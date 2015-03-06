@@ -1,8 +1,8 @@
-
 #pragma once
 #include "d3d8to9_private.h"
 
-struct Direct3DVertexBuffer8Adapter : public d3d8::IDirect3DVertexBuffer8 {
+struct Direct3DVertexBuffer8Adapter : public d3d8::IDirect3DVertexBuffer8
+{
 	Direct3DVertexBuffer8Adapter();
 
 	virtual ~Direct3DVertexBuffer8Adapter();
@@ -23,7 +23,7 @@ struct Direct3DVertexBuffer8Adapter : public d3d8::IDirect3DVertexBuffer8 {
 	STDMETHOD_(d3d8::D3DRESOURCETYPE, GetType)(THIS);
 	STDMETHOD(Lock)(THIS_ UINT OffsetToLock, UINT SizeToLock, BYTE** ppbData, DWORD Flags);
 	STDMETHOD(Unlock)(THIS);
-	STDMETHOD(GetDesc)(THIS_ d3d8::D3DVERTEXBUFFER_DESC *pDesc);
+	STDMETHOD(GetDesc)(THIS_ d3d8::D3DVERTEXBUFFER_DESC* pDesc);
 
-	IDirect3DVertexBuffer9 *delegate;
+	IDirect3DVertexBuffer9* delegate;
 };

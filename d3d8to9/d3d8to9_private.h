@@ -7,7 +7,8 @@
 #pragma comment(lib, "dxerr.lib")
 #pragma comment(lib, "D3dx9.lib")
 
-namespace d3d8 {
+namespace d3d8
+{
 #include "../d3d8/d3d8.h"
 }
 
@@ -21,8 +22,10 @@ namespace d3d8 {
 
 extern bool useD3dEx;
 
-inline HRESULT handleError(const char *method, HRESULT result) {
-	if (result != S_OK) {
+inline HRESULT handleError(const char* method, HRESULT result)
+{
+	if (result != S_OK)
+	{
 		LOG(info) << "DirectX Error @ " << method << ": " << DXGetErrorStringA(result);
 	}
 	return result;

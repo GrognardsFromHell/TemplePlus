@@ -1,4 +1,3 @@
-
 #include "system.h"
 
 #include "graphics.h"
@@ -12,11 +11,12 @@
  * Size being cleared is 4796 byte in length
  * Start @ 0x1E74580
  */
-struct VideoData {
+struct VideoData
+{
 	HINSTANCE hinstance;
 	HWND hwnd;
-	IDirect3D8 *d3d;
-	IDirect3DDevice8 *d3dDevice;
+	IDirect3D8* d3d;
+	IDirect3DDevice8* d3dDevice;
 	D3DCAPS8 d3dCaps;
 	char padding[124];
 	DWORD unk2;
@@ -48,20 +48,20 @@ struct VideoData {
 	DWORD mode; // check d3d typdef for this
 	D3DFORMAT adapterformat;
 	DWORD current_refresh;
-	IDirect3DVertexBuffer8 *vertexBuffer;
+	IDirect3DVertexBuffer8* vertexBuffer;
 	D3DMATRIX stru_11E75788;
 };
 
-VideoData *video;
+VideoData* video;
 
 _tig_init video_startup_org = 0;
-int *adapter = 0;
+int* adapter = 0;
 
-typedef boolean(__fastcall *_init_renderstates)(Settings *settings);
+typedef boolean (__fastcall *_init_renderstates)(Settings* settings);
 _init_renderstates init_renderstates = 0;
 
-static bool create_window(Settings *settings) {
-
+static bool create_window(Settings* settings)
+{
 	LOG(info) << "Struct @ 0x" << std::hex << (DWORD)(&video->stru_11E75788);
 
 	bool windowed = (settings->flags & 0x20) != 0;
@@ -79,7 +79,8 @@ static bool create_window(Settings *settings) {
 	wndClass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
 	wndClass.lpszClassName = "TIGClass";
 
-	if (!RegisterClassA(&wndClass)) {
+	if (!RegisterClassA(&wndClass))
+	{
 		return false;
 	}
 
@@ -91,7 +92,8 @@ static bool create_window(Settings *settings) {
 	DWORD dwStyle;
 	DWORD dwExStyle;
 
-	if (!windowed) {
+	if (!windowed)
+	{
 		windowRect.left = 0;
 		windowRect.top = 0;
 		windowRect.right = screenWidth;
@@ -101,15 +103,18 @@ static bool create_window(Settings *settings) {
 		dwExStyle = WS_EX_APPWINDOW | WS_EX_TOPMOST;
 		memcpy(&video->screenSizeRect, &windowRect, sizeof(RECT));
 	}
-	else {
+	else
+	{
 		// Apparently this flag controls whether x,y are preset from the outside
-		if (unknownFlag) {
+		if (unknownFlag)
+		{
 			windowRect.left = settings->x;
 			windowRect.top = settings->y;
 			windowRect.right = settings->x + settings->width;
 			windowRect.bottom = settings->y + settings->height;
 		}
-		else {
+		else
+		{
 			windowRect.left = (screenWidth - settings->width) / 2;
 			windowRect.top = (screenHeight - settings->height) / 2;
 			windowRect.right = windowRect.left + settings->width;
@@ -120,7 +125,8 @@ static bool create_window(Settings *settings) {
 		dwExStyle = 0;
 
 		// Apparently 0x80 means window rect isn't adjusted. is this a half-implemented borderless fullscreen?
-		if (!(settings->flags & 0x80)) {
+		if (!(settings->flags & 0x80))
+		{
 			AdjustWindowRectEx(&windowRect, dwStyle, menu != 0, 0);
 			// TODO: Adjust back
 			//            v13 = Rect.right - Rect.left - v1->width;
@@ -145,12 +151,14 @@ static bool create_window(Settings *settings) {
 	temple_set<0x10D24E10>(0);
 	temple_set<0x10D24E14>(settings->width);
 
-	const char *windowTitle;
+	const char* windowTitle;
 	// Apparently is a flag that indicates a custom window title
-	if (settings->flags & 0x40) {
+	if (settings->flags & 0x40)
+	{
 		windowTitle = settings->windowTitle;
 	}
-	else {
+	else
+	{
 		windowTitle = "Temple of Elemental Evil - Cirlce of Eight";
 	}
 
@@ -170,7 +178,8 @@ static bool create_window(Settings *settings) {
 		settings->hinstance,
 		0);
 
-	if (video->hwnd) {
+	if (video->hwnd)
+	{
 		RECT clientRect;
 		GetClientRect(video->hwnd, &clientRect);
 		video->current_width = clientRect.right - clientRect.left;
@@ -186,13 +195,16 @@ static bool create_window(Settings *settings) {
 	return false;
 }
 
-int __cdecl video_startup(Settings *settings) {
+int __cdecl video_startup(Settings* settings)
+{
 	memset(video, 0, 4796);
 
 	bool windowed = (settings->flags & 0x20) != 0;
 
-	if (windowed) {
-		if (!settings->wndproc) {
+	if (windowed)
+	{
+		if (!settings->wndproc)
+		{
 			return 12;
 		}
 		temple_set<0x10D25C38>(settings->wndproc);
@@ -201,11 +213,13 @@ int __cdecl video_startup(Settings *settings) {
 	*adapter = 0;
 
 	// create window call
-	if (!create_window(settings)) {
+	if (!create_window(settings))
+	{
 		return 17;
 	}
 
-	if (!init_renderstates(settings)) {
+	if (!init_renderstates(settings))
+	{
 		video->hwnd = 0;
 		return 17;
 	}
@@ -215,7 +229,8 @@ int __cdecl video_startup(Settings *settings) {
 	video->halfWidth = video->width * 0.5f;
 	video->halfHeight = video->height * 0.5f;
 
-	if (settings->flags & SF_FPS) {
+	if (settings->flags & SF_FPS)
+	{
 		/*
 			dword_10D250EC = 1;
 			dword_10D24DD8 = 8;
@@ -230,7 +245,8 @@ int __cdecl video_startup(Settings *settings) {
 			dword_10D24DB4 = 5;
 			*/
 	}
-	else {
+	else
+	{
 		temple_set<0x10D250EC>(0);
 	}
 
@@ -247,17 +263,20 @@ int __cdecl video_startup(Settings *settings) {
 	temple_set<0x10D2511C, int>(0);
 
 	uint32_t v3 = 0x10D24CAC;
-	do {
+	do
+	{
 		temple_set(v3, 0);
 		v3 += 12;
-	} while (v3 < 0x10D24D6C);
+	}
+	while (v3 < 0x10D24D6C);
 
 	v3 = 0x10D24C8C;
 	do
 	{
 		temple_set(v3, 0);
 		v3 += 8;
-	} while (v3 < 0x10D24CAC);
+	}
+	while (v3 < 0x10D24CAC);
 
 	temple_set<0x10D25134>(settings->callback1);
 	temple_set<0x10D25138>(settings->callback2);
@@ -270,8 +289,8 @@ int __cdecl video_startup(Settings *settings) {
 /*
 	The original function could not handle PCs with >4GB ram
 */
-void get_system_memory(int* totalMem, int* availableMem) {
-	
+void get_system_memory(int* totalMem, int* availableMem)
+{
 	MEMORYSTATUS status;
 
 	GlobalMemoryStatus(&status);
@@ -281,7 +300,8 @@ void get_system_memory(int* totalMem, int* availableMem) {
 	*availableMem = min(1024 * 1024 * 1024, status.dwAvailPhys);
 }
 
-void hook_graphics() {
+void hook_graphics()
+{
 	hook_directx();
 
 	video = (VideoData*)temple_address<0x11E74580>(); // Goes until 1E7583C

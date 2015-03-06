@@ -1,9 +1,9 @@
-
 #pragma once
 
 #include "d3d8to9_private.h"
 
-struct Direct3D8Adapter : public d3d8::IDirect3D8 {
+struct Direct3D8Adapter : public d3d8::IDirect3D8
+{
 	Direct3D8Adapter();
 	virtual ~Direct3D8Adapter();
 
@@ -27,5 +27,5 @@ struct Direct3D8Adapter : public d3d8::IDirect3D8 {
 	STDMETHOD(CreateDevice)(THIS_ UINT Adapter, d3d8::D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags, d3d8::D3DPRESENT_PARAMETERS* pPresentationParameters, d3d8::IDirect3DDevice8** ppReturnedDeviceInterface);
 
 
-	IDirect3D9Ex *delegate;
+	IDirect3D9Ex* delegate;
 };

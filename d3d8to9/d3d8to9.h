@@ -4,3 +4,4 @@
 void hook_directx();
 
 #endif // D3D8TO9_H
+

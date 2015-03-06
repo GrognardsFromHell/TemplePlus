@@ -1,8 +1,7 @@
-
 #include "d3d8to9_private.h"
 
-struct Direct3DIndexBuffer8Adapter : public d3d8::IDirect3DIndexBuffer8 {
-
+struct Direct3DIndexBuffer8Adapter : public d3d8::IDirect3DIndexBuffer8
+{
 	Direct3DIndexBuffer8Adapter();
 	virtual ~Direct3DIndexBuffer8Adapter();
 
@@ -22,7 +21,7 @@ struct Direct3DIndexBuffer8Adapter : public d3d8::IDirect3DIndexBuffer8 {
 	STDMETHOD_(d3d8::D3DRESOURCETYPE, GetType)(THIS);
 	STDMETHOD(Lock)(THIS_ UINT OffsetToLock, UINT SizeToLock, BYTE** ppbData, DWORD Flags);
 	STDMETHOD(Unlock)(THIS);
-	STDMETHOD(GetDesc)(THIS_ d3d8::D3DINDEXBUFFER_DESC *pDesc);
+	STDMETHOD(GetDesc)(THIS_ d3d8::D3DINDEXBUFFER_DESC* pDesc);
 
-	IDirect3DIndexBuffer9 *delegate;
+	IDirect3DIndexBuffer9* delegate;
 };

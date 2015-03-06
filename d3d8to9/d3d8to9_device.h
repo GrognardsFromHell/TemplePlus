@@ -1,10 +1,10 @@
-
 #pragma once
 
 #include "d3d8to9_private.h"
 
-struct Direct3DDevice8Adapter : public d3d8::IDirect3DDevice8 {
-	STDMETHOD(QueryInterface)(THIS_ REFIID /*riid*/, void** /*ppvObj*/) ;
+struct Direct3DDevice8Adapter : public d3d8::IDirect3DDevice8
+{
+	STDMETHOD(QueryInterface)(THIS_ REFIID /*riid*/, void** /*ppvObj*/);
 	STDMETHOD_(ULONG, AddRef)(THIS);
 	STDMETHOD_(ULONG, Release)(THIS);
 
@@ -15,7 +15,7 @@ struct Direct3DDevice8Adapter : public d3d8::IDirect3DDevice8 {
 	STDMETHOD(GetDirect3D)(THIS_ d3d8::IDirect3D8** ppD3D8);
 	STDMETHOD(GetDeviceCaps)(THIS_ d3d8::D3DCAPS8* pCaps);
 	STDMETHOD(GetDisplayMode)(THIS_ d3d8::D3DDISPLAYMODE* pMode);
-	STDMETHOD(GetCreationParameters)(THIS_ d3d8::D3DDEVICE_CREATION_PARAMETERS *pParameters);
+	STDMETHOD(GetCreationParameters)(THIS_ d3d8::D3DDEVICE_CREATION_PARAMETERS* pParameters);
 	STDMETHOD(SetCursorProperties)(THIS_ UINT XHotSpot, UINT YHotSpot, d3d8::IDirect3DSurface8* pCursorBitmap);
 	STDMETHOD_(void, SetCursorPosition)(THIS_ int X, int Y, DWORD Flags);
 	STDMETHOD_(BOOL, ShowCursor)(THIS_ BOOL bShow);
@@ -50,8 +50,8 @@ struct Direct3DDevice8Adapter : public d3d8::IDirect3DDevice8 {
 	STDMETHOD(GetViewport)(THIS_ d3d8::D3DVIEWPORT8* pViewport);
 	STDMETHOD(SetMaterial)(THIS_ CONST d3d8::D3DMATERIAL8* pMaterial);
 	STDMETHOD(GetMaterial)(THIS_ d3d8::D3DMATERIAL8* pMaterial);
-	STDMETHOD(SetLight)(THIS_ DWORD Index, CONST d3d8::D3DLIGHT8*Light);
-	STDMETHOD(GetLight)(THIS_ DWORD Index, d3d8::D3DLIGHT8*Light);
+	STDMETHOD(SetLight)(THIS_ DWORD Index, CONST d3d8::D3DLIGHT8* Light);
+	STDMETHOD(GetLight)(THIS_ DWORD Index, d3d8::D3DLIGHT8* Light);
 	STDMETHOD(LightEnable)(THIS_ DWORD Index, BOOL Enable);
 	STDMETHOD(GetLightEnable)(THIS_ DWORD Index, BOOL* pEnable);
 	STDMETHOD(SetClipPlane)(THIS_ DWORD Index, CONST float* pPlane);
@@ -75,11 +75,11 @@ struct Direct3DDevice8Adapter : public d3d8::IDirect3DDevice8 {
 	STDMETHOD(SetPaletteEntries)(THIS_ UINT PaletteNumber, CONST PALETTEENTRY* pEntries);
 	STDMETHOD(GetPaletteEntries)(THIS_ UINT PaletteNumber, PALETTEENTRY* pEntries);
 	STDMETHOD(SetCurrentTexturePalette)(THIS_ UINT PaletteNumber);
-	STDMETHOD(GetCurrentTexturePalette)(THIS_ UINT *PaletteNumber);
+	STDMETHOD(GetCurrentTexturePalette)(THIS_ UINT* PaletteNumber);
 	STDMETHOD(DrawPrimitive)(THIS_ d3d8::D3DPRIMITIVETYPE type, UINT StartVertex, UINT PrimitiveCount);
 	STDMETHOD(DrawIndexedPrimitive)(THIS_ d3d8::D3DPRIMITIVETYPE type, UINT minIndex, UINT NumVertices, UINT startIndex, UINT primCount);
 	STDMETHOD(DrawPrimitiveUP)(THIS_ d3d8::D3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, CONST void* pVertexStreamZeroData, UINT VertexStreamZeroStride);
-	STDMETHOD(DrawIndexedPrimitiveUP)(THIS_ d3d8::D3DPRIMITIVETYPE PrimitiveType, UINT MinVertexIndex, UINT NumVertexIndices, UINT PrimitiveCount, CONST void* pIndexData, d3d8::D3DFORMAT IndexDataFormat, CONST void* 			pVertexStreamZeroData, UINT VertexStreamZeroStride);
+	STDMETHOD(DrawIndexedPrimitiveUP)(THIS_ d3d8::D3DPRIMITIVETYPE PrimitiveType, UINT MinVertexIndex, UINT NumVertexIndices, UINT PrimitiveCount, CONST void* pIndexData, d3d8::D3DFORMAT IndexDataFormat, CONST void* pVertexStreamZeroData, UINT VertexStreamZeroStride);
 	STDMETHOD(ProcessVertices)(THIS_ UINT SrcStartIndex, UINT DestIndex, UINT VertexCount, d3d8::IDirect3DVertexBuffer8* pDestBuffer, DWORD Flags);
 	STDMETHOD(CreateVertexShader)(THIS_ CONST DWORD* pDeclaration, CONST DWORD* pFunction, DWORD* pHandle, DWORD Usage);
 	STDMETHOD(SetVertexShader)(THIS_ DWORD Handle);
@@ -106,9 +106,9 @@ struct Direct3DDevice8Adapter : public d3d8::IDirect3DDevice8 {
 
 	Direct3DDevice8Adapter();
 	virtual ~Direct3DDevice8Adapter();
-	
-	IDirect3DDevice9Ex *delegate;
-	Direct3DTexture8Adapter *stages[16];
-	Direct3DVertexBuffer8Adapter *streamSources[16];
-	Direct3DIndexBuffer8Adapter *indices;
+
+	IDirect3DDevice9Ex* delegate;
+	Direct3DTexture8Adapter* stages[16];
+	Direct3DVertexBuffer8Adapter* streamSources[16];
+	Direct3DIndexBuffer8Adapter* indices;
 };

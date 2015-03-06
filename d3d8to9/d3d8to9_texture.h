@@ -1,7 +1,7 @@
-
 #include "d3d8to9_private.h"
 
-struct Direct3DTexture8Adapter : public d3d8::IDirect3DTexture8 {
+struct Direct3DTexture8Adapter : public d3d8::IDirect3DTexture8
+{
 	/*** IUnknown methods ***/
 	STDMETHOD(QueryInterface)(THIS_ REFIID /*riid*/, void** /*ppvObj*/);
 	STDMETHOD_(ULONG, AddRef)(THIS);
@@ -20,7 +20,7 @@ struct Direct3DTexture8Adapter : public d3d8::IDirect3DTexture8 {
 	STDMETHOD_(DWORD, GetLOD)(THIS);
 	STDMETHOD_(DWORD, GetLevelCount)(THIS);
 
-	STDMETHOD(GetLevelDesc)(THIS_ UINT Level, d3d8::D3DSURFACE_DESC *pDesc);
+	STDMETHOD(GetLevelDesc)(THIS_ UINT Level, d3d8::D3DSURFACE_DESC* pDesc);
 
 	STDMETHOD(GetSurfaceLevel)(THIS_ UINT Level, d3d8::IDirect3DSurface8** ppSurfaceLevel);
 
@@ -34,5 +34,5 @@ struct Direct3DTexture8Adapter : public d3d8::IDirect3DTexture8 {
 
 	virtual ~Direct3DTexture8Adapter();
 
-	IDirect3DTexture9 *delegate;
+	IDirect3DTexture9* delegate;
 };

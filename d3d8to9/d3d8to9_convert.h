@@ -1,9 +1,10 @@
-
 #include "d3d8to9_private.h"
 
-inline D3DFORMAT convert(d3d8::D3DFORMAT format) {
+inline D3DFORMAT convert(d3d8::D3DFORMAT format)
+{
 	// TODO: Convert format
-	switch (format) {
+	switch (format)
+	{
 	case d3d8::D3DFMT_X8R8G8B8:
 		return D3DFMT_X8R8G8B8;
 	case d3d8::D3DFMT_A8R8G8B8:
@@ -18,8 +19,10 @@ inline D3DFORMAT convert(d3d8::D3DFORMAT format) {
 	}
 }
 
-inline d3d8::D3DFORMAT convert(D3DFORMAT format) {
-	switch (format) {
+inline d3d8::D3DFORMAT convert(D3DFORMAT format)
+{
+	switch (format)
+	{
 	case D3DFMT_X8R8G8B8:
 		return d3d8::D3DFMT_X8R8G8B8;
 	case D3DFMT_A8R8G8B8:
@@ -34,8 +37,10 @@ inline d3d8::D3DFORMAT convert(D3DFORMAT format) {
 	}
 }
 
-inline D3DRENDERSTATETYPE convert(d3d8::D3DRENDERSTATETYPE type) {
-	switch (type) {
+inline D3DRENDERSTATETYPE convert(d3d8::D3DRENDERSTATETYPE type)
+{
+	switch (type)
+	{
 		// TODO: Probably needs tweaking
 	case d3d8::D3DRS_ZBIAS: return D3DRS_DEPTHBIAS;
 	case d3d8::D3DRS_ZENABLE: return D3DRS_ZENABLE;
@@ -112,7 +117,8 @@ inline D3DRENDERSTATETYPE convert(d3d8::D3DRENDERSTATETYPE type) {
 	}
 }
 
-inline void convert(const D3DCAPS9 &caps, d3d8::D3DCAPS8 *pCaps) {
+inline void convert(const D3DCAPS9& caps, d3d8::D3DCAPS8* pCaps)
+{
 	// TOOD: Possbile conversions
 
 	ZeroMemory(pCaps, sizeof(d3d8::D3DCAPS8));
@@ -137,13 +143,13 @@ inline void convert(const D3DCAPS9 &caps, d3d8::D3DCAPS8 *pCaps) {
 	pCaps->AlphaCmpCaps = caps.AlphaCmpCaps;
 	pCaps->ShadeCaps = caps.ShadeCaps;
 	pCaps->TextureCaps = caps.TextureCaps;
-	pCaps->TextureFilterCaps = caps.TextureFilterCaps;          // D3DPTFILTERCAPS for IDirect3DTexture8's
-	pCaps->CubeTextureFilterCaps = caps.CubeTextureFilterCaps;      // D3DPTFILTERCAPS for IDirect3DCubeTexture8's
-	pCaps->VolumeTextureFilterCaps = caps.VolumeTextureFilterCaps;    // D3DPTFILTERCAPS for IDirect3DVolumeTexture8's
-	pCaps->TextureAddressCaps = caps.TextureAddressCaps;         // D3DPTADDRESSCAPS for IDirect3DTexture8's
-	pCaps->VolumeTextureAddressCaps = caps.VolumeTextureAddressCaps;   // D3DPTADDRESSCAPS for IDirect3DVolumeTexture8's
+	pCaps->TextureFilterCaps = caps.TextureFilterCaps; // D3DPTFILTERCAPS for IDirect3DTexture8's
+	pCaps->CubeTextureFilterCaps = caps.CubeTextureFilterCaps; // D3DPTFILTERCAPS for IDirect3DCubeTexture8's
+	pCaps->VolumeTextureFilterCaps = caps.VolumeTextureFilterCaps; // D3DPTFILTERCAPS for IDirect3DVolumeTexture8's
+	pCaps->TextureAddressCaps = caps.TextureAddressCaps; // D3DPTADDRESSCAPS for IDirect3DTexture8's
+	pCaps->VolumeTextureAddressCaps = caps.VolumeTextureAddressCaps; // D3DPTADDRESSCAPS for IDirect3DVolumeTexture8's
 
-	pCaps->LineCaps = caps.LineCaps;                   // D3DLINECAPS
+	pCaps->LineCaps = caps.LineCaps; // D3DLINECAPS
 
 	pCaps->MaxTextureWidth = caps.MaxTextureWidth;
 	pCaps->MaxTextureHeight = caps.MaxTextureHeight;

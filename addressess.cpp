@@ -1,4 +1,3 @@
-
 #include "addresses.h"
 
-void *templeImageBase = 0;
+void* templeImageBase = 0;
