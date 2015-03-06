@@ -1,30 +1,32 @@
 
+#include "addresses.h"
 #include "temple_functions.h"
-
-_temple_main temple_main = 0;
-
-_print_debug_message print_debug_message = 0;
+#include "graphics.h"
 
 void init_functions() {
-
-    quint32 imageBase = (quint32)GetModuleHandleA("temple.dll");
-    if (!imageBase) {
-        qFatal("temple.dll not found in memory space");
+	templeImageBase = (void*)GetModuleHandleA("temple.dll");
+	if (!templeImageBase) {
+        LOG(error) << "temple.dll not found in memory space";
     }
-
-    print_debug_message = (_print_debug_message)(imageBase + 0x1E48F0);
 }
 
 /*
  *  Simply forward all logging to printf at this point.
  */
 void __cdecl hooked_print_debug_message(char *format, ...) {
+	char message[4096];
     va_list args;
     va_start(args, format);
-    vprintf(format, args);
+    vsnprintf(message, 4096, format, args);
+	LOG(info) << message;
 }
 
 void init_hooks() {
-    MH_CreateHook(print_debug_message, hooked_print_debug_message, NULL);
+    LOG(info) << "Base offset for temple.dll memory is 0x" << std::hex << templeImageBase;
+
+	temple_set<0x10EED638>(1); // Debug message enable
+
+	MH_CreateHook(temple_address<0x101E48F0>(), hooked_print_debug_message, NULL);
+    hook_graphics();
     MH_EnableHook(MH_ALL_HOOKS);
 }

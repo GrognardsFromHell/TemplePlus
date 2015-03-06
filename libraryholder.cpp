@@ -1,10 +1,9 @@
 #include "libraryholder.h"
 
-LibraryHolder::LibraryHolder(const QString &path) : mLibraryHandle(0)
+LibraryHolder::LibraryHolder(const path &path) : mLibraryHandle(0)
 {
-    qDebug() << "Loading" << path;
-    const wchar_t *dllPath = (LPCWSTR)path.utf16();
-    mLibraryHandle = LoadLibraryW(dllPath);
+    LOG(info) << "Loading" << path;
+    mLibraryHandle = LoadLibraryW(path.wstring().data());
 
     if (!mLibraryHandle) {
         LPWSTR bufPtr = NULL;
@@ -13,8 +12,7 @@ LibraryHolder::LibraryHolder(const QString &path) : mLibraryHandle(0)
                        FORMAT_MESSAGE_FROM_SYSTEM |
                        FORMAT_MESSAGE_IGNORE_INSERTS,
                        NULL, err, 0, (LPWSTR)&bufPtr, 0, NULL);
-        mErrorText = (bufPtr) ? QString::fromUtf16((const ushort*)bufPtr).trimmed() :
-                       QString("Unknown Error %1").arg(err);
+		mErrorText = bufPtr ? wstring(bufPtr) : (wformat(L"Unknown error %1%") % err).str();
         LocalFree(bufPtr);
     }
 }

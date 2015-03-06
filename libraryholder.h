@@ -6,23 +6,23 @@
 class LibraryHolder
 {
 public:
-    LibraryHolder(const QString &path);
+    LibraryHolder(const path &path);
     ~LibraryHolder();
 
     template<typename T>
     T getFun(const char *name) {
         T result = (T) GetProcAddress(mLibraryHandle, name);
         if (!result) {
-            qFatal("Unable to find proc %s in DLL.", name);
+			LOG(error) << "Unable to find proc " << name << " in DLL";
         }
         return result;
     }
 
     bool valid();
-    const QString &errorText() const { return mErrorText; }
+    const wstring &errorText() const { return mErrorText; }
 private:
     HMODULE mLibraryHandle;
-    QString mErrorText;
+    wstring mErrorText;
 };
 
 #endif // LIBRARYHOLDER_H

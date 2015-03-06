@@ -3,49 +3,54 @@
 #include "temple_functions.h"
 #include "libraryholder.h"
 
-int main(int argc, char *argv[])
-{
-    QCoreApplication a(argc, argv);
+#include <boost/program_options.hpp>
+#include <boost/log/utility/setup/file.hpp>
+#include <boost/log/utility/setup/console.hpp>
 
-    if (a.arguments().size() != 2) {
-        qDebug() << "Usage: program <toee-dir>";
-        return -1;
-    }
+namespace po = boost::program_options;
 
-    QString toeeDir = a.arguments().at(1);
-    QFileInfo toeeDirInfo(toeeDir);
-    toeeDir = toeeDirInfo.absoluteFilePath();
+void InitLogging();
 
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int showCmd)
+{	
+	WCHAR toeeDllFilename[MAX_PATH];
+	GetModuleFileName(GetModuleHandle(L"temple"), toeeDllFilename, MAX_PATH);
+	wpath toeeDir(wpath(toeeDllFilename).parent_path());
+	
+	InitLogging();
+
+	LOG(info) << "Starting up with toee path: " << toeeDir;
+	
+	boost::system::error_code errorCode;
+	current_path(toeeDir, errorCode);
+    
     // Set DLL search path and current directory
-    if (!SetDllDirectoryW((LPWSTR)toeeDir.utf16())) {
-        qDebug() << "Unable to set DLL directory.";
+    if (errorCode) {
+        LOG(error) << "Unable to set current directory.";
     }
-    if (!SetCurrentDirectoryW((LPWSTR)toeeDir.utf16())) {
-        qDebug() << "Unable to change working directory.";
+    if (!SetDllDirectoryW(toeeDir.wstring().data())) {
+        LOG(error) << "Unable to change DLL search directory.";
     }
 
     // Initialize minhook
     MH_Initialize();
-
-    LibraryHolder templeDll("temple.dll");
-
-    if (!templeDll.valid()) {
-        qDebug() << "Unable to load temple.dll from" << toeeDir;
-        qDebug() << "Error:" << templeDll.errorText();
-        return -2;
-    }
-
+	
     init_functions();
     init_hooks();
-
-    // Get entry point
-    temple_main = templeDll.getFun<_temple_main>("temple_main");
-
-    QByteArray localCmdLineStart = ("\"" + toeeDir + "toee.exe\" -window").toLocal8Bit();
+	
+    string localCmdLineStart = "\"" + toeeDir.string() + "toee.exe\"";
     auto ourModule = GetModuleHandleW(NULL);
-    temple_main(ourModule, NULL, localCmdLineStart.data(), SW_SHOWDEFAULT);
+    int result = temple_main(ourModule, NULL, localCmdLineStart.data(), SW_SHOWDEFAULT);
 
     MH_Uninitialize();
 
-    return a.exec();
+	return result;
+}
+
+void InitLogging() {
+	AllocConsole();
+	freopen("CONOUT$", "w", stdout);
+
+	//boost::log::add_file_log("sample.log");
+	// boost::log::add_console_log();
 }
