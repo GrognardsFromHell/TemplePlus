@@ -136,9 +136,10 @@ HRESULT Direct3DDevice8Adapter::Present(THIS_ CONST RECT* pSourceRect, CONST REC
 
 HRESULT Direct3DDevice8Adapter::GetBackBuffer(THIS_ UINT BackBuffer, d3d8::D3DBACKBUFFER_TYPE Type, d3d8::IDirect3DSurface8** ppBackBuffer)
 {
-	LOG(info) << "Unsupported D3D method called: GetBackBuffer";
-	abort();
-	return EFAULT;
+	auto adapter = new Direct3DSurface8Adapter;
+	HRESULT result = handleError("GetBackBuffer", delegate->GetBackBuffer(0, BackBuffer, (D3DBACKBUFFER_TYPE)Type, &adapter->delegate));
+	*ppBackBuffer = adapter;
+	return result;
 }
 
 HRESULT Direct3DDevice8Adapter::GetRasterStatus(THIS_ d3d8::D3DRASTER_STATUS* pRasterStatus)
