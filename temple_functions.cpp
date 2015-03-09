@@ -1,14 +1,18 @@
+
+#include "stdafx.h"
 #include "addresses.h"
 #include "temple_functions.h"
 #include "graphics.h"
 
 void init_functions()
 {
-	templeImageBase = (void*)GetModuleHandleA("temple.dll");
+	templeImageBase = static_cast<void*>(GetModuleHandleA("temple.dll"));
 	if (!templeImageBase)
 	{
 		LOG(error) << "temple.dll not found in memory space";
 	}
+
+	AddressInitializer::performRebase();
 }
 
 /*
@@ -37,7 +41,7 @@ void __cdecl hooked_print_debug_message(char* format, ...)
 
 void init_hooks()
 {
-	LOG(info) << "Base offset for temple.dll memory is 0x" << std::hex << templeImageBase;
+	LOG(info) << format("Base offset for temple.dll memory is 0x%x") % templeImageBase;
 
 	temple_set<0x10EED638>(1); // Debug message enable
 

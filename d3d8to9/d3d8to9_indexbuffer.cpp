@@ -1,3 +1,5 @@
+
+#include "stdafx.h"
 #include "d3d8to9_indexbuffer.h"
 
 Direct3DIndexBuffer8Adapter::Direct3DIndexBuffer8Adapter()

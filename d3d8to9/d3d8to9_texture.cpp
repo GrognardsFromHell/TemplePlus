@@ -1,3 +1,5 @@
+
+#include "stdafx.h"
 #include "d3d8to9_private.h"
 #include "d3d8to9_texture.h"
 
@@ -92,14 +94,14 @@ HRESULT Direct3DTexture8Adapter::GetSurfaceLevel(THIS_ UINT Level, d3d8::IDirect
 HRESULT Direct3DTexture8Adapter::LockRect(THIS_ UINT Level, d3d8::D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags)
 {
 	HRESULT result = delegate->LockRect(Level, (D3DLOCKED_RECT*)pLockedRect, pRect, Flags);
-	handleError("LockRect", result);
+	handleD3dError("LockRect", result);
 	return result;
 }
 
 HRESULT Direct3DTexture8Adapter::UnlockRect(THIS_ UINT Level)
 {
 	HRESULT result = delegate->UnlockRect(Level);
-	return handleError("UnlockRect", result);
+	return handleD3dError("UnlockRect", result);
 }
 
 HRESULT Direct3DTexture8Adapter::AddDirtyRect(THIS_ CONST RECT* pDirtyRect)

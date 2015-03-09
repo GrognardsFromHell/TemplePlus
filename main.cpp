@@ -1,22 +1,19 @@
-#include "system.h"
+
+#include "stdafx.h"
 #include "temple_functions.h"
 #include "libraryholder.h"
 
-#include <boost/program_options.hpp>
-#include <boost/log/utility/setup/file.hpp>
-#include <boost/log/utility/setup/console.hpp>
-
-namespace po = boost::program_options;
+#include <boost/log/utility/setup.hpp>
 
 void InitLogging();
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int showCmd)
 {
+	InitLogging();
+	
 	WCHAR toeeDllFilename[MAX_PATH];
 	GetModuleFileName(GetModuleHandle(L"temple"), toeeDllFilename, MAX_PATH);
 	wpath toeeDir(wpath(toeeDllFilename).parent_path());
-
-	InitLogging();
 
 	LOG(info) << "Starting up with toee path: " << toeeDir;
 
@@ -53,6 +50,7 @@ void InitLogging()
 	AllocConsole();
 	freopen("CONOUT$", "w", stdout);
 
-	boost::log::add_file_log("TemplePlus.log");
+	boost::log::add_file_log(boost::log::keywords::file_name = "TemplePlus.log", 
+		boost::log::keywords::auto_flush = true);
 	boost::log::add_console_log(cout);
 }

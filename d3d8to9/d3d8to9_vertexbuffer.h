@@ -4,6 +4,7 @@
 struct Direct3DVertexBuffer8Adapter : public d3d8::IDirect3DVertexBuffer8
 {
 	Direct3DVertexBuffer8Adapter();
+	Direct3DVertexBuffer8Adapter(IDirect3DVertexBuffer9 *_delegate) : delegate(_delegate) {}
 
 	virtual ~Direct3DVertexBuffer8Adapter();
 

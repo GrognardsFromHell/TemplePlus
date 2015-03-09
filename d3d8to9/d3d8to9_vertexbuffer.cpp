@@ -1,3 +1,5 @@
+
+#include "stdafx.h"
 #include "d3d8to9_vertexbuffer.h"
 
 Direct3DVertexBuffer8Adapter::Direct3DVertexBuffer8Adapter(): delegate(nullptr)
@@ -72,12 +74,12 @@ d3d8::D3DRESOURCETYPE Direct3DVertexBuffer8Adapter::GetType(THIS)
 HRESULT Direct3DVertexBuffer8Adapter::Lock(THIS_ UINT OffsetToLock, UINT SizeToLock, BYTE** ppbData, DWORD Flags)
 {
 	// TODO: Inspect flags
-	return handleError("Lock", delegate->Lock(OffsetToLock, SizeToLock, (void**)ppbData, Flags));
+	return handleD3dError("Lock", delegate->Lock(OffsetToLock, SizeToLock, (void**)ppbData, Flags));
 }
 
 HRESULT Direct3DVertexBuffer8Adapter::Unlock(THIS)
 {
-	return handleError("Unlock", delegate->Unlock());
+	return handleD3dError("Unlock", delegate->Unlock());
 }
 
 HRESULT Direct3DVertexBuffer8Adapter::GetDesc(THIS_ d3d8::D3DVERTEXBUFFER_DESC* pDesc)

@@ -1,9 +1,13 @@
+
+#include "stdafx.h"
 #include "d3d8to9_device.h"
 #include "d3d8to9_convert.h"
 #include "d3d8to9_texture.h"
 #include "d3d8to9_vertexbuffer.h"
 #include "d3d8to9_indexbuffer.h"
 #include "d3d8to9_surface.h"
+
+bool enableLinearPresent = false;
 
 HRESULT Direct3DDevice8Adapter::QueryInterface(THIS_ REFIID /*riid*/, void** /*ppvObj*/)
 {
@@ -51,7 +55,7 @@ HRESULT Direct3DDevice8Adapter::GetDeviceCaps(THIS_ d3d8::D3DCAPS8* pCaps)
 {
 	D3DCAPS9 caps;
 	HRESULT result = delegate->GetDeviceCaps(&caps);
-	handleError("GetDeviceCaps", result);
+	handleD3dError("GetDeviceCaps", result);
 
 	convert(caps, pCaps);
 
@@ -64,7 +68,7 @@ HRESULT Direct3DDevice8Adapter::GetDisplayMode(THIS_ d3d8::D3DDISPLAYMODE* pMode
 	// TODO: D3DFormat is actually incompatible
 	HRESULT result = delegate->GetDisplayMode(0, (D3DDISPLAYMODE*)(pMode));
 	pMode->Format = convert((D3DFORMAT)pMode->Format);
-	handleError("GetDisplayMode", result);
+	handleD3dError("GetDisplayMode", result);
 	return result;
 }
 
@@ -101,31 +105,31 @@ HRESULT Direct3DDevice8Adapter::CreateAdditionalSwapChain(THIS_ d3d8::D3DPRESENT
 
 HRESULT Direct3DDevice8Adapter::Reset(THIS_ d3d8::D3DPRESENT_PARAMETERS* pPresentationParameters)
 {
-	LOG(info) << "Unsupported D3D method called: Reset";
-
 	D3DPRESENT_PARAMETERS presentParams;
 	memset(&presentParams, 0, sizeof(presentParams));
-	presentParams.BackBufferWidth = pPresentationParameters->BackBufferWidth;
-	presentParams.BackBufferHeight = pPresentationParameters->BackBufferHeight;
-	presentParams.BackBufferFormat = convert(pPresentationParameters->BackBufferFormat);
-	presentParams.BackBufferCount = pPresentationParameters->BackBufferCount;
-
-	presentParams.MultiSampleType = (D3DMULTISAMPLE_TYPE)pPresentationParameters->MultiSampleType;
-	presentParams.MultiSampleQuality = 0;
+	
+	// presentParams.MultiSampleType = (D3DMULTISAMPLE_TYPE)pPresentationParameters->MultiSampleType;
+	// presentParams.MultiSampleQuality = 0;
 
 	// We always use DISCARD
 	presentParams.SwapEffect = D3DSWAPEFFECT_DISCARD;
 	presentParams.hDeviceWindow = pPresentationParameters->hDeviceWindow;
-	presentParams.Windowed = pPresentationParameters->Windowed;
+	presentParams.Windowed = true; // pPresentationParameters->Windowed;
 	presentParams.EnableAutoDepthStencil = pPresentationParameters->EnableAutoDepthStencil;
 	presentParams.AutoDepthStencilFormat = convert(pPresentationParameters->AutoDepthStencilFormat);
-	presentParams.Flags = 0; // Ignoring the flags that are passed in
-
-	presentParams.FullScreen_RefreshRateInHz = pPresentationParameters->FullScreen_RefreshRateInHz;
+	presentParams.Flags = pPresentationParameters->Flags;
 	presentParams.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
 
+	/*
+	presentParams.BackBufferWidth = pPresentationParameters->BackBufferWidth;
+	presentParams.BackBufferHeight = pPresentationParameters->BackBufferHeight;
+	presentParams.BackBufferFormat = convert(pPresentationParameters->BackBufferFormat);
+	presentParams.BackBufferCount = pPresentationParameters->BackBufferCount;
+	presentParams.FullScreen_RefreshRateInHz = pPresentationParameters->FullScreen_RefreshRateInHz;
+	*/
+
 	auto result = delegate->Reset(&presentParams);
-	handleError("Reset", result);
+	handleD3dError("Reset", result);
 	return result;
 }
 
@@ -137,7 +141,7 @@ HRESULT Direct3DDevice8Adapter::Present(THIS_ CONST RECT* pSourceRect, CONST REC
 HRESULT Direct3DDevice8Adapter::GetBackBuffer(THIS_ UINT BackBuffer, d3d8::D3DBACKBUFFER_TYPE Type, d3d8::IDirect3DSurface8** ppBackBuffer)
 {
 	auto adapter = new Direct3DSurface8Adapter;
-	HRESULT result = handleError("GetBackBuffer", delegate->GetBackBuffer(0, BackBuffer, (D3DBACKBUFFER_TYPE)Type, &adapter->delegate));
+	HRESULT result = handleD3dError("GetBackBuffer", delegate->GetBackBuffer(0, BackBuffer, D3DBACKBUFFER_TYPE_MONO, &adapter->delegate));
 	*ppBackBuffer = adapter;
 	return result;
 }
@@ -167,13 +171,13 @@ HRESULT Direct3DDevice8Adapter::CreateTexture(THIS_ UINT Width, UINT Height, UIN
 
 	auto d3d9format = convert(Format);
 	auto d3d9pool = (D3DPOOL)Pool;
-	if (useD3dEx && d3d9pool == D3DPOOL_MANAGED)
+	if (config.useDirect3d9Ex && d3d9pool == D3DPOOL_MANAGED)
 	{
 		d3d9pool = D3DPOOL_DEFAULT;
 		Usage |= D3DUSAGE_DYNAMIC;
 	}
 	auto result = delegate->CreateTexture(Width, Height, Levels, Usage, d3d9format, d3d9pool, &adapter->delegate, NULL);
-	handleError("CreateTexture", result);
+	handleD3dError("CreateTexture", result);
 	*ppTexture = adapter;
 	return result;
 }
@@ -201,7 +205,7 @@ HRESULT Direct3DDevice8Adapter::CreateVertexBuffer(THIS_ UINT Length, DWORD Usag
 	Usage = D3DUSAGE_DYNAMIC;
 	Pool = d3d8::D3DPOOL_SYSTEMMEM;
 	HRESULT result = delegate->CreateVertexBuffer(Length, Usage, FVF, (D3DPOOL)Pool, &adapter->delegate, 0);
-	handleError("CreateVertexBuffer", result);
+	handleD3dError("CreateVertexBuffer", result);
 	*ppVertexBuffer = adapter;
 	return result;
 }
@@ -211,7 +215,7 @@ HRESULT Direct3DDevice8Adapter::CreateIndexBuffer(THIS_ UINT Length, DWORD Usage
 	auto adapter = new Direct3DIndexBuffer8Adapter;
 
 	auto result = delegate->CreateIndexBuffer(Length, Usage, convert(Format), (D3DPOOL)Pool, &adapter->delegate, NULL);
-	handleError("CreateIndexBuffer", result);
+	handleD3dError("CreateIndexBuffer", result);
 	*ppIndexBuffer = adapter;
 	return result;
 }
@@ -235,7 +239,7 @@ HRESULT Direct3DDevice8Adapter::CreateImageSurface(THIS_ UINT Width, UINT Height
 	auto adapter = new Direct3DSurface8Adapter;
 	*ppSurface = adapter;
 	HRESULT result = delegate->CreateOffscreenPlainSurface(Width, Height, convert(Format), D3DPOOL_SYSTEMMEM, &adapter->delegate, NULL);
-	return handleError("CreateImageSurface", result);
+	return handleD3dError("CreateImageSurface", result);
 }
 
 HRESULT Direct3DDevice8Adapter::CopyRects(THIS_ d3d8::IDirect3DSurface8* pSourceSurface, CONST RECT* pSourceRectsArray, UINT cRects, d3d8::IDirect3DSurface8* pDestinationSurface, CONST POINT* pDestPointsArray)
@@ -255,7 +259,7 @@ HRESULT Direct3DDevice8Adapter::UpdateTexture(THIS_ d3d8::IDirect3DBaseTexture8*
 HRESULT Direct3DDevice8Adapter::GetFrontBuffer(THIS_ d3d8::IDirect3DSurface8* pDestSurface)
 {
 	auto adapter = (Direct3DSurface8Adapter*)pDestSurface;
-	return handleError("GetFrontBuffer", delegate->GetFrontBufferData(0, adapter->delegate));
+	return handleD3dError("GetFrontBuffer", delegate->GetFrontBufferData(0, adapter->delegate));
 }
 
 HRESULT Direct3DDevice8Adapter::SetRenderTarget(THIS_ d3d8::IDirect3DSurface8* pRenderTarget, d3d8::IDirect3DSurface8* pNewZStencil)
@@ -281,32 +285,32 @@ HRESULT Direct3DDevice8Adapter::GetDepthStencilSurface(THIS_ d3d8::IDirect3DSurf
 
 HRESULT Direct3DDevice8Adapter::BeginScene(THIS)
 {
-	return handleError("BeginScene", delegate->BeginScene());
+	return handleD3dError("BeginScene", delegate->BeginScene());
 }
 
 HRESULT Direct3DDevice8Adapter::EndScene(THIS)
 {
-	return handleError("EndScene", delegate->EndScene());
+	return handleD3dError("EndScene", delegate->EndScene());
 }
 
 HRESULT Direct3DDevice8Adapter::Clear(THIS_ DWORD Count, CONST d3d8::D3DRECT* pRects, DWORD Flags, d3d8::D3DCOLOR Color, float Z, DWORD Stencil)
 {
-	return handleError("Clear", delegate->Clear(Count, (const D3DRECT*)pRects, Flags, (D3DCOLOR)Color, Z, Stencil));
+	return handleD3dError("Clear", delegate->Clear(Count, (const D3DRECT*)pRects, Flags, (D3DCOLOR)Color, Z, Stencil));
 }
 
 HRESULT Direct3DDevice8Adapter::SetTransform(THIS_ d3d8::D3DTRANSFORMSTATETYPE State, CONST d3d8::D3DMATRIX* pMatrix)
 {
-	return handleError("SetTransform", delegate->SetTransform((D3DTRANSFORMSTATETYPE)State, (const D3DMATRIX*)pMatrix));
+	return handleD3dError("SetTransform", delegate->SetTransform((D3DTRANSFORMSTATETYPE)State, (const D3DMATRIX*)pMatrix));
 }
 
 HRESULT Direct3DDevice8Adapter::GetTransform(THIS_ d3d8::D3DTRANSFORMSTATETYPE State, d3d8::D3DMATRIX* pMatrix)
 {
-	return handleError("GetTransform", delegate->GetTransform((D3DTRANSFORMSTATETYPE)State, (D3DMATRIX*)pMatrix));
+	return handleD3dError("GetTransform", delegate->GetTransform((D3DTRANSFORMSTATETYPE)State, (D3DMATRIX*)pMatrix));
 }
 
 HRESULT Direct3DDevice8Adapter::MultiplyTransform(THIS_ d3d8::D3DTRANSFORMSTATETYPE State, CONST d3d8::D3DMATRIX* pMatrix)
 {
-	return handleError("MultiplyTransform", delegate->MultiplyTransform((D3DTRANSFORMSTATETYPE)State, (D3DMATRIX*)pMatrix));
+	return handleD3dError("MultiplyTransform", delegate->MultiplyTransform((D3DTRANSFORMSTATETYPE)State, (D3DMATRIX*)pMatrix));
 }
 
 HRESULT Direct3DDevice8Adapter::SetViewport(THIS_ CONST d3d8::D3DVIEWPORT8* pViewport)
@@ -584,12 +588,20 @@ HRESULT Direct3DDevice8Adapter::GetCurrentTexturePalette(THIS_ UINT* PaletteNumb
 
 HRESULT Direct3DDevice8Adapter::DrawPrimitive(THIS_ d3d8::D3DPRIMITIVETYPE type, UINT StartVertex, UINT PrimitiveCount)
 {
-	return handleError("DrawPrimitive", delegate->DrawPrimitive((D3DPRIMITIVETYPE)type, StartVertex, PrimitiveCount));
+	return handleD3dError("DrawPrimitive", delegate->DrawPrimitive((D3DPRIMITIVETYPE)type, StartVertex, PrimitiveCount));
 }
 
 HRESULT Direct3DDevice8Adapter::DrawIndexedPrimitive(THIS_ d3d8::D3DPRIMITIVETYPE type, UINT minIndex, UINT NumVertices, UINT startIndex, UINT primCount)
 {
-	return handleError("DrawIndexedPrimitive", delegate->DrawIndexedPrimitive((D3DPRIMITIVETYPE)type, 0, minIndex, NumVertices, startIndex, primCount));
+	HRESULT result = handleD3dError("DrawIndexedPrimitive", delegate->DrawIndexedPrimitive((D3DPRIMITIVETYPE)type, 0, minIndex, NumVertices, startIndex, primCount));
+
+	//IDirect3DSurface9 *bb;
+	//delegate->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &bb);
+	//D3DXSaveSurfaceToFileA("backbuffer.png", D3DXIFF_PNG, bb, NULL, NULL);
+	//bb->Release();
+
+	return result;
+
 }
 
 HRESULT Direct3DDevice8Adapter::DrawPrimitiveUP(THIS_ d3d8::D3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, CONST void* pVertexStreamZeroData, UINT VertexStreamZeroStride)
@@ -622,7 +634,7 @@ HRESULT Direct3DDevice8Adapter::CreateVertexShader(THIS_ CONST DWORD* pDeclarati
 
 HRESULT Direct3DDevice8Adapter::SetVertexShader(THIS_ DWORD Handle)
 {
-	return handleError("SetVertexShader", delegate->SetFVF(Handle));
+	return handleD3dError("SetVertexShader", delegate->SetFVF(Handle));
 }
 
 HRESULT Direct3DDevice8Adapter::GetVertexShader(THIS_ DWORD* pHandle)
@@ -671,11 +683,11 @@ HRESULT Direct3DDevice8Adapter::SetStreamSource(THIS_ UINT StreamNumber, d3d8::I
 	streamSources[StreamNumber] = adapter;
 	if (adapter)
 	{
-		return handleError("SetStreamSource", delegate->SetStreamSource(StreamNumber, adapter->delegate, 0, Stride));
+		return handleD3dError("SetStreamSource", delegate->SetStreamSource(StreamNumber, adapter->delegate, 0, Stride));
 	}
 	else
 	{
-		return handleError("SetStreamSource", delegate->SetStreamSource(StreamNumber, 0, 0, Stride));
+		return handleD3dError("SetStreamSource", delegate->SetStreamSource(StreamNumber, 0, 0, Stride));
 	}
 }
 
@@ -684,7 +696,7 @@ HRESULT Direct3DDevice8Adapter::GetStreamSource(THIS_ UINT StreamNumber, d3d8::I
 	IDirect3DVertexBuffer9* vbuf;
 	UINT offset;
 	HRESULT result = delegate->GetStreamSource(StreamNumber, &vbuf, &offset, pStride);
-	handleError("GetStreamSource", result);
+	handleD3dError("GetStreamSource", result);
 
 	// TODO this is clumsy?
 	// Check if our adapter is still valid
@@ -722,7 +734,7 @@ HRESULT Direct3DDevice8Adapter::GetIndices(THIS_ d3d8::IDirect3DIndexBuffer8** p
 	pBaseVertexIndex = 0;
 	IDirect3DIndexBuffer9* current;
 	auto result = delegate->GetIndices(&current);
-	handleError("GetIndices", result);
+	handleD3dError("GetIndices", result);
 	if (current && indices && indices->delegate == current)
 	{
 		*ppIndexData = indices;

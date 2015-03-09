@@ -1,3 +1,5 @@
+
+#include "stdafx.h"
 #include "libraryholder.h"
 
 LibraryHolder::LibraryHolder(const path& path) : mLibraryHandle(0)

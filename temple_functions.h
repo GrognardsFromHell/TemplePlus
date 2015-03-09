@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "system.h"
+#include "stdafx.h"
 #include "addresses.h"
 
 // Contains the function definitions for stuff found in temple.dll that we may want to call or override.
@@ -14,13 +14,14 @@ extern "C"
 // Functions used to init subsystems
 
 // Observed in window mode: 0x11024
-// 0x4 seems to be the default
+// 0x4 seems to be the default (seems to be VSYNC)
 // 0x20 is windowed
 // 0x1000 is unknown
 // 0x10000 means anti aliasing is turned on
 enum StartupFlag
 {
 	SF_FPS = 0x1, // -fps
+	SF_VSYNC = 0x4,
 	SF_NOSOUND = 0x2000, // -nosound
 	SF_DOUBLEBUFFER = 0x2, // -doublebuffer
 	SF_ANIMCATCHUP, // -animcatchup (stored elsewhere)
@@ -45,7 +46,7 @@ enum StartupFlag
 };
 
 // 19 values total (guessed from memset 0 at start of main method)
-struct Settings
+struct TempleStartSettings
 {
 	int flags;
 	int32_t x;
@@ -60,15 +61,15 @@ struct Settings
 	uint32_t unk9;
 	void* someOtherFunc;
 	const char* soundSystem;
-	uint32_t unk10;
-	uint32_t unk11;
+	uint32_t minTexWidth;
+	uint32_t minTexHeight;
 	uint32_t framelimit;
 	const char* windowTitle;
 	uint32_t callback1;
 	uint32_t callback2;
 };
 
-typedef int (__cdecl *_tig_init)(Settings* settings);
+typedef int (__cdecl *_tig_init)(TempleStartSettings* settings);
 
 void init_functions();
 void init_hooks();

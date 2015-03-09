@@ -1,7 +1,7 @@
 #ifndef LIBRARYHOLDER_H
 #define LIBRARYHOLDER_H
 
-#include "system.h"
+#include "stdafx.h"
 
 class LibraryHolder
 {

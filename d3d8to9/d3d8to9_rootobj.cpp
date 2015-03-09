@@ -1,3 +1,5 @@
+
+#include "stdafx.h"
 #include "d3d8to9_rootobj.h"
 #include "d3d8to9_device.h"
 #include "d3d8to9_convert.h"
@@ -74,7 +76,7 @@ HRESULT Direct3D8Adapter::GetAdapterDisplayMode(THIS_ UINT Adapter, d3d8::D3DDIS
 	// TODO structs are NOT equivalent
 	HRESULT result = delegate->GetAdapterDisplayMode(Adapter, (D3DDISPLAYMODE*)pMode);
 	pMode->Format = convert((D3DFORMAT)pMode->Format);
-	handleError("GetAdapterDisplayMode", result);
+	handleD3dError("GetAdapterDisplayMode", result);
 	return result;
 }
 
@@ -86,7 +88,7 @@ HRESULT Direct3D8Adapter::CheckDeviceType(THIS_ UINT Adapter, d3d8::D3DDEVTYPE C
 HRESULT Direct3D8Adapter::CheckDeviceFormat(THIS_ UINT Adapter, d3d8::D3DDEVTYPE DeviceType, d3d8::D3DFORMAT AdapterFormat, DWORD Usage, d3d8::D3DRESOURCETYPE RType, d3d8::D3DFORMAT CheckFormat)
 {
 	HRESULT result = delegate->CheckDeviceFormat(Adapter, (D3DDEVTYPE)DeviceType, convert(AdapterFormat), Usage, (D3DRESOURCETYPE)RType, convert(CheckFormat));
-	handleError("CheckDeviceFormat", result);
+	handleD3dError("CheckDeviceFormat", result);
 	return result;
 }
 
@@ -116,58 +118,6 @@ HMONITOR Direct3D8Adapter::GetAdapterMonitor(THIS_ UINT Adapter)
 
 HRESULT Direct3D8Adapter::CreateDevice(THIS_ UINT Adapter, d3d8::D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags, d3d8::D3DPRESENT_PARAMETERS* pPresentationParameters, d3d8::IDirect3DDevice8** ppReturnedDeviceInterface)
 {
-	// TODO For some reason, ToEE specifies flags=D3DCREATE_SOFTWARE_VERTEXPROCESSING here. Maybe we should change this to HARDARE
-	BehaviorFlags = D3DCREATE_HARDWARE_VERTEXPROCESSING;
-
-	auto adapter = new Direct3DDevice8Adapter;
-
-	D3DPRESENT_PARAMETERS presentParams;
-	memset(&presentParams, 0, sizeof(presentParams));
-	presentParams.BackBufferWidth = pPresentationParameters->BackBufferWidth;
-	presentParams.BackBufferHeight = pPresentationParameters->BackBufferHeight;
-	presentParams.BackBufferFormat = convert(pPresentationParameters->BackBufferFormat);
-	presentParams.BackBufferCount = pPresentationParameters->BackBufferCount;
-
-	presentParams.MultiSampleType = (D3DMULTISAMPLE_TYPE)pPresentationParameters->MultiSampleType;
-	presentParams.MultiSampleQuality = 0;
-
-	// We always use DISCARD
-	presentParams.SwapEffect = D3DSWAPEFFECT_DISCARD;
-	presentParams.hDeviceWindow = pPresentationParameters->hDeviceWindow;
-	presentParams.Windowed = pPresentationParameters->Windowed;
-	presentParams.EnableAutoDepthStencil = pPresentationParameters->EnableAutoDepthStencil;
-	presentParams.AutoDepthStencilFormat = convert(pPresentationParameters->AutoDepthStencilFormat);
-	presentParams.Flags = 0; // Ignoring the flags that are passed in
-
-	presentParams.FullScreen_RefreshRateInHz = pPresentationParameters->FullScreen_RefreshRateInHz;
-	presentParams.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
-	// FullScreen_PresentationInterval is ignored
-
-	D3DDISPLAYMODEEX fullScreenMode;
-	D3DDISPLAYMODEEX* pFullScreenMode = NULL;
-	if (!presentParams.Windowed)
-	{
-		fullScreenMode.Size = sizeof(D3DDISPLAYMODEEX);
-		fullScreenMode.Width = pPresentationParameters->BackBufferWidth;
-		fullScreenMode.Height = pPresentationParameters->BackBufferHeight;
-		fullScreenMode.RefreshRate = pPresentationParameters->FullScreen_RefreshRateInHz;
-		fullScreenMode.Format = convert(pPresentationParameters->BackBufferFormat);
-
-		pFullScreenMode = &fullScreenMode;
-	}
-
-	HRESULT result;
-	if (useD3dEx)
-	{
-		result = delegate->CreateDeviceEx(Adapter, D3DDEVTYPE_HAL, hFocusWindow, BehaviorFlags, &presentParams, pFullScreenMode, &adapter->delegate);
-	}
-	else
-	{
-		result = delegate->CreateDevice(Adapter, D3DDEVTYPE_HAL, hFocusWindow, BehaviorFlags, &presentParams, (IDirect3DDevice9**)&adapter->delegate);
-	}
-
-	handleError("CreateDevice", result);
-	*ppReturnedDeviceInterface = adapter;
-
-	return result;
+	LOG(error) << "Unsupported D3D function called!";
+	abort();
 }

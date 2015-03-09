@@ -42,12 +42,15 @@
     <ClCompile Include="d3d8to9\d3d8to9_vertexbuffer.cpp">
       <Filter>D3D8to9</Filter>
     </ClCompile>
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="tig_font.cpp" />
+    <ClCompile Include="idxtables.cpp" />
+    <ClCompile Include="config.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="addresses.h" />
     <ClInclude Include="graphics.h" />
     <ClInclude Include="libraryholder.h" />
-    <ClInclude Include="system.h" />
     <ClInclude Include="temple_functions.h" />
     <ClInclude Include="minhook\src\buffer.h">
       <Filter>MinHook</Filter>
@@ -106,6 +109,10 @@
     <ClInclude Include="d3d8\d3d8caps.h">
       <Filter>D3D8</Filter>
     </ClInclude>
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="tig_font.h" />
+    <ClInclude Include="idxtables.h" />
+    <ClInclude Include="config.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MinHook">

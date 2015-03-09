@@ -1,32 +1,14 @@
 #pragma once
 
-#include "../system.h"
+#include "../stdafx.h"
 #include "../addresses.h"
+#include "../config.h"
 
-#include <DxErr.h>
-#pragma comment(lib, "dxerr.lib")
-#pragma comment(lib, "D3dx9.lib")
-
-namespace d3d8
-{
-#include "../d3d8/d3d8.h"
-}
-
-#undef D3DFVF_POSITION_MASK
-#undef D3DFVF_RESERVED2
-#undef D3DSP_REGNUM_MASK
-#undef DIRECT3D_VERSION
-#undef D3D_SDK_VERSION
-#include <d3d9.h>
-#include <D3dx9tex.h>
-
-extern bool useD3dEx;
-
-inline HRESULT handleError(const char* method, HRESULT result)
+inline HRESULT handleD3dError(const char* method, HRESULT result)
 {
 	if (result != S_OK)
 	{
-		LOG(info) << "DirectX Error @ " << method << ": " << DXGetErrorStringA(result);
+		LOG(info) << "Direct3D Error @ " << method << ": " << DXGetErrorStringA(result);
 	}
 	return result;
 }

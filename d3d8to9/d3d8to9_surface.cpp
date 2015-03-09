@@ -1,4 +1,7 @@
+
+#include "stdafx.h"
 #include "d3d8to9_surface.h"
+#include "d3d8to9_convert.h"
 
 Direct3DSurface8Adapter::Direct3DSurface8Adapter()
 {
@@ -59,16 +62,27 @@ HRESULT Direct3DSurface8Adapter::GetContainer(THIS_ REFIID riid, void** ppContai
 
 HRESULT Direct3DSurface8Adapter::GetDesc(THIS_ d3d8::D3DSURFACE_DESC* pDesc)
 {
-	LOG(error) << "Called unsupported method: IDirect3DSurface8::GetContainer";
-	abort();
+	D3DSURFACE_DESC desc;
+	ZeroMemory(&desc, sizeof(D3DSURFACE_DESC));
+
+	auto result = delegate->GetDesc(&desc);
+	pDesc->Format = convert(desc.Format);
+	pDesc->Type = (d3d8::D3DRESOURCETYPE) desc.Type;
+	pDesc->Usage = desc.Usage;
+	pDesc->Pool = (d3d8::D3DPOOL) desc.Pool;
+	pDesc->MultiSampleType = (d3d8::D3DMULTISAMPLE_TYPE) desc.MultiSampleType;
+	pDesc->Width = desc.Width;
+	pDesc->Height = desc.Height;
+
+	return handleD3dError("GetDesc", result);
 }
 
 HRESULT Direct3DSurface8Adapter::LockRect(THIS_ d3d8::D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags)
 {
-	return handleError("LockRect", delegate->LockRect((D3DLOCKED_RECT*)pLockedRect, pRect, Flags));
+	return handleD3dError("LockRect", delegate->LockRect((D3DLOCKED_RECT*)pLockedRect, pRect, Flags));
 }
 
 HRESULT Direct3DSurface8Adapter::UnlockRect(THIS)
 {
-	return handleError("UnlockRect", delegate->UnlockRect());
+	return handleD3dError("UnlockRect", delegate->UnlockRect());
 }
