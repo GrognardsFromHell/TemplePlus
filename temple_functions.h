@@ -58,7 +58,7 @@ struct TempleStartSettings
 	uint32_t unk7;
 	uint32_t unk8;
 	WNDPROC wndproc;
-	uint32_t unk9;
+	bool (__cdecl *windowMessageFilter)(MSG *msg);
 	void* someOtherFunc;
 	const char* soundSystem;
 	uint32_t minTexWidth;

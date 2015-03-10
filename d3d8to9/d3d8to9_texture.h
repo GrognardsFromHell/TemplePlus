@@ -32,6 +32,8 @@ struct Direct3DTexture8Adapter : public d3d8::IDirect3DTexture8
 
 	Direct3DTexture8Adapter();
 
+	Direct3DTexture8Adapter(IDirect3DTexture9* _delegate) : delegate(_delegate) {}
+
 	virtual ~Direct3DTexture8Adapter();
 
 	IDirect3DTexture9* delegate;

@@ -56,9 +56,18 @@ private:
 	static bool rebaseDone;
 };
 
-template <typename T>
+template <typename T, uint32_t offsetPreset = 0>
 struct GlobalStruct
 {
+	GlobalStruct() : mPtr(reinterpret_cast<T*>(offsetPreset))
+	{
+		static_assert(offsetPreset != 0, "This constructor should only be used with a template argument offset");
+		AddressInitializer([this](Rebaser rebase)
+		{
+			rebase(mPtr);
+		});
+	}
+
 	GlobalStruct(uint32_t offset)
 	{
 		mPtr = reinterpret_cast<T*>(offset);
