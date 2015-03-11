@@ -593,15 +593,7 @@ HRESULT Direct3DDevice8Adapter::DrawPrimitive(THIS_ d3d8::D3DPRIMITIVETYPE type,
 
 HRESULT Direct3DDevice8Adapter::DrawIndexedPrimitive(THIS_ d3d8::D3DPRIMITIVETYPE type, UINT minIndex, UINT NumVertices, UINT startIndex, UINT primCount)
 {
-	HRESULT result = handleD3dError("DrawIndexedPrimitive", delegate->DrawIndexedPrimitive((D3DPRIMITIVETYPE)type, 0, minIndex, NumVertices, startIndex, primCount));
-
-	//IDirect3DSurface9 *bb;
-	//delegate->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &bb);
-	//D3DXSaveSurfaceToFileA("backbuffer.png", D3DXIFF_PNG, bb, NULL, NULL);
-	//bb->Release();
-
-	return result;
-
+	return handleD3dError("DrawIndexedPrimitive", delegate->DrawIndexedPrimitive((D3DPRIMITIVETYPE)type, 0, minIndex, NumVertices, startIndex, primCount));	
 }
 
 HRESULT Direct3DDevice8Adapter::DrawPrimitiveUP(THIS_ d3d8::D3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, CONST void* pVertexStreamZeroData, UINT VertexStreamZeroStride)

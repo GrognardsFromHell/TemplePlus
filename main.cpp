@@ -17,7 +17,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 	LOG(info) << "Starting up with toee path: " << toeeDir;
 
-	boost::system::error_code errorCode;
+	system::error_code errorCode;
 	current_path(toeeDir, errorCode);
 
 	// Set DLL search path and current directory

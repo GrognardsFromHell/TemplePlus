@@ -131,6 +131,50 @@ struct VideoFuncs : AddressTable {
 	}
 } videoFuncs; 
 
+struct TigFontGlyph {
+	uint32_t x;
+	uint32_t y;
+	uint32_t width;
+	uint32_t height;
+	uint32_t field10;
+	uint32_t width_line;
+	uint32_t width_line_x_offset;
+	uint32_t base_line_y_offset;
+};
+
+struct TigFont {
+	uint32_t field0;
+	uint32_t largestHeight;
+	uint32_t fontsize;
+	uint32_t fieldc;
+	uint32_t glyphcount;
+	uint32_t field14;
+	TigFontGlyph *glyphs;
+	const char *name;
+	uint32_t artIds[4];
+};
+
+struct TigFontData {
+	uint16_t indices[4800];
+	TigFont fonts[128];
+	int fontStack[128];
+	uint32_t dword_10EF2E48;
+	uint32_t dword_10EF2E4C;
+	uint32_t fontStackSize;
+	uint32_t dword_10EF2E54;
+	uint32_t dword_10EF2E58; // Possibly never read or written to
+	uint32_t dword_10EF2E5C;
+};
+
+GlobalStruct<TigFontData, 0x10EEEEC8> fontData;
+
+//struct TigFontFuncs : AddressTable {
+//	
+//	void rebase(Rebaser rebase) override {
+//	}
+//
+// } fontFuncs;
+
 /*
  * Size being cleared is 4796 byte in length
  * Start @ 0x1E74580
@@ -348,31 +392,31 @@ static bool TigResetDirect3D() {
 	material.Power = 50.0f;
 	d3d9Device->SetMaterial(&material);
 
-	d3d9Device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-	d3d9Device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-	d3d9Device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+	handleD3dError("SetRenderState", d3d9Device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE));
+	handleD3dError("SetRenderState", d3d9Device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA));
+	handleD3dError("SetRenderState", d3d9Device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA));
 
-	d3d9Device->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
-	d3d9Device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTOP_SELECTARG1);
-	d3d9Device->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTOP_DISABLE);
+		handleD3dError("SetTextureStageState", d3d9Device->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1));
+	handleD3dError("SetTextureStageState", d3d9Device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTOP_SELECTARG1));
+	handleD3dError("SetTextureStageState", d3d9Device->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTOP_DISABLE));
 
 	for (DWORD i = 0; i < video->maxActiveTextures; ++i) {
-		d3d9Device->SetSamplerState(i, D3DSAMP_MINFILTER, 1);
-		d3d9Device->SetSamplerState(i, D3DSAMP_MAGFILTER, 2);
-		d3d9Device->SetSamplerState(i, D3DSAMP_MIPFILTER, 1);
-		d3d9Device->SetSamplerState(i, D3DSAMP_MIPMAPLODBIAS, 0);
-		d3d9Device->SetSamplerState(i, D3DSAMP_MAXMIPLEVEL, 01);
-		d3d9Device->SetSamplerState(i, D3DSAMP_MINFILTER, 1);
-		d3d9Device->SetSamplerState(i, D3DSAMP_MINFILTER, 1);
-		d3d9Device->SetSamplerState(i, D3DSAMP_ADDRESSU, 3);
-		d3d9Device->SetSamplerState(i, D3DSAMP_ADDRESSV, 3);
-		d3d9Device->SetTextureStageState(i, D3DTSS_TEXTURETRANSFORMFLAGS, 0);
-		d3d9Device->SetTextureStageState(i, D3DTSS_TEXCOORDINDEX, 0);
+		handleD3dError("SetSamplerState", d3d9Device->SetSamplerState(i, D3DSAMP_MINFILTER, 1));
+		handleD3dError("SetSamplerState", d3d9Device->SetSamplerState(i, D3DSAMP_MAGFILTER, 2));
+		handleD3dError("SetSamplerState", d3d9Device->SetSamplerState(i, D3DSAMP_MIPFILTER, 1));
+		handleD3dError("SetSamplerState", d3d9Device->SetSamplerState(i, D3DSAMP_MIPMAPLODBIAS, 0));
+		handleD3dError("SetSamplerState", d3d9Device->SetSamplerState(i, D3DSAMP_MAXMIPLEVEL, 01));
+		handleD3dError("SetSamplerState", d3d9Device->SetSamplerState(i, D3DSAMP_MINFILTER, 1));
+		handleD3dError("SetSamplerState", d3d9Device->SetSamplerState(i, D3DSAMP_MINFILTER, 1));
+		handleD3dError("SetSamplerState", d3d9Device->SetSamplerState(i, D3DSAMP_ADDRESSU, 3));
+		handleD3dError("SetSamplerState", d3d9Device->SetSamplerState(i, D3DSAMP_ADDRESSV, 3));
+		handleD3dError("SetTextureStageState", d3d9Device->SetTextureStageState(i, D3DTSS_TEXTURETRANSFORMFLAGS, 0));
+		handleD3dError("SetTextureStageState", d3d9Device->SetTextureStageState(i, D3DTSS_TEXCOORDINDEX, 0));
 	}
 
 	D3DXMATRIX identity;
 	D3DXMatrixIdentity(&identity);
-	d3d9Device->SetTransform(D3DTS_TEXTURE0, &identity);
+	handleD3dError("SetTransform", d3d9Device->SetTransform(D3DTS_TEXTURE0, &identity));
 
 	d3d9Device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
 	d3d9Device->SetRenderState(D3DRS_ALPHAREF, 1);
@@ -398,20 +442,20 @@ static bool TigResetDirect3D() {
 	videoFuncs.ReadInitialState();
 	memcpy(videoFuncs.renderStates.ptr(), videoFuncs.activeRenderStates.ptr(), sizeof(TigRenderStates));
 	
-	__asm mov eax, D3DFMT_A8R8G8B8
+	__asm mov eax, D3DFMT_X8R8G8B8
 	if (!videoFuncs.tig_d3d_init_handleformat()) {
 		LOG(error) << "Format init failed.";
 	}
-
-	/*videoFuncs.create_partsys_vertex_buffers();
+	
+	videoFuncs.create_partsys_vertex_buffers();
 	videoFuncs.tigMovieInitialized = true;
 	videoFuncs.tig_font_related_init();
 	videoFuncs.matrix_related(videoFuncs.tig_matrices2.ptr());
 	videoFuncs.buffersFreed = false;
 
 	// This is always the same pointer although it's callback 2 of the GameStartConfig
-	videoFuncs.GameCreateVideoBuffers();*/
-
+	videoFuncs.GameCreateVideoBuffers();
+	
 	return true;
 }
 
@@ -486,6 +530,17 @@ bool ReadCaps(IDirect3DDevice9Ex* device, uint32_t minTexWidth, uint32_t minTexH
 		return false;
 	}
 
+	/*
+		Vermutlich kein Effekt
+	*/
+	if (video->makesSthLarger) {
+		video->neverReadFlag1 = 4096;
+		video->neverReadFlag2 = 16;
+	} else {
+		video->neverReadFlag1 = 2048;
+		video->neverReadFlag2 = 0;
+	}
+
 	if ((caps.TextureCaps & D3DPTEXTURECAPS_POW2) != 0) {
 		LOG(info) << "Textures must be power of two";
 		video->capPowerOfTwoTextures = true;
@@ -554,7 +609,7 @@ static bool TigInitDirect3D(TempleStartSettings* settings) {
 	}
 
 	// This is only really used by alloc_texture_mem and the init func
-	video->adapterformat = D3DFMT_A8R8G8B8;
+	video->adapterformat = D3DFMT_X8R8G8B8;
 	video->current_bpp = 32;
 	settings->bpp = 32;
 
@@ -578,14 +633,14 @@ static bool TigInitDirect3D(TempleStartSettings* settings) {
 	D3DPRESENT_PARAMETERS presentParams;
 	memset(&presentParams, 0, sizeof(presentParams));
 
-	presentParams.BackBufferFormat = D3DFMT_A8R8G8B8;
+	presentParams.BackBufferFormat = D3DFMT_X8R8G8B8;
 	// Using discard here allows us to do multisampling.
 	presentParams.SwapEffect = D3DSWAPEFFECT_DISCARD;
 	presentParams.hDeviceWindow = video->hwnd;
 	presentParams.Windowed = true;
 	presentParams.EnableAutoDepthStencil = true;
 	presentParams.AutoDepthStencilFormat = D3DFMT_D16;
-	presentParams.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER | D3DPRESENTFLAG_DISCARD_DEPTHSTENCIL;
+	presentParams.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
 	presentParams.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
 
 	// presentParams.MultiSampleType = D3DMULTISAMPLE_4_SAMPLES;
@@ -666,8 +721,13 @@ static bool TigCreateWindow(TempleStartSettings* settings) {
 		windowRect.right = screenWidth;
 		windowRect.bottom = screenHeight;
 		menu = 0;
-		dwStyle = WS_POPUP;
-		dwExStyle = WS_EX_APPWINDOW | WS_EX_TOPMOST;
+		dwStyle = WS_POPUP;		
+		// This is bad for debugging
+		if (!IsDebuggerPresent()) {
+			dwExStyle = WS_EX_APPWINDOW|WS_EX_TOPMOST;
+		} else {
+			dwExStyle = 0;
+		}
 		memcpy(&video->screenSizeRect, &windowRect, sizeof(RECT));
 	} else {
 		// Apparently this flag controls whether x,y are preset from the outside
@@ -900,7 +960,8 @@ int __cdecl VideoStartup(TempleStartSettings* settings) {
 
 	video->current_bpp = settings->bpp;
 
-	ShowCursor(windowed); // Show cursor in windowed mode
+	// TODO: Draw normal cursor
+	// ShowCursor(windowed); // Show cursor in windowed mode
 
 	temple_set<0x10D250E0, int>(0);
 	temple_set<0x10D250E4, int>(1);
@@ -939,13 +1000,9 @@ struct TempleTextureTypeTable {
 GlobalStruct<TempleTextureTypeTable, 0x102A05A8> textureFormatTable;
 
 bool __cdecl AllocTextureMemory(Direct3DDevice8Adapter* adapter, int w, int h, int flags, Direct3DTexture8Adapter** textureOut, int* textureTypePtr) {
-	LOG(info) << "Alloc texture memory!";
-
 	auto device = adapter->delegate;
 
 	int levels = 1;
-	DWORD usage = 0;
-	D3DPOOL pool = D3DPOOL_SYSTEMMEM;
 	D3DFORMAT format;
 	IDirect3DTexture9* texture = nullptr;
 
@@ -953,12 +1010,14 @@ bool __cdecl AllocTextureMemory(Direct3DDevice8Adapter* adapter, int w, int h, i
 	auto desiredType = textureFormatTable->formats[textureType];
 	format = desiredType.d3dFormat;
 
+	DWORD usage = D3DUSAGE_DYNAMIC;
+	// d3d9ex does not support managed anymore, but default has better guarantees now anyway
+	D3DPOOL pool = config.useDirect3d9Ex ? D3DPOOL_DEFAULT : D3DPOOL_MANAGED;
 	if (flags & 0x40) {
 		usage = D3DUSAGE_RENDERTARGET;
 		pool = D3DPOOL_DEFAULT;
-	} else {
-		usage = D3DUSAGE_DYNAMIC;
 	}
+
 	if (flags & 0x20 && video->enableMipMaps) {
 		levels = 2;
 	}
@@ -1024,25 +1083,23 @@ bool __cdecl HookedPresentFrame() {
 		}
 	}
 
-	tig_font_extents extents;
-	extents.x = 100;
-	extents.y = 100;
-	tigFont.Draw("Hello World!\nHow are you today?", &extents, drawFpsTextStyle);
+	// tig_font_extents extents;
+	// extents.x = 100;
+	// extents.y = 100;
+	// tigFont.Draw("Hello World!\nHow are you today?", &extents, drawFpsTextStyle);
 
 	return videoFuncs.PresentFrame();
 }
 
 void HookedPlayLegalMovies() {
-	return; // TODO: Fix movies
-
+	return;
 	if (!config.skipLegal) {
 		videoFuncs.PlayLegalMovies();
 	}
 }
 
 void __cdecl HookedPlayMovie(char* filename, int a1, int a2, int a3) {
-	return; // TODO: Fix movies
-
+	return;
 	// We skip the intro cinematic exactly once. So it can still be played
 	// via the cinematics menu
 	if (config.skipIntro && !strcmp(filename, "movies\\introcinematic.bik")) {
@@ -1066,11 +1123,11 @@ void hook_graphics() {
 	MH_CreateHook(videoFuncs.PlayLegalMovies, HookedPlayLegalMovies, reinterpret_cast<LPVOID*>(&videoFuncs.PlayLegalMovies));
 	MH_CreateHook(videoFuncs.PlayMovie, HookedPlayMovie, reinterpret_cast<LPVOID*>(&videoFuncs.PlayMovie));
 
-	//MH_CreateHook(videoFuncs.SetVideoMode, HookedSetVideoMode, reinterpret_cast<LPVOID*>(&videoFuncs.SetVideoMode));
-	//MH_CreateHook(videoFuncs.CleanUpBuffers, HookedCleanUpBuffers, reinterpret_cast<LPVOID*>(&videoFuncs.CleanUpBuffers));
+	MH_CreateHook(videoFuncs.SetVideoMode, HookedSetVideoMode, reinterpret_cast<LPVOID*>(&videoFuncs.SetVideoMode));
+	MH_CreateHook(videoFuncs.CleanUpBuffers, HookedCleanUpBuffers, reinterpret_cast<LPVOID*>(&videoFuncs.CleanUpBuffers));
 
 	// We hook the entire video subsystem initialization function
-	MH_CreateHook(temple_address<0x101DC6E0>(), VideoStartup, NULL);
+	MH_CreateHook(temple_address<0x101DC6E0>(), VideoStartup, nullptr);
 	MH_CreateHook(temple_address<0x101DBC80>(), AllocTextureMemory, nullptr);
-	MH_CreateHook(temple_address<0x101E0750>(), GetSystemMemory, NULL);
+	MH_CreateHook(temple_address<0x101E0750>(), GetSystemMemory, nullptr);
 }
