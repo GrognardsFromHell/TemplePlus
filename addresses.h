@@ -155,7 +155,7 @@ struct AddressTable
 	{
 	}
 
-	virtual void rebase(Rebaser rebaser) = 0;
+	virtual void rebase(Rebaser rebase) = 0;
 };
 
 /**

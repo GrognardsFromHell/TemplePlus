@@ -4,6 +4,8 @@
 #include "temple_functions.h"
 #include "graphics.h"
 
+TempleFuncs templeFuncs;
+
 void init_functions()
 {
 	templeImageBase = static_cast<void*>(GetModuleHandleA("temple.dll"));

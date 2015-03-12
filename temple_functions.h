@@ -11,6 +11,16 @@ extern "C"
 	int __declspec(dllimport) __cdecl temple_main(HINSTANCE hInstance, HINSTANCE hPrevInstance, const char* lpCommandLine, int nCmdShow);
 }
 
+struct TempleFuncs : AddressTable {
+	void (*ProcessSystemEvents)();
+
+	void rebase(Rebaser rebase) override {
+		rebase(ProcessSystemEvents, 0x101DF440);
+	}
+};
+
+extern TempleFuncs templeFuncs;
+
 // Functions used to init subsystems
 
 // Observed in window mode: 0x11024

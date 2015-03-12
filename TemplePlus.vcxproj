@@ -58,6 +58,7 @@
     <ClCompile Include="minhook\src\hook.c" />
     <ClCompile Include="minhook\src\trampoline.c" />
     <ClCompile Include="idxtables.cpp" />
+    <ClCompile Include="movies.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -71,6 +72,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="tig_msg.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="addresses.h" />
@@ -96,10 +98,12 @@
     <ClInclude Include="minhook\src\HDE\table64.h" />
     <ClInclude Include="minhook\src\trampoline.h" />
     <ClInclude Include="idxtables.h" />
+    <ClInclude Include="movies.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="temple_functions.h" />
     <ClInclude Include="tig_font.h" />
+    <ClInclude Include="tig_msg.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3E3B6C43-8C76-4CD5-BCF8-3F2B9C5178FE}</ProjectGuid>

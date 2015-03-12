@@ -46,6 +46,8 @@
     <ClCompile Include="tig_font.cpp" />
     <ClCompile Include="idxtables.cpp" />
     <ClCompile Include="config.cpp" />
+    <ClCompile Include="movies.cpp" />
+    <ClCompile Include="tig_msg.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="addresses.h" />
@@ -113,6 +115,8 @@
     <ClInclude Include="tig_font.h" />
     <ClInclude Include="idxtables.h" />
     <ClInclude Include="config.h" />
+    <ClInclude Include="movies.h" />
+    <ClInclude Include="tig_msg.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MinHook">
