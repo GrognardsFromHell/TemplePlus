@@ -461,7 +461,9 @@ LRESULT CALLBACK HookedWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lpa
 	switch (msg) {
 	case WM_SETCURSOR:
 		SetCursor(nullptr); // Disables default cursor
-		video->d3dDevice->delegate->ShowCursor(TRUE);
+		if (!movieFuncs.MovieIsPlaying) {
+			video->d3dDevice->delegate->ShowCursor(TRUE);
+		}
 		return TRUE; // This prevents windows from setting the default cursor for us
 	}
 

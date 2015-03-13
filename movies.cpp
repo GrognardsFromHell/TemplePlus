@@ -187,6 +187,8 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 
 	auto d3dDevice = video->d3dDevice->delegate;
 
+	d3dDevice->ShowCursor(FALSE);
+
 	// Create the movie texture we write to
 	IDirect3DTexture9* texture;
 	if (handleD3dError("CreateTexture", d3dDevice->CreateTexture(movie->width, movie->height, 1, D3DUSAGE_DYNAMIC, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &texture, nullptr))) {
@@ -264,8 +266,8 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 			play_movie_present();
 		}
 	*/
-
 	movieFuncs.MovieIsPlaying = false;
+	d3dDevice->ShowCursor(TRUE);
 
 	return 0;
 }
