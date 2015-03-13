@@ -6,6 +6,7 @@
 #include "idxtables.h"
 #include "config.h"
 #include "movies.h"
+#include "tig_shader.h"
 
 // #include "d3d8/d3d8.h"
 #include "d3d8to9/d3d8to9.h"
@@ -15,7 +16,6 @@ GlobalBool<0x10D250EC> drawFps;
 GlobalStruct<tig_text_style, 0x10D24DB0> drawFpsTextStyle;
 VideoFuncs videoFuncs;
 GlobalStruct<VideoData, 0x11E74580> video;
-IdxTableWrapper<TigShaderRegistryEntry> shaderRegistry(0x10D47544);
 
 // Our precompiled header swallows this somehow...
 static const DWORD D3D_SDK_VERSION = 32;
@@ -456,6 +456,19 @@ static bool TigInitDirect3D(TempleStartSettings* settings) {
 	return true;
 }
 
+LRESULT CALLBACK HookedWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
+		
+	switch (msg) {
+	case WM_SETCURSOR:
+		SetCursor(nullptr); // Disables default cursor
+		video->d3dDevice->delegate->ShowCursor(TRUE);
+		return TRUE; // This prevents windows from setting the default cursor for us
+	}
+
+	auto tigWndProc = static_cast<WNDPROC>(temple_address<0x101DE9A0>());
+	return tigWndProc(hWnd, msg, wparam, lparam);
+}
+
 static bool TigCreateWindow(TempleStartSettings* settings) {
 	bool windowed = config.windowed;
 	bool unknownFlag = (settings->flags & 0x100) != 0;
@@ -465,7 +478,7 @@ static bool TigCreateWindow(TempleStartSettings* settings) {
 	WNDCLASSA wndClass;
 	ZeroMemory(&wndClass, sizeof(WNDCLASSA));
 	wndClass.style = CS_DBLCLKS;
-	wndClass.lpfnWndProc = (WNDPROC) temple_address<0x101DE9A0>(); // tig_wndproc
+	wndClass.lpfnWndProc = HookedWindowProc;
 	wndClass.hInstance = video->hinstance;
 	wndClass.hIcon = LoadIconA(video->hinstance, "TIGIcon");
 	wndClass.hCursor = LoadCursorA(0, MAKEINTRESOURCEA(IDC_ARROW));

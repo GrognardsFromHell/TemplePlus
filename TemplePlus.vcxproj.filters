@@ -48,6 +48,9 @@
     <ClCompile Include="config.cpp" />
     <ClCompile Include="movies.cpp" />
     <ClCompile Include="tig_msg.cpp" />
+    <ClCompile Include="tig_mouse.cpp" />
+    <ClCompile Include="tig_shader.cpp" />
+    <ClCompile Include="tig_texture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="addresses.h" />
@@ -117,6 +120,9 @@
     <ClInclude Include="config.h" />
     <ClInclude Include="movies.h" />
     <ClInclude Include="tig_msg.h" />
+    <ClInclude Include="tig_mouse.h" />
+    <ClInclude Include="tig_shader.h" />
+    <ClInclude Include="tig_texture.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MinHook">

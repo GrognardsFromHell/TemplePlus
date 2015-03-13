@@ -3,6 +3,7 @@
 #include "addresses.h"
 #include "temple_functions.h"
 #include "graphics.h"
+#include "tig_mouse.h"
 
 TempleFuncs templeFuncs;
 
@@ -46,8 +47,10 @@ void init_hooks()
 	LOG(info) << format("Base offset for temple.dll memory is 0x%x") % templeImageBase;
 
 	temple_set<0x10EED638>(1); // Debug message enable
-
 	MH_CreateHook(temple_address<0x101E48F0>(), hooked_print_debug_message, NULL);
+
 	hook_graphics();
+	hook_mouse();
+
 	MH_EnableHook(MH_ALL_HOOKS);
 }
