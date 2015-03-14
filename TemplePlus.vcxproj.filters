@@ -51,6 +51,7 @@
     <ClCompile Include="tig_mouse.cpp" />
     <ClCompile Include="tig_shader.cpp" />
     <ClCompile Include="tig_texture.cpp" />
+    <ClCompile Include="mainwindow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="addresses.h" />
@@ -123,6 +124,7 @@
     <ClInclude Include="tig_mouse.h" />
     <ClInclude Include="tig_shader.h" />
     <ClInclude Include="tig_texture.h" />
+    <ClInclude Include="mainwindow.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MinHook">

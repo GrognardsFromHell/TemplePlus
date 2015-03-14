@@ -5,7 +5,6 @@
 
 #include "d3d8to9/d3d8to9.h"
 
-#include "idxtables.h"
 #include "tig_font.h"
 #include "temple_functions.h"
 
@@ -185,6 +184,7 @@ extern GlobalStruct<tig_text_style, 0x10D24DB0> drawFpsTextStyle;
 extern GlobalStruct<VideoData, 0x11E74580> video;
 extern VideoFuncs videoFuncs;
 
+void ResizeBuffers(int width, int height);
 void hook_graphics();
 
 #endif // GRAPHICS_H

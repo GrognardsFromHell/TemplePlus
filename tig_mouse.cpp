@@ -15,7 +15,7 @@ static bool SetCursorFromShaderId(int shaderId) {
 	TigShader shader;
 	if (shaderFuncs.GetLoaded(shaderId, &shader)) {
 		LOG(error) << "Unable to get or load cursor shader " << shaderId;
-		return 1;
+		return false;
 	}
 
 	int textureId;
@@ -24,14 +24,14 @@ static bool SetCursorFromShaderId(int shaderId) {
 	TigTextureRegistryEntry textureEntry;
 	if (textureFuncs.GetLoaded(textureId, &textureEntry)) {
 		LOG(error) << "Unable to get mouse cursor texture " << textureId;
-		return 2;
+		return false;
 	}
 
 	auto texture = textureEntry.buffer->d3dtexture->delegate;
 	IDirect3DSurface9 *surface = nullptr;
 	if (handleD3dError("GetSurfaceLevel", texture->GetSurfaceLevel(0, &surface)) != D3D_OK) {
 		LOG(error) << "Unable to get surface of cursor texture.";
-		return 3;
+		return false;
 	}
 
 	auto device = video->d3dDevice->delegate;
@@ -39,6 +39,13 @@ static bool SetCursorFromShaderId(int shaderId) {
 		LOG(error) << "Unable to set cursor properties.";
 	}
 	surface->Release();
+	return true;
+}
+
+void MouseFuncs::RefreshCursor() {
+	if (!stashedCursorShaderIds.empty()) {
+		SetCursorFromShaderId(stashedCursorShaderIds.back());
+	}
 }
 
 /**

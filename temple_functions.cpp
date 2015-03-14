@@ -4,6 +4,7 @@
 #include "temple_functions.h"
 #include "graphics.h"
 #include "tig_mouse.h"
+#include "tig_msg.h"
 
 TempleFuncs templeFuncs;
 
@@ -51,6 +52,7 @@ void init_hooks()
 
 	hook_graphics();
 	hook_mouse();
+	hook_msgs();
 
 	MH_EnableHook(MH_ALL_HOOKS);
 }

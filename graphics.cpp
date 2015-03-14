@@ -6,7 +6,10 @@
 #include "idxtables.h"
 #include "config.h"
 #include "movies.h"
+#include "tig_msg.h"
 #include "tig_shader.h"
+#include "tig_mouse.h"
+#include "mainwindow.h"
 
 // #include "d3d8/d3d8.h"
 #include "d3d8to9/d3d8to9.h"
@@ -20,111 +23,23 @@ GlobalStruct<VideoData, 0x11E74580> video;
 // Our precompiled header swallows this somehow...
 static const DWORD D3D_SDK_VERSION = 32;
 
-/*
-	This is an attempt at extracting all state reset functionality from TigInitDirect3D.
-*/
-static bool TigResetDirect3D() {
-	D3DXMatrixIdentity(&video->stru_11E75788);
-	D3DXMatrixIdentity(&video->matrix_identity);
+static D3DPRESENT_PARAMETERS CreatePresentParams() {
+	D3DPRESENT_PARAMETERS presentParams;
+	memset(&presentParams, 0, sizeof(presentParams));
 
-	/*
-	Create several shared buffers. Most of these don't seem to be used much or ever.
-	*/
-	HRESULT d3dresult;
-	auto d3d9Device = video->d3dDevice->delegate;
-	IDirect3DVertexBuffer9* vbuffer;
-	if ((d3dresult = d3d9Device->CreateVertexBuffer(
-		112, // Space for 4 vertices
-		D3DUSAGE_DYNAMIC,
-		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
-		D3DPOOL_SYSTEMMEM,
-		&vbuffer,
-		nullptr)) != D3D_OK) {
-		handleD3dError("CreateVertexBuffer", d3dresult);
-		return false;
-	}
-	video->blitVBuffer = new Direct3DVertexBuffer8Adapter(vbuffer);
+	presentParams.BackBufferFormat = D3DFMT_X8R8G8B8;
+	// Using discard here allows us to do multisampling.
+	presentParams.SwapEffect = D3DSWAPEFFECT_DISCARD;
+	presentParams.hDeviceWindow = video->hwnd;
+	presentParams.Windowed = true;
+	presentParams.EnableAutoDepthStencil = true;
+	presentParams.AutoDepthStencilFormat = D3DFMT_D16;
+	presentParams.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
+	presentParams.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
+	return presentParams;
+}
 
-	if ((d3dresult = d3d9Device->CreateVertexBuffer(
-		140, // Space for 5 vertices
-		D3DUSAGE_DYNAMIC,
-		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
-		D3DPOOL_SYSTEMMEM,
-		&vbuffer,
-		nullptr)) != D3D_OK) {
-		handleD3dError("CreateVertexBuffer", d3dresult);
-		return false;
-	}
-	videoFuncs.globalFadeVBuffer = new Direct3DVertexBuffer8Adapter(vbuffer);
-
-	if ((d3dresult = d3d9Device->CreateVertexBuffer(
-		72, // 2 vertices (odd)
-		D3DUSAGE_DYNAMIC,
-		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_NORMAL | D3DFVF_XYZ, // 36 byte per vertex
-		D3DPOOL_SYSTEMMEM,
-		&vbuffer,
-		nullptr)) != D3D_OK) {
-		handleD3dError("CreateVertexBuffer", d3dresult);
-		return false;
-	}
-	videoFuncs.sharedVBuffer1 = new Direct3DVertexBuffer8Adapter(vbuffer);
-
-	if ((d3dresult = d3d9Device->CreateVertexBuffer(
-		56, // 2 vertices
-		D3DUSAGE_DYNAMIC,
-		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
-		D3DPOOL_SYSTEMMEM,
-		&vbuffer,
-		nullptr)) != D3D_OK) {
-		handleD3dError("CreateVertexBuffer", d3dresult);
-		return false;
-	}
-	videoFuncs.sharedVBuffer2 = new Direct3DVertexBuffer8Adapter(vbuffer);
-
-	if ((d3dresult = d3d9Device->CreateVertexBuffer(
-		7168, // 256 vertices
-		D3DUSAGE_DYNAMIC,
-		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
-		D3DPOOL_SYSTEMMEM,
-		&vbuffer,
-		nullptr)) != D3D_OK) {
-		handleD3dError("CreateVertexBuffer", d3dresult);
-		return false;
-	}
-	videoFuncs.sharedVBuffer3 = new Direct3DVertexBuffer8Adapter(vbuffer);
-
-	if ((d3dresult = d3d9Device->CreateVertexBuffer(
-		4644, // 129 vertices
-		D3DUSAGE_DYNAMIC,
-		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_NORMAL | D3DFVF_XYZ, // 36 byte per vertex
-		D3DPOOL_SYSTEMMEM,
-		&vbuffer,
-		nullptr)) != D3D_OK) {
-		handleD3dError("CreateVertexBuffer", d3dresult);
-		return false;
-	}
-	videoFuncs.sharedVBuffer4 = new Direct3DVertexBuffer8Adapter(vbuffer);
-
-	/*
-		Set backbuffer size
-	*/
-	IDirect3DSurface9 *backBufferSurface = nullptr;	
-	HRESULT result;
-	if ((result = d3d9Device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &backBufferSurface)) != D3D_OK) {
-		handleD3dError("GetBackBuffer", result);
-		return false;
-	}		
-	D3DSURFACE_DESC backBufferDesc;
-	memset(&backBufferDesc, 0, sizeof(backBufferDesc));
-	if ((result = backBufferSurface->GetDesc(&backBufferDesc)) != D3D_OK) {
-		handleD3dError("GetDesc", result);
-		return false;
-	}
-	backBufferSurface->Release();
-
-	videoFuncs.backbufferWidth = backBufferDesc.Width;
-	videoFuncs.backbufferHeight = backBufferDesc.Height;
-
+static void SetDefaultRenderStates(IDirect3DDevice9 *d3d9Device) {
 	/*
 	SET DEFAULT RENDER STATES
 	*/
@@ -168,7 +83,7 @@ static bool TigResetDirect3D() {
 	handleD3dError("SetRenderState", d3d9Device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA));
 	handleD3dError("SetRenderState", d3d9Device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA));
 
-		handleD3dError("SetTextureStageState", d3d9Device->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1));
+	handleD3dError("SetTextureStageState", d3d9Device->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1));
 	handleD3dError("SetTextureStageState", d3d9Device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTOP_SELECTARG1));
 	handleD3dError("SetTextureStageState", d3d9Device->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTOP_DISABLE));
 
@@ -193,6 +108,125 @@ static bool TigResetDirect3D() {
 	d3d9Device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
 	d3d9Device->SetRenderState(D3DRS_ALPHAREF, 1);
 	d3d9Device->SetRenderState(D3DRS_ALPHAFUNC, 7);
+}
+
+static void StoreBackBufferSize(IDirect3DDevice9 *device) {
+	/*
+	Set backbuffer size
+	*/
+	IDirect3DSurface9 *backBufferSurface = nullptr;
+	HRESULT result;
+	if ((result = device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &backBufferSurface)) != D3D_OK) {
+		handleD3dError("GetBackBuffer", result);
+		return;
+	}
+	D3DSURFACE_DESC backBufferDesc;
+	memset(&backBufferDesc, 0, sizeof(backBufferDesc));
+	if ((result = backBufferSurface->GetDesc(&backBufferDesc)) != D3D_OK) {
+		handleD3dError("GetDesc", result);
+		backBufferSurface->Release();
+		return;
+	}
+	backBufferSurface->Release();
+
+	videoFuncs.backbufferWidth = backBufferDesc.Width;
+	videoFuncs.backbufferHeight = backBufferDesc.Height;
+
+}
+
+bool CreateSharedVertexBuffers(IDirect3DDevice9* device) {
+	/*
+	Create several shared buffers. Most of these don't seem to be used much or ever.
+	*/
+	HRESULT d3dresult;
+	IDirect3DVertexBuffer9* vbuffer;
+	if ((d3dresult = device->CreateVertexBuffer(
+		112, // Space for 4 vertices
+		D3DUSAGE_DYNAMIC,
+		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
+		D3DPOOL_SYSTEMMEM,
+		&vbuffer,
+		nullptr)) != D3D_OK) {
+		handleD3dError("CreateVertexBuffer", d3dresult);
+		return false;
+	}
+	video->blitVBuffer = new Direct3DVertexBuffer8Adapter(vbuffer);
+
+	if ((d3dresult = device->CreateVertexBuffer(
+		140, // Space for 5 vertices
+		D3DUSAGE_DYNAMIC,
+		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
+		D3DPOOL_SYSTEMMEM,
+		&vbuffer,
+		nullptr)) != D3D_OK) {
+		handleD3dError("CreateVertexBuffer", d3dresult);
+		return false;
+	}
+	videoFuncs.globalFadeVBuffer = new Direct3DVertexBuffer8Adapter(vbuffer);
+
+	if ((d3dresult = device->CreateVertexBuffer(
+		72, // 2 vertices (odd)
+		D3DUSAGE_DYNAMIC,
+		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_NORMAL | D3DFVF_XYZ, // 36 byte per vertex
+		D3DPOOL_SYSTEMMEM,
+		&vbuffer,
+		nullptr)) != D3D_OK) {
+		handleD3dError("CreateVertexBuffer", d3dresult);
+		return false;
+	}
+	videoFuncs.sharedVBuffer1 = new Direct3DVertexBuffer8Adapter(vbuffer);
+
+	if ((d3dresult = device->CreateVertexBuffer(
+		56, // 2 vertices
+		D3DUSAGE_DYNAMIC,
+		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
+		D3DPOOL_SYSTEMMEM,
+		&vbuffer,
+		nullptr)) != D3D_OK) {
+		handleD3dError("CreateVertexBuffer", d3dresult);
+		return false;
+	}
+	videoFuncs.sharedVBuffer2 = new Direct3DVertexBuffer8Adapter(vbuffer);
+
+	if ((d3dresult = device->CreateVertexBuffer(
+		7168, // 256 vertices
+		D3DUSAGE_DYNAMIC,
+		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
+		D3DPOOL_SYSTEMMEM,
+		&vbuffer,
+		nullptr)) != D3D_OK) {
+		handleD3dError("CreateVertexBuffer", d3dresult);
+		return false;
+	}
+	videoFuncs.sharedVBuffer3 = new Direct3DVertexBuffer8Adapter(vbuffer);
+
+	if ((d3dresult = device->CreateVertexBuffer(
+		4644, // 129 device
+		D3DUSAGE_DYNAMIC,
+		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_NORMAL | D3DFVF_XYZ, // 36 byte per vertex
+		D3DPOOL_SYSTEMMEM,
+		&vbuffer,
+		nullptr)) != D3D_OK) {
+		handleD3dError("CreateVertexBuffer", d3dresult);
+		return false;
+	}
+	videoFuncs.sharedVBuffer4 = new Direct3DVertexBuffer8Adapter(vbuffer);
+	return true;
+}
+
+/*
+	This is an attempt at extracting all state reset functionality from TigInitDirect3D.
+*/
+static bool TigResetDirect3D() {
+	D3DXMatrixIdentity(&video->stru_11E75788);
+	D3DXMatrixIdentity(&video->matrix_identity);
+
+	IDirect3DDevice9 *device = video->d3dDevice->delegate;
+	if (!CreateSharedVertexBuffers(device)) {
+		return false;
+	}
+	StoreBackBufferSize(device);
+	SetDefaultRenderStates(device);
 
 	// Seems to be 4 VECTOR3's for the screen corners
 	auto fadeScreenRect = videoFuncs.fadeScreenRect.ptr();
@@ -225,10 +259,36 @@ static bool TigResetDirect3D() {
 	videoFuncs.matrix_related(videoFuncs.tig_matrices2.ptr());
 	videoFuncs.buffersFreed = false;
 
-	// This is always the same pointer although it's callback 2 of the GameStartConfig
+	// This is always the same pointer although it's callback 2 of the GameStartConfig	
 	videoFuncs.GameCreateVideoBuffers();
 	
 	return true;
+}
+
+void ResizeBuffers(int width, int height) {
+
+	if (!video->d3dDevice) {
+		return;
+	}
+
+	auto device = video->d3dDevice->delegate;
+
+	// TODO: Handle non d3d9ex case
+	auto presentParams = CreatePresentParams();
+	device->ResetEx(&presentParams, nullptr);
+
+	video->current_width = width;
+	video->current_height = height;
+	videoFuncs.matrix_related(videoFuncs.tig_matrices2.ptr());
+
+	videoFuncs.GameFreeVideoBuffers();
+	videoFuncs.GameCreateVideoBuffers();
+
+	temple_set<0x10D24E14>(width);
+
+	// Mouse cursor disasppers after resizing
+	mouseFuncs.RefreshCursor();
+
 }
 
 bool ReadCaps(IDirect3DDevice9Ex* device, uint32_t minTexWidth, uint32_t minTexHeight) {
@@ -402,18 +462,7 @@ static bool TigInitDirect3D(TempleStartSettings* settings) {
 	}
 	d3d9->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &caps);
 
-	D3DPRESENT_PARAMETERS presentParams;
-	memset(&presentParams, 0, sizeof(presentParams));
-
-	presentParams.BackBufferFormat = D3DFMT_X8R8G8B8;
-	// Using discard here allows us to do multisampling.
-	presentParams.SwapEffect = D3DSWAPEFFECT_DISCARD;
-	presentParams.hDeviceWindow = video->hwnd;
-	presentParams.Windowed = true;
-	presentParams.EnableAutoDepthStencil = true;
-	presentParams.AutoDepthStencilFormat = D3DFMT_D16;
-	presentParams.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
-	presentParams.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
+	auto presentParams = CreatePresentParams();
 
 	// presentParams.MultiSampleType = D3DMULTISAMPLE_4_SAMPLES;
 	// presentParams.MultiSampleQuality = 0;
@@ -454,149 +503,6 @@ static bool TigInitDirect3D(TempleStartSettings* settings) {
 	}
 
 	return true;
-}
-
-LRESULT CALLBACK HookedWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
-		
-	switch (msg) {
-	case WM_SETCURSOR:
-		SetCursor(nullptr); // Disables default cursor
-		if (!movieFuncs.MovieIsPlaying) {
-			video->d3dDevice->delegate->ShowCursor(TRUE);
-		}
-		return TRUE; // This prevents windows from setting the default cursor for us
-	}
-
-	auto tigWndProc = static_cast<WNDPROC>(temple_address<0x101DE9A0>());
-	return tigWndProc(hWnd, msg, wparam, lparam);
-}
-
-static bool TigCreateWindow(TempleStartSettings* settings) {
-	bool windowed = config.windowed;
-	bool unknownFlag = (settings->flags & 0x100) != 0;
-
-	video->hinstance = settings->hinstance;
-
-	WNDCLASSA wndClass;
-	ZeroMemory(&wndClass, sizeof(WNDCLASSA));
-	wndClass.style = CS_DBLCLKS;
-	wndClass.lpfnWndProc = HookedWindowProc;
-	wndClass.hInstance = video->hinstance;
-	wndClass.hIcon = LoadIconA(video->hinstance, "TIGIcon");
-	wndClass.hCursor = LoadCursorA(0, MAKEINTRESOURCEA(IDC_ARROW));
-	wndClass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-	wndClass.lpszClassName = "TIGClass";
-
-	if (!RegisterClassA(&wndClass)) {
-		return false;
-	}
-
-	auto screenWidth = GetSystemMetrics(SM_CXSCREEN);
-	auto screenHeight = GetSystemMetrics(SM_CYSCREEN);
-
-	RECT windowRect;
-	HMENU menu;
-	DWORD dwStyle;
-	DWORD dwExStyle;
-
-	if (!windowed) {
-		settings->width = screenWidth;
-		settings->height = screenHeight;
-
-		windowRect.left = 0;
-		windowRect.top = 0;
-		windowRect.right = screenWidth;
-		windowRect.bottom = screenHeight;
-		menu = 0;
-		dwStyle = WS_POPUP;		
-		// This is bad for debugging
-		if (!IsDebuggerPresent()) {
-			dwExStyle = WS_EX_APPWINDOW|WS_EX_TOPMOST;
-		} else {
-			dwExStyle = 0;
-		}
-		memcpy(&video->screenSizeRect, &windowRect, sizeof(RECT));
-	} else {
-		// Apparently this flag controls whether x,y are preset from the outside
-		if (unknownFlag) {
-			windowRect.left = settings->x;
-			windowRect.top = settings->y;
-			windowRect.right = settings->x + settings->width;
-			windowRect.bottom = settings->y + settings->height;
-		} else {
-			windowRect.left = (screenWidth - settings->width) / 2;
-			windowRect.top = (screenHeight - settings->height) / 2;
-			windowRect.right = windowRect.left + settings->width;
-			windowRect.bottom = windowRect.top + settings->height;
-		}
-		menu = LoadMenuA(settings->hinstance, "TIGMenu");
-		dwStyle = WS_OVERLAPPEDWINDOW; //  WS_CAPTION | WS_CLIPCHILDREN | WS_SYSMENU | WS_GROUP;
-		dwExStyle = 0;
-
-		// Apparently 0x80 means window rect isn't adjusted. is this a half-implemented borderless fullscreen?
-		if (!(settings->flags & 0x80)) {
-			AdjustWindowRectEx(&windowRect, dwStyle, menu != 0, 0);
-			// TODO: Adjust back
-			//            v13 = Rect.right - Rect.left - v1->width;
-			//            LODWORD(v13) = v13 - HIDWORD(v13);
-			//            v14 = Rect.bottom - Rect.top - v1->height;
-			//            v3 = ((signed int)v13 >> 1) + Rect.left;
-			//            v4 = ((signed int)v13 >> 1) + Rect.right;
-			//            v15 = v14 / 2 + Rect.top;
-			//            v5 = v14 / 2 + Rect.bottom;
-			//            Rect.left += (signed int)v13 >> 1;
-			//            Rect.right += (signed int)v13 >> 1;
-			//            Rect.top += v14 / 2;
-			//            Rect.bottom += v14 / 2;
-		}
-	}
-
-	dwStyle |= WS_VISIBLE;
-	video->width = settings->width;
-	video->height = settings->height;
-
-	temple_set<0x10D24E0C>(0);
-	temple_set<0x10D24E10>(0);
-	temple_set<0x10D24E14>(settings->width);
-
-	const char* windowTitle;
-	// Apparently is a flag that indicates a custom window title
-	if (settings->flags & 0x40) {
-		windowTitle = settings->windowTitle;
-	} else {
-		windowTitle = "Temple of Elemental Evil - Cirlce of Eight";
-	}
-
-	DWORD windowWidth = windowRect.right - windowRect.left;
-	DWORD windowHeight = windowRect.bottom - windowRect.top;
-	video->hwnd = CreateWindowExA(
-		dwExStyle,
-		"TIGClass",
-		windowTitle,
-		dwStyle,
-		windowRect.left,
-		windowRect.top,
-		windowWidth,
-		windowHeight,
-		0,
-		menu,
-		settings->hinstance,
-		0);
-
-	if (video->hwnd) {
-		RECT clientRect;
-		GetClientRect(video->hwnd, &clientRect);
-		video->current_width = clientRect.right - clientRect.left;
-		video->current_height = clientRect.bottom - clientRect.top;
-
-		// Scratchbuffer size sometimes doesn't seem to be set by ToEE itself
-		temple_set<0x10307284>(video->current_width);
-		temple_set<0x10307288>(video->current_height);
-
-		return true;
-	}
-
-	return false;
 }
 
 int __cdecl HookedCleanUpBuffers() {
@@ -702,16 +608,10 @@ int __cdecl VideoStartup(TempleStartSettings* settings) {
 
 	bool windowed = config.windowed;
 
-	// Since we always make ToEE think we are in windowed mode, we always set the WNDPROC
-	if (!settings->wndproc) {
-		return 12;
-	}
-	temple_set<0x10D25C38>(settings->wndproc);
-
 	video->adapter = 0;
 
 	// create window call
-	if (!TigCreateWindow(settings)) {
+	if (!CreateMainWindow(settings)) {
 		return 17;
 	}
 
@@ -746,9 +646,6 @@ int __cdecl VideoStartup(TempleStartSettings* settings) {
 	temple_set<0x11E7570C, int>((settings->flags & 4) != 0);
 
 	video->current_bpp = settings->bpp;
-
-	// TODO: Draw normal cursor
-	// ShowCursor(windowed); // Show cursor in windowed mode
 
 	temple_set<0x10D250E0, int>(0);
 	temple_set<0x10D250E4, int>(1);

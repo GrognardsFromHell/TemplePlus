@@ -242,10 +242,10 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 		templeFuncs.ProcessSystemEvents();
 
 		TigMsg msg;		
-		while (!tigMsgFuncs.Process(&msg))
+		while (!msgFuncs.Process(&msg))
 		{			
 			// Flags 1 seems to disable skip via keyboard. Also seems unused.
-			if (!(flags & 1) && msg.type == TMT_KEYSTATECHANGE && LOBYTE(msg.arg2) == 1) {
+			if (!(flags & 1) && msg.type == TigMsgType::KEYSTATECHANGE && LOBYTE(msg.arg2) == 1) {
 				// TODO Wait for the key to be unpressed again
 				keyPressed = true;
 				break;
