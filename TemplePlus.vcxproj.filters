@@ -52,6 +52,13 @@
     <ClCompile Include="tig_shader.cpp" />
     <ClCompile Include="tig_texture.cpp" />
     <ClCompile Include="mainwindow.cpp" />
+    <ClCompile Include="ui.cpp" />
+    <ClCompile Include="bonusspells.cpp">
+      <Filter>fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="fixes.cpp">
+      <Filter>fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="addresses.h" />
@@ -125,6 +132,10 @@
     <ClInclude Include="tig_shader.h" />
     <ClInclude Include="tig_texture.h" />
     <ClInclude Include="mainwindow.h" />
+    <ClInclude Include="ui.h" />
+    <ClInclude Include="fixes.h">
+      <Filter>fixes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MinHook">
@@ -136,5 +147,13 @@
     <Filter Include="D3D8">
       <UniqueIdentifier>{81cfef8a-ad0c-4ba3-a13c-a9c559d8b2e5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="fixes">
+      <UniqueIdentifier>{5ee7b777-16d7-4e67-83ba-9680533e67e9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\Spellslinger%27s Notes\bonusspells.txt">
+      <Filter>fixes</Filter>
+    </Text>
   </ItemGroup>
 </Project>

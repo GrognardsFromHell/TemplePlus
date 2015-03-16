@@ -10,10 +10,12 @@
 #include "tig_shader.h"
 #include "tig_mouse.h"
 #include "mainwindow.h"
+#include "ui.h"
 
 // #include "d3d8/d3d8.h"
 #include "d3d8to9/d3d8to9.h"
 #include <d3d9.h>
+#include <map>
 
 GlobalBool<0x10D250EC> drawFps;
 GlobalStruct<tig_text_style, 0x10D24DB0> drawFpsTextStyle;
@@ -744,6 +746,34 @@ void GetSystemMemory(int* totalMem, int* availableMem) {
 
 bool __cdecl HookedPresentFrame() {
 	static bool dumpedPacketStructs = true;
+
+	/*void(__cdecl*ShowConsole)() = (void(__cdecl*)()) temple_address(0x101DF7C0);
+	ShowConsole();*/
+
+	/*
+		Dumps all widgets out to console
+	*/
+	/*map<uint32_t,int> renderFuncs;
+	map<uint32_t,int> messageHandlers;
+	LOG(trace) << "--------------------------------------------------";
+	LOG(trace) << sizeof(WidgetType1);
+	ActiveWidgetListEntry *node = activeWidgetAllocList;
+	while (node) {
+		Widget *widget = node->widget;
+		renderFuncs[widget->render]++;
+		messageHandlers[widget->handleMessage]++;
+		node = node->next;
+	}
+
+	for (auto messageHandler : renderFuncs) {
+		LOG(trace) << "RENDERER: " << format("%x") % messageHandler.first << ": " << messageHandler.second;
+	}
+
+	for (auto messageHandler : messageHandlers) {
+		LOG(trace) << "MSG HANDLER: " << format("%x") % messageHandler.first << ": " << messageHandler.second;
+	}
+
+	LOG(trace) << "--------------------------------------------------";*/
 
 	if (!dumpedPacketStructs) {
 		for (const auto& node : shaderRegistry) {

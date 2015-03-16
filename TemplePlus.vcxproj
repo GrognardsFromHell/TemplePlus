@@ -15,6 +15,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="bonusspells.cpp" />
     <ClCompile Include="d3d8to9\d3d8to9.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
@@ -43,6 +44,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="fixes.cpp" />
     <ClCompile Include="graphics.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
@@ -92,6 +94,7 @@
     <ClCompile Include="tig_shader.cpp" />
     <ClCompile Include="tig_texture.cpp" />
     <ClCompile Include="mainwindow.cpp" />
+    <ClCompile Include="ui.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="addresses.h" />
@@ -108,6 +111,7 @@
     <ClInclude Include="d3d8\d3d8caps.h" />
     <ClInclude Include="d3d8\d3d8types.h" />
     <ClInclude Include="graphics.h" />
+    <ClInclude Include="fixes.h" />
     <ClInclude Include="libraryholder.h" />
     <ClInclude Include="minhook\src\buffer.h" />
     <ClInclude Include="minhook\src\HDE\hde32.h" />
@@ -127,6 +131,10 @@
     <ClInclude Include="tig_shader.h" />
     <ClInclude Include="tig_texture.h" />
     <ClInclude Include="mainwindow.h" />
+    <ClInclude Include="ui.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\Spellslinger%27s Notes\bonusspells.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3E3B6C43-8C76-4CD5-BCF8-3F2B9C5178FE}</ProjectGuid>

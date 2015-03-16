@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "temple_functions.h"
 #include "libraryholder.h"
+#include "fixes.h"
 
 #include <boost/log/utility/setup.hpp>
 
@@ -35,6 +36,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 	init_functions();
 	init_hooks();
+
+	TempleFixes::apply();
 
 	string localCmdLineStart = "\"" + toeeDir.string() + "toee.exe\" -window";
 	auto ourModule = GetModuleHandleW(nullptr);

@@ -9,16 +9,23 @@ void __cdecl HookedEnqueue(TigMsg *msg) {
 		LOG(info) << "MOUSE";
 		break;
 	case TigMsgType::CHAR:
-		LOG(info) << "CHAR";
+		LOG(info) << "CHAR " << (uint32_t)msg->type
+			<< " Args: " << msg->arg1 << " " << msg->arg2 << " " << msg->arg3 << " " << msg->arg4
+			<< " (Created: " << msg->createdMs << ")";
 		break;
 	case TigMsgType::KEYSTATECHANGE:
-		LOG(info) << "KEYSTATECHANGE";
+		LOG(info) << "KEYSTATECHANGE " << (uint32_t)msg->type
+			<< " Args: " << msg->arg1 << " " << msg->arg2 << " " << msg->arg3 << " " << msg->arg4
+			<< " (Created: " << msg->createdMs << ")";
 		break;
 	case TigMsgType::KEYDOWN:
-		LOG(info) << "KEYDOWN";
+		LOG(info) << "KEYDOWN " << (uint32_t)msg->type
+			<< " Args: " << msg->arg1 << " " << msg->arg2 << " " << msg->arg3 << " " << msg->arg4
+			<< " (Created: " << msg->createdMs << ")";
 		break;
 	case TigMsgType::UPDATE_TIME:
-		LOG(info) << "Msg UPDATE_TIME (" << msg->createdMs << ")";
+		// Since this is called every frame, it produces logspam
+		// LOG(info) << "Msg UPDATE_TIME (" << msg->createdMs << ")";
 		break;
 	default:
 		LOG(info) << "Message " << (uint32_t) msg->type
