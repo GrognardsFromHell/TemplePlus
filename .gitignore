@@ -8,3 +8,5 @@ release
 *.sdf
 *.suo
 *.user
+*.opensdf
+ipch/templeplus-6e57462c/templeplus-516eb4d7.ipch
