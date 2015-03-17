@@ -122,6 +122,7 @@
     <ClInclude Include="minhook\src\HDE\table64.h" />
     <ClInclude Include="minhook\src\trampoline.h" />
     <ClInclude Include="idxtables.h" />
+    <ClInclude Include="python_header.h" />
     <ClInclude Include="tig_mouse.h" />
     <ClInclude Include="movies.h" />
     <ClInclude Include="stdafx.h" />

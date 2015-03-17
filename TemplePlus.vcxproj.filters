@@ -59,7 +59,9 @@
     <ClCompile Include="fixes.cpp">
       <Filter>fixes</Filter>
     </ClCompile>
-    <ClCompile Include="python.cpp" />
+    <ClCompile Include="python.cpp">
+      <Filter>Python additions</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="addresses.h" />
@@ -137,6 +139,9 @@
     <ClInclude Include="fixes.h">
       <Filter>fixes</Filter>
     </ClInclude>
+    <ClInclude Include="python_header.h">
+      <Filter>Python additions</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MinHook">
@@ -150,6 +155,9 @@
     </Filter>
     <Filter Include="fixes">
       <UniqueIdentifier>{5ee7b777-16d7-4e67-83ba-9680533e67e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Python additions">
+      <UniqueIdentifier>{7696d99d-eccf-423e-83b2-1a3cbb3f90e2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

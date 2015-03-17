@@ -4,31 +4,7 @@
 #include "addresses.h"
 #include "dependencies/python-2.2/Python.h"
 #include "temple_functions.h""
-
-/*
-	Define all type objects used by ToEE.
-*/
-// ObjHandle
-	static GlobalStruct<PyTypeObject, 0x102CF3B8> pyObjHandleType;
-	static getattrfunc pyObjHandleTypeGetAttr; // Original getattr of pyObjHandleType
-	static setattrfunc pyObjHandleTypeSetAttr; // Original setattr of pyObjHandleType
-	static GlobalStruct<PyMethodDef, 0x102CE9A8> pyObjHandleMethods;
-	//PyCFunction a[]; // this causes errors during compile!
-	
-
-struct ObjectId {
-	uint16_t subtype;
-	GUID guid;
-};
-
-struct TemplePyObjHandle : public PyObject {
-	ObjectId objId;
-	uint64_t objHandle;
-};
-
-
-
-
+#include "python_header.h"
 
 
 
@@ -43,9 +19,25 @@ static PyObject * pyObjHandleType_Faction_Has(TemplePyObjHandle* obj, PyObject *
 	return PyInt_FromLong(templeFuncs.Obj_Faction_Has(obj->objHandle, nFac));
 };
 
+static PyObject * pyObjHandleType_Faction_Add(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+	int nFac;
+	if (!PyArg_ParseTuple(pyTupleIn, "i", &nFac)) {
+		return nullptr;
+	};
+	
+	if (nFac == 0){
+		return PyInt_FromLong(0);
+	}
+
+	templeFuncs.Obj_Faction_Add(obj->objHandle, nFac);
+	return PyInt_FromLong(1);
+};
+
+
+
 static PyMethodDef pyObjHandleMethods_New[] = {
 	"faction_has", (PyCFunction)pyObjHandleType_Faction_Has, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!",
-	"faction_has2", (PyCFunction)pyObjHandleType_Faction_Has, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!",
+	"faction_add", (PyCFunction)pyObjHandleType_Faction_Add, METH_VARARGS, "Add a faction to an NPC. Doesn't work on PCs!",
 	0, 0, 0, 0
 };
 
@@ -83,24 +75,22 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 	}
 
 	if (!_strcmpi(name, "faction_has")) {
-		//ObjHndl ObjSubsInv = templeFuncs.Obj_Get_Substitute_Inventory(obj->objHandle);
-		
-		
 		return Py_FindMethod(pyObjHandleMethods_New, obj, "faction_has");
-		
 	}
-
-
-	if (!_strcmpi(name, "substitute_inventory")) {
+	else if (!_strcmpi(name, "faction_add"))
+	{
+		return Py_FindMethod(pyObjHandleMethods_New, obj, "faction_add");
+	} 
+	else if (!_strcmpi(name, "substitute_inventory"))
+	{
 		ObjHndl ObjSubsInv = templeFuncs.Obj_Get_Substitute_Inventory(obj->objHandle);
 		return templeFuncs.PyObj_From_ObjHnd(ObjSubsInv);
-	}
-
-
+	};
+	
 
 	if (!_strcmpi(name, "obj_get_field_64")) {
 		
-		return 0; 
+		return nullptr; 
 	}
 
 	return pyObjHandleTypeGetAttr(obj, name);
@@ -117,14 +107,11 @@ int __cdecl  pyObjHandleType_setAttrNew(TemplePyObjHandle *obj, char *name, Temp
 
 	if (!strcmp(name, "substitute_inventory")) {
 
-
 		if (obj2 != nullptr)  {
 			if (obj->ob_type == obj2->ob_type){
 				templeFuncs.Obj_Set_Field_ObjHnd(obj->objHandle, obj_f_npc_substitute_inventory, obj2->objHandle);
 			}
-			
 		}
-		
 		return 0;
 	}
 
