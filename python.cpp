@@ -10,7 +10,17 @@
 static GlobalStruct<PyTypeObject, 0x102CF3B8> pyObjHandleType;
 static getattrfunc pyObjHandleTypeGetAttr; // Original getattr of pyObjHandleType
 
-PyObject* __cdecl  pyObjHandleType_getAttrNew(PyObject *obj, char *name) {
+struct ObjectId {
+	uint16_t subtype;
+	GUID guid;
+};
+
+struct TemplePyObjHandle : public PyObject {
+	ObjectId objId;
+	uint64_t objHandle;
+};
+
+PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name) {
 	LOG(info) << "Tried getting property: " << name;
 	if (!strcmp(name, "co8rocks")) {
 		return PyString_FromString("IT SURE DOES!");
@@ -31,7 +41,7 @@ void PythonExtensions::apply() {
 
 	// Hook the getattr function of obj handles
 	pyObjHandleTypeGetAttr = pyObjHandleType->tp_getattr;
-	pyObjHandleType->tp_getattr = pyObjHandleType_getAttrNew;
+	pyObjHandleType->tp_getattr = (getattrfunc) pyObjHandleType_getAttrNew;
 
 
 }
