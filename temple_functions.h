@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "addresses.h"
+#include "dependencies/python-2.2/Python.h"
 
 // Contains the function definitions for stuff found in temple.dll that we may want to call or override.
 
@@ -11,11 +12,25 @@ extern "C"
 	int __declspec(dllimport) __cdecl temple_main(HINSTANCE hInstance, HINSTANCE hPrevInstance, const char* lpCommandLine, int nCmdShow);
 }
 
+typedef uint64_t ObjHndl;
+
 struct TempleFuncs : AddressTable {
 	void (*ProcessSystemEvents)();
+	int (*Obj_Get_Field_32bit)( ObjHndl objHnd, uint32_t nFieldIdx);
+	PyObject*  (__cdecl *PyObj_From_ObjHnd) ( ObjHndl);
+	ObjHndl(__cdecl *Obj_Get_Substitute_Inventory)  (ObjHndl);
+	int(__cdecl *Obj_Set_Field_ObjHnd)(ObjHndl, uint32_t nFieldIdx, ObjHndl);
+	//PyObject* (*PyObj_From_ObjHnd)();
+	
+
 
 	void rebase(Rebaser rebase) override {
 		rebase(ProcessSystemEvents, 0x101DF440);
+		rebase(Obj_Get_Field_32bit, 0x1009E1D0);
+		rebase(PyObj_From_ObjHnd, 0x100AF1D0);
+		rebase(Obj_Get_Substitute_Inventory, 0x1007F5B0);
+		rebase(Obj_Set_Field_ObjHnd, 0x100A0280);
+		
 	}
 };
 
