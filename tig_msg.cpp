@@ -6,7 +6,7 @@ void __cdecl HookedEnqueue(TigMsg *msg) {
 
 	switch (msg->type) {
 	case TigMsgType::MOUSE:
-		LOG(info) << "MOUSE";
+		// LOG(info) << "MOUSE";
 		break;
 	case TigMsgType::CHAR:
 		LOG(info) << "CHAR " << (uint32_t)msg->type

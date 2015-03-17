@@ -11,7 +11,6 @@ static GlobalStruct<PyTypeObject, 0x102CF3B8> pyObjHandleType;
 static getattrfunc pyObjHandleTypeGetAttr; // Original getattr of pyObjHandleType
 
 PyObject* __cdecl  pyObjHandleType_getAttrNew(PyObject *obj, char *name) {
-	
 	LOG(info) << "Tried getting property: " << name;
 	if (!strcmp(name, "co8rocks")) {
 		return PyString_FromString("IT SURE DOES!");
