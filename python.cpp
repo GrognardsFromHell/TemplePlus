@@ -15,24 +15,6 @@
 	static GlobalStruct<PyMethodDef, 0x102CE9A8> pyObjHandleMethods;
 	//PyCFunction a[]; // this causes errors during compile!
 	
-	
-	static PyMethodDef pyObjHandleMethods_New[] = {
-		"faction_has", (PyCFunction)pyObjHandleType_Faction_Has, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!",
-		"faction_has2", (PyCFunction)pyObjHandleType_Faction_Has, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!",
-		0,0,0,0
-	};
-
-
-
-
-	static PyObject * pyObjHandleType_Faction_Has(PyObject* obj, PyObject * pyTupleIn){
-		int nFac;
-		if (!PyArg_ParseTuple(pyTupleIn, "i", &nFac)) {
-			return nullptr;
-		}
-		return PyInt_FromLong(templeFuncs.Obj_Faction_Has((TemplePyObjHandle*)obj->objHandle, nFac));
-	};
-
 
 struct ObjectId {
 	uint16_t subtype;
@@ -44,6 +26,28 @@ struct TemplePyObjHandle : public PyObject {
 	uint64_t objHandle;
 };
 
+
+
+
+
+
+
+static PyObject * pyObjHandleType_Faction_Has(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+	int nFac;
+	if (!PyArg_ParseTuple(pyTupleIn, "i", &nFac)) {
+		return nullptr;
+	};
+	//auto dude = (TemplePyObjHandle*)obj;
+
+	//return PyInt_FromLong(templeFuncs.Obj_Faction_Has(dude->objHandle, nFac));
+	return PyInt_FromLong(templeFuncs.Obj_Faction_Has(obj->objHandle, nFac));
+};
+
+static PyMethodDef pyObjHandleMethods_New[] = {
+	"faction_has", (PyCFunction)pyObjHandleType_Faction_Has, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!",
+	"faction_has2", (PyCFunction)pyObjHandleType_Faction_Has, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!",
+	0, 0, 0, 0
+};
 
 
 
@@ -116,7 +120,7 @@ int __cdecl  pyObjHandleType_setAttrNew(TemplePyObjHandle *obj, char *name, Temp
 
 		if (obj2 != nullptr)  {
 			if (obj->ob_type == obj2->ob_type){
-				templeFuncs.Obj_Set_Field_ObjHnd(obj->objHandle, 365, obj2->objHandle);
+				templeFuncs.Obj_Set_Field_ObjHnd(obj->objHandle, obj_f_npc_substitute_inventory, obj2->objHandle);
 			}
 			
 		}
