@@ -59,6 +59,7 @@
     <ClCompile Include="fixes.cpp">
       <Filter>fixes</Filter>
     </ClCompile>
+    <ClCompile Include="python.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="addresses.h" />
