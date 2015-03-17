@@ -15,6 +15,24 @@
 	static GlobalStruct<PyMethodDef, 0x102CE9A8> pyObjHandleMethods;
 	//PyCFunction a[]; // this causes errors during compile!
 	
+	
+	static PyMethodDef pyObjHandleMethods_New[] = {
+		"faction_has", (PyCFunction)pyObjHandleType_Faction_Has, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!",
+		"faction_has2", (PyCFunction)pyObjHandleType_Faction_Has, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!",
+		0,0,0,0
+	};
+
+
+
+
+	static PyObject * pyObjHandleType_Faction_Has(PyObject* obj, PyObject * pyTupleIn){
+		int nFac;
+		if (!PyArg_ParseTuple(pyTupleIn, "i", &nFac)) {
+			return nullptr;
+		}
+		return PyInt_FromLong(templeFuncs.Obj_Faction_Has((TemplePyObjHandle*)obj->objHandle, nFac));
+	};
+
 
 struct ObjectId {
 	uint16_t subtype;
@@ -26,35 +44,65 @@ struct TemplePyObjHandle : public PyObject {
 	uint64_t objHandle;
 };
 
+
+
+
 PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name) {
 	LOG(info) << "Tried getting property: " << name;
-	if (!strcmp(name, "co8rocks")) {
+	if (!_strcmpi(name, "co8rocks")) {
 		return PyString_FromString("IT SURE DOES!");
 	}
 
-	if (!strcmpi(name, "ObjHandle")) {
-		uint64_t objhnd = obj->objHandle; // this is ok
-		PyObject* PyObj_ObjHnd = PyLong_FromLongLong(objhnd);
-		PyObject* PyReturn = PyTuple_New(2);
-		PyTuple_SetItem(PyReturn, 0, PyObj_ObjHnd);
-		PyTuple_SetItem(PyReturn, 1, PyObj_ObjHnd);
-		return  PyReturn; // it returns a PyTuple with wrong number! number look like memory addresses
+	if (!_strcmpi(name, "ObjHandle")) {
+		return  PyLong_FromLongLong(obj->objHandle); 
+	}
+
+	if (!_strcmpi(name, "factions")) {
+		ObjHndl ObjHnd = obj->objHandle;
+		int a[50] = {};
+		int n = 0;
+
+		for (int i = 0; i < 50; i ++){
+			int fac = templeFuncs.Obj_Get_IdxField_32bit(ObjHnd, obj_f_npc_faction, i);
+			if (fac == 0) break;
+			a[i] = fac;
+			n++;
+		};
+
+		auto outTup = PyTuple_New(n);
+		for (int i = 0; i < n ; i++){
+			PyTuple_SetItem(outTup, i, PyInt_FromLong(a[i]));
+		};
+
+		
+		return  outTup; 
+	}
+
+	if (!_strcmpi(name, "faction_has")) {
+		//ObjHndl ObjSubsInv = templeFuncs.Obj_Get_Substitute_Inventory(obj->objHandle);
+		
+		
+		return Py_FindMethod(pyObjHandleMethods_New, obj, "faction_has");
+		
 	}
 
 
-
-	if (!strcmpi(name, "substitute_inventory")) {
+	if (!_strcmpi(name, "substitute_inventory")) {
 		ObjHndl ObjSubsInv = templeFuncs.Obj_Get_Substitute_Inventory(obj->objHandle);
 		return templeFuncs.PyObj_From_ObjHnd(ObjSubsInv);
 	}
 
-	if (!strcmpi(name, "obj_get_field_64")) {
+
+
+	if (!_strcmpi(name, "obj_get_field_64")) {
 		
 		return 0; 
 	}
 
 	return pyObjHandleTypeGetAttr(obj, name);
 }
+
+
 
 
 int __cdecl  pyObjHandleType_setAttrNew(TemplePyObjHandle *obj, char *name, TemplePyObjHandle *obj2) {
