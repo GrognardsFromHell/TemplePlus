@@ -6,6 +6,7 @@ static GlobalStruct<PyTypeObject, 0x102CF3B8> pyObjHandleType;
 static getattrfunc pyObjHandleTypeGetAttr; // Original getattr of pyObjHandleType
 static setattrfunc pyObjHandleTypeSetAttr; // Original setattr of pyObjHandleType
 static GlobalStruct<PyMethodDef, 0x102CE9A8> pyObjHandleMethods;
+
 //PyCFunction a[]; // this causes errors during compile!
 
 

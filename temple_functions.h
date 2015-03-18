@@ -16,6 +16,13 @@ typedef uint64_t ObjHndl;
 typedef uint32_t _nFieldIdx;
 typedef uint32_t _nFieldSubIdx;
 
+struct GroupArray {
+	ObjHndl GroupMembers[32];
+	uint32_t * GroupSize;
+	void* unknownfunc;
+};
+
+
 struct TempleFuncs : AddressTable {
 	void (*ProcessSystemEvents)();
 	int (*Obj_Get_Field_32bit)( ObjHndl objHnd, uint32_t nFieldIdx);
@@ -45,6 +52,12 @@ struct TempleFuncs : AddressTable {
 	int(__cdecl *Obj_Faction_Has)(ObjHndl, int nFaction);
 	int(__cdecl *Obj_PC_Has_Faction_From_Reputation)(ObjHndl, int nFaction);
 	int(__cdecl *Obj_Faction_Add)(ObjHndl, int nFaction);
+	ObjHndl(__cdecl *Get_Group_Member_n)(GroupArray *, int nIdx);
+	int(__cdecl *Is_ObjHnd_In_Group_Array)(GroupArray *, ObjHndl);
+	int(__cdecl * Obj_Find_In_Group_Array)(GroupArray *, ObjHndl); // returns index
+	int(__cdecl * Obj_Remove_From_All_Group_Arrays)(ObjHndl);
+	int (__cdecl *Obj_Add_to_GroupArray)(GroupArray *, ObjHndl);
+	int(__cdecl *Obj_Add_to_PC_Group)(ObjHndl);
 	//PyObject* (*PyObj_From_ObjHnd)();
 	
 
@@ -81,6 +94,15 @@ struct TempleFuncs : AddressTable {
 		rebase(Obj_Faction_Has, 0x1007E430);
 		rebase(Obj_PC_Has_Faction_From_Reputation, 0x10054D70);
 		rebase(Obj_Faction_Add, 0x1007E480);
+		rebase(Get_Group_Member_n, 0x100DF760);
+		rebase(Obj_Find_In_Group_Array, 0x100DF780);
+		rebase(Is_ObjHnd_In_Group_Array, 0x100DF960);
+		rebase(Obj_Remove_From_All_Group_Arrays, 0x1002BD00);
+		rebase(Obj_Add_to_GroupArray, 0x100DF990);
+		rebase(Obj_Add_to_PC_Group, 0x1002BBE0);
+		
+		
+		
 		
 	}
 };
@@ -121,14 +143,35 @@ enum StartupFlag
 	SF_FLAG_uint32_t = 0x7FFFFFFF
 };
 
+
+enum obj_t{
+	obj_t_portal = 0,
+	obj_t_container = 1,
+	obj_t_scenery = 2,
+	obj_t_projectile = 3,
+	obj_t_weapon = 4,
+	obj_t_ammo = 5,
+	obj_t_armor = 6,
+	obj_t_money = 7,
+	obj_t_food = 8,
+	obj_t_scroll = 9,
+	obj_t_key = 10,
+	obj_t_written = 11,
+	obj_t_generic = 12,
+	obj_t_pc = 13,
+	obj_t_npc = 14,
+	obj_t_trap = 15,
+	obj_t_bag = 16
+};
+
 enum obj_f
 {
 
 	obj_f_begin = 0,
-	obj_f_current_aid = 1,
-	obj_f_location = 2,
-	obj_f_offset_x = 3,
-	obj_f_offset_y = 4,
+	obj_f_location = 1, // note: in the DLL this is labeled obj_f_current_aid  but there appears to be an offset here. Maybe they removed "obj_f_current_aid" and forgot to update the strings?
+	obj_f_offset_x = 2,
+	obj_f_offset_y = 3,
+	obj_f_UNKNOWN4 = 4, // was "offset_y" in the DLL, is probably obj_f_shadow but I'm not sure so leaving it as UNKOWN
 	obj_f_shadow = 5,
 	obj_f_overlay_fore = 6, 
 	obj_f_overlay_back = 7, 
@@ -143,15 +186,15 @@ enum obj_f
 	obj_f_overlay_light_flags = 16,
 	obj_f_overlay_light_aid = 17,
 	obj_f_overlay_light_color = 18,
-	obj_f_flags = 19,
+	obj_f_UNKNOWN19 = 19,
 	obj_f_spell_flags = 20,
 	obj_f_blocking_mask = 21,
-	obj_f_name = 22,
+	obj_f_flags = 22,  // was "obj_f_name" in the DLL but is used as obj_f_flags so it must be another mis-named one
 	obj_f_description = 23,
 	obj_f_aid = 24,
 	obj_f_destroyed_aid = 25,
 	obj_f_size = 26,
-	obj_f_hp_pts = 27,
+	obj_f_hp_pts = 27, // at least from here onwards the names are correct
 	obj_f_hp_adj = 28,
 	obj_f_hp_damage = 29,
 	obj_f_material = 30,
@@ -564,6 +607,12 @@ enum obj_f
 	obj_f_prototype_handle = 429
 
 };
+
+
+const int CONTAINER_MAX_ITEMS = 1000; // may need to be reduced
+const int CRITTER_MAX_ITEMS = 24; // definitely needs to be increased in the future :)
+const int CRITTER_EQUIPPED_ITEM_SLOTS = 16;
+const int CRITTER_EQUIPPED_ITEM_OFFSET = 200;
 
 // 19 values total (guessed from memset 0 at start of main method)
 struct TempleStartSettings
