@@ -45,7 +45,8 @@ struct TempleFuncs : AddressTable {
 	int(__cdecl *Obj_Set_Field_32bit)(ObjHndl ObjHnd, uint32_t nFieldIdx, uint32_t n32Data);
 	int (__cdecl *Obj_Set_Field_64bit)(ObjHndl, uint32_t nFieldIdx, uint64_t);
 	int(__cdecl *Obj_Set_Field_ObjHnd)(ObjHndl, uint32_t nFieldIdx, ObjHndl);
-	int (__cdecl *Obj_Set_IdxField_32bit)(ObjHndl, _nFieldIdx, _nFieldSubIdx, int);
+	int (__cdecl *Obj_Set_IdxField_byValue)(ObjHndl, _nFieldIdx, _nFieldSubIdx, ...);
+	void (__cdecl *Obj_Set_IdxField_byPtr)(ObjHndl, _nFieldIdx, _nFieldSubIdx, void * _SourceData);
 	int (__cdecl *Obj_Set_IdxField_ObjHnd)(ObjHndl, _nFieldIdx, _nFieldSubIdx, ObjHndl);
 	
 
@@ -88,7 +89,8 @@ struct TempleFuncs : AddressTable {
 		rebase(Obj_Set_Field_32bit, 0x100A0190);
 		rebase(Obj_Set_Field_64bit, 0x100A0200);
 		rebase(Obj_Set_Field_ObjHnd, 0x100A0280);
-		rebase(Obj_Set_IdxField_32bit, 0x100A1310);
+		rebase(Obj_Set_IdxField_byValue, 0x100A1310);
+		rebase(Obj_Set_IdxField_byPtr, 0x100A1540);
 		rebase(Obj_Set_IdxField_ObjHnd, 0x100A14A0);
 
 		rebase(Obj_Faction_Has, 0x1007E430);
@@ -100,8 +102,6 @@ struct TempleFuncs : AddressTable {
 		rebase(Obj_Remove_From_All_Group_Arrays, 0x1002BD00);
 		rebase(Obj_Add_to_GroupArray, 0x100DF990);
 		rebase(Obj_Add_to_PC_Group, 0x1002BBE0);
-		
-		
 		
 		
 	}

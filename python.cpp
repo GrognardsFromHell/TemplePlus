@@ -6,6 +6,10 @@
 #include "temple_functions.h""
 #include "python_header.h"
 
+// hmm should the functions be STATIC or maybe global? What's the syntax?
+
+#pragma region Python Global Functions - DONE
+
 static bool isTypeCritter(int nObjType){
 	if (nObjType == obj_t_pc || nObjType == obj_t_npc){
 		return 1;
@@ -163,20 +167,42 @@ static PyObject * pyObjHandleType_Get_IdxField_32bit(TemplePyObjHandle* obj, PyO
 	if (!PyArg_ParseTuple(pyTupleIn, "ii", &nFieldIdx, &nFieldSubIdx)) {
 		return nullptr;
 	};
-	return PyInt_FromLong(templeFuncs.Obj_Get_IdxField_32bit(obj->objHandle, nFieldIdx, nFieldSubIdx));
+	n32 = templeFuncs.Obj_Get_IdxField_32bit(obj->objHandle, nFieldIdx, nFieldSubIdx);
+	return PyInt_FromLong(n32);
 };
 
 static PyObject * pyObjHandleType_Set_IdxField_32bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	_nFieldIdx nFieldIdx = 0;
 	_nFieldSubIdx nFieldSubIdx = 0;
-	uint64_t n32 = 0;
+	uint32_t n32 = 0;
 	if (!PyArg_ParseTuple(pyTupleIn, "iii", &nFieldIdx, &nFieldSubIdx, &n32)) {
 		return PyInt_FromLong(0);
 	};
-	templeFuncs.Obj_Set_IdxField_32bit(obj->objHandle, nFieldIdx, nFieldSubIdx, n32);
+	templeFuncs.Obj_Set_IdxField_byValue(obj->objHandle, nFieldIdx, nFieldSubIdx, n32);
 	return PyInt_FromLong(1);
 };
 
+static PyObject * pyObjHandleType_Get_IdxField_64bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+	_nFieldIdx nFieldIdx = 0;
+	_nFieldSubIdx nFieldSubIdx = 0;
+	uint64_t n64 = 0;
+	if (!PyArg_ParseTuple(pyTupleIn, "ii", &nFieldIdx, &nFieldSubIdx)) {
+		return nullptr;
+	};
+	n64 = templeFuncs.Obj_Get_IdxField_64bit(obj->objHandle, nFieldIdx, nFieldSubIdx);
+	return PyLong_FromLongLong(n64);
+};
+
+static PyObject * pyObjHandleType_Set_IdxField_64bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+	_nFieldIdx nFieldIdx = 0;
+	_nFieldSubIdx nFieldSubIdx = 0;
+	uint64_t n64 = 0;
+	if (!PyArg_ParseTuple(pyTupleIn, "iiL", &nFieldIdx, &nFieldSubIdx, &n64)) {
+		return PyInt_FromLong(0);
+	};
+	templeFuncs.Obj_Set_IdxField_byValue(obj->objHandle, nFieldIdx, nFieldSubIdx, n64);
+	return PyInt_FromLong(1);
+};
 
 static PyObject * pyObjHandleType_Remove_From_All_Groups(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	templeFuncs.Obj_Remove_From_All_Group_Arrays(obj->objHandle);
@@ -191,6 +217,22 @@ static PyObject * pyObjHandleType_PC_Rejoin(TemplePyObjHandle* obj, PyObject * p
 	return PyInt_FromLong(1);
 };
 
+
+#pragma endregion
+
+/*
+static PyObject * pyObjHandleType_Set_IdxField_byValue(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+_nFieldIdx nFieldIdx = 0;
+_nFieldSubIdx nFieldSubIdx = 0;
+void n64; // well ASM allows this :P what's python for varArg?
+if (!PyArg_ParseTuple(pyTupleIn, "iiL", &nFieldIdx, &nFieldSubIdx, &n64)) {
+return PyInt_FromLong(0);
+};
+templeFuncs.Obj_Set_IdxField_byValue(obj->objHandle, nFieldIdx, nFieldSubIdx, n64);
+return PyInt_FromLong(1);
+}; */
+
+
 static PyMethodDef pyObjHandleMethods_New[] = {
 	"faction_has", (PyCFunction)pyObjHandleType_Faction_Has, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!",
 	"faction_add", (PyCFunction)pyObjHandleType_Faction_Add, METH_VARARGS, "Add a faction to an NPC. Doesn't work on PCs!",
@@ -201,6 +243,9 @@ static PyMethodDef pyObjHandleMethods_New[] = {
 	"obj_set_field_objhndl", (PyCFunction)pyObjHandleType_Set_Field_ObjHandle, METH_VARARGS, "Sets ObjHndl field",
 	"obj_get_idxfield_32bit", (PyCFunction)pyObjHandleType_Get_IdxField_32bit, METH_VARARGS, "Gets 32 bit index field",
 	"obj_set_idxfield_32bit", (PyCFunction)pyObjHandleType_Set_IdxField_32bit, METH_VARARGS, "Sets 32 bit index field",
+	"obj_get_idxfield_64bit", (PyCFunction)pyObjHandleType_Get_IdxField_64bit, METH_VARARGS, "Gets 64 bit index field",
+	"obj_set_idxfield_64bit", (PyCFunction)pyObjHandleType_Set_IdxField_64bit, METH_VARARGS, "Sets 64 bit index field",
+	//"obj_set_idxfield_byvalue", (PyCFunction)pyObjHandleType_Set_IdxField_byValue, METH_VARARGS, "Sets index field - general (depending on nFieldIndex which the game looks up and fetches nFieldType to determine data size)",
 	"obj_remove_from_all_groups", (PyCFunction)pyObjHandleType_Remove_From_All_Groups, METH_VARARGS, "Removes the object from all the groups (GroupList, PCs, NPCs, AI controlled followers, Currently Selected",
 	"pc_rejoin", (PyCFunction)pyObjHandleType_PC_Rejoin, METH_VARARGS, "Removes the object from all the groups (GroupList, PCs, NPCs, AI controlled followers, Currently Selected",
 
@@ -215,6 +260,7 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 		return PyString_FromString("IT SURE DOES!");
 	}
 
+	#pragma region FINISHED
 	if (!_strcmpi(name, "ObjHandle")) {
 		return  PyLong_FromLongLong(obj->objHandle); 
 	}
@@ -239,7 +285,7 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 		
 		return  outTup; 
 	}
-
+	
 	if (!_strcmpi(name, "faction_has")) {
 		return Py_FindMethod(pyObjHandleMethods_New, obj, "faction_has");
 	}
@@ -251,9 +297,12 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 	{
 		ObjHndl ObjSubsInv = templeFuncs.Obj_Get_Substitute_Inventory(obj->objHandle);
 		return templeFuncs.PyObj_From_ObjHnd(ObjSubsInv);
-	};
-	
+	}; 
 
+	#pragma endregion
+
+
+	#pragma region TODO
 	if (!_strcmpi(name, "inventory")) {
 		return Py_FindMethod(pyObjHandleMethods_New, obj, "inventory");
 	}
@@ -265,6 +314,17 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 	};
 
 
+	if (!_strcmpi(name, "pc_stay_behind")){
+		return Py_FindMethod(pyObjHandleMethods_New, obj, "obj_remove_from_all_groups");
+	}
+	else if (!_strcmpi(name, "pc_rejoin")){
+		return Py_FindMethod(pyObjHandleMethods_New, obj, "pc_rejoin");
+	};
+
+	#pragma endregion
+
+
+	#pragma region Generic Get/Set Funcs
 	if (!_strcmpi(name, "obj_get_field_64bit")) {
 		return Py_FindMethod(pyObjHandleMethods_New, obj, "obj_get_field_64bit");
 	}
@@ -294,14 +354,12 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 	}
 	else if (!_strcmpi(name, "obj_set_idxfield_32bit")){
 		return Py_FindMethod(pyObjHandleMethods_New, obj, "obj_set_idxfield_32bit");
+	}
+	else if (!_strcmpi(name, "obj_set_idxfield_64bit")){
+		return Py_FindMethod(pyObjHandleMethods_New, obj, "obj_set_idxfield_64bit");
 	};
+	#pragma endregion
 
-	if (!_strcmpi(name, "pc_stay_behind")){
-		return Py_FindMethod(pyObjHandleMethods_New, obj, "obj_remove_from_all_groups");
-	} 
-	else if (!_strcmpi(name, "pc_rejoin")){
-		return Py_FindMethod(pyObjHandleMethods_New, obj, "pc_rejoin");
-	};
 
 
 	return pyObjHandleTypeGetAttr(obj, name);
@@ -309,6 +367,14 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 
 
 
+PyObject* __cdecl pySpellType_getAttrNew(PySpell* spell, char *name){
+	LOG(info) << "Tried getting property: " << name;
+	if (!_strcmpi(name, "caster_class_alt")) {
+		return PyString_FromString("IT SURE DOES!");
+	}
+	
+	return pySpellTypeGetAttr(spell, name);
+};
 
 int __cdecl  pyObjHandleType_setAttrNew(TemplePyObjHandle *obj, char *name, TemplePyObjHandle *obj2) {
 	LOG(info) << "Tried setting property: " << name;
@@ -347,7 +413,7 @@ void PythonExtensions::apply() {
 	pyObjHandleTypeSetAttr = pyObjHandleType->tp_setattr;
 	pyObjHandleType->tp_setattr = (setattrfunc) pyObjHandleType_setAttrNew;
 
-
-	//a[0] = pyObjHandleMethods->ml_meth;
+	pySpellTypeGetAttr = pySpellType->tp_getattr;
+	pySpellType->tp_getattr = (getattrfunc)pySpellType_getAttrNew;
 	
 }
