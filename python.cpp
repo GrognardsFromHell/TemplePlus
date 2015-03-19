@@ -85,7 +85,6 @@ static PyObject * pyObjHandleType_Inventory(TemplePyObjHandle* obj, PyObject * p
 		};
 	};
 
-
 	ObjHndl ItemObjHnds[8192] = {}; // seems large enough to cover any practical case :P
 
 	int nMax = CRITTER_MAX_ITEMS;

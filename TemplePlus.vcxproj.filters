@@ -62,6 +62,9 @@
     <ClCompile Include="python.cpp">
       <Filter>Python additions</Filter>
     </ClCompile>
+    <ClCompile Include="ui_item_creation.cpp" />
+    <ClCompile Include="tig_mes.cpp" />
+    <ClCompile Include="gamesystems.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="addresses.h" />
@@ -142,6 +145,8 @@
     <ClInclude Include="python_header.h">
       <Filter>Python additions</Filter>
     </ClInclude>
+    <ClInclude Include="tig_mes.h" />
+    <ClInclude Include="gamesystems.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MinHook">

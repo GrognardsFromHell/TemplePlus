@@ -49,6 +49,7 @@ struct TempleFuncs : AddressTable {
 	void (__cdecl *Obj_Set_IdxField_byPtr)(ObjHndl, _nFieldIdx, _nFieldSubIdx, void * _SourceData);
 	int (__cdecl *Obj_Set_IdxField_ObjHnd)(ObjHndl, _nFieldIdx, _nFieldSubIdx, ObjHndl);
 	
+	const char *(__cdecl *Obj_Get_DisplayName)(uint64_t obj, uint64_t observer);
 
 	int(__cdecl *Obj_Faction_Has)(ObjHndl, int nFaction);
 	int(__cdecl *Obj_PC_Has_Faction_From_Reputation)(ObjHndl, int nFaction);
@@ -61,10 +62,28 @@ struct TempleFuncs : AddressTable {
 	int(__cdecl *Obj_Add_to_PC_Group)(ObjHndl);
 	//PyObject* (*PyObj_From_ObjHnd)();
 	
+	uint64_t (__cdecl *GetProtoHandle)(int protoId);
 
+	bool DoesTypeSupportField(uint32_t objType, uint32_t objField) {
+		int result;
+		__asm {			
+			push esi;
+			push ecx;
+			mov ecx, this;
+			mov esi, [ecx]._DoesObjectFieldExist;
+			mov ecx, objType;
+			mov eax, objField;
+			call esi;
+			pop ecx;
+			pop esi;
+			mov result, eax
+		}
+		return result != 0;
+	}
 
 	void rebase(Rebaser rebase) override {
 		rebase(ProcessSystemEvents, 0x101DF440);
+		rebase(GetProtoHandle, 0x1003AD70);
 
 		rebase(Obj_Get_Field_32bit, 0x1009E1D0);
 		rebase(Obj_Get_Field_64bit, 0x1009E2E0);
@@ -81,6 +100,8 @@ struct TempleFuncs : AddressTable {
 		
 
 		rebase(PyObj_From_ObjHnd, 0x100AF1D0);
+		
+		rebase(Obj_Get_DisplayName, 0x1001FA80);
 		
 		
 		rebase(Obj_Get_Substitute_Inventory, 0x1007F5B0);
@@ -103,8 +124,18 @@ struct TempleFuncs : AddressTable {
 		rebase(Obj_Add_to_GroupArray, 0x100DF990);
 		rebase(Obj_Add_to_PC_Group, 0x1002BBE0);
 		
+<<<<<<< HEAD
+=======
+		rebase(_DoesObjectFieldExist, 0x1009C190);
+		
+>>>>>>> origin/master
 		
 	}
+
+private:
+
+	// usercall... eax has field id, ecx has type
+	bool(__cdecl *_DoesObjectFieldExist)();
 };
 
 extern TempleFuncs templeFuncs;
@@ -597,12 +628,23 @@ enum obj_f
 	obj_f_render_colors = 408,
 	obj_f_render_palette = 409,
 	obj_f_render_scale = 410,
-	obj_f_render_alpha = 411,	obj_f_render_x = 412,	obj_f_render_y = 413,
-	obj_f_render_width = 414,	obj_f_render_height = 415,	obj_f_palette = 416,
-	obj_f_color = 417,	obj_f_colors = 418,	obj_f_render_flags = 419,
-	obj_f_temp_id = 420,	obj_f_light_handle = 421,	obj_f_overlay_light_handles = 422,
-	obj_f_internal_flags = 423,	obj_f_find_node = 424,	obj_f_animation_handle = 425,
-	obj_f_grapple_state = 426,	obj_f_transient_end = 427,
+	obj_f_render_alpha = 411,
+	obj_f_render_x = 412,
+	obj_f_render_y = 413,
+	obj_f_render_width = 414,
+	obj_f_render_height = 415,
+	obj_f_palette = 416,
+	obj_f_color = 417,
+	obj_f_colors = 418,
+	obj_f_render_flags = 419,
+	obj_f_temp_id = 420,
+	obj_f_light_handle = 421,
+	obj_f_overlay_light_handles = 422,
+	obj_f_internal_flags = 423,
+	obj_f_find_node = 424,
+	obj_f_animation_handle = 425,
+	obj_f_grapple_state = 426,
+	obj_f_transient_end = 427,
 	obj_f_type = 428,
 	obj_f_prototype_handle = 429
 
