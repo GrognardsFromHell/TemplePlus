@@ -36,7 +36,7 @@ struct AddressInitializer
 {
 	friend struct AddressTable;
 
-	typedef function<void(Rebaser rebaser)> Callback;
+	typedef std::function<void(Rebaser rebaser)> Callback;
 
 	AddressInitializer(const Callback& callback)
 	{

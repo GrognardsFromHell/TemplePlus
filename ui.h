@@ -17,7 +17,7 @@ struct Widget {
 	uint32_t width;
 	uint32_t height;
 	uint32_t field_6c;
-	uint32_t field_70;
+	uint32_t renderTooltip;
 	uint32_t render; // Function pointer
 	uint32_t handleMessage; // Function pointer
 };
