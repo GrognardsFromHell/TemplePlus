@@ -3,7 +3,7 @@
 #include "fixes.h"
 #include "addresses.h"
 #include "dependencies/python-2.2/Python.h"
-#include "temple_functions.h""
+#include "temple_functions.h"
 #include "python_header.h"
 
 // hmm should the functions be STATIC or maybe global? What's the syntax?
@@ -210,7 +210,6 @@ static PyObject * pyObjHandleType_Inventory(TemplePyObjHandle* obj, PyObject * p
 		//TODO
 	}
 
-
 	return ItemPyTuple;
 };
 
@@ -265,11 +264,6 @@ static PyMethodDef pyObjHandleMethods_New[] = {
 
 
 PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name) {
-	LOG(info) << "Tried getting property: " << name;
-	if (!_strcmpi(name, "co8rocks")) {
-		return PyString_FromString("IT SURE DOES!");
-	}
-
 	#pragma region PyObjHandle Members - FINISHED
 	if (!_strcmpi(name, "ObjHandle")) {
 		return  PyLong_FromLongLong(obj->objHandle); 
