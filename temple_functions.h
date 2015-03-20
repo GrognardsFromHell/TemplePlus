@@ -12,59 +12,112 @@ extern "C"
 	int __declspec(dllimport) __cdecl temple_main(HINSTANCE hInstance, HINSTANCE hPrevInstance, const char* lpCommandLine, int nCmdShow);
 }
 
-typedef uint64_t ObjHndl;
-typedef uint32_t _nFieldIdx;
-typedef uint32_t _nFieldSubIdx;
+typedef uint64_t objHndl;
+typedef uint32_t _fieldIdx;
+typedef uint32_t _fieldSubIdx;
+typedef uint32_t _mapNum;
+typedef uint32_t _jmpPntID;
+typedef uint32_t _standPointType;
+typedef uint32_t _featCode;
+
+
+struct ObjectId {
+	uint16_t subtype;
+	GUID guid;
+};
+
+struct locXY{
+	uint32_t locx;
+	uint32_t locy;
+};
+
+struct Loc_And_Offsets{
+	locXY location;
+	float off_x;
+	float off_y;
+};
+
+struct LocFull {
+	Loc_And_Offsets location;
+	float off_z;
+};
 
 struct GroupArray {
-	ObjHndl GroupMembers[32];
+	objHndl GroupMembers[32];
 	uint32_t * GroupSize;
 	void* unknownfunc;
 };
 
 
+struct StandPoint {
+	uint32_t mapNum;
+	uint32_t field4;
+	Loc_And_Offsets LocAndOff;
+	_jmpPntID jmpPntID;
+	uint32_t field_1C;
+};
+
+struct JumpPointPacket{
+	_jmpPntID jmpPntID;
+	char * pMapName;
+	_mapNum mapNum;
+	uint32_t field_C;
+	locXY location;
+};
+
 struct TempleFuncs : AddressTable {
 	void (*ProcessSystemEvents)();
-	int (*Obj_Get_Field_32bit)( ObjHndl objHnd, uint32_t nFieldIdx);
-	ObjHndl (__cdecl *Obj_Get_Field_ObjHnd__fastout)(ObjHndl, _nFieldIdx);
-	uint64_t (__cdecl *Obj_Get_Field_64bit)(ObjHndl, _nFieldIdx);
-	int (__cdecl *Obj_Get_Field_Float)(ObjHndl, _nFieldIdx);
 
-	int (__cdecl *Obj_Get_IdxField_NumItems)(ObjHndl, _nFieldIdx);
-	uint32_t (__cdecl *Obj_Get_IdxField_32bit)(ObjHndl, _nFieldIdx, _nFieldSubIdx);
-	uint64_t (__cdecl *Obj_Get_IdxField_64bit)(ObjHndl, _nFieldIdx, _nFieldSubIdx);
-	ObjHndl (__cdecl *Obj_Get_IdxField_ObjHnd)(ObjHndl, _nFieldIdx, _nFieldSubIdx);
-	int(__cdecl *Obj_Get_IdxField_256bit)(ObjHndl, _nFieldIdx, _nFieldSubIdx, void *);
-		
+#pragma region Object Get / Set General
+	int (*Obj_Get_Field_32bit)( objHndl objHnd, uint32_t nFieldIdx);
+	objHndl (__cdecl *Obj_Get_Field_ObjHnd__fastout)(objHndl, _fieldIdx);
+	uint64_t (__cdecl *Obj_Get_Field_64bit)(objHndl, _fieldIdx);
+	int (__cdecl *Obj_Get_Field_Float)(objHndl, _fieldIdx);
+	int (__cdecl *Obj_Get_IdxField_NumItems)(objHndl, _fieldIdx);
+	uint32_t (__cdecl *Obj_Get_IdxField_32bit)(objHndl, _fieldIdx, _fieldSubIdx);
+	uint64_t (__cdecl *Obj_Get_IdxField_64bit)(objHndl, _fieldIdx, _fieldSubIdx);
+	objHndl (__cdecl *Obj_Get_IdxField_ObjHnd)(objHndl, _fieldIdx, _fieldSubIdx);
+	int(__cdecl *Obj_Get_IdxField_256bit)(objHndl, _fieldIdx, _fieldSubIdx, void *);
+	int(__cdecl *Obj_Set_Field_32bit)(objHndl ObjHnd, uint32_t nFieldIdx, uint32_t n32Data);
+	int (__cdecl *Obj_Set_Field_64bit)(objHndl, uint32_t nFieldIdx, uint64_t);
+	int(__cdecl *Obj_Set_Field_ObjHnd)(objHndl, uint32_t nFieldIdx, objHndl);
+	int (__cdecl *Obj_Set_IdxField_byValue)(objHndl, _fieldIdx, _fieldSubIdx, ...);
+	void (__cdecl *Obj_Set_IdxField_byPtr)(objHndl, _fieldIdx, _fieldSubIdx, void * _SourceData);
+	int (__cdecl *Obj_Set_IdxField_ObjHnd)(objHndl, _fieldIdx, _fieldSubIdx, objHndl);
+#pragma endregion
 
-	ObjHndl(__cdecl *Obj_Get_Substitute_Inventory)  (ObjHndl);
-	ObjHndl (__cdecl *Obj_Get_Item_At_Inventory_Location_n)(ObjHndl, uint32_t nIdx);
-	PyObject*  (__cdecl *PyObj_From_ObjHnd) ( ObjHndl);
-	
-	
-	int(__cdecl *Obj_Set_Field_32bit)(ObjHndl ObjHnd, uint32_t nFieldIdx, uint32_t n32Data);
-	int (__cdecl *Obj_Set_Field_64bit)(ObjHndl, uint32_t nFieldIdx, uint64_t);
-	int(__cdecl *Obj_Set_Field_ObjHnd)(ObjHndl, uint32_t nFieldIdx, ObjHndl);
-	int (__cdecl *Obj_Set_IdxField_byValue)(ObjHndl, _nFieldIdx, _nFieldSubIdx, ...);
-	void (__cdecl *Obj_Set_IdxField_byPtr)(ObjHndl, _nFieldIdx, _nFieldSubIdx, void * _SourceData);
-	int (__cdecl *Obj_Set_IdxField_ObjHnd)(ObjHndl, _nFieldIdx, _nFieldSubIdx, ObjHndl);
-	
-	const char *(__cdecl *Obj_Get_DisplayName)(uint64_t obj, uint64_t observer);
+	PyObject*  (__cdecl *PyObjFromObjHnd) (objHndl);
+	const char *(__cdecl *ObjGetDisplayName)(uint64_t obj, uint64_t observer);
 
-	int(__cdecl *Obj_Faction_Has)(ObjHndl, int nFaction);
-	int(__cdecl *Obj_PC_Has_Faction_From_Reputation)(ObjHndl, int nFaction);
-	int(__cdecl *Obj_Faction_Add)(ObjHndl, int nFaction);
-	ObjHndl(__cdecl *Get_Group_Member_n)(GroupArray *, int nIdx);
-	int(__cdecl *Is_ObjHnd_In_Group_Array)(GroupArray *, ObjHndl);
-	int(__cdecl * Obj_Find_In_Group_Array)(GroupArray *, ObjHndl); // returns index
-	int(__cdecl * Obj_Remove_From_All_Group_Arrays)(ObjHndl);
-	int (__cdecl *Obj_Add_to_GroupArray)(GroupArray *, ObjHndl);
-	int(__cdecl *Obj_Add_to_PC_Group)(ObjHndl);
-	//PyObject* (*PyObj_From_ObjHnd)();
+	// GroupArray stuff (groups include: NPCs, PCs, AI Followers, Currently Selected)
+	objHndl(__cdecl *GroupArrayMemberN)(GroupArray *, int nIdx);
+	int(__cdecl *IsObjHndInGroupArray)(GroupArray *, objHndl);
+	int(__cdecl * ObjFindInGroupArray)(GroupArray *, objHndl); // returns index
+	int(__cdecl * ObjRemoveFromAllGroupArrays)(objHndl);
+	int(__cdecl *ObjAddToGroupArray)(GroupArray *, objHndl);
+	int(__cdecl *ObjAddToPCGroup)(objHndl);
+
+
+	objHndl(__cdecl *ObjGetSubstituteInventory)  (objHndl);
+	objHndl(__cdecl *ObjGetItemAtInventoryLocation)(objHndl, uint32_t nIdx);
+
+	
+	bool(__cdecl *StandPointPacketGet)(_jmpPntID jmpPntID, char * mapNameOut, size_t, _mapNum * mapNumOut, locXY * locXYOut);
+	int(__cdecl *ObjStandpointGet)(objHndl, _standPointType, StandPoint *);
+	int(__cdecl *ObjStandpointSet)(objHndl, _standPointType, StandPoint *);
+
+	int(__cdecl *ObjFactionHas)(objHndl, int nFaction);
+	int(__cdecl *ObjPCHasFactionFromReputation)(objHndl, int nFaction);
+	int(__cdecl *ObjFactionAdd)(objHndl, int nFaction);
+
+
+	int (__cdecl *ObjFeatAdd)(objHndl, _featCode);
+	
+	//PyObject* (*PyObjFromObjHnd)();
 	
 	uint64_t (__cdecl *GetProtoHandle)(int protoId);
 
-	bool DoesTypeSupportField(uint32_t objType, uint32_t objField) {
+	bool DoesTypeSupportField(uint32_t objType, _fieldIdx objField) {
 		int result;
 		__asm {			
 			push esi;
@@ -85,11 +138,13 @@ struct TempleFuncs : AddressTable {
 		rebase(ProcessSystemEvents, 0x101DF440);
 		rebase(GetProtoHandle, 0x1003AD70);
 
+# pragma region Obj Get/Set General
+
 		rebase(Obj_Get_Field_32bit, 0x1009E1D0);
 		rebase(Obj_Get_Field_64bit, 0x1009E2E0);
 		rebase(Obj_Get_Field_Float, 0x1009E260);
 		rebase(Obj_Get_Field_ObjHnd__fastout, 0x1009E360);
-		
+
 
 		rebase(Obj_Get_IdxField_NumItems, 0x1009E7E0);
 
@@ -97,22 +152,48 @@ struct TempleFuncs : AddressTable {
 		rebase(Obj_Get_IdxField_64bit, 0x1009E640);
 		rebase(Obj_Get_IdxField_ObjHnd, 0x1009E6D0);
 		rebase(Obj_Get_IdxField_256bit, 0x1009E770);
-		
 
-		rebase(PyObj_From_ObjHnd, 0x100AF1D0);
-		
-		rebase(Obj_Get_DisplayName, 0x1001FA80);
-		
-		
-		rebase(Obj_Get_Substitute_Inventory, 0x1007F5B0);
-		rebase(Obj_Get_Item_At_Inventory_Location_n, 0x100651B0);
-		
 		rebase(Obj_Set_Field_32bit, 0x100A0190);
 		rebase(Obj_Set_Field_64bit, 0x100A0200);
 		rebase(Obj_Set_Field_ObjHnd, 0x100A0280);
 		rebase(Obj_Set_IdxField_byValue, 0x100A1310);
 		rebase(Obj_Set_IdxField_byPtr, 0x100A1540);
 		rebase(Obj_Set_IdxField_ObjHnd, 0x100A14A0);
+
+<<<<<<< HEAD
+#pragma endregion
+		
+		rebase(PyObjFromObjHnd, 0x100AF1D0);
+		rebase(ObjGetDisplayName, 0x1001FA80);
+
+
+		rebase(GroupArrayMemberN, 0x100DF760);
+		rebase(ObjFindInGroupArray, 0x100DF780);
+		rebase(IsObjHndInGroupArray, 0x100DF960);
+		rebase(ObjRemoveFromAllGroupArrays, 0x1002BD00);
+		rebase(ObjAddToGroupArray, 0x100DF990);
+		rebase(ObjAddToPCGroup, 0x1002BBE0);
+
+
+		rebase(ObjGetSubstituteInventory, 0x1007F5B0);
+		rebase(ObjGetItemAtInventoryLocation, 0x100651B0);
+
+
+
+		rebase(ObjFactionHas, 0x1007E430);
+		rebase(ObjPCHasFactionFromReputation, 0x10054D70);
+		rebase(ObjFactionAdd, 0x1007E480);
+
+		rebase(ObjFeatAdd, 0x1007CF30);
+		
+
+		rebase(_DoesObjectFieldExist, 0x1009C190);
+
+
+		rebase(StandPointPacketGet, 0x100BDE20);
+		rebase(ObjStandpointGet, 0x100BA890);
+		rebase(ObjStandpointSet, 0x100BA8F0);
+		
 
 		rebase(Obj_Faction_Has, 0x1007E430);
 		rebase(Obj_PC_Has_Faction_From_Reputation, 0x10054D70);
@@ -646,6 +727,11 @@ enum obj_f
 
 };
 
+enum _standPointType_enum{
+	STANDPOINT_DAY = 0,
+	STANDPOINT_NIGHT = 1,
+	STANDPOINT_SCOUT = 2
+};
 
 const int CONTAINER_MAX_ITEMS = 1000; // may need to be reduced
 const int CRITTER_MAX_ITEMS = 24; // definitely needs to be increased in the future :)
