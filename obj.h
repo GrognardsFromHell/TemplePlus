@@ -4,12 +4,13 @@
 #include "temple_functions.h"
 
 #pragma pack(push, 1)
+/*
 struct ObjectId {
 	uint16_t subtype;
 	uint16_t something;
 	uint32_t field4;
 	GUID guid;
-};
+};*/
 
 struct TransientProps {
 	uint32_t renderColor;
@@ -39,7 +40,7 @@ struct GameObjectBody {
 	uint32_t field4;
 	ObjectId id;
 	ObjectId protoId;
-	ObjHndl protoHandle;
+	uint64_t protoHandle;
 	uint32_t field40;
 	uint16_t propCollectionHas;
 	uint16_t propCollectionItems;

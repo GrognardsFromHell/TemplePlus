@@ -160,9 +160,9 @@ struct TempleFuncs : AddressTable {
 		rebase(Obj_Set_IdxField_byPtr, 0x100A1540);
 		rebase(Obj_Set_IdxField_ObjHnd, 0x100A14A0);
 
-<<<<<<< HEAD
+
 #pragma endregion
-		
+
 		rebase(PyObjFromObjHnd, 0x100AF1D0);
 		rebase(ObjGetDisplayName, 0x1001FA80);
 
@@ -185,30 +185,29 @@ struct TempleFuncs : AddressTable {
 		rebase(ObjFactionAdd, 0x1007E480);
 
 		rebase(ObjFeatAdd, 0x1007CF30);
-		
 
-		rebase(_DoesObjectFieldExist, 0x1009C190);
+
 
 
 		rebase(StandPointPacketGet, 0x100BDE20);
 		rebase(ObjStandpointGet, 0x100BA890);
 		rebase(ObjStandpointSet, 0x100BA8F0);
-		
 
-		rebase(Obj_Faction_Has, 0x1007E430);
-		rebase(Obj_PC_Has_Faction_From_Reputation, 0x10054D70);
-		rebase(Obj_Faction_Add, 0x1007E480);
-		rebase(Get_Group_Member_n, 0x100DF760);
-		rebase(Obj_Find_In_Group_Array, 0x100DF780);
-		rebase(Is_ObjHnd_In_Group_Array, 0x100DF960);
-		rebase(Obj_Remove_From_All_Group_Arrays, 0x1002BD00);
-		rebase(Obj_Add_to_GroupArray, 0x100DF990);
-		rebase(Obj_Add_to_PC_Group, 0x1002BBE0);
-		
+
+		rebase(ObjFactionHas, 0x1007E430);
+		rebase(ObjPCHasFactionFromReputation, 0x10054D70);
+		rebase(ObjFactionAdd, 0x1007E480);
+		rebase(GroupArrayMemberN, 0x100DF760);
+		rebase(ObjFindInGroupArray, 0x100DF780);
+		rebase(IsObjHndInGroupArray, 0x100DF960);
+		rebase(ObjRemoveFromAllGroupArrays, 0x1002BD00);
+		rebase(ObjAddToGroupArray, 0x100DF990);
+		rebase(ObjAddToPCGroup, 0x1002BBE0);
+
 		rebase(_DoesObjectFieldExist, 0x1009C190);
-				
-	}
 
+
+	}
 private:
 
 	// usercall... eax has field id, ecx has type
