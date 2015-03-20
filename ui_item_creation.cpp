@@ -202,20 +202,20 @@ static vector<uint64_t> craftingProtoHandles[8];
 const char *getProtoName(uint64_t protoHandle) {
 	/*
 	 // gets item creation proto id
-  if ( sub_1009C950((ObjHndl)protoHandle) )
+  if ( sub_1009C950((objHndl)protoHandle) )
     v1 = sub_100392E0(protoHandle);
   else
-    v1 = sub_10039320((ObjHndl)protoHandle);
+    v1 = sub_10039320((objHndl)protoHandle);
 
   line.key = v1;
   if ( tig_mes_get_line(ui_itemcreation_names, &line) )
     result = line.value;
   else
-    result = Obj_Get_DisplayName((ObjHndl)protoHandle, (ObjHndl)protoHandle);
+    result = ObjGetDisplayName((objHndl)protoHandle, (objHndl)protoHandle);
   return result;
   */
 
-	return templeFuncs.Obj_Get_DisplayName(protoHandle, protoHandle);
+	return templeFuncs.ObjGetDisplayName(protoHandle, protoHandle);
 }
 
 static void loadProtoIds(MesHandle mesHandle) {

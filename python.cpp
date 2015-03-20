@@ -8,7 +8,8 @@
 
 // hmm should the functions be STATIC or maybe global? What's the syntax?
 
-#pragma region Python Global Functions - DONE
+
+#pragma region Helper Functions
 
 static bool isTypeCritter(int nObjType){
 	if (nObjType == obj_t_pc || nObjType == obj_t_npc){
@@ -24,7 +25,7 @@ static bool isTypeContainer(int nObjType){
 	return 0;
 };
 
-static _nFieldIdx objGetInventoryListFieldIdx(TemplePyObjHandle* obj){
+static _fieldIdx objGetInventoryListFieldIdx(TemplePyObjHandle* obj){
 	int objType = templeFuncs.Obj_Get_Field_32bit(obj->objHandle, obj_f_type);
 	if (isTypeCritter(objType)){
 		return obj_f_critter_inventory_list_idx;
@@ -35,94 +36,12 @@ static _nFieldIdx objGetInventoryListFieldIdx(TemplePyObjHandle* obj){
 	return 0;
 }
 
-static PyObject * pyObjHandleType_Faction_Has(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	int nFac;
-	if (!PyArg_ParseTuple(pyTupleIn, "i", &nFac)) {
-		return nullptr;
-	};
-	return PyInt_FromLong(templeFuncs.Obj_Faction_Has(obj->objHandle, nFac));
-};
+#pragma endregion
 
-static PyObject * pyObjHandleType_Faction_Add(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	int nFac;
-	if (!PyArg_ParseTuple(pyTupleIn, "i", &nFac)) {
-		return nullptr;
-	};
-	
-	if (nFac == 0){
-		return PyInt_FromLong(0);
-	}
-	if (! templeFuncs.Obj_Faction_Has(obj->objHandle, nFac) ) {
-		templeFuncs.Obj_Faction_Add(obj->objHandle, nFac);
-	}
-	
-	return PyInt_FromLong(1);
-};
-
-static PyObject * pyObjHandleType_Inventory(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	int nArgs = PyTuple_Size(pyTupleIn);
-	ObjHndl ObjHnd = obj->objHandle;
-	int nModeSelect = 0;
-	bool bIncludeBackpack = 1;
-	bool bIncludeEquipped = 0;
-	bool bRetunProtos = 0;
-	int nInventoryFieldType = objGetInventoryListFieldIdx(obj);
-
-	
-	
-	int nItems = templeFuncs.Obj_Get_IdxField_NumItems(ObjHnd, nInventoryFieldType);
-
-	if (nArgs == 1){ // returns the entire non-worn inventory
-		if (!PyArg_ParseTuple(pyTupleIn, "i", &nModeSelect)) {
-			return nullptr;
-		} 
-		else if (nModeSelect == 1){
-			bIncludeEquipped = 1;
-		}
-		else if (nModeSelect == 2){
-			bIncludeBackpack = 0;
-			bIncludeEquipped = 1;
-		};
-	};
-
-	ObjHndl ItemObjHnds[8192] = {}; // seems large enough to cover any practical case :P
-
-	int nMax = CRITTER_MAX_ITEMS;
-	if (nInventoryFieldType == obj_f_container_inventory_list_idx){
-		nMax = CONTAINER_MAX_ITEMS;
-	};
-
-	int j = 0;
-	if (bIncludeBackpack){
-		for (int i = 0; (j < nItems) & (i < nMax); i++){
-			ItemObjHnds[j] = templeFuncs.Obj_Get_Item_At_Inventory_Location_n(ObjHnd, i);
-			if (ItemObjHnds[j]){ j++; };
-		}
-	};
-
-	if (bIncludeEquipped){
-		for (int i = CRITTER_EQUIPPED_ITEM_OFFSET; (j < nItems) & (i < CRITTER_EQUIPPED_ITEM_OFFSET + CRITTER_EQUIPPED_ITEM_SLOTS); i++){
-			ItemObjHnds[j] = templeFuncs.Obj_Get_Item_At_Inventory_Location_n(ObjHnd, i);
-			if (ItemObjHnds[j]){ j++; };
-		}
-	};
-
-	auto ItemPyTuple = PyTuple_New(j);
-	if (!bRetunProtos){
-		for (int i = 0; i < j; i++){
-			PyTuple_SetItem(ItemPyTuple, i, templeFuncs.PyObj_From_ObjHnd(ItemObjHnds[i]));
-		}
-	}
-	else {
-		//TODO
-	}
-	
-	
-	return ItemPyTuple;
-};
+#pragma region Python Obj Field Get/Set Function Implementation
 
 static PyObject * pyObjHandleType_Get_Field_64bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	_nFieldIdx nFieldIdx = 0;
+	_fieldIdx nFieldIdx = 0;
 	uint64_t n64 = 0;
 	if (!PyArg_ParseTuple(pyTupleIn, "i", &nFieldIdx)) {
 		return nullptr;
@@ -131,7 +50,7 @@ static PyObject * pyObjHandleType_Get_Field_64bit(TemplePyObjHandle* obj, PyObje
 };
 
 static PyObject * pyObjHandleType_Set_Field_64bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	_nFieldIdx nFieldIdx = 0;
+	_fieldIdx nFieldIdx = 0;
 	uint64_t n64 = 0;
 	if (!PyArg_ParseTuple(pyTupleIn, "iL", &nFieldIdx, &n64)) {
 		return PyInt_FromLong(0);
@@ -141,8 +60,8 @@ static PyObject * pyObjHandleType_Set_Field_64bit(TemplePyObjHandle* obj, PyObje
 };
 
 static PyObject * pyObjHandleType_Get_Field_ObjHandle(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	_nFieldIdx nFieldIdx = 0;
-	ObjHndl ObjHnd = 0;
+	_fieldIdx nFieldIdx = 0;
+	objHndl ObjHnd = 0;
 	if (!PyArg_ParseTuple(pyTupleIn, "i", &nFieldIdx)) {
 		return nullptr;
 	};
@@ -150,8 +69,8 @@ static PyObject * pyObjHandleType_Get_Field_ObjHandle(TemplePyObjHandle* obj, Py
 };
 
 static PyObject * pyObjHandleType_Set_Field_ObjHandle(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	_nFieldIdx nFieldIdx = 0;
-	ObjHndl ObjHnd = 0;
+	_fieldIdx nFieldIdx = 0;
+	objHndl ObjHnd = 0;
 	if (!PyArg_ParseTuple(pyTupleIn, "iL", &nFieldIdx, &ObjHnd)) {
 		return PyInt_FromLong(0);
 	};
@@ -160,8 +79,8 @@ static PyObject * pyObjHandleType_Set_Field_ObjHandle(TemplePyObjHandle* obj, Py
 };
 
 static PyObject * pyObjHandleType_Get_IdxField_32bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	_nFieldIdx nFieldIdx = 0;
-	_nFieldSubIdx nFieldSubIdx = 0;
+	_fieldIdx nFieldIdx = 0;
+	_fieldSubIdx nFieldSubIdx = 0;
 	uint64_t n32 = 0;
 	if (!PyArg_ParseTuple(pyTupleIn, "ii", &nFieldIdx, &nFieldSubIdx)) {
 		return nullptr;
@@ -171,8 +90,8 @@ static PyObject * pyObjHandleType_Get_IdxField_32bit(TemplePyObjHandle* obj, PyO
 };
 
 static PyObject * pyObjHandleType_Set_IdxField_32bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	_nFieldIdx nFieldIdx = 0;
-	_nFieldSubIdx nFieldSubIdx = 0;
+	_fieldIdx nFieldIdx = 0;
+	_fieldSubIdx nFieldSubIdx = 0;
 	uint32_t n32 = 0;
 	if (!PyArg_ParseTuple(pyTupleIn, "iii", &nFieldIdx, &nFieldSubIdx, &n32)) {
 		return PyInt_FromLong(0);
@@ -182,8 +101,8 @@ static PyObject * pyObjHandleType_Set_IdxField_32bit(TemplePyObjHandle* obj, PyO
 };
 
 static PyObject * pyObjHandleType_Get_IdxField_64bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	_nFieldIdx nFieldIdx = 0;
-	_nFieldSubIdx nFieldSubIdx = 0;
+	_fieldIdx nFieldIdx = 0;
+	_fieldSubIdx nFieldSubIdx = 0;
 	uint64_t n64 = 0;
 	if (!PyArg_ParseTuple(pyTupleIn, "ii", &nFieldIdx, &nFieldSubIdx)) {
 		return nullptr;
@@ -193,8 +112,8 @@ static PyObject * pyObjHandleType_Get_IdxField_64bit(TemplePyObjHandle* obj, PyO
 };
 
 static PyObject * pyObjHandleType_Set_IdxField_64bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	_nFieldIdx nFieldIdx = 0;
-	_nFieldSubIdx nFieldSubIdx = 0;
+	_fieldIdx nFieldIdx = 0;
+	_fieldSubIdx nFieldSubIdx = 0;
 	uint64_t n64 = 0;
 	if (!PyArg_ParseTuple(pyTupleIn, "iiL", &nFieldIdx, &nFieldSubIdx, &n64)) {
 		return PyInt_FromLong(0);
@@ -203,31 +122,123 @@ static PyObject * pyObjHandleType_Set_IdxField_64bit(TemplePyObjHandle* obj, PyO
 	return PyInt_FromLong(1);
 };
 
-static PyObject * pyObjHandleType_Remove_From_All_Groups(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	templeFuncs.Obj_Remove_From_All_Group_Arrays(obj->objHandle);
-	return PyInt_FromLong(1);
-};
-
-
-
-static PyObject * pyObjHandleType_PC_Rejoin(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-
-	templeFuncs.Obj_Add_to_PC_Group(obj->objHandle);
-	return PyInt_FromLong(1);
-};
-
 
 #pragma endregion
 
+
+#pragma region Python Obj Faction Manipulation
+static PyObject * pyObjHandleType_Faction_Has(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+	int nFac;
+	if (!PyArg_ParseTuple(pyTupleIn, "i", &nFac)) {
+		return nullptr;
+	};
+	return PyInt_FromLong(templeFuncs.ObjFactionHas(obj->objHandle, nFac));
+};
+
+static PyObject * pyObjHandleType_Faction_Add(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+	int nFac;
+	if (!PyArg_ParseTuple(pyTupleIn, "i", &nFac)) {
+		return nullptr;
+	};
+
+	if (nFac == 0){
+		return PyInt_FromLong(0);
+	}
+	if (!templeFuncs.ObjFactionHas(obj->objHandle, nFac)) {
+		templeFuncs.ObjFactionAdd(obj->objHandle, nFac);
+	}
+
+	return PyInt_FromLong(1);
+};
+
+#pragma endregion
+
+#pragma region Python Obj Inventory Manipulation
+static PyObject * pyObjHandleType_Inventory(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+	int nArgs = PyTuple_Size(pyTupleIn);
+	objHndl ObjHnd = obj->objHandle;
+	int nModeSelect = 0;
+	bool bIncludeBackpack = 1;
+	bool bIncludeEquipped = 0;
+	bool bRetunProtos = 0;
+	int nInventoryFieldType = objGetInventoryListFieldIdx(obj);
+
+	int nItems = templeFuncs.Obj_Get_IdxField_NumItems(ObjHnd, nInventoryFieldType);
+
+	if (nArgs == 1){ // returns the entire non-worn inventory
+		if (!PyArg_ParseTuple(pyTupleIn, "i", &nModeSelect)) {
+			return nullptr;
+		}
+		else if (nModeSelect == 1){
+			bIncludeEquipped = 1;
+		}
+		else if (nModeSelect == 2){
+			bIncludeBackpack = 0;
+			bIncludeEquipped = 1;
+		};
+	};
+
+	objHndl ItemObjHnds[8192] = {}; // seems large enough to cover any practical case :P
+
+	int nMax = CRITTER_MAX_ITEMS;
+	if (nInventoryFieldType == obj_f_container_inventory_list_idx){
+		nMax = CONTAINER_MAX_ITEMS;
+	};
+
+	int j = 0;
+	if (bIncludeBackpack){
+		for (int i = 0; (j < nItems) & (i < nMax); i++){
+			ItemObjHnds[j] = templeFuncs.ObjGetItemAtInventoryLocation(ObjHnd, i);
+			if (ItemObjHnds[j]){ j++; };
+		}
+	};
+
+	if (bIncludeEquipped){
+		for (int i = CRITTER_EQUIPPED_ITEM_OFFSET; (j < nItems) & (i < CRITTER_EQUIPPED_ITEM_OFFSET + CRITTER_EQUIPPED_ITEM_SLOTS); i++){
+			ItemObjHnds[j] = templeFuncs.ObjGetItemAtInventoryLocation(ObjHnd, i);
+			if (ItemObjHnds[j]){ j++; };
+		}
+	};
+
+	auto ItemPyTuple = PyTuple_New(j);
+	if (!bRetunProtos){
+		for (int i = 0; i < j; i++){
+			PyTuple_SetItem(ItemPyTuple, i, templeFuncs.PyObjFromObjHnd(ItemObjHnds[i]));
+		}
+	}
+	else {
+		//TODO
+	}
+
+
+	return ItemPyTuple;
+};
+
+#pragma endregion
+
+static PyObject * pyObjHandleType_Remove_From_All_Groups(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+	templeFuncs.ObjRemoveFromAllGroupArrays(obj->objHandle);
+	return PyInt_FromLong(1);
+};
+
+static PyObject * pyObjHandleType_PC_Add(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+	// TODO  add fluidity to number of PCs / NPCs
+	templeFuncs.ObjAddToPCGroup(obj->objHandle);
+	return PyInt_FromLong(1);
+};
+
+
+
+
 /*
 static PyObject * pyObjHandleType_Set_IdxField_byValue(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-_nFieldIdx nFieldIdx = 0;
-_nFieldSubIdx nFieldSubIdx = 0;
-void n64; // well ASM allows this :P what's python for varArg?
-if (!PyArg_ParseTuple(pyTupleIn, "iiL", &nFieldIdx, &nFieldSubIdx, &n64)) {
+_fieldIdx nFieldIdx = 0;
+_fieldSubIdx nFieldSubIdx = 0;
+va_list dataIn; 
+if (!PyArg_ParseTuple(pyTupleIn, "iiL", &nFieldIdx, &nFieldSubIdx, &dataIn)) {
 return PyInt_FromLong(0);
 };
-templeFuncs.Obj_Set_IdxField_byValue(obj->objHandle, nFieldIdx, nFieldSubIdx, n64);
+templeFuncs.Obj_Set_IdxField_byValue(obj->objHandle, nFieldIdx, nFieldSubIdx, dataIn);
 return PyInt_FromLong(1);
 }; */
 
@@ -238,15 +249,15 @@ static PyMethodDef pyObjHandleMethods_New[] = {
 	"inventory", (PyCFunction)pyObjHandleType_Inventory, METH_VARARGS, "Fetches a tuple of the object's inventory (items are Python Objects). Optional argument int nModeSelect : 0 - backpack only (excludes equipped items); 1 - backpack + equipped; 2 - equipped only",
 	"obj_get_field_64bit", (PyCFunction)pyObjHandleType_Get_Field_64bit, METH_VARARGS, "Gets 64 bit field",
 	"obj_set_field_64bit", (PyCFunction)pyObjHandleType_Set_Field_64bit, METH_VARARGS, "Sets 64 bit field",
-	"obj_get_field_objhndl", (PyCFunction)pyObjHandleType_Get_Field_ObjHandle, METH_VARARGS, "Gets ObjHndl field",
-	"obj_set_field_objhndl", (PyCFunction)pyObjHandleType_Set_Field_ObjHandle, METH_VARARGS, "Sets ObjHndl field",
+	"obj_get_field_objHndl", (PyCFunction)pyObjHandleType_Get_Field_ObjHandle, METH_VARARGS, "Gets objHndl field",
+	"obj_set_field_objHndl", (PyCFunction)pyObjHandleType_Set_Field_ObjHandle, METH_VARARGS, "Sets objHndl field",
 	"obj_get_idxfield_32bit", (PyCFunction)pyObjHandleType_Get_IdxField_32bit, METH_VARARGS, "Gets 32 bit index field",
 	"obj_set_idxfield_32bit", (PyCFunction)pyObjHandleType_Set_IdxField_32bit, METH_VARARGS, "Sets 32 bit index field",
 	"obj_get_idxfield_64bit", (PyCFunction)pyObjHandleType_Get_IdxField_64bit, METH_VARARGS, "Gets 64 bit index field",
 	"obj_set_idxfield_64bit", (PyCFunction)pyObjHandleType_Set_IdxField_64bit, METH_VARARGS, "Sets 64 bit index field",
 	//"obj_set_idxfield_byvalue", (PyCFunction)pyObjHandleType_Set_IdxField_byValue, METH_VARARGS, "Sets index field - general (depending on nFieldIndex which the game looks up and fetches nFieldType to determine data size)",
 	"obj_remove_from_all_groups", (PyCFunction)pyObjHandleType_Remove_From_All_Groups, METH_VARARGS, "Removes the object from all the groups (GroupList, PCs, NPCs, AI controlled followers, Currently Selected",
-	"pc_rejoin", (PyCFunction)pyObjHandleType_PC_Rejoin, METH_VARARGS, "Removes the object from all the groups (GroupList, PCs, NPCs, AI controlled followers, Currently Selected",
+	"pc_add", (PyCFunction)pyObjHandleType_PC_Add, METH_VARARGS, "Adds object as a PC party member.",
 
 	0, 0, 0, 0
 };
@@ -259,13 +270,13 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 		return PyString_FromString("IT SURE DOES!");
 	}
 
-	#pragma region FINISHED
+	#pragma region PyObjHandle Members - FINISHED
 	if (!_strcmpi(name, "ObjHandle")) {
 		return  PyLong_FromLongLong(obj->objHandle); 
 	}
 
 	if (!_strcmpi(name, "factions")) {
-		ObjHndl ObjHnd = obj->objHandle;
+		objHndl ObjHnd = obj->objHandle;
 		int a[50] = {};
 		int n = 0;
 
@@ -294,8 +305,8 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 	} 
 	else if (!_strcmpi(name, "substitute_inventory"))
 	{
-		ObjHndl ObjSubsInv = templeFuncs.Obj_Get_Substitute_Inventory(obj->objHandle);
-		return templeFuncs.PyObj_From_ObjHnd(ObjSubsInv);
+		objHndl ObjSubsInv = templeFuncs.ObjGetSubstituteInventory(obj->objHandle);
+		return templeFuncs.PyObjFromObjHnd(ObjSubsInv);
 	}; 
 
 	#pragma endregion
@@ -316,8 +327,8 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 	if (!_strcmpi(name, "pc_stay_behind")){
 		return Py_FindMethod(pyObjHandleMethods_New, obj, "obj_remove_from_all_groups");
 	}
-	else if (!_strcmpi(name, "pc_rejoin")){
-		return Py_FindMethod(pyObjHandleMethods_New, obj, "pc_rejoin");
+	else if (!_strcmpi(name, "pc_add")){
+		return Py_FindMethod(pyObjHandleMethods_New, obj, "pc_add");
 	};
 
 	#pragma endregion
@@ -327,8 +338,8 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 	if (!_strcmpi(name, "obj_get_field_64bit")) {
 		return Py_FindMethod(pyObjHandleMethods_New, obj, "obj_get_field_64bit");
 	}
-	else if (!_strcmpi(name, "obj_get_field_ObjHndl")){
-		return Py_FindMethod(pyObjHandleMethods_New, obj, "obj_get_field_objhndl");
+	else if (!_strcmpi(name, "obj_get_field_objHndl")){
+		return Py_FindMethod(pyObjHandleMethods_New, obj, "obj_get_field_objHndl");
 	}
 	else if (!_strcmpi(name, "obj_get_idxfield_numitems")){
 		return Py_FindMethod(pyObjHandleMethods_New, obj, "obj_get_idxfield_numitems");
@@ -339,7 +350,7 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 	else if (!_strcmpi(name, "obj_get_idxfield_64bit")){
 		return Py_FindMethod(pyObjHandleMethods_New, obj, "obj_get_idxfield_64bit");
 	}
-	else if (!_strcmpi(name, "obj_get_idxfield_ObjHndl")){
+	else if (!_strcmpi(name, "obj_get_idxfield_objHndl")){
 		return Py_FindMethod(pyObjHandleMethods_New, obj, "obj_get_idxfield_objhandle");
 	}
 	else if (!_strcmpi(name, "obj_get_idxfield_256bit")){
@@ -348,8 +359,8 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 	else if (!_strcmpi(name, "obj_set_field_64bit")) {
 		return Py_FindMethod(pyObjHandleMethods_New, obj, "obj_set_field_64bit");
 	}
-	else if (!_strcmpi(name, "obj_set_field_ObjHndl")) {
-		return Py_FindMethod(pyObjHandleMethods_New, obj, "obj_set_field_objhndl");
+	else if (!_strcmpi(name, "obj_set_field_objHndl")) {
+		return Py_FindMethod(pyObjHandleMethods_New, obj, "obj_set_field_objHndl");
 	}
 	else if (!_strcmpi(name, "obj_set_idxfield_32bit")){
 		return Py_FindMethod(pyObjHandleMethods_New, obj, "obj_set_idxfield_32bit");
