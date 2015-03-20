@@ -10,47 +10,6 @@ LOG(info) << "FIELD!";
 }
 */
 
-struct GameSystemConf {
-	bool editor;
-	int width;
-	int height;
-	int field_c;
-	int field_10;
-	int field_14;
-};
-
-struct TioFile {
-	const char* filename;
-	uint32_t flags;
-	FILE fileHandle;
-	uint32_t field_c;
-	uint32_t field_10;
-	uint32_t field_14;
-	uint32_t field_18;
-	uint32_t field_1c;
-	uint32_t field_20;
-	uint32_t field_24;
-	uint32_t field_28;
-	uint32_t field_2c;
-};
-
-struct GameSystemSaveFile {
-	uint32_t saveVersion;
-	TioFile* file;
-};
-
-struct RebuildBufferInfo {
-	uint32_t gameConfField_c;
-	uint32_t unk1;
-	uint32_t unk2;
-	uint32_t width;
-	uint32_t height;
-	uint32_t unk3;
-	uint32_t unk4;
-	uint32_t width2;
-	uint32_t height2;
-};
-
 typedef bool (__cdecl *GameSystemInit)(GameSystemConf* conf);
 typedef void (__cdecl *GameSystemReset)();
 typedef bool (__cdecl *GameSystemModuleLoad)();
@@ -84,9 +43,32 @@ static GlobalStruct<GameSystems, 0x102AB368> gameSystems;
 static GameSystem orgFirstSystem;
 static GameSystem orgLastSystem;
 
+static vector<std::function<void(GameSystemConf*)>> beforeInitCallbacks;
+static vector<std::function<void(GameSystemConf*)>> afterInitCallbacks;
+static vector<std::function<void()>> beforeResetCallbacks;
+static vector<std::function<void()>> afterResetCallbacks;
+static vector<std::function<void()>> beforeModuleLoadCallbacks;
+static vector<std::function<void()>> afterModuleLoadCallbacks;
+static vector<std::function<void()>> beforeModuleUnloadCallbacks;
+static vector<std::function<void()>> afterModuleUnloadCallbacks;
+static vector<std::function<void()>> beforeExitCallbacks;
+static vector<std::function<void()>> afterExitCallbacks;
+static vector<std::function<void(time_t)>> beforeAdvanceTimeCallbacks;
+static vector<std::function<void(time_t)>> afterAdvanceTimeCallbacks;
+static vector<std::function<void(TioFile)>> beforeSaveCallbacks;
+static vector<std::function<void(TioFile)>> afterSaveCallbacks;
+static vector<std::function<void(GameSystemSaveFile*)>> beforeLoadCallbacks;
+static vector<std::function<void(GameSystemSaveFile*)>> afterLoadCallbacks;
+static vector<std::function<void(RebuildBufferInfo*)>> beforeResizeBuffersCallbacks;
+static vector<std::function<void(RebuildBufferInfo*)>> afterResizeBuffersCallbacks;
+
 struct BeforeCallbacks {
 	static bool __cdecl Init(GameSystemConf* conf) {
 		LOG(info) << "EVENT: Before Init";
+
+		for (auto& callback : beforeInitCallbacks) {
+			callback(conf);
+		}
 
 		if (orgFirstSystem.init) {
 			return orgFirstSystem.init(conf);
@@ -97,6 +79,10 @@ struct BeforeCallbacks {
 	static void __cdecl Reset() {
 		LOG(info) << "EVENT: Before Reset";
 
+		for (auto& callback : beforeResetCallbacks) {
+			callback();
+		}
+
 		if (orgFirstSystem.reset) {
 			orgFirstSystem.reset();
 		}
@@ -104,6 +90,10 @@ struct BeforeCallbacks {
 
 	static bool __cdecl ModuleLoad() {
 		LOG(info) << "EVENT: Before Module Load";
+
+		for (auto& callback : beforeModuleLoadCallbacks) {
+			callback();
+		}
 
 		if (orgFirstSystem.moduleLoad) {
 			return orgFirstSystem.moduleLoad();
@@ -113,6 +103,11 @@ struct BeforeCallbacks {
 
 	static void __cdecl ModuleUnload() {
 		LOG(info) << "EVENT: Before Module Unload";
+
+		for (auto& callback : beforeModuleUnloadCallbacks) {
+			callback();
+		}
+
 		if (orgFirstSystem.moduleUnload) {
 			orgFirstSystem.moduleUnload();
 		}
@@ -120,6 +115,11 @@ struct BeforeCallbacks {
 
 	static void __cdecl Exit() {
 		LOG(info) << "EVENT: Before Exit";
+
+		for (auto& callback : beforeExitCallbacks) {
+			callback();
+		}
+
 		if (orgFirstSystem.exit) {
 			orgFirstSystem.exit();
 		}
@@ -128,6 +128,10 @@ struct BeforeCallbacks {
 	static void __cdecl AdvanceTime(time_t time) {
 		// This spams the log a lot
 		// LOG(info) << "EVENT: Before Advance Time";
+		for (auto& callback : beforeAdvanceTimeCallbacks) {
+			callback(time);
+		}
+
 		if (orgFirstSystem.advanceTime) {
 			orgFirstSystem.advanceTime(time);
 		}
@@ -135,7 +139,11 @@ struct BeforeCallbacks {
 
 	static bool __cdecl Save(TioFile file) {
 		LOG(info) << "EVENT: Before Save";
-		
+
+		for (auto& callback : beforeSaveCallbacks) {
+			callback(file);
+		}
+
 		if (orgFirstSystem.save) {
 			return orgFirstSystem.save(file);
 		}
@@ -144,7 +152,11 @@ struct BeforeCallbacks {
 
 	static bool __cdecl Load(GameSystemSaveFile* file) {
 		LOG(info) << "EVENT: Before Load";
-		
+
+		for (auto& callback : beforeLoadCallbacks) {
+			callback(file);
+		}
+
 		if (orgFirstSystem.load) {
 			return orgFirstSystem.load(file);
 		}
@@ -153,18 +165,16 @@ struct BeforeCallbacks {
 
 	static void __cdecl ResetBuffers(RebuildBufferInfo* info) {
 		LOG(info) << "EVENT: Before Reset Buffers";
+
+		for (auto& callback : beforeResizeBuffersCallbacks) {
+			callback(info);
+		}
+
 		if (orgFirstSystem.resetBuffers) {
 			orgFirstSystem.resetBuffers(info);
 		}
 	}
 };
-
-int NumberOfSetBits(int i)
-{
-	i = i - ((i >> 1) & 0x55555555);
-	i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
-	return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
-}
 
 struct AfterCallbacks {
 	static bool __cdecl Init(GameSystemConf* conf) {
@@ -175,7 +185,19 @@ struct AfterCallbacks {
 
 		LOG(info) << "EVENT: After Init";
 
-		/*struct FieldDef {
+		for (auto& callback : afterInitCallbacks) {
+			callback(conf);
+		}
+
+		/*
+		
+int NumberOfSetBits(int i)
+{
+	i = i - ((i >> 1) & 0x55555555);
+	i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
+	return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
+}
+		struct FieldDef {
 			int protoPropIndex;
 			int field4;
 			int PropBitmap_idx1;
@@ -215,7 +237,7 @@ struct AfterCallbacks {
 				<< ";" << format("0x%x") % field.PropBitmask << ";" << field.PropBitmap_idx2
 				<< ";" << field.IsStoredInPropCollection << ";" << field.FieldTypeCode << typeSupport;
 		}*/
-		
+
 		return result;
 	}
 
@@ -225,6 +247,9 @@ struct AfterCallbacks {
 		}
 
 		LOG(info) << "EVENT: After Reset";
+		for (auto& callback : afterResetCallbacks) {
+			callback();
+		}
 	}
 
 	static bool __cdecl ModuleLoad() {
@@ -233,6 +258,9 @@ struct AfterCallbacks {
 			result = orgFirstSystem.moduleLoad();
 		}
 		LOG(info) << "EVENT: After Module Load";
+		for (auto& callback : afterModuleLoadCallbacks) {
+			callback();
+		}
 		return result;
 	}
 
@@ -241,13 +269,19 @@ struct AfterCallbacks {
 			orgFirstSystem.moduleUnload();
 		}
 		LOG(info) << "EVENT: After Module Unload";
+		for (auto& callback : afterModuleUnloadCallbacks) {
+			callback();
+		}
 	}
 
 	static void __cdecl Exit() {
 		if (orgFirstSystem.exit) {
 			orgFirstSystem.exit();
 		}
-		LOG(info) << "EVENT: After Module Exit";
+		LOG(info) << "EVENT: After Exit";
+		for (auto& callback : afterExitCallbacks) {
+			callback();
+		}
 	}
 
 	static void __cdecl AdvanceTime(time_t time) {
@@ -256,6 +290,9 @@ struct AfterCallbacks {
 		}
 		// Logspam
 		// LOG(info) << "EVENT: After Advance Time";
+		for (auto& callback : afterAdvanceTimeCallbacks) {
+			callback(time);
+		}
 	}
 
 	static bool __cdecl Save(TioFile file) {
@@ -264,6 +301,9 @@ struct AfterCallbacks {
 			result = orgFirstSystem.save(file);
 		}
 		LOG(info) << "EVENT: After Save";
+		for (auto& callback : afterSaveCallbacks) {
+			callback(file);
+		}
 		return result;
 	}
 
@@ -273,6 +313,9 @@ struct AfterCallbacks {
 			result = orgFirstSystem.load(file);
 		}
 		LOG(info) << "EVENT: After Load";
+		for (auto& callback : afterLoadCallbacks) {
+			callback(file);
+		}
 		return result;
 	}
 
@@ -281,13 +324,16 @@ struct AfterCallbacks {
 			orgFirstSystem.resetBuffers(info);
 		}
 		LOG(info) << "EVENT: After Reset Buffers";
+		for (auto& callback : afterResizeBuffersCallbacks) {
+			callback(info);
+		}
 	}
 };
 
 /*
 	Overrides the first and last game system so we can provide before/after hooks for all events.
 */
-class GameSystemHook : TempleFix {
+class GameSystemHookInitializer : TempleFix {
 public:
 	const char* name() override {
 		return "Gamesystem Hooks";
@@ -295,7 +341,7 @@ public:
 
 	void apply() override {
 		// Override all functions for "before" callbacks
-		auto &firstSystem = gameSystems->systems[0];
+		auto& firstSystem = gameSystems->systems[0];
 		orgFirstSystem = firstSystem;
 		firstSystem.init = &BeforeCallbacks::Init;
 		firstSystem.reset = &BeforeCallbacks::Reset;
@@ -308,7 +354,7 @@ public:
 		firstSystem.resetBuffers = &BeforeCallbacks::ResetBuffers;
 
 		// Override all functions for "before" callbacks
-		auto &lastSystem = gameSystems->systems[60];
+		auto& lastSystem = gameSystems->systems[60];
 		orgLastSystem = lastSystem;
 		lastSystem.init = &AfterCallbacks::Init;
 		lastSystem.reset = &AfterCallbacks::Reset;
@@ -321,4 +367,76 @@ public:
 		lastSystem.resetBuffers = &AfterCallbacks::ResetBuffers;
 	}
 
-} gameSystemHook;
+} gameSystemHookInitializer;
+
+void GameSystemHooks::AddInitHook(std::function<void(GameSystemConf*)> callback, bool before) {
+	if (before) {
+		beforeInitCallbacks.push_back(callback);
+	} else {
+		afterInitCallbacks.push_back(callback);
+	}
+}
+
+void GameSystemHooks::AddResetHook(std::function<void()> callback, bool before) {
+	if (before) {
+		beforeResetCallbacks.push_back(callback);
+	} else {
+		afterResetCallbacks.push_back(callback);
+	}
+}
+
+void GameSystemHooks::AddModuleLoadHook(std::function<void()> callback, bool before) {
+	if (before) {
+		beforeModuleLoadCallbacks.push_back(callback);
+	} else {
+		afterModuleLoadCallbacks.push_back(callback);
+	}
+}
+
+void GameSystemHooks::AddModuleUnloadHook(std::function<void()> callback, bool before) {
+	if (before) {
+		beforeModuleUnloadCallbacks.push_back(callback);
+	} else {
+		afterModuleUnloadCallbacks.push_back(callback);
+	}
+}
+
+void GameSystemHooks::AddExitHook(std::function<void()> callback, bool before) {
+	if (before) {
+		beforeExitCallbacks.push_back(callback);
+	} else {
+		afterExitCallbacks.push_back(callback);
+	}
+}
+
+void GameSystemHooks::AddAdvanceTimeHook(std::function<void(time_t)> callback, bool before) {
+	if (before) {
+		beforeAdvanceTimeCallbacks.push_back(callback);
+	} else {
+		afterAdvanceTimeCallbacks.push_back(callback);
+	}
+}
+
+void GameSystemHooks::AddSaveHook(std::function<void(TioFile)> callback, bool before) {
+	if (before) {
+		beforeSaveCallbacks.push_back(callback);
+	} else {
+		afterSaveCallbacks.push_back(callback);
+	}
+}
+
+void GameSystemHooks::AddLoadHook(std::function<void(GameSystemSaveFile*)> callback, bool before) {
+	if (before) {
+		beforeLoadCallbacks.push_back(callback);
+	} else {
+		afterLoadCallbacks.push_back(callback);
+	}
+}
+
+void GameSystemHooks::AddResizeBuffersHook(std::function<void(RebuildBufferInfo*)> callback, bool before) {
+	if (before) {
+		beforeResizeBuffersCallbacks.push_back(callback);
+	} else {
+		afterResizeBuffersCallbacks.push_back(callback);
+	}
+}

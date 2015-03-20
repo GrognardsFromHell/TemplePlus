@@ -3,8 +3,8 @@
 
 struct TemplePlusConfig
 {
-	bool skipIntro = true;
-	bool skipLegal = true;
+	bool skipIntro = false;
+	bool skipLegal = false;
 	bool useDirect3d9Ex = true;
 	bool windowed = true;
 };

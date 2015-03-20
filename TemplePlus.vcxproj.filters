@@ -2,172 +2,83 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="addressess.cpp" />
+    <ClCompile Include="bonusspells.cpp" />
+    <ClCompile Include="d3d8to9\d3d8to9.cpp" />
+    <ClCompile Include="d3d8to9\d3d8to9_device.cpp" />
+    <ClCompile Include="d3d8to9\d3d8to9_indexbuffer.cpp" />
+    <ClCompile Include="d3d8to9\d3d8to9_rootobj.cpp" />
+    <ClCompile Include="d3d8to9\d3d8to9_surface.cpp" />
+    <ClCompile Include="d3d8to9\d3d8to9_texture.cpp" />
+    <ClCompile Include="d3d8to9\d3d8to9_vertexbuffer.cpp" />
+    <ClCompile Include="fixes.cpp" />
+    <ClCompile Include="gamesystems.cpp" />
     <ClCompile Include="graphics.cpp" />
     <ClCompile Include="libraryholder.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="temple_functions.cpp" />
-    <ClCompile Include="minhook\src\buffer.c">
-      <Filter>MinHook</Filter>
-    </ClCompile>
-    <ClCompile Include="minhook\src\HDE\hde32.c">
-      <Filter>MinHook</Filter>
-    </ClCompile>
-    <ClCompile Include="minhook\src\HDE\hde64.c">
-      <Filter>MinHook</Filter>
-    </ClCompile>
-    <ClCompile Include="minhook\src\hook.c">
-      <Filter>MinHook</Filter>
-    </ClCompile>
-    <ClCompile Include="minhook\src\trampoline.c">
-      <Filter>MinHook</Filter>
-    </ClCompile>
-    <ClCompile Include="d3d8to9\d3d8to9.cpp">
-      <Filter>D3D8to9</Filter>
-    </ClCompile>
-    <ClCompile Include="d3d8to9\d3d8to9_device.cpp">
-      <Filter>D3D8to9</Filter>
-    </ClCompile>
-    <ClCompile Include="d3d8to9\d3d8to9_indexbuffer.cpp">
-      <Filter>D3D8to9</Filter>
-    </ClCompile>
-    <ClCompile Include="d3d8to9\d3d8to9_rootobj.cpp">
-      <Filter>D3D8to9</Filter>
-    </ClCompile>
-    <ClCompile Include="d3d8to9\d3d8to9_surface.cpp">
-      <Filter>D3D8to9</Filter>
-    </ClCompile>
-    <ClCompile Include="d3d8to9\d3d8to9_texture.cpp">
-      <Filter>D3D8to9</Filter>
-    </ClCompile>
-    <ClCompile Include="d3d8to9\d3d8to9_vertexbuffer.cpp">
-      <Filter>D3D8to9</Filter>
-    </ClCompile>
-    <ClCompile Include="stdafx.cpp" />
-    <ClCompile Include="tig_font.cpp" />
+    <ClCompile Include="minhook\src\buffer.c" />
+    <ClCompile Include="minhook\src\HDE\hde32.c" />
+    <ClCompile Include="minhook\src\HDE\hde64.c" />
+    <ClCompile Include="minhook\src\hook.c" />
+    <ClCompile Include="minhook\src\trampoline.c" />
     <ClCompile Include="idxtables.cpp" />
-    <ClCompile Include="config.cpp" />
     <ClCompile Include="movies.cpp" />
-    <ClCompile Include="tig_msg.cpp" />
+    <ClCompile Include="python.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="config.cpp" />
+    <ClCompile Include="temple_functions.cpp" />
+    <ClCompile Include="tig_font.cpp" />
+    <ClCompile Include="tig_mes.cpp" />
     <ClCompile Include="tig_mouse.cpp" />
+    <ClCompile Include="tig_msg.cpp" />
     <ClCompile Include="tig_shader.cpp" />
     <ClCompile Include="tig_texture.cpp" />
     <ClCompile Include="mainwindow.cpp" />
     <ClCompile Include="ui.cpp" />
-    <ClCompile Include="bonusspells.cpp">
-      <Filter>fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="fixes.cpp">
-      <Filter>fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="python.cpp">
-      <Filter>Python additions</Filter>
-    </ClCompile>
     <ClCompile Include="ui_item_creation.cpp" />
-    <ClCompile Include="tig_mes.cpp" />
-    <ClCompile Include="gamesystems.cpp" />
+    <ClCompile Include="obj.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="addresses.h" />
+    <ClInclude Include="d3d8to9\d3d8to9.h" />
+    <ClInclude Include="d3d8to9\d3d8to9_convert.h" />
+    <ClInclude Include="d3d8to9\d3d8to9_device.h" />
+    <ClInclude Include="d3d8to9\d3d8to9_indexbuffer.h" />
+    <ClInclude Include="d3d8to9\d3d8to9_private.h" />
+    <ClInclude Include="d3d8to9\d3d8to9_rootobj.h" />
+    <ClInclude Include="d3d8to9\d3d8to9_surface.h" />
+    <ClInclude Include="d3d8to9\d3d8to9_texture.h" />
+    <ClInclude Include="d3d8to9\d3d8to9_vertexbuffer.h" />
+    <ClInclude Include="d3d8\d3d8.h" />
+    <ClInclude Include="d3d8\d3d8caps.h" />
+    <ClInclude Include="d3d8\d3d8types.h" />
+    <ClInclude Include="gamesystems.h" />
     <ClInclude Include="graphics.h" />
+    <ClInclude Include="fixes.h" />
     <ClInclude Include="libraryholder.h" />
-    <ClInclude Include="temple_functions.h" />
-    <ClInclude Include="minhook\src\buffer.h">
-      <Filter>MinHook</Filter>
-    </ClInclude>
-    <ClInclude Include="minhook\src\HDE\hde32.h">
-      <Filter>MinHook</Filter>
-    </ClInclude>
-    <ClInclude Include="minhook\src\HDE\hde64.h">
-      <Filter>MinHook</Filter>
-    </ClInclude>
-    <ClInclude Include="minhook\src\HDE\pstdint.h">
-      <Filter>MinHook</Filter>
-    </ClInclude>
-    <ClInclude Include="minhook\src\HDE\table64.h">
-      <Filter>MinHook</Filter>
-    </ClInclude>
-    <ClInclude Include="minhook\src\HDE\table32.h">
-      <Filter>MinHook</Filter>
-    </ClInclude>
-    <ClInclude Include="minhook\src\trampoline.h">
-      <Filter>MinHook</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8to9\d3d8to9.h">
-      <Filter>D3D8to9</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8to9\d3d8to9_convert.h">
-      <Filter>D3D8to9</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8to9\d3d8to9_device.h">
-      <Filter>D3D8to9</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8to9\d3d8to9_indexbuffer.h">
-      <Filter>D3D8to9</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8to9\d3d8to9_private.h">
-      <Filter>D3D8to9</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8to9\d3d8to9_rootobj.h">
-      <Filter>D3D8to9</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8to9\d3d8to9_surface.h">
-      <Filter>D3D8to9</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8to9\d3d8to9_texture.h">
-      <Filter>D3D8to9</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8to9\d3d8to9_vertexbuffer.h">
-      <Filter>D3D8to9</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8\d3d8.h">
-      <Filter>D3D8</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8\d3d8types.h">
-      <Filter>D3D8</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8\d3d8caps.h">
-      <Filter>D3D8</Filter>
-    </ClInclude>
-    <ClInclude Include="stdafx.h" />
-    <ClInclude Include="tig_font.h" />
+    <ClInclude Include="minhook\src\buffer.h" />
+    <ClInclude Include="minhook\src\HDE\hde32.h" />
+    <ClInclude Include="minhook\src\HDE\hde64.h" />
+    <ClInclude Include="minhook\src\HDE\pstdint.h" />
+    <ClInclude Include="minhook\src\HDE\table32.h" />
+    <ClInclude Include="minhook\src\HDE\table64.h" />
+    <ClInclude Include="minhook\src\trampoline.h" />
     <ClInclude Include="idxtables.h" />
-    <ClInclude Include="config.h" />
-    <ClInclude Include="movies.h" />
-    <ClInclude Include="tig_msg.h" />
+    <ClInclude Include="python_header.h" />
+    <ClInclude Include="tig_mes.h" />
     <ClInclude Include="tig_mouse.h" />
+    <ClInclude Include="movies.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="config.h" />
+    <ClInclude Include="temple_functions.h" />
+    <ClInclude Include="tig_font.h" />
+    <ClInclude Include="tig_msg.h" />
     <ClInclude Include="tig_shader.h" />
     <ClInclude Include="tig_texture.h" />
     <ClInclude Include="mainwindow.h" />
     <ClInclude Include="ui.h" />
-    <ClInclude Include="fixes.h">
-      <Filter>fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="python_header.h">
-      <Filter>Python additions</Filter>
-    </ClInclude>
-    <ClInclude Include="tig_mes.h" />
-    <ClInclude Include="gamesystems.h" />
+    <ClInclude Include="obj.h" />
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="MinHook">
-      <UniqueIdentifier>{5b4b9fd4-244e-4c03-965c-5b4c248a3a85}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="D3D8to9">
-      <UniqueIdentifier>{ad5a6cd7-2255-4b51-8aa5-a29775d04fb5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="D3D8">
-      <UniqueIdentifier>{81cfef8a-ad0c-4ba3-a13c-a9c559d8b2e5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="fixes">
-      <UniqueIdentifier>{5ee7b777-16d7-4e67-83ba-9680533e67e9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Python additions">
-      <UniqueIdentifier>{7696d99d-eccf-423e-83b2-1a3cbb3f90e2}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\Spellslinger%27s Notes\bonusspells.txt">
-      <Filter>fixes</Filter>
-    </Text>
+    <Text Include="..\Spellslinger%27s Notes\bonusspells.txt" />
   </ItemGroup>
 </Project>

@@ -77,6 +77,7 @@
     </ClCompile>
     <ClCompile Include="idxtables.cpp" />
     <ClCompile Include="movies.cpp" />
+    <ClCompile Include="obj.cpp" />
     <ClCompile Include="python.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -126,6 +127,7 @@
     <ClInclude Include="minhook\src\HDE\table64.h" />
     <ClInclude Include="minhook\src\trampoline.h" />
     <ClInclude Include="idxtables.h" />
+    <ClInclude Include="obj.h" />
     <ClInclude Include="python_header.h" />
     <ClInclude Include="tig_mes.h" />
     <ClInclude Include="tig_mouse.h" />
