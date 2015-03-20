@@ -66,6 +66,7 @@ struct VideoFuncs : AddressTable {
 	void (__cdecl *create_partsys_vertex_buffers)();
 	void (__cdecl *tig_font_related_init)();
 	void (__cdecl *matrix_related)(TigMatrices* matrices);
+	void (__cdecl *GamelibResizeScreen)(uint32_t adapter, int width, int height, int bpp, int refresh, int flags);
 
 	// current video format has to be in eax before calling this
 	bool (__cdecl *tig_d3d_init_handleformat)();
@@ -116,6 +117,7 @@ struct VideoFuncs : AddressTable {
 		rebase(GameCreateVideoBuffers, 0x10001370);
 		rebase(GameFreeVideoBuffers, 0x100013A0);
 		rebase(tig_d3d_init_handleformat, 0x101D6F40);
+		rebase(GamelibResizeScreen, 0x10002370);
 	}
 };
 

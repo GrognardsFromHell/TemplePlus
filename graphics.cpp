@@ -292,6 +292,12 @@ void ResizeBuffers(int width, int height) {
 	// Mouse cursor disasppers after resizing
 	mouseFuncs.RefreshCursor();
 
+	videoFuncs.GamelibResizeScreen(video->adapter, 
+		width,
+		height,
+		video->current_bpp,
+		video->current_refresh,
+		videoFuncs.currentFlags);
 }
 
 bool ReadCaps(IDirect3DDevice9Ex* device, uint32_t minTexWidth, uint32_t minTexHeight) {
