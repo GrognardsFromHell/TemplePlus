@@ -124,12 +124,8 @@ struct TempleFuncs : AddressTable {
 		rebase(Obj_Add_to_GroupArray, 0x100DF990);
 		rebase(Obj_Add_to_PC_Group, 0x1002BBE0);
 		
-<<<<<<< HEAD
-=======
 		rebase(_DoesObjectFieldExist, 0x1009C190);
-		
->>>>>>> origin/master
-		
+				
 	}
 
 private:

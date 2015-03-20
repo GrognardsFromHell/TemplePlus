@@ -15,6 +15,7 @@ struct SubtitleLine {
 struct MovieFuncs : AddressTable {
 	void(__cdecl *PlayLegalMovies)() = nullptr;
 	void(__cdecl *PlayMovie)(char* filename, int, int, int);
+	void(__cdecl *PlayMovieSlide)(uint32_t, uint32_t, const SubtitleLine *subtitles, uint32_t, uint32_t);
 	void(__cdecl *PlayMovieBink)(const char *filename, const SubtitleLine *subtitles, int flags, int soundtrackId);
 
 	GlobalPrimitive<uint32_t, 0x103010F8> MovieVolume; // 0-127
@@ -26,6 +27,7 @@ struct MovieFuncs : AddressTable {
 		rebase(PlayMovie, 0x10034100);
 		rebase(PlayLegalMovies, 0x10003AC0);
 		rebase(PlayMovieBink, 0x101F1BE0);
+		rebase(PlayMovieSlide, 0x101F10F0);
 	}
 
 };

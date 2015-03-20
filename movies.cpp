@@ -272,6 +272,11 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 	return 0;
 }
 
+void __cdecl HookedPlayMovieSlide(uint32_t unk1, uint32_t unk2, const SubtitleLine *subtitles, uint32_t unk3, uint32_t unk4) {
+	LOG(info) << "Play Movie Slide " << unk1 << " " << unk2 << " " << unk3 << " " << unk4;
+	// TODO: Implement this!
+}
+
 void HookedPlayLegalMovies() {
 	if (!config.skipLegal) {
 		movieFuncs.PlayMovie("movies\\AtariLogo.bik", 0, 0, 0);
@@ -299,5 +304,6 @@ void hook_movies() {
 	MH_CreateHook(movieFuncs.PlayLegalMovies, HookedPlayLegalMovies, reinterpret_cast<LPVOID*>(&movieFuncs.PlayLegalMovies));
 	MH_CreateHook(movieFuncs.PlayMovie, HookedPlayMovie, reinterpret_cast<LPVOID*>(&movieFuncs.PlayMovie));
 	MH_CreateHook(movieFuncs.PlayMovieBink, HookedPlayMovieBink, reinterpret_cast<LPVOID*>(&movieFuncs.PlayMovieBink));
+	MH_CreateHook(movieFuncs.PlayMovieSlide, HookedPlayMovieSlide, reinterpret_cast<LPVOID*>(&movieFuncs.PlayMovieSlide));
 
 }
