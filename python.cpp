@@ -81,11 +81,10 @@ static PyObject * pyObjHandleType_Set_Field_ObjHandle(TemplePyObjHandle* obj, Py
 static PyObject * pyObjHandleType_Get_IdxField_32bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	_fieldIdx nFieldIdx = 0;
 	_fieldSubIdx nFieldSubIdx = 0;
-	uint64_t n32 = 0;
 	if (!PyArg_ParseTuple(pyTupleIn, "ii", &nFieldIdx, &nFieldSubIdx)) {
 		return nullptr;
 	};
-	n32 = templeFuncs.Obj_Get_IdxField_32bit(obj->objHandle, nFieldIdx, nFieldSubIdx);
+	uint32_t n32 = templeFuncs.Obj_Get_IdxField_32bit(obj->objHandle, nFieldIdx, nFieldSubIdx);
 	return PyInt_FromLong(n32);
 };
 
@@ -103,11 +102,10 @@ static PyObject * pyObjHandleType_Set_IdxField_32bit(TemplePyObjHandle* obj, PyO
 static PyObject * pyObjHandleType_Get_IdxField_64bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	_fieldIdx nFieldIdx = 0;
 	_fieldSubIdx nFieldSubIdx = 0;
-	uint64_t n64 = 0;
 	if (!PyArg_ParseTuple(pyTupleIn, "ii", &nFieldIdx, &nFieldSubIdx)) {
 		return nullptr;
 	};
-	n64 = templeFuncs.Obj_Get_IdxField_64bit(obj->objHandle, nFieldIdx, nFieldSubIdx);
+	uint64_t n64 = templeFuncs.Obj_Get_IdxField_64bit(obj->objHandle, nFieldIdx, nFieldSubIdx);
 	return PyLong_FromLongLong(n64);
 };
 
