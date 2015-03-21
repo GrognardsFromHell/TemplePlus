@@ -37,6 +37,9 @@
     <ClCompile Include="ui_item_creation.cpp" />
     <ClCompile Include="obj.cpp" />
     <ClCompile Include="folderutils.cpp" />
+    <ClCompile Include="debugMessageToggles.cpp" />
+    <ClCompile Include="testhelper.cpp" />
+    <ClCompile Include="xp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="addresses.h" />
@@ -80,6 +83,9 @@
     <ClInclude Include="obj.h" />
     <ClInclude Include="tig_startup.h" />
     <ClInclude Include="folderutils.h" />
+    <ClInclude Include="temple_enums.h" />
+    <ClInclude Include="testhelper.h" />
+    <ClInclude Include="xp.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Spellslinger%27s Notes\bonusspells.txt" />

@@ -44,6 +44,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="debugMessageToggles.cpp" />
     <ClCompile Include="fixes.cpp" />
     <ClCompile Include="folderutils.cpp" />
     <ClCompile Include="gamesystems.cpp" />
@@ -80,6 +81,7 @@
     <ClCompile Include="movies.cpp" />
     <ClCompile Include="obj.cpp" />
     <ClCompile Include="python.cpp" />
+    <ClCompile Include="xp.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -89,6 +91,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="testhelper.cpp" />
     <ClCompile Include="tig_font.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
@@ -131,6 +134,8 @@
     <ClInclude Include="idxtables.h" />
     <ClInclude Include="obj.h" />
     <ClInclude Include="python_header.h" />
+    <ClInclude Include="temple_enums.h" />
+    <ClInclude Include="testhelper.h" />
     <ClInclude Include="tig_startup.h" />
     <ClInclude Include="tig_mes.h" />
     <ClInclude Include="tig_mouse.h" />
@@ -144,6 +149,7 @@
     <ClInclude Include="tig_texture.h" />
     <ClInclude Include="mainwindow.h" />
     <ClInclude Include="ui.h" />
+    <ClInclude Include="xp.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Spellslinger%27s Notes\bonusspells.txt" />
