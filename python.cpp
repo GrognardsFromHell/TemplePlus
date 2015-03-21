@@ -3,9 +3,8 @@
 #include "fixes.h"
 #include "addresses.h"
 #include "dependencies/python-2.2/Python.h"
-#include "temple_functions.h"
+#include "temple_functions.h""
 #include "python_header.h"
-#include "testhelper.h"
 
 // hmm should the functions be STATIC or maybe global? What's the syntax?
 
@@ -83,15 +82,19 @@ static PyObject * pyObjHandleType_Get_IdxField_32bit(TemplePyObjHandle* obj, PyO
 	_fieldIdx nFieldIdx = 0;
 	_fieldSubIdx nFieldSubIdx = 0;
 <<<<<<< HEAD
+<<<<<<< HEAD
 	uint32_t n32 = 0;
 =======
 >>>>>>> origin/master
 =======
 >>>>>>> origin/master
+=======
+	uint64_t n32 = 0;
+>>>>>>> parent of 7149e71... Argh
 	if (!PyArg_ParseTuple(pyTupleIn, "ii", &nFieldIdx, &nFieldSubIdx)) {
 		return nullptr;
 	};
-	uint32_t n32 = templeFuncs.Obj_Get_IdxField_32bit(obj->objHandle, nFieldIdx, nFieldSubIdx);
+	n32 = templeFuncs.Obj_Get_IdxField_32bit(obj->objHandle, nFieldIdx, nFieldSubIdx);
 	return PyInt_FromLong(n32);
 };
 
@@ -109,10 +112,11 @@ static PyObject * pyObjHandleType_Set_IdxField_32bit(TemplePyObjHandle* obj, PyO
 static PyObject * pyObjHandleType_Get_IdxField_64bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	_fieldIdx nFieldIdx = 0;
 	_fieldSubIdx nFieldSubIdx = 0;
+	uint64_t n64 = 0;
 	if (!PyArg_ParseTuple(pyTupleIn, "ii", &nFieldIdx, &nFieldSubIdx)) {
 		return nullptr;
 	};
-	uint64_t n64 = templeFuncs.Obj_Get_IdxField_64bit(obj->objHandle, nFieldIdx, nFieldSubIdx);
+	n64 = templeFuncs.Obj_Get_IdxField_64bit(obj->objHandle, nFieldIdx, nFieldSubIdx);
 	return PyLong_FromLongLong(n64);
 };
 
@@ -215,6 +219,7 @@ static PyObject * pyObjHandleType_Inventory(TemplePyObjHandle* obj, PyObject * p
 		//TODO
 	}
 
+
 	return ItemPyTuple;
 };
 
@@ -231,36 +236,8 @@ static PyObject * pyObjHandleType_PC_Add(TemplePyObjHandle* obj, PyObject * pyTu
 	return PyInt_FromLong(1);
 };
 
-static PyObject * pyObjHandleType_ObjFeatAdd(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	int nFeatCode;
-	if (!PyArg_ParseTuple(pyTupleIn, "i", &nFeatCode)) {
-		return nullptr;
-	};
-
-	if (nFeatCode == 0){
-		return PyInt_FromLong(0);
-	}
-	
-	templeFuncs.ObjFeatAdd(obj->objHandle, nFeatCode);
-	
-	return PyInt_FromLong(1);
-};
 
 
-static PyObject * pyObjHandleType_MakeWizard(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	int level;
-	if (!PyArg_ParseTuple(pyTupleIn, "i", &level)) {
-		return nullptr;
-	};
-
-	if (level <= 0 || level > 20){
-		return PyInt_FromLong(0);
-	}
-
-	MakeWizard(obj->objHandle, level);
-
-	return PyInt_FromLong(1);
-};
 
 /*
 static PyObject * pyObjHandleType_Set_IdxField_byValue(TemplePyObjHandle* obj, PyObject * pyTupleIn){
@@ -290,8 +267,6 @@ static PyMethodDef pyObjHandleMethods_New[] = {
 	//"obj_set_idxfield_byvalue", (PyCFunction)pyObjHandleType_Set_IdxField_byValue, METH_VARARGS, "Sets index field - general (depending on nFieldIndex which the game looks up and fetches nFieldType to determine data size)",
 	"obj_remove_from_all_groups", (PyCFunction)pyObjHandleType_Remove_From_All_Groups, METH_VARARGS, "Removes the object from all the groups (GroupList, PCs, NPCs, AI controlled followers, Currently Selected",
 	"pc_add", (PyCFunction)pyObjHandleType_PC_Add, METH_VARARGS, "Adds object as a PC party member.",
-	"objfeatadd", (PyCFunction)pyObjHandleType_ObjFeatAdd, METH_VARARGS, "Adds a feat. Feats can be added multiple times (at least some of them? like Toughness)",
-	"makewiz", (PyCFunction)pyObjHandleType_MakeWizard, METH_VARARGS, "Makes character a wizard of level n",
 
 	0, 0, 0, 0
 };
@@ -299,6 +274,11 @@ static PyMethodDef pyObjHandleMethods_New[] = {
 
 
 PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name) {
+	LOG(info) << "Tried getting property: " << name;
+	if (!_strcmpi(name, "co8rocks")) {
+		return PyString_FromString("IT SURE DOES!");
+	}
+
 	#pragma region PyObjHandle Members - FINISHED
 	if (!_strcmpi(name, "ObjHandle")) {
 		return  PyLong_FromLongLong(obj->objHandle); 
@@ -336,12 +316,7 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 	{
 		objHndl ObjSubsInv = templeFuncs.ObjGetSubstituteInventory(obj->objHandle);
 		return templeFuncs.PyObjFromObjHnd(ObjSubsInv);
-	}
-	else if (!_strcmpi(name, "feat_add")) {
-		int a;
-		a = sizeof(ObjectId);
-		return Py_FindMethod(pyObjHandleMethods_New, obj, "objfeatadd");
-	};
+	}; 
 
 	#pragma endregion
 
@@ -404,9 +379,7 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 	};
 	#pragma endregion
 
-	if (!_strcmpi(name, "makewiz")) {
-		return Py_FindMethod(pyObjHandleMethods_New, obj, "makewiz");
-	}
+
 
 	return pyObjHandleTypeGetAttr(obj, name);
 }
