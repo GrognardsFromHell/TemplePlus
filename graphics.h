@@ -2,6 +2,7 @@
 #define GRAPHICS_H
 
 #include "stdafx.h"
+#include "tig_startup.h"
 
 #include "d3d8to9/d3d8to9.h"
 
@@ -58,7 +59,7 @@ struct TigMatrices {
 Container for ToEE functions related to video
 */
 struct VideoFuncs : AddressTable {
-	bool (__fastcall *TigDirect3dInit)(TempleStartSettings* settings) = nullptr;
+	bool(__fastcall *TigDirect3dInit)(TigConfig* settings) = nullptr;
 	bool (__cdecl *PresentFrame)() = nullptr;
 	void (__cdecl *SetVideoMode)(int adapter, int nWidth, int nHeight, int bpp, int refresh, int flags);
 	void (__cdecl *CleanUpBuffers)();

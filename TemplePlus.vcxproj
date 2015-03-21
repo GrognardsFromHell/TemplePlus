@@ -45,6 +45,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="fixes.cpp" />
+    <ClCompile Include="folderutils.cpp" />
     <ClCompile Include="gamesystems.cpp" />
     <ClCompile Include="graphics.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
@@ -115,6 +116,7 @@
     <ClInclude Include="d3d8\d3d8.h" />
     <ClInclude Include="d3d8\d3d8caps.h" />
     <ClInclude Include="d3d8\d3d8types.h" />
+    <ClInclude Include="folderutils.h" />
     <ClInclude Include="gamesystems.h" />
     <ClInclude Include="graphics.h" />
     <ClInclude Include="fixes.h" />
@@ -129,6 +131,7 @@
     <ClInclude Include="idxtables.h" />
     <ClInclude Include="obj.h" />
     <ClInclude Include="python_header.h" />
+    <ClInclude Include="tig_startup.h" />
     <ClInclude Include="tig_mes.h" />
     <ClInclude Include="tig_mouse.h" />
     <ClInclude Include="movies.h" />

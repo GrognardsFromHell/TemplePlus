@@ -3,7 +3,7 @@
 #include "config.h"
 #include "graphics.h"
 #include "movies.h"
-#include "temple_functions.h"
+#include "tig_startup.h"
 #include "tig_msg.h"
 #include "tig_mouse.h"
 
@@ -24,7 +24,7 @@ struct WindowFuncs : AddressTable {
 
 GlobalPrimitive<uint32_t, 0x10D25C38> globalWwndproc;
 
-bool CreateMainWindow(TempleStartSettings* settings) {
+bool CreateMainWindow(TigConfig* settings) {
 	bool windowed = config.windowed;
 	bool unknownFlag = (settings->flags & 0x100) != 0;
 
