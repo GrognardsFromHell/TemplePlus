@@ -140,6 +140,9 @@
 =======
     <ClInclude Include="tig_startup.h" />
 >>>>>>> origin/master
+=======
+    <ClInclude Include="tig_startup.h" />
+>>>>>>> origin/master
     <ClInclude Include="tig_mes.h" />
     <ClInclude Include="tig_mouse.h" />
     <ClInclude Include="movies.h" />

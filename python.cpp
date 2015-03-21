@@ -86,6 +86,8 @@ static PyObject * pyObjHandleType_Get_IdxField_32bit(TemplePyObjHandle* obj, PyO
 	uint32_t n32 = 0;
 =======
 >>>>>>> origin/master
+=======
+>>>>>>> origin/master
 	if (!PyArg_ParseTuple(pyTupleIn, "ii", &nFieldIdx, &nFieldSubIdx)) {
 		return nullptr;
 	};
