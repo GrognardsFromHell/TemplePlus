@@ -11,6 +11,7 @@
 #include "tig_mouse.h"
 #include "mainwindow.h"
 #include "ui.h"
+#include "folderutils.h"
 
 // #include "d3d8/d3d8.h"
 #include "d3d8to9/d3d8to9.h"
@@ -292,6 +293,12 @@ void ResizeBuffers(int width, int height) {
 	// Mouse cursor disasppers after resizing
 	mouseFuncs.RefreshCursor();
 
+	videoFuncs.GamelibResizeScreen(video->adapter, 
+		width,
+		height,
+		video->current_bpp,
+		video->current_refresh,
+		videoFuncs.currentFlags);
 }
 
 bool ReadCaps(IDirect3DDevice9Ex* device, uint32_t minTexWidth, uint32_t minTexHeight) {
@@ -387,7 +394,7 @@ bool ReadCaps(IDirect3DDevice9Ex* device, uint32_t minTexWidth, uint32_t minTexH
 	return true;
 }
 
-static bool TigInitDirect3D(TempleStartSettings* settings) {
+static bool TigInitDirect3D(TigConfig* settings) {
 
 	HRESULT d3dresult;
 
@@ -606,7 +613,7 @@ int __cdecl HookedSetVideoMode(int adapter, int nWidth, int nHeight, int bpp, in
 	return 0;
 }
 
-int __cdecl VideoStartup(TempleStartSettings* settings) {
+int __cdecl VideoStartup(TigConfig* settings) {
 	memset(video, 0, 4796);
 
 	bool windowed = config.windowed;
@@ -653,7 +660,9 @@ int __cdecl VideoStartup(TempleStartSettings* settings) {
 	temple_set<0x10D250E0, int>(0);
 	temple_set<0x10D250E4, int>(1);
 	temple_set<0x10300914, int>(-1);
-	temple_set<0x10D2511C, int>(0);
+	
+	// Unused mkscreenshot related pointer
+	// temple_set<0x10D2511C, int>(0);
 
 	/*
 		This stuff doesn't really seem to be used.
@@ -670,8 +679,9 @@ int __cdecl VideoStartup(TempleStartSettings* settings) {
 		v3 += 8;
 	} while (v3 < 0x10D24CAC);
 
-	temple_set<0x10D25134>(settings->callback1);
-	temple_set<0x10D25138>(settings->callback2);
+	// These may actually no longer be needed since we replaced the referencing subsystems directly
+	temple_set<0x10D25134>(settings->createBuffers);
+	temple_set<0x10D25138>(settings->freeBuffers);
 
 	memcpy(temple_address<0x11E75840>(), settings, 0x4C);
 
@@ -784,6 +794,45 @@ bool __cdecl HookedPresentFrame() {
 	return videoFuncs.PresentFrame();
 }
 
+// They keycode parameter can be ignored
+void __cdecl TakeScreenshot(int) {
+
+	if (!video->d3dDevice) {
+		return;
+	}
+		
+	// Calculate size of screenshot
+	RECT rect;
+	GetWindowRect(video->hwnd, &rect);
+	auto width = rect.right - rect.left;
+	auto height = rect.bottom - rect.top;
+
+	// Calculate output filename
+	auto folder = GetScreenshotFolder();
+	wstring path;
+	if (!folder.empty()) {
+		folder.append(L"\\");
+	}
+	for (auto i = 1; i <= 9999; ++i) {
+		path = (wformat(L"%sToEE%04d.jpg") % folder % i).str();
+		if (!PathFileExistsW(path.c_str())) {
+			break;
+		}
+	}
+	
+	// Take screenshot
+	auto device = video->d3dDevice->delegate;
+	IDirect3DSurface9* surface;
+	device->CreateOffscreenPlainSurface(width, height, D3DFMT_A8R8G8B8, D3DPOOL_SCRATCH, &surface, nullptr);
+	if (surface) {
+		// device->GetFrontBufferData(0, surface);
+		device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &surface);
+		D3DXSaveSurfaceToFileW(path.c_str(), D3DXIFF_JPG, surface, nullptr, nullptr);
+		surface->Release();
+	}
+
+}
+
 void hook_graphics() {
 	/*
 		These assertions are based on mallocs or memsets in the code that allow us to deduce the original struct
@@ -804,7 +853,8 @@ void hook_graphics() {
 	// We hook the entire video subsystem initialization function
 	MH_CreateHook(temple_address<0x101DC6E0>(), VideoStartup, nullptr);
 	MH_CreateHook(temple_address<0x101DBC80>(), AllocTextureMemory, nullptr);
-	MH_CreateHook(temple_address<0x101E0750>(), GetSystemMemory, nullptr);
+	MH_CreateHook(temple_address<0x101E0750>(), GetSystemMemory, nullptr);	
+	MH_CreateHook(temple_address<0x101DBD80>(), TakeScreenshot, nullptr);
 
 	hook_movies();
 }

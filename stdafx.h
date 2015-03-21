@@ -4,6 +4,12 @@
 #include <windowsx.h>
 
 #include "MinHook.h"
+#include "Shlobj.h"
+#include "Shobjidl.h"
+#pragma comment(lib, "shell32.lib")
+
+#include "Shlwapi.h"
+#pragma comment(lib, "shlwapi.lib")
 
 #include <string>
 #include <functional>

@@ -10,7 +10,7 @@ static GlobalStruct<PyMethodDef, 0x102CE9A8> pyObjHandleMethods;
 static GlobalStruct<PyTypeObject, 0x102CFBC0> pySpellType;
 static getattrfunc pySpellTypeGetAttr; // Original getattr of pySpellType
 
-static struct GlobalPrimitive<PyListObject*, 0x10BCABD0>* pPySpellList;
+GlobalPrimitive<PyListObject*, 0x10BCABD0>* pPySpellList;
 
 //PyCFunction a[]; // this causes errors during compile!
 
