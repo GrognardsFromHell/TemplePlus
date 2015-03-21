@@ -44,7 +44,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="debugMessageToggles.cpp" />
     <ClCompile Include="fixes.cpp" />
+    <ClCompile Include="folderutils.cpp" />
     <ClCompile Include="gamesystems.cpp" />
     <ClCompile Include="graphics.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
@@ -79,6 +81,8 @@
     <ClCompile Include="movies.cpp" />
     <ClCompile Include="obj.cpp" />
     <ClCompile Include="python.cpp" />
+    <ClCompile Include="testhelper.cpp" />
+    <ClCompile Include="testhelper.h" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -100,6 +104,7 @@
     <ClCompile Include="mainwindow.cpp" />
     <ClCompile Include="ui.cpp" />
     <ClCompile Include="ui_item_creation.cpp" />
+    <ClCompile Include="xp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="addresses.h" />
@@ -115,6 +120,7 @@
     <ClInclude Include="d3d8\d3d8.h" />
     <ClInclude Include="d3d8\d3d8caps.h" />
     <ClInclude Include="d3d8\d3d8types.h" />
+    <ClInclude Include="folderutils.h" />
     <ClInclude Include="gamesystems.h" />
     <ClInclude Include="graphics.h" />
     <ClInclude Include="fixes.h" />
@@ -129,6 +135,11 @@
     <ClInclude Include="idxtables.h" />
     <ClInclude Include="obj.h" />
     <ClInclude Include="python_header.h" />
+<<<<<<< HEAD
+    <ClInclude Include="temple_enums.h" />
+=======
+    <ClInclude Include="tig_startup.h" />
+>>>>>>> origin/master
     <ClInclude Include="tig_mes.h" />
     <ClInclude Include="tig_mouse.h" />
     <ClInclude Include="movies.h" />
@@ -141,6 +152,7 @@
     <ClInclude Include="tig_texture.h" />
     <ClInclude Include="mainwindow.h" />
     <ClInclude Include="ui.h" />
+    <ClInclude Include="xp.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Spellslinger%27s Notes\bonusspells.txt" />
