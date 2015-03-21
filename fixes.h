@@ -36,7 +36,6 @@ protected:
 	void read(uint32_t offset, void *buffer, size_t size);
 	void writeHex(uint32_t offset, const string &hexPattern);
 	void redirectCall(uint32_t offset, void* redirectTo);
-	void *replaceFunction(uint32_t offset, void *replaceWith);
 	void writeCall(uint32_t offset, void* redirectTo);
 };
 

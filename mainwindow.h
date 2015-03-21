@@ -1,6 +1,6 @@
 
 #pragma once
 
-#include "tig_startup.h"
+#include "temple_functions.h"
 
-bool CreateMainWindow(TigConfig* settings);
+bool CreateMainWindow(TempleStartSettings* settings);

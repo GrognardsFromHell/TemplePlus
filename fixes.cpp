@@ -47,25 +47,6 @@ void TempleFix::writeHex(uint32_t offset, const string &hexPattern) {
 	memcpy(temple_address(offset), buffer, totalSize);
 }
 
-void *TempleFix::replaceFunction(uint32_t offset, void* replaceWith) {
-	void* original = nullptr;
-	auto target = reinterpret_cast<void*>(offset);
-	
-	auto status = MH_CreateHook(target, replaceWith, &original);
-	if (status != MH_OK) {
-		LOG(error) << "Unable to hook the function @ " << format("%x") % offset << ": " << status;
-		return nullptr;
-	}
-
-	status = MH_QueueEnableHook(target);
-	if (status != MH_OK) {
-		LOG(error) << "Unable to enable hook for " << format("%x") % offset << ": " << status;
-		return nullptr;
-	}
-
-	return original;
-}
-
 void TempleFix::redirectCall(uint32_t offset, void* redirectTo) {
 
 	// Read what's there...
@@ -109,11 +90,6 @@ void TempleFixes::apply() {
 	for (auto fix : fixes()) {
 		LOG(info) << "Applying fix " << fix->name();
 		fix->apply();
-	}
-
-	auto status = MH_ApplyQueued();
-	if (status != MH_OK) {
-		LOG(error) << "Unable to apply queued hooks: " << status;
 	}
 
 	LOG(info) << "Finished applying DLL fixes";
