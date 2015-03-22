@@ -825,7 +825,6 @@ void __cdecl TakeScreenshot(int) {
 	IDirect3DSurface9* surface;
 	device->CreateOffscreenPlainSurface(width, height, D3DFMT_A8R8G8B8, D3DPOOL_SCRATCH, &surface, nullptr);
 	if (surface) {
-		// device->GetFrontBufferData(0, surface);
 		device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &surface);
 		D3DXSaveSurfaceToFileW(path.c_str(), D3DXIFF_JPG, surface, nullptr, nullptr);
 		surface->Release();

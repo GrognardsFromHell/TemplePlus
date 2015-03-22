@@ -5,78 +5,6 @@
 #include "tig_mes.h"
 #include "temple_functions.h"
 
-struct UiConf {
-	bool editor; // True for worlded it seems
-	int width; // Screen width
-	int height; // Screen height
-	uint32_t field_c;
-	uint32_t field_10;
-	uint32_t field_14;
-};
-
-typedef int (__cdecl *UiSystemInit)(const UiConf *conf);
-typedef void(__cdecl *UiSystemReset)();
-typedef bool (__cdecl *UiSystemLoadModule)();
-typedef void (__cdecl *UiSystemUnloadModule)();
-typedef void (__cdecl *UiSystemShutdown)();
-typedef bool (__cdecl *UiSystemSaveGame)(void *tioFile);
-typedef bool (__cdecl *UiSystemLoadGame)(void *sth);
-
-struct UiSystemSpec {
-	const char *name;
-	UiSystemInit init;
-	UiSystemReset reset;
-	UiSystemLoadModule loadModule;
-	UiSystemUnloadModule unloadModule;
-	UiSystemShutdown shutdown;
-	UiSystemSaveGame savegame;
-	UiSystemLoadGame loadgame;
-	uint32_t field_20;
-};
-
-struct ImgFile : public TempleAlloc {
-	int tilesX;
-	int tilesY;
-	int width;
-	int height;
-	int textureIds[16];
-	int field_50;
-};
-
-enum class UiAssetType : uint32_t {
-	Portraits = 0,
-	Inventory,
-	Generic, // Textures
-	GenericLarge // IMG files
-};
-
-enum class UiGenericAsset : uint32_t {
-	AcceptHover = 0,
-	AcceptNormal,
-	AcceptPressed,
-	DeclineHover,
-	DeclineNormal,
-	DeclinePressed,
-	DisabledNormal,
-	GenericDialogueCheck
-};
-
-struct UiFuncs : AddressTable {
-	ImgFile *(__cdecl *LoadImg)(const char *filename);
-
-	bool GetAsset(UiAssetType assetType, UiGenericAsset assetIndex, int *textureIdOut) {
-		return _GetAsset(assetType, (uint32_t)assetIndex, textureIdOut, 0) == 0;
-	}
-
-	void rebase(Rebaser rebase) override {
-		rebase(LoadImg, 0x101E8320);
-		rebase(_GetAsset, 0x1004A360);
-	}
-
-private:
-	int(__cdecl *_GetAsset)(UiAssetType assetType, uint32_t assetIndex, int *textureIdOut, int offset);
-} uiFuncs;
-
 struct UiSystemSpecs {
 	UiSystemSpec systems[43];
 };
@@ -246,7 +174,7 @@ static void loadProtoIds(MesHandle mesHandle) {
 	
 }
 
-static int __cdecl systemInit(const UiConf *conf) {
+static int __cdecl systemInit(const GameSystemConf *conf) {
 
 	mesFuncs.Open("mes\\item_creation.mes", &mesItemCreationText);
 	mesFuncs.Open("mes\\item_creation_names.mes", &mesItemCreationNamesText);

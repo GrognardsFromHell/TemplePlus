@@ -8,8 +8,20 @@
 #include <vector>
 
 MouseFuncs mouseFuncs;
+GlobalStruct<TigMouseState, 0x10D25184> mouseState;
 
 vector<int> stashedCursorShaderIds;
+
+struct OriginalMouseFuncs : AddressTable {
+
+	int(__cdecl *SetCursor)(int shaderId);
+	void(__cdecl *ResetCursor)();
+
+	void rebase(Rebaser rebase) override {
+		rebase(SetCursor, 0x101DDDD0);
+		rebase(ResetCursor, 0x101DD780);
+	}
+} orgMouseFuncs;
 
 static bool SetCursorFromShaderId(int shaderId) {
 	TigShader shader;
@@ -52,7 +64,7 @@ void MouseFuncs::RefreshCursor() {
  * Sadly ToEE calls this not with a cursor ID but rather with a shader id. So what we do here is we extract the texture from the shader,
  * then the surface from the texture and use the D3D9 API to set the cursor.
  */
-int __cdecl HookedSetCursor(int shaderId) {
+int __cdecl MouseFuncs::SetCursor(int shaderId) {
 	if (!SetCursorFromShaderId(shaderId)) {
 		return 10; // some non 0 number
 	}
@@ -61,7 +73,7 @@ int __cdecl HookedSetCursor(int shaderId) {
 	return 0;
 }
 
-void __cdecl HookedResetCursor() {
+void __cdecl MouseFuncs::ResetCursor() {
 	// The back is the one on screen
 	if (!stashedCursorShaderIds.empty()) {
 		stashedCursorShaderIds.pop_back();
@@ -76,7 +88,7 @@ void __cdecl HookedResetCursor() {
 
 void hook_mouse() {
 
-	MH_CreateHook(mouseFuncs.SetCursor, HookedSetCursor, reinterpret_cast<void**>(&mouseFuncs.SetCursor));
-	MH_CreateHook(mouseFuncs.ResetCursor, HookedResetCursor, reinterpret_cast<void**>(&mouseFuncs.ResetCursor));
+	MH_CreateHook(orgMouseFuncs.SetCursor, MouseFuncs::SetCursor, reinterpret_cast<void**>(&orgMouseFuncs.SetCursor));
+	MH_CreateHook(orgMouseFuncs.ResetCursor, MouseFuncs::ResetCursor, reinterpret_cast<void**>(&orgMouseFuncs.ResetCursor));
 
 }

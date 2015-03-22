@@ -92,6 +92,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="testhelper.cpp" />
+    <ClCompile Include="temple_main.cpp" />
     <ClCompile Include="tig_font.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
@@ -104,6 +105,7 @@
     <ClCompile Include="mainwindow.cpp" />
     <ClCompile Include="ui.cpp" />
     <ClCompile Include="ui_item_creation.cpp" />
+    <ClCompile Include="ui_mainmenu.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="addresses.h" />
@@ -150,6 +152,7 @@
     <ClInclude Include="mainwindow.h" />
     <ClInclude Include="ui.h" />
     <ClInclude Include="xp.h" />
+    <ClInclude Include="ui_mainmenu.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Spellslinger%27s Notes\bonusspells.txt" />

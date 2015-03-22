@@ -1,13 +1,15 @@
 
 #pragma once
 
+#include "addresses.h"
+
 struct GameSystemConf {
 	bool editor;
 	int width;
 	int height;
-	int field_c;
+	int bufferstuffIdx;
 	int field_10;
-	int field_14;
+	int renderfunc;
 };
 
 struct TioFile {
@@ -41,6 +43,19 @@ struct RebuildBufferInfo {
 	uint32_t width2;
 	uint32_t height2;
 };
+
+struct GameSystemFuncs : AddressTable {
+
+	bool (__cdecl *Init)(GameSystemConf *conf);
+	bool (__cdecl *LoadModule)(const char *name);
+
+	void rebase(Rebaser rebase) override {
+		rebase(Init, 0x10004C40);
+		rebase(LoadModule, 0x10005480);
+	}
+};
+
+extern GameSystemFuncs gameSystemFuncs;
 
 // Register hooks for game system events
 class GameSystemHooks {

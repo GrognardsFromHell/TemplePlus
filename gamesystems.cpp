@@ -3,6 +3,8 @@
 #include "fixes.h"
 #include "temple_functions.h"
 
+GameSystemFuncs gameSystemFuncs;
+
 /*
 FieldDefs *fieldDefTable = (FieldDefs*)0x10B3D7D8;
 for (auto field : fieldDefTable->fields) {
@@ -261,6 +263,16 @@ int NumberOfSetBits(int i)
 		for (auto& callback : afterModuleLoadCallbacks) {
 			callback();
 		}
+
+		struct RandomInts {
+			int numbers[256];
+		};
+		GlobalStruct<RandomInts, 0x10AB7648> randoms;
+
+		for (auto number : randoms->numbers) {
+			LOG(error) << number;
+		}
+
 		return result;
 	}
 

@@ -3,10 +3,14 @@
 #include "temple_functions.h"
 #include "libraryholder.h"
 #include "fixes.h"
+#include "config.h"
 
 #include <boost/log/utility/setup.hpp>
 
 void InitLogging();
+
+// Defined in temple_main.cpp for now
+int TempleMain(HINSTANCE hInstance, const wstring &commandLine);
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int showCmd)
 {
@@ -38,10 +42,15 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	init_hooks();
 
 	TempleFixes::apply();
+	
+	// this forces us to be REALLY linked against temple.dll If we do not reference anything from it, the ref will be optimized out
+	bool dontChangeMe = false;
+	if (dontChangeMe) {
+		temple_main(nullptr, nullptr, nullptr, 0);
+	}
 
-	string localCmdLineStart = "\"" + toeeDir.string() + "toee.exe\" -window";
 	auto ourModule = GetModuleHandleW(nullptr);
-	int result = temple_main(ourModule, nullptr, localCmdLineStart.data(), SW_SHOWDEFAULT);
+	auto result = TempleMain(ourModule, lpCmdLine);
 
 	MH_Uninitialize();
 
@@ -50,10 +59,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 void InitLogging()
 {
-	AllocConsole();
-	freopen("CONOUT$", "w", stdout);
+	if (config.showConsoleWindow) {
+		AllocConsole();
+		freopen("CONOUT$", "w", stdout);
+		boost::log::add_console_log(cout);
+	}
 
 	boost::log::add_file_log(boost::log::keywords::file_name = "TemplePlus.log", 
-		boost::log::keywords::auto_flush = true);
-	boost::log::add_console_log(cout);
+		boost::log::keywords::auto_flush = true);	
 }

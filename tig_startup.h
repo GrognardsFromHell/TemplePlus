@@ -38,7 +38,7 @@ enum StartupFlag
 // 19 values total (guessed from memset 0 at start of main method)
 struct TigConfig
 {
-	int flags; // See StartupFlag
+	uint32_t flags;
 	int32_t x;
 	int32_t y;
 	uint32_t width;

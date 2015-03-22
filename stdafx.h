@@ -19,6 +19,7 @@
 #include <boost/log/trivial.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/optional.hpp>
 
 using namespace std;
 using namespace boost::filesystem;
