@@ -7,6 +7,8 @@
 
 GlobalPrimitive<float, 0x102CF708> experienceMultiplier;
 GlobalPrimitive<int, 0x10BCA850> numCrittersSlainByCR;
+GlobalPrimitive<int, 0x10BCA8BC> xpPile; // sum of all the XP given to party members before divinding by party size
+
 
 static_assert(CRMIN == -2, "CRMIN for XP award definition should be at most -2!");
 static_assert(CRMAX >= 20, "CRMAX for XP award definition should be at least 20!");
@@ -98,6 +100,7 @@ void GiveXPAwards(){
 
 	auto killCountByCR = numCrittersSlainByCR.ptr();
 	bool bShouldUpdatePartyUI = false;
+	int xpForxpPile = 0;
 
 	for (int i = 0; i < templeFuncs.GroupListGetLen(); i++){
 		objHndl objHnd = templeFuncs.GroupListGetMemberN(i);
@@ -113,11 +116,15 @@ void GiveXPAwards(){
 		for (int n = 0; n < CRMAX - CRMIN + 1; n++){
 			float nkill = (float)killCountByCR[n];
 			float xp = (float)xpawarddd.XPAwardTable[level - 1][n];
-			xpGainRaw += (int)(
-				experienceMultiplier *
-				nkill *	xp
-				);
+			if (nkill){
+				xpGainRaw += (int)(
+					experienceMultiplier *
+					nkill *	xp
+					);
+			}
+			
 		}
+		xpForxpPile += xpGainRaw;
 		xpGainRaw = int((float)(xpGainRaw) / fNumLivingPartyMembers);
 		if (templeFuncs.ObjXPGainProcess(objHnd, xpGainRaw)){
 			if (templeFuncs.Obj_Get_Field_32bit(objHnd, obj_f_type) == obj_t_pc || config.NPCsLevelLikePCs){
@@ -125,6 +132,12 @@ void GiveXPAwards(){
 			}
 		}
 	}
+
+	for (int n = 0; n < CRMAX - CRMIN + 1; n++){
+		killCountByCR[n] = 0;
+	};
+	*(xpPile.ptr()) = xpForxpPile;
+
 	if (bShouldUpdatePartyUI){
 		templeFuncs.UpdatePartyUI();
 	}
