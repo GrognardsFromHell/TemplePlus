@@ -37,11 +37,12 @@
     <ClCompile Include="ui_item_creation.cpp" />
     <ClCompile Include="obj.cpp" />
     <ClCompile Include="folderutils.cpp" />
-    <ClCompile Include="debugMessageToggles.cpp" />
-    <ClCompile Include="testhelper.cpp" />
     <ClCompile Include="xp.cpp" />
     <ClCompile Include="temple_main.cpp" />
     <ClCompile Include="ui_mainmenu.cpp" />
+    <ClCompile Include="game_config.cpp" />
+    <ClCompile Include="tig_loadingscreen.cpp" />
+    <ClCompile Include="aas.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="addresses.h" />
@@ -89,6 +90,13 @@
     <ClInclude Include="testhelper.h" />
     <ClInclude Include="xp.h" />
     <ClInclude Include="ui_mainmenu.h" />
+    <ClInclude Include="exception.h" />
+    <ClInclude Include="stopwatch.h" />
+    <ClInclude Include="game_config.h" />
+    <ClInclude Include="tig_loadingscreen.h" />
+    <ClInclude Include="tio.h" />
+    <ClInclude Include="aas.h" />
+    <ClInclude Include="tig.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Spellslinger%27s Notes\bonusspells.txt" />

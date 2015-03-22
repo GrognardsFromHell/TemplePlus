@@ -134,7 +134,7 @@ struct UiFuncs : AddressTable {
 		return _GetAsset(assetType, (uint32_t)assetIndex, textureIdOut, 0) == 0;
 	}
 
-	void rebase(Rebaser rebase) override {
+	UiFuncs() {
 		rebase(Init, 0x101156F0);
 		rebase(LoadModule, 0x10115790);
 		rebase(LoadImg, 0x101E8320);

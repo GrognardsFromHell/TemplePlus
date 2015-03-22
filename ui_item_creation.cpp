@@ -79,7 +79,7 @@ struct StringTokenizerFuncs : AddressTable {
 	int (__cdecl *NextToken)(int *tokenizerId, StringToken *tokenOut);
 	int (__cdecl *Destroy)(int *tokenizerId);
 
-	void rebase(Rebaser rebase) override {
+	StringTokenizerFuncs() {
 		rebase(Create, 0x101F2350);
 		rebase(NextToken, 0x101F25F0);
 		rebase(Destroy, 0x101F2560);

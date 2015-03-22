@@ -63,7 +63,7 @@ struct StartupRelevantFuncs : AddressTable {
 	void(__cdecl *RunBatchFile)(const char *filename);
 	void(__cdecl *RunMainLoop)();
 
-	void rebase(Rebaser rebase) override {
+	StartupRelevantFuncs() {
 		rebase(FindSound, 0x1003B9E0);
 		rebase(TigInit, 0x101DF5A0);
 		rebase(TigExit, 0x101DF3D0);
@@ -140,9 +140,10 @@ public:
 		mConfig.renderfunc = 0x10002650; // Callback 1
 		mConfig.bufferstuffIdx = tigBuffer.bufferIdx();
 
-		if (!gameSystemFuncs.Init(&mConfig)) {
-			throw TempleException("Unable to initialize game systems!");
-		}
+		gameSystemFuncs.NewInit(mConfig);
+		// if (!gameSystemFuncs.Init(&mConfig)) {
+		//	throw TempleException("Unable to initialize game systems!");
+		// }
 	}
 	~GameSystemsInitializer() {
 		LOG(info) << "Unloading game systems";

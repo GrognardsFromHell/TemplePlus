@@ -156,7 +156,7 @@ struct TempleFuncs : AddressTable {
 	}
 
 
-	void rebase(Rebaser rebase) override {
+	TempleFuncs() {
 		rebase(ProcessSystemEvents, 0x101DF440);
 		rebase(UpdatePartyUI, 0x10134CB0);
 

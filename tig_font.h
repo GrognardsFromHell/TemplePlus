@@ -75,10 +75,16 @@ struct TigFontFuncs : AddressTable
 {
 	int(__cdecl *Measure)(tig_text_style *style, tig_font_metrics *metrics);
 	int(__cdecl *Draw)(const char *text, tig_font_extents* extents, tig_text_style *style);
+	int(__cdecl *LoadAll)(const char *pattern);
+	int(__cdecl *PushFont)(const char *name, int size, bool antialias);
+	int(__cdecl *PopFont)();
 
-	void rebase(Rebaser rebase) override {
+	TigFontFuncs() {
 		rebase(Measure, 0x101EA4E0);
 		rebase(Draw, 0x101EAF30);
+		rebase(LoadAll, 0x101EA1F0);
+		rebase(PushFont, 0x101E89D0);
+		rebase(PopFont, 0x101E8AC0);
 	}
 };
 

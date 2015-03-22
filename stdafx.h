@@ -1,5 +1,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+// ToEE was compiled with 32-bit time_t sadly
+#define _USE_32BIT_TIME_T
+
 #include <Windows.h>
 #include <windowsx.h>
 

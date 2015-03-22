@@ -1,80 +1,31 @@
 #pragma once
 
 #include "stdafx.h"
+#include "exception.h"
 
 extern void* templeImageBase;
 
-/**
- * This is a utility class that helps with access to function pointers.
- * It provides an automatic callback to be notified as soon as 
- */
-struct Rebaser
-{
-	/*
-		Modifies a pointer argument of arbitrary type
-	*/
-	template <typename T>
-	void operator()(T& arg)
-	{
-		uint32_t relativeOffset = reinterpret_cast<uint32_t>(arg) - 0x10000000;
-		BOOST_ASSERT(relativeOffset > 0 && relativeOffset < 0x10000000);
-		auto realAddress = static_cast<char*>(templeImageBase) + relativeOffset;
-		arg = reinterpret_cast<T>(realAddress);
-	}
-
-	template <typename T>
-	void operator()(T& arg, uint32_t address)
-	{
-		uint32_t relativeOffset = address - 0x10000000;
-		BOOST_ASSERT(relativeOffset > 0 && relativeOffset < 0x10000000);
-		auto realAddress = static_cast<char*>(templeImageBase) + relativeOffset;
-		arg = reinterpret_cast<T>(realAddress);
-	}
-};
-
 struct AddressInitializer
 {
-	friend struct AddressTable;
-
-	typedef std::function<void(Rebaser rebaser)> Callback;
-
-	AddressInitializer(const Callback& callback)
-	{
-		if (rebaseDone)
-		{
-			callback(Rebaser());
-		}
-		else
-		{
-			initializers.push_back(callback);
-		}
+	// Add a pointer to the queue for being rebased
+	static void queueRebase(void **ptr) {
+		rebaseQueue.push_back(ptr);
 	}
 
+	// Perform all queued rebase operations
 	static void performRebase();
 private:
-	static vector<Callback> initializers;
+	static vector<void**> rebaseQueue;
 	static bool rebaseDone;
 };
 
-template <typename T, uint32_t offsetPreset = 0>
+template <typename T, uint32_t offsetPreset>
 struct GlobalStruct
 {
 	GlobalStruct() : mPtr(reinterpret_cast<T*>(offsetPreset))
 	{
 		static_assert(offsetPreset != 0, "This constructor should only be used with a template argument offset");
-		AddressInitializer([this](Rebaser rebase)
-		{
-			rebase(mPtr);
-		});
-	}
-
-	GlobalStruct(uint32_t offset)
-	{
-		mPtr = reinterpret_cast<T*>(offset);
-		AddressInitializer([this](Rebaser rebase)
-			{
-				rebase(mPtr);
-			});
+		AddressInitializer::queueRebase(reinterpret_cast<void**>(&mPtr));
 	}
 
 	operator T*()
@@ -96,25 +47,13 @@ private:
 	T* mPtr;
 };
 
-template <typename T, uint32_t offsetPreset = 0>
+template <typename T, uint32_t offsetPreset>
 struct GlobalPrimitive
 {
 	GlobalPrimitive() : mPtr(reinterpret_cast<T*>(offsetPreset))
 	{
-		static_assert(offsetPreset != 0, "This constructor should only be used with a template argument offset");
-		AddressInitializer([this](Rebaser rebase)
-		{
-			rebase(mPtr);
-		});
-	}
-
-	GlobalPrimitive(uint32_t offset)
-	{
-		mPtr = reinterpret_cast<T*>(offset);
-		AddressInitializer([this](Rebaser rebase)
-		{
-			rebase(mPtr);
-		});
+		BOOST_ASSERT(mPtr != nullptr);
+		AddressInitializer::queueRebase(reinterpret_cast<void**>(&mPtr));
 	}
 
 	T operator =(T value)
@@ -138,24 +77,21 @@ private:
 	T* mPtr;
 };
 
-template<uint32_t offset = 0> using GlobalBool = GlobalPrimitive<bool, offset>;
+template<uint32_t offset> using GlobalBool = GlobalPrimitive<bool, offset>;
 
 struct AddressTable
 {
-	AddressTable()
-	{
-		AddressInitializer::Callback callback = [this](Rebaser rebaser)
-			{
-				rebase(rebaser);
-			};
-		AddressInitializer::initializers.push_back(callback);
-	}
+	AddressTable() {}
 
-	virtual ~AddressTable()
-	{
-	}
+	AddressTable & operator =(const AddressTable &) = delete;
+	AddressTable(const AddressTable &) = delete;
 
-	virtual void rebase(Rebaser rebase) = 0;
+protected:
+	template<typename T>
+	void rebase(T &ref, uint32_t offset) {
+		ref = reinterpret_cast<T>(offset);
+		AddressInitializer::queueRebase(reinterpret_cast<void**>(&ref));
+	}
 };
 
 /**
@@ -166,7 +102,7 @@ struct TempleAllocFuncs : AddressTable
 	void* (__cdecl *opNew)(size_t count);
 	void (__cdecl *free)(void *ptr);
 
-	void rebase(Rebaser rebase) override {
+	TempleAllocFuncs() {
 		rebase(opNew, 0x10256432);
 		rebase(free, 0x10254209);
 	}

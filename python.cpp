@@ -253,7 +253,6 @@ static PyObject * pyObjHandleType_MakeWizard(TemplePyObjHandle* obj, PyObject * 
 		return PyInt_FromLong(0);
 	}
 
-	MakeWizard(obj->objHandle, level);
 
 	return PyInt_FromLong(1);
 };

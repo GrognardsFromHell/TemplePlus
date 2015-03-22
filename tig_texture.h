@@ -81,12 +81,24 @@ struct TigTextureRegistryEntry
 	TigBuffer *buffer;
 };
 
+struct TigBufferCreateArgs {
+	int flagsOrSth;
+	int width;
+	int height;
+	int zero4;
+	int field_10;
+	int texturetype;
+};
+
 struct TextureFuncs : AddressTable {
 
 	int(__cdecl *GetLoaded)(int textureId, TigTextureRegistryEntry *textureOut);
 
-	void rebase(Rebaser rebase) override {
+	int(__cdecl *CreateBuffer)(TigBufferCreateArgs *createargs, TigBuffer **bufferOut);
+
+	TextureFuncs() {
 		rebase(GetLoaded, 0x101EECA0);
+		rebase(CreateBuffer, 0x101DCE50);
 	}
 };
 

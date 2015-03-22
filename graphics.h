@@ -106,7 +106,7 @@ struct VideoFuncs : AddressTable {
 	GlobalPrimitive<TigRenderStates, 0x10EF30D8> activeRenderStates;
 	GlobalPrimitive<float, 0x10D24D7C> fadeScreenRect;
 
-	void rebase(Rebaser rebase) override {
+	VideoFuncs() {
 		rebase(TigDirect3dInit, 0x101DAFB0);
 		rebase(PresentFrame, 0x101DCB80);
 		rebase(SetVideoMode, 0x101DC870);

@@ -34,6 +34,7 @@ struct MouseFuncs : AddressTable {
 	void (__cdecl *SetButtonState)(MouseButton button, bool pressed);
 	void (__cdecl *SetPos)(int x, int y, int wheelDelta);
 	void RefreshCursor();
+	void (__cdecl *SetBounds)(int maxX, int maxY);
 
 	void ShowCursor() {
 		mouseState->flags &= ~MF_HIDE_CURSOR;
@@ -42,9 +43,10 @@ struct MouseFuncs : AddressTable {
 		mouseState->flags |= MF_HIDE_CURSOR;
 	}
 
-	void rebase(Rebaser rebase) override {
+	MouseFuncs() {
 		rebase(SetButtonState, 0x101DD1B0);
 		rebase(SetPos, 0x101DD070);
+		rebase(SetBounds, 0x101DD010);
 	}
 };
 

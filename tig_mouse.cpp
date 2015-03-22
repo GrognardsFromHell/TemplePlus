@@ -17,7 +17,7 @@ struct OriginalMouseFuncs : AddressTable {
 	int(__cdecl *SetCursor)(int shaderId);
 	void(__cdecl *ResetCursor)();
 
-	void rebase(Rebaser rebase) override {
+	OriginalMouseFuncs() {
 		rebase(SetCursor, 0x101DDDD0);
 		rebase(ResetCursor, 0x101DD780);
 	}

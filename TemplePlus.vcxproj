@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="aas.cpp" />
     <ClCompile Include="addressess.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
@@ -44,10 +45,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="debugMessageToggles.cpp" />
     <ClCompile Include="fixes.cpp" />
     <ClCompile Include="folderutils.cpp" />
     <ClCompile Include="gamesystems.cpp" />
+    <ClCompile Include="game_config.cpp" />
     <ClCompile Include="graphics.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
@@ -56,6 +57,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="tig_loadingscreen.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="minhook\src\buffer.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -91,7 +93,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="testhelper.cpp" />
     <ClCompile Include="temple_main.cpp" />
     <ClCompile Include="tig_font.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
@@ -108,6 +109,7 @@
     <ClCompile Include="ui_mainmenu.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="aas.h" />
     <ClInclude Include="addresses.h" />
     <ClInclude Include="d3d8to9\d3d8to9.h" />
     <ClInclude Include="d3d8to9\d3d8to9_convert.h" />
@@ -121,11 +123,15 @@
     <ClInclude Include="d3d8\d3d8.h" />
     <ClInclude Include="d3d8\d3d8caps.h" />
     <ClInclude Include="d3d8\d3d8types.h" />
+    <ClInclude Include="exception.h" />
     <ClInclude Include="folderutils.h" />
     <ClInclude Include="gamesystems.h" />
+    <ClInclude Include="game_config.h" />
     <ClInclude Include="graphics.h" />
     <ClInclude Include="fixes.h" />
     <ClInclude Include="libraryholder.h" />
+    <ClInclude Include="tig.h" />
+    <ClInclude Include="tig_loadingscreen.h" />
     <ClInclude Include="minhook\src\buffer.h" />
     <ClInclude Include="minhook\src\HDE\hde32.h" />
     <ClInclude Include="minhook\src\HDE\hde64.h" />
@@ -136,6 +142,7 @@
     <ClInclude Include="idxtables.h" />
     <ClInclude Include="obj.h" />
     <ClInclude Include="python_header.h" />
+    <ClInclude Include="stopwatch.h" />
     <ClInclude Include="temple_enums.h" />
     <ClInclude Include="testhelper.h" />
     <ClInclude Include="tig_startup.h" />
@@ -150,6 +157,7 @@
     <ClInclude Include="tig_shader.h" />
     <ClInclude Include="tig_texture.h" />
     <ClInclude Include="mainwindow.h" />
+    <ClInclude Include="tio.h" />
     <ClInclude Include="ui.h" />
     <ClInclude Include="xp.h" />
     <ClInclude Include="ui_mainmenu.h" />
@@ -209,7 +217,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>winmm.lib;temple.lib;d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>temple.lib;tio.lib;winmm.lib;d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <AdditionalLibraryDirectories>dependencies\boost_1_57_0\lib32-msvc-12.0</AdditionalLibraryDirectories>
@@ -232,7 +240,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>winmm.lib;temple.lib;d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>temple.lib;tio.lib;winmm.lib;d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>

@@ -11,7 +11,7 @@
 enum StartupFlag
 {
 	SF_FPS = 0x1, // -fps
-	SF_VSYNC = 0x4,
+	SF_VSYNC = 0x4, // TODO: This is probably wrong. 0x4 gets tested against d3d flags, not these flags
 	SF_NOSOUND = 0x2000, // -nosound
 	SF_DOUBLEBUFFER = 0x2, // -doublebuffer
 	SF_ANIMCATCHUP, // -animcatchup (stored elsewhere)
