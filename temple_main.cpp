@@ -11,8 +11,8 @@
 #include "ui.h"
 #include "ui_mainmenu.h"
 #include "movies.h"
-
-#include <boost/algorithm/string.hpp>    
+#include "exception.h"
+#include "stopwatch.h"
 
 class TempleMutex {
 public:
@@ -84,6 +84,124 @@ static void addScreenshotHotkey();
 static void applyGameConfig();
 static bool setDefaultCursor();
 
+// RAII for TIG initialization
+class TigInitializer {
+public:
+	TigInitializer(HINSTANCE hInstance) : mConfig(createTigConfig(hInstance)) {
+		StopwatchReporter reporter("TIG initialized in %s");
+		LOG(info) << "Initializing TIG";
+		auto result = startupRelevantFuncs.TigInit(&mConfig);
+		if (result) {
+			throw TempleException(format("Unable to initialize TIG: %d") % result);
+		}
+		tigConsoleDisabled = false; // tig init disables console by default
+	}
+	~TigInitializer() {
+		LOG(info) << "Shutting down TIG";
+		startupRelevantFuncs.TigExit();
+	}
+	const TigConfig &config() const {
+		return mConfig;
+	}
+private:
+	TigConfig mConfig;
+};
+
+class TigBufferstuffInitializer {
+public:
+	TigBufferstuffInitializer() {
+		StopwatchReporter reporter("Game scratch buffer initialized in %s");
+		LOG(info) << "Creating game scratch buffer";
+		if (!startupRelevantFuncs.TigWindowBufferstuffCreate(&mBufferIdx)) {
+			throw TempleException("Unable to initialize TIG buffer");
+		}
+	}
+	~TigBufferstuffInitializer() {
+		LOG(info) << "Freeing game scratch buffer";
+		startupRelevantFuncs.TigWindowBufferstuffFree(mBufferIdx);
+	}
+	int bufferIdx() const {
+		return mBufferIdx;
+	}
+private:
+	int mBufferIdx = -1;
+};
+
+class GameSystemsInitializer {
+public:
+	GameSystemsInitializer(const TigConfig &tigConfig) {
+		StopwatchReporter reporter("Game systems initialized in %s");
+		LOG(info) << "Loading game systems";
+
+		memset(&mConfig, 0, sizeof(mConfig));
+		mConfig.width = tigConfig.width;
+		mConfig.height = tigConfig.height;
+		mConfig.field_10 = 0x10002530; // Callback 1
+		mConfig.renderfunc = 0x10002650; // Callback 1
+		mConfig.bufferstuffIdx = tigBuffer.bufferIdx();
+
+		if (!gameSystemFuncs.Init(&mConfig)) {
+			throw TempleException("Unable to initialize game systems!");
+		}
+	}
+	~GameSystemsInitializer() {
+		LOG(info) << "Unloading game systems";
+		gameSystemFuncs.Shutdown();
+	}
+	const GameSystemConf &config() const {
+		return mConfig;
+	}
+private:
+	GameSystemConf mConfig;
+	TigBufferstuffInitializer tigBuffer;
+};
+
+class UiInitializer {
+public:
+	UiInitializer(const GameSystemConf &config) {
+		StopwatchReporter reporter("UI initialized in %s");
+		LOG(info) << "Loading UI systems";
+		if (!uiFuncs.Init(&config)) {
+			throw TempleException("Unable to initialize the UI systems.");
+		}
+	}
+	~UiInitializer() {
+		LOG(info) << "Unloading UI systems";
+		uiFuncs.Shutdown();
+	}
+};
+
+class GameSystemsModuleInitializer {
+public:
+	GameSystemsModuleInitializer(const string &moduleName) {
+		StopwatchReporter reporter("Game module loaded in %s");
+		LOG(info) << "Loading game module " << moduleName;
+		if (!gameSystemFuncs.LoadModule(moduleName.c_str())) {
+			throw TempleException(format("Unable to load game module %s") % moduleName);
+		}
+	}
+	~GameSystemsModuleInitializer() {
+		LOG(info) << "Unloading game module";
+		gameSystemFuncs.UnloadModule();
+	}
+};
+
+class UiModuleInitializer {
+public:
+	UiModuleInitializer() {
+		StopwatchReporter reporter("Module specific UI loaded in %s");
+		LOG(info) << "Loading module specific UI.";
+		if (!uiFuncs.LoadModule()) {
+			throw TempleException("Unable to load module specific UI data.");
+		}
+	}
+	~UiModuleInitializer() {
+		LOG(info) << "Unloading module specific UI.";
+		uiFuncs.UnloadModule();
+	}
+};
+
+
 int TempleMain(HINSTANCE hInstance, const wstring &commandLine) {
 	TempleMutex mutex;
 
@@ -96,49 +214,20 @@ int TempleMain(HINSTANCE hInstance, const wstring &commandLine) {
 	*/
 	applyGlobalConfig();
 
-	/*
-		Initialize TIG
-	*/
-	auto tigConfig = createTigConfig(hInstance);
-
-	// TODO: RAII
-	auto result = startupRelevantFuncs.TigInit(&tigConfig);
-	if (result) {
-		LOG(error) << "Unable to initialize TIG: " << result;
-		return 1;
-	}
-	tigConsoleDisabled = false; // tig init disables console by default
+	TigInitializer tig(hInstance);
 
 	setMiles3dProvider();
 	addScreenshotHotkey();
 
 	// It's pretty unclear what this is used for
 	bufferstuffFlag = bufferstuffFlag | 0x40;
-	bufferstuffWidth = tigConfig.width;
-	bufferstuffHeight = tigConfig.height;
+	bufferstuffWidth = tig.config().width;
+	bufferstuffHeight = tig.config().height;
 	
 	// Hides the cursor during loading
 	mouseFuncs.HideCursor();
 
-	/*
-		Initialize Game Systems
-	*/
-	GameSystemConf gameConf;
-	memset(&gameConf, 0, sizeof(gameConf));
-	gameConf.width = tigConfig.width;
-	gameConf.height = tigConfig.height;
-	gameConf.field_10 = 0x10002530; // Callback 1
-	gameConf.renderfunc = 0x10002650; // Callback 1
-
-	// TODO: RAII
-	if (!startupRelevantFuncs.TigWindowBufferstuffCreate(&gameConf.bufferstuffIdx)) {
-		return 1;
-	}
-
-	if (!gameSystemFuncs.Init(&gameConf)) {
-		LOG(error) << "Unable to initialize game systems.";
-		return 1;
-	}
+	GameSystemsInitializer gameSystems(tig.config());
 
 	/*
 		Process options applicable after initialization of game systems
@@ -149,25 +238,13 @@ int TempleMain(HINSTANCE hInstance, const wstring &commandLine) {
 		return 1;
 	}
 
-	// TODO: RAII
-	if (!uiFuncs.Init(&gameConf)) {
-		return 1;
-	}
+	UiInitializer ui(gameSystems.config());
 
-	// The name here was previously overridable via the cmdline but should use a different mechanism in the future
-	// TODO: RAII
-	if (!gameSystemFuncs.LoadModule("ToEE")) {
-		LOG(error) << "Unable to load module ToEE";
-		return 1;
-	}
+	GameSystemsModuleInitializer gameModule(config.defaultModule);
 
 	// Notify the UI system that the module has been loaded
-	// TODO: RAII
-	if (!uiFuncs.LoadModule()) {
-		LOG(error) << "Unable to load UI module data.";
-		return 1;
-	}
-
+	UiModuleInitializer uiModule;
+	
 	if (!config.skipIntro) {
 		movieFuncs.PlayMovie("movies\\introcinematic.bik", 0, 0, 0);
 	}
@@ -184,8 +261,6 @@ int TempleMain(HINSTANCE hInstance, const wstring &commandLine) {
 		
 	startupRelevantFuncs.RunMainLoop();
 
-	startupRelevantFuncs.TigWindowBufferstuffFree(gameConf.bufferstuffIdx);
-	startupRelevantFuncs.TigExit();
 	return 0;
 }
 

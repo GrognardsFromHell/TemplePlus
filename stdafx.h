@@ -14,6 +14,7 @@
 #include <string>
 #include <functional>
 #include <vector>
+#include <chrono>
 
 #include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>

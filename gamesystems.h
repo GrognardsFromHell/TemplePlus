@@ -48,10 +48,14 @@ struct GameSystemFuncs : AddressTable {
 
 	bool (__cdecl *Init)(GameSystemConf *conf);
 	bool (__cdecl *LoadModule)(const char *name);
+	void (__cdecl *UnloadModule)();
+	void (__cdecl *Shutdown)();
 
 	void rebase(Rebaser rebase) override {
 		rebase(Init, 0x10004C40);
 		rebase(LoadModule, 0x10005480);
+		rebase(UnloadModule, 0x10004280);
+		rebase(Shutdown, 0x10001F30);
 	}
 };
 

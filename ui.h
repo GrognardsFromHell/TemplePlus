@@ -123,8 +123,10 @@ enum class UiGenericAsset : uint32_t {
 
 struct UiFuncs : AddressTable {
 
-	bool (__cdecl *Init)(GameSystemConf *conf);
+	bool (__cdecl *Init)(const GameSystemConf *conf);
 	bool (__cdecl *LoadModule)();
+	void (__cdecl *UnloadModule)();
+	void (__cdecl *Shutdown)();
 
 	ImgFile *(__cdecl *LoadImg)(const char *filename);
 
@@ -136,6 +138,8 @@ struct UiFuncs : AddressTable {
 		rebase(Init, 0x101156F0);
 		rebase(LoadModule, 0x10115790);
 		rebase(LoadImg, 0x101E8320);
+		rebase(UnloadModule, 0x101152C0);
+		rebase(Shutdown, 0x10115230);
 		rebase(_GetAsset, 0x1004A360);
 	}
 
