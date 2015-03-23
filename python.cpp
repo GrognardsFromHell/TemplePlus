@@ -334,8 +334,6 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 		return templeFuncs.PyObjFromObjHnd(ObjSubsInv);
 	}
 	else if (!_strcmpi(name, "feat_add")) {
-		int a;
-		a = sizeof(ObjectId);
 		return Py_FindMethod(pyObjHandleMethods_New, obj, "objfeatadd");
 		
 	};
