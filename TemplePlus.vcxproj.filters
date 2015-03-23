@@ -1,19 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="addressess.cpp" />
     <ClCompile Include="gamesystems.cpp" />
     <ClCompile Include="graphics.cpp" />
-    <ClCompile Include="libraryholder.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="idxtables.cpp" />
     <ClCompile Include="movies.cpp" />
     <ClCompile Include="stdafx.cpp" />
-    <ClCompile Include="config.cpp" />
     <ClCompile Include="temple_functions.cpp" />
     <ClCompile Include="mainwindow.cpp" />
     <ClCompile Include="obj.cpp" />
-    <ClCompile Include="folderutils.cpp" />
     <ClCompile Include="debugMessageToggles.cpp" />
     <ClCompile Include="attackrollcpp.cpp">
       <Filter>Mods and Fixes</Filter>
@@ -93,7 +89,7 @@
     </ClCompile>
     <ClCompile Include="bonusspells.cpp">
       <Filter>Mods and Fixes</Filter>
-	</ClCompile>
+    </ClCompile>
     <ClCompile Include="minhook\src\HDE\hde32.c">
       <Filter>Dependencies\minhook</Filter>
     </ClCompile>
@@ -115,26 +111,33 @@
     <ClCompile Include="dependencies\json11\json11.cpp">
       <Filter>Dependencies\json11</Filter>
     </ClCompile>
+    <ClCompile Include="libraryholder.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="folderutils.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="config.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="addressess.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="addresses.h" />
     <ClInclude Include="gamesystems.h" />
     <ClInclude Include="graphics.h" />
-    <ClInclude Include="libraryholder.h" />
     <ClInclude Include="idxtables.h" />
     <ClInclude Include="movies.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="config.h" />
     <ClInclude Include="temple_functions.h" />
     <ClInclude Include="mainwindow.h" />
     <ClInclude Include="obj.h" />
-    <ClInclude Include="folderutils.h" />
     <ClInclude Include="temple_enums.h" />
     <ClInclude Include="testhelper.h" />
     <ClInclude Include="aas.h" />
     <ClInclude Include="exception.h" />
     <ClInclude Include="game_config.h" />
-    <ClInclude Include="stopwatch.h" />
     <ClInclude Include="tio.h" />
     <ClInclude Include="xp.h">
       <Filter>Mods and Fixes</Filter>
@@ -214,6 +217,21 @@
     <ClInclude Include="python_header.h">
       <Filter>python</Filter>
     </ClInclude>
+    <ClInclude Include="stopwatch.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="libraryholder.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="folderutils.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="config.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="addresses.h">
+      <Filter>utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -278,6 +296,9 @@
     <ClInclude Include="dependencies\json11\json11.hpp">
       <Filter>Dependencies\json11</Filter>
     </ClInclude>
+    <Filter Include="utils">
+      <UniqueIdentifier>{66b79c6d-b1d5-4441-b7c0-6af6c3fc49a8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Spellslinger%27s Notes\bonusspells.txt">
