@@ -42,12 +42,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 		TempleFixes::apply();
 
-		// this forces us to be REALLY linked against temple.dll If we do not reference anything from it, the ref will be optimized out
-		bool dontChangeMe = false;
-		if (dontChangeMe) {
-			temple_main(nullptr, nullptr, nullptr, 0);
-		}
-
 		auto ourModule = GetModuleHandleW(nullptr);
 		auto result = TempleMain(ourModule, lpCmdLine);
 
@@ -55,7 +49,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 		return result;
 	}
-	catch (std::exception &e) {
+	catch (exception &e) {
 		string msg = format("Uncaught exception: {}", e.what());
 		MessageBoxA(NULL, msg.c_str(), "Fatal Error", MB_OK | MB_ICONERROR);
 		return 1;
@@ -99,11 +93,11 @@ static wstring GetInstallationDir() {
 	wstring pathStr(path);
 
 	if (!PathRemoveFileSpec(path)) {
-		logger->error(format("Unable to remove trailing filename in temple.dll path: {}", converter.to_bytes(pathStr)));
+		logger->error("Unable to remove trailing filename in temple.dll path: {}", converter.to_bytes(pathStr));
 	}
 
 	if (!PathAddBackslash(path)) {
-		logger->error(format("Unable to append the backslash to the end of the installation directory: {}", converter.to_bytes(pathStr)));
+		logger->error("Unable to append the backslash to the end of the installation directory: {}", converter.to_bytes(pathStr));
 	}
 
 	return path;

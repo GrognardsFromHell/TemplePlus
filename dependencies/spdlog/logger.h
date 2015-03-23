@@ -74,31 +74,6 @@ public:
     template <typename... Args> details::line_logger emerg(const char* fmt, const Args&... args);
 
 
-    // logger.info(msg) << ".." call style
-    template <typename T> details::line_logger trace(const T&);
-    template <typename T> details::line_logger debug(const T&);
-    template <typename T> details::line_logger info(const T&);
-    template <typename T> details::line_logger notice(const T&);
-    template <typename T> details::line_logger warn(const T&);
-    template <typename T> details::line_logger error(const T&);
-    template <typename T> details::line_logger critical(const T&);
-    template <typename T> details::line_logger alert(const T&);
-    template <typename T> details::line_logger emerg(const T&);
-
-
-    // logger.info() << ".." call  style
-    details::line_logger trace();
-    details::line_logger debug();
-    details::line_logger info();
-    details::line_logger notice();
-    details::line_logger warn();
-    details::line_logger error();
-    details::line_logger critical();
-    details::line_logger alert();
-    details::line_logger emerg();
-
-
-
     // Create log message with the given level, no matter what is the actual logger's level
     template <typename... Args>
     details::line_logger force_log(level::level_enum lvl, const char* fmt, const Args&... args);
