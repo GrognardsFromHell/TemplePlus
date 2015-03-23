@@ -39,7 +39,21 @@
     <ClCompile Include="folderutils.cpp" />
     <ClCompile Include="debugMessageToggles.cpp" />
     <ClCompile Include="testhelper.cpp" />
-    <ClCompile Include="xp.cpp" />
+    <ClCompile Include="attackrollcpp.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="animalcompanion.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="generalfixes.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="xp.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="spells.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="addresses.h" />
@@ -89,5 +103,10 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Spellslinger%27s Notes\bonusspells.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Mods and Fixes">
+      <UniqueIdentifier>{16476d0b-e734-44fe-9cae-2e14bb4ee82b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

@@ -15,6 +15,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="animalcompanion.cpp" />
+    <ClCompile Include="attackrollcpp.cpp" />
     <ClCompile Include="bonusspells.cpp" />
     <ClCompile Include="d3d8to9\d3d8to9.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
@@ -48,6 +50,7 @@
     <ClCompile Include="fixes.cpp" />
     <ClCompile Include="folderutils.cpp" />
     <ClCompile Include="gamesystems.cpp" />
+    <ClCompile Include="generalfixes.cpp" />
     <ClCompile Include="graphics.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
@@ -81,6 +84,7 @@
     <ClCompile Include="movies.cpp" />
     <ClCompile Include="obj.cpp" />
     <ClCompile Include="python.cpp" />
+    <ClCompile Include="spells.cpp" />
     <ClCompile Include="xp.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
