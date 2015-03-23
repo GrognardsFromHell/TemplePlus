@@ -2,20 +2,20 @@
 #include "stdafx.h"
 #include "libraryholder.h"
 
-LibraryHolder::LibraryHolder(const path& path) : mLibraryHandle(0)
+LibraryHolder::LibraryHolder(const wstring& path) : mLibraryHandle(0)
 {
-	LOG(info) << "Loading" << path;
-	mLibraryHandle = LoadLibraryW(path.wstring().data());
+	// logger->info("Loading" << path;
+	mLibraryHandle = LoadLibraryW(path.data());
 
 	if (!mLibraryHandle)
 	{
-		LPWSTR bufPtr = NULL;
+		LPSTR bufPtr = NULL;
 		DWORD err = GetLastError();
-		FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER |
 		                                             FORMAT_MESSAGE_FROM_SYSTEM |
 		                                             FORMAT_MESSAGE_IGNORE_INSERTS,
-		                                             NULL, err, 0, (LPWSTR)&bufPtr, 0, NULL);
-		mErrorText = bufPtr ? wstring(bufPtr) : (wformat(L"Unknown error %1%") % err).str();
+		                                             NULL, err, 0, (LPSTR)&bufPtr, 0, NULL);
+		mErrorText = bufPtr ? string(bufPtr) : format("Unknown error {}", err);
 		LocalFree(bufPtr);
 	}
 }
@@ -30,5 +30,5 @@ LibraryHolder::~LibraryHolder()
 
 bool LibraryHolder::valid()
 {
-	return !!mLibraryHandle;
+	return mLibraryHandle != nullptr;
 }

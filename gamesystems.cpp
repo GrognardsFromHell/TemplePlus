@@ -20,7 +20,7 @@ GameSystemFuncs gameSystemFuncs;
 /*
 FieldDefs *fieldDefTable = (FieldDefs*)0x10B3D7D8;
 for (auto field : fieldDefTable->fields) {
-LOG(info) << "FIELD!";
+logger->info("FIELD!");
 }
 */
 
@@ -29,7 +29,7 @@ typedef void (__cdecl *GameSystemReset)();
 typedef bool (__cdecl *GameSystemModuleLoad)();
 typedef void (__cdecl *GameSystemModuleUnload)();
 typedef void (__cdecl *GameSystemExit)();
-typedef void (__cdecl *GameSystemAdvanceTime)(time_t time);
+typedef void (__cdecl *GameSystemAdvanceTime)(uint32_t time);
 typedef bool (__cdecl *GameSystemSave)(TioFile file);
 typedef bool (__cdecl *GameSystemLoad)(GameSystemSaveFile* saveFile);
 typedef void (__cdecl *GameSystemResetBuffers)(RebuildBufferInfo* rebuildInfo);
@@ -69,8 +69,8 @@ static vector<std::function<void()>> beforeModuleUnloadCallbacks;
 static vector<std::function<void()>> afterModuleUnloadCallbacks;
 static vector<std::function<void()>> beforeExitCallbacks;
 static vector<std::function<void()>> afterExitCallbacks;
-static vector<std::function<void(time_t)>> beforeAdvanceTimeCallbacks;
-static vector<std::function<void(time_t)>> afterAdvanceTimeCallbacks;
+static vector<std::function<void(uint32_t)>> beforeAdvanceTimeCallbacks;
+static vector<std::function<void(uint32_t)>> afterAdvanceTimeCallbacks;
 static vector<std::function<void(TioFile)>> beforeSaveCallbacks;
 static vector<std::function<void(TioFile)>> afterSaveCallbacks;
 static vector<std::function<void(GameSystemSaveFile*)>> beforeLoadCallbacks;
@@ -80,7 +80,7 @@ static vector<std::function<void(RebuildBufferInfo*)>> afterResizeBuffersCallbac
 
 struct BeforeCallbacks {
 	static bool __cdecl Init(const GameSystemConf* conf) {
-		LOG(info) << "EVENT: Before Init";
+		logger->info("EVENT: Before Init");
 
 		for (auto& callback : beforeInitCallbacks) {
 			callback(conf);
@@ -93,7 +93,7 @@ struct BeforeCallbacks {
 	}
 
 	static void __cdecl Reset() {
-		LOG(info) << "EVENT: Before Reset";
+		logger->info("EVENT: Before Reset");
 
 		for (auto& callback : beforeResetCallbacks) {
 			callback();
@@ -105,7 +105,7 @@ struct BeforeCallbacks {
 	}
 
 	static bool __cdecl ModuleLoad() {
-		LOG(info) << "EVENT: Before Module Load";
+		logger->info("EVENT: Before Module Load");
 
 		for (auto& callback : beforeModuleLoadCallbacks) {
 			callback();
@@ -118,7 +118,7 @@ struct BeforeCallbacks {
 	}
 
 	static void __cdecl ModuleUnload() {
-		LOG(info) << "EVENT: Before Module Unload";
+		logger->info("EVENT: Before Module Unload");
 
 		for (auto& callback : beforeModuleUnloadCallbacks) {
 			callback();
@@ -130,7 +130,7 @@ struct BeforeCallbacks {
 	}
 
 	static void __cdecl Exit() {
-		LOG(info) << "EVENT: Before Exit";
+		logger->info("EVENT: Before Exit");
 
 		for (auto& callback : beforeExitCallbacks) {
 			callback();
@@ -141,9 +141,9 @@ struct BeforeCallbacks {
 		}
 	}
 
-	static void __cdecl AdvanceTime(time_t time) {
+	static void __cdecl AdvanceTime(uint32_t time) {
 		// This spams the log a lot
-		// LOG(info) << "EVENT: Before Advance Time";
+		// logger->info("EVENT: Before Advance Time");
 		for (auto& callback : beforeAdvanceTimeCallbacks) {
 			callback(time);
 		}
@@ -154,7 +154,7 @@ struct BeforeCallbacks {
 	}
 
 	static bool __cdecl Save(TioFile file) {
-		LOG(info) << "EVENT: Before Save";
+		logger->info("EVENT: Before Save");
 
 		for (auto& callback : beforeSaveCallbacks) {
 			callback(file);
@@ -167,7 +167,7 @@ struct BeforeCallbacks {
 	}
 
 	static bool __cdecl Load(GameSystemSaveFile* file) {
-		LOG(info) << "EVENT: Before Load";
+		logger->info("EVENT: Before Load");
 
 		for (auto& callback : beforeLoadCallbacks) {
 			callback(file);
@@ -180,7 +180,7 @@ struct BeforeCallbacks {
 	}
 
 	static void __cdecl ResetBuffers(RebuildBufferInfo* info) {
-		LOG(info) << "EVENT: Before Reset Buffers";
+		logger->info("EVENT: Before Reset Buffers");
 
 		for (auto& callback : beforeResizeBuffersCallbacks) {
 			callback(info);
@@ -199,7 +199,7 @@ struct AfterCallbacks {
 			result = orgFirstSystem.init(conf);
 		}
 
-		LOG(info) << "EVENT: After Init";
+		logger->info("EVENT: After Init");
 
 		for (auto& callback : afterInitCallbacks) {
 			callback(conf);
@@ -235,8 +235,8 @@ int NumberOfSetBits(int i)
 			typeNamesHeader.append(";").append(typeNames[j]);
 		}
 
-		LOG(info) << "fieldname;proto idx;field4;bitmapidx1;bitmask;bitmapidx2;stored_in_prop_collection;field_type" << typeNamesHeader;
-		int i = 0;
+		logger->info("fieldname;proto idx;field4;bitmapidx1;bitmask;bitmapidx2;stored_in_prop_collection;field_type" << typeNamesHeader;
+		int i = 0);
 		for (auto field : fieldDefTable->fields) {
 			string typeSupport;
 			for (int j = 0; j <= 16; ++j) {
@@ -262,7 +262,7 @@ int NumberOfSetBits(int i)
 			orgFirstSystem.reset();
 		}
 
-		LOG(info) << "EVENT: After Reset";
+		logger->info("EVENT: After Reset");
 		for (auto& callback : afterResetCallbacks) {
 			callback();
 		}
@@ -273,20 +273,10 @@ int NumberOfSetBits(int i)
 		if (orgFirstSystem.moduleLoad) {
 			result = orgFirstSystem.moduleLoad();
 		}
-		LOG(info) << "EVENT: After Module Load";
+		logger->info("EVENT: After Module Load");
 		for (auto& callback : afterModuleLoadCallbacks) {
 			callback();
 		}
-
-		struct RandomInts {
-			int numbers[256];
-		};
-		GlobalStruct<RandomInts, 0x10AB7648> randoms;
-
-		for (auto number : randoms->numbers) {
-			LOG(error) << number;
-		}
-
 		return result;
 	}
 
@@ -294,7 +284,7 @@ int NumberOfSetBits(int i)
 		if (orgFirstSystem.moduleUnload) {
 			orgFirstSystem.moduleUnload();
 		}
-		LOG(info) << "EVENT: After Module Unload";
+		logger->info("EVENT: After Module Unload");
 		for (auto& callback : afterModuleUnloadCallbacks) {
 			callback();
 		}
@@ -304,18 +294,18 @@ int NumberOfSetBits(int i)
 		if (orgFirstSystem.exit) {
 			orgFirstSystem.exit();
 		}
-		LOG(info) << "EVENT: After Exit";
+		logger->info("EVENT: After Exit");
 		for (auto& callback : afterExitCallbacks) {
 			callback();
 		}
 	}
 
-	static void __cdecl AdvanceTime(time_t time) {
+	static void __cdecl AdvanceTime(uint32_t time) {
 		if (orgFirstSystem.advanceTime) {
 			orgFirstSystem.advanceTime(time);
 		}
 		// Logspam
-		// LOG(info) << "EVENT: After Advance Time";
+		// logger->info("EVENT: After Advance Time");
 		for (auto& callback : afterAdvanceTimeCallbacks) {
 			callback(time);
 		}
@@ -326,7 +316,7 @@ int NumberOfSetBits(int i)
 		if (orgFirstSystem.save) {
 			result = orgFirstSystem.save(file);
 		}
-		LOG(info) << "EVENT: After Save";
+		logger->info("EVENT: After Save");
 		for (auto& callback : afterSaveCallbacks) {
 			callback(file);
 		}
@@ -338,7 +328,7 @@ int NumberOfSetBits(int i)
 		if (orgFirstSystem.load) {
 			result = orgFirstSystem.load(file);
 		}
-		LOG(info) << "EVENT: After Load";
+		logger->info("EVENT: After Load");
 		for (auto& callback : afterLoadCallbacks) {
 			callback(file);
 		}
@@ -349,7 +339,7 @@ int NumberOfSetBits(int i)
 		if (orgFirstSystem.resetBuffers) {
 			orgFirstSystem.resetBuffers(info);
 		}
-		LOG(info) << "EVENT: After Reset Buffers";
+		logger->info("EVENT: After Reset Buffers");
 		for (auto& callback : afterResizeBuffersCallbacks) {
 			callback(info);
 		}
@@ -435,7 +425,7 @@ void GameSystemHooks::AddExitHook(std::function<void()> callback, bool before) {
 	}
 }
 
-void GameSystemHooks::AddAdvanceTimeHook(std::function<void(time_t)> callback, bool before) {
+void GameSystemHooks::AddAdvanceTimeHook(std::function<void(uint32_t)> callback, bool before) {
 	if (before) {
 		beforeAdvanceTimeCallbacks.push_back(callback);
 	} else {
@@ -650,7 +640,7 @@ void GameSystemFuncs::NewInit(const GameSystemConf& conf) {
 
 	auto lang = getLanguage();
 	if (lang == "en") {
-		LOG(info) << "Assuming english fonts";
+		logger->info("Assuming english fonts");
 		*gameSystemInitTable.fontIsEnglish = true;
 	}
 
@@ -682,14 +672,14 @@ void GameSystemFuncs::NewInit(const GameSystemConf& conf) {
 	// TODO: RAII this
 	// TODO:before / after init callbacks should be placed directly in here
 	for (auto &system : gameSystems->systems) {
-		LOG(info) << "Loading game system " << system.name;
+		logger->info("Loading game system {}", system.name);
 		msgFuncs.ProcessSystemEvents();
 		if (system.loadscreenMesIdx) {
 			loadingScreen.NextMessage();
 		}
 		if (system.init) {
 			if (!system.init(&conf)) {
-				throw TempleException(format("Game system %s failed to initialize") % system.name);
+				throw TempleException(format("Game system {} failed to initialize", system.name));
 			}
 		}
 	}
@@ -706,10 +696,10 @@ static void registerDataFiles() {
 
 	for (int i = 0; i < list.count; ++i) {
 		auto file = list.files[i];
-		LOG(info) << "Registering archive " << file.name;
+		logger->info("Registering archive {}", file.name);
 		int result = tio_path_add(file.name);
-		if (result != 1) {
-			LOG(trace) << "Unable to add archive " << file.name << ": " << result;
+		if (result != 0) {
+			logger->trace("Unable to add archive {}: {}", file.name, result);
 		}
 	}
 

@@ -9,8 +9,8 @@ public:
 	~StopwatchReporter() {
 		auto duration = chrono::duration_cast<chrono::milliseconds>(
 			chrono::high_resolution_clock::now() - mStart
-			);
-		LOG(info) << format(mFormat) % (format("%d ms") % duration.count());
+		);
+		logger->info(mFormat.c_str(), format("{} ms", duration.count()));
 	}
 private:
 	string mFormat;

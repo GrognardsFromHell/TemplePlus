@@ -30,7 +30,7 @@ ULONG Direct3DIndexBuffer8Adapter::Release(THIS)
 /*** IDirect3DResource8 methods ***/
 HRESULT Direct3DIndexBuffer8Adapter::GetDevice(THIS_ d3d8::IDirect3DDevice8** ppDevice)
 {
-	LOG(error) << "Unsupported d3d function called: GetDevice";
+	logger->error("Unsupported d3d function called: GetDevice");
 	abort();
 }
 
@@ -84,6 +84,6 @@ HRESULT Direct3DIndexBuffer8Adapter::Unlock(THIS)
 
 HRESULT Direct3DIndexBuffer8Adapter::GetDesc(THIS_ d3d8::D3DINDEXBUFFER_DESC* pDesc)
 {
-	LOG(error) << "Unsupported d3d function called: GetDesc";
+	logger->error("Unsupported d3d function called: GetDesc");
 	abort();
 }

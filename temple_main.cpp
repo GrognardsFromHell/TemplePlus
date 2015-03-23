@@ -88,16 +88,16 @@ static bool setDefaultCursor();
 class TigInitializer {
 public:
 	TigInitializer(HINSTANCE hInstance) : mConfig(createTigConfig(hInstance)) {
-		StopwatchReporter reporter("TIG initialized in %s");
-		LOG(info) << "Initializing TIG";
+		StopwatchReporter reporter("TIG initialized in {}");
+		logger->info("Initializing TIG");
 		auto result = startupRelevantFuncs.TigInit(&mConfig);
 		if (result) {
-			throw TempleException(format("Unable to initialize TIG: %d") % result);
+			throw TempleException(format("Unable to initialize TIG: {}", result));
 		}
 		tigConsoleDisabled = false; // tig init disables console by default
 	}
 	~TigInitializer() {
-		LOG(info) << "Shutting down TIG";
+		logger->info("Shutting down TIG");
 		startupRelevantFuncs.TigExit();
 	}
 	const TigConfig &config() const {
@@ -110,14 +110,14 @@ private:
 class TigBufferstuffInitializer {
 public:
 	TigBufferstuffInitializer() {
-		StopwatchReporter reporter("Game scratch buffer initialized in %s");
-		LOG(info) << "Creating game scratch buffer";
+		StopwatchReporter reporter("Game scratch buffer initialized in {}");
+		logger->info("Creating game scratch buffer");
 		if (!startupRelevantFuncs.TigWindowBufferstuffCreate(&mBufferIdx)) {
 			throw TempleException("Unable to initialize TIG buffer");
 		}
 	}
 	~TigBufferstuffInitializer() {
-		LOG(info) << "Freeing game scratch buffer";
+		logger->info("Freeing game scratch buffer");
 		startupRelevantFuncs.TigWindowBufferstuffFree(mBufferIdx);
 	}
 	int bufferIdx() const {
@@ -130,8 +130,8 @@ private:
 class GameSystemsInitializer {
 public:
 	GameSystemsInitializer(const TigConfig &tigConfig) {
-		StopwatchReporter reporter("Game systems initialized in %s");
-		LOG(info) << "Loading game systems";
+		StopwatchReporter reporter("Game systems initialized in {}");
+		logger->info("Loading game systems");
 
 		memset(&mConfig, 0, sizeof(mConfig));
 		mConfig.width = tigConfig.width;
@@ -146,7 +146,7 @@ public:
 		// }
 	}
 	~GameSystemsInitializer() {
-		LOG(info) << "Unloading game systems";
+		logger->info("Unloading game systems");
 		gameSystemFuncs.Shutdown();
 	}
 	const GameSystemConf &config() const {
@@ -160,14 +160,14 @@ private:
 class UiInitializer {
 public:
 	UiInitializer(const GameSystemConf &config) {
-		StopwatchReporter reporter("UI initialized in %s");
-		LOG(info) << "Loading UI systems";
+		StopwatchReporter reporter("UI initialized in {}");
+		logger->info("Loading UI systems");
 		if (!uiFuncs.Init(&config)) {
 			throw TempleException("Unable to initialize the UI systems.");
 		}
 	}
 	~UiInitializer() {
-		LOG(info) << "Unloading UI systems";
+		logger->info("Unloading UI systems");
 		uiFuncs.Shutdown();
 	}
 };
@@ -175,14 +175,14 @@ public:
 class GameSystemsModuleInitializer {
 public:
 	GameSystemsModuleInitializer(const string &moduleName) {
-		StopwatchReporter reporter("Game module loaded in %s");
-		LOG(info) << "Loading game module " << moduleName;
+		StopwatchReporter reporter("Game module loaded in {}");
+		logger->info("Loading game module {}", moduleName);
 		if (!gameSystemFuncs.LoadModule(moduleName.c_str())) {
-			throw TempleException(format("Unable to load game module %s") % moduleName);
+			throw TempleException(format("Unable to load game module {}", moduleName));
 		}
 	}
 	~GameSystemsModuleInitializer() {
-		LOG(info) << "Unloading game module";
+		logger->info("Unloading game module");
 		gameSystemFuncs.UnloadModule();
 	}
 };
@@ -190,14 +190,14 @@ public:
 class UiModuleInitializer {
 public:
 	UiModuleInitializer() {
-		StopwatchReporter reporter("Module specific UI loaded in %s");
-		LOG(info) << "Loading module specific UI.";
+		StopwatchReporter reporter("Module specific UI loaded in {}");
+		logger->info("Loading module specific UI.");
 		if (!uiFuncs.LoadModule()) {
 			throw TempleException("Unable to load module specific UI data.");
 		}
 	}
 	~UiModuleInitializer() {
-		LOG(info) << "Unloading module specific UI.";
+		logger->info("Unloading module specific UI.");
 		uiFuncs.UnloadModule();
 	}
 };
@@ -256,9 +256,9 @@ int TempleMain(HINSTANCE hInstance, const wstring &commandLine) {
 	temple_set<0x10BD3A68>(1); // Purpose unknown and unconfirmed, may be able to remove
 
 	// Run console commands from "startup.txt" (working dir)
-	LOG(info) << "[Running Startup.txt]";
+	logger->info("[Running Startup.txt]");
 	startupRelevantFuncs.RunBatchFile("Startup.txt");
-	LOG(info) << "[Beginning Game]";
+	logger->info("[Beginning Game]");
 		
 	startupRelevantFuncs.RunMainLoop();
 
@@ -273,10 +273,10 @@ static void applyGlobalConfig() {
 		msMouseZEnabled = false;
 	}
 	if (config.pathLimit) {
-		pathLimit = *config.pathLimit;
+		pathLimit = config.pathLimit;
 	}
 	if (config.pathTimeLimit) {
-		pathTimeLimit = *config.pathTimeLimit;
+		pathTimeLimit = config.pathTimeLimit;
 	}
 }
 
@@ -344,7 +344,7 @@ void applyGameConfig() {
 		activeRngType = 1;
 		break;
 	default: 
-		LOG(error) << "Unknown RNG type specified!";
+		logger->error("Unknown RNG type specified!");
 		break;
 	}
 	
@@ -374,13 +374,13 @@ bool setDefaultCursor() {
 	int cursorShaderId;
 	auto result = shaderFuncs.GetId("art\\interface\\cursors\\MainCursor.mdf", &cursorShaderId);
 	if (result) {
-		LOG(error) << "Unable to load cursor material: " << result;
+		logger->error("Unable to load cursor material: {}", result);
 		return false;
 	}
 
 	result = mouseFuncs.SetCursor(cursorShaderId);
 	if (result) {
-		LOG(error) << "Unable to set default cursor: " << result;
+		logger->error("Unable to set default cursor: {}", result);
 		return false;
 	}
 	return true;

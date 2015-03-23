@@ -254,7 +254,7 @@ static bool TigResetDirect3D() {
 	
 	__asm mov eax, D3DFMT_X8R8G8B8
 	if (!videoFuncs.tig_d3d_init_handleformat()) {
-		LOG(error) << "Format init failed.";
+		logger->error("Format init failed.");
 	}
 	
 	videoFuncs.create_partsys_vertex_buffers();
@@ -306,69 +306,69 @@ bool ReadCaps(IDirect3DDevice9Ex* device, uint32_t minTexWidth, uint32_t minTexH
 	HRESULT d3dresult;
 	D3DCAPS9 caps;
 	if ((d3dresult = device->GetDeviceCaps(&caps)) != D3D_OK) {
-		LOG(error) << "Unable to retrieve device caps.";
+		logger->error("Unable to retrieve device caps.");
 		handleD3dError("GetDeviceCaps", d3dresult);
 		return false;
 	}
-	video->maxActiveLights = min(8, caps.MaxActiveLights);
+	video->maxActiveLights = min<DWORD>(8, caps.MaxActiveLights);
 
 	/*
 	Several sanity checks follow
 	*/
 	if (!(caps.SrcBlendCaps & D3DPBLENDCAPS_SRCALPHA)) {
-		LOG(info) << "source D3DPBLENDCAPS_SRCALPHA is missing";
+		logger->error("source D3DPBLENDCAPS_SRCALPHA is missing");
 	}
 	if (!(caps.SrcBlendCaps & D3DPBLENDCAPS_ONE)) {
-		LOG(info) << "source D3DPBLENDCAPS_ONE is missing";
+		logger->error("source D3DPBLENDCAPS_ONE is missing");
 	}
 	if (!(caps.SrcBlendCaps & D3DPBLENDCAPS_ZERO)) {
-		LOG(info) << "source D3DPBLENDCAPS_ZERO is missing";
+		logger->error("source D3DPBLENDCAPS_ZERO is missing");
 	}
 	if (!(caps.DestBlendCaps & D3DPBLENDCAPS_INVSRCALPHA)) {
-		LOG(info) << "destination D3DPBLENDCAPS_INVSRCALPHA is missing";
+		logger->error("destination D3DPBLENDCAPS_INVSRCALPHA is missing");
 	}
 	if (!(caps.DestBlendCaps & D3DPBLENDCAPS_ONE)) {
-		LOG(info) << "destination D3DPBLENDCAPS_ONE is missing";
+		logger->error("destination D3DPBLENDCAPS_ONE is missing");
 	}
 	if (!(caps.DestBlendCaps & D3DPBLENDCAPS_ZERO)) {
-		LOG(info) << "destination D3DPBLENDCAPS_ZERO is missing";
+		logger->error("destination D3DPBLENDCAPS_ZERO is missing");
 	}
 
 	if (caps.MaxSimultaneousTextures < 4) {
-		LOG(info) << "less than 4 active textures possible: " << caps.MaxSimultaneousTextures;
+		logger->error("less than 4 active textures possible: {}", caps.MaxSimultaneousTextures);
 	}
 	if (caps.MaxTextureBlendStages < 4) {
-		LOG(info) << "less than 4 texture blend stages possible: " << caps.MaxTextureBlendStages;
+		logger->error("less than 4 texture blend stages possible: {}", caps.MaxTextureBlendStages);
 	}
 	video->maxActiveTextures = 4; // We do not accept less than 4
 
 	if (!(caps.TextureOpCaps & D3DTOP_DISABLE)) {
-		LOG(info) << "texture op D3DTOP_DISABLE is missing";
+		logger->error("texture op D3DTOP_DISABLE is missing");
 	}
 	if (!(caps.TextureOpCaps & D3DTOP_SELECTARG1)) {
-		LOG(info) << "texture op D3DTOP_SELECTARG1 is missing";
+		logger->error("texture op D3DTOP_SELECTARG1 is missing");
 	}
 	if (!(caps.TextureOpCaps & D3DTOP_SELECTARG2)) {
-		LOG(info) << "texture op D3DTOP_SELECTARG2 is missing";
+		logger->error("texture op D3DTOP_SELECTARG2 is missing");
 	}
 	if (!(caps.TextureOpCaps & D3DTOP_BLENDTEXTUREALPHA)) {
-		LOG(info) << "texture op D3DTOP_BLENDTEXTUREALPHA is missing";
+		logger->error("texture op D3DTOP_BLENDTEXTUREALPHA is missing");
 	}
 	if (!(caps.TextureOpCaps & D3DTOP_BLENDCURRENTALPHA)) {
-		LOG(info) << "texture op D3DTOP_BLENDCURRENTALPHA is missing";
+		logger->error("texture op D3DTOP_BLENDCURRENTALPHA is missing");
 	}
 	if (!(caps.TextureOpCaps & D3DTOP_MODULATE)) {
-		LOG(info) << "texture op D3DTOP_MODULATE is missing";
+		logger->error("texture op D3DTOP_MODULATE is missing");
 	}
 	if (!(caps.TextureOpCaps & D3DTOP_ADD)) {
-		LOG(info) << "texture op D3DTOP_ADD is missing";
+		logger->error("texture op D3DTOP_ADD is missing");
 	}
 	if (!(caps.TextureOpCaps & D3DTOP_MODULATEALPHA_ADDCOLOR)) {
-		LOG(info) << "texture op D3DTOP_MODULATEALPHA_ADDCOLOR is missing";
+		logger->error("texture op D3DTOP_MODULATEALPHA_ADDCOLOR is missing");
 	}
 	if (caps.MaxTextureWidth < minTexWidth || caps.MaxTextureHeight < minTexHeight) {
-		LOG(info) << "minimum texture resolution of " << minTexWidth << "x" << minTexHeight
-				<< " is not supported. Supported: " << caps.MaxTextureWidth << "x" << caps.MaxTextureHeight;
+		logger->error("minimum texture resolution of {}x{} is not supported. Supported: {}x{}",
+			minTexWidth, minTexHeight, caps.MaxTextureWidth, caps.MaxTextureHeight);
 		return false;
 	}
 
@@ -384,11 +384,11 @@ bool ReadCaps(IDirect3DDevice9Ex* device, uint32_t minTexWidth, uint32_t minTexH
 	}
 
 	if ((caps.TextureCaps & D3DPTEXTURECAPS_POW2) != 0) {
-		LOG(info) << "Textures must be power of two";
+		logger->error("Textures must be power of two");
 		video->capPowerOfTwoTextures = true;
 	}
 	if ((caps.TextureCaps & D3DPTEXTURECAPS_SQUAREONLY) != 0) {
-		LOG(info) << "Textures must be square";
+		logger->error("Textures must be square");
 		video->capSquareTextures = true;
 	}
 	return true;
@@ -399,7 +399,7 @@ static bool TigInitDirect3D(TigConfig* settings) {
 	HRESULT d3dresult;
 
 	if (settings->bpp < 32) {
-		LOG(error) << "BPP settings must be 32-bit";
+		logger->error("BPP settings must be 32-bit");
 		return false;
 	}
 
@@ -419,14 +419,14 @@ static bool TigInitDirect3D(TigConfig* settings) {
 	if (config.useDirect3d9Ex) {
 		d3dresult = Direct3DCreate9Ex(D3D_SDK_VERSION, &d3d9);
 		if (d3dresult != D3D_OK) {
-			LOG(error) << "Unable to create Direct3D9Ex device.";
+			logger->error("Unable to create Direct3D9Ex device.");
 			handleD3dError("TigInitDirect3D", d3dresult);
 			return false;
 		}
 	} else {
 		d3d9 = static_cast<IDirect3D9Ex*>(Direct3DCreate9(D3D_SDK_VERSION));
 		if (!d3d9) {
-			LOG(error) << "Unable to create Direct3D9 device.";
+			logger->error("Unable to create Direct3D9 device.");
 			return false;
 		}
 	}
@@ -439,14 +439,14 @@ static bool TigInitDirect3D(TigConfig* settings) {
 	D3DDISPLAYMODE displayMode;
 	d3dresult = d3d9->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &displayMode);
 	if (d3dresult != D3D_OK) {
-		LOG(error) << "Unable to query display mode for primary adapter.";
+		logger->error("Unable to query display mode for primary adapter.");
 		handleD3dError("GetAdapterDisplayMode", d3dresult);
 		return false;
 	}
 
 	// We need at least 1024x768
 	if (displayMode.Width < 1024 || displayMode.Height < 768) {
-		LOG(error) << "You need at least a display resolution of 1024x768.";
+		logger->error("You need at least a display resolution of 1024x768.");
 		return false;
 	}
 
@@ -460,14 +460,14 @@ static bool TigInitDirect3D(TigConfig* settings) {
 		*/
 	D3DCAPS9 caps;
 	if ((d3dresult = d3d9->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &caps)) != D3D_OK) {
-		LOG(error) << "Unable to retrieve device caps.";
+		logger->error("Unable to retrieve device caps.");
 		handleD3dError("GetDeviceCaps", d3dresult);
 		return false;
 	}
 
 	enableLinearPresent = false;
 	if ((caps.Caps3 & D3DCAPS3_LINEAR_TO_SRGB_PRESENTATION) != 0) {
-		LOG(info) << "Automatic gamma corection is supported by driver.";
+		logger->error("Automatic gamma corection is supported by driver.");
 		enableLinearPresent = true;
 	}
 	d3d9->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &caps);
@@ -480,14 +480,14 @@ static bool TigInitDirect3D(TigConfig* settings) {
 	// Nvidia drivers seriously barf on D3d9ex if we use software vertex processing here, as ToEE specifies.
 	// I think we are safe with hardware vertex processing, since HW T&L has been standard for more than 10 years.
 	if (config.useDirect3d9Ex) {
-		LOG(info) << "Creating Direct3D9Ex device.";
+		logger->error("Creating Direct3D9Ex device.");
 		d3dresult = d3d9->CreateDeviceEx(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, video->hwnd, D3DCREATE_HARDWARE_VERTEXPROCESSING, &presentParams, nullptr, &d3d9Device);
 	} else {
-		LOG(info) << "Creating Direct3D9 device.";
+		logger->error("Creating Direct3D9 device.");
 		d3dresult = d3d9->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, video->hwnd, D3DCREATE_HARDWARE_VERTEXPROCESSING, &presentParams, reinterpret_cast<IDirect3DDevice9**>(&d3d9Device));
 	}
 	if (d3dresult != D3D_OK) {
-		LOG(error) << "Unable to create Direct3d9 device.";
+		logger->error("Unable to create Direct3d9 device.");
 		handleD3dError("CreateDevice", d3dresult);
 		return false;
 	}
@@ -516,16 +516,14 @@ static bool TigInitDirect3D(TigConfig* settings) {
 }
 
 int __cdecl HookedCleanUpBuffers() {
-	LOG(info) << "Buffer cleanup called";
+	logger->error("Buffer cleanup called");
 	return 0;
 }
 
 int __cdecl HookedSetVideoMode(int adapter, int nWidth, int nHeight, int bpp, int refresh, int flags) {
-	LOG(info) << "set_video_mode adapter=" << adapter << " w=" << nWidth << " h="
-			<< nHeight << " bpp=" << bpp << " refresh=" << refresh << " flags=" << flags;
 	return 0;
 
-	LOG(info) << "Buffers Freed: " << videoFuncs.buffersFreed;
+	logger->info("Buffers Freed: {}", (bool) videoFuncs.buffersFreed);
 
 	// We probabl need to create a shadow for this...
 	bool changed =
@@ -751,8 +749,8 @@ void GetSystemMemory(int* totalMem, int* availableMem) {
 	GlobalMemoryStatus(&status);
 
 	// Max 1GB because of process space limitations
-	*totalMem = min(1024 * 1024 * 1024, status.dwTotalPhys);
-	*availableMem = min(1024 * 1024 * 1024, status.dwAvailPhys);
+	*totalMem = min<SIZE_T>(1024 * 1024 * 1024, status.dwTotalPhys);
+	*availableMem = min<SIZE_T>(1024 * 1024 * 1024, status.dwAvailPhys);
 }
 
 bool __cdecl HookedPresentFrame() {
@@ -763,24 +761,24 @@ bool __cdecl HookedPresentFrame() {
 
 	if (!dumpedPacketStructs) {
 		for (const auto& node : shaderRegistry) {
-			LOG(info) << "Registered shader: " << node.data->name;
+			logger->error("Registered shader: {}", node.data->name);
 		}
 
 		auto defaultShader = shaderRegistry.get(0);
 		if (defaultShader) {
-			LOG(info) << "Found default shader!";
+			logger->error("Found default shader!");
 		} else {
-			LOG(info) << "Did not find default shader!";
+			logger->info("Did not find default shader!");
 		}
 
-		LOG(info) << "=================================================================================================";
+		logger->error("=================================================================================================");
 		auto listEntry = *idxTablesList.ptr();
 		while (listEntry) {
-			LOG(info) << "Index Table allocated @ " << listEntry->sourceFile << ":" << listEntry->lineNumber;
+			logger->info("Index Table allocated @ {}:{}", listEntry->sourceFile, listEntry->lineNumber);
 
 			auto table = listEntry->table;
-			LOG(info) << "   Buckets: " << table->bucketCount << " Item Count: " << table->itemCount << " Item Size: "
-					<< table->itemSize << " Address: " << format("%x") % reinterpret_cast<uint32_t>(table);
+			logger->info("   Buckets: {} Item Count: {} Item Size: {} Address: {:x}",
+				table->bucketCount, table->itemCount, table->itemSize, reinterpret_cast<uint32_t>(table));
 
 			listEntry = listEntry->next;
 		}
@@ -814,7 +812,7 @@ void __cdecl TakeScreenshot(int) {
 		folder.append(L"\\");
 	}
 	for (auto i = 1; i <= 9999; ++i) {
-		path = (wformat(L"%sToEE%04d.jpg") % folder % i).str();
+		path = format(L"{}ToEE{:04d}.jpg", folder, i);
 		if (!PathFileExistsW(path.c_str())) {
 			break;
 		}

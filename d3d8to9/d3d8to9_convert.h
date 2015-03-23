@@ -14,7 +14,7 @@ inline D3DFORMAT convert(d3d8::D3DFORMAT format)
 	case d3d8::D3DFMT_INDEX16:
 		return D3DFMT_INDEX16;
 	default:
-		LOG(info) << "Unknown D3D Format used: " << format;
+		logger->info("Unknown D3D Format used: {}", format);
 		abort();
 	}
 }
@@ -32,7 +32,7 @@ inline d3d8::D3DFORMAT convert(D3DFORMAT format)
 	case D3DFMT_INDEX16:
 		return d3d8::D3DFMT_INDEX16;
 	default:
-		LOG(info) << "Unknown D3D Format used: " << format;
+		logger->info("Unknown D3D Format used: {}");
 		return (d3d8::D3DFORMAT)format;
 	}
 }
@@ -112,7 +112,7 @@ inline D3DRENDERSTATETYPE convert(d3d8::D3DRENDERSTATETYPE type)
 	case d3d8::D3DRS_TWEENFACTOR: return D3DRS_TWEENFACTOR;
 	case d3d8::D3DRS_BLENDOP: return D3DRS_BLENDOP;
 	default:
-		LOG(error) << "Unsupported render state type: " << type;
+		logger->error("Unsupported render state type: {}", type);
 		abort();
 	}
 }

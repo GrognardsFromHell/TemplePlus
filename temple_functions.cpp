@@ -13,7 +13,7 @@ void init_functions()
 	templeImageBase = static_cast<void*>(GetModuleHandleA("temple.dll"));
 	if (!templeImageBase)
 	{
-		LOG(error) << "temple.dll not found in memory space";
+		logger->error("temple.dll not found in memory space");
 	}
 
 	AddressInitializer::performRebase();
@@ -40,12 +40,12 @@ void __cdecl hooked_print_debug_message(char* format, ...)
 		return; // Trimmed completely
 	}
 
-	LOG(info) << buffer;
+	logger->info("{}", buffer);
 }
 
 void init_hooks()
 {
-	LOG(info) << format("Base offset for temple.dll memory is 0x%x") % templeImageBase;
+	logger->info("Base offset for temple.dll memory is 0x{}", templeImageBase);
 
 	temple_set<0x10EED638>(1); // Debug message enable
 	MH_CreateHook(temple_address<0x101E48F0>(), hooked_print_debug_message, NULL);

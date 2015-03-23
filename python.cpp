@@ -294,7 +294,7 @@ static PyMethodDef pyObjHandleMethods_New[] = {
 
 
 PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name) {
-	LOG(info) << "Tried getting property: " << name;
+	logger->info("Tried getting property: {}");
 	#pragma region PyObjHandle Members - FINISHED
 	if (!_strcmpi(name, "ObjHandle")) {
 		return  PyLong_FromLongLong(obj->objHandle); 
@@ -411,7 +411,7 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 
 
 PyObject* __cdecl pySpellType_getAttrNew(PySpell* spell, char *name){
-	LOG(info) << "Tried getting property: " << name;
+	logger->info("Tried getting property: {}", name);
 	if (!_strcmpi(name, "caster_class_alt")) {
 		return PyString_FromString("IT SURE DOES!");
 	}
@@ -420,7 +420,7 @@ PyObject* __cdecl pySpellType_getAttrNew(PySpell* spell, char *name){
 };
 
 int __cdecl  pyObjHandleType_setAttrNew(TemplePyObjHandle *obj, char *name, TemplePyObjHandle *obj2) {
-	LOG(info) << "Tried setting property: " << name;
+	logger->info("Tried setting property: {}", name);
 	if (!strcmp(name, "co8rocks")) {
 		return 0;
 	}

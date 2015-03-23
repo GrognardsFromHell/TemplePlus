@@ -17,7 +17,6 @@ public:
 } animalCompanionMod;
 
 void AnimalCompanionMod::apply() {
-	LOG(info) << "Applying Trip Bug fix...";
 	//write(0x100FC52C, animalCompanionProtos,4);
 	//write(0x100FC5AA, animalCompanionLevelRestrictions, 4);
 	//write(0x100FC288, animalCompanionLevelRestrictions, 4);

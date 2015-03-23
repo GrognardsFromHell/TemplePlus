@@ -15,15 +15,15 @@ static void rebase(void **ptr) {
 	auto ptrValue = reinterpret_cast<uint32_t>(*ptr);
 
 	auto relativeOffset = ptrValue - orgTempleBase;
-	BOOST_ASSERT(relativeOffset > 0 && relativeOffset < 0x10000000);
+	assert(relativeOffset > 0 && relativeOffset < 0x10000000);
 	auto realAddress = reinterpret_cast<uint32_t>(templeImageBase) + relativeOffset;
 	*ptr = reinterpret_cast<void*>(realAddress);
 }
 
 void AddressInitializer::performRebase() {
-	BOOST_ASSERT(!rebaseDone);
+	assert(!rebaseDone);
 	rebaseDone = true;
-	LOG(info) << "Rebasing " << rebaseQueue.size() << " addresses";
+	logger->info("Rebasing {} addresses", rebaseQueue.size());
 	for (size_t i = 0; i < rebaseQueue.size(); ++i) {
 		rebase(rebaseQueue[i]);
 	}

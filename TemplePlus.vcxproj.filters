@@ -6,11 +6,6 @@
     <ClCompile Include="graphics.cpp" />
     <ClCompile Include="libraryholder.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="minhook\src\buffer.c" />
-    <ClCompile Include="minhook\src\HDE\hde32.c" />
-    <ClCompile Include="minhook\src\HDE\hde64.c" />
-    <ClCompile Include="minhook\src\hook.c" />
-    <ClCompile Include="minhook\src\trampoline.c" />
     <ClCompile Include="idxtables.cpp" />
     <ClCompile Include="movies.cpp" />
     <ClCompile Include="stdafx.cpp" />
@@ -98,6 +93,27 @@
     </ClCompile>
     <ClCompile Include="bonusspells.cpp">
       <Filter>Mods and Fixes</Filter>
+	</ClCompile>
+    <ClCompile Include="minhook\src\HDE\hde32.c">
+      <Filter>Dependencies\minhook</Filter>
+    </ClCompile>
+    <ClCompile Include="minhook\src\HDE\hde64.c">
+      <Filter>Dependencies\minhook</Filter>
+    </ClCompile>
+    <ClCompile Include="minhook\src\hook.c">
+      <Filter>Dependencies\minhook</Filter>
+    </ClCompile>
+    <ClCompile Include="minhook\src\trampoline.c">
+      <Filter>Dependencies\minhook</Filter>
+    </ClCompile>
+    <ClCompile Include="minhook\src\buffer.c">
+      <Filter>Dependencies\minhook</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\cppformat\format.cc">
+      <Filter>Dependencies\cppformat</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\json11\json11.cpp">
+      <Filter>Dependencies\json11</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -105,13 +121,6 @@
     <ClInclude Include="gamesystems.h" />
     <ClInclude Include="graphics.h" />
     <ClInclude Include="libraryholder.h" />
-    <ClInclude Include="minhook\src\buffer.h" />
-    <ClInclude Include="minhook\src\HDE\hde32.h" />
-    <ClInclude Include="minhook\src\HDE\hde64.h" />
-    <ClInclude Include="minhook\src\HDE\pstdint.h" />
-    <ClInclude Include="minhook\src\HDE\table32.h" />
-    <ClInclude Include="minhook\src\HDE\table64.h" />
-    <ClInclude Include="minhook\src\trampoline.h" />
     <ClInclude Include="idxtables.h" />
     <ClInclude Include="movies.h" />
     <ClInclude Include="stdafx.h" />
@@ -222,10 +231,82 @@
     <Filter Include="python">
       <UniqueIdentifier>{ea100e12-e4d1-4df0-8ed7-e2ba3025f6e5}</UniqueIdentifier>
     </Filter>
+    <ClInclude Include="aas.h" />
+    <ClInclude Include="tig.h" />
+    <ClInclude Include="minhook\src\HDE\hde32.h">
+      <Filter>Dependencies\minhook</Filter>
+    </ClInclude>
+    <ClInclude Include="minhook\src\HDE\hde64.h">
+      <Filter>Dependencies\minhook</Filter>
+    </ClInclude>
+    <ClInclude Include="minhook\src\HDE\table32.h">
+      <Filter>Dependencies\minhook</Filter>
+    </ClInclude>
+    <ClInclude Include="minhook\src\HDE\table64.h">
+      <Filter>Dependencies\minhook</Filter>
+    </ClInclude>
+    <ClInclude Include="minhook\src\trampoline.h">
+      <Filter>Dependencies\minhook</Filter>
+    </ClInclude>
+    <ClInclude Include="minhook\src\HDE\pstdint.h">
+      <Filter>Dependencies\minhook</Filter>
+    </ClInclude>
+    <ClInclude Include="minhook\src\buffer.h">
+      <Filter>Dependencies\minhook</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\cppformat\format.h">
+      <Filter>Dependencies\cppformat</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\spdlog\async_logger.h">
+      <Filter>Dependencies\spdlog</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\spdlog\common.h">
+      <Filter>Dependencies\spdlog</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\spdlog\formatter.h">
+      <Filter>Dependencies\spdlog</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\spdlog\logger.h">
+      <Filter>Dependencies\spdlog</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\spdlog\spdlog.h">
+      <Filter>Dependencies\spdlog</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\feather-ini\INI.h">
+      <Filter>Dependencies\featherini</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\json11\json11.hpp">
+      <Filter>Dependencies\json11</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Spellslinger%27s Notes\bonusspells.txt">
       <Filter>Mods and Fixes</Filter>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Dependencies">
+      <UniqueIdentifier>{19c3791b-555a-4456-8131-5c09f9116f00}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies\cppformat">
+      <UniqueIdentifier>{f337e661-8b3d-412c-8a28-5c1b90ea972a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies\minhook">
+      <UniqueIdentifier>{256b0e85-1958-4443-9c02-4a5fe6890179}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies\spdlog">
+      <UniqueIdentifier>{67a9704a-41d0-406d-8b05-c5a034a5c44f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies\featherini">
+      <UniqueIdentifier>{94170950-96c6-419a-91d3-0a01f9c5135d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies\json11">
+      <UniqueIdentifier>{97b9d78b-2f33-42c0-ab85-0761747bf9bd}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="dependencies\spdlog\LICENSE">
+      <Filter>Dependencies\spdlog</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -6,7 +6,7 @@
 class LibraryHolder
 {
 public:
-	LibraryHolder(const path& path);
+	LibraryHolder(const wstring& path);
 	~LibraryHolder();
 
 	template <typename T>
@@ -15,21 +15,21 @@ public:
 		T result = (T) GetProcAddress(mLibraryHandle, name);
 		if (!result)
 		{
-			LOG(error) << "Unable to find proc " << name << " in DLL";
+			logger->error("Unable to find proc {} in DLL", name);
 		}
 		return result;
 	}
 
 	bool valid();
 
-	const wstring& errorText() const
+	const string& errorText() const
 	{
 		return mErrorText;
 	}
 
 private:
 	HMODULE mLibraryHandle;
-	wstring mErrorText;
+	string mErrorText;
 };
 
 #endif // LIBRARYHOLDER_H

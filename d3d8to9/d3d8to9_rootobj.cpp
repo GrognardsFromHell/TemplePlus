@@ -118,6 +118,6 @@ HMONITOR Direct3D8Adapter::GetAdapterMonitor(THIS_ UINT Adapter)
 
 HRESULT Direct3D8Adapter::CreateDevice(THIS_ UINT Adapter, d3d8::D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags, d3d8::D3DPRESENT_PARAMETERS* pPresentationParameters, d3d8::IDirect3DDevice8** ppReturnedDeviceInterface)
 {
-	LOG(error) << "Unsupported D3D function called!";
+	logger->error("Unsupported D3D function called!");
 	abort();
 }

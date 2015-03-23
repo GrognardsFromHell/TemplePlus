@@ -52,7 +52,7 @@ struct GlobalPrimitive
 {
 	GlobalPrimitive() : mPtr(reinterpret_cast<T*>(offsetPreset))
 	{
-		BOOST_ASSERT(mPtr != nullptr);
+		assert(mPtr != nullptr);
 		AddressInitializer::queueRebase(reinterpret_cast<void**>(&mPtr));
 	}
 
@@ -129,14 +129,14 @@ inline void* temple_address()
 {
 	static_assert(address > 0x10000000 && address < 0x20000000,
 		"address is not within temple.dll address space");
-	BOOST_ASSERT(templeImageBase != 0);
+	assert(templeImageBase != 0);
 	return ((char*)templeImageBase) + (address - 0x10000000);
 }
 
 inline void* temple_address(uint32_t address)
 {
-	BOOST_ASSERT(address > 0x10000000 && address < 0x20000000);
-	BOOST_ASSERT(templeImageBase != 0);
+	assert(address > 0x10000000 && address < 0x20000000);
+	assert(templeImageBase != 0);
 	return ((char*)templeImageBase) + (address - 0x10000000);
 }
 
