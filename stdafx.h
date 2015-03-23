@@ -1,5 +1,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+// ToEE was compiled with 32-bit time_t sadly
+#define _USE_32BIT_TIME_T
+
 #include <Windows.h>
 #include <windowsx.h>
 
@@ -14,11 +17,13 @@
 #include <string>
 #include <functional>
 #include <vector>
+#include <chrono>
 
 #include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/optional.hpp>
 
 using namespace std;
 using namespace boost::filesystem;

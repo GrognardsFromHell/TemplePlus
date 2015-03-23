@@ -118,15 +118,9 @@ template <typename T>
 class IdxTableWrapper
 {
 public:
-	IdxTableWrapper(uint32_t address, bool rebase = true) : mTable(reinterpret_cast<IdxTable<T>*>(address))
+	IdxTableWrapper(uint32_t address) : mTable(reinterpret_cast<IdxTable<T>*>(address))
 	{
-		if (rebase)
-		{
-			AddressInitializer([this](Rebaser rebaser)
-				{
-					rebaser(mTable);
-				});
-		}
+		AddressInitializer::queueRebase(reinterpret_cast<void**>(&mTable));
 	}
 
 	IdxTableWrapper(IdxTable<T>* pointer) : mTable(pointer)
@@ -217,4 +211,4 @@ private:
 	IdxTable<T>* mTable;
 };
 
-extern GlobalPrimitive<IdxTableListsNode*> idxTablesList;
+extern GlobalPrimitive<IdxTableListsNode*, 0x10EF2E70> idxTablesList;

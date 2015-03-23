@@ -3,6 +3,8 @@
 
 #include "addresses.h"
 
+struct GameSystemConf;
+
 struct Widget {
 	uint32_t type;
 	uint32_t size;
@@ -70,3 +72,80 @@ extern GlobalPrimitive<ActiveWidgetListEntry*, 0x10EF68DC> activeWidgetAllocList
 */
 extern GlobalPrimitive<Widget**, 0x10EF68E0> activeWidgets;
 extern GlobalPrimitive<int, 0x10EF68D8> activeWidgetCount;
+
+
+typedef int(__cdecl *UiSystemInit)(const GameSystemConf *conf);
+typedef void(__cdecl *UiSystemReset)();
+typedef bool(__cdecl *UiSystemLoadModule)();
+typedef void(__cdecl *UiSystemUnloadModule)();
+typedef void(__cdecl *UiSystemShutdown)();
+typedef bool(__cdecl *UiSystemSaveGame)(void *tioFile);
+typedef bool(__cdecl *UiSystemLoadGame)(void *sth);
+
+struct UiSystemSpec {
+	const char *name;
+	UiSystemInit init;
+	UiSystemReset reset;
+	UiSystemLoadModule loadModule;
+	UiSystemUnloadModule unloadModule;
+	UiSystemShutdown shutdown;
+	UiSystemSaveGame savegame;
+	UiSystemLoadGame loadgame;
+	uint32_t field_20;
+};
+
+struct ImgFile : public TempleAlloc {
+	int tilesX;
+	int tilesY;
+	int width;
+	int height;
+	int textureIds[16];
+	int field_50;
+};
+
+enum class UiAssetType : uint32_t {
+	Portraits = 0,
+	Inventory,
+	Generic, // Textures
+	GenericLarge // IMG files
+};
+
+enum class UiGenericAsset : uint32_t {
+	AcceptHover = 0,
+	AcceptNormal,
+	AcceptPressed,
+	DeclineHover,
+	DeclineNormal,
+	DeclinePressed,
+	DisabledNormal,
+	GenericDialogueCheck
+};
+
+struct UiFuncs : AddressTable {
+
+	bool (__cdecl *Init)(const GameSystemConf *conf);
+	bool (__cdecl *LoadModule)();
+	void (__cdecl *UnloadModule)();
+	void (__cdecl *Shutdown)();
+
+	ImgFile *(__cdecl *LoadImg)(const char *filename);
+
+	bool GetAsset(UiAssetType assetType, UiGenericAsset assetIndex, int *textureIdOut) {
+		return _GetAsset(assetType, (uint32_t)assetIndex, textureIdOut, 0) == 0;
+	}
+
+	UiFuncs() {
+		rebase(Init, 0x101156F0);
+		rebase(LoadModule, 0x10115790);
+		rebase(LoadImg, 0x101E8320);
+		rebase(UnloadModule, 0x101152C0);
+		rebase(Shutdown, 0x10115230);
+		rebase(_GetAsset, 0x1004A360);
+	}
+
+private:
+	int(__cdecl *_GetAsset)(UiAssetType assetType, uint32_t assetIndex, int *textureIdOut, int offset);
+
+};
+
+extern UiFuncs uiFuncs;

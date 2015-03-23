@@ -115,10 +115,12 @@ struct TigShaderRegistryEntry {
 
 struct ShaderFuncs : AddressTable {
 
+	int(__cdecl *GetId)(const char *filename, int *shaderIdOut);
 	int(__cdecl *GetLoaded)(int shaderId, TigShader *shaderOut);
 
-	void rebase(Rebaser rebase) override {
+	ShaderFuncs() {
 		rebase(GetLoaded, 0x101E20C0);
+		rebase(GetId, 0x101E2160);
 	}
 };
 

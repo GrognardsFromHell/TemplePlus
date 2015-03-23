@@ -29,14 +29,21 @@ struct TigMsg {
 	uint32_t arg4; // button state flags for mouse events
 };
 
+struct TigMsgGlobalKeyCallback {
+	uint32_t keycode; // DirectInput constants
+	void(__cdecl *callback)(uint32_t);
+};
+
 struct TigMsgFuncs : AddressTable {
 	// Return code of 0 means a msg has been written to msgOut.
 	int(__cdecl *Process)(TigMsg *msgOut);
 	void(__cdecl *Enqueue)(TigMsg *msg);
+	void(__cdecl *ProcessSystemEvents)();
 
-	void rebase(Rebaser rebase) override {
+	TigMsgFuncs() {
 		rebase(Process, 0x101DE750);
 		rebase(Enqueue, 0x101DE660);
+		rebase(ProcessSystemEvents, 0x101DF440);
 	}
 };
 

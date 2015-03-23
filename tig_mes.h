@@ -23,7 +23,7 @@ struct MesFuncs : public AddressTable {
 		}
 	}
 
-	void rebase(Rebaser rebase) override {
+	MesFuncs() {
 		rebase(Open, 0x101E6D00);
 		rebase(Close, 0x101E6360);
 		rebase(GetLine, 0x101E6760);
@@ -31,3 +31,47 @@ struct MesFuncs : public AddressTable {
 
 };
 extern MesFuncs mesFuncs;
+
+// Helper for wrapping the MES file functions above
+class MesFile {
+public:
+	MesFile(const char *name) : mValid(false) {
+		if (mesFuncs.Open(name, &mHandle)) {
+			mValid = true;
+		}
+	}
+	~MesFile() {
+		if (mValid) {
+			mesFuncs.Close(mHandle);
+		}
+	}
+
+	bool valid() const {
+		return mValid;
+	}
+
+	const char *operator[](uint32_t key)
+	{
+		if (!mValid) {
+			return nullptr;
+		}
+		return mesFuncs.GetLineById(mHandle, key);
+	}
+
+	bool GetLine(uint32_t key, const char *&line) {
+		line = nullptr;
+		if (!mValid) {
+			return false;
+		}
+		MesLine lineArg;
+		lineArg.key = key;
+		if (mesFuncs.GetLine(mHandle, &lineArg)) {
+			line = lineArg.value;
+			return true;
+		}
+		return false;
+	}
+private:
+	MesHandle mHandle;
+	bool mValid;
+};

@@ -20,15 +20,13 @@ static_assert(MAXLEVEL >= 20, "MAXLEVEL for XP award definition should be at lea
 
 
 XPAward::XPAward(){
-
 	// First set the table's "spine" - when CR = Level  then   XP = 300*level 
-	for (int level = 0; level <= 20; level++){
-
+	for (int level = 1; level <= MAXLEVEL; level++) {
 		XPAwardTable[level - 1][level - CRMIN] = level * 300;
 	}
 
 	// Fill out the bottom left portion
-	for (int level = 0; level <= 20; level++){
+	for (int level = 0; level <= MAXLEVEL; level++){
 		for (int j = level - CRMIN - 1; j >= 2; j--){
 			int i = level - 1;
 			int cr = j + CRMIN;
@@ -155,6 +153,6 @@ public:
 
 void XPTableForHighLevels::apply() {
 
-	TempleFix::replaceFunction(0x100B5700, GiveXPAwards);
+	replaceFunction(0x100B5700, GiveXPAwards);
 
 }

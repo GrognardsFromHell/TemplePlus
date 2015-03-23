@@ -17,7 +17,7 @@ static bool creatingWindow = false;
 struct WindowFuncs : AddressTable {
 	void (__cdecl *WindowActivationChanged)(bool active);
 
-	void rebase(Rebaser rebase) override {
+	WindowFuncs() {
 		rebase(WindowActivationChanged, 0x101DF4E0);
 	}
 } windowFuncs;
@@ -90,13 +90,13 @@ bool CreateMainWindow(TigConfig* settings) {
 		dwStyle = WS_OVERLAPPEDWINDOW; //  WS_CAPTION | WS_CLIPCHILDREN | WS_SYSMENU | WS_GROUP;
 		dwExStyle = 0;
 
- 		AdjustWindowRect(&windowRect, dwStyle, FALSE);
+  		AdjustWindowRect(&windowRect, dwStyle, FALSE);
 		int extraWidth = (windowRect.right - windowRect.left) - settings->width;
 		int extraHeight = (windowRect.bottom - windowRect.top) - settings->height;
-		windowRect.left -= extraWidth / 2;
-		windowRect.top -= extraHeight / 2;		
-		windowRect.right += extraWidth / 2;
-		windowRect.bottom += extraHeight / 2;
+		windowRect.left = (screenWidth - settings->width) / 2 - (extraWidth / 2);
+		windowRect.top = (screenHeight - settings->height) / 2 - (extraHeight / 2);
+		windowRect.right = windowRect.left + settings->width + extraWidth;
+		windowRect.bottom = windowRect.top + settings->height + extraHeight;
 	}
 
 	dwStyle |= WS_VISIBLE;
@@ -117,6 +117,7 @@ bool CreateMainWindow(TigConfig* settings) {
 
 	DWORD windowWidth = windowRect.right - windowRect.left;
 	DWORD windowHeight = windowRect.bottom - windowRect.top;
+	LOG(info) << format("Creating window with dimensions %dx%d") % windowWidth % windowHeight;
 	video->hwnd = CreateWindowExA(
 		dwExStyle,
 		"TIGClass",

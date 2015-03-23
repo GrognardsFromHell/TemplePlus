@@ -277,32 +277,9 @@ void __cdecl HookedPlayMovieSlide(uint32_t unk1, uint32_t unk2, const SubtitleLi
 	// TODO: Implement this!
 }
 
-void HookedPlayLegalMovies() {
-	if (!config.skipLegal) {
-		movieFuncs.PlayMovie("movies\\AtariLogo.bik", 0, 0, 0);
-		movieFuncs.PlayMovie("movies\\TroikaLogo.bik", 0, 0, 0);
-		movieFuncs.PlayMovie("movies\\WotCLogo.bik", 0, 0, 0);
-	}
-}
-
-void __cdecl HookedPlayMovie(char* filename, int a1, int a2, int a3) {
-	// We skip the intro cinematic exactly once. So it can still be played
-	// via the cinematics menu
-	if (config.skipIntro && !strcmp(filename, "movies\\introcinematic.bik")) {
-		static auto skippedIntro = false;
-		if (!skippedIntro) {
-			LOG(info) << "Skipping intro cinematic.";
-			skippedIntro = true;
-			return;
-		}
-	}
-
-	movieFuncs.PlayMovie(filename, a1, a2, a3);
-}
-
 void hook_movies() {
-	MH_CreateHook(movieFuncs.PlayLegalMovies, HookedPlayLegalMovies, reinterpret_cast<LPVOID*>(&movieFuncs.PlayLegalMovies));
-	MH_CreateHook(movieFuncs.PlayMovie, HookedPlayMovie, reinterpret_cast<LPVOID*>(&movieFuncs.PlayMovie));
+	// MH_CreateHook(movieFuncs.PlayLegalMovies, HookedPlayLegalMovies, reinterpret_cast<LPVOID*>(&movieFuncs.PlayLegalMovies));
+	// MH_CreateHook(movieFuncs.PlayMovie, HookedPlayMovie, reinterpret_cast<LPVOID*>(&movieFuncs.PlayMovie));
 	MH_CreateHook(movieFuncs.PlayMovieBink, HookedPlayMovieBink, reinterpret_cast<LPVOID*>(&movieFuncs.PlayMovieBink));
 	MH_CreateHook(movieFuncs.PlayMovieSlide, HookedPlayMovieSlide, reinterpret_cast<LPVOID*>(&movieFuncs.PlayMovieSlide));
 

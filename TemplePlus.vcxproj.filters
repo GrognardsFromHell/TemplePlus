@@ -38,7 +38,6 @@
     <ClCompile Include="obj.cpp" />
     <ClCompile Include="folderutils.cpp" />
     <ClCompile Include="debugMessageToggles.cpp" />
-    <ClCompile Include="testhelper.cpp" />
     <ClCompile Include="attackrollcpp.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
@@ -54,6 +53,12 @@
     <ClCompile Include="spells.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="aas.cpp" />
+    <ClCompile Include="game_config.cpp" />
+    <ClCompile Include="tig_loadingscreen.cpp" />
+    <ClCompile Include="temple_main.cpp" />
+    <ClCompile Include="ui_mainmenu.cpp" />
+    <ClCompile Include="testhelper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="addresses.h" />
@@ -100,6 +105,14 @@
     <ClInclude Include="temple_enums.h" />
     <ClInclude Include="testhelper.h" />
     <ClInclude Include="xp.h" />
+    <ClInclude Include="aas.h" />
+    <ClInclude Include="exception.h" />
+    <ClInclude Include="game_config.h" />
+    <ClInclude Include="tig.h" />
+    <ClInclude Include="tig_loadingscreen.h" />
+    <ClInclude Include="stopwatch.h" />
+    <ClInclude Include="tio.h" />
+    <ClInclude Include="ui_mainmenu.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Spellslinger%27s Notes\bonusspells.txt" />
