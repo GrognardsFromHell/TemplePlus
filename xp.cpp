@@ -152,7 +152,7 @@ public:
 } xpTableFix;
 
 void XPTableForHighLevels::apply() {
-	LOG(info) << "Applying XP Table Extension upto Level 20";
+	logger->info("Applying XP Table Extension upto Level 20");
 	replaceFunction(0x100B5700, GiveXPAwards);
 
 }
