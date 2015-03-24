@@ -51,9 +51,8 @@ extern TigMsgFuncs msgFuncs;
 
 inline void processTigMessages() {
 	TigMsg msg;
-	while (!msgFuncs.Process(&msg)) {
-		LOG(trace) << "Processed msg type " << (uint32_t) msg.type;
-	}
+	while (!msgFuncs.Process(&msg))
+		;
 }
 
 void hook_msgs();

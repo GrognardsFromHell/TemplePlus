@@ -21,7 +21,7 @@ public:
 			}
 		}
 
-		LOG(error) << "Couldn't find UI system " << name << "! Replacement failed.";
+		logger->error("Couldn't find UI system {}! Replacement failed.", name);
 		return nullptr;
 	}
 };
@@ -92,7 +92,7 @@ public:
 	StringTokenizer(const string &line) : mTokenizerId(0) {
 		int errorCode;
 		if ((errorCode = stringTokenizerFuncs.Create(line.c_str(), &mTokenizerId)) != 0) {
-			LOG(error) << "Unable to create tokenizer for string " << line << ": " << errorCode;
+			logger->error("Unable to create tokenizer for string {}: {}", line, errorCode);
 		}
 	}
 
@@ -169,7 +169,7 @@ static void loadProtoIds(MesHandle mesHandle) {
 			auto nameB = getProtoName(b);
 			return _strcmpi(nameA, nameB);
 		});
-		LOG(info) << "Loaded " << craftingProtoHandles[i].size() << " prototypes for crafting type " << i;
+		logger->info("Loaded {} prototypes for crafting type {}", craftingProtoHandles[i].size(), i);
 	}
 	
 }

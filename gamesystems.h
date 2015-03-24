@@ -56,7 +56,7 @@ public:
 	static void AddModuleLoadHook(std::function<void()> callback, bool before = false);
 	static void AddModuleUnloadHook(std::function<void()> callback, bool before = false);
 	static void AddExitHook(std::function<void()> callback, bool before = false);
-	static void AddAdvanceTimeHook(std::function<void(time_t)> callback, bool before = false);
+	static void AddAdvanceTimeHook(std::function<void(uint32_t)> callback, bool before = false);
 	static void AddSaveHook(std::function<void(TioFile)> callback, bool before = false);
 	static void AddLoadHook(std::function<void(GameSystemSaveFile*)> callback, bool before = false);
 	static void AddResizeBuffersHook(std::function<void(RebuildBufferInfo*)> callback, bool before = false);

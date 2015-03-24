@@ -10,7 +10,6 @@ return "trip bug fix: the game would use the attacker's dex score for the defend
 }
 
 void apply() override {
-	LOG(info) << "Applying Trip Bug fix...";
 	writeHex(0x100B632D, "5355");
 }
 } tripBugFix;

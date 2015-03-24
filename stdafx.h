@@ -1,12 +1,13 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-// ToEE was compiled with 32-bit time_t sadly
-#define _USE_32BIT_TIME_T
+// We'd rather use std::min
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
 
 #include <Windows.h>
+#include <Mmsystem.h>
 #include <windowsx.h>
 
-#include "MinHook.h"
 #include "Shlobj.h"
 #include "Shobjidl.h"
 #pragma comment(lib, "shell32.lib")
@@ -18,18 +19,11 @@
 #include <functional>
 #include <vector>
 #include <chrono>
-
-#include <boost/filesystem.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/format.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/optional.hpp>
+#include <cassert>
+#include <memory>
+#include <algorithm>
 
 using namespace std;
-using namespace boost::filesystem;
-using namespace boost;
-
-#define LOG(T) BOOST_LOG_TRIVIAL(T)
 
 #include <DxErr.h>
 #pragma comment(lib, "dxerr.lib")
@@ -48,3 +42,11 @@ namespace d3d8
 #undef D3D_SDK_VERSION
 #include <d3d9.h>
 #include <D3dx9tex.h>
+
+#include "dependencies/cppformat/format.h"
+using fmt::format;
+
+#include "MinHook.h"
+#include "dependencies/spdlog/spdlog.h"
+
+extern shared_ptr<spdlog::logger> logger;

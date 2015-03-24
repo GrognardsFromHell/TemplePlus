@@ -117,7 +117,7 @@ bool CreateMainWindow(TigConfig* settings) {
 
 	DWORD windowWidth = windowRect.right - windowRect.left;
 	DWORD windowHeight = windowRect.bottom - windowRect.top;
-	LOG(info) << format("Creating window with dimensions %dx%d") % windowWidth % windowHeight;
+	logger->info("Creating window with dimensions {}x{}", windowWidth, windowHeight);
 	video->hwnd = CreateWindowExA(
 		dwExStyle,
 		"TIGClass",

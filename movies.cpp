@@ -20,7 +20,7 @@ struct BinkMovie {
 inline void* getBinkProc(HMODULE module, const char* funcName) {
 	void* result = GetProcAddress(module, funcName);
 	if (!result) {
-		LOG(error) << "Could not find function " << funcName << " in binkw32.dll";
+		logger->error("Could not find function {} in binkw32.dll", funcName);
 	}
 	return result;
 }
@@ -58,7 +58,7 @@ struct BinkFuncs {
 		auto module = GetModuleHandleA("binkw32");
 
 		if (!module) {
-			LOG(error) << "Unable to find binkw32.dll in memory!";
+			logger->error("Unable to find binkw32.dll in memory!");
 			abort();
 		}
 
@@ -90,7 +90,7 @@ static bool binkRenderFrame(BinkMovie* movie, IDirect3DTexture9* texture) {
 		HRESULT result;
 		result = texture->LockRect(0, &locked, nullptr, D3DLOCK_DISCARD);
 		if (result != D3D_OK) {
-			LOG(error) << "Unable to lock texture for movie frame!";
+			logger->error("Unable to lock texture for movie frame!");
 			handleD3dError("LockRect", result);
 			return false;
 		}
@@ -177,7 +177,7 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 
 	auto movie = binkFuncs.BinkOpen(filename, openFlags);
 	if (!movie) {
-		LOG(error) << "Unable to load BINK movie " << filename << " with flags " << openFlags;
+		logger->error("Unable to load BINK movie {} with flags {}", filename, openFlags);
 		return 13;
 	}
 
@@ -192,7 +192,7 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 	// Create the movie texture we write to
 	IDirect3DTexture9* texture;
 	if (handleD3dError("CreateTexture", d3dDevice->CreateTexture(movie->width, movie->height, 1, D3DUSAGE_DYNAMIC, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &texture, nullptr))) {
-		LOG(error) << "Unable to create texture for bink video";
+		logger->error("Unable to create texture for bink video");
 		return 0;
 	}
 	d3dDevice->SetTexture(0, texture);
@@ -273,7 +273,7 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 }
 
 void __cdecl HookedPlayMovieSlide(uint32_t unk1, uint32_t unk2, const SubtitleLine *subtitles, uint32_t unk3, uint32_t unk4) {
-	LOG(info) << "Play Movie Slide " << unk1 << " " << unk2 << " " << unk3 << " " << unk4;
+	logger->info("Play Movie Slide {} {} {} {}", unk1, unk2, unk3, unk4);
 	// TODO: Implement this!
 }
 

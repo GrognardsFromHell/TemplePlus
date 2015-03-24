@@ -7,7 +7,7 @@
 
 /*
 static void __cdecl sanitizeSpellSlots(int arg1, int arg2) {
-	LOG(info) << "HAHAHAHAHA";
+	logger->info("HAHAHAHAHA");
 }
 
 class BonusSpellFix : public TempleFix {

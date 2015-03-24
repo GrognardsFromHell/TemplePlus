@@ -32,14 +32,14 @@ public:
 
 	static void dumpObjectTables() {
 
-		/*LOG(info) << "Object pool size: " << objPoolSize;
+		/*logger->info("Object pool size: " << objPoolSize;
 		
 		ObjectMasterTable *table = objMasterTable;
 		for (int i = 0; i < objMasterTableSize; ++i) {
 			auto row = table->rows[i];
 
 			for (auto &obj : row->objects) {
-				LOG(info) << "obj!";
+				logger->info("obj!";
 			}
 		}*/
 

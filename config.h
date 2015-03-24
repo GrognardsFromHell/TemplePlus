@@ -16,8 +16,8 @@ struct TemplePlusConfig
 	bool noMsMouseZ = false; // Previously -nomsmousez
 	bool antialiasing = true; // Previously -noantialiasing
 	bool mipmapping = false; // Previously -mipmapping
-	optional<uint32_t> pathLimit; // Default is 10, previously -pathlimit
-	optional<uint32_t> pathTimeLimit; // Default is 250, previously -pathtimelimit
+	uint32_t pathLimit = 0; // Default is 10, previously -pathlimit
+	uint32_t pathTimeLimit = 0; // Default is 250, previously -pathtimelimit
 	RngType rngType = RngType::MERSENNE_TWISTER; // Previously: -rng
 	bool showDialogLineNos = false; // Previously: -dialognumber
 	uint32_t scrollDistance = 10; // Not really sure what this is used for. Previously: -scrolldist

@@ -34,19 +34,19 @@ HRESULT Direct3DDevice8Adapter::TestCooperativeLevel(THIS)
 UINT Direct3DDevice8Adapter::GetAvailableTextureMem(THIS)
 {
 	// ToEE apparently seems to incorrectly use a 32-bit int
-	return min(0x7FFFFFFF, delegate->GetAvailableTextureMem());
+	return min<UINT>(0x7FFFFFFF, delegate->GetAvailableTextureMem());
 }
 
 HRESULT Direct3DDevice8Adapter::ResourceManagerDiscardBytes(THIS_ DWORD Bytes)
 {
-	LOG(info) << "Unsupported D3D method called: ResourceManagerDiscardBytes";
+	logger->info("Unsupported D3D method called: ResourceManagerDiscardBytes");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::GetDirect3D(THIS_ d3d8::IDirect3D8** ppD3D8)
 {
-	LOG(info) << "Unsupported D3D method called: GetDirect3D";
+	logger->info("Unsupported D3D method called: GetDirect3D");
 	abort();
 	return EFAULT;
 }
@@ -74,7 +74,7 @@ HRESULT Direct3DDevice8Adapter::GetDisplayMode(THIS_ d3d8::D3DDISPLAYMODE* pMode
 
 HRESULT Direct3DDevice8Adapter::GetCreationParameters(THIS_ d3d8::D3DDEVICE_CREATION_PARAMETERS* pParameters)
 {
-	LOG(info) << "Unsupported D3D method called: GetCreationParameters";
+	logger->info("Unsupported D3D method called: GetCreationParameters");
 	abort();
 	return EFAULT;
 }
@@ -98,7 +98,7 @@ BOOL Direct3DDevice8Adapter::ShowCursor(THIS_ BOOL bShow)
 
 HRESULT Direct3DDevice8Adapter::CreateAdditionalSwapChain(THIS_ d3d8::D3DPRESENT_PARAMETERS* pPresentationParameters, d3d8::IDirect3DSwapChain8** pSwapChain)
 {
-	LOG(info) << "Unsupported D3D method called: CreateAdditionalSwapChain";
+	logger->info("Unsupported D3D method called: CreateAdditionalSwapChain");
 	abort();
 	return EFAULT;
 }
@@ -184,14 +184,14 @@ HRESULT Direct3DDevice8Adapter::CreateTexture(THIS_ UINT Width, UINT Height, UIN
 
 HRESULT Direct3DDevice8Adapter::CreateVolumeTexture(THIS_ UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, d3d8::D3DFORMAT Format, d3d8::D3DPOOL Pool, d3d8::IDirect3DVolumeTexture8** ppVolumeTexture)
 {
-	LOG(info) << "Unsupported D3D method called: CreateVolumeTexture";
+	logger->info("Unsupported D3D method called: CreateVolumeTexture");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::CreateCubeTexture(THIS_ UINT EdgeLength, UINT Levels, DWORD Usage, d3d8::D3DFORMAT Format, d3d8::D3DPOOL Pool, d3d8::IDirect3DCubeTexture8** ppCubeTexture)
 {
-	LOG(info) << "Unsupported D3D method called: CreateCubeTexture";
+	logger->info("Unsupported D3D method called: CreateCubeTexture");
 	abort();
 	return EFAULT;
 }
@@ -222,14 +222,14 @@ HRESULT Direct3DDevice8Adapter::CreateIndexBuffer(THIS_ UINT Length, DWORD Usage
 
 HRESULT Direct3DDevice8Adapter::CreateRenderTarget(THIS_ UINT Width, UINT Height, d3d8::D3DFORMAT Format, d3d8::D3DMULTISAMPLE_TYPE MultiSample, BOOL Lockable, d3d8::IDirect3DSurface8** ppSurface)
 {
-	LOG(info) << "Unsupported D3D method called: CreateRenderTarget";
+	logger->info("Unsupported D3D method called: CreateRenderTarget");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::CreateDepthStencilSurface(THIS_ UINT Width, UINT Height, d3d8::D3DFORMAT Format, d3d8::D3DMULTISAMPLE_TYPE MultiSample, d3d8::IDirect3DSurface8** ppSurface)
 {
-	LOG(info) << "Unsupported D3D method called: CreateDepthStencilSurface";
+	logger->info("Unsupported D3D method called: CreateDepthStencilSurface");
 	abort();
 	return EFAULT;
 }
@@ -244,14 +244,14 @@ HRESULT Direct3DDevice8Adapter::CreateImageSurface(THIS_ UINT Width, UINT Height
 
 HRESULT Direct3DDevice8Adapter::CopyRects(THIS_ d3d8::IDirect3DSurface8* pSourceSurface, CONST RECT* pSourceRectsArray, UINT cRects, d3d8::IDirect3DSurface8* pDestinationSurface, CONST POINT* pDestPointsArray)
 {
-	LOG(info) << "Unsupported D3D method called: CopyRects";
+	logger->info("Unsupported D3D method called: CopyRects");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::UpdateTexture(THIS_ d3d8::IDirect3DBaseTexture8* pSourceTexture, d3d8::IDirect3DBaseTexture8* pDestinationTexture)
 {
-	LOG(info) << "Unsupported D3D method called: UpdateTexture";
+	logger->info("Unsupported D3D method called: UpdateTexture");
 	abort();
 	return EFAULT;
 }
@@ -264,21 +264,21 @@ HRESULT Direct3DDevice8Adapter::GetFrontBuffer(THIS_ d3d8::IDirect3DSurface8* pD
 
 HRESULT Direct3DDevice8Adapter::SetRenderTarget(THIS_ d3d8::IDirect3DSurface8* pRenderTarget, d3d8::IDirect3DSurface8* pNewZStencil)
 {
-	LOG(info) << "Unsupported D3D method called: SetRenderTarget";
+	logger->info("Unsupported D3D method called: SetRenderTarget");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::GetRenderTarget(THIS_ d3d8::IDirect3DSurface8** ppRenderTarget)
 {
-	LOG(info) << "Unsupported D3D method called: GetRenderTarget";
+	logger->info("Unsupported D3D method called: GetRenderTarget");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::GetDepthStencilSurface(THIS_ d3d8::IDirect3DSurface8** ppZStencilSurface)
 {
-	LOG(info) << "Unsupported D3D method called: GetDepthStencilSurface";
+	logger->info("Unsupported D3D method called: GetDepthStencilSurface");
 	abort();
 	return EFAULT;
 }
@@ -315,14 +315,14 @@ HRESULT Direct3DDevice8Adapter::MultiplyTransform(THIS_ d3d8::D3DTRANSFORMSTATET
 
 HRESULT Direct3DDevice8Adapter::SetViewport(THIS_ CONST d3d8::D3DVIEWPORT8* pViewport)
 {
-	LOG(info) << "Unsupported D3D method called: SetViewport";
+	logger->info("Unsupported D3D method called: SetViewport");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::GetViewport(THIS_ d3d8::D3DVIEWPORT8* pViewport)
 {
-	LOG(info) << "Unsupported D3D method called: GetViewport";
+	logger->info("Unsupported D3D method called: GetViewport");
 	abort();
 	return EFAULT;
 }
@@ -363,14 +363,14 @@ HRESULT Direct3DDevice8Adapter::GetLightEnable(THIS_ DWORD Index, BOOL* pEnable)
 
 HRESULT Direct3DDevice8Adapter::SetClipPlane(THIS_ DWORD Index, CONST float* pPlane)
 {
-	LOG(info) << "Unsupported D3D method called: SetClipPlane";
+	logger->info("Unsupported D3D method called: SetClipPlane");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::GetClipPlane(THIS_ DWORD Index, float* pPlane)
 {
-	LOG(info) << "Unsupported D3D method called: GetClipPlane";
+	logger->info("Unsupported D3D method called: GetClipPlane");
 	abort();
 	return EFAULT;
 }
@@ -387,63 +387,63 @@ HRESULT Direct3DDevice8Adapter::GetRenderState(THIS_ d3d8::D3DRENDERSTATETYPE St
 
 HRESULT Direct3DDevice8Adapter::BeginStateBlock(THIS)
 {
-	LOG(info) << "Unsupported D3D method called: BeginStateBlock";
+	logger->info("Unsupported D3D method called: BeginStateBlock");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::EndStateBlock(THIS_ DWORD* pToken)
 {
-	LOG(info) << "Unsupported D3D method called: EndStateBlock";
+	logger->info("Unsupported D3D method called: EndStateBlock");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::ApplyStateBlock(THIS_ DWORD Token)
 {
-	LOG(info) << "Unsupported D3D method called: ApplyStateBlock";
+	logger->info("Unsupported D3D method called: ApplyStateBlock");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::CaptureStateBlock(THIS_ DWORD Token)
 {
-	LOG(info) << "Unsupported D3D method called: CaptureStateBlock";
+	logger->info("Unsupported D3D method called: CaptureStateBlock");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::DeleteStateBlock(THIS_ DWORD Token)
 {
-	LOG(info) << "Unsupported D3D method called: DeleteStateBlock";
+	logger->info("Unsupported D3D method called: DeleteStateBlock");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::CreateStateBlock(THIS_ d3d8::D3DSTATEBLOCKTYPE Type, DWORD* pToken)
 {
-	LOG(info) << "Unsupported D3D method called: CreateStateBlock";
+	logger->info("Unsupported D3D method called: CreateStateBlock");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::SetClipStatus(THIS_ CONST d3d8::D3DCLIPSTATUS8* pClipStatus)
 {
-	LOG(info) << "Unsupported D3D method called: SetClipStatus";
+	logger->info("Unsupported D3D method called: SetClipStatus");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::GetClipStatus(THIS_ d3d8::D3DCLIPSTATUS8* pClipStatus)
 {
-	LOG(info) << "Unsupported D3D method called: GetClipStatus";
+	logger->info("Unsupported D3D method called: GetClipStatus");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::GetTexture(THIS_ DWORD Stage, d3d8::IDirect3DBaseTexture8** ppTexture)
 {
-	BOOST_ASSERT(Stage < 16);
+	assert(Stage < 16);
 	auto result = stages[Stage];
 	if (result)
 	{
@@ -455,7 +455,7 @@ HRESULT Direct3DDevice8Adapter::GetTexture(THIS_ DWORD Stage, d3d8::IDirect3DBas
 
 HRESULT Direct3DDevice8Adapter::SetTexture(THIS_ DWORD Stage, d3d8::IDirect3DBaseTexture8* pTexture)
 {
-	BOOST_ASSERT(Stage < 16);
+	assert(Stage < 16);
 	auto adapter = (Direct3DTexture8Adapter*)pTexture;
 	stages[Stage] = adapter;
 	HRESULT result;
@@ -503,7 +503,7 @@ HRESULT Direct3DDevice8Adapter::GetTextureStageState(THIS_ DWORD Stage, d3d8::D3
 		return delegate->GetSamplerState(Stage, D3DSAMP_ADDRESSV, pValue);
 	}
 
-	LOG(info) << "Unknwon texture state type: " << Type;
+	logger->info("Unknwon texture state type: {}", Type);
 	abort();
 }
 
@@ -540,48 +540,48 @@ HRESULT Direct3DDevice8Adapter::SetTextureStageState(THIS_ DWORD Stage, d3d8::D3
 		return delegate->SetSamplerState(Stage, D3DSAMP_ADDRESSV, Value);
 	}
 
-	LOG(info) << "Unknwon texture state type: " << Type;
+	logger->info("Unknwon texture state type: {}", Type);
 	abort();
 }
 
 HRESULT Direct3DDevice8Adapter::ValidateDevice(THIS_ DWORD* pNumPasses)
 {
-	LOG(info) << "Unsupported D3D method called: ValidateDevice";
+	logger->info("Unsupported D3D method called: ValidateDevice");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::GetInfo(THIS_ DWORD DevInfoID, void* pDevInfoStruct, DWORD DevInfoStructSize)
 {
-	LOG(info) << "Unsupported D3D method called: GetInfo";
+	logger->info("Unsupported D3D method called: GetInfo");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::SetPaletteEntries(THIS_ UINT PaletteNumber, CONST PALETTEENTRY* pEntries)
 {
-	LOG(info) << "Unsupported D3D method called: SetPaletteEntries";
+	logger->info("Unsupported D3D method called: SetPaletteEntries");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::GetPaletteEntries(THIS_ UINT PaletteNumber, PALETTEENTRY* pEntries)
 {
-	LOG(info) << "Unsupported D3D method called: GetPaletteEntries";
+	logger->info("Unsupported D3D method called: GetPaletteEntries");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::SetCurrentTexturePalette(THIS_ UINT PaletteNumber)
 {
-	LOG(info) << "Unsupported D3D method called: SetCurrentTexturePalette";
+	logger->info("Unsupported D3D method called: SetCurrentTexturePalette");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::GetCurrentTexturePalette(THIS_ UINT* PaletteNumber)
 {
-	LOG(info) << "Unsupported D3D method called: GetCurrentTexturePalette";
+	logger->info("Unsupported D3D method called: GetCurrentTexturePalette");
 	abort();
 	return EFAULT;
 }
@@ -598,28 +598,28 @@ HRESULT Direct3DDevice8Adapter::DrawIndexedPrimitive(THIS_ d3d8::D3DPRIMITIVETYP
 
 HRESULT Direct3DDevice8Adapter::DrawPrimitiveUP(THIS_ d3d8::D3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, CONST void* pVertexStreamZeroData, UINT VertexStreamZeroStride)
 {
-	LOG(info) << "Unsupported D3D method called: DrawPrimitiveUP";
+	logger->info("Unsupported D3D method called: DrawPrimitiveUP");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::DrawIndexedPrimitiveUP(THIS_ d3d8::D3DPRIMITIVETYPE PrimitiveType, UINT MinVertexIndex, UINT NumVertexIndices, UINT PrimitiveCount, CONST void* pIndexData, d3d8::D3DFORMAT IndexDataFormat, CONST void* pVertexStreamZeroData, UINT VertexStreamZeroStride)
 {
-	LOG(info) << "Unsupported D3D method called: DrawIndexedPrimitiveUP";
+	logger->info("Unsupported D3D method called: DrawIndexedPrimitiveUP");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::ProcessVertices(THIS_ UINT SrcStartIndex, UINT DestIndex, UINT VertexCount, d3d8::IDirect3DVertexBuffer8* pDestBuffer, DWORD Flags)
 {
-	LOG(info) << "Unsupported D3D method called: ProcessVertices";
+	logger->info("Unsupported D3D method called: ProcessVertices");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::CreateVertexShader(THIS_ CONST DWORD* pDeclaration, CONST DWORD* pFunction, DWORD* pHandle, DWORD Usage)
 {
-	LOG(info) << "Unsupported D3D method called: CreateVertexShader";
+	logger->info("Unsupported D3D method called: CreateVertexShader");
 	abort();
 	return EFAULT;
 }
@@ -636,35 +636,35 @@ HRESULT Direct3DDevice8Adapter::GetVertexShader(THIS_ DWORD* pHandle)
 
 HRESULT Direct3DDevice8Adapter::DeleteVertexShader(THIS_ DWORD Handle)
 {
-	LOG(info) << "Unsupported D3D method called: DeleteVertexShader";
+	logger->info("Unsupported D3D method called: DeleteVertexShader");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::SetVertexShaderConstant(THIS_ DWORD Register, CONST void* pConstantData, DWORD ConstantCount)
 {
-	LOG(info) << "Unsupported D3D method called: SetVertexShaderConstant";
+	logger->info("Unsupported D3D method called: SetVertexShaderConstant");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::GetVertexShaderConstant(THIS_ DWORD Register, void* pConstantData, DWORD ConstantCount)
 {
-	LOG(info) << "Unsupported D3D method called: GetVertexShaderConstant";
+	logger->info("Unsupported D3D method called: GetVertexShaderConstant");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::GetVertexShaderDeclaration(THIS_ DWORD Handle, void* pData, DWORD* pSizeOfData)
 {
-	LOG(info) << "Unsupported D3D method called: GetVertexShaderDeclaration";
+	logger->info("Unsupported D3D method called: GetVertexShaderDeclaration");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::GetVertexShaderFunction(THIS_ DWORD Handle, void* pData, DWORD* pSizeOfData)
 {
-	LOG(info) << "Unsupported D3D method called: GetVertexShaderFunction";
+	logger->info("Unsupported D3D method called: GetVertexShaderFunction");
 	abort();
 	return EFAULT;
 }
@@ -707,7 +707,7 @@ HRESULT Direct3DDevice8Adapter::GetStreamSource(THIS_ UINT StreamNumber, d3d8::I
 
 HRESULT Direct3DDevice8Adapter::SetIndices(THIS_ d3d8::IDirect3DIndexBuffer8* pIndexData, UINT BaseVertexIndex)
 {
-	BOOST_ASSERT(BaseVertexIndex == 0);
+	assert(BaseVertexIndex == 0);
 
 	indices = (Direct3DIndexBuffer8Adapter*)pIndexData;
 
@@ -740,70 +740,70 @@ HRESULT Direct3DDevice8Adapter::GetIndices(THIS_ d3d8::IDirect3DIndexBuffer8** p
 
 HRESULT Direct3DDevice8Adapter::CreatePixelShader(THIS_ CONST DWORD* pFunction, DWORD* pHandle)
 {
-	LOG(info) << "Unsupported D3D method called: CreatePixelShader";
+	logger->info("Unsupported D3D method called: CreatePixelShader");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::SetPixelShader(THIS_ DWORD Handle)
 {
-	LOG(info) << "Unsupported D3D method called: SetPixelShader";
+	logger->info("Unsupported D3D method called: SetPixelShader");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::GetPixelShader(THIS_ DWORD* pHandle)
 {
-	LOG(info) << "Unsupported D3D method called: GetPixelShader";
+	logger->info("Unsupported D3D method called: GetPixelShader");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::DeletePixelShader(THIS_ DWORD Handle)
 {
-	LOG(info) << "Unsupported D3D method called: DeletePixelShader";
+	logger->info("Unsupported D3D method called: DeletePixelShader");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::SetPixelShaderConstant(THIS_ DWORD Register, CONST void* pConstantData, DWORD ConstantCount)
 {
-	LOG(info) << "Unsupported D3D method called: SetPixelShaderConstant";
+	logger->info("Unsupported D3D method called: SetPixelShaderConstant");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::GetPixelShaderConstant(THIS_ DWORD Register, void* pConstantData, DWORD ConstantCount)
 {
-	LOG(info) << "Unsupported D3D method called: GetPixelShaderConstant";
+	logger->info("Unsupported D3D method called: GetPixelShaderConstant");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::GetPixelShaderFunction(THIS_ DWORD Handle, void* pData, DWORD* pSizeOfData)
 {
-	LOG(info) << "Unsupported D3D method called: GetPixelShaderFunction";
+	logger->info("Unsupported D3D method called: GetPixelShaderFunction");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::DrawRectPatch(THIS_ UINT Handle, CONST float* pNumSegs, CONST d3d8::D3DRECTPATCH_INFO* pRectPatchInfo)
 {
-	LOG(info) << "Unsupported D3D method called: DrawRectPatch";
+	logger->info("Unsupported D3D method called: DrawRectPatch");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::DrawTriPatch(THIS_ UINT Handle, CONST float* pNumSegs, CONST d3d8::D3DTRIPATCH_INFO* pTriPatchInfo)
 {
-	LOG(info) << "Unsupported D3D method called: DrawTriPatch";
+	logger->info("Unsupported D3D method called: DrawTriPatch");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DDevice8Adapter::DeletePatch(THIS_ UINT Handle)
 {
-	LOG(info) << "Unsupported D3D method called: DeletePatch";
+	logger->info("Unsupported D3D method called: DeletePatch");
 	abort();
 	return EFAULT;
 }

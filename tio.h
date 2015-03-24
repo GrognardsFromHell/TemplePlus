@@ -40,7 +40,7 @@ struct TioFileListFile {
 	char name[260];
 	uint32_t attribs; // See TioFileAttribs
 	uint32_t sizeInBytes;
-	time_t lastModified;
+	uint32_t lastModified;
 };
 #pragma pack(pop)
 

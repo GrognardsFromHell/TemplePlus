@@ -14,7 +14,7 @@ Direct3DSurface8Adapter::~Direct3DSurface8Adapter()
 /*** IUnknown methods ***/
 HRESULT Direct3DSurface8Adapter::QueryInterface(THIS_ REFIID riid, void** ppvObj)
 {
-	LOG(error) << "Called unsupported method: IDirect3DSurface8::QueryInterface";
+	logger->error("Called unsupported method: IDirect3DSurface8::QueryInterface");
 	abort();
 }
 
@@ -32,31 +32,31 @@ ULONG Direct3DSurface8Adapter::Release(THIS)
 /*** IDirect3DSurface8 methods ***/
 HRESULT Direct3DSurface8Adapter::GetDevice(THIS_ d3d8::IDirect3DDevice8** ppDevice)
 {
-	LOG(error) << "Called unsupported method: IDirect3DSurface8::GetDevice";
+	logger->error("Called unsupported method: IDirect3DSurface8::GetDevice");
 	abort();
 }
 
 HRESULT Direct3DSurface8Adapter::SetPrivateData(THIS_ REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags)
 {
-	LOG(error) << "Called unsupported method: IDirect3DSurface8::SetPrivateData";
+	logger->error("Called unsupported method: IDirect3DSurface8::SetPrivateData");
 	abort();
 }
 
 HRESULT Direct3DSurface8Adapter::GetPrivateData(THIS_ REFGUID refguid, void* pData, DWORD* pSizeOfData)
 {
-	LOG(error) << "Called unsupported method: IDirect3DSurface8::GetPrivateData";
+	logger->error("Called unsupported method: IDirect3DSurface8::GetPrivateData");
 	abort();
 }
 
 HRESULT Direct3DSurface8Adapter::FreePrivateData(THIS_ REFGUID refguid)
 {
-	LOG(error) << "Called unsupported method: IDirect3DSurface8::FreePrivateData";
+	logger->error("Called unsupported method: IDirect3DSurface8::FreePrivateData");
 	abort();
 }
 
 HRESULT Direct3DSurface8Adapter::GetContainer(THIS_ REFIID riid, void** ppContainer)
 {
-	LOG(error) << "Called unsupported method: IDirect3DSurface8::GetContainer";
+	logger->error("Called unsupported method: IDirect3DSurface8::GetContainer");
 	abort();
 }
 

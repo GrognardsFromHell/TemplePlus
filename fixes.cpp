@@ -27,8 +27,8 @@ void TempleFix::read(uint32_t offset, void* buffer, size_t size) {
 
 void TempleFix::writeHex(uint32_t offset, const string &hexPattern) {
 	// at most 128 bytes supported due to the buffer below
-	BOOST_ASSERT(hexPattern.size() <= 256);
-	BOOST_ASSERT(hexPattern.size() >= 2);
+	assert(hexPattern.size() <= 256);
+	assert(hexPattern.size() >= 2);
 
 	// Parse hex pattern into a vector of uint8_t
 	uint8_t buffer[128];
@@ -53,13 +53,13 @@ void *TempleFix::replaceFunction(uint32_t offset, void* replaceWith) {
 	
 	auto status = MH_CreateHook(target, replaceWith, &original);
 	if (status != MH_OK) {
-		LOG(error) << "Unable to hook the function @ " << format("%x") % offset << ": " << status;
+		logger->error("Unable to hook the function @ {:x}: {}", offset, status);
 		return nullptr;
 	}
 
 	status = MH_QueueEnableHook(target);
 	if (status != MH_OK) {
-		LOG(error) << "Unable to enable hook for " << format("%x") % offset << ": " << status;
+		logger->error("Unable to enable hook for function @ {:x}: {}", offset, status);
 		return nullptr;
 	}
 
@@ -78,15 +78,15 @@ void TempleFix::redirectCall(uint32_t offset, void* redirectTo) {
 	switch (oldInstruction.opcode) {
 	// relative call opcode
 	case 0xE8:
-		BOOST_ASSERT(oldInstruction.len == 5);
+		assert(oldInstruction.len == 5);
 		oldCallTo = offset + oldInstruction.len + static_cast<int32_t>(oldInstruction.imm.imm32);
 		break;
 	default:
-		LOG(error) << "Unsupported opcode for replacing a call: " << oldInstruction.opcode;
+		logger->error("Unsupported opcode for replacing a call: {:x}", oldInstruction.opcode);
 		break;
 	}
 
-	LOG(trace) << "Replacing old call to " << format("0x%x") % oldCallTo;
+	logger->trace("Replacing old call to 0x{:x}", oldCallTo);
 	
 	writeCall(offset, redirectTo);
 }
@@ -104,18 +104,18 @@ void TempleFix::writeCall(uint32_t offset, void* redirectTo) {
 }
 
 void TempleFixes::apply() {
-	LOG(info) << "Applying DLL fixes";
+	logger->info("Applying {} DLL fixes", fixes().size());
 
 	for (auto fix : fixes()) {
-		LOG(info) << "Applying fix " << fix->name();
+		logger->info("Applying fix {}", fix->name());
 		fix->apply();
 	}
 
 	auto status = MH_ApplyQueued();
 	if (status != MH_OK) {
-		LOG(error) << "Unable to apply queued hooks: " << status;
+		logger->error("Unable to apply queued hooks: {}", status);
 	}
 
-	LOG(info) << "Finished applying DLL fixes";
+	logger->info("Finished applying DLL fixes");
 
 }

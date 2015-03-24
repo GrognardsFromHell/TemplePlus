@@ -26,7 +26,7 @@ struct OriginalMouseFuncs : AddressTable {
 static bool SetCursorFromShaderId(int shaderId) {
 	TigShader shader;
 	if (shaderFuncs.GetLoaded(shaderId, &shader)) {
-		LOG(error) << "Unable to get or load cursor shader " << shaderId;
+		logger->error("Unable to get or load cursor shader {}", shaderId);
 		return false;
 	}
 
@@ -35,20 +35,20 @@ static bool SetCursorFromShaderId(int shaderId) {
 
 	TigTextureRegistryEntry textureEntry;
 	if (textureFuncs.GetLoaded(textureId, &textureEntry)) {
-		LOG(error) << "Unable to get mouse cursor texture " << textureId;
+		logger->error("Unable to get mouse cursor texture {}", textureId);
 		return false;
 	}
 
 	auto texture = textureEntry.buffer->d3dtexture->delegate;
 	IDirect3DSurface9 *surface = nullptr;
 	if (handleD3dError("GetSurfaceLevel", texture->GetSurfaceLevel(0, &surface)) != D3D_OK) {
-		LOG(error) << "Unable to get surface of cursor texture.";
+		logger->error("Unable to get surface of cursor texture.");
 		return false;
 	}
 
 	auto device = video->d3dDevice->delegate;
 	if (handleD3dError("SetCursorProperties", device->SetCursorProperties(0, 0, surface)) != D3D_OK) {		
-		LOG(error) << "Unable to set cursor properties.";
+		logger->error("Unable to set cursor properties.");
 	}
 	surface->Release();
 	return true;

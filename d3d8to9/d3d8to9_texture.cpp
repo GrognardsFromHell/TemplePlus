@@ -21,7 +21,7 @@ ULONG Direct3DTexture8Adapter::Release(THIS)
 
 HRESULT Direct3DTexture8Adapter::GetDevice(THIS_ d3d8::IDirect3DDevice8** ppDevice)
 {
-	LOG(error) << "Unsupported d3d function called: GetDevice";
+	logger->error("Unsupported d3d function called: GetDevice");
 	abort();
 }
 
@@ -79,14 +79,14 @@ DWORD Direct3DTexture8Adapter::GetLevelCount(THIS)
 
 HRESULT Direct3DTexture8Adapter::GetLevelDesc(THIS_ UINT Level, d3d8::D3DSURFACE_DESC* pDesc)
 {
-	LOG(error) << "Unsupported method called: GetLevelDesc";
+	logger->error("Unsupported method called: GetLevelDesc");
 	abort();
 	return EFAULT;
 }
 
 HRESULT Direct3DTexture8Adapter::GetSurfaceLevel(THIS_ UINT Level, d3d8::IDirect3DSurface8** ppSurfaceLevel)
 {
-	LOG(error) << "Unsupported method called: GetSurfaceLevel";
+	logger->error("Unsupported method called: GetSurfaceLevel");
 	abort();
 	return EFAULT;
 }
@@ -106,7 +106,7 @@ HRESULT Direct3DTexture8Adapter::UnlockRect(THIS_ UINT Level)
 
 HRESULT Direct3DTexture8Adapter::AddDirtyRect(THIS_ CONST RECT* pDirtyRect)
 {
-	LOG(error) << "Unsupported method called: AddDirtyRect";
+	logger->error("Unsupported method called: AddDirtyRect");
 	abort();
 	return EFAULT;
 }
