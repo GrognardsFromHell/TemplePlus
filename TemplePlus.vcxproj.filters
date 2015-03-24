@@ -123,6 +123,10 @@
     <ClCompile Include="addressess.cpp">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="tig_tokenizer.cpp">
+      <Filter>tig</Filter>
+    </ClCompile>
+    <ClCompile Include="timeevents.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -232,6 +236,10 @@
     <ClInclude Include="addresses.h">
       <Filter>utils</Filter>
     </ClInclude>
+    <ClInclude Include="tig_tokenizer.h">
+      <Filter>tig</Filter>
+    </ClInclude>
+    <ClInclude Include="timeevents.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

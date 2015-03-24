@@ -70,7 +70,6 @@ struct StartupRelevantFuncs : AddressTable {
 		rebase(SetScreenshotKeyhandler, 0x101DCB30);
 		rebase(TigWindowBufferstuffCreate, 0x10113EB0);
 		rebase(TigWindowBufferstuffFree, 0x101DF2C0);		
-		rebase(TigWindowBufferstuffFree, 0x101DF2C0);
 		rebase(RunBatchFile, 0x101DFF10);
 		rebase(RunMainLoop, 0x100010F0);		
 	}

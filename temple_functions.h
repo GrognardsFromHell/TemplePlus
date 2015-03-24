@@ -232,16 +232,6 @@ struct TempleFuncs : AddressTable {
 		rebase(ObjStandpointSet, 0x100BA8F0);
 
 
-		rebase(ObjFactionHas, 0x1007E430);
-		rebase(ObjPCHasFactionFromReputation, 0x10054D70);
-		rebase(ObjFactionAdd, 0x1007E480);
-		rebase(GroupArrayMemberN, 0x100DF760);
-		rebase(ObjFindInGroupArray, 0x100DF780);
-		rebase(ObjIsInGroupArray, 0x100DF960);
-		rebase(ObjRemoveFromAllGroupArrays, 0x1002BD00);
-		rebase(ObjAddToGroupArray, 0x100DF990);
-		rebase(ObjAddToPCGroup, 0x1002BBE0);
-
 		rebase(_DoesObjectFieldExist, 0x1009C190);
 
 

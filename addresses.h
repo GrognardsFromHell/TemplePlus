@@ -9,13 +9,23 @@ struct AddressInitializer
 {
 	// Add a pointer to the queue for being rebased
 	static void queueRebase(void **ptr) {
-		rebaseQueue.push_back(ptr);
+		assert(!rebaseDone);
+#ifndef NDEBUG
+		// Check for duplicates
+		for (size_t i = 0; i < rebaseQueue().size(); ++i) {
+			if (rebaseQueue()[i] == ptr) {
+				throw TempleException("Pointer has been queued up twice for rebasing. "
+					"This will cause a crash if rebasing actually happens!");
+			}
+		}
+#endif
+		rebaseQueue().push_back(ptr);
 	}
-
+	
 	// Perform all queued rebase operations
 	static void performRebase();
-private:
-	static vector<void**> rebaseQueue;
+private:	
+	static vector<void**> &rebaseQueue();
 	static bool rebaseDone;
 };
 
