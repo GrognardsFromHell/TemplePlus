@@ -26,7 +26,7 @@ XPAward::XPAward(){
 	}
 
 	// Fill out the bottom left portion
-	for (int level = 0; level <= MAXLEVEL; level++){
+	for (int level = 1; level <= MAXLEVEL; level++){
 		for (int j = level - CRMIN - 1; j >= 2; j--){
 			int i = level - 1;
 			int cr = j + CRMIN;
@@ -146,13 +146,13 @@ void GiveXPAwards(){
 class XPTableForHighLevels : public TempleFix {
 public:
 	const char* name() override {
-		return "Debug Message Toggles";
+		return "XP Table Fix for higher levels";
 	}
 	void apply() override;
 } xpTableFix;
 
 void XPTableForHighLevels::apply() {
-
+	LOG(info) << "Applying XP Table Extension upto Level 20";
 	replaceFunction(0x100B5700, GiveXPAwards);
 
 }
