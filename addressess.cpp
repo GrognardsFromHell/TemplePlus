@@ -1,17 +1,14 @@
-
 #include "stdafx.h"
 #include "addresses.h"
 
 void* templeImageBase = nullptr;
-
-vector<void**> AddressInitializer::rebaseQueue;
 
 bool AddressInitializer::rebaseDone = false;
 
 // This is the image base of the temple.dll as the PE header says
 const uint32_t orgTempleBase = 0x10000000;
 
-static void rebase(void **ptr) {
+static void rebase(void** ptr) {
 	auto ptrValue = reinterpret_cast<uint32_t>(*ptr);
 
 	auto relativeOffset = ptrValue - orgTempleBase;
@@ -23,11 +20,17 @@ static void rebase(void **ptr) {
 void AddressInitializer::performRebase() {
 	assert(!rebaseDone);
 	rebaseDone = true;
-	logger->info("Rebasing {} addresses", rebaseQueue.size());
-	for (size_t i = 0; i < rebaseQueue.size(); ++i) {
-		rebase(rebaseQueue[i]);
+	logger->info("Rebasing {} addresses", rebaseQueue().size());
+	for (size_t i = 0; i < rebaseQueue().size(); ++i) {
+		rebase(rebaseQueue()[i]);
 	}
-	rebaseQueue.clear();
+	rebaseQueue().clear();
+}
+
+// This is a way around the static initialization order
+vector<void**>& AddressInitializer::rebaseQueue() {
+	static auto queue = new vector<void**>();
+	return *queue;
 }
 
 TempleAllocFuncs allocFuncs;

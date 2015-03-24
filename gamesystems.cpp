@@ -650,8 +650,8 @@ void GameSystemFuncs::NewInit(const GameSystemConf& conf) {
 
 	// For whatever reason these are set here
 	memcpy(gameSystemInitTable.gameSystemConf, &conf, sizeof(GameSystemConf));
-	gameSystemInitTable.gameSystemConf->field_10 = 0x10002530;
-	gameSystemInitTable.gameSystemConf->renderfunc = 0x10002650;
+	gameSystemInitTable.gameSystemConf->field_10 = (uint32_t)temple_address<0x10002530>();
+	gameSystemInitTable.gameSystemConf->renderfunc = (uint32_t)temple_address<0x10002650>();
 	
 	initBufferStuff(conf);
 	
@@ -777,9 +777,9 @@ static void initAas() {
 	memset(&conf, 0, sizeof(conf));
 	conf.pixelPerWorldTile1 = *reinterpret_cast<float*>(&pixelPerWorldTile);
 	conf.pixelPerWorldTile2 = conf.pixelPerWorldTile1;
-	conf.getSkmFile = 0x100041E0;
-	conf.getSkaFile = 0x10004230;
-	conf.runScript = 0x100AD990;
+	conf.getSkmFile = (uint32_t)temple_address<0x100041E0>();
+	conf.getSkaFile = (uint32_t)temple_address<0x10004230>();
+	conf.runScript = (uint32_t)temple_address<0x100AD990>();
 
 	if (aasFuncs.Init(&conf)) {
 		throw TempleException("Failed to initialize animation system.");

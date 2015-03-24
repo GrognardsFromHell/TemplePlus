@@ -20,9 +20,14 @@ static_assert(MAXLEVEL >= 20, "MAXLEVEL for XP award definition should be at lea
 
 
 XPAward::XPAward(){
+	int table[MAXLEVEL][CRMAX - CRMIN + 1];
+	memset(table, 0, sizeof(table));
+
 	// First set the table's "spine" - when CR = Level  then   XP = 300*level 
 	for (int level = 1; level <= MAXLEVEL; level++) {
-		XPAwardTable[level - 1][level - CRMIN] = level * 300;
+		assert(level >= 1);
+		assert(level - CRMIN < CRCOUNT);
+		table[level - 1][level - CRMIN] = level * 300;
 	}
 
 	// Fill out the bottom left portion
@@ -31,19 +36,25 @@ XPAward::XPAward(){
 			int i = level - 1;
 			int cr = j + CRMIN;
 
+			assert(i >= 0 && i < MAXLEVEL);
+			assert(j >= 0 && j < CRCOUNT);
+
 			if (cr <= level - 8){
-				XPAwardTable[i][j] = 0;
+				table[i][j] = 0;
 			}
 			else if (cr == 0){
-				XPAwardTable[i][2] = XPAwardTable[i][3] / 2;
-				XPAwardTable[i][1] = XPAwardTable[i][3] / 3;
-				XPAwardTable[i][0] = XPAwardTable[i][3] / 4;
+				table[i][2] = table[i][3] / 2;
+				table[i][1] = table[i][3] / 3;
+				table[i][0] = table[i][3] / 4;
 			}
 			else if (cr == level - 1) {
-				XPAwardTable[i][j] = min(XPAwardTable[i - 1][j], level * 200);
+				assert(i >= 1);
+				table[i][j] = min(table[i - 1][j], level * 200);
 			}
 			else {
-				XPAwardTable[i][j] = min(XPAwardTable[i - 1][j], XPAwardTable[i][j + 2] / 2);
+				assert(i >= 1);
+				assert(j + 2 < CRCOUNT);
+				table[i][j] = min(table[i - 1][j], table[i][j + 2] / 2);
 			}
 		}
 	}
@@ -55,17 +66,26 @@ XPAward::XPAward(){
 			int i = level - 1;
 			int j = level - CRMIN + cr_off;
 
+			assert(i >= 0 && i < MAXLEVEL);
+			assert(j >= 0 && j < CRCOUNT);
+
 			if (cr_off >= 10){
-				XPAwardTable[i][j] = XPAwardTable[level - 1][j - 1]; // repeat the last value
+				table[i][j] = table[level - 1][j - 1]; // repeat the last value
 			}
 			else if (cr_off == 1){
-				XPAwardTable[i][j] = max((XPAwardTable[i][j - 1] * 3) / 2, XPAwardTable[i + 1][j]);
+				assert(j >= 1);
+				assert(i + 1 < MAXLEVEL);
+				table[i][j] = max((table[i][j - 1] * 3) / 2, table[i + 1][j]);
 			}
 			else {
-				XPAwardTable[i][j] = max(XPAwardTable[i][j - 2] * 2, XPAwardTable[i + 1][j]);
+				assert(i + 1 < MAXLEVEL);
+				assert(j >= 2);
+				table[i][j] = max(table[i][j - 2] * 2, table[i + 1][j]);
 			}
 		}
 	}
+
+	memcpy(XPAwardTable, table, sizeof(table));
 };
 
 
@@ -75,9 +95,6 @@ void GiveXPAwards(){
 	float fNumLivingPartyMembers = 0.0;
 
 	//int XPAwardTable[MAXLEVEL][CRMAX - CRMIN + 1] = {};
-
-
-
 
 	for (int i = 0; i < templeFuncs.GroupPCsLen(); i++){
 		objHndl objHndPC = templeFuncs.GroupPCsGetMemberN(i);

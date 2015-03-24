@@ -113,6 +113,8 @@
     <ClCompile Include="obj.cpp" />
     <ClCompile Include="python.cpp" />
     <ClCompile Include="spells.cpp" />
+    <ClCompile Include="tig_tokenizer.cpp" />
+    <ClCompile Include="timeevents.cpp" />
     <ClCompile Include="xp.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -198,6 +200,8 @@
     <ClInclude Include="tig_shader.h" />
     <ClInclude Include="tig_texture.h" />
     <ClInclude Include="mainwindow.h" />
+    <ClInclude Include="tig_tokenizer.h" />
+    <ClInclude Include="timeevents.h" />
     <ClInclude Include="tio.h" />
     <ClInclude Include="ui.h" />
     <ClInclude Include="xp.h" />
@@ -304,6 +308,7 @@
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <AdditionalLibraryDirectories>dependencies\boost_1_57_0\lib32-msvc-12.0</AdditionalLibraryDirectories>
+      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
