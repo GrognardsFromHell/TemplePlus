@@ -217,7 +217,6 @@ struct TempleFuncs : AddressTable {
 
 
 		rebase(ObjFactionHas, 0x1007E430);
-		rebase(ObjPCHasFactionFromReputation, 0x10054D70);
 		rebase(ObjFactionAdd, 0x1007E480);
 
 		rebase(ObjXPGainProcess, 0x100B5480);
