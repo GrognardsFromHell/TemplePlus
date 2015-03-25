@@ -5,11 +5,13 @@
 #include "tig_mes.h"
 #include "temple_functions.h"
 #include "tig_tokenizer.h"
+#include "ui_item_creation.h"
 
 struct UiSystemSpecs {
 	UiSystemSpec systems[43];
 };
 static GlobalStruct<UiSystemSpecs, 0x102F6C10> templeUiSystems;
+GlobalPrimitive<ItemCreationType, 0x10BEDF50> itemCreationType;
 
 class UiSystem {
 public:
@@ -54,17 +56,67 @@ static ButtonStateTextures acceptBtnTextures;
 static ButtonStateTextures declineBtnTextures;
 static int disabledBtnTexture;
 
-enum class ItemCreationType : uint32_t {
-	Alchemy = 0,
-	Potion,
-	Scroll,
-	Wand,
-	Rod,
-	Wondrous,
-	ArmsAndArmor,
-	Unk7,
-	Unk8
+
+
+
+void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCrafter){
+
+	// the new and improved Wands/Scroll Property Setting Function
+
+
+	if (itemCreationType == ItemCreationType(3)){
+		// do wand specific stuff
+	};
+	if (itemCreationType == ItemCreationType(2)){
+		// do scroll specific stuff
+	};
+
+	if (itemCreationType == ItemCreationType(1)){
+		// do potion specific stuff
+	};
+
+	int numItemSpells = templeFuncs.Obj_Get_IdxField_NumItems(objHndItem, obj_f_item_spell_idx);
+
+	// loop thru the item's spells (can be more than one in principle, like Keoghthem's Ointment)
+
+	// Current code - change this at will...
+	for (int n = 0; n < numItemSpells; n++){
+		SpellStoredData spellData;
+		templeFuncs.Obj_Get_IdxField_256bit(objHndItem, obj_f_item_spell_idx, n, &spellData);
+
+		// get data from caster - make this optional!
+
+		uint32_t classCodes[SPELLENUMMAX] = { 0, };
+		uint32_t spellLevels[SPELLENUMMAX] = { 0, };
+		uint32_t spellFoundNum = 0;
+		int casterKnowsSpell = templeFuncs.ObjSpellKnownQueryGetData(objHndCrafter, spellData.spellEnum, classCodes, spellLevels, &spellFoundNum);
+		if (casterKnowsSpell){
+			uint32_t spellClassFinal = classCodes[0];
+			uint32_t spellLevelFinal = 0;
+			uint32_t isClassSpell = classCodes[0] & (0x80);
+
+			if (isClassSpell){
+				spellLevelFinal = templeFuncs.ObjGetMaxSpellSlotLevel(objHndCrafter, classCodes[0] & (0x7F), 0);
+			};
+			if (spellFoundNum > 1){
+				for (int i = 1; i < spellFoundNum; i++){
+					if (spellLevels[i] > spellLevelFinal){
+						spellData.classCode = classCodes[i];
+						spellLevelFinal = spellLevels[i];
+					};
+				}
+				spellData.spellLevel = spellLevelFinal;
+
+			};
+			spellData.spellLevel = spellLevelFinal;
+			templeFuncs.Obj_Set_IdxField_byPtr(objHndItem, obj_f_item_spell_idx, n, &spellData);
+
+		};
+
+	};
 };
+
+
 
 static vector<uint64_t> craftingProtoHandles[8];
 
@@ -160,5 +212,6 @@ public:
 	void apply() override {
 		// auto system = UiSystem::getUiSystem("ItemCreation-UI");		
 		// system->init = systemInit;
+		replaceFunction(0x10150DA0, CraftScrollWandPotionSetItemSpellData);
 	}
 } itemCreation;

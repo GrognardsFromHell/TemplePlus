@@ -26,7 +26,7 @@ static bool isTypeContainer(int nObjType){
 	return 0;
 };
 
-static _fieldIdx objGetInventoryListFieldIdx(TemplePyObjHandle* obj){
+static _fieldIdx objGetInventoryListField(TemplePyObjHandle* obj){
 	int objType = templeFuncs.Obj_Get_Field_32bit(obj->objHandle, obj_f_type);
 	if (isTypeCritter(objType)){
 		return obj_f_critter_inventory_list_idx;
@@ -160,7 +160,7 @@ static PyObject * pyObjHandleType_Inventory(TemplePyObjHandle* obj, PyObject * p
 	bool bIncludeBackpack = 1;
 	bool bIncludeEquipped = 0;
 	bool bRetunProtos = 0;
-	int nInventoryFieldType = objGetInventoryListFieldIdx(obj);
+	int nInventoryFieldType = objGetInventoryListField(obj);
 
 	int nItems = templeFuncs.Obj_Get_IdxField_NumItems(ObjHnd, nInventoryFieldType);
 
@@ -210,6 +210,26 @@ static PyObject * pyObjHandleType_Inventory(TemplePyObjHandle* obj, PyObject * p
 	}
 
 	return ItemPyTuple;
+};
+
+static PyObject * pyObjHandleType_Inventory_Item(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+	int nArgs = PyTuple_Size(pyTupleIn);
+	objHndl ObjHnd = obj->objHandle;
+	bool bRetunProtos = 0;
+	int nInventoryFieldType = objGetInventoryListField(obj);
+	int n = 0;
+	if (PyArg_ParseTuple(pyTupleIn, "i", &n)){
+		int nMax = CRITTER_MAX_ITEMS;
+		if (nInventoryFieldType == obj_f_container_inventory_list_idx){
+			nMax = CONTAINER_MAX_ITEMS;
+		};
+		if (n < nMax){
+			return templeFuncs.PyObjFromObjHnd(templeFuncs.ObjGetItemAtInventoryLocation(ObjHnd, n));
+		};
+		
+	};
+	return templeFuncs.PyObjFromObjHnd(0);
+
 };
 
 #pragma endregion
@@ -274,6 +294,7 @@ static PyMethodDef pyObjHandleMethods_New[] = {
 	"faction_has", (PyCFunction)pyObjHandleType_Faction_Has, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!",
 	"faction_add", (PyCFunction)pyObjHandleType_Faction_Add, METH_VARARGS, "Add a faction to an NPC. Doesn't work on PCs!",
 	"inventory", (PyCFunction)pyObjHandleType_Inventory, METH_VARARGS, "Fetches a tuple of the object's inventory (items are Python Objects). Optional argument int nModeSelect : 0 - backpack only (excludes equipped items); 1 - backpack + equipped; 2 - equipped only",
+	"inventory_item", (PyCFunction)pyObjHandleType_Inventory_Item, METH_VARARGS, "Fetches an inventory item of index n",
 	"obj_get_field_64bit", (PyCFunction)pyObjHandleType_Get_Field_64bit, METH_VARARGS, "Gets 64 bit field",
 	"obj_set_field_64bit", (PyCFunction)pyObjHandleType_Set_Field_64bit, METH_VARARGS, "Sets 64 bit field",
 	"obj_get_field_objHndl", (PyCFunction)pyObjHandleType_Get_Field_ObjHandle, METH_VARARGS, "Gets objHndl field",

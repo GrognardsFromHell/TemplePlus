@@ -173,6 +173,7 @@
     <ClInclude Include="graphics.h" />
     <ClInclude Include="fixes.h" />
     <ClInclude Include="libraryholder.h" />
+    <ClInclude Include="spell.h" />
     <ClInclude Include="tig.h" />
     <ClInclude Include="tig_loadingscreen.h" />
     <ClInclude Include="minhook\src\buffer.h" />
@@ -204,6 +205,7 @@
     <ClInclude Include="timeevents.h" />
     <ClInclude Include="tio.h" />
     <ClInclude Include="ui.h" />
+    <ClInclude Include="ui_item_creation.h" />
     <ClInclude Include="xp.h" />
     <ClInclude Include="ui_mainmenu.h" />
   </ItemGroup>

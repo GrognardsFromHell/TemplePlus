@@ -4,6 +4,7 @@
 #include "addresses.h"
 #include "dependencies/python-2.2/Python.h"
 #include "temple_enums.h"
+#include "spell.h"
 
 // Contains the function definitions for stuff found in temple.dll that we may want to call or override.
 
@@ -138,6 +139,10 @@ struct TempleFuncs : AddressTable {
 
 	uint64_t(__cdecl *GetProtoHandle)(int protoId);
 
+	int(__cdecl *ObjSpellKnownQueryGetData)(objHndl objHnd, uint32_t spellEnums, uint32_t *_classCodes, uint32_t *_spellLevels, uint32_t *_numSpellsFound);
+	int(__cdecl *ObjGetMaxSpellSlotLevel)(objHndl ObjHnd, uint32_t statClassIdx, uint32_t arg3);
+
+
 	bool DoesTypeSupportField(uint32_t objType, _fieldIdx objField) {
 		int result;
 		__asm {
@@ -229,6 +234,10 @@ struct TempleFuncs : AddressTable {
 		rebase(StandPointPacketGet, 0x100BDE20);
 		rebase(ObjStandpointGet, 0x100BA890);
 		rebase(ObjStandpointSet, 0x100BA8F0);
+
+
+		rebase(ObjSpellKnownQueryGetData, 0x100762D0);
+		rebase(ObjGetMaxSpellSlotLevel, 0x100765B0);
 
 
 		rebase(_DoesObjectFieldExist, 0x1009C190);

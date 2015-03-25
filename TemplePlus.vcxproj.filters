@@ -240,6 +240,10 @@
       <Filter>tig</Filter>
     </ClInclude>
     <ClInclude Include="timeevents.h" />
+    <ClInclude Include="spell.h" />
+    <ClInclude Include="ui_item_creation.h">
+      <Filter>ui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
