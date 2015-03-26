@@ -12,6 +12,11 @@ struct UiSystemSpecs {
 };
 static GlobalStruct<UiSystemSpecs, 0x102F6C10> templeUiSystems;
 GlobalPrimitive<ItemCreationType, 0x10BEDF50> itemCreationType;
+GlobalPrimitive<int32_t, 0x10BEE3A4> dword_10BEE3A4;
+GlobalPrimitive<int32_t, 0x10BEE3A8> craftInsufficientFunds;
+GlobalPrimitive<int32_t, 0x10BEE3AC> dword_10BEE3AC;
+GlobalPrimitive<int32_t, 0x10BEE3B0> dword_10BEE3B0;
+
 
 class UiSystem {
 public:
@@ -58,6 +63,70 @@ static int disabledBtnTexture;
 
 
 
+int32_t CreateItemResourceCheck(objHndl ObjHnd, objHndl ObjHndItem){
+	bool canCraft = 1;
+	bool xpCheck = 0;
+	int32_t * globA4 = dword_10BEE3A4.ptr();
+	int32_t * globInsuffFunds = craftInsufficientFunds.ptr();
+	int32_t *globAC = dword_10BEE3AC.ptr();
+	int32_t *globB0 = dword_10BEE3B0.ptr();
+	uint32_t crafterLevel = templeFuncs.ObjStatGet(ObjHnd, stat_level);
+	uint32_t minXPForCurrentLevel = templeFuncs.XPReqForLevel(crafterLevel); 
+	uint32_t crafterXP = templeFuncs.Obj_Get_Field_32bit(ObjHnd, obj_f_critter_experience);
+	uint32_t surplusXP = crafterXP - minXPForCurrentLevel;
+	uint32_t craftingCost = 0;
+	uint32_t partyMoney = templeFuncs.PartyMoney();
+
+	*globA4 = 0;
+	*globInsuffFunds = 0;
+	*globAC = 0;
+	*globB0 = 0;
+
+	
+	// Check GP Section
+	if (itemCreationType == ItemCreationType(8) ){ 
+		craftingCost = templeFuncs.ItemWorthFromEnhancements( 41 );
+	}
+	else
+	{
+		// current method for crafting stuff:
+		craftingCost =  templeFuncs.Obj_Get_Field_32bit(ObjHndItem, obj_f_item_worth);
+
+		// TODO: create new function
+		// // craftingCost = CraftedItemWorthDueToAppliedLevel()
+	};
+
+	if ( ( (uint32_t)partyMoney ) < craftingCost){
+		*globInsuffFunds = 1;
+		canCraft = 0;
+	};
+
+
+	// Check XP section (and maybe spell prerequisites too? explore sub_10152280)
+	if ( itemCreationType != ItemCreationType(8) ){
+		if ( templeFuncs.sub_10152280(ObjHnd, ObjHndItem) == 0){ //TODO explore function
+			*globB0 = 1;
+			canCraft = 0;
+		};
+
+		// TODO make proper XP cost calculation!!!
+		uint32_t itemXPCost = 0;  // 
+		xpCheck = surplusXP > itemXPCost;
+	} else 
+	{
+		uint32_t magicArmsAndArmorXPCost = templeFuncs.CraftMagicArmsAndArmorSthg(41);
+		xpCheck = surplusXP > magicArmsAndArmorXPCost;
+	}
+		
+	if (xpCheck){
+		return canCraft;
+	} else
+	{
+		*globA4 = 1;
+		return 0;
+	};
+
+};
 
 void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCrafter){
 
@@ -213,5 +282,7 @@ public:
 		// auto system = UiSystem::getUiSystem("ItemCreation-UI");		
 		// system->init = systemInit;
 		replaceFunction(0x10150DA0, CraftScrollWandPotionSetItemSpellData);
+		replaceFunction(0x10152690, CreateItemResourceCheck);
+
 	}
 } itemCreation;

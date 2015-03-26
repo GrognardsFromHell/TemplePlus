@@ -75,6 +75,7 @@ struct JumpPointPacket{
 struct TempleFuncs : AddressTable {
 	void(*ProcessSystemEvents)();
 	void(__cdecl *UpdatePartyUI)();
+	uint32_t(__cdecl *PartyMoney)();
 
 #pragma region Object Get / Set General
 	int(*Obj_Get_Field_32bit)(objHndl objHnd, uint32_t nFieldIdx);
@@ -130,8 +131,10 @@ struct TempleFuncs : AddressTable {
 	int(__cdecl *ObjPCHasFactionFromReputation)(objHndl, int nFaction);
 	int(__cdecl *ObjFactionAdd)(objHndl, int nFaction);
 
-
+	uint32_t(__cdecl *XPReqForLevel)(uint32_t level);
 	int(__cdecl *ObjXPGainProcess)(objHndl, int nXPGainRaw);
+
+	int(__cdecl *sub_10152280)(objHndl, objHndl);
 
 	int(__cdecl *ObjFeatAdd)(objHndl, _featCode);
 
@@ -161,10 +164,28 @@ struct TempleFuncs : AddressTable {
 	}
 
 
+	bool ItemWorthFromEnhancements(uint32_t n) {
+		int result;
+		__asm {
+			push esi;
+			push ecx;
+			mov ecx, this;
+			mov esi, [ecx]._ItemWorthFromEnhancements;
+			mov eax, n;
+			call esi;
+			pop ecx;
+			pop esi;
+			mov result, eax
+		}
+		return result ;
+	}
+	uint32_t(__cdecl *CraftMagicArmsAndArmorSthg)(int n);
+
+	// rebase on init
 	TempleFuncs() {
 		rebase(ProcessSystemEvents, 0x101DF440);
 		rebase(UpdatePartyUI, 0x10134CB0);
-
+		rebase(PartyMoney, 0x1002B750);
 
 		rebase(GetProtoHandle, 0x1003AD70);
 
@@ -224,7 +245,11 @@ struct TempleFuncs : AddressTable {
 		rebase(ObjFactionHas, 0x1007E430);
 		rebase(ObjFactionAdd, 0x1007E480);
 
+		rebase(XPReqForLevel, 0x100802E0);
 		rebase(ObjXPGainProcess, 0x100B5480);
+
+		rebase(sub_10152280, 0x10152280);
+		rebase(CraftMagicArmsAndArmorSthg, 0x10150B20);
 
 		rebase(ObjFeatAdd, 0x1007CF30);
 
@@ -241,13 +266,16 @@ struct TempleFuncs : AddressTable {
 
 
 		rebase(_DoesObjectFieldExist, 0x1009C190);
-
+		rebase(_ItemWorthFromEnhancements, 0x101509C0);
 
 	}
 private:
 
 	// usercall... eax has field id, ecx has type
 	bool(__cdecl *_DoesObjectFieldExist)();
+
+	// usercall... eax has sthg to do with Magic Arms and Armor crafting
+	bool(__cdecl *_ItemWorthFromEnhancements)();
 };
 
 extern TempleFuncs templeFuncs;
