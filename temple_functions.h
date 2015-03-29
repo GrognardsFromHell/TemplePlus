@@ -76,6 +76,8 @@ struct TempleFuncs : AddressTable {
 	void(*ProcessSystemEvents)();
 	void(__cdecl *UpdatePartyUI)();
 	uint32_t(__cdecl *PartyMoney)();
+	void(__cdecl *DebitPartyMoney)(int32_t copperPcs, int32_t silverPcs, int32_t goldPcs, int32_t platPcs);
+
 
 #pragma region Object Get / Set General
 	int(*Obj_Get_Field_32bit)(objHndl objHnd, uint32_t nFieldIdx);
@@ -186,6 +188,7 @@ struct TempleFuncs : AddressTable {
 		rebase(ProcessSystemEvents, 0x101DF440);
 		rebase(UpdatePartyUI, 0x10134CB0);
 		rebase(PartyMoney, 0x1002B750);
+		rebase(DebitPartyMoney, 0x1002C020);
 
 		rebase(GetProtoHandle, 0x1003AD70);
 

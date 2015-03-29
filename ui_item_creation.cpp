@@ -12,7 +12,7 @@ struct UiSystemSpecs {
 };
 static GlobalStruct<UiSystemSpecs, 0x102F6C10> templeUiSystems;
 GlobalPrimitive<ItemCreationType, 0x10BEDF50> itemCreationType;
-GlobalPrimitive<int32_t, 0x10BEE3A4> dword_10BEE3A4;
+GlobalPrimitive<int32_t, 0x10BEE3A4> craftInsufficientXP;
 GlobalPrimitive<int32_t, 0x10BEE3A8> craftInsufficientFunds;
 GlobalPrimitive<int32_t, 0x10BEE3AC> dword_10BEE3AC;
 GlobalPrimitive<int32_t, 0x10BEE3B0> dword_10BEE3B0;
@@ -66,7 +66,7 @@ static int disabledBtnTexture;
 int32_t CreateItemResourceCheck(objHndl ObjHnd, objHndl ObjHndItem){
 	bool canCraft = 1;
 	bool xpCheck = 0;
-	int32_t * globA4 = dword_10BEE3A4.ptr();
+	int32_t * globInsuffXP = craftInsufficientXP.ptr();
 	int32_t * globInsuffFunds = craftInsufficientFunds.ptr();
 	int32_t *globAC = dword_10BEE3AC.ptr();
 	int32_t *globB0 = dword_10BEE3B0.ptr();
@@ -74,10 +74,10 @@ int32_t CreateItemResourceCheck(objHndl ObjHnd, objHndl ObjHndItem){
 	uint32_t minXPForCurrentLevel = templeFuncs.XPReqForLevel(crafterLevel); 
 	uint32_t crafterXP = templeFuncs.Obj_Get_Field_32bit(ObjHnd, obj_f_critter_experience);
 	uint32_t surplusXP = crafterXP - minXPForCurrentLevel;
-	uint32_t craftingCost = 0;
+	uint32_t craftingCostCP = 0;
 	uint32_t partyMoney = templeFuncs.PartyMoney();
 
-	*globA4 = 0;
+	*globInsuffXP = 0;
 	*globInsuffFunds = 0;
 	*globAC = 0;
 	*globB0 = 0;
@@ -85,18 +85,18 @@ int32_t CreateItemResourceCheck(objHndl ObjHnd, objHndl ObjHndItem){
 	
 	// Check GP Section
 	if (itemCreationType == ItemCreationType(8) ){ 
-		craftingCost = templeFuncs.ItemWorthFromEnhancements( 41 );
+		craftingCostCP = templeFuncs.ItemWorthFromEnhancements( 41 );
 	}
 	else
 	{
 		// current method for crafting stuff:
-		craftingCost =  templeFuncs.Obj_Get_Field_32bit(ObjHndItem, obj_f_item_worth);
+		craftingCostCP =  templeFuncs.Obj_Get_Field_32bit(ObjHndItem, obj_f_item_worth) / 2;
 
 		// TODO: create new function
-		// // craftingCost = CraftedItemWorthDueToAppliedLevel()
+		// // craftingCostCP = CraftedItemWorthDueToAppliedLevel()
 	};
 
-	if ( ( (uint32_t)partyMoney ) < craftingCost){
+	if ( ( (uint32_t)partyMoney ) < craftingCostCP){
 		*globInsuffFunds = 1;
 		canCraft = 0;
 	};
@@ -109,8 +109,8 @@ int32_t CreateItemResourceCheck(objHndl ObjHnd, objHndl ObjHndItem){
 			canCraft = 0;
 		};
 
-		// TODO make proper XP cost calculation!!!
-		uint32_t itemXPCost = 0;  // 
+		// TODO make XP cost calculation take applied caster level into account
+		uint32_t itemXPCost = templeFuncs.Obj_Get_Field_32bit(ObjHndItem, obj_f_item_worth) / 2500; 
 		xpCheck = surplusXP > itemXPCost;
 	} else 
 	{
@@ -122,7 +122,7 @@ int32_t CreateItemResourceCheck(objHndl ObjHnd, objHndl ObjHndItem){
 		return canCraft;
 	} else
 	{
-		*globA4 = 1;
+		*globInsuffXP = 1;
 		return 0;
 	};
 
@@ -186,6 +186,27 @@ void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCra
 };
 
 
+void CreateItemDebitXPGP(objHndl objHndCrafter, objHndl objHndItem){
+	uint32_t crafterXP = templeFuncs.Obj_Get_Field_32bit(objHndCrafter, obj_f_critter_experience);
+	uint32_t craftingCostCP = 0;
+	uint32_t craftingCostXP = 0;
+
+	if (itemCreationType == ItemCreationType(8)){ // magic arms and armor
+		craftingCostCP = templeFuncs.ItemWorthFromEnhancements(41);
+		craftingCostXP = templeFuncs.CraftMagicArmsAndArmorSthg(41);
+	}
+	else
+	{
+		// TODO make crafting costs take applied caster level into account
+		// currently this is what ToEE does	
+		craftingCostCP = templeFuncs.Obj_Get_Field_32bit(objHndItem, obj_f_item_worth) / 2;
+		craftingCostXP = templeFuncs.Obj_Get_Field_32bit(objHndItem, obj_f_item_worth) / 2500;
+
+	};
+
+	templeFuncs.DebitPartyMoney(craftingCostCP, 0, 0, 0);
+	templeFuncs.Obj_Set_Field_32bit(objHndCrafter, obj_f_critter_experience, crafterXP - craftingCostXP);
+};
 
 static vector<uint64_t> craftingProtoHandles[8];
 
@@ -283,6 +304,7 @@ public:
 		// system->init = systemInit;
 		replaceFunction(0x10150DA0, CraftScrollWandPotionSetItemSpellData);
 		replaceFunction(0x10152690, CreateItemResourceCheck);
+		replaceFunction(0x10151F60, CreateItemDebitXPGP);
 
 	}
 } itemCreation;

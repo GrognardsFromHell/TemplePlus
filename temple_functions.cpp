@@ -8,6 +8,9 @@
 
 TempleFuncs templeFuncs;
 
+GlobalPrimitive<uint32_t, 0x10AB757C> customNamesCount;
+GlobalPrimitive<char *, 0x10AB7578> customNamesArray;
+
 void init_functions()
 {
 	templeImageBase = static_cast<void*>(GetModuleHandleA("temple.dll"));
