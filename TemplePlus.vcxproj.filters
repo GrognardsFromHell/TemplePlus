@@ -252,6 +252,10 @@
     </ClInclude>
     <ClInclude Include="pathfinding.h" />
     <ClInclude Include="mainloop.h" />
+    <ClInclude Include="spell.h" />
+    <ClInclude Include="ui_item_creation.h">
+      <Filter>ui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

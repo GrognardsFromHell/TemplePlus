@@ -96,13 +96,13 @@ void GiveXPAwards(){
 
 	//int XPAwardTable[MAXLEVEL][CRMAX - CRMIN + 1] = {};
 
-	for (int i = 0; i < templeFuncs.GroupPCsLen(); i++){
+	for (uint32_t i = 0; i < templeFuncs.GroupPCsLen(); i++){
 		objHndl objHndPC = templeFuncs.GroupPCsGetMemberN(i);
 		if (!templeFuncs.IsObjDeadNullDestroyed(objHndPC)){
 			fNumLivingPartyMembers += 1.0;
 		}
 	};
-	for (int i = 0; i < templeFuncs.GroupNPCFollowersLen(); i++){
+	for (uint32_t i = 0; i < templeFuncs.GroupNPCFollowersLen(); i++){
 		objHndl objHndNPCFollower = templeFuncs.GroupNPCFollowersGetMemberN(i);
 		if (!templeFuncs.IsObjDeadNullDestroyed(objHndNPCFollower)
 			&& !templeFuncs.DispatcherD20Query(objHndNPCFollower, DK_QUE_ExperienceExempt)){
@@ -117,7 +117,7 @@ void GiveXPAwards(){
 	bool bShouldUpdatePartyUI = false;
 	int xpForxpPile = 0;
 
-	for (int i = 0; i < templeFuncs.GroupListGetLen(); i++){
+	for (uint32_t i = 0; i < templeFuncs.GroupListGetLen(); i++){
 		objHndl objHnd = templeFuncs.GroupListGetMemberN(i);
 		if (templeFuncs.IsObjDeadNullDestroyed(objHnd)){ continue; };
 		if (templeFuncs.DispatcherD20Query(objHnd, DK_QUE_ExperienceExempt)) { continue; };
