@@ -1,6 +1,7 @@
 #pragma once
 
 #include "stdafx.h"
+#include "tig_font.h"
 #include "addresses.h"
 #include "dependencies/python-2.2/Python.h"
 #include "temple_enums.h"
@@ -74,9 +75,11 @@ struct JumpPointPacket{
 
 struct TempleFuncs : AddressTable {
 	void(*ProcessSystemEvents)();
+	PyObject* (__cdecl *PyScript_Execute)(char *pPyFileName, char *pPyFuncName, PyObject *pPyArgTuple);
+
 	void(__cdecl *UpdatePartyUI)();
 	uint32_t(__cdecl *PartyMoney)();
-	void(__cdecl *DebitPartyMoney)(int32_t copperPcs, int32_t silverPcs, int32_t goldPcs, int32_t platPcs);
+	void(__cdecl *DebitPartyMoney)(int32_t platPcs, int32_t goldPcs, int32_t  silverPcs, int32_t copperPcs);
 
 
 #pragma region Object Get / Set General
@@ -97,58 +100,67 @@ struct TempleFuncs : AddressTable {
 	int(__cdecl *Obj_Set_IdxField_ObjHnd)(objHndl, _fieldIdx, _fieldSubIdx, objHndl);
 #pragma endregion
 
-	int(__cdecl *IsObjDeadNullDestroyed)(objHndl);
+	uint32_t(__cdecl *IsObjDeadNullDestroyed)(objHndl);
 	PyObject*  (__cdecl *PyObjFromObjHnd) (objHndl);
-	const char *(__cdecl *ObjGetDisplayName)(uint64_t obj, uint64_t observer);
+	uint64_t(__cdecl *GetProtoHandle)(uint32_t protoId);
+	uint32_t(__cdecl *ObjGetProtoNum)(objHndl);
 
-	int(__cdecl *DispatcherD20Query)(objHndl ObjHnd, _key nKey);
+	const char *(__cdecl *ObjGetDisplayName)(uint64_t obj, uint64_t observer);
+	uint32_t(__cdecl *DescriptionIsCustom)(int32_t descrIdx); 
+	uint32_t (__cdecl *CustomNameNew)(char *pString);
+	void (__cdecl *CustomNameChange)(char * pNewNameSource, uint32_t descrIdx);
+
+	uint32_t(__cdecl *DispatcherD20Query)(objHndl ObjHnd, _key nKey);
 
 	// GroupArray stuff (groups include: NPCs, PCs, AI Followers, Currently Selected)
-	objHndl(__cdecl *GroupArrayMemberN)(GroupArray *, int nIdx);
-	objHndl(__cdecl *GroupNPCFollowersGetMemberN)(int nIdx);
-	int(__cdecl *GroupNPCFollowersLen)();
-	objHndl(__cdecl *GroupPCsGetMemberN)(int nIdx);
-	int(__cdecl *GroupPCsLen)();
-	objHndl(__cdecl *GroupListGetMemberN)(int nIdx);
-	int(__cdecl *GroupListGetLen)();
-	int(__cdecl *ObjIsInGroupArray)(GroupArray *, objHndl);
-	int(__cdecl *ObjIsAIFollower)(objHndl);
-	int(__cdecl * ObjFindInGroupArray)(GroupArray *, objHndl); // returns index
-	int(__cdecl * ObjRemoveFromAllGroupArrays)(objHndl);
-	int(__cdecl *ObjAddToGroupArray)(GroupArray *, objHndl);
-	int(__cdecl *ObjAddToPCGroup)(objHndl);
-
+#pragma region GroupArray stuff
+	objHndl(__cdecl *GroupArrayMemberN)(GroupArray *, uint32_t nIdx);
+	objHndl(__cdecl *GroupNPCFollowersGetMemberN)(uint32_t nIdx);
+	uint32_t(__cdecl *GroupNPCFollowersLen)();
+	objHndl(__cdecl *GroupPCsGetMemberN)(uint32_t nIdx);
+	uint32_t(__cdecl *GroupPCsLen)();
+	objHndl(__cdecl *GroupListGetMemberN)(uint32_t nIdx);
+	uint32_t(__cdecl *GroupListGetLen)();
+	uint32_t(__cdecl *ObjIsInGroupArray)(GroupArray *, objHndl);
+	uint32_t(__cdecl *ObjIsAIFollower)(objHndl);
+	uint32_t(__cdecl * ObjFindInGroupArray)(GroupArray *, objHndl); // returns index
+	uint32_t(__cdecl * ObjRemoveFromAllGroupArrays)(objHndl);
+	uint32_t(__cdecl *ObjAddToGroupArray)(GroupArray *, objHndl);
+	uint32_t(__cdecl *ObjAddToPCGroup)(objHndl);
+#pragma endregion
 
 
 	objHndl(__cdecl *ObjGetSubstituteInventory)  (objHndl);
 	objHndl(__cdecl *ObjGetItemAtInventoryLocation)(objHndl, uint32_t nIdx);
+	objHndl (__cdecl *ObjFindMatchingStackableItem)(objHndl objHndReceiver, objHndl objHndItem); // TODO: rewrite so it doesn't stack items with different descriptions and/or caster levels, so potions/scrolls of different caster levels don't stack
 
-	int(__cdecl *ObjStatGet)(objHndl, int obj_stat);
+
+	uint32_t(__cdecl *ObjStatGet)(objHndl, uint32_t obj_stat);
 
 	bool(__cdecl *StandPointPacketGet)(_jmpPntID jmpPntID, char * mapNameOut, size_t, _mapNum * mapNumOut, locXY * locXYOut);
-	int(__cdecl *ObjStandpointGet)(objHndl, _standPointType, StandPoint *);
-	int(__cdecl *ObjStandpointSet)(objHndl, _standPointType, StandPoint *);
+	uint32_t(__cdecl *ObjStandpointGet)(objHndl, _standPointType, StandPoint *);
+	uint32_t(__cdecl *ObjStandpointSet)(objHndl, _standPointType, StandPoint *);
 
-	int(__cdecl *ObjFactionHas)(objHndl, int nFaction);
-	int(__cdecl *ObjPCHasFactionFromReputation)(objHndl, int nFaction);
-	int(__cdecl *ObjFactionAdd)(objHndl, int nFaction);
+	uint32_t(__cdecl *ObjFactionHas)(objHndl, uint32_t nFaction);
+	uint32_t(__cdecl *ObjPCHasFactionFromReputation)(objHndl, uint32_t nFaction);
+	uint32_t(__cdecl *ObjFactionAdd)(objHndl, uint32_t nFaction);
 
 	uint32_t(__cdecl *XPReqForLevel)(uint32_t level);
-	int(__cdecl *ObjXPGainProcess)(objHndl, int nXPGainRaw);
+	uint32_t(__cdecl *ObjXPGainProcess)(objHndl, uint32_t nXPGainRaw);
 
-	int(__cdecl *sub_10152280)(objHndl, objHndl);
+	uint32_t(__cdecl *sub_10152280)(objHndl, objHndl);
 
-	int(__cdecl *ObjFeatAdd)(objHndl, _featCode);
+	uint32_t(__cdecl *ObjFeatAdd)(objHndl, _featCode);
 
 	//PyObject* (*PyObjFromObjHnd)();
 
-	uint64_t(__cdecl *GetProtoHandle)(int protoId);
-
-	int(__cdecl *ObjSpellKnownQueryGetData)(objHndl objHnd, uint32_t spellEnums, uint32_t *_classCodes, uint32_t *_spellLevels, uint32_t *_numSpellsFound);
-	int(__cdecl *ObjGetMaxSpellSlotLevel)(objHndl ObjHnd, uint32_t statClassIdx, uint32_t arg3);
 
 
-	bool DoesTypeSupportField(uint32_t objType, _fieldIdx objField) {
+	uint32_t(__cdecl *ObjSpellKnownQueryGetData)(objHndl objHnd, uint32_t spellEnums, uint32_t *_classCodes, uint32_t *_spellLevels, uint32_t *_numSpellsFound);
+	uint32_t(__cdecl *ObjGetMaxSpellSlotLevel)(objHndl ObjHnd, uint32_t statClassIdx, uint32_t arg3);
+
+
+	uint32_t DoesTypeSupportField(uint32_t objType, _fieldIdx objField) {
 		int result;
 		__asm {
 			push esi;
@@ -166,8 +178,9 @@ struct TempleFuncs : AddressTable {
 	}
 
 
-	bool ItemWorthFromEnhancements(uint32_t n) {
-		int result;
+
+	uint32_t ItemWorthFromEnhancements(uint32_t n) {
+		uint32_t result;
 		__asm {
 			push esi;
 			push ecx;
@@ -181,16 +194,22 @@ struct TempleFuncs : AddressTable {
 		}
 		return result ;
 	}
-	uint32_t(__cdecl *CraftMagicArmsAndArmorSthg)(int n);
+	uint32_t(__cdecl *CraftMagicArmsAndArmorSthg)(uint32_t n);
+	char *(__cdecl *ItemCreationPrereqSthg_sub_101525B0)(objHndl, objHndl);
+
+	int (*temple_snprintf)(char *, size_t, const char *, ...);
+	bool (__cdecl *FontDrawSthg_sub_101F87C0)(int widgetId, char *text, RECT *rect, tig_text_style *style); // sthg with font drawing
 
 	// rebase on init
 	TempleFuncs() {
 		rebase(ProcessSystemEvents, 0x101DF440);
+		rebase(PyScript_Execute, 0x100ADE40);
+
 		rebase(UpdatePartyUI, 0x10134CB0);
 		rebase(PartyMoney, 0x1002B750);
 		rebase(DebitPartyMoney, 0x1002C020);
 
-		rebase(GetProtoHandle, 0x1003AD70);
+
 
 # pragma region Obj Get/Set General
 
@@ -221,8 +240,13 @@ struct TempleFuncs : AddressTable {
 
 		rebase(IsObjDeadNullDestroyed, 0x1007E650);
 		rebase(PyObjFromObjHnd, 0x100AF1D0);
-		rebase(ObjGetDisplayName, 0x1001FA80);
+		rebase(GetProtoHandle, 0x1003AD70);
+		rebase(ObjGetProtoNum, 0x10039320);
 
+		rebase(ObjGetDisplayName, 0x1001FA80);
+		rebase(DescriptionIsCustom, 0x100869B0);
+		rebase(CustomNameNew,0x10086A50);
+		rebase(CustomNameChange, 0x10086AA0);
 
 		rebase(GroupArrayMemberN, 0x100DF760);
 		rebase(GroupNPCFollowersGetMemberN, 0x1002B190);
@@ -241,6 +265,7 @@ struct TempleFuncs : AddressTable {
 
 		rebase(ObjGetSubstituteInventory, 0x1007F5B0);
 		rebase(ObjGetItemAtInventoryLocation, 0x100651B0);
+		rebase(ObjFindMatchingStackableItem, 0x10067DF0);
 
 		rebase(ObjStatGet, 0x10074800);
 
@@ -270,12 +295,18 @@ struct TempleFuncs : AddressTable {
 
 		rebase(_DoesObjectFieldExist, 0x1009C190);
 		rebase(_ItemWorthFromEnhancements, 0x101509C0);
+		rebase(ItemCreationPrereqSthg_sub_101525B0, 0x101525B0);
+
+
+		rebase(temple_snprintf, 0x10254680);
+		rebase(FontDrawSthg_sub_101F87C0, 0x101F87C0); // sthg with font drawing
 
 	}
 private:
 
 	// usercall... eax has field id, ecx has type
 	bool(__cdecl *_DoesObjectFieldExist)();
+	
 
 	// usercall... eax has sthg to do with Magic Arms and Armor crafting
 	bool(__cdecl *_ItemWorthFromEnhancements)();

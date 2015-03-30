@@ -12,3 +12,6 @@ enum class ItemCreationType : uint32_t {
 	Unk7,
 	ArmsAndArmor
 };
+
+
+uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t slotLevelNew);

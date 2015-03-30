@@ -320,6 +320,13 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 	if (!_strcmpi(name, "ObjHandle")) {
 		return  PyLong_FromLongLong(obj->objHandle); 
 	}
+	else if (!_strcmpi(name, "proto"))
+	{
+		return  PyLong_FromLongLong(templeFuncs.ObjGetProtoNum(obj->objHandle));
+	}
+	else if (!_strcmpi(name, "description")){
+		return  PyString_FromString(templeFuncs.ObjGetDisplayName(obj->objHandle,obj->objHandle));
+	}
 
 	if (!_strcmpi(name, "factions")) {
 		objHndl ObjHnd = obj->objHandle;
