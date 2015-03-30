@@ -49,4 +49,8 @@ using fmt::format;
 #include "MinHook.h"
 #include "dependencies/spdlog/spdlog.h"
 
+#include "dependencies/python-2.2/Python.h"
+#undef _GNU_SOURCE // Defined by python for some reason
+#undef LONG_LONG
+
 extern shared_ptr<spdlog::logger> logger;

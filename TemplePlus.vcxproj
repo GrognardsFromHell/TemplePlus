@@ -21,6 +21,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="anim.cpp" />
     <ClCompile Include="animalcompanion.cpp" />
     <ClCompile Include="attackrollcpp.cpp" />
     <ClCompile Include="bonusspells.cpp" />
@@ -80,6 +81,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="mainloop.cpp" />
+    <ClCompile Include="pathfinding.cpp" />
+    <ClCompile Include="pythonglobal.cpp" />
     <ClCompile Include="testhelper.cpp" />
     <ClCompile Include="tig_loadingscreen.cpp" />
     <ClCompile Include="main.cpp" />
@@ -146,6 +150,7 @@
   <ItemGroup>
     <ClInclude Include="aas.h" />
     <ClInclude Include="addresses.h" />
+    <ClInclude Include="anim.h" />
     <ClInclude Include="d3d8to9\d3d8to9.h" />
     <ClInclude Include="d3d8to9\d3d8to9_convert.h" />
     <ClInclude Include="d3d8to9\d3d8to9_device.h" />
@@ -173,6 +178,9 @@
     <ClInclude Include="graphics.h" />
     <ClInclude Include="fixes.h" />
     <ClInclude Include="libraryholder.h" />
+    <ClInclude Include="mainloop.h" />
+    <ClInclude Include="pathfinding.h" />
+    <ClInclude Include="pythonglobal.h" />
     <ClInclude Include="tig.h" />
     <ClInclude Include="tig_loadingscreen.h" />
     <ClInclude Include="minhook\src\buffer.h" />

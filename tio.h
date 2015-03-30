@@ -74,10 +74,14 @@ extern "C" {
 	*/
 	void TIOAPI tio_mkdir(const char *path);
 
+	/*
+		Reads data from an opened file. Largely equivalent to fread.
+	*/
+	int TIOAPI tio_fread(void *buffer, size_t size, size_t count, TioFile *file);
+
 	// The following functions have the wrong signature
 	void TIOAPI tio_fgetpos();
 	void TIOAPI tio_fclose();
-	void TIOAPI tio_fread();
 	void TIOAPI tio_fopen();
 	void TIOAPI tio_remove();
 	void TIOAPI tio_fwrite();

@@ -34,15 +34,15 @@ struct ButtonStateTextures {
 	ButtonStateTextures() : normal(-1), hover(-1), pressed(-1) {}
 
 	void loadAccept() {
-		uiFuncs.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptNormal, &normal);
-		uiFuncs.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptHover, &hover);
-		uiFuncs.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptPressed, &pressed);
+		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptNormal, normal);
+		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptHover, hover);
+		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptPressed, pressed);
 	}
 
 	void loadDecline() {
-		uiFuncs.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineNormal, &normal);
-		uiFuncs.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineHover, &hover);
-		uiFuncs.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclinePressed, &pressed);
+		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineNormal, normal);
+		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineHover, hover);
+		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclinePressed, pressed);
 	}
 };
 
@@ -124,9 +124,9 @@ static int __cdecl systemInit(const GameSystemConf *conf) {
 
 	acceptBtnTextures.loadAccept();
 	declineBtnTextures.loadDecline();
-	uiFuncs.GetAsset(UiAssetType::Generic, UiGenericAsset::DisabledNormal, &disabledBtnTexture);
+	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DisabledNormal, disabledBtnTexture);
 
-	background = uiFuncs.LoadImg("art\\interface\\item_creation_ui\\item_creation.img");
+	background = ui.LoadImg("art\\interface\\item_creation_ui\\item_creation.img");
 
 	// TODO !sub_10150F00("rules\\item_creation.mes")
 

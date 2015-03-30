@@ -651,12 +651,9 @@ enum feat_enums
 	FEAT_WIDEN_SPELL = 0x285,
 	FEAT_RANGER_RAPID_SHOT = 0x286,
 	FEAT_RANGER_MANYSHOT = 0x287,
-}
-;
+};
 
-
-
-enum obj_t{
+enum ObjectType : uint32_t {
 	obj_t_portal = 0,
 	obj_t_container = 1,
 	obj_t_scenery = 2,
@@ -1339,9 +1336,7 @@ enum D20Query
 	Q_Item_Has_Keen_Bonus = 0x6F,
 	Q_AI_Has_Spell_Override = 0x70,
 	Q_Weapon_Get_Keen_Bonus = 0x71,
-}
-;
-
+};
 
 
 enum D20Signal

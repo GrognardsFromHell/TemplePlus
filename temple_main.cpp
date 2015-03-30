@@ -13,6 +13,8 @@
 #include "movies.h"
 #include "exception.h"
 #include "stopwatch.h"
+#include "pythonglobal.h"
+#include "mainloop.h"
 
 class TempleMutex {
 public:
@@ -156,21 +158,6 @@ private:
 	TigBufferstuffInitializer tigBuffer;
 };
 
-class UiInitializer {
-public:
-	UiInitializer(const GameSystemConf &config) {
-		StopwatchReporter reporter("UI initialized in {}");
-		logger->info("Loading UI systems");
-		if (!uiFuncs.Init(&config)) {
-			throw TempleException("Unable to initialize the UI systems.");
-		}
-	}
-	~UiInitializer() {
-		logger->info("Unloading UI systems");
-		uiFuncs.Shutdown();
-	}
-};
-
 class GameSystemsModuleInitializer {
 public:
 	GameSystemsModuleInitializer(const string &moduleName) {
@@ -185,22 +172,6 @@ public:
 		gameSystemFuncs.UnloadModule();
 	}
 };
-
-class UiModuleInitializer {
-public:
-	UiModuleInitializer() {
-		StopwatchReporter reporter("Module specific UI loaded in {}");
-		logger->info("Loading module specific UI.");
-		if (!uiFuncs.LoadModule()) {
-			throw TempleException("Unable to load module specific UI data.");
-		}
-	}
-	~UiModuleInitializer() {
-		logger->info("Unloading module specific UI.");
-		uiFuncs.UnloadModule();
-	}
-};
-
 
 int TempleMain(HINSTANCE hInstance, const wstring &commandLine) {
 	TempleMutex mutex;
@@ -238,12 +209,15 @@ int TempleMain(HINSTANCE hInstance, const wstring &commandLine) {
 		return 1;
 	}
 
-	UiInitializer ui(gameSystems.config());
+	UiLoader uiLoader(gameSystems.config());
 
 	GameSystemsModuleInitializer gameModule(config.defaultModule);
 
+	// Python should now be initialized. Do the global hooks
+	PythonGlobalExtension::installExtensions();
+
 	// Notify the UI system that the module has been loaded
-	UiModuleInitializer uiModule;
+	UiModuleLoader uiModuleLoader(uiLoader);
 	
 	if (!config.skipIntro) {
 		movieFuncs.PlayMovie("movies\\introcinematic.bik", 0, 0, 0);
@@ -251,15 +225,16 @@ int TempleMain(HINSTANCE hInstance, const wstring &commandLine) {
 
 	// Show the main menu
 	mouseFuncs.ShowCursor();
-	uiMainMenuFuncs.ShowPage(0); 
+	uiMainMenuFuncs.ShowPage(0);
 	temple_set<0x10BD3A68>(1); // Purpose unknown and unconfirmed, may be able to remove
 
 	// Run console commands from "startup.txt" (working dir)
 	logger->info("[Running Startup.txt]");
 	startupRelevantFuncs.RunBatchFile("Startup.txt");
 	logger->info("[Beginning Game]");
-		
-	startupRelevantFuncs.RunMainLoop();
+
+	RunMainLoop();
+	// startupRelevantFuncs.RunMainLoop();
 
 	return 0;
 }

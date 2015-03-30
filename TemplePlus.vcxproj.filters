@@ -127,6 +127,12 @@
       <Filter>tig</Filter>
     </ClCompile>
     <ClCompile Include="timeevents.cpp" />
+    <ClCompile Include="anim.cpp" />
+    <ClCompile Include="pythonglobal.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="pathfinding.cpp" />
+    <ClCompile Include="mainloop.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -240,6 +246,12 @@
       <Filter>tig</Filter>
     </ClInclude>
     <ClInclude Include="timeevents.h" />
+    <ClInclude Include="anim.h" />
+    <ClInclude Include="pythonglobal.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="pathfinding.h" />
+    <ClInclude Include="mainloop.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

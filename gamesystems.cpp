@@ -499,6 +499,12 @@ struct GameSystemInitTable : AddressTable {
 	// It's not even safe to assume these rects belong to the scratchbuffer
 	TigRect *scratchBufferRect;
 	TigRect *scratchBufferRectExtended;
+
+	/*
+		Stores the last timestamp when the game systems were processed.
+		Sadly, this is used from somewhere deep in the obj system.
+	*/
+	uint32_t *lastAdvanceTime;
 	
 	GameSystemInitTable() {
 		rebase(DifficultyChanged, 0x10003770);
@@ -521,6 +527,7 @@ struct GameSystemInitTable : AddressTable {
 		rebase(scratchBuffer, 0x103072DC);
 		rebase(scratchBufferRect, 0x1030727C);
 		rebase(scratchBufferRectExtended, 0x10307290);
+		rebase(lastAdvanceTime, 0x11E726AC);
 	}
 } gameSystemInitTable;
 
@@ -538,7 +545,7 @@ public:
 		}
 
 		sequence.messages = new const char*[gameSystemCount]; // 61 is the number of game systems
-		sequence.image = uiFuncs.LoadImg("art\\splash\\legal0322.img");
+		sequence.image = ui.LoadImg("art\\splash\\legal0322.img");
 		sequence.textColor = &graycolor;
 		sequence.barBorderColor = &graycolor;
 		sequence.barBackground = &darkblue;
@@ -688,6 +695,25 @@ void GameSystemFuncs::NewInit(const GameSystemConf& conf) {
 
 	*gameSystemInitTable.ironmanFlag = false;
 	*gameSystemInitTable.ironmanSaveGame = 0;
+}
+
+void GameSystemFuncs::AdvanceTime() {
+
+	auto now = timeGetTime();
+
+	// This is used from somewhere in the object system
+	*gameSystemInitTable.lastAdvanceTime = now;
+
+	// TODO: Insert pre advance hook here
+
+	for (auto &system : gameSystems->systems) {
+		if (system.advanceTime) {
+			system.advanceTime(now);
+		}
+	}
+
+	// TODO: Insert post advance hook here
+
 }
 
 static void registerDataFiles() {
