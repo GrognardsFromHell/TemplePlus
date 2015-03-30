@@ -20,7 +20,7 @@ public:
 class SpellEnumExpansion : public TempleFix {
 public:
 	const char* name() override {
-		return "Spell Hostility bug: fix mass cure spells triggering hostile reaction. Can be expanded to other spells.";
+		return "Expand the range of usable spellEnums. Currently walled off at 802.";
 	}
 
 	void apply() override {
