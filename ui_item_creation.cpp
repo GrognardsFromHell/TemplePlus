@@ -8,10 +8,6 @@
 #include "tig_tokenizer.h"
 #include "ui_item_creation.h"
 
-struct UiSystemSpecs {
-	UiSystemSpec systems[43];
-};
-static GlobalStruct<UiSystemSpecs, 0x102F6C10> templeUiSystems;
 GlobalPrimitive<ItemCreationType, 0x10BEDF50> itemCreationType;
 GlobalPrimitive<objHndl, 0x10BECEE0> globObjHndCrafter;
 
@@ -26,24 +22,6 @@ GlobalPrimitive<char *, 0x10BED8A4> itemCreationUIStringXPCost;
 GlobalPrimitive<char *, 0x10BED8A8> itemCreationUIStringValue;
 GlobalPrimitive<tig_text_style, 0x10BEE338> itemCreationTextStyle; // so far used by "Item Cost: %d" and "Experience Cost: %d"
 GlobalPrimitive<tig_text_style, 0x10BED938> itemCreationTextStyle2; // so far used by "Value: %d"
-
-
-
-class UiSystem {
-public:
-
-	static UiSystemSpec *getUiSystem(const char *name) {
-		// Search for the ui system to replace
-		for (auto &system : templeUiSystems->systems) {
-			if (!strcmp(name, system.name)) {
-				return &system;
-			}
-		}
-
-		logger->error("Couldn't find UI system {}! Replacement failed.", name);
-		return nullptr;
-	}
-};
 
 struct ButtonStateTextures {
 	int normal;

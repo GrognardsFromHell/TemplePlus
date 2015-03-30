@@ -72,6 +72,9 @@ protected:
 
 void InitLogging()
 {
+
+	spdlog::set_level(spdlog::level::debug);
+
 	try {
 		// Always log to a file
 		DeleteFile(L"TemplePlus.log");
@@ -80,7 +83,7 @@ void InitLogging()
 		logger = spdlog::create("core", {fileSink, debugSink});
 	}
 	catch (const spdlog::spdlog_ex &e) {
-		string msg = format("Unable to initialize the logging subsystem:\n{}", e.what());
+		auto msg = format("Unable to initialize the logging subsystem:\n{}", e.what());
 		MessageBoxA(NULL, msg.c_str(), "Logging Error", MB_OK | MB_ICONERROR);
 	}
 

@@ -116,7 +116,7 @@ extern Ui ui;
 */
 class UiLoader {
 public:
-	UiLoader(const GameSystemConf &conf);
+	explicit UiLoader(const GameSystemConf &conf);
 	~UiLoader();
 };
 
