@@ -60,7 +60,6 @@ Container for ToEE functions related to video
 */
 struct VideoFuncs : AddressTable {
 	bool(__fastcall *TigDirect3dInit)(TigConfig* settings) = nullptr;
-	bool (__cdecl *PresentFrame)() = nullptr;
 	void (__cdecl *SetVideoMode)(int adapter, int nWidth, int nHeight, int bpp, int refresh, int flags);
 	void (__cdecl *CleanUpBuffers)();
 	void (__cdecl *ReadInitialState)();
@@ -108,7 +107,6 @@ struct VideoFuncs : AddressTable {
 
 	VideoFuncs() {
 		rebase(TigDirect3dInit, 0x101DAFB0);
-		rebase(PresentFrame, 0x101DCB80);
 		rebase(SetVideoMode, 0x101DC870);
 		rebase(CleanUpBuffers, 0x101D8640);
 		rebase(ReadInitialState, 0x101F06F0);
@@ -186,6 +184,25 @@ extern GlobalBool<0x10D250EC> drawFps;
 extern GlobalStruct<tig_text_style, 0x10D24DB0> drawFpsTextStyle;
 extern GlobalStruct<VideoData, 0x11E74580> video;
 extern VideoFuncs videoFuncs;
+
+typedef chrono::high_resolution_clock graphics_clock;
+
+class Graphics {
+public:
+	Graphics();
+
+	bool BeginFrame();
+	bool Present();	
+
+	void UpdateScreenSize(int w, int h);
+private:
+	void RenderGFade();
+
+	D3DVECTOR mScreenCorners[4];
+	int mFrameDepth = 0;
+	chrono::time_point<graphics_clock> mLastFrameStart = graphics_clock::now();
+};
+extern Graphics graphics;
 
 void ResizeBuffers(int width, int height);
 void hook_graphics();

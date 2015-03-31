@@ -33,6 +33,12 @@ struct RebuildBufferInfo {
 struct GameSystemFuncs : AddressTable {
 
 	void NewInit(const GameSystemConf &conf);
+
+	/*
+		Called during the main loop.
+	*/
+	void AdvanceTime();
+
 	bool (__cdecl *Init)(GameSystemConf *conf);
 	bool (__cdecl *LoadModule)(const char *name);
 	void (__cdecl *UnloadModule)();

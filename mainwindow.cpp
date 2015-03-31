@@ -219,7 +219,7 @@ static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARA
 		break;
 	case WM_CLOSE:
 		tigMsg.createdMs = timeGetTime();
-		tigMsg.type = TigMsgType::TMT_UNK3;
+		tigMsg.type = TigMsgType::EXIT;
 		tigMsg.arg1 = 1;
 		msgFuncs.Enqueue(&tigMsg);
 		return 0;

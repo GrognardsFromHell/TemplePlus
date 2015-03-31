@@ -19,6 +19,8 @@
 #include <map>
 #include <set>
 
+Graphics graphics;
+
 GlobalBool<0x10D250EC> drawFps;
 GlobalStruct<tig_text_style, 0x10D24DB0> drawFpsTextStyle;
 VideoFuncs videoFuncs;
@@ -287,6 +289,8 @@ void ResizeBuffers(int width, int height) {
 
 	videoFuncs.GameFreeVideoBuffers();
 	videoFuncs.GameCreateVideoBuffers();
+
+	graphics.UpdateScreenSize(width, height);
 
 	temple_set<0x10D24E14>(width);
 
@@ -592,20 +596,9 @@ int __cdecl HookedSetVideoMode(int adapter, int nWidth, int nHeight, int bpp, in
 		buffers_freed = 0;
 		if ( set_video_mode_callback )
 		set_video_mode_callback();
-		v8 = (long double)current_width;
-		LODWORD(screen_rect[0].x) = 0;
-		LODWORD(screen_rect[0].y) = 0;
-		LODWORD(screen_rect[0].z) = 0;
-		screen_rect[1].x = v8;
-		LODWORD(screen_rect[1].y) = 0;
-		screen_rect[2].x = v8;
-		LODWORD(screen_rect[1].z) = 0;
-		v9 = (long double)current_height;
-		LODWORD(screen_rect[2].z) = 0;
-		LODWORD(screen_rect[3].x) = 0;
-		LODWORD(screen_rect[3].z) = 0;
-		screen_rect[2].y = v9;
-		screen_rect[3].y = v9;
+
+		NOTE: screen rect is now updated belo
+
 	}*/
 
 	return 0;
@@ -753,45 +746,6 @@ void GetSystemMemory(int* totalMem, int* availableMem) {
 	*availableMem = min<SIZE_T>(1024 * 1024 * 1024, status.dwAvailPhys);
 }
 
-bool __cdecl HookedPresentFrame() {
-	static bool dumpedPacketStructs = true;
-
-	/*void(__cdecl*ShowConsole)() = (void(__cdecl*)()) temple_address(0x101DF7C0);
-	ShowConsole();*/
-
-	if (!dumpedPacketStructs) {
-		for (const auto& node : shaderRegistry) {
-			logger->error("Registered shader: {}", node.data->name);
-		}
-
-		auto defaultShader = shaderRegistry.get(0);
-		if (defaultShader) {
-			logger->error("Found default shader!");
-		} else {
-			logger->info("Did not find default shader!");
-		}
-
-		logger->error("=================================================================================================");
-		auto listEntry = *idxTablesList.ptr();
-		while (listEntry) {
-			logger->info("Index Table allocated @ {}:{}", listEntry->sourceFile, listEntry->lineNumber);
-
-			auto table = listEntry->table;
-			logger->info("   Buckets: {} Item Count: {} Item Size: {} Address: {:x}",
-				table->bucketCount, table->itemCount, table->itemSize, reinterpret_cast<uint32_t>(table));
-
-			listEntry = listEntry->next;
-		}
-	}
-
-	// tig_font_extents extents;
-	// extents.x = 100;
-	// extents.y = 100;
-	// tigFont.Draw("Hello World!\nHow are you today?", &extents, drawFpsTextStyle);
-
-	return videoFuncs.PresentFrame();
-}
-
 // They keycode parameter can be ignored
 void __cdecl TakeScreenshot(int) {
 
@@ -830,6 +784,22 @@ void __cdecl TakeScreenshot(int) {
 
 }
 
+// Delegate to the new present frame
+static int HookedPresentFrame() {
+	if (!graphics.Present()) {
+		return 1;
+	}
+	return 0;
+}
+
+// Delegate to the new begin frame
+static int HookedBeginFrame() {
+	if (!graphics.BeginFrame()) {
+		return 1;
+	}
+	return 0;
+}
+
 void hook_graphics() {
 	/*
 		These assertions are based on mallocs or memsets in the code that allow us to deduce the original struct
@@ -842,7 +812,8 @@ void hook_graphics() {
 	videoFuncs.startupFlags = SF_WINDOW;
 
 	// Hook into present frame to do after-frame stuff
-	MH_CreateHook(videoFuncs.PresentFrame, HookedPresentFrame, reinterpret_cast<LPVOID*>(&videoFuncs.PresentFrame));
+	MH_CreateHook(temple_address(0x101DCB80), HookedPresentFrame, nullptr);
+	MH_CreateHook(temple_address(0x101D8870), HookedBeginFrame, nullptr);
 
 	MH_CreateHook(videoFuncs.SetVideoMode, HookedSetVideoMode, reinterpret_cast<LPVOID*>(&videoFuncs.SetVideoMode));
 	MH_CreateHook(videoFuncs.CleanUpBuffers, HookedCleanUpBuffers, reinterpret_cast<LPVOID*>(&videoFuncs.CleanUpBuffers));
@@ -854,4 +825,153 @@ void hook_graphics() {
 	MH_CreateHook(temple_address<0x101DBD80>(), TakeScreenshot, nullptr);
 
 	hook_movies();
+}
+
+static struct ExternalGraphicsFuncs : AddressTable {
+
+	/*
+		Advances the clock used by the general shader to animate textures and such.
+	*/
+	void (__cdecl *AdvanceShaderClock)(float timeInMs);
+
+	/*
+		Frees texture memory if more than the memory budget is allocated.
+	*/
+	void (__cdecl *FreeTextureMemory)();
+
+	/*
+		Renders a 2d quad on screen.
+	*/
+	int(__cdecl *RenderTexturedQuad)(D3DVECTOR *vertices, float *u, float *v, int textureId, D3DCOLOR color);
+
+	/*
+		Sadly no idea what this does. Looks like some indexbuffer rotating cache?
+	*/
+	void (__cdecl *sub_101EF8B0)(void);
+
+	// Is the full-screen overlay for fading out/in enabled?
+	bool *gfadeEnable;
+	// If it's enabled, what color does it have?
+	D3DCOLOR *gfadeColor;
+
+	ExternalGraphicsFuncs() {
+		rebase(AdvanceShaderClock, 0x101E0A30);
+		rebase(FreeTextureMemory, 0x101EDF00);
+
+		rebase(gfadeEnable, 0x10D25118);
+		rebase(gfadeColor, 0x10D24A28);
+		
+		rebase(RenderTexturedQuad, 0x101d90b0);
+		rebase(sub_101EF8B0, 0x101EF8B0);
+	}
+} externalGraphicsFuncs;
+
+Graphics::Graphics() {
+	memset(mScreenCorners, 0, sizeof(mScreenCorners));
+}
+
+bool Graphics::BeginFrame() {
+	// ToEE supports nested begin/present calls and silently ignored them
+	if (++mFrameDepth > 1) {
+		return true;
+	}
+
+	auto clearColor = D3DCOLOR_ARGB(0, 0, 0, 0);
+
+	auto device = video->d3dDevice->delegate;
+	auto result = device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, clearColor, 1.0f, 0);
+
+	if (handleD3dError("Clear", result) != D3D_OK) {
+		return false;
+	}
+
+	result = device->BeginScene();
+
+	if (handleD3dError("BeginScene", result) != D3D_OK) {
+		return false;
+	}
+
+	// Advance time of shader clock
+	auto now = graphics_clock::now();
+	auto frameTime = chrono::duration_cast<chrono::milliseconds>(now - mLastFrameStart);	
+	externalGraphicsFuncs.AdvanceShaderClock(static_cast<float>(frameTime.count()));
+	
+	return true;
+}
+
+bool Graphics::Present() {
+	if (--mFrameDepth > 0) {
+		return true;
+	}
+
+	externalGraphicsFuncs.FreeTextureMemory();
+
+	/*
+	if ( draw_fps )
+    {
+      if ( Get_Elapsed_System_Time(last_fps_drawn) > 1000 )
+      {
+        v0 = (long double)dword_10D250F0;
+        v1 = v0 / ((long double)Get_Elapsed_System_Time(last_fps_drawn) * 0.001);
+        flt_10D25100 = v1;
+        if ( v1 > flt_10D25104 )
+          flt_10D25104 = flt_10D25100;
+        Get_System_Time_in_msec((uint32_t *)&last_fps_drawn);
+        _snprintf(fps_str_buffer, 0x50u, "FPS: %.2f (%.2fmax)", flt_10D25100, flt_10D25104);
+        dword_10D250F0 = 0;
+        fps_text_metrics.text = fps_str_buffer;
+        fps_text_metrics.height = 0;
+        fps_text_metrics.width = 0;
+        tig_font_measure(&fps_text_style, &fps_text_metrics);
+        fps_text_rect.left = 0;
+        fps_text_rect.top = 0;
+        fps_text_rect.right = fps_text_metrics.width;
+        fps_text_rect.bottom = fps_text_metrics.height;
+      }
+      tig_font_draw(fps_str_buffer, &fps_text_rect, &fps_text_style);
+    }
+	*/
+	RenderGFade();
+
+	auto device = video->d3dDevice->delegate;
+	auto result = device->EndScene();
+	if (handleD3dError("EndScene", result) != D3D_OK) {
+		return false;
+	}
+	
+	if (config.useDirect3d9Ex) {
+		// May use D3DPRESENT_LINEAR_CONTENT to implement gamma?
+		result = device->PresentEx(nullptr, nullptr, nullptr, nullptr, 0);
+		if (handleD3dError("PresentEx", result) != D3D_OK) {
+			return false;
+		}
+	} else {
+		result = device->Present(nullptr, nullptr, nullptr, nullptr);
+		if (handleD3dError("Present", result) != D3D_OK) {
+			return false;
+		}
+	}
+	
+	/*
+    ++dword_10D250F0; <- FPS counter frame count	
+	*/
+	externalGraphicsFuncs.sub_101EF8B0();
+
+	return true;
+}
+
+void Graphics::UpdateScreenSize(int w, int h) {
+	mScreenCorners[1].x = static_cast<float>(w);
+	mScreenCorners[2].x = static_cast<float>(w);
+	mScreenCorners[2].y = static_cast<float>(h);
+	mScreenCorners[3].y = static_cast<float>(h);
+}
+
+void Graphics::RenderGFade() {
+	static float quadU[] = { 0, 1, 1, 0 };
+	static float quadV[] = { 0, 1, 0, 1 };
+
+	if (externalGraphicsFuncs.gfadeEnable) {	
+		externalGraphicsFuncs.RenderTexturedQuad(mScreenCorners, quadU, quadV, 0, *externalGraphicsFuncs.gfadeColor);
+	}
 }

@@ -27,7 +27,7 @@ struct Widget {
 /*
 	Type: 1
 	Size: 660
-	Examples: mm_ui.c:1057
+	Examples: mm_ui->c:1057
 */
 struct WidgetType1 : public Widget {
 	int children[128];
@@ -42,7 +42,7 @@ struct WidgetType1 : public Widget {
 /*
 	Type: 2
 	Size: 188
-	Examples: charmap_ui.c:203, options_ui.c:1342
+	Examples: charmap_ui->c:203, options_ui->c:1342
 */
 struct WidgetType2 : public Widget {
 };
@@ -73,27 +73,6 @@ extern GlobalPrimitive<ActiveWidgetListEntry*, 0x10EF68DC> activeWidgetAllocList
 extern GlobalPrimitive<Widget**, 0x10EF68E0> activeWidgets;
 extern GlobalPrimitive<int, 0x10EF68D8> activeWidgetCount;
 
-
-typedef int(__cdecl *UiSystemInit)(const GameSystemConf *conf);
-typedef void(__cdecl *UiSystemReset)();
-typedef bool(__cdecl *UiSystemLoadModule)();
-typedef void(__cdecl *UiSystemUnloadModule)();
-typedef void(__cdecl *UiSystemShutdown)();
-typedef bool(__cdecl *UiSystemSaveGame)(void *tioFile);
-typedef bool(__cdecl *UiSystemLoadGame)(void *sth);
-
-struct UiSystemSpec {
-	const char *name;
-	UiSystemInit init;
-	UiSystemReset reset;
-	UiSystemLoadModule loadModule;
-	UiSystemUnloadModule unloadModule;
-	UiSystemShutdown shutdown;
-	UiSystemSaveGame savegame;
-	UiSystemLoadGame loadgame;
-	uint32_t field_20;
-};
-
 struct ImgFile : public TempleAlloc {
 	int tilesX;
 	int tilesY;
@@ -121,31 +100,31 @@ enum class UiGenericAsset : uint32_t {
 	GenericDialogueCheck
 };
 
-struct UiFuncs : AddressTable {
+class Ui {
+public:
+	bool GetAsset(UiAssetType assetType, UiGenericAsset assetIndex, int &textureIdOut);
 
-	bool (__cdecl *Init)(const GameSystemConf *conf);
-	bool (__cdecl *LoadModule)();
-	void (__cdecl *UnloadModule)();
-	void (__cdecl *Shutdown)();
+	/*
+		Loads a .img file.
+	*/
+	ImgFile* LoadImg(const char *filename);
+};
+extern Ui ui;
 
-	ImgFile *(__cdecl *LoadImg)(const char *filename);
-
-	bool GetAsset(UiAssetType assetType, UiGenericAsset assetIndex, int *textureIdOut) {
-		return _GetAsset(assetType, (uint32_t)assetIndex, textureIdOut, 0) == 0;
-	}
-
-	UiFuncs() {
-		rebase(Init, 0x101156F0);
-		rebase(LoadModule, 0x10115790);
-		rebase(LoadImg, 0x101E8320);
-		rebase(UnloadModule, 0x101152C0);
-		rebase(Shutdown, 0x10115230);
-		rebase(_GetAsset, 0x1004A360);
-	}
-
-private:
-	int(__cdecl *_GetAsset)(UiAssetType assetType, uint32_t assetIndex, int *textureIdOut, int offset);
-
+/*
+	Utility class to load and initialize the UI system using RAII.
+*/
+class UiLoader {
+public:
+	explicit UiLoader(const GameSystemConf &conf);
+	~UiLoader();
 };
 
-extern UiFuncs uiFuncs;
+/*
+	Utility class to load and unload the module in the UI system using RAII.
+*/
+class UiModuleLoader {
+public:
+	explicit UiModuleLoader(const UiLoader &ui);
+	~UiModuleLoader();
+};

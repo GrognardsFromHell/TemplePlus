@@ -49,3 +49,9 @@ public:
 		GameSystemHooks::AddModuleLoadHook(&dumpObjectTables);
 	}
 } objTableDump;
+
+Objects objects;
+
+Objects::Objects() {
+	rebase(_GetInternalFieldInt32, 0x1009E1D0);
+}

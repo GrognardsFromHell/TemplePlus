@@ -25,6 +25,7 @@ typedef uint32_t _key;
 
 # pragma region Standard Structs
 
+#pragma pack(push, 1)
 struct ObjectId {
 	uint16_t subtype;
 	uint16_t something;
@@ -37,7 +38,7 @@ struct locXY{
 	uint32_t locy;
 };
 
-struct Loc_And_Offsets{
+struct Loc_And_Offsets {
 	locXY location;
 	float off_x;
 	float off_y;
@@ -70,6 +71,7 @@ struct JumpPointPacket{
 	uint32_t field_C;
 	locXY location;
 };
+#pragma pack(pop)
 
 #pragma endregion
 
@@ -177,6 +179,12 @@ struct TempleFuncs : AddressTable {
 		return result != 0;
 	}
 
+	void (__cdecl *TurnProcessing)(objHndl obj);
+
+	/*
+		Generates a random integer using the configured random number generator.
+	*/
+	int (__cdecl *RandomIntRange)(int from, int to);
 
 
 	uint32_t ItemWorthFromEnhancements(uint32_t n) {
@@ -297,6 +305,8 @@ struct TempleFuncs : AddressTable {
 		rebase(_ItemWorthFromEnhancements, 0x101509C0);
 		rebase(ItemCreationPrereqSthg_sub_101525B0, 0x101525B0);
 
+		rebase(TurnProcessing, 0x100634E0);
+		rebase(RandomIntRange, 0x10038DF0);
 
 		rebase(temple_snprintf, 0x10254680);
 		rebase(FontDrawSthg_sub_101F87C0, 0x101F87C0); // sthg with font drawing
@@ -310,6 +320,51 @@ private:
 
 	// usercall... eax has sthg to do with Magic Arms and Armor crafting
 	bool(__cdecl *_ItemWorthFromEnhancements)();
+};
+
+enum Skills {
+	skill_appraise = 0,
+	skill_bluff,
+	skill_concentration,
+	skill_diplomacy,
+	skill_disable_device,
+	skill_gather_information,
+	skill_heal,
+	skill_hide,
+	skill_intimidate,
+	skill_listen,
+	skill_move_silently,
+	skill_open_lock,
+	skill_pick_pocket,
+	skill_search,
+	skill_sense_motive,
+	skill_spellcraft,
+	skill_spot,
+	skill_use_magic_device,
+	skill_tumble,
+	skill_wilderness_lore,
+	skill_perform,
+	skill_alchemy,
+	skill_balance,
+	skill_climb,
+	skill_craft,
+	skill_decipher_script,
+	skill_disguise,
+	skill_escape_artist,
+	skill_forgery,
+	skill_handle_animal,
+	skill_innuendo,
+	skill_intuit_direction,
+	skill_jump,
+	skill_knowledge_arcana,
+	skill_knowledge_religion,
+	skill_knowledge_nature,
+	skill_knowledge_all,
+	skill_profession,
+	skill_read_lips,
+	skill_ride,
+	skill_swim,
+	skill_use_rope
 };
 
 extern TempleFuncs templeFuncs;
