@@ -248,7 +248,7 @@ static PyObject * pyObjHandleType_PC_Add(TemplePyObjHandle* obj, PyObject * pyTu
 
 
 static PyObject * pyObjHandleType_ObjFeatAdd(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	int nFeatCode;
+	feat_enums nFeatCode;
 	if (!PyArg_ParseTuple(pyTupleIn, "i", &nFeatCode)) {
 		return nullptr;
 	};

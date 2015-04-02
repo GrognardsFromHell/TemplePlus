@@ -1,7 +1,7 @@
 #pragma once
 #include "stdafx.h"
 
-enum class ItemCreationType : uint32_t {
+enum ItemCreationType : uint32_t {
 	Alchemy = 0,
 	Potion,
 	Scroll,

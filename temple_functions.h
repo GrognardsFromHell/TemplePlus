@@ -6,6 +6,9 @@
 #include "dependencies/python-2.2/Python.h"
 #include "temple_enums.h"
 #include "spell.h"
+//#include "obj.h"
+//#include "feat.h"
+//#include "d20.h"
 
 // Contains the function definitions for stuff found in temple.dll that we may want to call or override.
 
@@ -20,7 +23,7 @@ typedef uint32_t _fieldSubIdx;
 typedef uint32_t _mapNum;
 typedef uint32_t _jmpPntID;
 typedef uint32_t _standPointType;
-typedef uint32_t _featCode;
+// typedef uint32_t _featCode; // replaced by feat_enums
 typedef uint32_t _key;
 
 # pragma region Standard Structs
@@ -136,8 +139,10 @@ struct TempleFuncs : AddressTable {
 	objHndl(__cdecl *ObjGetItemAtInventoryLocation)(objHndl, uint32_t nIdx);
 	objHndl (__cdecl *ObjFindMatchingStackableItem)(objHndl objHndReceiver, objHndl objHndItem); // TODO: rewrite so it doesn't stack items with different descriptions and/or caster levels, so potions/scrolls of different caster levels don't stack
 
-
-	uint32_t(__cdecl *ObjStatGet)(objHndl, uint32_t obj_stat);
+	
+	int32_t(__cdecl *ObjStatBaseGet)(objHndl, uint32_t obj_stat); // can return single precision floating point too (e.g. movement speed)
+	int32_t(__cdecl *ObjStatBaseDispatch)(objHndl, uint32_t obj_stat, void *); // Dispatcher Type 0x42; defaults to ObjStatBaseGet if no Dispatcher found
+	int32_t(__cdecl *ObjStatLevelGet)(objHndl, uint32_t obj_stat);
 
 	bool(__cdecl *StandPointPacketGet)(_jmpPntID jmpPntID, char * mapNameOut, size_t, _mapNum * mapNumOut, locXY * locXYOut);
 	uint32_t(__cdecl *ObjStandpointGet)(objHndl, _standPointType, StandPoint *);
@@ -147,12 +152,16 @@ struct TempleFuncs : AddressTable {
 	uint32_t(__cdecl *ObjPCHasFactionFromReputation)(objHndl, uint32_t nFaction);
 	uint32_t(__cdecl *ObjFactionAdd)(objHndl, uint32_t nFaction);
 
+	uint32_t (__cdecl *ObjGetBABAfterLevelling)(objHndl objHnd, Stat classBeingLevelledUp);
 	uint32_t(__cdecl *XPReqForLevel)(uint32_t level);
 	uint32_t(__cdecl *ObjXPGainProcess)(objHndl, uint32_t nXPGainRaw);
 
 	uint32_t(__cdecl *sub_10152280)(objHndl, objHndl);
 
-	uint32_t(__cdecl *ObjFeatAdd)(objHndl, _featCode);
+
+
+	uint32_t(__cdecl *ObjFeatAdd)(objHndl, feat_enums);
+	
 
 	//PyObject* (*PyObjFromObjHnd)();
 
@@ -163,7 +172,7 @@ struct TempleFuncs : AddressTable {
 
 
 	uint32_t DoesTypeSupportField(uint32_t objType, _fieldIdx objField) {
-		int result;
+		uint32_t result;
 		__asm {
 			push esi;
 			push ecx;
@@ -275,18 +284,22 @@ struct TempleFuncs : AddressTable {
 		rebase(ObjGetItemAtInventoryLocation, 0x100651B0);
 		rebase(ObjFindMatchingStackableItem, 0x10067DF0);
 
-		rebase(ObjStatGet, 0x10074800);
-
+		rebase(ObjStatBaseGet, 0x10074CF0);
+		rebase(ObjStatBaseDispatch, 0x1004E810);
+		rebase(ObjStatLevelGet, 0x10074800);
+		
 
 		rebase(ObjFactionHas, 0x1007E430);
 		rebase(ObjFactionAdd, 0x1007E480);
 
+		rebase(ObjGetBABAfterLevelling, 0x100749B0);
 		rebase(XPReqForLevel, 0x100802E0);
 		rebase(ObjXPGainProcess, 0x100B5480);
 
 		rebase(sub_10152280, 0x10152280);
 		rebase(CraftMagicArmsAndArmorSthg, 0x10150B20);
 
+		rebase(_FeatSthg_sub_1007C4F0, 0x1007C4F0);
 		rebase(ObjFeatAdd, 0x1007CF30);
 
 
@@ -317,6 +330,8 @@ private:
 	// usercall... eax has field id, ecx has type
 	bool(__cdecl *_DoesObjectFieldExist)();
 	
+
+	uint32_t(__cdecl *_FeatSthg_sub_1007C4F0)(); // (objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen); // are the args necessary? I don't think so!
 
 	// usercall... eax has sthg to do with Magic Arms and Armor crafting
 	bool(__cdecl *_ItemWorthFromEnhancements)();

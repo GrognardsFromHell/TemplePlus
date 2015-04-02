@@ -59,7 +59,7 @@ int32_t CreateItemResourceCheck(objHndl ObjHnd, objHndl ObjHndItem){
 	int32_t * globInsuffFunds = craftInsufficientFunds.ptr();
 	int32_t *globSkillReqNotMet = craftSkillReqNotMet.ptr();
 	int32_t *globB0 = dword_10BEE3B0.ptr();
-	uint32_t crafterLevel = templeFuncs.ObjStatGet(ObjHnd, stat_level);
+	uint32_t crafterLevel = templeFuncs.ObjStatLevelGet(ObjHnd, stat_level);
 	uint32_t minXPForCurrentLevel = templeFuncs.XPReqForLevel(crafterLevel); 
 	uint32_t crafterXP = templeFuncs.Obj_Get_Field_32bit(ObjHnd, obj_f_critter_experience);
 	uint32_t surplusXP = crafterXP - minXPForCurrentLevel;
@@ -150,7 +150,7 @@ void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCra
 
 	// Current code - change this at will...
 	for (int n = 0; n < numItemSpells; n++){
-		SpellStoredData spellData;
+		SpellStoreData spellData;
 		templeFuncs.Obj_Get_IdxField_256bit(objHndItem, obj_f_item_spell_idx, n, &spellData);
 
 		// get data from caster - make this optional!
@@ -331,7 +331,7 @@ uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t slotLevelN
 	// loop thru the item's spells (can be more than one in principle, like Keoghthem's Ointment)
 
 	for (uint32_t n = 0; n < numItemSpells; n++){
-		SpellStoredData spellData;
+		SpellStoreData spellData;
 		templeFuncs.Obj_Get_IdxField_256bit(objHndItem, obj_f_item_spell_idx, n, &spellData);
 		if (spellData.spellLevel > itemSlotLevelBase){
 			itemSlotLevelBase = spellData.spellLevel;

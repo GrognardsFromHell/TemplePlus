@@ -9,7 +9,6 @@
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="temple_functions.cpp" />
     <ClCompile Include="mainwindow.cpp" />
-    <ClCompile Include="obj.cpp" />
     <ClCompile Include="debugMessageToggles.cpp" />
     <ClCompile Include="attackrollcpp.cpp">
       <Filter>Mods and Fixes</Filter>
@@ -133,6 +132,15 @@
     </ClCompile>
     <ClCompile Include="pathfinding.cpp" />
     <ClCompile Include="mainloop.cpp" />
+    <ClCompile Include="feat.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="d20.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="obj.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -142,7 +150,6 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="temple_functions.h" />
     <ClInclude Include="mainwindow.h" />
-    <ClInclude Include="obj.h" />
     <ClInclude Include="temple_enums.h" />
     <ClInclude Include="testhelper.h" />
     <ClInclude Include="aas.h" />
@@ -252,9 +259,20 @@
     </ClInclude>
     <ClInclude Include="pathfinding.h" />
     <ClInclude Include="mainloop.h" />
-    <ClInclude Include="spell.h" />
     <ClInclude Include="ui_item_creation.h">
       <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="feat.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="d20.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="spell.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="obj.h">
+      <Filter>Mods and Fixes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,7 +1,7 @@
 
 #pragma once
 
-enum feat_enums
+enum feat_enums : uint32_t
 {
 	FEAT_ACROBATIC = 0x0,
 	FEAT_AGILE = 0x1,
@@ -653,6 +653,23 @@ enum feat_enums
 	FEAT_RANGER_MANYSHOT = 0x287,
 };
 
+enum feat_requirement_codes : int32_t
+{
+	featReqCodeTerminator = -1,
+	featReqCodeMinCasterLevel = -2,
+	featReqCodeTurnUndeadRelated = -3,
+	featReqCodeEvasionRelated = -5,
+	featReqCodeFastMovement = -6,
+	featReqCodeUncannyDodgeRelated = -7,
+	featReqCodeMinArcaneCasterLevel = -8,
+	featReqCodeAnimalCompanion = -9
+};
+
+enum featPropertyEnums : uint32_t
+{
+	featPropRogueFeat = 0x40000
+};
+
 enum ObjectType : uint32_t {
 	obj_t_portal = 0,
 	obj_t_container = 1,
@@ -673,7 +690,7 @@ enum ObjectType : uint32_t {
 	obj_t_bag = 16
 };
 
-enum obj_f
+enum obj_f : uint32_t
 {
 
 	obj_f_begin = 0,
@@ -1128,16 +1145,33 @@ enum obj_f
 
 };
 
-enum _standPointType_enum{
+enum _standPointType_enum : uint32_t {
 	STANDPOINT_DAY = 0,
 	STANDPOINT_NIGHT = 1,
 	STANDPOINT_SCOUT = 2
 };
 
+enum Alignment : uint32_t
+{
+	ALIGNMENT_NEUTRAL = 0,
+	ALIGNMENT_LAWFUL = 1,
+	ALIGNMENT_CHAOTIC = 2,
+	ALIGNMENT_GOOD = 4,
+	ALIGNMENT_EVIL = 8,
+
+	ALIGNMENT_TRUE_NEUTRAL = 0,
+	ALIGNMENT_LAWFUL_NEUTRAL = 1,
+	ALIGNMENT_CHAOTIC_NEUTRAL = 2,
+	ALIGNMENT_NEUTRAL_GOOD = 4,
+	ALIGNMENT_LAWFUL_GOOD = 5,
+	ALIGNMENT_CHAOTIC_GOOD = 6,
+	ALIGNMENT_NEUTRAL_EVIL = 8,
+	ALIGNMENT_LAWFUL_EVIL = 9,
+	ALIGNMENT_CHAOTIC_EVIL = 10
+};
 
 
-
-enum Stat
+enum Stat : uint32_t
 {
 	stat_strength = 0x0,
 	stat_dexterity = 0x1,
@@ -1220,7 +1254,7 @@ enum Stat
 };
 
 
-enum D20Query
+enum D20Query : uint32_t
 {
 	Q_Helpless = 0x0,
 	Q_SneakAttack = 0x1,
@@ -1339,7 +1373,7 @@ enum D20Query
 };
 
 
-enum D20Signal
+enum D20Signal : uint32_t
 {
 	S_HP_Changed = 0x0,
 	S_HealSkill = 0x1,
@@ -1404,7 +1438,7 @@ enum D20Signal
 ;
 
 
-enum D20DispatcherKey
+enum D20DispatcherKey : uint32_t
 {
 	DK_NONE = 0x0,
 	DK_SIG_HP_Changed = 0x93,

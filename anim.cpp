@@ -855,7 +855,7 @@ public:
 
 static PyObject* animDump(PyObject* ignore, PyObject* args) {
 
-	for (int i = 0; i < templeFuncs.GroupPCsLen(); i++) {
+	for (uint32_t i = 0; i < templeFuncs.GroupPCsLen(); i++) {
 		objHndl objHndPC = templeFuncs.GroupPCsGetMemberN(i);
 		if (!templeFuncs.IsObjDeadNullDestroyed(objHndPC)) {
 			animAddresses.PushGoalDying(objHndPC, 1);

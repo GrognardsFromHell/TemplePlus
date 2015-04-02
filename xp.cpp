@@ -123,7 +123,7 @@ void GiveXPAwards(){
 		if (templeFuncs.DispatcherD20Query(objHnd, DK_QUE_ExperienceExempt)) { continue; };
 		if (templeFuncs.ObjIsAIFollower(objHnd)) { continue; };
 
-		int level = templeFuncs.ObjStatGet(objHnd, stat_level);
+		int level = templeFuncs.ObjStatLevelGet(objHnd, stat_level);
 		if (level <= 0) { continue; };
 
 		int xpGainRaw = 0; // raw means it's prior to applying multiclass penalties, which  is Someone Else's Problem :P

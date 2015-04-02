@@ -91,6 +91,33 @@ void TempleFix::redirectCall(uint32_t offset, void* redirectTo) {
 	writeCall(offset, redirectTo);
 }
 
+
+void TempleFix::redirectJump(uint32_t offset, void* redirectTo) {
+
+	// Read what's there...
+	auto realAddress = temple_address(offset);
+	hde32s oldInstruction;
+	hde32_disasm(realAddress, &oldInstruction);
+
+	uint32_t oldCallTo;
+
+	switch (oldInstruction.opcode) {
+		// relative call opcode
+	case 0xE9:
+		assert(oldInstruction.len == 5);
+		oldCallTo = offset + oldInstruction.len + static_cast<int32_t>(oldInstruction.imm.imm32);
+		break;
+	default:
+		logger->error("Unsupported opcode for replacing a jump: {:x}", oldInstruction.opcode);
+		break;
+	}
+
+	logger->trace("Replacing old jump to 0x{:x}", oldCallTo);
+
+	writeJump(offset, redirectTo);
+}
+
+
 void TempleFix::writeCall(uint32_t offset, void* redirectTo) {
 	CALL_REL call = {
 		0xE8,                   // E8 xxxxxxxx: CALL +5+xxxxxxxx
@@ -102,6 +129,20 @@ void TempleFix::writeCall(uint32_t offset, void* redirectTo) {
 	call.operand = targetAddress - startOfNextInstruction;
 	write(offset, &call, sizeof(call));	
 }
+
+
+void TempleFix::writeJump(uint32_t offset, void* redirectTo) {
+	CALL_REL call = {
+		0xE9,                   // E9 xxxxxxxx: JMP +5+xxxxxxxx
+		0x00000000              // Relative destination address
+	};
+
+	auto startOfNextInstruction = reinterpret_cast<int32_t>(temple_address(offset + 5));
+	auto targetAddress = reinterpret_cast<int32_t>(redirectTo);
+	call.operand = targetAddress - startOfNextInstruction;
+	write(offset, &call, sizeof(call));
+}
+
 
 void TempleFixes::apply() {
 	logger->info("Applying {} DLL fixes", fixes().size());

@@ -25,6 +25,7 @@
     <ClCompile Include="animalcompanion.cpp" />
     <ClCompile Include="attackrollcpp.cpp" />
     <ClCompile Include="bonusspells.cpp" />
+    <ClCompile Include="d20.cpp" />
     <ClCompile Include="d3d8to9\d3d8to9.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
@@ -66,6 +67,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="feat.cpp" />
     <ClCompile Include="fixes.cpp" />
     <ClCompile Include="folderutils.cpp" />
     <ClCompile Include="gamesystems.cpp" />
@@ -151,6 +153,7 @@
     <ClInclude Include="aas.h" />
     <ClInclude Include="addresses.h" />
     <ClInclude Include="anim.h" />
+    <ClInclude Include="d20.h" />
     <ClInclude Include="d3d8to9\d3d8to9.h" />
     <ClInclude Include="d3d8to9\d3d8to9_convert.h" />
     <ClInclude Include="d3d8to9\d3d8to9_device.h" />
@@ -172,6 +175,7 @@
     <ClInclude Include="dependencies\spdlog\logger.h" />
     <ClInclude Include="dependencies\spdlog\spdlog.h" />
     <ClInclude Include="exception.h" />
+    <ClInclude Include="feat.h" />
     <ClInclude Include="folderutils.h" />
     <ClInclude Include="gamesystems.h" />
     <ClInclude Include="game_config.h" />
