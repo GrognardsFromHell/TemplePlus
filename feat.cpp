@@ -387,23 +387,7 @@ uint32_t RogueSpecialFeat(feat_enums featIdx, uint32_t newLevel)
 	}
 	return 0;
 };
-/*
-11EB7F00    8B4424 08       MOV EAX,DWORD PTR SS:[ESP+8]
-11EB7F04    3D 89020000     CMP EAX,289
-11EB7F09    7F 19           JG SHORT temple.11EB7F24
-11EB7F0B    3E:8B4424 0C    MOV EAX,DWORD PTR DS:[ESP+C]
-11EB7F10    83F8 0A         CMP EAX,0A
-11EB7F13    74 12           JE SHORT temple.11EB7F27
-11EB7F15    83F8 0D         CMP EAX,0D
-11EB7F18    74 0D           JE SHORT temple.11EB7F27
-11EB7F1A    83F8 10         CMP EAX,10
-11EB7F1D    74 08           JE SHORT temple.11EB7F27
-11EB7F1F    83F8 13         CMP EAX,13
-11EB7F22    74 03           JE SHORT temple.11EB7F27
-11EB7F24    33C0            XOR EAX,EAX
-11EB7F26    C3              RETN
-11EB7F27    B8 01000000     MOV EAX,1
-11EB7F2C    C3              RETN*/
+
 
 
 uint32_t __declspec(naked) FeatSthg_sub_1007C4F0(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat eax_objStat, uint32_t ebx_n1)

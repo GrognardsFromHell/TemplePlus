@@ -70,6 +70,8 @@
     <ClCompile Include="feat.cpp" />
     <ClCompile Include="fixes.cpp" />
     <ClCompile Include="folderutils.cpp" />
+    <ClCompile Include="gamelib_load.cpp" />
+    <ClCompile Include="gamelib_save.cpp" />
     <ClCompile Include="gamesystems.cpp" />
     <ClCompile Include="generalfixes.cpp" />
     <ClCompile Include="game_config.cpp" />
