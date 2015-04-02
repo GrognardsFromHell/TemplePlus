@@ -14,6 +14,7 @@
 #include "tig_font.h"
 #include "tig_texture.h"
 #include "tig.h"
+#include "ui.h"
 
 GameSystemFuncs gameSystemFuncs;
 
@@ -714,6 +715,36 @@ void GameSystemFuncs::AdvanceTime() {
 
 	// TODO: Insert post advance hook here
 
+}
+
+void GameSystemFuncs::ResizeScreen(int w, int h) {
+
+	gameSystemInitTable.gameSystemConf->width = w;
+	gameSystemInitTable.gameSystemConf->height = h;
+
+	// These do not seem to be read anywhere
+	// dword_1030705C = video_width / 4;
+	// dword_10307170 = video_height / 4;
+
+	auto scratchBufferRectExtended = gameSystemInitTable.scratchBufferRectExtended;
+	scratchBufferRectExtended->y = -256;
+	scratchBufferRectExtended->width = w + 512;
+	scratchBufferRectExtended->x = -256;
+	scratchBufferRectExtended->height = h + 512;
+
+	auto scratchBufferRect = gameSystemInitTable.scratchBufferRect;
+	scratchBufferRect->x = 0;
+	scratchBufferRect->y = 0;
+	scratchBufferRect->width = w;
+	scratchBufferRect->height = h;
+
+	auto windowBufferStuffId = gameSystemInitTable.gameSystemConf->bufferstuffIdx;
+	
+	// I do not think that the scratchbuffer is used in any way
+	// rebuild_scratchbuffer(&resizeargs);
+
+	ui.ResizeScreen(windowBufferStuffId, w, h);
+	
 }
 
 static void registerDataFiles() {

@@ -162,13 +162,6 @@ static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARA
 			video->d3dDevice->delegate->ShowCursor(TRUE);
 		}
 		return TRUE; // This prevents windows from setting the default cursor for us
-	case WM_SIZE:
-	{
-		int width = LOWORD(lparam);
-		int height = HIWORD(lparam);
-		ResizeBuffers(width, height);
-	}
-		break;
 	case WM_LBUTTONDOWN:
 		mouseFuncs.SetButtonState(MouseButton::LEFT, true);
 		break;

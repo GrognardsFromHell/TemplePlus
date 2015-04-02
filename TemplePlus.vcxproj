@@ -83,6 +83,7 @@
     </ClCompile>
     <ClCompile Include="mainloop.cpp" />
     <ClCompile Include="pathfinding.cpp" />
+    <ClCompile Include="portrait_in_mainmenu.cpp" />
     <ClCompile Include="pythonglobal.cpp" />
     <ClCompile Include="testhelper.cpp" />
     <ClCompile Include="tig_loadingscreen.cpp" />
@@ -119,6 +120,7 @@
     <ClCompile Include="spells.cpp" />
     <ClCompile Include="tig_tokenizer.cpp" />
     <ClCompile Include="timeevents.cpp" />
+    <ClCompile Include="ui_char_highresfix.cpp" />
     <ClCompile Include="xp.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

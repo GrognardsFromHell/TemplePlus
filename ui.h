@@ -2,8 +2,15 @@
 #pragma once
 
 #include "addresses.h"
+#include "tig.h"
 
 struct GameSystemConf;
+
+struct UiResizeArgs {
+	int windowBufferStuffId;
+	TigRect rect1;
+	TigRect rect2;
+};
 
 struct Widget {
 	uint32_t type;
@@ -108,6 +115,11 @@ public:
 		Loads a .img file.
 	*/
 	ImgFile* LoadImg(const char *filename);
+	
+	/*
+		Notifies UI of a resized screen.
+	*/
+	void ResizeScreen(int bufferStuffId, int width, int height);
 };
 extern Ui ui;
 

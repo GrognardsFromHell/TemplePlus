@@ -12,6 +12,7 @@
 #include "mainwindow.h"
 #include "ui.h"
 #include "folderutils.h"
+#include "gamesystems.h"
 
 // #include "d3d8/d3d8.h"
 #include "d3d8to9/d3d8to9.h"
@@ -262,7 +263,7 @@ static bool TigResetDirect3D() {
 	videoFuncs.create_partsys_vertex_buffers();
 	videoFuncs.tigMovieInitialized = true;
 	videoFuncs.tig_font_related_init();
-	videoFuncs.matrix_related(videoFuncs.tig_matrices2.ptr());
+	videoFuncs.updateProjMatrices(videoFuncs.tigMatrices2);
 	videoFuncs.buffersFreed = false;
 
 	// This is always the same pointer although it's callback 2 of the GameStartConfig	
@@ -283,9 +284,14 @@ void ResizeBuffers(int width, int height) {
 	auto presentParams = CreatePresentParams();
 	device->ResetEx(&presentParams, nullptr);
 
+	video->width = width;
+	video->height = height;
+	video->halfWidth = video->width * 0.5f;
+	video->halfHeight = video->height * 0.5f;
+
 	video->current_width = width;
 	video->current_height = height;
-	videoFuncs.matrix_related(videoFuncs.tig_matrices2.ptr());
+	videoFuncs.updateProjMatrices(videoFuncs.tigMatrices2);
 
 	videoFuncs.GameFreeVideoBuffers();
 	videoFuncs.GameCreateVideoBuffers();
@@ -297,12 +303,9 @@ void ResizeBuffers(int width, int height) {
 	// Mouse cursor disasppers after resizing
 	mouseFuncs.RefreshCursor();
 
-	videoFuncs.GamelibResizeScreen(video->adapter, 
-		width,
-		height,
-		video->current_bpp,
-		video->current_refresh,
-		videoFuncs.currentFlags);
+	gameSystemFuncs.ResizeScreen(width, height);
+
+	mouseFuncs.SetBounds(width, height);
 }
 
 bool ReadCaps(IDirect3DDevice9Ex* device, uint32_t minTexWidth, uint32_t minTexHeight) {
@@ -568,7 +571,7 @@ int __cdecl HookedSetVideoMode(int adapter, int nWidth, int nHeight, int bpp, in
 	videoFuncs.create_partsys_vertex_buffers();
 	videoFuncs.tigMovieInitialized = true;
 	videoFuncs.tig_font_related_init();
-	videoFuncs.matrix_related(videoFuncs.tig_matrices2.ptr());
+	videoFuncs.updateProjMatrices(videoFuncs.tigMatrices2);
 	videoFuncs.buffersFreed = false;
 
 	// This is always the same pointer although it's callback 2 of the GameStartConfig
@@ -592,7 +595,7 @@ int __cdecl HookedSetVideoMode(int adapter, int nWidth, int nHeight, int bpp, in
 		create_partsys_vertex_buffers();
 		tig_movie_set_initialized();
 		tig_font_related_init();
-		matrix_related(&matrix_related_2);
+		updateProjMatrices(&matrix_related_2);
 		buffers_freed = 0;
 		if ( set_video_mode_callback )
 		set_video_mode_callback();
@@ -891,10 +894,10 @@ bool Graphics::BeginFrame() {
 		return false;
 	}
 
-	// Advance time of shader clock
+	// Advance time of shader clock, used for texture animation
 	auto now = graphics_clock::now();
 	auto frameTime = chrono::duration_cast<chrono::milliseconds>(now - mLastFrameStart);	
-	externalGraphicsFuncs.AdvanceShaderClock(static_cast<float>(frameTime.count()));
+	externalGraphicsFuncs.AdvanceShaderClock(frameTime.count() / 1000.0f);
 	
 	return true;
 }
@@ -953,7 +956,7 @@ bool Graphics::Present() {
 	}
 	
 	/*
-    ++dword_10D250F0; <- FPS counter frame count	
+		++dword_10D250F0; <- FPS counter frame count	
 	*/
 	externalGraphicsFuncs.sub_101EF8B0();
 
