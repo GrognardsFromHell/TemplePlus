@@ -49,7 +49,7 @@ void TempleFix::writeHex(uint32_t offset, const string &hexPattern) {
 
 void *TempleFix::replaceFunction(uint32_t offset, void* replaceWith) {
 	void* original = nullptr;
-	auto target = reinterpret_cast<void*>(offset);
+	auto target = temple_address(offset);
 	
 	auto status = MH_CreateHook(target, replaceWith, &original);
 	if (status != MH_OK) {
