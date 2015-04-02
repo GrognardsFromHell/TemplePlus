@@ -14,6 +14,9 @@ static wstring GetInstallationDir();
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int showCmd)
 {
+	config.Load();
+	config.Save();
+
 	InitLogging();
 
 	HMODULE templeDllHandle = LoadLibraryW(L"temple.dll");
@@ -52,9 +55,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 		MH_Uninitialize();
 
+		config.Save();
+
 		return result;
-	}
-	catch (exception &e) {
+	} catch (exception &e) {
 		string msg = format("Uncaught exception: {}", e.what());
 		MessageBoxA(NULL, msg.c_str(), "Fatal Error", MB_OK | MB_ICONERROR);
 		return 1;

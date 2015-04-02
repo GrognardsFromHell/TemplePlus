@@ -27,7 +27,6 @@ struct TemplePlusConfig
 	bool skipLegal = true;
 	bool useDirect3d9Ex = true;
 	bool windowed = true;
-	bool showConsoleWindow = false;	
 
 	// debug msgs
 	bool featPrereqWarnings = false;
@@ -36,6 +35,9 @@ struct TemplePlusConfig
 	// gameplay
 	double randomEncounterExperienceFactor = 0.7; // an additional factor; e.g. if the normal Experience Multiplier is 0.7 and this is 0.7, overall is 0.49
 	bool NPCsLevelLikePCs = true;
+
+	void Load();
+	void Save();
 };
 
 extern TemplePlusConfig config;

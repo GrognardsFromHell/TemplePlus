@@ -39,6 +39,11 @@ struct GameSystemFuncs : AddressTable {
 	*/
 	void AdvanceTime();
 
+	/*
+		Used to notify game systems about an updated screen size.
+	*/
+	void ResizeScreen(int w, int h);
+
 	bool (__cdecl *Init)(GameSystemConf *conf);
 	bool (__cdecl *LoadModule)(const char *name);
 	void (__cdecl *UnloadModule)();

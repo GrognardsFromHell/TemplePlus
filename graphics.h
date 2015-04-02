@@ -50,9 +50,9 @@ struct TigRenderStates {
 #pragma pack(pop)
 
 struct TigMatrices {
-	D3DMATRIX* matrix1;
-	D3DMATRIX* matrix2;
-	D3DMATRIX* matrix3;
+	float xOffset;
+	float yOffset;
+	float scale;
 };
 
 /*
@@ -65,7 +65,7 @@ struct VideoFuncs : AddressTable {
 	void (__cdecl *ReadInitialState)();
 	void (__cdecl *create_partsys_vertex_buffers)();
 	void (__cdecl *tig_font_related_init)();
-	void (__cdecl *matrix_related)(TigMatrices* matrices);
+	void (__cdecl *updateProjMatrices)(TigMatrices* matrices);
 	void (__cdecl *GamelibResizeScreen)(uint32_t adapter, int width, int height, int bpp, int refresh, int flags);
 
 	// current video format has to be in eax before calling this
@@ -77,7 +77,7 @@ struct VideoFuncs : AddressTable {
 
 	GlobalBool<0x10D25144> buffersFreed;
 	GlobalPrimitive<uint32_t, 0x10D25148> currentFlags;
-	GlobalStruct<TigMatrices, 0x10D24E00> tig_matrices2;
+	TigMatrices *tigMatrices2;
 
 	/*
 	Used to take screenshots (copy front buffer)
@@ -112,11 +112,12 @@ struct VideoFuncs : AddressTable {
 		rebase(ReadInitialState, 0x101F06F0);
 		rebase(create_partsys_vertex_buffers, 0x101E6E20);
 		rebase(tig_font_related_init, 0x101E85C0);
-		rebase(matrix_related, 0x101D8910);
+		rebase(updateProjMatrices, 0x101D8910);
 		rebase(GameCreateVideoBuffers, 0x10001370);
 		rebase(GameFreeVideoBuffers, 0x100013A0);
 		rebase(tig_d3d_init_handleformat, 0x101D6F40);
 		rebase(GamelibResizeScreen, 0x10002370);
+		rebase(tigMatrices2, 0x10D24E00);
 	}
 };
 
@@ -175,9 +176,7 @@ struct VideoData {
 	D3DVECTOR stru_11E75814;
 	D3DVECTOR stru_11E75820;
 	int dword_11E7582C; // this is for alignment only according to IdaPro
-	int dword_11E75830;
-	int dword_11E75834;
-	int dword_11E75838;
+	TigMatrices viewParams;
 };
 
 extern GlobalBool<0x10D250EC> drawFps;

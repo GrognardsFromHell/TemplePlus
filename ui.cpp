@@ -9,12 +9,6 @@ Ui ui;
 /*
 	System spec used to define an UI subsystem (i.e. dialogs and such).
 */
-struct UiResizeArgs {
-	int windowBufferStuffId;
-	TigRect rect1;
-	TigRect rect2;
-};
-
 typedef int (__cdecl *UiSystemInit)(const GameSystemConf& conf);
 typedef void (__cdecl *UiSystemReset)();
 typedef bool (__cdecl *UiSystemLoadModule)();
@@ -108,6 +102,25 @@ ImgFile* Ui::LoadImg(const char* filename) {
 	return uiFuncs.LoadImg(filename);
 }
 
+void Ui::ResizeScreen(int bufferStuffId, int width, int height) {
+	
+	UiResizeArgs args;
+	memset(&args, 0, sizeof(args));
+	args.windowBufferStuffId = bufferStuffId;
+	args.rect1.width = width;
+	args.rect1.height = height;
+	args.rect2.width = width;
+	args.rect2.height = height;
+
+	for (auto i = 0; i < UiSystemsCount; ++i) {
+		auto resizeFunc = uiFuncs.systems[i].resizeScreen;
+		if (resizeFunc) {
+			resizeFunc(args);
+		}
+	}
+
+}
+
 #pragma region Loading and Unloading
 UiLoader::UiLoader(const GameSystemConf& conf) {
 
@@ -137,7 +150,7 @@ UiLoader::~UiLoader() {
 
 	logger->info("Shutting down UI systems...");
 
-	for (auto i = 0; i < UiSystemsCount; ++i) {
+	for (auto i = UiSystemsCount - 1; i >= 0; --i) {
 		auto& system = uiFuncs.systems[i];
 		if (system.shutdown) {
 			logger->debug("   Shutting down '{}'..", system.name);
@@ -178,11 +191,11 @@ UiModuleLoader::~UiModuleLoader() {
 
 	logger->info("Unloading modules for UI systems...");
 
-	for (auto i = 0; i < UiSystemsCount; ++i) {
+	for (auto i = UiSystemsCount - 1; i >= 0; --i) {
 		auto& system = uiFuncs.systems[i];
-		if (system.shutdown) {
+		if (system.unloadModule) {
 			logger->debug("   Unloading module for '{}'..", system.name);
-			system.shutdown();
+			system.unloadModule();
 		}
 	}
 
