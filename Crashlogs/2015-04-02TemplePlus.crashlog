@@ -1,0 +1,558 @@
+[2015-04-02 19:23:21.315] [core] [warning] Temple.dll has been loaded to a different base address than 0x10000000: 2a50000
+[2015-04-02 19:23:21.317] [core] [info] Rebasing 281 addresses
+[2015-04-02 19:23:21.317] [core] [info] Base offset for temple.dll memory is 0x0x2a50000
+[2015-04-02 19:23:21.341] [core] [info] Applying 16 DLL fixes
+[2015-04-02 19:23:21.342] [core] [info] Applying fix Anim Fix
+[2015-04-02 19:23:21.345] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.345] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.345] [core] [info] New state flags 40000034
+[2015-04-02 19:23:21.346] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.346] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.346] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.384] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.384] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.385] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.385] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.385] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.387] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.387] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.387] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.387] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.389] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.389] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.390] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.390] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.390] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.392] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.392] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.392] [core] [info] New state flags 40000034
+[2015-04-02 19:23:21.393] [core] [info] New state flags 40000006
+[2015-04-02 19:23:21.393] [core] [info] New state flags 40000033
+[2015-04-02 19:23:21.393] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.393] [core] [info] New state flags 50000007
+[2015-04-02 19:23:21.394] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.395] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.396] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.396] [core] [info] New state flags 40000034
+[2015-04-02 19:23:21.396] [core] [info] New state flags 40000006
+[2015-04-02 19:23:21.396] [core] [info] New state flags 40000033
+[2015-04-02 19:23:21.397] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.397] [core] [info] New state flags 50000007
+[2015-04-02 19:23:21.397] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.399] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.399] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.400] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.400] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.400] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.400] [core] [info] New state flags 5000000c
+[2015-04-02 19:23:21.400] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.401] [core] [info] New state flags 50000007
+[2015-04-02 19:23:21.401] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.408] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.408] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.408] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.408] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.409] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.409] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.410] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.410] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.411] [core] [info] New state flags 40000034
+[2015-04-02 19:23:21.411] [core] [info] New state flags 40000006
+[2015-04-02 19:23:21.411] [core] [info] New state flags 40000033
+[2015-04-02 19:23:21.411] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.412] [core] [info] New state flags 50000007
+[2015-04-02 19:23:21.412] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.423] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.423] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.423] [core] [info] New state flags 40000034
+[2015-04-02 19:23:21.424] [core] [info] New state flags 40000039
+[2015-04-02 19:23:21.424] [core] [info] New state flags 40000039
+[2015-04-02 19:23:21.424] [core] [info] New state flags 50000007
+[2015-04-02 19:23:21.425] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.426] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.427] [core] [info] New state flags 4000000b
+[2015-04-02 19:23:21.427] [core] [info] New state flags 4000000b
+[2015-04-02 19:23:21.427] [core] [info] New state flags 50000007
+[2015-04-02 19:23:21.427] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.429] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.429] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.429] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.430] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.431] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.432] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.432] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.433] [core] [info] New state flags 7000000e
+[2015-04-02 19:23:21.433] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.433] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.434] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.434] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.434] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.436] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.436] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.436] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.437] [core] [info] New state flags 7000000e
+[2015-04-02 19:23:21.437] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.437] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.438] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.438] [core] [info] New state flags 31000000
+[2015-04-02 19:23:21.438] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.440] [core] [info] New state flags 40000023
+[2015-04-02 19:23:21.440] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.442] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.442] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.442] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.443] [core] [info] New state flags 40000034
+[2015-04-02 19:23:21.443] [core] [info] New state flags 74000014
+[2015-04-02 19:23:21.443] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.444] [core] [info] New state flags 40000049
+[2015-04-02 19:23:21.444] [core] [info] New state flags 50000007
+[2015-04-02 19:23:21.444] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.447] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.448] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.448] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.449] [core] [info] New state flags 74000013
+[2015-04-02 19:23:21.449] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.452] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.452] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.453] [core] [info] New state flags 40000034
+[2015-04-02 19:23:21.453] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.454] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.454] [core] [info] New state flags 40000009
+[2015-04-02 19:23:21.454] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.479] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.479] [core] [info] New state flags 40000009
+[2015-04-02 19:23:21.480] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.480] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.482] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.482] [core] [info] New state flags 70000009
+[2015-04-02 19:23:21.482] [core] [info] New state flags 70000036
+[2015-04-02 19:23:21.483] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.483] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.485] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.485] [core] [info] New state flags 70000005
+[2015-04-02 19:23:21.486] [core] [info] New state flags 40000018
+[2015-04-02 19:23:21.487] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.487] [core] [info] New state flags 40000032
+[2015-04-02 19:23:21.488] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.488] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.489] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.490] [core] [info] New state flags 40000034
+[2015-04-02 19:23:21.490] [core] [info] New state flags 40000016
+[2015-04-02 19:23:21.491] [core] [info] New state flags 40000009
+[2015-04-02 19:23:21.491] [core] [info] New state flags 7000001c
+[2015-04-02 19:23:21.491] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.492] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.493] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.494] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.495] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.495] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.495] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.495] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.496] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.496] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.496] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.497] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.497] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.499] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.499] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.499] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.500] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.500] [core] [info] New state flags 40000048
+[2015-04-02 19:23:21.500] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.500] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.502] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.502] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.503] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.503] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.503] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.518] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.518] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.519] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.519] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.519] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.521] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.522] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.522] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.522] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.522] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.525] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.526] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.526] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.526] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.527] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.527] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.529] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.529] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.531] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.531] [core] [info] New state flags 40000006
+[2015-04-02 19:23:21.531] [core] [info] New state flags 40000006
+[2015-04-02 19:23:21.532] [core] [info] New state flags 40000033
+[2015-04-02 19:23:21.532] [core] [info] New state flags 7000003f
+[2015-04-02 19:23:21.532] [core] [info] New state flags 50000007
+[2015-04-02 19:23:21.533] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.533] [core] [info] New state flags 70000050
+[2015-04-02 19:23:21.533] [core] [info] New state flags 70000051
+[2015-04-02 19:23:21.533] [core] [info] New state flags 70000024
+[2015-04-02 19:23:21.535] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.535] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.536] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.536] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.536] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.536] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.537] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.537] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.537] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.537] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.539] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.539] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.540] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.540] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.540] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.541] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.541] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.543] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.543] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.543] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.544] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.544] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.546] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.546] [core] [info] New state flags 40000009
+[2015-04-02 19:23:21.547] [core] [info] New state flags 40000033
+[2015-04-02 19:23:21.547] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.547] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.548] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.548] [core] [info] New state flags 7000000c
+[2015-04-02 19:23:21.548] [core] [info] New state flags 7000002f
+[2015-04-02 19:23:21.559] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.559] [core] [info] New state flags 40000009
+[2015-04-02 19:23:21.560] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.560] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.561] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.561] [core] [info] New state flags 40000009
+[2015-04-02 19:23:21.562] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.562] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.563] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.564] [core] [info] New state flags 40000008
+[2015-04-02 19:23:21.564] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.564] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.581] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.581] [core] [info] New state flags 40000008
+[2015-04-02 19:23:21.581] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.582] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.583] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.583] [core] [info] New state flags 4000003c
+[2015-04-02 19:23:21.584] [core] [info] New state flags 4000003c
+[2015-04-02 19:23:21.584] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.584] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.586] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.586] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.587] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.587] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.587] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.589] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.589] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.589] [core] [info] New state flags 70000030
+[2015-04-02 19:23:21.590] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.591] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.591] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.591] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.591] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.602] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.602] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.603] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.603] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.603] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.605] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.605] [core] [info] New state flags 40000034
+[2015-04-02 19:23:21.605] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.606] [core] [info] New state flags 40000006
+[2015-04-02 19:23:21.606] [core] [info] New state flags 40000006
+[2015-04-02 19:23:21.606] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.607] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.607] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.608] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.608] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.609] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.610] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.610] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.610] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.611] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.612] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.613] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.613] [core] [info] New state flags 40000034
+[2015-04-02 19:23:21.613] [core] [info] New state flags 40000006
+[2015-04-02 19:23:21.613] [core] [info] New state flags 40000033
+[2015-04-02 19:23:21.614] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.614] [core] [info] New state flags 50000007
+[2015-04-02 19:23:21.614] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.616] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.616] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.616] [core] [info] New state flags 40000034
+[2015-04-02 19:23:21.616] [core] [info] New state flags 40000006
+[2015-04-02 19:23:21.617] [core] [info] New state flags 40000006
+[2015-04-02 19:23:21.617] [core] [info] New state flags 50000007
+[2015-04-02 19:23:21.617] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.619] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.619] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.619] [core] [info] New state flags 40000034
+[2015-04-02 19:23:21.620] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.620] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.620] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.621] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.622] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.623] [core] [info] New state flags 70000031
+[2015-04-02 19:23:21.623] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.623] [core] [info] New state flags 40000034
+[2015-04-02 19:23:21.623] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.624] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.624] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.631] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.631] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.631] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.632] [core] [info] New state flags 5200000c
+[2015-04-02 19:23:21.632] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.633] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.633] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.633] [core] [info] New state flags 5000000f
+[2015-04-02 19:23:21.633] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.633] [core] [info] New state flags 50000007
+[2015-04-02 19:23:21.634] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.635] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.636] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.636] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.636] [core] [info] New state flags 7000003b
+[2015-04-02 19:23:21.636] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.638] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.638] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.638] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.638] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.638] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.640] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.640] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.640] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.641] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.642] [core] [info] New state flags 70000008
+[2015-04-02 19:23:21.642] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.643] [core] [info] New state flags 70000008
+[2015-04-02 19:23:21.644] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.645] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.646] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.646] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.646] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.647] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.647] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.647] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.647] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.648] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.649] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.649] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.650] [core] [info] New state flags 40000034
+[2015-04-02 19:23:21.650] [core] [info] New state flags 40000006
+[2015-04-02 19:23:21.650] [core] [info] New state flags 40000033
+[2015-04-02 19:23:21.650] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.651] [core] [info] New state flags 50000007
+[2015-04-02 19:23:21.651] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.660] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.660] [core] [info] New state flags 40000032
+[2015-04-02 19:23:21.660] [core] [info] New state flags 70000009
+[2015-04-02 19:23:21.661] [core] [info] New state flags 70000036
+[2015-04-02 19:23:21.661] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.661] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.663] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.663] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.663] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.664] [core] [info] New state flags 70000044
+[2015-04-02 19:23:21.664] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.666] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.666] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.667] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.667] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.668] [core] [info] New state flags 70000043
+[2015-04-02 19:23:21.668] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.669] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.670] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.670] [core] [info] New state flags 40000016
+[2015-04-02 19:23:21.671] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.671] [core] [info] New state flags 40000009
+[2015-04-02 19:23:21.671] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.671] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.672] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.672] [core] [info] New state flags 7000001c
+[2015-04-02 19:23:21.672] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.674] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.674] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.674] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.675] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.675] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.675] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.675] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.676] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.676] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.676] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.677] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.678] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.678] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.679] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.679] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.679] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.681] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.681] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.681] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.682] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.699] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.700] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.700] [core] [info] New state flags 40000034
+[2015-04-02 19:23:21.701] [core] [info] New state flags 50000007
+[2015-04-02 19:23:21.701] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.701] [core] [info] New state flags 4000004a
+[2015-04-02 19:23:21.702] [core] [info] New state flags 40000039
+[2015-04-02 19:23:21.704] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.704] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.704] [core] [info] New state flags 38000000
+[2015-04-02 19:23:21.705] [core] [info] New state flags 5200000c
+[2015-04-02 19:23:21.705] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.706] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.706] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.707] [core] [info] New state flags 5000000f
+[2015-04-02 19:23:21.707] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.707] [core] [info] New state flags 50000007
+[2015-04-02 19:23:21.707] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.709] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.709] [core] [info] New state flags 40000009
+[2015-04-02 19:23:21.709] [core] [info] New state flags 40000033
+[2015-04-02 19:23:21.710] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.710] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.710] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.710] [core] [info] New state flags 7000000c
+[2015-04-02 19:23:21.711] [core] [info] New state flags 7000002f
+[2015-04-02 19:23:21.712] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.712] [core] [info] New state flags 40000034
+[2015-04-02 19:23:21.713] [core] [info] New state flags 40000016
+[2015-04-02 19:23:21.713] [core] [info] New state flags 40000009
+[2015-04-02 19:23:21.714] [core] [info] New state flags 7000004d
+[2015-04-02 19:23:21.714] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.714] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.716] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.717] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.717] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.718] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.718] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.718] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.718] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.719] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.719] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.720] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.720] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.721] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.721] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.723] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.723] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.723] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.723] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.724] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.726] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.726] [core] [info] New state flags 40000032
+[2015-04-02 19:23:21.727] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.727] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.729] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.729] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.730] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.730] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.730] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.730] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.731] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.731] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.731] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.733] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.733] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.733] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.734] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.734] [core] [info] New state flags 10000000
+[2015-04-02 19:23:21.734] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.734] [core] [info] New state flags 30000000
+[2015-04-02 19:23:21.734] [core] [info] New state flags 90000000
+[2015-04-02 19:23:21.736] [core] [info] DONE
+[2015-04-02 19:23:21.738] [core] [info] Applying fix Animal Companion For High Levels
+[2015-04-02 19:23:21.738] [core] [info] Applying fix trip bug fix: the game would use the attacker's dex score for the defender's roll
+[2015-04-02 19:23:21.738] [core] [info] Applying fix D20 Function Replacements
+[2015-04-02 19:23:21.739] [core] [error] Unable to hook the function @ 10077850: 7
+[2015-04-02 19:23:21.739] [core] [error] Unable to hook the function @ 10077830: 7
+[2015-04-02 19:23:21.739] [core] [info] Applying fix Debug Message Toggles
+[2015-04-02 19:23:21.740] [core] [info] Applying fix Re-implementation of SpellSlinger's fix for Rogues feats above level 10 in a way that doesn't involve undeclared memory segments
+[2015-04-02 19:23:21.740] [core] [error] Unable to hook the function @ 1007c8f0: 7
+[2015-04-02 19:23:21.740] [core] [error] Unable to hook the function @ 1007b990: 7
+[2015-04-02 19:23:21.740] [core] [error] Unable to hook the function @ 1007bf10: 7
+[2015-04-02 19:23:21.741] [core] [info] Applying fix Gamesystem Hooks
+[2015-04-02 19:23:21.741] [core] [info] Applying fix fixes size_colossal (was misspelled as size_clossal)
+[2015-04-02 19:23:21.741] [core] [info] Applying fix Makes Kukri Proficiency Martial
+[2015-04-02 19:23:21.741] [core] [info] Applying fix Obj Table Dump
+[2015-04-02 19:23:21.742] [core] [info] Applying fix Python Script Extensions
+[2015-04-02 19:23:21.742] [core] [info] Applying fix Recreation of SpellSlinger's Spontaneous Casting for levels 6-9
+[2015-04-02 19:23:21.742] [core] [info] Applying fix Spell Hostility bug: fix mass cure spells triggering hostile reaction. Can be expanded to other spells.
+[2015-04-02 19:23:21.742] [core] [info] Applying fix Expand the range of usable spellEnums. Currently walled off at 802.
+[2015-04-02 19:23:21.743] [core] [info] Applying fix XP Table Fix for higher levels
+[2015-04-02 19:23:21.743] [core] [info] Applying XP Table Extension upto Level 20
+[2015-04-02 19:23:21.743] [core] [error] Unable to hook the function @ 100b5700: 7
+[2015-04-02 19:23:21.743] [core] [info] Applying fix Item Creation UI
+[2015-04-02 19:23:21.743] [core] [error] Unable to hook the function @ 10150da0: 7
+[2015-04-02 19:23:21.744] [core] [error] Unable to hook the function @ 10152690: 7
+[2015-04-02 19:23:21.744] [core] [error] Unable to hook the function @ 10151f60: 7
+[2015-04-02 19:23:21.744] [core] [error] Unable to hook the function @ 10152930: 7
+[2015-04-02 19:23:21.744] [core] [info] Finished applying DLL fixes
+[2015-04-02 19:23:21.744] [core] [info] Initializing TIG
+[2015-04-02 19:23:21.745] [core] [info] Creating window with dimensions 1040x806
+[2015-04-02 19:23:21.824] [core] [error] Creating Direct3D9Ex device.
+[2015-04-02 19:23:22.000] [core] [info] tig_video_buffer_mem returned total = 2147483647; avail = 2147483647
+[2015-04-02 19:23:22.001] [core] [info] tig_texture_init: memory limit 973078528
+[2015-04-02 19:23:22.224] [core] [info] Miles Fast 2D Positional Audio initialized.
+[2015-04-02 19:23:22.238] [core] [info] TIG initialized in 494 ms
+[2015-04-02 19:23:22.239] [core] [info] Creating game scratch buffer
+[2015-04-02 19:23:22.239] [core] [info] Game scratch buffer initialized in 0 ms
+[2015-04-02 19:23:22.240] [core] [info] Loading game systems
+[2015-04-02 19:23:22.244] [core] [info] Registering archive RT_ToEE4.dat
+[2015-04-02 19:23:22.246] [core] [info] Registering archive tig.dat
+[2015-04-02 19:23:22.246] [core] [info] Registering archive ToEE1.dat
+[2015-04-02 19:23:22.251] [core] [info] Registering archive ToEE2.dat
+[2015-04-02 19:23:22.252] [core] [info] Registering archive ToEE3.dat
+[2015-04-02 19:23:22.255] [core] [info] Registering archive ToEE4.dat
+[2015-04-02 19:23:22.257] [core] [info] Registering archive unins000.dat
+[2015-04-02 19:23:22.258] [core] [info] Registering archive unins001.dat
+[2015-04-02 19:23:22.259] [core] [info] Registering archive unins002.dat
+[2015-04-02 19:23:22.260] [core] [info] Registering archive unins003.dat
+[2015-04-02 19:23:22.261] [core] [info] Registering archive unins004.dat
+[2015-04-02 19:23:22.264] [core] [info] Assuming english fonts
+[2015-04-02 19:23:22.556] [core] [info] Loading game system Vagrant
+[2015-04-02 19:23:22.599] [core] [info] EVENT: Before Init
+[2015-04-02 19:23:22.600] [core] [info] Loading game system Description
+[2015-04-02 19:23:22.636] [core] [info] mes\description.mes: two lines numbered 9670
+[2015-04-02 19:23:22.637] [core] [info] mes\description.mes: two lines numbered 9671
+[2015-04-02 19:23:22.644] [core] [info] Warning! Possible missing right brace } on or before line 2454 (mes\long_description.mes)
+[2015-04-02 19:23:22.644] [core] [info] Warning! Bad number field on line: 2454 (mes\long_description.mes)
+[2015-04-02 19:23:22.650] [core] [info] Loading game system Item-Effect
+[2015-04-02 19:23:22.651] [core] [info] Loading game system Teleport
+[2015-04-02 19:23:22.665] [core] [info] Loading game system Sector
+[2015-04-02 19:23:22.682] [core] [info] Loading game system Random
+[2015-04-02 19:23:22.698] [core] [info] Loading game system Critter
+[2015-04-02 19:23:22.727] [core] [info] Loading game system ScriptName
+[2015-04-02 19:23:22.738] [core] [info] Loading game system Portrait
+[2015-04-02 19:23:22.771] [core] [info] Loading game system Skill
+[2015-04-02 19:23:22.782] [core] [info] Loading game system feat
+[2015-04-02 19:23:22.809] [core] [info] Loading game system Spell
+[2015-04-02 19:23:22.832] [core] [info] Spell read: unparseable AI Action Type ai_action_offensive
+[2015-04-02 19:23:22.836] [core] [info] Spell read: unparseable AI Action Type ai_action_offensive
+[2015-04-02 19:23:22.839] [core] [info] Could not find element 'Primary
+' in spell array.
+[2015-04-02 19:23:22.842] [core] [info] Spell read: unparseable AI Action Type ai_action_summon
+[2015-04-02 19:23:22.848] [core] [info] Spell read: unparseable AI Action Type ai_action_summon
+[2015-04-02 19:23:22.850] [core] [info] Spell read: unparseable AI Action Type ai_action_offensive
+[2015-04-02 19:23:22.851] [core] [info] Could not find element 'Primary
+' in spell array.
+[2015-04-02 19:23:22.854] [core] [info] Spell read: unparseable AI Action Type ai_action_summon
+[2015-04-02 19:23:22.876] [core] [info] Spell read: unparseable AI Action Type ai_action_offensive
+[2015-04-02 19:23:22.876] [core] [info] Spell read: unparseable AI Action Type ai_action_offensive
+[2015-04-02 19:23:22.877] [core] [info] Spell read: unparseable AI Action Type ai_action_offensive
+[2015-04-02 19:23:22.897] [core] [info] Spell read: unparseable AI Action Type ai_action_offensive
+[2015-04-02 19:23:22.901] [core] [info] Could not find element 'Universal
+' in spell array.
+[2015-04-02 19:23:22.911] [core] [info] Loading game system Stat
+[2015-04-02 19:23:22.914] [core] [info] Loading game system Script

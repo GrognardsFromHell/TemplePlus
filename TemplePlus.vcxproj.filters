@@ -132,6 +132,12 @@
     </ClCompile>
     <ClCompile Include="pathfinding.cpp" />
     <ClCompile Include="mainloop.cpp" />
+    <ClCompile Include="portrait_in_mainmenu.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="ui_char_highresfix.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
     <ClCompile Include="feat.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
@@ -139,12 +145,6 @@
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="obj.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="portrait_in_mainmenu.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="ui_char_highresfix.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
   </ItemGroup>
