@@ -25,13 +25,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	if (templeDllHandle != reinterpret_cast<HMODULE>(0x10000000)) {
 		auto moduleName = FindConflictingModule();
 
-		auto msg = format("Temple.dll has been loaded to a different base address than 0x10000000: 0x{:x}\nConflicts with: {}", 
+		auto msg = format("Temple.dll has been loaded to a different base address than 0x10000000: 0x{:08x}\nConflicts with: {}", 
 			reinterpret_cast<uint32_t>(templeDllHandle), moduleName);
 
-#ifndef NDEBUG
 		MessageBoxA(nullptr, msg.c_str(), "Rebase Warning", MB_OK | MB_ICONWARNING);
-#endif
-		logger->warn("{}", msg);
 	}
 
 	try {
@@ -137,10 +134,10 @@ string FindConflictingModule() {
 			GetModuleInformation(hProcess, hMods[i], &moduleInfo, cbNeeded);
 			auto fromAddress = reinterpret_cast<uint32_t>(moduleInfo.lpBaseOfDll);
 			auto toAddress = fromAddress + moduleInfo.SizeOfImage;
-			logger->debug(" Module {}: 0x{:x}-0x{:x}", moduleName, fromAddress, toAddress);
+			logger->debug(" Module {}: 0x{:08x}-0x{:08x}", moduleName, fromAddress, toAddress);
 
 			if (fromAddress <= templeDesiredEnd && toAddress > templeDesiredStart) {
-				conflicting = format("{} (0x{:x}-0x{:x})", moduleName, fromAddress, toAddress);
+				conflicting = format("{} (0x{:08x}-0x{:08x})", moduleName, fromAddress, toAddress);
 			}
 		}
 	}
