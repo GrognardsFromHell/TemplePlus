@@ -1,19 +1,21 @@
-
 #include "stdafx.h"
 #include "temple_functions.h"
 #include "libraryholder.h"
 #include "fixes.h"
 #include "config.h"
 
+#include <psapi.h>
+
 void InitLogging();
 
 // Defined in temple_main.cpp for now
-int TempleMain(HINSTANCE hInstance, const wstring &commandLine);
+int TempleMain(HINSTANCE hInstance, const wstring& commandLine);
 
 static wstring GetInstallationDir();
 
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int showCmd)
-{
+string FindConflictingModule();
+
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int showCmd) {
 	config.Load();
 	config.Save();
 
@@ -21,7 +23,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 	HMODULE templeDllHandle = LoadLibraryW(L"temple.dll");
 	if (templeDllHandle != reinterpret_cast<HMODULE>(0x10000000)) {
-		auto msg = format("Temple.dll has been loaded to a different base address than 0x10000000: {:x}", reinterpret_cast<uint32_t>(templeDllHandle));
+		auto moduleName = FindConflictingModule();
+
+		auto msg = format("Temple.dll has been loaded to a different base address than 0x10000000: 0x{:x}\nConflicts with: {}", 
+			reinterpret_cast<uint32_t>(templeDllHandle), moduleName);
 
 #ifndef NDEBUG
 		MessageBoxA(nullptr, msg.c_str(), "Rebase Warning", MB_OK | MB_ICONWARNING);
@@ -37,8 +42,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		if (!SetCurrentDirectory(toeeDir.c_str())) {
 			logger->error("Unable to change current working directory!");
 		}
-		if (!SetDllDirectory(toeeDir.c_str()))
-		{
+		if (!SetDllDirectory(toeeDir.c_str())) {
 			logger->error("Unable to change DLL search directory.");
 		}
 
@@ -58,7 +62,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		config.Save();
 
 		return result;
-	} catch (exception &e) {
+	} catch (exception& e) {
 		string msg = format("Uncaught exception: {}", e.what());
 		MessageBoxA(NULL, msg.c_str(), "Fatal Error", MB_OK | MB_ICONERROR);
 		return 1;
@@ -74,8 +78,7 @@ protected:
 	}
 };
 
-void InitLogging()
-{
+void InitLogging() {
 
 	spdlog::set_level(spdlog::level::debug);
 
@@ -85,8 +88,7 @@ void InitLogging()
 		auto fileSink = make_shared<spdlog::sinks::simple_file_sink_mt>("TemplePlus.log", true);
 		auto debugSink = make_shared<OutputDebugStringSink>();
 		logger = spdlog::create("core", {fileSink, debugSink});
-	}
-	catch (const spdlog::spdlog_ex &e) {
+	} catch (const spdlog::spdlog_ex& e) {
 		auto msg = format("Unable to initialize the logging subsystem:\n{}", e.what());
 		MessageBoxA(NULL, msg.c_str(), "Logging Error", MB_OK | MB_ICONERROR);
 	}
@@ -113,4 +115,37 @@ static wstring GetInstallationDir() {
 	}
 
 	return path;
+}
+
+string FindConflictingModule() {
+	HMODULE hMods[1024];
+	DWORD cbNeeded;
+	char moduleName[MAX_PATH];
+
+	auto hProcess = GetCurrentProcess();
+
+	string conflicting = "";
+
+	const uint32_t templeImageSize = 0x01EB717E;
+	const uint32_t templeDesiredStart = 0x10000000;
+	const uint32_t templeDesiredEnd = templeDesiredStart + templeImageSize;
+
+	if (EnumProcessModules(hProcess, hMods, sizeof(hMods), &cbNeeded)) {
+		for (uint32_t i = 0; i < (cbNeeded / sizeof(HMODULE)); i++) {
+			GetModuleFileNameA(hMods[i], moduleName, MAX_PATH);
+			MODULEINFO moduleInfo;
+			GetModuleInformation(hProcess, hMods[i], &moduleInfo, cbNeeded);
+			auto fromAddress = reinterpret_cast<uint32_t>(moduleInfo.lpBaseOfDll);
+			auto toAddress = fromAddress + moduleInfo.SizeOfImage;
+			logger->debug(" Module {}: 0x{:x}-0x{:x}", moduleName, fromAddress, toAddress);
+
+			if (fromAddress <= templeDesiredEnd && toAddress > templeDesiredStart) {
+				conflicting = format("{} (0x{:x}-0x{:x})", moduleName, fromAddress, toAddress);
+			}
+		}
+	}
+
+	CloseHandle(hProcess);
+
+	return conflicting;
 }

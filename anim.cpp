@@ -792,6 +792,8 @@ public:
 
 	void apply() override {
 
+		return; // Currently not used
+
 		map<uint32_t, string> goalFuncNames;
 		map<uint32_t, string> goalFuncDescs;
 #define MakeName(a, b) goalFuncNames[a] = b
