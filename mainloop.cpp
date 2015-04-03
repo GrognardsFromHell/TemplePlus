@@ -66,7 +66,7 @@ static void RenderFrame();
 	temple_main, there is no need to hook this function in temple.dll
 */
 void RunMainLoop() {
-	
+		
 	// Is this a center map kind of deal?
 	locXY loc;
 	if (!mainLoop.sub_100290C0(400, 300, &loc)) {

@@ -27,6 +27,9 @@ struct TemplePlusConfig
 	bool skipLegal = true;
 	bool useDirect3d9Ex = true;
 	bool windowed = true;
+	
+	// This is some crazy editor stuff leftover from worlded
+	bool editor = false;
 
 	// debug msgs
 	bool featPrereqWarnings = false;

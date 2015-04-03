@@ -53,6 +53,7 @@ GlobalPrimitive<bool, 0x108ED0D0> showDialogLineNo;
 GlobalPrimitive<uint32_t, 0x10307374> scrollDistance;
 GlobalPrimitive<uint32_t, 0x108254A0> mapFoggingInited;
 GlobalPrimitive<uint32_t, 0x102F7778> uiOptionsSupportedModeCount;
+GlobalPrimitive<uint32_t, 0x10BD3A48> startMap;
 
 struct StartupRelevantFuncs : AddressTable {
 	
@@ -65,6 +66,11 @@ struct StartupRelevantFuncs : AddressTable {
 	void(__cdecl *RunBatchFile)(const char *filename);
 	void(__cdecl *RunMainLoop)();
 
+	/*
+		This is here just for the editor
+	*/
+	int(__cdecl *MapOpenInGame)(int mapId, int a3, int a4);
+
 	StartupRelevantFuncs() {
 		rebase(FindSound, 0x1003B9E0);
 		rebase(TigInit, 0x101DF5A0);
@@ -74,6 +80,8 @@ struct StartupRelevantFuncs : AddressTable {
 		rebase(TigWindowBufferstuffFree, 0x101DF2C0);		
 		rebase(RunBatchFile, 0x101DFF10);
 		rebase(RunMainLoop, 0x100010F0);		
+		
+		rebase(MapOpenInGame, 0x10072A90);
 	}
 
 } startupRelevantFuncs;
@@ -135,6 +143,7 @@ public:
 		logger->info("Loading game systems");
 
 		memset(&mConfig, 0, sizeof(mConfig));
+		mConfig.editor = ::config.editor;
 		mConfig.width = tigConfig.width;
 		mConfig.height = tigConfig.height;
 		mConfig.field_10 = 0x10002530; // Callback 1
@@ -179,7 +188,7 @@ int TempleMain(HINSTANCE hInstance, const wstring &commandLine) {
 	if (!mutex.acquire()) {
 		return 1;
 	}
-
+	
 	/*
 		Write ToEE global config vars from our config
 	*/
@@ -227,13 +236,17 @@ int TempleMain(HINSTANCE hInstance, const wstring &commandLine) {
 
 	// Show the main menu
 	mouseFuncs.ShowCursor();
-	uiMainMenuFuncs.ShowPage(0);
+	if (!config.editor) {
+		uiMainMenuFuncs.ShowPage(0);
+	} else {
+		startupRelevantFuncs.MapOpenInGame(5001, 0, 1);
+	}
 	temple_set<0x10BD3A68>(1); // Purpose unknown and unconfirmed, may be able to remove
 
 	// Run console commands from "startup.txt" (working dir)
 	logger->info("[Running Startup.txt]");
 	startupRelevantFuncs.RunBatchFile("Startup.txt");
-	logger->info("[Beginning Game]");
+	logger->info("[Beginning Game]");		
 
 	RunMainLoop();
 	// startupRelevantFuncs.RunMainLoop();

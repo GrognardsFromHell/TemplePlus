@@ -664,8 +664,11 @@ void GameSystemFuncs::NewInit(const GameSystemConf& conf) {
 	initBufferStuff(conf);
 	
 	// This seems to be the primary rendering function, it's called from the renderfunc above (0x10002650)
-	temple_set<0x103072BC>(temple_address(0x100039E0));
-	// TODO try 10003A50, which seems to be used by worlded
+	if (!conf.editor) {
+		temple_set<0x103072BC>(temple_address(0x100039E0));
+	} else {
+		temple_set<0x103072BC>(temple_address(0x10003A50));
+	}
 
 	temple_set<0x10306C10>(false); // always set to false, used by the renderfunc
 
