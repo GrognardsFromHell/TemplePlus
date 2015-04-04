@@ -1,5 +1,8 @@
 # TemplePlus
 
+[![Build status](https://ci.appveyor.com/api/projects/status/github/CircleOf8/TemplePlus?svg=true)]
+(https://ci.appveyor.com/project/shartte/templeplus)
+
 ## Quickstart
 
 * Get Microsoft Visual Studio
