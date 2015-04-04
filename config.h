@@ -25,6 +25,7 @@ struct TemplePlusConfig
 	bool disableFogOfWar = false; // Previously: -nofog
 	bool skipIntro = true;
 	bool skipLegal = true;
+	bool engineEnhancements = true;
 	bool useDirect3d9Ex = true;
 	bool windowed = true;
 	

@@ -53,9 +53,11 @@ void init_hooks()
 	temple_set<0x10EED638>(1); // Debug message enable
 	MH_CreateHook(temple_address<0x101E48F0>(), hooked_print_debug_message, NULL);
 
-	hook_graphics();
-	hook_mouse();
-	hook_msgs();
+	if (config.engineEnhancements) {
+		hook_graphics();
+		hook_mouse();
+		hook_msgs();
+	}
 
 	MH_EnableHook(MH_ALL_HOOKS);
 }

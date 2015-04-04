@@ -658,8 +658,8 @@ void GameSystemFuncs::NewInit(const GameSystemConf& conf) {
 
 	// For whatever reason these are set here
 	memcpy(gameSystemInitTable.gameSystemConf, &conf, sizeof(GameSystemConf));
-	gameSystemInitTable.gameSystemConf->field_10 = (uint32_t)temple_address<0x10002530>();
-	gameSystemInitTable.gameSystemConf->renderfunc = (uint32_t)temple_address<0x10002650>();
+	gameSystemInitTable.gameSystemConf->field_10 = temple_address<0x10002530>();
+	gameSystemInitTable.gameSystemConf->renderfunc = temple_address<0x10002650>();
 	
 	initBufferStuff(conf);
 	

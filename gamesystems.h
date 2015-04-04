@@ -9,8 +9,8 @@ struct GameSystemConf {
 	int width;
 	int height;
 	int bufferstuffIdx;
-	int field_10;
-	int renderfunc;
+	void *field_10;
+	void *renderfunc;
 };
 
 struct GameSystemSaveFile {

@@ -63,8 +63,9 @@ struct StartupRelevantFuncs : AddressTable {
 	int (__cdecl *SetScreenshotKeyhandler)(TigMsgGlobalKeyCallback *callback);
 	bool (__cdecl *TigWindowBufferstuffCreate)(int *bufferStuffIdx);
 	void (__cdecl *TigWindowBufferstuffFree)(int bufferStuffIdx);
-	void(__cdecl *RunBatchFile)(const char *filename);
-	void(__cdecl *RunMainLoop)();
+	void (__cdecl *RunBatchFile)(const char *filename);
+	void (__cdecl *RunMainLoop)();
+	int (__cdecl *TempleMain)(HINSTANCE hInstance, HINSTANCE hInstancePrev, const char *commandLine, int showCmd);
 
 	/*
 		This is here just for the editor
@@ -80,6 +81,7 @@ struct StartupRelevantFuncs : AddressTable {
 		rebase(TigWindowBufferstuffFree, 0x101DF2C0);		
 		rebase(RunBatchFile, 0x101DFF10);
 		rebase(RunMainLoop, 0x100010F0);		
+		rebase(TempleMain, 0x100013D0);
 		
 		rebase(MapOpenInGame, 0x10072A90);
 	}
@@ -146,8 +148,8 @@ public:
 		mConfig.editor = ::config.editor;
 		mConfig.width = tigConfig.width;
 		mConfig.height = tigConfig.height;
-		mConfig.field_10 = 0x10002530; // Callback 1
-		mConfig.renderfunc = 0x10002650; // Callback 1
+		mConfig.field_10 = temple_address(0x10002530); // Callback 1
+		mConfig.renderfunc = temple_address(0x10002650); // Callback 1
 		mConfig.bufferstuffIdx = tigBuffer.bufferIdx();
 
 		gameSystemFuncs.NewInit(mConfig);
@@ -182,7 +184,19 @@ public:
 	}
 };
 
-int TempleMain(HINSTANCE hInstance, const wstring &commandLine) {
+int TempleMain(HINSTANCE hInstance, const string &commandLine) {
+
+	if (!config.engineEnhancements) {
+		temple_set<0x10307284>(800);
+		temple_set<0x10307288>(600);
+		if (config.skipLegal) {
+			temple_set<0x102AB360>(0); // Disable legal movies
+		}
+		const char *cmdLine = GetCommandLineA();
+
+		return startupRelevantFuncs.TempleMain(hInstance, nullptr, cmdLine, SW_NORMAL);
+	}
+
 	TempleMutex mutex;
 
 	if (!mutex.acquire()) {

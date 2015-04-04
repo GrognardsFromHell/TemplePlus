@@ -3,6 +3,7 @@
 #include "fixes.h"
 #include "temple_functions.h"
 #include "gamesystems.h"
+#include "config.h"
 
 typedef int(__cdecl *UiCharInit)(const GameSystemConf& conf);
 static UiCharInit uiCharInit;
@@ -34,6 +35,10 @@ public:
 	}
 
 	void apply() override {
+		if (!config.engineEnhancements) {
+			return;
+		}
+
 		uiCharInit = reinterpret_cast<UiCharInit>(replaceFunction(0x1014B900, HookedUiCharInit));
 	}
 

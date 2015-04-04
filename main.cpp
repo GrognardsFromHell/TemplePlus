@@ -9,13 +9,13 @@
 void InitLogging();
 
 // Defined in temple_main.cpp for now
-int TempleMain(HINSTANCE hInstance, const wstring& commandLine);
+int TempleMain(HINSTANCE hInstance, const string& commandLine);
 
 static wstring GetInstallationDir();
 
 string FindConflictingModule();
 
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int showCmd) {
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int showCmd) {
 	config.Load();
 	config.Save();
 
@@ -51,7 +51,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 		TempleFixes::apply();
 
-		auto ourModule = GetModuleHandleW(nullptr);
+		auto ourModule = GetModuleHandleA(nullptr);
 		auto result = TempleMain(ourModule, lpCmdLine);
 
 		MH_Uninitialize();
