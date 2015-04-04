@@ -10,12 +10,14 @@
 */
 class MemoryUnprotector {
 public:
-	MemoryUnprotector(uint32_t dllAddress, size_t size) : mAddress(temple_address(dllAddress)), mSize(size), mOldProtection(0) {
+	explicit MemoryUnprotector(uint32_t dllAddress, size_t size) throw() : mAddress(temple_address(dllAddress)), mSize(size), mOldProtection(0) {
 		// rebase the address using temple_address
-		assert(VirtualProtect(mAddress, mSize, PAGE_READWRITE, &mOldProtection));
+		auto result = VirtualProtect(mAddress, mSize, PAGE_READWRITE, &mOldProtection);
+		assert(result);
 	}
-	~MemoryUnprotector() {
-		assert(VirtualProtect(mAddress, mSize, mOldProtection, &mOldProtection));
+	~MemoryUnprotector() throw() {
+		auto result = VirtualProtect(mAddress, mSize, mOldProtection, &mOldProtection);
+		assert(result);
 	}
 private:
 	void *mAddress; // This is the real address
