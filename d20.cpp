@@ -126,8 +126,8 @@ public:
 		replaceFunction(0x10077850, D20SpellDataExtractInfo);
 		replaceFunction(0x10077830, D20SpellDataSetSpontCast);
 		replaceFunction(0x1004D700, DispIO14hCheckDispIOType1);
-	//	replaceFunction(0x100ECF30, ConditionPrevent);
-	//	replaceFunction(0x100FD790, D20StatusInitRace);
+		replaceFunction(0x100ECF30, ConditionPrevent);
+		replaceFunction(0x100FD790, D20StatusInitRace);
 	}
 } d20Replacements;
 

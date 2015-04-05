@@ -70,7 +70,7 @@ struct CondNode : TempleAlloc {
 	CondStruct* condStruct;
 	CondNode* nextCondNode;
 	uint32_t flags;
-	uint32_t args[4];
+	uint32_t args[6];
 
 	explicit CondNode(CondStruct *cond);
 };

@@ -8,7 +8,7 @@ const uint32_t DISPATCHER_MAX = 250; // max num of simultaneous Dispatches going
 
 Objects objects;
 
-static_assert(validate_size<CondNode, 28>::value, "Condition node structure has incorrect size.");
+static_assert(validate_size<CondNode, 36>::value, "Condition node structure has incorrect size.");
 
 #pragma region Object Internals
 const size_t objHeaderSize = 4; // Constant
@@ -144,10 +144,12 @@ public:
 	}
 
 	void apply() override {
+		replaceFunction(0x100E1F10, DispatcherInit); 
+		replaceFunction(0x1004DBA0, DispIO_Size32_Type21_Init);
 		replaceFunction(0x1004D3A0, Dispatch62);
 		replaceFunction(0x1004D440, Dispatch63);
-		replaceFunction(0x100E1F10, DispatcherInit);
-		replaceFunction(0x1004DBA0, DispIO_Size32_Type21_Init);
+		
+		
 		replaceFunction(0x100E2120, DispatcherProcessor);
 		
 		replaceFunction(0x100E22D0, ConditionAddDispatch);
@@ -181,7 +183,10 @@ uint32_t Dispatch63(objHndl objHnd, DispIO* dispIO) {
 }
 
 uint32_t ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4) {
-	assert(condStruct->numArgs >= 0 && condStruct->numArgs <= 4);
+	
+	assert(condStruct->numArgs >= 0 && condStruct->numArgs <= 6);
+
+
 
 	// pre-add section (may abort adding condition, or cause another condition to be deleted first)
 	DispIO14h dispIO14h;
@@ -269,7 +274,7 @@ void CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNode) {
 
 
 uint32_t ConditionAddToAttribs_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct) {
-	return ConditionAddDispatch(dispatcher, &dispatcher->otherConds, condStruct, 0, 0, 0, 0);
+	return ConditionAddDispatch(dispatcher, &dispatcher->attributeConds, condStruct, 0, 0, 0, 0);
 };
 
 uint32_t ConditionAddToAttribs_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2) {
