@@ -161,6 +161,10 @@
     <ClCompile Include="description.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="map_obj.cpp" />
+    <ClCompile Include="python_debug.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -308,6 +312,10 @@
     </ClInclude>
     <ClInclude Include="description.h">
       <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="map_obj.h" />
+    <ClInclude Include="python_debug.h">
+      <Filter>python</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

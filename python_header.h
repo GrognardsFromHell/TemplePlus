@@ -1,3 +1,9 @@
+
+#pragma once
+
+#include "addresses.h"
+#include "obj.h"
+
 /*
 Define all type objects used by ToEE.
 */
@@ -10,12 +16,7 @@ static GlobalStruct<PyMethodDef, 0x102CE9A8> pyObjHandleMethods;
 static GlobalStruct<PyTypeObject, 0x102CFBC0> pySpellType;
 static getattrfunc pySpellTypeGetAttr; // Original getattr of pySpellType
 
-GlobalPrimitive<PyListObject*, 0x10BCABD0>* pPySpellList;
-
-//PyCFunction a[]; // this causes errors during compile!
-
-
-
+static GlobalPrimitive<PyListObject*, 0x10BCABD0>* pPySpellList;
 
 struct TemplePyObjHandle : public PyObject {
 	ObjectId objId;
