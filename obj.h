@@ -201,11 +201,26 @@ extern struct Objects : AddressTable {
 		return (Dispatcher *)(_GetInternalFieldInt32(obj, obj_f_dispatcher));
 	}
 
+	uint32_t StatLevelGet(objHndl obj, Stat stat)
+	{
+		return _StatLevelGet(obj, stat);
+	};
+
+	uint32_t GetInt32(objHndl obj, obj_f fieldIdx)
+	{
+		return _GetInternalFieldInt32(obj, fieldIdx);
+	};
+
+	void SetDispatcher(objHndl obj, uint32_t data32) {
+		_SetInternalFieldInt32(obj, obj_f_dispatcher, data32);
+		return;
+	}
+
 private:
 	int(__cdecl *_GetInternalFieldInt32)(objHndl ObjHnd, int nFieldIdx);
 	int64_t(__cdecl *_GetInternalFieldInt64)(objHndl ObjHnd, int nFieldIdx);
-	int(__cdecl *_StatLevelGet)(objHndl ObjHnd, Stat);
-
+	int32_t(__cdecl *_StatLevelGet)(objHndl ObjHnd, Stat);
+	void(__cdecl *_SetInternalFieldInt32)(objHndl objHnd, obj_f fieldIdx, uint32_t data32);
 } objects;
 
 // const auto TestSizeOfDispatcher = sizeof(Dispatcher); // 0x138 as it should be
@@ -222,3 +237,4 @@ uint32_t ConditionAdd_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct);
 uint32_t ConditionAdd_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2);
 uint32_t ConditionAdd_NumArgs3(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3);
 uint32_t ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4);
+void DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO);

@@ -33,6 +33,15 @@ uint32_t * metaMagicData);
 
 DispIO14h * DispIO14hCheckDispIOType1(DispIO14h * dispIO);
 void D20StatusInitRace(objHndl objHnd);
+void D20StatusInitClass(objHndl objHnd);
+void D20StatusInit(objHndl objHnd);
+void D20StatusInitDomains(objHndl objHnd);
+uint32_t ConditionPrevent(DispatcherCallbackArgs args);
+void __cdecl DispatcherRemoveSubDispNodes(Dispatcher * dispatcher, CondNode * cond);
+void __cdecl DispatcherClearField(Dispatcher *dispatcher, CondNode ** dispCondList);
+void __cdecl DispatcherClearAttribs(Dispatcher *dispatcher);
+void __cdecl DispatcherClearItemConds(Dispatcher *dispatcher);
+void __cdecl DispatcherClearConds(Dispatcher *dispatcher);
 
 extern GlobalPrimitive<CondStruct, 0x102E8088> ConditionGlobal;
 extern GlobalPrimitive<CondNode *, 0x10BCADA0> pCondNodeGlobal;

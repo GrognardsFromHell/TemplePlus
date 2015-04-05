@@ -16,6 +16,39 @@ const size_t objBodySize = 168; // Passed in to Object_Tables_Init
 const size_t objSize = objHeaderSize + objBodySize;
 static_assert(validate_size<GameObject, objSize>::value, "Object structure has incorrect size.");
 
+
+
+class ObjectDispatch : public TempleFix {
+public:
+	const char* name() override {
+		return "Object";
+	}
+
+	void apply() override {
+		replaceFunction(0x100E1F10, DispatcherInit);
+		replaceFunction(0x1004DBA0, DispIO_Size32_Type21_Init);
+		replaceFunction(0x1004D3A0, Dispatch62);
+		replaceFunction(0x1004D440, Dispatch63);
+
+
+		replaceFunction(0x100E2120, DispatcherProcessor);
+
+		replaceFunction(0x100E22D0, ConditionAddDispatch);
+		replaceFunction(0x100E24C0, ConditionAddToAttribs_NumArgs0);
+		replaceFunction(0x100E2500, ConditionAddToAttribs_NumArgs2);
+		replaceFunction(0x100E24E0, ConditionAdd_NumArgs0);
+		replaceFunction(0x100E2530, ConditionAdd_NumArgs2);
+		replaceFunction(0x100E2560, ConditionAdd_NumArgs3);
+		replaceFunction(0x100E2590, ConditionAdd_NumArgs4);
+	}
+};
+
+
+
+
+
+
+
 // Root hashtable for all objects
 struct ObjectMasterTableRow {
 	GameObject objects[0x2000];
@@ -108,6 +141,7 @@ Objects::Objects() {
 	rebase(_GetInternalFieldInt32, 0x1009E1D0);
 	rebase(_GetInternalFieldInt64, 0x1009E2E0);
 	rebase(_StatLevelGet, 0x10074800);
+	rebase(_SetInternalFieldInt32, 0x1010B4A0);
 }
 
 Dispatcher* DispatcherInit(objHndl objHnd) {
@@ -137,30 +171,7 @@ void DispIO_Size32_Type21_Init(DispIO20h* dispIO) {
 };
 
 
-class ObjectDispatch : public TempleFix {
-public:
-	const char* name() override {
-		return "Object";
-	}
 
-	void apply() override {
-		replaceFunction(0x100E1F10, DispatcherInit); 
-		replaceFunction(0x1004DBA0, DispIO_Size32_Type21_Init);
-		replaceFunction(0x1004D3A0, Dispatch62);
-		replaceFunction(0x1004D440, Dispatch63);
-		
-		
-		replaceFunction(0x100E2120, DispatcherProcessor);
-		
-		replaceFunction(0x100E22D0, ConditionAddDispatch);
-		replaceFunction(0x100E24C0, ConditionAddToAttribs_NumArgs0);
-		replaceFunction(0x100E2500, ConditionAddToAttribs_NumArgs2);
-		replaceFunction(0x100E24E0, ConditionAdd_NumArgs0);
-		replaceFunction(0x100E2530, ConditionAdd_NumArgs2);
-		replaceFunction(0x100E2560, ConditionAdd_NumArgs3);
-		replaceFunction(0x100E2590, ConditionAdd_NumArgs4);
-	}
-};
 
 ObjectDispatch objectDispatch;
 
