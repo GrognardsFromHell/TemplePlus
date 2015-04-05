@@ -81,6 +81,8 @@ struct JumpPointPacket{
 struct TempleFuncs : AddressTable {
 	void(*ProcessSystemEvents)();
 	PyObject* (__cdecl *PyScript_Execute)(char *pPyFileName, char *pPyFuncName, PyObject *pPyArgTuple);
+	uint32_t(__cdecl *StringHash)( char * pString);
+
 
 	void(__cdecl *UpdatePartyUI)();
 	uint32_t(__cdecl *PartyMoney)();
@@ -221,6 +223,7 @@ struct TempleFuncs : AddressTable {
 	TempleFuncs() {
 		rebase(ProcessSystemEvents, 0x101DF440);
 		rebase(PyScript_Execute, 0x100ADE40);
+		rebase(StringHash, 0x101EBB00);
 
 		rebase(UpdatePartyUI, 0x10134CB0);
 		rebase(PartyMoney, 0x1002B750);

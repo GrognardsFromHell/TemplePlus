@@ -25,6 +25,7 @@
     <ClCompile Include="animalcompanion.cpp" />
     <ClCompile Include="attackrollcpp.cpp" />
     <ClCompile Include="bonusspells.cpp" />
+    <ClCompile Include="combat.cpp" />
     <ClCompile Include="d20.cpp" />
     <ClCompile Include="d3d8to9\d3d8to9.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
@@ -90,6 +91,7 @@
     <ClCompile Include="pathfinding.cpp" />
     <ClCompile Include="portrait_in_mainmenu.cpp" />
     <ClCompile Include="pythonglobal.cpp" />
+    <ClCompile Include="radial_menu.cpp" />
     <ClCompile Include="testhelper.cpp" />
     <ClCompile Include="tig_loadingscreen.cpp" />
     <ClCompile Include="main.cpp" />
@@ -158,6 +160,8 @@
     <ClInclude Include="aas.h" />
     <ClInclude Include="addresses.h" />
     <ClInclude Include="anim.h" />
+    <ClInclude Include="combat.h" />
+    <ClInclude Include="conditions.h" />
     <ClInclude Include="d20.h" />
     <ClInclude Include="d3d8to9\d3d8to9.h" />
     <ClInclude Include="d3d8to9\d3d8to9_convert.h" />
@@ -191,6 +195,7 @@
     <ClInclude Include="obj_fieldnames.h" />
     <ClInclude Include="pathfinding.h" />
     <ClInclude Include="pythonglobal.h" />
+    <ClInclude Include="radial_menu.h" />
     <ClInclude Include="spell.h" />
     <ClInclude Include="tig.h" />
     <ClInclude Include="tig_loadingscreen.h" />
@@ -309,7 +314,7 @@
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;pytoee22.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>tio.dll; winmm.dll;d3d9.dll;pytoee22.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">
@@ -328,7 +333,7 @@
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <AdditionalLibraryDirectories>dependencies\boost_1_57_0\lib32-msvc-12.0</AdditionalLibraryDirectories>
-      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;pytoee22.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>tio.dll; winmm.dll;d3d9.dll;pytoee22.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -359,7 +364,7 @@
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;pytoee22.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>tio.dll; winmm.dll;d3d9.dll;pytoee22.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

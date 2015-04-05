@@ -30,3 +30,9 @@ void D20SpellDataExtractInfo
 (D20SpellData * d20SpellData, uint32_t * spellEnum, uint32_t * spellEnumOriginal,
 uint32_t * spellClassCode, uint32_t * spellSlotLevel, uint32_t * itemSpellData,
 uint32_t * metaMagicData);
+
+DispIO14h * DispIO14hCheckDispIOType1(DispIO14h * dispIO);
+void D20StatusInitRace(objHndl objHnd);
+
+extern GlobalPrimitive<CondStruct, 0x102E8088> ConditionGlobal;
+extern GlobalPrimitive<CondNode *, 0x10BCADA0> pCondNodeGlobal;
