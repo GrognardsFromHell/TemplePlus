@@ -163,7 +163,7 @@ public:
 		return "Object";
 	}
 	void apply() override {
-
+		/*
 		replaceFunction(0x1004D3A0, Dispatch62);
 		replaceFunction(0x1004D440, Dispatch63);
 		replaceFunction(0x100E1F10, DispatcherInit);
@@ -180,6 +180,7 @@ public:
 		replaceFunction(0x100E2530, ConditionAdd_NumArgs2);
 		replaceFunction(0x100E2560, ConditionAdd_NumArgs3);
 		replaceFunction(0x100E2590, ConditionAdd_NumArgs4);
+		*/
 	}
 };
 
@@ -272,7 +273,7 @@ uint32_t ConditionAddDispatch(Dispatcher * dispatcher, CondNode ** ppCondNode, C
 CondNode * CondNodeInit(CondStruct * condStruct)
 {
 	auto condNodeSize = 12 + 4 * condStruct->numArgs;
-	CondNode * condNodeNew =  (CondNode *)allocFuncs.opNew(condNodeSize);
+	CondNode * condNodeNew =  (CondNode *)allocFuncs._malloc_0(condNodeSize);
 	memset(condNodeNew, 0, condNodeSize);
 	condNodeNew->condStruct = condStruct;
 
@@ -285,7 +286,7 @@ void CondNodeAddToSubDispNodeArray(Dispatcher * dispatcher, CondNode * condNode)
 
 	while (subDispDef->dispType != 0)
 	{
-		SubDispNode * subDispNodeNew =  (SubDispNode *)allocFuncs.opNew(sizeof(SubDispNode));
+		SubDispNode * subDispNodeNew =  (SubDispNode *)allocFuncs._malloc_0(sizeof(SubDispNode));
 		subDispNodeNew->subDispDef = subDispDef;
 		subDispNodeNew->next = nullptr;
 		subDispNodeNew->condNode = condNode;
