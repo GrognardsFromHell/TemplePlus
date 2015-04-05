@@ -88,6 +88,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="mainloop.cpp" />
+    <ClCompile Include="obj_fieldnames.cpp" />
     <ClCompile Include="pathfinding.cpp" />
     <ClCompile Include="portrait_in_mainmenu.cpp" />
     <ClCompile Include="pythonglobal.cpp" />
@@ -193,6 +194,7 @@
     <ClInclude Include="fixes.h" />
     <ClInclude Include="libraryholder.h" />
     <ClInclude Include="mainloop.h" />
+    <ClInclude Include="obj_fieldnames.h" />
     <ClInclude Include="pathfinding.h" />
     <ClInclude Include="pythonglobal.h" />
     <ClInclude Include="radial_menu.h" />
