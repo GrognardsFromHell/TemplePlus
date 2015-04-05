@@ -7,6 +7,9 @@
 #include "temple_functions.h"
 #include "tig_tokenizer.h"
 #include "ui_item_creation.h"
+#include "combat.h"
+#include "obj.h"
+#include "radial_menu.h"
 
 GlobalPrimitive<ItemCreationType, 0x10BEDF50> itemCreationType;
 GlobalPrimitive<objHndl, 0x10BECEE0> globObjHndCrafter;
@@ -23,24 +26,8 @@ GlobalPrimitive<char *, 0x10BED8A8> itemCreationUIStringValue;
 GlobalPrimitive<tig_text_style, 0x10BEE338> itemCreationTextStyle; // so far used by "Item Cost: %d" and "Experience Cost: %d"
 GlobalPrimitive<tig_text_style, 0x10BED938> itemCreationTextStyle2; // so far used by "Value: %d"
 
-struct ButtonStateTextures {
-	int normal;
-	int hover;
-	int pressed;
-	ButtonStateTextures() : normal(-1), hover(-1), pressed(-1) {}
 
-	void loadAccept() {
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptNormal, normal);
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptHover, hover);
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptPressed, pressed);
-	}
 
-	void loadDecline() {
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineNormal, normal);
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineHover, hover);
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclinePressed, pressed);
-	}
-};
 
 static MesHandle mesItemCreationText;
 static MesHandle mesItemCreationRules;
@@ -399,6 +386,67 @@ static void loadProtoIds(MesHandle mesHandle) {
 	
 }
 
+
+
+
+uint32_t ItemCreationBuildRadialMenuEntry(DispatcherCallbackArgs args, ItemCreationType itemCreationType, char* helpSystemString, MesHandle combatMesLine)
+{
+	if (IsCombatActive()) { return 0; }
+	MesLine mesLine;
+	RadialMenuStruct radmenu;
+	mesLine.key = combatMesLine;
+	mesFuncs.GetLine_Safe(combatsysCombatMesfileIdx, &mesLine);
+	RadialMenuStructInit(&radmenu);
+	radmenu.field0 = (void*)mesLine.value;
+	radmenu.field20 = 37;
+	radmenu.field24 = itemCreationType;
+	radmenu.field40 = templeFuncs.StringHash(helpSystemString);
+	radialFuncs.RadialMenuCreateEntry(args.objHndCaller,  &radmenu , radialFuncs.RadialMenuArgMap_sub_100F12B0(3) ) ;
+
+	return 0;
+};
+
+uint32_t BrewPotionRadialMenu(DispatcherCallbackArgs args)
+{
+	return ItemCreationBuildRadialMenuEntry(args, BrewPotion, "TAG_BREW_POTION", 5066);
+};
+
+uint32_t ScribeScrollRadialMenu(DispatcherCallbackArgs args)
+{
+	return ItemCreationBuildRadialMenuEntry(args, ScribeScroll, "TAG_SCRIBE_SCROLL", 5067);
+};
+
+uint32_t CraftWandRadialMenu(DispatcherCallbackArgs args)
+{
+	return ItemCreationBuildRadialMenuEntry(args, CraftWand, "TAG_CRAFT_WAND", 5068);
+};
+
+uint32_t CraftRodRadialMenu(DispatcherCallbackArgs args)
+{
+	return ItemCreationBuildRadialMenuEntry(args, CraftRod, "TAG_CRAFT_ROD", 5069);
+};
+
+uint32_t CraftWondrousRadialMenu(DispatcherCallbackArgs args)
+{
+	return ItemCreationBuildRadialMenuEntry(args, CraftWondrous, "TAG_CRAFT_WONDROUS", 5070);
+};
+
+uint32_t CraftStaffRadialMenu(DispatcherCallbackArgs args)
+{
+	return ItemCreationBuildRadialMenuEntry(args, CraftStaff, "TAG_CRAFT_STAFF", 5103);
+};
+
+uint32_t ForgeRingRadialMenu(DispatcherCallbackArgs args)
+{
+	return ItemCreationBuildRadialMenuEntry(args, ForgeRing, "TAG_FORGE_RING", 5104);
+};
+
+uint32_t CraftMagicArmsAndArmorRadialMenu(DispatcherCallbackArgs args)
+{
+	return ItemCreationBuildRadialMenuEntry(args, CraftMagicArmsAndArmor, "TAG_CRAFT_MAA", 5071);
+};
+
+
 static int __cdecl systemInit(const GameSystemConf *conf) {
 
 	mesFuncs.Open("mes\\item_creation.mes", &mesItemCreationText);
@@ -444,10 +492,31 @@ public:
 	void apply() override {
 		// auto system = UiSystem::getUiSystem("ItemCreation-UI");		
 		// system->init = systemInit;
-		replaceFunction(0x10150DA0, CraftScrollWandPotionSetItemSpellData);
+		void* ptrToBrewPotion = BrewPotionRadialMenu;
+		void* ptrToScribeScroll = ScribeScrollRadialMenu;
+		void* ptrToCraftWand = CraftWandRadialMenu;
+		void* ptrToCraftRod = CraftRodRadialMenu;
+
+		void* ptrToCraftWondrous = CraftWondrousRadialMenu;
+		void* ptrToCraftStaff = CraftStaffRadialMenu;
+		void* ptrToForgeRing = ForgeRingRadialMenu;
+		void* ptrToMAA = CraftMagicArmsAndArmorRadialMenu;
+
+
+		/*replaceFunction(0x10150DA0, CraftScrollWandPotionSetItemSpellData);
 		replaceFunction(0x10152690, CreateItemResourceCheck);
 		replaceFunction(0x10151F60, CreateItemDebitXPGP);
 		replaceFunction(0x10152930, UiItemCreationCraftingCostTexts);
 
+
+		write(0x102EE250, ptrToBrewPotion, sizeof(ptrToBrewPotion));
+		write(0x102EE280, ptrToScribeScroll, sizeof(ptrToScribeScroll));
+		write(0x102EE2B0, ptrToCraftWand, sizeof(ptrToCraftWand));
+		write(0x102EE2E0, ptrToCraftRod, sizeof(ptrToCraftRod));
+
+		write(0x102EE310, ptrToCraftWondrous, sizeof(ptrToCraftWondrous));
+		write(0x102AAE28, ptrToCraftStaff, sizeof(ptrToCraftStaff));
+		write(0x102AADF8, ptrToForgeRing, sizeof(ptrToForgeRing));
+		write(0x102EE340, ptrToMAA, sizeof(ptrToMAA));*/
 	}
 } itemCreation;

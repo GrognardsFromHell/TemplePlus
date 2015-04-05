@@ -110,11 +110,13 @@ protected:
 struct TempleAllocFuncs : AddressTable
 {
 	void* (__cdecl *opNew)(size_t count);
+	void* (__cdecl *_malloc_0)(size_t count);
 	void (__cdecl *free)(void *ptr);
 
 	TempleAllocFuncs() {
 		rebase(opNew, 0x10256432);
 		rebase(free, 0x10254209);
+		rebase(_malloc_0, 0x1025444F);
 	}
 };
 extern TempleAllocFuncs allocFuncs;

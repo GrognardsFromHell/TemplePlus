@@ -149,6 +149,12 @@
     <ClCompile Include="gamelib_save.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="combat.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="radial_menu.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -280,6 +286,15 @@
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
     <ClInclude Include="obj.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="combat.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="radial_menu.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="conditions.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
   </ItemGroup>
