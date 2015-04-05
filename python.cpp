@@ -6,9 +6,28 @@
 #include "temple_functions.h"
 #include "python_header.h"
 #include "testhelper.h"
+#include "python_debug.h"
 
 // hmm should the functions be STATIC or maybe global? What's the syntax?
 
+static struct PythonInternal : AddressTable {
+
+	/*
+		The python dictionary that contains all global Python objects.
+	*/
+	PyObject **globals;
+
+	/*
+		Initialization function for Python.
+	*/
+	int (__cdecl *InitPython)();
+
+	PythonInternal() {
+		rebase(globals, 0x10BCA764);
+		rebase(InitPython, 0x100ADA30);
+	}
+
+} pythonInternal;
 
 #pragma region Helper Functions
 
@@ -435,13 +454,7 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 	return pyObjHandleTypeGetAttr(obj, name);
 }
 
-
-
-PyObject* __cdecl pySpellType_getAttrNew(PySpell* spell, char *name){
-	if (!_strcmpi(name, "caster_class_alt")) {
-		return PyString_FromString("IT SURE DOES!");
-	}
-	
+PyObject* __cdecl pySpellType_getAttrNew(PySpell* spell, char *name) {	
 	return pySpellTypeGetAttr(spell, name);
 };
 
@@ -465,24 +478,64 @@ int __cdecl  pyObjHandleType_setAttrNew(TemplePyObjHandle *obj, char *name, Temp
 	return pyObjHandleTypeSetAttr(obj, name, obj2);
 }
 
+static PyMethodDef debugMethodDef = {
+	"debug",
+	nullptr,
+	METH_VARARGS,
+	nullptr
+};
+
 class PythonExtensions : public TempleFix {
 public:
 	const char* name() override {
 		return "Python Script Extensions";
 	}
-	void apply() override;
+
+	static PyObject* DebugCallHandler(PyObject *pyIdx, PyObject *args) {
+		auto idx = PyInt_AsLong(pyIdx);
+		auto cb = reinterpret_cast<PythonDebugFunc*>(idx);
+
+		cb->callback()();
+		
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+
+	static int __cdecl HookedInitPython() {
+
+		auto result = pythonInternal.InitPython();
+
+		logger->info("Initializating Co8 Python subsystems...");
+		for (auto cb : PythonDebugFunc::callbacks()) {
+			logger->debug("  Registering Python global {}", cb->name());
+
+			auto name = const_cast<char*>(cb->name());
+			debugMethodDef.ml_meth = reinterpret_cast<PyCFunction>(&DebugCallHandler);
+			PyObject *cFunc = PyCFunction_New(&debugMethodDef, PyInt_FromLong(reinterpret_cast<long>(cb)));
+			PyDict_SetItemString(*pythonInternal.globals, name, cFunc);
+			Py_DECREF(cFunc);
+		}
+		
+		return result;
+	}
+
+	void apply() override {
+
+		// replace the init function with our own, so we can add our stuff at the right time
+		auto orgInitPython = replaceFunction(reinterpret_cast<uint32_t>(pythonInternal.InitPython),
+			&HookedInitPython);
+		pythonInternal.InitPython = reinterpret_cast<int(__cdecl*)()>(orgInitPython);
+
+		// Hook the getattr function of obj handles
+		pyObjHandleTypeGetAttr = pyObjHandleType->tp_getattr;
+		pyObjHandleType->tp_getattr = (getattrfunc)pyObjHandleType_getAttrNew;
+
+		pyObjHandleTypeSetAttr = pyObjHandleType->tp_setattr;
+		pyObjHandleType->tp_setattr = (setattrfunc)pyObjHandleType_setAttrNew;
+
+		pySpellTypeGetAttr = pySpellType->tp_getattr;
+		pySpellType->tp_getattr = (getattrfunc)pySpellType_getAttrNew;
+
+	}
+
 } pythonExtension;
-
-void PythonExtensions::apply() {
-
-	// Hook the getattr function of obj handles
-	pyObjHandleTypeGetAttr = pyObjHandleType->tp_getattr;
-	pyObjHandleType->tp_getattr = (getattrfunc) pyObjHandleType_getAttrNew;
-
-	pyObjHandleTypeSetAttr = pyObjHandleType->tp_setattr;
-	pyObjHandleType->tp_setattr = (setattrfunc) pyObjHandleType_setAttrNew;
-
-	pySpellTypeGetAttr = pySpellType->tp_getattr;
-	pySpellType->tp_getattr = (getattrfunc)pySpellType_getAttrNew;
-	
-}

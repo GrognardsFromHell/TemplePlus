@@ -855,6 +855,7 @@ static PyObject* animDump(PyObject* ignore, PyObject* args) {
 		}
 	}
 
+	Py_INCREF(Py_None);
 	return Py_None;
 }
 
