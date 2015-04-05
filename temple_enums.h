@@ -1,8 +1,6 @@
-
 #pragma once
 
-enum feat_enums : uint32_t
-{
+enum feat_enums : uint32_t {
 	FEAT_ACROBATIC = 0x0,
 	FEAT_AGILE = 0x1,
 	FEAT_ALERTNESS = 0x2,
@@ -653,8 +651,7 @@ enum feat_enums : uint32_t
 	FEAT_RANGER_MANYSHOT = 0x287,
 };
 
-enum feat_requirement_codes : int32_t
-{
+enum feat_requirement_codes : int32_t {
 	featReqCodeTerminator = -1,
 	featReqCodeMinCasterLevel = -2,
 	featReqCodeTurnUndeadRelated = -3,
@@ -665,8 +662,7 @@ enum feat_requirement_codes : int32_t
 	featReqCodeAnimalCompanion = -9
 };
 
-enum featPropertyEnums : uint32_t
-{
+enum featPropertyEnums : uint32_t {
 	featPropRogueFeat = 0x40000
 };
 
@@ -690,8 +686,7 @@ enum ObjectType : uint32_t {
 	obj_t_bag = 16
 };
 
-enum obj_f : uint32_t
-{
+enum obj_f : uint32_t {
 
 	obj_f_begin = 0,
 	obj_f_location = 1, // note: in the DLL this is labeled obj_f_current_aid  but there appears to be an offset here. Maybe they removed "obj_f_current_aid" and forgot to update the strings?
@@ -715,7 +710,7 @@ enum obj_f : uint32_t
 	obj_f_light_offset_X = 19,
 	obj_f_light_offset_Y = 20,
 	obj_f_light_offset_Z = 21,
-	obj_f_flags = 22,  // was "obj_f_name" in the DLL but is used as obj_f_flags so it must be another mis-named one
+	obj_f_flags = 22, // was "obj_f_name" in the DLL but is used as obj_f_flags so it must be another mis-named one
 	obj_f_spell_flags = 23,
 	obj_f_name = 24,
 	obj_f_description = 25,
@@ -1151,8 +1146,7 @@ enum _standPointType_enum : uint32_t {
 	STANDPOINT_SCOUT = 2
 };
 
-enum Alignment : uint32_t
-{
+enum Alignment : uint32_t {
 	ALIGNMENT_NEUTRAL = 0,
 	ALIGNMENT_LAWFUL = 1,
 	ALIGNMENT_CHAOTIC = 2,
@@ -1171,8 +1165,7 @@ enum Alignment : uint32_t
 };
 
 
-enum Stat : uint32_t
-{
+enum Stat : uint32_t {
 	stat_strength = 0x0,
 	stat_dexterity = 0x1,
 	stat_constitution = 0x2,
@@ -1254,8 +1247,7 @@ enum Stat : uint32_t
 };
 
 
-enum D20Query : uint32_t
-{
+enum D20Query : uint32_t {
 	Q_Helpless = 0x0,
 	Q_SneakAttack = 0x1,
 	Q_OpponentSneakAttack = 0x2,
@@ -1373,8 +1365,7 @@ enum D20Query : uint32_t
 };
 
 
-enum D20Signal : uint32_t
-{
+enum D20Signal : uint32_t {
 	S_HP_Changed = 0x0,
 	S_HealSkill = 0x1,
 	S_Sequence = 0x2,
@@ -1434,12 +1425,10 @@ enum D20Signal : uint32_t
 	S_Web_Burning = 0x38,
 	S_Anim_CastConjureEnd = 0x39,
 	S_Item_Remove_Enhancement = 0x3A,
-}
-;
+};
 
 
-enum D20DispatcherKey : uint32_t
-{
+enum D20DispatcherKey : uint32_t {
 	DK_NONE = 0x0,
 	DK_SIG_HP_Changed = 0x93,
 	DK_SIG_HealSkill = 0x94,
@@ -1614,11 +1603,9 @@ enum D20DispatcherKey : uint32_t
 	DK_QUE_Item_Has_Keen_Bonus = 0x13E,
 	DK_QUE_AI_Has_Spell_Override = 0x13F,
 	DK_QUE_Weapon_Get_Keen_Bonus = 0x140,
-}
-;
+};
 
-enum enum_dispIO_type : uint32_t
-{
+enum enum_dispIO_type : uint32_t {
 	dispIOType0= 0,
 	dispIOType1,
 	dispIOType2,
@@ -1656,8 +1643,7 @@ enum enum_dispIO_type : uint32_t
 
 };
 
-enum enum_disp_type : uint32_t
-{
+enum enum_disp_type : uint32_t {
 	dispType0 = 0,
 	dispTypeConditionAdd,
 	dispTypeConditionRemove,
@@ -1718,7 +1704,7 @@ enum enum_disp_type : uint32_t
 	dispType57,
 	dispType58,
 	dispType59,
-	
+
 	dispType60,
 	dispType61,
 	dispType62,
@@ -1735,31 +1721,130 @@ enum enum_disp_type : uint32_t
 	dispType72,
 
 
-
 	dispTypeCount // used just for size definition purposes
 
 
 };
 
-enum enum_monster_category : uint32_t
-{
+enum enum_monster_category : uint32_t {
 	mc_type_aberration = 0,
-	 mc_type_animal = 1,
-	 mc_type_beast = 2,
-	 mc_type_construct = 3,
-	 mc_type_dragon = 4,
-	 mc_type_elemental = 5,
-	 mc_type_fey = 6,
-	 mc_type_giant = 7,
-	 mc_type_humanoid = 8,
-	 mc_type_magical_beast = 9,
-	 mc_type_monstrous_humanoid = 10,
-	 mc_type_ooze = 11,
-	 mc_type_outsider = 12,
-	 mc_type_plant = 13,
-	 mc_type_shapechanger = 14,
-	 mc_type_undead = 15,
-	 mc_type_vermin = 16,
-	 mc_subtype_earth = 256,
-	 mc_subtye_fire = 4096
+	mc_type_animal = 1,
+	mc_type_beast = 2,
+	mc_type_construct = 3,
+	mc_type_dragon = 4,
+	mc_type_elemental = 5,
+	mc_type_fey = 6,
+	mc_type_giant = 7,
+	mc_type_humanoid = 8,
+	mc_type_magical_beast = 9,
+	mc_type_monstrous_humanoid = 10,
+	mc_type_ooze = 11,
+	mc_type_outsider = 12,
+	mc_type_plant = 13,
+	mc_type_shapechanger = 14,
+	mc_type_undead = 15,
+	mc_type_vermin = 16,
+	mc_subtype_earth = 256,
+	mc_subtye_fire = 4096
+};
+
+/*
+	Flags supported by all object types.
+	Query with objects.GetFlags
+*/
+enum ObjectFlag : uint32_t {
+	OF_DESTROYED = 1,
+	OF_OFF,
+	OF_FLAT,
+	OF_TEXT,
+	OF_SEE_THROUGH,
+	OF_SHOOT_THROUGH,
+	OF_TRANSLUCENT,
+	OF_SHRUNK,
+	OF_DONTDRAW,
+	OF_INVISIBLE,
+	OF_NO_BLOCK,
+	OF_CLICK_THROUGH,
+	OF_INVENTORY,
+	OF_DYNAMIC,
+	OF_PROVIDES_COVER,
+	OF_RANDOM_SIZE,
+	OF_NOHEIGHT,
+	OF_WADING,
+	OF_UNUSED_40000,
+	OF_STONED,
+	OF_DONTLIGHT,
+	OF_TEXT_FLOATER,
+	OF_INVULNERABLE,
+	OF_EXTINCT,
+	OF_TRAP_PC,
+	OF_TRAP_SPOTTED,
+	OF_DISALLOW_WADING,
+	OF_UNUSED_08000000,
+	OF_HEIGHT_SET,
+	OF_ANIMATED_DEAD,
+	OF_TELEPORTED,
+	OF_RADIUS_SET
+};
+
+enum ItemFlag : uint32_t {
+	OIF_IDENTIFIED = 0x1,
+	OIF_WONT_SELL = 0x2,
+	OIF_IS_MAGICAL = 0x4,
+	OIF_NO_PICKPOCKET = 0x8,
+	OIF_NO_DISPLAY = 0x10,
+	OIF_NO_DROP = 0x20,
+	OIF_NEEDS_SPELL = 0x40,
+	OIF_CAN_USE_BOX = 0x80,
+	OIF_NEEDS_TARGET = 0x100,
+	OIF_LIGHT_SMALL = 0x200,
+	OIF_LIGHT_MEDIUM = 0x400,
+	OIF_LIGHT_LARGE = 0x800,
+	OIF_LIGHT_XLARGE = 0x1000,
+	OIF_PERSISTENT = 0x2000,
+	OIF_MT_TRIGGERED = 0x4000,
+	OIF_STOLEN = 0x8000,
+	OIF_USE_IS_THROW = 0x10000,
+	OIF_NO_DECAY = 0x20000,
+	OIF_UBER = 0x40000,
+	OIF_NO_NPC_PICKUP = 0x80000,
+	OIF_NO_RANGED_USE = 0x100000,
+	OIF_VALID_AI_ACTION = 0x200000,
+	OIF_DRAW_WHEN_PARENTED = 0x400000,
+	OIF_EXPIRES_AFTER_USE = 0x800000,
+	OIF_NO_LOOT = 0x1000000,
+	OIF_USES_WAND_ANIM = 0x2000000,
+	OIF_NO_TRANSFER = 0x4000000
+};
+
+enum PortalFlag : uint32_t {
+	OPF_LOCKED = 0x1,
+	OPF_JAMMED = 0x2,
+	OPF_MAGICALLY_HELD = 0x4,
+	OPF_NEVER_LOCKED = 0x8,
+	OPF_ALWAYS_LOCKED = 0x10,
+	OPF_LOCKED_DAY = 0x20,
+	OPF_LOCKED_NIGHT = 0x40,
+	OPF_BUSTED = 0x80,
+	OPF_NOT_STICKY = 0x100,
+	OPF_OPEN = 0x200
+};
+
+enum SecretDoorFlag : uint32_t {
+	OSDF_DC_0 = 0x1,
+	OSDF_DC_1 = 0x2,
+	OSDF_DC_2 = 0x4,
+	OSDF_DC_3 = 0x8,
+	OSDF_DC_4 = 0x10,
+	OSDF_DC_5 = 0x20,
+	OSDF_DC_6 = 0x40,
+	OSDF_RANK_0 = 0x80,
+	OSDF_RANK_1 = 0x100,
+	OSDF_RANK_2 = 0x200,
+	OSDF_RANK_3 = 0x300,
+	OSDF_RANK_4 = 0x400,
+	OSDF_RANK_5 = 0x800,
+	OSDF_RANK_6 = 0x1000,
+	OSDF_SECRET_DOOR = 0x2000,
+	OSDF_SECRET_DOOR_FOUND = 0x4000
 };

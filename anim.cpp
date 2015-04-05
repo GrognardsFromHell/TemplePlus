@@ -12,15 +12,6 @@
 #include <fstream>
 #include "pythonglobal.h"
 
-
-template <typename Type, size_t ExpectedSize, size_t ActualSize = 0>
-struct validate_size : true_type {
-	static_assert(ActualSize == ExpectedSize, "Structure does not have required size!");
-};
-template <typename Type, size_t ExpectedSize>
-struct validate_size<Type, ExpectedSize, 0> : validate_size<Type, ExpectedSize, sizeof(Type)> {
-};
-
 #pragma pack(push, 1)
 
 struct AnimSlotId {

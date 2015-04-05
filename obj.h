@@ -1,9 +1,7 @@
-
 #pragma once
 
 #include "temple_functions.h"
 #include "temple_enums.h"
-
 
 struct SubDispDef;
 struct CondStruct;
@@ -64,105 +62,86 @@ struct GameObject {
 };
 #pragma pack(pop)
 
-/*
-	Flags supported by all object types.
-	Query with objects.GetFlags
-*/
-enum ObjectFlag : uint32_t {
-	OF_DESTROYED = 1,
-	OF_OFF,
-	OF_FLAT,
-	OF_TEXT,
-	OF_SEE_THROUGH,
-	OF_SHOOT_THROUGH,
-	OF_TRANSLUCENT,
-	OF_SHRUNK,
-	OF_DONTDRAW,
-	OF_INVISIBLE,
-	OF_NO_BLOCK,
-	OF_CLICK_THROUGH,
-	OF_INVENTORY,
-	OF_DYNAMIC,
-	OF_PROVIDES_COVER,
-	OF_RANDOM_SIZE,
-	OF_NOHEIGHT,
-	OF_WADING,
-	OF_UNUSED_40000,
-	OF_STONED,
-	OF_DONTLIGHT,
-	OF_TEXT_FLOATER,
-	OF_INVULNERABLE,
-	OF_EXTINCT,
-	OF_TRAP_PC,
-	OF_TRAP_SPOTTED,
-	OF_DISALLOW_WADING,
-	OF_UNUSED_08000000,
-	OF_HEIGHT_SET,
-	OF_ANIMATED_DEAD,
-	OF_TELEPORTED,
-	OF_RADIUS_SET
+struct DispIO {
+	enum_dispIO_type dispIOType;
 };
 
-enum ItemFlag : uint32_t {
-	OIF_IDENTIFIED = 0x1,
-	OIF_WONT_SELL = 0x2,
-	OIF_IS_MAGICAL = 0x4,
-	OIF_NO_PICKPOCKET = 0x8,
-	OIF_NO_DISPLAY = 0x10,
-	OIF_NO_DROP = 0x20,
-	OIF_NEEDS_SPELL = 0x40,
-	OIF_CAN_USE_BOX = 0x80,
-	OIF_NEEDS_TARGET = 0x100,
-	OIF_LIGHT_SMALL = 0x200,
-	OIF_LIGHT_MEDIUM = 0x400,
-	OIF_LIGHT_LARGE = 0x800,
-	OIF_LIGHT_XLARGE = 0x1000,
-	OIF_PERSISTENT = 0x2000,
-	OIF_MT_TRIGGERED = 0x4000,
-	OIF_STOLEN = 0x8000,
-	OIF_USE_IS_THROW = 0x10000,
-	OIF_NO_DECAY = 0x20000,
-	OIF_UBER = 0x40000,
-	OIF_NO_NPC_PICKUP = 0x80000,
-	OIF_NO_RANGED_USE = 0x100000,
-	OIF_VALID_AI_ACTION = 0x200000,
-	OIF_DRAW_WHEN_PARENTED = 0x400000,
-	OIF_EXPIRES_AFTER_USE = 0x800000,
-	OIF_NO_LOOT = 0x1000000,
-	OIF_USES_WAND_ANIM = 0x2000000,
-	OIF_NO_TRANSFER = 0x4000000
+struct CondNode : TempleAlloc {
+	CondStruct* condStruct;
+	CondNode* nextCondNode;
+	uint32_t flags;
+	uint32_t args[4];
+
+	explicit CondNode(CondStruct *cond);
 };
 
-enum PortalFlag : uint32_t {
-	OPF_LOCKED = 0x1,
-	OPF_JAMMED = 0x2,
-	OPF_MAGICALLY_HELD = 0x4,
-	OPF_NEVER_LOCKED = 0x8,
-	OPF_ALWAYS_LOCKED = 0x10,
-	OPF_LOCKED_DAY = 0x20,
-	OPF_LOCKED_NIGHT = 0x40,
-	OPF_BUSTED = 0x80,
-	OPF_NOT_STICKY = 0x100,
-	OPF_OPEN = 0x200
+struct SubDispNode : TempleAlloc {
+	SubDispDef* subDispDef;
+	CondNode* condNode;
+	SubDispNode* next;
 };
 
-enum SecretDoorFlag : uint32_t {
-	OSDF_DC_0 = 0x1,
-	OSDF_DC_1 = 0x2,
-	OSDF_DC_2 = 0x4,
-	OSDF_DC_3 = 0x8,
-	OSDF_DC_4 = 0x10,
-	OSDF_DC_5 = 0x20,
-	OSDF_DC_6 = 0x40,
-	OSDF_RANK_0 = 0x80,
-	OSDF_RANK_1 = 0x100,
-	OSDF_RANK_2 = 0x200,
-	OSDF_RANK_3 = 0x300,
-	OSDF_RANK_4 = 0x400,
-	OSDF_RANK_5 = 0x800,
-	OSDF_RANK_6 = 0x1000,
-	OSDF_SECRET_DOOR = 0x2000,
-	OSDF_SECRET_DOOR_FOUND = 0x4000
+struct SubDispDef {
+	enum_disp_type dispType;
+	uint32_t dispKey;
+	void (__cdecl *dispCallback)(SubDispNode* subDispNode, objHndl objHnd, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO);
+	uint32_t data1;
+	uint32_t data2;
+};
+
+struct CondStruct {
+	char* condName;
+	int numArgs;
+	SubDispDef subDispDefs;
+};
+
+struct DispatcherCallbackArgs {
+	SubDispNode* subDispNode;
+	objHndl objHndCaller;
+	enum_disp_type dispType;
+	uint32_t dispKey;
+	DispIO* dispIO;
+};
+
+struct DispIO14h : DispIO {
+	CondStruct* condStruct;
+	uint32_t outputFlag;
+	uint32_t arg1;
+	uint32_t arg2;
+
+	DispIO14h() {
+		dispIOType = dispIOType0;
+		condStruct = nullptr;
+		outputFlag = 0;
+		arg1 = 0;
+		arg2 = 0;
+	}
+};
+
+struct DispIO20h : DispIO {
+	uint32_t interrupt;
+	uint32_t field_8;
+	uint32_t field_C;
+	uint32_t val1;
+	uint32_t val2;
+	uint32_t okToAdd;
+	CondNode* condNode;
+
+	DispIO20h() {
+		dispIOType = dispIOType0;
+		condNode = nullptr;
+		val1 = 0;
+		val2 = 0;
+		interrupt = 0;
+	}
+};
+
+struct Dispatcher :TempleAlloc {
+	objHndl objHnd;
+	CondNode* attributeConds;
+	CondNode* itemConds;
+	CondNode* otherConds;
+	SubDispNode* subDispNodes[ dispTypeCount ];
 };
 
 extern struct Objects : AddressTable {
@@ -177,8 +156,7 @@ extern struct Objects : AddressTable {
 		return static_cast<ObjectType>(_GetInternalFieldInt32(obj, obj_f_type));
 	}
 
-	uint32_t GetRace(objHndl obj)
-	{
+	uint32_t GetRace(objHndl obj) {
 		return _StatLevelGet(obj, stat_race);
 	}
 
@@ -187,175 +165,60 @@ extern struct Objects : AddressTable {
 		return type == obj_t_npc || type == obj_t_pc;
 	}
 
-	bool IsCategoryType(objHndl objHnd, enum_monster_category categoryType)
-	{
-		if (objHnd != 0)
-		{
-			if (IsCritter(objHnd))
-			{
+	bool IsCategoryType(objHndl objHnd, enum_monster_category categoryType) {
+		if (objHnd != 0) {
+			if (IsCritter(objHnd)) {
 				auto monCat = _GetInternalFieldInt64(objHnd, obj_f_critter_monster_category);
-				return (monCat & 0xFFFFFFFF == categoryType);
+				return (monCat & 0xFFFFFFFF) == categoryType;
 			}
 		}
 		return 0;
 	}
 
-	bool IsCategorySubtype(objHndl objHnd, enum_monster_category categoryType)
-	{
-		if (objHnd != 0)
-		{
-			if (IsCritter(objHnd))
-			{
+	bool IsCategorySubtype(objHndl objHnd, enum_monster_category categoryType) {
+		if (objHnd != 0) {
+			if (IsCritter(objHnd)) {
 				auto monCat = _GetInternalFieldInt64(objHnd, obj_f_critter_monster_category);
-				return ( (monCat>> 32) & 0xFFFFFFFF == categoryType);
+				return ((monCat >> 32) & 0xFFFFFFFF) == categoryType;
 			}
 		}
 		return 0;
 	}
-	
-	bool IsUndead(objHndl objHnd)
-	{
+
+	bool IsUndead(objHndl objHnd) {
 		return IsCategoryType(objHnd, mc_type_undead);
 	}
 
-	bool IsOoze(objHndl objHnd)
-	{
+	bool IsOoze(objHndl objHnd) {
 		return IsCategoryType(objHnd, mc_type_ooze);
 	}
 
-	bool IsSubtypeFire(objHndl objHnd)
-	{
+	bool IsSubtypeFire(objHndl objHnd) {
 		return IsCategorySubtype(objHnd, mc_subtye_fire);
 	}
 
-	Dispatcher * GetDispatcher(objHndl obj)
-	{
+	Dispatcher* GetDispatcher(objHndl obj) {
 		return (Dispatcher *)(_GetInternalFieldInt32(obj, obj_f_dispatcher));
 	}
 
 private:
-	int (__cdecl *_GetInternalFieldInt32)(objHndl ObjHnd, int nFieldIdx);
+	int(__cdecl *_GetInternalFieldInt32)(objHndl ObjHnd, int nFieldIdx);
 	int64_t(__cdecl *_GetInternalFieldInt64)(objHndl ObjHnd, int nFieldIdx);
 	int(__cdecl *_StatLevelGet)(objHndl ObjHnd, Stat);
-	
+
 } objects;
-
-
-struct DispIO
-{
-	enum_dispIO_type dispIOType;
-	uint32_t dispIOData[];
-};
-
-
-
-
-
-
-struct CondNode : TempleAlloc
-{
-	CondStruct * condStruct;
-	CondNode * nextCondNode;
-	uint32_t flags;
-	uint32_t condArgs[];
-};
-
-struct SubDispNode : TempleAlloc
-{
-	SubDispDef * subDispDef;
-	CondNode * condNode;
-	SubDispNode * next;
-};
-
-
-struct SubDispDef
-{
-	enum_disp_type dispType;
-	uint32_t dispKey;
-	void(__cdecl *dispCallback)(SubDispNode * subDispNode, objHndl objHnd, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO);
-	uint32_t data1;
-	uint32_t data2;
-};
-
-struct CondStruct
-{
-	char * condName;
-	uint32_t numArgs;
-	SubDispDef subDispDefs;
-};
-
-
-
-struct DispatcherCallbackArgs
-{
-	SubDispNode * subDispNode;
-	objHndl objHndCaller;
-	enum_disp_type dispType;
-	uint32_t dispKey;
-	DispIO * dispIO;
-};
-
-
-struct DispIO14h
-{
-	enum_dispIO_type dispIOType;
-	CondStruct * condStruct;
-	uint32_t outputFlag;
-	uint32_t arg1;
-	uint32_t arg2;
-	DispIO14h()
-	{
-		dispIOType = dispIOType0;
-		condStruct = nullptr;
-		outputFlag = 0;
-		arg1 = 0;
-		arg2 = 0;
-	}
-};
-
-struct DispIO20h
-{
-	enum_dispIO_type dispIOType;
-	uint32_t interrupt;
-	uint32_t field_8;
-	uint32_t field_C;
-	uint32_t val1;
-	uint32_t val2;
-	uint32_t okToAdd;
-	CondNode * condNode;
-	DispIO20h()
-	{
-		dispIOType = dispIOType0;
-		condNode = nullptr;
-		val1 = 0;
-		val2 = 0;
-		interrupt = 0;
-	}
-};
-
-
-struct Dispatcher :TempleAlloc
-{
-	objHndl objHnd;
-	CondNode * attributeConds;
-	CondNode * itemConds;
-	CondNode * otherConds;
-	SubDispNode * subDispNodes[ dispTypeCount  ];
-};
 
 // const auto TestSizeOfDispatcher = sizeof(Dispatcher); // 0x138 as it should be
 
-Dispatcher * DispatcherInit(objHndl objHnd);
-void DispIO_Size32_Type21_Init(DispIO20h * dispIO);
+Dispatcher* DispatcherInit(objHndl objHnd);
+void DispIO_Size32_Type21_Init(DispIO20h* dispIO);
 uint32_t Dispatch62(objHndl, DispIO*, uint32_t dispKey);
 uint32_t Dispatch63(objHndl objHnd, DispIO* dispIO);
-uint32_t ConditionAddDispatch(Dispatcher * dispatcher, CondNode ** ppCondNode, CondStruct * condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4);
-CondNode * CondNodeInit(CondStruct * condStruct);
-void CondNodeAddToSubDispNodeArray(Dispatcher * dispatcher, CondNode * condNode);
-uint32_t ConditionAddToAttribs_NumArgs0(Dispatcher * dispatcher, CondStruct * condStruct);
-uint32_t ConditionAddToAttribs_NumArgs2(Dispatcher * dispatcher, CondStruct * condStruct, uint32_t arg1, uint32_t arg2);
-uint32_t ConditionAdd_NumArgs0(Dispatcher * dispatcher, CondStruct * condStruct);
-uint32_t ConditionAdd_NumArgs2(Dispatcher * dispatcher, CondStruct * condStruct, uint32_t arg1, uint32_t arg2);
-uint32_t ConditionAdd_NumArgs3(Dispatcher * dispatcher, CondStruct * condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3);
-uint32_t ConditionAdd_NumArgs4(Dispatcher * dispatcher, CondStruct * condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4);
-
+uint32_t ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4);
+void CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNode);
+uint32_t ConditionAddToAttribs_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct);
+uint32_t ConditionAddToAttribs_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2);
+uint32_t ConditionAdd_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct);
+uint32_t ConditionAdd_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2);
+uint32_t ConditionAdd_NumArgs3(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3);
+uint32_t ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4);

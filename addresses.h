@@ -5,6 +5,17 @@
 
 extern void* templeImageBase;
 
+/*
+	Utility to validate the size of structures.
+*/
+template <typename Type, size_t ExpectedSize, size_t ActualSize = 0>
+struct validate_size : true_type {
+	static_assert(ActualSize == ExpectedSize, "Structure does not have required size!");
+};
+template <typename Type, size_t ExpectedSize>
+struct validate_size<Type, ExpectedSize, 0> : validate_size<Type, ExpectedSize, sizeof(Type)>{
+};
+
 struct AddressInitializer
 {
 	// Add a pointer to the queue for being rebased
@@ -122,12 +133,12 @@ struct TempleAllocFuncs : AddressTable
 extern TempleAllocFuncs allocFuncs;
 
 /*
-Utility base class that ensures memory is allocated within the heap of temple.dll
-Simply using new will otherwise cause issues since the free&malloc functions within
-temple.dll do not come from the same CRT.
+	Utility base class that ensures memory is allocated within the heap of temple.dll
+	Simply using new will otherwise cause issues since the free&malloc functions within
+	temple.dll do not come from the same CRT.
 */
 struct TempleAlloc {
-	void* operator new (size_t count){
+	void* operator new (size_t count) {
 		return allocFuncs.opNew(count);
 	}
 
