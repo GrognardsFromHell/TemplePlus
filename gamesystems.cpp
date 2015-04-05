@@ -18,13 +18,6 @@
 
 GameSystemFuncs gameSystemFuncs;
 
-/*
-FieldDefs *fieldDefTable = (FieldDefs*)0x10B3D7D8;
-for (auto field : fieldDefTable->fields) {
-logger->info("FIELD!");
-}
-*/
-
 typedef bool (__cdecl *GameSystemInit)(const GameSystemConf* conf);
 typedef void (__cdecl *GameSystemReset)();
 typedef bool (__cdecl *GameSystemModuleLoad)();
@@ -205,55 +198,6 @@ struct AfterCallbacks {
 		for (auto& callback : afterInitCallbacks) {
 			callback(conf);
 		}
-
-		/*
-		
-int NumberOfSetBits(int i)
-{
-	i = i - ((i >> 1) & 0x55555555);
-	i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
-	return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
-}
-		struct FieldDef {
-			int protoPropIndex;
-			int field4;
-			int PropBitmap_idx1;
-			uint32_t PropBitmask;
-			int PropBitmap_idx2;
-			uint32_t IsStoredInPropCollection;
-			uint32_t FieldTypeCode;
-		};
-
-		struct FieldDefs {
-			FieldDef fields[430];
-		};
-
-		const char **typeNames = (const char**)0x102CD7F8;
-		const char **fieldNames = (const char**)0x102CD840;
-		FieldDefs *fieldDefTable = *(FieldDefs**)0x10B3D7D8;
-		string typeNamesHeader;
-		for (int j = 0; j <= 16; ++j) {
-			typeNamesHeader.append(";").append(typeNames[j]);
-		}
-
-		logger->info("fieldname;proto idx;field4;bitmapidx1;bitmask;bitmapidx2;stored_in_prop_collection;field_type" << typeNamesHeader;
-		int i = 0);
-		for (auto field : fieldDefTable->fields) {
-			string typeSupport;
-			for (int j = 0; j <= 16; ++j) {
-				if (templeFuncs.DoesTypeSupportField(j, i)) {
-					typeSupport.append(";X");
-				} else {
-					typeSupport.append(";");
-				}
-			}
-
-			LOG(info)
-				<< fieldNames[i++] << ";"
-				<< field.protoPropIndex << ";" << field.field4 << ";" << field.PropBitmap_idx1
-				<< ";" << format("0x%x") % field.PropBitmask << ";" << field.PropBitmap_idx2
-				<< ";" << field.IsStoredInPropCollection << ";" << field.FieldTypeCode << typeSupport;
-		}*/
 
 		return result;
 	}
