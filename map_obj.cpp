@@ -6,13 +6,12 @@
 #include "python_debug.h"
 
 struct MapFindNodeObj {
-	int flags;
-	int field4;
+	int flags; // 2 if in use
+	int field4; // badfood
 	objHndl objHandle;
-	int field10;
+	MapFindNodeObj *prev;
 	MapFindNodeObj *next;
-	int field18;
-	int field1c;
+	locationSec sectorLoc;
 };
 
 struct MapFindNodeObjPage {
@@ -20,9 +19,9 @@ struct MapFindNodeObjPage {
 };
 
 struct MapFindNodeSector {
-	locXY sectorLoc;
-	int unk1;
-	int unk2;
+	locationSec sectorLoc;
+	MapFindNodeObj *firstObj;
+	int unk2; // badfood
 };
 
 struct MapFindNodeData {
@@ -46,7 +45,21 @@ static struct MapObjInternal : AddressTable {
 } mapObjInternal;
 
 static void DumpMapObjects() {
-	logger->info("HELLO WORLD!");
+
+	auto findNodeData = mapObjInternal.findNodeData;
+	auto nodes = findNodeData->sectorNodes;
+	
+	for (auto i = 0; i < findNodeData->sectorNodeCount; ++i) {
+		auto &sectorNode = nodes[i];
+		logger->info("{}, {}", sectorNode.sectorLoc.x(), sectorNode.sectorLoc.y());
+
+		auto objNode = sectorNode.firstObj;
+		while (objNode) {
+			logger->info("{}", objNode->objHandle);
+			objNode = objNode->next;
+		}
+	}
+
 }
 
 static PythonDebugFunc pyMapObjDebugFunc("dump_map_obj", &DumpMapObjects);

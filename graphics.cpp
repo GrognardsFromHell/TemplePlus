@@ -803,6 +803,16 @@ static int HookedBeginFrame() {
 	return 0;
 }
 
+static void HookedUpdateProjMatrices(const TigMatrices &matrices) {
+	TigMatrices modifiedParams;
+	modifiedParams.xOffset = matrices.xOffset + 0.5f;
+	modifiedParams.yOffset = matrices.yOffset + 0.5f;
+	modifiedParams.scale = matrices.scale;
+
+	videoFuncs.updateProjMatrices(&modifiedParams);
+
+}
+
 void hook_graphics() {
 	/*
 		These assertions are based on mallocs or memsets in the code that allow us to deduce the original struct
@@ -813,6 +823,8 @@ void hook_graphics() {
 
 	// We only differ between borderless and normal window mode.
 	videoFuncs.startupFlags = SF_WINDOW;
+
+	MH_CreateHook(videoFuncs.updateProjMatrices, HookedUpdateProjMatrices, reinterpret_cast<LPVOID*>(&videoFuncs.updateProjMatrices));
 
 	// Hook into present frame to do after-frame stuff
 	MH_CreateHook(temple_address(0x101DCB80), HookedPresentFrame, nullptr);

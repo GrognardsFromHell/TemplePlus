@@ -118,12 +118,10 @@ static struct RenderFuncs : AddressTable {
 
 	void (__cdecl *RenderUi)();
 	void (__cdecl *RenderMouseCursor)();
-	void (__cdecl *RenderGameSystems)();
-
+	
 	RenderFuncs() {
 		rebase(RenderUi, 0x101F8D10);
 		rebase(RenderMouseCursor, 0x101DD330);
-		rebase(RenderGameSystems, 0x10002650);
 	}
 } renderFuncs;
 
@@ -131,7 +129,7 @@ static struct RenderFuncs : AddressTable {
 static void RenderFrame() {
 	graphics.BeginFrame();
 
-	renderFuncs.RenderGameSystems();
+	GameSystemsRender();
 	renderFuncs.RenderUi();
 	renderFuncs.RenderMouseCursor();
 	

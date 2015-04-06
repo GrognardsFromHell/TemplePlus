@@ -36,6 +36,17 @@ struct ObjectId {
 	GUID guid;
 };
 
+struct locationSec {
+	uint64_t location;
+
+	int x() const {
+		return location & 0x3FFFFFF;
+	}
+	int y() const {
+		return (location >> 26) & 0x3FFFFFF;
+	}
+};
+
 struct locXY{
 	uint32_t locx;
 	uint32_t locy;

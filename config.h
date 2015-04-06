@@ -9,7 +9,7 @@ enum class RngType {
 struct TemplePlusConfig
 {
 	bool showFps = false; // Previously -fps
-	bool noSound = false; // Previously -nosound
+	bool noSound = true; // Previously -nosound
 	bool doublebuffer = false; // Previously -doublebuffer
 	bool animCatchup = false; // Previously -animcatchup
 	bool noRandomEncounters = false; // Previously -norandom
