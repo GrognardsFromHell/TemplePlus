@@ -5,7 +5,7 @@ build_script:
   - msbuild TemplePlus.sln /p:Configuration=Release /p:MSBuildDefines="_TP_VERSION=%APPVEYOR_BUILD_VERSION%;_TP_COMMIT=%APPVEYOR_REPO_COMMIT%" /verbosity:minimal
 
 after_build:
-  - 7z a TemplePLus-%APPVEYOR_BUILD_VERSION%.zip %APPVEYOR_BUILD_FOLDER%\Release\TemplePlus.exe
+  - 7z a TemplePlus-%APPVEYOR_BUILD_VERSION%.zip %APPVEYOR_BUILD_FOLDER%\Release\TemplePlus.exe
 
 artifacts:
   - path: 'TemplePlus*.zip'
