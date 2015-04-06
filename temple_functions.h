@@ -228,7 +228,6 @@ struct TempleFuncs : AddressTable {
 	char *(__cdecl *ItemCreationPrereqSthg_sub_101525B0)(objHndl, objHndl);
 
 	int (*temple_snprintf)(char *, size_t, const char *, ...);
-	bool (__cdecl *FontDrawSthg_sub_101F87C0)(int widgetId, char *text, RECT *rect, tig_text_style *style); // sthg with font drawing
 
 	// rebase on init
 	TempleFuncs() {
@@ -336,7 +335,6 @@ struct TempleFuncs : AddressTable {
 		rebase(RandomIntRange, 0x10038DF0);
 
 		rebase(temple_snprintf, 0x10254680);
-		rebase(FontDrawSthg_sub_101F87C0, 0x101F87C0); // sthg with font drawing
 
 	}
 private:

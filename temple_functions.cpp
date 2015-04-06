@@ -42,6 +42,10 @@ void __cdecl hooked_print_debug_message(char* format, ...)
 		return; // Trimmed completely
 	}
 
+	if (!strncmp("PyScript: call to", buffer, strlen("PyScript: call to"))) {
+
+	}
+
 	logger->info("{}", buffer);
 }
 

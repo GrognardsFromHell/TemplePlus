@@ -170,6 +170,7 @@
     </ClCompile>
     <ClCompile Include="gamesystems_render.cpp" />
     <ClCompile Include="ui_render.cpp" />
+    <ClCompile Include="version.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -323,6 +324,7 @@
       <Filter>python</Filter>
     </ClInclude>
     <ClInclude Include="ui_render.h" />
+    <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -398,6 +400,7 @@
     <Text Include="..\Spellslinger%27s Notes\bonusspells.txt">
       <Filter>Mods and Fixes</Filter>
     </Text>
+    <Text Include="appveyor.yml" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Dependencies">

@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "temple_functions.h"
-#include "libraryholder.h"
 #include "fixes.h"
 #include "config.h"
+#include "version.h"
 
 #include <psapi.h>
 
@@ -20,6 +20,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	config.Save();
 
 	InitLogging();
+	
+	logger->info("Starting Temple Plus");
+	logger->info("Version: {}", GetTemplePlusVersion());
+	logger->info("Commit: {}", GetTemplePlusCommitId());
 
 	HMODULE templeDllHandle = LoadLibraryW(L"temple.dll");
 	if (templeDllHandle != reinterpret_cast<HMODULE>(0x10000000)) {

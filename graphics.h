@@ -180,7 +180,7 @@ struct VideoData {
 };
 
 extern GlobalBool<0x10D250EC> drawFps;
-extern GlobalStruct<tig_text_style, 0x10D24DB0> drawFpsTextStyle;
+extern GlobalStruct<TigTextStyle, 0x10D24DB0> drawFpsTextStyle;
 extern GlobalStruct<VideoData, 0x11E74580> video;
 extern VideoFuncs videoFuncs;
 

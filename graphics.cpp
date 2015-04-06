@@ -23,7 +23,7 @@
 Graphics graphics;
 
 GlobalBool<0x10D250EC> drawFps;
-GlobalStruct<tig_text_style, 0x10D24DB0> drawFpsTextStyle;
+GlobalStruct<TigTextStyle, 0x10D24DB0> drawFpsTextStyle;
 VideoFuncs videoFuncs;
 GlobalStruct<VideoData, 0x11E74580> video;
 

@@ -6,6 +6,9 @@ struct ColorRect {
 	D3DCOLOR topRight;
 	D3DCOLOR bottomLeft;
 	D3DCOLOR bottomRight;
+
+	ColorRect() {}
+	ColorRect(D3DCOLOR fill) : topLeft(fill), topRight(fill), bottomLeft(fill), bottomRight(fill) {}
 };
 
 struct TigRect {
