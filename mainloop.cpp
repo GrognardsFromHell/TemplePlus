@@ -4,6 +4,7 @@
 #include "addresses.h"
 #include "temple_functions.h"
 #include "tig_msg.h"
+#include "tig_mouse.h"
 #include "gamesystems.h"
 #include "graphics.h"
 
@@ -109,7 +110,7 @@ void RunMainLoop() {
 			if (mainLoop.sub_10113D40(unk)) {
 				DoMouseScrolling();
 			}
-		}	
+		}
 	}
 
 }
@@ -131,7 +132,9 @@ static void RenderFrame() {
 
 	GameSystemsRender();
 	renderFuncs.RenderUi();
-	renderFuncs.RenderMouseCursor();
+	
+	renderFuncs.RenderMouseCursor(); // This calls the strange render-callback
+	mouseFuncs.DrawCursor(); // This draws dragged items
 	
 	graphics.Present();
 }

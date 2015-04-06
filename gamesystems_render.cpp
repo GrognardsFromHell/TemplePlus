@@ -117,7 +117,7 @@ void GameSystemsRender() {
 		renderInfo.tiles = &tiles;
 		renderInfo.viewportSize = &viewportSize;
 
-		// I think this maybe a 2D arcanum leftover, when the map could be incrementally drawn based on "dirty rects"
+		// I think this maybe a 2D arcanum leftover when the map could be incrementally drawn based on "dirty rects"
 		TigRectList dirtyList;
 		dirtyList.rect = TigRect(0, 0, video->width, video->height);
 		dirtyList.next = nullptr;

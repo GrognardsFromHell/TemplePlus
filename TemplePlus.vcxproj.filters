@@ -169,6 +169,7 @@
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="gamesystems_render.cpp" />
+    <ClCompile Include="ui_render.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -321,6 +322,7 @@
     <ClInclude Include="python_debug.h">
       <Filter>python</Filter>
     </ClInclude>
+    <ClInclude Include="ui_render.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

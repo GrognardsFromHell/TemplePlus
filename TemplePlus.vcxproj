@@ -133,6 +133,7 @@
     <ClCompile Include="tig_tokenizer.cpp" />
     <ClCompile Include="timeevents.cpp" />
     <ClCompile Include="ui_char_highresfix.cpp" />
+    <ClCompile Include="ui_render.cpp" />
     <ClCompile Include="xp.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -237,6 +238,7 @@
     <ClInclude Include="tio.h" />
     <ClInclude Include="ui.h" />
     <ClInclude Include="ui_item_creation.h" />
+    <ClInclude Include="ui_render.h" />
     <ClInclude Include="xp.h" />
     <ClInclude Include="ui_mainmenu.h" />
   </ItemGroup>

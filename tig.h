@@ -1,6 +1,13 @@
 
 #pragma once
 
+struct ColorRect {
+	D3DCOLOR topLeft;
+	D3DCOLOR topRight;
+	D3DCOLOR bottomLeft;
+	D3DCOLOR bottomRight;
+};
+
 struct TigRect {
 	int x;
 	int y;
