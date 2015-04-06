@@ -2,11 +2,9 @@
 
 #include "temple_functions.h"
 #include "temple_enums.h"
+#include "dispatcher.h"
 
-struct SubDispDef;
-struct CondStruct;
-struct DispatcherCallbackArgs;
-struct Dispatcher;
+
 
 #pragma pack(push, 1)
 /*
@@ -62,87 +60,7 @@ struct GameObject {
 };
 #pragma pack(pop)
 
-struct DispIO {
-	enum_dispIO_type dispIOType;
-};
 
-struct CondNode : TempleAlloc {
-	CondStruct* condStruct;
-	CondNode* nextCondNode;
-	uint32_t flags;
-	uint32_t args[6];
-
-	explicit CondNode(CondStruct *cond);
-};
-
-struct SubDispNode : TempleAlloc {
-	SubDispDef* subDispDef;
-	CondNode* condNode;
-	SubDispNode* next;
-};
-
-struct SubDispDef {
-	enum_disp_type dispType;
-	uint32_t dispKey;
-	void (__cdecl *dispCallback)(SubDispNode* subDispNode, objHndl objHnd, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO);
-	uint32_t data1;
-	uint32_t data2;
-};
-
-struct CondStruct {
-	char* condName;
-	int numArgs;
-	SubDispDef subDispDefs;
-};
-
-struct DispatcherCallbackArgs {
-	SubDispNode* subDispNode;
-	objHndl objHndCaller;
-	enum_disp_type dispType;
-	uint32_t dispKey;
-	DispIO* dispIO;
-};
-
-struct DispIO14h : DispIO {
-	CondStruct* condStruct;
-	uint32_t outputFlag;
-	uint32_t arg1;
-	uint32_t arg2;
-
-	DispIO14h() {
-		dispIOType = dispIOType0;
-		condStruct = nullptr;
-		outputFlag = 0;
-		arg1 = 0;
-		arg2 = 0;
-	}
-};
-
-struct DispIO20h : DispIO {
-	uint32_t interrupt;
-	uint32_t field_8;
-	uint32_t field_C;
-	uint32_t val1;
-	uint32_t val2;
-	uint32_t okToAdd;
-	CondNode* condNode;
-
-	DispIO20h() {
-		dispIOType = dispIOType0;
-		condNode = nullptr;
-		val1 = 0;
-		val2 = 0;
-		interrupt = 0;
-	}
-};
-
-struct Dispatcher :TempleAlloc {
-	objHndl objHnd;
-	CondNode* attributeConds;
-	CondNode* itemConds;
-	CondNode* otherConds;
-	SubDispNode* subDispNodes[ dispTypeCount ];
-};
 
 extern struct Objects : AddressTable {
 	Objects();
@@ -225,16 +143,3 @@ private:
 
 // const auto TestSizeOfDispatcher = sizeof(Dispatcher); // 0x138 as it should be
 
-Dispatcher* DispatcherInit(objHndl objHnd);
-void DispIO_Size32_Type21_Init(DispIO20h* dispIO);
-uint32_t Dispatch62(objHndl, DispIO*, uint32_t dispKey);
-uint32_t Dispatch63(objHndl objHnd, DispIO* dispIO);
-uint32_t ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4);
-void CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNode);
-uint32_t ConditionAddToAttribs_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct);
-uint32_t ConditionAddToAttribs_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2);
-uint32_t ConditionAdd_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct);
-uint32_t ConditionAdd_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2);
-uint32_t ConditionAdd_NumArgs3(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3);
-uint32_t ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4);
-void DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO);

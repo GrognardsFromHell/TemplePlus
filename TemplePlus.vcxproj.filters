@@ -165,6 +165,9 @@
     <ClCompile Include="python_debug.cpp">
       <Filter>python</Filter>
     </ClCompile>
+    <ClCompile Include="dispatcher.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -316,6 +319,9 @@
     <ClInclude Include="map_obj.h" />
     <ClInclude Include="python_debug.h">
       <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="dispatcher.h">
+      <Filter>Mods and Fixes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

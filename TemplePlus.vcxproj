@@ -69,6 +69,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="description.cpp" />
+    <ClCompile Include="dispatcher.cpp" />
     <ClCompile Include="feat.cpp" />
     <ClCompile Include="fixes.cpp" />
     <ClCompile Include="folderutils.cpp" />
@@ -187,6 +188,7 @@
     <ClInclude Include="dependencies\spdlog\logger.h" />
     <ClInclude Include="dependencies\spdlog\spdlog.h" />
     <ClInclude Include="description.h" />
+    <ClInclude Include="dispatcher.h" />
     <ClInclude Include="exception.h" />
     <ClInclude Include="feat.h" />
     <ClInclude Include="folderutils.h" />
