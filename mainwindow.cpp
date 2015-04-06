@@ -87,7 +87,7 @@ bool CreateMainWindow(TigConfig* settings) {
 		}
 
 		menu = NULL;
-		dwStyle = WS_OVERLAPPEDWINDOW; //  WS_CAPTION | WS_CLIPCHILDREN | WS_SYSMENU | WS_GROUP;
+		dwStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
 		dwExStyle = 0;
 
   		AdjustWindowRect(&windowRect, dwStyle, FALSE);
