@@ -38,7 +38,7 @@ bool CreateMainWindow(TigConfig* settings) {
 	wndClass.style = CS_DBLCLKS;
 	wndClass.lpfnWndProc = MainWindowProc;
 	wndClass.hInstance = video->hinstance;
-	wndClass.hIcon = LoadIconA(video->hinstance, "TIGIcon");
+	wndClass.hIcon = LoadIconA(video->hinstance, "icon");
 	wndClass.hCursor = LoadCursorA(0, MAKEINTRESOURCEA(IDC_ARROW));
 	wndClass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
 	wndClass.lpszClassName = "TIGClass";

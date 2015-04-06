@@ -390,6 +390,9 @@
     <Filter Include="utils">
       <UniqueIdentifier>{66b79c6d-b1d5-4441-b7c0-6af6c3fc49a8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="resources">
+      <UniqueIdentifier>{c55bf3c4-caa1-41f3-8954-f4017d3b70e6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Spellslinger%27s Notes\bonusspells.txt">
@@ -420,5 +423,15 @@
     <None Include="dependencies\spdlog\LICENSE">
       <Filter>Dependencies\spdlog</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="toee_gog_icon.ico">
+      <Filter>resources</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resource.rc">
+      <Filter>resources</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

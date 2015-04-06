@@ -248,6 +248,12 @@
   <ItemGroup>
     <None Include="dependencies\spdlog\LICENSE" />
   </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="toee_gog_icon.ico" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3E3B6C43-8C76-4CD5-BCF8-3F2B9C5178FE}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
