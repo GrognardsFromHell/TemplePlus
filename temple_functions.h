@@ -15,6 +15,17 @@ extern "C"
 
 
 
+struct locationSec {
+	uint64_t location;
+
+	int x() const {
+		return location & 0x3FFFFFF;
+	}
+	int y() const {
+		return (location >> 26) & 0x3FFFFFF;
+	}
+};
+
 
 
 struct TempleFuncs : AddressTable {
@@ -156,7 +167,6 @@ struct TempleFuncs : AddressTable {
 	char *(__cdecl *ItemCreationPrereqSthg_sub_101525B0)(objHndl, objHndl);
 
 	int (*temple_snprintf)(char *, size_t, const char *, ...);
-	bool (__cdecl *FontDrawSthg_sub_101F87C0)(int widgetId, char *text, RECT *rect, tig_text_style *style); // sthg with font drawing
 
 	uint32_t(__cdecl *sub_100664B0)(objHndl objHnd, uint32_t);
 
@@ -266,7 +276,6 @@ struct TempleFuncs : AddressTable {
 		rebase(RandomIntRange, 0x10038DF0);
 
 		rebase(temple_snprintf, 0x10254680);
-		rebase(FontDrawSthg_sub_101F87C0, 0x101F87C0); // sthg with font drawing
 
 		rebase(sub_100664B0, 0x100664B0);
 

@@ -2,20 +2,52 @@
 #pragma once
 
 #include "addresses.h"
+#include "tig.h"
 
 /**
  * Describes how text is rendered on the screen (style, font, etc.)
  */
-struct tig_text_style
+#pragma pack(push, 1)
+struct TigTextStyle
 {
-	int unk1;
+	int field0;
+	int tracking = 0;
+	int kerning = 1; // Anything less than this doesn't render properly
+	int leading = 0;
+	int field10;
+	int field14;
+	int field18;
+	int field1c;
+	int field20;
+	int field24;
+	/*
+		8 seems to be drop shadow
+		0x10 centers the text
+		0x400 Draws a filled rect behind the text (see bgColor)
+		0x800 Draws a border box around the text, always black
+		0xC00 is used for tooltips
+		Not seen in the wild:
+		0x2000
+		0x4000 truncates text if too long for rect and appends "..."
+	*/
+	int flags = 0;
+	int field2c;
+	int field30;
+	ColorRect *textColor = nullptr;
+	ColorRect *colors2 = nullptr;
+	ColorRect *shadowColor = nullptr; // Use with flags |= 0x8
+	ColorRect *colors4 = nullptr;
+	ColorRect *bgColor = nullptr; // Use with flags |= 0x400
+	int field48;
+	int field4c;
 };
+#pragma pack(pop)
 
 /**
  * Plug in "text" and pass to Measure to get the on-screen measurements a blob of text
  * will have.
  */
-struct tig_font_metrics
+struct TigFontMetrics
 {
 	const char *text = nullptr;
 	int width = 0;
@@ -23,18 +55,6 @@ struct tig_font_metrics
 	int lines = 0;
 	int lineheight = 0;
 };
-
-/**
- * Used by Draw to position and draw the text. measurements are made automatically if not passed in via w/h
- */
-struct tig_font_extents
-{
-	int x = 0;
-	int y = 0;
-	int width = 0;
-	int height = 0;
-};
-
 
 struct TigFontGlyph {
 	uint32_t x;
@@ -73,8 +93,8 @@ struct TigFontData {
 
 struct TigFontFuncs : AddressTable
 {
-	int(__cdecl *Measure)(tig_text_style *style, tig_font_metrics *metrics);
-	int(__cdecl *Draw)(const char *text, tig_font_extents* extents, tig_text_style *style);
+	int(__cdecl *Measure)(const TigTextStyle &style, TigFontMetrics &metrics);
+	int(__cdecl *Draw)(const char *text, const TigRect& extents, const TigTextStyle& style);
 	int(__cdecl *LoadAll)(const char *pattern);
 	int(__cdecl *PushFont)(const char *name, int size, bool antialias);
 	int(__cdecl *PopFont)();

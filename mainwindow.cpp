@@ -38,7 +38,7 @@ bool CreateMainWindow(TigConfig* settings) {
 	wndClass.style = CS_DBLCLKS;
 	wndClass.lpfnWndProc = MainWindowProc;
 	wndClass.hInstance = video->hinstance;
-	wndClass.hIcon = LoadIconA(video->hinstance, "TIGIcon");
+	wndClass.hIcon = LoadIconA(video->hinstance, "icon");
 	wndClass.hCursor = LoadCursorA(0, MAKEINTRESOURCEA(IDC_ARROW));
 	wndClass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
 	wndClass.lpszClassName = "TIGClass";
@@ -87,7 +87,7 @@ bool CreateMainWindow(TigConfig* settings) {
 		}
 
 		menu = NULL;
-		dwStyle = WS_OVERLAPPEDWINDOW; //  WS_CAPTION | WS_CLIPCHILDREN | WS_SYSMENU | WS_GROUP;
+		dwStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
 		dwExStyle = 0;
 
   		AdjustWindowRect(&windowRect, dwStyle, FALSE);
@@ -107,13 +107,7 @@ bool CreateMainWindow(TigConfig* settings) {
 	temple_set<0x10D24E10>(0);
 	temple_set<0x10D24E14>(settings->width);
 
-	const char* windowTitle;
-	// Apparently is a flag that indicates a custom window title
-	if (settings->flags & 0x40) {
-		windowTitle = settings->windowTitle;
-	} else {
-		windowTitle = "Temple of Elemental Evil - Cirlce of Eight";
-	}
+	string windowTitle = "Temple of Elemental Evil - Co8";
 
 	DWORD windowWidth = windowRect.right - windowRect.left;
 	DWORD windowHeight = windowRect.bottom - windowRect.top;
@@ -121,7 +115,7 @@ bool CreateMainWindow(TigConfig* settings) {
 	video->hwnd = CreateWindowExA(
 		dwExStyle,
 		"TIGClass",
-		windowTitle,
+		windowTitle.c_str(),
 		dwStyle,
 		windowRect.left,
 		windowRect.top,

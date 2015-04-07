@@ -4,6 +4,7 @@
 #include "tig_shader.h"
 #include "tig_texture.h"
 #include "graphics.h"
+#include "ui_render.h"
 
 #include <vector>
 
@@ -17,10 +18,31 @@ struct OriginalMouseFuncs : AddressTable {
 	int(__cdecl *SetCursor)(int shaderId);
 	void(__cdecl *ResetCursor)();
 
+	/*
+		If something is to be dragged around, this contains the texture id of the dragged item/object.
+		0 if nothing is to be drawn under the cursor.
+	*/
+	int *draggedTexId;
+
+	// Specifies the texture rectangle of the texture being dragged around (see draggedTexId).
+	RECT *draggedTexRect;
+
+	// The X coordinate within the texture where the user clicked to initiate the drag.
+	int *draggedCenterX;
+	
+	// The Y coordinate within the texture where the user clicked to initiate the drag.
+	int *draggedCenterY;
+	
 	OriginalMouseFuncs() {
 		rebase(SetCursor, 0x101DDDD0);
 		rebase(ResetCursor, 0x101DD780);
+
+		rebase(draggedTexId, 0x10D2558C);
+		rebase(draggedTexRect, 0x10D255B0);
+		rebase(draggedCenterX, 0x10D255C0);
+		rebase(draggedCenterY, 0x10D255C4);
 	}
+
 } orgMouseFuncs;
 
 static bool SetCursorFromShaderId(int shaderId) {
@@ -58,6 +80,22 @@ void MouseFuncs::RefreshCursor() {
 	if (!stashedCursorShaderIds.empty()) {
 		SetCursorFromShaderId(stashedCursorShaderIds.back());
 	}
+}
+
+void MouseFuncs::DrawCursor() {
+
+	auto texId = *orgMouseFuncs.draggedTexId;
+
+	if (texId) {
+		TigRect rect;
+		rect.x = mouseState->x + *orgMouseFuncs.draggedCenterX;
+		rect.y = mouseState->y + *orgMouseFuncs.draggedCenterY;
+		rect.width = orgMouseFuncs.draggedTexRect->right;
+		rect.height = orgMouseFuncs.draggedTexRect->bottom;
+
+		UiRenderer::DrawTexture(texId, rect);
+	}
+
 }
 
 /**

@@ -11,6 +11,7 @@
 #include "obj.h"
 #include "radial_menu.h"
 #include "common.h"
+#include "ui_render.h"
 
 GlobalPrimitive<ItemCreationType, 0x10BEDF50> itemCreationType;
 GlobalPrimitive<objHndl, 0x10BECEE0> globObjHndCrafter;
@@ -24,8 +25,8 @@ GlobalPrimitive<char *, 0x10BED6D4> itemCreationUIStringSkillRequired;
 GlobalPrimitive<char *, 0x10BEDB50> itemCreationUIStringItemCost;
 GlobalPrimitive<char *, 0x10BED8A4> itemCreationUIStringXPCost;
 GlobalPrimitive<char *, 0x10BED8A8> itemCreationUIStringValue;
-GlobalPrimitive<tig_text_style, 0x10BEE338> itemCreationTextStyle; // so far used by "Item Cost: %d" and "Experience Cost: %d"
-GlobalPrimitive<tig_text_style, 0x10BED938> itemCreationTextStyle2; // so far used by "Value: %d"
+GlobalPrimitive<TigTextStyle, 0x10BEE338> itemCreationTextStyle; // so far used by "Item Cost: %d" and "Experience Cost: %d"
+GlobalPrimitive<TigTextStyle, 0x10BED938> itemCreationTextStyle2; // so far used by "Value: %d"
 
 
 
@@ -205,8 +206,7 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 	int32_t *globB0;
 	uint32_t craftingCostCP;
 	uint32_t craftingCostXP;
-	char text[128];
-	RECT rect;
+	TigRect rect;
 	char * prereqString;
 	__asm{
 		mov widgetId, ebx; // widgetId is passed in ebx
@@ -221,10 +221,10 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 	};
 	
 
-	rect.left = 212;
-	rect.top = 157;
-	rect.right= 159;
-	rect.bottom = 10;
+	rect.x = 212;
+	rect.y = 157;
+	rect.width = 159;
+	rect.height = 10;
 
 	globInsuffXP = craftInsufficientXP.ptr();
 	globInsuffFunds = craftInsufficientFunds.ptr();
@@ -240,21 +240,19 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 	craftingCostCP = ItemWorthAdjustedForCasterLevel(objHndItem, slowLevelNew) / 2;
 	craftingCostXP = ItemWorthAdjustedForCasterLevel(objHndItem, slowLevelNew) / 2500;
 	
-
+	string text;
 	// "Item Cost: %d"
 	if (*globInsuffXP || *globInsuffFunds || *globSkillReqNotMet || *globB0){
 		
-		//_snprintf(text, 128, "%s @%d%d", itemCreationUIStringItemCost.ptr(), globInsuffFunds+1, craftingCostCP / 100);
-		templeFuncs.temple_snprintf(text, 128, "%s @%d%d", *(itemCreationUIStringItemCost.ptr() ), *(globInsuffFunds) + 1, craftingCostCP / 100);
-	}
-	else {
+		text = format("{} @{}{}", *itemCreationUIStringItemCost.ptr(), *(globInsuffFunds)+1, craftingCostCP / 100);
+	} else {
 		//_snprintf(text, 128, "%s @3%d", itemCreationUIStringItemCost.ptr(), craftingCostCP / 100);
-		templeFuncs.temple_snprintf(text, 128, "%s @3%d", *(itemCreationUIStringItemCost.ptr()), craftingCostCP / 100);
+		text = format("{} @3{}", *itemCreationUIStringItemCost.ptr(), craftingCostCP / 100);
 	};
 
 
-	templeFuncs.FontDrawSthg_sub_101F87C0(widgetId, text, &rect, itemCreationTextStyle.ptr());
-	rect.top += 11;
+	UiRenderer::DrawTextInWidget(widgetId, text, rect, itemCreationTextStyle);
+	rect.y += 11;
 
 
 
@@ -263,43 +261,39 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 	if (itemCreationType == ItemCreationType(0)){ // alchemy
 		// placeholder - they do similar bullshit in the code :P but I guess it can be modified easily enough!
 		if (*globInsuffXP || *globInsuffFunds || *globSkillReqNotMet || *globB0){
-			_snprintf(text, 128, "%s @%d%d", * (itemCreationUIStringSkillRequired.ptr() ), *(globSkillReqNotMet) + 1, craftingCostXP);
+			text = format("{} @{}{}", *itemCreationUIStringSkillRequired.ptr(), *globSkillReqNotMet + 1, craftingCostXP);
 		}
 		else {
-			_snprintf(text, 128, "%s @3%d", *(itemCreationUIStringSkillRequired.ptr()), craftingCostXP);
+			text = format("{} @3{}", *itemCreationUIStringSkillRequired.ptr(), craftingCostXP);
 		};
 	}
 	else
 	{
 		if (*globInsuffXP || *globInsuffFunds || *globSkillReqNotMet || *globB0){
-			_snprintf(text, 128, "%s @%d%d", *(itemCreationUIStringXPCost.ptr()), *(globInsuffXP) + 1, craftingCostXP);
+			text = format("{} @{}{}", *itemCreationUIStringXPCost.ptr(), *(globInsuffXP) + 1, craftingCostXP);
 		}
 		else {
-			_snprintf(text, 128, "%s @3%d", *(itemCreationUIStringXPCost.ptr()), craftingCostXP);
+			text = format("{} @3{}", *itemCreationUIStringXPCost.ptr(), craftingCostXP);
 		};
 	};
 
-	templeFuncs.FontDrawSthg_sub_101F87C0(widgetId, text, &rect, itemCreationTextStyle.ptr());
-	rect.top += 11;
+	UiRenderer::DrawTextInWidget(widgetId, text, rect, itemCreationTextStyle);
+	rect.y += 11;
 
 	// "Value: %d"
 	//_snprintf(text, 128, "%s @1%d", * (itemCreationUIStringValue.ptr() ), templeFuncs.Obj_Get_Field_32bit(objHndItem, obj_f_item_worth) / 100);
-	_snprintf(text, 128, "%s @1%d", *(itemCreationUIStringValue.ptr()), ItemWorthAdjustedForCasterLevel(objHndItem, slowLevelNew) / 100);
+	text = format("{} @1{}", *itemCreationUIStringValue.ptr(), ItemWorthAdjustedForCasterLevel(objHndItem, slowLevelNew) / 100);
 
-	templeFuncs.FontDrawSthg_sub_101F87C0(widgetId, text, &rect, itemCreationTextStyle2.ptr());
-
-
-
+	UiRenderer::DrawTextInWidget(widgetId, text, rect, itemCreationTextStyle2);
 
 	// Prereq: %s
-	;
-	rect.left = 210;
-	rect.top = 200;
-	rect.right = 150;
-	rect.bottom = 105;
+	rect.x = 210;
+	rect.y = 200;
+	rect.width = 150;
+	rect.height = 105;
 	prereqString = templeFuncs.ItemCreationPrereqSthg_sub_101525B0(globObjHndCrafter, objHndItem);
 	if (prereqString){
-		templeFuncs.FontDrawSthg_sub_101F87C0(widgetId, prereqString , &rect, itemCreationTextStyle.ptr());
+		UiRenderer::DrawTextInWidget(widgetId, prereqString, rect, itemCreationTextStyle);
 	}
 	
 

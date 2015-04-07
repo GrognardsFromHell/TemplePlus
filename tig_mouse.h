@@ -43,6 +43,8 @@ struct MouseFuncs : AddressTable {
 		mouseState->flags |= MF_HIDE_CURSOR;
 	}
 
+	void DrawCursor();
+
 	MouseFuncs() {
 		rebase(SetButtonState, 0x101DD1B0);
 		rebase(SetPos, 0x101DD070);

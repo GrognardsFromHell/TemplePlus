@@ -72,3 +72,5 @@ public:
 	static void AddLoadHook(std::function<void(GameSystemSaveFile*)> callback, bool before = false);
 	static void AddResizeBuffersHook(std::function<void(RebuildBufferInfo*)> callback, bool before = false);
 };
+
+void GameSystemsRender();

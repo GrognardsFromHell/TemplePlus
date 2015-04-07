@@ -4,8 +4,11 @@
 #include "addresses.h"
 #include "temple_functions.h"
 #include "tig_msg.h"
+#include "tig_mouse.h"
 #include "gamesystems.h"
 #include "graphics.h"
+#include "ui_render.h"
+#include "version.h"
 
 static struct MainLoop : AddressTable {
 	
@@ -109,7 +112,7 @@ void RunMainLoop() {
 			if (mainLoop.sub_10113D40(unk)) {
 				DoMouseScrolling();
 			}
-		}	
+		}
 	}
 
 }
@@ -118,22 +121,29 @@ static struct RenderFuncs : AddressTable {
 
 	void (__cdecl *RenderUi)();
 	void (__cdecl *RenderMouseCursor)();
-	void (__cdecl *RenderGameSystems)();
-
+	
 	RenderFuncs() {
 		rebase(RenderUi, 0x101F8D10);
 		rebase(RenderMouseCursor, 0x101DD330);
-		rebase(RenderGameSystems, 0x10002650);
 	}
 } renderFuncs;
+
+static void RenderVersion();
 
 // TODO: hook this?
 static void RenderFrame() {
 	graphics.BeginFrame();
 
-	renderFuncs.RenderGameSystems();
+	GameSystemsRender();
 	renderFuncs.RenderUi();
-	renderFuncs.RenderMouseCursor();
+
+	// Draw Version Number while in Main Menu
+	if (mainLoop.IsMainMenuVisible()) {
+		RenderVersion();
+	}
+	
+	renderFuncs.RenderMouseCursor(); // This calls the strange render-callback
+	mouseFuncs.DrawCursor(); // This draws dragged items
 	
 	graphics.Present();
 }
@@ -141,4 +151,20 @@ static void RenderFrame() {
 void DoMouseScrolling() {
 	// TODO: This would be the place to implement better scrolling in windowed mode
 	mainLoop.DoMouseScrolling();
+}
+
+static void RenderVersion() {
+	UiRenderer::PushFont(PredefinedFont::ARIAL_10);
+
+	ColorRect textColor(0x7FFFFFFF);
+	TigTextStyle style;
+	style.textColor = &textColor;
+
+	auto version = GetTemplePlusVersion();
+	auto rect = UiRenderer::MeasureTextSize(version, style);
+	rect.x = video->width - rect.width - 10;
+	rect.y = video->height - rect.height - 10;
+	UiRenderer::RenderText(version, rect, style);
+
+	UiRenderer::PopFont();
 }

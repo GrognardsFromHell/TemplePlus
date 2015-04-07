@@ -1,6 +1,8 @@
 
 #include "stdafx.h"
 #include "fixes.h"
+#include "gamesystems.h"
+#include "graphics.h"
 
 struct float4 {
 	float x;

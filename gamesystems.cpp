@@ -673,6 +673,7 @@ void GameSystemFuncs::ResizeScreen(int w, int h) {
 	// dword_1030705C = video_width / 4;
 	// dword_10307170 = video_height / 4;
 
+	// TODO: Can be removed since we write it on the stack in GameSystemsRender
 	auto scratchBufferRectExtended = gameSystemInitTable.scratchBufferRectExtended;
 	scratchBufferRectExtended->y = -256;
 	scratchBufferRectExtended->width = w + 512;
