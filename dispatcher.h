@@ -2,7 +2,7 @@
 
 #include "common.h"
 
-
+#define DISPATCHER_MAX  250 // max num of simultaneous Dispatches going on (static int counter inside DispatcherProcessor)
 
 struct SubDispDef;
 struct CondStruct;
@@ -99,5 +99,10 @@ void  DispatcherClearField(Dispatcher *dispatcher, CondNode ** dispCondList);
 void  DispatcherClearAttribs(Dispatcher *dispatcher);
 void  DispatcherClearItemConds(Dispatcher *dispatcher);
 void  DispatcherClearConds(Dispatcher *dispatcher);
+DispIO14h * DispIO14hCheckDispIOType1(DispIO14h * dispIO);
+void DispIO_Size32_Type21_Init(DispIO20h* dispIO);
+
+uint32_t Dispatch62(objHndl, DispIO*, uint32_t dispKey);
+uint32_t Dispatch63(objHndl objHnd, DispIO* dispIO);
 
 void DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO);

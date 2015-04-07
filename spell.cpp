@@ -12,7 +12,48 @@ SpontCastSpellLists spontCastSpellLists;
 //GlobalPrimitive<uint16_t>
 //1028D09C
 
+class SpontaneousCastingExpansion : public TempleFix {
+public:
+	const char* name() override {
+		return "Recreation of SpellSlinger's Spontaneous Casting for levels 6-9";
+	}
 
+	void apply() override {
+		writeCall(0x100F1127, DruidRadialSelectSummonsHook); // replaces SpellSlinger's hook for Druid Summon options
+		writeCall(0x100F113F, DruidRadialSpontCastSpellEnumHook);
+		writeCall(0x100F109D, GoodClericRadialSpontCastSpellEnumHook);
+		writeCall(0x100F10AE, EvilClericRadialSpontCastSpellEnumHook);
+	}
+} spellSpontCastExpansion;
+
+
+class SpellHostilityFlagFix : public TempleFix {
+public:
+	const char* name() override {
+		return "Spell Hostility bug: fix mass cure spells triggering hostile reaction. Can be expanded to other spells.";
+	}
+
+	void apply() override {
+		writeHex(0x10076EF4, "02"); // Cure Light Wounds, Mass
+		writeHex(0x10076F42, "02"); // Mass Heal
+		writeHex(0x10077058, "02 02 02"); // Cure Moderate + Serious + Critical Wounds, Mass
+	}
+} spellHostilityFlagFix;
+
+
+class SpellEnumExpansion : public TempleFix {
+public:
+	const char* name() override {
+		return "Expand the range of usable spellEnums. Currently walled off at 802.";
+	}
+
+	void apply() override {
+		// writeHex(0x100779DE + 2, "A0 0F"); // this prevents the crash from casting from scroll, but it fucks up normal spell casting... (can't go to radial menu to cast!)
+	}
+} spellEnumExpansionMod;
+
+
+#pragma region Spontaneous Summon Hooks
 
 void __declspec(naked) DruidRadialSelectSummonsHook()
 {
@@ -80,45 +121,15 @@ uint32_t _EvilClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel)
 	return spontCastSpellLists.spontCastSpellsEvilCleric[spellSlotLevel];
 }
 
-class SpontaneousCastingExpansion : public TempleFix {
-public:
-	const char* name() override {
-		return "Recreation of SpellSlinger's Spontaneous Casting for levels 6-9";
-	}
 
-	void apply() override {
-		writeCall(0x100F1127, DruidRadialSelectSummonsHook); // replaces SpellSlinger's hook for Druid Summon options
-		writeCall(0x100F113F, DruidRadialSpontCastSpellEnumHook);
-		writeCall(0x100F109D, GoodClericRadialSpontCastSpellEnumHook);
-		writeCall(0x100F10AE, EvilClericRadialSpontCastSpellEnumHook);
-	}
-} spellSpontCastExpansion;
+
+#pragma endregion
 
 
 
-class SpellHostilityFlagFix : public TempleFix {
-public:
-	const char* name() override {
-		return "Spell Hostility bug: fix mass cure spells triggering hostile reaction. Can be expanded to other spells.";
-	}
-
-	void apply() override {
-		writeHex(0x10076EF4, "02"); // Cure Light Wounds, Mass
-		writeHex(0x10076F42, "02"); // Mass Heal
-		writeHex(0x10077058, "02 02 02"); // Cure Moderate + Serious + Critical Wounds, Mass
-	}
-} spellHostilityFlagFix;
 
 
-class SpellEnumExpansion : public TempleFix {
-public:
-	const char* name() override {
-		return "Expand the range of usable spellEnums. Currently walled off at 802.";
-	}
 
-	void apply() override {
-		// writeHex(0x100779DE + 2, "A0 0F"); // this prevents the crash from casting from scroll, but it fucks up normal spell casting... (can't go to radial menu to cast!)
-	}
-} spellEnumExpansionMod;
+
 
 

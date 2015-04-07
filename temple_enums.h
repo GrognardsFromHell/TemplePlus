@@ -1903,10 +1903,10 @@ enum WeaponTypes : uint32_t
 	wt_morningstar,
 	wt_quarterstaff,
 	wt_spear,
-	wt_light_crossbow,
+	wt_light_crossbow,		// 14
 	wt_dart,
 	wt_sling,
-	wt_heavy_crossbow,
+	wt_heavy_crossbow,		// 17
 	wt_javelin,
 	wt_throwing_axe,
 	wt_light_hammer,
@@ -1954,7 +1954,7 @@ enum WeaponTypes : uint32_t
 	wt_dire_flail,
 	wt_two_bladed_sword,
 	wt_dwarven_urgrosh,
-	wt_hand_crossbow,
+	wt_hand_crossbow,			// 65
 	wt_shuriken,
 	wt_whip,
 	wt_repeating_crossbow,

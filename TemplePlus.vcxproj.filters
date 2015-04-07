@@ -22,9 +22,6 @@
     <ClCompile Include="xp.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
-    <ClCompile Include="spells.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
     <ClCompile Include="aas.cpp" />
     <ClCompile Include="game_config.cpp" />
     <ClCompile Include="temple_main.cpp" />
@@ -172,6 +169,12 @@
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="weapon.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="spell.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="condition.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
   </ItemGroup>
@@ -339,6 +342,9 @@
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
     <ClInclude Include="weapon.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="condition.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
   </ItemGroup>

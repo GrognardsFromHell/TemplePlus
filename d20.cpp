@@ -1,28 +1,21 @@
 #include "stdafx.h"
+#include "common.h"
 #include "d20.h"
 #include "temple_functions.h"
 #include "obj.h"
-#include "obj_structs.h"
-#include "spell_structs.h"
 #include "addresses.h"
 #include "feat.h"
 #include "fixes.h"
 #include "spell.h"
-#include "common.h"
+#include "dispatcher.h"
+#include "condition.h"
+
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
 
 
 ConditionStructs conds;
 CharacterClasses charClasses;
-
-//const uint32_t NUM_CLASSES = stat_level_wizard - stat_level_barbarian + 1;
-//Stat charClassEnums[NUM_CLASSES] = { stat_level_barbarian, stat_level_bard, stat_level_cleric, stat_level_druid, stat_level_fighter, stat_level_monk, stat_level_paladin, stat_level_ranger, stat_level_rogue, stat_level_sorcerer, stat_level_wizard };
-//Stat charClassEnums[NUM_CLASSES] = { stat_level_barbarian, stat_level_bard, stat_level_cleric, stat_level_druid, stat_level_fighter, stat_level_monk, stat_level_paladin, stat_level_ranger, stat_level_rogue, stat_level_sorcerer, stat_level_wizard };
-
-
-
-
 
 
 class D20Replacements : public TempleFix {
@@ -278,7 +271,7 @@ void D20StatusInitFeats(objHndl objHnd)
 
 		for (uint32_t i = 0; i < numFeats; i++)
 		{
-			CondStruct * cond;
+			CondStruct * cond; //WIP TODO
 		//	if ()
 			{
 	//			ConditionAddToAttribs_NumArgs2(dispatcher, cond, featList[i], )
@@ -287,75 +280,6 @@ void D20StatusInitFeats(objHndl objHnd)
 	}
 };
 
-void __cdecl DispatcherClearField(Dispatcher *dispatcher, CondNode ** dispCondList)
-{
-	CondNode * cond = *dispCondList;
-	objHndl obj = dispatcher->objHnd;
-	while ( cond != nullptr)
-	{
-		SubDispNode * subDispNode_TypeRemoveCond = dispatcher->subDispNodes[2];
-		CondNode * nextCond = cond->nextCondNode;
-
-		while (subDispNode_TypeRemoveCond != nullptr)
-		{
-			
-			SubDispDef * sdd = subDispNode_TypeRemoveCond->subDispDef;
-			if (sdd->dispKey == 0 && (subDispNode_TypeRemoveCond->condNode->flags & 1 ) == 0 
-				&& subDispNode_TypeRemoveCond->condNode == cond)
-			{
-				sdd->dispCallback(subDispNode_TypeRemoveCond, obj, dispTypeConditionRemove, 0, nullptr);
-			}
-			subDispNode_TypeRemoveCond = subDispNode_TypeRemoveCond->next;
-		}
-		DispatcherRemoveSubDispNodes(dispatcher, cond);
-		allocFuncs.free(cond);
-		cond = nextCond;
-
-	}
-	*dispCondList = nullptr;
-};
-
-void __cdecl DispatcherClearAttribs(Dispatcher *dispatcher)
-{
-	DispatcherClearField(dispatcher, &dispatcher->attributeConds);
-};
-
-void __cdecl DispatcherClearItemConds(Dispatcher *dispatcher)
-{
-	DispatcherClearField(dispatcher, &dispatcher->itemConds);
-};
-
-void __cdecl DispatcherClearConds(Dispatcher *dispatcher)
-{
-	DispatcherClearField(dispatcher, &dispatcher->otherConds);
-};
-
-void __cdecl DispatcherRemoveSubDispNodes(Dispatcher * dispatcher, CondNode * cond)
-{
-	for (uint32_t i = 0; i < dispTypeCount; i++)
-	{
-		SubDispNode ** ppSubDispNode = &dispatcher->subDispNodes[i];
-		while (*ppSubDispNode != nullptr)
-		{
-			if ( (*ppSubDispNode)->condNode == cond)
-			{
-				SubDispNode * savedNext = (*ppSubDispNode)->next;
-				allocFuncs.free(*ppSubDispNode);
-				*ppSubDispNode = savedNext;
-				
-			} else
-			{
-				ppSubDispNode = & ((*ppSubDispNode)->next);
-			}
-			
-		}
-	}
-
-};
 
 
-DispIO14h * DispIO14hCheckDispIOType1(DispIO14h * dispIO)
-{
-	if (dispIO->dispIOType == 1){ return dispIO; }
-	else { return nullptr; }
-};
+

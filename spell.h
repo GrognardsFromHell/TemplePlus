@@ -1,24 +1,7 @@
 #pragma once
 
 #include "stdafx.h"
-//#include "temple_functions.h"
 #include "common.h"
-
-
-uint32_t _DruidRadialSelectSummons(uint32_t spellSlotLevel);
-void DruidRadialSelectSummonsHook();
-uint32_t _DruidRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel);
-void DruidRadialSpontCastSpellEnumHook();
-uint32_t _GoodClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel);
-uint32_t _EvilClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel);
-
-const uint32_t TestSizeOfSpellStoreData = sizeof(SpellStoreData);
-
-const uint32_t TestSizeOfMetaMagicData = sizeof(MetaMagicData);
-const uint32_t TestSizeOfSpellStoreType = sizeof(SpellStoreType);
-const uint32_t TestSizeOfSpellStoreState = sizeof(SpellStoreState);
-
-//const uint32_t bbb = sizeof(int32_t);
 
 
 struct SpontCastSpellLists : AddressTable
@@ -42,3 +25,24 @@ public:
 };
 
 extern SpontCastSpellLists spontCastSpellLists;
+
+
+
+uint32_t _DruidRadialSelectSummons(uint32_t spellSlotLevel);
+void DruidRadialSelectSummonsHook();
+uint32_t _DruidRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel);
+void DruidRadialSpontCastSpellEnumHook();
+uint32_t _GoodClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel);
+uint32_t _EvilClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel);
+void EvilClericRadialSpontCastSpellEnumHook();
+void GoodClericRadialSpontCastSpellEnumHook();
+
+const uint32_t TestSizeOfSpellStoreData = sizeof(SpellStoreData);
+
+const uint32_t TestSizeOfMetaMagicData = sizeof(MetaMagicData);
+const uint32_t TestSizeOfSpellStoreType = sizeof(SpellStoreType);
+const uint32_t TestSizeOfSpellStoreState = sizeof(SpellStoreState);
+
+//const uint32_t bbb = sizeof(int32_t);
+
+

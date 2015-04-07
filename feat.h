@@ -39,6 +39,7 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 uint32_t _FeatExistsInArray(feat_enums featCode, feat_enums * featArray, uint32_t featArrayLen);
 uint32_t _FeatPrereqsCheck(objHndl, feat_enums featIdx, feat_enums*, uint32_t, Stat, Stat);
 uint32_t _RogueSpecialFeat(feat_enums featIdx, uint32_t newLevel);
-uint32_t FeatListGet(objHndl objHnd, feat_enums * listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat);
+uint32_t _FeatListGet(objHndl objHnd, feat_enums * listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat);
 uint32_t _FeatListElective(objHndl objHnd, feat_enums * listOut);
 uint32_t _WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType);
+uint32_t _WeaponFeatCheckSimpleWrapper(objHndl objHnd, WeaponTypes wpnType);

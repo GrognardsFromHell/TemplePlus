@@ -26,9 +26,10 @@ public:
 		replaceFunction(0x1007BF10, _RogueSpecialFeat);
 		replaceFunction(0x1007B930, _HasFeatCount);
 		replaceFunction(0x1007C080, _HasFeatCountByClass);
-		replaceFunction(0x1007C370, FeatListGet);
+		replaceFunction(0x1007C370, _FeatListGet);
 		replaceFunction(0x1007C3F0, _FeatListElective);
-		//replaceFunction(0x1007C4F0, _WeaponFeatCheck);
+		replaceFunction(0x1007C8D0, _WeaponFeatCheckSimpleWrapper);
+		//replaceFunction(0x1007C4F0, _WeaponFeatCheck); // usercall bullshit
 	}
 };
 FeatFixes featFixes;
@@ -39,8 +40,8 @@ FeatSystem::FeatSystem()
 	rebase(featPropertiesTable, 0x102BFD78); 		// TODO: export this to a mesfile
 	rebase(classFeatTable, 0x102CAAF8); 		// TODO: export this to a mesfile
 	rebase(featPreReqTable, 0x102C07A0); 		// TODO: export this to a mesfile
-	rebase(charEditorObjHnd, 0x11E741A0);
-	rebase(charEditorClassCode, 0x11E72FC0);
+	rebase(charEditorObjHnd, 0x11E741A0);		// TODO: move this to the appropriate system
+	rebase(charEditorClassCode, 0x11E72FC0);	// TODO: move this to the appropriate system
 	rebase(ToEE_WeaponFeatCheck, 0x1007C4F0);
 
 	uint32_t _racialFeatsTable[NUM_RACES * 10] = { -1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -122,8 +123,10 @@ uint32_t FeatSystem::WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uin
 #pragma endregion
 
 
-uint32_t __declspec(naked) FeatSthg_sub_1007C4F0(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat eax_objStat, uint32_t ebx_n1)
-{ // objStat goes into eax,  n1 goes into ebx
+uint32_t __declspec(naked) ToEEWeaponFeatCheckUsercallWrapper(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat eax_objStat, uint32_t ebx_n1)
+{ 
+	// Note: NO LONGER NECESSARY - function has been re-implemented in TemplePlus!
+	// objStat goes into eax,  n1 goes into ebx
 	__asm {// stack frame
 		//arg4	  // esp0 - 0x20
 		//arg8      // esp0 - 0x1C
@@ -164,6 +167,11 @@ uint32_t __declspec(naked) FeatSthg_sub_1007C4F0(objHndl objHnd, feat_enums * fe
 	}
 };
 
+
+uint32_t _WeaponFeatCheckSimpleWrapper(objHndl objHnd, WeaponTypes wpnType)
+{
+	return feats.WeaponFeatCheck(objHnd, 0, 0, (Stat)0, wpnType);
+}
 
 uint32_t _WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType)
 {
@@ -310,8 +318,6 @@ uint32_t _FeatExistsInArray(feat_enums featCode, feat_enums * featArray, uint32_
 
 uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * featArray, uint32_t featArrayLen, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased)
 {
-	//	uint32_t * featPropertiesTable = featPropertiesTable;
-
 	uint32_t featProps = feats.featPropertiesTable[featIdx];
 	uint32_t * featPrereqs = feats.featPreReqTable;
 	const uint8_t numCasterClasses = 7;
@@ -324,7 +330,7 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 
 	//return 1; // h4x :)
 
-//	checking feats in the character editor
+#pragma region	checking feats in the character editor - SpellSlinger hack for special Rogue feats for level > 10
 	if ( *feats.charEditorClassCode != 0 && *feats.charEditorObjHnd != 0)
 	{
 		auto newClassLvl = templeFuncs.ObjStatLevelGet(*feats.charEditorObjHnd, *feats.charEditorClassCode) + 1;
@@ -340,6 +346,7 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 			}
 		}
 	}
+#pragma endregion
 
 
 	uint32_t initOffset = featIdx * 16;
@@ -498,24 +505,29 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 		}
 		else if (featReqCode == -10)
 		{
-			if (!FeatSthg_sub_1007C4F0(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, FEAT_CRAFT_MAGIC_ARMS_AND_ARMOR))
+#pragma region Crossbow-related feats (probably rapid reload and stuff)
+			if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, wt_light_crossbow))
 			{
-				if (!FeatSthg_sub_1007C4F0(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, FEAT_CRAFT_WAND))
+				if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, wt_heavy_crossbow))
 				{
-					if (!FeatSthg_sub_1007C4F0(objHnd, featArray, featArrayLen, (Stat)0, FEAT_GREATER_WEAPON_FOCUS_GAUNTLET))
+					if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, wt_hand_crossbow))
 					{
 						return 0;
 					}
 				}
 			}
+#pragma endregion
 		}
 		else if (featReqCode == -4)
 		{
-			if (!FeatSthg_sub_1007C4F0(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, featReqCodeArg))
+#pragma region Weapon related feats general
+			if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, (WeaponTypes)featReqCodeArg))
 			{
 				return 0;
 			}
-		} else if( featReqCode >= 1000 && featReqCode <= 1999)
+#pragma endregion
+		} 
+		else if( featReqCode >= 1000 && featReqCode <= 1999)
 		{
 # pragma region Custom Feat Stat Requirement (?)
 			feat_enums featIdxFromReqCode = (feat_enums)(featReqCode - 1000);
@@ -613,7 +625,7 @@ uint32_t _HasFeatCount(objHndl objHnd, feat_enums featEnum)
 };
 
 
-uint32_t FeatListGet(objHndl objHnd, feat_enums * listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat)
+uint32_t _FeatListGet(objHndl objHnd, feat_enums * listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat)
 {
 	uint32_t featCount = 0;
 	int32_t hasFeatTimes = 0;
@@ -635,7 +647,7 @@ uint32_t FeatListGet(objHndl objHnd, feat_enums * listOut, Stat classBeingLevell
 
 uint32_t _FeatListElective(objHndl objHnd, feat_enums * listOut)
 {
-	return FeatListGet(objHnd, listOut, (Stat)0, (feat_enums)0);
+	return _FeatListGet(objHnd, listOut, (Stat)0, (feat_enums)0);
 };
 
 
@@ -660,7 +672,6 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 	
 	
 	for (uint32_t i = 0; i < NUM_CLASSES; i++)
-	//for (uint32_t i = 2; i < 4; i++)
 	{
 		uint32_t classLevel = objects.StatLevelGet(objHnd, charClasses.charClassEnums[i]);
 		if (classLevelBeingRaised == charClasses.charClassEnums[i])
@@ -670,18 +681,19 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 
 		uint32_t * classFeat = feats.classFeatTable + 80 * i;
 		uint32_t * classFeatStart = classFeat;
-	//	uint32_t * asdf = (uint32_t*)0x1E700000;
-	//	if (classFeat > asdf)
-	//	{
-	//		auto dummy = 1;
-	//	}
-		while (classFeat[0] != -1 && classFeat < classFeatStart + 80)
+
+		if (classLevel == 0)
 		{
-			if (classLevel >= classFeat[1])
-			{
-				//return 1;
-			}
+			continue;
+		}
+
+		while (featEnum != classFeat[0] && classFeat[0] != -1)
+		{
 			classFeat += 2;
+		}
+		if (classFeat[0] != -1 && classLevel >= classFeat[1])
+		{
+			return 1;
 		}
 
 	}

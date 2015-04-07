@@ -26,6 +26,7 @@
     <ClCompile Include="attackrollcpp.cpp" />
     <ClCompile Include="bonusspells.cpp" />
     <ClCompile Include="combat.cpp" />
+    <ClCompile Include="condition.cpp" />
     <ClCompile Include="d20.cpp" />
     <ClCompile Include="d3d8to9\d3d8to9.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
@@ -128,7 +129,7 @@
     <ClCompile Include="movies.cpp" />
     <ClCompile Include="obj.cpp" />
     <ClCompile Include="python.cpp" />
-    <ClCompile Include="spells.cpp" />
+    <ClCompile Include="spell.cpp" />
     <ClCompile Include="tig_tokenizer.cpp" />
     <ClCompile Include="timeevents.cpp" />
     <ClCompile Include="ui_char_highresfix.cpp" />
@@ -168,6 +169,7 @@
     <ClInclude Include="anim.h" />
     <ClInclude Include="combat.h" />
     <ClInclude Include="common.h" />
+    <ClInclude Include="condition.h" />
     <ClInclude Include="d20.h" />
     <ClInclude Include="d20_defs.h" />
     <ClInclude Include="d3d8to9\d3d8to9.h" />
