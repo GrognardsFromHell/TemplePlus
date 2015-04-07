@@ -8,4 +8,16 @@
 uint32_t IsCombatActive();
 uint32_t Combat_GetMesfileIdx_CombatMes();
 
-extern GlobalPrimitive<MesHandle, 0x10AA8408> combatsysCombatMesfileIdx;
+struct CombatSystem : AddressTable
+{
+	MesHandle * combatMesfileIdx;
+	uint32_t * combatModeActive;
+
+	CombatSystem()
+	{
+		rebase(combatModeActive, 0x10AA8418);
+		rebase(combatMesfileIdx, 0x10AA8408);
+	}
+} ;
+
+extern CombatSystem combat;

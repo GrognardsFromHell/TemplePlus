@@ -4,17 +4,13 @@
 #include "feat.h"
 #include "obj.h"
 #include "temple_functions.h"
+#include "d20.h"
+#include "tig_mes.h"
+#include "common.h"
+#include "weapon.h"
 
-GlobalPrimitive<uint32_t, 0x102BFD78> featPropertiesTable;
-GlobalPrimitive<uint32_t, 0x102C07A0> featPreReqTable;
-GlobalPrimitive<objHndl, 0x11E741A0> charEditorObjHnd;
-GlobalPrimitive<Stat, 0x11E72FC0> charEditorClassCode;
 
-uint32_t FeatExistsInArray(feat_enums featCode, feat_enums * featArray, uint32_t featArrayLen);
-uint32_t FeatSthg_sub_1007C4F0(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat eax_objStat, uint32_t ebx_n1);
-uint32_t ObjCheckFeatPrereqs(objHndl, feat_enums featIdx, feat_enums*, uint32_t, Stat, Stat);
-uint32_t RogueSpecialFeat(feat_enums featIdx, uint32_t newLevel);
-
+FeatSystem feats;
 
 class FeatFixes : public TempleFix {
 public:
@@ -24,23 +20,92 @@ public:
 
 	void apply() override {
 		//writeHex(0x10278078, "73 69 7A 65 5F 63 6F 6C 6F 73 73 61 6C");
-		replaceFunction(0x1007C8F0, ObjCheckFeatPrereqs);
-		replaceFunction(0x1007B990, FeatExistsInArray);
-		replaceFunction(0x1007BF10, RogueSpecialFeat);
 		
+		replaceFunction(0x1007C8F0, _FeatPrereqsCheck);
+		replaceFunction(0x1007B990, _FeatExistsInArray);
+		replaceFunction(0x1007BF10, _RogueSpecialFeat);
+		replaceFunction(0x1007B930, _HasFeatCount);
+		replaceFunction(0x1007C080, _HasFeatCountByClass);
+		replaceFunction(0x1007C370, FeatListGet);
+		replaceFunction(0x1007C3F0, _FeatListElective);
+		//replaceFunction(0x1007C4F0, _WeaponFeatCheck);
 	}
-} featPrereqFix;
+};
+FeatFixes featFixes;
 
-struct FeatFuncs : AddressTable
+# pragma region FeatSystem Implementations
+FeatSystem::FeatSystem()
 {
-	void (__cdecl *_FeatSthg_sub_1007C4F0)();
-	FeatFuncs()
-	{
-		rebase(_FeatSthg_sub_1007C4F0, 0x1007C4F0);
-	}
-} featFuncs;
+	rebase(featPropertiesTable, 0x102BFD78); 		// TODO: export this to a mesfile
+	rebase(classFeatTable, 0x102CAAF8); 		// TODO: export this to a mesfile
+	rebase(featPreReqTable, 0x102C07A0); 		// TODO: export this to a mesfile
+	rebase(charEditorObjHnd, 0x11E741A0);
+	rebase(charEditorClassCode, 0x11E72FC0);
+	rebase(ToEE_WeaponFeatCheck, 0x1007C4F0);
 
-uint32_t FeatExistsInArray(feat_enums featCode, feat_enums * featArray, uint32_t featArrayLen)
+	uint32_t _racialFeatsTable[NUM_RACES * 10] = { -1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		FEAT_SIMPLE_WEAPON_PROFICIENCY_ELF, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // table presupposes 10 items on each row, terminator character -1
+	uint32_t _rangerArcheryFeats[2 * 2] = { FEAT_RANGER_RAPID_SHOT, 2, FEAT_RANGER_MANYSHOT, 6 };
+	uint32_t _rangerTwoWeaponFeats[2 * 2] = { FEAT_TWO_WEAPON_FIGHTING_RANGER, 2, FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER, 6 };
+
+	memcpy(racialFeats, _racialFeatsTable, sizeof(racialFeats));
+	memcpy(rangerArcheryFeats, _rangerArcheryFeats, sizeof(rangerArcheryFeats));
+	memcpy(rangerTwoWeaponFeats, _rangerTwoWeaponFeats, sizeof(rangerTwoWeaponFeats));
+};
+
+uint32_t FeatSystem::HasFeatCount(objHndl objHnd, feat_enums featEnum)
+{
+	uint32_t featCount = 0;
+	uint32_t numFeats = templeFuncs.Obj_Get_IdxField_NumItems(objHnd, obj_f_critter_feat_idx);
+	for (uint32_t i = 0; i < numFeats; i++)
+	{
+		if (templeFuncs.Obj_Get_IdxField_32bit(objHnd, obj_f_critter_feat_idx, i) == featEnum)
+		{
+			featCount++;
+		}
+	}
+	return featCount;
+}
+
+
+uint32_t FeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classEnum, ::uint32_t rangerSpecializationFeat)
+{
+	return _HasFeatCountByClass(objHnd, featEnum, classEnum, rangerSpecializationFeat);
+};
+
+uint32_t FeatSystem::FeatListGet(objHndl objHnd, feat_enums* listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat)
+{
+	uint32_t featCount = 0;
+	int32_t hasFeatTimes = 0;
+	uint32_t i = 0;
+	void * ptrOut = listOut;
+	while (i < NUM_FEATS)
+	{
+		hasFeatTimes = feats.HasFeatCountByClass(objHnd, (feat_enums)i, classBeingLevelled, rangerSpecFeat);
+
+		if (hasFeatTimes && listOut && hasFeatTimes > 0)
+		{
+			memset(&(listOut[featCount]), i, hasFeatTimes*sizeof(uint32_t));
+			featCount += hasFeatTimes;
+		}
+		i++;
+	}
+	return featCount;
+}
+
+
+uint32_t FeatSystem::FeatListElective(objHndl objHnd, feat_enums* listOut)
+{
+	return FeatListGet(objHnd, listOut, (Stat)0, (feat_enums)0);
+}
+
+uint32_t FeatSystem::FeatExistsInArray(feat_enums featCode, feat_enums * featArray, uint32_t featArrayLen)
 {
 	for (uint32_t i = 0; i < featArrayLen; i++)
 	{
@@ -49,26 +114,220 @@ uint32_t FeatExistsInArray(feat_enums featCode, feat_enums * featArray, uint32_t
 	return 0;
 };
 
-uint32_t ObjCheckFeatPrereqs(objHndl objHnd, feat_enums featIdx, feat_enums * featArray, uint32_t featArrayLen, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased)
+uint32_t FeatSystem::WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType)
 {
-	uint32_t * featPropsTable = featPropertiesTable.ptr();
-	uint32_t featProps = featPropsTable[featIdx];
-	uint32_t * featPrereqs = featPreReqTable.ptr();
+	return _WeaponFeatCheck( objHnd,  featArray,  featArrayLen,  classBeingLeveled,  wpnType);
+};
+
+#pragma endregion
+
+
+uint32_t __declspec(naked) FeatSthg_sub_1007C4F0(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat eax_objStat, uint32_t ebx_n1)
+{ // objStat goes into eax,  n1 goes into ebx
+	__asm {// stack frame
+		//arg4	  // esp0 - 0x20
+		//arg8      // esp0 - 0x1C
+		//argC      // esp0 - 0x18
+		//		   arg10	  // esp0 - 0x14
+		//ebx       // esp0 - 0x10
+		//ecx
+		//esi
+		//edi
+		//retaddr    esp0
+		//arg4	objHnd
+		//arg8
+		// argC	featArray
+		// arg10	featArrayLen
+		// arg14   objStat  esp0+0x14
+		// arg18   n1       esp0+0x18
+		//
+		push edi;
+		push esi;
+		push ecx;
+		push ebx; // esp0 - 0x10
+		sub esp, 0x10			// esp0 - 0x20
+			mov edi, esp;
+		lea esi, [esp + 0x24];	// esi = esp0 + 4	
+		mov ecx, 4;
+		rep movsd;
+		mov eax, [esp + 0x34]; // objStat   esp0+0x14
+		mov ebx, [esp + 0x38]; // n1		 esp0+0x18
+		mov esi, feats.ToEE_WeaponFeatCheck;
+		call esi; // esp0 - 0x20
+		add esp, 0x10;
+		pop ebx;
+		pop ecx;
+		pop esi;
+		pop edi;
+		ret;
+
+	}
+};
+
+
+uint32_t _WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType)
+{
+	if (templeFuncs.sub_100664B0(objHnd, wpnType) == 3){ return 0; }
+
+	if (weapons.IsSimple(wpnType))
+	{
+		if (feats.HasFeatCountByClass(objHnd, FEAT_SIMPLE_WEAPON_PROFICIENCY, classBeingLeveled, 0))
+		{
+			return 1;
+		}
+	}
+
+	if (weapons.IsMartial(wpnType))
+	{
+		if (feats.HasFeatCountByClass(objHnd, FEAT_MARTIAL_WEAPON_PROFICIENCY_ALL, classBeingLeveled, 0))
+		{
+			return 1;
+		}
+		if (feats.FeatExistsInArray(FEAT_MARTIAL_WEAPON_PROFICIENCY_ALL, featArray, featArrayLen))
+		{
+			return 1;
+		}
+
+		if (feats.HasFeatCountByClass(objHnd, (feat_enums) ((uint32_t)wpnType + (uint32_t)FEAT_IMPROVED_CRITICAL_REPEATING_CROSSBOW), classBeingLeveled, 0))
+		{
+			return 1;
+		}
+
+		if (feats.FeatExistsInArray((feat_enums)((uint32_t)wpnType + (uint32_t)FEAT_IMPROVED_CRITICAL_REPEATING_CROSSBOW), featArray, featArrayLen))
+		{
+			return 1;
+		}
+	}
+
+	if (weapons.IsExotic(wpnType))
+	{
+		if (feats.HasFeatCountByClass(objHnd, (feat_enums)((uint32_t)wpnType - 21), classBeingLeveled, 0))
+		{
+			return 1;
+		}
+		if (feats.FeatExistsInArray((feat_enums)((uint32_t)wpnType - 21), featArray, featArrayLen))
+		{
+			return 1;
+		}
+	}
+
+	if (wpnType == wt_bastard_sword || wpnType == wt_dwarven_waraxe)
+	{
+		if (feats.HasFeatCountByClass(objHnd, FEAT_MARTIAL_WEAPON_PROFICIENCY_ALL, classBeingLeveled, 0))
+		{
+			return 1;
+		}
+	}
+
+	if (weapons.IsDruidWeapon(wpnType))
+	{
+		if (feats.HasFeatCountByClass(objHnd, FEAT_SIMPLE_WEAPON_PROFICIENCY_DRUID, classBeingLeveled, 0))
+		{
+			return 1;
+		}
+	}
+
+	if (weapons.IsMonkWeapon(wpnType))
+	{
+		if (feats.HasFeatCountByClass(objHnd, FEAT_SIMPLE_WEAPON_PROFICIENCY_DRUID, classBeingLeveled, 0))
+		{
+			return 1;
+		}
+	}
+
+	if (weapons.IsRogueWeapon(objects.StatLevelGet(objHnd, stat_size), wpnType))
+	{
+		if (feats.HasFeatCountByClass(objHnd, FEAT_SIMPLE_WEAPON_PROFICIENCY_ROGUE, classBeingLeveled, 0))
+		{
+			return 1;
+		}
+	}
+
+	if (weapons.IsWizardWeapon(wpnType))
+	{
+		if (feats.HasFeatCountByClass(objHnd, FEAT_SIMPLE_WEAPON_PROFICIENCY_WIZARD, classBeingLeveled, 0))
+		{
+			return 1;
+		}
+	}
+
+	if (weapons.IsElvenWeapon(wpnType))
+	{
+		if (feats.HasFeatCountByClass(objHnd, FEAT_SIMPLE_WEAPON_PROFICIENCY_ELF, classBeingLeveled, 0))
+		{
+			return 1;
+		}
+	}
+
+
+	if (weapons.IsBardWeapon(wpnType))
+	{
+		if (feats.HasFeatCountByClass(objHnd, FEAT_SIMPLE_WEAPON_PROFICIENCY_BARD, classBeingLeveled, 0))
+		{
+			return 1;
+		}
+	}
+
+	if (wpnType == wt_orc_double_axe)
+	{
+		if (objects.GetRace(objHnd) == race_halforc)
+		{
+			return 1;
+		}
+		return 0;
+	}
+	else if (wpnType == wt_gnome_hooked_hammer)
+	{
+		if (objects.GetRace(objHnd) == race_gnome)
+		{
+			return 1;
+		}
+		return 0;
+	}
+	else if (wpnType == wt_dwarven_waraxe)
+	{
+		if (objects.GetRace(objHnd) == race_dwarf)
+		{
+			return 1;
+		}
+		return 0;
+	} else if (wpnType == wt_grenade)
+	{
+		return 1;
+	}
+
+	return 0;
+}
+
+uint32_t _FeatExistsInArray(feat_enums featCode, feat_enums * featArray, uint32_t featArrayLen)
+{
+	for (uint32_t i = 0; i < featArrayLen; i++)
+	{
+		if (featArray[i] == featCode){ return 1; }
+	}
+	return 0;
+};
+
+uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * featArray, uint32_t featArrayLen, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased)
+{
+	//	uint32_t * featPropertiesTable = featPropertiesTable;
+
+	uint32_t featProps = feats.featPropertiesTable[featIdx];
+	uint32_t * featPrereqs = feats.featPreReqTable;
 	const uint8_t numCasterClasses = 7;
 	uint32_t casterClassCodes[numCasterClasses] = { stat_level_bard, stat_level_cleric, stat_level_druid, stat_level_paladin, stat_level_ranger, stat_level_sorcerer, stat_level_wizard };
 
-	if (featProps  & 2)
+	if (featProps & 2)
 	{
 		return 0;
 	}
 
-	// return 1; // h4x :)
-
+	//return 1; // h4x :)
 
 //	checking feats in the character editor
-	if (charEditorClassCode != 0 && charEditorObjHnd != 0)
+	if ( *feats.charEditorClassCode != 0 && *feats.charEditorObjHnd != 0)
 	{
-		auto newClassLvl = templeFuncs.ObjStatLevelGet(charEditorObjHnd, charEditorClassCode) + 1;
+		auto newClassLvl = templeFuncs.ObjStatLevelGet(*feats.charEditorObjHnd, *feats.charEditorClassCode) + 1;
 
 		if (classCodeBeingLevelledUp == stat_level_rogue)
 		{
@@ -82,57 +341,6 @@ uint32_t ObjCheckFeatPrereqs(objHndl objHnd, feat_enums featIdx, feat_enums * fe
 		}
 	}
 
-		//
-		
-		
-	/*
-
-	11EB6380    83EC 30         SUB ESP, 30
-	11EB6383    833D C02FE711 0> CMP DWORD PTR DS : [11E72FC0], 0
-	11EB638A    74 71           JE SHORT temple.11EB63FD
-	11EB638C    833D A441E711 0>CMP DWORD PTR DS : [11E741A4], 0
-	11EB6393    74 68           JE SHORT temple.11EB63FD
-	11EB6395    833D A041E711 0>CMP DWORD PTR DS : [11E741A0], 0
-	11EB639C    74 5F           JE SHORT temple.11EB63FD     / continue as usual
-	11EB639E    FF35 C02FE711   PUSH DWORD PTR DS : [11E72FC0]
-	11EB63A4    FF35 A441E711   PUSH DWORD PTR DS : [11E741A4]
-	11EB63AA    FF35 A041E711   PUSH DWORD PTR DS : [11E741A0]
-	11EB63B0    E8 4BE41BFE     CALL temple.10074800
-
-	11EB63B5    40              INC EAX
-	11EB63B6    8BC8            MOV ECX, EAX
-	11EB63B8    58              POP EAX
-	11EB63B9    58              POP EAX
-	11EB63BA    58              POP EAX
-	11EB63BB    837C24 48 0F    CMP DWORD PTR SS : [ESP + 48], 0F
-	11EB63C0    75 3B           JNZ SHORT temple.11EB63FD
-	11EB63C2    83F9 0A         CMP ECX, 0A
-	11EB63C5    74 11           JE SHORT temple.11EB63D8
-	11EB63C7    83F9 0D         CMP ECX, 0D
-	11EB63CA    74 0C           JE SHORT temple.11EB63D8
-	11EB63CC    83F9 10         CMP ECX, 10
-	11EB63CF    74 07           JE SHORT temple.11EB63D8
-	11EB63D1    83F9 13         CMP ECX, 13
-	11EB63D4    74 02           JE SHORT temple.11EB63D8
-	11EB63D6    EB 25           JMP SHORT temple.11EB63FD
-	11EB63D8    8B4C24 3C       MOV ECX, DWORD PTR SS : [ESP + 3C]
-	11EB63DC    3E : 8B048D 78FD2>MOV EAX, DWORD PTR DS : [ECX * 4 + 102BFD78]
-	11EB63E4    81E0 00000400   AND EAX, 40000
-	11EB63EA    81E8 00000400   SUB EAX, 40000
-	11EB63F0    F7D8            NEG EAX
-	11EB63F2    1BC0            SBB EAX, EAX
-	11EB63F4    40              INC EAX
-	11EB63F5    85C0            TEST EAX, EAX
-	11EB63F7    74 08           JE SHORT temple.11EB6401
-	11EB63F9    83C4 30         ADD ESP, 30
-	11EB63FC    C3              RETN
-	11EB63FD    8B4C24 3C       MOV ECX, DWORD PTR SS : [ESP + 3C]
-	11EB6401 - E9 EF641CFE     JMP temple.1007C8F5
-
-	*/
-
-
-
 
 	uint32_t initOffset = featIdx * 16;
 
@@ -141,6 +349,7 @@ uint32_t ObjCheckFeatPrereqs(objHndl objHnd, feat_enums featIdx, feat_enums * fe
 
 	for (uint32_t i = 0; featPrereqs[initOffset + i] != featReqCodeTerminator; i+=2)
 	{
+		//disassm notes:
 		// eax is classCodeBeingLevelledUp
 		// esi is featReqCode
 		// ecx is featIdx
@@ -310,7 +519,7 @@ uint32_t ObjCheckFeatPrereqs(objHndl objHnd, feat_enums featIdx, feat_enums * fe
 		{
 # pragma region Custom Feat Stat Requirement (?)
 			feat_enums featIdxFromReqCode = (feat_enums)(featReqCode - 1000);
-			if (!FeatExistsInArray(featIdxFromReqCode, featArray, featArrayLen))
+			if (!_FeatExistsInArray(featIdxFromReqCode, featArray, featArrayLen))
 			{
 				if ((uint32_t)templeFuncs.ObjStatBaseGet(objHnd, featReqCode) < featReqCodeArg)
 				{
@@ -375,7 +584,7 @@ uint32_t ObjCheckFeatPrereqs(objHndl objHnd, feat_enums featIdx, feat_enums * fe
 };
 
 
-uint32_t RogueSpecialFeat(feat_enums featIdx, uint32_t newLevel)
+uint32_t _RogueSpecialFeat(feat_enums featIdx, uint32_t newLevel)
 {
 	if (featIdx > 0x289)
 	{
@@ -388,46 +597,183 @@ uint32_t RogueSpecialFeat(feat_enums featIdx, uint32_t newLevel)
 	return 0;
 };
 
+uint32_t _HasFeatCount(objHndl objHnd, feat_enums featEnum)
+{
+
+	uint32_t featCount = 0;
+	uint32_t numFeats = templeFuncs.Obj_Get_IdxField_NumItems(objHnd, obj_f_critter_feat_idx);
+	for (uint32_t i = 0; i < numFeats; i++)
+	{
+		if (templeFuncs.Obj_Get_IdxField_32bit(objHnd, obj_f_critter_feat_idx, i) == featEnum)
+		{
+			featCount++;
+		}
+	}
+	return featCount;
+};
 
 
-uint32_t __declspec(naked) FeatSthg_sub_1007C4F0(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat eax_objStat, uint32_t ebx_n1)
-{ // objStat goes into eax,  n1 goes into ebx
-	__asm {/* stack frame
-		   arg4	  // esp0 - 0x20
-		   arg8      // esp0 - 0x1C
-		   argC      // esp0 - 0x18
-		   arg10	  // esp0 - 0x14
-		   ebx       // esp0 - 0x10
-		   ecx
-		   esi
-		   edi
-		   retaddr    esp0
-		   arg4	objHnd
-		   arg8
-		   argC	featArray
-		   arg10	featArrayLen
-		   arg14   objStat  esp0+0x14
-		   arg18   n1       esp0+0x18
-		   */
-		push edi;
-		push esi;
-		push ecx;
-		push ebx; // esp0 - 0x10
-		sub esp, 0x10			// esp0 - 0x20
-			mov edi, esp;
-		lea esi, [esp + 0x24];	// esi = esp0 + 4	
-		mov ecx, 4;
-		rep movsd;
-		mov eax, [esp + 0x34]; // objStat   esp0+0x14
-		mov ebx, [esp + 0x38]; // n1		 esp0+0x18
-		mov esi, featFuncs._FeatSthg_sub_1007C4F0;
-		call esi; // esp0 - 0x20
-		add esp, 0x10;
-		pop ebx;
-		pop ecx;
-		pop esi;
-		pop edi;
-		ret;
+uint32_t FeatListGet(objHndl objHnd, feat_enums * listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat)
+{
+	uint32_t featCount = 0;
+	int32_t hasFeatTimes = 0;
+	uint32_t i = 0;
+	void * ptrOut = listOut;
+	while (i < NUM_FEATS)
+	{
+		hasFeatTimes = _HasFeatCountByClass(objHnd, (feat_enums)i, classBeingLevelled, rangerSpecFeat);
+
+		if (hasFeatTimes && listOut && hasFeatTimes > 0)
+		{
+			memset(&(listOut[featCount]), i, hasFeatTimes*sizeof(uint32_t));
+			featCount += hasFeatTimes;
+		}
+		i++;
+	}
+	return featCount;
+};
+
+uint32_t _FeatListElective(objHndl objHnd, feat_enums * listOut)
+{
+	return FeatListGet(objHnd, listOut, (Stat)0, (feat_enums)0);
+};
+
+
+// WIP:
+
+uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLevelBeingRaised, uint32_t rangerSpecializationFeat)
+{
+
+	if (feats.featPropertiesTable[(uint32_t)featEnum] & featPropDisabled){ return 0; }
+
+	// race feats
+	uint32_t objRace = objects.StatLevelGet(objHnd, stat_race);
+	uint32_t * racialFeat = & (feats.racialFeats[objRace * 10]);
+	while (*racialFeat != -1)
+	{
+		if (*racialFeat == featEnum)
+		{
+			return 1;
+		}
+		racialFeat++;
+	}
+	
+	
+	for (uint32_t i = 0; i < NUM_CLASSES; i++)
+	//for (uint32_t i = 2; i < 4; i++)
+	{
+		uint32_t classLevel = objects.StatLevelGet(objHnd, charClasses.charClassEnums[i]);
+		if (classLevelBeingRaised == charClasses.charClassEnums[i])
+		{
+			classLevel++;
+		}
+
+		uint32_t * classFeat = feats.classFeatTable + 80 * i;
+		uint32_t * classFeatStart = classFeat;
+	//	uint32_t * asdf = (uint32_t*)0x1E700000;
+	//	if (classFeat > asdf)
+	//	{
+	//		auto dummy = 1;
+	//	}
+		while (classFeat[0] != -1 && classFeat < classFeatStart + 80)
+		{
+			if (classLevel >= classFeat[1])
+			{
+				//return 1;
+			}
+			classFeat += 2;
+		}
 
 	}
-};
+	
+	
+	 if (featEnum == FEAT_IMPROVED_UNCANNY_DODGE)
+	 {
+		 if (objects.StatLevelGet(objHnd, stat_level_barbarian) >= 2 
+			 || objects.StatLevelGet(objHnd, stat_level_rogue) >= 4)
+		 {
+			 return 1;
+		 }
+	 }
+
+	 // ranger styles
+	 auto rangerLvl = objects.StatLevelGet(objHnd, stat_level_ranger);
+	 if (rangerSpecializationFeat){ rangerLvl++; }
+	 if (rangerLvl >= 2)
+	 {
+		 if (_HasFeatCount(objHnd, FEAT_RANGER_ARCHERY_STYLE) || rangerSpecializationFeat == FEAT_RANGER_ARCHERY_STYLE)
+		 {
+			 auto rangerArcheryFeat = feats.rangerArcheryFeats;
+			 while (*rangerArcheryFeat != -1)
+			 {
+				 if (rangerArcheryFeat[0] == featEnum && rangerLvl >= rangerArcheryFeat[1]){ return 1; }
+				 rangerArcheryFeat += 2;
+			 }
+		 }
+		 else if (_HasFeatCount(objHnd, FEAT_RANGER_TWO_WEAPON_STYLE) || rangerSpecializationFeat == FEAT_RANGER_TWO_WEAPON_STYLE)
+		 {
+			 auto rangerTWFeat = feats.rangerTwoWeaponFeats;
+			 while (rangerTWFeat[0] != -1)
+			 {
+				 if (rangerTWFeat[0] == featEnum && rangerLvl >= rangerTWFeat[1]){ return 1; }
+				 rangerTWFeat += 2;
+			 }
+		 }
+	 }
+
+	 // war domain
+	 uint32_t objDeity= objects.GetInt32(objHnd, obj_f_critter_deity);
+	 uint32_t domain_1 = objects.GetInt32(objHnd, obj_f_critter_domain_1);
+	 uint32_t domain_2 = objects.GetInt32(objHnd, obj_f_critter_domain_2);
+	 if (domain_1 == 21 || domain_2 == 21) // must be war domain
+	 {
+		 switch (objDeity)
+		 {
+		 case DEITY_CORELLON_LARETHIAN:
+			 if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_LONGSWORD || featEnum == FEAT_WEAPON_FOCUS_LONGSWORD){ return 1; }
+		 case DEITY_ERYTHNUL:
+			 if (featEnum == FEAT_WEAPON_FOCUS_MORNINGSTAR){ return 1; }
+		 case DEITY_GRUUMSH:
+			 if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_LONGSPEAR || featEnum == FEAT_WEAPON_FOCUS_LONGSPEAR){ return 1; }
+		 case DEITY_HEIRONEOUS:
+			 if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_LONGSWORD || featEnum == FEAT_WEAPON_FOCUS_LONGSWORD){ return 1; }
+		 case DEITY_HEXTOR:
+			 if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_HEAVY_FLAIL || FEAT_WEAPON_FOCUS_HEAVY_FLAIL){ return 1; }
+		 }
+	 }
+
+	 // simple weapon prof
+	 if (featEnum == FEAT_SIMPLE_WEAPON_PROFICIENCY)
+	 {
+		 auto monCat = objects.GetCategory(objHnd);
+		 if (monCat == mc_type_outsider || monCat == mc_type_monstrous_humanoid
+			 || monCat == mc_type_humanoid || monCat == mc_type_giant || monCat == mc_type_fey)
+		 {
+			 return 1;
+		 }
+	 } 
+	 else if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_ALL)
+	 {
+		 if ((uint32_t)objects.IsCategoryType(objHnd, mc_type_outsider)
+			 && objects.StatLevelGet(objHnd, stat_strength) >= 6)	
+		 {	return 1;	 }
+	 }
+	 else if (featEnum == FEAT_TURN_UNDEAD
+		 && (objects.StatLevelGet(objHnd, stat_level_cleric) >= 1 
+		     || objects.StatLevelGet(objHnd, stat_level_paladin) >= 4)
+		 && objects.GetInt32(objHnd, obj_f_critter_alignment_choice) == 1)
+	 {
+		 return 1;
+	 } 
+	 else if (featEnum == FEAT_REBUKE_UNDEAD 
+		 && objects.StatLevelGet(objHnd, stat_level_cleric) >= 1 
+		 && objects.GetInt32(objHnd, obj_f_critter_alignment_choice) == 2)
+	 {
+		 return 1;
+	 }
+	 
+	
+	return _HasFeatCount(objHnd, featEnum);
+}
+
+

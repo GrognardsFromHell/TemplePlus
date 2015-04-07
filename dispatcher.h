@@ -1,7 +1,6 @@
 #pragma once
 
-#include "temple_functions.h"
-
+#include "common.h"
 
 
 

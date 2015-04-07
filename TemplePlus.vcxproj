@@ -132,6 +132,8 @@
     <ClCompile Include="tig_tokenizer.cpp" />
     <ClCompile Include="timeevents.cpp" />
     <ClCompile Include="ui_char_highresfix.cpp" />
+    <ClCompile Include="usercall.cpp" />
+    <ClCompile Include="weapon.cpp" />
     <ClCompile Include="xp.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -165,8 +167,9 @@
     <ClInclude Include="addresses.h" />
     <ClInclude Include="anim.h" />
     <ClInclude Include="combat.h" />
-    <ClInclude Include="conditions.h" />
+    <ClInclude Include="common.h" />
     <ClInclude Include="d20.h" />
+    <ClInclude Include="d20_defs.h" />
     <ClInclude Include="d3d8to9\d3d8to9.h" />
     <ClInclude Include="d3d8to9\d3d8to9_convert.h" />
     <ClInclude Include="d3d8to9\d3d8to9_device.h" />
@@ -200,11 +203,13 @@
     <ClInclude Include="mainloop.h" />
     <ClInclude Include="map_obj.h" />
     <ClInclude Include="obj_fieldnames.h" />
+    <ClInclude Include="obj_structs.h" />
     <ClInclude Include="pathfinding.h" />
     <ClInclude Include="pythonglobal.h" />
     <ClInclude Include="python_debug.h" />
     <ClInclude Include="radial_menu.h" />
     <ClInclude Include="spell.h" />
+    <ClInclude Include="spell_structs.h" />
     <ClInclude Include="tig.h" />
     <ClInclude Include="tig_loadingscreen.h" />
     <ClInclude Include="minhook\src\buffer.h" />
@@ -237,6 +242,7 @@
     <ClInclude Include="tio.h" />
     <ClInclude Include="ui.h" />
     <ClInclude Include="ui_item_creation.h" />
+    <ClInclude Include="weapon.h" />
     <ClInclude Include="xp.h" />
     <ClInclude Include="ui_mainmenu.h" />
   </ItemGroup>

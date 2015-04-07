@@ -1,8 +1,9 @@
 #include "stdafx.h"
 #include "obj.h"
 #include "addresses.h"
-#include "fixes.h"
 #include "d20.h"
+#include "common.h"
+#include "temple_functions.h"
 
 const uint32_t DISPATCHER_MAX = 250; // max num of simultaneous Dispatches going on (static int counter inside DispatcherProcessor)
 
@@ -41,7 +42,7 @@ public:
 		replaceFunction(0x100E2560, ConditionAdd_NumArgs3);
 		replaceFunction(0x100E2590, ConditionAdd_NumArgs4);
 	}
-};
+} objectDispatch;
 
 
 
@@ -88,6 +89,7 @@ static struct ObjInternal : AddressTable {
 	}
 } objInternal;
 #pragma endregion
+
 
 void DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO) {
 	static uint32_t dispCounter = 0;
@@ -147,7 +149,7 @@ Objects::Objects() {
 Dispatcher* DispatcherInit(objHndl objHnd) {
 	Dispatcher* dispatcherNew = (Dispatcher *)allocFuncs._malloc_0(sizeof(Dispatcher));
 	memset(&dispatcherNew->subDispNodes, 0, dispTypeCount * sizeof(SubDispNode*));
-	CondNode* condNode = pCondNodeGlobal;
+	CondNode* condNode = * (conds.pCondNodeGlobal);
 	while (condNode != nullptr) {
 		CondNodeAddToSubDispNodeArray(dispatcherNew, condNode);
 		condNode = condNode->nextCondNode;
@@ -170,10 +172,6 @@ void DispIO_Size32_Type21_Init(DispIO20h* dispIO) {
 	dispIO->condNode = nullptr;
 };
 
-
-
-
-ObjectDispatch objectDispatch;
 
 
 uint32_t Dispatch62(objHndl objHnd, DispIO* dispIO, uint32_t dispKey) {

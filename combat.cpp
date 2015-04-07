@@ -2,15 +2,14 @@
 #include "combat.h"
 #include "tig_mes.h"
 
-GlobalPrimitive<uint32_t, 0x10AA8418> combatModeActive;
-GlobalPrimitive<MesHandle, 0x10AA8408> combatsysCombatMesfileIdx;
+CombatSystem combat;
 
 uint32_t IsCombatActive()
 {
-	return combatModeActive;
+	return *combat.combatModeActive;
 }
 
 uint32_t Combat_GetMesfileIdx_CombatMes()
 {
-	return combatsysCombatMesfileIdx;
+	return *combat.combatMesfileIdx;
 }

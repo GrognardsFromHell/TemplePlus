@@ -6,19 +6,9 @@
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
-SpontCastSpellLists::SpontCastSpellLists()
-{
-	uint32_t _spontCastSpellsDruid[] = { -1, 476, 477, 478, 479, 480, 481, 482, 483, 484, 4000 };
-	uint32_t _spontCastSpellsEvilCleric[] = { 248, 247, 249, 250, 246, 61, 581, 582, 583, 583, 0 };
-	uint32_t _spontCastSpellsGoodCleric[] = { 91, 90, 92, 93, 89, 221, 577, 578, 579, 579, 0 };
-	uint32_t _spontCastSpellsDruidSummons[] = { -1, 2000, 2100, 2200, 2300, 2400, 2500, 2600, 2700, 2800, 0 };
-	memcpy(spontCastSpellsDruid, _spontCastSpellsDruid, 11);
-	memcpy(spontCastSpellsEvilCleric, _spontCastSpellsEvilCleric, 11);
-	memcpy(spontCastSpellsGoodCleric, _spontCastSpellsGoodCleric, 11);
-	memcpy(spontCastSpellsDruidSummons, _spontCastSpellsDruidSummons, 11);
-}
 
-SpontCastSpellLists spontCastSpellLists_spells;
+
+SpontCastSpellLists spontCastSpellLists;
 //GlobalPrimitive<uint16_t>
 //1028D09C
 
@@ -72,22 +62,22 @@ void __declspec(naked) EvilClericRadialSpontCastSpellEnumHook()
 
 uint32_t _DruidRadialSelectSummons(uint32_t spellSlotLevel)
 {
-	return spontCastSpellLists_spells.spontCastSpellsDruidSummons[spellSlotLevel];
+	return spontCastSpellLists.spontCastSpellsDruidSummons[spellSlotLevel];
 }
 
 uint32_t _DruidRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel)
 {
-	return spontCastSpellLists_spells.spontCastSpellsDruid[spellSlotLevel];
+	return spontCastSpellLists.spontCastSpellsDruid[spellSlotLevel];
 }
 
 uint32_t _GoodClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel)
 {
-	return spontCastSpellLists_spells.spontCastSpellsGoodCleric[spellSlotLevel];
+	return spontCastSpellLists.spontCastSpellsGoodCleric[spellSlotLevel];
 }
 
 uint32_t _EvilClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel)
 {
-	return spontCastSpellLists_spells.spontCastSpellsEvilCleric[spellSlotLevel];
+	return spontCastSpellLists.spontCastSpellsEvilCleric[spellSlotLevel];
 }
 
 class SpontaneousCastingExpansion : public TempleFix {

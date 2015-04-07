@@ -1,31 +1,26 @@
 #include "stdafx.h"
 #include "d20.h"
+#include "temple_functions.h"
 #include "obj.h"
+#include "obj_structs.h"
+#include "spell_structs.h"
 #include "addresses.h"
+#include "feat.h"
+#include "fixes.h"
+#include "spell.h"
+#include "common.h"
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
 
-extern SpontCastSpellLists spontCastSpellLists_spells;
-GlobalPrimitive<CondStruct, 0x102E8088> ConditonGlobal;
-GlobalPrimitive<CondNode*, 0x10BCADA0> pCondNodeGlobal;
-GlobalPrimitive<CondStruct, 0x102EF9A8> ConditionMonsterUndead;
-GlobalPrimitive<CondStruct, 0x102EFBE8> ConditionSubtypeFire;
-GlobalPrimitive<CondStruct, 0x102EFAF0> ConditionMonsterOoze;
-GlobalPrimitive<CondStruct*, 0x102EFC18> ConditionArrayRace;
-GlobalPrimitive<CondStruct *, 0x102F0634> ConditionArrayClasses;
-GlobalPrimitive<CondStruct, 0x102B0D48> ConditionTurnUndead;
-GlobalPrimitive<CondStruct, 0x102F0520> ConditionBardicMusic;
-GlobalPrimitive<CondStruct, 0x102F0604> ConditionSchoolSpecialization;
-GlobalPrimitive<CondStruct *, 0x102B1690> ConditionArrayDomains;
-GlobalPrimitive<uint32_t, 0x102B1694> ConditionArrayDomainsArg1;
-GlobalPrimitive<uint32_t, 0x102B1698> ConditionArrayDomainsArg2;
 
-auto pConditionTurnUndead = ConditionTurnUndead.ptr();
-auto pConditionBardicMusic = ConditionBardicMusic.ptr();
-auto pConditionSchoolSpec = ConditionSchoolSpecialization.ptr();
+ConditionStructs conds;
+CharacterClasses charClasses;
+
+//const uint32_t NUM_CLASSES = stat_level_wizard - stat_level_barbarian + 1;
+//Stat charClassEnums[NUM_CLASSES] = { stat_level_barbarian, stat_level_bard, stat_level_cleric, stat_level_druid, stat_level_fighter, stat_level_monk, stat_level_paladin, stat_level_ranger, stat_level_rogue, stat_level_sorcerer, stat_level_wizard };
+//Stat charClassEnums[NUM_CLASSES] = { stat_level_barbarian, stat_level_bard, stat_level_cleric, stat_level_druid, stat_level_fighter, stat_level_monk, stat_level_paladin, stat_level_ranger, stat_level_rogue, stat_level_sorcerer, stat_level_wizard };
 
 
-const uint32_t NUM_CLASSES = stat_level_wizard - stat_level_barbarian + 1;
 
 
 
@@ -82,15 +77,15 @@ void D20SpellDataExtractInfo
 	{
 		if ((SpontCastType) d20SpellData->spontCastType == spontCastGoodCleric)
 		{
-			*spellEnum = spontCastSpellLists_spells.spontCastSpellsGoodCleric[d20SpellData->spellSlotLevel];
+			*spellEnum = spontCastSpellLists.spontCastSpellsGoodCleric[d20SpellData->spellSlotLevel];
 		}
 		else if ((SpontCastType)d20SpellData->spontCastType == spontCastEvilCleric)
 		{
-			*spellEnum = spontCastSpellLists_spells.spontCastSpellsEvilCleric[d20SpellData->spellSlotLevel];
+			*spellEnum = spontCastSpellLists.spontCastSpellsEvilCleric[d20SpellData->spellSlotLevel];
 		} 
 		else if ( (SpontCastType) d20SpellData->spontCastType == spontCastDruid)
 		{
-			*spellEnum = spontCastSpellLists_spells.spontCastSpellsDruid[d20SpellData->spellSlotLevel];
+			*spellEnum = spontCastSpellLists.spontCastSpellsDruid[d20SpellData->spellSlotLevel];
 		}
  else
  {
@@ -159,6 +154,7 @@ void D20StatusInit(objHndl objHnd)
 	D20StatusInitClass(objHnd);
 
 
+
 	D20StatusInitRace(objHnd);
 
 }
@@ -171,21 +167,21 @@ void D20StatusInitRace(objHndl objHnd)
 		Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 		if (objects.IsUndead(objHnd))
 		{
-			ConditionAddToAttribs_NumArgs0(dispatcher, ConditionMonsterUndead.ptr());
+			ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterUndead);
 		}
 
 		uint32_t objRace = objects.GetRace(objHnd);
-		CondStruct ** condStructRace = ConditionArrayRace.ptr() + objRace;
+		CondStruct ** condStructRace = conds.ConditionArrayRace + objRace;
 		ConditionAddToAttribs_NumArgs0(dispatcher, *condStructRace);
 
 		if (objects.IsSubtypeFire(objHnd))
 		{
-			ConditionAddToAttribs_NumArgs0(dispatcher, ConditionSubtypeFire.ptr());
+			ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionSubtypeFire);
 		}
 
 		if (objects.IsOoze(objHnd))
 		{
-			ConditionAddToAttribs_NumArgs0(dispatcher, ConditionMonsterOoze.ptr());
+			ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterOoze);
 		}
 	}
 };
@@ -197,7 +193,7 @@ void D20StatusInitClass(objHndl objHnd)
 	{
 		Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 
-		CondStruct ** condStructClass = ConditionArrayClasses.ptr();
+		CondStruct ** condStructClass = conds.ConditionArrayClasses;
 
 		uint32_t stat = stat_caster_level_barbarian;
 		for (uint32_t i = 0; i < NUM_CLASSES; i++)
@@ -219,17 +215,17 @@ void D20StatusInitClass(objHndl objHnd)
 
 		if (objects.StatLevelGet(objHnd, stat_level_paladin) >= 3)
 		{
-			ConditionAddToAttribs_NumArgs0(dispatcher, pConditionTurnUndead );
+			ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionTurnUndead );
 		}
 
 		if (objects.StatLevelGet(objHnd, stat_level_bard) >= 1)
 		{
-			ConditionAddToAttribs_NumArgs0(dispatcher, pConditionBardicMusic);
+			ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionBardicMusic);
 		}
 
 		if (objects.GetInt32(objHnd, obj_f_critter_school_specialization) & 0xFF)
 		{
-			ConditionAddToAttribs_NumArgs0(dispatcher, pConditionSchoolSpec);
+			ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionSchoolSpecialization);
 		}
 	}
 };
@@ -242,9 +238,9 @@ void D20StatusInitDomains(objHndl objHnd)
 	
 	if (domain_1)
 	{
-		CondStruct * condStructDomain1 = *(ConditionArrayDomains.ptr() + 3*domain_1);
-		uint32_t arg1 = * (ConditionArrayDomainsArg1.ptr() + 3*domain_1);
-		uint32_t arg2 = *(ConditionArrayDomainsArg2.ptr() + 3 * domain_1);
+		CondStruct * condStructDomain1 = *(conds.ConditionArrayDomains + 3*domain_1);
+		uint32_t arg1 = * (conds.ConditionArrayDomainsArg1 + 3*domain_1);
+		uint32_t arg2 = *(conds.ConditionArrayDomainsArg2 + 3 * domain_1);
 		if (condStructDomain1 != nullptr)
 		{
 			ConditionAddToAttribs_NumArgs2(dispatcher, condStructDomain1, arg1, arg2);
@@ -253,9 +249,9 @@ void D20StatusInitDomains(objHndl objHnd)
 
 	if (domain_2)
 	{
-		CondStruct * condStructDomain2 = *(ConditionArrayDomains.ptr() + 3 * domain_2);
-		uint32_t arg1 = *(ConditionArrayDomainsArg1.ptr() + 3 * domain_2);
-		uint32_t arg2 = *(ConditionArrayDomainsArg2.ptr() + 3 * domain_2);
+		CondStruct * condStructDomain2 = *(conds.ConditionArrayDomains + 3 * domain_2);
+		uint32_t arg1 = *(conds.ConditionArrayDomainsArg1 + 3 * domain_2);
+		uint32_t arg2 = *(conds.ConditionArrayDomainsArg2 + 3 * domain_2);
 		if (condStructDomain2 != nullptr)
 		{
 			ConditionAddToAttribs_NumArgs2(dispatcher, condStructDomain2, arg1, arg2);
@@ -265,13 +261,31 @@ void D20StatusInitDomains(objHndl objHnd)
 	auto alignmentchoice = objects.GetInt32(objHnd, obj_f_critter_alignment_choice);
 	if (alignmentchoice == 2)
 	{
-		ConditionAddToAttribs_NumArgs2(dispatcher, pConditionTurnUndead, 1, 0);
+		ConditionAddToAttribs_NumArgs2(dispatcher, conds.ConditionTurnUndead, 1, 0);
 	} else
 	{
-		ConditionAddToAttribs_NumArgs2(dispatcher, pConditionTurnUndead, 0, 0);
+		ConditionAddToAttribs_NumArgs2(dispatcher, conds.ConditionTurnUndead, 0, 0);
 	}
 }
 
+void D20StatusInitFeats(objHndl objHnd)
+{
+	if( objects.IsCritter(objHnd))
+	{
+		Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+		feat_enums featList[1000] = {};
+		uint32_t numFeats = feats.FeatListElective(objHnd, featList);
+
+		for (uint32_t i = 0; i < numFeats; i++)
+		{
+			CondStruct * cond;
+		//	if ()
+			{
+	//			ConditionAddToAttribs_NumArgs2(dispatcher, cond, featList[i], )
+			}
+		}
+	}
+};
 
 void __cdecl DispatcherClearField(Dispatcher *dispatcher, CondNode ** dispCondList)
 {

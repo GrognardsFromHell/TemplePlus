@@ -168,6 +168,12 @@
     <ClCompile Include="dispatcher.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="usercall.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="weapon.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -307,9 +313,6 @@
     <ClInclude Include="radial_menu.h">
       <Filter>ui</Filter>
     </ClInclude>
-    <ClInclude Include="conditions.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
     <ClInclude Include="obj_fieldnames.h">
       <Filter>utils</Filter>
     </ClInclude>
@@ -321,6 +324,21 @@
       <Filter>python</Filter>
     </ClInclude>
     <ClInclude Include="dispatcher.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="obj_structs.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="spell_structs.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="common.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="d20_defs.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="weapon.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
   </ItemGroup>

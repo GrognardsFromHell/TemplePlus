@@ -648,7 +648,8 @@ enum feat_enums : uint32_t {
 	FEAT_RANGER_ARCHERY_STYLE = 0x284,
 	FEAT_WIDEN_SPELL = 0x285,
 	FEAT_RANGER_RAPID_SHOT = 0x286,
-	FEAT_RANGER_MANYSHOT = 0x287,
+	FEAT_RANGER_MANYSHOT = 647,
+	FEAT_SIMPLE_WEAPON_PROFICIENCY_BARD = 648,
 };
 
 enum feat_requirement_codes : int32_t {
@@ -663,7 +664,8 @@ enum feat_requirement_codes : int32_t {
 };
 
 enum featPropertyEnums : uint32_t {
-	featPropRogueFeat = 0x40000
+	featPropDisabled  = 0x00000002,
+	featPropRogueFeat = 0x00040000
 };
 
 enum ObjectType : uint32_t {
@@ -1164,6 +1166,9 @@ enum Alignment : uint32_t {
 	ALIGNMENT_CHAOTIC_EVIL = 10
 };
 
+enum Race : uint32_t
+{	race_human = 0,	race_deep_dwarf = 0,	race_derro = 1,	race_dwarf = 1,	race_elf = 2,	race_duergar = 2,	race_gnome = 3,	race_mountain_dwarf = 3,	race_halfelf = 4,	race_half_elf = 4,	race_aquatic_elf = 4,	race_drow = 5,	race_halforc = 5,	race_half_orc = 5,	race_halfling = 6,	race_gray_elf = 6,	race_wild_elf = 7,	race_wood_elf = 8,	race_svirfneblin = 9,	race_forest_gnome = 10,	race_tallfellow = 11,	race_deep_halfling = 12,
+};
 
 enum Stat : uint32_t {
 	stat_strength = 0x0,
@@ -1210,7 +1215,7 @@ enum Stat : uint32_t {
 	stat_age = 0xE9,
 	stat_height = 0xEA,
 	stat_weight = 0xEB,
-	stat_size = 0xEC,
+	stat_size = 236,
 	stat_experience = 0xED,
 	stat_category = 0xE7,
 	stat_alignment = 0xEE,
@@ -1847,4 +1852,114 @@ enum SecretDoorFlag : uint32_t {
 	OSDF_RANK_6 = 0x1000,
 	OSDF_SECRET_DOOR = 0x2000,
 	OSDF_SECRET_DOOR_FOUND = 0x4000
+};
+
+
+enum Deities : uint32_t
+{
+	DEITY_NONE = 0,
+	DEITY_BOCCOB = 1,
+	DEITY_CORELLON_LARETHIAN = 2,
+	DEITY_EHLONNA = 3,
+	DEITY_ERYTHNUL = 4,
+	DEITY_FHARLANGHN = 5,
+	DEITY_GARL_GLITTERGOLD = 6,
+	DEITY_GRUUMSH = 7,
+	DEITY_HEIRONEOUS = 8,
+	DEITY_HEXTOR = 9,
+	DEITY_KORD = 10,
+	DEITY_MORADIN = 11,
+	DEITY_NERULL = 12,
+	DEITY_OBAD_HAI = 13,
+	DEITY_OLIDAMMARA = 14,
+	DEITY_PELOR = 15,
+	DEITY_ST_CUTHBERT = 16,
+	DEITY_VECNA = 17,
+	DEITY_WEE_JAS = 18,
+	DEITY_YONDALLA = 19,
+	DEITY_OLD_FAITH = 20,
+	DEITY_ZUGGTMOY = 21,
+	DEITY_IUZ = 22,
+	DEITY_LOLTH = 23,
+	DEITY_PROCAN = 24,
+	DEITY_NOREBO = 25,
+	DEITY_PYREMIUS = 26,
+	DEITY_RALISHAZ = 27
+};
+
+enum WeaponTypes : uint32_t
+{
+	wt_gauntlet = 0,
+	wt_unarmed_strike_medium_sized_being,
+	wt_unarmed_strike_small_being,
+	wt_dagger,
+	wt_punching_dagger,
+	wt_spiked_gauntlet,
+	wt_light_mace,
+	wt_sickle,
+	wt_club,
+	wt_shortspear,
+	wt_heavy_mace,
+	wt_morningstar,
+	wt_quarterstaff,
+	wt_spear,
+	wt_light_crossbow,
+	wt_dart,
+	wt_sling,
+	wt_heavy_crossbow,
+	wt_javelin,
+	wt_throwing_axe,
+	wt_light_hammer,
+	wt_handaxe,
+	wt_light_lance,
+	wt_light_pick,
+	wt_sap,
+	wt_short_sword,
+	wt_battleaxe,
+	wt_light_flail,
+	wt_heavy_lance,
+	wt_longsword,
+	wt_heavy_pick,
+	wt_rapier,
+	wt_scimitar,
+	wt_trident,
+	wt_warhammer,
+	wt_falchion,
+	wt_heavy_flail,
+	wt_glaive,
+	wt_greataxe,
+	wt_greatclub,
+	wt_greatsword,
+	wt_guisarme,
+	wt_halberd,
+	wt_longspear,
+	wt_ranseur,
+	wt_scythe,
+	wt_shortbow,
+	wt_composite_shortbow,
+	wt_longbow,
+	wt_composite_longbow,
+	wt_halfling_kama,
+	wt_kukri,
+	wt_halfling_nunchaku,
+	wt_halfling_siangham,
+	wt_kama,
+	wt_nunchaku,
+	wt_siangham,
+	wt_bastard_sword,
+	wt_dwarven_waraxe,          // racial weapons - 58 and on
+	wt_gnome_hooked_hammer,
+	wt_orc_double_axe,
+	wt_spike_chain,
+	wt_dire_flail,
+	wt_two_bladed_sword,
+	wt_dwarven_urgrosh,
+	wt_hand_crossbow,
+	wt_shuriken,
+	wt_whip,
+	wt_repeating_crossbow,
+	wt_net,
+	wt_grapple,
+	wt_ray,
+	wt_grenade   // 72
 };

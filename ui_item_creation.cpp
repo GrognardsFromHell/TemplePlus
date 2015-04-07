@@ -10,6 +10,7 @@
 #include "combat.h"
 #include "obj.h"
 #include "radial_menu.h"
+#include "common.h"
 
 GlobalPrimitive<ItemCreationType, 0x10BEDF50> itemCreationType;
 GlobalPrimitive<objHndl, 0x10BECEE0> globObjHndCrafter;
@@ -395,7 +396,7 @@ uint32_t ItemCreationBuildRadialMenuEntry(DispatcherCallbackArgs args, ItemCreat
 	MesLine mesLine;
 	RadialMenuStruct radmenu;
 	mesLine.key = combatMesLine;
-	mesFuncs.GetLine_Safe(combatsysCombatMesfileIdx, &mesLine);
+	mesFuncs.GetLine_Safe(*combat.combatMesfileIdx, &mesLine);
 	RadialMenuStructInit(&radmenu);
 	radmenu.field0 = (void*)mesLine.value;
 	radmenu.field20 = 37;
