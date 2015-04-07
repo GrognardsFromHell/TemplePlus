@@ -18,33 +18,6 @@ static_assert(validate_size<GameObject, objSize>::value, "Object structure has i
 
 
 
-class ObjectDispatch : public TempleFix {
-public:
-	const char* name() override {
-		return "Object";
-	}
-
-	void apply() override {
-		replaceFunction(0x100E1F10, DispatcherInit);
-		replaceFunction(0x1004DBA0, DispIO_Size32_Type21_Init);
-		replaceFunction(0x1004D3A0, Dispatch62);
-		replaceFunction(0x1004D440, Dispatch63);
-
-
-		replaceFunction(0x100E2120, DispatcherProcessor);
-
-		replaceFunction(0x100E22D0, ConditionAddDispatch);
-		replaceFunction(0x100E24C0, ConditionAddToAttribs_NumArgs0);
-		replaceFunction(0x100E2500, ConditionAddToAttribs_NumArgs2);
-		replaceFunction(0x100E24E0, ConditionAdd_NumArgs0);
-		replaceFunction(0x100E2530, ConditionAdd_NumArgs2);
-		replaceFunction(0x100E2560, ConditionAdd_NumArgs3);
-		replaceFunction(0x100E2590, ConditionAdd_NumArgs4);
-	}
-} objectDispatch;
-
-
-
 // Root hashtable for all objects
 struct ObjectMasterTableRow {
 	GameObject objects[0x2000];

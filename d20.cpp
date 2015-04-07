@@ -14,7 +14,7 @@
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
 
 
-ConditionStructs conds;
+
 CharacterClasses charClasses;
 
 
@@ -27,29 +27,15 @@ public:
 	void apply() override {
 		replaceFunction(0x10077850, D20SpellDataExtractInfo);
 		replaceFunction(0x10077830, D20SpellDataSetSpontCast);
-		replaceFunction(0x1004D700, DispIO14hCheckDispIOType1);
-		replaceFunction(0x100ECF30, ConditionPrevent);
+		
+
 		replaceFunction(0x100FD790, D20StatusInitRace);
 		replaceFunction(0x100FD790, D20StatusInitClass);
-		replaceFunction(0x100E1E30, DispatcherRemoveSubDispNodes);
-		replaceFunction(0x100E2400, DispatcherClearField);
-		replaceFunction(0x100E2720, DispatcherClearAttribs);
-		replaceFunction(0x100E2740, DispatcherClearItemConds);
-		replaceFunction(0x100E2760, DispatcherClearConds);
-		
 	}
 } d20Replacements;
 
 
-
-
-
-
-
-
-
-
-
+#pragma region D20 Spell Stuff
 
 void D20SpellDataExtractInfo
   (D20SpellData * d20SpellData	, uint32_t * spellEnum		, uint32_t * spellEnumOriginal	, 
@@ -113,22 +99,11 @@ void __cdecl D20SpellDataSetSpontCast(D20SpellData* d20SpellData, SpontCastType 
 	}
 };
 
+#pragma endregion
 
-uint32_t ConditionPrevent(DispatcherCallbackArgs args)
-{
-	DispIO14h * dispIO = DispIO14hCheckDispIOType1((DispIO14h*)args.dispIO);
-	if (dispIO == nullptr)
-	{
-		logger->error("Dispatcher Error! Condition {} fuckup, wrong DispIO type", args.subDispNode->condNode->condStruct->condName);
-		return 0; // if we get here then VERY BAD!
-	}
-	if (dispIO->condStruct == (CondStruct *)args.subDispNode->subDispDef->data1)
-	{
-		dispIO->outputFlag = 0;
-	}
-	return 0;
-};
 
+
+#pragma region D20Status Init Functions
 
 void D20StatusInit(objHndl objHnd)
 {
@@ -283,3 +258,4 @@ void D20StatusInitFeats(objHndl objHnd)
 
 
 
+#pragma endregion

@@ -6,6 +6,32 @@
 #include "condition.h"
 
 
+class DispatcherReplacements : public TempleFix {
+public:
+	const char* name() override {
+		return "Dispatcher System Function Replacements";
+	}
+
+	void apply() override {
+		logger->info("Replacing basic Dispatcher functions");
+		replaceFunction(0x1004D700, DispIO14hCheckDispIOType1);
+		replaceFunction(0x100E1E30, DispatcherRemoveSubDispNodes);
+		replaceFunction(0x100E2400, DispatcherClearField);
+		replaceFunction(0x100E2720, DispatcherClearAttribs);
+		replaceFunction(0x100E2740, DispatcherClearItemConds);
+		replaceFunction(0x100E2760, DispatcherClearConds);
+		replaceFunction(0x100E2120, DispatcherProcessor);
+		replaceFunction(0x100E1F10, DispatcherInit);
+		replaceFunction(0x1004DBA0, DispIO_Size32_Type21_Init);
+		replaceFunction(0x1004D3A0, Dispatch62);
+		replaceFunction(0x1004D440, Dispatch63);
+	}
+} dispatcherReplacements;
+
+
+
+#pragma region Dispatcher Functions
+
 void __cdecl DispatcherRemoveSubDispNodes(Dispatcher * dispatcher, CondNode * cond)
 {
 	for (uint32_t i = 0; i < dispTypeCount; i++)
@@ -167,3 +193,5 @@ uint32_t Dispatch63(objHndl objHnd, DispIO* dispIO) {
 	}
 	return 0;
 }
+
+#pragma endregion 

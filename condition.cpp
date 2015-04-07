@@ -4,10 +4,36 @@
 #include "condition.h"
 
 
+ConditionStructs conds;
+
+class ConditionFunctionReplacement : public TempleFix {
+public:
+	const char* name() override {
+		return "Condition Function Replacement";
+	}
+
+	void apply() override {
+		logger->info("Replacing Condition-related Functions");
+		replaceFunction(0x100E22D0, ConditionAddDispatch);
+		replaceFunction(0x100E24C0, ConditionAddToAttribs_NumArgs0);
+		replaceFunction(0x100E2500, ConditionAddToAttribs_NumArgs2);
+		replaceFunction(0x100E24E0, ConditionAdd_NumArgs0);
+		replaceFunction(0x100E2530, ConditionAdd_NumArgs2);
+		replaceFunction(0x100E2560, ConditionAdd_NumArgs3);
+		replaceFunction(0x100E2590, ConditionAdd_NumArgs4);
+		replaceFunction(0x100ECF30, ConditionPrevent);
+		replaceFunction(0x100E1DD0, CondNodeAddToSubDispNodeArray);
+	}
+} condFuncReplacement;
+
+
 CondNode::CondNode(CondStruct *cond) {
 	memset(this, 0, sizeof(CondNode));
 	condStruct = cond;
 }
+
+
+#pragma region Condition Add Functions
 
 uint32_t ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4) {
 
@@ -123,4 +149,21 @@ uint32_t ConditionAdd_NumArgs3(Dispatcher* dispatcher, CondStruct* condStruct, u
 
 uint32_t ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4) {
 	return ConditionAddDispatch(dispatcher, &dispatcher->otherConds, condStruct, arg1, arg2, arg3, arg4);
+};
+
+#pragma endregion
+
+uint32_t ConditionPrevent(DispatcherCallbackArgs args)
+{
+	DispIO14h * dispIO = DispIO14hCheckDispIOType1((DispIO14h*)args.dispIO);
+	if (dispIO == nullptr)
+	{
+		logger->error("Dispatcher Error! Condition {} fuckup, wrong DispIO type", args.subDispNode->condNode->condStruct->condName);
+		return 0; // if we get here then VERY BAD!
+	}
+	if (dispIO->condStruct == (CondStruct *)args.subDispNode->subDispDef->data1)
+	{
+		dispIO->outputFlag = 0;
+	}
+	return 0;
 };

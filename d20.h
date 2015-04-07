@@ -5,6 +5,8 @@
 #include "d20_defs.h"
 
 
+#pragma region D20 Spell Related Structs
+
 enum SpontCastType : unsigned char {
 	spontCastGoodCleric = 2,
 	spontCastEvilCleric = 4,
@@ -24,6 +26,15 @@ struct D20SpellData
 const uint32_t TestSizeOfD20SpellData = sizeof(D20SpellData);
 
 
+void __cdecl D20SpellDataSetSpontCast(D20SpellData*, SpontCastType spontCastType);
+void D20SpellDataExtractInfo
+(D20SpellData * d20SpellData, uint32_t * spellEnum, uint32_t * spellEnumOriginal,
+uint32_t * spellClassCode, uint32_t * spellSlotLevel, uint32_t * itemSpellData,
+uint32_t * metaMagicData);
+
+
+#pragma endregion
+
 struct CharacterClasses : AddressTable
 {
 public:
@@ -37,51 +48,10 @@ public:
 
 extern CharacterClasses charClasses;
 
-struct ConditionStructs : AddressTable
-{
-	CondStruct * ConditionGlobal;
-	CondNode ** pCondNodeGlobal;
-	CondStruct * ConditionMonsterUndead;
-	CondStruct * ConditionSubtypeFire;
-	CondStruct * ConditionMonsterOoze;
-	CondStruct ** ConditionArrayRace;
-	CondStruct ** ConditionArrayClasses;
-	CondStruct * ConditionTurnUndead;
-	CondStruct * ConditionBardicMusic;
-	CondStruct * ConditionSchoolSpecialization;
-	CondStruct ** ConditionArrayDomains;
-	uint32_t * ConditionArrayDomainsArg1;
-	uint32_t * ConditionArrayDomainsArg2;
-
-
-	ConditionStructs()
-	{
-		rebase(ConditionGlobal, 0x102E8088);
-		rebase(pCondNodeGlobal, 0x10BCADA0);
-		rebase(ConditionMonsterUndead, 0x102EF9A8);
-		rebase(ConditionSubtypeFire, 0x102EFBE8);
-		rebase(ConditionMonsterOoze, 0x102EFAF0);
-		rebase(ConditionArrayRace, 0x102EFC18);
-		rebase(ConditionArrayClasses, 0x102F0634);
-		rebase(ConditionTurnUndead, 0x102B0D48);
-		rebase(ConditionBardicMusic, 0x102F0520);
-		rebase(ConditionSchoolSpecialization, 0x102F0604);
-		rebase(ConditionArrayDomains, 0x102B1690);
-		rebase(ConditionArrayDomainsArg1, 0x102B1694);
-		rebase(ConditionArrayDomainsArg2, 0x102B1698);
-	}
-
-};
-
-extern ConditionStructs conds;
 
 
 
-void __cdecl D20SpellDataSetSpontCast(D20SpellData*, SpontCastType spontCastType);
-void D20SpellDataExtractInfo
-(D20SpellData * d20SpellData, uint32_t * spellEnum, uint32_t * spellEnumOriginal,
-uint32_t * spellClassCode, uint32_t * spellSlotLevel, uint32_t * itemSpellData,
-uint32_t * metaMagicData);
+
 
 
 
