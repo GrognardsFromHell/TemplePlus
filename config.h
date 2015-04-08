@@ -28,6 +28,8 @@ struct TemplePlusConfig
 	bool engineEnhancements = true;
 	bool useDirect3d9Ex = true;
 	bool windowed = true;
+	int windowWidth = 1024;
+	int windowHeight = 768;
 	
 	// This is some crazy editor stuff leftover from worlded
 	bool editor = false;

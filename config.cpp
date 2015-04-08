@@ -95,7 +95,9 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(spellAlreadyKnownWarnings),
 	CONF_BOOL(NPCsLevelLikePCs),
 	CONF_DOUBLE(randomEncounterExperienceFactor),
-	CONF_STRING(defaultModule)
+	CONF_STRING(defaultModule),
+	CONF_INT(windowWidth),
+	CONF_INT(windowHeight)
 };
 
 void TemplePlusConfig::Load() {
