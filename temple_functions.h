@@ -4,11 +4,7 @@
 #include "tig_font.h"
 #include "addresses.h"
 #include "dependencies/python-2.2/Python.h"
-#include "temple_enums.h"
-#include "spell.h"
-//#include "obj.h"
-//#include "feat.h"
-//#include "d20.h"
+#include "common.h"
 
 // Contains the function definitions for stuff found in temple.dll that we may want to call or override.
 
@@ -17,24 +13,7 @@ extern "C"
 	int __declspec(dllimport) __cdecl temple_main(HINSTANCE hInstance, HINSTANCE hPrevInstance, const char* lpCommandLine, int nCmdShow);
 }
 
-typedef uint64_t objHndl;
-typedef uint32_t _fieldIdx;
-typedef uint32_t _fieldSubIdx;
-typedef uint32_t _mapNum;
-typedef uint32_t _jmpPntID;
-typedef uint32_t _standPointType;
-// typedef uint32_t _featCode; // replaced by feat_enums
-typedef uint32_t _key;
 
-# pragma region Standard Structs
-
-#pragma pack(push, 1)
-struct ObjectId {
-	uint16_t subtype;
-	uint16_t something;
-	uint32_t field4; // always zero from what I've seen
-	GUID guid;
-};
 
 struct locationSec {
 	uint64_t location;
@@ -47,47 +26,7 @@ struct locationSec {
 	}
 };
 
-struct locXY{
-	uint32_t locx;
-	uint32_t locy;
-};
 
-struct Loc_And_Offsets {
-	locXY location;
-	float off_x;
-	float off_y;
-};
-
-struct LocFull {
-	Loc_And_Offsets location;
-	float off_z;
-};
-
-struct GroupArray {
-	objHndl GroupMembers[32];
-	uint32_t * GroupSize;
-	void* unknownfunc;
-};
-
-
-struct StandPoint {
-	uint32_t mapNum;
-	uint32_t field4;
-	Loc_And_Offsets LocAndOff;
-	_jmpPntID jmpPntID;
-	uint32_t field_1C;
-};
-
-struct JumpPointPacket{
-	_jmpPntID jmpPntID;
-	char * pMapName;
-	_mapNum mapNum;
-	uint32_t field_C;
-	locXY location;
-};
-#pragma pack(pop)
-
-#pragma endregion
 
 struct TempleFuncs : AddressTable {
 	void(*ProcessSystemEvents)();
@@ -229,6 +168,8 @@ struct TempleFuncs : AddressTable {
 
 	int (*temple_snprintf)(char *, size_t, const char *, ...);
 
+	uint32_t(__cdecl *sub_100664B0)(objHndl objHnd, uint32_t);
+
 	// rebase on init
 	TempleFuncs() {
 		rebase(ProcessSystemEvents, 0x101DF440);
@@ -335,6 +276,8 @@ struct TempleFuncs : AddressTable {
 		rebase(RandomIntRange, 0x10038DF0);
 
 		rebase(temple_snprintf, 0x10254680);
+
+		rebase(sub_100664B0, 0x100664B0);
 
 	}
 private:

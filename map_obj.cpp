@@ -1,9 +1,10 @@
-
 #include "stdafx.h"
+#include "common.h"
 #include "map_obj.h"
 #include "addresses.h"
 #include "obj.h"
 #include "python_debug.h"
+#include "temple_functions.h"
 
 struct MapFindNodeObj {
 	int flags; // 2 if in use

@@ -1,64 +1,32 @@
 #pragma once
 
 #include "stdafx.h"
-#include "temple_functions.h"
+#include "common.h"
 
-const uint32_t SPELLENUMMAX = 4000;
-/*
 
-*/
-class SpontCastSpellLists
+struct SpontCastSpellLists : AddressTable
 {
 public:
 	uint32_t spontCastSpellsDruid[11];
 	uint32_t spontCastSpellsEvilCleric[11];
 	uint32_t spontCastSpellsGoodCleric[11];
 	uint32_t spontCastSpellsDruidSummons[11];
-	SpontCastSpellLists();
-
-
+	SpontCastSpellLists()
+	{
+		uint32_t _spontCastSpellsDruid[] = { -1, 476, 477, 478, 479, 480, 481, 482, 483, 484, 4000 };
+		uint32_t _spontCastSpellsEvilCleric[] = { 248, 247, 249, 250, 246, 61, 581, 582, 583, 583, 0 };
+		uint32_t _spontCastSpellsGoodCleric[] = { 91, 90, 92, 93, 89, 221, 577, 578, 579, 579, 0 };
+		uint32_t _spontCastSpellsDruidSummons[] = { -1, 2000, 2100, 2200, 2300, 2400, 2500, 2600, 2700, 2800, 0 };
+		memcpy(spontCastSpellsDruid, _spontCastSpellsDruid, 11 * sizeof(uint32_t));
+		memcpy(spontCastSpellsEvilCleric, _spontCastSpellsEvilCleric, 11 * sizeof(uint32_t));
+		memcpy(spontCastSpellsGoodCleric, _spontCastSpellsGoodCleric, 11 * sizeof(uint32_t));
+		memcpy(spontCastSpellsDruidSummons, _spontCastSpellsDruidSummons, 11 * sizeof(uint32_t));
+	}
 };
 
-
-//extern SpontCastSpellLists spontCastSpellLists;
-
-
-enum SpellStoreType : uint8_t
-{
-	spellStoreKnown = 1,
-	spellStoreMemorized = 2,
-	spellStoreCast = 3
-};
-
-struct MetaMagicData
-{
-	unsigned char metaMagicFlags : 4; // 1 - Maximize Spell ; 2 - Quicken Spell ; 4 - Silent Spell;  8 - Still Spell
-	unsigned char metaMagicEmpowerSpellCount : 4;
-	unsigned char metaMagicEnlargeSpellCount : 4;
-	unsigned char metaMagicExtendSpellCount : 4;
-	unsigned char metaMagicHeightenSpellCount : 4;
-	unsigned char metaMagicWidenSpellCount : 4;
-};
+extern SpontCastSpellLists spontCastSpellLists;
 
 
-struct SpellStoreState
-{
-	SpellStoreType spellStoreType;
-	uint8_t usedUp; // relevant only for spellStoreMemorized
-};
-
-struct SpellStoreData
-{
-	uint32_t spellEnum;
-	uint32_t classCode;
-	uint32_t spellLevel;
-	SpellStoreState spellStoreState ;
-	MetaMagicData metaMagicData; // should be stored as 32bit value!
-	char pad0;
-	uint32_t pad1;
-	uint32_t pad2;
-	uint32_t pad3;
-};
 
 uint32_t _DruidRadialSelectSummons(uint32_t spellSlotLevel);
 void DruidRadialSelectSummonsHook();
@@ -66,6 +34,8 @@ uint32_t _DruidRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel);
 void DruidRadialSpontCastSpellEnumHook();
 uint32_t _GoodClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel);
 uint32_t _EvilClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel);
+void EvilClericRadialSpontCastSpellEnumHook();
+void GoodClericRadialSpontCastSpellEnumHook();
 
 const uint32_t TestSizeOfSpellStoreData = sizeof(SpellStoreData);
 
@@ -74,3 +44,5 @@ const uint32_t TestSizeOfSpellStoreType = sizeof(SpellStoreType);
 const uint32_t TestSizeOfSpellStoreState = sizeof(SpellStoreState);
 
 //const uint32_t bbb = sizeof(int32_t);
+
+

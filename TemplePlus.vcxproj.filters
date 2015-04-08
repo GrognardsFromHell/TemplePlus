@@ -22,9 +22,6 @@
     <ClCompile Include="xp.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
-    <ClCompile Include="spells.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
     <ClCompile Include="aas.cpp" />
     <ClCompile Include="game_config.cpp" />
     <ClCompile Include="temple_main.cpp" />
@@ -165,12 +162,30 @@
     <ClCompile Include="python_debug.cpp">
       <Filter>python</Filter>
     </ClCompile>
+    <ClCompile Include="dispatcher.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="usercall.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="weapon.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="spell.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="condition.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
     <ClCompile Include="fog_seams.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="gamesystems_render.cpp" />
     <ClCompile Include="ui_render.cpp" />
     <ClCompile Include="version.cpp" />
+    <ClCompile Include="inventory.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -310,9 +325,6 @@
     <ClInclude Include="radial_menu.h">
       <Filter>ui</Filter>
     </ClInclude>
-    <ClInclude Include="conditions.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
     <ClInclude Include="obj_fieldnames.h">
       <Filter>utils</Filter>
     </ClInclude>
@@ -323,8 +335,32 @@
     <ClInclude Include="python_debug.h">
       <Filter>python</Filter>
     </ClInclude>
+    <ClInclude Include="dispatcher.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="obj_structs.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="spell_structs.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="common.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="d20_defs.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="weapon.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="condition.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
     <ClInclude Include="ui_render.h" />
     <ClInclude Include="version.h" />
+    <ClInclude Include="inventory.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

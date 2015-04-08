@@ -6,6 +6,8 @@
 #include "tig_mouse.h"
 #include "tig_msg.h"
 #include "combat.h"
+//#include "spell.h"
+#include "common.h"
 
 TempleFuncs templeFuncs;
 
