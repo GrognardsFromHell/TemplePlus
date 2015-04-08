@@ -1932,7 +1932,7 @@ enum WeaponTypes : uint32_t
 	wt_greatsword,
 	wt_guisarme,
 	wt_halberd,
-	wt_longspear,
+	wt_longspear,  //43
 	wt_ranseur,
 	wt_scythe,
 	wt_shortbow,
