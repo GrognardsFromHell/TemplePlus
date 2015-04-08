@@ -86,6 +86,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="inventory.cpp" />
     <ClCompile Include="libraryholder.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
@@ -205,6 +206,7 @@
     <ClInclude Include="game_config.h" />
     <ClInclude Include="graphics.h" />
     <ClInclude Include="fixes.h" />
+    <ClInclude Include="inventory.h" />
     <ClInclude Include="libraryholder.h" />
     <ClInclude Include="mainloop.h" />
     <ClInclude Include="map_obj.h" />

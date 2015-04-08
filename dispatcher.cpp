@@ -5,6 +5,40 @@
 #include "obj.h"
 #include "condition.h"
 
+#pragma region Dispatcher System Implementation
+DispatcherSystem dispatch;
+
+void DispatcherSystem::DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO)
+{
+	_DispatcherProcessor(dispatcher, dispType, dispKey, dispIO);
+}
+
+Dispatcher * DispatcherSystem::DispatcherInit(objHndl objHnd)
+{
+	return _DispatcherInit(objHnd);
+}
+
+void  DispatcherSystem::DispatcherClearField(Dispatcher * dispatcher, CondNode ** dispCondList)
+{
+	_DispatcherClearField(dispatcher, dispCondList);
+}
+
+void  DispatcherSystem::DispatcherClearAttribs(Dispatcher * dispatcher)
+{
+	_DispatcherClearAttribs(dispatcher);
+}
+
+void  DispatcherSystem::DispatcherClearItemConds(Dispatcher * dispatcher)
+{
+	_DispatcherClearItemConds(dispatcher);
+}
+
+void  DispatcherSystem::DispatcherClearConds(Dispatcher *dispatcher)
+{
+	_DispatcherClearConds(dispatcher);
+}
+
+#pragma endregion
 
 class DispatcherReplacements : public TempleFix {
 public:
@@ -14,17 +48,17 @@ public:
 
 	void apply() override {
 		logger->info("Replacing basic Dispatcher functions");
-		replaceFunction(0x1004D700, DispIO14hCheckDispIOType1);
-		replaceFunction(0x100E1E30, DispatcherRemoveSubDispNodes);
-		replaceFunction(0x100E2400, DispatcherClearField);
-		replaceFunction(0x100E2720, DispatcherClearAttribs);
-		replaceFunction(0x100E2740, DispatcherClearItemConds);
-		replaceFunction(0x100E2760, DispatcherClearConds);
-		replaceFunction(0x100E2120, DispatcherProcessor);
-		replaceFunction(0x100E1F10, DispatcherInit);
-		replaceFunction(0x1004DBA0, DispIO_Size32_Type21_Init);
-		replaceFunction(0x1004D3A0, Dispatch62);
-		replaceFunction(0x1004D440, Dispatch63);
+		replaceFunction(0x1004D700, _DispIO14hCheckDispIOType1);
+		replaceFunction(0x100E1E30, _DispatcherRemoveSubDispNodes);
+		replaceFunction(0x100E2400, _DispatcherClearField);
+		replaceFunction(0x100E2720, _DispatcherClearAttribs);
+		replaceFunction(0x100E2740, _DispatcherClearItemConds);
+		replaceFunction(0x100E2760, _DispatcherClearConds);
+		replaceFunction(0x100E2120, _DispatcherProcessor);
+		replaceFunction(0x100E1F10, _DispatcherInit);
+		replaceFunction(0x1004DBA0, _DispIO_Size32_Type21_Init);
+		replaceFunction(0x1004D3A0, _Dispatch62);
+		replaceFunction(0x1004D440, _Dispatch63);
 	}
 } dispatcherReplacements;
 
@@ -32,7 +66,7 @@ public:
 
 #pragma region Dispatcher Functions
 
-void __cdecl DispatcherRemoveSubDispNodes(Dispatcher * dispatcher, CondNode * cond)
+void __cdecl _DispatcherRemoveSubDispNodes(Dispatcher * dispatcher, CondNode * cond)
 {
 	for (uint32_t i = 0; i < dispTypeCount; i++)
 	{
@@ -57,7 +91,7 @@ void __cdecl DispatcherRemoveSubDispNodes(Dispatcher * dispatcher, CondNode * co
 	};
 
 
-void __cdecl DispatcherClearField(Dispatcher *dispatcher, CondNode ** dispCondList)
+void __cdecl _DispatcherClearField(Dispatcher *dispatcher, CondNode ** dispCondList)
 {
 	CondNode * cond = *dispCondList;
 	objHndl obj = dispatcher->objHnd;
@@ -77,7 +111,7 @@ void __cdecl DispatcherClearField(Dispatcher *dispatcher, CondNode ** dispCondLi
 			}
 			subDispNode_TypeRemoveCond = subDispNode_TypeRemoveCond->next;
 		}
-		DispatcherRemoveSubDispNodes(dispatcher, cond);
+		_DispatcherRemoveSubDispNodes(dispatcher, cond);
 		allocFuncs.free(cond);
 		cond = nextCond;
 
@@ -85,30 +119,31 @@ void __cdecl DispatcherClearField(Dispatcher *dispatcher, CondNode ** dispCondLi
 	*dispCondList = nullptr;
 };
 
-void __cdecl DispatcherClearAttribs(Dispatcher *dispatcher)
+void __cdecl _DispatcherClearAttribs(Dispatcher *dispatcher)
 {
-	DispatcherClearField(dispatcher, &dispatcher->attributeConds);
+	_DispatcherClearField(dispatcher, &dispatcher->attributeConds);
 };
 
-void __cdecl DispatcherClearItemConds(Dispatcher *dispatcher)
+void __cdecl _DispatcherClearItemConds(Dispatcher *dispatcher)
 {
-	DispatcherClearField(dispatcher, &dispatcher->itemConds);
+	_DispatcherClearField(dispatcher, &dispatcher->itemConds);
 };
 
-void __cdecl DispatcherClearConds(Dispatcher *dispatcher)
+void __cdecl _DispatcherClearConds(Dispatcher *dispatcher)
 {
-	DispatcherClearField(dispatcher, &dispatcher->otherConds);
+	_DispatcherClearField(dispatcher, &dispatcher->otherConds);
 };
 
-DispIO14h * DispIO14hCheckDispIOType1(DispIO14h * dispIO)
+DispIO14h * _DispIO14hCheckDispIOType1(DispIO14h * dispIO)
 {
 	if (dispIO->dispIOType == 1){ return dispIO; }
 	else { return nullptr; }
 };
 
-void DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO) {
+void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO) {
 	static uint32_t dispCounter = 0;
 	if (dispCounter > DISPATCHER_MAX) {
+		logger->info("Dispatcher maximum recursion reached!");
 		return;
 	}
 	dispCounter++;
@@ -120,17 +155,17 @@ void DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32
 		if ((subDispNode->subDispDef->dispKey == dispKey || subDispNode->subDispDef->dispKey == 0) && ((subDispNode->condNode->flags & 1) == 0)) {
 
 			DispIO20h dispIO20h;
-			DispIO_Size32_Type21_Init((DispIO20h*)&dispIO20h);
+			_DispIO_Size32_Type21_Init((DispIO20h*)&dispIO20h);
 			dispIO20h.condNode = (CondNode *)subDispNode->condNode;
 
 			if (dispKey != 10 || dispType != 62) {
-				Dispatch62(dispatcher->objHnd, (DispIO*)&dispIO20h, 10);
+				_Dispatch62(dispatcher->objHnd, (DispIO*)&dispIO20h, 10);
 			}
 
 			if (dispIO20h.interrupt == 1 && dispType != dispType63) {
 				dispIO20h.interrupt = 0;
 				dispIO20h.val2 = 10;
-				Dispatch63(dispatcher->objHnd, (DispIO*)&dispIO20h);
+				_Dispatch63(dispatcher->objHnd, (DispIO*)&dispIO20h);
 				if (dispIO20h.interrupt == 0) {
 					subDispNode->subDispDef->dispCallback(subDispNode, dispatcher->objHnd, dispType, dispKey, (DispIO*)dispIO);
 				}
@@ -150,7 +185,7 @@ void DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32
 
 };
 
-Dispatcher* DispatcherInit(objHndl objHnd) {
+Dispatcher* _DispatcherInit(objHndl objHnd) {
 	Dispatcher* dispatcherNew = (Dispatcher *)allocFuncs._malloc_0(sizeof(Dispatcher));
 	memset(&dispatcherNew->subDispNodes, 0, dispTypeCount * sizeof(SubDispNode*));
 	CondNode* condNode = *(conds.pCondNodeGlobal);
@@ -165,7 +200,7 @@ Dispatcher* DispatcherInit(objHndl objHnd) {
 	return dispatcherNew;
 };
 
-void DispIO_Size32_Type21_Init(DispIO20h* dispIO) {
+void _DispIO_Size32_Type21_Init(DispIO20h* dispIO) {
 	dispIO->dispIOType = dispIOType21;
 	dispIO->interrupt = 0;
 	dispIO->field_8 = 0;
@@ -177,19 +212,19 @@ void DispIO_Size32_Type21_Init(DispIO20h* dispIO) {
 };
 
 
-uint32_t Dispatch62(objHndl objHnd, DispIO* dispIO, uint32_t dispKey) {
+uint32_t _Dispatch62(objHndl objHnd, DispIO* dispIO, uint32_t dispKey) {
 	Dispatcher* dispatcher = (Dispatcher *)objects.GetDispatcher(objHnd);
 	if (dispatcher != nullptr && (int32_t)dispatcher != -1) {
-		DispatcherProcessor(dispatcher, dispType62, dispKey, dispIO);
+		_DispatcherProcessor(dispatcher, dispType62, dispKey, dispIO);
 	}
 	return 0;
 }
 
 
-uint32_t Dispatch63(objHndl objHnd, DispIO* dispIO) {
+uint32_t _Dispatch63(objHndl objHnd, DispIO* dispIO) {
 	Dispatcher* dispatcher = (Dispatcher *)objects.GetDispatcher(objHnd);
 	if (dispatcher != nullptr && (int32_t)dispatcher != -1) {
-		DispatcherProcessor(dispatcher, dispType63, 0, dispIO);
+		_DispatcherProcessor(dispatcher, dispType63, 0, dispIO);
 	}
 	return 0;
 }

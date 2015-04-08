@@ -48,15 +48,39 @@ public:
 
 extern CharacterClasses charClasses;
 
+struct D20System : AddressTable
+{
+	void D20StatusInitRace(objHndl objHnd);
+	void D20StatusInitClass(objHndl objHnd);
+	void D20StatusInit(objHndl objHnd);
+	void D20StatusInitDomains(objHndl objHnd);
+	void D20StatusInitFeats(objHndl objHnd);
+	void D20StatusInitItemConditions(objHndl objHnd);
+	uint32_t D20Query(objHndl ObjHnd, D20DispatcherKey dispKey);
+
+	void (__cdecl *D20StatusInitFromInternalFields)(objHndl objHnd, Dispatcher *dispatcher);
+	void (__cdecl *AppendObjHndToArray10BCAD94)(objHndl ObjHnd);
+	uint32_t * D20Global10AA3284;
+
+
+	D20System()
+	{
+		rebase(D20StatusInitFromInternalFields, 0x1004F910);
+		rebase(AppendObjHndToArray10BCAD94, 0x100DFAD0);
+		rebase(D20Global10AA3284, 0x10AA3284);
+	};
+};
+
+
+extern D20System d20;
 
 
 
 
-
-
-
-
-void D20StatusInitRace(objHndl objHnd);
-void D20StatusInitClass(objHndl objHnd);
-void D20StatusInit(objHndl objHnd);
-void D20StatusInitDomains(objHndl objHnd);
+void _D20StatusInitRace(objHndl objHnd);
+void _D20StatusInitClass(objHndl objHnd);
+void _D20StatusInit(objHndl objHnd);
+void _D20StatusInitDomains(objHndl objHnd);
+void _D20StatusInitFeats(objHndl objHnd);
+void _D20StatusInitItemConditions(objHndl objHnd);
+uint32_t _D20Query(objHndl objHnd, D20DispatcherKey dispKey);

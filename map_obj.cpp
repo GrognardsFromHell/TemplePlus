@@ -1,5 +1,5 @@
-#include "common.h"
 #include "stdafx.h"
+#include "common.h"
 #include "map_obj.h"
 #include "addresses.h"
 #include "obj.h"

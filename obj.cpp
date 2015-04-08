@@ -64,7 +64,8 @@ Objects::Objects() {
 	rebase(_GetInternalFieldInt32, 0x1009E1D0);
 	rebase(_GetInternalFieldInt64, 0x1009E2E0);
 	rebase(_StatLevelGet, 0x10074800);
-	rebase(_SetInternalFieldInt32, 0x1010B4A0);
+	rebase(_SetInternalFieldInt32, 0x100A0190);
+	
 }
 
 

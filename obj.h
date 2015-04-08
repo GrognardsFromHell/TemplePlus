@@ -3,10 +3,8 @@
 //#include "temple_functions.h"
 #include "dispatcher.h"
 #include "common.h"
-
-
-
-
+#include "d20.h"
+#include "feat.h"
 
 
 struct Objects : AddressTable {
@@ -17,6 +15,8 @@ struct Objects : AddressTable {
 		return _GetInternalFieldInt32(obj, obj_f_flags);
 	}
 
+
+#pragma region Common Attributes
 	ObjectType GetType(objHndl obj) {
 		return static_cast<ObjectType>(_GetInternalFieldInt32(obj, obj_f_type));
 	}
@@ -73,9 +73,7 @@ struct Objects : AddressTable {
 		return IsCategorySubtype(objHnd, mc_subtye_fire);
 	}
 
-	Dispatcher* GetDispatcher(objHndl obj) {
-		return (Dispatcher *)(_GetInternalFieldInt32(obj, obj_f_dispatcher));
-	}
+
 
 	uint32_t StatLevelGet(objHndl obj, Stat stat)
 	{
@@ -87,10 +85,26 @@ struct Objects : AddressTable {
 		return _GetInternalFieldInt32(obj, fieldIdx);
 	};
 
+#pragma endregion
+
+#pragma region Dispatcher Stuff
+
+	Dispatcher* GetDispatcher(objHndl obj) {
+		return (Dispatcher *)(_GetInternalFieldInt32(obj, obj_f_dispatcher));
+	}
+
 	void SetDispatcher(objHndl obj, uint32_t data32) {
 		_SetInternalFieldInt32(obj, obj_f_dispatcher, data32);
 		return;
 	}
+
+	DispatcherSystem dispatch;
+
+	D20System d20;
+
+	FeatSystem feats;
+
+#pragma endregion
 
 private:
 	int(__cdecl *_GetInternalFieldInt32)(objHndl ObjHnd, int nFieldIdx);

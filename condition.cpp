@@ -23,6 +23,7 @@ public:
 		replaceFunction(0x100E2590, ConditionAdd_NumArgs4);
 		replaceFunction(0x100ECF30, ConditionPrevent);
 		replaceFunction(0x100E1DD0, CondNodeAddToSubDispNodeArray);
+		replaceFunction(0x100F7BE0, _GetCondStructFromFeat);
 	}
 } condFuncReplacement;
 
@@ -49,7 +50,7 @@ uint32_t ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, Con
 	dispIO14h.arg1 = arg1;
 	dispIO14h.arg2 = arg2;
 
-	DispatcherProcessor(dispatcher, dispTypeConditionAddPre, 0, (DispIO*)&dispIO14h);
+	_DispatcherProcessor(dispatcher, dispTypeConditionAddPre, 0, (DispIO*)&dispIO14h);
 
 	if (dispIO14h.outputFlag == 0) {
 		return 0;
@@ -155,7 +156,7 @@ uint32_t ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, u
 
 uint32_t ConditionPrevent(DispatcherCallbackArgs args)
 {
-	DispIO14h * dispIO = DispIO14hCheckDispIOType1((DispIO14h*)args.dispIO);
+	DispIO14h * dispIO = _DispIO14hCheckDispIOType1((DispIO14h*)args.dispIO);
 	if (dispIO == nullptr)
 	{
 		logger->error("Dispatcher Error! Condition {} fuckup, wrong DispIO type", args.subDispNode->condNode->condStruct->condName);
@@ -167,3 +168,23 @@ uint32_t ConditionPrevent(DispatcherCallbackArgs args)
 	}
 	return 0;
 };
+
+uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** condStructOut, uint32_t * arg2Out)
+{
+	feat_enums * featFromDict = & ( conds.FeatConditionDict->featEnum );
+	uint32_t iter = 0;
+	while (
+		( (int32_t)featEnum != featFromDict[0] || featFromDict[1] != -1)
+		&&  ( (int32_t)featEnum < (int32_t)featFromDict[0] 
+				|| (int32_t)featEnum >= (int32_t)featFromDict[1]  )
+		)
+	{
+		iter += 16;
+		featFromDict += 4;
+		if (iter >= 0x540){ return 0; }
+	}
+
+	*condStructOut = (CondStruct *)*(featFromDict - 1);
+	*arg2Out = featEnum + featFromDict[2] - featFromDict[0];
+	return 1;
+}

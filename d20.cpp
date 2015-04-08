@@ -9,11 +9,48 @@
 #include "spell.h"
 #include "dispatcher.h"
 #include "condition.h"
+#include "inventory.h"
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
 
+#pragma region D20System Implementation
 
+D20System d20;
+
+void D20System::D20StatusInitRace(objHndl objHnd)
+{
+	_D20StatusInitRace(objHnd);
+}
+void D20System::D20StatusInitClass(objHndl objHnd)
+{
+	_D20StatusInitClass(objHnd);
+}
+void D20System::D20StatusInit(objHndl objHnd)
+{
+	_D20StatusInit(objHnd);
+}
+void D20System::D20StatusInitDomains(objHndl objHnd)
+{
+	_D20StatusInitDomains(objHnd);
+}
+
+void D20System::D20StatusInitFeats(objHndl objHnd)
+{
+	_D20StatusInitFeats(objHnd);
+}
+
+void D20System::D20StatusInitItemConditions(objHndl objHnd)
+{
+	_D20StatusInitItemConditions(objHnd);
+}
+
+uint32_t D20System::D20Query(objHndl objHnd, D20DispatcherKey dispKey)
+{
+	return _D20Query(objHnd, dispKey);
+}
+
+#pragma endregion 
 
 CharacterClasses charClasses;
 
@@ -29,8 +66,12 @@ public:
 		replaceFunction(0x10077830, D20SpellDataSetSpontCast);
 		
 
-		replaceFunction(0x100FD790, D20StatusInitRace);
-		replaceFunction(0x100FD790, D20StatusInitClass);
+		replaceFunction(0x100FD790, _D20StatusInitRace);
+		replaceFunction(0x100FEE60, _D20StatusInitClass);
+		replaceFunction(0x1004FDB0, _D20StatusInit);
+		replaceFunction(0x100FD2D0, _D20StatusInitFeats);
+		replaceFunction(0x1004CA00, _D20StatusInitItemConditions);
+		replaceFunction(0x1004CC00, _D20Query);
 	}
 } d20Replacements;
 
@@ -105,7 +146,7 @@ void __cdecl D20SpellDataSetSpontCast(D20SpellData* d20SpellData, SpontCastType 
 
 #pragma region D20Status Init Functions
 
-void D20StatusInit(objHndl objHnd)
+void _D20StatusInit(objHndl objHnd)
 {
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (dispatcher != nullptr && (uint32_t)dispatcher != 0xFFFFFFFF)
@@ -113,22 +154,68 @@ void D20StatusInit(objHndl objHnd)
 		return ;
 	}
 
-	dispatcher = DispatcherInit(objHnd);
+	dispatcher = objects.dispatch.DispatcherInit(objHnd);
 
 	objects.SetDispatcher(objHnd, (uint32_t)dispatcher);
 
-	DispatcherClearAttribs(dispatcher);
+	objects.dispatch.DispatcherClearAttribs(dispatcher);
 	
-	D20StatusInitClass(objHnd);
 
+	objects.d20.D20StatusInitClass(objHnd);
 
+	objects.d20.D20StatusInitRace(objHnd);
 
-	D20StatusInitRace(objHnd);
+	objects.d20.D20StatusInitFeats(objHnd);
+
+	objects.d20.D20StatusInitItemConditions(objHnd);
+
+	objects.d20.D20StatusInitFromInternalFields(objHnd, dispatcher);
+
+	objects.d20.AppendObjHndToArray10BCAD94(objHnd);
+
+	if (*objects.d20.D20Global10AA3284 != 0){ return; }
+
+	if (objects.IsCritter(objHnd))
+	{
+		if (! templeFuncs.IsObjDeadNullDestroyed(objHnd))
+		{
+			uint32_t hpCur = objects.StatLevelGet(objHnd, stat_hp_current);
+			uint32_t subdualDam = objects.GetInt32(objHnd, obj_f_critter_subdual_damage);
+
+			if ( (uint32_t)hpCur != 0xFFFF0001)
+			{
+				if (hpCur < 0)
+				{
+					if (feats.HasFeatCount(objHnd, FEAT_DIEHARD))
+					{
+						ConditionAdd_NumArgs0(dispatcher, conds.ConditionDisabled);
+					} else
+					{
+						ConditionAdd_NumArgs0(dispatcher, conds.ConditionUnconscious);
+					}
+				} 
+				
+				else
+				{
+					if (hpCur == 0)
+					{
+						ConditionAdd_NumArgs0(dispatcher, conds.ConditionDisabled);
+					} else if ( subdualDam > hpCur)
+					{
+						ConditionAdd_NumArgs0(dispatcher, conds.ConditionUnconscious);
+					}
+				}
+
+			}
+		}
+	}
+	return;
+
 
 }
 
 
-void D20StatusInitRace(objHndl objHnd)
+void _D20StatusInitRace(objHndl objHnd)
 {
 	if (objects.IsCritter(objHnd))
 	{
@@ -155,7 +242,7 @@ void D20StatusInitRace(objHndl objHnd)
 };
 
 
-void D20StatusInitClass(objHndl objHnd)
+void _D20StatusInitClass(objHndl objHnd)
 {
 	if (objects.IsCritter(objHnd))
 	{
@@ -178,7 +265,7 @@ void D20StatusInitClass(objHndl objHnd)
 		
 		if (objects.StatLevelGet(objHnd, stat_level_cleric) >= 1)
 		{
-			D20StatusInitDomains(objHnd);
+			_D20StatusInitDomains(objHnd);
 		}
 
 		if (objects.StatLevelGet(objHnd, stat_level_paladin) >= 3)
@@ -198,7 +285,7 @@ void D20StatusInitClass(objHndl objHnd)
 	}
 };
 
-void D20StatusInitDomains(objHndl objHnd)
+void _D20StatusInitDomains(objHndl objHnd)
 {
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	uint32_t domain_1 = objects.GetInt32(objHnd, obj_f_critter_domain_1);
@@ -236,26 +323,68 @@ void D20StatusInitDomains(objHndl objHnd)
 	}
 }
 
-void D20StatusInitFeats(objHndl objHnd)
+void _D20StatusInitFeats(objHndl objHnd)
 {
-	if( objects.IsCritter(objHnd))
-	{
-		Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
-		feat_enums featList[1000] = {};
-		uint32_t numFeats = feats.FeatListElective(objHnd, featList);
+	
+	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+	feat_enums featList[1000] = {};
+	uint32_t numFeats = feats.FeatListElective(objHnd, featList);
 
-		for (uint32_t i = 0; i < numFeats; i++)
+	for (uint32_t i = 0; i < numFeats; i++)
+	{
+		CondStruct * cond; 
+		uint32_t arg2 = 0;
+		if (_GetCondStructFromFeat(featList[i], &cond, &arg2))
 		{
-			CondStruct * cond; //WIP TODO
-		//	if ()
-			{
-	//			ConditionAddToAttribs_NumArgs2(dispatcher, cond, featList[i], )
-			}
+			ConditionAddToAttribs_NumArgs2(dispatcher, cond, featList[i], arg2);
 		}
 	}
+	ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionAttackOfOpportunity);
+	ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionCastDefensively);
+	ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionDealSubdualDamage);
+	ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionDealNormalDamage);
+	ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionFightDefensively);
+	
 };
 
+void _D20StatusInitItemConditions(objHndl objHnd)
+{
+	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+	if (dispatcher == 0 || (int32_t)dispatcher == -1){ return; }
+	if (objects.IsCritter(objHnd))
+	{
+		objects.dispatch.DispatcherClearItemConds(dispatcher);
+		if (!objects.d20.D20Query(objHnd, DK_QUE_Polymorphed))
+		{
+			uint32_t invenCount = objects.GetInt32(objHnd, obj_f_critter_inventory_num);
+			for (uint32_t i = 0; i < invenCount; i++)
+			{
+				objHndl objHndItem = templeFuncs.Obj_Get_IdxField_ObjHnd(objHnd, obj_f_critter_inventory_list_idx, i);
+				uint32_t itemInvocation = objects.GetInt32(objHndItem, obj_f_item_inv_location);
+				if (inventory.IsItemEffectingConditions(objHndItem, itemInvocation))
+				{
+					inventory.sub_100FF500(dispatcher, objHndItem, itemInvocation);
+				}
+			}
+		}
 
-
+	}
+	return;
+}
 
 #pragma endregion
+
+
+uint32_t _D20Query(objHndl objHnd, D20DispatcherKey dispKey)
+{
+	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+	if (dispatcher == nullptr || (int32_t)dispatcher == -1){ return 0; }
+	DispIO10h dispIO;
+	dispIO.dispIOType = dispIOType7;
+	dispIO.return_val = 0;
+	dispIO.data1 = 0;
+	dispIO.data2 = 0;
+	objects.dispatch.DispatcherProcessor(dispatcher, dispTypeD20Query, dispKey, &dispIO);
+	return dispIO.return_val;
+
+}

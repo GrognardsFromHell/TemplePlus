@@ -2,12 +2,31 @@
 
 #include "common.h"
 
-#define DISPATCHER_MAX  250 // max num of simultaneous Dispatches going on (static int counter inside DispatcherProcessor)
+#define DISPATCHER_MAX  250 // max num of simultaneous Dispatches going on (static int counter inside _DispatcherProcessor)
 
+struct CondNode;
+struct DispIO;
 struct SubDispDef;
 struct CondStruct;
 struct DispatcherCallbackArgs;
 struct Dispatcher;
+
+
+struct DispatcherSystem : AddressTable
+{
+	Dispatcher* DispatcherInit(objHndl objHnd);
+	void DispatcherProcessor(Dispatcher * dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO * dispIO);
+	void  DispatcherClearField(Dispatcher * dispatcher, CondNode ** dispCondList);
+	void  DispatcherClearAttribs(Dispatcher * dispatcher);
+	void  DispatcherClearItemConds(Dispatcher * dispatcher);
+	void  DispatcherClearConds(Dispatcher *dispatcher);
+	DispatcherSystem(){	};
+};
+
+extern DispatcherSystem dispatch;
+
+
+#pragma region Dispatcher Structs
 
 struct DispIO {
 	enum_dispIO_type dispIOType;
@@ -48,6 +67,21 @@ struct DispatcherCallbackArgs {
 	enum_disp_type dispType;
 	uint32_t dispKey;
 	DispIO* dispIO;
+};
+
+struct DispIO10h : DispIO
+{
+	uint32_t return_val;
+	uint32_t data1;
+	uint32_t data2;
+
+	DispIO10h()
+	{
+		dispIOType = dispIOType7;
+		return_val = 0;
+		data1 = 0;
+		data2 = 0;
+	}
 };
 
 struct DispIO14h : DispIO {
@@ -91,18 +125,25 @@ struct Dispatcher :TempleAlloc {
 	SubDispNode* subDispNodes[dispTypeCount];
 };
 
+#pragma endregion
 
-Dispatcher* DispatcherInit(objHndl objHnd);
 
-void  DispatcherRemoveSubDispNodes(Dispatcher * dispatcher, CondNode * cond);
-void  DispatcherClearField(Dispatcher *dispatcher, CondNode ** dispCondList);
-void  DispatcherClearAttribs(Dispatcher *dispatcher);
-void  DispatcherClearItemConds(Dispatcher *dispatcher);
-void  DispatcherClearConds(Dispatcher *dispatcher);
-DispIO14h * DispIO14hCheckDispIOType1(DispIO14h * dispIO);
-void DispIO_Size32_Type21_Init(DispIO20h* dispIO);
 
-uint32_t Dispatch62(objHndl, DispIO*, uint32_t dispKey);
-uint32_t Dispatch63(objHndl objHnd, DispIO* dispIO);
+#pragma region Dispatcher Functions
 
-void DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO);
+Dispatcher* _DispatcherInit(objHndl objHnd);
+
+void  _DispatcherRemoveSubDispNodes(Dispatcher * dispatcher, CondNode * cond);
+void  _DispatcherClearField(Dispatcher *dispatcher, CondNode ** dispCondList);
+void  _DispatcherClearAttribs(Dispatcher *dispatcher);
+void  _DispatcherClearItemConds(Dispatcher *dispatcher);
+void  _DispatcherClearConds(Dispatcher *dispatcher);
+DispIO14h * _DispIO14hCheckDispIOType1(DispIO14h * dispIO);
+void _DispIO_Size32_Type21_Init(DispIO20h* dispIO);
+
+uint32_t _Dispatch62(objHndl, DispIO*, uint32_t dispKey);
+uint32_t _Dispatch63(objHndl objHnd, DispIO* dispIO);
+
+void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO * dispIO);
+
+#pragma endregion

@@ -183,6 +183,9 @@
     <ClCompile Include="gamesystems_render.cpp" />
     <ClCompile Include="ui_render.cpp" />
     <ClCompile Include="version.cpp" />
+    <ClCompile Include="inventory.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -355,6 +358,9 @@
     </ClInclude>
     <ClInclude Include="ui_render.h" />
     <ClInclude Include="version.h" />
+    <ClInclude Include="inventory.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
