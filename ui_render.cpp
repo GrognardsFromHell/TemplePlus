@@ -83,6 +83,10 @@ void UiRenderer::PushFont(PredefinedFont font) {
 	}
 }
 
+void UiRenderer::PushFont(const std::string& faceName, int pixelSize, bool antialiased) {
+	tigFont.PushFont(faceName.c_str(), pixelSize, antialiased);
+}
+
 void UiRenderer::PopFont() {
 	tigFont.PopFont();
 }

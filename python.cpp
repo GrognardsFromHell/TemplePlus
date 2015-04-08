@@ -522,8 +522,7 @@ public:
 	void apply() override {
 
 		// replace the init function with our own, so we can add our stuff at the right time
-		auto orgInitPython = replaceFunction(reinterpret_cast<uint32_t>(pythonInternal.InitPython),
-			&HookedInitPython);
+		auto orgInitPython = replaceFunction(0x100ADA30, &HookedInitPython);
 		pythonInternal.InitPython = reinterpret_cast<int(__cdecl*)()>(orgInitPython);
 
 		// Hook the getattr function of obj handles

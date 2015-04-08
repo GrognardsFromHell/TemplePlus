@@ -886,7 +886,7 @@ Graphics::Graphics() {
 }
 
 bool Graphics::BeginFrame() {
-	// ToEE supports nested begin/present calls and silently ignored them
+	// ToEE supports nested begin/present calls and silently ignores them
 	if (++mFrameDepth > 1) {
 		return true;
 	}
@@ -909,7 +909,8 @@ bool Graphics::BeginFrame() {
 	// Advance time of shader clock, used for texture animation
 	auto now = graphics_clock::now();
 	auto frameTime = chrono::duration_cast<chrono::milliseconds>(now - mLastFrameStart);	
-	externalGraphicsFuncs.AdvanceShaderClock(frameTime.count() / 1000.0f);
+	externalGraphicsFuncs.AdvanceShaderClock(static_cast<float>(frameTime.count()));
+	mLastFrameStart = graphics_clock::now();
 	
 	return true;
 }

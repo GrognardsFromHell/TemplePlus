@@ -32,6 +32,11 @@ public:
 	static void PushFont(PredefinedFont font);
 
 	/*
+		Pushes a custom font for further text rendering.
+	*/
+	static void PushFont(const std::string &faceName, int pixelSize, bool antialiased = true);
+
+	/*
 		Pops the last pushed font from the font stack.
 	*/
 	static void PopFont();

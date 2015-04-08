@@ -293,8 +293,8 @@ static TigConfig createTigConfig(HINSTANCE hInstance) {
 	// This should no longer be used since we completely replaced this part of tig
 	// tigConfig.wndproc = (int)windowproc;
 	tigConfig.framelimit = 100;
-	tigConfig.width = 1024; // These should be read from a cfg file
-	tigConfig.height = 768;
+	tigConfig.width = config.windowWidth;
+	tigConfig.height = config.windowHeight;
 	tigConfig.bpp = 32;
 	tigConfig.hinstance = hInstance;
 	tigConfig.findSound = startupRelevantFuncs.FindSound;

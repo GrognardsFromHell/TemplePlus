@@ -92,7 +92,7 @@ uint32_t FeatSystem::FeatListGet(objHndl objHnd, feat_enums* listOut, Stat class
 
 		if (hasFeatTimes && listOut && hasFeatTimes > 0)
 		{
-			for (uint32_t j = 0; j < hasFeatTimes; j++)
+			for (auto j = 0; j < hasFeatTimes; j++)
 			{
 				memcpy(&(listOut[featCount+j]), &i, sizeof(uint32_t));
 
