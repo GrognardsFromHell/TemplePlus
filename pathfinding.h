@@ -31,8 +31,8 @@ enum PathQueryFlags : uint32_t {
 struct PathQuery {
 	int flags; // See PathQueryFlags
 	int field_4;
-	Loc_And_Offsets from;
-	Loc_And_Offsets to;
+	LocAndOffsets from;
+	LocAndOffsets to;
 	int field28;
 	int field2c;
 	objHndl critter;  // Set PQF_HAS_CRITTER
@@ -55,8 +55,8 @@ enum PathFlags {
 struct Path {
 	int flags;
 	int field4;
-	Loc_And_Offsets from;
-	Loc_And_Offsets to;
+	LocAndOffsets from;
+	LocAndOffsets to;
 	objHndl mover;
 	int field30[50];
 	int nodeCount3;
@@ -64,7 +64,7 @@ struct Path {
 	int field100[800];
 	int nodeCount2;
 	int fieldd84;
-	Loc_And_Offsets nodes[200];
+	LocAndOffsets nodes[200];
 	int nodeCount;
 	int currentNode;
 	int field_1a10;

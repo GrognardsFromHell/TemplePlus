@@ -2,6 +2,102 @@
 
 #include "stdafx.h"
 #include "common.h"
+#include "idxtables.h"
+
+
+struct SpellEntryLevelSpec
+{
+	uint32_t classCode;
+	uint32_t slotLevel;
+};
+
+struct SpellEntry
+{
+	uint32_t spellEnum;
+	uint32_t spellSchoolEnum;
+	uint32_t spellSubSchoolEnum;
+	uint32_t spellDescriptorBitmask;
+	uint32_t spellComponentBitmask;
+	uint32_t costGP;
+	uint32_t costXP;
+	uint32_t castingTimeType;
+	uint32_t spellRangeType;
+	uint32_t spellRange;
+	uint32_t savingThrowType;
+	uint32_t spellResistanceCode;
+	SpellEntryLevelSpec spellLvls[10];
+	uint32_t spellLvlsNum;
+	uint32_t projectileFlag;
+	uint64_t flagsTargetBitmask;
+	uint64_t incFlagsTargetBitmask;
+	uint64_t excFlagsTargetBitmask;
+	uint64_t modeTargetSemiBitmask;
+	uint32_t minTarget;
+	uint32_t maxTarget;
+	uint32_t radiusTarget; //note:	if it's negative, it means it's an index(up to - 7); if it's positive, it's a specified number(in feet ? )
+	float_t degreesTarget;
+	uint32_t aiTypeBitmask;
+	uint32_t pad;
+};
+
+const uint32_t TestSizeOfSpellEntry = sizeof(SpellEntry); // should be 0xC0  ( 192 )
+
+struct SpellPacketBody
+{
+	uint32_t spellEnum;
+	uint32_t spellEnumOriginal; // used for spontaneous casting in order to debit the "original" spell
+	uint32_t flagSthg;
+	void * pSthg;
+	objHndl objHndCaster;
+	uint32_t casterPartsysId;
+	uint32_t casterClassCode;
+	uint32_t spellKnownSlotLevel;
+	uint32_t baseCasterLevel;
+	uint32_t spellDC;
+	uint32_t unknowns[515];
+	uint32_t targetListNumItemsCopy;
+	uint32_t targetListNumItems;
+	objHndl targetListHandles[32];
+	uint32_t targetListPartsysIds[32];
+	uint32_t numProjectiles;
+	uint32_t field_9C4;
+	uint32_t field_9C8;
+	uint32_t field_9CC;
+	SpellPacketBody * spellPktBods[8];
+	LocFull locFull;
+	uint32_t field_A04;
+	SpellEntry spellEntry;
+	uint32_t spellDuration;
+	uint32_t field_ACC;
+	uint32_t spellRange;
+	uint32_t field_AD4;
+	uint32_t field_AD8_maybe_itemSpellLevel;
+	uint32_t field_ADC;
+	uint32_t spellId;
+	uint32_t field_AE4;
+};
+
+const uint32_t TestSizeOfSpellPacketBody = sizeof(SpellPacketBody); // should be 0xAE8  (2792)
+
+struct SpellPacket
+{
+	uint32_t key;
+	uint32_t isActive;
+	SpellPacketBody spellPktBody;
+};
+
+const uint32_t TestSizeOfSpellPacket = sizeof(SpellPacket); // should be 0xAF0  (2800)
+
+struct SpellSystem : AddressTable
+{
+	IdxTable<SpellPacket> * spellCastIdxTable;
+	SpellSystem()
+	{
+		rebase(spellCastIdxTable, 0x10AAF218);
+	}
+};
+
+extern SpellSystem spells;
 
 
 struct SpontCastSpellLists : AddressTable

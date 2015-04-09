@@ -344,7 +344,7 @@
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DelayLoadDLLs>tio.dll; winmm.dll;d3d9.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">
@@ -363,7 +363,7 @@
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <AdditionalLibraryDirectories>dependencies\boost_1_57_0\lib32-msvc-12.0</AdditionalLibraryDirectories>
-      <DelayLoadDLLs>tio.dll; winmm.dll;d3d9.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -394,7 +394,7 @@
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DelayLoadDLLs>tio.dll; winmm.dll;d3d9.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

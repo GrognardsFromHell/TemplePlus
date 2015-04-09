@@ -13,6 +13,9 @@
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
+static_assert(sizeof(D20Action) == 0x58, "D20Action struct has the wrong size!");
+const uint32_t asdf = sizeof(ActionSequence);
+
 
 #pragma region D20System Implementation
 
@@ -173,7 +176,7 @@ void _D20StatusInit(objHndl objHnd)
 
 	objects.d20.AppendObjHndToArray10BCAD94(objHnd);
 
-	if (*objects.d20.D20Global10AA3284 != 0){ return; }
+	if (*objects.d20.D20GlobalSthg10AA3284 != 0){ return; }
 
 	if (objects.IsCritter(objHnd))
 	{

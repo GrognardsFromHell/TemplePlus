@@ -29,7 +29,7 @@ public:
 		replaceFunction(0x1007C370, _FeatListGet);
 		replaceFunction(0x1007C3F0, _FeatListElective);
 		replaceFunction(0x1007C8D0, _WeaponFeatCheckSimpleWrapper);
-		//replaceFunction(0x1007C4F0, _WeaponFeatCheck); // usercall bullshit
+		//replaceFunction(0x1007C4F0, _WeaponFeatCheck); // usercall bullshit; replaced the functions that used it anyway
 	}
 };
 FeatFixes featFixes;
