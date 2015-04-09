@@ -1,6 +1,8 @@
 
 #include "stdafx.h"
 #include "fixes.h"
+#include "common.h"
+#include "obj.h"
 
 
 
@@ -23,6 +25,34 @@ public:
 
 	void apply() override {
 		writeHex(0x102BFD78 + 30*4, "00 09"); // marks Kukri as Martial in the sense that picking "Martial Weapons Proficiency" will now list Kukri
-		// TODO: makes the feat "Martial Weapons Proficiency: All" include Kukri proficiency
+		// see rest of fix in weapon.cpp IsMartialWeapon
 	}
 } kukriFix;
+
+
+objHndl __cdecl ItemWornAtModifiedForTumlbeCheck(objHndl objHnd, uint32_t itemWornSlot)
+{
+	if (objects.GetRace(objHnd) == race_dwarf)
+	{
+		return 0;
+	}
+	else
+	{
+		return objects.inventory.ItemWornAt(objHnd, itemWornSlot);
+	}
+}
+
+
+class DwarfTumbleFix : public TempleFix
+{
+public:
+	const char* name() override {
+		return "Allows Dwarves to tumble in heavy armor";
+	}
+
+	void apply() override {
+		redirectCall(0x1008AB49, ItemWornAtModifiedForTumlbeCheck);
+	}
+
+	//
+} dwarfTumbleFix;
