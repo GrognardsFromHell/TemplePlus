@@ -5,7 +5,7 @@
 #include "obj.h"
 #include "temple_functions.h"
 #include "d20.h"
-#include "tig_mes.h"
+#include "tig/tig_mes.h"
 #include "common.h"
 #include "weapon.h"
 

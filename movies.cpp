@@ -2,7 +2,7 @@
 
 #include "movies.h"
 #include "graphics.h"
-#include "tig_msg.h"
+#include "tig/tig_msg.h"
 
 MovieFuncs movieFuncs;
 
@@ -139,9 +139,12 @@ struct MovieRect {
 };
 
 static MovieRect getMovieRect(BinkMovie *movie) {
+	auto screenWidth = graphics.backBufferDesc().Width;
+	auto screenHeight = graphics.backBufferDesc().Height;
+
 	// Fit movie into rect
-	float w = static_cast<float>(video->current_width);
-	float h = static_cast<float>(video->current_height);
+	float w = static_cast<float>(screenWidth);
+	float h = static_cast<float>(screenHeight);
 	float wFactor = w / movie->width;
 	float hFactor = h / movie->height;
 	float scale = min(wFactor, hFactor);
@@ -150,8 +153,8 @@ static MovieRect getMovieRect(BinkMovie *movie) {
 
 	// Center on screen
 	MovieRect result;
-	result.left = (video->current_width - movieW) / 2;
-	result.top = (video->current_height - movieH) / 2;
+	result.left = (screenWidth - movieW) / 2;
+	result.top = (screenHeight - movieH) / 2;
 	result.right = result.left + movieW;
 	result.bottom = result.top + movieH;
 
@@ -185,13 +188,13 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 	int binkVolume = movieFuncs.MovieVolume * 258;
 	binkFuncs.BinkSetVolume(movie, 0, binkVolume);
 
-	auto d3dDevice = video->d3dDevice->delegate;
+	auto d3dDevice = graphics.device();
 
 	d3dDevice->ShowCursor(FALSE);
 
 	// Create the movie texture we write to
 	IDirect3DTexture9* texture;
-	if (handleD3dError("CreateTexture", d3dDevice->CreateTexture(movie->width, movie->height, 1, D3DUSAGE_DYNAMIC, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &texture, nullptr))) {
+	if (D3DLOG(d3dDevice->CreateTexture(movie->width, movie->height, 1, D3DUSAGE_DYNAMIC, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &texture, nullptr)) != D3D_OK) {
 		logger->error("Unable to create texture for bink video");
 		return 0;
 	}

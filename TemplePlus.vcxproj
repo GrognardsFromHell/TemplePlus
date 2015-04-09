@@ -100,7 +100,8 @@
     <ClCompile Include="python_debug.cpp" />
     <ClCompile Include="radial_menu.cpp" />
     <ClCompile Include="testhelper.cpp" />
-    <ClCompile Include="tig_loadingscreen.cpp" />
+    <ClCompile Include="tig\tig_init.cpp" />
+    <ClCompile Include="tig\tig_loadingscreen.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="minhook\src\buffer.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -132,7 +133,7 @@
     <ClCompile Include="obj.cpp" />
     <ClCompile Include="python.cpp" />
     <ClCompile Include="spell.cpp" />
-    <ClCompile Include="tig_tokenizer.cpp" />
+    <ClCompile Include="tig\tig_tokenizer.cpp" />
     <ClCompile Include="timeevents.cpp" />
     <ClCompile Include="ui_char_highresfix.cpp" />
     <ClCompile Include="usercall.cpp" />
@@ -152,16 +153,16 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="temple_main.cpp" />
-    <ClCompile Include="tig_font.cpp">
+    <ClCompile Include="tig\tig_font.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="tig_mes.cpp" />
-    <ClCompile Include="tig_mouse.cpp" />
-    <ClCompile Include="tig_msg.cpp" />
-    <ClCompile Include="tig_shader.cpp" />
-    <ClCompile Include="tig_texture.cpp" />
+    <ClCompile Include="tig\tig_mes.cpp" />
+    <ClCompile Include="tig\tig_mouse.cpp" />
+    <ClCompile Include="tig\tig_msg.cpp" />
+    <ClCompile Include="tig\tig_shader.cpp" />
+    <ClCompile Include="tig\tig_texture.cpp" />
     <ClCompile Include="mainwindow.cpp" />
     <ClCompile Include="ui.cpp" />
     <ClCompile Include="ui_item_creation.cpp" />
@@ -217,8 +218,9 @@
     <ClInclude Include="radial_menu.h" />
     <ClInclude Include="spell.h" />
     <ClInclude Include="spell_structs.h" />
-    <ClInclude Include="tig.h" />
-    <ClInclude Include="tig_loadingscreen.h" />
+    <ClInclude Include="tig\tig.h" />
+    <ClInclude Include="tig\tig_init.h" />
+    <ClInclude Include="tig\tig_loadingscreen.h" />
     <ClInclude Include="minhook\src\buffer.h" />
     <ClInclude Include="minhook\src\HDE\hde32.h" />
     <ClInclude Include="minhook\src\HDE\hde64.h" />
@@ -232,19 +234,19 @@
     <ClInclude Include="stopwatch.h" />
     <ClInclude Include="temple_enums.h" />
     <ClInclude Include="testhelper.h" />
-    <ClInclude Include="tig_startup.h" />
-    <ClInclude Include="tig_mes.h" />
-    <ClInclude Include="tig_mouse.h" />
+    <ClInclude Include="tig\tig_startup.h" />
+    <ClInclude Include="tig\tig_mes.h" />
+    <ClInclude Include="tig\tig_mouse.h" />
     <ClInclude Include="movies.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="temple_functions.h" />
-    <ClInclude Include="tig_font.h" />
-    <ClInclude Include="tig_msg.h" />
-    <ClInclude Include="tig_shader.h" />
-    <ClInclude Include="tig_texture.h" />
+    <ClInclude Include="tig\tig_font.h" />
+    <ClInclude Include="tig\tig_msg.h" />
+    <ClInclude Include="tig\tig_shader.h" />
+    <ClInclude Include="tig\tig_texture.h" />
     <ClInclude Include="mainwindow.h" />
-    <ClInclude Include="tig_tokenizer.h" />
+    <ClInclude Include="tig\tig_tokenizer.h" />
     <ClInclude Include="timeevents.h" />
     <ClInclude Include="tio.h" />
     <ClInclude Include="ui.h" />

@@ -3,8 +3,8 @@
 #include "mainloop.h"
 #include "addresses.h"
 #include "temple_functions.h"
-#include "tig_msg.h"
-#include "tig_mouse.h"
+#include "tig/tig_msg.h"
+#include "tig/tig_mouse.h"
 #include "gamesystems.h"
 #include "graphics.h"
 #include "ui_render.h"
@@ -133,7 +133,17 @@ static void RenderVersion();
 // TODO: hook this?
 static void RenderFrame() {
 	graphics.BeginFrame();
+	
+	auto device = graphics.device();
+	
+	// Set it as the render target
+	D3DLOG(device->SetRenderTarget(0, graphics.sceneSurface()));
+	D3DLOG(device->SetDepthStencilSurface(graphics.sceneDepthSurface()));
 
+	// Clear the new render target as well
+	auto clearColor = D3DCOLOR_ARGB(255, 255, 0, 0);
+	D3DLOG(device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, clearColor, 1.0f, 0));
+	
 	GameSystemsRender();
 	renderFuncs.RenderUi();
 
@@ -145,6 +155,20 @@ static void RenderFrame() {
 	renderFuncs.RenderMouseCursor(); // This calls the strange render-callback
 	mouseFuncs.DrawCursor(); // This draws dragged items
 	
+	// Reset the render target
+	D3DLOG(device->SetRenderTarget(0, graphics.backBuffer()));
+	D3DLOG(device->SetDepthStencilSurface(graphics.backBufferDepth()));
+
+	// Copy from the actual render target to the back buffer and scale / position accordingly
+	auto destRect = graphics.sceneRect();
+	device->StretchRect(
+		graphics.sceneSurface(),
+		nullptr,
+		graphics.backBuffer(),
+		&destRect,
+		D3DTEXF_LINEAR
+	);
+		
 	graphics.Present();
 }
 

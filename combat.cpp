@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "combat.h"
-#include "tig_mes.h"
+#include "tig/tig_mes.h"
 
 CombatSystem combat;
 

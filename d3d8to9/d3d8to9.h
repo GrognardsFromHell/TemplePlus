@@ -13,7 +13,5 @@ struct Direct3D8Adapter;
 #include "d3d8to9_vertexbuffer.h"
 #include "d3d8to9_texture.h"
 
-extern bool enableLinearPresent;
-
 #endif // D3D8TO9_H
 

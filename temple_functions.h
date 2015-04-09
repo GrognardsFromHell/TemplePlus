@@ -1,7 +1,7 @@
 #pragma once
 
 #include "stdafx.h"
-#include "tig_font.h"
+#include "tig/tig_font.h"
 #include "addresses.h"
 #include "dependencies/python-2.2/Python.h"
 #include "common.h"

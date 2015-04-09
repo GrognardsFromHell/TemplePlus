@@ -2,7 +2,7 @@
 
 #include "stdafx.h"
 #include "addresses.h"
-#include "tig_mes.h"
+#include "tig/tig_mes.h"
 
 
 uint32_t IsCombatActive();

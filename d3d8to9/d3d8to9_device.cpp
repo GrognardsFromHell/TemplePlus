@@ -7,8 +7,6 @@
 #include "d3d8to9_indexbuffer.h"
 #include "d3d8to9_surface.h"
 
-bool enableLinearPresent = false;
-
 HRESULT Direct3DDevice8Adapter::QueryInterface(THIS_ REFIID /*riid*/, void** /*ppvObj*/)
 {
 	return E_NOINTERFACE;

@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "addresses.h"
-#include "tig.h"
+#include "tig/tig.h"
 #include "graphics.h"
 
 #pragma pack(push, 1)

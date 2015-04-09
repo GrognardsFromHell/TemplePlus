@@ -1,13 +1,14 @@
 
 #include "stdafx.h"
 #include "temple_functions.h"
-#include "tig_msg.h"
-#include "tig_startup.h"
-#include "tig_mouse.h"
+#include "tig/tig_msg.h"
+#include "tig/tig_startup.h"
+#include "tig/tig_mouse.h"
+#include "tig/tig_init.h"
 #include "gamesystems.h"
 #include "config.h"
 #include "graphics.h"
-#include "tig_shader.h"
+#include "tig/tig_shader.h"
 #include "ui.h"
 #include "ui_mainmenu.h"
 #include "movies.h"
@@ -40,7 +41,6 @@ private:
 	HANDLE mMutex;
 };
 
-GlobalPrimitive<bool, 0x10D26DB4> tigConsoleDisabled; // TODO: move to tig_console.h
 GlobalPrimitive<bool, 0x10BDDD9C> noRandomEncounters;
 GlobalPrimitive<bool, 0x10300974> msMouseZEnabled;
 GlobalPrimitive<uint32_t, 0x102AF7C0> pathLimit;
@@ -57,9 +57,7 @@ GlobalPrimitive<uint32_t, 0x10BD3A48> startMap;
 
 struct StartupRelevantFuncs : AddressTable {
 	
-	int (__cdecl *FindSound)(int soundId, char *filenameOut);
-	_tig_init TigInit;
-	void (__cdecl *TigExit)();
+
 	int (__cdecl *SetScreenshotKeyhandler)(TigMsgGlobalKeyCallback *callback);
 	bool (__cdecl *TigWindowBufferstuffCreate)(int *bufferStuffIdx);
 	void (__cdecl *TigWindowBufferstuffFree)(int bufferStuffIdx);
@@ -73,9 +71,6 @@ struct StartupRelevantFuncs : AddressTable {
 	int(__cdecl *MapOpenInGame)(int mapId, int a3, int a4);
 
 	StartupRelevantFuncs() {
-		rebase(FindSound, 0x1003B9E0);
-		rebase(TigInit, 0x101DF5A0);
-		rebase(TigExit, 0x101DF3D0);
 		rebase(SetScreenshotKeyhandler, 0x101DCB30);
 		rebase(TigWindowBufferstuffCreate, 0x10113EB0);
 		rebase(TigWindowBufferstuffFree, 0x101DF2C0);		
@@ -89,34 +84,10 @@ struct StartupRelevantFuncs : AddressTable {
 } startupRelevantFuncs;
 
 static void applyGlobalConfig();
-static TigConfig createTigConfig(HINSTANCE hInstance);
 static void setMiles3dProvider();
 static void addScreenshotHotkey();
 static void applyGameConfig();
 static bool setDefaultCursor();
-
-// RAII for TIG initialization
-class TigInitializer {
-public:
-	TigInitializer(HINSTANCE hInstance) : mConfig(createTigConfig(hInstance)) {
-		StopwatchReporter reporter("TIG initialized in {}");
-		logger->info("Initializing TIG");
-		auto result = startupRelevantFuncs.TigInit(&mConfig);
-		if (result) {
-			throw TempleException(format("Unable to initialize TIG: {}", result));
-		}
-		tigConsoleDisabled = false; // tig init disables console by default
-	}
-	~TigInitializer() {
-		logger->info("Shutting down TIG");
-		startupRelevantFuncs.TigExit();
-	}
-	const TigConfig &config() const {
-		return mConfig;
-	}
-private:
-	TigConfig mConfig;
-};
 
 class TigBufferstuffInitializer {
 public:
@@ -281,49 +252,6 @@ static void applyGlobalConfig() {
 	if (config.pathTimeLimit) {
 		pathTimeLimit = config.pathTimeLimit;
 	}
-}
-
-static TigConfig createTigConfig(HINSTANCE hInstance) {
-	TigConfig tigConfig;
-	memset(&tigConfig, 0, sizeof(tigConfig));
-	tigConfig.minTexWidth = 1024;
-	tigConfig.minTexHeight = 1024;
-	// From ToEE's pov we now always run windowed (TODO: Make this conditional on the graphics replacement)
-	tigConfig.flags = SF_VSYNC | SF_WINDOW;
-	// This should no longer be used since we completely replaced this part of tig
-	// tigConfig.wndproc = (int)windowproc;
-	tigConfig.framelimit = 100;
-	tigConfig.width = config.windowWidth;
-	tigConfig.height = config.windowHeight;
-	tigConfig.bpp = 32;
-	tigConfig.hinstance = hInstance;
-	tigConfig.findSound = startupRelevantFuncs.FindSound;
-
-	if (config.antialiasing) {
-		tigConfig.flags |= SF_ANTIALIASING;
-	}
-	if (config.mipmapping) {
-		tigConfig.flags |= SF_MIPMAPPING;
-	}
-	tigConfig.flags |= 0x1000; // Usage unknown
-	tigConfig.soundSystem = "miles";
-	// TODO: These two might no longer be needed due to us reworking the video system
-	tigConfig.createBuffers = videoFuncs.GameCreateVideoBuffers;
-	tigConfig.freeBuffers = videoFuncs.GameFreeVideoBuffers;
-
-	if (config.showFps) {
-		tigConfig.flags |= SF_FPS;
-	}
-	if (config.noSound) {
-		tigConfig.flags |= SF_NOSOUND;
-	}
-	if (config.doublebuffer) {
-		tigConfig.flags |= SF_DOUBLEBUFFER;
-	}
-	if (config.animCatchup) {
-		tigConfig.flags |= SF_ANIMCATCHUP;
-	}
-	return tigConfig;
 }
 
 void setMiles3dProvider() {

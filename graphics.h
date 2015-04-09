@@ -2,11 +2,11 @@
 #define GRAPHICS_H
 
 #include "stdafx.h"
-#include "tig_startup.h"
+#include "tig/tig_startup.h"
 
 #include "d3d8to9/d3d8to9.h"
 
-#include "tig_font.h"
+#include "tig/tig_font.h"
 #include "temple_functions.h"
 
 #pragma pack(push, 1)
@@ -191,11 +191,92 @@ public:
 	Graphics();
 
 	bool BeginFrame();
-	bool Present();	
+	bool Present();
+
+	void ResetDevice();
 
 	void UpdateScreenSize(int w, int h);
+
+	/*
+		The back buffer size of the D3D context. This is not
+		necessarily the size at which ToEE is rendered:
+	*/
+	void UpdateWindowSize(int w, int h);
+
+	void InitializeDirect3d();
+
+	// Returns the current back buffer surface description
+	const D3DSURFACE_DESC &backBufferDesc() {
+		return mBackBufferDesc;
+	}
+
+	IDirect3DSurface9 *backBuffer() {
+		return mBackBuffer;
+	}
+
+	IDirect3DSurface9 *backBufferDepth() {
+		return mBackBufferDepth;
+	}
+
+
+	IDirect3DSurface9 *sceneSurface() {
+		return mSceneSurface;
+	}
+
+	IDirect3DSurface9 *sceneDepthSurface() {
+		return mSceneDepthSurface;
+	}
+
+	int windowWidth() const {
+		return mWindowWidth;
+	}
+
+	int windowHeight() const {
+		return mWindowHeight;
+	}
+
+	IDirect3DDevice9 *device() {
+		return mDevice;
+	}
+
+	const RECT &sceneRect() const {
+		return mSceneRect;
+	}
+
+	float sceneScale() const {
+		return mSceneScale;
+	}
+		
 private:
 	void RenderGFade();
+
+	void RefreshSceneRect();
+
+	// Free resources allocated in video memory
+	void FreeResources();
+
+	// Create resources stored in video memory
+	void CreateResources();
+
+	IDirect3D9Ex *mDirect3d9 = nullptr;
+	IDirect3DDevice9Ex *mDevice = nullptr;
+	IDirect3DSurface9 *mBackBuffer = nullptr;
+	IDirect3DSurface9 *mBackBufferDepth = nullptr;
+
+	// Render targets used to draw the ToEE scene at a different resolution
+	// than the screen resolution
+	IDirect3DSurface9 *mSceneSurface = nullptr;
+	IDirect3DSurface9 *mSceneDepthSurface = nullptr;
+
+	D3DSURFACE_DESC mBackBufferDesc;
+
+	// Vertex Buffers used in ToEE for UI rendering
+
+	int mWindowWidth = 0;
+	int mWindowHeight = 0;
+
+	RECT mSceneRect;
+	float mSceneScale;
 
 	D3DVECTOR mScreenCorners[4];
 	int mFrameDepth = 0;

@@ -8,7 +8,8 @@ struct ColorRect {
 	D3DCOLOR bottomRight;
 
 	ColorRect() {}
-	ColorRect(D3DCOLOR fill) : topLeft(fill), topRight(fill), bottomLeft(fill), bottomRight(fill) {}
+
+	explicit ColorRect(D3DCOLOR fill) : topLeft(fill), topRight(fill), bottomLeft(fill), bottomRight(fill) {}
 };
 
 struct TigRect {
