@@ -1680,7 +1680,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeD20Signal,
 	dispTypeD20Query,
 	dispType30,
-	dispType31,
+	dispTypeRadialMenuEntry,
 	dispType32,
 	dispType33,
 	dispType34,

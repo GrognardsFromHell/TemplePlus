@@ -60,14 +60,7 @@ struct TempleFuncs : AddressTable {
 	uint32_t(__cdecl *IsObjDeadNullDestroyed)(objHndl);
 	PyObject*  (__cdecl *PyObjFromObjHnd) (objHndl);
 	uint64_t(__cdecl *GetProtoHandle)(uint32_t protoId);
-	uint32_t(__cdecl *ObjGetProtoNum)(objHndl);
 
-	const char *(__cdecl *ObjGetDisplayName)(uint64_t obj, uint64_t observer);
-	uint32_t(__cdecl *DescriptionIsCustom)(int32_t descrIdx); 
-	uint32_t (__cdecl *CustomNameNew)(char *pString);
-	void (__cdecl *CustomNameChange)(char * pNewNameSource, uint32_t descrIdx);
-
-	uint32_t(__cdecl *DispatcherD20Query)(objHndl ObjHnd, _key nKey);
 
 	// GroupArray stuff (groups include: NPCs, PCs, AI Followers, Currently Selected)
 #pragma region GroupArray stuff
@@ -94,7 +87,6 @@ struct TempleFuncs : AddressTable {
 	
 	int32_t(__cdecl *ObjStatBaseGet)(objHndl, uint32_t obj_stat); // can return single precision floating point too (e.g. movement speed)
 	int32_t(__cdecl *ObjStatBaseDispatch)(objHndl, uint32_t obj_stat, void *); // Dispatcher Type 0x42; defaults to ObjStatBaseGet if no Dispatcher found
-	int32_t(__cdecl *ObjStatLevelGet)(objHndl, uint32_t obj_stat);
 
 	bool(__cdecl *StandPointPacketGet)(_jmpPntID jmpPntID, char * mapNameOut, size_t, _mapNum * mapNumOut, locXY * locXYOut);
 	uint32_t(__cdecl *ObjStandpointGet)(objHndl, _standPointType, StandPoint *);
@@ -207,17 +199,10 @@ struct TempleFuncs : AddressTable {
 
 #pragma endregion
 
-		rebase(DispatcherD20Query, 0x1004CC00);
-
 		rebase(IsObjDeadNullDestroyed, 0x1007E650);
 		rebase(PyObjFromObjHnd, 0x100AF1D0);
 		rebase(GetProtoHandle, 0x1003AD70);
-		rebase(ObjGetProtoNum, 0x10039320);
 
-		rebase(ObjGetDisplayName, 0x1001FA80);
-		rebase(DescriptionIsCustom, 0x100869B0);
-		rebase(CustomNameNew,0x10086A50);
-		rebase(CustomNameChange, 0x10086AA0);
 
 		rebase(GroupArrayMemberN, 0x100DF760);
 		rebase(GroupNPCFollowersGetMemberN, 0x1002B190);
@@ -240,7 +225,6 @@ struct TempleFuncs : AddressTable {
 
 		rebase(ObjStatBaseGet, 0x10074CF0);
 		rebase(ObjStatBaseDispatch, 0x1004E810);
-		rebase(ObjStatLevelGet, 0x10074800);
 		
 
 		rebase(ObjFactionHas, 0x1007E430);

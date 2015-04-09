@@ -19,13 +19,14 @@ uint32_t WeaponSystem::IsMartial(WeaponTypes wpnType)
 	{
 		return 1;
 	}
+	if (wpnType == wt_kukri){ return 1; }
 	return 0;
 }
 
 
 uint32_t WeaponSystem::IsExotic(WeaponTypes wpnType)
 {
-	if (wpnType >= wt_halfling_kama && wpnType <= wt_grenade )
+	if (wpnType >= wt_halfling_kama && wpnType <= wt_grenade && wpnType != wt_kukri)
 	{
 		return 1;
 	}

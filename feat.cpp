@@ -338,7 +338,7 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 #pragma region	checking feats in the character editor - SpellSlinger hack for special Rogue feats for level > 10
 	if ( *feats.charEditorClassCode != 0 && *feats.charEditorObjHnd != 0)
 	{
-		auto newClassLvl = templeFuncs.ObjStatLevelGet(*feats.charEditorObjHnd, *feats.charEditorClassCode) + 1;
+		auto newClassLvl = objects.StatLevelGet(*feats.charEditorObjHnd, *feats.charEditorClassCode) + 1;
 
 		if (classCodeBeingLevelledUp == stat_level_rogue)
 		{
@@ -378,7 +378,7 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 			for (uint8_t j = 0; j < numCasterClasses; j++)
 			{
 				
-				auto casterLevel = templeFuncs.ObjStatLevelGet(objHnd, casterClassCodes[j]);
+				auto casterLevel = objects.StatLevelGet(objHnd, (Stat)casterClassCodes[j]);
 				if (classCodeBeingLevelledUp == casterClassCodes[j]){ casterLevel++; };
 				if (casterClassCodes[j] == stat_level_paladin || casterClassCodes[j] == stat_level_ranger){ casterLevel /= 2; };
 				if ((uint32_t)casterLevel >= (uint32_t)featReqCodeArg){ var_2C = 1; };
@@ -390,9 +390,9 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 		else if (featReqCode == featReqCodeTurnUndeadRelated)
 		{
 #pragma region Turn / Rebuke Undead Stuff
-			uint32_t critterAlignment = templeFuncs.ObjStatLevelGet(objHnd, stat_alignment);
-			uint32_t paladinLevel = templeFuncs.ObjStatLevelGet(objHnd, stat_level_paladin);
-			uint32_t clericLevel = templeFuncs.ObjStatLevelGet(objHnd, stat_level_cleric);
+			uint32_t critterAlignment = objects.StatLevelGet(objHnd, stat_alignment);
+			uint32_t paladinLevel = objects.StatLevelGet(objHnd, stat_level_paladin);
+			uint32_t clericLevel = objects.StatLevelGet(objHnd, stat_level_cleric);
 			uint32_t paladinReqLvl = featReqCodeArg;
 			uint32_t clericReqLvl = featReqCodeArg;
 			if (featIdx == FEAT_TURN_UNDEAD)
@@ -423,8 +423,8 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 		} else if (featReqCode == featReqCodeEvasionRelated)
 		{
 # pragma region Evasion Related
-			auto rogueLevel = templeFuncs.ObjStatLevelGet(objHnd, stat_level_rogue);
-			auto monkLevel = templeFuncs.ObjStatLevelGet(objHnd, stat_level_monk);
+			auto rogueLevel = objects.StatLevelGet(objHnd, stat_level_rogue);
+			auto monkLevel = objects.StatLevelGet(objHnd, stat_level_monk);
 			if (featIdx == FEAT_EVASION)
 			{
 				if (rogueLevel+ (classCodeBeingLevelledUp == stat_level_rogue) < 2
@@ -445,8 +445,8 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 		else if (featReqCode == featReqCodeFastMovement)
 		{ 
 #pragma region Fast Movement
-			auto monkLevel = templeFuncs.ObjStatLevelGet(objHnd, stat_level_monk);
-			auto barbarianLevel = templeFuncs.ObjStatLevelGet(objHnd, stat_level_barbarian);
+			auto monkLevel = objects.StatLevelGet(objHnd, stat_level_monk);
+			auto barbarianLevel = objects.StatLevelGet(objHnd, stat_level_barbarian);
 			if (featIdx == FEAT_FAST_MOVEMENT)
 			{
 				if (barbarianLevel + (classCodeBeingLevelledUp == stat_level_barbarian) < 1
@@ -460,8 +460,8 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 		else if (featReqCode == featReqCodeMinArcaneCasterLevel)
 		{
 # pragma region Min Arcane Caster Level
-			uint32_t sorcererLevel = templeFuncs.ObjStatLevelGet(objHnd, stat_level_sorcerer);
-			uint32_t wizardLevel = templeFuncs.ObjStatLevelGet(objHnd, stat_level_wizard);
+			uint32_t sorcererLevel = objects.StatLevelGet(objHnd, stat_level_sorcerer);
+			uint32_t wizardLevel = objects.StatLevelGet(objHnd, stat_level_wizard);
 			if (sorcererLevel + (classCodeBeingLevelledUp == stat_level_sorcerer) < featReqCodeArg
 				&& wizardLevel + (classCodeBeingLevelledUp == stat_level_wizard) < featReqCodeArg
 				){
@@ -472,8 +472,8 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 		else if (featReqCode == featReqCodeUncannyDodgeRelated)
 		{
 #pragma region Uncanny Dodge Related
-			auto rogueLevel = templeFuncs.ObjStatLevelGet(objHnd, stat_level_rogue);
-			auto barbarianLevel = templeFuncs.ObjStatLevelGet(objHnd, stat_level_barbarian);
+			auto rogueLevel = objects.StatLevelGet(objHnd, stat_level_rogue);
+			auto barbarianLevel = objects.StatLevelGet(objHnd, stat_level_barbarian);
 			if (featIdx == FEAT_UNCANNY_DODGE)
 			{
 				if (rogueLevel + (classCodeBeingLevelledUp == stat_level_rogue) < 3
@@ -494,8 +494,8 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 		else if (featReqCode == featReqCodeAnimalCompanion)
 		{
 #pragma region Animal Companion
-			auto druidLevel = templeFuncs.ObjStatLevelGet(objHnd, stat_level_druid);
-			auto rangerLevel = templeFuncs.ObjStatLevelGet(objHnd, stat_level_ranger);
+			auto druidLevel = objects.StatLevelGet(objHnd, stat_level_druid);
+			auto rangerLevel = objects.StatLevelGet(objHnd, stat_level_ranger);
 		
 
 			if (featIdx == FEAT_ANIMAL_COMPANION)
@@ -567,7 +567,7 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 		{
 # pragma region Class Level Requirement
 			if (classCodeBeingLevelledUp == featReqCode){	featReqCodeArg--;	}
-			if ((uint32_t)templeFuncs.ObjStatLevelGet(objHnd, featReqCode) < featReqCodeArg){ return 0; }
+			if ((uint32_t)objects.StatLevelGet(objHnd, (Stat)featReqCode) < featReqCodeArg){ return 0; }
 #pragma endregion 
 		} 
 		else if (featReqCode == 266)

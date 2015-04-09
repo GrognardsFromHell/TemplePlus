@@ -65,6 +65,8 @@ Objects::Objects() {
 	rebase(_GetInternalFieldInt64, 0x1009E2E0);
 	rebase(_StatLevelGet, 0x10074800);
 	rebase(_SetInternalFieldInt32, 0x100A0190);
+	rebase(_IsPlayerControlled, 0x1002B390);
+	rebase(_ObjGetProtoNum, 0x10039320);
 	
 }
 

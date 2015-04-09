@@ -5,6 +5,7 @@
 #include "common.h"
 #include "d20.h"
 #include "feat.h"
+#include "description.h"
 
 
 struct Objects : AddressTable {
@@ -29,6 +30,16 @@ struct Objects : AddressTable {
 		auto type = GetType(obj);
 		return type == obj_t_npc || type == obj_t_pc;
 	}
+
+	bool IsPlayerControlled(objHndl obj)
+	{
+		return _IsPlayerControlled(obj);
+	}
+
+	uint32_t ObjGetProtoNum(objHndl obj)
+	{
+		return _ObjGetProtoNum(obj);
+	};
 
 	enum_monster_category GetCategory(objHndl objHnd)
 	{
@@ -98,19 +109,23 @@ struct Objects : AddressTable {
 		return;
 	}
 
+#pragma endregion
+
 	DispatcherSystem dispatch;
 
 	D20System d20;
 
 	FeatSystem feats;
 
-#pragma endregion
+	DescriptionSystem description;
 
 private:
 	int(__cdecl *_GetInternalFieldInt32)(objHndl ObjHnd, int nFieldIdx);
 	int64_t(__cdecl *_GetInternalFieldInt64)(objHndl ObjHnd, int nFieldIdx);
 	int32_t(__cdecl *_StatLevelGet)(objHndl ObjHnd, Stat);
 	void(__cdecl *_SetInternalFieldInt32)(objHndl objHnd, obj_f fieldIdx, uint32_t data32);
+	bool(__cdecl * _IsPlayerControlled)(objHndl objHnd);
+	uint32_t(__cdecl *_ObjGetProtoNum)(objHndl);
 } ;
 
 extern Objects objects;

@@ -4,6 +4,7 @@
 #include "temple_functions.h"
 #include "config.h"
 #include "xp.h"
+#include "obj.h"
 
 GlobalPrimitive<float, 0x102CF708> experienceMultiplier;
 GlobalPrimitive<int, 0x10BCA850> numCrittersSlainByCR;
@@ -104,8 +105,8 @@ void GiveXPAwards(){
 	};
 	for (uint32_t i = 0; i < templeFuncs.GroupNPCFollowersLen(); i++){
 		objHndl objHndNPCFollower = templeFuncs.GroupNPCFollowersGetMemberN(i);
-		if (!templeFuncs.IsObjDeadNullDestroyed(objHndNPCFollower)
-			&& !templeFuncs.DispatcherD20Query(objHndNPCFollower, DK_QUE_ExperienceExempt)){
+		if (!templeFuncs.IsObjDeadNullDestroyed(objHndNPCFollower) 
+			&& !objects.d20.D20Query(objHndNPCFollower, DK_QUE_ExperienceExempt)){
 			fNumLivingPartyMembers += 1.0;
 		}
 	};
@@ -120,10 +121,10 @@ void GiveXPAwards(){
 	for (uint32_t i = 0; i < templeFuncs.GroupListGetLen(); i++){
 		objHndl objHnd = templeFuncs.GroupListGetMemberN(i);
 		if (templeFuncs.IsObjDeadNullDestroyed(objHnd)){ continue; };
-		if (templeFuncs.DispatcherD20Query(objHnd, DK_QUE_ExperienceExempt)) { continue; };
+		if (objects.d20.D20Query(objHnd, DK_QUE_ExperienceExempt)) { continue; };
 		if (templeFuncs.ObjIsAIFollower(objHnd)) { continue; };
 
-		int level = templeFuncs.ObjStatLevelGet(objHnd, stat_level);
+		int level = objects.StatLevelGet(objHnd, stat_level);
 		if (level <= 0) { continue; };
 
 		int xpGainRaw = 0; // raw means it's prior to applying multiclass penalties, which  is Someone Else's Problem :P

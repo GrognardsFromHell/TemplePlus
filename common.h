@@ -7,7 +7,7 @@
 #include "spell_structs.h"
 #include "temple_enums.h"
 #include "d20_defs.h"
-
+#include "config.h"
 
 # pragma region Standard Structs
 

@@ -340,10 +340,10 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 	}
 	else if (!_strcmpi(name, "proto"))
 	{
-		return  PyLong_FromLongLong(templeFuncs.ObjGetProtoNum(obj->objHandle));
+		return  PyLong_FromLongLong(objects.ObjGetProtoNum(obj->objHandle));
 	}
 	else if (!_strcmpi(name, "description")){
-		return  PyString_FromString(templeFuncs.ObjGetDisplayName(obj->objHandle,obj->objHandle));
+		return  PyString_FromString(objects.description.GetDisplayName(obj->objHandle,obj->objHandle));
 	}
 
 	if (!_strcmpi(name, "factions")) {
