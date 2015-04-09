@@ -695,6 +695,7 @@ void Graphics::FreeResources() {
 	videoFuncs.CleanUpBuffers();
 	// videoFuncs.GameFreeVideoBuffers();
 
+	// Handled by CleanUpBuffers
 	//FreeD3dResource(video->blitVBuffer);
 	//FreeD3dResource(videoFuncs.globalFadeVBuffer);
 	//FreeD3dResource(videoFuncs.sharedVBuffer1);
@@ -762,6 +763,9 @@ void Graphics::CreateResources() {
 	// This is always the same pointer although it's callback 2 of the GameStartConfig	
 	videoFuncs.create_partsys_vertex_buffers();
 	videoFuncs.GameCreateVideoBuffers();
+
+	// After a reset, the D3D cursor is hidden
+	mouseFuncs.RefreshCursor();
 }
 
 void Graphics::UpdateScreenSize(int w, int h) {
