@@ -30,6 +30,20 @@ public:
 		replaceFunction(0x1007C3F0, _FeatListElective);
 		replaceFunction(0x1007C8D0, _WeaponFeatCheckSimpleWrapper);
 		//replaceFunction(0x1007C4F0, _WeaponFeatCheck); // usercall bullshit; replaced the functions that used it anyway
+
+		writeHex(0x102C9720, "0F 00 00 00 13 00 00 00");
+		writeHex(0x102C9E20, "0F 00 00 00 13 00 00 00"); // (old:BF FF FF FF 0A 00 00 00 <-don't know why, should be rog only, mnk feat is separate)
+		writeHex(0x102C9F20, "0F 00 00 00 13 00 00 00");
+		writeHex(0x102C9F60, "0F 00 00 00 13 00 00 00");
+		writeHex(0x102C9FA0, "0F 00 00 00 13 00 00 00");
+		writeHex(0x102C9FE0, "0F 00 00 00 13 00 00 00");
+		if (config.newFeatureTestMode)
+		{
+			char * testbuf[8];
+			read(0x102C9E20, testbuf, 8);
+			logger->info("New Feature Test: Re-implementing SpellSlinger's Rogue Feat Fix");
+		}
+
 	}
 };
 FeatFixes featFixes;
@@ -43,6 +57,7 @@ FeatSystem::FeatSystem()
 	rebase(charEditorObjHnd, 0x11E741A0);		// TODO: move this to the appropriate system
 	rebase(charEditorClassCode, 0x11E72FC0);	// TODO: move this to the appropriate system
 	rebase(ToEE_WeaponFeatCheck, 0x1007C4F0);
+	rebase(FeatAdd, 0x1007CF30);
 
 	uint32_t _racialFeatsTable[NUM_RACES * 10] = { -1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,

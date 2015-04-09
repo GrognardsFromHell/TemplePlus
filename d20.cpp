@@ -180,7 +180,7 @@ void _D20StatusInit(objHndl objHnd)
 
 	if (objects.IsCritter(objHnd))
 	{
-		if (! templeFuncs.IsObjDeadNullDestroyed(objHnd))
+		if (! objects.IsDeadNullDestroyed(objHnd))
 		{
 			uint32_t hpCur = objects.StatLevelGet(objHnd, stat_hp_current);
 			uint32_t subdualDam = objects.GetInt32(objHnd, obj_f_critter_subdual_damage);

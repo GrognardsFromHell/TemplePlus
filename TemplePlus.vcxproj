@@ -71,6 +71,7 @@
     </ClCompile>
     <ClCompile Include="description.cpp" />
     <ClCompile Include="dispatcher.cpp" />
+    <ClCompile Include="faction.cpp" />
     <ClCompile Include="feat.cpp" />
     <ClCompile Include="fixes.cpp" />
     <ClCompile Include="folderutils.cpp" />
@@ -94,6 +95,7 @@
     <ClCompile Include="mainloop.cpp" />
     <ClCompile Include="map_obj.cpp" />
     <ClCompile Include="obj_fieldnames.cpp" />
+    <ClCompile Include="party.cpp" />
     <ClCompile Include="pathfinding.cpp" />
     <ClCompile Include="portrait_in_mainmenu.cpp" />
     <ClCompile Include="pythonglobal.cpp" />
@@ -199,6 +201,7 @@
     <ClInclude Include="description.h" />
     <ClInclude Include="dispatcher.h" />
     <ClInclude Include="exception.h" />
+    <ClInclude Include="faction.h" />
     <ClInclude Include="feat.h" />
     <ClInclude Include="folderutils.h" />
     <ClInclude Include="gamesystems.h" />
@@ -211,6 +214,7 @@
     <ClInclude Include="map_obj.h" />
     <ClInclude Include="obj_fieldnames.h" />
     <ClInclude Include="obj_structs.h" />
+    <ClInclude Include="party.h" />
     <ClInclude Include="pathfinding.h" />
     <ClInclude Include="pythonglobal.h" />
     <ClInclude Include="python_debug.h" />

@@ -47,7 +47,7 @@ uint32_t * metaMagicData);
 #pragma endregion
 
 
-
+#pragma region D20 Action and Action Sequence Structs
 struct D20Action
 {
 	D20ActionType d20ActType;
@@ -94,6 +94,8 @@ struct ActionSequence
 };
 
 const uint32_t TestSizeOfActionSequence = sizeof(ActionSequence); // should be 0x1648 (5704)
+
+#pragma endregion
 
 struct CharacterClasses : AddressTable
 {
