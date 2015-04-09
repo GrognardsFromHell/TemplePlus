@@ -82,27 +82,7 @@ uint32_t FeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, St
 
 uint32_t FeatSystem::FeatListGet(objHndl objHnd, feat_enums* listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat)
 {
-	uint32_t featCount = 0;
-	int32_t hasFeatTimes = 0;
-	uint32_t i = 0;
-	void * ptrOut = listOut;
-	while (i < NUM_FEATS)
-	{
-		hasFeatTimes = feats.HasFeatCountByClass(objHnd, (feat_enums)i, classBeingLevelled, rangerSpecFeat);
-
-		if (hasFeatTimes && listOut && hasFeatTimes > 0)
-		{
-			for (auto j = 0; j < hasFeatTimes; j++)
-			{
-				memcpy(&(listOut[featCount+j]), &i, sizeof(uint32_t));
-
-			}
-			featCount += hasFeatTimes;
-			
-		}
-		i++;
-	}
-	return featCount;
+	return _FeatListGet(objHnd, listOut, classBeingLevelled, rangerSpecFeat);
 }
 
 
@@ -640,9 +620,14 @@ uint32_t _FeatListGet(objHndl objHnd, feat_enums * listOut, Stat classBeingLevel
 	{
 		hasFeatTimes = _HasFeatCountByClass(objHnd, (feat_enums)i, classBeingLevelled, rangerSpecFeat);
 
+
 		if (hasFeatTimes && listOut && hasFeatTimes > 0)
 		{
-			memset(&(listOut[featCount]), i, hasFeatTimes*sizeof(uint32_t));
+			for (auto j = 0; j < hasFeatTimes; j++)
+			{
+				memcpy(&(listOut[featCount + j]), &i, sizeof(uint32_t));
+
+			}
 			featCount += hasFeatTimes;
 		}
 		i++;
