@@ -204,7 +204,7 @@ const char* animGoalTypeNames[ag_count] = {
 // Has to be 0x10 in size
 union AnimParam {
 	objHndl obj;
-	Loc_And_Offsets location;
+	LocAndOffsets location;
 	int number;
 };
 

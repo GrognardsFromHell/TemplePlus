@@ -9,6 +9,7 @@ static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the
 
 
 SpontCastSpellLists spontCastSpellLists;
+SpellSystem spells;
 //GlobalPrimitive<uint16_t>
 //1028D09C
 

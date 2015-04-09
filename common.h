@@ -19,14 +19,14 @@ struct locXY{
 	uint32_t locy;
 };
 
-struct Loc_And_Offsets {
+struct LocAndOffsets {
 	locXY location;
 	float off_x;
 	float off_y;
 };
 
 struct LocFull {
-	Loc_And_Offsets location;
+	LocAndOffsets location;
 	float off_z;
 };
 
@@ -40,7 +40,7 @@ struct GroupArray {
 struct StandPoint {
 	uint32_t mapNum;
 	uint32_t field4;
-	Loc_And_Offsets LocAndOff;
+	LocAndOffsets LocAndOff;
 	_jmpPntID jmpPntID;
 	uint32_t field_1C;
 };
