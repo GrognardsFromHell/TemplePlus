@@ -26,6 +26,8 @@ struct FeatSystem : AddressTable
 
 
 	void(__cdecl *ToEE_WeaponFeatCheck)();
+	uint32_t(__cdecl *FeatAdd)(objHndl, feat_enums);
+
 
 	FeatSystem();
 };

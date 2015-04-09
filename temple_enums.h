@@ -1680,7 +1680,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeD20Signal,
 	dispTypeD20Query,
 	dispType30,
-	dispType31,
+	dispTypeRadialMenuEntry,
 	dispType32,
 	dispType33,
 	dispType34,
@@ -1963,3 +1963,15 @@ enum WeaponTypes : uint32_t
 	wt_ray,
 	wt_grenade   // 72
 };
+
+
+enum ArmorType : uint32_t
+{
+	ARMOR_TYPE_LIGHT = 0,
+	ARMOR_TYPE_MEDIUM = 1,
+	ARMOR_TYPE_HEAVY = 2,
+	ARMOR_TYPE_SHIELD = 3,
+	ARMOR_TYPE_BITMASK = 3,
+	ARMOR_TYPE_NONE = 0x10
+};
+

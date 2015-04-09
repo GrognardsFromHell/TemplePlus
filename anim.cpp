@@ -11,6 +11,7 @@
 #include <set>
 #include <fstream>
 #include "pythonglobal.h"
+#include "party.h"
 
 #pragma pack(push, 1)
 
@@ -848,9 +849,9 @@ public:
 
 static PyObject* animDump(PyObject* ignore, PyObject* args) {
 
-	for (uint32_t i = 0; i < templeFuncs.GroupPCsLen(); i++) {
-		objHndl objHndPC = templeFuncs.GroupPCsGetMemberN(i);
-		if (!templeFuncs.IsObjDeadNullDestroyed(objHndPC)) {
+	for (uint32_t i = 0; i < party.GroupPCsLen(); i++) {
+		objHndl objHndPC = party.GroupPCsGetMemberN(i);
+		if (!objects.IsDeadNullDestroyed(objHndPC)) {
 			animAddresses.PushGoalDying(objHndPC, 1);
 		}
 	}

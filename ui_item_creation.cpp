@@ -48,7 +48,7 @@ int32_t CreateItemResourceCheck(objHndl ObjHnd, objHndl ObjHndItem){
 	int32_t * globInsuffFunds = craftInsufficientFunds.ptr();
 	int32_t *globSkillReqNotMet = craftSkillReqNotMet.ptr();
 	int32_t *globB0 = dword_10BEE3B0.ptr();
-	uint32_t crafterLevel = templeFuncs.ObjStatLevelGet(ObjHnd, stat_level);
+	uint32_t crafterLevel = objects.StatLevelGet(ObjHnd, stat_level);
 	uint32_t minXPForCurrentLevel = templeFuncs.XPReqForLevel(crafterLevel); 
 	uint32_t crafterXP = templeFuncs.Obj_Get_Field_32bit(ObjHnd, obj_f_critter_experience);
 	uint32_t surplusXP = crafterXP - minXPForCurrentLevel;
@@ -81,7 +81,7 @@ int32_t CreateItemResourceCheck(objHndl ObjHnd, objHndl ObjHndItem){
 
 
 	// Check XP section (and maybe spell prerequisites too? explore sub_10152280)
-	if ( itemCreationType != ItemCreationType(8) ){
+	if ( itemCreationType != CraftMagicArmsAndArmor){
 		if ( templeFuncs.sub_10152280(ObjHnd, ObjHndItem) == 0){ //TODO explore function
 			*globB0 = 1;
 			canCraft = 0;
@@ -114,20 +114,23 @@ void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCra
 	PyTuple_SetItem(pytup, 0, templeFuncs.PyObjFromObjHnd(objHndItem));
 	PyTuple_SetItem(pytup, 1, templeFuncs.PyObjFromObjHnd(objHndCrafter));
 
-	if (itemCreationType == ItemCreationType(3)){
+	if (itemCreationType == CraftWand){
 		// do wand specific stuff
-		
-		char * wandNewName = PyString_AsString(templeFuncs.PyScript_Execute("crafting", "craft_wand_new_name", pytup));
+		if (config.newFeatureTestMode)
+		{
+			char * wandNewName = PyString_AsString(templeFuncs.PyScript_Execute("crafting", "craft_wand_new_name", pytup));
 
-		templeFuncs.Obj_Set_Field_32bit(objHndItem, obj_f_description, templeFuncs.CustomNameNew(wandNewName)); // TODO: create function that appends effect of caster level boost
+			templeFuncs.Obj_Set_Field_32bit(objHndItem, obj_f_description, objects.description.CustomNameNew(wandNewName)); // TODO: create function that appends effect of caster level boost			
+		}
+
 		//templeFuncs.GetGlo
 	};
-	if (itemCreationType == ItemCreationType(2)){
+	if (itemCreationType == ScribeScroll){
 		// do scroll specific stuff
 		// templeFuncs.Obj_Set_Field_32bit(objHndItem, obj_f_description, templeFuncs.CustomNameNew("Scroll of LOL"));
 	};
 
-	if (itemCreationType == ItemCreationType(1)){
+	if (itemCreationType == BrewPotion){
 		// do potion specific stuff
 		// templeFuncs.Obj_Set_Field_32bit(objHndItem, obj_f_description, templeFuncs.CustomNameNew("Potion of Commotion"));
 		// TODO: change it so it's 0xBAAD F00D just like spawned / mobbed potions
@@ -180,7 +183,7 @@ void CreateItemDebitXPGP(objHndl objHndCrafter, objHndl objHndItem){
 	uint32_t craftingCostCP = 0;
 	uint32_t craftingCostXP = 0;
 
-	if (itemCreationType == ItemCreationType(8)){ // magic arms and armor
+	if (itemCreationType == CraftMagicArmsAndArmor){ // magic arms and armor
 		craftingCostCP = templeFuncs.ItemWorthFromEnhancements(41);
 		craftingCostXP = templeFuncs.CraftMagicArmsAndArmorSthg(41);
 	}
@@ -214,10 +217,9 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 
 
 	uint32_t slowLevelNew = -1; // h4x!
-	if (itemCreationType == ItemCreationType(3)){
+	if (itemCreationType == CraftWand){
 		// do wand specific stuff
-		slowLevelNew = 5;
-		//templeFuncs.GetGlo
+		// slowLevelNew = 5; // jus for testing!
 	};
 	
 
@@ -258,7 +260,7 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 
 	// "Experience Cost: %d"  (or "Skill Req: " for alchemy - WIP)
 
-	if (itemCreationType == ItemCreationType(0)){ // alchemy
+	if (itemCreationType == Alchemy){ 
 		// placeholder - they do similar bullshit in the code :P but I guess it can be modified easily enough!
 		if (*globInsuffXP || *globInsuffFunds || *globSkillReqNotMet || *globB0){
 			text = format("{} @{}{}", *itemCreationUIStringSkillRequired.ptr(), *globSkillReqNotMet + 1, craftingCostXP);
@@ -346,11 +348,11 @@ const char *getProtoName(uint64_t protoHandle) {
   if ( tig_mes_get_line(ui_itemcreation_names, &line) )
     result = line.value;
   else
-    result = ObjGetDisplayName((objHndl)protoHandle, (objHndl)protoHandle);
+    result = objects.description.GetDisplayName((objHndl)protoHandle, (objHndl)protoHandle);
   return result;
   */
 
-	return templeFuncs.ObjGetDisplayName(protoHandle, protoHandle);
+	return objects.description.GetDisplayName(protoHandle, protoHandle);
 }
 
 static void loadProtoIds(MesHandle mesHandle) {
@@ -401,6 +403,8 @@ uint32_t ItemCreationBuildRadialMenuEntry(DispatcherCallbackArgs args, ItemCreat
 	return 0;
 };
 
+#pragma region ItemCreation Radial Menu Dispatcher Callbacks
+
 uint32_t BrewPotionRadialMenu(DispatcherCallbackArgs args)
 {
 	return ItemCreationBuildRadialMenuEntry(args, BrewPotion, "TAG_BREW_POTION", 5066);
@@ -441,6 +445,7 @@ uint32_t CraftMagicArmsAndArmorRadialMenu(DispatcherCallbackArgs args)
 	return ItemCreationBuildRadialMenuEntry(args, CraftMagicArmsAndArmor, "TAG_CRAFT_MAA", 5071);
 };
 
+#pragma endregion
 
 static int __cdecl systemInit(const GameSystemConf *conf) {
 
@@ -487,31 +492,38 @@ public:
 	void apply() override {
 		// auto system = UiSystem::getUiSystem("ItemCreation-UI");		
 		// system->init = systemInit;
-		void* ptrToBrewPotion = BrewPotionRadialMenu;
-		void* ptrToScribeScroll = ScribeScrollRadialMenu;
-		void* ptrToCraftWand = CraftWandRadialMenu;
-		void* ptrToCraftRod = CraftRodRadialMenu;
+		void* ptrToBrewPotion = &BrewPotionRadialMenu;
+		void* ptrToScribeScroll = &ScribeScrollRadialMenu;
+		void* ptrToCraftWand = &CraftWandRadialMenu;
+		void* ptrToCraftRod = &CraftRodRadialMenu;
 
-		void* ptrToCraftWondrous = CraftWondrousRadialMenu;
-		void* ptrToCraftStaff = CraftStaffRadialMenu;
-		void* ptrToForgeRing = ForgeRingRadialMenu;
-		void* ptrToMAA = CraftMagicArmsAndArmorRadialMenu;
+		void* ptrToCraftWondrous = &CraftWondrousRadialMenu;
+		void* ptrToCraftStaff = &CraftStaffRadialMenu;
+		void* ptrToForgeRing = &ForgeRingRadialMenu;
+		void* ptrToMAA = &CraftMagicArmsAndArmorRadialMenu;
 
-
-		/*replaceFunction(0x10150DA0, CraftScrollWandPotionSetItemSpellData);
+		replaceFunction(0x10150DA0, CraftScrollWandPotionSetItemSpellData);
 		replaceFunction(0x10152690, CreateItemResourceCheck);
 		replaceFunction(0x10151F60, CreateItemDebitXPGP);
 		replaceFunction(0x10152930, UiItemCreationCraftingCostTexts);
 
 
-		write(0x102EE250, ptrToBrewPotion, sizeof(ptrToBrewPotion));
-		write(0x102EE280, ptrToScribeScroll, sizeof(ptrToScribeScroll));
-		write(0x102EE2B0, ptrToCraftWand, sizeof(ptrToCraftWand));
-		write(0x102EE2E0, ptrToCraftRod, sizeof(ptrToCraftRod));
+		write(0x102EE250, &ptrToBrewPotion, sizeof(ptrToBrewPotion));
+		
+		write(0x102EE280, &ptrToScribeScroll, sizeof(ptrToScribeScroll));
+		write(0x102EE2B0, &ptrToCraftWand, sizeof(ptrToCraftWand));
+		write(0x102EE2E0, &ptrToCraftRod, sizeof(ptrToCraftRod));
 
-		write(0x102EE310, ptrToCraftWondrous, sizeof(ptrToCraftWondrous));
-		write(0x102AAE28, ptrToCraftStaff, sizeof(ptrToCraftStaff));
-		write(0x102AADF8, ptrToForgeRing, sizeof(ptrToForgeRing));
-		write(0x102EE340, ptrToMAA, sizeof(ptrToMAA));*/
+		write(0x102EE310, &ptrToCraftWondrous, sizeof(ptrToCraftWondrous));
+		if (config.newFeatureTestMode)
+		{
+			char * testbuf[100];
+			read(0x102EE310, testbuf, 4);
+			logger->info("New Feature Test Mode: Testing Item Creation Function Replacement");
+		}
+
+		write(0x102AAE28, &ptrToCraftStaff, sizeof(ptrToCraftStaff));
+		write(0x102AADF8, &ptrToForgeRing, sizeof(ptrToForgeRing));
+		write(0x102EE340, &ptrToMAA, sizeof(ptrToMAA));
 	}
 } itemCreation;

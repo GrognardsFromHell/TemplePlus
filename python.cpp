@@ -7,8 +7,8 @@
 #include "python_header.h"
 #include "testhelper.h"
 #include "python_debug.h"
+#include "party.h"
 
-// hmm should the functions be STATIC or maybe global? What's the syntax?
 
 static struct PythonInternal : AddressTable {
 
@@ -150,7 +150,7 @@ static PyObject * pyObjHandleType_Faction_Has(TemplePyObjHandle* obj, PyObject *
 	if (!PyArg_ParseTuple(pyTupleIn, "i", &nFac)) {
 		return nullptr;
 	};
-	return PyInt_FromLong(templeFuncs.ObjFactionHas(obj->objHandle, nFac));
+	return PyInt_FromLong(objects.factions.FactionHas(obj->objHandle, nFac));
 };
 
 static PyObject * pyObjHandleType_Faction_Add(TemplePyObjHandle* obj, PyObject * pyTupleIn){
@@ -162,8 +162,8 @@ static PyObject * pyObjHandleType_Faction_Add(TemplePyObjHandle* obj, PyObject *
 	if (nFac == 0){
 		return PyInt_FromLong(0);
 	}
-	if (!templeFuncs.ObjFactionHas(obj->objHandle, nFac)) {
-		templeFuncs.ObjFactionAdd(obj->objHandle, nFac);
+	if (!objects.factions.FactionHas(obj->objHandle, nFac)) {
+		objects.factions.FactionAdd(obj->objHandle, nFac);
 	}
 
 	return PyInt_FromLong(1);
@@ -206,14 +206,14 @@ static PyObject * pyObjHandleType_Inventory(TemplePyObjHandle* obj, PyObject * p
 	int j = 0;
 	if (bIncludeBackpack){
 		for (int i = 0; (j < nItems) & (i < nMax); i++){
-			ItemObjHnds[j] = templeFuncs.ObjGetItemAtInventoryLocation(ObjHnd, i);
+			ItemObjHnds[j] = objects.inventory.GetItemAtInventoryLocation(ObjHnd, i);
 			if (ItemObjHnds[j]){ j++; };
 		}
 	};
 
 	if (bIncludeEquipped){
 		for (int i = CRITTER_EQUIPPED_ITEM_OFFSET; (j < nItems) & (i < CRITTER_EQUIPPED_ITEM_OFFSET + CRITTER_EQUIPPED_ITEM_SLOTS); i++){
-			ItemObjHnds[j] = templeFuncs.ObjGetItemAtInventoryLocation(ObjHnd, i);
+			ItemObjHnds[j] = objects.inventory.GetItemAtInventoryLocation(ObjHnd, i);
 			if (ItemObjHnds[j]){ j++; };
 		}
 	};
@@ -243,7 +243,7 @@ static PyObject * pyObjHandleType_Inventory_Item(TemplePyObjHandle* obj, PyObjec
 			nMax = CONTAINER_MAX_ITEMS;
 		};
 		if (n < nMax){
-			return templeFuncs.PyObjFromObjHnd(templeFuncs.ObjGetItemAtInventoryLocation(ObjHnd, n));
+			return templeFuncs.PyObjFromObjHnd(objects.inventory.GetItemAtInventoryLocation(ObjHnd, n));
 		};
 		
 	};
@@ -254,13 +254,13 @@ static PyObject * pyObjHandleType_Inventory_Item(TemplePyObjHandle* obj, PyObjec
 #pragma endregion
 
 static PyObject * pyObjHandleType_Remove_From_All_Groups(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	templeFuncs.ObjRemoveFromAllGroupArrays(obj->objHandle);
+	party.ObjRemoveFromAllGroupArrays(obj->objHandle);
 	return PyInt_FromLong(1);
 };
 
 static PyObject * pyObjHandleType_PC_Add(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	// TODO  add fluidity to number of PCs / NPCs
-	templeFuncs.ObjAddToPCGroup(obj->objHandle);
+	party.ObjAddToPCGroup(obj->objHandle);
 	return PyInt_FromLong(1);
 };
 
@@ -276,7 +276,7 @@ static PyObject * pyObjHandleType_ObjFeatAdd(TemplePyObjHandle* obj, PyObject * 
 		return PyInt_FromLong(0);
 	}
 
-	templeFuncs.ObjFeatAdd(obj->objHandle, nFeatCode);
+	objects.feats.FeatAdd(obj->objHandle, nFeatCode);
 
 	return PyInt_FromLong(1);
 };
@@ -340,10 +340,10 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 	}
 	else if (!_strcmpi(name, "proto"))
 	{
-		return  PyLong_FromLongLong(templeFuncs.ObjGetProtoNum(obj->objHandle));
+		return  PyLong_FromLongLong(objects.ObjGetProtoNum(obj->objHandle));
 	}
 	else if (!_strcmpi(name, "description")){
-		return  PyString_FromString(templeFuncs.ObjGetDisplayName(obj->objHandle,obj->objHandle));
+		return  PyString_FromString(objects.description.GetDisplayName(obj->objHandle,obj->objHandle));
 	}
 
 	if (!_strcmpi(name, "factions")) {
@@ -376,7 +376,7 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 	} 
 	else if (!_strcmpi(name, "substitute_inventory"))
 	{
-		objHndl ObjSubsInv = templeFuncs.ObjGetSubstituteInventory(obj->objHandle);
+		objHndl ObjSubsInv = objects.inventory.GetSubstituteInventory(obj->objHandle);
 		return templeFuncs.PyObjFromObjHnd(ObjSubsInv);
 	}
 	else if (!_strcmpi(name, "feat_add")) {

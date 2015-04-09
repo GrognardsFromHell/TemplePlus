@@ -4,6 +4,8 @@
 #include "temple_functions.h"
 #include "config.h"
 #include "xp.h"
+#include "obj.h"
+#include "party.h"
 
 GlobalPrimitive<float, 0x102CF708> experienceMultiplier;
 GlobalPrimitive<int, 0x10BCA850> numCrittersSlainByCR;
@@ -96,16 +98,16 @@ void GiveXPAwards(){
 
 	//int XPAwardTable[MAXLEVEL][CRMAX - CRMIN + 1] = {};
 
-	for (uint32_t i = 0; i < templeFuncs.GroupPCsLen(); i++){
-		objHndl objHndPC = templeFuncs.GroupPCsGetMemberN(i);
-		if (!templeFuncs.IsObjDeadNullDestroyed(objHndPC)){
+	for (uint32_t i = 0; i < party.GroupPCsLen(); i++){
+		objHndl objHndPC = party.GroupPCsGetMemberN(i);
+		if (!objects.IsDeadNullDestroyed(objHndPC)){
 			fNumLivingPartyMembers += 1.0;
 		}
 	};
-	for (uint32_t i = 0; i < templeFuncs.GroupNPCFollowersLen(); i++){
-		objHndl objHndNPCFollower = templeFuncs.GroupNPCFollowersGetMemberN(i);
-		if (!templeFuncs.IsObjDeadNullDestroyed(objHndNPCFollower)
-			&& !templeFuncs.DispatcherD20Query(objHndNPCFollower, DK_QUE_ExperienceExempt)){
+	for (uint32_t i = 0; i < party.GroupNPCFollowersLen(); i++){
+		objHndl objHndNPCFollower = party.GroupNPCFollowersGetMemberN(i);
+		if (!objects.IsDeadNullDestroyed(objHndNPCFollower) 
+			&& !objects.d20.D20Query(objHndNPCFollower, DK_QUE_ExperienceExempt)){
 			fNumLivingPartyMembers += 1.0;
 		}
 	};
@@ -117,13 +119,13 @@ void GiveXPAwards(){
 	bool bShouldUpdatePartyUI = false;
 	int xpForxpPile = 0;
 
-	for (uint32_t i = 0; i < templeFuncs.GroupListGetLen(); i++){
-		objHndl objHnd = templeFuncs.GroupListGetMemberN(i);
-		if (templeFuncs.IsObjDeadNullDestroyed(objHnd)){ continue; };
-		if (templeFuncs.DispatcherD20Query(objHnd, DK_QUE_ExperienceExempt)) { continue; };
-		if (templeFuncs.ObjIsAIFollower(objHnd)) { continue; };
+	for (uint32_t i = 0; i < party.GroupListGetLen(); i++){
+		objHndl objHnd = party.GroupListGetMemberN(i);
+		if (objects.IsDeadNullDestroyed(objHnd)){ continue; };
+		if (objects.d20.D20Query(objHnd, DK_QUE_ExperienceExempt)) { continue; };
+		if (party.ObjIsAIFollower(objHnd)) { continue; };
 
-		int level = templeFuncs.ObjStatLevelGet(objHnd, stat_level);
+		int level = objects.StatLevelGet(objHnd, stat_level);
 		if (level <= 0) { continue; };
 
 		int xpGainRaw = 0; // raw means it's prior to applying multiclass penalties, which  is Someone Else's Problem :P

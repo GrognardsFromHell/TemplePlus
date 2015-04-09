@@ -5,10 +5,13 @@
 #include "common.h"
 #include "d20.h"
 #include "feat.h"
+#include "description.h"
+#include "faction.h"
+#include "feat.h"
+#include "inventory.h"
 
 
 struct Objects : AddressTable {
-	Objects();
 
 	// Retrieves the object flags for the given object handle
 	uint32_t GetFlags(objHndl obj) {
@@ -21,6 +24,11 @@ struct Objects : AddressTable {
 		return static_cast<ObjectType>(_GetInternalFieldInt32(obj, obj_f_type));
 	}
 
+	uint32_t IsDeadNullDestroyed(objHndl obj)
+	{
+		return _IsObjDeadNullDestroyed(obj);
+	}
+
 	uint32_t GetRace(objHndl obj) {
 		return _StatLevelGet(obj, stat_race);
 	}
@@ -29,6 +37,16 @@ struct Objects : AddressTable {
 		auto type = GetType(obj);
 		return type == obj_t_npc || type == obj_t_pc;
 	}
+
+	bool IsPlayerControlled(objHndl obj)
+	{
+		return _IsPlayerControlled(obj);
+	}
+
+	uint32_t ObjGetProtoNum(objHndl obj)
+	{
+		return _ObjGetProtoNum(obj);
+	};
 
 	enum_monster_category GetCategory(objHndl objHnd)
 	{
@@ -98,19 +116,38 @@ struct Objects : AddressTable {
 		return;
 	}
 
+#pragma endregion
+
 	DispatcherSystem dispatch;
 
 	D20System d20;
 
 	FeatSystem feats;
 
-#pragma endregion
+	DescriptionSystem description;
+
+	FactionSystem factions;
+
+	InventorySystem inventory;
+
+	Objects() {
+		rebase(_GetInternalFieldInt32, 0x1009E1D0);
+		rebase(_GetInternalFieldInt64, 0x1009E2E0);
+		rebase(_StatLevelGet, 0x10074800);
+		rebase(_SetInternalFieldInt32, 0x100A0190);
+		rebase(_IsPlayerControlled, 0x1002B390);
+		rebase(_ObjGetProtoNum, 0x10039320);
+		rebase(_IsObjDeadNullDestroyed, 0x1007E650);
+	}
 
 private:
 	int(__cdecl *_GetInternalFieldInt32)(objHndl ObjHnd, int nFieldIdx);
 	int64_t(__cdecl *_GetInternalFieldInt64)(objHndl ObjHnd, int nFieldIdx);
 	int32_t(__cdecl *_StatLevelGet)(objHndl ObjHnd, Stat);
 	void(__cdecl *_SetInternalFieldInt32)(objHndl objHnd, obj_f fieldIdx, uint32_t data32);
+	bool(__cdecl * _IsPlayerControlled)(objHndl objHnd);
+	uint32_t(__cdecl *_ObjGetProtoNum)(objHndl);
+	uint32_t(__cdecl *_IsObjDeadNullDestroyed)(objHndl);
 } ;
 
 extern Objects objects;

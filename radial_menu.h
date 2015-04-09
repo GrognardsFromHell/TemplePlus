@@ -39,11 +39,13 @@ struct RadialFuncs : AddressTable
 	uint32_t(__cdecl * D20ASthg_sub_100F0110)(objHndl objHnd, void *);
 	uint32_t(__cdecl * RadialMenuArgMap_sub_100F12B0)(uint32_t);
 	uint32_t(__cdecl * RadialMenuCreateEntry)(objHndl objHnd, RadialMenuStruct* radmenu, uint32_t);
+	void(__cdecl * sub_100F0A70)(objHndl objHnd);
 	RadialFuncs()
 	{
 		rebase(D20ASthg_sub_100F0110, 0x100F0110);
 		rebase(RadialMenuArgMap_sub_100F12B0, 0x100F12B0);
 		rebase(RadialMenuCreateEntry, 0x100F0670);
+		rebase(sub_100F0A70, 0x100F0A70);
 	}
 };
 
@@ -53,3 +55,6 @@ struct RadialFuncs : AddressTable
 // const auto TestSizeOfRadialMenuStruct = sizeof(RadialMenuStruct); // shoud be 72
 
 extern RadialFuncs radialFuncs;
+
+
+void _RadialMenuUpdate(objHndl objHnd);

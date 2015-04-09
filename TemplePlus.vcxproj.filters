@@ -186,6 +186,12 @@
     <ClCompile Include="tig\tig_init.cpp">
       <Filter>tig</Filter>
     </ClCompile>
+    <ClCompile Include="faction.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="party.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -363,6 +369,12 @@
     </ClInclude>
     <ClInclude Include="tig\tig_init.h">
       <Filter>tig</Filter>
+    </ClInclude>
+    <ClInclude Include="faction.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="party.h">
+      <Filter>Mods and Fixes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

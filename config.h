@@ -41,7 +41,8 @@ struct TemplePlusConfig
 	bool spellAlreadyKnownWarnings = false;
 
 	// gameplay
-	double randomEncounterExperienceFactor = 0.7; // an additional factor; e.g. if the normal Experience Multiplier is 0.7 and this is 0.7, overall is 0.49
+	// double randomEncounterExperienceFactor = 0.7; // an additional factor; e.g. if the normal Experience Multiplier is 0.7 and this is 0.7, overall is 0.49 NOT YET IMPLEMENTED
+	bool newFeatureTestMode = true;
 	bool NPCsLevelLikePCs = true;
 
 	void Load();

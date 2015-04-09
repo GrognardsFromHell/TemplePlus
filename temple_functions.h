@@ -57,52 +57,17 @@ struct TempleFuncs : AddressTable {
 	int(__cdecl *Obj_Set_IdxField_ObjHnd)(objHndl, _fieldIdx, _fieldSubIdx, objHndl);
 #pragma endregion
 
-	uint32_t(__cdecl *IsObjDeadNullDestroyed)(objHndl);
 	PyObject*  (__cdecl *PyObjFromObjHnd) (objHndl);
 	uint64_t(__cdecl *GetProtoHandle)(uint32_t protoId);
-	uint32_t(__cdecl *ObjGetProtoNum)(objHndl);
 
-	const char *(__cdecl *ObjGetDisplayName)(uint64_t obj, uint64_t observer);
-	uint32_t(__cdecl *DescriptionIsCustom)(int32_t descrIdx); 
-	uint32_t (__cdecl *CustomNameNew)(char *pString);
-	void (__cdecl *CustomNameChange)(char * pNewNameSource, uint32_t descrIdx);
-
-	uint32_t(__cdecl *DispatcherD20Query)(objHndl ObjHnd, _key nKey);
-
-	// GroupArray stuff (groups include: NPCs, PCs, AI Followers, Currently Selected)
-#pragma region GroupArray stuff
-	objHndl(__cdecl *GroupArrayMemberN)(GroupArray *, uint32_t nIdx);
-	objHndl(__cdecl *GroupNPCFollowersGetMemberN)(uint32_t nIdx);
-	uint32_t(__cdecl *GroupNPCFollowersLen)();
-	objHndl(__cdecl *GroupPCsGetMemberN)(uint32_t nIdx);
-	uint32_t(__cdecl *GroupPCsLen)();
-	objHndl(__cdecl *GroupListGetMemberN)(uint32_t nIdx);
-	uint32_t(__cdecl *GroupListGetLen)();
-	uint32_t(__cdecl *ObjIsInGroupArray)(GroupArray *, objHndl);
-	uint32_t(__cdecl *ObjIsAIFollower)(objHndl);
-	uint32_t(__cdecl * ObjFindInGroupArray)(GroupArray *, objHndl); // returns index
-	uint32_t(__cdecl * ObjRemoveFromAllGroupArrays)(objHndl);
-	uint32_t(__cdecl *ObjAddToGroupArray)(GroupArray *, objHndl);
-	uint32_t(__cdecl *ObjAddToPCGroup)(objHndl);
-#pragma endregion
-
-
-	objHndl(__cdecl *ObjGetSubstituteInventory)  (objHndl);
-	objHndl(__cdecl *ObjGetItemAtInventoryLocation)(objHndl, uint32_t nIdx);
-	objHndl (__cdecl *ObjFindMatchingStackableItem)(objHndl objHndReceiver, objHndl objHndItem); // TODO: rewrite so it doesn't stack items with different descriptions and/or caster levels, so potions/scrolls of different caster levels don't stack
 
 	
 	int32_t(__cdecl *ObjStatBaseGet)(objHndl, uint32_t obj_stat); // can return single precision floating point too (e.g. movement speed)
 	int32_t(__cdecl *ObjStatBaseDispatch)(objHndl, uint32_t obj_stat, void *); // Dispatcher Type 0x42; defaults to ObjStatBaseGet if no Dispatcher found
-	int32_t(__cdecl *ObjStatLevelGet)(objHndl, uint32_t obj_stat);
 
 	bool(__cdecl *StandPointPacketGet)(_jmpPntID jmpPntID, char * mapNameOut, size_t, _mapNum * mapNumOut, locXY * locXYOut);
 	uint32_t(__cdecl *ObjStandpointGet)(objHndl, _standPointType, StandPoint *);
 	uint32_t(__cdecl *ObjStandpointSet)(objHndl, _standPointType, StandPoint *);
-
-	uint32_t(__cdecl *ObjFactionHas)(objHndl, uint32_t nFaction);
-	uint32_t(__cdecl *ObjPCHasFactionFromReputation)(objHndl, uint32_t nFaction);
-	uint32_t(__cdecl *ObjFactionAdd)(objHndl, uint32_t nFaction);
 
 	uint32_t (__cdecl *ObjGetBABAfterLevelling)(objHndl objHnd, Stat classBeingLevelledUp);
 	uint32_t(__cdecl *XPReqForLevel)(uint32_t level);
@@ -110,9 +75,6 @@ struct TempleFuncs : AddressTable {
 
 	uint32_t(__cdecl *sub_10152280)(objHndl, objHndl);
 
-
-
-	uint32_t(__cdecl *ObjFeatAdd)(objHndl, feat_enums);
 	
 
 	//PyObject* (*PyObjFromObjHnd)();
@@ -207,44 +169,12 @@ struct TempleFuncs : AddressTable {
 
 #pragma endregion
 
-		rebase(DispatcherD20Query, 0x1004CC00);
-
-		rebase(IsObjDeadNullDestroyed, 0x1007E650);
 		rebase(PyObjFromObjHnd, 0x100AF1D0);
 		rebase(GetProtoHandle, 0x1003AD70);
-		rebase(ObjGetProtoNum, 0x10039320);
 
-		rebase(ObjGetDisplayName, 0x1001FA80);
-		rebase(DescriptionIsCustom, 0x100869B0);
-		rebase(CustomNameNew,0x10086A50);
-		rebase(CustomNameChange, 0x10086AA0);
-
-		rebase(GroupArrayMemberN, 0x100DF760);
-		rebase(GroupNPCFollowersGetMemberN, 0x1002B190);
-		rebase(GroupNPCFollowersLen, 0x1002B360);
-		rebase(GroupPCsGetMemberN, 0x1002B170);
-		rebase(GroupPCsLen, 0x1002B370);
-		rebase(GroupListGetMemberN, 0x1002B150);
-		rebase(GroupListGetLen, 0x1002B2B0);
-		rebase(ObjFindInGroupArray, 0x100DF780);
-		rebase(ObjIsInGroupArray, 0x100DF960);
-		rebase(ObjIsAIFollower, 0x1002B220);
-		rebase(ObjRemoveFromAllGroupArrays, 0x1002BD00);
-		rebase(ObjAddToGroupArray, 0x100DF990);
-		rebase(ObjAddToPCGroup, 0x1002BBE0);
-
-
-		rebase(ObjGetSubstituteInventory, 0x1007F5B0);
-		rebase(ObjGetItemAtInventoryLocation, 0x100651B0);
-		rebase(ObjFindMatchingStackableItem, 0x10067DF0);
 
 		rebase(ObjStatBaseGet, 0x10074CF0);
 		rebase(ObjStatBaseDispatch, 0x1004E810);
-		rebase(ObjStatLevelGet, 0x10074800);
-		
-
-		rebase(ObjFactionHas, 0x1007E430);
-		rebase(ObjFactionAdd, 0x1007E480);
 
 		rebase(ObjGetBABAfterLevelling, 0x100749B0);
 		rebase(XPReqForLevel, 0x100802E0);
@@ -252,9 +182,6 @@ struct TempleFuncs : AddressTable {
 
 		rebase(sub_10152280, 0x10152280);
 		rebase(CraftMagicArmsAndArmorSthg, 0x10150B20);
-
-		rebase(_FeatSthg_sub_1007C4F0, 0x1007C4F0);
-		rebase(ObjFeatAdd, 0x1007CF30);
 
 
 
@@ -284,9 +211,6 @@ private:
 
 	// usercall... eax has field id, ecx has type
 	bool(__cdecl *_DoesObjectFieldExist)();
-	
-
-	uint32_t(__cdecl *_FeatSthg_sub_1007C4F0)(); // (objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen); // are the args necessary? I don't think so!
 
 	// usercall... eax has sthg to do with Magic Arms and Armor crafting
 	bool(__cdecl *_ItemWorthFromEnhancements)();

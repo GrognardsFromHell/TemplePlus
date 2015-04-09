@@ -5,6 +5,7 @@
 #include "idxtables.h"
 
 
+#pragma region Spell Structs
 struct SpellEntryLevelSpec
 {
 	uint32_t classCode;
@@ -87,6 +88,8 @@ struct SpellPacket
 };
 
 const uint32_t TestSizeOfSpellPacket = sizeof(SpellPacket); // should be 0xAF0  (2800)
+
+#pragma endregion
 
 struct SpellSystem : AddressTable
 {
