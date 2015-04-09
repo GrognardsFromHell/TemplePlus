@@ -73,7 +73,6 @@
     <ClCompile Include="dispatcher.cpp" />
     <ClCompile Include="feat.cpp" />
     <ClCompile Include="fixes.cpp" />
-    <ClCompile Include="fog_seams.cpp" />
     <ClCompile Include="folderutils.cpp" />
     <ClCompile Include="gamelib_load.cpp" />
     <ClCompile Include="gamelib_save.cpp" />

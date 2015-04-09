@@ -177,9 +177,6 @@
     <ClCompile Include="condition.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
-    <ClCompile Include="fog_seams.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
     <ClCompile Include="gamesystems_render.cpp" />
     <ClCompile Include="ui_render.cpp" />
     <ClCompile Include="version.cpp" />
