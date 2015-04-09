@@ -27,7 +27,8 @@ GlobalStruct<VideoData, 0x11E74580> video;
 // Our precompiled header swallows this somehow...
 static const DWORD D3D_SDK_VERSION = 32;
 
-static void FreeResource(IUnknown *&unk) {
+template<typename T>
+static void FreeD3dResource(T *&unk) {
 	if (unk) {
 		unk->Release();
 		unk = nullptr;
@@ -133,7 +134,7 @@ void CreateSharedVertexBuffers(IDirect3DDevice9* device) {
 		throw TempleException("Couldn't create shared vertex buffer");
 	}
 	video->blitVBuffer = new Direct3DVertexBuffer8Adapter(vbuffer);
-
+	
 	if (D3DLOG(device->CreateVertexBuffer(
 		140, // Space for 5 vertices
 		D3DUSAGE_DYNAMIC,
@@ -688,22 +689,37 @@ void Graphics::ResetDevice() {
 }
 
 void Graphics::FreeResources() {
-
-	videoFuncs.CleanUpBuffers();
-
 	logger->info("Freeing Direct3D video memory resources");
 
-	FreeResource(mBackBuffer);
-	FreeResource(mBackBufferDepth);
+	videoFuncs.buffersFreed = false;
+	videoFuncs.CleanUpBuffers();
+	// videoFuncs.GameFreeVideoBuffers();
 
-	FreeResource(mSceneSurface);
-	FreeResource(mSceneDepthSurface);
+	//FreeD3dResource(video->blitVBuffer);
+	//FreeD3dResource(videoFuncs.globalFadeVBuffer);
+	//FreeD3dResource(videoFuncs.sharedVBuffer1);
+	//FreeD3dResource(videoFuncs.sharedVBuffer2);
+	//FreeD3dResource(videoFuncs.sharedVBuffer3);
+	//FreeD3dResource(videoFuncs.sharedVBuffer4);
+
+	FreeD3dResource(mBackBuffer);
+	FreeD3dResource(mBackBufferDepth);
+
+	FreeD3dResource(mSceneSurface);
+	FreeD3dResource(mSceneDepthSurface);
 
 }
 
 void Graphics::CreateResources() {
 
+
+	videoFuncs.ReadInitialState();
+	memcpy(videoFuncs.renderStates.ptr(), videoFuncs.activeRenderStates.ptr(), sizeof(TigRenderStates));
+
+
 	videoFuncs.buffersFreed = false;
+
+	CreateSharedVertexBuffers(mDevice);
 
 	// Get the currently attached backbuffer
 	if (D3DLOG(mDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &mBackBuffer)) != D3D_OK) {
@@ -891,7 +907,6 @@ void Graphics::InitializeDirect3d() {
 	D3DXMatrixIdentity(&video->matrix_identity);
 
 	IDirect3DDevice9* device = video->d3dDevice->delegate;
-	CreateSharedVertexBuffers(device);
 	SetDefaultRenderStates(device);
 
 	// Seems to be 4 VECTOR3's for the screen corners
@@ -910,9 +925,6 @@ void Graphics::InitializeDirect3d() {
 	fadeScreenRect[11] = 0;
 
 	video->unusedCap = 1; // Seems to be ref'd from light_init
-
-	videoFuncs.ReadInitialState();
-	memcpy(videoFuncs.renderStates.ptr(), videoFuncs.activeRenderStates.ptr(), sizeof(TigRenderStates));
 
 	__asm mov eax, D3DFMT_X8R8G8B8
 	if (!videoFuncs.tig_d3d_init_handleformat()) {
