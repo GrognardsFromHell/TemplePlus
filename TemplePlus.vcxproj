@@ -101,6 +101,7 @@
     <ClCompile Include="pythonglobal.cpp" />
     <ClCompile Include="python_debug.cpp" />
     <ClCompile Include="radial_menu.cpp" />
+    <ClCompile Include="spell_condition.cpp" />
     <ClCompile Include="testhelper.cpp" />
     <ClCompile Include="tig\tig_init.cpp" />
     <ClCompile Include="tig\tig_loadingscreen.cpp" />

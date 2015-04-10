@@ -61,9 +61,6 @@
     <ClCompile Include="python.cpp">
       <Filter>python</Filter>
     </ClCompile>
-    <ClCompile Include="bonusspells.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
     <ClCompile Include="minhook\src\HDE\hde32.c">
       <Filter>Dependencies\minhook</Filter>
     </ClCompile>
@@ -193,6 +190,12 @@
     </ClCompile>
     <ClCompile Include="idxtables.cpp">
       <Filter>generic data structures</Filter>
+    </ClCompile>
+    <ClCompile Include="bonusspells.cpp">
+      <Filter>Mods and Fixes\Spell Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="spell_condition.cpp">
+      <Filter>Mods and Fixes\Spell Fixes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -401,7 +404,6 @@
       <UniqueIdentifier>{ea100e12-e4d1-4df0-8ed7-e2ba3025f6e5}</UniqueIdentifier>
     </Filter>
     <ClInclude Include="aas.h" />
-    <ClInclude Include="tig.h" />
     <ClInclude Include="minhook\src\HDE\hde32.h">
       <Filter>Dependencies\minhook</Filter>
     </ClInclude>
@@ -456,12 +458,15 @@
     <Filter Include="generic data structures">
       <UniqueIdentifier>{9fef2488-221b-44e8-90ae-f5cf72e4b8b1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Mods and Fixes\Spell Fixes">
+      <UniqueIdentifier>{0e53287e-d500-4b3d-a274-09c4e0cf6dbf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\Spellslinger%27s Notes\bonusspells.txt">
-      <Filter>Mods and Fixes</Filter>
-    </Text>
     <Text Include="appveyor.yml" />
+    <Text Include="..\Spellslinger%27s Notes\bonusspells.txt">
+      <Filter>Mods and Fixes\Spell Fixes</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Dependencies">
