@@ -92,6 +92,13 @@ void RunMainLoop() {
 
 		gameSystemFuncs.AdvanceTime();
 
+		// Always lock the cursor
+		if (!config.windowed && config.lockCursor && GetForegroundWindow() == video->hwnd) {
+			RECT rect;
+			GetClientRect(video->hwnd, &rect);
+			ClipCursor(&rect);
+		}
+
 		RenderFrame();
 				
 		// Why does it process msgs AFTER rendering???		
