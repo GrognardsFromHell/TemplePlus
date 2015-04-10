@@ -25,27 +25,6 @@
     <ClCompile Include="game_config.cpp" />
     <ClCompile Include="temple_main.cpp" />
     <ClCompile Include="testhelper.cpp" />
-    <ClCompile Include="tig_font.cpp">
-      <Filter>tig</Filter>
-    </ClCompile>
-    <ClCompile Include="tig_loadingscreen.cpp">
-      <Filter>tig</Filter>
-    </ClCompile>
-    <ClCompile Include="tig_mes.cpp">
-      <Filter>tig</Filter>
-    </ClCompile>
-    <ClCompile Include="tig_mouse.cpp">
-      <Filter>tig</Filter>
-    </ClCompile>
-    <ClCompile Include="tig_msg.cpp">
-      <Filter>tig</Filter>
-    </ClCompile>
-    <ClCompile Include="tig_shader.cpp">
-      <Filter>tig</Filter>
-    </ClCompile>
-    <ClCompile Include="tig_texture.cpp">
-      <Filter>tig</Filter>
-    </ClCompile>
     <ClCompile Include="d3d8to9\d3d8to9.cpp">
       <Filter>d3d</Filter>
     </ClCompile>
@@ -118,9 +97,6 @@
     <ClCompile Include="addressess.cpp">
       <Filter>utils</Filter>
     </ClCompile>
-    <ClCompile Include="tig_tokenizer.cpp">
-      <Filter>tig</Filter>
-    </ClCompile>
     <ClCompile Include="timeevents.cpp" />
     <ClCompile Include="anim.cpp" />
     <ClCompile Include="pythonglobal.cpp">
@@ -182,6 +158,33 @@
     <ClCompile Include="inventory.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="tig\tig_font.cpp">
+      <Filter>tig</Filter>
+    </ClCompile>
+    <ClCompile Include="tig\tig_loadingscreen.cpp">
+      <Filter>tig</Filter>
+    </ClCompile>
+    <ClCompile Include="tig\tig_mes.cpp">
+      <Filter>tig</Filter>
+    </ClCompile>
+    <ClCompile Include="tig\tig_mouse.cpp">
+      <Filter>tig</Filter>
+    </ClCompile>
+    <ClCompile Include="tig\tig_msg.cpp">
+      <Filter>tig</Filter>
+    </ClCompile>
+    <ClCompile Include="tig\tig_shader.cpp">
+      <Filter>tig</Filter>
+    </ClCompile>
+    <ClCompile Include="tig\tig_texture.cpp">
+      <Filter>tig</Filter>
+    </ClCompile>
+    <ClCompile Include="tig\tig_tokenizer.cpp">
+      <Filter>tig</Filter>
+    </ClCompile>
+    <ClCompile Include="tig\tig_init.cpp">
+      <Filter>tig</Filter>
+    </ClCompile>
     <ClCompile Include="faction.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
@@ -207,33 +210,6 @@
     <ClInclude Include="tio.h" />
     <ClInclude Include="xp.h">
       <Filter>Mods and Fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="tig_texture.h">
-      <Filter>tig</Filter>
-    </ClInclude>
-    <ClInclude Include="tig.h">
-      <Filter>tig</Filter>
-    </ClInclude>
-    <ClInclude Include="tig_font.h">
-      <Filter>tig</Filter>
-    </ClInclude>
-    <ClInclude Include="tig_loadingscreen.h">
-      <Filter>tig</Filter>
-    </ClInclude>
-    <ClInclude Include="tig_mes.h">
-      <Filter>tig</Filter>
-    </ClInclude>
-    <ClInclude Include="tig_mouse.h">
-      <Filter>tig</Filter>
-    </ClInclude>
-    <ClInclude Include="tig_msg.h">
-      <Filter>tig</Filter>
-    </ClInclude>
-    <ClInclude Include="tig_shader.h">
-      <Filter>tig</Filter>
-    </ClInclude>
-    <ClInclude Include="tig_startup.h">
-      <Filter>tig</Filter>
     </ClInclude>
     <ClInclude Include="d3d8\d3d8.h">
       <Filter>d3d</Filter>
@@ -298,9 +274,6 @@
     <ClInclude Include="addresses.h">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="tig_tokenizer.h">
-      <Filter>tig</Filter>
-    </ClInclude>
     <ClInclude Include="timeevents.h" />
     <ClInclude Include="anim.h" />
     <ClInclude Include="pythonglobal.h">
@@ -364,6 +337,39 @@
     <ClInclude Include="version.h" />
     <ClInclude Include="inventory.h">
       <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="tig\tig.h">
+      <Filter>tig</Filter>
+    </ClInclude>
+    <ClInclude Include="tig\tig_font.h">
+      <Filter>tig</Filter>
+    </ClInclude>
+    <ClInclude Include="tig\tig_loadingscreen.h">
+      <Filter>tig</Filter>
+    </ClInclude>
+    <ClInclude Include="tig\tig_mes.h">
+      <Filter>tig</Filter>
+    </ClInclude>
+    <ClInclude Include="tig\tig_mouse.h">
+      <Filter>tig</Filter>
+    </ClInclude>
+    <ClInclude Include="tig\tig_msg.h">
+      <Filter>tig</Filter>
+    </ClInclude>
+    <ClInclude Include="tig\tig_shader.h">
+      <Filter>tig</Filter>
+    </ClInclude>
+    <ClInclude Include="tig\tig_startup.h">
+      <Filter>tig</Filter>
+    </ClInclude>
+    <ClInclude Include="tig\tig_texture.h">
+      <Filter>tig</Filter>
+    </ClInclude>
+    <ClInclude Include="tig\tig_tokenizer.h">
+      <Filter>tig</Filter>
+    </ClInclude>
+    <ClInclude Include="tig\tig_init.h">
+      <Filter>tig</Filter>
     </ClInclude>
     <ClInclude Include="faction.h">
       <Filter>Mods and Fixes</Filter>

@@ -6,9 +6,9 @@
 #include "idxtables.h"
 #include "config.h"
 #include "movies.h"
-#include "tig_msg.h"
-#include "tig_shader.h"
-#include "tig_mouse.h"
+#include "tig/tig_msg.h"
+#include "tig/tig_shader.h"
+#include "tig/tig_mouse.h"
 #include "mainwindow.h"
 #include "ui.h"
 #include "folderutils.h"
@@ -21,14 +21,19 @@
 #include <set>
 
 Graphics graphics;
-
-GlobalBool<0x10D250EC> drawFps;
-GlobalStruct<TigTextStyle, 0x10D24DB0> drawFpsTextStyle;
 VideoFuncs videoFuncs;
 GlobalStruct<VideoData, 0x11E74580> video;
 
 // Our precompiled header swallows this somehow...
 static const DWORD D3D_SDK_VERSION = 32;
+
+template<typename T>
+static void FreeD3dResource(T *&unk) {
+	if (unk) {
+		unk->Release();
+		unk = nullptr;
+	}
+}
 
 static D3DPRESENT_PARAMETERS CreatePresentParams() {
 	D3DPRESENT_PARAMETERS presentParams;
@@ -46,7 +51,7 @@ static D3DPRESENT_PARAMETERS CreatePresentParams() {
 	return presentParams;
 }
 
-static void SetDefaultRenderStates(IDirect3DDevice9 *d3d9Device) {
+static void SetDefaultRenderStates(IDirect3DDevice9* d3d9Device) {
 	/*
 	SET DEFAULT RENDER STATES
 	*/
@@ -117,159 +122,73 @@ static void SetDefaultRenderStates(IDirect3DDevice9 *d3d9Device) {
 	d3d9Device->SetRenderState(D3DRS_ALPHAFUNC, 7);
 }
 
-static void StoreBackBufferSize(IDirect3DDevice9 *device) {
-	/*
-	Set backbuffer size
-	*/
-	IDirect3DSurface9 *backBufferSurface = nullptr;
-	HRESULT result;
-	if ((result = device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &backBufferSurface)) != D3D_OK) {
-		handleD3dError("GetBackBuffer", result);
-		return;
-	}
-	D3DSURFACE_DESC backBufferDesc;
-	memset(&backBufferDesc, 0, sizeof(backBufferDesc));
-	if ((result = backBufferSurface->GetDesc(&backBufferDesc)) != D3D_OK) {
-		handleD3dError("GetDesc", result);
-		backBufferSurface->Release();
-		return;
-	}
-	backBufferSurface->Release();
-
-	videoFuncs.backbufferWidth = backBufferDesc.Width;
-	videoFuncs.backbufferHeight = backBufferDesc.Height;
-
-}
-
-bool CreateSharedVertexBuffers(IDirect3DDevice9* device) {
-	/*
-	Create several shared buffers. Most of these don't seem to be used much or ever.
-	*/
-	HRESULT d3dresult;
+void CreateSharedVertexBuffers(IDirect3DDevice9* device) {
 	IDirect3DVertexBuffer9* vbuffer;
-	if ((d3dresult = device->CreateVertexBuffer(
+	if (D3DLOG(device->CreateVertexBuffer(
 		112, // Space for 4 vertices
 		D3DUSAGE_DYNAMIC,
 		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
 		D3DPOOL_SYSTEMMEM,
 		&vbuffer,
 		nullptr)) != D3D_OK) {
-		handleD3dError("CreateVertexBuffer", d3dresult);
-		return false;
+		throw TempleException("Couldn't create shared vertex buffer");
 	}
 	video->blitVBuffer = new Direct3DVertexBuffer8Adapter(vbuffer);
-
-	if ((d3dresult = device->CreateVertexBuffer(
+	
+	if (D3DLOG(device->CreateVertexBuffer(
 		140, // Space for 5 vertices
 		D3DUSAGE_DYNAMIC,
 		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
 		D3DPOOL_SYSTEMMEM,
 		&vbuffer,
 		nullptr)) != D3D_OK) {
-		handleD3dError("CreateVertexBuffer", d3dresult);
-		return false;
+		throw TempleException("Couldn't create shared vertex buffer");
 	}
 	videoFuncs.globalFadeVBuffer = new Direct3DVertexBuffer8Adapter(vbuffer);
 
-	if ((d3dresult = device->CreateVertexBuffer(
+	if (D3DLOG(device->CreateVertexBuffer(
 		72, // 2 vertices (odd)
 		D3DUSAGE_DYNAMIC,
 		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_NORMAL | D3DFVF_XYZ, // 36 byte per vertex
 		D3DPOOL_SYSTEMMEM,
 		&vbuffer,
 		nullptr)) != D3D_OK) {
-		handleD3dError("CreateVertexBuffer", d3dresult);
-		return false;
+		throw TempleException("Couldn't create shared vertex buffer");
 	}
 	videoFuncs.sharedVBuffer1 = new Direct3DVertexBuffer8Adapter(vbuffer);
 
-	if ((d3dresult = device->CreateVertexBuffer(
+	if (D3DLOG(device->CreateVertexBuffer(
 		56, // 2 vertices
 		D3DUSAGE_DYNAMIC,
 		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
 		D3DPOOL_SYSTEMMEM,
 		&vbuffer,
 		nullptr)) != D3D_OK) {
-		handleD3dError("CreateVertexBuffer", d3dresult);
-		return false;
+		throw TempleException("Couldn't create shared vertex buffer");
 	}
 	videoFuncs.sharedVBuffer2 = new Direct3DVertexBuffer8Adapter(vbuffer);
 
-	if ((d3dresult = device->CreateVertexBuffer(
+	if (D3DLOG(device->CreateVertexBuffer(
 		7168, // 256 vertices
 		D3DUSAGE_DYNAMIC,
 		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
 		D3DPOOL_SYSTEMMEM,
 		&vbuffer,
 		nullptr)) != D3D_OK) {
-		handleD3dError("CreateVertexBuffer", d3dresult);
-		return false;
+		throw TempleException("Couldn't create shared vertex buffer");
 	}
 	videoFuncs.sharedVBuffer3 = new Direct3DVertexBuffer8Adapter(vbuffer);
 
-	if ((d3dresult = device->CreateVertexBuffer(
+	if (D3DLOG(device->CreateVertexBuffer(
 		4644, // 129 device
 		D3DUSAGE_DYNAMIC,
 		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_NORMAL | D3DFVF_XYZ, // 36 byte per vertex
 		D3DPOOL_SYSTEMMEM,
 		&vbuffer,
 		nullptr)) != D3D_OK) {
-		handleD3dError("CreateVertexBuffer", d3dresult);
-		return false;
+		throw TempleException("Couldn't create shared vertex buffer");
 	}
 	videoFuncs.sharedVBuffer4 = new Direct3DVertexBuffer8Adapter(vbuffer);
-	return true;
-}
-
-/*
-	This is an attempt at extracting all state reset functionality from TigInitDirect3D.
-*/
-static bool TigResetDirect3D() {
-	D3DXMatrixIdentity(&video->stru_11E75788);
-	D3DXMatrixIdentity(&video->matrix_identity);
-
-	IDirect3DDevice9 *device = video->d3dDevice->delegate;
-	if (!CreateSharedVertexBuffers(device)) {
-		return false;
-	}
-	StoreBackBufferSize(device);
-	SetDefaultRenderStates(device);
-
-	// Seems to be 4 VECTOR3's for the screen corners
-	auto fadeScreenRect = videoFuncs.fadeScreenRect.ptr();
-	fadeScreenRect[0] = 0;
-	fadeScreenRect[1] = 0;
-	fadeScreenRect[2] = 0;
-	fadeScreenRect[3] = (float)video->current_width;
-	fadeScreenRect[4] = 0;
-	fadeScreenRect[5] = 0;
-	fadeScreenRect[6] = (float)video->current_width;
-	fadeScreenRect[7] = (float)video->current_height;
-	fadeScreenRect[8] = 0;
-	fadeScreenRect[9] = 0;
-	fadeScreenRect[10] = (float)video->current_height;
-	fadeScreenRect[11] = 0;
-
-	video->unusedCap = 1; // Seems to be ref'd from light_init
-
-	videoFuncs.ReadInitialState();
-	memcpy(videoFuncs.renderStates.ptr(), videoFuncs.activeRenderStates.ptr(), sizeof(TigRenderStates));
-	
-	__asm mov eax, D3DFMT_X8R8G8B8
-	if (!videoFuncs.tig_d3d_init_handleformat()) {
-		logger->error("Format init failed.");
-	}
-	
-	videoFuncs.create_partsys_vertex_buffers();
-	videoFuncs.tigMovieInitialized = true;
-	videoFuncs.tig_font_related_init();
-	videoFuncs.updateProjMatrices(videoFuncs.tigMatrices2);
-	videoFuncs.buffersFreed = false;
-
-	// This is always the same pointer although it's callback 2 of the GameStartConfig	
-	videoFuncs.GameCreateVideoBuffers();
-	
-	return true;
 }
 
 void ResizeBuffers(int width, int height) {
@@ -308,14 +227,11 @@ void ResizeBuffers(int width, int height) {
 	mouseFuncs.SetBounds(width, height);
 }
 
-bool ReadCaps(IDirect3DDevice9Ex* device, uint32_t minTexWidth, uint32_t minTexHeight) {
+void ReadCaps(IDirect3DDevice9Ex* device, uint32_t minTexWidth, uint32_t minTexHeight) {
 
-	HRESULT d3dresult;
 	D3DCAPS9 caps;
-	if ((d3dresult = device->GetDeviceCaps(&caps)) != D3D_OK) {
-		logger->error("Unable to retrieve device caps.");
-		handleD3dError("GetDeviceCaps", d3dresult);
-		return false;
+	if (D3DLOG(device->GetDeviceCaps(&caps)) != D3D_OK) {
+		throw TempleException("Unable to retrieve Direct3D device caps");
 	}
 	video->maxActiveLights = min<DWORD>(8, caps.MaxActiveLights);
 
@@ -374,9 +290,9 @@ bool ReadCaps(IDirect3DDevice9Ex* device, uint32_t minTexWidth, uint32_t minTexH
 		logger->error("texture op D3DTOP_MODULATEALPHA_ADDCOLOR is missing");
 	}
 	if (caps.MaxTextureWidth < minTexWidth || caps.MaxTextureHeight < minTexHeight) {
-		logger->error("minimum texture resolution of {}x{} is not supported. Supported: {}x{}",
-			minTexWidth, minTexHeight, caps.MaxTextureWidth, caps.MaxTextureHeight);
-		return false;
+		auto msg = format("minimum texture resolution of {}x{} is not supported. Supported: {}x{}",
+		                  minTexWidth, minTexHeight, caps.MaxTextureWidth, caps.MaxTextureHeight);
+		throw TempleException(msg);
 	}
 
 	/*
@@ -398,128 +314,6 @@ bool ReadCaps(IDirect3DDevice9Ex* device, uint32_t minTexWidth, uint32_t minTexH
 		logger->error("Textures must be square");
 		video->capSquareTextures = true;
 	}
-	return true;
-}
-
-static bool TigInitDirect3D(TigConfig* settings) {
-
-	HRESULT d3dresult;
-
-	if (settings->bpp < 32) {
-		logger->error("BPP settings must be 32-bit");
-		return false;
-	}
-
-	/*
-		Set some global flags.
-	*/
-	video->unusedCap = 0;
-	video->makesSthLarger = 0;
-	video->capPowerOfTwoTextures = 0;
-	video->capSquareTextures = 0;
-	video->neverReadFlag1 = 0;
-	video->neverReadFlag2 = 0;
-	video->dword_11E7572C = 0;
-	video->enableMipMaps = (settings->flags & SF_MIPMAPPING) != 0;
-
-	IDirect3D9Ex* d3d9 = nullptr;
-	if (config.useDirect3d9Ex) {
-		d3dresult = Direct3DCreate9Ex(D3D_SDK_VERSION, &d3d9);
-		if (d3dresult != D3D_OK) {
-			logger->error("Unable to create Direct3D9Ex device.");
-			handleD3dError("TigInitDirect3D", d3dresult);
-			return false;
-		}
-	} else {
-		d3d9 = static_cast<IDirect3D9Ex*>(Direct3DCreate9(D3D_SDK_VERSION));
-		if (!d3d9) {
-			logger->error("Unable to create Direct3D9 device.");
-			return false;
-		}
-	}
-	video->d3d = new Direct3D8Adapter;
-	video->d3d->delegate = d3d9;
-
-	/** START OF OLD WINDOWED INIT */
-	IDirect3DDevice9Ex* d3d9Device = nullptr;
-	// At this point we only do a GetDisplayMode to check the resolution. We could also do this elsewhere
-	D3DDISPLAYMODE displayMode;
-	d3dresult = d3d9->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &displayMode);
-	if (d3dresult != D3D_OK) {
-		logger->error("Unable to query display mode for primary adapter.");
-		handleD3dError("GetAdapterDisplayMode", d3dresult);
-		return false;
-	}
-
-	// We need at least 1024x768
-	if (displayMode.Width < 1024 || displayMode.Height < 768) {
-		logger->error("You need at least a display resolution of 1024x768.");
-		return false;
-	}
-
-	// This is only really used by alloc_texture_mem and the init func
-	video->adapterformat = D3DFMT_X8R8G8B8;
-	video->current_bpp = 32;
-	settings->bpp = 32;
-
-	/*
-		Check for linear->srgb conversion support (also known as gamma correction)
-		*/
-	D3DCAPS9 caps;
-	if ((d3dresult = d3d9->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &caps)) != D3D_OK) {
-		logger->error("Unable to retrieve device caps.");
-		handleD3dError("GetDeviceCaps", d3dresult);
-		return false;
-	}
-
-	enableLinearPresent = false;
-	if ((caps.Caps3 & D3DCAPS3_LINEAR_TO_SRGB_PRESENTATION) != 0) {
-		logger->error("Automatic gamma corection is supported by driver.");
-		enableLinearPresent = true;
-	}
-	d3d9->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &caps);
-
-	auto presentParams = CreatePresentParams();
-
-	// presentParams.MultiSampleType = D3DMULTISAMPLE_4_SAMPLES;
-	// presentParams.MultiSampleQuality = 0;
-
-	// Nvidia drivers seriously barf on D3d9ex if we use software vertex processing here, as ToEE specifies.
-	// I think we are safe with hardware vertex processing, since HW T&L has been standard for more than 10 years.
-	if (config.useDirect3d9Ex) {
-		logger->error("Creating Direct3D9Ex device.");
-		d3dresult = d3d9->CreateDeviceEx(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, video->hwnd, D3DCREATE_HARDWARE_VERTEXPROCESSING, &presentParams, nullptr, &d3d9Device);
-	} else {
-		logger->error("Creating Direct3D9 device.");
-		d3dresult = d3d9->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, video->hwnd, D3DCREATE_HARDWARE_VERTEXPROCESSING, &presentParams, reinterpret_cast<IDirect3DDevice9**>(&d3d9Device));
-	}
-	if (d3dresult != D3D_OK) {
-		logger->error("Unable to create Direct3d9 device.");
-		handleD3dError("CreateDevice", d3dresult);
-		return false;
-	}
-	video->d3dDevice = new Direct3DDevice8Adapter;
-	video->d3dDevice->delegate = d3d9Device;
-
-	video->fullscreen = false;
-	video->unk2 = false;
-	video->gammaSupported = false;
-
-	// TODO: color bullshit is not yet done (tig_d3d_init_handleformat et al)
-
-	/** END OF OLD WINDOWED INIT */
-	videoFuncs.currentFlags = settings->flags;
-
-	// Get the device caps for real this time.
-	if (!ReadCaps(d3d9Device, settings->minTexWidth, settings->minTexHeight)) {
-		return false;
-	}
-
-	if (!TigResetDirect3D()) {
-		return false;
-	}
-
-	return true;
 }
 
 int __cdecl HookedCleanUpBuffers() {
@@ -527,83 +321,10 @@ int __cdecl HookedCleanUpBuffers() {
 	return 0;
 }
 
+/*
+	Video mode switching no longer needs to happen.
+*/
 int __cdecl HookedSetVideoMode(int adapter, int nWidth, int nHeight, int bpp, int refresh, int flags) {
-	return 0;
-
-	logger->info("Buffers Freed: {}", (bool) videoFuncs.buffersFreed);
-
-	// We probabl need to create a shadow for this...
-	bool changed =
-		video->adapter != adapter
-		|| video->current_bpp != bpp
-		|| video->current_width != nWidth
-		|| video->current_height != nHeight;
-
-	if (!changed) {
-		return 0;
-	}
-
-	nWidth = video->current_width;
-	nHeight = video->current_height;
-	bpp = video->current_bpp;
-
-	video->current_width = nWidth;
-	video->current_height = nHeight;
-	video->current_bpp = 32; // Never anything else
-	// Adapter changes will not happen...
-	video->adapter = adapter;
-	videoFuncs.currentFlags = flags;
-
-	if (!videoFuncs.buffersFreed) {
-		videoFuncs.CleanUpBuffers();
-	}
-
-	video->halfWidth = nWidth * 0.5f;
-	video->halfHeight = nHeight * 0.5f;
-
-	// this was the old reset stuff for the window
-	// RECT rect;
-	// GetWindowRect(video->hwnd, &rect);
-	// MoveWindow(video->hwnd, 0, 0, nWidth, nHeight, 0);
-
-	TigResetDirect3D();
-
-	videoFuncs.create_partsys_vertex_buffers();
-	videoFuncs.tigMovieInitialized = true;
-	videoFuncs.tig_font_related_init();
-	videoFuncs.updateProjMatrices(videoFuncs.tigMatrices2);
-	videoFuncs.buffersFreed = false;
-
-	// This is always the same pointer although it's callback 2 of the GameStartConfig
-	videoFuncs.GameCreateVideoBuffers();
-
-	/*
-		Basically this is the inverse of CleanBuffers. Sadly it's not an easily callable function.
-	*/
-	/*config.bpp = bpp;
-	config.width = nWidth;
-	config.height = nHeight;
-	config.framelimit = refresh;
-	backbuffer_width = nWidth;
-	backbuffer_height = nHeight;
-
-	if (tig_d3d_init(&config, flags))
-	{
-		result = return_EAX_0();
-		if ( result )
-		return result;
-		create_partsys_vertex_buffers();
-		tig_movie_set_initialized();
-		tig_font_related_init();
-		updateProjMatrices(&matrix_related_2);
-		buffers_freed = 0;
-		if ( set_video_mode_callback )
-		set_video_mode_callback();
-
-		NOTE: screen rect is now updated belo
-
-	}*/
-
 	return 0;
 }
 
@@ -619,32 +340,12 @@ int __cdecl VideoStartup(TigConfig* settings) {
 		return 17;
 	}
 
-	if (!TigInitDirect3D(settings)) {
-		video->hwnd = 0;
-		return 17;
-	}
+	graphics.InitializeDirect3d();
 
 	video->width = settings->width;
 	video->height = settings->height;
 	video->halfWidth = video->width * 0.5f;
 	video->halfHeight = video->height * 0.5f;
-
-	if (settings->flags & SF_FPS) {
-		drawFps = true;
-		temple_set<0x10D24DB0>(0);
-		temple_set<0x10D24DB4>(5);
-		temple_set<0x10D24DB8>(2);
-		temple_set<0x10D24DBC>(0);
-
-		temple_set<0x10D24DD8>(8);
-		temple_set<0x10D24DDC>(-1);
-		temple_set<0x10D24DE4>(temple_address<0x103008F4>());
-		temple_set<0x10D24DE8>(temple_address<0x103008F4>());
-		temple_set<0x10D24DEC>(temple_address<0x10300904>());
-		temple_set<0x10D24DF0>(temple_address<0x103008F4>());
-	} else {
-		drawFps = false;
-	}
 
 	// Seems always enabled in default config and never read
 	temple_set<0x11E7570C, int>((settings->flags & 4) != 0);
@@ -654,7 +355,7 @@ int __cdecl VideoStartup(TigConfig* settings) {
 	temple_set<0x10D250E0, int>(0);
 	temple_set<0x10D250E4, int>(1);
 	temple_set<0x10300914, int>(-1);
-	
+
 	// Unused mkscreenshot related pointer
 	// temple_set<0x10D2511C, int>(0);
 
@@ -704,20 +405,20 @@ bool __cdecl AllocTextureMemory(Direct3DDevice8Adapter* adapter, int w, int h, i
 	auto desiredType = textureFormatTable->formats[textureType];
 	format = desiredType.d3dFormat;
 
-	DWORD usage = D3DUSAGE_DYNAMIC;
+	DWORD usage = 0; // I don't think ToEE uses dynamic textures
+
 	// d3d9ex does not support managed anymore, but default has better guarantees now anyway
 	D3DPOOL pool = config.useDirect3d9Ex ? D3DPOOL_DEFAULT : D3DPOOL_MANAGED;
 	if (flags & 0x40) {
-		usage = D3DUSAGE_RENDERTARGET;
-		pool = D3DPOOL_DEFAULT;
+		// This previously allocated a render target texture, but this is not supported and i do not think used by ToEE
+		throw TempleException("Render Targets are not supported by this method");
 	}
 
 	if (flags & 0x20 && video->enableMipMaps) {
 		levels = 2;
 	}
 
-	HRESULT result;
-	if ((result = device->CreateTexture(
+	if (D3DLOG(device->CreateTexture(
 		w,
 		h,
 		levels,
@@ -727,7 +428,6 @@ bool __cdecl AllocTextureMemory(Direct3DDevice8Adapter* adapter, int w, int h, i
 		&texture,
 		nullptr
 	)) != D3D_OK) {
-		handleD3dError("CreateTexture", result);
 		return false;
 	}
 
@@ -755,7 +455,7 @@ void __cdecl TakeScreenshot(int) {
 	if (!video->d3dDevice) {
 		return;
 	}
-		
+
 	// Calculate size of screenshot
 	RECT rect;
 	GetWindowRect(video->hwnd, &rect);
@@ -774,7 +474,7 @@ void __cdecl TakeScreenshot(int) {
 			break;
 		}
 	}
-	
+
 	// Take screenshot
 	auto device = video->d3dDevice->delegate;
 	IDirect3DSurface9* surface;
@@ -803,7 +503,7 @@ static int HookedBeginFrame() {
 	return 0;
 }
 
-static void HookedUpdateProjMatrices(const TigMatrices &matrices) {
+static void HookedUpdateProjMatrices(const TigMatrices& matrices) {
 	TigMatrices modifiedParams;
 	modifiedParams.xOffset = matrices.xOffset + 0.5f;
 	modifiedParams.yOffset = matrices.yOffset + 0.5f;
@@ -836,7 +536,7 @@ void hook_graphics() {
 	// We hook the entire video subsystem initialization function
 	MH_CreateHook(temple_address<0x101DC6E0>(), VideoStartup, nullptr);
 	MH_CreateHook(temple_address<0x101DBC80>(), AllocTextureMemory, nullptr);
-	MH_CreateHook(temple_address<0x101E0750>(), GetSystemMemory, nullptr);	
+	MH_CreateHook(temple_address<0x101E0750>(), GetSystemMemory, nullptr);
 	MH_CreateHook(temple_address<0x101DBD80>(), TakeScreenshot, nullptr);
 
 	hook_movies();
@@ -857,7 +557,7 @@ static struct ExternalGraphicsFuncs : AddressTable {
 	/*
 		Renders a 2d quad on screen.
 	*/
-	int(__cdecl *RenderTexturedQuad)(D3DVECTOR *vertices, float *u, float *v, int textureId, D3DCOLOR color);
+	int (__cdecl *RenderTexturedQuad)(D3DVECTOR* vertices, float* u, float* v, int textureId, D3DCOLOR color);
 
 	/*
 		Sadly no idea what this does. Looks like some indexbuffer rotating cache?
@@ -865,9 +565,9 @@ static struct ExternalGraphicsFuncs : AddressTable {
 	void (__cdecl *sub_101EF8B0)(void);
 
 	// Is the full-screen overlay for fading out/in enabled?
-	bool *gfadeEnable;
+	bool* gfadeEnable;
 	// If it's enabled, what color does it have?
-	D3DCOLOR *gfadeColor;
+	D3DCOLOR* gfadeColor;
 
 	ExternalGraphicsFuncs() {
 		rebase(AdvanceShaderClock, 0x101E0A30);
@@ -875,7 +575,7 @@ static struct ExternalGraphicsFuncs : AddressTable {
 
 		rebase(gfadeEnable, 0x10D25118);
 		rebase(gfadeColor, 0x10D24A28);
-		
+
 		rebase(RenderTexturedQuad, 0x101d90b0);
 		rebase(sub_101EF8B0, 0x101EF8B0);
 	}
@@ -908,10 +608,10 @@ bool Graphics::BeginFrame() {
 
 	// Advance time of shader clock, used for texture animation
 	auto now = graphics_clock::now();
-	auto frameTime = chrono::duration_cast<chrono::milliseconds>(now - mLastFrameStart);	
+	auto frameTime = chrono::duration_cast<chrono::milliseconds>(now - mLastFrameStart);
 	externalGraphicsFuncs.AdvanceShaderClock(static_cast<float>(frameTime.count()));
 	mLastFrameStart = graphics_clock::now();
-	
+
 	return true;
 }
 
@@ -922,58 +622,150 @@ bool Graphics::Present() {
 
 	externalGraphicsFuncs.FreeTextureMemory();
 
-	/*
-	if ( draw_fps )
-    {
-      if ( Get_Elapsed_System_Time(last_fps_drawn) > 1000 )
-      {
-        v0 = (long double)dword_10D250F0;
-        v1 = v0 / ((long double)Get_Elapsed_System_Time(last_fps_drawn) * 0.001);
-        flt_10D25100 = v1;
-        if ( v1 > flt_10D25104 )
-          flt_10D25104 = flt_10D25100;
-        Get_System_Time_in_msec((uint32_t *)&last_fps_drawn);
-        _snprintf(fps_str_buffer, 0x50u, "FPS: %.2f (%.2fmax)", flt_10D25100, flt_10D25104);
-        dword_10D250F0 = 0;
-        fps_text_metrics.text = fps_str_buffer;
-        fps_text_metrics.height = 0;
-        fps_text_metrics.width = 0;
-        tig_font_measure(&fps_text_style, &fps_text_metrics);
-        fps_text_rect.left = 0;
-        fps_text_rect.top = 0;
-        fps_text_rect.right = fps_text_metrics.width;
-        fps_text_rect.bottom = fps_text_metrics.height;
-      }
-      tig_font_draw(fps_str_buffer, &fps_text_rect, &fps_text_style);
-    }
-	*/
 	RenderGFade();
 
-	auto device = video->d3dDevice->delegate;
-	auto result = device->EndScene();
-	if (handleD3dError("EndScene", result) != D3D_OK) {
+	if (D3DLOG(mDevice->EndScene()) != D3D_OK) {
 		return false;
 	}
+
+	auto result = D3DLOG(mDevice->Present(nullptr, nullptr, nullptr, nullptr));
 	
-	if (config.useDirect3d9Ex) {
-		// May use D3DPRESENT_LINEAR_CONTENT to implement gamma?
-		result = device->PresentEx(nullptr, nullptr, nullptr, nullptr, 0);
-		if (handleD3dError("PresentEx", result) != D3D_OK) {
-			return false;
-		}
-	} else {
-		result = device->Present(nullptr, nullptr, nullptr, nullptr);
-		if (handleD3dError("Present", result) != D3D_OK) {
-			return false;
-		}
+	if (result == D3DERR_DEVICELOST) {
+		ResetDevice();
 	}
 	
+	if (result != D3D_OK) {
+		return false;
+	}
+
 	/*
 		++dword_10D250F0; <- FPS counter frame count	
 	*/
 	externalGraphicsFuncs.sub_101EF8B0();
 
 	return true;
+}
+
+void Graphics::ResetDevice() {
+
+	while (true) {
+		// While the cooperation level says
+		auto result = mDevice->TestCooperativeLevel();
+
+		// Direct3D documentation tells us to wait and retry periodically if device is lost
+		while (result == D3DERR_DEVICELOST) {
+			logger->trace("Direct3D9 device is lost. Waiting for chance to restore it");
+			msgFuncs.ProcessSystemEvents();
+			Sleep(100);
+			result = mDevice->TestCooperativeLevel();
+		}
+
+		if (result == D3D_OK) {
+			return; // Unlikely, but... okay
+		}
+
+		// There's also D3DERR_DRIVERINTERNALERROR, but I don't think we can recover from that
+		assert(result == D3DERR_DEVICENOTRESET);
+
+		logger->debug("Resetting Direct3D device");
+
+		FreeResources();
+
+		auto presentParams = CreatePresentParams();
+		if ((result = D3DLOG(mDevice->Reset(&presentParams))) != D3D_OK) {
+			if (result == D3DERR_DEVICELOST) {
+				continue;
+			}
+			throw TempleException("Unable to reset the Direct3d device after it being lost.");
+		}
+
+		logger->debug("Successfully reset Direct3D device");
+
+		CreateResources();
+
+		break;
+	}
+
+}
+
+void Graphics::FreeResources() {
+	logger->info("Freeing Direct3D video memory resources");
+
+	videoFuncs.buffersFreed = false;
+	videoFuncs.CleanUpBuffers();
+	// videoFuncs.GameFreeVideoBuffers();
+
+	// Handled by CleanUpBuffers
+	//FreeD3dResource(video->blitVBuffer);
+	//FreeD3dResource(videoFuncs.globalFadeVBuffer);
+	//FreeD3dResource(videoFuncs.sharedVBuffer1);
+	//FreeD3dResource(videoFuncs.sharedVBuffer2);
+	//FreeD3dResource(videoFuncs.sharedVBuffer3);
+	//FreeD3dResource(videoFuncs.sharedVBuffer4);
+
+	FreeD3dResource(mBackBuffer);
+	FreeD3dResource(mBackBufferDepth);
+
+	FreeD3dResource(mSceneSurface);
+	FreeD3dResource(mSceneDepthSurface);
+
+}
+
+void Graphics::CreateResources() {
+
+
+	videoFuncs.ReadInitialState();
+	memcpy(videoFuncs.renderStates.ptr(), videoFuncs.activeRenderStates.ptr(), sizeof(TigRenderStates));
+
+
+	videoFuncs.buffersFreed = false;
+
+	CreateSharedVertexBuffers(mDevice);
+
+	// Get the currently attached backbuffer
+	if (D3DLOG(mDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &mBackBuffer)) != D3D_OK) {
+		throw TempleException("Unable to retrieve the back buffer");
+	}
+	if (D3DLOG(mDevice->GetDepthStencilSurface(&mBackBufferDepth)) != D3D_OK) {
+		throw TempleException("Unable to retrieve depth/stencil surface from device");
+	}
+
+	memset(&mBackBufferDesc, 0, sizeof(mBackBufferDesc));
+	if (D3DLOG(mBackBuffer->GetDesc(&mBackBufferDesc)) != D3D_OK) {
+		throw TempleException("Unable to retrieve back buffer description");
+	}
+
+	// Store back buffer size
+	videoFuncs.backbufferWidth = mBackBufferDesc.Width;
+	videoFuncs.backbufferHeight = mBackBufferDesc.Height;
+
+	// Create surfaces for the scene
+	D3DLOG(mDevice->CreateRenderTarget(
+		config.screenWidth,
+		config.screenHeight,
+		mBackBufferDesc.Format,
+		mBackBufferDesc.MultiSampleType,
+		mBackBufferDesc.MultiSampleQuality,
+		FALSE,
+		&mSceneSurface,
+		nullptr));
+
+	D3DLOG(mDevice->CreateDepthStencilSurface(
+		config.screenWidth,
+		config.screenHeight,
+		D3DFMT_D16,
+		mBackBufferDesc.MultiSampleType,
+		mBackBufferDesc.MultiSampleQuality,
+		TRUE,
+		&mSceneDepthSurface,
+		nullptr));
+
+	// This is always the same pointer although it's callback 2 of the GameStartConfig	
+	videoFuncs.create_partsys_vertex_buffers();
+	videoFuncs.GameCreateVideoBuffers();
+
+	// After a reset, the D3D cursor is hidden
+	mouseFuncs.RefreshCursor();
 }
 
 void Graphics::UpdateScreenSize(int w, int h) {
@@ -983,11 +775,169 @@ void Graphics::UpdateScreenSize(int w, int h) {
 	mScreenCorners[3].y = static_cast<float>(h);
 }
 
-void Graphics::RenderGFade() {
-	static float quadU[] = { 0, 1, 1, 0 };
-	static float quadV[] = { 0, 1, 0, 1 };
+void Graphics::UpdateWindowSize(int w, int h) {
+	mWindowWidth = w;
+	mWindowHeight = h;
+	// TODO: Update back buffer accordingly
 
-	if (externalGraphicsFuncs.gfadeEnable) {	
+	RefreshSceneRect();
+}
+
+void Graphics::RenderGFade() {
+	static float quadU[] = {0, 1, 1, 0};
+	static float quadV[] = {0, 1, 0, 1};
+
+	if (externalGraphicsFuncs.gfadeEnable) {
 		externalGraphicsFuncs.RenderTexturedQuad(mScreenCorners, quadU, quadV, 0, *externalGraphicsFuncs.gfadeColor);
 	}
+}
+
+void Graphics::RefreshSceneRect() {
+
+	/*
+	Calculates the rectangle within the back buffer that the scene
+	will be drawn in. This accounts for "fit to width/height" scenarios
+	where the back buffer has a different aspect ratio.
+	*/
+	float w = static_cast<float>(graphics.windowWidth());
+	float h = static_cast<float>(graphics.windowHeight());
+	float wFactor = (float)w / config.screenWidth;
+	float hFactor = (float)h / config.screenHeight;
+	mSceneScale = min(wFactor, hFactor);
+	int screenW = (int)round(mSceneScale * config.screenWidth);
+	int screenH = (int)round(mSceneScale * config.screenHeight);
+
+	// Center on screen
+	RECT rect;
+	rect.left = (mWindowWidth - screenW) / 2;
+	rect.top = (mWindowHeight - screenH) / 2;
+	rect.right = rect.left + screenW;
+	rect.bottom = rect.top + screenH;
+	mSceneRect = rect;
+
+}
+
+void Graphics::InitializeDirect3d() {
+
+	HRESULT d3dresult;
+
+	/*
+	Set some global flags.
+	*/
+	video->unusedCap = 0;
+	video->makesSthLarger = 0;
+	video->capPowerOfTwoTextures = 0;
+	video->capSquareTextures = 0;
+	video->neverReadFlag1 = 0;
+	video->neverReadFlag2 = 0;
+	video->dword_11E7572C = 0;
+	video->enableMipMaps = config.mipmapping;
+
+	if (config.useDirect3d9Ex) {
+		d3dresult = D3DLOG(Direct3DCreate9Ex(D3D_SDK_VERSION, &mDirect3d9));
+		if (d3dresult != D3D_OK) {
+			throw TempleException("Unable to create Direct3D9 interface.");
+		}
+	} else {
+		mDirect3d9 = static_cast<IDirect3D9Ex*>(Direct3DCreate9(D3D_SDK_VERSION));
+		if (!mDirect3d9) {
+			throw TempleException("Unable to create Direct3D9 interface.");
+		}
+	}
+	video->d3d = new Direct3D8Adapter;
+	video->d3d->delegate = mDirect3d9;
+
+	/** START OF OLD WINDOWED INIT */
+	// At this point we only do a GetDisplayMode to check the resolution. We could also do this elsewhere
+	D3DDISPLAYMODE displayMode;
+	d3dresult = mDirect3d9->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &displayMode);
+	if (d3dresult != D3D_OK) {
+		handleD3dError("GetAdapterDisplayMode", d3dresult);
+		throw TempleException("Unable to query display mode for primary adapter.");
+	}
+
+	// We need at least 1024x768
+	if (displayMode.Width < 1024 || displayMode.Height < 768) {
+		throw TempleException("You need at least a display resolution of 1024x768.");
+	}
+
+	// This is only really used by alloc_texture_mem and the init func
+	video->adapterformat = D3DFMT_X8R8G8B8;
+	video->current_bpp = 32;
+
+	auto presentParams = CreatePresentParams();
+
+	// presentParams.MultiSampleType = D3DMULTISAMPLE_4_SAMPLES;
+	// presentParams.MultiSampleQuality = 0;
+
+	// Nvidia drivers seriously barf on D3d9ex if we use software vertex processing here, as ToEE specifies.
+	// I think we are safe with hardware vertex processing, since HW T&L has been standard for more than 10 years.
+	if (config.useDirect3d9Ex) {
+		logger->info("Creating Direct3D9Ex device.");
+		d3dresult = D3DLOG(mDirect3d9->CreateDeviceEx(
+			D3DADAPTER_DEFAULT,
+			D3DDEVTYPE_HAL,
+			video->hwnd,
+			D3DCREATE_HARDWARE_VERTEXPROCESSING,
+			&presentParams,
+			nullptr,
+			&mDevice));
+	} else {
+		logger->info("Creating Direct3D9 device.");
+		d3dresult = D3DLOG(mDirect3d9->CreateDevice(
+			D3DADAPTER_DEFAULT,
+			D3DDEVTYPE_HAL,
+			video->hwnd,
+			D3DCREATE_HARDWARE_VERTEXPROCESSING,
+			&presentParams,
+			reinterpret_cast<IDirect3DDevice9**>(&mDevice)));
+	}
+	if (d3dresult != D3D_OK) {
+		throw TempleException("Unable to create Direct3D9 device!");
+	}
+	video->d3dDevice = new Direct3DDevice8Adapter;
+	video->d3dDevice->delegate = mDevice;
+
+	video->fullscreen = false;
+	video->unk2 = false;
+	video->gammaSupported = false;
+
+	// TODO: color bullshit is not yet done (tig_d3d_init_handleformat et al)
+
+	// Get the device caps for real this time.
+	ReadCaps(mDevice, 1024, 1024);
+
+	D3DXMatrixIdentity(&video->stru_11E75788);
+	D3DXMatrixIdentity(&video->matrix_identity);
+
+	IDirect3DDevice9* device = video->d3dDevice->delegate;
+	SetDefaultRenderStates(device);
+
+	// Seems to be 4 VECTOR3's for the screen corners
+	auto fadeScreenRect = videoFuncs.fadeScreenRect.ptr();
+	fadeScreenRect[0] = 0;
+	fadeScreenRect[1] = 0;
+	fadeScreenRect[2] = 0;
+	fadeScreenRect[3] = (float)video->current_width;
+	fadeScreenRect[4] = 0;
+	fadeScreenRect[5] = 0;
+	fadeScreenRect[6] = (float)video->current_width;
+	fadeScreenRect[7] = (float)video->current_height;
+	fadeScreenRect[8] = 0;
+	fadeScreenRect[9] = 0;
+	fadeScreenRect[10] = (float)video->current_height;
+	fadeScreenRect[11] = 0;
+
+	video->unusedCap = 1; // Seems to be ref'd from light_init
+
+	__asm mov eax, D3DFMT_X8R8G8B8
+	if (!videoFuncs.tig_d3d_init_handleformat()) {
+		logger->error("Format init failed.");
+	}
+
+	videoFuncs.tigMovieInitialized = true;
+	videoFuncs.tig_font_related_init();
+	videoFuncs.updateProjMatrices(videoFuncs.tigMatrices2);
+
+	graphics.CreateResources();
 }

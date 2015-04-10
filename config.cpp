@@ -3,8 +3,6 @@
 #include "config.h"
 #include "dependencies/feather-ini/INI.h"
 
-#include <fstream>
-
 TemplePlusConfig config;
 
 typedef INI <string, string, string> ini_t;
@@ -98,7 +96,9 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(newFeatureTestMode),
 	CONF_STRING(defaultModule),
 	CONF_INT(windowWidth),
-	CONF_INT(windowHeight)
+	CONF_INT(windowHeight),
+	CONF_INT(screenWidth),
+	CONF_INT(screenHeight)
 };
 
 void TemplePlusConfig::Load() {

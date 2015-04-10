@@ -3,9 +3,9 @@
 #include "config.h"
 #include "graphics.h"
 #include "movies.h"
-#include "tig_startup.h"
-#include "tig_msg.h"
-#include "tig_mouse.h"
+#include "tig/tig_startup.h"
+#include "tig/tig_msg.h"
+#include "tig/tig_mouse.h"
 
 LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
@@ -56,9 +56,6 @@ bool CreateMainWindow(TigConfig* settings) {
 	DWORD dwExStyle;
 
 	if (!windowed) {
-		settings->width = screenWidth;
-		settings->height = screenHeight;
-
 		windowRect.left = 0;
 		windowRect.top = 0;
 		windowRect.right = screenWidth;
@@ -77,13 +74,13 @@ bool CreateMainWindow(TigConfig* settings) {
 		if (unknownFlag) {
 			windowRect.left = settings->x;
 			windowRect.top = settings->y;
-			windowRect.right = settings->x + settings->width;
-			windowRect.bottom = settings->y + settings->height;
+			windowRect.right = settings->x + config.windowWidth;
+			windowRect.bottom = settings->y + config.windowHeight;
 		} else {
 			windowRect.left = (screenWidth - settings->width) / 2;
 			windowRect.top = (screenHeight - settings->height) / 2;
-			windowRect.right = windowRect.left + settings->width;
-			windowRect.bottom = windowRect.top + settings->height;
+			windowRect.right = windowRect.left + config.windowWidth;
+			windowRect.bottom = windowRect.top + config.windowHeight;
 		}
 
 		menu = NULL;
@@ -91,12 +88,12 @@ bool CreateMainWindow(TigConfig* settings) {
 		dwExStyle = 0;
 
   		AdjustWindowRect(&windowRect, dwStyle, FALSE);
-		int extraWidth = (windowRect.right - windowRect.left) - settings->width;
-		int extraHeight = (windowRect.bottom - windowRect.top) - settings->height;
-		windowRect.left = (screenWidth - settings->width) / 2 - (extraWidth / 2);
-		windowRect.top = (screenHeight - settings->height) / 2 - (extraHeight / 2);
-		windowRect.right = windowRect.left + settings->width + extraWidth;
-		windowRect.bottom = windowRect.top + settings->height + extraHeight;
+		int extraWidth = (windowRect.right - windowRect.left) - config.windowWidth;
+		int extraHeight = (windowRect.bottom - windowRect.top) - config.windowHeight;
+		windowRect.left = (screenWidth - config.windowWidth) / 2 - (extraWidth / 2);
+		windowRect.top = (screenHeight - config.windowHeight) / 2 - (extraHeight / 2);
+		windowRect.right = windowRect.left + config.windowWidth + extraWidth;
+		windowRect.bottom = windowRect.top + config.windowHeight + extraHeight;
 	}
 
 	dwStyle |= WS_VISIBLE;
@@ -129,10 +126,14 @@ bool CreateMainWindow(TigConfig* settings) {
 	if (video->hwnd) {
 		RECT clientRect;
 		GetClientRect(video->hwnd, &clientRect);
-		video->current_width = clientRect.right - clientRect.left;
-		video->current_height = clientRect.bottom - clientRect.top;
+		
+		auto w = clientRect.right - clientRect.left;
+		auto h = clientRect.bottom - clientRect.top;
+		graphics.UpdateWindowSize(w, h);
 
 		// Scratchbuffer size sometimes doesn't seem to be set by ToEE itself
+		video->current_width = config.screenWidth;
+		video->current_height = config.screenHeight;
 		temple_set<0x10307284>(video->current_width);
 		temple_set<0x10307288>(video->current_height);
 
@@ -140,6 +141,26 @@ bool CreateMainWindow(TigConfig* settings) {
 	}
 	
 	return false;
+}
+
+static void UpdateMousePos(int xAbs, int yAbs, int wheelDelta) {
+	auto rect = graphics.sceneRect();
+	int sw = rect.right - rect.left;
+	int sh = rect.bottom - rect.top;
+	
+	// Make the mouse pos relative to the scene rectangle
+	xAbs -= rect.left;
+	yAbs -= rect.top;
+
+	// MOve it into the scene rectangle coordinate space
+	xAbs = (int) round(xAbs / graphics.sceneScale());
+	yAbs = (int) round(yAbs / graphics.sceneScale());
+
+	// Account for a resized screen
+	if (xAbs < 0 || yAbs < 0 || xAbs >= sw || yAbs >= sh)
+		return;
+
+	mouseFuncs.SetPos(xAbs, yAbs, wheelDelta);
 }
 
 static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
@@ -173,14 +194,6 @@ static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARA
 		break;
 	case WM_MBUTTONUP:
 		mouseFuncs.SetButtonState(MouseButton::MIDDLE, false);
-		break;
-	case WM_MOUSEWHEEL:
-		GetWindowRect(hWnd, &rect);
-		mouseFuncs.SetPos(
-			GET_X_LPARAM(lparam) - rect.left,
-			                    GET_Y_LPARAM(lparam) - rect.top,
-			                    GET_WHEEL_DELTA_WPARAM(wparam)
-		);
 		break;
 	case WM_KEYDOWN:
 		if (wparam >= VK_HOME && wparam <= VK_DOWN || wparam == VK_DELETE) {
@@ -227,17 +240,25 @@ static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARA
 			goto LABEL_40;*/
 	case WM_ERASEBKGND:
 		return 0;
+	case WM_MOUSEWHEEL:
+		GetWindowRect(hWnd, &rect);
+		UpdateMousePos(
+			GET_X_LPARAM(lparam) - rect.left,
+			GET_Y_LPARAM(lparam) - rect.top,
+			GET_WHEEL_DELTA_WPARAM(wparam)
+			);
+		break;
 	case WM_MOUSEMOVE:
 		mousePosX = GET_X_LPARAM(lparam);
 		mousePosY = GET_Y_LPARAM(lparam);
-		mouseFuncs.SetPos(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), 0);
+		UpdateMousePos(mousePosX, mousePosY, 0);
 		break;
 	default:
 		break;
 	}
 
 	if (msg != WM_KEYDOWN) {
-		mouseFuncs.SetPos(mousePosX, mousePosY, 0);
+		UpdateMousePos(mousePosX, mousePosY, 0);
 	}
 
 	// Previously, ToEE called a global window proc here but it did nothing useful.

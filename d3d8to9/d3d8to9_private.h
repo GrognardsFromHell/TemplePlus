@@ -11,6 +11,8 @@ inline HRESULT handleD3dError(const char* method, HRESULT result) {
 	return result;
 }
 
+#define D3DLOG(CMD) handleD3dError(#CMD, CMD)
+
 // Forward declaration for all our adapters
 struct Direct3DVertexBuffer8Adapter;
 struct Direct3DIndexBuffer8Adapter;

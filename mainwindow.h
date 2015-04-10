@@ -1,6 +1,6 @@
 
 #pragma once
 
-#include "tig_startup.h"
+#include "tig/tig_startup.h"
 
 bool CreateMainWindow(TigConfig* settings);

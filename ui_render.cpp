@@ -4,7 +4,7 @@
 #include "addresses.h"
 
 #pragma pack(push, 1)
-#include "tig_font.h"
+#include "tig/tig_font.h"
 
 struct DrawTexturedQuadArgs {
 	int flags = 0;

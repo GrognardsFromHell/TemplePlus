@@ -2,7 +2,7 @@
 #pragma once
 
 #include "addresses.h"
-#include "tig.h"
+#include "tig/tig.h"
 
 struct GameSystemConf;
 

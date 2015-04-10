@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "tig.h"
+#include "tig/tig.h"
 
 struct TigTextStyle;
 
