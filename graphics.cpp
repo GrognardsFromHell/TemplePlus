@@ -405,7 +405,7 @@ bool __cdecl AllocTextureMemory(Direct3DDevice8Adapter* adapter, int w, int h, i
 	auto desiredType = textureFormatTable->formats[textureType];
 	format = desiredType.d3dFormat;
 
-	DWORD usage = 0; // I don't think ToEE uses dynamic textures
+	DWORD usage = config.useDirect3d9Ex ? D3DUSAGE_DYNAMIC : 0;
 
 	// d3d9ex does not support managed anymore, but default has better guarantees now anyway
 	D3DPOOL pool = config.useDirect3d9Ex ? D3DPOOL_DEFAULT : D3DPOOL_MANAGED;
