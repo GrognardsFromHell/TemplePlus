@@ -4,7 +4,7 @@
 #include "condition.h"
 
 
-ConditionStructs conds;
+ConditionSystem conds;
 
 class ConditionFunctionReplacement : public TempleFix {
 public:
@@ -14,16 +14,18 @@ public:
 
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
-		replaceFunction(0x100E22D0, ConditionAddDispatch);
-		replaceFunction(0x100E24C0, ConditionAddToAttribs_NumArgs0);
-		replaceFunction(0x100E2500, ConditionAddToAttribs_NumArgs2);
-		replaceFunction(0x100E24E0, ConditionAdd_NumArgs0);
-		replaceFunction(0x100E2530, ConditionAdd_NumArgs2);
-		replaceFunction(0x100E2560, ConditionAdd_NumArgs3);
-		replaceFunction(0x100E2590, ConditionAdd_NumArgs4);
+		replaceFunction(0x100E22D0, _ConditionAddDispatch);
+		replaceFunction(0x100E24C0, _ConditionAddToAttribs_NumArgs0);
+		replaceFunction(0x100E2500, _ConditionAddToAttribs_NumArgs2);
+		replaceFunction(0x100E24E0, _ConditionAdd_NumArgs0);
+		replaceFunction(0x100E2530, _ConditionAdd_NumArgs2);
+		replaceFunction(0x100E2560, _ConditionAdd_NumArgs3);
+		replaceFunction(0x100E2590, _ConditionAdd_NumArgs4);
 		replaceFunction(0x100ECF30, ConditionPrevent);
-		replaceFunction(0x100E1DD0, CondNodeAddToSubDispNodeArray);
+		replaceFunction(0x100E1DD0, _CondNodeAddToSubDispNodeArray);
 		replaceFunction(0x100F7BE0, _GetCondStructFromFeat);
+		replaceFunction(0x100E1A80, _GetCondStructFromHashcode);
+		replaceFunction(0x100E19C0, _CondStructAddToHashtable);
 	}
 } condFuncReplacement;
 
@@ -36,7 +38,7 @@ CondNode::CondNode(CondStruct *cond) {
 
 #pragma region Condition Add Functions
 
-uint32_t ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4) {
+uint32_t _ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4) {
 
 	assert(condStruct->numArgs >= 0 && condStruct->numArgs <= 6);
 
@@ -79,7 +81,7 @@ uint32_t ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, Con
 	}
 	*ppNextCondeNode = condNodeNew;
 
-	CondNodeAddToSubDispNodeArray(dispatcher, condNodeNew);
+	_CondNodeAddToSubDispNodeArray(dispatcher, condNodeNew);
 
 
 	auto dispatcherSubDispNodeType1 = dispatcher->subDispNodes[1];
@@ -96,7 +98,7 @@ uint32_t ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, Con
 	return 1;
 };
 
-void CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNode) {
+void _CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNode) {
 	auto subDispDef = &(condNode->condStruct->subDispDefs);
 
 	while (subDispDef->dispType != 0) {
@@ -128,28 +130,28 @@ void CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNode) {
 };
 
 
-uint32_t ConditionAddToAttribs_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct) {
-	return ConditionAddDispatch(dispatcher, &dispatcher->attributeConds, condStruct, 0, 0, 0, 0);
+uint32_t _ConditionAddToAttribs_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct) {
+	return _ConditionAddDispatch(dispatcher, &dispatcher->attributeConds, condStruct, 0, 0, 0, 0);
 };
 
-uint32_t ConditionAddToAttribs_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2) {
-	return ConditionAddDispatch(dispatcher, &dispatcher->attributeConds, condStruct, arg1, arg2, 0, 0);
+uint32_t _ConditionAddToAttribs_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2) {
+	return _ConditionAddDispatch(dispatcher, &dispatcher->attributeConds, condStruct, arg1, arg2, 0, 0);
 };
 
-uint32_t ConditionAdd_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct) {
-	return ConditionAddDispatch(dispatcher, &dispatcher->otherConds, condStruct, 0, 0, 0, 0);
+uint32_t _ConditionAdd_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct) {
+	return _ConditionAddDispatch(dispatcher, &dispatcher->otherConds, condStruct, 0, 0, 0, 0);
 };
 
-uint32_t ConditionAdd_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2) {
-	return ConditionAddDispatch(dispatcher, &dispatcher->otherConds, condStruct, arg1, arg2, 0, 0);
+uint32_t _ConditionAdd_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2) {
+	return _ConditionAddDispatch(dispatcher, &dispatcher->otherConds, condStruct, arg1, arg2, 0, 0);
 };
 
-uint32_t ConditionAdd_NumArgs3(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3) {
-	return ConditionAddDispatch(dispatcher, &dispatcher->otherConds, condStruct, arg1, arg2, arg3, 0);
+uint32_t _ConditionAdd_NumArgs3(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3) {
+	return _ConditionAddDispatch(dispatcher, &dispatcher->otherConds, condStruct, arg1, arg2, arg3, 0);
 };
 
-uint32_t ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4) {
-	return ConditionAddDispatch(dispatcher, &dispatcher->otherConds, condStruct, arg1, arg2, arg3, arg4);
+uint32_t _ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4) {
+	return _ConditionAddDispatch(dispatcher, &dispatcher->otherConds, condStruct, arg1, arg2, arg3, arg4);
 };
 
 #pragma endregion
@@ -187,4 +189,14 @@ uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** condStructOu
 	*condStructOut = (CondStruct *)*(featFromDict - 1);
 	*arg2Out = featEnum + featFromDict[2] - featFromDict[0];
 	return 1;
+}
+
+uint32_t _CondStructAddToHashtable(CondStruct * condStruct)
+{
+	return conds.hashmethods.CondStructAddToHashtable(condStruct);
+}
+
+CondStruct * _GetCondStructFromHashcode(uint32_t key)
+{
+	return conds.hashmethods.GetCondStruct(key);
 }

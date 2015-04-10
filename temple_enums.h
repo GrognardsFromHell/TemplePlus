@@ -1939,13 +1939,13 @@ enum WeaponTypes : uint32_t
 	wt_composite_shortbow,
 	wt_longbow,
 	wt_composite_longbow,
-	wt_halfling_kama,
+	wt_halfling_kama, // 50
 	wt_kukri,
-	wt_halfling_nunchaku,
-	wt_halfling_siangham,
-	wt_kama,
-	wt_nunchaku,
-	wt_siangham,
+	wt_halfling_nunchaku, //52
+	wt_halfling_siangham, //53
+	wt_kama, //54
+	wt_nunchaku, // 55
+	wt_siangham, // 56
 	wt_bastard_sword,
 	wt_dwarven_waraxe,          // racial weapons - 58 and on
 	wt_gnome_hooked_hammer,

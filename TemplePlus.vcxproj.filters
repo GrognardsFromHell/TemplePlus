@@ -4,7 +4,6 @@
     <ClCompile Include="gamesystems.cpp" />
     <ClCompile Include="graphics.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="idxtables.cpp" />
     <ClCompile Include="movies.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="temple_functions.cpp" />
@@ -189,11 +188,13 @@
     <ClCompile Include="party.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="idxtables.cpp">
+      <Filter>generic data structures</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
     <ClInclude Include="graphics.h" />
-    <ClInclude Include="idxtables.h" />
     <ClInclude Include="movies.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="temple_functions.h" />
@@ -370,6 +371,12 @@
     <ClInclude Include="party.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
+    <ClInclude Include="idxtables.h">
+      <Filter>generic data structures</Filter>
+    </ClInclude>
+    <ClInclude Include="hashtable.h">
+      <Filter>generic data structures</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -439,6 +446,9 @@
     </Filter>
     <Filter Include="resources">
       <UniqueIdentifier>{c55bf3c4-caa1-41f3-8954-f4017d3b70e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="generic data structures">
+      <UniqueIdentifier>{9fef2488-221b-44e8-90ae-f5cf72e4b8b1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
