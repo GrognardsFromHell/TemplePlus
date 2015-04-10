@@ -209,6 +209,7 @@
     <ClInclude Include="game_config.h" />
     <ClInclude Include="graphics.h" />
     <ClInclude Include="fixes.h" />
+    <ClInclude Include="hashtable.h" />
     <ClInclude Include="inventory.h" />
     <ClInclude Include="libraryholder.h" />
     <ClInclude Include="mainloop.h" />

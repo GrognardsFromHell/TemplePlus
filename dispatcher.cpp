@@ -190,7 +190,7 @@ Dispatcher* _DispatcherInit(objHndl objHnd) {
 	memset(&dispatcherNew->subDispNodes, 0, dispTypeCount * sizeof(SubDispNode*));
 	CondNode* condNode = *(conds.pCondNodeGlobal);
 	while (condNode != nullptr) {
-		CondNodeAddToSubDispNodeArray(dispatcherNew, condNode);
+		_CondNodeAddToSubDispNodeArray(dispatcherNew, condNode);
 		condNode = condNode->nextCondNode;
 	}
 	dispatcherNew->objHnd = objHnd;

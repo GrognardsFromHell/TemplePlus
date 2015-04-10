@@ -191,10 +191,10 @@ void _D20StatusInit(objHndl objHnd)
 				{
 					if (feats.HasFeatCount(objHnd, FEAT_DIEHARD))
 					{
-						ConditionAdd_NumArgs0(dispatcher, conds.ConditionDisabled);
+						_ConditionAdd_NumArgs0(dispatcher, conds.ConditionDisabled);
 					} else
 					{
-						ConditionAdd_NumArgs0(dispatcher, conds.ConditionUnconscious);
+						_ConditionAdd_NumArgs0(dispatcher, conds.ConditionUnconscious);
 					}
 				} 
 				
@@ -202,10 +202,10 @@ void _D20StatusInit(objHndl objHnd)
 				{
 					if (hpCur == 0)
 					{
-						ConditionAdd_NumArgs0(dispatcher, conds.ConditionDisabled);
+						_ConditionAdd_NumArgs0(dispatcher, conds.ConditionDisabled);
 					} else if ( subdualDam > hpCur)
 					{
-						ConditionAdd_NumArgs0(dispatcher, conds.ConditionUnconscious);
+						_ConditionAdd_NumArgs0(dispatcher, conds.ConditionUnconscious);
 					}
 				}
 
@@ -225,21 +225,21 @@ void _D20StatusInitRace(objHndl objHnd)
 		Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 		if (objects.IsUndead(objHnd))
 		{
-			ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterUndead);
+			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterUndead);
 		}
 
 		uint32_t objRace = objects.GetRace(objHnd);
 		CondStruct ** condStructRace = conds.ConditionArrayRace + objRace;
-		ConditionAddToAttribs_NumArgs0(dispatcher, *condStructRace);
+		_ConditionAddToAttribs_NumArgs0(dispatcher, *condStructRace);
 
 		if (objects.IsSubtypeFire(objHnd))
 		{
-			ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionSubtypeFire);
+			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionSubtypeFire);
 		}
 
 		if (objects.IsOoze(objHnd))
 		{
-			ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterOoze);
+			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterOoze);
 		}
 	}
 };
@@ -259,7 +259,7 @@ void _D20StatusInitClass(objHndl objHnd)
 			if ( objects.StatLevelGet(objHnd, (Stat)stat) > 0 
 				&& *condStructClass != nullptr)
 			{
-				ConditionAddToAttribs_NumArgs0(dispatcher, *condStructClass);
+				_ConditionAddToAttribs_NumArgs0(dispatcher, *condStructClass);
 			};
 
 			condStructClass += 1;
@@ -273,17 +273,17 @@ void _D20StatusInitClass(objHndl objHnd)
 
 		if (objects.StatLevelGet(objHnd, stat_level_paladin) >= 3)
 		{
-			ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionTurnUndead );
+			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionTurnUndead );
 		}
 
 		if (objects.StatLevelGet(objHnd, stat_level_bard) >= 1)
 		{
-			ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionBardicMusic);
+			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionBardicMusic);
 		}
 
 		if (objects.GetInt32(objHnd, obj_f_critter_school_specialization) & 0xFF)
 		{
-			ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionSchoolSpecialization);
+			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionSchoolSpecialization);
 		}
 	}
 };
@@ -301,7 +301,7 @@ void _D20StatusInitDomains(objHndl objHnd)
 		uint32_t arg2 = *(conds.ConditionArrayDomainsArg2 + 3 * domain_1);
 		if (condStructDomain1 != nullptr)
 		{
-			ConditionAddToAttribs_NumArgs2(dispatcher, condStructDomain1, arg1, arg2);
+			_ConditionAddToAttribs_NumArgs2(dispatcher, condStructDomain1, arg1, arg2);
 		}
 	}
 
@@ -312,17 +312,17 @@ void _D20StatusInitDomains(objHndl objHnd)
 		uint32_t arg2 = *(conds.ConditionArrayDomainsArg2 + 3 * domain_2);
 		if (condStructDomain2 != nullptr)
 		{
-			ConditionAddToAttribs_NumArgs2(dispatcher, condStructDomain2, arg1, arg2);
+			_ConditionAddToAttribs_NumArgs2(dispatcher, condStructDomain2, arg1, arg2);
 		}
 	}
 
 	auto alignmentchoice = objects.GetInt32(objHnd, obj_f_critter_alignment_choice);
 	if (alignmentchoice == 2)
 	{
-		ConditionAddToAttribs_NumArgs2(dispatcher, conds.ConditionTurnUndead, 1, 0);
+		_ConditionAddToAttribs_NumArgs2(dispatcher, conds.ConditionTurnUndead, 1, 0);
 	} else
 	{
-		ConditionAddToAttribs_NumArgs2(dispatcher, conds.ConditionTurnUndead, 0, 0);
+		_ConditionAddToAttribs_NumArgs2(dispatcher, conds.ConditionTurnUndead, 0, 0);
 	}
 }
 
@@ -339,14 +339,14 @@ void _D20StatusInitFeats(objHndl objHnd)
 		uint32_t arg2 = 0;
 		if (_GetCondStructFromFeat(featList[i], &cond, &arg2))
 		{
-			ConditionAddToAttribs_NumArgs2(dispatcher, cond, featList[i], arg2);
+			_ConditionAddToAttribs_NumArgs2(dispatcher, cond, featList[i], arg2);
 		}
 	}
-	ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionAttackOfOpportunity);
-	ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionCastDefensively);
-	ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionDealSubdualDamage);
-	ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionDealNormalDamage);
-	ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionFightDefensively);
+	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionAttackOfOpportunity);
+	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionCastDefensively);
+	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionDealSubdualDamage);
+	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionDealNormalDamage);
+	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionFightDefensively);
 	
 };
 
