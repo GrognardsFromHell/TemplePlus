@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "addresses.h"
+#include "util/addresses.h"
 
 void* templeImageBase = nullptr;
 

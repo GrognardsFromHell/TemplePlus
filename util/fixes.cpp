@@ -1,6 +1,6 @@
 
 #include "stdafx.h"
-#include "fixes.h"
+#include "util/fixes.h"
 #include "minhook/src/trampoline.h"
 #include "minhook/src/HDE/hde32.h"
 

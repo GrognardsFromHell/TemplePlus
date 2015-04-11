@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "aas.h"
 #include "gamesystems.h"
-#include "config.h"
-#include "fixes.h"
+#include "util/fixes.h"
+#include "util/fixes.h"
 #include "temple_functions.h"
 #include "game_config.h"
 #include "tig/tig_mouse.h"
@@ -10,11 +10,11 @@
 #include "tig/tig_msg.h"
 #include "movies.h"
 #include "tig/tig_loadingscreen.h"
-#include "tio.h"
+#include "tio/tio.h"
 #include "tig/tig_font.h"
 #include "tig/tig_texture.h"
 #include "tig/tig.h"
-#include "ui.h"
+#include "ui/ui_render.h"
 
 GameSystemFuncs gameSystemFuncs;
 

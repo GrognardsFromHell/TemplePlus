@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "fixes.h"
-#include "config.h"
+#include "util/fixes.h"
+#include "util/config.h"
 
 class DebugMessageToggles : public TempleFix {
 public:

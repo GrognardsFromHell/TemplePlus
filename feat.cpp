@@ -1,6 +1,6 @@
 
 #include "stdafx.h"
-#include "fixes.h"
+#include "util/config.h"
 #include "feat.h"
 #include "obj.h"
 #include "temple_functions.h"

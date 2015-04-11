@@ -6,7 +6,6 @@
 
 #include <Windows.h>
 #include <Mmsystem.h>
-#include <windowsx.h>
 
 #include "Shlobj.h"
 #include "Shobjidl.h"

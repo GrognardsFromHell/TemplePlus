@@ -1,6 +1,6 @@
 
 #pragma once
-#include "addresses.h"
+#include "util/addresses.h"
 
 enum class MouseButton : uint32_t {
 	LEFT = 0,

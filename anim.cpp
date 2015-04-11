@@ -1,16 +1,16 @@
 #include "stdafx.h"
 #include "anim.h"
-#include "fixes.h"
+#include "util/fixes.h"
 #include "temple_functions.h"
 #include "timeevents.h"
-#include "config.h"
+#include "util/config.h"
 #include "obj.h"
 #include "pathfinding.h"
 
 #include <map>
 #include <set>
 #include <fstream>
-#include "pythonglobal.h"
+#include "python/pythonglobal.h"
 #include "party.h"
 
 #pragma pack(push, 1)

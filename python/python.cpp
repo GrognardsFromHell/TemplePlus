@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
-#include "fixes.h"
-#include "addresses.h"
+#include "util/fixes.h"
+#include "util/addresses.h"
 #include "dependencies/python-2.2/Python.h"
 #include "temple_functions.h"
 #include "python_header.h"

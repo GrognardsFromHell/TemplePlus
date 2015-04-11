@@ -1,6 +1,8 @@
 #include "stdafx.h"
 
-#include "config.h"
+#include <windowsx.h>
+
+#include "util/fixes.h"
 #include "graphics.h"
 #include "movies.h"
 #include "tig/tig_startup.h"

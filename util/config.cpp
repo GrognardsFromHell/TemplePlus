@@ -1,7 +1,7 @@
 ﻿
 #include "stdafx.h"
 #include "config.h"
-#include "dependencies/feather-ini/INI.h"
+#include "../dependencies/feather-ini/INI.h"
 
 TemplePlusConfig config;
 
@@ -100,6 +100,7 @@ static ConfigSetting configSettings[] = {
 	CONF_INT(screenWidth),
 	CONF_INT(screenHeight),
 	CONF_BOOL(debugMessageEnable)
+	CONF_BOOL(lockCursor)
 };
 
 void TemplePlusConfig::Load() {

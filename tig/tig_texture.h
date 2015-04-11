@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "addresses.h"
+#include "util/addresses.h"
 #include "idxtables.h"
 #include "d3d8to9/d3d8to9.h"
 

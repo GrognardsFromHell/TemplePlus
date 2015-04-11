@@ -1,6 +1,6 @@
 
 #include "stdafx.h"
-#include "fixes.h"
+#include "util/fixes.h"
 #include "temple_functions.h"
 
 const uint8_t animalIndexOffset = 8; // the game has a block of familiar/wildshape/anim comp stuff defined, and AC's have an index relative to that

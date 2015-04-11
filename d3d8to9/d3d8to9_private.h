@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../stdafx.h"
-#include "../addresses.h"
-#include "../config.h"
+#include "../util/addresses.h"
+#include "../util/config.h"
 
 inline HRESULT handleD3dError(const char* method, HRESULT result) {
 	if (result != S_OK) {

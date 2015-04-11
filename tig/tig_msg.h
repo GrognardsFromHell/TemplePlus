@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "addresses.h"
+#include "util/addresses.h"
 
 enum class TigMsgType : uint32_t {
 	MOUSE = 0,

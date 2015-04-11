@@ -2,10 +2,10 @@
 #include "stdafx.h"
 #include "tig_init.h"
 
-#include "../config.h"
-#include "../stopwatch.h"
-#include "../exception.h"
-#include "../addresses.h"
+#include "../util/config.h"
+#include "../util/stopwatch.h"
+#include "../util/exception.h"
+#include "../util/addresses.h"
 
 static struct TigInternal : AddressTable {
 	bool *consoleDisabled; // TODO: move to tig_console.h

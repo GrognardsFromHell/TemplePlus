@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "addresses.h"
+#include "util/addresses.h"
 
 /*
 	AAS seems to be the animation system.

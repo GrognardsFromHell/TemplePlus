@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "addresses.h"
+#include "util/addresses.h"
 
 struct SubtitleLine {
 	uint32_t startMs;

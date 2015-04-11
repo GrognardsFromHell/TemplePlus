@@ -1,9 +1,9 @@
 
 #pragma once
 
-#include "addresses.h"
+#include "util/addresses.h"
 #include "tig_startup.h"
-#include "ui.h"
+#include "ui/ui.h"
 
 struct RectColor {
 	D3DCOLOR colors[4];

@@ -28,6 +28,7 @@ struct TemplePlusConfig
 	bool engineEnhancements = true;
 	bool useDirect3d9Ex = true;
 	bool windowed = true;
+	bool lockCursor = true; // When in fullscreen, lock cursor
 	int windowWidth = 1680;
 	int windowHeight = 1050;
 	int screenWidth = 1024;

@@ -16,7 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aas.cpp" />
-    <ClCompile Include="addressess.cpp">
+    <ClCompile Include="util\addressess.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
@@ -73,8 +73,8 @@
     <ClCompile Include="dispatcher.cpp" />
     <ClCompile Include="faction.cpp" />
     <ClCompile Include="feat.cpp" />
-    <ClCompile Include="fixes.cpp" />
-    <ClCompile Include="folderutils.cpp" />
+    <ClCompile Include="util\fixes.cpp" />
+    <ClCompile Include="util\folderutils.cpp" />
     <ClCompile Include="gamelib_load.cpp" />
     <ClCompile Include="gamelib_save.cpp" />
     <ClCompile Include="gamesystems.cpp" />
@@ -87,7 +87,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="inventory.cpp" />
-    <ClCompile Include="libraryholder.cpp">
+    <ClCompile Include="util\libraryholder.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
@@ -98,8 +98,9 @@
     <ClCompile Include="party.cpp" />
     <ClCompile Include="pathfinding.cpp" />
     <ClCompile Include="portrait_in_mainmenu.cpp" />
-    <ClCompile Include="pythonglobal.cpp" />
-    <ClCompile Include="python_debug.cpp" />
+    <ClCompile Include="python\python.cpp" />
+    <ClCompile Include="python\pythonglobal.cpp" />
+    <ClCompile Include="python\python_debug.cpp" />
     <ClCompile Include="radial_menu.cpp" />
     <ClCompile Include="spell_condition.cpp" />
     <ClCompile Include="testhelper.cpp" />
@@ -134,22 +135,21 @@
     <ClCompile Include="idxtables.cpp" />
     <ClCompile Include="movies.cpp" />
     <ClCompile Include="obj.cpp" />
-    <ClCompile Include="python.cpp" />
     <ClCompile Include="spell.cpp" />
     <ClCompile Include="tig\tig_tokenizer.cpp" />
     <ClCompile Include="timeevents.cpp" />
-    <ClCompile Include="ui_char_highresfix.cpp" />
-    <ClCompile Include="usercall.cpp" />
+    <ClCompile Include="ui\ui_char_highresfix.cpp" />
+    <ClCompile Include="ui\ui_text.cpp" />
     <ClCompile Include="weapon.cpp" />
-    <ClCompile Include="ui_render.cpp" />
-    <ClCompile Include="version.cpp" />
+    <ClCompile Include="ui\ui_render.cpp" />
+    <ClCompile Include="util\version.cpp" />
     <ClCompile Include="xp.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="config.cpp" />
+    <ClCompile Include="util\config.cpp" />
     <ClCompile Include="temple_functions.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
@@ -167,13 +167,13 @@
     <ClCompile Include="tig\tig_shader.cpp" />
     <ClCompile Include="tig\tig_texture.cpp" />
     <ClCompile Include="mainwindow.cpp" />
-    <ClCompile Include="ui.cpp" />
-    <ClCompile Include="ui_item_creation.cpp" />
-    <ClCompile Include="ui_mainmenu.cpp" />
+    <ClCompile Include="ui\ui.cpp" />
+    <ClCompile Include="ui\ui_item_creation.cpp" />
+    <ClCompile Include="ui\ui_mainmenu.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aas.h" />
-    <ClInclude Include="addresses.h" />
+    <ClInclude Include="util\addresses.h" />
     <ClInclude Include="anim.h" />
     <ClInclude Include="combat.h" />
     <ClInclude Include="common.h" />
@@ -202,25 +202,27 @@
     <ClInclude Include="dependencies\spdlog\spdlog.h" />
     <ClInclude Include="description.h" />
     <ClInclude Include="dispatcher.h" />
-    <ClInclude Include="exception.h" />
+    <ClInclude Include="util\exception.h" />
     <ClInclude Include="faction.h" />
     <ClInclude Include="feat.h" />
-    <ClInclude Include="folderutils.h" />
+    <ClInclude Include="util\folderutils.h" />
     <ClInclude Include="gamesystems.h" />
     <ClInclude Include="game_config.h" />
+    <ClInclude Include="goalfuncnames.h" />
     <ClInclude Include="graphics.h" />
-    <ClInclude Include="fixes.h" />
+    <ClInclude Include="util\fixes.h" />
     <ClInclude Include="hashtable.h" />
     <ClInclude Include="inventory.h" />
-    <ClInclude Include="libraryholder.h" />
+    <ClInclude Include="util\libraryholder.h" />
     <ClInclude Include="mainloop.h" />
     <ClInclude Include="map_obj.h" />
     <ClInclude Include="obj_fieldnames.h" />
     <ClInclude Include="obj_structs.h" />
     <ClInclude Include="party.h" />
     <ClInclude Include="pathfinding.h" />
-    <ClInclude Include="pythonglobal.h" />
-    <ClInclude Include="python_debug.h" />
+    <ClInclude Include="python\pythonglobal.h" />
+    <ClInclude Include="python\python_debug.h" />
+    <ClInclude Include="python\python_header.h" />
     <ClInclude Include="radial_menu.h" />
     <ClInclude Include="spell.h" />
     <ClInclude Include="spell_structs.h" />
@@ -236,8 +238,7 @@
     <ClInclude Include="minhook\src\trampoline.h" />
     <ClInclude Include="idxtables.h" />
     <ClInclude Include="obj.h" />
-    <ClInclude Include="python_header.h" />
-    <ClInclude Include="stopwatch.h" />
+    <ClInclude Include="util\stopwatch.h" />
     <ClInclude Include="temple_enums.h" />
     <ClInclude Include="testhelper.h" />
     <ClInclude Include="tig\tig_startup.h" />
@@ -245,7 +246,7 @@
     <ClInclude Include="tig\tig_mouse.h" />
     <ClInclude Include="movies.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="config.h" />
+    <ClInclude Include="util\config.h" />
     <ClInclude Include="temple_functions.h" />
     <ClInclude Include="tig\tig_font.h" />
     <ClInclude Include="tig\tig_msg.h" />
@@ -254,14 +255,15 @@
     <ClInclude Include="mainwindow.h" />
     <ClInclude Include="tig\tig_tokenizer.h" />
     <ClInclude Include="timeevents.h" />
-    <ClInclude Include="tio.h" />
-    <ClInclude Include="ui.h" />
-    <ClInclude Include="ui_item_creation.h" />
-    <ClInclude Include="ui_render.h" />
-    <ClInclude Include="version.h" />
+    <ClInclude Include="tio\tio.h" />
+    <ClInclude Include="ui\ui.h" />
+    <ClInclude Include="ui\ui_item_creation.h" />
+    <ClInclude Include="ui\ui_render.h" />
+    <ClInclude Include="ui\ui_text.h" />
+    <ClInclude Include="util\version.h" />
     <ClInclude Include="weapon.h" />
     <ClInclude Include="xp.h" />
-    <ClInclude Include="ui_mainmenu.h" />
+    <ClInclude Include="ui\ui_mainmenu.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Spellslinger%27s Notes\bonusspells.txt" />
@@ -269,6 +271,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="dependencies\spdlog\LICENSE" />
+    <None Include="LICENSE" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
@@ -335,8 +339,8 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;$(MSBuildDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;dependencies\freetype\include\;minhook\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ROCKET_STATIC_LIB;WIN32;_DEBUG;_WINDOWS;$(MSBuildDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;dependencies\librocket\include;dependencies\freetype\include\;minhook\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
@@ -346,11 +350,10 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>tio.lib;winmm.lib;d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tio\tio.lib;winmm.lib;d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
-      <AdditionalLibraryDirectories>
-      </AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>dependencies\librocket\debug;python</AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
     </Link>
@@ -361,7 +364,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;dependencies\freetype\include\;minhook\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;dependencies\librocket\include;dependencies\freetype\include\;minhook\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -370,7 +373,8 @@
       <AdditionalDependencies>tio.lib;winmm.lib;d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
-      <AdditionalLibraryDirectories>dependencies\boost_1_57_0\lib32-msvc-12.0</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
       <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
@@ -381,8 +385,8 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;$(MSBuildDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;dependencies\freetype\include\;minhook\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ROCKET_STATIC_LIB;WIN32;NDEBUG;_WINDOWS;$(MSBuildDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;dependencies\librocket\include;dependencies\freetype\include\;minhook\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <ForcedIncludeFiles>
@@ -395,12 +399,11 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>tio.lib;winmm.lib;d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tio\tio.lib;winmm.lib;d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
-      <AdditionalLibraryDirectories>
-      </AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>dependencies\librocket\release;python</AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
     </Link>

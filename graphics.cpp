@@ -2,17 +2,18 @@
 
 #include "graphics.h"
 #include "temple_functions.h"
-#include "addresses.h"
+#include "util/addresses.h"
 #include "idxtables.h"
-#include "config.h"
+#include "util/fixes.h"
 #include "movies.h"
 #include "tig/tig_msg.h"
 #include "tig/tig_shader.h"
 #include "tig/tig_mouse.h"
 #include "mainwindow.h"
-#include "ui.h"
-#include "folderutils.h"
+#include "ui/ui.h"
+#include "util/folderutils.h"
 #include "gamesystems.h"
+#include "ui/ui_text.h"
 
 // #include "d3d8/d3d8.h"
 #include "d3d8to9/d3d8to9.h"
@@ -380,6 +381,8 @@ int __cdecl VideoStartup(TigConfig* settings) {
 
 	memcpy(temple_address<0x11E75840>(), settings, 0x4C);
 
+	uiText.Initialize();
+
 	return 0;
 }
 
@@ -405,7 +408,7 @@ bool __cdecl AllocTextureMemory(Direct3DDevice8Adapter* adapter, int w, int h, i
 	auto desiredType = textureFormatTable->formats[textureType];
 	format = desiredType.d3dFormat;
 
-	DWORD usage = 0; // I don't think ToEE uses dynamic textures
+	DWORD usage = config.useDirect3d9Ex ? D3DUSAGE_DYNAMIC : 0;
 
 	// d3d9ex does not support managed anymore, but default has better guarantees now anyway
 	D3DPOOL pool = config.useDirect3d9Ex ? D3DPOOL_DEFAULT : D3DPOOL_MANAGED;
