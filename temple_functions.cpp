@@ -54,8 +54,11 @@ void __cdecl hooked_print_debug_message(char* format, ...)
 void init_hooks()
 {
 	logger->info("Base offset for temple.dll memory is 0x{}", templeImageBase);
-
-	temple_set<0x10EED638>(1); // Debug message enable
+	if (config.debugMessageEnable)
+	{
+		temple_set<0x10EED638>(1); // Debug message enable	
+	}
+	
 	MH_CreateHook(temple_address<0x101E48F0>(), hooked_print_debug_message, NULL);
 
 	if (config.engineEnhancements) {

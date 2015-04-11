@@ -83,12 +83,14 @@ struct ToEEHashtableSystem : AddressTable
 	{
 		uint32_t bitmask = (hashtable->powerOfTwo - 1);
 		uint32_t idx = key & bitmask;
-		uint32_t storedKey = hashtable->keyArray[idx];
+		uint32_t * keyArray = hashtable->keyArray;
+		assert(keyArray);
+		uint32_t storedKey = keyArray[idx];
 		if (!storedKey){ return 0x11; }
 		while (storedKey != key)
 		{
 			idx = bitmask & (idx + 1);
-			storedKey = hashtable->keyArray[idx];
+			storedKey = keyArray[idx];
 			if (!storedKey){ return 0x11; }
 		}
 

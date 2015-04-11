@@ -85,22 +85,7 @@ struct TempleFuncs : AddressTable {
 	uint32_t(__cdecl *ObjGetMaxSpellSlotLevel)(objHndl ObjHnd, uint32_t statClassIdx, uint32_t arg3);
 
 
-	uint32_t DoesTypeSupportField(uint32_t objType, _fieldIdx objField) {
-		uint32_t result;
-		__asm {
-			push esi;
-			push ecx;
-			mov ecx, this;
-			mov esi, [ecx]._DoesObjectFieldExist;
-			mov ecx, objType;
-			mov eax, objField;
-			call esi;
-			pop ecx;
-			pop esi;
-			mov result, eax
-		}
-		return result != 0;
-	}
+	
 
 	void (__cdecl *TurnProcessing)(objHndl obj);
 
@@ -195,7 +180,7 @@ struct TempleFuncs : AddressTable {
 		rebase(ObjGetMaxSpellSlotLevel, 0x100765B0);
 
 
-		rebase(_DoesObjectFieldExist, 0x1009C190);
+
 		rebase(_ItemWorthFromEnhancements, 0x101509C0);
 		rebase(ItemCreationPrereqSthg_sub_101525B0, 0x101525B0);
 
@@ -210,7 +195,7 @@ struct TempleFuncs : AddressTable {
 private:
 
 	// usercall... eax has field id, ecx has type
-	bool(__cdecl *_DoesObjectFieldExist)();
+
 
 	// usercall... eax has sthg to do with Magic Arms and Armor crafting
 	bool(__cdecl *_ItemWorthFromEnhancements)();
@@ -268,6 +253,8 @@ const int CONTAINER_MAX_ITEMS = 1000; // may need to be reduced
 const int CRITTER_MAX_ITEMS = 24; // definitely needs to be increased in the future :)
 const int CRITTER_EQUIPPED_ITEM_SLOTS = 16;
 const int CRITTER_EQUIPPED_ITEM_OFFSET = 200;
+
+void __cdecl hooked_print_debug_message(char* format, ...);
 
 void init_functions();
 void init_hooks();

@@ -98,7 +98,8 @@ static ConfigSetting configSettings[] = {
 	CONF_INT(windowWidth),
 	CONF_INT(windowHeight),
 	CONF_INT(screenWidth),
-	CONF_INT(screenHeight)
+	CONF_INT(screenHeight),
+	CONF_BOOL(debugMessageEnable)
 };
 
 void TemplePlusConfig::Load() {

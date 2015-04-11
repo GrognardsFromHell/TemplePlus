@@ -440,6 +440,7 @@ static const uint32_t objectFieldCount = sizeof(objectFieldNames) / sizeof(const
 string GetFieldName(int objFieldIdx) {
 
 	if (objFieldIdx < 0 || objFieldIdx >= objectFieldCount) {
+		assert(objFieldIdx < 0 || objFieldIdx >= objectFieldCount);
 		return format("UnknownField{}", objFieldIdx);
 	}
 
