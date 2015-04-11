@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "addresses.h"
+#include "util/addresses.h"
 
 /*
 	A utility class that unprotects an area of memory while it is in scope.

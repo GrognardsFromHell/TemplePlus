@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "obj.h"
-#include "addresses.h"
+#include "util/addresses.h"
 #include "d20.h"
 #include "common.h"
 #include "temple_functions.h"

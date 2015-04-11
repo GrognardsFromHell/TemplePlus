@@ -1,6 +1,6 @@
 
 #include "stdafx.h"
-#include "fixes.h"
+#include "util/fixes.h"
 #include "obj.h"
 #include "graphics.h"
 

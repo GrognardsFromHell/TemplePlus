@@ -1,6 +1,6 @@
 
 #include "stdafx.h"
-#include "addresses.h"
+#include "util/addresses.h"
 #include "temple_functions.h"
 #include "graphics.h"
 #include "tig/tig_mouse.h"

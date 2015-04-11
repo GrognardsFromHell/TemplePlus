@@ -1,9 +1,9 @@
 
 #include "stdafx.h"
-#include "fixes.h"
+#include "util/fixes.h"
 #include "temple_functions.h"
 #include "gamesystems.h"
-#include "config.h"
+#include "util/config.h"
 
 typedef int(__cdecl *UiCharInit)(const GameSystemConf& conf);
 static UiCharInit uiCharInit;

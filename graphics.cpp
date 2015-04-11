@@ -2,17 +2,18 @@
 
 #include "graphics.h"
 #include "temple_functions.h"
-#include "addresses.h"
+#include "util/addresses.h"
 #include "idxtables.h"
-#include "config.h"
+#include "util/fixes.h"
 #include "movies.h"
 #include "tig/tig_msg.h"
 #include "tig/tig_shader.h"
 #include "tig/tig_mouse.h"
 #include "mainwindow.h"
-#include "ui.h"
-#include "folderutils.h"
+#include "ui/ui.h"
+#include "util/folderutils.h"
 #include "gamesystems.h"
+#include "ui/ui_text.h"
 
 // #include "d3d8/d3d8.h"
 #include "d3d8to9/d3d8to9.h"
@@ -379,6 +380,8 @@ int __cdecl VideoStartup(TigConfig* settings) {
 	temple_set<0x10D25138>(settings->freeBuffers);
 
 	memcpy(temple_address<0x11E75840>(), settings, 0x4C);
+
+	uiText.Initialize();
 
 	return 0;
 }

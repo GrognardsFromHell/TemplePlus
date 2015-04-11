@@ -1,14 +1,15 @@
 
 #include "stdafx.h"
 #include "mainloop.h"
-#include "addresses.h"
+#include "util/addresses.h"
 #include "temple_functions.h"
 #include "tig/tig_msg.h"
 #include "tig/tig_mouse.h"
 #include "gamesystems.h"
 #include "graphics.h"
-#include "ui_render.h"
-#include "version.h"
+#include "ui/ui_render.h"
+#include "ui/ui_text.h"
+#include "util/version.h"
 
 static struct MainLoop : AddressTable {
 	
@@ -92,7 +93,7 @@ void RunMainLoop() {
 
 		gameSystemFuncs.AdvanceTime();
 
-		// Always lock the cursor
+		// This locks the cursor to our window if we are in the foreground and it's enabled
 		if (!config.windowed && config.lockCursor && GetForegroundWindow() == video->hwnd) {
 			RECT rect;
 			GetClientRect(video->hwnd, &rect);
@@ -175,6 +176,12 @@ static void RenderFrame() {
 		&destRect,
 		D3DTEXF_LINEAR
 	);
+
+	uiText.Update();
+	uiText.Render();
+
+	videoFuncs.ReadInitialState();
+	memcpy(videoFuncs.renderStates.ptr(), videoFuncs.activeRenderStates.ptr(), sizeof(TigRenderStates));
 		
 	graphics.Present();
 }

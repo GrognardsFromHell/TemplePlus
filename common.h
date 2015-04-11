@@ -1,13 +1,13 @@
 #pragma once
 
 #include "stdafx.h"
-#include "addresses.h"
-#include "fixes.h"
+#include "util/addresses.h"
+#include "util/fixes.h"
 #include "obj_structs.h"
 #include "spell_structs.h"
 #include "temple_enums.h"
 #include "d20_defs.h"
-#include "config.h"
+#include "util/fixes.h"
 
 # pragma region Standard Structs
 

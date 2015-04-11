@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "temple_functions.h"
-#include "fixes.h"
-#include "config.h"
-#include "version.h"
+#include "util/fixes.h"
+#include "util/config.h"
+#include "util/version.h"
 
 #include <psapi.h>
 

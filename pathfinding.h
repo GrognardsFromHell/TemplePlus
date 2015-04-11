@@ -1,6 +1,6 @@
 
 #pragma once
-#include "addresses.h"
+#include "util/addresses.h"
 #include "temple_functions.h"
 
 enum PathQueryFlags : uint32_t {

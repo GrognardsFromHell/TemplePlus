@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "addresses.h"
+#include "util/addresses.h"
 
 enum class StringTokenType : uint32_t {
 	Invalid = 0,

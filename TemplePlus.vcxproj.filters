@@ -46,21 +46,6 @@
     <ClCompile Include="d3d8to9\d3d8to9_vertexbuffer.cpp">
       <Filter>d3d</Filter>
     </ClCompile>
-    <ClCompile Include="fixes.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="ui.cpp">
-      <Filter>ui</Filter>
-    </ClCompile>
-    <ClCompile Include="ui_item_creation.cpp">
-      <Filter>ui</Filter>
-    </ClCompile>
-    <ClCompile Include="ui_mainmenu.cpp">
-      <Filter>ui</Filter>
-    </ClCompile>
-    <ClCompile Include="python.cpp">
-      <Filter>python</Filter>
-    </ClCompile>
     <ClCompile Include="bonusspells.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
@@ -85,23 +70,8 @@
     <ClCompile Include="dependencies\json11\json11.cpp">
       <Filter>Dependencies\json11</Filter>
     </ClCompile>
-    <ClCompile Include="libraryholder.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
-    <ClCompile Include="folderutils.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
-    <ClCompile Include="config.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
-    <ClCompile Include="addressess.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
     <ClCompile Include="timeevents.cpp" />
     <ClCompile Include="anim.cpp" />
-    <ClCompile Include="pythonglobal.cpp">
-      <Filter>python</Filter>
-    </ClCompile>
     <ClCompile Include="pathfinding.cpp" />
     <ClCompile Include="mainloop.cpp" />
     <ClCompile Include="feat.cpp">
@@ -114,7 +84,6 @@
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="portrait_in_mainmenu.cpp" />
-    <ClCompile Include="ui_char_highresfix.cpp" />
     <ClCompile Include="gamelib_load.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
@@ -134,13 +103,7 @@
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="map_obj.cpp" />
-    <ClCompile Include="python_debug.cpp">
-      <Filter>python</Filter>
-    </ClCompile>
     <ClCompile Include="dispatcher.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="usercall.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="weapon.cpp">
@@ -153,8 +116,6 @@
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="gamesystems_render.cpp" />
-    <ClCompile Include="ui_render.cpp" />
-    <ClCompile Include="version.cpp" />
     <ClCompile Include="inventory.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
@@ -194,6 +155,43 @@
     <ClCompile Include="idxtables.cpp">
       <Filter>generic data structures</Filter>
     </ClCompile>
+    <ClCompile Include="python\python.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_debug.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\pythonglobal.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_text.cpp" />
+    <ClCompile Include="ui\ui_render.cpp" />
+    <ClCompile Include="ui\ui_mainmenu.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_char_highresfix.cpp" />
+    <ClCompile Include="ui\ui_item_creation.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="util\addressess.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="util\config.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="util\fixes.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="util\folderutils.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="util\libraryholder.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="util\version.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -205,9 +203,7 @@
     <ClInclude Include="temple_enums.h" />
     <ClInclude Include="testhelper.h" />
     <ClInclude Include="aas.h" />
-    <ClInclude Include="exception.h" />
     <ClInclude Include="game_config.h" />
-    <ClInclude Include="tio.h" />
     <ClInclude Include="xp.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
@@ -247,43 +243,10 @@
     <ClInclude Include="d3d8\d3d8types.h">
       <Filter>d3d</Filter>
     </ClInclude>
-    <ClInclude Include="fixes.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="ui_mainmenu.h">
-      <Filter>ui</Filter>
-    </ClInclude>
-    <ClInclude Include="ui.h">
-      <Filter>ui</Filter>
-    </ClInclude>
-    <ClInclude Include="python_header.h">
-      <Filter>python</Filter>
-    </ClInclude>
-    <ClInclude Include="stopwatch.h">
-      <Filter>utils</Filter>
-    </ClInclude>
-    <ClInclude Include="libraryholder.h">
-      <Filter>utils</Filter>
-    </ClInclude>
-    <ClInclude Include="folderutils.h">
-      <Filter>utils</Filter>
-    </ClInclude>
-    <ClInclude Include="config.h">
-      <Filter>utils</Filter>
-    </ClInclude>
-    <ClInclude Include="addresses.h">
-      <Filter>utils</Filter>
-    </ClInclude>
     <ClInclude Include="timeevents.h" />
     <ClInclude Include="anim.h" />
-    <ClInclude Include="pythonglobal.h">
-      <Filter>python</Filter>
-    </ClInclude>
     <ClInclude Include="pathfinding.h" />
     <ClInclude Include="mainloop.h" />
-    <ClInclude Include="ui_item_creation.h">
-      <Filter>ui</Filter>
-    </ClInclude>
     <ClInclude Include="feat.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
@@ -309,9 +272,6 @@
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
     <ClInclude Include="map_obj.h" />
-    <ClInclude Include="python_debug.h">
-      <Filter>python</Filter>
-    </ClInclude>
     <ClInclude Include="dispatcher.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
@@ -333,8 +293,6 @@
     <ClInclude Include="condition.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
-    <ClInclude Include="ui_render.h" />
-    <ClInclude Include="version.h" />
     <ClInclude Include="inventory.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
@@ -383,6 +341,48 @@
     <ClInclude Include="hashtable.h">
       <Filter>generic data structures</Filter>
     </ClInclude>
+    <ClInclude Include="python\python_debug.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_header.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\pythonglobal.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="goalfuncnames.h" />
+    <ClInclude Include="ui\ui_text.h" />
+    <ClInclude Include="ui\ui_render.h" />
+    <ClInclude Include="ui\ui_mainmenu.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_item_creation.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="util\addresses.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="util\config.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="util\exception.h" />
+    <ClInclude Include="util\fixes.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="util\folderutils.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="util\libraryholder.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="util\version.h" />
+    <ClInclude Include="util\stopwatch.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="tio\tio.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -401,7 +401,6 @@
       <UniqueIdentifier>{ea100e12-e4d1-4df0-8ed7-e2ba3025f6e5}</UniqueIdentifier>
     </Filter>
     <ClInclude Include="aas.h" />
-    <ClInclude Include="tig.h" />
     <ClInclude Include="minhook\src\HDE\hde32.h">
       <Filter>Dependencies\minhook</Filter>
     </ClInclude>
@@ -487,6 +486,8 @@
     <None Include="dependencies\spdlog\LICENSE">
       <Filter>Dependencies\spdlog</Filter>
     </None>
+    <None Include="LICENSE" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="toee_gog_icon.ico">

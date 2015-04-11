@@ -1,8 +1,8 @@
 
 #pragma once
 
-#include "addresses.h"
-#include "tio.h"
+#include "util/addresses.h"
+#include "tio/tio.h"
 
 struct GameSystemConf {
 	bool editor;

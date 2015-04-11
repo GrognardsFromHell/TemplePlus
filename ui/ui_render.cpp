@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "ui_render.h"
-#include "addresses.h"
+#include "util/addresses.h"
 
 #pragma pack(push, 1)
 #include "tig/tig_font.h"
