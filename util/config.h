@@ -9,7 +9,7 @@ enum class RngType {
 struct TemplePlusConfig
 {
 	bool showFps = false; // Previously -fps
-	bool noSound = true; // Previously -nosound
+	bool noSound = false; // Previously -nosound
 	bool doublebuffer = false; // Previously -doublebuffer
 	bool animCatchup = false; // Previously -animcatchup
 	bool noRandomEncounters = false; // Previously -norandom
@@ -29,16 +29,16 @@ struct TemplePlusConfig
 	bool useDirect3d9Ex = true;
 	bool windowed = true;
 	bool lockCursor = true; // When in fullscreen, lock cursor
-	int windowWidth = 1680;
-	int windowHeight = 1050;
-	int screenWidth = 1024;
-	int screenHeight = 768;
+	int windowWidth = 1024;
+	int windowHeight = 768;
+	int renderWidth = 1024;
+	int renderHeight = 768;
 	
 	// This is some crazy editor stuff leftover from worlded
 	bool editor = false;
 
 	// debug msgs
-	bool debugMessageEnable = true; // ToEE debug spam
+	bool debugMessageEnable = false; // ToEE debug spam
 	bool featPrereqWarnings = false;
 	bool spellAlreadyKnownWarnings = false;
 

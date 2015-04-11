@@ -50,8 +50,8 @@ static TigConfig createTigConfig(HINSTANCE hInstance) {
 	// tigConfig.wndproc = (int)windowproc;
 	tigConfig.framelimit = 100;
 	// NOTE: These are the actual render sizes, we use a different size for the window / presentation
-	tigConfig.width = config.screenWidth;
-	tigConfig.height = config.screenHeight;
+	tigConfig.width = config.renderWidth;
+	tigConfig.height = config.renderHeight;
 	tigConfig.bpp = 32;
 	tigConfig.hinstance = hInstance;
 	tigConfig.findSound = tigInternal.FindSound;

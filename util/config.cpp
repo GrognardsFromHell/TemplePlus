@@ -86,6 +86,7 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(skipIntro),
 	CONF_BOOL(skipLegal),
 	CONF_BOOL(engineEnhancements),
+	//CONF_BOOL(editor),
 	CONF_BOOL(useDirect3d9Ex),
 	CONF_BOOL(windowed),
 	CONF_BOOL(noSound),
@@ -97,8 +98,8 @@ static ConfigSetting configSettings[] = {
 	CONF_STRING(defaultModule),
 	CONF_INT(windowWidth),
 	CONF_INT(windowHeight),
-	CONF_INT(screenWidth),
-	CONF_INT(screenHeight),
+	CONF_INT(renderWidth),
+	CONF_INT(renderHeight),
 	CONF_BOOL(debugMessageEnable),
 	CONF_BOOL(lockCursor)
 };

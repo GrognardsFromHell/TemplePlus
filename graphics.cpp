@@ -744,8 +744,8 @@ void Graphics::CreateResources() {
 
 	// Create surfaces for the scene
 	D3DLOG(mDevice->CreateRenderTarget(
-		config.screenWidth,
-		config.screenHeight,
+		config.renderWidth,
+		config.renderHeight,
 		mBackBufferDesc.Format,
 		mBackBufferDesc.MultiSampleType,
 		mBackBufferDesc.MultiSampleQuality,
@@ -754,8 +754,8 @@ void Graphics::CreateResources() {
 		nullptr));
 
 	D3DLOG(mDevice->CreateDepthStencilSurface(
-		config.screenWidth,
-		config.screenHeight,
+		config.renderWidth,
+		config.renderHeight,
 		D3DFMT_D16,
 		mBackBufferDesc.MultiSampleType,
 		mBackBufferDesc.MultiSampleQuality,
@@ -804,11 +804,11 @@ void Graphics::RefreshSceneRect() {
 	*/
 	float w = static_cast<float>(graphics.windowWidth());
 	float h = static_cast<float>(graphics.windowHeight());
-	float wFactor = (float)w / config.screenWidth;
-	float hFactor = (float)h / config.screenHeight;
+	float wFactor = (float)w / config.renderWidth;
+	float hFactor = (float)h / config.renderHeight;
 	mSceneScale = min(wFactor, hFactor);
-	int screenW = (int)round(mSceneScale * config.screenWidth);
-	int screenH = (int)round(mSceneScale * config.screenHeight);
+	int screenW = (int)round(mSceneScale * config.renderWidth);
+	int screenH = (int)round(mSceneScale * config.renderHeight);
 
 	// Center on screen
 	RECT rect;

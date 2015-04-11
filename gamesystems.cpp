@@ -310,8 +310,8 @@ public:
 		firstSystem.moduleUnload = &BeforeCallbacks::ModuleUnload;
 		firstSystem.exit = &BeforeCallbacks::Exit;
 		firstSystem.advanceTime = &BeforeCallbacks::AdvanceTime;
-		firstSystem.save = &BeforeCallbacks::Save;
-		firstSystem.load = &BeforeCallbacks::Load;
+		//firstSystem.save = &BeforeCallbacks::Save;
+		//firstSystem.load = &BeforeCallbacks::Load;
 		firstSystem.resetBuffers = &BeforeCallbacks::ResetBuffers;
 
 		// Override all functions for "before" callbacks
@@ -323,8 +323,8 @@ public:
 		lastSystem.moduleUnload = &AfterCallbacks::ModuleUnload;
 		lastSystem.exit = &AfterCallbacks::Exit;
 		lastSystem.advanceTime = &AfterCallbacks::AdvanceTime;
-		lastSystem.save = &AfterCallbacks::Save;
-		lastSystem.load = &AfterCallbacks::Load;
+		//lastSystem.save = &AfterCallbacks::Save;
+		//lastSystem.load = &AfterCallbacks::Load;
 		lastSystem.resetBuffers = &AfterCallbacks::ResetBuffers;
 	}
 

@@ -28,27 +28,30 @@ void init_functions()
  */
 void __cdecl hooked_print_debug_message(char* format, ...)
 {
-	static char buffer[32 * 1024];
-	va_list args;
-	va_start(args, format);
-	vsnprintf(buffer, sizeof(buffer), format, args);
-	int len = strlen(buffer) - 1;
-	// Strip trailing newlines
-	while (len > 0 && (buffer[len] == '\n' || buffer[len] == '\r' || buffer[len] == ' '))
+	if (config.debugMessageEnable)
 	{
-		buffer[len] = 0;
-		--len;
-	}
-	if (buffer[0] == 0)
-	{
-		return; // Trimmed completely
-	}
+		static char buffer[32 * 1024];
+		va_list args;
+		va_start(args, format);
+		vsnprintf(buffer, sizeof(buffer), format, args);
+		int len = strlen(buffer) - 1;
+		// Strip trailing newlines
+		while (len > 0 && (buffer[len] == '\n' || buffer[len] == '\r' || buffer[len] == ' '))
+		{
+			buffer[len] = 0;
+			--len;
+		}
+		if (buffer[0] == 0)
+		{
+			return; // Trimmed completely
+		}
 
-	if (!strncmp("PyScript: call to", buffer, strlen("PyScript: call to"))) {
+		if (!strncmp("PyScript: call to", buffer, strlen("PyScript: call to"))) {
 
+		}
+
+		logger->info("{}", buffer);
 	}
-
-	logger->info("{}", buffer);
 }
 
 void init_hooks()
