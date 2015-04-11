@@ -1,9 +1,9 @@
 
 #include "stdafx.h"
 #include "common.h"
-#include "fixes.h"
-#include "pythonglobal.h"
-#include "python_header.h"
+#include "util\fixes.h"
+#include "python\pythonglobal.h"
+#include "python\python_header.h"
 #include "obj.h"
 #include "d20.h"
 

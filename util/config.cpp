@@ -99,7 +99,7 @@ static ConfigSetting configSettings[] = {
 	CONF_INT(windowHeight),
 	CONF_INT(screenWidth),
 	CONF_INT(screenHeight),
-	CONF_BOOL(debugMessageEnable)
+	CONF_BOOL(debugMessageEnable),
 	CONF_BOOL(lockCursor)
 };
 
