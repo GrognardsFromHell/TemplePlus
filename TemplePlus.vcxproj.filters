@@ -192,6 +192,10 @@
       <Filter>utils</Filter>
     </ClCompile>
     <ClCompile Include="util\version.cpp" />
+    <ClCompile Include="python\python_embed.cpp" />
+    <ClCompile Include="python\python_importer.cpp" />
+    <ClCompile Include="python\python_consoleout.cpp" />
+    <ClCompile Include="python\python_game.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -383,6 +387,9 @@
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="tio\tio.h" />
+    <ClInclude Include="python\python_importer.h" />
+    <ClInclude Include="python\python_consoleout.h" />
+    <ClInclude Include="python\python_game.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
