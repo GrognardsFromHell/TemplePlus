@@ -20,7 +20,11 @@ struct DispatcherSystem : AddressTable
 	void  DispatcherClearAttribs(Dispatcher * dispatcher);
 	void  DispatcherClearItemConds(Dispatcher * dispatcher);
 	void  DispatcherClearConds(Dispatcher *dispatcher);
-	DispatcherSystem(){	};
+	uint32_t(__cdecl * dispatcherForCritters)(objHndl, DispIO *, enum_disp_type, uint32_t dispKey);
+	DispatcherSystem()
+	{
+		rebase(dispatcherForCritters, 0x1004DD00);
+	};
 };
 
 extern DispatcherSystem dispatch;

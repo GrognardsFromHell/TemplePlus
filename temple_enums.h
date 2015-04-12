@@ -1659,7 +1659,7 @@ enum enum_disp_type : uint32_t {
 	dispType7,
 	dispType8,
 	dispType9,
-	dispType10,
+	dispTypeAbilityScoreLevel,
 	dispType11,
 	dispType12,
 	dispType13,

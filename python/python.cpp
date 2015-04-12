@@ -284,7 +284,7 @@ static PyObject * pyObjHandleType_ObjFeatAdd(TemplePyObjHandle* obj, PyObject * 
 
 
 static PyObject * pyObjHandleType_MakeWizard(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	int level;
+	uint32_t level;
 	if (!PyArg_ParseTuple(pyTupleIn, "i", &level)) {
 		return nullptr;
 	};

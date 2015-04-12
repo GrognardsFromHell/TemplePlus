@@ -19,6 +19,7 @@ struct Objects : AddressTable {
 	}
 	uint32_t GetInt32(objHndl obj, obj_f fieldIdx);
 	void SetInt32(objHndl obj, obj_f fieldIdx, uint32_t dataIn);
+	uint32_t abilityScoreLevelGet(objHndl, Stat, DispIO *);
 
 #pragma region Common Attributes
 	ObjectType GetType(objHndl obj) {
@@ -176,3 +177,4 @@ extern Objects objects;
 
 uint32_t _obj_get_int(objHndl obj, obj_f fieldIdx);
 void _obj_set_int(objHndl obj, obj_f fieldIdx, uint32_t dataIn);
+uint32_t _abilityScoreLevelGet(objHndl obj, Stat abScore, DispIO * dispIO);

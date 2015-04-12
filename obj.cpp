@@ -21,6 +21,7 @@ public:
 	void apply() override {
 		replaceFunction(0x1009E1D0, _obj_get_int);
 		replaceFunction(0x100A0190, _obj_set_int);
+		replaceFunction(0x1004E7F0, _abilityScoreLevelGet);
 	}
 } objReplacements;
 
@@ -187,6 +188,12 @@ uint32_t Objects::DoesTypeSupportField(uint32_t objType, _fieldIdx objField) {
 	return result != 0;
 }
 
+uint32_t Objects::abilityScoreLevelGet(objHndl objHnd, Stat stat, DispIO* dispIO)
+{
+	return objects.dispatch.dispatcherForCritters(objHnd, dispIO, dispTypeAbilityScoreLevel, stat + 1);
+}
+
+
 #pragma endregion
 
 
@@ -200,6 +207,11 @@ uint32_t _obj_get_int(objHndl obj, obj_f fieldIdx)
 void _obj_set_int(objHndl obj, obj_f fieldIdx, uint32_t dataIn)
 {
 	objects.SetInt32(obj, fieldIdx, dataIn);
+}
+
+uint32_t _abilityScoreLevelGet(objHndl obj, Stat abScore, DispIO * dispIO)
+{
+	return objects.abilityScoreLevelGet(obj, abScore, dispIO);
 }
 
 #pragma endregion
