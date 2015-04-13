@@ -13,6 +13,7 @@
 #include "ui/ui.h"
 #include "util/folderutils.h"
 #include "gamesystems.h"
+#include "renderstates.h"
 #include "ui/ui_text.h"
 
 // #include "d3d8/d3d8.h"
@@ -521,7 +522,6 @@ void hook_graphics() {
 		These assertions are based on mallocs or memsets in the code that allow us to deduce the original struct
 		size.
 	*/
-	static_assert(sizeof(TigRenderStates) == 0x1C4, "TigRenderStates has the wrong size.");
 	static_assert(sizeof(VideoData) == 4796, "Video Data struct has the wrong size.");
 
 	// We only differ between borderless and normal window mode.
@@ -716,10 +716,7 @@ void Graphics::FreeResources() {
 
 void Graphics::CreateResources() {
 
-
-	videoFuncs.ReadInitialState();
-	memcpy(videoFuncs.renderStates.ptr(), videoFuncs.activeRenderStates.ptr(), sizeof(TigRenderStates));
-
+	renderStates.Reset();
 
 	videoFuncs.buffersFreed = false;
 

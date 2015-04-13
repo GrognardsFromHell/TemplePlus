@@ -179,10 +179,7 @@ static void RenderFrame() {
 
 	uiText.Update();
 	uiText.Render();
-
-	videoFuncs.ReadInitialState();
-	memcpy(videoFuncs.renderStates.ptr(), videoFuncs.activeRenderStates.ptr(), sizeof(TigRenderStates));
-		
+			
 	graphics.Present();
 }
 

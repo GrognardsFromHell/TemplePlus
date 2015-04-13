@@ -198,6 +198,7 @@
       <Filter>utils</Filter>
     </ClCompile>
     <ClCompile Include="util\version.cpp" />
+    <ClCompile Include="renderstates.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -389,6 +390,7 @@
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="tio\tio.h" />
+    <ClInclude Include="renderstates.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

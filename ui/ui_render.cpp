@@ -99,9 +99,11 @@ bool UiRenderer::RenderText(const string &text, TigRect &rect, const TigTextStyl
 	return tigFont.Draw(text.c_str(), rect, style) == 0;
 }
 
-TigRect UiRenderer::MeasureTextSize(const string &text, const TigTextStyle &style) {
+TigRect UiRenderer::MeasureTextSize(const string &text, const TigTextStyle &style, int maxWidth, int maxHeight) {
 	TigFontMetrics metrics;
 	metrics.text = text.c_str();
+	metrics.width = maxWidth;
+	metrics.height = maxHeight;
 	tigFont.Measure(style, metrics);
 	TigRect result;
 	result.x = 0;

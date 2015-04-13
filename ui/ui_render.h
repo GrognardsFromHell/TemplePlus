@@ -55,6 +55,6 @@ public:
 	/*
 		Measures the given text and returns the bounding rect.
 	*/
-	static TigRect MeasureTextSize(const string &text, const TigTextStyle &style);
+	static TigRect MeasureTextSize(const string &text, const TigTextStyle &style, int maxWidth = 0, int maxHeight = 0);
 
 };

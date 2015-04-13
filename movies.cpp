@@ -3,6 +3,8 @@
 #include "movies.h"
 #include "graphics.h"
 #include "tig/tig_msg.h"
+#include "ui/ui_render.h"
+#include "renderstates.h"
 
 MovieFuncs movieFuncs;
 
@@ -162,6 +164,82 @@ static MovieRect getMovieRect(BinkMovie *movie) {
 
 }
 
+class SubtitleRenderer {
+public:
+	SubtitleRenderer(const SubtitleLine *firstLine) : mLine(firstLine) {
+		mMovieStarted = timeGetTime();
+		InitializeSubtitleStyle();
+	}
+	
+	void Render() {
+		if (!mLine) {
+			return;
+		}
+
+		// Update elapsed time
+		mElapsedTime = timeGetTime() - mMovieStarted;
+
+		// Update current line
+		AdvanceLine();
+
+		// Should we display the current line?
+		if (IsCurrentLineVisible()) {
+			RenderCurrentLine();
+		}
+	}
+
+private:
+	void AdvanceLine() {
+		// Go to the next appropriate line
+		auto nextLine = mLine->nextLine;
+		while (nextLine && nextLine->startMs < mElapsedTime) {
+			mLine = nextLine;
+			nextLine = mLine->nextLine;
+		}
+	}
+
+	bool IsCurrentLineVisible() {
+		if (!mLine) {
+			return false;
+		}
+		return mLine->startMs <= mElapsedTime
+			&& mLine->startMs + mLine->durationMs > mElapsedTime;
+	}
+
+	void RenderCurrentLine() {
+		
+		UiRenderer::PushFont(mLine->fontname, 0, 0);
+
+		auto extents = UiRenderer::MeasureTextSize(mLine->text, mSubtitleStyle, 700, 150);
+
+		extents.x = (graphics.windowWidth() - extents.width) / 2;
+		extents.y = graphics.windowHeight() - graphics.windowHeight() / 10;
+
+		UiRenderer::RenderText(mLine->text, extents, mSubtitleStyle);
+
+		UiRenderer::PopFont();
+
+	}
+
+	void InitializeSubtitleStyle() {
+		mSubtitleStyle.flags = TTSF_DROP_SHADOW | TTSF_CENTER;
+		mSubtitleStyle.bgColor = &mSubtitleBgColor;
+		mSubtitleStyle.field2c = -1;
+		mSubtitleStyle.shadowColor = &mSubtitleShadowColor;
+		mSubtitleStyle.textColor = &mSubtitleTextColor;
+		mSubtitleStyle.kerning = 1;
+		mSubtitleStyle.tracking = 4;
+	}
+
+	ColorRect mSubtitleBgColor = ColorRect(D3DCOLOR_ARGB(153, 17, 17, 17));
+	ColorRect mSubtitleTextColor = ColorRect(D3DCOLOR_ARGB(255, 255, 255, 255));
+	ColorRect mSubtitleShadowColor = ColorRect(D3DCOLOR_ARGB(255, 0, 0, 0));
+	TigTextStyle mSubtitleStyle;
+	const SubtitleLine *mLine;
+	uint32_t mMovieStarted;
+	uint32_t mElapsedTime;
+};
+
 int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int flags, uint32_t soundtrackId) {
 
 	if (!binkInitialized) {
@@ -198,17 +276,10 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 		logger->error("Unable to create texture for bink video");
 		return 0;
 	}
-	d3dDevice->SetTexture(0, texture);
-	d3dDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-	d3dDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
 
 	// Clear screen with black color and present immediately
 	d3dDevice->Clear(0, nullptr, D3DCLEAR_TARGET|D3DCLEAR_ZBUFFER, 0, 0, 0);
 	d3dDevice->Present(nullptr, nullptr, nullptr, nullptr);
-
-	d3dDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
-	d3dDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
-	d3dDevice->SetRenderState(D3DRS_CULLMODE, FALSE);
 
 	processTigMessages();
 
@@ -217,7 +288,6 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 	// TODO UV should be manipulated for certain vignettes since they have been letterboxed in the bink file!!!
 
 	// Set vertex shader
-	d3dDevice->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1);
 	MovieVertex vertices[4] = {
 		{ movieRect.left, movieRect.top, 0, 0 },
 		{ movieRect.right, movieRect.top, 1, 0 },
@@ -232,13 +302,26 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 	handleD3dError("Lock", vertexBuffer->Lock(0, 0, &data, 0));
 	memcpy(data, vertices, sizeof(vertices));
 	vertexBuffer->Unlock();
-	d3dDevice->SetStreamSource(0, vertexBuffer, 0, sizeof(MovieVertex));
+
+	SubtitleRenderer subtitleRenderer(subtitles);
 	
 	bool keyPressed = false;
 	while (!keyPressed && binkRenderFrame(movie, texture)) {
 		handleD3dError("Clear", d3dDevice->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0, 0));
 		handleD3dError("BeginScene", d3dDevice->BeginScene());
+
+		renderStates.SetTexture(0, texture);
+		renderStates.SetTextureMinFilter(0, D3DTEXF_LINEAR);
+		renderStates.SetTextureMagFilter(0, D3DTEXF_LINEAR);
+		renderStates.SetLighting(false);
+		renderStates.SetZEnable(false);
+		renderStates.SetCullMode(D3DCULL_NONE);
+		renderStates.SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1);
+		renderStates.SetStreamSource(0, vertexBuffer, sizeof(MovieVertex));
+		renderStates.Commit();
+
 		handleD3dError("DrawPrimitive", d3dDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, 2));
+		subtitleRenderer.Render();
 		handleD3dError("EndScene", d3dDevice->EndScene());
 		handleD3dError("Present", d3dDevice->Present(NULL, NULL, NULL, NULL));
 
