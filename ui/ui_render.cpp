@@ -2,10 +2,10 @@
 #include "stdafx.h"
 #include "ui_render.h"
 #include "util/addresses.h"
+#include "tig/tig_font.h"
+#include "tig/tig_texture.h"
 
 #pragma pack(push, 1)
-#include "tig/tig_font.h"
-
 struct DrawTexturedQuadArgs {
 	int flags = 0;
 	int textureId;
@@ -35,11 +35,51 @@ static struct UiRenderFuncs : AddressTable {
 	*/
 	bool (__cdecl *DrawTextInWidget)(int widgetId, const char *text, const TigRect &rect, const TigTextStyle &style);
 
+
+
 	UiRenderFuncs() {
 		rebase(DrawTexturedQuad, 0x101D9300);
 		rebase(DrawTextInWidget, 0x101F87C0);
 	}
 } uiRenderFuncs;
+
+int UiRenderer::RegisterTexture(const string& path) {
+
+	int textureId;
+	if (textureFuncs.RegisterTexture(path.c_str(), &textureId) != 0) {
+		// TODO: this should probably instead of failing, return "bad art" or something similar
+		throw TempleException(format("Unable to register texture {}", path));
+	}
+
+	return textureId;
+
+}
+
+Texture UiRenderer::LoadTexture(const int textureId) {
+
+	TigTextureRegistryEntry textureEntry;
+	if (textureFuncs.LoadTexture(textureId, &textureEntry) != 0) {
+		// TODO: Probably should return bad art here
+		throw TempleException(format("Unable to load texture {}", textureId));
+	}
+
+	Texture result;
+	result.id = textureEntry.textureId;
+	result.width = textureEntry.width;
+	result.height = textureEntry.height;
+	result.rect = textureEntry.rect;
+	strcpy(result.path, textureEntry.name);
+	result.unk = textureEntry.set_to_true_in_shader;
+	result.field_124 = textureEntry.field_124;
+	result.buffer = textureEntry.buffer;
+
+	return result;
+	
+}
+
+Texture UiRenderer::LoadTexture(const string& path) {
+	return LoadTexture(RegisterTexture(path));
+}
 
 void UiRenderer::DrawTexture(int texId, const TigRect &destRect) {
 

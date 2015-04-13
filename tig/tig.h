@@ -25,4 +25,7 @@ struct TigRect {
 		this->width = w;
 		this->height = h;
 	}
+
+	RECT ToRect();
+	void FitInto(const TigRect &boundingRect);
 };

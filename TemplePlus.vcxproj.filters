@@ -199,6 +199,9 @@
     </ClCompile>
     <ClCompile Include="util\version.cpp" />
     <ClCompile Include="renderstates.cpp" />
+    <ClCompile Include="tio\tio_utils.cpp" />
+    <ClCompile Include="tig\tig.cpp" />
+    <ClCompile Include="tig\tig_sound.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -391,6 +394,8 @@
     </ClInclude>
     <ClInclude Include="tio\tio.h" />
     <ClInclude Include="renderstates.h" />
+    <ClInclude Include="tio\tio_utils.h" />
+    <ClInclude Include="tig\tig_sound.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

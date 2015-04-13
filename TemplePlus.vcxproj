@@ -17,6 +17,9 @@
   <ItemGroup>
     <ClCompile Include="aas.cpp" />
     <ClCompile Include="renderstates.cpp" />
+    <ClCompile Include="tig\tig.cpp" />
+    <ClCompile Include="tig\tig_sound.cpp" />
+    <ClCompile Include="tio\tio_utils.cpp" />
     <ClCompile Include="util\addressess.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
@@ -175,6 +178,8 @@
   <ItemGroup>
     <ClInclude Include="aas.h" />
     <ClInclude Include="renderstates.h" />
+    <ClInclude Include="tig\tig_sound.h" />
+    <ClInclude Include="tio\tio_utils.h" />
     <ClInclude Include="util\addresses.h" />
     <ClInclude Include="anim.h" />
     <ClInclude Include="combat.h" />
