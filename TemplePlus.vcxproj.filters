@@ -9,16 +9,7 @@
     <ClCompile Include="temple_functions.cpp" />
     <ClCompile Include="mainwindow.cpp" />
     <ClCompile Include="debugMessageToggles.cpp" />
-    <ClCompile Include="attackrollcpp.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="animalcompanion.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
     <ClCompile Include="generalfixes.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="xp.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="aas.cpp" />
@@ -46,9 +37,6 @@
     <ClCompile Include="d3d8to9\d3d8to9_vertexbuffer.cpp">
       <Filter>d3d</Filter>
     </ClCompile>
-    <ClCompile Include="bonusspells.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
     <ClCompile Include="minhook\src\HDE\hde32.c">
       <Filter>Dependencies\minhook</Filter>
     </ClCompile>
@@ -74,51 +62,15 @@
     <ClCompile Include="anim.cpp" />
     <ClCompile Include="pathfinding.cpp" />
     <ClCompile Include="mainloop.cpp" />
-    <ClCompile Include="feat.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="d20.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="obj.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
     <ClCompile Include="portrait_in_mainmenu.cpp" />
-    <ClCompile Include="gamelib_load.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="gamelib_save.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
     <ClCompile Include="obj_fieldnames.cpp">
       <Filter>utils</Filter>
-    </ClCompile>
-    <ClCompile Include="combat.cpp">
-      <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="radial_menu.cpp">
       <Filter>ui</Filter>
     </ClCompile>
-    <ClCompile Include="description.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
     <ClCompile Include="map_obj.cpp" />
-    <ClCompile Include="dispatcher.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="weapon.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="spell.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="condition.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
     <ClCompile Include="gamesystems_render.cpp" />
-    <ClCompile Include="inventory.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
     <ClCompile Include="tig\tig_font.cpp">
       <Filter>tig</Filter>
     </ClCompile>
@@ -146,12 +98,6 @@
     <ClCompile Include="tig\tig_init.cpp">
       <Filter>tig</Filter>
     </ClCompile>
-    <ClCompile Include="faction.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="party.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
     <ClCompile Include="idxtables.cpp">
       <Filter>generic data structures</Filter>
     </ClCompile>
@@ -160,6 +106,72 @@
     </ClCompile>
     <ClCompile Include="spell_condition.cpp">
       <Filter>Mods and Fixes\Spell Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="util\addressess.cpp" />
+    <ClCompile Include="util\fixes.cpp" />
+    <ClCompile Include="util\folderutils.cpp" />
+    <ClCompile Include="util\libraryholder.cpp" />
+    <ClCompile Include="ui\ui_char_highresfix.cpp" />
+    <ClCompile Include="ui\ui_text.cpp" />
+    <ClCompile Include="ui\ui_render.cpp" />
+    <ClCompile Include="util\version.cpp" />
+    <ClCompile Include="util\config.cpp" />
+    <ClCompile Include="ui\ui.cpp" />
+    <ClCompile Include="ui\ui_item_creation.cpp" />
+    <ClCompile Include="ui\ui_mainmenu.cpp" />
+    <ClCompile Include="inventory.cpp">
+      <Filter>gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="obj.cpp">
+      <Filter>gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="party.cpp">
+      <Filter>gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="spell.cpp">
+      <Filter>gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="weapon.cpp">
+      <Filter>gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="xp.cpp">
+      <Filter>gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="feat.cpp">
+      <Filter>gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="gamelib_load.cpp">
+      <Filter>gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="gamelib_save.cpp">
+      <Filter>gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="faction.cpp">
+      <Filter>gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="dispatcher.cpp">
+      <Filter>gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="description.cpp">
+      <Filter>gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="d20.cpp">
+      <Filter>gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="condition.cpp">
+      <Filter>gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="combat.cpp">
+      <Filter>gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="attackrollcpp.cpp">
+      <Filter>gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="animalcompanion.cpp">
+      <Filter>gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="action_sequence.cpp">
+      <Filter>gameplay</Filter>
     </ClCompile>
     <ClCompile Include="python\python.cpp">
       <Filter>python</Filter>
@@ -170,34 +182,12 @@
     <ClCompile Include="python\pythonglobal.cpp">
       <Filter>python</Filter>
     </ClCompile>
-    <ClCompile Include="ui\ui.cpp">
-      <Filter>ui</Filter>
+    <ClCompile Include="location.cpp">
+      <Filter>gameplay</Filter>
     </ClCompile>
-    <ClCompile Include="ui\ui_text.cpp" />
-    <ClCompile Include="ui\ui_render.cpp" />
-    <ClCompile Include="ui\ui_mainmenu.cpp">
-      <Filter>ui</Filter>
+    <ClCompile Include="float_line.cpp">
+      <Filter>gameplay</Filter>
     </ClCompile>
-    <ClCompile Include="ui\ui_char_highresfix.cpp" />
-    <ClCompile Include="ui\ui_item_creation.cpp">
-      <Filter>ui</Filter>
-    </ClCompile>
-    <ClCompile Include="util\addressess.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
-    <ClCompile Include="util\config.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
-    <ClCompile Include="util\fixes.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="util\folderutils.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
-    <ClCompile Include="util\libraryholder.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
-    <ClCompile Include="util\version.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -210,9 +200,6 @@
     <ClInclude Include="testhelper.h" />
     <ClInclude Include="aas.h" />
     <ClInclude Include="game_config.h" />
-    <ClInclude Include="xp.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
     <ClInclude Include="d3d8\d3d8.h">
       <Filter>d3d</Filter>
     </ClInclude>
@@ -253,55 +240,13 @@
     <ClInclude Include="anim.h" />
     <ClInclude Include="pathfinding.h" />
     <ClInclude Include="mainloop.h" />
-    <ClInclude Include="feat.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="d20.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="spell.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="obj.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="combat.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
     <ClInclude Include="radial_menu.h">
       <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="obj_fieldnames.h">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="description.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
     <ClInclude Include="map_obj.h" />
-    <ClInclude Include="dispatcher.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="obj_structs.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="spell_structs.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="common.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="d20_defs.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="weapon.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="condition.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="inventory.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
     <ClInclude Include="tig\tig.h">
       <Filter>tig</Filter>
     </ClInclude>
@@ -335,17 +280,77 @@
     <ClInclude Include="tig\tig_init.h">
       <Filter>tig</Filter>
     </ClInclude>
-    <ClInclude Include="faction.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="party.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
     <ClInclude Include="idxtables.h">
       <Filter>generic data structures</Filter>
     </ClInclude>
     <ClInclude Include="hashtable.h">
       <Filter>generic data structures</Filter>
+    </ClInclude>
+    <ClInclude Include="util\addresses.h" />
+    <ClInclude Include="util\exception.h" />
+    <ClInclude Include="util\folderutils.h" />
+    <ClInclude Include="goalfuncnames.h" />
+    <ClInclude Include="util\fixes.h" />
+    <ClInclude Include="util\libraryholder.h" />
+    <ClInclude Include="util\stopwatch.h" />
+    <ClInclude Include="util\config.h" />
+    <ClInclude Include="tio\tio.h" />
+    <ClInclude Include="ui\ui.h" />
+    <ClInclude Include="ui\ui_item_creation.h" />
+    <ClInclude Include="ui\ui_render.h" />
+    <ClInclude Include="ui\ui_text.h" />
+    <ClInclude Include="util\version.h" />
+    <ClInclude Include="ui\ui_mainmenu.h" />
+    <ClInclude Include="xp.h">
+      <Filter>gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="inventory.h">
+      <Filter>gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="obj.h">
+      <Filter>gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="obj_structs.h">
+      <Filter>gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="party.h">
+      <Filter>gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="spell.h">
+      <Filter>gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="spell_structs.h">
+      <Filter>gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="weapon.h">
+      <Filter>gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="feat.h">
+      <Filter>gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="faction.h">
+      <Filter>gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="dispatcher.h">
+      <Filter>gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="description.h">
+      <Filter>gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="d20_defs.h">
+      <Filter>gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="d20.h">
+      <Filter>gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="condition.h">
+      <Filter>gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="combat.h">
+      <Filter>gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="action_sequence.h">
+      <Filter>gameplay</Filter>
     </ClInclude>
     <ClInclude Include="python\python_debug.h">
       <Filter>python</Filter>
@@ -356,39 +361,13 @@
     <ClInclude Include="python\pythonglobal.h">
       <Filter>python</Filter>
     </ClInclude>
-    <ClInclude Include="goalfuncnames.h" />
-    <ClInclude Include="ui\ui_text.h" />
-    <ClInclude Include="ui\ui_render.h" />
-    <ClInclude Include="ui\ui_mainmenu.h">
-      <Filter>ui</Filter>
+    <ClInclude Include="location.h">
+      <Filter>gameplay</Filter>
     </ClInclude>
-    <ClInclude Include="ui\ui_item_creation.h">
-      <Filter>ui</Filter>
+    <ClInclude Include="float_line.h">
+      <Filter>gameplay</Filter>
     </ClInclude>
-    <ClInclude Include="ui\ui.h">
-      <Filter>ui</Filter>
-    </ClInclude>
-    <ClInclude Include="util\addresses.h">
-      <Filter>utils</Filter>
-    </ClInclude>
-    <ClInclude Include="util\config.h">
-      <Filter>utils</Filter>
-    </ClInclude>
-    <ClInclude Include="util\exception.h" />
-    <ClInclude Include="util\fixes.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="util\folderutils.h">
-      <Filter>utils</Filter>
-    </ClInclude>
-    <ClInclude Include="util\libraryholder.h">
-      <Filter>utils</Filter>
-    </ClInclude>
-    <ClInclude Include="util\version.h" />
-    <ClInclude Include="util\stopwatch.h">
-      <Filter>utils</Filter>
-    </ClInclude>
-    <ClInclude Include="tio\tio.h" />
+    <ClInclude Include="common.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -463,6 +442,9 @@
     </Filter>
     <Filter Include="Mods and Fixes\Spell Fixes">
       <UniqueIdentifier>{0e53287e-d500-4b3d-a274-09c4e0cf6dbf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gameplay">
+      <UniqueIdentifier>{bad083d9-b690-4b0c-9e99-b46e1cea1196}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

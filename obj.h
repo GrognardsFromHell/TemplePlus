@@ -10,6 +10,11 @@
 #include "feat.h"
 #include "inventory.h"
 
+struct FloatLineSystem;
+//forward decl
+struct LocationSys;
+struct Pathfinding;
+
 
 struct Objects : AddressTable {
 
@@ -21,87 +26,26 @@ struct Objects : AddressTable {
 	void SetInt32(objHndl obj, obj_f fieldIdx, uint32_t dataIn);
 	uint32_t abilityScoreLevelGet(objHndl, Stat, DispIO *);
 
-#pragma region Common Attributes
-	ObjectType GetType(objHndl obj) {
-		return static_cast<ObjectType>(_GetInternalFieldInt32(obj, obj_f_type));
-	}
+#pragma region Common
+	ObjectType GetType(objHndl obj);
+	uint32_t IsDeadNullDestroyed(objHndl obj);
+	uint32_t IsUnconscious(objHndl obj);
+	int32_t GetHPCur(objHndl obj);
+	uint32_t GetRace(objHndl obj);
+	bool IsCritter(objHndl obj);
+	bool IsPlayerControlled(objHndl obj);
+	uint32_t ObjGetProtoNum(objHndl obj);
 
-	uint32_t IsDeadNullDestroyed(objHndl obj)
-	{
-		return _IsObjDeadNullDestroyed(obj);
-	}
+	uint32_t StatLevelGet(objHndl obj, Stat stat);
+#pragma endregion
 
-	uint32_t GetRace(objHndl obj) {
-		return _StatLevelGet(obj, stat_race);
-	}
-
-	bool IsCritter(objHndl obj) {
-		auto type = GetType(obj);
-		return type == obj_t_npc || type == obj_t_pc;
-	}
-
-	bool IsPlayerControlled(objHndl obj)
-	{
-		return _IsPlayerControlled(obj);
-	}
-
-	uint32_t ObjGetProtoNum(objHndl obj)
-	{
-		return _ObjGetProtoNum(obj);
-	};
-
-	enum_monster_category GetCategory(objHndl objHnd)
-	{
-		if (objHnd != 0) {
-			if (IsCritter(objHnd)) {
-				auto monCat = _GetInternalFieldInt64(objHnd, obj_f_critter_monster_category);
-				return (enum_monster_category)(monCat & 0xFFFFFFFF) ;
-			}
-		}
-		return mc_type_monstrous_humanoid; // default - so they have at least a weapons proficiency
-	};
-
-	bool IsCategoryType(objHndl objHnd, enum_monster_category categoryType) {
-		if (objHnd != 0) {
-			if (IsCritter(objHnd)) {
-				auto monCat = _GetInternalFieldInt64(objHnd, obj_f_critter_monster_category);
-				return (monCat & 0xFFFFFFFF) == categoryType;
-			}
-		}
-		return 0;
-	}
-
-	bool IsCategorySubtype(objHndl objHnd, enum_monster_category categoryType) {
-		if (objHnd != 0) {
-			if (IsCritter(objHnd)) {
-				auto monCat = _GetInternalFieldInt64(objHnd, obj_f_critter_monster_category);
-				return ((monCat >> 32) & 0xFFFFFFFF) == categoryType;
-			}
-		}
-		return 0;
-	}
-
-	bool IsUndead(objHndl objHnd) {
-		return IsCategoryType(objHnd, mc_type_undead);
-	}
-
-	bool IsOoze(objHndl objHnd) {
-		return IsCategoryType(objHnd, mc_type_ooze);
-	}
-
-	bool IsSubtypeFire(objHndl objHnd) {
-		return IsCategorySubtype(objHnd, mc_subtye_fire);
-	}
-
-
-
-	uint32_t StatLevelGet(objHndl obj, Stat stat)
-	{
-		return _StatLevelGet(obj, stat);
-	};
-
-
-
+#pragma region Category
+	MonsterCategory GetCategory(objHndl objHnd);
+	bool IsCategoryType(objHndl objHnd, MonsterCategory categoryType);
+	bool IsCategorySubtype(objHndl objHnd, MonsterCategory categoryType);
+	bool IsUndead(objHndl objHnd);
+	bool IsOoze(objHndl objHnd);
+	bool IsSubtypeFire(objHndl objHnd);
 #pragma endregion
 
 #pragma region Dispatcher Stuff
@@ -117,6 +61,7 @@ struct Objects : AddressTable {
 
 #pragma endregion
 
+#pragma region Subsystems
 	DispatcherSystem dispatch;
 
 	D20System d20;
@@ -129,6 +74,12 @@ struct Objects : AddressTable {
 
 	InventorySystem inventory;
 
+	LocationSys * loc;
+
+	Pathfinding * pathfinding;
+
+	FloatLineSystem  * floats;
+#pragma endregion
 
 #pragma region Memory Internals
 	uint32_t DoesTypeSupportField(uint32_t objType, _fieldIdx objField);
@@ -140,21 +91,8 @@ struct Objects : AddressTable {
 
 
 
-	Objects() {
-		rebase(_GetInternalFieldInt32, 0x1009E1D0);
-		rebase(_GetInternalFieldInt64, 0x1009E2E0);
-		rebase(_StatLevelGet, 0x10074800);
-		rebase(_SetInternalFieldInt32, 0x100A0190);
-		rebase(_IsPlayerControlled, 0x1002B390);
-		rebase(_ObjGetProtoNum, 0x10039320);
-		rebase(_IsObjDeadNullDestroyed, 0x1007E650);
-		rebase(_GetMemoryAddress, 0x100C2A70);
-		rebase(_DoesObjectFieldExist, 0x1009C190);
-		rebase( _ObjectPropFetcher, 0x1009CD40);
-		rebase(_DLLFieldNames, 0x102CD840);
-		rebase(_InsetDataIntoInternalStack, 0x1009EA80);
-	}
-
+	Objects();
+#pragma region Privates
 private:
 	int(__cdecl *_GetInternalFieldInt32)(objHndl ObjHnd, int nFieldIdx);
 	int64_t(__cdecl *_GetInternalFieldInt64)(objHndl ObjHnd, int nFieldIdx);
@@ -168,7 +106,7 @@ private:
 	void(__cdecl * _ObjectPropFetcher)();
 	char ** _DLLFieldNames;
 	void(__cdecl * _InsetDataIntoInternalStack)();//(int nFieldIdx, void *, ToEEObjBody *@<eax>);
-
+#pragma endregion
 } ;
 
 extern Objects objects;

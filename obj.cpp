@@ -6,6 +6,9 @@
 #include "temple_functions.h"
 #include "condition.h"
 #include "obj_fieldnames.h"
+#include "location.h"
+#include "pathfinding.h"
+#include "float_line.h"
 
 Objects objects;
 
@@ -153,6 +156,25 @@ void Objects::InsertDataIntoInternalStack(GameObjectBody * objBody, obj_f fieldI
 	}
 }
 
+Objects::Objects()
+{
+	pathfinding = &pathfindingSys;
+	loc = &locSys;
+	floats = &floatSys;
+	rebase(_GetInternalFieldInt32, 0x1009E1D0);
+	rebase(_GetInternalFieldInt64, 0x1009E2E0);
+	rebase(_StatLevelGet, 0x10074800);
+	rebase(_SetInternalFieldInt32, 0x100A0190);
+	rebase(_IsPlayerControlled, 0x1002B390);
+	rebase(_ObjGetProtoNum, 0x10039320);
+	rebase(_IsObjDeadNullDestroyed, 0x1007E650);
+	rebase(_GetMemoryAddress, 0x100C2A70);
+	rebase(_DoesObjectFieldExist, 0x1009C190);
+	rebase(_ObjectPropFetcher, 0x1009CD40);
+	rebase(_DLLFieldNames, 0x102CD840);
+	rebase(_InsetDataIntoInternalStack, 0x1009EA80);
+}
+
 void Objects::PropFetcher(GameObjectBody* objBody, obj_f fieldIdx, void * dataOut) {
 	__asm {
 		push esi;
@@ -193,7 +215,102 @@ uint32_t Objects::abilityScoreLevelGet(objHndl objHnd, Stat stat, DispIO* dispIO
 	return objects.dispatch.dispatcherForCritters(objHnd, dispIO, dispTypeAbilityScoreLevel, stat + 1);
 }
 
+ObjectType Objects::GetType(objHndl obj)
+{
+	return static_cast<ObjectType>(_GetInternalFieldInt32(obj, obj_f_type));
+}
 
+uint32_t Objects::IsDeadNullDestroyed(objHndl obj)
+{
+	return _IsObjDeadNullDestroyed(obj);
+}
+
+uint32_t Objects::IsUnconscious(objHndl obj)
+{
+	if (obj == 0){ return 1; }
+	if (GetFlags(obj) & OF_DESTROYED){ return 1; }
+	if (GetHPCur(obj) < -10){ return 1; }
+	return d20.d20Query(obj, DK_QUE_Unconscious) != 0;
+}
+
+int32_t Objects::GetHPCur(objHndl obj)
+{
+	return _StatLevelGet(obj, stat_hp_current);
+}
+
+uint32_t Objects::GetRace(objHndl obj)
+{
+	return _StatLevelGet(obj, stat_race);
+}
+
+bool Objects::IsCritter(objHndl obj)
+{
+	auto type = GetType(obj);
+	return type == obj_t_npc || type == obj_t_pc;
+}
+
+bool Objects::IsPlayerControlled(objHndl obj)
+{
+	return _IsPlayerControlled(obj);
+}
+
+uint32_t Objects::ObjGetProtoNum(objHndl obj)
+{
+	return _ObjGetProtoNum(obj);
+}
+
+MonsterCategory Objects::GetCategory(objHndl objHnd)
+{
+	if (objHnd != 0) {
+		if (IsCritter(objHnd)) {
+			auto monCat = _GetInternalFieldInt64(objHnd, obj_f_critter_monster_category);
+			return (MonsterCategory)(monCat & 0xFFFFFFFF);
+		}
+	}
+	return mc_type_monstrous_humanoid; // default - so they have at least a weapons proficiency
+}
+
+bool Objects::IsCategoryType(objHndl objHnd, MonsterCategory categoryType)
+{
+	if (objHnd != 0) {
+		if (IsCritter(objHnd)) {
+			auto monCat = _GetInternalFieldInt64(objHnd, obj_f_critter_monster_category);
+			return (monCat & 0xFFFFFFFF) == categoryType;
+		}
+	}
+	return 0;
+}
+
+bool Objects::IsCategorySubtype(objHndl objHnd, MonsterCategory categoryType)
+{
+	if (objHnd != 0) {
+		if (IsCritter(objHnd)) {
+			auto monCat = _GetInternalFieldInt64(objHnd, obj_f_critter_monster_category);
+			return ((monCat >> 32) & 0xFFFFFFFF) == categoryType;
+		}
+	}
+	return 0;
+}
+
+bool Objects::IsUndead(objHndl objHnd)
+{
+	return IsCategoryType(objHnd, mc_type_undead);
+}
+
+bool Objects::IsOoze(objHndl objHnd)
+{
+	return IsCategoryType(objHnd, mc_type_ooze);
+}
+
+bool Objects::IsSubtypeFire(objHndl objHnd)
+{
+	return IsCategorySubtype(objHnd, mc_subtye_fire);
+}
+
+uint32_t Objects::StatLevelGet(objHndl obj, Stat stat)
+{
+	return _StatLevelGet(obj, stat);
+}
 #pragma endregion
 
 

@@ -388,11 +388,11 @@ static void loadProtoIds(MesHandle mesHandle) {
 
 uint32_t ItemCreationBuildRadialMenuEntry(DispatcherCallbackArgs args, ItemCreationType itemCreationType, char* helpSystemString, MesHandle combatMesLine)
 {
-	if (IsCombatActive()) { return 0; }
+	if (combatSys.isCombatActive()) { return 0; }
 	MesLine mesLine;
 	RadialMenuStruct radmenu;
 	mesLine.key = combatMesLine;
-	mesFuncs.GetLine_Safe(*combat.combatMesfileIdx, &mesLine);
+	mesFuncs.GetLine_Safe(*combatSys.combatMesfileIdx, &mesLine);
 	RadialMenuStructInit(&radmenu);
 	radmenu.field0 = (void*)mesLine.value;
 	radmenu.field20 = 37;

@@ -101,7 +101,8 @@ static ConfigSetting configSettings[] = {
 	CONF_INT(renderWidth),
 	CONF_INT(renderHeight),
 	CONF_BOOL(debugMessageEnable),
-	CONF_BOOL(lockCursor)
+	CONF_BOOL(lockCursor),
+	CONF_BOOL(showExactHPforNPCs)
 };
 
 void TemplePlusConfig::Load() {

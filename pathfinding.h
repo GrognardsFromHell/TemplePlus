@@ -1,7 +1,9 @@
-
 #pragma once
+
 #include "util/addresses.h"
 #include "temple_functions.h"
+
+#define pfCacheSize  0x20
 
 enum PathQueryFlags : uint32_t {
 	/*
@@ -73,15 +75,18 @@ struct Path {
 
 struct PathQueryResult {
 	Path path;
-	int field_1a18;
+	int d20sthg;
 	int someDelay;
 };
 
 #pragma pack(pop)
 
-extern struct Pathfinding : AddressTable {
+struct Pathfinding : AddressTable {
 	Pathfinding();
 
 	bool (__cdecl *FindPath)(PathQuery &query, PathQueryResult &result);
-	
-} pathfinding;
+	PathQueryResult * pathQArray;
+
+} ;
+
+extern Pathfinding pathfindingSys;

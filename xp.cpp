@@ -107,7 +107,7 @@ void GiveXPAwards(){
 	for (uint32_t i = 0; i < party.GroupNPCFollowersLen(); i++){
 		objHndl objHndNPCFollower = party.GroupNPCFollowersGetMemberN(i);
 		if (!objects.IsDeadNullDestroyed(objHndNPCFollower) 
-			&& !objects.d20.D20Query(objHndNPCFollower, DK_QUE_ExperienceExempt)){
+			&& !objects.d20.d20Query(objHndNPCFollower, DK_QUE_ExperienceExempt)){
 			fNumLivingPartyMembers += 1.0;
 		}
 	};
@@ -122,7 +122,7 @@ void GiveXPAwards(){
 	for (uint32_t i = 0; i < party.GroupListGetLen(); i++){
 		objHndl objHnd = party.GroupListGetMemberN(i);
 		if (objects.IsDeadNullDestroyed(objHnd)){ continue; };
-		if (objects.d20.D20Query(objHnd, DK_QUE_ExperienceExempt)) { continue; };
+		if (objects.d20.d20Query(objHnd, DK_QUE_ExperienceExempt)) { continue; };
 		if (party.ObjIsAIFollower(objHnd)) { continue; };
 
 		int level = objects.StatLevelGet(objHnd, stat_level);

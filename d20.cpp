@@ -10,16 +10,36 @@
 #include "dispatcher.h"
 #include "condition.h"
 #include "inventory.h"
+#include "python/python_debug.h"
+#include "pathfinding.h"
+#include "location.h"
+#include "action_sequence.h"
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
-static_assert(sizeof(D20Action) == 0x58, "D20Action struct has the wrong size!");
-const uint32_t asdf = sizeof(ActionSequence);
+static_assert(sizeof(D20Actn) == 0x58, "D20Action struct has the wrong size!");
+static_assert(sizeof(D20ActionDef) == 0x30, "D20ActionDef struct has the wrong size!");
 
 
 #pragma region D20System Implementation
+D20System d20sys;
 
-D20System d20;
+D20System::D20System()
+{
+	pathfinding = &pathfindingSys;
+	actSeq = &actSeqSys;
+	rebase(D20StatusInitFromInternalFields, 0x1004F910);
+	rebase(AppendObjHndToArray10BCAD94, 0x100DFAD0);
+	rebase(D20GlobalSthg10AA3284, 0x10AA3284);
+	rebase(globD20Action, 0x1186AC00);
+	rebase(ToHitProc, 0x100B7160);
+	rebase(d20Defs, 0x102CC5C8);
+	//rebase(ToEEd20ActionNames, 0x102CD2BC);
+	rebase(_d20aTriggerCombatCheck, 0x1008AE90);//ActnSeq * @<eax>
+	rebase(_tumbleCheck, 0x1008AA90);
+	rebase(_d20aTriggersAOO, 0x1008A9C0);
+}
+
 
 void D20System::D20StatusInitRace(objHndl objHnd)
 {
@@ -48,11 +68,117 @@ void D20System::D20StatusInitItemConditions(objHndl objHnd)
 	_D20StatusInitItemConditions(objHnd);
 }
 
-uint32_t D20System::D20Query(objHndl objHnd, D20DispatcherKey dispKey)
+uint32_t D20System::d20Query(objHndl objHnd, D20DispatcherKey dispKey)
 {
-	return _D20Query(objHnd, dispKey);
+	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+	if (dispatcher == nullptr || (int32_t)dispatcher == -1){ return 0; }
+	DispIO10h dispIO;
+	dispIO.dispIOType = dispIOType7;
+	dispIO.return_val = 0;
+	dispIO.data1 = 0;
+	dispIO.data2 = 0;
+	objects.dispatch.DispatcherProcessor(dispatcher, dispTypeD20Query, dispKey, &dispIO);
+	return dispIO.return_val;
 }
 
+uint32_t D20System::d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2)
+{
+	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+	if (dispatcher == nullptr || (int32_t)dispatcher == -1){ return 0; }
+	DispIO10h dispIO;
+	dispIO.dispIOType = dispIOType7;
+	dispIO.return_val = 0;
+	dispIO.data1 = arg1;
+	dispIO.data2 = arg2;
+	objects.dispatch.DispatcherProcessor(dispatcher, dispTypeD20Query, dispKey, &dispIO);
+	return dispIO.return_val;
+}
+
+void D20System::d20ActnInit(objHndl objHnd, D20Actn* d20a)
+{
+	d20a->d20APerformer = objHnd;
+	d20a->d20ActType = D20A_NONE;
+	d20a->data1=0 ;
+	d20a->d20ATarget=0;
+	d20a->field_30 = 0;
+	d20a->field_34 = 0;
+	d20a->spellEnum = 0;
+	objects.loc->getLocAndOff(objHnd, &d20a->locAndOff);
+	PathQueryResult * pq = d20a->path;
+	if (pq && pq >= pathfinding->pathQArray && pq < (pathfinding->pathQArray + pfCacheSize))
+	{
+		pq->d20sthg = 0;
+	}
+	d20a->path = nullptr;
+	d20a->d20SpellData.spellEnumOrg = 0;
+	d20a->animID = 0;
+	d20a->rollHist1 = -1;
+	d20a->rollHist2 = -1;
+	d20a->rollHist3 = -1;
+	
+}
+
+void D20System::globD20aSetTypeAndData1(D20ActionType d20type, uint32_t data1)
+{
+	globD20Action->d20ActType = d20type;
+	globD20Action->data1 = data1;
+}
+
+void D20System::d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx)
+{
+	__asm{
+		push esi;
+		push ecx;
+		mov ecx, this;
+		mov esi, idx;
+		push esi;
+		mov esi, [ecx]._d20aTriggerCombatCheck;
+		mov eax, actSeq;
+		call esi;
+		add esp, 4;
+
+		pop ecx;
+		pop esi;
+	}
+	//void d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx);//1008AE90    ActnSeq * @<eax>
+}
+
+int32_t D20System::d20aTriggersAOOCheck(D20Actn* d20a, void* iO)
+{
+	uint32_t result = 0;
+	__asm{
+		push esi;
+		push ecx;
+		push ebx;
+		mov ecx, this;
+		mov esi, iO;
+		push esi;
+		mov ebx, [ecx]._d20aTriggersAOO;
+		mov esi, d20a;
+		call ebx;
+		add esp, 4;
+		mov result, eax;
+		pop ebx;
+		pop ecx;
+		pop esi;
+	}
+	return result; //_d20aTriggersAOO(void * iO); // d20a @<esi> // 1008A9C0
+}
+
+uint32_t D20System::tumbleCheck(D20Actn* d20a)
+{
+	if (d20QueryWithData(d20a->d20ATarget, DK_QUE_Critter_Has_Spell_Active, 407, 0)) return 0; // spell_sanctuary active
+	if (actSeq->isPerforming(d20a->d20APerformer))
+	{
+		hooked_print_debug_message("movement aoo while performing...\n");
+		return 0;
+	}
+	if (!d20QueryWithData(d20a->d20ATarget, DK_QUE_AOOIncurs, (uint32_t)(d20a->d20APerformer & 0xFFFFffff), (uint32_t)(d20a->d20APerformer >> 32))){ return 0; }
+	if (!d20QueryWithData(d20a->d20APerformer, DK_QUE_AOOPossible, (uint32_t)(d20a->d20ATarget & 0xFFFFffff), (uint32_t)(d20a->d20ATarget >> 32))){ return 0; }
+	if (!d20QueryWithData(d20a->d20APerformer, DK_QUE_AOOWillTake, (uint32_t)(d20a->d20ATarget & 0xFFFFffff), (uint32_t)(d20a->d20ATarget >> 32))){ return 0; }
+	// not fully implemented yet, but that should cover 90% of the cases anyway ;) TODO: complete this function
+	return _tumbleCheck(d20a);
+}
 #pragma endregion 
 
 CharacterClasses charClasses;
@@ -75,6 +201,9 @@ public:
 		replaceFunction(0x100FD2D0, _D20StatusInitFeats);
 		replaceFunction(0x1004CA00, _D20StatusInitItemConditions);
 		replaceFunction(0x1004CC00, _D20Query);
+		replaceFunction(0x10093810, _d20aInitUsercallWrapper); // function takes esi as argument
+		replaceFunction(0x10089F80, _globD20aSetTypeAndData1);
+		replaceFunction(0x1004CC60, _d20QueryWithData);
 	}
 } d20Replacements;
 
@@ -88,7 +217,7 @@ void D20SpellDataExtractInfo
 {
 	if ( ! (spellEnumOriginal == nullptr) )
 	{
-		*spellEnumOriginal = d20SpellData->spellEnumOriginal;
+		*spellEnumOriginal = d20SpellData->spellEnumOrg;
 	}
 
 	if (!(spellSlotLevel == nullptr ) )
@@ -112,7 +241,7 @@ void D20SpellDataExtractInfo
 		}
  else
  {
-	 *spellEnum = d20SpellData->spellEnumOriginal;
+	 *spellEnum = d20SpellData->spellEnumOrg;
  }
 	}
 
@@ -357,7 +486,7 @@ void _D20StatusInitItemConditions(objHndl objHnd)
 	if (objects.IsCritter(objHnd))
 	{
 		objects.dispatch.DispatcherClearItemConds(dispatcher);
-		if (!objects.d20.D20Query(objHnd, DK_QUE_Polymorphed))
+		if (!objects.d20.d20Query(objHnd, DK_QUE_Polymorphed))
 		{
 			uint32_t invenCount = objects.GetInt32(objHnd, obj_f_critter_inventory_num);
 			for (uint32_t i = 0; i < invenCount; i++)
@@ -380,14 +509,56 @@ void _D20StatusInitItemConditions(objHndl objHnd)
 
 uint32_t _D20Query(objHndl objHnd, D20DispatcherKey dispKey)
 {
-	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
-	if (dispatcher == nullptr || (int32_t)dispatcher == -1){ return 0; }
-	DispIO10h dispIO;
-	dispIO.dispIOType = dispIOType7;
-	dispIO.return_val = 0;
-	dispIO.data1 = 0;
-	dispIO.data2 = 0;
-	objects.dispatch.DispatcherProcessor(dispatcher, dispTypeD20Query, dispKey, &dispIO);
-	return dispIO.return_val;
-
+	return d20sys.d20Query(objHnd, dispKey);
 }
+
+
+void __cdecl _d20aInitCdecl(objHndl objHnd, D20Actn* d20a)
+{
+	d20sys.d20ActnInit(objHnd, d20a);
+}
+
+
+void __declspec(naked) _d20aInitUsercallWrapper(objHndl objHnd)
+{
+	__asm{ // esi is D20Actn * d20a
+		push ebp; 
+		mov ebp, esp; // ebp = &var4  ebp+4 = &retaddr  ebp+8 = &arg1
+
+		push esi; 
+		mov eax, [ebp + 12];
+		push eax;
+		mov eax, [ebp + 8];
+		push eax;
+		mov eax, _d20aInitCdecl;
+		call eax;
+		add esp, 8;
+
+		pop esi;
+		mov esp, ebp;
+		pop ebp;
+		retn;
+	}
+}
+
+void _globD20aSetTypeAndData1(D20ActionType d20type, uint32_t data1)
+{
+	d20sys.globD20aSetTypeAndData1(d20type, data1);
+}
+
+uint32_t _d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2)
+{
+	return d20sys.d20QueryWithData(objHnd, dispKey, arg1, arg2);
+}
+
+static void D20Dumper() {
+
+	
+
+/*	for (auto i = 0; i < 68; i++) {
+		logger->info("{}", d20sys.ToEEd20ActionNames[i]);
+	}
+	*/ // dump completed, imported into TemplePlus :)
+}
+
+static PythonDebugFunc pyMapObjDebugFunc("dump_d20_actions", &D20Dumper);

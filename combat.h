@@ -5,13 +5,13 @@
 #include "tig/tig_mes.h"
 
 
-uint32_t IsCombatActive();
 uint32_t Combat_GetMesfileIdx_CombatMes();
 
 struct CombatSystem : AddressTable
 {
 	MesHandle * combatMesfileIdx;
 	uint32_t * combatModeActive;
+	unsigned isCombatActive();
 
 	CombatSystem()
 	{
@@ -20,4 +20,8 @@ struct CombatSystem : AddressTable
 	}
 } ;
 
-extern CombatSystem combat;
+extern CombatSystem combatSys;
+
+
+
+uint32_t _isCombatActive();
