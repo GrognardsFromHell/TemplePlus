@@ -94,8 +94,8 @@ extern "C" {
 	TIOLIB void TIOAPI tio_fgetpos();
 	TIOLIB int TIOAPI tio_fclose(TioFile *file);
 	TIOLIB TioFile* TIOAPI tio_fopen(const char *file, const char *mode);
-	TIOLIB void TIOAPI tio_remove();
-	TIOLIB void TIOAPI tio_fwrite();
+	TIOLIB void TIOAPI tio_remove(const char *file);
+	TIOLIB int TIOAPI tio_fwrite(void *buffer, int size, int count, TioFile *file);
 	TIOLIB int TIOAPI tio_fstat(TioFile *file, TioFileListFile* pFileInfo);
 	TIOLIB bool TIOAPI tio_fileexists(const char *path, TioFileListFile *pInfoOut);
 	TIOLIB void TIOAPI tio_rename();

@@ -162,6 +162,12 @@ public:
 
 	void InitializeDirect3d();
 
+	/*
+		Take a screenshot with the given size. The image will be stretched to the given
+		size.
+	*/
+	void TakeScaledScreenshot(const string &filename, int width, int height);
+
 	// Returns the current back buffer surface description
 	const D3DSURFACE_DESC &backBufferDesc() {
 		return mBackBufferDesc;
