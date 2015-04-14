@@ -803,10 +803,13 @@ void Graphics::RenderGFade() {
 
 void Graphics::RefreshSceneRect() {
 
+	// GFade is drawn after the scene buffer, so this is in window space
+	UpdateScreenSize(config.windowWidth, config.windowHeight);
+
 	/*
-	Calculates the rectangle within the back buffer that the scene
-	will be drawn in. This accounts for "fit to width/height" scenarios
-	where the back buffer has a different aspect ratio.
+		Calculates the rectangle within the back buffer that the scene
+		will be drawn in. This accounts for "fit to width/height" scenarios
+		where the back buffer has a different aspect ratio.
 	*/
 	float w = static_cast<float>(graphics.windowWidth());
 	float h = static_cast<float>(graphics.windowHeight());
