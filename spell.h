@@ -94,10 +94,24 @@ const uint32_t TestSizeOfSpellPacket = sizeof(SpellPacket); // should be 0xAF0  
 struct SpellSystem : AddressTable
 {
 	IdxTable<SpellPacket> * spellCastIdxTable;
+	uint32_t getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t classLvl, uint32_t slotLvl, uint32_t unknown1);
+	uint32_t getWizSchool(objHndl objHnd);
+	uint32_t getStatModBonusSpellCount(objHndl objHnd, uint32_t classCode, uint32_t slotLvl);
+	uint32_t(__cdecl * spellRemoveFromStorage)(objHndl objHnd, obj_f fieldIdx, SpellStoreData * spellData, int unknown);
+	uint32_t (__cdecl * spellsPendingToMemorized)(objHndl objHnd);
 	SpellSystem()
 	{
 		rebase(spellCastIdxTable, 0x10AAF218);
+		rebase(_getSpellCountByClassLvl, 0x100F4D10);
+		rebase(_getStatModBonusSpellCount, 0x100F4C30);
+		rebase(spellRemoveFromStorage, 0x100758A0);
+		rebase(spellsPendingToMemorized, 0x100757D0);
 	}
+private:
+
+	uint32_t(__cdecl * _getSpellCountByClassLvl)();
+	uint32_t(__cdecl* _getStatModBonusSpellCount)();
+
 };
 
 extern SpellSystem spells;
@@ -145,3 +159,4 @@ const uint32_t TestSizeOfSpellStoreState = sizeof(SpellStoreState);
 //const uint32_t bbb = sizeof(int32_t);
 
 
+uint32_t _getWizSchool(objHndl objHnd);

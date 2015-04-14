@@ -4,6 +4,11 @@
 #include "util/addresses.h"
 #include "tig.h"
 
+enum TigTextStyleFlag {
+	TTSF_DROP_SHADOW = 0x8,
+	TTSF_CENTER = 0x10
+};
+
 /**
  * Describes how text is rendered on the screen (style, font, etc.)
  */

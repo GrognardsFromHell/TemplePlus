@@ -5,50 +5,105 @@
 #include "d20_defs.h"
 #include "spell.h"
 
-
-struct D20Action;
-struct ActionSequence;
+struct ActionSequenceSystem;
+// Forward decls
+struct D20Actn;
+struct ActnSeq;
 enum SpontCastType;
 struct D20SpellData;
-enum D20ActionType : uint32_t;
+enum D20ActionType : int32_t;
 enum D20CAF : uint32_t;
+enum SpontCastType : unsigned char;
+struct D20SpellData;
+struct D20Actn;
+struct D20ActionDef;
+struct ActnSeq;
+struct PathQueryResult;
+struct Pathfinding;
 
 
 
+struct D20System : AddressTable
+{
+	void D20StatusInitRace(objHndl objHnd);
+	void D20StatusInitClass(objHndl objHnd);
+	void D20StatusInit(objHndl objHnd);
+	void D20StatusInitDomains(objHndl objHnd);
+	void D20StatusInitFeats(objHndl objHnd);
+	void D20StatusInitItemConditions(objHndl objHnd);
+	uint32_t d20Query(objHndl ObjHnd, D20DispatcherKey dispKey);
+	uint32_t d20QueryWithData(objHndl ObjHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
 
-#pragma region D20 Spell Related Structs
+	void d20ActnInit(objHndl objHnd, D20Actn * d20a);
+	void globD20aSetTypeAndData1(D20ActionType d20type, uint32_t data1);
+	void d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx);//1008AE90    ActnSeq * @<eax>
+	int32_t d20aTriggersAOOCheck(D20Actn * d20a, void * iO);// 1008A9C0
+	uint32_t tumbleCheck(D20Actn*); 
 
-enum SpontCastType : unsigned char {
-	spontCastGoodCleric = 2,
-	spontCastEvilCleric = 4,
-	spontCastDruid = 8
+	ActionSequenceSystem * actSeq;
+
+	D20Actn * globD20Action;
+	D20ActionDef * d20Defs;
+	void (__cdecl *D20StatusInitFromInternalFields)(objHndl objHnd, Dispatcher *dispatcher);
+	void (__cdecl *AppendObjHndToArray10BCAD94)(objHndl ObjHnd);
+	void(__cdecl * _d20aTriggerCombatCheck)(int32_t idx);//1008AE90    ActnSeq * @<eax>
+	uint32_t * D20GlobalSthg10AA3284;
+	void(__cdecl *ToHitProc)(D20Actn *);
+	uint32_t (__cdecl*_tumbleCheck)(D20Actn* d20a);
+	int32_t (__cdecl *_d20aTriggersAOO)(void * iO); // d20a @<esi> // 1008A9C0
+
+	Pathfinding * pathfinding;
+	//char **ToEEd20ActionNames;
+
+	D20System();
 };
+
+
+extern D20System d20sys;
+
+
+struct CharacterClasses : AddressTable
+{
+public:
+	Stat charClassEnums[NUM_CLASSES];
+	CharacterClasses()
+	{
+		Stat _charClassEnums[NUM_CLASSES] = { stat_level_barbarian, stat_level_bard, stat_level_cleric, stat_level_druid, stat_level_fighter, stat_level_monk, stat_level_paladin, stat_level_ranger, stat_level_rogue, stat_level_sorcerer, stat_level_wizard };
+		memcpy(charClassEnums, _charClassEnums, NUM_CLASSES * sizeof(uint32_t));
+	};
+};
+
+extern CharacterClasses charClasses;
+
+void _D20StatusInitRace(objHndl objHnd);
+void _D20StatusInitClass(objHndl objHnd);
+void _D20StatusInit(objHndl objHnd);
+void _D20StatusInitDomains(objHndl objHnd);
+void _D20StatusInitFeats(objHndl objHnd);
+void _D20StatusInitItemConditions(objHndl objHnd);
+uint32_t _D20Query(objHndl objHnd, D20DispatcherKey dispKey);
+void __cdecl D20SpellDataSetSpontCast(D20SpellData*, SpontCastType spontCastType);
+void D20SpellDataExtractInfo
+(D20SpellData * d20SpellData, uint32_t * spellEnum, uint32_t * spellEnumOriginal, uint32_t * spellClassCode, uint32_t * spellSlotLevel, uint32_t * itemSpellData, uint32_t * metaMagicData);
+void _d20aInitUsercallWrapper(objHndl objHnd);
+void _globD20aSetTypeAndData1(D20ActionType d20type, uint32_t data1);
+uint32_t _d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
 
 struct D20SpellData
 {
-	uint16_t spellEnumOriginal;
+	uint16_t spellEnumOrg;
 	MetaMagicData metaMagicData;
-	uint8_t spellClassCode ;
+	uint8_t spellClassCode;
 	uint8_t itemSpellData;
-	SpontCastType spontCastType: 4;
+	SpontCastType spontCastType : 4;
 	unsigned char spellSlotLevel : 4;
 };
 
 const uint32_t TestSizeOfD20SpellData = sizeof(D20SpellData);
 
-
-void __cdecl D20SpellDataSetSpontCast(D20SpellData*, SpontCastType spontCastType);
-void D20SpellDataExtractInfo
-(D20SpellData * d20SpellData, uint32_t * spellEnum, uint32_t * spellEnumOriginal,
-uint32_t * spellClassCode, uint32_t * spellSlotLevel, uint32_t * itemSpellData,
-uint32_t * metaMagicData);
-
-
-#pragma endregion
-
-
 #pragma region D20 Action and Action Sequence Structs
-struct D20Action
+
+struct D20Actn
 {
 	D20ActionType d20ActType;
 	uint32_t data1;
@@ -65,87 +120,34 @@ struct D20Action
 	D20SpellData d20SpellData;
 	uint32_t spellEnum;
 	uint32_t animID;
-	void * path;
+	PathQueryResult * path;
 };
 
 
-struct ActionSequence
+struct D20ActionDef
 {
-	D20Action d20ActArray[32];
-	uint32_t d20ActArrayNum;
-	ActionSequence * prevSeq;
-	uint32_t field_B0C;
-	uint32_t seqOccupied;
-	uint32_t field_B14;
-	D20CAF callActionFrameFlags;
-	uint32_t idxSthg;
-	uint32_t field_B20;
-	uint32_t field_B24;
-	uint32_t field_B28;
-	uint32_t field_B2C;
-	uint32_t field_B30;
-	uint32_t field_B34;
-	objHndl performer;
-	LocAndOffsets locAndOff;
-	objHndl unknown_maybeInteruptee;
-	SpellPacketBody spellPktBody;
-	D20Action * d20Action;
-	uint32_t field_1644_maybe_spellAssignedFlag;
+	uint32_t(__cdecl *addToSeqFunc)(D20Actn *, ActnSeq *, void*iO);
+	void * unknownFunc1;
+	uint32_t (__cdecl * actionCheckFunc)(D20Actn* d20a, void* iO);
+	void * targetCheckFunc;
+	void * toHitFunc_maybe;
+	uint32_t (__cdecl* performFunc)(D20Actn* d20a);
+	void * actionFrameFunc;
+	void * projectilePerformFunc;
+	uint32_t pad_apparently;
+	void * moveFunc_maybe;
+	void * unknownFunc3;
+	uint32_t flags; // not D20CAF I think; maybe the STD flags?
 };
-
-const uint32_t TestSizeOfActionSequence = sizeof(ActionSequence); // should be 0x1648 (5704)
 
 #pragma endregion
 
-struct CharacterClasses : AddressTable
-{
-public:
-	Stat charClassEnums[NUM_CLASSES];
-	CharacterClasses()
-	{
-		Stat _charClassEnums[NUM_CLASSES] = { stat_level_barbarian, stat_level_bard, stat_level_cleric, stat_level_druid, stat_level_fighter, stat_level_monk, stat_level_paladin, stat_level_ranger, stat_level_rogue, stat_level_sorcerer, stat_level_wizard };
-		memcpy(charClassEnums, _charClassEnums, NUM_CLASSES * sizeof(uint32_t));
-	};
+
+
+enum SpontCastType : unsigned char{
+	spontCastGoodCleric = 2,
+	spontCastEvilCleric = 4,
+	spontCastDruid = 8
 };
 
-extern CharacterClasses charClasses;
-
-struct D20System : AddressTable
-{
-	void D20StatusInitRace(objHndl objHnd);
-	void D20StatusInitClass(objHndl objHnd);
-	void D20StatusInit(objHndl objHnd);
-	void D20StatusInitDomains(objHndl objHnd);
-	void D20StatusInitFeats(objHndl objHnd);
-	void D20StatusInitItemConditions(objHndl objHnd);
-	uint32_t D20Query(objHndl ObjHnd, D20DispatcherKey dispKey);
-	D20Action * globD20Action;
-
-	void (__cdecl *D20StatusInitFromInternalFields)(objHndl objHnd, Dispatcher *dispatcher);
-	void (__cdecl *AppendObjHndToArray10BCAD94)(objHndl ObjHnd);
-	uint32_t * D20GlobalSthg10AA3284;
-
-
-
-	D20System()
-	{
-		rebase(D20StatusInitFromInternalFields, 0x1004F910);
-		rebase(AppendObjHndToArray10BCAD94, 0x100DFAD0);
-		rebase(D20GlobalSthg10AA3284, 0x10AA3284);
-		rebase(globD20Action, 0x1186AC00);
-	};
-};
-
-
-extern D20System d20;
-
-
-
-
-void _D20StatusInitRace(objHndl objHnd);
-void _D20StatusInitClass(objHndl objHnd);
-void _D20StatusInit(objHndl objHnd);
-void _D20StatusInitDomains(objHndl objHnd);
-void _D20StatusInitFeats(objHndl objHnd);
-void _D20StatusInitItemConditions(objHndl objHnd);
-uint32_t _D20Query(objHndl objHnd, D20DispatcherKey dispKey);
+#pragma endregion 

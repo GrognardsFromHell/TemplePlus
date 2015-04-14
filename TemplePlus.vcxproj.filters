@@ -155,6 +155,12 @@
     <ClCompile Include="idxtables.cpp">
       <Filter>generic data structures</Filter>
     </ClCompile>
+    <ClCompile Include="bonusspells.cpp">
+      <Filter>Mods and Fixes\Spell Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="spell_condition.cpp">
+      <Filter>Mods and Fixes\Spell Fixes</Filter>
+    </ClCompile>
     <ClCompile Include="python\python.cpp">
       <Filter>python</Filter>
     </ClCompile>
@@ -192,6 +198,13 @@
       <Filter>utils</Filter>
     </ClCompile>
     <ClCompile Include="util\version.cpp" />
+    <ClCompile Include="renderstates.cpp" />
+    <ClCompile Include="tio\tio_utils.cpp" />
+    <ClCompile Include="tig\tig.cpp" />
+    <ClCompile Include="tig\tig_sound.cpp" />
+    <ClCompile Include="action_sequence.cpp" />
+    <ClCompile Include="float_line.cpp" />
+    <ClCompile Include="location.cpp" />
     <ClCompile Include="python\python_embed.cpp" />
     <ClCompile Include="python\python_importer.cpp" />
     <ClCompile Include="python\python_consoleout.cpp" />
@@ -387,6 +400,12 @@
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="tio\tio.h" />
+    <ClInclude Include="renderstates.h" />
+    <ClInclude Include="tio\tio_utils.h" />
+    <ClInclude Include="tig\tig_sound.h" />
+    <ClInclude Include="action_sequence.h" />
+    <ClInclude Include="float_line.h" />
+    <ClInclude Include="location.h" />
     <ClInclude Include="python\python_importer.h" />
     <ClInclude Include="python\python_consoleout.h" />
     <ClInclude Include="python\python_game.h" />
@@ -462,12 +481,15 @@
     <Filter Include="generic data structures">
       <UniqueIdentifier>{9fef2488-221b-44e8-90ae-f5cf72e4b8b1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Mods and Fixes\Spell Fixes">
+      <UniqueIdentifier>{0e53287e-d500-4b3d-a274-09c4e0cf6dbf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\Spellslinger%27s Notes\bonusspells.txt">
-      <Filter>Mods and Fixes</Filter>
-    </Text>
     <Text Include="appveyor.yml" />
+    <Text Include="..\Spellslinger%27s Notes\bonusspells.txt">
+      <Filter>Mods and Fixes\Spell Fixes</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Dependencies">

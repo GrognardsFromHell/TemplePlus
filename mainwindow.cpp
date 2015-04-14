@@ -134,8 +134,8 @@ bool CreateMainWindow(TigConfig* settings) {
 		graphics.UpdateWindowSize(w, h);
 
 		// Scratchbuffer size sometimes doesn't seem to be set by ToEE itself
-		video->current_width = config.screenWidth;
-		video->current_height = config.screenHeight;
+		video->current_width = config.renderWidth;
+		video->current_height = config.renderHeight;
 		temple_set<0x10307284>(video->current_width);
 		temple_set<0x10307288>(video->current_height);
 

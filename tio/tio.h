@@ -6,15 +6,15 @@ enum TioFileFlag {
 
 #pragma pack(push, 1)
 struct TioFileFuncs {
-	int (__cdecl *flush)(void* handle) = nullptr;
-	int (__cdecl *ungetc)(int ch, void* handle) = nullptr;
-	size_t (__cdecl *read)(void* ptr, size_t size, size_t count, void* handle) = nullptr;
-	size_t (__cdecl *write)(const void* ptr, size_t size, size_t count, void* handle) = nullptr;
-	int (__cdecl *seek)(int offset, int origin, void* handle) = nullptr;
-	int (__cdecl *tell)(void* handle) = nullptr;
-	int (__cdecl *eof)(void* handle) = nullptr;
-	int (__cdecl *stat)(struct stat*, void* handle) = nullptr;
-	int (__cdecl *close)(void* handle) = nullptr;
+	int(__cdecl *flush)(void* handle) = nullptr;
+	int(__cdecl *ungetc)(int ch, void* handle) = nullptr;
+	size_t(__cdecl *read)(void* ptr, size_t size, size_t count, void* handle) = nullptr;
+	size_t(__cdecl *write)(const void* ptr, size_t size, size_t count, void* handle) = nullptr;
+	int(__cdecl *seek)(int offset, int origin, void* handle) = nullptr;
+	int(__cdecl *tell)(void* handle) = nullptr;
+	int(__cdecl *eof)(void* handle) = nullptr;
+	int(__cdecl *stat)(struct stat*, void* handle) = nullptr;
+	int(__cdecl *close)(void* handle) = nullptr;
 };
 
 struct TioFile {
@@ -60,33 +60,33 @@ extern "C" {
 #define TIOLIB __declspec(dllimport)
 
 	/*
-		Performs a search (including the current search path) for the given file pattern, such as
-		*.dat or similar and writes the result to list.
+	Performs a search (including the current search path) for the given file pattern, such as
+	*.dat or similar and writes the result to list.
 	*/
 	TIOLIB void TIOAPI tio_filelist_create(TioFileList* list, const char* globPattern);
 
 	/*
-		Destroys a result list previously created with tio_filelist_create.
+	Destroys a result list previously created with tio_filelist_create.
 	*/
 	TIOLIB void TIOAPI tio_filelist_destroy(TioFileList* list);
 
 	/*
-		Adds a file (either a directory or a .dat file) to the TIO search path.
+	Adds a file (either a directory or a .dat file) to the TIO search path.
 	*/
 	TIOLIB int TIOAPI tio_path_add(const char* path);
 
 	/*
-		Removes a previously added path.
+	Removes a previously added path.
 	*/
 	TIOLIB bool TIOAPI tio_path_remove(const char* path);
 
 	/*
-		Creates a new directory.
+	Creates a new directory.
 	*/
 	TIOLIB void TIOAPI tio_mkdir(const char* path);
 
 	/*
-		Reads data from an opened file. Largely equivalent to fread.
+	Reads data from an opened file. Largely equivalent to fread.
 	*/
 	TIOLIB int TIOAPI tio_fread(void* buffer, size_t size, size_t count, TioFile* file);
 
@@ -94,10 +94,10 @@ extern "C" {
 	TIOLIB void TIOAPI tio_fgetpos();
 	TIOLIB int TIOAPI tio_fclose(TioFile *file);
 	TIOLIB TioFile* TIOAPI tio_fopen(const char *file, const char *mode);
-	TIOLIB void TIOAPI tio_remove();
-	TIOLIB void TIOAPI tio_fwrite();
+	TIOLIB void TIOAPI tio_remove(const char *file);
+	TIOLIB int TIOAPI tio_fwrite(void *buffer, int size, int count, TioFile *file);
 	TIOLIB int TIOAPI tio_fstat(TioFile *file, TioFileListFile* pFileInfo);
-	TIOLIB bool TIOAPI tio_fileexists(const char *path, TioFileList *pInfoOut);
+	TIOLIB bool TIOAPI tio_fileexists(const char *path, TioFileListFile *pInfoOut);
 	TIOLIB void TIOAPI tio_rename();
 	TIOLIB void TIOAPI tio_path_guid();
 	TIOLIB void TIOAPI tio_fseek();

@@ -4,6 +4,7 @@
 #include "util/addresses.h"
 #include "idxtables.h"
 #include "d3d8to9/d3d8to9.h"
+#include "tig.h"
 
 struct TigTexture
 {
@@ -68,15 +69,12 @@ struct TigBuffer
 
 struct TigTextureRegistryEntry
 {
-	int set_to_true_in_shader;
+	bool set_to_true_in_shader;
 	int textureId;
 	char name[260];
-	int field_10C; // Width??
-	int field_110; // Height??
-	int field_114;
-	int field_118;
-	int field_11C; // Width??
-	int field_120; // Height??
+	int width;
+	int height;
+	TigRect rect;
 	int field_124;
 	TigBuffer *buffer;
 };
@@ -92,13 +90,24 @@ struct TigBufferCreateArgs {
 
 struct TextureFuncs : AddressTable {
 
-	int(__cdecl *GetLoaded)(int textureId, TigTextureRegistryEntry *textureOut);
-
 	int(__cdecl *CreateBuffer)(TigBufferCreateArgs *createargs, TigBuffer **bufferOut);
 
+	/*
+		Registers a texture filename in the texture registry and returns the assigned texture id in in pTexIdOut.
+		Returns 0 on success, 17 on failure.
+	*/
+	int (__cdecl *RegisterTexture)(const char *filename, int *pTexIdOut);
+
+	/*
+		Loads the given texture by id or if it has already been loaded, returns the loaded entry.
+		Returns 0 on success, 17 on failure.
+	*/
+	int (__cdecl *LoadTexture)(int textureId, TigTextureRegistryEntry *pTextureOut);
+
 	TextureFuncs() {
-		rebase(GetLoaded, 0x101EECA0);
 		rebase(CreateBuffer, 0x101DCE50);
+		rebase(RegisterTexture, 0x101EE7B0);
+		rebase(LoadTexture, 0x101EECA0);
 	}
 };
 

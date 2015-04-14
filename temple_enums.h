@@ -1,5 +1,7 @@
 #pragma once
 
+
+#pragma region feats
 enum feat_enums : uint32_t {
 	FEAT_ACROBATIC = 0x0,
 	FEAT_AGILE = 0x1,
@@ -668,6 +670,9 @@ enum featPropertyEnums : uint32_t {
 	featPropRogueFeat = 0x00040000
 };
 
+#pragma endregion
+
+#pragma region Object stuff
 enum ObjectType : uint32_t {
 	obj_t_portal = 0,
 	obj_t_container = 1,
@@ -1142,6 +1147,46 @@ enum obj_f : uint32_t {
 
 };
 
+/*
+Flags supported by all object types.
+Query with objects.GetFlags
+*/
+enum ObjectFlag : uint32_t {
+	OF_DESTROYED = 1,
+	OF_OFF,
+	OF_FLAT,
+	OF_TEXT,
+	OF_SEE_THROUGH,
+	OF_SHOOT_THROUGH,
+	OF_TRANSLUCENT,
+	OF_SHRUNK,
+	OF_DONTDRAW,
+	OF_INVISIBLE,
+	OF_NO_BLOCK,
+	OF_CLICK_THROUGH,
+	OF_INVENTORY,
+	OF_DYNAMIC,
+	OF_PROVIDES_COVER,
+	OF_RANDOM_SIZE,
+	OF_NOHEIGHT,
+	OF_WADING,
+	OF_UNUSED_40000,
+	OF_STONED,
+	OF_DONTLIGHT,
+	OF_TEXT_FLOATER,
+	OF_INVULNERABLE,
+	OF_EXTINCT,
+	OF_TRAP_PC,
+	OF_TRAP_SPOTTED,
+	OF_DISALLOW_WADING,
+	OF_UNUSED_08000000,
+	OF_HEIGHT_SET,
+	OF_ANIMATED_DEAD,
+	OF_TELEPORTED,
+	OF_RADIUS_SET
+};
+
+
 enum _standPointType_enum : uint32_t {
 	STANDPOINT_DAY = 0,
 	STANDPOINT_NIGHT = 1,
@@ -1273,6 +1318,10 @@ enum Stat : uint32_t {
 	stat_save_willpower = 0x109,
 };
 
+#pragma endregion
+
+
+#pragma region D20
 
 enum D20Query : uint32_t {
 	Q_Helpless = 0x0,
@@ -1681,7 +1730,7 @@ enum enum_disp_type : uint32_t {
 	dispType7,
 	dispType8,
 	dispType9,
-	dispType10,
+	dispTypeAbilityScoreLevel,
 	dispType11,
 	dispType12,
 	dispType13,
@@ -1753,7 +1802,12 @@ enum enum_disp_type : uint32_t {
 
 };
 
-enum enum_monster_category : uint32_t {
+
+#pragma endregion
+
+#pragma region Critter
+
+enum MonsterCategory : uint32_t {
 	mc_type_aberration = 0,
 	mc_type_animal = 1,
 	mc_type_beast = 2,
@@ -1775,74 +1829,9 @@ enum enum_monster_category : uint32_t {
 	mc_subtye_fire = 4096
 };
 
-/*
-	Flags supported by all object types.
-	Query with objects.GetFlags
-*/
-enum ObjectFlag : uint32_t {
-	OF_DESTROYED = 1,
-	OF_OFF,
-	OF_FLAT,
-	OF_TEXT,
-	OF_SEE_THROUGH,
-	OF_SHOOT_THROUGH,
-	OF_TRANSLUCENT,
-	OF_SHRUNK,
-	OF_DONTDRAW,
-	OF_INVISIBLE,
-	OF_NO_BLOCK,
-	OF_CLICK_THROUGH,
-	OF_INVENTORY,
-	OF_DYNAMIC,
-	OF_PROVIDES_COVER,
-	OF_RANDOM_SIZE,
-	OF_NOHEIGHT,
-	OF_WADING,
-	OF_UNUSED_40000,
-	OF_STONED,
-	OF_DONTLIGHT,
-	OF_TEXT_FLOATER,
-	OF_INVULNERABLE,
-	OF_EXTINCT,
-	OF_TRAP_PC,
-	OF_TRAP_SPOTTED,
-	OF_DISALLOW_WADING,
-	OF_UNUSED_08000000,
-	OF_HEIGHT_SET,
-	OF_ANIMATED_DEAD,
-	OF_TELEPORTED,
-	OF_RADIUS_SET
-};
 
-enum ItemFlag : uint32_t {
-	OIF_IDENTIFIED = 0x1,
-	OIF_WONT_SELL = 0x2,
-	OIF_IS_MAGICAL = 0x4,
-	OIF_NO_PICKPOCKET = 0x8,
-	OIF_NO_DISPLAY = 0x10,
-	OIF_NO_DROP = 0x20,
-	OIF_NEEDS_SPELL = 0x40,
-	OIF_CAN_USE_BOX = 0x80,
-	OIF_NEEDS_TARGET = 0x100,
-	OIF_LIGHT_SMALL = 0x200,
-	OIF_LIGHT_MEDIUM = 0x400,
-	OIF_LIGHT_LARGE = 0x800,
-	OIF_LIGHT_XLARGE = 0x1000,
-	OIF_PERSISTENT = 0x2000,
-	OIF_MT_TRIGGERED = 0x4000,
-	OIF_STOLEN = 0x8000,
-	OIF_USE_IS_THROW = 0x10000,
-	OIF_NO_DECAY = 0x20000,
-	OIF_UBER = 0x40000,
-	OIF_NO_NPC_PICKUP = 0x80000,
-	OIF_NO_RANGED_USE = 0x100000,
-	OIF_VALID_AI_ACTION = 0x200000,
-	OIF_DRAW_WHEN_PARENTED = 0x400000,
-	OIF_EXPIRES_AFTER_USE = 0x800000,
-	OIF_NO_LOOT = 0x1000000,
-	OIF_USES_WAND_ANIM = 0x2000000,
-	OIF_NO_TRANSFER = 0x4000000
-};
+#pragma endregion
+
 
 enum PortalFlag : uint32_t {
 	OPF_LOCKED = 0x1,
@@ -1908,6 +1897,39 @@ enum Deities : uint32_t
 	DEITY_PYREMIUS = 26,
 	DEITY_RALISHAZ = 27
 };
+
+
+#pragma region Items
+enum ItemFlag : uint32_t {
+	OIF_IDENTIFIED = 0x1,
+	OIF_WONT_SELL = 0x2,
+	OIF_IS_MAGICAL = 0x4,
+	OIF_NO_PICKPOCKET = 0x8,
+	OIF_NO_DISPLAY = 0x10,
+	OIF_NO_DROP = 0x20,
+	OIF_NEEDS_SPELL = 0x40,
+	OIF_CAN_USE_BOX = 0x80,
+	OIF_NEEDS_TARGET = 0x100,
+	OIF_LIGHT_SMALL = 0x200,
+	OIF_LIGHT_MEDIUM = 0x400,
+	OIF_LIGHT_LARGE = 0x800,
+	OIF_LIGHT_XLARGE = 0x1000,
+	OIF_PERSISTENT = 0x2000,
+	OIF_MT_TRIGGERED = 0x4000,
+	OIF_STOLEN = 0x8000,
+	OIF_USE_IS_THROW = 0x10000,
+	OIF_NO_DECAY = 0x20000,
+	OIF_UBER = 0x40000,
+	OIF_NO_NPC_PICKUP = 0x80000,
+	OIF_NO_RANGED_USE = 0x100000,
+	OIF_VALID_AI_ACTION = 0x200000,
+	OIF_DRAW_WHEN_PARENTED = 0x400000,
+	OIF_EXPIRES_AFTER_USE = 0x800000,
+	OIF_NO_LOOT = 0x1000000,
+	OIF_USES_WAND_ANIM = 0x2000000,
+	OIF_NO_TRANSFER = 0x4000000
+};
+
 
 enum WeaponTypes : uint32_t
 {
@@ -1997,3 +2019,4 @@ enum ArmorType : uint32_t
 	ARMOR_TYPE_NONE = 0x10
 };
 
+#pragma endregion 

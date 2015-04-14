@@ -83,12 +83,14 @@ struct ToEEHashtableSystem : AddressTable
 	{
 		uint32_t bitmask = (hashtable->powerOfTwo - 1);
 		uint32_t idx = key & bitmask;
-		uint32_t storedKey = hashtable->keyArray[idx];
+		uint32_t * keyArray = hashtable->keyArray;
+		assert(keyArray);
+		uint32_t storedKey = keyArray[idx];
 		if (!storedKey){ return 0x11; }
 		while (storedKey != key)
 		{
 			idx = bitmask & (idx + 1);
-			storedKey = hashtable->keyArray[idx];
+			storedKey = keyArray[idx];
 			if (!storedKey){ return 0x11; }
 		}
 
@@ -103,6 +105,32 @@ struct ToEEHashtableSystem : AddressTable
 	uint32_t StringHash(char * stringIn)
 	{
 		return ELFhash(stringIn);
+	}
+
+	uint32_t HashtableOverwriteItem(ToEEHashtable<T> * hashtable, uint32_t key, T* structIn)
+	{
+		if (key == 0){ return 0x11; }
+		uint32_t bitmask = hashtable->powerOfTwo - 1;
+		uint32_t idxNew = key & bitmask;
+		uint32_t storedKey = hashtable->keyArray[idxNew];
+
+		while (storedKey != key)
+		{
+			if (!storedKey)
+			{
+				if (hashtable->numItems >= hashtable->capacity){ return 3; }
+				hashtable->keyArray[idxNew] = key;
+				hashtable->dataArray[idxNew] = structIn;
+				hashtable->idxArray[hashtable->numItems] = idxNew;
+				hashtable->numItems += 1;
+				return 0;
+			}
+			idxNew = bitmask & (idxNew + 1);
+			storedKey = hashtable->keyArray[idxNew];
+		}
+
+		hashtable->dataArray[idxNew] = structIn;
+		return 0x111;
 	}
 
 	ToEEHashtableSystem()

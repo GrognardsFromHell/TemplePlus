@@ -35,6 +35,19 @@ struct CondHashSystem : ToEEHashtableSystem < CondStruct >
 		return condOut;
 	}
 
+	uint32_t CondStructOverwriteInHashtable(CondStruct * condStruct)
+	{
+		uint32_t key = StringHash(condStruct->condName);
+		CondStruct * condFound;
+		uint32_t result = HashtableSearch((ToEEHashtable < CondStruct >*)temple_address(CondStructHastableAddr), key, &condFound);
+		if (!result)
+		{
+			logger->info("Condition Overwrite warning: Condition Struct not found, adding new.");
+		}
+		result = HashtableOverwriteItem((ToEEHashtable < CondStruct >*)temple_address(CondStructHastableAddr), key, condStruct);
+		return result;
+	}
+
 };
 
 

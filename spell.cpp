@@ -1,7 +1,9 @@
 
 #include "stdafx.h"
 #include "util/fixes.h"
+#include "common.h"
 #include "spell.h"
+#include "obj.h"
 
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
@@ -42,7 +44,7 @@ public:
 } spellHostilityFlagFix;
 
 
-class SpellEnumExpansion : public TempleFix {
+class SpellFuncReplacements : public TempleFix {
 public:
 	const char* name() override {
 		return "Expand the range of usable spellEnums. Currently walled off at 802.";
@@ -50,8 +52,68 @@ public:
 
 	void apply() override {
 		// writeHex(0x100779DE + 2, "A0 0F"); // this prevents the crash from casting from scroll, but it fucks up normal spell casting... (can't go to radial menu to cast!)
+		replaceFunction(0x100FDEA0, _getWizSchool);
 	}
-} spellEnumExpansionMod;
+} spellFuncReplacements;
+
+
+uint32_t SpellSystem::getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t classLvl, uint32_t slotLvl, uint32_t unknown1)
+{
+	__asm{
+		// ecx - classLvl
+		// eax - slotLvl
+		// edx - unknown?
+		push esi;
+		push ecx;
+		mov ecx, this;
+		mov esi, [ecx]._getSpellCountByClassLvl;
+		mov eax, classCode;
+		push eax;
+		mov eax, slotLvl;
+		mov ecx, classLvl;
+		mov edx , unknown1
+		call esi;
+		add esp, 4;
+		pop ecx;
+		pop esi;
+	}
+}
+
+uint32_t SpellSystem::getWizSchool(objHndl objHnd)
+{
+	return ( objects.GetInt32(objHnd, obj_f_critter_school_specialization) & 0x000000FF );
+}
+
+uint32_t SpellSystem::getStatModBonusSpellCount(objHndl objHnd, uint32_t classCode, uint32_t slotLvl)
+{
+	uint32_t objHndLSB = (uint32_t)objHnd;
+	uint32_t objHndMSB = (uint32_t)(objHnd >> 32);
+	uint32_t result = 0;
+	__asm{
+		// esi - slotLvl
+		// eax - classCode
+		push edi;
+		push edx;
+		push esi;
+		push ecx;
+		mov ecx, this;
+		mov edi, [ecx]._getStatModBonusSpellCount;
+		mov eax, objHndMSB;
+		mov edx, objHndLSB;
+		push eax;
+		push edx;
+		mov eax, classCode;
+		mov esi, slotLvl;
+		call edi;
+		add esp, 8;
+		mov result, eax;
+		pop edi;
+		pop edx;
+		pop esi;
+		pop ecx;
+	}
+	return result;
+}
 
 
 #pragma region Spontaneous Summon Hooks
@@ -128,7 +190,10 @@ uint32_t _EvilClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel)
 
 
 
-
+uint32_t _getWizSchool(objHndl objHnd)
+{
+	return spells.getWizSchool(objHnd);
+}
 
 
 
