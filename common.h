@@ -9,6 +9,21 @@
 #include "d20_defs.h"
 #include "util/fixes.h"
 
+#define macAsmProl {\
+	__asm push ecx\
+	__asm push esi\
+	__asm push ebx\
+	__asm push edi};
+
+#define macAsmEpil {\
+	__asm pop edi\
+	__asm pop ebx\
+	__asm pop esi\
+	__asm pop ecx}\
+
+#define macRebase(funName , b) rebase(funName, 0x##b); 
+#define macReplaceFun(b, funName) replaceFunction(0x##b, funName); 
+
 # pragma region Standard Structs
 
 #pragma pack(push, 1)

@@ -8,7 +8,7 @@
 #include "d20.h"
 
 
-void PyPerformTouchAttack_PatchedCallToHitProcessing(D20Action * pd20A, D20Action d20A, uint32_t savedesi, uint32_t retaddr, PyObject * pyObjCaller, PyObject * pyTupleArgs);
+void PyPerformTouchAttack_PatchedCallToHitProcessing(D20Actn * pd20A, D20Actn d20A, uint32_t savedesi, uint32_t retaddr, PyObject * pyObjCaller, PyObject * pyTupleArgs);
 
 class SpellConditionFixes : public TempleFix {
 public:
@@ -45,7 +45,7 @@ void SpellConditionFixes::VampiricTouchFix()
 	return;
 };
 
-void PyPerformTouchAttack_PatchedCallToHitProcessing( D20Action * pd20A, D20Action d20A, uint32_t savedesi, uint32_t retaddr, PyObject * pyObjCaller, PyObject * pyTupleArgs)
+void PyPerformTouchAttack_PatchedCallToHitProcessing( D20Actn * pd20A, D20Actn d20A, uint32_t savedesi, uint32_t retaddr, PyObject * pyObjCaller, PyObject * pyTupleArgs)
 {
 	auto tupSize = PyTuple_Size(pyTupleArgs);
 	uint32_t shouldPerformMeleeTouchAttack = 0;
@@ -62,7 +62,7 @@ void PyPerformTouchAttack_PatchedCallToHitProcessing( D20Action * pd20A, D20Acti
 	}
 	
 
-	d20.ToHitProc(pd20A);
+	d20sys.ToHitProc(pd20A);
 	return;
 	
 }

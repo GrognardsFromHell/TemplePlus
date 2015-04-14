@@ -16,6 +16,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aas.cpp" />
+    <ClCompile Include="action_sequence.cpp" />
+    <ClCompile Include="float_line.cpp" />
+    <ClCompile Include="location.cpp" />
     <ClCompile Include="renderstates.cpp" />
     <ClCompile Include="tig\tig.cpp" />
     <ClCompile Include="tig\tig_sound.cpp" />
@@ -177,6 +180,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aas.h" />
+    <ClInclude Include="action_sequence.h" />
+    <ClInclude Include="float_line.h" />
+    <ClInclude Include="location.h" />
     <ClInclude Include="renderstates.h" />
     <ClInclude Include="tig\tig_sound.h" />
     <ClInclude Include="tio\tio_utils.h" />
