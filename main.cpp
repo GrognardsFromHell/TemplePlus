@@ -15,7 +15,18 @@ static wstring GetInstallationDir();
 
 string FindConflictingModule();
 
+void *templeMainRefHack;
+
+extern "C"
+{
+	int __declspec(dllimport) __cdecl temple_main(HINSTANCE hInstance, HINSTANCE hPrevInstance, const char* lpCommandLine, int nCmdShow);
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int showCmd) {
+
+	// Even though we are not using this function, we have to force the linker to not optimize our dependency away...
+	templeMainRefHack = &temple_main;
+
 	config.Load();
 	config.Save();
 

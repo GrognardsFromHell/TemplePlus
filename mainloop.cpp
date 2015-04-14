@@ -149,7 +149,7 @@ static void RenderFrame() {
 	D3DLOG(device->SetDepthStencilSurface(graphics.sceneDepthSurface()));
 
 	// Clear the new render target as well
-	auto clearColor = D3DCOLOR_ARGB(255, 255, 0, 0);
+	auto clearColor = D3DCOLOR_ARGB(0, 0, 0, 0);
 	D3DLOG(device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, clearColor, 1.0f, 0));
 	
 	GameSystemsRender();
