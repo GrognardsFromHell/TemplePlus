@@ -38,7 +38,7 @@ void  DispatcherSystem::DispatcherClearConds(Dispatcher *dispatcher)
 	_DispatcherClearConds(dispatcher);
 }
 
-float DispatcherSystem::Dispatch29hMovementSthg(objHndl objHnd, void* iO)
+float DispatcherSystem::Dispatch29hGetMoveSpeed(objHndl objHnd, void* iO) // including modifiers like armor restirction
 {
 	float result = 30.0;
 	uint32_t objHndLo = (uint32_t)(objHnd & 0xffffFFFF);

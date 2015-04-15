@@ -31,7 +31,7 @@ public:
 		macReplaceFun(100996E0, _actionPerform)
 		
 		
-		//macReplaceFun(10094F70, _moveSeqD20SthgUsercallWrapper)
+		macReplaceFun(10094F70, _moveSequenceParseUsercallWrapper)
 		macReplaceFun(10095860, _unspecifiedMoveAddToSeq)
 		
 	}
@@ -221,7 +221,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	if (!combat->isCombatActive()){	d20aCopy.distTraversed = 0;		pathLength = 0.0;	}
 
 	float remainingMaxMoveLength = 0;
-	if (getRemainingMaxMoveLength(d20a, &tbStatCopy, &remainingMaxMoveLength))
+	if (getRemainingMaxMoveLength(d20a, &tbStatCopy, &remainingMaxMoveLength)) // deducting moves that have already been spent, but also a raw calculation (not taking 5' step and such into account)
 	{
 		if (remainingMaxMoveLength < 0.1)	{releasePath(d20aCopy.path);	return 0x8;	}
 		if (static_cast<long double>(remainingMaxMoveLength) < pathLength)
@@ -232,18 +232,23 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 			pathLength = remainingMaxMoveLength;
 		}
 	}
-	if (nonspecificMoveType)
+
+
+	/*
+	this is 0 for specific move action types like 5' step, Move, Run, Withdraw; 
+	*/
+	if (nonspecificMoveType) 
 	{
-		remainingMaxMoveLength = dispatch.Dispatch29hMovementSthg(d20aCopy.d20APerformer, nullptr);
+		float baseMoveDist = dispatch.Dispatch29hGetMoveSpeed(d20aCopy.d20APerformer, nullptr);
 		if (!(d20aCopy.d20Caf & D20CAF_RANGED))
 		{
-			if (pathLength > (long double)tbStatCopy.remainingMoveDistance)
+			if (pathLength > (long double)tbStatCopy.surplusMoveDistance)
 			{
-				if (remainingMaxMoveLength + remainingMaxMoveLength + tbStatCopy.remainingMoveDistance < (long double)pathLength){ releasePath(pqResult); return 8; }
-				if (tbStatCopy.remainingMoveDistance + remainingMaxMoveLength < (long double)pathLength){ d20aCopy.d20ActType = D20A_DOUBLE_MOVE; goto LABEL_53; }
+				if ( 2*baseMoveDist + tbStatCopy.surplusMoveDistance < (long double)pathLength){ releasePath(pqResult); return 8; }
+				if (tbStatCopy.surplusMoveDistance + baseMoveDist < (long double)pathLength){ d20aCopy.d20ActType = D20A_DOUBLE_MOVE; goto LABEL_53; }
 				else if (pathLength <= 5.0)
 				{
-					if (d20a->d20ActType)
+					if (d20a->d20ActType != D20A_UNSPECIFIED_MOVE)
 					{
 						d20->d20Defs[d20a->d20ActType].moveFunc(d20a, &tbStatCopy, &locAndOffCopy);
 						if (locAndOffCopy.location.locx == 4 || !tbStatCopy.hourglassState) //BUG? TODO
@@ -261,15 +266,16 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 			d20aCopy.d20ActType = D20A_MOVE;
 			goto LABEL_53;
 		} 
-		else if (remainingMaxMoveLength + remainingMaxMoveLength >= (long double)pathLength){ d20aCopy.d20ActType = D20A_RUN;	goto LABEL_53; }
+		else if ( 2* baseMoveDist >= (long double)pathLength){ d20aCopy.d20ActType = D20A_RUN;	goto LABEL_53; }
 		else	{	releasePath(pqResult); return 8;	}
 	}
 
 LABEL_53: *actSeqPerfLoc = pqResult->to;
-	CmbtIntrpts str84;
-	str84.numItems = 0;
-	IntrrptSthgsub_100939D0(&d20aCopy, &str84);
+	CmbtIntrpts intrpts;
+	intrpts.numItems = 0;
+	IntrrptSthgsub_100939D0(&d20aCopy, &intrpts);
 	sub_1008BB40(actSeq, &d20aCopy);
+	addReadiedInterrupts(actSeq, &intrpts);
 	updateDistTraversed(actSeq);
 	return 0;
 }
@@ -299,7 +305,7 @@ void ActionSequenceSystem::addReadiedInterrupts(ActnSeq* actSeq, CmbtIntrpts* in
 	IntrptSthg * intrptSthg ;
 	for (int i = 0; i < intrptNum; i++)
 	{
-		intrptSthg = intrpts->field0[i];
+		intrptSthg = intrpts->intrptSthgs[i];
 		d20aNew.d20APerformer = intrptSthg->interrupter;
 		memcpy(&(actSeq->d20ActArray[actSeq->d20ActArrayNum]), &d20aNew, sizeof(d20aNew));
 		++actSeq->d20ActArrayNum;
@@ -415,7 +421,7 @@ uint32_t ActionSequenceSystem::seqCheckFuncs(TurnBasedStatus* actnSthg)
 			
 		result = sub_10093950(d20a, actnSthg);
 		if (result)	
-			{ actnSthg->field_B34__errCodeApparently = result;	break; }
+			{ actnSthg->errCode = result;	break; }
 
 		auto actCheckFunc = d20->d20Defs[d20a->d20ActType].actionCheckFunc;
 		if (actCheckFunc)
@@ -560,7 +566,7 @@ void ActionSequenceSystem::actionPerform()
 			mesFuncs.GetLine_Safe(*actionMesHandle, &mesLine);
 			hooked_print_debug_message("Action unavailable for %s (%I64x): %s\n", objects.description.GetDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer, mesLine.value );
 			*actnProcState = errCode;
-			curSeq->tbStatus.field_B34__errCodeApparently = errCode;
+			curSeq->tbStatus.errCode = errCode;
 			objects.floats->floatMesLine(performer, 1, 1, mesLine.value);
 			curSeq->d20ActArrayNum = curSeq->d20aCurIdx;
 			break;
@@ -822,34 +828,34 @@ uint32_t _seqCheckFuncsCdecl(TurnBasedStatus* actnSthg)
 
 
 
-uint32_t __cdecl _moveSeqD20SthgCdecl(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* actnSthg, float distSthg, float reach, int flagSthg)
+uint32_t __cdecl _moveSequenceParseCdecl(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* actnSthg, float distSthg, float reach, int flagSthg)
 {
 	return actSeqSys.moveSequenceParse(d20a, actSeq, actnSthg, distSthg, reach, flagSthg);
 };
 
-uint32_t __declspec(naked) _moveSeqD20SthgUsercallWrapper(ActnSeq* actSeq, TurnBasedStatus* actnSthg, float distSthg, float reach, int flagSthg)
+uint32_t __declspec(naked) _moveSequenceParseUsercallWrapper(ActnSeq* actSeq, TurnBasedStatus* actnSthg, float distSthg, float reach, int flagSthg)
 { //, D20_Action *d20aIn@<eax>
-	macAsmProl;
+	macAsmProl; // esp = esp0 - 16
 	__asm{
-		mov ebx, flagSthg;
+		mov ebx, [esp + 36]; // flagSthg @ esp0+20 , esp = esp0-16
 		push ebx;
-		mov edi, reach;
-		push edi;
-		mov ebx, distSthg;
+		mov esi, [esp + 36];  // esp = esp0-20,  reach @ esp0+16
+		push esi;
+		mov ebx, [esp + 36];
 		push ebx;
-		mov edi, actnSthg;
-		push edi;
-		mov ebx, actSeq;
+		mov esi, [esp + 36];
+		push esi;
+		mov ebx, [esp + 36];
 		push ebx;
 		push eax;
-		mov eax, _moveSeqD20SthgCdecl;
-		call eax;
-		add esp, 24; // result should be in eax already
+		mov esi, _moveSequenceParseCdecl;
+		call esi;
+		add esp, 24; 
 	}
-	macAsmEpil
-		__asm retn;
+	macAsmEpil;
+	__asm retn;
 }
-
+	
 uint32_t _unspecifiedMoveAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* actnSthg)
 {
 	return actSeqSys.moveSequenceParse(d20a, actSeq, actnSthg, 0.0, 0.0, 1);

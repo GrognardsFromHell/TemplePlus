@@ -21,7 +21,7 @@ struct DispatcherSystem : AddressTable
 	void  DispatcherClearItemConds(Dispatcher * dispatcher);
 	void  DispatcherClearConds(Dispatcher *dispatcher);
 	
-	float Dispatch29hMovementSthg(objHndl objHnd, void *);
+	float Dispatch29hGetMoveSpeed(objHndl objHnd, void *);
 
 	uint32_t(__cdecl * dispatcherForCritters)(objHndl, DispIO *, enum_disp_type, uint32_t dispKey);
 	DispatcherSystem()

@@ -97,12 +97,12 @@ struct TurnBasedStatus
 	uint32_t hourglassState; // 4 - full action remaining; 2 - single action remaining; 1 - move action remaining
 	D20CAF callActionFrameFlags;
 	uint32_t idxSthg;
-	float remainingMoveDistance; // for a "single move" (half hourglass); and then only if currently sequencing a move action (otherwise it's 0)
+	float surplusMoveDistance; // is nonzero when you have started a move action already and haven't used it all up
 	uint32_t field_B24;
 	uint32_t field_B28;
 	uint32_t field_B2C;
 	uint32_t field_B30;
-	uint32_t field_B34__errCodeApparently;
+	uint32_t errCode;
 };
 
 const uint32_t TestSizeOfActnSthg = sizeof(TurnBasedStatus); // should be 36 (0x24)
@@ -133,7 +133,7 @@ struct IntrptSthg
 
 struct CmbtIntrpts
 {
-	IntrptSthg* field0[32];
+	IntrptSthg* intrptSthgs[32];
 	int32_t numItems;
 };
 
@@ -149,6 +149,6 @@ uint32_t _actSeqOkToPerform();
 void _actionPerform();
 uint32_t _isSimultPerformer(objHndl objHnd);
 uint32_t _seqCheckFuncsCdecl(TurnBasedStatus *actnSthg);
-uint32_t _moveSeqD20SthgUsercallWrapper(ActnSeq *actSeq, TurnBasedStatus *actnSthg, float distSthg, float reach, int flagSthg); //, D20_Action *d20aIn@<eax>
+uint32_t _moveSequenceParseUsercallWrapper(ActnSeq *actSeq, TurnBasedStatus *actnSthg, float distSthg, float reach, int flagSthg); //, D20_Action *d20aIn@<eax>
 uint32_t _unspecifiedMoveAddToSeq(D20Actn *d20a, ActnSeq *actSeq, TurnBasedStatus *actnSthg);
 void _actionPerformRecursion();
