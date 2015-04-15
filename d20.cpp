@@ -21,6 +21,30 @@ static_assert(sizeof(D20Actn) == 0x58, "D20Action struct has the wrong size!");
 static_assert(sizeof(D20ActionDef) == 0x30, "D20ActionDef struct has the wrong size!");
 
 
+class D20Replacements : public TempleFix {
+public:
+	const char* name() override {
+		return "D20 Function Replacements";
+	}
+
+	void apply() override {
+		replaceFunction(0x10077850, D20SpellDataExtractInfo);
+		replaceFunction(0x10077830, D20SpellDataSetSpontCast);
+
+
+		replaceFunction(0x100FD790, _D20StatusInitRace);
+		replaceFunction(0x100FEE60, _D20StatusInitClass);
+		replaceFunction(0x1004FDB0, _D20StatusInit);
+		replaceFunction(0x100FD2D0, _D20StatusInitFeats);
+		replaceFunction(0x1004CA00, _D20StatusInitItemConditions);
+		replaceFunction(0x1004CC00, _D20Query);
+		replaceFunction(0x10093810, _d20aInitUsercallWrapper); // function takes esi as argument
+		replaceFunction(0x10089F80, _globD20aSetTypeAndData1);
+		replaceFunction(0x1004CC60, _d20QueryWithData);
+	}
+} d20Replacements;
+
+
 #pragma region D20System Implementation
 D20System d20sys;
 
@@ -184,28 +208,7 @@ uint32_t D20System::tumbleCheck(D20Actn* d20a)
 CharacterClasses charClasses;
 
 
-class D20Replacements : public TempleFix {
-public:
-	const char* name() override {
-		return "D20 Function Replacements";
-	}
 
-	void apply() override {
-		replaceFunction(0x10077850, D20SpellDataExtractInfo);
-		replaceFunction(0x10077830, D20SpellDataSetSpontCast);
-		
-
-		replaceFunction(0x100FD790, _D20StatusInitRace);
-		replaceFunction(0x100FEE60, _D20StatusInitClass);
-		replaceFunction(0x1004FDB0, _D20StatusInit);
-		replaceFunction(0x100FD2D0, _D20StatusInitFeats);
-		replaceFunction(0x1004CA00, _D20StatusInitItemConditions);
-		replaceFunction(0x1004CC00, _D20Query);
-		replaceFunction(0x10093810, _d20aInitUsercallWrapper); // function takes esi as argument
-		replaceFunction(0x10089F80, _globD20aSetTypeAndData1);
-		replaceFunction(0x1004CC60, _d20QueryWithData);
-	}
-} d20Replacements;
 
 
 #pragma region D20 Spell Stuff
@@ -393,7 +396,7 @@ void _D20StatusInitClass(objHndl objHnd)
 
 		CondStruct ** condStructClass = conds.ConditionArrayClasses;
 
-		uint32_t stat = stat_caster_level_barbarian;
+		uint32_t stat = stat_level_barbarian;
 		for (uint32_t i = 0; i < NUM_CLASSES; i++)
 		{
 			if ( objects.StatLevelGet(objHnd, (Stat)stat) > 0 
