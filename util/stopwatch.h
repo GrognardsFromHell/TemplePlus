@@ -1,18 +1,31 @@
 
 #pragma once
 
-class StopwatchReporter {
+class Stopwatch {
 public:
-	StopwatchReporter(const string &reportFormat) : mFormat(reportFormat) {
+	Stopwatch() {
 		mStart = chrono::high_resolution_clock::now();
 	}
-	~StopwatchReporter() {
+
+	int GetElapsedMs() const {
 		auto duration = chrono::duration_cast<chrono::milliseconds>(
 			chrono::high_resolution_clock::now() - mStart
 		);
-		logger->info(mFormat.c_str(), format("{} ms", duration.count()));
+		return (int) duration.count();
+	}
+
+private:
+	chrono::time_point<chrono::high_resolution_clock> mStart;
+};
+
+class StopwatchReporter {
+public:
+	StopwatchReporter(const string &reportFormat) : mFormat(reportFormat) {
+	}
+	~StopwatchReporter() {
+		logger->info(mFormat.c_str(), format("{} ms", sw.GetElapsedMs()));
 	}
 private:
 	string mFormat;
-	chrono::time_point<chrono::high_resolution_clock> mStart;
+	Stopwatch sw;	
 };

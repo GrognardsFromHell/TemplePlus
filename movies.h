@@ -18,8 +18,6 @@ struct MovieFuncs : AddressTable {
 	void(__cdecl *PlayMovieSlide)(uint32_t, uint32_t, const SubtitleLine *subtitles, uint32_t, uint32_t);
 	void(__cdecl *PlayMovieBink)(const char *filename, const SubtitleLine *subtitles, int flags, int soundtrackId);
 
-	GlobalPrimitive<uint32_t, 0x103010F8> MovieVolume; // 0-127
-
 	// Seems to suppress input event processing if true
 	GlobalBool<0x10EF32A0> MovieIsPlaying;
 

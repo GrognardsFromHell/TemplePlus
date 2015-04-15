@@ -56,7 +56,7 @@ static bool SetCursorFromShaderId(int shaderId) {
 	shader.GetTextureId(shader.data, &textureId);
 
 	TigTextureRegistryEntry textureEntry;
-	if (textureFuncs.GetLoaded(textureId, &textureEntry)) {
+	if (textureFuncs.LoadTexture(textureId, &textureEntry)) {
 		logger->error("Unable to get mouse cursor texture {}", textureId);
 		return false;
 	}

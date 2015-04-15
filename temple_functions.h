@@ -8,13 +8,6 @@
 
 // Contains the function definitions for stuff found in temple.dll that we may want to call or override.
 
-extern "C"
-{
-	int __declspec(dllimport) __cdecl temple_main(HINSTANCE hInstance, HINSTANCE hPrevInstance, const char* lpCommandLine, int nCmdShow);
-}
-
-
-
 struct locationSec {
 	uint64_t location;
 

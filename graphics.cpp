@@ -13,7 +13,9 @@
 #include "ui/ui.h"
 #include "util/folderutils.h"
 #include "gamesystems.h"
+#include "renderstates.h"
 #include "ui/ui_text.h"
+#include <atlbase.h>
 
 // #include "d3d8/d3d8.h"
 #include "d3d8to9/d3d8to9.h"
@@ -508,6 +510,7 @@ static int HookedBeginFrame() {
 
 static void HookedUpdateProjMatrices(const TigMatrices& matrices) {
 	TigMatrices modifiedParams;
+	// - 0.5f might be better here
 	modifiedParams.xOffset = matrices.xOffset + 0.5f;
 	modifiedParams.yOffset = matrices.yOffset + 0.5f;
 	modifiedParams.scale = matrices.scale;
@@ -516,12 +519,17 @@ static void HookedUpdateProjMatrices(const TigMatrices& matrices) {
 
 }
 
+// Take screenshots for the savegame
+static void TakeSaveScreenshots() {
+	graphics.TakeScaledScreenshot("save\\temps.jpg", 64, 48);
+	graphics.TakeScaledScreenshot("save\\templ.jpg", 256, 192);	
+}
+
 void hook_graphics() {
 	/*
 		These assertions are based on mallocs or memsets in the code that allow us to deduce the original struct
 		size.
 	*/
-	static_assert(sizeof(TigRenderStates) == 0x1C4, "TigRenderStates has the wrong size.");
 	static_assert(sizeof(VideoData) == 4796, "Video Data struct has the wrong size.");
 
 	// We only differ between borderless and normal window mode.
@@ -541,6 +549,7 @@ void hook_graphics() {
 	MH_CreateHook(temple_address<0x101DBC80>(), AllocTextureMemory, nullptr);
 	MH_CreateHook(temple_address<0x101E0750>(), GetSystemMemory, nullptr);
 	MH_CreateHook(temple_address<0x101DBD80>(), TakeScreenshot, nullptr);
+	MH_CreateHook(temple_address<0x10002830>(), TakeSaveScreenshots, nullptr);
 
 	hook_movies();
 }
@@ -716,10 +725,7 @@ void Graphics::FreeResources() {
 
 void Graphics::CreateResources() {
 
-
-	videoFuncs.ReadInitialState();
-	memcpy(videoFuncs.renderStates.ptr(), videoFuncs.activeRenderStates.ptr(), sizeof(TigRenderStates));
-
+	renderStates.Reset();
 
 	videoFuncs.buffersFreed = false;
 
@@ -797,10 +803,13 @@ void Graphics::RenderGFade() {
 
 void Graphics::RefreshSceneRect() {
 
+	// GFade is drawn after the scene buffer, so this is in window space
+	UpdateScreenSize(config.windowWidth, config.windowHeight);
+
 	/*
-	Calculates the rectangle within the back buffer that the scene
-	will be drawn in. This accounts for "fit to width/height" scenarios
-	where the back buffer has a different aspect ratio.
+		Calculates the rectangle within the back buffer that the scene
+		will be drawn in. This accounts for "fit to width/height" scenarios
+		where the back buffer has a different aspect ratio.
 	*/
 	float w = static_cast<float>(graphics.windowWidth());
 	float h = static_cast<float>(graphics.windowHeight());
@@ -943,4 +952,58 @@ void Graphics::InitializeDirect3d() {
 	videoFuncs.updateProjMatrices(videoFuncs.tigMatrices2);
 
 	graphics.CreateResources();
+}
+
+void Graphics::TakeScaledScreenshot(const string& filename, int width, int height) {
+	logger->debug("Creating screenshot with size {}x{} in {}", width, height, filename);
+	
+	auto device = graphics.device();
+
+	// Get display mode to get screen resolution
+	D3DDISPLAYMODE displayMode;
+	if (D3DLOG(device->GetDisplayMode(0, &displayMode)) != D3D_OK) {
+		logger->error("Unable to get the adapter display mode.");
+		return;
+	}
+
+	// Create an offscreen surface to contain the frontbuffer data
+	CComPtr<IDirect3DSurface9> fbSurface;
+	if (D3DLOG(device->CreateOffscreenPlainSurface(displayMode.Width, displayMode.Height, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &fbSurface, nullptr)) != D3D_OK) {
+		logger->error("Unable to create offscreen surface for copying the frontbuffer");
+		return;
+	}
+
+	if (D3DLOG(device->GetFrontBufferData(0, fbSurface)) != D3D_OK) {
+		logger->error("Unable to copy the front buffer.");
+		return;
+	}
+
+	auto sceneSurface = graphics.sceneSurface();
+	D3DSURFACE_DESC desc;
+	sceneSurface->GetDesc(&desc);
+	CComPtr<IDirect3DSurface9> stretchedScene;
+	if (D3DLOG(device->CreateRenderTarget(width, height, desc.Format, desc.MultiSampleType, desc.MultiSampleQuality, false, &stretchedScene, NULL)) != D3D_OK) {
+		return;
+	}
+	
+	if (D3DLOG(device->StretchRect(sceneSurface, nullptr, stretchedScene, nullptr, D3DTEXF_LINEAR)) != D3D_OK) {
+		logger->error("Unable to copy front buffer to target surface for screenshot");
+		return;
+	}
+
+	CComPtr<ID3DXBuffer> buffer;
+	if (!SUCCEEDED(D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_JPG, stretchedScene, nullptr, nullptr))) {
+		logger->error("Unable to save screenshot surface to JPEG file.");
+		return;
+	}
+
+	// We have to write using tio or else it goes god knows where
+	auto fh = tio_fopen(filename.c_str(), "w+b");
+	if (tio_fwrite(buffer->GetBufferPointer(), 1, buffer->GetBufferSize(), fh) != buffer->GetBufferSize()) {
+		logger->error("Unable to write screenshot to disk due to an IO error.");
+		tio_fclose(fh);
+		tio_remove(filename.c_str());
+	} else {
+		tio_fclose(fh);
+	}
 }

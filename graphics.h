@@ -9,46 +9,6 @@
 #include "tig/tig_font.h"
 #include "temple_functions.h"
 
-#pragma pack(push, 1)
-struct TigRenderStates {
-	D3DXMATRIX proj_matrix;
-	D3DXMATRIX view_matrix;
-	int zenable;
-	int fillmode;
-	int zwriteenable;
-	int alphatestenable;
-	int srcblend;
-	int destblend;
-	int cullmode;
-	int alphablendenable;
-	int lighting;
-	int colorvertex;
-	int colorwriteenable;
-	int zfunc;
-	int specularenable;
-	int zbias;
-	int texture[4];
-	int tex_colorop[4];
-	int tex_colorarg1[4];
-	int tex_colorarg2[4];
-	int tex_alphaop[4];
-	int tex_alphaarg1[4];
-	int tex_alphaarg2[4];
-	int tex_coordindex[4];
-	int tex_mipfilter[4];
-	int tex_magfilter[4];
-	int tex_minfilter[4];
-	int tex_addressu[4];
-	int tex_addressv[4];
-	int tex_transformflags[4];
-	int vertexattribs;
-	int vertexbuffers[4];
-	int vertexstrides[4];
-	int indexbuffer;
-	int basevertexindex;
-};
-#pragma pack(pop)
-
 struct TigMatrices {
 	float xOffset;
 	float yOffset;
@@ -62,7 +22,7 @@ struct VideoFuncs : AddressTable {
 	bool(__fastcall *TigDirect3dInit)(TigConfig* settings) = nullptr;
 	void (__cdecl *SetVideoMode)(int adapter, int nWidth, int nHeight, int bpp, int refresh, int flags);
 	void (__cdecl *CleanUpBuffers)();
-	void (__cdecl *ReadInitialState)();
+	
 	void (__cdecl *create_partsys_vertex_buffers)();
 	void (__cdecl *tig_font_related_init)();
 	void (__cdecl *updateProjMatrices)(TigMatrices* matrices);
@@ -101,15 +61,12 @@ struct VideoFuncs : AddressTable {
 	GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D25130> sharedVBuffer4;
 	GlobalBool<0x103010FC> tigMovieInitialized;
 
-	GlobalPrimitive<TigRenderStates, 0x10EF2F10> renderStates;
-	GlobalPrimitive<TigRenderStates, 0x10EF30D8> activeRenderStates;
 	GlobalPrimitive<float, 0x10D24D7C> fadeScreenRect;
 
 	VideoFuncs() {
 		rebase(TigDirect3dInit, 0x101DAFB0);
 		rebase(SetVideoMode, 0x101DC870);
 		rebase(CleanUpBuffers, 0x101D8640);
-		rebase(ReadInitialState, 0x101F06F0);
 		rebase(create_partsys_vertex_buffers, 0x101E6E20);
 		rebase(tig_font_related_init, 0x101E85C0);
 		rebase(updateProjMatrices, 0x101D8910);
@@ -204,6 +161,12 @@ public:
 	void UpdateWindowSize(int w, int h);
 
 	void InitializeDirect3d();
+
+	/*
+		Take a screenshot with the given size. The image will be stretched to the given
+		size.
+	*/
+	void TakeScaledScreenshot(const string &filename, int width, int height);
 
 	// Returns the current back buffer surface description
 	const D3DSURFACE_DESC &backBufferDesc() {
