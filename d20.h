@@ -112,7 +112,7 @@ struct D20Actn
 	uint32_t field_C;
 	objHndl d20APerformer;
 	objHndl d20ATarget;
-	LocAndOffsets locAndOff;
+	LocAndOffsets destLoc;
 	float distTraversed;
 	uint32_t field_34;
 	uint32_t rollHist3;

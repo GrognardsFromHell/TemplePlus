@@ -37,7 +37,7 @@ struct ActionSequenceSystem : AddressTable
 	uint32_t isPerforming(objHndl objHnd);
 	uint32_t addSeqSimple(D20Actn * d20a, ActnSeq * actSeq);
 	void IntrrptSthgsub_100939D0(D20Actn * d20a, CmbtIntrpts * str84);
-	uint32_t moveSeqD20Sthg(D20Actn * d20aIn, ActnSeq* actSeq, TurnBasedStatus *actnSthg, float distSthg, float reach, int a5);
+	uint32_t moveSequenceParse(D20Actn * d20aIn, ActnSeq* actSeq, TurnBasedStatus *actnSthg, float distSthg, float reach, int a5);
 		void releasePath(PathQueryResult*);
 		void addReadiedInterrupts(ActnSeq* actSeq, CmbtIntrpts * intrpts);
 		void updateDistTraversed(ActnSeq* actSeq);
@@ -72,7 +72,7 @@ struct ActionSequenceSystem : AddressTable
 private:
 	bool (__cdecl *_actionPerformProjectile)();
 	void (__cdecl *_sub_1008BB40)(D20Actn * d20a); // ActnSeq*actSeq@<ebx>, 
-	uint32_t (__cdecl *sub_1008B8A0)(D20Actn *d20a, TurnBasedStatus *actnSthg, float *floatOut);
+	uint32_t (__cdecl *getRemainingMaxMoveLength)(D20Actn *d20a, TurnBasedStatus *actnSthg, float *floatOut); // doesn't take things like having made 5 foot step into account, just a raw calculation
 	uint32_t (__cdecl *_sub_10093950)(D20Actn* d20a);
 	void (__cdecl *_sub_100939D0)(CmbtIntrpts* d20a); // D20Actn*@<eax>
 	uint32_t (__cdecl* _sub_10096450)(ActnSeq * actSeq, uint32_t); // void * iO @<ebx>
@@ -115,7 +115,7 @@ struct ActnSeq
 	ActnSeq * prevSeq;
 	uint32_t field_B0C;
 	uint32_t seqOccupied;
-	TurnBasedStatus actnSthgField;
+	TurnBasedStatus tbStatus;
 	objHndl performer;
 	LocAndOffsets performerLoc;
 	objHndl targetObj;

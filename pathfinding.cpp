@@ -5,7 +5,7 @@
 
 Pathfinding pathfindingSys;
 
-float Pathfinding::pathDistBtwnToAndFrom(Path* path)
+float Pathfinding::pathLength(Path* path)
 {
 	float distTot;
 	if (path->flags & PQF_UNK2)	return loc->distBtwnLocAndOffs(path->to, path->from) / 12.0;

@@ -94,7 +94,7 @@ struct Pathfinding : AddressTable {
 
 	LocationSys * loc;
 
-	float pathDistBtwnToAndFrom(Path *path); // note: unlike the ToEE function, returns a float (and NOT to the FPU!)
+	float pathLength(Path *path); // note: unlike the ToEE function, returns a float (and NOT to the FPU!)
 
 	Pathfinding();
 

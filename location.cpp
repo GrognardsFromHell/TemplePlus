@@ -7,10 +7,12 @@ float LocationSys::distBtwnLocAndOffs(LocAndOffsets loca, LocAndOffsets locb)
 {
 	float dx = 0;
 	float dy = 0;
+	const float eighthundred = 800;
+	float sqrt800 = sqrt(eighthundred);
 	int32_t dyi = loca.location.locy - locb.location.locy;
 	int32_t dxi = loca.location.locx - locb.location.locx;
-	dx += (loca.off_x - locb.off_x) + intToFloat(dxi)*tileToOffset;
-	dy += (loca.off_y - locb.off_y) + intToFloat(dyi)*tileToOffset;
+	dx += (loca.off_x - locb.off_x) + intToFloat(dxi)*sqrt800;
+	dy += (loca.off_y - locb.off_y) + intToFloat(dyi)*sqrt800;
 	 return sqrt(pow(dx, 2) + pow(dy, 2)) ;
 }
 
