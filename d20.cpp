@@ -100,14 +100,14 @@ void D20System::d20ActnInit(objHndl objHnd, D20Actn* d20a)
 	d20a->d20ActType = D20A_NONE;
 	d20a->data1=0 ;
 	d20a->d20ATarget=0;
-	d20a->field_30 = 0;
+	d20a->distTraversed = 0;
 	d20a->field_34 = 0;
 	d20a->spellEnum = 0;
 	objects.loc->getLocAndOff(objHnd, &d20a->locAndOff);
 	PathQueryResult * pq = d20a->path;
 	if (pq && pq >= pathfinding->pathQArray && pq < (pathfinding->pathQArray + pfCacheSize))
 	{
-		pq->d20sthg = 0;
+		pq->occupiedFlag = 0;
 	}
 	d20a->path = nullptr;
 	d20a->d20SpellData.spellEnumOrg = 0;

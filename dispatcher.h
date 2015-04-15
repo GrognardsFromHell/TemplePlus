@@ -20,11 +20,18 @@ struct DispatcherSystem : AddressTable
 	void  DispatcherClearAttribs(Dispatcher * dispatcher);
 	void  DispatcherClearItemConds(Dispatcher * dispatcher);
 	void  DispatcherClearConds(Dispatcher *dispatcher);
+	
+	float Dispatch29hMovementSthg(objHndl objHnd, void *);
+
 	uint32_t(__cdecl * dispatcherForCritters)(objHndl, DispIO *, enum_disp_type, uint32_t dispKey);
 	DispatcherSystem()
 	{
+		macRebase(_Dispatch29hMovementSthg, 1004D080)
 		rebase(dispatcherForCritters, 0x1004DD00);
+	
 	};
+private:
+	void(__cdecl *_Dispatch29hMovementSthg)(objHndl objHnd, void *);
 };
 
 extern DispatcherSystem dispatch;

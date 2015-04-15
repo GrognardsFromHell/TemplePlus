@@ -9,6 +9,7 @@ struct ActionSequenceSystem;
 // Forward decls
 struct D20Actn;
 struct ActnSeq;
+struct ActnSthg;
 enum SpontCastType;
 struct D20SpellData;
 enum D20ActionType : int32_t;
@@ -112,7 +113,7 @@ struct D20Actn
 	objHndl d20APerformer;
 	objHndl d20ATarget;
 	LocAndOffsets locAndOff;
-	uint32_t field_30;
+	float distTraversed;
 	uint32_t field_34;
 	uint32_t rollHist3;
 	uint32_t rollHist1;
@@ -126,18 +127,18 @@ struct D20Actn
 
 struct D20ActionDef
 {
-	uint32_t(__cdecl *addToSeqFunc)(D20Actn *, ActnSeq *, void*iO);
-	void * unknownFunc1;
-	uint32_t (__cdecl * actionCheckFunc)(D20Actn* d20a, void* iO);
-	void * targetCheckFunc;
-	void * toHitFunc_maybe;
+	uint32_t (__cdecl *addToSeqFunc)(D20Actn *, ActnSeq *, ActnSthg*iO);
+	uint32_t (__cdecl* unknownFunc1)(D20Actn* d20a, ActnSthg* iO);
+	uint32_t (__cdecl * actionCheckFunc)(D20Actn* d20a, ActnSthg* iO);
+	uint32_t (__cdecl * tgtCheckFunc)(D20Actn* d20a, ActnSthg* iO);
+	uint32_t (__cdecl * locCheckFunc)(D20Actn* d20a, ActnSthg* iO, LocAndOffsets * locAndOff); // also seems to double as a generic check function (e.g. for move silently it checks if combat is active and nothing to do with location)
 	uint32_t (__cdecl* performFunc)(D20Actn* d20a);
 	void * actionFrameFunc;
 	void * projectilePerformFunc;
 	uint32_t pad_apparently;
-	void * moveFunc_maybe;
+	uint32_t (__cdecl * moveFunc)(D20Actn* d20a, ActnSthg* iO, LocAndOffsets * locAndOff); 
 	void * unknownFunc3;
-	uint32_t flags; // not D20CAF I think; maybe the STD flags?
+	uint32_t flags; // not D20CAF I think; maybe the STD flags? path query flags?
 };
 
 #pragma endregion

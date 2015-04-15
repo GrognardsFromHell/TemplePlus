@@ -8,6 +8,8 @@
 #include "float_line.h"
 #include "combat.h"
 #include "description.h"
+#include "location.h"
+#include "pathfinding.h"
 
 
 class ActnSeqReplacements : public TempleFix
@@ -17,13 +19,21 @@ public:
 		return "ActionSequence Replacements";
 	}
 	void apply() override{
+		
 		macReplaceFun(1008BFA0, _addSeqSimple)
-		macReplaceFun(1008A100, _addD20AToSeq)
-		macReplaceFun(10094C60, _seqCheckAction)
-		macReplaceFun(1008A050, _isPerforming)
-		macReplaceFun(1008A980, _actSeqOkToPerform)
+			macReplaceFun(1008A100, _addD20AToSeq)
+			macReplaceFun(10094C60, _seqCheckAction)
+			macReplaceFun(1008A050, _isPerforming)
+			macReplaceFun(1008A980, _actSeqOkToPerform)
+			macReplaceFun(100925E0, _isSimultPerformer)
+			//macReplaceFun(10094CA0, _seqCheckFuncs) 
+			/*
 		macReplaceFun(100996E0, _actionPerform)
-		macReplaceFun(100925E0, _isSimultPerformer)
+		
+		
+		//macReplaceFun(10094F70, _moveSeqD20SthgUsercallWrapper)
+		//macReplaceFun(10095860, _unspecifiedMoveAddToSeq)
+		*/
 	}
 } actSeqReplacements;
 
@@ -36,9 +46,13 @@ ActionSequenceSystem::ActionSequenceSystem()
 {
 	d20 = &d20sys;
 	combat = &combatSys;
+	pathfinding = &pathfindingSys;
 	rebase(actSeqCur, 0x1186A8F0);
 	macRebase(actnSthg118CD3C0, 118CD3C0)
 	rebase(actnProcState, 0x10B3D5A4);
+	macRebase(_sub_1008BB40, 1008BB40)
+	macRebase(sub_1008B8A0, 1008B8A0);
+	macRebase(sub_1008B9A0, 1008B9A0);
 	rebase(_sub_10093950, 0x10093950);
 	rebase(_sub_10096450, 0x10096450);
 	rebase(actionMesHandle, 0x10B3BF48);
@@ -57,6 +71,8 @@ ActionSequenceSystem::ActionSequenceSystem()
 	rebase(numSimultPerformers, 0x10B3D5B8);
 	rebase(simultPerformerQueue, 0x118A06C0);
 	macRebase(simulsIdx, 10B3D5BC)
+	macRebase(_moveSeqD20Sthg, 10094F70)
+	macRebase(_sub_100939D0, 100939D0)
 	
 }
 
@@ -90,7 +106,10 @@ uint32_t ActionSequenceSystem::isPerforming(objHndl objHnd)
 {
 	for (auto i = 0; i < actSeqArraySize; i++)
 	{
-		if (actSeqArray[i].performer == objHnd && (actSeqArray[i].seqOccupied & 1)){ return 1; }
+		if (actSeqArray[i].performer == objHnd && (actSeqArray[i].seqOccupied & 1))
+		{
+			return 1;
+		}
 	}
 	return 0;
 }
@@ -99,6 +118,195 @@ uint32_t ActionSequenceSystem::addSeqSimple(D20Actn* d20a, ActnSeq * actSeq)
 {
 	memcpy(actSeq + sizeof(D20Actn) * actSeq->d20ActArrayNum++, d20a, sizeof(D20Actn));
 	return 0;
+}
+
+void ActionSequenceSystem::IntrrptSthgsub_100939D0(D20Actn* d20a, CmbtIntrpts* str84)
+{
+	macAsmProl;
+	__asm{
+		mov ecx, this;
+		mov esi, [ecx]._sub_100939D0;
+		mov eax, str84;
+		push eax;
+		mov eax, d20a;
+		call esi;
+		add esp, 4;
+	}
+	macAsmEpil;
+}
+
+uint32_t ActionSequenceSystem::moveSeqD20Sthg(D20Actn* d20aIn, ActnSeq* actSeq, ActnSthg* actnSthg, float distToTgt, float reach, int flagSthg)
+{
+	D20Actn d20aCopy;
+	ActnSthg actnSthgCopy;
+	PathQuery pathQ;
+	PathQueryResult * pqResult = nullptr;
+	LocAndOffsets locAndOffCopy = d20aIn->locAndOff;
+
+	memcpy(&d20aCopy, d20aIn, sizeof(D20Actn));
+	memcpy(&actnSthgCopy, actnSthg, sizeof(ActnSthg));
+
+	seqCheckFuncs(&actnSthgCopy);
+	if (d20->d20Query(d20aCopy.d20APerformer, DK_QUE_Prone))
+	{
+		auto nextd20a = &actSeq->d20ActArray[actSeq->d20ActArrayNum];
+		d20aCopy.d20ActType = D20A_STAND_UP;
+		memcpy(nextd20a, &d20aCopy, sizeof(D20Actn));
+		++actSeq->d20ActArrayNum; 
+	}
+
+	auto d20a = d20aIn;
+
+	pathQ.critter = d20aCopy.d20APerformer;
+	pathQ.from = actSeq->performerLoc;
+
+
+	if (d20a->d20ATarget)
+	{
+		const float twelve = 12.0;
+		const float fourPointSevenPlusEight = (float)4.714045 + 8.0;
+		pathQ.targetObj = d20a->d20ATarget;
+		pathQ.flags = (PathQueryFlags)0x23803;
+		if (reach < 0.1){ reach = 3.0; }
+		actSeq->targetObj = d20a->d20ATarget;
+		pathQ.distanceToTarget = distToTgt * twelve;
+		pathQ.radius = reach * twelve - fourPointSevenPlusEight;
+	} else
+	{
+		pathQ.to = d20aIn->locAndOff;
+		pathQ.flags = static_cast<PathQueryFlags>(0x40803);
+	}
+
+	if (d20a->d20Caf & D20CAF_TRUNCATED)
+	{
+		auto asdf = &pathQ.flags;
+		*((int*)asdf) |= 0x80000;
+	}
+
+	if (d20aCopy.path && d20aCopy.path >= pathfindingSys.pathQArray && d20aCopy.path < &pathfindingSys.pathQArray[pfCacheSize]) d20aCopy.path->occupiedFlag = 0; // frees the last path used in the d20a
+
+	for (int i = 0; i < pfCacheSize; i++)
+	{
+		if (pathfindingSys.pathQArray[i].occupiedFlag == 0)
+		{
+			pathfindingSys.pathQArray[i].occupiedFlag = 1;
+			pqResult = &pathfindingSys.pathQArray[i];
+			break;
+		}
+	}
+	if (!pqResult) return 0x9;
+	d20aCopy.path = pqResult;
+	*pathfindingSys.pathSthgFlag_10B3D5C8 = 0;
+	if (! pathfinding->FindPath(&pathQ, pqResult))
+	{
+		if (pqResult->flags & 0x10) *pathfindingSys.pathSthgFlag_10B3D5C8 = 1;
+		hooked_print_debug_message("\nFAILED PATH...");
+		if (pqResult >= pathfindingSys.pathQArray && pqResult < &pathfindingSys.pathQArray[pfCacheSize]) pqResult->occupiedFlag = 0;
+		return 0x9;
+	}
+	
+	auto distTraversed = pathfinding->pathDistBtwnToAndFrom(pqResult);
+	d20aCopy.locAndOff = pqResult->to;
+	d20aCopy.distTraversed = distTraversed;
+
+	if (distTraversed < 0.1) return 0;
+	if (!combat->isCombatActive()){	d20aCopy.distTraversed = 0;		distTraversed = 0.0;	}
+
+	float dist2 = 0;
+	if (sub_1008B8A0(d20a, &actnSthgCopy, &dist2))
+	{
+		if (dist2 < 0.1)	{releasePath(d20aCopy.path);	return 0x8;	}
+		if (static_cast<long double>(dist2) < distTraversed)
+		{
+			auto temp = 1;;
+			if (sub_1008B9A0(&d20aCopy, dist2, &pathQ)){ releasePath(d20aCopy.path); return temp; }
+			pqResult = d20aCopy.path;
+			distTraversed = dist2;
+		}
+	}
+	if (flagSthg)
+	{
+		dist2 = dispatch.Dispatch29hMovementSthg(d20aCopy.d20APerformer, nullptr);
+		if (!(d20aCopy.d20Caf & D20CAF_RANGED))
+		{
+			if (distTraversed > (long double)actnSthgCopy.floaSthg)
+			{
+				if (dist2 + dist2 + actnSthgCopy.floaSthg < (long double)distTraversed){ releasePath(pqResult); return 8; }
+				if (actnSthgCopy.floaSthg + dist2 < (long double)distTraversed){ d20aCopy.d20ActType = D20A_DOUBLE_MOVE; goto LABEL_53; }
+				else if (distTraversed <= 5.0)
+				{
+					if (d20a->d20ActType)
+					{
+						d20->d20Defs[d20a->d20ActType].moveFunc(d20a, &actnSthgCopy, &locAndOffCopy);
+						if (locAndOffCopy.location.locx == 4 || !actnSthgCopy.field_B14) //BUG? TODO
+						{
+							d20aCopy.d20ActType = D20A_5FOOTSTEP; goto LABEL_53;
+						}
+					} else if (!actnSthgCopy.field_B14)
+					{
+						d20aCopy.d20ActType = D20A_5FOOTSTEP;
+						if (!(actnSthgCopy.callActionFrameFlags & 6)){	goto LABEL_53; }
+					}
+				}
+
+			}
+			d20aCopy.d20ActType = D20A_MOVE;
+			goto LABEL_53;
+		} 
+		else if (dist2 + dist2 >= (long double)distTraversed){ d20aCopy.d20ActType = D20A_RUN;	goto LABEL_53; }
+		else	{	releasePath(pqResult); return 8;	}
+	}
+
+LABEL_53: actSeq->performerLoc = pqResult->to;
+	CmbtIntrpts str84;
+	str84.numItems = 0;
+	IntrrptSthgsub_100939D0(&d20aCopy, &str84);
+	sub_1008BB40(actSeq, &d20aCopy);
+	updateDistTraversed(actSeq);
+	return 0;
+}
+
+void ActionSequenceSystem::releasePath(PathQueryResult* pqr)
+{
+	if (pqr)
+	{
+		if (pqr >= pathfinding->pathQArray && pqr < &pathfinding->pathQArray[pfCacheSize])
+		{
+			pqr->occupiedFlag = 0;
+		}
+	}
+}
+
+void ActionSequenceSystem::addReadiedInterrupts(ActnSeq* actSeq, CmbtIntrpts* intrpts)
+{
+	D20Actn d20aNew;
+	int32_t intrptNum = intrpts->numItems;
+	if (intrptNum <= 0) return;
+	
+	d20aNew.d20ATarget = actSeq->performer;
+	d20aNew.d20Caf = (D20CAF)0;
+	d20aNew.d20ActType = D20A_READIED_INTERRUPT;
+	d20aNew.data1 = 1;
+	d20aNew.path = nullptr;
+	IntrptSthg * intrptSthg ;
+	for (int i = 0; i < intrptNum; i++)
+	{
+		intrptSthg = intrpts->field0[i];
+		d20aNew.d20APerformer = intrptSthg->interrupter;
+		memcpy(&(actSeq->d20ActArray[actSeq->d20ActArrayNum]), &d20aNew, sizeof(d20aNew));
+		++actSeq->d20ActArrayNum;
+	}
+}
+
+void ActionSequenceSystem::updateDistTraversed(ActnSeq* actSeq)
+{
+	PathQueryResult * path;
+	int numd20s = actSeq->d20ActArrayNum;
+	for (int i = 0; i < numd20s; i++)
+	{
+		path = actSeq->d20ActArray[i].path;
+		if (path){	actSeq->d20ActArray[i].distTraversed = pathfinding->pathDistBtwnToAndFrom(path);	}
+	}
 }
 
 uint32_t ActionSequenceSystem::actSeqOkToPerform()
@@ -113,7 +321,22 @@ uint32_t ActionSequenceSystem::actSeqOkToPerform()
 	return 1;
 }
 
-uint32_t ActionSequenceSystem::sub_10093950(D20Actn* d20a, void* iO)
+void ActionSequenceSystem::sub_1008BB40(ActnSeq* actSeq, D20Actn* d20a)
+{
+	macAsmProl;
+	__asm{
+		mov ecx, this;
+		mov esi, [ecx]._sub_1008BB40;
+		mov eax, d20a;
+		push eax;
+		mov ebx, actSeq;
+		call esi;
+		add esp, 4;
+	}
+	macAsmEpil;
+}
+
+unsigned ActionSequenceSystem::sub_10093950(D20Actn* d20a, ActnSthg* actnSthg)
 {
 	uint32_t result = 0;
 	__asm{
@@ -121,7 +344,7 @@ uint32_t ActionSequenceSystem::sub_10093950(D20Actn* d20a, void* iO)
 		push ecx;
 		push ebx;
 		mov ecx, this;
-		mov esi, iO;
+		mov esi, actnSthg;
 		push esi;
 		mov esi, [ecx]._sub_10093950;
 		mov ebx, d20a;
@@ -161,6 +384,48 @@ uint32_t ActionSequenceSystem::sub_10096450(ActnSeq* actSeq, uint32_t idx ,void 
 		pop esi;
 	}
 	return result;
+}
+
+uint32_t ActionSequenceSystem::seqCheckFuncs(ActnSthg* actnSthg)
+{
+	LocAndOffsets seqPerfLoc;
+	ActnSeq * curSeq = *actSeqCur;
+	uint32_t result = 0;
+	
+	if (!curSeq){	memset(actnSthg, 0, sizeof(ActnSthg));		return 0;	}
+
+	memcpy(actnSthg, &curSeq->actnSthgField, sizeof(ActnSthg));
+	objects.loc->getLocAndOff(curSeq->performer, &seqPerfLoc);
+	for (int32_t i = 0; i < curSeq->d20ActArrayNum; i++)
+	{
+		auto d20type = curSeq->d20ActArray[i].d20ActType;
+
+		auto tgtCheckFunc = d20->d20Defs[d20type].tgtCheckFunc;
+		if (tgtCheckFunc){	result = tgtCheckFunc(&curSeq->d20ActArray[i], actnSthg);	if (result) break;		}
+		
+		auto d20a = &curSeq->d20ActArray[i];
+		result = sub_10093950(d20a, actnSthg);
+		if (result)	{ actnSthg->field_B34__errCodeApparently = result;	break;	} 
+
+		auto actCheckFunc = d20->d20Defs[d20a->d20ActType].actionCheckFunc;
+		if (actCheckFunc)	{	result = actCheckFunc(d20a, actnSthg);		if (result) break;		}
+
+		auto locCheckFunc = d20->d20Defs[d20type].locCheckFunc;
+		if (locCheckFunc){	result = locCheckFunc(d20a, actnSthg, &seqPerfLoc); if (result) break;	}
+
+		auto path = curSeq->d20ActArray[i].path;
+		if (path)
+		{
+			seqPerfLoc.location.locx = path->to.location.locx;
+			seqPerfLoc.location.locy = path->to.location.locy;
+			seqPerfLoc.off_x = path->to.off_x;
+			seqPerfLoc.off_y = path->to.off_y;
+		}
+	}
+	if (!*actSeqCur){ memset(actnSthg, 0, sizeof(ActnSthg)); }
+	memcpy(actnSthg, &(*actSeqCur)->actnSthgField, sizeof(ActnSthg));
+	return result;
+
 }
 
 void ActionSequenceSystem::AOOSthgSub_10097D50(objHndl objHnd1, objHndl objHnd2)
@@ -226,7 +491,7 @@ uint32_t ActionSequenceSystem::combatTriggerSthg(ActnSeq* actSeq)
 	return result;
 }
 
-uint32_t ActionSequenceSystem::seqCheckAction(D20Actn* d20a, void* iO)
+uint32_t ActionSequenceSystem::seqCheckAction(D20Actn* d20a, ActnSthg* iO)
 {
 	uint32_t a = sub_10093950(d20a, iO);
 	if (a)
@@ -514,7 +779,7 @@ uint32_t _addSeqSimple(D20Actn* d20a, ActnSeq * actSeq)
 	return actSeqSys.addSeqSimple(d20a, actSeq);
 }
 
-uint32_t _seqCheckAction(D20Actn* d20a, void* iO)
+uint32_t _seqCheckAction(D20Actn* d20a, ActnSthg* iO)
 {
 	return actSeqSys.seqCheckAction(d20a, iO);
 }
@@ -538,5 +803,44 @@ void _actionPerform()
 uint32_t _isSimultPerformer(objHndl objHnd)
 {
 	return actSeqSys.isSimultPerformer(objHnd);
+}
+
+uint32_t _seqCheckFuncs(ActnSthg* actnSthg)
+{
+	return actSeqSys.seqCheckFuncs(actnSthg);
+}
+
+
+uint32_t __cdecl _moveSeqD20SthgCdecl(D20Actn* d20a, ActnSeq* actSeq, ActnSthg* actnSthg, float distSthg, float reach, int flagSthg)
+{
+	return actSeqSys.moveSeqD20Sthg(d20a, actSeq, actnSthg, distSthg, reach, flagSthg);
+};
+
+uint32_t __declspec(naked) _moveSeqD20SthgUsercallWrapper(ActnSeq* actSeq, ActnSthg* actnSthg, float distSthg, float reach, int flagSthg)
+{ //, D20_Action *d20aIn@<eax>
+	macAsmProl;
+	__asm{
+		mov ebx, flagSthg;
+		push ebx;
+		mov edi, reach;
+		push edi;
+		mov ebx, distSthg;
+		push ebx;
+		mov edi, actnSthg;
+		push edi;
+		mov ebx, actSeq;
+		push ebx;
+		push eax;
+		mov eax, _moveSeqD20SthgCdecl;
+		call eax;
+		add esp, 24; // result should be in eax already
+	}
+	macAsmEpil
+		__asm retn;
+}
+
+uint32_t _unspecifiedMoveAddToSeq(D20Actn* d20a, ActnSeq* actSeq, ActnSthg* actnSthg)
+{
+	return actSeqSys.moveSeqD20Sthg(d20a, actSeq, actnSthg, 0.0, 0.0, 1);
 }
 #pragma endregion

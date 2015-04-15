@@ -38,6 +38,28 @@ void  DispatcherSystem::DispatcherClearConds(Dispatcher *dispatcher)
 	_DispatcherClearConds(dispatcher);
 }
 
+float DispatcherSystem::Dispatch29hMovementSthg(objHndl objHnd, void* iO)
+{
+	float result = 30.0;
+	uint32_t objHndLo = (uint32_t)(objHnd & 0xffffFFFF);
+	uint32_t objHndHi = (uint32_t)((objHnd >>32) & 0xffffFFFF);
+	macAsmProl;
+	__asm{
+		mov ecx, this;
+		mov esi, [ecx]._Dispatch29hMovementSthg;
+		mov eax, iO;
+		push eax;
+		mov eax, objHndHi;
+		push eax;
+		mov eax, objHndLo;
+		push eax;
+		call esi;
+		add esp, 12;
+		fstp result;
+	}
+	macAsmEpil
+	return result;
+}
 #pragma endregion
 
 class DispatcherReplacements : public TempleFix {
