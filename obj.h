@@ -14,6 +14,7 @@ struct FloatLineSystem;
 //forward decl
 struct LocationSys;
 struct Pathfinding;
+struct FieldDataMax { uint32_t data[8]; }; // for wrapping "objSetField" calls that get input by value; this is the largest data size that I know of
 
 
 struct Objects : AddressTable {
@@ -22,8 +23,10 @@ struct Objects : AddressTable {
 	uint32_t GetFlags(objHndl obj) {
 		return _GetInternalFieldInt32(obj, obj_f_flags);
 	}
-	uint32_t GetInt32(objHndl obj, obj_f fieldIdx);
-	void SetInt32(objHndl obj, obj_f fieldIdx, uint32_t dataIn);
+	uint32_t getInt32(objHndl obj, obj_f fieldIdx);
+	void setInt32(objHndl obj, obj_f fieldIdx, uint32_t dataIn);
+	void setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, FieldDataMax data);
+	int32_t getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx);
 	uint32_t abilityScoreLevelGet(objHndl, Stat, DispIO *);
 
 #pragma region Common
@@ -87,6 +90,7 @@ struct Objects : AddressTable {
 	void PropFetcher(GameObjectBody* objBody, obj_f fieldIdx, void * dataOut);
 
 	void InsertDataIntoInternalStack(GameObjectBody * objBody, obj_f fieldIdx, void * dataIn);
+
 #pragma endregion 
 
 
@@ -94,18 +98,26 @@ struct Objects : AddressTable {
 	Objects();
 #pragma region Privates
 private:
+	void setArrayFieldLowLevel(GameObjectBody * objBody, void * sourceData, obj_f fieldIdx, uint32_t subIdx);
+	void fieldNonexistantDebug(objHndl obj, GameObjectBody* objBody, obj_f fieldIdx, uint32_t objType, char* accessType);
+	void getArrayFieldInternal(GameObjectBody * objBody, void * outAddr, obj_f fieldIdx, uint32_t subIdx); // _nFieldIdx@<eax>, _nFieldSubIdx@<ecx>
+
 	int(__cdecl *_GetInternalFieldInt32)(objHndl ObjHnd, int nFieldIdx);
 	int64_t(__cdecl *_GetInternalFieldInt64)(objHndl ObjHnd, int nFieldIdx);
 	int32_t(__cdecl *_StatLevelGet)(objHndl ObjHnd, Stat);
 	void(__cdecl *_SetInternalFieldInt32)(objHndl objHnd, obj_f fieldIdx, uint32_t data32);
+	void(__cdecl * _setArrayFieldLowLevel)(obj_f fieldIdx, uint32_t subIdx); // GameObjectBody *@<ecx>, sourceData *@<eax>
 	bool(__cdecl * _IsPlayerControlled)(objHndl objHnd);
 	uint32_t(__cdecl *_ObjGetProtoNum)(objHndl);
 	uint32_t(__cdecl *_IsObjDeadNullDestroyed)(objHndl);
 	GameObjectBody * (__cdecl *_GetMemoryAddress)(objHndl ObjHnd);
 	bool(__cdecl *_DoesObjectFieldExist)();
 	void(__cdecl * _ObjectPropFetcher)();
+	void (__cdecl *_getArrayFieldInternal)(GameObjectBody * objBody, void * out); // _nFieldIdx@<eax>, _nFieldSubIdx@<ecx>
 	char ** _DLLFieldNames;
 	void(__cdecl * _InsetDataIntoInternalStack)();//(int nFieldIdx, void *, ToEEObjBody *@<eax>);
+
+	
 #pragma endregion
 } ;
 
@@ -116,3 +128,5 @@ extern Objects objects;
 uint32_t _obj_get_int(objHndl obj, obj_f fieldIdx);
 void _obj_set_int(objHndl obj, obj_f fieldIdx, uint32_t dataIn);
 uint32_t _abilityScoreLevelGet(objHndl obj, Stat abScore, DispIO * dispIO);
+void _setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, FieldDataMax data);
+int32_t _getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx);

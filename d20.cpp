@@ -280,6 +280,7 @@ void __cdecl D20SpellDataSetSpontCast(D20SpellData* d20SpellData, SpontCastType 
 
 void _D20StatusInit(objHndl objHnd)
 {
+	static int debugLol = 0;
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (dispatcher != nullptr && (uint32_t)dispatcher != 0xFFFFFFFF)
 	{
@@ -292,12 +293,22 @@ void _D20StatusInit(objHndl objHnd)
 
 	objects.dispatch.DispatcherClearAttribs(dispatcher);
 	
+	if (objects.IsCritter(objHnd))
+	{
+		objects.d20.D20StatusInitClass(objHnd);
 
-	objects.d20.D20StatusInitClass(objHnd);
+		objects.d20.D20StatusInitRace(objHnd);
 
-	objects.d20.D20StatusInitRace(objHnd);
+		objects.d20.D20StatusInitFeats(objHnd);
 
-	objects.d20.D20StatusInitFeats(objHnd);
+	} else
+	{
+		debugLol ++;
+		if (debugLol % 1000 == 1)
+		{
+			auto lololol = 0;
+		}
+	}
 
 	objects.d20.D20StatusInitItemConditions(objHnd);
 
@@ -312,7 +323,7 @@ void _D20StatusInit(objHndl objHnd)
 		if (! objects.IsDeadNullDestroyed(objHnd))
 		{
 			uint32_t hpCur = objects.StatLevelGet(objHnd, stat_hp_current);
-			uint32_t subdualDam = objects.GetInt32(objHnd, obj_f_critter_subdual_damage);
+			uint32_t subdualDam = objects.getInt32(objHnd, obj_f_critter_subdual_damage);
 
 			if ( (uint32_t)hpCur != 0xFFFF0001)
 			{
@@ -410,7 +421,7 @@ void _D20StatusInitClass(objHndl objHnd)
 			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionBardicMusic);
 		}
 
-		if (objects.GetInt32(objHnd, obj_f_critter_school_specialization) & 0xFF)
+		if (objects.getInt32(objHnd, obj_f_critter_school_specialization) & 0xFF)
 		{
 			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionSchoolSpecialization);
 		}
@@ -420,8 +431,8 @@ void _D20StatusInitClass(objHndl objHnd)
 void _D20StatusInitDomains(objHndl objHnd)
 {
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
-	uint32_t domain_1 = objects.GetInt32(objHnd, obj_f_critter_domain_1);
-	uint32_t domain_2 = objects.GetInt32(objHnd, obj_f_critter_domain_2);
+	uint32_t domain_1 = objects.getInt32(objHnd, obj_f_critter_domain_1);
+	uint32_t domain_2 = objects.getInt32(objHnd, obj_f_critter_domain_2);
 	
 	if (domain_1)
 	{
@@ -445,7 +456,7 @@ void _D20StatusInitDomains(objHndl objHnd)
 		}
 	}
 
-	auto alignmentchoice = objects.GetInt32(objHnd, obj_f_critter_alignment_choice);
+	auto alignmentchoice = objects.getInt32(objHnd, obj_f_critter_alignment_choice);
 	if (alignmentchoice == 2)
 	{
 		_ConditionAddToAttribs_NumArgs2(dispatcher, conds.ConditionTurnUndead, 1, 0);
@@ -488,11 +499,11 @@ void _D20StatusInitItemConditions(objHndl objHnd)
 		objects.dispatch.DispatcherClearItemConds(dispatcher);
 		if (!objects.d20.d20Query(objHnd, DK_QUE_Polymorphed))
 		{
-			uint32_t invenCount = objects.GetInt32(objHnd, obj_f_critter_inventory_num);
+			uint32_t invenCount = objects.getInt32(objHnd, obj_f_critter_inventory_num);
 			for (uint32_t i = 0; i < invenCount; i++)
 			{
 				objHndl objHndItem = templeFuncs.Obj_Get_IdxField_ObjHnd(objHnd, obj_f_critter_inventory_list_idx, i);
-				uint32_t itemInvocation = objects.GetInt32(objHndItem, obj_f_item_inv_location);
+				uint32_t itemInvocation = objects.getInt32(objHndItem, obj_f_item_inv_location);
 				if (inventory.IsItemEffectingConditions(objHndItem, itemInvocation))
 				{
 					inventory.sub_100FF500(dispatcher, objHndItem, itemInvocation);

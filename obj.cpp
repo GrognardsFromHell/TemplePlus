@@ -25,6 +25,8 @@ public:
 		replaceFunction(0x1009E1D0, _obj_get_int);
 		replaceFunction(0x100A0190, _obj_set_int);
 		replaceFunction(0x1004E7F0, _abilityScoreLevelGet);
+		macReplaceFun(100A1310, _setArrayFieldByValue)
+		macReplaceFun(1009E5C0, _getArrayFieldInt32)
 	}
 } objReplacements;
 
@@ -79,60 +81,61 @@ static struct ObjInternal : AddressTable {
 
 #pragma region Objects implementation
 
-uint32_t Objects::GetInt32(objHndl obj, obj_f fieldIdx)
+uint32_t Objects::getInt32(objHndl obj, obj_f fieldIdx)
 {
 	GameObjectBody * objBody = _GetMemoryAddress(obj);
 	uint32_t objType = objBody->type;
 	uint32_t dataOut[8] = {0,0,0,0, 0,0,0,0}; // so the game doesn't crash when the naive modder tries to read a non-32bit field at least ;)
 	if (!DoesTypeSupportField(objBody->type, fieldIdx))
 	{
-		hooked_print_debug_message("GetInt32 Error: Accessing non-existant field [%s: %d] in object type [%d].", _DLLFieldNames[fieldIdx] , fieldIdx, objType); // TODO: replace this with the corrected FieldNames. Fucking std::string, how does it work???
-		uint32_t subtype = objBody->id.subtype;
-		if (subtype == 1)
-		{
-			hooked_print_debug_message("Sonavabitch proto is %d", objBody->id.guid.Data1);
-		}
-		else if (subtype == 2){
-			hooked_print_debug_message("Sonavabitch proto is %d", ObjGetProtoNum(obj));
-		}
+		fieldNonexistantDebug(obj, objBody, fieldIdx, objType, "getInt32");
 		return 0;
 	}
 	if (fieldIdx == obj_f_type){ return objType; }
 	PropFetcher(objBody, fieldIdx, dataOut);
 	return dataOut[0];
-	
 }
 
 
-void Objects::SetInt32(objHndl obj, obj_f fieldIdx, uint32_t dataIn)
+void Objects::setInt32(objHndl obj, obj_f fieldIdx, uint32_t dataIn)
 {
 	GameObjectBody * objBody = _GetMemoryAddress(obj);
 	uint32_t objType = objBody->type;
 	uint32_t dataOut[8] = { 0, 0, 0, 0, 0, 0, 0, 0 }; // so the game doesn't crash when the naive modder tries to read a non-32bit field at least ;)
 	if (!DoesTypeSupportField(objBody->type, fieldIdx))
 	{
-		hooked_print_debug_message("SetInt32 Error: Accessing non-existant field [%s: %d] in object type [%d].", _DLLFieldNames[fieldIdx], fieldIdx, objType); // TODO: replace this with the corrected FieldNames. Fucking std::string, how does it work???. Not a big deal actually since the early fields exist for all objects.
-		uint32_t subtype = objBody->id.subtype;
-		uint32_t protonum = 0;
-		if (subtype == 1)
-		{
-			protonum = objBody->id.guid.Data1;
-			
-		}
-		else if (subtype == 2){
-
-			protonum = ObjGetProtoNum(obj);
-		}
-		hooked_print_debug_message("Sonavabitch proto is %d", protonum);
-		if (protonum < 12624 || protonum > 12680)
-		{
-			uint32_t dummy = 0;
-		}
-		
+		fieldNonexistantDebug(obj, objBody, fieldIdx, objType, "setInt32");
 		return ;
 	}
 	InsertDataIntoInternalStack(objBody, fieldIdx, &dataIn);
 	return;
+}
+
+void Objects::setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, FieldDataMax data)
+{
+	GameObjectBody * objBody = _GetMemoryAddress(obj);
+	uint32_t objType = objBody->type;
+	if (!DoesTypeSupportField(objBody->type, fieldIdx))
+	{
+		fieldNonexistantDebug(obj, objBody, fieldIdx, objType, "setArrayFieldByValue");
+		return;
+	}
+	setArrayFieldLowLevel(objBody, &data, fieldIdx, subIdx);
+	return;
+}
+
+int32_t Objects::getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx)
+{
+	GameObjectBody * objBody = _GetMemoryAddress(obj);
+	uint32_t objType = objBody->type;
+	uint32_t dataOut[8] = { 0, 0, 0, 0, 0, 0, 0, 0 }; // so the game doesn't crash when the naive modder tries to read a non-32bit field at least ;)
+	if (!DoesTypeSupportField(objBody->type, fieldIdx))
+	{
+		fieldNonexistantDebug(obj, objBody, fieldIdx, objType, "getArrayFieldInt32");
+		return 0;
+	}
+	getArrayFieldInternal(objBody, dataOut, fieldIdx, subIdx);
+	return dataOut[0];
 }
 
 void Objects::InsertDataIntoInternalStack(GameObjectBody * objBody, obj_f fieldIdx, void * dataIn)
@@ -165,12 +168,14 @@ Objects::Objects()
 	rebase(_GetInternalFieldInt64, 0x1009E2E0);
 	rebase(_StatLevelGet, 0x10074800);
 	rebase(_SetInternalFieldInt32, 0x100A0190);
+	macRebase(_setArrayFieldLowLevel, 100A0500)
 	rebase(_IsPlayerControlled, 0x1002B390);
 	rebase(_ObjGetProtoNum, 0x10039320);
 	rebase(_IsObjDeadNullDestroyed, 0x1007E650);
 	rebase(_GetMemoryAddress, 0x100C2A70);
 	rebase(_DoesObjectFieldExist, 0x1009C190);
 	rebase(_ObjectPropFetcher, 0x1009CD40);
+	macRebase(_getArrayFieldInternal, 1009CEB0)
 	rebase(_DLLFieldNames, 0x102CD840);
 	rebase(_InsetDataIntoInternalStack, 0x1009EA80);
 }
@@ -190,6 +195,55 @@ void Objects::PropFetcher(GameObjectBody* objBody, obj_f fieldIdx, void * dataOu
 		pop ecx;
 		pop esi;
 	}
+}
+
+void Objects::setArrayFieldLowLevel(GameObjectBody* objBody, void* sourceData, obj_f fieldIdx, uint32_t subIdx)
+{
+	macAsmProl;
+	__asm{
+		mov ecx, this;
+		mov esi, [ecx]._setArrayFieldLowLevel;
+		mov eax, subIdx;
+		push eax;
+		mov ebx, fieldIdx;
+		push ebx;
+		mov ecx, objBody;
+		mov eax, sourceData;
+		call esi;
+		add esp, 8;
+	}
+	macAsmEpil;
+}
+
+void Objects::fieldNonexistantDebug(unsigned long long obj, GameObjectBody* objBody, obj_f fieldIdx, unsigned objType, char* accessType)
+{
+	hooked_print_debug_message("%s Error: Accessing non-existant field [%s: %d] in object type [%d].",accessType, _DLLFieldNames[fieldIdx], fieldIdx, objType); // TODO: replace this with the corrected FieldNames. Fucking std::string, how does it work???. Not a big deal actually since the early fields exist for all objects.
+	uint32_t subtype = objBody->id.subtype;
+	uint32_t protonum = 0;
+	if (subtype == 1)	protonum = objBody->id.guid.Data1;
+	else if (subtype == 2)	protonum = ObjGetProtoNum(obj);
+	hooked_print_debug_message("Sonavabitch proto is %d", protonum);
+	if (protonum < 12624 || protonum > 12680)
+	{
+		uint32_t breakpointDummy = 0;
+	}
+}
+
+void Objects::getArrayFieldInternal(GameObjectBody* objBody, void* outAddr, obj_f fieldIdx, uint32_t subIdx)
+{
+	macAsmProl;
+	macAsmThis(getArrayFieldInternal)
+	__asm{
+		mov eax, fieldIdx;
+		mov ecx, subIdx;
+		mov ebx, outAddr;
+		push ebx;
+		mov edi, objBody;
+		push edi;
+		call esi;
+		add esp, 8;
+	}
+	macAsmEpil
 }
 
 uint32_t Objects::DoesTypeSupportField(uint32_t objType, _fieldIdx objField) {
@@ -318,12 +372,12 @@ uint32_t Objects::StatLevelGet(objHndl obj, Stat stat)
 
 uint32_t _obj_get_int(objHndl obj, obj_f fieldIdx)
 {
-	return objects.GetInt32(obj, fieldIdx);
+	return objects.getInt32(obj, fieldIdx);
 }
 
 void _obj_set_int(objHndl obj, obj_f fieldIdx, uint32_t dataIn)
 {
-	objects.SetInt32(obj, fieldIdx, dataIn);
+	objects.setInt32(obj, fieldIdx, dataIn);
 }
 
 uint32_t _abilityScoreLevelGet(objHndl obj, Stat abScore, DispIO * dispIO)
@@ -331,4 +385,14 @@ uint32_t _abilityScoreLevelGet(objHndl obj, Stat abScore, DispIO * dispIO)
 	return objects.abilityScoreLevelGet(obj, abScore, dispIO);
 }
 
+
+void _setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, FieldDataMax data)
+{
+	objects.setArrayFieldByValue(obj, fieldIdx, subIdx, data);
+}
+
+int32_t _getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx)
+{
+	return objects.getArrayFieldInt32(obj, fieldIdx, subIdx);
+}
 #pragma endregion

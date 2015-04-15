@@ -47,6 +47,8 @@ struct ActionSequenceSystem : AddressTable
 	void sub_1008BB40(ActnSeq*actSeq, D20Actn * d20a); // actSeq@<ebx>
 	uint32_t sub_10093950(D20Actn* d20a, ActnSthg* iO);
 	uint32_t sub_10096450(ActnSeq * actSeq, uint32_t idx, void* iO);
+	
+	uint32_t (__cdecl *seqCheckFuncssub_10094CA0)(ActnSthg *actnSthg);
 	uint32_t seqCheckFuncs(ActnSthg *actnSthg);
 	void AOOSthgSub_10097D50(objHndl, objHndl);
 	int32_t AOOSthg2_100981C0(objHndl);
@@ -57,7 +59,7 @@ struct ActionSequenceSystem : AddressTable
 	unsigned seqCheckAction(D20Actn* d20a, ActnSthg* iO);
 	uint32_t curSeqNext();
 	void actionPerform();
-	void actionPerformRecursion();
+	void sequencePerform();
 	bool projectileCheckBeforeNextAction();
 	uint32_t actSeqSpellHarmful(ActnSeq* actSeq);
 	uint32_t isSimultPerformer(objHndl);
@@ -92,10 +94,10 @@ extern ActionSequenceSystem actSeqSys;
 
 struct ActnSthg
 {
-	uint32_t field_B14;
+	uint32_t hourglassState; // 4 - full action remaining; 2 - single action remaining; 1 - move action remaining
 	D20CAF callActionFrameFlags;
 	uint32_t idxSthg;
-	float floaSthg;
+	float remainingMoveDistance; // for a "single move" (half hourglass); and then only if currently sequencing a move action (otherwise it's 0)
 	uint32_t field_B24;
 	uint32_t field_B28;
 	uint32_t field_B2C;
@@ -146,6 +148,7 @@ uint32_t _isPerforming(objHndl objHnd);
 uint32_t _actSeqOkToPerform();
 void _actionPerform();
 uint32_t _isSimultPerformer(objHndl objHnd);
-uint32_t _seqCheckFuncs(ActnSthg *actnSthg);
+uint32_t _seqCheckFuncsCdecl(ActnSthg *actnSthg);
 uint32_t _moveSeqD20SthgUsercallWrapper(ActnSeq *actSeq, ActnSthg *actnSthg, float distSthg, float reach, int flagSthg); //, D20_Action *d20aIn@<eax>
 uint32_t _unspecifiedMoveAddToSeq(D20Actn *d20a, ActnSeq *actSeq, ActnSthg *actnSthg);
+void _actionPerformRecursion();

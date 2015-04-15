@@ -23,6 +23,9 @@
 
 #define macRebase(funName , b) rebase(funName, 0x##b); 
 #define macReplaceFun(b, funName) replaceFunction(0x##b, funName); 
+#define macAsmThis(funName) {\
+	__asm mov ecx, this\
+	__asm mov esi, [ecx]._##funName }
 
 # pragma region Standard Structs
 

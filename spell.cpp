@@ -81,7 +81,7 @@ uint32_t SpellSystem::getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t c
 
 uint32_t SpellSystem::getWizSchool(objHndl objHnd)
 {
-	return ( objects.GetInt32(objHnd, obj_f_critter_school_specialization) & 0x000000FF );
+	return ( objects.getInt32(objHnd, obj_f_critter_school_specialization) & 0x000000FF );
 }
 
 uint32_t SpellSystem::getStatModBonusSpellCount(objHndl objHnd, uint32_t classCode, uint32_t slotLvl)

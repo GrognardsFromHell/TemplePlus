@@ -739,9 +739,9 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 	 }
 
 	 // war domain
-	 uint32_t objDeity= objects.GetInt32(objHnd, obj_f_critter_deity);
-	 uint32_t domain_1 = objects.GetInt32(objHnd, obj_f_critter_domain_1);
-	 uint32_t domain_2 = objects.GetInt32(objHnd, obj_f_critter_domain_2);
+	 uint32_t objDeity= objects.getInt32(objHnd, obj_f_critter_deity);
+	 uint32_t domain_1 = objects.getInt32(objHnd, obj_f_critter_domain_1);
+	 uint32_t domain_2 = objects.getInt32(objHnd, obj_f_critter_domain_2);
 	 if (domain_1 == 21 || domain_2 == 21) // must be war domain
 	 {
 		 switch (objDeity)
@@ -778,13 +778,13 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 	 else if (featEnum == FEAT_TURN_UNDEAD
 		 && (objects.StatLevelGet(objHnd, stat_level_cleric) >= 1 
 		     || objects.StatLevelGet(objHnd, stat_level_paladin) >= 4)
-		 && objects.GetInt32(objHnd, obj_f_critter_alignment_choice) == 1)
+		 && objects.getInt32(objHnd, obj_f_critter_alignment_choice) == 1)
 	 {
 		 return 1;
 	 } 
 	 else if (featEnum == FEAT_REBUKE_UNDEAD 
 		 && objects.StatLevelGet(objHnd, stat_level_cleric) >= 1 
-		 && objects.GetInt32(objHnd, obj_f_critter_alignment_choice) == 2)
+		 && objects.getInt32(objHnd, obj_f_critter_alignment_choice) == 2)
 	 {
 		 return 1;
 	 }
