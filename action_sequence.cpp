@@ -32,7 +32,7 @@ public:
 		
 		
 		//macReplaceFun(10094F70, _moveSeqD20SthgUsercallWrapper)
-		macReplaceFun(10095860, _unspecifiedMoveAddToSeq)
+		//macReplaceFun(10095860, _unspecifiedMoveAddToSeq)
 		
 	}
 } actSeqReplacements;
@@ -136,17 +136,18 @@ void ActionSequenceSystem::IntrrptSthgsub_100939D0(D20Actn* d20a, CmbtIntrpts* s
 	macAsmEpil;
 }
 
-uint32_t ActionSequenceSystem::moveSeqD20Sthg(D20Actn* d20aIn, ActnSeq* actSeq, ActnSthg* actnSthg, float distToTgt, float reach, int flagSthg)
+uint32_t ActionSequenceSystem::moveSeqD20Sthg(D20Actn* d20aIn, ActnSeq* actSeq, TurnBasedStatus* tbStat, float distToTgt, float reach, int flagSthg)
 {
 	D20Actn d20aCopy;
-	ActnSthg actnSthgCopy;
+	TurnBasedStatus tbStatCopy;
 	PathQuery pathQ;
 	PathQueryResult * pqResult = nullptr;
 	LocAndOffsets locAndOffCopy = d20aIn->locAndOff;
+	LocAndOffsets * actSeqPerfLoc;
 
 	
-	memcpy(&actnSthgCopy, actnSthg, sizeof(ActnSthg));
-	seqCheckFuncs(&actnSthgCopy);
+	memcpy(&tbStatCopy, tbStat, sizeof(TurnBasedStatus));
+	seqCheckFuncs(&tbStatCopy);
 
 	if (d20->d20Query(d20aIn->d20APerformer, DK_QUE_Prone))
 	{
@@ -159,6 +160,8 @@ uint32_t ActionSequenceSystem::moveSeqD20Sthg(D20Actn* d20aIn, ActnSeq* actSeq, 
 	memcpy(&d20aCopy, d20aIn, sizeof(D20Actn));
 	auto d20a = d20aIn;
 
+
+	actSeqPerfLoc = &actSeq->performerLoc;
 	pathQ.critter = d20aCopy.d20APerformer;
 	pathQ.from = actSeq->performerLoc;
 
@@ -185,7 +188,9 @@ uint32_t ActionSequenceSystem::moveSeqD20Sthg(D20Actn* d20aIn, ActnSeq* actSeq, 
 		*((int*)asdf) |= 0x80000;
 	}
 
-	if (d20aCopy.path && d20aCopy.path >= pathfindingSys.pathQArray && d20aCopy.path < &pathfindingSys.pathQArray[pfCacheSize]) d20aCopy.path->occupiedFlag = 0; // frees the last path used in the d20a
+
+	if (d20aCopy.path && d20aCopy.path >= pathfindingSys.pathQArray && d20aCopy.path < &pathfindingSys.pathQArray[pfCacheSize]) 
+		d20aCopy.path->occupiedFlag = 0; // frees the last path used in the d20a
 
 	for (int i = 0; i < pfCacheSize; i++)
 	{
@@ -196,8 +201,9 @@ uint32_t ActionSequenceSystem::moveSeqD20Sthg(D20Actn* d20aIn, ActnSeq* actSeq, 
 			break;
 		}
 	}
-	if (!pqResult) return 0x9;
 	d20aCopy.path = pqResult;
+	if (!pqResult) return 0x9;
+
 	*pathfindingSys.pathSthgFlag_10B3D5C8 = 0;
 	if (! pathfinding->FindPath(&pathQ, pqResult))
 	{
@@ -215,7 +221,7 @@ uint32_t ActionSequenceSystem::moveSeqD20Sthg(D20Actn* d20aIn, ActnSeq* actSeq, 
 	if (!combat->isCombatActive()){	d20aCopy.distTraversed = 0;		distTraversed = 0.0;	}
 
 	float dist2 = 0;
-	if (sub_1008B8A0(d20a, &actnSthgCopy, &dist2))
+	if (sub_1008B8A0(d20a, &tbStatCopy, &dist2))
 	{
 		if (dist2 < 0.1)	{releasePath(d20aCopy.path);	return 0x8;	}
 		if (static_cast<long double>(dist2) < distTraversed)
@@ -231,23 +237,23 @@ uint32_t ActionSequenceSystem::moveSeqD20Sthg(D20Actn* d20aIn, ActnSeq* actSeq, 
 		dist2 = dispatch.Dispatch29hMovementSthg(d20aCopy.d20APerformer, nullptr);
 		if (!(d20aCopy.d20Caf & D20CAF_RANGED))
 		{
-			if (distTraversed > (long double)actnSthgCopy.remainingMoveDistance)
+			if (distTraversed > (long double)tbStatCopy.remainingMoveDistance)
 			{
-				if (dist2 + dist2 + actnSthgCopy.remainingMoveDistance < (long double)distTraversed){ releasePath(pqResult); return 8; }
-				if (actnSthgCopy.remainingMoveDistance + dist2 < (long double)distTraversed){ d20aCopy.d20ActType = D20A_DOUBLE_MOVE; goto LABEL_53; }
+				if (dist2 + dist2 + tbStatCopy.remainingMoveDistance < (long double)distTraversed){ releasePath(pqResult); return 8; }
+				if (tbStatCopy.remainingMoveDistance + dist2 < (long double)distTraversed){ d20aCopy.d20ActType = D20A_DOUBLE_MOVE; goto LABEL_53; }
 				else if (distTraversed <= 5.0)
 				{
 					if (d20a->d20ActType)
 					{
-						d20->d20Defs[d20a->d20ActType].moveFunc(d20a, &actnSthgCopy, &locAndOffCopy);
-						if (locAndOffCopy.location.locx == 4 || !actnSthgCopy.hourglassState) //BUG? TODO
+						d20->d20Defs[d20a->d20ActType].moveFunc(d20a, &tbStatCopy, &locAndOffCopy);
+						if (locAndOffCopy.location.locx == 4 || !tbStatCopy.hourglassState) //BUG? TODO
 						{
 							d20aCopy.d20ActType = D20A_5FOOTSTEP; goto LABEL_53;
 						}
-					} else if (!actnSthgCopy.hourglassState)
+					} else if (!tbStatCopy.hourglassState)
 					{
 						d20aCopy.d20ActType = D20A_5FOOTSTEP;
-						if (!(actnSthgCopy.callActionFrameFlags & 6)){	goto LABEL_53; }
+						if (!(tbStatCopy.callActionFrameFlags & 6)){	goto LABEL_53; }
 					}
 				}
 
@@ -259,7 +265,7 @@ uint32_t ActionSequenceSystem::moveSeqD20Sthg(D20Actn* d20aIn, ActnSeq* actSeq, 
 		else	{	releasePath(pqResult); return 8;	}
 	}
 
-LABEL_53: actSeq->performerLoc = pqResult->to;
+LABEL_53: *actSeqPerfLoc = pqResult->to;
 	CmbtIntrpts str84;
 	str84.numItems = 0;
 	IntrrptSthgsub_100939D0(&d20aCopy, &str84);
@@ -338,7 +344,7 @@ void ActionSequenceSystem::sub_1008BB40(ActnSeq* actSeq, D20Actn* d20a)
 	macAsmEpil;
 }
 
-uint32_t ActionSequenceSystem::sub_10093950(D20Actn* d20a, ActnSthg* actnSthg)
+uint32_t ActionSequenceSystem::sub_10093950(D20Actn* d20a, TurnBasedStatus* actnSthg)
 {
 	uint32_t result = 0;
 	macAsmProl
@@ -384,16 +390,16 @@ uint32_t ActionSequenceSystem::sub_10096450(ActnSeq* actSeq, uint32_t idx ,void 
 	return result;
 }
 
-uint32_t ActionSequenceSystem::seqCheckFuncs(ActnSthg* actnSthg)
+uint32_t ActionSequenceSystem::seqCheckFuncs(TurnBasedStatus* actnSthg)
 {
 	LocAndOffsets seqPerfLoc;
 	ActnSeq * curSeq = *actSeqCur;
 	uint32_t result = 0;
 	
 	if (!curSeq)
-		{	memset(actnSthg, 0, sizeof(ActnSthg));		return 0;	}
+		{	memset(actnSthg, 0, sizeof(TurnBasedStatus));		return 0;	}
 
-	memcpy(actnSthg, &curSeq->actnSthgField, sizeof(ActnSthg));
+	memcpy(actnSthg, &curSeq->actnSthgField, sizeof(TurnBasedStatus));
 	objects.loc->getLocAndOff(curSeq->performer, &seqPerfLoc);
 	for (int32_t i = 0; i < curSeq->d20ActArrayNum; i++)
 	{
@@ -425,8 +431,8 @@ uint32_t ActionSequenceSystem::seqCheckFuncs(ActnSthg* actnSthg)
 	}
 	if (result)
 	{
-		if (!*actSeqCur){ memset(actnSthg, 0, sizeof(ActnSthg)); }
-		else{ memcpy(actnSthg, &(*actSeqCur)->actnSthgField, sizeof(ActnSthg)); }
+		if (!*actSeqCur){ memset(actnSthg, 0, sizeof(TurnBasedStatus)); }
+		else{ memcpy(actnSthg, &(*actSeqCur)->actnSthgField, sizeof(TurnBasedStatus)); }
 	}
 	
 	return result;
@@ -496,7 +502,7 @@ uint32_t ActionSequenceSystem::combatTriggerSthg(ActnSeq* actSeq)
 	return result;
 }
 
-uint32_t ActionSequenceSystem::seqCheckAction(D20Actn* d20a, ActnSthg* iO)
+uint32_t ActionSequenceSystem::seqCheckAction(D20Actn* d20a, TurnBasedStatus* iO)
 {
 	uint32_t a = sub_10093950(d20a, iO);
 	if (a)
@@ -525,7 +531,7 @@ uint32_t ActionSequenceSystem::curSeqNext()
 void ActionSequenceSystem::actionPerform()
 {
 	MesLine mesLine;
-	ActnSthg actnSthg;
+	TurnBasedStatus actnSthg;
 	int32_t * curIdx ;
 	D20Actn * d20a = nullptr;
 	while (1)
@@ -646,8 +652,6 @@ void ActionSequenceSystem::sequencePerform()
 			actionPerform();
 		}
 	}
-
-	//_actionPerformRecursion();
 }
 
 bool ActionSequenceSystem::projectileCheckBeforeNextAction()
@@ -740,7 +744,7 @@ uint32_t ActionSequenceSystem::simulsAbort(objHndl objHnd)
 			}
 			else{
 				*numSimultPerformers = *simulsIdx;
-				memcpy(actnSthg118CD3C0, &(*actSeqCur)->actnSthgField, sizeof(ActnSthg));
+				memcpy(actnSthg118CD3C0, &(*actSeqCur)->actnSthgField, sizeof(TurnBasedStatus));
 				hooked_print_debug_message("Simul aborted %s (%d)", description.GetDisplayName(objHnd, objHnd), *simulsIdx);
 				return 1;
 			}
@@ -784,7 +788,7 @@ uint32_t _addSeqSimple(D20Actn* d20a, ActnSeq * actSeq)
 	return actSeqSys.addSeqSimple(d20a, actSeq);
 }
 
-uint32_t _seqCheckAction(D20Actn* d20a, ActnSthg* iO)
+uint32_t _seqCheckAction(D20Actn* d20a, TurnBasedStatus* iO)
 {
 	return actSeqSys.seqCheckAction(d20a, iO);
 }
@@ -810,7 +814,7 @@ uint32_t _isSimultPerformer(objHndl objHnd)
 	return actSeqSys.isSimultPerformer(objHnd);
 }
 
-uint32_t _seqCheckFuncsCdecl(ActnSthg* actnSthg)
+uint32_t _seqCheckFuncsCdecl(TurnBasedStatus* actnSthg)
 {
 	return actSeqSys.seqCheckFuncs(actnSthg);
 }
@@ -818,12 +822,12 @@ uint32_t _seqCheckFuncsCdecl(ActnSthg* actnSthg)
 
 
 
-uint32_t __cdecl _moveSeqD20SthgCdecl(D20Actn* d20a, ActnSeq* actSeq, ActnSthg* actnSthg, float distSthg, float reach, int flagSthg)
+uint32_t __cdecl _moveSeqD20SthgCdecl(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* actnSthg, float distSthg, float reach, int flagSthg)
 {
 	return actSeqSys.moveSeqD20Sthg(d20a, actSeq, actnSthg, distSthg, reach, flagSthg);
 };
 
-uint32_t __declspec(naked) _moveSeqD20SthgUsercallWrapper(ActnSeq* actSeq, ActnSthg* actnSthg, float distSthg, float reach, int flagSthg)
+uint32_t __declspec(naked) _moveSeqD20SthgUsercallWrapper(ActnSeq* actSeq, TurnBasedStatus* actnSthg, float distSthg, float reach, int flagSthg)
 { //, D20_Action *d20aIn@<eax>
 	macAsmProl;
 	__asm{
@@ -846,7 +850,7 @@ uint32_t __declspec(naked) _moveSeqD20SthgUsercallWrapper(ActnSeq* actSeq, ActnS
 		__asm retn;
 }
 
-uint32_t _unspecifiedMoveAddToSeq(D20Actn* d20a, ActnSeq* actSeq, ActnSthg* actnSthg)
+uint32_t _unspecifiedMoveAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* actnSthg)
 {
 	return actSeqSys.moveSeqD20Sthg(d20a, actSeq, actnSthg, 0.0, 0.0, 1);
 }
