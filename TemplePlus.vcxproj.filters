@@ -205,6 +205,18 @@
     <ClCompile Include="action_sequence.cpp" />
     <ClCompile Include="float_line.cpp" />
     <ClCompile Include="location.cpp" />
+    <ClCompile Include="secret_door.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="skill.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="history.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="bonus.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -402,6 +414,18 @@
     <ClInclude Include="action_sequence.h" />
     <ClInclude Include="float_line.h" />
     <ClInclude Include="location.h" />
+    <ClInclude Include="secret_door.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="skill.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="history.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="bonus.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

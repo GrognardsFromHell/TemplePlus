@@ -1484,7 +1484,19 @@ enum D20Signal : uint32_t {
 
 enum D20DispatcherKey : uint32_t {
 	DK_NONE = 0x0,
-	DK_SIG_HP_Changed = 0x93,
+	DK_STAT_STRENGTH = 1,
+	DK_STAT_DEXTERITY = 2,
+	DK_STAT_CONSTITUTION = 3,
+	DK_STAT_INTELLIGENCE = 4,
+	DK_STAT_WISDOM = 5,
+	DK_STAT_CHARISMA = 6,
+	DK_SKILL_APPRAISE = 20,
+	DK_SKILL_BLUFF = 21,
+	DK_SKILL_CONCENTRATION = 22,
+	DK_SKILL_RIDE = 59,
+	DK_SKILL_SWIM = 60,
+	DK_SKILL_USE_ROPE = 61,
+	DK_SIG_HP_Changed = 147,
 	DK_SIG_HealSkill = 0x94,
 	DK_SIG_Sequence = 0x95,
 	DK_SIG_Pre_Action_Sequence = 0x96,
@@ -1728,7 +1740,7 @@ enum enum_disp_type : uint32_t {
 	dispType27,
 	dispTypeD20Signal,
 	dispTypeD20Query,
-	dispType30,
+	dispTypeSkillLevel,
 	dispTypeRadialMenuEntry,
 	dispType32,
 	dispType33,
@@ -1835,12 +1847,14 @@ enum SecretDoorFlag : uint32_t {
 	OSDF_RANK_0 = 0x80,
 	OSDF_RANK_1 = 0x100,
 	OSDF_RANK_2 = 0x200,
-	OSDF_RANK_3 = 0x300,
-	OSDF_RANK_4 = 0x400,
-	OSDF_RANK_5 = 0x800,
-	OSDF_RANK_6 = 0x1000,
-	OSDF_SECRET_DOOR = 0x2000,
-	OSDF_SECRET_DOOR_FOUND = 0x4000
+	OSDF_RANK_3 = 0x400,
+	OSDF_RANK_4 = 0x800,
+	OSDF_RANK_5 = 0x1000,
+	OSDF_RANK_6 = 0x2000,
+	OSDF_UNUSED = 0x4000,
+	OSDF_UNUSED2 = 0x8000,
+	OSDF_SECRET_DOOR = 0x10000,
+	OSDF_SECRET_DOOR_FOUND = 0x20000
 };
 
 

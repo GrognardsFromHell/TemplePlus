@@ -10,12 +10,14 @@
 #include "feat.h"
 #include "inventory.h"
 
-struct FloatLineSystem;
-//forward decl
+
+//forward declarations
 struct LocationSys;
 struct Pathfinding;
-struct FieldDataMax { uint32_t data[8]; }; // for wrapping "objSetField" calls that get input by value; this is the largest data size that I know of
+struct SkillSystem;
+struct FloatLineSystem;
 
+struct FieldDataMax { uint32_t data[8]; }; // for wrapping "objSetField" calls that get input by value; this is the largest data size that I know of
 
 struct Objects : AddressTable {
 
@@ -68,6 +70,8 @@ struct Objects : AddressTable {
 	DispatcherSystem dispatch;
 
 	D20System d20;
+
+	SkillSystem * skill;
 
 	FeatSystem feats;
 

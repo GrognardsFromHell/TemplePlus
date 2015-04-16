@@ -13,7 +13,7 @@ public:
 	void apply() override{
 		replaceFunction(0x100628D0, _isCombatActive);
 	}
-} actSeqReplacements;
+} combatSysReplacements;
 
 
 

@@ -27,10 +27,17 @@
 	__asm mov ecx, this\
 	__asm mov esi, [ecx]._##funName }
 
+#define macTempleFix(sysName) public:\
+	const char* name() override {\
+			return #sysName "Function Replacements";}\
+			void apply() override \
+
+
+
 # pragma region Standard Structs
 
 #pragma pack(push, 1)
-
+enum SkillEnum : uint32_t;
 
 struct locXY{
 	uint32_t locx;
@@ -70,6 +77,46 @@ struct JumpPointPacket{
 	uint32_t field_C;
 	locXY location;
 };
+
+
+struct BonusEntry
+{
+	int32_t value;
+	uint32_t bonusType_maybe; // gets comapred with 0, 8 and 21 in 100E6490; I think these types allow bonuses to stack
+	char * rollHistoryString;
+	uint32_t fieldC;
+};
+
+struct BonusList
+{
+	BonusEntry bonusEntries[40];
+	uint32_t count;
+	BonusEntry field284[10];
+	uint32_t count2;
+	uint32_t field328[10];
+	uint32_t count3;
+	int32_t maxSthg; //init to largest  positive int
+	uint32_t field358;
+	uint32_t field35C;
+	uint32_t field360;
+	int32_t minSthg; //init to most negative int
+	uint32_t field368;
+	uint32_t field36C;
+	uint32_t field370;
+	uint32_t flags; // init 0; compared to 0x1 , 0x2 at 0x100E6641
+	
+	BonusList()
+	{
+		this->count = 0;
+		this->count2 = 0;
+		this->count3 = 0;
+		this->flags = 0;
+		this->maxSthg = 0x7fffFFFF;
+		this->minSthg = 0x80000001;
+	}
+};
 #pragma pack(pop)
+
+const int TestSizeOfStruct378 = sizeof(BonusList); // should be 888 (0x378)
 
 #pragma endregion

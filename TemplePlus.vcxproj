@@ -17,9 +17,13 @@
   <ItemGroup>
     <ClCompile Include="aas.cpp" />
     <ClCompile Include="action_sequence.cpp" />
+    <ClCompile Include="bonus.cpp" />
     <ClCompile Include="float_line.cpp" />
+    <ClCompile Include="history.cpp" />
     <ClCompile Include="location.cpp" />
     <ClCompile Include="renderstates.cpp" />
+    <ClCompile Include="secret_door.cpp" />
+    <ClCompile Include="skill.cpp" />
     <ClCompile Include="tig\tig.cpp" />
     <ClCompile Include="tig\tig_sound.cpp" />
     <ClCompile Include="tio\tio_utils.cpp" />
@@ -181,9 +185,13 @@
   <ItemGroup>
     <ClInclude Include="aas.h" />
     <ClInclude Include="action_sequence.h" />
+    <ClInclude Include="bonus.h" />
     <ClInclude Include="float_line.h" />
+    <ClInclude Include="history.h" />
     <ClInclude Include="location.h" />
     <ClInclude Include="renderstates.h" />
+    <ClInclude Include="secret_door.h" />
+    <ClInclude Include="skill.h" />
     <ClInclude Include="tig\tig_sound.h" />
     <ClInclude Include="tio\tio_utils.h" />
     <ClInclude Include="util\addresses.h" />

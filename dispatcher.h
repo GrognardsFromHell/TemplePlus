@@ -15,12 +15,14 @@ struct Dispatcher;
 struct DispatcherSystem : AddressTable
 {
 	Dispatcher* DispatcherInit(objHndl objHnd);
+	bool dispatcherValid(Dispatcher * dispatcher);
 	void DispatcherProcessor(Dispatcher * dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO * dispIO);
 	void  DispatcherClearField(Dispatcher * dispatcher, CondNode ** dispCondList);
 	void  DispatcherClearAttribs(Dispatcher * dispatcher);
 	void  DispatcherClearItemConds(Dispatcher * dispatcher);
 	void  DispatcherClearConds(Dispatcher *dispatcher);
 	
+	int32_t dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList * bonOut, objHndl objHnd2, int32_t flag);
 	float Dispatch29hGetMoveSpeed(objHndl objHnd, void *);
 
 	uint32_t(__cdecl * dispatcherForCritters)(objHndl, DispIO *, enum_disp_type, uint32_t dispKey);
@@ -128,6 +130,17 @@ struct DispIO20h : DispIO {
 	}
 };
 
+struct DispIO390h : DispIO
+{
+	uint32_t returnVal;
+	BonusList * bonOut;
+	uint32_t pad;
+	objHndl obj; //optional
+	BonusList bonlist;
+};
+
+const int TestSizeOfDispIO390h = sizeof(DispIO390h); // should be 912 (0x390)
+
 struct Dispatcher :TempleAlloc {
 	objHndl objHnd;
 	CondNode* attributeConds;
@@ -156,5 +169,6 @@ uint32_t _Dispatch62(objHndl, DispIO*, uint32_t dispKey);
 uint32_t _Dispatch63(objHndl objHnd, DispIO* dispIO);
 
 void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO * dispIO);
+int32_t _dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut, objHndl objHnd2, int32_t flag);
 
 #pragma endregion
