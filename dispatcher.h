@@ -4,6 +4,7 @@
 
 #define DISPATCHER_MAX  250 // max num of simultaneous Dispatches going on (static int counter inside _DispatcherProcessor)
 
+struct BonusList;
 struct CondNode;
 struct DispIO;
 struct SubDispDef;

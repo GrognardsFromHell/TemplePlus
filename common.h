@@ -79,6 +79,10 @@ struct JumpPointPacket{
 };
 
 
+
+#pragma pack(pop)
+
+
 struct BonusEntry
 {
 	int32_t bonValue;
@@ -87,44 +91,42 @@ struct BonusEntry
 	char * bonusDescr; // e.g. "Magic Full Plate +1"
 };
 
-struct BonusReference
+struct BonusCap
 {
-	int bonReffield0;
-	char *bonReffield4;
-	int	bonReffield8;
-	int bonReffieldC;
+	int capValue;
+	int bonType;
+	char *bonCapperString;
+	char * bonCapDescr;
 };
 
 struct BonusList
 {
 	BonusEntry bonusEntries[40];
-	uint32_t count;
-	BonusReference field284[10];
-	uint32_t count2;
-	uint32_t field328[10];
-	uint32_t count3;
-	int32_t maxCap; //init to largest  positive int
-	uint32_t field358;
-	char * field35C;
-	uint32_t field360;
-	int32_t minCap; //init to most negative int
-	uint32_t field368;
-	char * field36C;
-	uint32_t field370;
-	uint32_t bonFlags; // init 0; compared to 0x1 , 0x2 at 0x100E6641
-	
+	uint32_t bonCount;
+	BonusCap bonCaps[10];
+	uint32_t bonCapperCount;
+	uint32_t zeroBonusReasonMesLine[10]; // a line from the bonus.mes that is auto assigned a 0 value (I think it will print ---). Probably for overrides like racial immunity and stuff.
+	uint32_t zeroBonusCount;
+	int32_t overallCapHigh; // init to largest  positive int; controlls what the sum of all the modifiers of various types cannot exceed
+	uint32_t field358; // looks unused
+	char * overallCapHighBonusMesString;
+	char * overallCapHighDescr;
+	int32_t overallCapLow; //init to most negative int
+	uint32_t field368; // looks unused
+	char * overallCapLowBonusMesString;
+	char * overallCapLowDescr;
+	uint32_t bonFlags; // init 0; 0x1 - overallCapHigh set; 0x2 - overallCapLow set; 0x4 - force cap override (otherwise it can only impose restrictions i.e. it will only change the cap if it's lower than the current one)
+
 	BonusList()
 	{
-		this->count = 0;
-		this->count2 = 0;
-		this->count3 = 0;
+		this->bonCount = 0;
+		this->bonCapperCount = 0;
+		this->zeroBonusCount = 0;
 		this->bonFlags = 0;
-		this->maxCap = 0x7fffFFFF;
-		this->minCap = 0x80000001;
+		this->overallCapHigh = 0x7fffFFFF;
+		this->overallCapLow = 0x80000001;
 	}
 };
-#pragma pack(pop)
 
-const int TestSizeOfStruct378 = sizeof(BonusList); // should be 888 (0x378)
-
+const int TestSizeOfBonusList = sizeof(BonusList); // should be 888 (0x378)
 #pragma endregion

@@ -84,7 +84,7 @@ int32_t DispatcherSystem::dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, 
 		bonusSys.initBonusList(&dispIO.bonlist);
 	}
 	DispatcherProcessor(dispatcher, dispTypeSkillLevel, skill + 20, &dispIO);
-	return bonusSys.sub_100E65C0(dispIO.bonOut);
+	return bonusSys.getOverallBonus(dispIO.bonOut);
 	
 }
 

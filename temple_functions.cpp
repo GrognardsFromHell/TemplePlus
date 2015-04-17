@@ -87,7 +87,7 @@ void init_hooks()
 int32_t TempleFuncs::diceRoll(uint32_t dieNum, uint32_t dieType, int32_t dieBonus)
 {
 	int32_t result = 0;
-	for (int i = 0; i < dieNum; i++)
+	for (uint32_t i = 0; i < dieNum; i++)
 	{
 		result += RNG(1, dieType);
 	}
