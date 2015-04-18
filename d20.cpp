@@ -38,11 +38,12 @@ public:
 		replaceFunction(0x100FD2D0, _D20StatusInitFeats);
 		replaceFunction(0x1004CA00, _D20StatusInitItemConditions);
 		replaceFunction(0x1004CC00, _D20Query);
+		replaceFunction(0x1004CC60, _d20QueryWithData);
 		macReplaceFun(1004E6B0, _d20SendSignal)
 		replaceFunction(0x10093810, _d20aInitUsercallWrapper); // function takes esi as argument
+
 		replaceFunction(0x10089F80, _globD20aSetTypeAndData1);
 		macReplaceFun(1008A530, _globD20aSetPerformer)
-		replaceFunction(0x1004CC60, _d20QueryWithData);
 	}
 } d20Replacements;
 
