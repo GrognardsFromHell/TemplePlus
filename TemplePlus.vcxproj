@@ -17,6 +17,7 @@
   <ItemGroup>
     <ClCompile Include="aas.cpp" />
     <ClCompile Include="action_sequence.cpp" />
+    <ClCompile Include="ai.cpp" />
     <ClCompile Include="bonus.cpp" />
     <ClCompile Include="float_line.cpp" />
     <ClCompile Include="history.cpp" />
@@ -27,6 +28,7 @@
     <ClCompile Include="tig\tig.cpp" />
     <ClCompile Include="tig\tig_sound.cpp" />
     <ClCompile Include="tio\tio_utils.cpp" />
+    <ClCompile Include="turn_based.cpp" />
     <ClCompile Include="util\addressess.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
@@ -185,6 +187,7 @@
   <ItemGroup>
     <ClInclude Include="aas.h" />
     <ClInclude Include="action_sequence.h" />
+    <ClInclude Include="ai.h" />
     <ClInclude Include="bonus.h" />
     <ClInclude Include="float_line.h" />
     <ClInclude Include="history.h" />
@@ -194,6 +197,7 @@
     <ClInclude Include="skill.h" />
     <ClInclude Include="tig\tig_sound.h" />
     <ClInclude Include="tio\tio_utils.h" />
+    <ClInclude Include="turn_based.h" />
     <ClInclude Include="util\addresses.h" />
     <ClInclude Include="anim.h" />
     <ClInclude Include="combat.h" />

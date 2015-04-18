@@ -20,6 +20,11 @@ float Pathfinding::pathLength(Path* path)
 	return distTot / 12.0;
 }
 
+bool Pathfinding::pathQueryResultIsValid(PathQueryResult* pqr)
+{
+	return pqr != nullptr && pqr >= pathQArray && pqr < &pathQArray[pfCacheSize];
+}
+
 Pathfinding::Pathfinding() {
 	static_assert(sizeof(PathQuery) == 0x50, "Path Query has the wrong size");
 	static_assert(sizeof(Path) == 0x1a18, "Path has the wrong size");

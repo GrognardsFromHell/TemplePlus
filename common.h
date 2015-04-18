@@ -9,6 +9,8 @@
 #include "d20_defs.h"
 #include "util/fixes.h"
 
+
+
 #define macAsmProl {\
 	__asm push ecx\
 	__asm push esi\

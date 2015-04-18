@@ -202,7 +202,6 @@
     <ClCompile Include="tio\tio_utils.cpp" />
     <ClCompile Include="tig\tig.cpp" />
     <ClCompile Include="tig\tig_sound.cpp" />
-    <ClCompile Include="action_sequence.cpp" />
     <ClCompile Include="float_line.cpp" />
     <ClCompile Include="location.cpp" />
     <ClCompile Include="secret_door.cpp">
@@ -215,6 +214,15 @@
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="bonus.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="ai.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="action_sequence.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="turn_based.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
   </ItemGroup>
@@ -411,7 +419,6 @@
     <ClInclude Include="renderstates.h" />
     <ClInclude Include="tio\tio_utils.h" />
     <ClInclude Include="tig\tig_sound.h" />
-    <ClInclude Include="action_sequence.h" />
     <ClInclude Include="float_line.h" />
     <ClInclude Include="location.h" />
     <ClInclude Include="secret_door.h">
@@ -424,6 +431,15 @@
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
     <ClInclude Include="bonus.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="ai.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="action_sequence.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="turn_based.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
   </ItemGroup>

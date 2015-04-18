@@ -4,6 +4,8 @@
 
 #define DISPATCHER_MAX  250 // max num of simultaneous Dispatches going on (static int counter inside _DispatcherProcessor)
 
+struct DispIOTurnBasedStatus;
+struct TurnBasedStatus;
 struct BonusList;
 struct CondNode;
 struct DispIO;
@@ -25,7 +27,8 @@ struct DispatcherSystem : AddressTable
 	
 	int32_t dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList * bonOut, objHndl objHnd2, int32_t flag);
 	float Dispatch29hGetMoveSpeed(objHndl objHnd, void *);
-
+	void dispIOTurnBasedStatusInit(DispIOTurnBasedStatus* dispIOtbStat);
+	void dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBasedStatus* dispIOtB);
 	uint32_t(__cdecl * dispatcherForCritters)(objHndl, DispIO *, enum_disp_type, uint32_t dispKey);
 	DispatcherSystem()
 	{
@@ -91,7 +94,7 @@ struct DispIO10h : DispIO
 
 	DispIO10h()
 	{
-		dispIOType = dispIOType7;
+		dispIOType = dispIOTypeQuery;
 		return_val = 0;
 		data1 = 0;
 		data2 = 0;
@@ -140,6 +143,11 @@ struct DispIO390h : DispIO
 	BonusList bonlist;
 };
 
+struct DispIOTurnBasedStatus : DispIO
+{
+	TurnBasedStatus * tbStatus;
+};
+
 const int TestSizeOfDispIO390h = sizeof(DispIO390h); // should be 912 (0x390)
 
 struct Dispatcher :TempleAlloc {
@@ -166,6 +174,7 @@ void  _DispatcherClearConds(Dispatcher *dispatcher);
 DispIO14h * _DispIO14hCheckDispIOType1(DispIO14h * dispIO);
 void _DispIO_Size32_Type21_Init(DispIO20h* dispIO);
 
+void _dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBasedStatus* dispIOtB);
 uint32_t _Dispatch62(objHndl, DispIO*, uint32_t dispKey);
 uint32_t _Dispatch63(objHndl objHnd, DispIO* dispIO);
 

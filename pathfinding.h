@@ -95,6 +95,7 @@ struct Pathfinding : AddressTable {
 	LocationSys * loc;
 
 	float pathLength(Path *path); // note: unlike the ToEE function, returns a float (and NOT to the FPU!)
+	bool pathQueryResultIsValid(PathQueryResult *pqr);
 
 	Pathfinding();
 

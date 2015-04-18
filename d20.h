@@ -34,13 +34,15 @@ struct D20System : AddressTable
 	void D20StatusInitItemConditions(objHndl objHnd);
 	uint32_t d20Query(objHndl ObjHnd, D20DispatcherKey dispKey);
 	uint32_t d20QueryWithData(objHndl ObjHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
+	void d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2);
 
 	void d20ActnInit(objHndl objHnd, D20Actn * d20a);
 	void globD20aSetTypeAndData1(D20ActionType d20type, uint32_t data1);
+	void globD20aSetPerformer(objHndl objHnd);
 	void d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx);//1008AE90    ActnSeq * @<eax>
 	int32_t d20aTriggersAOOCheck(D20Actn * d20a, void * iO);// 1008A9C0
-	uint32_t tumbleCheck(D20Actn*); 
-
+	uint32_t tumbleCheck(D20Actn*);
+	
 	ActionSequenceSystem * actSeq;
 
 	D20Actn * globD20Action;
@@ -76,19 +78,6 @@ public:
 
 extern CharacterClasses charClasses;
 
-void _D20StatusInitRace(objHndl objHnd);
-void _D20StatusInitClass(objHndl objHnd);
-void _D20StatusInit(objHndl objHnd);
-void _D20StatusInitDomains(objHndl objHnd);
-void _D20StatusInitFeats(objHndl objHnd);
-void _D20StatusInitItemConditions(objHndl objHnd);
-uint32_t _D20Query(objHndl objHnd, D20DispatcherKey dispKey);
-void __cdecl D20SpellDataSetSpontCast(D20SpellData*, SpontCastType spontCastType);
-void D20SpellDataExtractInfo
-(D20SpellData * d20SpellData, uint32_t * spellEnum, uint32_t * spellEnumOriginal, uint32_t * spellClassCode, uint32_t * spellSlotLevel, uint32_t * itemSpellData, uint32_t * metaMagicData);
-void _d20aInitUsercallWrapper(objHndl objHnd);
-void _globD20aSetTypeAndData1(D20ActionType d20type, uint32_t data1);
-uint32_t _d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
 
 struct D20SpellData
 {
@@ -141,7 +130,6 @@ struct D20ActionDef
 	uint32_t flags; // not D20CAF I think; maybe the STD flags? path query flags?
 };
 
-#pragma endregion
 
 
 
@@ -151,4 +139,22 @@ enum SpontCastType : unsigned char{
 	spontCastDruid = 8
 };
 
+#pragma endregion 
+
+#pragma region D20 Action Function Replacements
+void _D20StatusInitRace(objHndl objHnd);
+void _D20StatusInitClass(objHndl objHnd);
+void _D20StatusInit(objHndl objHnd);
+void _D20StatusInitDomains(objHndl objHnd);
+void _D20StatusInitFeats(objHndl objHnd);
+void _D20StatusInitItemConditions(objHndl objHnd);
+uint32_t _D20Query(objHndl objHnd, D20DispatcherKey dispKey);
+void _d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2);
+void __cdecl D20SpellDataSetSpontCast(D20SpellData*, SpontCastType spontCastType);
+void D20SpellDataExtractInfo
+(D20SpellData * d20SpellData, uint32_t * spellEnum, uint32_t * spellEnumOriginal, uint32_t * spellClassCode, uint32_t * spellSlotLevel, uint32_t * itemSpellData, uint32_t * metaMagicData);
+void _d20aInitUsercallWrapper(objHndl objHnd);
+void _globD20aSetTypeAndData1(D20ActionType d20type, uint32_t data1);
+uint32_t _d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
+void _globD20aSetPerformer(objHndl objHnd);
 #pragma endregion 

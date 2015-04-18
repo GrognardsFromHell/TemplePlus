@@ -38,8 +38,10 @@ public:
 		replaceFunction(0x100FD2D0, _D20StatusInitFeats);
 		replaceFunction(0x1004CA00, _D20StatusInitItemConditions);
 		replaceFunction(0x1004CC00, _D20Query);
+		macReplaceFun(1004E6B0, _d20SendSignal)
 		replaceFunction(0x10093810, _d20aInitUsercallWrapper); // function takes esi as argument
 		replaceFunction(0x10089F80, _globD20aSetTypeAndData1);
+		macReplaceFun(1008A530, _globD20aSetPerformer)
 		replaceFunction(0x1004CC60, _d20QueryWithData);
 	}
 } d20Replacements;
@@ -97,7 +99,7 @@ uint32_t D20System::d20Query(objHndl objHnd, D20DispatcherKey dispKey)
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (dispatcher == nullptr || (int32_t)dispatcher == -1){ return 0; }
 	DispIO10h dispIO;
-	dispIO.dispIOType = dispIOType7;
+	dispIO.dispIOType = dispIOTypeQuery;
 	dispIO.return_val = 0;
 	dispIO.data1 = 0;
 	dispIO.data2 = 0;
@@ -110,12 +112,27 @@ uint32_t D20System::d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, u
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (dispatcher == nullptr || (int32_t)dispatcher == -1){ return 0; }
 	DispIO10h dispIO;
-	dispIO.dispIOType = dispIOType7;
+	dispIO.dispIOType = dispIOTypeQuery;
 	dispIO.return_val = 0;
 	dispIO.data1 = arg1;
 	dispIO.data2 = arg2;
 	objects.dispatch.DispatcherProcessor(dispatcher, dispTypeD20Query, dispKey, &dispIO);
 	return dispIO.return_val;
+}
+
+void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2)
+{
+	DispIO10h dispIO;
+	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+	if (!dispatch.dispatcherValid(dispatcher))
+	{
+		hooked_print_debug_message("d20SendSignal(): Object %s (%I64x) lacks a Dispatcher", description.GetDisplayName(objHnd, objHnd), objHnd);
+		return;
+	}
+	dispIO.dispIOType = dispIOType6;
+	dispIO.data1 = arg1;
+	dispIO.data2 = arg2;
+	dispatch.DispatcherProcessor(dispatcher, dispTypeD20Signal, dispKey, &dispIO);
 }
 
 void D20System::d20ActnInit(objHndl objHnd, D20Actn* d20a)
@@ -146,6 +163,17 @@ void D20System::globD20aSetTypeAndData1(D20ActionType d20type, uint32_t data1)
 {
 	globD20Action->d20ActType = d20type;
 	globD20Action->data1 = data1;
+}
+
+void D20System::globD20aSetPerformer(objHndl objHnd)
+{
+	if (objHnd != (*globD20Action).d20APerformer)
+	{
+		*actSeq->seqSthg_118CD3B8 = -1;
+		*actSeq->seqSthg_118A0980 = 1;
+		*actSeq->seqSthg_118CD570 = 0;
+	}
+	(*globD20Action).d20APerformer = objHnd;
 }
 
 void D20System::d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx)
@@ -526,6 +554,10 @@ uint32_t _D20Query(objHndl objHnd, D20DispatcherKey dispKey)
 	return d20sys.d20Query(objHnd, dispKey);
 }
 
+void _d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2)
+{
+	d20sys.d20SendSignal(objHnd, dispKey, arg1, arg2);
+}
 
 void __cdecl _d20aInitCdecl(objHndl objHnd, D20Actn* d20a)
 {
@@ -563,6 +595,11 @@ void _globD20aSetTypeAndData1(D20ActionType d20type, uint32_t data1)
 uint32_t _d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2)
 {
 	return d20sys.d20QueryWithData(objHnd, dispKey, arg1, arg2);
+}
+
+void _globD20aSetPerformer(objHndl objHnd)
+{
+	d20sys.globD20aSetPerformer(objHnd);
 }
 
 static void D20Dumper() {

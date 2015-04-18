@@ -5,6 +5,8 @@
 #include "obj.h"
 #include "condition.h"
 #include "bonus.h"
+#include "action_sequence.h"
+#include "turn_based.h"
 
 class DispatcherReplacements : public TempleFix {
 public:
@@ -25,6 +27,7 @@ public:
 		replaceFunction(0x1004DBA0, _DispIO_Size32_Type21_Init);
 		replaceFunction(0x1004D3A0, _Dispatch62);
 		replaceFunction(0x1004D440, _Dispatch63);
+		macReplaceFun(1004E790,_dispatchTurnBasedStatusInit)
 		macReplaceFun(1004ED70, _dispatch1ESkillLevel)
 	}
 } dispatcherReplacements;
@@ -109,6 +112,29 @@ float DispatcherSystem::Dispatch29hGetMoveSpeed(objHndl objHnd, void* iO) // inc
 	}
 	macAsmEpil
 	return result;
+}
+
+void DispatcherSystem::dispIOTurnBasedStatusInit(DispIOTurnBasedStatus* dispIOtbStat)
+{
+	dispIOtbStat->dispIOType = dispIOTypeTurnBasedStatus;
+	dispIOtbStat->tbStatus = nullptr;
+}
+
+
+void DispatcherSystem::dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBasedStatus* dispIOtB)
+{
+	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+	if (dispatcherValid(dispatcher))
+	{
+		DispatcherProcessor(dispatcher, dispTypeTurnBasedStatusInit, 0, dispIOtB);
+		if (dispIOtB->tbStatus)
+		{
+			if (dispIOtB->tbStatus->hourglassState > 0)
+			{
+				d20sys.d20SendSignal(objHnd, DK_SIG_BeginTurn, 0, 0);
+			}
+		}
+	}
 }
 #pragma endregion
 
@@ -266,6 +292,11 @@ void _DispIO_Size32_Type21_Init(DispIO20h* dispIO) {
 	dispIO->val2 = 0;
 	dispIO->okToAdd = 0;
 	dispIO->condNode = nullptr;
+}
+
+void _dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBasedStatus* dispIOtB)
+{
+	dispatch.dispatchTurnBasedStatusInit(objHnd, dispIOtB);
 };
 
 

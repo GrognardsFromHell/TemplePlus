@@ -10,6 +10,7 @@
 #include "description.h"
 #include "location.h"
 #include "pathfinding.h"
+#include "turn_based.h"
 
 
 class ActnSeqReplacements : public TempleFix
@@ -20,18 +21,31 @@ public:
 	}
 	void apply() override{
 		
-		macReplaceFun(1008BFA0, _addSeqSimple)
-		macReplaceFun(1008A100, _addD20AToSeq)
-		macReplaceFun(10094C60, _seqCheckAction)
+		macReplaceFun(10089F70, _curSeqGetTurnBasedStatus)
+
 		macReplaceFun(1008A050, _isPerforming)
+		macReplaceFun(1008A100, _addD20AToSeq)
 		macReplaceFun(1008A980, _actSeqOkToPerform)
+		macReplaceFun(1008BFA0, _addSeqSimple)
+
 		macReplaceFun(100925E0, _isSimultPerformer)
-		macReplaceFun(10094CA0, _seqCheckFuncsCdecl) 
-		macReplaceFun(100961C0, _actionPerformRecursion)
+
+		macReplaceFun(10094A00, _curSeqReset)
+		macReplaceFun(10094CA0, _seqCheckFuncsCdecl)
+		macReplaceFun(10094C60, _seqCheckAction)
+		macReplaceFun(10094E20, _allocSeq)
+		macReplaceFun(10094EB0, _assignSeq)
+
+		macReplaceFun(10094F70, _moveSequenceParseUsercallWrapper)
+
+		macReplaceFun(10095FD0, _turnBasedStatusInit)
+		
+		
+		macReplaceFun(100961C0, _sequencePerform)
 		macReplaceFun(100996E0, _actionPerform)
 		
 		
-		macReplaceFun(10094F70, _moveSequenceParseUsercallWrapper)
+		
 		macReplaceFun(10095860, _unspecifiedMoveAddToSeq)
 		
 	}
@@ -47,6 +61,9 @@ ActionSequenceSystem::ActionSequenceSystem()
 	d20 = &d20sys;
 	combat = &combatSys;
 	pathfinding = &pathfindingSys;
+	location = &locSys;
+	object = &objects;
+	turnbased = &tbSys;
 	rebase(actSeqCur, 0x1186A8F0);
 	macRebase(actnSthg118CD3C0, 118CD3C0)
 	rebase(actnProcState, 0x10B3D5A4);
@@ -75,8 +92,45 @@ ActionSequenceSystem::ActionSequenceSystem()
 	macRebase(_moveSeqD20Sthg, 10094F70)
 	macRebase(_sub_100939D0, 100939D0)
 	
+	macRebase(seqSthg_118CD3B8, 118CD3B8)
+	macRebase(seqSthg_118A0980, 118A0980)
+	macRebase(seqSthg_118CD570, 118CD570)
+
 }
 
+
+void ActionSequenceSystem::curSeqReset(objHndl objHnd) 
+{ // initializes the sequence pointed to by actSeqCur and assigns it to objHnd
+	ActnSeq * curSeq = *actSeqCur;
+	PathQueryResult * pqr;
+
+	// release path finding queries 
+	for (auto i = 0; i < curSeq->d20ActArrayNum; i++)
+	{
+		pqr = curSeq->d20ActArray[i].path;
+		if (pathfinding->pathQueryResultIsValid(pqr))	pqr->occupiedFlag = 0;
+		curSeq->d20ActArray[i].path = nullptr;
+	}
+
+	curSeq->d20ActArrayNum = 0;
+	curSeq->d20aCurIdx = -1;
+	curSeq->prevSeq = nullptr;
+	curSeq->field_B0C = 0;
+	curSeq->seqOccupied = 0;
+	if (objHnd != d20->globD20Action->d20APerformer)
+	{
+		*seqSthg_118CD3B8 = -1;
+		*seqSthg_118A0980 = 1;
+		*seqSthg_118CD570 = 0;
+	}
+
+	d20->globD20Action->d20APerformer = objHnd;
+	d20->d20ActnInit(objHnd, d20->globD20Action);
+	curSeq->performer = objHnd;
+	curSeq->targetObj = 0;
+	location->getLocAndOff(objHnd, &curSeq->performerLoc);
+	*seqSthg_10B3D5C0 = 0;
+}
 
 uint32_t ActionSequenceSystem::addD20AToSeq(D20Actn* d20a, ActnSeq* actSeq)
 {
@@ -333,6 +387,88 @@ uint32_t ActionSequenceSystem::actSeqOkToPerform()
 		return (caflags & D20CAF_NEED_ANIM_COMPLETED) == 0;
 	}
 	return 1;
+}
+
+TurnBasedStatus* ActionSequenceSystem::curSeqGetTurnBasedStatus()
+{
+	if (*actSeqCur)
+	{
+		return &(*actSeqCur)->tbStatus;
+	} 
+	return nullptr;
+}
+
+uint32_t ActionSequenceSystem::allocSeq(objHndl objHnd)
+{
+	// finds an available sequence and allocates it to objHnd
+	ActnSeq * curSeq = *actSeqCur;
+	if (curSeq && !(curSeq->seqOccupied & 1)) { *actSeqCur = nullptr; }
+	for (auto i = 0; i < actSeqArraySize; i++)
+	{
+		if (actSeqArray[i].seqOccupied== 0)
+		{
+			*actSeqCur = &actSeqArray[i];
+			if (combat->isCombatActive())	hooked_print_debug_message("\nSequence Allocate[%d](%x)(%I64x): Resetting Sequence. \n", i, *actSeqCur, objHnd);
+			curSeqReset(objHnd);
+			return 1;
+		}
+	}
+	return 0;
+}
+
+uint32_t ActionSequenceSystem::assignSeq(objHndl objHnd)
+{
+	ActnSeq * prevSeq = *actSeqCur;
+	if (allocSeq(objHnd))
+	{
+		if (combat->isCombatActive())
+		{
+			if (prevSeq != nullptr)
+			{
+				hooked_print_debug_message("\nPushing sequence from for %s (%I64x) to %s (%I64x)", object->description.GetDisplayName(prevSeq->performer, prevSeq->performer), prevSeq->performer, object->description.GetDisplayName(objHnd, objHnd), objHnd);
+			} else
+			{
+				hooked_print_debug_message("\nAllocating sequence for %s (%I64x) ", object->description.GetDisplayName(objHnd, objHnd), objHnd);
+			}
+		}
+		(*actSeqCur)->prevSeq = prevSeq;
+		(*actSeqCur)->seqOccupied |= 1;
+		return 1;
+	}
+	return 0;
+}
+
+uint32_t ActionSequenceSystem::turnBasedStatusInit(objHndl objHnd)
+{
+	TurnBasedStatus * tbStatus;
+	DispIOTurnBasedStatus dispIOtB;
+
+	if (combat->isCombatActive())
+	{
+		if (turnbased->turnBasedGetCurrentActor() == objHnd) return 1;
+	} else if ( !isPerforming(objHnd))
+	{
+		d20->globD20aSetPerformer(objHnd);
+		*actSeqCur = nullptr;
+		assignSeq(objHnd);
+		ActnSeq * curSeq = *actSeqCur;
+		tbStatus = &curSeq->tbStatus;
+		tbStatus->hourglassState = 4;
+		tbStatus->callActionFrameFlags = (D20CAF)0;
+		tbStatus-> idxSthg= -1;
+		tbStatus-> field_10= 0;
+		tbStatus->field_14 = 0;
+		tbStatus-> field_18= 0;
+		tbStatus-> field_1C= 0;
+		tbStatus-> errCode= 0;
+		tbStatus-> surplusMoveDistance = 0;
+		dispatch.dispIOTurnBasedStatusInit(&dispIOtB);
+		dispIOtB.tbStatus = &curSeq->tbStatus;
+		dispatch.dispatchTurnBasedStatusInit(objHnd, &dispIOtB);
+		curSeq->seqOccupied &= 0xffffFFFE; // unset "occupied" byte flag
+		return 1;
+	}
+	return 0;
 }
 
 void ActionSequenceSystem::sub_1008BB40(ActnSeq* actSeq, D20Actn* d20a)
@@ -861,8 +997,33 @@ uint32_t _unspecifiedMoveAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatu
 	return actSeqSys.moveSequenceParse(d20a, actSeq, actnSthg, 0.0, 0.0, 1);
 }
 
-void _actionPerformRecursion()
+void _sequencePerform()
 {
 	actSeqSys.sequencePerform();
+}
+
+void _curSeqReset(objHndl objHnd)
+{
+	actSeqSys.curSeqReset(objHnd);
+}
+
+uint32_t _allocSeq(objHndl objHnd)
+{
+	return actSeqSys.allocSeq(objHnd);
+}
+
+uint32_t _assignSeq(objHndl objHnd)
+{
+	return actSeqSys.assignSeq(objHnd);
+}
+
+TurnBasedStatus* _curSeqGetTurnBasedStatus()
+{
+	return actSeqSys.curSeqGetTurnBasedStatus();
+}
+
+uint32_t _turnBasedStatusInit(objHndl objHnd)
+{
+	return actSeqSys.turnBasedStatusInit(objHnd);
 }
 #pragma endregion
