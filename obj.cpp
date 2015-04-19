@@ -10,6 +10,9 @@
 #include "pathfinding.h"
 #include "float_line.h"
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 Objects objects;
 
 static_assert(validate_size<CondNode, 36>::value, "Condition node structure has incorrect size.");
@@ -161,18 +164,32 @@ Objects::Objects()
 	pathfinding = &pathfindingSys;
 	loc = &locSys;
 	floats = &floatSys;
+	rebase(_GetId, 0x1009CA40);
+	rebase(_GetHandle, 0x100C3050);
+	rebase(_Create, 0x10028D20);
+	rebase(_GetReaction, 0x10054180);
+	rebase(_AdjustReaction, 0x10053F20);
 	rebase(_GetInternalFieldInt32, 0x1009E1D0);
 	rebase(_GetInternalFieldInt64, 0x1009E2E0);
+	rebase(_GetInternalFieldFloat, 0x1009E260);
+	rebase(_GetInternalFieldInt32Array, 0x1009E5C0);
 	rebase(_StatLevelGet, 0x10074800);
+	rebase(_GetSize, 0x1004D690);
 	rebase(_SetInternalFieldInt32, 0x100A0190);
+	rebase(_SetInternalFieldFloat, 0x100A0190); // This is actually the same function as 32-bit heh
 	rebase(_IsPlayerControlled, 0x1002B390);
 	rebase(_ObjGetProtoNum, 0x10039320);
+	rebase(_FindFreeSpot, 0x100BDB50);
 	rebase(_IsObjDeadNullDestroyed, 0x1007E650);
 	rebase(_GetMemoryAddress, 0x100C2A70);
 	rebase(_DoesObjectFieldExist, 0x1009C190);
 	rebase(_ObjectPropFetcher, 0x1009CD40);
 	rebase(_DLLFieldNames, 0x102CD840);
 	rebase(_InsetDataIntoInternalStack, 0x1009EA80);
+	rebase(_GetDisplayName, 0x1001F970);
+	rebase(_AiForceSpreadOut, 0x1005A640);
+	rebase(_GetRadius, 0x10021C40);
+	rebase(_TargetRandomTileNear, 0x100B99A0);
 }
 
 void Objects::PropFetcher(GameObjectBody* objBody, obj_f fieldIdx, void * dataOut) {
@@ -213,6 +230,98 @@ uint32_t Objects::DoesTypeSupportField(uint32_t objType, _fieldIdx objField) {
 uint32_t Objects::abilityScoreLevelGet(objHndl objHnd, Stat stat, DispIO* dispIO)
 {
 	return objects.dispatch.dispatcherForCritters(objHnd, dispIO, dispTypeAbilityScoreLevel, stat + 1);
+}
+
+void Objects::SetRotation(objHndl handle, float rotation) {
+	// Normalizes the rotation parameter to valid radians range
+	static auto PI_2 = (float)(2.0 * M_PI);
+	
+	while (rotation >= PI_2) {
+		rotation -= PI_2;
+	}
+	while (rotation < 0) {
+		rotation += PI_2;
+	}
+	_SetInternalFieldFloat(handle, obj_f_rotation, rotation);
+}
+
+int Objects::GetScript(objHndl handle, int index) {
+	ObjectScript scriptIdx;
+	templeFuncs.Obj_Get_ArrayElem_Generic(handle, obj_f_scripts_idx, index, &scriptIdx);
+	return scriptIdx.scriptId;
+}
+
+void Objects::SetScript(objHndl handle, int index, int scriptId) {
+	ObjectScript scriptIdx;
+	templeFuncs.Obj_Get_ArrayElem_Generic(handle, obj_f_scripts_idx, index, &scriptIdx);
+	scriptIdx.scriptId = scriptId;
+	templeFuncs.Obj_Set_IdxField_byPtr(handle, obj_f_scripts_idx, index, &scriptIdx);
+}
+
+Dice Objects::GetHitDice(objHndl handle) {
+	auto count = _GetInternalFieldInt32Array(handle, obj_f_npc_hitdice_idx, 0);
+	auto sides = _GetInternalFieldInt32Array(handle, obj_f_npc_hitdice_idx, 1);
+	auto modifier = _GetInternalFieldInt32Array(handle, obj_f_npc_hitdice_idx, 2);
+	return Dice(count, sides, modifier);
+}
+
+// Reimplements 100801D0
+int Objects::GetHitDiceNum(objHndl handle) {
+	int result = _GetInternalFieldInt32(handle, obj_f_critter_level_idx);
+	if (GetType(handle) == obj_t_npc) {
+		result += _GetInternalFieldInt32Array(handle, obj_f_npc_hitdice_idx, 0);
+	}
+	return result;
+}
+
+int Objects::GetSize(objHndl handle) {
+	// This function uses the dispatcher internally and should probably be rewritten
+	return _GetSize(handle);
+}
+
+objHndl Objects::Create(objHndl proto, locXY tile) {
+	objHndl handle;
+	if (_Create(proto, tile, &handle)) {
+		return handle;
+	} else {
+		return 0;
+	}
+}
+
+bool Objects::FindFreeSpot(LocAndOffsets location, float radius, LocAndOffsets& freeSpotOut) {
+	return _FindFreeSpot(location, radius, freeSpotOut);
+}
+
+objHndl Objects::GetProtoHandle(int protoNumber) {
+	return templeFuncs.GetProtoHandle(protoNumber);
+}
+
+bool Objects::AiForceSpreadOut(objHndl handle) {
+	return _AiForceSpreadOut(handle, nullptr);
+}
+
+bool Objects::AiForceSpreadOut(objHndl handle, LocAndOffsets &location) {
+	return _AiForceSpreadOut(handle, &location);
+}
+
+locXY Objects::TargetRandomTileNear(objHndl handle, int distance) {
+	locXY result;
+	_TargetRandomTileNear(handle, distance, &result);
+	return result;
+}
+
+void Objects::Move(objHndl handle, LocAndOffsets toLocation) {
+
+}
+
+ObjectId Objects::GetId(objHndl handle) {
+	ObjectId result;
+	_GetId(&result, handle);
+	return result;
+}
+
+objHndl Objects::GetHandle(const ObjectId &id) {
+	return _GetHandle(id);
 }
 
 ObjectType Objects::GetType(objHndl obj)
@@ -257,6 +366,12 @@ bool Objects::IsPlayerControlled(objHndl obj)
 uint32_t Objects::ObjGetProtoNum(objHndl obj)
 {
 	return _ObjGetProtoNum(obj);
+}
+
+string Objects::GetDisplayName(objHndl obj, objHndl observer) {
+	char name[512];
+	_GetDisplayName(obj, observer, name);
+	return name;
 }
 
 MonsterCategory Objects::GetCategory(objHndl objHnd)

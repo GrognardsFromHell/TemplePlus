@@ -143,7 +143,7 @@ void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCra
 	// Current code - change this at will...
 	for (int n = 0; n < numItemSpells; n++){
 		SpellStoreData spellData;
-		templeFuncs.Obj_Get_IdxField_256bit(objHndItem, obj_f_item_spell_idx, n, &spellData);
+		templeFuncs.Obj_Get_ArrayElem_Generic(objHndItem, obj_f_item_spell_idx, n, &spellData);
 
 		// get data from caster - make this optional!
 
@@ -316,7 +316,7 @@ uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t slotLevelN
 
 	for (uint32_t n = 0; n < numItemSpells; n++){
 		SpellStoreData spellData;
-		templeFuncs.Obj_Get_IdxField_256bit(objHndItem, obj_f_item_spell_idx, n, &spellData);
+		templeFuncs.Obj_Get_ArrayElem_Generic(objHndItem, obj_f_item_spell_idx, n, &spellData);
 		if (spellData.spellLevel > itemSlotLevelBase){
 			itemSlotLevelBase = spellData.spellLevel;
 		}

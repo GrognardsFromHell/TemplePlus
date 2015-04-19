@@ -11,12 +11,18 @@ struct CombatSystem : AddressTable
 {
 	MesHandle * combatMesfileIdx;
 	uint32_t * combatModeActive;
-	unsigned isCombatActive();
+	bool isCombatActive();
+
+	/*
+		Use for the non-lethal brawl.
+	*/
+	void (__cdecl *Brawl)(objHndl a, objHndl b);
 
 	CombatSystem()
 	{
 		rebase(combatModeActive, 0x10AA8418);
 		rebase(combatMesfileIdx, 0x10AA8408);
+		rebase(Brawl, 0x100EBD40);
 	}
 } ;
 

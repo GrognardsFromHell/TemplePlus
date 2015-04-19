@@ -13,7 +13,7 @@ void removeSurplusSpells(int surplus, objHndl objHnd, uint32_t classCode, int sl
 	SpellStoreData spellData;
 	for (int i = numMemorized - 1; i>=0 && surplus > 0 ; i--)
 	{
-		templeFuncs.Obj_Get_IdxField_256bit(objHnd, obj_f_critter_spells_memorized_idx, i, &spellData);
+		templeFuncs.Obj_Get_ArrayElem_Generic(objHnd, obj_f_critter_spells_memorized_idx, i, &spellData);
 		if (spellData.classCode == (classCode | 0x80) && slotLvl == spellData.spellLevel)
 		{
 			spells.spellRemoveFromStorage(objHnd, obj_f_critter_spells_memorized_idx, &spellData, 0);
@@ -30,7 +30,7 @@ int getMemorizedSpells(objHndl objHnd, uint32_t classCode, int slotLvl)
 	SpellStoreData spellData ;
 	for (int i = 0; i < memorizedTotal; i++)
 	{
-		templeFuncs.Obj_Get_IdxField_256bit(objHnd, obj_f_critter_spells_memorized_idx, i, &spellData);
+		templeFuncs.Obj_Get_ArrayElem_Generic(objHnd, obj_f_critter_spells_memorized_idx, i, &spellData);
 		if (spellData.classCode == (classCode | 0x80 ) && spellData.spellLevel == slotLvl)
 		{
 			numMemorizedThisLvl++;

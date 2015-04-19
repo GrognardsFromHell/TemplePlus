@@ -13,7 +13,6 @@
 
 static struct MainLoop : AddressTable {
 	
-	bool (__cdecl *sub_100290C0)(int64_t a, int64_t b, void *pOut);
 	void (__cdecl *sub_1002A580)(locXY loc);
 
 	/*
@@ -44,7 +43,6 @@ static struct MainLoop : AddressTable {
 	void (__cdecl *InGameHandleMessage)(TigMsg &msg);
 	
 	MainLoop() {
-		rebase(sub_100290C0, 0x100290C0);
 		rebase(sub_1002A580, 0x1002A580);
 		rebase(QueueFidgetAnimEvent, 0x100146C0);
 
@@ -73,7 +71,7 @@ void RunMainLoop() {
 		
 	// Is this a center map kind of deal?
 	locXY loc;
-	if (!mainLoop.sub_100290C0(400, 300, &loc)) {
+	if (!graphics.ScreenToTile(400, 300, loc)) {
 		throw TempleException("Initial call to unknown main loop function failed!");
 	}
 	mainLoop.sub_1002A580(loc);

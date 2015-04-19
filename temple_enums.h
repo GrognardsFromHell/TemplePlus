@@ -2020,3 +2020,4 @@ enum ArmorType : uint32_t
 };
 
 #pragma endregion 
+

@@ -118,6 +118,18 @@ uint32_t FeatSystem::FeatExistsInArray(feat_enums featCode, feat_enums * featArr
 uint32_t FeatSystem::WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType)
 {
 	return _WeaponFeatCheck( objHnd,  featArray,  featArrayLen,  classBeingLeveled,  wpnType);
+}
+
+vector<feat_enums> FeatSystem::GetFeats(objHndl handle) {
+
+	auto featCount = templeFuncs.Obj_Get_IdxField_NumItems(handle, obj_f_critter_feat_idx);
+	vector<feat_enums> result(featCount);
+
+	for (int i = 0; i < featCount; ++i) {
+		result[i] = (feat_enums) templeFuncs.Obj_Get_IdxField_32bit(handle, obj_f_critter_feat_idx, i);
+	}
+
+	return result;
 };
 
 #pragma endregion

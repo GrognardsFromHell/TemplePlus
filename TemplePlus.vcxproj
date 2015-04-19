@@ -17,9 +17,52 @@
   <ItemGroup>
     <ClCompile Include="aas.cpp" />
     <ClCompile Include="action_sequence.cpp" />
+    <ClCompile Include="dependencies\minhook\src\buffer.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="dependencies\minhook\src\HDE\hde32.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="dependencies\minhook\src\HDE\hde64.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="dependencies\minhook\src\hook.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="dependencies\minhook\src\trampoline.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="dice.cpp" />
+    <ClCompile Include="fade.cpp" />
     <ClCompile Include="float_line.cpp" />
     <ClCompile Include="location.cpp" />
+    <ClCompile Include="maps.cpp" />
+    <ClCompile Include="objlist.cpp" />
+    <ClCompile Include="particles.cpp" />
+    <ClCompile Include="python\python_console.cpp" />
+    <ClCompile Include="python\python_dice.cpp" />
+    <ClCompile Include="python\python_integration.cpp" />
+    <ClCompile Include="python\python_module.cpp" />
+    <ClCompile Include="python\python_object.cpp" />
+    <ClCompile Include="python\python_objectscripts.cpp" />
+    <ClCompile Include="python\python_scripts.cpp" />
+    <ClCompile Include="python\python_time.cpp" />
     <ClCompile Include="renderstates.cpp" />
+    <ClCompile Include="sound.cpp" />
+    <ClCompile Include="textbubbles.cpp" />
     <ClCompile Include="tig\tig.cpp" />
     <ClCompile Include="tig\tig_sound.cpp" />
     <ClCompile Include="tio\tio_utils.cpp" />
@@ -27,6 +70,9 @@
     <ClCompile Include="python\python_embed.cpp" />
     <ClCompile Include="python\python_game.cpp" />
     <ClCompile Include="python\python_importer.cpp" />
+    <ClCompile Include="ui\ui_dialog.cpp" />
+    <ClCompile Include="ui\ui_picker.cpp" />
+    <ClCompile Include="ui\ui_tutorial.cpp" />
     <ClCompile Include="util\addressess.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
@@ -118,31 +164,6 @@
     <ClCompile Include="tig\tig_init.cpp" />
     <ClCompile Include="tig\tig_loadingscreen.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="minhook\src\buffer.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="minhook\src\HDE\hde32.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="minhook\src\HDE\hde64.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="minhook\src\hook.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="minhook\src\trampoline.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="idxtables.cpp" />
     <ClCompile Include="movies.cpp" />
     <ClCompile Include="obj.cpp" />
@@ -185,14 +206,41 @@
   <ItemGroup>
     <ClInclude Include="aas.h" />
     <ClInclude Include="action_sequence.h" />
+    <ClInclude Include="dependencies\minhook\include\MinHook.h" />
+    <ClInclude Include="dependencies\minhook\src\buffer.h" />
+    <ClInclude Include="dependencies\minhook\src\HDE\hde32.h" />
+    <ClInclude Include="dependencies\minhook\src\HDE\hde64.h" />
+    <ClInclude Include="dependencies\minhook\src\HDE\pstdint.h" />
+    <ClInclude Include="dependencies\minhook\src\HDE\table32.h" />
+    <ClInclude Include="dependencies\minhook\src\HDE\table64.h" />
+    <ClInclude Include="dependencies\minhook\src\trampoline.h" />
+    <ClInclude Include="dice.h" />
+    <ClInclude Include="fade.h" />
     <ClInclude Include="float_line.h" />
     <ClInclude Include="location.h" />
+    <ClInclude Include="maps.h" />
+    <ClInclude Include="objlist.h" />
+    <ClInclude Include="particles.h" />
+    <ClInclude Include="python\python_console.h" />
+    <ClInclude Include="python\python_dice.h" />
+    <ClInclude Include="python\python_embed.h" />
+    <ClInclude Include="python\python_error.h" />
+    <ClInclude Include="python\python_integration.h" />
+    <ClInclude Include="python\python_module.h" />
+    <ClInclude Include="python\python_object.h" />
+    <ClInclude Include="python\python_objectscripts.h" />
+    <ClInclude Include="python\python_support.h" />
+    <ClInclude Include="python\python_time.h" />
     <ClInclude Include="renderstates.h" />
+    <ClInclude Include="textbubbles.h" />
     <ClInclude Include="tig\tig_sound.h" />
     <ClInclude Include="tio\tio_utils.h" />
     <ClInclude Include="python\python_game.h" />
     <ClInclude Include="python\python_importer.h" />
     <ClInclude Include="python\python_consoleout.h" />
+    <ClInclude Include="ui\ui_dialog.h" />
+    <ClInclude Include="ui\ui_picker.h" />
+    <ClInclude Include="ui\ui_tutorial.h" />
     <ClInclude Include="util\addresses.h" />
     <ClInclude Include="anim.h" />
     <ClInclude Include="combat.h" />
@@ -249,15 +297,10 @@
     <ClInclude Include="tig\tig.h" />
     <ClInclude Include="tig\tig_init.h" />
     <ClInclude Include="tig\tig_loadingscreen.h" />
-    <ClInclude Include="minhook\src\buffer.h" />
-    <ClInclude Include="minhook\src\HDE\hde32.h" />
-    <ClInclude Include="minhook\src\HDE\hde64.h" />
-    <ClInclude Include="minhook\src\HDE\pstdint.h" />
-    <ClInclude Include="minhook\src\HDE\table32.h" />
-    <ClInclude Include="minhook\src\HDE\table64.h" />
-    <ClInclude Include="minhook\src\trampoline.h" />
     <ClInclude Include="idxtables.h" />
     <ClInclude Include="obj.h" />
+    <ClInclude Include="util\mathutil.h" />
+    <ClInclude Include="sound.h" />
     <ClInclude Include="util\stopwatch.h" />
     <ClInclude Include="temple_enums.h" />
     <ClInclude Include="testhelper.h" />
@@ -360,7 +403,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>ROCKET_STATIC_LIB;WIN32;_DEBUG;_WINDOWS;$(MSBuildDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;dependencies\librocket\include;dependencies\freetype\include\;dependencies\python\include;minhook\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;dependencies\librocket\include;dependencies\freetype\include\;dependencies\python\include;dependencies\minhook\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>

@@ -24,14 +24,39 @@
 #define macRebase(funName , b) rebase(funName, 0x##b); 
 #define macReplaceFun(b, funName) replaceFunction(0x##b, funName); 
 
+// This is the number of pixels per tile on the x and y axis. Derived from sqrt(800)
+#define PIXELS_PER_TILE 28.284271247461900976033774484194f
+
 # pragma region Standard Structs
 
 #pragma pack(push, 1)
 
+struct vector3f {
+	float x;
+	float y;
+	float z;
+};
 
-struct locXY{
+struct locXY {
 	uint32_t locx;
 	uint32_t locy;
+
+	static locXY fromField(uint64_t location) {
+		return *(locXY*)&location;
+	}
+
+	operator uint64_t() const {
+		return *(uint64_t*)this;
+	}
+
+	vector3f To3d(float offsetX = 0, float offsetY = 0, float offsetZ = 0) {
+		return{
+			locx * PIXELS_PER_TILE + offsetX,
+			offsetZ,
+			locy * PIXELS_PER_TILE + offsetY
+		};
+	}
+
 };
 
 struct LocAndOffsets {

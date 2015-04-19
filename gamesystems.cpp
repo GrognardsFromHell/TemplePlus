@@ -15,6 +15,7 @@
 #include "tig/tig_texture.h"
 #include "tig/tig.h"
 #include "ui/ui_render.h"
+#include "python/python_integration.h"
 
 GameSystemFuncs gameSystemFuncs;
 
@@ -419,6 +420,11 @@ struct GameSystemInitTable : AddressTable {
 	void (__cdecl *SetEnvMapping)(int value);
 	void (__cdecl *SetParticleFidelity)(float value); // Value is clamped to [0,1]
 
+	bool (__cdecl *SaveGame)(const char *filename, const char *displayName);
+	bool (__cdecl *LoadGame)(const char *filename);
+	void (__cdecl *DestroyPlayerObject)();
+	void (__cdecl *EndGame)();
+
 	// Initializes several random tables, vectors and shuffled int lists as well as the lightning material.
 	void (__cdecl *InitPfxLightning)();
 
@@ -461,6 +467,10 @@ struct GameSystemInitTable : AddressTable {
 		rebase(SetClothFrameSkip, 0x102629C0);
 		rebase(SetEnvMapping, 0x101E0A20);
 		rebase(InitPfxLightning, 0x10087220);
+		rebase(SaveGame, 0x100042C0);
+		rebase(LoadGame, 0x100028D0);
+		rebase(DestroyPlayerObject, 0x1006EEF0);
+		rebase(EndGame, 0x1014E160);
 
 		rebase(moduleLoaded, 0x10307054);
 		rebase(fullInstall, 0x10306F48);
@@ -477,6 +487,7 @@ struct GameSystemInitTable : AddressTable {
 } gameSystemInitTable;
 
 static void registerDataFiles();
+static void verifyTemplePlusData();
 static string getLanguage();
 static void playLegalMovies();
 static void initBufferStuff(const GameSystemConf &conf);
@@ -589,6 +600,7 @@ void GameSystemFuncs::NewInit(const GameSystemConf& conf) {
 	*gameSystemInitTable.fullInstall = true;
 	
 	registerDataFiles();
+	verifyTemplePlusData();
 
 	auto lang = getLanguage();
 	if (lang == "en") {
@@ -695,6 +707,22 @@ void GameSystemFuncs::ResizeScreen(int w, int h) {
 	
 }
 
+bool GameSystemFuncs::SaveGame(const string& filename, const string& displayName) {
+	return gameSystemInitTable.SaveGame(filename.c_str(), displayName.c_str());
+}
+
+bool GameSystemFuncs::LoadGame(const string& filename) {
+	return gameSystemInitTable.LoadGame(filename.c_str());
+}
+
+void GameSystemFuncs::EndGame() {
+	return gameSystemInitTable.EndGame();
+}
+
+void GameSystemFuncs::DestroyPlayerObject() {
+	gameSystemInitTable.DestroyPlayerObject();
+}
+
 static void registerDataFiles() {
 	TioFileList list;
 	tio_filelist_create(&list, "*.dat");
@@ -712,6 +740,23 @@ static void registerDataFiles() {
 	
 	tio_mkdir("data");
 	tio_path_add("data");
+
+	for (auto &entry : config.additionalTioPaths) {
+		logger->info("Adding additional TIO path {}", entry);
+		tio_path_add(entry.c_str());
+	}
+}
+
+/*
+	Checks that the TemplePlus data file has been loaded in some way.
+*/
+static void verifyTemplePlusData() {
+
+	TioFileListFile info;
+	if (!tio_fileexists("templeplus\\data_present", &info)) {
+		throw TempleException("The TemplePlus data files are not installed.");
+	}
+
 }
 
 // Gets the language of the current toee installation (i.e. "en")
@@ -784,7 +829,8 @@ static void initAas() {
 	conf.pixelPerWorldTile2 = conf.pixelPerWorldTile1;
 	conf.getSkmFile = (uint32_t)temple_address<0x100041E0>();
 	conf.getSkaFile = (uint32_t)temple_address<0x10004230>();
-	conf.runScript = (uint32_t)temple_address<0x100AD990>();
+	conf.runScript = RunPythonString;
+		// (uint32_t)temple_address<0x100AD990>();
 
 	if (aasFuncs.Init(&conf)) {
 		throw TempleException("Failed to initialize animation system.");

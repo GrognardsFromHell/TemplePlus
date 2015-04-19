@@ -49,6 +49,27 @@ struct GameSystemFuncs : AddressTable {
 	void (__cdecl *UnloadModule)();
 	void (__cdecl *Shutdown)();
 
+	/*
+		Makes a savegame.
+	*/
+	bool SaveGame(const string &filename, const string &displayName);
+
+	/*
+		Loads a game.
+	*/
+	bool LoadGame(const string &filename);
+
+	/*
+		Ends the game, resets the game systems and returns to the main menu.
+	*/
+	void EndGame();
+
+	/*
+		Call this before loading a game. Use not yet known.
+		TODO I do NOT think this is used, should be checked. Seems like leftovers from even before arcanum
+	*/
+	void DestroyPlayerObject();
+
 	GameSystemFuncs() {
 		rebase(Init, 0x10004C40);
 		rebase(LoadModule, 0x10005480);

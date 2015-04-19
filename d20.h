@@ -151,3 +151,7 @@ enum SpontCastType : unsigned char{
 };
 
 #pragma endregion 
+
+inline int GetAttributeMod(int stat) {
+	return (stat - 10) / 2;
+}

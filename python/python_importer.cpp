@@ -141,6 +141,10 @@ PyObject* PyTempleImporter::LoadModule(PyObject* self, PyObject* args) {
 	auto data = ReadData(moduleInfo.sourcePath);
 	auto code = Py_CompileString(PyString_AsString(data), moduleInfo.sourcePath.c_str(), Py_file_input);
 
+	if (!code) {
+		return nullptr; // Compilation error
+	}
+
 	auto module = PyImport_AddModule(fullname);	
 	if (!module) {
 		Py_DECREF(code);
@@ -293,7 +297,8 @@ PyObject* PyTempleImporter::ReadData(const string& path) {
 void PyTempleImporter_Install() {
 	assert(!PyTempleImporter::instance);
 	PyTempleImporter::instance = new PyTempleImporter;
-	PyTempleImporter::instance->mSearchPath.push_back("lib\\");
+	PyTempleImporter::instance->mSearchPath.push_back("python-lib\\");
+	PyTempleImporter::instance->mSearchPath.push_back("templeplus\\lib\\");
 	PyTempleImporter::instance->mSearchPath.push_back("scr\\");
 }
 

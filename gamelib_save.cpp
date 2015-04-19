@@ -11,7 +11,7 @@ uint32_t Co8DataHook_save(void* retaddr , char* pString, void * p2)
 	char c[] = "save";
 	auto dude = Py_BuildValue(a, pString);
 	//auto dude = (PyObject* ())pyToEEPy_BuildValue(a, pString);
-	templeFuncs.PyScript_Execute(b, c, dude);
+	// TODO templeFuncs.PyScript_Execute(b, c, dude);
 	return 1;
 };
 

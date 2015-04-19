@@ -41,7 +41,7 @@ struct TempleFuncs : AddressTable {
 	uint32_t(__cdecl *Obj_Get_IdxField_32bit)(objHndl, _fieldIdx, _fieldSubIdx);
 	uint64_t(__cdecl *Obj_Get_IdxField_64bit)(objHndl, _fieldIdx, _fieldSubIdx);
 	objHndl(__cdecl *Obj_Get_IdxField_ObjHnd)(objHndl, _fieldIdx, _fieldSubIdx);
-	int(__cdecl *Obj_Get_IdxField_256bit)(objHndl, _fieldIdx, _fieldSubIdx, void *);
+	int(__cdecl *Obj_Get_ArrayElem_Generic)(objHndl, _fieldIdx, _fieldSubIdx, void *pDataOut);
 	int(__cdecl *Obj_Set_Field_32bit)(objHndl ObjHnd, uint32_t nFieldIdx, uint32_t n32Data);
 	int(__cdecl *Obj_Set_Field_64bit)(objHndl, uint32_t nFieldIdx, uint64_t);
 	int(__cdecl *Obj_Set_Field_ObjHnd)(objHndl, uint32_t nFieldIdx, objHndl);
@@ -81,11 +81,6 @@ struct TempleFuncs : AddressTable {
 	
 
 	void (__cdecl *TurnProcessing)(objHndl obj);
-
-	/*
-		Generates a random integer using the configured random number generator.
-	*/
-	int (__cdecl *RandomIntRange)(int from, int to);
 
 
 	uint32_t ItemWorthFromEnhancements(uint32_t n) {
@@ -135,7 +130,7 @@ struct TempleFuncs : AddressTable {
 		rebase(Obj_Get_IdxField_32bit, 0x1009E5C0);
 		rebase(Obj_Get_IdxField_64bit, 0x1009E640);
 		rebase(Obj_Get_IdxField_ObjHnd, 0x1009E6D0);
-		rebase(Obj_Get_IdxField_256bit, 0x1009E770);
+		rebase(Obj_Get_ArrayElem_Generic, 0x1009E770);
 
 		rebase(Obj_Set_Field_32bit, 0x100A0190);
 		rebase(Obj_Set_Field_64bit, 0x100A0200);
@@ -178,7 +173,6 @@ struct TempleFuncs : AddressTable {
 		rebase(ItemCreationPrereqSthg_sub_101525B0, 0x101525B0);
 
 		rebase(TurnProcessing, 0x100634E0);
-		rebase(RandomIntRange, 0x10038DF0);
 
 		rebase(temple_snprintf, 0x10254680);
 

@@ -6,6 +6,7 @@
 #include "util/config.h"
 #include "obj.h"
 #include "pathfinding.h"
+#include "dice.h"
 
 #include <map>
 #include <set>
@@ -525,9 +526,9 @@ static void getTransitionText(string& diagramText, int& j, AnimStateTransition& 
 static void rescheduleEvent(int delayMs, const AnimSlot &slot, const TimeEvent *oldEvt) {
 	TimeEvent evt;
 	evt.system = TimeEventSystem::Anim;
-	evt.params[0].field0 = slot.id.slotIndex;
-	evt.params[1].field0 = slot.id.uniqueId;
-	evt.params[2].field0 = 1111; // Some way to identify these rescheduled events???
+	evt.params[0].int32 = slot.id.slotIndex;
+	evt.params[1].int32 = slot.id.uniqueId;
+	evt.params[2].int32 = 1111; // Some way to identify these rescheduled events???
 	
 	if (config.animCatchup) {
 		timeEvents.ScheduleAbsolute(evt, oldEvt->time, delayMs);
@@ -559,7 +560,7 @@ static void __cdecl anim_timeevent_process(const TimeEvent* evt) {
 	}
 
 	// The animation slot id we're triggered for
-	AnimSlotId triggerId = {evt->params[0].field0, evt->params[1].field0, evt->params[2].field0};
+	AnimSlotId triggerId = { evt->params[0].int32, evt->params[1].int32, evt->params[2].int32 };
 
 	assert(triggerId.slotIndex < animAddresses.slotsCount);
 
@@ -732,7 +733,7 @@ static void __cdecl anim_timeevent_process(const TimeEvent* evt) {
 					break;
 				case AnimStateTransition::DelayRandom:
 					// Calculates the animation delay randomly in a range from 0 to 300
-					delay = templeFuncs.RandomIntRange(0, 300);
+					delay = RandomIntRange(0, 300);
 					break;
 				default:
 					// Keep predefined delay

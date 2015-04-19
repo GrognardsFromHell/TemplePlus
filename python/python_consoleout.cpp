@@ -4,21 +4,43 @@
 #include "osdefs.h"
 #include "marshal.h"
 #include "tio/tio.h"
+#include <util/addresses.h>
+
+static struct PyConsoleOutAddresses : AddressTable {
+	void (__cdecl *AppendLine)(const char *line);
+
+	PyConsoleOutAddresses() {
+		rebase(AppendLine, 0x101DFC70);
+	}
+} addresses;
 
 PyObject *pytcout_write(PyObject *self, PyObject *args) {
 	char *message;
 
 	if (!PyArg_ParseTuple(args, "s:PyTempleConsoleOut.write", &message))
 		return NULL;
-
+		
+	addresses.AppendLine(message);
+	
+	// Dont append a new line for the logger
+	int len = strlen(message);
+	if (len > 0 && message[len - 1] == '\n') {
+		message[len - 1] = '\0';
+	}
 	logger->info("Python: {}", message);
 
 	Py_INCREF(Py_None);
 	return Py_None;
 }
 
+PyObject *pytcout_flush(PyObject *self, PyObject *args) {
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
 static PyMethodDef methods[] = {
 	{ "write", pytcout_write, METH_VARARGS, 0 },
+	{ "flush", pytcout_flush, METH_VARARGS, 0 },
 	{ NULL, NULL }   /* sentinel */
 };
 
@@ -57,4 +79,8 @@ static PyTypeObject PyTempleConsoleOutType = {
 
 PyObject *PyTempleConsoleOut_New() {
 	return PyObject_New(PyObject, &PyTempleConsoleOutType);
+}
+
+void PyTempleConsoleOut_Append(const char *text) {
+	addresses.AppendLine(text);
 }

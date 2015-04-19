@@ -1,6 +1,5 @@
 #pragma once
 
-//#include "temple_functions.h"
 #include "dispatcher.h"
 #include "common.h"
 #include "d20.h"
@@ -9,12 +8,19 @@
 #include "faction.h"
 #include "feat.h"
 #include "inventory.h"
+#include "dice.h"
 
 struct FloatLineSystem;
 //forward decl
 struct LocationSys;
 struct Pathfinding;
 
+// Stored in obj_f_script_idx array
+struct ObjectScript {
+	int unk1;
+	int counters;
+	int scriptId;
+};
 
 struct Objects : AddressTable {
 
@@ -23,10 +29,107 @@ struct Objects : AddressTable {
 		return _GetInternalFieldInt32(obj, obj_f_flags);
 	}
 	uint32_t GetInt32(objHndl obj, obj_f fieldIdx);
-	void SetInt32(objHndl obj, obj_f fieldIdx, uint32_t dataIn);
+	void SetInt32(objHndl obj, obj_f fieldIdx, uint32_t dataIn);	
 	uint32_t abilityScoreLevelGet(objHndl, Stat, DispIO *);
+	locXY GetLocation(objHndl handle) {
+		return locXY::fromField(_GetInternalFieldInt64(handle, obj_f_location));
+	}
+	LocAndOffsets GetLocationFull(objHndl handle) {
+		LocAndOffsets result;
+		result.location = locXY::fromField(_GetInternalFieldInt64(handle, obj_f_location));
+		result.off_x = GetOffsetX(handle);
+		result.off_y = GetOffsetY(handle);
+		return result;
+	}
+	float GetOffsetX(objHndl handle) {
+		return _GetInternalFieldFloat(handle, obj_f_offset_x);
+	}
+	float GetOffsetY(objHndl handle) {
+		return _GetInternalFieldFloat(handle, obj_f_offset_y);
+	}
+	int GetOriginMapId(objHndl handle) {
+		return _GetInternalFieldInt32(handle, obj_f_critter_teleport_map);
+	}
+	void SetOriginMapId(objHndl handle, int mapId) {
+		_SetInternalFieldInt32(handle, obj_f_critter_teleport_map, mapId);
+	}
+	int GetNameId(objHndl handle) {
+		return _GetInternalFieldInt32(handle, obj_f_name);
+	}
+	float GetRadius(objHndl handle) {
+		return _GetRadius(handle);
+	}
+	void SetRadius(objHndl handle, float radius) {
+		_SetInternalFieldFloat(handle, obj_f_radius, radius);
+	}
+	float GetRenderHeight(objHndl handle) {
+		return _GetInternalFieldFloat(handle, obj_f_3d_render_height);
+	}
+	void SetRenderHeight(objHndl handle, float renderHeight) {
+		_SetInternalFieldFloat(handle, obj_f_3d_render_height, renderHeight);
+	}
+	float GetRotation(objHndl handle) {
+		return _GetInternalFieldFloat(handle, obj_f_rotation);
+	}
+	void SetRotation(objHndl handle, float rotation);
+
+	int GetScript(objHndl handle, int index);
+	void SetScript(objHndl handle, int index, int scriptId);
+
+	Dice GetHitDice(objHndl handle); // This only makes sense for NPCs
+	int GetHitDiceNum(objHndl handle);
+	int GetSize(objHndl handle);
+
+	// Get NPC reaction towards another critter
+	int GetReaction(objHndl of, objHndl towards) {
+		return _GetReaction(of, towards);
+	}
+
+	// Adjust NPC reaction towards another critter
+	void AdjustReaction(objHndl of, objHndl towards, int adjustment) {
+		_AdjustReaction(of, towards, adjustment);
+	}
+
+	/*
+		Creates a new object at the given location.
+		Returns the null handle if creation fails.
+	*/
+	objHndl Create(objHndl proto, locXY tile);
+
+	/*
+		Attempts to find a good free spot at the given location for an object with the
+		given radius. If a spot was found, it returns true.
+	*/
+	bool FindFreeSpot(LocAndOffsets location, float radius, LocAndOffsets &freeSpotOut);
+
+	/*
+		Returns the handle for a prototype given its number from proto.tab
+	*/
+	objHndl GetProtoHandle(int protoNumber);
+
+	/*
+		Moves an object to a new position.
+	*/
+	void Move(objHndl handle, LocAndOffsets toLocation);
+
+	/*
+		Move this to AI? 
+		Seems to force a critter to seek to move in order to avoid overlap with other objects.
+	*/
+	bool AiForceSpreadOut(objHndl handle);
+
+	/*
+		Same as above, but allows specifying another location than the current obj location.
+		The location also seems to receive the final location the obj will be moved to by the
+		function.		
+	*/
+	bool AiForceSpreadOut(objHndl handle, LocAndOffsets &location);
+	
+	locXY TargetRandomTileNear(objHndl handle, int distance);
 
 #pragma region Common
+	ObjectId GetId(objHndl handle);
+	objHndl GetHandle(const ObjectId &id);
 	ObjectType GetType(objHndl obj);
 	uint32_t IsDeadNullDestroyed(objHndl obj);
 	uint32_t IsUnconscious(objHndl obj);
@@ -35,6 +138,7 @@ struct Objects : AddressTable {
 	bool IsCritter(objHndl obj);
 	bool IsPlayerControlled(objHndl obj);
 	uint32_t ObjGetProtoNum(objHndl obj);
+	string GetDisplayName(objHndl obj, objHndl observer);
 
 	uint32_t StatLevelGet(objHndl obj, Stat stat);
 #pragma endregion
@@ -58,7 +162,6 @@ struct Objects : AddressTable {
 		_SetInternalFieldInt32(obj, obj_f_dispatcher, data32);
 		return;
 	}
-
 #pragma endregion
 
 #pragma region Subsystems
@@ -89,23 +192,36 @@ struct Objects : AddressTable {
 	void InsertDataIntoInternalStack(GameObjectBody * objBody, obj_f fieldIdx, void * dataIn);
 #pragma endregion 
 
-
-
 	Objects();
 #pragma region Privates
 private:
+	ObjectId *(__cdecl *_GetId)(ObjectId *pIdOut, objHndl handle);
+	objHndl (__cdecl *_GetHandle)(ObjectId id);
+	int(__cdecl *_GetReaction)(objHndl of, objHndl towards);
+	void(__cdecl *_AdjustReaction)(objHndl of, objHndl towards, int change);
+	void(__cdecl *_GetDisplayName)(objHndl obj, objHndl observer, char *pNameOut);
+	float(__cdecl *_GetRadius)(objHndl ObjHnd);
 	int(__cdecl *_GetInternalFieldInt32)(objHndl ObjHnd, int nFieldIdx);
+	int(__cdecl *_GetInternalFieldInt32Array)(objHndl ObjHnd, int nFieldIdx, int index);
+	float(__cdecl *_GetInternalFieldFloat)(objHndl ObjHnd, int nFieldIdx);
 	int64_t(__cdecl *_GetInternalFieldInt64)(objHndl ObjHnd, int nFieldIdx);
 	int32_t(__cdecl *_StatLevelGet)(objHndl ObjHnd, Stat);
+	int(__cdecl *_GetSize)(objHndl handle);
 	void(__cdecl *_SetInternalFieldInt32)(objHndl objHnd, obj_f fieldIdx, uint32_t data32);
+	void(__cdecl *_SetInternalFieldFloat)(objHndl objHnd, obj_f fieldIdx, float data);
 	bool(__cdecl * _IsPlayerControlled)(objHndl objHnd);
 	uint32_t(__cdecl *_ObjGetProtoNum)(objHndl);
 	uint32_t(__cdecl *_IsObjDeadNullDestroyed)(objHndl);
 	GameObjectBody * (__cdecl *_GetMemoryAddress)(objHndl ObjHnd);
 	bool(__cdecl *_DoesObjectFieldExist)();
 	void(__cdecl * _ObjectPropFetcher)();
+	void (__cdecl *_Move)(objHndl handle, LocAndOffsets toLocation);
+	bool(__cdecl * _FindFreeSpot)(LocAndOffsets loc, float radius, LocAndOffsets &freeSpot);
+	bool (__cdecl *_Create)(objHndl proto, locXY tile, objHndl *pHandleOut);
+	bool (__cdecl *_AiForceSpreadOut)(objHndl handle, LocAndOffsets *location);
 	char ** _DLLFieldNames;
 	void(__cdecl * _InsetDataIntoInternalStack)();//(int nFieldIdx, void *, ToEEObjBody *@<eax>);
+	void (__cdecl *_TargetRandomTileNear)(objHndl handle, int distance, locXY *pLocOut);
 #pragma endregion
 } ;
 

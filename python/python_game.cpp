@@ -1,20 +1,61 @@
-
 #include "stdafx.h"
 #include "python_game.h"
 #include <util/addresses.h>
+#include "obj.h"
+#include "python_object.h"
+#include "python_time.h"
+#include "tig/tig_mouse.h"
+#include "maps.h"
+#include "fade.h"
+#include "combat.h"
+#include "objlist.h"
+#include "d20.h"
+#include "movies.h"
+#include "textbubbles.h"
+#include "graphics.h"
+#include "party.h"
+#include "sound.h"
+#include "ui/ui.h"
+#include "ui/ui_dialog.h"
+#include "ui/ui_tutorial.h"
+#include "ui/ui_picker.h"
+#include "particles.h"
+#include "gamesystems.h"
+#include "python_support.h"
+#include <timeevents.h>
+#include "util/mathutil.h"
+#include "temple_functions.h"
+
+struct PyGameObject {
+	PyObject_HEAD
+};
 
 static struct PyGameAddresses : AddressTable {
-	
+
 	int* partyAlignment;
-	int *sid;
-	int *newSid;
-	
+	int* sid;
+	int* newSid;
+
 	void (__cdecl *SetPartyAlignment)(int alignment);
 	int (__cdecl *GetPartyAlignment)();
 
-	void(__cdecl *SetStoryState)(int alignment);
-	int(__cdecl *GetStoryState)();
-	
+	void (__cdecl *SetStoryState)(int alignment);
+	int (__cdecl *GetStoryState)();
+
+	int (__cdecl *PartyGetSelectedCount)();
+	objHndl (__cdecl *PartyGetSelectedByIdx)(int idx);
+
+	int (__cdecl *PartyGetCount)();
+
+	// Returns the first conscious party member (which is then the leader) or 0
+	objHndl (__cdecl *PartyGetLeader)();
+
+	// Casts a ray into the game world at the given x,y screen coordinates and returns the object it found
+	// what objects are collided with is controlled by the flags value
+	// Returns true if an object is found
+	// Flags is mostly 6 but for spells with different target types it differs
+	bool (__cdecl *GameRaycast)(int screenX, int screenY, objHndl* pObjHndlOut, int flags);
+
 	PyGameAddresses() {
 		rebase(partyAlignment, 0x1080ABA4);
 		rebase(sid, 0x10BD2DA4);
@@ -25,22 +66,887 @@ static struct PyGameAddresses : AddressTable {
 
 		rebase(SetStoryState, 0x10006A30);
 		rebase(GetStoryState, 0x10006A20);
+
+		rebase(PartyGetSelectedCount, 0x1002B5C0);
+		rebase(PartyGetSelectedByIdx, 0x1002B5D0);
+
+		rebase(PartyGetCount, 0x1002B2B0);
+		rebase(PartyGetLeader, 0x1002BE60);
+
+		rebase(GameRaycast, 0x10022360);
 	}
 } pyGameAddresses;
 
-#define PY_INT_GETTER_PTR(expr) ((getter) [] (PyObject*,void*) { return PyInt_FromLong(*(expr)); })
-#define PY_INT_SETTER_PTR(expr) ((setter) [] (PyObject*,PyObject*val,void*) { *(expr) = PyInt_AS_LONG(val); return 0; })
+/*
+	TODO:
+	global_vars
+	global_flags
+	quests
+	areas
+	counters -> PyCountersArray (turn counter???)
+	encounter_queue -> returns ref to global encounterlist?
+	floaters
+	console
+	-> methods
+*/
 
-#define PY_INT_GETTER(method) ((getter) [] (PyObject*,void*) { return PyInt_FromLong(method()); })
-#define PY_INT_SETTER(method) ((setter) [] (PyObject*,PyObject*val,void*) { method(PyInt_AS_LONG(val)); return 0; })
+// Generic function to build a tuple of handles from a count and a getter
+static PyObject* BuildHandleList(int count, function<objHndl(int)> getCallback) {
+	auto result = PyTuple_New(count);
 
-#define PY_INT_PROP_PTR(name, ptrExpr, doc) { name, PY_INT_GETTER_PTR((ptrExpr)), PY_INT_SETTER_PTR(ptrExpr), doc, NULL }
-#define PY_INT_PROP(name, getMeth, setMeth, doc) { name, PY_INT_GETTER(getMeth), PY_INT_SETTER(setMeth), doc, NULL }
+	for (auto i = 0; i < count; ++i) {
+		auto handle = getCallback(i);
+		auto handleObj = PyObjHndl_Create(handle);
+		PyTuple_SET_ITEM(result, i, handleObj); // Steals handleObj
+	}
 
-static PyGetSetDef pyGameGetSetDefs[] = {
-	PY_INT_PROP("party_alignment", pyGameAddresses.GetPartyAlignment, pyGameAddresses.SetPartyAlignment, NULL),
+	return result;
+}
+
+/*
+	Returns a tuple that contains the obj handles of all selected party members.
+*/
+static PyObject* PyGame_GetPartySelected(PyObject*, void*) {
+	auto count = pyGameAddresses.PartyGetSelectedCount();
+	return BuildHandleList(count, pyGameAddresses.PartyGetSelectedByIdx);
+}
+
+/*
+	Returns a tuple that contains the obj handles of all selected party members.
+*/
+static PyObject* PyGame_GetParty(PyObject*, void*) {
+	auto count = pyGameAddresses.PartyGetCount();
+	return BuildHandleList(count, party.GroupListGetMemberN);
+}
+
+/*
+	Returns the object the mouse is currently hovering over in the game world.
+*/
+static PyObject* PyGame_GetHovered(PyObject*, void*) {
+	auto pos = mouseFuncs.GetPos();
+	objHndl handle;
+
+	if (pyGameAddresses.GameRaycast(pos.x, pos.y, &handle, 6)) {
+		return PyObjHndl_Create(handle);
+	} else {
+		return PyObjHndl_CreateNull();
+	}
+}
+
+
+static PyObject* PyGame_GetMapsVisited(PyObject*, void*) {
+	auto visitedMapIds = maps.GetVisited();
+
+	auto result = PyTuple_New(visitedMapIds.size());
+	for (size_t i = 0; i < visitedMapIds.size(); ++i) {
+		auto mapId = PyInt_FromLong(visitedMapIds[i]);
+		PyTuple_SET_ITEM(result, i, mapId);
+	}
+	return result;
+
+}
+
+static PyObject* PyGame_GetTime(PyObject*, void*) {
+	return PyTimeStamp_Create();
+}
+
+static PyObject* PyGame_GetLeader(PyObject*, void*) {
+	return PyObjHndl_Create(pyGameAddresses.PartyGetLeader());
+}
+
+static PyGetSetDef PyGameGettersSetters[] = {
+	PY_INT_PROP_RO("party_alignment", pyGameAddresses.GetPartyAlignment, NULL),
 	PY_INT_PROP("story_state", pyGameAddresses.GetStoryState, pyGameAddresses.SetStoryState, NULL),
-	{ "sid", PY_INT_GETTER_PTR(pyGameAddresses.sid), NULL, NULL },
-	PY_INT_PROP_PTR("new_sid", pyGameAddresses.sid, NULL)
+	PY_INT_PROP_PTR_RO("sid", pyGameAddresses.sid, NULL),
+	PY_INT_PROP_PTR("new_sid", pyGameAddresses.sid, NULL),
+	{"selected", PyGame_GetPartySelected, NULL, NULL},
+	{"party", PyGame_GetParty, NULL, NULL},
+	{"hovered", PyGame_GetHovered, NULL, NULL},
+	{"maps_visited", PyGame_GetMapsVisited, NULL, NULL},
+	{"leader", PyGame_GetLeader, NULL, NULL},
+	{"time", PyGame_GetTime, NULL, NULL},
+	{NULL, NULL, NULL, NULL}
 };
 
+PyObject* PyGame_FadeAndTeleport(PyObject*, PyObject* args) {
+
+	FadeAndTeleportArgs fadeArgs;
+
+	if (!PyArg_ParseTuple(args, "iiiiii", &fadeArgs.timeToAdvance, &fadeArgs.soundId, &fadeArgs.movieId, &fadeArgs.destMap, &fadeArgs.destLoc.locx, &fadeArgs.destLoc.locy)) {
+		return 0;
+	}
+
+	fadeArgs.field34 = 48;
+	fadeArgs.field50 = 48;
+	fadeArgs.field2c = 0;
+	fadeArgs.field3c = 0;
+	fadeArgs.color = D3DCOLOR_RGBA(0xff, 0, 0, 0);
+	fadeArgs.somefloat = 2.0f;
+	fadeArgs.somefloat2 = 2.0f;
+	fadeArgs.flags = 0;
+
+	auto leader = party.GroupListGetMemberN(0);
+	fadeArgs.somehandle = leader;
+	if (fadeArgs.timeToAdvance > 0)
+		fadeArgs.flags |= ftf_advance_time;
+	if (fadeArgs.soundId)
+		fadeArgs.flags |= ftf_play_sound;
+	if (fadeArgs.movieId > 0)
+	{
+		fadeArgs.flags |= ftf_play_movie;
+		fadeArgs.field20 = 0;
+	}
+	
+	auto result = fade.FadeAndTeleport(fadeArgs);
+	return PyInt_FromLong(result);
+}
+
+PyObject* PyGame_Fade(PyObject*, PyObject* args) {
+
+	// TODO: This seems to be way too much logic for the glue code layer, move this to fade.cpp maybe?
+
+	int timeToAdvance;
+	int soundId;
+	int movieId;
+	int fadeOutTime;
+
+	if (!PyArg_ParseTuple(args, "iiii", &timeToAdvance, &soundId, &movieId, &fadeOutTime)) {
+		return 0;
+	}
+
+	// Trigger the fade out immediately
+	FadeArgs fadeArgs;
+	fadeArgs.field0 = 0;
+	fadeArgs.field10 = 0;
+	fadeArgs.color = D3DCOLOR_ARGB(255, 0, 0, 0);
+	fadeArgs.transitionTime = 2.0f;
+	fadeArgs.field8 = 48;
+	fade.PerformFade(fadeArgs);
+
+	textBubbles.HideAll();
+
+	if (timeToAdvance > 0) {
+		auto time = GameTime::FromSeconds(timeToAdvance);
+		timeEvents.AdvanceTime(time);
+	}
+
+	if (movieId) {
+		// Originally the soundId was passed here
+		// But since no BinkW movie actually uses soundtrack ids,
+		// just skip it.
+		if (soundId > 0) {
+			movieFuncs.PlayMovieId(movieId, 0, soundId);
+		} else {
+			movieFuncs.PlayMovieId(movieId, 0, 0);
+		}
+	} else if (soundId > 0) {
+		sound.PlaySound(soundId);
+	}
+
+	if (fadeOutTime) {
+		TimeEvent evt;
+		evt.system = TimeEventSystem::Fade;
+		evt.params[0].int32 = 1;
+		evt.params[1].int32 = 0xFF000000;
+		evt.params[2].float32 = 2.0f;
+		evt.params[3].int32 = 48;
+		timeEvents.Schedule(evt, fadeOutTime);
+	} else {
+		fadeArgs.field0 = 1;
+		fade.PerformFade(fadeArgs);
+	}
+
+	Py_RETURN_NONE;
+}
+
+PyObject* PyGame_PartySize(PyObject*, PyObject* args) {
+	return PyInt_FromLong(party.GroupListGetLen());
+}
+
+PyObject* PyGame_PartyPcSize(PyObject*, PyObject* args) {
+	return PyInt_FromLong(party.GroupPCsLen());
+}
+
+PyObject* PyGame_PartyNpcSize(PyObject*, PyObject* args) {
+	return PyInt_FromLong(party.GroupNPCFollowersLen());
+}
+
+static PyObject *ObjListToTuple(ObjList &objList) {
+	auto result = PyTuple_New(objList.size());
+	for (auto i = 0; i < objList.size(); ++i) {
+		auto handle = PyObjHndl_Create(objList[i]);
+		PyTuple_SET_ITEM(result, i, handle);
+	}
+	return result;
+}
+
+PyObject* PyGame_ObjList(PyObject*, PyObject* args) {
+	locXY loc;
+	int flags;
+	if (!PyArg_ParseTuple(args, "Li:game.obj_list", &loc, &flags)) {
+		return 0;
+	}
+
+	ObjList objList;
+	objList.ListTile(loc, flags);
+	return ObjListToTuple(objList);
+}
+
+PyObject* PyGame_ObjListVicinity(PyObject*, PyObject* args) {
+	locXY loc;
+	int flags;
+	if (!PyArg_ParseTuple(args, "Li:game.obj_list_vicinity", &loc, &flags)) {
+		return 0;
+	}
+
+	ObjList objList;
+	objList.ListVicinity(loc, flags);
+	return ObjListToTuple(objList);
+}
+
+PyObject* PyGame_ObjListRange(PyObject*, PyObject* args) {
+	LocAndOffsets loc;
+	int radius;
+	int flags;
+	if (!PyArg_ParseTuple(args, "Lii:game.obj_list_range", &loc.location, &radius, &flags)) {
+		return 0;
+	}
+
+	float radiusArg = radius * 12.0f; // Apparently a shoddy conversion to coordinate space
+
+	ObjList objList;
+	objList.ListRadius(loc, radiusArg, flags);
+	return ObjListToTuple(objList);
+}
+
+PyObject* PyGame_ObjListCone(PyObject*, PyObject* args) {
+	objHndl originHndl;
+	int flags, coneLeft, coneArc;
+	float radius;
+	if (!PyArg_ParseTuple(args, "O&ifii:game.obj_list_cone", &ConvertObjHndl, &originHndl, &flags, &radius, &coneLeft, &coneArc)) {
+		return 0;
+	}
+
+	radius *= 12.0f; // Apparently a shoddy conversion to coordinate space
+
+	// Get location and rotation of obj
+	auto origin = objects.GetLocationFull(originHndl);
+	auto rotation = objects.GetRotation(originHndl);
+
+	// Modify rotation by coneLeft to get the start angle of the cone
+	rotation += deg2rad((float)coneLeft);
+
+	float coneArcRad = deg2rad((float)coneArc);
+
+	ObjList objList;
+	objList.ListCone(origin, radius, rotation, coneArcRad, flags);
+	return ObjListToTuple(objList);
+}
+
+PyObject* PyGame_Sound(PyObject*, PyObject* args) {
+	int soundId;
+	int loopCount = 1;
+	if (!PyArg_ParseTuple(args, "i|i:game.sound", &soundId, &loopCount)) {
+		return 0;
+	}
+
+	// Seems to be -1 on failure
+	auto streamId = sound.PlaySound(soundId, loopCount);
+	return PyInt_FromLong(streamId);
+}
+
+PyObject* PyGame_SoundLocalObj(PyObject*, PyObject* args) {
+	objHndl handle;
+	int soundId;
+	int loopCount = 1;
+	if (!PyArg_ParseTuple(args, "iO&|i:game.sound_local_obj", &soundId, &ConvertObjHndl, &handle, &loopCount)) {
+		return 0;
+	}
+
+	// Seems to be -1 on failure
+	auto streamId = sound.PlaySoundAtObj(soundId, handle, loopCount);
+	return PyInt_FromLong(streamId);
+}
+
+PyObject* PyGame_SoundLocalLoc(PyObject*, PyObject* args) {
+	locXY tileLoc;
+	int soundId;
+	int loopCount = 1;
+	if (!PyArg_ParseTuple(args, "iL|i:game.sound_local_loc", &soundId, &tileLoc, &loopCount)) {
+		return 0;
+	}
+
+	// Seems to be -1 on failure
+	auto streamId = sound.PlaySoundAtLoc(soundId, tileLoc, loopCount);
+	return PyInt_FromLong(streamId);
+}
+
+PyObject* PyGame_Particles(PyObject*, PyObject* args) {
+
+	char *name;
+	PyObject *locOrObj;
+
+	if (!PyArg_ParseTuple(args, "sO:game.particles", &name, &locOrObj)) {
+		return 0;
+	}
+
+	if (PyObjHndl_Check(locOrObj)) {
+		auto objHandle = PyObjHndl_AsObjHndl(locOrObj);
+		auto partHandle = particles.CreateAtObj(name, objHandle);
+		return PyInt_FromLong(partHandle);
+	}
+	else if (PyLong_Check(locOrObj)) {
+		auto loc = locXY::fromField(PyLong_AsUnsignedLongLong(locOrObj));
+		auto partHandle = particles.CreateAt3dPos(name, loc.To3d());
+		return PyInt_FromLong(partHandle);
+	}
+	else {
+		PyErr_SetString(PyExc_TypeError, "Location of particle system must be either a tile location (long) or an object handle.");
+		return 0;
+	}
+
+}
+
+PyObject* PyGame_ObjCreate(PyObject*, PyObject* args) {
+	int protoId;
+	locXY loc = { 0, 0 };
+	float offsetX = 0, offsetY = 0;
+
+	if (!PyArg_ParseTuple(args, "i|Lff:game.obj_create", &protoId, &loc, &offsetX, &offsetY)) {
+		return 0;
+	}
+
+	// Use mouse position if no location was given
+	if (loc.locx == 0 && loc.locy == 0) {
+		auto mousePos = mouseFuncs.GetPos();
+		if (!graphics.ScreenToTile(mousePos.x, mousePos.y, loc)) {
+			PyErr_SetString(PyExc_RuntimeError, "Could not get tile at mouse position to place object.");
+			return 0;
+		}
+	}
+
+	// resolve the proto handle for the prototype number
+	auto protoHandle = objects.GetProtoHandle(protoId);
+
+	if (!protoHandle) {
+		PyErr_SetString(PyExc_ValueError, "Cannot create object for unknown prototype id.");
+		return 0;
+	}
+
+	auto handle = objects.Create(protoHandle, loc);
+
+	if (handle) {
+		auto radius = objects.GetRadius(handle);
+		LocAndOffsets locOff = { loc, offsetX, offsetY };
+		LocAndOffsets freeSpot;
+		if (objects.FindFreeSpot(locOff, radius, freeSpot)) {
+			objects.Move(handle, freeSpot);
+		}
+		if (objects.IsCritter(handle)) {
+			objects.AiForceSpreadOut(handle);
+		}
+	}
+
+	return PyObjHndl_Create(handle);
+}
+
+PyObject* PyGame_TimeEventAdd(PyObject*, PyObject* args) {
+
+	TimeEvent evt;
+	int realtime = 0;
+	int timeInMsec;
+
+	if (!PyArg_ParseTuple(args, "OOi|i:game.timeevent_add", &evt.params[0].pyobj, &evt.params[1].pyobj, &timeInMsec, &realtime)) {
+		return 0;
+	}
+
+	evt.system = TimeEventSystem::PythonScript;
+	if (realtime) {
+		evt.system = TimeEventSystem::PythonRealtime;
+	}
+	Py_INCREF(evt.params[0].pyobj);
+	Py_INCREF(evt.params[1].pyobj);
+	timeEvents.Schedule(evt, timeInMsec);
+	Py_RETURN_NONE;
+}
+
+/*
+	Reveals a flag on the townmap UI for a map.
+	1st arg is the map id (i.e. 5001)
+	2nd arg is the flag id (see rules\townmap_ui_placed_flag_locations.mes)
+	3rd arg is unused, but seemed to indicate that it should be revealed (which is all this function can do)
+*/
+PyObject* PyGame_MapFlags(PyObject*, PyObject* args) {
+	int mapId, flagId, reveal;
+	if (!PyArg_ParseTuple(args, "ii|i:game.mapflags", &mapId, &flagId, &reveal)) {
+		return 0;
+	}
+
+	if (reveal != 1) {
+		logger->warn("Using map_flags with a reveal-argument other than 1: {}. Flags can only be revealed using this function.", reveal);
+	}
+
+	maps.RevealFlag(mapId, flagId);
+	Py_RETURN_NONE;
+}
+
+PyObject* PyGame_ParticlesKill(PyObject*, PyObject* args) {
+	int partSysId;
+	if (!PyArg_ParseTuple(args, "i:game.particles_kill", &partSysId)) {
+		return 0;
+	}
+	if (!partSysId) {
+		PyErr_SetString(PyExc_ValueError, "Cannot kill particle system id 0. Invalid value.");
+		return 0;
+	}
+	particles.Kill(partSysId);
+	Py_RETURN_NONE;
+}
+
+PyObject* PyGame_ParticlesEnd(PyObject*, PyObject* args) {
+	int partSysId;
+	if (!PyArg_ParseTuple(args, "i:game.particles_kill", &partSysId)) {
+		return 0;
+	}
+	if (!partSysId) {
+		PyErr_SetString(PyExc_ValueError, "Cannot kill particle system id 0. Invalid value.");
+		return 0;
+	}
+	particles.End(partSysId);
+	Py_RETURN_NONE;
+}
+
+PyObject* PyGame_SaveGame(PyObject*, PyObject* args) {
+	char *filename;
+	char *displayName;
+	if (!PyArg_ParseTuple(args, "ss:game.savegame", &filename, &displayName)) {
+		return 0;
+	}
+
+	auto result = gameSystemFuncs.SaveGame(filename, displayName);
+	return PyInt_FromLong(result);
+}
+
+PyObject* PyGame_LoadGame(PyObject*, PyObject* args) {
+	char *filename;
+	if (!PyArg_ParseTuple(args, "s:game.loadgame", &filename)) {
+		return 0;
+	}
+		
+	gameSystemFuncs.DestroyPlayerObject();
+	auto result = gameSystemFuncs.LoadGame(filename);
+	return PyInt_FromLong(result);
+}
+
+PyObject* PyGame_UpdateCombatUi(PyObject*, PyObject* args) {
+	ui.UpdateCombatUi();
+	Py_RETURN_NONE;
+}
+
+PyObject* PyGame_UpdatePartyUi(PyObject*, PyObject* args) {
+	ui.UpdatePartyUi();
+	Py_RETURN_NONE;
+}
+
+PyObject* PyGame_RandomRange(PyObject*, PyObject* args) {
+	int from, to;
+	if (!PyArg_ParseTuple(args, "ii", &from, &to)) {
+		return 0;
+	}
+	
+	auto result = RandomIntRange(from, to);
+	return PyInt_FromLong(result);
+}
+
+PyObject* PyGame_TargetRandomTileNearGet(PyObject*, PyObject* args) {
+	objHndl handle;
+	int distance;
+
+	if (!PyArg_ParseTuple(args, "O&i:game.target_random_tile_near_get", &ConvertObjHndl, &handle, &distance)) {
+		return 0;
+	}
+	
+	auto loc = objects.TargetRandomTileNear(handle, distance);
+	return PyLong_FromLongLong(loc);
+}
+
+PyObject* PyGame_GetStatMod(PyObject*, PyObject* args) {
+	int attributeValue;
+	if (!PyArg_ParseTuple(args, "i:game.get_stat_mod", &attributeValue)) {
+		return 0;		
+	}
+
+	return PyInt_FromLong(GetAttributeMod(attributeValue));
+}
+
+PyObject* PyGame_UiShowWorldmap(PyObject*, PyObject* args) {
+	int unk;
+	if (!PyArg_ParseTuple(args, "i:game.ui_show_worldmap", &unk)) {
+		return 0;
+	}
+	ui.ShowWorldMap(unk);
+	Py_RETURN_NONE;
+}
+
+PyObject* PyGame_WorldmapTravelByDialog(PyObject*, PyObject* args) {
+	int destination;
+	if (!PyArg_ParseTuple(args, "i:game.ui_worldmap_travel_by_dialog", &destination)) {
+		return 0;
+	}
+	ui.WorldMapTravelByDialog(destination);
+	Py_RETURN_NONE;
+}
+
+PyObject* PyGame_PfxCallLightning(PyObject*, PyObject* args) {
+	LocAndOffsets loc;
+	float offz; // actually ignored
+	if (!PyArg_ParseTuple(args, "Lfff:game.pfx_call_lightning", &loc.location, &loc.off_x, &loc.off_y, &offz)) {
+		return 0;
+	}
+
+	particles.CallLightning(loc);
+	Py_RETURN_NONE;
+}
+
+PyObject* PyGame_PfxChainLightning(PyObject*, PyObject* args) {
+	// TODO: Requires PyTargetArray
+	return 0;
+}
+
+PyObject* PyGame_PfxLightningBolt(PyObject*, PyObject* args) {
+	objHndl caster;
+	LocAndOffsets target;
+	float offz; // Ignored
+	if (!PyArg_ParseTuple(args, "O&Lfff:game.pfx_lightning_bolt", &ConvertObjHndl, &caster, &target.location, &target.off_x, &target.off_y, &offz)) {
+		return 0;
+	}
+
+	particles.LightningBolt(caster, target);
+	Py_RETURN_NONE;
+}
+
+PyObject* PyGame_GametimeAdd(PyObject*, PyObject* args) {
+	int timeInMs;
+	if (!PyArg_ParseTuple(args, "i:game.gametime_add", &timeInMs)) {
+		return 0;
+	}
+
+	timeEvents.AddTime(timeInMs);
+	auto time = timeEvents.GetTime();
+	auto formattedTime = timeEvents.FormatTime(time);
+	return PyString_FromString(formattedTime.c_str());
+}
+
+PyObject* PyGame_IsOutdoor(PyObject*, PyObject* args) {
+	return PyInt_FromLong(maps.IsCurrentMapOutdoor());
+}
+
+PyObject* PyGame_Shake(PyObject*, PyObject* args) {
+	float amount, duration;
+
+	if (!PyArg_ParseTuple(args, "ff:game.shake", &amount, &duration)) {
+		return 0;
+	}
+
+	graphics.ShakeScreen(amount, duration);
+	Py_RETURN_NONE;
+}
+
+PyObject* PyGame_MoviequeueAdd(PyObject*, PyObject* args) {
+	int movieId;
+	if (!PyArg_ParseTuple(args, "i:game.moviequeue_add", &movieId)) {
+		return 0;
+	}
+	movieFuncs.MovieQueueAdd(movieId);
+	Py_RETURN_NONE;
+}
+
+PyObject* PyGame_MoviequeuePlay(PyObject*, PyObject* args) {
+	movieFuncs.MovieQueuePlay();
+	Py_RETURN_NONE;
+}
+
+PyObject* PyGame_MoviequeuePlayEndGame(PyObject*, PyObject* args) {
+	movieFuncs.MovieQueuePlay();
+	gameSystemFuncs.EndGame();
+	Py_RETURN_NONE;
+}
+
+static struct PyGameDialogPickerArgs {
+	PyObject *isValidTarget = nullptr;
+	int invalidTargetLine = 0;
+	int cancelledLine = 0;
+	int validTargetLine = 0;
+} dialogPickerArgs;
+
+static void __cdecl PyGame_PickerCallback(const PickerResult &result, void* callbackData);
+
+/*
+	This can only be called from within dialogs to initiate a spell picker
+	that will lead in turn to a dialog line and set the picker_obj global.
+*/
+PyObject* PyGame_Picker(PyObject*, PyObject* args) {
+	int spellId;
+	objHndl caster;
+	PyObject *validTargetCallback;
+	PyObject *dialogLines;
+
+	if (!PyArg_ParseTuple(args, "O&iOO!:game.picker", &ConvertObjHndl, &caster, &spellId, &validTargetCallback, &PyList_Type, &dialogLines)) {
+		return 0;
+	}
+
+	if (!PyCallable_Check(validTargetCallback)) {
+		PyErr_SetString(PyExc_TypeError, "Third argument must be a callable that determines whether a target is valid or not.");
+		return 0;
+	}
+
+	if (PyList_Size(dialogLines) != 3) {
+		PyErr_SetString(PyExc_ValueError, "Expect exactly three dialog lines in the 4th argument.");
+		return 0;
+	}
+
+	for (auto i = 0; i < 3; ++i) {
+		if (!PyInt_Check(PyList_GET_ITEM(dialogLines, i))) {
+			PyErr_SetString(PyExc_TypeError, "Expected the list in the 4th argument to only contain integer line numers.");
+			return 0;
+		}
+	}
+
+	// This picker can only be used while in dialog
+	if (!uiDialog.IsActive()) {
+		logger->debug("Can only use game.picker from dialog");
+		Py_RETURN_NONE;
+	}
+
+	// Set up the callback arguments we'll get
+	Py_XDECREF(dialogPickerArgs.isValidTarget); // Clear previous callback if any
+	dialogPickerArgs.isValidTarget = validTargetCallback;
+	dialogPickerArgs.invalidTargetLine = PyInt_AsLong(PyList_GET_ITEM(dialogLines, 0));
+	dialogPickerArgs.cancelledLine = PyInt_AsLong(PyList_GET_ITEM(dialogLines, 1));
+	dialogPickerArgs.validTargetLine = PyInt_AsLong(PyList_GET_ITEM(dialogLines, 2));
+
+	PickerArgs picker;
+	picker.flags = 0x100;
+	picker.field4 = 0;
+	picker.fieldc = 0;
+	picker.field10 = 2;
+	picker.field14 = 0;
+	picker.field18 = 0;
+	picker.field1c = 0;
+	picker.spellId = spellId;
+	picker.type = UiPickerType::Single;
+	picker.callback = PyGame_PickerCallback;
+	
+	uiDialog.Hide();
+	uiPicker.ShowPicker(picker, &dialogPickerArgs);
+
+	Py_RETURN_NONE;
+}
+
+// This is called for various tasks by the picker we create above
+static void __cdecl PyGame_PickerCallback(const PickerResult &result, void*) {
+
+	auto currentDlg = uiDialog.GetCurrentDialog();
+		
+	if (result.flags & PRF_CANCELLED) {
+		// The player cancelled the picker
+		uiDialog.ReShowDialog(currentDlg, dialogPickerArgs.cancelledLine);
+	} else {
+		// Something has been picked. Is it a valid target?
+		auto targetObj = PyObjHndl_Create(result.handle);
+		auto isValidObj = PyObject_CallFunction(dialogPickerArgs.isValidTarget, "O", targetObj);
+		Py_DECREF(targetObj);		
+
+		if (!isValidObj) {
+			// Call resulted in an exception
+			logger->error("Unable to call the is_valid_target callback for game.picker");
+			PyErr_Print();
+		} else {
+			// Target is valid
+			if (PyObject_IsTrue(isValidObj)) {
+				uiDialog.ReShowDialog(currentDlg, dialogPickerArgs.validTargetLine);
+			} else {
+				uiDialog.ReShowDialog(currentDlg, dialogPickerArgs.invalidTargetLine);
+			}
+			Py_DECREF(isValidObj);
+		}
+	}
+
+	// Free the callback
+	Py_DECREF(dialogPickerArgs.isValidTarget);
+	dialogPickerArgs.isValidTarget = nullptr;
+	
+	// The picker would still be going if we didnt cancel it
+	uiPicker.FreeCurrentPicker();
+	uiDialog.Unk(); // Not clear what this does. Plays some speech samples? 
+	
+}
+
+PyObject* PyGame_PartyPool(PyObject*, PyObject* args) {
+	ui.ShowPartyPool(true);
+	Py_RETURN_NONE;
+}
+
+PyObject* PyGame_CharUiHide(PyObject*, PyObject* args) {
+	ui.ShowCharUi(0);
+	Py_RETURN_NONE;
+}
+
+void UpdateSleepStatus(); // Dirty stuff...
+PyObject* PyGame_SleepStatusUpdate(PyObject*, PyObject* args) {
+	UpdateSleepStatus();
+	Py_RETURN_NONE;
+}
+
+PyObject* PyGame_Brawl(PyObject*, PyObject* args) {
+	objHndl pc, npc;
+	if (!PyArg_ParseTuple(args, "O&O&:game.brawl", &ConvertObjHndl, &pc, &ConvertObjHndl, &npc)) {
+		return 0;
+	}
+
+	combatSys.Brawl(pc, npc);
+	Py_RETURN_NONE;
+}
+
+PyObject* PyGame_TutorialToggle(PyObject*, PyObject* args) {
+	return PyInt_FromLong(uiTutorial.Toggle());
+}
+
+PyObject* PyGame_TutorialIsActive(PyObject*, PyObject* args) {
+	return PyInt_FromLong(uiTutorial.IsActive());
+}
+
+PyObject* PyGame_TutorialShowTopic(PyObject*, PyObject* args) {
+	int topicId;
+	if (!PyArg_ParseTuple(args, "i:game.tutorial_show_topic", &topicId)) {
+		return 0;
+	}
+
+	return PyInt_FromLong(uiTutorial.ShowTopic(topicId));
+}
+
+PyObject* PyGame_CombatIsActive(PyObject*, PyObject* args) {
+	return PyInt_FromLong(combatSys.isCombatActive());
+}
+
+PyObject* PyGame_WrittenUiShow(PyObject*, PyObject* args) {
+	objHndl handle;
+	if (!PyArg_ParseTuple(args, "O&:game.written_ui_show", &ConvertObjHndl, &handle)) {
+		return 0;
+	}
+
+	auto result = ui.ShowWrittenUi(handle);
+	return PyInt_FromLong(result);
+}
+
+PyObject* PyGame_IsDaytime(PyObject*, PyObject* args) {
+	return PyInt_FromLong(timeEvents.IsDaytime());
+}
+
+static PyMethodDef PyGameMethods[]{
+	{"fade_and_teleport", PyGame_FadeAndTeleport, METH_VARARGS, NULL},
+	{"fade", PyGame_Fade, METH_VARARGS, NULL},
+	{"party_size", PyGame_PartySize, METH_VARARGS, NULL},
+	{"party_pc_size", PyGame_PartyPcSize, METH_VARARGS, NULL},
+	{"party_npc_size", PyGame_PartyNpcSize, METH_VARARGS, NULL},
+	{"obj_list", PyGame_ObjList, METH_VARARGS, NULL},
+	{"obj_list_vicinity", PyGame_ObjListVicinity, METH_VARARGS, NULL},
+	{"obj_list_range", PyGame_ObjListRange, METH_VARARGS, NULL},
+	{"obj_list_cone", PyGame_ObjListCone, METH_VARARGS, NULL},
+	{"sound", PyGame_Sound, METH_VARARGS, NULL},
+	// Not implemented, because it needs internal knowledge about the sound coordinate space
+	// {"sound_local_xy", PyGame_SoundLocalXY, METH_VARARGS, NULL},
+	{"sound_local_obj", PyGame_SoundLocalObj, METH_VARARGS, NULL},
+	{"sound_local_loc", PyGame_SoundLocalLoc, METH_VARARGS, NULL},
+	{"particles", PyGame_Particles, METH_VARARGS, NULL},
+	{"obj_create", PyGame_ObjCreate, METH_VARARGS, NULL},
+	{"timeevent_add", PyGame_TimeEventAdd, METH_VARARGS, NULL},
+	{"timevent_add", PyGame_TimeEventAdd, METH_VARARGS, NULL},
+	{"map_flags", PyGame_MapFlags, METH_VARARGS, NULL},
+	{"particles_kill", PyGame_ParticlesKill, METH_VARARGS, NULL},
+	{"particles_end", PyGame_ParticlesEnd, METH_VARARGS, NULL},
+	{"savegame", PyGame_SaveGame, METH_VARARGS, NULL},
+	{"loadgame", PyGame_LoadGame, METH_VARARGS, NULL},
+	{"update_combat_ui", PyGame_UpdateCombatUi, METH_VARARGS, NULL},
+	{"update_party_ui", PyGame_UpdatePartyUi, METH_VARARGS, NULL},
+	{"random_range", PyGame_RandomRange, METH_VARARGS, NULL},
+	{"target_random_tile_near_get", PyGame_TargetRandomTileNearGet, METH_VARARGS, NULL},
+	{"get_stat_mod", PyGame_GetStatMod, METH_VARARGS, NULL},
+	{"ui_show_worldmap", PyGame_UiShowWorldmap, METH_VARARGS, NULL},
+	{"worldmap_travel_by_dialog", PyGame_WorldmapTravelByDialog, METH_VARARGS, NULL},
+	{"pfx_call_lightning", PyGame_PfxCallLightning, METH_VARARGS, NULL},
+	{"pfx_chain_lightning", PyGame_PfxChainLightning, METH_VARARGS, NULL},
+	{"pfx_lightning_bolt", PyGame_PfxLightningBolt, METH_VARARGS, NULL},
+	{"gametime_add", PyGame_GametimeAdd, METH_VARARGS, NULL},
+	{"is_outdoor", PyGame_IsOutdoor, METH_VARARGS, NULL},
+	{"shake", PyGame_Shake, METH_VARARGS, NULL},
+	{"moviequeue_add", PyGame_MoviequeueAdd, METH_VARARGS, NULL},
+	{"moviequeue_play", PyGame_MoviequeuePlay, METH_VARARGS, NULL},
+	{"moviequeue_play_end_game", PyGame_MoviequeuePlayEndGame, METH_VARARGS, NULL},
+	{"picker", PyGame_Picker, METH_VARARGS, NULL},
+	{"party_pool", PyGame_PartyPool, METH_VARARGS, NULL},
+	{"char_ui_hide", PyGame_CharUiHide, METH_VARARGS, NULL},
+	{"sleep_status_update", PyGame_SleepStatusUpdate, METH_VARARGS, NULL},
+	{"brawl", PyGame_Brawl, METH_VARARGS, NULL},
+	{"tutorial_toggle", PyGame_TutorialToggle, METH_VARARGS, NULL},
+	{"tutorial_is_active", PyGame_TutorialIsActive, METH_VARARGS, NULL},
+	{"tutorial_show_topic", PyGame_TutorialShowTopic, METH_VARARGS, NULL},
+	{"combat_is_active", PyGame_CombatIsActive, METH_VARARGS, NULL},
+	{"written_ui_show", PyGame_WrittenUiShow, METH_VARARGS, NULL},
+	{"is_daytime", PyGame_IsDaytime, METH_VARARGS, NULL},
+	// This is some unfinished UI for which the graphics are missing
+	// {"charmap", PyGame_Charmap, METH_VARARGS, NULL},
+	{NULL, NULL, NULL, NULL}
+};
+
+static void PyGame_Dealloc(PyObject* obj) {
+	auto self = (PyGameObject*)obj;
+	// Free inner pointers
+	PyObject_Del(self);
+}
+
+static PyTypeObject PyGameType = {
+	PyObject_HEAD_INIT(NULL)
+	0, /*ob_size*/
+	"PyGame", /*tp_name*/
+	sizeof(PyGameObject), /*tp_basicsize*/
+	0, /*tp_itemsize*/
+	PyGame_Dealloc, /*tp_dealloc*/
+	0, /*tp_print*/
+	0, /*tp_getattr*/
+	0, /*tp_setattr*/
+	0, /*tp_compare*/
+	0, /*tp_repr*/
+	0, /*tp_as_number*/
+	0, /*tp_as_sequence*/
+	0, /*tp_as_mapping*/
+	0, /*tp_hash */
+	0, /*tp_call*/
+	0, /*tp_str*/
+	PyObject_GenericGetAttr, /*tp_getattro*/
+	PyObject_GenericSetAttr, /*tp_setattro*/
+	0, /*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT, /*tp_flags*/
+	0, /* tp_doc */
+	0, /* tp_traverse */
+	0, /* tp_clear */
+	0, /* tp_richcompare */
+	0, /* tp_weaklistoffset */
+	0, /* tp_iter */
+	0, /* tp_iternext */
+	PyGameMethods, /* tp_methods */
+	0, /* tp_members */
+	PyGameGettersSetters, /* tp_getset */
+	0, /* tp_base */
+	0, /* tp_dict */
+	0, /* tp_descr_get */
+	0, /* tp_descr_set */
+	0, /* tp_dictoffset */
+	0, /* tp_init */
+	0, /* tp_alloc */
+	0, /* tp_new */
+};
+
+PyObject* PyGame_Create() {
+	return (PyObject*) PyObject_New(PyGameObject, &PyGameType);
+}
