@@ -3,6 +3,16 @@
 #include "critter.h"
 #include "obj.h"
 
+static struct CritterAddresses : AddressTable {
+
+	bool(__cdecl *HasMet)(objHndl critter, objHndl otherCritter);
+
+	CritterAddresses() {
+		rebase(HasMet, 0x10053CD0);
+	}
+
+} addresses;
+
 class CritterReplacements : public TempleFix
 {
 	macTempleFix(Critter System)
@@ -34,6 +44,10 @@ int CritterSystem::GetLootBehaviour(objHndl npc) {
 
 void CritterSystem::SetLootBehaviour(objHndl npc, int behaviour) {
 	objects.setInt32(npc, obj_f_npc_pad_i_3, behaviour & 0xF);
+}
+
+bool CritterSystem::HasMet(objHndl critter, objHndl otherCritter) {
+	return addresses.HasMet(critter, otherCritter);
 }
 
 #pragma region Critter Hooks

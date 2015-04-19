@@ -5,8 +5,11 @@
 #include "../inventory.h"
 #include "../timeevents.h"
 #include "../critter.h"
+#include "../dispatcher.h"
+#include "../party.h"
 #include "python_dice.h"
 #include "python_objectscripts.h"
+#include <objlist.h>
 
 static struct PyObjHandleAddresses : AddressTable {
 	PyObjHandleAddresses() {
@@ -307,9 +310,9 @@ static PyObject* PyObjHandle_SkillLevelGet(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 
 	objHndl handle;
-	int skillId;
+	SkillEnum skillId;
 	if (PyTuple_Size(args) == 1) {
-		if (!PyArg_ParseTuple(args, "O&i", &ConvertObjHndl, &handle, &skillId)) {
+		if (!PyArg_ParseTuple(args, "O&i:objhndl.skill_level_get", &ConvertObjHndl, &handle, &skillId)) {
 			return 0;
 		}
 	} else {
@@ -317,10 +320,88 @@ static PyObject* PyObjHandle_SkillLevelGet(PyObject* obj, PyObject* args) {
 			return 0;
 		}
 	}
+	
+	auto skillLevel = dispatch.dispatch1ESkillLevel(self->handle, skillId, nullptr, handle, 1);
 
+	return PyInt_FromLong(skillLevel);
+}
 
+static PyObject* PyObjHandle_HasMet(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl critter;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.has_met", &ConvertObjHndl, &critter)) {
+		return 0;
+	}
 
-	return 0;
+	auto result = critterSys.HasMet(self->handle, critter);
+	return PyInt_FromLong(result);
+}
+
+/*
+	Checks if the player has a follower with a given name id.
+*/
+static PyObject* PyObjHandle_HasFollower(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int nameId;
+	if (!PyArg_ParseTuple(args, "i:objhndl.has_follower", &nameId)) {
+		return 0;
+	}
+
+	ObjList followers;
+	followers.ListFollowers(self->handle);
+
+	for (int i = 0; i < followers.size(); ++i) {
+		auto follower = followers[i];
+		if (objects.GetNameId(follower) == nameId) {
+			return PyInt_FromLong(1);
+		}
+	}
+
+	return PyInt_FromLong(0);
+}
+
+static PyObject* PyObjHandle_GroupList(PyObject* obj, PyObject* args) {
+	auto len = party.GroupListGetLen();
+	auto result = PyTuple_New(len);
+
+	for (uint32_t i = 0; i < len; ++i) {
+		auto hndl = PyObjHndl_Create(party.GroupListGetMemberN(i));
+		PyTuple_SET_ITEM(result, i, hndl);
+	}
+
+	return result;
+}
+
+static PyObject* PyObjHandle_StatLevelGet(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	Stat stat;
+	if (!PyArg_ParseTuple(args, "i:objhndl:stat_level_get", &stat)) {
+		return 0;
+	}
+
+	return PyInt_FromLong(objects.StatLevelGet(self->handle, stat));
+}
+
+static PyObject* PyObjHandle_StatLevelGetBase(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	Stat stat;
+	if (!PyArg_ParseTuple(args, "i:objhndl:stat_level_get_base", &stat)) {
+		return 0;
+	}
+
+	return PyInt_FromLong(objects.StatLevelGetBase(self->handle, stat));
+}
+
+static PyObject* PyObjHandle_StatLevelSetBase(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	Stat stat;
+	int value;
+	if (!PyArg_ParseTuple(args, "ii:objhndl:stat_level_set_base", &stat, &value)) {
+		return 0;
+	}
+
+	auto result = objects.StatLevelSetBase(self->handle, stat, value);
+	return PyInt_FromLong(result);
 }
 
 static PyMethodDef PyObjHandleMethods[] = {
@@ -338,14 +419,14 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "money_get", PyObjHandle_MoneyGet, METH_VARARGS, NULL },
 	{ "money_adj", PyObjHandle_MoneyAdj, METH_VARARGS, NULL },
 	{ "cast_spell", PyObjHandle_CastSpell, METH_VARARGS, NULL },
-	{ "skill_level_get", NULL, METH_VARARGS, NULL },
-	{ "has_met", NULL, METH_VARARGS, NULL },
-	{ "hasMet", NULL, METH_VARARGS, NULL },
-	{ "has_follower", NULL, METH_VARARGS, NULL },
-	{ "group_list", NULL, METH_VARARGS, NULL },
-	{ "stat_level_get", NULL, METH_VARARGS, NULL },
-	{ "stat_base_get", NULL, METH_VARARGS, NULL },
-	{ "stat_base_set", NULL, METH_VARARGS, NULL },
+	{ "skill_level_get", PyObjHandle_SkillLevelGet, METH_VARARGS, NULL },
+	{ "has_met", PyObjHandle_HasMet, METH_VARARGS, NULL },
+	{ "hasMet", PyObjHandle_HasMet, METH_VARARGS, NULL },
+	{ "has_follower", PyObjHandle_HasFollower, METH_VARARGS, NULL },
+	{ "group_list", PyObjHandle_GroupList, METH_VARARGS, NULL },
+	{ "stat_level_get", PyObjHandle_StatLevelGet, METH_VARARGS, NULL },
+	{ "stat_base_get", PyObjHandle_StatLevelGetBase, METH_VARARGS, NULL },
+	{ "stat_base_set", PyObjHandle_StatLevelSetBase, METH_VARARGS, NULL },
 	{ "follower_add", NULL, METH_VARARGS, NULL },
 	{ "follower_remove", NULL, METH_VARARGS, NULL },
 	{ "follower_atmax", NULL, METH_VARARGS, NULL },

@@ -225,6 +225,8 @@ Objects::Objects()
 	rebase(_GetInternalFieldFloat, 0x1009E260);
 	rebase(_GetInternalFieldInt32Array, 0x1009E5C0);
 	rebase(_StatLevelGet, 0x10074800);
+	rebase(_StatLevelGetBase, 0x10074CF0);
+	rebase(_StatLevelSetBase, 0x10074E10);
 	rebase(_GetSize, 0x1004D690);
 	rebase(_SetInternalFieldInt32, 0x100A0190);
 	macRebase(_setArrayFieldLowLevel, 100A0500)
@@ -539,6 +541,17 @@ uint32_t Objects::StatLevelGet(objHndl obj, Stat stat)
 {
 	return _StatLevelGet(obj, stat);
 }
+
+int Objects::StatLevelGetBase(objHndl obj, Stat stat)
+{
+	return _StatLevelGetBase(obj, stat);
+}
+
+int Objects::StatLevelSetBase(objHndl obj, Stat stat, int value)
+{
+	return _StatLevelSetBase(obj, stat, value);
+}
+
 #pragma endregion
 
 

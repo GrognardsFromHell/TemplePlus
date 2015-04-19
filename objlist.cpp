@@ -6,12 +6,14 @@ static struct ObjListAddresses : AddressTable {
 	void(__cdecl *ObjListTile)(locXY loc, int flags, ObjListResult &result);
 	void(__cdecl *ObjListVicinity)(locXY loc, int flags, ObjListResult &result);
 	void(__cdecl *ObjListRadius)(LocAndOffsets loc, float radius, float unk1, float unk2, int flags, ObjListResult &result);
+	void(__cdecl *ObjListFollowers)(objHndl critter, ObjListResult &result);
 	void(__cdecl *ObjListFree)(ObjListResult &result);
 
 	ObjListAddresses() {
 		rebase(ObjListTile, 0x1010D4D0);
 		rebase(ObjListVicinity, 0x1001F1C0);
 		rebase(ObjListRadius, 0x1010D650);
+		rebase(ObjListFollowers, 0x1001F450);
 		rebase(ObjListFree, 0x1001F2C0);
 	}
 } addresses;
@@ -42,6 +44,11 @@ void ObjList::ListRadius(LocAndOffsets loc, float radius, int flags) {
 void ObjList::ListCone(LocAndOffsets loc, float radius, float coneStartAngleRad, float coneArcRad, int flags) {
 	FreeResult();
 	addresses.ObjListRadius(loc, radius, coneStartAngleRad, coneArcRad, flags, mResult);
+}
+
+void ObjList::ListFollowers(objHndl critter) {
+	FreeResult();
+	addresses.ObjListFollowers(critter, mResult);
 }
 
 int ObjList::size() {

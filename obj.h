@@ -159,6 +159,8 @@ struct Objects : AddressTable {
 	string GetDisplayName(objHndl obj, objHndl observer);
 
 	uint32_t StatLevelGet(objHndl obj, Stat stat);
+	int StatLevelGetBase(objHndl obj, Stat stat);
+	int StatLevelSetBase(objHndl obj, Stat stat, int value);
 #pragma endregion
 
 #pragma region Category
@@ -234,6 +236,8 @@ private:
 	float(__cdecl *_GetInternalFieldFloat)(objHndl ObjHnd, int nFieldIdx);
 	int64_t(__cdecl *_GetInternalFieldInt64)(objHndl ObjHnd, int nFieldIdx);
 	int32_t(__cdecl *_StatLevelGet)(objHndl ObjHnd, Stat);
+	int(__cdecl *_StatLevelGetBase)(objHndl ObjHnd, Stat);
+	int(__cdecl *_StatLevelSetBase)(objHndl ObjHnd, Stat, int);
 	int(__cdecl *_GetSize)(objHndl handle);
 	void(__cdecl *_SetInternalFieldInt32)(objHndl objHnd, obj_f fieldIdx, uint32_t data32);
 	void(__cdecl * _setArrayFieldLowLevel)(obj_f fieldIdx, uint32_t subIdx); // GameObjectBody *@<ecx>, sourceData *@<eax>

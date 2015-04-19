@@ -102,6 +102,11 @@ public:
 	*/
 	void ListCone(LocAndOffsets loc, float radius, float coneStartAngleRad, float coneArcRad, int flags);
 
+	/*
+		Lists all followers (and their followers).
+	*/
+	void ListFollowers(objHndl critter);
+
 	int size();
 	objHndl get(int idx) {
 		return mResult.objects[idx];

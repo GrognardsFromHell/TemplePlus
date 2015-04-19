@@ -12,6 +12,8 @@ struct CritterSystem : AddressTable
 	int GetLootBehaviour(objHndl npc);
 	void SetLootBehaviour(objHndl npc, int behaviour);
 
+	bool HasMet(objHndl pc, objHndl npc);
+
 };
 
 extern CritterSystem critterSys;
