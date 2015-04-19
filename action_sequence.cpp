@@ -89,7 +89,6 @@ ActionSequenceSystem::ActionSequenceSystem()
 	rebase(numSimultPerformers, 0x10B3D5B8);
 	rebase(simultPerformerQueue, 0x118A06C0);
 	macRebase(simulsIdx, 10B3D5BC)
-	macRebase(_moveSeqD20Sthg, 10094F70)
 	macRebase(_sub_100939D0, 100939D0)
 	
 	macRebase(seqSthg_118CD3B8, 118CD3B8)

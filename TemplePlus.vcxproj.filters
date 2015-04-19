@@ -228,6 +228,7 @@
     <ClCompile Include="critter.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="tab_file.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -448,6 +449,7 @@
     <ClInclude Include="critter.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
+    <ClInclude Include="tab_file.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

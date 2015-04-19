@@ -4,6 +4,7 @@
 #include "common.h"
 #include "spell.h"
 #include "obj.h"
+#include "tig/tig_mes.h"
 
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
@@ -53,6 +54,7 @@ public:
 	void apply() override {
 		// writeHex(0x100779DE + 2, "A0 0F"); // this prevents the crash from casting from scroll, but it fucks up normal spell casting... (can't go to radial menu to cast!)
 		replaceFunction(0x100FDEA0, _getWizSchool);
+		macReplaceFun(100779A0, _getSpellEnum)
 	}
 } spellFuncReplacements;
 
@@ -126,6 +128,18 @@ void SpellSystem::spellPacketBodyReset(SpellPacketBody* spellPktBody)
 void SpellSystem::spellPacketSetCasterLevel(SpellPacketBody* spellPktBody)
 {
 	_spellPacketSetCasterLevel(spellPktBody);
+}
+
+uint32_t SpellSystem::getSpellEnum(const char* spellName)
+{
+	MesLine mesLine;
+	for (auto i = 0; i < SPELL_ENUM_MAX; i++)
+	{
+		mesFuncs.GetLine_Safe(*spellEnumMesHandle, &mesLine);
+		if (!_stricmp(spellName, mesLine.value))
+			return i;
+	}
+	return 0;
 }
 #pragma endregion
 
@@ -203,11 +217,15 @@ uint32_t _EvilClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel)
 
 
 
-uint32_t _getWizSchool(objHndl objHnd)
+uint32_t __cdecl _getWizSchool(objHndl objHnd)
 {
 	return spellSys.getWizSchool(objHnd);
 }
 
+uint32_t __cdecl _getSpellEnum(const char* spellName)
+{
+	return spellSys.getSpellEnum(spellName);
+}
 
 
 

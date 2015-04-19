@@ -26,6 +26,7 @@
     <ClCompile Include="renderstates.cpp" />
     <ClCompile Include="secret_door.cpp" />
     <ClCompile Include="skill.cpp" />
+    <ClCompile Include="tab_file.cpp" />
     <ClCompile Include="tig\tig.cpp" />
     <ClCompile Include="tig\tig_sound.cpp" />
     <ClCompile Include="tio\tio_utils.cpp" />
@@ -197,6 +198,7 @@
     <ClInclude Include="renderstates.h" />
     <ClInclude Include="secret_door.h" />
     <ClInclude Include="skill.h" />
+    <ClInclude Include="tab_file.h" />
     <ClInclude Include="tig\tig_sound.h" />
     <ClInclude Include="tio\tio_utils.h" />
     <ClInclude Include="turn_based.h" />

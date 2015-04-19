@@ -3,7 +3,7 @@
 #include "stdafx.h"
 #include "common.h"
 #include "idxtables.h"
-
+#include "tig\tig_mes.h"
 
 #pragma region Spell Structs
 struct SpellEntryLevelSpec
@@ -94,17 +94,22 @@ const uint32_t TestSizeOfSpellPacket = sizeof(SpellPacket); // should be 0xAF0  
 struct SpellSystem : AddressTable
 {
 	IdxTable<SpellPacket> * spellCastIdxTable;
+	MesHandle * spellEnumMesHandle;
+
 	uint32_t getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t classLvl, uint32_t slotLvl, uint32_t unknown1);
 	uint32_t getWizSchool(objHndl objHnd);
 	uint32_t getStatModBonusSpellCount(objHndl objHnd, uint32_t classCode, uint32_t slotLvl);
 	void spellPacketBodyReset(SpellPacketBody * spellPktBody);
 	void spellPacketSetCasterLevel(SpellPacketBody * spellPktBody);
+	uint32_t getSpellEnum(const char* spellName);
 
 	uint32_t(__cdecl * spellRemoveFromStorage)(objHndl objHnd, obj_f fieldIdx, SpellStoreData * spellData, int unknown);
 	uint32_t (__cdecl * spellsPendingToMemorized)(objHndl objHnd);
 	SpellSystem()
 	{
 		rebase(spellCastIdxTable, 0x10AAF218);
+		macRebase(spellEnumMesHandle, 10AAF210)
+
 		rebase(_getSpellCountByClassLvl, 0x100F4D10);
 		rebase(_getStatModBonusSpellCount, 0x100F4C30);
 		rebase(spellRemoveFromStorage, 0x100758A0);
@@ -166,3 +171,4 @@ const uint32_t TestSizeOfSpellStoreState = sizeof(SpellStoreState);
 
 
 uint32_t _getWizSchool(objHndl objHnd);
+uint32_t _getSpellEnum(const char * spellName);
