@@ -163,7 +163,9 @@ struct ObjScriptInvocation {
 
 static int RunPythonObjScript(ObjScriptInvocation *invoc) {
 
+	// This seemsprimarily used by the CounterArray
 	// set_script_context(invoc->scriptIdxPtr->scriptNumber, invoc->attachee, invoc->eventId);
+	pythonIntegration.SetInObjInvocation(true);
 
 	PyObject *args;
 	PyObject *triggerer = PyObjHndl_Create(invoc->triggerer);
@@ -189,11 +191,11 @@ static int RunPythonObjScript(ObjScriptInvocation *invoc) {
 
 	Py_DECREF(args);
 
-	/*if (get_newsid() != -1 && get_newsid() != invoc->scriptIdxPtr->scriptNumber)
-	{
-		invoc->scriptIdxPtr->scriptNumber = get_newsid();
-		reset_newsid();
-	}*/
+	auto newSid = pythonIntegration.GetNewSid();
+	if (newSid != -1 && newSid != invoc->script->scriptId) {
+		invoc->script->scriptId = newSid;
+	}
+	pythonIntegration.SetInObjInvocation(false);
 
 	return result;
 }

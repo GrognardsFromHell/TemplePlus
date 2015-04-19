@@ -68,9 +68,45 @@ public:
 	void RunString(const char *command);
 	int RunScript(int scriptId, ScriptEvent evt, PyObject *args);
 
+	// Indicates that the integration is currently executing a script attached to an obj
+	// Only if this is true do the next two properties (newsid + counters) have any actual meaning
+	bool IsInObjInvocation() {
+		return mInObjInvocation;
+	}
+	void SetInObjInvocation(bool inObjInvocation) {
+		mInObjInvocation = inObjInvocation;
+		mNewSid = -1;
+		memset(mCounters, 0, sizeof(mCounters));
+	}
+
+	// Four 8-bit counter values are provided for each script attachment to track some state
+	int GetCounter(int idx) {
+		if (idx >= 0 && idx < 4) {
+			return mCounters[idx] & 0xFF;
+		}
+		return 0;
+	}
+	void SetCounter(int idx, int value) {
+		if (idx >= 0 && idx < 4) {
+			mCounters[idx] = value & 0xFF;
+		}
+	}
+
+	// Used by a script attached to an object to replace itself with something else
+	void SetNewSid(int newSid) {
+		mNewSid = newSid;
+	}
+	int GetNewSid() {
+		return mNewSid;
+	}
+
 private:
 	typedef unordered_map<int, ScriptRecord> ScriptCache;
 	ScriptCache mScripts;
+
+	bool mInObjInvocation = false;
+	int mNewSid = -1;
+	int mCounters[4];
 };
 
 extern PythonIntegration pythonIntegration;

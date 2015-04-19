@@ -22,6 +22,7 @@
 #include "particles.h"
 #include "gamesystems.h"
 #include "python_support.h"
+#include "python_integration.h"
 #include <timeevents.h>
 #include "util/mathutil.h"
 #include "temple_functions.h"
@@ -34,7 +35,6 @@ static struct PyGameAddresses : AddressTable {
 
 	int* partyAlignment;
 	int* sid;
-	int* newSid;
 
 	void (__cdecl *SetPartyAlignment)(int alignment);
 	int (__cdecl *GetPartyAlignment)();
@@ -59,7 +59,6 @@ static struct PyGameAddresses : AddressTable {
 	PyGameAddresses() {
 		rebase(partyAlignment, 0x1080ABA4);
 		rebase(sid, 0x10BD2DA4);
-		rebase(newSid, 0x102F43F8);
 
 		rebase(SetPartyAlignment, 0x1002B720);
 		rebase(GetPartyAlignment, 0x1002B730);
@@ -158,7 +157,7 @@ static PyGetSetDef PyGameGettersSetters[] = {
 	PY_INT_PROP_RO("party_alignment", pyGameAddresses.GetPartyAlignment, NULL),
 	PY_INT_PROP("story_state", pyGameAddresses.GetStoryState, pyGameAddresses.SetStoryState, NULL),
 	PY_INT_PROP_PTR_RO("sid", pyGameAddresses.sid, NULL),
-	PY_INT_PROP_PTR("new_sid", pyGameAddresses.sid, NULL),
+	PY_INT_PROP("new_sid", pythonIntegration.GetNewSid, pythonIntegration.SetNewSid, NULL),
 	{"selected", PyGame_GetPartySelected, NULL, NULL},
 	{"party", PyGame_GetParty, NULL, NULL},
 	{"hovered", PyGame_GetHovered, NULL, NULL},
