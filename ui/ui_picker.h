@@ -42,7 +42,7 @@ struct PickerArgs {
 	int field18;
 	int field1c;
 	int field20;
-	int field24;
+	int maxTargets;
 	int field28;
 	int field2c;
 	int field30;

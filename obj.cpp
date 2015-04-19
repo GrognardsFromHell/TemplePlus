@@ -190,6 +190,8 @@ Objects::Objects()
 	rebase(_AiForceSpreadOut, 0x1005A640);
 	rebase(_GetRadius, 0x10021C40);
 	rebase(_TargetRandomTileNear, 0x100B99A0);
+	rebase(_TakeMoney, 0x1007FA40);
+	rebase(_GiveMoney, 0x1007F960);
 }
 
 void Objects::PropFetcher(GameObjectBody* objBody, obj_f fieldIdx, void * dataOut) {
@@ -310,8 +312,16 @@ locXY Objects::TargetRandomTileNear(objHndl handle, int distance) {
 	return result;
 }
 
-void Objects::Move(objHndl handle, LocAndOffsets toLocation) {
+void Objects::TakeMoney(objHndl critter, int platinum, int gold, int silver, int copper) {
+	_TakeMoney(critter, platinum, gold, silver, copper);
+}
 
+void Objects::GiveMoney(objHndl critter, int platinum, int gold, int silver, int copper) {
+	_GiveMoney(critter, platinum, gold, silver, copper);
+}
+
+void Objects::Move(objHndl handle, LocAndOffsets toLocation) {
+	_Move(handle, toLocation);
 }
 
 ObjectId Objects::GetId(objHndl handle) {

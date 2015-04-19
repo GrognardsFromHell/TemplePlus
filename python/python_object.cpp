@@ -216,6 +216,112 @@ static PyObject* PyObjHandle_ReactionAdjust(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_ItemFind(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int nameId;
+	if (!PyArg_ParseTuple(args, "i:objhndl.itemfind", &nameId)) {
+		return 0;
+	}
+
+	return PyObjHndl_Create(inventory.FindItemByName(self->handle, nameId));
+}
+
+static PyObject* PyObjHandle_ItemTransferTo(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int nameId;
+	objHndl target;
+	if (!PyArg_ParseTuple(args, "O&i:objhndl.itemtransferto", &ConvertObjHndl, &target, &nameId)) {
+		return 0;
+	}
+	
+	auto item = inventory.FindItemByName(self->handle, nameId);
+	auto result = 0;
+	if (item) {
+		result = inventory.SetItemParent(item, target, 0);
+	}
+	return PyInt_FromLong(result);
+}
+
+static PyObject* PyObjHandle_ItemFindByProto(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int protoId;
+	if (!PyArg_ParseTuple(args, "i:objhndl.itemfindbyproto", &protoId)) {
+		return 0;
+	}
+	return PyObjHndl_Create(inventory.FindItemByProtoId(self->handle, protoId));
+}
+
+static PyObject* PyObjHandle_ItemTransferToByProto(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int protoId;
+	objHndl target;
+	if (!PyArg_ParseTuple(args, "O&i:objhndl.itemtransfertobyproto", &ConvertObjHndl, &target, &protoId)) {
+		return 0;
+	}
+
+	auto item = inventory.FindItemByProtoId(self->handle, protoId);
+	auto result = 0;
+	if (item) {
+		result = inventory.SetItemParent(item, target, 0);
+	}
+	return PyInt_FromLong(result);
+}
+
+static PyObject* PyObjHandle_MoneyGet(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	return PyInt_FromLong(objects.StatLevelGet(self->handle, stat_money));
+}
+
+static PyObject* PyObjHandle_MoneyAdj(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int copperAdj;
+	if (!PyArg_ParseTuple(args, "i:objhndl.money_adj", &copperAdj)) {
+		return 0;
+	}
+
+	if (copperAdj <= 0) {
+		objects.TakeMoney(self->handle, 0, 0, 0, -copperAdj);
+	} else {
+		objects.GiveMoney(self->handle, 0, 0, 0, copperAdj);
+	}
+
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+
+	objHndl target = 0;
+	int spellId;
+	if (!PyArg_ParseTuple(args, "i|O&:objhndl.cast_spell", &spellId, &ConvertObjHndl, &target)) {
+		return 0;
+	}
+
+	// TODO: STUBBED OUT FOR SHAI
+
+	return 0;
+}
+
+static PyObject* PyObjHandle_SkillLevelGet(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+
+	objHndl handle;
+	int skillId;
+	if (PyTuple_Size(args) == 1) {
+		if (!PyArg_ParseTuple(args, "O&i", &ConvertObjHndl, &handle, &skillId)) {
+			return 0;
+		}
+	} else {
+		if (!PyArg_ParseTuple(args, "i:objhndl.skill_level_get", &skillId)) {
+			return 0;
+		}
+	}
+
+
+
+	return 0;
+}
+
 static PyMethodDef PyObjHandleMethods[] = {
 	{ "__getstate__", PyObjHandle_getstate, METH_VARARGS, NULL },
 	{ "__reduce__", PyObjHandle_reduce, METH_VARARGS, NULL },
@@ -224,13 +330,13 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "reaction_get", PyObjHandle_ReactionGet, METH_VARARGS, NULL },
 	{ "reaction_set", PyObjHandle_ReactionSet, METH_VARARGS, NULL },
 	{ "reaction_adj", PyObjHandle_ReactionAdjust, METH_VARARGS, NULL },
-	{ "item_find", NULL, METH_VARARGS, NULL },
-	{ "item_transfer_to", NULL, METH_VARARGS, NULL },
-	{ "item_find_by_proto", NULL, METH_VARARGS, NULL },
-	{ "item_transfer_to_by_proto", NULL, METH_VARARGS, NULL },
-	{ "money_get", NULL, METH_VARARGS, NULL },
-	{ "money_adj", NULL, METH_VARARGS, NULL },
-	{ "cast_spell", NULL, METH_VARARGS, NULL },
+	{ "item_find", PyObjHandle_ItemFind, METH_VARARGS, NULL },
+	{ "item_transfer_to", PyObjHandle_ItemTransferTo, METH_VARARGS, NULL },
+	{ "item_find_by_proto", PyObjHandle_ItemFindByProto, METH_VARARGS, NULL },
+	{ "item_transfer_to_by_proto", PyObjHandle_ItemTransferToByProto, METH_VARARGS, NULL },
+	{ "money_get", PyObjHandle_MoneyGet, METH_VARARGS, NULL },
+	{ "money_adj", PyObjHandle_MoneyAdj, METH_VARARGS, NULL },
+	{ "cast_spell", PyObjHandle_CastSpell, METH_VARARGS, NULL },
 	{ "skill_level_get", NULL, METH_VARARGS, NULL },
 	{ "has_met", NULL, METH_VARARGS, NULL },
 	{ "hasMet", NULL, METH_VARARGS, NULL },

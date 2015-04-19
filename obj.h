@@ -79,7 +79,7 @@ struct Objects : AddressTable {
 	Dice GetHitDice(objHndl handle); // This only makes sense for NPCs
 	int GetHitDiceNum(objHndl handle);
 	int GetSize(objHndl handle);
-
+	
 	// Get NPC reaction towards another critter
 	int GetReaction(objHndl of, objHndl towards) {
 		return _GetReaction(of, towards);
@@ -126,6 +126,17 @@ struct Objects : AddressTable {
 	bool AiForceSpreadOut(objHndl handle, LocAndOffsets &location);
 	
 	locXY TargetRandomTileNear(objHndl handle, int distance);
+
+	/*
+		Takes money from a critter. If the critter is a PC, money is taken from the party instead.
+		NOTE: All arguments must be *positive*.
+	*/
+	void TakeMoney(objHndl critter, int platinum, int gold, int silver, int copper);
+
+	/*
+		Gives money to a critter. If the critter is a PC, money is given to the party instead.
+	*/
+	void GiveMoney(objHndl critter, int platinum, int gold, int silver, int copper);
 
 #pragma region Common
 	ObjectId GetId(objHndl handle);
@@ -222,6 +233,9 @@ private:
 	char ** _DLLFieldNames;
 	void(__cdecl * _InsetDataIntoInternalStack)();//(int nFieldIdx, void *, ToEEObjBody *@<eax>);
 	void (__cdecl *_TargetRandomTileNear)(objHndl handle, int distance, locXY *pLocOut);
+
+	void (__cdecl *_TakeMoney)(objHndl critter, int platinum, int gold, int silver, int copper);
+	void (__cdecl *_GiveMoney)(objHndl critter, int platinum, int gold, int silver, int copper);
 #pragma endregion
 } ;
 
