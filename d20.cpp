@@ -21,8 +21,37 @@ static_assert(sizeof(D20Actn) == 0x58, "D20Action struct has the wrong size!");
 static_assert(sizeof(D20ActionDef) == 0x30, "D20ActionDef struct has the wrong size!");
 
 
+class D20Replacements : public TempleFix {
+public:
+	const char* name() override {
+		return "D20 Function Replacements";
+	}
+
+	void apply() override {
+		replaceFunction(0x10077850, D20SpellDataExtractInfo);
+		replaceFunction(0x10077830, D20SpellDataSetSpontCast);
+		macReplaceFun(10077800, _d20ActnSetSpellData)
+
+		replaceFunction(0x100FD790, _D20StatusInitRace);
+		replaceFunction(0x100FEE60, _D20StatusInitClass);
+		replaceFunction(0x1004FDB0, _D20StatusInit);
+		replaceFunction(0x100FD2D0, _D20StatusInitFeats);
+		replaceFunction(0x1004CA00, _D20StatusInitItemConditions);
+		replaceFunction(0x1004CC00, _D20Query);
+		replaceFunction(0x1004CC60, _d20QueryWithData);
+		macReplaceFun(1004E6B0, _d20SendSignal)
+		macReplaceFun(1004CD40, _d20QueryReturnData)
+		replaceFunction(0x10093810, _d20aInitUsercallWrapper); // function takes esi as argument
+
+		replaceFunction(0x10089F80, _globD20aSetTypeAndData1);
+		macReplaceFun(1008A530, _globD20aSetPerformer)
+		macReplaceFun(100949E0, _globD20ActnInit)
+	}
+} d20Replacements;
+
+
 #pragma region D20System Implementation
-D20System d20sys;
+D20System d20Sys;
 
 D20System::D20System()
 {
@@ -73,7 +102,7 @@ uint32_t D20System::d20Query(objHndl objHnd, D20DispatcherKey dispKey)
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (dispatcher == nullptr || (int32_t)dispatcher == -1){ return 0; }
 	DispIO10h dispIO;
-	dispIO.dispIOType = dispIOType7;
+	dispIO.dispIOType = dispIOTypeQuery;
 	dispIO.return_val = 0;
 	dispIO.data1 = 0;
 	dispIO.data2 = 0;
@@ -86,12 +115,27 @@ uint32_t D20System::d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, u
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (dispatcher == nullptr || (int32_t)dispatcher == -1){ return 0; }
 	DispIO10h dispIO;
-	dispIO.dispIOType = dispIOType7;
+	dispIO.dispIOType = dispIOTypeQuery;
 	dispIO.return_val = 0;
 	dispIO.data1 = arg1;
 	dispIO.data2 = arg2;
 	objects.dispatch.DispatcherProcessor(dispatcher, dispTypeD20Query, dispKey, &dispIO);
 	return dispIO.return_val;
+}
+
+void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2)
+{
+	DispIO10h dispIO;
+	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+	if (!dispatch.dispatcherValid(dispatcher))
+	{
+		hooked_print_debug_message("d20SendSignal(): Object %s (%I64x) lacks a Dispatcher", description.GetDisplayName(objHnd, objHnd), objHnd);
+		return;
+	}
+	dispIO.dispIOType = dispIOType6;
+	dispIO.data1 = arg1;
+	dispIO.data2 = arg2;
+	dispatch.DispatcherProcessor(dispatcher, dispTypeD20Signal, dispKey, &dispIO);
 }
 
 void D20System::d20ActnInit(objHndl objHnd, D20Actn* d20a)
@@ -100,14 +144,14 @@ void D20System::d20ActnInit(objHndl objHnd, D20Actn* d20a)
 	d20a->d20ActType = D20A_NONE;
 	d20a->data1=0 ;
 	d20a->d20ATarget=0;
-	d20a->field_30 = 0;
+	d20a->distTraversed = 0;
 	d20a->field_34 = 0;
 	d20a->spellEnum = 0;
-	objects.loc->getLocAndOff(objHnd, &d20a->locAndOff);
+	objects.loc->getLocAndOff(objHnd, &d20a->destLoc);
 	PathQueryResult * pq = d20a->path;
 	if (pq && pq >= pathfinding->pathQArray && pq < (pathfinding->pathQArray + pfCacheSize))
 	{
-		pq->d20sthg = 0;
+		pq->occupiedFlag = 0;
 	}
 	d20a->path = nullptr;
 	d20a->d20SpellData.spellEnumOrg = 0;
@@ -118,10 +162,26 @@ void D20System::d20ActnInit(objHndl objHnd, D20Actn* d20a)
 	
 }
 
-void D20System::globD20aSetTypeAndData1(D20ActionType d20type, uint32_t data1)
+void D20System::globD20ActnSetTypeAndData1(D20ActionType d20type, uint32_t data1)
 {
 	globD20Action->d20ActType = d20type;
 	globD20Action->data1 = data1;
+}
+
+void D20System::globD20ActnSetPerformer(objHndl objHnd)
+{
+	if (objHnd != (*globD20Action).d20APerformer)
+	{
+		*actSeq->seqSthg_118CD3B8 = -1;
+		*actSeq->seqSthg_118A0980 = 1;
+		*actSeq->seqSthg_118CD570 = 0;
+	}
+	(*globD20Action).d20APerformer = objHnd;
+}
+
+void D20System::globD20ActnInit()
+{
+	d20ActnInit(globD20Action->d20APerformer, globD20Action);
 }
 
 void D20System::d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx)
@@ -179,33 +239,35 @@ uint32_t D20System::tumbleCheck(D20Actn* d20a)
 	// not fully implemented yet, but that should cover 90% of the cases anyway ;) TODO: complete this function
 	return _tumbleCheck(d20a);
 }
+
+void D20System::d20ActnSetSpellData(D20SpellData* d20SpellData, uint32_t spellEnumOrg, uint32_t spellClassCode, uint32_t spellSlotLevel, uint32_t itemSpellData, uint32_t metaMagicData)
+{
+	*(uint32_t *)&d20SpellData->metaMagicData = metaMagicData;
+	d20SpellData->spellEnumOrg = spellEnumOrg;
+	d20SpellData->spellClassCode = spellClassCode;
+	d20SpellData->itemSpellData = itemSpellData;
+	d20SpellData->spontCastType = (SpontCastType)0;
+	d20SpellData->spellSlotLevel = spellSlotLevel;
+}
+
+uint64_t D20System::d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, ::uint32_t arg2)
+{
+	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+	if (!dispatch.dispatcherValid(dispatcher)){ return 0; }
+	DispIO10h dispIO;
+	dispIO.dispIOType = dispIOTypeQuery;
+	dispIO.return_val = 0;
+	dispIO.data1 = arg1;
+	dispIO.data2 = arg2;
+	objects.dispatch.DispatcherProcessor(dispatcher, dispTypeD20Query, dispKey, &dispIO);
+	return *(uint64_t*)&dispIO.data1;
+}
 #pragma endregion 
 
 CharacterClasses charClasses;
 
 
-class D20Replacements : public TempleFix {
-public:
-	const char* name() override {
-		return "D20 Function Replacements";
-	}
 
-	void apply() override {
-		replaceFunction(0x10077850, D20SpellDataExtractInfo);
-		replaceFunction(0x10077830, D20SpellDataSetSpontCast);
-		
-
-		replaceFunction(0x100FD790, _D20StatusInitRace);
-		replaceFunction(0x100FEE60, _D20StatusInitClass);
-		replaceFunction(0x1004FDB0, _D20StatusInit);
-		replaceFunction(0x100FD2D0, _D20StatusInitFeats);
-		replaceFunction(0x1004CA00, _D20StatusInitItemConditions);
-		replaceFunction(0x1004CC00, _D20Query);
-		replaceFunction(0x10093810, _d20aInitUsercallWrapper); // function takes esi as argument
-		replaceFunction(0x10089F80, _globD20aSetTypeAndData1);
-		replaceFunction(0x1004CC60, _d20QueryWithData);
-	}
-} d20Replacements;
 
 
 #pragma region D20 Spell Stuff
@@ -280,6 +342,7 @@ void __cdecl D20SpellDataSetSpontCast(D20SpellData* d20SpellData, SpontCastType 
 
 void _D20StatusInit(objHndl objHnd)
 {
+	static int debugLol = 0;
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (dispatcher != nullptr && (uint32_t)dispatcher != 0xFFFFFFFF)
 	{
@@ -292,12 +355,22 @@ void _D20StatusInit(objHndl objHnd)
 
 	objects.dispatch.DispatcherClearAttribs(dispatcher);
 	
+	if (objects.IsCritter(objHnd))
+	{
+		objects.d20.D20StatusInitClass(objHnd);
 
-	objects.d20.D20StatusInitClass(objHnd);
+		objects.d20.D20StatusInitRace(objHnd);
 
-	objects.d20.D20StatusInitRace(objHnd);
+		objects.d20.D20StatusInitFeats(objHnd);
 
-	objects.d20.D20StatusInitFeats(objHnd);
+	} else
+	{
+		debugLol ++;
+		if (debugLol % 1000 == 1)
+		{
+			auto lololol = 0;
+		}
+	}
 
 	objects.d20.D20StatusInitItemConditions(objHnd);
 
@@ -312,7 +385,7 @@ void _D20StatusInit(objHndl objHnd)
 		if (! objects.IsDeadNullDestroyed(objHnd))
 		{
 			uint32_t hpCur = objects.StatLevelGet(objHnd, stat_hp_current);
-			uint32_t subdualDam = objects.GetInt32(objHnd, obj_f_critter_subdual_damage);
+			uint32_t subdualDam = objects.getInt32(objHnd, obj_f_critter_subdual_damage);
 
 			if ( (uint32_t)hpCur != 0xFFFF0001)
 			{
@@ -382,7 +455,7 @@ void _D20StatusInitClass(objHndl objHnd)
 
 		CondStruct ** condStructClass = conds.ConditionArrayClasses;
 
-		uint32_t stat = stat_caster_level_barbarian;
+		uint32_t stat = stat_level_barbarian;
 		for (uint32_t i = 0; i < NUM_CLASSES; i++)
 		{
 			if ( objects.StatLevelGet(objHnd, (Stat)stat) > 0 
@@ -410,7 +483,7 @@ void _D20StatusInitClass(objHndl objHnd)
 			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionBardicMusic);
 		}
 
-		if (objects.GetInt32(objHnd, obj_f_critter_school_specialization) & 0xFF)
+		if (objects.getInt32(objHnd, obj_f_critter_school_specialization) & 0xFF)
 		{
 			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionSchoolSpecialization);
 		}
@@ -420,8 +493,8 @@ void _D20StatusInitClass(objHndl objHnd)
 void _D20StatusInitDomains(objHndl objHnd)
 {
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
-	uint32_t domain_1 = objects.GetInt32(objHnd, obj_f_critter_domain_1);
-	uint32_t domain_2 = objects.GetInt32(objHnd, obj_f_critter_domain_2);
+	uint32_t domain_1 = objects.getInt32(objHnd, obj_f_critter_domain_1);
+	uint32_t domain_2 = objects.getInt32(objHnd, obj_f_critter_domain_2);
 	
 	if (domain_1)
 	{
@@ -445,7 +518,7 @@ void _D20StatusInitDomains(objHndl objHnd)
 		}
 	}
 
-	auto alignmentchoice = objects.GetInt32(objHnd, obj_f_critter_alignment_choice);
+	auto alignmentchoice = objects.getInt32(objHnd, obj_f_critter_alignment_choice);
 	if (alignmentchoice == 2)
 	{
 		_ConditionAddToAttribs_NumArgs2(dispatcher, conds.ConditionTurnUndead, 1, 0);
@@ -488,11 +561,11 @@ void _D20StatusInitItemConditions(objHndl objHnd)
 		objects.dispatch.DispatcherClearItemConds(dispatcher);
 		if (!objects.d20.d20Query(objHnd, DK_QUE_Polymorphed))
 		{
-			uint32_t invenCount = objects.GetInt32(objHnd, obj_f_critter_inventory_num);
+			uint32_t invenCount = objects.getInt32(objHnd, obj_f_critter_inventory_num);
 			for (uint32_t i = 0; i < invenCount; i++)
 			{
 				objHndl objHndItem = templeFuncs.Obj_Get_IdxField_ObjHnd(objHnd, obj_f_critter_inventory_list_idx, i);
-				uint32_t itemInvocation = objects.GetInt32(objHndItem, obj_f_item_inv_location);
+				uint32_t itemInvocation = objects.getInt32(objHndItem, obj_f_item_inv_location);
 				if (inventory.IsItemEffectingConditions(objHndItem, itemInvocation))
 				{
 					inventory.sub_100FF500(dispatcher, objHndItem, itemInvocation);
@@ -509,13 +582,17 @@ void _D20StatusInitItemConditions(objHndl objHnd)
 
 uint32_t _D20Query(objHndl objHnd, D20DispatcherKey dispKey)
 {
-	return d20sys.d20Query(objHnd, dispKey);
+	return d20Sys.d20Query(objHnd, dispKey);
 }
 
+void _d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2)
+{
+	d20Sys.d20SendSignal(objHnd, dispKey, arg1, arg2);
+}
 
 void __cdecl _d20aInitCdecl(objHndl objHnd, D20Actn* d20a)
 {
-	d20sys.d20ActnInit(objHnd, d20a);
+	d20Sys.d20ActnInit(objHnd, d20a);
 }
 
 
@@ -541,14 +618,34 @@ void __declspec(naked) _d20aInitUsercallWrapper(objHndl objHnd)
 	}
 }
 
+void _d20ActnSetSpellData(D20SpellData* d20SpellData, uint32_t spellEnumOrg, uint32_t spellClassCode, uint32_t spellSlotLevel, uint32_t itemSpellData, uint32_t metaMagicData)
+{
+	d20Sys.d20ActnSetSpellData(d20SpellData, spellEnumOrg, spellClassCode, spellSlotLevel, itemSpellData, metaMagicData);
+}
+
 void _globD20aSetTypeAndData1(D20ActionType d20type, uint32_t data1)
 {
-	d20sys.globD20aSetTypeAndData1(d20type, data1);
+	d20Sys.globD20ActnSetTypeAndData1(d20type, data1);
 }
 
 uint32_t _d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2)
 {
-	return d20sys.d20QueryWithData(objHnd, dispKey, arg1, arg2);
+	return d20Sys.d20QueryWithData(objHnd, dispKey, arg1, arg2);
+}
+
+uint64_t _d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2)
+{
+	return d20Sys.d20QueryReturnData(objHnd, dispKey, arg1, arg2);
+}
+
+void _globD20aSetPerformer(objHndl objHnd)
+{
+	d20Sys.globD20ActnSetPerformer(objHnd);
+}
+
+void _globD20ActnInit()
+{
+	d20Sys.globD20ActnInit();
 }
 
 static void D20Dumper() {
@@ -556,7 +653,7 @@ static void D20Dumper() {
 	
 
 /*	for (auto i = 0; i < 68; i++) {
-		logger->info("{}", d20sys.ToEEd20ActionNames[i]);
+		logger->info("{}", d20Sys.ToEEd20ActionNames[i]);
 	}
 	*/ // dump completed, imported into TemplePlus :)
 }

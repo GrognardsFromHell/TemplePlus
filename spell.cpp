@@ -11,7 +11,7 @@ static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the
 
 
 SpontCastSpellLists spontCastSpellLists;
-SpellSystem spells;
+
 //GlobalPrimitive<uint16_t>
 //1028D09C
 
@@ -56,6 +56,9 @@ public:
 	}
 } spellFuncReplacements;
 
+#pragma region Spell System Implementation
+
+SpellSystem spellSys;
 
 uint32_t SpellSystem::getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t classLvl, uint32_t slotLvl, uint32_t unknown1)
 {
@@ -81,7 +84,7 @@ uint32_t SpellSystem::getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t c
 
 uint32_t SpellSystem::getWizSchool(objHndl objHnd)
 {
-	return ( objects.GetInt32(objHnd, obj_f_critter_school_specialization) & 0x000000FF );
+	return ( objects.getInt32(objHnd, obj_f_critter_school_specialization) & 0x000000FF );
 }
 
 uint32_t SpellSystem::getStatModBonusSpellCount(objHndl objHnd, uint32_t classCode, uint32_t slotLvl)
@@ -115,6 +118,16 @@ uint32_t SpellSystem::getStatModBonusSpellCount(objHndl objHnd, uint32_t classCo
 	return result;
 }
 
+void SpellSystem::spellPacketBodyReset(SpellPacketBody* spellPktBody)
+{
+	_spellPacketBodyReset(spellPktBody);
+}
+
+void SpellSystem::spellPacketSetCasterLevel(SpellPacketBody* spellPktBody)
+{
+	_spellPacketSetCasterLevel(spellPktBody);
+}
+#pragma endregion
 
 #pragma region Spontaneous Summon Hooks
 
@@ -192,7 +205,7 @@ uint32_t _EvilClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel)
 
 uint32_t _getWizSchool(objHndl objHnd)
 {
-	return spells.getWizSchool(objHnd);
+	return spellSys.getWizSchool(objHnd);
 }
 
 

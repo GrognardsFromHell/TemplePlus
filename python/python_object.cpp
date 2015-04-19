@@ -4,6 +4,7 @@
 #include "../maps.h"
 #include "../inventory.h"
 #include "../timeevents.h"
+#include "../critter.h"
 #include "python_dice.h"
 #include "python_objectscripts.h"
 
@@ -599,8 +600,7 @@ static PyObject* PyObjHandle_GetFeats(PyObject* obj, void*) {
 // This is the NPC looting behaviour
 static PyObject* PyObjHandle_GetLoots(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
-	auto loots = objects.GetInt32(self->handle, obj_f_npc_pad_i_3);
-	return PyInt_FromLong(loots & 0xF);
+	return PyInt_FromLong(critterSys.GetLootBehaviour(self->handle));
 }
 
 static int PyObjHandle_SetLoots(PyObject* obj, PyObject* value, void*) {
@@ -609,7 +609,7 @@ static int PyObjHandle_SetLoots(PyObject* obj, PyObject* value, void*) {
 	if (!GetInt(value, loots)) {
 		return -1;
 	}
-	objects.SetInt32(self->handle, obj_f_npc_pad_i_3, loots);
+	critterSys.SetLootBehaviour(self->handle, loots);
 	return 0;
 }
 

@@ -9,6 +9,8 @@
 #include "d20_defs.h"
 #include "util/fixes.h"
 
+
+
 #define macAsmProl {\
 	__asm push ecx\
 	__asm push esi\
@@ -23,6 +25,16 @@
 
 #define macRebase(funName , b) rebase(funName, 0x##b); 
 #define macReplaceFun(b, funName) replaceFunction(0x##b, funName); 
+#define macAsmThis(funName) {\
+	__asm mov ecx, this\
+	__asm mov esi, [ecx]._##funName }
+
+#define macTempleFix(sysName) public:\
+	const char* name() override {\
+			return #sysName "Function Replacements";}\
+			void apply() override \
+
+#define BonusListMax 40
 
 // This is the number of pixels per tile on the x and y axis. Derived from sqrt(800)
 #define PIXELS_PER_TILE 28.284271247461900976033774484194f
@@ -30,6 +42,7 @@
 # pragma region Standard Structs
 
 #pragma pack(push, 1)
+enum SkillEnum : uint32_t;
 
 struct vector3f {
 	float x;
@@ -92,6 +105,56 @@ struct JumpPointPacket{
 	uint32_t field_C;
 	locXY location;
 };
+
+
+
 #pragma pack(pop)
 
+
+struct BonusEntry
+{
+	int32_t bonValue;
+	uint32_t bonType; // gets comapred with 0, 8 and 21 in 100E6490; I think these types allow bonuses to stack
+	char * bonusMesString; // parsable string for the help system e.g. "~Item~[TAG_ITEM]"
+	char * bonusDescr; // e.g. "Magic Full Plate +1"
+};
+
+struct BonusCap
+{
+	int capValue;
+	int bonType;
+	char *bonCapperString;
+	char * bonCapDescr;
+};
+
+struct BonusList
+{
+	BonusEntry bonusEntries[40];
+	uint32_t bonCount;
+	BonusCap bonCaps[10];
+	uint32_t bonCapperCount;
+	uint32_t zeroBonusReasonMesLine[10]; // a line from the bonus.mes that is auto assigned a 0 value (I think it will print ---). Probably for overrides like racial immunity and stuff.
+	uint32_t zeroBonusCount;
+	int32_t overallCapHigh; // init to largest  positive int; controlls what the sum of all the modifiers of various types cannot exceed
+	uint32_t field358; // looks unused
+	char * overallCapHighBonusMesString;
+	char * overallCapHighDescr;
+	int32_t overallCapLow; //init to most negative int
+	uint32_t field368; // looks unused
+	char * overallCapLowBonusMesString;
+	char * overallCapLowDescr;
+	uint32_t bonFlags; // init 0; 0x1 - overallCapHigh set; 0x2 - overallCapLow set; 0x4 - force cap override (otherwise it can only impose restrictions i.e. it will only change the cap if it's lower than the current one)
+
+	BonusList()
+	{
+		this->bonCount = 0;
+		this->bonCapperCount = 0;
+		this->zeroBonusCount = 0;
+		this->bonFlags = 0;
+		this->overallCapHigh = 0x7fffFFFF;
+		this->overallCapLow = 0x80000001;
+	}
+};
+
+const int TestSizeOfBonusList = sizeof(BonusList); // should be 888 (0x378)
 #pragma endregion

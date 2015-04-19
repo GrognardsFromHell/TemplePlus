@@ -73,7 +73,7 @@ struct SpellPacketBody
 	uint32_t spellRange;
 	uint32_t field_AD4;
 	uint32_t field_AD8_maybe_itemSpellLevel;
-	uint32_t field_ADC;
+	uint32_t metaMagicData;
 	uint32_t spellId;
 	uint32_t field_AE4;
 };
@@ -97,6 +97,9 @@ struct SpellSystem : AddressTable
 	uint32_t getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t classLvl, uint32_t slotLvl, uint32_t unknown1);
 	uint32_t getWizSchool(objHndl objHnd);
 	uint32_t getStatModBonusSpellCount(objHndl objHnd, uint32_t classCode, uint32_t slotLvl);
+	void spellPacketBodyReset(SpellPacketBody * spellPktBody);
+	void spellPacketSetCasterLevel(SpellPacketBody * spellPktBody);
+
 	uint32_t(__cdecl * spellRemoveFromStorage)(objHndl objHnd, obj_f fieldIdx, SpellStoreData * spellData, int unknown);
 	uint32_t (__cdecl * spellsPendingToMemorized)(objHndl objHnd);
 	SpellSystem()
@@ -106,15 +109,18 @@ struct SpellSystem : AddressTable
 		rebase(_getStatModBonusSpellCount, 0x100F4C30);
 		rebase(spellRemoveFromStorage, 0x100758A0);
 		rebase(spellsPendingToMemorized, 0x100757D0);
+		macRebase(_spellPacketBodyReset, 1008A350)
+		macRebase(_spellPacketSetCasterLevel, 10079B70)
 	}
 private:
 
 	uint32_t(__cdecl * _getSpellCountByClassLvl)();
 	uint32_t(__cdecl* _getStatModBonusSpellCount)();
-
+	void(__cdecl * _spellPacketBodyReset)(SpellPacketBody * spellPktBody);
+	void(__cdecl * _spellPacketSetCasterLevel)(SpellPacketBody * spellPktBody);
 };
 
-extern SpellSystem spells;
+extern SpellSystem spellSys;
 
 
 struct SpontCastSpellLists : AddressTable

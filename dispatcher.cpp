@@ -4,6 +4,34 @@
 #include "temple_functions.h"
 #include "obj.h"
 #include "condition.h"
+#include "bonus.h"
+#include "action_sequence.h"
+#include "turn_based.h"
+
+class DispatcherReplacements : public TempleFix {
+public:
+	const char* name() override {
+		return "Dispatcher System Function Replacements";
+	}
+
+	void apply() override {
+		logger->info("Replacing basic Dispatcher functions");
+		replaceFunction(0x1004D700, _DispIO14hCheckDispIOType1);
+		replaceFunction(0x100E1E30, _DispatcherRemoveSubDispNodes);
+		replaceFunction(0x100E2400, _DispatcherClearField);
+		replaceFunction(0x100E2720, _DispatcherClearAttribs);
+		replaceFunction(0x100E2740, _DispatcherClearItemConds);
+		replaceFunction(0x100E2760, _DispatcherClearConds);
+		replaceFunction(0x100E2120, _DispatcherProcessor);
+		replaceFunction(0x100E1F10, _DispatcherInit);
+		replaceFunction(0x1004DBA0, _DispIO_Size32_Type21_Init);
+		replaceFunction(0x1004D3A0, _Dispatch62);
+		replaceFunction(0x1004D440, _Dispatch63);
+		macReplaceFun(1004E790,_dispatchTurnBasedStatusInit)
+		macReplaceFun(1004ED70, _dispatch1ESkillLevel)
+	}
+} dispatcherReplacements;
+
 
 #pragma region Dispatcher System Implementation
 DispatcherSystem dispatch;
@@ -16,6 +44,11 @@ void DispatcherSystem::DispatcherProcessor(Dispatcher* dispatcher, enum_disp_typ
 Dispatcher * DispatcherSystem::DispatcherInit(objHndl objHnd)
 {
 	return _DispatcherInit(objHnd);
+}
+
+bool DispatcherSystem::dispatcherValid(Dispatcher* dispatcher)
+{
+	return (dispatcher != nullptr && dispatcher != (Dispatcher*)-1);
 }
 
 void  DispatcherSystem::DispatcherClearField(Dispatcher * dispatcher, CondNode ** dispCondList)
@@ -38,29 +71,74 @@ void  DispatcherSystem::DispatcherClearConds(Dispatcher *dispatcher)
 	_DispatcherClearConds(dispatcher);
 }
 
+int32_t DispatcherSystem::dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut, objHndl objHnd2, int32_t flag)
+{
+	DispIO390h dispIO;
+	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+	if (!dispatcherValid(dispatcher)) return 0;
+
+	dispIO.dispIOType = dispIOType10;
+	dispIO.returnVal = flag;
+	dispIO.bonOut = bonOut;
+	dispIO.obj = objHnd2;
+	if (!bonOut)
+	{
+		dispIO.bonOut = &dispIO.bonlist;
+		bonusSys.initBonusList(&dispIO.bonlist);
+	}
+	DispatcherProcessor(dispatcher, dispTypeSkillLevel, skill + 20, &dispIO);
+	return bonusSys.getOverallBonus(dispIO.bonOut);
+	
+}
+
+float DispatcherSystem::Dispatch29hGetMoveSpeed(objHndl objHnd, void* iO) // including modifiers like armor restirction
+{
+	float result = 30.0;
+	uint32_t objHndLo = (uint32_t)(objHnd & 0xffffFFFF);
+	uint32_t objHndHi = (uint32_t)((objHnd >>32) & 0xffffFFFF);
+	macAsmProl;
+	__asm{
+		mov ecx, this;
+		mov esi, [ecx]._Dispatch29hMovementSthg;
+		mov eax, iO;
+		push eax;
+		mov eax, objHndHi;
+		push eax;
+		mov eax, objHndLo;
+		push eax;
+		call esi;
+		add esp, 12;
+		fstp result;
+	}
+	macAsmEpil
+	return result;
+}
+
+void DispatcherSystem::dispIOTurnBasedStatusInit(DispIOTurnBasedStatus* dispIOtbStat)
+{
+	dispIOtbStat->dispIOType = dispIOTypeTurnBasedStatus;
+	dispIOtbStat->tbStatus = nullptr;
+}
+
+
+void DispatcherSystem::dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBasedStatus* dispIOtB)
+{
+	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+	if (dispatcherValid(dispatcher))
+	{
+		DispatcherProcessor(dispatcher, dispTypeTurnBasedStatusInit, 0, dispIOtB);
+		if (dispIOtB->tbStatus)
+		{
+			if (dispIOtB->tbStatus->hourglassState > 0)
+			{
+				d20Sys.d20SendSignal(objHnd, DK_SIG_BeginTurn, 0, 0);
+			}
+		}
+	}
+}
 #pragma endregion
 
-class DispatcherReplacements : public TempleFix {
-public:
-	const char* name() override {
-		return "Dispatcher System Function Replacements";
-	}
 
-	void apply() override {
-		logger->info("Replacing basic Dispatcher functions");
-		replaceFunction(0x1004D700, _DispIO14hCheckDispIOType1);
-		replaceFunction(0x100E1E30, _DispatcherRemoveSubDispNodes);
-		replaceFunction(0x100E2400, _DispatcherClearField);
-		replaceFunction(0x100E2720, _DispatcherClearAttribs);
-		replaceFunction(0x100E2740, _DispatcherClearItemConds);
-		replaceFunction(0x100E2760, _DispatcherClearConds);
-		replaceFunction(0x100E2120, _DispatcherProcessor);
-		replaceFunction(0x100E1F10, _DispatcherInit);
-		replaceFunction(0x1004DBA0, _DispIO_Size32_Type21_Init);
-		replaceFunction(0x1004D3A0, _Dispatch62);
-		replaceFunction(0x1004D440, _Dispatch63);
-	}
-} dispatcherReplacements;
 
 
 
@@ -183,6 +261,11 @@ void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint3
 	dispCounter--;
 	return;
 
+}
+
+int32_t _dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut, objHndl objHnd2, int32_t flag)
+{
+	return dispatch.dispatch1ESkillLevel(objHnd, skill, bonOut, objHnd2, flag);
 };
 
 Dispatcher* _DispatcherInit(objHndl objHnd) {
@@ -209,6 +292,11 @@ void _DispIO_Size32_Type21_Init(DispIO20h* dispIO) {
 	dispIO->val2 = 0;
 	dispIO->okToAdd = 0;
 	dispIO->condNode = nullptr;
+}
+
+void _dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBasedStatus* dispIOtB)
+{
+	dispatch.dispatchTurnBasedStatusInit(objHnd, dispIOtB);
 };
 
 

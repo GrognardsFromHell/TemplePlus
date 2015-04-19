@@ -177,6 +177,10 @@
       <Filter>utils</Filter>
     </ClCompile>
     <ClCompile Include="util\version.cpp" />
+    <ClCompile Include="renderstates.cpp" />
+    <ClCompile Include="tio\tio_utils.cpp" />
+    <ClCompile Include="tig\tig.cpp" />
+    <ClCompile Include="tig\tig_sound.cpp" />
     <ClCompile Include="python\python_embed.cpp" />
     <ClCompile Include="python\python_importer.cpp" />
     <ClCompile Include="python\python_consoleout.cpp" />
@@ -212,6 +216,30 @@
     <ClCompile Include="ui\ui_picker.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
     <ClCompile Include="ui\ui_tutorial.cpp" />
+    <ClCompile Include="secret_door.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="skill.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="history.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="bonus.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="ai.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="action_sequence.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="turn_based.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="critter.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -403,6 +431,9 @@
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="tio\tio.h" />
+    <ClInclude Include="renderstates.h" />
+    <ClInclude Include="tio\tio_utils.h" />
+    <ClInclude Include="tig\tig_sound.h" />
     <ClInclude Include="python\python_importer.h" />
     <ClInclude Include="python\python_consoleout.h" />
     <ClInclude Include="python\python_game.h" />
@@ -441,6 +472,30 @@
     <ClInclude Include="ui\ui_picker.h" />
     <ClInclude Include="ui\ui_dialog.h" />
     <ClInclude Include="ui\ui_tutorial.h" />
+    <ClInclude Include="secret_door.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="skill.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="history.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="bonus.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="ai.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="action_sequence.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="turn_based.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="critter.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

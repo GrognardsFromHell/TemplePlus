@@ -13,7 +13,7 @@ public:
 	void apply() override{
 		replaceFunction(0x100628D0, _isCombatActive);
 	}
-} actSeqReplacements;
+} combatSysReplacements;
 
 
 
@@ -25,6 +25,10 @@ bool CombatSystem::isCombatActive()
 	return *combatSys.combatModeActive != 0;
 }
 
+void CombatSystem::enterCombat(objHndl objHnd)
+{
+	_enterCombat(objHnd);
+}
 #pragma endregion
 
 

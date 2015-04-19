@@ -47,7 +47,11 @@
     </ClCompile>
     <ClCompile Include="dice.cpp" />
     <ClCompile Include="fade.cpp" />
+    <ClCompile Include="ai.cpp" />
+    <ClCompile Include="bonus.cpp" />
+    <ClCompile Include="critter.cpp" />
     <ClCompile Include="float_line.cpp" />
+    <ClCompile Include="history.cpp" />
     <ClCompile Include="location.cpp" />
     <ClCompile Include="maps.cpp" />
     <ClCompile Include="objlist.cpp" />
@@ -61,6 +65,8 @@
     <ClCompile Include="python\python_scripts.cpp" />
     <ClCompile Include="python\python_time.cpp" />
     <ClCompile Include="renderstates.cpp" />
+    <ClCompile Include="secret_door.cpp" />
+    <ClCompile Include="skill.cpp" />
     <ClCompile Include="sound.cpp" />
     <ClCompile Include="textbubbles.cpp" />
     <ClCompile Include="tig\tig.cpp" />
@@ -73,6 +79,7 @@
     <ClCompile Include="ui\ui_dialog.cpp" />
     <ClCompile Include="ui\ui_picker.cpp" />
     <ClCompile Include="ui\ui_tutorial.cpp" />
+    <ClCompile Include="turn_based.cpp" />
     <ClCompile Include="util\addressess.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
@@ -206,6 +213,9 @@
   <ItemGroup>
     <ClInclude Include="aas.h" />
     <ClInclude Include="action_sequence.h" />
+    <ClInclude Include="ai.h" />
+    <ClInclude Include="bonus.h" />
+    <ClInclude Include="critter.h" />
     <ClInclude Include="dependencies\minhook\include\MinHook.h" />
     <ClInclude Include="dependencies\minhook\src\buffer.h" />
     <ClInclude Include="dependencies\minhook\src\HDE\hde32.h" />
@@ -217,6 +227,7 @@
     <ClInclude Include="dice.h" />
     <ClInclude Include="fade.h" />
     <ClInclude Include="float_line.h" />
+    <ClInclude Include="history.h" />
     <ClInclude Include="location.h" />
     <ClInclude Include="maps.h" />
     <ClInclude Include="objlist.h" />
@@ -232,6 +243,8 @@
     <ClInclude Include="python\python_support.h" />
     <ClInclude Include="python\python_time.h" />
     <ClInclude Include="renderstates.h" />
+    <ClInclude Include="secret_door.h" />
+    <ClInclude Include="skill.h" />
     <ClInclude Include="textbubbles.h" />
     <ClInclude Include="tig\tig_sound.h" />
     <ClInclude Include="tio\tio_utils.h" />
@@ -241,6 +254,7 @@
     <ClInclude Include="ui\ui_dialog.h" />
     <ClInclude Include="ui\ui_picker.h" />
     <ClInclude Include="ui\ui_tutorial.h" />
+    <ClInclude Include="turn_based.h" />
     <ClInclude Include="util\addresses.h" />
     <ClInclude Include="anim.h" />
     <ClInclude Include="combat.h" />

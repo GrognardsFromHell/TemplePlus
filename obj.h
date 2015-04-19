@@ -10,10 +10,12 @@
 #include "inventory.h"
 #include "dice.h"
 
-struct FloatLineSystem;
-//forward decl
+
+//forward declarations
 struct LocationSys;
 struct Pathfinding;
+struct SkillSystem;
+struct FloatLineSystem;
 
 // Stored in obj_f_script_idx array
 struct ObjectScript {
@@ -21,6 +23,7 @@ struct ObjectScript {
 	int counters;
 	int scriptId;
 };
+struct FieldDataMax { uint32_t data[8]; }; // for wrapping "objSetField" calls that get input by value; this is the largest data size that I know of
 
 struct Objects : AddressTable {
 
@@ -28,8 +31,12 @@ struct Objects : AddressTable {
 	uint32_t GetFlags(objHndl obj) {
 		return _GetInternalFieldInt32(obj, obj_f_flags);
 	}
-	uint32_t GetInt32(objHndl obj, obj_f fieldIdx);
-	void SetInt32(objHndl obj, obj_f fieldIdx, uint32_t dataIn);	
+	uint32_t getInt32(objHndl obj, obj_f fieldIdx);
+	uint64_t getInt64(objHndl obj, obj_f fieldIdx);
+	objHndl getObjHnd(objHndl obj, obj_f fieldIdx);
+	void setInt32(objHndl obj, obj_f fieldIdx, uint32_t dataIn);
+	void setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, FieldDataMax data);
+	int32_t getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx);
 	uint32_t abilityScoreLevelGet(objHndl, Stat, DispIO *);
 	locXY GetLocation(objHndl handle) {
 		return locXY::fromField(_GetInternalFieldInt64(handle, obj_f_location));
@@ -173,12 +180,16 @@ struct Objects : AddressTable {
 		_SetInternalFieldInt32(obj, obj_f_dispatcher, data32);
 		return;
 	}
+
+	
 #pragma endregion
 
 #pragma region Subsystems
 	DispatcherSystem dispatch;
 
 	D20System d20;
+
+	SkillSystem * skill;
 
 	FeatSystem feats;
 
@@ -201,6 +212,8 @@ struct Objects : AddressTable {
 	void PropFetcher(GameObjectBody* objBody, obj_f fieldIdx, void * dataOut);
 
 	void InsertDataIntoInternalStack(GameObjectBody * objBody, obj_f fieldIdx, void * dataIn);
+
+	objHndl lookupInHandlesList(ObjectId objId);// 100C3050
 #pragma endregion 
 
 	Objects();
@@ -212,6 +225,10 @@ private:
 	void(__cdecl *_AdjustReaction)(objHndl of, objHndl towards, int change);
 	void(__cdecl *_GetDisplayName)(objHndl obj, objHndl observer, char *pNameOut);
 	float(__cdecl *_GetRadius)(objHndl ObjHnd);
+	void setArrayFieldLowLevel(GameObjectBody * objBody, void * sourceData, obj_f fieldIdx, uint32_t subIdx);
+	void fieldNonexistantDebug(objHndl obj, GameObjectBody* objBody, obj_f fieldIdx, uint32_t objType, char* accessType);
+	void getArrayFieldInternal(GameObjectBody * objBody, void * outAddr, obj_f fieldIdx, uint32_t subIdx); // _nFieldIdx@<eax>, _nFieldSubIdx@<ecx>
+
 	int(__cdecl *_GetInternalFieldInt32)(objHndl ObjHnd, int nFieldIdx);
 	int(__cdecl *_GetInternalFieldInt32Array)(objHndl ObjHnd, int nFieldIdx, int index);
 	float(__cdecl *_GetInternalFieldFloat)(objHndl ObjHnd, int nFieldIdx);
@@ -219,6 +236,7 @@ private:
 	int32_t(__cdecl *_StatLevelGet)(objHndl ObjHnd, Stat);
 	int(__cdecl *_GetSize)(objHndl handle);
 	void(__cdecl *_SetInternalFieldInt32)(objHndl objHnd, obj_f fieldIdx, uint32_t data32);
+	void(__cdecl * _setArrayFieldLowLevel)(obj_f fieldIdx, uint32_t subIdx); // GameObjectBody *@<ecx>, sourceData *@<eax>
 	void(__cdecl *_SetInternalFieldFloat)(objHndl objHnd, obj_f fieldIdx, float data);
 	bool(__cdecl * _IsPlayerControlled)(objHndl objHnd);
 	uint32_t(__cdecl *_ObjGetProtoNum)(objHndl);
@@ -230,6 +248,8 @@ private:
 	bool(__cdecl * _FindFreeSpot)(LocAndOffsets loc, float radius, LocAndOffsets &freeSpot);
 	bool (__cdecl *_Create)(objHndl proto, locXY tile, objHndl *pHandleOut);
 	bool (__cdecl *_AiForceSpreadOut)(objHndl handle, LocAndOffsets *location);
+	void (__cdecl *_getArrayFieldInternal)(GameObjectBody * objBody, void * out); // _nFieldIdx@<eax>, _nFieldSubIdx@<ecx>
+	objHndl(__cdecl*_lookupInHandlesList)(ObjectId objId);
 	char ** _DLLFieldNames;
 	void(__cdecl * _InsetDataIntoInternalStack)();//(int nFieldIdx, void *, ToEEObjBody *@<eax>);
 	void (__cdecl *_TargetRandomTileNear)(objHndl handle, int distance, locXY *pLocOut);
@@ -246,3 +266,7 @@ extern Objects objects;
 uint32_t _obj_get_int(objHndl obj, obj_f fieldIdx);
 void _obj_set_int(objHndl obj, obj_f fieldIdx, uint32_t dataIn);
 uint32_t _abilityScoreLevelGet(objHndl obj, Stat abScore, DispIO * dispIO);
+void _setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, FieldDataMax data);
+int32_t _getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx);
+uint64_t __cdecl _getInt64(objHndl obj, obj_f fieldIdx);
+objHndl __cdecl _getObjHnd(objHndl obj, obj_f fieldIdx);

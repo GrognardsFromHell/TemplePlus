@@ -5,6 +5,9 @@
 
 #define pfCacheSize  0x20
 
+
+struct LocationSys;
+
 enum PathQueryFlags : uint32_t {
 	/*
 		The pathfinder seems to ignore offset x and y of the destination if this flag
@@ -15,6 +18,9 @@ enum PathQueryFlags : uint32_t {
 		Indicates that the query is on behalf of a critter and the critter is set.
 	*/
 	PQF_HAS_CRITTER = 2,
+
+	PQF_UNK1 = 4,
+	PQF_UNK2 = 8, // appears to indicate a straight line path from->to
 	/*
 		Indicates that the query is to move to a target object.
 	*/
@@ -26,12 +32,12 @@ enum PathQueryFlags : uint32_t {
 	PQF_ADJUST_RADIUS = 0x20,
 
 	// Could mean "USE TIME LIMIT" ? or it could be "continue searching"?
-	PQF_UNK1 = 0x80000
+	PQF_UNK3 = 0x80000 // it is set when the D20 action has the flag D20CAF_TRUNCATED
 };
 
 #pragma pack(push, 1)
 struct PathQuery {
-	int flags; // See PathQueryFlags
+	PathQueryFlags flags; 
 	int field_4;
 	LocAndOffsets from;
 	LocAndOffsets to;
@@ -39,8 +45,8 @@ struct PathQuery {
 	int field2c;
 	objHndl critter;  // Set PQF_HAS_CRITTER
 	objHndl targetObj; // Set PQF_TARGET_OBJ
-	int distanceToTarget; // Related to the targetObj's radius
-	int radius; // I think this is the radius of critter
+	float distanceToTarget; // Related to the targetObj's radius
+	float radius; // I think this is the radius of critter
 	int flags2;
 	int field_4c;
 
@@ -49,9 +55,11 @@ struct PathQuery {
 	}
 };
 
+const uint32_t TestSizeofPathQuery = sizeof(PathQuery); // should be 80 (0x50)
+
 enum PathFlags {
 	PF_COMPLETE = 0x1, // Seems to indicate that the path is complete (or valid?)
-	PF_UNK1 = 0x10, // Seems to be setin response to query flag 0x80000
+	PF_UNK1 = 0x10, // Seems to be set in response to query flag 0x80000
 };
 
 struct Path {
@@ -73,19 +81,29 @@ struct Path {
 	int field_1a14;
 };
 
-struct PathQueryResult {
-	Path path;
-	int d20sthg;
+struct PathQueryResult : Path {
+	int occupiedFlag;
 	int someDelay;
 };
+
+const uint32_t TestSizeofPathQueryResult = sizeof(PathQueryResult); // should be 6688 (0x1A20)
 
 #pragma pack(pop)
 
 struct Pathfinding : AddressTable {
+
+	LocationSys * loc;
+
+	float pathLength(Path *path); // note: unlike the ToEE function, returns a float (and NOT to the FPU!)
+	bool pathQueryResultIsValid(PathQueryResult *pqr);
+
 	Pathfinding();
 
-	bool (__cdecl *FindPath)(PathQuery &query, PathQueryResult &result);
+	bool (__cdecl *FindPath)(PathQuery *query, PathQueryResult *result);
+	void (__cdecl *ToEEpathDistBtwnToAndFrom)(Path *path); // outputs to FPU (st0);  apparently distance in feet (since it divides by 12)
+	objHndl(__cdecl * canPathToParty)(objHndl objHnd);
 	PathQueryResult * pathQArray;
+	uint32_t * pathSthgFlag_10B3D5C8;
 
 } ;
 
