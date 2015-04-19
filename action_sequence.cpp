@@ -58,7 +58,7 @@ ActionSequenceSystem actSeqSys;
 
 ActionSequenceSystem::ActionSequenceSystem()
 {
-	d20 = &d20sys;
+	d20 = &d20Sys;
 	combat = &combatSys;
 	pathfinding = &pathfindingSys;
 	location = &locSys;
@@ -448,7 +448,7 @@ uint32_t ActionSequenceSystem::turnBasedStatusInit(objHndl objHnd)
 		if (turnbased->turnBasedGetCurrentActor() == objHnd) return 1;
 	} else if ( !isPerforming(objHnd))
 	{
-		d20->globD20aSetPerformer(objHnd);
+		d20->globD20ActnSetPerformer(objHnd);
 		*actSeqCur = nullptr;
 		assignSeq(objHnd);
 		ActnSeq * curSeq = *actSeqCur;

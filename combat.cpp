@@ -25,6 +25,10 @@ uint32_t CombatSystem::isCombatActive()
 	return *combatSys.combatModeActive;
 }
 
+void CombatSystem::enterCombat(objHndl objHnd)
+{
+	_enterCombat(objHnd);
+}
 #pragma endregion
 
 

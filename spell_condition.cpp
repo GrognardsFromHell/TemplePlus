@@ -62,7 +62,7 @@ void PyPerformTouchAttack_PatchedCallToHitProcessing( D20Actn * pd20A, D20Actn d
 	}
 	
 
-	d20sys.ToHitProc(pd20A);
+	d20Sys.ToHitProc(pd20A);
 	return;
 	
 }

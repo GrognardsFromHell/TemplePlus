@@ -131,7 +131,7 @@ void DispatcherSystem::dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBas
 		{
 			if (dispIOtB->tbStatus->hourglassState > 0)
 			{
-				d20sys.d20SendSignal(objHnd, DK_SIG_BeginTurn, 0, 0);
+				d20Sys.d20SendSignal(objHnd, DK_SIG_BeginTurn, 0, 0);
 			}
 		}
 	}

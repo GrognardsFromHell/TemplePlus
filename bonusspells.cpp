@@ -16,7 +16,7 @@ void removeSurplusSpells(int surplus, objHndl objHnd, uint32_t classCode, int sl
 		templeFuncs.Obj_Get_IdxField_256bit(objHnd, obj_f_critter_spells_memorized_idx, i, &spellData);
 		if (spellData.classCode == (classCode | 0x80) && slotLvl == spellData.spellLevel)
 		{
-			spells.spellRemoveFromStorage(objHnd, obj_f_critter_spells_memorized_idx, &spellData, 0);
+			spellSys.spellRemoveFromStorage(objHnd, obj_f_critter_spells_memorized_idx, &spellData, 0);
 			surplus--;
 		}
 	}
@@ -41,15 +41,15 @@ int getMemorizedSpells(objHndl objHnd, uint32_t classCode, int slotLvl)
 
 int getMaxSpells(objHndl objHnd, uint32_t classCode, int slotLvl, uint32_t classLvl)
 {
-	uint32_t maxSpells = spells.getBaseSpellCountByClassLvl(classCode, classLvl, slotLvl, 0);
+	uint32_t maxSpells = spellSys.getBaseSpellCountByClassLvl(classCode, classLvl, slotLvl, 0);
 	if (maxSpells)
 	{
-		if ( spells.getWizSchool(objHnd) )
+		if ( spellSys.getWizSchool(objHnd) )
 		{
 			maxSpells++;
 
 		}
-		maxSpells += spells.getStatModBonusSpellCount(objHnd, classCode, slotLvl);
+		maxSpells += spellSys.getStatModBonusSpellCount(objHnd, classCode, slotLvl);
 		return maxSpells;
 	} 
 	else
@@ -107,7 +107,7 @@ static void __cdecl sanitizeSpellSlots(objHndl objHnd) {
 void __cdecl hookedSpellsPendingToMemorized(objHndl objHnd)
 {
 	sanitizeSpellSlots(objHnd);
-	spells.spellsPendingToMemorized(objHnd);
+	spellSys.spellsPendingToMemorized(objHnd);
 }
 
 class BonusSpellFix : public TempleFix {

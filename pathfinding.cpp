@@ -33,6 +33,7 @@ Pathfinding::Pathfinding() {
 	loc = &locSys;
 
 	rebase(FindPath, 0x10043070);
+	macRebase(canPathToParty, 10057F80)
 	rebase(pathQArray, 0x1186AC60);
 	rebase(pathSthgFlag_10B3D5C8,0x10B3D5C8); 
 }

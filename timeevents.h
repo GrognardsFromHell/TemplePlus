@@ -14,6 +14,7 @@ enum class GameClockType : uint32_t {
 	RealTime = 0,
 	/*
 		Only advances while out of combat, [0x10AA83D8] is 0 and the dialog UI is not visible.
+		I suspect the 0x10AA83D8 is an end of turn flag
 	*/
 	GameTime,
 	/*

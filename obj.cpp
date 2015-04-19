@@ -27,6 +27,8 @@ public:
 		replaceFunction(0x1004E7F0, _abilityScoreLevelGet);
 		macReplaceFun(100A1310, _setArrayFieldByValue)
 		macReplaceFun(1009E5C0, _getArrayFieldInt32)
+		macReplaceFun(1009E2E0, _getInt64)
+		macReplaceFun(1009E360, _getObjHnd)
 	}
 } objReplacements;
 
@@ -96,6 +98,47 @@ uint32_t Objects::getInt32(objHndl obj, obj_f fieldIdx)
 	return dataOut[0];
 }
 
+uint64_t Objects::getInt64(objHndl obj, obj_f fieldIdx)
+{
+	GameObjectBody * objBody = _GetMemoryAddress(obj);
+	uint32_t objType = objBody->type;
+	uint64_t dataOut[4] = { 0, 0, 0, 0 }; // so the game doesn't crash when the naive modder tries to read a non-32bit field at least ;)
+	if (!DoesTypeSupportField(objBody->type, fieldIdx))
+	{
+		fieldNonexistantDebug(obj, objBody, fieldIdx, objType, "getInt64");
+		return 0;
+	}
+	if (fieldIdx == obj_f_type){ return objType; }
+	PropFetcher(objBody, fieldIdx, dataOut);
+	return dataOut[0];
+}
+
+objHndl Objects::getObjHnd(objHndl obj, obj_f fieldIdx)
+{
+	GameObjectBody * objBody = _GetMemoryAddress(obj);
+	uint32_t objType = objBody->type;
+	ObjectId dataOut = { 0,}; 
+	if (!DoesTypeSupportField(objBody->type, fieldIdx))
+	{
+		fieldNonexistantDebug(obj, objBody, fieldIdx, objType, "getObjHnd");
+		return 0;
+	}
+	if (fieldIdx == obj_f_prototype_handle)
+	{
+		if (!objBody->protoHandle)
+		{
+			ObjectId objIdtemp;
+			memcpy(&objIdtemp, &objBody->protoId, sizeof(ObjectId));
+			objBody->protoHandle = lookupInHandlesList(objIdtemp);
+		}
+		return objBody->protoHandle;
+	} 
+
+	PropFetcher(objBody, fieldIdx, &dataOut);
+	if (!dataOut.subtype || dataOut.subtype != 0xfffe) return 0i64;
+	return *(uint64_t*)&dataOut.guid.Data1;
+	
+}
 
 void Objects::setInt32(objHndl obj, obj_f fieldIdx, uint32_t dataIn)
 {
@@ -159,6 +202,11 @@ void Objects::InsertDataIntoInternalStack(GameObjectBody * objBody, obj_f fieldI
 	}
 }
 
+objHndl Objects::lookupInHandlesList(ObjectId objId)
+{
+	return _lookupInHandlesList(objId);
+}
+
 Objects::Objects()
 {
 	pathfinding = &pathfindingSys;
@@ -176,6 +224,7 @@ Objects::Objects()
 	rebase(_DoesObjectFieldExist, 0x1009C190);
 	rebase(_ObjectPropFetcher, 0x1009CD40);
 	macRebase(_getArrayFieldInternal, 1009CEB0)
+	macRebase(_lookupInHandlesList, 100C3050)
 	rebase(_DLLFieldNames, 0x102CD840);
 	rebase(_InsetDataIntoInternalStack, 0x1009EA80);
 }
@@ -394,5 +443,15 @@ void _setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, FieldDa
 int32_t _getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx)
 {
 	return objects.getArrayFieldInt32(obj, fieldIdx, subIdx);
+}
+
+uint64_t _getInt64(objHndl obj, obj_f fieldIdx)
+{
+	return objects.getInt64(obj, fieldIdx);
+}
+
+objHndl _getObjHnd(objHndl obj, obj_f fieldIdx)
+{
+	return objects.getObjHnd(obj, fieldIdx);
 }
 #pragma endregion

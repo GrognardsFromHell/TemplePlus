@@ -225,6 +225,9 @@
     <ClCompile Include="turn_based.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="critter.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -440,6 +443,9 @@
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
     <ClInclude Include="turn_based.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="critter.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
   </ItemGroup>

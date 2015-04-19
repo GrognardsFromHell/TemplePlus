@@ -12,6 +12,9 @@ struct MapObjSystem : AddressTable {
 
 	MapObjSystem();
 	void objNodeAlloc();
+	void objFindNodeAlloc(objHndl objHnd);
+	uint32_t findSector(locationSec locSec, int32_t* idxOut);
+	uint64_t getSecLocFromLoc(uint64_t loc);
 };
 
 extern MapObjSystem mapObjSys;
@@ -47,3 +50,6 @@ struct MapFindNodeData {
 
 
 void _objNodeAlloc();
+void _objFindNodeAlloc(objHndl objHnd);
+uint32_t _findSector(locationSec locSec, int32_t* idxOut);
+uint64_t  __cdecl _getSecLocFromLoc(uint64_t loc);

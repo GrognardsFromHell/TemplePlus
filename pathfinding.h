@@ -101,6 +101,7 @@ struct Pathfinding : AddressTable {
 
 	bool (__cdecl *FindPath)(PathQuery *query, PathQueryResult *result);
 	void (__cdecl *ToEEpathDistBtwnToAndFrom)(Path *path); // outputs to FPU (st0);  apparently distance in feet (since it divides by 12)
+	objHndl(__cdecl * canPathToParty)(objHndl objHnd);
 	PathQueryResult * pathQArray;
 	uint32_t * pathSthgFlag_10B3D5C8;
 

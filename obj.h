@@ -26,6 +26,8 @@ struct Objects : AddressTable {
 		return _GetInternalFieldInt32(obj, obj_f_flags);
 	}
 	uint32_t getInt32(objHndl obj, obj_f fieldIdx);
+	uint64_t getInt64(objHndl obj, obj_f fieldIdx);
+	objHndl getObjHnd(objHndl obj, obj_f fieldIdx);
 	void setInt32(objHndl obj, obj_f fieldIdx, uint32_t dataIn);
 	void setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, FieldDataMax data);
 	int32_t getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx);
@@ -64,6 +66,7 @@ struct Objects : AddressTable {
 		return;
 	}
 
+	
 #pragma endregion
 
 #pragma region Subsystems
@@ -95,6 +98,7 @@ struct Objects : AddressTable {
 
 	void InsertDataIntoInternalStack(GameObjectBody * objBody, obj_f fieldIdx, void * dataIn);
 
+	objHndl lookupInHandlesList(ObjectId objId);// 100C3050
 #pragma endregion 
 
 
@@ -118,6 +122,7 @@ private:
 	bool(__cdecl *_DoesObjectFieldExist)();
 	void(__cdecl * _ObjectPropFetcher)();
 	void (__cdecl *_getArrayFieldInternal)(GameObjectBody * objBody, void * out); // _nFieldIdx@<eax>, _nFieldSubIdx@<ecx>
+	objHndl(__cdecl*_lookupInHandlesList)(ObjectId objId);
 	char ** _DLLFieldNames;
 	void(__cdecl * _InsetDataIntoInternalStack)();//(int nFieldIdx, void *, ToEEObjBody *@<eax>);
 
@@ -134,3 +139,5 @@ void _obj_set_int(objHndl obj, obj_f fieldIdx, uint32_t dataIn);
 uint32_t _abilityScoreLevelGet(objHndl obj, Stat abScore, DispIO * dispIO);
 void _setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, FieldDataMax data);
 int32_t _getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx);
+uint64_t __cdecl _getInt64(objHndl obj, obj_f fieldIdx);
+objHndl __cdecl _getObjHnd(objHndl obj, obj_f fieldIdx);
