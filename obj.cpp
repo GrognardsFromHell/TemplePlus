@@ -425,6 +425,13 @@ void Objects::GiveMoney(objHndl critter, int platinum, int gold, int silver, int
 	_GiveMoney(critter, platinum, gold, silver, copper);
 }
 
+float Objects::GetRotationTowards(objHndl from, objHndl to) {
+	auto locFrom = GetLocationFull(from);
+	auto locTo = GetLocationFull(to);
+
+	return AngleBetweenPoints(locFrom, locTo);
+}
+
 void Objects::Move(objHndl handle, LocAndOffsets toLocation) {
 	_Move(handle, toLocation);
 }

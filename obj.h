@@ -145,6 +145,11 @@ struct Objects : AddressTable {
 	*/
 	void GiveMoney(objHndl critter, int platinum, int gold, int silver, int copper);
 
+	/*
+		Calculates the rotation for obj from when it is facing object "to" directly.
+	*/
+	float GetRotationTowards(objHndl from, objHndl to);
+
 #pragma region Common
 	ObjectId GetId(objHndl handle);
 	objHndl GetHandle(const ObjectId &id);

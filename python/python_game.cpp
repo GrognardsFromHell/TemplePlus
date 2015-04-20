@@ -396,7 +396,7 @@ PyObject* PyGame_Particles(PyObject*, PyObject* args) {
 	}
 	else if (PyLong_Check(locOrObj)) {
 		auto loc = locXY::fromField(PyLong_AsUnsignedLongLong(locOrObj));
-		auto partHandle = particles.CreateAt3dPos(name, loc.To3d());
+		auto partHandle = particles.CreateAt3dPos(name, loc.ToInches3D());
 		return PyInt_FromLong(partHandle);
 	}
 	else {

@@ -5,8 +5,10 @@
 #include "../inventory.h"
 #include "../timeevents.h"
 #include "../critter.h"
+#include "../anim.h"
 #include "../dispatcher.h"
 #include "../party.h"
+#include "../ui/ui.h"
 #include "python_dice.h"
 #include "python_objectscripts.h"
 #include <objlist.h>
@@ -404,6 +406,147 @@ static PyObject* PyObjHandle_StatLevelSetBase(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+static PyObject* PyObjHandle_FollowerAdd(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl follower;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.follower_add", &ConvertObjHndl, &follower)) {
+		return 0;
+	}
+
+	auto result = critterSys.AddFollower(follower, self->handle, 1, false);
+	ui.UpdatePartyUi();
+	return PyInt_FromLong(result);
+}
+
+static PyObject* PyObjHandle_FollowerRemove(PyObject* obj, PyObject* args) {
+	objHndl follower;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.follower_remove", &ConvertObjHndl, &follower)) {
+		return 0;
+	}
+
+	auto result = critterSys.RemoveFollower(follower, 1);
+	ui.UpdatePartyUi();
+	return PyInt_FromLong(result);
+}
+
+
+static PyObject* PyObjHandle_FollowerAtMax(PyObject* obj, PyObject* args) {
+	auto followers = party.GroupNPCFollowersLen();
+	return PyInt_FromLong(followers >= 2);
+}
+
+static PyObject* PyObjHandle_AiFollowerAdd(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl follower;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.ai_follower_add", &ConvertObjHndl, &follower)) {
+		return 0;
+	}
+
+	auto result = critterSys.AddFollower(follower, self->handle, 1, true);
+	ui.UpdatePartyUi();
+	return PyInt_FromLong(result);
+}
+
+// Okay.. Apparently the AI follower methods should better not be called
+static PyObject* ReturnZero(PyObject* obj, PyObject* args) {
+	return PyInt_FromLong(0);
+}
+
+static PyObject* PyObjHandle_LeaderGet(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	auto leader = critterSys.GetLeader(self->handle);
+	return PyObjHndl_Create(leader);
+}
+
+// CanSee and HasLos are the same
+static PyObject* PyObjHandle_HasLos(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl target;
+	if (!PyArg_ParseTuple(args, "O&:objHndl.has_los", &ConvertObjHndl, &target)) {
+		return 0;
+	}
+	auto obstacles = critterSys.HasLineOfSight(self->handle, target);
+	return PyInt_FromLong(obstacles == 0);
+}
+
+/*
+	Pretty stupid name. Checks if the critter currently wears an item with the
+	given name id.
+*/
+static PyObject* PyObjHandle_HasWielded(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int nameId;
+	if (!PyArg_ParseTuple(args, "i:objhndl.has_wielded", &nameId)) {
+		return 0;
+	}
+
+	for (auto i = 0; i < (int) EquipSlot::Count; ++i) {
+		auto item = critterSys.GetWornItem(self->handle, (EquipSlot) i);
+		if (objects.GetNameId(item) == nameId) {
+			return PyInt_FromLong(1);
+		}
+	}
+
+	return PyInt_FromLong(0);
+}
+
+static PyObject* PyObjHandle_HasItem(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int nameId;
+	if (!PyArg_ParseTuple(args, "i:objhndl.has_item", &nameId)) {
+		return 0;
+	}
+
+	auto hasItem = (inventory.FindItemByName(self->handle, nameId) != 0);
+	return PyInt_FromLong(hasItem);
+}
+
+static PyObject* PyObjHandle_ItemWornAt(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	EquipSlot slot;
+	if (!PyArg_ParseTuple(args, "i:objhndl.item_worn_at", &slot)) {
+		return 0;
+	}
+
+	auto item = critterSys.GetWornItem(self->handle, slot);
+	return PyObjHndl_Create(item);
+}
+
+static PyObject* PyObjHandle_Attack(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl target;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.attack", &ConvertObjHndl, &target)) {
+		return 0;
+	}
+
+	// This is pretty odd since it causes the opposite oO
+	if (!party.IsInParty(target)) {
+		critterSys.Attack(self->handle, target, 1, 2);
+	} else {
+		// This apparently causes the NPC to attack ALL of the party, not just the one PC
+		for (uint32_t i = 0; i < party.GroupListGetLen(); ++i) {
+			auto partyMember = party.GroupListGetMemberN(i);
+			if (objects.IsPlayerControlled(partyMember)) {
+				critterSys.Attack(partyMember, self->handle, 1, 2);
+			}
+		}
+	}
+
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_TurnTowards(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl target;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.turn_towards", &ConvertObjHndl, &target)) {
+		return 0;
+	}
+
+	auto targetRot = objects.GetRotationTowards(self->handle, target);
+	animationGoals.PushRotate(self->handle, targetRot);
+	Py_RETURN_NONE;
+}
+
 static PyMethodDef PyObjHandleMethods[] = {
 	{ "__getstate__", PyObjHandle_getstate, METH_VARARGS, NULL },
 	{ "__reduce__", PyObjHandle_reduce, METH_VARARGS, NULL },
@@ -427,19 +570,19 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "stat_level_get", PyObjHandle_StatLevelGet, METH_VARARGS, NULL },
 	{ "stat_base_get", PyObjHandle_StatLevelGetBase, METH_VARARGS, NULL },
 	{ "stat_base_set", PyObjHandle_StatLevelSetBase, METH_VARARGS, NULL },
-	{ "follower_add", NULL, METH_VARARGS, NULL },
-	{ "follower_remove", NULL, METH_VARARGS, NULL },
-	{ "follower_atmax", NULL, METH_VARARGS, NULL },
-	{ "ai_follower_add", NULL, METH_VARARGS, NULL },
-	{ "ai_follower_remove", NULL, METH_VARARGS, NULL },
-	{ "ai_follower_atmax", NULL, METH_VARARGS, NULL },
-	{ "leader_get", NULL, METH_VARARGS, NULL },
-	{ "can_see", NULL, METH_VARARGS, NULL },
-	{ "has_wielded", NULL, METH_VARARGS, NULL },
-	{ "has_item", NULL, METH_VARARGS, NULL },
-	{ "item_worn_at", NULL, METH_VARARGS, NULL },
-	{ "attack", NULL, METH_VARARGS, NULL },
-	{ "turn_towards", NULL, METH_VARARGS, NULL },
+	{ "follower_add", PyObjHandle_FollowerAdd, METH_VARARGS, NULL },
+	{ "follower_remove", PyObjHandle_FollowerRemove, METH_VARARGS, NULL },
+	{ "follower_atmax", PyObjHandle_FollowerAtMax, METH_VARARGS, NULL },
+	{ "ai_follower_add", PyObjHandle_AiFollowerAdd, METH_VARARGS, NULL },
+	{ "ai_follower_remove", ReturnZero, METH_VARARGS, NULL },
+	{ "ai_follower_atmax", ReturnZero, METH_VARARGS, NULL },
+	{ "leader_get", PyObjHandle_LeaderGet, METH_VARARGS, NULL },
+	{ "can_see", PyObjHandle_HasLos, METH_VARARGS, NULL },
+	{ "has_wielded", PyObjHandle_HasWielded, METH_VARARGS, NULL },
+	{ "has_item", PyObjHandle_HasItem, METH_VARARGS, NULL },
+	{ "item_worn_at", PyObjHandle_ItemWornAt, METH_VARARGS, NULL },
+	{ "attack", PyObjHandle_Attack, METH_VARARGS, NULL },
+	{ "turn_towards", PyObjHandle_TurnTowards, METH_VARARGS, NULL },
 	{ "float_line", NULL, METH_VARARGS, NULL },
 	{ "damage", NULL, METH_VARARGS, NULL },
 	{ "damage_with_reduction", NULL, METH_VARARGS, NULL },
@@ -526,7 +669,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "get_deity", NULL, METH_VARARGS, NULL },
 	{ "item_wield_best_all", NULL, METH_VARARGS, NULL },
 	{ "award_experience", NULL, METH_VARARGS, NULL },
-	{ "has_los", NULL, METH_VARARGS, NULL },
+	{ "has_los", PyObjHandle_HasLos, METH_VARARGS, NULL },
 	{ "has_atoned", NULL, METH_VARARGS, NULL },
 	{ "sweep_for_cover", NULL, METH_VARARGS, NULL },
 	{ "d20_send_signal", NULL, METH_VARARGS, NULL },

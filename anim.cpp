@@ -877,3 +877,19 @@ public:
 
 	}
 } extension;
+
+static struct AnimationAdresses : AddressTable {
+	
+	bool (__cdecl *PushRotate)(objHndl obj, float rotation);
+
+	AnimationAdresses() {
+		rebase(PushRotate, 0x100153E0);
+	}
+
+} addresses;
+
+AnimationGoals animationGoals;
+
+bool AnimationGoals::PushRotate(objHndl obj, float rotation) {
+	return addresses.PushRotate(obj, rotation);
+}

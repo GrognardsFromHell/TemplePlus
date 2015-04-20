@@ -23,7 +23,7 @@ public:
 	Creates a particle system at a tile location.
 	*/
 	int CreateAtTile(const char *name, locXY tile) {
-		return CreateAt3dPos(name, tile.To3d());
+		return CreateAt3dPos(name, tile.ToInches3D());
 	}
 
 	/*

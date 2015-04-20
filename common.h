@@ -37,18 +37,17 @@
 #define BonusListMax 40
 
 // This is the number of pixels per tile on the x and y axis. Derived from sqrt(800)
-#define PIXELS_PER_TILE 28.284271247461900976033774484194f
+#define INCH_PER_TILE 28.284271247461900976033774484194f
+#define INCH_PER_HALFTILE (INCH_PER_TILE/2.0f)
+#define INCH_PER_FEET 12
 
 # pragma region Standard Structs
 
 #pragma pack(push, 1)
 enum SkillEnum : uint32_t;
 
-struct vector3f {
-	float x;
-	float y;
-	float z;
-};
+typedef D3DXVECTOR2 vector2f;
+typedef D3DXVECTOR3 vector3f;
 
 struct locXY {
 	uint32_t locx;
@@ -62,11 +61,18 @@ struct locXY {
 		return *(uint64_t*)this;
 	}
 
-	vector3f To3d(float offsetX = 0, float offsetY = 0, float offsetZ = 0) {
+	vector2f ToInches2D(float offsetX = 0, float offsetY = 0) {
 		return{
-			locx * PIXELS_PER_TILE + offsetX,
+			locx * INCH_PER_TILE + offsetX,
+			locy * INCH_PER_TILE + offsetY
+		};
+	}
+
+	vector3f ToInches3D(float offsetX = 0, float offsetY = 0, float offsetZ = 0) {
+		return {
+			locx * INCH_PER_TILE + offsetX,
 			offsetZ,
-			locy * PIXELS_PER_TILE + offsetY
+			locy * INCH_PER_TILE + offsetY
 		};
 	}
 
@@ -76,6 +82,14 @@ struct LocAndOffsets {
 	locXY location;
 	float off_x;
 	float off_y;
+	
+	vector2f ToInches2D() {
+		return location.ToInches2D(off_x, off_y);
+	}
+
+	vector3f ToInches3D(float offsetZ = 0) {
+		return location.ToInches3D(off_x, off_y, offsetZ);
+	}
 };
 
 struct LocFull {
