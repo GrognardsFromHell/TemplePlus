@@ -46,7 +46,7 @@ struct PathQuery {
 	objHndl critter;  // Set PQF_HAS_CRITTER
 	objHndl targetObj; // Set PQF_TARGET_OBJ
 	float distanceToTarget; // Related to the targetObj's radius
-	float radius; // I think this is the radius of critter
+	float tolRadius; // Tolerance (How far away from the exact destination you are allowed to be)
 	int flags2;
 	int field_4c;
 

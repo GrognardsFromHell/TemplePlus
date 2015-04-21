@@ -199,7 +199,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	LocAndOffsets locAndOffCopy = d20aIn->destLoc;
 	LocAndOffsets * actSeqPerfLoc;
 
-	hooked_print_debug_message("Parsing move sequence for %s, d20 action %s", description.getDisplayName(d20aIn->d20APerformer), d20ActionNames[d20aIn->d20ActType]);
+	//hooked_print_debug_message("Parsing move sequence for %s, d20 action %s", description.getDisplayName(d20aIn->d20APerformer), d20ActionNames[d20aIn->d20ActType]);
 	
 	memcpy(&tbStatCopy, tbStat, sizeof(TurnBasedStatus));
 	seqCheckFuncs(&tbStatCopy);
@@ -230,7 +230,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		if (reach < 0.1){ reach = 3.0; }
 		actSeq->targetObj = d20a->d20ATarget;
 		pathQ.distanceToTarget = distToTgt * twelve;
-		pathQ.radius = reach * twelve - fourPointSevenPlusEight;
+		pathQ.tolRadius = reach * twelve - fourPointSevenPlusEight;
 	} else
 	{
 		pathQ.to = d20aIn->destLoc;
@@ -259,6 +259,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	d20aCopy.path = pqResult;
 	if (!pqResult) return 0x9;
 
+
 	*pathfindingSys.pathSthgFlag_10B3D5C8 = 0;
 	if (! pathfinding->FindPath(&pathQ, pqResult))
 	{
@@ -268,6 +269,50 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		return 0x9;
 	}
 	
+	if (d20aCopy.d20Caf & D20CAF_CHARGE )
+	{
+		if (pqResult->nodeCount >= 2)
+		{
+			uint32_t straightPathSuccess = 1;
+			LocAndOffsets midpoint;
+			midpoint.location.locx = (pathQ.from.location.locx + pqResult->to.location.locx) / 2;
+			midpoint.location.locy = (pathQ.from.location.locy + pqResult->to.location.locy) / 2;
+			midpoint.off_x = 0;
+			midpoint.off_y = 0;
+			PathQuery pathQueryStartToMid = pathQ;
+			PathQuery pathQueryMidToEnd = pathQ;
+			pathQueryStartToMid.to = midpoint;
+			pathQueryStartToMid.flags = static_cast<PathQueryFlags>(0x40803);
+			
+			pathQueryMidToEnd.from = midpoint;
+			pathQueryMidToEnd.to = pqResult->to;
+			pathQueryStartToMid.flags = static_cast<PathQueryFlags>(0x40803);
+			*pathfindingSys.pathSthgFlag_10B3D5C8 = 0;
+			//pathQueryStartToMid.tolRadius = 30.0;
+			if (pathfinding->FindPath(&pathQueryStartToMid, pqResult))
+			{
+				*pathfindingSys.pathSthgFlag_10B3D5C8 = 0;
+				pathQueryMidToEnd.tolRadius = 25.0;
+				if (pqResult->nodeCount == 1)
+				{
+					if (pathfinding->FindPath(&pathQueryMidToEnd, pqResult))
+					{
+						if (pqResult->nodeCount == 1)
+						{
+							pqResult->nodeCount = 1;
+							pqResult->nodes[0] = pathQueryMidToEnd.to;
+							pqResult->from = pathQueryStartToMid.from;
+						}	else straightPathSuccess = 0;
+					}	else straightPathSuccess = 0;
+				}	else straightPathSuccess = 0;
+			}	else straightPathSuccess = 0;
+			if (!straightPathSuccess)
+			{
+				pathfinding->FindPath(&pathQ, pqResult);
+			}
+		}
+	}
+
 	auto pathLength = pathfinding->pathLength(pqResult);
 	d20aCopy.destLoc = pqResult->to;
 	d20aCopy.distTraversed = pathLength;
