@@ -203,7 +203,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	
 	memcpy(&tbStatCopy, tbStat, sizeof(TurnBasedStatus));
 	seqCheckFuncs(&tbStatCopy);
-
+	
 	if (d20->d20Query(d20aIn->d20APerformer, DK_QUE_Prone))
 	{
 		memcpy(&d20aCopy, d20aIn, sizeof(D20Actn));
@@ -295,7 +295,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	if (nonspecificMoveType) 
 	{
 		float baseMoveDist = dispatch.Dispatch29hGetMoveSpeed(d20aCopy.d20APerformer, nullptr);
-		if (!(d20aCopy.d20Caf & D20CAF_RANGED))
+		if (!(d20aCopy.d20Caf & D20CAF_CHARGE))
 		{
 			if (pathLength > (long double)tbStatCopy.surplusMoveDistance)
 			{
@@ -319,9 +319,8 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 
 			}
 			d20aCopy.d20ActType = D20A_MOVE;
-			goto LABEL_53;
 		} 
-		else if ( 2* baseMoveDist >= (long double)pathLength){ d20aCopy.d20ActType = D20A_RUN;	goto LABEL_53; }
+		else if ( 2* baseMoveDist >= (long double)pathLength) d20aCopy.d20ActType = D20A_RUN;	
 		else	{	releasePath(pqResult); return 8;	}
 	}
 
