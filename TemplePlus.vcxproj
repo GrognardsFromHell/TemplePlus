@@ -20,6 +20,8 @@
     <ClCompile Include="ai.cpp" />
     <ClCompile Include="bonus.cpp" />
     <ClCompile Include="critter.cpp" />
+    <ClCompile Include="d20_class.cpp" />
+    <ClCompile Include="d20_status.cpp" />
     <ClCompile Include="float_line.cpp" />
     <ClCompile Include="history.cpp" />
     <ClCompile Include="location.cpp" />
@@ -191,7 +193,9 @@
     <ClInclude Include="action_sequence.h" />
     <ClInclude Include="ai.h" />
     <ClInclude Include="bonus.h" />
+    <ClInclude Include="d20_class.h" />
     <ClInclude Include="critter.h" />
+    <ClInclude Include="d20_status.h" />
     <ClInclude Include="float_line.h" />
     <ClInclude Include="history.h" />
     <ClInclude Include="location.h" />

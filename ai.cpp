@@ -94,7 +94,7 @@ uint32_t AiSystem::aiStrategyParse(objHndl objHnd, objHndl target)
 	for (uint32_t i = 0; i < aiStrat->numTactics; i++)
 	{
 		aiTacticGetConfig(i, &aiTac, aiStrat);
-		hooked_print_debug_message("\n%s attempting %s...\n", description.GetDisplayName(objHnd, objHnd), aiTac.aiTac->name);
+		hooked_print_debug_message("\n%s attempting %s...\n", description._getDisplayName(objHnd, objHnd), aiTac.aiTac->name);
 		auto aiFunc = aiTac.aiTac->aiFunc;
 		if (!aiFunc) continue;
 		if (aiFunc(&aiTac)) {
@@ -107,7 +107,7 @@ uint32_t AiSystem::aiStrategyParse(objHndl objHnd, objHndl target)
 	aiTac.aiTac = &aiTacticDefs[0];
 	aiTac.field4 = 0;
 	aiTac.tacIdx = -1;
-	hooked_print_debug_message("\n%s attempting %s...\n", description.GetDisplayName(objHnd, objHnd), aiTac.aiTac->name);
+	hooked_print_debug_message("\n%s attempting %s...\n", description._getDisplayName(objHnd, objHnd), aiTac.aiTac->name);
 	assert(aiTac.aiTac != nullptr);
 	if (aiTac.aiTac->aiFunc(&aiTac))
 	{

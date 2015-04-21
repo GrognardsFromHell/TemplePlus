@@ -348,11 +348,11 @@ const char *getProtoName(uint64_t protoHandle) {
   if ( tig_mes_get_line(ui_itemcreation_names, &line) )
     result = line.value;
   else
-    result = objects.description.GetDisplayName((objHndl)protoHandle, (objHndl)protoHandle);
+    result = objects.description._getDisplayName((objHndl)protoHandle, (objHndl)protoHandle);
   return result;
   */
 
-	return objects.description.GetDisplayName(protoHandle, protoHandle);
+	return objects.description._getDisplayName(protoHandle, protoHandle);
 }
 
 static void loadProtoIds(MesHandle mesHandle) {

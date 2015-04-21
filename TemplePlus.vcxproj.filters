@@ -229,6 +229,12 @@
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="tab_file.cpp" />
+    <ClCompile Include="d20_class.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="d20_status.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -450,6 +456,12 @@
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
     <ClInclude Include="tab_file.h" />
+    <ClInclude Include="d20_class.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="d20_status.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

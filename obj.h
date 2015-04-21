@@ -23,7 +23,7 @@ struct Objects : AddressTable {
 
 	// Retrieves the object flags for the given object handle
 	uint32_t GetFlags(objHndl obj) {
-		return _GetInternalFieldInt32(obj, obj_f_flags);
+		return getInt32(obj, obj_f_flags);
 	}
 	uint32_t getInt32(objHndl obj, obj_f fieldIdx);
 	uint64_t getInt64(objHndl obj, obj_f fieldIdx);
@@ -31,6 +31,9 @@ struct Objects : AddressTable {
 	void setInt32(objHndl obj, obj_f fieldIdx, uint32_t dataIn);
 	void setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, FieldDataMax data);
 	int32_t getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx);
+	void getArrayField(objHndl obj, obj_f fieldIdx, uint32_t subIdx, void * dataOut);
+	uint32_t getArrayFieldNumItems(objHndl obj, obj_f fieldIdx);
+
 	uint32_t abilityScoreLevelGet(objHndl, Stat, DispIO *);
 
 #pragma region Common
@@ -58,11 +61,11 @@ struct Objects : AddressTable {
 #pragma region Dispatcher Stuff
 
 	Dispatcher* GetDispatcher(objHndl obj) {
-		return (Dispatcher *)(_GetInternalFieldInt32(obj, obj_f_dispatcher));
+		return (Dispatcher *)getInt32(obj, obj_f_dispatcher);
 	}
 
 	void SetDispatcher(objHndl obj, uint32_t data32) {
-		_SetInternalFieldInt32(obj, obj_f_dispatcher, data32);
+		setInt32(obj, obj_f_dispatcher, data32);
 		return;
 	}
 
@@ -114,6 +117,7 @@ private:
 	int64_t(__cdecl *_GetInternalFieldInt64)(objHndl ObjHnd, int nFieldIdx);
 	int32_t(__cdecl *_StatLevelGet)(objHndl ObjHnd, Stat);
 	void(__cdecl *_SetInternalFieldInt32)(objHndl objHnd, obj_f fieldIdx, uint32_t data32);
+	uint32_t(__cdecl *_getArrayFieldNumItems)(objHndl obj, obj_f fieldIdx);// 1009E7E0
 	void(__cdecl * _setArrayFieldLowLevel)(obj_f fieldIdx, uint32_t subIdx); // GameObjectBody *@<ecx>, sourceData *@<eax>
 	bool(__cdecl * _IsPlayerControlled)(objHndl objHnd);
 	uint32_t(__cdecl *_ObjGetProtoNum)(objHndl);

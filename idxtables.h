@@ -153,6 +153,25 @@ public:
 		return nullptr;
 	}
 
+	uint32_t copy(int id, T * dataOut)
+	{
+		auto node = mTable->buckets[id % mTable->bucketCount];
+
+		while (node)
+		{
+			if (node->id == id)
+			{
+				memcpy(dataOut, node->data, sizeof(T));
+				return 1;
+			}
+			node = node->next;
+		}
+
+		return 0;
+	}
+
+
+
 	void put(int id, const T &data)
 	{
 		auto bucketId = id % mTable->bucketCount;

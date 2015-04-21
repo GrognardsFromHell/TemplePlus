@@ -181,6 +181,23 @@ int32_t Objects::getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx
 	return dataOut[0];
 }
 
+void Objects::getArrayField(objHndl obj, obj_f fieldIdx, uint32_t subIdx, void* dataOut)
+{
+	GameObjectBody * objBody = _GetMemoryAddress(obj);
+	uint32_t objType = objBody->type;
+	if (!DoesTypeSupportField(objBody->type, fieldIdx))
+	{
+		fieldNonexistantDebug(obj, objBody, fieldIdx, objType, "getArrayField");
+		return ;
+	}
+	getArrayFieldInternal(objBody, dataOut, fieldIdx, subIdx);
+}
+
+uint32_t Objects::getArrayFieldNumItems(objHndl obj, obj_f fieldIdx)
+{
+	return _getArrayFieldNumItems(obj, fieldIdx);
+}
+
 void Objects::InsertDataIntoInternalStack(GameObjectBody * objBody, obj_f fieldIdx, void * dataIn)
 {
 	__asm{
@@ -212,11 +229,9 @@ Objects::Objects()
 	pathfinding = &pathfindingSys;
 	loc = &locSys;
 	floats = &floatSys;
-	rebase(_GetInternalFieldInt32, 0x1009E1D0);
-	rebase(_GetInternalFieldInt64, 0x1009E2E0);
 	rebase(_StatLevelGet, 0x10074800);
-	rebase(_SetInternalFieldInt32, 0x100A0190);
 	macRebase(_setArrayFieldLowLevel, 100A0500)
+	macRebase(_getArrayFieldNumItems, 1009E7E0)
 	rebase(_IsPlayerControlled, 0x1002B390);
 	rebase(_ObjGetProtoNum, 0x10039320);
 	rebase(_IsObjDeadNullDestroyed, 0x1007E650);
@@ -320,7 +335,7 @@ uint32_t Objects::abilityScoreLevelGet(objHndl objHnd, Stat stat, DispIO* dispIO
 
 ObjectType Objects::GetType(objHndl obj)
 {
-	return static_cast<ObjectType>(_GetInternalFieldInt32(obj, obj_f_type));
+	return static_cast<ObjectType>(getInt32(obj, obj_f_type));
 }
 
 uint32_t Objects::IsDeadNullDestroyed(objHndl obj)
@@ -366,7 +381,7 @@ MonsterCategory Objects::GetCategory(objHndl objHnd)
 {
 	if (objHnd != 0) {
 		if (IsCritter(objHnd)) {
-			auto monCat = _GetInternalFieldInt64(objHnd, obj_f_critter_monster_category);
+			auto monCat = getInt64(objHnd, obj_f_critter_monster_category);
 			return (MonsterCategory)(monCat & 0xFFFFFFFF);
 		}
 	}
@@ -377,7 +392,7 @@ bool Objects::IsCategoryType(objHndl objHnd, MonsterCategory categoryType)
 {
 	if (objHnd != 0) {
 		if (IsCritter(objHnd)) {
-			auto monCat = _GetInternalFieldInt64(objHnd, obj_f_critter_monster_category);
+			auto monCat = getInt64(objHnd, obj_f_critter_monster_category);
 			return (monCat & 0xFFFFFFFF) == categoryType;
 		}
 	}
@@ -388,7 +403,7 @@ bool Objects::IsCategorySubtype(objHndl objHnd, MonsterCategory categoryType)
 {
 	if (objHnd != 0) {
 		if (IsCritter(objHnd)) {
-			auto monCat = _GetInternalFieldInt64(objHnd, obj_f_critter_monster_category);
+			auto monCat = getInt64(objHnd, obj_f_critter_monster_category);
 			return ((monCat >> 32) & 0xFFFFFFFF) == categoryType;
 		}
 	}

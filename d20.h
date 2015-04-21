@@ -3,7 +3,9 @@
 #include "dispatcher.h"
 #include "common.h"
 #include "d20_defs.h"
+#include "d20_class.h"
 #include "spell.h"
+#include "d20_status.h"
 
 struct ActionSequenceSystem;
 // Forward decls
@@ -30,13 +32,8 @@ struct D20System : AddressTable
 	D20ActionDef * d20Defs;
 	Pathfinding * pathfinding;
 	ActionSequenceSystem * actSeq;
-
-	void D20StatusInitRace(objHndl objHnd);
-	void D20StatusInitClass(objHndl objHnd);
-	void D20StatusInit(objHndl objHnd);
-	void D20StatusInitDomains(objHndl objHnd);
-	void D20StatusInitFeats(objHndl objHnd);
-	void D20StatusInitItemConditions(objHndl objHnd);
+	D20ClassSystem * d20Class;
+	D20StatusSystem * d20Status;
 
 	void d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2);
 	uint32_t d20Query(objHndl ObjHnd, D20DispatcherKey dispKey);
@@ -66,20 +63,6 @@ struct D20System : AddressTable
 
 
 extern D20System d20Sys;
-
-
-struct CharacterClasses : AddressTable
-{
-public:
-	Stat charClassEnums[NUM_CLASSES];
-	CharacterClasses()
-	{
-		Stat _charClassEnums[NUM_CLASSES] = { stat_level_barbarian, stat_level_bard, stat_level_cleric, stat_level_druid, stat_level_fighter, stat_level_monk, stat_level_paladin, stat_level_ranger, stat_level_rogue, stat_level_sorcerer, stat_level_wizard };
-		memcpy(charClassEnums, _charClassEnums, NUM_CLASSES * sizeof(uint32_t));
-	};
-};
-
-extern CharacterClasses charClasses;
 
 
 struct D20SpellData

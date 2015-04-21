@@ -8,7 +8,10 @@
 #include "testhelper.h"
 #include "python_debug.h"
 #include "party.h"
-
+#include "common.h"
+#include "spell.h"
+#include "d20.h"
+#include "action_sequence.h"
 
 static struct PythonInternal : AddressTable {
 
@@ -265,6 +268,32 @@ static PyObject * pyObjHandleType_PC_Add(TemplePyObjHandle* obj, PyObject * pyTu
 };
 
 
+static PyObject * pyObjHandleType_CastSpell(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+	uint32_t spellEnum;
+	PyObject * targetPyObj;
+	SpellPacketBody spellPktBody;
+	if (!PyArg_ParseTuple(pyTupleIn, "i|O!", &targetPyObj, &spellEnum)) return nullptr;
+
+	objHndl caster = obj->objHandle;
+	
+	// get spell known data
+	// I've set up a really large buffer just in case, 
+	// because in theory a player might have permutations 
+	// of spells due to metamagic, different casting classes etc.
+	uint32_t classCodes[10000] = { 0, };
+	uint32_t spellLevels[10000] = {0,};
+	uint32_t numSpells = 0;
+	if (!spellSys.spellKnownQueryGetData(caster, spellEnum, classCodes, spellLevels, &numSpells)) return Py_None;
+	if (numSpells <= 0) return Py_None;
+
+	for (uint32_t i = 0; i < numSpells; i++)
+	{
+		
+	}
+	spellSys.spellPacketBodyReset(&spellPktBody);
+	
+};
+
 
 static PyObject * pyObjHandleType_ObjFeatAdd(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	feat_enums nFeatCode;
@@ -277,7 +306,7 @@ static PyObject * pyObjHandleType_ObjFeatAdd(TemplePyObjHandle* obj, PyObject * 
 	}
 
 	objects.feats.FeatAdd(obj->objHandle, nFeatCode);
-	objects.d20.D20StatusInit(obj->objHandle);
+	objects.d20.d20Status->D20StatusInit(obj->objHandle);
 
 	return PyInt_FromLong(1);
 };
@@ -297,7 +326,7 @@ static PyObject * pyObjHandleType_MakeWizard(TemplePyObjHandle* obj, PyObject * 
 		templeFuncs.Obj_Set_IdxField_byValue(obj->objHandle, obj_f_critter_level_idx, i, stat_level_wizard);
 	}
 
-	objects.d20.D20StatusInit(obj->objHandle);
+	objects.d20.d20Status->D20StatusInit(obj->objHandle);
 	
 
 	return PyInt_FromLong(1);
@@ -350,7 +379,7 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 		return  PyLong_FromLongLong(objects.ObjGetProtoNum(obj->objHandle));
 	}
 	else if (!_strcmpi(name, "description")){
-		return  PyString_FromString(objects.description.GetDisplayName(obj->objHandle,obj->objHandle));
+		return  PyString_FromString(objects.description._getDisplayName(obj->objHandle,obj->objHandle));
 	}
 
 	if (!_strcmpi(name, "factions")) {

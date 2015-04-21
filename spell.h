@@ -5,6 +5,8 @@
 #include "idxtables.h"
 #include "tig\tig_mes.h"
 
+#define MAX_SPELLS_KNOWN 384
+
 #pragma region Spell Structs
 struct SpellEntryLevelSpec
 {
@@ -102,7 +104,12 @@ struct SpellSystem : AddressTable
 	void spellPacketBodyReset(SpellPacketBody * spellPktBody);
 	void spellPacketSetCasterLevel(SpellPacketBody * spellPktBody);
 	uint32_t getSpellEnum(const char* spellName);
-
+	uint32_t spellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count);
+	uint32_t spellCanCast(objHndl objHnd, uint32_t spellEnum, uint32_t spellClassCode, uint32_t spellLevel);
+	uint32_t spellMemorizedQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count);
+	bool numSpellsKnownTooHigh(objHndl objHnd);
+	bool numSpellsMemorizedTooHigh(objHndl objHnd);
+	bool isDomainSpell(uint32_t spellClassCode);
 	uint32_t(__cdecl * spellRemoveFromStorage)(objHndl objHnd, obj_f fieldIdx, SpellStoreData * spellData, int unknown);
 	uint32_t (__cdecl * spellsPendingToMemorized)(objHndl objHnd);
 	SpellSystem()
@@ -126,6 +133,8 @@ private:
 };
 
 extern SpellSystem spellSys;
+
+extern IdxTableWrapper<SpellEntry> spellEntryRegistry;
 
 
 struct SpontCastSpellLists : AddressTable
@@ -172,3 +181,6 @@ const uint32_t TestSizeOfSpellStoreState = sizeof(SpellStoreState);
 
 uint32_t _getWizSchool(objHndl objHnd);
 uint32_t _getSpellEnum(const char * spellName);
+uint32_t _spellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t * classCodesOut, uint32_t *slotLevelsOut, uint32_t * count);
+uint32_t _spellMemorizedQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t * classCodesOut, uint32_t *slotLevelsOut, uint32_t * count);
+uint32_t _spellCanCast(objHndl objHnd, uint32_t spellEnum, uint32_t spellClassCode, uint32_t spellLevel);
