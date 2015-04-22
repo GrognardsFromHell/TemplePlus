@@ -45,6 +45,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="dialog.cpp" />
     <ClCompile Include="dice.cpp" />
     <ClCompile Include="fade.cpp" />
     <ClCompile Include="ai.cpp" />
@@ -224,6 +225,7 @@
     <ClInclude Include="dependencies\minhook\src\HDE\table32.h" />
     <ClInclude Include="dependencies\minhook\src\HDE\table64.h" />
     <ClInclude Include="dependencies\minhook\src\trampoline.h" />
+    <ClInclude Include="dialog.h" />
     <ClInclude Include="dice.h" />
     <ClInclude Include="fade.h" />
     <ClInclude Include="float_line.h" />

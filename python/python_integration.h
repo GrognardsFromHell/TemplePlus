@@ -19,7 +19,7 @@ enum class ScriptEvent : uint32_t {
 	Throw,
 	Hit,
 	Miss,
-	Dialog,
+	Dialog = 9,
 	FirstHeartbeat,
 	CatchingThiefPc,
 	Dying,

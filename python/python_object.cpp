@@ -9,9 +9,12 @@
 #include "../dispatcher.h"
 #include "../party.h"
 #include "../ui/ui.h"
+#include "../ui/ui_dialog.h"
+#include "../dialog.h"
 #include "python_dice.h"
 #include "python_objectscripts.h"
 #include <objlist.h>
+#include "python_integration.h"
 
 static struct PyObjHandleAddresses : AddressTable {
 	PyObjHandleAddresses() {
@@ -547,6 +550,46 @@ static PyObject* PyObjHandle_TurnTowards(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_FloatLine(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int lineId;
+	objHndl pc;
+	if (!PyArg_ParseTuple(args, "iO&:objhndl.float_line", &lineId, &ConvertObjHndl, &pc)) {
+		return 0;
+	}
+
+	// Try to load the dialog file attached to this object.
+	auto dlgScriptId = objects.GetScript(self->handle, (int)ScriptEvent::Dialog);
+	auto dlgFile = dialogScripts.GetFilename(dlgScriptId);
+	if (dlgFile.empty()) {
+		PyErr_SetString(PyExc_AttributeError, "No dialog script attached to this object.");
+		return 0;
+	}
+	DialogState dlgState;
+	if (!dialogScripts.Load(dlgFile, dlgState.dialogHandle)) {
+		logger->warn("Unable to load dialog file {}", dlgFile);
+		PyErr_SetString(PyExc_RuntimeError, "Could not load Python dialog file.");
+	}
+
+	// Fill in the Dialog State
+	dlgState.pc = pc;
+	dlgState.reqNpcLineId = lineId;
+	/*
+		Previously, the sid was used here, but this can actually screw up speech and play back the wrong samples,
+		if a different script id is attached for san_dialog (which is used above) than for whatever san triggered
+		this function.
+	*/
+	dlgState.dialogScriptId = dlgScriptId;
+	dlgState.npc = self->handle;
+	dialogScripts.LoadNpcLine(dlgState, true);
+
+	uiDialog.ShowTextBubble(dlgState.npc, dlgState.pc, dlgState.npcLineText, dlgState.speechId);
+
+	dialogScripts.Free(dlgState.dialogHandle);
+
+	Py_RETURN_NONE;
+}
+
 static PyMethodDef PyObjHandleMethods[] = {
 	{ "__getstate__", PyObjHandle_getstate, METH_VARARGS, NULL },
 	{ "__reduce__", PyObjHandle_reduce, METH_VARARGS, NULL },
@@ -583,7 +626,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "item_worn_at", PyObjHandle_ItemWornAt, METH_VARARGS, NULL },
 	{ "attack", PyObjHandle_Attack, METH_VARARGS, NULL },
 	{ "turn_towards", PyObjHandle_TurnTowards, METH_VARARGS, NULL },
-	{ "float_line", NULL, METH_VARARGS, NULL },
+	{ "float_line", PyObjHandle_FloatLine, METH_VARARGS, NULL },
 	{ "damage", NULL, METH_VARARGS, NULL },
 	{ "damage_with_reduction", NULL, METH_VARARGS, NULL },
 	{ "heal", NULL, METH_VARARGS, NULL },

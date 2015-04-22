@@ -2,18 +2,7 @@
 #pragma once
 #include <obj.h>
 
-#pragma pack(push, 1)
-struct UiCurrentDlgInfo {
-	int slotIdx;
-	int padding;
-	objHndl npc;
-	int padding2[10];
-	objHndl pc;
-	int padding3[10];
-	int unk;
-	int scriptNo;
-};
-#pragma pack(pop)
+#include "../dialog.h"
 
 class UiDialog {
 public:
@@ -23,9 +12,17 @@ public:
 	bool IsActive();
 
 	// this seems to be mostly internal for the python based picker
-	UiCurrentDlgInfo *GetCurrentDialog();
-	void ReShowDialog(UiCurrentDlgInfo *info, int line);
+	DialogState *GetCurrentDialog();
+	void ReShowDialog(DialogState *info, int line);
 	void Unk();
+
+	/*
+		Show an ingame popover with the portrait of the speaker and the given text message.
+		Can be used outside of dialog too. 
+		The NPC also turns towards the target it is speaking to.
+		The voice sample with the id given in speechId is played back if it is not -1.
+	*/
+	void ShowTextBubble(objHndl speaker, objHndl speakingTo, const string &text, int speechId = -1);
 
 };
 
