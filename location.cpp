@@ -29,5 +29,6 @@ float LocationSys::intToFloat(int32_t x)
 LocationSys::LocationSys()
 {
 	rebase(getLocAndOff, 0x10040080);
+	macRebase(subtileFromLoc ,10040750)
 	macRebase(TOEEdistBtwnLocAndOffs, 1002A0A0)
 }

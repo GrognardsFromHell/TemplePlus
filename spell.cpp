@@ -25,6 +25,7 @@ public:
 		macReplaceFun(100762D0, _spellKnownQueryGetData)
 		macReplaceFun(10076190, _spellMemorizedQueryGetData)
 		macReplaceFun(1007A140, _spellCanCast)
+		macReplaceFun(100754B0, _spellRegistryCopy)
 	}
 } spellFuncReplacements;
 
@@ -68,6 +69,11 @@ public:
 #pragma region Spell System Implementation
 
 SpellSystem spellSys;
+
+uint32_t SpellSystem::spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry)
+{
+	return spellEntryRegistry.copy(spellEnum, spellEntry);
+}
 
 uint32_t SpellSystem::getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t classLvl, uint32_t slotLvl, uint32_t unknown1)
 {
@@ -378,4 +384,8 @@ uint32_t _spellCanCast(objHndl objHnd, uint32_t spellEnum, uint32_t spellClassCo
 	return spellSys.spellCanCast(objHnd, spellEnum, spellClassCode, spellLevel);
 }
 
+uint32_t _spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry)
+{
+	return spellSys.spellRegistryCopy(spellEnum, spellEntry);
+}
 #pragma endregion 

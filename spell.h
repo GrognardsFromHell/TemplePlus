@@ -96,6 +96,8 @@ const uint32_t TestSizeOfSpellPacket = sizeof(SpellPacket); // should be 0xAF0  
 struct SpellSystem : AddressTable
 {
 	IdxTable<SpellPacket> * spellCastIdxTable;
+	uint32_t spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry);
+
 	MesHandle * spellEnumMesHandle;
 
 	uint32_t getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t classLvl, uint32_t slotLvl, uint32_t unknown1);
@@ -130,6 +132,7 @@ private:
 	uint32_t(__cdecl* _getStatModBonusSpellCount)();
 	void(__cdecl * _spellPacketBodyReset)(SpellPacketBody * spellPktBody);
 	void(__cdecl * _spellPacketSetCasterLevel)(SpellPacketBody * spellPktBody);
+	//uint32_t(__cdecl * Spell_Range_Sthg_From_SpellEntry_sub_100772A0)(SpellEntry *spellEntry, );
 };
 
 extern SpellSystem spellSys;
@@ -184,3 +187,4 @@ uint32_t _getSpellEnum(const char * spellName);
 uint32_t _spellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t * classCodesOut, uint32_t *slotLevelsOut, uint32_t * count);
 uint32_t _spellMemorizedQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t * classCodesOut, uint32_t *slotLevelsOut, uint32_t * count);
 uint32_t _spellCanCast(objHndl objHnd, uint32_t spellEnum, uint32_t spellClassCode, uint32_t spellLevel);
+uint32_t __cdecl _spellRegistryCopy(uint32_t spellEnum, SpellEntry * spellEntry);

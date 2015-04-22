@@ -272,6 +272,7 @@ static PyObject * pyObjHandleType_CastSpell(TemplePyObjHandle* obj, PyObject * p
 	uint32_t spellEnum;
 	PyObject * targetPyObj;
 	SpellPacketBody spellPktBody;
+	SpellEntry spellEntry;
 	if (!PyArg_ParseTuple(pyTupleIn, "i|O!", &targetPyObj, &spellEnum)) return nullptr;
 
 	objHndl caster = obj->objHandle;
@@ -285,12 +286,14 @@ static PyObject * pyObjHandleType_CastSpell(TemplePyObjHandle* obj, PyObject * p
 	uint32_t numSpells = 0;
 	if (!spellSys.spellKnownQueryGetData(caster, spellEnum, classCodes, spellLevels, &numSpells)) return Py_None;
 	if (numSpells <= 0) return Py_None;
-
+	spellSys.spellPacketBodyReset(&spellPktBody);
 	for (uint32_t i = 0; i < numSpells; i++)
 	{
-		
+		if (!spellSys.spellCanCast(caster, spellEnum, classCodes[i], spellLevels[i])) continue;
+		spellSys.spellPacketSetCasterLevel(&spellPktBody);
+		if (!spellSys.spellRegistryCopy(spellEnum, &spellEntry)) continue;
 	}
-	spellSys.spellPacketBodyReset(&spellPktBody);
+	
 	
 };
 
