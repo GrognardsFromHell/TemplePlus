@@ -4,7 +4,7 @@
 
 struct FloatLineSystem : AddressTable
 {
-	void(__cdecl * floatMesLine)(objHndl, int32_t, int32_t, const char* );
+	void(__cdecl * floatMesLine)(objHndl, int categoryBit, int colorId, const char *text);
 
 	FloatLineSystem();
 };

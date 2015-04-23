@@ -9,6 +9,8 @@
 #include "../anim.h"
 #include "../dispatcher.h"
 #include "../party.h"
+#include "../tig/tig_mes.h"
+#include "../float_line.h"
 #include "../condition.h"
 #include "../ui/ui.h"
 #include "../damage.h"
@@ -723,21 +725,19 @@ static PyObject* PyObjHandle_ReputationRemove(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
-static PyObject* PyObjHandle_ItemConditionAdd(PyObject* obj, PyObject* args) {
-	auto self = GetSelf(obj);
-
+static bool ParseCondNameAndArgs(PyObject *args, CondStruct *&condStructOut, vector<int> &argsOut) {
 	// First arg has to be the condition name
 	if (PyTuple_GET_SIZE(args) < 1 || !PyString_Check(PyTuple_GET_ITEM(args, 0))) {
 		PyErr_SetString(PyExc_RuntimeError, "item_condition_add_with_args has to be "
 			"called at least with the condition name.");
-		return 0;
+		return false;
 	}
 
 	auto condName = PyString_AsString(PyTuple_GET_ITEM(args, 0));
 	auto cond = conds.GetByName(condName);
 	if (!cond) {
 		PyErr_Format(PyExc_ValueError, "Unknown condition name: %s", condName);
-		return 0;
+		return false;
 	}
 
 	// Following arguments all have to be integers and gel with the condition argument count
@@ -750,14 +750,191 @@ static PyObject* PyObjHandle_ItemConditionAdd(PyObject* obj, PyObject* args) {
 				PyErr_Format(PyExc_ValueError, "Argument %d for condition %s (requires %d args) is not of type int: %s",
 					i + 1, condName, cond->numArgs, PyString_AsString(itemRepr));
 				Py_DECREF(itemRepr);
-				return 0;
+				return false;
 			}
 			condArgs[i] = PyInt_AsLong(item);
 		}
 	}
 
+	return true;
+}
+
+static PyObject* PyObjHandle_ItemConditionAdd(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+
+	CondStruct *cond;
+	vector<int> condArgs;
+	if (!ParseCondNameAndArgs(args, cond, condArgs)) {
+		return 0;
+	}
+
 	conds.AddToItem(self->handle, cond, condArgs);
 	return PyInt_FromLong(1);
+}
+
+static PyObject* PyObjHandle_ConditionAddWithArgs(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+
+	CondStruct *cond;
+	vector<int> condArgs;
+	if (!ParseCondNameAndArgs(args, cond, condArgs)) {
+		return 0;
+	}
+	
+	conds.AddTo(self->handle, cond, condArgs);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_IsFriendly(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl pc;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.is_friendly", &ConvertObjHndl, &pc)) {
+		return 0;
+	}
+
+	auto result = critterSys.IsFriendly(pc, self->handle);
+	return PyInt_FromLong(result);
+}
+
+static PyObject* PyObjHandle_FadeTo(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int targetOpacity, transitionTimeInMs, unk1, unk2 = 0;
+	if (!PyArg_ParseTuple(args, "iii|i:objhndl.fade_to", &targetOpacity, &transitionTimeInMs, &unk1, &unk2)) {
+		return 0;
+	}
+
+	objects.FadeTo(self->handle, targetOpacity, transitionTimeInMs, unk1, unk2);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_Move(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	LocAndOffsets newLoc;
+	newLoc.off_x = 0;
+	newLoc.off_y = 0;
+	if (!PyArg_ParseTuple(args, "L|ff:objhndl.move", &newLoc.location, &newLoc.off_x, &newLoc.off_y)) {
+		return 0;
+	}
+	objects.Move(self->handle, newLoc);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_FloatMesFileLine(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	char *mesFilename;
+	int mesLineKey;
+	int colorId = 0;
+	if (!PyArg_ParseTuple(args, "si|i:", &mesFilename, &mesLineKey, &colorId)) {
+		return 0;
+	}
+	MesFile mesFile(mesFilename);
+	if (!mesFile.valid()) {
+		PyErr_Format(PyExc_IOError, "Could not open mes file %s", mesFilename);
+		return 0;
+	}
+	const char *mesLine;
+	if (!mesFile.GetLine(mesLineKey, mesLine)) {
+		PyErr_Format(PyExc_IOError, "Could not find line %d in mes file %s.", mesLineKey, mesFilename);
+		return 0;
+	}
+
+	floatSys.floatMesLine(self->handle, 1, colorId, mesLine);
+	Py_RETURN_NONE;
+}
+
+// Generic methods to get/set/clear flags
+template<obj_f flagsField>
+static PyObject *GetFlags(PyObject *obj, PyObject*) {
+	auto self = GetSelf(obj);
+	auto flags = objects.getInt32(self->handle, flagsField);
+	return PyInt_FromLong(flags);
+}
+
+template<obj_f flagsField>
+static PyObject *SetFlag(PyObject *obj, PyObject*args) {
+	auto self = GetSelf(obj);
+	uint32_t flag;
+	if (!PyArg_ParseTuple(args, "i:objhndl.generic_set_flag", &flag)) {
+		return 0;
+	}
+	auto currentFlags = objects.getInt32(self->handle, flagsField);
+	currentFlags |= flag;
+	objects.setInt32(self->handle, flagsField, currentFlags);
+	Py_RETURN_NONE;
+}
+
+template<obj_f flagsField>
+static PyObject *ClearFlag(PyObject *obj, PyObject*args) {
+	auto self = GetSelf(obj);
+	uint32_t flag;
+	if (!PyArg_ParseTuple(args, "i:objhndl.generic_set_flag", &flag)) {
+		return 0;
+	}
+	auto currentFlags = objects.getInt32(self->handle, flagsField);
+	currentFlags &= ~ flag;
+	objects.setInt32(self->handle, flagsField, currentFlags);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_ObjectFlagSet(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	ObjectFlag flag;
+	if (!PyArg_ParseTuple(args, "i:objhndl.object_flag_set", &flag)) {
+		return 0;
+	}
+	objects.SetFlag(self->handle, flag);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_ObjectFlagUnset(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	ObjectFlag flag;
+	if (!PyArg_ParseTuple(args, "i:objhndl.object_flag_unset", &flag)) {
+		return 0;
+	}
+	objects.ClearFlag(self->handle, flag);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_PortalToggleOpen(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objects.PortalToggleOpen(self->handle);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_ContainerToggleOpen(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objects.ContainerToggleOpen(self->handle);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_SavingThrow(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int dc;
+	SavingThrowType type;
+	auto flags = (D20SavingThrowFlag) 0;
+	objHndl attacker = 0;
+	if (!PyArg_ParseTuple(args, "iii|O&:objhndl:saving_throw", &dc, &type, &flags, &ConvertObjHndl, &attacker)) {
+		return 0;
+	}
+
+	auto result = damage.SavingThrow(self->handle, attacker, dc, type, flags);
+	return PyInt_FromLong(result);
+}
+
+static PyObject* PyObjHandle_SavingThrowSpell(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int dc;
+	SavingThrowType type;
+	auto flags = (D20SavingThrowFlag)0;
+	objHndl attacker;
+	int spellId;
+	if (!PyArg_ParseTuple(args, "iiiO&i:objhndl:saving_throw_spell", &dc, &type, &flags, &ConvertObjHndl, &attacker, &spellId)) {
+		return 0;
+	}
+
+	auto result = damage.SavingThrowSpell(self->handle, attacker, dc, type, flags, spellId);
+	return PyInt_FromLong(result);
 }
 
 static PyMethodDef PyObjHandleMethods[] = {
@@ -806,37 +983,35 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "reputation_add", PyObjHandle_ReputationAdd, METH_VARARGS, NULL },
 	{ "reputation_remove", PyObjHandle_ReputationRemove, METH_VARARGS, NULL },
 	{ "item_condition_add_with_args", PyObjHandle_ItemConditionAdd, METH_VARARGS, NULL },
-	{ "condition_add_with_args", NULL, METH_VARARGS, NULL },
-	{ "condition_add_with_args", NULL, METH_VARARGS, NULL },
-	{ "condition_add", NULL, METH_VARARGS, NULL },
-	{ "is_friendly", NULL, METH_VARARGS, NULL },
-	{ "fade_to", NULL, METH_VARARGS, NULL },
-	{ "move", NULL, METH_VARARGS, NULL },
-	{ "float_mesfile_line", NULL, METH_VARARGS, NULL },
-	{ "object_flags_get", NULL, METH_VARARGS, NULL },
-	{ "object_flag_set", NULL, METH_VARARGS, NULL },
-	{ "object_flag_unset", NULL, METH_VARARGS, NULL },
-	{ "portal_flags_get", NULL, METH_VARARGS, NULL },
-	{ "portal_flag_set", NULL, METH_VARARGS, NULL },
-	{ "portal_flag_unset", NULL, METH_VARARGS, NULL },
-	{ "container_flags_get", NULL, METH_VARARGS, NULL },
-	{ "container_flag_set", NULL, METH_VARARGS, NULL },
-	{ "container_flag_unset", NULL, METH_VARARGS, NULL },
-	{ "portal_toggle_open", NULL, METH_VARARGS, NULL },
-	{ "container_toggle_open", NULL, METH_VARARGS, NULL },
-	{ "container_toggle_open", NULL, METH_VARARGS, NULL },
-	{ "item_flags_get", NULL, METH_VARARGS, NULL },
-	{ "item_flag_set", NULL, METH_VARARGS, NULL },
-	{ "item_flag_unset", NULL, METH_VARARGS, NULL },
-	{ "critter_flags_get", NULL, METH_VARARGS, NULL },
-	{ "critter_flag_set", NULL, METH_VARARGS, NULL },
-	{ "critter_flag_unset", NULL, METH_VARARGS, NULL },
-	{ "npc_flags_get", NULL, METH_VARARGS, NULL },
-	{ "npc_flag_set", NULL, METH_VARARGS, NULL },
-	{ "npc_flag_unset", NULL, METH_VARARGS, NULL },
-	{ "saving_throw", NULL, METH_VARARGS, NULL },
-	{ "saving_throw_with_args", NULL, METH_VARARGS, NULL },
-	{ "saving_throw_spell", NULL, METH_VARARGS, NULL },
+	{ "condition_add_with_args", PyObjHandle_ConditionAddWithArgs, METH_VARARGS, NULL },
+	{ "condition_add", PyObjHandle_ConditionAddWithArgs, METH_VARARGS, NULL },
+	{ "is_friendly", PyObjHandle_IsFriendly, METH_VARARGS, NULL },
+	{ "fade_to", PyObjHandle_FadeTo, METH_VARARGS, NULL },
+	{ "move", PyObjHandle_Move, METH_VARARGS, NULL },
+	{ "float_mesfile_line", PyObjHandle_FloatMesFileLine, METH_VARARGS, NULL },
+	{ "object_flags_get", GetFlags<obj_f_flags>, METH_VARARGS, NULL },
+	{ "object_flag_set", PyObjHandle_ObjectFlagSet, METH_VARARGS, NULL },
+	{ "object_flag_unset", PyObjHandle_ObjectFlagUnset, METH_VARARGS, NULL },
+	{ "portal_flags_get", GetFlags<obj_f_portal_flags>, METH_VARARGS, NULL },
+	{ "portal_flag_set", SetFlag<obj_f_portal_flags>, METH_VARARGS, NULL },
+	{ "portal_flag_unset", ClearFlag<obj_f_portal_flags>, METH_VARARGS, NULL },
+	{ "container_flags_get", GetFlags<obj_f_container_flags>, METH_VARARGS, NULL },
+	{ "container_flag_set", SetFlag<obj_f_container_flags>, METH_VARARGS, NULL },
+	{ "container_flag_unset", ClearFlag<obj_f_container_flags>, METH_VARARGS, NULL },
+	{ "portal_toggle_open", PyObjHandle_PortalToggleOpen, METH_VARARGS, NULL },
+	{ "container_toggle_open", PyObjHandle_ContainerToggleOpen, METH_VARARGS, NULL },
+	{ "item_flags_get", GetFlags<obj_f_item_flags>, METH_VARARGS, NULL },
+	{ "item_flag_set", SetFlag<obj_f_item_flags>, METH_VARARGS, NULL },
+	{ "item_flag_unset", ClearFlag<obj_f_item_flags>, METH_VARARGS, NULL },
+	{ "critter_flags_get", GetFlags<obj_f_critter_flags>, METH_VARARGS, NULL },
+	{ "critter_flag_set", SetFlag<obj_f_critter_flags>, METH_VARARGS, NULL },
+	{ "critter_flag_unset", ClearFlag<obj_f_critter_flags>, METH_VARARGS, NULL },
+	{ "npc_flags_get", GetFlags<obj_f_npc_flags>, METH_VARARGS, NULL },
+	{ "npc_flag_set", SetFlag<obj_f_npc_flags>, METH_VARARGS, NULL },
+	{ "npc_flag_unset", ClearFlag<obj_f_npc_flags>, METH_VARARGS, NULL },
+	{ "saving_throw", PyObjHandle_SavingThrow, METH_VARARGS, NULL },
+	{ "saving_throw_with_args", PyObjHandle_SavingThrow, METH_VARARGS, NULL },
+	{ "saving_throw_spell", PyObjHandle_SavingThrowSpell, METH_VARARGS, NULL },
 	{ "reflex_save_and_damage", NULL, METH_VARARGS, NULL },
 	{ "soundmap_critter", NULL, METH_VARARGS, NULL },
 	{ "footstep", NULL, METH_VARARGS, NULL },

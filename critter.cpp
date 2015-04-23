@@ -12,6 +12,7 @@ static struct CritterAddresses : AddressTable {
 	objHndl (__cdecl *GetLeader)(objHndl critter);
 	int (__cdecl *HasLineOfSight)(objHndl critter, objHndl target);
 	void (__cdecl *Attack)(objHndl target, objHndl attacker, int n1, int n2);
+	bool (__cdecl *IsFriendly)(objHndl pc, objHndl npc);
 
 	CritterAddresses() {
 		rebase(HasMet, 0x10053CD0);
@@ -20,6 +21,7 @@ static struct CritterAddresses : AddressTable {
 		rebase(GetLeader, 0x1007EA70);
 		rebase(HasLineOfSight, 0x10059470);
 		rebase(Attack, 0x1005E8D0);
+		rebase(IsFriendly, 0x10080E00);
 	}
 
 } addresses;
@@ -82,6 +84,11 @@ objHndl CritterSystem::GetWornItem(objHndl handle, EquipSlot slot) {
 }
 
 void CritterSystem::Attack(objHndl target, objHndl attacker, int n1, int n2) {
+	addresses.Attack(target, attacker, n1, n2);
+}
+
+bool CritterSystem::IsFriendly(objHndl pc, objHndl npc) {
+	return addresses.IsFriendly(pc, npc);
 }
 #pragma region Critter Hooks
 

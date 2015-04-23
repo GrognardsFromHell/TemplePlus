@@ -112,6 +112,7 @@ enum D20AttackPower : uint32_t {
 	D20DAP_COLD = 0x2000
 };
 
+// THIS IS INCORRECT! THIS ENUM IS WRONG
 enum D20SavingThrowFlag : uint32_t {
 	D20STD_F_MAX = 0,
 	D20STD_F_NONE = 0,

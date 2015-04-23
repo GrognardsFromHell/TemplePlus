@@ -40,39 +40,55 @@ CondNode::CondNode(CondStruct *cond) {
 #pragma region Condition Add Functions
 
 uint32_t _ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4) {
-
 	assert(condStruct->numArgs >= 0 && condStruct->numArgs <= 6);
 
+	vector<int> args;
+	if (condStruct->numArgs > 0) {
+		args.push_back(arg1);
+	}
+	if (condStruct->numArgs > 1) {
+		args.push_back(arg2);
+	}
+	if (condStruct->numArgs > 2) {
+		args.push_back(arg2);
+	}
+	if (condStruct->numArgs > 3) {
+		args.push_back(arg3);
+	}
+	if (condStruct->numArgs > 4) {
+		args.push_back(arg4);
+	}
 
+	return _ConditionAddDispatchArgs(dispatcher, ppCondNode, condStruct, args);
+};
+
+bool _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, const vector<int> &args) {
+	assert(condStruct->numArgs == args.size());
 
 	// pre-add section (may abort adding condition, or cause another condition to be deleted first)
 	DispIO14h dispIO14h;
 	dispIO14h.dispIOType = dispIOType1;
 	dispIO14h.condStruct = condStruct;
 	dispIO14h.outputFlag = 1;
-	dispIO14h.arg1 = arg1;
-	dispIO14h.arg2 = arg2;
+	dispIO14h.arg1 = 0;
+	dispIO14h.arg2 = 0;
+	if (args.size() > 0) {
+		dispIO14h.arg1 = args[0];
+	}
+	if (args.size() > 1) {
+		dispIO14h.arg2 = args[1];
+	}
 
 	_DispatcherProcessor(dispatcher, dispTypeConditionAddPre, 0, (DispIO*)&dispIO14h);
 
 	if (dispIO14h.outputFlag == 0) {
-		return 0;
+		return false;
 	}
 
 	// adding condition
 	auto condNodeNew = new CondNode(condStruct);
-	auto numArgs = condStruct->numArgs;
-	if (numArgs >= 1) {
-		condNodeNew->args[0] = arg1;
-	}
-	if (numArgs >= 2) {
-		condNodeNew->args[1] = arg2;
-	}
-	if (numArgs >= 3) {
-		condNodeNew->args[2] = arg3;
-	}
-	if (numArgs >= 4) {
-		condNodeNew->args[3] = arg4;
+	for (int i = 0; i < condStruct->numArgs; ++i) {
+		condNodeNew->args[i] = args[i];
 	}
 
 	CondNode** ppNextCondeNode = ppCondNode;
@@ -96,7 +112,7 @@ uint32_t _ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, Co
 		dispatcherSubDispNodeType1 = dispatcherSubDispNodeType1->next;
 	}
 
-	return 1;
+	return true;
 };
 
 void _CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNode) {
@@ -141,6 +157,10 @@ uint32_t _ConditionAddToAttribs_NumArgs2(Dispatcher* dispatcher, CondStruct* con
 
 uint32_t _ConditionAdd_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct) {
 	return _ConditionAddDispatch(dispatcher, &dispatcher->otherConds, condStruct, 0, 0, 0, 0);
+};
+
+uint32_t _ConditionAdd_NumArgs1(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1) {
+	return _ConditionAddDispatch(dispatcher, &dispatcher->otherConds, condStruct, arg1, 0, 0, 0);
 };
 
 uint32_t _ConditionAdd_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2) {
@@ -222,4 +242,16 @@ void ConditionSystem::AddToItem(objHndl item, const CondStruct* cond, const vect
 		templeFuncs.Obj_Set_IdxField_byValue(item, obj_f_item_pad_wielder_argument_array, idx, arg);
 		idx++;
 	}
+}
+
+bool ConditionSystem::AddTo(objHndl handle, const CondStruct* cond, const vector<int>& args) {
+	assert(args.size() == cond->numArgs);
+
+	auto dispatcher = objects.GetDispatcher(handle);
+
+	if (!dispatcher) {
+		return false;
+	}
+
+	return _ConditionAddDispatchArgs(dispatcher, &dispatcher->otherConds, const_cast<CondStruct*>(cond), args) != 0;
 }

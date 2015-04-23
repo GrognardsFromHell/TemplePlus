@@ -84,6 +84,12 @@ public:
 
 	void HealSubdual(objHndl target, int amount);
 
+	// See D20SavingThrowFlags for flags
+	bool SavingThrow(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags);
+
+	// Save against a spell
+	bool SavingThrowSpell(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags, int spellId);
+
 };
 
 extern Damage damage;

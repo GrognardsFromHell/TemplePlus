@@ -150,6 +150,29 @@ struct Objects : AddressTable {
 	*/
 	float GetRotationTowards(objHndl from, objHndl to);
 
+	/*
+		Fades an object to a certain opacity.
+	*/
+	void FadeTo(objHndl obj, int targetOpacity, int fadeTimeInMs, int unk1, int unk2);
+	
+	void SetFlag(objHndl obj, ObjectFlag flag) {
+		_SetFlag(obj, flag);
+	}
+	void ClearFlag(objHndl obj, ObjectFlag flag) {
+		_ClearFlag(obj, flag);
+	}
+
+	/*
+		Toggles a portal open/closed state.
+	*/
+	void PortalToggleOpen(objHndl handle) {
+		_PortalToggleOpen(handle);
+	}
+
+	void ContainerToggleOpen(objHndl handle) {
+		_ContainerToggleOpen(handle);
+	}
+
 #pragma region Common
 	ObjectId GetId(objHndl handle);
 	objHndl GetHandle(const ObjectId &id);
@@ -265,6 +288,13 @@ private:
 
 	void (__cdecl *_TakeMoney)(objHndl critter, int platinum, int gold, int silver, int copper);
 	void (__cdecl *_GiveMoney)(objHndl critter, int platinum, int gold, int silver, int copper);
+
+	void(__cdecl *_FadeTo)(objHndl obj, int targetOpacity, int fadeTime, int unk1, int unk2);
+
+	void (__cdecl *_SetFlag)(objHndl obj, ObjectFlag flag);
+	void (__cdecl *_ClearFlag)(objHndl obj, ObjectFlag flag);
+	void (__cdecl *_PortalToggleOpen)(objHndl handle);
+	void (__cdecl *_ContainerToggleOpen)(objHndl handle);
 #pragma endregion
 } ;
 

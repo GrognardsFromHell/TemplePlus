@@ -60,6 +60,11 @@ struct CritterSystem : AddressTable
 	objHndl GetWornItem(objHndl handle, EquipSlot slot);
 
 	void Attack(objHndl target, objHndl attacker, int n1, int n2);
+
+	/*
+		Checks if the given critter is friendly towards the target.
+	*/
+	bool IsFriendly(objHndl, objHndl);
 };
 
 extern CritterSystem critterSys;

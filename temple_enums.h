@@ -1320,7 +1320,7 @@ enum Stat : uint32_t {
 
 #pragma endregion
 
-enum ONF : uint32_t
+enum NpcFlag : uint32_t
 {
 	ONF_EX_FOLLOWER = 1,
 	ONF_WAYPOINTS_DAY = 2,
@@ -1876,7 +1876,7 @@ enum MonsterCategory : uint32_t {
 	mc_subtye_fire = 4096
 };
 
-enum OCF
+enum CritterFlag
 {
 	OCF_IS_CONCEALED = 0x1,
 	OCF_MOVING_SILENTLY = 0x2,
@@ -1915,6 +1915,21 @@ enum OCF
 
 #pragma endregion
 
+enum ContainerFlag : uint32_t {
+	OCOF_LOCKED = 0x1,
+	OCOF_JAMMED = 0x2,
+	OCOF_MAGICALLY_HELD = 0x4,
+	OCOF_NEVER_LOCKED = 0x8,
+	OCOF_ALWAYS_LOCKED = 0x10,
+	OCOF_LOCKED_DAY = 0x20,
+	OCOF_LOCKED_NIGHT = 0x40,
+	OCOF_BUSTED = 0x80,
+	OCOF_NOT_STICKY = 0x100,
+	OCOF_INVEN_SPAWN_ONCE = 0x200,
+	OCOF_INVEN_SPAWN_INDEPENDENT = 0x400,
+	OCOF_OPEN = 0x800,
+	OCOF_HAS_BEEN_OPENED = 0x1000
+};
 
 enum PortalFlag : uint32_t {
 	OPF_LOCKED = 0x1,
@@ -2128,4 +2143,10 @@ enum class DamageType : int {
 	Force = 16,
 	BloodLoss = 17,
 	Magic = 18
+};
+
+enum class SavingThrowType : uint32_t {
+	Fortitude = 0,
+	Reflex,
+	Will
 };

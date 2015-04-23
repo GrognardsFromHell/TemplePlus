@@ -248,6 +248,13 @@ Objects::Objects()
 	rebase(_TargetRandomTileNear, 0x100B99A0);
 	rebase(_TakeMoney, 0x1007FA40);
 	rebase(_GiveMoney, 0x1007F960);
+	rebase(_FadeTo, 0x1004C490);
+
+	rebase(_SetFlag, 0x10020F50);
+	rebase(_ClearFlag, 0x10021020);
+
+	rebase(_PortalToggleOpen, 0x100B4700);
+	rebase(_ContainerToggleOpen, 0x1010EA00);
 }
 
 void Objects::PropFetcher(GameObjectBody* objBody, obj_f fieldIdx, void * dataOut) {
@@ -430,6 +437,10 @@ float Objects::GetRotationTowards(objHndl from, objHndl to) {
 	auto locTo = GetLocationFull(to);
 
 	return AngleBetweenPoints(locFrom, locTo);
+}
+
+void Objects::FadeTo(objHndl obj, int targetOpacity, int fadeTimeInMs, int unk1, int unk2) {
+	_FadeTo(obj, targetOpacity, fadeTimeInMs, unk1, unk2);
 }
 
 void Objects::Move(objHndl handle, LocAndOffsets toLocation) {
