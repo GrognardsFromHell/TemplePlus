@@ -85,6 +85,17 @@ public:
 
 	ToEEHashtable<CondStruct> * mCondStructHashtable;
 
+	/*
+		Returns the condition definition with the given name,
+		null if none exists.
+	*/
+	CondStruct *GetByName(const string &name);
+
+	/*
+		Adds a condition to an item's obj_f_item_pad_wielder_condition_array and 
+		obj_f_item_pad_wielder_argument_array.
+	*/
+	void AddToItem(objHndl item, const CondStruct *cond, const vector<int> &args);
 
 #pragma endregion
 

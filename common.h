@@ -44,7 +44,6 @@
 # pragma region Standard Structs
 
 #pragma pack(push, 1)
-enum SkillEnum : uint32_t;
 
 typedef D3DXVECTOR2 vector2f;
 typedef D3DXVECTOR3 vector3f;

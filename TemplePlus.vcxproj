@@ -17,6 +17,7 @@
   <ItemGroup>
     <ClCompile Include="aas.cpp" />
     <ClCompile Include="action_sequence.cpp" />
+    <ClCompile Include="damage.cpp" />
     <ClCompile Include="dependencies\minhook\src\buffer.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -66,6 +67,7 @@
     <ClCompile Include="python\python_scripts.cpp" />
     <ClCompile Include="python\python_time.cpp" />
     <ClCompile Include="renderstates.cpp" />
+    <ClCompile Include="reputations.cpp" />
     <ClCompile Include="secret_door.cpp" />
     <ClCompile Include="skill.cpp" />
     <ClCompile Include="sound.cpp" />
@@ -217,6 +219,7 @@
     <ClInclude Include="ai.h" />
     <ClInclude Include="bonus.h" />
     <ClInclude Include="critter.h" />
+    <ClInclude Include="damage.h" />
     <ClInclude Include="dependencies\minhook\include\MinHook.h" />
     <ClInclude Include="dependencies\minhook\src\buffer.h" />
     <ClInclude Include="dependencies\minhook\src\HDE\hde32.h" />
@@ -245,6 +248,7 @@
     <ClInclude Include="python\python_support.h" />
     <ClInclude Include="python\python_time.h" />
     <ClInclude Include="renderstates.h" />
+    <ClInclude Include="reputations.h" />
     <ClInclude Include="secret_door.h" />
     <ClInclude Include="skill.h" />
     <ClInclude Include="textbubbles.h" />

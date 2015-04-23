@@ -4,11 +4,15 @@
 #include "../maps.h"
 #include "../inventory.h"
 #include "../timeevents.h"
+#include "../reputations.h"
 #include "../critter.h"
 #include "../anim.h"
 #include "../dispatcher.h"
 #include "../party.h"
+#include "../condition.h"
 #include "../ui/ui.h"
+#include "../damage.h"
+#include "../skill.h"
 #include "../ui/ui_dialog.h"
 #include "../dialog.h"
 #include "python_dice.h"
@@ -590,6 +594,172 @@ static PyObject* PyObjHandle_FloatLine(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_Damage(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl attacker;
+	DamageType damageType;
+	Dice dice;
+	int attackPower = 0;
+	D20ActionType actionType = D20A_NONE;
+	if (!PyArg_ParseTuple(args, "O&iO&|ii:objhndl.damage", &ConvertObjHndl, &attacker, &damageType, &ConvertDice, &dice, &attackPower, &actionType)) {
+		return 0;
+	}
+
+	damage.DealDamageFullUnk(self->handle, attacker, dice, damageType, attackPower, actionType);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_DamageWithReduction(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl attacker;
+	DamageType damageType;
+	Dice dice;
+	int reduction;
+	int attackPower = 0;
+	D20ActionType actionType = D20A_NONE;
+	if (!PyArg_ParseTuple(args, "O&iO&ii|i:objhndl.damage", &ConvertObjHndl, &attacker, &damageType, &ConvertDice, &dice, &attackPower, &reduction, &actionType)) {
+		return 0;
+	}
+
+	// Line 105: Saving Throw
+	damage.DealDamage(self->handle, attacker, dice, damageType, attackPower, reduction, 105, actionType);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_Heal(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl healer;
+	Dice dice;
+	D20ActionType actionType = D20A_NONE;
+
+	if (!PyArg_ParseTuple(args, "O&O&|i:objhndl.heal", &ConvertObjHndl, &healer, &ConvertDice, &dice, &actionType)) {
+		return 0;
+	}
+	damage.Heal(self->handle, healer, dice, actionType);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_HealSubdual(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl healer;
+	Dice dice;
+	D20ActionType actionType = D20A_NONE;
+	int spellId = 0; // TODO: check this default
+	if (!PyArg_ParseTuple(args, "O&O&|ii:objhndl.heal_subdual", &ConvertObjHndl, &healer, &ConvertDice, &dice, &actionType, &spellId)) {
+		return 0;
+	}
+
+	auto amount = dice.Roll();
+	damage.HealSubdual(self->handle, amount);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_SpellDamage(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl attacker;
+	Dice dice;
+	DamageType type;
+	int attackPowerType = 0;
+	D20ActionType actionType = D20A_NONE;
+	int spellId = 0;
+	if (!PyArg_ParseTuple(args, "O&iO&|iii:objhndl.spell_damage", &ConvertObjHndl, &attacker, &type, &ConvertDice, &dice, &attackPowerType, &actionType, &spellId)) {
+		return 0;
+	}
+	damage.DealSpellDamageFullUnk(self->handle, attacker, dice, type, attackPowerType, actionType, spellId, 0);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_SpellDamageWithReduction(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl attacker;
+	Dice dice;
+	DamageType type;
+	int attackPowerType = 0;
+	int reduction = 100;
+	D20ActionType actionType = D20A_NONE;
+	int spellId = 0;
+	if (!PyArg_ParseTuple(args, "O&iO&|iiii:objhndl.spell_damage_with_reduction", &ConvertObjHndl, &attacker, &type, &ConvertDice, &dice, &attackPowerType, &reduction, &actionType, &spellId)) {
+		return 0;
+	}
+	// Line 105: Saving Throw
+	damage.DealSpellDamage(self->handle, attacker, dice, type, attackPowerType, reduction, 105, actionType, spellId, 0);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_StealFrom(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl target;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.steal_from", &ConvertObjHndl, &target)) {
+		return 0;
+	}
+
+	animationGoals.PushUseSkillOn(self->handle, target, skill_pick_pocket);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_ReputationHas(PyObject* obj, PyObject* args) {
+	int reputationId;
+	if (!PyArg_ParseTuple(args, "i:objhndl.reputation_has", &reputationId)) {
+		return 0;
+	}
+	return PyInt_FromLong(partyReputation.Has(reputationId));
+}
+
+static PyObject* PyObjHandle_ReputationAdd(PyObject* obj, PyObject* args) {
+	int reputationId;
+	if (!PyArg_ParseTuple(args, "i:objhndl.reputation_add", &reputationId)) {
+		return 0;
+	}
+	partyReputation.Add(reputationId);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_ReputationRemove(PyObject* obj, PyObject* args) {
+	int reputationId;
+	if (!PyArg_ParseTuple(args, "i:objhndl.reputation_remove", &reputationId)) {
+		return 0;
+	}
+	partyReputation.Remove(reputationId);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_ItemConditionAdd(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+
+	// First arg has to be the condition name
+	if (PyTuple_GET_SIZE(args) < 1 || !PyString_Check(PyTuple_GET_ITEM(args, 0))) {
+		PyErr_SetString(PyExc_RuntimeError, "item_condition_add_with_args has to be "
+			"called at least with the condition name.");
+		return 0;
+	}
+
+	auto condName = PyString_AsString(PyTuple_GET_ITEM(args, 0));
+	auto cond = conds.GetByName(condName);
+	if (!cond) {
+		PyErr_Format(PyExc_ValueError, "Unknown condition name: %s", condName);
+		return 0;
+	}
+
+	// Following arguments all have to be integers and gel with the condition argument count
+	vector<int> condArgs(cond->numArgs, 0);
+	for (int i = 0; i < cond->numArgs; ++i) {
+		if (PyTuple_GET_SIZE(args) > i + 1) {
+			auto item = PyTuple_GET_ITEM(args, i + 1);
+			if (!PyInt_Check(item)) {
+				auto itemRepr = PyObject_Repr(item);
+				PyErr_Format(PyExc_ValueError, "Argument %d for condition %s (requires %d args) is not of type int: %s",
+					i + 1, condName, cond->numArgs, PyString_AsString(itemRepr));
+				Py_DECREF(itemRepr);
+				return 0;
+			}
+			condArgs[i] = PyInt_AsLong(item);
+		}
+	}
+
+	conds.AddToItem(self->handle, cond, condArgs);
+	return PyInt_FromLong(1);
+}
+
 static PyMethodDef PyObjHandleMethods[] = {
 	{ "__getstate__", PyObjHandle_getstate, METH_VARARGS, NULL },
 	{ "__reduce__", PyObjHandle_reduce, METH_VARARGS, NULL },
@@ -627,15 +797,15 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "attack", PyObjHandle_Attack, METH_VARARGS, NULL },
 	{ "turn_towards", PyObjHandle_TurnTowards, METH_VARARGS, NULL },
 	{ "float_line", PyObjHandle_FloatLine, METH_VARARGS, NULL },
-	{ "damage", NULL, METH_VARARGS, NULL },
-	{ "damage_with_reduction", NULL, METH_VARARGS, NULL },
-	{ "heal", NULL, METH_VARARGS, NULL },
-	{ "healsubdual", NULL, METH_VARARGS, NULL },
-	{ "steal_from", NULL, METH_VARARGS, NULL },
-	{ "reputation_has", NULL, METH_VARARGS, NULL },
-	{ "reputation_add", NULL, METH_VARARGS, NULL },
-	{ "reputation_remove", NULL, METH_VARARGS, NULL },
-	{ "item_condition_add_with_args", NULL, METH_VARARGS, NULL },
+	{ "damage", PyObjHandle_Damage, METH_VARARGS, NULL },
+	{ "damage_with_reduction", PyObjHandle_DamageWithReduction, METH_VARARGS, NULL },
+	{ "heal", PyObjHandle_Heal, METH_VARARGS, NULL },
+	{ "healsubdual", PyObjHandle_HealSubdual, METH_VARARGS, NULL },
+	{ "steal_from", PyObjHandle_StealFrom, METH_VARARGS, NULL },
+	{ "reputation_has", PyObjHandle_ReputationHas, METH_VARARGS, NULL },
+	{ "reputation_add", PyObjHandle_ReputationAdd, METH_VARARGS, NULL },
+	{ "reputation_remove", PyObjHandle_ReputationRemove, METH_VARARGS, NULL },
+	{ "item_condition_add_with_args", PyObjHandle_ItemConditionAdd, METH_VARARGS, NULL },
 	{ "condition_add_with_args", NULL, METH_VARARGS, NULL },
 	{ "condition_add_with_args", NULL, METH_VARARGS, NULL },
 	{ "condition_add", NULL, METH_VARARGS, NULL },
@@ -704,8 +874,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "has_feat", NULL, METH_VARARGS, NULL },
 	{ "spell_known_add", NULL, METH_VARARGS, NULL },
 	{ "spell_memorized_add", NULL, METH_VARARGS, NULL },
-	{ "spell_damage", NULL, METH_VARARGS, NULL },
-	{ "spell_damage_with_reduction", NULL, METH_VARARGS, NULL },
+	{ "spell_damage", PyObjHandle_SpellDamage, METH_VARARGS, NULL },
+	{ "spell_damage_with_reduction", PyObjHandle_SpellDamageWithReduction, METH_VARARGS, NULL },
 	{ "spell_heal", NULL, METH_VARARGS, NULL },
 	{ "identify_all", NULL, METH_VARARGS, NULL },
 	{ "ai_flee_add", NULL, METH_VARARGS, NULL },

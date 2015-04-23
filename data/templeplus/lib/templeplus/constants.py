@@ -348,11 +348,12 @@ D20_MODS_SPELLS_F_DISPEL_MAGIC_AREA = -2
 D20_MODS_SPELLS_F_DISPEL_MAGIC_TARGET = -1
 
 D20_Save_Fortitude = 0
+D20_Save_Reflex = 1
+D20_Save_Will = 2
+
 D20_Save_Reduction_None = 0
 D20_Save_Reduction_Half = 1
-D20_Save_Reflex = 1
 D20_Save_Reduction_Quarter = 2
-D20_Save_Will = 2
 
 DAMAGE_REDUCTION_QUARTER = 25
 DAMAGE_REDUCTION_HALF = 50

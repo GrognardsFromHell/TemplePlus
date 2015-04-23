@@ -4,6 +4,7 @@
 #include <util/fixes.h>
 #include "python_debug.h"
 #include "python_importer.h"
+#include "python_debug.h"
 #include "python_game.h"
 #include "python_time.h"
 #include "python_consoleout.h"
@@ -50,9 +51,6 @@ void PythonPrepareGlobalNamespace() {
 
 static bool __cdecl PythonInit(GameSystemConf *conf) {
 
-	TioFileFuncs fileFuncs;
-	fileFuncs.write = pythonInitInternal.PythonConsoleWrite;
-
 	Py_OptimizeFlag++;
 	Py_VerboseFlag++;
 	Py_NoSiteFlag++;
@@ -64,6 +62,7 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 		
 	PyTempleImporter_Install();
 	PyToeeInitModule();
+	PyDebug_Init();
 
 	MainModule = PyImport_ImportModule("__main__");
 	MainModuleDict = PyModule_GetDict(MainModule);

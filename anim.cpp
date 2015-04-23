@@ -882,8 +882,11 @@ static struct AnimationAdresses : AddressTable {
 	
 	bool (__cdecl *PushRotate)(objHndl obj, float rotation);
 
+	bool (__cdecl *PushUseSkillOn)(objHndl actor, objHndl target, objHndl scratchObj, SkillEnum skill, int goalFlags);
+
 	AnimationAdresses() {
 		rebase(PushRotate, 0x100153E0);
+		rebase(PushUseSkillOn, 0x1001C690);
 	}
 
 } addresses;
@@ -892,4 +895,8 @@ AnimationGoals animationGoals;
 
 bool AnimationGoals::PushRotate(objHndl obj, float rotation) {
 	return addresses.PushRotate(obj, rotation);
+}
+
+bool AnimationGoals::PushUseSkillOn(objHndl actor, objHndl target, SkillEnum skill, objHndl scratchObj, int goalFlags) {
+	return addresses.PushUseSkillOn(actor, target, scratchObj, skill, goalFlags);
 }

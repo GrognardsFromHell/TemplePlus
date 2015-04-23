@@ -647,15 +647,3 @@ void _globD20ActnInit()
 {
 	d20Sys.globD20ActnInit();
 }
-
-static void D20Dumper() {
-
-	
-
-/*	for (auto i = 0; i < 68; i++) {
-		logger->info("{}", d20Sys.ToEEd20ActionNames[i]);
-	}
-	*/ // dump completed, imported into TemplePlus :)
-}
-
-static PythonDebugFunc pyMapObjDebugFunc("dump_d20_actions", &D20Dumper);

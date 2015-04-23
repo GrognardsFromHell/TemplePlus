@@ -220,6 +220,8 @@
     <ClCompile Include="skill.cpp" />
     <ClCompile Include="turn_based.cpp" />
     <ClCompile Include="dialog.cpp" />
+    <ClCompile Include="damage.cpp" />
+    <ClCompile Include="reputations.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -457,6 +459,8 @@
     <ClInclude Include="skill.h" />
     <ClInclude Include="turn_based.h" />
     <ClInclude Include="dialog.h" />
+    <ClInclude Include="damage.h" />
+    <ClInclude Include="reputations.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

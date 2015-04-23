@@ -2,7 +2,8 @@
 #include "common.h"
 #include "dispatcher.h"
 #include "condition.h"
-
+#include "temple_functions.h"
+#include "obj.h"
 
 ConditionSystem conds;
 
@@ -99,7 +100,7 @@ uint32_t _ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, Co
 };
 
 void _CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNode) {
-	auto subDispDef = &(condNode->condStruct->subDispDefs);
+	auto subDispDef = condNode->condStruct->subDispDefs;
 
 	while (subDispDef->dispType != 0) {
 		auto subDispNodeNew = (SubDispNode *)allocFuncs._malloc_0(sizeof(SubDispNode));
@@ -199,4 +200,26 @@ uint32_t _CondStructAddToHashtable(CondStruct * condStruct)
 CondStruct * _GetCondStructFromHashcode(uint32_t key)
 {
 	return conds.hashmethods.GetCondStruct(key);
+}
+
+CondStruct* ConditionSystem::GetByName(const string& name) {
+	auto key = templeFuncs.StringHash(name.c_str());
+	return hashmethods.GetCondStruct(key);
+}
+
+void ConditionSystem::AddToItem(objHndl item, const CondStruct* cond, const vector<int>& args) {
+	assert(args.size() == cond->numArgs);
+
+	auto curCondCount = templeFuncs.Obj_Get_IdxField_NumItems(item, obj_f_item_pad_wielder_condition_array);
+	auto curCondArgCount = templeFuncs.Obj_Get_IdxField_NumItems(item, obj_f_item_pad_wielder_argument_array);
+
+	// Add the condition name hash to the list
+	auto key = templeFuncs.StringHash(cond->condName);
+	templeFuncs.Obj_Set_IdxField_byValue(item, obj_f_item_pad_wielder_condition_array, curCondCount, key);
+
+	auto idx = curCondArgCount;
+	for (auto arg : args) {
+		templeFuncs.Obj_Set_IdxField_byValue(item, obj_f_item_pad_wielder_argument_array, idx, arg);
+		idx++;
+	}
 }

@@ -1733,7 +1733,7 @@ enum enum_dispIO_type : uint32_t {
 	dispIOType1,
 	dispIOType2,
 	dispIOType3,
-	dispIOType4,
+	dispIOTypeDamage,
 	dispIOType5,
 	dispIOType6,
 	dispIOTypeQuery,
@@ -1787,7 +1787,7 @@ enum enum_disp_type : uint32_t {
 	dispType17,
 	dispType18,
 	dispType19,
-	dispType20,
+	dispType20, // Combat
 	dispType21,
 	dispType22,
 	dispType23,
@@ -2106,3 +2106,26 @@ enum ArmorType : uint32_t
 
 #pragma endregion 
 
+// Keep in sync with Python enum
+enum class DamageType : int {
+	Unspecified = -1,
+	Bludgeoning = 0,
+	Piercing = 1,
+	Slashing = 2,
+	BludgeoningAndPiercing = 3,
+	PiercingAndSlashing = 4,
+	SlashingAndBludgeoning = 5,
+	SlashingAndBludgeoningAndPiercing = 6,
+	Acid = 7,
+	Cold = 8,
+	Electricity = 9,
+	Fire = 10,
+	Sonic = 11,
+	NegativeEnergy = 12,
+	Subdual = 13,
+	Poison = 14,
+	PositiveEnergy = 15,
+	Force = 16,
+	BloodLoss = 17,
+	Magic = 18
+};

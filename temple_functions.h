@@ -27,7 +27,7 @@ struct TempleFuncs : AddressTable {
 
 	void(*ProcessSystemEvents)();
 	PyObject* (__cdecl *PyScript_Execute)(char *pPyFileName, char *pPyFuncName, PyObject *pPyArgTuple);
-	uint32_t(__cdecl *StringHash)( char * pString);
+	uint32_t(__cdecl *StringHash)(const char * pString);
 
 
 	int32_t diceRoll(uint32_t dieNum, uint32_t dieType, int32_t dieBonus);

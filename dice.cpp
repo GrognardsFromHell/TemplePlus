@@ -19,6 +19,10 @@ int Dice::Roll(int count, int sides, int modifier) {
 	return addresses.DiceRoller(count, sides, modifier);
 }
 
+int Dice::Roll() {
+	return Roll(mCount, mSides, mModifier);
+}
+
 bool Dice::Parse(const char* diceStr, int& count, int& sides, int& modifier) {
 	modifier = 0;
 	count = atoi(diceStr);

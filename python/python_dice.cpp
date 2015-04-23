@@ -129,3 +129,14 @@ PyObject* PyDice_FromDice(const Dice& dice) {
 	self->bonus = dice.GetModifier();
 	return (PyObject*) self;
 }
+
+bool ConvertDice(PyObject* obj, Dice* pDiceOut) {
+	if (obj->ob_type != &PyDiceType) {
+		PyErr_SetString(PyExc_TypeError, "Expected a dice.");
+		return false;
+	}
+
+	auto pyDice = (PyDice*)obj;
+	*pDiceOut = Dice(pyDice->number, pyDice->size, pyDice->bonus);
+	return true;
+}

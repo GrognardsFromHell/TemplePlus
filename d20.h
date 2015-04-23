@@ -12,7 +12,6 @@ struct ActnSeq;
 struct TurnBasedStatus;
 enum SpontCastType;
 struct D20SpellData;
-enum D20ActionType : int32_t;
 enum D20CAF : uint32_t;
 enum SpontCastType : unsigned char;
 struct D20SpellData;

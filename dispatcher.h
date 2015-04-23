@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.h"
+#include "skill.h"
 
 #define DISPATCHER_MAX  250 // max num of simultaneous Dispatches going on (static int counter inside _DispatcherProcessor)
 
@@ -72,10 +73,16 @@ struct SubDispDef {
 	uint32_t data2;
 };
 
+/*
+	This defines a condition and what it does, while CondNode represents an instance of this or another condition.
+*/
 struct CondStruct {
 	char* condName;
 	int numArgs;
-	SubDispDef subDispDefs;
+	/*
+		This is a variable length array of dispatcher hooks that this condition has.
+	*/
+	SubDispDef subDispDefs[1];
 };
 
 struct DispatcherCallbackArgs {
