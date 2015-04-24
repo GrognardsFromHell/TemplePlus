@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "location.h"
+#include "obj.h"
 
 LocationSys locSys;
 
@@ -28,10 +29,22 @@ float LocationSys::intToFloat(int32_t x)
 	return result;
 }
 
+float LocationSys::DistanceToLoc(objHndl from, LocAndOffsets loc) {
+	auto objLoc = objects.GetLocationFull(from);
+	auto distance = Distance3d(objLoc, loc);
+	auto radius = objects.GetRadius(from);
+	return distance - radius;
+}
+
+float LocationSys::InchesToFeet(float inches) {
+	return inches / 12.0f;
+}
+
 LocationSys::LocationSys()
 {
 	rebase(getLocAndOff, 0x10040080);
-	macRebase(TOEEdistBtwnLocAndOffs, 1002A0A0)
+	rebase(DistanceToObj, 0x100236E0);
+	rebase(Distance3d, 0x1002A0A0);
 }
 
 float AngleBetweenPoints(LocAndOffsets fromPoint, LocAndOffsets toPoint) {

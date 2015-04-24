@@ -67,6 +67,7 @@ D20System::D20System()
 	rebase(_d20aTriggerCombatCheck, 0x1008AE90);//ActnSeq * @<eax>
 	rebase(_tumbleCheck, 0x1008AA90);
 	rebase(_d20aTriggersAOO, 0x1008A9C0);
+	rebase(CreateRollHistory, 0x100DFFF0);
 }
 
 

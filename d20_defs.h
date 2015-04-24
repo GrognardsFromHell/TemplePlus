@@ -120,7 +120,42 @@ enum D20SavingThrowFlag : uint32_t {
 	D20STD_F_CHARM = 2,
 	D20STD_F_TRAP = 3,
 	D20STD_F_POISON = 4,
-	D20STD_F_SPELL_LIKE_EFFECT = 5,
+
+	/*
+	    v7 = flags | 0x10; <-- marks it as a spell like effect i'd wager
+    switch ( v10.SpellSchoolIdx )
+    {
+      case 1:
+        v7 = flags | 0x30;
+        break;
+      case 2:
+        v7 = flags | 0x50;
+        break;
+      case 3:
+        v7 = flags | 0x90;
+        break;
+      case 4:
+        v7 = flags | 0x110;
+        break;
+      case 5:
+        v7 = flags | 0x210;
+        break;
+      case 6:
+        v7 = flags | 0x410;
+        break;
+      case 7:
+        v7 = flags | 0x810;
+        break;
+      case 8:
+        v7 = flags | 0x1010;
+        break;
+      default:
+        break;
+    }
+    v8 = 0;
+	*/
+
+	D20STD_F_SPELL_LIKE_EFFECT = 0x10,
 	D20STD_F_SPELL_SCHOOL_ABJURATION = 6,
 	D20STD_F_SPELL_SCHOOL_CONJURATION = 7,
 	D20STD_F_SPELL_SCHOOL_DIVINATION = 8,
@@ -129,7 +164,20 @@ enum D20SavingThrowFlag : uint32_t {
 	D20STD_F_SPELL_SCHOOL_ILLUSION = 11,
 	D20STD_F_SPELL_SCHOOL_NECROMANCY = 12,
 	D20STD_F_SPELL_SCHOOL_TRANSMUTATION = 13,
-	D20STD_F_SPELL_DESCRIPTOR_ACID = 14,
+
+	/*
+		The spell descriptor bitmask is copied over allmost verbatim,
+		although shifted left by 13. 
+		v8 = 0;
+		do
+		{
+			if ( (v10.SpellDescriptorBitmask & (1 << v8)) == 1 << v8 )
+			v7 |= 1 << (v8 + 13);
+			++v8;
+		}
+		while ( v8 < 21 );
+	*/
+	D20STD_F_SPELL_DESCRIPTOR_ACID = 0x2000,
 	D20STD_F_SPELL_DESCRIPTOR_CHAOTIC = 15,
 	D20STD_F_SPELL_DESCRIPTOR_COLD = 16,
 	D20STD_F_SPELL_DESCRIPTOR_DARKNESS = 17,
@@ -148,7 +196,7 @@ enum D20SavingThrowFlag : uint32_t {
 	D20STD_F_SPELL_DESCRIPTOR_TELEPORTATION = 30,
 	D20STD_F_SPELL_DESCRIPTOR_AIR = 31,
 	D20STD_F_SPELL_DESCRIPTOR_EARTH = 32,
-	D20STD_F_SPELL_DESCRIPTOR_WATER = 33,
+	D20STD_F_SPELL_DESCRIPTOR_WATER = 33, // <- This one might not even work anymore...
 	D20STD_F_DISABLE_SLIPPERY_MIND = 34
 };
 

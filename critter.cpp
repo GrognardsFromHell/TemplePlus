@@ -13,6 +13,9 @@ static struct CritterAddresses : AddressTable {
 	int (__cdecl *HasLineOfSight)(objHndl critter, objHndl target);
 	void (__cdecl *Attack)(objHndl target, objHndl attacker, int n1, int n2);
 	bool (__cdecl *IsFriendly)(objHndl pc, objHndl npc);
+	int (__cdecl *SoundmapCritter)(objHndl critter, int id);
+	void (__cdecl *KillByEffect)(objHndl critter, objHndl killer);
+	void (__cdecl *Kill)(objHndl critter, objHndl killer);
 
 	CritterAddresses() {
 		rebase(HasMet, 0x10053CD0);
@@ -22,6 +25,9 @@ static struct CritterAddresses : AddressTable {
 		rebase(HasLineOfSight, 0x10059470);
 		rebase(Attack, 0x1005E8D0);
 		rebase(IsFriendly, 0x10080E00);
+		rebase(SoundmapCritter, 0x1006DEF0);
+		rebase(Kill, 0x100B8A00);
+		rebase(KillByEffect, 0x100B9460);
 	}
 
 } addresses;
@@ -90,8 +96,20 @@ void CritterSystem::Attack(objHndl target, objHndl attacker, int n1, int n2) {
 bool CritterSystem::IsFriendly(objHndl pc, objHndl npc) {
 	return addresses.IsFriendly(pc, npc);
 }
-#pragma region Critter Hooks
 
+int CritterSystem::SoundmapCritter(objHndl critter, int id) {
+	return addresses.SoundmapCritter(critter, id);
+}
+
+void CritterSystem::Kill(objHndl critter, objHndl killer) {
+	return addresses.Kill(critter, killer);
+}
+
+void CritterSystem::KillByEffect(objHndl critter, objHndl killer) {
+	return addresses.KillByEffect(critter, killer);
+}
+
+#pragma region Critter Hooks
 uint32_t _isCritterCombatModeActive(objHndl objHnd)
 {
 	return critterSys.isCritterCombatModeActive(objHnd);

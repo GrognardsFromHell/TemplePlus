@@ -200,8 +200,12 @@ static int RunPythonObjScript(ObjScriptInvocation *invoc) {
 	return result;
 }
 
-void RunPythonString(const char *command) {
-	pythonIntegration.RunString(command);
+void RunAnimFramePythonScript(const char *command) {
+	pythonIntegration.RunAnimFrameScript(command);
+}
+
+void SetAnimatedObject(objHndl handle) {
+	pythonIntegration.SetAnimatedObject(handle);
 }
 
 class PythonScriptIntegration : public TempleFix {
@@ -224,6 +228,7 @@ public:
 		replaceFunction(0x11EB6966, Co8Load);
 		replaceFunction(0x100AE1E0, IsPythonScript);
 		replaceFunction(0x100AE210, RunPythonObjScript);
+		replaceFunction(0x100AEDA0, SetAnimatedObject);
 	}
 
 } pythonIntegrationReplacement;
@@ -283,8 +288,28 @@ bool PythonIntegration::IsValidScriptId(int scriptId) {
 	return mScripts.find(scriptId) != mScripts.end();
 }
 
-void PythonIntegration::RunString(const char* command) {
+void PythonIntegration::RunAnimFrameScript(const char* command) {
 	logger->info("Running Python command {}", command);
+
+	auto mainModule = PyImport_ImportModule("__main__");
+	auto mainDict = PyModule_GetDict(mainModule);
+	auto locals = PyDict_New();
+
+	// Put the anim obj into the locals
+	auto animObj = PyObjHndl_Create(mAnimatedObj);
+	PyDict_SetItemString(locals, "anim_obj", animObj);
+	Py_DECREF(animObj);
+
+	auto result = PyRun_String(command, Py_single_input, mainDict, locals);
+
+	Py_DECREF(mainModule);
+	Py_DECREF(locals);
+
+	if (!result) {
+		PyErr_Print();
+	} else {
+		Py_DECREF(result);
+	}
 }
 
 int PythonIntegration::RunScript(int scriptId, ScriptEvent evt, PyObject* args) {

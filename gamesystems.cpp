@@ -829,8 +829,7 @@ static void initAas() {
 	conf.pixelPerWorldTile2 = conf.pixelPerWorldTile1;
 	conf.getSkmFile = (uint32_t)temple_address<0x100041E0>();
 	conf.getSkaFile = (uint32_t)temple_address<0x10004230>();
-	conf.runScript = RunPythonString;
-		// (uint32_t)temple_address<0x100AD990>();
+	conf.runScript = RunAnimFramePythonScript;
 
 	if (aasFuncs.Init(&conf)) {
 		throw TempleException("Failed to initialize animation system.");

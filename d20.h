@@ -58,6 +58,8 @@ struct D20System : AddressTable
 	uint32_t (__cdecl*_tumbleCheck)(D20Actn* d20a);
 	int32_t (__cdecl *_d20aTriggersAOO)(void * iO); // d20a @<esi> // 1008A9C0
 
+	void (__cdecl *CreateRollHistory)(int idx);
+
 	//char **ToEEd20ActionNames;
 
 	D20System();
@@ -99,7 +101,7 @@ struct D20Actn
 {
 	D20ActionType d20ActType;
 	uint32_t data1;
-	D20CAF d20Caf;
+	int d20Caf; // Based on D20_CAF
 	uint32_t field_C;
 	objHndl d20APerformer;
 	objHndl d20ATarget;
@@ -113,6 +115,22 @@ struct D20Actn
 	uint32_t spellEnum;
 	uint32_t animID;
 	PathQueryResult * path;
+
+	D20Actn() {}
+
+	D20Actn(D20ActionType type) {
+		rollHist1 = -1;
+		rollHist2 = -1;
+		rollHist3 = -1;
+		d20ActType = type;
+		d20APerformer = 0;
+		d20ATarget = 0;
+		d20Caf = 0;
+		distTraversed = 0;
+		path = 0;
+		spellEnum = 0;
+		data1 = 0;
+	}
 };
 
 

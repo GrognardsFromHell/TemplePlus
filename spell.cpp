@@ -8,7 +8,18 @@
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
+struct SpellCondListEntry {
+	CondStruct *condition;
+	int unknown;
+};
 
+static struct SpellAddresses : AddressTable {
+	SpellCondListEntry *spellConds;
+
+	SpellAddresses() {
+		rebase(spellConds, 0x102E2600);
+	}
+} addresses;
 
 SpontCastSpellLists spontCastSpellLists;
 
@@ -126,6 +137,13 @@ void SpellSystem::spellPacketBodyReset(SpellPacketBody* spellPktBody)
 void SpellSystem::spellPacketSetCasterLevel(SpellPacketBody* spellPktBody)
 {
 	_spellPacketSetCasterLevel(spellPktBody);
+}
+
+CondStruct* SpellSystem::GetCondFromSpellId(int id) {
+	if (id >= 3 && id < 254) {
+		return addresses.spellConds[id - 1].condition;
+	}
+	return nullptr;
 }
 #pragma endregion
 

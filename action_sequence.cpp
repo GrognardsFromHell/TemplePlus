@@ -733,8 +733,7 @@ void ActionSequenceSystem::actionPerform()
 		if (d20->tumbleCheck(d20a))
 		{
 			AOOSthgSub_10097D50(d20a->d20APerformer, d20a->d20ATarget);
-			D20CAF * caflags = & (curSeq->d20ActArray[curSeq->d20ActArrayNum - 1].d20Caf);
-			*((uint32_t*)caflags) |= (uint32_t)D20CAF_AOO_MOVEMENT;
+			curSeq->d20ActArray[curSeq->d20ActArrayNum - 1].d20Caf |= D20CAF_AOO_MOVEMENT;
 			sequencePerform();
 			return;
 		}

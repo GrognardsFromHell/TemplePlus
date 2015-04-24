@@ -19,6 +19,8 @@ static struct DamageAddresses : AddressTable {
 	
 	bool (__cdecl *SavingThrowSpell)(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags, int spellId);
 
+	bool (__cdecl *ReflexSaveAndDamage)(objHndl obj, objHndl attacker, int dc, int reduction, int flags, int dicePacked, DamageType damageType, int attackPower, D20ActionType actionType, int spellId);
+
 	DamageAddresses() {
 		rebase(DoDamage, 0x100B8D70);
 		rebase(Heal, 0x100B7DF0);
@@ -26,6 +28,7 @@ static struct DamageAddresses : AddressTable {
 		rebase(HealSubdual, 0x100B9030);
 		rebase(SavingThrow, 0x100B4F20);
 		rebase(SavingThrowSpell, 0x100B83C0);
+		rebase(ReflexSaveAndDamage, 0x100B9500);
 	}
 } addresses;
 
@@ -57,4 +60,8 @@ bool Damage::SavingThrow(objHndl obj, objHndl attacker, int dc, SavingThrowType 
 
 bool Damage::SavingThrowSpell(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags, int spellId) {
 	return addresses.SavingThrow(obj, attacker, dc, type, flags);
+}
+
+bool Damage::ReflexSaveAndDamage(objHndl obj, objHndl attacker, int dc, int reduction, int flags, const Dice& dice, DamageType damageType, int attackPower, D20ActionType actionType, int spellId) {
+	return addresses.ReflexSaveAndDamage(obj, attacker, dc, reduction, flags, dice.ToPacked(), damageType, attackPower, actionType, spellId);
 }

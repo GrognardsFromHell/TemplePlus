@@ -65,6 +65,22 @@ struct CritterSystem : AddressTable
 		Checks if the given critter is friendly towards the target.
 	*/
 	bool IsFriendly(objHndl, objHndl);
+
+	/*
+		For id = 7, this returns footstep sound ids for the critter
+		on the tile it is standing on. -1 if none should be played.
+	*/
+	int SoundmapCritter(objHndl critter, int id);
+
+	/*
+		Kills the critter.
+	*/
+	void Kill(objHndl critter, objHndl killer = 0);
+
+	/*
+		Same as Kill, but applies condition "Killed By Death Effect" before killing.
+	*/
+	void KillByEffect(objHndl critter, objHndl killer = 0);
 };
 
 extern CritterSystem critterSys;

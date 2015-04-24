@@ -173,6 +173,18 @@ struct Objects : AddressTable {
 		_ContainerToggleOpen(handle);
 	}
 
+	bool SecretdoorDetect(objHndl door, objHndl viewer) {
+		return _SecretdoorDetect(door, viewer);
+	}
+
+	bool HasSpellEffects(objHndl obj) {
+		return _HasSpellEffects(obj);
+	}
+
+	void Destroy(objHndl obj) {
+		_Destroy(obj);
+	}
+
 #pragma region Common
 	ObjectId GetId(objHndl handle);
 	objHndl GetHandle(const ObjectId &id);
@@ -295,6 +307,11 @@ private:
 	void (__cdecl *_ClearFlag)(objHndl obj, ObjectFlag flag);
 	void (__cdecl *_PortalToggleOpen)(objHndl handle);
 	void (__cdecl *_ContainerToggleOpen)(objHndl handle);
+
+	bool (__cdecl *_SecretdoorDetect)(objHndl door, objHndl viewer);
+	bool (__cdecl *_HasSpellEffects)(objHndl obj);
+
+	void (__cdecl *_Destroy)(objHndl obj);
 #pragma endregion
 } ;
 

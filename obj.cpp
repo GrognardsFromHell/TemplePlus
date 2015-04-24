@@ -255,6 +255,9 @@ Objects::Objects()
 
 	rebase(_PortalToggleOpen, 0x100B4700);
 	rebase(_ContainerToggleOpen, 0x1010EA00);
+	rebase(_SecretdoorDetect, 0x10046920);
+	rebase(_HasSpellEffects, 0x10076370);
+	rebase(_Destroy, 0x100257A0);
 }
 
 void Objects::PropFetcher(GameObjectBody* objBody, obj_f fieldIdx, void * dataOut) {

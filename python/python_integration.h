@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "../obj.h"
+
 struct ScriptRecord {
 	int id;
 	string moduleName;
@@ -65,8 +67,16 @@ public:
 	void UnloadScripts();
 
 	bool IsValidScriptId(int scriptId);
-	void RunString(const char *command);
+	void RunAnimFrameScript(const char *command);
 	int RunScript(int scriptId, ScriptEvent evt, PyObject *args);
+
+	/*
+		Set the object that is being animated. All calls to RunString will 
+		have this object in their local variables.
+	*/
+	void SetAnimatedObject(objHndl handle) {
+		mAnimatedObj = handle;
+	}
 
 	// Indicates that the integration is currently executing a script attached to an obj
 	// Only if this is true do the next two properties (newsid + counters) have any actual meaning
@@ -107,8 +117,9 @@ private:
 	bool mInObjInvocation = false;
 	int mNewSid = -1;
 	int mCounters[4];
+	objHndl mAnimatedObj;
 };
 
 extern PythonIntegration pythonIntegration;
 
-void RunPythonString(const char *command);
+void RunAnimFramePythonScript(const char *command);

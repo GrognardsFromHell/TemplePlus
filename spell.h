@@ -91,6 +91,8 @@ const uint32_t TestSizeOfSpellPacket = sizeof(SpellPacket); // should be 0xAF0  
 
 #pragma endregion
 
+struct CondStruct;
+
 struct SpellSystem : AddressTable
 {
 	IdxTable<SpellPacket> * spellCastIdxTable;
@@ -99,7 +101,7 @@ struct SpellSystem : AddressTable
 	uint32_t getStatModBonusSpellCount(objHndl objHnd, uint32_t classCode, uint32_t slotLvl);
 	void spellPacketBodyReset(SpellPacketBody * spellPktBody);
 	void spellPacketSetCasterLevel(SpellPacketBody * spellPktBody);
-
+	CondStruct *GetCondFromSpellId(int id);
 	uint32_t(__cdecl * spellRemoveFromStorage)(objHndl objHnd, obj_f fieldIdx, SpellStoreData * spellData, int unknown);
 	uint32_t (__cdecl * spellsPendingToMemorized)(objHndl objHnd);
 	SpellSystem()

@@ -90,6 +90,11 @@ public:
 	// Save against a spell
 	bool SavingThrowSpell(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags, int spellId);
 
+	/*
+		Deals damage that can be reduced by a successful reflex save.
+	*/
+	bool ReflexSaveAndDamage(objHndl obj, objHndl attacker, int dc, int reduction, int flags, const Dice &dice, DamageType damageType, int attackPower, D20ActionType actionType, int spellId);
+
 };
 
 extern Damage damage;
