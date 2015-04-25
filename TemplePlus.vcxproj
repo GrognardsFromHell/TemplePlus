@@ -70,6 +70,7 @@
     <ClCompile Include="python\python_objectscripts.cpp" />
     <ClCompile Include="python\python_quests.cpp" />
     <ClCompile Include="python\python_scripts.cpp" />
+    <ClCompile Include="python\python_spell.cpp" />
     <ClCompile Include="python\python_time.cpp" />
     <ClCompile Include="quest.cpp" />
     <ClCompile Include="renderstates.cpp" />
@@ -256,6 +257,7 @@
     <ClInclude Include="python\python_object.h" />
     <ClInclude Include="python\python_objectscripts.h" />
     <ClInclude Include="python\python_quests.h" />
+    <ClInclude Include="python\python_spell.h" />
     <ClInclude Include="python\python_support.h" />
     <ClInclude Include="python\python_time.h" />
     <ClInclude Include="quest.h" />

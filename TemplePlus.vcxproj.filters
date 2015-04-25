@@ -228,6 +228,7 @@
     <ClCompile Include="quest.cpp" />
     <ClCompile Include="python\python_areas.cpp" />
     <ClCompile Include="python\python_counters.cpp" />
+    <ClCompile Include="python\python_spell.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -474,6 +475,7 @@
     <ClInclude Include="quest.h" />
     <ClInclude Include="python\python_areas.h" />
     <ClInclude Include="python\python_counters.h" />
+    <ClInclude Include="python\python_spell.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
