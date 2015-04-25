@@ -8,6 +8,7 @@
 #include "tig/tig_mes.h"
 #include "common.h"
 #include "weapon.h"
+#include "critter.h"
 
 
 FeatSystem feats;
@@ -668,8 +669,6 @@ uint32_t _FeatListElective(objHndl objHnd, feat_enums * listOut)
 };
 
 
-// WIP:
-
 uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLevelBeingRaised, uint32_t rangerSpecializationFeat)
 {
 
@@ -774,7 +773,7 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 	 // simple weapon prof
 	 if (featEnum == FEAT_SIMPLE_WEAPON_PROFICIENCY)
 	 {
-		 auto monCat = objects.GetCategory(objHnd);
+		 auto monCat = critterSys.GetCategory(objHnd);
 		 if (monCat == mc_type_outsider || monCat == mc_type_monstrous_humanoid
 			 || monCat == mc_type_humanoid || monCat == mc_type_giant || monCat == mc_type_fey)
 		 {
@@ -783,7 +782,7 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 	 } 
 	 else if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_ALL)
 	 {
-		 if ((uint32_t)objects.IsCategoryType(objHnd, mc_type_outsider)
+		 if ((uint32_t)critterSys.IsCategoryType(objHnd, mc_type_outsider)
 			 && objects.StatLevelGet(objHnd, stat_strength) >= 6)	
 		 {	return 1;	 }
 	 }

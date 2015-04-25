@@ -26,6 +26,7 @@ struct ObjectScript {
 struct FieldDataMax { uint32_t data[8]; }; // for wrapping "objSetField" calls that get input by value; this is the largest data size that I know of
 
 struct Objects : AddressTable {
+	friend struct CritterSystem;
 
 	// Retrieves the object flags for the given object handle
 	uint32_t GetFlags(objHndl obj) {
@@ -95,6 +96,10 @@ struct Objects : AddressTable {
 	// Adjust NPC reaction towards another critter
 	void AdjustReaction(objHndl of, objHndl towards, int adjustment) {
 		_AdjustReaction(of, towards, adjustment);
+	}
+
+	int GetDeity(objHndl critter) {
+		return _StatLevelGet(critter, stat_deity);
 	}
 
 	/*
@@ -201,15 +206,6 @@ struct Objects : AddressTable {
 	uint32_t StatLevelGet(objHndl obj, Stat stat);
 	int StatLevelGetBase(objHndl obj, Stat stat);
 	int StatLevelSetBase(objHndl obj, Stat stat, int value);
-#pragma endregion
-
-#pragma region Category
-	MonsterCategory GetCategory(objHndl objHnd);
-	bool IsCategoryType(objHndl objHnd, MonsterCategory categoryType);
-	bool IsCategorySubtype(objHndl objHnd, MonsterCategory categoryType);
-	bool IsUndead(objHndl objHnd);
-	bool IsOoze(objHndl objHnd);
-	bool IsSubtypeFire(objHndl objHnd);
 #pragma endregion
 
 #pragma region Dispatcher Stuff

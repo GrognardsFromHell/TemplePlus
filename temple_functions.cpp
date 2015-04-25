@@ -128,6 +128,7 @@ TempleFuncs::TempleFuncs()
 	rebase(Obj_Set_IdxField_byValue, 0x100A1310);
 	rebase(Obj_Set_IdxField_byPtr, 0x100A1540);
 	rebase(Obj_Set_IdxField_ObjHnd, 0x100A14A0);
+	rebase(Obj_Clear_IdxField, 0x1009E860);
 
 
 #pragma endregion
@@ -149,9 +150,6 @@ TempleFuncs::TempleFuncs()
 
 
 
-	rebase(StandPointPacketGet, 0x100BDE20);
-	rebase(ObjStandpointGet, 0x100BA890);
-	rebase(ObjStandpointSet, 0x100BA8F0);
 
 
 	rebase(ObjSpellKnownQueryGetData, 0x100762D0);

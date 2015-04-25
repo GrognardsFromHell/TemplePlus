@@ -22,6 +22,27 @@ enum class EquipSlot : uint32_t {
 	Count = 16
 };
 
+enum class StandPointType : uint32_t {
+	Day = 0,
+	Night = 1,
+	Scout = 2
+};
+
+struct StandPoint {
+	uint32_t mapId;
+	int _pad1;
+	LocAndOffsets location;
+	int jumpPointId;
+	int _pad2;
+}; 
+
+enum class ResurrectType : uint32_t {
+	RaiseDead = 0,
+	Resurrect = 1,
+	ResurrectTrue = 2,
+	CuthbertResurrect = 3
+};
+
 struct CritterSystem : AddressTable
 {
 
@@ -81,6 +102,58 @@ struct CritterSystem : AddressTable
 		Same as Kill, but applies condition "Killed By Death Effect" before killing.
 	*/
 	void KillByEffect(objHndl critter, objHndl killer = 0);
+		
+	/*
+		Changes one of the standpoints for a critter.
+	*/
+	void SetStandPoint(objHndl critter, StandPointType type, const StandPoint &standpoint);
+
+	/*
+		Gets one of the standpoints for a critter.
+	*/
+	StandPoint GetStandPoint(objHndl critter, StandPointType type);
+
+	/*
+		Sets the overall subdual damage received by the critter.
+	*/
+	void SetSubdualDamage(objHndl critter, int damage);
+
+	/*
+		Awards XP to the given critter.
+	*/
+	void AwardXp(objHndl critter, int xpAwarded);
+
+	/*
+		Perform the special Balor death logic.
+	*/
+	void BalorDeath(objHndl npc);
+
+	/*
+		Changes whether the given critter is concealed or not.	
+	*/
+	void SetConcealed(objHndl critter, bool concealed);
+
+	/*
+		Third argument seems unused.
+	*/
+	bool Resurrect(objHndl critter, ResurrectType type, int unk);
+
+	/*
+		Dominates a critter.
+	*/
+	bool Dominate(objHndl critter, objHndl caster);
+
+	bool IsDeadOrUnconscious(objHndl critter);
+	
+#pragma region Category
+	MonsterCategory GetCategory(objHndl objHnd);
+	bool IsCategoryType(objHndl objHnd, MonsterCategory categoryType);
+	bool IsCategorySubtype(objHndl objHnd, MonsterCategory categoryType);
+	bool IsUndead(objHndl objHnd);
+	bool IsOoze(objHndl objHnd);
+	bool IsSubtypeFire(objHndl objHnd);	
+#pragma endregion
+
 };
 
 extern CritterSystem critterSys;

@@ -101,9 +101,12 @@ struct SpellSystem : AddressTable
 	uint32_t getStatModBonusSpellCount(objHndl objHnd, uint32_t classCode, uint32_t slotLvl);
 	void spellPacketBodyReset(SpellPacketBody * spellPktBody);
 	void spellPacketSetCasterLevel(SpellPacketBody * spellPktBody);
-	CondStruct *GetCondFromSpellId(int id);
+	CondStruct *GetCondFromSpellIdx(int id);
 	uint32_t(__cdecl * spellRemoveFromStorage)(objHndl objHnd, obj_f fieldIdx, SpellStoreData * spellData, int unknown);
 	uint32_t (__cdecl * spellsPendingToMemorized)(objHndl objHnd);
+	int (__cdecl *SpellKnownAdd)(objHndl ObjHnd, int nSpellIdx, int nSpellClassCode, int nSpellCasterLevel, int nSpellStoreData, int nMetamagicData);
+	int (__cdecl *SpellMemorizedAdd)(objHndl ObjHnd, int nSpellIdx, int nSpellClassCode, int nSpellCasterLevel, int nSpellStoreData, int nMetamagicData);
+	void ForgetMemorized(objHndl handle);
 	SpellSystem()
 	{
 		rebase(spellCastIdxTable, 0x10AAF218);
@@ -112,7 +115,9 @@ struct SpellSystem : AddressTable
 		rebase(spellRemoveFromStorage, 0x100758A0);
 		rebase(spellsPendingToMemorized, 0x100757D0);
 		macRebase(_spellPacketBodyReset, 1008A350)
-		macRebase(_spellPacketSetCasterLevel, 10079B70)
+			macRebase(_spellPacketSetCasterLevel, 10079B70)
+		rebase(SpellKnownAdd, 0x10079EE0);
+		rebase(SpellMemorizedAdd, 0x10075A10);
 	}
 private:
 

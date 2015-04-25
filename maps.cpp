@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "maps.h"
 #include <util/addresses.h>
+#include "location.h"
 
 struct MapAddresses : AddressTable {
 	
@@ -36,6 +37,11 @@ struct MapAddresses : AddressTable {
 		Reveals a Flag on the Townmap UI.
 	*/
 	void (__cdecl *RevealFlag)(int mapId, int flagId);
+
+	/*
+		Gets a jump point definition.
+	*/
+	bool (__cdecl *GetJumpPoint)(int jmpPntID, char *mapNameOut, size_t mapNameOutSize, int *mapNumOut, locXY *locXYOut);
 	
 	MapAddresses() {
 		rebase(GetVisitedMaps, 0x1006FE50);
@@ -44,6 +50,7 @@ struct MapAddresses : AddressTable {
 		rebase(IsValidMapId, 0x10070EF0);
 		rebase(RevealFlag, 0x10128360);
 		rebase(IsCurrentMapOutdoor, 0x1006FE80);
+		rebase(GetJumpPoint, 0x100BDE20);
 	}
 };
 
@@ -84,4 +91,14 @@ void Maps::RevealFlag(int mapId, int flagId) {
 
 bool Maps::IsCurrentMapOutdoor() {
 	return mapAddresses.IsCurrentMapOutdoor();
+}
+
+bool Maps::GetJumpPoint(int id, JumpPoint& jumpPoint, bool withMapName) {
+	char mapName[256];
+	size_t mapNameLen = withMapName ? 256 : 0;
+	bool result = mapAddresses.GetJumpPoint(id, mapName, mapNameLen, &jumpPoint.mapId, &jumpPoint.location);
+	if (result) {
+		jumpPoint.mapName = mapName;
+	}
+	return result;
 }

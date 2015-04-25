@@ -4,6 +4,7 @@
 #include "common.h"
 #include "spell.h"
 #include "obj.h"
+#include "temple_functions.h"
 
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
@@ -139,11 +140,15 @@ void SpellSystem::spellPacketSetCasterLevel(SpellPacketBody* spellPktBody)
 	_spellPacketSetCasterLevel(spellPktBody);
 }
 
-CondStruct* SpellSystem::GetCondFromSpellId(int id) {
+CondStruct* SpellSystem::GetCondFromSpellIdx(int id) {
 	if (id >= 3 && id < 254) {
 		return addresses.spellConds[id - 1].condition;
 	}
 	return nullptr;
+}
+
+void SpellSystem::ForgetMemorized(objHndl handle) {
+	templeFuncs.Obj_Clear_IdxField(handle, obj_f_critter_spells_memorized_idx);
 }
 #pragma endregion
 

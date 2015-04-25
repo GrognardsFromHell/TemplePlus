@@ -11,6 +11,8 @@ static struct DamageAddresses : AddressTable {
 
 	int (__cdecl *Heal)(objHndl target, objHndl healer, uint32_t dmgDice, D20ActionType actionType);
 
+	void (__cdecl *HealSpell)(objHndl target, objHndl healer, uint32_t dmgDice, D20ActionType actionType, int spellId);
+
 	int (__cdecl*HealSubdual)(objHndl target, int amount);
 
 	int (__cdecl*DoSpellDamage)(objHndl victim, objHndl attacker, uint32_t dmgDice, DamageType type, int attackPowerType, int reduction, int damageDescMesKey, int actionType, int spellId, int flags);
@@ -24,6 +26,7 @@ static struct DamageAddresses : AddressTable {
 	DamageAddresses() {
 		rebase(DoDamage, 0x100B8D70);
 		rebase(Heal, 0x100B7DF0);
+		rebase(HealSpell, 0x100B81D0);
 		rebase(DoSpellDamage, 0x100B7F80);
 		rebase(HealSubdual, 0x100B9030);
 		rebase(SavingThrow, 0x100B4F20);
@@ -48,6 +51,10 @@ void Damage::DealSpellDamage(objHndl victim, objHndl attacker, const Dice& dice,
 
 void Damage::Heal(objHndl target, objHndl healer, const Dice& dice, D20ActionType actionType) {
 	addresses.Heal(target, healer, dice.ToPacked(), actionType);
+}
+
+void Damage::HealSpell(objHndl target, objHndl healer, const Dice& dice, D20ActionType actionType, int spellId) {
+	addresses.HealSpell(target, healer, dice.ToPacked(), actionType, spellId);
 }
 
 void Damage::HealSubdual(objHndl target, int amount) {

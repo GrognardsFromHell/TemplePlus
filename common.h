@@ -102,17 +102,8 @@ struct GroupArray {
 	void* unknownfunc;
 };
 
-
-struct StandPoint {
-	uint32_t mapNum;
-	uint32_t field4;
-	LocAndOffsets LocAndOff;
-	_jmpPntID jmpPntID;
-	uint32_t field_1C;
-};
-
-struct JumpPointPacket{
-	_jmpPntID jmpPntID;
+struct JumpPointPacket {
+	int jmpPntId;
 	char * pMapName;
 	_mapNum mapNum;
 	uint32_t field_C;

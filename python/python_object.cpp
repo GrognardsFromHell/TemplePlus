@@ -7,6 +7,7 @@
 #include "../reputations.h"
 #include "../critter.h"
 #include "../anim.h"
+#include "../ai.h"
 #include "../combat.h"
 #include "../dispatcher.h"
 #include "../location.h"
@@ -826,7 +827,7 @@ static PyObject* PyObjHandle_FloatMesFileLine(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	char* mesFilename;
 	int mesLineKey;
-	int colorId = 0;
+	auto colorId = FloatLineColor::White;
 	if (!PyArg_ParseTuple(args, "si|i:", &mesFilename, &mesLineKey, &colorId)) {
 		return 0;
 	}
@@ -1097,7 +1098,7 @@ static PyObject* PyObjHandle_D20QueryHasSpellCond(PyObject* obj, PyObject* args)
 	}
 
 	// Get the condition struct from the spell id
-	auto cond = spellSys.GetCondFromSpellId(spellId);
+	auto cond = spellSys.GetCondFromSpellIdx(spellId);
 	if (!cond) {
 		return PyInt_FromLong(0);
 	}
@@ -1207,6 +1208,350 @@ static PyObject* PyObjHandle_AnimCallback(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_ObjectScriptExecute(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl triggerer;
+	ScriptEvent scriptEvent;
+	if (!PyArg_ParseTuple(args, "O&i:objhndl.object_script_execute", &triggerer, &scriptEvent)) {
+		return 0;
+	}
+	auto result = pythonIntegration.ExecuteObjectScript(triggerer, self->handle, scriptEvent);
+	return PyInt_FromLong(result);
+}
+
+static PyObject* PyObjHandle_AnimGoalInterrupt(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	animationGoals.Interrupt(self->handle, AGP_HIGHEST, false);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_D20StatusInit(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	d20Sys.D20StatusInit(self->handle);
+	Py_RETURN_NONE;
+}
+
+/*
+	Sets one of the critters stand points to a jump point.
+*/
+static PyObject* PyObjHandle_StandpointSet(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);	
+	StandPointType type;
+	int jumpPointId;
+	if (!PyArg_ParseTuple(args, "ii:objhndl.standpoint_set", &type, &jumpPointId)) {
+		return 0;
+	}
+
+	JumpPoint jumpPoint;
+	if (!maps.GetJumpPoint(jumpPointId, jumpPoint)) {
+		PyErr_Format(PyExc_ValueError, "Unknown jump point id %d used to set a standpoint.", jumpPointId);
+		return 0;
+	}
+
+	StandPoint standPoint;
+	standPoint.location.location = jumpPoint.location;
+	standPoint.location.off_x = 0;
+	standPoint.location.off_y = 0;
+	standPoint.mapId = jumpPoint.mapId;
+	standPoint.jumpPointId = jumpPointId;
+	critterSys.SetStandPoint(self->handle, type, standPoint);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_RunOff(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	LocAndOffsets loc;
+	loc.off_x = 0;
+	loc.off_y = 0;
+	if (!PyArg_ParseTuple(args, "L|ff:objhndl.runoff", &loc.location, &loc.off_x, &loc.off_y)) {
+		return 0;
+	}
+
+	objects.SetFlag(self->handle, OF_CLICK_THROUGH);
+	aiSys.SetAiFlag(self->handle, AiFlag::RunningOff);
+	objects.FadeTo(self->handle, 0, 25, 5, 2);
+	animationGoals.PushRunNearTile(self->handle, loc, 5);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_GetCategoryType(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	auto type = critterSys.GetCategory(self->handle);
+	return PyInt_FromLong(type);
+}
+
+static PyObject* PyObjHandle_IsCategoryType(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int type;
+	if (!PyArg_ParseTuple(args, "i:objhndl.is_category_type", &type)) {
+		return 0;
+	}
+	auto result = critterSys.IsCategoryType(self->handle, (MonsterCategory) type);
+	return PyInt_FromLong(result);
+}
+
+static PyObject* PyObjHandle_IsCategorySubtype(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int type;
+	if (!PyArg_ParseTuple(args, "i:objhndl.is_category_subtype", &type)) {
+		return 0;
+	}
+	auto result = critterSys.IsCategorySubtype(self->handle, (MonsterCategory)type);
+	return PyInt_FromLong(result);
+}
+
+static PyObject* PyObjHandle_RumorLogAdd(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int rumorId;
+	if (!PyArg_ParseTuple(args, "i:objhndl.rumor_log_add", &rumorId)) {
+		return 0;
+	}
+	party.RumorLogAdd(self->handle, rumorId);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_SetInt(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	obj_f field;
+	int value;
+	if (!PyArg_ParseTuple(args, "ii:objhndl.obj_set_int", &field, &value)) {
+		return 0;
+	}
+	if (field == obj_f_critter_subdual_damage) {
+		critterSys.SetSubdualDamage(self->handle, value);
+	} else {
+		objects.setInt32(self->handle, field, value);
+	}
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_GetInt(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	obj_f field;
+	if (!PyArg_ParseTuple(args, "i:objhndl.obj_get_int", &field)) {
+		return 0;
+	}
+	auto value = objects.getInt32(self->handle, field);
+	return PyInt_FromLong(value);
+}
+
+static PyObject* PyObjHandle_HasFeat(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	feat_enums feat;
+	if (!PyArg_ParseTuple(args, "i:objhndl.has_feat", &feat)) {
+		return 0;
+	}
+	
+	auto result = _HasFeatCountByClass(self->handle, feat, (Stat) 0, 0);
+	return PyInt_FromLong(result);
+}
+
+static PyObject* PyObjHandle_SpellKnownAdd(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int spellIdx;
+	int spellClassCode;
+	int slotLevel;
+	if (!PyArg_ParseTuple(args, "iii:objhndl.spell_known_add", &spellIdx, &spellClassCode, &slotLevel)) {
+		return 0;
+	}
+	spellSys.SpellKnownAdd(self->handle, spellIdx, spellClassCode & 0x7F | 0x80, slotLevel, 1, 0);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_SpellMemorizedAdd(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int spellIdx;
+	int spellClassCode;
+	int slotLevel;
+	if (!PyArg_ParseTuple(args, "iii:objhndl.spell_memorized_add", &spellIdx, &spellClassCode, &slotLevel)) {
+		return 0;
+	}
+	spellSys.SpellKnownAdd(self->handle, spellIdx, spellClassCode & 0x7F | 0x80, slotLevel, 2, 0);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_SpellHeal(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl healer;
+	Dice dice;
+	D20ActionType actionType = D20A_NONE;
+	int spellId = 0;
+	if (!PyArg_ParseTuple(args, "O&O&|ii:objhndl.spell_heal", &ConvertObjHndl, &healer, &ConvertDice, &dice, &actionType, &spellId)) {
+		return 0;
+	}
+	damage.HealSpell(self->handle, healer, dice, actionType, spellId);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_IdentifyAll(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	inventory.IdentifyAll(self->handle);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_AiFleeAdd(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl target;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.ai_flee_add", &ConvertObjHndl, &target)) {
+		return 0;
+	}
+	aiSys.FleeAdd(self->handle, target);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_AiShitlistAdd(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl target;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.ai_shitlist_add", &ConvertObjHndl, &target)) {
+		return 0;
+	}
+	aiSys.ShitlistAdd(self->handle, target);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_AiShitlistRemove(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl target;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.ai_shitlist_remove", &ConvertObjHndl, &target)) {
+		return 0;
+	}
+	aiSys.ShitlistRemove(self->handle, target);
+	Py_RETURN_NONE;
+}
+static PyObject* PyObjHandle_AiStopAttacking(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	aiSys.StopAttacking(self->handle);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_GetDeity(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	return PyInt_FromLong(objects.GetDeity(self->handle));
+}
+
+static PyObject* PyObjHandle_WieldBestAll(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl targetHndl;
+	if (!PyArg_ParseTuple(args, "|O&:objhndl.wield_best_all", &ConvertObjHndl, &targetHndl)) {
+		return 0;
+	}
+	inventory.WieldBestAll(self->handle, targetHndl);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_AwardExperience(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int xpAwarded;
+	if (!PyArg_ParseTuple(args, "i:objhndl.award_experience", &xpAwarded)) {
+		return 0;
+	}
+	critterSys.AwardXp(self->handle, xpAwarded);
+	ui.UpdatePartyUi();
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_HasAtoned(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	d20Sys.d20SendSignal(self->handle, DK_SIG_Atone_Fallen_Paladin, 0, 0);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_D20SendSignal(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int signalId;
+	PyObject *arg = 0;
+	if (!PyArg_ParseTuple(args, "i|O:objhndl.d20_send_signal", &signalId, &arg)) {
+		return 0;
+	}
+	D20DispatcherKey dispKey = (D20DispatcherKey)(DK_SIG_HP_Changed + signalId);
+
+	if (arg && PyObjHndl_Check(arg)) {
+		objHndl hndl = PyObjHndl_AsObjHndl(arg);
+		d20Sys.d20SendSignal(self->handle, dispKey, hndl);
+	} else if (arg && PyInt_Check(arg)) {
+		auto val = PyInt_AsLong(arg);
+		d20Sys.d20SendSignal(self->handle, dispKey, val, 0);
+	} else {
+		d20Sys.d20SendSignal(self->handle, dispKey, 0, 0);
+	}
+	
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_D20SendSignalEx(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int signalId;
+	objHndl arg = 0;
+	if (!PyArg_ParseTuple(args, "i|O&:objhndl.d20_send_signal_ex", &signalId, &ConvertObjHndl, &arg)) {
+		return 0;
+	}
+	D20DispatcherKey dispKey = (D20DispatcherKey)(DK_SIG_HP_Changed + signalId);
+
+	d20Sys.d20SendSignal(self->handle, dispKey, arg);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_BalorDeath(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	critterSys.BalorDeath(self->handle);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_ConcealedSet(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	bool concealed;
+	if (!PyArg_ParseTuple(args, "i:objhndl.concealed_set", &concealed)) {
+		return 0;
+	}
+	critterSys.SetConcealed(self->handle, concealed);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_Unconceal(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	auto result = animationGoals.PushUnconceal(self->handle);
+	return PyInt_FromLong(result);
+}
+
+static PyObject* PyObjHandle_PendingToMemorized(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	spellSys.spellsPendingToMemorized(self->handle);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_MemorizedForget(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	spellSys.ForgetMemorized(self->handle);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_Resurrect(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	ResurrectType type;
+	int unk = 0;
+	if (!PyArg_ParseTuple(args, "i|i:objhndl.resurrect", &type, &unk)) {
+		return 0;
+	}
+	auto result = critterSys.Resurrect(self->handle, type, unk);
+	return PyInt_FromLong(result);
+}
+
+static PyObject* PyObjHandle_Dominate(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl caster;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.dominate", &ConvertObjHndl, &caster)) {
+		return 0;
+	}
+	auto result = critterSys.Dominate(self->handle, caster);
+	return PyInt_FromLong(result);
+}
+
+static PyObject* PyObjHandle_IsUnconscious(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	auto result = critterSys.IsDeadOrUnconscious(self->handle);
+	return PyInt_FromLong(result);
+}
+
 static PyMethodDef PyObjHandleMethods[] = {
 	{"__getstate__", PyObjHandle_getstate, METH_VARARGS, NULL},
 	{"__reduce__", PyObjHandle_reduce, METH_VARARGS, NULL},
@@ -1303,46 +1648,44 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"d20_query_get_data", PyObjHandle_D20QueryGetData, METH_VARARGS, NULL},
 	{"critter_get_alignment", PyObjHandle_CritterGetAlignment, METH_VARARGS, NULL},
 	{"distance_to", PyObjHandle_DistanceTo, METH_VARARGS, NULL},
-	{ "anim_callback", PyObjHandle_AnimCallback, METH_VARARGS, NULL },
-	{"anim_goal_interrupt", NULL, METH_VARARGS, NULL},
-	{"d20_status_init", NULL, METH_VARARGS, NULL},
-	{"object_script_execute", NULL, METH_VARARGS, NULL},
-	{"standpoint_set", NULL, METH_VARARGS, NULL},
-	{"runoff", NULL, METH_VARARGS, NULL},
-	{"get_category_type", NULL, METH_VARARGS, NULL},
-	{"is_category_type", NULL, METH_VARARGS, NULL},
-	{"is_category_subtype", NULL, METH_VARARGS, NULL},
-	{"obj_set_initiative", NULL, METH_VARARGS, NULL},
-	{"rumor_log_add", NULL, METH_VARARGS, NULL},
-	{"obj_set_int", NULL, METH_VARARGS, NULL},
-	{"obj_get_int", NULL, METH_VARARGS, NULL},
-	{"has_feat", NULL, METH_VARARGS, NULL},
-	{"spell_known_add", NULL, METH_VARARGS, NULL},
-	{"spell_memorized_add", NULL, METH_VARARGS, NULL},
+	{"anim_callback", PyObjHandle_AnimCallback, METH_VARARGS, NULL },
+	{"anim_goal_interrupt", PyObjHandle_AnimGoalInterrupt, METH_VARARGS, NULL },
+	{"d20_status_init", PyObjHandle_D20StatusInit, METH_VARARGS, NULL},
+	{ "object_script_execute", PyObjHandle_ObjectScriptExecute, METH_VARARGS, NULL },
+	{"standpoint_set", PyObjHandle_StandpointSet, METH_VARARGS, NULL},
+	{"runoff", PyObjHandle_RunOff, METH_VARARGS, NULL},
+	{ "get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL },
+	{ "is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL },
+	{ "is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL },
+	{"rumor_log_add", PyObjHandle_RumorLogAdd, METH_VARARGS, NULL},
+	{"obj_set_int", PyObjHandle_SetInt, METH_VARARGS, NULL},
+	{ "obj_get_int", PyObjHandle_GetInt, METH_VARARGS, NULL },
+	{ "has_feat", PyObjHandle_HasFeat, METH_VARARGS, NULL },
+	{"spell_known_add", PyObjHandle_SpellKnownAdd, METH_VARARGS, NULL},
+	{ "spell_memorized_add", PyObjHandle_SpellMemorizedAdd, METH_VARARGS, NULL },
 	{"spell_damage", PyObjHandle_SpellDamage, METH_VARARGS, NULL},
 	{"spell_damage_with_reduction", PyObjHandle_SpellDamageWithReduction, METH_VARARGS, NULL},
-	{"spell_heal", NULL, METH_VARARGS, NULL},
-	{"identify_all", NULL, METH_VARARGS, NULL},
-	{"ai_flee_add", NULL, METH_VARARGS, NULL},
-	{"get_deity", NULL, METH_VARARGS, NULL},
-	{"item_wield_best_all", NULL, METH_VARARGS, NULL},
-	{"award_experience", NULL, METH_VARARGS, NULL},
+	{"spell_heal", PyObjHandle_SpellHeal, METH_VARARGS, NULL},
+	{ "identify_all", PyObjHandle_IdentifyAll, METH_VARARGS, NULL },
+	{"ai_flee_add", PyObjHandle_AiFleeAdd, METH_VARARGS, NULL},
+	{ "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
+	{"item_wield_best_all", PyObjHandle_WieldBestAll, METH_VARARGS, NULL},
+	{"award_experience", PyObjHandle_AwardExperience, METH_VARARGS, NULL},
 	{"has_los", PyObjHandle_HasLos, METH_VARARGS, NULL},
-	{"has_atoned", NULL, METH_VARARGS, NULL},
-	{"sweep_for_cover", NULL, METH_VARARGS, NULL},
-	{"d20_send_signal", NULL, METH_VARARGS, NULL},
-	{"d20_send_signal_ex", NULL, METH_VARARGS, NULL},
-	{"balor_death", NULL, METH_VARARGS, NULL},
-	{"concealed_set", NULL, METH_VARARGS, NULL},
-	{"ai_shitlist_add", NULL, METH_VARARGS, NULL},
-	{"ai_shitlist_remove", NULL, METH_VARARGS, NULL},
-	{"unconceal", NULL, METH_VARARGS, NULL},
-	{"spells_pending_to_memorized", NULL, METH_VARARGS, NULL},
-	{"spells_memorized_forget", NULL, METH_VARARGS, NULL},
-	{"ai_stop_attacking", NULL, METH_VARARGS, NULL},
-	{"resurrect", NULL, METH_VARARGS, NULL},
-	{"dominate", NULL, METH_VARARGS, NULL},
-	{"is_unconscious", NULL, METH_VARARGS, NULL},
+	{"has_atoned", PyObjHandle_HasAtoned, METH_VARARGS, NULL },
+	{"d20_send_signal", PyObjHandle_D20SendSignal, METH_VARARGS, NULL},
+	{ "d20_send_signal_ex", PyObjHandle_D20SendSignalEx, METH_VARARGS, NULL },
+	{"balor_death", PyObjHandle_BalorDeath, METH_VARARGS, NULL},
+	{"concealed_set", PyObjHandle_ConcealedSet, METH_VARARGS, NULL},
+	{ "ai_shitlist_add", PyObjHandle_AiShitlistAdd, METH_VARARGS, NULL },
+	{ "ai_shitlist_remove", PyObjHandle_AiShitlistRemove, METH_VARARGS, NULL },
+	{ "unconceal", PyObjHandle_Unconceal, METH_VARARGS, NULL },
+	{"spells_pending_to_memorized", PyObjHandle_PendingToMemorized, METH_VARARGS, NULL},
+	{ "spells_memorized_forget", PyObjHandle_MemorizedForget, METH_VARARGS, NULL },
+	{ "ai_stop_attacking", PyObjHandle_AiStopAttacking, METH_VARARGS, NULL },
+	{"resurrect", PyObjHandle_Resurrect, METH_VARARGS, NULL},
+	{"dominate", PyObjHandle_Dominate, METH_VARARGS, NULL},
+	{"is_unconscious", PyObjHandle_IsUnconscious, METH_VARARGS, NULL},
 	{NULL, NULL, NULL, NULL}
 };
 

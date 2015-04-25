@@ -58,6 +58,7 @@ struct TempleFuncs : AddressTable {
 	int(__cdecl *Obj_Set_IdxField_byValue)(objHndl, _fieldIdx, _fieldSubIdx, ...);
 	void(__cdecl *Obj_Set_IdxField_byPtr)(objHndl, _fieldIdx, _fieldSubIdx, void * _SourceData);
 	int(__cdecl *Obj_Set_IdxField_ObjHnd)(objHndl, _fieldIdx, _fieldSubIdx, objHndl);
+	void(__cdecl *Obj_Clear_IdxField)(objHndl, _fieldIdx);
 #pragma endregion
 
 	PyObject*  (__cdecl *PyObjFromObjHnd) (objHndl);
@@ -67,10 +68,6 @@ struct TempleFuncs : AddressTable {
 	
 	int32_t(__cdecl *ObjStatBaseGet)(objHndl, uint32_t obj_stat); // can return single precision floating point too (e.g. movement speed)
 	int32_t(__cdecl *ObjStatBaseDispatch)(objHndl, uint32_t obj_stat, void *); // Dispatcher Type 0x42; defaults to ObjStatBaseGet if no Dispatcher found
-
-	bool(__cdecl *StandPointPacketGet)(_jmpPntID jmpPntID, char * mapNameOut, size_t, _mapNum * mapNumOut, locXY * locXYOut);
-	uint32_t(__cdecl *ObjStandpointGet)(objHndl, _standPointType, StandPoint *);
-	uint32_t(__cdecl *ObjStandpointSet)(objHndl, _standPointType, StandPoint *);
 
 	uint32_t (__cdecl *ObjGetBABAfterLevelling)(objHndl objHnd, Stat classBeingLevelledUp);
 	uint32_t(__cdecl *XPReqForLevel)(uint32_t level);

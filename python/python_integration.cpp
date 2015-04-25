@@ -17,8 +17,16 @@ static const char *GetScriptEventFunction(ScriptEvent evt);
 static struct IntegrationAddresses : AddressTable {
 	int *sleepStatus;
 
+	/*
+		spellId and unk1 actually seem to be a pair that can also be an obj hndl but this only seems to be used
+		for the legacy scripting system.
+		unk2 seems to be entirely unused.
+	*/
+	int (__cdecl *ExecuteObjectScript)(objHndl triggerer, objHndl attachee, int spellId, int unk1, ScriptEvent evt, int unk2);
+
 	IntegrationAddresses() {
 		rebase(sleepStatus, 0x109DD854);
+		rebase(ExecuteObjectScript, 0x10025D60);
 	}
 } addresses;
 
@@ -282,6 +290,14 @@ void PythonIntegration::UnloadScripts() {
 		Py_XDECREF(entry.second.module);
 	}
 	mScripts.clear();
+}
+
+int PythonIntegration::ExecuteObjectScript(objHndl triggerer, objHndl attachee, int spellId, ScriptEvent evt) {
+	return addresses.ExecuteObjectScript(triggerer, attachee, spellId, 0, evt, 0);
+}
+
+int PythonIntegration::ExecuteObjectScript(objHndl triggerer, objHndl attachee, ScriptEvent evt) {
+	return ExecuteObjectScript(triggerer, attachee, 0, evt);
 }
 
 bool PythonIntegration::IsValidScriptId(int scriptId) {

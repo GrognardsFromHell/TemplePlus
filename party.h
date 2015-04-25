@@ -19,6 +19,8 @@ struct PartySystem : AddressTable
 	uint32_t(__cdecl *ObjAddToGroupArray)(GroupArray *, objHndl);
 	uint32_t(__cdecl *ObjAddToPCGroup)(objHndl);
 
+	void (__cdecl *RumorLogAdd)(objHndl pc, int rumor);
+
 	PartySystem()
 	{
 		rebase(GroupArrayMemberN, 0x100DF760);
@@ -35,6 +37,7 @@ struct PartySystem : AddressTable
 		rebase(ObjAddToGroupArray, 0x100DF990);
 		rebase(ObjAddToPCGroup, 0x1002BBE0);
 		rebase(IsInParty, 0x1002B1B0);
+		rebase(RumorLogAdd, 0x1005FC20);
 	}
 };
 

@@ -703,7 +703,7 @@ void ActionSequenceSystem::actionPerform()
 			hooked_print_debug_message("Action unavailable for %s (%I64x): %s\n", objects.description.GetDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer, mesLine.value );
 			*actnProcState = errCode;
 			curSeq->tbStatus.errCode = errCode;
-			objects.floats->floatMesLine(performer, 1, 1, mesLine.value);
+			objects.floats->floatMesLine(performer, 1, FloatLineColor::Red, mesLine.value);
 			curSeq->d20ActArrayNum = curSeq->d20aCurIdx;
 			break;
 		}

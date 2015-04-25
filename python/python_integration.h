@@ -66,6 +66,12 @@ public:
 	void LoadScripts();
 	void UnloadScripts();
 
+	/*
+		Spell ID is only used for script event san_cast_spell
+	*/
+	int ExecuteObjectScript(objHndl triggerer, objHndl attachee, int spellId, ScriptEvent event);
+	int ExecuteObjectScript(objHndl triggerer, objHndl attachee, ScriptEvent event);
+
 	bool IsValidScriptId(int scriptId);
 	void RunAnimFrameScript(const char *command);
 	int RunScript(int scriptId, ScriptEvent evt, PyObject *args);

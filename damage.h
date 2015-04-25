@@ -81,6 +81,8 @@ public:
 		int spellId, int flags);
 
 	void Heal(objHndl target, objHndl healer, const Dice &dice, D20ActionType actionType);
+	
+	void HealSpell(objHndl target, objHndl healer, const Dice &dice, D20ActionType actionType, int spellId);
 
 	void HealSubdual(objHndl target, int amount);
 

@@ -38,6 +38,8 @@ struct D20System : AddressTable
 	void D20StatusInitItemConditions(objHndl objHnd);
 
 	void d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2);
+	void d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, objHndl arg);
+
 	uint32_t d20Query(objHndl ObjHnd, D20DispatcherKey dispKey);
 	uint32_t d20QueryWithData(objHndl ObjHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
 	uint64_t d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);

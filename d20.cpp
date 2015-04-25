@@ -14,6 +14,7 @@
 #include "pathfinding.h"
 #include "location.h"
 #include "action_sequence.h"
+#include "critter.h"
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
@@ -136,6 +137,19 @@ void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t 
 	dispIO.dispIOType = dispIOType6;
 	dispIO.data1 = arg1;
 	dispIO.data2 = arg2;
+	dispatch.DispatcherProcessor(dispatcher, dispTypeD20Signal, dispKey, &dispIO);
+}
+
+void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, objHndl arg) {
+	DispIO10h dispIO;
+	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+	if (!dispatch.dispatcherValid(dispatcher))
+	{
+		hooked_print_debug_message("d20SendSignal(): Object %s (%I64x) lacks a Dispatcher", description.GetDisplayName(objHnd, objHnd), objHnd);
+		return;
+	}
+	dispIO.dispIOType = dispIOType6;
+	*(objHndl*)&dispIO.data1 = arg;
 	dispatch.DispatcherProcessor(dispatcher, dispTypeD20Signal, dispKey, &dispIO);
 }
 
@@ -426,7 +440,7 @@ void _D20StatusInitRace(objHndl objHnd)
 	if (objects.IsCritter(objHnd))
 	{
 		Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
-		if (objects.IsUndead(objHnd))
+		if (critterSys.IsUndead(objHnd))
 		{
 			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterUndead);
 		}
@@ -435,12 +449,12 @@ void _D20StatusInitRace(objHndl objHnd)
 		CondStruct ** condStructRace = conds.ConditionArrayRace + objRace;
 		_ConditionAddToAttribs_NumArgs0(dispatcher, *condStructRace);
 
-		if (objects.IsSubtypeFire(objHnd))
+		if (critterSys.IsSubtypeFire(objHnd))
 		{
 			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionSubtypeFire);
 		}
 
-		if (objects.IsOoze(objHnd))
+		if (critterSys.IsOoze(objHnd))
 		{
 			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterOoze);
 		}

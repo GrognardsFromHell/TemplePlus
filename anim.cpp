@@ -307,20 +307,10 @@ struct AnimGoalState {
 };
 #pragma pack(pop)
 
-enum AnimPriority {
-	AP_MIN = 0,
-	AP_LEVEL1,
-	AP_LEVEL2,
-	AP_LEVEL3,
-	AP_LEVEL4,
-	AP_LEVEL5,
-	AP_HIGHEST
-};
-
 #pragma pack(push, 1)
 struct AnimGoal {
 	int statecount;
-	AnimPriority priority;
+	AnimGoalPriority priority;
 	int field_8;
 	int field_C;
 	int field_10;
@@ -437,13 +427,13 @@ public:
 
 	void (__cdecl *GetAnimName)(int animId, char* animNameOut);
 	void (__cdecl *PushGoalDying)(objHndl obj, int rotation);
-	void (__cdecl *InterruptAllGoalsOfPriority)(AnimPriority priority);
+	void (__cdecl *InterruptAllGoalsOfPriority)(AnimGoalPriority priority);
 	void (__cdecl *InterruptAllForTbCombat)();
 	
 	/*
 		Interrupts animations in the given animation slot. Exact behaviour is not known yet.
 	*/
-	void (__cdecl *Interrupt)(const AnimSlotId &id, AnimPriority priority);
+	void(__cdecl *Interrupt)(const AnimSlotId &id, AnimGoalPriority priority);
 
 	void (__cdecl *DrainCompletedQueue)();
 	
@@ -555,7 +545,7 @@ static void PushCompletedAnimation(const AnimSlot &slot) {
 static void __cdecl anim_timeevent_process(const TimeEvent* evt) {
 
 	if (*animAddresses.allSlotsUsed) {
-		animAddresses.InterruptAllGoalsOfPriority(AP_LEVEL3);
+		animAddresses.InterruptAllGoalsOfPriority(AGP_3);
 		*animAddresses.allSlotsUsed = false;
 	}
 
@@ -647,7 +637,7 @@ static void __cdecl anim_timeevent_process(const TimeEvent* evt) {
 				logger->error("Goal {} loops infinitely in animation {}!", slot.pCurrentGoal->goalType, slot.id);				
 				templeFuncs.TurnProcessing(slot.animObj);
 				*animAddresses.currentlyProcessingSlotIdx = -1;
-				animAddresses.Interrupt(slot.id, AP_HIGHEST);
+				animAddresses.Interrupt(slot.id, AGP_HIGHEST);
 				animAddresses.DrainCompletedQueue();
 				return;
 			}
@@ -677,7 +667,7 @@ static void __cdecl anim_timeevent_process(const TimeEvent* evt) {
 				*animAddresses.currentlyProcessingSlotIdx = -1;
 				if (slot.animObj) {
 					// Interrupt everything for the slot
-					animAddresses.Interrupt(slot.id, AP_HIGHEST);
+					animAddresses.Interrupt(slot.id, AGP_HIGHEST);
 					if (objects.IsCritter(slot.animObj)) {
 						PushCompletedAnimation(slot);
 					}
@@ -767,7 +757,7 @@ static void __cdecl anim_timeevent_process(const TimeEvent* evt) {
 
 	if (slot.animObj) {
 		// Interrupt everything for the slot
-		animAddresses.Interrupt(slot.id, AP_HIGHEST);
+		animAddresses.Interrupt(slot.id, AGP_HIGHEST);
 
 		if (objects.IsCritter(slot.animObj)) {
 			PushCompletedAnimation(slot);
@@ -884,9 +874,18 @@ static struct AnimationAdresses : AddressTable {
 
 	bool (__cdecl *PushUseSkillOn)(objHndl actor, objHndl target, objHndl scratchObj, SkillEnum skill, int goalFlags);
 
+	bool (__cdecl *PushRunNearTile)(objHndl actor, LocAndOffsets target, int radiusFeet);
+
+	bool (__cdecl *PushUnconceal)(objHndl actor);
+
+	bool (__cdecl *Interrupt)(objHndl actor, AnimGoalPriority priority, bool all);
+
 	AnimationAdresses() {
 		rebase(PushRotate, 0x100153E0);
 		rebase(PushUseSkillOn, 0x1001C690);
+		rebase(PushRunNearTile, 0x1001C1B0);
+		rebase(PushUnconceal, 0x10015E00);
+		rebase(Interrupt, 0x1000C7E0);
 	}
 
 } addresses;
@@ -899,4 +898,16 @@ bool AnimationGoals::PushRotate(objHndl obj, float rotation) {
 
 bool AnimationGoals::PushUseSkillOn(objHndl actor, objHndl target, SkillEnum skill, objHndl scratchObj, int goalFlags) {
 	return addresses.PushUseSkillOn(actor, target, scratchObj, skill, goalFlags);
+}
+
+bool AnimationGoals::PushRunNearTile(objHndl actor, LocAndOffsets target, int radiusFeet) {
+	return addresses.PushRunNearTile(actor, target, radiusFeet);
+}
+
+bool AnimationGoals::PushUnconceal(objHndl actor) {
+	return addresses.PushUnconceal(actor);
+}
+
+bool AnimationGoals::Interrupt(objHndl actor, AnimGoalPriority priority, bool all) {
+	return addresses.Interrupt(actor, priority, all);
 }

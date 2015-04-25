@@ -29,6 +29,16 @@ struct InventorySystem : AddressTable
 
 	int SetItemParent(objHndl item, objHndl parent, int flags);
 
+	/*
+		Identifies all items held or contained within the given parent.
+	*/
+	void (__cdecl *IdentifyAll)(objHndl parent);
+
+	/*
+		Tries to wield the best items, unclear what the optional item argument does.
+	*/
+	void (__cdecl *WieldBestAll)(objHndl critter, objHndl item);
+
 	InventorySystem()
 	{
 		rebase(GetSubstituteInventory, 0x1007F5B0);
@@ -42,6 +52,9 @@ struct InventorySystem : AddressTable
 		rebase(_FindItemByName, 0x100643F0);
 		rebase(_FindItemByProto, 0x100644B0);
 		rebase(_SetItemParent, 0x1006B6C0);
+
+		rebase(IdentifyAll, 0x10064C70);
+		rebase(WieldBestAll, 0x1006D100);
 	}
 
 private:

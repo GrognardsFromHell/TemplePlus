@@ -510,54 +510,6 @@ string Objects::GetDisplayName(objHndl obj, objHndl observer) {
 	return name;
 }
 
-MonsterCategory Objects::GetCategory(objHndl objHnd)
-{
-	if (objHnd != 0) {
-		if (IsCritter(objHnd)) {
-			auto monCat = _GetInternalFieldInt64(objHnd, obj_f_critter_monster_category);
-			return (MonsterCategory)(monCat & 0xFFFFFFFF);
-		}
-	}
-	return mc_type_monstrous_humanoid; // default - so they have at least a weapons proficiency
-}
-
-bool Objects::IsCategoryType(objHndl objHnd, MonsterCategory categoryType)
-{
-	if (objHnd != 0) {
-		if (IsCritter(objHnd)) {
-			auto monCat = _GetInternalFieldInt64(objHnd, obj_f_critter_monster_category);
-			return (monCat & 0xFFFFFFFF) == categoryType;
-		}
-	}
-	return 0;
-}
-
-bool Objects::IsCategorySubtype(objHndl objHnd, MonsterCategory categoryType)
-{
-	if (objHnd != 0) {
-		if (IsCritter(objHnd)) {
-			auto monCat = _GetInternalFieldInt64(objHnd, obj_f_critter_monster_category);
-			return ((monCat >> 32) & 0xFFFFFFFF) == categoryType;
-		}
-	}
-	return 0;
-}
-
-bool Objects::IsUndead(objHndl objHnd)
-{
-	return IsCategoryType(objHnd, mc_type_undead);
-}
-
-bool Objects::IsOoze(objHndl objHnd)
-{
-	return IsCategoryType(objHnd, mc_type_ooze);
-}
-
-bool Objects::IsSubtypeFire(objHndl objHnd)
-{
-	return IsCategorySubtype(objHnd, mc_subtye_fire);
-}
-
 uint32_t Objects::StatLevelGet(objHndl obj, Stat stat)
 {
 	return _StatLevelGet(obj, stat);
