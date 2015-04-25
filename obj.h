@@ -28,6 +28,11 @@ struct FieldDataMax { uint32_t data[8]; }; // for wrapping "objSetField" calls t
 struct Objects : AddressTable {
 	friend struct CritterSystem;
 
+	// Verifies if the handle is valid
+	bool VerifyHandle(objHndl handle) {
+		return _VerifyHandle(handle);
+	}
+
 	// Retrieves the object flags for the given object handle
 	uint32_t GetFlags(objHndl obj) {
 		return _GetInternalFieldInt32(obj, obj_f_flags);
@@ -257,6 +262,7 @@ struct Objects : AddressTable {
 	Objects();
 #pragma region Privates
 private:
+	bool (__cdecl *_VerifyHandle)(objHndl handle);
 	ObjectId *(__cdecl *_GetId)(ObjectId *pIdOut, objHndl handle);
 	objHndl (__cdecl *_GetHandle)(ObjectId id);
 	int(__cdecl *_GetReaction)(objHndl of, objHndl towards);

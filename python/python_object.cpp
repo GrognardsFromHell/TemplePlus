@@ -37,9 +37,19 @@ struct PyObjHandle {
 	objHndl handle;
 };
 
-static PyObjHandle* GetSelf(PyObject* self) {
-	// TODO refresh handle from guid if necessary
-	return (PyObjHandle*)self;
+static PyObjHandle* GetSelf(PyObject* obj) {
+	assert(PyObjHndl_Check(obj));
+
+	auto self = (PyObjHandle*) obj;
+
+	if (!self->handle && self->id.subtype) {
+		self->handle = objects.GetHandle(self->id);
+	}
+	if (!objects.VerifyHandle(self->handle)) {
+		self->handle = objects.GetHandle(self->id);
+	}
+	
+	return self;
 }
 
 static PyObject* PyObjHandle_Repr(PyObject* obj) {

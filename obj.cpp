@@ -86,6 +86,10 @@ static struct ObjInternal : AddressTable {
 
 #pragma region Objects implementation
 
+bool Objects::VerifyHandle(objHndl handle) {
+
+}
+
 uint32_t Objects::getInt32(objHndl obj, obj_f fieldIdx)
 {
 	GameObjectBody * objBody = _GetMemoryAddress(obj);
@@ -215,6 +219,7 @@ Objects::Objects()
 	pathfinding = &pathfindingSys;
 	loc = &locSys;
 	floats = &floatSys;
+	rebase(_VerifyHandle, 0x100C2D00);
 	rebase(_GetId, 0x1009CA40);
 	rebase(_GetHandle, 0x100C3050);
 	rebase(_Create, 0x10028D20);
