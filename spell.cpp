@@ -6,6 +6,7 @@
 #include "obj.h"
 #include "tig/tig_mes.h"
 #include "temple_functions.h"
+#include "ui\ui_picker.h"
 
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
@@ -64,6 +65,13 @@ public:
 } spellHostilityFlagFix;
 
 
+static struct SpellSystemAddresses : AddressTable {
+	uint32_t(__cdecl * ConfigSpellTargetting)(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
+	SpellSystemAddresses()
+	{
+		macRebase(ConfigSpellTargetting, 100B9690)
+	}
+} addresses;
 
 
 #pragma region Spell System Implementation
@@ -73,6 +81,11 @@ SpellSystem spellSys;
 uint32_t SpellSystem::spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry)
 {
 	return spellEntryRegistry.copy(spellEnum, spellEntry);
+}
+
+uint32_t SpellSystem::ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPktBody)
+{
+	return addresses.ConfigSpellTargetting(pickerArgs, spellPktBody);
 }
 
 uint32_t SpellSystem::getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t classLvl, uint32_t slotLvl, uint32_t unknown1)
@@ -164,7 +177,7 @@ uint32_t SpellSystem::spellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum,
 
 	*n = 0;
 	uint32_t numSpellsKnown = objects.getArrayFieldNumItems(objHnd, obj_f_critter_spells_known_idx);
-	for (auto i = 0; i < numSpellsKnown; i++)
+	for (uint32_t i = 0; i < numSpellsKnown; i++)
 	{
 		SpellStoreData spellData;
 		objects.getArrayField(objHnd, obj_f_critter_spells_known_idx, i, &spellData);
@@ -282,6 +295,11 @@ bool SpellSystem::isDomainSpell(uint32_t spellClassCode)
 {
 	if (spellClassCode & 0x80) return 0;
 	return 1;
+}
+
+uint32_t SpellSystem::pickerArgsFromSpellEntry(SpellEntry* spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLvl)
+{
+	return _pickerArgsFromSpellEntry(spellEntry, pickArgs, objHnd, casterLvl);
 }
 #pragma endregion
 

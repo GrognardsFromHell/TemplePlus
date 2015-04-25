@@ -12,6 +12,9 @@
 #include "spell.h"
 #include "d20.h"
 #include "action_sequence.h"
+#include <ui/ui_picker.h>
+#include <location.h>
+#include <turn_based.h>
 
 static struct PythonInternal : AddressTable {
 
@@ -268,14 +271,24 @@ static PyObject * pyObjHandleType_PC_Add(TemplePyObjHandle* obj, PyObject * pyTu
 };
 
 
+UiPickerType operator&(const UiPickerType& lhs, const UiPickerType& rhs){
+	return (UiPickerType)((uint64_t)lhs & (uint64_t)rhs);
+};
+
 static PyObject * pyObjHandleType_CastSpell(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	uint32_t spellEnum;
-	PyObject * targetPyObj;
+	TemplePyObjHandle * targetPyObj;
+	PickerArgs pickArgs;
 	SpellPacketBody spellPktBody;
 	SpellEntry spellEntry;
-	if (!PyArg_ParseTuple(pyTupleIn, "i|O!", &targetPyObj, &spellEnum)) return nullptr;
-
+	char parseString[] = "i|O!";
+	if (!PyArg_ParseTuple(pyTupleIn, "i|O!:objhndl.cast_spell", &spellEnum, pyObjHandleType.ptr(), &targetPyObj)) {
+		return 0;
+	}
 	objHndl caster = obj->objHandle;
+	objHndl targetObj = targetPyObj->objHandle;
+	LocAndOffsets loc;
+	D20SpellData d20SpellData;
 	
 	// get spell known data
 	// I've set up a really large buffer just in case, 
@@ -284,17 +297,73 @@ static PyObject * pyObjHandleType_CastSpell(TemplePyObjHandle* obj, PyObject * p
 	uint32_t classCodes[10000] = { 0, };
 	uint32_t spellLevels[10000] = {0,};
 	uint32_t numSpells = 0;
-	if (!spellSys.spellKnownQueryGetData(caster, spellEnum, classCodes, spellLevels, &numSpells)) return Py_None;
-	if (numSpells <= 0) return Py_None;
+	if (!spellSys.spellKnownQueryGetData(caster, spellEnum, classCodes, spellLevels, &numSpells)) {
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+	if (numSpells <= 0) {
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
 	spellSys.spellPacketBodyReset(&spellPktBody);
 	for (uint32_t i = 0; i < numSpells; i++)
 	{
 		if (!spellSys.spellCanCast(caster, spellEnum, classCodes[i], spellLevels[i])) continue;
 		spellSys.spellPacketSetCasterLevel(&spellPktBody);
 		if (!spellSys.spellRegistryCopy(spellEnum, &spellEntry)) continue;
+		if (!spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, caster, spellPktBody.baseCasterLevel)) continue;
+		pickArgs.result = { 0, };
+		pickArgs.flagsTarget = (UiPickerFlagsTarget)(
+			(uint64_t)pickArgs.flagsTarget | (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::Unknown100h 
+			- (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::Range
+			);
+
+		if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Single))
+		{
+			objects.loc->getLocAndOff(targetObj, &loc);
+			uiPicker.sub_100BA480(targetObj, &pickArgs);
+		} 
+		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Multi))
+		{
+			objects.loc->getLocAndOff(targetObj, &loc);
+			uiPicker.sub_100BA480(targetObj, &pickArgs);
+		}
+		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Cone))
+		{
+			objects.loc->getLocAndOff(targetObj, &loc);
+			uiPicker.sub_100BA6A0(&loc, &pickArgs);
+
+		}
+		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Area))
+		{
+			if (spellEntry.spellRangeType == SRT_Personal)
+				objects.loc->getLocAndOff(caster, &loc);
+			else objects.loc->getLocAndOff(targetObj, &loc);
+			uiPicker.sub_100BA540(&loc, &pickArgs);
+		}
+		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Personal))
+		{
+			objects.loc->getLocAndOff(caster, &loc);
+			uiPicker.sub_100BA480(caster, &pickArgs);
+		}
+
+		spellSys.ConfigSpellTargetting(&pickArgs, &spellPktBody);
+		if (spellPktBody.targetListNumItems <= 0) continue;
+		if (!actSeqSys.TurnBasedStatusInit(caster)) continue;
+		d20Sys.GlobD20ActnInit();
+		d20Sys.GlobD20ActnSetTypeAndData1(D20A_CAST_SPELL, 0);
+		actSeqSys.ActSeqCurSetSpellPacket(&spellPktBody, 1);
+		d20Sys.D20ActnSetSpellData(&d20SpellData, spellEnum, classCodes[i], spellLevels[i], 0xFF, 0);
+		d20Sys.GlobD20ActnSetSpellData(&d20SpellData);
+		d20Sys.GlobD20ActnSetTarget(targetObj, &loc);
+		actSeqSys.ActionAddToSeq();
+		actSeqSys.sequencePerform();
+
+		Py_INCREF(Py_None);
+		return Py_None;
 	}
-	
-	
+	Py_INCREF(Py_None);
+	return Py_None;
 };
 
 
@@ -366,7 +435,8 @@ static PyMethodDef pyObjHandleMethods_New[] = {
 	"pc_add", (PyCFunction)pyObjHandleType_PC_Add, METH_VARARGS, "Adds object as a PC party member.",
 	"objfeatadd", (PyCFunction)pyObjHandleType_ObjFeatAdd, METH_VARARGS, "Adds a feat. Feats can be added multiple times (at least some of them? like Toughness)",
 	"makewiz", (PyCFunction)pyObjHandleType_MakeWizard, METH_VARARGS, "Makes character a wizard of level n",
-
+	"cast_spell", (PyCFunction)pyObjHandleType_CastSpell, METH_VARARGS, "Casts a spell. Beware the chaos!",
+	//
 	0, 0, 0, 0
 };
 
@@ -489,6 +559,11 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 		
 	};
 
+	if (!_strcmpi(name, "cast_spell")) {
+	//	return Py_FindMethod(pyObjHandleMethods_New, obj, "cast_spell");
+
+	};
+	
 
 	return pyObjHandleTypeGetAttr(obj, name);
 }

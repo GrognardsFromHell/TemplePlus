@@ -44,11 +44,21 @@ public:
 		replaceFunction(0x10093810, _d20aInitUsercallWrapper); // function takes esi as argument
 
 		replaceFunction(0x10089F80, _globD20aSetTypeAndData1);
+		macReplaceFun(1008A450, _GlobD20ActnSetSpellData)
 		macReplaceFun(1008A530, _globD20aSetPerformer)
 		macReplaceFun(100949E0, _globD20ActnInit)
 	}
 } d20Replacements;
 
+
+static struct D20SystemAddresses : AddressTable {
+
+	void(__cdecl*  GlobD20ActnSetTarget)(objHndl objHnd, LocAndOffsets * loc);
+	D20SystemAddresses()
+	{
+		macRebase(GlobD20ActnSetTarget, 10092E50)
+	}
+} addresses;
 
 #pragma region D20System Implementation
 D20System d20Sys;
@@ -139,7 +149,7 @@ void D20System::d20ActnInit(objHndl objHnd, D20Actn* d20a)
 	
 }
 
-void D20System::globD20ActnSetTypeAndData1(D20ActionType d20type, uint32_t data1)
+void D20System::GlobD20ActnSetTypeAndData1(D20ActionType d20type, uint32_t data1)
 {
 	globD20Action->d20ActType = d20type;
 	globD20Action->data1 = data1;
@@ -156,7 +166,12 @@ void D20System::globD20ActnSetPerformer(objHndl objHnd)
 	(*globD20Action).d20APerformer = objHnd;
 }
 
-void D20System::globD20ActnInit()
+void D20System::GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc)
+{
+	addresses.GlobD20ActnSetTarget(objHnd, loc);
+}
+
+void D20System::GlobD20ActnInit()
 {
 	d20ActnInit(globD20Action->d20APerformer, globD20Action);
 }
@@ -217,7 +232,7 @@ uint32_t D20System::tumbleCheck(D20Actn* d20a)
 	return _tumbleCheck(d20a);
 }
 
-void D20System::d20ActnSetSpellData(D20SpellData* d20SpellData, uint32_t spellEnumOrg, uint32_t spellClassCode, uint32_t spellSlotLevel, uint32_t itemSpellData, uint32_t metaMagicData)
+void D20System::D20ActnSetSpellData(D20SpellData* d20SpellData, uint32_t spellEnumOrg, uint32_t spellClassCode, uint32_t spellSlotLevel, uint32_t itemSpellData, uint32_t metaMagicData)
 {
 	*(uint32_t *)&d20SpellData->metaMagicData = metaMagicData;
 	d20SpellData->spellEnumOrg = spellEnumOrg;
@@ -225,6 +240,11 @@ void D20System::d20ActnSetSpellData(D20SpellData* d20SpellData, uint32_t spellEn
 	d20SpellData->itemSpellData = itemSpellData;
 	d20SpellData->spontCastType = (SpontCastType)0;
 	d20SpellData->spellSlotLevel = spellSlotLevel;
+}
+
+void D20System::GlobD20ActnSetSpellData(D20SpellData* d20SpellData)
+{
+	d20Sys.globD20Action->d20SpellData = *d20SpellData;
 }
 
 uint64_t D20System::d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, ::uint32_t arg2)
@@ -390,12 +410,12 @@ void __declspec(naked) _d20aInitUsercallWrapper(objHndl objHnd)
 
 void _d20ActnSetSpellData(D20SpellData* d20SpellData, uint32_t spellEnumOrg, uint32_t spellClassCode, uint32_t spellSlotLevel, uint32_t itemSpellData, uint32_t metaMagicData)
 {
-	d20Sys.d20ActnSetSpellData(d20SpellData, spellEnumOrg, spellClassCode, spellSlotLevel, itemSpellData, metaMagicData);
+	d20Sys.D20ActnSetSpellData(d20SpellData, spellEnumOrg, spellClassCode, spellSlotLevel, itemSpellData, metaMagicData);
 }
 
 void _globD20aSetTypeAndData1(D20ActionType d20type, uint32_t data1)
 {
-	d20Sys.globD20ActnSetTypeAndData1(d20type, data1);
+	d20Sys.GlobD20ActnSetTypeAndData1(d20type, data1);
 }
 
 uint32_t _d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2)
@@ -415,7 +435,12 @@ void _globD20aSetPerformer(objHndl objHnd)
 
 void _globD20ActnInit()
 {
-	d20Sys.globD20ActnInit();
+	d20Sys.GlobD20ActnInit();
+}
+
+void _GlobD20ActnSetSpellData(D20SpellData* d20SpellData)
+{
+	d20Sys.GlobD20ActnSetSpellData(d20SpellData);
 }
 
 static void D20Dumper() {

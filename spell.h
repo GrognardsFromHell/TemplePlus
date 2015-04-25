@@ -5,13 +5,29 @@
 #include "idxtables.h"
 #include "tig\tig_mes.h"
 
+
+struct PickerArgs;
+
 #define MAX_SPELLS_KNOWN 384
 
 #pragma region Spell Structs
+
 struct SpellEntryLevelSpec
 {
 	uint32_t classCode;
 	uint32_t slotLevel;
+};
+
+enum SpellRangeType : uint32_t
+{
+	SRT_Specified = 0,
+	SRT_Personal=  1,
+	SRT_Touch , 
+	SRT_Close, 
+	SRT_Medium,
+	SRT_Long,
+	SRT_Unlimited,
+	SRT_Special_Inivibility_Purge
 };
 
 struct SpellEntry
@@ -24,7 +40,7 @@ struct SpellEntry
 	uint32_t costGP;
 	uint32_t costXP;
 	uint32_t castingTimeType;
-	uint32_t spellRangeType;
+	SpellRangeType spellRangeType;
 	uint32_t spellRange;
 	uint32_t savingThrowType;
 	uint32_t spellResistanceCode;
@@ -97,7 +113,7 @@ struct SpellSystem : AddressTable
 {
 	IdxTable<SpellPacket> * spellCastIdxTable;
 	uint32_t spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry);
-
+	uint32_t ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
 	MesHandle * spellEnumMesHandle;
 
 	uint32_t getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t classLvl, uint32_t slotLvl, uint32_t unknown1);
@@ -112,6 +128,9 @@ struct SpellSystem : AddressTable
 	bool numSpellsKnownTooHigh(objHndl objHnd);
 	bool numSpellsMemorizedTooHigh(objHndl objHnd);
 	bool isDomainSpell(uint32_t spellClassCode);
+	uint32_t pickerArgsFromSpellEntry(SpellEntry * spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLevel);
+
+
 	uint32_t(__cdecl * spellRemoveFromStorage)(objHndl objHnd, obj_f fieldIdx, SpellStoreData * spellData, int unknown);
 	uint32_t (__cdecl * spellsPendingToMemorized)(objHndl objHnd);
 	SpellSystem()
@@ -125,6 +144,7 @@ struct SpellSystem : AddressTable
 		rebase(spellsPendingToMemorized, 0x100757D0);
 		macRebase(_spellPacketBodyReset, 1008A350)
 		macRebase(_spellPacketSetCasterLevel, 10079B70)
+		macRebase(_pickerArgsFromSpellEntry, 100772A0)
 	}
 private:
 
@@ -132,6 +152,7 @@ private:
 	uint32_t(__cdecl* _getStatModBonusSpellCount)();
 	void(__cdecl * _spellPacketBodyReset)(SpellPacketBody * spellPktBody);
 	void(__cdecl * _spellPacketSetCasterLevel)(SpellPacketBody * spellPktBody);
+	uint32_t(__cdecl * _pickerArgsFromSpellEntry)(SpellEntry * spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLevel);
 	//uint32_t(__cdecl * Spell_Range_Sthg_From_SpellEntry_sub_100772A0)(SpellEntry *spellEntry, );
 };
 

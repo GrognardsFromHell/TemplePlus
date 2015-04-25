@@ -235,6 +235,13 @@
     <ClCompile Include="d20_status.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="objlist.cpp" />
+    <ClCompile Include="ui\ui_picker.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_spell.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -461,6 +468,13 @@
     </ClInclude>
     <ClInclude Include="d20_status.h">
       <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_picker.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="objlist.h" />
+    <ClInclude Include="python\python_spell.h">
+      <Filter>python</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

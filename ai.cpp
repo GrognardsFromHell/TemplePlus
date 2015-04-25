@@ -74,7 +74,7 @@ void AiSystem::aiTacticGetConfig(int tacIdx, AiTactic* aiTacOut, AiStrategy* aiS
 		aiTacOut->spellPktBody.casterClassCode = aiStrat->spellsKnown[tacIdx].classCode;
 		aiTacOut->spellPktBody.spellKnownSlotLevel = aiStrat->spellsKnown[tacIdx].spellLevel;
 		spell->spellPacketSetCasterLevel(spellPktBody);
-		d20->d20ActnSetSpellData(&aiTacOut->d20SpellData, spellEnum, spellPktBody->casterClassCode, spellPktBody->spellKnownSlotLevel, 0xFF, spellPktBody->metaMagicData);
+		d20->D20ActnSetSpellData(&aiTacOut->d20SpellData, spellEnum, spellPktBody->casterClassCode, spellPktBody->spellKnownSlotLevel, 0xFF, spellPktBody->metaMagicData);
 	}
 }
 
@@ -83,10 +83,10 @@ uint32_t AiSystem::aiStrategyParse(objHndl objHnd, objHndl target)
 	AiTactic aiTac;
 	combat->enterCombat(objHnd);
 	AiStrategy* aiStrat = &(*aiStrategies)[objects.getInt32(objHnd, obj_f_critter_strategy)];
-	if (!actSeq->turnBasedStatusInit(objHnd)) return 0;
+	if (!actSeq->TurnBasedStatusInit(objHnd)) return 0;
 	
 	actSeq->curSeqReset(objHnd);
-	d20->globD20ActnInit();
+	d20->GlobD20ActnInit();
 	spell->spellPacketBodyReset(&aiTac.spellPktBody);
 	aiTac.performer = objHnd;
 	aiTac.target = target;

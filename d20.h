@@ -41,13 +41,15 @@ struct D20System : AddressTable
 	uint64_t d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
 
 	void d20ActnInit(objHndl objHnd, D20Actn * d20a);
-	void globD20ActnSetTypeAndData1(D20ActionType d20type, uint32_t data1);
+	void GlobD20ActnSetTypeAndData1(D20ActionType d20type, uint32_t data1);
 	void globD20ActnSetPerformer(objHndl objHnd);
-	void globD20ActnInit();
+	void GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc);
+	void GlobD20ActnInit();
 	void d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx);//1008AE90    ActnSeq * @<eax>
 	int32_t d20aTriggersAOOCheck(D20Actn * d20a, void * iO);// 1008A9C0
 	uint32_t tumbleCheck(D20Actn*);
-	void d20ActnSetSpellData(D20SpellData* d20SpellData, uint32_t spellEnumOrg, uint32_t spellClassCode, uint32_t spellSlotLevel, uint32_t itemSpellData, uint32_t metaMagicData);
+	void D20ActnSetSpellData(D20SpellData* d20SpellData, uint32_t spellEnumOrg, uint32_t spellClassCode, uint32_t spellSlotLevel, uint32_t itemSpellData, uint32_t metaMagicData);
+	void GlobD20ActnSetSpellData(D20SpellData* d20SpellData);
 	void (__cdecl *D20StatusInitFromInternalFields)(objHndl objHnd, Dispatcher *dispatcher);
 	void (__cdecl *AppendObjHndToArray10BCAD94)(objHndl ObjHnd);
 	void(__cdecl * _d20aTriggerCombatCheck)(int32_t idx);//1008AE90    ActnSeq * @<eax>
@@ -146,4 +148,5 @@ uint32_t _d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t ar
 uint64_t _d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
 void _globD20aSetPerformer(objHndl objHnd);
 void _globD20ActnInit();
+void _GlobD20ActnSetSpellData(D20SpellData * d20SpellData);
 #pragma endregion 
