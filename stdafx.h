@@ -27,6 +27,9 @@
 
 using namespace std;
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #include <DxErr.h>
 #pragma comment(lib, "dxerr.lib")
 #pragma comment(lib, "D3dx9.lib")

@@ -11,6 +11,7 @@
 #include "location.h"
 #include "pathfinding.h"
 #include "turn_based.h"
+#include "util/config.h"
 
 
 class ActnSeqReplacements : public TempleFix
@@ -22,9 +23,11 @@ public:
 	void apply() override{
 		
 		macReplaceFun(10089F70, _curSeqGetTurnBasedStatus)
+		macReplaceFun(10089FA0, _ActSeqCurSetSpellPacket)
 
 		macReplaceFun(1008A050, _isPerforming)
 		macReplaceFun(1008A100, _addD20AToSeq)
+		macReplaceFun(1008A1B0, _ActionErrorString)
 		macReplaceFun(1008A980, _actSeqOkToPerform)
 		macReplaceFun(1008BFA0, _addSeqSimple)
 
@@ -52,6 +55,16 @@ public:
 } actSeqReplacements;
 
 
+static struct ActnSeqAddresses : AddressTable{
+
+	void(__cdecl *ActionAddToSeq)();
+	ActnSeqAddresses()
+	{
+		macRebase(ActionAddToSeq, 10097C20)
+	}
+}addresses;
+
+
 #pragma region Action Sequence System Implementation
 
 ActionSequenceSystem actSeqSys;
@@ -65,7 +78,7 @@ ActionSequenceSystem::ActionSequenceSystem()
 	object = &objects;
 	turnbased = &tbSys;
 	rebase(actSeqCur, 0x1186A8F0);
-	macRebase(actnSthg118CD3C0, 118CD3C0)
+	macRebase(tbStatus118CD3C0, 118CD3C0)
 	rebase(actnProcState, 0x10B3D5A4);
 	macRebase(_sub_1008BB40, 1008BB40)
 	macRebase(getRemainingMaxMoveLength, 1008B8A0);
@@ -89,7 +102,6 @@ ActionSequenceSystem::ActionSequenceSystem()
 	rebase(numSimultPerformers, 0x10B3D5B8);
 	rebase(simultPerformerQueue, 0x118A06C0);
 	macRebase(simulsIdx, 10B3D5BC)
-	macRebase(_moveSeqD20Sthg, 10094F70)
 	macRebase(_sub_100939D0, 100939D0)
 	
 	macRebase(seqSthg_118CD3B8, 118CD3B8)
@@ -130,6 +142,11 @@ void ActionSequenceSystem::curSeqReset(objHndl objHnd)
 	curSeq->targetObj = 0;
 	location->getLocAndOff(objHnd, &curSeq->performerLoc);
 	*seqSthg_10B3D5C0 = 0;
+}
+
+void ActionSequenceSystem::ActionAddToSeq()
+{
+	addresses.ActionAddToSeq();
 }
 
 uint32_t ActionSequenceSystem::addD20AToSeq(D20Actn* d20a, ActnSeq* actSeq)
@@ -199,10 +216,11 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	LocAndOffsets locAndOffCopy = d20aIn->destLoc;
 	LocAndOffsets * actSeqPerfLoc;
 
+	//hooked_print_debug_message("Parsing move sequence for %s, d20 action %s", description.getDisplayName(d20aIn->d20APerformer), d20ActionNames[d20aIn->d20ActType]);
 	
 	memcpy(&tbStatCopy, tbStat, sizeof(TurnBasedStatus));
 	seqCheckFuncs(&tbStatCopy);
-
+	
 	if (d20->d20Query(d20aIn->d20APerformer, DK_QUE_Prone))
 	{
 		memcpy(&d20aCopy, d20aIn, sizeof(D20Actn));
@@ -229,7 +247,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		if (reach < 0.1){ reach = 3.0; }
 		actSeq->targetObj = d20a->d20ATarget;
 		pathQ.distanceToTarget = distToTgt * twelve;
-		pathQ.radius = reach * twelve - fourPointSevenPlusEight;
+		pathQ.tolRadius = reach * twelve - fourPointSevenPlusEight;
 	} else
 	{
 		pathQ.to = d20aIn->destLoc;
@@ -258,6 +276,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	d20aCopy.path = pqResult;
 	if (!pqResult) return 0x9;
 
+
 	*pathfindingSys.pathSthgFlag_10B3D5C8 = 0;
 	if (! pathfinding->FindPath(&pathQ, pqResult))
 	{
@@ -267,6 +286,50 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		return 0x9;
 	}
 	
+	if (d20aCopy.d20Caf & D20CAF_CHARGE )
+	{
+		if (pqResult->nodeCount >= 2)
+		{
+			uint32_t straightPathSuccess = 1;
+			LocAndOffsets midpoint;
+			midpoint.location.locx = (pathQ.from.location.locx + pqResult->to.location.locx) / 2;
+			midpoint.location.locy = (pathQ.from.location.locy + pqResult->to.location.locy) / 2;
+			midpoint.off_x = 0;
+			midpoint.off_y = 0;
+			PathQuery pathQueryStartToMid = pathQ;
+			PathQuery pathQueryMidToEnd = pathQ;
+			pathQueryStartToMid.to = midpoint;
+			pathQueryStartToMid.flags = static_cast<PathQueryFlags>(0x40803);
+			
+			pathQueryMidToEnd.from = midpoint;
+			pathQueryMidToEnd.to = pqResult->to;
+			pathQueryStartToMid.flags = static_cast<PathQueryFlags>(0x40803);
+			*pathfindingSys.pathSthgFlag_10B3D5C8 = 0;
+			//pathQueryStartToMid.tolRadius = 30.0;
+			if (pathfinding->FindPath(&pathQueryStartToMid, pqResult))
+			{
+				*pathfindingSys.pathSthgFlag_10B3D5C8 = 0;
+				pathQueryMidToEnd.tolRadius = 25.0;
+				if (pqResult->nodeCount == 1)
+				{
+					if (pathfinding->FindPath(&pathQueryMidToEnd, pqResult))
+					{
+						if (pqResult->nodeCount == 1)
+						{
+							pqResult->nodeCount = 1;
+							pqResult->nodes[0] = pathQueryMidToEnd.to;
+							pqResult->from = pathQueryStartToMid.from;
+						}	else straightPathSuccess = 0;
+					}	else straightPathSuccess = 0;
+				}	else straightPathSuccess = 0;
+			}	else straightPathSuccess = 0;
+			if (!straightPathSuccess)
+			{
+				pathfinding->FindPath(&pathQ, pqResult);
+			}
+		}
+	}
+
 	auto pathLength = pathfinding->pathLength(pqResult);
 	d20aCopy.destLoc = pqResult->to;
 	d20aCopy.distTraversed = pathLength;
@@ -294,7 +357,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	if (nonspecificMoveType) 
 	{
 		float baseMoveDist = dispatch.Dispatch29hGetMoveSpeed(d20aCopy.d20APerformer, nullptr);
-		if (!(d20aCopy.d20Caf & D20CAF_RANGED))
+		if (!(d20aCopy.d20Caf & D20CAF_CHARGE))
 		{
 			if (pathLength > (long double)tbStatCopy.surplusMoveDistance)
 			{
@@ -318,9 +381,8 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 
 			}
 			d20aCopy.d20ActType = D20A_MOVE;
-			goto LABEL_53;
 		} 
-		else if ( 2* baseMoveDist >= (long double)pathLength){ d20aCopy.d20ActType = D20A_RUN;	goto LABEL_53; }
+		else if ( 2* baseMoveDist >= (long double)pathLength) d20aCopy.d20ActType = D20A_RUN;	
 		else	{	releasePath(pqResult); return 8;	}
 	}
 
@@ -398,6 +460,14 @@ TurnBasedStatus* ActionSequenceSystem::curSeqGetTurnBasedStatus()
 	return nullptr;
 }
 
+const char* ActionSequenceSystem::ActionErrorString(uint32_t actnErrorCode)
+{
+	MesLine mesLine;
+	mesLine.key = actnErrorCode + 1000;
+	mesFuncs.GetLine_Safe(*actionMesHandle, &mesLine);
+	return mesLine.value;
+}
+
 uint32_t ActionSequenceSystem::allocSeq(objHndl objHnd)
 {
 	// finds an available sequence and allocates it to objHnd
@@ -425,10 +495,10 @@ uint32_t ActionSequenceSystem::assignSeq(objHndl objHnd)
 		{
 			if (prevSeq != nullptr)
 			{
-				hooked_print_debug_message("\nPushing sequence from for %s (%I64x) to %s (%I64x)", object->description.GetDisplayName(prevSeq->performer, prevSeq->performer), prevSeq->performer, object->description.GetDisplayName(objHnd, objHnd), objHnd);
+				hooked_print_debug_message("\nPushing sequence from for %s (%I64x) to %s (%I64x)", object->description._getDisplayName(prevSeq->performer, prevSeq->performer), prevSeq->performer, object->description._getDisplayName(objHnd, objHnd), objHnd);
 			} else
 			{
-				hooked_print_debug_message("\nAllocating sequence for %s (%I64x) ", object->description.GetDisplayName(objHnd, objHnd), objHnd);
+				hooked_print_debug_message("\nAllocating sequence for %s (%I64x) ", object->description._getDisplayName(objHnd, objHnd), objHnd);
 			}
 		}
 		(*actSeqCur)->prevSeq = prevSeq;
@@ -438,7 +508,7 @@ uint32_t ActionSequenceSystem::assignSeq(objHndl objHnd)
 	return 0;
 }
 
-uint32_t ActionSequenceSystem::turnBasedStatusInit(objHndl objHnd)
+uint32_t ActionSequenceSystem::TurnBasedStatusInit(objHndl objHnd)
 {
 	TurnBasedStatus * tbStatus;
 	DispIOTurnBasedStatus dispIOtB;
@@ -469,6 +539,12 @@ uint32_t ActionSequenceSystem::turnBasedStatusInit(objHndl objHnd)
 		return 1;
 	}
 	return 0;
+}
+
+void ActionSequenceSystem::ActSeqCurSetSpellPacket(SpellPacketBody* spellPktBody, int flag)
+{
+	memcpy(&(*actSeqCur)->spellPktBody, spellPktBody, sizeof(SpellPacketBody));
+	(*actSeqCur)->aiSpellFlagSthg_maybe = flag;
 }
 
 void ActionSequenceSystem::sub_1008BB40(ActnSeq* actSeq, D20Actn* d20a)
@@ -532,16 +608,16 @@ uint32_t ActionSequenceSystem::sub_10096450(ActnSeq* actSeq, uint32_t idx ,void 
 	return result;
 }
 
-uint32_t ActionSequenceSystem::seqCheckFuncs(TurnBasedStatus* actnSthg)
+uint32_t ActionSequenceSystem::seqCheckFuncs(TurnBasedStatus* tbStatus)
 {
 	LocAndOffsets seqPerfLoc;
 	ActnSeq * curSeq = *actSeqCur;
 	uint32_t result = 0;
 	
 	if (!curSeq)
-		{	memset(actnSthg, 0, sizeof(TurnBasedStatus));		return 0;	}
+		{	memset(tbStatus, 0, sizeof(TurnBasedStatus));		return 0;	}
 
-	memcpy(actnSthg, &curSeq->tbStatus, sizeof(TurnBasedStatus));
+	memcpy(tbStatus, &curSeq->tbStatus, sizeof(TurnBasedStatus));
 	objects.loc->getLocAndOff(curSeq->performer, &seqPerfLoc);
 	for (int32_t i = 0; i < curSeq->d20ActArrayNum; i++)
 	{
@@ -552,20 +628,20 @@ uint32_t ActionSequenceSystem::seqCheckFuncs(TurnBasedStatus* actnSthg)
 		auto d20type = curSeq->d20ActArray[i].d20ActType;
 		auto tgtCheckFunc = d20->d20Defs[d20type].tgtCheckFunc;
 		if (tgtCheckFunc)
-			{ result = tgtCheckFunc(&curSeq->d20ActArray[i], actnSthg);	if (result) break; }
+			{ result = tgtCheckFunc(&curSeq->d20ActArray[i], tbStatus);	if (result) break; }
 
 			
-		result = sub_10093950(d20a, actnSthg);
+		result = sub_10093950(d20a, tbStatus);
 		if (result)	
-			{ actnSthg->errCode = result;	break; }
+			{ tbStatus->errCode = result;	break; }
 
 		auto actCheckFunc = d20->d20Defs[d20a->d20ActType].actionCheckFunc;
 		if (actCheckFunc)
-			{ result = actCheckFunc(d20a, actnSthg);		if (result) break; }
+			{ result = actCheckFunc(d20a, tbStatus);		if (result) break; }
 
 		auto locCheckFunc = d20->d20Defs[d20type].locCheckFunc;
 		if (locCheckFunc)
-			{ result = locCheckFunc(d20a, actnSthg, &seqPerfLoc); if (result) break; }
+			{ result = locCheckFunc(d20a, tbStatus, &seqPerfLoc); if (result) break; }
 
 		auto path = curSeq->d20ActArray[i].path;
 		if (path) 
@@ -573,8 +649,8 @@ uint32_t ActionSequenceSystem::seqCheckFuncs(TurnBasedStatus* actnSthg)
 	}
 	if (result)
 	{
-		if (!*actSeqCur){ memset(actnSthg, 0, sizeof(TurnBasedStatus)); }
-		else{ memcpy(actnSthg, &(*actSeqCur)->tbStatus, sizeof(TurnBasedStatus)); }
+		if (!*actSeqCur){ memset(tbStatus, 0, sizeof(TurnBasedStatus)); }
+		else{ memcpy(tbStatus, &(*actSeqCur)->tbStatus, sizeof(TurnBasedStatus)); }
 	}
 	
 	return result;
@@ -665,7 +741,7 @@ uint32_t ActionSequenceSystem::curSeqNext()
 {
 	ActnSeq* curSeq = *actSeqCur;
 	curSeq->seqOccupied &= 0xffffFFFE; //unset "occupied" flag
-	hooked_print_debug_message("\nSequence Completed for %s (%I64x) (sequence %x)",description.GetDisplayName(curSeq->performer, curSeq->performer), curSeq->performer, curSeq);
+	hooked_print_debug_message("\nSequence Completed for %s (%I64x) (sequence %x)",description._getDisplayName(curSeq->performer, curSeq->performer), curSeq->performer, curSeq);
 
 	return _curSeqNext();
 }
@@ -673,7 +749,7 @@ uint32_t ActionSequenceSystem::curSeqNext()
 void ActionSequenceSystem::actionPerform()
 {
 	MesLine mesLine;
-	TurnBasedStatus actnSthg;
+	TurnBasedStatus tbStatus;
 	int32_t * curIdx ;
 	D20Actn * d20a = nullptr;
 	while (1)
@@ -687,20 +763,20 @@ void ActionSequenceSystem::actionPerform()
 		if (objects.IsUnconscious(performer))
 		{
 			curSeq->d20ActArrayNum = curSeq->d20aCurIdx;
-			hooked_print_debug_message("\nUnconscious actor %s - cutting sequence", objects.description.GetDisplayName(performer, performer));
+			hooked_print_debug_message("\nUnconscious actor %s - cutting sequence", objects.description._getDisplayName(performer, performer));
 		}
 		if (curSeq->d20aCurIdx >= (int32_t)curSeq->d20ActArrayNum) break;	
 		
-		memcpy(&actnSthg, &curSeq->tbStatus, sizeof(actnSthg));
+		memcpy(&tbStatus, &curSeq->tbStatus, sizeof(tbStatus));
 		d20a = &curSeq->d20ActArray[*curIdx];
 		
-		auto errCode = sub_10096450( curSeq, *curIdx,&actnSthg);
+		auto errCode = sub_10096450( curSeq, *curIdx,&tbStatus);
 		if (errCode)
 		{
 			
 			mesLine.key = errCode + 1000;
 			mesFuncs.GetLine_Safe(*actionMesHandle, &mesLine);
-			hooked_print_debug_message("Action unavailable for %s (%I64x): %s\n", objects.description.GetDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer, mesLine.value );
+			hooked_print_debug_message("Action unavailable for %s (%I64x): %s\n", objects.description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer, mesLine.value );
 			*actnProcState = errCode;
 			curSeq->tbStatus.errCode = errCode;
 			objects.floats->floatMesLine(performer, 1, FloatLineColor::Red, mesLine.value);
@@ -714,17 +790,17 @@ void ActionSequenceSystem::actionPerform()
 
 		if (d20a->d20ActType != D20A_AOO_MOVEMENT)
 		{
-			if ( d20->d20aTriggersAOOCheck(d20a, &actnSthg) && AOOSthg2_100981C0(d20a->d20APerformer))
+			if ( d20->d20aTriggersAOOCheck(d20a, &tbStatus) && AOOSthg2_100981C0(d20a->d20APerformer))
 			{
-				hooked_print_debug_message("\nSequence Preempted %s (%I64x)", description.GetDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
+				hooked_print_debug_message("\nSequence Preempted %s (%I64x)", description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
 				--*(curIdx);
 				sequencePerform();
 			} else
 			{
-				memcpy(&curSeq->tbStatus, &actnSthg, sizeof(actnSthg));
+				memcpy(&curSeq->tbStatus, &tbStatus, sizeof(tbStatus));
 				*(uint32_t*)(&curSeq->tbStatus.callActionFrameFlags) |= (uint32_t)D20CAF_NEED_ANIM_COMPLETED;
 				InterruptSthg_10099360(d20a);
-				hooked_print_debug_message("\nPerforming action for %s (%I64x)", description.GetDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
+				hooked_print_debug_message("\nPerforming action for %s (%I64x)", description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
 				d20->d20Defs[d20a->d20ActType].performFunc(d20a);
 				InterruptSthg_10099320(d20a);
 			}
@@ -759,7 +835,7 @@ void ActionSequenceSystem::sequencePerform()
 	ActnSeq * curSeq = *actSeqCur;
 	if (combat->isCombatActive() || !actSeqSpellHarmful(curSeq) || !combatTriggerSthg(curSeq) ) // POSSIBLE BUG: I think this can cause spells to be overridden (e.g. when the temple priests prebuff simulataneously with you, and you get the spell effect instead) TODO
 	{
-		hooked_print_debug_message("\n%s performing sequence...", description.GetDisplayName(curSeq->performer, curSeq->performer));
+		hooked_print_debug_message("\n%s performing sequence...", description._getDisplayName(curSeq->performer, curSeq->performer));
 		if (isSimultPerformer(curSeq->performer))
 		{ 
 			hooked_print_debug_message("simultaneously...");
@@ -885,8 +961,8 @@ uint32_t ActionSequenceSystem::simulsAbort(objHndl objHnd)
 			}
 			else{
 				*numSimultPerformers = *simulsIdx;
-				memcpy(actnSthg118CD3C0, &(*actSeqCur)->tbStatus, sizeof(TurnBasedStatus));
-				hooked_print_debug_message("Simul aborted %s (%d)", description.GetDisplayName(objHnd, objHnd), *simulsIdx);
+				memcpy(tbStatus118CD3C0, &(*actSeqCur)->tbStatus, sizeof(TurnBasedStatus));
+				hooked_print_debug_message("Simul aborted %s (%d)", description._getDisplayName(objHnd, objHnd), *simulsIdx);
 				return 1;
 			}
 		}
@@ -955,9 +1031,9 @@ uint32_t _isSimultPerformer(objHndl objHnd)
 	return actSeqSys.isSimultPerformer(objHnd);
 }
 
-uint32_t _seqCheckFuncsCdecl(TurnBasedStatus* actnSthg)
+uint32_t _seqCheckFuncsCdecl(TurnBasedStatus* tbStatus)
 {
-	return actSeqSys.seqCheckFuncs(actnSthg);
+	return actSeqSys.seqCheckFuncs(tbStatus);
 }
 
 
@@ -1023,6 +1099,16 @@ TurnBasedStatus* _curSeqGetTurnBasedStatus()
 
 uint32_t _turnBasedStatusInit(objHndl objHnd)
 {
-	return actSeqSys.turnBasedStatusInit(objHnd);
+	return actSeqSys.TurnBasedStatusInit(objHnd);
+}
+
+const char* __cdecl _ActionErrorString(uint32_t actnErrorCode)
+{
+	return actSeqSys.ActionErrorString(actnErrorCode);
+}
+
+void _ActSeqCurSetSpellPacket(SpellPacketBody* spellPktBody, int flag)
+{
+	actSeqSys.ActSeqCurSetSpellPacket(spellPktBody, flag);
 }
 #pragma endregion

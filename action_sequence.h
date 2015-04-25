@@ -35,7 +35,7 @@ struct ActionSequenceSystem : AddressTable
 	MesHandle  * actionMesHandle; 
 	uint32_t * seqSthg_10B3D5C0; // init to 0
 	uint32_t * actnProc_10B3D5A0;
-	TurnBasedStatus * actnSthg118CD3C0;
+	TurnBasedStatus * tbStatus118CD3C0;
 
 	int32_t * seqSthg_118CD3B8; // init to -1
 	int32_t * seqSthg_118A0980; // init to 1
@@ -45,7 +45,8 @@ struct ActionSequenceSystem : AddressTable
 	objHndl * simultPerformerQueue; 
 
 	void curSeqReset(objHndl objHnd);
-	uint32_t addD20AToSeq(D20Actn * d20a, ActnSeq * actSeq);
+	void ActionAddToSeq();
+		uint32_t addD20AToSeq(D20Actn * d20a, ActnSeq * actSeq);
 	uint32_t isPerforming(objHndl objHnd);
 	uint32_t addSeqSimple(D20Actn * d20a, ActnSeq * actSeq);
 	void IntrrptSthgsub_100939D0(D20Actn * d20a, CmbtIntrpts * str84);
@@ -55,14 +56,17 @@ struct ActionSequenceSystem : AddressTable
 		void updateDistTraversed(ActnSeq* actSeq);
 	uint32_t actSeqOkToPerform();
 	TurnBasedStatus* curSeqGetTurnBasedStatus();
+	const char * ActionErrorString(uint32_t actnErrorCode);
 
 	uint32_t allocSeq(objHndl objHnd);
 	uint32_t assignSeq(objHndl objHnd);
-	uint32_t turnBasedStatusInit(objHndl objHnd);
+	uint32_t TurnBasedStatusInit(objHndl objHnd);
+	void ActSeqCurSetSpellPacket(SpellPacketBody* spellPacketBody, int flag);
 	int (__cdecl *sub_1008B9A0)(D20Actn *d20a, float float1, PathQuery *pathQ);
 	void sub_1008BB40(ActnSeq*actSeq, D20Actn * d20a); // actSeq@<ebx>
 	uint32_t sub_10093950(D20Actn* d20a, TurnBasedStatus* iO);
 	uint32_t sub_10096450(ActnSeq * actSeq, uint32_t idx, void* iO);
+	//10097C20
 	
 	uint32_t (__cdecl *seqCheckFuncssub_10094CA0)(TurnBasedStatus *actnSthg);
 	uint32_t seqCheckFuncs(TurnBasedStatus *actnSthg);
@@ -137,7 +141,7 @@ struct ActnSeq
 	objHndl targetObj;
 	SpellPacketBody spellPktBody;
 	D20Actn * d20Action;
-	uint32_t field_1644_maybe_spellAssignedFlag;
+	uint32_t aiSpellFlagSthg_maybe;
 };
 
 struct IntrptSthg
@@ -173,3 +177,5 @@ uint32_t _allocSeq(objHndl objHnd);
 uint32_t _assignSeq(objHndl objHnd);
 TurnBasedStatus * _curSeqGetTurnBasedStatus();
 uint32_t _turnBasedStatusInit(objHndl objHnd);
+const char * _ActionErrorString(uint32_t actnErrorCode);
+void __cdecl _ActSeqCurSetSpellPacket(SpellPacketBody *, int flag );

@@ -229,6 +229,46 @@
     <ClCompile Include="python\python_areas.cpp" />
     <ClCompile Include="python\python_counters.cpp" />
     <ClCompile Include="python\python_spell.cpp" />
+    <ClCompile Include="float_line.cpp" />
+    <ClCompile Include="location.cpp" />
+    <ClCompile Include="secret_door.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="skill.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="history.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="bonus.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="ai.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="action_sequence.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="turn_based.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="critter.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="tab_file.cpp" />
+    <ClCompile Include="d20_class.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="d20_status.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="objlist.cpp" />
+    <ClCompile Include="ui\ui_picker.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_spell.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -429,6 +469,47 @@
     <ClInclude Include="renderstates.h" />
     <ClInclude Include="tig\tig_sound.h" />
     <ClInclude Include="tio\tio_utils.h" />
+    <ClInclude Include="tig\tig_sound.h" />
+    <ClInclude Include="float_line.h" />
+    <ClInclude Include="location.h" />
+    <ClInclude Include="secret_door.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="skill.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="history.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="bonus.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="ai.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="action_sequence.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="turn_based.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="critter.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="tab_file.h" />
+    <ClInclude Include="d20_class.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="d20_status.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_picker.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="objlist.h" />
+    <ClInclude Include="python\python_spell.h">
+      <Filter>python</Filter>
+    </ClInclude>
     <ClInclude Include="python\python_object.h" />
     <ClInclude Include="python\python_time.h" />
     <ClInclude Include="python\python_embed.h" />

@@ -3,7 +3,9 @@
 #include "dispatcher.h"
 #include "common.h"
 #include "d20_defs.h"
+#include "d20_class.h"
 #include "spell.h"
+#include "d20_status.h"
 
 struct ActionSequenceSystem;
 // Forward decls
@@ -29,13 +31,8 @@ struct D20System : AddressTable
 	D20ActionDef * d20Defs;
 	Pathfinding * pathfinding;
 	ActionSequenceSystem * actSeq;
-
-	void D20StatusInitRace(objHndl objHnd);
-	void D20StatusInitClass(objHndl objHnd);
-	void D20StatusInit(objHndl objHnd);
-	void D20StatusInitDomains(objHndl objHnd);
-	void D20StatusInitFeats(objHndl objHnd);
-	void D20StatusInitItemConditions(objHndl objHnd);
+	D20ClassSystem * d20Class;
+	D20StatusSystem * d20Status;
 
 	void d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2);
 	void d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, objHndl arg);
@@ -45,13 +42,15 @@ struct D20System : AddressTable
 	uint64_t d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
 
 	void d20ActnInit(objHndl objHnd, D20Actn * d20a);
-	void globD20ActnSetTypeAndData1(D20ActionType d20type, uint32_t data1);
+	void GlobD20ActnSetTypeAndData1(D20ActionType d20type, uint32_t data1);
 	void globD20ActnSetPerformer(objHndl objHnd);
-	void globD20ActnInit();
+	void GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc);
+	void GlobD20ActnInit();
 	void d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx);//1008AE90    ActnSeq * @<eax>
 	int32_t d20aTriggersAOOCheck(D20Actn * d20a, void * iO);// 1008A9C0
-	uint32_t tumbleCheck(D20Actn*); 
-	void d20ActnSetSpellData(D20SpellData* d20SpellData, uint32_t spellEnumOrg, uint32_t spellClassCode, uint32_t spellSlotLevel, uint32_t itemSpellData, uint32_t metaMagicData);
+	uint32_t tumbleCheck(D20Actn*);
+	void D20ActnSetSpellData(D20SpellData* d20SpellData, uint32_t spellEnumOrg, uint32_t spellClassCode, uint32_t spellSlotLevel, uint32_t itemSpellData, uint32_t metaMagicData);
+	void GlobD20ActnSetSpellData(D20SpellData* d20SpellData);
 	void (__cdecl *D20StatusInitFromInternalFields)(objHndl objHnd, Dispatcher *dispatcher);
 	void (__cdecl *AppendObjHndToArray10BCAD94)(objHndl ObjHnd);
 	void(__cdecl * _d20aTriggerCombatCheck)(int32_t idx);//1008AE90    ActnSeq * @<eax>
@@ -69,20 +68,6 @@ struct D20System : AddressTable
 
 
 extern D20System d20Sys;
-
-
-struct CharacterClasses : AddressTable
-{
-public:
-	Stat charClassEnums[NUM_CLASSES];
-	CharacterClasses()
-	{
-		Stat _charClassEnums[NUM_CLASSES] = { stat_level_barbarian, stat_level_bard, stat_level_cleric, stat_level_druid, stat_level_fighter, stat_level_monk, stat_level_paladin, stat_level_ranger, stat_level_rogue, stat_level_sorcerer, stat_level_wizard };
-		memcpy(charClassEnums, _charClassEnums, NUM_CLASSES * sizeof(uint32_t));
-	};
-};
-
-extern CharacterClasses charClasses;
 
 
 struct D20SpellData
@@ -114,7 +99,7 @@ struct D20Actn
 	uint32_t rollHist1;
 	uint32_t rollHist2;
 	D20SpellData d20SpellData;
-	uint32_t spellEnum;
+	uint32_t spellId;
 	uint32_t animID;
 	PathQueryResult * path;
 
@@ -182,6 +167,7 @@ uint32_t _d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t ar
 uint64_t _d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
 void _globD20aSetPerformer(objHndl objHnd);
 void _globD20ActnInit();
+void _GlobD20ActnSetSpellData(D20SpellData * d20SpellData);
 #pragma endregion 
 
 inline int GetAttributeMod(int stat) {

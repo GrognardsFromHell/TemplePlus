@@ -36,6 +36,15 @@ public:
 } objReplacements;
 
 
+static struct ObjectSystemAddresses : AddressTable {
+	uint32_t (__cdecl *ScriptExecute)(objHndl attachee, objHndl triggerer, uint32_t spellId, uint32_t trapIdMaybe, uint32_t san, uint32_t a6);
+	ObjectSystemAddresses()
+	{
+		macRebase(ScriptExecute, 10025D60)
+	}
+} addresses;
+
+
 #pragma region Object Internals
 const size_t objHeaderSize = 4; // Constant
 const size_t objBodySize = 168; // Passed in to Object_Tables_Init
@@ -95,11 +104,11 @@ uint32_t Objects::getInt32(objHndl obj, obj_f fieldIdx)
 	{
 		fieldNonexistantDebug(obj, objBody, fieldIdx, objType, "getInt32");
 		return 0;
-		}
+	}
 	if (fieldIdx == obj_f_type){ return objType; }
 	PropFetcher(objBody, fieldIdx, dataOut);
 	return dataOut[0];
-		}
+}
 
 uint64_t Objects::getInt64(objHndl obj, obj_f fieldIdx)
 {
@@ -127,7 +136,7 @@ objHndl Objects::getObjHnd(objHndl obj, obj_f fieldIdx)
 		return 0;
 	}
 	if (fieldIdx == obj_f_prototype_handle)
-		{
+	{
 		if (!objBody->protoHandle)
 		{
 			ObjectId objIdtemp;
@@ -136,12 +145,12 @@ objHndl Objects::getObjHnd(objHndl obj, obj_f fieldIdx)
 		}
 		return objBody->protoHandle;
 	} 
-			
+
 	PropFetcher(objBody, fieldIdx, &dataOut);
 	if (!dataOut.subtype || dataOut.subtype != 0xfffe) return 0i64;
 	return *(uint64_t*)&dataOut.guid.Data1;
 	
-		}
+}
 
 void Objects::setInt32(objHndl obj, obj_f fieldIdx, uint32_t dataIn)
 {
@@ -152,24 +161,24 @@ void Objects::setInt32(objHndl obj, obj_f fieldIdx, uint32_t dataIn)
 	{
 		fieldNonexistantDebug(obj, objBody, fieldIdx, objType, "setInt32");
 		return ;
-		}
+	}
 	InsertDataIntoInternalStack(objBody, fieldIdx, &dataIn);
 	return;
 }
 
 void Objects::setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, FieldDataMax data)
-		{
+{
 	GameObjectBody * objBody = _GetMemoryAddress(obj);
 	uint32_t objType = objBody->type;
 	if (!DoesTypeSupportField(objBody->type, fieldIdx))
 	{
 		fieldNonexistantDebug(obj, objBody, fieldIdx, objType, "setArrayFieldByValue");
 		return;
-		}
+	}
 	setArrayFieldLowLevel(objBody, &data, fieldIdx, subIdx);
 	return;
 }
-		
+
 int32_t Objects::getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx)
 {
 	GameObjectBody * objBody = _GetMemoryAddress(obj);
@@ -182,6 +191,23 @@ int32_t Objects::getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx
 	}
 	getArrayFieldInternal(objBody, dataOut, fieldIdx, subIdx);
 	return dataOut[0];
+}
+
+void Objects::getArrayField(objHndl obj, obj_f fieldIdx, uint32_t subIdx, void* dataOut)
+{
+	GameObjectBody * objBody = _GetMemoryAddress(obj);
+	uint32_t objType = objBody->type;
+	if (!DoesTypeSupportField(objBody->type, fieldIdx))
+	{
+		fieldNonexistantDebug(obj, objBody, fieldIdx, objType, "getArrayField");
+		return ;
+	}
+	getArrayFieldInternal(objBody, dataOut, fieldIdx, subIdx);
+}
+
+uint32_t Objects::getArrayFieldNumItems(objHndl obj, obj_f fieldIdx)
+{
+	return _getArrayFieldNumItems(obj, fieldIdx);
 }
 
 void Objects::InsertDataIntoInternalStack(GameObjectBody * objBody, obj_f fieldIdx, void * dataIn)
@@ -233,6 +259,7 @@ Objects::Objects()
 	rebase(_SetInternalFieldInt32, 0x100A0190);
 	macRebase(_setArrayFieldLowLevel, 100A0500)
 	rebase(_SetInternalFieldFloat, 0x100A0190); // This is actually the same function as 32-bit heh
+	macRebase(_getArrayFieldNumItems, 1009E7E0)
 	rebase(_IsPlayerControlled, 0x1002B390);
 	rebase(_ObjGetProtoNum, 0x10039320);
 	rebase(_FindFreeSpot, 0x100BDB50);
@@ -472,9 +499,14 @@ objHndl Objects::GetHandle(const ObjectId &id) {
 	return _GetHandle(id);
 }
 
+uint32_t Objects::ScriptExecute(objHndl attachee, objHndl triggerer, uint32_t spellId, uint32_t trapIdMaybe, uint32_t san, uint32_t a6)
+{
+	return addresses.ScriptExecute(attachee, triggerer, spellId, trapIdMaybe, san, a6);
+}
+
 ObjectType Objects::GetType(objHndl obj)
 {
-	return static_cast<ObjectType>(_GetInternalFieldInt32(obj, obj_f_type));
+	return static_cast<ObjectType>(getInt32(obj, obj_f_type));
 }
 
 uint32_t Objects::IsDeadNullDestroyed(objHndl obj)
@@ -520,12 +552,12 @@ string Objects::GetDisplayName(objHndl obj, objHndl observer) {
 	char name[512];
 	_GetDisplayName(obj, observer, name);
 	return name;
-}
+		}
 
 uint32_t Objects::StatLevelGet(objHndl obj, Stat stat)
 {
 	return _StatLevelGet(obj, stat);
-}
+		}
 
 int Objects::StatLevelGetBase(objHndl obj, Stat stat)
 {

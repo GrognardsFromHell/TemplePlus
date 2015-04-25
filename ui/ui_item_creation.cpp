@@ -147,8 +147,8 @@ void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCra
 
 		// get data from caster - make this optional!
 
-		uint32_t classCodes[SPELLENUMMAX] = { 0, };
-		uint32_t spellLevels[SPELLENUMMAX] = { 0, };
+		uint32_t classCodes[SPELL_ENUM_MAX] = { 0, };
+		uint32_t spellLevels[SPELL_ENUM_MAX] = { 0, };
 		uint32_t spellFoundNum = 0;
 		int casterKnowsSpell = templeFuncs.ObjSpellKnownQueryGetData(objHndCrafter, spellData.spellEnum, classCodes, spellLevels, &spellFoundNum);
 		if (casterKnowsSpell){
@@ -348,11 +348,11 @@ const char *getProtoName(uint64_t protoHandle) {
   if ( tig_mes_get_line(ui_itemcreation_names, &line) )
     result = line.value;
   else
-    result = objects.description.GetDisplayName((objHndl)protoHandle, (objHndl)protoHandle);
+    result = objects.description._getDisplayName((objHndl)protoHandle, (objHndl)protoHandle);
   return result;
   */
 
-	return objects.description.GetDisplayName(protoHandle, protoHandle);
+	return objects.description._getDisplayName(protoHandle, protoHandle);
 }
 
 static void loadProtoIds(MesHandle mesHandle) {

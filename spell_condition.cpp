@@ -9,6 +9,8 @@
 
 
 void PyPerformTouchAttack_PatchedCallToHitProcessing(D20Actn * pd20A, D20Actn d20A, uint32_t savedesi, uint32_t retaddr, PyObject * pyObjCaller, PyObject * pyTupleArgs);
+void enlargeSpellRestoreModelScaleHook(objHndl objHnd);
+void enlargeSpellIncreaseModelScaleHook(objHndl objHnd);
 
 class SpellConditionFixes : public TempleFix {
 public:
@@ -17,10 +19,12 @@ public:
 	}
 
 	void VampiricTouchFix();
+	void enlargePersonModelScaleFix(); // fixes ambiguous float point calculations that resulted in cumulative roundoff errors
 	
 	void apply() override {
 		
 		VampiricTouchFix();
+		enlargePersonModelScaleFix();
 	}
 } spellConditionFixes;
 
@@ -43,6 +47,14 @@ void SpellConditionFixes::VampiricTouchFix()
 	//Perform Touch Attack mod:
 	redirectCall(0x100B2CC9, PyPerformTouchAttack_PatchedCallToHitProcessing);
 	return;
+}
+
+void SpellConditionFixes::enlargePersonModelScaleFix()
+{
+	redirectCall(0x100CD45C, enlargeSpellIncreaseModelScaleHook);
+	redirectCall(0x100D84DE, enlargeSpellRestoreModelScaleHook); // sp152 enlarge 
+	redirectCall(0x100D9C22, enlargeSpellRestoreModelScaleHook); // sp404 righteous might
+
 };
 
 void PyPerformTouchAttack_PatchedCallToHitProcessing( D20Actn * pd20A, D20Actn d20A, uint32_t savedesi, uint32_t retaddr, PyObject * pyObjCaller, PyObject * pyTupleArgs)
@@ -65,4 +77,21 @@ void PyPerformTouchAttack_PatchedCallToHitProcessing( D20Actn * pd20A, D20Actn d
 	d20Sys.ToHitProc(pd20A);
 	return;
 	
+}
+
+void __cdecl enlargeSpellRestoreModelScaleHook(objHndl objHnd)
+{
+	// patches for spellRemove function (disgusting hardcoded shit! bah!)
+	uint32_t modelScale = objects.getInt32(objHnd, obj_f_model_scale);
+	modelScale *= 5;
+	modelScale /= 9;
+	objects.setInt32(objHnd, obj_f_model_scale, modelScale);
+}
+
+void enlargeSpellIncreaseModelScaleHook(objHndl objHnd)
+{
+	uint32_t modelScale = objects.getInt32(objHnd, obj_f_model_scale);
+	modelScale *= 9;
+	modelScale /= 5;
+	objects.setInt32(objHnd, obj_f_model_scale, modelScale);
 }
