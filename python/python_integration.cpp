@@ -8,6 +8,8 @@
 #include "python_integration.h"
 #include "python_object.h"
 #include "tio/tio.h"
+#include "../dialog.h"
+#include <util/stringutil.h>
 
 PythonIntegration pythonIntegration;
 
@@ -212,8 +214,103 @@ void RunAnimFramePythonScript(const char *command) {
 	pythonIntegration.RunAnimFrameScript(command);
 }
 
-void SetAnimatedObject(objHndl handle) {
+static void SetAnimatedObject(objHndl handle) {
 	pythonIntegration.SetAnimatedObject(handle);
+}
+
+/*
+	Set up the locals dictionary for executing dialog guards and actions.
+*/
+static PyObject *CreateDialogLocals(const DialogState *dialog, int pickedLine) {
+
+	auto locals = PyDict_New();
+	auto pcObj = PyObjHndl_Create(dialog->pc);
+	PyDict_SetItemString(locals, "pc", pcObj);
+	Py_DECREF(pcObj);
+	auto npcObj = PyObjHndl_Create(dialog->npc);
+	PyDict_SetItemString(locals, "npc", npcObj);
+	Py_DECREF(npcObj);
+	auto lineObj = PyInt_FromLong(pickedLine);
+	PyDict_SetItemString(locals, "picked_line", lineObj);
+	Py_DECREF(lineObj);
+
+	return locals;
+}
+
+static void RunDialogAction(const char *actionString, DialogState *dialog, int pickedLine) {
+	logger->debug("Running dialog actions '{}'", actionString);
+
+	auto commands = split(actionString, ';', true);
+
+	// Set script context so counters will work
+	pythonIntegration.SetCounterContext(dialog->npc, dialog->dialogScriptId, ScriptEvent::Dialog);
+
+	/*
+		We use the globals defined by the python script @ dialog->dialogScriptId
+	*/
+	ScriptRecord script;
+	if (!pythonIntegration.LoadScript(dialog->dialogScriptId, script)) {
+		logger->error("Cannot load script id {} to run dialog guard {}", dialog->dialogScriptId, actionString);
+		return;
+	}
+	auto globalsDict = PyModule_GetDict(script.module);
+
+	auto locals = CreateDialogLocals(dialog, pickedLine);
+	
+	for (const auto &command : commands) {
+		logger->debug("Running dialog action '{}'", command);
+
+		auto result = PyRun_String(command.c_str(), Py_single_input, globalsDict, locals);
+
+		if (!result) {
+			PyErr_Print();
+		} else {
+			Py_DECREF(result);
+		}
+	}
+
+	Py_DECREF(locals);
+}
+
+static bool RunDialogGuard(const char *expression, DialogState *dialog, int pickedLine) {
+	logger->debug("Running dialog guard {} for line {} in script {}", expression, pickedLine, dialog->dialogScriptId);
+
+	// Set script context so counters will work
+	pythonIntegration.SetCounterContext(dialog->npc, dialog->dialogScriptId, ScriptEvent::Dialog);
+
+	/*
+		We use the globals defined by the python script @ dialog->dialogScriptId
+	*/
+	ScriptRecord script;
+	if (!pythonIntegration.LoadScript(dialog->dialogScriptId, script)) {
+		logger->error("Cannot load script id {} to run dialog guard {}", dialog->dialogScriptId, expression);
+		return false;
+	}
+
+	/*
+		Set up the locals dictionary for the script execution
+	*/
+	auto locals = CreateDialogLocals(dialog, pickedLine);
+
+	// Skip whitespace at the start of the expression
+	while (isspace(expression[0])) {
+		expression++;
+	}
+
+	auto globalsDict = PyModule_GetDict(script.module);
+	auto result = PyRun_String(expression, Py_eval_input, globalsDict, locals);
+	Py_DECREF(locals);
+
+	if (!result) {
+		PyErr_Print();
+		return false;
+	}
+
+	bool guardIsTrue = PyObject_IsTrue(result) == 1;
+	logger->debug("Dialog guard is {}", guardIsTrue);
+
+	Py_DECREF(result);
+	return guardIsTrue;
 }
 
 class PythonScriptIntegration : public TempleFix {
@@ -237,6 +334,8 @@ public:
 		replaceFunction(0x100AE1E0, IsPythonScript);
 		replaceFunction(0x100AE210, RunPythonObjScript);
 		replaceFunction(0x100AEDA0, SetAnimatedObject);
+		replaceFunction(0x100AE7A0, RunDialogAction);
+		replaceFunction(0x100AE3F0, RunDialogGuard);
 	}
 
 } pythonIntegrationReplacement;
@@ -329,27 +428,10 @@ void PythonIntegration::RunAnimFrameScript(const char* command) {
 }
 
 int PythonIntegration::RunScript(int scriptId, ScriptEvent evt, PyObject* args) {
-	auto it = mScripts.find(scriptId);
-	if (it == mScripts.end()) {
-		logger->error("Trying to invoke unknown script id {}", scriptId);
+
+	ScriptRecord script;
+	if (!LoadScript(scriptId, script)) {
 		return 1;
-	}
-
-	auto &script = it->second;
-	if (script.loadingError) {
-		return 1; // cannot execute a script we previously failed to load
-	}
-
-	// We have not yet loaded the Python module
-	if (!script.module) {
-		script.module = PyImport_ImportModule(script.moduleName.c_str());
-		if (!script.module) {
-			// Loading error
-			logger->error("Could not load script {}.", script.filename);
-			PyErr_Print();
-			script.loadingError = true; // Do not try this over and over again
-			return 1;
-		}
 	}
 
 	auto dict = PyModule_GetDict(script.module);
@@ -377,6 +459,52 @@ int PythonIntegration::RunScript(int scriptId, ScriptEvent evt, PyObject* args) 
 	Py_DECREF(resultObj);
 
 	return result;
+}
+
+bool PythonIntegration::LoadScript(int scriptId, ScriptRecord &scriptOut) {
+	auto it = mScripts.find(scriptId);
+	if (it == mScripts.end()) {
+		logger->error("Trying to invoke unknown script id {}", scriptId);
+		return false;
+	}
+
+	auto &script = it->second;
+	if (script.loadingError) {
+		return false; // cannot execute a script we previously failed to load
+	}
+
+	// We have not yet loaded the Python module
+	if (!script.module) {
+		script.module = PyImport_ImportModule(script.moduleName.c_str());
+		if (!script.module) {
+			// Loading error
+			logger->error("Could not load script {}.", script.filename);
+			PyErr_Print();
+			script.loadingError = true; // Do not try this over and over again
+			return false;
+		}
+	}
+	
+	scriptOut = script;
+	return true;
+}
+
+int PythonIntegration::GetCounter(int idx) {
+	if (idx >= 0 && idx < 4) {
+		auto attachment = objects.GetScriptAttachment(mCounterObj, (int)mCounterEvent);
+		// Check if this indexing logic is acturally correct
+		return attachment.counters[idx] & 0xFF;
+	}
+	return 0;
+}
+
+void PythonIntegration::SetCounter(int idx, int value) {
+	if (idx >= 0 && idx < 4) {
+		auto attachment = objects.GetScriptAttachment(mCounterObj, (int)mCounterEvent);
+		// Check if this indexing logic is acturally correct
+		attachment.counters[idx] = value & 0xFF;
+		objects.SetScriptAttachment(mCounterObj, (int)mCounterEvent, attachment);
+	}
 }
 
 static const char *scriptEventFunctions[] = {

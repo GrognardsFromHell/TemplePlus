@@ -1441,7 +1441,7 @@ static PyObject* PyObjHandle_GetDeity(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_WieldBestAll(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
-	objHndl targetHndl;
+	objHndl targetHndl = 0;
 	if (!PyArg_ParseTuple(args, "|O&:objhndl.wield_best_all", &ConvertObjHndl, &targetHndl)) {
 		return 0;
 	}

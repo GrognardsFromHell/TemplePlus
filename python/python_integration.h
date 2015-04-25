@@ -77,6 +77,12 @@ public:
 	int RunScript(int scriptId, ScriptEvent evt, PyObject *args);
 
 	/*
+		Gets a loaded instance of a script module or null if loading failed.
+		Returns a borrowed ref
+	*/
+	bool LoadScript(int scriptId, ScriptRecord &scriptOut);
+
+	/*
 		Set the object that is being animated. All calls to RunString will 
 		have this object in their local variables.
 	*/
@@ -92,21 +98,20 @@ public:
 	void SetInObjInvocation(bool inObjInvocation) {
 		mInObjInvocation = inObjInvocation;
 		mNewSid = -1;
-		memset(mCounters, 0, sizeof(mCounters));
+	}
+
+	/*
+		Sets the context for the script counter manipulation.
+	*/
+	void SetCounterContext(objHndl attachee, int scriptId, ScriptEvent evt) {
+		mCounterObj = attachee;
+		mCounterScriptId = scriptId;
+		mCounterEvent = evt;
 	}
 
 	// Four 8-bit counter values are provided for each script attachment to track some state
-	int GetCounter(int idx) {
-		if (idx >= 0 && idx < 4) {
-			return mCounters[idx] & 0xFF;
-		}
-		return 0;
-	}
-	void SetCounter(int idx, int value) {
-		if (idx >= 0 && idx < 4) {
-			mCounters[idx] = value & 0xFF;
-		}
-	}
+	int GetCounter(int idx);
+	void SetCounter(int idx, int value);
 
 	// Used by a script attached to an object to replace itself with something else
 	void SetNewSid(int newSid) {
@@ -122,8 +127,12 @@ private:
 
 	bool mInObjInvocation = false;
 	int mNewSid = -1;
-	int mCounters[4];
 	objHndl mAnimatedObj;
+
+	// Used to track which counters are manipulated
+	objHndl mCounterObj;
+	ScriptEvent mCounterEvent;
+	int mCounterScriptId;
 };
 
 extern PythonIntegration pythonIntegration;

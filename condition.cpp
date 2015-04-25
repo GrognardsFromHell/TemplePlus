@@ -63,7 +63,7 @@ uint32_t _ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, Co
 };
 
 bool _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, const vector<int> &args) {
-	assert(condStruct->numArgs == args.size());
+	assert(condStruct->numArgs >= args.size());
 
 	// pre-add section (may abort adding condition, or cause another condition to be deleted first)
 	DispIO14h dispIO14h;
@@ -88,7 +88,12 @@ bool _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode, Co
 	// adding condition
 	auto condNodeNew = new CondNode(condStruct);
 	for (int i = 0; i < condStruct->numArgs; ++i) {
-		condNodeNew->args[i] = args[i];
+		if (i < args.size()) {
+			condNodeNew->args[i] = args[i];
+		} else {
+			// Fill the rest with zeros
+			condNodeNew->args[i] = 0;
+		}
 	}
 
 	CondNode** ppNextCondeNode = ppCondNode;

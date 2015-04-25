@@ -461,6 +461,7 @@
     <ClInclude Include="dialog.h" />
     <ClInclude Include="damage.h" />
     <ClInclude Include="reputations.h" />
+    <ClInclude Include="util\stringutil.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

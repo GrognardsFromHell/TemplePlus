@@ -86,10 +86,6 @@ static struct ObjInternal : AddressTable {
 
 #pragma region Objects implementation
 
-bool Objects::VerifyHandle(objHndl handle) {
-
-}
-
 uint32_t Objects::getInt32(objHndl obj, obj_f fieldIdx)
 {
 	GameObjectBody * objBody = _GetMemoryAddress(obj);
@@ -233,6 +229,7 @@ Objects::Objects()
 	rebase(_StatLevelGetBase, 0x10074CF0);
 	rebase(_StatLevelSetBase, 0x10074E10);
 	rebase(_GetSize, 0x1004D690);
+	rebase(_Move, 0x10025950);
 	rebase(_SetInternalFieldInt32, 0x100A0190);
 	macRebase(_setArrayFieldLowLevel, 100A0500)
 	rebase(_SetInternalFieldFloat, 0x100A0190); // This is actually the same function as 32-bit heh
@@ -378,6 +375,16 @@ void Objects::SetScript(objHndl handle, int index, int scriptId) {
 	templeFuncs.Obj_Get_ArrayElem_Generic(handle, obj_f_scripts_idx, index, &scriptIdx);
 	scriptIdx.scriptId = scriptId;
 	templeFuncs.Obj_Set_IdxField_byPtr(handle, obj_f_scripts_idx, index, &scriptIdx);
+}
+
+ObjectScript Objects::GetScriptAttachment(objHndl handle, int index) {
+	ObjectScript scriptIdx;
+	templeFuncs.Obj_Get_ArrayElem_Generic(handle, obj_f_scripts_idx, index, &scriptIdx);
+	return scriptIdx;
+}
+
+void Objects::SetScriptAttachment(objHndl handle, int index, const ObjectScript& script) {
+	templeFuncs.Obj_Set_IdxField_byPtr(handle, obj_f_scripts_idx, index, const_cast<ObjectScript*>(&script));
 }
 
 Dice Objects::GetHitDice(objHndl handle) {

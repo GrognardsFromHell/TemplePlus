@@ -18,11 +18,13 @@ struct SkillSystem;
 struct FloatLineSystem;
 
 // Stored in obj_f_script_idx array
+#pragma pack(push, 1)
 struct ObjectScript {
 	int unk1;
-	int counters;
+	char counters[4];
 	int scriptId;
 };
+#pragma pack(pop)
 struct FieldDataMax { uint32_t data[8]; }; // for wrapping "objSetField" calls that get input by value; this is the largest data size that I know of
 
 struct Objects : AddressTable {
@@ -88,6 +90,9 @@ struct Objects : AddressTable {
 
 	int GetScript(objHndl handle, int index);
 	void SetScript(objHndl handle, int index, int scriptId);
+	
+	ObjectScript GetScriptAttachment(objHndl handle, int index);
+	void SetScriptAttachment(objHndl handle, int index, const ObjectScript &script);
 
 	Dice GetHitDice(objHndl handle); // This only makes sense for NPCs
 	int GetHitDiceNum(objHndl handle);

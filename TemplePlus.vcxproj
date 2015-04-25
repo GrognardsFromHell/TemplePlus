@@ -343,6 +343,7 @@
     <ClInclude Include="ui\ui_item_creation.h" />
     <ClInclude Include="ui\ui_render.h" />
     <ClInclude Include="ui\ui_text.h" />
+    <ClInclude Include="util\stringutil.h" />
     <ClInclude Include="util\version.h" />
     <ClInclude Include="weapon.h" />
     <ClInclude Include="xp.h" />
