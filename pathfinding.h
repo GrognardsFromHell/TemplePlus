@@ -31,6 +31,8 @@ enum PathQueryFlags : uint32_t {
 	*/
 	PQF_ADJUST_RADIUS = 0x20,
 
+	PQF_UNKNOWN4000h = 0x4000,
+
 	// Could mean "USE TIME LIMIT" ? or it could be "continue searching"?
 	PQF_UNK3 = 0x80000 // it is set when the D20 action has the flag D20CAF_TRUNCATED
 };
@@ -98,7 +100,7 @@ struct Pathfinding : AddressTable {
 	bool pathQueryResultIsValid(PathQueryResult *pqr);
 
 	Pathfinding();
-
+	uint32_t ShouldUsePathnodes(PathQueryResult* pathQueryResult, PathQuery* pathQuery);
 	bool (__cdecl *FindPath)(PathQuery *query, PathQueryResult *result);
 	void (__cdecl *ToEEpathDistBtwnToAndFrom)(Path *path); // outputs to FPU (st0);  apparently distance in feet (since it divides by 12)
 	objHndl(__cdecl * canPathToParty)(objHndl objHnd);
@@ -108,3 +110,7 @@ struct Pathfinding : AddressTable {
 } ;
 
 extern Pathfinding pathfindingSys;
+
+
+
+uint32_t _ShouldUsePathnodesUsercallWrapper();

@@ -23,3 +23,6 @@ static struct PythonSpellSystemAddresses : AddressTable {
 	}
 } addresses;
 
+
+
+
