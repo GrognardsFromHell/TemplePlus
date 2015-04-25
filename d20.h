@@ -96,7 +96,7 @@ struct D20Actn
 	uint32_t rollHist1;
 	uint32_t rollHist2;
 	D20SpellData d20SpellData;
-	uint32_t spellEnum;
+	uint32_t spellId;
 	uint32_t animID;
 	PathQueryResult * path;
 };

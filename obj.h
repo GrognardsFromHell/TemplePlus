@@ -36,6 +36,8 @@ struct Objects : AddressTable {
 
 	uint32_t abilityScoreLevelGet(objHndl, Stat, DispIO *);
 
+	uint32_t ScriptExecute(objHndl attachee, objHndl triggerer, uint32_t spellId, uint32_t trapIdMaybe, uint32_t san, uint32_t a6);
+
 #pragma region Common
 	ObjectType GetType(objHndl obj);
 	uint32_t IsDeadNullDestroyed(objHndl obj);

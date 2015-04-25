@@ -125,9 +125,14 @@ uint32_t AiSystem::aiStrategyParse(objHndl objHnd, objHndl target)
 	}
 	return 0;
 }
+
+
 #pragma endregion
 
 #pragma region AI replacement functions
 
-
+uint32_t _aiStrategyParse(objHndl objHnd, objHndl target)
+{
+	return aiSys.aiStrategyParse(objHnd, target);
+}
 #pragma endregion 

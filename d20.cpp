@@ -133,7 +133,7 @@ void D20System::d20ActnInit(objHndl objHnd, D20Actn* d20a)
 	d20a->d20ATarget=0;
 	d20a->distTraversed = 0;
 	d20a->field_34 = 0;
-	d20a->spellEnum = 0;
+	d20a->spellId = 0;
 	objects.loc->getLocAndOff(objHnd, &d20a->destLoc);
 	PathQueryResult * pq = d20a->path;
 	if (pq && pq >= pathfinding->pathQArray && pq < (pathfinding->pathQArray + pfCacheSize))

@@ -112,6 +112,7 @@ const uint32_t TestSizeOfSpellPacket = sizeof(SpellPacket); // should be 0xAF0  
 struct SpellSystem : AddressTable
 {
 	IdxTable<SpellPacket> * spellCastIdxTable;
+	
 	uint32_t spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry);
 	uint32_t ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
 	MesHandle * spellEnumMesHandle;
@@ -122,6 +123,8 @@ struct SpellSystem : AddressTable
 	void spellPacketBodyReset(SpellPacketBody * spellPktBody);
 	void spellPacketSetCasterLevel(SpellPacketBody * spellPktBody);
 	uint32_t getSpellEnum(const char* spellName);
+	uint32_t GetSpellEnumFromSpellId(uint32_t spellId);
+	uint32_t GetSpellPacketBody(uint32_t spellId, SpellPacketBody* spellPktBodyOut);
 	uint32_t spellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count);
 	uint32_t spellCanCast(objHndl objHnd, uint32_t spellEnum, uint32_t spellClassCode, uint32_t spellLevel);
 	uint32_t spellMemorizedQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count);
@@ -159,6 +162,7 @@ private:
 extern SpellSystem spellSys;
 
 extern IdxTableWrapper<SpellEntry> spellEntryRegistry;
+extern IdxTableWrapper<SpellPacket> spellsCastRegistry;
 
 
 struct SpontCastSpellLists : AddressTable
@@ -209,3 +213,5 @@ uint32_t _spellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t * 
 uint32_t _spellMemorizedQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t * classCodesOut, uint32_t *slotLevelsOut, uint32_t * count);
 uint32_t _spellCanCast(objHndl objHnd, uint32_t spellEnum, uint32_t spellClassCode, uint32_t spellLevel);
 uint32_t __cdecl _spellRegistryCopy(uint32_t spellEnum, SpellEntry * spellEntry);
+uint32_t _GetSpellEnumFromSpellId(uint32_t spellId);
+uint32_t _GetSpellPacketBody(uint32_t spellId, SpellPacketBody * spellPktBodyOut);

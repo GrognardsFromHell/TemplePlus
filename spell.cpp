@@ -12,6 +12,7 @@
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
 IdxTableWrapper<SpellEntry> spellEntryRegistry(0x10AAF428);
+IdxTableWrapper<SpellPacket> spellsCastRegistry(0x10AAF218);
 
 class SpellFuncReplacements : public TempleFix {
 public:
@@ -27,6 +28,8 @@ public:
 		macReplaceFun(10076190, _spellMemorizedQueryGetData)
 		macReplaceFun(1007A140, _spellCanCast)
 		macReplaceFun(100754B0, _spellRegistryCopy)
+		macReplaceFun(10075660, _GetSpellEnumFromSpellId)
+		macReplaceFun(100756E0, _GetSpellPacketBody)
 	}
 } spellFuncReplacements;
 
@@ -165,6 +168,28 @@ uint32_t SpellSystem::getSpellEnum(const char* spellName)
 		mesFuncs.GetLine_Safe(*spellEnumMesHandle, &mesLine);
 		if (!_stricmp(spellName, mesLine.value))
 			return i;
+	}
+	return 0;
+}
+
+uint32_t SpellSystem::GetSpellEnumFromSpellId(uint32_t spellId)
+{
+	SpellPacket spellPacket;
+	if (spellsCastRegistry.copy(spellId, &spellPacket))
+	{
+		if (spellPacket.isActive == 1)
+			return spellPacket.spellPktBody.spellEnum;
+	}
+	return 0;
+}
+
+uint32_t SpellSystem::GetSpellPacketBody(uint32_t spellId, SpellPacketBody* spellPktBodyOut)
+{
+	SpellPacket spellPkt;
+	if (spellsCastRegistry.copy(spellId, &spellPkt))
+	{
+		memcpy(spellPktBodyOut, &spellPkt.spellPktBody, sizeof(SpellPacketBody));
+		return 1;
 	}
 	return 0;
 }
@@ -405,5 +430,15 @@ uint32_t _spellCanCast(objHndl objHnd, uint32_t spellEnum, uint32_t spellClassCo
 uint32_t _spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry)
 {
 	return spellSys.spellRegistryCopy(spellEnum, spellEntry);
+}
+
+uint32_t _GetSpellEnumFromSpellId(uint32_t spellId)
+{
+	return spellSys.GetSpellEnumFromSpellId(spellId);
+}
+
+uint32_t _GetSpellPacketBody(uint32_t spellId, SpellPacketBody* spellPktBodyOut)
+{
+	return spellSys.GetSpellPacketBody(spellId, spellPktBodyOut);
 }
 #pragma endregion 

@@ -38,7 +38,4 @@ struct AiTacticDef
 	uint32_t pad;
 };
 
-uint32_t _aiStrategyParse(objHndl objHnd, objHndl target)
-{
-	return aiSys.aiStrategyParse(objHnd, target);
-}
+uint32_t _aiStrategyParse(objHndl objHnd, objHndl target);
