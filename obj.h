@@ -21,7 +21,7 @@ struct FloatLineSystem;
 #pragma pack(push, 1)
 struct ObjectScript {
 	int unk1;
-	char counters[4];
+	uint32_t counters;
 	int scriptId;
 };
 #pragma pack(pop)

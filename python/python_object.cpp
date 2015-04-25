@@ -1162,7 +1162,7 @@ static PyObject* PyObjHandle_CritterGetAlignment(PyObject* obj, PyObject* args) 
 
 static PyObject* PyObjHandle_DistanceTo(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
-	if (!PyTuple_GET_SIZE(args) != 1) {
+	if (PyTuple_GET_SIZE(args) != 1) {
 		PyErr_SetString(PyExc_RuntimeError, "distance_to takes exactly one argument: objhndl or location");
 		return 0;
 	}

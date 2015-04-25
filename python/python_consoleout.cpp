@@ -16,8 +16,9 @@ static struct PyConsoleOutAddresses : AddressTable {
 
 PyObject *pytcout_write(PyObject *self, PyObject *args) {
 	char *message;
+	int messageLen;
 
-	if (!PyArg_ParseTuple(args, "s:PyTempleConsoleOut.write", &message))
+	if (!PyArg_ParseTuple(args, "s#:PyTempleConsoleOut.write", &message, &messageLen))
 		return NULL;
 		
 	addresses.AppendLine(message);

@@ -108,10 +108,12 @@ public:
 		mCounterScriptId = scriptId;
 		mCounterEvent = evt;
 	}
-
-	// Four 8-bit counter values are provided for each script attachment to track some state
-	int GetCounter(int idx);
-	void SetCounter(int idx, int value);
+	objHndl GetCounterObj() {
+		return mCounterObj;
+	}
+	ScriptEvent GetCounterEvent() {
+		return mCounterEvent;
+	}
 
 	// Used by a script attached to an object to replace itself with something else
 	void SetNewSid(int newSid) {

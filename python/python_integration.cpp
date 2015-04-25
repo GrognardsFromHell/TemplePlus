@@ -92,7 +92,7 @@ static void __cdecl RandomEncounterCreate(void *arg) {
 /*
 	Calls into random_encounter.encounter_exists.
 */
-static bool __cdecl RandomEncounterExists(void *, void*) {
+static BOOL __cdecl RandomEncounterExists(void *, void*) {
 	// TODO
 	return false;
 }
@@ -157,7 +157,7 @@ static int Co8Save(const char *str) {
 	This seems highly inefficient and should really be 
 	handled differently.
 */
-static bool IsPythonScript(int scriptNumber) {
+static BOOL IsPythonScript(int scriptNumber) {
 	return pythonIntegration.IsValidScriptId(scriptNumber);
 }
 
@@ -272,7 +272,7 @@ static void RunDialogAction(const char *actionString, DialogState *dialog, int p
 	Py_DECREF(locals);
 }
 
-static bool RunDialogGuard(const char *expression, DialogState *dialog, int pickedLine) {
+static BOOL RunDialogGuard(const char *expression, DialogState *dialog, int pickedLine) {
 	logger->debug("Running dialog guard {} for line {} in script {}", expression, pickedLine, dialog->dialogScriptId);
 
 	// Set script context so counters will work
@@ -306,11 +306,11 @@ static bool RunDialogGuard(const char *expression, DialogState *dialog, int pick
 		return false;
 	}
 
-	bool guardIsTrue = PyObject_IsTrue(result) == 1;
-	logger->debug("Dialog guard is {}", guardIsTrue);
-
+	int guardResult = PyObject_IsTrue(result);
 	Py_DECREF(result);
-	return guardIsTrue;
+	
+	logger->debug("Dialog guard is {}", guardResult);
+	return guardResult == 1;
 }
 
 class PythonScriptIntegration : public TempleFix {
@@ -415,7 +415,7 @@ void PythonIntegration::RunAnimFrameScript(const char* command) {
 	PyDict_SetItemString(locals, "anim_obj", animObj);
 	Py_DECREF(animObj);
 
-	auto result = PyRun_String(command, Py_single_input, mainDict, locals);
+	auto result = PyRun_String(command, Py_eval_input, mainDict, locals);
 
 	Py_DECREF(mainModule);
 	Py_DECREF(locals);
@@ -487,24 +487,6 @@ bool PythonIntegration::LoadScript(int scriptId, ScriptRecord &scriptOut) {
 	
 	scriptOut = script;
 	return true;
-}
-
-int PythonIntegration::GetCounter(int idx) {
-	if (idx >= 0 && idx < 4) {
-		auto attachment = objects.GetScriptAttachment(mCounterObj, (int)mCounterEvent);
-		// Check if this indexing logic is acturally correct
-		return attachment.counters[idx] & 0xFF;
-	}
-	return 0;
-}
-
-void PythonIntegration::SetCounter(int idx, int value) {
-	if (idx >= 0 && idx < 4) {
-		auto attachment = objects.GetScriptAttachment(mCounterObj, (int)mCounterEvent);
-		// Check if this indexing logic is acturally correct
-		attachment.counters[idx] = value & 0xFF;
-		objects.SetScriptAttachment(mCounterObj, (int)mCounterEvent, attachment);
-	}
 }
 
 static const char *scriptEventFunctions[] = {

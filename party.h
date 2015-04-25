@@ -21,6 +21,10 @@ struct PartySystem : AddressTable
 
 	void (__cdecl *RumorLogAdd)(objHndl pc, int rumor);
 
+	objHndl GetLeader() {
+		return GroupListGetMemberN(0);
+	}
+
 	PartySystem()
 	{
 		rebase(GroupArrayMemberN, 0x100DF760);

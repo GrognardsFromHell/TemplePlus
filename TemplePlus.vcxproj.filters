@@ -222,6 +222,12 @@
     <ClCompile Include="dialog.cpp" />
     <ClCompile Include="damage.cpp" />
     <ClCompile Include="reputations.cpp" />
+    <ClCompile Include="python\python_globalvars.cpp" />
+    <ClCompile Include="python\python_globalflags.cpp" />
+    <ClCompile Include="python\python_quests.cpp" />
+    <ClCompile Include="quest.cpp" />
+    <ClCompile Include="python\python_areas.cpp" />
+    <ClCompile Include="python\python_counters.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -462,6 +468,12 @@
     <ClInclude Include="damage.h" />
     <ClInclude Include="reputations.h" />
     <ClInclude Include="util\stringutil.h" />
+    <ClInclude Include="python\python_globalvars.h" />
+    <ClInclude Include="python\python_globalflags.h" />
+    <ClInclude Include="python\python_quests.h" />
+    <ClInclude Include="quest.h" />
+    <ClInclude Include="python\python_areas.h" />
+    <ClInclude Include="python\python_counters.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

@@ -3,7 +3,12 @@
 #include <util/addresses.h>
 #include "obj.h"
 #include "python_object.h"
+#include "python_globalvars.h"
+#include "python_globalflags.h"
 #include "python_time.h"
+#include "python_quests.h"
+#include "python_counters.h"
+#include "python_areas.h"
 #include "tig/tig_mouse.h"
 #include "maps.h"
 #include "fade.h"
@@ -27,8 +32,15 @@
 #include "util/mathutil.h"
 #include "temple_functions.h"
 
+// TODO: This has to be reset on PyGame_Reset
+static PyObject *encounterQueue = nullptr;
+
 struct PyGameObject {
-	PyObject_HEAD
+	PyObject_HEAD;
+	PyObject *globalVars;
+	PyObject *globalFlags;
+	PyObject *quests;
+	PyObject *areas;
 };
 
 static struct PyGameAddresses : AddressTable {
@@ -77,16 +89,9 @@ static struct PyGameAddresses : AddressTable {
 } pyGameAddresses;
 
 /*
-	TODO:
-	global_vars
-	global_flags
-	quests
-	areas
-	counters -> PyCountersArray (turn counter???)
-	encounter_queue -> returns ref to global encounterlist?
+	NYI (because unused):
 	floaters
 	console
-	-> methods
 */
 
 // Generic function to build a tuple of handles from a count and a getter
@@ -153,6 +158,41 @@ static PyObject* PyGame_GetLeader(PyObject*, void*) {
 	return PyObjHndl_Create(pyGameAddresses.PartyGetLeader());
 }
 
+static PyObject* PyGame_GetGlobalVars(PyObject *obj, void*) {
+	auto self = (PyGameObject*)obj;
+	Py_INCREF(self->globalVars);
+	return self->globalVars;
+}
+
+static PyObject* PyGame_GetGlobalFlags(PyObject *obj, void*) {
+	auto self = (PyGameObject*)obj;
+	Py_INCREF(self->globalFlags);
+	return self->globalFlags;
+}
+
+static PyObject* PyGame_GetQuests(PyObject *obj, void*) {
+	auto self = (PyGameObject*)obj;
+	Py_INCREF(self->quests);
+	return self->quests;
+}
+
+static PyObject* PyGame_GetAreas(PyObject *obj, void*) {
+	auto self = (PyGameObject*)obj;
+	Py_INCREF(self->areas);
+	return self->areas;
+}
+
+static PyObject* PyGame_GetCounters(PyObject *obj, void*) {
+	return PyCounters_Create();
+}
+
+static PyObject* PyGame_GetEncounterQueue(PyObject *obj, void*) {
+	if (!encounterQueue) {
+		encounterQueue = PyList_New(0);
+	}
+	return encounterQueue;
+}
+
 static PyGetSetDef PyGameGettersSetters[] = {
 	PY_INT_PROP_RO("party_alignment", pyGameAddresses.GetPartyAlignment, NULL),
 	PY_INT_PROP("story_state", pyGameAddresses.GetStoryState, pyGameAddresses.SetStoryState, NULL),
@@ -164,6 +204,12 @@ static PyGetSetDef PyGameGettersSetters[] = {
 	{"maps_visited", PyGame_GetMapsVisited, NULL, NULL},
 	{"leader", PyGame_GetLeader, NULL, NULL},
 	{"time", PyGame_GetTime, NULL, NULL},
+	{"global_vars", PyGame_GetGlobalVars, NULL, NULL},
+	{"global_flags", PyGame_GetGlobalFlags, NULL, NULL},
+	{"quests", PyGame_GetQuests, NULL, NULL},
+	{"areas", PyGame_GetAreas, NULL, NULL},
+	{"counters", PyGame_GetCounters, NULL, NULL},
+	{"encounter_queue", PyGame_GetEncounterQueue, NULL, NULL},
 	{NULL, NULL, NULL, NULL}
 };
 
@@ -900,7 +946,10 @@ static PyMethodDef PyGameMethods[]{
 
 static void PyGame_Dealloc(PyObject* obj) {
 	auto self = (PyGameObject*)obj;
-	// Free inner pointers
+	Py_DECREF(self->globalVars);
+	Py_DECREF(self->globalFlags);
+	Py_DECREF(self->quests);
+	Py_DECREF(self->areas);
 	PyObject_Del(self);
 }
 
@@ -947,5 +996,10 @@ static PyTypeObject PyGameType = {
 };
 
 PyObject* PyGame_Create() {
-	return (PyObject*) PyObject_New(PyGameObject, &PyGameType);
+	auto result = PyObject_New(PyGameObject, &PyGameType);
+	result->globalVars = PyGlobalVars_Create();
+	result->globalFlags = PyGlobalFlags_Create();
+	result->quests = PyQuests_Create();
+	result->areas = PyAreas_Create();
+	return (PyObject*) result;
 }

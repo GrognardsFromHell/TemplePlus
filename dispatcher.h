@@ -43,6 +43,7 @@ private:
 
 extern DispatcherSystem dispatch;
 
+#pragma pack(push, 1)
 
 #pragma region Dispatcher Structs
 
@@ -167,7 +168,7 @@ struct Dispatcher :TempleAlloc {
 
 #pragma endregion
 
-
+#pragma pack(pop)
 
 #pragma region Dispatcher Functions
 
