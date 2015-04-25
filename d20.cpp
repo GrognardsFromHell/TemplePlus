@@ -132,7 +132,7 @@ void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, objHndl 
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (!dispatch.dispatcherValid(dispatcher))
 	{
-		hooked_print_debug_message("d20SendSignal(): Object %s (%I64x) lacks a Dispatcher", description.GetDisplayName(objHnd, objHnd), objHnd);
+		hooked_print_debug_message("d20SendSignal(): Object %s (%I64x) lacks a Dispatcher", description._getDisplayName(objHnd, objHnd), objHnd);
 		return;
 	}
 	dispIO.dispIOType = dispIOType6;

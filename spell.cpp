@@ -9,7 +9,6 @@
 #include "ui\ui_picker.h"
 #include "temple_functions.h"
 
-
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
 struct SpellCondListEntry {
@@ -20,9 +19,11 @@ struct SpellCondListEntry {
 static struct SpellAddresses : AddressTable {
 	SpellCondListEntry *spellConds;
 
+	uint32_t(__cdecl * ConfigSpellTargetting)(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
 
 	SpellAddresses() {
 		rebase(spellConds, 0x102E2600);
+		macRebase(ConfigSpellTargetting, 100B9690)
 	}
 } addresses;
 
@@ -81,15 +82,6 @@ public:
 		writeHex(0x10077058, "02 02 02"); // Cure Moderate + Serious + Critical Wounds, Mass
 	}
 } spellHostilityFlagFix;
-
-
-static struct SpellSystemAddresses : AddressTable {
-	uint32_t(__cdecl * ConfigSpellTargetting)(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
-	SpellSystemAddresses()
-	{
-		macRebase(ConfigSpellTargetting, 100B9690)
-	}
-} addresses;
 
 
 #pragma region Spell System Implementation

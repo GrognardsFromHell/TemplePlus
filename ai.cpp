@@ -9,21 +9,6 @@
 #include "temple_functions.h"
 #include "pathfinding.h"
 
-static uint32_t _aiStrategyParse(objHndl objHnd, objHndl target)
-{
-	return aiSys.aiStrategyParse(objHnd, target);
-}
-
-class AiReplacements : public TempleFix
-{
-	macTempleFix(AI Replacements)
-	{
-		logger->info("Replacing AI functions...");
-		macReplaceFun(100E50C0, _aiStrategyParse)
-	}
-} aiReplacements;
-
-
 #pragma region AI System Implementation
 struct AiSystem aiSys;
 
@@ -204,4 +189,13 @@ uint32_t _aiStrategyParse(objHndl objHnd, objHndl target)
 {
 	return aiSys.aiStrategyParse(objHnd, target);
 }
+
+class AiReplacements : public TempleFix
+{
+	macTempleFix(AI Replacements)
+	{
+		logger->info("Replacing AI functions...");
+		macReplaceFun(100E50C0, _aiStrategyParse)
+	}
+} aiReplacements;
 #pragma endregion 

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "d20_status.h"
 #include "condition.h"
+#include "critter.h"
 #include "obj.h"
 #include "temple_functions.h"
 
@@ -12,7 +13,7 @@ void D20StatusSystem::initRace(objHndl objHnd)
 	if (objects.IsCritter(objHnd))
 	{
 		Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
-		if (objects.IsUndead(objHnd))
+		if (critterSys.IsUndead(objHnd))
 		{
 			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterUndead);
 		}
@@ -21,12 +22,12 @@ void D20StatusSystem::initRace(objHndl objHnd)
 		CondStruct ** condStructRace = conds.ConditionArrayRace + objRace;
 		_ConditionAddToAttribs_NumArgs0(dispatcher, *condStructRace);
 
-		if (objects.IsSubtypeFire(objHnd))
+		if (critterSys.IsSubtypeFire(objHnd))
 		{
 			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionSubtypeFire);
 		}
 
-		if (objects.IsOoze(objHnd))
+		if (critterSys.IsOoze(objHnd))
 		{
 			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterOoze);
 		}

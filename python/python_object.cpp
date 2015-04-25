@@ -1237,7 +1237,7 @@ static PyObject* PyObjHandle_AnimGoalInterrupt(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_D20StatusInit(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
-	d20Sys.D20StatusInit(self->handle);
+	d20Sys.d20Status->D20StatusInit(self->handle);
 	Py_RETURN_NONE;
 }
 

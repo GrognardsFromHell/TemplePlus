@@ -76,4 +76,3 @@ struct AiTacticDef
 	uint32_t pad;
 };
 
-uint32_t _aiStrategyParse(objHndl objHnd, objHndl target);

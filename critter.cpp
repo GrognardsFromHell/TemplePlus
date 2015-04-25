@@ -188,7 +188,7 @@ MonsterCategory CritterSystem::GetCategory(objHndl objHnd)
 {
 	if (objHnd != 0) {
 		if (objects.IsCritter(objHnd)) {
-			auto monCat = objects._GetInternalFieldInt64(objHnd, obj_f_critter_monster_category);
+			auto monCat = objects.getInt64(objHnd, obj_f_critter_monster_category);
 			return (MonsterCategory)(monCat & 0xFFFFFFFF);
 		}
 	}
@@ -199,7 +199,7 @@ bool CritterSystem::IsCategoryType(objHndl objHnd, MonsterCategory categoryType)
 {
 	if (objHnd != 0) {
 		if (objects.IsCritter(objHnd)) {
-			auto monCat = objects._GetInternalFieldInt64(objHnd, obj_f_critter_monster_category);
+			auto monCat = objects.getInt64(objHnd, obj_f_critter_monster_category);
 			return (monCat & 0xFFFFFFFF) == categoryType;
 		}
 	}
@@ -210,7 +210,7 @@ bool CritterSystem::IsCategorySubtype(objHndl objHnd, MonsterCategory categoryTy
 {
 	if (objHnd != 0) {
 		if (objects.IsCritter(objHnd)) {
-			auto monCat = objects._GetInternalFieldInt64(objHnd, obj_f_critter_monster_category);
+			auto monCat = objects.getInt64(objHnd, obj_f_critter_monster_category);
 			return ((monCat >> 32) & 0xFFFFFFFF) == categoryType;
 		}
 	}

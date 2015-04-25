@@ -771,15 +771,11 @@ PyObject* PyGame_Picker(PyObject*, PyObject* args) {
 	dialogPickerArgs.validTargetLine = PyInt_AsLong(PyList_GET_ITEM(dialogLines, 2));
 
 	PickerArgs picker;
-	picker.flags = 0x100;
-	picker.field4 = 0;
-	picker.fieldc = 0;
-	picker.field10 = 2;
-	picker.field14 = 0;
-	picker.field18 = 0;
-	picker.field1c = 0;
-	picker.spellId = spellId;
-	picker.type = UiPickerType::Single;
+	picker.flagsTarget = Unknown100h;
+	picker.modeTarget = UiPickerType::Single;
+	picker.incFlags = UiPickerIncFlags::Other;
+	picker.excFlags = UiPickerIncFlags::None;
+	picker.spellEnum = spellId;
 	picker.callback = PyGame_PickerCallback;
 	
 	uiDialog.Hide();

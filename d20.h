@@ -115,7 +115,7 @@ struct D20Actn
 		d20Caf = 0;
 		distTraversed = 0;
 		path = 0;
-		spellEnum = 0;
+		spellId = 0;
 		data1 = 0;
 	}
 };
