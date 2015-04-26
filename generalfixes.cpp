@@ -3,7 +3,8 @@
 #include "util/fixes.h"
 #include "common.h"
 #include "obj.h"
-
+#include "turn_based.h"
+#include "temple_functions.h"
 
 
 class SizeColossalFix : public TempleFix {
@@ -106,3 +107,36 @@ public:
 		writeHex(0x102D5454, "1E 00 00 00  22 00 00 00  00 2B 0D 10   00 00 00 00");
 	}
 };
+
+
+
+static uint32_t (__cdecl *OrgFragarachAnswering)(DispatcherCallbackArgs);
+
+uint32_t __cdecl HookedFragarachAnswering(DispatcherCallbackArgs args) {
+	// adds an "IsCritter" check
+	auto dispIO = args.dispIO;
+	auto curActor = tbSys.turnBasedGetCurrentActor();
+	auto attachee = args.objHndCaller;
+	auto tgtObj = *(objHndl*)(dispIO + 2);
+	//hooked_print_debug_message("Prevented Scather AoO bug! TB Actor is %s , Attachee is %s,  target is %s", description.getDisplayName(curActor), description.getDisplayName(attachee), description.getDisplayName(tgtObj));
+	if (!tgtObj || !objects.IsCritter(tgtObj) || curActor == attachee)
+	{
+		hooked_print_debug_message("Prevented Scather AoO bug! TB Actor is %s , Attachee is %s,  target is %s", description.getDisplayName(curActor), description.getDisplayName(attachee), description.getDisplayName(tgtObj) );
+		return 0;
+	}
+	auto result = OrgFragarachAnswering(args); // Call original method
+	return result;
+}
+
+class FragarachAoOFix : public TempleFix
+{
+public:
+	const char* name() override {
+		return "Fixes the Fragarach hang that is caused by attacking a fire creature (which deals damage to the caster -> triggers the answering ability - > attempts an AoO -> but there is no one to AoO!)";
+	}
+
+	void apply() override {
+		OrgFragarachAnswering = (uint32_t(__cdecl*)(DispatcherCallbackArgs)) replaceFunction(0x10104330, HookedFragarachAnswering);
+
+	}
+} fragarachAoOFix;
