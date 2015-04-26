@@ -321,17 +321,22 @@ static PyObject* PyObjHandle_MoneyAdj(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
-
-	objHndl targetObj = 0;
-	uint32_t spellEnum;
-	if (!PyArg_ParseTuple(args, "i|O&:objhndl.cast_spell", &spellEnum, &ConvertObjHndl, &targetObj)) {
+	/*
+	objHndl target = 0;
+	if (!PyArg_ParseTuple(args, "i|O&:objhndl.cast_spell", &spellId, &ConvertObjHndl, &target)) {
 		return 0;
-	}
+	}*/
 
+	uint32_t spellEnum;
 	PickerArgs pickArgs;
 	SpellPacketBody spellPktBody;
 	SpellEntry spellEntry;
+	objHndl targetObj = 0;
+	if (!PyArg_ParseTuple(args, "i|O&:objhndl.cast_spell", &spellEnum, &ConvertObjHndl, &targetObj)) {
+		return 0;
+	}
 	objHndl caster = self->handle;
+
 	LocAndOffsets loc;
 	D20SpellData d20SpellData;
 
@@ -351,9 +356,14 @@ static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 		return Py_None;
 	}
 	spellSys.spellPacketBodyReset(&spellPktBody);
+	spellPktBody.spellEnum = spellEnum;
+	spellPktBody.spellEnumOriginal = spellEnum;
+	spellPktBody.objHndCaster = caster;
 	for (uint32_t i = 0; i < numSpells; i++)
 	{
 		if (!spellSys.spellCanCast(caster, spellEnum, classCodes[i], spellLevels[i])) continue;
+		spellPktBody.spellKnownSlotLevel = spellLevels[i];
+		spellPktBody.casterClassCode = classCodes[i];
 		spellSys.spellPacketSetCasterLevel(&spellPktBody);
 		if (!spellSys.spellRegistryCopy(spellEnum, &spellEntry)) continue;
 		if (!spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, caster, spellPktBody.baseCasterLevel)) continue;
@@ -409,6 +419,8 @@ static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 	}
 	Py_INCREF(Py_None);
 	return Py_None;
+
+	return 0;
 }
 
 static PyObject* PyObjHandle_SkillLevelGet(PyObject* obj, PyObject* args) {
