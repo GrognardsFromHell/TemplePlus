@@ -1768,7 +1768,7 @@ enum enum_disp_type : uint32_t {
 	dispType32,
 	dispType33,
 	dispType34,
-	dispType35,
+	dispTypeBaseCasterLevelMod,
 	dispType36,
 	dispType37,
 	dispType38,
