@@ -25,6 +25,8 @@
 #include "python_objectscripts.h"
 #include <objlist.h>
 #include "python_integration.h"
+#include <action_sequence.h>
+#include <ui/ui_picker.h>
 
 static struct PyObjHandleAddresses : AddressTable {
 	PyObjHandleAddresses() {
@@ -319,16 +321,105 @@ static PyObject* PyObjHandle_MoneyAdj(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
-
+	/*
 	objHndl target = 0;
-	int spellId;
 	if (!PyArg_ParseTuple(args, "i|O&:objhndl.cast_spell", &spellId, &ConvertObjHndl, &target)) {
 		return 0;
+	}*/
+
+	uint32_t spellEnum;
+	PickerArgs pickArgs;
+	SpellPacketBody spellPktBody;
+	SpellEntry spellEntry;
+	objHndl targetObj = 0;
+	if (!PyArg_ParseTuple(args, "i|O&:objhndl.cast_spell", &spellEnum, &ConvertObjHndl, &targetObj)) {
+		return 0;
 	}
+	objHndl caster = self->handle;
+	
+	LocAndOffsets loc;
+	D20SpellData d20SpellData;
 
-	// TODO: STUBBED OUT FOR SHAI
+	// get spell known data
+	// I've set up a really large buffer just in case, 
+	// because in theory a player might have permutations 
+	// of spells due to metamagic, different casting classes etc.
+	uint32_t classCodes[10000] = { 0, };
+	uint32_t spellLevels[10000] = { 0, };
+	uint32_t numSpells = 0;
+	if (!spellSys.spellKnownQueryGetData(caster, spellEnum, classCodes, spellLevels, &numSpells)) {
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+	if (numSpells <= 0) {
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+	spellSys.spellPacketBodyReset(&spellPktBody);
+	spellPktBody.spellEnum = spellEnum;
+	spellPktBody.spellEnumOriginal = spellEnum;
+	spellPktBody.objHndCaster = caster;
+	for (uint32_t i = 0; i < numSpells; i++)
+	{
+		if (!spellSys.spellCanCast(caster, spellEnum, classCodes[i], spellLevels[i])) continue;
+		spellPktBody.spellKnownSlotLevel = spellLevels[i];
+		spellPktBody.casterClassCode = classCodes[i];
+		spellSys.spellPacketSetCasterLevel(&spellPktBody);
+		if (!spellSys.spellRegistryCopy(spellEnum, &spellEntry)) continue;
+		if (!spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, caster, spellPktBody.baseCasterLevel)) continue;
+		pickArgs.result = { 0, };
+		pickArgs.flagsTarget = (UiPickerFlagsTarget)(
+			(uint64_t)pickArgs.flagsTarget | (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::Unknown100h
+			- (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::Range
+			);
 
-	return 0;
+		if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Single))
+		{
+			objects.loc->getLocAndOff(targetObj, &loc);
+			uiPicker.sub_100BA480(targetObj, &pickArgs);
+		}
+		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Multi))
+		{
+			objects.loc->getLocAndOff(targetObj, &loc);
+			uiPicker.sub_100BA480(targetObj, &pickArgs);
+		}
+		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Cone))
+		{
+			objects.loc->getLocAndOff(targetObj, &loc);
+			uiPicker.sub_100BA6A0(&loc, &pickArgs);
+
+		}
+		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Area))
+		{
+			if (spellEntry.spellRangeType == SRT_Personal)
+				objects.loc->getLocAndOff(caster, &loc);
+			else objects.loc->getLocAndOff(targetObj, &loc);
+			uiPicker.sub_100BA540(&loc, &pickArgs);
+		}
+		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Personal))
+		{
+			objects.loc->getLocAndOff(caster, &loc);
+			uiPicker.sub_100BA480(caster, &pickArgs);
+		}
+
+		spellSys.ConfigSpellTargetting(&pickArgs, &spellPktBody);
+		if (spellPktBody.targetListNumItems <= 0) continue;
+		if (!actSeqSys.TurnBasedStatusInit(caster)) continue;
+		d20Sys.GlobD20ActnInit();
+		d20Sys.GlobD20ActnSetTypeAndData1(D20A_CAST_SPELL, 0);
+		actSeqSys.ActSeqCurSetSpellPacket(&spellPktBody, 1);
+		d20Sys.D20ActnSetSpellData(&d20SpellData, spellEnum, classCodes[i], spellLevels[i], 0xFF, 0);
+		d20Sys.GlobD20ActnSetSpellData(&d20SpellData);
+		d20Sys.GlobD20ActnSetTarget(targetObj, &loc);
+		actSeqSys.ActionAddToSeq();
+		actSeqSys.sequencePerform();
+
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+	Py_INCREF(Py_None);
+	return Py_None;
+
 }
 
 static PyObject* PyObjHandle_SkillLevelGet(PyObject* obj, PyObject* args) {
