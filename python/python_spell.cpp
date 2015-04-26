@@ -74,6 +74,11 @@ static PyObject* PySpell_GetCaster(PyObject* obj, void*) {
 
 static int PySpell_SetCaster(PyObject *obj, PyObject *value, void*) {
 	auto self = (PySpell*)obj;
+	if (!PyObjHndl_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, "Caster must be an object handle");
+		return -1;
+	}
+	self->caster = PyObjHndl_AsObjHndl(value);
 	PySpell_UpdatePacket(obj);
 	return 0;
 }
@@ -95,6 +100,11 @@ static PyObject* PySpell_GetRangeExact(PyObject* obj, void*) {
 
 static int PySpell_SetRangeExact(PyObject *obj, PyObject *value, void*) {
 	auto self = (PySpell*)obj;
+	if (!PyInt_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, "Range exact must be an int");
+		return -1;
+	}
+	self->rangeExact = PyInt_AsLong(value);
 	PySpell_UpdatePacket(obj);
 	return 0;
 }
@@ -106,6 +116,11 @@ static PyObject* PySpell_GetTargetLoc(PyObject* obj, void*) {
 
 static int PySpell_SetTargetLoc(PyObject *obj, PyObject *value, void*) {
 	auto self = (PySpell*)obj;
+	if (!PyLong_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, "Duration must be a long");
+		return -1;
+	}
+	self->targetLocation.location.location = locXY::fromField(PyLong_AsLongLong(value));
 	PySpell_UpdatePacket(obj);
 	return 0;
 }
@@ -132,6 +147,11 @@ static PyObject* PySpell_GetCasterLevel(PyObject* obj, void*) {
 
 static int PySpell_SetCasterLevel(PyObject *obj, PyObject *value, void*) {
 	auto self = (PySpell*)obj;
+	if (!PyInt_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, "Caster level can only be an integer");
+		return -1;
+	}
+	self->casterLevel = PyInt_AsLong(value);
 	PySpell_UpdatePacket(obj);
 	return 0;
 }
@@ -143,6 +163,11 @@ static PyObject* PySpell_GetDC(PyObject* obj, void*) {
 
 static int PySpell_SetDC(PyObject *obj, PyObject *value, void*) {
 	auto self = (PySpell*)obj;
+	if (!PyInt_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, "DC can only be an integer");
+		return -1;
+	}
+	self->dc = PyInt_AsLong(value);
 	PySpell_UpdatePacket(obj);
 	return 0;
 }
@@ -159,6 +184,11 @@ static PyObject* PySpell_GetDuration(PyObject* obj, void*) {
 
 static int PySpell_SetDuration(PyObject *obj, PyObject *value, void*) {
 	auto self = (PySpell*)obj;
+	if (!PyInt_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, "Duration can only be an integer");
+		return -1;
+	}
+	self->duration = PyInt_AsLong(value);
 	PySpell_UpdatePacket(obj);
 	return 0;
 }
@@ -170,6 +200,11 @@ static PyObject* PySpell_GetNumOfTargets(PyObject* obj, void*) {
 
 static int PySpell_SetNumOfTargets(PyObject *obj, PyObject *value, void*) {
 	auto self = (PySpell*)obj;
+	if (!PyInt_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, "Number of targets can only be an integer");
+		return -1;		
+	}
+	self->targetCount = PyInt_AsLong(value);
 	PySpell_UpdatePacket(obj);
 	return 0;
 }
@@ -181,6 +216,11 @@ static PyObject* PySpell_GetNumOfProjectiles(PyObject* obj, void*) {
 
 static int PySpell_SetNumOfProjectiles(PyObject *obj, PyObject *value, void*) {
 	auto self = (PySpell*)obj;
+	if (!PyInt_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, "Number of projectiles can only be an integer");
+		return -1;
+	}
+	self->projectileCount = PyInt_AsLong(value);
 	PySpell_UpdatePacket(obj);
 	return 0;
 }
@@ -192,6 +232,11 @@ static PyObject* PySpell_GetCasterPartsysId(PyObject* obj, void*) {
 
 static int PySpell_SetCasterPartsysId(PyObject *obj, PyObject *value, void*) {
 	auto self = (PySpell*)obj;
+	if (!PyInt_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, "Caster partsys id can only be an integer");
+		return -1;
+	}
+	self->casterPartSysId = PyInt_AsLong(value);
 	PySpell_UpdatePacket(obj);
 	return 0;
 }
@@ -203,8 +248,8 @@ static PyObject* PySpell_GetTargetList(PyObject* obj, void*) {
 
 static PyObject* PySpell_GetSpellRadius(PyObject* obj, void*) {
 	auto self = (PySpell*)obj;
-	// TODO
-	return 0;
+	auto spellEntry = spellEntryRegistry.get(self->spellEnum);
+	return PyInt_FromLong(spellEntry->radiusTarget);
 }
 
 static PyObject* PySpell_GetSpell(PyObject* obj, void*) {
