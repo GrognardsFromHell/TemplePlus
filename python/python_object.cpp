@@ -50,7 +50,7 @@ static PyObjHandle* GetSelf(PyObject* obj) {
 	if (!objects.VerifyHandle(self->handle)) {
 		self->handle = objects.GetHandle(self->id);
 	}
-	
+
 	return self;
 }
 
@@ -321,12 +321,6 @@ static PyObject* PyObjHandle_MoneyAdj(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
-	/*
-	objHndl target = 0;
-	if (!PyArg_ParseTuple(args, "i|O&:objhndl.cast_spell", &spellId, &ConvertObjHndl, &target)) {
-		return 0;
-	}*/
-
 	uint32_t spellEnum;
 	PickerArgs pickArgs;
 	SpellPacketBody spellPktBody;
@@ -344,8 +338,8 @@ static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 	// I've set up a really large buffer just in case, 
 	// because in theory a player might have permutations 
 	// of spells due to metamagic, different casting classes etc.
-	uint32_t classCodes[10000] = { 0, };
-	uint32_t spellLevels[10000] = { 0, };
+	uint32_t classCodes[10000] = {0,};
+	uint32_t spellLevels[10000] = {0,};
 	uint32_t numSpells = 0;
 	if (!spellSys.spellKnownQueryGetData(caster, spellEnum, classCodes, spellLevels, &numSpells)) {
 		Py_INCREF(Py_None);
@@ -359,52 +353,48 @@ static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 	spellPktBody.spellEnum = spellEnum;
 	spellPktBody.spellEnumOriginal = spellEnum;
 	spellPktBody.objHndCaster = caster;
-	for (uint32_t i = 0; i < numSpells; i++)
-	{
-		if (!spellSys.spellCanCast(caster, spellEnum, classCodes[i], spellLevels[i])) continue;
+	for (uint32_t i = 0; i < numSpells; i++) {
+		if (!spellSys.spellCanCast(caster, spellEnum, classCodes[i], spellLevels[i]))
+			continue;
 		spellPktBody.spellKnownSlotLevel = spellLevels[i];
 		spellPktBody.casterClassCode = classCodes[i];
 		spellSys.spellPacketSetCasterLevel(&spellPktBody);
-		if (!spellSys.spellRegistryCopy(spellEnum, &spellEntry)) continue;
-		if (!spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, caster, spellPktBody.baseCasterLevel)) continue;
-		pickArgs.result = { 0, };
+		if (!spellSys.spellRegistryCopy(spellEnum, &spellEntry))
+			continue;
+		if (!spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, caster, spellPktBody.baseCasterLevel))
+			continue;
+		pickArgs.result = {0,};
 		pickArgs.flagsTarget = (UiPickerFlagsTarget)(
 			(uint64_t)pickArgs.flagsTarget | (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::Unknown100h
 			- (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::Range
-			);
+		);
 
-		if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Single))
-		{
+		if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Single)) {
 			objects.loc->getLocAndOff(targetObj, &loc);
 			uiPicker.sub_100BA480(targetObj, &pickArgs);
-		}
-		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Multi))
-		{
+		} else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Multi)) {
 			objects.loc->getLocAndOff(targetObj, &loc);
 			uiPicker.sub_100BA480(targetObj, &pickArgs);
-		}
-		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Cone))
-		{
+		} else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Cone)) {
 			objects.loc->getLocAndOff(targetObj, &loc);
 			uiPicker.sub_100BA6A0(&loc, &pickArgs);
 
-		}
-		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Area))
-		{
+		} else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Area)) {
 			if (spellEntry.spellRangeType == SRT_Personal)
 				objects.loc->getLocAndOff(caster, &loc);
-			else objects.loc->getLocAndOff(targetObj, &loc);
+			else
+				objects.loc->getLocAndOff(targetObj, &loc);
 			uiPicker.sub_100BA540(&loc, &pickArgs);
-		}
-		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Personal))
-		{
+		} else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Personal)) {
 			objects.loc->getLocAndOff(caster, &loc);
 			uiPicker.sub_100BA480(caster, &pickArgs);
 		}
 
 		spellSys.ConfigSpellTargetting(&pickArgs, &spellPktBody);
-		if (spellPktBody.targetListNumItems <= 0) continue;
-		if (!actSeqSys.TurnBasedStatusInit(caster)) continue;
+		if (spellPktBody.targetListNumItems <= 0)
+			continue;
+		if (!actSeqSys.TurnBasedStatusInit(caster))
+			continue;
 		d20Sys.GlobD20ActnInit();
 		d20Sys.GlobD20ActnSetTypeAndData1(D20A_CAST_SPELL, 0);
 		actSeqSys.ActSeqCurSetSpellPacket(&spellPktBody, 1);
@@ -1288,17 +1278,17 @@ static PyObject* PyObjHandle_AnimCallback(PyObject* obj, PyObject* args) {
 	}
 
 	int oldGrappleState;
-	switch (id) {		
+	switch (id) {
 	case 0: // ANIM_CALLBACK_FROG_FAILED_LATCH
 		objects.setInt32(self->handle, obj_f_grapple_state, 1);
-		break;		
+		break;
 	case 1: // ANIM_CALLBACK_FROG_LATCH
 		objects.setInt32(self->handle, obj_f_grapple_state, 3);
-		break;		
+		break;
 	case 2: // ANIM_CALLBACK_FROG_PULL
 		oldGrappleState = objects.getInt32(self->handle, obj_f_grapple_state);
 		objects.setInt32(self->handle, obj_f_grapple_state, oldGrappleState & 0xFFFF0005 | 5);
-		break;		
+		break;
 	case 3: // ANIM_CALLBACK_FROG_SWALLOW
 		oldGrappleState = objects.getInt32(self->handle, obj_f_grapple_state);
 		objects.setInt32(self->handle, obj_f_grapple_state, oldGrappleState & 0xFFFF0007 | 7);
@@ -1337,7 +1327,7 @@ static PyObject* PyObjHandle_D20StatusInit(PyObject* obj, PyObject* args) {
 	Sets one of the critters stand points to a jump point.
 */
 static PyObject* PyObjHandle_StandpointSet(PyObject* obj, PyObject* args) {
-	auto self = GetSelf(obj);	
+	auto self = GetSelf(obj);
 	StandPointType type;
 	int jumpPointId;
 	if (!PyArg_ParseTuple(args, "ii:objhndl.standpoint_set", &type, &jumpPointId)) {
@@ -1443,7 +1433,7 @@ static PyObject* PyObjHandle_HasFeat(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "i:objhndl.has_feat", &feat)) {
 		return 0;
 	}
-	
+
 	auto result = _HasFeatCountByClass(self->handle, feat, (Stat) 0, 0);
 	return PyInt_FromLong(result);
 }
@@ -1520,6 +1510,7 @@ static PyObject* PyObjHandle_AiShitlistRemove(PyObject* obj, PyObject* args) {
 	aiSys.ShitlistRemove(self->handle, target);
 	Py_RETURN_NONE;
 }
+
 static PyObject* PyObjHandle_AiStopAttacking(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	aiSys.StopAttacking(self->handle);
@@ -1561,7 +1552,7 @@ static PyObject* PyObjHandle_HasAtoned(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_D20SendSignal(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	int signalId;
-	PyObject *arg = 0;
+	PyObject* arg = 0;
 	if (!PyArg_ParseTuple(args, "i|O:objhndl.d20_send_signal", &signalId, &arg)) {
 		return 0;
 	}
@@ -1576,7 +1567,7 @@ static PyObject* PyObjHandle_D20SendSignal(PyObject* obj, PyObject* args) {
 	} else {
 		d20Sys.d20SendSignal(self->handle, dispKey, 0, 0);
 	}
-	
+
 	Py_RETURN_NONE;
 }
 
@@ -1750,41 +1741,41 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"d20_query_get_data", PyObjHandle_D20QueryGetData, METH_VARARGS, NULL},
 	{"critter_get_alignment", PyObjHandle_CritterGetAlignment, METH_VARARGS, NULL},
 	{"distance_to", PyObjHandle_DistanceTo, METH_VARARGS, NULL},
-	{"anim_callback", PyObjHandle_AnimCallback, METH_VARARGS, NULL },
-	{"anim_goal_interrupt", PyObjHandle_AnimGoalInterrupt, METH_VARARGS, NULL },
+	{"anim_callback", PyObjHandle_AnimCallback, METH_VARARGS, NULL},
+	{"anim_goal_interrupt", PyObjHandle_AnimGoalInterrupt, METH_VARARGS, NULL},
 	{"d20_status_init", PyObjHandle_D20StatusInit, METH_VARARGS, NULL},
-	{ "object_script_execute", PyObjHandle_ObjectScriptExecute, METH_VARARGS, NULL },
+	{"object_script_execute", PyObjHandle_ObjectScriptExecute, METH_VARARGS, NULL},
 	{"standpoint_set", PyObjHandle_StandpointSet, METH_VARARGS, NULL},
 	{"runoff", PyObjHandle_RunOff, METH_VARARGS, NULL},
-	{ "get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL },
-	{ "is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL },
-	{ "is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL },
+	{"get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL},
+	{"is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL},
+	{"is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL},
 	{"rumor_log_add", PyObjHandle_RumorLogAdd, METH_VARARGS, NULL},
 	{"obj_set_int", PyObjHandle_SetInt, METH_VARARGS, NULL},
-	{ "obj_get_int", PyObjHandle_GetInt, METH_VARARGS, NULL },
-	{ "has_feat", PyObjHandle_HasFeat, METH_VARARGS, NULL },
+	{"obj_get_int", PyObjHandle_GetInt, METH_VARARGS, NULL},
+	{"has_feat", PyObjHandle_HasFeat, METH_VARARGS, NULL},
 	{"spell_known_add", PyObjHandle_SpellKnownAdd, METH_VARARGS, NULL},
-	{ "spell_memorized_add", PyObjHandle_SpellMemorizedAdd, METH_VARARGS, NULL },
+	{"spell_memorized_add", PyObjHandle_SpellMemorizedAdd, METH_VARARGS, NULL},
 	{"spell_damage", PyObjHandle_SpellDamage, METH_VARARGS, NULL},
 	{"spell_damage_with_reduction", PyObjHandle_SpellDamageWithReduction, METH_VARARGS, NULL},
 	{"spell_heal", PyObjHandle_SpellHeal, METH_VARARGS, NULL},
-	{ "identify_all", PyObjHandle_IdentifyAll, METH_VARARGS, NULL },
+	{"identify_all", PyObjHandle_IdentifyAll, METH_VARARGS, NULL},
 	{"ai_flee_add", PyObjHandle_AiFleeAdd, METH_VARARGS, NULL},
-	{ "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
+	{"get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL},
 	{"item_wield_best_all", PyObjHandle_WieldBestAll, METH_VARARGS, NULL},
 	{"award_experience", PyObjHandle_AwardExperience, METH_VARARGS, NULL},
 	{"has_los", PyObjHandle_HasLos, METH_VARARGS, NULL},
-	{"has_atoned", PyObjHandle_HasAtoned, METH_VARARGS, NULL },
+	{"has_atoned", PyObjHandle_HasAtoned, METH_VARARGS, NULL},
 	{"d20_send_signal", PyObjHandle_D20SendSignal, METH_VARARGS, NULL},
-	{ "d20_send_signal_ex", PyObjHandle_D20SendSignalEx, METH_VARARGS, NULL },
+	{"d20_send_signal_ex", PyObjHandle_D20SendSignalEx, METH_VARARGS, NULL},
 	{"balor_death", PyObjHandle_BalorDeath, METH_VARARGS, NULL},
 	{"concealed_set", PyObjHandle_ConcealedSet, METH_VARARGS, NULL},
-	{ "ai_shitlist_add", PyObjHandle_AiShitlistAdd, METH_VARARGS, NULL },
-	{ "ai_shitlist_remove", PyObjHandle_AiShitlistRemove, METH_VARARGS, NULL },
-	{ "unconceal", PyObjHandle_Unconceal, METH_VARARGS, NULL },
+	{"ai_shitlist_add", PyObjHandle_AiShitlistAdd, METH_VARARGS, NULL},
+	{"ai_shitlist_remove", PyObjHandle_AiShitlistRemove, METH_VARARGS, NULL},
+	{"unconceal", PyObjHandle_Unconceal, METH_VARARGS, NULL},
 	{"spells_pending_to_memorized", PyObjHandle_PendingToMemorized, METH_VARARGS, NULL},
-	{ "spells_memorized_forget", PyObjHandle_MemorizedForget, METH_VARARGS, NULL },
-	{ "ai_stop_attacking", PyObjHandle_AiStopAttacking, METH_VARARGS, NULL },
+	{"spells_memorized_forget", PyObjHandle_MemorizedForget, METH_VARARGS, NULL},
+	{"ai_stop_attacking", PyObjHandle_AiStopAttacking, METH_VARARGS, NULL},
 	{"resurrect", PyObjHandle_Resurrect, METH_VARARGS, NULL},
 	{"dominate", PyObjHandle_Dominate, METH_VARARGS, NULL},
 	{"is_unconscious", PyObjHandle_IsUnconscious, METH_VARARGS, NULL},
