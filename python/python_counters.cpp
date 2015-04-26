@@ -1,13 +1,13 @@
 
 #include "stdafx.h"
 #include "python_counters.h"
-#include "python_integration.h"
+#include "python_integration_obj.h"
 #include <util/addresses.h>
 
 struct PyCounters {
 	PyObject_HEAD;
 	objHndl handle;
-	ScriptEvent evt;
+	ObjScriptEvent evt;
 };
 
 static PyObject *PyCounters_GetItem(PyObject *obj, Py_ssize_t index) {
@@ -95,7 +95,7 @@ PyObject* PyCounters_Create() {
 	}
 
 	auto result = PyObject_New(PyCounters, &PyCountersType);
-	result->handle = pythonIntegration.GetCounterObj();
-	result->evt = pythonIntegration.GetCounterEvent();
+	result->handle = pythonObjIntegration.GetCounterObj();
+	result->evt = pythonObjIntegration.GetCounterEvent();
 	return (PyObject*) result;
 }

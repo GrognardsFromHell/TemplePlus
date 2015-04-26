@@ -87,7 +87,7 @@ struct SpellPacketBody
 	uint32_t field_A04;
 	SpellEntry spellEntry;
 	uint32_t spellDuration;
-	uint32_t field_ACC;
+	int field_ACC;
 	uint32_t spellRange;
 	uint32_t field_AD4;
 	uint32_t field_AD8_maybe_itemSpellLevel;
@@ -127,6 +127,7 @@ struct SpellSystem : AddressTable
 	uint32_t getSpellEnum(const char* spellName);
 	uint32_t GetSpellEnumFromSpellId(uint32_t spellId);
 	uint32_t GetSpellPacketBody(uint32_t spellId, SpellPacketBody* spellPktBodyOut);
+	void UpdateSpellPacket(const SpellPacketBody &spellPktBody);
 	uint32_t spellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count);
 	uint32_t spellCanCast(objHndl objHnd, uint32_t spellEnum, uint32_t spellClassCode, uint32_t spellLevel);
 	uint32_t spellMemorizedQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count);

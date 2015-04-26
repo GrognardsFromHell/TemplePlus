@@ -66,6 +66,8 @@
     <ClCompile Include="python\python_globalflags.cpp" />
     <ClCompile Include="python\python_globalvars.cpp" />
     <ClCompile Include="python\python_integration.cpp" />
+    <ClCompile Include="python\python_integration_obj.cpp" />
+    <ClCompile Include="python\python_integration_spells.cpp" />
     <ClCompile Include="python\python_module.cpp" />
     <ClCompile Include="python\python_object.cpp" />
     <ClCompile Include="python\python_objectscripts.cpp" />
@@ -258,6 +260,8 @@
     <ClInclude Include="python\python_globalflags.h" />
     <ClInclude Include="python\python_globalvars.h" />
     <ClInclude Include="python\python_integration.h" />
+    <ClInclude Include="python\python_integration_obj.h" />
+    <ClInclude Include="python\python_integration_spells.h" />
     <ClInclude Include="python\python_module.h" />
     <ClInclude Include="python\python_object.h" />
     <ClInclude Include="python\python_objectscripts.h" />

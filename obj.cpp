@@ -35,16 +35,6 @@ public:
 	}
 } objReplacements;
 
-
-static struct ObjectSystemAddresses : AddressTable {
-	uint32_t (__cdecl *ScriptExecute)(objHndl attachee, objHndl triggerer, uint32_t spellId, uint32_t trapIdMaybe, uint32_t san, uint32_t a6);
-	ObjectSystemAddresses()
-	{
-		macRebase(ScriptExecute, 10025D60)
-	}
-} addresses;
-
-
 #pragma region Object Internals
 const size_t objHeaderSize = 4; // Constant
 const size_t objBodySize = 168; // Passed in to Object_Tables_Init
@@ -497,11 +487,6 @@ ObjectId Objects::GetId(objHndl handle) {
 
 objHndl Objects::GetHandle(const ObjectId &id) {
 	return _GetHandle(id);
-}
-
-uint32_t Objects::ScriptExecute(objHndl attachee, objHndl triggerer, uint32_t spellId, uint32_t trapIdMaybe, uint32_t san, uint32_t a6)
-{
-	return addresses.ScriptExecute(attachee, triggerer, spellId, trapIdMaybe, san, a6);
 }
 
 ObjectType Objects::GetType(objHndl obj)

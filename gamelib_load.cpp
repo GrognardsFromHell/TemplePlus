@@ -1,14 +1,17 @@
 #include "stdafx.h"
 #include "util/fixes.h"
 #include "temple_functions.h"
+#include "python/python_integration_obj.h"
 
 uint32_t Co8DataHook_load(void* retaddr_hookee, char* pString, void * p2)
 {
-	char a[] = "(s)";
+	// TODO: replace this
+	/*char a[] = "(s)";
 	char b[] = "_co8init";
 	char c[] = "load";
 	auto dude = Py_BuildValue(a, pString);
 	templeFuncs.PyScript_Execute(b, c, dude);
+	pythonObjIntegration.*/
 	return 1;
 };
 

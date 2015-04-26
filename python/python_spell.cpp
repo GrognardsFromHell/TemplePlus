@@ -1,170 +1,254 @@
+
 #include "stdafx.h"
-#include "common.h"
+
 #include "python_spell.h"
-#include <spell.h>
-#include "..\tio\tio.h"
-#include "temple_functions.h"
-#include "python_header.h"
+#include "../common.h"
+#include "../spell.h"
 
+struct PySpellTarget {
+	objHndl obj;
+	int partSysId;
+};
 
-PythonSpellSystem pySpellSystem;
+struct PySpell {
+	PyObject_HEAD;
+	uint32_t spellEnum;
+	uint32_t spellEnumOriginal;
+	uint32_t spellId;
+	uint32_t field_14;
+	objHndl caster;
+	uint32_t casterPartSysId;
+	uint32_t casterClass;
+	uint32_t casterClassAlt; // used for spells cast from items, and maybe domain spells too
+	uint32_t field_2C;
+	LocFull targetLocation;
+	uint32_t dc;
+	uint32_t spellLevel;
+	uint32_t casterLevel;
+	uint32_t rangeExact;
+	uint32_t duration;
+	uint32_t field_58;
+	PyObject* spellVariables;
+	uint32_t targetCountCopy;
+	int targetCount;
+	uint32_t projectileCount;
+	uint32_t field_6C;
+	PySpellTarget targets[32];
+	SpellPacketBody *spellPacketBodies[8];
+	MetaMagicData metaMagic;
+	int field_270;
+	int field_274;
+};
 
+// Contains all active spells
+typedef unordered_map<int, PySpell*> ActiveSpellMap;
+static ActiveSpellMap activeSpells;
 
-class PythonSpellReplacements : TempleFix
-{
-	macTempleFix(Python Spell)
-	{
-		// macReplaceFun(100C0180, _SpellTrigger) // fucker is bugged :(
-	}
-
-} pySpellReplacements;
-
-static struct PythonSpellSystemAddresses : AddressTable {
-
-
-	//100BF0C0
-	char ** spellEventNames;
-	PyObject* (__cdecl * PySpellFromSpellId)(uint32_t spellId);
-	void(__cdecl * SpellPacketUpdateFromPySpell)(); //usercall  PySpell * @<eax>
-	LocFull * pySpellLoc;
-	LocFull * pySpellLoc2;
-
-	PythonSpellSystemAddresses()
-	{
-		macRebase(spellEventNames, 102CFE24)
-		macRebase(PySpellFromSpellId, 100BE880)
-		macRebase(pySpellLoc, 10BCABD8)
-		macRebase(pySpellLoc2, 10BCABF0)
-		macRebase(SpellPacketUpdateFromPySpell, 100BE2C0)
-		macRebase(SpellSoundPlay, 100BF770)
-	}
-
-	uint32_t (__cdecl *SpellSoundPlay)(SpellPacketBody* spellPacketBody, PySpellEventCode pySpellEventCode);
-} addresses;
-
-
-char* PythonSpellSystem::GetSpellEventName(PySpellEventCode spellEventCode)
-{
-	return addresses.spellEventNames[spellEventCode];
+static PyObject *PySpell_Repr(PyObject *obj) {
+	auto self = (PySpell*)obj;
+	return PyString_FromFormat("Spell(%d)", self->spellEnum);
 }
 
-uint32_t PythonSpellSystem::GetSpellFilename(char* filenameOut, uint32_t spellId)
-{
-	TioFileList tfl;
-	char filePattern[0x100] = {0,};
-	uint32_t spellEnum = spellSys.GetSpellEnumFromSpellId(spellId);
-	_snprintf(filePattern, 0x100, "scr\\Spell%03d*.py", spellEnum);
-	tio_filelist_create(&tfl, filePattern);
-	if (tfl.count == 1)
-	{
-		_splitpath(tfl.files->name, nullptr, nullptr, filenameOut, nullptr);
-		return 1;
-	} 
-	if (tfl.count > 1)
-	{
-		hooked_print_debug_message("PyScript: multiple script files with number: %d \n", spellId);
-		for (int i = 0; i < tfl.count; i++)
-		{
-			hooked_print_debug_message("        : %s \n", &tfl.files[i]);
-		}
+static void PySpell_Del(PyObject *obj) {
+	auto self = (PySpell*)obj;
+	Py_DECREF(self->spellVariables);
+
+	// Remove from list of active packets
+	auto it = activeSpells.find(self->spellId);
+	if (it != activeSpells.end()) {
+		activeSpells.erase(it);
 	}
-	return 0;
+
+	PyObject_Del(obj);
 }
 
-uint32_t PythonSpellSystem::SpellTrigger(uint32_t spellId, PySpellEventCode spellEventCode)
-{
-	uint32_t flagSthg = 0;
-	char filename[0x100] = {0,};
-	if (!GetSpellFilename(filename, spellId))
+static PyMethodDef PySpellMethods[] = {
+	{ NULL, NULL, NULL, NULL }
+};
+
+static PyGetSetDef PySpellGetSet[] = {
+	{ NULL, NULL, NULL, NULL }
+};
+
+static PyTypeObject PySpellType = {
+	PyObject_HEAD_INIT(NULL)
+	0, /*ob_size*/
+	"toee.PySpell", /*tp_name*/
+	sizeof(PySpell), /*tp_basicsize*/
+	0, /*tp_itemsize*/
+	PySpell_Del, /*tp_dealloc*/
+	0, /*tp_print*/
+	0, /*tp_getattr*/
+	0, /*tp_setattr*/
+	0, /*tp_compare*/
+	PySpell_Repr, /*tp_repr*/
+	0, /*tp_as_number*/
+	0, /*tp_as_sequence*/
+	0, /*tp_as_mapping*/
+	0, /*tp_hash */
+	0, /*tp_call*/
+	0, /*tp_str*/
+	PyObject_GenericGetAttr, /*tp_getattro*/
+	PyObject_GenericSetAttr, /*tp_setattro*/
+	0, /*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT, /*tp_flags*/
+	0, /* tp_doc */
+	0, /* tp_traverse */
+	0, /* tp_clear */
+	0, /* tp_richcompare */
+	0, /* tp_weaklistoffset */
+	0, /* tp_iter */
+	0, /* tp_iternext */
+	PySpellMethods, /* tp_methods */
+	0, /* tp_members */
+	PySpellGetSet, /* tp_getset */
+	0, /* tp_base */
+	0, /* tp_dict */
+	0, /* tp_descr_get */
+	0, /* tp_descr_set */
+	0, /* tp_dictoffset */
+	0, /* tp_init */
+	0, /* tp_alloc */
+	0, /* tp_new */
+};
+
+static void PySpell_UpdateFromPacket(PySpell *self, const SpellPacketBody &spell) {
+	self->spellEnum = spell.spellEnum;
+	self->spellEnumOriginal = spell.spellEnumOriginal;
+	self->caster = spell.objHndCaster;
+	self->casterPartSysId = spell.casterPartsysId;
+
+	// TODO: check for correctness
+	if (spell.casterClassCode & 0x80) {
+		self->casterClass = spell.casterClassCode & 0x7F;
+	}
+	else {
+		self->casterClassAlt = spell.casterClassCode & 0x7F;
+	}
+
+	// I think we can replace this with something better
+	/*pyspell_targetloc2.LocAndOff_XY.locx = spell.locFull.location.location.locx;
+	pyspell_targetloc1.LocAndOff_XY.locx = spell.locFull.LocAndOff_XY.locx;
+	pyspell_targetloc2.LocAndOff_XY.off_x = spell.locFull.LocAndOff_XY.off_x;
+	pyspell_targetloc2.LocAndOff_XY.locy = spell.locFull.LocAndOff_XY.locy;
+	pyspell_targetloc1.LocAndOff_XY.locy = spell.locFull.LocAndOff_XY.locy;
+	pyspell_targetloc1.LocAndOff_XY.off_x = spell.locFull.LocAndOff_XY.off_x;
+	pyspell_targetloc2.LocAndOff_XY.off_y = spell.locFull.LocAndOff_XY.off_y;
+	pyspell_targetloc1.LocAndOff_XY.off_y = spell.locFull.LocAndOff_XY.off_y;
+	pyspell_targetloc2.off_z = spell.locFull.off_z;
+	pyspell_targetloc1.off_z = spell.locFull.off_z;*/
+
+	self->spellLevel = spell.spellKnownSlotLevel;
+	self->casterLevel = spell.baseCasterLevel;
+	self->rangeExact = spell.spellRange;
+	self->dc = spell.spellDC;
+	self->duration = spell.spellDuration;
+	self->field_58 = spell.field_ACC;
+	self->rangeExact = spell.spellRange;
+	self->targetCountCopy = spell.targetListNumItemsCopy;
+	self->targetCount = spell.targetListNumItems;
+	self->projectileCount = spell.numProjectiles;
+	*((uint32_t*)&self->metaMagic) = spell.metaMagicData;
+	self->targetLocation = spell.locFull;
+	self->field_270 = spell.field_9C8;
+	self->field_274 = spell.field_9CC;
+	self->spellPacketBodies[0] = spell.spellPktBods[0];
+	self->spellPacketBodies[1] = spell.spellPktBods[1];
+	self->spellPacketBodies[2] = spell.spellPktBods[2];
+	self->spellPacketBodies[3] = spell.spellPktBods[3];
+	self->spellPacketBodies[4] = spell.spellPktBods[4];
+	self->spellPacketBodies[5] = spell.spellPktBods[5];
+	self->spellPacketBodies[6] = spell.spellPktBods[6];
+	self->spellPacketBodies[7] = spell.spellPktBods[7];
+
+	for (int i = 0; i < 32; ++i) {
+		self->targets[i].obj = spell.targetListHandles[i];
+		self->targets[i].partSysId = spell.targetListPartsysIds[i];
+	}
+
+}
+
+PyObject* PySpell_Create(int spellId) {
+	if (PyType_Ready(&PySpellType)) {
 		return 0;
+	}
+
+	// Return an already created and still active spell packet if possible
+	auto it = activeSpells.find(spellId);
+	if (it != activeSpells.end()) {
+		auto result = it->second;
+		Py_INCREF(result);
+		return (PyObject*) result;
+	}
+
+	SpellPacketBody spell;
+	if (!spellSys.GetSpellPacketBody(spellId, &spell)) {
+		Py_RETURN_NONE;
+	}
 	
-	char * spellEventName = GetSpellEventName(spellEventCode);
-	if (!spellEventName || strlen(spellEventName) == 0)
-	{
-		hooked_print_debug_message("python_spell.cpp / SpellTrigger(): WARNING - spell script=(%s) is missing python trigger=(%d)\n", filename, spellEventCode);
-		return 0;
-	} 
-	auto pytup = PyTuple_New(1);
-	PySpell * pySpell = (PySpell *)PySpellFromSpellId(spellId);
-	SpellPacketBody spellPktBody;
-	++pySpell->ob_refcnt;
-	PyTuple_SetItem(pySpell, 0, (PyObject*)pySpell);
-	spellSys.GetSpellPacketBody(pySpell->spellId , &spellPktBody);
-	if (spellEventCode == OnSpellEffect && spellPktBody.targetListNumItems > 0)
-	{
-		for (uint32_t i = 0; i < spellPktBody.targetListNumItems; i++)
-		{
-			objHndl tgtObj = spellPktBody.targetListHandles[i];
-			if (!objects.ScriptExecute(spellPktBody.objHndCaster, tgtObj, spellId, 0, san_spell_cast, 0))
-				flagSthg = 1;
-		}
-		if (flagSthg) return 1;
+	auto self = PyObject_NEW(PySpell, &PySpellType);
+	self->spellId = spellId;
+	self->spellVariables = PyList_New(0);
 
+	PySpell_UpdateFromPacket(self, spell);
+
+	// We do not incref here since we remove this entry in the obj's destructor
+	activeSpells[spellId] = self;
+	
+	return (PyObject*)self;
+}
+
+/*
+	If any python spell for the given spell id is still active, update its properties from
+	the spell packet.
+*/
+void PySpell_Update(int spellId) {
+	auto it = activeSpells.find(spellId);
+
+	if (it == activeSpells.end()) {
+		return;
 	}
-	PyObject * pyscriptRet = templeFuncs.PyScript_Execute(filename, spellEventName, pytup);
-	if (pyscriptRet)
-	{
-		PySpellLocSet(&pySpell->target_location_full);
-		PySpellLoc2Set(&pySpell->target_location_full);
-		SpellPacketUpdateFromPySpell(pySpell);
 
-		pySpell->ob_refcnt--;
-		if (!pySpell->ob_refcnt)
-			pySpell->ob_type->tp_dealloc(pySpell);
-
-		pyscriptRet->ob_refcnt--;
-		if (!pyscriptRet->ob_refcnt)
-			pyscriptRet->ob_type->tp_dealloc(pyscriptRet);
-
-		pytup->ob_refcnt--;
-		if (!pytup->ob_refcnt)
-			pytup->ob_type->tp_dealloc(pytup);
-
-		SpellSoundPlay(&spellPktBody, spellEventCode);
-		return 1;
+	auto self = it->second;
+	SpellPacketBody spell;
+	if (!spellSys.GetSpellPacketBody(spellId, &spell)) {
+		return;
 	}
-	pytup->ob_refcnt--;
-	if (!pytup->ob_refcnt)
-	{
-		pytup->ob_type->tp_dealloc(pytup);
-		return 0;
+
+	PySpell_UpdateFromPacket(self, spell);
+}
+
+void PySpell_UpdatePacket(PyObject* pySpell) {
+	auto self = (PySpell*)pySpell;
+
+	SpellPacketBody spell;
+	spellSys.GetSpellPacketBody(self->spellId, &spell);
+
+	spell.objHndCaster = self->caster;
+	spell.casterPartsysId = self->casterPartSysId;
+	spell.spellDC = self->dc;
+	spell.targetListNumItemsCopy = self->targetCount;	
+	spell.numProjectiles = self->projectileCount;	
+	spell.metaMagicData = *((uint32_t*)&self->metaMagic);	
+	spell.locFull = self->targetLocation;	
+	spell.field_9C8 = self->field_270;	
+	spell.field_9CC = self->field_274;
+
+	for (int i = 0; i < 8; ++i) {
+		spell.spellPktBods[i] = self->spellPacketBodies[i];
 	}
-	return 0;
-}
+	
+	spell.baseCasterLevel = self->casterLevel;
+	spell.targetListNumItems = self->targetCount;
+	spell.spellDuration = self->duration;
+	if (spell.field_ACC <= 0)
+		spell.field_ACC = self->duration;
+	spell.spellRange = self->rangeExact;
 
-PyObject* PythonSpellSystem::PySpellFromSpellId(uint32_t spellId)
-{
-	return addresses.PySpellFromSpellId(spellId);
-}
-
-void PythonSpellSystem::PySpellLocSet(LocFull* locFull)
-{
-	*addresses.pySpellLoc = *locFull;
-}
-
-void PythonSpellSystem::PySpellLoc2Set(LocFull* locFull)
-{
-	*addresses.pySpellLoc2 = *locFull;
-}
-
-void PythonSpellSystem::SpellPacketUpdateFromPySpell(PySpell* pySpell)
-{
-	macAsmProl
-	__asm{
-		mov ecx, this;
-		mov esi, addresses.SpellPacketUpdateFromPySpell;
-		mov eax, pySpell;
-		call esi;
+	for (int i = 0; i < self->targetCount; ++i) {
+		spell.targetListHandles[i] = self->targets[i].obj;
+		spell.targetListPartsysIds[i] = self->targets[i].partSysId;
 	}
-	macAsmEpil
-}
 
-uint32_t PythonSpellSystem::SpellSoundPlay(SpellPacketBody* spellPktBody, PySpellEventCode pySpellEvent)
-{
-	return addresses.SpellSoundPlay(spellPktBody, pySpellEvent);
-}
-
-uint32_t _SpellTrigger(uint32_t spellId, PySpellEventCode spellEventCode)
-{
-	return pySpellSystem.SpellTrigger(spellId, spellEventCode);
+	spellSys.UpdateSpellPacket(spell);
 }

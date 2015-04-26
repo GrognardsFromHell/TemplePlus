@@ -24,7 +24,9 @@
 #include "python_dice.h"
 #include "python_objectscripts.h"
 #include <objlist.h>
-#include "python_integration.h"
+#include "python_integration_obj.h"
+#include <action_sequence.h>
+#include <ui/ui_picker.h>
 
 static struct PyObjHandleAddresses : AddressTable {
 	PyObjHandleAddresses() {
@@ -320,15 +322,93 @@ static PyObject* PyObjHandle_MoneyAdj(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 
-	objHndl target = 0;
-	int spellId;
-	if (!PyArg_ParseTuple(args, "i|O&:objhndl.cast_spell", &spellId, &ConvertObjHndl, &target)) {
+	objHndl targetObj = 0;
+	uint32_t spellEnum;
+	if (!PyArg_ParseTuple(args, "i|O&:objhndl.cast_spell", &spellEnum, &ConvertObjHndl, &targetObj)) {
 		return 0;
 	}
 
-	// TODO: STUBBED OUT FOR SHAI
+	PickerArgs pickArgs;
+	SpellPacketBody spellPktBody;
+	SpellEntry spellEntry;
+	objHndl caster = self->handle;
+	LocAndOffsets loc;
+	D20SpellData d20SpellData;
 
-	return 0;
+	// get spell known data
+	// I've set up a really large buffer just in case, 
+	// because in theory a player might have permutations 
+	// of spells due to metamagic, different casting classes etc.
+	uint32_t classCodes[10000] = { 0, };
+	uint32_t spellLevels[10000] = { 0, };
+	uint32_t numSpells = 0;
+	if (!spellSys.spellKnownQueryGetData(caster, spellEnum, classCodes, spellLevels, &numSpells)) {
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+	if (numSpells <= 0) {
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+	spellSys.spellPacketBodyReset(&spellPktBody);
+	for (uint32_t i = 0; i < numSpells; i++)
+	{
+		if (!spellSys.spellCanCast(caster, spellEnum, classCodes[i], spellLevels[i])) continue;
+		spellSys.spellPacketSetCasterLevel(&spellPktBody);
+		if (!spellSys.spellRegistryCopy(spellEnum, &spellEntry)) continue;
+		if (!spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, caster, spellPktBody.baseCasterLevel)) continue;
+		pickArgs.result = { 0, };
+		pickArgs.flagsTarget = (UiPickerFlagsTarget)(
+			(uint64_t)pickArgs.flagsTarget | (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::Unknown100h
+			- (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::Range
+			);
+
+		if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Single))
+		{
+			objects.loc->getLocAndOff(targetObj, &loc);
+			uiPicker.sub_100BA480(targetObj, &pickArgs);
+		}
+		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Multi))
+		{
+			objects.loc->getLocAndOff(targetObj, &loc);
+			uiPicker.sub_100BA480(targetObj, &pickArgs);
+		}
+		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Cone))
+		{
+			objects.loc->getLocAndOff(targetObj, &loc);
+			uiPicker.sub_100BA6A0(&loc, &pickArgs);
+
+		}
+		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Area))
+		{
+			if (spellEntry.spellRangeType == SRT_Personal)
+				objects.loc->getLocAndOff(caster, &loc);
+			else objects.loc->getLocAndOff(targetObj, &loc);
+			uiPicker.sub_100BA540(&loc, &pickArgs);
+		}
+		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Personal))
+		{
+			objects.loc->getLocAndOff(caster, &loc);
+			uiPicker.sub_100BA480(caster, &pickArgs);
+		}
+
+		spellSys.ConfigSpellTargetting(&pickArgs, &spellPktBody);
+		if (spellPktBody.targetListNumItems <= 0) continue;
+		if (!actSeqSys.TurnBasedStatusInit(caster)) continue;
+		d20Sys.GlobD20ActnInit();
+		d20Sys.GlobD20ActnSetTypeAndData1(D20A_CAST_SPELL, 0);
+		actSeqSys.ActSeqCurSetSpellPacket(&spellPktBody, 1);
+		d20Sys.D20ActnSetSpellData(&d20SpellData, spellEnum, classCodes[i], spellLevels[i], 0xFF, 0);
+		d20Sys.GlobD20ActnSetSpellData(&d20SpellData);
+		d20Sys.GlobD20ActnSetTarget(targetObj, &loc);
+		actSeqSys.ActionAddToSeq();
+		actSeqSys.sequencePerform();
+
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
 static PyObject* PyObjHandle_SkillLevelGet(PyObject* obj, PyObject* args) {
@@ -579,7 +659,7 @@ static PyObject* PyObjHandle_FloatLine(PyObject* obj, PyObject* args) {
 	}
 
 	// Try to load the dialog file attached to this object.
-	auto dlgScriptId = objects.GetScript(self->handle, (int)ScriptEvent::Dialog);
+	auto dlgScriptId = objects.GetScript(self->handle, (int)ObjScriptEvent::Dialog);
 	auto dlgFile = dialogScripts.GetFilename(dlgScriptId);
 	if (dlgFile.empty()) {
 		PyErr_SetString(PyExc_AttributeError, "No dialog script attached to this object.");
@@ -1221,11 +1301,11 @@ static PyObject* PyObjHandle_AnimCallback(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_ObjectScriptExecute(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	objHndl triggerer;
-	ScriptEvent scriptEvent;
+	ObjScriptEvent scriptEvent;
 	if (!PyArg_ParseTuple(args, "O&i:objhndl.object_script_execute", &triggerer, &scriptEvent)) {
 		return 0;
 	}
-	auto result = pythonIntegration.ExecuteObjectScript(triggerer, self->handle, scriptEvent);
+	auto result = pythonObjIntegration.ExecuteObjectScript(triggerer, self->handle, scriptEvent);
 	return PyInt_FromLong(result);
 }
 

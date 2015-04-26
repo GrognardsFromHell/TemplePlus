@@ -269,6 +269,8 @@
     <ClCompile Include="python\python_spell.cpp">
       <Filter>python</Filter>
     </ClCompile>
+    <ClCompile Include="python\python_integration_spells.cpp" />
+    <ClCompile Include="python\python_integration_obj.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -557,6 +559,8 @@
     <ClInclude Include="python\python_areas.h" />
     <ClInclude Include="python\python_counters.h" />
     <ClInclude Include="python\python_spell.h" />
+    <ClInclude Include="python\python_integration_spells.h" />
+    <ClInclude Include="python\python_integration_obj.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

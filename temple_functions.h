@@ -26,7 +26,6 @@ struct TempleFuncs : AddressTable {
 
 
 	void(*ProcessSystemEvents)();
-	PyObject* (__cdecl *PyScript_Execute)(char *pPyFileName, char *pPyFuncName, PyObject *pPyArgTuple);
 	uint32_t(__cdecl *StringHash)(const char * pString);
 
 

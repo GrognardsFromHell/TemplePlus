@@ -8,7 +8,8 @@
 #include "python_game.h"
 #include "python_time.h"
 #include "python_consoleout.h"
-#include "python_integration.h"
+#include "python_integration_obj.h"
+#include "python_integration_spells.h"
 #include "python_console.h"
 #include "tio/tio.h"
 #include <set>
@@ -80,7 +81,8 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 	console = new PyConsole;
 	pythonInitInternal.TigConsoleSetCommandInterpreter(PyConsole_Exec);
 
-	pythonIntegration.LoadScripts();
+	pythonObjIntegration.LoadScripts();
+	pythonSpellIntegration.LoadScripts();
 
 	return true;
 }

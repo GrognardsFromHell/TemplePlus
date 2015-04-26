@@ -27,7 +27,7 @@
 #include "particles.h"
 #include "gamesystems.h"
 #include "python_support.h"
-#include "python_integration.h"
+#include "python_integration_obj.h"
 #include <timeevents.h>
 #include "util/mathutil.h"
 #include "temple_functions.h"
@@ -197,7 +197,7 @@ static PyGetSetDef PyGameGettersSetters[] = {
 	PY_INT_PROP_RO("party_alignment", pyGameAddresses.GetPartyAlignment, NULL),
 	PY_INT_PROP("story_state", pyGameAddresses.GetStoryState, pyGameAddresses.SetStoryState, NULL),
 	PY_INT_PROP_PTR_RO("sid", pyGameAddresses.sid, NULL),
-	PY_INT_PROP("new_sid", pythonIntegration.GetNewSid, pythonIntegration.SetNewSid, NULL),
+	PY_INT_PROP("new_sid", pythonObjIntegration.GetNewSid, pythonObjIntegration.SetNewSid, NULL),
 	{"selected", PyGame_GetPartySelected, NULL, NULL},
 	{"party", PyGame_GetParty, NULL, NULL},
 	{"hovered", PyGame_GetHovered, NULL, NULL},

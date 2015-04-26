@@ -19,9 +19,12 @@ struct SpellCondListEntry {
 static struct SpellAddresses : AddressTable {
 	SpellCondListEntry *spellConds;
 
+	void (__cdecl *UpdateSpellPacket)(const SpellPacketBody &spellPktBody);
+
 	uint32_t(__cdecl * ConfigSpellTargetting)(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
 
 	SpellAddresses() {
+		rebase(UpdateSpellPacket, 0x10075730);
 		rebase(spellConds, 0x102E2600);
 		macRebase(ConfigSpellTargetting, 100B9690)
 	}
@@ -210,6 +213,10 @@ uint32_t SpellSystem::GetSpellPacketBody(uint32_t spellId, SpellPacketBody* spel
 		return 1;
 	}
 	return 0;
+}
+
+void SpellSystem::UpdateSpellPacket(const SpellPacketBody& spellPktBody) {
+	addresses.UpdateSpellPacket(spellPktBody);
 }
 
 uint32_t SpellSystem::spellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count)

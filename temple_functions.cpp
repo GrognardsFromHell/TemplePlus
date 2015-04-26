@@ -24,8 +24,7 @@ class TempleFuncReplacements : public TempleFix
 void init_functions()
 {
 	templeImageBase = static_cast<void*>(GetModuleHandleA("temple.dll"));
-	if (!templeImageBase)
-	{
+	if (!templeImageBase) {
 		logger->error("temple.dll not found in memory space");
 	}
 
@@ -97,7 +96,6 @@ int32_t TempleFuncs::diceRoll(uint32_t dieNum, uint32_t dieType, int32_t dieBonu
 TempleFuncs::TempleFuncs()
 {
 	rebase(ProcessSystemEvents, 0x101DF440);
-	rebase(PyScript_Execute, 0x100ADE40);
 	rebase(StringHash, 0x101EBB00);
 	macRebase(RNG, 10038DF5)
 	macRebase(encodeTriplet, 10038C50)

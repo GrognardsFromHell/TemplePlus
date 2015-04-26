@@ -203,8 +203,6 @@ struct Objects : AddressTable {
 		_Destroy(obj);
 	}
 
-	uint32_t ScriptExecute(objHndl attachee, objHndl triggerer, uint32_t spellId, uint32_t trapIdMaybe, uint32_t san, uint32_t a6);
-
 #pragma region Common
 	ObjectId GetId(objHndl handle);
 	objHndl GetHandle(const ObjectId &id);
