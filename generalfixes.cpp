@@ -113,7 +113,8 @@ public:
 static uint32_t (__cdecl *OrgFragarachAnswering)(DispatcherCallbackArgs);
 
 uint32_t __cdecl HookedFragarachAnswering(DispatcherCallbackArgs args) {
-	// adds an "IsCritter" check
+	// checks if the current TB actor is the same as the "attachee" (critter taking damage)
+	// if so, aborts the answering (you can have an AoO on your turn!)
 	auto dispIO = args.dispIO;
 	auto curActor = tbSys.turnBasedGetCurrentActor();
 	auto attachee = args.objHndCaller;

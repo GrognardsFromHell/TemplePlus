@@ -11,7 +11,7 @@ class PathfindingReplacements : TempleFix
 {
 	macTempleFix(Bathfinding Functions)
 	{
-		macReplaceFun(10040520, _ShouldUsePathnodesUsercallWrapper)
+		 macReplaceFun(10040520, _ShouldUsePathnodesUsercallWrapper)
 	}
 } pathFindingReplacements;
 
@@ -56,13 +56,13 @@ uint32_t Pathfinding::ShouldUsePathnodes(PathQueryResult* pathQueryResult, PathQ
 	{
 		if (combatSys.isCombatActive())
 		{
-			if (locSys.distBtwnLocAndOffs(pathQuery->from, pathQuery->to) > (float)1200.0 )
+			if (locSys.distBtwnLocAndOffs(pathQueryResult->from, pathQueryResult->to) > (float)1200.0)
 			{
 				return true;
 			}
 			
 		}
-		else if (locSys.distBtwnLocAndOffs(pathQuery->from, pathQuery->to) > (float)800.0)
+		else if (locSys.distBtwnLocAndOffs(pathQueryResult->from, pathQueryResult->to) > (float)800.0)
 		{
 			return true;
 		}

@@ -18,17 +18,8 @@ struct SpellEntryLevelSpec
 	uint32_t slotLevel;
 };
 
-enum SpellRangeType : uint32_t
-{
-	SRT_Specified = 0,
-	SRT_Personal=  1,
-	SRT_Touch , 
-	SRT_Close, 
-	SRT_Medium,
-	SRT_Long,
-	SRT_Unlimited,
-	SRT_Special_Inivibility_Purge
-};
+enum SpellRangeType : uint32_t;
+enum Domain;
 
 struct SpellEntry
 {
@@ -215,3 +206,51 @@ uint32_t _spellCanCast(objHndl objHnd, uint32_t spellEnum, uint32_t spellClassCo
 uint32_t __cdecl _spellRegistryCopy(uint32_t spellEnum, SpellEntry * spellEntry);
 uint32_t _GetSpellEnumFromSpellId(uint32_t spellId);
 uint32_t _GetSpellPacketBody(uint32_t spellId, SpellPacketBody * spellPktBodyOut);
+
+
+
+
+
+
+enum SpellRangeType : uint32_t
+{
+	SRT_Specified = 0,
+		SRT_Personal = 1,
+		SRT_Touch,
+		SRT_Close,
+		SRT_Medium,
+		SRT_Long,
+		SRT_Unlimited,
+		SRT_Special_Inivibility_Purge
+};
+
+
+
+
+enum Domain
+{
+	Domain_None = 0,
+		Domain_Air = 1,
+		Domain_Animal = 2,
+		Domain_Chaos = 3,
+		Domain_Death = 4,
+		Domain_Destruction = 5,
+		Domain_Earth = 6,
+		Domain_Evil = 7,
+		Domain_Fire = 8,
+		Domain_Good = 9,
+		Domain_Healing = 10,
+		Domain_Knowledge = 11,
+		Domain_Law = 12,
+		Domain_Luck = 13,
+		Domain_Magic = 14,
+		Domain_Plant = 15,
+		Domain_Protection = 16,
+		Domain_Strength = 17,
+		Domain_Sun = 18,
+		Domain_Travel = 19,
+		Domain_Trickery = 20,
+		Domain_War = 21,
+		Domain_Water = 22,
+		Domain_Special = 23
+};
