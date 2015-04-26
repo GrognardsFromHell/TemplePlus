@@ -56,6 +56,10 @@ struct locXY {
 		return *(locXY*)&location;
 	}
 
+	uint64_t ToField() {
+		return *((uint64_t*)this);
+	}
+
 	operator uint64_t() const {
 		return *(uint64_t*)this;
 	}
