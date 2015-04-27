@@ -5,6 +5,14 @@
 #include "../common.h"
 #include "../spell.h"
 #include "../radialmenu.h"
+#include "../location.h"
+#include <ai.h>
+#include <party.h>
+#include <critter.h>
+#include <combat.h>
+#include <ui/ui.h>
+#include <condition.h>
+#include <anim.h>
 
 struct PySpell;
 static PyObject *PySpellTargets_Create(PySpell *spell);
@@ -83,13 +91,101 @@ static PyObject *PySpell_SpellRemove(PyObject *obj, PyObject *args) {
 	Py_RETURN_NONE;
 }
 
+enum TargetSortCriteria {
+	OBJ_HANDLE = 0,
+	HIT_DICE = 1,
+	HIT_DICE_THEN_DIST = 2,
+	DIST = 3,
+	DIST_FROM_CASTER = 4
+};
+
 static PyObject *PySpell_SpellTargetListSort(PyObject *obj, PyObject *args) {
 	auto self = (PySpell*)obj;
-	int unk1, unk2;
-	if (!PyArg_ParseTuple(args, "ii:pyspell.spell_target_list_sort", &unk1, &unk2)) {
+	TargetSortCriteria criteria;
+	bool descending;
+	if (!PyArg_ParseTuple(args, "ii:pyspell.spell_target_list_sort", &criteria, &descending)) {
 		return 0;
 	}
-	// TODO: Implement this
+	
+	// Copy them over for much easier sorting using STL
+	vector<PySpellTarget> targets(self->targetCount);
+	for (int i = 0; i < self->targetCount; ++i) {
+		targets[i] = self->targets[i];
+	}
+
+	switch (criteria) {
+		// This seems pretty useless
+	case OBJ_HANDLE:
+		sort(targets.begin(), targets.end(), [=] (const PySpellTarget &a, const PySpellTarget &b) {
+			if (!descending) {
+				return a.obj < b.obj;
+			} else {
+				return a.obj >= b.obj;
+			}
+		});
+		break;
+	case HIT_DICE: 
+		sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
+			auto diceA = objects.GetHitDiceNum(a.obj);
+			auto diceB = objects.GetHitDiceNum(b.obj);
+			if (!descending) {
+				return diceA < diceB;
+			} else {
+				return diceA >= diceB;
+			}
+		});
+		break;
+	case HIT_DICE_THEN_DIST: 
+		sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
+			auto diceA = objects.GetHitDiceNum(a.obj);
+			auto diceB = objects.GetHitDiceNum(b.obj);
+			if (diceA != diceB) {
+				if (!descending) {
+					return diceA < diceB;
+				} else {
+					return diceA >= diceB;
+				}
+			}
+
+			auto distA = locSys.DistanceToLoc(a.obj, self->targetLocation.location);
+			auto distB = locSys.DistanceToLoc(b.obj, self->targetLocation.location);
+			if (!descending) {
+				return distA < distB;
+			} else {
+				return distA >= distB;
+			}
+		});
+		break;
+	case DIST: 
+		sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
+			auto distA = locSys.DistanceToLoc(a.obj, self->targetLocation.location);
+			auto distB = locSys.DistanceToLoc(b.obj, self->targetLocation.location);
+			if (!descending) {
+				return distA < distB;
+			} else {
+				return distA >= distB;
+			}
+		});
+		break;
+	case DIST_FROM_CASTER:
+		sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
+			// In vanilla, this still just sorts between the target loc and obj. It's fixed here
+			auto distA = locSys.DistanceToObj(a.obj, self->caster);
+			auto distB = locSys.DistanceToObj(b.obj, self->caster);
+			if (!descending) {
+				return distA < distB;
+			}
+			else {
+				return distA >= distB;
+			}
+		});
+		break;
+	default:
+		logger->warn("Unknown sorting used for sorting the target list.");
+		break;
+	}
+
+	PySpell_UpdatePacket(obj);
 	Py_RETURN_NONE;
 }
 
@@ -101,7 +197,7 @@ enum class RadialMenuSetting : int {
 	Actual = 3
 };
 
-static PyObject *PySpell_SpellGetMenuArg(PyObject *obj, PyObject *args) {
+static PyObject *PySpell_SpellGetMenuArg(PyObject*, PyObject *args) {
 	RadialMenuSetting setting;
 	if (!PyArg_ParseTuple(args, "i:pyspell.spell_get_menu_arg", &setting)) {
 		return 0;
@@ -125,7 +221,7 @@ static PyObject *PySpell_SpellGetMenuArg(PyObject *obj, PyObject *args) {
 
 	return PyInt_FromLong(result);
 }
-static PyObject *PySpell_IsObjectSelected(PyObject *obj, PyObject *args) {
+static PyObject *PySpell_IsObjectSelected(PyObject *obj, PyObject *) {
 	auto self = (PySpell*)obj;
 	SpellPacketBody body;
 	spellSys.GetSpellPacketBody(self->spellId, &body);
@@ -135,8 +231,65 @@ static PyObject *PySpell_IsObjectSelected(PyObject *obj, PyObject *args) {
 
 static PyObject *PySpell_SummonMonsters(PyObject *obj, PyObject *args) {
 	auto self = (PySpell*)obj;
-	// TODO: implement
-	return 0;
+
+	int isAiFollower;
+	int protoId = 17000;
+	if (!PyArg_ParseTuple(args, "i|i:pyspell.summon_monsters", &isAiFollower, &protoId)) {
+		return 0;
+	}
+
+	if (self->targetCount >= 32) {
+		PyErr_SetString(PyExc_RuntimeError, "Cannot add to the target list since there are already 32 targets.");
+		return 0;
+	}
+
+	auto protoHandle = objects.GetProtoHandle(protoId);
+
+	auto loc = self->targetLocation.location.location;
+	auto newHandle = objects.Create(protoHandle, loc);
+
+	if (!newHandle) {
+		logger->error("Unable to create object with proto id {}", protoId);
+		Py_RETURN_NONE;
+	}
+
+	objects.AiForceSpreadOut(newHandle);
+
+	if (!critterSys.AddFollower(newHandle, self->caster, 1, isAiFollower != 0)) {
+		logger->error("Unable to add new critter as a follower");
+		objects.Destroy(newHandle);
+		Py_RETURN_NONE;
+	}
+	
+	combatSys.AddToInitiative(newHandle);
+	auto casterIni = combatSys.GetInitiative(self->caster);
+	combatSys.SetInitiative(newHandle, casterIni);
+
+	ui.UpdateCombatUi();
+	ui.UpdatePartyUi();
+
+	conds.AddTo(newHandle, "sp-Summoned", { (int)self->spellId, (int) self->duration });
+	conds.AddTo(newHandle, "Timed-Disappear", { (int) self->spellId, (int)self->duration });
+	
+	// Add to the target list
+	self->targets[self->targetCount].obj = newHandle;
+	self->targets[self->targetCount].partSysId = 0;
+	self->targetCount++;
+
+	// Make NPC summoned monsters attack the party
+	if (objects.IsNPC(self->caster) && !party.IsInParty(self->caster)) {
+
+		for (size_t i = 0; i < party.GroupListGetLen(); ++i) {
+			auto partyMember = party.GroupListGetMemberN(i);
+			critterSys.Attack(partyMember, newHandle, 1, 2);
+		}
+
+	}
+
+	animationGoals.Interrupt(newHandle, AGP_HIGHEST);	
+	
+	PySpell_UpdatePacket((PyObject*) self);
+	return PyInt_FromLong(1);
 }
 
 static PyMethodDef PySpellMethods[] = {
@@ -415,18 +568,6 @@ static void PySpell_UpdateFromPacket(PySpell* self, const SpellPacketBody& spell
 	} else {
 		self->casterClassAlt = spell.casterClassCode & 0x7F;
 	}
-
-	// I think we can replace this with something better
-	/*pyspell_targetloc2.LocAndOff_XY.locx = spell.locFull.location.location.locx;
-	pyspell_targetloc1.LocAndOff_XY.locx = spell.locFull.LocAndOff_XY.locx;
-	pyspell_targetloc2.LocAndOff_XY.off_x = spell.locFull.LocAndOff_XY.off_x;
-	pyspell_targetloc2.LocAndOff_XY.locy = spell.locFull.LocAndOff_XY.locy;
-	pyspell_targetloc1.LocAndOff_XY.locy = spell.locFull.LocAndOff_XY.locy;
-	pyspell_targetloc1.LocAndOff_XY.off_x = spell.locFull.LocAndOff_XY.off_x;
-	pyspell_targetloc2.LocAndOff_XY.off_y = spell.locFull.LocAndOff_XY.off_y;
-	pyspell_targetloc1.LocAndOff_XY.off_y = spell.locFull.LocAndOff_XY.off_y;
-	pyspell_targetloc2.off_z = spell.locFull.off_z;
-	pyspell_targetloc1.off_z = spell.locFull.off_z;*/
 
 	self->spellLevel = spell.spellKnownSlotLevel;
 	self->casterLevel = spell.baseCasterLevel;

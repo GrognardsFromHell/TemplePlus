@@ -212,6 +212,7 @@ struct Objects : AddressTable {
 	int32_t GetHPCur(objHndl obj);
 	uint32_t GetRace(objHndl obj);
 	bool IsCritter(objHndl obj);
+	bool IsNPC(objHndl obj);
 	bool IsPlayerControlled(objHndl obj);
 	uint32_t ObjGetProtoNum(objHndl obj);
 	string GetDisplayName(objHndl obj, objHndl observer);

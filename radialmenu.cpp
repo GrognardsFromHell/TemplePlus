@@ -13,10 +13,11 @@ static struct RadialMenuAddresses : AddressTable {
 	int *radialMenuCount;
 	RadialMenu *radialMenus; // 10 consecutive
 	RadialMenuEntry *selectedEntry; // Last selected radial entry
+	int *standardNodeIndices; // Array of indices for standard radial menu nodes
 
 	RadialMenu* (__cdecl *GetRadialMenu)(objHndl handle);
 	void (__cdecl *SetDefaults)(RadialMenuEntry *entry);
-
+	
 	// The difference of the secondary add functions is not quite clear yet.
 	// Returns the index of the new node
 	int (__cdecl *AddRootNode)(objHndl handle, const RadialMenuEntry &entry);
@@ -37,23 +38,30 @@ static struct RadialMenuAddresses : AddressTable {
 		rebase(radialMenuCount, 0x10BD0230);
 		rebase(radialMenus, 0x115B2060);
 		rebase(selectedEntry, 0x10BD01E0);
+		rebase(standardNodeIndices, 0x11E76CE4);
 	}
 } addresses;
 
-const RadialMenu* RadialMenus::GetRadialMenu(objHndl handle) {
+const RadialMenu* RadialMenus::GetForObj(objHndl handle) {
 	return addresses.GetRadialMenu(handle);
 }
 
-vector<const RadialMenu*> RadialMenus::GetRadialMenus() {
+vector<const RadialMenu*> RadialMenus::GetAll() {
 	vector<const RadialMenu*> result;
 
-
+	for (int i = 0; i < *addresses.radialMenuCount; ++i) {
+		result.push_back(addresses.radialMenus + i);
+	}
 
 	return result;
 }
 
 const RadialMenuEntry& RadialMenus::GetLastSelected() {
 	return *addresses.selectedEntry;
+}
+
+int RadialMenus::GetStandardNode(RadialMenuStandardNode node) {
+	return addresses.standardNodeIndices[(int)node];
 }
 
 void RadialMenuEntry::SetDefaults() {

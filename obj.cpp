@@ -523,6 +523,12 @@ bool Objects::IsCritter(objHndl obj)
 	return type == obj_t_npc || type == obj_t_pc;
 }
 
+bool Objects::IsNPC(objHndl obj)
+{
+	auto type = GetType(obj);
+	return type == obj_t_npc;
+}
+
 bool Objects::IsPlayerControlled(objHndl obj)
 {
 	return _IsPlayerControlled(obj);

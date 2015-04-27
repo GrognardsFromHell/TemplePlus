@@ -260,3 +260,13 @@ bool ConditionSystem::AddTo(objHndl handle, const CondStruct* cond, const vector
 
 	return _ConditionAddDispatchArgs(dispatcher, &dispatcher->otherConds, const_cast<CondStruct*>(cond), args) != 0;
 }
+
+bool ConditionSystem::AddTo(objHndl handle, const string& name, const vector<int>& args) {
+	auto cond = GetByName(name);
+	if (!cond) {
+		logger->warn("Unable to find condition {}", name);
+		return false;
+	}
+
+	return AddTo(handle, cond, args);
+}

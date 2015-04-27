@@ -103,6 +103,12 @@ public:
 	*/
 	bool AddTo(objHndl handle, const CondStruct* cond, const vector<int> &args);
 
+	/*
+		Adds a condition to an object by name. There is no type restriction for the target
+		object, but usually it should be a critter.
+	*/
+	bool AddTo(objHndl handle, const string &name, const vector<int> &args);
+
 #pragma endregion
 
 	ConditionSystem()
