@@ -852,6 +852,9 @@ static bool ParseCondNameAndArgs(PyObject* args, CondStruct*& condStructOut, vec
 		}
 	}
 
+	condStructOut = cond;
+	argsOut = condArgs;
+
 	return true;
 }
 

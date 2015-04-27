@@ -4,6 +4,7 @@
 #include "python_object.h"
 #include "../common.h"
 #include "../spell.h"
+#include "../radialmenu.h"
 
 struct PySpell;
 static PyObject *PySpellTargets_Create(PySpell *spell);
@@ -63,7 +64,88 @@ static void PySpell_Del(PyObject* obj) {
 	PyObject_Del(obj);
 }
 
+// This is effectively a static method...
+static PyObject *PySpell_SpellEnd(PyObject*, PyObject *args) {
+	int unk1, unk2 = 0;
+	if (!PyArg_ParseTuple(args, "i|i:pyspell.spell_end", &unk1, &unk2)) {
+		return 0;
+	}
+	spellSys.SpellEnd(unk1, unk2);
+	Py_RETURN_NONE;
+}
+
+static PyObject *PySpell_SpellRemove(PyObject *obj, PyObject *args) {
+	int unk1;
+	if (!PyArg_ParseTuple(args, "i:pyspell.spell_remove", &unk1)) {
+		return 0;
+	}
+	spellSys.SpellRemove(unk1);
+	Py_RETURN_NONE;
+}
+
+static PyObject *PySpell_SpellTargetListSort(PyObject *obj, PyObject *args) {
+	auto self = (PySpell*)obj;
+	int unk1, unk2;
+	if (!PyArg_ParseTuple(args, "ii:pyspell.spell_target_list_sort", &unk1, &unk2)) {
+		return 0;
+	}
+	// TODO: Implement this
+	Py_RETURN_NONE;
+}
+
+// This is just used to communicate with the python script, 
+// no internal meaning other than that
+enum class RadialMenuSetting : int {
+	Min = 1,
+	Max = 2,
+	Actual = 3
+};
+
+static PyObject *PySpell_SpellGetMenuArg(PyObject *obj, PyObject *args) {
+	RadialMenuSetting setting;
+	if (!PyArg_ParseTuple(args, "i:pyspell.spell_get_menu_arg", &setting)) {
+		return 0;
+	}
+	
+	int result;
+	auto &lastSelected = radialMenus.GetLastSelected();
+	switch (setting) {
+	case RadialMenuSetting::Min:
+		result = lastSelected.minArg;
+		break;
+	case RadialMenuSetting::Max: 
+		result = lastSelected.maxArg;
+		break;
+	case RadialMenuSetting::Actual: 
+		result = lastSelected.actualArg;
+		break;
+	default:
+		Py_RETURN_NONE;
+	}
+
+	return PyInt_FromLong(result);
+}
+static PyObject *PySpell_IsObjectSelected(PyObject *obj, PyObject *args) {
+	auto self = (PySpell*)obj;
+	SpellPacketBody body;
+	spellSys.GetSpellPacketBody(self->spellId, &body);
+	auto result = (body.spellEntry.spellEnum & 0x20) == 0x20;
+	return PyInt_FromLong(result);
+}
+
+static PyObject *PySpell_SummonMonsters(PyObject *obj, PyObject *args) {
+	auto self = (PySpell*)obj;
+	// TODO: implement
+	return 0;
+}
+
 static PyMethodDef PySpellMethods[] = {
+	{ "spell_end", PySpell_SpellEnd, METH_VARARGS, NULL },
+	{ "spell_remove", PySpell_SpellRemove, METH_VARARGS, NULL },
+	{ "spell_target_list_sort", PySpell_SpellTargetListSort, METH_VARARGS, NULL },
+	{ "spell_get_menu_arg", PySpell_SpellGetMenuArg, METH_VARARGS, NULL },
+	{ "is_object_selected", PySpell_IsObjectSelected, METH_VARARGS, NULL },
+	{ "summon_monsters", PySpell_SummonMonsters, METH_VARARGS, NULL },
 	{NULL, NULL, NULL, NULL}
 };
 

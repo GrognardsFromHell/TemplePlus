@@ -271,6 +271,7 @@
     </ClCompile>
     <ClCompile Include="python\python_integration_spells.cpp" />
     <ClCompile Include="python\python_integration_obj.cpp" />
+    <ClCompile Include="radialmenu.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -561,6 +562,7 @@
     <ClInclude Include="python\python_spell.h" />
     <ClInclude Include="python\python_integration_spells.h" />
     <ClInclude Include="python\python_integration_obj.h" />
+    <ClInclude Include="radialmenu.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

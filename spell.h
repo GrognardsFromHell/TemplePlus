@@ -136,6 +136,8 @@ struct SpellSystem : AddressTable
 	bool isDomainSpell(uint32_t spellClassCode);
 	uint32_t pickerArgsFromSpellEntry(SpellEntry * spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLevel);
 
+	void (__cdecl *SpellEnd)(int, int);
+	void (__cdecl *SpellRemove)(int);
 
 	CondStruct *GetCondFromSpellIdx(int id);
 	uint32_t(__cdecl * spellRemoveFromStorage)(objHndl objHnd, obj_f fieldIdx, SpellStoreData * spellData, int unknown);
@@ -148,6 +150,8 @@ struct SpellSystem : AddressTable
 		rebase(spellCastIdxTable, 0x10AAF218);
 		macRebase(spellEnumMesHandle, 10AAF210)
 
+		rebase(SpellEnd, 0x10079980);
+		rebase(SpellRemove, 0x10079A20);
 		rebase(_getSpellCountByClassLvl, 0x100F4D10);
 		rebase(_getStatModBonusSpellCount, 0x100F4C30);
 		rebase(spellRemoveFromStorage, 0x100758A0);
