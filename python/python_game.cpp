@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "python_game.h"
 #include <util/addresses.h>
+#include <tio/tio.h>
 #include "obj.h"
 #include "python_object.h"
 #include "python_globalvars.h"
@@ -11,6 +12,7 @@
 #include "python_areas.h"
 #include "tig/tig_mouse.h"
 #include "maps.h"
+#include "../gamesystems.h"
 #include "fade.h"
 #include "combat.h"
 #include "objlist.h"
@@ -30,9 +32,7 @@
 #include "python_integration_obj.h"
 #include <timeevents.h>
 #include "util/mathutil.h"
-#include "temple_functions.h"
 
-// TODO: This has to be reset on PyGame_Reset
 static PyObject *encounterQueue = nullptr;
 
 struct PyGameObject {
@@ -189,7 +189,9 @@ static PyObject* PyGame_GetCounters(PyObject *obj, void*) {
 static PyObject* PyGame_GetEncounterQueue(PyObject *obj, void*) {
 	if (!encounterQueue) {
 		encounterQueue = PyList_New(0);
+		Py_INCREF(encounterQueue); // store an additional ref to it in the global
 	}
+	Py_INCREF(encounterQueue);
 	return encounterQueue;
 }
 
@@ -998,4 +1000,44 @@ PyObject* PyGame_Create() {
 	result->quests = PyQuests_Create();
 	result->areas = PyAreas_Create();
 	return (PyObject*) result;
+}
+
+void PyGame_Exit() {
+	Py_XDECREF(encounterQueue);
+	encounterQueue = nullptr;
+	Py_XDECREF(dialogPickerArgs.isValidTarget);
+	dialogPickerArgs.isValidTarget = nullptr;
+}
+
+void PyGame_Reset() {
+	PyGame_Exit();
+}
+
+bool PyGame_Save(TioFile* file) {
+	return true;
+}
+
+bool PyGame_Load(GameSystemSaveFile *saveFile) {
+	Py_XDECREF(encounterQueue);
+	encounterQueue = nullptr;
+
+	int count;
+	if (tio_fread(&count, 4, 1, saveFile->file) != 1) {
+		logger->error("Unable to read encounter queue size from savegame.");
+		return false;
+	}
+
+	encounterQueue = PyList_New(count);
+	for (int i = 0; i < count; ++i) {
+		int encounterId;
+		if (tio_fread(&encounterId, 4, 1, saveFile->file) != 1) {
+			logger->error("Unable to read encounter id from savegame.");
+			Py_DECREF(encounterQueue);
+			encounterQueue = nullptr;
+			return false;
+		}
+		PyList_SET_ITEM(encounterQueue, i, PyInt_FromLong(encounterId));
+	}
+
+	return true;
 }

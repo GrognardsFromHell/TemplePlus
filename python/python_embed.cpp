@@ -93,20 +93,27 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 }
 
 static bool __cdecl PythonSaveGame(TioFile *file) {
-	// TODO
-	return true;
+	return PyGame_Save(file);
 }
-static bool __cdecl PythonLoadGame(TioFile *file) {
-	// TODO
-	return true;
+
+static bool __cdecl PythonLoadGame(GameSystemSaveFile *file) {
+	return PyGame_Load(file);
 }
 
 static void __cdecl PythonReset() {
-	// TODO
+	PyGame_Reset();
 }
 
 static void __cdecl PythonExit() {
-	// TODO
+	pythonObjIntegration.UnloadScripts();
+	pythonSpellIntegration.UnloadScripts();
+
+	Py_XDECREF(MainModuleDict);
+	Py_XDECREF(MainModule);
+
+	PyGame_Exit();
+
+	Py_Finalize();
 }
 
 static void breakIt() {

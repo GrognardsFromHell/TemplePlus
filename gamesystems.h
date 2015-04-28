@@ -80,18 +80,4 @@ struct GameSystemFuncs : AddressTable {
 
 extern GameSystemFuncs gameSystemFuncs;
 
-// Register hooks for game system events
-class GameSystemHooks {
-public:
-	static void AddInitHook(std::function<void(const GameSystemConf*)> callback, bool before = false);
-	static void AddResetHook(std::function<void()> callback, bool before = false);
-	static void AddModuleLoadHook(std::function<void()> callback, bool before = false);
-	static void AddModuleUnloadHook(std::function<void()> callback, bool before = false);
-	static void AddExitHook(std::function<void()> callback, bool before = false);
-	static void AddAdvanceTimeHook(std::function<void(uint32_t)> callback, bool before = false);
-	static void AddSaveHook(std::function<void(TioFile)> callback, bool before = false);
-	static void AddLoadHook(std::function<void(GameSystemSaveFile*)> callback, bool before = false);
-	static void AddResizeBuffersHook(std::function<void(RebuildBufferInfo*)> callback, bool before = false);
-};
-
 void GameSystemsRender();

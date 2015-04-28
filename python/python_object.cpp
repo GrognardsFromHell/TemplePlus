@@ -28,11 +28,6 @@
 #include <action_sequence.h>
 #include <ui/ui_picker.h>
 
-static struct PyObjHandleAddresses : AddressTable {
-	PyObjHandleAddresses() {
-	}
-} addresses;
-
 struct PyObjHandle {
 	PyObject_HEAD;
 	ObjectId id;
