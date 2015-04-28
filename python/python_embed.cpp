@@ -9,6 +9,7 @@
 #include "python_time.h"
 #include "python_consoleout.h"
 #include "python_integration_obj.h"
+#include "python_cheats.h"
 #include "python_integration_spells.h"
 #include "python_console.h"
 #include "tio/tio.h"
@@ -48,6 +49,10 @@ void PythonPrepareGlobalNamespace() {
 		PyErr_Print();
 	}
 	Py_DECREF(toeeModule);
+
+	auto cheats = PyCheats_Create();
+	PyDict_SetItemString(MainModuleDict, "cheats", cheats);
+	Py_DECREF(cheats);
 }
 
 static bool __cdecl PythonInit(GameSystemConf *conf) {

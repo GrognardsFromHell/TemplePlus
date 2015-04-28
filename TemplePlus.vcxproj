@@ -60,6 +60,7 @@
     <ClCompile Include="maps.cpp" />
     <ClCompile Include="particles.cpp" />
     <ClCompile Include="python\python_areas.cpp" />
+    <ClCompile Include="python\python_cheats.cpp" />
     <ClCompile Include="python\python_console.cpp" />
     <ClCompile Include="python\python_counters.cpp" />
     <ClCompile Include="python\python_dice.cpp" />
@@ -253,6 +254,7 @@
     <ClInclude Include="objlist.h" />
     <ClInclude Include="particles.h" />
     <ClInclude Include="python\python_areas.h" />
+    <ClInclude Include="python\python_cheats.h" />
     <ClInclude Include="python\python_console.h" />
     <ClInclude Include="python\python_counters.h" />
     <ClInclude Include="python\python_dice.h" />
