@@ -21,6 +21,7 @@
     <ClCompile Include="bonus.cpp" />
     <ClCompile Include="critter.cpp" />
     <ClCompile Include="d20_class.cpp" />
+    <ClCompile Include="d20_level.cpp" />
     <ClCompile Include="d20_status.cpp" />
     <ClCompile Include="float_line.cpp" />
     <ClCompile Include="history.cpp" />
@@ -198,6 +199,7 @@
     <ClInclude Include="bonus.h" />
     <ClInclude Include="d20_class.h" />
     <ClInclude Include="critter.h" />
+    <ClInclude Include="d20_level.h" />
     <ClInclude Include="d20_status.h" />
     <ClInclude Include="float_line.h" />
     <ClInclude Include="history.h" />

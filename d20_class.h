@@ -1,7 +1,10 @@
 #pragma once
 #include "stdafx.h"
 #include "common.h"
+#include "idxtables.h"
 
+
+struct ClassPacket;
 
 struct D20ClassSystem : AddressTable
 {
@@ -10,6 +13,11 @@ public:
 	bool isNaturalCastingClass(Stat classEnum);
 	bool isNaturalCastingClass(uint32_t classEnum);
 	bool isVancianCastingClass(Stat classEnum);
+	void ClassPacketAlloc(ClassPacket *classPkt); // allocates the three IdxTables within ClassPacket
+	void ClassPacketDealloc(ClassPacket *classPkt);
+	uint32_t GetClassPacket(Stat classEnum, ClassPacket *classPkt); // fills the struct with content based on classEnum (e.g. Barbarian Feats in the featsIdxTable). Also STUB FOR PRESTIGE CLASSES! TODO
+	
+
 	D20ClassSystem()
 	{
 		Stat _charClassEnums[NUM_CLASSES] = 
@@ -20,3 +28,21 @@ public:
 };
 
 extern D20ClassSystem d20ClassSys;
+
+#pragma pack(push, 1)
+struct ClassPacket
+{
+	IdxTable<uint32_t> idxTab1; // unknown
+	IdxTable<uint32_t> idxTab2; // unknown
+	IdxTable<feat_enums> featsIdxTable;
+	uint32_t fortitudeSaveIsFavored;
+	uint32_t reflexSaveIsFavored;
+	uint32_t willSaveIsFavored;
+	uint32_t hitDice; // packed in that triplet format XdY+Z
+	Stat classEnum;
+	uint32_t skillPointsPerLevel_Maybe;
+	uint32_t skillPointsMultiplier_Maybe;
+};
+
+const auto TestSizeOfClassPacket = sizeof(ClassPacket); // should be 76 ( 0x4C )
+#pragma pack(pop)

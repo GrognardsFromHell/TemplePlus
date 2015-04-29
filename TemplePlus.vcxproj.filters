@@ -242,6 +242,9 @@
     <ClCompile Include="python\python_spell.cpp">
       <Filter>python</Filter>
     </ClCompile>
+    <ClCompile Include="d20_level.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -475,6 +478,9 @@
     <ClInclude Include="objlist.h" />
     <ClInclude Include="python\python_spell.h">
       <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="d20_level.h">
+      <Filter>Mods and Fixes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
