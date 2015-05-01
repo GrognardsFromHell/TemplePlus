@@ -31,6 +31,12 @@ enum ObjectListFilter {
 };
 
 #pragma pack(push, 1)
+
+struct ObjListResultItem {
+	objHndl handle;
+	ObjListResultItem *next;
+};
+
 struct ObjListResult
 {
 	int field_0;
@@ -67,7 +73,7 @@ struct ObjListResult
 	int field_7C;
 	int field_80;
 	int field_84;
-	objHndl *objects;
+	ObjListResultItem *objects;
 	int field_8C;
 	int field_90;
 	int field_94;
@@ -109,7 +115,11 @@ public:
 
 	int size();
 	objHndl get(int idx) {
-		return mResult.objects[idx];
+		auto item = mResult.objects;
+		for (int i = 0; i < idx - 1; ++i) {
+			item = item->next;
+		}
+		return item->handle;
 	}
 	objHndl operator[](int idx) {
 		return get(idx);

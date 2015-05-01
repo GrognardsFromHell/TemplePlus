@@ -411,9 +411,9 @@ static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_SkillLevelGet(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 
-	objHndl handle;
+	objHndl handle = 0;
 	SkillEnum skillId;
-	if (PyTuple_Size(args) == 1) {
+	if (PyTuple_Size(args) == 2) {
 		if (!PyArg_ParseTuple(args, "O&i:objhndl.skill_level_get", &ConvertObjHndl, &handle, &skillId)) {
 			return 0;
 		}
