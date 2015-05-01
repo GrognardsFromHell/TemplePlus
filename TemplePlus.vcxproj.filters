@@ -275,6 +275,8 @@
     <ClCompile Include="python\python_cheats.cpp" />
     <ClCompile Include="python\python_timeevents.cpp" />
     <ClCompile Include="python\python_tio.cpp" />
+    <ClCompile Include="python\python_trap.cpp" />
+    <ClCompile Include="traps.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -570,6 +572,9 @@
     <ClInclude Include="gamelib_private.h" />
     <ClInclude Include="python\python_timeevents.h" />
     <ClInclude Include="python\python_tio.h" />
+    <ClInclude Include="python\python_trap.h" />
+    <ClInclude Include="tig\tig_tabparser.h" />
+    <ClInclude Include="traps.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

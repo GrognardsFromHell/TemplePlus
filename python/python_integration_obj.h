@@ -107,6 +107,10 @@ public:
 		return mNewSid;
 	}
 
+	string GetEventName(ObjScriptEvent evt) {
+		return GetFunctionName((EventId)evt);
+	}
+
 protected:
 	const char* GetFunctionName(EventId evt) override;
 

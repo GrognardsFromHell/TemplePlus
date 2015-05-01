@@ -36,6 +36,7 @@ public:
 	// Special effects
 	void CallLightning(LocAndOffsets location);
 	void LightningBolt(objHndl caster, LocAndOffsets target);
+	void ChainLightning(objHndl caster, const vector<objHndl> &targets);
 };
 
 extern Particles particles;

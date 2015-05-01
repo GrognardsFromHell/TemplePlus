@@ -683,6 +683,11 @@ void PySpell_UpdatePacket(PyObject* pySpell) {
 	spellSys.UpdateSpellPacket(spell);
 }
 
+objHndl PySpell_GetTargetHandle(PyObject* spell, int targetIdx) {
+	auto self = (PySpell*)spell;
+	return self->targets[targetIdx].obj;
+}
+
 /******************************************************************************
 * Spell Target
 ******************************************************************************/
@@ -969,4 +974,14 @@ PyObject *PySpellTargets_Create(PySpell *spell) {
 	self->spell = spell;
 	Py_INCREF(spell);
 	return (PyObject*)self;
+}
+
+BOOL ConvertTargetArray(PyObject* obj, PySpell** pySpellOut) {
+	if (obj->ob_type != &PySpellTargetsType) {
+		PyErr_SetString(PyExc_TypeError, "Expected spell target array.");
+		return FALSE;
+	}
+
+	*pySpellOut = ((PySpellTargets*)obj)->spell;
+	return TRUE;
 }

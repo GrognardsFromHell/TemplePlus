@@ -55,6 +55,18 @@ public:
 		return result;
 	}
 
+	static Dice FromPacked(uint32_t packed) {
+		bool modNegative = (packed & 0x80000000) != 0;
+		int mod = (packed >> 14) & 0x7F;
+		int count = (packed & 0x7F);
+		int sides = ((packed >> 7) & 0x7F);
+		if (modNegative) {
+			mod = -mod;
+		}
+
+		return Dice(count, sides, mod);
+	}
+
 private:
 	int mCount = 0;
 	int mSides = 0;

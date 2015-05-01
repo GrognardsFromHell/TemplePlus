@@ -94,6 +94,12 @@ struct DispatcherCallbackArgs {
 	DispIO* dispIO;
 };
 
+struct DispIOAC : DispIO {
+	DispIOAC() {
+		dispIOType = dispIOTypeAC;
+	}
+};
+
 struct DispIO10h : DispIO
 {
 	uint32_t return_val;

@@ -1734,7 +1734,7 @@ enum enum_dispIO_type : uint32_t {
 	dispIOType2,
 	dispIOType3,
 	dispIOTypeDamage,
-	dispIOType5,
+	dispIOTypeAC, // AC
 	dispIOType6,
 	dispIOTypeQuery,
 	dispIOTypeTurnBasedStatus,

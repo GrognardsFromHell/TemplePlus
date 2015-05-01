@@ -2059,19 +2059,19 @@ PyTypeObject PyObjHandleType = {
 	PyObjHandle_New, /* tp_new */
 };
 
-bool ConvertObjHndl(PyObject* obj, objHndl* pHandleOut) {
+BOOL ConvertObjHndl(PyObject* obj, objHndl* pHandleOut) {
 	if (obj == Py_None) {
 		*pHandleOut = 0;
-		return true;
+		return TRUE;
 	}
 
 	if (obj->ob_type != &PyObjHandleType) {
 		PyErr_SetString(PyExc_TypeError, "Expected object handle.");
-		return false;
+		return FALSE;
 	}
 
 	*pHandleOut = GetSelf(obj)->handle;
-	return true;
+	return TRUE;
 }
 
 PyObject* PyObjHndl_Create(objHndl handle) {

@@ -10,6 +10,7 @@
 #include "python_quests.h"
 #include "python_counters.h"
 #include "python_areas.h"
+#include "python_spell.h"
 #include "tig/tig_mouse.h"
 #include "maps.h"
 #include "../gamesystems.h"
@@ -656,8 +657,22 @@ PyObject* PyGame_PfxCallLightning(PyObject*, PyObject* args) {
 }
 
 PyObject* PyGame_PfxChainLightning(PyObject*, PyObject* args) {
-	// TODO: Requires PyTargetArray
-	return 0;
+
+	objHndl caster;
+	int targetCount;
+	PyObject *spell;
+
+	if (!PyArg_ParseTuple(args, "O&iO&", &ConvertObjHndl, &caster, &targetCount, &ConvertTargetArray, &spell)) {
+		return 0;
+	}
+
+	// This is very much at the wrong location (should be in spell). but hrm.
+	vector<objHndl> targets;
+	for (int i = 0; i < targetCount; ++i) {
+		targets.push_back(PySpell_GetTargetHandle(spell, i));
+	}
+	particles.ChainLightning(caster, targets);	
+	Py_RETURN_NONE;
 }
 
 PyObject* PyGame_PfxLightningBolt(PyObject*, PyObject* args) {

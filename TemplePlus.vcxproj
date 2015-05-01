@@ -78,6 +78,7 @@
     <ClCompile Include="python\python_time.cpp" />
     <ClCompile Include="python\python_timeevents.cpp" />
     <ClCompile Include="python\python_tio.cpp" />
+    <ClCompile Include="python\python_trap.cpp" />
     <ClCompile Include="quest.cpp" />
     <ClCompile Include="objlist.cpp" />
     <ClCompile Include="radialmenu.cpp" />
@@ -95,6 +96,7 @@
     <ClCompile Include="python\python_embed.cpp" />
     <ClCompile Include="python\python_game.cpp" />
     <ClCompile Include="python\python_importer.cpp" />
+    <ClCompile Include="traps.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
     <ClCompile Include="ui\ui_tutorial.cpp" />
     <ClCompile Include="turn_based.cpp" />
@@ -277,6 +279,7 @@
     <ClInclude Include="python\python_time.h" />
     <ClInclude Include="python\python_timeevents.h" />
     <ClInclude Include="python\python_tio.h" />
+    <ClInclude Include="python\python_trap.h" />
     <ClInclude Include="quest.h" />
     <ClInclude Include="radialmenu.h" />
     <ClInclude Include="renderstates.h" />
@@ -286,10 +289,12 @@
     <ClInclude Include="tab_file.h" />
     <ClInclude Include="textbubbles.h" />
     <ClInclude Include="tig\tig_sound.h" />
+    <ClInclude Include="tig\tig_tabparser.h" />
     <ClInclude Include="tio\tio_utils.h" />
     <ClInclude Include="python\python_game.h" />
     <ClInclude Include="python\python_importer.h" />
     <ClInclude Include="python\python_consoleout.h" />
+    <ClInclude Include="traps.h" />
     <ClInclude Include="ui\ui_dialog.h" />
     <ClInclude Include="ui\ui_tutorial.h" />
     <ClInclude Include="turn_based.h" />

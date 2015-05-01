@@ -12,7 +12,7 @@ static struct ParticleAddresses : AddressTable {
 	void (__cdecl *End)(int partSysId);
 	void (__cdecl *Kill)(int partSysId);
 	void (__cdecl *CallLightning)(LocAndOffsets location);
-	void (__cdecl *ChainLightning)(LocAndOffsets location); // Inaccurate signature
+	void (__cdecl *ChainLightning)(objHndl caster, int targetCount, const objHndl *targets);
 	void (__cdecl *LightningBolt)(objHndl caster, LocAndOffsets target);
 
 	ParticleAddresses() {
@@ -52,4 +52,8 @@ void Particles::CallLightning(LocAndOffsets location) {
 
 void Particles::LightningBolt(objHndl caster, LocAndOffsets target) {
 	addresses.LightningBolt(caster, target);
+}
+
+void Particles::ChainLightning(objHndl caster, const vector<objHndl>& targets) {
+	addresses.ChainLightning(caster, targets.size(), targets.data());
 }

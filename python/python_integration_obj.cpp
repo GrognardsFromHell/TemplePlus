@@ -1,20 +1,22 @@
 #include "stdafx.h"
 #include "python_integration_obj.h"
 #include "python_object.h"
+#include "python_trap.h"
+#include "python_spell.h"
 #include <dialog.h>
 #include <util/stringutil.h>
 
 PythonObjIntegration pythonObjIntegration;
 
 static struct IntegrationAddresses : AddressTable {
-	int *sleepStatus;
+	int* sleepStatus;
 
 	/*
 	spellId and unk1 actually seem to be a pair that can also be an obj hndl but this only seems to be used
 	for the legacy scripting system.
 	unk2 seems to be entirely unused.
 	*/
-	int(__cdecl *ExecuteObjectScript)(objHndl triggerer, objHndl attachee, int spellId, int unk1, ObjScriptEvent evt, int unk2);
+	int (__cdecl *ExecuteObjectScript)(objHndl triggerer, objHndl attachee, int spellId, int unk1, ObjScriptEvent evt, int unk2);
 
 	IntegrationAddresses() {
 		rebase(sleepStatus, 0x109DD854);
@@ -37,7 +39,7 @@ void UpdateSleepStatus() {
 /*
 Calls into random_encounter.encounter_create.
 */
-static void __cdecl RandomEncounterCreate(void *arg) {
+static void __cdecl RandomEncounterCreate(void* arg) {
 	// TODO
 
 }
@@ -45,7 +47,7 @@ static void __cdecl RandomEncounterCreate(void *arg) {
 /*
 Calls into random_encounter.encounter_exists.
 */
-static BOOL __cdecl RandomEncounterExists(void *, void*) {
+static BOOL __cdecl RandomEncounterExists(void*, void*) {
 	// TODO
 	return false;
 }
@@ -54,7 +56,7 @@ static BOOL __cdecl RandomEncounterExists(void *, void*) {
 Calls into rumor_control.rumor_given_out
 */
 static void __cdecl RumorGivenOut(int rumorIdx) {
-
+	// TODO
 }
 
 /*
@@ -65,6 +67,7 @@ Quote from the python function:
 # available
 */
 static int __cdecl RumorFind(objHndl pc, objHndl npc) {
+	// TODO
 	return -1;
 }
 
@@ -72,21 +75,23 @@ static int __cdecl RumorFind(objHndl pc, objHndl npc) {
 Calls pc_start.pc_start
 */
 static void PcStart(objHndl pc) {
-
+	// TODO
 }
 
 /*
 Calls into py00116Tolub brawl_end directly
 */
 static void BrawlResult(int) {
-
+	// TODO
 }
 
-static int Co8Load(const char *str) {
+static int Co8Load(const char* str) {
+	// TODO
 	return 0;
 }
 
-static int Co8Save(const char *str) {
+static int Co8Save(const char* str) {
+	// TODO
 	return 0;
 }
 
@@ -101,7 +106,7 @@ static BOOL IsPythonScript(int scriptNumber) {
 }
 
 struct ObjScriptInvocation {
-	ObjectScript *script;
+	ObjectScript* script;
 	int field4;
 	objHndl triggerer;
 	objHndl attachee;
@@ -110,35 +115,35 @@ struct ObjScriptInvocation {
 	ObjScriptEvent evt;
 };
 
-static int RunPythonObjScript(ObjScriptInvocation *invoc) {
+static int RunPythonObjScript(ObjScriptInvocation* invoc) {
 
-	// This seemsprimarily used by the CounterArray
-	// set_script_context(invoc->scriptIdxPtr->scriptNumber, invoc->attachee, invoc->eventId);
+	// This seems to be primarily used by the CounterArray
+	pythonObjIntegration.SetCounterContext(invoc->attachee, invoc->script->scriptId, invoc->evt);
 	pythonObjIntegration.SetInObjInvocation(true);
 
-	PyObject *args;
-	PyObject *triggerer = PyObjHndl_Create(invoc->triggerer);
+	PyObject* args;
+	auto triggerer = PyObjHndl_Create(invoc->triggerer);
 
 	// Expected arguments depend on the event type
 	if (invoc->evt == ObjScriptEvent::SpellCast) {
 		auto attachee = PyObjHndl_Create(invoc->attachee);
-		args = Py_BuildValue("OOO", attachee, triggerer, Py_None); // TODO: Spells
+		auto spell = PySpell_Create(invoc->spellId);
+		args = Py_BuildValue("OOO", attachee, triggerer, spell);
+		Py_DECREF(spell);
 		Py_DECREF(attachee);
-	}
-	else if (invoc->evt == ObjScriptEvent::Trap) {
-		auto attachee = PyObjHndl_Create(invoc->attachee); // TODO: Traps
+	} else if (invoc->evt == ObjScriptEvent::Trap) {
+		auto attachee = PyTrap_Create(invoc->attachee);
 		args = Py_BuildValue("OO", attachee, triggerer);
 		Py_DECREF(attachee);
-	}
-	else {
+	} else {
 		auto attachee = PyObjHndl_Create(invoc->attachee);
 		args = Py_BuildValue("OO", attachee, triggerer);
 		Py_DECREF(attachee);
 	}
 
 	auto result = pythonObjIntegration.RunScript(invoc->script->scriptId,
-		(PythonIntegration::EventId) invoc->evt,
-		args);
+	                                             (PythonIntegration::EventId) invoc->evt,
+	                                             args);
 
 	Py_DECREF(args);
 
@@ -151,7 +156,7 @@ static int RunPythonObjScript(ObjScriptInvocation *invoc) {
 	return result;
 }
 
-void RunAnimFramePythonScript(const char *command) {
+void RunAnimFramePythonScript(const char* command) {
 	pythonObjIntegration.RunAnimFrameScript(command);
 }
 
@@ -162,7 +167,7 @@ static void SetAnimatedObject(objHndl handle) {
 /*
 Set up the locals dictionary for executing dialog guards and actions.
 */
-static PyObject *CreateDialogLocals(const DialogState *dialog, int pickedLine) {
+static PyObject* CreateDialogLocals(const DialogState* dialog, int pickedLine) {
 
 	auto locals = PyDict_New();
 	auto pcObj = PyObjHndl_Create(dialog->pc);
@@ -178,7 +183,7 @@ static PyObject *CreateDialogLocals(const DialogState *dialog, int pickedLine) {
 	return locals;
 }
 
-static void RunDialogAction(const char *actionString, DialogState *dialog, int pickedLine) {
+static void RunDialogAction(const char* actionString, DialogState* dialog, int pickedLine) {
 	logger->debug("Running dialog actions '{}'", actionString);
 
 	auto commands = split(actionString, ';', true);
@@ -198,15 +203,14 @@ static void RunDialogAction(const char *actionString, DialogState *dialog, int p
 
 	auto locals = CreateDialogLocals(dialog, pickedLine);
 
-	for (const auto &command : commands) {
+	for (const auto& command : commands) {
 		logger->debug("Running dialog action '{}'", command);
 
 		auto result = PyRun_String(command.c_str(), Py_single_input, globalsDict, locals);
 
 		if (!result) {
 			PyErr_Print();
-		}
-		else {
+		} else {
 			Py_DECREF(result);
 		}
 	}
@@ -214,7 +218,7 @@ static void RunDialogAction(const char *actionString, DialogState *dialog, int p
 	Py_DECREF(locals);
 }
 
-static BOOL RunDialogGuard(const char *expression, DialogState *dialog, int pickedLine) {
+static BOOL RunDialogGuard(const char* expression, DialogState* dialog, int pickedLine) {
 	logger->debug("Running dialog guard {} for line {} in script {}", expression, pickedLine, dialog->dialogScriptId);
 
 	// Set script context so counters will work
@@ -311,8 +315,7 @@ void PythonObjIntegration::RunAnimFrameScript(const char* command) {
 
 	if (!result) {
 		PyErr_Print();
-	}
-	else {
+	} else {
 		Py_DECREF(result);
 	}
 }
@@ -353,7 +356,7 @@ PyObject* PythonObjIntegration::ExecuteScript(const char* moduleName, const char
 	return result;
 }
 
-static const char *scriptEventFunctions[] = {
+static const char* scriptEventFunctions[] = {
 	"san_examine",
 	"san_use",
 	"san_destroy",
