@@ -1014,6 +1014,30 @@ void PyGame_Reset() {
 }
 
 bool PyGame_Save(TioFile* file) {
+
+	if (!encounterQueue) {
+		int count = 0;
+		if (tio_fwrite(&count, 4, 1, file) != 1) {
+			logger->error("Unable to write encounter queue size.");
+			return false;
+		}
+		return true;
+	}
+		
+	int count = PyList_Size(encounterQueue);
+	if (tio_fwrite(&count, 4, 1, file) != 1) {
+		logger->error("Unable to write encounter queue size.");
+		return false;
+	}
+
+	for (int i = 0; i < count; ++i) {
+		auto encounterId = PyInt_AsLong(PyList_GET_ITEM(encounterQueue, i));
+		if (tio_fwrite(&encounterId, 4, 1, file) != 1) {
+			logger->error("Unable to write encounter id {}", encounterId);
+			return false;
+		}
+	}
+
 	return true;
 }
 

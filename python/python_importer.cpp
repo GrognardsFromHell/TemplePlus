@@ -297,9 +297,9 @@ PyObject* PyTempleImporter::ReadData(const string& path) {
 void PyTempleImporter_Install() {
 	assert(!PyTempleImporter::instance);
 	PyTempleImporter::instance = new PyTempleImporter;
-	PyTempleImporter::instance->mSearchPath.push_back("python-lib\\");
-	PyTempleImporter::instance->mSearchPath.push_back("templeplus\\lib\\");
-	PyTempleImporter::instance->mSearchPath.push_back("scr\\");
+	PyTempleImporter::instance->mSearchPath.push_back("python-lib/");
+	PyTempleImporter::instance->mSearchPath.push_back("templeplus/lib/");
+	PyTempleImporter::instance->mSearchPath.push_back("scr/");
 }
 
 void PyTempleImporter_Uninstall() {

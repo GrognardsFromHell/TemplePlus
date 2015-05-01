@@ -184,6 +184,14 @@ bool CritterSystem::IsDeadOrUnconscious(objHndl critter) {
 	return addresses.IsDeadOrUnconscious(critter);
 }
 
+int CritterSystem::GetPortraitId(objHndl leader) {
+	return objects.getInt32(leader, obj_f_critter_portrait);
+}
+
+int CritterSystem::GetLevel(objHndl critter) {
+	return objects.StatLevelGet(critter, stat_level);
+}
+
 MonsterCategory CritterSystem::GetCategory(objHndl objHnd)
 {
 	if (objHnd != 0) {

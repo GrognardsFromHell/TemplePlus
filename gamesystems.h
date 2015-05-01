@@ -4,8 +4,9 @@
 #include "util/addresses.h"
 #include "tio/tio.h"
 
+#pragma pack(push, 1)
 struct GameSystemConf {
-	bool editor;
+	int editor;
 	int width;
 	int height;
 	int bufferstuffIdx;
@@ -29,6 +30,7 @@ struct RebuildBufferInfo {
 	uint32_t width2;
 	uint32_t height2;
 };
+#pragma pack(pop)
 
 struct GameSystemFuncs : AddressTable {
 

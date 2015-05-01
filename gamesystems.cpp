@@ -15,41 +15,11 @@
 #include "tig/tig.h"
 #include "ui/ui_render.h"
 #include "python/python_integration.h"
+#include "gamelib_private.h"
 
 GameSystemFuncs gameSystemFuncs;
 
-typedef bool (__cdecl *GameSystemInit)(const GameSystemConf* conf);
-typedef void (__cdecl *GameSystemReset)();
-typedef bool (__cdecl *GameSystemModuleLoad)();
-typedef void (__cdecl *GameSystemModuleUnload)();
-typedef void (__cdecl *GameSystemExit)();
-typedef void (__cdecl *GameSystemAdvanceTime)(uint32_t time);
-typedef bool (__cdecl *GameSystemSave)(TioFile file);
-typedef bool (__cdecl *GameSystemLoad)(GameSystemSaveFile* saveFile);
-typedef void (__cdecl *GameSystemResetBuffers)(RebuildBufferInfo* rebuildInfo);
-
-struct GameSystem {
-	const char* name;
-	GameSystemInit init;
-	GameSystemReset reset;
-	GameSystemModuleLoad moduleLoad;
-	GameSystemModuleUnload moduleUnload;
-	GameSystemExit exit;
-	GameSystemAdvanceTime advanceTime;
-	uint32_t field1c;
-	GameSystemSave save;
-	GameSystemLoad load;
-	GameSystemResetBuffers resetBuffers;
-	uint32_t loadscreenMesIdx;
-};
-
-const uint32_t gameSystemCount = 61;
-
-struct GameSystems {
-	GameSystem systems[gameSystemCount];
-};
-
-static GlobalStruct<GameSystems, 0x102AB368> gameSystems;
+GlobalStruct<GameSystems, 0x102AB368> gameSystems;
 
 struct GameSystemInitTable : AddressTable {
 
@@ -68,8 +38,6 @@ struct GameSystemInitTable : AddressTable {
 	void (__cdecl *SetEnvMapping)(int value);
 	void (__cdecl *SetParticleFidelity)(float value); // Value is clamped to [0,1]
 
-	bool (__cdecl *SaveGame)(const char *filename, const char *displayName);
-	bool (__cdecl *LoadGame)(const char *filename);
 	void (__cdecl *DestroyPlayerObject)();
 	void (__cdecl *EndGame)();
 
@@ -115,8 +83,6 @@ struct GameSystemInitTable : AddressTable {
 		rebase(SetClothFrameSkip, 0x102629C0);
 		rebase(SetEnvMapping, 0x101E0A20);
 		rebase(InitPfxLightning, 0x10087220);
-		rebase(SaveGame, 0x100042C0);
-		rebase(LoadGame, 0x100028D0);
 		rebase(DestroyPlayerObject, 0x1006EEF0);
 		rebase(EndGame, 0x1014E160);
 
@@ -353,14 +319,6 @@ void GameSystemFuncs::ResizeScreen(int w, int h) {
 
 	ui.ResizeScreen(windowBufferStuffId, w, h);
 	
-}
-
-bool GameSystemFuncs::SaveGame(const string& filename, const string& displayName) {
-	return gameSystemInitTable.SaveGame(filename.c_str(), displayName.c_str());
-}
-
-bool GameSystemFuncs::LoadGame(const string& filename) {
-	return gameSystemInitTable.LoadGame(filename.c_str());
 }
 
 void GameSystemFuncs::EndGame() {

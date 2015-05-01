@@ -273,6 +273,8 @@
     <ClCompile Include="python\python_integration_obj.cpp" />
     <ClCompile Include="radialmenu.cpp" />
     <ClCompile Include="python\python_cheats.cpp" />
+    <ClCompile Include="python\python_timeevents.cpp" />
+    <ClCompile Include="python\python_tio.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -565,6 +567,9 @@
     <ClInclude Include="python\python_integration_obj.h" />
     <ClInclude Include="radialmenu.h" />
     <ClInclude Include="python\python_cheats.h" />
+    <ClInclude Include="gamelib_private.h" />
+    <ClInclude Include="python\python_timeevents.h" />
+    <ClInclude Include="python\python_tio.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

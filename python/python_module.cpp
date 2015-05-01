@@ -35,11 +35,8 @@ static PyObject *Anyone(PyObject *obj, PyObject *args) {
 	Py_RETURN_FALSE;
 }
 
-static PyObject *DiceNew(PyObject *obj, PyObject *args) {
-}
-
 static PyMethodDef pyToeeMethods[] = {
-	{ "anyone", NULL, METH_VARARGS, NULL },
+	{ "anyone", Anyone, METH_VARARGS, NULL },
 	{ NULL, NULL, NULL, NULL }
 };
 
@@ -65,7 +62,7 @@ void PyToeeInitModule() {
 		PyErr_Print();
 	}
 
-	// This is absolutly REQUIRED to unpickle obj handles
+	// This is critical for unpickling object handles stored in timed events
 	PyDict_SetItemString(dict, "PyObjHandle", (PyObject*) &PyObjHandleType);
 	PyDict_SetItemString(dict, "dice_new", (PyObject*) &PyDiceType);
 

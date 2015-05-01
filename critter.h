@@ -145,13 +145,18 @@ struct CritterSystem : AddressTable
 
 	bool IsDeadOrUnconscious(objHndl critter);
 	
+	int GetPortraitId(objHndl critter);
+
+	int GetLevel(objHndl critter);
+
 #pragma region Category
 	MonsterCategory GetCategory(objHndl objHnd);
 	bool IsCategoryType(objHndl objHnd, MonsterCategory categoryType);
 	bool IsCategorySubtype(objHndl objHnd, MonsterCategory categoryType);
 	bool IsUndead(objHndl objHnd);
 	bool IsOoze(objHndl objHnd);
-	bool IsSubtypeFire(objHndl objHnd);	
+	bool IsSubtypeFire(objHndl objHnd);
+	
 #pragma endregion
 
 };

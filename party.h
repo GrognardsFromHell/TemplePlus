@@ -21,6 +21,9 @@ struct PartySystem : AddressTable
 
 	void (__cdecl *RumorLogAdd)(objHndl pc, int rumor);
 
+	int (__cdecl *GetStoryState)();
+	void (__cdecl *SetStoryState)(int newState);
+
 	objHndl GetLeader() {
 		return GroupListGetMemberN(0);
 	}
@@ -42,6 +45,8 @@ struct PartySystem : AddressTable
 		rebase(ObjAddToPCGroup, 0x1002BBE0);
 		rebase(IsInParty, 0x1002B1B0);
 		rebase(RumorLogAdd, 0x1005FC20);
+		rebase(GetStoryState, 0x10006A20);
+		rebase(SetStoryState, 0x10006A30);
 	}
 };
 
