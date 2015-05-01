@@ -24,8 +24,8 @@ class PythonSpellIntegration : public PythonIntegration {
 public:
 	PythonSpellIntegration();
 
-	int SpellTrigger(int spellId, SpellEvent evt);
-	int SpellTrigger(int spellId, SpellEvent evt, objHndl handle, int someNumber);
+	void SpellTrigger(int spellId, SpellEvent evt);
+	void SpellTriggerProjectile(int spellId, SpellEvent evt, objHndl projectile, int targetIdx);
 
 	void UpdateSpell(int spellId);
 	void RemoveSpell(int spellId);

@@ -2,6 +2,7 @@
 #include "python_integration_spells.h"
 #include "python_integration_obj.h"
 #include "python_spell.h"
+#include "python_object.h"
 
 PythonSpellIntegration pythonSpellIntegration;
 
@@ -13,6 +14,8 @@ static struct PythonIntegrationSpellsAddresses : AddressTable {
 	void (__cdecl * SpellPacketUpdateFromPySpell)(); //usercall  PySpell * @<eax>
 	LocFull* pySpellLoc;
 	LocFull* pySpellLoc2;
+	uint32_t(__cdecl *SpellSoundPlay)(SpellPacketBody* spellPacketBody, SpellEvent pySpellEventCode);
+	uint32_t(__cdecl *SpellProjectileSoundPlay)(SpellPacketBody* spellPacketBody, SpellEvent pySpellEventCode, objHndl projectile);
 
 	PythonIntegrationSpellsAddresses() {
 		rebase(spellEventNames, 0x102CFE24);
@@ -21,23 +24,22 @@ static struct PythonIntegrationSpellsAddresses : AddressTable {
 		rebase(pySpellLoc2, 0x10BCABF0);
 		rebase(SpellPacketUpdateFromPySpell, 0x100BE2C0);
 		rebase(SpellSoundPlay, 0x100BF770);
-	}
-
-	uint32_t (__cdecl *SpellSoundPlay)(SpellPacketBody* spellPacketBody, SpellEvent pySpellEventCode);
+		rebase(SpellProjectileSoundPlay, 0x100BFBB0);
+	}		
 } addresses;
 
 /*
 Calls the actual python spell script.
 */
-static int SpellTrigger(int spellId, SpellEvent evt) {
-	return pythonSpellIntegration.SpellTrigger(spellId, evt);
+static void SpellTrigger(int spellId, SpellEvent evt) {
+	pythonSpellIntegration.SpellTrigger(spellId, evt);
 }
 
 /*
 Calls the python spell with more args?
 */
-static int SpellTrigger2(int spellId, SpellEvent evt, objHndl handle, int someNumber) {
-	return pythonSpellIntegration.SpellTrigger(spellId, evt, handle, someNumber);
+static void SpellTriggerProjectile(int spellId, SpellEvent evt, objHndl projectile, int targetIdx) {
+	pythonSpellIntegration.SpellTriggerProjectile(spellId, evt, projectile, targetIdx);
 }
 
 /*
@@ -66,7 +68,7 @@ public:
 
 	void apply() override {
 		replaceFunction(0x100C0180, SpellTrigger);
-		replaceFunction(0x100C0390, SpellTrigger2);
+		replaceFunction(0x100C0390, SpellTriggerProjectile);
 		replaceFunction(0x100BEB80, UpdatePythonSpell);
 		replaceFunction(0x100BEAF0, RemovePythonSpell);
 	}
@@ -77,7 +79,7 @@ PythonSpellIntegration::PythonSpellIntegration()
 	: PythonIntegration("scr\\spell*.py", "(spell(\\d{3}).*)\\.py") {
 }
 
-int PythonSpellIntegration::SpellTrigger(int spellId, SpellEvent evt) {
+void PythonSpellIntegration::SpellTrigger(int spellId, SpellEvent evt) {
 	bool cancelled = 0;
 
 	SpellPacketBody spellPktBody;
@@ -91,7 +93,7 @@ int PythonSpellIntegration::SpellTrigger(int spellId, SpellEvent evt) {
 			}
 		}
 		if (cancelled) {
-			return 1;
+			return;
 		}
 	}
 
@@ -103,65 +105,45 @@ int PythonSpellIntegration::SpellTrigger(int spellId, SpellEvent evt) {
 	auto result = RunScript(spellEnum, (EventId)evt, args);
 	Py_DECREF(args);
 
-	if (result) {
-		/*PySpellLocSet(&pySpell->target_location_full);
-		PySpellLoc2Set(&pySpell->target_location_full);*/
+	// Result of RunScript is a bit different here
+	if (result == 0 || result == -1) {
 		PySpell_UpdatePacket(pySpell);
-
-		Py_DECREF(pySpell);
-
 		addresses.SpellSoundPlay(&spellPktBody, evt);
 	}
-
-	return result;
+	Py_DECREF(pySpell);
 }
 
+void PythonSpellIntegration::SpellTriggerProjectile(int spellId, SpellEvent evt, objHndl projectile, int targetIdx) {
+	auto pySpell = PySpell_Create(spellId);
+	auto projectileObj = PyObjHndl_Create(projectile);
+	auto args = Py_BuildValue("(OOi)", pySpell, projectile, targetIdx);
+	Py_DECREF(projectileObj);
 
-//PyObject* PythonSpellSystem::PySpellFromSpellId(uint32_t spellId)
-//{
-//	return 0; // addresses.PySpellFromSpellId(spellId);
-//}
-//
-//void PythonSpellSystem::PySpellLocSet(LocFull* locFull)
-//{
-//	//*addresses.pySpellLoc = *locFull;
-//}
-//
-//void PythonSpellSystem::PySpellLoc2Set(LocFull* locFull)
-//{
-//	//*addresses.pySpellLoc2 = *locFull;
-//}
-//
-//void PythonSpellSystem::SpellPacketUpdateFromPySpell(PySpell* pySpell)
-//{
-//	macAsmProl
-//	__asm{
-//		mov ecx, this;
-//		mov esi, addresses.SpellPacketUpdateFromPySpell;
-//		mov eax, pySpell;
-//		call esi;
-//	}
-//	macAsmEpil
-//}
-//
-//uint32_t PythonSpellSystem::SpellSoundPlay(SpellPacketBody* spellPktBody, PySpellEventCode pySpellEvent)
-//{
-//	return 0; // addresses.SpellSoundPlay(spellPktBody, pySpellEvent);
-//}
-//
+	auto spellEnum = spellSys.GetSpellEnumFromSpellId(spellId);
+	auto result = RunScript(spellEnum, (EventId)evt, args);
+	Py_DECREF(args);
 
+	// The meaning of the results is different from obj scripts
+	if (result == -1 || result == 0) {
+		PySpell_UpdatePacket(pySpell);
 
-int PythonSpellIntegration::SpellTrigger(int spellId, SpellEvent evt, objHndl handle, int someNumber) {
-	// TODO
-	return 0;
+		SpellPacketBody spellPktBody;
+		spellSys.GetSpellPacketBody(spellId, &spellPktBody);
+		addresses.SpellProjectileSoundPlay(&spellPktBody, evt, projectile);
+	}
+	
+	Py_DECREF(pySpell);
 }
 
 void PythonSpellIntegration::UpdateSpell(int spellId) {
 	PySpell_Update(spellId);
 }
 
-void PythonSpellIntegration::RemoveSpell(int spellId) {
-	// TODO
+void PythonSpellIntegration::RemoveSpell(int /*spellId*/) {
+	/*
+		As soon as the last ref to the PySpell object goes away, the
+		spell will automatically be removed from the active spell list.
+	*/
 }
 
 static const char* spellEventNames[] = {
