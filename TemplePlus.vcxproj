@@ -73,6 +73,7 @@
     <ClCompile Include="python\python_object.cpp" />
     <ClCompile Include="python\python_objectscripts.cpp" />
     <ClCompile Include="python\python_quests.cpp" />
+    <ClCompile Include="python\python_integration_encounter.cpp" />
     <ClCompile Include="python\python_scripts.cpp" />
     <ClCompile Include="python\python_spell.cpp" />
     <ClCompile Include="python\python_time.cpp" />

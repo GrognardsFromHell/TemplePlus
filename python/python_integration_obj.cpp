@@ -9,8 +9,6 @@
 PythonObjIntegration pythonObjIntegration;
 
 static struct IntegrationAddresses : AddressTable {
-	int* sleepStatus;
-
 	/*
 	spellId and unk1 actually seem to be a pair that can also be an obj hndl but this only seems to be used
 	for the legacy scripting system.
@@ -19,38 +17,9 @@ static struct IntegrationAddresses : AddressTable {
 	int (__cdecl *ExecuteObjectScript)(objHndl triggerer, objHndl attachee, int spellId, int unk1, ObjScriptEvent evt, int unk2);
 
 	IntegrationAddresses() {
-		rebase(sleepStatus, 0x109DD854);
 		rebase(ExecuteObjectScript, 0x10025D60);
 	}
 } addresses;
-
-/*
-Calls into random_encounter.can_sleep to update how the party
-can rest in the current area.
-*/
-void UpdateSleepStatus() {
-	auto result = pythonObjIntegration.ExecuteScript("random_encounter", "can_sleep");
-	if (result) {
-		*addresses.sleepStatus = PyInt_AsLong(result);
-		Py_DECREF(result);
-	}
-}
-
-/*
-Calls into random_encounter.encounter_create.
-*/
-static void __cdecl RandomEncounterCreate(void* arg) {
-	// TODO
-
-}
-
-/*
-Calls into random_encounter.encounter_exists.
-*/
-static BOOL __cdecl RandomEncounterExists(void*, void*) {
-	// TODO
-	return false;
-}
 
 /*
 Calls into rumor_control.rumor_given_out
@@ -266,9 +235,6 @@ public:
 	}
 
 	void apply() override {
-		replaceFunction(0x10045850, UpdateSleepStatus);
-		replaceFunction(0x10046030, RandomEncounterCreate);
-		replaceFunction(0x100461E0, RandomEncounterExists);
 		replaceFunction(0x1005FA00, RumorGivenOut);
 		replaceFunction(0x1005FB70, RumorFind);
 		replaceFunction(0x1006D190, PcStart);

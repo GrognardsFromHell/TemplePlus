@@ -13,6 +13,9 @@ static struct ReputationAddresses : AddressTable {
 	void (__cdecl *ReputationRemove)(objHndl target, int repId);
 
 	ReputationAddresses() {
+		rebase(ReputationHas, 0x100546E0);
+		rebase(ReputationRemove, 0x10054820);
+		rebase(ReputationAdd, 0x10054740);
 	}
 } addresses;
 

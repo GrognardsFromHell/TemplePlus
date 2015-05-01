@@ -1934,7 +1934,7 @@ static PyObject* PyObjHandle_SafeForUnpickling(PyObject*, void*) {
 }
 
 static PyGetSetDef PyObjHandleGetSets[] = {
-	PY_INT_PROP_RO("area", maps.GetCurrentMapId, NULL),
+	PY_INT_PROP_RO("area", maps.GetCurrentAreaId, NULL),
 	{"name", PyObjHandle_GetNameId, NULL, NULL},
 	{"location", PyObjHandle_GetLocation, NULL, NULL},
 	{"type", PyObjHandle_GetType, NULL, NULL},

@@ -277,6 +277,7 @@
     <ClCompile Include="python\python_tio.cpp" />
     <ClCompile Include="python\python_trap.cpp" />
     <ClCompile Include="traps.cpp" />
+    <ClCompile Include="python\python_integration_encounter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
