@@ -4,8 +4,9 @@
 #include "util/addresses.h"
 #include "tio/tio.h"
 
+#pragma pack(push, 1)
 struct GameSystemConf {
-	bool editor;
+	int editor;
 	int width;
 	int height;
 	int bufferstuffIdx;
@@ -29,6 +30,7 @@ struct RebuildBufferInfo {
 	uint32_t width2;
 	uint32_t height2;
 };
+#pragma pack(pop)
 
 struct GameSystemFuncs : AddressTable {
 
@@ -49,6 +51,27 @@ struct GameSystemFuncs : AddressTable {
 	void (__cdecl *UnloadModule)();
 	void (__cdecl *Shutdown)();
 
+	/*
+		Makes a savegame.
+	*/
+	bool SaveGame(const string &filename, const string &displayName);
+
+	/*
+		Loads a game.
+	*/
+	bool LoadGame(const string &filename);
+
+	/*
+		Ends the game, resets the game systems and returns to the main menu.
+	*/
+	void EndGame();
+
+	/*
+		Call this before loading a game. Use not yet known.
+		TODO I do NOT think this is used, should be checked. Seems like leftovers from even before arcanum
+	*/
+	void DestroyPlayerObject();
+
 	GameSystemFuncs() {
 		rebase(Init, 0x10004C40);
 		rebase(LoadModule, 0x10005480);
@@ -58,19 +81,5 @@ struct GameSystemFuncs : AddressTable {
 };
 
 extern GameSystemFuncs gameSystemFuncs;
-
-// Register hooks for game system events
-class GameSystemHooks {
-public:
-	static void AddInitHook(std::function<void(const GameSystemConf*)> callback, bool before = false);
-	static void AddResetHook(std::function<void()> callback, bool before = false);
-	static void AddModuleLoadHook(std::function<void()> callback, bool before = false);
-	static void AddModuleUnloadHook(std::function<void()> callback, bool before = false);
-	static void AddExitHook(std::function<void()> callback, bool before = false);
-	static void AddAdvanceTimeHook(std::function<void(uint32_t)> callback, bool before = false);
-	static void AddSaveHook(std::function<void(TioFile)> callback, bool before = false);
-	static void AddLoadHook(std::function<void(GameSystemSaveFile*)> callback, bool before = false);
-	static void AddResizeBuffersHook(std::function<void(RebuildBufferInfo*)> callback, bool before = false);
-};
 
 void GameSystemsRender();

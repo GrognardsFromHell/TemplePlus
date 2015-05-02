@@ -71,19 +71,33 @@ enum class TimeEventSystem : uint32_t {
 struct GameTime {
 	int timeInDays = 0;
 	int timeInMs = 0;
+	
+	GameTime(uint64_t t) {
+		timeInDays = (t >> 32) & 0xFFFFFFFF;
+		timeInMs = t & 0xFFFFFFFF;
+	}
 
 	GameTime() {
 	}
 
 	GameTime(int days, int ms) : timeInDays(days), timeInMs(ms) {
 	}
+
+	static GameTime FromSeconds(int seconds) {
+		if (seconds == 0) {
+			return { 0, 1 };
+		} else {
+			return { 0, seconds * 1000 };
+		}
+	}
 };
 
-struct TimeEventArg {
-	int field0 = 0;
-	int field1 = 0;
-	int field2 = 0;
-	int field3 = 0;
+union TimeEventArg {
+	int int32;
+	float float32;
+	objHndl handle;
+	PyObject *pyobj;
+	int raw[4];
 };
 
 struct TimeEventObjInfo {
@@ -108,6 +122,8 @@ struct TimeEventListEntry {
 	TimeEventListEntry* nextEvent;
 };
 
+#pragma pack(pop)
+
 extern struct TimeEvents : AddressTable {
 
 	void Schedule(const TimeEvent &evt, uint32_t delayInMs) {
@@ -119,7 +135,27 @@ extern struct TimeEvents : AddressTable {
 		GameTime delay(0, delayInMs);
 		_Schedule(&evt, &delay, &baseTime, nullptr, nullptr, 0);
 	}
+
+	GameTime GetTime() {
+		return _GetTime();
+	}
+
+	bool IsDaytime() {
+		return _IsDaytime();
+	}
 	
+	void AdvanceTime(const GameTime &advanceBy) {
+		_AdvanceTime(advanceBy);
+	}
+
+	// This odd, at a glance it seems to do the same as the previous, but if more than a day is passed
+	// additional dispatcher functions are called for the party...???
+	void AddTime(int timeInMs) {
+		_AddTime(timeInMs);
+	}
+
+	string FormatTime(const GameTime &time);
+
 	TimeEvents();
 
 private:
@@ -132,6 +168,9 @@ private:
 		- sourceFile and sourceLine are not used.
 	*/
 	bool (__cdecl *_Schedule)(const TimeEvent *evt, const GameTime *delay, const GameTime *baseTime, GameTime *triggerTime, const char *sourceFile, int sourceLine);
+	bool (__cdecl *_IsDaytime)();
+	void (__cdecl *_AdvanceTime)(const GameTime &time);
+	void (__cdecl *_AddTime)(int timeInMs);
+	GameTime (__cdecl *_GetTime)();
+	void (__cdecl *_FormatTime)(const GameTime &time, char *pOut);
 } timeEvents;
-
-#pragma pack(pop)

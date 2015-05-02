@@ -8,6 +8,7 @@
 #include "tig/tig_mes.h"
 #include "common.h"
 #include "weapon.h"
+#include "critter.h"
 
 
 FeatSystem feats;
@@ -118,6 +119,18 @@ uint32_t FeatSystem::FeatExistsInArray(feat_enums featCode, feat_enums * featArr
 uint32_t FeatSystem::WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType)
 {
 	return _WeaponFeatCheck( objHnd,  featArray,  featArrayLen,  classBeingLeveled,  wpnType);
+}
+
+vector<feat_enums> FeatSystem::GetFeats(objHndl handle) {
+
+	auto featCount = templeFuncs.Obj_Get_IdxField_NumItems(handle, obj_f_critter_feat_idx);
+	vector<feat_enums> result(featCount);
+
+	for (int i = 0; i < featCount; ++i) {
+		result[i] = (feat_enums) templeFuncs.Obj_Get_IdxField_32bit(handle, obj_f_critter_feat_idx, i);
+	}
+
+	return result;
 };
 
 #pragma endregion
@@ -278,7 +291,7 @@ uint32_t _WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featA
 
 	if (wpnType == wt_orc_double_axe)
 	{
-		if (objects.GetRace(objHnd) == race_halforc)
+		if (critterSys.GetRace(objHnd) == race_halforc)
 		{
 			return 1;
 		}
@@ -286,7 +299,7 @@ uint32_t _WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featA
 	}
 	else if (wpnType == wt_gnome_hooked_hammer)
 	{
-		if (objects.GetRace(objHnd) == race_gnome)
+		if (critterSys.GetRace(objHnd) == race_gnome)
 		{
 			return 1;
 		}
@@ -294,7 +307,7 @@ uint32_t _WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featA
 	}
 	else if (wpnType == wt_dwarven_waraxe)
 	{
-		if (objects.GetRace(objHnd) == race_dwarf)
+		if (critterSys.GetRace(objHnd) == race_dwarf)
 		{
 			return 1;
 		}
@@ -656,8 +669,6 @@ uint32_t _FeatListElective(objHndl objHnd, feat_enums * listOut)
 };
 
 
-// WIP:
-
 uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLevelBeingRaised, uint32_t rangerSpecializationFeat)
 {
 
@@ -762,7 +773,7 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 	 // simple weapon prof
 	 if (featEnum == FEAT_SIMPLE_WEAPON_PROFICIENCY)
 	 {
-		 auto monCat = objects.GetCategory(objHnd);
+		 auto monCat = critterSys.GetCategory(objHnd);
 		 if (monCat == mc_type_outsider || monCat == mc_type_monstrous_humanoid
 			 || monCat == mc_type_humanoid || monCat == mc_type_giant || monCat == mc_type_fey)
 		 {
@@ -771,7 +782,7 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 	 } 
 	 else if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_ALL)
 	 {
-		 if ((uint32_t)objects.IsCategoryType(objHnd, mc_type_outsider)
+		 if ((uint32_t)critterSys.IsCategoryType(objHnd, mc_type_outsider)
 			 && objects.StatLevelGet(objHnd, stat_strength) >= 6)	
 		 {	return 1;	 }
 	 }

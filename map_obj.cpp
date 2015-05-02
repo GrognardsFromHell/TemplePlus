@@ -124,22 +124,5 @@ uint64_t _getSecLocFromLoc(uint64_t loc)
 	return mapObjSys.getSecLocFromLoc(loc);
 }
 #pragma endregion
-static void DumpMapObjects() {
 
-	auto findNodeData = mapObjSys.findNodeData;
-	auto nodes = findNodeData->sectorNodes;
-	
-	for (auto i = 0; i < findNodeData->sectorNodeCount; ++i) {
-		auto &sectorNode = nodes[i];
-		logger->info("{}, {}", sectorNode.sectorLoc.x(), sectorNode.sectorLoc.y());
 
-		auto objNode = sectorNode.firstObj;
-		while (objNode) {
-			logger->info("{}", objNode->objHandle);
-			objNode = objNode->next;
-		}
-	}
-
-}
-
-static PythonDebugFunc pyMapObjDebugFunc("dump_map_obj", &DumpMapObjects);

@@ -1,6 +1,16 @@
-
 #include "stdafx.h"
 #include "tig.h"
+#include "tig_tabparser.h"
+
+TigTabParserFuncs tigTabParserFuncs;
+
+TigTabParserFuncs::TigTabParserFuncs() {
+	rebase(Init, 0x101F2C10);
+	rebase(Open, 0x101F2E40);
+	rebase(GetLineCount, 0x101F2D40);
+	rebase(Process, 0x101F2C70);
+	rebase(Close, 0x101F2C30);
+}
 
 void TigRect::FitInto(const TigRect& boundingRect) {
 
@@ -15,7 +25,7 @@ void TigRect::FitInto(const TigRect& boundingRect) {
 	float hFactor = (float)h / height;
 	float scale = min(wFactor, hFactor);
 	width = (int)round(scale * width);
-	height = (int)round(scale  * height);
+	height = (int)round(scale * height);
 
 	// Center in bounding Rect
 	x = boundingRect.x + (boundingRect.width - width) / 2;
@@ -23,5 +33,5 @@ void TigRect::FitInto(const TigRect& boundingRect) {
 }
 
 RECT TigRect::ToRect() {
-	return {x, y, x + width, y + height};
+	return{x, y, x + width, y + height};
 }

@@ -9,16 +9,6 @@
 #include "temple_functions.h"
 #include "pathfinding.h"
 
-class AiReplacements : public TempleFix
-{
-	macTempleFix(AI Replacements)
-	{
-		logger->info("Replacing AI functions...");
-		macReplaceFun(100E50C0, _aiStrategyParse)
-	}
-} aiReplacements;
-
-
 #pragma region AI System Implementation
 struct AiSystem aiSys;
 
@@ -54,8 +44,13 @@ AiSystem::AiSystem()
 	spell = &spellSys;
 	pathfinding = &pathfindingSys;
 	macRebase(aiStrategies, 11868F3C)
-	macRebase(aiStrategiesNum,11868F40)
+	macRebase(aiStrategiesNum, 11868F40)
 	macRebase(aiTacticDefs, 102E4398)
+	rebase(_AiRemoveFromList, 0x1005A070);
+	rebase(_FleeAdd, 0x1005DE60);
+	rebase(_ShitlistAdd, 0x1005CC10);
+	rebase(_StopAttacking, 0x1005E6A0);
+	rebase(_AiSetCombatStatus, 0x1005DA00);
 }
 
 void AiSystem::aiTacticGetConfig(int tacIdx, AiTactic* aiTacOut, AiStrategy* aiStrat)
@@ -126,7 +121,66 @@ uint32_t AiSystem::aiStrategyParse(objHndl objHnd, objHndl target)
 	return 0;
 }
 
+bool AiSystem::HasAiFlag(objHndl npc, AiFlag flag) {
+	auto aiFlags = templeFuncs.Obj_Get_Field_64bit(npc, obj_f_npc_ai_flags64);
+	auto flagBit = (uint64_t)flag;
+	return (aiFlags & flagBit) != 0;
+}
 
+void AiSystem::SetAiFlag(objHndl npc, AiFlag flag) {
+	auto aiFlags = templeFuncs.Obj_Get_Field_64bit(npc, obj_f_npc_ai_flags64);
+	aiFlags |= (uint64_t) flag;
+	templeFuncs.Obj_Set_Field_64bit(npc, obj_f_npc_ai_flags64, aiFlags);
+}
+
+void AiSystem::ClearAiFlag(objHndl npc, AiFlag flag) {
+	auto aiFlags = templeFuncs.Obj_Get_Field_64bit(npc, obj_f_npc_ai_flags64);
+	aiFlags &= ~ (uint64_t)flag;
+	templeFuncs.Obj_Set_Field_64bit(npc, obj_f_npc_ai_flags64, aiFlags);
+}
+
+void AiSystem::ShitlistAdd(objHndl npc, objHndl target) {
+	_ShitlistAdd(npc, target);
+}
+
+void AiSystem::ShitlistRemove(objHndl npc, objHndl target) {
+	_AiRemoveFromList(npc, target, 0); // 0 is the shitlist
+
+	auto focus = GetCombatFocus(npc);
+	if (focus == target) {
+		SetCombatFocus(npc, 0);
+	}
+	auto hitMeLast = GetWhoHitMeLast(npc);
+	if (hitMeLast == target) {
+		SetWhoHitMeLast(npc, 0);
+	}
+
+	_AiSetCombatStatus(npc, 0, 0, 0); // I think this means stop attacking?
+}
+
+void AiSystem::FleeAdd(objHndl npc, objHndl target) {
+	_FleeAdd(npc, target);
+}
+
+void AiSystem::StopAttacking(objHndl npc) {
+	_StopAttacking(npc);
+}
+
+objHndl AiSystem::GetCombatFocus(objHndl npc) {
+	return templeFuncs.Obj_Get_Field_ObjHnd__fastout(npc, obj_f_npc_combat_focus);
+}
+
+objHndl AiSystem::GetWhoHitMeLast(objHndl npc) {
+	return templeFuncs.Obj_Get_Field_ObjHnd__fastout(npc, obj_f_npc_who_hit_me_last);
+}
+
+void AiSystem::SetCombatFocus(objHndl npc, objHndl target) {
+	templeFuncs.Obj_Set_Field_ObjHnd(npc, obj_f_npc_combat_focus, target);
+}
+
+void AiSystem::SetWhoHitMeLast(objHndl npc, objHndl target) {
+	templeFuncs.Obj_Set_Field_ObjHnd(npc, obj_f_npc_who_hit_me_last, target);
+}
 #pragma endregion
 
 #pragma region AI replacement functions
@@ -135,4 +189,13 @@ uint32_t _aiStrategyParse(objHndl objHnd, objHndl target)
 {
 	return aiSys.aiStrategyParse(objHnd, target);
 }
+
+class AiReplacements : public TempleFix
+{
+	macTempleFix(AI Replacements)
+	{
+		logger->info("Replacing AI functions...");
+		macReplaceFun(100E50C0, _aiStrategyParse)
+	}
+} aiReplacements;
 #pragma endregion 

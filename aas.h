@@ -14,7 +14,7 @@ struct AasConfig {
 	uint32_t getAnimName; // Callback, but default is used
 	uint32_t anim_callback2; // Callback, but default is used
 	uint32_t field18;
-	uint32_t runScript; // Python run script, probably for embedded animation scripts
+	void (__cdecl *runScript)(const char *command); // Python run script, probably for embedded animation scripts
 };
 
 struct AasFuncs : AddressTable {

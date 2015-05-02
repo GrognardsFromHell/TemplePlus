@@ -576,10 +576,17 @@ static struct ExternalGraphicsFuncs : AddressTable {
 	*/
 	void (__cdecl *sub_101EF8B0)(void);
 
+	/*
+		Converts from screen loc to tile.
+	*/
+	bool (__cdecl *ScreenToLoc)(int64_t x, int64_t y, locXY &locOut);
+
 	// Is the full-screen overlay for fading out/in enabled?
 	bool* gfadeEnable;
 	// If it's enabled, what color does it have?
 	D3DCOLOR* gfadeColor;
+
+	void (__cdecl *ShakeScreen)(float amount, float duration);
 
 	ExternalGraphicsFuncs() {
 		rebase(AdvanceShaderClock, 0x101E0A30);
@@ -590,6 +597,9 @@ static struct ExternalGraphicsFuncs : AddressTable {
 
 		rebase(RenderTexturedQuad, 0x101d90b0);
 		rebase(sub_101EF8B0, 0x101EF8B0);
+
+		rebase(ScreenToLoc, 0x100290C0);
+		rebase(ShakeScreen, 0x10005840);
 	}
 } externalGraphicsFuncs;
 
@@ -790,6 +800,19 @@ void Graphics::UpdateWindowSize(int w, int h) {
 	// TODO: Update back buffer accordingly
 
 	RefreshSceneRect();
+}
+
+bool Graphics::ScreenToTile(int x, int y, locXY& tileOut) {
+	auto result = externalGraphicsFuncs.ScreenToLoc(x, y, tileOut);
+	if (!result) {
+		tileOut.locx = 0;
+		tileOut.locy = 0;
+	}
+	return result;
+}
+
+void Graphics::ShakeScreen(float amount, float duration) {
+	externalGraphicsFuncs.ShakeScreen(amount, duration);
 }
 
 void Graphics::RenderGFade() {

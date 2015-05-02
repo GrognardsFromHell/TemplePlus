@@ -78,7 +78,7 @@ struct SpellPacketBody
 	uint32_t field_A04;
 	SpellEntry spellEntry;
 	uint32_t spellDuration;
-	uint32_t field_ACC;
+	int field_ACC;
 	uint32_t spellRange;
 	uint32_t field_AD4;
 	uint32_t field_AD8_maybe_itemSpellLevel;
@@ -100,6 +100,8 @@ const uint32_t TestSizeOfSpellPacket = sizeof(SpellPacket); // should be 0xAF0  
 
 #pragma endregion
 
+struct CondStruct;
+
 struct SpellSystem : AddressTable
 {
 	IdxTable<SpellPacket> * spellCastIdxTable;
@@ -116,6 +118,7 @@ struct SpellSystem : AddressTable
 	uint32_t getSpellEnum(const char* spellName);
 	uint32_t GetSpellEnumFromSpellId(uint32_t spellId);
 	uint32_t GetSpellPacketBody(uint32_t spellId, SpellPacketBody* spellPktBodyOut);
+	void UpdateSpellPacket(const SpellPacketBody &spellPktBody);
 	uint32_t spellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count);
 	uint32_t spellCanCast(objHndl objHnd, uint32_t spellEnum, uint32_t spellClassCode, uint32_t spellLevel);
 	uint32_t spellMemorizedQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count);
@@ -124,20 +127,30 @@ struct SpellSystem : AddressTable
 	bool isDomainSpell(uint32_t spellClassCode);
 	uint32_t pickerArgsFromSpellEntry(SpellEntry * spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLevel);
 
+	void (__cdecl *SpellEnd)(int, int);
+	void (__cdecl *SpellRemove)(int);
 
+	CondStruct *GetCondFromSpellIdx(int id);
 	uint32_t(__cdecl * spellRemoveFromStorage)(objHndl objHnd, obj_f fieldIdx, SpellStoreData * spellData, int unknown);
 	uint32_t (__cdecl * spellsPendingToMemorized)(objHndl objHnd);
+	int (__cdecl *SpellKnownAdd)(objHndl ObjHnd, int nSpellIdx, int nSpellClassCode, int nSpellCasterLevel, int nSpellStoreData, int nMetamagicData);
+	int (__cdecl *SpellMemorizedAdd)(objHndl ObjHnd, int nSpellIdx, int nSpellClassCode, int nSpellCasterLevel, int nSpellStoreData, int nMetamagicData);
+	void ForgetMemorized(objHndl handle);
 	SpellSystem()
 	{
 		rebase(spellCastIdxTable, 0x10AAF218);
 		macRebase(spellEnumMesHandle, 10AAF210)
 
+		rebase(SpellEnd, 0x10079980);
+		rebase(SpellRemove, 0x10079A20);
 		rebase(_getSpellCountByClassLvl, 0x100F4D10);
 		rebase(_getStatModBonusSpellCount, 0x100F4C30);
 		rebase(spellRemoveFromStorage, 0x100758A0);
 		rebase(spellsPendingToMemorized, 0x100757D0);
 		macRebase(_spellPacketBodyReset, 1008A350)
 		macRebase(_spellPacketSetCasterLevel, 10079B70)
+		rebase(SpellKnownAdd, 0x10079EE0);
+		rebase(SpellMemorizedAdd, 0x10075A10);
 		macRebase(_pickerArgsFromSpellEntry, 100772A0)
 	}
 private:

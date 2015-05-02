@@ -3,6 +3,7 @@
 
 #include "util/addresses.h"
 #include "tig/tig.h"
+#include <obj.h>
 
 struct GameSystemConf;
 
@@ -120,6 +121,40 @@ public:
 		Notifies UI of a resized screen.
 	*/
 	void ResizeScreen(int bufferStuffId, int width, int height);
+
+	/*
+	
+	*/
+	void UpdateCombatUi();
+
+	/*
+	
+	*/
+	void UpdatePartyUi();
+
+	/*
+	
+	*/
+	void ShowWorldMap(int unk);
+
+	void WorldMapTravelByDialog(int destination);
+
+	/*
+		Shows the party pool UI. Flag indicates whether the pool
+		is being shown ingame (tavern) or from outside the game.
+	*/
+	void ShowPartyPool(bool ingame);
+
+	/*
+		This is actually used to *hide* the char ui if param is 0.
+		Other meanings of param are currently unknown.
+	*/
+	void ShowCharUi(int page);
+
+	/*
+		Not quite clear what this is.
+	*/
+	bool ShowWrittenUi(objHndl handle);
 };
 extern Ui ui;
 

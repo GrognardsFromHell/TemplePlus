@@ -275,98 +275,6 @@ UiPickerType operator&(const UiPickerType& lhs, const UiPickerType& rhs){
 	return (UiPickerType)((uint64_t)lhs & (uint64_t)rhs);
 };
 
-static PyObject * pyObjHandleType_CastSpell(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	uint32_t spellEnum;
-	TemplePyObjHandle * targetPyObj;
-	PickerArgs pickArgs;
-	SpellPacketBody spellPktBody;
-	SpellEntry spellEntry;
-	char parseString[] = "i|O!";
-	if (!PyArg_ParseTuple(pyTupleIn, "i|O!:objhndl.cast_spell", &spellEnum, pyObjHandleType.ptr(), &targetPyObj)) {
-		return 0;
-	}
-	objHndl caster = obj->objHandle;
-	objHndl targetObj = targetPyObj->objHandle;
-	LocAndOffsets loc;
-	D20SpellData d20SpellData;
-	
-	// get spell known data
-	// I've set up a really large buffer just in case, 
-	// because in theory a player might have permutations 
-	// of spells due to metamagic, different casting classes etc.
-	uint32_t classCodes[10000] = { 0, };
-	uint32_t spellLevels[10000] = {0,};
-	uint32_t numSpells = 0;
-	if (!spellSys.spellKnownQueryGetData(caster, spellEnum, classCodes, spellLevels, &numSpells)) {
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-	if (numSpells <= 0) {
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-	spellSys.spellPacketBodyReset(&spellPktBody);
-	for (uint32_t i = 0; i < numSpells; i++)
-	{
-		if (!spellSys.spellCanCast(caster, spellEnum, classCodes[i], spellLevels[i])) continue;
-		spellSys.spellPacketSetCasterLevel(&spellPktBody);
-		if (!spellSys.spellRegistryCopy(spellEnum, &spellEntry)) continue;
-		if (!spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, caster, spellPktBody.baseCasterLevel)) continue;
-		pickArgs.result = { 0, };
-		pickArgs.flagsTarget = (UiPickerFlagsTarget)(
-			(uint64_t)pickArgs.flagsTarget | (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::Unknown100h 
-			- (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::Range
-			);
-
-		if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Single))
-		{
-			objects.loc->getLocAndOff(targetObj, &loc);
-			uiPicker.sub_100BA480(targetObj, &pickArgs);
-		} 
-		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Multi))
-		{
-			objects.loc->getLocAndOff(targetObj, &loc);
-			uiPicker.sub_100BA480(targetObj, &pickArgs);
-		}
-		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Cone))
-		{
-			objects.loc->getLocAndOff(targetObj, &loc);
-			uiPicker.sub_100BA6A0(&loc, &pickArgs);
-
-		}
-		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Area))
-		{
-			if (spellEntry.spellRangeType == SRT_Personal)
-				objects.loc->getLocAndOff(caster, &loc);
-			else objects.loc->getLocAndOff(targetObj, &loc);
-			uiPicker.sub_100BA540(&loc, &pickArgs);
-		}
-		else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Personal))
-		{
-			objects.loc->getLocAndOff(caster, &loc);
-			uiPicker.sub_100BA480(caster, &pickArgs);
-		}
-
-		spellSys.ConfigSpellTargetting(&pickArgs, &spellPktBody);
-		if (spellPktBody.targetListNumItems <= 0) continue;
-		if (!actSeqSys.TurnBasedStatusInit(caster)) continue;
-		d20Sys.GlobD20ActnInit();
-		d20Sys.GlobD20ActnSetTypeAndData1(D20A_CAST_SPELL, 0);
-		actSeqSys.ActSeqCurSetSpellPacket(&spellPktBody, 1);
-		d20Sys.D20ActnSetSpellData(&d20SpellData, spellEnum, classCodes[i], spellLevels[i], 0xFF, 0);
-		d20Sys.GlobD20ActnSetSpellData(&d20SpellData);
-		d20Sys.GlobD20ActnSetTarget(targetObj, &loc);
-		actSeqSys.ActionAddToSeq();
-		actSeqSys.sequencePerform();
-
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-	Py_INCREF(Py_None);
-	return Py_None;
-};
-
-
 static PyObject * pyObjHandleType_ObjFeatAdd(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	feat_enums nFeatCode;
 	if (!PyArg_ParseTuple(pyTupleIn, "i", &nFeatCode)) {
@@ -435,7 +343,6 @@ static PyMethodDef pyObjHandleMethods_New[] = {
 	"pc_add", (PyCFunction)pyObjHandleType_PC_Add, METH_VARARGS, "Adds object as a PC party member.",
 	"objfeatadd", (PyCFunction)pyObjHandleType_ObjFeatAdd, METH_VARARGS, "Adds a feat. Feats can be added multiple times (at least some of them? like Toughness)",
 	"makewiz", (PyCFunction)pyObjHandleType_MakeWizard, METH_VARARGS, "Makes character a wizard of level n",
-	"cast_spell", (PyCFunction)pyObjHandleType_CastSpell, METH_VARARGS, "Casts a spell. Beware the chaos!",
 	//
 	0, 0, 0, 0
 };
@@ -568,10 +475,6 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 	return pyObjHandleTypeGetAttr(obj, name);
 }
 
-PyObject* __cdecl pySpellType_getAttrNew(PySpell* spell, char *name) {	
-	return pySpellTypeGetAttr(spell, name);
-};
-
 int __cdecl  pyObjHandleType_setAttrNew(TemplePyObjHandle *obj, char *name, TemplePyObjHandle *obj2) {
 	logger->info("Tried setting property: {}", name);
 	if (!strcmp(name, "co8rocks")) {
@@ -591,64 +494,3 @@ int __cdecl  pyObjHandleType_setAttrNew(TemplePyObjHandle *obj, char *name, Temp
 
 	return pyObjHandleTypeSetAttr(obj, name, obj2);
 }
-
-static PyMethodDef debugMethodDef = {
-	"debug",
-	nullptr,
-	METH_VARARGS,
-	nullptr
-};
-
-class PythonExtensions : public TempleFix {
-public:
-	const char* name() override {
-		return "Python Script Extensions";
-	}
-
-	static PyObject* DebugCallHandler(PyObject *pyIdx, PyObject *args) {
-		auto idx = PyInt_AsLong(pyIdx);
-		auto cb = reinterpret_cast<PythonDebugFunc*>(idx);
-
-		cb->callback()();
-		
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-
-	static int __cdecl HookedInitPython() {
-
-		auto result = pythonInternal.InitPython();
-
-		logger->info("Initializating Co8 Python subsystems...");
-		for (auto cb : PythonDebugFunc::callbacks()) {
-			logger->debug("  Registering Python global {}", cb->name());
-
-			auto name = const_cast<char*>(cb->name());
-			debugMethodDef.ml_meth = reinterpret_cast<PyCFunction>(&DebugCallHandler);
-			PyObject *cFunc = PyCFunction_New(&debugMethodDef, PyInt_FromLong(reinterpret_cast<long>(cb)));
-			PyDict_SetItemString(*pythonInternal.globals, name, cFunc);
-			Py_DECREF(cFunc);
-		}
-		
-		return result;
-	}
-
-	void apply() override {
-
-		// replace the init function with our own, so we can add our stuff at the right time
-		auto orgInitPython = replaceFunction(0x100ADA30, &HookedInitPython);
-		pythonInternal.InitPython = reinterpret_cast<int(__cdecl*)()>(orgInitPython);
-
-		// Hook the getattr function of obj handles
-		pyObjHandleTypeGetAttr = pyObjHandleType->tp_getattr;
-		pyObjHandleType->tp_getattr = (getattrfunc)pyObjHandleType_getAttrNew;
-
-		pyObjHandleTypeSetAttr = pyObjHandleType->tp_setattr;
-		pyObjHandleType->tp_setattr = (setattrfunc)pyObjHandleType_setAttrNew;
-
-		pySpellTypeGetAttr = pySpellType->tp_getattr;
-		pySpellType->tp_getattr = (getattrfunc)pySpellType_getAttrNew;
-
-	}
-
-} pythonExtension;

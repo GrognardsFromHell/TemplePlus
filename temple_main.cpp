@@ -116,7 +116,7 @@ public:
 		logger->info("Loading game systems");
 
 		memset(&mConfig, 0, sizeof(mConfig));
-		mConfig.editor = ::config.editor;
+		mConfig.editor = ::config.editor ? 1 : 0;
 		mConfig.width = tigConfig.width;
 		mConfig.height = tigConfig.height;
 		mConfig.field_10 = temple_address(0x10002530); // Callback 1

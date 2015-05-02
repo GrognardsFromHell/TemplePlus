@@ -91,14 +91,14 @@ extern "C" {
 	TIOLIB int TIOAPI tio_fread(void* buffer, size_t size, size_t count, TioFile* file);
 
 	// The following functions have the wrong signature
-	TIOLIB void TIOAPI tio_fgetpos();
+	TIOLIB void TIOAPI tio_fgetpos(TioFile *file, uint64_t *filePos);
 	TIOLIB int TIOAPI tio_fclose(TioFile *file);
 	TIOLIB TioFile* TIOAPI tio_fopen(const char *file, const char *mode);
-	TIOLIB void TIOAPI tio_remove(const char *file);
-	TIOLIB int TIOAPI tio_fwrite(void *buffer, int size, int count, TioFile *file);
+	TIOLIB int TIOAPI tio_remove(const char *file);
+	TIOLIB int TIOAPI tio_fwrite(const void *buffer, int size, int count, TioFile *file);
 	TIOLIB int TIOAPI tio_fstat(TioFile *file, TioFileListFile* pFileInfo);
-	TIOLIB bool TIOAPI tio_fileexists(const char *path, TioFileListFile *pInfoOut);
-	TIOLIB void TIOAPI tio_rename();
+	TIOLIB bool TIOAPI tio_fileexists(const char *path, TioFileListFile *pInfoOut = nullptr);
+	TIOLIB void TIOAPI tio_rename(const char *from, const char *to);
 	TIOLIB void TIOAPI tio_path_guid();
 	TIOLIB void TIOAPI tio_fseek();
 	TIOLIB void TIOAPI tio_file_extract();
@@ -123,6 +123,7 @@ extern "C" {
 	TIOLIB void TIOAPI tio_fflush();
 	TIOLIB void TIOAPI tio_ferror();
 	TIOLIB void TIOAPI tio_clearerr();
-	TIOLIB void TIOAPI tio_rmdir();
+	TIOLIB int TIOAPI tio_rmdir(const char *path);
+
 
 }

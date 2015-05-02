@@ -1,3 +1,4 @@
+
 #include "stdafx.h"
 #include "objlist.h"
 
@@ -63,11 +64,11 @@ int ObjList::CountObjects() const {
 	if (!mResult.objects) {
 		return 0;
 	}
-	auto ptr = mResult.objects;
+	auto item = mResult.objects;
 	auto result = 0;
-	while (*ptr) {
+	while (item) {
 		result++;
-		ptr++;
+		item = item->next;
 	}
 	return result;
 }

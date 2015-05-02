@@ -21,6 +21,8 @@ struct FeatSystem : AddressTable
 	uint32_t FeatExistsInArray(feat_enums featCode, feat_enums * featArray, uint32_t featArrayLen);
 	uint32_t WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType);
 
+	vector<feat_enums> GetFeats(objHndl handle); // This is what objHndl.feats in python returns ??
+
 	uint32_t rangerArcheryFeats[2 * 2];
 	uint32_t rangerTwoWeaponFeats[2 * 2];
 

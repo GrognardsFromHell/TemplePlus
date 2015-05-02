@@ -18,7 +18,7 @@ class PathfindingReplacements : TempleFix
 float Pathfinding::pathLength(Path* path)
 {
 	float distTot;
-	if (path->flags & PQF_UNK2)	return loc->distBtwnLocAndOffs(path->to, path->from) / (float)12.0;
+	if (path->flags & PQF_UNK2)	return loc->distBtwnLocAndOffs(path->to, path->from) / 12.0f;
 	distTot = 0;
 	auto nodeFrom = path->from;
 	for (int i = 0; i < path->nodeCount; i++)
@@ -27,7 +27,7 @@ float Pathfinding::pathLength(Path* path)
 		distTot += loc->distBtwnLocAndOffs(nodeFrom, nodeTo);
 		nodeFrom = nodeTo;
 	}
-	return distTot / (float)12.0;
+	return distTot / 12.0f;
 }
 
 bool Pathfinding::pathQueryResultIsValid(PathQueryResult* pqr)

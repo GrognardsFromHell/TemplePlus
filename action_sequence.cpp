@@ -241,7 +241,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	if (d20a->d20ATarget)
 	{
 		const float twelve = 12.0;
-		const float fourPointSevenPlusEight = (float)4.714045 + 8.0;
+		const float fourPointSevenPlusEight = 4.714045f + 8.0f;
 		pathQ.targetObj = d20a->d20ATarget;
 		pathQ.flags = (PathQueryFlags)0x23803;
 		if (reach < 0.1){ reach = 3.0; }
@@ -779,7 +779,7 @@ void ActionSequenceSystem::actionPerform()
 			hooked_print_debug_message("Action unavailable for %s (%I64x): %s\n", objects.description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer, mesLine.value );
 			*actnProcState = errCode;
 			curSeq->tbStatus.errCode = errCode;
-			objects.floats->floatMesLine(performer, 1, 1, mesLine.value);
+			objects.floats->floatMesLine(performer, 1, FloatLineColor::Red, mesLine.value);
 			curSeq->d20ActArrayNum = curSeq->d20aCurIdx;
 			break;
 		}
@@ -809,8 +809,7 @@ void ActionSequenceSystem::actionPerform()
 		if (d20->tumbleCheck(d20a))
 		{
 			AOOSthgSub_10097D50(d20a->d20APerformer, d20a->d20ATarget);
-			D20CAF * caflags = & (curSeq->d20ActArray[curSeq->d20ActArrayNum - 1].d20Caf);
-			*((uint32_t*)caflags) |= (uint32_t)D20CAF_AOO_MOVEMENT;
+			curSeq->d20ActArray[curSeq->d20ActArrayNum - 1].d20Caf |= D20CAF_AOO_MOVEMENT;
 			sequencePerform();
 			return;
 		}

@@ -18,6 +18,32 @@ public:
 		return ConfigSetting(option, setter, getter, description);
 	}
 
+	static ConfigSetting StringList(const char *option, char sep, Setter<const vector<string>&> setter, Getter<vector<string>> getter, const char *description = nullptr) {
+		Getter<string> getterAdapter = [=] {
+			string result;
+			for (auto &str : getter()) {
+				if (!result.empty()) {
+					result += sep;
+				}
+				result += str;
+			}
+			return result;
+		};
+		Setter<string> setterAdapter = [=](string x) {
+			vector<string> result;
+			stringstream ss(x);
+			string token;
+			while (getline(ss, token, sep)) {
+				if (!token.empty()) {
+					result.push_back(token);
+				}
+			}
+			setter(result);
+		};
+
+		return ConfigSetting(option, setterAdapter, getterAdapter, description);
+	}
+
 	static ConfigSetting Bool(const char *option, Setter<bool> setter, Getter<bool> getter, const char *description = nullptr) {
 		Getter<string> getterAdapter = [=] {
 			return getter() ? "true" : "false";
@@ -78,6 +104,7 @@ private:
 };
 
 #define CONF_STRING(FIELDNAME) ConfigSetting::String(#FIELDNAME, [] (string val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
+#define CONF_STRING_LIST(FIELDNAME, SEP) ConfigSetting::StringList(#FIELDNAME, SEP, [] (const vector<string> &val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
 #define CONF_INT(FIELDNAME) ConfigSetting::Int(#FIELDNAME, [] (int val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
 #define CONF_BOOL(FIELDNAME) ConfigSetting::Bool(#FIELDNAME, [] (bool val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
 #define CONF_DOUBLE(FIELDNAME) ConfigSetting::Double(#FIELDNAME, [] (double val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
@@ -102,7 +129,8 @@ static ConfigSetting configSettings[] = {
 	CONF_INT(renderHeight),
 	CONF_BOOL(debugMessageEnable),
 	CONF_BOOL(lockCursor),
-	CONF_BOOL(showExactHPforNPCs)
+	CONF_BOOL(showExactHPforNPCs),
+	CONF_STRING_LIST(additionalTioPaths, ';')
 };
 
 void TemplePlusConfig::Load() {
