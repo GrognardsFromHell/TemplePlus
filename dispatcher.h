@@ -4,6 +4,7 @@
 
 #define DISPATCHER_MAX  250 // max num of simultaneous Dispatches going on (static int counter inside _DispatcherProcessor)
 
+struct DispIOBonusListAndSpellEntry;
 struct SpellEntry;
 struct DispIOTurnBasedStatus;
 struct TurnBasedStatus;
@@ -30,6 +31,7 @@ struct DispatcherSystem : AddressTable
 	float Dispatch29hGetMoveSpeed(objHndl objHnd, void *);
 	void dispIOTurnBasedStatusInit(DispIOTurnBasedStatus* dispIOtbStat);
 	void dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBasedStatus* dispIOtB);
+	DispIOBonusListAndSpellEntry* DispIOCheckIoType14(DispIO* dispIo);
 	uint32_t(__cdecl * dispatcherForCritters)(objHndl, DispIO *, enum_disp_type, uint32_t dispKey);
 	DispatcherSystem()
 	{
@@ -187,5 +189,7 @@ uint32_t _Dispatch63(objHndl objHnd, DispIO* dispIO);
 
 void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO * dispIO);
 int32_t _dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut, objHndl objHnd2, int32_t flag);
+
+DispIOBonusListAndSpellEntry * __cdecl _DispIOCheckIoType14(DispIO *dispIO);
 
 #pragma endregion
