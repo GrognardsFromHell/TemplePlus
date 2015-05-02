@@ -140,6 +140,12 @@
     <ClCompile Include="idxtables.cpp">
       <Filter>generic data structures</Filter>
     </ClCompile>
+    <ClCompile Include="bonusspells.cpp">
+      <Filter>Mods and Fixes\Spell Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="spell_condition.cpp">
+      <Filter>Mods and Fixes\Spell Fixes</Filter>
+    </ClCompile>
     <ClCompile Include="python\python.cpp">
       <Filter>python</Filter>
     </ClCompile>
@@ -177,58 +183,10 @@
       <Filter>utils</Filter>
     </ClCompile>
     <ClCompile Include="util\version.cpp" />
-    <ClCompile Include="python\python_embed.cpp" />
-    <ClCompile Include="python\python_importer.cpp" />
-    <ClCompile Include="python\python_consoleout.cpp" />
-    <ClCompile Include="python\python_game.cpp" />
-    <ClCompile Include="action_sequence.cpp" />
-    <ClCompile Include="float_line.cpp" />
-    <ClCompile Include="location.cpp" />
     <ClCompile Include="renderstates.cpp" />
+    <ClCompile Include="tio\tio_utils.cpp" />
     <ClCompile Include="tig\tig.cpp" />
     <ClCompile Include="tig\tig_sound.cpp" />
-    <ClCompile Include="tio\tio_utils.cpp" />
-    <ClCompile Include="spell_condition.cpp" />
-    <ClCompile Include="python\python_object.cpp" />
-    <ClCompile Include="python\python_time.cpp" />
-    <ClCompile Include="dependencies\minhook\src\buffer.c" />
-    <ClCompile Include="dependencies\minhook\src\hook.c" />
-    <ClCompile Include="dependencies\minhook\src\trampoline.c" />
-    <ClCompile Include="dependencies\minhook\src\HDE\hde32.c" />
-    <ClCompile Include="dependencies\minhook\src\HDE\hde64.c" />
-    <ClCompile Include="python\python_scripts.cpp" />
-    <ClCompile Include="python\python_integration.cpp" />
-    <ClCompile Include="python\python_console.cpp" />
-    <ClCompile Include="python\python_module.cpp" />
-    <ClCompile Include="python\python_dice.cpp" />
-    <ClCompile Include="dice.cpp" />
-    <ClCompile Include="maps.cpp" />
-    <ClCompile Include="python\python_objectscripts.cpp" />
-    <ClCompile Include="fade.cpp" />
-    <ClCompile Include="textbubbles.cpp" />
-    <ClCompile Include="objlist.cpp" />
-    <ClCompile Include="sound.cpp" />
-    <ClCompile Include="particles.cpp" />
-    <ClCompile Include="ui\ui_picker.cpp" />
-    <ClCompile Include="ui\ui_dialog.cpp" />
-    <ClCompile Include="ui\ui_tutorial.cpp" />
-    <ClCompile Include="ai.cpp" />
-    <ClCompile Include="bonus.cpp" />
-    <ClCompile Include="critter.cpp" />
-    <ClCompile Include="history.cpp" />
-    <ClCompile Include="secret_door.cpp" />
-    <ClCompile Include="skill.cpp" />
-    <ClCompile Include="turn_based.cpp" />
-    <ClCompile Include="dialog.cpp" />
-    <ClCompile Include="damage.cpp" />
-    <ClCompile Include="reputations.cpp" />
-    <ClCompile Include="python\python_globalvars.cpp" />
-    <ClCompile Include="python\python_globalflags.cpp" />
-    <ClCompile Include="python\python_quests.cpp" />
-    <ClCompile Include="quest.cpp" />
-    <ClCompile Include="python\python_areas.cpp" />
-    <ClCompile Include="python\python_counters.cpp" />
-    <ClCompile Include="python\python_spell.cpp" />
     <ClCompile Include="float_line.cpp" />
     <ClCompile Include="location.cpp" />
     <ClCompile Include="secret_door.cpp">
@@ -269,19 +227,53 @@
     <ClCompile Include="python\python_spell.cpp">
       <Filter>python</Filter>
     </ClCompile>
-    <ClCompile Include="python\python_integration_spells.cpp" />
-    <ClCompile Include="python\python_integration_obj.cpp" />
-    <ClCompile Include="radialmenu.cpp" />
-    <ClCompile Include="python\python_cheats.cpp" />
-    <ClCompile Include="python\python_timeevents.cpp" />
-    <ClCompile Include="python\python_tio.cpp" />
-    <ClCompile Include="python\python_trap.cpp" />
-    <ClCompile Include="traps.cpp" />
-    <ClCompile Include="python\python_integration_encounter.cpp" />
-    <ClCompile Include="python\python_integration_brawl.cpp" />
     <ClCompile Include="d20_level.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="damage.cpp" />
+    <ClCompile Include="dependencies\minhook\src\buffer.c" />
+    <ClCompile Include="dependencies\minhook\src\HDE\hde32.c" />
+    <ClCompile Include="dependencies\minhook\src\HDE\hde64.c" />
+    <ClCompile Include="dependencies\minhook\src\hook.c" />
+    <ClCompile Include="dependencies\minhook\src\trampoline.c" />
+    <ClCompile Include="dialog.cpp" />
+    <ClCompile Include="dice.cpp" />
+    <ClCompile Include="fade.cpp" />
+    <ClCompile Include="maps.cpp" />
+    <ClCompile Include="particles.cpp" />
+    <ClCompile Include="python\python_areas.cpp" />
+    <ClCompile Include="python\python_cheats.cpp" />
+    <ClCompile Include="python\python_console.cpp" />
+    <ClCompile Include="python\python_counters.cpp" />
+    <ClCompile Include="python\python_dice.cpp" />
+    <ClCompile Include="python\python_globalflags.cpp" />
+    <ClCompile Include="python\python_globalvars.cpp" />
+    <ClCompile Include="python\python_integration.cpp" />
+    <ClCompile Include="python\python_integration_brawl.cpp" />
+    <ClCompile Include="python\python_integration_obj.cpp" />
+    <ClCompile Include="python\python_integration_spells.cpp" />
+    <ClCompile Include="python\python_module.cpp" />
+    <ClCompile Include="python\python_object.cpp" />
+    <ClCompile Include="python\python_objectscripts.cpp" />
+    <ClCompile Include="python\python_quests.cpp" />
+    <ClCompile Include="python\python_integration_encounter.cpp" />
+    <ClCompile Include="python\python_scripts.cpp" />
+    <ClCompile Include="python\python_time.cpp" />
+    <ClCompile Include="python\python_timeevents.cpp" />
+    <ClCompile Include="python\python_tio.cpp" />
+    <ClCompile Include="python\python_trap.cpp" />
+    <ClCompile Include="quest.cpp" />
+    <ClCompile Include="radialmenu.cpp" />
+    <ClCompile Include="reputations.cpp" />
+    <ClCompile Include="sound.cpp" />
+    <ClCompile Include="textbubbles.cpp" />
+    <ClCompile Include="python\python_consoleout.cpp" />
+    <ClCompile Include="python\python_embed.cpp" />
+    <ClCompile Include="python\python_game.cpp" />
+    <ClCompile Include="python\python_importer.cpp" />
+    <ClCompile Include="traps.cpp" />
+    <ClCompile Include="ui\ui_dialog.cpp" />
+    <ClCompile Include="ui\ui_tutorial.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -473,14 +465,7 @@
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="tio\tio.h" />
-    <ClInclude Include="python\python_importer.h" />
-    <ClInclude Include="python\python_consoleout.h" />
-    <ClInclude Include="python\python_game.h" />
-    <ClInclude Include="action_sequence.h" />
-    <ClInclude Include="float_line.h" />
-    <ClInclude Include="location.h" />
     <ClInclude Include="renderstates.h" />
-    <ClInclude Include="tig\tig_sound.h" />
     <ClInclude Include="tio\tio_utils.h" />
     <ClInclude Include="tig\tig_sound.h" />
     <ClInclude Include="float_line.h" />
@@ -523,66 +508,59 @@
     <ClInclude Include="python\python_spell.h">
       <Filter>python</Filter>
     </ClInclude>
-    <ClInclude Include="python\python_object.h" />
-    <ClInclude Include="python\python_time.h" />
-    <ClInclude Include="python\python_embed.h" />
+    <ClInclude Include="d20_level.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="damage.h" />
+    <ClInclude Include="dependencies\minhook\include\MinHook.h" />
     <ClInclude Include="dependencies\minhook\src\buffer.h" />
-    <ClInclude Include="dependencies\minhook\src\trampoline.h" />
     <ClInclude Include="dependencies\minhook\src\HDE\hde32.h" />
     <ClInclude Include="dependencies\minhook\src\HDE\hde64.h" />
     <ClInclude Include="dependencies\minhook\src\HDE\pstdint.h" />
     <ClInclude Include="dependencies\minhook\src\HDE\table32.h" />
     <ClInclude Include="dependencies\minhook\src\HDE\table64.h" />
-    <ClInclude Include="dependencies\minhook\include\MinHook.h" />
-    <ClInclude Include="python\python_integration.h" />
-    <ClInclude Include="python\python_console.h" />
-    <ClInclude Include="python\python_error.h" />
-    <ClInclude Include="python\python_module.h" />
-    <ClInclude Include="python\python_support.h" />
-    <ClInclude Include="python\python_dice.h" />
-    <ClInclude Include="dice.h" />
-    <ClInclude Include="maps.h" />
-    <ClInclude Include="python\python_objectscripts.h" />
-    <ClInclude Include="fade.h" />
-    <ClInclude Include="textbubbles.h" />
-    <ClInclude Include="objlist.h" />
-    <ClInclude Include="util\mathutil.h" />
-    <ClInclude Include="sound.h" />
-    <ClInclude Include="particles.h" />
-    <ClInclude Include="ui\ui_picker.h" />
-    <ClInclude Include="ui\ui_dialog.h" />
-    <ClInclude Include="ui\ui_tutorial.h" />
-    <ClInclude Include="ai.h" />
-    <ClInclude Include="bonus.h" />
-    <ClInclude Include="critter.h" />
-    <ClInclude Include="history.h" />
-    <ClInclude Include="secret_door.h" />
-    <ClInclude Include="skill.h" />
-    <ClInclude Include="turn_based.h" />
+    <ClInclude Include="dependencies\minhook\src\trampoline.h" />
     <ClInclude Include="dialog.h" />
-    <ClInclude Include="damage.h" />
-    <ClInclude Include="reputations.h" />
-    <ClInclude Include="util\stringutil.h" />
-    <ClInclude Include="python\python_globalvars.h" />
-    <ClInclude Include="python\python_globalflags.h" />
-    <ClInclude Include="python\python_quests.h" />
-    <ClInclude Include="quest.h" />
-    <ClInclude Include="python\python_areas.h" />
-    <ClInclude Include="python\python_counters.h" />
-    <ClInclude Include="python\python_spell.h" />
-    <ClInclude Include="python\python_integration_spells.h" />
-    <ClInclude Include="python\python_integration_obj.h" />
-    <ClInclude Include="radialmenu.h" />
-    <ClInclude Include="python\python_cheats.h" />
+    <ClInclude Include="dice.h" />
+    <ClInclude Include="fade.h" />
+    <ClInclude Include="maps.h" />
+    <ClInclude Include="particles.h" />
     <ClInclude Include="gamelib_private.h" />
+    <ClInclude Include="python\python_areas.h" />
+    <ClInclude Include="python\python_cheats.h" />
+    <ClInclude Include="python\python_console.h" />
+    <ClInclude Include="python\python_counters.h" />
+    <ClInclude Include="python\python_dice.h" />
+    <ClInclude Include="python\python_embed.h" />
+    <ClInclude Include="python\python_error.h" />
+    <ClInclude Include="python\python_globalflags.h" />
+    <ClInclude Include="python\python_globalvars.h" />
+    <ClInclude Include="python\python_integration.h" />
+    <ClInclude Include="python\python_integration_obj.h" />
+    <ClInclude Include="python\python_integration_spells.h" />
+    <ClInclude Include="python\python_module.h" />
+    <ClInclude Include="python\python_object.h" />
+    <ClInclude Include="python\python_objectscripts.h" />
+    <ClInclude Include="python\python_quests.h" />
+    <ClInclude Include="python\python_support.h" />
+    <ClInclude Include="python\python_time.h" />
     <ClInclude Include="python\python_timeevents.h" />
     <ClInclude Include="python\python_tio.h" />
     <ClInclude Include="python\python_trap.h" />
+    <ClInclude Include="quest.h" />
+    <ClInclude Include="radialmenu.h" />
+    <ClInclude Include="reputations.h" />
+    <ClInclude Include="textbubbles.h" />
     <ClInclude Include="tig\tig_tabparser.h" />
+    <ClInclude Include="python\python_game.h" />
+    <ClInclude Include="python\python_importer.h" />
+    <ClInclude Include="python\python_consoleout.h" />
     <ClInclude Include="traps.h" />
-    <ClInclude Include="d20_level.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
+    <ClInclude Include="ui\ui_dialog.h" />
+    <ClInclude Include="ui\ui_tutorial.h" />
+    <ClInclude Include="util\mathutil.h" />
+    <ClInclude Include="sound.h" />
+    <ClInclude Include="util\stringutil.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -634,12 +612,15 @@
     <Filter Include="generic data structures">
       <UniqueIdentifier>{9fef2488-221b-44e8-90ae-f5cf72e4b8b1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Mods and Fixes\Spell Fixes">
+      <UniqueIdentifier>{0e53287e-d500-4b3d-a274-09c4e0cf6dbf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\Spellslinger%27s Notes\bonusspells.txt">
-      <Filter>Mods and Fixes</Filter>
-    </Text>
     <Text Include="appveyor.yml" />
+    <Text Include="..\Spellslinger%27s Notes\bonusspells.txt">
+      <Filter>Mods and Fixes\Spell Fixes</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Dependencies">
