@@ -61,7 +61,7 @@ public:
 	int ExecuteObjectScript(objHndl triggerer, objHndl attachee, ObjScriptEvent evt);
 	
 	void RunAnimFrameScript(const char *command);
-
+		
 	PyObject *ExecuteScript(const char *moduleName, const char *functionName, PyObject *args);
 	
 	PyObject *ExecuteScript(const char *moduleName, const char *functionName);
@@ -115,6 +115,7 @@ protected:
 	const char* GetFunctionName(EventId evt) override;
 
 private:
+
 	bool mInObjInvocation = false;
 	int mNewSid = -1;
 	objHndl mAnimatedObj;

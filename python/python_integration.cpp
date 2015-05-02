@@ -5,6 +5,7 @@
 
 #include "python_integration.h"
 #include "tio/tio.h"
+#include "python_embed.h"
 
 PythonIntegration::PythonIntegration(const string& searchPattern, const string& filenameRegexp) {
 	mSearchPattern = searchPattern;
@@ -118,9 +119,27 @@ bool PythonIntegration::LoadScript(int scriptId, ScriptRecord &scriptOut) {
 			PyErr_Print();
 			script.loadingError = true; // Do not try this over and over again
 			return false;
+		} else {
+			// Add globals on demand
+			auto dict = PyModule_GetDict(script.module);
+			AddGlobalsOnDemand(dict);
 		}
 	}
 
 	scriptOut = script;
 	return true;
+}
+
+
+/*
+	Will check if the given dict contains one of the constants and if not present,
+	will import them automatically.
+*/
+void PythonIntegration::AddGlobalsOnDemand(PyObject* dict) {
+
+	if (PyDict_GetItemString(dict, "stat_strength")) {
+		return; // Already imported
+	}
+
+	PyDict_Merge(dict, MainModuleDict, 0);
 }

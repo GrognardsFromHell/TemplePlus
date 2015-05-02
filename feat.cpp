@@ -291,7 +291,7 @@ uint32_t _WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featA
 
 	if (wpnType == wt_orc_double_axe)
 	{
-		if (objects.GetRace(objHnd) == race_halforc)
+		if (critterSys.GetRace(objHnd) == race_halforc)
 		{
 			return 1;
 		}
@@ -299,7 +299,7 @@ uint32_t _WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featA
 	}
 	else if (wpnType == wt_gnome_hooked_hammer)
 	{
-		if (objects.GetRace(objHnd) == race_gnome)
+		if (critterSys.GetRace(objHnd) == race_gnome)
 		{
 			return 1;
 		}
@@ -307,7 +307,7 @@ uint32_t _WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featA
 	}
 	else if (wpnType == wt_dwarven_waraxe)
 	{
-		if (objects.GetRace(objHnd) == race_dwarf)
+		if (critterSys.GetRace(objHnd) == race_dwarf)
 		{
 			return 1;
 		}

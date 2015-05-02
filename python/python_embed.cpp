@@ -30,7 +30,7 @@ static struct PythonInitInternal : AddressTable {
 } pythonInitInternal;
 
 static PyObject *MainModule;
-static PyObject *MainModuleDict;
+PyObject *MainModuleDict;
 static PyConsole *console;
 
 // Wrapper for PyConsole::Exec

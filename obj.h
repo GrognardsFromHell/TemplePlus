@@ -210,7 +210,6 @@ struct Objects : AddressTable {
 	uint32_t IsDeadNullDestroyed(objHndl obj);
 	uint32_t IsUnconscious(objHndl obj);
 	int32_t GetHPCur(objHndl obj);
-	uint32_t GetRace(objHndl obj);
 	bool IsCritter(objHndl obj);
 	bool IsNPC(objHndl obj);
 	bool IsPlayerControlled(objHndl obj);

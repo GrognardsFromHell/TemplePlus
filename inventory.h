@@ -39,6 +39,12 @@ struct InventorySystem : AddressTable
 	*/
 	void (__cdecl *WieldBestAll)(objHndl critter, objHndl item);
 
+	/*
+		Clears the inventory of the given object. Keeps items that have the PERSISTENT flag set if
+		the second argument is TRUE.
+	*/
+	void (__cdecl *Clear)(objHndl parent, BOOL keepPersistent);
+
 	InventorySystem()
 	{
 		rebase(GetSubstituteInventory, 0x1007F5B0);
@@ -55,6 +61,7 @@ struct InventorySystem : AddressTable
 
 		rebase(IdentifyAll, 0x10064C70);
 		rebase(WieldBestAll, 0x1006D100);
+		rebase(Clear, 0x10069E00);
 	}
 
 private:

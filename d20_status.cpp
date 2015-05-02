@@ -18,7 +18,7 @@ void D20StatusSystem::initRace(objHndl objHnd)
 			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterUndead);
 		}
 
-		uint32_t objRace = objects.GetRace(objHnd);
+		uint32_t objRace = critterSys.GetRace(objHnd);
 		CondStruct ** condStructRace = conds.ConditionArrayRace + objRace;
 		_ConditionAddToAttribs_NumArgs0(dispatcher, *condStructRace);
 

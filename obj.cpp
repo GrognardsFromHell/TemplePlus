@@ -512,11 +512,6 @@ int32_t Objects::GetHPCur(objHndl obj)
 	return _StatLevelGet(obj, stat_hp_current);
 }
 
-uint32_t Objects::GetRace(objHndl obj)
-{
-	return _StatLevelGet(obj, stat_race);
-}
-
 bool Objects::IsCritter(objHndl obj)
 {
 	auto type = GetType(obj);

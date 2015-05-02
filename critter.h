@@ -149,14 +149,18 @@ struct CritterSystem : AddressTable
 
 	int GetLevel(objHndl critter);
 
+	Race GetRace(objHndl critter);
+
+	// Create and give an item to a critter
+	objHndl GiveItem(objHndl critter, int protoId);
+
 #pragma region Category
 	MonsterCategory GetCategory(objHndl objHnd);
 	bool IsCategoryType(objHndl objHnd, MonsterCategory categoryType);
 	bool IsCategorySubtype(objHndl objHnd, MonsterCategory categoryType);
 	bool IsUndead(objHndl objHnd);
 	bool IsOoze(objHndl objHnd);
-	bool IsSubtypeFire(objHndl objHnd);
-	
+	bool IsSubtypeFire(objHndl objHnd);	
 #pragma endregion
 
 };

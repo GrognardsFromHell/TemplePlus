@@ -2,9 +2,11 @@
 #include "python_integration_obj.h"
 #include "python_object.h"
 #include "python_trap.h"
+#include "python_embed.h"
 #include "python_spell.h"
 #include <dialog.h>
 #include <util/stringutil.h>
+#include <critter.h>
 
 PythonObjIntegration pythonObjIntegration;
 
@@ -25,7 +27,12 @@ static struct IntegrationAddresses : AddressTable {
 Calls into rumor_control.rumor_given_out
 */
 static void __cdecl RumorGivenOut(int rumorIdx) {
-	// TODO
+	logger->debug("Rumor given out: {}", rumorIdx);
+
+	auto args = Py_BuildValue("(i)", 10 * rumorIdx);
+	auto result = pythonObjIntegration.ExecuteScript("rumor_control", "rumor_given_out", args);
+	Py_DECREF(result);
+	Py_DECREF(args);
 }
 
 /*
@@ -36,15 +43,71 @@ Quote from the python function:
 # available
 */
 static int __cdecl RumorFind(objHndl pc, objHndl npc) {
-	// TODO
-	return -1;
+
+	auto args = PyTuple_New(2);
+	PyTuple_SET_ITEM(args, 0, PyObjHndl_Create(pc));
+	PyTuple_SET_ITEM(args, 1, PyObjHndl_Create(npc));
+
+	auto result = pythonObjIntegration.ExecuteScript("rumor_control", "find_rumor", args);
+	auto rumorId = -1;
+
+	if (PyInt_Check(result)) {
+		rumorId = PyInt_AsLong(result);
+		if (rumorId != -1) {
+			rumorId /= 10;
+		}
+	}
+	Py_DECREF(result);
+	Py_DECREF(args);
+
+	logger->debug("Rumor found: {}", rumorId);
+	return rumorId;
 }
 
 /*
 Calls pc_start.pc_start
 */
 static void PcStart(objHndl pc) {
-	// TODO
+	inventory.Clear(pc, FALSE);
+	
+	// This checks that the PC has at least one level in any of the classes
+	auto stat = stat_level_barbarian;
+	auto classIndex = 0;
+	while (objects.StatLevelGet(pc, stat) <= 0) {
+		classIndex++;
+		stat = (Stat)(stat + 1);		
+		if (stat >= stat_level_wizard)
+			return;
+	}
+
+	MesFile mesFile("rules\\start_equipment.mes");
+	if (mesFile.valid()) {
+		auto key = classIndex;
+
+		// Modify for "small" races
+		auto race = critterSys.GetRace(pc);
+		if (race == race_halfling || race == race_gnome) {
+			key += 100;
+		}
+		
+		const char *line;
+		if (mesFile.GetLine(key, line)) {
+			auto protoIds = split(line, ' ', true);
+			for (auto protoIdStr : protoIds) {
+				auto protoId = stoi(protoIdStr);
+				critterSys.GiveItem(pc, protoId);
+			}
+		}
+
+		auto args = PyTuple_New(1);
+		PyTuple_SET_ITEM(args, 0, PyObjHndl_Create(pc));
+
+		auto result = pythonObjIntegration.ExecuteScript("pc_start", "pc_start", args);
+		Py_DECREF(result);
+		Py_DECREF(args);
+	}
+
+	inventory.WieldBestAll(pc, 0);
 }
 
 /*
@@ -52,16 +115,6 @@ Calls into py00116Tolub brawl_end directly
 */
 static void BrawlResult(int) {
 	// TODO
-}
-
-static int Co8Load(const char* str) {
-	// TODO
-	return 0;
-}
-
-static int Co8Save(const char* str) {
-	// TODO
-	return 0;
 }
 
 /*
@@ -168,8 +221,8 @@ static void RunDialogAction(const char* actionString, DialogState* dialog, int p
 		logger->error("Cannot load script id {} to run dialog guard {}", dialog->dialogScriptId, actionString);
 		return;
 	}
+	
 	auto globalsDict = PyModule_GetDict(script.module);
-
 	auto locals = CreateDialogLocals(dialog, pickedLine);
 
 	for (const auto& command : commands) {
@@ -239,8 +292,6 @@ public:
 		replaceFunction(0x1005FB70, RumorFind);
 		replaceFunction(0x1006D190, PcStart);
 		replaceFunction(0x100EBE20, BrawlResult);
-		replaceFunction(0x11EB6940, Co8Save);
-		replaceFunction(0x11EB6966, Co8Load);
 		replaceFunction(0x100AE1E0, IsPythonScript);
 		replaceFunction(0x100AE210, RunPythonObjScript);
 		replaceFunction(0x100AEDA0, SetAnimatedObject);
@@ -265,8 +316,6 @@ int PythonObjIntegration::ExecuteObjectScript(objHndl triggerer, objHndl attache
 void PythonObjIntegration::RunAnimFrameScript(const char* command) {
 	logger->trace("Running Python command {}", command);
 
-	auto mainModule = PyImport_ImportModule("__main__");
-	auto mainDict = PyModule_GetDict(mainModule);
 	auto locals = PyDict_New();
 
 	// Put the anim obj into the locals
@@ -274,9 +323,8 @@ void PythonObjIntegration::RunAnimFrameScript(const char* command) {
 	PyDict_SetItemString(locals, "anim_obj", animObj);
 	Py_DECREF(animObj);
 
-	auto result = PyRun_String(command, Py_eval_input, mainDict, locals);
+	auto result = PyRun_String(command, Py_eval_input, MainModuleDict, locals);
 
-	Py_DECREF(mainModule);
 	Py_DECREF(locals);
 
 	if (!result) {
@@ -294,13 +342,17 @@ PyObject* PythonObjIntegration::ExecuteScript(const char* moduleName, const char
 }
 
 PyObject* PythonObjIntegration::ExecuteScript(const char* moduleName, const char* functionName, PyObject* args) {
-	auto module = PyImport_ImportModule(moduleName); // New ref
-	if (!module) {
+	auto locals = PyDict_New();
+	auto module = PyImport_ImportModuleEx(const_cast<char*>(moduleName), MainModuleDict, locals, 0); // New ref
+	Py_DECREF(locals);
+	if (!module) {		
 		logger->error("Unable to find Python module {}", moduleName);
 		Py_RETURN_NONE;
 	}
 
 	auto dict = PyModule_GetDict(module); // Borrowed ref
+	AddGlobalsOnDemand(dict);
+
 	auto callback = PyDict_GetItemString(dict, functionName); // Borrowed ref
 
 	if (!callback || !PyCallable_Check(callback)) {

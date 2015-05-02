@@ -3,7 +3,7 @@
 #include "util/fixes.h"
 #include "common.h"
 #include "obj.h"
-
+#include "critter.h"
 
 
 class SizeColossalFix : public TempleFix {
@@ -32,7 +32,7 @@ public:
 
 objHndl __cdecl ItemWornAtModifiedForTumlbeCheck(objHndl objHnd, uint32_t itemWornSlot)
 {
-	if (objects.GetRace(objHnd) == race_dwarf)
+	if (critterSys.GetRace(objHnd) == race_dwarf)
 	{
 		return 0;
 	}

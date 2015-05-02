@@ -32,6 +32,8 @@ static struct CritterAddresses : AddressTable {
 
 	bool (__cdecl *IsDeadOrUnconscious)(objHndl critter);
 
+	objHndl (__cdecl *GiveItem)(objHndl critter, int protoId);
+
 	CritterAddresses() {
 		rebase(HasMet, 0x10053CD0);
 		rebase(AddFollower, 0x100812F0);
@@ -50,6 +52,7 @@ static struct CritterAddresses : AddressTable {
 		rebase(SetConcealed, 0x10080670);
 		rebase(Resurrect, 0x100809C0);
 		rebase(IsDeadOrUnconscious, 0x100803E0);
+		rebase(GiveItem, 0x1006CC30);
 	}
 
 } addresses;
@@ -190,6 +193,14 @@ int CritterSystem::GetPortraitId(objHndl leader) {
 
 int CritterSystem::GetLevel(objHndl critter) {
 	return objects.StatLevelGet(critter, stat_level);
+}
+
+Race CritterSystem::GetRace(objHndl critter) {
+	return (Race)objects.StatLevelGet(critter, stat_race);
+}
+
+objHndl CritterSystem::GiveItem(objHndl critter, int protoId) {
+	return addresses.GiveItem(critter, protoId);
 }
 
 MonsterCategory CritterSystem::GetCategory(objHndl objHnd)
