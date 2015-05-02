@@ -22,34 +22,37 @@ public:
 	}
 	void apply() override{
 		
-		macReplaceFun(10089F70, _curSeqGetTurnBasedStatus)
-		macReplaceFun(10089FA0, _ActSeqCurSetSpellPacket)
+		replaceFunction(0x10089F70, _curSeqGetTurnBasedStatus); 
+		replaceFunction(0x10089FA0, _ActSeqCurSetSpellPacket); 
 
-		macReplaceFun(1008A050, _isPerforming)
-		macReplaceFun(1008A100, _addD20AToSeq)
-		macReplaceFun(1008A1B0, _ActionErrorString)
-		macReplaceFun(1008A980, _actSeqOkToPerform)
-		macReplaceFun(1008BFA0, _addSeqSimple)
-
+		replaceFunction(0x1008A050, _isPerforming); 
+		replaceFunction(0x1008A100, _addD20AToSeq); 
+		replaceFunction(0x1008A1B0, _ActionErrorString); 
+		replaceFunction(0x1008A980, _actSeqOkToPerform); 
+		replaceFunction(0x1008BFA0, _addSeqSimple); 
+		
 		macReplaceFun(100925E0, _isSimultPerformer)
 
 		macReplaceFun(10094A00, _curSeqReset)
 		macReplaceFun(10094CA0, _seqCheckFuncsCdecl)
 		macReplaceFun(10094C60, _seqCheckAction)
-		macReplaceFun(10094E20, _allocSeq)
-		macReplaceFun(10094EB0, _assignSeq)
+		
+		//macReplaceFun(10094E20, _allocSeq)
+		
+		//macReplaceFun(10094EB0, _assignSeq)
 
 		macReplaceFun(10094F70, _moveSequenceParseUsercallWrapper)
-
-		macReplaceFun(10095FD0, _turnBasedStatusInit)
+		
+		replaceFunction(0x10095FD0, _turnBasedStatusInit); 
 		
 		
-		macReplaceFun(100961C0, _sequencePerform)
-		macReplaceFun(100996E0, _actionPerform)
+		replaceFunction(0x100961C0, _sequencePerform); 
+		replaceFunction(0x100996E0, _actionPerform); 
 		
 		
 		
-		macReplaceFun(10095860, _unspecifiedMoveAddToSeq)
+		replaceFunction(0x10095860, _unspecifiedMoveAddToSeq); 
+		
 		
 	}
 } actSeqReplacements;
@@ -481,8 +484,10 @@ uint32_t ActionSequenceSystem::allocSeq(objHndl objHnd)
 			if (combat->isCombatActive())	hooked_print_debug_message("\nSequence Allocate[%d](%x)(%I64x): Resetting Sequence. \n", i, *actSeqCur, objHnd);
 			curSeqReset(objHnd);
 			return 1;
-		}
+		} 
+	//	hooked_print_debug_message("\nSequence Allocate: Sequence [%d](%x) occupied by %s (%I64x). Trying next sequence - better luck next time %s (%I64x)! \n", i, &actSeqArray[i], description.getDisplayName(actSeqArray[i].performer), actSeqArray[i].performer,description.getDisplayName(objHnd) , objHnd);
 	}
+	hooked_print_debug_message("\nSequence Allocation for (%I64x) failed!  \nBad things imminent. All sequences were taken!\n",  *actSeqCur, objHnd);
 	return 0;
 }
 

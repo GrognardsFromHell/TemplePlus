@@ -127,6 +127,7 @@ struct TurnBasedStatus
 
 const uint32_t TestSizeOfActnSthg = sizeof(TurnBasedStatus); // should be 36 (0x24)
 
+#pragma pack(push, 1)
 struct ActnSeq
 {
 	D20Actn d20ActArray[32];
@@ -143,6 +144,7 @@ struct ActnSeq
 	D20Actn * d20Action;
 	uint32_t aiSpellFlagSthg_maybe;
 };
+#pragma pack(pop)
 
 struct IntrptSthg
 {

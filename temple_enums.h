@@ -1782,7 +1782,7 @@ enum enum_disp_type : uint32_t {
 	dispType12,
 	dispType13,
 	dispType14,
-	dispType15,
+	dispTypeToHitBonus,
 	dispType16,
 	dispType17,
 	dispType18,
@@ -1812,7 +1812,7 @@ enum enum_disp_type : uint32_t {
 	dispType42,
 	dispType43,
 	dispType44,
-	dispType45,
+	dispTypeSpellResistance,
 	dispType46,
 	dispType47,
 	dispType48,
@@ -1834,9 +1834,9 @@ enum enum_disp_type : uint32_t {
 	dispType63,
 	dispType64,
 	dispType65,
-	dispType66,
+	dispTypeStatBaseGet, // looks like this is intended to replace StatBaseGet function for Critters with Dispatchers
 	dispType67,
-	dispType68,
+	dispTypeItemForceRemove, // has a single function associated with this - 10104410 int __cdecl ItemForceRemoveCallback_SetItemPadWielderArgs(Dispatcher_Callback_Args args);
 	dispType69,
 
 	dispType70,

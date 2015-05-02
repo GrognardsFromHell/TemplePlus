@@ -17,6 +17,8 @@ public:
 	void apply() override {
 		logger->info("Replacing basic Dispatcher functions");
 		replaceFunction(0x1004D700, _DispIO14hCheckDispIOType1);
+		replaceFunction(0x1004D8A0, _DispIOCheckIoType14);
+
 		replaceFunction(0x100E1E30, _DispatcherRemoveSubDispNodes);
 		replaceFunction(0x100E2400, _DispatcherClearField);
 		replaceFunction(0x100E2720, _DispatcherClearAttribs);
@@ -27,8 +29,9 @@ public:
 		replaceFunction(0x1004DBA0, _DispIO_Size32_Type21_Init);
 		replaceFunction(0x1004D3A0, _Dispatch62);
 		replaceFunction(0x1004D440, _Dispatch63);
-		macReplaceFun(1004E790,_dispatchTurnBasedStatusInit)
-		macReplaceFun(1004ED70, _dispatch1ESkillLevel)
+		replaceFunction(0x1004E790, _dispatchTurnBasedStatusInit); 
+		replaceFunction(0x1004ED70, _dispatch1ESkillLevel); 
+
 	}
 } dispatcherReplacements;
 
@@ -135,6 +138,12 @@ void DispatcherSystem::dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBas
 			}
 		}
 	}
+}
+
+DispIOBonusListAndSpellEntry* DispatcherSystem::DispIOCheckIoType14(DispIO* dispIo)
+{
+	if (dispIo->dispIOType != 14) return (DispIOBonusListAndSpellEntry*)nullptr; 
+	return (DispIOBonusListAndSpellEntry*)dispIo;
 }
 #pragma endregion
 
@@ -266,6 +275,11 @@ void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint3
 int32_t _dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut, objHndl objHnd2, int32_t flag)
 {
 	return dispatch.dispatch1ESkillLevel(objHnd, skill, bonOut, objHnd2, flag);
+}
+
+DispIOBonusListAndSpellEntry* _DispIOCheckIoType14(DispIO* dispIO)
+{
+	return dispatch.DispIOCheckIoType14(dispIO);
 };
 
 Dispatcher* _DispatcherInit(objHndl objHnd) {
