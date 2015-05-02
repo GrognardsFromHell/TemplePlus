@@ -7,10 +7,10 @@
 #include <util/addresses.h>
 
 static struct PyConsoleOutAddresses : AddressTable {
-	void (__cdecl *AppendLine)(const char *line);
+	int (__cdecl *AppendLine)(const char *line);
 
 	PyConsoleOutAddresses() {
-		rebase(AppendLine, 0x101DFC70);
+		rebase(AppendLine, 0x101DFDC0);
 	}
 } addresses;
 
