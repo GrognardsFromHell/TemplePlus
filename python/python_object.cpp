@@ -1953,6 +1953,7 @@ static PyGetSetDef PyObjHandleGetSets[] = {
 	{"feats", PyObjHandle_GetFeats, NULL, NULL},
 	{"loots", PyObjHandle_GetLoots, PyObjHandle_SetLoots, NULL},
 	{"__safe_for_unpickling__", PyObjHandle_SafeForUnpickling, NULL, NULL},
+	{NULL, NULL, NULL, NULL}
 };
 
 #pragma endregion

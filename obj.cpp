@@ -267,7 +267,7 @@ Objects::Objects()
 	rebase(_TargetRandomTileNear, 0x100B99A0);
 	rebase(_TakeMoney, 0x1007FA40);
 	rebase(_GiveMoney, 0x1007F960);
-	rebase(_FadeTo, 0x1004C490);
+	rebase(_FadeTo, 0x1004C390);
 
 	rebase(_SetFlag, 0x10020F50);
 	rebase(_ClearFlag, 0x10021020);

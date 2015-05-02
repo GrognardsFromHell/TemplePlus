@@ -28,7 +28,8 @@ static int PyQuest_SetState(PyObject *obj, PyObject *value, void *) {
 }
 
 static PyGetSetDef PyQuestGetSet[] = {
-	{ "state", PyQuest_GetState, PyQuest_SetState, NULL }
+	{ "state", PyQuest_GetState, PyQuest_SetState, NULL },
+	{ NULL, NULL, NULL, NULL }
 };
 
 static PyObject *PyQuest_Unbotch(PyObject *obj, PyObject *args) {
@@ -38,7 +39,8 @@ static PyObject *PyQuest_Unbotch(PyObject *obj, PyObject *args) {
 }
 
 static PyMethodDef PyQuestMethods[] = {
-	{ "unbotch", PyQuest_Unbotch, METH_VARARGS, NULL }
+	{ "unbotch", PyQuest_Unbotch, METH_VARARGS, NULL },
+	{ NULL, NULL, NULL, NULL }
 };
 
 static PyTypeObject PyQuestType = {

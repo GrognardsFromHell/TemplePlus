@@ -10,3 +10,4 @@ release
 *.user
 *.opensdf
 ipch
+/dist
