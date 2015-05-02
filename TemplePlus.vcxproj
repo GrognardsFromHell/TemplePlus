@@ -67,6 +67,7 @@
     <ClCompile Include="python\python_globalflags.cpp" />
     <ClCompile Include="python\python_globalvars.cpp" />
     <ClCompile Include="python\python_integration.cpp" />
+    <ClCompile Include="python\python_integration_brawl.cpp" />
     <ClCompile Include="python\python_integration_obj.cpp" />
     <ClCompile Include="python\python_integration_spells.cpp" />
     <ClCompile Include="python\python_module.cpp" />

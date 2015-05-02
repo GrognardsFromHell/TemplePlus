@@ -111,13 +111,6 @@ static void PcStart(objHndl pc) {
 }
 
 /*
-Calls into py00116Tolub brawl_end directly
-*/
-static void BrawlResult(int) {
-	// TODO
-}
-
-/*
 Checks whether the given number is a Python script by
 loading and unloading it.
 This seems highly inefficient and should really be
@@ -291,7 +284,6 @@ public:
 		replaceFunction(0x1005FA00, RumorGivenOut);
 		replaceFunction(0x1005FB70, RumorFind);
 		replaceFunction(0x1006D190, PcStart);
-		replaceFunction(0x100EBE20, BrawlResult);
 		replaceFunction(0x100AE1E0, IsPythonScript);
 		replaceFunction(0x100AE210, RunPythonObjScript);
 		replaceFunction(0x100AEDA0, SetAnimatedObject);
