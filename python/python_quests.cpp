@@ -1,36 +1,8 @@
 
 #include "stdafx.h"
-#include "python_globalflags.h"
-#include <util/addresses.h>
 #include "../quest.h"
 
-const int QuestCount = 3200; // see script_init
-
-static struct QuestAddresses : AddressTable {
-	int **globalFlags;
-
-	bool Get(int flagIdx) {
-		int idx = flagIdx / 32;
-		uint32_t bit = flagIdx % 32;
-		int flagWord = (*globalFlags)[idx];
-		return (flagWord & (1 << bit)) != 0;
-	}
-	void Set(int flagIdx, bool value) {
-		int idx = flagIdx / 32;
-		int bit = flagIdx % 32;
-		int &flagWord = (*globalFlags)[idx];
-		uint32_t mask = (1 << bit);
-		if (value) {
-			flagWord |= mask;
-		} else {
-			flagWord &= ~mask;
-		}
-	}
-
-	QuestAddresses() {
-		rebase(globalFlags, 0x103073B8);
-	}
-} addresses;
+const int QuestCount = 200;
 
 struct PyQuest {
 	PyObject_HEAD;

@@ -27,7 +27,7 @@ static struct GlobalFlagAddresses : AddressTable {
 	}
 
 	GlobalFlagAddresses() {
-		rebase(globalFlags, 0x103073B8);
+		rebase(globalFlags, 0x103073A8);
 	}
 } addresses;
 
