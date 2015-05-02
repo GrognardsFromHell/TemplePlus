@@ -343,7 +343,10 @@ static void registerDataFiles() {
 	}
 
 	tio_filelist_destroy(&list);
-	
+
+	tio_mkdir("tpdata");
+	tio_path_add("tpdata");
+
 	tio_mkdir("data");
 	tio_path_add("data");
 

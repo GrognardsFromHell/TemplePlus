@@ -13,8 +13,8 @@ after_build:
   - rd /s /q dist || cd .
   - mkdir dist
   - copy Release\TemplePlus.exe dist
-  - xcopy /E /I data dist\data
-  - xcopy /E /I dependencies\python\python-lib dist\data\python-lib
+  - xcopy /E /I tpdata dist\tpdata
+  - xcopy /E /I dependencies\python\python-lib dist\tpdata\python-lib
   - 7z a TemplePlus-%APPVEYOR_BUILD_VERSION%.zip %APPVEYOR_BUILD_FOLDER%\dist\*
 
 artifacts:
