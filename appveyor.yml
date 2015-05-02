@@ -4,7 +4,7 @@ version: 0.1.0-pre+{build}
 install:
   - appveyor DownloadFile https://github.com/GrognardsFromHell/python-superstatic/releases/download/1.0.0/pythonstatic.7z
   - mkdir dependencies\python
-  - 7z x -o dependencies\python pythonstatic.7z
+  - 7z x -odependencies\python pythonstatic.7z
 
 build_script:
   - msbuild TemplePlus.sln /p:Configuration=Release /p:MSBuildDefines="_TP_VERSION=%APPVEYOR_BUILD_VERSION%;_TP_COMMIT=%APPVEYOR_REPO_COMMIT%" /verbosity:minimal
