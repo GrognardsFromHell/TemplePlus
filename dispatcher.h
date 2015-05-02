@@ -4,6 +4,7 @@
 
 #define DISPATCHER_MAX  250 // max num of simultaneous Dispatches going on (static int counter inside _DispatcherProcessor)
 
+struct SpellEntry;
 struct DispIOTurnBasedStatus;
 struct TurnBasedStatus;
 struct BonusList;
@@ -149,6 +150,12 @@ struct DispIOTurnBasedStatus : DispIO
 };
 
 const int TestSizeOfDispIO390h = sizeof(DispIO390h); // should be 912 (0x390)
+
+struct DispIOBonusListAndSpellEntry: DispIO{
+	BonusList * bonList;
+	SpellEntry * spellEntry;
+	uint32_t field_C; // unused?
+};
 
 struct Dispatcher :TempleAlloc {
 	objHndl objHnd;

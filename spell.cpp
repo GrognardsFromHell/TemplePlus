@@ -23,13 +23,14 @@ public:
 	void apply() override {
 		// writeHex(0x100779DE + 2, "A0 0F"); // this prevents the crash from casting from scroll, but it fucks up normal spell casting... (can't go to radial menu to cast!)
 		replaceFunction(0x100FDEA0, _getWizSchool);
-		macReplaceFun(100779A0, _getSpellEnum)
-		macReplaceFun(100762D0, _spellKnownQueryGetData)
-		macReplaceFun(10076190, _spellMemorizedQueryGetData)
-		macReplaceFun(1007A140, _spellCanCast)
-		macReplaceFun(100754B0, _spellRegistryCopy)
-		macReplaceFun(10075660, _GetSpellEnumFromSpellId)
-		macReplaceFun(100756E0, _GetSpellPacketBody)
+		replaceFunction(0x100779A0, _getSpellEnum); 
+		replaceFunction(0x100762D0, _spellKnownQueryGetData); 
+		replaceFunction(0x10076190, _spellMemorizedQueryGetData); 
+		replaceFunction(0x1007A140, _spellCanCast); 
+		replaceFunction(0x100754B0, _spellRegistryCopy); 
+		replaceFunction(0x10075660, _GetSpellEnumFromSpellId); 
+		replaceFunction(0x100756E0, _GetSpellPacketBody); 
+		
 	}
 } spellFuncReplacements;
 
@@ -286,7 +287,7 @@ uint32_t SpellSystem::spellMemorizedQueryGetData(objHndl objHnd, uint32_t spellE
 	{
 		SpellStoreData spellData;
 		objects.getArrayField(objHnd, obj_f_critter_spells_memorized_idx, i, &spellData);
-		if (spellData.spellEnum == spellEnum)
+		if (spellData.spellEnum == spellEnum && !spellData.spellStoreState.usedUp)
 		{
 			if (classCodesOut) classCodesOut[*n] = spellData.classCode;
 			if (slotLevelsOut) slotLevelsOut[*n] = spellData.spellLevel;
