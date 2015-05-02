@@ -12,6 +12,7 @@
 #include "radial_menu.h"
 #include "common.h"
 #include "ui_render.h"
+#include <python/python_integration_obj.h>
 
 GlobalPrimitive<ItemCreationType, 0x10BEDF50> itemCreationType;
 GlobalPrimitive<objHndl, 0x10BECEE0> globObjHndCrafter;
@@ -110,17 +111,22 @@ void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCra
 
 	// the new and improved Wands/Scroll Property Setting Function
 
-	auto pytup = PyTuple_New(2);
-	PyTuple_SetItem(pytup, 0, templeFuncs.PyObjFromObjHnd(objHndItem));
-	PyTuple_SetItem(pytup, 1, templeFuncs.PyObjFromObjHnd(objHndCrafter));
-
 	if (itemCreationType == CraftWand){
+		
 		// do wand specific stuff
 		if (config.newFeatureTestMode)
 		{
-			char * wandNewName = PyString_AsString(templeFuncs.PyScript_Execute("crafting", "craft_wand_new_name", pytup));
+			auto args = PyTuple_New(2);
+			PyTuple_SET_ITEM(args, 0, templeFuncs.PyObjFromObjHnd(objHndItem));
+			PyTuple_SET_ITEM(args, 1, templeFuncs.PyObjFromObjHnd(objHndCrafter));
 
+			auto wandNameObj = pythonObjIntegration.ExecuteScript("crafting", "craft_wand_new_name", args);
+			char * wandNewName = PyString_AsString(wandNameObj);
+			
 			templeFuncs.Obj_Set_Field_32bit(objHndItem, obj_f_description, objects.description.CustomNameNew(wandNewName)); // TODO: create function that appends effect of caster level boost			
+
+			Py_DECREF(wandNameObj);
+			Py_DECREF(args);
 		}
 
 		//templeFuncs.GetGlo
@@ -143,7 +149,7 @@ void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCra
 	// Current code - change this at will...
 	for (int n = 0; n < numItemSpells; n++){
 		SpellStoreData spellData;
-		templeFuncs.Obj_Get_IdxField_256bit(objHndItem, obj_f_item_spell_idx, n, &spellData);
+		templeFuncs.Obj_Get_ArrayElem_Generic(objHndItem, obj_f_item_spell_idx, n, &spellData);
 
 		// get data from caster - make this optional!
 
@@ -316,7 +322,7 @@ uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t slotLevelN
 
 	for (uint32_t n = 0; n < numItemSpells; n++){
 		SpellStoreData spellData;
-		templeFuncs.Obj_Get_IdxField_256bit(objHndItem, obj_f_item_spell_idx, n, &spellData);
+		templeFuncs.Obj_Get_ArrayElem_Generic(objHndItem, obj_f_item_spell_idx, n, &spellData);
 		if (spellData.spellLevel > itemSlotLevelBase){
 			itemSlotLevelBase = spellData.spellLevel;
 		}

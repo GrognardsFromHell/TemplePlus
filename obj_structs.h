@@ -18,8 +18,6 @@ typedef uint64_t objHndl;
 typedef uint32_t _fieldIdx;
 typedef uint32_t _fieldSubIdx;
 typedef uint32_t _mapNum;
-typedef uint32_t _jmpPntID;
-typedef uint32_t _standPointType;
 typedef uint32_t _key;
 
 

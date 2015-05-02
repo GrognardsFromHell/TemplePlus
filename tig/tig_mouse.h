@@ -35,6 +35,9 @@ struct MouseFuncs : AddressTable {
 	void (__cdecl *SetPos)(int x, int y, int wheelDelta);
 	void RefreshCursor();
 	void (__cdecl *SetBounds)(int maxX, int maxY);
+	POINT GetPos() {
+		return { mouseState->x, mouseState->y };
+	}
 
 	void ShowCursor() {
 		mouseState->flags &= ~MF_HIDE_CURSOR;

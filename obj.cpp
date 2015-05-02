@@ -10,6 +10,9 @@
 #include "pathfinding.h"
 #include "float_line.h"
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 Objects objects;
 
 static_assert(validate_size<CondNode, 36>::value, "Condition node structure has incorrect size.");
@@ -31,16 +34,6 @@ public:
 		macReplaceFun(1009E360, _getObjHnd)
 	}
 } objReplacements;
-
-
-static struct ObjectSystemAddresses : AddressTable {
-	uint32_t (__cdecl *ScriptExecute)(objHndl attachee, objHndl triggerer, uint32_t spellId, uint32_t trapIdMaybe, uint32_t san, uint32_t a6);
-	ObjectSystemAddresses()
-	{
-		macRebase(ScriptExecute, 10025D60)
-	}
-} addresses;
-
 
 #pragma region Object Internals
 const size_t objHeaderSize = 4; // Constant
@@ -238,11 +231,28 @@ Objects::Objects()
 	pathfinding = &pathfindingSys;
 	loc = &locSys;
 	floats = &floatSys;
+	rebase(_VerifyHandle, 0x100C2D00);
+	rebase(_GetId, 0x1009CA40);
+	rebase(_GetHandle, 0x100C3050);
+	rebase(_Create, 0x10028D20);
+	rebase(_GetReaction, 0x10054180);
+	rebase(_AdjustReaction, 0x10053F20);
+	rebase(_GetInternalFieldInt32, 0x1009E1D0);
+	rebase(_GetInternalFieldInt64, 0x1009E2E0);
+	rebase(_GetInternalFieldFloat, 0x1009E260);
+	rebase(_GetInternalFieldInt32Array, 0x1009E5C0);
 	rebase(_StatLevelGet, 0x10074800);
+	rebase(_StatLevelGetBase, 0x10074CF0);
+	rebase(_StatLevelSetBase, 0x10074E10);
+	rebase(_GetSize, 0x1004D690);
+	rebase(_Move, 0x10025950);
+	rebase(_SetInternalFieldInt32, 0x100A0190);
 	macRebase(_setArrayFieldLowLevel, 100A0500)
+	rebase(_SetInternalFieldFloat, 0x100A0190); // This is actually the same function as 32-bit heh
 	macRebase(_getArrayFieldNumItems, 1009E7E0)
 	rebase(_IsPlayerControlled, 0x1002B390);
 	rebase(_ObjGetProtoNum, 0x10039320);
+	rebase(_FindFreeSpot, 0x100BDB50);
 	rebase(_IsObjDeadNullDestroyed, 0x1007E650);
 	rebase(_GetMemoryAddress, 0x100C2A70);
 	rebase(_DoesObjectFieldExist, 0x1009C190);
@@ -251,6 +261,22 @@ Objects::Objects()
 	macRebase(_lookupInHandlesList, 100C3050)
 	rebase(_DLLFieldNames, 0x102CD840);
 	rebase(_InsetDataIntoInternalStack, 0x1009EA80);
+	rebase(_GetDisplayName, 0x1001F970);
+	rebase(_AiForceSpreadOut, 0x1005A640);
+	rebase(_GetRadius, 0x10021C40);
+	rebase(_TargetRandomTileNear, 0x100B99A0);
+	rebase(_TakeMoney, 0x1007FA40);
+	rebase(_GiveMoney, 0x1007F960);
+	rebase(_FadeTo, 0x1004C490);
+
+	rebase(_SetFlag, 0x10020F50);
+	rebase(_ClearFlag, 0x10021020);
+
+	rebase(_PortalToggleOpen, 0x100B4700);
+	rebase(_ContainerToggleOpen, 0x1010EA00);
+	rebase(_SecretdoorDetect, 0x10046920);
+	rebase(_HasSpellEffects, 0x10076370);
+	rebase(_Destroy, 0x100257A0);
 }
 
 void Objects::PropFetcher(GameObjectBody* objBody, obj_f fieldIdx, void * dataOut) {
@@ -342,9 +368,125 @@ uint32_t Objects::abilityScoreLevelGet(objHndl objHnd, Stat stat, DispIO* dispIO
 	return objects.dispatch.dispatcherForCritters(objHnd, dispIO, dispTypeAbilityScoreLevel, stat + 1);
 }
 
-uint32_t Objects::ScriptExecute(objHndl attachee, objHndl triggerer, uint32_t spellId, uint32_t trapIdMaybe, uint32_t san, uint32_t a6)
-{
-	return addresses.ScriptExecute(attachee, triggerer, spellId, trapIdMaybe, san, a6);
+void Objects::SetRotation(objHndl handle, float rotation) {
+	// Normalizes the rotation parameter to valid radians range
+	static auto PI_2 = (float)(2.0 * M_PI);
+	
+	while (rotation >= PI_2) {
+		rotation -= PI_2;
+	}
+	while (rotation < 0) {
+		rotation += PI_2;
+	}
+	_SetInternalFieldFloat(handle, obj_f_rotation, rotation);
+}
+
+int Objects::GetScript(objHndl handle, int index) {
+	ObjectScript scriptIdx;
+	templeFuncs.Obj_Get_ArrayElem_Generic(handle, obj_f_scripts_idx, index, &scriptIdx);
+	return scriptIdx.scriptId;
+}
+
+void Objects::SetScript(objHndl handle, int index, int scriptId) {
+	ObjectScript scriptIdx;
+	templeFuncs.Obj_Get_ArrayElem_Generic(handle, obj_f_scripts_idx, index, &scriptIdx);
+	scriptIdx.scriptId = scriptId;
+	templeFuncs.Obj_Set_IdxField_byPtr(handle, obj_f_scripts_idx, index, &scriptIdx);
+}
+
+ObjectScript Objects::GetScriptAttachment(objHndl handle, int index) {
+	ObjectScript scriptIdx;
+	templeFuncs.Obj_Get_ArrayElem_Generic(handle, obj_f_scripts_idx, index, &scriptIdx);
+	return scriptIdx;
+}
+
+void Objects::SetScriptAttachment(objHndl handle, int index, const ObjectScript& script) {
+	templeFuncs.Obj_Set_IdxField_byPtr(handle, obj_f_scripts_idx, index, const_cast<ObjectScript*>(&script));
+}
+
+Dice Objects::GetHitDice(objHndl handle) {
+	auto count = _GetInternalFieldInt32Array(handle, obj_f_npc_hitdice_idx, 0);
+	auto sides = _GetInternalFieldInt32Array(handle, obj_f_npc_hitdice_idx, 1);
+	auto modifier = _GetInternalFieldInt32Array(handle, obj_f_npc_hitdice_idx, 2);
+	return Dice(count, sides, modifier);
+}
+
+// Reimplements 100801D0
+int Objects::GetHitDiceNum(objHndl handle) {
+	int result = _GetInternalFieldInt32(handle, obj_f_critter_level_idx);
+	if (GetType(handle) == obj_t_npc) {
+		result += _GetInternalFieldInt32Array(handle, obj_f_npc_hitdice_idx, 0);
+	}
+	return result;
+}
+
+int Objects::GetSize(objHndl handle) {
+	// This function uses the dispatcher internally and should probably be rewritten
+	return _GetSize(handle);
+}
+
+objHndl Objects::Create(objHndl proto, locXY tile) {
+	objHndl handle;
+	if (_Create(proto, tile, &handle)) {
+		return handle;
+	} else {
+		return 0;
+	}
+}
+
+bool Objects::FindFreeSpot(LocAndOffsets location, float radius, LocAndOffsets& freeSpotOut) {
+	return _FindFreeSpot(location, radius, freeSpotOut);
+}
+
+objHndl Objects::GetProtoHandle(int protoNumber) {
+	return templeFuncs.GetProtoHandle(protoNumber);
+}
+
+bool Objects::AiForceSpreadOut(objHndl handle) {
+	return _AiForceSpreadOut(handle, nullptr);
+}
+
+bool Objects::AiForceSpreadOut(objHndl handle, LocAndOffsets &location) {
+	return _AiForceSpreadOut(handle, &location);
+}
+
+locXY Objects::TargetRandomTileNear(objHndl handle, int distance) {
+	locXY result;
+	_TargetRandomTileNear(handle, distance, &result);
+	return result;
+}
+
+void Objects::TakeMoney(objHndl critter, int platinum, int gold, int silver, int copper) {
+	_TakeMoney(critter, platinum, gold, silver, copper);
+}
+
+void Objects::GiveMoney(objHndl critter, int platinum, int gold, int silver, int copper) {
+	_GiveMoney(critter, platinum, gold, silver, copper);
+}
+
+float Objects::GetRotationTowards(objHndl from, objHndl to) {
+	auto locFrom = GetLocationFull(from);
+	auto locTo = GetLocationFull(to);
+
+	return AngleBetweenPoints(locFrom, locTo);
+}
+
+void Objects::FadeTo(objHndl obj, int targetOpacity, int fadeTimeInMs, int unk1, int unk2) {
+	_FadeTo(obj, targetOpacity, fadeTimeInMs, unk1, unk2);
+}
+
+void Objects::Move(objHndl handle, LocAndOffsets toLocation) {
+	_Move(handle, toLocation);
+}
+
+ObjectId Objects::GetId(objHndl handle) {
+	ObjectId result;
+	_GetId(&result, handle);
+	return result;
+}
+
+objHndl Objects::GetHandle(const ObjectId &id) {
+	return _GetHandle(id);
 }
 
 ObjectType Objects::GetType(objHndl obj)
@@ -370,15 +512,16 @@ int32_t Objects::GetHPCur(objHndl obj)
 	return _StatLevelGet(obj, stat_hp_current);
 }
 
-uint32_t Objects::GetRace(objHndl obj)
-{
-	return _StatLevelGet(obj, stat_race);
-}
-
 bool Objects::IsCritter(objHndl obj)
 {
 	auto type = GetType(obj);
 	return type == obj_t_npc || type == obj_t_pc;
+}
+
+bool Objects::IsNPC(objHndl obj)
+{
+	auto type = GetType(obj);
+	return type == obj_t_npc;
 }
 
 bool Objects::IsPlayerControlled(objHndl obj)
@@ -391,58 +534,27 @@ uint32_t Objects::ObjGetProtoNum(objHndl obj)
 	return _ObjGetProtoNum(obj);
 }
 
-MonsterCategory Objects::GetCategory(objHndl objHnd)
-{
-	if (objHnd != 0) {
-		if (IsCritter(objHnd)) {
-			auto monCat = getInt64(objHnd, obj_f_critter_monster_category);
-			return (MonsterCategory)(monCat & 0xFFFFFFFF);
+string Objects::GetDisplayName(objHndl obj, objHndl observer) {
+	char name[512];
+	_GetDisplayName(obj, observer, name);
+	return name;
 		}
-	}
-	return mc_type_monstrous_humanoid; // default - so they have at least a weapons proficiency
-}
-
-bool Objects::IsCategoryType(objHndl objHnd, MonsterCategory categoryType)
-{
-	if (objHnd != 0) {
-		if (IsCritter(objHnd)) {
-			auto monCat = getInt64(objHnd, obj_f_critter_monster_category);
-			return (monCat & 0xFFFFFFFF) == categoryType;
-		}
-	}
-	return 0;
-}
-
-bool Objects::IsCategorySubtype(objHndl objHnd, MonsterCategory categoryType)
-{
-	if (objHnd != 0) {
-		if (IsCritter(objHnd)) {
-			auto monCat = getInt64(objHnd, obj_f_critter_monster_category);
-			return ((monCat >> 32) & 0xFFFFFFFF) == categoryType;
-		}
-	}
-	return 0;
-}
-
-bool Objects::IsUndead(objHndl objHnd)
-{
-	return IsCategoryType(objHnd, mc_type_undead);
-}
-
-bool Objects::IsOoze(objHndl objHnd)
-{
-	return IsCategoryType(objHnd, mc_type_ooze);
-}
-
-bool Objects::IsSubtypeFire(objHndl objHnd)
-{
-	return IsCategorySubtype(objHnd, mc_subtye_fire);
-}
 
 uint32_t Objects::StatLevelGet(objHndl obj, Stat stat)
 {
 	return _StatLevelGet(obj, stat);
+		}
+
+int Objects::StatLevelGetBase(objHndl obj, Stat stat)
+{
+	return _StatLevelGetBase(obj, stat);
 }
+
+int Objects::StatLevelSetBase(objHndl obj, Stat stat, int value)
+{
+	return _StatLevelSetBase(obj, stat, value);
+}
+
 #pragma endregion
 
 

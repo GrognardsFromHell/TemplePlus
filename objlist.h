@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include "common.h"
@@ -30,6 +31,12 @@ enum ObjectListFilter {
 };
 
 #pragma pack(push, 1)
+
+struct ObjListResultItem {
+	objHndl handle;
+	ObjListResultItem *next;
+};
+
 struct ObjListResult
 {
 	int field_0;
@@ -66,13 +73,12 @@ struct ObjListResult
 	int field_7C;
 	int field_80;
 	int field_84;
-	objHndl *objects;
+	ObjListResultItem *objects;
 	int field_8C;
 	int field_90;
 	int field_94;
 };
 #pragma pack(pop)
-
 
 class ObjList {
 public:
@@ -80,36 +86,40 @@ public:
 	~ObjList();
 
 	/*
-	Searches for everything on a single tile that matches the given search flags.
+		Searches for everything on a single tile that matches the given search flags.
 	*/
 	void ListTile(locXY loc, int flags);
 
 	/*
-	I believe this searches for all objects that would be visible if the screen was
-	centered on the given tile.
+		I believe this searches for all objects that would be visible if the screen was
+		centered on the given tile.
 	*/
 	void ListVicinity(locXY loc, int flags);
 
 	/*
-	Lists objects in a radius. This seems to be the radius in the X,Y 3D coordinate
-	space.
+		Lists objects in a radius. This seems to be the radius in the X,Y 3D coordinate
+		space.
 	*/
 	void ListRadius(LocAndOffsets loc, float radius, int flags);
 
 	/*
-	Lists objects in a cone. This seems to be the radius in the X,Y 3D coordinate
-	space.
+		Lists objects in a cone. This seems to be the radius in the X,Y 3D coordinate
+		space.
 	*/
 	void ListCone(LocAndOffsets loc, float radius, float coneStartAngleRad, float coneArcRad, int flags);
 
 	/*
-	Lists all followers (and their followers).
+		Lists all followers (and their followers).
 	*/
 	void ListFollowers(objHndl critter);
 
 	int size();
 	objHndl get(int idx) {
-		return mResult.objects[idx];
+		auto item = mResult.objects;
+		for (int i = 0; i < idx - 1; ++i) {
+			item = item->next;
+		}
+		return item->handle;
 	}
 	objHndl operator[](int idx) {
 		return get(idx);
@@ -128,4 +138,3 @@ private:
 	ObjList(const ObjList &other) = delete;
 	ObjList& operator=(const ObjList &other) = delete;
 };
-

@@ -5,7 +5,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <Windows.h>
-#include <Mmsystem.h>
+#include <timeapi.h>
 
 #include "Shlobj.h"
 #include "Shobjidl.h"
@@ -21,6 +21,9 @@
 #include <cassert>
 #include <memory>
 #include <algorithm>
+
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 using namespace std;
 
@@ -51,7 +54,8 @@ using fmt::format;
 #include "MinHook.h"
 #include "dependencies/spdlog/spdlog.h"
 
-#include "dependencies/python-2.2/Python.h"
+#define Py_NO_ENABLE_SHARED
+#include "Python.h"
 #undef _GNU_SOURCE // Defined by python for some reason
 #undef LONG_LONG
 

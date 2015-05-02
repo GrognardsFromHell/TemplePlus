@@ -46,6 +46,13 @@ static struct UiFuncs : AddressTable {
 
 	ImgFile*(__cdecl *LoadImg)(const char* filename);
 	int (__cdecl *GetAsset)(UiAssetType assetType, uint32_t assetIndex, int& textureIdOut, int offset);
+	void (__cdecl *UpdateCombatUi)();
+	void (__cdecl *UpdatePartyUi)();
+	void (__cdecl *ShowWorldMap)(int unk);
+	void (__cdecl *WorldMapTravelByDialog)(int destination);
+	void (__cdecl *ShowPartyPool)(bool ingame);
+	void (__cdecl *ShowCharUi)(int page);
+	bool (__cdecl *ShowWrittenUi)(objHndl handle);
 
 	ActiveWidgetListEntry* activeWidgetAllocList;
 	Widget** activeWidgets;
@@ -70,6 +77,13 @@ static struct UiFuncs : AddressTable {
 		rebase(UnloadModule, 0x101152C0);
 		rebase(Shutdown, 0x10115230);
 		rebase(GetAsset, 0x1004A360);
+		rebase(UpdateCombatUi, 0x1009A730);
+		rebase(UpdatePartyUi, 0x1009A740);
+		rebase(ShowWorldMap, 0x1015F140);
+		rebase(WorldMapTravelByDialog, 0x10160450);
+		rebase(ShowPartyPool, 0x10165E60);
+		rebase(ShowCharUi, 0x10148E20);
+		rebase(ShowWrittenUi, 0x10160F50);
 
 		rebase(GameLoad, 0x101154B0);
 		rebase(GameSave, 0x101152F0);
@@ -119,6 +133,34 @@ void Ui::ResizeScreen(int bufferStuffId, int width, int height) {
 		}
 	}
 
+}
+
+void Ui::UpdateCombatUi() {
+	uiFuncs.UpdateCombatUi();
+}
+
+void Ui::UpdatePartyUi() {
+	uiFuncs.UpdatePartyUi();
+}
+
+void Ui::ShowWorldMap(int unk) {
+	uiFuncs.ShowWorldMap(unk);
+}
+
+void Ui::WorldMapTravelByDialog(int destination) {
+	uiFuncs.WorldMapTravelByDialog(destination);
+}
+
+void Ui::ShowPartyPool(bool ingame) {
+	uiFuncs.ShowPartyPool(ingame);
+}
+
+void Ui::ShowCharUi(int page) {
+	uiFuncs.ShowCharUi(page);
+}
+
+bool Ui::ShowWrittenUi(objHndl handle) {
+	return uiFuncs.ShowWrittenUi(handle);
 }
 
 #pragma region Loading and Unloading

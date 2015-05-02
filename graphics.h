@@ -160,6 +160,15 @@ public:
 	*/
 	void UpdateWindowSize(int w, int h);
 
+	/*
+		Converts a x, y screen position (Careful this is in render space, relative to the
+		scene surface, not the actual window) and returns the tile below that point.
+		Returns true if there is an actual tile at the position.
+	*/
+	bool ScreenToTile(int x, int y, locXY &tileOut);
+
+	void ShakeScreen(float amount, float duration);
+
 	void InitializeDirect3d();
 
 	/*

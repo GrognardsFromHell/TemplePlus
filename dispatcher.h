@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.h"
+#include "skill.h"
 
 #define DISPATCHER_MAX  250 // max num of simultaneous Dispatches going on (static int counter inside _DispatcherProcessor)
 
@@ -45,6 +46,7 @@ private:
 
 extern DispatcherSystem dispatch;
 
+#pragma pack(push, 1)
 
 #pragma region Dispatcher Structs
 
@@ -75,10 +77,16 @@ struct SubDispDef {
 	uint32_t data2;
 };
 
+/*
+	This defines a condition and what it does, while CondNode represents an instance of this or another condition.
+*/
 struct CondStruct {
 	char* condName;
 	int numArgs;
-	SubDispDef subDispDefs;
+	/*
+		This is a variable length array of dispatcher hooks that this condition has.
+	*/
+	SubDispDef subDispDefs[1];
 };
 
 struct DispatcherCallbackArgs {
@@ -87,6 +95,12 @@ struct DispatcherCallbackArgs {
 	enum_disp_type dispType;
 	uint32_t dispKey;
 	DispIO* dispIO;
+};
+
+struct DispIOAC : DispIO {
+	DispIOAC() {
+		dispIOType = dispIOTypeAC;
+	}
 };
 
 struct DispIO10h : DispIO
@@ -169,7 +183,7 @@ struct Dispatcher :TempleAlloc {
 
 #pragma endregion
 
-
+#pragma pack(pop)
 
 #pragma region Dispatcher Functions
 

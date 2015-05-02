@@ -2,7 +2,6 @@
 #include "aas.h"
 #include "gamesystems.h"
 #include "util/fixes.h"
-#include "util/fixes.h"
 #include "temple_functions.h"
 #include "game_config.h"
 #include "tig/tig_mouse.h"
@@ -15,392 +14,12 @@
 #include "tig/tig_texture.h"
 #include "tig/tig.h"
 #include "ui/ui_render.h"
+#include "python/python_integration.h"
+#include "gamelib_private.h"
 
 GameSystemFuncs gameSystemFuncs;
 
-typedef bool (__cdecl *GameSystemInit)(const GameSystemConf* conf);
-typedef void (__cdecl *GameSystemReset)();
-typedef bool (__cdecl *GameSystemModuleLoad)();
-typedef void (__cdecl *GameSystemModuleUnload)();
-typedef void (__cdecl *GameSystemExit)();
-typedef void (__cdecl *GameSystemAdvanceTime)(uint32_t time);
-typedef bool (__cdecl *GameSystemSave)(TioFile file);
-typedef bool (__cdecl *GameSystemLoad)(GameSystemSaveFile* saveFile);
-typedef void (__cdecl *GameSystemResetBuffers)(RebuildBufferInfo* rebuildInfo);
-
-struct GameSystem {
-	const char* name;
-	GameSystemInit init;
-	GameSystemReset reset;
-	GameSystemModuleLoad moduleLoad;
-	GameSystemModuleUnload moduleUnload;
-	GameSystemExit exit;
-	GameSystemAdvanceTime advanceTime;
-	uint32_t field1c;
-	GameSystemSave save;
-	GameSystemLoad load;
-	GameSystemResetBuffers resetBuffers;
-	uint32_t loadscreenMesIdx;
-};
-
-const uint32_t gameSystemCount = 61;
-
-struct GameSystems {
-	GameSystem systems[gameSystemCount];
-};
-
-static GlobalStruct<GameSystems, 0x102AB368> gameSystems;
-static GameSystem orgFirstSystem;
-static GameSystem orgLastSystem;
-
-static vector<std::function<void(const GameSystemConf*)>> beforeInitCallbacks;
-static vector<std::function<void(const GameSystemConf*)>> afterInitCallbacks;
-static vector<std::function<void()>> beforeResetCallbacks;
-static vector<std::function<void()>> afterResetCallbacks;
-static vector<std::function<void()>> beforeModuleLoadCallbacks;
-static vector<std::function<void()>> afterModuleLoadCallbacks;
-static vector<std::function<void()>> beforeModuleUnloadCallbacks;
-static vector<std::function<void()>> afterModuleUnloadCallbacks;
-static vector<std::function<void()>> beforeExitCallbacks;
-static vector<std::function<void()>> afterExitCallbacks;
-static vector<std::function<void(uint32_t)>> beforeAdvanceTimeCallbacks;
-static vector<std::function<void(uint32_t)>> afterAdvanceTimeCallbacks;
-static vector<std::function<void(TioFile)>> beforeSaveCallbacks;
-static vector<std::function<void(TioFile)>> afterSaveCallbacks;
-static vector<std::function<void(GameSystemSaveFile*)>> beforeLoadCallbacks;
-static vector<std::function<void(GameSystemSaveFile*)>> afterLoadCallbacks;
-static vector<std::function<void(RebuildBufferInfo*)>> beforeResizeBuffersCallbacks;
-static vector<std::function<void(RebuildBufferInfo*)>> afterResizeBuffersCallbacks;
-
-struct BeforeCallbacks {
-	static bool __cdecl Init(const GameSystemConf* conf) {
-		logger->info("EVENT: Before Init");
-
-		for (auto& callback : beforeInitCallbacks) {
-			callback(conf);
-		}
-
-		if (orgFirstSystem.init) {
-			return orgFirstSystem.init(conf);
-		}
-		return true;
-	}
-
-	static void __cdecl Reset() {
-		logger->info("EVENT: Before Reset");
-
-		for (auto& callback : beforeResetCallbacks) {
-			callback();
-		}
-
-		if (orgFirstSystem.reset) {
-			orgFirstSystem.reset();
-		}
-	}
-
-	static bool __cdecl ModuleLoad() {
-		logger->info("EVENT: Before Module Load");
-
-		for (auto& callback : beforeModuleLoadCallbacks) {
-			callback();
-		}
-
-		if (orgFirstSystem.moduleLoad) {
-			return orgFirstSystem.moduleLoad();
-		}
-		return true;
-	}
-
-	static void __cdecl ModuleUnload() {
-		logger->info("EVENT: Before Module Unload");
-
-		for (auto& callback : beforeModuleUnloadCallbacks) {
-			callback();
-		}
-
-		if (orgFirstSystem.moduleUnload) {
-			orgFirstSystem.moduleUnload();
-		}
-	}
-
-	static void __cdecl Exit() {
-		logger->info("EVENT: Before Exit");
-
-		for (auto& callback : beforeExitCallbacks) {
-			callback();
-		}
-
-		if (orgFirstSystem.exit) {
-			orgFirstSystem.exit();
-		}
-	}
-
-	static void __cdecl AdvanceTime(uint32_t time) {
-		// This spams the log a lot
-		// logger->info("EVENT: Before Advance Time");
-		for (auto& callback : beforeAdvanceTimeCallbacks) {
-			callback(time);
-		}
-
-		if (orgFirstSystem.advanceTime) {
-			orgFirstSystem.advanceTime(time);
-		}
-	}
-
-	static bool __cdecl Save(TioFile file) {
-		logger->info("EVENT: Before Save");
-
-		for (auto& callback : beforeSaveCallbacks) {
-			callback(file);
-		}
-
-		if (orgFirstSystem.save) {
-			return orgFirstSystem.save(file);
-		}
-		return true;
-	}
-
-	static bool __cdecl Load(GameSystemSaveFile* file) {
-		logger->info("EVENT: Before Load");
-
-		for (auto& callback : beforeLoadCallbacks) {
-			callback(file);
-		}
-
-		if (orgFirstSystem.load) {
-			return orgFirstSystem.load(file);
-		}
-		return true;
-	}
-
-	static void __cdecl ResetBuffers(RebuildBufferInfo* info) {
-		logger->info("EVENT: Before Reset Buffers");
-
-		for (auto& callback : beforeResizeBuffersCallbacks) {
-			callback(info);
-		}
-
-		if (orgFirstSystem.resetBuffers) {
-			orgFirstSystem.resetBuffers(info);
-		}
-	}
-};
-
-struct AfterCallbacks {
-	static bool __cdecl Init(const GameSystemConf* conf) {
-		bool result = true;
-		if (orgFirstSystem.init) {
-			result = orgFirstSystem.init(conf);
-		}
-
-		logger->info("EVENT: After Init");
-
-		for (auto& callback : afterInitCallbacks) {
-			callback(conf);
-		}
-
-		return result;
-	}
-
-	static void __cdecl Reset() {
-		if (orgFirstSystem.reset) {
-			orgFirstSystem.reset();
-		}
-
-		logger->info("EVENT: After Reset");
-		for (auto& callback : afterResetCallbacks) {
-			callback();
-		}
-	}
-
-	static bool __cdecl ModuleLoad() {
-		bool result = true;
-		if (orgFirstSystem.moduleLoad) {
-			result = orgFirstSystem.moduleLoad();
-		}
-		logger->info("EVENT: After Module Load");
-		for (auto& callback : afterModuleLoadCallbacks) {
-			callback();
-		}
-		return result;
-	}
-
-	static void __cdecl ModuleUnload() {
-		if (orgFirstSystem.moduleUnload) {
-			orgFirstSystem.moduleUnload();
-		}
-		logger->info("EVENT: After Module Unload");
-		for (auto& callback : afterModuleUnloadCallbacks) {
-			callback();
-		}
-	}
-
-	static void __cdecl Exit() {
-		if (orgFirstSystem.exit) {
-			orgFirstSystem.exit();
-		}
-		logger->info("EVENT: After Exit");
-		for (auto& callback : afterExitCallbacks) {
-			callback();
-		}
-	}
-
-	static void __cdecl AdvanceTime(uint32_t time) {
-		if (orgFirstSystem.advanceTime) {
-			orgFirstSystem.advanceTime(time);
-		}
-		// Logspam
-		// logger->info("EVENT: After Advance Time");
-		for (auto& callback : afterAdvanceTimeCallbacks) {
-			callback(time);
-		}
-	}
-
-	static bool __cdecl Save(TioFile file) {
-		bool result = true;
-		if (orgFirstSystem.save) {
-			result = orgFirstSystem.save(file);
-		}
-		logger->info("EVENT: After Save");
-		for (auto& callback : afterSaveCallbacks) {
-			callback(file);
-		}
-		return result;
-	}
-
-	static bool __cdecl Load(GameSystemSaveFile* file) {
-		bool result = true;
-		if (orgFirstSystem.load) {
-			result = orgFirstSystem.load(file);
-		}
-		logger->info("EVENT: After Load");
-		for (auto& callback : afterLoadCallbacks) {
-			callback(file);
-		}
-		return result;
-	}
-
-	static void __cdecl ResetBuffers(RebuildBufferInfo* info) {
-		if (orgFirstSystem.resetBuffers) {
-			orgFirstSystem.resetBuffers(info);
-		}
-		logger->info("EVENT: After Reset Buffers");
-		for (auto& callback : afterResizeBuffersCallbacks) {
-			callback(info);
-		}
-	}
-};
-
-/*
-	Overrides the first and last game system so we can provide before/after hooks for all events.
-*/
-class GameSystemHookInitializer : TempleFix {
-public:
-	const char* name() override {
-		return "Gamesystem Hooks";
-	}
-
-	void apply() override {
-		// Override all functions for "before" callbacks
-		auto& firstSystem = gameSystems->systems[0];
-		orgFirstSystem = firstSystem;
-		firstSystem.init = &BeforeCallbacks::Init;
-		firstSystem.reset = &BeforeCallbacks::Reset;
-		firstSystem.moduleLoad = &BeforeCallbacks::ModuleLoad;
-		firstSystem.moduleUnload = &BeforeCallbacks::ModuleUnload;
-		firstSystem.exit = &BeforeCallbacks::Exit;
-		firstSystem.advanceTime = &BeforeCallbacks::AdvanceTime;
-		//firstSystem.save = &BeforeCallbacks::Save;
-		//firstSystem.load = &BeforeCallbacks::Load;
-		firstSystem.resetBuffers = &BeforeCallbacks::ResetBuffers;
-
-		// Override all functions for "before" callbacks
-		auto& lastSystem = gameSystems->systems[60];
-		orgLastSystem = lastSystem;
-		lastSystem.init = &AfterCallbacks::Init;
-		lastSystem.reset = &AfterCallbacks::Reset;
-		lastSystem.moduleLoad = &AfterCallbacks::ModuleLoad;
-		lastSystem.moduleUnload = &AfterCallbacks::ModuleUnload;
-		lastSystem.exit = &AfterCallbacks::Exit;
-		lastSystem.advanceTime = &AfterCallbacks::AdvanceTime;
-		//lastSystem.save = &AfterCallbacks::Save;
-		//lastSystem.load = &AfterCallbacks::Load;
-		lastSystem.resetBuffers = &AfterCallbacks::ResetBuffers;
-	}
-
-} gameSystemHookInitializer;
-
-void GameSystemHooks::AddInitHook(std::function<void(const GameSystemConf*)> callback, bool before) {
-	if (before) {
-		beforeInitCallbacks.push_back(callback);
-	} else {
-		afterInitCallbacks.push_back(callback);
-	}
-}
-
-void GameSystemHooks::AddResetHook(std::function<void()> callback, bool before) {
-	if (before) {
-		beforeResetCallbacks.push_back(callback);
-	} else {
-		afterResetCallbacks.push_back(callback);
-	}
-}
-
-void GameSystemHooks::AddModuleLoadHook(std::function<void()> callback, bool before) {
-	if (before) {
-		beforeModuleLoadCallbacks.push_back(callback);
-	} else {
-		afterModuleLoadCallbacks.push_back(callback);
-	}
-}
-
-void GameSystemHooks::AddModuleUnloadHook(std::function<void()> callback, bool before) {
-	if (before) {
-		beforeModuleUnloadCallbacks.push_back(callback);
-	} else {
-		afterModuleUnloadCallbacks.push_back(callback);
-	}
-}
-
-void GameSystemHooks::AddExitHook(std::function<void()> callback, bool before) {
-	if (before) {
-		beforeExitCallbacks.push_back(callback);
-	} else {
-		afterExitCallbacks.push_back(callback);
-	}
-}
-
-void GameSystemHooks::AddAdvanceTimeHook(std::function<void(uint32_t)> callback, bool before) {
-	if (before) {
-		beforeAdvanceTimeCallbacks.push_back(callback);
-	} else {
-		afterAdvanceTimeCallbacks.push_back(callback);
-	}
-}
-
-void GameSystemHooks::AddSaveHook(std::function<void(TioFile)> callback, bool before) {
-	if (before) {
-		beforeSaveCallbacks.push_back(callback);
-	} else {
-		afterSaveCallbacks.push_back(callback);
-	}
-}
-
-void GameSystemHooks::AddLoadHook(std::function<void(GameSystemSaveFile*)> callback, bool before) {
-	if (before) {
-		beforeLoadCallbacks.push_back(callback);
-	} else {
-		afterLoadCallbacks.push_back(callback);
-	}
-}
-
-void GameSystemHooks::AddResizeBuffersHook(std::function<void(RebuildBufferInfo*)> callback, bool before) {
-	if (before) {
-		beforeResizeBuffersCallbacks.push_back(callback);
-	} else {
-		afterResizeBuffersCallbacks.push_back(callback);
-	}
-}
+GlobalStruct<GameSystems, 0x102AB368> gameSystems;
 
 struct GameSystemInitTable : AddressTable {
 
@@ -418,6 +37,9 @@ struct GameSystemInitTable : AddressTable {
 	void (__cdecl *SetClothFrameSkip)(int value);
 	void (__cdecl *SetEnvMapping)(int value);
 	void (__cdecl *SetParticleFidelity)(float value); // Value is clamped to [0,1]
+
+	void (__cdecl *DestroyPlayerObject)();
+	void (__cdecl *EndGame)();
 
 	// Initializes several random tables, vectors and shuffled int lists as well as the lightning material.
 	void (__cdecl *InitPfxLightning)();
@@ -461,6 +83,8 @@ struct GameSystemInitTable : AddressTable {
 		rebase(SetClothFrameSkip, 0x102629C0);
 		rebase(SetEnvMapping, 0x101E0A20);
 		rebase(InitPfxLightning, 0x10087220);
+		rebase(DestroyPlayerObject, 0x1006EEF0);
+		rebase(EndGame, 0x1014E160);
 
 		rebase(moduleLoaded, 0x10307054);
 		rebase(fullInstall, 0x10306F48);
@@ -477,6 +101,7 @@ struct GameSystemInitTable : AddressTable {
 } gameSystemInitTable;
 
 static void registerDataFiles();
+static void verifyTemplePlusData();
 static string getLanguage();
 static void playLegalMovies();
 static void initBufferStuff(const GameSystemConf &conf);
@@ -589,6 +214,7 @@ void GameSystemFuncs::NewInit(const GameSystemConf& conf) {
 	*gameSystemInitTable.fullInstall = true;
 	
 	registerDataFiles();
+	verifyTemplePlusData();
 
 	auto lang = getLanguage();
 	if (lang == "en") {
@@ -695,6 +321,14 @@ void GameSystemFuncs::ResizeScreen(int w, int h) {
 	
 }
 
+void GameSystemFuncs::EndGame() {
+	return gameSystemInitTable.EndGame();
+}
+
+void GameSystemFuncs::DestroyPlayerObject() {
+	gameSystemInitTable.DestroyPlayerObject();
+}
+
 static void registerDataFiles() {
 	TioFileList list;
 	tio_filelist_create(&list, "*.dat");
@@ -709,9 +343,29 @@ static void registerDataFiles() {
 	}
 
 	tio_filelist_destroy(&list);
-	
+
+	tio_mkdir("tpdata");
+	tio_path_add("tpdata");
+
 	tio_mkdir("data");
 	tio_path_add("data");
+
+	for (auto &entry : config.additionalTioPaths) {
+		logger->info("Adding additional TIO path {}", entry);
+		tio_path_add(entry.c_str());
+	}
+}
+
+/*
+	Checks that the TemplePlus data file has been loaded in some way.
+*/
+static void verifyTemplePlusData() {
+
+	TioFileListFile info;
+	if (!tio_fileexists("templeplus\\data_present", &info)) {
+		throw TempleException("The TemplePlus data files are not installed.");
+	}
+
 }
 
 // Gets the language of the current toee installation (i.e. "en")
@@ -784,7 +438,7 @@ static void initAas() {
 	conf.pixelPerWorldTile2 = conf.pixelPerWorldTile1;
 	conf.getSkmFile = (uint32_t)temple_address<0x100041E0>();
 	conf.getSkaFile = (uint32_t)temple_address<0x10004230>();
-	conf.runScript = (uint32_t)temple_address<0x100AD990>();
+	conf.runScript = RunAnimFramePythonScript;
 
 	if (aasFuncs.Init(&conf)) {
 		throw TempleException("Failed to initialize animation system.");

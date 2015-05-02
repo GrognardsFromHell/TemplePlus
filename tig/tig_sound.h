@@ -18,7 +18,7 @@ struct TigSoundAddresses : AddressTable {
 	void (__cdecl *LoadSound)(int streamId, const char *filename, int a4, bool allowReverb, int a5);
 	bool (__cdecl *IsStreamPlaying)(int streamId);
 	bool (__cdecl *IsStreamActive)(int streamId);
-	void(__cdecl *FreeStream)(int streamId);
+	void (__cdecl *FreeStream)(int streamId);
 
 	TigSoundAddresses() {
 		rebase(movieVolume, 0x103010F8); // 0-127
@@ -28,7 +28,7 @@ struct TigSoundAddresses : AddressTable {
 		rebase(LoadSound, 0x101E3B00);
 		rebase(IsStreamPlaying, 0x101E3D40);
 		rebase(IsStreamActive, 0x101E3DC0);
-		rebase(FreeStream, 0x101E36D0);		
+		rebase(FreeStream, 0x101E36D0);
 	}
 	
 };

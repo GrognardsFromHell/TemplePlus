@@ -14,7 +14,6 @@ struct ActnSeq;
 struct TurnBasedStatus;
 enum SpontCastType;
 struct D20SpellData;
-enum D20ActionType : int32_t;
 enum D20CAF : uint32_t;
 enum SpontCastType : unsigned char;
 struct D20SpellData;
@@ -36,6 +35,8 @@ struct D20System : AddressTable
 	D20StatusSystem * d20Status;
 
 	void d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2);
+	void d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, objHndl arg);
+
 	uint32_t d20Query(objHndl ObjHnd, D20DispatcherKey dispKey);
 	uint32_t d20QueryWithData(objHndl ObjHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
 	uint64_t d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
@@ -57,6 +58,8 @@ struct D20System : AddressTable
 	void(__cdecl *ToHitProc)(D20Actn *);
 	uint32_t (__cdecl*_tumbleCheck)(D20Actn* d20a);
 	int32_t (__cdecl *_d20aTriggersAOO)(void * iO); // d20a @<esi> // 1008A9C0
+
+	void (__cdecl *CreateRollHistory)(int idx);
 
 	//char **ToEEd20ActionNames;
 
@@ -85,7 +88,7 @@ struct D20Actn
 {
 	D20ActionType d20ActType;
 	uint32_t data1;
-	D20CAF d20Caf;
+	int d20Caf; // Based on D20_CAF
 	uint32_t field_C;
 	objHndl d20APerformer;
 	objHndl d20ATarget;
@@ -99,6 +102,22 @@ struct D20Actn
 	uint32_t spellId;
 	uint32_t animID;
 	PathQueryResult * path;
+
+	D20Actn() {}
+
+	D20Actn(D20ActionType type) {
+		rollHist1 = -1;
+		rollHist2 = -1;
+		rollHist3 = -1;
+		d20ActType = type;
+		d20APerformer = 0;
+		d20ATarget = 0;
+		d20Caf = 0;
+		distTraversed = 0;
+		path = 0;
+		spellId = 0;
+		data1 = 0;
+	}
 };
 
 
@@ -150,3 +169,7 @@ void _globD20aSetPerformer(objHndl objHnd);
 void _globD20ActnInit();
 void _GlobD20ActnSetSpellData(D20SpellData * d20SpellData);
 #pragma endregion 
+
+inline int GetAttributeMod(int stat) {
+	return (stat - 10) / 2;
+}

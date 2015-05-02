@@ -20,9 +20,9 @@ public:
 #pragma region Combat System Implementation
 CombatSystem combatSys;
 
-uint32_t CombatSystem::isCombatActive()
+bool CombatSystem::isCombatActive()
 {
-	return *combatSys.combatModeActive;
+	return *combatSys.combatModeActive != 0;
 }
 
 void CombatSystem::enterCombat(objHndl objHnd)

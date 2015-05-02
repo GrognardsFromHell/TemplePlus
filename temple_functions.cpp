@@ -24,8 +24,7 @@ class TempleFuncReplacements : public TempleFix
 void init_functions()
 {
 	templeImageBase = static_cast<void*>(GetModuleHandleA("temple.dll"));
-	if (!templeImageBase)
-	{
+	if (!templeImageBase) {
 		logger->error("temple.dll not found in memory space");
 	}
 
@@ -97,7 +96,6 @@ int32_t TempleFuncs::diceRoll(uint32_t dieNum, uint32_t dieType, int32_t dieBonu
 TempleFuncs::TempleFuncs()
 {
 	rebase(ProcessSystemEvents, 0x101DF440);
-	rebase(PyScript_Execute, 0x100ADE40);
 	rebase(StringHash, 0x101EBB00);
 	macRebase(RNG, 10038DF5)
 	macRebase(encodeTriplet, 10038C50)
@@ -120,7 +118,7 @@ TempleFuncs::TempleFuncs()
 	rebase(Obj_Get_IdxField_32bit, 0x1009E5C0);
 	rebase(Obj_Get_IdxField_64bit, 0x1009E640);
 	rebase(Obj_Get_IdxField_ObjHnd, 0x1009E6D0);
-	rebase(Obj_Get_IdxField_256bit, 0x1009E770);
+	rebase(Obj_Get_ArrayElem_Generic, 0x1009E770);
 
 	rebase(Obj_Set_Field_32bit, 0x100A0190);
 	rebase(Obj_Set_Field_64bit, 0x100A0200);
@@ -128,6 +126,7 @@ TempleFuncs::TempleFuncs()
 	rebase(Obj_Set_IdxField_byValue, 0x100A1310);
 	rebase(Obj_Set_IdxField_byPtr, 0x100A1540);
 	rebase(Obj_Set_IdxField_ObjHnd, 0x100A14A0);
+	rebase(Obj_Clear_IdxField, 0x1009E860);
 
 
 #pragma endregion
@@ -149,9 +148,6 @@ TempleFuncs::TempleFuncs()
 
 
 
-	rebase(StandPointPacketGet, 0x100BDE20);
-	rebase(ObjStandpointGet, 0x100BA890);
-	rebase(ObjStandpointSet, 0x100BA8F0);
 
 
 	rebase(ObjSpellKnownQueryGetData, 0x100762D0);
@@ -163,7 +159,6 @@ TempleFuncs::TempleFuncs()
 	rebase(ItemCreationPrereqSthg_sub_101525B0, 0x101525B0);
 
 	rebase(TurnProcessing, 0x100634E0);
-	rebase(RandomIntRange, 0x10038DF0);
 
 	rebase(temple_snprintf, 0x10254680);
 

@@ -1,8 +1,8 @@
 
 #include "stdafx.h"
 #include "util/fixes.h"
-#include "minhook/src/trampoline.h"
-#include "minhook/src/HDE/hde32.h"
+#include "dependencies/minhook/src/trampoline.h"
+#include "dependencies/minhook/src/HDE/hde32.h"
 
 vector<TempleFix*> &TempleFixes::fixes() {
 	static vector<TempleFix*> activeFixes;

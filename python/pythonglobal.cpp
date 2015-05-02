@@ -10,7 +10,7 @@ static struct TemplePythonData : AddressTable {
 	TemplePythonData() {
 		rebase(globals, 0x10BCA764);
 	}
-		
+
 } templePythonData;
 
 PythonGlobalExtension::PythonGlobalExtension() {
@@ -23,14 +23,15 @@ PythonGlobalExtension::~PythonGlobalExtension() {
 void PythonGlobalExtension::installExtensions() {
 
 	// Get the python global object
-	auto globals = *templePythonData.globals;
+	// TODO re-enable later
+	/*auto globals = *templePythonData.globals;
 	auto list = extensions();
 
 	logger->info("Applying {} Python global extensions.", list.size());
 
 	for (auto extension : list) {
 		extension->extend(globals);
-	}
+	}*/
 
 }
 

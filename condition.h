@@ -85,6 +85,29 @@ public:
 
 	ToEEHashtable<CondStruct> * mCondStructHashtable;
 
+	/*
+		Returns the condition definition with the given name,
+		null if none exists.
+	*/
+	CondStruct *GetByName(const string &name);
+
+	/*
+		Adds a condition to an item's obj_f_item_pad_wielder_condition_array and 
+		obj_f_item_pad_wielder_argument_array.
+	*/
+	void AddToItem(objHndl item, const CondStruct *cond, const vector<int> &args);
+
+	/*
+		Adds a condition to an object. There is no type restriction for the target
+		object, but usually it should be a critter.
+	*/
+	bool AddTo(objHndl handle, const CondStruct* cond, const vector<int> &args);
+
+	/*
+		Adds a condition to an object by name. There is no type restriction for the target
+		object, but usually it should be a critter.
+	*/
+	bool AddTo(objHndl handle, const string &name, const vector<int> &args);
 
 #pragma endregion
 
@@ -115,7 +138,6 @@ public:
 		
 		rebase(mCondStructHashtable, 0x11868F60);
 	}
-
 };
 
 extern ConditionSystem conds;
@@ -132,10 +154,12 @@ struct CondFeatDictionary  // maps feat enums to CondStructs
 };
 
 uint32_t _ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4);
+bool _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, const vector<int> &args);
 void _CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNode);
 uint32_t _ConditionAddToAttribs_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct);
 uint32_t _ConditionAddToAttribs_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2);
 uint32_t _ConditionAdd_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct);
+uint32_t _ConditionAdd_NumArgs1(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1);
 uint32_t _ConditionAdd_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2);
 uint32_t _ConditionAdd_NumArgs3(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3);
 uint32_t _ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4);

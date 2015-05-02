@@ -49,21 +49,6 @@
     <ClCompile Include="bonusspells.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
-    <ClCompile Include="minhook\src\HDE\hde32.c">
-      <Filter>Dependencies\minhook</Filter>
-    </ClCompile>
-    <ClCompile Include="minhook\src\HDE\hde64.c">
-      <Filter>Dependencies\minhook</Filter>
-    </ClCompile>
-    <ClCompile Include="minhook\src\hook.c">
-      <Filter>Dependencies\minhook</Filter>
-    </ClCompile>
-    <ClCompile Include="minhook\src\trampoline.c">
-      <Filter>Dependencies\minhook</Filter>
-    </ClCompile>
-    <ClCompile Include="minhook\src\buffer.c">
-      <Filter>Dependencies\minhook</Filter>
-    </ClCompile>
     <ClCompile Include="dependencies\cppformat\format.cc">
       <Filter>Dependencies\cppformat</Filter>
     </ClCompile>
@@ -245,6 +230,50 @@
     <ClCompile Include="d20_level.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="damage.cpp" />
+    <ClCompile Include="dependencies\minhook\src\buffer.c" />
+    <ClCompile Include="dependencies\minhook\src\HDE\hde32.c" />
+    <ClCompile Include="dependencies\minhook\src\HDE\hde64.c" />
+    <ClCompile Include="dependencies\minhook\src\hook.c" />
+    <ClCompile Include="dependencies\minhook\src\trampoline.c" />
+    <ClCompile Include="dialog.cpp" />
+    <ClCompile Include="dice.cpp" />
+    <ClCompile Include="fade.cpp" />
+    <ClCompile Include="maps.cpp" />
+    <ClCompile Include="particles.cpp" />
+    <ClCompile Include="python\python_areas.cpp" />
+    <ClCompile Include="python\python_cheats.cpp" />
+    <ClCompile Include="python\python_console.cpp" />
+    <ClCompile Include="python\python_counters.cpp" />
+    <ClCompile Include="python\python_dice.cpp" />
+    <ClCompile Include="python\python_globalflags.cpp" />
+    <ClCompile Include="python\python_globalvars.cpp" />
+    <ClCompile Include="python\python_integration.cpp" />
+    <ClCompile Include="python\python_integration_brawl.cpp" />
+    <ClCompile Include="python\python_integration_obj.cpp" />
+    <ClCompile Include="python\python_integration_spells.cpp" />
+    <ClCompile Include="python\python_module.cpp" />
+    <ClCompile Include="python\python_object.cpp" />
+    <ClCompile Include="python\python_objectscripts.cpp" />
+    <ClCompile Include="python\python_quests.cpp" />
+    <ClCompile Include="python\python_integration_encounter.cpp" />
+    <ClCompile Include="python\python_scripts.cpp" />
+    <ClCompile Include="python\python_time.cpp" />
+    <ClCompile Include="python\python_timeevents.cpp" />
+    <ClCompile Include="python\python_tio.cpp" />
+    <ClCompile Include="python\python_trap.cpp" />
+    <ClCompile Include="quest.cpp" />
+    <ClCompile Include="radialmenu.cpp" />
+    <ClCompile Include="reputations.cpp" />
+    <ClCompile Include="sound.cpp" />
+    <ClCompile Include="textbubbles.cpp" />
+    <ClCompile Include="python\python_consoleout.cpp" />
+    <ClCompile Include="python\python_embed.cpp" />
+    <ClCompile Include="python\python_game.cpp" />
+    <ClCompile Include="python\python_importer.cpp" />
+    <ClCompile Include="traps.cpp" />
+    <ClCompile Include="ui\ui_dialog.cpp" />
+    <ClCompile Include="ui\ui_tutorial.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -482,6 +511,56 @@
     <ClInclude Include="d20_level.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
+    <ClInclude Include="damage.h" />
+    <ClInclude Include="dependencies\minhook\include\MinHook.h" />
+    <ClInclude Include="dependencies\minhook\src\buffer.h" />
+    <ClInclude Include="dependencies\minhook\src\HDE\hde32.h" />
+    <ClInclude Include="dependencies\minhook\src\HDE\hde64.h" />
+    <ClInclude Include="dependencies\minhook\src\HDE\pstdint.h" />
+    <ClInclude Include="dependencies\minhook\src\HDE\table32.h" />
+    <ClInclude Include="dependencies\minhook\src\HDE\table64.h" />
+    <ClInclude Include="dependencies\minhook\src\trampoline.h" />
+    <ClInclude Include="dialog.h" />
+    <ClInclude Include="dice.h" />
+    <ClInclude Include="fade.h" />
+    <ClInclude Include="maps.h" />
+    <ClInclude Include="particles.h" />
+    <ClInclude Include="gamelib_private.h" />
+    <ClInclude Include="python\python_areas.h" />
+    <ClInclude Include="python\python_cheats.h" />
+    <ClInclude Include="python\python_console.h" />
+    <ClInclude Include="python\python_counters.h" />
+    <ClInclude Include="python\python_dice.h" />
+    <ClInclude Include="python\python_embed.h" />
+    <ClInclude Include="python\python_error.h" />
+    <ClInclude Include="python\python_globalflags.h" />
+    <ClInclude Include="python\python_globalvars.h" />
+    <ClInclude Include="python\python_integration.h" />
+    <ClInclude Include="python\python_integration_obj.h" />
+    <ClInclude Include="python\python_integration_spells.h" />
+    <ClInclude Include="python\python_module.h" />
+    <ClInclude Include="python\python_object.h" />
+    <ClInclude Include="python\python_objectscripts.h" />
+    <ClInclude Include="python\python_quests.h" />
+    <ClInclude Include="python\python_support.h" />
+    <ClInclude Include="python\python_time.h" />
+    <ClInclude Include="python\python_timeevents.h" />
+    <ClInclude Include="python\python_tio.h" />
+    <ClInclude Include="python\python_trap.h" />
+    <ClInclude Include="quest.h" />
+    <ClInclude Include="radialmenu.h" />
+    <ClInclude Include="reputations.h" />
+    <ClInclude Include="textbubbles.h" />
+    <ClInclude Include="tig\tig_tabparser.h" />
+    <ClInclude Include="python\python_game.h" />
+    <ClInclude Include="python\python_importer.h" />
+    <ClInclude Include="python\python_consoleout.h" />
+    <ClInclude Include="traps.h" />
+    <ClInclude Include="ui\ui_dialog.h" />
+    <ClInclude Include="ui\ui_tutorial.h" />
+    <ClInclude Include="util\mathutil.h" />
+    <ClInclude Include="sound.h" />
+    <ClInclude Include="util\stringutil.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -500,27 +579,6 @@
       <UniqueIdentifier>{ea100e12-e4d1-4df0-8ed7-e2ba3025f6e5}</UniqueIdentifier>
     </Filter>
     <ClInclude Include="aas.h" />
-    <ClInclude Include="minhook\src\HDE\hde32.h">
-      <Filter>Dependencies\minhook</Filter>
-    </ClInclude>
-    <ClInclude Include="minhook\src\HDE\hde64.h">
-      <Filter>Dependencies\minhook</Filter>
-    </ClInclude>
-    <ClInclude Include="minhook\src\HDE\table32.h">
-      <Filter>Dependencies\minhook</Filter>
-    </ClInclude>
-    <ClInclude Include="minhook\src\HDE\table64.h">
-      <Filter>Dependencies\minhook</Filter>
-    </ClInclude>
-    <ClInclude Include="minhook\src\trampoline.h">
-      <Filter>Dependencies\minhook</Filter>
-    </ClInclude>
-    <ClInclude Include="minhook\src\HDE\pstdint.h">
-      <Filter>Dependencies\minhook</Filter>
-    </ClInclude>
-    <ClInclude Include="minhook\src\buffer.h">
-      <Filter>Dependencies\minhook</Filter>
-    </ClInclude>
     <ClInclude Include="dependencies\cppformat\format.h">
       <Filter>Dependencies\cppformat</Filter>
     </ClInclude>

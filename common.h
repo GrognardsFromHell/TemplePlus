@@ -36,20 +36,63 @@
 
 #define BonusListMax 40
 
+// This is the number of pixels per tile on the x and y axis. Derived from sqrt(800)
+#define INCH_PER_TILE 28.284271247461900976033774484194f
+#define INCH_PER_HALFTILE (INCH_PER_TILE/2.0f)
+#define INCH_PER_FEET 12
+
 # pragma region Standard Structs
 
 #pragma pack(push, 1)
-enum SkillEnum : uint32_t;
 
-struct locXY{
+typedef D3DXVECTOR2 vector2f;
+typedef D3DXVECTOR3 vector3f;
+
+struct locXY {
 	uint32_t locx;
 	uint32_t locy;
+
+	static locXY fromField(uint64_t location) {
+		return *(locXY*)&location;
+	}
+
+	uint64_t ToField() {
+		return *((uint64_t*)this);
+	}
+
+	operator uint64_t() const {
+		return *(uint64_t*)this;
+	}
+
+	vector2f ToInches2D(float offsetX = 0, float offsetY = 0) {
+		return{
+			locx * INCH_PER_TILE + offsetX,
+			locy * INCH_PER_TILE + offsetY
+		};
+	}
+
+	vector3f ToInches3D(float offsetX = 0, float offsetY = 0, float offsetZ = 0) {
+		return {
+			locx * INCH_PER_TILE + offsetX,
+			offsetZ,
+			locy * INCH_PER_TILE + offsetY
+		};
+	}
+
 };
 
 struct LocAndOffsets {
 	locXY location;
 	float off_x;
 	float off_y;
+	
+	vector2f ToInches2D() {
+		return location.ToInches2D(off_x, off_y);
+	}
+
+	vector3f ToInches3D(float offsetZ = 0) {
+		return location.ToInches3D(off_x, off_y, offsetZ);
+	}
 };
 
 struct LocFull {
@@ -63,17 +106,8 @@ struct GroupArray {
 	void* unknownfunc;
 };
 
-
-struct StandPoint {
-	uint32_t mapNum;
-	uint32_t field4;
-	LocAndOffsets LocAndOff;
-	_jmpPntID jmpPntID;
-	uint32_t field_1C;
-};
-
-struct JumpPointPacket{
-	_jmpPntID jmpPntID;
+struct JumpPointPacket {
+	int jmpPntId;
 	char * pMapName;
 	_mapNum mapNum;
 	uint32_t field_C;

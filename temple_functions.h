@@ -26,8 +26,7 @@ struct TempleFuncs : AddressTable {
 
 
 	void(*ProcessSystemEvents)();
-	PyObject* (__cdecl *PyScript_Execute)(char *pPyFileName, char *pPyFuncName, PyObject *pPyArgTuple);
-	uint32_t(__cdecl *StringHash)( char * pString);
+	uint32_t(__cdecl *StringHash)(const char * pString);
 
 
 	int32_t diceRoll(uint32_t dieNum, uint32_t dieType, int32_t dieBonus);
@@ -51,13 +50,14 @@ struct TempleFuncs : AddressTable {
 	uint32_t(__cdecl *Obj_Get_IdxField_32bit)(objHndl, _fieldIdx, _fieldSubIdx);
 	uint64_t(__cdecl *Obj_Get_IdxField_64bit)(objHndl, _fieldIdx, _fieldSubIdx);
 	objHndl(__cdecl *Obj_Get_IdxField_ObjHnd)(objHndl, _fieldIdx, _fieldSubIdx);
-	int(__cdecl *Obj_Get_IdxField_256bit)(objHndl, _fieldIdx, _fieldSubIdx, void *);
+	int(__cdecl *Obj_Get_ArrayElem_Generic)(objHndl, _fieldIdx, _fieldSubIdx, void *pDataOut);
 	int(__cdecl *Obj_Set_Field_32bit)(objHndl ObjHnd, uint32_t nFieldIdx, uint32_t n32Data);
 	int(__cdecl *Obj_Set_Field_64bit)(objHndl, uint32_t nFieldIdx, uint64_t);
 	int(__cdecl *Obj_Set_Field_ObjHnd)(objHndl, uint32_t nFieldIdx, objHndl);
 	int(__cdecl *Obj_Set_IdxField_byValue)(objHndl, _fieldIdx, _fieldSubIdx, ...);
 	void(__cdecl *Obj_Set_IdxField_byPtr)(objHndl, _fieldIdx, _fieldSubIdx, void * _SourceData);
 	int(__cdecl *Obj_Set_IdxField_ObjHnd)(objHndl, _fieldIdx, _fieldSubIdx, objHndl);
+	void(__cdecl *Obj_Clear_IdxField)(objHndl, _fieldIdx);
 #pragma endregion
 
 	PyObject*  (__cdecl *PyObjFromObjHnd) (objHndl);
@@ -67,10 +67,6 @@ struct TempleFuncs : AddressTable {
 	
 	int32_t(__cdecl *ObjStatBaseGet)(objHndl, uint32_t obj_stat); // can return single precision floating point too (e.g. movement speed)
 	int32_t(__cdecl *ObjStatBaseDispatch)(objHndl, uint32_t obj_stat, void *); // Dispatcher Type 0x42; defaults to ObjStatBaseGet if no Dispatcher found
-
-	bool(__cdecl *StandPointPacketGet)(_jmpPntID jmpPntID, char * mapNameOut, size_t, _mapNum * mapNumOut, locXY * locXYOut);
-	uint32_t(__cdecl *ObjStandpointGet)(objHndl, _standPointType, StandPoint *);
-	uint32_t(__cdecl *ObjStandpointSet)(objHndl, _standPointType, StandPoint *);
 
 	uint32_t (__cdecl *ObjGetBABAfterLevelling)(objHndl objHnd, Stat classBeingLevelledUp);
 	uint32_t(__cdecl *XPReqForLevel)(uint32_t level);
@@ -91,11 +87,6 @@ struct TempleFuncs : AddressTable {
 	
 
 	void (__cdecl *TurnProcessing)(objHndl obj);
-
-	/*
-		Generates a random integer using the configured random number generator.
-	*/
-	int (__cdecl *RandomIntRange)(int from, int to);
 
 
 	uint32_t ItemWorthFromEnhancements(uint32_t n) {

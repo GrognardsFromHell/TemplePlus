@@ -1212,7 +1212,29 @@ enum Alignment : uint32_t {
 };
 
 enum Race : uint32_t
-{	race_human = 0,	race_deep_dwarf = 0,	race_derro = 1,	race_dwarf = 1,	race_elf = 2,	race_duergar = 2,	race_gnome = 3,	race_mountain_dwarf = 3,	race_halfelf = 4,	race_half_elf = 4,	race_aquatic_elf = 4,	race_drow = 5,	race_halforc = 5,	race_half_orc = 5,	race_halfling = 6,	race_gray_elf = 6,	race_wild_elf = 7,	race_wood_elf = 8,	race_svirfneblin = 9,	race_forest_gnome = 10,	race_tallfellow = 11,	race_deep_halfling = 12,
+{
+	race_human = 0,
+	race_deep_dwarf = 0,
+	race_derro = 1,
+	race_dwarf = 1,
+	race_elf = 2,
+	race_duergar = 2,
+	race_gnome = 3,
+	race_mountain_dwarf = 3,
+	race_halfelf = 4,
+	race_half_elf = 4,
+	race_aquatic_elf = 4,
+	race_drow = 5,
+	race_halforc = 5,
+	race_half_orc = 5,
+	race_halfling = 6,
+	race_gray_elf = 6,
+	race_wild_elf = 7,
+	race_wood_elf = 8,
+	race_svirfneblin = 9,
+	race_forest_gnome = 10,
+	race_tallfellow = 11,
+	race_deep_halfling = 12,
 };
 
 enum Stat : uint32_t {
@@ -1298,27 +1320,39 @@ enum Stat : uint32_t {
 
 #pragma endregion
 
-enum ONF : uint32_t
+enum NpcFlag : uint32_t
 {
-	ONF_EX_FOLLOWER = 1,	ONF_WAYPOINTS_DAY = 2,	ONF_WAYPOINTS_NIGHT = 4,
-	ONF_AI_WAIT_HERE = 8,	ONF_AI_SPREAD_OUT = 16,	ONF_JILTED = 32,
-	ONF_LOGBOOK_IGNORES = 64,	ONF_UNUSED_00000080 = 128,	ONF_KOS = 256,
-	ONF_USE_ALERTPOINTS = 512,	ONF_FORCED_FOLLOWER = 1024,
+	ONF_EX_FOLLOWER = 1,
+	ONF_WAYPOINTS_DAY = 2,
+	ONF_WAYPOINTS_NIGHT = 4,
+	ONF_AI_WAIT_HERE = 8,
+	ONF_AI_SPREAD_OUT = 16,
+	ONF_JILTED = 32,
+	ONF_LOGBOOK_IGNORES = 64,
+	ONF_UNUSED_00000080 = 128,
+	ONF_KOS = 256,
+	ONF_USE_ALERTPOINTS = 512,
+	ONF_FORCED_FOLLOWER = 1024,
 	ONF_KOS_OVERRIDE = 2048,
-	ONF_WANDERS = 4096,	ONF_WANDERS_IN_DARK = 8192,
+	ONF_WANDERS = 4096,
+	ONF_WANDERS_IN_DARK = 8192,
 	ONF_FENCE = 16384,
-	ONF_FAMILIAR = 32768,	ONF_CHECK_LEADER = 65536,	ONF_NO_EQUIP = 131072,
-	ONF_CAST_HIGHEST = 262144,	ONF_GENERATOR = 524288,
+	ONF_FAMILIAR = 32768,
+	ONF_CHECK_LEADER = 65536,
+	ONF_NO_EQUIP = 131072,
+	ONF_CAST_HIGHEST = 262144,
+	ONF_GENERATOR = 524288,
 	ONF_GENERATED = 1048576,
-	ONF_GENERATOR_RATE1 = 2097152,	ONF_GENERATOR_RATE2 = 4194304,
+	ONF_GENERATOR_RATE1 = 2097152,
+	ONF_GENERATOR_RATE2 = 4194304,
 	ONF_GENERATOR_RATE3 = 8388608,
 	ONF_DEMAINTAIN_SPELLS = 16777216,
 	ONF_UNUSED_02000000 = 33554432,
 	ONF_UNUSED_04000000 = 67108864,
 	ONF_UNUSED_08000000 = 134217728,
-	ONF_BACKING_OFF = 268435456,
-	ONF_NO_ATTACK = 536870912,
-	ONF_BOSS_MONSTER = 1073741824,
+	ONF_BACKING_OFF = 0x10000000,
+	ONF_NO_ATTACK = 0x20000000,
+	ONF_BOSS_MONSTER = 0x40000000,
 	ONF_EXTRAPLANAR = 0x80000000
 };
 
@@ -1699,8 +1733,8 @@ enum enum_dispIO_type : uint32_t {
 	dispIOType1,
 	dispIOType2,
 	dispIOType3,
-	dispIOType4,
-	dispIOType5,
+	dispIOTypeDamage,
+	dispIOTypeAC, // AC
 	dispIOType6,
 	dispIOTypeQuery,
 	dispIOTypeTurnBasedStatus,
@@ -1753,7 +1787,7 @@ enum enum_disp_type : uint32_t {
 	dispType17,
 	dispType18,
 	dispType19,
-	dispType20,
+	dispType20, // Combat
 	dispType21,
 	dispType22,
 	dispType23,
@@ -1842,7 +1876,7 @@ enum MonsterCategory : uint32_t {
 	mc_subtye_fire = 4096
 };
 
-enum OCF
+enum CritterFlag
 {
 	OCF_IS_CONCEALED = 0x1,
 	OCF_MOVING_SILENTLY = 0x2,
@@ -1881,6 +1915,21 @@ enum OCF
 
 #pragma endregion
 
+enum ContainerFlag : uint32_t {
+	OCOF_LOCKED = 0x1,
+	OCOF_JAMMED = 0x2,
+	OCOF_MAGICALLY_HELD = 0x4,
+	OCOF_NEVER_LOCKED = 0x8,
+	OCOF_ALWAYS_LOCKED = 0x10,
+	OCOF_LOCKED_DAY = 0x20,
+	OCOF_LOCKED_NIGHT = 0x40,
+	OCOF_BUSTED = 0x80,
+	OCOF_NOT_STICKY = 0x100,
+	OCOF_INVEN_SPAWN_ONCE = 0x200,
+	OCOF_INVEN_SPAWN_INDEPENDENT = 0x400,
+	OCOF_OPEN = 0x800,
+	OCOF_HAS_BEEN_OPENED = 0x1000
+};
 
 enum PortalFlag : uint32_t {
 	OPF_LOCKED = 0x1,
@@ -2071,3 +2120,33 @@ enum ArmorType : uint32_t
 };
 
 #pragma endregion 
+
+// Keep in sync with Python enum
+enum class DamageType : int {
+	Unspecified = -1,
+	Bludgeoning = 0,
+	Piercing = 1,
+	Slashing = 2,
+	BludgeoningAndPiercing = 3,
+	PiercingAndSlashing = 4,
+	SlashingAndBludgeoning = 5,
+	SlashingAndBludgeoningAndPiercing = 6,
+	Acid = 7,
+	Cold = 8,
+	Electricity = 9,
+	Fire = 10,
+	Sonic = 11,
+	NegativeEnergy = 12,
+	Subdual = 13,
+	Poison = 14,
+	PositiveEnergy = 15,
+	Force = 16,
+	BloodLoss = 17,
+	Magic = 18
+};
+
+enum class SavingThrowType : uint32_t {
+	Fortitude = 0,
+	Reflex,
+	Will
+};

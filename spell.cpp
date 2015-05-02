@@ -7,9 +7,28 @@
 #include "tig/tig_mes.h"
 #include "temple_functions.h"
 #include "ui\ui_picker.h"
-
+#include "temple_functions.h"
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
+
+struct SpellCondListEntry {
+	CondStruct *condition;
+	int unknown;
+};
+
+static struct SpellAddresses : AddressTable {
+	SpellCondListEntry *spellConds;
+
+	void (__cdecl *UpdateSpellPacket)(const SpellPacketBody &spellPktBody);
+
+	uint32_t(__cdecl * ConfigSpellTargetting)(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
+
+	SpellAddresses() {
+		rebase(UpdateSpellPacket, 0x10075730);
+		rebase(spellConds, 0x102E2600);
+		macRebase(ConfigSpellTargetting, 100B9690)
+	}
+} addresses;
 
 IdxTableWrapper<SpellEntry> spellEntryRegistry(0x10AAF428);
 IdxTableWrapper<SpellPacket> spellsCastRegistry(0x10AAF218);
@@ -67,15 +86,6 @@ public:
 		writeHex(0x10077058, "02 02 02"); // Cure Moderate + Serious + Critical Wounds, Mass
 	}
 } spellHostilityFlagFix;
-
-
-static struct SpellSystemAddresses : AddressTable {
-	uint32_t(__cdecl * ConfigSpellTargetting)(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
-	SpellSystemAddresses()
-	{
-		macRebase(ConfigSpellTargetting, 100B9690)
-	}
-} addresses;
 
 
 #pragma region Spell System Implementation
@@ -160,6 +170,17 @@ void SpellSystem::spellPacketSetCasterLevel(SpellPacketBody* spellPktBody)
 	_spellPacketSetCasterLevel(spellPktBody);
 }
 
+CondStruct* SpellSystem::GetCondFromSpellIdx(int id) {
+	if (id >= 3 && id < 254) {
+		return addresses.spellConds[id - 1].condition;
+	}
+	return nullptr;
+}
+
+void SpellSystem::ForgetMemorized(objHndl handle) {
+	templeFuncs.Obj_Clear_IdxField(handle, obj_f_critter_spells_memorized_idx);
+}
+
 uint32_t SpellSystem::getSpellEnum(const char* spellName)
 {
 	MesLine mesLine;
@@ -193,6 +214,10 @@ uint32_t SpellSystem::GetSpellPacketBody(uint32_t spellId, SpellPacketBody* spel
 		return 1;
 	}
 	return 0;
+}
+
+void SpellSystem::UpdateSpellPacket(const SpellPacketBody& spellPktBody) {
+	addresses.UpdateSpellPacket(spellPktBody);
 }
 
 uint32_t SpellSystem::spellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count)
