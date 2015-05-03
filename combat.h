@@ -27,10 +27,10 @@ struct CombatSystem : AddressTable {
 	CombatSystem() {
 		rebase(combatModeActive, 0x10AA8418);
 		rebase(combatMesfileIdx, 0x10AA8408);
-		macRebase(_enterCombat, 100631E0)
+		rebase(_enterCombat,0x100631E0); 
 		rebase(Brawl, 0x100EBD40);
-		rebase(AddToInitiative, 0x100B2D50);
-		rebase(RemoveFromInitiative, 0x100B2D80);
+		rebase(AddToInitiative, 0x100DF1E0);
+		rebase(RemoveFromInitiative, 0x100DF530);
 		rebase(GetInitiative, 0x100DEDB0);
 		rebase(SetInitiative, 0x100DF2E0);
 
