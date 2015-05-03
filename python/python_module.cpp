@@ -16,7 +16,7 @@ static PyObject *Anyone(PyObject *obj, PyObject *args) {
 	auto size = PyTuple_Size(targetObjs);
 	for (ssize_t i = 0; i < size; ++i) {
 		auto targetObj = PyTuple_GET_ITEM(targetObjs, i);
-		auto result = PyObject_CallMethodObjArgs(targetObj, methodName, methodArg, methodArg, NULL);
+		auto result = PyObject_CallMethodObjArgs(targetObj, methodName, methodArg, NULL);
 		if (!result) {
 			PyErr_Print();
 			auto methodNameStr = PyString_AsString(methodName);
