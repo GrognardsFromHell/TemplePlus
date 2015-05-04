@@ -268,8 +268,8 @@ static PyObject *PySpell_SummonMonsters(PyObject *obj, PyObject *args) {
 	ui.UpdateCombatUi();
 	ui.UpdatePartyUi();
 
-	conds.AddTo(newHandle, "sp-Summoned", { (int)self->spellId, (int) self->duration });
-	conds.AddTo(newHandle, "Timed-Disappear", { (int) self->spellId, (int)self->duration });
+	conds.AddTo(newHandle, "sp-Summoned", { (int)self->spellId, (int) self->duration, 0 });
+	conds.AddTo(newHandle, "Timed-Disappear", { (int) self->spellId, (int)self->duration, 0 });
 	
 	// Add to the target list
 	self->targets[self->targetCount].obj = newHandle;
