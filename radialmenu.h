@@ -50,7 +50,7 @@ struct RadialMenuNode {
 	int children[50]; // Indices of children in the radial menu
 	int childCount;
 	int parent; // Index of parent node or -1
-	int field118;
+	int morphsTo; // is set for spontaneous casting (shift held down); see function inside AddSpell
 };
 
 struct RadialMenu {
@@ -93,6 +93,16 @@ enum RadialMenuStandardNode : uint32_t {
 	SpellsDruid,
 	SpellsRanger,
 	SpellsDomain,
+};
+
+struct D20RadialMenuDef
+{
+	int parent;
+	D20ActionType d20ActionType;
+	int d20ActionData1;
+	int combatMesLineIdx;
+	const char * helpSystemEntryName;
+	void(__cdecl * callback)(objHndl, RadialMenuEntry*);
 };
 
 /*

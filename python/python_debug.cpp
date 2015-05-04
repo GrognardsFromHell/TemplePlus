@@ -79,7 +79,7 @@ PyObject* DumpRadialNode(const RadialMenuNode &node) {
 		PyList_SET_ITEM(children, i, PyInt_FromLong(node.children[i]));
 	}
 	SetDictItem(result, "children", children);
-	SetDictItem(result, "field118", PyInt_FromLong(node.field118));
+	SetDictItem(result, "morphsTo", PyInt_FromLong(node.morphsTo));
 	SetDictItem(result, "parent", PyInt_FromLong(node.parent));
 
 	return result;
