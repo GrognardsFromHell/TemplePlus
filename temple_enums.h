@@ -1790,7 +1790,7 @@ enum enum_disp_type : uint32_t {
 	dispType18,
 	dispType19,
 	dispType20, // Combat
-	dispType21,
+	dispTypeTakingDamage,
 	dispType22,
 	dispType23,
 	dispType24,
