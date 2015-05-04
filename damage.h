@@ -6,37 +6,37 @@
 
 class Dice;
 
-struct DamageDice {
-	const char *typeDescription;
-	int field4;
+struct DamageDice { // see 100E03F0 AddDamageDice
 	int dicePacked;
 	DamageType type;
 	int rolledDamage;
+	const char *typeDescription;
+	int field4;
 };
 
 struct DamageReduction {
-	int field0;
+	int damageReductionAmount;
 	float dmgFactor;
 	DamageType type;
 	int fieldc;
 	const char *typeDescription;
-	int field14;
-	int field18;
+	const char * causedBy; // e.g. an item name
+	int damageReduced; // e.g. from CalcDamageModFromFactor 0x100E0E00 
 };
 
 struct DamagePacket {
+	int field0;
+	int field4;
 	DamageDice dice[5];
-	int field64;
-	int field68;
 	int diceCount;
-	char unk[140];
-	int unkCount;
-	DamageReduction reductions[5];
-	int reductionsCount;
+	DamageReduction damageResistances[5];
+	int damResCount;
+	DamageReduction damageFactorModifiers[5]; // may also be used for vulnerabilities (e.g. Condition Monster Subtype Fire does this for Cold Damage)
+	int damModCount;
 	BonusList bonuses;
 	int attackPowerType;
-	int field50c;
-	int flags;
+	int finalDamage;
+	int flags; // 1 - Maximized (takes max value of damage dice) ; 2 - Empowered (1.5x on rolls)
 	int field51c;
 };
 

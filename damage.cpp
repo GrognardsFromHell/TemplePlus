@@ -23,6 +23,26 @@ static struct DamageAddresses : AddressTable {
 
 	bool (__cdecl *ReflexSaveAndDamage)(objHndl obj, objHndl attacker, int dc, int reduction, int flags, int dicePacked, DamageType damageType, int attackPower, D20ActionType actionType, int spellId);
 
+	void(__cdecl * DamagePacketInit)(DamagePacket *dmgPkt);
+	int (__cdecl *AddDamageDice)(DamagePacket *dmgPkt, int dicePacked, DamageType damType, unsigned int damageMesLine);
+
+
+	int (__cdecl *AddAttackPowerType)(DamagePacket *dmgPkt, int attackPowerType); // allows you to bypass DR with the same attackPowerType bitmask
+	int (__cdecl *AddDamageBonus)(DamagePacket *damPkt, int bonValue, int bonType, int bonMesLineNum, char *bonDescr);
+	int (__cdecl *AddPhysicalDR)(DamagePacket *damPkt, int DRAmount, int bypasserBitmask, unsigned int damageMesLine); // DR vs. normal physical attack
+	int (__cdecl *AddDamageModFactor)(DamagePacket *damage, float dmgFactor, DamageType damType, unsigned int damageMesLine); // use this to grant immunities / vulnerabilities by setting the factor to 0.0 or 2.0
+	int (__cdecl *AddIncorporealImmunity)(DamagePacket *dmgPkt);
+	int (__cdecl *AddDR)(DamagePacket *damPkt, int DRAmount, DamageType damType, int damageMesLine);
+	int (__cdecl *AddDamResistanceWithCause)(DamagePacket *a1, int DRAmount, DamageType damType, unsigned int damageMesLine, const char *causedBy);
+	int (__cdecl *EnsureMinimumDamage1)(DamagePacket *dmgPkt); // if overall damage is 0 or less, gives it a bonus so it's exactly 1
+	void (__cdecl *SetMaximizedFlag)(DamagePacket *dmgPkt);
+	void (__cdecl *SetEmpoweredFlag)(DamagePacket *);
+	int (__cdecl *CalcDamageModFromDR)(DamagePacket *damPkt, DamageReduction *damReduc, DamageType attackDamType, DamageType attackDamType2); // sets the damageReduced field in damReduc
+	void(__cdecl *CalcDamageModFromFactor)(DamagePacket *damPkt, DamageReduction *damReduc, DamageType attackDamType, DamageType attackDamType2); // same, but for "factor" type DamageReduction (i.e. it doesn't consider damResAmount)
+	int (__cdecl *GetDamageTypeOverallDamage)(DamagePacket *damPkt, DamageType damType);
+	int(__cdecl *GetOverallDamage)(DamagePacket *damagePacket);
+	void(__cdecl *CalcFinalDamage)(DamagePacket *damPkt);
+
 	DamageAddresses() {
 		rebase(DoDamage, 0x100B8D70);
 		rebase(Heal, 0x100B7DF0);
@@ -32,6 +52,26 @@ static struct DamageAddresses : AddressTable {
 		rebase(SavingThrow, 0x100B4F20);
 		rebase(SavingThrowSpell, 0x100B83C0);
 		rebase(ReflexSaveAndDamage, 0x100B9500);
+
+		rebase(DamagePacketInit, 0x100E0390);
+		rebase(AddDamageDice, 0x100E03F0);
+
+		rebase(AddAttackPowerType, 0x100E0520);
+		rebase(AddDamageBonus, 0x100E05E0);
+		rebase(AddPhysicalDR, 0x100E0610);
+		rebase(AddDamageModFactor, 0x100E06D0);
+		rebase(AddIncorporealImmunity ,0x100E0780);
+		rebase(AddDR, 0x100E0830);
+		rebase(AddDamResistanceWithCause, 0x100E08F0);
+		rebase(EnsureMinimumDamage1, 0x100E09B0);
+		rebase(SetMaximizedFlag, 0x100E0A50);
+		rebase(SetEmpoweredFlag, 0x100E0A60);
+		rebase(CalcDamageModFromDR, 0x100E0C90);
+		rebase(CalcDamageModFromFactor, 0x100E0E00);
+		rebase(GetDamageTypeOverallDamage, 0X100E1210);
+		rebase(GetOverallDamage, 0x100E1360);
+		rebase(CalcFinalDamage, 0x100E16F0);
+
 	}
 } addresses;
 
