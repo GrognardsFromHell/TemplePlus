@@ -58,8 +58,8 @@ struct ActionSequenceSystem : AddressTable
 	TurnBasedStatus* curSeqGetTurnBasedStatus();
 	const char * ActionErrorString(uint32_t actnErrorCode);
 
-	uint32_t allocSeq(objHndl objHnd);
-	uint32_t assignSeq(objHndl objHnd);
+	uint32_t AllocSeq(objHndl objHnd);
+	uint32_t AssignSeq(objHndl objHnd);
 	uint32_t TurnBasedStatusInit(objHndl objHnd);
 	void ActSeqCurSetSpellPacket(SpellPacketBody* spellPacketBody, int flag);
 	int (__cdecl *sub_1008B9A0)(D20Actn *d20a, float float1, PathQuery *pathQ);

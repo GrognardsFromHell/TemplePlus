@@ -31,17 +31,17 @@ public:
 		replaceFunction(0x1008A980, _actSeqOkToPerform); 
 		replaceFunction(0x1008BFA0, _addSeqSimple); 
 		
-		macReplaceFun(100925E0, _isSimultPerformer)
+		replaceFunction(0x100925E0, _isSimultPerformer); 
 
-		macReplaceFun(10094A00, _curSeqReset)
-		macReplaceFun(10094CA0, _seqCheckFuncsCdecl)
-		macReplaceFun(10094C60, _seqCheckAction)
+		replaceFunction(0x10094A00, _curSeqReset); 
+		replaceFunction(0x10094CA0, _seqCheckFuncsCdecl); 
+		replaceFunction(0x10094C60, _seqCheckAction); 
 		
-		//macReplaceFun(10094E20, _allocSeq)
+		replaceFunction(0x10094E20, _allocSeq); 
 		
-		//macReplaceFun(10094EB0, _assignSeq)
+		replaceFunction(0x10094EB0, _assignSeq); 
 
-		macReplaceFun(10094F70, _moveSequenceParseUsercallWrapper)
+		replaceFunction(0x10094F70, _moveSequenceParseUsercallWrapper); 
 		
 		replaceFunction(0x10095FD0, _turnBasedStatusInit); 
 		
@@ -471,30 +471,29 @@ const char* ActionSequenceSystem::ActionErrorString(uint32_t actnErrorCode)
 	return mesLine.value;
 }
 
-uint32_t ActionSequenceSystem::allocSeq(objHndl objHnd)
+uint32_t ActionSequenceSystem::AllocSeq(objHndl objHnd)
 {
 	// finds an available sequence and allocates it to objHnd
 	ActnSeq * curSeq = *actSeqCur;
 	if (curSeq && !(curSeq->seqOccupied & 1)) { *actSeqCur = nullptr; }
 	for (auto i = 0; i < actSeqArraySize; i++)
 	{
-		if (actSeqArray[i].seqOccupied== 0)
+		if ( (actSeqArray[i].seqOccupied & 1 ) == 0)
 		{
 			*actSeqCur = &actSeqArray[i];
 			if (combat->isCombatActive())	hooked_print_debug_message("\nSequence Allocate[%d](%x)(%I64x): Resetting Sequence. \n", i, *actSeqCur, objHnd);
 			curSeqReset(objHnd);
 			return 1;
 		} 
-	//	hooked_print_debug_message("\nSequence Allocate: Sequence [%d](%x) occupied by %s (%I64x). Trying next sequence - better luck next time %s (%I64x)! \n", i, &actSeqArray[i], description.getDisplayName(actSeqArray[i].performer), actSeqArray[i].performer,description.getDisplayName(objHnd) , objHnd);
 	}
 	hooked_print_debug_message("\nSequence Allocation for (%I64x) failed!  \nBad things imminent. All sequences were taken!\n",  *actSeqCur, objHnd);
 	return 0;
 }
 
-uint32_t ActionSequenceSystem::assignSeq(objHndl objHnd)
+uint32_t ActionSequenceSystem::AssignSeq(objHndl objHnd)
 {
 	ActnSeq * prevSeq = *actSeqCur;
-	if (allocSeq(objHnd))
+	if (AllocSeq(objHnd))
 	{
 		if (combat->isCombatActive())
 		{
@@ -525,7 +524,7 @@ uint32_t ActionSequenceSystem::TurnBasedStatusInit(objHndl objHnd)
 	{
 		d20->globD20ActnSetPerformer(objHnd);
 		*actSeqCur = nullptr;
-		assignSeq(objHnd);
+		AssignSeq(objHnd);
 		ActnSeq * curSeq = *actSeqCur;
 		tbStatus = &curSeq->tbStatus;
 		tbStatus->hourglassState = 4;
@@ -1089,12 +1088,12 @@ void _curSeqReset(objHndl objHnd)
 
 uint32_t _allocSeq(objHndl objHnd)
 {
-	return actSeqSys.allocSeq(objHnd);
+	return actSeqSys.AllocSeq(objHnd);
 }
 
 uint32_t _assignSeq(objHndl objHnd)
 {
-	return actSeqSys.assignSeq(objHnd);
+	return actSeqSys.AssignSeq(objHnd);
 }
 
 TurnBasedStatus* _curSeqGetTurnBasedStatus()
