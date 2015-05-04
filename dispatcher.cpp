@@ -7,6 +7,7 @@
 #include "bonus.h"
 #include "action_sequence.h"
 #include "turn_based.h"
+#include "damage.h"
 
 class DispatcherReplacements : public TempleFix {
 public:
@@ -18,6 +19,7 @@ public:
 		logger->info("Replacing basic Dispatcher functions");
 		replaceFunction(0x1004D700, _DispIO14hCheckDispIOType1);
 		replaceFunction(0x1004D8A0, _DispIOCheckIoType14);
+		replaceFunction(0x1004D760, _DispIOCheckIoType4);
 
 		replaceFunction(0x100E1E30, _DispatcherRemoveSubDispNodes);
 		replaceFunction(0x100E2400, _DispatcherClearField);
@@ -140,6 +142,12 @@ void DispatcherSystem::dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBas
 	}
 }
 
+DispIoDamage* DispatcherSystem::DispIoCheckIoType4(DispIoDamage* dispIo)
+{
+	if (dispIo->dispIOType != 4) return (DispIoDamage*)nullptr;
+	return (DispIoDamage*)dispIo;
+}
+
 DispIOBonusListAndSpellEntry* DispatcherSystem::DispIOCheckIoType14(DispIO* dispIo)
 {
 	if (dispIo->dispIOType != 14) return (DispIOBonusListAndSpellEntry*)nullptr; 
@@ -225,6 +233,11 @@ DispIO14h * _DispIO14hCheckDispIOType1(DispIO14h * dispIO)
 {
 	if (dispIO->dispIOType == 1){ return dispIO; }
 	else { return nullptr; }
+}
+
+DispIoDamage* _DispIOCheckIoType4(DispIoDamage* dispIo)
+{
+	return dispatch.DispIoCheckIoType4(dispIo);
 };
 
 void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO) {

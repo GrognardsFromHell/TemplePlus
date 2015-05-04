@@ -8,6 +8,7 @@
 struct DispIOBonusListAndSpellEntry;
 struct SpellEntry;
 struct DispIOTurnBasedStatus;
+struct DispIoDamage;
 struct TurnBasedStatus;
 struct BonusList;
 struct CondNode;
@@ -32,6 +33,7 @@ struct DispatcherSystem : AddressTable
 	float Dispatch29hGetMoveSpeed(objHndl objHnd, void *);
 	void dispIOTurnBasedStatusInit(DispIOTurnBasedStatus* dispIOtbStat);
 	void dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBasedStatus* dispIOtB);
+	DispIoDamage * DispIoCheckIoType4(DispIoDamage* dispIo);
 	DispIOBonusListAndSpellEntry* DispIOCheckIoType14(DispIO* dispIo);
 	uint32_t(__cdecl * dispatcherForCritters)(objHndl, DispIO *, enum_disp_type, uint32_t dispKey);
 	DispatcherSystem()
@@ -195,6 +197,7 @@ void  _DispatcherClearAttribs(Dispatcher *dispatcher);
 void  _DispatcherClearItemConds(Dispatcher *dispatcher);
 void  _DispatcherClearConds(Dispatcher *dispatcher);
 DispIO14h * _DispIO14hCheckDispIOType1(DispIO14h * dispIO);
+DispIoDamage* _DispIOCheckIoType4(DispIoDamage* dispIo);
 void _DispIO_Size32_Type21_Init(DispIO20h* dispIO);
 
 void _dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBasedStatus* dispIOtB);

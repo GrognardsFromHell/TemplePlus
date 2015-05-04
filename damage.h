@@ -11,7 +11,7 @@ struct DamageDice { // see 100E03F0 AddDamageDice
 	DamageType type;
 	int rolledDamage;
 	const char *typeDescription;
-	int field4;
+	const char * causedBy; // e.g. item name
 };
 
 struct DamageReduction {
