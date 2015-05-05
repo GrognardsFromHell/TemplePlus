@@ -16,6 +16,7 @@
 #include "ui/ui_render.h"
 #include "python/python_integration.h"
 #include "gamelib_private.h"
+#include "ui/ui_text.h"
 
 GameSystemFuncs gameSystemFuncs;
 
@@ -269,6 +270,8 @@ void GameSystemFuncs::NewInit(const GameSystemConf& conf) {
 
 	*gameSystemInitTable.ironmanFlag = false;
 	*gameSystemInitTable.ironmanSaveGame = 0;
+
+	uiText.Initialize();
 }
 
 void GameSystemFuncs::AdvanceTime() {

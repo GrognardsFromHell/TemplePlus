@@ -98,8 +98,6 @@ void RunMainLoop() {
 			ClipCursor(&rect);
 		}
 
-		RenderFrame();
-				
 		// Why does it process msgs AFTER rendering???		
 		while (!msgFuncs.Process(&msg)) {
 			if (msg.type == TigMsgType::EXIT) {
@@ -119,6 +117,8 @@ void RunMainLoop() {
 				DoMouseScrolling();
 			}
 		}
+
+		RenderFrame();
 	}
 
 }

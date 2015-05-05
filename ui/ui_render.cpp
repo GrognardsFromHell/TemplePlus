@@ -35,8 +35,6 @@ static struct UiRenderFuncs : AddressTable {
 	*/
 	bool (__cdecl *DrawTextInWidget)(int widgetId, const char *text, const TigRect &rect, const TigTextStyle &style);
 
-
-
 	UiRenderFuncs() {
 		rebase(DrawTexturedQuad, 0x101D9300);
 		rebase(DrawTextInWidget, 0x101F87C0);

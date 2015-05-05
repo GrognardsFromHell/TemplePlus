@@ -55,6 +55,12 @@ void PythonPrepareGlobalNamespace() {
 	Py_DECREF(cheats);
 }
 
+// Forward declare the init functions of the two librocket modules
+extern "C" {
+	void init_rocketcore();
+	void init_rocketcontrols();
+}
+
 static bool __cdecl PythonInit(GameSystemConf *conf) {
 
 	Py_OptimizeFlag++;
@@ -88,6 +94,9 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 
 	pythonObjIntegration.LoadScripts();
 	pythonSpellIntegration.LoadScripts();
+
+	init_rocketcore();
+	init_rocketcontrols();
 
 	return true;
 }

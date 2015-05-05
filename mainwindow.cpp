@@ -8,6 +8,7 @@
 #include "tig/tig_startup.h"
 #include "tig/tig_msg.h"
 #include "tig/tig_mouse.h"
+#include "ui/ui_text.h"
 
 LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
@@ -145,7 +146,7 @@ bool CreateMainWindow(TigConfig* settings) {
 	return false;
 }
 
-static void UpdateMousePos(int xAbs, int yAbs, int wheelDelta) {
+void UpdateMousePos(int xAbs, int yAbs, int wheelDelta) {
 	auto rect = graphics.sceneRect();
 	int sw = rect.right - rect.left;
 	int sh = rect.bottom - rect.top;
@@ -171,6 +172,10 @@ static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARA
 	static int mousePosY = 0; // Replaces memory @ 10D25CF0
 	RECT rect;
 	TigMsg tigMsg;
+
+	if (uiText.HandleMessage(hWnd, msg, wparam, lparam)) {
+		return TRUE;
+	}
 
 	switch (msg) {
 	case WM_SETCURSOR:

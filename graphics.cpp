@@ -383,8 +383,6 @@ int __cdecl VideoStartup(TigConfig* settings) {
 
 	memcpy(temple_address<0x11E75840>(), settings, 0x4C);
 
-	uiText.Initialize();
-
 	return 0;
 }
 
