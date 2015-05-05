@@ -9,7 +9,5 @@
 * Get a Git client (such as Source Tree). You can switch to Visual Studio's built in Source Control later.
 * Clone the repository (use the HTTPS URL instead of the SSH URL so you can use Visual Studio's Git integration).
 * Configure the solution so it points to your ToEE folder when running the debugger (right click ->  Properties -> Configuration Properties -> Debugging -> Working Directory)
-* Download the dependency binaries from here: 
-  https://github.com/GrognardsFromHell/TemplePlusDependencies/releases/tag/1.0
-  And unzip them into the dependencies directory.
+* Download the latest [binary dependency release](https://github.com/GrognardsFromHell/TemplePlusDependencies/releases/) and unzip it into the ``dependencies`` folder.
 * Press F5 :)
