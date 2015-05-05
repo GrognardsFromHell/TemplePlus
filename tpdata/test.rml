@@ -1,0 +1,76 @@
+<rml>
+	<head>
+		<title>Demo</title>
+		<style>
+      body
+      {
+          width: 291px;
+          height: 210px;
+          font-family: Alegreya;
+          font-size: 14px;
+          line-height: 14px;
+          margin: auto;
+          color: white;
+          background-decorator: image;
+          background-image: art/interface/GENERIC/genericdialogue_nocheckbox.img;
+          drag: drag;
+        }
+
+        p {
+          width: 240px;
+          height: 100px;
+          left: 25px;
+          top: 45px;
+          position: absolute;
+        }
+
+        button
+        {
+          display: block;
+          width: 112px;
+          height: 22px;
+          line-height: 22px;
+
+          position: absolute;
+          top: 170px;
+
+          font-size: 18;
+          text-align: center;
+          tab-index: auto;
+
+          background-decorator: image;
+        }
+
+        button.ok {
+          left: 29px;
+          background-image: art/interface/generic/Accept_Normal.tga;
+        }
+        button.ok:hover {
+          background-image: art/interface/generic/Accept_Hover.tga;
+        }
+        button.ok:active {
+          background-image: art/interface/generic/Accept_Pressed.tga;
+        }
+        button.cancel {
+          left: 152px;
+          background-image: art/interface/generic/Decline_Normal.tga;
+        }
+        button.cancel:hover {
+          background-image: art/interface/generic/Decline_Hover.tga;
+        }
+        button.cancel:active {
+          background-image: art/interface/generic/Decline_Pressed.tga;
+        }
+    </style>
+    <script src="test.py" />
+	</head>
+	<body ondragstart="onDragStart(event)" ondrag="onDrag(event)" ondragend="onDragEnd(event)">
+		<p>
+		  <input type="text" />
+		  Select a Party Alignment. Your party alignment restricts the alignment choices available to your characters and sets the general moral and personal attitudes for the party during your adventure.
+		</p>
+    
+    <button class="ok" onclick="print 'hello'">OK</button>
+    <button class="cancel" onclick="print 'hello'">Cancel</button>
+	</body>
+</rml>
