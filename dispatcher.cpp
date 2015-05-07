@@ -17,9 +17,13 @@ public:
 
 	void apply() override {
 		logger->info("Replacing basic Dispatcher functions");
-		replaceFunction(0x1004D700, _DispIO14hCheckDispIOType1);
-		replaceFunction(0x1004D8A0, _DispIOCheckIoType14);
+		replaceFunction(0x1004D700, _DispIoCheckIoType1);
+		replaceFunction(0x1004D720, _DispIoCheckIoType2);
 		replaceFunction(0x1004D760, _DispIOCheckIoType4);
+		replaceFunction(0x1004D7E0, _DispIOCheckIoType8);
+		replaceFunction(0x1004D840, _DispIOCheckIoType11);
+		replaceFunction(0x1004D860, _DispIoCheckIoType12);
+		replaceFunction(0x1004D8A0, _DispIOCheckIoType14);
 
 		replaceFunction(0x100E1E30, _DispatcherRemoveSubDispNodes);
 		replaceFunction(0x100E2400, _DispatcherClearField);
@@ -142,17 +146,51 @@ void DispatcherSystem::dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBas
 	}
 }
 
-DispIoDamage* DispatcherSystem::DispIoCheckIoType4(DispIoDamage* dispIo)
+
+DispIoCondStruct* DispatcherSystem::DispIoCheckIoType1(DispIoCondStruct* dispIo)
 {
-	if (dispIo->dispIOType != 4) return (DispIoDamage*)nullptr;
-	return (DispIoDamage*)dispIo;
+	if (dispIo->dispIOType != dispIoTypeCondStruct) return nullptr;
+	return dispIo;
 }
 
-DispIOBonusListAndSpellEntry* DispatcherSystem::DispIOCheckIoType14(DispIO* dispIo)
+DispIoBonusList* DispatcherSystem::DispIoCheckIoType2(DispIoBonusList* dispIo)
 {
-	if (dispIo->dispIOType != 14) return (DispIOBonusListAndSpellEntry*)nullptr; 
-	return (DispIOBonusListAndSpellEntry*)dispIo;
+	if (dispIo->dispIOType != dispIOTypeBonusList) return nullptr;
+	return dispIo;
 }
+
+DispIoDamage* DispatcherSystem::DispIoCheckIoType4(DispIoDamage* dispIo)
+{
+	if (dispIo->dispIOType != dispIOTypeDamage) return nullptr;
+	return dispIo;
+}
+
+DispIOTurnBasedStatus* DispatcherSystem::DispIoCheckIoType8(DispIOTurnBasedStatus* dispIo)
+{
+	if (dispIo->dispIOType != dispIOTypeTurnBasedStatus) return nullptr;
+	return dispIo;
+}
+
+DispIoDispelCheck* DispatcherSystem::DispIOCheckIoType11(DispIoDispelCheck* dispIo)
+{
+	if (dispIo->dispIOType != dispIOTypeDispelCheck) return nullptr;
+	return dispIo;
+}
+
+DispIoD20ActionTurnBased* DispatcherSystem::DispIOCheckIoType12(DispIoD20ActionTurnBased* dispIo)
+{
+	if (dispIo->dispIOType != dispIOTypeD20ActionTurnBased) return nullptr;
+	return dispIo;
+}
+
+
+DispIOBonusListAndSpellEntry* DispatcherSystem::DispIOCheckIoType14(DispIOBonusListAndSpellEntry* dispIo)
+{
+	if (dispIo->dispIOType != dispIoTypeBonusListAndSpellEntry) return nullptr;
+	return dispIo;
+}
+
+
 #pragma endregion
 
 
@@ -229,15 +267,34 @@ void __cdecl _DispatcherClearConds(Dispatcher *dispatcher)
 	_DispatcherClearField(dispatcher, &dispatcher->otherConds);
 };
 
-DispIO14h * _DispIO14hCheckDispIOType1(DispIO14h * dispIO)
+DispIoCondStruct * _DispIoCheckIoType1(DispIoCondStruct * dispIo)
 {
-	if (dispIO->dispIOType == 1){ return dispIO; }
-	else { return nullptr; }
+	return dispatch.DispIoCheckIoType1(dispIo);
+}
+
+DispIoBonusList* _DispIoCheckIoType2(DispIoBonusList* dispIo)
+{
+	return dispatch.DispIoCheckIoType2(dispIo);
 }
 
 DispIoDamage* _DispIOCheckIoType4(DispIoDamage* dispIo)
 {
 	return dispatch.DispIoCheckIoType4(dispIo);
+}
+
+DispIOTurnBasedStatus* _DispIOCheckIoType8(DispIOTurnBasedStatus* dispIo)
+{
+	return dispatch.DispIoCheckIoType8(dispIo);
+}
+
+DispIoDispelCheck* _DispIOCheckIoType11(DispIoDispelCheck* dispIo)
+{
+	return dispatch.DispIOCheckIoType11(dispIo);
+}
+
+DispIoD20ActionTurnBased* _DispIoCheckIoType12(DispIoD20ActionTurnBased* dispIo)
+{
+	return dispatch.DispIOCheckIoType12(dispIo);
 };
 
 void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO) {
@@ -290,7 +347,7 @@ int32_t _dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut
 	return dispatch.dispatch1ESkillLevel(objHnd, skill, bonOut, objHnd2, flag);
 }
 
-DispIOBonusListAndSpellEntry* _DispIOCheckIoType14(DispIO* dispIO)
+DispIOBonusListAndSpellEntry* _DispIOCheckIoType14(DispIOBonusListAndSpellEntry* dispIO)
 {
 	return dispatch.DispIOCheckIoType14(dispIO);
 };

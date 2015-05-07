@@ -226,6 +226,11 @@ objHndl Objects::lookupInHandlesList(ObjectId objId)
 	return _lookupInHandlesList(objId);
 }
 
+int Objects::ObjectIdPrint(char* printOut, ObjectId objId)
+{
+	return _ObjectIdPrint(printOut, objId);
+}
+
 Objects::Objects()
 {
 	pathfinding = &pathfindingSys;
@@ -277,6 +282,8 @@ Objects::Objects()
 	rebase(_SecretdoorDetect, 0x10046920);
 	rebase(_HasSpellEffects, 0x10076370);
 	rebase(_Destroy, 0x100257A0);
+
+	rebase(_ObjectIdPrint, 0x100C2460);
 }
 
 void Objects::PropFetcher(GameObjectBody* objBody, obj_f fieldIdx, void * dataOut) {

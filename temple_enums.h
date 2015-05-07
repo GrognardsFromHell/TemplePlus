@@ -1547,6 +1547,9 @@ enum D20DispatcherKey : uint32_t {
 	DK_STAT_INTELLIGENCE = 4,
 	DK_STAT_WISDOM = 5,
 	DK_STAT_CHARISMA = 6,
+	DK_SAVE_FORTITUDE = 7,
+	DK_SAVE_REFLEX = 8,
+	DK_SAVE_WILL = 9,
 	DK_SKILL_APPRAISE = 20,
 	DK_SKILL_BLUFF = 21,
 	DK_SKILL_CONCENTRATION = 22,
@@ -1731,21 +1734,21 @@ enum D20DispatcherKey : uint32_t {
 };
 
 enum enum_dispIO_type : uint32_t {
-	dispIOType0= 0,
-	dispIOType1,
-	dispIOType2,
+	dispIoTypeNull= 0, // not in actual use (other than init), first real type is the next one
+	dispIoTypeCondStruct,
+	dispIOTypeBonusList,
 	dispIOType3,
 	dispIOTypeDamage,
 	dispIOTypeAC, // AC
-	dispIOType6,
+	dispIoTypeSendSignal,
 	dispIOTypeQuery,
 	dispIOTypeTurnBasedStatus,
 	dispIOType9,
 	dispIOType10,
-	dispIOType11,
-	dispIOType12,
+	dispIOTypeDispelCheck, // goes with dispType33
+	dispIOTypeD20ActionTurnBased,
 	dispIOType13,
-	dispIOType14,
+	dispIoTypeBonusListAndSpellEntry,
 	dispIOType15,
 	dispIOType16,
 	dispIOType17,

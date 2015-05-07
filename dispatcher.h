@@ -5,6 +5,11 @@
 
 #define DISPATCHER_MAX  250 // max num of simultaneous Dispatches going on (static int counter inside _DispatcherProcessor)
 
+struct DispIoBonusList;
+struct DispIoCondStruct;
+struct DispIoDispelCheck;
+struct DispIoD20ActionTurnBased;
+struct D20Actn;
 struct DispIOBonusListAndSpellEntry;
 struct SpellEntry;
 struct DispIOTurnBasedStatus;
@@ -33,12 +38,23 @@ struct DispatcherSystem : AddressTable
 	float Dispatch29hGetMoveSpeed(objHndl objHnd, void *);
 	void dispIOTurnBasedStatusInit(DispIOTurnBasedStatus* dispIOtbStat);
 	void dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBasedStatus* dispIOtB);
+
+#pragma region event object checkers
+
+	DispIoCondStruct* DispIoCheckIoType1(DispIoCondStruct* dispIo); // used for ConditionAdd (3); 1,2 and 4 dispatch will null eventObjs
+	DispIoBonusList* DispIoCheckIoType2(DispIoBonusList* dispIoBonusList); // used for stat level (10), stat base (66) and Cur/Max HP
 	DispIoDamage * DispIoCheckIoType4(DispIoDamage* dispIo);
-	DispIOBonusListAndSpellEntry* DispIOCheckIoType14(DispIO* dispIo);
+	DispIOTurnBasedStatus* DispIoCheckIoType8(DispIOTurnBasedStatus* dispIo);
+	DispIoDispelCheck* DispIOCheckIoType11(DispIoDispelCheck* dispIo);
+	DispIoD20ActionTurnBased* DispIOCheckIoType12(DispIoD20ActionTurnBased* dispIo);
+	DispIOBonusListAndSpellEntry* DispIOCheckIoType14(DispIOBonusListAndSpellEntry* dispIo);
+
+#pragma endregion
+
 	uint32_t(__cdecl * dispatcherForCritters)(objHndl, DispIO *, enum_disp_type, uint32_t dispKey);
 	DispatcherSystem()
 	{
-		macRebase(_Dispatch29hMovementSthg, 1004D080)
+		rebase(_Dispatch29hMovementSthg,0x1004D080); 
 		rebase(dispatcherForCritters, 0x1004DD00);
 	
 	};
@@ -99,19 +115,39 @@ struct DispatcherCallbackArgs {
 	DispIO* dispIO;
 };
 
+struct DispIoCondStruct : DispIO { // DispIoType = 1
+	CondStruct* condStruct;
+	uint32_t outputFlag;
+	uint32_t arg1;
+	uint32_t arg2;
+
+	DispIoCondStruct() {
+		dispIOType = dispIoTypeCondStruct;
+		condStruct = nullptr;
+		outputFlag = 0;
+		arg1 = 0;
+		arg2 = 0;
+	}
+};
+
+struct DispIoBonusList : DispIO { // DispIoType = 2  used for fetching ability scores (dispType 10, 66), and Cur/Max HP 
+	BonusList* bonlist;
+	uint32_t flags;
+};
+
 struct DispIOAC : DispIO {
 	DispIOAC() {
 		dispIOType = dispIOTypeAC;
 	}
 };
 
-struct DispIO10h : DispIO
+struct DispIoD20Query : DispIO
 {
 	uint32_t return_val;
 	uint32_t data1;
 	uint32_t data2;
 
-	DispIO10h()
+	DispIoD20Query()
 	{
 		dispIOType = dispIOTypeQuery;
 		return_val = 0;
@@ -120,20 +156,7 @@ struct DispIO10h : DispIO
 	}
 };
 
-struct DispIO14h : DispIO {
-	CondStruct* condStruct;
-	uint32_t outputFlag;
-	uint32_t arg1;
-	uint32_t arg2;
 
-	DispIO14h() {
-		dispIOType = dispIOType0;
-		condStruct = nullptr;
-		outputFlag = 0;
-		arg1 = 0;
-		arg2 = 0;
-	}
-};
 
 struct DispIO20h : DispIO {
 	uint32_t interrupt;
@@ -145,7 +168,7 @@ struct DispIO20h : DispIO {
 	CondNode* condNode;
 
 	DispIO20h() {
-		dispIOType = dispIOType0;
+		dispIOType = dispIoTypeNull;
 		condNode = nullptr;
 		val1 = 0;
 		val2 = 0;
@@ -175,6 +198,19 @@ struct DispIOBonusListAndSpellEntry: DispIO{
 	uint32_t field_C; // unused?
 };
 
+struct DispIoDispelCheck : DispIO
+{
+	uint32_t spellId; // of the Dispel Spell (Break Enchantment, Dispel Magic etc.)
+	uint32_t flags;  // 0x80 - Dispel Magic   0x40 - Break Enchantment  0x20 - slippery mind 0x10 - 0x2 DispelAlignment stuff
+	uint32_t returnVal;
+};
+
+struct DispIoD20ActionTurnBased : DispIO{ // dispIoType = 12; matches dispTypes 36, 37, 
+	int returnVal;
+	D20Actn * d20a;
+	TurnBasedStatus * tbStatus;
+};
+
 struct Dispatcher :TempleAlloc {
 	objHndl objHnd;
 	CondNode* attributeConds;
@@ -196,8 +232,15 @@ void  _DispatcherClearField(Dispatcher *dispatcher, CondNode ** dispCondList);
 void  _DispatcherClearAttribs(Dispatcher *dispatcher);
 void  _DispatcherClearItemConds(Dispatcher *dispatcher);
 void  _DispatcherClearConds(Dispatcher *dispatcher);
-DispIO14h * _DispIO14hCheckDispIOType1(DispIO14h * dispIO);
+
+DispIoCondStruct * _DispIoCheckIoType1(DispIoCondStruct * dispIo);
+DispIoBonusList * _DispIoCheckIoType2(DispIoBonusList * dispIo);
 DispIoDamage* _DispIOCheckIoType4(DispIoDamage* dispIo);
+DispIOTurnBasedStatus * _DispIOCheckIoType8(DispIOTurnBasedStatus* dispIo);
+DispIoDispelCheck * _DispIOCheckIoType11(DispIoDispelCheck* dispIo);
+DispIoD20ActionTurnBased * _DispIoCheckIoType12(DispIoD20ActionTurnBased* dispIo);
+DispIOBonusListAndSpellEntry * __cdecl _DispIOCheckIoType14(DispIOBonusListAndSpellEntry *dispIO);
+
 void _DispIO_Size32_Type21_Init(DispIO20h* dispIO);
 
 void _dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBasedStatus* dispIOtB);
@@ -207,6 +250,6 @@ uint32_t _Dispatch63(objHndl objHnd, DispIO* dispIO);
 void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO * dispIO);
 int32_t _dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut, objHndl objHnd2, int32_t flag);
 
-DispIOBonusListAndSpellEntry * __cdecl _DispIOCheckIoType14(DispIO *dispIO);
+
 
 #pragma endregion

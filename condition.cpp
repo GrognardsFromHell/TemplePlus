@@ -66,8 +66,8 @@ bool _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode, Co
 	assert(condStruct->numArgs >= args.size());
 
 	// pre-add section (may abort adding condition, or cause another condition to be deleted first)
-	DispIO14h dispIO14h;
-	dispIO14h.dispIOType = dispIOType1;
+	DispIoCondStruct dispIO14h;
+	dispIO14h.dispIOType = dispIoTypeCondStruct;
 	dispIO14h.condStruct = condStruct;
 	dispIO14h.outputFlag = 1;
 	dispIO14h.arg1 = 0;
@@ -184,7 +184,7 @@ uint32_t _ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, 
 
 uint32_t ConditionPrevent(DispatcherCallbackArgs args)
 {
-	DispIO14h * dispIO = _DispIO14hCheckDispIOType1((DispIO14h*)args.dispIO);
+	DispIoCondStruct * dispIO = _DispIoCheckIoType1((DispIoCondStruct*)args.dispIO);
 	if (dispIO == nullptr)
 	{
 		logger->error("Dispatcher Error! Condition {} fuckup, wrong DispIO type", args.subDispNode->condNode->condStruct->condName);

@@ -265,6 +265,8 @@ struct Objects : AddressTable {
 	void InsertDataIntoInternalStack(GameObjectBody * objBody, obj_f fieldIdx, void * dataIn);
 
 	objHndl lookupInHandlesList(ObjectId objId);// 100C3050
+
+	int ObjectIdPrint(char * printOut, ObjectId objId);
 #pragma endregion 
 
 	Objects();
@@ -323,6 +325,8 @@ private:
 	bool (__cdecl *_HasSpellEffects)(objHndl obj);
 
 	void (__cdecl *_Destroy)(objHndl obj);
+
+	int(__cdecl * _ObjectIdPrint)(char * printOut, ObjectId objId);
 #pragma endregion
 } ;
 

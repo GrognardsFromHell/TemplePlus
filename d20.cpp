@@ -90,7 +90,7 @@ uint32_t D20System::d20Query(objHndl objHnd, D20DispatcherKey dispKey)
 {
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (dispatcher == nullptr || (int32_t)dispatcher == -1){ return 0; }
-	DispIO10h dispIO;
+	DispIoD20Query dispIO;
 	dispIO.dispIOType = dispIOTypeQuery;
 	dispIO.return_val = 0;
 	dispIO.data1 = 0;
@@ -103,7 +103,7 @@ uint32_t D20System::d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, u
 {
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (dispatcher == nullptr || (int32_t)dispatcher == -1){ return 0; }
-	DispIO10h dispIO;
+	DispIoD20Query dispIO;
 	dispIO.dispIOType = dispIOTypeQuery;
 	dispIO.return_val = 0;
 	dispIO.data1 = arg1;
@@ -114,28 +114,28 @@ uint32_t D20System::d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, u
 
 void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2)
 {
-	DispIO10h dispIO;
+	DispIoD20Query dispIO;
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (!dispatch.dispatcherValid(dispatcher))
 	{
 		hooked_print_debug_message("d20SendSignal(): Object %s (%I64x) lacks a Dispatcher", description._getDisplayName(objHnd, objHnd), objHnd);
 		return;
 	}
-	dispIO.dispIOType = dispIOType6;
+	dispIO.dispIOType = dispIoTypeSendSignal;
 	dispIO.data1 = arg1;
 	dispIO.data2 = arg2;
 	dispatch.DispatcherProcessor(dispatcher, dispTypeD20Signal, dispKey, &dispIO);
 }
 
 void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, objHndl arg) {
-	DispIO10h dispIO;
+	DispIoD20Query dispIO;
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (!dispatch.dispatcherValid(dispatcher))
 	{
 		hooked_print_debug_message("d20SendSignal(): Object %s (%I64x) lacks a Dispatcher", description._getDisplayName(objHnd, objHnd), objHnd);
 		return;
 	}
-	dispIO.dispIOType = dispIOType6;
+	dispIO.dispIOType = dispIoTypeSendSignal;
 	*(objHndl*)&dispIO.data1 = arg;
 	dispatch.DispatcherProcessor(dispatcher, dispTypeD20Signal, dispKey, &dispIO);
 }
@@ -266,7 +266,7 @@ uint64_t D20System::d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey,
 {
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (!dispatch.dispatcherValid(dispatcher)){ return 0; }
-	DispIO10h dispIO;
+	DispIoD20Query dispIO;
 	dispIO.dispIOType = dispIOTypeQuery;
 	dispIO.return_val = 0;
 	dispIO.data1 = arg1;
