@@ -4,6 +4,7 @@
 
 
 struct HistoryEntry;
+struct HistoryArrayEntry;
 
 struct HistorySystem : AddressTable
 {
