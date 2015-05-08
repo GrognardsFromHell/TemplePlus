@@ -31,6 +31,15 @@
 #include <Rocket/Core.h>
 #include <d3dx9.h>
 
+inline HRESULT handleD3dError(const char* method, HRESULT result) {
+	if (result != S_OK) {
+		logger->warn("Direct3D Error @ {}: {}", method, DXGetErrorStringA(result));
+	}
+	return result;
+}
+
+#define D3DLOG(CMD) handleD3dError(#CMD, CMD)
+
 // This structure is created for each set of geometry that Rocket compiles. It stores the vertex and index buffers and
 // the texture associated with the geometry, if one was specified.
 struct RocketD3D9CompiledGeometry {
@@ -200,15 +209,15 @@ struct TGAHeader {
 // Restore packing
 #pragma pack()
 
-static char* ReadFullFile(const string &filename) {
+static char* ReadFullFile(const string &filename, int &size) {
 	auto file_interface = Rocket::Core::GetFileInterface();
 	auto file_handle = file_interface->Open(filename.c_str());
 	if (file_handle == NULL)
 		return nullptr;
 
-	int len = file_interface->Length(file_handle);
-	char *result = new char[len];
-	file_interface->Read(result, len, file_handle);
+	size = file_interface->Length(file_handle);
+	char *result = new char[size];
+	file_interface->Read(result, size, file_handle);
 	file_interface->Close(file_handle);
 
 	return result;
@@ -224,55 +233,34 @@ bool RenderInterfaceDirectX::LoadTexture(Rocket::Core::TextureHandle& texture_ha
 		return LoadImgFile(texture_handle, texture_dimensions, source);
 	}
 
-	auto buffer = ReadFullFile(source.CString());
-
-	TGAHeader header;
-	memcpy(&header, buffer, sizeof(TGAHeader));
-
-	int color_mode = header.bitsPerPixel / 8;
-	int image_size = header.width * header.height * 4; // We always make 32bit textures 
-
-	if (header.dataType != 2) {
-		Rocket::Core::Log::Message(Rocket::Core::Log::LT_ERROR, "Only 24/32bit uncompressed TGAs are supported.");
+	int dataSize;
+	auto buffer = ReadFullFile(source.CString(), dataSize);
+	if (!buffer) {
+		return false;
+	}
+		
+	D3DXIMAGE_INFO imageInfo;
+	if (D3DLOG(D3DXGetImageInfoFromFileInMemory(buffer, dataSize, &imageInfo)) != D3D_OK) {
+		logger->error("Unable to read image information for {}", source.CString());
+		delete [] buffer;
 		return false;
 	}
 
-	// Ensure we have at least 3 colors
-	if (color_mode < 3) {
-		Rocket::Core::Log::Message(Rocket::Core::Log::LT_ERROR, "Only 24 and 32bit textures are supported");
-		return false;
+	texture_dimensions.x = imageInfo.Width;
+	texture_dimensions.y = imageInfo.Height;
+
+	D3DPOOL pool = config.useDirect3d9Ex ? D3DPOOL_DEFAULT : D3DPOOL_MANAGED;
+
+	LPDIRECT3DTEXTURE9 texture = nullptr;
+	if (D3DLOG(D3DXCreateTextureFromFileInMemoryEx(mDevice, buffer, dataSize, 
+		imageInfo.Width, imageInfo.Height, 1, 0, imageInfo.Format,
+		pool, D3DX_FILTER_NONE, D3DX_DEFAULT, 0, NULL, NULL, &texture)) != D3D_OK) {
+		logger->error("Unable to create D3d9 texture for {}", source.CString());		
 	}
 
-	const char* image_src = buffer + sizeof(TGAHeader);
-	unsigned char* image_dest = new unsigned char[image_size];
-
-	// Targa is BGR, swap to RGB and flip Y axis
-	for (long y = 0; y < header.height; y++) {
-		long read_index = y * header.width * color_mode;
-		long write_index = ((header.imageDescriptor & 32) != 0) ? read_index : (header.height - y - 1) * header.width * color_mode;
-		for (long x = 0; x < header.width; x++) {
-			image_dest[write_index] = image_src[read_index + 2];
-			image_dest[write_index + 1] = image_src[read_index + 1];
-			image_dest[write_index + 2] = image_src[read_index];
-			if (color_mode == 4)
-				image_dest[write_index + 3] = image_src[read_index + 3];
-			else
-				image_dest[write_index + 3] = 255;
-
-			write_index += 4;
-			read_index += color_mode;
-		}
-	}
-
-	texture_dimensions.x = header.width;
-	texture_dimensions.y = header.height;
-
-	bool success = GenerateTexture(texture_handle, image_dest, texture_dimensions);
-
-	delete [] image_dest;
-	delete [] buffer;
-
-	return success;
+	delete[] buffer;
+	texture_handle = (Rocket::Core::TextureHandle) texture;
+	return texture != nullptr;
 }
 
 // Called by Rocket when a texture is required to be built from an internally-generated sequence of pixels.
@@ -353,7 +341,8 @@ bool RenderInterfaceDirectX::LoadImgFile(Rocket::Core::TextureHandle& texture_ha
 			// Open the TGA tile
 			auto filename = format("{}_{}_{}.tga", baseName.CString(), tileX, tileY);
 
-			char *data = ReadFullFile(filename);
+			int dataSize;
+			char *data = ReadFullFile(filename, dataSize);
 
 			memcpy(&header, data, sizeof(TGAHeader));
 			int color_mode = header.bitsPerPixel / 8;

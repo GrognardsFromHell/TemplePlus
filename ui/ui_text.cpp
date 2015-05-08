@@ -16,6 +16,19 @@ static void InitialiseKeymap();
 static const int KEYMAP_SIZE = 256;
 static Rocket::Core::Input::KeyIdentifier key_identifier_map[KEYMAP_SIZE];
 
+/*
+	This element will be added to the very bottom of the context to receive 
+	any input event that is not handled by the rest of librocket.
+*/
+class GameViewInputProxy : public Rocket::Core::Element {
+public:
+	GameViewInputProxy() : Element("gameview") {
+	}
+
+
+
+};
+
 class TempleFileInterface : public Rocket::Core::FileInterface {
 public:
 	Rocket::Core::FileHandle Open(const Rocket::Core::String& path) override {
@@ -128,6 +141,9 @@ void UiText::Initialize() {
 		Rocket::Core::Shutdown();
 		throw TempleException("Unable to initialize libRocket");
 	}
+
+	Rocket::Debugger::Initialise(d->context);
+	Rocket::Debugger::SetVisible(true);
 
 	Rocket::Core::FontDatabase::LoadFontFace("Alegreya-Regular.otf");
 

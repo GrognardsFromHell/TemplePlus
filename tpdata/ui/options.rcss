@@ -1,0 +1,38 @@
+
+body {
+  width: 518px;
+  height: 499px;
+  margin: auto;
+
+  background-decorator: image;
+  background-image: /art/interface/options_ui/options_background.img;
+}
+
+tabset {
+  position: absolute;
+  left: 27px;
+  top: 33px;
+  width: 464px;
+}
+
+tabset tabs {
+  display: block;
+  height: 14px;
+}
+
+tabset panels {
+  display: block;
+  width: 464px;
+  height: 390px;
+}
+
+button {
+  position: absolute;
+  top: 454px;
+}
+button.ok {
+  left: 133px;
+}
+button.cancel {
+  left: 274px;
+}

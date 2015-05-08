@@ -1,0 +1,30 @@
+<rml>
+	<head>
+		<title>Options</title>
+		<link type="text/rcss" href="global.rcss" />
+		<link type="text/rcss" href="options.rcss" />
+    <script src="options.py" />
+	</head>
+	<body>
+
+		<tabset>
+		  <tab>VIDEO</tab>
+		  <panel>
+		    video settings
+
+        <input type="range" min="0" max="10" />
+		  </panel>
+		  <tab>AUDIO</tab>
+		  <panel>
+		    audio settings
+      </panel>
+		  <tab>PREFERENCES</tab>
+		  <panel>
+		    preferences
+		  </panel>
+		</tabset>
+
+    <button class="ok" onclick="accept()">OK</button>
+    <button class="cancel" onclick="decline()">Cancel</button>
+	</body>
+</rml>

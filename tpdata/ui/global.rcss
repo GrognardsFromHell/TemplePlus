@@ -1,0 +1,120 @@
+
+/*
+  Default Fonts
+*/
+body {
+  font-family: Alegreya;
+  font-size: 14px;
+  line-height: 14px;
+  color: white;
+}
+
+/*
+  Slider
+*/
+input.range {
+  height: 25px;
+  width: 200px; /* Some sane default height */
+}
+
+input.range sliderarrowdec {
+  width: 25px;
+  height: 25px;
+  icon-decorator: image;
+  icon-image: controls.png 0px 1px 25px 26px;
+}
+
+input.range sliderarrowinc {
+  width: 25px;
+  height: 25px;
+  icon-decorator: image;
+  icon-image: controls.png 28px 1px 53px 26px;
+}
+
+input.range sliderarrowdec:hover, input.range sliderarrowinc:hover {
+  icon-image-t: 27px 52px;
+}
+
+input.range sliderarrowdec:active, input.range sliderarrowinc:active {
+  icon-image-t: 53px 78px;
+}
+
+input.range slidertrack {
+  height: 25px;
+  bg-decorator: tiled-box;
+  bg-top-left-image: controls.png 0 0 0 0;
+  bg-top-right-image: controls.png 0 0 0 0;
+  bg-bottom-left-image: controls.png 0 0 0 0;
+  bg-bottom-right-image: controls.png 0 0 0 0;
+  bg-top-image: controls.png 0 0 0 0;
+  bg-bottom-image: controls.png 0 0 0 0;
+  bg-left-image: controls.png 0 80px 5px 105px;
+  bg-center-image: controls.png 5px 80px 120px 105px;
+  bg-right-image: controls.png 120px 80px 125px 105px;
+}
+
+input.range sliderbar {
+  height: 25px;
+  width: 11px;
+  icon-decorator: image;
+  icon-image: controls.png 59px 27px 70px 52px;
+}
+
+/*
+  Button
+*/
+button.ok, button.cancel {
+  display: block;
+  width: 112px;
+  height: 22px;
+  line-height: 22px;
+
+  font-size: 18;
+  text-align: center;
+  tab-index: auto;
+
+  background-decorator: image;
+}
+
+button.ok {
+  background-image: /art/interface/generic/Accept_Normal.tga;
+}
+button.ok:hover {
+  background-image: /art/interface/generic/Accept_Hover.tga;
+}
+button.ok:active {
+  background-image: /art/interface/generic/Accept_Pressed.tga;
+}
+button.cancel {
+  background-image: /art/interface/generic/Decline_Normal.tga;
+}
+button.cancel:hover {
+  background-image: /art/interface/generic/Decline_Hover.tga;
+}
+button.cancel:active {
+  background-image: /art/interface/generic/Decline_Pressed.tga;
+}
+
+/*
+  Select Box
+*/
+
+/* TODO */
+
+/*
+  Tabsets in general
+*/
+tabset {
+  display: block;
+}
+
+tabset panels {
+  border: solid;
+  border-color: #1ac3ff;
+  border-width: 1px;
+}
+
+tabset tab {
+  display: inline-block;
+  background-color: red;
+}
