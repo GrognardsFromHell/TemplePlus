@@ -22,8 +22,9 @@ tabset tabs {
 
 tabset panels {
   display: block;
-  width: 464px;
-  height: 390px;
+  width: 454px;
+  height: 380px;
+  padding: 5px;
 }
 
 button {

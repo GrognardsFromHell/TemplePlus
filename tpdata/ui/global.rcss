@@ -116,5 +116,22 @@ tabset panels {
 
 tabset tab {
   display: inline-block;
-  background-color: red;
+  height: 14px;
+  padding-left: 19px;
+  padding-right: 19px;
+
+  bg-decorator: tiled-horizontal;
+  bg-left-image: controls.png 78px 24px 97px 38px;
+  bg-center-image: controls.png 99px 24px 99px 38px;
+  bg-right-image: controls.png 97px 24px 78px 38px;
+}
+
+tabset tab:selected, tabset tab:active, tabset tab:hover {
+  bg-left-image: controls.png 78px 9px 97px 23px;
+  bg-center-image: controls.png 99px 9px 99px 23px;
+  bg-right-image: controls.png 97px 9px 78px 23px;
+}
+
+tabset tab span {
+  display: inline;
 }

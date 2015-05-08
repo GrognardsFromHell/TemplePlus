@@ -5,20 +5,20 @@
 		<link type="text/rcss" href="options.rcss" />
     <script src="options.py" />
 	</head>
-	<body>
+	<body onload="resizetabs(document)">
 
 		<tabset>
-		  <tab>VIDEO</tab>
+		  <tab><span>VIDEO</span></tab>
 		  <panel>
 		    video settings
 
         <input type="range" min="0" max="10" />
 		  </panel>
-		  <tab>AUDIO</tab>
+		  <tab><span>AUDIO</span></tab>
 		  <panel>
 		    audio settings
       </panel>
-		  <tab>PREFERENCES</tab>
+		  <tab><span>PREFERENCES</span></tab>
 		  <panel>
 		    preferences
 		  </panel>
