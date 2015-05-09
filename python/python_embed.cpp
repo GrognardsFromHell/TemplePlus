@@ -50,6 +50,14 @@ void PythonPrepareGlobalNamespace() {
 	}
 	Py_DECREF(toeeModule);
 
+	auto utilsModule = PyImport_ImportModule("utilities");
+	auto utilsDict = PyModule_GetDict(toeeModule);
+	if (PyDict_Merge(MainModuleDict, utilsDict, FALSE) == -1) {
+		logger->error("Unable to import utilities.* into __main__");
+		PyErr_Print();
+	}
+	Py_DECREF(utilsModule);
+
 	auto cheats = PyCheats_Create();
 	PyDict_SetItemString(MainModuleDict, "cheats", cheats);
 	Py_DECREF(cheats);
