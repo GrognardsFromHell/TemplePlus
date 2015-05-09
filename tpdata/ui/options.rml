@@ -7,12 +7,59 @@
 	</head>
 	<body onload="resizetabs(document)">
 
+		<div class="bgfill" />
+
 		<tabset>
 		  <tab><span>VIDEO</span></tab>
 		  <panel>
-		    video settings
-
-        <input type="range" min="0" max="10" />
+		  	<div>
+					<label>video settings</label>
+					<input type="range" min="0" max="10" />
+        </div>
+        <div>
+					<label>video settings</label>
+					<input type="range" min="0" max="10" />
+				</div>
+				<div>
+					<label>video settings</label>
+					<input type="range" min="0" max="10" />
+				</div>
+		  	<div>
+					<label>video settings</label>
+					<input type="range" min="0" max="10" />
+        </div>
+        <div>
+					<label>video settings</label>
+					<input type="range" min="0" max="10" />
+				</div>
+				<div>
+					<label>video settings</label>
+					<input type="range" min="0" max="10" />
+				</div>
+		  	<div>
+					<label>video settings</label>
+					<input type="range" min="0" max="10" />
+        </div>
+        <div>
+					<label>video settings</label>
+					<input type="range" min="0" max="10" />
+				</div>
+				<div>
+					<label>video settings</label>
+					<input type="range" min="0" max="10" />
+				</div>
+		  	<div>
+					<label>video settings</label>
+					<input type="range" min="0" max="10" />
+        </div>
+        <div>
+					<label>video settings</label>
+					<input type="range" min="0" max="10" />
+				</div>
+				<div>
+					<label>video settings</label>
+					<input type="range" min="0" max="10" />
+				</div>
 		  </panel>
 		  <tab><span>AUDIO</span></tab>
 		  <panel>

@@ -9,6 +9,8 @@
 #include "tio/tio.h"
 #include "tig/tig_mouse.h"
 
+#include "python/python_integration_obj.h"
+
 #include <Rocket/Core.h>
 #include <Rocket/Debugger.h>
 
@@ -145,8 +147,6 @@ void UiText::Initialize() {
 	Rocket::Debugger::Initialise(d->context);
 	Rocket::Debugger::SetVisible(true);
 
-	Rocket::Core::FontDatabase::LoadFontFace("Alegreya-Regular.otf");
-
 	d->context->AddEventListener("mousemove", &d->mouseListener);
 	d->context->AddEventListener("mouseup", &d->mouseListener);
 	d->context->AddEventListener("mousedown", &d->mouseListener);
@@ -154,6 +154,12 @@ void UiText::Initialize() {
 
 	d->context->AddEventListener("keydown", &d->keyListener);
 	d->context->AddEventListener("keyup", &d->keyListener);
+
+	auto res = pythonObjIntegration.ExecuteScript("templeplus.ui", "loadFonts");
+	if (!res) {
+		PyErr_Print();
+	}
+	Py_XDECREF(res);
 }
 
 void UiText::Uninitialize() {

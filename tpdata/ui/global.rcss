@@ -135,3 +135,40 @@ tabset tab:selected, tabset tab:active, tabset tab:hover {
 tabset tab span {
   display: inline;
 }
+
+/*
+  Scrollbar
+*/
+scrollbarvertical {
+  width: 13px;
+}
+scrollbarvertical sliderarrowdec {
+  bg-decorator: image;
+  bg-image: /art/interface/scrollbar/ScrollBar_Arrow_Top.tga;
+  width: 13px;
+  height: 12px;
+}
+scrollbarvertical sliderarrowinc {
+  bg-decorator: image;
+  bg-image: /art/interface/scrollbar/ScrollBar_Arrow_Bottom.tga;
+  width: 13px;
+  height: 12px;
+}
+scrollbarvertical slidertrack {
+  width: 13px;
+  bg-decorator: image;
+  bg-image: /art/interface/scrollbar/ScrollBar_Empty.tga;
+}
+scrollbarvertical sliderbar {
+  width: 13px;
+  bg-decorator: tiled-vertical;
+  bg-top-image: /art/interface/scrollbar/ScrollBar_Fill_Top.tga;
+  bg-center-image: /art/interface/scrollbar/ScrollBar_Fill.tga;
+  bg-bottom-image: /art/interface/scrollbar/ScrollBar_Fill_Bottom.tga;
+}
+
+scrollbarvertical sliderbar:active {
+  bg-top-image: /art/interface/scrollbar/ScrollBar_Fill_Top_Click.tga;
+  bg-center-image: /art/interface/scrollbar/ScrollBar_Fill_Click.tga;
+  bg-bottom-image: /art/interface/scrollbar/ScrollBar_Fill_Bottom_Click.tga;
+}
