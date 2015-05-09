@@ -15,6 +15,12 @@ public:
 
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
+		replaceFunction(0x100E19C0, _CondStructAddToHashtable);
+		replaceFunction(0x100E1A80, _GetCondStructFromHashcode);
+		replaceFunction(0x100E1AB0, _CondNodeGetArg);
+		replaceFunction(0x100E1AD0, _CondNodeSetArg);
+		replaceFunction(0x100E1DD0, _CondNodeAddToSubDispNodeArray);
+
 		replaceFunction(0x100E22D0, _ConditionAddDispatch);
 		replaceFunction(0x100E24C0, _ConditionAddToAttribs_NumArgs0);
 		replaceFunction(0x100E2500, _ConditionAddToAttribs_NumArgs2);
@@ -23,10 +29,8 @@ public:
 		replaceFunction(0x100E2560, _ConditionAdd_NumArgs3);
 		replaceFunction(0x100E2590, _ConditionAdd_NumArgs4);
 		replaceFunction(0x100ECF30, ConditionPrevent);
-		replaceFunction(0x100E1DD0, _CondNodeAddToSubDispNodeArray);
+		
 		replaceFunction(0x100F7BE0, _GetCondStructFromFeat);
-		replaceFunction(0x100E1A80, _GetCondStructFromHashcode);
-		replaceFunction(0x100E19C0, _CondStructAddToHashtable);
 	}
 } condFuncReplacement;
 
@@ -38,6 +42,16 @@ CondNode::CondNode(CondStruct *cond) {
 
 
 #pragma region Condition Add Functions
+
+int32_t _CondNodeGetArg(CondNode* condNode, uint32_t argIdx)
+{
+	return conds.CondNodeGetArg(condNode, argIdx);
+}
+
+void _CondNodeSetArg(CondNode* condNode, uint32_t argIdx, uint32_t argVal)
+{
+	conds.CondNodeSetArg(condNode, argIdx, argVal);
+}
 
 uint32_t _ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4) {
 	assert(condStruct->numArgs >= 0 && condStruct->numArgs <= 6);
@@ -62,7 +76,7 @@ uint32_t _ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, Co
 	return _ConditionAddDispatchArgs(dispatcher, ppCondNode, condStruct, args);
 };
 
-bool _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, const vector<int> &args) {
+uint32_t _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, const vector<int> &args) {
 	assert(condStruct->numArgs >= args.size());
 
 	// pre-add section (may abort adding condition, or cause another condition to be deleted first)
@@ -82,7 +96,7 @@ bool _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode, Co
 	_DispatcherProcessor(dispatcher, dispTypeConditionAddPre, 0, (DispIO*)&dispIO14h);
 
 	if (dispIO14h.outputFlag == 0) {
-		return false;
+		return 0;
 	}
 
 	// adding condition
@@ -117,7 +131,7 @@ bool _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode, Co
 		dispatcherSubDispNodeType1 = dispatcherSubDispNodeType1->next;
 	}
 
-	return true;
+	return 1;
 };
 
 void _CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNode) {
@@ -269,4 +283,21 @@ bool ConditionSystem::AddTo(objHndl handle, const string& name, const vector<int
 	}
 
 	return AddTo(handle, cond, args);
+}
+
+int32_t ConditionSystem::CondNodeGetArg(CondNode* condNode, uint32_t argIdx)
+{
+	if (argIdx < condNode->condStruct->numArgs)
+	{
+		return condNode->args[argIdx];
+	}
+	return 0;
+}
+
+void ConditionSystem::CondNodeSetArg(CondNode* condNode, uint32_t argIdx, uint32_t argVal)
+{
+	if (argIdx < condNode->condStruct->numArgs)
+	{
+		condNode->args[argIdx] = argVal;
+	}
 }

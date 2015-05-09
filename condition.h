@@ -109,6 +109,13 @@ public:
 	*/
 	bool AddTo(objHndl handle, const string &name, const vector<int> &args);
 
+	/*
+		Get/Set a Condition Node's arg. Often used in the init callbacks of various conditions.
+	*/
+	int32_t CondNodeGetArg(CondNode* condNode, uint32_t argIdx);
+	void CondNodeSetArg(CondNode* condNode, uint32_t argIdx, uint32_t argVal);
+
+
 #pragma endregion
 
 	ConditionSystem()
@@ -138,6 +145,8 @@ public:
 		
 		rebase(mCondStructHashtable, 0x11868F60);
 	}
+
+
 };
 
 extern ConditionSystem conds;
@@ -153,8 +162,11 @@ struct CondFeatDictionary  // maps feat enums to CondStructs
 	uint32_t condArg2Offset; // the GetCondStruct
 };
 
+
+int32_t _CondNodeGetArg(CondNode* condNode, uint32_t argIdx);
+void _CondNodeSetArg(CondNode* condNode, uint32_t argIdx, uint32_t argVal);
 uint32_t _ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4);
-bool _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, const vector<int> &args);
+uint32_t _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, const vector<int> &args);
 void _CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNode);
 uint32_t _ConditionAddToAttribs_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct);
 uint32_t _ConditionAddToAttribs_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2);

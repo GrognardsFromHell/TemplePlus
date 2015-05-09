@@ -1556,7 +1556,7 @@ enum D20DispatcherKey : uint32_t {
 	DK_SKILL_RIDE = 59,
 	DK_SKILL_SWIM = 60,
 	DK_SKILL_USE_ROPE = 61,
-	DK_D20A_Check0 = 75,
+	DK_D20A_Check0 = 75, //D20Action Range
 	DK_D20A_Check68 = 143,
 	DK_SIG_HP_Changed = 147,
 	DK_SIG_HealSkill = 0x94,
@@ -1785,7 +1785,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeAbilityScoreLevel,
 	dispType11,
 	dispType12,
-	dispType13,
+	dispTypeSaveThrowLevel, // goes with keys DK_SAVE_X 
 	dispType14,
 	dispTypeToHitBonus,
 	dispType16,

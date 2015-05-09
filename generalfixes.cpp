@@ -6,6 +6,7 @@
 #include "turn_based.h"
 #include "temple_functions.h"
 #include "critter.h"
+#include "condition.h"
 
 
 class SizeColossalFix : public TempleFix {
@@ -142,3 +143,42 @@ public:
 
 	}
 } fragarachAoOFix;
+
+
+
+uint32_t GetCourageBonus(objHndl objHnd)
+{
+	auto bardLvl = (int32_t)objects.StatLevelGet(objHnd, stat_level_bard);
+	if (bardLvl < 8) return 1;
+	if (bardLvl < 14) return 2;
+	if (bardLvl < 20) return 3;
+	return 4;
+};
+
+uint32_t __cdecl BardicInspiredCourageInitArgs(DispatcherCallbackArgs args)
+{
+	conds.CondNodeSetArg(args.subDispNode->condNode, 0, 5);
+	conds.CondNodeSetArg(args.subDispNode->condNode, 1, 0);
+	auto courageBonus = 1;
+	if ( objects.IsCritter(args.objHndCaller) )
+	{
+		courageBonus = GetCourageBonus(args.objHndCaller);
+	}
+	else
+	{
+		hooked_print_debug_message("Bardic Inspired Courage dispatched from non-critter! Mon seigneur %s", description.getDisplayName(args.objHndCaller));
+	}
+	conds.CondNodeSetArg(args.subDispNode->condNode, 3, courageBonus);
+	return 0;
+};
+
+class BardicInspireCourageFix : public TempleFix
+{
+	public: const char* name() override {
+		return "Bardic Inspire Courage Function Replacements";
+	};
+	void apply() override
+	{
+		replaceFunction(0x100EA5C0, BardicInspiredCourageInitArgs);
+	}
+} bardicInspireCourageFix;
