@@ -172,3 +172,18 @@ scrollbarvertical sliderbar:active {
   bg-center-image: /art/interface/scrollbar/ScrollBar_Fill_Click.tga;
   bg-bottom-image: /art/interface/scrollbar/ScrollBar_Fill_Bottom_Click.tga;
 }
+
+/*
+  Checkbox
+*/
+input.checkbox {
+  width: 15px;
+  height: 15px;
+  bg-decorator: image;
+  bg-image: /art/interface/options_ui/checkbox_off.tga;
+}
+
+input.checkbox:active, input.checkbox:checked {
+  bg-decorator: image;
+  bg-image: /art/interface/options_ui/checkbox_on.tga;
+}

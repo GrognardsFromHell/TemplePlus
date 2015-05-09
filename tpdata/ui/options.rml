@@ -18,7 +18,7 @@
         </div>
         <div>
 					<label>video settings</label>
-					<input type="range" min="0" max="10" />
+					<input type="checkbox" />
 				</div>
 				<div>
 					<label>video settings</label>
