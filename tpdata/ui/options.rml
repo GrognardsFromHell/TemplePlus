@@ -22,7 +22,10 @@
 				</div>
 				<div>
 					<label>video settings</label>
-					<input type="range" min="0" max="10" />
+					<select>
+						<option>Resolution 1</option>
+						<option>Resolution 2</option>
+					</select>
 				</div>
 		  	<div>
 					<label>video settings</label>

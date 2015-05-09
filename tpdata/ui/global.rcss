@@ -187,3 +187,60 @@ input.checkbox:active, input.checkbox:checked {
   bg-decorator: image;
   bg-image: /art/interface/options_ui/checkbox_on.tga;
 }
+
+/*
+  Select
+*/
+select {
+	width: 173px;
+	height: 22px;
+  border-top: 1px #41586f;
+  border-left: 1px #41586f;
+  border-right: 1px #41586f;
+  border-bottom: 1px #41586f;
+}
+
+select selectvalue {
+	width: 151px;
+	height: 20px;
+
+  line-height: 100%;
+  padding-left: 4px;
+
+  border-right: 1px #41586f;
+}
+
+select selectarrow {
+  width: 15px;
+  height: 17px;
+  margin-left: -6px;
+  margin-top: 1px;
+  bg-decorator: image;
+  bg-image: controls.png 104px 7px 119px 24px;
+}
+
+// Flip the arrow
+select selectarrow:active, select selectarrow:checked {
+  bg-image: controls.png 104px 24px 119px 7px;
+}
+
+select selectbox {
+  background-color: black;
+  border-right: 1px #41586f;
+  border-left: 1px #41586f;
+  border-bottom: 1px #41586f;
+  line-height: 18px;
+}
+
+select selectbox option {
+  padding: 4px;
+  border-bottom: 1px #41586f;
+}
+
+select selectbox option:hover {
+  background-color: #1ac3ff;
+}
+
+select selectbox option:last-child {
+  border-bottom: 0;
+}
