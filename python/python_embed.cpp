@@ -12,6 +12,7 @@
 #include "python_cheats.h"
 #include "python_integration_spells.h"
 #include "python_console.h"
+#include "python_hooks.h"
 #include "tio/tio.h"
 #include <set>
 #include "python_module.h"
@@ -74,6 +75,7 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 	Py_OptimizeFlag++;
 	Py_VerboseFlag++;
 	Py_NoSiteFlag++;
+	PyImport_AppendInittab("_hooks", init_hooks);
 	Py_SetProgramName("TemplePlus.exe");
 	Py_Initialize();
 	

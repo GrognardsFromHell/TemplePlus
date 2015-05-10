@@ -22,13 +22,18 @@ static Rocket::Core::Input::KeyIdentifier key_identifier_map[KEYMAP_SIZE];
 	This element will be added to the very bottom of the context to receive 
 	any input event that is not handled by the rest of librocket.
 */
-class GameViewInputProxy : public Rocket::Core::Element {
+class GameInputProxy : public Rocket::Core::Element {
 public:
-	GameViewInputProxy() : Element("gameview") {
+
+	explicit GameInputProxy(const Rocket::Core::String& tag)
+		: Element(tag) {
+		SetProperty("display", "block");
+		SetProperty("position", "absolute");
+		SetProperty("left", "0");
+		SetProperty("top", "0");
+		SetProperty("width", "100%");
+		SetProperty("height", "100%");
 	}
-
-
-
 };
 
 class TempleFileInterface : public Rocket::Core::FileInterface {
@@ -117,6 +122,7 @@ struct UiTextPrivate {
 	TempleFileInterface fileInterface;
 	GameMouseInputListener mouseListener;
 	GameKeyInputListener keyListener;
+	GameInputProxy *inputProxy = nullptr;
 };
 
 UiText uiText;
@@ -135,6 +141,11 @@ void UiText::Initialize() {
 
 	Rocket::Core::Initialise();
 
+	// Register the instancer for our custom input proxy element
+	auto proxyInstancer = new Rocket::Core::ElementInstancerGeneric<GameInputProxy>();
+	Rocket::Core::Factory::RegisterElementInstancer("inputproxy", proxyInstancer);
+	proxyInstancer->RemoveReference();
+
 	Rocket::Core::StyleSheetSpecification::RegisterProperty("click-through", "false", false)
 		.AddParser("keyword", "false,true");
 		
@@ -143,6 +154,18 @@ void UiText::Initialize() {
 		Rocket::Core::Shutdown();
 		throw TempleException("Unable to initialize libRocket");
 	}
+
+	// Add the input capture element to the context (this has to be here all the time)	
+	auto doc = d->context->CreateDocument();
+	doc->SetProperty("position", "absolute");
+	doc->SetProperty("left", "0");
+	doc->SetProperty("top", "0");
+	doc->SetProperty("width", "100%");
+	doc->SetProperty("height", "100%");
+	doc->SetProperty("z-index", "bottom");
+	d->inputProxy = (GameInputProxy*) doc->CreateElement("inputproxy");
+	doc->AppendChild(d->inputProxy);
+	doc->RemoveReference();
 
 	Rocket::Debugger::Initialise(d->context);
 	Rocket::Debugger::SetVisible(true);
@@ -154,8 +177,9 @@ void UiText::Initialize() {
 
 	d->context->AddEventListener("keydown", &d->keyListener);
 	d->context->AddEventListener("keyup", &d->keyListener);
+	d->context->AddEventListener("textinput", &d->keyListener);
 
-	auto res = pythonObjIntegration.ExecuteScript("templeplus.ui", "loadFonts");
+	auto res = pythonObjIntegration.ExecuteScript("templeplus.ui", "init");
 	if (!res) {
 		PyErr_Print();
 	}
@@ -163,6 +187,10 @@ void UiText::Initialize() {
 }
 
 void UiText::Uninitialize() {
+	if (d->inputProxy) {
+		d->inputProxy->RemoveReference();
+		d->inputProxy = nullptr;
+	}
 }
 
 void UiText::Update() {
@@ -267,6 +295,8 @@ bool UiText::HandleMessage(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		// Or endlines - Windows sends them through as carriage returns.
 		else if (wparam == '\r')
 			d->context->ProcessTextInput((Rocket::Core::word) '\n');
+		else
+			return false;
 	}
 	break;
 
@@ -283,8 +313,7 @@ bool UiText::HandleMessage(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		librocket.
 	*/
 	if (mouseClickEvent && d->mouseListener.passThrough) {
-		auto focusElem = d->context->GetFocusElement();
-		d->context->GetRootElement()->Focus();
+		d->inputProxy->Focus();
 	}
 	
 	return !d->mouseListener.passThrough && !d->keyListener.passThrough;
@@ -327,7 +356,7 @@ void GameMouseInputListener::ProcessEvent(Rocket::Core::Event& evt) {
 
 	auto target = evt.GetTargetElement();
 	passThrough = false;
-	if (target->GetTagName() == "#root") {
+	if (target->GetTagName() == "#root" || target->GetTagName() == "inputproxy") {
 		passThrough = true;
 	} else {
 		passThrough = target->GetProperty("click-through")->Get<int>() == 1;
@@ -362,8 +391,9 @@ void GameKeyInputListener::ProcessEvent(Rocket::Core::Event& evt) {
 
 	auto target = evt.GetTargetElement();
 	passThrough = false;
-	if (target->GetTagName() == "#root") {
+	if (target->GetTagName() == "#root" || target->GetTagName() == "inputproxy") {
 		passThrough = true;
+		return;
 	}
 
 	if (!passThrough && evt.GetType() == "keydown") {

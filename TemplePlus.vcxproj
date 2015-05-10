@@ -67,6 +67,7 @@
     <ClCompile Include="python\python_dice.cpp" />
     <ClCompile Include="python\python_globalflags.cpp" />
     <ClCompile Include="python\python_globalvars.cpp" />
+    <ClCompile Include="python\python_hooks.cpp" />
     <ClCompile Include="python\python_integration.cpp" />
     <ClCompile Include="python\python_integration_brawl.cpp" />
     <ClCompile Include="python\python_integration_obj.cpp" />
@@ -272,6 +273,7 @@
     <ClInclude Include="python\python_error.h" />
     <ClInclude Include="python\python_globalflags.h" />
     <ClInclude Include="python\python_globalvars.h" />
+    <ClInclude Include="python\python_hooks.h" />
     <ClInclude Include="python\python_integration.h" />
     <ClInclude Include="python\python_integration_obj.h" />
     <ClInclude Include="python\python_integration_spells.h" />
