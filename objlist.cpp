@@ -10,9 +10,9 @@ static struct ObjListAddresses : AddressTable {
 	void(__cdecl *ObjListFree)(ObjListResult &result);
 
 	ObjListAddresses() {
-		rebase(ObjListTile, 0x1010D4D0);
+		rebase(ObjListTile, 0x1001E970);
 		rebase(ObjListVicinity, 0x1001F1C0);
-		rebase(ObjListRadius, 0x1010D650);
+		rebase(ObjListRadius, 0x10022E50);
 		rebase(ObjListFollowers, 0x1001F450);
 		rebase(ObjListFree, 0x1001F2C0);
 	}

@@ -379,12 +379,22 @@ PyObject* PyGame_ObjListCone(PyObject*, PyObject* args) {
 
 	// Get location and rotation of obj
 	auto origin = objects.GetLocationFull(originHndl);
-	auto rotation = objects.GetRotation(originHndl);
+	float rotation = objects.GetRotation(originHndl);
 
 	// Modify rotation by coneLeft to get the start angle of the cone
-	rotation += deg2rad((float)coneLeft);
-
-	float coneArcRad = deg2rad((float)coneArc);
+	float coneLeftFloat = 0.0;
+	__asm{
+		fild coneLeft;
+		fstp coneLeftFloat;
+	}
+	rotation += deg2rad(coneLeftFloat);
+	
+	float coneArcFloat = 0.0;
+	__asm{
+		fild coneArc;
+		fstp coneArcFloat;
+	}
+	float coneArcRad = deg2rad(coneArcFloat);
 
 	ObjList objList;
 	objList.ListCone(origin, radius, rotation, coneArcRad, flags);
