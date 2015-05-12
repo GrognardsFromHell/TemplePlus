@@ -155,6 +155,17 @@ struct CritterSystem : AddressTable
 	// Create and give an item to a critter
 	objHndl GiveItem(objHndl critter, int protoId);
 
+
+	/*
+		Takes money from a critter. If the critter is a PC, money is taken from the party instead.
+		NOTE: All arguments must be *positive*.
+	*/
+	void TakeMoney(objHndl critter, int platinum, int gold, int silver, int copper);
+	/*
+		Gives money to a critter. If the critter is a PC, money is given to the party instead.
+	*/
+	void GiveMoney(objHndl critter, int platinum, int gold, int silver, int copper);
+
 #pragma region Category
 	MonsterCategory GetCategory(objHndl objHnd);
 	uint32_t IsCategoryType(objHndl objHnd, MonsterCategory categoryType);

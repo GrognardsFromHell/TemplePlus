@@ -306,9 +306,9 @@ static PyObject* PyObjHandle_MoneyAdj(PyObject* obj, PyObject* args) {
 	}
 
 	if (copperAdj <= 0) {
-		objects.TakeMoney(self->handle, 0, 0, 0, -copperAdj);
+		critterSys.TakeMoney(self->handle, 0, 0, 0, -copperAdj);
 	} else {
-		objects.GiveMoney(self->handle, 0, 0, 0, copperAdj);
+		critterSys.GiveMoney(self->handle, 0, 0, 0, copperAdj);
 	}
 
 	Py_RETURN_NONE;

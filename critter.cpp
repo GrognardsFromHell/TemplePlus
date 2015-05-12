@@ -34,6 +34,9 @@ static struct CritterAddresses : AddressTable {
 
 	objHndl (__cdecl *GiveItem)(objHndl critter, int protoId);
 
+	void(__cdecl *TakeMoney)(objHndl critter, int platinum, int gold, int silver, int copper);
+	void(__cdecl *GiveMoney)(objHndl critter, int platinum, int gold, int silver, int copper);
+
 	CritterAddresses() {
 		rebase(HasMet, 0x10053CD0);
 		rebase(AddFollower, 0x100812F0);
@@ -53,6 +56,9 @@ static struct CritterAddresses : AddressTable {
 		rebase(Resurrect, 0x100809C0);
 		rebase(IsDeadOrUnconscious, 0x100803E0);
 		rebase(GiveItem, 0x1006CC30);
+
+		rebase(GiveMoney, 0x1007F960);
+		rebase(TakeMoney, 0x1007FA40);
 	}
 
 } addresses;
@@ -206,6 +212,16 @@ Race CritterSystem::GetRace(objHndl critter) {
 
 objHndl CritterSystem::GiveItem(objHndl critter, int protoId) {
 	return addresses.GiveItem(critter, protoId);
+}
+
+void CritterSystem::TakeMoney(objHndl critter, int platinum, int gold, int silver, int copper)
+{
+	addresses.TakeMoney(critter, platinum, gold, silver, copper);
+}
+
+void CritterSystem::GiveMoney(objHndl critter, int platinum, int gold, int silver, int copper)
+{
+	addresses.GiveMoney(critter, platinum, gold, silver, copper);
 }
 
 MonsterCategory CritterSystem::GetCategory(objHndl objHnd)

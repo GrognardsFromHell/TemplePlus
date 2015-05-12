@@ -252,9 +252,9 @@ Objects::Objects()
 	rebase(_GetSize, 0x1004D690);
 	rebase(_Move, 0x10025950);
 	rebase(_SetInternalFieldInt32, 0x100A0190);
-	macRebase(_setArrayFieldLowLevel, 100A0500)
+	rebase(_setArrayFieldLowLevel,0x100A0500); 
 	rebase(_SetInternalFieldFloat, 0x100A0190); // This is actually the same function as 32-bit heh
-	macRebase(_getArrayFieldNumItems, 1009E7E0)
+	rebase(_getArrayFieldNumItems,0x1009E7E0); 
 	rebase(_IsPlayerControlled, 0x1002B390);
 	rebase(_ObjGetProtoNum, 0x10039320);
 	rebase(_FindFreeSpot, 0x100BDB50);
@@ -262,16 +262,14 @@ Objects::Objects()
 	rebase(_GetMemoryAddress, 0x100C2A70);
 	rebase(_DoesObjectFieldExist, 0x1009C190);
 	rebase(_ObjectPropFetcher, 0x1009CD40);
-	macRebase(_getArrayFieldInternal, 1009CEB0)
-	macRebase(_lookupInHandlesList, 100C3050)
+	rebase(_getArrayFieldInternal,0x1009CEB0); 
+	rebase(_lookupInHandlesList,0x100C3050); 
 	rebase(_DLLFieldNames, 0x102CD840);
 	rebase(_InsetDataIntoInternalStack, 0x1009EA80);
 	rebase(_GetDisplayName, 0x1001F970);
 	rebase(_AiForceSpreadOut, 0x1005A640);
 	rebase(_GetRadius, 0x10021C40);
 	rebase(_TargetRandomTileNear, 0x100B99A0);
-	rebase(_TakeMoney, 0x1007FA40);
-	rebase(_GiveMoney, 0x1007F960);
 	rebase(_FadeTo, 0x1004C390);
 
 	rebase(_SetFlag, 0x10020F50);
@@ -461,14 +459,6 @@ locXY Objects::TargetRandomTileNear(objHndl handle, int distance) {
 	locXY result;
 	_TargetRandomTileNear(handle, distance, &result);
 	return result;
-}
-
-void Objects::TakeMoney(objHndl critter, int platinum, int gold, int silver, int copper) {
-	_TakeMoney(critter, platinum, gold, silver, copper);
-}
-
-void Objects::GiveMoney(objHndl critter, int platinum, int gold, int silver, int copper) {
-	_GiveMoney(critter, platinum, gold, silver, copper);
 }
 
 float Objects::GetRotationTowards(objHndl from, objHndl to) {
