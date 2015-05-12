@@ -1,8 +1,8 @@
 # C++ objects and libs
 
 Win32
-debug
-release
+/Debug
+/Release
 *.exp
 *.log
 *.sdf

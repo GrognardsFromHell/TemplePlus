@@ -1,0 +1,11 @@
+<rml>
+	<head>
+		<title>Debug Jump Menu</title>
+		<script src="jump.py" />
+		<link type="text/template" href="sidebar.rml"/>
+	</head>
+	<body onload="loadPoints(document)" template="sidebar">
+		<h1>Jumppoints</h1>
+		<div id="list"></div>
+	</body>
+</rml>

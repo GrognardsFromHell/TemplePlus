@@ -1,0 +1,12 @@
+<rml>
+	<head>
+		<title>Debug Menu</title>
+		<link type="text/template" href="sidebar.rml"/>
+	</head>
+	<body template="sidebar">
+
+		<h1>Debug Menu</h1>
+
+		<button onclick="go('jump.rml')">Jump</button>
+	</body>
+</rml>

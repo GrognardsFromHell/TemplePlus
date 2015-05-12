@@ -1,0 +1,63 @@
+<template name="sidebar" content="content">
+	<head>
+		<title>Debug Sidebar</title>
+		<link type="text/rcss" href="../global.rcss" />
+		<style>
+		body {
+			position: absolute;
+			right: 0;
+			top: 0;
+			height: 100%;
+			width: 200px;
+			background-color: rgba(127, 127, 127, 127);
+			border-left: 2px #ffffff;
+			font-family: Open Sans;
+			overflow-y: auto;
+		}
+
+		h1 {
+		  font-size: 12pt;
+		  font-weight: bold;
+		  margin: 5px;
+		  margin-bottom: 1em;
+		  text-align: center;
+		  display: block;
+		}
+
+		button {
+		  display: block;
+		  font-weight: bold;
+		  margin: 0 auto;
+		  width: 180px;
+		  height: auto;
+		  text-align: center;
+		  line-height: 25px;
+		  background-color: rgba(255, 255, 255, 25%);
+			border-left: 2px #ffffff;
+			border-top: 2px #ffffff;
+			border-right: 2px #cccccc;
+			border-bottom: 2px #cccccc;
+		}
+		button:hover {
+      background-color: rgba(255, 255, 255, 50%);
+		}
+		button:active {
+      background-color: rgba(255, 255, 255, 60%);
+      padding-left: 1px;
+      width: 179px;
+    }
+
+		#content {
+		  color: #ffffff;
+		}
+		</style>
+    <script>
+import ui.debug
+def go(url):
+  ui.debug.show_url(url)
+    </script>
+	</head>
+	<body>
+		<div id="content" />
+	</body>
+</template>
