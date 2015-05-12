@@ -168,7 +168,6 @@ void UiText::Initialize() {
 	doc->RemoveReference();
 
 	Rocket::Debugger::Initialise(d->context);
-	Rocket::Debugger::SetVisible(true);
 
 	d->context->AddEventListener("mousemove", &d->mouseListener);
 	d->context->AddEventListener("mouseup", &d->mouseListener);
@@ -275,11 +274,16 @@ bool UiText::HandleMessage(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		Rocket::Core::Input::KeyIdentifier key_identifier = key_identifier_map[wparam];
 		int key_modifier_state = GetKeyModifierState();
 
-		// Check for a shift-~ to toggle the debugger.
-		if (key_identifier == Rocket::Core::Input::KI_OEM_3 &&
+		if (key_identifier == Rocket::Core::Input::KI_F9 &&
 			key_modifier_state & Rocket::Core::Input::KM_SHIFT)
 		{
 			Rocket::Debugger::SetVisible(!Rocket::Debugger::IsVisible());
+			break;
+		}
+
+		// TODO Make this a config option
+		if (key_identifier == Rocket::Core::Input::KI_NUMPAD0) {
+			pythonObjIntegration.ExecuteScript("ui.debug", "show");
 			break;
 		}
 

@@ -15,6 +15,8 @@ struct MesFuncs : public AddressTable {
 	bool (__cdecl *Close)(MesHandle handle);
 	MesLine *(__cdecl *GetLine)(MesHandle handle, MesLine *line);
 	MesLine *(__cdecl *GetLine_Safe)(MesHandle handle, MesLine *line); // returns "Error! Missing line %d in %s" if it fails to find it
+	int (__cdecl *GetLineCount)(MesHandle handle);
+	BOOL (__cdecl *GetLineByIdx)(MesHandle handle, int idx, MesLine *line);
 	const char *GetLineById(MesHandle handle, uint32_t key) {
 		MesLine line = { key, nullptr };
 		if (GetLine(handle, &line)) {
@@ -29,6 +31,8 @@ struct MesFuncs : public AddressTable {
 		rebase(Close, 0x101E6360);
 		rebase(GetLine, 0x101E6760);
 		rebase(GetLine_Safe, 0x101E65E0);
+		rebase(GetLineCount, 0x101E62F0);
+		rebase(GetLineByIdx, 0x101E6310);
 	}
 
 };
@@ -50,6 +54,26 @@ public:
 
 	bool valid() const {
 		return mValid;
+	}
+
+	int size() const {
+		if (!mValid) {
+			return 0;
+		}
+		return mesFuncs.GetLineCount(mHandle);
+	}
+
+	bool GetLineAt(int idx, uint32_t &key, const char *&value) {
+		if (!mValid) {
+			return false;
+		}
+		MesLine l;
+		if (!mesFuncs.GetLineByIdx(mHandle, idx, &l)) {
+			return false;
+		}
+		key = l.key;
+		value = l.value;
+		return true;
 	}
 
 	const char *operator[](uint32_t key)

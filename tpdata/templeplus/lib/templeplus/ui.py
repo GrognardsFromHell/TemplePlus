@@ -1,7 +1,6 @@
+from __future__ import absolute_import
 from _rocketcore import *
 from _rocketcontrols import *
-from _hooks import replace_func
-from ctypes import *
 
 mainContext = contexts['main']
 
@@ -13,7 +12,10 @@ fonts = [
     "AlegreyaSC-Bold.otf",
     "AlegreyaSC-BoldItalic.otf",
     "AlegreyaSC-Italic.otf",
-    "AlegreyaSC-Regular.otf"
+    "AlegreyaSC-Regular.otf",
+    "OpenSans-Regular.ttf",
+    "OpenSans-Bold.ttf",
+    "OpenSans-Italic.ttf"
 ]
 
 def init():
@@ -27,13 +29,10 @@ def loadFonts():
         print "Loading font", font
         LoadFontFace("/fonts/" + font)
 
-showOptionsOrg = None
-
-def showOptions(unk):
-    print "Showing options", unk
-    showOptionsOrg(unk)
-
 def hookFunctions():
-    FUNC = CFUNCTYPE(None, c_int)
-    global showOptionsOrg
-    showOptionsOrg = replace_func(0x10119D20, FUNC(showOptions))
+    import ui.options
+    ui.options.init()
+
+def load_doc(docUrl):
+    doc = mainContext.LoadDocument(docUrl)
+    return doc

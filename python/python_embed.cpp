@@ -12,7 +12,6 @@
 #include "python_cheats.h"
 #include "python_integration_spells.h"
 #include "python_console.h"
-#include "python_hooks.h"
 #include "tio/tio.h"
 #include <set>
 #include "python_module.h"
@@ -65,10 +64,10 @@ void PythonPrepareGlobalNamespace() {
 }
 
 // Forward declare the init functions of the two librocket modules
-extern "C" {
-	void init_rocketcore();
-	void init_rocketcontrols();
-}
+PyMODINIT_FUNC init_rocketcore();
+PyMODINIT_FUNC init_rocketcontrols();
+PyMODINIT_FUNC init_hooks();
+PyMODINIT_FUNC init_templeplus();
 
 static bool __cdecl PythonInit(GameSystemConf *conf) {
 
@@ -76,6 +75,7 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 	Py_VerboseFlag++;
 	Py_NoSiteFlag++;
 	PyImport_AppendInittab("_hooks", init_hooks);
+	PyImport_AppendInittab("_templeplus", init_templeplus);
 	Py_SetProgramName("TemplePlus.exe");
 	Py_Initialize();
 	

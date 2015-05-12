@@ -276,6 +276,7 @@
     <ClCompile Include="ui\ui_tutorial.cpp" />
     <ClCompile Include="ui\ui_render_dx.cpp" />
     <ClCompile Include="python\python_hooks.cpp" />
+    <ClCompile Include="python\python_templeplus.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -564,7 +565,6 @@
     <ClInclude Include="sound.h" />
     <ClInclude Include="util\stringutil.h" />
     <ClInclude Include="ui\ui_render_dx.h" />
-    <ClInclude Include="python\python_hooks.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

@@ -62,7 +62,7 @@ void __cdecl hooked_print_debug_message(char* format, ...)
 	}
 }
 
-void init_hooks()
+void InitTempleHooks()
 {
 	logger->info("Base offset for temple.dll memory is 0x{}", templeImageBase);
 	if (config.debugMessageEnable)

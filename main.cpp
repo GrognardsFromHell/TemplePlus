@@ -62,7 +62,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		MH_Initialize();
 
 		init_functions();
-		init_hooks();
+		InitTempleHooks();
 
 		TempleFixes::apply();
 

@@ -131,7 +131,7 @@ const int CRITTER_EQUIPPED_ITEM_OFFSET = 200;
 void __cdecl hooked_print_debug_message(char* format, ...);
 
 void init_functions();
-void init_hooks();
+void InitTempleHooks();
 
 
 int32_t _diceRoll(uint32_t dieNum, uint32_t dieType, int32_t dieBonus);
