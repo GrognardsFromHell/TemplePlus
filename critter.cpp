@@ -10,13 +10,13 @@
 
 static struct CritterAddresses : AddressTable {
 
-	bool (__cdecl *HasMet)(objHndl critter, objHndl otherCritter);
-	bool (__cdecl *AddFollower)(objHndl npc, objHndl pc, int unkFlag, bool asAiFollower);
-	bool (__cdecl *RemoveFollower)(objHndl npc, int unkFlag);
+	uint32_t (__cdecl *HasMet)(objHndl critter, objHndl otherCritter);
+	uint32_t (__cdecl *AddFollower)(objHndl npc, objHndl pc, int unkFlag, bool asAiFollower);
+	uint32_t (__cdecl *RemoveFollower)(objHndl npc, int unkFlag);
 	objHndl (__cdecl *GetLeader)(objHndl critter);
 	int (__cdecl *HasLineOfSight)(objHndl critter, objHndl target);
 	void (__cdecl *Attack)(objHndl target, objHndl attacker, int n1, int n2);
-	bool (__cdecl *IsFriendly)(objHndl pc, objHndl npc);
+	uint32_t (__cdecl *IsFriendly)(objHndl pc, objHndl npc);
 	int (__cdecl *SoundmapCritter)(objHndl critter, int id);
 	void (__cdecl *KillByEffect)(objHndl critter, objHndl killer);
 	void (__cdecl *Kill)(objHndl critter, objHndl killer);
@@ -28,9 +28,9 @@ static struct CritterAddresses : AddressTable {
 	void (__cdecl *BalorDeath)(objHndl critter);
 	void (__cdecl *SetConcealed)(objHndl critter, bool concealed);
 
-	bool (__cdecl *Resurrect)(objHndl critter, ResurrectType type, int unk);
+	uint32_t(__cdecl *Resurrect)(objHndl critter, ResurrectType type, int unk);
 
-	bool (__cdecl *IsDeadOrUnconscious)(objHndl critter);
+	uint32_t(__cdecl *IsDeadOrUnconscious)(objHndl critter);
 
 	objHndl (__cdecl *GiveItem)(objHndl critter, int protoId);
 
@@ -79,6 +79,11 @@ uint32_t CritterSystem::isCritterCombatModeActive(objHndl objHnd)
 CritterSystem::CritterSystem()
 {
 }
+
+uint32_t CritterSystem::IsPC(objHndl objHnd)
+{
+	return objects.getInt32(objHnd, obj_f_type) == obj_t_pc;
+}
 #pragma endregion
 
 int CritterSystem::GetLootBehaviour(objHndl npc) {
@@ -89,15 +94,15 @@ void CritterSystem::SetLootBehaviour(objHndl npc, int behaviour) {
 	objects.setInt32(npc, obj_f_npc_pad_i_3, behaviour & 0xF);
 }
 
-bool CritterSystem::HasMet(objHndl critter, objHndl otherCritter) {
+uint32_t CritterSystem::HasMet(objHndl critter, objHndl otherCritter) {
 	return addresses.HasMet(critter, otherCritter);
 }
 
-bool CritterSystem::AddFollower(objHndl npc, objHndl pc, int unkFlag, bool asAiFollower) {
+uint32_t CritterSystem::AddFollower(objHndl npc, objHndl pc, int unkFlag, bool asAiFollower) {
 	return addresses.AddFollower(npc, pc, unkFlag, asAiFollower);
 }
 
-bool CritterSystem::RemoveFollower(objHndl npc, int unkFlag) {
+uint32_t CritterSystem::RemoveFollower(objHndl npc, int unkFlag) {
 	return addresses.RemoveFollower(npc, unkFlag);
 }
 
@@ -117,7 +122,7 @@ void CritterSystem::Attack(objHndl target, objHndl attacker, int n1, int n2) {
 	addresses.Attack(target, attacker, n1, n2);
 }
 
-bool CritterSystem::IsFriendly(objHndl pc, objHndl npc) {
+uint32_t CritterSystem::IsFriendly(objHndl pc, objHndl npc) {
 	return addresses.IsFriendly(pc, npc);
 }
 
@@ -164,11 +169,11 @@ void CritterSystem::SetConcealed(objHndl critter, bool concealed) {
 	addresses.SetConcealed(critter, concealed);
 }
 
-bool CritterSystem::Resurrect(objHndl critter, ResurrectType type, int unk) {
+uint32_t CritterSystem::Resurrect(objHndl critter, ResurrectType type, int unk) {
 	return addresses.Resurrect(critter, type, unk);
 }
 
-bool CritterSystem::Dominate(objHndl critter, objHndl caster) {
+uint32_t CritterSystem::Dominate(objHndl critter, objHndl caster) {
 
 	// Float a "charmed!" line above the critter
 	floatSys.FloatSpellLine(critter, 20018, FloatLineColor::Red);
@@ -183,7 +188,7 @@ bool CritterSystem::Dominate(objHndl critter, objHndl caster) {
 	return conds.AddTo(critter, cond, args);
 }
 
-bool CritterSystem::IsDeadOrUnconscious(objHndl critter) {
+uint32_t CritterSystem::IsDeadOrUnconscious(objHndl critter) {
 	return addresses.IsDeadOrUnconscious(critter);
 }
 
@@ -214,7 +219,7 @@ MonsterCategory CritterSystem::GetCategory(objHndl objHnd)
 	return mc_type_monstrous_humanoid; // default - so they have at least a weapons proficiency
 }
 
-bool CritterSystem::IsCategoryType(objHndl objHnd, MonsterCategory categoryType)
+uint32_t CritterSystem::IsCategoryType(objHndl objHnd, MonsterCategory categoryType)
 {
 	if (objHnd != 0) {
 		if (objects.IsCritter(objHnd)) {
@@ -225,7 +230,7 @@ bool CritterSystem::IsCategoryType(objHndl objHnd, MonsterCategory categoryType)
 	return 0;
 }
 
-bool CritterSystem::IsCategorySubtype(objHndl objHnd, MonsterCategory categoryType)
+uint32_t CritterSystem::IsCategorySubtype(objHndl objHnd, MonsterCategory categoryType)
 {
 	if (objHnd != 0) {
 		if (objects.IsCritter(objHnd)) {
@@ -236,17 +241,17 @@ bool CritterSystem::IsCategorySubtype(objHndl objHnd, MonsterCategory categoryTy
 	return 0;
 }
 
-bool CritterSystem::IsUndead(objHndl objHnd)
+uint32_t CritterSystem::IsUndead(objHndl objHnd)
 {
 	return IsCategoryType(objHnd, mc_type_undead);
 }
 
-bool CritterSystem::IsOoze(objHndl objHnd)
+uint32_t CritterSystem::IsOoze(objHndl objHnd)
 {
 	return IsCategoryType(objHnd, mc_type_ooze);
 }
 
-bool CritterSystem::IsSubtypeFire(objHndl objHnd)
+uint32_t CritterSystem::IsSubtypeFire(objHndl objHnd)
 {
 	return IsCategorySubtype(objHnd, mc_subtye_fire);
 }

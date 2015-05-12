@@ -49,20 +49,21 @@ struct CritterSystem : AddressTable
 	uint32_t isCritterCombatModeActive(objHndl objHnd);
 	CritterSystem();
 
+	uint32_t IsPC(objHndl);
 	int GetLootBehaviour(objHndl npc);
 	void SetLootBehaviour(objHndl npc, int behaviour);
 
-	bool HasMet(objHndl pc, objHndl npc);
+	uint32_t HasMet(objHndl pc, objHndl npc);
 
 	/*
 		Unk Flag could mean -> Add their NPC followers to the group as well
 	*/
-	bool AddFollower(objHndl npc, objHndl pc, int unkFlag, bool asAiFollower);
+	uint32_t AddFollower(objHndl npc, objHndl pc, int unkFlag, bool asAiFollower);
 
 	/*
 		Unk Flag could mean -> Remove their NPC followers to the group as well
 	*/
-	bool RemoveFollower(objHndl npc, int unkFlag);
+	uint32_t RemoveFollower(objHndl npc, int unkFlag);
 
 	/*
 		Gets the current leader of the given critter. Might be 0.
@@ -85,7 +86,7 @@ struct CritterSystem : AddressTable
 	/*
 		Checks if the given critter is friendly towards the target.
 	*/
-	bool IsFriendly(objHndl, objHndl);
+	uint32_t IsFriendly(objHndl, objHndl);
 
 	/*
 		For id = 7, this returns footstep sound ids for the critter
@@ -136,14 +137,14 @@ struct CritterSystem : AddressTable
 	/*
 		Third argument seems unused.
 	*/
-	bool Resurrect(objHndl critter, ResurrectType type, int unk);
+	uint32_t Resurrect(objHndl critter, ResurrectType type, int unk);
 
 	/*
 		Dominates a critter.
 	*/
-	bool Dominate(objHndl critter, objHndl caster);
+	uint32_t Dominate(objHndl critter, objHndl caster);
 
-	bool IsDeadOrUnconscious(objHndl critter);
+	uint32_t IsDeadOrUnconscious(objHndl critter);
 	
 	int GetPortraitId(objHndl critter);
 
@@ -156,11 +157,11 @@ struct CritterSystem : AddressTable
 
 #pragma region Category
 	MonsterCategory GetCategory(objHndl objHnd);
-	bool IsCategoryType(objHndl objHnd, MonsterCategory categoryType);
-	bool IsCategorySubtype(objHndl objHnd, MonsterCategory categoryType);
-	bool IsUndead(objHndl objHnd);
-	bool IsOoze(objHndl objHnd);
-	bool IsSubtypeFire(objHndl objHnd);	
+	uint32_t IsCategoryType(objHndl objHnd, MonsterCategory categoryType);
+	uint32_t IsCategorySubtype(objHndl objHnd, MonsterCategory categoryType);
+	uint32_t IsUndead(objHndl objHnd);
+	uint32_t IsOoze(objHndl objHnd);
+	uint32_t IsSubtypeFire(objHndl objHnd);
 #pragma endregion
 
 };

@@ -116,7 +116,7 @@ public:
 	int size();
 	objHndl get(int idx) {
 		auto item = mResult.objects;
-		for (int i = 0; i < idx - 1; ++i) {
+		for (int i = 1; i <= idx ; i++) { // tsk, tsk, tsk Pugmeister :D
 			item = item->next;
 		}
 		return item->handle;

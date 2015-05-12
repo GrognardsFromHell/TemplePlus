@@ -5,13 +5,20 @@
 #include "tig/tig_mes.h"
 
 
+/*
+	Maximum distance for NPCs to execute the "EnterCombat" function
+	Unfortunately increasing this only makes you bump into the pathfinding
+	limitation
+*/
+#define COMBAT_ACTIVATION_DISTANCE 42.5 
+
 uint32_t Combat_GetMesfileIdx_CombatMes();
 
 struct CombatSystem : AddressTable {
 	MesHandle* combatMesfileIdx;
 	uint32_t* combatModeActive;
 	bool isCombatActive();
-
+	uint32_t IsCloseToParty(objHndl objHnd);
 	/*
 		Use for the non-lethal brawl.
 	*/
@@ -45,3 +52,4 @@ extern CombatSystem combatSys;
 
 
 uint32_t _isCombatActive();
+uint32_t _IsCloseToParty(objHndl objHnd);

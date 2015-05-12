@@ -193,8 +193,10 @@ bool GameSystemFuncs::LoadGame(const string& filename) {
 	
 	ui.UpdatePartyUi();
 	
-	// co8 hack
-	// sub_11EB6966();
+	// Co8 load hook
+	auto loadHookArgs = Py_BuildValue("(s)", filename.c_str());
+	pythonObjIntegration.ExecuteScript("templeplus.savehook", "load", loadHookArgs);
+	Py_DECREF(loadHookArgs);
 
 	return true;
 }

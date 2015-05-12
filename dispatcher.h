@@ -52,6 +52,8 @@ struct DispatcherSystem : AddressTable
 #pragma endregion
 
 	uint32_t(__cdecl * dispatcherForCritters)(objHndl, DispIO *, enum_disp_type, uint32_t dispKey);
+	void DispIoDamageInit(DispIoDamage *dispIoDamage);
+	int32_t DispatchDamage(objHndl objHnd, DispIoDamage* dispIoDamage, enum_disp_type enumDispType, D20DispatcherKey d20DispatcherKey);
 	DispatcherSystem()
 	{
 		rebase(_Dispatch29hMovementSthg,0x1004D080); 
@@ -248,6 +250,7 @@ uint32_t _Dispatch62(objHndl, DispIO*, uint32_t dispKey);
 uint32_t _Dispatch63(objHndl objHnd, DispIO* dispIO);
 
 void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO * dispIO);
+int32_t _DispatchDamage(objHndl objHnd, DispIoDamage* dispIo, enum_disp_type dispType, D20DispatcherKey key);
 int32_t _dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut, objHndl objHnd2, int32_t flag);
 
 

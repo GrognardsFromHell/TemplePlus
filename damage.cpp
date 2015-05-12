@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "damage.h"
 #include "dice.h"
+#include "bonus.h"
 
 static_assert(validate_size<DispIoDamage, 0x550>::value, "DispIoDamage");
 
@@ -111,4 +112,17 @@ bool Damage::SavingThrowSpell(objHndl obj, objHndl attacker, int dc, SavingThrow
 
 bool Damage::ReflexSaveAndDamage(objHndl obj, objHndl attacker, int dc, int reduction, int flags, const Dice& dice, DamageType damageType, int attackPower, D20ActionType actionType, int spellId) {
 	return addresses.ReflexSaveAndDamage(obj, attacker, dc, reduction, flags, dice.ToPacked(), damageType, attackPower, actionType, spellId);
+}
+
+void Damage::DamagePacketInit(DamagePacket* dmgPkt)
+{
+	dmgPkt->diceCount=0;
+	dmgPkt->damResCount=0;
+	dmgPkt->damModCount=0;
+	dmgPkt->attackPowerType=0;
+	dmgPkt->finalDamage=0;
+	dmgPkt->flags=0;
+	dmgPkt->field0=0;
+	dmgPkt->field4=1;
+	bonusSys.initBonusList(&dmgPkt->bonuses);
 }

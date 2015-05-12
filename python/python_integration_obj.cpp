@@ -71,12 +71,13 @@ static void PcStart(objHndl pc) {
 	inventory.Clear(pc, FALSE);
 	
 	// This checks that the PC has at least one level in any of the classes
-	auto stat = stat_level_barbarian;
+	auto stat = d20ClassSys.classEnums[0];
 	auto classIndex = 0;
-	while (objects.StatLevelGet(pc, stat) <= 0) {
+	while (classIndex <= NUM_CLASSES) {
+		stat = d20ClassSys.classEnums[classIndex];
+		if (objects.StatLevelGet(pc, stat) > 0) break;
 		classIndex++;
-		stat = (Stat)(stat + 1);		
-		if (stat >= stat_level_wizard)
+		if (classIndex >= NUM_CLASSES)
 			return;
 	}
 
@@ -334,15 +335,25 @@ PyObject* PythonObjIntegration::ExecuteScript(const char* moduleName, const char
 }
 
 PyObject* PythonObjIntegration::ExecuteScript(const char* moduleName, const char* functionName, PyObject* args) {
-	auto locals = PyDict_New();
+	auto module = PyImport_ImportModule(moduleName); // New ref
+	if (!module) {
+	/*auto locals = PyDict_New();
 	auto module = PyImport_ImportModuleEx(const_cast<char*>(moduleName), MainModuleDict, locals, 0); // New ref
 	Py_DECREF(locals);
-	if (!module) {		
+	if (!module) {		*/
 		logger->error("Unable to find Python module {}", moduleName);
 		Py_RETURN_NONE;
 	}
 
 	auto dict = PyModule_GetDict(module); // Borrowed ref
+/*	auto keys = PyDict_Keys(dict);
+	for (int i = 0; i < PySequence_Length(keys); ++i) {
+		auto key = PySequence_Fast_GET_ITEM(keys, i);
+		auto str = PyString_AsString(PyObject_Str(key));
+		auto obj = PyDict_GetItemString(dict, str);
+		auto val = PyString_AsString(PyObject_Str(obj));
+		logger->info("{} = {}", str, val);
+	}*/
 	AddGlobalsOnDemand(dict);
 
 	auto callback = PyDict_GetItemString(dict, functionName); // Borrowed ref

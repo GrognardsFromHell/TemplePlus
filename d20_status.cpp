@@ -94,6 +94,7 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 
 	if (objects.IsCritter(objHnd))
 	{
+		hooked_print_debug_message("D20Status Init for %s", description.getDisplayName(objHnd));
 		initClass(objHnd);
 
 		initRace(objHnd);

@@ -35,9 +35,10 @@ public:
 		replaceFunction(0x1004DBA0, _DispIO_Size32_Type21_Init);
 		replaceFunction(0x1004D3A0, _Dispatch62);
 		replaceFunction(0x1004D440, _Dispatch63);
+		replaceFunction(0x1004E040, _DispatchDamage);
 		replaceFunction(0x1004E790, _dispatchTurnBasedStatusInit); 
 		replaceFunction(0x1004ED70, _dispatch1ESkillLevel); 
-
+ 
 	}
 } dispatcherReplacements;
 
@@ -190,6 +191,35 @@ DispIOBonusListAndSpellEntry* DispatcherSystem::DispIOCheckIoType14(DispIOBonusL
 	return dispIo;
 }
 
+void DispatcherSystem::DispIoDamageInit(DispIoDamage* dispIoDamage)
+{
+	dispIoDamage->dispIOType = dispIOTypeDamage;
+	damage.DamagePacketInit(&dispIoDamage->damage);
+	dispIoDamage->src=0i64;
+	dispIoDamage->victim=0i64;
+	dispIoDamage->field1c=0;
+	dispIoDamage->flags=0;
+	dispIoDamage->weaponUsed = 0i64;
+	dispIoDamage->anotherItem = 0i64;
+	dispIoDamage->actionType=D20A_NONE;
+
+}
+
+int32_t DispatcherSystem::DispatchDamage(objHndl objHnd, DispIoDamage* dispIoDamage, enum_disp_type dispType, D20DispatcherKey key)
+{
+	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+	if (!dispatch.dispatcherValid(dispatcher)) return 0;
+	DispIoDamage * dispIo = dispIoDamage;
+	DispIoDamage dispIoLocal;
+	if (!dispIoDamage)
+	{
+		dispatch.DispIoDamageInit(&dispIoLocal);
+		dispIo = &dispIoLocal;
+	}
+	hooked_print_debug_message("Dispatching damage event for %s - type %d, key %d, victim %s", description.getDisplayName(objHnd), dispType, key, description.getDisplayName( dispIoDamage->victim) );
+	dispatch.DispatcherProcessor(dispatcher, dispType, key, dispIo);
+	return 1;
+}
 
 #pragma endregion
 
@@ -340,6 +370,11 @@ void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint3
 	dispCounter--;
 	return;
 
+}
+
+int32_t _DispatchDamage(objHndl objHnd, DispIoDamage* dispIo, enum_disp_type dispType, D20DispatcherKey key)
+{
+	return dispatch.DispatchDamage(objHnd, dispIo, dispType, key);
 }
 
 int32_t _dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut, objHndl objHnd2, int32_t flag)

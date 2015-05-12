@@ -8,6 +8,7 @@
 #include "party.h"
 #include "maps.h"
 #include "critter.h"
+#include "python/python_integration_obj.h"
 
 struct GsiData {
 	string filename;
@@ -254,7 +255,9 @@ bool GameSystemFuncs::SaveGame(const string& filename, const string& displayName
 	tio_rename("save\\temps.jpg", screenDestName.c_str());
 
 	// co8 savehook
-	// sub_11EB6940();
+	auto saveHookArgs = Py_BuildValue("(s)", filename.c_str());
+	pythonObjIntegration.ExecuteScript("templeplus.savehook", "save", saveHookArgs);
+	Py_DECREF(saveHookArgs);
 
 	return true;
 }
