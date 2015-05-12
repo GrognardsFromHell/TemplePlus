@@ -875,8 +875,8 @@ static PyObject* PyObjHandle_ConditionAddWithArgs(PyObject* obj, PyObject* args)
 		return 0;
 	}
 
-	conds.AddTo(self->handle, cond, condArgs);
-	Py_RETURN_NONE;
+	auto result = conds.AddTo(self->handle, cond, condArgs);
+	return PyInt_FromLong(result);
 }
 
 static PyObject* PyObjHandle_IsFriendly(PyObject* obj, PyObject* args) {
