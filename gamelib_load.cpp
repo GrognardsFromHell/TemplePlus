@@ -53,7 +53,7 @@ bool GameSystemFuncs::LoadGame(const string& filename) {
 
 	logger->debug("Loading savegame from {}", filename);
 
-	InLoadGame inLoadGame; // Sets the global flag that indicates we're loading a save
+	InLoadGame inLoadGame; // Sets the global flag that indicates we're loading a save; destructor unsets it
 	
 	addresses.UiMmRelated(63);
 

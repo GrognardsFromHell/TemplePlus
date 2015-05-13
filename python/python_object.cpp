@@ -1023,7 +1023,8 @@ static PyObject* PyObjHandle_SavingThrowSpell(PyObject* obj, PyObject* args) {
 	auto flags = (D20SavingThrowFlag)0;
 	objHndl attacker;
 	int spellId;
-	if (!PyArg_ParseTuple(args, "iiiO&i:objhndl:saving_throw_spell", &dc, &type, &flags, &ConvertObjHndl, &attacker, &spellId)) {
+	int spellId2; // seems like Python bug really, but I'd hate to break vanilla scripts
+	if (!PyArg_ParseTuple(args, "iiiO&i|i:objhndl:saving_throw_spell", &dc, &type, &flags, &ConvertObjHndl, &attacker, &spellId, &spellId2)) {
 		return 0;
 	}
 
