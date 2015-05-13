@@ -7,9 +7,16 @@ struct LevelPacket;
 
 class D20LevelSystem
 {
+public:
+	uint32_t maxLevel;
 	uint32_t LevelPacketInit(LevelPacket* lvlPkt);
 	uint32_t LevelPacketDealloc(LevelPacket *lvlPkt);
 	uint32_t GetLevelPacket(Stat classEnum, objHndl ObjHnd, uint32_t levelAdjustSthg, uint32_t classLevel, LevelPacket *lvlPkt);
+	bool CanLevelup(objHndl objHnd);
+	D20LevelSystem()
+	{
+		maxLevel = 20;
+	}
 };
 
 extern D20LevelSystem d20LevelSys;

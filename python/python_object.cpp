@@ -833,7 +833,7 @@ static bool ParseCondNameAndArgs(PyObject* args, CondStruct*& condStructOut, vec
 
 	// Following arguments all have to be integers and gel with the condition argument count
 	vector<int> condArgs(cond->numArgs, 0);
-	for (int i = 0; i < cond->numArgs; ++i) {
+	for (unsigned int i = 0; i < cond->numArgs; ++i) {
 		if (PyTuple_GET_SIZE(args) > i + 1) {
 			auto item = PyTuple_GET_ITEM(args, i + 1);
 			if (!PyInt_Check(item)) {

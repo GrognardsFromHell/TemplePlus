@@ -102,7 +102,7 @@ struct SubDispDef {
 */
 struct CondStruct {
 	char* condName;
-	int numArgs;
+	unsigned int numArgs;
 	/*
 		This is a variable length array of dispatcher hooks that this condition has.
 	*/

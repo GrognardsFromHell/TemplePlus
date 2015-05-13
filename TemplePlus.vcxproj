@@ -56,6 +56,7 @@
     <ClCompile Include="d20_level.cpp" />
     <ClCompile Include="d20_status.cpp" />
     <ClCompile Include="float_line.cpp" />
+    <ClCompile Include="gameplay_configs.cpp" />
     <ClCompile Include="history.cpp" />
     <ClCompile Include="location.cpp" />
     <ClCompile Include="maps.cpp" />

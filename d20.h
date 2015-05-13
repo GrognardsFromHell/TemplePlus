@@ -168,6 +168,7 @@ uint64_t _d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t 
 void _globD20aSetPerformer(objHndl objHnd);
 void _globD20ActnInit();
 void _GlobD20ActnSetSpellData(D20SpellData * d20SpellData);
+uint32_t _CanLevelup(objHndl objHnd);
 #pragma endregion 
 
 inline int GetAttributeMod(int stat) {

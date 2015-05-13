@@ -101,7 +101,7 @@ uint32_t _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode
 
 	// adding condition
 	auto condNodeNew = new CondNode(condStruct);
-	for (int i = 0; i < condStruct->numArgs; ++i) {
+	for (unsigned int i = 0; i < condStruct->numArgs; ++i) {
 		if (i < args.size()) {
 			condNodeNew->args[i] = args[i];
 		} else {

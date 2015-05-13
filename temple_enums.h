@@ -1804,7 +1804,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeD20Query,
 	dispTypeSkillLevel,
 	dispTypeRadialMenuEntry,
-	dispType32,
+	dispTypeTooltip,
 	dispType33,
 	dispType34,
 	dispTypeBaseCasterLevelMod,

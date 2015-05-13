@@ -29,25 +29,30 @@ public:
 	}
 
 	void apply() override {
-		replaceFunction(0x10077850, D20SpellDataExtractInfo);
-		replaceFunction(0x10077830, D20SpellDataSetSpontCast);
-		macReplaceFun(10077800, _d20ActnSetSpellData)
 
-		replaceFunction(0x100FD790, _D20StatusInitRace);
-		replaceFunction(0x100FEE60, _D20StatusInitClass);
-		replaceFunction(0x1004FDB0, _D20StatusInit);
-		replaceFunction(0x100FD2D0, _D20StatusInitFeats);
 		replaceFunction(0x1004CA00, _D20StatusInitItemConditions);
 		replaceFunction(0x1004CC00, _D20Query);
 		replaceFunction(0x1004CC60, _d20QueryWithData);
-		macReplaceFun(1004E6B0, _d20SendSignal)
-		macReplaceFun(1004CD40, _d20QueryReturnData)
-		replaceFunction(0x10093810, _d20aInitUsercallWrapper); // function takes esi as argument
+		replaceFunction(0x1004E6B0, _d20SendSignal);
+		replaceFunction(0x1004CD40, _d20QueryReturnData);
+		replaceFunction(0x1004FDB0, _D20StatusInit);
+
+		replaceFunction(0x10077850, D20SpellDataExtractInfo);
+		replaceFunction(0x10077830, D20SpellDataSetSpontCast);
+		replaceFunction(0x10077800, _d20ActnSetSpellData); 
+
+		replaceFunction(0x10080220, _CanLevelup);
 
 		replaceFunction(0x10089F80, _globD20aSetTypeAndData1);
-		macReplaceFun(1008A450, _GlobD20ActnSetSpellData)
-		macReplaceFun(1008A530, _globD20aSetPerformer)
-		macReplaceFun(100949E0, _globD20ActnInit)
+		replaceFunction(0x1008A450, _GlobD20ActnSetSpellData);
+		replaceFunction(0x1008A530, _globD20aSetPerformer);
+		replaceFunction(0x100949E0, _globD20ActnInit);
+
+		replaceFunction(0x10093810, _d20aInitUsercallWrapper); // function takes esi as argument
+
+		replaceFunction(0x100FD2D0, _D20StatusInitFeats);
+		replaceFunction(0x100FD790, _D20StatusInitRace);
+		replaceFunction(0x100FEE60, _D20StatusInitClass);
 	}
 } d20Replacements;
 
@@ -57,7 +62,7 @@ static struct D20SystemAddresses : AddressTable {
 	void(__cdecl*  GlobD20ActnSetTarget)(objHndl objHnd, LocAndOffsets * loc);
 	D20SystemAddresses()
 	{
-		macRebase(GlobD20ActnSetTarget, 10092E50)
+		rebase(GlobD20ActnSetTarget,0x10092E50); 
 	}
 } addresses;
 

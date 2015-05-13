@@ -274,6 +274,9 @@
     <ClCompile Include="traps.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
     <ClCompile Include="ui\ui_tutorial.cpp" />
+    <ClCompile Include="gameplay_configs.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />

@@ -6,39 +6,40 @@
 #include "xp.h"
 #include "obj.h"
 #include "party.h"
+#include "d20_level.h"
+
 
 GlobalPrimitive<float, 0x102CF708> experienceMultiplier;
 GlobalPrimitive<int, 0x10BCA850> numCrittersSlainByCR;
 GlobalPrimitive<int, 0x10BCA8BC> xpPile; // sum of all the XP given to party members before divinding by party size
 
-
 static_assert(CRMIN == -2, "CRMIN for XP award definition should be at most -2!");
 static_assert(CRMAX >= 20, "CRMAX for XP award definition should be at least 20!");
-static_assert(MAXLEVEL >= 20, "MAXLEVEL for XP award definition should be at least 20!");
+static_assert(XPTABLE_MAXLEVEL >= 20, "XPTABLE_MAXLEVEL for XP award definition should be at least 20!");
 
 
-// static int XPAwardTable[MAXLEVEL][CRMAX - CRMIN + 1] = {};
+// static int XPAwardTable[XPTABLE_MAXLEVEL][CRMAX - CRMIN + 1] = {};
 
 
 
 XPAward::XPAward(){
-	int table[MAXLEVEL][CRMAX - CRMIN + 1];
+	int table[XPTABLE_MAXLEVEL][CRMAX - CRMIN + 1];
 	memset(table, 0, sizeof(table));
 
 	// First set the table's "spine" - when CR = Level  then   XP = 300*level 
-	for (int level = 1; level <= MAXLEVEL; level++) {
+	for (int level = 1; level <= XPTABLE_MAXLEVEL; level++) {
 		assert(level >= 1);
 		assert(level - CRMIN < CRCOUNT);
 		table[level - 1][level - CRMIN] = level * 300;
 	}
 
 	// Fill out the bottom left portion
-	for (int level = 1; level <= MAXLEVEL; level++){
+	for (int level = 1; level <= XPTABLE_MAXLEVEL; level++){
 		for (int j = level - CRMIN - 1; j >= 2; j--){
 			int i = level - 1;
 			int cr = j + CRMIN;
 
-			assert(i >= 0 && i < MAXLEVEL);
+			assert(i >= 0 && i < XPTABLE_MAXLEVEL);
 			assert(j >= 0 && j < CRCOUNT);
 
 			if (cr <= level - 8){
@@ -64,11 +65,11 @@ XPAward::XPAward(){
 	// Fill out the top right portion
 	for (int cr_off = 1; cr_off < CRMAX; cr_off++){
 
-		for (int level = 1; level <= MAXLEVEL && level + cr_off <= CRMAX; level++){
+		for (int level = 1; level <= XPTABLE_MAXLEVEL && level + cr_off <= CRMAX; level++){
 			int i = level - 1;
 			int j = level - CRMIN + cr_off;
 
-			assert(i >= 0 && i < MAXLEVEL);
+			assert(i >= 0 && i < XPTABLE_MAXLEVEL);
 			assert(j >= 0 && j < CRCOUNT);
 
 			if (cr_off >= 10){
@@ -76,11 +77,11 @@ XPAward::XPAward(){
 			}
 			else if (cr_off == 1){
 				assert(j >= 1);
-				assert(i + 1 < MAXLEVEL);
+				assert(i + 1 < XPTABLE_MAXLEVEL);
 				table[i][j] = max((table[i][j - 1] * 3) / 2, table[i + 1][j]);
 			}
 			else {
-				assert(i + 1 < MAXLEVEL);
+				assert(i + 1 < XPTABLE_MAXLEVEL);
 				assert(j >= 2);
 				table[i][j] = max(table[i][j - 2] * 2, table[i + 1][j]);
 			}
@@ -96,7 +97,7 @@ XPAward xpawarddd;
 void GiveXPAwards(){
 	float fNumLivingPartyMembers = 0.0;
 
-	//int XPAwardTable[MAXLEVEL][CRMAX - CRMIN + 1] = {};
+	//int XPAwardTable[XPTABLE_MAXLEVEL][CRMAX - CRMIN + 1] = {};
 
 	for (uint32_t i = 0; i < party.GroupPCsLen(); i++){
 		objHndl objHndPC = party.GroupPCsGetMemberN(i);
@@ -162,6 +163,7 @@ void GiveXPAwards(){
 	return;
 }
 
+
 class XPTableForHighLevels : public TempleFix {
 public:
 	const char* name() override {
@@ -173,5 +175,4 @@ public:
 void XPTableForHighLevels::apply() {
 	logger->info("Applying XP Table Extension upto Level 20");
 	replaceFunction(0x100B5700, GiveXPAwards);
-
 }
