@@ -62,7 +62,7 @@ FeatSystem::FeatSystem()
 
 	uint32_t _racialFeatsTable[NUM_RACES * 10] = { -1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		FEAT_SIMPLE_WEAPON_PROFICIENCY_ELF, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		FEAT_SIMPLE_WEAPON_PROFICIENCY_ELF, -1, 0, 0, 0, 0, 0, 0, 0, 0,
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
