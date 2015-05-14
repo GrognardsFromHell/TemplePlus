@@ -23,8 +23,4 @@ void PyConsole::Exec(const string& command) {
 	} else {
 		Py_DECREF(result);
 	}
-
-	// Always end with appending a newline, since some print 
-	// commands do not do this on their own
-	PyTempleConsoleOut_Append("\n");
 }

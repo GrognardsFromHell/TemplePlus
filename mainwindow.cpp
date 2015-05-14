@@ -107,7 +107,7 @@ bool CreateMainWindow(TigConfig* settings) {
 	temple_set<0x10D24E10>(0);
 	temple_set<0x10D24E14>(settings->width);
 
-	string windowTitle = "Temple of Elemental Evil - Co8";
+	string windowTitle = "Temple of Elemental Evil - TemplePlus";
 
 	DWORD windowWidth = windowRect.right - windowRect.left;
 	DWORD windowHeight = windowRect.bottom - windowRect.top;
@@ -184,7 +184,7 @@ static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARA
 			video->d3dDevice->delegate->ShowCursor(TRUE);
 		}
 		return TRUE; // This prevents windows from setting the default cursor for us
-	case WM_LBUTTONDOWN:
+	/*case WM_LBUTTONDOWN:
 		mouseFuncs.SetButtonState(MouseButton::LEFT, true);
 		break;
 	case WM_LBUTTONUP:
@@ -215,7 +215,7 @@ static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARA
 		tigMsg.type = TigMsgType::CHAR;
 		tigMsg.arg1 = wparam;
 		msgFuncs.Enqueue(&tigMsg);
-		break;
+		break;*/
 	case WM_SYSCOMMAND:
 		if (wparam == SC_KEYMENU || wparam == SC_SCREENSAVE || wparam == SC_MONITORPOWER) {
 			return 0;
@@ -248,25 +248,25 @@ static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARA
 	case WM_ERASEBKGND:
 		return 0;
 	case WM_MOUSEWHEEL:
-		GetWindowRect(hWnd, &rect);
+		/*GetWindowRect(hWnd, &rect);
 		UpdateMousePos(
 			GET_X_LPARAM(lparam) - rect.left,
 			GET_Y_LPARAM(lparam) - rect.top,
 			GET_WHEEL_DELTA_WPARAM(wparam)
-			);
+			);*/
 		break;
 	case WM_MOUSEMOVE:
-		mousePosX = GET_X_LPARAM(lparam);
+		/*mousePosX = GET_X_LPARAM(lparam);
 		mousePosY = GET_Y_LPARAM(lparam);
-		UpdateMousePos(mousePosX, mousePosY, 0);
+		UpdateMousePos(mousePosX, mousePosY, 0);*/
 		break;
 	default:
 		break;
 	}
 
-	if (msg != WM_KEYDOWN) {
+	/*if (msg != WM_KEYDOWN) {
 		UpdateMousePos(mousePosX, mousePosY, 0);
-	}
+	}*/
 
 	// Previously, ToEE called a global window proc here but it did nothing useful.
 	return DefWindowProcA(hWnd, msg, wparam, lparam);

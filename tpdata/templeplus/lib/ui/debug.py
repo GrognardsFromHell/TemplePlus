@@ -19,4 +19,3 @@ def show_url(url):
 
     debug_doc = load_doc("ui/debug/" + url)
     debug_doc.Show()
-

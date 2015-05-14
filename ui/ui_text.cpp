@@ -13,6 +13,7 @@
 
 #include <Rocket/Core.h>
 #include <Rocket/Debugger.h>
+#include <tig/tig_msg.h>
 
 static void InitialiseKeymap();
 static const int KEYMAP_SIZE = 256;
@@ -34,6 +35,8 @@ public:
 		SetProperty("width", "100%");
 		SetProperty("height", "100%");
 	}
+
+	void ProcessEvent(Rocket::Core::Event& event) override;
 };
 
 class TempleFileInterface : public Rocket::Core::FileInterface {
@@ -97,31 +100,11 @@ public:
 	}
 };
 
-class GameMouseInputListener : public Rocket::Core::EventListener {
-public:
-	void ProcessEvent(Rocket::Core::Event& event) override;
-
-	bool passThrough = false;
-	bool capture = false;
-	bool dragging = false;
-};
-
-
-class GameKeyInputListener : public Rocket::Core::EventListener {
-public:
-	void ProcessEvent(Rocket::Core::Event& event) override;
-
-	bool passThrough = false;
-	bool capture = false;
-};
-
 struct UiTextPrivate {
 	Rocket::Core::Context *context = nullptr;
 	RenderInterfaceDirectX renderer;
 	TempleSystemInterface systemInterface;
 	TempleFileInterface fileInterface;
-	GameMouseInputListener mouseListener;
-	GameKeyInputListener keyListener;
 	GameInputProxy *inputProxy = nullptr;
 };
 
@@ -168,15 +151,6 @@ void UiText::Initialize() {
 	doc->RemoveReference();
 
 	Rocket::Debugger::Initialise(d->context);
-
-	d->context->AddEventListener("mousemove", &d->mouseListener);
-	d->context->AddEventListener("mouseup", &d->mouseListener);
-	d->context->AddEventListener("mousedown", &d->mouseListener);
-	d->context->AddEventListener("mousescroll", &d->mouseListener);
-
-	d->context->AddEventListener("keydown", &d->keyListener);
-	d->context->AddEventListener("keyup", &d->keyListener);
-	d->context->AddEventListener("textinput", &d->keyListener);
 
 	auto res = pythonObjIntegration.ExecuteScript("templeplus.ui", "init");
 	if (!res) {
@@ -227,16 +201,10 @@ bool UiText::HandleMessage(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	if (!d || !d->context) {
 		return false;
 	}
-	
-	d->mouseListener.passThrough = false;
-	d->keyListener.passThrough = false;
-
-	bool mouseClickEvent = false;
 
 	switch (msg) {
 	case WM_LBUTTONDOWN:
 		d->context->ProcessMouseButtonDown(0, GetKeyModifierState());
-		mouseClickEvent = true;
 		break;
 
 	case WM_LBUTTONUP:
@@ -245,7 +213,6 @@ bool UiText::HandleMessage(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
 	case WM_RBUTTONDOWN:
 		d->context->ProcessMouseButtonDown(1, GetKeyModifierState());
-		mouseClickEvent = true;
 		break;
 
 	case WM_RBUTTONUP:
@@ -254,7 +221,6 @@ bool UiText::HandleMessage(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
 	case WM_MBUTTONDOWN:
 		d->context->ProcessMouseButtonDown(2, GetKeyModifierState()); 
-		mouseClickEvent = true;
 		break;
 
 	case WM_MBUTTONUP:
@@ -312,15 +278,8 @@ bool UiText::HandleMessage(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		return false;
 	}
 
-	/*
-		If any mouse event passes through to ToEE, we assume that it's stealing focus from 
-		librocket.
-	*/
-	if (mouseClickEvent && d->mouseListener.passThrough) {
-		d->inputProxy->Focus();
-	}
-	
-	return !d->mouseListener.passThrough && !d->keyListener.passThrough;
+	// This means we handled the event
+	return true;
 }
 
 static int GetKeyModifierState()
@@ -355,64 +314,6 @@ static int GetKeyModifierState()
 
 	return key_modifier_state;
 }
-
-void GameMouseInputListener::ProcessEvent(Rocket::Core::Event& evt) {
-
-	auto target = evt.GetTargetElement();
-	passThrough = false;
-	if (target->GetTagName() == "#root" || target->GetTagName() == "inputproxy") {
-		passThrough = true;
-	} else {
-		passThrough = target->GetProperty("click-through")->Get<int>() == 1;
-	}
-
-	if (!passThrough) {
-		if (evt.GetType() == "mousedown") {
-			capture = true;
-		}
-	}
-	if (capture && evt.GetType() == "mouseup" && !dragging) {
-		capture = false;
-		passThrough = false;
-	}
-
-	if (evt.GetType() == "dragstart") {
-		capture = true;
-		dragging = true;
-	} else if (evt.GetType() == "dragend") {
-		capture = false;
-		passThrough = true;
-		dragging = false;
-	}
-
-	if (dragging) {
-		passThrough = true;
-	}
-	
-}
-
-void GameKeyInputListener::ProcessEvent(Rocket::Core::Event& evt) {
-
-	auto target = evt.GetTargetElement();
-	passThrough = false;
-	if (target->GetTagName() == "#root" || target->GetTagName() == "inputproxy") {
-		passThrough = true;
-		return;
-	}
-
-	if (!passThrough && evt.GetType() == "keydown") {
-		capture = true;
-	}
-	if (evt.GetType() == "keyup") {
-		capture = false;
-	}
-
-	if (capture) {
-		passThrough = false;
-	}
-
-}
-
 
 static void InitialiseKeymap()
 {
@@ -611,4 +512,81 @@ static void InitialiseKeymap()
 	key_identifier_map[VK_ZOOM] = Rocket::Core::Input::KI_ZOOM;
 	key_identifier_map[VK_PA1] = Rocket::Core::Input::KI_PA1;
 	key_identifier_map[VK_OEM_CLEAR] = Rocket::Core::Input::KI_OEM_CLEAR;
+}
+
+static set<Rocket::Core::String> mouseEventTypes {"mousemove", "mouseup", "mousedown"};
+
+static bool IsToeeMouseButton(int buttonIndex) {
+	return buttonIndex >= 0 && buttonIndex <= 2;
+}
+
+static MouseButton GetToeeMouseButton(int buttonIndex) {
+	switch (buttonIndex) {
+	case 0:
+		return MouseButton::LEFT;
+	case 1:
+		return MouseButton::RIGHT;
+	case 2:
+		return MouseButton::MIDDLE;
+	}
+	throw TempleException("Use this function only with mouse buttons supported by ToEE");
+}
+
+void GameInputProxy::ProcessEvent(Rocket::Core::Event& evt) {
+	
+	int mouseButton = evt.GetParameter("button", -1);
+
+	if (mouseEventTypes.find(evt.GetType()) != mouseEventTypes.end()) {
+		auto mouseX = evt.GetParameter("mouse_x", 0);
+		auto mouseY = evt.GetParameter("mouse_y", 0);
+
+		// Translate to screen coordinates
+		UpdateMousePos(mouseX, mouseY, 0);
+	}
+
+	if (evt.GetType() == "mousescroll") {
+		auto pos = mouseFuncs.GetPos();
+		auto wheelDelta = evt.GetParameter("wheel_delta", 0);
+		UpdateMousePos(pos.x, pos.y, wheelDelta);
+	}
+
+	// Simulate "leaving" hovered elements by setting mouse to 10000,10000
+	if (evt.GetType() == "mouseout") {
+		UpdateMousePos(10000, 10000, 0);
+	} else if (evt.GetType() == "mousedown") {
+		if (IsToeeMouseButton(mouseButton)) {
+			mouseFuncs.SetButtonState(GetToeeMouseButton(mouseButton), true);
+		}
+	} else if (evt.GetType() == "mouseup") {
+		if (IsToeeMouseButton(mouseButton)) {
+			mouseFuncs.SetButtonState(GetToeeMouseButton(mouseButton), false);
+		}
+	} else if (evt.GetType() == "keydown") {
+		auto key = evt.GetParameter("key_identifier", 0);
+		auto vk = 0;
+		for (int i = 0; i < KEYMAP_SIZE; ++i) {
+			if (key_identifier_map[i] == key) {
+				vk = i;
+				break;
+			}
+		}
+		
+		if (vk >= VK_HOME && vk <= VK_DOWN || vk == VK_DELETE) {
+			TigMsg msg;
+			msg.createdMs = timeGetTime();
+			msg.type = TigMsgType::KEYDOWN;
+			msg.arg1 = vk;
+			msgFuncs.Enqueue(&msg);
+		}
+	} else if (evt.GetType() == "textinput") {
+		auto key = evt.GetParameter<uint16_t>("data", 0);
+
+		TigMsg msg;
+		msg.createdMs = timeGetTime();
+		msg.type = TigMsgType::CHAR;
+		msg.arg1 = key;
+		msgFuncs.Enqueue(&msg);
+	}
+	
+
 }

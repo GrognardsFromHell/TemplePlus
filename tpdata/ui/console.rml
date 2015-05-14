@@ -1,0 +1,42 @@
+<rml>
+  <head>
+    <title>Console</title>
+    <link type="text/rcss" href="global.rcss" />
+    <style>
+      body {
+        width: 100%;
+        height: 25%;
+        position: absolute;
+        top: 0;
+        background-color: rgba(0, 0, 0, 50%);
+        border-bottom: 2px white;
+
+        font-family: SourceCodePro;
+        padding: 4px;
+        padding-bottom: 20px;
+      }
+      div {
+        display: block;
+        width: 100%;
+        height: 100%;
+        overflow-y: scroll;
+        white-space: pre-wrap;
+      }
+      input {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        height: 20px;
+        border-top: 1px white;
+        background-color: rgba(0, 0, 0, 20%);
+        padding-left: 4px;
+        padding-right: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="output" />
+    <input id="input" type="text" />
+  </body>
+</rml>

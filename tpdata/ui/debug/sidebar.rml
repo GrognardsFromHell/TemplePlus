@@ -11,7 +11,7 @@
 			width: 200px;
 			background-color: rgba(127, 127, 127, 127);
 			border-left: 2px #ffffff;
-			font-family: Open Sans;
+			font-family: OpenSans;
 			overflow-y: auto;
 		}
 

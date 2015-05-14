@@ -3,16 +3,16 @@
 #include "Python.h"
 #include "osdefs.h"
 #include "marshal.h"
+#include "structmember.h"
 #include "tio/tio.h"
+#include "python_integration_obj.h"
 #include <util/addresses.h>
+#include <util/stringutil.h>
 
-static struct PyConsoleOutAddresses : AddressTable {
-	int (__cdecl *AppendLine)(const char *line);
-
-	PyConsoleOutAddresses() {
-		rebase(AppendLine, 0x101DFDC0);
-	}
-} addresses;
+struct pytcout {
+	PyObject_HEAD;
+	int softspace;
+};
 
 PyObject *pytcout_write(PyObject *self, PyObject *args) {
 	char *message;
@@ -20,23 +20,32 @@ PyObject *pytcout_write(PyObject *self, PyObject *args) {
 
 	if (!PyArg_ParseTuple(args, "s#:PyTempleConsoleOut.write", &message, &messageLen))
 		return NULL;
-		
-	addresses.AppendLine(message);
-	
-	// Dont append a new line for the logger
-	int len = strlen(message);
-	if (len > 0 && message[len - 1] == '\n') {
-		message[len - 1] = '\0';
-	}
-	logger->info("Python: {}", message);
 
-	Py_INCREF(Py_None);
-	return Py_None;
+	static bool inConsoleAppend = false;
+
+	if (!inConsoleAppend) {
+		inConsoleAppend = true;
+		auto res = pythonObjIntegration.ExecuteScript("ui.console", "append", args);
+		if (!res) {
+			PyErr_Print();
+		}
+		Py_XDECREF(res);
+		inConsoleAppend = false;
+	}
+		
+	// Dont append a new line for the logger
+	string msg = message;
+	msg = rtrim(msg);
+	if (trim(msg).empty()) {
+		Py_RETURN_NONE; // no empty lines
+	}
+	logger->info("Python: {}", msg);
+
+	Py_RETURN_NONE;
 }
 
 PyObject *pytcout_flush(PyObject *self, PyObject *args) {
-	Py_INCREF(Py_None);
-	return Py_None;
+	Py_RETURN_NONE;
 }
 
 static PyMethodDef methods[] = {
@@ -45,12 +54,18 @@ static PyMethodDef methods[] = {
 	{ NULL, NULL }   /* sentinel */
 };
 
+static PyMemberDef members[] = {
+	{ "softspace", T_INT, offsetof(pytcout, softspace), 0,
+	"flag indicating that a space needs to be printed; used by print" },
+	{ NULL } /* Sentinel */
+};
+
 static PyTypeObject PyTempleConsoleOutType = {
 	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"PyTempleConsoleOut",
-	sizeof(PyObject),
+	sizeof(pytcout),
 	0,                                          /* tp_itemsize */
-	(destructor)PyObject_Free,					/* tp_dealloc */
+	(destructor)PyObject_Del,					/* tp_dealloc */
 	0,                                          /* tp_print */
 	0,                                          /* tp_getattr */
 	0,                                          /* tp_setattr */
@@ -63,7 +78,7 @@ static PyTypeObject PyTempleConsoleOutType = {
 	0,                                          /* tp_call */
 	0,                                          /* tp_str */
 	PyObject_GenericGetAttr,                    /* tp_getattro */
-	0,                                          /* tp_setattro */
+	PyObject_GenericSetAttr,                    /* tp_setattro */
 	0,                                          /* tp_as_buffer */
 	Py_TPFLAGS_DEFAULT,							/* tp_flags */
 	0,											/* tp_doc */
@@ -74,14 +89,11 @@ static PyTypeObject PyTempleConsoleOutType = {
 	0,                                          /* tp_iter */
 	0,                                          /* tp_iternext */
 	methods,                        /* tp_methods */
-	0,
+	members,
+	0
 };
 
 
 PyObject *PyTempleConsoleOut_New() {
 	return PyObject_New(PyObject, &PyTempleConsoleOutType);
-}
-
-void PyTempleConsoleOut_Append(const char *text) {
-	addresses.AppendLine(text);
 }

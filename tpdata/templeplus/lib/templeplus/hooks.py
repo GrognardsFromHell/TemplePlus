@@ -1,6 +1,10 @@
-
-from _hooks import replace_func, rebase
 from ctypes import *
+
+import _hooks
+
+rebase = _hooks.rebase
+replace_func = _hooks.replace_func
+
 
 def native_func(address, restype, *argtypes):
     """
@@ -13,3 +17,5 @@ def native_func(address, restype, *argtypes):
     """
     func_type = CFUNCTYPE(restype, *argtypes)
     return func_type(rebase(address))
+
+
