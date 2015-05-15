@@ -41,7 +41,7 @@ struct D20System : AddressTable
 	uint32_t d20QueryWithData(objHndl ObjHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
 	uint64_t d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
 
-	void d20ActnInit(objHndl objHnd, D20Actn * d20a);
+	void D20ActnInit(objHndl objHnd, D20Actn * d20a);
 	void GlobD20ActnSetTypeAndData1(D20ActionType d20type, uint32_t data1);
 	void globD20ActnSetPerformer(objHndl objHnd);
 	void GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc);
@@ -94,7 +94,7 @@ struct D20Actn
 	objHndl d20ATarget;
 	LocAndOffsets destLoc;
 	float distTraversed;
-	uint32_t field_34;
+	uint32_t radialMenuActualArg;
 	uint32_t rollHist3;
 	uint32_t rollHist1;
 	uint32_t rollHist2;
@@ -120,6 +120,7 @@ struct D20Actn
 	}
 };
 
+const auto TestSizeOfD20Action = sizeof(D20Actn); // should be 88 (0x58)
 
 struct D20ActionDef
 {
@@ -160,13 +161,13 @@ void _d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int3
 void __cdecl D20SpellDataSetSpontCast(D20SpellData*, SpontCastType spontCastType);
 void D20SpellDataExtractInfo
 (D20SpellData * d20SpellData, uint32_t * spellEnum, uint32_t * spellEnumOriginal, uint32_t * spellClassCode, uint32_t * spellSlotLevel, uint32_t * itemSpellData, uint32_t * metaMagicData);
-void _d20aInitUsercallWrapper(objHndl objHnd);
+void _D20ActnInitUsercallWrapper(objHndl objHnd);
 void _d20ActnSetSpellData(D20SpellData * d20SpellData, uint32_t spellEnumOrg, uint32_t spellClassCode, uint32_t spellSlotLevel, uint32_t itemSpellData, uint32_t metaMagicData);
 void _globD20aSetTypeAndData1(D20ActionType d20type, uint32_t data1);
 uint32_t _d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
 uint64_t _d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
 void _globD20aSetPerformer(objHndl objHnd);
-void _globD20ActnInit();
+void _GlobD20ActnInit();
 void _GlobD20ActnSetSpellData(D20SpellData * d20SpellData);
 uint32_t _CanLevelup(objHndl objHnd);
 #pragma endregion 

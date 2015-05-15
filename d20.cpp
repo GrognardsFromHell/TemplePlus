@@ -29,30 +29,36 @@ public:
 	}
 
 	void apply() override {
-
+		
 		replaceFunction(0x1004CA00, _D20StatusInitItemConditions);
 		replaceFunction(0x1004CC00, _D20Query);
 		replaceFunction(0x1004CC60, _d20QueryWithData);
 		replaceFunction(0x1004E6B0, _d20SendSignal);
 		replaceFunction(0x1004CD40, _d20QueryReturnData);
 		replaceFunction(0x1004FDB0, _D20StatusInit);
-
+		
 		replaceFunction(0x10077850, D20SpellDataExtractInfo);
 		replaceFunction(0x10077830, D20SpellDataSetSpontCast);
 		replaceFunction(0x10077800, _d20ActnSetSpellData); 
+		
 
+		
 		replaceFunction(0x10080220, _CanLevelup);
-
+		
 		replaceFunction(0x10089F80, _globD20aSetTypeAndData1);
 		replaceFunction(0x1008A450, _GlobD20ActnSetSpellData);
 		replaceFunction(0x1008A530, _globD20aSetPerformer);
-		replaceFunction(0x100949E0, _globD20ActnInit);
+		
+		replaceFunction(0x100949E0, _GlobD20ActnInit);
+		
 
-		replaceFunction(0x10093810, _d20aInitUsercallWrapper); // function takes esi as argument
-
+		
+		replaceFunction(0x10093810, _D20ActnInitUsercallWrapper); // function takes esi as argument
+		
 		replaceFunction(0x100FD2D0, _D20StatusInitFeats);
 		replaceFunction(0x100FD790, _D20StatusInitRace);
-		replaceFunction(0x100FEE60, _D20StatusInitClass);
+		replaceFunction(0x100FEE60, _D20StatusInitClass); 
+		
 	}
 } d20Replacements;
 
@@ -145,17 +151,19 @@ void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, objHndl 
 	dispatch.DispatcherProcessor(dispatcher, dispTypeD20Signal, dispKey, &dispIO);
 }
 
-void D20System::d20ActnInit(objHndl objHnd, D20Actn* d20a)
+void D20System::D20ActnInit(objHndl objHnd, D20Actn* d20a)
 {
 	d20a->d20APerformer = objHnd;
 	d20a->d20ActType = D20A_NONE;
 	d20a->data1=0 ;
-	d20a->d20ATarget=0;
-	d20a->distTraversed = 0;
-	d20a->field_34 = 0;
-	d20a->spellId = 0;
+	d20a->d20ATarget=0i64;
 	objects.loc->getLocAndOff(objHnd, &d20a->destLoc);
 	PathQueryResult * pq = d20a->path;
+	d20a->distTraversed = 0;
+	d20a->radialMenuActualArg = 0;
+	d20a->spellId = 0;
+	d20a->d20Caf = 0;
+
 	if (pq && pq >= pathfinding->pathQArray && pq < (pathfinding->pathQArray + pfCacheSize))
 	{
 		pq->occupiedFlag = 0;
@@ -193,7 +201,7 @@ void D20System::GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc)
 
 void D20System::GlobD20ActnInit()
 {
-	d20ActnInit(globD20Action->d20APerformer, globD20Action);
+	D20ActnInit(globD20Action->d20APerformer, globD20Action);
 }
 
 void D20System::d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx)
@@ -400,13 +408,13 @@ void _d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int3
 	d20Sys.d20SendSignal(objHnd, dispKey, arg1, arg2);
 }
 
-void __cdecl _d20aInitCdecl(objHndl objHnd, D20Actn* d20a)
+void __cdecl _D20aInitCdecl(objHndl objHnd, D20Actn* d20a)
 {
-	d20Sys.d20ActnInit(objHnd, d20a);
+	d20Sys.D20ActnInit(objHnd, d20a);
 }
 
 
-void __declspec(naked) _d20aInitUsercallWrapper(objHndl objHnd)
+void __declspec(naked) _D20ActnInitUsercallWrapper(objHndl objHnd)
 {
 	__asm{ // esi is D20Actn * d20a
 		push ebp; 
@@ -417,7 +425,7 @@ void __declspec(naked) _d20aInitUsercallWrapper(objHndl objHnd)
 		push eax;
 		mov eax, [ebp + 8];
 		push eax;
-		mov eax, _d20aInitCdecl;
+		mov eax, _D20aInitCdecl;
 		call eax;
 		add esp, 8;
 
@@ -453,7 +461,7 @@ void _globD20aSetPerformer(objHndl objHnd)
 	d20Sys.globD20ActnSetPerformer(objHnd);
 }
 
-void _globD20ActnInit()
+void _GlobD20ActnInit()
 {
 	d20Sys.GlobD20ActnInit();
 }

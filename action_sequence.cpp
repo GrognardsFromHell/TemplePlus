@@ -140,7 +140,7 @@ void ActionSequenceSystem::curSeqReset(objHndl objHnd)
 	}
 
 	d20->globD20Action->d20APerformer = objHnd;
-	d20->d20ActnInit(objHnd, d20->globD20Action);
+	d20->D20ActnInit(objHnd, d20->globD20Action);
 	curSeq->performer = objHnd;
 	curSeq->targetObj = 0;
 	location->getLocAndOff(objHnd, &curSeq->performerLoc);
@@ -833,7 +833,7 @@ void ActionSequenceSystem::sequencePerform()
 	if (!actSeqOkToPerform())
 	{
 		hooked_print_debug_message("Sequence given while performing previous action - aborted. \n");
-		d20->d20ActnInit(d20->globD20Action->d20APerformer, d20->globD20Action);
+		d20->D20ActnInit(d20->globD20Action->d20APerformer, d20->globD20Action);
 		return;
 	}
 	ActnSeq * curSeq = *actSeqCur;

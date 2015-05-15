@@ -159,7 +159,7 @@ struct CmbtIntrpts
 	int32_t numItems;
 };
 
-const uint32_t TestSizeOfD20Action= sizeof(D20Actn); // should be 0x58 (88)
+
 
 const uint32_t TestSizeOfActionSequence = sizeof(ActnSeq); // should be 0x1648 (5704)
 
