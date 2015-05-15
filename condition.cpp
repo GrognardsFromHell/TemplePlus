@@ -64,14 +64,12 @@ uint32_t _ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, Co
 		args.push_back(arg2);
 	}
 	if (condStruct->numArgs > 2) {
-		args.push_back(arg2);
-	}
-	if (condStruct->numArgs > 3) {
 		args.push_back(arg3);
 	}
-	if (condStruct->numArgs > 4) {
+	if (condStruct->numArgs > 3) {
 		args.push_back(arg4);
 	}
+
 
 	return _ConditionAddDispatchArgs(dispatcher, ppCondNode, condStruct, args);
 };
