@@ -24,11 +24,13 @@ PyObject *pytcout_write(PyObject *self, PyObject *args) {
 	addresses.AppendLine(message);
 	
 	// Dont append a new line for the logger
+	message = strdup(message);
 	int len = strlen(message);
 	if (len > 0 && message[len - 1] == '\n') {
 		message[len - 1] = '\0';
 	}
 	logger->info("Python: {}", message);
+	free(message);
 
 	Py_INCREF(Py_None);
 	return Py_None;
