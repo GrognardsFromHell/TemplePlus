@@ -131,7 +131,8 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(lockCursor),
 	CONF_BOOL(showExactHPforNPCs),
 	CONF_STRING_LIST(additionalTioPaths, ';'),
-	CONF_INT(pointBuyPoints)
+	CONF_INT(pointBuyPoints),
+	CONF_INT(maxPCs)
 };
 
 void TemplePlusConfig::Load() {

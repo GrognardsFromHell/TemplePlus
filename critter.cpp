@@ -7,6 +7,7 @@
 #include "condition.h"
 #include "particles.h"
 #include "temple_functions.h"
+#include "util/config.h"
 
 static struct CritterAddresses : AddressTable {
 
@@ -65,13 +66,28 @@ static struct CritterAddresses : AddressTable {
 
 class CritterReplacements : public TempleFix
 {
-	macTempleFix(Critter System)
+	public: const char* name() override { 
+		return "Critter System" "Function Replacements";
+	} 
+	void ShowExactHpForNPCs();
+
+	void apply() override 
 	{
 		logger->info("Replacing Critter System functions");
-		macReplaceFun(10062720, _isCritterCombatModeActive)
+		replaceFunction(0x10062720, _isCritterCombatModeActive); 
+		ShowExactHpForNPCs();
 	}
 } critterReplacements;
 
+void CritterReplacements::ShowExactHpForNPCs()
+{
+	if (config.showExactHPforNPCs)
+	{
+		char displayExactHpForNPCsChar = 0;
+		char * displayExactHpForNPCsBuffer = &displayExactHpForNPCsChar;
+		write(0x1012441B + 2, displayExactHpForNPCsBuffer, 1);
+	}
+}
 
 #pragma region Critter System Implementation
 

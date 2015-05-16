@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "common.h"
 #include "party.h"
+#include "util/config.h"
 
 struct PartySystemAddresses : AddressTable
 {
@@ -19,7 +20,7 @@ public:
 
 	void apply() override 
 	{
-		
+		SetMaxPCs((char)config.maxPCs);
 	}
 } partyHacks;
 
