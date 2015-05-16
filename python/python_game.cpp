@@ -804,6 +804,7 @@ PyObject* PyGame_Picker(PyObject*, PyObject* args) {
 	picker.excFlags = UiPickerIncFlags::None;
 	picker.spellEnum = spellId;
 	picker.callback = PyGame_PickerCallback;
+	picker.caster = caster;
 	
 	uiDialog.Hide();
 	uiPicker.ShowPicker(picker, &dialogPickerArgs);
@@ -815,6 +816,9 @@ PyObject* PyGame_Picker(PyObject*, PyObject* args) {
 static void __cdecl PyGame_PickerCallback(const PickerResult &result, void*) {
 
 	auto currentDlg = uiDialog.GetCurrentDialog();
+
+	// Reset picker obj
+	pythonObjIntegration.SetPickerObj(nullptr);
 		
 	if (result.flags & PRF_CANCELLED) {
 		// The player cancelled the picker
@@ -823,7 +827,6 @@ static void __cdecl PyGame_PickerCallback(const PickerResult &result, void*) {
 		// Something has been picked. Is it a valid target?
 		auto targetObj = PyObjHndl_Create(result.handle);
 		auto isValidObj = PyObject_CallFunction(dialogPickerArgs.isValidTarget, "O", targetObj);
-		Py_DECREF(targetObj);		
 
 		if (!isValidObj) {
 			// Call resulted in an exception
@@ -833,11 +836,14 @@ static void __cdecl PyGame_PickerCallback(const PickerResult &result, void*) {
 			// Target is valid
 			if (PyObject_IsTrue(isValidObj)) {
 				uiDialog.ReShowDialog(currentDlg, dialogPickerArgs.validTargetLine);
+				pythonObjIntegration.SetPickerObj(targetObj);
 			} else {
 				uiDialog.ReShowDialog(currentDlg, dialogPickerArgs.invalidTargetLine);
 			}
 			Py_DECREF(isValidObj);
 		}
+
+		Py_DECREF(targetObj);
 	}
 
 	// Free the callback

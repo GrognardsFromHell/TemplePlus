@@ -218,6 +218,9 @@ static void RunDialogAction(const char* actionString, DialogState* dialog, int p
 	
 	auto globalsDict = PyModule_GetDict(script.module);
 	auto locals = CreateDialogLocals(dialog, pickedLine);
+	if (pythonObjIntegration.GetPickerObj()) {
+		PyDict_SetItemString(locals, "picker_obj", pythonObjIntegration.GetPickerObj());
+	}
 
 	for (const auto& command : commands) {
 		logger->debug("Running dialog action '{}'", command);
@@ -346,14 +349,6 @@ PyObject* PythonObjIntegration::ExecuteScript(const char* moduleName, const char
 	}
 
 	auto dict = PyModule_GetDict(module); // Borrowed ref
-/*	auto keys = PyDict_Keys(dict);
-	for (int i = 0; i < PySequence_Length(keys); ++i) {
-		auto key = PySequence_Fast_GET_ITEM(keys, i);
-		auto str = PyString_AsString(PyObject_Str(key));
-		auto obj = PyDict_GetItemString(dict, str);
-		auto val = PyString_AsString(PyObject_Str(obj));
-		logger->info("{} = {}", str, val);
-	}*/
 	AddGlobalsOnDemand(dict);
 
 	auto callback = PyDict_GetItemString(dict, functionName); // Borrowed ref
@@ -375,6 +370,20 @@ PyObject* PythonObjIntegration::ExecuteScript(const char* moduleName, const char
 
 	Py_DECREF(module);
 	return result;
+}
+
+void PythonObjIntegration::SetPickerObj(PyObject *obj) {
+	if (mPickerObj) {
+		Py_DECREF(mPickerObj);
+	}
+	if (obj) {
+		Py_INCREF(obj);
+	}
+	mPickerObj = obj;
+}
+
+PyObject *PythonObjIntegration::GetPickerObj() {
+	return mPickerObj;
 }
 
 static const char* scriptEventFunctions[] = {

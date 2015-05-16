@@ -67,6 +67,12 @@ public:
 	PyObject *ExecuteScript(const char *moduleName, const char *functionName);
 
 	/*
+		This is available in the globals for dialog actions.
+	*/
+	void SetPickerObj(PyObject *obj);
+	PyObject *GetPickerObj();
+
+	/*
 	Set the object that is being animated. All calls to RunString will
 	have this object in their local variables.
 	*/
@@ -119,6 +125,7 @@ private:
 	bool mInObjInvocation = false;
 	int mNewSid = -1;
 	objHndl mAnimatedObj;
+	PyObject *mPickerObj = nullptr;
 
 	// Used to track which counters are manipulated
 	objHndl mCounterObj;
