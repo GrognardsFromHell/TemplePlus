@@ -15,6 +15,7 @@ public:
 
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
+
 		replaceFunction(0x100E19C0, _CondStructAddToHashtable);
 		replaceFunction(0x100E1A80, _GetCondStructFromHashcode);
 		replaceFunction(0x100E1AB0, _CondNodeGetArg);
@@ -31,6 +32,7 @@ public:
 		replaceFunction(0x100ECF30, ConditionPrevent);
 		
 		replaceFunction(0x100F7BE0, _GetCondStructFromFeat);
+
 	}
 } condFuncReplacement;
 

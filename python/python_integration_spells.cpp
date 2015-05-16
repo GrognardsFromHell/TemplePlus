@@ -116,7 +116,7 @@ void PythonSpellIntegration::SpellTrigger(int spellId, SpellEvent evt) {
 void PythonSpellIntegration::SpellTriggerProjectile(int spellId, SpellEvent evt, objHndl projectile, int targetIdx) {
 	auto pySpell = PySpell_Create(spellId);
 	auto projectileObj = PyObjHndl_Create(projectile);
-	auto args = Py_BuildValue("(OOi)", pySpell, projectile, targetIdx);
+	auto args = Py_BuildValue("(OOi)", pySpell, projectileObj, targetIdx);
 	Py_DECREF(projectileObj);
 
 	auto spellEnum = spellSys.GetSpellEnumFromSpellId(spellId);
