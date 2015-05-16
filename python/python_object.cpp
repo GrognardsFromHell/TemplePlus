@@ -190,14 +190,16 @@ static PyObject* PyObjHandle_BeginDialog(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "O&i:begin_dialog", &ConvertObjHndl, &target, &line)) {
 		return 0;
 	}
-
-	TimeEvent evt;
-	evt.system = TimeEventSystem::PythonDialog;
-	evt.params[0].handle = self->handle;
-	evt.params[1].handle = target;
-	evt.params[2].int32 = line;
-	timeEvents.Schedule(evt, 1);
-
+	if ( critterSys.IsPC(self->handle))
+	{	
+		TimeEvent evt;
+		evt.system = TimeEventSystem::PythonDialog;
+		evt.params[0].handle = self->handle;
+		evt.params[1].handle = target;
+		evt.params[2].int32 = line;
+		timeEvents.Schedule(evt, 1);
+	}
+	
 	Py_RETURN_NONE;
 }
 
