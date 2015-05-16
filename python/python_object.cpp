@@ -198,6 +198,9 @@ static PyObject* PyObjHandle_BeginDialog(PyObject* obj, PyObject* args) {
 		evt.params[1].handle = target;
 		evt.params[2].int32 = line;
 		timeEvents.Schedule(evt, 1);
+	} else
+	{
+		// TODO: Add a "Party Leader Override" option that attempts to initiate dialogue with the Party Leader if possible
 	}
 	
 	Py_RETURN_NONE;
