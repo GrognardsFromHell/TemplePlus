@@ -51,6 +51,7 @@ struct TemplePlusConfig
 	bool showExactHPforNPCs = false; // draw exact HP for NPCs
 	int pointBuyPoints = 25; // number of Point Buy points at chargen
 	int maxPCs = 5; // max number of PCs in the party
+	bool usingCo8 = true;
 	void Load();
 	void Save();
 };

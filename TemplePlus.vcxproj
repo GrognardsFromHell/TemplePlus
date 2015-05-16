@@ -106,6 +106,7 @@
     <ClCompile Include="ui\ui_tutorial.cpp" />
     <ClCompile Include="turn_based.cpp" />
     <ClCompile Include="ui\ui_picker.cpp" />
+    <ClCompile Include="ui_char.cpp" />
     <ClCompile Include="util\addressess.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
