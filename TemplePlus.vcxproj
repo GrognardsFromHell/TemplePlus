@@ -17,6 +17,7 @@
   <ItemGroup>
     <ClCompile Include="aas.cpp" />
     <ClCompile Include="action_sequence.cpp" />
+    <ClCompile Include="char_creation.cpp" />
     <ClCompile Include="damage.cpp" />
     <ClCompile Include="dependencies\minhook\src\buffer.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -240,6 +241,7 @@
     <ClInclude Include="action_sequence.h" />
     <ClInclude Include="ai.h" />
     <ClInclude Include="bonus.h" />
+    <ClInclude Include="char_creation.h" />
     <ClInclude Include="d20_class.h" />
     <ClInclude Include="critter.h" />
     <ClInclude Include="d20_level.h" />

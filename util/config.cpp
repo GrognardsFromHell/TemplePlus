@@ -130,7 +130,8 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(debugMessageEnable),
 	CONF_BOOL(lockCursor),
 	CONF_BOOL(showExactHPforNPCs),
-	CONF_STRING_LIST(additionalTioPaths, ';')
+	CONF_STRING_LIST(additionalTioPaths, ';'),
+	CONF_INT(pointBuyPoints)
 };
 
 void TemplePlusConfig::Load() {

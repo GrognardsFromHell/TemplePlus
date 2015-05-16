@@ -49,6 +49,7 @@ struct TemplePlusConfig
 	bool newFeatureTestMode = true;
 	bool NPCsLevelLikePCs = true;
 	bool showExactHPforNPCs; // draw exact HP for NPCs
+	int pointBuyPoints = 25;
 
 	void Load();
 	void Save();
