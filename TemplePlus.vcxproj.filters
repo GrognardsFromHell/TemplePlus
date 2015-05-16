@@ -277,6 +277,12 @@
     <ClCompile Include="gameplay_configs.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="char_creation.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="ui_char.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -564,6 +570,9 @@
     <ClInclude Include="util\mathutil.h" />
     <ClInclude Include="sound.h" />
     <ClInclude Include="util\stringutil.h" />
+    <ClInclude Include="char_creation.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

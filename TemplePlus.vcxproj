@@ -17,6 +17,7 @@
   <ItemGroup>
     <ClCompile Include="aas.cpp" />
     <ClCompile Include="action_sequence.cpp" />
+    <ClCompile Include="char_creation.cpp" />
     <ClCompile Include="damage.cpp" />
     <ClCompile Include="dependencies\minhook\src\buffer.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -105,6 +106,7 @@
     <ClCompile Include="ui\ui_tutorial.cpp" />
     <ClCompile Include="turn_based.cpp" />
     <ClCompile Include="ui\ui_picker.cpp" />
+    <ClCompile Include="ui_char.cpp" />
     <ClCompile Include="util\addressess.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
@@ -240,6 +242,7 @@
     <ClInclude Include="action_sequence.h" />
     <ClInclude Include="ai.h" />
     <ClInclude Include="bonus.h" />
+    <ClInclude Include="char_creation.h" />
     <ClInclude Include="d20_class.h" />
     <ClInclude Include="critter.h" />
     <ClInclude Include="d20_level.h" />

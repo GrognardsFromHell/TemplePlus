@@ -4,6 +4,8 @@
 
 struct PartySystem : AddressTable
 {
+	void SetMaxPCs(char maxPCs);
+
 	objHndl(__cdecl *GroupArrayMemberN)(GroupArray *, uint32_t nIdx);
 	objHndl(__cdecl *GroupNPCFollowersGetMemberN)(uint32_t nIdx);
 	uint32_t(__cdecl *GroupNPCFollowersLen)();
