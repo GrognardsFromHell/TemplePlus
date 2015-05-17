@@ -1308,7 +1308,7 @@ static PyObject* PyObjHandle_ObjectScriptExecute(PyObject* obj, PyObject* args) 
 	auto self = GetSelf(obj);
 	objHndl triggerer;
 	ObjScriptEvent scriptEvent;
-	if (!PyArg_ParseTuple(args, "O&i:objhndl.object_script_execute", &triggerer, &scriptEvent)) {
+	if (!PyArg_ParseTuple(args, "O&i:objhndl.object_script_execute", &ConvertObjHndl, &triggerer, &scriptEvent)) {
 		return 0;
 	}
 	auto result = pythonObjIntegration.ExecuteObjectScript(triggerer, self->handle, scriptEvent);
