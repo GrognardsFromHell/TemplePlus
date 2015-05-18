@@ -206,6 +206,12 @@ static PyObject* PyObjHandle_BeginDialog(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_Barter(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	hooked_print_debug_message("There was never any .barter() method in ToEE, you've been copypasting nonsense all along. Trolololo!");
+	Py_RETURN_NONE;
+}
+
 static PyObject* PyObjHandle_ReactionGet(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 
@@ -729,8 +735,9 @@ static PyObject* PyObjHandle_Heal(PyObject* obj, PyObject* args) {
 	objHndl healer;
 	Dice dice;
 	D20ActionType actionType = D20A_NONE;
+	int dummySpellId = 0; // not really used, just makign the code tolerate 4 args
 
-	if (!PyArg_ParseTuple(args, "O&O&|i:objhndl.heal", &ConvertObjHndl, &healer, &ConvertDice, &dice, &actionType)) {
+	if (!PyArg_ParseTuple(args, "O&O&|ii:objhndl.heal", &ConvertObjHndl, &healer, &ConvertDice, &dice, &actionType, &dummySpellId)) {
 		return 0;
 	}
 	damage.Heal(self->handle, healer, dice, actionType);
@@ -1654,6 +1661,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"__reduce__", PyObjHandle_reduce, METH_VARARGS, NULL},
 	{"__setstate__", PyObjHandle_setstate, METH_VARARGS, NULL},
 	{"begin_dialog", PyObjHandle_BeginDialog, METH_VARARGS, NULL},
+	{"barter", PyObjHandle_Barter, METH_VARARGS, NULL },
 	{"reaction_get", PyObjHandle_ReactionGet, METH_VARARGS, NULL},
 	{"reaction_set", PyObjHandle_ReactionSet, METH_VARARGS, NULL},
 	{"reaction_adj", PyObjHandle_ReactionAdjust, METH_VARARGS, NULL},

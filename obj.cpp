@@ -418,7 +418,7 @@ Dice Objects::GetHitDice(objHndl handle) {
 
 // Reimplements 100801D0
 int Objects::GetHitDiceNum(objHndl handle) {
-	int result = _GetInternalFieldInt32(handle, obj_f_critter_level_idx);
+	int result = _getArrayFieldNumItems(handle, obj_f_critter_level_idx);
 	if (GetType(handle) == obj_t_npc) {
 		result += _GetInternalFieldInt32Array(handle, obj_f_npc_hitdice_idx, 0);
 	}
