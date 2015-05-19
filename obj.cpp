@@ -552,6 +552,11 @@ int Objects::StatLevelSetBase(objHndl obj, Stat stat, int value)
 	return _StatLevelSetBase(obj, stat, value);
 }
 
+bool Objects::IsContainer(objHndl objHnd)
+{
+	auto type = GetType(objHnd);
+	return type == obj_t_container || type == obj_t_bag;
+}
 #pragma endregion
 
 

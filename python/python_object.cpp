@@ -213,6 +213,36 @@ static PyObject* PyObjHandle_Barter(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+#pragma region Python Obj Faction Manipulation
+static PyObject * PyObjHandle_FactionHas(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int objFaction;
+	if (!PyArg_ParseTuple(args, "i:faction_has", &objFaction)) {
+		return nullptr;
+	};
+	return PyInt_FromLong(objects.factions.FactionHas(self->handle, objFaction));
+};
+
+static PyObject * PyObjHandle_FactionAdd(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	int nFac;
+	if (!PyArg_ParseTuple(args, "i:faction_add", &nFac)) {
+		return nullptr;
+	};
+
+	if (nFac == 0){
+		return PyInt_FromLong(0);
+	}
+	if (!objects.factions.FactionHas(self->handle, nFac)) {
+		objects.factions.FactionAdd(self->handle, nFac);
+	}
+
+	return PyInt_FromLong(1);
+};
+
+#pragma endregion
+
+
 static PyObject* PyObjHandle_ReactionGet(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 
@@ -1792,6 +1822,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"resurrect", PyObjHandle_Resurrect, METH_VARARGS, NULL},
 	{"dominate", PyObjHandle_Dominate, METH_VARARGS, NULL},
 	{"is_unconscious", PyObjHandle_IsUnconscious, METH_VARARGS, NULL},
+	{ "faction_has", PyObjHandle_FactionHas, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!" },
+	{ "faction_add", PyObjHandle_FactionAdd, METH_VARARGS, "Adds faction to NPC. Doesn't work on PCs!" },
 	{NULL, NULL, NULL, NULL}
 };
 

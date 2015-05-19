@@ -29,6 +29,8 @@ struct InventorySystem : AddressTable
 
 	int SetItemParent(objHndl item, objHndl parent, int flags);
 
+	static obj_f GetInventoryListField(objHndl objHnd);
+
 	/*
 		Identifies all items held or contained within the given parent.
 	*/

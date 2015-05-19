@@ -52,7 +52,7 @@ static bool isTypeContainer(int nObjType){
 };
 
 static _fieldIdx objGetInventoryListField(TemplePyObjHandle* obj){
-	int objType = templeFuncs.Obj_Get_Field_32bit(obj->objHandle, obj_f_type);
+	int objType = objects.GetType(obj->objHandle);  //templeFuncs.Obj_Get_Field_32bit(obj->objHandle, obj_f_type);
 	if (isTypeCritter(objType)){
 		return obj_f_critter_inventory_list_idx;
 	}
@@ -149,34 +149,6 @@ static PyObject * pyObjHandleType_Set_IdxField_64bit(TemplePyObjHandle* obj, PyO
 
 #pragma endregion
 
-
-#pragma region Python Obj Faction Manipulation
-static PyObject * pyObjHandleType_Faction_Has(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	int nFac;
-	if (!PyArg_ParseTuple(pyTupleIn, "i", &nFac)) {
-		return nullptr;
-	};
-	return PyInt_FromLong(objects.factions.FactionHas(obj->objHandle, nFac));
-};
-
-static PyObject * pyObjHandleType_Faction_Add(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	int nFac;
-	if (!PyArg_ParseTuple(pyTupleIn, "i", &nFac)) {
-		return nullptr;
-	};
-
-	if (nFac == 0){
-		return PyInt_FromLong(0);
-	}
-	if (!objects.factions.FactionHas(obj->objHandle, nFac)) {
-		objects.factions.FactionAdd(obj->objHandle, nFac);
-	}
-
-	return PyInt_FromLong(1);
-};
-
-#pragma endregion
-
 #pragma region Python Obj Inventory Manipulation
 static PyObject * pyObjHandleType_Inventory(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	int nArgs = PyTuple_Size(pyTupleIn);
@@ -185,9 +157,9 @@ static PyObject * pyObjHandleType_Inventory(TemplePyObjHandle* obj, PyObject * p
 	bool bIncludeBackpack = 1;
 	bool bIncludeEquipped = 0;
 	bool bRetunProtos = 0;
-	int nInventoryFieldType = objGetInventoryListField(obj);
+	int invFieldType = inventory.GetInventoryListField(obj->objHandle);
 
-	int nItems = templeFuncs.Obj_Get_IdxField_NumItems(ObjHnd, nInventoryFieldType);
+	int nItems = templeFuncs.Obj_Get_IdxField_NumItems(ObjHnd, invFieldType);
 
 	if (nArgs == 1){ // returns the entire non-worn inventory
 		if (!PyArg_ParseTuple(pyTupleIn, "i", &nModeSelect)) {
@@ -205,7 +177,7 @@ static PyObject * pyObjHandleType_Inventory(TemplePyObjHandle* obj, PyObject * p
 	objHndl ItemObjHnds[8192] = {}; // seems large enough to cover any practical case :P
 
 	int nMax = CRITTER_MAX_ITEMS;
-	if (nInventoryFieldType == obj_f_container_inventory_list_idx){
+	if (invFieldType == obj_f_container_inventory_list_idx){
 		nMax = CONTAINER_MAX_ITEMS;
 	};
 
@@ -241,11 +213,11 @@ static PyObject * pyObjHandleType_Inventory_Item(TemplePyObjHandle* obj, PyObjec
 	int nArgs = PyTuple_Size(pyTupleIn);
 	objHndl ObjHnd = obj->objHandle;
 	bool bRetunProtos = 0;
-	int nInventoryFieldType = objGetInventoryListField(obj);
+	int invFieldType = inventory.GetInventoryListField(obj->objHandle);
 	int n = 0;
 	if (PyArg_ParseTuple(pyTupleIn, "i", &n)){
 		int nMax = CRITTER_MAX_ITEMS;
-		if (nInventoryFieldType == obj_f_container_inventory_list_idx){
+		if (invFieldType == obj_f_container_inventory_list_idx){
 			nMax = CONTAINER_MAX_ITEMS;
 		};
 		if (n < nMax){
@@ -326,8 +298,6 @@ return PyInt_FromLong(1);
 
 
 static PyMethodDef pyObjHandleMethods_New[] = {
-	"faction_has", (PyCFunction)pyObjHandleType_Faction_Has, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!",
-	"faction_add", (PyCFunction)pyObjHandleType_Faction_Add, METH_VARARGS, "Add a faction to an NPC. Doesn't work on PCs!",
 	"inventory", (PyCFunction)pyObjHandleType_Inventory, METH_VARARGS, "Fetches a tuple of the object's inventory (items are Python Objects). Optional argument int nModeSelect : 0 - backpack only (excludes equipped items); 1 - backpack + equipped; 2 - equipped only",
 	"inventory_item", (PyCFunction)pyObjHandleType_Inventory_Item, METH_VARARGS, "Fetches an inventory item of index n",
 	"obj_get_field_64bit", (PyCFunction)pyObjHandleType_Get_Field_64bit, METH_VARARGS, "Gets 64 bit field",

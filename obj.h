@@ -200,6 +200,7 @@ struct Objects : AddressTable {
 	uint32_t IsUnconscious(objHndl obj);
 	int32_t GetHPCur(objHndl obj);
 	bool IsCritter(objHndl obj);
+	bool IsContainer(objHndl objHnd);
 	bool IsNPC(objHndl obj);
 	bool IsPlayerControlled(objHndl obj);
 	uint32_t ObjGetProtoNum(objHndl obj);
@@ -221,7 +222,8 @@ struct Objects : AddressTable {
 		return;
 	}
 
-	
+
+
 #pragma endregion
 
 #pragma region Subsystems
