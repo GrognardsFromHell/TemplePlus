@@ -5,12 +5,14 @@
 
 class TurnBasedReplacements : public TempleFix
 {
-	macTempleFix(Turn Based)
+public: 
+	const char* name() override { return "Turn Based" "Function Replacements";} 
+	void apply() override 
 	{
 		logger->info("Replacing Turn Based System functions");
 
-		macReplaceFun(100DEE10, _turnBasedSetCurrentActor)
-		macReplaceFun(100DEE40, _turnBasedGetCurrentActor)
+		replaceFunction(0x100DEE10, _turnBasedSetCurrentActor); 
+		replaceFunction(0x100DEE40, _turnBasedGetCurrentActor); 
 	}
 } tbReplacements;
 
@@ -19,7 +21,7 @@ struct TurnBasedSys tbSys;
 
 TurnBasedSys::TurnBasedSys()
 {
-	macRebase(turnBasedCurrentActor, 10BCAD88)
+	rebase(turnBasedCurrentActor,0x10BCAD88); 
 }
 
 objHndl TurnBasedSys::turnBasedGetCurrentActor()

@@ -28,10 +28,10 @@ public:
 		replaceFunction(0x1009E1D0, _obj_get_int);
 		replaceFunction(0x100A0190, _obj_set_int);
 		replaceFunction(0x1004E7F0, _abilityScoreLevelGet);
-		macReplaceFun(100A1310, _setArrayFieldByValue)
-		macReplaceFun(1009E5C0, _getArrayFieldInt32)
-		macReplaceFun(1009E2E0, _getInt64)
-		macReplaceFun(1009E360, _getObjHnd)
+		replaceFunction(0x100A1310, _setArrayFieldByValue); 
+		replaceFunction(0x1009E5C0, _getArrayFieldInt32); 
+		replaceFunction(0x1009E2E0, _getInt64); 
+		replaceFunction(0x1009E360, _getObjHnd); 
 	}
 } objReplacements;
 

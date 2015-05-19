@@ -192,10 +192,12 @@ uint32_t _aiStrategyParse(objHndl objHnd, objHndl target)
 
 class AiReplacements : public TempleFix
 {
-	macTempleFix(AI Replacements)
+public: 
+	const char* name() override { return "AI Function Replacements";} 
+	void apply() override 
 	{
 		logger->info("Replacing AI functions...");
-		macReplaceFun(100E50C0, _aiStrategyParse)
+		replaceFunction(0x100E50C0, _aiStrategyParse); 
 	}
 } aiReplacements;
 #pragma endregion 

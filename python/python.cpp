@@ -66,7 +66,7 @@ static _fieldIdx objGetInventoryListField(TemplePyObjHandle* obj){
 
 #pragma region Python Obj Field Get/Set Function Implementation
 
-static PyObject * pyObjHandleType_Get_Field_64bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+static PyObject * PyObjHandle_GetField64(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	_fieldIdx nFieldIdx = 0;
 	uint64_t n64 = 0;
 	if (!PyArg_ParseTuple(pyTupleIn, "i", &nFieldIdx)) {
@@ -135,7 +135,7 @@ static PyObject * pyObjHandleType_Get_IdxField_64bit(TemplePyObjHandle* obj, PyO
 	return PyLong_FromLongLong(n64);
 };
 
-static PyObject * pyObjHandleType_Set_IdxField_64bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+static PyObject * PyObjHandle_SetIdxField64bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	_fieldIdx nFieldIdx = 0;
 	_fieldSubIdx nFieldSubIdx = 0;
 	uint64_t n64 = 0;
@@ -150,7 +150,7 @@ static PyObject * pyObjHandleType_Set_IdxField_64bit(TemplePyObjHandle* obj, PyO
 #pragma endregion
 
 #pragma region Python Obj Inventory Manipulation
-static PyObject * pyObjHandleType_Inventory(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+static PyObject * PyObjHandle_Inventory(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	int nArgs = PyTuple_Size(pyTupleIn);
 	objHndl ObjHnd = obj->objHandle;
 	int nModeSelect = 0;
@@ -209,7 +209,7 @@ static PyObject * pyObjHandleType_Inventory(TemplePyObjHandle* obj, PyObject * p
 	return ItemPyTuple;
 };
 
-static PyObject * pyObjHandleType_Inventory_Item(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+static PyObject * PyObjHandle_InventoryItem(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	int nArgs = PyTuple_Size(pyTupleIn);
 	objHndl ObjHnd = obj->objHandle;
 	bool bRetunProtos = 0;
@@ -231,12 +231,12 @@ static PyObject * pyObjHandleType_Inventory_Item(TemplePyObjHandle* obj, PyObjec
 
 #pragma endregion
 
-static PyObject * pyObjHandleType_Remove_From_All_Groups(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+static PyObject * PyObjHandle_RemoveFromAllGroups(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	party.ObjRemoveFromAllGroupArrays(obj->objHandle);
 	return PyInt_FromLong(1);
 };
 
-static PyObject * pyObjHandleType_PC_Add(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+static PyObject * PyObjHandle_PCAdd(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	// TODO  add fluidity to number of PCs / NPCs
 	party.ObjAddToPCGroup(obj->objHandle);
 	return PyInt_FromLong(1);
@@ -247,7 +247,7 @@ UiPickerType operator&(const UiPickerType& lhs, const UiPickerType& rhs){
 	return (UiPickerType)((uint64_t)lhs & (uint64_t)rhs);
 };
 
-static PyObject * pyObjHandleType_ObjFeatAdd(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+static PyObject * PyObjHandle_ObjFeatAdd(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	feat_enums nFeatCode;
 	if (!PyArg_ParseTuple(pyTupleIn, "i", &nFeatCode)) {
 		return nullptr;
@@ -264,7 +264,7 @@ static PyObject * pyObjHandleType_ObjFeatAdd(TemplePyObjHandle* obj, PyObject * 
 };
 
 
-static PyObject * pyObjHandleType_MakeWizard(TemplePyObjHandle* obj, PyObject * pyTupleIn){
+static PyObject * PyObjHandle_MakeWizard(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	uint32_t level;
 	if (!PyArg_ParseTuple(pyTupleIn, "i", &level)) {
 		return nullptr;
@@ -298,21 +298,21 @@ return PyInt_FromLong(1);
 
 
 static PyMethodDef pyObjHandleMethods_New[] = {
-	"inventory", (PyCFunction)pyObjHandleType_Inventory, METH_VARARGS, "Fetches a tuple of the object's inventory (items are Python Objects). Optional argument int nModeSelect : 0 - backpack only (excludes equipped items); 1 - backpack + equipped; 2 - equipped only",
-	"inventory_item", (PyCFunction)pyObjHandleType_Inventory_Item, METH_VARARGS, "Fetches an inventory item of index n",
-	"obj_get_field_64bit", (PyCFunction)pyObjHandleType_Get_Field_64bit, METH_VARARGS, "Gets 64 bit field",
+	"inventory", (PyCFunction)PyObjHandle_Inventory, METH_VARARGS, "Fetches a tuple of the object's inventory (items are Python Objects). Optional argument int nModeSelect : 0 - backpack only (excludes equipped items); 1 - backpack + equipped; 2 - equipped only",
+	"inventory_item", (PyCFunction)PyObjHandle_InventoryItem, METH_VARARGS, "Fetches an inventory item of index n",
+	"obj_get_field_64bit", (PyCFunction)PyObjHandle_GetField64, METH_VARARGS, "Gets 64 bit field",
 	"obj_set_field_64bit", (PyCFunction)pyObjHandleType_Set_Field_64bit, METH_VARARGS, "Sets 64 bit field",
 	"obj_get_field_objHndl", (PyCFunction)pyObjHandleType_Get_Field_ObjHandle, METH_VARARGS, "Gets objHndl field",
 	"obj_set_field_objHndl", (PyCFunction)pyObjHandleType_Set_Field_ObjHandle, METH_VARARGS, "Sets objHndl field",
 	"obj_get_idxfield_32bit", (PyCFunction)pyObjHandleType_Get_IdxField_32bit, METH_VARARGS, "Gets 32 bit index field",
 	"obj_set_idxfield_32bit", (PyCFunction)pyObjHandleType_Set_IdxField_32bit, METH_VARARGS, "Sets 32 bit index field",
 	"obj_get_idxfield_64bit", (PyCFunction)pyObjHandleType_Get_IdxField_64bit, METH_VARARGS, "Gets 64 bit index field",
-	"obj_set_idxfield_64bit", (PyCFunction)pyObjHandleType_Set_IdxField_64bit, METH_VARARGS, "Sets 64 bit index field",
+	"obj_set_idxfield_64bit", (PyCFunction)PyObjHandle_SetIdxField64bit, METH_VARARGS, "Sets 64 bit index field",
 	//"obj_set_idxfield_byvalue", (PyCFunction)pyObjHandleType_Set_IdxField_byValue, METH_VARARGS, "Sets index field - general (depending on nFieldIndex which the game looks up and fetches nFieldType to determine data size)",
-	"obj_remove_from_all_groups", (PyCFunction)pyObjHandleType_Remove_From_All_Groups, METH_VARARGS, "Removes the object from all the groups (GroupList, PCs, NPCs, AI controlled followers, Currently Selected",
-	"pc_add", (PyCFunction)pyObjHandleType_PC_Add, METH_VARARGS, "Adds object as a PC party member.",
-	"objfeatadd", (PyCFunction)pyObjHandleType_ObjFeatAdd, METH_VARARGS, "Adds a feat. Feats can be added multiple times (at least some of them? like Toughness)",
-	"makewiz", (PyCFunction)pyObjHandleType_MakeWizard, METH_VARARGS, "Makes character a wizard of level n",
+	"obj_remove_from_all_groups", (PyCFunction)PyObjHandle_RemoveFromAllGroups, METH_VARARGS, "Removes the object from all the groups (GroupList, PCs, NPCs, AI controlled followers, Currently Selected",
+	"pc_add", (PyCFunction)PyObjHandle_PCAdd, METH_VARARGS, "Adds object as a PC party member.",
+	"objfeatadd", (PyCFunction)PyObjHandle_ObjFeatAdd, METH_VARARGS, "Adds a feat. Feats can be added multiple times (at least some of them? like Toughness)",
+	"makewiz", (PyCFunction)PyObjHandle_MakeWizard, METH_VARARGS, "Makes character a wizard of level n",
 	//
 	0, 0, 0, 0
 };
@@ -353,14 +353,7 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 		return  outTup; 
 	}
 	
-	if (!_strcmpi(name, "faction_has")) {
-		return Py_FindMethod(pyObjHandleMethods_New, obj, "faction_has");
-	}
-	else if (!_strcmpi(name, "faction_add"))
-	{
-		return Py_FindMethod(pyObjHandleMethods_New, obj, "faction_add");
-	} 
-	else if (!_strcmpi(name, "substitute_inventory"))
+	if (!_strcmpi(name, "substitute_inventory"))
 	{
 		objHndl ObjSubsInv = objects.inventory.GetSubstituteInventory(obj->objHandle);
 		return templeFuncs.PyObjFromObjHnd(ObjSubsInv);
