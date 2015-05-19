@@ -27,6 +27,7 @@
 #include "python_integration_obj.h"
 #include <action_sequence.h>
 #include <ui/ui_picker.h>
+#include <util/config.h>
 
 struct PyObjHandle {
 	PyObject_HEAD;
@@ -543,7 +544,7 @@ static PyObject* PyObjHandle_FollowerRemove(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_FollowerAtMax(PyObject* obj, PyObject* args) {
 	auto followers = party.GroupNPCFollowersLen();
-	return PyInt_FromLong(followers >= 2);
+	return PyInt_FromLong(followers >= 8 - config.maxPCs);
 }
 
 static PyObject* PyObjHandle_AiFollowerAdd(PyObject* obj, PyObject* args) {
