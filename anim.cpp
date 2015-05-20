@@ -880,11 +880,16 @@ static struct AnimationAdresses : AddressTable {
 
 	bool (__cdecl *Interrupt)(objHndl actor, AnimGoalPriority priority, bool all);
 
+	void(__cdecl *PushFallDown)(objHndl actor, int unk);
+
 	AnimationAdresses() {
-		rebase(PushRotate, 0x100153E0);
+		
 		rebase(PushUseSkillOn, 0x1001C690);
 		rebase(PushRunNearTile, 0x1001C1B0);
+		rebase(PushRotate, 0x100153E0);
+		rebase(PushFallDown, 0x100157B0);
 		rebase(PushUnconceal, 0x10015E00);
+		
 		rebase(Interrupt, 0x1000C7E0);
 	}
 
@@ -910,4 +915,9 @@ bool AnimationGoals::PushUnconceal(objHndl actor) {
 
 bool AnimationGoals::Interrupt(objHndl actor, AnimGoalPriority priority, bool all) {
 	return addresses.Interrupt(actor, priority, all);
+}
+
+void AnimationGoals::PushFallDown(objHndl actor, int unk)
+{
+	addresses.PushFallDown(actor, unk);
 }

@@ -44,6 +44,8 @@ public:
 	*/
 	bool Interrupt(objHndl actor, AnimGoalPriority priority, bool all = false);
 
+	void PushFallDown(objHndl actor, int unk);
+
 };
 
 extern AnimationGoals animationGoals;

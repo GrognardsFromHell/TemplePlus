@@ -243,6 +243,19 @@ static PyObject * PyObjHandle_FactionAdd(PyObject* obj, PyObject* args) {
 #pragma endregion
 
 
+static PyObject * PyObjHandle_FallDown(PyObject* obj, PyObject* args)
+{
+	auto self = GetSelf(obj);
+	int fallDownArg = 73;
+	if (!PyArg_ParseTuple(args, "|i:fall_down",  &fallDownArg)) {
+		return 0;
+	}
+	if (fallDownArg > 75 || fallDownArg < 73) fallDownArg = 73;
+	animationGoals.PushFallDown(self->handle, fallDownArg);
+	Py_RETURN_NONE;
+}
+	
+
 static PyObject* PyObjHandle_ReactionGet(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 
@@ -1822,8 +1835,9 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"resurrect", PyObjHandle_Resurrect, METH_VARARGS, NULL},
 	{"dominate", PyObjHandle_Dominate, METH_VARARGS, NULL},
 	{"is_unconscious", PyObjHandle_IsUnconscious, METH_VARARGS, NULL},
-	{ "faction_has", PyObjHandle_FactionHas, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!" },
-	{ "faction_add", PyObjHandle_FactionAdd, METH_VARARGS, "Adds faction to NPC. Doesn't work on PCs!" },
+	{"faction_has", PyObjHandle_FactionHas, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!" },
+	{"faction_add", PyObjHandle_FactionAdd, METH_VARARGS, "Adds faction to NPC. Doesn't work on PCs!" },
+	{"fall_down", PyObjHandle_FallDown, METH_VARARGS, "Makes a Critter fall down" },
 	{NULL, NULL, NULL, NULL}
 };
 
