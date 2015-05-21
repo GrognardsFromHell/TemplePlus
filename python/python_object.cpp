@@ -607,6 +607,31 @@ static PyObject* PyObjHandle_AiFollowerAdd(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+
+static PyObject * PyObjHandle_RemoveFromAllGroups(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl dude;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.obj_remove_from_all_groups", &ConvertObjHndl, &dude)) {
+		return 0;
+	}
+	auto result = party.ObjRemoveFromAllGroupArrays(dude);
+	ui.UpdatePartyUi();
+	return PyInt_FromLong(result);
+};
+
+static PyObject * PyObjHandle_PCAdd(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl dude;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.obj_remove_from_all_groups", &ConvertObjHndl, &dude)) {
+		return 0;
+	}
+	auto result = party.AddToPCGroup(self->handle);
+	ui.UpdatePartyUi();
+	return PyInt_FromLong(result);
+};
+
+
+
 // Okay.. Apparently the AI follower methods should better not be called
 static PyObject* ReturnZero(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(0);
@@ -1426,6 +1451,18 @@ static PyObject* PyObjHandle_RunOff(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_RunTo(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	LocAndOffsets loc;
+	loc.off_x = 0;
+	loc.off_y = 0;
+	if (!PyArg_ParseTuple(args, "L|ff:objhndl.runoff", &loc.location, &loc.off_x, &loc.off_y)) {
+		return 0;
+	}
+	animationGoals.PushRunNearTile(self->handle, loc, 5);
+	Py_RETURN_NONE;
+}
+
 static PyObject* PyObjHandle_GetCategoryType(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	auto type = critterSys.GetCategory(self->handle);
@@ -1710,6 +1747,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"__reduce__", PyObjHandle_reduce, METH_VARARGS, NULL},
 	{"__setstate__", PyObjHandle_setstate, METH_VARARGS, NULL},
 	{"begin_dialog", PyObjHandle_BeginDialog, METH_VARARGS, NULL},
+	{"begian_dialog", PyObjHandle_BeginDialog, METH_VARARGS, "I make this typo so much that I want it supported :P" },
 	{"barter", PyObjHandle_Barter, METH_VARARGS, NULL },
 	{"reaction_get", PyObjHandle_ReactionGet, METH_VARARGS, NULL},
 	{"reaction_set", PyObjHandle_ReactionSet, METH_VARARGS, NULL},
@@ -1735,6 +1773,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"ai_follower_add", PyObjHandle_AiFollowerAdd, METH_VARARGS, NULL},
 	{"ai_follower_remove", ReturnZero, METH_VARARGS, NULL},
 	{"ai_follower_atmax", ReturnZero, METH_VARARGS, NULL},
+	{"obj_remove_from_all_groups", PyObjHandle_RemoveFromAllGroups, METH_VARARGS, "Removes the object from all the groups (GroupList, PCs, NPCs, AI controlled followers, Currently Selected" },
+	{"pc_add", PyObjHandle_PCAdd, METH_VARARGS, "Adds object as a PC party member." },
 	{"leader_get", PyObjHandle_LeaderGet, METH_VARARGS, NULL},
 	{"can_see", PyObjHandle_HasLos, METH_VARARGS, NULL},
 	{"has_wielded", PyObjHandle_HasWielded, METH_VARARGS, NULL},
@@ -1808,6 +1848,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"object_script_execute", PyObjHandle_ObjectScriptExecute, METH_VARARGS, NULL},
 	{"standpoint_set", PyObjHandle_StandpointSet, METH_VARARGS, NULL},
 	{"runoff", PyObjHandle_RunOff, METH_VARARGS, NULL},
+	{"run_to", PyObjHandle_RunTo, METH_VARARGS, NULL },
 	{"get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL},
 	{"is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL},
 	{"is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL},

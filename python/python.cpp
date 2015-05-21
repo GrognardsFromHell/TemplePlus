@@ -35,34 +35,6 @@ static struct PythonInternal : AddressTable {
 
 } pythonInternal;
 
-#pragma region Helper Functions
-
-static bool isTypeCritter(int nObjType){
-	if (nObjType == obj_t_pc || nObjType == obj_t_npc){
-		return 1;
-	}
-	return 0;
-};
-
-static bool isTypeContainer(int nObjType){
-	if (nObjType == obj_t_container || nObjType == obj_t_bag ){
-		return 1;
-	}
-	return 0;
-};
-
-static _fieldIdx objGetInventoryListField(TemplePyObjHandle* obj){
-	int objType = objects.GetType(obj->objHandle);  //templeFuncs.Obj_Get_Field_32bit(obj->objHandle, obj_f_type);
-	if (isTypeCritter(objType)){
-		return obj_f_critter_inventory_list_idx;
-	}
-	else if (isTypeContainer(objType)){
-		return obj_f_container_inventory_list_idx;
-	};
-	return 0;
-}
-
-#pragma endregion
 
 #pragma region Python Obj Field Get/Set Function Implementation
 
@@ -231,17 +203,6 @@ static PyObject * PyObjHandle_InventoryItem(TemplePyObjHandle* obj, PyObject * p
 
 #pragma endregion
 
-static PyObject * PyObjHandle_RemoveFromAllGroups(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	party.ObjRemoveFromAllGroupArrays(obj->objHandle);
-	return PyInt_FromLong(1);
-};
-
-static PyObject * PyObjHandle_PCAdd(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	// TODO  add fluidity to number of PCs / NPCs
-	party.AddToPCGroup(obj->objHandle);
-	return PyInt_FromLong(1);
-};
-
 
 UiPickerType operator&(const UiPickerType& lhs, const UiPickerType& rhs){
 	return (UiPickerType)((uint64_t)lhs & (uint64_t)rhs);
@@ -309,8 +270,6 @@ static PyMethodDef pyObjHandleMethods_New[] = {
 	"obj_get_idxfield_64bit", (PyCFunction)pyObjHandleType_Get_IdxField_64bit, METH_VARARGS, "Gets 64 bit index field",
 	"obj_set_idxfield_64bit", (PyCFunction)PyObjHandle_SetIdxField64bit, METH_VARARGS, "Sets 64 bit index field",
 	//"obj_set_idxfield_byvalue", (PyCFunction)pyObjHandleType_Set_IdxField_byValue, METH_VARARGS, "Sets index field - general (depending on nFieldIndex which the game looks up and fetches nFieldType to determine data size)",
-	"obj_remove_from_all_groups", (PyCFunction)PyObjHandle_RemoveFromAllGroups, METH_VARARGS, "Removes the object from all the groups (GroupList, PCs, NPCs, AI controlled followers, Currently Selected",
-	"pc_add", (PyCFunction)PyObjHandle_PCAdd, METH_VARARGS, "Adds object as a PC party member.",
 	"objfeatadd", (PyCFunction)PyObjHandle_ObjFeatAdd, METH_VARARGS, "Adds a feat. Feats can be added multiple times (at least some of them? like Toughness)",
 	"makewiz", (PyCFunction)PyObjHandle_MakeWizard, METH_VARARGS, "Makes character a wizard of level n",
 	//

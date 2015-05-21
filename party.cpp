@@ -84,6 +84,8 @@ uint32_t PartySystem::AddToPCGroup(objHndl objHnd)
 uint32_t PartySystem::AddToNpcGroup(objHndl objHnd)
 {
 	auto npcFollowers = GroupNPCFollowersLen();
+	if (npcFollowers >= 5) return 0;
+	
 	auto pcs = GroupPCsLen();
 
 	if (npcFollowers < PARTY_SIZE_MAX - config.maxPCs
