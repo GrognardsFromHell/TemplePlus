@@ -793,6 +793,7 @@ PyObject* PyGame_Picker(PyObject*, PyObject* args) {
 	// Set up the callback arguments we'll get
 	Py_XDECREF(dialogPickerArgs.isValidTarget); // Clear previous callback if any
 	dialogPickerArgs.isValidTarget = validTargetCallback;
+	Py_INCREF(validTargetCallback);
 	dialogPickerArgs.invalidTargetLine = PyInt_AsLong(PyList_GET_ITEM(dialogLines, 0));
 	dialogPickerArgs.cancelledLine = PyInt_AsLong(PyList_GET_ITEM(dialogLines, 1));
 	dialogPickerArgs.validTargetLine = PyInt_AsLong(PyList_GET_ITEM(dialogLines, 2));
@@ -835,8 +836,8 @@ static void __cdecl PyGame_PickerCallback(const PickerResult &result, void*) {
 		} else {
 			// Target is valid
 			if (PyObject_IsTrue(isValidObj)) {
-				uiDialog.ReShowDialog(currentDlg, dialogPickerArgs.validTargetLine);
 				pythonObjIntegration.SetPickerObj(targetObj);
+				uiDialog.ReShowDialog(currentDlg, dialogPickerArgs.validTargetLine);
 			} else {
 				uiDialog.ReShowDialog(currentDlg, dialogPickerArgs.invalidTargetLine);
 			}
