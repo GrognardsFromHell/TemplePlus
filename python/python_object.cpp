@@ -594,7 +594,7 @@ static PyObject* PyObjHandle_FollowerAtMax(PyObject* obj, PyObject* args) {
 	}
 	return PyInt_FromLong((followers >= PARTY_SIZE_MAX - config.maxPCs) || followers >= 5);
 }
-
+ 
 static PyObject* PyObjHandle_AiFollowerAdd(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	objHndl follower;
