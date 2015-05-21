@@ -587,7 +587,12 @@ static PyObject* PyObjHandle_FollowerRemove(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_FollowerAtMax(PyObject* obj, PyObject* args) {
 	auto followers = party.GroupNPCFollowersLen();
-	return PyInt_FromLong(followers >= 8 - config.maxPCs);
+	auto pcs = party.GroupPCsLen();
+	if (config.maxPCsFlexible)
+	{
+		return PyInt_FromLong( (followers + pcs >= PARTY_SIZE_MAX) || followers >= 5 );
+	}
+	return PyInt_FromLong((followers >= PARTY_SIZE_MAX - config.maxPCs) || followers >= 5);
 }
 
 static PyObject* PyObjHandle_AiFollowerAdd(PyObject* obj, PyObject* args) {

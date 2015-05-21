@@ -2,10 +2,12 @@
 #include "stdafx.h"
 #include "common.h"
 
+#define PARTY_SIZE_MAX 8 // PCs and NPCs
+
 struct PartySystem : AddressTable
 {
 	void SetMaxPCs(char maxPCs);
-
+	
 	objHndl(__cdecl *GroupArrayMemberN)(GroupArray *, uint32_t nIdx);
 	objHndl(__cdecl *GroupNPCFollowersGetMemberN)(uint32_t nIdx);
 	uint32_t(__cdecl *GroupNPCFollowersLen)();
@@ -19,7 +21,8 @@ struct PartySystem : AddressTable
 	uint32_t(__cdecl * ObjFindInGroupArray)(GroupArray *, objHndl); // returns index
 	uint32_t(__cdecl * ObjRemoveFromAllGroupArrays)(objHndl);
 	uint32_t(__cdecl *ObjAddToGroupArray)(GroupArray *, objHndl);
-	uint32_t(__cdecl *ObjAddToPCGroup)(objHndl);
+	uint32_t AddToPCGroup(objHndl objHnd);
+	uint32_t AddToNpcGroup(objHndl objHnd);
 
 	void (__cdecl *RumorLogAdd)(objHndl pc, int rumor);
 
@@ -44,7 +47,7 @@ struct PartySystem : AddressTable
 		rebase(ObjIsAIFollower, 0x1002B220);
 		rebase(ObjRemoveFromAllGroupArrays, 0x1002BD00);
 		rebase(ObjAddToGroupArray, 0x100DF990);
-		rebase(ObjAddToPCGroup, 0x1002BBE0);
+		//rebase(AddToPCGroup, 0x1002BBE0);
 		rebase(IsInParty, 0x1002B1B0);
 		rebase(RumorLogAdd, 0x1005FC20);
 		rebase(GetStoryState, 0x10006A20);
@@ -53,3 +56,6 @@ struct PartySystem : AddressTable
 };
 
 extern PartySystem party;
+
+uint32_t AddToPcGroup(objHndl objHnd);
+uint32_t AddToNpcGroup(objHndl objHnd);

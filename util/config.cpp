@@ -133,6 +133,7 @@ static ConfigSetting configSettings[] = {
 	CONF_STRING_LIST(additionalTioPaths, ';'),
 	CONF_INT(pointBuyPoints),
 	CONF_INT(maxPCs),
+	CONF_BOOL(maxPCsFlexible),
 	CONF_BOOL(usingCo8)
 };
 

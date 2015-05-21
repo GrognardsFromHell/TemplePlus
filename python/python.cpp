@@ -238,7 +238,7 @@ static PyObject * PyObjHandle_RemoveFromAllGroups(TemplePyObjHandle* obj, PyObje
 
 static PyObject * PyObjHandle_PCAdd(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	// TODO  add fluidity to number of PCs / NPCs
-	party.ObjAddToPCGroup(obj->objHandle);
+	party.AddToPCGroup(obj->objHandle);
 	return PyInt_FromLong(1);
 };
 
