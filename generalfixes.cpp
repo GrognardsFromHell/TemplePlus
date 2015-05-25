@@ -182,3 +182,15 @@ class BardicInspireCourageFix : public TempleFix
 		replaceFunction(0x100EA5C0, BardicInspiredCourageInitArgs);
 	}
 } bardicInspireCourageFix;
+
+
+class SorcererFailureDoubleChargeFix : public TempleFix
+{
+public: const char* name() override {
+	return "Sorcerer Spell Failure Double Debit Fix";
+};
+		void apply() override
+		{
+			writeHex(0x1008D80E, "90 90 90 90 90");
+		}
+} sorcererSpellFailureFix;

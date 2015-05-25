@@ -80,7 +80,7 @@ struct VideoFuncs : AddressTable {
 
 /*
 * Size being cleared is 4796 byte in length
-* Start @ 0x1E74580
+* Start @ 0x11E74580
 */
 struct VideoData {
 	HINSTANCE hinstance;

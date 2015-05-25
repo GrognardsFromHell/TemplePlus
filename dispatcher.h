@@ -94,7 +94,7 @@ struct DispIO {
 struct CondNode : TempleAlloc {
 	CondStruct* condStruct;
 	CondNode* nextCondNode;
-	uint32_t flags;
+	uint32_t flags; // 1 - expired; 2 - got arg data from info stored in field
 	uint32_t args[6];
 
 	explicit CondNode(CondStruct *cond);

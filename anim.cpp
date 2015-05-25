@@ -256,6 +256,8 @@ struct AnimSlotGoalStackEntry {
 	TimeEventObjInfo parentTracking;
 };
 
+const auto TestSizeOfAnimSlotGoalStackEntry = sizeof(AnimSlotGoalStackEntry);
+
 struct AnimSlot {
 	AnimSlotId id;
 	int flags; // See AnimSlotFlag

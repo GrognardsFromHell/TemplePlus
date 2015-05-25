@@ -1790,7 +1790,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeConditionRemove,
 	dispTypeConditionAddPre,
 	dispTypeConditionRemove2,
-	dispType5,
+	dispTypeConditionAddFromD20StatusInit,
 	dispType6,
 	dispTypeTurnBasedStatusInit,
 	dispType8,
