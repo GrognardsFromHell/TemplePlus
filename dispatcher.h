@@ -5,19 +5,31 @@
 
 #define DISPATCHER_MAX  250 // max num of simultaneous Dispatches going on (static int counter inside _DispatcherProcessor)
 
-struct DispIoBonusList;
-struct DispIoCondStruct;
-struct DispIoDispelCheck;
-struct DispIoD20ActionTurnBased;
+
+
+
+struct DispIO;
+struct DispIoCondStruct; // 1
+struct DispIoBonusList; // 2
+struct DispIoSavingThrow; // 3
+struct DispIoDamage; // 4
+struct DispIoAttackBonus; // 5
+struct DispIoD20Signal; // 6
+struct DispIoD20Query; // 7
+struct DispIOTurnBasedStatus; // 8
+struct DispIoTooltip; // 9
+struct DispIoDispelCheck; // 11
+struct DispIoD20ActionTurnBased; // 12
+struct DispIOBonusListAndSpellEntry; // 14
 struct D20Actn;
-struct DispIOBonusListAndSpellEntry;
+
 struct SpellEntry;
-struct DispIOTurnBasedStatus;
-struct DispIoDamage;
+
+
 struct TurnBasedStatus;
 struct BonusList;
 struct CondNode;
-struct DispIO;
+
 struct SubDispDef;
 struct CondStruct;
 struct DispatcherCallbackArgs;
@@ -43,8 +55,13 @@ struct DispatcherSystem : AddressTable
 
 	DispIoCondStruct* DispIoCheckIoType1(DispIoCondStruct* dispIo); // used for ConditionAdd (3); 1,2 and 4 dispatch will null eventObjs
 	DispIoBonusList* DispIoCheckIoType2(DispIoBonusList* dispIoBonusList); // used for stat level (10), stat base (66) and Cur/Max HP
+	DispIoSavingThrow* DispIoCheckIoType3(DispIoSavingThrow* dispIoBonusList); // 
 	DispIoDamage * DispIoCheckIoType4(DispIoDamage* dispIo);
+	DispIoAttackBonus * DispIoCheckIoType5(DispIoAttackBonus* dispIo);
+	DispIoD20Signal* DispIoCheckIoType6(DispIoD20Signal* dispIo);
+	DispIoD20Query* DispIoCheckIoType7(DispIoD20Query* dispIo);
 	DispIOTurnBasedStatus* DispIoCheckIoType8(DispIOTurnBasedStatus* dispIo);
+	DispIoTooltip* DispIoCheckIoType9(DispIoTooltip* dispIo);
 	DispIoDispelCheck* DispIOCheckIoType11(DispIoDispelCheck* dispIo);
 	DispIoD20ActionTurnBased* DispIOCheckIoType12(DispIoD20ActionTurnBased* dispIo);
 	DispIOBonusListAndSpellEntry* DispIOCheckIoType14(DispIOBonusListAndSpellEntry* dispIo);
@@ -104,7 +121,7 @@ struct CondStruct {
 	char* condName;
 	unsigned int numArgs;
 	/*
-		This is a variable length array of dispatcher hooks that this condition has.
+		This is a variable length array of dispatcher hooks that this condition has. Terminated by null.
 	*/
 	SubDispDef subDispDefs[1];
 };
@@ -137,13 +154,43 @@ struct DispIoBonusList : DispIO { // DispIoType = 2  used for fetching ability s
 	uint32_t flags;
 };
 
-struct DispIOAC : DispIO {
-	DispIOAC() {
-		dispIOType = dispIOTypeAC;
+
+struct DispIoSavingThrow : DispIO { // DispIoType = 3
+	uint32_t returVal;
+	objHndl obj;
+	uint32_t flags;
+	int field_14;
+	BonusList bonlist;
+	int rollResult;
+};
+
+struct DispIoAttackBonus : DispIO { // DispIoType 5
+	int field_4;
+	AttackPacket attackPacket;
+	BonusList bonlist;
+	DispIoAttackBonus() {
+		dispIOType = dispIOTypeAttackBonus;
 	}
 };
 
-struct DispIoD20Query : DispIO
+
+struct DispIoD20Signal : DispIO // DispIoType 6
+{
+	uint32_t return_val;
+	uint32_t data1;
+	uint32_t data2;
+
+	DispIoD20Signal()
+	{
+		dispIOType = dispIoTypeSendSignal;
+		return_val = 0;
+		data1 = 0;
+		data2 = 0;
+	}
+};
+
+
+struct DispIoD20Query : DispIO // DispIoType 7
 {
 	uint32_t return_val;
 	uint32_t data1;
@@ -158,21 +205,26 @@ struct DispIoD20Query : DispIO
 	}
 };
 
+struct DispIoTooltip : DispIO // DispIoType 9 ; tooltip additional text when hovering over an object in the game
+{
+	char strings[10][256];
+	uint32_t numStrings;
+};
+const auto TestSizeOfDispIoTooltip = sizeof(DispIoTooltip); // should be 2568  (0xA08)
 
-
-struct DispIO20h : DispIO {
+struct DispIoType21 : DispIO { // DispIoType 21
 	uint32_t interrupt;
 	uint32_t field_8;
 	uint32_t field_C;
-	uint32_t val1;
+	uint32_t SDDKey1;
 	uint32_t val2;
-	uint32_t okToAdd;
+	uint32_t okToAdd; // or spellId???
 	CondNode* condNode;
 
-	DispIO20h() {
+	DispIoType21() {
 		dispIOType = dispIoTypeNull;
 		condNode = nullptr;
-		val1 = 0;
+		SDDKey1 = 0;
 		val2 = 0;
 		interrupt = 0;
 	}
@@ -187,20 +239,20 @@ struct DispIO390h : DispIO
 	BonusList bonlist;
 };
 
-struct DispIOTurnBasedStatus : DispIO
+struct DispIOTurnBasedStatus : DispIO // type 8
 {
 	TurnBasedStatus * tbStatus;
 };
 
 const int TestSizeOfDispIO390h = sizeof(DispIO390h); // should be 912 (0x390)
 
-struct DispIOBonusListAndSpellEntry: DispIO{
+struct DispIOBonusListAndSpellEntry: DispIO { // Type 14
 	BonusList * bonList;
 	SpellEntry * spellEntry;
 	uint32_t field_C; // unused?
 };
 
-struct DispIoDispelCheck : DispIO
+struct DispIoDispelCheck : DispIO // type 11
 {
 	uint32_t spellId; // of the Dispel Spell (Break Enchantment, Dispel Magic etc.)
 	uint32_t flags;  // 0x80 - Dispel Magic   0x40 - Break Enchantment  0x20 - slippery mind 0x10 - 0x2 DispelAlignment stuff
@@ -237,13 +289,18 @@ void  _DispatcherClearConds(Dispatcher *dispatcher);
 
 DispIoCondStruct * _DispIoCheckIoType1(DispIoCondStruct * dispIo);
 DispIoBonusList * _DispIoCheckIoType2(DispIoBonusList * dispIo);
-DispIoDamage* _DispIOCheckIoType4(DispIoDamage* dispIo);
-DispIOTurnBasedStatus * _DispIOCheckIoType8(DispIOTurnBasedStatus* dispIo);
-DispIoDispelCheck * _DispIOCheckIoType11(DispIoDispelCheck* dispIo);
+DispIoSavingThrow* _DispIOCheckIoType3(DispIoSavingThrow* dispIo);
+DispIoDamage* _DispIoCheckIoType4(DispIoDamage* dispIo);
+DispIoAttackBonus* _DispIoCheckIoType5(DispIoAttackBonus* dispIo);
+DispIoD20Signal* _DispIoCheckIoType6(DispIoD20Signal* dispIo);
+DispIoD20Query* _DispIoCheckIoType7(DispIoD20Query* dispIo);
+DispIOTurnBasedStatus * _DispIoCheckIoType8(DispIOTurnBasedStatus* dispIo);
+DispIoTooltip* _DispIoCheckIoType9(DispIoTooltip* dispIo);
+DispIoDispelCheck * _DispIoCheckIoType11(DispIoDispelCheck* dispIo);
 DispIoD20ActionTurnBased * _DispIoCheckIoType12(DispIoD20ActionTurnBased* dispIo);
-DispIOBonusListAndSpellEntry * __cdecl _DispIOCheckIoType14(DispIOBonusListAndSpellEntry *dispIO);
+DispIOBonusListAndSpellEntry * __cdecl _DispIoCheckIoType14(DispIOBonusListAndSpellEntry *dispIO);
 
-void _DispIO_Size32_Type21_Init(DispIO20h* dispIO);
+void DispIOType21Init(DispIoType21* dispIO);
 
 void _dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBasedStatus* dispIOtB);
 uint32_t _Dispatch62(objHndl, DispIO*, uint32_t dispKey);

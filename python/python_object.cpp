@@ -1689,7 +1689,7 @@ static PyObject* PyObjHandle_BalorDeath(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_ConcealedSet(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
-	bool concealed;
+	int concealed;
 	if (!PyArg_ParseTuple(args, "i:objhndl.concealed_set", &concealed)) {
 		return 0;
 	}

@@ -238,7 +238,8 @@ static void RunDialogAction(const char* actionString, DialogState* dialog, int p
 }
 
 static BOOL RunDialogGuard(const char* expression, DialogState* dialog, int pickedLine) {
-	logger->debug("Running dialog guard {} for line {} in script {}", expression, pickedLine, dialog->dialogScriptId);
+	logger->debug("Running dialog guard {} for node {}, npc text {}, in script {}", expression, dialog->lineNumber, dialog->npcLineText, dialog->dialogScriptId);
+	if (pickedLine) logger->debug("Picked Line is {}", pickedLine);
 
 	// Set script context so counters will work
 	pythonObjIntegration.SetCounterContext(dialog->npc, dialog->dialogScriptId, ObjScriptEvent::Dialog);
@@ -274,7 +275,7 @@ static BOOL RunDialogGuard(const char* expression, DialogState* dialog, int pick
 	int guardResult = PyObject_IsTrue(result);
 	Py_DECREF(result);
 
-	logger->debug("Dialog guard is {}", guardResult);
+	logger->debug("Dialog guard result is {}", guardResult);
 	return guardResult == 1;
 }
 

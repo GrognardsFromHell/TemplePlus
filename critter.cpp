@@ -27,7 +27,7 @@ static struct CritterAddresses : AddressTable {
 	void (__cdecl *SetSubdualDamage)(objHndl critter, int damage);
 
 	void (__cdecl *BalorDeath)(objHndl critter);
-	void (__cdecl *SetConcealed)(objHndl critter, bool concealed);
+	void (__cdecl *SetConcealed)(objHndl critter, int concealed);
 
 	uint32_t(__cdecl *Resurrect)(objHndl critter, ResurrectType type, int unk);
 
@@ -187,7 +187,7 @@ void CritterSystem::BalorDeath(objHndl npc) {
 	addresses.BalorDeath(npc);
 }
 
-void CritterSystem::SetConcealed(objHndl critter, bool concealed) {
+void CritterSystem::SetConcealed(objHndl critter, int concealed) {
 	addresses.SetConcealed(critter, concealed);
 }
 

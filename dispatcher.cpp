@@ -19,11 +19,15 @@ public:
 		logger->info("Replacing basic Dispatcher functions");
 		replaceFunction(0x1004D700, _DispIoCheckIoType1);
 		replaceFunction(0x1004D720, _DispIoCheckIoType2);
-		replaceFunction(0x1004D760, _DispIOCheckIoType4);
-		replaceFunction(0x1004D7E0, _DispIOCheckIoType8);
-		replaceFunction(0x1004D840, _DispIOCheckIoType11);
+		replaceFunction(0x1004D760, _DispIoCheckIoType4);
+		replaceFunction(0x1004D780, _DispIoCheckIoType5);
+		replaceFunction(0x1004D7A0, _DispIoCheckIoType6);
+		replaceFunction(0x1004D7C0, _DispIoCheckIoType7);
+		replaceFunction(0x1004D7E0, _DispIoCheckIoType8);
+		replaceFunction(0x1004D800, _DispIoCheckIoType9);
+		replaceFunction(0x1004D840, _DispIoCheckIoType11);
 		replaceFunction(0x1004D860, _DispIoCheckIoType12);
-		replaceFunction(0x1004D8A0, _DispIOCheckIoType14);
+		replaceFunction(0x1004D8A0, _DispIoCheckIoType14);
 
 		replaceFunction(0x100E1E30, _DispatcherRemoveSubDispNodes);
 		replaceFunction(0x100E2400, _DispatcherClearField);
@@ -32,7 +36,7 @@ public:
 		replaceFunction(0x100E2760, _DispatcherClearConds);
 		replaceFunction(0x100E2120, _DispatcherProcessor);
 		replaceFunction(0x100E1F10, _DispatcherInit);
-		replaceFunction(0x1004DBA0, _DispIO_Size32_Type21_Init);
+		replaceFunction(0x1004DBA0, DispIOType21Init);
 		replaceFunction(0x1004D3A0, _Dispatch62);
 		replaceFunction(0x1004D440, _Dispatch63);
 		replaceFunction(0x1004E040, _DispatchDamage);
@@ -87,7 +91,7 @@ int32_t DispatcherSystem::dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, 
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (!dispatcherValid(dispatcher)) return 0;
 
-	dispIO.dispIOType = dispIOType10;
+	dispIO.dispIOType = dispIOTypeSkillLevel;
 	dispIO.returnVal = flag;
 	dispIO.bonOut = bonOut;
 	dispIO.obj = objHnd2;
@@ -160,15 +164,45 @@ DispIoBonusList* DispatcherSystem::DispIoCheckIoType2(DispIoBonusList* dispIo)
 	return dispIo;
 }
 
+DispIoSavingThrow* DispatcherSystem::DispIoCheckIoType3(DispIoSavingThrow* dispIo)
+{
+	if (dispIo->dispIOType != dispIOTypeSavingThrow) return nullptr;
+	return dispIo;
+}
+
 DispIoDamage* DispatcherSystem::DispIoCheckIoType4(DispIoDamage* dispIo)
 {
 	if (dispIo->dispIOType != dispIOTypeDamage) return nullptr;
 	return dispIo;
 }
 
+DispIoAttackBonus* DispatcherSystem::DispIoCheckIoType5(DispIoAttackBonus* dispIo)
+{
+	if (dispIo->dispIOType != dispIOTypeAttackBonus) return nullptr;
+	return dispIo;
+}
+
+DispIoD20Signal* DispatcherSystem::DispIoCheckIoType6(DispIoD20Signal* dispIo)
+{
+	if (dispIo->dispIOType != dispIoTypeSendSignal) return nullptr;
+	return dispIo;
+}
+
+DispIoD20Query* DispatcherSystem::DispIoCheckIoType7(DispIoD20Query* dispIo)
+{
+	if (dispIo->dispIOType != dispIOTypeQuery) return nullptr;
+	return dispIo;
+}
+
 DispIOTurnBasedStatus* DispatcherSystem::DispIoCheckIoType8(DispIOTurnBasedStatus* dispIo)
 {
 	if (dispIo->dispIOType != dispIOTypeTurnBasedStatus) return nullptr;
+	return dispIo;
+}
+
+DispIoTooltip* DispatcherSystem::DispIoCheckIoType9(DispIoTooltip* dispIo)
+{
+	if (dispIo->dispIOType != dispIoTypeTooltip) return nullptr;
 	return dispIo;
 }
 
@@ -191,17 +225,19 @@ DispIOBonusListAndSpellEntry* DispatcherSystem::DispIOCheckIoType14(DispIOBonusL
 	return dispIo;
 }
 
+
+
 void DispatcherSystem::DispIoDamageInit(DispIoDamage* dispIoDamage)
 {
 	dispIoDamage->dispIOType = dispIOTypeDamage;
 	damage.DamagePacketInit(&dispIoDamage->damage);
-	dispIoDamage->src=0i64;
-	dispIoDamage->victim=0i64;
-	dispIoDamage->field1c=0;
-	dispIoDamage->flags=0;
-	dispIoDamage->weaponUsed = 0i64;
-	dispIoDamage->anotherItem = 0i64;
-	dispIoDamage->actionType=D20A_NONE;
+	dispIoDamage->attackPacket.attacker=0i64;
+	dispIoDamage->attackPacket.victim = 0i64;
+	dispIoDamage->attackPacket.field_14 = 0;
+	dispIoDamage->attackPacket.flags = 0;
+	dispIoDamage->attackPacket.weaponUsed = 0i64;
+	dispIoDamage->attackPacket.anotherItem = 0i64;
+	dispIoDamage->attackPacket.d20ActnType= D20A_NONE;
 
 }
 
@@ -216,7 +252,7 @@ int32_t DispatcherSystem::DispatchDamage(objHndl objHnd, DispIoDamage* dispIoDam
 		dispatch.DispIoDamageInit(&dispIoLocal);
 		dispIo = &dispIoLocal;
 	}
-	hooked_print_debug_message("Dispatching damage event for %s - type %d, key %d, victim %s", description.getDisplayName(objHnd), dispType, key, description.getDisplayName( dispIoDamage->victim) );
+	hooked_print_debug_message("Dispatching damage event for %s - type %d, key %d, victim %s", description.getDisplayName(objHnd), dispType, key, description.getDisplayName( dispIoDamage->attackPacket.victim) );
 	dispatch.DispatcherProcessor(dispatcher, dispType, key, dispIo);
 	return 1;
 }
@@ -307,17 +343,42 @@ DispIoBonusList* _DispIoCheckIoType2(DispIoBonusList* dispIo)
 	return dispatch.DispIoCheckIoType2(dispIo);
 }
 
-DispIoDamage* _DispIOCheckIoType4(DispIoDamage* dispIo)
+DispIoSavingThrow* _DispIOCheckIoType3(DispIoSavingThrow* dispIo)
+{
+	return dispatch.DispIoCheckIoType3(dispIo);
+}
+
+DispIoDamage* _DispIoCheckIoType4(DispIoDamage* dispIo)
 {
 	return dispatch.DispIoCheckIoType4(dispIo);
 }
 
-DispIOTurnBasedStatus* _DispIOCheckIoType8(DispIOTurnBasedStatus* dispIo)
+DispIoAttackBonus* _DispIoCheckIoType5(DispIoAttackBonus* dispIo)
+{
+	return dispatch.DispIoCheckIoType5(dispIo);
+}
+
+DispIoD20Signal* _DispIoCheckIoType6(DispIoD20Signal* dispIo)
+{
+	return dispatch.DispIoCheckIoType6(dispIo);
+}
+
+DispIoD20Query* _DispIoCheckIoType7(DispIoD20Query* dispIo)
+{
+	return dispatch.DispIoCheckIoType7(dispIo);
+}
+
+DispIOTurnBasedStatus* _DispIoCheckIoType8(DispIOTurnBasedStatus* dispIo)
 {
 	return dispatch.DispIoCheckIoType8(dispIo);
 }
 
-DispIoDispelCheck* _DispIOCheckIoType11(DispIoDispelCheck* dispIo)
+DispIoTooltip* _DispIoCheckIoType9(DispIoTooltip* dispIo)
+{
+	return dispatch.DispIoCheckIoType9(dispIo);
+}
+
+DispIoDispelCheck* _DispIoCheckIoType11(DispIoDispelCheck* dispIo)
 {
 	return dispatch.DispIOCheckIoType11(dispIo);
 }
@@ -325,6 +386,11 @@ DispIoDispelCheck* _DispIOCheckIoType11(DispIoDispelCheck* dispIo)
 DispIoD20ActionTurnBased* _DispIoCheckIoType12(DispIoD20ActionTurnBased* dispIo)
 {
 	return dispatch.DispIOCheckIoType12(dispIo);
+};
+
+DispIOBonusListAndSpellEntry* _DispIoCheckIoType14(DispIOBonusListAndSpellEntry* dispIO)
+{
+	return dispatch.DispIOCheckIoType14(dispIO);
 };
 
 void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO) {
@@ -341,8 +407,8 @@ void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint3
 
 		if ((subDispNode->subDispDef->dispKey == dispKey || subDispNode->subDispDef->dispKey == 0) && ((subDispNode->condNode->flags & 1) == 0)) {
 
-			DispIO20h dispIO20h;
-			_DispIO_Size32_Type21_Init((DispIO20h*)&dispIO20h);
+			DispIoType21 dispIO20h;
+			DispIOType21Init((DispIoType21*)&dispIO20h);
 			dispIO20h.condNode = (CondNode *)subDispNode->condNode;
 
 			if (dispKey != 10 || dispType != 62) {
@@ -382,10 +448,6 @@ int32_t _dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut
 	return dispatch.dispatch1ESkillLevel(objHnd, skill, bonOut, objHnd2, flag);
 }
 
-DispIOBonusListAndSpellEntry* _DispIOCheckIoType14(DispIOBonusListAndSpellEntry* dispIO)
-{
-	return dispatch.DispIOCheckIoType14(dispIO);
-};
 
 Dispatcher* _DispatcherInit(objHndl objHnd) {
 	Dispatcher* dispatcherNew = (Dispatcher *)allocFuncs._malloc_0(sizeof(Dispatcher));
@@ -402,12 +464,12 @@ Dispatcher* _DispatcherInit(objHndl objHnd) {
 	return dispatcherNew;
 };
 
-void _DispIO_Size32_Type21_Init(DispIO20h* dispIO) {
+void DispIOType21Init(DispIoType21* dispIO) {
 	dispIO->dispIOType = dispIOType21;
 	dispIO->interrupt = 0;
 	dispIO->field_8 = 0;
 	dispIO->field_C = 0;
-	dispIO->val1 = 0;
+	dispIO->SDDKey1 = 0;
 	dispIO->val2 = 0;
 	dispIO->okToAdd = 0;
 	dispIO->condNode = nullptr;

@@ -165,4 +165,17 @@ struct BonusList
 };
 
 const int TestSizeOfBonusList = sizeof(BonusList); // should be 888 (0x378)
+
+
+struct AttackPacket
+{
+	objHndl attacker;
+	objHndl victim;
+	D20ActionType d20ActnType;
+	int field_14;
+	uint32_t flags;
+	int field_1C;
+	objHndl weaponUsed;
+	objHndl anotherItem;
+};
 #pragma endregion

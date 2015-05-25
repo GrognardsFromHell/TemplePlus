@@ -125,7 +125,7 @@ uint32_t D20System::d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, u
 
 void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2)
 {
-	DispIoD20Query dispIO;
+	DispIoD20Signal dispIO;
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (!dispatch.dispatcherValid(dispatcher))
 	{
@@ -139,7 +139,7 @@ void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t 
 }
 
 void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, objHndl arg) {
-	DispIoD20Query dispIO;
+	DispIoD20Signal dispIO;
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (!dispatch.dispatcherValid(dispatcher))
 	{

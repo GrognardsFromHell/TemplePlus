@@ -41,16 +41,9 @@ struct DamagePacket {
 };
 
 #pragma pack(push, 1)
-struct DispIoDamage : DispIO {
+struct DispIoDamage : DispIO { // Io type 4
 	int padding;
-	objHndl src;
-	objHndl victim;
-	D20ActionType actionType;
-	int field1c;
-	int flags;
-	int field24;
-	objHndl weaponUsed;
-	objHndl anotherItem;
+	AttackPacket attackPacket;
 	DamagePacket damage;
 
 	DispIoDamage() {

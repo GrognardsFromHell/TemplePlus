@@ -129,8 +129,8 @@ struct D20ActionDef
 	uint32_t (__cdecl * actionCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO);
 	uint32_t (__cdecl * tgtCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO);
 	uint32_t (__cdecl * locCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO, LocAndOffsets * locAndOff); // also seems to double as a generic check function (e.g. for move silently it checks if combat is active and nothing to do with location)
-	uint32_t (__cdecl* performFunc)(D20Actn* d20a);
-	void * actionFrameFunc;
+	uint32_t (__cdecl * performFunc)(D20Actn* d20a);
+	uint32_t (__cdecl * actionFrameFunc)(D20Actn* d20a);
 	void * projectilePerformFunc;
 	uint32_t pad_apparently;
 	uint32_t (__cdecl * moveFunc)(D20Actn* d20a, TurnBasedStatus* iO, LocAndOffsets * locAndOff); 

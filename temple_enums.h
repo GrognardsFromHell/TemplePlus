@@ -1750,14 +1750,14 @@ enum enum_dispIO_type : uint32_t {
 	dispIoTypeNull= 0, // not in actual use (other than init), first real type is the next one
 	dispIoTypeCondStruct,
 	dispIOTypeBonusList,
-	dispIOType3,
+	dispIOTypeSavingThrow,
 	dispIOTypeDamage,
-	dispIOTypeAC, // AC
+	dispIOTypeAttackBonus, // AC
 	dispIoTypeSendSignal,
 	dispIOTypeQuery,
 	dispIOTypeTurnBasedStatus,
-	dispIOType9,
-	dispIOType10,
+	dispIoTypeTooltip,
+	dispIOTypeSkillLevel, // also used for initiative level
 	dispIOTypeDispelCheck, // goes with dispType33
 	dispIOTypeD20ActionTurnBased,
 	dispIOType13,
@@ -1796,12 +1796,12 @@ enum enum_disp_type : uint32_t {
 	dispType8,
 	dispType9,
 	dispTypeAbilityScoreLevel,
-	dispType11,
+	dispTypeGetAC,
 	dispType12,
 	dispTypeSaveThrowLevel, // goes with keys DK_SAVE_X 
 	dispType14,
-	dispTypeToHitBonus,
-	dispType16,
+	dispTypeToHitBonusBase,
+	dispTypeToHitBonus2,
 	dispType17,
 	dispType18,
 	dispType19,
@@ -1857,7 +1857,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeItemForceRemove, // has a single function associated with this - 10104410 int __cdecl ItemForceRemoveCallback_SetItemPadWielderArgs(Dispatcher_Callback_Args args);
 	dispType69,
 
-	dispType70,
+	dispTypeMaxDexAcBonus,
 	dispType71,
 	dispType72,
 

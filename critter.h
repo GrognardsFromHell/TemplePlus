@@ -132,7 +132,7 @@ struct CritterSystem : AddressTable
 	/*
 		Changes whether the given critter is concealed or not.	
 	*/
-	void SetConcealed(objHndl critter, bool concealed);
+	void SetConcealed(objHndl critter, int concealed);
 
 	/*
 		Third argument seems unused.
