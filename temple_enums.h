@@ -1830,9 +1830,9 @@ enum enum_disp_type : uint32_t {
 	dispType42,
 	dispType43,
 	dispType44,
-	dispTypeSpellResistance,
-	dispType46,
-	dispType47,
+	dispTypeSpellResistanceMod,
+	dispTypeSpellDcBase, // haven't seen this actually used, just the mod dispatch (for Spell Focus and the Gnome bonus for Illusion spells)
+	dispTypeSpellDcMod,
 	dispType48,
 	dispType49,
 	dispType50,

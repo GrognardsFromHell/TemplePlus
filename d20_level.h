@@ -4,6 +4,7 @@
 #include "idxtables.h"
 
 struct LevelPacket;
+struct LevelupPacket;
 
 class D20LevelSystem
 {

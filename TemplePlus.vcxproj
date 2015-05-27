@@ -18,6 +18,7 @@
     <ClCompile Include="aas.cpp" />
     <ClCompile Include="action_sequence.cpp" />
     <ClCompile Include="char_creation.cpp" />
+    <ClCompile Include="d20_levelup.cpp" />
     <ClCompile Include="damage.cpp" />
     <ClCompile Include="dependencies\minhook\src\buffer.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -246,6 +247,7 @@
     <ClInclude Include="d20_class.h" />
     <ClInclude Include="critter.h" />
     <ClInclude Include="d20_level.h" />
+    <ClInclude Include="d20_levelup.h" />
     <ClInclude Include="d20_status.h" />
     <ClInclude Include="damage.h" />
     <ClInclude Include="dependencies\minhook\include\MinHook.h" />

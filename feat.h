@@ -2,11 +2,31 @@
 
 #include "common.h"
 
-#define NUM_FEATS 664
+#define NUM_FEATS 664 // inc. those hacked by Moebius/SpellSlinger (otherwise vanilla is 649)
 
 
 struct FeatSystem : AddressTable
-{
+{	/* feat property bit meaning:
+	0x00000001 - can gain multiple times
+	0x00000002 - Not implemented (cannot select)
+	0x00000004 - Race Automatic Feat
+	0x00000008 - Class Automatic Feat
+	0x00000010 - Fighter feat
+	0x00000020 - Monk 1st lvl
+	0x00000040 - Monk 2nd lvl feat
+	0x00000080 - Monk 6th lvl feat
+	0x00000100 - part of a multiselect feat apparently (though not quite always - Spell Focus seems like an exception - or was it a multiselect?)
+	0x00000300 - EWP
+	0x00000500 - Imp. Crit
+	0x00000900 - MWP
+	0x00001100 - Skill Focus
+	0x00002100 - Wpn Finesse
+	0x00004100 - Wpn Focus
+	0x00008100 - Wpn Spec.
+	0x00010100 - G. Wpn Focus
+	0x00020000 - Wizard Feat (crafting, metamagic etc.)
+	0x00040000 - Rogue 10th lvl Feat
+	*/
 	uint32_t * featPropertiesTable;
 	uint32_t * classFeatTable;
 	uint32_t * featPreReqTable;

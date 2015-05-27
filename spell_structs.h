@@ -30,7 +30,7 @@ struct SpellStoreState
 	SpellStoreType spellStoreType;
 	uint8_t usedUp; // relevant only for spellStoreMemorized
 };
-
+#pragma pack(push,4)
 struct SpellStoreData
 {
 	uint32_t spellEnum;
@@ -43,3 +43,5 @@ struct SpellStoreData
 	uint32_t pad2;
 	uint32_t pad3;
 };
+const auto TestSizeOfSpellStoreData = sizeof(SpellStoreData);
+#pragma pack(pop)
