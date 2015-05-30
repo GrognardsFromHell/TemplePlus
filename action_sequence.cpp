@@ -289,6 +289,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		return 0x9;
 	}
 	
+	/*
 	if (d20aCopy.d20Caf & D20CAF_CHARGE )
 	{
 		if (pqResult->nodeCount >= 2)
@@ -332,6 +333,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 			}
 		}
 	}
+	*/
 
 	auto pathLength = pathfinding->pathLength(pqResult);
 	d20aCopy.destLoc = pqResult->to;
