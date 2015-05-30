@@ -6,6 +6,14 @@
 #include "obj.h"
 
 ConditionSystem conds;
+struct ConditionSystemAddresses : AddressTable
+{
+	void(__cdecl* SetPermanentModArgsFromDataFields)(Dispatcher* dispatcher, CondStruct* condStruct, int* condArgs);
+	ConditionSystemAddresses()
+	{
+		rebase(SetPermanentModArgsFromDataFields, 0x100E1B90);
+	}
+} addresses;
 
 class ConditionFunctionReplacement : public TempleFix {
 public:
@@ -29,6 +37,7 @@ public:
 		replaceFunction(0x100E2530, _ConditionAdd_NumArgs2);
 		replaceFunction(0x100E2560, _ConditionAdd_NumArgs3);
 		replaceFunction(0x100E2590, _ConditionAdd_NumArgs4);
+		replaceFunction(0x100E25C0, InitCondFromCondStructAndArgs);
 		replaceFunction(0x100ECF30, ConditionPrevent);
 		
 		replaceFunction(0x100F7BE0, _GetCondStructFromFeat);
@@ -167,31 +176,36 @@ void _CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNode) 
 
 
 uint32_t _ConditionAddToAttribs_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct) {
-	return _ConditionAddDispatch(dispatcher, &dispatcher->attributeConds, condStruct, 0, 0, 0, 0);
+	return _ConditionAddDispatch(dispatcher, &dispatcher->permanentMods, condStruct, 0, 0, 0, 0);
 };
 
 uint32_t _ConditionAddToAttribs_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2) {
-	return _ConditionAddDispatch(dispatcher, &dispatcher->attributeConds, condStruct, arg1, arg2, 0, 0);
+	return _ConditionAddDispatch(dispatcher, &dispatcher->permanentMods, condStruct, arg1, arg2, 0, 0);
 };
 
 uint32_t _ConditionAdd_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct) {
-	return _ConditionAddDispatch(dispatcher, &dispatcher->otherConds, condStruct, 0, 0, 0, 0);
+	return _ConditionAddDispatch(dispatcher, &dispatcher->conditions, condStruct, 0, 0, 0, 0);
 };
 
 uint32_t _ConditionAdd_NumArgs1(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1) {
-	return _ConditionAddDispatch(dispatcher, &dispatcher->otherConds, condStruct, arg1, 0, 0, 0);
+	return _ConditionAddDispatch(dispatcher, &dispatcher->conditions, condStruct, arg1, 0, 0, 0);
 };
 
 uint32_t _ConditionAdd_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2) {
-	return _ConditionAddDispatch(dispatcher, &dispatcher->otherConds, condStruct, arg1, arg2, 0, 0);
+	return _ConditionAddDispatch(dispatcher, &dispatcher->conditions, condStruct, arg1, arg2, 0, 0);
 };
 
 uint32_t _ConditionAdd_NumArgs3(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3) {
-	return _ConditionAddDispatch(dispatcher, &dispatcher->otherConds, condStruct, arg1, arg2, arg3, 0);
+	return _ConditionAddDispatch(dispatcher, &dispatcher->conditions, condStruct, arg1, arg2, arg3, 0);
 };
 
 uint32_t _ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4) {
-	return _ConditionAddDispatch(dispatcher, &dispatcher->otherConds, condStruct, arg1, arg2, arg3, arg4);
+	return _ConditionAddDispatch(dispatcher, &dispatcher->conditions, condStruct, arg1, arg2, arg3, arg4);
+}
+
+void InitCondFromCondStructAndArgs(Dispatcher* dispatcher, CondStruct* condStruct, int* condargs)
+{
+	conds.InitCondFromCondStructAndArgs(dispatcher, condStruct, condargs);
 };
 
 #pragma endregion
@@ -272,7 +286,7 @@ bool ConditionSystem::AddTo(objHndl handle, const CondStruct* cond, const vector
 		return false;
 	}
 
-	return _ConditionAddDispatchArgs(dispatcher, &dispatcher->otherConds, const_cast<CondStruct*>(cond), args) != 0;
+	return _ConditionAddDispatchArgs(dispatcher, &dispatcher->conditions, const_cast<CondStruct*>(cond), args) != 0;
 }
 
 bool ConditionSystem::AddTo(objHndl handle, const string& name, const vector<int>& args) {
@@ -300,4 +314,169 @@ void ConditionSystem::CondNodeSetArg(CondNode* condNode, uint32_t argIdx, uint32
 	{
 		condNode->args[argIdx] = argVal;
 	}
+}
+
+void ConditionSystem::CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNodeNew)
+{
+	_CondNodeAddToSubDispNodeArray(dispatcher, condNodeNew);
+}
+
+void ConditionSystem::InitCondFromCondStructAndArgs(Dispatcher* dispatcher, CondStruct* condStruct, int* condargs)
+{
+	CondNode **v4; 
+	SubDispNode *subDispNode; 
+	CondNode *condNode; 
+
+	auto *condNodeNew = new CondNode(condStruct);
+	v4 = &dispatcher->conditions;
+	while (*v4)
+	{
+		v4 = & (*v4)->nextCondNode;
+	}
+	*v4 = condNodeNew;
+
+	for (auto i = 0; i < condStruct->numArgs; i++)
+	{
+		condNodeNew->args[i] = condargs[i];
+	}
+	conds.CondNodeAddToSubDispNodeArray(dispatcher, condNodeNew);
+	for (subDispNode = dispatcher->subDispNodes[dispTypeConditionAddFromD20StatusInit]; subDispNode; subDispNode = subDispNode->next)
+	{
+		if (subDispNode->subDispDef->dispKey == 0)
+		{
+			condNode = subDispNode->condNode;
+			if (!(condNode->flags & 1) && condNode == condNodeNew)
+				subDispNode->subDispDef->dispCallback(subDispNode,dispatcher->objHnd, dispTypeConditionAddFromD20StatusInit, 0, nullptr);
+		}
+	}
+}
+
+void ConditionSystem::SetPermanentModArgsFromDataFields(Dispatcher* dispatcher, CondStruct* condStruct, int* condArgs)
+{
+	addresses.SetPermanentModArgsFromDataFields(dispatcher, condStruct, condArgs);
+}
+
+void ConditionSystem::DispatcherCondsResetFlag2(Dispatcher* dispatcher)
+{
+	CondNode *condNode; 
+	for (condNode = dispatcher->permanentMods; condNode; condNode = condNode->nextCondNode)
+		condNode->flags &= 0xFFFFFFFD;
+	for (condNode = dispatcher->itemConds; condNode; condNode = condNode->nextCondNode)
+		condNode->flags &= 0xFFFFFFFD;
+}
+
+int ConditionSystem::GetActiveCondsNum(Dispatcher* dispatcher)
+{ 
+	int numConds=0; 
+
+	CondNode *cond = dispatcher->conditions;
+	while (cond)
+	{
+		if (!(cond->flags & 1))
+			++numConds;
+		cond = cond->nextCondNode;
+	}
+	return numConds;
+}
+
+int ConditionSystem::GetPermanentModsAndItemCondCount(Dispatcher* dispatcher)
+{
+	int numConds = 0;
+	CondNode *cond = dispatcher->permanentMods;
+
+	while (cond)
+	{
+		if (!(cond->flags & 1))
+			++numConds;
+		cond = cond->nextCondNode;
+	}
+
+	cond = dispatcher->itemConds;
+	while(cond)
+	{
+		if (!(cond->flags & 1))
+			++numConds;
+		cond = cond->nextCondNode;
+	}
+	return numConds;
+}
+
+int ConditionSystem::ConditionsExtractInfo(Dispatcher* dispatcher, int activeCondIdx, int* hashkeyOut, int* condArgsOut)
+{
+	CondNode *cond;
+	int n; 
+	int numArgs; 
+
+
+	cond = dispatcher->conditions;              
+	n = 0;
+	while (cond)
+	{
+		if (cond->flags & 1)
+		{
+			cond = cond->nextCondNode;
+			continue;
+		}
+		if (n == activeCondIdx)
+			break;
+		n++;
+	}
+	if (!cond) return 0;
+
+	*hashkeyOut = conds.hashmethods.GetCondStructHashkey(cond->condStruct);
+	numArgs = cond->condStruct->numArgs;
+	for (int i = 0; i < numArgs; i++)
+	{
+		condArgsOut[i++] = cond->args[i];
+	}
+	return cond->condStruct->numArgs;
+}
+
+int ConditionSystem::PermanentAndItemModsExtractInfo(Dispatcher* dispatcher, int permModIdx, int* hashkeyOut, int* condArgsOut)
+{
+	
+	int i=0; 
+	CondNode *cond;
+
+	cond = dispatcher->permanentMods;
+	while (cond )
+	{
+		if (!(cond->flags & 1))
+		{
+			if (i == permModIdx)
+			{
+				*hashkeyOut = conds.hashmethods.GetCondStructHashkey(cond->condStruct);
+				int numArgs = cond->condStruct->numArgs;
+				for (int i = 0; i < numArgs; i++)
+				{
+					condArgsOut[i++] = cond->args[i];
+				}
+				return cond->condStruct->numArgs;
+			}
+			++i;
+		}
+		cond = cond->nextCondNode;
+	}
+
+
+	cond = dispatcher->itemConds;
+	while (cond)
+	{
+		if (! (cond->flags & 1))
+		{
+			if (i == permModIdx)
+			{
+				*hashkeyOut = conds.hashmethods.GetCondStructHashkey(cond->condStruct);
+				int numArgs = cond->condStruct->numArgs;
+				for (i = 0; i < numArgs; i++)
+				{
+					condArgsOut[i++] = cond->args[i];
+				}
+				return cond->condStruct->numArgs;
+			}
+			i++;
+		}
+		cond = cond->nextCondNode;
+	}
+	if (!cond) return 0;
 }

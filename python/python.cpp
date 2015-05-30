@@ -285,7 +285,7 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 	}
 	else if (!_strcmpi(name, "proto"))
 	{
-		return  PyLong_FromLongLong(objects.ObjGetProtoNum(obj->objHandle));
+		return  PyLong_FromLongLong(objects.GetProtoNum(obj->objHandle));
 	}
 	else if (!_strcmpi(name, "description")){
 		return  PyString_FromString(objects.description._getDisplayName(obj->objHandle,obj->objHandle));

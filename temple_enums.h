@@ -1753,7 +1753,7 @@ enum enum_dispIO_type : uint32_t {
 	dispIOTypeSavingThrow,
 	dispIOTypeDamage,
 	dispIOTypeAttackBonus, // AC
-	dispIoTypeSendSignal,
+	dispIoTypeSendSignal, // Usages detected: dispTypeD20AdvanceTime (6), dispTypeBeginRound (48), and of course also dispTypeD20Signal (28)
 	dispIOTypeQuery,
 	dispIOTypeTurnBasedStatus,
 	dispIoTypeTooltip,
@@ -1793,13 +1793,13 @@ enum enum_disp_type : uint32_t {
 	dispTypeConditionAddFromD20StatusInit,
 	dispType6,
 	dispTypeTurnBasedStatusInit,
-	dispType8,
+	dispTypeInitiative,
 	dispType9,
 	dispTypeAbilityScoreLevel,
 	dispTypeGetAC,
 	dispType12,
 	dispTypeSaveThrowLevel, // goes with keys DK_SAVE_X 
-	dispType14,
+	dispTypeSaveThrowSpellResistanceBonus, // only used for Inward Magic Circle
 	dispTypeToHitBonusBase,
 	dispTypeToHitBonus2,
 	dispType17,
@@ -1821,7 +1821,7 @@ enum enum_disp_type : uint32_t {
 	dispType33,
 	dispType34,
 	dispTypeBaseCasterLevelMod,
-	dispType36,
+	dispTypeD20ActnCheck,
 	dispType37,
 	dispType38,
 	dispType39,
@@ -1829,11 +1829,11 @@ enum enum_disp_type : uint32_t {
 	dispType41,
 	dispType42,
 	dispType43,
-	dispType44,
+	dispTypeCountersongSaveThrow,
 	dispTypeSpellResistanceMod,
 	dispTypeSpellDcBase, // haven't seen this actually used, just the mod dispatch (for Spell Focus and the Gnome bonus for Illusion spells)
 	dispTypeSpellDcMod,
-	dispType48,
+	dispTypeBeginRound, // immediately followed by the OnBeginRound spell trigger. Commonly used for spell countdown / removal when finished
 	dispType49,
 	dispType50,
 	dispType51,

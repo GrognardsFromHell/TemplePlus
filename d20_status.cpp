@@ -90,7 +90,7 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 
 	objects.SetDispatcher(objHnd, (uint32_t)dispatcher);
 
-	objects.dispatch.DispatcherClearAttribs(dispatcher);
+	objects.dispatch.DispatcherClearPermanentMods(dispatcher);
 
 	if (objects.IsCritter(objHnd))
 	{
@@ -156,6 +156,21 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 		}
 	}
 	return;
+}
+
+void D20StatusSystem::D20StatusRefresh(objHndl objHnd)
+{
+	Dispatcher *dispatcher; 
+	hooked_print_debug_message("Refreshing D20 Status for %s", description.getDisplayName(objHnd));
+	dispatcher = objects.GetDispatcher(objHnd);
+	if (dispatch.dispatcherValid(dispatcher)){
+		dispatch.PackDispatcherIntoObjFields(objHnd, dispatcher);
+		dispatch.DispatcherClearPermanentMods(dispatcher);
+		initClass(objHnd);
+		initRace(objHnd);
+		initFeats(objHnd);
+		D20StatusInitFromInternalFields(objHnd, dispatcher);	
+	}
 }
 
 void D20StatusSystem::initDomains(objHndl objHnd)
@@ -242,4 +257,50 @@ void D20StatusSystem::initItemConditions(objHndl objHnd)
 
 	}
 	return;
+}
+
+void D20StatusSystem::D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher* dispatcher)
+{
+	CondStruct *condStruct;
+	int condArgs[64];
+
+	dispatch.DispatcherClearConds(dispatcher);
+	int numConds = objects.getArrayFieldNumItems(objHnd, obj_f_conditions);
+	int numPermMods = objects.getArrayFieldNumItems(objHnd, obj_f_permanent_mods);
+	for (int i=0,j= 0; i < numConds; i++)
+	{
+		condStruct = conds.hashmethods.GetCondStruct(objects.getArrayFieldInt32(objHnd, obj_f_conditions, i));
+		if (condStruct)
+		{
+			for (int k = 0; k < condStruct->numArgs; k++)
+			{
+				condArgs[k++] = objects.getArrayFieldInt32(objHnd, obj_f_condition_arg0, j++);
+			}
+			if (memcmp(condStruct->condName, "Unconscious", 12u))
+				conds.InitCondFromCondStructAndArgs(dispatcher, condStruct, condArgs);
+		}
+	}
+	for ( int i=0,j = 0 ; i < numPermMods; ++i)
+	{
+		condStruct  = conds.hashmethods.GetCondStruct(objects.getArrayFieldInt32(objHnd, obj_f_permanent_mods, i));
+		if (!condStruct)
+		{
+			logger->debug("Missing condStruct for {}", description.getDisplayName(objHnd));
+			break;
+		}
+
+		for (int k = 0; k < condStruct->numArgs; k++)
+		{
+			condArgs[k++] = objects.getArrayFieldInt32(objHnd, obj_f_permanent_mod_data, j++);
+		}
+		conds.SetPermanentModArgsFromDataFields(dispatcher, condStruct, condArgs);
+	}
+	conds.DispatcherCondsResetFlag2(dispatcher);
+
+
+	DispIoD20Signal dispIo;
+	dispIo.dispIOType = dispIoTypeSendSignal;
+	dispIo.data1 = 0;
+	dispIo.data2 = 0;
+	dispatch.DispatcherProcessor(dispatcher, dispTypeD20Signal, DK_SIG_Unpack, &dispIo);
 }

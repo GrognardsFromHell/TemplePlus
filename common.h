@@ -103,7 +103,7 @@ struct LocFull {
 struct GroupArray {
 	objHndl GroupMembers[32];
 	uint32_t * GroupSize;
-	void* unknownfunc;
+	int (__cdecl*sortFunc)(void*, void*); // used for comparing two items (e.g. alphabetic sorting)
 };
 
 struct JumpPointPacket {

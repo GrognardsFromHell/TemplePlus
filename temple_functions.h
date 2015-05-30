@@ -57,7 +57,6 @@ struct TempleFuncs : AddressTable {
 	int(__cdecl *Obj_Set_IdxField_byValue)(objHndl, _fieldIdx, _fieldSubIdx, ...);
 	void(__cdecl *Obj_Set_IdxField_byPtr)(objHndl, _fieldIdx, _fieldSubIdx, void * _SourceData);
 	int(__cdecl *Obj_Set_IdxField_ObjHnd)(objHndl, _fieldIdx, _fieldSubIdx, objHndl);
-	void(__cdecl *Obj_Clear_IdxField)(objHndl, _fieldIdx);
 #pragma endregion
 
 	PyObject*  (__cdecl *PyObjFromObjHnd) (objHndl);
@@ -72,19 +71,7 @@ struct TempleFuncs : AddressTable {
 	uint32_t(__cdecl *XPReqForLevel)(uint32_t level);
 	uint32_t(__cdecl *ObjXPGainProcess)(objHndl, uint32_t nXPGainRaw);
 
-	uint32_t(__cdecl *sub_10152280)(objHndl, objHndl);
-
-	
-
-	//PyObject* (*PyObjFromObjHnd)();
-
-
-
-	uint32_t(__cdecl *ObjSpellKnownQueryGetData)(objHndl objHnd, uint32_t spellEnums, uint32_t *_classCodes, uint32_t *_spellLevels, uint32_t *_numSpellsFound);
-	uint32_t(__cdecl *ObjGetMaxSpellSlotLevel)(objHndl ObjHnd, uint32_t statClassIdx, uint32_t arg3);
-
-
-	
+	uint32_t(__cdecl *sub_10152280)(objHndl, objHndl);	
 
 	void (__cdecl *TurnProcessing)(objHndl obj);
 

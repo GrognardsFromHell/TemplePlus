@@ -42,7 +42,7 @@ struct DispatcherSystem : AddressTable
 	bool dispatcherValid(Dispatcher * dispatcher);
 	void DispatcherProcessor(Dispatcher * dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO * dispIO);
 	void  DispatcherClearField(Dispatcher * dispatcher, CondNode ** dispCondList);
-	void  DispatcherClearAttribs(Dispatcher * dispatcher);
+	void  DispatcherClearPermanentMods(Dispatcher * dispatcher);
 	void  DispatcherClearItemConds(Dispatcher * dispatcher);
 	void  DispatcherClearConds(Dispatcher *dispatcher);
 	
@@ -65,7 +65,7 @@ struct DispatcherSystem : AddressTable
 	DispIoDispelCheck* DispIOCheckIoType11(DispIoDispelCheck* dispIo);
 	DispIoD20ActionTurnBased* DispIOCheckIoType12(DispIoD20ActionTurnBased* dispIo);
 	DispIOBonusListAndSpellEntry* DispIOCheckIoType14(DispIOBonusListAndSpellEntry* dispIo);
-
+	void PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher* dispatcher);
 #pragma endregion
 
 	uint32_t(__cdecl * dispatcherForCritters)(objHndl, DispIO *, enum_disp_type, uint32_t dispKey);
@@ -267,9 +267,9 @@ struct DispIoD20ActionTurnBased : DispIO{ // dispIoType = 12; matches dispTypes 
 
 struct Dispatcher :TempleAlloc {
 	objHndl objHnd;
-	CondNode* attributeConds;
+	CondNode* permanentMods;
 	CondNode* itemConds;
-	CondNode* otherConds;
+	CondNode* conditions;
 	SubDispNode* subDispNodes[dispTypeCount];
 };
 
@@ -283,7 +283,7 @@ Dispatcher* _DispatcherInit(objHndl objHnd);
 
 void  _DispatcherRemoveSubDispNodes(Dispatcher * dispatcher, CondNode * cond);
 void  _DispatcherClearField(Dispatcher *dispatcher, CondNode ** dispCondList);
-void  _DispatcherClearAttribs(Dispatcher *dispatcher);
+void  _DispatcherClearPermanentMods(Dispatcher *dispatcher);
 void  _DispatcherClearItemConds(Dispatcher *dispatcher);
 void  _DispatcherClearConds(Dispatcher *dispatcher);
 
@@ -299,6 +299,7 @@ DispIoTooltip* _DispIoCheckIoType9(DispIoTooltip* dispIo);
 DispIoDispelCheck * _DispIoCheckIoType11(DispIoDispelCheck* dispIo);
 DispIoD20ActionTurnBased * _DispIoCheckIoType12(DispIoD20ActionTurnBased* dispIo);
 DispIOBonusListAndSpellEntry * __cdecl _DispIoCheckIoType14(DispIOBonusListAndSpellEntry *dispIO);
+void __cdecl _PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher*dispatcher);
 
 void DispIOType21Init(DispIoType21* dispIO);
 

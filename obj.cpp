@@ -17,6 +17,23 @@ Objects objects;
 
 static_assert(validate_size<CondNode, 36>::value, "Condition node structure has incorrect size.");
 
+struct ObjectSystemAddresses : AddressTable
+{
+	uint32_t(__cdecl *GetProtoNum)(objHndl);
+
+	uint32_t(__cdecl *GetArrayFieldNumItems)(objHndl obj, obj_f fieldIdx);
+	void(__cdecl *ClearArrayField)(objHndl, obj_f);
+	void(__cdecl * PropCollectionRemoveField)(objHndl objHnd, obj_f fieldIdx);
+	ObjectSystemAddresses()
+	{
+		rebase(GetProtoNum, 0x10039320);
+
+		rebase(GetArrayFieldNumItems, 0x1009E7E0);
+		rebase(ClearArrayField, 0x1009E860);
+		rebase(PropCollectionRemoveField, 0x1009E9C0);
+	}
+} addresses;
+
 
 class ObjectReplacements : public TempleFix {
 public:
@@ -131,7 +148,7 @@ objHndl Objects::getObjHnd(objHndl obj, obj_f fieldIdx)
 		{
 			ObjectId objIdtemp;
 			memcpy(&objIdtemp, &objBody->protoId, sizeof(ObjectId));
-			objBody->protoHandle = lookupInHandlesList(objIdtemp);
+			objBody->protoHandle = GetHandle(objIdtemp);
 		}
 		return objBody->protoHandle;
 	} 
@@ -169,6 +186,13 @@ void Objects::setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx,
 	return;
 }
 
+void Objects::setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, int data)
+{
+	FieldDataMax fdm;
+	fdm.data[0] = data;
+	setArrayFieldByValue(obj, fieldIdx, subIdx, fdm);
+}
+
 int32_t Objects::getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx)
 {
 	GameObjectBody * objBody = _GetMemoryAddress(obj);
@@ -197,7 +221,12 @@ void Objects::getArrayField(objHndl obj, obj_f fieldIdx, uint32_t subIdx, void* 
 
 uint32_t Objects::getArrayFieldNumItems(objHndl obj, obj_f fieldIdx)
 {
-	return _getArrayFieldNumItems(obj, fieldIdx);
+	return addresses.GetArrayFieldNumItems(obj, fieldIdx);
+}
+
+void Objects::ClearArrayField(objHndl objHnd, obj_f objF)
+{
+	addresses.ClearArrayField(objHnd, objF);
 }
 
 void Objects::InsertDataIntoInternalStack(GameObjectBody * objBody, obj_f fieldIdx, void * dataIn)
@@ -221,11 +250,6 @@ void Objects::InsertDataIntoInternalStack(GameObjectBody * objBody, obj_f fieldI
 	}
 }
 
-objHndl Objects::lookupInHandlesList(ObjectId objId)
-{
-	return _lookupInHandlesList(objId);
-}
-
 int Objects::ObjectIdPrint(char* printOut, ObjectId objId)
 {
 	return _ObjectIdPrint(printOut, objId);
@@ -236,52 +260,69 @@ Objects::Objects()
 	pathfinding = &pathfindingSys;
 	loc = &locSys;
 	floats = &floatSys;
-	rebase(_VerifyHandle, 0x100C2D00);
-	rebase(_GetId, 0x1009CA40);
-	rebase(_GetHandle, 0x100C3050);
-	rebase(_Create, 0x10028D20);
-	rebase(_GetReaction, 0x10054180);
-	rebase(_AdjustReaction, 0x10053F20);
-	rebase(_GetInternalFieldInt32, 0x1009E1D0);
-	rebase(_GetInternalFieldInt64, 0x1009E2E0);
-	rebase(_GetInternalFieldFloat, 0x1009E260);
-	rebase(_GetInternalFieldInt32Array, 0x1009E5C0);
-	rebase(_StatLevelGet, 0x10074800);
-	rebase(_StatLevelGetBase, 0x10074CF0);
-	rebase(_StatLevelSetBase, 0x10074E10);
-	rebase(_GetSize, 0x1004D690);
-	rebase(_Move, 0x10025950);
-	rebase(_SetInternalFieldInt32, 0x100A0190);
-	rebase(_setArrayFieldLowLevel,0x100A0500); 
-	rebase(_SetInternalFieldFloat, 0x100A0190); // This is actually the same function as 32-bit heh
-	rebase(_getArrayFieldNumItems,0x1009E7E0); 
-	rebase(_IsPlayerControlled, 0x1002B390);
-	rebase(_ObjGetProtoNum, 0x10039320);
-	rebase(_FindFreeSpot, 0x100BDB50);
-	rebase(_IsObjDeadNullDestroyed, 0x1007E650);
-	rebase(_GetMemoryAddress, 0x100C2A70);
-	rebase(_DoesObjectFieldExist, 0x1009C190);
-	rebase(_ObjectPropFetcher, 0x1009CD40);
-	rebase(_getArrayFieldInternal,0x1009CEB0); 
-	rebase(_lookupInHandlesList,0x100C3050); 
-	rebase(_DLLFieldNames, 0x102CD840);
-	rebase(_InsetDataIntoInternalStack, 0x1009EA80);
 	rebase(_GetDisplayName, 0x1001F970);
-	rebase(_AiForceSpreadOut, 0x1005A640);
-	rebase(_GetRadius, 0x10021C40);
+
+
+	rebase(_SetFlag,	0x10020F50);
+	rebase(_ClearFlag,	0x10021020);
+	rebase(_GetRadius,	0x10021C40);
+
+	rebase(_Destroy,	0x100257A0);
+	rebase(_Move,		0x10025950);
+	rebase(_Create,		0x10028D20);
+	
+	rebase(_IsPlayerControlled, 0x1002B390);
+
+	rebase(_SecretdoorDetect,	0x10046920);
+	rebase(_FadeTo,				0x1004C390);
+	rebase(_GetSize,			0x1004D690);
+
+	rebase(_AdjustReaction,		0x10053F20);
+	rebase(_GetReaction,		0x10054180);
+
+	rebase(_AiForceSpreadOut,	0x1005A640);
+	
+	rebase(_StatLevelGet,			0x10074800);
+	rebase(_StatLevelGetBase,		0x10074CF0);
+	rebase(_StatLevelSetBase,		0x10074E10);
+
+	rebase(_HasSpellEffects,		0x10076370);
+
+	rebase(_IsObjDeadNullDestroyed, 0x1007E650);
+
+	rebase(_GetId, 0x1009CA40);
+
+	rebase(_DoesObjectFieldExist,	0x1009C190);
+	rebase(_ObjectPropFetcher,		0x1009CD40);
+	rebase(_getArrayFieldInternal, 0x1009CEB0);
+
+	rebase(_GetInternalFieldInt32,		0x1009E1D0);
+	rebase(_GetInternalFieldInt64,		0x1009E2E0);
+	rebase(_GetInternalFieldFloat,		0x1009E260);
+	rebase(_GetInternalFieldInt32Array, 0x1009E5C0);
+	rebase(_InsetDataIntoInternalStack, 0x1009EA80);
+
+
+
+	rebase(_SetInternalFieldInt32,	0x100A0190);
+	rebase(_setArrayFieldLowLevel,	0x100A0500); 
+	rebase(_SetInternalFieldFloat,	0x100A0190); // This is actually the same function as 32-bit heh
+
+
+	rebase(_PortalToggleOpen,	0x100B4700);
+
 	rebase(_TargetRandomTileNear, 0x100B99A0);
-	rebase(_FadeTo, 0x1004C390);
+	rebase(_FindFreeSpot,		  0x100BDB50);
 
-	rebase(_SetFlag, 0x10020F50);
-	rebase(_ClearFlag, 0x10021020);
+	rebase(_ObjectIdPrint,		0x100C2460);
+	rebase(_GetMemoryAddress,	0x100C2A70);
+	rebase(_VerifyHandle,		0x100C2D00);
+	rebase(_GetHandle,			0x100C3050);
+	rebase(_lookupInHandlesList,0x100C3050);
 
-	rebase(_PortalToggleOpen, 0x100B4700);
 	rebase(_ContainerToggleOpen, 0x1010EA00);
-	rebase(_SecretdoorDetect, 0x10046920);
-	rebase(_HasSpellEffects, 0x10076370);
-	rebase(_Destroy, 0x100257A0);
 
-	rebase(_ObjectIdPrint, 0x100C2460);
+	rebase(_DLLFieldNames,		0x102CD840);
 }
 
 void Objects::PropFetcher(GameObjectBody* objBody, obj_f fieldIdx, void * dataOut) {
@@ -325,7 +366,7 @@ void Objects::fieldNonexistantDebug(unsigned long long obj, GameObjectBody* objB
 	uint32_t subtype = objBody->id.subtype;
 	uint32_t protonum = 0;
 	if (subtype == 1)	protonum = objBody->id.guid.Data1;
-	else if (subtype == 2)	protonum = ObjGetProtoNum(obj);
+	else if (subtype == 2)	protonum = GetProtoNum(obj);
 	hooked_print_debug_message("Sonavabitch proto is %d", protonum);
 	if (protonum < 12624 || protonum > 12680)
 	{
@@ -418,7 +459,7 @@ Dice Objects::GetHitDice(objHndl handle) {
 
 // Reimplements 100801D0
 int Objects::GetHitDiceNum(objHndl handle) {
-	int result = _getArrayFieldNumItems(handle, obj_f_critter_level_idx);
+	int result = getArrayFieldNumItems(handle, obj_f_critter_level_idx);
 	if (GetType(handle) == obj_t_npc) {
 		result += _GetInternalFieldInt32Array(handle, obj_f_npc_hitdice_idx, 0);
 	}
@@ -526,9 +567,9 @@ bool Objects::IsPlayerControlled(objHndl obj)
 	return _IsPlayerControlled(obj);
 }
 
-uint32_t Objects::ObjGetProtoNum(objHndl obj)
+uint32_t Objects::GetProtoNum(objHndl obj)
 {
-	return _ObjGetProtoNum(obj);
+	return addresses.GetProtoNum(obj);
 }
 
 string Objects::GetDisplayName(objHndl obj, objHndl observer) {
@@ -550,6 +591,11 @@ int Objects::StatLevelGetBase(objHndl obj, Stat stat)
 int Objects::StatLevelSetBase(objHndl obj, Stat stat, int value)
 {
 	return _StatLevelSetBase(obj, stat, value);
+}
+
+void Objects::PropCollectionRemoveField(objHndl objHnd, obj_f objF)
+{
+	addresses.PropCollectionRemoveField(objHnd, objF);
 }
 
 bool Objects::IsContainer(objHndl objHnd)

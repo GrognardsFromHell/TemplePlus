@@ -108,6 +108,7 @@ struct SpellSystem : AddressTable
 	
 	uint32_t spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry);
 	uint32_t ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
+	uint32_t GetMaxSpellSlotLevel(objHndl objHnd, Stat classCode, int casterLvl);
 	MesHandle * spellEnumMesHandle;
 
 	uint32_t getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t classLvl, uint32_t slotLvl, uint32_t unknown1);
@@ -202,7 +203,7 @@ uint32_t _EvilClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel);
 void EvilClericRadialSpontCastSpellEnumHook();
 void GoodClericRadialSpontCastSpellEnumHook();
 
-const uint32_t TestSizeOfSpellStoreData = sizeof(SpellStoreData);
+
 
 const uint32_t TestSizeOfMetaMagicData = sizeof(MetaMagicData);
 const uint32_t TestSizeOfSpellStoreType = sizeof(SpellStoreType);

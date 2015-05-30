@@ -19,14 +19,21 @@ struct SpellCondListEntry {
 static struct SpellAddresses : AddressTable {
 	SpellCondListEntry *spellConds;
 
+
 	void (__cdecl *UpdateSpellPacket)(const SpellPacketBody &spellPktBody);
+	uint32_t(__cdecl*GetMaxSpellSlotLevel)(objHndl objHnd, Stat classCode, int casterLvl);
+
 
 	uint32_t(__cdecl * ConfigSpellTargetting)(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
 
 	SpellAddresses() {
 		rebase(UpdateSpellPacket, 0x10075730);
+		rebase(GetMaxSpellSlotLevel, 0x100765B0);
+
+		rebase(ConfigSpellTargetting, 0x100B9690);
+
 		rebase(spellConds, 0x102E2600);
-		macRebase(ConfigSpellTargetting, 100B9690)
+		
 	}
 } addresses;
 
@@ -100,6 +107,11 @@ uint32_t SpellSystem::spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEnt
 uint32_t SpellSystem::ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPktBody)
 {
 	return addresses.ConfigSpellTargetting(pickerArgs, spellPktBody);
+}
+
+uint32_t SpellSystem::GetMaxSpellSlotLevel(objHndl objHnd, Stat classCode, int casterLvl)
+{
+	return addresses.GetMaxSpellSlotLevel(objHnd, classCode, casterLvl);
 }
 
 uint32_t SpellSystem::getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t classLvl, uint32_t slotLvl, uint32_t unknown1)
@@ -178,7 +190,7 @@ CondStruct* SpellSystem::GetCondFromSpellIdx(int id) {
 }
 
 void SpellSystem::ForgetMemorized(objHndl handle) {
-	templeFuncs.Obj_Clear_IdxField(handle, obj_f_critter_spells_memorized_idx);
+	objects.ClearArrayField(handle, obj_f_critter_spells_memorized_idx);
 }
 
 uint32_t SpellSystem::getSpellEnum(const char* spellName)

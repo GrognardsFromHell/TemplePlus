@@ -156,14 +156,14 @@ void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCra
 		uint32_t classCodes[SPELL_ENUM_MAX] = { 0, };
 		uint32_t spellLevels[SPELL_ENUM_MAX] = { 0, };
 		uint32_t spellFoundNum = 0;
-		int casterKnowsSpell = templeFuncs.ObjSpellKnownQueryGetData(objHndCrafter, spellData.spellEnum, classCodes, spellLevels, &spellFoundNum);
+		int casterKnowsSpell = spellSys.spellKnownQueryGetData(objHndCrafter, spellData.spellEnum, classCodes, spellLevels, &spellFoundNum);
 		if (casterKnowsSpell){
 			uint32_t spellClassFinal = classCodes[0];
 			uint32_t spellLevelFinal = 0;
 			uint32_t isClassSpell = classCodes[0] & (0x80);
 
 			if (isClassSpell){
-				spellLevelFinal = templeFuncs.ObjGetMaxSpellSlotLevel(objHndCrafter, classCodes[0] & (0x7F), 0);
+				spellLevelFinal = spellSys.GetMaxSpellSlotLevel(objHndCrafter, static_cast<Stat>(classCodes[0] & 0x7F), 0);
 			};
 			if (spellFoundNum > 1){
 				for (uint32_t i = 1; i < spellFoundNum; i++){

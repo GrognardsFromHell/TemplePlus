@@ -97,8 +97,8 @@ TempleFuncs::TempleFuncs()
 {
 	rebase(ProcessSystemEvents, 0x101DF440);
 	rebase(StringHash, 0x101EBB00);
-	macRebase(RNG, 10038DF5)
-	macRebase(encodeTriplet, 10038C50)
+	rebase(RNG,0x10038DF5); 
+	rebase(encodeTriplet,0x10038C50); 
 	rebase(UpdatePartyUI, 0x10134CB0);
 	rebase(PartyMoney, 0x1002B750);
 	rebase(DebitPartyMoney, 0x1002C020);
@@ -126,8 +126,6 @@ TempleFuncs::TempleFuncs()
 	rebase(Obj_Set_IdxField_byValue, 0x100A1310);
 	rebase(Obj_Set_IdxField_byPtr, 0x100A1540);
 	rebase(Obj_Set_IdxField_ObjHnd, 0x100A14A0);
-	rebase(Obj_Clear_IdxField, 0x1009E860);
-
 
 #pragma endregion
 
@@ -144,15 +142,6 @@ TempleFuncs::TempleFuncs()
 
 	rebase(sub_10152280, 0x10152280);
 	rebase(CraftMagicArmsAndArmorSthg, 0x10150B20);
-
-
-
-
-
-
-	rebase(ObjSpellKnownQueryGetData, 0x100762D0);
-	rebase(ObjGetMaxSpellSlotLevel, 0x100765B0);
-
 
 
 	rebase(_ItemWorthFromEnhancements, 0x101509C0);

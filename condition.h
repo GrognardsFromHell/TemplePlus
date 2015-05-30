@@ -28,6 +28,21 @@ struct CondHashSystem : ToEEHashtableSystem < CondStruct >
 		return result;
 	}
 
+	int GetCondStructHashkey(CondStruct* condStruct)
+	{
+		auto condHashTable = (ToEEHashtable < CondStruct >*)temple_address(CondStructHastableAddr);
+		int N = HashtableNumItems(condHashTable);
+
+		for (int i = 0; i < N;i++)
+		{
+			if (condStruct == HashtableGetDataPtr(condHashTable, i))
+			{
+				return HashtableGetKey(condHashTable, i);
+			}
+		}
+		return 0;
+	};
+
 	CondStruct * GetCondStruct(uint32_t key)
 	{
 		CondStruct * condOut = nullptr;
@@ -115,6 +130,8 @@ public:
 	int32_t CondNodeGetArg(CondNode* condNode, uint32_t argIdx);
 	void CondNodeSetArg(CondNode* condNode, uint32_t argIdx, uint32_t argVal);
 
+	void CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNodeNew);
+	void InitCondFromCondStructAndArgs(Dispatcher* dispatcher, CondStruct* condStruct, int* condargs);
 
 #pragma endregion
 
@@ -146,7 +163,12 @@ public:
 		rebase(mCondStructHashtable, 0x11868F60);
 	}
 
-
+	void SetPermanentModArgsFromDataFields(Dispatcher* dispatcher, CondStruct* condStruct, int *condArgs);
+	void DispatcherCondsResetFlag2(Dispatcher* dispatcher);
+	int GetActiveCondsNum(Dispatcher* dispatcher);
+	int GetPermanentModsAndItemCondCount(Dispatcher* dispatcher);
+	int ConditionsExtractInfo(Dispatcher* dispatcher, int condIdx, int* hashkeyOut, int *condsArgsOut);
+	int PermanentAndItemModsExtractInfo(Dispatcher* dispatcher, int permModIdx, int* hashkeyOut, int * condsArgs);
 };
 
 extern ConditionSystem conds;
@@ -175,7 +197,7 @@ uint32_t _ConditionAdd_NumArgs1(Dispatcher* dispatcher, CondStruct* condStruct, 
 uint32_t _ConditionAdd_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2);
 uint32_t _ConditionAdd_NumArgs3(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3);
 uint32_t _ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4);
-
+void InitCondFromCondStructAndArgs(Dispatcher *dispatcher, CondStruct *condStruct, int *condargs);
 
 uint32_t ConditionPrevent(DispatcherCallbackArgs args);
 

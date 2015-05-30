@@ -44,9 +44,11 @@ struct Objects : AddressTable {
 	objHndl getObjHnd(objHndl obj, obj_f fieldIdx);
 	void setInt32(objHndl obj, obj_f fieldIdx, uint32_t dataIn);
 	void setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, FieldDataMax data);
+	void setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, int data);
 	int32_t getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx);
 	void getArrayField(objHndl obj, obj_f fieldIdx, uint32_t subIdx, void * dataOut);
 	uint32_t getArrayFieldNumItems(objHndl obj, obj_f fieldIdx);
+	void ClearArrayField(objHndl objHnd, obj_f objF);
 
 	uint32_t abilityScoreLevelGet(objHndl, Stat, DispIO *);
 	locXY GetLocation(objHndl handle) {
@@ -203,7 +205,7 @@ struct Objects : AddressTable {
 	bool IsContainer(objHndl objHnd);
 	bool IsNPC(objHndl obj);
 	bool IsPlayerControlled(objHndl obj);
-	uint32_t ObjGetProtoNum(objHndl obj);
+	uint32_t GetProtoNum(objHndl obj);
 	string GetDisplayName(objHndl obj, objHndl observer);
 
 	uint32_t StatLevelGet(objHndl obj, Stat stat);
@@ -222,6 +224,7 @@ struct Objects : AddressTable {
 		return;
 	}
 
+	void PropCollectionRemoveField(objHndl objHnd, obj_f objF);
 
 
 #pragma endregion
@@ -255,8 +258,6 @@ struct Objects : AddressTable {
 
 	void InsertDataIntoInternalStack(GameObjectBody * objBody, obj_f fieldIdx, void * dataIn);
 
-	objHndl lookupInHandlesList(ObjectId objId);// 100C3050
-
 	int ObjectIdPrint(char * printOut, ObjectId objId);
 #pragma endregion 
 
@@ -283,11 +284,9 @@ private:
 	int(__cdecl *_StatLevelSetBase)(objHndl ObjHnd, Stat, int);
 	int(__cdecl *_GetSize)(objHndl handle);
 	void(__cdecl *_SetInternalFieldInt32)(objHndl objHnd, obj_f fieldIdx, uint32_t data32);
-	uint32_t(__cdecl *_getArrayFieldNumItems)(objHndl obj, obj_f fieldIdx);// 1009E7E0
 	void(__cdecl * _setArrayFieldLowLevel)(obj_f fieldIdx, uint32_t subIdx); // GameObjectBody *@<ecx>, sourceData *@<eax>
 	void(__cdecl *_SetInternalFieldFloat)(objHndl objHnd, obj_f fieldIdx, float data);
 	bool(__cdecl * _IsPlayerControlled)(objHndl objHnd);
-	uint32_t(__cdecl *_ObjGetProtoNum)(objHndl);
 	uint32_t(__cdecl *_IsObjDeadNullDestroyed)(objHndl);
 	GameObjectBody * (__cdecl *_GetMemoryAddress)(objHndl ObjHnd);
 	bool(__cdecl *_DoesObjectFieldExist)();

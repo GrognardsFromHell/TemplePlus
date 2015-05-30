@@ -28,10 +28,11 @@ public:
 		replaceFunction(0x1004D840, _DispIoCheckIoType11);
 		replaceFunction(0x1004D860, _DispIoCheckIoType12);
 		replaceFunction(0x1004D8A0, _DispIoCheckIoType14);
+		replaceFunction(0x1004F780, _PackDispatcherIntoObjFields);
 
 		replaceFunction(0x100E1E30, _DispatcherRemoveSubDispNodes);
 		replaceFunction(0x100E2400, _DispatcherClearField);
-		replaceFunction(0x100E2720, _DispatcherClearAttribs);
+		replaceFunction(0x100E2720, _DispatcherClearPermanentMods);
 		replaceFunction(0x100E2740, _DispatcherClearItemConds);
 		replaceFunction(0x100E2760, _DispatcherClearConds);
 		replaceFunction(0x100E2120, _DispatcherProcessor);
@@ -70,14 +71,14 @@ void  DispatcherSystem::DispatcherClearField(Dispatcher * dispatcher, CondNode *
 	_DispatcherClearField(dispatcher, dispCondList);
 }
 
-void  DispatcherSystem::DispatcherClearAttribs(Dispatcher * dispatcher)
+void  DispatcherSystem::DispatcherClearPermanentMods(Dispatcher * dispatcher)
 {
-	_DispatcherClearAttribs(dispatcher);
+	_DispatcherClearField(dispatcher, &dispatcher->permanentMods);
 }
 
 void  DispatcherSystem::DispatcherClearItemConds(Dispatcher * dispatcher)
 {
-	_DispatcherClearItemConds(dispatcher);
+	_DispatcherClearField(dispatcher, &dispatcher->itemConds);
 }
 
 void  DispatcherSystem::DispatcherClearConds(Dispatcher *dispatcher)
@@ -225,6 +226,41 @@ DispIOBonusListAndSpellEntry* DispatcherSystem::DispIOCheckIoType14(DispIOBonusL
 	return dispIo;
 }
 
+void DispatcherSystem::PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher* dispatcher)
+{
+	int numArgs;
+	int k;
+	int hashkey;
+	int numConds;
+	int condArgs[64];
+
+	k = 0;
+	d20Sys.d20SendSignal(objHnd, DK_SIG_Pack, 0, 0);
+	objects.PropCollectionRemoveField(objHnd, obj_f_conditions);
+	objects.PropCollectionRemoveField(objHnd, obj_f_condition_arg0);
+	objects.ClearArrayField(objHnd, obj_f_permanent_mods);
+	objects.ClearArrayField(objHnd, obj_f_permanent_mod_data);
+	numConds = conds.GetActiveCondsNum(dispatcher);
+	for (int i = 0; i < numConds; i++)
+	{
+		numArgs = conds.ConditionsExtractInfo(dispatcher, i, &hashkey, condArgs);
+		objects.setArrayFieldByValue(objHnd, obj_f_conditions, i, hashkey);
+		for (int j = 0; j < numArgs; ++k)
+			objects.setArrayFieldByValue(objHnd, obj_f_condition_arg0, k, condArgs[j++]);
+	}
+	k = 0;
+	numConds = conds.GetPermanentModsAndItemCondCount(dispatcher);
+	for (int i = 0; i < numConds; i++)
+	{
+		numArgs = conds.PermanentAndItemModsExtractInfo(dispatcher, i, &hashkey, condArgs);
+		if (hashkey)
+		{
+			objects.setArrayFieldByValue(objHnd, obj_f_permanent_mods, i, hashkey);
+			for (int j = 0; j < numArgs; ++k)
+				objects.setArrayFieldByValue(objHnd, obj_f_permanent_mod_data, k, condArgs[j++]);
+		}
+	}
+}
 
 
 void DispatcherSystem::DispIoDamageInit(DispIoDamage* dispIoDamage)
@@ -318,9 +354,9 @@ void __cdecl _DispatcherClearField(Dispatcher *dispatcher, CondNode ** dispCondL
 	*dispCondList = nullptr;
 };
 
-void __cdecl _DispatcherClearAttribs(Dispatcher *dispatcher)
+void __cdecl _DispatcherClearPermanentMods(Dispatcher *dispatcher)
 {
-	_DispatcherClearField(dispatcher, &dispatcher->attributeConds);
+	_DispatcherClearField(dispatcher, &dispatcher->permanentMods);
 };
 
 void __cdecl _DispatcherClearItemConds(Dispatcher *dispatcher)
@@ -330,7 +366,7 @@ void __cdecl _DispatcherClearItemConds(Dispatcher *dispatcher)
 
 void __cdecl _DispatcherClearConds(Dispatcher *dispatcher)
 {
-	_DispatcherClearField(dispatcher, &dispatcher->otherConds);
+	_DispatcherClearField(dispatcher, &dispatcher->conditions);
 };
 
 DispIoCondStruct * _DispIoCheckIoType1(DispIoCondStruct * dispIo)
@@ -391,6 +427,11 @@ DispIoD20ActionTurnBased* _DispIoCheckIoType12(DispIoD20ActionTurnBased* dispIo)
 DispIOBonusListAndSpellEntry* _DispIoCheckIoType14(DispIOBonusListAndSpellEntry* dispIO)
 {
 	return dispatch.DispIOCheckIoType14(dispIO);
+}
+
+void _PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher* dispatcher)
+{
+	dispatch.PackDispatcherIntoObjFields(objHnd, dispatcher);
 };
 
 void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO) {
@@ -458,9 +499,9 @@ Dispatcher* _DispatcherInit(objHndl objHnd) {
 		condNode = condNode->nextCondNode;
 	}
 	dispatcherNew->objHnd = objHnd;
-	dispatcherNew->attributeConds = nullptr;
+	dispatcherNew->permanentMods = nullptr;
 	dispatcherNew->itemConds = nullptr;
-	dispatcherNew->otherConds = nullptr;
+	dispatcherNew->conditions = nullptr;
 	return dispatcherNew;
 };
 

@@ -6,18 +6,18 @@
 
 class BonusSysReplacements : public TempleFix
 {
-	macTempleFix(History System)
+	public: const char* name() override { return "History System" "Function Replacements";} void apply() override 
 	{
-		macReplaceFun(100E6490, _isBonusNotMaximal)
-		macReplaceFun(100E6110, _bonusAddToBonusList)
-		macReplaceFun(100E60D0,_initBonusList)
-		macReplaceFun(100E6260, _bonusAddToBonusListWithDescr)
-		macReplaceFun(100E62A0, _bonusCapAdd)
-		macReplaceFun(100E6340,_bonusCapAddWithDescr)
-		macReplaceFun(100E6410, _isBonusCapped)
-		macReplaceFun(100E63B0, _getNumBonuses)
-		macReplaceFun(100E6380, _zeroBonusSetMeslineNum)
-		macReplaceFun(100E61A0, _bonusSetOverallCap)
+		replaceFunction(0x100E6490, _isBonusNotMaximal); 
+		replaceFunction(0x100E6110, _bonusAddToBonusList); 
+		replaceFunction(0x100E60D0, _initBonusList); 
+		replaceFunction(0x100E6260, _bonusAddToBonusListWithDescr); 
+		replaceFunction(0x100E62A0, _bonusCapAdd); 
+		replaceFunction(0x100E6340, _bonusCapAddWithDescr); 
+		replaceFunction(0x100E6410, _isBonusCapped); 
+		replaceFunction(0x100E63B0, _getNumBonuses); 
+		replaceFunction(0x100E6380, _zeroBonusSetMeslineNum); 
+		replaceFunction(0x100E61A0, _bonusSetOverallCap); 
 	}
 } bonusSystemReplacements;
 
