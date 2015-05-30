@@ -156,14 +156,14 @@ static PyObject * PyObjHandle_Inventory(TemplePyObjHandle* obj, PyObject * pyTup
 	int j = 0;
 	if (bIncludeBackpack){
 		for (int i = 0; (j < nItems) & (i < nMax); i++){
-			ItemObjHnds[j] = objects.inventory.GetItemAtInventoryLocation(ObjHnd, i);
+			ItemObjHnds[j] = objects.inventory.GetItemAtInvIdx(ObjHnd, i);
 			if (ItemObjHnds[j]){ j++; };
 		}
 	};
 
 	if (bIncludeEquipped){
 		for (int i = CRITTER_EQUIPPED_ITEM_OFFSET; (j < nItems) & (i < CRITTER_EQUIPPED_ITEM_OFFSET + CRITTER_EQUIPPED_ITEM_SLOTS); i++){
-			ItemObjHnds[j] = objects.inventory.GetItemAtInventoryLocation(ObjHnd, i);
+			ItemObjHnds[j] = objects.inventory.GetItemAtInvIdx(ObjHnd, i);
 			if (ItemObjHnds[j]){ j++; };
 		}
 	};
@@ -193,7 +193,7 @@ static PyObject * PyObjHandle_InventoryItem(TemplePyObjHandle* obj, PyObject * p
 			nMax = CONTAINER_MAX_ITEMS;
 		};
 		if (n < nMax){
-			return templeFuncs.PyObjFromObjHnd(objects.inventory.GetItemAtInventoryLocation(ObjHnd, n));
+			return templeFuncs.PyObjFromObjHnd(objects.inventory.GetItemAtInvIdx(ObjHnd, n));
 		};
 		
 	};

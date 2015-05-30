@@ -200,6 +200,7 @@ uint32_t _ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, 
 void InitCondFromCondStructAndArgs(Dispatcher *dispatcher, CondStruct *condStruct, int *condargs);
 
 uint32_t ConditionPrevent(DispatcherCallbackArgs args);
+int SkillBonusCallback(DispatcherCallbackArgs args); 
 
 uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** ppCondStruct, uint32_t * arg2);
 uint32_t _CondStructAddToHashtable(CondStruct * condStruct);

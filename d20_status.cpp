@@ -249,10 +249,10 @@ void D20StatusSystem::initItemConditions(objHndl objHnd)
 			for (uint32_t i = 0; i < invenCount; i++)
 			{
 				objHndl objHndItem = templeFuncs.Obj_Get_IdxField_ObjHnd(objHnd, obj_f_critter_inventory_list_idx, i);
-				uint32_t itemInvocation = objects.getInt32(objHndItem, obj_f_item_inv_location);
-				if (inventory.IsItemEffectingConditions(objHndItem, itemInvocation))
+				uint32_t itemInvLocation = objects.getInt32(objHndItem, obj_f_item_inv_location);
+				if (inventory.IsItemEffectingConditions(objHndItem, itemInvLocation))
 				{
-					inventory.sub_100FF500(dispatcher, objHndItem, itemInvocation);
+					inventory.sub_100FF500(dispatcher, objHndItem, itemInvLocation);
 				}
 			}
 		}

@@ -4,6 +4,7 @@
 #include "condition.h"
 #include "temple_functions.h"
 #include "obj.h"
+#include "bonus.h"
 
 ConditionSystem conds;
 struct ConditionSystemAddresses : AddressTable
@@ -23,7 +24,7 @@ public:
 
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
-
+		
 		replaceFunction(0x100E19C0, _CondStructAddToHashtable);
 		replaceFunction(0x100E1A80, _GetCondStructFromHashcode);
 		replaceFunction(0x100E1AB0, _CondNodeGetArg);
@@ -39,9 +40,10 @@ public:
 		replaceFunction(0x100E2590, _ConditionAdd_NumArgs4);
 		replaceFunction(0x100E25C0, InitCondFromCondStructAndArgs);
 		replaceFunction(0x100ECF30, ConditionPrevent);
+		replaceFunction(0x10101150, SkillBonusCallback);
 		
 		replaceFunction(0x100F7BE0, _GetCondStructFromFeat);
-
+		
 	}
 } condFuncReplacement;
 
@@ -224,6 +226,25 @@ uint32_t ConditionPrevent(DispatcherCallbackArgs args)
 	}
 	return 0;
 };
+
+int __cdecl SkillBonusCallback(DispatcherCallbackArgs args)
+{
+	/*
+	used by conditions: Skill Circumstance Bonus, Skill Competence Bonus
+	*/
+	SkillEnum skillEnum = (SkillEnum)conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+	int bonValue = conds.CondNodeGetArg(args.subDispNode->condNode, 1);
+	int bonType = args.subDispNode->subDispDef->data1;
+	if (args.dispKey - 20 == skillEnum)
+	{
+		int invIdx = conds.CondNodeGetArg(args.subDispNode->condNode, 2);
+		objHndl itemHnd = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+		DispIoBonusAndObj * dispIo = dispatch.DispIoCheckIoType10((DispIoBonusAndObj*)args.dispIO);
+		const char * name = description.getDisplayName(itemHnd, args.objHndCaller);
+		bonusSys.bonusAddToBonusListWithDescr(dispIo->bonOut, bonValue, bonType, 112, (char*)name);
+	}
+	return 0;
+}
 
 uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** condStructOut, uint32_t * arg2Out)
 {
@@ -412,14 +433,21 @@ int ConditionSystem::ConditionsExtractInfo(Dispatcher* dispatcher, int activeCon
 	n = 0;
 	while (cond)
 	{
-		if (cond->flags & 1)
+		if (!(cond->flags & 1))
 		{
-			cond = cond->nextCondNode;
-			continue;
+			if (n == activeCondIdx)
+			{
+				*hashkeyOut = conds.hashmethods.GetCondStructHashkey(cond->condStruct);
+				int numArgs = cond->condStruct->numArgs;
+				for (int i = 0; i < numArgs; i++)
+				{
+					condArgsOut[i] = cond->args[i];
+				}
+				return cond->condStruct->numArgs;
+			}
+			++n;
 		}
-		if (n == activeCondIdx)
-			break;
-		n++;
+		cond = cond->nextCondNode;
 	}
 	if (!cond) return 0;
 
@@ -427,7 +455,7 @@ int ConditionSystem::ConditionsExtractInfo(Dispatcher* dispatcher, int activeCon
 	numArgs = cond->condStruct->numArgs;
 	for (int i = 0; i < numArgs; i++)
 	{
-		condArgsOut[i++] = cond->args[i];
+		condArgsOut[i] = cond->args[i];
 	}
 	return cond->condStruct->numArgs;
 }
@@ -449,7 +477,7 @@ int ConditionSystem::PermanentAndItemModsExtractInfo(Dispatcher* dispatcher, int
 				int numArgs = cond->condStruct->numArgs;
 				for (int i = 0; i < numArgs; i++)
 				{
-					condArgsOut[i++] = cond->args[i];
+					condArgsOut[i] = cond->args[i];
 				}
 				return cond->condStruct->numArgs;
 			}
@@ -470,7 +498,7 @@ int ConditionSystem::PermanentAndItemModsExtractInfo(Dispatcher* dispatcher, int
 				int numArgs = cond->condStruct->numArgs;
 				for (i = 0; i < numArgs; i++)
 				{
-					condArgsOut[i++] = cond->args[i];
+					condArgsOut[i] = cond->args[i];
 				}
 				return cond->condStruct->numArgs;
 			}

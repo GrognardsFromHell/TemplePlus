@@ -17,6 +17,7 @@ public:
 
 	void apply() override {
 		logger->info("Replacing basic Dispatcher functions");
+		
 		replaceFunction(0x1004D700, _DispIoCheckIoType1);
 		replaceFunction(0x1004D720, _DispIoCheckIoType2);
 		replaceFunction(0x1004D760, _DispIoCheckIoType4);
@@ -25,11 +26,12 @@ public:
 		replaceFunction(0x1004D7C0, _DispIoCheckIoType7);
 		replaceFunction(0x1004D7E0, _DispIoCheckIoType8);
 		replaceFunction(0x1004D800, _DispIoCheckIoType9);
+		replaceFunction(0x1004D820, _DispIoCheckIoType10);
 		replaceFunction(0x1004D840, _DispIoCheckIoType11);
 		replaceFunction(0x1004D860, _DispIoCheckIoType12);
 		replaceFunction(0x1004D8A0, _DispIoCheckIoType14);
 		replaceFunction(0x1004F780, _PackDispatcherIntoObjFields);
-
+		
 		replaceFunction(0x100E1E30, _DispatcherRemoveSubDispNodes);
 		replaceFunction(0x100E2400, _DispatcherClearField);
 		replaceFunction(0x100E2720, _DispatcherClearPermanentMods);
@@ -43,6 +45,7 @@ public:
 		replaceFunction(0x1004E040, _DispatchDamage);
 		replaceFunction(0x1004E790, _dispatchTurnBasedStatusInit); 
 		replaceFunction(0x1004ED70, _dispatch1ESkillLevel); 
+		
  
 	}
 } dispatcherReplacements;
@@ -88,7 +91,7 @@ void  DispatcherSystem::DispatcherClearConds(Dispatcher *dispatcher)
 
 int32_t DispatcherSystem::dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut, objHndl objHnd2, int32_t flag)
 {
-	DispIO390h dispIO;
+	DispIoBonusAndObj dispIO;
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (!dispatcherValid(dispatcher)) return 0;
 
@@ -207,6 +210,12 @@ DispIoTooltip* DispatcherSystem::DispIoCheckIoType9(DispIoTooltip* dispIo)
 	return dispIo;
 }
 
+DispIoBonusAndObj* DispatcherSystem::DispIoCheckIoType10(DispIoBonusAndObj* dispIo)
+{
+	if (dispIo->dispIOType != dispIOTypeSkillLevel) return nullptr;
+	return dispIo;
+}
+
 DispIoDispelCheck* DispatcherSystem::DispIOCheckIoType11(DispIoDispelCheck* dispIo)
 {
 	if (dispIo->dispIOType != dispIOTypeDispelCheck) return nullptr;
@@ -232,7 +241,8 @@ void DispatcherSystem::PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher* d
 	int k;
 	int hashkey;
 	int numConds;
-	int condArgs[64];
+	int condArgs[64] = {0,};
+	const char* name = description.getDisplayName(objHnd);
 
 	k = 0;
 	d20Sys.d20SendSignal(objHnd, DK_SIG_Pack, 0, 0);
@@ -246,7 +256,10 @@ void DispatcherSystem::PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher* d
 		numArgs = conds.ConditionsExtractInfo(dispatcher, i, &hashkey, condArgs);
 		objects.setArrayFieldByValue(objHnd, obj_f_conditions, i, hashkey);
 		for (int j = 0; j < numArgs; ++k)
+		{
 			objects.setArrayFieldByValue(objHnd, obj_f_condition_arg0, k, condArgs[j++]);
+		}
+			
 	}
 	k = 0;
 	numConds = conds.GetPermanentModsAndItemCondCount(dispatcher);
@@ -257,10 +270,14 @@ void DispatcherSystem::PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher* d
 		{
 			objects.setArrayFieldByValue(objHnd, obj_f_permanent_mods, i, hashkey);
 			for (int j = 0; j < numArgs; ++k)
+			{
 				objects.setArrayFieldByValue(objHnd, obj_f_permanent_mod_data, k, condArgs[j++]);
+			}
+				
 		}
 	}
 }
+
 
 
 void DispatcherSystem::DispIoDamageInit(DispIoDamage* dispIoDamage)
@@ -412,6 +429,11 @@ DispIOTurnBasedStatus* _DispIoCheckIoType8(DispIOTurnBasedStatus* dispIo)
 DispIoTooltip* _DispIoCheckIoType9(DispIoTooltip* dispIo)
 {
 	return dispatch.DispIoCheckIoType9(dispIo);
+}
+
+DispIoBonusAndObj* _DispIoCheckIoType10(DispIoBonusAndObj* dispIo)
+{
+	return dispatch.DispIoCheckIoType10(dispIo);
 }
 
 DispIoDispelCheck* _DispIoCheckIoType11(DispIoDispelCheck* dispIo)

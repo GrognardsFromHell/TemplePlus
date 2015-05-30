@@ -7,7 +7,6 @@
 
 
 
-
 struct DispIO;
 struct DispIoCondStruct; // 1
 struct DispIoBonusList; // 2
@@ -18,6 +17,7 @@ struct DispIoD20Signal; // 6
 struct DispIoD20Query; // 7
 struct DispIOTurnBasedStatus; // 8
 struct DispIoTooltip; // 9
+struct DispIoBonusAndObj; // 10
 struct DispIoDispelCheck; // 11
 struct DispIoD20ActionTurnBased; // 12
 struct DispIOBonusListAndSpellEntry; // 14
@@ -62,10 +62,12 @@ struct DispatcherSystem : AddressTable
 	DispIoD20Query* DispIoCheckIoType7(DispIoD20Query* dispIo);
 	DispIOTurnBasedStatus* DispIoCheckIoType8(DispIOTurnBasedStatus* dispIo);
 	DispIoTooltip* DispIoCheckIoType9(DispIoTooltip* dispIo);
+	DispIoBonusAndObj* DispIoCheckIoType10(DispIoBonusAndObj* dispIo);
 	DispIoDispelCheck* DispIOCheckIoType11(DispIoDispelCheck* dispIo);
 	DispIoD20ActionTurnBased* DispIOCheckIoType12(DispIoD20ActionTurnBased* dispIo);
 	DispIOBonusListAndSpellEntry* DispIOCheckIoType14(DispIOBonusListAndSpellEntry* dispIo);
 	void PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher* dispatcher);
+	
 #pragma endregion
 
 	uint32_t(__cdecl * dispatcherForCritters)(objHndl, DispIO *, enum_disp_type, uint32_t dispKey);
@@ -230,7 +232,7 @@ struct DispIoType21 : DispIO { // DispIoType 21
 	}
 };
 
-struct DispIO390h : DispIO
+struct DispIoBonusAndObj : DispIO // type 10
 {
 	uint32_t returnVal;
 	BonusList * bonOut;
@@ -244,7 +246,7 @@ struct DispIOTurnBasedStatus : DispIO // type 8
 	TurnBasedStatus * tbStatus;
 };
 
-const int TestSizeOfDispIO390h = sizeof(DispIO390h); // should be 912 (0x390)
+const int TestSizeOfDispIO390h = sizeof(DispIoBonusAndObj); // should be 912 (0x390)
 
 struct DispIOBonusListAndSpellEntry: DispIO { // Type 14
 	BonusList * bonList;
@@ -296,6 +298,7 @@ DispIoD20Signal* _DispIoCheckIoType6(DispIoD20Signal* dispIo);
 DispIoD20Query* _DispIoCheckIoType7(DispIoD20Query* dispIo);
 DispIOTurnBasedStatus * _DispIoCheckIoType8(DispIOTurnBasedStatus* dispIo);
 DispIoTooltip* _DispIoCheckIoType9(DispIoTooltip* dispIo);
+DispIoBonusAndObj * _DispIoCheckIoType10(DispIoBonusAndObj *dispIo);
 DispIoDispelCheck * _DispIoCheckIoType11(DispIoDispelCheck* dispIo);
 DispIoD20ActionTurnBased * _DispIoCheckIoType12(DispIoD20ActionTurnBased* dispIo);
 DispIOBonusListAndSpellEntry * __cdecl _DispIoCheckIoType14(DispIOBonusListAndSpellEntry *dispIO);
