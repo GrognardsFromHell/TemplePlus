@@ -4,6 +4,7 @@
 #include "critter.h"
 #include "obj.h"
 #include "temple_functions.h"
+#include "d20_obj_registry.h"
 
 
 D20StatusSystem d20StatusSys;
@@ -94,7 +95,7 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 
 	if (objects.IsCritter(objHnd))
 	{
-		hooked_print_debug_message("D20Status Init for %s", description.getDisplayName(objHnd));
+	//	hooked_print_debug_message("D20Status Init for %s", description.getDisplayName(objHnd));
 		initClass(objHnd);
 
 		initRace(objHnd);
@@ -104,6 +105,7 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 	}
 	else
 	{
+		hooked_print_debug_message("Attempted D20Status Init for non-critter %s", description.getDisplayName(objHnd));
 		debugLol++;
 		if (debugLol % 1000 == 1)
 		{
@@ -115,7 +117,7 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 
 	d20StatusSys.D20StatusInitFromInternalFields(objHnd, dispatcher);
 
-	objects.d20.D20ObjRegistryAppend(objHnd);
+	d20ObjRegistrySys.Append(objHnd);
 
 	if (*objects.d20.d20EditorMode != 0){ return; }
 

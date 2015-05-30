@@ -286,6 +286,9 @@
     <ClCompile Include="d20_levelup.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="d20_obj_registry.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -577,6 +580,9 @@
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
     <ClInclude Include="d20_levelup.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="d20_obj_registry.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
   </ItemGroup>
