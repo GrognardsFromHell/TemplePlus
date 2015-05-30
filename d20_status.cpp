@@ -113,11 +113,11 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 
 	initItemConditions(objHnd);
 
-	objects.d20.D20StatusInitFromInternalFields(objHnd, dispatcher);
+	d20StatusSys.D20StatusInitFromInternalFields(objHnd, dispatcher);
 
-	objects.d20.AppendObjHndToArray10BCAD94(objHnd);
+	objects.d20.D20ObjRegistryAppend(objHnd);
 
-	if (*objects.d20.D20GlobalSthg10AA3284 != 0){ return; }
+	if (*objects.d20.d20EditorMode != 0){ return; }
 
 	if (objects.IsCritter(objHnd))
 	{
@@ -274,7 +274,7 @@ void D20StatusSystem::D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher
 		{
 			for (int k = 0; k < condStruct->numArgs; k++)
 			{
-				condArgs[k++] = objects.getArrayFieldInt32(objHnd, obj_f_condition_arg0, j++);
+				condArgs[k] = objects.getArrayFieldInt32(objHnd, obj_f_condition_arg0, j++);
 			}
 			if (memcmp(condStruct->condName, "Unconscious", 12u))
 				conds.InitCondFromCondStructAndArgs(dispatcher, condStruct, condArgs);
@@ -291,7 +291,7 @@ void D20StatusSystem::D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher
 
 		for (int k = 0; k < condStruct->numArgs; k++)
 		{
-			condArgs[k++] = objects.getArrayFieldInt32(objHnd, obj_f_permanent_mod_data, j++);
+			condArgs[k] = objects.getArrayFieldInt32(objHnd, obj_f_permanent_mod_data, j++);
 		}
 		conds.SetPermanentModArgsFromDataFields(dispatcher, condStruct, condArgs);
 	}

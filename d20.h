@@ -52,9 +52,9 @@ struct D20System : AddressTable
 	void D20ActnSetSpellData(D20SpellData* d20SpellData, uint32_t spellEnumOrg, uint32_t spellClassCode, uint32_t spellSlotLevel, uint32_t itemSpellData, uint32_t metaMagicData);
 	void GlobD20ActnSetSpellData(D20SpellData* d20SpellData);
 	void (__cdecl *D20StatusInitFromInternalFields)(objHndl objHnd, Dispatcher *dispatcher);
-	void (__cdecl *AppendObjHndToArray10BCAD94)(objHndl ObjHnd);
+	void (__cdecl *D20ObjRegistryAppend)(objHndl ObjHnd);
 	void(__cdecl * _d20aTriggerCombatCheck)(int32_t idx);//1008AE90    ActnSeq * @<eax>
-	uint32_t * D20GlobalSthg10AA3284;
+	uint32_t * d20EditorMode;
 	void(__cdecl *ToHitProc)(D20Actn *);
 	uint32_t (__cdecl*_tumbleCheck)(D20Actn* d20a);
 	int32_t (__cdecl *_d20aTriggersAOO)(void * iO); // d20a @<esi> // 1008A9C0
@@ -150,9 +150,11 @@ enum SpontCastType : unsigned char{
 #pragma endregion 
 
 #pragma region D20 Action Function Replacements
+void __cdecl _D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher* dispatcher);
 void _D20StatusInitRace(objHndl objHnd);
 void _D20StatusInitClass(objHndl objHnd);
 void _D20StatusInit(objHndl objHnd);
+void _D20StatusRefresh(objHndl objHnd);
 void _D20StatusInitDomains(objHndl objHnd);
 void _D20StatusInitFeats(objHndl objHnd);
 void _D20StatusInitItemConditions(objHndl objHnd);

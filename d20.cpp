@@ -30,12 +30,14 @@ public:
 
 	void apply() override {
 		
+		replaceFunction(0x1004F910, _D20StatusInitFromInternalFields);
 		replaceFunction(0x1004CA00, _D20StatusInitItemConditions);
 		replaceFunction(0x1004CC00, _D20Query);
 		replaceFunction(0x1004CC60, _d20QueryWithData);
 		replaceFunction(0x1004E6B0, _d20SendSignal);
 		replaceFunction(0x1004CD40, _d20QueryReturnData);
 		replaceFunction(0x1004FDB0, _D20StatusInit);
+		replaceFunction(0x1004FF30, _D20StatusRefresh);
 		
 		replaceFunction(0x10077850, D20SpellDataExtractInfo);
 		replaceFunction(0x10077830, D20SpellDataSetSpontCast);
@@ -82,8 +84,8 @@ D20System::D20System()
 	d20Class = &d20ClassSys;
 	d20Status = &d20StatusSys;
 	rebase(D20StatusInitFromInternalFields, 0x1004F910);
-	rebase(AppendObjHndToArray10BCAD94, 0x100DFAD0);
-	rebase(D20GlobalSthg10AA3284, 0x10AA3284);
+	rebase(D20ObjRegistryAppend, 0x100DFAD0);
+	rebase(d20EditorMode, 0x10AA3284);
 	rebase(globD20Action, 0x1186AC00);
 	rebase(ToHitProc, 0x100B7160);
 	rebase(d20Defs, 0x102CC5C8);
@@ -368,6 +370,15 @@ void _D20StatusInit(objHndl objHnd)
 	d20Sys.d20Status->D20StatusInit(objHnd);
 	}
 
+void _D20StatusRefresh(objHndl objHnd)
+{
+	d20StatusSys.D20StatusRefresh(objHnd);
+}
+
+void _D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher * dispatcher)
+{
+	d20StatusSys.D20StatusInitFromInternalFields(objHnd,  dispatcher);
+}
 
 void _D20StatusInitRace(objHndl objHnd)
 {
