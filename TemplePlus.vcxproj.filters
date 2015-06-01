@@ -289,6 +289,9 @@
     <ClCompile Include="d20_obj_registry.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="hotkeys.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -584,6 +587,9 @@
     </ClInclude>
     <ClInclude Include="d20_obj_registry.h">
       <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="hotkeys.h">
+      <Filter>ui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

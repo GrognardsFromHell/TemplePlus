@@ -2,6 +2,8 @@
 //#include "obj.h"
 #include "common.h"
 
+// use radialmenu.h instead of this weaksauce
+
 struct RadialMenuStruct
 {
 	void * field0;

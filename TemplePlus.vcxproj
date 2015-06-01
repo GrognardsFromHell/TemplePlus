@@ -61,6 +61,7 @@
     <ClCompile Include="float_line.cpp" />
     <ClCompile Include="gameplay_configs.cpp" />
     <ClCompile Include="history.cpp" />
+    <ClCompile Include="hotkeys.cpp" />
     <ClCompile Include="location.cpp" />
     <ClCompile Include="maps.cpp" />
     <ClCompile Include="particles.cpp" />
@@ -265,6 +266,7 @@
     <ClInclude Include="fade.h" />
     <ClInclude Include="float_line.h" />
     <ClInclude Include="history.h" />
+    <ClInclude Include="hotkeys.h" />
     <ClInclude Include="location.h" />
     <ClInclude Include="maps.h" />
     <ClInclude Include="objlist.h" />
