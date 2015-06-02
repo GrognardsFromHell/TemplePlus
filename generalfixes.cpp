@@ -127,8 +127,30 @@ uint32_t __cdecl HookedFragarachAnswering(DispatcherCallbackArgs args) {
 		hooked_print_debug_message("Prevented Scather AoO bug! TB Actor is %s , Attachee is %s,  target is %s", description.getDisplayName(curActor), description.getDisplayName(attachee), description.getDisplayName(tgtObj) );
 		return 0;
 	}
-	auto result = OrgFragarachAnswering(args); // Call original method
-	return result;
+
+
+	/*
+	disable AoO effect for other identical conditions (so you don't get the 2 AoO Hang) // TODO: Makes this work like Great Cleave for maximum munchkinism
+	*/
+	if (conds.CondNodeGetArg(args.subDispNode->condNode, 0) == 1)
+	{
+		auto dispatcher = objects.GetDispatcher(args.objHndCaller);
+		auto cond = &dispatcher->itemConds;
+		while (*cond)
+		{
+			if ((*cond)->condStruct->condName == args.subDispNode->condNode->condStruct->condName
+				&& (*cond) != args.subDispNode->condNode)
+			{
+				(*cond)->args[0] = 0;
+			}
+			cond = &(*cond)->nextCondNode;
+		}
+		auto result = OrgFragarachAnswering(args); // Call original method
+		return result;
+	}
+	
+	return 0;
+	
 }
 
 class FragarachAoOFix : public TempleFix
