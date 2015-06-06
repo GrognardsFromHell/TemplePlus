@@ -43,8 +43,8 @@ struct FeatSystem : AddressTable
 
 	vector<feat_enums> GetFeats(objHndl handle); // This is what objHndl.feats in python returns ??
 
-	uint32_t rangerArcheryFeats[2 * 2];
-	uint32_t rangerTwoWeaponFeats[2 * 2];
+	uint32_t rangerArcheryFeats[3 * 2];
+	uint32_t rangerTwoWeaponFeats[3 * 2];
 
 
 	void(__cdecl *ToEE_WeaponFeatCheck)();

@@ -68,8 +68,8 @@ FeatSystem::FeatSystem()
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // table presupposes 10 items on each row, terminator character -1
-	uint32_t _rangerArcheryFeats[2 * 2] = { FEAT_RANGER_RAPID_SHOT, 2, FEAT_RANGER_MANYSHOT, 6 };
-	uint32_t _rangerTwoWeaponFeats[2 * 2] = { FEAT_TWO_WEAPON_FIGHTING_RANGER, 2, FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER, 6 };
+	uint32_t _rangerArcheryFeats[3 * 2] = { FEAT_RANGER_RAPID_SHOT, 2, FEAT_RANGER_MANYSHOT, 6, -1, -1 };
+	uint32_t _rangerTwoWeaponFeats[3 * 2] = { FEAT_TWO_WEAPON_FIGHTING_RANGER, 2, FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER, 6, -1, -1 };
 
 	memcpy(racialFeats, _racialFeatsTable, sizeof(racialFeats));
 	memcpy(rangerArcheryFeats, _rangerArcheryFeats, sizeof(rangerArcheryFeats));
