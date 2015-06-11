@@ -1571,6 +1571,9 @@ enum D20DispatcherKey : uint32_t {
 	DK_SKILL_USE_ROPE = 61,
 	DK_D20A_Check0 = 75, //D20Action Range
 	DK_D20A_Check68 = 143,
+
+	DK_NEWDAY_REST = 145, // for successfully resting (is also triggered for an 8 hour uninterrupted rest period)
+	DK_NEWDAY_CALENDARICAL = 146, // for starting a new calendarical day (or artificially adding a days period); I think it's only used for disease timers
 	DK_SIG_HP_Changed = 147,
 	DK_SIG_HealSkill = 0x94,
 	DK_SIG_Sequence = 0x95,
@@ -1791,44 +1794,44 @@ enum enum_disp_type : uint32_t {
 	dispTypeConditionAddPre,
 	dispTypeConditionRemove2,
 	dispTypeConditionAddFromD20StatusInit,
-	dispType6,
+	dispTypeD20AdvanceTime,
 	dispTypeTurnBasedStatusInit,
 	dispTypeInitiative,
-	dispType9,
+	dispTypeNewDay, // refers both to an uninterrupted 8 hour rest period (key 0x91), or a 1 day rest period (key 0x91), or a new calendarical day (with key 0x92)
 	dispTypeAbilityScoreLevel,
 	dispTypeGetAC,
-	dispType12,
+	dispTypeGetACBonus2, //in practice this is used for cappers like loss of Dex Bonus due to invisibility, but there's also an Inward Magic Circle spell effect using this. Could be a mistake though
 	dispTypeSaveThrowLevel, // goes with keys DK_SAVE_X 
 	dispTypeSaveThrowSpellResistanceBonus, // only used for Inward Magic Circle
 	dispTypeToHitBonusBase,
 	dispTypeToHitBonus2,
 	dispType17,
-	dispType18,
-	dispType19,
-	dispType20, // Combat
+	dispTypeDealingDamage,
 	dispTypeTakingDamage,
+	dispTypeDealingDamage2, 
+	dispTypeTakingDamage2,
 	dispType22,
 	dispType23,
-	dispType24,
+	dispTypeGetCriticalHitExtraDice, // runs for the attacker's dispatcher
 	dispTypeCurrentHP,
 	dispTypeMaxHP,
-	dispType27,
+	dispTypeInitiativeMod,
 	dispTypeD20Signal,
 	dispTypeD20Query,
 	dispTypeSkillLevel,
 	dispTypeRadialMenuEntry,
 	dispTypeTooltip,
 	dispType33,
-	dispType34,
+	dispTypeGetDefenderConcealmentMissChance, // defender bonus (e.g. if defender is invisible)
 	dispTypeBaseCasterLevelMod,
-	dispTypeD20ActnCheck,
+	dispTypeD20ActionCheck,
 	dispType37,
 	dispType38,
 	dispType39,
-	dispType40,
-	dispType41,
+	dispTypeGetMoveSpeedBase,
+	dispTypeGetMoveSpeed,
 	dispType42,
-	dispType43,
+	dispTypeGetAttackerConcealmentMissChance, // attacker penalty (e.g. if attacker is blind). Also applies to stuff like Blink spell
 	dispTypeCountersongSaveThrow,
 	dispTypeSpellResistanceMod,
 	dispTypeSpellDcBase, // haven't seen this actually used, just the mod dispatch (for Spell Focus and the Gnome bonus for Illusion spells)
@@ -1848,10 +1851,10 @@ enum enum_disp_type : uint32_t {
 
 	dispType60,
 	dispType61,
-	dispType62,
+	dispTypeImmunityTrigger,
 	dispType63,
-	dispType64,
-	dispType65,
+	dispTypeSpellImmunityCheck, 
+	dispTypeEffectTooltip, // for those little bonus flags on top of portraits
 	dispTypeStatBaseGet, // looks like this is intended to replace StatBaseGet function for Critters with Dispatchers
 	dispType67,
 	dispTypeItemForceRemove, // has a single function associated with this - 10104410 int __cdecl ItemForceRemoveCallback_SetItemPadWielderArgs(Dispatcher_Callback_Args args);

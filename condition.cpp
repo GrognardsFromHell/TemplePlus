@@ -5,8 +5,12 @@
 #include "temple_functions.h"
 #include "obj.h"
 #include "bonus.h"
+#include "radialmenu.h"
+#include "combat.h"
 
 ConditionSystem conds;
+CondStructNew conditionDisableAoO;
+
 struct ConditionSystemAddresses : AddressTable
 {
 	void(__cdecl* SetPermanentModArgsFromDataFields)(Dispatcher* dispatcher, CondStruct* condStruct, int* condArgs);
@@ -42,7 +46,9 @@ public:
 		replaceFunction(0x100ECF30, ConditionPrevent);
 		replaceFunction(0x10101150, SkillBonusCallback);
 		
+		replaceFunction(0x100F7B60, _FeatConditionsRegister);
 		replaceFunction(0x100F7BE0, _GetCondStructFromFeat);
+		
 		
 	}
 } condFuncReplacement;
@@ -244,6 +250,23 @@ int __cdecl SkillBonusCallback(DispatcherCallbackArgs args)
 		bonusSys.bonusAddToBonusListWithDescr(dispIo->bonOut, bonValue, bonType, 112, (char*)name);
 	}
 	return 0;
+}
+
+void _FeatConditionsRegister()
+{
+	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAttackOfOpportunity);
+	conds.hashmethods.CondStructAddToHashtable(conds.ConditionCastDefensively);
+	conds.hashmethods.CondStructAddToHashtable(conds.ConditionCombatCasting);
+	conds.hashmethods.CondStructAddToHashtable(conds.ConditionDealSubdualDamage );
+	conds.hashmethods.CondStructAddToHashtable(conds.ConditionDealNormalDamage);
+	conds.hashmethods.CondStructAddToHashtable(conds.ConditionFightDefensively);
+	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAnimalCompanionAnimal);
+	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAutoendTurn);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionDisableAoO); //NEW!
+	for (unsigned int i = 0; i < 84; i++)
+	{
+		conds.hashmethods.CondStructAddToHashtable(conds.FeatConditionDict[i].condStruct);
+	}
 }
 
 uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** condStructOut, uint32_t * arg2Out)
@@ -507,4 +530,45 @@ int ConditionSystem::PermanentAndItemModsExtractInfo(Dispatcher* dispatcher, int
 		cond = cond->nextCondNode;
 	}
 	if (!cond) return 0;
+}
+
+int* ConditionSystem::CondNodeGetArgPtr(CondNode* condNode, int argIdx)
+{
+	if (argIdx < condNode->condStruct->numArgs)
+		return (int*)&condNode->args[argIdx];
+	return 0;
+}
+
+ int __cdecl AoODisableRadialMenuInit(DispatcherCallbackArgs args)
+{
+	RadialMenuEntry radEntry;
+	radEntry.SetDefaults();
+	radEntry.maxArg = 1;
+	radEntry.minArg = 0;
+	radEntry.type = RadialMenuEntryType::Toggle;
+	radEntry.actualArg = (int)conds.CondNodeGetArgPtr(args.subDispNode->condNode, 0);
+	radEntry.callback = (void (__cdecl*)(objHndl, RadialMenuEntry*))temple_address(0x100F0200);
+	MesLine mesLine;
+	mesLine.key = 5105; //disable AoOs
+	if (!mesFuncs.GetLine(*combatSys.combatMesfileIdx, &mesLine) )
+	{
+		sprintf((char*)temple_address(0x10EEE228), "Disable Attacks of Opportunity");
+		mesLine.value = (char*) temple_address(0x10EEE228);
+	};
+	//mesFuncs.GetLine_Safe(*combatSys.combatMesfileIdx, &mesLine);
+	radEntry.text = (char*)mesLine.value;
+	radEntry.helpId = conds.hashmethods.StringHash("TAG_RADIAL_MENU_DISABLE_AOOS");
+	int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Options);
+	radialMenus.AddChildNode(args.objHndCaller, &radEntry, parentNode);
+	return 0;
+}
+
+int __cdecl AoODisableQueryAoOPossible(DispatcherCallbackArgs args)
+{
+	DispIoD20Query * dispIo = dispatch.DispIoCheckIoType7((DispIoD20Query*)args.dispIO);
+	if (dispIo->return_val && conds.CondNodeGetArg(args.subDispNode->condNode, 0))
+	{
+		dispIo->return_val = 0;
+	}
+	return 0;
 }

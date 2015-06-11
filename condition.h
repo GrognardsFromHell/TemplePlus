@@ -5,7 +5,10 @@
 #include "hashtable.h"
 
 const uint32_t CondStructHastableAddr = 0x11868F60;
-
+int __cdecl AoODisableRadialMenuInit(DispatcherCallbackArgs args);
+int __cdecl AoODisableQueryAoOPossible(DispatcherCallbackArgs args);
+uint32_t ConditionPrevent(DispatcherCallbackArgs args);
+extern CondStructNew conditionDisableAoO;
 
 struct CondFeatDictionary;
 
@@ -88,11 +91,14 @@ public:
 	CondFeatDictionary * FeatConditionDict; //102EEBF0   includes feats
 	CondStruct * ConditionAttackOfOpportunity;
 	CondStruct * ConditionCastDefensively;
+	CondStruct * ConditionCombatCasting;
 	CondStruct * ConditionDealSubdualDamage;
 	CondStruct * ConditionDealNormalDamage;
 	CondStruct * ConditionFightDefensively;
 	CondStruct * ConditionDisabled;
 	CondStruct * ConditionUnconscious;
+	CondStruct * ConditionAnimalCompanionAnimal;
+	CondStruct * ConditionAutoendTurn;
 
 
 
@@ -100,6 +106,8 @@ public:
 
 	ToEEHashtable<CondStruct> * mCondStructHashtable;
 
+	char mConditionDisableAoOName [100] ;
+	CondStructNew* mConditionDisableAoO;
 	/*
 		Returns the condition definition with the given name,
 		null if none exists.
@@ -128,6 +136,7 @@ public:
 		Get/Set a Condition Node's arg. Often used in the init callbacks of various conditions.
 	*/
 	int32_t CondNodeGetArg(CondNode* condNode, uint32_t argIdx);
+	int * CondNodeGetArgPtr(CondNode* condNode, int argIdx);
 	void CondNodeSetArg(CondNode* condNode, uint32_t argIdx, uint32_t argVal);
 
 	void CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNodeNew);
@@ -137,6 +146,9 @@ public:
 
 	ConditionSystem()
 	{
+		mConditionDisableAoO = &conditionDisableAoO;
+		memset(mConditionDisableAoOName, 0, sizeof(mConditionDisableAoOName));
+		memcpy(mConditionDisableAoOName, "Disable AoO", sizeof("Disable AoO")); 
 		rebase(ConditionGlobal, 0x102E8088);
 		rebase(pCondNodeGlobal, 0x10BCADA0);
 		rebase(ConditionArraySpellEffects, 0x102E2600);
@@ -154,13 +166,35 @@ public:
 		rebase(FeatConditionDict, 0x102EEBF0);
 		rebase(ConditionAttackOfOpportunity, 0x102ED5B0);
 		rebase(ConditionCastDefensively, 0x102ED630);
+		rebase(ConditionCombatCasting ,0x102ED738);
 		rebase(ConditionDealSubdualDamage, 0x102ED790);
 		rebase(ConditionDealNormalDamage, 0x102ED828);
 		rebase(ConditionFightDefensively, 0x102ECC38);
 		rebase(ConditionDisabled, 0x102E4A70);
 		rebase(ConditionUnconscious, 0x102E4CB0);
+		rebase(ConditionAnimalCompanionAnimal, 0x102EE590);
+		rebase(ConditionAutoendTurn, 0x102ED6C8);
 		
 		rebase(mCondStructHashtable, 0x11868F60);
+
+		mConditionDisableAoO->condName = mConditionDisableAoOName;
+		mConditionDisableAoO->numArgs = 1;
+		mConditionDisableAoO->subDispDefs[1].dispType = dispTypeRadialMenuEntry;
+		mConditionDisableAoO->subDispDefs[1].dispKey = 0;
+		mConditionDisableAoO->subDispDefs[1].dispCallback = AoODisableRadialMenuInit;
+		
+		mConditionDisableAoO->subDispDefs[0].dispType = dispTypeD20Query;
+		mConditionDisableAoO->subDispDefs[0].dispKey = DK_QUE_AOOPossible;
+		mConditionDisableAoO->subDispDefs[0].dispCallback = AoODisableQueryAoOPossible;
+		
+		mConditionDisableAoO->subDispDefs[2].dispType = dispTypeConditionAddPre;
+		mConditionDisableAoO->subDispDefs[2].dispKey = 0;
+		mConditionDisableAoO->subDispDefs[2].data1 = (uint32_t)&mConditionDisableAoO;;
+		mConditionDisableAoO->subDispDefs[2].dispCallback = (int(__cdecl *)(DispatcherCallbackArgs))ConditionPrevent;
+		
+		mConditionDisableAoO->subDispDefs[3].dispType = dispType0;
+		mConditionDisableAoO->subDispDefs[3].dispKey = 0;
+		mConditionDisableAoO->subDispDefs[3].dispCallback = 0;
 	}
 
 	void SetPermanentModArgsFromDataFields(Dispatcher* dispatcher, CondStruct* condStruct, int *condArgs);
@@ -169,6 +203,7 @@ public:
 	int GetPermanentModsAndItemCondCount(Dispatcher* dispatcher);
 	int ConditionsExtractInfo(Dispatcher* dispatcher, int condIdx, int* hashkeyOut, int *condsArgsOut);
 	int PermanentAndItemModsExtractInfo(Dispatcher* dispatcher, int permModIdx, int* hashkeyOut, int * condsArgs);
+
 };
 
 extern ConditionSystem conds;
@@ -199,9 +234,10 @@ uint32_t _ConditionAdd_NumArgs3(Dispatcher* dispatcher, CondStruct* condStruct, 
 uint32_t _ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4);
 void InitCondFromCondStructAndArgs(Dispatcher *dispatcher, CondStruct *condStruct, int *condargs);
 
-uint32_t ConditionPrevent(DispatcherCallbackArgs args);
+
 int SkillBonusCallback(DispatcherCallbackArgs args); 
 
+void _FeatConditionsRegister();
 uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** ppCondStruct, uint32_t * arg2);
 uint32_t _CondStructAddToHashtable(CondStruct * condStruct);
 CondStruct * _GetCondStructFromHashcode(uint32_t key);

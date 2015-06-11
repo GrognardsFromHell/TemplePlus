@@ -19,7 +19,7 @@ PyObject *PyDebug_DumpConds() {
 		
 		auto hooks = PyList_New(0);
 		auto hook = data->subDispDefs;
-		while (hook->dispCallback) {
+		while (hook->dispType) {
 			auto v = Py_BuildValue("IIIII", hook->dispCallback, hook->data1, hook->data2, hook->dispType, hook->dispKey);
 			PyList_Append(hooks, v);
 			hook++;

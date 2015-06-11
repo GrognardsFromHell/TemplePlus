@@ -234,6 +234,7 @@ void D20StatusSystem::initFeats(objHndl objHnd)
 	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionDealSubdualDamage);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionDealNormalDamage);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionFightDefensively);
+	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)conds.mConditionDisableAoO);
 }
 
 void D20StatusSystem::initItemConditions(objHndl objHnd)
@@ -274,7 +275,7 @@ void D20StatusSystem::D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher
 		condStruct = conds.hashmethods.GetCondStruct(objects.getArrayFieldInt32(objHnd, obj_f_conditions, i));
 		if (condStruct)
 		{
-			for (int k = 0; k < condStruct->numArgs; k++)
+			for (unsigned int k = 0; k < condStruct->numArgs; k++)
 			{
 				condArgs[k] = objects.getArrayFieldInt32(objHnd, obj_f_condition_arg0, j++);
 			}
@@ -291,7 +292,7 @@ void D20StatusSystem::D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher
 			break;
 		}
 
-		for (int k = 0; k < condStruct->numArgs; k++)
+		for (unsigned int k = 0; k < condStruct->numArgs; k++)
 		{
 			condArgs[k] = objects.getArrayFieldInt32(objHnd, obj_f_permanent_mod_data, j++);
 		}

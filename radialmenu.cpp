@@ -1,6 +1,7 @@
 
 #include "stdafx.h"
 #include "radialmenu.h"
+#include "condition.h"
 
 RadialMenus radialMenus;
 
@@ -32,8 +33,11 @@ static struct RadialMenuAddresses : AddressTable {
 
 	int(__cdecl *SetSpontaneousCastingAltNode)(objHndl handle, int parentIdx, SpellStoreData * spellData);
 	int(__cdecl *AddSpell)(objHndl handle, SpellStoreData * spellData, int * idxOut, const RadialMenuEntry & entry); //adds a spell to the Radial Menu
+	int(__cdecl * Sub_100F0200)(objHndl objHnd, RadialMenuEntry* radialMenuEntry);
 
 	RadialMenuAddresses() {
+		rebase(Sub_100F0200, 0x100F0200);
+
 		rebase(GetRadialMenu, 0x100F04D0);
 		rebase(SetDefaults, 0x100F0AF0);
 		
@@ -53,6 +57,8 @@ static struct RadialMenuAddresses : AddressTable {
 		rebase(standardNodeIndices, 0x11E76CE4);
 		rebase(d20RadialDefs, 0x102E8738);
 	}
+
+
 } addresses;
 
 const RadialMenu* RadialMenus::GetForObj(objHndl handle) {
@@ -75,6 +81,29 @@ const RadialMenuEntry& RadialMenus::GetLastSelected() {
 
 int RadialMenus::GetStandardNode(RadialMenuStandardNode node) {
 	return addresses.standardNodeIndices[(int)node];
+}
+
+int RadialMenus::Sub_100F0200(objHndl objHnd, RadialMenuEntry* radEntry)
+{
+	return addresses.Sub_100F0200(objHnd, radEntry);
+}
+
+int RadialMenus::AddChildNode(objHndl objHnd, RadialMenuEntry* radialMenuEntry, int parentIdx)
+{
+	auto radMenu = GetForObj(objHnd);
+	auto nodeCount = radMenu->nodeCount;
+	RadialMenuNode * node = (RadialMenuNode*)&radMenu->nodes[nodeCount];
+	((RadialMenu*)radMenu)->nodeCount++;
+	memcpy(&node->entry, radialMenuEntry, sizeof(RadialMenuEntry));
+	node->parent = parentIdx;
+	node->childCount = 0;
+	node->morphsTo = -1;
+	RadialMenuNode * parentNode = (RadialMenuNode*)&radMenu->nodes[parentIdx];
+	node->entry.textHash = conds.hashmethods.StringHash(radialMenuEntry->text);
+	parentNode->children[parentNode->childCount++] = nodeCount;
+	return nodeCount;
+
+//	return addresses.AddChildNode(objHnd, (const RadialMenuEntry &)radialMenuEntry, parentIdx);
 }
 
 void RadialMenuEntry::SetDefaults() {

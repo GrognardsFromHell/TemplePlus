@@ -547,7 +547,7 @@ void _dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBasedStatus* dispIOt
 uint32_t _Dispatch62(objHndl objHnd, DispIO* dispIO, uint32_t dispKey) {
 	Dispatcher* dispatcher = (Dispatcher *)objects.GetDispatcher(objHnd);
 	if (dispatcher != nullptr && (int32_t)dispatcher != -1) {
-		_DispatcherProcessor(dispatcher, dispType62, dispKey, dispIO);
+		_DispatcherProcessor(dispatcher, dispTypeImmunityTrigger, dispKey, dispIO);
 	}
 	return 0;
 }

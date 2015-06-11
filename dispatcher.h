@@ -116,6 +116,14 @@ struct SubDispDef {
 	uint32_t data2;
 };
 
+struct SubDispDefNew {
+	enum_disp_type dispType;
+	uint32_t dispKey;
+	int(__cdecl *dispCallback)(DispatcherCallbackArgs args);
+	uint32_t data1;
+	uint32_t data2;
+};
+
 /*
 	This defines a condition and what it does, while CondNode represents an instance of this or another condition.
 */
@@ -126,6 +134,13 @@ struct CondStruct {
 		This is a variable length array of dispatcher hooks that this condition has. Terminated by null.
 	*/
 	SubDispDef subDispDefs[1];
+};
+
+struct CondStructNew
+{
+	const char* condName;
+	unsigned int numArgs;
+	SubDispDefNew subDispDefs[100];
 };
 
 struct DispatcherCallbackArgs {

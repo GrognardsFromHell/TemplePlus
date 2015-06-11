@@ -44,7 +44,7 @@ struct RadialMenuEntry {
 
 	void SetDefaults();
 };
-
+const auto TestSizeOfRadialMenuEntry = sizeof(RadialMenuEntry); // should be 72 (0x48)
 struct RadialMenuNode {
 	RadialMenuEntry entry;
 	int children[50]; // Indices of children in the radial menu
@@ -132,6 +132,11 @@ public:
 	*/
 	int GetStandardNode(RadialMenuStandardNode node);
 
+	/*
+		a common callback, used for Checbox types mostly but some others as well
+	*/
+	int Sub_100F0200(objHndl objHnd, RadialMenuEntry *radEntry);
+	int AddChildNode(objHndl objHndCaller, RadialMenuEntry* radialMenuEntry, int parentIdx);
 };
 
 extern RadialMenus radialMenus;
