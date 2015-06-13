@@ -216,3 +216,16 @@ public: const char* name() override {
 			writeHex(0x1008D80E, "90 90 90 90 90");
 		}
 } sorcererSpellFailureFix;
+
+
+class CripplingStrikeFix : public TempleFix
+{
+	// fixes Str damage on crippling strike (should be 2 instead of 1)
+public: const char* name() override {
+	return "Crippling Strike Fix";
+};
+		void apply() override
+		{
+			writeHex(0x100F9B70, "6A 02");
+		}
+} cripplingStrikeFix;
