@@ -288,6 +288,37 @@ uint32_t CritterSystem::IsSubtypeFire(objHndl objHnd)
 	return IsCategorySubtype(objHnd, mc_subtye_fire);
 }
 
+float CritterSystem::GetReach(objHndl obj, D20ActionType actType)
+{
+	float naturalReach = objects.getInt32(obj, obj_f_critter_reach);
+	__asm{
+		fild naturalReach;
+		fstp naturalReach;
+	}
+	if (naturalReach < 0.01)
+		naturalReach = 5.0;
+	if (actType != D20A_TOUCH_ATTACK)
+	{
+		objHndl weapon = inventory.GetItemAtInvIdx(obj, 203);
+		if (weapon)
+		{
+			WeaponTypes weapType = (WeaponTypes)objects.getInt32(weapon, obj_f_weapon_type);
+			switch (weapType)
+			{
+			case wt_glaive:
+			case wt_guisarme:
+			case wt_longspear:
+			case wt_ranseur:
+			case wt_spike_chain:
+				return naturalReach + 3.0; // +5.0 - 2.0
+			default:
+				return naturalReach - 2.0;
+			}
+				
+		}
+	}
+	return naturalReach - 2.0;
+}
 #pragma region Critter Hooks
 uint32_t _isCritterCombatModeActive(objHndl objHnd)
 {

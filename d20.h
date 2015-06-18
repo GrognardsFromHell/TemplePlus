@@ -122,6 +122,14 @@ struct D20Actn
 
 const auto TestSizeOfD20Action = sizeof(D20Actn); // should be 88 (0x58)
 
+struct ActionCostPacket
+{
+	int hourglassCost;
+	int chargeAfterPicker; // flag I think; is only set at stuff that requires using the picker it seems
+	float moveDistCost;
+};
+const auto TestSizeOfActionCostPacket = sizeof(ActionCostPacket); // should be 12 (0xC)
+
 struct D20ActionDef
 {
 	uint32_t (__cdecl *addToSeqFunc)(D20Actn *, ActnSeq *, TurnBasedStatus*iO);
@@ -133,7 +141,7 @@ struct D20ActionDef
 	uint32_t (__cdecl * actionFrameFunc)(D20Actn* d20a);
 	void * projectilePerformFunc;
 	uint32_t pad_apparently;
-	uint32_t (__cdecl * moveFunc)(D20Actn* d20a, TurnBasedStatus* iO, LocAndOffsets * locAndOff); 
+	uint32_t(__cdecl * actionCost)(D20Actn* d20a, TurnBasedStatus* iO, ActionCostPacket * actionCostPacket);
 	void * unknownFunc3;
 	uint32_t flags; // not D20CAF I think; maybe the STD flags? path query flags?
 };

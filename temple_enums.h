@@ -1839,9 +1839,9 @@ enum enum_disp_type : uint32_t {
 	dispTypeBeginRound, // immediately followed by the OnBeginRound spell trigger. Commonly used for spell countdown / removal when finished
 	dispType49,
 	dispType50,
-	dispType51,
-	dispType52,
-	dispType53,
+	dispTypeGetNumAttacksBase,
+	dispTypeGetBonusAttacks,
+	dispTypeGetCritterNaturalAttacksNum,
 	dispType54,
 	dispType55,
 	dispType56,
@@ -2140,6 +2140,22 @@ enum ArmorType : uint32_t
 	ARMOR_TYPE_NONE = 0x10
 };
 
+enum WeaponFlags : uint32_t
+{
+	OWF_LOUD = 1,
+	OWF_SILENT= 2 ,
+	OWF_UNUSED_1 = 4,
+	OWF_UNUSED_2 = 8,
+	OWF_THROWABLE = 8,
+	OWF_TRANS_PROJECTILE = 16,
+	OWF_BOOMERANGS = 32,
+	OWF_IGNORE_RESISTANCE = 64,
+	OWF_DAMAGE_ARMOR = 128,
+	OWF_DEFAULT_THROWS = 256,
+	OWF_RANGED_WEAPON = 512,
+	OWF_WEAPON_LOADED = 1024,
+	OWF_MAGIC_STAFF = 2048
+};
 #pragma endregion 
 
 // Keep in sync with Python enum

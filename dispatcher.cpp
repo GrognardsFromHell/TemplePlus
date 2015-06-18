@@ -310,6 +310,21 @@ int32_t DispatcherSystem::DispatchDamage(objHndl objHnd, DispIoDamage* dispIoDam
 	return 1;
 }
 
+int DispatcherSystem::DispatchD20ActionCheck(D20Actn* d20a, TurnBasedStatus* turnBasedStatus, enum_disp_type dispType)
+{
+	auto dispatcher = objects.GetDispatcher(d20a->d20APerformer);
+	if (dispatch.dispatcherValid(dispatcher))
+	{
+		DispIoD20ActionTurnBased dispIo;
+		dispIo.tbStatus = turnBasedStatus;
+		dispIo.dispIOType = dispIOTypeD20ActionTurnBased;
+		dispIo.returnVal = 0;
+		dispIo.d20a = d20a;
+		dispatch.DispatcherProcessor(dispatcher, dispType, d20a->d20ActType + 75, &dispIo);
+		return dispIo.returnVal;
+	}
+	return 0;
+}
 #pragma endregion
 
 

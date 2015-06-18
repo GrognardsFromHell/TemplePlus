@@ -12,6 +12,7 @@
 #include "pathfinding.h"
 #include "turn_based.h"
 #include "util/config.h"
+#include "critter.h"
 
 
 class ActnSeqReplacements : public TempleFix
@@ -81,35 +82,56 @@ ActionSequenceSystem::ActionSequenceSystem()
 	object = &objects;
 	turnbased = &tbSys;
 	rebase(actSeqCur, 0x1186A8F0);
-	macRebase(tbStatus118CD3C0, 118CD3C0)
+	rebase(tbStatus118CD3C0,0x118CD3C0); 
+
 	rebase(actnProcState, 0x10B3D5A4);
-	macRebase(_sub_1008BB40, 1008BB40)
-	macRebase(getRemainingMaxMoveLength, 1008B8A0);
-	macRebase(sub_1008B9A0, 1008B9A0);
-	rebase(_sub_10093950, 0x10093950);
-	rebase(_sub_10096450, 0x10096450);
-	macRebase(seqCheckFuncssub_10094CA0, 10094CA0);
+
+
+	
+	
+	
 	rebase(actionMesHandle, 0x10B3BF48);
-	rebase(seqSthg_10B3D5C0, 0x10B3D5C0);
+	rebase(seqFlag_10B3D5C0, 0x10B3D5C0);
 	rebase(actnProc_10B3D5A0, 0x10B3D5A0);
 	rebase(actSeqArray, 0x118A09A0);
-	rebase(_actionPerformProjectile, 0x1008AC70);
-	rebase(_AOOSthgSub_10097D50, 0x10097D50);
-	rebase(_actionPerformRecursion, 0x100961C0);
-	rebase(_AOOSthg2_100981C0, 0x100981C0);
-	rebase(_curSeqNext, 0x10098ED0);
-	rebase(_InterruptSthg_10099320, 0x10099320);
-	rebase(_InterruptSthg_10099360, 0x10099360);
-	rebase(_actSeqSpellHarmful, 0x1008AD10);
-	rebase(_combatTriggerSthg, 0x10093890);
+
+
+	
+	
 	rebase(numSimultPerformers, 0x10B3D5B8);
 	rebase(simultPerformerQueue, 0x118A06C0);
-	macRebase(simulsIdx, 10B3D5BC)
-	macRebase(_sub_100939D0, 100939D0)
+
+	rebase(simulsIdx,0x10B3D5BC); 
+
+
+	rebase(_actionPerformProjectile, 0x1008AC70);
+	rebase(_actSeqSpellHarmful, 0x1008AD10);
+	rebase(_sub_1008BB40, 0x1008BB40);
+	rebase(getRemainingMaxMoveLength, 0x1008B8A0);
+	rebase(sub_1008B9A0, 0x1008B9A0);
+
+	rebase(ActionCostReload, 0x100903B0);
+
+	rebase(_combatTriggerSthg, 0x10093890);
+	rebase(_sub_10093950,      0x10093950);
+	rebase(_sub_100939D0,      0x100939D0); 
+	rebase(seqCheckFuncssub_10094CA0, 0x10094CA0);
+
+	rebase(_actionPerformRecursion, 0x100961C0);
+	rebase(_sub_10096450,           0x10096450);
+	rebase(TouchAttackAddToSeq,     0x10096760);
+
+	rebase(_AOOSthgSub_10097D50, 0x10097D50);
+
+	rebase(_AOOSthg2_100981C0, 0x100981C0);
+	rebase(_curSeqNext,        0x10098ED0);
+
+	rebase(_InterruptSthg_10099320, 0x10099320);
+	rebase(_InterruptSthg_10099360, 0x10099360);
 	
-	macRebase(seqSthg_118CD3B8, 118CD3B8)
-	macRebase(seqSthg_118A0980, 118A0980)
-	macRebase(seqSthg_118CD570, 118CD570)
+	rebase(seqSthg_118CD3B8,0x118CD3B8); 
+	rebase(seqSthg_118A0980,0x118A0980); 
+	rebase(seqSthg_118CD570,0x118CD570); 
 
 }
 
@@ -144,7 +166,7 @@ void ActionSequenceSystem::curSeqReset(objHndl objHnd)
 	curSeq->performer = objHnd;
 	curSeq->targetObj = 0;
 	location->getLocAndOff(objHnd, &curSeq->performerLoc);
-	*seqSthg_10B3D5C0 = 0;
+	*seqFlag_10B3D5C0 = 0;
 }
 
 void ActionSequenceSystem::ActionAddToSeq()
@@ -218,6 +240,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	PathQueryResult * pqResult = nullptr;
 	LocAndOffsets locAndOffCopy = d20aIn->destLoc;
 	LocAndOffsets * actSeqPerfLoc;
+	ActionCostPacket actCost;
 
 	//hooked_print_debug_message("Parsing move sequence for %s, d20 action %s", description.getDisplayName(d20aIn->d20APerformer), d20ActionNames[d20aIn->d20ActType]);
 	
@@ -372,8 +395,8 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 				{
 					if (d20a->d20ActType != D20A_UNSPECIFIED_MOVE)
 					{
-						d20->d20Defs[d20a->d20ActType].moveFunc(d20a, &tbStatCopy, &locAndOffCopy);
-						if (locAndOffCopy.location.locx == 4 || !tbStatCopy.hourglassState) //BUG? TODO
+						d20->d20Defs[d20a->d20ActType].actionCost(d20a, &tbStatCopy, &actCost);
+						if (actCost.hourglassCost == 4 || !tbStatCopy.hourglassState) 
 						{
 							d20aCopy.d20ActType = D20A_5FOOTSTEP; goto LABEL_53;
 						}
@@ -555,7 +578,7 @@ void ActionSequenceSystem::ActSeqCurSetSpellPacket(SpellPacketBody* spellPktBody
 
 void ActionSequenceSystem::sub_1008BB40(ActnSeq* actSeq, D20Actn* d20a)
 {
-	macAsmProl;
+	{ __asm push ecx __asm push esi __asm push ebx __asm push edi};;
 	__asm{
 		mov ecx, this;
 		mov esi, [ecx]._sub_1008BB40;
@@ -565,13 +588,31 @@ void ActionSequenceSystem::sub_1008BB40(ActnSeq* actSeq, D20Actn* d20a)
 		call esi;
 		add esp, 4;
 	}
-	macAsmEpil;
+	{ __asm pop edi __asm pop ebx __asm pop esi __asm pop ecx} ;
 }
 
-uint32_t ActionSequenceSystem::sub_10093950(D20Actn* d20a, TurnBasedStatus* actnSthg)
+int ActionSequenceSystem::CrossBowSthgReload_1008E8A0(D20Actn* d20a, ActnSeq* actSeq)
+{
+	int result = 0;
+	{ __asm push ecx __asm push esi __asm push ebx __asm push edi};;
+	__asm{
+		mov ecx, this;
+		mov esi, [ecx]._CrossBowSthgReload_1008E8A0;
+		mov eax, d20a;
+		push eax;
+		mov ebx, actSeq;
+		call esi;
+		add esp, 4;
+		mov result, eax;
+	}
+	{ __asm pop edi __asm pop ebx __asm pop esi __asm pop ecx} 
+	return result;
+}
+
+uint32_t ActionSequenceSystem::TurnBasedStatusUpdate(D20Actn* d20a, TurnBasedStatus* actnSthg)
 {
 	uint32_t result = 0;
-	macAsmProl
+	{ __asm push ecx __asm push esi __asm push ebx __asm push edi};
 	__asm{
 		mov ecx, this;
 		mov esi, actnSthg;
@@ -583,11 +624,11 @@ uint32_t ActionSequenceSystem::sub_10093950(D20Actn* d20a, TurnBasedStatus* actn
 
 		mov result, eax;
 	}
-	macAsmEpil
+	{ __asm pop edi __asm pop ebx __asm pop esi __asm pop ecx} 
 	return result;
 }
 
-uint32_t ActionSequenceSystem::sub_10096450(ActnSeq* actSeq, uint32_t idx ,void * iO)
+uint32_t ActionSequenceSystem::SequencePathSthgSub_10096450(ActnSeq* actSeq, uint32_t idx ,TurnBasedStatus * tbStat)
 {
 	uint32_t result = 0;
 	__asm{
@@ -600,7 +641,7 @@ uint32_t ActionSequenceSystem::sub_10096450(ActnSeq* actSeq, uint32_t idx ,void 
 		mov esi, idx;
 		push esi;
 		mov esi, [ecx]._sub_10096450;
-		mov ebx, iO;
+		mov ebx, tbStat;
 		mov eax, actSeq;
 		push eax;
 		call esi;
@@ -637,7 +678,7 @@ uint32_t ActionSequenceSystem::seqCheckFuncs(TurnBasedStatus* tbStatus)
 			{ result = tgtCheckFunc(&curSeq->d20ActArray[i], tbStatus);	if (result) break; }
 
 			
-		result = sub_10093950(d20a, tbStatus);
+		result = TurnBasedStatusUpdate(d20a, tbStatus);
 		if (result)	
 			{ tbStatus->errCode = result;	break; }
 
@@ -728,7 +769,7 @@ uint32_t ActionSequenceSystem::combatTriggerSthg(ActnSeq* actSeq)
 
 uint32_t ActionSequenceSystem::seqCheckAction(D20Actn* d20a, TurnBasedStatus* iO)
 {
-	uint32_t a = sub_10093950(d20a, iO);
+	uint32_t a = TurnBasedStatusUpdate(d20a, iO);
 	if (a)
 	{
 		*((uint32_t*)iO + 8) = a;
@@ -776,7 +817,7 @@ void ActionSequenceSystem::actionPerform()
 		memcpy(&tbStatus, &curSeq->tbStatus, sizeof(tbStatus));
 		d20a = &curSeq->d20ActArray[*curIdx];
 		
-		auto errCode = sub_10096450( curSeq, *curIdx,&tbStatus);
+		auto errCode = SequencePathSthgSub_10096450( curSeq, *curIdx,&tbStatus);
 		if (errCode)
 		{
 			
@@ -790,7 +831,7 @@ void ActionSequenceSystem::actionPerform()
 			break;
 		}
 
-		if (seqSthg_10B3D5C0[0]){	seqSthg_10B3D5C0[1] = 1;	}
+		if (seqFlag_10B3D5C0[0]){	seqFlag_10B3D5C0[1] = 1;	}
 
 		d20->d20aTriggerCombatCheck(curSeq, *curIdx);
 
@@ -994,6 +1035,111 @@ uint32_t ActionSequenceSystem::isSomeoneAlreadyActingSimult(objHndl objHnd)
 		}
 	}
 	return 0;
+}
+
+void ActionSequenceSystem::FullAttackCostCalculate(D20Actn* d20a, TurnBasedStatus* tbStatus, int* baseAttackNumCode, int* bonusAttacks, int* numAttacks, int* attackModeCode)
+{
+	objHndl  performer = d20a->d20APerformer;
+	int usingOffhand = 0;
+	int _attackTypeCodeHigh = 1;
+	int _attackTypeCodeLow = 0;
+	int numAttacksBase = 0;
+	auto mainWeapon = inventory.ItemWornAt(performer, 3);
+	auto offhand = inventory.ItemWornAt(performer, 4);
+
+	if (offhand)
+	{
+		if (objects.GetType(offhand) != obj_t_armor)
+		{
+			_attackTypeCodeHigh = 100; // originally 5
+			_attackTypeCodeLow = 99; // originally 4
+			usingOffhand = 1;
+		}
+	}
+	if (mainWeapon)
+	{
+		int weapFlags = objects.getInt32(mainWeapon, obj_f_weapon_flags);
+		if (weapFlags & OWF_RANGED_WEAPON)
+			d20a->d20Caf |= D20CAF_RANGED;
+
+	}
+	if (!mainWeapon && !offhand)
+	{
+		numAttacksBase = dispatch.DispatchD20ActionCheck(d20a, tbStatus, dispTypeGetCritterNaturalAttacksNum);
+		if (numAttacksBase > 0)
+		{
+			_attackTypeCodeHigh = 1000; // originally 10
+			_attackTypeCodeLow = 999; // originally 9
+		}
+	}
+
+	if (numAttacksBase <= 0)
+	{
+		numAttacksBase = dispatch.DispatchD20ActionCheck(d20a, tbStatus, dispTypeGetNumAttacksBase);
+	}
+
+	*bonusAttacks = dispatch.DispatchD20ActionCheck(d20a, tbStatus, dispTypeGetBonusAttacks);
+	*numAttacks = usingOffhand + numAttacksBase + *bonusAttacks;
+	*attackModeCode = _attackTypeCodeLow;
+	*baseAttackNumCode = numAttacksBase + _attackTypeCodeHigh - 1 + usingOffhand;
+}
+
+int ActionSequenceSystem::TurnBasedStatusUpdate(TurnBasedStatus* tbStat, D20Actn* d20a)
+{
+	return TurnBasedStatusUpdate(d20a, tbStat);
+}
+
+int ActionSequenceSystem::UnspecifiedAttackAddToSeqRangedCore(ActnSeq* actnSeq, D20Actn* d20Actn, TurnBasedStatus* tbStat)
+{
+}
+
+int ActionSequenceSystem::UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat)
+{
+	objHndl objHnd = d20a->d20ATarget;
+	objHndl performer = d20a->d20APerformer;
+	D20Actn d20aCopy;
+		memcpy(&d20aCopy, d20a, sizeof(D20Actn));
+	int d20aNum = actSeq->d20ActArrayNum;
+	ActionCostPacket acp;
+	int junk =0;
+	int numAttacks = 0;
+
+
+	*seqFlag_10B3D5C0 = 1;
+	if (!objHnd) return 9;
+	if (d20->d20Query(d20a->d20APerformer, DK_QUE_HoldingCharge))
+		return TouchAttackAddToSeq(d20a, actSeq, tbStat);
+	float reach = critterSys.GetReach(d20a->d20APerformer, d20a->d20ActType);
+	auto weapon = inventory.ItemWornAt(performer, 3);
+	TurnBasedStatus tbStatCopy;
+	memcpy(&tbStatCopy, tbStat, sizeof(TurnBasedStatus));
+	if (weapon)
+	{
+		int weapFlags = objects.getInt32(weapon, obj_f_weapon_flags);
+		if (weapFlags & OWF_RANGED_WEAPON)
+		{
+			d20aCopy.d20Caf |= D20CAF_RANGED;
+			if (inventory.IsNormalCrossbow(weapon))
+			{
+				ActionCostReload(d20a, &tbStatCopy, &acp);
+				if (acp.hourglassCost)
+				{
+					d20aCopy.d20ActType = D20A_STANDARD_RANGED_ATTACK;
+					return CrossBowSthgReload_1008E8A0(&d20aCopy, actSeq);
+				}
+			}
+			FullAttackCostCalculate(&d20aCopy, &tbStatCopy, &junk, &junk, &numAttacks, &junk );
+			d20aCopy.d20ActType = D20A_FULL_ATTACK;
+			if (numAttacks > 1 && !TurnBasedStatusUpdate(&tbStatCopy, &d20aCopy))
+			{
+				memcpy(&actSeq->d20ActArray[actSeq->d20ActArrayNum++], &d20aCopy, sizeof(D20Actn));
+				d20aCopy.d20ActType = inventory.IsThrowingWeapon(weapon) != 0 ? D20A_THROW : D20A_STANDARD_RANGED_ATTACK;
+				return UnspecifiedAttackAddToSeqRangedCore(actSeq, &d20aCopy, &tbStatCopy);
+			}
+			return 0;
+		}
+	}
+
 }
 #pragma endregion
 

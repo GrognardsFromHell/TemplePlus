@@ -229,3 +229,28 @@ public: const char* name() override {
 			writeHex(0x100F9B70, "6A 02");
 		}
 } cripplingStrikeFix;
+
+
+
+int __cdecl sub_100FD1C0(DispatcherCallbackArgs a1)
+{
+	DispIoD20ActionTurnBased *v5; 
+
+
+	v5 = dispatch.DispIOCheckIoType12((DispIoD20ActionTurnBased*)a1.dispIO);
+	++v5->returnVal;
+	++v5->returnVal;
+	++v5->returnVal;
+	return 0;
+}
+
+class TestImprovedTWF : public TempleFix
+{
+public: const char* name() override {
+	return "TWF TEst";
+};
+		void apply() override
+		{
+		//	replaceFunction(0x100FD1C0, sub_100FD1C0);
+		}
+} testImprovedTWF;

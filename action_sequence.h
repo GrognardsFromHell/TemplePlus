@@ -33,7 +33,7 @@ struct ActionSequenceSystem : AddressTable
 	ActnSeq * actSeqArray; // size 32
 	uint32_t * actnProcState;
 	MesHandle  * actionMesHandle; 
-	uint32_t * seqSthg_10B3D5C0; // init to 0
+	uint32_t * seqFlag_10B3D5C0; // init to 0
 	uint32_t * actnProc_10B3D5A0;
 	TurnBasedStatus * tbStatus118CD3C0;
 
@@ -64,8 +64,9 @@ struct ActionSequenceSystem : AddressTable
 	void ActSeqCurSetSpellPacket(SpellPacketBody* spellPacketBody, int flag);
 	int (__cdecl *sub_1008B9A0)(D20Actn *d20a, float float1, PathQuery *pathQ);
 	void sub_1008BB40(ActnSeq*actSeq, D20Actn * d20a); // actSeq@<ebx>
-	uint32_t sub_10093950(D20Actn* d20a, TurnBasedStatus* iO);
-	uint32_t sub_10096450(ActnSeq * actSeq, uint32_t idx, void* iO);
+	int(CrossBowSthgReload_1008E8A0)(D20Actn *d20a, ActnSeq*actSeq); //, ActnSeq *actSeq@<ebx>
+	uint32_t TurnBasedStatusUpdate(D20Actn* d20a, TurnBasedStatus* tbStat);
+	uint32_t SequencePathSthgSub_10096450(ActnSeq * actSeq, uint32_t idx, TurnBasedStatus* tbStat);
 	//10097C20
 	
 	uint32_t (__cdecl *seqCheckFuncssub_10094CA0)(TurnBasedStatus *actnSthg);
@@ -88,10 +89,19 @@ struct ActionSequenceSystem : AddressTable
 	uint32_t isSomeoneAlreadyActingSimult(objHndl objHnd);
 
 
+	int (__cdecl *ActionCostReload)(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp); 
+	void FullAttackCostCalculate(D20Actn *d20a, TurnBasedStatus *tbStatus, int *baseAttackNumCode, int *bonusAttacks, int *numAttacks, int *attackModeCode);
+	int (__cdecl *TouchAttackAddToSeq)(D20Actn* d20Actn, ActnSeq* actnSeq, TurnBasedStatus* turnBasedStatus);
+	int TurnBasedStatusUpdate(TurnBasedStatus* tbStat, D20Actn* d20a);
+	int UnspecifiedAttackAddToSeqRangedCore(ActnSeq* actnSeq, D20Actn* d20Actn, TurnBasedStatus* tbStat);
+	int  UnspecifiedAttackAddToSeq(D20Actn *d20a, ActnSeq *actSeq, TurnBasedStatus *tbStat);
+
+
 	ActionSequenceSystem();
 private:
 	bool (__cdecl *_actionPerformProjectile)();
 	void (__cdecl *_sub_1008BB40)(D20Actn * d20a); // ActnSeq*actSeq@<ebx>, 
+	int(__cdecl* _CrossBowSthgReload_1008E8A0)(D20Actn *d20a); //, ActnSeq *actSeq@<ebx>
 	uint32_t (__cdecl *getRemainingMaxMoveLength)(D20Actn *d20a, TurnBasedStatus *actnSthg, float *floatOut); // doesn't take things like having made 5 foot step into account, just a raw calculation
 	uint32_t (__cdecl *_sub_10093950)(D20Actn* d20a);
 	void (__cdecl *_sub_100939D0)(CmbtIntrpts* d20a); // D20Actn*@<eax>

@@ -23,6 +23,18 @@ int InventorySystem::SetItemParent(objHndl item, objHndl parent, int flags)  {
 	return _SetItemParent(item, parent, flags);
 }
 
+int InventorySystem::IsNormalCrossbow(objHndl weapon)
+{
+	if (objects.GetType(weapon) == obj_t_weapon)
+	{
+		int weapType = objects.getInt32(weapon, obj_f_weapon_type);
+		if (weapType == wt_heavy_crossbow || weapType == wt_light_crossbow )
+			return 1; // TODO: should this include repeating crossbow? I think the context is reloading action in some cases
+		// || weapType == wt_hand_crossbow
+	}
+	return 0;
+}
+
 obj_f InventorySystem::GetInventoryListField(objHndl objHnd)
 {
 	if (objects.IsCritter(objHnd)) 	return obj_f_critter_inventory_list_idx;

@@ -28,7 +28,7 @@ struct InventorySystem : AddressTable
 	objHndl FindItemByProtoId(objHndl container, int protoId, bool skipWorn = false);
 
 	int SetItemParent(objHndl item, objHndl parent, int flags);
-
+	int IsNormalCrossbow(objHndl weapon);
 	static obj_f GetInventoryListField(objHndl objHnd);
 
 	/*
