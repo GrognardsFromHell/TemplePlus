@@ -14,7 +14,7 @@ objHndl InventorySystem::FindItemByProtoHandle(objHndl container, objHndl protoH
 	return _FindItemByProto(container, protoHandle, skipWorn);
 }
 
-objHndl InventorySystem::FindItemByProtoId(objHndl container, int protoId, bool skipWorn) {	
+objHndl InventorySystem::FindItemByProtoId(objHndl container, int protoId, bool skipWorn) {
 	auto protoHandle = objects.GetProtoHandle(protoId);
 	return _FindItemByProto(container, protoHandle, skipWorn);
 }
@@ -28,9 +28,22 @@ int InventorySystem::IsNormalCrossbow(objHndl weapon)
 	if (objects.GetType(weapon) == obj_t_weapon)
 	{
 		int weapType = objects.getInt32(weapon, obj_f_weapon_type);
-		if (weapType == wt_heavy_crossbow || weapType == wt_light_crossbow )
+		if (weapType == wt_heavy_crossbow || weapType == wt_light_crossbow)
 			return 1; // TODO: should this include repeating crossbow? I think the context is reloading action in some cases
 		// || weapType == wt_hand_crossbow
+	}
+	return 0;
+}
+
+int InventorySystem::IsThrowingWeapon(objHndl weapon)
+{
+	if (objects.GetType(weapon) == obj_t_weapon)
+	{
+		WeaponAmmoType ammoType = (WeaponAmmoType)objects.getInt32(weapon, obj_f_weapon_ammo_type);
+		if (ammoType > wat_dagger && ammoType <= wat_bottle) // thrown weapons   TODO: should this include daggers??
+		{
+			return 1;
+		}
 	}
 	return 0;
 }

@@ -876,6 +876,8 @@ static struct AnimationAdresses : AddressTable {
 
 	bool (__cdecl *PushUseSkillOn)(objHndl actor, objHndl target, objHndl scratchObj, SkillEnum skill, int goalFlags);
 
+	int (__cdecl *PushAttackAnim)(objHndl actor, objHndl target, int unk1, int hitAnimIdx, int playCrit, int useSecondaryAnim);
+
 	bool (__cdecl *PushRunNearTile)(objHndl actor, LocAndOffsets target, int radiusFeet);
 
 	bool (__cdecl *PushUnconceal)(objHndl actor);
@@ -884,15 +886,23 @@ static struct AnimationAdresses : AddressTable {
 
 	void(__cdecl *PushFallDown)(objHndl actor, int unk);
 
+	int(__cdecl *GetAnimIdSthgSub_1001ABB0)(objHndl actor);
+
 	AnimationAdresses() {
 		
-		rebase(PushUseSkillOn, 0x1001C690);
-		rebase(PushRunNearTile, 0x1001C1B0);
-		rebase(PushRotate, 0x100153E0);
-		rebase(PushFallDown, 0x100157B0);
-		rebase(PushUnconceal, 0x10015E00);
-		
 		rebase(Interrupt, 0x1000C7E0);
+
+		rebase(PushRotate,      0x100153E0);
+		rebase(PushFallDown,    0x100157B0);
+		rebase(PushUnconceal,   0x10015E00);
+		
+		rebase(GetAnimIdSthgSub_1001ABB0, 0x1001ABB0);
+
+		rebase(PushUseSkillOn,  0x1001C690);
+		rebase(PushRunNearTile, 0x1001C1B0);
+		
+		rebase(PushAttackAnim,     0x1001C370);
+		
 	}
 
 } addresses;
@@ -922,4 +932,14 @@ bool AnimationGoals::Interrupt(objHndl actor, AnimGoalPriority priority, bool al
 void AnimationGoals::PushFallDown(objHndl actor, int unk)
 {
 	addresses.PushFallDown(actor, unk);
+}
+
+int AnimationGoals::PushAttackAnim(objHndl actor, objHndl target, int unk1, int hitAnimIdx, int playCrit, int useSecondaryAnim)
+{
+	return addresses.PushAttackAnim(actor, target, unk1, hitAnimIdx, playCrit, useSecondaryAnim);
+}
+
+int AnimationGoals::GetAnimIdSthgSub_1001ABB0(objHndl objHndl)
+{
+	return addresses.GetAnimIdSthgSub_1001ABB0(objHndl);
 }

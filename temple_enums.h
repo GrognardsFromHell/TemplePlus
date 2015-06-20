@@ -657,7 +657,8 @@ enum feat_enums : uint32_t {
 	FEAT_MONK_DIAMOND_SOUL = 660,
 	FEAT_MONK_QUIVERING_PALM = 661,
 	FEAT_MONK_EMPTY_BODY = 662,
-	FEAT_MONK_PERFECT_SELF = 663
+	FEAT_MONK_PERFECT_SELF = 663,
+	FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER = 664
 };
 
 enum feat_requirement_codes : int32_t {
@@ -1858,10 +1859,10 @@ enum enum_disp_type : uint32_t {
 	dispTypeStatBaseGet, // looks like this is intended to replace StatBaseGet function for Critters with Dispatchers
 	dispType67,
 	dispTypeItemForceRemove, // has a single function associated with this - 10104410 int __cdecl ItemForceRemoveCallback_SetItemPadWielderArgs(Dispatcher_Callback_Args args);
-	dispType69,
+	dispTypeArmorCheckPenalty,
 
 	dispTypeMaxDexAcBonus,
-	dispType71,
+	dispTypeGetSizeCategory,
 	dispType72,
 
 
@@ -1936,6 +1937,7 @@ enum CritterFlag
 
 #pragma endregion
 
+#pragma region Portal / Container / Secretdoor flags
 enum ContainerFlag : uint32_t {
 	OCOF_LOCKED = 0x1,
 	OCOF_JAMMED = 0x2,
@@ -1986,6 +1988,7 @@ enum SecretDoorFlag : uint32_t {
 	OSDF_SECRET_DOOR_FOUND = 0x20000
 };
 
+#pragma endregion
 
 enum Deities : uint32_t
 {
@@ -2146,16 +2149,39 @@ enum WeaponFlags : uint32_t
 	OWF_SILENT= 2 ,
 	OWF_UNUSED_1 = 4,
 	OWF_UNUSED_2 = 8,
-	OWF_THROWABLE = 8,
-	OWF_TRANS_PROJECTILE = 16,
-	OWF_BOOMERANGS = 32,
-	OWF_IGNORE_RESISTANCE = 64,
-	OWF_DAMAGE_ARMOR = 128,
-	OWF_DEFAULT_THROWS = 256,
-	OWF_RANGED_WEAPON = 512,
-	OWF_WEAPON_LOADED = 1024,
-	OWF_MAGIC_STAFF = 2048
+	OWF_THROWABLE = 16,
+	OWF_TRANS_PROJECTILE = 32,
+	OWF_BOOMERANGS = 64,
+	OWF_IGNORE_RESISTANCE = 128,
+	OWF_DAMAGE_ARMOR = 256,
+	OWF_DEFAULT_THROWS = 512,
+	OWF_RANGED_WEAPON = 1024,
+	OWF_WEAPON_LOADED = 2048,
+	OWF_MAGIC_STAFF = 4096
 };
+
+enum WeaponAmmoType
+{
+	wat_arrow = 0,
+	wat_bolt,
+	wat_bullet,
+	wat_magic_missile,
+	wat_dagger,
+	wat_club,
+	wat_shortspear,
+	wat_spear,
+	wat_dart,
+	wat_javelin,
+	wat_throwing_axe,
+	wat_light_hammer,
+	wat_trident,
+	wat_halfling_sai,
+	wat_sai,
+	wat_shuriken, // 15
+	wat_ball_of_fire,
+	wat_bottle
+};
+
 #pragma endregion 
 
 // Keep in sync with Python enum

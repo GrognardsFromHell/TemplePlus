@@ -19,6 +19,7 @@ struct CombatSystem : AddressTable {
 	uint32_t* combatModeActive;
 	bool isCombatActive();
 	uint32_t IsCloseToParty(objHndl objHnd);
+	int (__cdecl* IsFlankedBy)(objHndl victim, objHndl attacker);
 	/*
 		Use for the non-lethal brawl.
 	*/
@@ -34,6 +35,7 @@ struct CombatSystem : AddressTable {
 	CombatSystem() {
 		rebase(combatModeActive, 0x10AA8418);
 		rebase(combatMesfileIdx, 0x10AA8408);
+		rebase(IsFlankedBy, 0x100B9200);
 		rebase(_enterCombat,0x100631E0); 
 		rebase(Brawl, 0x100EBD40);
 		rebase(AddToInitiative, 0x100DF1E0);

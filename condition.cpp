@@ -7,6 +7,7 @@
 #include "bonus.h"
 #include "radialmenu.h"
 #include "combat.h"
+#include "critter.h"
 
 ConditionSystem conds;
 CondStructNew conditionDisableAoO;
@@ -44,6 +45,7 @@ public:
 		replaceFunction(0x100E2590, _ConditionAdd_NumArgs4);
 		replaceFunction(0x100E25C0, InitCondFromCondStructAndArgs);
 		replaceFunction(0x100ECF30, ConditionPrevent);
+		replaceFunction(0x100EE280, GlobalToHitBonus);
 		replaceFunction(0x10101150, SkillBonusCallback);
 		
 		replaceFunction(0x100F7B60, _FeatConditionsRegister);
@@ -249,6 +251,93 @@ int __cdecl SkillBonusCallback(DispatcherCallbackArgs args)
 		const char * name = description.getDisplayName(itemHnd, args.objHndCaller);
 		bonusSys.bonusAddToBonusListWithDescr(dispIo->bonOut, bonValue, bonType, 112, (char*)name);
 	}
+	return 0;
+}
+
+int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
+{
+	DispIoAttackBonus * dispIo = dispatch.DispIoCheckIoType5((DispIoAttackBonus*)args.dispIO);
+	dispatch.DispatchToHitBonusBase(args.objHndCaller, dispIo);
+
+	// natural attack - get attack bonus from internal defs
+	if (dispIo->attackPacket.dispKey >= (ATTACK_CODE_NATURAL_ATTACK+1) 
+		 && !d20Sys.d20Query(args.objHndCaller, DK_QUE_Polymorphed) )
+	{
+		int attackIdx = dispIo->attackPacket.dispKey - (ATTACK_CODE_NATURAL_ATTACK + 1);
+		int bonValue = 0; // temporarily used as an index value for obj_f_attack_bonus_idx field
+		for (int i = 0,  j=0; i < 4; i++)
+		{
+			j += objects.getArrayFieldInt32(args.objHndCaller, obj_f_critter_attacks_idx, i); // number of attacks
+			if (attackIdx < j){
+				bonValue = i;
+				break;
+			}
+		}
+		bonValue = objects.getArrayFieldInt32(args.objHndCaller, obj_f_attack_bonus_idx, bonValue);
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, bonValue, 1, 118); // base attack
+	}
+
+	if (dispIo->attackPacket.flags & D20CAF_RANGED) // get to hit modifier from DEX
+	{
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 
+			objects.GetModFromStatLevel(objects.abilityScoreLevelGet(args.objHndCaller, stat_dexterity, 0)) , 3, 104);
+	} else // get to hit mod from STR
+	{
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist,
+			objects.GetModFromStatLevel(objects.abilityScoreLevelGet(args.objHndCaller, stat_strength, 0)), 2, 103);
+	}
+
+	int attackCode = dispIo->attackPacket.dispKey;
+	if (attackCode < ATTACK_CODE_NATURAL_ATTACK) // apply penalties for Nth attack
+	{
+		int attackNumber = 1;
+		int dualWielding = 0;
+		d20Sys.ExtractAttackNumber(args.objHndCaller, attackCode, &attackNumber, &dualWielding);
+		assert(attackNumber > 0);
+		switch (attackNumber)
+		{
+		case 1: 
+			break;
+		case 2:
+			bonusSys.bonusAddToBonusList(&dispIo->bonlist, -(attackNumber-1) * 5, 24, 119);
+			break;
+		default:
+			bonusSys.bonusAddToBonusList(&dispIo->bonlist, -(attackNumber - 1) * 5, 25, 120);
+		}
+		if (dualWielding)
+		{
+			if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
+				bonusSys.bonusAddToBonusList(&dispIo->bonlist, -10, 26, 121); // penalty for dualwield on offhand attack
+			else
+				bonusSys.bonusAddToBonusList(&dispIo->bonlist, -6, 27, 122); // penalty for dualwield on primary attack
+
+			auto offhand = inventory.ItemWornAt(args.objHndCaller, 4);
+			if (offhand)
+			{
+				if (inventory.GetWieldType(dispIo->attackPacket.attacker, offhand) == 0)
+					bonusSys.bonusAddToBonusList(&dispIo->bonlist, 2, 0, 167); // Light Off-hand Weapon
+			}
+		}
+	}
+
+	// helplessness bonus
+	if (dispIo->attackPacket.victim
+		&& d20Sys.d20Query(dispIo->attackPacket.victim, DK_QUE_Helpless)
+		&& !d20Sys.d20Query(dispIo->attackPacket.victim, DK_QUE_Critter_Is_Stunned))
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 4, 30, 136);
+	
+	// flanking bonus
+	if (combatSys.IsFlankedBy(dispIo->attackPacket.victim, dispIo->attackPacket.attacker))
+	{
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 2, 0, 201);
+		dispIo->attackPacket.flags |= D20CAF_FLANKED;
+	}
+
+	// size bonus / penalty
+	int sizeCategory = dispatch.DispatchGetSizeCategory(args.objHndCaller);
+	int sizeCatBonus = critterSys.GetBonusFromSizeCategory(sizeCategory);
+	bonusSys.bonusAddToBonusList(&dispIo->bonlist, sizeCatBonus, 0, 115);
+
 	return 0;
 }
 

@@ -240,6 +240,21 @@ void CritterSystem::GiveMoney(objHndl critter, int platinum, int gold, int silve
 	addresses.GiveMoney(critter, platinum, gold, silver, copper);
 }
 
+int CritterSystem::NumOffhandExtraAttacks(objHndl critter)
+{
+	if (feats.HasFeatCount(critter, FEAT_GREATER_TWO_WEAPON_FIGHTING)
+		|| feats.HasFeatCount(critter, FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER))
+	{
+		return 3;
+	}
+
+	if (feats.HasFeatCount(critter, FEAT_IMPROVED_TWO_WEAPON_FIGHTING)
+		|| feats.HasFeatCount(critter, FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER))
+		return 2;
+
+	return 1;
+}
+
 MonsterCategory CritterSystem::GetCategory(objHndl objHnd)
 {
 	if (objHnd != 0) {
@@ -318,6 +333,45 @@ float CritterSystem::GetReach(objHndl obj, D20ActionType actType)
 		}
 	}
 	return naturalReach - 2.0;
+}
+
+int CritterSystem::GetBonusFromSizeCategory(int sizeCategory)
+{
+	int result = sizeCategory;
+	switch (sizeCategory)
+	{
+	case 1:
+		result = 8;
+		break;
+	case 2:
+		result = 4;
+		break;
+	case 3:
+		result = 2;
+		break;
+	case 4:
+		result = 1;
+		break;
+	case 5:
+		result = 0;
+		break;
+	case 6:
+		result = -1;
+		break;
+	case 7:
+		result = -2;
+		break;
+	case 8:
+		result = -4;
+		break;
+	case 9:
+		result = -8;
+		break;
+	default:
+		result = sizeCategory;
+		break;
+	}
+	return result;
 }
 #pragma region Critter Hooks
 uint32_t _isCritterCombatModeActive(objHndl objHnd)

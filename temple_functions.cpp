@@ -13,11 +13,11 @@ TempleFuncs templeFuncs;
 
 class TempleFuncReplacements : public TempleFix
 {
-	macTempleFix(Temple General Function)
+	public: const char* name() override { return "Temple General Function" "Function Replacements";} void apply() override 
 	{
-		macReplaceFun(10038B60, _diceRoll)
+		replaceFunction(0x10038B60, _diceRoll); 
 	}
-};
+} templeFuncReplacements;
 
 
 
@@ -97,7 +97,7 @@ TempleFuncs::TempleFuncs()
 {
 	rebase(ProcessSystemEvents, 0x101DF440);
 	rebase(StringHash, 0x101EBB00);
-	rebase(RNG,0x10038DF5); 
+	rebase(RNG, 0x10038DF0);
 	rebase(encodeTriplet,0x10038C50); 
 	rebase(UpdatePartyUI, 0x10134CB0);
 	rebase(PartyMoney, 0x1002B750);

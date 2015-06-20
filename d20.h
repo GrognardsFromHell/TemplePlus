@@ -7,6 +7,10 @@
 #include "spell.h"
 #include "d20_status.h"
 
+#define ATTACK_CODE_PRIMARY 0
+#define ATTACK_CODE_OFFHAND 99 // originally 4
+#define ATTACK_CODE_NATURAL_ATTACK 999 //originally 9
+
 struct ActionSequenceSystem;
 // Forward decls
 struct D20Actn;
@@ -51,6 +55,10 @@ struct D20System : AddressTable
 	uint32_t tumbleCheck(D20Actn*);
 	void D20ActnSetSpellData(D20SpellData* d20SpellData, uint32_t spellEnumOrg, uint32_t spellClassCode, uint32_t spellSlotLevel, uint32_t itemSpellData, uint32_t metaMagicData);
 	void GlobD20ActnSetSpellData(D20SpellData* d20SpellData);
+	bool UsingSecondaryWeapon(D20Actn* d20a);
+	bool UsingSecondaryWeapon(objHndl obj, int attackCode);
+	void ExtractAttackNumber(objHndl obj, int attackCode, int * attackNumber, int* dualWielding); // e.g. is it a 2nd attack? (-5 penalty)
+	int PerformStandardAttack(D20Actn* d20a);
 	void (__cdecl *D20StatusInitFromInternalFields)(objHndl objHnd, Dispatcher *dispatcher);
 	void (__cdecl *D20ObjRegistryAppend)(objHndl ObjHnd);
 	void(__cdecl * _d20aTriggerCombatCheck)(int32_t idx);//1008AE90    ActnSeq * @<eax>
@@ -180,6 +188,7 @@ void _globD20aSetPerformer(objHndl objHnd);
 void _GlobD20ActnInit();
 void _GlobD20ActnSetSpellData(D20SpellData * d20SpellData);
 uint32_t _CanLevelup(objHndl objHnd);
+int __cdecl _PerformStandardAttack(D20Actn * d20a);
 #pragma endregion 
 
 inline int GetAttributeMod(int stat) {

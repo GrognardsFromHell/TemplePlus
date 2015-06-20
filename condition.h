@@ -236,6 +236,7 @@ void InitCondFromCondStructAndArgs(Dispatcher *dispatcher, CondStruct *condStruc
 
 
 int SkillBonusCallback(DispatcherCallbackArgs args); 
+int GlobalToHitBonus(DispatcherCallbackArgs args);
 
 void _FeatConditionsRegister();
 uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** ppCondStruct, uint32_t * arg2);

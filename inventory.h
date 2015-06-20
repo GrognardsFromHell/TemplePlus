@@ -29,6 +29,12 @@ struct InventorySystem : AddressTable
 
 	int SetItemParent(objHndl item, objHndl parent, int flags);
 	int IsNormalCrossbow(objHndl weapon);
+	int IsThrowingWeapon(objHndl weapon);
+
+	/*
+		0 - light weapon; 1 - can wield one handed; 2 - must wield two handed; 3 (???)
+	*/
+	int (__cdecl *GetWieldType)(objHndl wielder, objHndl item);
 	static obj_f GetInventoryListField(objHndl objHnd);
 
 	/*
@@ -51,7 +57,8 @@ struct InventorySystem : AddressTable
 	{
 		rebase(GetSubstituteInventory, 0x1007F5B0);
 		rebase(GetItemAtInvIdx, 0x100651B0);
-		rebase(ItemWornAt, 0x10065010);
+		rebase(ItemWornAt,      0x10065010);
+		rebase(GetWieldType,    0x10066580);
 		rebase(FindMatchingStackableItem, 0x10067DF0);
 
 		rebase(sub_100FF500, 0x100FF500);

@@ -65,7 +65,6 @@ struct ActionSequenceSystem : AddressTable
 	int (__cdecl *sub_1008B9A0)(D20Actn *d20a, float float1, PathQuery *pathQ);
 	void sub_1008BB40(ActnSeq*actSeq, D20Actn * d20a); // actSeq@<ebx>
 	int(CrossBowSthgReload_1008E8A0)(D20Actn *d20a, ActnSeq*actSeq); //, ActnSeq *actSeq@<ebx>
-	uint32_t TurnBasedStatusUpdate(D20Actn* d20a, TurnBasedStatus* tbStat);
 	uint32_t SequencePathSthgSub_10096450(ActnSeq * actSeq, uint32_t idx, TurnBasedStatus* tbStat);
 	//10097C20
 	
@@ -90,12 +89,15 @@ struct ActionSequenceSystem : AddressTable
 
 
 	int (__cdecl *ActionCostReload)(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp); 
+	int ActionCostFullAttack(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp);
 	void FullAttackCostCalculate(D20Actn *d20a, TurnBasedStatus *tbStatus, int *baseAttackNumCode, int *bonusAttacks, int *numAttacks, int *attackModeCode);
-	int (__cdecl *TouchAttackAddToSeq)(D20Actn* d20Actn, ActnSeq* actnSeq, TurnBasedStatus* turnBasedStatus);
-	int TurnBasedStatusUpdate(TurnBasedStatus* tbStat, D20Actn* d20a);
-	int UnspecifiedAttackAddToSeqRangedCore(ActnSeq* actnSeq, D20Actn* d20Actn, TurnBasedStatus* tbStat);
+	int TouchAttackAddToSeq(D20Actn* d20Actn, ActnSeq* actnSeq, TurnBasedStatus* turnBasedStatus);
+	uint32_t TurnBasedStatusUpdate(D20Actn* d20a, TurnBasedStatus* tbStat);
+		int TurnBasedStatusUpdate(TurnBasedStatus* tbStat, D20Actn* d20a);
+	int UnspecifiedAttackAddToSeqRangedMulti(ActnSeq* actnSeq, D20Actn* d20Actn, TurnBasedStatus* tbStat);
+	int UnspecifiedAttackAddToSeqMeleeMulti(ActnSeq* actSeq, TurnBasedStatus* tbStat, D20Actn* d20a);
 	int  UnspecifiedAttackAddToSeq(D20Actn *d20a, ActnSeq *actSeq, TurnBasedStatus *tbStat);
-
+	void AttackAppend(ActnSeq * actSeq, D20Actn * d20a, TurnBasedStatus* tbStat, int attackCode);
 
 	ActionSequenceSystem();
 private:
@@ -103,7 +105,7 @@ private:
 	void (__cdecl *_sub_1008BB40)(D20Actn * d20a); // ActnSeq*actSeq@<ebx>, 
 	int(__cdecl* _CrossBowSthgReload_1008E8A0)(D20Actn *d20a); //, ActnSeq *actSeq@<ebx>
 	uint32_t (__cdecl *getRemainingMaxMoveLength)(D20Actn *d20a, TurnBasedStatus *actnSthg, float *floatOut); // doesn't take things like having made 5 foot step into account, just a raw calculation
-	uint32_t (__cdecl *_sub_10093950)(D20Actn* d20a);
+	int(__cdecl*_TurnBasedStatusUpdate)(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus);
 	void (__cdecl *_sub_100939D0)(CmbtIntrpts* d20a); // D20Actn*@<eax>
 	uint32_t (__cdecl* _sub_10096450)(ActnSeq * actSeq, uint32_t); // void * iO @<ebx>
 	void(__cdecl* _AOOSthgSub_10097D50)(objHndl, objHndl);
@@ -125,13 +127,13 @@ extern ActionSequenceSystem actSeqSys;
 struct TurnBasedStatus
 {
 	uint32_t hourglassState; // 4 - full action remaining; 2 - single action remaining; 1 - move action remaining
-	D20CAF callActionFrameFlags;
+	int tbsFlags; // 0x40 full attack
 	uint32_t idxSthg;
 	float surplusMoveDistance; // is nonzero when you have started a move action already and haven't used it all up
-	uint32_t field_10;
-	uint32_t field_14;
-	uint32_t field_18;
-	uint32_t field_1C;
+	uint32_t baseAttackNumCode; // is composed of the base number of attacks (dispatch 51 or 53) + a code number: 99 for dual wielding (+1 for extra offhand attack), 999 for natural attacks
+	uint32_t attackModeCode; // 0 for normal main hand, 99 for dual wielding, 999 for natural attacks
+	uint32_t numBonusAttacks; // number of bonus attacks (dispatch 52)
+	uint32_t numAttacks;
 	uint32_t errCode;
 };
 
@@ -183,6 +185,8 @@ uint32_t _isSimultPerformer(objHndl objHnd);
 uint32_t _seqCheckFuncsCdecl(TurnBasedStatus *actnSthg);
 uint32_t _moveSequenceParseUsercallWrapper(ActnSeq *actSeq, TurnBasedStatus *actnSthg, float distSthg, float reach, int flagSthg); //, D20_Action *d20aIn@<eax>
 uint32_t _unspecifiedMoveAddToSeq(D20Actn *d20a, ActnSeq *actSeq, TurnBasedStatus *actnSthg);
+int __cdecl _UnspecifiedAttackAddToSeq(D20Actn *d20a, ActnSeq *actSeq, TurnBasedStatus *tbStat);
+int __cdecl _ActionCostFullAttack(D20Actn* d20, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 void _sequencePerform();
 void _curSeqReset(objHndl objHnd);
 uint32_t _allocSeq(objHndl objHnd);

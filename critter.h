@@ -166,6 +166,11 @@ struct CritterSystem : AddressTable
 	*/
 	void GiveMoney(objHndl critter, int platinum, int gold, int silver, int copper);
 
+	/*
+		Gets number of extra offhand attacks critter can do if wielding an offhand weapon (1 if no special feats)
+	*/
+	int NumOffhandExtraAttacks(objHndl critter);
+
 #pragma region Category
 	MonsterCategory GetCategory(objHndl objHnd);
 	uint32_t IsCategoryType(objHndl objHnd, MonsterCategory categoryType);
@@ -174,6 +179,7 @@ struct CritterSystem : AddressTable
 	uint32_t IsOoze(objHndl objHnd);
 	uint32_t IsSubtypeFire(objHndl objHnd);
 	float GetReach(objHndl objHndl, D20ActionType actType);
+	int GetBonusFromSizeCategory(int sizeCategory); // bonus to hit from size
 #pragma endregion
 
 };

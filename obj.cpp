@@ -598,6 +598,11 @@ void Objects::PropCollectionRemoveField(objHndl objHnd, obj_f objF)
 	addresses.PropCollectionRemoveField(objHnd, objF);
 }
 
+int Objects::GetModFromStatLevel(int statLevel)
+{
+	return (statLevel - 10) / 2;
+}
+
 bool Objects::IsContainer(objHndl objHnd)
 {
 	auto type = GetType(objHnd);

@@ -46,6 +46,8 @@ public:
 
 	void PushFallDown(objHndl actor, int unk);
 
+	int PushAttackAnim(objHndl actor, objHndl target, int unk1, int hitAnimIdx, int playCrit, int useSecondaryAnim);
+	int GetAnimIdSthgSub_1001ABB0(objHndl objHndl);
 };
 
 extern AnimationGoals animationGoals;

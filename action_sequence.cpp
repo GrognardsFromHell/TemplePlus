@@ -31,6 +31,7 @@ public:
 		replaceFunction(0x1008A1B0, _ActionErrorString); 
 		replaceFunction(0x1008A980, _actSeqOkToPerform); 
 		replaceFunction(0x1008BFA0, _addSeqSimple); 
+		replaceFunction(0x1008C6A0, _ActionCostFullAttack);
 		
 		replaceFunction(0x100925E0, _isSimultPerformer); 
 
@@ -48,6 +49,7 @@ public:
 		
 		
 		replaceFunction(0x100961C0, _sequencePerform); 
+		replaceFunction(0x100968B0, _UnspecifiedAttackAddToSeq);
 		replaceFunction(0x100996E0, _actionPerform); 
 		
 		
@@ -61,11 +63,17 @@ public:
 
 static struct ActnSeqAddresses : AddressTable{
 
+	int(__cdecl *TouchAttackAddToSeq)(D20Actn* d20Actn, ActnSeq* actnSeq, TurnBasedStatus* turnBasedStatus);
 	void(__cdecl *ActionAddToSeq)();
+	
 	ActnSeqAddresses()
 	{
-		macRebase(ActionAddToSeq, 10097C20)
+		rebase(TouchAttackAddToSeq, 0x10096760);
+		rebase(ActionAddToSeq,0x10097C20); 
+		
 	}
+
+	
 }addresses;
 
 
@@ -112,14 +120,14 @@ ActionSequenceSystem::ActionSequenceSystem()
 
 	rebase(ActionCostReload, 0x100903B0);
 
+	rebase(_TurnBasedStatusUpdate, 0x10093950);
 	rebase(_combatTriggerSthg, 0x10093890);
-	rebase(_sub_10093950,      0x10093950);
 	rebase(_sub_100939D0,      0x100939D0); 
 	rebase(seqCheckFuncssub_10094CA0, 0x10094CA0);
 
 	rebase(_actionPerformRecursion, 0x100961C0);
 	rebase(_sub_10096450,           0x10096450);
-	rebase(TouchAttackAddToSeq,     0x10096760);
+
 
 	rebase(_AOOSthgSub_10097D50, 0x10097D50);
 
@@ -403,7 +411,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 					} else if (!tbStatCopy.hourglassState)
 					{
 						d20aCopy.d20ActType = D20A_5FOOTSTEP;
-						if (!(tbStatCopy.callActionFrameFlags & 6)){	goto LABEL_53; }
+						if (!(tbStatCopy.tbsFlags & 6)){	goto LABEL_53; }
 					}
 				}
 
@@ -553,12 +561,12 @@ uint32_t ActionSequenceSystem::TurnBasedStatusInit(objHndl objHnd)
 		ActnSeq * curSeq = *actSeqCur;
 		tbStatus = &curSeq->tbStatus;
 		tbStatus->hourglassState = 4;
-		tbStatus->callActionFrameFlags = (D20CAF)0;
+		tbStatus->tbsFlags = (D20CAF)0;
 		tbStatus-> idxSthg= -1;
-		tbStatus-> field_10= 0;
-		tbStatus->field_14 = 0;
-		tbStatus-> field_18= 0;
-		tbStatus-> field_1C= 0;
+		tbStatus-> baseAttackNumCode= 0;
+		tbStatus->attackModeCode = 0;
+		tbStatus-> numBonusAttacks= 0;
+		tbStatus-> numAttacks= 0;
 		tbStatus-> errCode= 0;
 		tbStatus-> surplusMoveDistance = 0;
 		dispatch.dispIOTurnBasedStatusInit(&dispIOtB);
@@ -617,7 +625,7 @@ uint32_t ActionSequenceSystem::TurnBasedStatusUpdate(D20Actn* d20a, TurnBasedSta
 		mov ecx, this;
 		mov esi, actnSthg;
 		push esi;
-		mov esi, [ecx]._sub_10093950;
+		mov esi, [ecx]._TurnBasedStatusUpdate;
 		mov ebx, d20a;
 		call esi;
 		add esp, 4;
@@ -845,7 +853,7 @@ void ActionSequenceSystem::actionPerform()
 			} else
 			{
 				memcpy(&curSeq->tbStatus, &tbStatus, sizeof(tbStatus));
-				*(uint32_t*)(&curSeq->tbStatus.callActionFrameFlags) |= (uint32_t)D20CAF_NEED_ANIM_COMPLETED;
+				*(uint32_t*)(&curSeq->tbStatus.tbsFlags) |= (uint32_t)D20CAF_NEED_ANIM_COMPLETED;
 				InterruptSthg_10099360(d20a);
 				hooked_print_debug_message("\nPerforming action for %s (%I64x)", description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
 				d20->d20Defs[d20a->d20ActType].performFunc(d20a);
@@ -1037,6 +1045,25 @@ uint32_t ActionSequenceSystem::isSomeoneAlreadyActingSimult(objHndl objHnd)
 	return 0;
 }
 
+int ActionSequenceSystem::ActionCostFullAttack(D20Actn* d20, TurnBasedStatus* tbStat, ActionCostPacket* acp)
+{
+	acp->chargeAfterPicker = 0;
+	acp->moveDistCost = 0;
+	acp->hourglassCost = 4;
+	int flags = d20->d20Caf;
+	if (d20->d20Caf & D20CAF_FREE_ACTION || !combat->isCombatActive() )  
+		acp->hourglassCost = 0;
+	if (tbStat->attackModeCode >= tbStat->baseAttackNumCode && tbStat->hourglassState >= 4 && !tbStat->numBonusAttacks)
+	{
+		FullAttackCostCalculate(d20, tbStat, (int*)&tbStat->baseAttackNumCode, (int*) &tbStat->numBonusAttacks,
+			(int*)&tbStat->numAttacks,(int*) &tbStat->attackModeCode);
+		tbStat->surplusMoveDistance = 0;
+		tbStat->tbsFlags = tbStat->tbsFlags | 0x40;
+	}
+
+	return 0;
+}
+
 void ActionSequenceSystem::FullAttackCostCalculate(D20Actn* d20a, TurnBasedStatus* tbStatus, int* baseAttackNumCode, int* bonusAttacks, int* numAttacks, int* attackModeCode)
 {
 	objHndl  performer = d20a->d20APerformer;
@@ -1051,8 +1078,8 @@ void ActionSequenceSystem::FullAttackCostCalculate(D20Actn* d20a, TurnBasedStatu
 	{
 		if (objects.GetType(offhand) != obj_t_armor)
 		{
-			_attackTypeCodeHigh = 100; // originally 5
-			_attackTypeCodeLow = 99; // originally 4
+			_attackTypeCodeHigh = ATTACK_CODE_OFFHAND + 1; // originally 5
+			_attackTypeCodeLow = ATTACK_CODE_OFFHAND; // originally 4
 			usingOffhand = 1;
 		}
 	}
@@ -1068,8 +1095,8 @@ void ActionSequenceSystem::FullAttackCostCalculate(D20Actn* d20a, TurnBasedStatu
 		numAttacksBase = dispatch.DispatchD20ActionCheck(d20a, tbStatus, dispTypeGetCritterNaturalAttacksNum);
 		if (numAttacksBase > 0)
 		{
-			_attackTypeCodeHigh = 1000; // originally 10
-			_attackTypeCodeLow = 999; // originally 9
+			_attackTypeCodeHigh = ATTACK_CODE_NATURAL_ATTACK + 1; // originally 10
+			_attackTypeCodeLow = ATTACK_CODE_NATURAL_ATTACK; // originally 9
 		}
 	}
 
@@ -1084,13 +1111,79 @@ void ActionSequenceSystem::FullAttackCostCalculate(D20Actn* d20a, TurnBasedStatu
 	*baseAttackNumCode = numAttacksBase + _attackTypeCodeHigh - 1 + usingOffhand;
 }
 
+int ActionSequenceSystem::TouchAttackAddToSeq(D20Actn* d20Actn, ActnSeq* actnSeq, TurnBasedStatus* turnBasedStatus)
+{
+	return addresses.TouchAttackAddToSeq(d20Actn, actnSeq, turnBasedStatus);
+}
+
 int ActionSequenceSystem::TurnBasedStatusUpdate(TurnBasedStatus* tbStat, D20Actn* d20a)
 {
 	return TurnBasedStatusUpdate(d20a, tbStat);
 }
 
-int ActionSequenceSystem::UnspecifiedAttackAddToSeqRangedCore(ActnSeq* actnSeq, D20Actn* d20Actn, TurnBasedStatus* tbStat)
+int ActionSequenceSystem::UnspecifiedAttackAddToSeqRangedMulti(ActnSeq* actSeq, D20Actn* d20a, TurnBasedStatus* tbStat)
 {
+	D20Actn d20aCopy;
+	int baseAttackNumCode = tbStat->baseAttackNumCode;
+	int numBonusAttacks = tbStat->numBonusAttacks;
+	int attackModeCode = tbStat->attackModeCode;
+	d20a->d20Caf |= D20CAF_RANGED;
+
+	int bonusAttackNumCode = attackModeCode + numBonusAttacks;
+	int attackCode = attackModeCode + 1;
+	auto weapon = inventory.ItemWornAt(d20a->d20APerformer, 3);
+	if (weapon)
+	{
+		WeaponAmmoType ammoType = (WeaponAmmoType)objects.getInt32(weapon, obj_f_weapon_ammo_type);
+		if (ammoType > wat_dagger && ammoType <= wat_bottle) // thrown weapons   TODO: should this include daggers??
+		{
+			d20a->d20Caf |= D20CAF_THROWN;
+			if (ammoType != wat_shuriken && !feats.HasFeatCount(d20a->d20APerformer, FEAT_QUICK_DRAW))
+			{
+				baseAttackNumCode = attackModeCode + 1;
+				bonusAttackNumCode = attackModeCode;
+			}
+		}
+	}
+
+	if (d20->d20Query(d20a->d20APerformer, DK_QUE_Prone))
+	{
+		memcpy(&d20aCopy, d20a, sizeof(D20Actn));
+		d20aCopy.d20ActType = D20A_STAND_UP;
+		memcpy(&actSeq->d20ActArray[actSeq->d20ActArrayNum++], &d20aCopy, sizeof(D20Actn));
+	}
+
+	for (int i = bonusAttackNumCode - attackModeCode; i > 0; i--)
+	{
+		AttackAppend(actSeq, d20a, tbStat, attackCode);
+	}
+
+	for (int i = baseAttackNumCode - attackModeCode; i > 0; i--)
+	{
+		AttackAppend(actSeq, d20a, tbStat, attackCode);
+		attackCode++;
+	}
+	return 0;
+}
+
+int ActionSequenceSystem::UnspecifiedAttackAddToSeqMeleeMulti(ActnSeq* actSeq, TurnBasedStatus* tbStat, D20Actn* d20a)
+{
+	int  attackModeCode = tbStat->attackModeCode;
+	int  baseAttackNumCode = tbStat->baseAttackNumCode;
+	int  attackCode = attackModeCode + 1;
+
+	for (int i = tbStat->numBonusAttacks; i > 0; i--)
+	{
+		AttackAppend(actSeq, d20a, tbStat, attackCode);
+	}
+
+	for (int i = baseAttackNumCode - attackModeCode; i > 0; i--)
+	{
+
+		AttackAppend(actSeq, d20a, tbStat, attackCode);
+		attackCode++;
+	}
+	return 0;
 }
 
 int ActionSequenceSystem::UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat)
@@ -1099,7 +1192,7 @@ int ActionSequenceSystem::UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actS
 	objHndl performer = d20a->d20APerformer;
 	D20Actn d20aCopy;
 		memcpy(&d20aCopy, d20a, sizeof(D20Actn));
-	int d20aNum = actSeq->d20ActArrayNum;
+	int d20aNumInitial = actSeq->d20ActArrayNum;
 	ActionCostPacket acp;
 	int junk =0;
 	int numAttacks = 0;
@@ -1134,12 +1227,88 @@ int ActionSequenceSystem::UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actS
 			{
 				memcpy(&actSeq->d20ActArray[actSeq->d20ActArrayNum++], &d20aCopy, sizeof(D20Actn));
 				d20aCopy.d20ActType = inventory.IsThrowingWeapon(weapon) != 0 ? D20A_THROW : D20A_STANDARD_RANGED_ATTACK;
-				return UnspecifiedAttackAddToSeqRangedCore(actSeq, &d20aCopy, &tbStatCopy);
+				return UnspecifiedAttackAddToSeqRangedMulti(actSeq, &d20aCopy, &tbStatCopy);
 			}
-			return 0;
+			memcpy(&d20aCopy, d20a, sizeof(D20Actn));
+			d20aCopy.d20ActType = inventory.IsThrowingWeapon(weapon) != 0 ? D20A_THROW : D20A_STANDARD_RANGED_ATTACK;
+			int result = TurnBasedStatusUpdate(&tbStatCopy, &d20aCopy);
+			if (!result)
+			{
+				int attackCode = tbStatCopy.attackModeCode;
+				AttackAppend(actSeq, &d20aCopy, tbStat, attackCode);
+			}
+			return result;
 		}
 	}
+	location->getLocAndOff(objHnd, &d20aCopy.destLoc);
+	if (location->DistanceToObj(performer, objHnd) > reach)
+	{
+		d20aCopy.d20ActType = D20A_UNSPECIFIED_MOVE;
+		int result = moveSequenceParse(&d20aCopy, actSeq, tbStat, 0.0, reach, 1);
+		if (result)
+			return result;
+		memcpy(&tbStatCopy, tbStat, sizeof(TurnBasedStatus));
 
+	}
+
+	// run the check function for all the new actions (if there are any)
+	for (int i = d20aNumInitial; i < actSeq->d20ActArrayNum; i++)
+	{
+		int result = seqCheckAction(&actSeq->d20ActArray[i], &tbStatCopy);
+		if (result) return result;
+
+	}
+
+	memcpy(&d20aCopy, d20a, sizeof(D20Actn));
+	FullAttackCostCalculate(&d20aCopy, &tbStatCopy, &junk, &junk, &numAttacks, &junk);
+	if (numAttacks > 1)
+	{
+		d20aCopy.d20ActType = D20A_FULL_ATTACK;
+		if (!TurnBasedStatusUpdate(&tbStatCopy, &d20aCopy))
+		{
+			memcpy(&actSeq->d20ActArray[actSeq->d20ActArrayNum++], &d20aCopy, sizeof(D20Actn));
+			d20aCopy.d20ActType = D20A_STANDARD_ATTACK;
+			return UnspecifiedAttackAddToSeqMeleeMulti(actSeq, &tbStatCopy, &d20aCopy);
+		}
+	}
+	memcpy(&d20aCopy, d20a, sizeof(D20Actn));
+	d20aCopy.d20ActType = D20A_STANDARD_ATTACK;
+	int result = TurnBasedStatusUpdate(&tbStatCopy, &d20aCopy);
+	if (!result)
+	{
+		int attackCode = tbStatCopy.attackModeCode;
+		AttackAppend(actSeq, &d20aCopy, tbStat, attackCode);
+	}
+	return result;
+
+}
+
+void ActionSequenceSystem::AttackAppend(ActnSeq* actSeq, D20Actn* d20a, TurnBasedStatus* tbStat, int attackCode)
+{
+	memcpy(& (actSeq->d20ActArray[actSeq->d20ActArrayNum]), d20a, sizeof(D20Actn));
+	actSeq->d20ActArray[actSeq->d20ActArrayNum].data1 = attackCode;
+	if (attackCode == ATTACK_CODE_OFFHAND + 2 || attackCode == ATTACK_CODE_OFFHAND + 4 || attackCode == ATTACK_CODE_OFFHAND + 6)
+	{
+		if (attackCode == ATTACK_CODE_OFFHAND + 2)
+		{
+			actSeq->d20ActArray[actSeq->d20ActArrayNum].d20Caf |= D20CAF_SECONDARY_WEAPON;
+		}
+		else if (attackCode == ATTACK_CODE_OFFHAND + 4)
+		{
+			if ( feats.HasFeatCount(d20a->d20APerformer, FEAT_IMPROVED_TWO_WEAPON_FIGHTING) 
+				|| feats.HasFeatCount(d20a->d20APerformer, FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER))
+				actSeq->d20ActArray[actSeq->d20ActArrayNum].d20Caf |= D20CAF_SECONDARY_WEAPON;
+		} else
+		{
+			if (feats.HasFeatCount(d20a->d20APerformer, FEAT_GREATER_TWO_WEAPON_FIGHTING) 
+				|| feats.HasFeatCount(d20a->d20APerformer, FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER))
+				actSeq->d20ActArray[actSeq->d20ActArrayNum].d20Caf |= D20CAF_SECONDARY_WEAPON;
+		}
+		
+	}
+	if (tbStat->tbsFlags & 0x40)
+		actSeq->d20ActArray[actSeq->d20ActArrayNum].d20Caf |= D20CAF_FULL_ATTACK;
+	actSeq->d20ActArrayNum++;
 }
 #pragma endregion
 
@@ -1222,6 +1391,16 @@ uint32_t __declspec(naked) _moveSequenceParseUsercallWrapper(ActnSeq* actSeq, Tu
 uint32_t _unspecifiedMoveAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* actnSthg)
 {
 	return actSeqSys.moveSequenceParse(d20a, actSeq, actnSthg, 0.0, 0.0, 1);
+}
+
+int _UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat)
+{
+	return actSeqSys.UnspecifiedAttackAddToSeq(d20a, actSeq, tbStat);
+}
+
+int _ActionCostFullAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp)
+{
+	return actSeqSys.ActionCostFullAttack(d20a, tbStat, acp);
 }
 
 void _sequencePerform()

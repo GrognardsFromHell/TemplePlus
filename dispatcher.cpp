@@ -50,6 +50,14 @@ public:
 	}
 } dispatcherReplacements;
 
+struct DispatcherSystemAddresses : AddressTable
+{
+	int(__cdecl *DispatchAttackBonus)(objHndl attacker, objHndl victim, DispIoAttackBonus *dispIoIn, enum_disp_type, int key);
+	DispatcherSystemAddresses()
+	{
+		rebase(DispatchAttackBonus, 0x1004DEC0);
+	}
+} addresses;
 
 #pragma region Dispatcher System Implementation
 DispatcherSystem dispatch;
@@ -278,7 +286,38 @@ void DispatcherSystem::PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher* d
 	}
 }
 
+int DispatcherSystem::DispatchAttackBonus(objHndl objHnd, objHndl victim, DispIoAttackBonus* dispIo, enum_disp_type dispType, int key)
+{
+	return addresses.DispatchAttackBonus(objHnd, victim, dispIo, dispType, key);
+}
 
+int DispatcherSystem::DispatchToHitBonusBase(objHndl objHndCaller, DispIoAttackBonus* dispIo)
+{
+	int key = 0;
+	if (dispIo)
+	{
+		key = dispIo->attackPacket.dispKey;
+	}
+	return DispatchAttackBonus(objHndCaller, 0i64, dispIo, dispTypeToHitBonusBase, key);
+}
+
+int DispatcherSystem::DispatchGetSizeCategory(objHndl obj)
+{
+	Dispatcher * dispatcher = objects.GetDispatcher(obj);
+	DispIoD20Query dispIo; 
+
+	if (dispatcherValid(dispatcher))
+	{
+		dispIo.dispIOType = dispIOTypeQuery;
+		dispIo.return_val = objects.GetSize(obj);
+		dispIo.data1 = 0;
+		dispIo.data2 = 0;
+		DispatcherProcessor(
+			(Dispatcher *)dispatcher, dispTypeGetSizeCategory,	0, &dispIo);
+		return dispIo.return_val;
+	}
+	return 0;
+}
 
 void DispatcherSystem::DispIoDamageInit(DispIoDamage* dispIoDamage)
 {
@@ -286,7 +325,7 @@ void DispatcherSystem::DispIoDamageInit(DispIoDamage* dispIoDamage)
 	damage.DamagePacketInit(&dispIoDamage->damage);
 	dispIoDamage->attackPacket.attacker=0i64;
 	dispIoDamage->attackPacket.victim = 0i64;
-	dispIoDamage->attackPacket.field_14 = 0;
+	dispIoDamage->attackPacket.dispKey = 0;
 	dispIoDamage->attackPacket.flags = 0;
 	dispIoDamage->attackPacket.weaponUsed = 0i64;
 	dispIoDamage->attackPacket.anotherItem = 0i64;

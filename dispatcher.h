@@ -67,6 +67,9 @@ struct DispatcherSystem : AddressTable
 	DispIoD20ActionTurnBased* DispIOCheckIoType12(DispIoD20ActionTurnBased* dispIo);
 	DispIOBonusListAndSpellEntry* DispIOCheckIoType14(DispIOBonusListAndSpellEntry* dispIo);
 	void PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher* dispatcher);
+	int DispatchAttackBonus(objHndl objHnd, objHndl victim, DispIoAttackBonus* dispIo, enum_disp_type dispType, int key);
+	int DispatchToHitBonusBase(objHndl objHndCaller, DispIoAttackBonus* dispIo);
+	int DispatchGetSizeCategory(objHndl objHndCaller);
 #pragma endregion
 
 	uint32_t(__cdecl * dispatcherForCritters)(objHndl, DispIO *, enum_disp_type, uint32_t dispKey);

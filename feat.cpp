@@ -69,11 +69,12 @@ FeatSystem::FeatSystem()
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // table presupposes 10 items on each row, terminator character -1
 	uint32_t _rangerArcheryFeats[3 * 2] = { FEAT_RANGER_RAPID_SHOT, 2, FEAT_RANGER_MANYSHOT, 6, -1, -1 };
-	uint32_t _rangerTwoWeaponFeats[3 * 2] = { FEAT_TWO_WEAPON_FIGHTING_RANGER, 2, FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER, 6, -1, -1 };
+	uint32_t _rangerTwoWeaponFeats[4 * 2] = { FEAT_TWO_WEAPON_FIGHTING_RANGER, 2, FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER, 6, FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER, 11 - 1, -1 };
 
 	memcpy(racialFeats, _racialFeatsTable, sizeof(racialFeats));
 	memcpy(rangerArcheryFeats, _rangerArcheryFeats, sizeof(rangerArcheryFeats));
 	memcpy(rangerTwoWeaponFeats, _rangerTwoWeaponFeats, sizeof(rangerTwoWeaponFeats));
+	featPropertiesTable[FEAT_GREATER_TWO_WEAPON_FIGHTING] = 0x10;
 };
 
 uint32_t FeatSystem::HasFeatCount(objHndl objHnd, feat_enums featEnum)

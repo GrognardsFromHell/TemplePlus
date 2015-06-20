@@ -3,7 +3,7 @@
 #include "common.h"
 
 #define NUM_FEATS 664 // inc. those hacked by Moebius/SpellSlinger (otherwise vanilla is 649)
-
+//664th - FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER
 
 struct FeatSystem : AddressTable
 {	/* feat property bit meaning:
@@ -44,7 +44,7 @@ struct FeatSystem : AddressTable
 	vector<feat_enums> GetFeats(objHndl handle); // This is what objHndl.feats in python returns ??
 
 	uint32_t rangerArcheryFeats[3 * 2];
-	uint32_t rangerTwoWeaponFeats[3 * 2];
+	uint32_t rangerTwoWeaponFeats[4 * 2];
 
 
 	void(__cdecl *ToEE_WeaponFeatCheck)();

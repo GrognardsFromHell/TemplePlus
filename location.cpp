@@ -43,8 +43,8 @@ float LocationSys::InchesToFeet(float inches) {
 LocationSys::LocationSys()
 {
 	rebase(getLocAndOff, 0x10040080);
-	macRebase(subtileFromLoc ,10040750)
-	macRebase(TOEEdistBtwnLocAndOffs, 1002A0A0)
+	rebase(subtileFromLoc,0x10040750); 
+	rebase(TOEEdistBtwnLocAndOffs,0x1002A0A0); 
 	rebase(DistanceToObj, 0x100236E0);
 	rebase(Distance3d, 0x1002A0A0);
 }

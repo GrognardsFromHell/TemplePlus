@@ -15,6 +15,7 @@
 #include "location.h"
 #include "action_sequence.h"
 #include "critter.h"
+#include "anim.h"
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
@@ -50,6 +51,8 @@ public:
 		replaceFunction(0x10089F80, _globD20aSetTypeAndData1);
 		replaceFunction(0x1008A450, _GlobD20ActnSetSpellData);
 		replaceFunction(0x1008A530, _globD20aSetPerformer);
+
+		replaceFunction(0x1008CE30, _PerformStandardAttack);
 		
 		replaceFunction(0x100949E0, _GlobD20ActnInit);
 		
@@ -277,6 +280,102 @@ void D20System::GlobD20ActnSetSpellData(D20SpellData* d20SpellData)
 	d20Sys.globD20Action->d20SpellData = *d20SpellData;
 }
 
+bool D20System::UsingSecondaryWeapon(D20Actn* d20a)
+{
+	return UsingSecondaryWeapon(d20a->d20APerformer, d20a->data1);
+}
+
+bool D20System::UsingSecondaryWeapon(objHndl obj, int attackCode)
+{
+	if (attackCode == ATTACK_CODE_OFFHAND + 2 || attackCode == ATTACK_CODE_OFFHAND + 4 || attackCode == ATTACK_CODE_OFFHAND + 6)
+	{
+		if (attackCode == ATTACK_CODE_OFFHAND + 2)
+		{
+			return 1;
+		}
+		if (attackCode == ATTACK_CODE_OFFHAND + 4)
+		{
+			if (feats.HasFeatCount(obj, FEAT_IMPROVED_TWO_WEAPON_FIGHTING)
+				|| feats.HasFeatCount(obj, FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER))
+				return 1;
+		}
+		else if (attackCode == ATTACK_CODE_OFFHAND + 6)
+		{
+			if (feats.HasFeatCount(obj, FEAT_GREATER_TWO_WEAPON_FIGHTING)
+				|| feats.HasFeatCount(obj, FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER))
+				return 1;
+		}
+	}
+	return 0;
+}
+
+void D20System::ExtractAttackNumber(objHndl obj, int attackCode, int* attackNumber, int * dualWielding)
+{
+	if (attackCode >= ATTACK_CODE_NATURAL_ATTACK)
+	{
+		*attackNumber = attackCode - ATTACK_CODE_NATURAL_ATTACK;
+		*dualWielding = 0 ;
+	}
+	else if (attackCode >= ATTACK_CODE_OFFHAND)
+	{
+		*dualWielding = 1;
+		int attackIdx = attackCode - (ATTACK_CODE_OFFHAND+1);
+		int numOffhandExtraAttacks = critterSys.NumOffhandExtraAttacks(obj);
+		if (d20Sys.UsingSecondaryWeapon(obj, attackCode))
+		{
+			if (attackIdx % 2 && (attackIdx - 1) / 2 < numOffhandExtraAttacks )
+				*attackNumber = 1 + (attackIdx - 1) / 2;
+		}
+		else
+		{
+			if ( !(attackIdx % 2 ) && (attackIdx  / 2 < numOffhandExtraAttacks) )
+				*attackNumber = 1 + attackIdx  / 2;
+			else
+				*attackNumber = 1 + numOffhandExtraAttacks + (attackIdx - 2*numOffhandExtraAttacks);
+		}
+	}
+	else // regular case (just primary hand)
+	{
+		*attackNumber = attackCode - ATTACK_CODE_PRIMARY;
+		*dualWielding = 0;
+	}
+}
+
+int D20System::PerformStandardAttack(D20Actn* d20a)
+{
+	int v5 = templeFuncs.RNG(0, 2);
+
+	int d20data = d20a->data1;
+	int playCritFlag = 0;
+	int useSecondaryAnim = 0;
+	if (UsingSecondaryWeapon(d20a))
+	{
+		d20a->d20Caf |= D20CAF_SECONDARY_WEAPON; 
+		useSecondaryAnim = 1;
+	}
+	else if (d20a->data1 >= ATTACK_CODE_NATURAL_ATTACK + 1)
+	{
+		useSecondaryAnim = templeFuncs.RNG(0, 1);
+		v5 = (d20a->data1 - (ATTACK_CODE_NATURAL_ATTACK + 1)) % 3;
+	}
+
+	ToHitProc(d20a);
+
+	int caflags = d20a->d20Caf;
+	if (caflags & D20CAF_CRITICAL
+		|| d20QueryWithData(d20a->d20APerformer, DK_QUE_Play_Critical_Hit_Anim, caflags, caflags >> 32))
+		playCritFlag = 1;
+
+
+	
+	if (animationGoals.PushAttackAnim(d20a->d20APerformer, d20a->d20ATarget, 0xFFFFFFFF, v5, playCritFlag, useSecondaryAnim))
+	{
+		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
+		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
+	}
+	return 0;
+}
+
 uint64_t D20System::d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, ::uint32_t arg2)
 {
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
@@ -480,4 +579,9 @@ void _GlobD20ActnInit()
 void _GlobD20ActnSetSpellData(D20SpellData* d20SpellData)
 {
 	d20Sys.GlobD20ActnSetSpellData(d20SpellData);
+}
+
+int _PerformStandardAttack(D20Actn* d20a)
+{
+	return d20Sys.PerformStandardAttack(d20a);
 }
