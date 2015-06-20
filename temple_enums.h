@@ -1859,7 +1859,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeStatBaseGet, // looks like this is intended to replace StatBaseGet function for Critters with Dispatchers
 	dispType67,
 	dispTypeItemForceRemove, // has a single function associated with this - 10104410 int __cdecl ItemForceRemoveCallback_SetItemPadWielderArgs(Dispatcher_Callback_Args args);
-	dispTypeArmorCheckPenalty,
+	dispTypeArmorToHitPenalty, // none exist apparently
 
 	dispTypeMaxDexAcBonus,
 	dispTypeGetSizeCategory,

@@ -4,6 +4,7 @@
 #include "python_object.h"
 #include "../condition.h"
 #include "../radialmenu.h"
+#include "feat.h"
 
 /*
 	Dumps all conditions from the global hashtable to a Wiki article.
@@ -108,10 +109,39 @@ PyObject *PyDebug_DumpRadial() {
 	return result;
 }
 
+/*
+	dumps feat data tables so they can finally be externalized!
+*/
+PyObject *PyDebug_DumpFeats() {
+	auto cap = NUM_FEATS;
+	auto result = PyList_New(cap);
+	uint32_t * featPropertiesTable = feats.featPropertiesTable;
+	FeatPrereqRow * featPreReqTable = feats.featPreReqTable;
+
+	for (size_t i = 0; i < cap; ++i) {
+		feat_enums feat = (feat_enums)i;
+		char * featName = feats.GetFeatName(feat);
+
+		auto featPrereqs = PyList_New(0);
+		for (int j = 0; j < 8; j++)
+		{
+			auto v = Py_BuildValue("II", featPreReqTable[i].featPrereqs[j].featPrereqCode, 
+				featPreReqTable[i].featPrereqs[j].featPrereqCodeArg);
+			PyList_Append(featPrereqs, v);
+		}
+
+		auto c = Py_BuildValue("sIIO", featName, feat, featPropertiesTable[i], featPrereqs);
+		Py_DecRef(featPrereqs);
+		PyList_SET_ITEM(result, i, c);
+	}
+
+	return result;
+}
+
 static PyMethodDef PyDebug_Methods[] = {
 	{ "dump_conds", (PyCFunction) PyDebug_DumpConds, METH_NOARGS, NULL },
 	{ "dump_radial", (PyCFunction) PyDebug_DumpRadial, METH_NOARGS, NULL },
-//	{ "dump_feats", (PyCFunction)PyDebug_DumpFeats, METH_NOARGS, NULL },
+	{ "dump_feats", (PyCFunction)PyDebug_DumpFeats, METH_NOARGS, NULL },
 	{ NULL, }
 };
 
