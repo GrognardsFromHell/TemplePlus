@@ -30,7 +30,7 @@ struct InventorySystem : AddressTable
 	int SetItemParent(objHndl item, objHndl parent, int flags);
 	int IsNormalCrossbow(objHndl weapon);
 	int IsThrowingWeapon(objHndl weapon);
-
+	ArmorType GetArmorType(int armorFlags);
 	/*
 		0 - light weapon; 1 - can wield one handed; 2 - must wield two handed; 3 (???)
 	*/

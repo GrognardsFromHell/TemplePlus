@@ -232,18 +232,6 @@ public: const char* name() override {
 
 
 
-int __cdecl sub_100FD1C0(DispatcherCallbackArgs a1)
-{
-	DispIoD20ActionTurnBased *v5; 
-
-
-	v5 = dispatch.DispIOCheckIoType12((DispIoD20ActionTurnBased*)a1.dispIO);
-	++v5->returnVal;
-	++v5->returnVal;
-	++v5->returnVal;
-	return 0;
-}
-
 class TestImprovedTWF : public TempleFix
 {
 public: const char* name() override {

@@ -19,6 +19,11 @@ struct CombatSystem : AddressTable {
 	uint32_t* combatModeActive;
 	bool isCombatActive();
 	uint32_t IsCloseToParty(objHndl objHnd);
+	/*
+		retrieves a list of enemies that the obj can melee with; return val is that number of such enemies
+	*/
+	int GetEnemiesCanMelee(objHndl obj, objHndl* canMeleeList);
+	objHndl GetWeapon(AttackPacket* attackPacket);
 	int (__cdecl* IsFlankedBy)(objHndl victim, objHndl attacker);
 	/*
 		Use for the non-lethal brawl.

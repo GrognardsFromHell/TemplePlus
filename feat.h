@@ -5,6 +5,17 @@
 #define NUM_FEATS 664 // inc. those hacked by Moebius/SpellSlinger (otherwise vanilla is 649)
 //664th - FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER
 
+struct FeatPrereq
+{
+	int featPrereqCode;
+	int featPrereqCodeArg;
+};
+
+struct FeatPrereqRow
+{
+	FeatPrereq featPrereqs[8];
+};
+
 struct FeatSystem : AddressTable
 {	/* feat property bit meaning:
 	0x00000001 - can gain multiple times
@@ -28,12 +39,14 @@ struct FeatSystem : AddressTable
 	0x00040000 - Rogue 10th lvl Feat
 	*/
 	uint32_t * featPropertiesTable;
+	FeatPrereqRow * featPreReqTable;
+	char ** featNames;
 	uint32_t * classFeatTable;
-	uint32_t * featPreReqTable;
 	objHndl * charEditorObjHnd;
 	Stat * charEditorClassCode;
 
 	uint32_t racialFeats[ 10 * NUM_RACES ];
+	
 	uint32_t HasFeatCount(objHndl objHnd, feat_enums featEnum);
 	uint32_t HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classEnum, uint32_t rangerSpecializationFeat);
 	uint32_t FeatListElective(objHndl objHnd, feat_enums * listOut);
@@ -42,7 +55,7 @@ struct FeatSystem : AddressTable
 	uint32_t WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType);
 
 	vector<feat_enums> GetFeats(objHndl handle); // This is what objHndl.feats in python returns ??
-
+	char* GetFeatName(feat_enums feat);
 	uint32_t rangerArcheryFeats[3 * 2];
 	uint32_t rangerTwoWeaponFeats[4 * 2];
 

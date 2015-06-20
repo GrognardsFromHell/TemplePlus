@@ -48,6 +48,13 @@ int InventorySystem::IsThrowingWeapon(objHndl weapon)
 	return 0;
 }
 
+ArmorType InventorySystem::GetArmorType(int armorFlags)
+{
+	if (armorFlags & ARMOR_TYPE_NONE)
+		return ARMOR_TYPE_NONE;
+	return (ArmorType) (armorFlags & (ARMOR_TYPE_LIGHT | ARMOR_TYPE_MEDIUM | ARMOR_TYPE_HEAVY) );
+}
+
 obj_f InventorySystem::GetInventoryListField(objHndl objHnd)
 {
 	if (objects.IsCritter(objHnd)) 	return obj_f_critter_inventory_list_idx;

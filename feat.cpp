@@ -53,8 +53,9 @@ FeatFixes featFixes;
 FeatSystem::FeatSystem()
 {
 	rebase(featPropertiesTable, 0x102BFD78); 		// TODO: export this to a mesfile
-	rebase(classFeatTable, 0x102CAAF8); 		// TODO: export this to a mesfile
 	rebase(featPreReqTable, 0x102C07A0); 		// TODO: export this to a mesfile
+	rebase(featNames, 0x10AB6268);
+	rebase(classFeatTable, 0x102CAAF8); 		// TODO: export this to a mesfile
 	rebase(charEditorObjHnd, 0x11E741A0);		// TODO: move this to the appropriate system
 	rebase(charEditorClassCode, 0x11E72FC0);	// TODO: move this to the appropriate system
 	rebase(ToEE_WeaponFeatCheck, 0x1007C4F0);
@@ -75,6 +76,8 @@ FeatSystem::FeatSystem()
 	memcpy(rangerArcheryFeats, _rangerArcheryFeats, sizeof(rangerArcheryFeats));
 	memcpy(rangerTwoWeaponFeats, _rangerTwoWeaponFeats, sizeof(rangerTwoWeaponFeats));
 	featPropertiesTable[FEAT_GREATER_TWO_WEAPON_FIGHTING] = 0x10;
+	featPreReqTable[FEAT_GREATER_TWO_WEAPON_FIGHTING].featPrereqs[2].featPrereqCode = 266;
+	featPreReqTable[FEAT_GREATER_TWO_WEAPON_FIGHTING].featPrereqs[2].featPrereqCodeArg = 11;
 };
 
 uint32_t FeatSystem::HasFeatCount(objHndl objHnd, feat_enums featEnum)
@@ -132,6 +135,11 @@ vector<feat_enums> FeatSystem::GetFeats(objHndl handle) {
 	}
 
 	return result;
+}
+
+char* FeatSystem::GetFeatName(feat_enums feat)
+{
+	return featNames[feat];
 };
 
 #pragma endregion
@@ -333,7 +341,7 @@ uint32_t _FeatExistsInArray(feat_enums featCode, feat_enums * featArray, uint32_
 uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * featArray, uint32_t featArrayLen, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased)
 {
 	uint32_t featProps = feats.featPropertiesTable[featIdx];
-	uint32_t * featPrereqs = feats.featPreReqTable;
+	FeatPrereqRow * featPrereqs = feats.featPreReqTable;
 	const uint8_t numCasterClasses = 7;
 	uint32_t casterClassCodes[numCasterClasses] = { stat_level_bard, stat_level_cleric, stat_level_druid, stat_level_paladin, stat_level_ranger, stat_level_sorcerer, stat_level_wizard };
 
@@ -364,19 +372,22 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 
 
 	uint32_t initOffset = featIdx * 16;
+	if (featIdx == FEAT_GREATER_TWO_WEAPON_FIGHTING)
+	{
+		int bpDummy = 1;
+	}
+	if (featPrereqs[featIdx].featPrereqs[0].featPrereqCode == featReqCodeTerminator){ return 1; };
 
-	if ( featPrereqs[initOffset]  == featReqCodeTerminator){ return 1; };
 
-
-	for (uint32_t i = 0; featPrereqs[initOffset + i] != featReqCodeTerminator; i+=2)
+	for (uint32_t i = 0; featPrereqs[featIdx].featPrereqs[i].featPrereqCode != featReqCodeTerminator; i += 1)
 	{
 		//disassm notes:
 		// eax is classCodeBeingLevelledUp
 		// esi is featReqCode
 		// ecx is featIdx
 
-		int32_t featReqCode = featPrereqs[initOffset + i];
-		auto featReqCodeArg = featPrereqs[initOffset + i + 1];
+		int32_t featReqCode = featPrereqs[featIdx].featPrereqs[i].featPrereqCode;
+		auto featReqCodeArg = featPrereqs[featIdx].featPrereqs[i].featPrereqCodeArg;
 		uint32_t var_2C = 0;
 
 		

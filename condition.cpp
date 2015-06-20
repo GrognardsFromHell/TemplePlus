@@ -8,9 +8,11 @@
 #include "radialmenu.h"
 #include "combat.h"
 #include "critter.h"
+#include "location.h"
 
 ConditionSystem conds;
 CondStructNew conditionDisableAoO;
+CondStructNew conditionGreaterTwoWeaponFighting;
 
 struct ConditionSystemAddresses : AddressTable
 {
@@ -47,6 +49,8 @@ public:
 		replaceFunction(0x100ECF30, ConditionPrevent);
 		replaceFunction(0x100EE280, GlobalToHitBonus);
 		replaceFunction(0x10101150, SkillBonusCallback);
+		replaceFunction(0x100F88C0, TwoWeaponFightingBonus);
+		replaceFunction(0x100F8940, TwoWeaponFightingBonusRanger);
 		
 		replaceFunction(0x100F7B60, _FeatConditionsRegister);
 		replaceFunction(0x100F7BE0, _GetCondStructFromFeat);
@@ -330,13 +334,41 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 	if (combatSys.IsFlankedBy(dispIo->attackPacket.victim, dispIo->attackPacket.attacker))
 	{
 		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 2, 0, 201);
-		dispIo->attackPacket.flags |= D20CAF_FLANKED;
+		*(int*)(&dispIo->attackPacket.flags ) |= (int)D20CAF_FLANKED;
 	}
 
 	// size bonus / penalty
 	int sizeCategory = dispatch.DispatchGetSizeCategory(args.objHndCaller);
 	int sizeCatBonus = critterSys.GetBonusFromSizeCategory(sizeCategory);
 	bonusSys.bonusAddToBonusList(&dispIo->bonlist, sizeCatBonus, 0, 115);
+
+	if (dispIo->attackPacket.flags & D20CAF_RANGED)
+	{
+
+		if (dispIo->attackPacket.victim)
+		{
+			// firing into melee penalty
+			objHndl canMeleeList[100];
+
+			int numEnemiesCanMelee = combatSys.GetEnemiesCanMelee(dispIo->attackPacket.victim, canMeleeList);
+			if (numEnemiesCanMelee > 0
+				&& (numEnemiesCanMelee != 1 || canMeleeList[0]!= args.objHndCaller)
+				&& !feats.HasFeatCount(args.objHndCaller, FEAT_PRECISE_SHOT))
+				bonusSys.bonusAddToBonusList(&dispIo->bonlist, -4, 0, 150); 
+		
+			// range penalty 
+			objHndl weapon = combatSys.GetWeapon(&dispIo->attackPacket);
+			float dist = locSys.DistanceToObj(args.objHndCaller, dispIo->attackPacket.victim);
+			if (dist < 0.0) dist = 0.0;
+			if (weapon)
+			{
+				long double weaponRange = (long double)objects.getInt32(weapon, obj_f_weapon_range);
+				int rangePenaltyFacotr = (int)(dist / weaponRange);
+				if ((int)rangePenaltyFacotr > 0)
+					bonusSys.bonusAddToBonusList(&dispIo->bonlist, -2 * rangePenaltyFacotr, 0, 303);
+			}
+		}
+	}
 
 	return 0;
 }
@@ -352,6 +384,7 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAnimalCompanionAnimal);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAutoendTurn);
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionDisableAoO); //NEW!
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionGreaterTwoWeaponFighting); //NEW!
 	for (unsigned int i = 0; i < 84; i++)
 	{
 		conds.hashmethods.CondStructAddToHashtable(conds.FeatConditionDict[i].condStruct);
@@ -360,6 +393,12 @@ void _FeatConditionsRegister()
 
 uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** condStructOut, uint32_t * arg2Out)
 {
+	if (featEnum == FEAT_GREATER_TWO_WEAPON_FIGHTING)
+	{
+		*condStructOut = (CondStruct*)conds.mConditionGreaterTwoWeaponFighting;
+		*arg2Out = 0;
+		return 1;
+	}
 	feat_enums * featFromDict = & ( conds.FeatConditionDict->featEnum );
 	uint32_t iter = 0;
 	while (
@@ -482,6 +521,61 @@ void ConditionSystem::InitCondFromCondStructAndArgs(Dispatcher* dispatcher, Cond
 				subDispNode->subDispDef->dispCallback(subDispNode,dispatcher->objHnd, dispTypeConditionAddFromD20StatusInit, 0, nullptr);
 		}
 	}
+}
+
+void ConditionSystem::RegisterNewConditions()
+{
+	mConditionDisableAoO = &conditionDisableAoO;
+	memset(mConditionDisableAoOName, 0, sizeof(mConditionDisableAoOName));
+	memcpy(mConditionDisableAoOName, "Disable AoO", sizeof("Disable AoO"));
+
+	mConditionGreaterTwoWeaponFighting = &conditionGreaterTwoWeaponFighting;
+	memset(mConditionGreaterTwoWeaponFightingName, 0, sizeof(mConditionDisableAoOName));
+	memcpy(mConditionGreaterTwoWeaponFightingName, "Greater Two Weapon Fighting", sizeof("Greater Two Weapon Fighting"));
+
+	mConditionDisableAoO->condName = mConditionDisableAoOName;
+	mConditionDisableAoO->numArgs = 1;
+	mConditionDisableAoO->subDispDefs[1].dispType = dispTypeRadialMenuEntry;
+	mConditionDisableAoO->subDispDefs[1].dispKey = 0;
+	mConditionDisableAoO->subDispDefs[1].dispCallback = AoODisableRadialMenuInit;
+
+	mConditionDisableAoO->subDispDefs[0].dispType = dispTypeD20Query;
+	mConditionDisableAoO->subDispDefs[0].dispKey = DK_QUE_AOOPossible;
+	mConditionDisableAoO->subDispDefs[0].dispCallback = AoODisableQueryAoOPossible;
+
+	mConditionDisableAoO->subDispDefs[2].dispType = dispTypeConditionAddPre;
+	mConditionDisableAoO->subDispDefs[2].dispKey = 0;
+	mConditionDisableAoO->subDispDefs[2].data1 = (uint32_t)&mConditionDisableAoO;;
+	mConditionDisableAoO->subDispDefs[2].dispCallback = (int(__cdecl *)(DispatcherCallbackArgs))ConditionPrevent;
+
+	mConditionDisableAoO->subDispDefs[3].dispType = dispType0;
+	mConditionDisableAoO->subDispDefs[3].dispKey = 0;
+	mConditionDisableAoO->subDispDefs[3].dispCallback = 0;
+
+
+	mConditionGreaterTwoWeaponFighting->condName = mConditionGreaterTwoWeaponFightingName;
+	mConditionGreaterTwoWeaponFighting->numArgs = 2;
+
+	DispatcherHookInit(&mConditionGreaterTwoWeaponFighting->subDispDefs[0], dispTypeConditionAddPre, 0, 
+		(int(__cdecl *)(DispatcherCallbackArgs))ConditionPrevent, (uint32_t)&mConditionGreaterTwoWeaponFighting, 0);
+
+	DispatcherHookInit(&mConditionGreaterTwoWeaponFighting->subDispDefs[1], dispTypeConditionAddPre, 0,
+		(int(__cdecl *)(DispatcherCallbackArgs))ConditionPrevent, (uint32_t)&mConditionGreaterTwoWeaponFighting, 0); // TODO: add TWF_RANGER
+
+	DispatcherHookInit(&mConditionGreaterTwoWeaponFighting->subDispDefs[2], dispTypeGetNumAttacksBase, 0,
+		GreaterTwoWeaponFighting, 0, 0); // same callback as Improved TWF (it just adds an extra attack... logic is inside the action sequence / d20 / GlobalToHit functions
+
+
+	DispatcherHookInit(&mConditionGreaterTwoWeaponFighting->subDispDefs[3], dispType0, 0, nullptr, 0, 0);
+}
+
+void ConditionSystem::DispatcherHookInit(SubDispDefNew* sdd, enum_disp_type dispType, int key, void* callback, int data1, int data2)
+{
+	sdd->dispType = dispType;
+	sdd->dispKey = key;
+	sdd->dispCallback = ( int(__cdecl*)(DispatcherCallbackArgs))callback;
+	sdd->data1 = data1;
+	sdd->data2 = data2;
 }
 
 void ConditionSystem::SetPermanentModArgsFromDataFields(Dispatcher* dispatcher, CondStruct* condStruct, int* condArgs)
@@ -660,4 +754,83 @@ int __cdecl AoODisableQueryAoOPossible(DispatcherCallbackArgs args)
 		dispIo->return_val = 0;
 	}
 	return 0;
+}
+
+int __cdecl GreaterTwoWeaponFighting(DispatcherCallbackArgs args)
+{
+	DispIoD20ActionTurnBased *dispIo = dispatch.DispIOCheckIoType12((DispIoD20ActionTurnBased*)args.dispIO);
+	objHndl mainWeapon = inventory.ItemWornAt(args.objHndCaller, 3);
+	objHndl offhand = inventory.ItemWornAt(args.objHndCaller, 4);
+	
+	if (mainWeapon != offhand)
+	{
+		if (mainWeapon)
+		{
+			if (offhand)
+			{
+				int weapFlags = objects.getInt32(mainWeapon, obj_f_weapon_flags);
+				if (!(weapFlags & (4<<8)) && objects.getInt32(offhand, obj_f_type) != obj_t_armor)
+					++dispIo->returnVal;
+			}
+		}
+	}
+	return 0;
+
+}
+
+
+int __cdecl TwoWeaponFightingBonus(DispatcherCallbackArgs args)
+{
+	DispIoAttackBonus *dispIo = dispatch.DispIoCheckIoType5((DispIoAttackBonus*)args.dispIO);
+	char *featName; // eax@3 MAPDST
+
+	feat_enums feat = (feat_enums)conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+	int attackCode = dispIo->attackPacket.dispKey;
+	int dualWielding = 0;
+	int attackNumber = 1;
+	if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
+	{
+		featName = feats.GetFeatName(feat);
+		bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 6, 0, 114, featName);
+	}
+		else if ( d20Sys.ExtractAttackNumber(args.objHndCaller, attackCode, &attackNumber, &dualWielding), dualWielding != 0)
+	{
+		featName = feats.GetFeatName(feat);
+		bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 2, 0, 114, featName);
+	}
+	return 0;
+}
+
+int TwoWeaponFightingBonusRanger(DispatcherCallbackArgs args)
+{
+	objHndl armor = inventory.ItemWornAt(args.objHndCaller, 5);
+	DispIoAttackBonus * dispIo = dispatch.DispIoCheckIoType5((DispIoAttackBonus*)args.dispIO);
+	if (armor)
+	{
+		int armorFlags = objects.getInt32(armor, obj_f_armor_flags);
+		if (inventory.GetArmorType(armorFlags) != ARMOR_TYPE_NONE	&& inventory.GetArmorType(armorFlags))
+		{
+			bonusSys.zeroBonusSetMeslineNum(&dispIo->bonlist, 166);
+			return 0;
+		}
+	}
+		
+	
+	feat_enums feat = FEAT_TWO_WEAPON_FIGHTING;
+	char * featName;
+	int attackCode = dispIo->attackPacket.dispKey;
+	int dualWielding = 0;
+	int attackNumber = 1;
+	if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
+	{
+		featName = feats.GetFeatName(feat);
+		bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 6, 0, 114, featName);
+	}
+	else if (d20Sys.ExtractAttackNumber(args.objHndCaller, attackCode, &attackNumber, &dualWielding), dualWielding != 0)
+	{
+		featName = feats.GetFeatName(feat);
+		bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 2, 0, 114, featName);
+	}
+	return 0;
+
 }

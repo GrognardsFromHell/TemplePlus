@@ -21,7 +21,14 @@ public:
 	}
 } combatSysReplacements;
 
-
+struct CombatSystemAddresses : AddressTable
+{
+	int(__cdecl* GetEnemiesCanMelee)(objHndl obj, objHndl* canMeleeList);
+	CombatSystemAddresses()
+	{
+		rebase(GetEnemiesCanMelee, 0x100B90C0);
+	}
+} addresses;
 
 #pragma region Combat System Implementation
 CombatSystem combatSys;
@@ -41,6 +48,21 @@ uint32_t CombatSystem::IsCloseToParty(objHndl objHnd)
 			return 1;
 	}
 	return 0;
+}
+
+int CombatSystem::GetEnemiesCanMelee(objHndl obj, objHndl* canMeleeList)
+{
+	return addresses.GetEnemiesCanMelee(obj, canMeleeList);
+}
+
+objHndl CombatSystem::GetWeapon(AttackPacket* attackPacket)
+{
+	D20CAF flags = attackPacket->flags;
+	objHndl result = 0i64;
+
+	if (!(flags & D20CAF_TOUCH_ATTACK) || flags & D20CAF_THROWN_GRENADE )
+		result = attackPacket->weaponUsed;
+	return result;
 }
 
 void CombatSystem::enterCombat(objHndl objHnd)

@@ -288,7 +288,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		pathQ.flags = static_cast<PathQueryFlags>(0x40803);
 	}
 
-	if (d20a->d20Caf & D20CAF_TRUNCATED)
+	if (d20a->d20Caf & D20CAF_UNNECESSARY)
 	{
 		auto asdf = &pathQ.flags;
 		*((int*)asdf) |= 0x80000;

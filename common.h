@@ -173,7 +173,7 @@ struct AttackPacket
 	objHndl victim;
 	D20ActionType d20ActnType;
 	int dispKey;
-	uint32_t flags;
+	D20CAF flags;
 	int field_1C;
 	objHndl weaponUsed;
 	objHndl anotherItem;

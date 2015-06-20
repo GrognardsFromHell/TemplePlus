@@ -9,6 +9,7 @@ int __cdecl AoODisableRadialMenuInit(DispatcherCallbackArgs args);
 int __cdecl AoODisableQueryAoOPossible(DispatcherCallbackArgs args);
 uint32_t ConditionPrevent(DispatcherCallbackArgs args);
 extern CondStructNew conditionDisableAoO;
+extern CondStructNew conditionGreaterTwoWeaponFighting;
 
 struct CondFeatDictionary;
 
@@ -106,8 +107,12 @@ public:
 
 	ToEEHashtable<CondStruct> * mCondStructHashtable;
 
-	char mConditionDisableAoOName [100] ;
+	char mConditionDisableAoOName [100];
 	CondStructNew* mConditionDisableAoO;
+	char mConditionGreaterTwoWeaponFightingName[100];
+	CondStructNew* mConditionGreaterTwoWeaponFighting;
+
+
 	/*
 		Returns the condition definition with the given name,
 		null if none exists.
@@ -143,12 +148,11 @@ public:
 	void InitCondFromCondStructAndArgs(Dispatcher* dispatcher, CondStruct* condStruct, int* condargs);
 
 #pragma endregion
-
+	void RegisterNewConditions();
+	void DispatcherHookInit( SubDispDefNew * sdd, enum_disp_type dispType,  int key, void * callback, int data1, int data2);
 	ConditionSystem()
 	{
-		mConditionDisableAoO = &conditionDisableAoO;
-		memset(mConditionDisableAoOName, 0, sizeof(mConditionDisableAoOName));
-		memcpy(mConditionDisableAoOName, "Disable AoO", sizeof("Disable AoO")); 
+
 		rebase(ConditionGlobal, 0x102E8088);
 		rebase(pCondNodeGlobal, 0x10BCADA0);
 		rebase(ConditionArraySpellEffects, 0x102E2600);
@@ -177,24 +181,9 @@ public:
 		
 		rebase(mCondStructHashtable, 0x11868F60);
 
-		mConditionDisableAoO->condName = mConditionDisableAoOName;
-		mConditionDisableAoO->numArgs = 1;
-		mConditionDisableAoO->subDispDefs[1].dispType = dispTypeRadialMenuEntry;
-		mConditionDisableAoO->subDispDefs[1].dispKey = 0;
-		mConditionDisableAoO->subDispDefs[1].dispCallback = AoODisableRadialMenuInit;
+		RegisterNewConditions();
+
 		
-		mConditionDisableAoO->subDispDefs[0].dispType = dispTypeD20Query;
-		mConditionDisableAoO->subDispDefs[0].dispKey = DK_QUE_AOOPossible;
-		mConditionDisableAoO->subDispDefs[0].dispCallback = AoODisableQueryAoOPossible;
-		
-		mConditionDisableAoO->subDispDefs[2].dispType = dispTypeConditionAddPre;
-		mConditionDisableAoO->subDispDefs[2].dispKey = 0;
-		mConditionDisableAoO->subDispDefs[2].data1 = (uint32_t)&mConditionDisableAoO;;
-		mConditionDisableAoO->subDispDefs[2].dispCallback = (int(__cdecl *)(DispatcherCallbackArgs))ConditionPrevent;
-		
-		mConditionDisableAoO->subDispDefs[3].dispType = dispType0;
-		mConditionDisableAoO->subDispDefs[3].dispKey = 0;
-		mConditionDisableAoO->subDispDefs[3].dispCallback = 0;
 	}
 
 	void SetPermanentModArgsFromDataFields(Dispatcher* dispatcher, CondStruct* condStruct, int *condArgs);
@@ -237,6 +226,10 @@ void InitCondFromCondStructAndArgs(Dispatcher *dispatcher, CondStruct *condStruc
 
 int SkillBonusCallback(DispatcherCallbackArgs args); 
 int GlobalToHitBonus(DispatcherCallbackArgs args);
+int GreaterTwoWeaponFighting(DispatcherCallbackArgs args);
+int TwoWeaponFightingBonus(DispatcherCallbackArgs args);
+int TwoWeaponFightingBonusRanger(DispatcherCallbackArgs args);
+
 
 void _FeatConditionsRegister();
 uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** ppCondStruct, uint32_t * arg2);

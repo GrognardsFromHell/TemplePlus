@@ -326,7 +326,7 @@ void DispatcherSystem::DispIoDamageInit(DispIoDamage* dispIoDamage)
 	dispIoDamage->attackPacket.attacker=0i64;
 	dispIoDamage->attackPacket.victim = 0i64;
 	dispIoDamage->attackPacket.dispKey = 0;
-	dispIoDamage->attackPacket.flags = 0;
+	*(int*)&dispIoDamage->attackPacket.flags = 0;
 	dispIoDamage->attackPacket.weaponUsed = 0i64;
 	dispIoDamage->attackPacket.anotherItem = 0i64;
 	dispIoDamage->attackPacket.d20ActnType= D20A_NONE;
