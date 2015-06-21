@@ -9,9 +9,18 @@
 #include "common.h"
 #include "weapon.h"
 #include "critter.h"
+#include "tab_file.h"
+
+
+TabFileStatus featPropertiesTabFile;
+uint32_t featPropertiesTable[NUM_FEATS + 1000];
+FeatPrereqRow featPreReqTable[NUM_FEATS + 1000];
 
 
 FeatSystem feats;
+
+
+
 
 class FeatFixes : public TempleFix {
 public:
@@ -22,14 +31,25 @@ public:
 	void apply() override {
 		//writeHex(0x10278078, "73 69 7A 65 5F 63 6F 6C 6F 73 73 61 6C");
 		
-		replaceFunction(0x1007C8F0, _FeatPrereqsCheck);
+		
 		replaceFunction(0x1007B990, _FeatExistsInArray);
 		replaceFunction(0x1007BF10, _RogueSpecialFeat);
+		replaceFunction(0x1007BFA0, FeatInit);
 		replaceFunction(0x1007B930, _HasFeatCount);
+		
 		replaceFunction(0x1007C080, _HasFeatCountByClass);
 		replaceFunction(0x1007C370, _FeatListGet);
 		replaceFunction(0x1007C3F0, _FeatListElective);
 		replaceFunction(0x1007C8D0, _WeaponFeatCheckSimpleWrapper);
+		replaceFunction(0x1007C8F0, _FeatPrereqsCheck);
+		replaceFunction(0x1007BBD0, _IsFeatEnabled);
+		replaceFunction(0x1007BBF0, _IsMagicFeat);
+		replaceFunction(0x1007BC80, _IsFeatPartOfMultiselect);
+		replaceFunction(0x1007BCA0, _IsFeatRacialOrClassAutomatic);
+		replaceFunction(0x1007BE70, _IsClassFeat);
+		replaceFunction(0x1007BE90, _IsFighterFeat); 
+		replaceFunction(0x1007B9C0, _GetFeatName);
+		
 		//replaceFunction(0x1007C4F0, _WeaponFeatCheck); // usercall bullshit; replaced the functions that used it anyway
 
 		writeHex(0x102C9720, "0F 00 00 00 13 00 00 00");
@@ -44,17 +64,43 @@ public:
 			read(0x102C9E20, testbuf, 8);
 			logger->info("New Feature Test: Re-implementing SpellSlinger's Rogue Feat Fix");
 		}
+		int writeNumFeats = NUM_FEATS;
 
+		// overwrite the iteration limits for a bunch of ui loops
+		
+		write(0x10182C73 + 2, &writeNumFeats, sizeof(int));
+		write(0x101A811D + 2, &writeNumFeats, sizeof(int));
+		write(0x101A815D + 2, &writeNumFeats, sizeof(int));
+		write(0x101A819D + 2, &writeNumFeats, sizeof(int));
+
+		write(0x101A81DD + 2, &writeNumFeats, sizeof(int));
+		write(0x101A821D + 2, &writeNumFeats, sizeof(int));
+		write(0x101A825D + 2, &writeNumFeats, sizeof(int));
+		write(0x101A829D + 2, &writeNumFeats, sizeof(int));
+		write(0x101A82DD + 2, &writeNumFeats, sizeof(int));
+		write(0x101A8BE1 + 2, &writeNumFeats, sizeof(int));
+		
 	}
 };
 FeatFixes featFixes;
 
 # pragma region FeatSystem Implementations
+
+
 FeatSystem::FeatSystem()
 {
-	rebase(featPropertiesTable, 0x102BFD78); 		// TODO: export this to a mesfile
-	rebase(featPreReqTable, 0x102C07A0); 		// TODO: export this to a mesfile
-	rebase(featNames, 0x10AB6268);
+	//rebase(featPropertiesTable, 0x102BFD78); 	
+	//rebase(featPreReqTable, 0x102C07A0); 			// now imported from file :)
+	m_featPreReqTable = (FeatPrereqRow *)&featPreReqTable;
+	m_featPropertiesTable = (uint32_t*)&featPropertiesTable;
+	rebase(featTabLineParser, 0x1007BF80);
+
+	//rebase(featNames, 0x10AB6268);
+	rebase(featEnumsMes, 0x10AB6CC8);
+	rebase(featMes,   0x10AB7090);
+	rebase(featTabFile, 0x10AB7094);
+	
+	
 	rebase(classFeatTable, 0x102CAAF8); 		// TODO: export this to a mesfile
 	rebase(charEditorObjHnd, 0x11E741A0);		// TODO: move this to the appropriate system
 	rebase(charEditorClassCode, 0x11E72FC0);	// TODO: move this to the appropriate system
@@ -78,7 +124,47 @@ FeatSystem::FeatSystem()
 	featPropertiesTable[FEAT_GREATER_TWO_WEAPON_FIGHTING] = 0x10;
 	featPreReqTable[FEAT_GREATER_TWO_WEAPON_FIGHTING].featPrereqs[2].featPrereqCode = 266;
 	featPreReqTable[FEAT_GREATER_TWO_WEAPON_FIGHTING].featPrereqs[2].featPrereqCodeArg = 11;
+
+	
 };
+
+int FeatInit()
+{
+	if (mesFuncs.Open("mes\\feat.mes", feats.featMes) && mesFuncs.Open("rules\\feat_enum.mes", feats.featEnumsMes))
+	{
+		memset(feats.featNames, 0, 649 * sizeof(int));
+		tabSys.tabFileStatusInit(feats.featTabFile, feats.featTabLineParser);
+		if (tabSys.tabFileStatusBasicFormatter(feats.featTabFile, "rules\\feat.tab"))
+		{
+			tabSys.tabFileStatusDealloc(feats.featTabFile);
+			return 0;
+		}
+
+		tabSys.tabFileParseLines(feats.featTabFile);
+		MesLine mesLine;
+		mesLine.key = 0;
+		do
+		{
+			auto lineFetched = mesFuncs.GetLine(*feats.featMes, &mesLine);
+			feats.featNames[mesLine.key] = (char *)(lineFetched != 0 ? mesLine.value : 0);
+			mesLine.key++;
+		} while (mesLine.key < NUM_FEATS);
+
+		tabSys.tabFileStatusInit(&featPropertiesTabFile, featPropertiesTabLineParser);
+		if (tabSys.tabFileStatusBasicFormatter(&featPropertiesTabFile, "rules\\feat_properties.tab"))
+		{
+			tabSys.tabFileStatusDealloc(&featPropertiesTabFile);
+		}
+		else
+		{
+			tabSys.tabFileParseLines(&featPropertiesTabFile);
+		}
+
+
+		return 1;
+	}
+	return 0;
+}
 
 uint32_t FeatSystem::HasFeatCount(objHndl objHnd, feat_enums featEnum)
 {
@@ -140,6 +226,46 @@ vector<feat_enums> FeatSystem::GetFeats(objHndl handle) {
 char* FeatSystem::GetFeatName(feat_enums feat)
 {
 	return featNames[feat];
+}
+
+int FeatSystem::IsFeatEnabled(feat_enums feat)
+{
+	return (m_featPropertiesTable[feat] & 2 ) == 0;
+}
+
+int FeatSystem::IsMagicFeat(feat_enums feat)
+{
+	return (m_featPropertiesTable[feat] & 0x20000 ) != 0;
+}
+
+int FeatSystem::IsFeatPartOfMultiselect(feat_enums feat)
+{
+	return ( m_featPropertiesTable[feat] & 0x100 ) != 0;
+}
+
+int FeatSystem::IsFeatRacialOrClassAutomatic(feat_enums feat)
+{
+	return (m_featPropertiesTable[feat] & 0xC ) != 0;
+}
+
+int FeatSystem::IsClassFeat(feat_enums feat)
+{
+	if (feat > 649 && feat < 664)
+		return 0;
+	return ( m_featPropertiesTable[feat] & 8 ) != 0;
+}
+
+int FeatSystem::IsFighterFeat(feat_enums feat)
+{
+	if (feat > 649 && feat < 664)
+	{
+		if (feat > 657)
+			return 0;
+		if (feat != 653)
+			return 1;
+		return 0;
+	}
+	return (m_featPropertiesTable[feat] & 0x10 ) != 0;
 };
 
 #pragma endregion
@@ -193,6 +319,41 @@ uint32_t __declspec(naked) ToEEWeaponFeatCheckUsercallWrapper(objHndl objHnd, fe
 uint32_t _WeaponFeatCheckSimpleWrapper(objHndl objHnd, WeaponTypes wpnType)
 {
 	return feats.WeaponFeatCheck(objHnd, 0, 0, (Stat)0, wpnType);
+}
+
+const char* _GetFeatName(feat_enums feat)
+{
+	return feats.GetFeatName(feat);
+}
+
+int _IsFeatEnabled(feat_enums feat)
+{
+	return feats.IsFeatEnabled(feat);
+}
+
+int _IsMagicFeat(feat_enums feat)
+{
+	return feats.IsMagicFeat(feat);
+}
+
+int _IsFeatPartOfMultiselect(feat_enums feat)
+{
+	return feats.IsFeatPartOfMultiselect(feat);
+}
+
+int _IsFeatRacialOrClassAutomatic(feat_enums feat)
+{
+	return feats.IsFeatRacialOrClassAutomatic(feat);
+}
+
+int _IsClassFeat(feat_enums feat)
+{
+	return feats.IsClassFeat(feat);
+}
+
+int _IsFighterFeat(feat_enums feat)
+{
+	return feats.IsFighterFeat(feat);
 }
 
 uint32_t _WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType)
@@ -340,8 +501,8 @@ uint32_t _FeatExistsInArray(feat_enums featCode, feat_enums * featArray, uint32_
 
 uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * featArray, uint32_t featArrayLen, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased)
 {
-	uint32_t featProps = feats.featPropertiesTable[featIdx];
-	FeatPrereqRow * featPrereqs = feats.featPreReqTable;
+	uint32_t featProps = (feats.m_featPropertiesTable)[featIdx];
+	FeatPrereqRow * featPrereqs = feats.m_featPreReqTable;
 	const uint8_t numCasterClasses = 7;
 	uint32_t casterClassCodes[numCasterClasses] = { stat_level_bard, stat_level_cleric, stat_level_druid, stat_level_paladin, stat_level_ranger, stat_level_sorcerer, stat_level_wizard };
 
@@ -684,7 +845,7 @@ uint32_t _FeatListElective(objHndl objHnd, feat_enums * listOut)
 uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLevelBeingRaised, uint32_t rangerSpecializationFeat)
 {
 
-	if (feats.featPropertiesTable[(uint32_t)featEnum] & featPropDisabled){ return 0; }
+	if (feats.m_featPropertiesTable[(uint32_t)featEnum] & featPropDisabled){ return 0; }
 
 	// race feats
 	uint32_t objRace = objects.StatLevelGet(objHnd, stat_race);
@@ -817,3 +978,20 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 }
 
 
+uint32_t featPropertiesTabLineParser(TabFileStatus*, uint32_t n, const char** strings)
+{
+	
+	feat_enums feat = (feat_enums)atoi(strings[0]);
+	if (feat >= NUM_FEATS || feat < 0)
+		return 0;
+	uint32_t featProps = atoi(strings[2]);
+	featPropertiesTable[feat] = featProps;
+	for (int i = 0; i < 8; i++)
+	{
+		int featPrereqCode = atoi(strings[3 + i * 2]);
+		int featPrereqCodeArg = atoi(strings[4 + i * 2]);
+		featPreReqTable[feat].featPrereqs[i].featPrereqCode = featPrereqCode;
+		featPreReqTable[feat].featPrereqs[i].featPrereqCodeArg = featPrereqCodeArg;
+	}
+	return 0;
+}

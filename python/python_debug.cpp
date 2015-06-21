@@ -115,8 +115,8 @@ PyObject *PyDebug_DumpRadial() {
 PyObject *PyDebug_DumpFeats() {
 	auto cap = NUM_FEATS;
 	auto result = PyList_New(cap);
-	uint32_t * featPropertiesTable = feats.featPropertiesTable;
-	FeatPrereqRow * featPreReqTable = feats.featPreReqTable;
+	uint32_t * featPropertiesTable = feats.m_featPropertiesTable;
+	FeatPrereqRow * featPreReqTable = feats.m_featPreReqTable;
 
 	for (size_t i = 0; i < cap; ++i) {
 		feat_enums feat = (feat_enums)i;

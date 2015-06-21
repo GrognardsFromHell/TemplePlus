@@ -2,8 +2,19 @@
 
 #include "common.h"
 
-#define NUM_FEATS 664 // inc. those hacked by Moebius/SpellSlinger (otherwise vanilla is 649)
+#define NUM_FEATS 675 // inc. those hacked by Moebius/SpellSlinger (otherwise vanilla is 649)
+#include "tig/tig_mes.h"
 //664th - FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER
+
+struct FeatPrereqRow;
+struct TabFileStatus;
+
+extern TabFileStatus featPropertiesTabFile;
+extern uint32_t  featPropertiesTable[];
+extern FeatPrereqRow featPreReqTable[];
+extern MesHandle * featMes;
+extern MesHandle * featEnumsMes;
+extern char ** featNames;
 
 struct FeatPrereq
 {
@@ -38,15 +49,18 @@ struct FeatSystem : AddressTable
 	0x00020000 - Wizard Feat (crafting, metamagic etc.)
 	0x00040000 - Rogue 10th lvl Feat
 	*/
-	uint32_t * featPropertiesTable;
-	FeatPrereqRow * featPreReqTable;
-	char ** featNames;
+	uint32_t * m_featPropertiesTable;
+	FeatPrereqRow * m_featPreReqTable;
+	char * featNames[NUM_FEATS +1000];
+	MesHandle * featMes;
+	MesHandle * featEnumsMes;
+	TabFileStatus * featTabFile;
+	//static TabFileStatus featPropertiesTabFile;
 	uint32_t * classFeatTable;
 	objHndl * charEditorObjHnd;
 	Stat * charEditorClassCode;
 
 	uint32_t racialFeats[ 10 * NUM_RACES ];
-	
 	uint32_t HasFeatCount(objHndl objHnd, feat_enums featEnum);
 	uint32_t HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classEnum, uint32_t rangerSpecializationFeat);
 	uint32_t FeatListElective(objHndl objHnd, feat_enums * listOut);
@@ -56,14 +70,20 @@ struct FeatSystem : AddressTable
 
 	vector<feat_enums> GetFeats(objHndl handle); // This is what objHndl.feats in python returns ??
 	char* GetFeatName(feat_enums feat);
-	uint32_t rangerArcheryFeats[3 * 2];
-	uint32_t rangerTwoWeaponFeats[4 * 2];
+	int IsFeatEnabled(feat_enums feat);
+	int IsMagicFeat(feat_enums feat); // crafting / metamagic feats (that Wiz/Sorcs can pick as bonus feats)
+	int IsFeatPartOfMultiselect(feat_enums feat); // hidden feats that are only selectable in a submenu
+	int IsFeatRacialOrClassAutomatic(feat_enums feat);  // feats automatically granted (cannot be manually selected at levelup)
+	int IsClassFeat(feat_enums feat);
+	int IsFighterFeat(feat_enums feat); // feats that fighters can select as bonus feats
+	uint32_t rangerArcheryFeats[3 * 2 + 100];
+	uint32_t rangerTwoWeaponFeats[4 * 2 + 100];
 
 
 	void(__cdecl *ToEE_WeaponFeatCheck)();
 	uint32_t(__cdecl *FeatAdd)(objHndl, feat_enums);
 
-
+	uint32_t(__cdecl *featTabLineParser)(TabFileStatus*, uint32_t, const char**);
 	FeatSystem();
 };
 
@@ -80,3 +100,14 @@ uint32_t _FeatListGet(objHndl objHnd, feat_enums * listOut, Stat classBeingLevel
 uint32_t _FeatListElective(objHndl objHnd, feat_enums * listOut);
 uint32_t _WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType);
 uint32_t _WeaponFeatCheckSimpleWrapper(objHndl objHnd, WeaponTypes wpnType);
+
+const char * _GetFeatName(feat_enums feat);
+int _IsFeatEnabled(feat_enums feat);
+int _IsMagicFeat(feat_enums feat);
+int _IsFeatPartOfMultiselect(feat_enums feat);
+int _IsFeatRacialOrClassAutomatic(feat_enums feat);
+int _IsClassFeat(feat_enums feat);
+int _IsFighterFeat(feat_enums feat);
+int FeatInit();
+
+uint32_t featPropertiesTabLineParser(TabFileStatus*, uint32_t, const char**);
