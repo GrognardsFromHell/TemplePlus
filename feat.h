@@ -48,6 +48,7 @@ struct FeatSystem : AddressTable
 	0x00010100 - G. Wpn Focus
 	0x00020000 - Wizard Feat (crafting, metamagic etc.)
 	0x00040000 - Rogue 10th lvl Feat
+	0x00080000 - Multiselect Parent
 	*/
 	uint32_t * m_featPropertiesTable;
 	FeatPrereqRow * m_featPreReqTable;
@@ -67,6 +68,7 @@ struct FeatSystem : AddressTable
 	uint32_t FeatListGet(objHndl objHnd, feat_enums * listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat);
 	uint32_t FeatExistsInArray(feat_enums featCode, feat_enums * featArray, uint32_t featArrayLen);
 	uint32_t WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType);
+	uint32_t FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * featArray, uint32_t featArrayLen, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased);
 
 	vector<feat_enums> GetFeats(objHndl handle); // This is what objHndl.feats in python returns ??
 	char* GetFeatName(feat_enums feat);

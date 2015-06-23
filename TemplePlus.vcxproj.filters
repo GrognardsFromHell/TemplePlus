@@ -292,6 +292,9 @@
     <ClCompile Include="hotkeys.cpp">
       <Filter>ui</Filter>
     </ClCompile>
+    <ClCompile Include="ui_char_editor_feats.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -589,6 +592,9 @@
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
     <ClInclude Include="hotkeys.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui_char_editor.h">
       <Filter>ui</Filter>
     </ClInclude>
   </ItemGroup>

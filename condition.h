@@ -226,6 +226,7 @@ void InitCondFromCondStructAndArgs(Dispatcher *dispatcher, CondStruct *condStruc
 
 int SkillBonusCallback(DispatcherCallbackArgs args); 
 int GlobalToHitBonus(DispatcherCallbackArgs args);
+int GlobalGetArmorClass(DispatcherCallbackArgs args);
 int GreaterTwoWeaponFighting(DispatcherCallbackArgs args);
 int TwoWeaponFightingBonus(DispatcherCallbackArgs args);
 int TwoWeaponFightingBonusRanger(DispatcherCallbackArgs args);

@@ -110,6 +110,7 @@
     <ClCompile Include="turn_based.cpp" />
     <ClCompile Include="ui\ui_picker.cpp" />
     <ClCompile Include="ui_char.cpp" />
+    <ClCompile Include="ui_char_editor_feats.cpp" />
     <ClCompile Include="util\addressess.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
@@ -313,6 +314,7 @@
     <ClInclude Include="ui\ui_tutorial.h" />
     <ClInclude Include="turn_based.h" />
     <ClInclude Include="ui\ui_picker.h" />
+    <ClInclude Include="ui_char_editor.h" />
     <ClInclude Include="util\addresses.h" />
     <ClInclude Include="anim.h" />
     <ClInclude Include="combat.h" />

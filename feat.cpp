@@ -79,6 +79,7 @@ public:
 		write(0x101A829D + 2, &writeNumFeats, sizeof(int));
 		write(0x101A82DD + 2, &writeNumFeats, sizeof(int));
 		write(0x101A8BE1 + 2, &writeNumFeats, sizeof(int));
+	//	writeHex(0x101A940E, "90 90 90 90 90");
 		
 	}
 };
@@ -115,8 +116,8 @@ FeatSystem::FeatSystem()
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // table presupposes 10 items on each row, terminator character -1
-	uint32_t _rangerArcheryFeats[3 * 2] = { FEAT_RANGER_RAPID_SHOT, 2, FEAT_RANGER_MANYSHOT, 6, -1, -1 };
-	uint32_t _rangerTwoWeaponFeats[4 * 2] = { FEAT_TWO_WEAPON_FIGHTING_RANGER, 2, FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER, 6, FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER, 11 - 1, -1 };
+	uint32_t _rangerArcheryFeats[4 * 2] = { FEAT_RANGER_RAPID_SHOT, 2, FEAT_RANGER_MANYSHOT, 6, FEAT_IMPROVED_PRECISE_SHOT, 11, -1, -1 };
+	uint32_t _rangerTwoWeaponFeats[4 * 2] = { FEAT_TWO_WEAPON_FIGHTING_RANGER, 2, FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER, 6, FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER, 11, - 1, -1 };
 
 	memcpy(racialFeats, _racialFeatsTable, sizeof(racialFeats));
 	memcpy(rangerArcheryFeats, _rangerArcheryFeats, sizeof(rangerArcheryFeats));
@@ -209,6 +210,11 @@ uint32_t FeatSystem::FeatExistsInArray(feat_enums featCode, feat_enums * featArr
 uint32_t FeatSystem::WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType)
 {
 	return _WeaponFeatCheck( objHnd,  featArray,  featArrayLen,  classBeingLeveled,  wpnType);
+}
+
+uint32_t FeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums* featArray, uint32_t featArrayLen, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased)
+{
+	return _FeatPrereqsCheck(objHnd, featIdx, featArray, featArrayLen, classCodeBeingLevelledUp, abilityScoreBeingIncreased);
 }
 
 vector<feat_enums> FeatSystem::GetFeats(objHndl handle) {
@@ -506,7 +512,7 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 	const uint8_t numCasterClasses = 7;
 	uint32_t casterClassCodes[numCasterClasses] = { stat_level_bard, stat_level_cleric, stat_level_druid, stat_level_paladin, stat_level_ranger, stat_level_sorcerer, stat_level_wizard };
 
-	if (featProps & 2)
+	if (featProps & 2 && !(featProps & 524290))
 	{
 		return 0;
 	}

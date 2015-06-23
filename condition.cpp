@@ -47,15 +47,16 @@ public:
 		replaceFunction(0x100E2590, _ConditionAdd_NumArgs4);
 		replaceFunction(0x100E25C0, InitCondFromCondStructAndArgs);
 		replaceFunction(0x100ECF30, ConditionPrevent);
+		replaceFunction(0x100EE050, GlobalGetArmorClass);
 		replaceFunction(0x100EE280, GlobalToHitBonus);
-		replaceFunction(0x10101150, SkillBonusCallback);
+
+		replaceFunction(0x100F7B60, _FeatConditionsRegister);
+		replaceFunction(0x100F7BE0, _GetCondStructFromFeat);
+
 		replaceFunction(0x100F88C0, TwoWeaponFightingBonus);
 		replaceFunction(0x100F8940, TwoWeaponFightingBonusRanger);
 		
-		replaceFunction(0x100F7B60, _FeatConditionsRegister);
-		replaceFunction(0x100F7BE0, _GetCondStructFromFeat);
-		
-		
+		replaceFunction(0x10101150, SkillBonusCallback);
 	}
 } condFuncReplacement;
 
@@ -370,6 +371,88 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 		}
 	}
 
+	return 0;
+}
+
+int GlobalGetArmorClass(DispatcherCallbackArgs args) // the basic AC value (initial value and some misc. global modifiers)
+{
+	DispIoAttackBonus * dispIo = dispatch.DispIoCheckIoType5((DispIoAttackBonus*)args.dispIO);
+	BonusList *bonlist = &dispIo->bonlist;
+
+	// Armor Class initial value 10
+	bonusSys.bonusAddToBonusList(bonlist, 10, 1, 102); 
+	
+	// add npc natural armor AC bonus
+	if (!(dispIo->attackPacket.flags & D20CAF_TOUCH_ATTACK))
+	{
+		objHndl defender = args.objHndCaller;
+		int polymorphedTo = d20Sys.d20Query(args.objHndCaller, DK_QUE_Polymorphed);
+		if (polymorphedTo)
+			defender = objects.GetProtoHandle(polymorphedTo);
+		if (objects.GetType(args.objHndCaller) == obj_t_npc || polymorphedTo)
+		{
+			bonusSys.bonusAddToBonusList(bonlist, objects.getInt32(defender, obj_f_npc_ac_bonus), 9, 123);
+		}
+	}
+
+	// add size bonus / penalty to AC
+	int sizeCat = dispatch.DispatchGetSizeCategory(args.objHndCaller);
+	int sizeCatBonus = critterSys.GetBonusFromSizeCategory(sizeCat);
+	bonusSys.bonusAddToBonusList(bonlist, sizeCatBonus, 0, 115); 
+
+	// dex bonus
+	int dexScore = objects.abilityScoreLevelGet(args.objHndCaller, stat_dexterity, 0);
+	int dexMod = objects.GetModFromStatLevel(dexScore);
+	bonusSys.bonusAddToBonusList(bonlist, dexMod, 3, 104);
+
+	// dodging trap
+	if (dispIo->attackPacket.flags & D20CAF_TRAP)
+	{
+		if (dispIo->attackPacket.victim && feats.HasFeatCount(dispIo->attackPacket.victim, FEAT_UNCANNY_DODGE))
+		{
+			bonusSys.zeroBonusSetMeslineNum(bonlist, 165); // dex bonus retained due to Uncanny Dodge
+			return 0;
+		}
+		bonusSys.bonusCapAdd(bonlist, 8, 0, 0x99u); // flatfooted
+		bonusSys.bonusCapAdd(bonlist, 3, 0, 0x99u);
+	}
+
+	if (dispIo->attackPacket.flags & D20CAF_COVER)
+	{
+		if (dispIo->attackPacket.attacker && feats.HasFeatCount(dispIo->attackPacket.attacker, FEAT_IMPROVED_PRECISE_SHOT))
+		{
+			bonusSys.zeroBonusSetMeslineNum(bonlist, 335); // Cover negated by Imp. Precise Shot
+			return 0;
+		}
+
+		if (dispIo->attackPacket.attacker && feats.HasFeatCount(dispIo->attackPacket.attacker, FEAT_IMPROVED_PRECISE_SHOT_RANGER))
+		{
+			auto armor = inventory.ItemWornAt(dispIo->attackPacket.attacker, 5);
+			if (armor)
+			{
+				int armorFlags = objects.getInt32(armor, obj_f_armor_flags);
+				ArmorType armorType = inventory.GetArmorType(armorFlags);
+				if (armorType == ARMOR_TYPE_NONE || armorType == ARMOR_TYPE_LIGHT)
+				{
+					bonusSys.zeroBonusSetMeslineNum(bonlist, 335); // Cover negated by Imp. Precise Shot
+					return 0;
+				}
+			} else
+			{
+				bonusSys.zeroBonusSetMeslineNum(bonlist, 335); // Cover negated by Imp. Precise Shot
+				return 0;
+			}
+			
+		}
+
+		if (dispIo->attackPacket.attacker && feats.HasFeatCount(dispIo->attackPacket.attacker, FEAT_SHARP_SHOOTING))
+		{
+			bonusSys.bonusAddToBonusList(bonlist, 2, 0, 336);; // Cover (diminished by Sharp-Shooting)
+			return 0;
+		}
+		bonusSys.bonusAddToBonusList(bonlist, 4, 0, 309);
+	}
+		
 	return 0;
 }
 
