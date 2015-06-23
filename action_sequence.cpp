@@ -111,12 +111,14 @@ ActionSequenceSystem::ActionSequenceSystem()
 
 	rebase(simulsIdx,0x10B3D5BC); 
 
-
+	
 	rebase(_actionPerformProjectile, 0x1008AC70);
 	rebase(_actSeqSpellHarmful, 0x1008AD10);
 	rebase(_sub_1008BB40, 0x1008BB40);
 	rebase(getRemainingMaxMoveLength, 0x1008B8A0);
 	rebase(sub_1008B9A0, 0x1008B9A0);
+
+	rebase(_CrossBowSthgReload_1008E8A0, 0x1008E8A0);
 
 	rebase(ActionCostReload, 0x100903B0);
 
@@ -141,6 +143,7 @@ ActionSequenceSystem::ActionSequenceSystem()
 	rebase(seqSthg_118A0980,0x118A0980); 
 	rebase(seqSthg_118CD570,0x118CD570); 
 
+	
 }
 
 

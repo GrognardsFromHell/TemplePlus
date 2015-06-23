@@ -333,10 +333,15 @@ void D20System::ExtractAttackNumber(objHndl obj, int attackCode, int* attackNumb
 			else
 				*attackNumber = 1 + numOffhandExtraAttacks + (attackIdx - 2*numOffhandExtraAttacks);
 		}
+		assert(*attackNumber > 0);
 	}
 	else // regular case (just primary hand)
 	{
 		*attackNumber = attackCode - ATTACK_CODE_PRIMARY;
+		if (*attackNumber <= 0) // seems to be the case for charge attack
+		{
+			*attackNumber = 1;
+		}
 		*dualWielding = 0;
 	}
 }

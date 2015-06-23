@@ -298,7 +298,11 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 		int attackNumber = 1;
 		int dualWielding = 0;
 		d20Sys.ExtractAttackNumber(args.objHndCaller, attackCode, &attackNumber, &dualWielding);
-		assert(attackNumber > 0);
+		if (attackNumber <= 0)
+		{
+			int dummy = 1;
+			assert(attackNumber > 0);
+		}
 		switch (attackNumber)
 		{
 		case 1: 
