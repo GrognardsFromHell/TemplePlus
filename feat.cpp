@@ -100,6 +100,7 @@ public:
 		
 
 		write(0x101A8BE1 + 2, &writeNumFeats, sizeof(int));
+		write(0x101BBDF4 + 2, &writeNumFeats, sizeof(int)); // charUiFeatList iteration limit
 	//	writeHex(0x101A940E, "90 90 90 90 90");
 		
 	}
