@@ -31,24 +31,41 @@ public:
 	void apply() override {
 		//writeHex(0x10278078, "73 69 7A 65 5F 63 6F 6C 6F 73 73 61 6C");
 		
-		
 		replaceFunction(0x1007B990, _FeatExistsInArray);
-		replaceFunction(0x1007BF10, _RogueSpecialFeat);
+		replaceFunction(0x1007B9C0, _GetFeatName);
+
+		
+		
 		replaceFunction(0x1007BFA0, FeatInit);
 		replaceFunction(0x1007B930, _HasFeatCount);
+		
+		
+		replaceFunction(0x1007BBD0, _IsFeatEnabled);
+		replaceFunction(0x1007BBF0, _IsMagicFeat);
+		replaceFunction(0x1007BC80, _IsFeatPartOfMultiselect);
+		replaceFunction(0x1007BCA0, _IsFeatRacialOrClassAutomatic);
+		replaceFunction(0x1007BCC0, _IsExoticWeaponProfFeat);
+		replaceFunction(0x1007BCE0, _IsImprovedCriticalFeat);
+		replaceFunction(0x1007BD00, _IsMartialWeaponFeat);
+		replaceFunction(0x1007BD20, _IsSkillFocusFeat);
+		replaceFunction(0x1007BD40, _IsWeaponFinesseFeat);
+		replaceFunction(0x1007BD60, _IsWeaponFocusFeat);
+		replaceFunction(0x1007BD80, _IsGreaterWeaponFocusFeat);
+		replaceFunction(0x1007BDA0, _IsWeaponSpecializationFeat);
+
+		replaceFunction(0x1007BE70, _IsClassFeat);
+
+		replaceFunction(0x1007BF10, _RogueSpecialFeat);
+
+		
+		replaceFunction(0x1007BE90, _IsFighterFeat); 
 		
 		replaceFunction(0x1007C080, _HasFeatCountByClass);
 		replaceFunction(0x1007C370, _FeatListGet);
 		replaceFunction(0x1007C3F0, _FeatListElective);
 		replaceFunction(0x1007C8D0, _WeaponFeatCheckSimpleWrapper);
+
 		replaceFunction(0x1007C8F0, _FeatPrereqsCheck);
-		replaceFunction(0x1007BBD0, _IsFeatEnabled);
-		replaceFunction(0x1007BBF0, _IsMagicFeat);
-		replaceFunction(0x1007BC80, _IsFeatPartOfMultiselect);
-		replaceFunction(0x1007BCA0, _IsFeatRacialOrClassAutomatic);
-		replaceFunction(0x1007BE70, _IsClassFeat);
-		replaceFunction(0x1007BE90, _IsFighterFeat); 
-		replaceFunction(0x1007B9C0, _GetFeatName);
 		
 		//replaceFunction(0x1007C4F0, _WeaponFeatCheck); // usercall bullshit; replaced the functions that used it anyway
 
@@ -69,6 +86,8 @@ public:
 		// overwrite the iteration limits for a bunch of ui loops
 		
 		write(0x10182C73 + 2, &writeNumFeats, sizeof(int));
+
+
 		write(0x101A811D + 2, &writeNumFeats, sizeof(int));
 		write(0x101A815D + 2, &writeNumFeats, sizeof(int));
 		write(0x101A819D + 2, &writeNumFeats, sizeof(int));
@@ -78,6 +97,8 @@ public:
 		write(0x101A825D + 2, &writeNumFeats, sizeof(int));
 		write(0x101A829D + 2, &writeNumFeats, sizeof(int));
 		write(0x101A82DD + 2, &writeNumFeats, sizeof(int));
+		
+
 		write(0x101A8BE1 + 2, &writeNumFeats, sizeof(int));
 	//	writeHex(0x101A940E, "90 90 90 90 90");
 		
@@ -256,7 +277,7 @@ int FeatSystem::IsFeatRacialOrClassAutomatic(feat_enums feat)
 
 int FeatSystem::IsClassFeat(feat_enums feat)
 {
-	if (feat > 649 && feat < 664)
+	if (feat > FEAT_NONE && feat < 664)
 		return 0;
 	return ( m_featPropertiesTable[feat] & 8 ) != 0;
 }
@@ -272,6 +293,11 @@ int FeatSystem::IsFighterFeat(feat_enums feat)
 		return 0;
 	}
 	return (m_featPropertiesTable[feat] & 0x10 ) != 0;
+}
+
+int FeatSystem::IsFeatPropertySet(feat_enums feat, int featProp)
+{
+	return (m_featPropertiesTable[feat] & featProp) == featProp;
 };
 
 #pragma endregion
@@ -360,6 +386,54 @@ int _IsClassFeat(feat_enums feat)
 int _IsFighterFeat(feat_enums feat)
 {
 	return feats.IsFighterFeat(feat);
+}
+
+int _IsExoticWeaponProfFeat(feat_enums feat)
+{
+	int featProp = 0x300;
+	return feats.IsFeatPropertySet(feat, featProp);
+}
+
+int _IsImprovedCriticalFeat(feat_enums feat)
+{
+	int featProp = 0x500;
+	return feats.IsFeatPropertySet(feat, featProp);
+}
+
+int _IsMartialWeaponFeat(feat_enums feat)
+{
+	int featProp = 0x900;
+	return feats.IsFeatPropertySet(feat, featProp);
+}
+
+int _IsSkillFocusFeat(feat_enums feat)
+{
+	int featProp = 0x1100;
+	return feats.IsFeatPropertySet(feat, featProp);
+}
+
+int _IsWeaponFinesseFeat(feat_enums feat)
+{
+	int featProp = 0x2100;
+	return feats.IsFeatPropertySet(feat, featProp);
+}
+
+int _IsWeaponFocusFeat(feat_enums feat)
+{
+	int featProp = 0x4100;
+	return feats.IsFeatPropertySet(feat, featProp);
+}
+
+int _IsGreaterWeaponFocusFeat(feat_enums feat)
+{
+	int featProp = 0x10100;
+	return feats.IsFeatPropertySet(feat, featProp);
+}
+
+int _IsWeaponSpecializationFeat(feat_enums feat)
+{
+	int featProp = 0x8100;
+	return feats.IsFeatPropertySet(feat, featProp);
 }
 
 uint32_t _WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType)

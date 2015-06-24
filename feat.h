@@ -78,6 +78,7 @@ struct FeatSystem : AddressTable
 	int IsFeatRacialOrClassAutomatic(feat_enums feat);  // feats automatically granted (cannot be manually selected at levelup)
 	int IsClassFeat(feat_enums feat);
 	int IsFighterFeat(feat_enums feat); // feats that fighters can select as bonus feats
+	int IsFeatPropertySet(feat_enums feat, int featProp); // checks bitfield if the entire featProp is set (i.e. partial matches return 0)
 	uint32_t rangerArcheryFeats[3 * 2 + 100];
 	uint32_t rangerTwoWeaponFeats[4 * 2 + 100];
 
@@ -110,6 +111,15 @@ int _IsFeatPartOfMultiselect(feat_enums feat);
 int _IsFeatRacialOrClassAutomatic(feat_enums feat);
 int _IsClassFeat(feat_enums feat);
 int _IsFighterFeat(feat_enums feat);
+int  _IsExoticWeaponProfFeat(feat_enums feat);
+int _IsImprovedCriticalFeat(feat_enums feat);
+int _IsMartialWeaponFeat(feat_enums feat);
+int _IsSkillFocusFeat(feat_enums feat);
+int _IsWeaponFinesseFeat(feat_enums feat);
+int _IsWeaponFocusFeat(feat_enums feat);
+int _IsGreaterWeaponFocusFeat(feat_enums feat);
+int _IsWeaponSpecializationFeat(feat_enums feat);
+
 int FeatInit();
 
 uint32_t featPropertiesTabLineParser(TabFileStatus*, uint32_t, const char**);
