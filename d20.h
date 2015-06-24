@@ -58,6 +58,7 @@ struct D20System : AddressTable
 	bool UsingSecondaryWeapon(D20Actn* d20a);
 	bool UsingSecondaryWeapon(objHndl obj, int attackCode);
 	void ExtractAttackNumber(objHndl obj, int attackCode, int * attackNumber, int* dualWielding); // e.g. is it a 2nd attack? (-5 penalty)
+	objHndl GetAttackWeapon(objHndl obj, int attackCode, D20CAF flags);
 	int PerformStandardAttack(D20Actn* d20a);
 	void (__cdecl *D20StatusInitFromInternalFields)(objHndl objHnd, Dispatcher *dispatcher);
 	void (__cdecl *D20ObjRegistryAppend)(objHndl ObjHnd);
@@ -189,6 +190,7 @@ void _GlobD20ActnInit();
 void _GlobD20ActnSetSpellData(D20SpellData * d20SpellData);
 uint32_t _CanLevelup(objHndl objHnd);
 int __cdecl _PerformStandardAttack(D20Actn * d20a);
+objHndl _GetAttackWeapon(objHndl obj, int attackCode, D20CAF flags);
 #pragma endregion 
 
 inline int GetAttributeMod(int stat) {

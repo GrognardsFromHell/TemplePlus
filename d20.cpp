@@ -35,6 +35,9 @@ public:
 		replaceFunction(0x1004CA00, _D20StatusInitItemConditions);
 		replaceFunction(0x1004CC00, _D20Query);
 		replaceFunction(0x1004CC60, _d20QueryWithData);
+
+		replaceFunction(0x1004DFC0, _GetAttackWeapon);
+
 		replaceFunction(0x1004E6B0, _d20SendSignal);
 		replaceFunction(0x1004CD40, _d20QueryReturnData);
 		replaceFunction(0x1004FDB0, _D20StatusInit);
@@ -346,6 +349,25 @@ void D20System::ExtractAttackNumber(objHndl obj, int attackCode, int* attackNumb
 	}
 }
 
+objHndl D20System::GetAttackWeapon(objHndl obj, int attackCode, D20CAF flags)
+{
+	if (flags & D20CAF_TOUCH_ATTACK && !(flags & D20CAF_THROWN_GRENADE))
+	{
+		return 0i64;
+	}
+
+	if (flags & D20CAF_SECONDARY_WEAPON)
+		return inventory.ItemWornAt(obj, 4);
+
+	if (UsingSecondaryWeapon(obj, attackCode))
+		return inventory.ItemWornAt(obj, 4);
+
+	if (attackCode > ATTACK_CODE_NATURAL_ATTACK)
+		return 0i64;
+
+	return inventory.ItemWornAt(obj, 3);
+}
+
 int D20System::PerformStandardAttack(D20Actn* d20a)
 {
 	int v5 = templeFuncs.RNG(0, 2);
@@ -589,4 +611,9 @@ void _GlobD20ActnSetSpellData(D20SpellData* d20SpellData)
 int _PerformStandardAttack(D20Actn* d20a)
 {
 	return d20Sys.PerformStandardAttack(d20a);
+}
+
+objHndl _GetAttackWeapon(objHndl obj, int attackCode, D20CAF flags)
+{
+	return d20Sys.GetAttackWeapon(obj, attackCode, flags);
 }
