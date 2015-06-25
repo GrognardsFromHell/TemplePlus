@@ -42,8 +42,10 @@ public:
 		replaceFunction(0x1004DBA0, DispIOType21Init);
 		replaceFunction(0x1004D3A0, _Dispatch62);
 		replaceFunction(0x1004D440, _Dispatch63);
+		replaceFunction(0x1004DEC0, _DispatchAttackBonus);
 		replaceFunction(0x1004E040, _DispatchDamage);
 		replaceFunction(0x1004E790, _dispatchTurnBasedStatusInit); 
+
 		replaceFunction(0x1004ED70, _dispatch1ESkillLevel); 
 		
  
@@ -288,7 +290,24 @@ void DispatcherSystem::PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher* d
 
 int DispatcherSystem::DispatchAttackBonus(objHndl objHnd, objHndl victim, DispIoAttackBonus* dispIo, enum_disp_type dispType, int key)
 {
-	return addresses.DispatchAttackBonus(objHnd, victim, dispIo, dispType, key);
+	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+	if (!dispatcherValid(dispatcher))
+		return 0;
+	DispIoAttackBonus dispIoLocal;
+	DispIoAttackBonus * dispIoToUse = dispIo;
+	if (!dispIo)
+	{
+		dispIoLocal.attackPacket.victim = victim;
+		dispIoLocal.attackPacket.attacker = objHnd;
+		dispIoLocal.attackPacket.d20ActnType = (D20ActionType)dispType; //  that's the original code, jones...
+		dispIoLocal.attackPacket.ammoItem = 0i64;
+		dispIoLocal.attackPacket.weaponUsed = 0i64;
+		dispIoToUse = &dispIoLocal;
+	}
+	DispatcherProcessor(dispatcher, dispType, key, dispIoToUse);
+	return bonusSys.getOverallBonus(&dispIoToUse->bonlist);
+
+	// return addresses.DispatchAttackBonus(objHnd, victim, dispIo, dispType, key);
 }
 
 int DispatcherSystem::DispatchToHitBonusBase(objHndl objHndCaller, DispIoAttackBonus* dispIo)
@@ -328,7 +347,7 @@ void DispatcherSystem::DispIoDamageInit(DispIoDamage* dispIoDamage)
 	dispIoDamage->attackPacket.dispKey = 0;
 	*(int*)&dispIoDamage->attackPacket.flags = 0;
 	dispIoDamage->attackPacket.weaponUsed = 0i64;
-	dispIoDamage->attackPacket.anotherItem = 0i64;
+	dispIoDamage->attackPacket.ammoItem = 0i64;
 	dispIoDamage->attackPacket.d20ActnType= D20A_NONE;
 
 }
@@ -551,6 +570,12 @@ void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint3
 	}
 
 	dispCounter--;
+	/*
+	if (dispCounter == 0)
+	{
+		int breakpointDummy = 1;
+	}
+	*/
 	return;
 
 }
@@ -595,6 +620,11 @@ void DispIOType21Init(DispIoType21* dispIO) {
 void _dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBasedStatus* dispIOtB)
 {
 	dispatch.dispatchTurnBasedStatusInit(objHnd, dispIOtB);
+}
+
+int _DispatchAttackBonus(objHndl objHnd, objHndl victim, DispIoAttackBonus* dispIo, enum_disp_type dispType, int key)
+{
+	return dispatch.DispatchAttackBonus(objHnd, victim, dispIo, dispType, key);
 };
 
 
@@ -615,4 +645,17 @@ uint32_t _Dispatch63(objHndl objHnd, DispIO* dispIO) {
 	return 0;
 }
 
+
 #pragma endregion 
+DispIoAttackBonus::DispIoAttackBonus()
+{
+	dispIOType = dispIOTypeAttackBonus;
+	bonusSys.initBonusList(&this->bonlist);
+	this->attackPacket.victim = 0i64;
+	this->attackPacket.attacker = 0i64;
+	this->attackPacket.weaponUsed = 0i64;
+	this->attackPacket.ammoItem = 0i64;
+	this->attackPacket.d20ActnType = D20A_STANDARD_ATTACK;
+	this->attackPacket.dispKey = 1;
+	this->attackPacket.flags = (D20CAF) 0;
+}

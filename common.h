@@ -176,6 +176,6 @@ struct AttackPacket
 	D20CAF flags;
 	int field_1C;
 	objHndl weaponUsed;
-	objHndl anotherItem;
+	objHndl ammoItem;
 };
 #pragma endregion

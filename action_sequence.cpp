@@ -56,6 +56,9 @@ public:
 		
 		replaceFunction(0x10095860, _unspecifiedMoveAddToSeq); 
 		
+		int writeVal = ATTACK_CODE_NATURAL_ATTACK;
+		write(0x1008C542 + 3, &writeVal, 4);
+
 		
 	}
 } actSeqReplacements;

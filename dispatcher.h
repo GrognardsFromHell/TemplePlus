@@ -188,9 +188,7 @@ struct DispIoAttackBonus : DispIO { // DispIoType 5
 	int field_4;
 	AttackPacket attackPacket;
 	BonusList bonlist;
-	DispIoAttackBonus() {
-		dispIOType = dispIOTypeAttackBonus;
-	}
+	DispIoAttackBonus();
 };
 
 
@@ -325,6 +323,7 @@ void __cdecl _PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher*dispatcher)
 void DispIOType21Init(DispIoType21* dispIO);
 
 void _dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBasedStatus* dispIOtB);
+int _DispatchAttackBonus(objHndl objHnd, objHndl victim, DispIoAttackBonus* dispIo, enum_disp_type dispType, int key);
 uint32_t _Dispatch62(objHndl, DispIO*, uint32_t dispKey);
 uint32_t _Dispatch63(objHndl objHnd, DispIO* dispIO);
 
