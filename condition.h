@@ -7,7 +7,6 @@
 const uint32_t CondStructHastableAddr = 0x11868F60;
 int __cdecl AoODisableRadialMenuInit(DispatcherCallbackArgs args);
 int __cdecl AoODisableQueryAoOPossible(DispatcherCallbackArgs args);
-int ConditionPrevent(DispatcherCallbackArgs args);
 extern CondStructNew conditionDisableAoO;
 extern CondStructNew conditionGreaterTwoWeaponFighting;
 
@@ -113,6 +112,8 @@ public:
 	CondStructNew* mCondGreaterTwoWeaponFighting;
 	char mCondGreaterTWFRangerName[100];
 	CondStructNew* mCondGreaterTWFRanger;
+	char mCondDivineMightName[100];
+	CondStructNew* mCondDivineMight;
 	
 	/*
 		Returns the condition definition with the given name,
@@ -154,6 +155,7 @@ public:
 		used for initializing new SubDispDef's with the specified values
 	*/
 	void DispatcherHookInit( SubDispDefNew * sdd, enum_disp_type dispType,  int key, void * callback, int data1, int data2);
+	void DispatcherHookInit( CondStructNew * cond , int hookIdx, enum_disp_type dispType, int key, void * callback, int data1, int data2);
 	ConditionSystem()
 	{
 
@@ -227,7 +229,8 @@ uint32_t _ConditionAdd_NumArgs3(Dispatcher* dispatcher, CondStruct* condStruct, 
 uint32_t _ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4);
 void InitCondFromCondStructAndArgs(Dispatcher *dispatcher, CondStruct *condStruct, int *condargs);
 
-
+int ConditionPrevent(DispatcherCallbackArgs args);
+int CondNodeSetArg0FromSubDispDef(DispatcherCallbackArgs args);
 int SkillBonusCallback(DispatcherCallbackArgs args); 
 int GlobalToHitBonus(DispatcherCallbackArgs args);
 int GlobalGetArmorClass(DispatcherCallbackArgs args);

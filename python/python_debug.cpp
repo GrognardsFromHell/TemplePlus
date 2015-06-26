@@ -138,10 +138,30 @@ PyObject *PyDebug_DumpFeats() {
 	return result;
 }
 
+PyObject *PyDebug_DumpD20Actions() {
+	auto cap = D20A_NUMACTIONS;
+	auto result = PyList_New(cap);
+	D20ActionDef * d20Defs = d20Sys.d20Defs;
+	
+	for (size_t i = 0; i < cap; ++i) {
+
+		auto c = Py_BuildValue("IIIIIIIIIIIII", i, 
+			d20Defs[i].addToSeqFunc, d20Defs[i].aiCheckMaybe, d20Defs[i].actionCheckFunc,
+			d20Defs[i].tgtCheckFunc, d20Defs[i].locCheckFunc, d20Defs[i].performFunc,
+			d20Defs[i].actionFrameFunc, d20Defs[i].projectilePerformFunc, d20Defs[i].pad_apparently,
+			d20Defs[i].actionCost, d20Defs[i].unknownFunc3, d20Defs[i].flags);
+		
+		PyList_SET_ITEM(result, i, c);
+	}
+
+	return result;
+}
+
 static PyMethodDef PyDebug_Methods[] = {
 	{ "dump_conds", (PyCFunction) PyDebug_DumpConds, METH_NOARGS, NULL },
 	{ "dump_radial", (PyCFunction) PyDebug_DumpRadial, METH_NOARGS, NULL },
 	{ "dump_feats", (PyCFunction)PyDebug_DumpFeats, METH_NOARGS, NULL },
+	{ "dump_d20actions", (PyCFunction)PyDebug_DumpD20Actions, METH_NOARGS, NULL },
 	{ NULL, }
 };
 

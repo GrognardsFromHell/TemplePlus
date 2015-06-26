@@ -14,6 +14,7 @@ ConditionSystem conds;
 CondStructNew conditionDisableAoO;
 CondStructNew conditionGreaterTwoWeaponFighting;
 CondStructNew condGreaterTWFRanger;
+CondStructNew condDivineMight;
 
 struct ConditionSystemAddresses : AddressTable
 {
@@ -238,6 +239,12 @@ int ConditionPrevent(DispatcherCallbackArgs args)
 	{
 		dispIO->outputFlag = 0;
 	}
+	return 0;
+};
+
+int __cdecl CondNodeSetArg0FromSubDispDef(DispatcherCallbackArgs args)
+{
+	conds.CondNodeSetArg(args.subDispNode->condNode, 0, args.subDispNode->subDispDef->data1);
 	return 0;
 };
 
@@ -646,10 +653,24 @@ void ConditionSystem::RegisterNewConditions()
 	mCondGreaterTWFRanger->condName = mCondGreaterTWFRangerName;
 	mCondGreaterTWFRanger->numArgs = 2;
 
-	DispatcherHookInit(&mCondGreaterTWFRanger->subDispDefs[0], dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondGreaterTwoWeaponFighting, 0);
-	DispatcherHookInit(&mCondGreaterTWFRanger->subDispDefs[1], dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondGreaterTWFRanger, 0); // TODO: add TWF_RANGER
-	DispatcherHookInit(&mCondGreaterTWFRanger->subDispDefs[2], dispTypeGetNumAttacksBase, 0, GreaterTWFRanger, 0, 0); // same callback as Improved TWF (it just adds an extra attack... logic is inside the action sequence / d20 / GlobalToHit functions
-	DispatcherHookInit(&mCondGreaterTWFRanger->subDispDefs[3], dispType0, 0, nullptr, 0, 0);
+	DispatcherHookInit(mCondGreaterTWFRanger, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondGreaterTwoWeaponFighting, 0);
+	DispatcherHookInit(mCondGreaterTWFRanger, 1, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondGreaterTWFRanger, 0); // TODO: add TWF_RANGER
+	DispatcherHookInit(mCondGreaterTWFRanger, 2, dispTypeGetNumAttacksBase, 0, GreaterTWFRanger, 0, 0); // same callback as Improved TWF (it just adds an extra attack... logic is inside the action sequence / d20 / GlobalToHit functions
+	DispatcherHookInit(mCondGreaterTWFRanger, 3, dispType0, 0, nullptr, 0, 0);
+
+	// Divine Might Ability
+	mCondDivineMight = &condDivineMight;
+	CondStructNew * cond = mCondDivineMight; 	char * condName = mCondDivineMightName;
+	memset(condName, 0, sizeof(condName)); 	memcpy(condName, "Divine Might", sizeof("Divine Might"));
+
+	cond->condName = condName;
+	cond->numArgs = 2;
+
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0 ,ConditionPrevent, (uint32_t) cond , 0 );
+	DispatcherHookInit(cond, 1, dispTypeConditionAdd, 0, CondNodeSetArg0FromSubDispDef, 1, 0);
+
+	
+
 }
 
 void ConditionSystem::DispatcherHookInit(SubDispDefNew* sdd, enum_disp_type dispType, int key, void* callback, int data1, int data2)
@@ -659,6 +680,11 @@ void ConditionSystem::DispatcherHookInit(SubDispDefNew* sdd, enum_disp_type disp
 	sdd->dispCallback = ( int(__cdecl*)(DispatcherCallbackArgs))callback;
 	sdd->data1 = data1;
 	sdd->data2 = data2;
+}
+
+void ConditionSystem::DispatcherHookInit(CondStructNew* cond, int hookIdx, enum_disp_type dispType, int key, void* callback, int data1, int data2)
+{
+	DispatcherHookInit(&cond->subDispDefs[hookIdx], dispType, key, callback, data1, data2 );
 }
 
 void ConditionSystem::SetPermanentModArgsFromDataFields(Dispatcher* dispatcher, CondStruct* condStruct, int* condArgs)
