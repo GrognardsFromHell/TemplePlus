@@ -243,15 +243,29 @@ void CritterSystem::GiveMoney(objHndl critter, int platinum, int gold, int silve
 int CritterSystem::NumOffhandExtraAttacks(objHndl critter)
 {
 	if (feats.HasFeatCount(critter, FEAT_GREATER_TWO_WEAPON_FIGHTING)
-		|| feats.HasFeatCount(critter, FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER))
+		|| feats.HasFeatCountByClass(critter, FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER, (Stat)0, 0))
 	{
 		return 3;
 	}
 
 	if (feats.HasFeatCount(critter, FEAT_IMPROVED_TWO_WEAPON_FIGHTING)
-		|| feats.HasFeatCount(critter, FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER))
+		|| feats.HasFeatCountByClass(critter, FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER, (Stat)0,0))
 		return 2;
 
+	return 1;
+}
+
+int CritterSystem::IsWearingLightOrNoArmor(objHndl critter)
+{
+	objHndl armor = inventory.ItemWornAt(critter, 5);
+	if (armor)
+	{
+		int armorFlags = objects.getInt32(armor, obj_f_armor_flags);
+		if (inventory.GetArmorType(armorFlags) != ARMOR_TYPE_NONE	&& inventory.GetArmorType(armorFlags) != ARMOR_TYPE_LIGHT)
+		{
+			return 0;
+		}
+	}
 	return 1;
 }
 

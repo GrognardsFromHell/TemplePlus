@@ -79,7 +79,7 @@ struct FeatSystem : AddressTable
 	int IsClassFeat(feat_enums feat);
 	int IsFighterFeat(feat_enums feat); // feats that fighters can select as bonus feats
 	int IsFeatPropertySet(feat_enums feat, int featProp); // checks bitfield if the entire featProp is set (i.e. partial matches return 0)
-	uint32_t rangerArcheryFeats[3 * 2 + 100];
+	uint32_t rangerArcheryFeats[4 * 2 + 100];
 	uint32_t rangerTwoWeaponFeats[4 * 2 + 100];
 
 

@@ -13,6 +13,7 @@
 ConditionSystem conds;
 CondStructNew conditionDisableAoO;
 CondStructNew conditionGreaterTwoWeaponFighting;
+CondStructNew condGreaterTWFRanger;
 
 struct ConditionSystemAddresses : AddressTable
 {
@@ -225,7 +226,7 @@ void InitCondFromCondStructAndArgs(Dispatcher* dispatcher, CondStruct* condStruc
 
 #pragma endregion
 
-uint32_t ConditionPrevent(DispatcherCallbackArgs args)
+int ConditionPrevent(DispatcherCallbackArgs args)
 {
 	DispIoCondStruct * dispIO = _DispIoCheckIoType1((DispIoCondStruct*)args.dispIO);
 	if (dispIO == nullptr)
@@ -429,24 +430,14 @@ int GlobalGetArmorClass(DispatcherCallbackArgs args) // the basic AC value (init
 			return 0;
 		}
 
-		if (dispIo->attackPacket.attacker && feats.HasFeatCount(dispIo->attackPacket.attacker, FEAT_IMPROVED_PRECISE_SHOT_RANGER))
+		if (dispIo->attackPacket.attacker && feats.HasFeatCountByClass(dispIo->attackPacket.attacker, FEAT_IMPROVED_PRECISE_SHOT_RANGER, (Stat)0, 0))
 		{
-			auto armor = inventory.ItemWornAt(dispIo->attackPacket.attacker, 5);
-			if (armor)
-			{
-				int armorFlags = objects.getInt32(armor, obj_f_armor_flags);
-				ArmorType armorType = inventory.GetArmorType(armorFlags);
-				if (armorType == ARMOR_TYPE_NONE || armorType == ARMOR_TYPE_LIGHT)
-				{
-					bonusSys.zeroBonusSetMeslineNum(bonlist, 335); // Cover negated by Imp. Precise Shot
-					return 0;
-				}
-			} else
+			if (critterSys.IsWearingLightOrNoArmor(dispIo->attackPacket.attacker))
 			{
 				bonusSys.zeroBonusSetMeslineNum(bonlist, 335); // Cover negated by Imp. Precise Shot
 				return 0;
 			}
-			
+						
 		}
 
 		if (dispIo->attackPacket.attacker && feats.HasFeatCount(dispIo->attackPacket.attacker, FEAT_SHARP_SHOOTING))
@@ -471,7 +462,8 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAnimalCompanionAnimal);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAutoendTurn);
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionDisableAoO); //NEW!
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionGreaterTwoWeaponFighting); //NEW!
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterTwoWeaponFighting); //NEW!
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterTWFRanger); //NEW!
 	for (unsigned int i = 0; i < 84; i++)
 	{
 		conds.hashmethods.CondStructAddToHashtable(conds.FeatConditionDict[i].condStruct);
@@ -482,10 +474,17 @@ uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** condStructOu
 {
 	if (featEnum == FEAT_GREATER_TWO_WEAPON_FIGHTING)
 	{
-		*condStructOut = (CondStruct*)conds.mConditionGreaterTwoWeaponFighting;
+		*condStructOut = (CondStruct*)conds.mCondGreaterTwoWeaponFighting;
 		*arg2Out = 0;
 		return 1;
 	}
+	if (featEnum == FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER)
+	{
+		*condStructOut = (CondStruct*)conds.mCondGreaterTWFRanger;
+		*arg2Out = 0;
+		return 1;
+	}
+
 	feat_enums * featFromDict = & ( conds.FeatConditionDict->featEnum );
 	uint32_t iter = 0;
 	while (
@@ -612,48 +611,45 @@ void ConditionSystem::InitCondFromCondStructAndArgs(Dispatcher* dispatcher, Cond
 
 void ConditionSystem::RegisterNewConditions()
 {
+
+	// Disable AoO
 	mConditionDisableAoO = &conditionDisableAoO;
 	memset(mConditionDisableAoOName, 0, sizeof(mConditionDisableAoOName));
 	memcpy(mConditionDisableAoOName, "Disable AoO", sizeof("Disable AoO"));
 
-	mConditionGreaterTwoWeaponFighting = &conditionGreaterTwoWeaponFighting;
-	memset(mConditionGreaterTwoWeaponFightingName, 0, sizeof(mConditionDisableAoOName));
-	memcpy(mConditionGreaterTwoWeaponFightingName, "Greater Two Weapon Fighting", sizeof("Greater Two Weapon Fighting"));
-
 	mConditionDisableAoO->condName = mConditionDisableAoOName;
 	mConditionDisableAoO->numArgs = 1;
-	mConditionDisableAoO->subDispDefs[1].dispType = dispTypeRadialMenuEntry;
-	mConditionDisableAoO->subDispDefs[1].dispKey = 0;
-	mConditionDisableAoO->subDispDefs[1].dispCallback = AoODisableRadialMenuInit;
 
-	mConditionDisableAoO->subDispDefs[0].dispType = dispTypeD20Query;
-	mConditionDisableAoO->subDispDefs[0].dispKey = DK_QUE_AOOPossible;
-	mConditionDisableAoO->subDispDefs[0].dispCallback = AoODisableQueryAoOPossible;
+	DispatcherHookInit(&mConditionDisableAoO->subDispDefs[0], dispTypeD20Query, DK_QUE_AOOPossible, AoODisableQueryAoOPossible,	0, 0);
+	DispatcherHookInit(&mConditionDisableAoO->subDispDefs[1], dispTypeRadialMenuEntry, 0, AoODisableRadialMenuInit,0,0);
+	DispatcherHookInit(&mConditionDisableAoO->subDispDefs[2], dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mConditionDisableAoO, 0);
+	DispatcherHookInit(&mConditionDisableAoO->subDispDefs[3], dispType0, 0, 0, 0, 0);
 
-	mConditionDisableAoO->subDispDefs[2].dispType = dispTypeConditionAddPre;
-	mConditionDisableAoO->subDispDefs[2].dispKey = 0;
-	mConditionDisableAoO->subDispDefs[2].data1 = (uint32_t)&mConditionDisableAoO;;
-	mConditionDisableAoO->subDispDefs[2].dispCallback = (int(__cdecl *)(DispatcherCallbackArgs))ConditionPrevent;
+	// Greater Two Weapon Fighting
+	mCondGreaterTwoWeaponFighting = &conditionGreaterTwoWeaponFighting;
+	memset(mConditionGreaterTwoWeaponFightingName, 0, sizeof(mConditionGreaterTwoWeaponFightingName));
+	memcpy(mConditionGreaterTwoWeaponFightingName, "Greater Two Weapon Fighting", sizeof("Greater Two Weapon Fighting"));
 
-	mConditionDisableAoO->subDispDefs[3].dispType = dispType0;
-	mConditionDisableAoO->subDispDefs[3].dispKey = 0;
-	mConditionDisableAoO->subDispDefs[3].dispCallback = 0;
+	mCondGreaterTwoWeaponFighting->condName = mConditionGreaterTwoWeaponFightingName;
+	mCondGreaterTwoWeaponFighting->numArgs = 2;
 
+	DispatcherHookInit(&mCondGreaterTwoWeaponFighting->subDispDefs[0], dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondGreaterTwoWeaponFighting, 0);
+	DispatcherHookInit(&mCondGreaterTwoWeaponFighting->subDispDefs[1], dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondGreaterTWFRanger, 0);
+	DispatcherHookInit(&mCondGreaterTwoWeaponFighting->subDispDefs[2], dispTypeGetNumAttacksBase, 0,GreaterTwoWeaponFighting, 0, 0); // same callback as Improved TWF (it just adds an extra attack... logic is inside the action sequence / d20 / GlobalToHit functions
+	DispatcherHookInit(&mCondGreaterTwoWeaponFighting->subDispDefs[3], dispType0, 0, nullptr, 0, 0);
 
-	mConditionGreaterTwoWeaponFighting->condName = mConditionGreaterTwoWeaponFightingName;
-	mConditionGreaterTwoWeaponFighting->numArgs = 2;
+	// Greater TWF Ranger
+	mCondGreaterTWFRanger = &condGreaterTWFRanger;
+	memset(mCondGreaterTWFRangerName, 0, sizeof(mCondGreaterTWFRangerName));
+	memcpy(mCondGreaterTWFRangerName, "Greater Two Weapon Fighting Ranger", sizeof("Greater Two Weapon Fighting Ranger"));
 
-	DispatcherHookInit(&mConditionGreaterTwoWeaponFighting->subDispDefs[0], dispTypeConditionAddPre, 0, 
-		(int(__cdecl *)(DispatcherCallbackArgs))ConditionPrevent, (uint32_t)&mConditionGreaterTwoWeaponFighting, 0);
+	mCondGreaterTWFRanger->condName = mCondGreaterTWFRangerName;
+	mCondGreaterTWFRanger->numArgs = 2;
 
-	DispatcherHookInit(&mConditionGreaterTwoWeaponFighting->subDispDefs[1], dispTypeConditionAddPre, 0,
-		(int(__cdecl *)(DispatcherCallbackArgs))ConditionPrevent, (uint32_t)&mConditionGreaterTwoWeaponFighting, 0); // TODO: add TWF_RANGER
-
-	DispatcherHookInit(&mConditionGreaterTwoWeaponFighting->subDispDefs[2], dispTypeGetNumAttacksBase, 0,
-		GreaterTwoWeaponFighting, 0, 0); // same callback as Improved TWF (it just adds an extra attack... logic is inside the action sequence / d20 / GlobalToHit functions
-
-
-	DispatcherHookInit(&mConditionGreaterTwoWeaponFighting->subDispDefs[3], dispType0, 0, nullptr, 0, 0);
+	DispatcherHookInit(&mCondGreaterTWFRanger->subDispDefs[0], dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondGreaterTwoWeaponFighting, 0);
+	DispatcherHookInit(&mCondGreaterTWFRanger->subDispDefs[1], dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondGreaterTWFRanger, 0); // TODO: add TWF_RANGER
+	DispatcherHookInit(&mCondGreaterTWFRanger->subDispDefs[2], dispTypeGetNumAttacksBase, 0, GreaterTWFRanger, 0, 0); // same callback as Improved TWF (it just adds an extra attack... logic is inside the action sequence / d20 / GlobalToHit functions
+	DispatcherHookInit(&mCondGreaterTWFRanger->subDispDefs[3], dispType0, 0, nullptr, 0, 0);
 }
 
 void ConditionSystem::DispatcherHookInit(SubDispDefNew* sdd, enum_disp_type dispType, int key, void* callback, int data1, int data2)
@@ -809,6 +805,8 @@ int* ConditionSystem::CondNodeGetArgPtr(CondNode* condNode, int argIdx)
 	return 0;
 }
 
+#pragma region NewConditionCallbacks
+
  int __cdecl AoODisableRadialMenuInit(DispatcherCallbackArgs args)
 {
 	RadialMenuEntry radEntry;
@@ -865,6 +863,14 @@ int __cdecl GreaterTwoWeaponFighting(DispatcherCallbackArgs args)
 
 }
 
+int __cdecl GreaterTWFRanger(DispatcherCallbackArgs args)
+{
+	if (!critterSys.IsWearingLightOrNoArmor(args.objHndCaller))
+	{
+		return 0;
+	}
+	return GreaterTwoWeaponFighting(args);
+};
 
 int __cdecl TwoWeaponFightingBonus(DispatcherCallbackArgs args)
 {
@@ -890,18 +896,13 @@ int __cdecl TwoWeaponFightingBonus(DispatcherCallbackArgs args)
 
 int TwoWeaponFightingBonusRanger(DispatcherCallbackArgs args)
 {
-	objHndl armor = inventory.ItemWornAt(args.objHndCaller, 5);
 	DispIoAttackBonus * dispIo = dispatch.DispIoCheckIoType5((DispIoAttackBonus*)args.dispIO);
-	if (armor)
+	if ( !critterSys.IsWearingLightOrNoArmor(args.objHndCaller))
 	{
-		int armorFlags = objects.getInt32(armor, obj_f_armor_flags);
-		if (inventory.GetArmorType(armorFlags) != ARMOR_TYPE_NONE	&& inventory.GetArmorType(armorFlags))
-		{
-			bonusSys.zeroBonusSetMeslineNum(&dispIo->bonlist, 166);
-			return 0;
-		}
+		bonusSys.zeroBonusSetMeslineNum(&dispIo->bonlist, 166);
+		return 0;
 	}
-		
+	
 	
 	feat_enums feat = FEAT_TWO_WEAPON_FIGHTING;
 	char * featName;
@@ -921,3 +922,5 @@ int TwoWeaponFightingBonusRanger(DispatcherCallbackArgs args)
 	return 0;
 
 }
+
+#pragma endregion

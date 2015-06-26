@@ -299,13 +299,13 @@ bool D20System::UsingSecondaryWeapon(objHndl obj, int attackCode)
 		if (attackCode == ATTACK_CODE_OFFHAND + 4)
 		{
 			if (feats.HasFeatCount(obj, FEAT_IMPROVED_TWO_WEAPON_FIGHTING)
-				|| feats.HasFeatCount(obj, FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER))
+				|| feats.HasFeatCountByClass(obj, FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER, (Stat)0,0))
 				return 1;
 		}
 		else if (attackCode == ATTACK_CODE_OFFHAND + 6)
 		{
 			if (feats.HasFeatCount(obj, FEAT_GREATER_TWO_WEAPON_FIGHTING)
-				|| feats.HasFeatCount(obj, FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER))
+				|| feats.HasFeatCountByClass(obj, FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER, (Stat)0, 0))
 				return 1;
 		}
 	}

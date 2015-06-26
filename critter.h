@@ -171,6 +171,12 @@ struct CritterSystem : AddressTable
 	*/
 	int NumOffhandExtraAttacks(objHndl critter);
 
+	/*
+		returns 1 if using no armor or light armor
+		useful for Ranger feats that require the above
+	*/
+	int IsWearingLightOrNoArmor(objHndl critter);
+
 #pragma region Category
 	MonsterCategory GetCategory(objHndl objHnd);
 	uint32_t IsCategoryType(objHndl objHnd, MonsterCategory categoryType);
