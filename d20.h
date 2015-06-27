@@ -10,7 +10,9 @@
 #define ATTACK_CODE_PRIMARY 0
 #define ATTACK_CODE_OFFHAND 99 // originally 4
 #define ATTACK_CODE_NATURAL_ATTACK 999 //originally 9
+#include "tab_file.h"
 
+struct GameSystemConf;
 struct ActionSequenceSystem;
 // Forward decls
 struct D20Actn;
@@ -37,7 +39,8 @@ struct D20System : AddressTable
 	ActionSequenceSystem * actSeq;
 	D20ClassSystem * d20Class;
 	D20StatusSystem * d20Status;
-
+	TabFileStatus* d20ActionsTabFile;
+	uint32_t(* d20actionTabLineParser)(TabFileStatus*, uint32_t, const char**);
 	void d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2);
 	void d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, objHndl arg);
 
@@ -71,6 +74,7 @@ struct D20System : AddressTable
 	void (__cdecl *CreateRollHistory)(int idx);
 
 	//char **ToEEd20ActionNames;
+	void NewD20ActionsInit();
 
 	D20System();
 };
@@ -196,3 +200,8 @@ objHndl _GetAttackWeapon(objHndl obj, int attackCode, D20CAF flags);
 inline int GetAttributeMod(int stat) {
 	return (stat - 10) / 2;
 }
+
+uint32_t _d20actionTabLineParser(TabFileStatus*, uint32_t n, const char** strings);
+int _D20Init(GameSystemConf* conf);
+uint32_t _DivineMightCheck(D20Actn* d20a, TurnBasedStatus* tbStat);
+uint32_t _DivineMightPerform(D20Actn* d20a);

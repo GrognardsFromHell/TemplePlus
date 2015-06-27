@@ -16,12 +16,15 @@
 #include "action_sequence.h"
 #include "critter.h"
 #include "anim.h"
+#include "tab_file.h"
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
 static_assert(sizeof(D20Actn) == 0x58, "D20Action struct has the wrong size!");
 static_assert(sizeof(D20ActionDef) == 0x30, "D20ActionDef struct has the wrong size!");
 
+
+int (__cdecl *OrgD20Init)(GameSystemConf* conf);
 
 class D20Replacements : public TempleFix {
 public:
@@ -31,15 +34,18 @@ public:
 
 	void apply() override {
 		
-		replaceFunction(0x1004F910, _D20StatusInitFromInternalFields);
+		OrgD20Init = (int(__cdecl *)(GameSystemConf* conf))replaceFunction(0x1004C8A0, _D20Init);
+
+
 		replaceFunction(0x1004CA00, _D20StatusInitItemConditions);
 		replaceFunction(0x1004CC00, _D20Query);
 		replaceFunction(0x1004CC60, _d20QueryWithData);
-
+		replaceFunction(0x1004CD40, _d20QueryReturnData);
 		replaceFunction(0x1004DFC0, _GetAttackWeapon);
 
 		replaceFunction(0x1004E6B0, _d20SendSignal);
-		replaceFunction(0x1004CD40, _d20QueryReturnData);
+		
+		replaceFunction(0x1004F910, _D20StatusInitFromInternalFields);
 		replaceFunction(0x1004FDB0, _D20StatusInit);
 		replaceFunction(0x1004FF30, _D20StatusRefresh);
 		
@@ -82,6 +88,28 @@ static struct D20SystemAddresses : AddressTable {
 
 #pragma region D20System Implementation
 D20System d20Sys;
+D20ActionDef d20ActionDefsNew[1000];
+TabFileStatus _d20actionTabFile;
+
+void D20System::NewD20ActionsInit()
+{
+	tabSys.tabFileStatusInit(d20ActionsTabFile, d20actionTabLineParser);
+	if (tabSys.tabFileStatusBasicFormatter(d20ActionsTabFile, "rules\\d20actions.tab"))
+	{
+		tabSys.tabFileStatusDealloc(d20ActionsTabFile);
+	}
+	else
+	{
+		tabSys.tabFileParseLines(d20ActionsTabFile);
+	}
+
+	d20Defs[D20A_DIVINE_MIGHT].flags = 0;
+	d20Defs[D20A_DIVINE_MIGHT].actionCost = _ActionCostNull;
+	d20Defs[D20A_DIVINE_MIGHT].actionCheckFunc = _DivineMightCheck;
+	d20Defs[D20A_DIVINE_MIGHT].performFunc = _DivineMightPerform;
+	d20Defs[D20A_DIVINE_MIGHT].addToSeqFunc = _AddToSeqSimple;
+
+}
 
 D20System::D20System()
 {
@@ -94,12 +122,17 @@ D20System::D20System()
 	rebase(d20EditorMode, 0x10AA3284);
 	rebase(globD20Action, 0x1186AC00);
 	rebase(ToHitProc, 0x100B7160);
-	rebase(d20Defs, 0x102CC5C8);
+	// rebase(d20Defs, 0x102CC5C8);
+	d20Defs = (D20ActionDef*)&d20ActionDefsNew;
+		d20ActionsTabFile = &_d20actionTabFile;
+		d20actionTabLineParser = &_d20actionTabLineParser;
 	//rebase(ToEEd20ActionNames, 0x102CD2BC);
 	rebase(_d20aTriggerCombatCheck, 0x1008AE90);//ActnSeq * @<eax>
 	rebase(_tumbleCheck, 0x1008AA90);
 	rebase(_d20aTriggersAOO, 0x1008A9C0);
 	rebase(CreateRollHistory, 0x100DFFF0);
+	
+
 }
 
 
@@ -616,4 +649,64 @@ int _PerformStandardAttack(D20Actn* d20a)
 objHndl _GetAttackWeapon(objHndl obj, int attackCode, D20CAF flags)
 {
 	return d20Sys.GetAttackWeapon(obj, attackCode, flags);
+}
+
+uint32_t _d20actionTabLineParser(TabFileStatus*, uint32_t n, const char** strings)
+{
+	D20ActionType d20ActionType = (D20ActionType)atoi(strings[0]);
+	if (d20ActionType <= D20A_USE_POTION)
+	{
+		for (int i = 0; i < sizeof(D20ActionDef) / sizeof(int); i++)
+		{
+			*((int*)&d20Sys.d20Defs[d20ActionType] + i) = atoi(strings[i + 1]);
+		}
+	}
+	return 0;
+
+}
+
+int _D20Init(GameSystemConf* conf)
+{
+	d20Sys.NewD20ActionsInit();
+	return OrgD20Init(conf);
+}
+
+uint32_t _DivineMightCheck(D20Actn* d20a, TurnBasedStatus* tbStat)
+{
+	DispIoD20ActionTurnBased dispIo;
+	dispIo.dispIOType = dispIOTypeD20ActionTurnBased;
+	dispIo.returnVal = 0;
+	dispIo.d20a = d20a;
+	dispIo.tbStatus = tbStat;
+	auto dispatcher = objects.GetDispatcher(d20a->d20APerformer);
+	auto alignmentchoice = objects.getInt32(d20a->d20APerformer, obj_f_critter_alignment_choice);
+	if (alignmentchoice == 2)
+		d20a->data1 = 1;
+
+	if (dispatch.dispatcherValid(dispatcher))
+	{
+		dispatch.DispatcherProcessor(dispatcher, dispTypeD20ActionCheck, DK_D20A_TURN_UNDEAD , &dispIo);
+	}
+
+	return dispIo.returnVal;
+}
+
+uint32_t _DivineMightPerform(D20Actn* d20a)
+{
+	DispIoD20ActionTurnBased dispIo;
+	dispIo.dispIOType = dispIOTypeD20ActionTurnBased;
+	dispIo.returnVal = 0;
+	dispIo.d20a = d20a;
+	dispIo.tbStatus = nullptr;
+	auto dispatcher = objects.GetDispatcher(d20a->d20APerformer);
+	if (dispatch.dispatcherValid(dispatcher))
+	{
+		dispatch.DispatcherProcessor(dispatcher, dispTypeD20ActionPerform, DK_D20A_DIVINE_MIGHT, &dispIo); // reduces the turn undead charge by 1
+	}
+
+	auto chaScore = objects.StatLevelGet(d20a->d20APerformer, stat_charisma);
+	auto chaMod = objects.GetModFromStatLevel(chaScore);
+	conds.AddTo(d20a->d20APerformer, "Divine Might", { chaMod, 0 });
+	
+	return dispIo.returnVal;
 }

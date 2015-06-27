@@ -30,7 +30,7 @@ public:
 		replaceFunction(0x1008A100, _addD20AToSeq); 
 		replaceFunction(0x1008A1B0, _ActionErrorString); 
 		replaceFunction(0x1008A980, _actSeqOkToPerform); 
-		replaceFunction(0x1008BFA0, _addSeqSimple); 
+		replaceFunction(0x1008BFA0, _AddToSeqSimple); 
 		replaceFunction(0x1008C6A0, _ActionCostFullAttack);
 		
 		replaceFunction(0x100925E0, _isSimultPerformer); 
@@ -146,7 +146,14 @@ ActionSequenceSystem::ActionSequenceSystem()
 	rebase(seqSthg_118A0980,0x118A0980); 
 	rebase(seqSthg_118CD570,0x118CD570); 
 
-	
+	int _transMatrix[7*5] = { 0 - 1, -1, -1, -1,
+		1, 0, -1, -1, -1,
+		2, 0, 0, -1, -1,
+		3, 0, 0, 0, -1,
+		4, 2, 1, -1, 0,
+		5, 2, 2, -1, 0,
+		6, 5, 2, -1, 3 };
+	memcpy(turnBasedStatusTransitionMatrix, _transMatrix, sizeof(turnBasedStatusTransitionMatrix));
 }
 
 
@@ -225,7 +232,7 @@ uint32_t ActionSequenceSystem::isPerforming(objHndl objHnd)
 	return 0;
 }
 
-uint32_t ActionSequenceSystem::addSeqSimple(D20Actn* d20a, ActnSeq * actSeq)
+uint32_t ActionSequenceSystem::AddToSeqSimple(D20Actn* d20a, ActnSeq * actSeq, TurnBasedStatus* tbStat)
 {
 	memcpy(actSeq + sizeof(D20Actn) * actSeq->d20ActArrayNum++, d20a, sizeof(D20Actn));
 	return 0;
@@ -233,7 +240,7 @@ uint32_t ActionSequenceSystem::addSeqSimple(D20Actn* d20a, ActnSeq * actSeq)
 
 void ActionSequenceSystem::IntrrptSthgsub_100939D0(D20Actn* d20a, CmbtIntrpts* str84)
 {
-	macAsmProl;
+	{ __asm push ecx __asm push esi __asm push ebx __asm push edi}
 	__asm{
 		mov ecx, this;
 		mov esi, [ecx]._sub_100939D0;
@@ -243,7 +250,7 @@ void ActionSequenceSystem::IntrrptSthgsub_100939D0(D20Actn* d20a, CmbtIntrpts* s
 		call esi;
 		add esp, 4;
 	}
-	macAsmEpil;
+	{ __asm pop edi __asm pop ebx __asm pop esi __asm pop ecx} 
 }
 
 uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSeq, TurnBasedStatus* tbStat, float distToTgt, float reach, int nonspecificMoveType)
@@ -590,6 +597,14 @@ void ActionSequenceSystem::ActSeqCurSetSpellPacket(SpellPacketBody* spellPktBody
 	(*actSeqCur)->aiSpellFlagSthg_maybe = flag;
 }
 
+uint32_t ActionSequenceSystem::ActionCostNull(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, ActionCostPacket* actionCostPacket)
+{
+	actionCostPacket->hourglassCost = 0;
+	actionCostPacket->chargeAfterPicker = 0;
+	actionCostPacket->moveDistCost = 0;
+	return 0;
+}
+
 void ActionSequenceSystem::sub_1008BB40(ActnSeq* actSeq, D20Actn* d20a)
 {
 	{ __asm push ecx __asm push esi __asm push ebx __asm push edi};;
@@ -623,13 +638,41 @@ int ActionSequenceSystem::CrossBowSthgReload_1008E8A0(D20Actn* d20a, ActnSeq* ac
 	return result;
 }
 
-uint32_t ActionSequenceSystem::TurnBasedStatusUpdate(D20Actn* d20a, TurnBasedStatus* actnSthg)
+uint32_t ActionSequenceSystem::TurnBasedStatusUpdate(D20Actn* d20a, TurnBasedStatus* tbStatus)
 {
 	uint32_t result = 0;
+	TurnBasedStatus tbStatCopy;
+	
+	memcpy(&tbStatCopy, tbStatus, sizeof(TurnBasedStatus));
+
+	int actProcResult = ActionCostProcess(&tbStatCopy, d20a);
+	if (!actProcResult)
+	{
+		memcpy(tbStatus, &tbStatCopy, sizeof(TurnBasedStatus));
+		return 0;
+	}
+
+	auto aiCheck = d20Sys.d20Defs[d20a->d20ActType].aiCheckMaybe;
+	if (aiCheck)
+	{
+		if (aiCheck(d20a, &tbStatCopy))
+		{
+			return actProcResult;
+		}
+		actProcResult = ActionCostProcess(&tbStatCopy, d20a);
+	}
+
+	if (!actProcResult)
+	{
+		memcpy(tbStatus, &tbStatCopy, sizeof(TurnBasedStatus));
+		return 0;
+	}
+	return actProcResult;
+	/*
 	{ __asm push ecx __asm push esi __asm push ebx __asm push edi};
 	__asm{
 		mov ecx, this;
-		mov esi, actnSthg;
+		mov esi, tbStat;
 		push esi;
 		mov esi, [ecx]._TurnBasedStatusUpdate;
 		mov ebx, d20a;
@@ -640,6 +683,7 @@ uint32_t ActionSequenceSystem::TurnBasedStatusUpdate(D20Actn* d20a, TurnBasedSta
 	}
 	{ __asm pop edi __asm pop ebx __asm pop esi __asm pop ecx} 
 	return result;
+	*/
 }
 
 uint32_t ActionSequenceSystem::SequencePathSthgSub_10096450(ActnSeq* actSeq, uint32_t idx ,TurnBasedStatus * tbStat)
@@ -1122,6 +1166,79 @@ int ActionSequenceSystem::TouchAttackAddToSeq(D20Actn* d20Actn, ActnSeq* actnSeq
 	return addresses.TouchAttackAddToSeq(d20Actn, actnSeq, turnBasedStatus);
 }
 
+int ActionSequenceSystem::ActionCostProcess(TurnBasedStatus* tbStat, D20Actn* d20a)
+{
+	ActionCostPacket actCost;
+	int hourglassCost;
+
+	int result = d20Sys.d20Defs[d20a->d20ActType].actionCost(d20a, tbStat, &actCost);
+	if (result)
+		return result;
+
+	
+	hourglassCost = actCost.hourglassCost;
+	if (tbStat->hourglassState == -1)
+		tbStat->hourglassState = -1;
+	else
+		tbStat->hourglassState = turnBasedStatusTransitionMatrix[tbStat->hourglassState][actCost.hourglassCost];
+
+	if (tbStat->hourglassState == -1) // this is an error state I think
+	{
+		result = 3;
+		if (hourglassCost <= 4)
+		{
+			switch (hourglassCost)
+			{
+			case 1:
+				tbStat->errCode = 2;
+				return 2;
+			case 2:
+				tbStat->errCode = 1;
+				return 1;
+			case 4:
+				tbStat->errCode = 3;
+				return 3;
+			case 3:
+				tbStat->errCode = 3;
+				break;
+			default:
+				break;
+			}
+		}
+
+	}
+
+	if (tbStat->surplusMoveDistance >= actCost.moveDistCost)
+	{
+		tbStat->surplusMoveDistance -= actCost.moveDistCost;
+		if ( actCost.chargeAfterPicker <= 0 
+			|| actCost.chargeAfterPicker + tbStat->attackModeCode <= tbStat->baseAttackNumCode + tbStat->numBonusAttacks)
+		{
+			if (tbStat->numBonusAttacks < actCost.chargeAfterPicker)
+				tbStat->attackModeCode += actCost.chargeAfterPicker;
+			else
+				tbStat->numBonusAttacks -= actCost.chargeAfterPicker;
+			if (tbStat->attackModeCode == tbStat->baseAttackNumCode && !tbStat->numBonusAttacks)
+				tbStat->tbsFlags &= 0xFFFFFFBF; // remove flag 0x4
+			result = 0;
+		}
+		else
+		{
+			result = 1;
+		}
+			
+	}
+	else
+	{
+		result = (tbStat->tbsFlags & 4) != 0 ? 4 : 8;
+	}
+
+	return result;
+
+		
+	
+}
+
 int ActionSequenceSystem::TurnBasedStatusUpdate(TurnBasedStatus* tbStat, D20Actn* d20a)
 {
 	return TurnBasedStatusUpdate(d20a, tbStat);
@@ -1327,9 +1444,9 @@ uint32_t _addD20AToSeq(D20Actn* d20a, ActnSeq* actSeq)
 }
 
 
-uint32_t _addSeqSimple(D20Actn* d20a, ActnSeq * actSeq)
+uint32_t _AddToSeqSimple(D20Actn* d20a, ActnSeq * actSeq, TurnBasedStatus* tbStat)
 {
-	return actSeqSys.addSeqSimple(d20a, actSeq);
+	return actSeqSys.AddToSeqSimple(d20a, actSeq, tbStat);
 }
 
 uint32_t _seqCheckAction(D20Actn* d20a, TurnBasedStatus* iO)
@@ -1447,5 +1564,15 @@ const char* __cdecl _ActionErrorString(uint32_t actnErrorCode)
 void _ActSeqCurSetSpellPacket(SpellPacketBody* spellPktBody, int flag)
 {
 	actSeqSys.ActSeqCurSetSpellPacket(spellPktBody, flag);
+}
+
+uint32_t _AddToSeqSimple(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat)
+{
+	return actSeqSys.AddToSeqSimple(d20a, actSeq, tbStat);
+}
+
+uint32_t _ActionCostNull(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp)
+{
+	return actSeqSys.ActionCostNull(d20a, tbStat, acp);
 }
 #pragma endregion

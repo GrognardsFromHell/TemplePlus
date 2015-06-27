@@ -42,13 +42,18 @@ struct ActionSequenceSystem : AddressTable
 	int32_t * seqSthg_118CD570; // init to 0
 	uint32_t * numSimultPerformers;
 	uint32_t * simulsIdx;  //10B3D5BC
-	objHndl * simultPerformerQueue; 
-
+	objHndl * simultPerformerQueue;
+	int turnBasedStatusTransitionMatrix[7][5]; // describes the new hourglass state when current state is i after doing an action that costs j
 	void curSeqReset(objHndl objHnd);
 	void ActionAddToSeq();
 		uint32_t addD20AToSeq(D20Actn * d20a, ActnSeq * actSeq);
+		uint32_t AddToSeqSimple(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+		int TouchAttackAddToSeq(D20Actn* d20Actn, ActnSeq* actnSeq, TurnBasedStatus* turnBasedStatus);
+		int UnspecifiedAttackAddToSeqRangedMulti(ActnSeq* actnSeq, D20Actn* d20Actn, TurnBasedStatus* tbStat);
+		int UnspecifiedAttackAddToSeqMeleeMulti(ActnSeq* actSeq, TurnBasedStatus* tbStat, D20Actn* d20a);
+		int  UnspecifiedAttackAddToSeq(D20Actn *d20a, ActnSeq *actSeq, TurnBasedStatus *tbStat);
+			void AttackAppend(ActnSeq * actSeq, D20Actn * d20a, TurnBasedStatus* tbStat, int attackCode);
 	uint32_t isPerforming(objHndl objHnd);
-	uint32_t addSeqSimple(D20Actn * d20a, ActnSeq * actSeq);
 	void IntrrptSthgsub_100939D0(D20Actn * d20a, CmbtIntrpts * str84);
 	uint32_t moveSequenceParse(D20Actn * d20aIn, ActnSeq* actSeq, TurnBasedStatus *actnSthg, float distSthg, float reach, int a5);
 		void releasePath(PathQueryResult*);
@@ -87,17 +92,14 @@ struct ActionSequenceSystem : AddressTable
 	uint32_t simulsAbort(objHndl);
 	uint32_t isSomeoneAlreadyActingSimult(objHndl objHnd);
 
-
+	uint32_t ActionCostNull(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, ActionCostPacket* actionCostPacket);
 	int (__cdecl *ActionCostReload)(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp); 
 	int ActionCostFullAttack(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp);
 	void FullAttackCostCalculate(D20Actn *d20a, TurnBasedStatus *tbStatus, int *baseAttackNumCode, int *bonusAttacks, int *numAttacks, int *attackModeCode);
-	int TouchAttackAddToSeq(D20Actn* d20Actn, ActnSeq* actnSeq, TurnBasedStatus* turnBasedStatus);
+	int ActionCostProcess(TurnBasedStatus* tbStat, D20Actn* d20a);
 	uint32_t TurnBasedStatusUpdate(D20Actn* d20a, TurnBasedStatus* tbStat);
 		int TurnBasedStatusUpdate(TurnBasedStatus* tbStat, D20Actn* d20a);
-	int UnspecifiedAttackAddToSeqRangedMulti(ActnSeq* actnSeq, D20Actn* d20Actn, TurnBasedStatus* tbStat);
-	int UnspecifiedAttackAddToSeqMeleeMulti(ActnSeq* actSeq, TurnBasedStatus* tbStat, D20Actn* d20a);
-	int  UnspecifiedAttackAddToSeq(D20Actn *d20a, ActnSeq *actSeq, TurnBasedStatus *tbStat);
-	void AttackAppend(ActnSeq * actSeq, D20Actn * d20a, TurnBasedStatus* tbStat, int attackCode);
+
 
 	ActionSequenceSystem();
 private:
@@ -176,7 +178,7 @@ struct CmbtIntrpts
 const uint32_t TestSizeOfActionSequence = sizeof(ActnSeq); // should be 0x1648 (5704)
 
 uint32_t _addD20AToSeq(D20Actn* d20a, ActnSeq* actSeq);
-uint32_t _addSeqSimple(D20Actn* d20a, ActnSeq * actSeq);
+uint32_t _AddToSeqSimple(D20Actn* d20a, ActnSeq * actSeq);
 unsigned _seqCheckAction(D20Actn* d20a, TurnBasedStatus* iO);
 uint32_t _isPerforming(objHndl objHnd);
 uint32_t _actSeqOkToPerform();
@@ -195,3 +197,4 @@ TurnBasedStatus * _curSeqGetTurnBasedStatus();
 uint32_t _turnBasedStatusInit(objHndl objHnd);
 const char * _ActionErrorString(uint32_t actnErrorCode);
 void __cdecl _ActSeqCurSetSpellPacket(SpellPacketBody *, int flag );
+uint32_t _ActionCostNull(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket *acp);

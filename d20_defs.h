@@ -77,6 +77,7 @@ enum D20ActionType : int32_t
 	D20A_DISMISS_SPELLS,
 	D20A_FLEE_COMBAT,
 	D20A_USE_POTION = 68,
+	D20A_DIVINE_MIGHT = 69,
 	D20A_NUMACTIONS, // always keep this last. Not counting D20A_NONE since it is unused (all the d20 action functions start cycling from D20A_UNSPECIFIED_MOVE)
 	D20A_UNASSIGNED = -2 // used for hotkey binds
 };

@@ -48,7 +48,7 @@ struct FeatSystem : AddressTable
 	0x00010100 - G. Wpn Focus
 	0x00020000 - Wizard Feat (crafting, metamagic etc.)
 	0x00040000 - Rogue 10th lvl Feat
-	0x00080000 - Multiselect Parent
+	0x00080000 - Multiselect Parent   NEW (overrides disablement for particular display purposes)
 	*/
 	uint32_t * m_featPropertiesTable;
 	FeatPrereqRow * m_featPreReqTable;
