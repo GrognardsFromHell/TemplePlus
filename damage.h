@@ -91,6 +91,7 @@ public:
 	bool ReflexSaveAndDamage(objHndl obj, objHndl attacker, int dc, int reduction, int flags, const Dice &dice, DamageType damageType, int attackPower, D20ActionType actionType, int spellId);
 
 	void DamagePacketInit(DamagePacket * dmgPkt);
+	int AddDamageBonus(DamagePacket* damage, int damBonus, int bonType, int bonusMesLine, char* desc);
 };
 
 extern Damage damage;

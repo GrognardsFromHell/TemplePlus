@@ -83,6 +83,7 @@ public:
 	CondStruct ** ConditionArrayRace;
 	CondStruct ** ConditionArrayClasses;
 	CondStruct * ConditionTurnUndead;
+	CondStruct * ConditionGreaterTurning;
 	CondStruct * ConditionBardicMusic;
 	CondStruct * ConditionSchoolSpecialization;
 	CondStruct ** ConditionArrayDomains;
@@ -114,7 +115,8 @@ public:
 	CondStructNew* mCondGreaterTWFRanger;
 	char mCondDivineMightName[100];
 	CondStructNew* mCondDivineMight;
-	
+	char mCondDivineMightBonusName[100];
+	CondStructNew* mCondDivineMightBonus;
 	/*
 		Returns the condition definition with the given name,
 		null if none exists.
@@ -168,6 +170,7 @@ public:
 		rebase(ConditionArrayRace, 0x102EFC18);
 		rebase(ConditionArrayClasses, 0x102F0634);
 		rebase(ConditionTurnUndead, 0x102B0D48);
+		rebase(ConditionGreaterTurning, 0x102B0DE0);
 		rebase(ConditionBardicMusic, 0x102F0520);
 		rebase(ConditionSchoolSpecialization, 0x102F0604);
 		rebase(ConditionArrayDomains, 0x102B1690);
@@ -198,7 +201,7 @@ public:
 	int GetPermanentModsAndItemCondCount(Dispatcher* dispatcher);
 	int ConditionsExtractInfo(Dispatcher* dispatcher, int condIdx, int* hashkeyOut, int *condsArgsOut);
 	int PermanentAndItemModsExtractInfo(Dispatcher* dispatcher, int permModIdx, int* hashkeyOut, int * condsArgs);
-
+	void ConditionRemove(objHndl objHnd, CondNode* cond);
 };
 
 extern ConditionSystem conds;
@@ -230,6 +233,7 @@ uint32_t _ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, 
 void InitCondFromCondStructAndArgs(Dispatcher *dispatcher, CondStruct *condStruct, int *condargs);
 
 int ConditionPrevent(DispatcherCallbackArgs args);
+int ConditionRemoveCallback(DispatcherCallbackArgs args);
 int CondNodeSetArg0FromSubDispDef(DispatcherCallbackArgs args);
 int SkillBonusCallback(DispatcherCallbackArgs args); 
 int GlobalToHitBonus(DispatcherCallbackArgs args);
@@ -238,6 +242,8 @@ int GreaterTwoWeaponFighting(DispatcherCallbackArgs args);
 int GreaterTWFRanger(DispatcherCallbackArgs args);
 int TwoWeaponFightingBonus(DispatcherCallbackArgs args);
 int TwoWeaponFightingBonusRanger(DispatcherCallbackArgs args);
+int DivineMightRadial(DispatcherCallbackArgs args);
+int DivineMightDamageBonus(DispatcherCallbackArgs args);
 
 
 void _FeatConditionsRegister();

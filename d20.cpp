@@ -103,11 +103,13 @@ void D20System::NewD20ActionsInit()
 		tabSys.tabFileParseLines(d20ActionsTabFile);
 	}
 
-	d20Defs[D20A_DIVINE_MIGHT].flags = 0;
-	d20Defs[D20A_DIVINE_MIGHT].actionCost = _ActionCostNull;
+	d20Defs[D20A_DIVINE_MIGHT].addToSeqFunc = _AddToSeqSimple;
 	d20Defs[D20A_DIVINE_MIGHT].actionCheckFunc = _DivineMightCheck;
 	d20Defs[D20A_DIVINE_MIGHT].performFunc = _DivineMightPerform;
-	d20Defs[D20A_DIVINE_MIGHT].addToSeqFunc = _AddToSeqSimple;
+	// d20Defs[D20A_DIVINE_MIGHT].actionFrameFunc = _DivineMightPerform;
+	d20Defs[D20A_DIVINE_MIGHT].actionCost = _ActionCostNull;
+	d20Defs[D20A_DIVINE_MIGHT].flags = 0;
+	
 
 }
 
@@ -706,7 +708,7 @@ uint32_t _DivineMightPerform(D20Actn* d20a)
 
 	auto chaScore = objects.StatLevelGet(d20a->d20APerformer, stat_charisma);
 	auto chaMod = objects.GetModFromStatLevel(chaScore);
-	conds.AddTo(d20a->d20APerformer, "Divine Might", { chaMod, 0 });
+	conds.AddTo(d20a->d20APerformer, "Divine Might Bonus", { chaMod, 0 });
 	
 	return dispIo.returnVal;
 }

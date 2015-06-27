@@ -9,12 +9,14 @@
 #include "combat.h"
 #include "critter.h"
 #include "location.h"
+#include "damage.h"
 
 ConditionSystem conds;
 CondStructNew conditionDisableAoO;
 CondStructNew conditionGreaterTwoWeaponFighting;
 CondStructNew condGreaterTWFRanger;
 CondStructNew condDivineMight;
+CondStructNew condDivineMightBonus;
 
 struct ConditionSystemAddresses : AddressTable
 {
@@ -242,9 +244,32 @@ int ConditionPrevent(DispatcherCallbackArgs args)
 	return 0;
 };
 
+
+int ConditionRemoveCallback(DispatcherCallbackArgs args)
+{
+	conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+	return 0;
+};
+
+int DivineMightEffectTooltipCallback(DispatcherCallbackArgs args)
+{
+	void * dispIo = args.dispIO;
+	int (__cdecl* callback )(int, int, int)= (int(__cdecl*)(int, int, int))temple_address(0x100F4760);
+	const char shit[] = "Divine Might";
+	callback( *((int*)dispIo + 1), args.subDispNode->subDispDef->data1, (int)shit);
+	return 0;
+};
+
 int __cdecl CondNodeSetArg0FromSubDispDef(DispatcherCallbackArgs args)
 {
 	conds.CondNodeSetArg(args.subDispNode->condNode, 0, args.subDispNode->subDispDef->data1);
+	return 0;
+};
+
+int __cdecl CondArgDecrement(DispatcherCallbackArgs args)
+{
+	conds.CondNodeSetArg(args.subDispNode->condNode, args.subDispNode->subDispDef->data1, 
+		conds.CondNodeGetArg(args.subDispNode->condNode, args.subDispNode->subDispDef->data1) - 1);
 	return 0;
 };
 
@@ -471,6 +496,9 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionDisableAoO); //NEW!
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterTwoWeaponFighting); //NEW!
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterTWFRanger); //NEW!
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDivineMight); //NEW!
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDivineMightBonus); //NEW!
+
 	for (unsigned int i = 0; i < 84; i++)
 	{
 		conds.hashmethods.CondStructAddToHashtable(conds.FeatConditionDict[i].condStruct);
@@ -488,6 +516,12 @@ uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** condStructOu
 	if (featEnum == FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER)
 	{
 		*condStructOut = (CondStruct*)conds.mCondGreaterTWFRanger;
+		*arg2Out = 0;
+		return 1;
+	}
+	if (featEnum == FEAT_DIVINE_MIGHT)
+	{
+		*condStructOut = (CondStruct*)conds.mCondDivineMight;
 		*arg2Out = 0;
 		return 1;
 	}
@@ -618,6 +652,8 @@ void ConditionSystem::InitCondFromCondStructAndArgs(Dispatcher* dispatcher, Cond
 
 void ConditionSystem::RegisterNewConditions()
 {
+	CondStructNew * cond;
+	char * condName;
 
 	// Disable AoO
 	mConditionDisableAoO = &conditionDisableAoO;
@@ -647,20 +683,21 @@ void ConditionSystem::RegisterNewConditions()
 
 	// Greater TWF Ranger
 	mCondGreaterTWFRanger = &condGreaterTWFRanger;
-	memset(mCondGreaterTWFRangerName, 0, sizeof(mCondGreaterTWFRangerName));
-	memcpy(mCondGreaterTWFRangerName, "Greater Two Weapon Fighting Ranger", sizeof("Greater Two Weapon Fighting Ranger"));
+	cond = mCondGreaterTWFRanger; 	condName = mCondGreaterTWFRangerName;
+	memset(condName, 0, sizeof(condName));
+	memcpy(condName, "Greater Two Weapon Fighting Ranger", sizeof("Greater Two Weapon Fighting Ranger"));
 
-	mCondGreaterTWFRanger->condName = mCondGreaterTWFRangerName;
-	mCondGreaterTWFRanger->numArgs = 2;
+	cond->condName = mCondGreaterTWFRangerName;
+	cond->numArgs = 2;
 
-	DispatcherHookInit(mCondGreaterTWFRanger, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondGreaterTwoWeaponFighting, 0);
-	DispatcherHookInit(mCondGreaterTWFRanger, 1, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondGreaterTWFRanger, 0); // TODO: add TWF_RANGER
-	DispatcherHookInit(mCondGreaterTWFRanger, 2, dispTypeGetNumAttacksBase, 0, GreaterTWFRanger, 0, 0); // same callback as Improved TWF (it just adds an extra attack... logic is inside the action sequence / d20 / GlobalToHit functions
-	DispatcherHookInit(mCondGreaterTWFRanger, 3, dispType0, 0, nullptr, 0, 0);
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondGreaterTwoWeaponFighting, 0);
+	DispatcherHookInit(cond, 1, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondGreaterTWFRanger, 0); // TODO: add TWF_RANGER
+	DispatcherHookInit(cond, 2, dispTypeGetNumAttacksBase, 0, GreaterTWFRanger, 0, 0); // same callback as Improved TWF (it just adds an extra attack... logic is inside the action sequence / d20 / GlobalToHit functions
+	DispatcherHookInit(cond, 3, dispType0, 0, nullptr, 0, 0);
 
 	// Divine Might Ability
 	mCondDivineMight = &condDivineMight;
-	CondStructNew * cond = mCondDivineMight; 	char * condName = mCondDivineMightName;
+	cond = mCondDivineMight; 	condName = mCondDivineMightName;
 	memset(condName, 0, sizeof(condName)); 	memcpy(condName, "Divine Might", sizeof("Divine Might"));
 
 	cond->condName = condName;
@@ -668,8 +705,24 @@ void ConditionSystem::RegisterNewConditions()
 
 	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0 ,ConditionPrevent, (uint32_t) cond , 0 );
 	DispatcherHookInit(cond, 1, dispTypeConditionAdd, 0, CondNodeSetArg0FromSubDispDef, 1, 0);
+	DispatcherHookInit(cond, 2, dispTypeRadialMenuEntry, 0, DivineMightRadial, 0, 0);
 
+	DispatcherHookInit((CondStructNew*)ConditionTurnUndead, 6, dispTypeD20ActionPerform, DK_D20A_DIVINE_MIGHT, CondArgDecrement, 1, 0); // decrement the number of turn charges remaining; 
+	DispatcherHookInit((CondStructNew*)ConditionGreaterTurning, 6, dispTypeD20ActionPerform, DK_D20A_DIVINE_MIGHT, CondArgDecrement, 1, 0); // decrement the number of turn charges remaining
 	
+	// Divine Might Bonus (gets activated when you choose the action from the Radial Menu)
+	mCondDivineMightBonus = &condDivineMightBonus;
+	cond = mCondDivineMightBonus; 	condName = mCondDivineMightBonusName;
+	memset(condName, 0, sizeof(condName)); 	memcpy(condName, "Divine Might Bonus", sizeof("Divine Might Bonus"));
+
+	cond->condName = condName;
+	cond->numArgs = 2;
+
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
+	DispatcherHookInit(cond, 1, dispTypeDealingDamage, 0, DivineMightDamageBonus, 0, 0);
+	DispatcherHookInit(cond, 2, dispTypeBeginRound, 0, ConditionRemoveCallback, 0, 0);
+	DispatcherHookInit(cond, 3, dispTypeD20Signal, DK_SIG_Killed, ConditionRemoveCallback, 0, 0);
+	DispatcherHookInit(cond, 4, dispTypeEffectTooltip, 0, DivineMightEffectTooltipCallback, 81, 0);
 
 }
 
@@ -684,6 +737,7 @@ void ConditionSystem::DispatcherHookInit(SubDispDefNew* sdd, enum_disp_type disp
 
 void ConditionSystem::DispatcherHookInit(CondStructNew* cond, int hookIdx, enum_disp_type dispType, int key, void* callback, int data1, int data2)
 {
+	assert(cond->subDispDefs[hookIdx].dispType == 0);
 	DispatcherHookInit(&cond->subDispDefs[hookIdx], dispType, key, callback, data1, data2 );
 }
 
@@ -824,6 +878,15 @@ int ConditionSystem::PermanentAndItemModsExtractInfo(Dispatcher* dispatcher, int
 	if (!cond) return 0;
 }
 
+void ConditionSystem::ConditionRemove(objHndl objHnd, CondNode* cond)
+{
+	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+	if (dispatch.dispatcherValid(dispatcher))
+	{
+		dispatch.DispatchConditionRemove(dispatcher, cond);
+	}
+}
+
 int* ConditionSystem::CondNodeGetArgPtr(CondNode* condNode, int argIdx)
 {
 	if (argIdx < condNode->condStruct->numArgs)
@@ -949,4 +1012,39 @@ int TwoWeaponFightingBonusRanger(DispatcherCallbackArgs args)
 
 }
 
+
+
+int __cdecl DivineMightRadial(DispatcherCallbackArgs args)
+{
+	if (d20Sys.d20Query(args.objHndCaller, DK_QUE_IsFallenPaladin))
+		return 0;
+
+	RadialMenuEntry radEntry;
+	radEntry.SetDefaults();
+	radEntry.type = RadialMenuEntryType::Action;
+	radEntry.d20ActionType = D20A_DIVINE_MIGHT;
+	radEntry.d20ActionData1 = 0;
+	MesLine mesLine;
+	mesLine.key = 5106; // Divine Might
+	if (!mesFuncs.GetLine(*combatSys.combatMesfileIdx, &mesLine))
+	{
+		sprintf((char*)temple_address(0x10EEE228), "Divine Might");
+		mesLine.value = (char*)temple_address(0x10EEE228);
+	};
+	radEntry.text = (char*)mesLine.value;
+	radEntry.helpId = conds.hashmethods.StringHash("TAG_DIVINE_MIGHT");
+	int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Feats);
+	radialMenus.AddChildNode(args.objHndCaller, &radEntry, parentNode);
+	return 0;
+}
+
+
+int __cdecl DivineMightDamageBonus(DispatcherCallbackArgs args)
+{
+	DispIoDamage * dispIo = dispatch.DispIoCheckIoType4((DispIoDamage*)args.dispIO);
+	char * desc = feats.GetFeatName(FEAT_DIVINE_MIGHT);
+	int damBonus = conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+	damage.AddDamageBonus(&dispIo->damage, damBonus, 0, 114, desc);
+	return 0;
+}
 #pragma endregion

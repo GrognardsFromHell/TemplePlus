@@ -35,9 +35,11 @@ public:
 		
 		replaceFunction(0x100925E0, _isSimultPerformer); 
 
+		replaceFunction(0x10094910, _GetNewHourglassState);
 		replaceFunction(0x10094A00, _curSeqReset); 
 		replaceFunction(0x10094CA0, _seqCheckFuncsCdecl); 
 		replaceFunction(0x10094C60, _seqCheckAction); 
+		
 		
 		replaceFunction(0x10094E20, _allocSeq); 
 		
@@ -58,6 +60,57 @@ public:
 		
 		int writeVal = ATTACK_CODE_NATURAL_ATTACK;
 		write(0x1008C542 + 3, &writeVal, 4);
+
+		
+		// new D20Defs
+
+		// seqAddWithTarget
+		writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
+		write(0x1009559F + 2, &writeVal, sizeof(int));
+		
+
+		// sub_100960B0
+		writeVal = (int)&d20Sys.d20Defs[0].tgtCheckFunc;
+		write(0x10096100 + 2, &writeVal, sizeof(int));
+		writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
+		write(0x1009613C + 2, &writeVal, sizeof(int));
+		writeVal = (int)&d20Sys.d20Defs[0].locCheckFunc;
+		write(0x1009615D + 2, &writeVal, sizeof(int));
+		
+		//  sub_10096390
+		writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
+		write(0x10096424 + 2, &writeVal, sizeof(int));
+		
+		// SequencePathSthgSub_10096450
+		writeVal = (int)&d20Sys.d20Defs[0].tgtCheckFunc;
+		write(0x10096493 + 2, &writeVal, sizeof(int));
+		writeVal = (int)&d20Sys.d20Defs[0].locCheckFunc;
+		write(0x100964C9 + 2, &writeVal, sizeof(int));
+		writeVal = ((int)&d20Sys.d20Defs[0].flags) + 2;
+		write(0x100964F9 + 2, &writeVal, sizeof(int));
+
+		
+
+		// sub_10097320
+		writeVal = (int)&d20Sys.d20Defs[0].flags;
+		write(0x10097330 + 2, &writeVal, sizeof(int));
+		writeVal = (int)&d20Sys.d20Defs[0].flags;
+		write(0x1009753B + 2, &writeVal, sizeof(int));
+		writeVal = (int)&d20Sys.d20Defs[0].aiCheckMaybe;
+		write(0x1009754D + 2, &writeVal, sizeof(int));
+		writeVal = (int)&d20Sys.d20Defs[0].unknownFunc3;
+		write(0x100976C9 + 2, &writeVal, sizeof(int));
+
+		
+		// ActionAddToSeq
+		writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
+		write(0x10097C7E + 2, &writeVal, sizeof(int));
+		
+		
+
+		
+
+		
 
 		
 	}
@@ -128,7 +181,6 @@ ActionSequenceSystem::ActionSequenceSystem()
 	rebase(_TurnBasedStatusUpdate, 0x10093950);
 	rebase(_combatTriggerSthg, 0x10093890);
 	rebase(_sub_100939D0,      0x100939D0); 
-	rebase(seqCheckFuncssub_10094CA0, 0x10094CA0);
 
 	rebase(_actionPerformRecursion, 0x100961C0);
 	rebase(_sub_10096450,           0x10096450);
@@ -146,7 +198,7 @@ ActionSequenceSystem::ActionSequenceSystem()
 	rebase(seqSthg_118A0980,0x118A0980); 
 	rebase(seqSthg_118CD570,0x118CD570); 
 
-	int _transMatrix[7*5] = { 0 - 1, -1, -1, -1,
+	int _transMatrix[7*5] = { 0, - 1, -1, -1, -1,
 		1, 0, -1, -1, -1,
 		2, 0, 0, -1, -1,
 		3, 0, 0, 0, -1,
@@ -595,6 +647,33 @@ void ActionSequenceSystem::ActSeqCurSetSpellPacket(SpellPacketBody* spellPktBody
 {
 	memcpy(&(*actSeqCur)->spellPktBody, spellPktBody, sizeof(SpellPacketBody));
 	(*actSeqCur)->aiSpellFlagSthg_maybe = flag;
+}
+
+int ActionSequenceSystem::GetNewHourglassState(objHndl performer, D20ActionType d20ActionType, int d20Data1, int radMenuActualArg, D20SpellData* d20SpellData)
+{
+	if (!*actSeqCur || *actSeqCur == (ActnSeq*)0xFFFFF4EC)
+		return -1;
+	
+	TurnBasedStatus tbStatus;
+	memcpy(&tbStatus, &(*actSeqCur)->tbStatus, sizeof(TurnBasedStatus));
+
+	D20Actn d20a;
+	d20a.d20ActType = d20ActionType;
+	d20a.d20APerformer = performer;
+	d20a.radialMenuActualArg = radMenuActualArg;
+	d20a.data1 = d20Data1;
+	d20a.d20Caf = D20CAF_NONE;
+	d20a.d20ATarget = 0i64;
+	d20a.distTraversed = 0;
+	d20a.spellId = 0;
+	d20a.path = nullptr;
+	if (d20SpellData)
+	{
+		d20a.d20SpellData = *d20SpellData;
+	}
+	if (TurnBasedStatusUpdate(&tbStatus, &d20a))
+		return -1;
+	return tbStatus.hourglassState;
 }
 
 uint32_t ActionSequenceSystem::ActionCostNull(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, ActionCostPacket* actionCostPacket)
@@ -1566,13 +1645,14 @@ void _ActSeqCurSetSpellPacket(SpellPacketBody* spellPktBody, int flag)
 	actSeqSys.ActSeqCurSetSpellPacket(spellPktBody, flag);
 }
 
-uint32_t _AddToSeqSimple(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat)
-{
-	return actSeqSys.AddToSeqSimple(d20a, actSeq, tbStat);
-}
 
 uint32_t _ActionCostNull(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp)
 {
 	return actSeqSys.ActionCostNull(d20a, tbStat, acp);
+}
+
+int _GetNewHourglassState(objHndl performer, D20ActionType d20aType, int d20Data1, int radMenuActualArg, D20SpellData* d20SpellData)
+{
+	return actSeqSys.GetNewHourglassState(performer, d20aType, d20Data1, radMenuActualArg, d20SpellData);
 }
 #pragma endregion

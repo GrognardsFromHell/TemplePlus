@@ -126,3 +126,9 @@ void Damage::DamagePacketInit(DamagePacket* dmgPkt)
 	dmgPkt->field4=1;
 	bonusSys.initBonusList(&dmgPkt->bonuses);
 }
+
+int Damage::AddDamageBonus(DamagePacket* damage, int damBonus, int bonType, int bonusMesLine, char* desc)
+{
+	bonusSys.bonusAddToBonusListWithDescr(&damage->bonuses, damBonus, bonType, bonusMesLine, desc );
+	return 1;
+}

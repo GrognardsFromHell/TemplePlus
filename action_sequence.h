@@ -67,14 +67,14 @@ struct ActionSequenceSystem : AddressTable
 	uint32_t AssignSeq(objHndl objHnd);
 	uint32_t TurnBasedStatusInit(objHndl objHnd);
 	void ActSeqCurSetSpellPacket(SpellPacketBody* spellPacketBody, int flag);
+	int GetNewHourglassState(objHndl performer, D20ActionType d20ActionType, int d20Data1, int radMenuActualArg, D20SpellData* d20SpellData);
 	int (__cdecl *sub_1008B9A0)(D20Actn *d20a, float float1, PathQuery *pathQ);
 	void sub_1008BB40(ActnSeq*actSeq, D20Actn * d20a); // actSeq@<ebx>
 	int(CrossBowSthgReload_1008E8A0)(D20Actn *d20a, ActnSeq*actSeq); //, ActnSeq *actSeq@<ebx>
 	uint32_t SequencePathSthgSub_10096450(ActnSeq * actSeq, uint32_t idx, TurnBasedStatus* tbStat);
 	//10097C20
 	
-	uint32_t (__cdecl *seqCheckFuncssub_10094CA0)(TurnBasedStatus *actnSthg);
-	uint32_t seqCheckFuncs(TurnBasedStatus *actnSthg);
+	uint32_t seqCheckFuncs(TurnBasedStatus *tbStatus);
 	void AOOSthgSub_10097D50(objHndl, objHndl);
 	int32_t AOOSthg2_100981C0(objHndl);
 	int32_t InterruptSthg_10099320(D20Actn *d20a);
@@ -178,7 +178,7 @@ struct CmbtIntrpts
 const uint32_t TestSizeOfActionSequence = sizeof(ActnSeq); // should be 0x1648 (5704)
 
 uint32_t _addD20AToSeq(D20Actn* d20a, ActnSeq* actSeq);
-uint32_t _AddToSeqSimple(D20Actn* d20a, ActnSeq * actSeq);
+uint32_t _AddToSeqSimple(D20Actn* d20a, ActnSeq * actSeq, TurnBasedStatus * tbStat);
 unsigned _seqCheckAction(D20Actn* d20a, TurnBasedStatus* iO);
 uint32_t _isPerforming(objHndl objHnd);
 uint32_t _actSeqOkToPerform();
@@ -198,3 +198,4 @@ uint32_t _turnBasedStatusInit(objHndl objHnd);
 const char * _ActionErrorString(uint32_t actnErrorCode);
 void __cdecl _ActSeqCurSetSpellPacket(SpellPacketBody *, int flag );
 uint32_t _ActionCostNull(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket *acp);
+int _GetNewHourglassState(objHndl performer, D20ActionType d20aType, int d20Data1, int radMenuActualArg, D20SpellData *d20SpellData);

@@ -204,6 +204,7 @@ enum D20SavingThrowFlag : uint32_t {
 
 enum D20CAF : uint32_t
 {
+	D20CAF_NONE = 0,
 	D20CAF_HIT = 0x1,
 	D20CAF_CRITICAL = 0x2,
 	D20CAF_RANGED = 0x4,
