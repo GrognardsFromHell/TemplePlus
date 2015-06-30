@@ -676,6 +676,13 @@ int ActionSequenceSystem::GetNewHourglassState(objHndl performer, D20ActionType 
 	return tbStatus.hourglassState;
 }
 
+int ActionSequenceSystem::GetHourglassTransition(int hourglassCurrent, int hourglassCost)
+{
+	if (hourglassCurrent == -1)
+		return hourglassCurrent;
+	return turnBasedStatusTransitionMatrix[hourglassCurrent][hourglassCost];
+}
+
 uint32_t ActionSequenceSystem::ActionCostNull(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, ActionCostPacket* actionCostPacket)
 {
 	actionCostPacket->hourglassCost = 0;

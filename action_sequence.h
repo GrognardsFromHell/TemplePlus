@@ -68,6 +68,7 @@ struct ActionSequenceSystem : AddressTable
 	uint32_t TurnBasedStatusInit(objHndl objHnd);
 	void ActSeqCurSetSpellPacket(SpellPacketBody* spellPacketBody, int flag);
 	int GetNewHourglassState(objHndl performer, D20ActionType d20ActionType, int d20Data1, int radMenuActualArg, D20SpellData* d20SpellData);
+	int GetHourglassTransition(int hourglassCurrent, int hourglassCost);
 	int (__cdecl *sub_1008B9A0)(D20Actn *d20a, float float1, PathQuery *pathQ);
 	void sub_1008BB40(ActnSeq*actSeq, D20Actn * d20a); // actSeq@<ebx>
 	int(CrossBowSthgReload_1008E8A0)(D20Actn *d20a, ActnSeq*actSeq); //, ActnSeq *actSeq@<ebx>
@@ -137,6 +138,18 @@ struct TurnBasedStatus
 	uint32_t numBonusAttacks; // number of bonus attacks (dispatch 52)
 	uint32_t numAttacks;
 	uint32_t errCode;
+	TurnBasedStatus()
+	{
+		hourglassState = 0;
+		tbsFlags = 0;
+		idxSthg = - 1;
+		surplusMoveDistance = 0.0;
+		baseAttackNumCode = 0;
+		attackModeCode = 0;
+		numBonusAttacks = 0;
+		numAttacks = 0;
+		errCode = 0;
+	}
 };
 
 const uint32_t TestSizeOfActnSthg = sizeof(TurnBasedStatus); // should be 36 (0x24)

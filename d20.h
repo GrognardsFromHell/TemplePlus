@@ -155,7 +155,7 @@ struct D20ActionDef
 	void * projectilePerformFunc;
 	uint32_t pad_apparently;
 	uint32_t(__cdecl * actionCost)(D20Actn* d20a, TurnBasedStatus* iO, ActionCostPacket * actionCostPacket);
-	void * unknownFunc3;
+	void (__cdecl * unknownFunc3)(D20Actn* d20a, int flags);
 	uint32_t flags; // not D20CAF I think; maybe the STD flags? path query flags?
 };
 
