@@ -46,6 +46,7 @@ struct UiIntgameTurnbasedAddresses : AddressTable
 		rebase(dword_115B1E60, 0x115B1E60);
 		rebase(flt_115B1E78, 0x115B1E78);
 		rebase(sub_10106F30, 0x10106F30);
+		rebase(stru_10B3B948, 0x10B3B948);
 
 		
 		rebase(dword_11869294, 0x11869294);
