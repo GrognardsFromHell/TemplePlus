@@ -59,11 +59,11 @@ public:
 	const char* name() override { return "UI Intgame Turnbased" "Function Replacements";} 
 	void apply() override 
 	{
-		replaceFunction(0x10097320, _sub_10097320);
+		replaceFunction(0x10097320, HourglassUpdate);
 	}
 } uiIntgameTurnbasedReplacements;
 
-void _sub_10097320(int a3, int a4, int flags)
+void HourglassUpdate(int a3, int a4, int flags)
 {
 	int v3 = flags; int v4 = a3;
 	int v33 = 0; int v34 = 0;
@@ -74,7 +74,7 @@ void _sub_10097320(int a3, int a4, int flags)
 	float moveSpeed = 0.0;
 	D20ActionType d20aType = d20Sys.globD20Action->d20ActType;
 	TurnBasedStatus tbStat1 ;
-	if (d20Sys.d20Defs[d20aType].flags & 0x40000)
+	if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].flags & 0x40000)
 	{
 		v3 = 1;
 		v4 = 1; 
@@ -132,6 +132,7 @@ void _sub_10097320(int a3, int a4, int flags)
 			{
 				moveDistance = tbStat->surplusMoveDistance;
 				moveSpeed = dispatch.Dispatch29hGetMoveSpeed(actSeq->performer, 0) + moveDistance;
+				v32 = moveSpeed;
 			}
 		} else
 		{
@@ -141,6 +142,9 @@ void _sub_10097320(int a3, int a4, int flags)
 				if (!(tbStat->tbsFlags & 3))
 				{
 					moveDistance = 5.0;
+				} else
+				{
+					moveDistance = -1.0;
 				}
 			} else
 			{
@@ -148,7 +152,6 @@ void _sub_10097320(int a3, int a4, int flags)
 				if (tbStat->tbsFlags & 3)
 				{
 					moveDistance = -1.0;
-					//goto LABEL_39;
 				}
 				else if (actSeqSys.GetHourglassTransition(tbStat->hourglassState, 4) == -1)
 				{
@@ -156,32 +159,20 @@ void _sub_10097320(int a3, int a4, int flags)
 					moveDistance = -1.0;
 				}
 				else
+				{
 					moveSpeed = moveDistance + moveDistance;
+					v32 = moveSpeed;
+				}
+					
 			}
 		}
 
-
-		if (tbStat->surplusMoveDistance < 0.01)
-		{
-			if (hourglassState == -1 || actSeqSys.turnBasedStatusTransitionMatrix[hourglassState][1] == -1)
-			{
-			LABEL_31:
-				moveDistance = -1.0;
-				//goto LABEL_39;
-			}
-			
-			
-			
-		}
-//		v32 = moveSpeed;
-		
-	LABEL_39:
 		d20aType = d20Sys.globD20Action->d20ActType;
 		if (d20Sys.d20Defs[d20aType].flags & 0x40000)
 		{
 			tbStat1.tbsFlags = tbStat->tbsFlags;
 			tbStat1.surplusMoveDistance = tbStat->surplusMoveDistance;
-			if (d20Sys.d20Defs[d20aType].aiCheckMaybe)
+			if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].aiCheckMaybe)
 			{
 				if (d20Sys.d20Defs[d20aType].aiCheckMaybe(d20Sys.globD20Action, &tbStat1))
 				{
@@ -214,8 +205,6 @@ void _sub_10097320(int a3, int a4, int flags)
 			}
 		}
 		v4 = a3;
-		
-
 
 	}
 
