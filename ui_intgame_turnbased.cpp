@@ -55,7 +55,7 @@ struct UiIntgameTurnbasedAddresses : AddressTable
 	}
 } addresses;
 
-
+ 
 
 class UiIntegameTurnbased : public TempleFix
 {
