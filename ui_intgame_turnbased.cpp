@@ -13,17 +13,19 @@
 struct UiIntgameTurnbasedAddresses : AddressTable
 {
 	void (__cdecl *sub_10097060)();
+	int(__cdecl *sub_10106F30)(void*, int);
 	int(__cdecl *sub_10109D10)();
 	int * dword_10B3D5AC;
 	int(__cdecl * uiRadMenuSthgCheck_115B204C)();
-	int * dword_10B3D598;
 	
+
+	void * stru_10B3B948;
+	int * idx_10B3D598;
 	int * dword_115B1E40;
 	float * flt_115B1E44;
 	float * flt_115B1E48;
 	int * dword_115B1E60;
 	float * flt_115B1E78;
-
 
 	int * dword_11869294;
 	int * dword_11869298;
@@ -34,6 +36,7 @@ struct UiIntgameTurnbasedAddresses : AddressTable
 	{
 		rebase(sub_10097060, 0x10097060);
 		rebase(sub_10109D10, 0x10109D10);
+		rebase(idx_10B3D598, 0x10B3D598);
 		rebase(dword_10B3D5AC, 0x10B3D5AC);
 		rebase(uiRadMenuSthgCheck_115B204C, 0x1009AB40);
 
@@ -42,9 +45,9 @@ struct UiIntgameTurnbasedAddresses : AddressTable
 		rebase(flt_115B1E48, 0x115B1E48);
 		rebase(dword_115B1E60, 0x115B1E60);
 		rebase(flt_115B1E78, 0x115B1E78);
+		rebase(sub_10106F30, 0x10106F30);
 
-
-		rebase(dword_10B3D598, 0x10B3D598);
+		
 		rebase(dword_11869294, 0x11869294);
 		rebase(dword_11869298, 0x11869298);
 		rebase(flt_11869240, 0x11869240);
@@ -80,6 +83,10 @@ void HourglassUpdate(int a3, int a4, int flags)
 		v4 = 1; 
 		a3 = 1;
 		a4 = 1;
+	} else
+	{
+		v3 = flags;
+		v4 = a3;
 	}
 	*addresses.dword_10B3D5AC = 0;
 	if (addresses.uiRadMenuSthgCheck_115B204C())
@@ -97,7 +104,7 @@ void HourglassUpdate(int a3, int a4, int flags)
 		if (v4 && a4)
 			v33 = 5;
 	}
-	*addresses.dword_10B3D598 = 0;
+	*addresses.idx_10B3D598 = 0;
 	*addresses.flt_11869240 = 0;
 	*addresses.dword_11869294 = 0;
 	*addresses.dword_11869298 = 0;
@@ -168,7 +175,7 @@ void HourglassUpdate(int a3, int a4, int flags)
 		}
 
 		d20aType = d20Sys.globD20Action->d20ActType;
-		if (d20Sys.d20Defs[d20aType].flags & 0x40000)
+		if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].flags & 0x40000)
 		{
 			tbStat1.tbsFlags = tbStat->tbsFlags;
 			tbStat1.surplusMoveDistance = tbStat->surplusMoveDistance;
@@ -208,7 +215,6 @@ void HourglassUpdate(int a3, int a4, int flags)
 
 	}
 
-	LABEL_56:
 	*addresses.dword_115B1E40 = v34;
 	*addresses.flt_115B1E44 = moveDistance;
 	*addresses.flt_115B1E48 = v32;
@@ -243,6 +249,10 @@ void HourglassUpdate(int a3, int a4, int flags)
 		return;
 	}
 
+	for (int i = 0; i < *addresses.idx_10B3D598 ; i++)
+	{
+		addresses.sub_10106F30(((int*)addresses.stru_10B3B948) + 6 * i, * ((int*)addresses.stru_10B3B948 + 6 * i + 4 ) );
+	}
 
 	if (*addresses.dword_10B3D5AC == 3 && addresses.sub_10109D10() == 1)
 		*addresses.dword_10B3D5AC = 4;

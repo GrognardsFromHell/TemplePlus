@@ -140,7 +140,7 @@ struct TurnBasedStatus
 	uint32_t errCode;
 	TurnBasedStatus()
 	{
-		hourglassState = 0;
+		hourglassState = 4;
 		tbsFlags = 0;
 		idxSthg = - 1;
 		surplusMoveDistance = 0.0;
