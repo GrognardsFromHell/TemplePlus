@@ -181,6 +181,21 @@ void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t 
 	dispatch.DispatcherProcessor(dispatcher, dispTypeD20Signal, dispKey, &dispIO);
 }
 
+void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, D20Actn* arg1, int32_t arg2)
+{
+	DispIoD20Signal dispIO;
+	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+	if (!dispatch.dispatcherValid(dispatcher))
+	{
+		hooked_print_debug_message("d20SendSignal(): Object %s (%I64x) lacks a Dispatcher", description._getDisplayName(objHnd, objHnd), objHnd);
+		return;
+	}
+	dispIO.dispIOType = dispIoTypeSendSignal;
+	dispIO.data1 = (int)arg1;
+	dispIO.data2 = arg2;
+	dispatch.DispatcherProcessor(dispatcher, dispTypeD20Signal, dispKey, &dispIO);
+}
+
 void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, objHndl arg) {
 	DispIoD20Signal dispIO;
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);

@@ -1676,8 +1676,12 @@ static PyObject* PyObjHandle_D20SendSignalEx(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 	D20DispatcherKey dispKey = (D20DispatcherKey)(DK_SIG_HP_Changed + signalId);
+	D20Actn d20a(D20A_CAST_SPELL);
+	d20a.d20APerformer = self->handle;
+	d20a.d20ATarget = arg;
+	d20a.d20Caf = D20CAF_HIT;
 
-	d20Sys.d20SendSignal(self->handle, dispKey, arg);
+	d20Sys.d20SendSignal(self->handle, dispKey, &d20a, 0);
 	Py_RETURN_NONE;
 }
 

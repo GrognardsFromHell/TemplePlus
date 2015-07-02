@@ -42,6 +42,7 @@ struct D20System : AddressTable
 	TabFileStatus* d20ActionsTabFile;
 	uint32_t(* d20actionTabLineParser)(TabFileStatus*, uint32_t, const char**);
 	void d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2);
+	void d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, D20Actn* arg1, int32_t arg2);
 	void d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, objHndl arg);
 
 	uint32_t d20Query(objHndl ObjHnd, D20DispatcherKey dispKey);

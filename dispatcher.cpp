@@ -568,7 +568,12 @@ void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint3
 		return;
 	}
 	dispCounter++;
-
+	/*
+	if (dispKey == DK_D20A_TOUCH_ATTACK || dispKey == DK_SIG_TouchAttack)
+	{
+		int asd = 1;
+	}
+	*/
 	SubDispNode* subDispNode = dispatcher->subDispNodes[dispType];
 
 	while (subDispNode != nullptr) {
