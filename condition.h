@@ -129,6 +129,10 @@ public:
 	char mCondPersistenSpellName[100];
 	CondStructNew *mCondPersistentSpell;
 
+	char mCondGreaterWeaponSpecializationName[100];
+	CondStructNew * mCondGreaterWeaponSpecialization;
+
+
 	char mCondGreaterRageName[100];
 	CondStructNew *mCondGreaterRage;
 	char mCondIndomitableWillName[100];
@@ -273,6 +277,7 @@ int TwoWeaponFightingBonus(DispatcherCallbackArgs args);
 int TwoWeaponFightingBonusRanger(DispatcherCallbackArgs args);
 int DivineMightRadial(DispatcherCallbackArgs args);
 int DivineMightDamageBonus(DispatcherCallbackArgs args);
+int GreaterWeaponSpecializationDamage(DispatcherCallbackArgs args);
 int RecklessOffenseRadialMenuInit(DispatcherCallbackArgs args);
 int RecklessOffenseAcPenalty(DispatcherCallbackArgs args);
 int RecklessOffenseToHitBonus(DispatcherCallbackArgs args);

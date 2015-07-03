@@ -2,7 +2,7 @@
 
 #include "common.h"
 
-#define NUM_FEATS 676 // inc. those hacked by Moebius/SpellSlinger (otherwise vanilla is 649)
+#define NUM_FEATS 747 // inc. those hacked by Moebius/SpellSlinger (otherwise vanilla is 649)
 #include "tig/tig_mes.h"
 //664th - FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER
 
@@ -65,6 +65,7 @@ struct FeatSystem : AddressTable
 	0x00020000 - Wizard Feat (crafting, metamagic etc.)
 	0x00040000 - Rogue 10th lvl Feat
 	0x00080000 - Multiselect Parent   NEW (overrides disablement for particular display purposes)
+	0x00100100 - G. Wpn. Specialization   (add 0x10 to make it a fighter feat, so the property number should be 1048848)
 	*/
 	uint32_t * m_featPropertiesTable;
 	FeatPrereqRow * m_featPreReqTable;

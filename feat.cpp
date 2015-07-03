@@ -255,6 +255,10 @@ vector<feat_enums> FeatSystem::GetFeats(objHndl handle) {
 
 char* FeatSystem::GetFeatName(feat_enums feat)
 {
+	if (feat >= FEAT_GREATER_WEAPON_SPECIALIZATION_GAUNTLET)
+	{
+		int dummy = 1;
+	}
 	return featNames[feat];
 }
 

@@ -33,6 +33,8 @@ CondStructNew condImprovedDisarm;
 // monsters
 CondStructNew condRend;
 
+CondStructNew condGreaterWeaponSpecialization;
+
 
 struct ConditionSystemAddresses : AddressTable
 {
@@ -268,6 +270,16 @@ int ConditionPrevent(DispatcherCallbackArgs args)
 	}
 	return 0;
 };
+
+int ConditionPreventWithArg(DispatcherCallbackArgs args)
+{
+	int arg1 = arg1 = conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+	DispIoCondStruct *dispIo = dispatch.DispIoCheckIoType1((DispIoCondStruct *)args.dispIO);;
+	
+	if (dispIo->condStruct == (CondStruct *)args.subDispNode->subDispDef->data1 && dispIo->arg1 == arg1)
+		dispIo->outputFlag = 0;
+	return 0;
+}
 
 
 int ConditionRemoveCallback(DispatcherCallbackArgs args)
@@ -535,6 +547,7 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDivineMight);
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDivineMightBonus);
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondRecklessOffense);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterWeaponSpecialization);
 	// conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondSuperiorExpertise); // will just be patched inside Combat Expertise callbacks
 
 	/*
@@ -593,6 +606,13 @@ uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** condStructOu
 		return 1;
 	default:
 		break;
+	}
+
+	if (featEnum >= FEAT_GREATER_WEAPON_SPECIALIZATION_GAUNTLET && featEnum <= FEAT_GREATER_WEAPON_SPECIALIZATION_GRAPPLE)
+	{
+		*condStructOut = (CondStruct*)conds.mCondGreaterWeaponSpecialization;
+		*arg2Out = featEnum - FEAT_GREATER_WEAPON_SPECIALIZATION_GAUNTLET;
+		return 1;
 	}
 
 	feat_enums * featFromDict = & ( conds.FeatConditionDict->featEnum );
@@ -818,6 +838,16 @@ void ConditionSystem::RegisterNewConditions()
 	cond->condName = condName;
 	cond->numArgs = 2;
 
+	// Knock Down
+	mCondGreaterWeaponSpecialization = &condGreaterWeaponSpecialization;
+	cond = mCondGreaterWeaponSpecialization; 	condName = mCondGreaterWeaponSpecializationName;
+	memset(condName, 0, sizeof(condName)); 	memcpy(condName, "Greater Weapon Specialization", sizeof("Greater Weapon Specialization"));
+
+	cond->condName = condName;
+	cond->numArgs = 2;
+
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPreventWithArg, (uint32_t)cond, 0);
+	DispatcherHookInit(cond, 1, dispTypeDealingDamage, 0, GreaterWeaponSpecializationDamage, 0, 0);
 
 	/*
 	char mCondDeadlyPrecisionName[100];
@@ -1165,6 +1195,28 @@ int __cdecl DivineMightDamageBonus(DispatcherCallbackArgs args)
 	char * desc = feats.GetFeatName(FEAT_DIVINE_MIGHT);
 	int damBonus = conds.CondNodeGetArg(args.subDispNode->condNode, 0);
 	damage.AddDamageBonus(&dispIo->damage, damBonus, 0, 114, desc);
+	return 0;
+}
+
+
+int GreaterWeaponSpecializationDamage(DispatcherCallbackArgs args)
+{
+	int weaponType; 
+	char *featName; 
+
+	feat_enums feat = (feat_enums)conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+	WeaponTypes wpnTypeFromCond = (WeaponTypes)conds.CondNodeGetArg(args.subDispNode->condNode, 1);
+	DispIoDamage * dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
+	objHndl weapon = combatSys.GetWeapon(&dispIo->attackPacket);
+	if (weapon)
+		weaponType = objects.getInt32(weapon, obj_f_weapon_type);
+	else
+		weaponType = 1;
+	if (weaponType == wpnTypeFromCond)
+	{
+		featName = feats.GetFeatName(feat);
+		damage.AddDamageBonus(&dispIo->damage, 2, 0, 114, featName);
+	}
 	return 0;
 }
 
