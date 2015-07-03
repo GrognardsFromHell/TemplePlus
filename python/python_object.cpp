@@ -1746,6 +1746,49 @@ static PyObject* PyObjHandle_IsUnconscious(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+static PyObject * PyObjHandle_MakeWizard(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	uint32_t level;
+	if (!PyArg_ParseTuple(args, "i", &level)) {
+		return nullptr;
+	}
+
+	if (level <= 0 || level > 20){
+		return PyInt_FromLong(0);
+	}
+	for (uint32_t i = 0; i < level; i++)
+	{
+		templeFuncs.Obj_Set_IdxField_byValue(self->handle, obj_f_critter_level_idx, i, stat_level_wizard);
+	}
+
+	objects.d20.d20Status->D20StatusRefresh(self->handle);
+
+
+	return PyInt_FromLong(1);
+};
+
+static PyObject * PyObjHandle_MakeClass(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	uint32_t level;
+	Stat statClass = stat_level_barbarian;
+	if (!PyArg_ParseTuple(args, "ii", &statClass, &level)) {
+		return nullptr;
+	}
+
+	if (level <= 0 || level > 20){
+		return PyInt_FromLong(0);
+	}
+	for (uint32_t i = 0; i < level; i++)
+	{
+		templeFuncs.Obj_Set_IdxField_byValue(self->handle, obj_f_critter_level_idx, i, statClass);
+	}
+
+	objects.d20.d20Status->D20StatusRefresh(self->handle);
+
+
+	return PyInt_FromLong(1);
+};
+
 static PyMethodDef PyObjHandleMethods[] = {
 	{"__getstate__", PyObjHandle_getstate, METH_VARARGS, NULL},
 	{"__reduce__", PyObjHandle_reduce, METH_VARARGS, NULL},
@@ -1888,6 +1931,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"faction_has", PyObjHandle_FactionHas, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!" },
 	{"faction_add", PyObjHandle_FactionAdd, METH_VARARGS, "Adds faction to NPC. Doesn't work on PCs!" },
 	{"fall_down", PyObjHandle_FallDown, METH_VARARGS, "Makes a Critter fall down" },
+	{"make_wiz", PyObjHandle_MakeWizard, METH_VARARGS, "Makes you a wizard of level N" },
+	{ "make_class", PyObjHandle_MakeClass, METH_VARARGS, "Makes you a CLASS N of level M" },
 	{NULL, NULL, NULL, NULL}
 };
 

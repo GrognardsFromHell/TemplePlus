@@ -43,8 +43,12 @@ static struct DamageAddresses : AddressTable {
 	int (__cdecl *GetDamageTypeOverallDamage)(DamagePacket *damPkt, DamageType damType);
 	int(__cdecl *GetOverallDamage)(DamagePacket *damagePacket);
 	void(__cdecl *CalcFinalDamage)(DamagePacket *damPkt);
+	MesHandle *damageMes;
 
 	DamageAddresses() {
+
+		rebase(damageMes, 0x102E3B30);
+
 		rebase(DoDamage, 0x100B8D70);
 		rebase(Heal, 0x100B7DF0);
 		rebase(HealSpell, 0x100B81D0);
@@ -122,8 +126,8 @@ void Damage::DamagePacketInit(DamagePacket* dmgPkt)
 	dmgPkt->attackPowerType=0;
 	dmgPkt->finalDamage=0;
 	dmgPkt->flags=0;
-	dmgPkt->field0=0;
-	dmgPkt->field4=1;
+	dmgPkt->description=0;
+	dmgPkt->critHitMultiplier=1;
 	bonusSys.initBonusList(&dmgPkt->bonuses);
 }
 
@@ -131,4 +135,29 @@ int Damage::AddDamageBonus(DamagePacket* damage, int damBonus, int bonType, int 
 {
 	bonusSys.bonusAddToBonusListWithDescr(&damage->bonuses, damBonus, bonType, bonusMesLine, desc );
 	return 1;
+}
+
+int Damage::AddPhysicalDR(DamagePacket* damPkt, int DRAmount, int bypasserBitmask, unsigned damageMesLine)
+{
+	MesLine mesLine; 
+
+	if (damPkt->damResCount < 5u)
+	{
+		mesLine.key = damageMesLine;
+		mesFuncs.GetLine_Safe(*damageMes, &mesLine);
+		damPkt->damageResistances[damPkt->damResCount].damageReductionAmount = DRAmount;
+		damPkt->damageResistances[damPkt->damResCount].dmgFactor = 0;
+		damPkt->damageResistances[damPkt->damResCount].type = DamageType::SlashingAndBludgeoningAndPiercing;
+		damPkt->damageResistances[damPkt->damResCount].bypasserBitmask = bypasserBitmask;
+		damPkt->damageResistances[damPkt->damResCount].typeDescription = mesLine.value;
+		damPkt->damageResistances[damPkt->damResCount++].causedBy = 0;
+		return 1;
+	}
+	return  0;
+	
+}
+
+Damage::Damage()
+{
+	damageMes = addresses.damageMes;
 }

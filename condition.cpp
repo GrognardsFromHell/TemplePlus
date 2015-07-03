@@ -69,7 +69,7 @@ public:
 		
 		replaceFunction(0x100EABB0, BarbarianRageStatBonus);
 		replaceFunction(0x100EABE0, BarbarianRageSaveBonus);
-
+		
 		replaceFunction(0x100ECF30, ConditionPrevent);
 		replaceFunction(0x100EE050, GlobalGetArmorClass);
 		replaceFunction(0x100EE280, GlobalToHitBonus);
@@ -82,6 +82,7 @@ public:
 		replaceFunction(0x100F7F00, CombatExpertiseSet);
 		replaceFunction(0x100F88C0, TwoWeaponFightingBonus);
 		replaceFunction(0x100F8940, TwoWeaponFightingBonusRanger);
+		replaceFunction(0x100FEBA0, BarbarianDamageResistance);
 
 		
 		replaceFunction(0x10101150, SkillBonusCallback);
@@ -1284,6 +1285,23 @@ int BarbarianRageSaveBonus(DispatcherCallbackArgs args)
 		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 3, 0, 338); // Greater Rage
 	else
 		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 2, 0, 195); // normal rage
+	return 0;
+}
+
+int BarbarianDamageResistance(DispatcherCallbackArgs args)
+{
+	DamagePacket *damagePacket; 
+	int barbLvl; 
+	int damRes = 0;
+
+	damagePacket = &dispatch.DispIoCheckIoType4(args.dispIO)->damage;
+	barbLvl = objects.StatLevelGet(args.objHndCaller, stat_level_barbarian);
+	if (barbLvl >= 7)
+	{
+		damRes = 1 + (barbLvl - 7) / 3;
+		damage.AddPhysicalDR(damagePacket, damRes, 1, 126u);
+	}
+	
 	return 0;
 }
 #pragma endregion

@@ -225,25 +225,7 @@ static PyObject * PyObjHandle_ObjFeatAdd(TemplePyObjHandle* obj, PyObject * pyTu
 };
 
 
-static PyObject * PyObjHandle_MakeWizard(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	uint32_t level;
-	if (!PyArg_ParseTuple(pyTupleIn, "i", &level)) {
-		return nullptr;
-	};
 
-	if (level <= 0 || level > 20){
-		return PyInt_FromLong(0);
-	}
-	for (uint32_t i = 0; i < level; i++)
-	{
-		templeFuncs.Obj_Set_IdxField_byValue(obj->objHandle, obj_f_critter_level_idx, i, stat_level_wizard);
-	}
-
-	objects.d20.d20Status->D20StatusRefresh(obj->objHandle);
-	
-
-	return PyInt_FromLong(1);
-};
 
 /*
 static PyObject * pyObjHandleType_Set_IdxField_byValue(TemplePyObjHandle* obj, PyObject * pyTupleIn){
@@ -271,8 +253,6 @@ static PyMethodDef pyObjHandleMethods_New[] = {
 	"obj_set_idxfield_64bit", (PyCFunction)PyObjHandle_SetIdxField64bit, METH_VARARGS, "Sets 64 bit index field",
 	//"obj_set_idxfield_byvalue", (PyCFunction)pyObjHandleType_Set_IdxField_byValue, METH_VARARGS, "Sets index field - general (depending on nFieldIndex which the game looks up and fetches nFieldType to determine data size)",
 	"objfeatadd", (PyCFunction)PyObjHandle_ObjFeatAdd, METH_VARARGS, "Adds a feat. Feats can be added multiple times (at least some of them? like Toughness)",
-	"makewiz", (PyCFunction)PyObjHandle_MakeWizard, METH_VARARGS, "Makes character a wizard of level n",
-	//
 	0, 0, 0, 0
 };
 

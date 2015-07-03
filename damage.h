@@ -3,6 +3,7 @@
 
 #include "dispatcher.h"
 #include "common.h"
+#include "tig/tig_mes.h"
 
 class Dice;
 
@@ -18,15 +19,15 @@ struct DamageReduction {
 	int damageReductionAmount;
 	float dmgFactor;
 	DamageType type;
-	int fieldc;
+	int bypasserBitmask;
 	const char *typeDescription;
 	const char * causedBy; // e.g. an item name
 	int damageReduced; // e.g. from CalcDamageModFromFactor 0x100E0E00 
 };
 
 struct DamagePacket {
-	int field0;
-	int field4;
+	char* description;
+	int critHitMultiplier; // 1 by default; gets set on an actual crit hit (and may be modified by various things)
 	DamageDice dice[5];
 	int diceCount;
 	DamageReduction damageResistances[5];
@@ -54,7 +55,9 @@ struct DispIoDamage : DispIO { // Io type 4
 
 class Damage {
 public:
-		
+	
+	MesHandle * damageMes;
+
 	void DealDamageFullUnk(objHndl victim, objHndl attacker, 
 		const Dice &dice, 
 		DamageType type = DamageType::Unspecified, 
@@ -92,6 +95,9 @@ public:
 
 	void DamagePacketInit(DamagePacket * dmgPkt);
 	int AddDamageBonus(DamagePacket* damage, int damBonus, int bonType, int bonusMesLine, char* desc);
+	int AddPhysicalDR(DamagePacket *damPkt, int DRAmount, int bypasserBitmask, unsigned int damageMesLine);
+
+	Damage();
 };
 
 extern Damage damage;

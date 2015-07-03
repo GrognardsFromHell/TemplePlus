@@ -200,6 +200,11 @@ DispIoDamage* DispatcherSystem::DispIoCheckIoType4(DispIoDamage* dispIo)
 	return dispIo;
 }
 
+DispIoDamage* DispatcherSystem::DispIoCheckIoType4(DispIO* dispIo)
+{
+	return DispIoCheckIoType4((DispIoDamage*)dispIo);
+}
+
 DispIoAttackBonus* DispatcherSystem::DispIoCheckIoType5(DispIoAttackBonus* dispIo)
 {
 	if (dispIo->dispIOType != dispIOTypeAttackBonus) return nullptr;

@@ -59,6 +59,7 @@ struct DispatcherSystem : AddressTable
 	DispIoSavingThrow* DispIoCheckIoType3(DispIoSavingThrow* dispIoBonusList);  
 	DispIoSavingThrow* DispIoCheckIoType3(DispIO* dispIoBonusList);
 	DispIoDamage * DispIoCheckIoType4(DispIoDamage* dispIo);
+	DispIoDamage * DispIoCheckIoType4(DispIO* dispIo);
 	DispIoAttackBonus * DispIoCheckIoType5(DispIoAttackBonus* dispIo);
 	DispIoAttackBonus * DispIoCheckIoType5(DispIO* dispIo);
 	DispIoD20Signal* DispIoCheckIoType6(DispIoD20Signal* dispIo);

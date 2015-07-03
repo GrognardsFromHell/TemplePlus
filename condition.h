@@ -283,6 +283,7 @@ int CombatExpertiseSet(DispatcherCallbackArgs args);
 
 int BarbarianRageStatBonus(DispatcherCallbackArgs args);
 int BarbarianRageSaveBonus(DispatcherCallbackArgs args);
+int BarbarianDamageResistance(DispatcherCallbackArgs args);
 
 
 void _FeatConditionsRegister();
