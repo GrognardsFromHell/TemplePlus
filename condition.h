@@ -117,6 +117,35 @@ public:
 	CondStructNew* mCondDivineMight;
 	char mCondDivineMightBonusName[100];
 	CondStructNew* mCondDivineMightBonus;
+
+	char mCondRecklessOffenseName[100];
+	CondStructNew *mCondRecklessOffense;
+	char mCondKnockDownName[100];
+	CondStructNew *mCondKnockDown;
+	char mCondSuperiorExpertiseName[100];
+	CondStructNew *mCondSuperiorExpertise;
+	char mCondDeadlyPrecisionName[100];
+	CondStructNew *mCondDeadlyPrecision;
+	char mCondPersistenSpellName[100];
+	CondStructNew *mCondPersistentSpell;
+
+	char mCondGreaterRageName[100];
+	CondStructNew *mCondGreaterRage;
+	char mCondIndomitableWillName[100];
+	CondStructNew *mCondIndomitableWill;
+	char mCondTirelessRageName[100];
+	CondStructNew *mCondTirelessRage;
+	char mCondMightyRageName[100];
+	CondStructNew *mCondMightyRage;
+	char mCondDisarmName[100];
+	CondStructNew *mCondDisarm;
+	char mCondImprovedDisarmName[100];
+	CondStructNew *mCondImprovedDisarm;
+
+	// monsters
+	char mCondRendName[100];
+	CondStructNew *mCondRend;
+
 	/*
 		Returns the condition definition with the given name,
 		null if none exists.
@@ -244,6 +273,15 @@ int TwoWeaponFightingBonus(DispatcherCallbackArgs args);
 int TwoWeaponFightingBonusRanger(DispatcherCallbackArgs args);
 int DivineMightRadial(DispatcherCallbackArgs args);
 int DivineMightDamageBonus(DispatcherCallbackArgs args);
+int RecklessOffenseRadialMenuInit(DispatcherCallbackArgs args);
+int RecklessOffenseAcPenalty(DispatcherCallbackArgs args);
+int RecklessOffenseToHitBonus(DispatcherCallbackArgs args);
+int TacticalOptionAbusePrevention(DispatcherCallbackArgs args);
+
+int CombatExpertiseRadialMenu(DispatcherCallbackArgs args);
+int CombatExpertiseSet(DispatcherCallbackArgs args);
+
+
 
 
 void _FeatConditionsRegister();

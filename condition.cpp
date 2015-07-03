@@ -17,6 +17,22 @@ CondStructNew conditionGreaterTwoWeaponFighting;
 CondStructNew condGreaterTWFRanger;
 CondStructNew condDivineMight;
 CondStructNew condDivineMightBonus;
+CondStructNew condRecklessOffense;
+CondStructNew condKnockDown;
+CondStructNew condDeadlyPrecision;
+CondStructNew condPersistentSpell;
+
+
+CondStructNew condGreaterRage;
+CondStructNew condIndomitableWill ;
+CondStructNew condTirelessRage;
+CondStructNew condMightyRage;
+CondStructNew condDisarm;
+CondStructNew condImprovedDisarm;
+
+// monsters
+CondStructNew condRend;
+
 
 struct ConditionSystemAddresses : AddressTable
 {
@@ -57,8 +73,11 @@ public:
 		replaceFunction(0x100F7B60, _FeatConditionsRegister);
 		replaceFunction(0x100F7BE0, _GetCondStructFromFeat);
 
+		replaceFunction(0x100F7D60, CombatExpertiseRadialMenu);
+		replaceFunction(0x100F7F00, CombatExpertiseSet);
 		replaceFunction(0x100F88C0, TwoWeaponFightingBonus);
 		replaceFunction(0x100F8940, TwoWeaponFightingBonusRanger);
+
 		
 		replaceFunction(0x10101150, SkillBonusCallback);
 	}
@@ -265,6 +284,15 @@ int __cdecl CondNodeSetArg0FromSubDispDef(DispatcherCallbackArgs args)
 	conds.CondNodeSetArg(args.subDispNode->condNode, 0, args.subDispNode->subDispDef->data1);
 	return 0;
 };
+
+int __cdecl CondNodeSetArgFromSubDispDef(DispatcherCallbackArgs args)
+{
+	// sets arg[data1] from data2  e.g. data1 = 0 data2 = 15  will set arg0 to 15
+	conds.CondNodeSetArg(args.subDispNode->condNode, args.subDispNode->subDispDef->data1,
+		args.subDispNode->subDispDef->data2);
+	return 0;
+};
+
 
 int __cdecl CondArgDecrement(DispatcherCallbackArgs args)
 {
@@ -493,11 +521,29 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionFightDefensively);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAnimalCompanionAnimal);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAutoendTurn);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionDisableAoO); //NEW!
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterTwoWeaponFighting); //NEW!
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterTWFRanger); //NEW!
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDivineMight); //NEW!
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDivineMightBonus); //NEW!
+
+	// New Conditions!
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionDisableAoO);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterTwoWeaponFighting);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterTWFRanger);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDivineMight);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDivineMightBonus);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondRecklessOffense);
+	// conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondSuperiorExpertise); // will just be patched inside Combat Expertise callbacks
+
+	/*
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDeadlyPrecision);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDisarm);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterRage);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondImprovedDisarm);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondIndomitableWill);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondKnockDown);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondMightyRage);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondPersistentSpell);
+	
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondRend);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondTirelessRage);
+	*/
 
 	for (unsigned int i = 0; i < 84; i++)
 	{
@@ -507,23 +553,40 @@ void _FeatConditionsRegister()
 
 uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** condStructOut, uint32_t * arg2Out)
 {
-	if (featEnum == FEAT_GREATER_TWO_WEAPON_FIGHTING)
+	switch (featEnum)
 	{
+	case FEAT_GREATER_TWO_WEAPON_FIGHTING:
 		*condStructOut = (CondStruct*)conds.mCondGreaterTwoWeaponFighting;
 		*arg2Out = 0;
 		return 1;
-	}
-	if (featEnum == FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER)
-	{
+	case FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER:
 		*condStructOut = (CondStruct*)conds.mCondGreaterTWFRanger;
 		*arg2Out = 0;
 		return 1;
-	}
-	if (featEnum == FEAT_DIVINE_MIGHT)
-	{
+	case FEAT_DIVINE_MIGHT:
 		*condStructOut = (CondStruct*)conds.mCondDivineMight;
 		*arg2Out = 0;
 		return 1;
+	case FEAT_RECKLESS_OFFENSE:
+		*condStructOut = (CondStruct*)conds.mCondRecklessOffense;
+		*arg2Out = 0;
+		return 1;
+	case FEAT_KNOCK_DOWN:
+		*condStructOut = (CondStruct*)conds.mCondKnockDown;
+		*arg2Out = 0;
+		return 1;
+	case FEAT_SUPERIOR_EXPERTISE:
+		return 0; // willl just be patched inside Combat Expertise
+	case FEAT_DEADLY_PRECISION:
+		*condStructOut = (CondStruct*)conds.mCondDeadlyPrecision;
+		*arg2Out = 0;
+		return 1;
+	case FEAT_PERSISTENT_SPELL:
+		*condStructOut = (CondStruct*)conds.mCondPersistentSpell;
+		*arg2Out = 0;
+		return 1;
+	default:
+		break;
 	}
 
 	feat_enums * featFromDict = & ( conds.FeatConditionDict->featEnum );
@@ -657,29 +720,30 @@ void ConditionSystem::RegisterNewConditions()
 
 	// Disable AoO
 	mConditionDisableAoO = &conditionDisableAoO;
-	memset(mConditionDisableAoOName, 0, sizeof(mConditionDisableAoOName));
-	memcpy(mConditionDisableAoOName, "Disable AoO", sizeof("Disable AoO"));
+	cond = mConditionDisableAoO; 	condName = mConditionDisableAoOName;
+	memset(condName, 0, sizeof(condName)); 	memcpy(condName, "Disable AoO", sizeof("Disable AoO"));
 
-	mConditionDisableAoO->condName = mConditionDisableAoOName;
-	mConditionDisableAoO->numArgs = 1;
+	cond->condName = mConditionDisableAoOName;
+	cond->numArgs = 1;
 
-	DispatcherHookInit(&mConditionDisableAoO->subDispDefs[0], dispTypeD20Query, DK_QUE_AOOPossible, AoODisableQueryAoOPossible,	0, 0);
-	DispatcherHookInit(&mConditionDisableAoO->subDispDefs[1], dispTypeRadialMenuEntry, 0, AoODisableRadialMenuInit,0,0);
-	DispatcherHookInit(&mConditionDisableAoO->subDispDefs[2], dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mConditionDisableAoO, 0);
-	DispatcherHookInit(&mConditionDisableAoO->subDispDefs[3], dispType0, 0, 0, 0, 0);
+	DispatcherHookInit(cond, 0, dispTypeD20Query, DK_QUE_AOOPossible, AoODisableQueryAoOPossible,	0, 0);
+	DispatcherHookInit(cond, 1, dispTypeRadialMenuEntry, 0, AoODisableRadialMenuInit, 0, 0);
+	DispatcherHookInit(cond, 2, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mConditionDisableAoO, 0);
+	DispatcherHookInit(cond, 3, dispType0, 0, 0, 0, 0);
 
 	// Greater Two Weapon Fighting
 	mCondGreaterTwoWeaponFighting = &conditionGreaterTwoWeaponFighting;
-	memset(mConditionGreaterTwoWeaponFightingName, 0, sizeof(mConditionGreaterTwoWeaponFightingName));
-	memcpy(mConditionGreaterTwoWeaponFightingName, "Greater Two Weapon Fighting", sizeof("Greater Two Weapon Fighting"));
+	cond = mCondGreaterTwoWeaponFighting; 	condName = mConditionGreaterTwoWeaponFightingName;
+	memset(condName, 0, sizeof(condName));
+	memcpy(condName, "Greater Two Weapon Fighting", sizeof("Greater Two Weapon Fighting"));
 
-	mCondGreaterTwoWeaponFighting->condName = mConditionGreaterTwoWeaponFightingName;
-	mCondGreaterTwoWeaponFighting->numArgs = 2;
+	cond->condName = mConditionGreaterTwoWeaponFightingName;
+	cond->numArgs = 2;
 
-	DispatcherHookInit(&mCondGreaterTwoWeaponFighting->subDispDefs[0], dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondGreaterTwoWeaponFighting, 0);
-	DispatcherHookInit(&mCondGreaterTwoWeaponFighting->subDispDefs[1], dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondGreaterTWFRanger, 0);
-	DispatcherHookInit(&mCondGreaterTwoWeaponFighting->subDispDefs[2], dispTypeGetNumAttacksBase, 0,GreaterTwoWeaponFighting, 0, 0); // same callback as Improved TWF (it just adds an extra attack... logic is inside the action sequence / d20 / GlobalToHit functions
-	DispatcherHookInit(&mCondGreaterTwoWeaponFighting->subDispDefs[3], dispType0, 0, nullptr, 0, 0);
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondGreaterTwoWeaponFighting, 0);
+	DispatcherHookInit(cond, 1, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondGreaterTWFRanger, 0);
+	DispatcherHookInit(cond, 2, dispTypeGetNumAttacksBase, 0, GreaterTwoWeaponFighting, 0, 0); // same callback as Improved TWF (it just adds an extra attack... logic is inside the action sequence / d20 / GlobalToHit functions
+	DispatcherHookInit(cond, 3, dispType0, 0, nullptr, 0, 0);
 
 	// Greater TWF Ranger
 	mCondGreaterTWFRanger = &condGreaterTWFRanger;
@@ -723,6 +787,56 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 2, dispTypeBeginRound, 0, ConditionRemoveCallback, 0, 0);
 	DispatcherHookInit(cond, 3, dispTypeD20Signal, DK_SIG_Killed, ConditionRemoveCallback, 0, 0);
 	DispatcherHookInit(cond, 4, dispTypeEffectTooltip, 0, DivineMightEffectTooltipCallback, 81, 0);
+
+	// Reckless Offense
+	mCondRecklessOffense = &condRecklessOffense;
+	cond = mCondRecklessOffense; 	condName = mCondRecklessOffenseName;
+	memset(condName, 0, sizeof(condName)); 	memcpy(condName, "Reckless Offense", sizeof("Reckless Offense"));
+
+	cond->condName = condName;
+	cond->numArgs = 2;
+
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
+	DispatcherHookInit(cond, 1, dispTypeRadialMenuEntry, 0, RecklessOffenseRadialMenuInit, 0, 0);
+	DispatcherHookInit(cond, 2, dispTypeGetAC, 0, RecklessOffenseAcPenalty, 0, 0);
+	DispatcherHookInit(cond, 3, dispTypeToHitBonus2, 0, RecklessOffenseToHitBonus, 0, 0);
+	DispatcherHookInit(cond, 4, dispTypeD20Signal, DK_SIG_Attack_Made, TacticalOptionAbusePrevention, 0, 0);
+	DispatcherHookInit(cond, 5, dispTypeBeginRound, 0, CondNodeSetArgFromSubDispDef, 1, 0);
+	DispatcherHookInit(cond, 6, dispTypeConditionAdd, 0, CondNodeSetArgFromSubDispDef, 0, 0);
+
+	// Knock Down
+	mCondKnockDown = &condKnockDown;
+	cond = mCondKnockDown; 	condName = mCondKnockDownName;
+	memset(condName, 0, sizeof(condName)); 	memcpy(condName, "Knock-Down", sizeof("Knock-Down"));
+
+	cond->condName = condName;
+	cond->numArgs = 2;
+
+
+	/*
+	char mCondDeadlyPrecisionName[100];
+	CondStructNew *mCondDeadlyPrecision;
+	char mCondPersistenSpellName[100];
+	CondStructNew *mCondPersistentSpell;
+
+	char mCondGreaterRageName[100];
+	CondStructNew *mCondGreaterRage;
+	char mCondIndomitableWillName[100];
+	CondStructNew *mCondIndomitableWill;
+	char mCondTirelessRageName[100];
+	CondStructNew *mCondTirelessRage;
+	char mCondMightyRageName[100];
+	CondStructNew *mCondMightyRage;
+	char mCondDisarmName[100];
+	CondStructNew *mCondDisarm;
+	char mCondImprovedDisarmName[100];
+	CondStructNew *mCondImprovedDisarm;
+
+	// monsters
+	char mCondRendName[100];
+	CondStructNew *mCondRend;
+	
+	*/
 
 }
 
@@ -1045,6 +1159,106 @@ int __cdecl DivineMightDamageBonus(DispatcherCallbackArgs args)
 	char * desc = feats.GetFeatName(FEAT_DIVINE_MIGHT);
 	int damBonus = conds.CondNodeGetArg(args.subDispNode->condNode, 0);
 	damage.AddDamageBonus(&dispIo->damage, damBonus, 0, 114, desc);
+	return 0;
+}
+
+int __cdecl RecklessOffenseRadialMenuInit(DispatcherCallbackArgs args)
+{
+	RadialMenuEntry radEntry;
+	radEntry.SetDefaults();
+	radEntry.maxArg = 1;
+	radEntry.minArg = 0;
+	radEntry.type = RadialMenuEntryType::Toggle;
+	radEntry.actualArg = (int)conds.CondNodeGetArgPtr(args.subDispNode->condNode, 0);
+	radEntry.callback = (void(__cdecl*)(objHndl, RadialMenuEntry*))temple_address(0x100F0200);
+	MesLine mesLine;
+	mesLine.key = 5107; //disable AoOs
+	if (!mesFuncs.GetLine(*combatSys.combatMesfileIdx, &mesLine))
+	{
+		sprintf((char*)temple_address(0x10EEE228), "Reckless Offense");
+		mesLine.value = (char*)temple_address(0x10EEE228);
+	};
+	radEntry.text = (char*)mesLine.value;
+	radEntry.helpId = conds.hashmethods.StringHash("TAG_FEAT_RECKLESS_OFFENSE");
+	int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Feats);
+	radialMenus.AddChildNode(args.objHndCaller, &radEntry, parentNode);
+	return 0;
+}
+
+int RecklessOffenseAcPenalty(DispatcherCallbackArgs args)
+{
+	if (conds.CondNodeGetArg(args.subDispNode->condNode, 0))
+	{
+		if (conds.CondNodeGetArg(args.subDispNode->condNode, 1))
+		{
+			DispIoAttackBonus* dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+			BonusList* bonlist = &dispIo->bonlist;
+			bonusSys.bonusAddToBonusList(bonlist, -4, 8, 337);
+		}
+	}
+	return 0;
+}
+
+int RecklessOffenseToHitBonus(DispatcherCallbackArgs args)
+{
+	if (conds.CondNodeGetArg(args.subDispNode->condNode, 0))
+	{
+		DispIoAttackBonus* dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+		if (!(dispIo->attackPacket.flags & D20CAF_RANGED))
+			bonusSys.bonusAddToBonusList(&dispIo->bonlist, 2, 0, 337);
+	}
+	return 0;
+}
+
+int TacticalOptionAbusePrevention(DispatcherCallbackArgs args)
+{ // signifies that an attack has been made using that tactical option (so user doesn't toggle it off and shrug off the penalties)
+	DispIoD20Signal * dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
+	if (!(*(char*)(dispIo->data1 + 32) & 4))
+		_CondNodeSetArg(args.subDispNode->condNode, 1, 1);
+	return 0;
+}
+
+int __cdecl CombatExpertiseRadialMenu(DispatcherCallbackArgs args)
+{
+	int bab = dispatch.DispatchToHitBonusBase(args.objHndCaller, 0);
+	if (bab > 0)
+	{
+		RadialMenuEntry radEntry;
+		radEntry.SetDefaults();
+		radEntry.maxArg = bab;
+		if (bab > 5 && !feats.HasFeatCount(args.objHndCaller, FEAT_SUPERIOR_EXPERTISE))
+			radEntry.maxArg = 5;
+		radEntry.minArg = 0;
+		radEntry.type = RadialMenuEntryType::Slider;
+		radEntry.actualArg = (int)conds.CondNodeGetArgPtr(args.subDispNode->condNode, 0);
+		radEntry.callback = (void(__cdecl*)(objHndl, RadialMenuEntry*))temple_address(0x100F0200);
+		MesLine mesLine;
+		mesLine.key = 5007; // Combat Expertise
+		if (!mesFuncs.GetLine(*combatSys.combatMesfileIdx, &mesLine))
+		{
+			sprintf((char*)temple_address(0x10EEE228), "Combat Expertise");
+			mesLine.value = (char*)temple_address(0x10EEE228);
+		}
+		radEntry.text = (char*)mesLine.value;
+		radEntry.helpId = conds.hashmethods.StringHash("TAG_COMBAT_EXPERTISE");
+		int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Feats);
+		radialMenus.AddChildNode(args.objHndCaller, &radEntry, parentNode);
+	}
+	return 0;
+}
+
+int CombatExpertiseSet(DispatcherCallbackArgs args)
+{
+	int bab = dispatch.DispatchToHitBonusBase(args.objHndCaller, 0);
+	if (bab > 5 && !feats.HasFeatCount(args.objHndCaller, FEAT_SUPERIOR_EXPERTISE))
+		bab = 5;
+	DispIoD20Signal * dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
+	int bonus = dispIo->data1;
+	if (bonus > bab)
+		bonus = bab;
+	if (bonus < 0)
+		bonus = 0;
+	conds.CondNodeSetArg(args.subDispNode->condNode, 0, bonus);
 	return 0;
 }
 #pragma endregion

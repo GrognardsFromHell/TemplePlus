@@ -196,10 +196,20 @@ DispIoAttackBonus* DispatcherSystem::DispIoCheckIoType5(DispIoAttackBonus* dispI
 	return dispIo;
 }
 
+DispIoAttackBonus* DispatcherSystem::DispIoCheckIoType5(DispIO* dispIo)
+{
+	return DispIoCheckIoType5((DispIoAttackBonus*)dispIo);
+}
+
 DispIoD20Signal* DispatcherSystem::DispIoCheckIoType6(DispIoD20Signal* dispIo)
 {
 	if (dispIo->dispIOType != dispIoTypeSendSignal) return nullptr;
 	return dispIo;
+}
+
+DispIoD20Signal* DispatcherSystem::DispIoCheckIoType6(DispIO* dispIo)
+{
+	return DispIoCheckIoType6((DispIoD20Signal*)dispIo);
 }
 
 DispIoD20Query* DispatcherSystem::DispIoCheckIoType7(DispIoD20Query* dispIo)
