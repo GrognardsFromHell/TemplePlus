@@ -55,7 +55,9 @@ struct DispatcherSystem : AddressTable
 
 	DispIoCondStruct* DispIoCheckIoType1(DispIoCondStruct* dispIo); // used for ConditionAdd (3); 1,2 and 4 dispatch will null eventObjs
 	DispIoBonusList* DispIoCheckIoType2(DispIoBonusList* dispIoBonusList); // used for stat level (10), stat base (66) and Cur/Max HP
-	DispIoSavingThrow* DispIoCheckIoType3(DispIoSavingThrow* dispIoBonusList); // 
+	DispIoBonusList* DispIoCheckIoType2(DispIO* dispIoBonusList); // used for stat level (10), stat base (66) and Cur/Max HP
+	DispIoSavingThrow* DispIoCheckIoType3(DispIoSavingThrow* dispIoBonusList);  
+	DispIoSavingThrow* DispIoCheckIoType3(DispIO* dispIoBonusList);
 	DispIoDamage * DispIoCheckIoType4(DispIoDamage* dispIo);
 	DispIoAttackBonus * DispIoCheckIoType5(DispIoAttackBonus* dispIo);
 	DispIoAttackBonus * DispIoCheckIoType5(DispIO* dispIo);
@@ -173,7 +175,7 @@ struct DispIoCondStruct : DispIO { // DispIoType = 1
 };
 
 struct DispIoBonusList : DispIO { // DispIoType = 2  used for fetching ability scores (dispType 10, 66), and Cur/Max HP 
-	BonusList* bonlist;
+	BonusList bonlist;
 	uint32_t flags;
 };
 

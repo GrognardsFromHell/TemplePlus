@@ -219,7 +219,7 @@ static PyObject * PyObjHandle_ObjFeatAdd(TemplePyObjHandle* obj, PyObject * pyTu
 	}
 
 	objects.feats.FeatAdd(obj->objHandle, nFeatCode);
-	objects.d20.d20Status->D20StatusInit(obj->objHandle);
+	objects.d20.d20Status->D20StatusRefresh(obj->objHandle);
 
 	return PyInt_FromLong(1);
 };
@@ -239,7 +239,7 @@ static PyObject * PyObjHandle_MakeWizard(TemplePyObjHandle* obj, PyObject * pyTu
 		templeFuncs.Obj_Set_IdxField_byValue(obj->objHandle, obj_f_critter_level_idx, i, stat_level_wizard);
 	}
 
-	objects.d20.d20Status->D20StatusInit(obj->objHandle);
+	objects.d20.d20Status->D20StatusRefresh(obj->objHandle);
 	
 
 	return PyInt_FromLong(1);

@@ -147,7 +147,9 @@ FeatSystem::FeatSystem()
 	featPropertiesTable[FEAT_GREATER_TWO_WEAPON_FIGHTING] = 0x10;
 	featPreReqTable[FEAT_GREATER_TWO_WEAPON_FIGHTING].featPrereqs[2].featPrereqCode = 266;
 	featPreReqTable[FEAT_GREATER_TWO_WEAPON_FIGHTING].featPrereqs[2].featPrereqCodeArg = 11;
-
+	classFeatTable->classEntries[0].entries[9].feat = FEAT_GREATER_RAGE;
+	classFeatTable->classEntries[0].entries[9].minLvl = 11;
+	*(int*)&classFeatTable->classEntries[0].entries[10].feat = -1;
 	
 };
 
@@ -949,8 +951,8 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 			classLevel++;
 		}
 
-		uint32_t * classFeat = feats.classFeatTable + 80 * i;
-		uint32_t * classFeatStart = classFeat;
+		feat_enums * classFeat = &feats.classFeatTable->classEntries[i].entries[0].feat;
+		feat_enums * classFeatStart = classFeat;
 
 		if (classLevel == 0)
 		{

@@ -2,11 +2,25 @@
 
 #include "common.h"
 
-#define NUM_FEATS 675 // inc. those hacked by Moebius/SpellSlinger (otherwise vanilla is 649)
+#define NUM_FEATS 676 // inc. those hacked by Moebius/SpellSlinger (otherwise vanilla is 649)
 #include "tig/tig_mes.h"
 //664th - FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER
 
 struct FeatPrereqRow;
+struct ClassFeatTableEntry
+{
+	feat_enums feat;
+	int minLvl;
+};
+struct ClassFeatTableRow
+{
+	ClassFeatTableEntry entries[20];
+}; // all the rows
+struct ClassFeatTable
+{
+	ClassFeatTableRow classEntries[NUM_CLASSES];
+};
+
 struct TabFileStatus;
 
 extern TabFileStatus featPropertiesTabFile;
@@ -26,6 +40,8 @@ struct FeatPrereqRow
 {
 	FeatPrereq featPrereqs[8];
 };
+
+
 
 struct FeatSystem : AddressTable
 {	/* feat property bit meaning:
@@ -57,7 +73,7 @@ struct FeatSystem : AddressTable
 	MesHandle * featEnumsMes;
 	TabFileStatus * featTabFile;
 	//static TabFileStatus featPropertiesTabFile;
-	uint32_t * classFeatTable;
+	ClassFeatTable * classFeatTable;
 	objHndl * charEditorObjHnd;
 	Stat * charEditorClassCode;
 

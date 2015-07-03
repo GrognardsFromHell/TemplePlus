@@ -66,9 +66,14 @@ public:
 		replaceFunction(0x100E2560, _ConditionAdd_NumArgs3);
 		replaceFunction(0x100E2590, _ConditionAdd_NumArgs4);
 		replaceFunction(0x100E25C0, InitCondFromCondStructAndArgs);
+		
+		replaceFunction(0x100EABB0, BarbarianRageStatBonus);
+		replaceFunction(0x100EABE0, BarbarianRageSaveBonus);
+
 		replaceFunction(0x100ECF30, ConditionPrevent);
 		replaceFunction(0x100EE050, GlobalGetArmorClass);
 		replaceFunction(0x100EE280, GlobalToHitBonus);
+		
 
 		replaceFunction(0x100F7B60, _FeatConditionsRegister);
 		replaceFunction(0x100F7BE0, _GetCondStructFromFeat);
@@ -1259,6 +1264,26 @@ int CombatExpertiseSet(DispatcherCallbackArgs args)
 	if (bonus < 0)
 		bonus = 0;
 	conds.CondNodeSetArg(args.subDispNode->condNode, 0, bonus);
+	return 0;
+}
+
+int BarbarianRageStatBonus(DispatcherCallbackArgs args)
+{
+	DispIoBonusList * dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
+	if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_GREATER_RAGE, (Stat)0, 0))
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 6, 0, 338); // Greater Rage
+	else
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 4, 0, 195); // normal rage
+	return 0;
+}
+
+int BarbarianRageSaveBonus(DispatcherCallbackArgs args)
+{
+	DispIoSavingThrow * dispIo = dispatch.DispIoCheckIoType3(args.dispIO);
+	if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_GREATER_RAGE, (Stat)0, 0))
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 3, 0, 338); // Greater Rage
+	else
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 2, 0, 195); // normal rage
 	return 0;
 }
 #pragma endregion

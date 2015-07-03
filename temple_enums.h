@@ -678,6 +678,7 @@ enum feat_enums : uint32_t {
 	FEAT_DEADLY_PRECISION = 672,
 	FEAT_PERSISTENT_SPELL = 673,
 	FEAT_POWER_CRITICAL = 674,
+	FEAT_GREATER_RAGE = 675
 };
 
 enum feat_requirement_codes : int32_t {

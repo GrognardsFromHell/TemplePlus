@@ -178,10 +178,20 @@ DispIoBonusList* DispatcherSystem::DispIoCheckIoType2(DispIoBonusList* dispIo)
 	return dispIo;
 }
 
+DispIoBonusList* DispatcherSystem::DispIoCheckIoType2(DispIO* dispIoBonusList)
+{
+	return DispIoCheckIoType2( (DispIoBonusList*) dispIoBonusList);
+}
+
 DispIoSavingThrow* DispatcherSystem::DispIoCheckIoType3(DispIoSavingThrow* dispIo)
 {
 	if (dispIo->dispIOType != dispIOTypeSavingThrow) return nullptr;
 	return dispIo;
+}
+
+DispIoSavingThrow* DispatcherSystem::DispIoCheckIoType3(DispIO* dispIo)
+{
+	return DispIoCheckIoType3((DispIoSavingThrow*)dispIo);
 }
 
 DispIoDamage* DispatcherSystem::DispIoCheckIoType4(DispIoDamage* dispIo)

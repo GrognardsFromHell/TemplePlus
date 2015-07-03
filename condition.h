@@ -281,7 +281,8 @@ int TacticalOptionAbusePrevention(DispatcherCallbackArgs args);
 int CombatExpertiseRadialMenu(DispatcherCallbackArgs args);
 int CombatExpertiseSet(DispatcherCallbackArgs args);
 
-
+int BarbarianRageStatBonus(DispatcherCallbackArgs args);
+int BarbarianRageSaveBonus(DispatcherCallbackArgs args);
 
 
 void _FeatConditionsRegister();
