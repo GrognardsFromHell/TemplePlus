@@ -1304,4 +1304,25 @@ int BarbarianDamageResistance(DispatcherCallbackArgs args)
 	
 	return 0;
 }
+
+
+void __cdecl BarbarianTirelessRageCheck(objHndl obj)
+{
+	if (objects.StatLevelGet(obj, stat_level_barbarian) < 17)
+		conds.AddTo(obj, "Barbarian_Fatigued", {0,0});
+};
+
+class BarbarianTirelessRagePatch : public TempleFix
+{
+public:
+	const char* name() override {
+		return "Barbarian Tireless Rage patch";
+	}
+
+	void apply() override {
+		redirectCall(0x100EADBF, BarbarianTirelessRageCheck);
+	}
+
+} barbarianTirelessRagePatch;
+
 #pragma endregion
