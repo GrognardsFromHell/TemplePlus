@@ -1068,9 +1068,9 @@ int* ConditionSystem::CondNodeGetArgPtr(CondNode* condNode, int argIdx)
 	mesLine.key = 5105; //disable AoOs
 	if (!mesFuncs.GetLine(*combatSys.combatMesfileIdx, &mesLine) )
 	{
-		sprintf((char*)temple_address(0x10EEE228), "Disable Attacks of Opportunity");
-		mesLine.value = (char*) temple_address(0x10EEE228);
-	};
+		//sprintf((char*)temple_address(0x10EEE228), "Disable Attacks of Opportunity");
+		mesLine.value = conds.mConditionDisableAoOName;
+	}
 	//mesFuncs.GetLine_Safe(*combatSys.combatMesfileIdx, &mesLine);
 	radEntry.text = (char*)mesLine.value;
 	radEntry.helpId = conds.hashmethods.StringHash("TAG_RADIAL_MENU_DISABLE_AOOS");
@@ -1187,8 +1187,8 @@ int __cdecl DivineMightRadial(DispatcherCallbackArgs args)
 	mesLine.key = 5106; // Divine Might
 	if (!mesFuncs.GetLine(*combatSys.combatMesfileIdx, &mesLine))
 	{
-		sprintf((char*)temple_address(0x10EEE228), "Divine Might");
-		mesLine.value = (char*)temple_address(0x10EEE228);
+		//sprintf((char*)temple_address(0x10EEE228), "Divine Might");
+		mesLine.value = conds.mCondDivineMightName;
 	};
 	radEntry.text = (char*)mesLine.value;
 	radEntry.helpId = conds.hashmethods.StringHash("TAG_DIVINE_MIGHT");
@@ -1239,11 +1239,11 @@ int __cdecl RecklessOffenseRadialMenuInit(DispatcherCallbackArgs args)
 	radEntry.actualArg = (int)conds.CondNodeGetArgPtr(args.subDispNode->condNode, 0);
 	radEntry.callback = (void(__cdecl*)(objHndl, RadialMenuEntry*))temple_address(0x100F0200);
 	MesLine mesLine;
-	mesLine.key = 5107; //disable AoOs
+	mesLine.key = 5107; // reckless offense
 	if (!mesFuncs.GetLine(*combatSys.combatMesfileIdx, &mesLine))
 	{
-		sprintf((char*)temple_address(0x10EEE228), "Reckless Offense");
-		mesLine.value = (char*)temple_address(0x10EEE228);
+		//sprintf((char*)temple_address(0x10EEE228), "Reckless Offense");
+		mesLine.value = conds.mCondRecklessOffenseName;
 	};
 	radEntry.text = (char*)mesLine.value;
 	radEntry.helpId = conds.hashmethods.StringHash("TAG_FEAT_RECKLESS_OFFENSE");
