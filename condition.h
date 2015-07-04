@@ -126,7 +126,7 @@ public:
 	CondStructNew *mCondSuperiorExpertise;
 	char mCondDeadlyPrecisionName[100];
 	CondStructNew *mCondDeadlyPrecision;
-	char mCondPersistenSpellName[100];
+	char mCondPersistentSpellName[100];
 	CondStructNew *mCondPersistentSpell;
 
 	char mCondGreaterWeaponSpecializationName[100];

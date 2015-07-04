@@ -838,7 +838,7 @@ void ConditionSystem::RegisterNewConditions()
 	cond->condName = condName;
 	cond->numArgs = 2;
 
-	// Knock Down
+	// Greater Weapon Specialization
 	mCondGreaterWeaponSpecialization = &condGreaterWeaponSpecialization;
 	cond = mCondGreaterWeaponSpecialization; 	condName = mCondGreaterWeaponSpecializationName;
 	memset(condName, 0, sizeof(condName)); 	memcpy(condName, "Greater Weapon Specialization", sizeof("Greater Weapon Specialization"));
@@ -849,14 +849,23 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPreventWithArg, (uint32_t)cond, 0);
 	DispatcherHookInit(cond, 1, dispTypeDealingDamage, 0, GreaterWeaponSpecializationDamage, 0, 0);
 
-	/*
-	char mCondDeadlyPrecisionName[100];
-	CondStructNew *mCondDeadlyPrecision;
-	char mCondPersistenSpellName[100];
-	CondStructNew *mCondPersistentSpell;
+	// Deadly Precision
+	mCondDeadlyPrecision = &condDeadlyPrecision;
+	cond = mCondDeadlyPrecision; 	condName = mCondDeadlyPrecisionName;
+	memset(condName, 0, sizeof(condName)); 	memcpy(condName, "Deadly Precision", sizeof("Deadly Precision"));
 
-	char mCondGreaterRageName[100];
-	CondStructNew *mCondGreaterRage;
+	cond->condName = condName;
+	cond->numArgs = 2;
+
+	// Persistent Spell
+	mCondPersistentSpell = &condPersistentSpell;
+	cond = mCondPersistentSpell; 	condName = mCondPersistentSpellName;
+	memset(condName, 0, sizeof(condName)); 	memcpy(condName, "Persistent Spell", sizeof("Persistent Spell"));
+
+	cond->condName = condName;
+	cond->numArgs = 2;
+
+	/*
 	char mCondIndomitableWillName[100];
 	CondStructNew *mCondIndomitableWill;
 	char mCondTirelessRageName[100];

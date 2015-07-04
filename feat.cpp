@@ -158,9 +158,9 @@ FeatSystem::FeatSystem()
 
 int FeatInit()
 {
-	if (mesFuncs.Open("mes\\feat.mes", feats.featMes) && mesFuncs.Open("rules\\feat_enum.mes", feats.featEnumsMes))
+	if (mesFuncs.Open("mes\\feat.mes", feats.featMes) && mesFuncs.Open("rules\\feat_enum.mes", feats.featEnumsMes) && mesFuncs.Open("tpmes\\feat.mes", &feats.featMesNew))
 	{
-		memset(feats.featNames, 0, 649 * sizeof(int));
+		memset(feats.featNames, 0, sizeof(feats.featNames));
 		tabSys.tabFileStatusInit(feats.featTabFile, feats.featTabLineParser);
 		if (tabSys.tabFileStatusBasicFormatter(feats.featTabFile, "rules\\feat.tab"))
 		{
@@ -175,6 +175,11 @@ int FeatInit()
 		{
 			auto lineFetched = mesFuncs.GetLine(*feats.featMes, &mesLine);
 			feats.featNames[mesLine.key] = (char *)(lineFetched != 0 ? mesLine.value : 0);
+			if (!lineFetched)
+			{
+				lineFetched = mesFuncs.GetLine(feats.featMesNew, &mesLine);
+				feats.featNames[mesLine.key] = (char *)(lineFetched != 0 ? mesLine.value : 0);
+			}
 			mesLine.key++;
 		} while (mesLine.key < NUM_FEATS);
 

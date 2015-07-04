@@ -71,6 +71,7 @@ struct FeatSystem : AddressTable
 	FeatPrereqRow * m_featPreReqTable;
 	char * featNames[NUM_FEATS +1000];
 	MesHandle * featMes;
+	MesHandle featMesNew; // for the new stuff
 	MesHandle * featEnumsMes;
 	TabFileStatus * featTabFile;
 	//static TabFileStatus featPropertiesTabFile;
