@@ -155,9 +155,11 @@ public:
 		replaceFunction(0x101A8D70, FeatUiPrereqCheckUsercallWrapper);
 		OrgFeatMultiselectSub_101A8080 = (int(__cdecl*)()) replaceFunction(0x101A8080, HookedUsercallFeatMultiselectSub_101A8080);
 
-		writeHex(0x101A940A, "90 90");
+		writeHex(0x101A940A, "90 90"); // affects right click
+
 		writeHex(0x101A9F81, "90 90");
 		writeHex(0x101AA053, "90 90");
+		writeHex(0x101A9E57, "90 90 90  90 90 90"); // affects drag n' drop
 
 		replaceFunction(0x101A8D20, GetMultiselectShortNameUsercall);
 	}

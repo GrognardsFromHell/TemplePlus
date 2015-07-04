@@ -3,11 +3,13 @@
 #include "bonus.h"
 #include "tig/tig_mes.h"
 
-
+int(__cdecl *OrgBonusInit)();
 class BonusSysReplacements : public TempleFix
 {
 	public: const char* name() override { return "History System" "Function Replacements";} void apply() override 
 	{
+		OrgBonusInit = (int(__cdecl *)())replaceFunction(0x100E5EB0, BonusMesInit);
+
 		replaceFunction(0x100E6490, _isBonusNotMaximal); 
 		replaceFunction(0x100E6110, _bonusAddToBonusList); 
 		replaceFunction(0x100E60D0, _initBonusList); 
@@ -18,9 +20,8 @@ class BonusSysReplacements : public TempleFix
 		replaceFunction(0x100E63B0, _getNumBonuses); 
 		replaceFunction(0x100E6380, _zeroBonusSetMeslineNum); 
 		replaceFunction(0x100E61A0, _bonusSetOverallCap); 
-		mesFuncs.Open("tpmes\\bonus.mes", &bonusSys.bonusMesNew);
 
-	}
+		}
 } bonusSystemReplacements;
 
 
@@ -217,6 +218,13 @@ BonusSystem::BonusSystem()
 #pragma endregion
 
 #pragma region Replacements
+
+
+int BonusMesInit()
+{
+	mesFuncs.Open("tpmes\\bonus.mes", &bonusSys.bonusMesNew);
+	return OrgBonusInit();
+}
 void _initBonusList(BonusList* bonusList)
 {
 	bonusSys.initBonusList(bonusList);

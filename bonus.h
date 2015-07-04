@@ -31,6 +31,8 @@ struct BonusSystem : AddressTable
 
 extern BonusSystem bonusSys;
 
+int BonusMesInit();
+
 void _initBonusList(BonusList * bonusList);
 uint32_t _isBonusNotMaximal(BonusList * str378, int n, uint32_t * idxOut);
 uint32_t _bonusAddToBonusList(BonusList* bonList, int32_t bonValue, int32_t bonType, uint32_t bonMesLineNum);
