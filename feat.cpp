@@ -103,6 +103,9 @@ public:
 		write(0x101BBDF4 + 2, &writeNumFeats, sizeof(int)); // charUiFeatList iteration limit
 	//	writeHex(0x101A940E, "90 90 90 90 90");
 		
+
+		// overwrite the "already taken" limit (jge command)
+		writeHex(0x101A87B2, "90 90 90 90     90 90");
 	}
 };
 FeatFixes featFixes;
@@ -176,7 +179,7 @@ int FeatInit()
 		} while (mesLine.key < NUM_FEATS);
 
 		tabSys.tabFileStatusInit(&featPropertiesTabFile, featPropertiesTabLineParser);
-		if (tabSys.tabFileStatusBasicFormatter(&featPropertiesTabFile, "rules\\feat_properties.tab"))
+		if (tabSys.tabFileStatusBasicFormatter(&featPropertiesTabFile, "tprules//feat_properties.tab"))
 		{
 			tabSys.tabFileStatusDealloc(&featPropertiesTabFile);
 		}

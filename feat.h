@@ -109,7 +109,7 @@ struct FeatSystem : AddressTable
 
 extern FeatSystem feats;
 
-
+int FeatInit();
 
 uint32_t _HasFeatCount(objHndl objHnd, feat_enums featEnum);
 uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLevelBeingRaised, uint32_t rangerSpecializationFeat);
@@ -137,6 +137,6 @@ int _IsWeaponFocusFeat(feat_enums feat);
 int _IsGreaterWeaponFocusFeat(feat_enums feat);
 int _IsWeaponSpecializationFeat(feat_enums feat);
 
-int FeatInit();
+
 
 uint32_t featPropertiesTabLineParser(TabFileStatus*, uint32_t, const char**);

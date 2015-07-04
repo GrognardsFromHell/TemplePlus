@@ -94,7 +94,7 @@ TabFileStatus _d20actionTabFile;
 void D20System::NewD20ActionsInit()
 {
 	tabSys.tabFileStatusInit(d20ActionsTabFile, d20actionTabLineParser);
-	if (tabSys.tabFileStatusBasicFormatter(d20ActionsTabFile, "rules\\d20actions.tab"))
+	if (tabSys.tabFileStatusBasicFormatter(d20ActionsTabFile, "tprules//d20actions.tab"))
 	{
 		tabSys.tabFileStatusDealloc(d20ActionsTabFile);
 	}

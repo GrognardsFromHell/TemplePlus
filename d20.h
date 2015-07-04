@@ -83,6 +83,8 @@ struct D20System : AddressTable
 
 extern D20System d20Sys;
 
+int _D20Init(GameSystemConf* conf);
+
 
 struct D20SpellData
 {
@@ -203,6 +205,6 @@ inline int GetAttributeMod(int stat) {
 }
 
 uint32_t _d20actionTabLineParser(TabFileStatus*, uint32_t n, const char** strings);
-int _D20Init(GameSystemConf* conf);
+
 uint32_t _DivineMightCheck(D20Actn* d20a, TurnBasedStatus* tbStat);
 uint32_t _DivineMightPerform(D20Actn* d20a);
