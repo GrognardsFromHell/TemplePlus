@@ -77,7 +77,7 @@ int __declspec(naked) HookedUsercallFeatMultiselectSub_101A8080()
 
 int HookedFeatMultiselectSub_101A8080(feat_enums feat)
 {
-	if ( (feat >= FEAT_EXOTIC_WEAPON_PROFICIENCY && feat <= FEAT_WEAPON_SPECIALIZATION) )
+	if ( (feat >= FEAT_EXOTIC_WEAPON_PROFICIENCY && feat <= FEAT_WEAPON_SPECIALIZATION) || feat == FEAT_WEAPON_FINESSE_DAGGER )
 	{
 		__asm mov eax, feat;
 		return OrgFeatMultiselectSub_101A8080();

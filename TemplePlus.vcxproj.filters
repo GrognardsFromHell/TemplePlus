@@ -298,6 +298,9 @@
     <ClCompile Include="ui_intgame_turnbased.cpp">
       <Filter>ui</Filter>
     </ClCompile>
+    <ClCompile Include="ui_pc_creation.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />

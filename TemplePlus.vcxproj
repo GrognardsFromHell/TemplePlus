@@ -112,6 +112,7 @@
     <ClCompile Include="ui_char.cpp" />
     <ClCompile Include="ui_char_editor_feats.cpp" />
     <ClCompile Include="ui_intgame_turnbased.cpp" />
+    <ClCompile Include="ui_pc_creation.cpp" />
     <ClCompile Include="util\addressess.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>

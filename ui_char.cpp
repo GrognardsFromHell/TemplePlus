@@ -9,7 +9,7 @@ public:
 	const char* name() override { return "CharUi - disabling stat text draw calls";} 
 	void apply() override 
 	{
-		if (config.usingCo8)
+		if (config.usingCo8) // disabling stat text draw calls
 		{
 			writeHex(0x1011DD4D, "90 90 90 90 90");
 		}
