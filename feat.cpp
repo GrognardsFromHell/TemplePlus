@@ -33,6 +33,8 @@ public:
 		
 		replaceFunction(0x1007B990, _FeatExistsInArray);
 		replaceFunction(0x1007B9C0, _GetFeatName);
+		replaceFunction(0x1007B9D0, _GetFeatDescription);
+		replaceFunction(0x1007BA10, _GetFeatPrereqDescription);
 
 		
 		
@@ -153,7 +155,8 @@ FeatSystem::FeatSystem()
 	classFeatTable->classEntries[0].entries[9].feat = FEAT_GREATER_RAGE;
 	classFeatTable->classEntries[0].entries[9].minLvl = 11;
 	*(int*)&classFeatTable->classEntries[0].entries[10].feat = -1;
-	
+	memset(emptyString, 0, 1);
+
 };
 
 int FeatInit()
@@ -263,11 +266,58 @@ vector<feat_enums> FeatSystem::GetFeats(objHndl handle) {
 
 char* FeatSystem::GetFeatName(feat_enums feat)
 {
-	if (feat >= FEAT_GREATER_WEAPON_SPECIALIZATION_GAUNTLET)
-	{
-		int dummy = 1;
-	}
 	return featNames[feat];
+}
+
+char* FeatSystem::GetFeatDescription(feat_enums feat)
+{
+	char getLineResult; 
+	const char *result; 
+	MesLine mesLine; 
+
+	mesLine.key = feat + 5000;
+	if (feat >= FEAT_NONE || feat == FEAT_GREATER_WEAPON_SPECIALIZATION)
+		getLineResult = mesFuncs.GetLine(feats.featMesNew, &mesLine) == 0;
+	else
+		getLineResult = mesFuncs.GetLine(*feats.featMes, &mesLine) == 0;
+	result = mesLine.value;
+	if (getLineResult)
+		result = emptyString;
+	return (char*)result;
+}
+
+char* FeatSystem::GetFeatPrereqDescription(feat_enums feat)
+{
+	char * result;
+	const char *v2;
+	char v3; 
+	MesLine mesLinePrerequisites;
+	MesLine mesLineFeatDesc; 
+	MesLine mesLineNone;
+	MesHandle * mesHnd = feats.featMes;
+	if (feat >= FEAT_NONE)
+		mesHnd = &feats.featMesNew;
+
+	mesLineNone.key = 9998;
+	if (mesFuncs.GetLine(*feats.featMes, &mesLineNone)
+		&& (mesLinePrerequisites.key = 9999, mesFuncs.GetLine(*feats.featMes, &mesLinePrerequisites))
+		&& (mesLineFeatDesc.key = feat + 10000, mesFuncs.GetLine(*mesHnd, &mesLineFeatDesc)))
+	{
+		v2 = mesLineFeatDesc.value;
+		do
+			v3 = *v2++;
+		while (v3);
+		if (v2 == mesLineFeatDesc.value + 1)
+			sprintf(featPrereqDescrBuffer, "%s%s", mesLinePrerequisites.value, mesLineNone.value);
+		else
+			sprintf(featPrereqDescrBuffer, "%s%s", mesLinePrerequisites.value, mesLineFeatDesc.value);
+		result = featPrereqDescrBuffer;
+	}
+	else
+	{
+		result = emptyString;
+	}
+	return result;
 }
 
 int FeatSystem::IsFeatEnabled(feat_enums feat)
@@ -371,6 +421,16 @@ uint32_t _WeaponFeatCheckSimpleWrapper(objHndl objHnd, WeaponTypes wpnType)
 const char* _GetFeatName(feat_enums feat)
 {
 	return feats.GetFeatName(feat);
+}
+
+const char* _GetFeatDescription(feat_enums feat)
+{
+	return feats.GetFeatDescription(feat);
+}
+
+const char* _GetFeatPrereqDescription(feat_enums feat)
+{
+	return feats.GetFeatPrereqDescription(feat);
 }
 
 int _IsFeatEnabled(feat_enums feat)

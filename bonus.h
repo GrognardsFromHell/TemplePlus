@@ -25,6 +25,7 @@ struct BonusSystem : AddressTable
 	int32_t(__cdecl * _getOverallBonus)(BonusList* bonList);
 
 	MesHandle * bonusMesHandle; //102E45A8
+	MesHandle bonusMesNew;
 	BonusSystem();
 };
 

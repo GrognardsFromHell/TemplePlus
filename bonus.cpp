@@ -18,6 +18,8 @@ class BonusSysReplacements : public TempleFix
 		replaceFunction(0x100E63B0, _getNumBonuses); 
 		replaceFunction(0x100E6380, _zeroBonusSetMeslineNum); 
 		replaceFunction(0x100E61A0, _bonusSetOverallCap); 
+		mesFuncs.Open("tpmes\\bonus.mes", &bonusSys.bonusMesNew);
+
 	}
 } bonusSystemReplacements;
 
@@ -65,7 +67,11 @@ uint32_t BonusSystem::bonusAddToBonusList(BonusList* bonList, int32_t bonValue, 
 	MesLine mesLine;
 	if (bonList->bonCount >= BonusListMax) return 0;
 	mesLine.key = bonMesLineNum;
-	mesFuncs.GetLine_Safe(*bonusMesHandle, &mesLine);
+
+	if (bonMesLineNum >= 335)
+		mesFuncs.GetLine_Safe(bonusMesNew, &mesLine);
+	else
+		mesFuncs.GetLine_Safe(*bonusMesHandle, &mesLine);
 	bonList->bonusEntries[bonList->bonCount].bonValue = bonValue;
 	bonList->bonusEntries[bonList->bonCount].bonType = bonType;
 	bonList->bonusEntries[bonList->bonCount].bonusMesString = (char*)mesLine.value;
@@ -90,8 +96,12 @@ uint32_t BonusSystem::bonusCapAdd(BonusList* bonList, int capType, int capValue,
 		auto breakPointDummy = 1;
 		if (bonList->bonCapperCount >= BonusListMax) return 0;// bug? there's only 10 slots (this is the original code!)
 	} 
+
 	mesLine.key = bonMesLineNum;
-	mesFuncs.GetLine_Safe(*bonusMesHandle, &mesLine);
+	if (bonMesLineNum >= 335)
+		mesFuncs.GetLine_Safe(bonusMesNew, &mesLine);
+	else
+		mesFuncs.GetLine_Safe(*bonusMesHandle, &mesLine);
 	bonList->bonCaps[bonList->bonCapperCount].capValue = capValue;
 	bonList->bonCaps[bonList->bonCapperCount].bonType = capType;
 	bonList->bonCaps[bonList->bonCapperCount].bonCapperString = (char*)mesLine.value;
@@ -173,7 +183,12 @@ uint32_t BonusSystem::bonusSetOverallCap(uint32_t bonFlags, BonusList* bonList, 
 	MesLine mesLine;
 	if (!bonFlags) return 0;
 	mesLine.key = bonMesLineNum;
-	mesFuncs.GetLine_Safe(*bonusMesHandle, &mesLine);
+
+	if (bonMesLineNum >= 335)
+		mesFuncs.GetLine_Safe(bonusMesNew, &mesLine);
+	else
+		mesFuncs.GetLine_Safe(*bonusMesHandle, &mesLine);
+
 	char * bonMesString = (char*)mesLine.value;
 	if (bonFlags & 1 && (bonList->overallCapHigh > newCap || bonFlags & 4))
 	{
@@ -195,9 +210,9 @@ uint32_t BonusSystem::bonusSetOverallCap(uint32_t bonFlags, BonusList* bonList, 
 
 BonusSystem::BonusSystem()
 {
-	macRebase(_bonusPrintString, 100E6740)
-	macRebase(bonusMesHandle, 102E45A8)
-	macRebase(_getOverallBonus, 100E65C0)
+	rebase(_bonusPrintString,0x100E6740); 
+	rebase(bonusMesHandle,0x102E45A8); 
+	rebase(_getOverallBonus,0x100E65C0); 
 }
 #pragma endregion
 

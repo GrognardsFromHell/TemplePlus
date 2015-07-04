@@ -78,6 +78,8 @@ struct FeatSystem : AddressTable
 	ClassFeatTable * classFeatTable;
 	objHndl * charEditorObjHnd;
 	Stat * charEditorClassCode;
+	char emptyString[1000] ;
+	char featPrereqDescrBuffer[5000];
 
 	uint32_t racialFeats[ 10 * NUM_RACES ];
 	uint32_t HasFeatCount(objHndl objHnd, feat_enums featEnum);
@@ -90,6 +92,8 @@ struct FeatSystem : AddressTable
 
 	vector<feat_enums> GetFeats(objHndl handle); // This is what objHndl.feats in python returns ??
 	char* GetFeatName(feat_enums feat);
+	char* GetFeatDescription(feat_enums feat);
+	char* GetFeatPrereqDescription(feat_enums feat);
 	int IsFeatEnabled(feat_enums feat);
 	int IsMagicFeat(feat_enums feat); // crafting / metamagic feats (that Wiz/Sorcs can pick as bonus feats)
 	int IsFeatPartOfMultiselect(feat_enums feat); // hidden feats that are only selectable in a submenu
@@ -123,6 +127,8 @@ uint32_t _WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featA
 uint32_t _WeaponFeatCheckSimpleWrapper(objHndl objHnd, WeaponTypes wpnType);
 
 const char * _GetFeatName(feat_enums feat);
+const char * _GetFeatDescription(feat_enums feat);
+const char * _GetFeatPrereqDescription(feat_enums feat);
 int _IsFeatEnabled(feat_enums feat);
 int _IsMagicFeat(feat_enums feat);
 int _IsFeatPartOfMultiselect(feat_enums feat);

@@ -101,6 +101,7 @@
 {749}{Indomitable Will}
 
 // short descriptions of feats
+{5137} Greater Weapon Specialization{You gain another +2 bonus on all damage rolls you make using the selected weapon, on top of the one from Weapon Specialization.}
 {5658} Diamond Body {You are immune to all poisons.}
 {5659} Abundant Step {You can slip magically between spaces, as if using the spell dimension door, once per day. To use this ability you must be wearing a Monk's Belt.}
 {5660} Diamond Soul {You have spell resistance equal to 10 + your current monk level.}
@@ -196,6 +197,7 @@
 {5749}{Indomitable Will}
 
 // prerequisites descriptions
+{10137} Greater Weapon Specialization {Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
 {10658} Diamond Body {}
 {10659} Abundant Step {}
 {10660} Diamond Soul {}
