@@ -14,7 +14,7 @@ struct ClassFeatTableEntry
 };
 struct ClassFeatTableRow
 {
-	ClassFeatTableEntry entries[20];
+	ClassFeatTableEntry entries[40];
 }; // all the rows
 struct ClassFeatTable
 {
