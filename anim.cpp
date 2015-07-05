@@ -888,6 +888,8 @@ static struct AnimationAdresses : AddressTable {
 
 	int(__cdecl *GetAnimIdSthgSub_1001ABB0)(objHndl actor);
 
+	int(__cdecl* PushAttemptAttack)(objHndl, objHndl);
+
 	AnimationAdresses() {
 		
 		rebase(Interrupt, 0x1000C7E0);
@@ -896,12 +898,14 @@ static struct AnimationAdresses : AddressTable {
 		rebase(PushFallDown,    0x100157B0);
 		rebase(PushUnconceal,   0x10015E00);
 		
+		rebase(PushAttemptAttack, 0x1001A540);
 		rebase(GetAnimIdSthgSub_1001ABB0, 0x1001ABB0);
 
 		rebase(PushUseSkillOn,  0x1001C690);
 		rebase(PushRunNearTile, 0x1001C1B0);
 		
 		rebase(PushAttackAnim,     0x1001C370);
+
 		
 	}
 
@@ -942,4 +946,9 @@ int AnimationGoals::PushAttackAnim(objHndl actor, objHndl target, int unk1, int 
 int AnimationGoals::GetAnimIdSthgSub_1001ABB0(objHndl objHndl)
 {
 	return addresses.GetAnimIdSthgSub_1001ABB0(objHndl);
+}
+
+int AnimationGoals::PushAttemptAttack(objHndl attacker, objHndl defender)
+{
+	return addresses.PushAttemptAttack(attacker, defender);
 }

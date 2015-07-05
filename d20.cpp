@@ -17,6 +17,8 @@
 #include "critter.h"
 #include "anim.h"
 #include "tab_file.h"
+#include "combat.h"
+#include "float_line.h"
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
@@ -112,10 +114,10 @@ void D20System::NewD20ActionsInit()
 	
 	d20Defs[D20A_DISARM].addToSeqFunc = _AddToSeqWithTarget;
 	d20Defs[D20A_DISARM].aiCheckMaybe = _StdAttackAiCheck;
-
 	d20Defs[D20A_DISARM].actionCheckFunc = _ActionCheckDisarm;
-	d20Defs[D20A_DISARM].performFunc = _DivineMightPerform;
-	// d20Defs[D20A_DIVINE_MIGHT].actionFrameFunc = _DivineMightPerform;
+	d20Defs[D20A_DISARM].locCheckFunc = nullptr;
+	d20Defs[D20A_DISARM].performFunc = _PerformDisarm;
+	d20Defs[D20A_DISARM].actionFrameFunc = _ActionFrameDisarm;
 	d20Defs[D20A_DISARM].actionCost = _ActionCostNull;
 	d20Defs[D20A_DISARM].flags = 0x28908;
 }
@@ -739,5 +741,61 @@ uint32_t _DivineMightPerform(D20Actn* d20a)
 
 uint32_t _ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat)
 {
+	objHndl weapon = inventory.ItemWornAt(d20a->d20APerformer, 3);
+	int weapFlags; 
+		
+	if (weapon && (weapFlags = objects.getInt32(weapon, obj_f_weapon_flags), weapFlags & OWF_RANGED_WEAPON)) // ranged weapon - Need Melee Weapon error
+	{
+		return 12;
+	}
+
+	if (d20a->d20ATarget)
+	{
+		objHndl targetWeapon = inventory.ItemWornAt(d20a->d20ATarget, 3);
+		if (!targetWeapon)
+		{
+			targetWeapon = inventory.ItemWornAt(d20a->d20ATarget, 4);
+			if (!targetWeapon)
+				return 9;
+			if (objects.GetType(targetWeapon) != obj_t_weapon)
+				return 9;
+		}
+	}
+	else
+		return 9;
+
 	return 0;
 }
+
+uint32_t _PerformDisarm(D20Actn* d20a)
+{
+	if (animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget))
+	{
+		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
+		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
+	}
+	return 0;
+};
+
+
+uint32_t _ActionFrameDisarm(D20Actn* d20a)
+{
+	if (!(d20a->d20Caf & D20CAF_HIT))
+	{
+		objects.floats->FloatCombatLine(d20a->d20APerformer, 29);
+		return 0;
+	}
+
+	if (combatSys.DisarmCheck(d20a->d20APerformer, d20a->d20ATarget))
+	{
+		objects.floats->FloatCombatLine(d20a->d20ATarget, 198);
+		return 0;
+	} 
+	if (combatSys.DisarmCheck(d20a->d20ATarget, d20a->d20APerformer))
+	{
+		objects.floats->FloatCombatLine(d20a->d20APerformer, 198);
+		return 0;
+	}
+
+	return 0;
+};

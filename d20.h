@@ -210,3 +210,5 @@ uint32_t _DivineMightCheck(D20Actn* d20a, TurnBasedStatus* tbStat);
 uint32_t _DivineMightPerform(D20Actn* d20a);
 
 uint32_t _ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat);
+uint32_t _PerformDisarm(D20Actn* d20a);
+uint32_t _ActionFrameDisarm(D20Actn* d20a);

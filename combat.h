@@ -24,6 +24,7 @@ struct CombatSystem : AddressTable {
 	*/
 	int GetEnemiesCanMelee(objHndl obj, objHndl* canMeleeList);
 	objHndl GetWeapon(AttackPacket* attackPacket);
+	bool DisarmCheck(objHndl attacker, objHndl defender);
 	int (__cdecl* IsFlankedBy)(objHndl victim, objHndl attacker);
 	/*
 		Use for the non-lethal brawl.

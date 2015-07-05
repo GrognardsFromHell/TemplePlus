@@ -48,6 +48,7 @@ public:
 
 	int PushAttackAnim(objHndl actor, objHndl target, int unk1, int hitAnimIdx, int playCrit, int useSecondaryAnim);
 	int GetAnimIdSthgSub_1001ABB0(objHndl objHndl);
+	int PushAttemptAttack(objHndl attacker, objHndl defender);
 };
 
 extern AnimationGoals animationGoals;

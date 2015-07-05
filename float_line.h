@@ -13,6 +13,12 @@ enum class FloatLineColor : uint32_t {
 struct FloatLineSystem : AddressTable
 {
 	void(__cdecl * floatMesLine)(objHndl, int categoryBit, FloatLineColor color, const char *text);
+
+
+	void FloatCombatLine(objHndl obj, int line)
+	{
+		_FloatCombatLine(obj, line);
+	}
 	
 	/*
 		Float a text line from mes/spells.mes with an optional prefix and suffix text.
@@ -25,6 +31,7 @@ struct FloatLineSystem : AddressTable
 private:
 
 	void(__cdecl *_FloatSpellLine)(objHndl, int mesId, FloatLineColor colorId, const char *prefix, const char *suffix);
+	void(__cdecl * _FloatCombatLine)(objHndl obj, int line);
 };
 
 extern  FloatLineSystem floatSys;

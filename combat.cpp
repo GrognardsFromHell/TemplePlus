@@ -65,6 +65,16 @@ objHndl CombatSystem::GetWeapon(AttackPacket* attackPacket)
 	return result;
 }
 
+bool CombatSystem::DisarmCheck(objHndl attacker, objHndl defender)
+{
+	objHndl attackerWeapon = inventory.ItemWornAt(attacker, 3);
+	objHndl defenderWeapon = inventory.ItemWornAt(defender, 3);
+	int rollResult = templeFuncs.diceRoll(1, 20, 0);
+	if (rollResult > 10)
+		return 1;
+	return 0;
+}
+
 void CombatSystem::enterCombat(objHndl objHnd)
 {
 	_enterCombat(objHnd);
