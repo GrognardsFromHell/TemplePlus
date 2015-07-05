@@ -78,6 +78,14 @@ enum D20ActionType : int32_t
 	D20A_FLEE_COMBAT,
 	D20A_USE_POTION = 68,
 	D20A_DIVINE_MIGHT = 69,
+	D20A_DISARM = 70,
+	D20A_SUNDER,
+	D20A_BULLRUSH,
+	D20A_TRAMPLE,
+	D20A_GRAPPLE,
+	D20A_PIN,
+	D20A_OVERRUN,
+	D20A_SHIELD_BASH,
 	D20A_NUMACTIONS, // always keep this last. Not counting D20A_NONE since it is unused (all the d20 action functions start cycling from D20A_UNSPECIFIED_MOVE)
 	D20A_UNASSIGNED = -2 // used for hotkey binds
 };

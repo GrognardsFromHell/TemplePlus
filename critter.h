@@ -184,7 +184,7 @@ struct CritterSystem : AddressTable
 	uint32_t IsUndead(objHndl objHnd);
 	uint32_t IsOoze(objHndl objHnd);
 	uint32_t IsSubtypeFire(objHndl objHnd);
-	float GetReach(objHndl objHndl, D20ActionType actType);
+	float GetReach(objHndl objHndl, D20ActionType actType); // reach in feet
 	int GetBonusFromSizeCategory(int sizeCategory); // bonus to hit from size
 #pragma endregion
 

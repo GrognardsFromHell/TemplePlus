@@ -48,11 +48,14 @@ struct ActionSequenceSystem : AddressTable
 	void ActionAddToSeq();
 		uint32_t addD20AToSeq(D20Actn * d20a, ActnSeq * actSeq);
 		uint32_t AddToSeqSimple(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+		int AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
 		int TouchAttackAddToSeq(D20Actn* d20Actn, ActnSeq* actnSeq, TurnBasedStatus* turnBasedStatus);
 		int UnspecifiedAttackAddToSeqRangedMulti(ActnSeq* actnSeq, D20Actn* d20Actn, TurnBasedStatus* tbStat);
 		int UnspecifiedAttackAddToSeqMeleeMulti(ActnSeq* actSeq, TurnBasedStatus* tbStat, D20Actn* d20a);
 		int  UnspecifiedAttackAddToSeq(D20Actn *d20a, ActnSeq *actSeq, TurnBasedStatus *tbStat);
 			void AttackAppend(ActnSeq * actSeq, D20Actn * d20a, TurnBasedStatus* tbStat, int attackCode);
+
+	int StdAttackAiCheck(D20Actn *d20a, TurnBasedStatus *tbStat);
 	uint32_t isPerforming(objHndl objHnd);
 	void IntrrptSthgsub_100939D0(D20Actn * d20a, CmbtIntrpts * str84);
 	uint32_t moveSequenceParse(D20Actn * d20aIn, ActnSeq* actSeq, TurnBasedStatus *actnSthg, float distSthg, float reach, int a5);
@@ -192,6 +195,10 @@ const uint32_t TestSizeOfActionSequence = sizeof(ActnSeq); // should be 0x1648 (
 
 uint32_t _addD20AToSeq(D20Actn* d20a, ActnSeq* actSeq);
 uint32_t _AddToSeqSimple(D20Actn* d20a, ActnSeq * actSeq, TurnBasedStatus * tbStat);
+uint32_t _AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStatus);
+
+uint32_t _StdAttackAiCheck(D20Actn *d20a, TurnBasedStatus *tbStat);
+
 unsigned _seqCheckAction(D20Actn* d20a, TurnBasedStatus* iO);
 uint32_t _isPerforming(objHndl objHnd);
 uint32_t _actSeqOkToPerform();

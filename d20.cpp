@@ -110,7 +110,14 @@ void D20System::NewD20ActionsInit()
 	d20Defs[D20A_DIVINE_MIGHT].actionCost = _ActionCostNull;
 	d20Defs[D20A_DIVINE_MIGHT].flags = 0;
 	
+	d20Defs[D20A_DISARM].addToSeqFunc = _AddToSeqWithTarget;
+	d20Defs[D20A_DISARM].aiCheckMaybe = _StdAttackAiCheck;
 
+	d20Defs[D20A_DISARM].actionCheckFunc = _ActionCheckDisarm;
+	d20Defs[D20A_DISARM].performFunc = _DivineMightPerform;
+	// d20Defs[D20A_DIVINE_MIGHT].actionFrameFunc = _DivineMightPerform;
+	d20Defs[D20A_DISARM].actionCost = _ActionCostNull;
+	d20Defs[D20A_DISARM].flags = 0x28908;
 }
 
 D20System::D20System()
@@ -726,4 +733,11 @@ uint32_t _DivineMightPerform(D20Actn* d20a)
 	conds.AddTo(d20a->d20APerformer, "Divine Might Bonus", { chaMod, 0 });
 	
 	return dispIo.returnVal;
+}
+
+
+
+uint32_t _ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat)
+{
+	return 0;
 }

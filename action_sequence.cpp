@@ -31,8 +31,12 @@ public:
 		replaceFunction(0x1008A1B0, _ActionErrorString); 
 		replaceFunction(0x1008A980, _actSeqOkToPerform); 
 		replaceFunction(0x1008BFA0, _AddToSeqSimple); 
+
+		replaceFunction(0x1008C4F0, _StdAttackAiCheck);
 		replaceFunction(0x1008C6A0, _ActionCostFullAttack);
 		
+
+
 		replaceFunction(0x100925E0, _isSimultPerformer); 
 
 		replaceFunction(0x10094910, _GetNewHourglassState);
@@ -47,6 +51,8 @@ public:
 
 		replaceFunction(0x10094F70, _moveSequenceParseUsercallWrapper); 
 		
+		replaceFunction(0x10095450, _AddToSeqWithTarget);
+
 		replaceFunction(0x10095FD0, _turnBasedStatusInit); 
 		
 		
@@ -288,6 +294,69 @@ uint32_t ActionSequenceSystem::AddToSeqSimple(D20Actn* d20a, ActnSeq * actSeq, T
 {
 	memcpy(actSeq + sizeof(D20Actn) * actSeq->d20ActArrayNum++, d20a, sizeof(D20Actn));
 	return 0;
+}
+
+int ActionSequenceSystem::AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStatus)
+{
+	int result; 
+	int v6; 
+	D20Actn *v7; 
+	uint32_t(__cdecl *actionCheckFunc)(D20Actn *, TurnBasedStatus *); 
+	int actNum; 
+	float reach; 
+	objHndl target; 
+	TurnBasedStatus tbStatusCopy; 
+	D20Actn d20aCopy; 
+
+	target = d20a->d20ATarget;
+	actNum = actSeq->d20ActArrayNum;
+	if (!target)
+		return 9;
+
+	// check if target is within reach
+	reach = critterSys.GetReach(d20a->d20APerformer, d20a->d20ActType);
+	if (location->DistanceToObj(d20a->d20APerformer, d20a->d20ATarget) < reach)
+	{
+		memcpy(&actSeq->d20ActArray[actSeq->d20ActArrayNum++], d20a, sizeof(D20Actn));
+		return 0;
+	}
+
+	// if not, add a move sequence
+	memcpy(&d20aCopy, d20a, sizeof(d20aCopy));
+	d20aCopy.d20ActType = D20A_UNSPECIFIED_MOVE;
+	location->getLocAndOff(target, &d20aCopy.destLoc);
+	result = moveSequenceParse(&d20aCopy, actSeq, tbStatus, 0.0, reach, 1 );
+	if (!result)
+	{
+		memcpy(&tbStatusCopy, tbStatus, sizeof(tbStatusCopy));
+		memcpy(&actSeq->d20ActArray[actSeq->d20ActArrayNum++], d20a, sizeof(D20Actn));
+		if (actNum < actSeq->d20ActArrayNum)
+		{
+			for (int dummy = 0 ; actNum < actSeq->d20ActArrayNum; actNum++)
+			{
+				result = TurnBasedStatusUpdate(&tbStatusCopy, &actSeq->d20ActArray[actNum]);
+				if (result)
+				{
+					tbStatusCopy.errCode = result;
+					return result;
+				}
+				actionCheckFunc = d20Sys.d20Defs[actSeq->d20ActArray[actNum].d20ActType].actionCheckFunc;
+				if (actionCheckFunc)
+				{
+					result = actionCheckFunc(&actSeq->d20ActArray[actNum], &tbStatusCopy);
+					if (result)
+						return result;
+				}
+			}
+			if (actNum >= actSeq->d20ActArrayNum)
+				return 0;
+			tbStatusCopy.errCode = result;
+			if (result)
+				return result;
+		}
+		return 0;
+	}
+	return result;
 }
 
 void ActionSequenceSystem::IntrrptSthgsub_100939D0(D20Actn* d20a, CmbtIntrpts* str84)
@@ -1519,6 +1588,28 @@ void ActionSequenceSystem::AttackAppend(ActnSeq* actSeq, D20Actn* d20a, TurnBase
 		actSeq->d20ActArray[actSeq->d20ActArrayNum].d20Caf |= D20CAF_FULL_ATTACK;
 	actSeq->d20ActArrayNum++;
 }
+
+int ActionSequenceSystem::StdAttackAiCheck(D20Actn* d20a, TurnBasedStatus* tbStat)
+{
+	int hgState = tbStat->hourglassState;
+
+	if (tbStat->attackModeCode < tbStat->baseAttackNumCode || hgState < 2)
+		return 1; // Not enough time error
+
+	
+	if (hgState != -1)
+		hgState = turnBasedStatusTransitionMatrix[hgState][2];
+	tbStat->hourglassState = hgState;
+
+	if (inventory.ItemWornAt(d20a->d20APerformer, 3) || dispatch.DispatchD20ActionCheck(d20a, tbStat, dispTypeGetCritterNaturalAttacksNum)  <= 0)
+		tbStat->attackModeCode = 0;
+	else
+		tbStat->attackModeCode = ATTACK_CODE_NATURAL_ATTACK;
+	tbStat->baseAttackNumCode = tbStat->attackModeCode + 1;
+	tbStat->numBonusAttacks = 0;
+	tbStat->numAttacks = 0;
+	return 0;
+}
 #pragma endregion
 
 
@@ -1533,6 +1624,16 @@ uint32_t _addD20AToSeq(D20Actn* d20a, ActnSeq* actSeq)
 uint32_t _AddToSeqSimple(D20Actn* d20a, ActnSeq * actSeq, TurnBasedStatus* tbStat)
 {
 	return actSeqSys.AddToSeqSimple(d20a, actSeq, tbStat);
+}
+
+uint32_t _AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStatus)
+{
+	return actSeqSys.AddToSeqWithTarget(d20a, actSeq, tbStatus);
+}
+
+uint32_t _StdAttackAiCheck(D20Actn* d20a, TurnBasedStatus* tbStat)
+{
+	return actSeqSys.StdAttackAiCheck(d20a, tbStat);
 }
 
 uint32_t _seqCheckAction(D20Actn* d20a, TurnBasedStatus* iO)

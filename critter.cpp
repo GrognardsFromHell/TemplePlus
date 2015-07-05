@@ -317,7 +317,7 @@ uint32_t CritterSystem::IsSubtypeFire(objHndl objHnd)
 	return IsCategorySubtype(objHnd, mc_subtye_fire);
 }
 
-float CritterSystem::GetReach(objHndl obj, D20ActionType actType)
+float CritterSystem::GetReach(objHndl obj, D20ActionType actType) 
 {
 	float naturalReach = objects.getInt32(obj, obj_f_critter_reach);
 	__asm{

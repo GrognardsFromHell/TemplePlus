@@ -208,3 +208,5 @@ uint32_t _d20actionTabLineParser(TabFileStatus*, uint32_t n, const char** string
 
 uint32_t _DivineMightCheck(D20Actn* d20a, TurnBasedStatus* tbStat);
 uint32_t _DivineMightPerform(D20Actn* d20a);
+
+uint32_t _ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat);
