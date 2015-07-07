@@ -235,6 +235,7 @@ void D20StatusSystem::initFeats(objHndl objHnd)
 	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionDealNormalDamage);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionFightDefensively);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)conds.mConditionDisableAoO);
+	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)conds.mCondDisarm);
 }
 
 void D20StatusSystem::initItemConditions(objHndl objHnd)

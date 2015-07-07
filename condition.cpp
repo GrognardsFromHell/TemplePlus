@@ -548,11 +548,13 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDivineMightBonus);
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondRecklessOffense);
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterWeaponSpecialization);
+	
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDisarm);
 	// conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondSuperiorExpertise); // will just be patched inside Combat Expertise callbacks
 
 	/*
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDeadlyPrecision);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDisarm);
+	
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterRage);
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondImprovedDisarm);
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondIndomitableWill);
@@ -865,6 +867,17 @@ void ConditionSystem::RegisterNewConditions()
 	cond->condName = condName;
 	cond->numArgs = 2;
 
+	// Disarm
+	mCondDisarm = &condDisarm;
+	cond = mCondDisarm; 	condName = mCondDisarmName;
+	memset(condName, 0, sizeof(condName)); 	memcpy(condName, "Disarm", sizeof("Disarm"));
+
+	cond->condName = condName;
+	cond->numArgs = 2;
+
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondDisarm, 0);
+	DispatcherHookInit(cond, 1, dispTypeRadialMenuEntry, 0, DisarmRadialMenu, 0, 0);
+	
 	/*
 	char mCondIndomitableWillName[100];
 	CondStructNew *mCondIndomitableWill;
@@ -1385,5 +1398,28 @@ public:
 	}
 
 } barbarianTirelessRagePatch;
+
+
+
+int __cdecl DisarmRadialMenu(DispatcherCallbackArgs args)
+{
+
+	RadialMenuEntry radEntry;
+	radEntry.SetDefaults();
+	radEntry.type = RadialMenuEntryType::Action;
+	radEntry.d20ActionType = D20A_DISARM;
+	radEntry.d20ActionData1 = 0;
+	MesLine mesLine;
+	mesLine.key = 5109; // Divine Might
+	if (!mesFuncs.GetLine(*combatSys.combatMesfileIdx, &mesLine))
+	{
+		mesLine.value = conds.mCondDisarmName;
+	};
+	radEntry.text = (char*)mesLine.value;
+	radEntry.helpId = conds.hashmethods.StringHash("TAG_DISARM");
+	int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Offense);
+	radialMenus.AddChildNode(args.objHndCaller, &radEntry, parentNode);
+	return 0;
+}
 
 #pragma endregion

@@ -82,9 +82,21 @@ public:
 static struct D20SystemAddresses : AddressTable {
 
 	void(__cdecl*  GlobD20ActnSetTarget)(objHndl objHnd, LocAndOffsets * loc);
+	uint32_t(__cdecl* LocationCheckStdAttack)(D20Actn*, TurnBasedStatus*, LocAndOffsets*);
+	uint32_t (__cdecl*ActionCostStandardAttack)(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp);
+	uint32_t(__cdecl*sub_1008EDF0)(D20Actn * d20a, int flags);
+	uint32_t(__cdecl*AddToSeqStdAttack)(D20Actn*, ActnSeq*, TurnBasedStatus*);
+	uint32_t(__cdecl*AiCheckStdAttack)(D20Actn*, TurnBasedStatus*);
+	uint32_t(__cdecl*ActionCheckStdAttack)(D20Actn*, TurnBasedStatus*);
 	D20SystemAddresses()
 	{
 		rebase(GlobD20ActnSetTarget,0x10092E50); 
+		rebase(LocationCheckStdAttack, 0x1008C910);
+		rebase(ActionCostStandardAttack, 0x100910F0);
+		rebase(sub_1008EDF0, 0x1008EDF0);
+		rebase(AddToSeqStdAttack, 0x100955E0);
+		rebase(AiCheckStdAttack, 0x1008C4F0);
+		rebase(ActionCheckStdAttack, 0x1008C910);
 	}
 } addresses;
 
@@ -112,14 +124,21 @@ void D20System::NewD20ActionsInit()
 	d20Defs[D20A_DIVINE_MIGHT].actionCost = _ActionCostNull;
 	d20Defs[D20A_DIVINE_MIGHT].flags = 0;
 	
-	d20Defs[D20A_DISARM].addToSeqFunc = _AddToSeqWithTarget;
-	d20Defs[D20A_DISARM].aiCheckMaybe = _StdAttackAiCheck;
-	d20Defs[D20A_DISARM].actionCheckFunc = _ActionCheckDisarm;
-	d20Defs[D20A_DISARM].locCheckFunc = nullptr;
-	d20Defs[D20A_DISARM].performFunc = _PerformDisarm;
-	d20Defs[D20A_DISARM].actionFrameFunc = _ActionFrameDisarm;
-	d20Defs[D20A_DISARM].actionCost = _ActionCostNull;
-	d20Defs[D20A_DISARM].flags = 0x28908;
+	D20ActionType d20Type = D20A_TRIP;
+	d20Defs[d20Type].addToSeqFunc = _AddToSeqWithTarget;
+	d20Defs[d20Type].aiCheckMaybe = _StdAttackAiCheck;
+	d20Defs[d20Type].actionCheckFunc = _ActionCheckDisarm;
+	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
+	d20Defs[d20Type].performFunc = _PerformDisarm;
+	d20Defs[d20Type].actionFrameFunc = _ActionFrameDisarm;
+	d20Defs[d20Type].actionCost = addresses.ActionCostStandardAttack;
+	d20Defs[d20Type].actionCost = _ActionCostNull; // just for testing - REMOVE!!!
+	d20Defs[d20Type].pickerFuncMaybe = addresses.sub_1008EDF0;
+	d20Defs[d20Type].flags = 166184; // 0x28908;
+
+
+	d20Defs[D20A_DISARM] = d20Defs[D20A_STANDARD_ATTACK];
+	d20Defs[d20Type].actionCost = _ActionCostNull; // just for testing - REMOVE!!!
 }
 
 D20System::D20System()
@@ -780,11 +799,6 @@ uint32_t _PerformDisarm(D20Actn* d20a)
 
 uint32_t _ActionFrameDisarm(D20Actn* d20a)
 {
-	if (!(d20a->d20Caf & D20CAF_HIT))
-	{
-		objects.floats->FloatCombatLine(d20a->d20APerformer, 29);
-		return 0;
-	}
 
 	if (combatSys.DisarmCheck(d20a->d20APerformer, d20a->d20ATarget))
 	{

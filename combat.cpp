@@ -7,6 +7,7 @@
 #include "temple_functions.h"
 #include "party.h"
 #include "location.h"
+#include "bonus.h"
 
 
 class CombatSystemReplacements : public TempleFix
@@ -69,8 +70,19 @@ bool CombatSystem::DisarmCheck(objHndl attacker, objHndl defender)
 {
 	objHndl attackerWeapon = inventory.ItemWornAt(attacker, 3);
 	objHndl defenderWeapon = inventory.ItemWornAt(defender, 3);
-	int rollResult = templeFuncs.diceRoll(1, 20, 0);
-	if (rollResult > 10)
+	int attackerRoll = templeFuncs.diceRoll(1, 20, 0);
+	int attackerSize = dispatch.DispatchGetSizeCategory(attacker);
+	BonusList atkBonlist;
+	bonusSys.bonusAddToBonusList(&atkBonlist, (attackerSize - 5 )* 4,0, 316);
+	attackerRoll += bonusSys.getOverallBonus(&atkBonlist);
+	
+	int defenderRoll = templeFuncs.diceRoll(1, 20, 0);
+	int defenderSize = dispatch.DispatchGetSizeCategory(defender);
+	BonusList defBonlist;
+	bonusSys.bonusAddToBonusList(&defBonlist, (defenderSize - 5) * 4, 0, 316);
+	defenderRoll += bonusSys.getOverallBonus(&defBonlist);
+	
+	if (attackerRoll > defenderRoll)
 		return 1;
 	return 0;
 }

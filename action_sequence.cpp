@@ -70,6 +70,58 @@ public:
 		
 		// new D20Defs
 
+		// addD20AToSeq
+		
+		writeVal = (int)&d20Sys.d20Defs[0].addToSeqFunc;
+	    write(0x1008A125 + 2, &writeVal, sizeof(int));
+
+		//sub_1008A180
+		// 1008A18A  flags
+
+		//1008A4B0
+		// 1008A4B8 flags
+
+
+		// D20ATriggersAoO
+		// 1008A9DA flags
+		// 1008AA10 flags
+
+		//projectileCheckBeforeNextAction
+		// 1008AC99  projectilePerformFunc
+
+		// sub_1008ACC0
+		//1008ACCA flags
+
+		// actSeqSpellHarmful
+		// 1008AD59 flags
+
+		// d20aTriggerCombatCheck
+		// 1008AEBD flags
+
+		// ActionCostProcess
+		// 1008B052 actionCost
+
+		// isSimulsOk
+		// 100926B8 flags + 2 (BYTE2)
+
+		// ActionFrameProcess
+		writeVal = (int)&d20Sys.d20Defs[0].actionFrameFunc;
+		write(0x100934BB + 2, &writeVal, sizeof(int));
+
+		// TurnBasedStatusUpdate
+		// 10093980  aiCheck
+
+		// seqCheckAction
+		// 10094C85 actionCheckFunc 
+
+		// seqCheckFuncs
+		// 10094D1C  tgtCheck
+		// 10094D57 actionCheckFunc
+		// 10094D81 locCheckFunc
+
+		// moveSequenceParse
+		// 1009538C actionCost
+
 		// seqAddWithTarget
 		writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
 		write(0x1009559F + 2, &writeVal, sizeof(int));
@@ -95,7 +147,10 @@ public:
 		writeVal = ((int)&d20Sys.d20Defs[0].flags) + 2;
 		write(0x100964F9 + 2, &writeVal, sizeof(int));
 
-		
+		// sub_10097060
+		// 100970BB pickerMaybe
+		// 100970EB pickerMaybe
+		// 10097111 pickerMaybe
 
 		// sub_10097320
 		writeVal = (int)&d20Sys.d20Defs[0].flags;
@@ -104,15 +159,28 @@ public:
 		write(0x1009753B + 2, &writeVal, sizeof(int));
 		writeVal = (int)&d20Sys.d20Defs[0].aiCheckMaybe;
 		write(0x1009754D + 2, &writeVal, sizeof(int));
-		writeVal = (int)&d20Sys.d20Defs[0].unknownFunc3;
+		writeVal = (int)&d20Sys.d20Defs[0].pickerFuncMaybe;
 		write(0x100976C9 + 2, &writeVal, sizeof(int));
 
+		// sub_100977A0
+		// 100977C2 flags
+		// 10097825 flags
+		// 100978EF flags
 		
 		// ActionAddToSeq
 		writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
 		write(0x10097C7E + 2, &writeVal, sizeof(int));
 		
-		
+		// curSeqNext
+		// 10099026 flags+1 (BYTE1)
+
+		//actionPerform
+		// 100998D4 performFunc
+
+		// sub_10099B10
+		// 10099C2E projectilePerformFunc
+
+
 
 		
 

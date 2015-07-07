@@ -240,8 +240,8 @@ void HourglassUpdate(int a3, int a4, int flags)
 					v33 |= 2;
 				if (actSeq->d20ActArray[i].d20ActType != D20A_NONE)
 				{
-					if (d20Sys.d20Defs[actSeq->d20ActArray[i].d20ActType].unknownFunc3)
-						d20Sys.d20Defs[actSeq->d20ActArray[i].d20ActType].unknownFunc3(&actSeq->d20ActArray[i], v33);
+					if (d20Sys.d20Defs[actSeq->d20ActArray[i].d20ActType].pickerFuncMaybe)
+						d20Sys.d20Defs[actSeq->d20ActArray[i].d20ActType].pickerFuncMaybe(&actSeq->d20ActArray[i], v33);
 				}
 			}
 		}
