@@ -8,6 +8,7 @@
 #include "party.h"
 #include "location.h"
 #include "bonus.h"
+#include "history.h"
 
 
 class CombatSystemReplacements : public TempleFix
@@ -74,17 +75,18 @@ bool CombatSystem::DisarmCheck(objHndl attacker, objHndl defender)
 	int attackerSize = dispatch.DispatchGetSizeCategory(attacker);
 	BonusList atkBonlist;
 	bonusSys.bonusAddToBonusList(&atkBonlist, (attackerSize - 5 )* 4,0, 316);
-	attackerRoll += bonusSys.getOverallBonus(&atkBonlist);
+	int attackerResult = attackerRoll + bonusSys.getOverallBonus(&atkBonlist);
 	
 	int defenderRoll = templeFuncs.diceRoll(1, 20, 0);
 	int defenderSize = dispatch.DispatchGetSizeCategory(defender);
 	BonusList defBonlist;
 	bonusSys.bonusAddToBonusList(&defBonlist, (defenderSize - 5) * 4, 0, 316);
-	defenderRoll += bonusSys.getOverallBonus(&defBonlist);
+	int defenderResult = defenderRoll + bonusSys.getOverallBonus(&defBonlist);
+	int attackerSucceeded = attackerResult > defenderResult;
+	int rollHistId = histSys.RollHistoryAddType6OpposedCheck(attacker, defender, attackerRoll, defenderRoll, &atkBonlist, &defBonlist, 5062, 144 - attackerSucceeded, 1);
+	histSys.CreateRollHistoryString(rollHistId);
 	
-	if (attackerRoll > defenderRoll)
-		return 1;
-	return 0;
+	return attackerSucceeded;
 }
 
 void CombatSystem::enterCombat(objHndl objHnd)

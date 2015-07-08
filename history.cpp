@@ -9,7 +9,9 @@
 
 class HistSysReplacements : public TempleFix
 {
-	macTempleFix(History System)
+public: 
+	const char* name() override { return "History System" "Function Replacements";} 
+	void apply() override 
 	{
 		
 	}
@@ -25,13 +27,18 @@ struct HistorySystemAddresses : AddressTable
 	int (__cdecl *RollHistoryType1Add)(objHndl objHnd, objHndl objHnd2, DamagePacket *damPkt);
 	int(__cdecl *RollHistoryType2Add)(objHndl objHnd, objHndl objHnd2, int skillIdx, int dicePacked, int rollResult, int DC, BonusList *bonlist);
 	int (__cdecl *RollHistoryType3Add)(objHndl obj, int DC, int saveType, int flags, int dicePacked, int rollResult, BonusList *bonListIn);
+	int (__cdecl *RollHistoryAddType6OpposedCheck)(objHndl attacker, objHndl defender, int attackerRoll, int defenderRoll, BonusList* attackerBonlist, BonusList* defenderBonlist, int combatMesLineTitle, int combatMesLineResult, int flag);
+	int (__cdecl*CreateRollHistoryString)(int histId);
 	HistorySystemAddresses()
 	{
-		rebase(rollUiMesHandle, 0x102B0168);
-		rebase(rollSerialNumber, 0x102B016C);
+
 		rebase(RollHistoryType1Add, 0x10047C80);
 		rebase(RollHistoryType2Add, 0x10047CF0);
 		rebase(RollHistoryType3Add, 0x10047D90);
+		rebase(RollHistoryAddType6OpposedCheck, 0x10047F70);
+		rebase(CreateRollHistoryString, 0x100DFFF0);
+		rebase(rollUiMesHandle, 0x102B0168);
+		rebase(rollSerialNumber, 0x102B016C);
 		rebase(histArray, 0x109DDA20);
 	}
 } addresses;
@@ -41,6 +48,16 @@ struct HistorySystemAddresses : AddressTable
 #pragma region History System Implementation
 HistorySystem histSys;
 
+
+int HistorySystem::RollHistoryAddType6OpposedCheck(objHndl attacker, objHndl defender, int attackerRoll, int defenderRoll, BonusList* attackerBonlist, BonusList* defenderBonlist, int combatMesLineTitle, int combatMesLineResult, int flag)
+{
+	return addresses.RollHistoryAddType6OpposedCheck(attacker, defender, attackerRoll, defenderRoll, attackerBonlist, defenderBonlist, combatMesLineTitle, combatMesLineResult, flag);
+}
+
+int HistorySystem::CreateRollHistoryString(int histId)
+{
+	return addresses.CreateRollHistoryString(histId);
+}
 
 HistorySystem::HistorySystem()
 {

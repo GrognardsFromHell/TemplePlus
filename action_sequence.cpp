@@ -76,33 +76,51 @@ public:
 	    write(0x1008A125 + 2, &writeVal, sizeof(int));
 
 		//sub_1008A180
-		// 1008A18A  flags
+		writeVal = (int)&d20Sys.d20Defs[0].flags;
+		write(0x1008A18A + 2, &writeVal, sizeof(int));
+
 
 		//1008A4B0
-		// 1008A4B8 flags
+		writeVal = (int)&d20Sys.d20Defs[0].flags;
+		write(0x1008A4B8 + 2, &writeVal, sizeof(int));
 
 
 		// D20ATriggersAoO
-		// 1008A9DA flags
-		// 1008AA10 flags
+		writeVal = (int)&d20Sys.d20Defs[0].flags;
+		write(0x1008A9DA + 2, &writeVal, sizeof(int));
+		write(0x1008AA10 + 2, &writeVal, sizeof(int));
+
 
 		//projectileCheckBeforeNextAction
-		// 1008AC99  projectilePerformFunc
+		writeVal = (int)&d20Sys.d20Defs[0].projectilePerformFunc;
+		write(0x1008AC99 + 2, &writeVal, sizeof(int));
 
 		// sub_1008ACC0
-		//1008ACCA flags
+		writeVal = (int)&d20Sys.d20Defs[0].flags;
+		write(0x1008ACCA + 2, &writeVal, sizeof(int));
 
 		// actSeqSpellHarmful
-		// 1008AD59 flags
+		//  flags
+		writeVal = (int)&d20Sys.d20Defs[0].flags;
+		write(0x1008AD59 + 2, &writeVal, sizeof(int));
 
 		// d20aTriggerCombatCheck
-		// 1008AEBD flags
+		//  flags
+		writeVal = (int)&d20Sys.d20Defs[0].flags;
+		write(0x1008AEBD + 2, &writeVal, sizeof(int));
+
 
 		// ActionCostProcess
 		// 1008B052 actionCost
+		writeVal = (int)&d20Sys.d20Defs[0].actionCost;
+		write(0x1008B052 + 2, &writeVal, sizeof(int));
+
 
 		// isSimulsOk
 		// 100926B8 flags + 2 (BYTE2)
+		writeVal = ((int)&d20Sys.d20Defs[0].flags) + 2;
+		write(0x100926B8 + 2, &writeVal, sizeof(int));
+
 
 		// ActionFrameProcess
 		writeVal = (int)&d20Sys.d20Defs[0].actionFrameFunc;
@@ -110,17 +128,31 @@ public:
 
 		// TurnBasedStatusUpdate
 		// 10093980  aiCheck
+		writeVal = (int)&d20Sys.d20Defs[0].aiCheckMaybe;
+		write(0x10093980 + 2, &writeVal, sizeof(int));
+
 
 		// seqCheckAction
 		// 10094C85 actionCheckFunc 
+		writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
+		write(0x10094C85 + 2, &writeVal, sizeof(int));
+
 
 		// seqCheckFuncs
+		writeVal = (int)&d20Sys.d20Defs[0].tgtCheckFunc;
+		write(0x10094D1C + 2, &writeVal, sizeof(int));
+		writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
+		write(0x10094D57 + 2, &writeVal, sizeof(int));
+		writeVal = (int)&d20Sys.d20Defs[0].locCheckFunc;
+		write(0x10094D81 + 2, &writeVal, sizeof(int));
 		// 10094D1C  tgtCheck
 		// 10094D57 actionCheckFunc
 		// 10094D81 locCheckFunc
 
 		// moveSequenceParse
 		// 1009538C actionCost
+		writeVal = (int)&d20Sys.d20Defs[0].actionCost;
+		write(0x1009538C + 2, &writeVal, sizeof(int));
 
 		// seqAddWithTarget
 		writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
@@ -151,6 +183,12 @@ public:
 		// 100970BB pickerMaybe
 		// 100970EB pickerMaybe
 		// 10097111 pickerMaybe
+		writeVal = (int)&d20Sys.d20Defs[0].pickerFuncMaybe;
+		write(0x100970BB + 2, &writeVal, sizeof(int));
+		writeVal = (int)&d20Sys.d20Defs[0].pickerFuncMaybe;
+		write(0x100970EB + 2, &writeVal, sizeof(int));
+		writeVal = (int)&d20Sys.d20Defs[0].pickerFuncMaybe;
+		write(0x10097111 + 2, &writeVal, sizeof(int));
 
 		// sub_10097320
 		writeVal = (int)&d20Sys.d20Defs[0].flags;
@@ -166,19 +204,34 @@ public:
 		// 100977C2 flags
 		// 10097825 flags
 		// 100978EF flags
-		
+		writeVal = (int)&d20Sys.d20Defs[0].flags;
+		write(0x100977C2 + 2, &writeVal, sizeof(int));
+		writeVal = (int)&d20Sys.d20Defs[0].flags;
+		write(0x10097825 + 2, &writeVal, sizeof(int));
+		writeVal = (int)&d20Sys.d20Defs[0].flags;
+		write(0x100978EF + 2, &writeVal, sizeof(int));
+
 		// ActionAddToSeq
 		writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
 		write(0x10097C7E + 2, &writeVal, sizeof(int));
 		
 		// curSeqNext
 		// 10099026 flags+1 (BYTE1)
+		writeVal = ((int)&d20Sys.d20Defs[0].flags) + 1;
+		write(0x10099026 + 2, &writeVal, sizeof(int));
+
 
 		//actionPerform
 		// 100998D4 performFunc
+		writeVal = (int)&d20Sys.d20Defs[0].performFunc;
+		write(0x100998D4 + 2, &writeVal, sizeof(int));
+
 
 		// sub_10099B10
 		// 10099C2E projectilePerformFunc
+		writeVal = (int)&d20Sys.d20Defs[0].projectilePerformFunc;
+		write(0x10099C2E + 2, &writeVal, sizeof(int));
+
 
 
 

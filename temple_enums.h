@@ -1925,7 +1925,7 @@ enum enum_disp_type : uint32_t {
 	dispType39,
 	dispTypeGetMoveSpeedBase,
 	dispTypeGetMoveSpeed,
-	dispType42,
+	dispTypeAbilityCheckModifier, // only used in Trip as far as I can tell for stuff like Sickened condition
 	dispTypeGetAttackerConcealmentMissChance, // attacker penalty (e.g. if attacker is blind). Also applies to stuff like Blink spell
 	dispTypeCountersongSaveThrow,
 	dispTypeSpellResistanceMod,

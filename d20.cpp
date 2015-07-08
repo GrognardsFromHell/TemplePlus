@@ -124,7 +124,7 @@ void D20System::NewD20ActionsInit()
 	d20Defs[D20A_DIVINE_MIGHT].actionCost = _ActionCostNull;
 	d20Defs[D20A_DIVINE_MIGHT].flags = 0;
 	
-	D20ActionType d20Type = D20A_TRIP;
+	D20ActionType d20Type = D20A_DISARM;
 	d20Defs[d20Type].addToSeqFunc = _AddToSeqWithTarget;
 	d20Defs[d20Type].aiCheckMaybe = _StdAttackAiCheck;
 	d20Defs[d20Type].actionCheckFunc = _ActionCheckDisarm;
@@ -137,7 +137,7 @@ void D20System::NewD20ActionsInit()
 	d20Defs[d20Type].flags = 166184; // 0x28908;
 
 
-	d20Defs[D20A_DISARM] = d20Defs[D20A_STANDARD_ATTACK];
+	//d20Defs[D20A_DISARM] = d20Defs[D20A_STANDARD_ATTACK];
 	d20Defs[d20Type].actionCost = _ActionCostNull; // just for testing - REMOVE!!!
 }
 
