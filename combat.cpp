@@ -67,23 +67,37 @@ objHndl CombatSystem::GetWeapon(AttackPacket* attackPacket)
 	return result;
 }
 
-bool CombatSystem::DisarmCheck(objHndl attacker, objHndl defender)
+bool CombatSystem::DisarmCheck(objHndl attacker, objHndl defender, D20Actn* d20a)
 {
 	objHndl attackerWeapon = inventory.ItemWornAt(attacker, 3);
 	objHndl defenderWeapon = inventory.ItemWornAt(defender, 3);
 	int attackerRoll = templeFuncs.diceRoll(1, 20, 0);
 	int attackerSize = dispatch.DispatchGetSizeCategory(attacker);
 	BonusList atkBonlist;
-	bonusSys.bonusAddToBonusList(&atkBonlist, (attackerSize - 5 )* 4,0, 316);
-	int attackerResult = attackerRoll + bonusSys.getOverallBonus(&atkBonlist);
+	DispIoAttackBonus dispIoAtkBonus;
+	bonusSys.bonusAddToBonusList(&dispIoAtkBonus.bonlist, (attackerSize - 5 )* 4,0, 316);
 	
+	dispIoAtkBonus.attackPacket.weaponUsed = attackerWeapon;
+	dispatch.DispatchAttackBonus(attacker, defender, &dispIoAtkBonus, dispType72, 0); // buckler penalty
+	dispatch.DispatchAttackBonus(attacker, 0, &dispIoAtkBonus, dispTypeToHitBonus2, 0); // to hit bonus2
+	int atkToHitBonus = dispatch.DispatchAttackBonus(defender, 0, &dispIoAtkBonus, dispTypeToHitBonusFromDefenderCondition, 0); 
+	int attackerResult = attackerRoll + bonusSys.getOverallBonus(&dispIoAtkBonus.bonlist);
+
 	int defenderRoll = templeFuncs.diceRoll(1, 20, 0);
 	int defenderSize = dispatch.DispatchGetSizeCategory(defender);
 	BonusList defBonlist;
-	bonusSys.bonusAddToBonusList(&defBonlist, (defenderSize - 5) * 4, 0, 316);
-	int defenderResult = defenderRoll + bonusSys.getOverallBonus(&defBonlist);
+	DispIoAttackBonus dispIoDefBonus;
+	bonusSys.bonusAddToBonusList(&dispIoDefBonus.bonlist, (defenderSize - 5) * 4, 0, 316);
+	
+	
+	dispIoDefBonus.attackPacket.weaponUsed = attackerWeapon;
+	dispatch.DispatchAttackBonus(defender, 0, &dispIoDefBonus, dispType72, 0); // buckler penalty
+	dispatch.DispatchAttackBonus(defender, 0, &dispIoDefBonus, dispTypeToHitBonus2, 0); // to hit bonus2
+	int defToHitBonus = dispatch.DispatchAttackBonus(attacker, 0, &dispIoDefBonus, dispTypeToHitBonusFromDefenderCondition, 0);
+	int defenderResult = defenderRoll + bonusSys.getOverallBonus(&dispIoDefBonus.bonlist);
+
 	int attackerSucceeded = attackerResult > defenderResult;
-	int rollHistId = histSys.RollHistoryAddType6OpposedCheck(attacker, defender, attackerRoll, defenderRoll, &atkBonlist, &defBonlist, 5062, 144 - attackerSucceeded, 1);
+	int rollHistId = histSys.RollHistoryAddType6OpposedCheck(attacker, defender, attackerRoll, defenderRoll, &dispIoAtkBonus.bonlist, &dispIoDefBonus.bonlist, 5109, 144 - attackerSucceeded, 1);
 	histSys.CreateRollHistoryString(rollHistId);
 	
 	return attackerSucceeded;

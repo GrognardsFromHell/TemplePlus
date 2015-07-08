@@ -353,7 +353,7 @@ int DispatcherSystem::DispatchGetSizeCategory(objHndl obj)
 	if (dispatcherValid(dispatcher))
 	{
 		dispIo.dispIOType = dispIOTypeQuery;
-		dispIo.return_val = objects.GetSize(obj);
+		dispIo.return_val = objects.getInt32(obj, obj_f_size);
 		dispIo.data1 = 0;
 		dispIo.data2 = 0;
 		DispatcherProcessor(

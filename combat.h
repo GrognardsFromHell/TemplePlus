@@ -12,6 +12,7 @@
 */
 #define COMBAT_ACTIVATION_DISTANCE 42.5 
 
+struct D20Actn;
 uint32_t Combat_GetMesfileIdx_CombatMes();
 
 struct CombatSystem : AddressTable {
@@ -24,7 +25,7 @@ struct CombatSystem : AddressTable {
 	*/
 	int GetEnemiesCanMelee(objHndl obj, objHndl* canMeleeList);
 	objHndl GetWeapon(AttackPacket* attackPacket);
-	bool DisarmCheck(objHndl attacker, objHndl defender);
+	bool DisarmCheck(objHndl attacker, objHndl defender, D20Actn* d20a);
 	int (__cdecl* IsFlankedBy)(objHndl victim, objHndl attacker);
 	/*
 		Use for the non-lethal brawl.

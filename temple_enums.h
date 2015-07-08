@@ -1900,7 +1900,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeSaveThrowSpellResistanceBonus, // only used for Inward Magic Circle
 	dispTypeToHitBonusBase,
 	dispTypeToHitBonus2,
-	dispType17,
+	dispTypeToHitBonusFromDefenderCondition, // e.g. if the defender has Blindness, the attacker will get a bonus for his To Hit
 	dispTypeDealingDamage,
 	dispTypeTakingDamage,
 	dispTypeDealingDamage2, 

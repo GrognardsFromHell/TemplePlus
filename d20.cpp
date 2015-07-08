@@ -800,12 +800,12 @@ uint32_t _PerformDisarm(D20Actn* d20a)
 uint32_t _ActionFrameDisarm(D20Actn* d20a)
 {
 
-	if (combatSys.DisarmCheck(d20a->d20APerformer, d20a->d20ATarget))
+	if (combatSys.DisarmCheck(d20a->d20APerformer, d20a->d20ATarget, d20a))
 	{
 		objects.floats->FloatCombatLine(d20a->d20ATarget, 198);
 		return 0;
 	} 
-	if (combatSys.DisarmCheck(d20a->d20ATarget, d20a->d20APerformer))
+	if (combatSys.DisarmCheck(d20a->d20ATarget, d20a->d20APerformer, d20a))
 	{
 		objects.floats->FloatCombatLine(d20a->d20APerformer, 198);
 		return 0;
