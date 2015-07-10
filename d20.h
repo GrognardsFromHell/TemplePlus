@@ -146,6 +146,32 @@ struct ActionCostPacket
 };
 const auto TestSizeOfActionCostPacket = sizeof(ActionCostPacket); // should be 12 (0xC)
 
+
+enum D20ADF : int{
+	D20ADF_None = 0,
+	D20ADF_Unk1 = 1,
+	D20ADF_Unk2 = 2,
+	D20ADF_Movement = 4,
+	D20ADF_TargetSingleExcSelf = 8,
+	D20ADF_MagicEffectTargeting = 0x10,
+	D20ADF_Unk20 = 0x20,
+	D20ADF_Unk40 = 0x40,
+	D20ADF_QueryForAoO = 0x80, // will trigger an AoO depending on a D20 Query for Action_Triggers_AOO
+	D20ADF_TriggersAoO = 0x100,
+	D20ADF_TargetSingleIncSelf = 0x200,
+	D20ADF_TargetingBasedOnD20Data = 0x400,
+	D20ADF_TriggersCombat = 0x800, // might be somewhat more general actually
+	D20ADF_CallLightningTargeting = 0x1000,
+	D20ADF_Unk2000 = 0x2000,
+	D20ADF_Unk4000 = 0x4000,
+	D20ADF_Unk8000 = 0x8000, // perhaps indicates a followup action, or to record what the last action was
+	D20ADF_TargetContainer = 0x10000,
+	D20ADF_SimulsCompatible = 0x20000,
+	D20ADF_DrawPathByDefault = 0x40000, // will draw path even without holding ALT
+	D20ADF_PathSthg =   0x80000,
+	D20ADF_Unk100000 = 0x100000
+};
+
 struct D20ActionDef
 {
 	uint32_t (__cdecl *addToSeqFunc)(D20Actn *, ActnSeq *, TurnBasedStatus*iO);
@@ -159,7 +185,7 @@ struct D20ActionDef
 	uint32_t pad_apparently;
 	uint32_t(__cdecl * actionCost)(D20Actn* d20a, TurnBasedStatus* iO, ActionCostPacket * actionCostPacket);
 	uint32_t (__cdecl * pickerFuncMaybe)(D20Actn* d20a, int flags);
-	uint32_t flags; // not D20CAF I think; maybe the STD flags? path query flags?
+	D20ADF flags; // not D20CAF I think; maybe the STD flags? path query flags?
 };
 
 

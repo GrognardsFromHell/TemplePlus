@@ -85,7 +85,7 @@ public:
 		write(0x1008A4B8 + 2, &writeVal, sizeof(int));
 
 
-		// D20ATriggersAoO
+		// D20ActionTriggersAoO
 		writeVal = (int)&d20Sys.d20Defs[0].flags;
 		write(0x1008A9DA + 2, &writeVal, sizeof(int));
 		write(0x1008AA10 + 2, &writeVal, sizeof(int));
@@ -1302,7 +1302,7 @@ uint32_t ActionSequenceSystem::simulsOk(ActnSeq* actSeq)
 	if (numd20as <= 0){ return 1; }
 	auto d20a = &actSeq->d20ActArray[0];
 	auto numStdAttkActns = 0;
-	while (d20a->d20ActType & D20A_STANDARD_ATTACK) // maybe we should add use potion in here, because the co8 critters usually start with that so they can breakfree; then again it might cause intereferences TODO
+	while (d20Sys.d20Defs[d20a->d20ActType].flags & D20ADF_SimulsCompatible)
 	{
 		++d20a;
 		++numStdAttkActns;

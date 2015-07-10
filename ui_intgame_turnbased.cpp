@@ -78,7 +78,7 @@ void HourglassUpdate(int a3, int a4, int flags)
 	float moveSpeed = 0.0;
 	D20ActionType d20aType = d20Sys.globD20Action->d20ActType;
 	TurnBasedStatus tbStat1 ;
-	if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].flags & 0x40000)
+	if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].flags & D20ADF::D20ADF_DrawPathByDefault)
 	{
 		v3 = 1;
 		v4 = 1; 
@@ -176,7 +176,7 @@ void HourglassUpdate(int a3, int a4, int flags)
 		}
 
 		d20aType = d20Sys.globD20Action->d20ActType;
-		if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].flags & 0x40000)
+		if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].flags & D20ADF::D20ADF_DrawPathByDefault)
 		{
 			tbStat1.tbsFlags = tbStat->tbsFlags;
 			tbStat1.surplusMoveDistance = tbStat->surplusMoveDistance;

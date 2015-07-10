@@ -122,7 +122,7 @@ void D20System::NewD20ActionsInit()
 	d20Defs[D20A_DIVINE_MIGHT].performFunc = _DivineMightPerform;
 	// d20Defs[D20A_DIVINE_MIGHT].actionFrameFunc = _DivineMightPerform;
 	d20Defs[D20A_DIVINE_MIGHT].actionCost = _ActionCostNull;
-	d20Defs[D20A_DIVINE_MIGHT].flags = 0;
+	d20Defs[D20A_DIVINE_MIGHT].flags = D20ADF::D20ADF_None;
 	
 	D20ActionType d20Type = D20A_DISARM;
 	d20Defs[d20Type].addToSeqFunc = _AddToSeqWithTarget;
@@ -133,8 +133,11 @@ void D20System::NewD20ActionsInit()
 	d20Defs[d20Type].actionFrameFunc = _ActionFrameDisarm;
 	d20Defs[d20Type].actionCost = addresses.ActionCostStandardAttack;
 	d20Defs[d20Type].pickerFuncMaybe = addresses.sub_1008EDF0;
-	d20Defs[d20Type].flags = 166184; // 0x28908;
-
+	d20Defs[d20Type].flags = (D20ADF) (D20ADF_TargetSingleExcSelf | D20ADF_TriggersAoO | D20ADF_TriggersCombat
+		| D20ADF_Unk8000 | D20ADF_SimulsCompatible ); // 0x28908; // same as Trip
+	
+	// *(int*)&d20Defs[D20A_USE_POTION].flags |= (int)D20ADF_SimulsCompatible;  // need to modify the SimulsEnqueue script because it also checks for san_start_combat being null
+	// *(int*)&d20Defs[D20A_TRIP].flags -= (int)D20ADF_Unk8000;
 
 	//d20Defs[D20A_DISARM] = d20Defs[D20A_STANDARD_ATTACK];
 	//d20Defs[d20Type].actionCost = _ActionCostNull; // just for testing - REMOVE!!!
@@ -315,11 +318,11 @@ int32_t D20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tbStat)
 	if (actSeq->tbStatus.tbsFlags & 0x10)
 		return 0;
 
-	if ( (d20Defs[d20a->d20ActType].flags & 0x80)
+	if ( (d20Defs[d20a->d20ActType].flags & D20ADF::D20ADF_QueryForAoO)
 		&& d20QueryWithData(d20a->d20APerformer, DK_QUE_ActionTriggersAOO, (int)d20a, 0))
 		return 1;
 	
-	if (! (d20Defs[d20a->d20ActType].flags & 0x100))
+	if (!(d20Defs[d20a->d20ActType].flags & D20ADF::D20ADF_TriggersAoO))
 		return 0;
 
 	if (d20a->d20ActType == D20A_TRIP)
