@@ -840,19 +840,29 @@ uint32_t _ActionFrameDisarm(D20Actn* d20a)
 	// counter attempt
 	if (!feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_DISARM))
 	{
-		if (combatSys.DisarmCheck(d20a->d20ATarget, d20a->d20APerformer, d20a))
+		D20Actn d20aCopy;
+		memcpy(&d20aCopy, d20a, sizeof(D20Actn));
+		d20aCopy.d20APerformer = d20a->d20ATarget;
+		d20aCopy.d20ATarget = d20a->d20APerformer;
+		if (!d20Sys.d20Defs[D20A_DISARM].actionCheckFunc(&d20aCopy, nullptr))
 		{
-
-			objHndl weapon = inventory.ItemWornAt(d20a->d20APerformer, 3);
-			if (!weapon)
-				weapon = inventory.ItemWornAt(d20a->d20APerformer, 4);
-			if (weapon)
+			if( animationGoals.PushAttemptAttack(d20aCopy.d20APerformer, d20aCopy.d20ATarget))
+				d20aCopy.animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20aCopy.d20APerformer);
+			if (combatSys.DisarmCheck(d20a->d20ATarget, d20a->d20APerformer, d20a))
 			{
-				inventory.ItemDrop(weapon);
+
+				objHndl weapon = inventory.ItemWornAt(d20a->d20APerformer, 3);
+				if (!weapon)
+					weapon = inventory.ItemWornAt(d20a->d20APerformer, 4);
+				if (weapon)
+				{
+					inventory.ItemDrop(weapon);
+				}
+				objects.floats->FloatCombatLine(d20a->d20APerformer, 198);
+				return 0;
 			}
-			objects.floats->FloatCombatLine(d20a->d20APerformer, 198);
-			return 0;
 		}
+		
 	}
 	
 
