@@ -220,6 +220,11 @@ uint32_t FeatSystem::HasFeatCount(objHndl objHnd, feat_enums featEnum)
 uint32_t FeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classEnum, ::uint32_t rangerSpecializationFeat)
 {
 	return _HasFeatCountByClass(objHnd, featEnum, classEnum, rangerSpecializationFeat);
+}
+
+uint32_t FeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEnum)
+{
+	return _HasFeatCountByClass(objHnd, featEnum, (Stat)0, 0);
 };
 
 uint32_t FeatSystem::FeatListGet(objHndl objHnd, feat_enums* listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat)
@@ -276,7 +281,9 @@ char* FeatSystem::GetFeatDescription(feat_enums feat)
 	MesLine mesLine; 
 
 	mesLine.key = feat + 5000;
-	if (feat >= FEAT_NONE || feat == FEAT_GREATER_WEAPON_SPECIALIZATION)
+	if (feat >= FEAT_NONE
+		|| feat == FEAT_IMPROVED_DISARM
+		|| feat ==  FEAT_GREATER_WEAPON_SPECIALIZATION)
 		getLineResult = mesFuncs.GetLine(feats.featMesNew, &mesLine) == 0;
 	else
 		getLineResult = mesFuncs.GetLine(*feats.featMes, &mesLine) == 0;
@@ -295,7 +302,9 @@ char* FeatSystem::GetFeatPrereqDescription(feat_enums feat)
 	MesLine mesLineFeatDesc; 
 	MesLine mesLineNone;
 	MesHandle * mesHnd = feats.featMes;
-	if (feat >= FEAT_NONE)
+	if (feat >= FEAT_NONE
+		|| feat == FEAT_IMPROVED_DISARM
+		|| feat == FEAT_GREATER_WEAPON_SPECIALIZATION)
 		mesHnd = &feats.featMesNew;
 
 	mesLineNone.key = 9998;

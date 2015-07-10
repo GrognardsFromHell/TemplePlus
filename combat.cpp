@@ -70,13 +70,35 @@ objHndl CombatSystem::GetWeapon(AttackPacket* attackPacket)
 bool CombatSystem::DisarmCheck(objHndl attacker, objHndl defender, D20Actn* d20a)
 {
 	objHndl attackerWeapon = inventory.ItemWornAt(attacker, 3);
+	if (!attackerWeapon)
+		attackerWeapon = inventory.ItemWornAt(attacker, 4);
 	objHndl defenderWeapon = inventory.ItemWornAt(defender, 3);
+	if (!defenderWeapon)
+		defenderWeapon = inventory.ItemWornAt(defender, 4);
 	int attackerRoll = templeFuncs.diceRoll(1, 20, 0);
 	int attackerSize = dispatch.DispatchGetSizeCategory(attacker);
 	BonusList atkBonlist;
 	DispIoAttackBonus dispIoAtkBonus;
+	if (feats.HasFeatCountByClass(attacker, FEAT_IMPROVED_DISARM))
+	{
+		char * featName = feats.GetFeatName(FEAT_IMPROVED_DISARM);
+		bonusSys.bonusAddToBonusListWithDescr(&dispIoAtkBonus.bonlist, 4, 0, 114, featName); // Feat Improved Disarm
+	}
 	bonusSys.bonusAddToBonusList(&dispIoAtkBonus.bonlist, (attackerSize - 5 )* 4,0, 316);
+	if (attackerWeapon)
+	{
+		int attackerWieldType = inventory.GetWieldType(attacker, attackerWeapon);
+		if (attackerWieldType == 0)
+			bonusSys.bonusAddToBonusList(&dispIoAtkBonus.bonlist, -4, 0, 340); // Light Weapon
+		else if (attackerWieldType == 2)
+			bonusSys.bonusAddToBonusList(&dispIoAtkBonus.bonlist, 4, 0, 341); // Two Handed Weapon
+	} else
+	{
+		bonusSys.bonusAddToBonusList(&dispIoAtkBonus.bonlist, -4, 0, 342); // Disarming While Unarmed
+	}
 	
+		
+
 	dispIoAtkBonus.attackPacket.weaponUsed = attackerWeapon;
 	dispatch.DispatchAttackBonus(attacker, defender, &dispIoAtkBonus, dispType72, 0); // buckler penalty
 	dispatch.DispatchAttackBonus(attacker, 0, &dispIoAtkBonus, dispTypeToHitBonus2, 0); // to hit bonus2
@@ -88,7 +110,14 @@ bool CombatSystem::DisarmCheck(objHndl attacker, objHndl defender, D20Actn* d20a
 	BonusList defBonlist;
 	DispIoAttackBonus dispIoDefBonus;
 	bonusSys.bonusAddToBonusList(&dispIoDefBonus.bonlist, (defenderSize - 5) * 4, 0, 316);
-	
+	if (defenderWeapon)
+	{
+		int wieldType = inventory.GetWieldType(defender, defenderWeapon);
+		if (wieldType == 0)
+			bonusSys.bonusAddToBonusList(&dispIoDefBonus.bonlist, -4, 0, 340); // Light Off-hand Weapon
+		else if (wieldType == 2)
+			bonusSys.bonusAddToBonusList(&dispIoDefBonus.bonlist, 4, 0, 341); // Two Handed Weapon
+	}
 	
 	dispIoDefBonus.attackPacket.weaponUsed = attackerWeapon;
 	dispatch.DispatchAttackBonus(defender, 0, &dispIoDefBonus, dispType72, 0); // buckler penalty

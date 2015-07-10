@@ -84,6 +84,7 @@ struct FeatSystem : AddressTable
 	uint32_t racialFeats[ 10 * NUM_RACES ];
 	uint32_t HasFeatCount(objHndl objHnd, feat_enums featEnum);
 	uint32_t HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classEnum, uint32_t rangerSpecializationFeat);
+	uint32_t HasFeatCountByClass(objHndl objHnd, feat_enums featEnum);
 	uint32_t FeatListElective(objHndl objHnd, feat_enums * listOut);
 	uint32_t FeatListGet(objHndl objHnd, feat_enums * listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat);
 	uint32_t FeatExistsInArray(feat_enums featCode, feat_enums * featArray, uint32_t featArrayLen);

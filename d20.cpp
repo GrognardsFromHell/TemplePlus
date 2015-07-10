@@ -132,13 +132,12 @@ void D20System::NewD20ActionsInit()
 	d20Defs[d20Type].performFunc = _PerformDisarm;
 	d20Defs[d20Type].actionFrameFunc = _ActionFrameDisarm;
 	d20Defs[d20Type].actionCost = addresses.ActionCostStandardAttack;
-	d20Defs[d20Type].actionCost = _ActionCostNull; // just for testing - REMOVE!!!
 	d20Defs[d20Type].pickerFuncMaybe = addresses.sub_1008EDF0;
 	d20Defs[d20Type].flags = 166184; // 0x28908;
 
 
 	//d20Defs[D20A_DISARM] = d20Defs[D20A_STANDARD_ATTACK];
-	d20Defs[d20Type].actionCost = _ActionCostNull; // just for testing - REMOVE!!!
+	//d20Defs[d20Type].actionCost = _ActionCostNull; // just for testing - REMOVE!!!
 }
 
 D20System::D20System()
@@ -309,9 +308,34 @@ void D20System::d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx)
 	//void d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx);//1008AE90    ActnSeq * @<eax>
 }
 
-int32_t D20System::d20aTriggersAOOCheck(D20Actn* d20a, void* iO)
+int32_t D20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tbStat)
 {
-	uint32_t result = 0;
+	//uint32_t result = 0;
+	ActnSeq * actSeq = *actSeqSys.actSeqCur;
+	if (actSeq->tbStatus.tbsFlags & 0x10)
+		return 0;
+
+	if ( (d20Defs[d20a->d20ActType].flags & 0x80)
+		&& d20QueryWithData(d20a->d20APerformer, DK_QUE_ActionTriggersAOO, (int)d20a, 0))
+		return 1;
+	
+	if (! (d20Defs[d20a->d20ActType].flags & 0x100))
+		return 0;
+
+	if (d20a->d20ActType == D20A_TRIP)
+		return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_TRIP) == 0;
+
+	if (d20a->d20ActType == D20A_DISARM)
+		return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_DISARM) == 0;
+
+	if (d20a->d20Caf & D20CAF_TOUCH_ATTACK
+		|| d20Sys.GetAttackWeapon(d20a->d20APerformer, d20a->data1, (D20CAF)d20a->d20Caf) 
+		|| dispatch.DispatchD20ActionCheck(d20a, tbStat, dispTypeGetCritterNaturalAttacksNum))
+		return 0;
+
+	return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_UNARMED_STRIKE) == 0;
+
+	/*
 	__asm{
 		push esi;
 		push ecx;
@@ -329,6 +353,7 @@ int32_t D20System::d20aTriggersAOOCheck(D20Actn* d20a, void* iO)
 		pop esi;
 	}
 	return result; //_d20aTriggersAOO(void * iO); // d20a @<esi> // 1008A9C0
+	*/
 }
 
 uint32_t D20System::tumbleCheck(D20Actn* d20a)
@@ -802,14 +827,34 @@ uint32_t _ActionFrameDisarm(D20Actn* d20a)
 
 	if (combatSys.DisarmCheck(d20a->d20APerformer, d20a->d20ATarget, d20a))
 	{
+		
+		objHndl weapon = inventory.ItemWornAt(d20a->d20ATarget, 3);
+		if (!weapon)
+			weapon = inventory.ItemWornAt(d20a->d20ATarget, 4);
+		if (weapon)
+			inventory.ItemDrop(weapon); 
 		objects.floats->FloatCombatLine(d20a->d20ATarget, 198);
 		return 0;
 	} 
-	if (combatSys.DisarmCheck(d20a->d20ATarget, d20a->d20APerformer, d20a))
+
+	// counter attempt
+	if (!feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_DISARM))
 	{
-		objects.floats->FloatCombatLine(d20a->d20APerformer, 198);
-		return 0;
+		if (combatSys.DisarmCheck(d20a->d20ATarget, d20a->d20APerformer, d20a))
+		{
+
+			objHndl weapon = inventory.ItemWornAt(d20a->d20APerformer, 3);
+			if (!weapon)
+				weapon = inventory.ItemWornAt(d20a->d20APerformer, 4);
+			if (weapon)
+			{
+				inventory.ItemDrop(weapon);
+			}
+			objects.floats->FloatCombatLine(d20a->d20APerformer, 198);
+			return 0;
+		}
 	}
+	
 
 	return 0;
 };

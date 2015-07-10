@@ -55,7 +55,7 @@ struct D20System : AddressTable
 	void GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc);
 	void GlobD20ActnInit();
 	void d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx);//1008AE90    ActnSeq * @<eax>
-	int32_t d20aTriggersAOOCheck(D20Actn * d20a, void * iO);// 1008A9C0
+	int D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tbStat);// 1008A9C0
 	uint32_t tumbleCheck(D20Actn*);
 	void D20ActnSetSpellData(D20SpellData* d20SpellData, uint32_t spellEnumOrg, uint32_t spellClassCode, uint32_t spellSlotLevel, uint32_t itemSpellData, uint32_t metaMagicData);
 	void GlobD20ActnSetSpellData(D20SpellData* d20SpellData);

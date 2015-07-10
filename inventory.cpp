@@ -55,9 +55,19 @@ ArmorType InventorySystem::GetArmorType(int armorFlags)
 	return (ArmorType) (armorFlags & (ARMOR_TYPE_LIGHT | ARMOR_TYPE_MEDIUM | ARMOR_TYPE_HEAVY) );
 }
 
+int InventorySystem::ItemDrop(objHndl item)
+{
+	return _ItemDrop(item);
+}
+
 obj_f InventorySystem::GetInventoryListField(objHndl objHnd)
 {
 	if (objects.IsCritter(objHnd)) 	return obj_f_critter_inventory_list_idx;
 	if (objects.IsContainer(objHnd)) return obj_f_container_inventory_list_idx;
 	return (obj_f)0;
+}
+
+int InventorySystem::ItemRemove(objHndl item)
+{
+	return _ItemRemove(item);
 }

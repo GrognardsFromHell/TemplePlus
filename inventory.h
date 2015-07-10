@@ -31,6 +31,7 @@ struct InventorySystem : AddressTable
 	int IsNormalCrossbow(objHndl weapon);
 	int IsThrowingWeapon(objHndl weapon);
 	ArmorType GetArmorType(int armorFlags);
+	int ItemDrop(objHndl item);
 	/*
 		0 - light weapon; 1 - can wield one handed; 2 - must wield two handed; 3 (???)
 	*/
@@ -53,6 +54,8 @@ struct InventorySystem : AddressTable
 	*/
 	void (__cdecl *Clear)(objHndl parent, BOOL keepPersistent);
 
+	int ItemRemove(objHndl item);
+
 	InventorySystem()
 	{
 		rebase(GetSubstituteInventory, 0x1007F5B0);
@@ -70,13 +73,17 @@ struct InventorySystem : AddressTable
 
 		rebase(IdentifyAll, 0x10064C70);
 		rebase(WieldBestAll, 0x1006D100);
-		rebase(Clear, 0x10069E00);
+		rebase(Clear,		0x10069E00);
+		rebase(_ItemRemove, 0x10069F60);
+		rebase(_ItemDrop, 0x1006AA60);
 	}
 
 private:
 	int(__cdecl *_SetItemParent)(objHndl item, objHndl parent, int flags);
 	objHndl(__cdecl *_FindItemByName)(objHndl container, int nameId);
 	objHndl(__cdecl *_FindItemByProto)(objHndl container, objHndl proto, bool skipWorn);
+	int(__cdecl*_ItemRemove)(objHndl item);
+	int(__cdecl*_ItemDrop)(objHndl item);
 };
 
 extern InventorySystem inventory;
