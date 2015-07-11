@@ -248,11 +248,16 @@ static struct ActnSeqAddresses : AddressTable{
 
 	int(__cdecl *TouchAttackAddToSeq)(D20Actn* d20Actn, ActnSeq* actnSeq, TurnBasedStatus* turnBasedStatus);
 	void(__cdecl *ActionAddToSeq)();
+	int(__cdecl*ActionSequenceChecksWithPerformerLocation)();
+	void(__cdecl* ActionSequenceRevertPath)(int d20ActnNum);
 	
 	ActnSeqAddresses()
 	{
+		rebase(ActionSequenceRevertPath, 0x10093180);
 		rebase(TouchAttackAddToSeq, 0x10096760);
+		rebase(ActionSequenceChecksWithPerformerLocation, 0x10097000);
 		rebase(ActionAddToSeq,0x10097C20); 
+		
 		
 	}
 
@@ -871,6 +876,16 @@ int ActionSequenceSystem::GetHourglassTransition(int hourglassCurrent, int hourg
 	if (hourglassCurrent == -1)
 		return hourglassCurrent;
 	return turnBasedStatusTransitionMatrix[hourglassCurrent][hourglassCost];
+}
+
+int ActionSequenceSystem::ActionSequenceChecksWithPerformerLocation()
+{
+	return addresses.ActionSequenceChecksWithPerformerLocation();
+}
+
+void ActionSequenceSystem::ActionSequenceRevertPath(int d20ANum)
+{
+	return addresses.ActionSequenceRevertPath(d20ANum);
 }
 
 uint32_t ActionSequenceSystem::ActionCostNull(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, ActionCostPacket* actionCostPacket)

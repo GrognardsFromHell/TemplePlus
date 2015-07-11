@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "common.h"
 #include "weapon.h"
+#include "obj.h"
 
 WeaponSystem weapons;
 
@@ -192,4 +193,141 @@ uint32_t WeaponSystem::IsBardWeapon(WeaponTypes wpnType)
 		return 0;
 	}
 	return 0;
+}
+
+bool WeaponSystem::IsSlashingOrBludgeoning(objHndl weapon)
+{
+	if (!weapon)
+		return 0;
+	WeaponTypes weaponType = (WeaponTypes)objects.getInt32(weapon, obj_f_weapon_type);
+	return IsSlashingOrBludgeoning(weaponType);
+}
+
+bool WeaponSystem::IsSlashingOrBludgeoning(WeaponTypes wpnType)
+{
+	switch (wpnType)
+	{
+	case wt_gauntlet:
+	case wt_light_mace:
+	case wt_sickle:
+	case wt_club:
+	case wt_heavy_mace:
+	case wt_morningstar:
+	case wt_quarterstaff:
+	case wt_sling:
+	case wt_throwing_axe:
+	case wt_light_hammer:
+	case wt_handaxe:
+	case wt_kukri:
+	case wt_sap:
+	case wt_battleaxe:
+	case wt_light_flail:
+	case wt_heavy_flail:
+	case wt_longsword:
+	case wt_scimitar:
+	case wt_warhammer:
+	case wt_falchion:
+	case wt_glaive:
+	case wt_greataxe:
+	case wt_greatclub:
+	case wt_greatsword:
+	case wt_guisarme:
+	case wt_halberd:
+	case wt_scythe:
+	case wt_kama:
+	case wt_halfling_kama:
+	case wt_nunchaku:
+	case wt_bastard_sword:
+	case wt_dwarven_waraxe:
+	case wt_whip:
+	case wt_orc_double_axe:
+	case wt_dire_flail:
+	case wt_gnome_hooked_hammer:
+	case wt_two_bladed_sword:
+	case wt_dwarven_urgrosh:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
+int WeaponSystem::GetBaseHardness(objHndl item)
+{
+	if (!item)
+		return -1;
+	if (objects.GetType(item) == obj_t_weapon)
+	{
+		WeaponTypes weaponType = (WeaponTypes)objects.getInt32(item, obj_f_weapon_type);
+		return GetBaseHardness(weaponType);
+	}
+	if (objects.GetType(item) == obj_t_armor)
+		return 100;
+
+	return 10;
+}
+
+int WeaponSystem::GetBaseHardness(WeaponTypes weapon)
+{
+	switch (weapon){
+	
+	case wt_light_mace:
+	case wt_club:
+	case wt_shortspear:
+	case wt_heavy_mace:
+	case wt_morningstar:
+	case wt_quarterstaff:
+	case wt_spear:
+	case wt_light_crossbow:		// 14
+	case wt_dart:
+	case wt_sling:
+	case wt_heavy_crossbow:		// 17
+	case wt_javelin:
+	case wt_throwing_axe:
+	case wt_light_hammer:
+	case wt_handaxe:
+	case wt_light_lance:
+	case wt_light_pick:
+			
+	case wt_battleaxe:
+	case wt_light_flail:
+			
+	case wt_heavy_pick:
+	case wt_rapier:
+			
+	case wt_trident:
+	case wt_warhammer:
+			
+	case wt_heavy_flail:
+	case wt_glaive:
+	case wt_greataxe:
+	case wt_greatclub:
+			
+	case wt_guisarme:
+	case wt_halberd:
+	case wt_longspear:  //43
+	case wt_ranseur:
+	case wt_scythe:
+	case wt_shortbow:
+	case wt_composite_shortbow:
+	case wt_longbow:
+	case wt_composite_longbow:
+	case wt_halfling_kama: // 50
+			
+	case wt_kama: //54
+
+	case wt_dwarven_waraxe:          // racial weapons - 58 and on
+	case wt_gnome_hooked_hammer:
+	case wt_orc_double_axe:
+			
+	case wt_dwarven_urgrosh:
+	case wt_hand_crossbow:			// 65
+			
+	case wt_whip:
+	case wt_repeating_crossbow:
+	case wt_net:
+			
+		return 5;
+	default: 
+		return 10;
+	}
 }

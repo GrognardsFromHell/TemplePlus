@@ -1409,14 +1409,22 @@ int __cdecl DisarmRadialMenu(DispatcherCallbackArgs args)
 	radEntry.type = RadialMenuEntryType::Action;
 	radEntry.d20ActionType = D20A_DISARM;
 	radEntry.d20ActionData1 = 0;
-	MesLine mesLine;
-	mesLine.key = 5109; // Divine Might
-	if (!mesFuncs.GetLine(*combatSys.combatMesfileIdx, &mesLine))
-	{
-		mesLine.value = conds.mCondDisarmName;
-	};
-	radEntry.text = (char*)mesLine.value;
+	radEntry.text = combatSys.GetCombatMesLine(5109); // Disarm
 	radEntry.helpId = conds.hashmethods.StringHash("TAG_DISARM");
+	int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Offense);
+	radialMenus.AddChildNode(args.objHndCaller, &radEntry, parentNode);
+	return 0;
+}
+
+int __cdecl SunderRadialMenu(DispatcherCallbackArgs args)
+{
+	RadialMenuEntry radEntry;
+	radEntry.SetDefaults();
+	radEntry.type = RadialMenuEntryType::Action;
+	radEntry.d20ActionType = D20A_SUNDER;
+	radEntry.d20ActionData1 = 0;
+	radEntry.text = combatSys.GetCombatMesLine(5110); // Sunder
+	radEntry.helpId = conds.hashmethods.StringHash("TAG_SUNDER");
 	int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Offense);
 	radialMenus.AddChildNode(args.objHndCaller, &radEntry, parentNode);
 	return 0;

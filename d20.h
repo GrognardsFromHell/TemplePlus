@@ -197,6 +197,37 @@ enum SpontCastType : unsigned char{
 	spontCastDruid = 8
 };
 
+
+struct AiTacticDef;
+
+struct AiTactic 
+{
+	AiTacticDef * aiTac;
+	uint32_t field4;
+	objHndl performer;
+	objHndl target;
+	int32_t tacIdx;
+	D20SpellData d20SpellData;
+	uint32_t field24;
+	SpellPacketBody spellPktBody;
+};
+
+struct AiTacticDef
+{
+	char * name;
+	uint32_t(__cdecl * aiFunc)(AiTactic *);
+	uint32_t pad;
+};
+
+
+struct AiStrategy
+{
+	uint32_t field0;
+	AiTacticDef * aiTacDefs[20];
+	uint32_t field54[20];
+	SpellStoreData spellsKnown[20];
+	uint32_t numTactics;
+};
 #pragma endregion 
 
 #pragma region D20 Action Function Replacements
@@ -238,3 +269,6 @@ uint32_t _DivineMightPerform(D20Actn* d20a);
 uint32_t _ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat);
 uint32_t _PerformDisarm(D20Actn* d20a);
 uint32_t _ActionFrameDisarm(D20Actn* d20a);
+
+uint32_t _ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat);
+uint32_t _ActionFrameSunder(D20Actn* d20a);

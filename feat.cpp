@@ -283,7 +283,8 @@ char* FeatSystem::GetFeatDescription(feat_enums feat)
 	mesLine.key = feat + 5000;
 	if (feat >= FEAT_NONE
 		|| feat == FEAT_IMPROVED_DISARM
-		|| feat ==  FEAT_GREATER_WEAPON_SPECIALIZATION)
+		|| feat ==  FEAT_GREATER_WEAPON_SPECIALIZATION
+		|| feat == FEAT_IMPROVED_SUNDER)
 		getLineResult = mesFuncs.GetLine(feats.featMesNew, &mesLine) == 0;
 	else
 		getLineResult = mesFuncs.GetLine(*feats.featMes, &mesLine) == 0;
@@ -304,7 +305,8 @@ char* FeatSystem::GetFeatPrereqDescription(feat_enums feat)
 	MesHandle * mesHnd = feats.featMes;
 	if (feat >= FEAT_NONE
 		|| feat == FEAT_IMPROVED_DISARM
-		|| feat == FEAT_GREATER_WEAPON_SPECIALIZATION)
+		|| feat == FEAT_GREATER_WEAPON_SPECIALIZATION
+		|| feat == FEAT_IMPROVED_SUNDER)
 		mesHnd = &feats.featMesNew;
 
 	mesLineNone.key = 9998;

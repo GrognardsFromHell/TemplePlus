@@ -13,6 +13,10 @@ struct WeaponSystem : AddressTable
 	uint32_t IsWizardWeapon(WeaponTypes wpnType);
 	uint32_t IsElvenWeapon(WeaponTypes wpnType);
 	uint32_t IsBardWeapon(WeaponTypes wpnType);
+	bool IsSlashingOrBludgeoning(objHndl weapon);
+	bool IsSlashingOrBludgeoning(WeaponTypes wpnType);
+	int GetBaseHardness(objHndl item);
+	int GetBaseHardness(WeaponTypes weapon);
 };
 
 extern WeaponSystem weapons;

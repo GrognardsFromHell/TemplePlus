@@ -15,10 +15,7 @@ struct FloatLineSystem : AddressTable
 	void(__cdecl * floatMesLine)(objHndl, int categoryBit, FloatLineColor color, const char *text);
 
 
-	void FloatCombatLine(objHndl obj, int line)
-	{
-		_FloatCombatLine(obj, line);
-	}
+	void FloatCombatLine(objHndl obj, int line);
 	
 	/*
 		Float a text line from mes/spells.mes with an optional prefix and suffix text.

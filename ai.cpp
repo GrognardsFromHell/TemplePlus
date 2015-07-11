@@ -10,28 +10,9 @@
 #include "pathfinding.h"
 
 #pragma region AI System Implementation
+#include "location.h"
 struct AiSystem aiSys;
 
-struct AiTactic {
-	AiTacticDef * aiTac;
-	uint32_t field4;
-	objHndl performer;
-	objHndl target;
-	int32_t tacIdx;
-	D20SpellData d20SpellData;
-	uint32_t field24;
-	SpellPacketBody spellPktBody;
-};
-
-
-struct AiStrategy
-{
-	uint32_t field0;
-	AiTacticDef * aiTacDefs[20];
-	uint32_t field54[20];
-	SpellStoreData spellsKnown[20];
-	uint32_t numTactics;
-};
 
 const auto TestSizeOfAiTactic = sizeof(AiTactic); // should be 2832 (0xB10 )
 const auto TestSizeOfAiStrategy = sizeof(AiStrategy); // should be 808 (0x324)
@@ -43,9 +24,9 @@ AiSystem::AiSystem()
 	actSeq = &actSeqSys;
 	spell = &spellSys;
 	pathfinding = &pathfindingSys;
-	macRebase(aiStrategies, 11868F3C)
-	macRebase(aiStrategiesNum, 11868F40)
-	macRebase(aiTacticDefs, 102E4398)
+	rebase(aiStrategies,0x11868F3C); 
+	rebase(aiStrategiesNum,0x11868F40); 
+	rebase(aiTacticDefs,0x102E4398); 
 	rebase(_AiRemoveFromList, 0x1005A070);
 	rebase(_FleeAdd, 0x1005DE60);
 	rebase(_ShitlistAdd, 0x1005CC10);
@@ -181,6 +162,74 @@ void AiSystem::SetCombatFocus(objHndl npc, objHndl target) {
 void AiSystem::SetWhoHitMeLast(objHndl npc, objHndl target) {
 	templeFuncs.Obj_Set_Field_ObjHnd(npc, obj_f_npc_who_hit_me_last, target);
 }
+
+int AiSystem::TargetClosest(AiTactic* aiTac)
+{
+	objHndl obj; 
+	LocAndOffsets loc; 
+	float dist = 0.0;
+
+	locSys.getLocAndOff(aiTac->performer, &loc);
+	if (combatSys.GetClosestEnemy(aiTac->performer, &loc, &obj, &dist, 0x21))
+	{
+		aiTac->target = obj;
+		
+	}
+	return 0;
+}
+
+int AiSystem::Approach(AiTactic* aiTac)
+{
+	int d20aNum; 
+
+	d20aNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+	if (!aiTac->target)
+		return 0;
+	if (combatSys.IsWithinReach(aiTac->performer, aiTac->target))
+		return 0;
+	actSeqSys.curSeqReset(aiTac->performer);
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_MOVE, 0);
+	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
+	actSeqSys.ActionAddToSeq();
+	if (actSeqSys.ActionSequenceChecksWithPerformerLocation())
+	{
+		actSeqSys.ActionSequenceRevertPath(d20aNum);
+		return 0;
+	}
+	return 1;
+}
+
+int AiSystem::CoupDeGrace(AiTactic* aiTac)
+{
+	int actNum; 
+	objHndl origTarget = aiTac->target;
+	signed int result; // eax@2
+
+	actNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+	aiTac->target = 0i64;
+	combatSys.GetClosestEnemy(aiTac, 1);
+	if (aiTac->target)
+	{
+		if (Approach(aiTac)
+			|| (d20Sys.GlobD20ActnInit(),
+			d20Sys.GlobD20ActnSetTypeAndData1(D20A_COUP_DE_GRACE, 0),
+			d20Sys.GlobD20ActnSetTarget(aiTac->target, 0),
+			actSeqSys.ActionAddToSeq(),
+			!actSeqSys.ActionSequenceChecksWithPerformerLocation()))
+		{
+			return 1;
+		}
+		actSeqSys.ActionSequenceRevertPath(actNum);
+		return 0;
+		
+	}
+
+	aiTac->target = origTarget;
+	return 0;
+
+
+}
 #pragma endregion
 
 #pragma region AI replacement functions
@@ -190,6 +239,16 @@ uint32_t _aiStrategyParse(objHndl objHnd, objHndl target)
 	return aiSys.aiStrategyParse(objHnd, target);
 }
 
+int _AiCoupDeGrace(AiTactic* aiTac)
+{
+	return aiSys.CoupDeGrace(aiTac);
+}
+
+int _AiApproach(AiTactic* aiTac)
+{
+	return aiSys.Approach(aiTac);
+}
+
 class AiReplacements : public TempleFix
 {
 public: 
@@ -197,7 +256,10 @@ public:
 	void apply() override 
 	{
 		logger->info("Replacing AI functions...");
+		replaceFunction(0x100E48D0, _AiApproach);
 		replaceFunction(0x100E50C0, _aiStrategyParse); 
+		replaceFunction(0x100E5DB0, _AiCoupDeGrace);
+		
 	}
 } aiReplacements;
 #pragma endregion 

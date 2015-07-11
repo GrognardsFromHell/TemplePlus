@@ -72,6 +72,8 @@ struct ActionSequenceSystem : AddressTable
 	void ActSeqCurSetSpellPacket(SpellPacketBody* spellPacketBody, int flag);
 	int GetNewHourglassState(objHndl performer, D20ActionType d20ActionType, int d20Data1, int radMenuActualArg, D20SpellData* d20SpellData);
 	int GetHourglassTransition(int hourglassCurrent, int hourglassCost);
+	int ActionSequenceChecksWithPerformerLocation();
+	void ActionSequenceRevertPath(int d20ANum);
 	int (__cdecl *sub_1008B9A0)(D20Actn *d20a, float float1, PathQuery *pathQ);
 	void sub_1008BB40(ActnSeq*actSeq, D20Actn * d20a); // actSeq@<ebx>
 	int(CrossBowSthgReload_1008E8A0)(D20Actn *d20a, ActnSeq*actSeq); //, ActnSeq *actSeq@<ebx>
@@ -123,7 +125,6 @@ private:
 	uint32_t (__cdecl *_actSeqSpellHarmful)(); // ActnSeq* @<ebx> 
 	uint32_t(__cdecl *_combatTriggerSthg)(); // ActnSeq* @<ebx> 
 	uint32_t(__cdecl * _moveSeqD20Sthg)(ActnSeq* actSeq, TurnBasedStatus *actnSthg, float a3, float reach, int a5); //, D20Actn * d20aIn @<eax>
-	
 };
 
 extern ActionSequenceSystem actSeqSys;

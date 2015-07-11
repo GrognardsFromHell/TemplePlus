@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "common.h"
 #include "tig\tig_mes.h"
+#include "d20.h"
 
 
 struct Pathfinding;
@@ -58,6 +59,10 @@ struct AiSystem : AddressTable
 	void SetCombatFocus(objHndl npc, objHndl target);
 	void SetWhoHitMeLast(objHndl npc, objHndl target);
 
+	int TargetClosest(AiTactic * aiTac);
+	int Approach(AiTactic* aiTac);
+	int CoupDeGrace(AiTactic * aiTac);
+
 private:
 	void (__cdecl *_ShitlistAdd)(objHndl npc, objHndl target);
 	void (__cdecl *_AiRemoveFromList)(objHndl npc, objHndl target, int listType);	
@@ -69,10 +74,5 @@ private:
 extern AiSystem aiSys;
 
 
-struct AiTacticDef
-{
-	char * name;
-	uint32_t(__cdecl * aiFunc)(AiTactic *);
-	uint32_t pad;
-};
+
 

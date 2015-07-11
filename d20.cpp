@@ -19,6 +19,7 @@
 #include "tab_file.h"
 #include "combat.h"
 #include "float_line.h"
+#include "weapon.h"
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
@@ -116,6 +117,7 @@ void D20System::NewD20ActionsInit()
 	{
 		tabSys.tabFileParseLines(d20ActionsTabFile);
 	}
+	mesFuncs.Open("tpmes//combat.mes", &combatSys.combatMesNew);
 
 	d20Defs[D20A_DIVINE_MIGHT].addToSeqFunc = _AddToSeqSimple;
 	d20Defs[D20A_DIVINE_MIGHT].actionCheckFunc = _DivineMightCheck;
@@ -136,6 +138,18 @@ void D20System::NewD20ActionsInit()
 	d20Defs[d20Type].flags = (D20ADF) (D20ADF_TargetSingleExcSelf | D20ADF_TriggersAoO | D20ADF_TriggersCombat
 		| D20ADF_Unk8000 | D20ADF_SimulsCompatible ); // 0x28908; // same as Trip
 	
+	d20Type = D20A_SUNDER;
+	d20Defs[d20Type].addToSeqFunc = _AddToSeqWithTarget;
+	d20Defs[d20Type].aiCheckMaybe = _StdAttackAiCheck;
+	d20Defs[d20Type].actionCheckFunc = _ActionCheckSunder;
+	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
+	d20Defs[d20Type].performFunc = _PerformDisarm;
+	d20Defs[d20Type].actionFrameFunc = _ActionFrameSunder;
+	d20Defs[d20Type].actionCost = addresses.ActionCostStandardAttack;
+	d20Defs[d20Type].pickerFuncMaybe = addresses.sub_1008EDF0;
+	d20Defs[d20Type].flags = (D20ADF)(D20ADF_TargetSingleExcSelf | D20ADF_TriggersAoO | D20ADF_TriggersCombat
+		| D20ADF_Unk8000 | D20ADF_SimulsCompatible); // 0x28908; // same as Trip
+
 	// *(int*)&d20Defs[D20A_USE_POTION].flags |= (int)D20ADF_SimulsCompatible;  // need to modify the SimulsEnqueue script because it also checks for san_start_combat being null
 	// *(int*)&d20Defs[D20A_TRIP].flags -= (int)D20ADF_Unk8000;
 
@@ -330,6 +344,10 @@ int32_t D20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tbStat)
 
 	if (d20a->d20ActType == D20A_DISARM)
 		return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_DISARM) == 0;
+
+	if (d20a->d20ActType == D20A_SUNDER)
+		return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_SUNDER) == 0;
+
 
 	if (d20a->d20Caf & D20CAF_TOUCH_ATTACK
 		|| d20Sys.GetAttackWeapon(d20a->d20APerformer, d20a->data1, (D20CAF)d20a->d20Caf) 
@@ -868,6 +886,61 @@ uint32_t _ActionFrameDisarm(D20Actn* d20a)
 		
 	}
 	
+
+	return 0;
+};
+
+
+uint32_t _ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat)
+{
+	objHndl weapon = inventory.ItemWornAt(d20a->d20APerformer, 3);
+	int weapFlags;
+
+	if (!weapon)
+		return 12;
+	weapFlags = objects.getInt32(weapon, obj_f_weapon_flags);
+	if ( weapFlags & OWF_RANGED_WEAPON) // ranged weapon - Need Melee Weapon error
+	{
+		return 12;
+	}
+	
+	if (!weapons.IsSlashingOrBludgeoning(weapon))
+		return 17;
+
+	if (d20a->d20ATarget)
+	{
+		objHndl targetWeapon = inventory.ItemWornAt(d20a->d20ATarget, 3);
+		if (!targetWeapon)
+		{
+			targetWeapon = inventory.ItemWornAt(d20a->d20ATarget, 4);
+			if (targetWeapon)
+				return 0;
+			targetWeapon = inventory.ItemWornAt(d20a->d20ATarget, 11); // shield
+			if (!targetWeapon)
+				return 9;
+		}
+	}
+	else
+		return 9;
+
+	return 0;
+}
+
+
+uint32_t _ActionFrameSunder(D20Actn* d20a)
+{
+
+	if (combatSys.SunderCheck(d20a->d20APerformer, d20a->d20ATarget, d20a))
+	{
+
+		objHndl weapon = inventory.ItemWornAt(d20a->d20ATarget, 3);
+		if (!weapon)
+			weapon = inventory.ItemWornAt(d20a->d20ATarget, 4);
+		if (weapon)
+			inventory.ItemDrop(weapon);
+		//objects.floats->FloatCombatLine(d20a->d20ATarget, 198);
+	}
+
 
 	return 0;
 };
