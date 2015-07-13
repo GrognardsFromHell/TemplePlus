@@ -64,6 +64,7 @@ struct D20System : AddressTable
 	void ExtractAttackNumber(objHndl obj, int attackCode, int * attackNumber, int* dualWielding); // e.g. is it a 2nd attack? (-5 penalty)
 	objHndl GetAttackWeapon(objHndl obj, int attackCode, D20CAF flags);
 	int PerformStandardAttack(D20Actn* d20a);
+	int TargetWithinReachOfLoc(objHndl obj, objHndl target, LocAndOffsets* loc);
 	void (__cdecl *D20StatusInitFromInternalFields)(objHndl objHnd, Dispatcher *dispatcher);
 	void (__cdecl *D20ObjRegistryAppend)(objHndl ObjHnd);
 	void(__cdecl * _d20aTriggerCombatCheck)(int32_t idx);//1008AE90    ActnSeq * @<eax>
@@ -269,6 +270,10 @@ uint32_t _DivineMightPerform(D20Actn* d20a);
 uint32_t _ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat);
 uint32_t _PerformDisarm(D20Actn* d20a);
 uint32_t _ActionFrameDisarm(D20Actn* d20a);
+
+uint32_t _ActionCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat);
+uint32_t LocationCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc);
+uint32_t _PerformDisarmedWeaponRetrieve(D20Actn* d20a);
 
 uint32_t _ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat);
 uint32_t _ActionFrameSunder(D20Actn* d20a);

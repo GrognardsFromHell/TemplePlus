@@ -65,6 +65,7 @@ struct DispatcherSystem : AddressTable
 	DispIoD20Signal* DispIoCheckIoType6(DispIoD20Signal* dispIo);
 	DispIoD20Signal* DispIoCheckIoType6(DispIO* dispIo);
 	DispIoD20Query* DispIoCheckIoType7(DispIoD20Query* dispIo);
+	DispIoD20Query* DispIoCheckIoType7(DispIO* dispIo);
 	DispIOTurnBasedStatus* DispIoCheckIoType8(DispIOTurnBasedStatus* dispIo);
 	DispIoTooltip* DispIoCheckIoType9(DispIoTooltip* dispIo);
 	DispIoBonusAndObj* DispIoCheckIoType10(DispIoBonusAndObj* dispIo);

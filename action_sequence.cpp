@@ -1895,6 +1895,24 @@ uint32_t _ActionCostNull(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacke
 	return actSeqSys.ActionCostNull(d20a, tbStat, acp);
 }
 
+
+uint32_t  _ActionCostMoveAction(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp)
+{
+	acp->hourglassCost = 0;
+	acp->chargeAfterPicker = 0;
+	acp->moveDistCost = 0;
+	if (!(d20->d20Caf & D20CAF_FREE_ACTION) && combatSys.isCombatActive())
+	{
+		acp->hourglassCost = 1;
+		tbStat->surplusMoveDistance = 0;
+		tbStat->numAttacks = 0;
+		tbStat->baseAttackNumCode = 0;
+		tbStat->attackModeCode = 0;
+		tbStat->numBonusAttacks = 0;
+	}
+	return 0;
+};
+
 int _GetNewHourglassState(objHndl performer, D20ActionType d20aType, int d20Data1, int radMenuActualArg, D20SpellData* d20SpellData)
 {
 	return actSeqSys.GetNewHourglassState(performer, d20aType, d20Data1, radMenuActualArg, d20SpellData);

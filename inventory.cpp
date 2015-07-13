@@ -6,6 +6,17 @@
 
 InventorySystem inventory;
 
+struct InventorySystemAddresses : AddressTable
+{
+	int (__cdecl*ItemGetAdvanced)(objHndl item, objHndl parent, int slotIdx, int flags);
+	int(__cdecl*GetParent)(objHndl, objHndl*);
+	InventorySystemAddresses()
+	{
+		rebase(GetParent, 0x10063E80);
+		rebase(ItemGetAdvanced, 0x1006A810);
+	}
+} addresses;
+
 objHndl InventorySystem::FindItemByName(objHndl container, int nameId) {
 	return _FindItemByName(container, nameId);
 }
@@ -60,6 +71,15 @@ int InventorySystem::ItemDrop(objHndl item)
 	return _ItemDrop(item);
 }
 
+int InventorySystem::GetParent(objHndl item)
+{
+	objHndl parent = 0i64;
+	if (!addresses.GetParent(item, &parent))
+		return 0;
+	return parent;
+	
+}
+
 obj_f InventorySystem::GetInventoryListField(objHndl objHnd)
 {
 	if (objects.IsCritter(objHnd)) 	return obj_f_critter_inventory_list_idx;
@@ -70,4 +90,9 @@ obj_f InventorySystem::GetInventoryListField(objHndl objHnd)
 int InventorySystem::ItemRemove(objHndl item)
 {
 	return _ItemRemove(item);
+}
+
+int InventorySystem::ItemGetAdvanced(objHndl item, objHndl parent, int slotIdx, int flags)
+{
+	return addresses.ItemGetAdvanced(item, parent, slotIdx, flags);
 }

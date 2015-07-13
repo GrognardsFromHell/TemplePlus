@@ -89,6 +89,7 @@ static struct D20SystemAddresses : AddressTable {
 	uint32_t(__cdecl*AddToSeqStdAttack)(D20Actn*, ActnSeq*, TurnBasedStatus*);
 	uint32_t(__cdecl*AiCheckStdAttack)(D20Actn*, TurnBasedStatus*);
 	uint32_t(__cdecl*ActionCheckStdAttack)(D20Actn*, TurnBasedStatus*);
+	int(__cdecl*TargetWithinReachOfLoc)(objHndl obj, objHndl target, LocAndOffsets* loc);
 	D20SystemAddresses()
 	{
 		rebase(GlobD20ActnSetTarget,0x10092E50); 
@@ -98,6 +99,8 @@ static struct D20SystemAddresses : AddressTable {
 		rebase(AddToSeqStdAttack, 0x100955E0);
 		rebase(AiCheckStdAttack, 0x1008C4F0);
 		rebase(ActionCheckStdAttack, 0x1008C910);
+
+		rebase(TargetWithinReachOfLoc, 0x100B86C0);
 	}
 } addresses;
 
@@ -126,7 +129,9 @@ void D20System::NewD20ActionsInit()
 	d20Defs[D20A_DIVINE_MIGHT].actionCost = _ActionCostNull;
 	d20Defs[D20A_DIVINE_MIGHT].flags = D20ADF::D20ADF_None;
 	
-	D20ActionType d20Type = D20A_DISARM;
+	D20ActionType d20Type;
+
+	d20Type = D20A_DISARM;
 	d20Defs[d20Type].addToSeqFunc = _AddToSeqWithTarget;
 	d20Defs[d20Type].aiCheckMaybe = _StdAttackAiCheck;
 	d20Defs[d20Type].actionCheckFunc = _ActionCheckDisarm;
@@ -137,6 +142,19 @@ void D20System::NewD20ActionsInit()
 	d20Defs[d20Type].pickerFuncMaybe = addresses.sub_1008EDF0;
 	d20Defs[d20Type].flags = (D20ADF) (D20ADF_TargetSingleExcSelf | D20ADF_TriggersAoO | D20ADF_TriggersCombat
 		| D20ADF_Unk8000 | D20ADF_SimulsCompatible ); // 0x28908; // same as Trip
+
+
+	d20Type = D20A_DISARMED_WEAPON_RETRIEVE;
+	d20Defs[d20Type].addToSeqFunc = _AddToSeqSimple;
+	d20Defs[d20Type].aiCheckMaybe = 0;
+	d20Defs[d20Type].actionCheckFunc = _ActionCheckDisarmedWeaponRetrieve;
+	d20Defs[d20Type].locCheckFunc = LocationCheckDisarmedWeaponRetrieve;
+	d20Defs[d20Type].performFunc = _PerformDisarmedWeaponRetrieve;
+	d20Defs[d20Type].actionFrameFunc = 0;
+	d20Defs[d20Type].actionCost = _ActionCostMoveAction;
+	d20Defs[d20Type].pickerFuncMaybe = 0;
+	d20Defs[d20Type].flags = (D20ADF)( D20ADF_TriggersAoO 	| D20ADF_Unk8000
+		| D20ADF_SimulsCompatible | D20ADF_Unk100000); // 0x28908; // largely same as Pick Up Object
 	
 	d20Type = D20A_SUNDER;
 	d20Defs[d20Type].addToSeqFunc = _AddToSeqWithTarget;
@@ -527,6 +545,11 @@ int D20System::PerformStandardAttack(D20Actn* d20a)
 	return 0;
 }
 
+int D20System::TargetWithinReachOfLoc(objHndl obj, objHndl target, LocAndOffsets* loc)
+{
+	return addresses.TargetWithinReachOfLoc(obj, target, loc);
+}
+
 uint64_t D20System::d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, ::uint32_t arg2)
 {
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
@@ -855,8 +878,17 @@ uint32_t _ActionFrameDisarm(D20Actn* d20a)
 		if (weapon)
 			inventory.ItemDrop(weapon); 
 		objects.floats->FloatCombatLine(d20a->d20ATarget, 198);
+		struct DisarmedArgs
+		{
+			objHndl weapon;
+		} disarmedArgs;
+		disarmedArgs.weapon = weapon;
+
+		conds.AddTo(d20a->d20ATarget, "Disarmed", { ((int*)&disarmedArgs)[0], ((int*)&disarmedArgs)[1],0,0,0,0 });
 		return 0;
 	} 
+
+	
 
 	// counter attempt
 	if (!feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_DISARM))
@@ -879,17 +911,60 @@ uint32_t _ActionFrameDisarm(D20Actn* d20a)
 				{
 					inventory.ItemDrop(weapon);
 				}
+				struct DisarmedArgs
+				{
+					objHndl weapon;
+				} disarmedArgs;
+				disarmedArgs.weapon = weapon;
 				objects.floats->FloatCombatLine(d20a->d20APerformer, 198);
+				conds.AddTo(d20a->d20APerformer, "Disarmed", { ((int*)&disarmedArgs)[0], ((int*)&disarmedArgs)[1], 0,0,0,0 });
 				return 0;
 			}
+			else
+			{
+				objects.floats->FloatCombatLine(d20a->d20APerformer, 195);
+			}
+		}
+		else
+		{
+			objects.floats->FloatCombatLine(d20a->d20APerformer, 195);
 		}
 		
+	} else
+	{
+		objects.floats->FloatCombatLine(d20a->d20APerformer, 195);
 	}
+
+	
 	
 
 	return 0;
 };
 
+
+uint32_t LocationCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc)
+{
+	if (!combatSys.isCombatActive())
+		return 0;
+	if (d20a->d20ATarget)
+		return d20Sys.TargetWithinReachOfLoc(d20a->d20APerformer, d20a->d20ATarget, loc) != 0 ? 0 : 8;
+	objHndl weapon = d20Sys.d20QueryReturnData(d20a->d20APerformer, DK_QUE_Disarmed, 0, 0);
+	if (weapon)
+		return d20Sys.TargetWithinReachOfLoc(d20a->d20APerformer, weapon, loc) != 0 ? 0 : 8;
+	return 9;
+};
+
+uint32_t _ActionCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat)
+{
+	int dummy = 1;
+	return 0;
+};
+
+uint32_t _PerformDisarmedWeaponRetrieve(D20Actn* d20a)
+{
+	d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Disarmed_Weapon_Retrieve, (int)d20a, 0);
+	return 0;
+};
 
 uint32_t _ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat)
 {

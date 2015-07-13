@@ -219,4 +219,5 @@ uint32_t _turnBasedStatusInit(objHndl objHnd);
 const char * _ActionErrorString(uint32_t actnErrorCode);
 void __cdecl _ActSeqCurSetSpellPacket(SpellPacketBody *, int flag );
 uint32_t _ActionCostNull(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket *acp);
+uint32_t  _ActionCostMoveAction(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp);
 int _GetNewHourglassState(objHndl performer, D20ActionType d20aType, int d20Data1, int radMenuActualArg, D20SpellData *d20SpellData);

@@ -28,7 +28,7 @@ CondStructNew condIndomitableWill ;
 CondStructNew condTirelessRage;
 CondStructNew condMightyRage;
 CondStructNew condDisarm;
-CondStructNew condImprovedDisarm;
+CondStructNew condDisarmed;
 
 // monsters
 CondStructNew condRend;
@@ -301,11 +301,41 @@ int __cdecl CondNodeSetArg0FromSubDispDef(DispatcherCallbackArgs args)
 {
 	conds.CondNodeSetArg(args.subDispNode->condNode, 0, args.subDispNode->subDispDef->data1);
 	return 0;
+}
+
+int QuerySetReturnVal1(DispatcherCallbackArgs args)
+{
+	DispIoD20Query * dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	dispIo->return_val = 1;
+	return 0;
+};
+
+int QueryGetArgs(DispatcherCallbackArgs args)
+{
+	DispIoD20Query * dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	dispIo->return_val = 1;
+	dispIo->data1 = conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+	dispIo->data2 = conds.CondNodeGetArg(args.subDispNode->condNode, 1);
+	return 0;
+};
+
+int DisarmedRetrieveQuery(DispatcherCallbackArgs args)
+{
+	DispIoD20Query * dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	dispIo->return_val = 1;
+	objHndl weapon;
+	ObjectId objId;
+	memcpy(&objId, args.subDispNode->condNode->args, sizeof(ObjectId));
+	weapon = objects.GetHandle(objId);
+	*(uint64_t*)&dispIo->data1 = weapon;
+	return 0;
 };
 
 int __cdecl CondNodeSetArgFromSubDispDef(DispatcherCallbackArgs args)
 {
-	// sets arg[data1] from data2  e.g. data1 = 0 data2 = 15  will set arg0 to 15
+	// sets arg[data1] from data2  
+	// e.g. IF data1 = 0, data2 = 15 
+	//    THEN it'll set arg0 = 15
 	conds.CondNodeSetArg(args.subDispNode->condNode, args.subDispNode->subDispDef->data1,
 		args.subDispNode->subDispDef->data2);
 	return 0;
@@ -550,6 +580,7 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterWeaponSpecialization);
 	
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDisarm);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDisarmed);
 	// conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondSuperiorExpertise); // will just be patched inside Combat Expertise callbacks
 
 	/*
@@ -878,6 +909,22 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondDisarm, 0);
 	DispatcherHookInit(cond, 1, dispTypeRadialMenuEntry, 0, DisarmRadialMenu, 0, 0);
 	
+	// Disarmed
+	mCondDisarmed = &condDisarmed;
+	cond = mCondDisarmed; 	condName = mCondDisarmedName;
+	memset(condName, 0, sizeof(condName)); 	memcpy(condName, "Disarmed", sizeof("Disarmed"));
+
+	cond->condName = condName;
+	cond->numArgs = 6;
+
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
+	DispatcherHookInit(cond, 1, dispTypeD20Query, DK_QUE_Disarmed, DisarmedRetrieveQuery, 0, 0);
+	DispatcherHookInit(cond, 2, dispTypeD20Signal, DK_SIG_Combat_End, DisarmedReminder, 0, 0);
+	DispatcherHookInit(cond, 3, dispTypeD20Signal, DK_SIG_Disarmed_Weapon_Retrieve, DisarmedWeaponRetrieve, 0, 0);
+	DispatcherHookInit(cond, 4, dispTypeRadialMenuEntry, 0, DisarmedRetrieveWeaponRadialMenu, 0, 0);
+	DispatcherHookInit(cond, 5, dispTypeConditionAdd, 0, DisarmedOnAdd, 0, 0);
+
+
 	/*
 	char mCondIndomitableWillName[100];
 	CondStructNew *mCondIndomitableWill;
@@ -1412,6 +1459,58 @@ int __cdecl DisarmRadialMenu(DispatcherCallbackArgs args)
 	radEntry.text = combatSys.GetCombatMesLine(5109); // Disarm
 	radEntry.helpId = conds.hashmethods.StringHash("TAG_DISARM");
 	int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Offense);
+	radialMenus.AddChildNode(args.objHndCaller, &radEntry, parentNode);
+	return 0;
+}
+
+int DisarmedReminder(DispatcherCallbackArgs args)
+{
+	return 0;
+}
+
+int DisarmedOnAdd(DispatcherCallbackArgs args)
+{
+	objHndl weapon;
+	((int*)&weapon)[0] = conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+	((int*)&weapon)[1] = conds.CondNodeGetArg(args.subDispNode->condNode, 1);
+	ObjectId objId = objects.GetId(weapon);
+	memcpy(args.subDispNode->condNode->args, &objId, sizeof(ObjectId));
+	return 0;
+}
+
+int DisarmedWeaponRetrieve(DispatcherCallbackArgs args)
+{
+	objHndl weapon;
+	DispIoD20Signal * dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
+	D20Actn* d20a = (D20Actn*)dispIo->data1;
+	if (d20a->d20ATarget)
+		weapon = d20a->d20ATarget;
+	else
+	{
+		ObjectId objId;
+		memcpy(&objId, args.subDispNode->condNode->args, sizeof(ObjectId));
+		weapon = objects.GetHandle(objId);
+	}
+	//((int*)&weapon)[0]= conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+	//((int*)&weapon)[1] = conds.CondNodeGetArg(args.subDispNode->condNode, 1);
+	if (!inventory.ItemWornAt(args.objHndCaller, 203))
+		inventory.ItemGetAdvanced(weapon, args.objHndCaller, 203, 0);
+	else
+		inventory.ItemGetAdvanced(weapon, args.objHndCaller, -1, 0);
+	conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+	return 0;
+};
+
+int DisarmedRetrieveWeaponRadialMenu(DispatcherCallbackArgs args)
+{
+	RadialMenuEntry radEntry;
+	radEntry.SetDefaults();
+	radEntry.type = RadialMenuEntryType::Action;
+	radEntry.d20ActionType = D20A_DISARMED_WEAPON_RETRIEVE;
+	radEntry.d20ActionData1 = 0;
+	radEntry.text = combatSys.GetCombatMesLine(5111); // Retrieve Disarmed Weapon
+	radEntry.helpId = conds.hashmethods.StringHash("TAG_DISARM");
+	int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Items);
 	radialMenus.AddChildNode(args.objHndCaller, &radEntry, parentNode);
 	return 0;
 }

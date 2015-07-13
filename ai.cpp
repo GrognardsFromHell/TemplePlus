@@ -8,14 +8,26 @@
 #include "spell.h"
 #include "temple_functions.h"
 #include "pathfinding.h"
+#include "objlist.h"
 
 #pragma region AI System Implementation
 #include "location.h"
+#include "critter.h"
+#include "weapon.h"
 struct AiSystem aiSys;
 
 
 const auto TestSizeOfAiTactic = sizeof(AiTactic); // should be 2832 (0xB10 )
 const auto TestSizeOfAiStrategy = sizeof(AiStrategy); // should be 808 (0x324)
+
+struct AiSystemAddresses :AddressTable
+{
+	int (__cdecl*UpdateAiFlags)(objHndl obj, int aiFightStatus, objHndl target, int * soundMap);
+	AiSystemAddresses()
+	{
+		rebase(UpdateAiFlags, 0x1005DA00);
+	}
+}addresses;
 
 AiSystem::AiSystem()
 {
@@ -54,7 +66,7 @@ void AiSystem::aiTacticGetConfig(int tacIdx, AiTactic* aiTacOut, AiStrategy* aiS
 	}
 }
 
-uint32_t AiSystem::aiStrategyParse(objHndl objHnd, objHndl target)
+uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 {
 	AiTactic aiTac;
 	combat->enterCombat(objHnd);
@@ -66,6 +78,16 @@ uint32_t AiSystem::aiStrategyParse(objHndl objHnd, objHndl target)
 	spell->spellPacketBodyReset(&aiTac.spellPktBody);
 	aiTac.performer = objHnd;
 	aiTac.target = target;
+
+	if (d20Sys.d20Query(aiTac.performer, DK_QUE_Disarmed))
+	{
+		hooked_print_debug_message("\n%s attempting to pickup weapon...\n", description._getDisplayName(objHnd, objHnd));
+		if (PickUpWeapon(&aiTac))
+		{
+			actSeq->sequencePerform();
+			return 1;
+		}
+	}
 
 	for (uint32_t i = 0; i < aiStrat->numTactics; i++)
 	{
@@ -165,14 +187,14 @@ void AiSystem::SetWhoHitMeLast(objHndl npc, objHndl target) {
 
 int AiSystem::TargetClosest(AiTactic* aiTac)
 {
-	objHndl obj; 
-	LocAndOffsets loc; 
+	objHndl target; 
+	LocAndOffsets performerLoc; 
 	float dist = 0.0;
 
-	locSys.getLocAndOff(aiTac->performer, &loc);
-	if (combatSys.GetClosestEnemy(aiTac->performer, &loc, &obj, &dist, 0x21))
+	locSys.getLocAndOff(aiTac->performer, &performerLoc);
+	if (combatSys.GetClosestEnemy(aiTac->performer, &performerLoc, &target, &dist, 0x21))
 	{
-		aiTac->target = obj;
+		aiTac->target = target;
 		
 	}
 	return 0;
@@ -190,6 +212,58 @@ int AiSystem::Approach(AiTactic* aiTac)
 	actSeqSys.curSeqReset(aiTac->performer);
 	d20Sys.GlobD20ActnInit();
 	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_MOVE, 0);
+	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
+	actSeqSys.ActionAddToSeq();
+	if (actSeqSys.ActionSequenceChecksWithPerformerLocation())
+	{
+		actSeqSys.ActionSequenceRevertPath(d20aNum);
+		return 0;
+	}
+	return 1;
+}
+
+int AiSystem::PickUpWeapon(AiTactic* aiTac)
+{
+	int d20aNum;
+
+	d20aNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+
+	if (inventory.ItemWornAt(aiTac->performer, 203) || inventory.ItemWornAt(aiTac->performer, 204))
+	{
+		return 0;
+	}
+	if (!d20Sys.d20Query(aiTac->performer, DK_QUE_Disarmed))
+		return 0;
+	objHndl weapon = d20Sys.d20QueryReturnData(aiTac->performer, DK_QUE_Disarmed, 0, 0);
+	if (weapon && !inventory.GetParent(weapon))
+	{
+		aiTac->target = weapon;
+	} else
+	{
+		LocAndOffsets loc;
+		locSys.getLocAndOff(aiTac->performer, &loc);
+
+		ObjList objList;
+		objList.ListTile(loc.location, OLC_WEAPON);
+
+		if (objList.size() > 0)
+		{
+			weapon = objList.get(0);
+			aiTac->target = weapon;
+		}
+	}
+	
+	
+	
+	
+	if (!aiTac->target)
+		return 0;
+
+	if (!combatSys.IsWithinReach(aiTac->performer, aiTac->target))
+		return 0;
+	actSeqSys.curSeqReset(aiTac->performer);
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_DISARMED_WEAPON_RETRIEVE, 0);
 	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
 	actSeqSys.ActionAddToSeq();
 	if (actSeqSys.ActionSequenceChecksWithPerformerLocation())
@@ -230,13 +304,63 @@ int AiSystem::CoupDeGrace(AiTactic* aiTac)
 
 
 }
+
+void AiSystem::UpdateAiFightStatus(objHndl objIn, int* aiStatus, objHndl* target)
+{
+	int critterFlags;
+	AiFlag aiFlags;
+
+	if (objects.getInt32(objIn, obj_f_critter_flags) & OCF_FLEEING)
+	{
+		if (target)
+			*target = objects.getObjHnd(objIn, obj_f_critter_fleeing_from);
+		*aiStatus = 2;
+	}
+	else
+	{
+		critterFlags = objects.getInt32(objIn, obj_f_critter_flags);
+		if (critterFlags & OCF_SURRENDERED)                     // OCF_SURRENDERED (maybe mixed up with OCF_SPELL_FLEE?)
+		{
+			if (target)
+				*target = objects.getObjHnd(objIn, obj_f_critter_fleeing_from);
+			*aiStatus = 3;
+		}
+		else
+		{
+			aiFlags = (AiFlag)objects.getInt64(objIn, obj_f_npc_ai_flags64);
+			if ((uint64_t)aiFlags & (uint64_t)AiFlag::Fighting)
+			{
+				if (target)
+					*target = objects.getObjHnd(objIn, obj_f_npc_combat_focus);
+				*aiStatus = 1;
+			}
+			else if ((uint64_t)aiFlags & (uint64_t)AiFlag::FindingHelp)
+			{
+				if (target)
+					*target = objects.getObjHnd(objIn, obj_f_npc_combat_focus);
+				*aiStatus = 4;
+			}
+			else
+			{
+				if (target)
+					*target = 0i64;
+				*aiStatus = 0;
+			}
+		}
+	}
+}
+
+int AiSystem::UpdateAiFlags(objHndl obj, int aiFightStatus, objHndl target, int* soundMap)
+{
+	return addresses.UpdateAiFlags(obj, aiFightStatus, target, soundMap);
+}
 #pragma endregion
 
 #pragma region AI replacement functions
 
 uint32_t _aiStrategyParse(objHndl objHnd, objHndl target)
 {
-	return aiSys.aiStrategyParse(objHnd, target);
+	return aiSys.AiStrategyParse(objHnd, target);
 }
 
 int _AiCoupDeGrace(AiTactic* aiTac)
@@ -263,3 +387,16 @@ public:
 	}
 } aiReplacements;
 #pragma endregion 
+AiPacket::AiPacket(objHndl objIn)
+{
+	target = 0i64;
+	obj = objIn;
+	aiFightStatus = 0;
+	aiState2 = 0;
+	field18 = 10000;
+	skillEnum = (SkillEnum)-1;
+	scratchObj = 0i64;
+	leader = critterSys.GetLeader(objIn);
+	aiSys.UpdateAiFightStatus(objIn, &this->aiFightStatus, &this->target);
+	field30 = -1;
+}

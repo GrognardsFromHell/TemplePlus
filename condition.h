@@ -143,6 +143,8 @@ public:
 	CondStructNew *mCondMightyRage;
 	char mCondDisarmName[100];
 	CondStructNew *mCondDisarm;
+	char mCondDisarmedName[100];
+	CondStructNew *mCondDisarmed;
 	char mCondImprovedDisarmName[100];
 	CondStructNew *mCondImprovedDisarm;
 
@@ -268,6 +270,7 @@ void InitCondFromCondStructAndArgs(Dispatcher *dispatcher, CondStruct *condStruc
 int ConditionPrevent(DispatcherCallbackArgs args);
 int ConditionRemoveCallback(DispatcherCallbackArgs args);
 int CondNodeSetArg0FromSubDispDef(DispatcherCallbackArgs args);
+int QuerySetReturnVal1(DispatcherCallbackArgs args);
 int SkillBonusCallback(DispatcherCallbackArgs args); 
 int GlobalToHitBonus(DispatcherCallbackArgs args);
 int GlobalGetArmorClass(DispatcherCallbackArgs args);
@@ -290,7 +293,12 @@ int BarbarianRageStatBonus(DispatcherCallbackArgs args);
 int BarbarianRageSaveBonus(DispatcherCallbackArgs args);
 int BarbarianDamageResistance(DispatcherCallbackArgs args);
 
+int DisarmedOnAdd(DispatcherCallbackArgs args);
+int DisarmedRetrieveQuery(DispatcherCallbackArgs args);
 int DisarmRadialMenu(DispatcherCallbackArgs args);
+int DisarmedReminder(DispatcherCallbackArgs args);
+int DisarmedWeaponRetrieve(DispatcherCallbackArgs args);
+int DisarmedRetrieveWeaponRadialMenu(DispatcherCallbackArgs args);
 
 void _FeatConditionsRegister();
 uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** ppCondStruct, uint32_t * arg2);

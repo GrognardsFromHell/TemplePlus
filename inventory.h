@@ -32,6 +32,7 @@ struct InventorySystem : AddressTable
 	int IsThrowingWeapon(objHndl weapon);
 	ArmorType GetArmorType(int armorFlags);
 	int ItemDrop(objHndl item);
+	int GetParent(objHndl item);
 	/*
 		0 - light weapon; 1 - can wield one handed; 2 - must wield two handed; 3 (???)
 	*/
@@ -55,6 +56,7 @@ struct InventorySystem : AddressTable
 	void (__cdecl *Clear)(objHndl parent, BOOL keepPersistent);
 
 	int ItemRemove(objHndl item);
+	int ItemGetAdvanced(objHndl item, objHndl parent, int slotIdx, int flags);
 
 	InventorySystem()
 	{

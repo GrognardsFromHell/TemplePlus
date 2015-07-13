@@ -15,6 +15,23 @@ struct D20System;
 struct CombatSystem;
 struct AiStrategy;
 struct AiTactic;
+struct AiPacket
+{
+	objHndl obj;
+	objHndl target;
+	int aiFightStatus; // 0 - none;  1 - fighting;  2 - fleeing  ;  3 - surrendered ; 4 - finding help
+	int aiState2; // 3 - use skill,  4 - scout point
+	int field18;
+	SkillEnum skillEnum;
+	objHndl scratchObj;
+	objHndl leader;
+	int field30;
+	D20SpellData spellData;
+	int field3C;
+	SpellPacketBody spellPktBod;
+
+	AiPacket(objHndl objIn);
+};
 
 enum class AiFlag : uint64_t {
 	FindingHelp = 0x1,
@@ -43,7 +60,7 @@ struct AiSystem : AddressTable
 	Pathfinding * pathfinding;
 	AiSystem();
 	void aiTacticGetConfig(int i, AiTactic* aiTac, AiStrategy* aiStrat);
-	uint32_t aiStrategyParse(objHndl objHnd, objHndl target);
+	uint32_t AiStrategyParse(objHndl objHnd, objHndl target);
 	
 	bool HasAiFlag(objHndl npc, AiFlag flag);
 	void SetAiFlag(objHndl npc, AiFlag flag);
@@ -62,6 +79,10 @@ struct AiSystem : AddressTable
 	int TargetClosest(AiTactic * aiTac);
 	int Approach(AiTactic* aiTac);
 	int CoupDeGrace(AiTactic * aiTac);
+	int PickUpWeapon(AiTactic* aiTac);
+	void UpdateAiFightStatus(objHndl objIn, int* aiState, objHndl* target);
+	int UpdateAiFlags(objHndl ObjHnd, int aiFightStatus, objHndl target, int *soundMap);
+
 
 private:
 	void (__cdecl *_ShitlistAdd)(objHndl npc, objHndl target);

@@ -233,6 +233,11 @@ DispIoD20Query* DispatcherSystem::DispIoCheckIoType7(DispIoD20Query* dispIo)
 	return dispIo;
 }
 
+DispIoD20Query* DispatcherSystem::DispIoCheckIoType7(DispIO* dispIo)
+{
+	return DispIoCheckIoType7((DispIoD20Query*)dispIo);
+}
+
 DispIOTurnBasedStatus* DispatcherSystem::DispIoCheckIoType8(DispIOTurnBasedStatus* dispIo)
 {
 	if (dispIo->dispIOType != dispIOTypeTurnBasedStatus) return nullptr;
