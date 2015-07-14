@@ -153,9 +153,10 @@ void D20System::NewD20ActionsInit()
 	d20Defs[d20Type].actionFrameFunc = 0;
 	d20Defs[d20Type].actionCost = _ActionCostMoveAction;
 	d20Defs[d20Type].pickerFuncMaybe = 0;
-	d20Defs[d20Type].flags = (D20ADF)( D20ADF_TriggersAoO 	| D20ADF_Unk8000
+	d20Defs[d20Type].flags = (D20ADF)( D20ADF_TriggersAoO 	| 0*D20ADF_Unk8000
 		| D20ADF_SimulsCompatible | D20ADF_Unk100000); // 0x28908; // largely same as Pick Up Object
-	
+	*(int*)&d20Defs[D20A_PICKUP_OBJECT].flags |= (int) (D20ADF_TriggersAoO);
+
 	d20Type = D20A_SUNDER;
 	d20Defs[d20Type].addToSeqFunc = _AddToSeqWithTarget;
 	d20Defs[d20Type].aiCheckMaybe = _StdAttackAiCheck;
@@ -916,7 +917,7 @@ uint32_t _ActionFrameDisarm(D20Actn* d20a)
 					objHndl weapon;
 				} disarmedArgs;
 				disarmedArgs.weapon = weapon;
-				objects.floats->FloatCombatLine(d20a->d20APerformer, 198);
+				objects.floats->FloatCombatLine(d20a->d20APerformer, 200);
 				conds.AddTo(d20a->d20APerformer, "Disarmed", { ((int*)&disarmedArgs)[0], ((int*)&disarmedArgs)[1], 0,0,0,0 });
 				return 0;
 			}

@@ -10,6 +10,7 @@
 #include "critter.h"
 #include "location.h"
 #include "damage.h"
+#include "float_line.h"
 
 ConditionSystem conds;
 CondStructNew conditionDisableAoO;
@@ -1497,6 +1498,7 @@ int DisarmedWeaponRetrieve(DispatcherCallbackArgs args)
 		inventory.ItemGetAdvanced(weapon, args.objHndCaller, 203, 0);
 	else
 		inventory.ItemGetAdvanced(weapon, args.objHndCaller, -1, 0);
+	objects.floats->FloatCombatLine(args.objHndCaller, 201);
 	conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 	return 0;
 };
