@@ -235,6 +235,7 @@ int AiSystem::PickUpWeapon(AiTactic* aiTac)
 	if (!d20Sys.d20Query(aiTac->performer, DK_QUE_Disarmed))
 		return 0;
 	objHndl weapon = d20Sys.d20QueryReturnData(aiTac->performer, DK_QUE_Disarmed, 0, 0);
+
 	if (weapon && !inventory.GetParent(weapon))
 	{
 		aiTac->target = weapon;
@@ -250,14 +251,19 @@ int AiSystem::PickUpWeapon(AiTactic* aiTac)
 		{
 			weapon = objList.get(0);
 			aiTac->target = weapon;
+		} else
+		{
+			aiTac->target = 0i64;
 		}
 	}
 	
 	
 	
-	
-	if (!aiTac->target)
+	if (!aiTac->target || objects.IsCritter(aiTac->target))
+	{
 		return 0;
+	}
+
 
 	if (!combatSys.IsWithinReach(aiTac->performer, aiTac->target))
 		return 0;

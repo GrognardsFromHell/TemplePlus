@@ -1481,17 +1481,26 @@ int DisarmedOnAdd(DispatcherCallbackArgs args)
 
 int DisarmedWeaponRetrieve(DispatcherCallbackArgs args)
 {
-	objHndl weapon;
+	objHndl weapon = 0i64;
 	DispIoD20Signal * dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
 	D20Actn* d20a = (D20Actn*)dispIo->data1;
-	if (d20a->d20ATarget)
+	if (d20a->d20ATarget && objects.GetType(d20a->d20ATarget) == obj_t_weapon)
+	{
 		weapon = d20a->d20ATarget;
+	}
 	else
 	{
 		ObjectId objId;
 		memcpy(&objId, args.subDispNode->condNode->args, sizeof(ObjectId));
 		weapon = objects.GetHandle(objId);
 	}
+	if (!weapon || inventory.GetParent(weapon) || objects.GetType(weapon) != obj_t_weapon)
+	{
+		objects.floats->FloatCombatLine(args.objHndCaller, 195); //fail!
+		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+		return 0;
+	}
+
 	//((int*)&weapon)[0]= conds.CondNodeGetArg(args.subDispNode->condNode, 0);
 	//((int*)&weapon)[1] = conds.CondNodeGetArg(args.subDispNode->condNode, 1);
 	if (!inventory.ItemWornAt(args.objHndCaller, 203))
