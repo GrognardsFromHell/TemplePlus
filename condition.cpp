@@ -912,7 +912,7 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 2, dispTypeD20Signal, DK_SIG_HP_Changed, DisarmHpChanged, 0, 0);
 	DispatcherHookInit(cond, 3, dispTypeD20Query, DK_QUE_ActionTriggersAOO, DisarmQueryAoOResetArg, 1, 1);
 	DispatcherHookInit(cond, 4, dispTypeD20Query, DK_QUE_Can_Perform_Disarm, DisarmCanPerform, 0, 0);
-	DispatcherHookInit(cond, 5, dispTypeD20Query, DK_QUE_ActionTriggersAOO, QuerySetReturnVal1, 0, 0);
+	//DispatcherHookInit(cond, 5, dispTypeD20Query, DK_QUE_ActionTriggersAOO, QuerySetReturnVal1, 0, 0);
 
 	// Disarmed
 	mCondDisarmed = &condDisarmed;
@@ -1488,7 +1488,8 @@ int __cdecl DisarmQueryAoOResetArg(DispatcherCallbackArgs args)
 	D20Actn * d20a = (D20Actn*)dispIo->data1;
 	if (d20a->d20ActType == D20A_DISARM)
 	{
-		dispIo->return_val = 1;
+		if (!feats.HasFeatCountByClass(args.objHndCaller, FEAT_IMPROVED_DISARM))
+			dispIo->return_val = 1;
 		conds.CondNodeSetArg(args.subDispNode->condNode, args.subDispNode->subDispDef->data1,
 			args.subDispNode->subDispDef->data2);
 	}

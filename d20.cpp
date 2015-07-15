@@ -360,6 +360,9 @@ int32_t D20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tbStat)
 	if (actSeq->tbStatus.tbsFlags & 0x10)
 		return 0;
 
+	if (d20a->d20ActType == D20A_DISARM)
+		return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_DISARM) == 0;
+
 	if ( (d20Defs[d20a->d20ActType].flags & D20ADF::D20ADF_QueryForAoO)
 		&& d20QueryWithData(d20a->d20APerformer, DK_QUE_ActionTriggersAOO, (int)d20a, 0))
 		return 1;
@@ -370,8 +373,6 @@ int32_t D20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tbStat)
 	if (d20a->d20ActType == D20A_TRIP)
 		return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_TRIP) == 0;
 
-	if (d20a->d20ActType == D20A_DISARM)
-		return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_DISARM) == 0;
 
 	if (d20a->d20ActType == D20A_SUNDER)
 		return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_SUNDER) == 0;
@@ -836,6 +837,10 @@ uint32_t _DivineMightPerform(D20Actn* d20a)
 
 uint32_t _ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat)
 {
+	objHndl performer = d20a->d20APerformer;
+	if (d20Sys.d20Query(performer, DK_QUE_Prone) || d20Sys.d20Query(performer, DK_QUE_Unconscious))
+		return 13;
+
 	objHndl weapon = inventory.ItemWornAt(d20a->d20APerformer, 3);
 	int weapFlags; 
 		
@@ -876,6 +881,7 @@ uint32_t _PerformDisarm(D20Actn* d20a)
 
 uint32_t _ActionFrameDisarm(D20Actn* d20a)
 {
+	objHndl performer = d20a->d20APerformer;
 	int failedOnce = 0;
 	if (!d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Can_Perform_Disarm))
 	{
@@ -885,13 +891,32 @@ uint32_t _ActionFrameDisarm(D20Actn* d20a)
 		
 	else if (combatSys.DisarmCheck(d20a->d20APerformer, d20a->d20ATarget, d20a))
 	{
-		
 		objHndl weapon = inventory.ItemWornAt(d20a->d20ATarget, 3);
+		objHndl attackerWeapon = inventory.ItemWornAt(performer, 3);
+		objHndl attackerOffhand = inventory.ItemWornAt(performer, 4);
+		objHndl attackerShield = inventory.ItemWornAt(performer, 11);
 		if (!weapon)
 			weapon = inventory.ItemWornAt(d20a->d20ATarget, 4);
-		if (weapon)
-			inventory.ItemDrop(weapon); 
-		objects.floats->FloatCombatLine(d20a->d20ATarget, 198);
+		if (!attackerWeapon && !attackerOffhand)
+		{
+			int itemWearFlags;
+			if ( (inventory.GetWieldType(d20a->d20APerformer, weapon) != 2 || !attackerShield
+				|| ( itemWearFlags = objects.getInt32(attackerShield, obj_f_item_wear_flags), itemWearFlags & OIF_WEAR_BUCKLER) ) 
+				&& objects.StatLevelGet(d20a->d20APerformer, stat_level_monk) == 0)
+				inventory.ItemGetAdvanced(weapon, d20a->d20APerformer, 203, 0);
+			else
+			{
+				inventory.ItemDrop(weapon);
+				inventory.SetItemParent(weapon, d20a->d20APerformer, 32);
+			}
+			objects.floats->FloatCombatLine(d20a->d20ATarget, 202);
+		} 
+		else if (weapon)
+		{
+			inventory.ItemDrop(weapon);
+			objects.floats->FloatCombatLine(d20a->d20ATarget, 198);
+		}
+		
 		struct DisarmedArgs
 		{
 			objHndl weapon;
