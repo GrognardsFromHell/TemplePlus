@@ -140,8 +140,8 @@ void D20System::NewD20ActionsInit()
 	d20Defs[d20Type].actionFrameFunc = _ActionFrameDisarm;
 	d20Defs[d20Type].actionCost = addresses.ActionCostStandardAttack;
 	d20Defs[d20Type].pickerFuncMaybe = addresses.sub_1008EDF0;
-	d20Defs[d20Type].flags = (D20ADF) (D20ADF_TargetSingleExcSelf | D20ADF_TriggersAoO | D20ADF_TriggersCombat
-		| D20ADF_Unk8000 | D20ADF_SimulsCompatible ); // 0x28908; // same as Trip
+	d20Defs[d20Type].flags = (D20ADF)(D20ADF_TargetSingleExcSelf | D20ADF_TriggersAoO | D20ADF_QueryForAoO | D20ADF_TriggersCombat
+		| D20ADF_Unk8000 | D20ADF_SimulsCompatible ); // 0x28908; // same as Trip // note : queryForAoO is used for resetting a flag
 
 
 	d20Type = D20A_DISARMED_WEAPON_RETRIEVE;
@@ -201,7 +201,7 @@ D20System::D20System()
 }
 
 
-
+#pragma region D20 Signal and D20 Query
 
 uint32_t D20System::d20Query(objHndl objHnd, D20DispatcherKey dispKey)
 {
@@ -272,6 +272,8 @@ void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, objHndl 
 	dispatch.DispatcherProcessor(dispatcher, dispTypeD20Signal, dispKey, &dispIO);
 }
 
+#pragma endregion
+
 void D20System::D20ActnInit(objHndl objHnd, D20Actn* d20a)
 {
 	d20a->d20APerformer = objHnd;
@@ -298,6 +300,7 @@ void D20System::D20ActnInit(objHndl objHnd, D20Actn* d20a)
 	
 }
 
+#pragma region Global D20 Action
 void D20System::GlobD20ActnSetTypeAndData1(D20ActionType d20type, uint32_t data1)
 {
 	globD20Action->d20ActType = d20type;
@@ -324,6 +327,12 @@ void D20System::GlobD20ActnInit()
 {
 	D20ActnInit(globD20Action->d20APerformer, globD20Action);
 }
+
+void D20System::GlobD20ActnSetSpellData(D20SpellData* d20SpellData)
+{
+	d20Sys.globD20Action->d20SpellData = *d20SpellData;
+}
+#pragma endregion
 
 void D20System::d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx)
 {
@@ -421,10 +430,7 @@ void D20System::D20ActnSetSpellData(D20SpellData* d20SpellData, uint32_t spellEn
 	d20SpellData->spellSlotLevel = spellSlotLevel;
 }
 
-void D20System::GlobD20ActnSetSpellData(D20SpellData* d20SpellData)
-{
-	d20Sys.globD20Action->d20SpellData = *d20SpellData;
-}
+
 
 bool D20System::UsingSecondaryWeapon(D20Actn* d20a)
 {
@@ -858,6 +864,7 @@ uint32_t _ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat)
 
 uint32_t _PerformDisarm(D20Actn* d20a)
 {
+	
 	if (animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget))
 	{
 		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
@@ -869,8 +876,14 @@ uint32_t _PerformDisarm(D20Actn* d20a)
 
 uint32_t _ActionFrameDisarm(D20Actn* d20a)
 {
-
-	if (combatSys.DisarmCheck(d20a->d20APerformer, d20a->d20ATarget, d20a))
+	int failedOnce = 0;
+	if (!d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Can_Perform_Disarm))
+	{
+		objects.floats->FloatCombatLine(d20a->d20APerformer, 195); //fail!
+		failedOnce = 1;
+	}
+		
+	else if (combatSys.DisarmCheck(d20a->d20APerformer, d20a->d20ATarget, d20a))
 	{
 		
 		objHndl weapon = inventory.ItemWornAt(d20a->d20ATarget, 3);
@@ -917,21 +930,21 @@ uint32_t _ActionFrameDisarm(D20Actn* d20a)
 					objHndl weapon;
 				} disarmedArgs;
 				disarmedArgs.weapon = weapon;
-				objects.floats->FloatCombatLine(d20a->d20APerformer, 200);
+				objects.floats->FloatCombatLine(d20a->d20APerformer, 200); // Counter Disarmed!
 				conds.AddTo(d20a->d20APerformer, "Disarmed", { ((int*)&disarmedArgs)[0], ((int*)&disarmedArgs)[1], 0,0,0,0 });
 				return 0;
 			}
-			else
+			else if (!failedOnce)
 			{
 				objects.floats->FloatCombatLine(d20a->d20APerformer, 195);
 			}
 		}
-		else
+		else if (!failedOnce)
 		{
 			objects.floats->FloatCombatLine(d20a->d20APerformer, 195);
 		}
 		
-	} else
+	} else if (!failedOnce)
 	{
 		objects.floats->FloatCombatLine(d20a->d20APerformer, 195);
 	}
@@ -942,7 +955,7 @@ uint32_t _ActionFrameDisarm(D20Actn* d20a)
 	return 0;
 };
 
-
+#pragma region Retrieve Disarmed Weapon
 uint32_t LocationCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc)
 {
 	if (!combatSys.isCombatActive())
@@ -966,6 +979,8 @@ uint32_t _PerformDisarmedWeaponRetrieve(D20Actn* d20a)
 	d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Disarmed_Weapon_Retrieve, (int)d20a, 0);
 	return 0;
 };
+
+#pragma endregion
 
 uint32_t _ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat)
 {

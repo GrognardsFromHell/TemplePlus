@@ -909,7 +909,11 @@ void ConditionSystem::RegisterNewConditions()
 
 	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondDisarm, 0);
 	DispatcherHookInit(cond, 1, dispTypeRadialMenuEntry, 0, DisarmRadialMenu, 0, 0);
-	
+	DispatcherHookInit(cond, 2, dispTypeD20Signal, DK_SIG_HP_Changed, DisarmHpChanged, 0, 0);
+	DispatcherHookInit(cond, 3, dispTypeD20Query, DK_QUE_ActionTriggersAOO, DisarmQueryAoOResetArg, 1, 1);
+	DispatcherHookInit(cond, 4, dispTypeD20Query, DK_QUE_Can_Perform_Disarm, DisarmCanPerform, 0, 0);
+	DispatcherHookInit(cond, 5, dispTypeD20Query, DK_QUE_ActionTriggersAOO, QuerySetReturnVal1, 0, 0);
+
 	// Disarmed
 	mCondDisarmed = &condDisarmed;
 	cond = mCondDisarmed; 	condName = mCondDisarmedName;
@@ -1346,6 +1350,8 @@ int TacticalOptionAbusePrevention(DispatcherCallbackArgs args)
 	return 0;
 }
 
+#pragma region Barbarian Stuff
+
 int __cdecl CombatExpertiseRadialMenu(DispatcherCallbackArgs args)
 {
 	int bab = dispatch.DispatchToHitBonusBase(args.objHndCaller, 0);
@@ -1447,11 +1453,10 @@ public:
 
 } barbarianTirelessRagePatch;
 
-
+#pragma endregion
 
 int __cdecl DisarmRadialMenu(DispatcherCallbackArgs args)
 {
-
 	RadialMenuEntry radEntry;
 	radEntry.SetDefaults();
 	radEntry.type = RadialMenuEntryType::Action;
@@ -1463,6 +1468,48 @@ int __cdecl DisarmRadialMenu(DispatcherCallbackArgs args)
 	radialMenus.AddChildNode(args.objHndCaller, &radEntry, parentNode);
 	return 0;
 }
+
+int __cdecl DisarmHpChanged(DispatcherCallbackArgs args)
+{
+	DispIoD20Signal * dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
+	int hpChange = dispIo->data1;
+	if (hpChange < 0)
+	{
+		if (conds.CondNodeGetArg(args.subDispNode->condNode, 1) )
+			conds.CondNodeSetArg(args.subDispNode->condNode, 0, 1);
+	}
+	return 0;
+};
+
+
+int __cdecl DisarmQueryAoOResetArg(DispatcherCallbackArgs args)
+{
+	DispIoD20Query * dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	D20Actn * d20a = (D20Actn*)dispIo->data1;
+	if (d20a->d20ActType == D20A_DISARM)
+	{
+		dispIo->return_val = 1;
+		conds.CondNodeSetArg(args.subDispNode->condNode, args.subDispNode->subDispDef->data1,
+			args.subDispNode->subDispDef->data2);
+	}
+		
+	// sets arg[data1] from data2  
+	// e.g. IF data1 = 0, data2 = 15 
+	//    THEN it'll set arg0 = 15
+	return 0;
+};
+
+int __cdecl DisarmCanPerform(DispatcherCallbackArgs args)
+{
+	DispIoD20Query * dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	conds.CondNodeSetArg(args.subDispNode->condNode, 1, 0);
+	if (conds.CondNodeGetArg(args.subDispNode->condNode, 0) == 0)
+	{
+		dispIo->return_val = 1;
+	}
+	conds.CondNodeSetArg(args.subDispNode->condNode, 0, 0);
+	return 0;
+};
 
 int DisarmedReminder(DispatcherCallbackArgs args)
 {

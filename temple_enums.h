@@ -1729,6 +1729,7 @@ enum D20DispatcherKey : uint32_t {
 	DK_SIG_Anim_CastConjureEnd = 0xCC,
 	DK_SIG_Item_Remove_Enhancement = 0xCD,
 	DK_SIG_Disarmed_Weapon_Retrieve = 0xCE, // NEW
+	DK_SIG_Disarm = 0xCF, // NEW; resets the "took damage -> abort" flag
 
 	DK_QUE_Helpless = 0xCF,
 	DK_QUE_SneakAttack = 0xD0,
@@ -1844,7 +1845,8 @@ enum D20DispatcherKey : uint32_t {
 	DK_QUE_Item_Has_Keen_Bonus = 0x13E,
 	DK_QUE_AI_Has_Spell_Override = 0x13F,
 	DK_QUE_Weapon_Get_Keen_Bonus = 0x140,
-	DK_QUE_Disarmed = 0x141
+	DK_QUE_Disarmed = 0x141,
+	DK_QUE_Can_Perform_Disarm = 0x142
 };
 
 enum enum_dispIO_type : uint32_t {
