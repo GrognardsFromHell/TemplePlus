@@ -1550,7 +1550,7 @@ int DisarmedWeaponRetrieve(DispatcherCallbackArgs args)
 		memcpy(&objId, args.subDispNode->condNode->args, sizeof(ObjectId));
 		weapon = objects.GetHandle(objId);
 	}
-	if (!weapon || inventory.GetParent(weapon) || objects.GetType(weapon) != obj_t_weapon)
+	if (!weapon || (inventory.GetParent(weapon) && combatSys.isCombatActive())|| objects.GetType(weapon) != obj_t_weapon)
 	{
 		objects.floats->FloatCombatLine(args.objHndCaller, 195); //fail!
 		if (args.subDispNode->condNode->args[6] < 2)
