@@ -1557,7 +1557,7 @@ int DisarmedWeaponRetrieve(DispatcherCallbackArgs args)
 			args.subDispNode->condNode->args[6]++;
 		else
 			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
-		return 0;
+		return 0; 
 	}
 
 	//((int*)&weapon)[0]= conds.CondNodeGetArg(args.subDispNode->condNode, 0);
