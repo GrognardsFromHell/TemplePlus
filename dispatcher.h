@@ -107,7 +107,7 @@ struct CondNode : TempleAlloc {
 	CondStruct* condStruct;
 	CondNode* nextCondNode;
 	uint32_t flags; // 1 - expired; 2 - got arg data from info stored in field
-	uint32_t args[6];
+	uint32_t args[8];
 
 	explicit CondNode(CondStruct *cond);
 };

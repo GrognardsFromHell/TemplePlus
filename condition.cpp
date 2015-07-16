@@ -11,6 +11,7 @@
 #include "location.h"
 #include "damage.h"
 #include "float_line.h"
+#include "ui/ui_dialog.h"
 
 ConditionSystem conds;
 CondStructNew conditionDisableAoO;
@@ -112,7 +113,7 @@ void _CondNodeSetArg(CondNode* condNode, uint32_t argIdx, uint32_t argVal)
 }
 
 uint32_t _ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4) {
-	assert(condStruct->numArgs >= 0 && condStruct->numArgs <= 6);
+	assert(condStruct->numArgs >= 0 && condStruct->numArgs <= 8);
 
 	vector<int> args;
 	if (condStruct->numArgs > 0) {
@@ -1514,6 +1515,13 @@ int __cdecl DisarmCanPerform(DispatcherCallbackArgs args)
 
 int DisarmedReminder(DispatcherCallbackArgs args)
 {
+	if (args.subDispNode->condNode->args[7] < 2)
+	{
+		char blargh[1000];
+		memcpy(blargh, "I was disarmed.", sizeof("I was disarmed."));
+		uiDialog.ShowTextBubble(args.objHndCaller, args.objHndCaller, { blargh }, -1);
+		args.subDispNode->condNode->args[7]++;
+	}
 	return 0;
 }
 
@@ -1545,7 +1553,10 @@ int DisarmedWeaponRetrieve(DispatcherCallbackArgs args)
 	if (!weapon || inventory.GetParent(weapon) || objects.GetType(weapon) != obj_t_weapon)
 	{
 		objects.floats->FloatCombatLine(args.objHndCaller, 195); //fail!
-		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+		if (args.subDispNode->condNode->args[6] < 2)
+			args.subDispNode->condNode->args[6]++;
+		else
+			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 		return 0;
 	}
 
