@@ -360,12 +360,16 @@ int32_t D20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tbStat)
 	if (actSeq->tbStatus.tbsFlags & 0x10)
 		return 0;
 
-	if (d20a->d20ActType == D20A_DISARM)
-		return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_DISARM) == 0;
+
 
 	if ( (d20Defs[d20a->d20ActType].flags & D20ADF::D20ADF_QueryForAoO)
 		&& d20QueryWithData(d20a->d20APerformer, DK_QUE_ActionTriggersAOO, (int)d20a, 0))
+	{
+		if (d20a->d20ActType == D20A_DISARM)
+			return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_DISARM) == 0;
 		return 1;
+	}
+		
 	
 	if (!(d20Defs[d20a->d20ActType].flags & D20ADF::D20ADF_TriggersAoO))
 		return 0;

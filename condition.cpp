@@ -12,6 +12,7 @@
 #include "damage.h"
 #include "float_line.h"
 #include "ui/ui_dialog.h"
+#include "party.h"
 
 ConditionSystem conds;
 CondStructNew conditionDisableAoO;
@@ -1515,7 +1516,7 @@ int __cdecl DisarmCanPerform(DispatcherCallbackArgs args)
 
 int DisarmedReminder(DispatcherCallbackArgs args)
 {
-	if (args.subDispNode->condNode->args[7] < 2)
+	if (args.subDispNode->condNode->args[7] < 2 && party.IsInParty(args.objHndCaller) && !objects.IsUnconscious(args.objHndCaller))
 	{
 		char blargh[1000];
 		memcpy(blargh, "I was disarmed.", sizeof("I was disarmed."));
