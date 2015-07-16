@@ -15,7 +15,7 @@
 
 Objects objects;
 
-static_assert(validate_size<CondNode, 36>::value, "Condition node structure has incorrect size.");
+static_assert(validate_size<CondNode, 44>::value, "Condition node structure has incorrect size.");
 
 struct ObjectSystemAddresses : AddressTable
 {
