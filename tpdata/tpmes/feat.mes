@@ -119,10 +119,10 @@
 {5669} Reckless Offense {When you use the attack action or full attack action in melee, you can take a penalty of -4 to your Armor Class and add a +2 bonus on your melee attack roll. The bonus on attack rolls and penalty to Armor Class last at least until the beginning of your next turn.}
 {5670} Knock-Down {Whenever you deal 10 or more points of damage to your opponent in melee, you make a trip attack as a free action against the same target if it is the same size category as yours or lower.}
 {5671} Superior Expertise {Eliminates the +5 maximum for the Combat Expertise feat.}
-{5672} Deadly Precision {Reroll any result of 1 on your sneak attack’s extra damage dice. You must keep the result of the reroll, even if it is another 1.}
-{5673} Persistent Spell {A persistent spell has a duration of 24 hours. The persistent spell must have a personal range or a fixed range. Uses up a spell slot six levels higher than the spell’s actual level.}
+{5672} Deadly Precision {Reroll any result of 1 on your sneak attack's extra damage dice. You must keep the result of the reroll, even if it is another 1.}
+{5673} Persistent Spell {A persistent spell has a duration of 24 hours. The persistent spell must have a personal range or a fixed range. Uses up a spell slot six levels higher than the spell's actual level.}
 {5674} Power Critical {When using the weapon you selected, you gain a +4 bonus on the roll to confirm a threat.}
-{5675} Greater Rage {At 11th level, a barbarian’s bonuses to Strength and Constitution during his rage each increase to +6, and his morale bonus on Will saves increases to +3. The penalty to AC remains at -2.}
+{5675} Greater Rage {At 11th level, a barbarian's bonuses to Strength and Constitution during his rage each increase to +6, and his morale bonus on Will saves increases to +3. The penalty to AC remains at -2.}
 {5676} Tireless Rage {}
 {5677} Greater Weapon Specialization Gauntlet {You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
 {5677}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
@@ -195,9 +195,9 @@
 {5744}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
 {5745}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
 {5746}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
-{5747}{Tireless Rage}
-{5748}{Mighty Rage}
-{5749}{Indomitable Will}
+{5747}{At 17th level and higher, a barbarian no longer becomes fatigued at the end of his rage.}
+{5748}{At 20th level, a barbarian's bonuses to Strength and Constitution during his rage each increase to +8, and his morale bonus on Will saves increases to +4. The penalty to AC remains at -2.}
+{5749}{While in a rage, a barbarian of 14th level or higher gains a +4 bonus on Will saves to resist enchantment spells. This bonus stacks with all other modifiers, including the morale bonus on Will saves he also receives during his rage.}
 
 // prerequisites descriptions
 {10137} Greater Weapon Specialization {Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
@@ -293,3 +293,6 @@
 {10744}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
 {10745}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
 {10746}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
+{10747}{Barbarian level 17.}
+{10748}{Barbarian level 20.}
+{10749}{Barbarian level 14.}

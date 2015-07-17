@@ -114,6 +114,9 @@ bool CombatSystem::DisarmCheck(objHndl attacker, objHndl defender, D20Actn* d20a
 			bonusSys.bonusAddToBonusList(&dispIoAtkBonus.bonlist, -4, 0, 340); // Light Weapon
 		else if (attackerWieldType == 2)
 			bonusSys.bonusAddToBonusList(&dispIoAtkBonus.bonlist, 4, 0, 341); // Two Handed Weapon
+		int weaponType = objects.getInt32(attackerWeapon, obj_f_weapon_type);
+		if (weaponType == wt_spike_chain || weaponType == wt_nunchaku || weaponType == wt_light_flail || weaponType == wt_heavy_flail || weaponType == wt_dire_flail || weaponType == wt_ranseur || weaponType == wt_halfling_nunchaku)
+			bonusSys.bonusAddToBonusList(&dispIoAtkBonus.bonlist, 2, 0, 343); // Weapon Special Bonus
 	} else
 	{
 		if (!feats.HasFeatCountByClass(attacker, FEAT_IMPROVED_UNARMED_STRIKE))
@@ -142,6 +145,9 @@ bool CombatSystem::DisarmCheck(objHndl attacker, objHndl defender, D20Actn* d20a
 			bonusSys.bonusAddToBonusList(&dispIoDefBonus.bonlist, -4, 0, 340); // Light Off-hand Weapon
 		else if (wieldType == 2)
 			bonusSys.bonusAddToBonusList(&dispIoDefBonus.bonlist, 4, 0, 341); // Two Handed Weapon
+		int weaponType = objects.getInt32(defenderWeapon, obj_f_weapon_type);
+		if (weaponType == wt_spike_chain || weaponType == wt_nunchaku || weaponType == wt_light_flail || weaponType == wt_heavy_flail || weaponType == wt_dire_flail || weaponType == wt_ranseur || weaponType == wt_halfling_nunchaku)
+			bonusSys.bonusAddToBonusList(&dispIoAtkBonus.bonlist, 2, 0, 343); // Weapon Special Bonus
 	}
 	
 	dispIoDefBonus.attackPacket.weaponUsed = attackerWeapon;

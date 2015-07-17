@@ -2,9 +2,9 @@
 
 #include "common.h"
 
-#define NUM_FEATS 747 // inc. those hacked by Moebius/SpellSlinger (otherwise vanilla is 649)
+#define NUM_FEATS 750 // vanilla was 649 (and Moebius hack increased this to 664 I think)
 #include "tig/tig_mes.h"
-//664th - FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER
+
 
 struct FeatPrereqRow;
 struct ClassFeatTableEntry

@@ -1401,7 +1401,9 @@ int CombatExpertiseSet(DispatcherCallbackArgs args)
 int BarbarianRageStatBonus(DispatcherCallbackArgs args)
 {
 	DispIoBonusList * dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
-	if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_GREATER_RAGE, (Stat)0, 0))
+	if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_MIGHTY_RAGE, (Stat)0, 0))
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 8, 0, 339); // Greater Rage
+	else if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_GREATER_RAGE, (Stat)0, 0))
 		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 6, 0, 338); // Greater Rage
 	else
 		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 4, 0, 195); // normal rage
@@ -1411,10 +1413,18 @@ int BarbarianRageStatBonus(DispatcherCallbackArgs args)
 int BarbarianRageSaveBonus(DispatcherCallbackArgs args)
 {
 	DispIoSavingThrow * dispIo = dispatch.DispIoCheckIoType3(args.dispIO);
-	if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_GREATER_RAGE, (Stat)0, 0))
+	if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_MIGHTY_RAGE, (Stat)0, 0))
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 4, 0, 339); // Mighty Rage
+	else if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_GREATER_RAGE, (Stat)0, 0))
 		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 3, 0, 338); // Greater Rage
 	else
 		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 2, 0, 195); // normal rage
+
+	if (dispIo->flags & 0x100) // enchantment
+	{
+		if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_INDOMITABLE_WILL, (Stat)0, 0))
+			bonusSys.bonusAddToBonusList(&dispIo->bonlist, 4, 0, 344); // Indomitable Will
+	}
 	return 0;
 }
 

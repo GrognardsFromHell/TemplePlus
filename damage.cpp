@@ -111,7 +111,7 @@ bool Damage::SavingThrow(objHndl obj, objHndl attacker, int dc, SavingThrowType 
 }
 
 bool Damage::SavingThrowSpell(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags, int spellId) {
-	return addresses.SavingThrow(obj, attacker, dc, type, flags);
+	return addresses.SavingThrowSpell(obj, attacker, dc, type, flags, spellId);
 }
 
 bool Damage::ReflexSaveAndDamage(objHndl obj, objHndl attacker, int dc, int reduction, int flags, const Dice& dice, DamageType damageType, int attackPower, D20ActionType actionType, int spellId) {
