@@ -25,16 +25,20 @@ static struct SpellAddresses : AddressTable {
 
 
 	uint32_t(__cdecl * ConfigSpellTargetting)(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
+	int(__cdecl*ParseSpellSpecString)(SpellStoreData* spellStoreData, char* spellString);
 
 	SpellAddresses() {
 		rebase(UpdateSpellPacket, 0x10075730);
 		rebase(GetMaxSpellSlotLevel, 0x100765B0);
+		rebase(ParseSpellSpecString, 0x10078F20);
 
 		rebase(ConfigSpellTargetting, 0x100B9690);
 
 		rebase(spellConds, 0x102E2600);
 		
 	}
+
+	
 } addresses;
 
 IdxTableWrapper<SpellEntry> spellEntryRegistry(0x10AAF428);
@@ -112,6 +116,11 @@ uint32_t SpellSystem::ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketB
 uint32_t SpellSystem::GetMaxSpellSlotLevel(objHndl objHnd, Stat classCode, int casterLvl)
 {
 	return addresses.GetMaxSpellSlotLevel(objHnd, classCode, casterLvl);
+}
+
+int SpellSystem::ParseSpellSpecString(SpellStoreData* spell, char* spellString)
+{
+	return addresses.ParseSpellSpecString(spell, spellString);
 }
 
 uint32_t SpellSystem::getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t classLvl, uint32_t slotLvl, uint32_t unknown1)

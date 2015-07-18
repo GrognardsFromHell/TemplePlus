@@ -91,6 +91,13 @@ public:
 
 		
 		replaceFunction(0x10101150, SkillBonusCallback);
+
+		// Replace hooks for S_Is_BreakFree_Possible so they also return the spell Id
+		int writeVal = (int)QueryRetrun1GetArgs;
+		write(0x102E0F1C + 8, &writeVal, sizeof(int*)); // web on
+		write(0x102D7958 + 8, &writeVal, sizeof(int*)); // entangle on
+		
+		//replaceFunction(0x100C7180, QueryRetrun1GetArgs);
 	}
 } condFuncReplacement;
 
@@ -313,7 +320,7 @@ int QuerySetReturnVal1(DispatcherCallbackArgs args)
 	return 0;
 };
 
-int QueryGetArgs(DispatcherCallbackArgs args)
+int QueryRetrun1GetArgs(DispatcherCallbackArgs args)
 {
 	DispIoD20Query * dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
 	dispIo->return_val = 1;

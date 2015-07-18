@@ -271,6 +271,7 @@ int ConditionPrevent(DispatcherCallbackArgs args);
 int ConditionRemoveCallback(DispatcherCallbackArgs args);
 int CondNodeSetArg0FromSubDispDef(DispatcherCallbackArgs args);
 int QuerySetReturnVal1(DispatcherCallbackArgs args);
+int QueryRetrun1GetArgs(DispatcherCallbackArgs args);
 int SkillBonusCallback(DispatcherCallbackArgs args); 
 int GlobalToHitBonus(DispatcherCallbackArgs args);
 int GlobalGetArmorClass(DispatcherCallbackArgs args);

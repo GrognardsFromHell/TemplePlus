@@ -223,7 +223,7 @@ struct AiTacticDef
 
 struct AiStrategy
 {
-	uint32_t field0;
+	char * name;
 	AiTacticDef * aiTacDefs[20];
 	uint32_t field54[20];
 	SpellStoreData spellsKnown[20];

@@ -1591,6 +1591,8 @@ enum D20DispatcherKey : uint32_t {
 	DK_IMMUNITY_RACIAL = 14,
 	DK_IMMUNITY_15 = 15,
 	DK_IMMUNITY_16 = 16,
+	DK_Object_Event18 = 18,
+	DK_Object_Event19 = 19,
 	DK_SKILL_APPRAISE = 20,
 	DK_SKILL_BLUFF = 21,
 	DK_SKILL_CONCENTRATION = 22,
@@ -1847,7 +1849,8 @@ enum D20DispatcherKey : uint32_t {
 	DK_QUE_AI_Has_Spell_Override = 0x13F,
 	DK_QUE_Weapon_Get_Keen_Bonus = 0x140,
 	DK_QUE_Disarmed = 0x141,
-	DK_QUE_Can_Perform_Disarm = 0x142
+	DK_SIG_Destruction_Domain_Smite = 0x142,
+	DK_QUE_Can_Perform_Disarm = 0x143
 };
 
 enum enum_dispIO_type : uint32_t {
@@ -1928,7 +1931,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeD20ActionCheck,
 	dispTypeD20ActionPerform,
 	dispTypeD20ActionOnActionFrame,
-	dispType39,
+	dispTypeDestructionDomain,
 	dispTypeGetMoveSpeedBase,
 	dispTypeGetMoveSpeed,
 	dispTypeAbilityCheckModifier, // only used in Trip as far as I can tell for stuff like Sickened condition
@@ -1939,7 +1942,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeSpellDcMod,
 	dispTypeBeginRound, // immediately followed by the OnBeginRound spell trigger. Commonly used for spell countdown / removal when finished
 	dispType49,
-	dispType50,
+	dispTypeDeflectArrows,
 	dispTypeGetNumAttacksBase,
 	dispTypeGetBonusAttacks,
 	dispTypeGetCritterNaturalAttacksNum,
@@ -1947,7 +1950,7 @@ enum enum_disp_type : uint32_t {
 	dispType55,
 	dispType56,
 	dispType57,
-	dispType58,
+	dispType58, // not actual use
 	dispType59,
 
 	dispType60,

@@ -80,8 +80,11 @@ struct AiSystem : AddressTable
 	int Approach(AiTactic* aiTac);
 	int CoupDeGrace(AiTactic * aiTac);
 	int PickUpWeapon(AiTactic* aiTac);
+	int BreakFree(AiTactic* aiTac);
 	void UpdateAiFightStatus(objHndl objIn, int* aiState, objHndl* target);
 	int UpdateAiFlags(objHndl ObjHnd, int aiFightStatus, objHndl target, int *soundMap);
+	void StrategyTabLineParseTactic(AiStrategy*, char * tacName, char * middleString, char* spellString);
+	int StrategyTabLineParser(TabFileStatus* tabFile, int n, char ** strings);
 
 
 private:

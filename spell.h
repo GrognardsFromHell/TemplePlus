@@ -109,6 +109,7 @@ struct SpellSystem : AddressTable
 	uint32_t spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry);
 	uint32_t ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
 	uint32_t GetMaxSpellSlotLevel(objHndl objHnd, Stat classCode, int casterLvl);
+	int ParseSpellSpecString(SpellStoreData* spell, char* spellString);
 	MesHandle * spellEnumMesHandle;
 
 	uint32_t getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t classLvl, uint32_t slotLvl, uint32_t unknown1);

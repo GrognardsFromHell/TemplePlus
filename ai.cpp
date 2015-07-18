@@ -81,13 +81,15 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 
 	if (d20Sys.d20Query(aiTac.performer, DK_QUE_Disarmed))
 	{
-		hooked_print_debug_message("\n%s attempting to pickup weapon...\n", description._getDisplayName(objHnd, objHnd));
+		hooked_print_debug_message("\n%s attempting to pickup weapon...\n", description.getDisplayName(objHnd));
 		if (PickUpWeapon(&aiTac))
 		{
 			actSeq->sequencePerform();
 			return 1;
 		}
 	}
+
+	
 
 	for (uint32_t i = 0; i < aiStrat->numTactics; i++)
 	{
@@ -121,6 +123,18 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 			return 1;
 		}
 	}
+
+	// if that doesn't work either, try to Break Free (NPC might be held back by Web / Entangle)
+	if (d20Sys.d20Query(aiTac.performer, DK_QUE_Is_BreakFree_Possible))
+	{
+		hooked_print_debug_message("\n%s attempting to break free...\n", description.getDisplayName(objHnd));
+		if (BreakFree(&aiTac))
+		{
+			actSeq->sequencePerform();
+			return 1;
+		}
+	}
+
 	return 0;
 }
 
@@ -280,6 +294,39 @@ int AiSystem::PickUpWeapon(AiTactic* aiTac)
 	return 1;
 }
 
+int AiSystem::BreakFree(AiTactic* aiTac)
+{
+	int d20aNum;
+	objHndl performer = aiTac->performer;
+	objHndl target;
+	LocAndOffsets performerLoc;
+	float dist = 0.0;
+
+	d20aNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+	if (!d20Sys.d20Query(performer, DK_QUE_Is_BreakFree_Possible))
+		return 0;
+	int spellId = d20Sys.d20QueryReturnData(performer, DK_QUE_Is_BreakFree_Possible, 0, 0);
+
+	locSys.getLocAndOff(aiTac->performer, &performerLoc);
+	if (combatSys.GetClosestEnemy(aiTac->performer, &performerLoc, &target, &dist, 0x21))
+	{
+		if (combatSys.IsWithinReach(aiTac->performer, target))
+			return 0;
+	}
+	actSeqSys.curSeqReset(aiTac->performer);
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_BREAK_FREE, spellId);
+	//d20Sys.GlobD20ActnSetTarget(aiTac->performer, 0);
+	actSeqSys.ActionAddToSeq();
+	if (actSeqSys.ActionSequenceChecksWithPerformerLocation())
+	{
+		actSeqSys.ActionSequenceRevertPath(d20aNum);
+		return 0;
+	}
+
+	return 1;
+}
+
 int AiSystem::CoupDeGrace(AiTactic* aiTac)
 {
 	int actNum; 
@@ -360,6 +407,64 @@ int AiSystem::UpdateAiFlags(objHndl obj, int aiFightStatus, objHndl target, int*
 {
 	return addresses.UpdateAiFlags(obj, aiFightStatus, target, soundMap);
 }
+
+void AiSystem::StrategyTabLineParseTactic(AiStrategy* aiStrat, char* tacName, char* middleString, char* spellString)
+{
+	int tacIdx = 0;
+	if (*tacName)
+	{
+		for (int i = 0; i < 44 && _stricmp(tacName, aiTacticDefs[i].name); i++){
+			++tacIdx;
+		}
+		if (tacIdx >= 44)
+		{
+			hooked_print_debug_message("\nError: No Such Tactic %s for Strategy %s", tacName, aiStrat->name);
+			return;
+		}
+		aiStrat->aiTacDefs[aiStrat->numTactics] = &aiTacticDefs[tacIdx];
+		aiStrat->field54[aiStrat->numTactics] = 0;
+		aiStrat->spellsKnown[aiStrat->numTactics].spellEnum = -1;
+		if (*spellString)
+			spell->ParseSpellSpecString(&aiStrat->spellsKnown[aiStrat->numTactics], (char *)spellString);
+		++aiStrat->numTactics;
+	}
+	return;
+}
+
+int AiSystem::StrategyTabLineParser(TabFileStatus* tabFile, int n, char** strings)
+{
+	AiStrategy *aiStrat; 
+	const char *v4; 
+	signed int i; 
+	char v6; 
+	char *stratName; 
+	int v8; 
+	char **v9; 
+
+	aiStrat = &((*aiStrategies)[n]);
+	v4 = *strings;
+	i = 0;
+	do
+		v6 = *v4++;
+	while (v6);
+	stratName = (char *)allocFuncs._malloc_0(v4 - ( (*strings )+ 1) + 1);
+	aiStrat->name = stratName;
+	strcpy((char *)stratName, *strings);
+	aiStrat->numTactics = 0;
+	v8 = 3;
+	v9 = strings + 2;
+	do
+	{
+		if (tabFile->numTabsMax < v8)
+			break;
+		StrategyTabLineParseTactic(aiStrat, *(v9 - 1), *v9, v9[1]);
+		v8 += 3;
+		v9 += 3;
+		++i;
+	} while (i < 20);
+	++aiStrategiesNum;
+	return 0;
+}
 #pragma endregion
 
 #pragma region AI replacement functions
@@ -379,6 +484,14 @@ int _AiApproach(AiTactic* aiTac)
 	return aiSys.Approach(aiTac);
 }
 
+
+
+void _StrategyTabLineParser(TabFileStatus* tabFile, int n, char** strings)
+{
+	aiSys.StrategyTabLineParser(tabFile, n, strings);
+}
+
+
 class AiReplacements : public TempleFix
 {
 public: 
@@ -386,9 +499,13 @@ public:
 	void apply() override 
 	{
 		logger->info("Replacing AI functions...");
+		
 		replaceFunction(0x100E48D0, _AiApproach);
 		replaceFunction(0x100E50C0, _aiStrategyParse); 
+	//	replaceFunction(0x100E5500, _StrategyTabLineParser);
 		replaceFunction(0x100E5DB0, _AiCoupDeGrace);
+
+
 		
 	}
 } aiReplacements;
