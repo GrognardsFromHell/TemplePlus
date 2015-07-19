@@ -274,6 +274,15 @@
     <ClCompile Include="traps.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
     <ClCompile Include="ui\ui_tutorial.cpp" />
+    <ClCompile Include="ui\ui_browser.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_browser_app.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_resourcebundlehandler.cpp" />
+    <ClCompile Include="ui\ui_browser_client.cpp" />
+    <ClCompile Include="ui\ui_render_handler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -561,6 +570,15 @@
     <ClInclude Include="util\mathutil.h" />
     <ClInclude Include="sound.h" />
     <ClInclude Include="util\stringutil.h" />
+    <ClInclude Include="ui\ui_browser.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_browser_app.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_resourcebundlehandler.h" />
+    <ClInclude Include="ui\ui_browser_client.h" />
+    <ClInclude Include="ui\ui_render_handler.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

@@ -11,6 +11,7 @@
 #include "tig/tig_shader.h"
 #include "ui/ui.h"
 #include "ui/ui_mainmenu.h"
+#include "ui/ui_browser.h"
 #include "movies.h"
 #include "util/exception.h"
 #include "util/stopwatch.h"
@@ -212,6 +213,8 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 
 	// Notify the UI system that the module has been loaded
 	UiModuleLoader uiModuleLoader(uiLoader);
+
+	UiBrowser browser;
 	
 	if (!config.skipIntro) {
 		movieFuncs.PlayMovie("movies\\introcinematic.bik", 0, 0, 0);
@@ -233,7 +236,7 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	startupRelevantFuncs.RunBatchFile("Startup.txt");
 	logger->info("[Beginning Game]");		
 
-	RunMainLoop();
+	RunMainLoop(browser);
 	// startupRelevantFuncs.RunMainLoop();
 
 	return 0;

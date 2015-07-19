@@ -8,9 +8,9 @@
 #pragma pack(push, 1)
 struct DrawTexturedQuadArgs {
 	int flags = 0;
-	int textureId;
+	int textureId = 0;
 	int field8;
-	void *texBuffer;
+	void *texBuffer = 0;
 	int shaderId;
 	const TigRect *srcRect;
 	const TigRect *destRect;	
@@ -29,7 +29,7 @@ static struct UiRenderFuncs : AddressTable {
 		It's a pretty flexible function. Not all arguments have been discovered yet.
 	*/
 	int (__cdecl *DrawTexturedQuad)(const DrawTexturedQuadArgs &);
-
+	
 	/*
 		Simply calls TIG Font Draw but positions the given rectangle relative to the given widget.
 	*/
@@ -91,6 +91,33 @@ void UiRenderer::DrawTexture(int texId, const TigRect &destRect) {
 	args.srcRect = &srcRect;
 
 	args.textureId = texId;
+
+	if (uiRenderFuncs.DrawTexturedQuad(args)) {
+		logger->warn("DrawTexturedQuad failed!");
+	}
+
+}
+
+void UiRenderer::DrawTexture(IDirect3DTexture9 *texture,
+	int texWidth,
+	int texHeight,
+	const TigRect &srcRect,
+	const TigRect &destRect) {
+
+	static Direct3DTexture8Adapter adapter;
+
+	DrawTexturedQuadArgs args;
+	args.flags = 0x80; // Indicates we dont use a texture id, but a "tig buffer"
+	args.destRect = &destRect;
+	args.srcRect = &srcRect;
+
+	TigBuffer buffer;
+	buffer.d3dtexture = &adapter;
+	adapter.delegate = texture; // We have to check if ToEE ever calls Release() on this
+	buffer.texturewidth = texWidth;
+	buffer.textureheight = texHeight;
+
+	args.texBuffer = &buffer;
 
 	if (uiRenderFuncs.DrawTexturedQuad(args)) {
 		logger->warn("DrawTexturedQuad failed!");

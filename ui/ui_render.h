@@ -55,6 +55,16 @@ public:
 		Draws the full texture in the given screen rectangle.
 	*/
 	static void DrawTexture(int texId, const TigRect &destRect);
+
+	/*
+		Draws an arbitrary Direct 3D texture on screen. The real texture size has to be given so the
+		UV coordinates can be calculated correctly.
+	*/
+	static void DrawTexture(IDirect3DTexture9 *texture, 
+		int texWidth,
+		int texHeight,
+		const TigRect &srcRect,
+		const TigRect &destRect);
 	
 	/*
 		Pushes a font for further text rendering.

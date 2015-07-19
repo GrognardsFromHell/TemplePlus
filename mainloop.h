@@ -1,4 +1,6 @@
 
 #pragma once
 
-void RunMainLoop();
+class UiBrowser;
+
+void RunMainLoop(UiBrowser &browser);

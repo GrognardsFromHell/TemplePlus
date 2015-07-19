@@ -9,6 +9,7 @@
 #include "graphics.h"
 #include "ui/ui_render.h"
 #include "ui/ui_text.h"
+#include "ui/ui_browser.h"
 #include "util/version.h"
 
 static struct MainLoop : AddressTable {
@@ -61,13 +62,13 @@ static struct MainLoop : AddressTable {
 } mainLoop;
 
 static void DoMouseScrolling();
-static void RenderFrame();
+static void RenderFrame(UiBrowser &browser);
 
 /*
 	This replaces the main loop that is called by temple_main. Since we already replaced
 	temple_main, there is no need to hook this function in temple.dll
 */
-void RunMainLoop() {
+void RunMainLoop(UiBrowser &browser) {
 		
 	// Is this a center map kind of deal?
 	locXY loc;
@@ -89,6 +90,8 @@ void RunMainLoop() {
 			msgFuncs.ProcessSystemEvents();
 		}
 
+		browser.Update();
+
 		gameSystemFuncs.AdvanceTime();
 
 		// This locks the cursor to our window if we are in the foreground and it's enabled
@@ -98,7 +101,7 @@ void RunMainLoop() {
 			ClipCursor(&rect);
 		}
 
-		RenderFrame();
+		RenderFrame(browser);
 				
 		// Why does it process msgs AFTER rendering???		
 		while (!msgFuncs.Process(&msg)) {
@@ -137,7 +140,7 @@ static struct RenderFuncs : AddressTable {
 static void RenderVersion();
 
 // TODO: hook this?
-static void RenderFrame() {
+static void RenderFrame(UiBrowser &browser) {
 	graphics.BeginFrame();
 	
 	auto device = graphics.device();
@@ -174,6 +177,9 @@ static void RenderFrame() {
 		&destRect,
 		D3DTEXF_LINEAR
 	);
+
+	// Draw our full scale UI (not stretched)
+	browser.Render();
 
 	uiText.Update();
 	uiText.Render();

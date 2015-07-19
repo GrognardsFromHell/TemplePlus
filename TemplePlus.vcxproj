@@ -100,7 +100,12 @@
     <ClCompile Include="python\python_game.cpp" />
     <ClCompile Include="python\python_importer.cpp" />
     <ClCompile Include="traps.cpp" />
+    <ClCompile Include="ui\ui_browser.cpp" />
+    <ClCompile Include="ui\ui_browser_app.cpp" />
+    <ClCompile Include="ui\ui_browser_client.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
+    <ClCompile Include="ui\ui_render_handler.cpp" />
+    <ClCompile Include="ui\ui_resourcebundlehandler.cpp" />
     <ClCompile Include="ui\ui_tutorial.cpp" />
     <ClCompile Include="turn_based.cpp" />
     <ClCompile Include="ui\ui_picker.cpp" />
@@ -299,7 +304,12 @@
     <ClInclude Include="python\python_importer.h" />
     <ClInclude Include="python\python_consoleout.h" />
     <ClInclude Include="traps.h" />
+    <ClInclude Include="ui\ui_browser.h" />
+    <ClInclude Include="ui\ui_browser_app.h" />
+    <ClInclude Include="ui\ui_browser_client.h" />
     <ClInclude Include="ui\ui_dialog.h" />
+    <ClInclude Include="ui\ui_render_handler.h" />
+    <ClInclude Include="ui\ui_resourcebundlehandler.h" />
     <ClInclude Include="ui\ui_tutorial.h" />
     <ClInclude Include="turn_based.h" />
     <ClInclude Include="ui\ui_picker.h" />
@@ -466,7 +476,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>ROCKET_STATIC_LIB;WIN32;_DEBUG;_WINDOWS;$(MSBuildDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;dependencies\librocket\include;dependencies\freetype\include\;dependencies\python\include;dependencies\minhook\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;dependencies\include;dependencies\cef;dependencies\minhook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
@@ -475,12 +485,12 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>temple.lib;tio\tio.lib;winmm.lib;d3d9.lib;Crypt32.lib;ws2_32.lib;libeay32.lib;ssleay32.lib;pythonembed_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>temple.lib;tio\tio.lib;winmm.lib;d3d9.lib;Crypt32.lib;ws2_32.lib;libeay32.lib;ssleay32.lib;python27_d.lib;dependencies\bin\debug\libcef.lib;libcef_dll_wrapper_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
-      <AdditionalLibraryDirectories>dependencies\librocket\debug;dependencies\python</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>dependencies\lib</AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll;libcef.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">
@@ -489,7 +499,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;dependencies\librocket\include;dependencies\freetype\include\;dependencies\python\include;dependencies\minhook\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;dependencies\include;dependencies\minhook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -498,8 +508,7 @@
       <AdditionalDependencies>tio\tio.lib;winmm.lib;d3d9.lib;Crypt32.lib;ws2_32.lib;libeay32.lib;ssleay32.lib;pythonembed_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
-      <AdditionalLibraryDirectories>
-      </AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>dependencies\lib</AdditionalLibraryDirectories>
       <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
@@ -511,7 +520,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>ROCKET_STATIC_LIB;WIN32;NDEBUG;_WINDOWS;$(MSBuildDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;dependencies\librocket\include;dependencies\freetype\include\;dependencies\python\include;dependencies\minhook\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;dependencies\include;dependencies\minhook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <ForcedIncludeFiles>
@@ -523,11 +532,11 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>temple.lib;tio\tio.lib;winmm.lib;d3d9.lib;Crypt32.lib;ws2_32.lib;libeay32.lib;ssleay32.lib;pythonembed.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>temple.lib;tio\tio.lib;winmm.lib;d3d9.lib;Crypt32.lib;ws2_32.lib;libeay32.lib;ssleay32.lib;python27.lib;dependencies\bin\release\libcef.lib;libcef_dll_wrapper.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
-      <AdditionalLibraryDirectories>dependencies\librocket\release;dependencies\python</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>dependencies\lib</AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
     </Link>
