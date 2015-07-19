@@ -12,6 +12,36 @@ UiRenderHandler::UiRenderHandler() {
 UiRenderHandler::~UiRenderHandler() {
 }
 
+bool UiRenderHandler::GetRootScreenRect(CefRefPtr<CefBrowser> browser, CefRect& rect) {
+	RECT window_rect = { 0 };
+	HWND root_window = GetAncestor(video->hwnd, GA_ROOT);
+	if (::GetWindowRect(root_window, &window_rect)) {
+		rect = CefRect(window_rect.left,
+			window_rect.top,
+			window_rect.right - window_rect.left,
+			window_rect.bottom - window_rect.top);
+		return true;
+	}
+	return false;
+}
+
+bool UiRenderHandler::GetScreenPoint(CefRefPtr<CefBrowser> browser,
+	int viewX,
+	int viewY,
+	int& screenX,
+	int& screenY) {
+
+	if (!::IsWindow(video->hwnd))
+		return false;
+
+	// Convert the point from view coordinates to actual screen coordinates.
+	POINT screen_pt = { viewX, viewY };
+	ClientToScreen(video->hwnd, &screen_pt);
+	screenX = screen_pt.x;
+	screenY = screen_pt.y;
+	return true;
+}
+
 bool UiRenderHandler::GetViewRect(CefRefPtr<CefBrowser> browser, CefRect& rect) {
 	rect.x = 0;
 	rect.y = 0;

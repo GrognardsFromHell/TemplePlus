@@ -21,7 +21,7 @@ public:
 
 	CefRefPtr<CefLoadHandler> GetLoadHandler() override;
 
-	/* CefLoadHandler Callbacks */
+	/* CefLoadHandler callbacks */
 
 	void OnLoadError(CefRefPtr<CefBrowser> browser,
 		CefRefPtr<CefFrame> frame,
@@ -29,8 +29,18 @@ public:
 		const CefString& errorText,
 		const CefString& failedUrl) override;
 
+
+	/* CefLifeSpanHandler callbacks */
+	void OnAfterCreated(CefRefPtr<CefBrowser> browser);
+
+	CefRefPtr<CefBrowser> browser() {
+		return mBrowser;
+	}
+
 private:
 	IMPLEMENT_REFCOUNTING(UiBrowserClient);
+
+	CefRefPtr<CefBrowser> mBrowser;
 
 	CefRefPtr<UiRenderHandler> mRenderHandler;
 };

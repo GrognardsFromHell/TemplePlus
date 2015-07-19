@@ -4,6 +4,7 @@
 
 #include "util/fixes.h"
 #include "graphics.h"
+#include "mainwindow.h"
 #include "movies.h"
 #include "tig/tig_startup.h"
 #include "tig/tig_msg.h"
@@ -25,6 +26,12 @@ struct WindowFuncs : AddressTable {
 } windowFuncs;
 
 GlobalPrimitive<uint32_t, 0x10D25C38> globalWwndproc;
+
+MessageFilterFn messageFilter = nullptr;
+
+void SetMessageFilter(MessageFilterFn filter) {
+	messageFilter = filter;
+}
 
 bool CreateMainWindow(TigConfig* settings) {
 	bool windowed = config.windowed;
@@ -171,6 +178,10 @@ static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARA
 	static int mousePosY = 0; // Replaces memory @ 10D25CF0
 	RECT rect;
 	TigMsg tigMsg;
+
+	if (messageFilter && messageFilter(hWnd, msg, wparam, lparam)) {
+		return DefWindowProcA(hWnd, msg, wparam, lparam);
+	}
 
 	switch (msg) {
 	case WM_SETCURSOR:

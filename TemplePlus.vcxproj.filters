@@ -283,6 +283,7 @@
     <ClCompile Include="ui\ui_resourcebundlehandler.cpp" />
     <ClCompile Include="ui\ui_browser_client.cpp" />
     <ClCompile Include="ui\ui_render_handler.cpp" />
+    <ClCompile Include="ui\ui_browser_input.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -579,6 +580,7 @@
     <ClInclude Include="ui\ui_resourcebundlehandler.h" />
     <ClInclude Include="ui\ui_browser_client.h" />
     <ClInclude Include="ui\ui_render_handler.h" />
+    <ClInclude Include="ui\ui_browser_input.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

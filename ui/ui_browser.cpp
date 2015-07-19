@@ -4,6 +4,7 @@
 #include "ui_browser.h"
 #include "ui_browser_app.h"
 #include "ui_browser_client.h"
+#include "ui_browser_input.h"
 #include "../util/exception.h"
 #include "../util/stopwatch.h"
 #include "../graphics.h"
@@ -70,7 +71,19 @@ void UiBrowser::CreateBrowser() {
 		throw new TempleException("Unable to create browser");
 	}
 
+	if (!mClient->browser()) {
+		throw new TempleException("Creation of browser did not succeed.");
+	}
+
+	mClient->browser()->GetHost()->WasResized();
+
+	mClient->browser()->GetHost()->SetWindowVisibility(true);
+
+	// This initializes the message filter that routes input events to the browser
+	mInput.reset(new UiBrowserInput(mClient->browser()));
 }
 
 void UiBrowser::LoadUi() {
+	// Wait until the browser says the page has loaded completely, since that means
+	// we can show it.
 }

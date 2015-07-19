@@ -103,6 +103,7 @@
     <ClCompile Include="ui\ui_browser.cpp" />
     <ClCompile Include="ui\ui_browser_app.cpp" />
     <ClCompile Include="ui\ui_browser_client.cpp" />
+    <ClCompile Include="ui\ui_browser_input.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
     <ClCompile Include="ui\ui_render_handler.cpp" />
     <ClCompile Include="ui\ui_resourcebundlehandler.cpp" />
@@ -307,6 +308,7 @@
     <ClInclude Include="ui\ui_browser.h" />
     <ClInclude Include="ui\ui_browser_app.h" />
     <ClInclude Include="ui\ui_browser_client.h" />
+    <ClInclude Include="ui\ui_browser_input.h" />
     <ClInclude Include="ui\ui_dialog.h" />
     <ClInclude Include="ui\ui_render_handler.h" />
     <ClInclude Include="ui\ui_resourcebundlehandler.h" />
