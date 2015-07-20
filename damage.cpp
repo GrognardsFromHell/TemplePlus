@@ -157,6 +157,11 @@ int Damage::AddPhysicalDR(DamagePacket* damPkt, int DRAmount, int bypasserBitmas
 	
 }
 
+int Damage::AddDamageDice(DamagePacket* dmgPkt, int dicePacked, DamageType damType, unsigned damageMesLine)
+{
+	return addresses.AddDamageDice(dmgPkt, dicePacked, damType, damageMesLine);
+}
+
 Damage::Damage()
 {
 	damageMes = addresses.damageMes;

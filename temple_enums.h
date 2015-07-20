@@ -1953,7 +1953,7 @@ enum enum_disp_type : uint32_t {
 	dispType58, // not actual use
 	dispType59,
 
-	dispType60,
+	dispTypeGetAttackDice,
 	dispType61,
 	dispTypeImmunityTrigger,
 	dispType63,

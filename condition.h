@@ -304,6 +304,8 @@ int DisarmedReminder(DispatcherCallbackArgs args);
 int DisarmedWeaponRetrieve(DispatcherCallbackArgs args);
 int DisarmedRetrieveWeaponRadialMenu(DispatcherCallbackArgs args);
 
+int RendOnDamage(DispatcherCallbackArgs args);
+
 void _FeatConditionsRegister();
 uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** ppCondStruct, uint32_t * arg2);
 uint32_t _CondStructAddToHashtable(CondStruct * condStruct);

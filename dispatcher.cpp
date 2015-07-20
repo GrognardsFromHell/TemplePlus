@@ -445,6 +445,32 @@ int DispatcherSystem::DispatchD20ActionCheck(D20Actn* d20a, TurnBasedStatus* tur
 	}
 	return 0;
 }
+
+int DispatcherSystem::Dispatch60GetAttackDice(objHndl obj, DispIoAttackDice* dispIo)
+{
+	BonusList localBonlist;
+	if (!dispIo->bonlist)
+		dispIo->bonlist = &localBonlist;
+
+	Dispatcher * dispatcher = objects.GetDispatcher(obj);
+	if (!dispatcherValid(dispatcher))
+		return 0;
+	if (dispIo->weapon)
+	{
+		
+	}
+	DispatcherProcessor(dispatcher, dispTypeGetAttackDice, 0, dispIo);
+	int overallBonus = bonusSys.getOverallBonus(dispIo->bonlist);
+	Dice diceNew ;
+	diceNew = diceNew.FromPacked(dispIo->dicePacked);
+	int bonus = diceNew.GetModifier() + overallBonus;
+	int diceType = diceNew.GetSides();
+	int diceNum = diceNew.GetCount();
+	Dice diceNew2(diceNum, diceType, bonus);
+	return diceNew.ToPacked();
+
+
+}
 #pragma endregion
 
 

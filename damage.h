@@ -96,7 +96,7 @@ public:
 	void DamagePacketInit(DamagePacket * dmgPkt);
 	int AddDamageBonus(DamagePacket* damage, int damBonus, int bonType, int bonusMesLine, char* desc);
 	int AddPhysicalDR(DamagePacket *damPkt, int DRAmount, int bypasserBitmask, unsigned int damageMesLine);
-
+	int AddDamageDice(DamagePacket *dmgPkt, int dicePacked, DamageType damType, unsigned int damageMesLine);
 	Damage();
 };
 

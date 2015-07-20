@@ -21,6 +21,7 @@ struct DispIoBonusAndObj; // 10
 struct DispIoDispelCheck; // 11
 struct DispIoD20ActionTurnBased; // 12
 struct DispIOBonusListAndSpellEntry; // 14
+struct DispIoAttackDice; // 20
 struct D20Actn;
 
 struct SpellEntry;
@@ -83,6 +84,7 @@ struct DispatcherSystem : AddressTable
 	void DispIoDamageInit(DispIoDamage *dispIoDamage);
 	int32_t DispatchDamage(objHndl objHnd, DispIoDamage* dispIoDamage, enum_disp_type enumDispType, D20DispatcherKey d20DispatcherKey);
 	int DispatchD20ActionCheck(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, enum_disp_type dispType);
+	int Dispatch60GetAttackDice(objHndl obj, DispIoAttackDice * dispIo);
 	DispatcherSystem()
 	{
 		rebase(_Dispatch29hMovementSthg,0x1004D080); 
@@ -282,6 +284,26 @@ struct DispIoDispelCheck : DispIO // type 11
 	uint32_t spellId; // of the Dispel Spell (Break Enchantment, Dispel Magic etc.)
 	uint32_t flags;  // 0x80 - Dispel Magic   0x40 - Break Enchantment  0x20 - slippery mind 0x10 - 0x2 DispelAlignment stuff
 	uint32_t returnVal;
+};
+
+struct DispIoAttackDice : DispIO // type 20
+{
+	BonusList * bonlist;
+	D20CAF flags;
+	int fieldC;
+	objHndl weapon;
+	objHndl wielder;
+	int dicePacked;
+	int attackType;
+	DispIoAttackDice()
+	{
+		dispIOType = dispIOType20;
+		bonlist = nullptr;
+		flags = D20CAF_HIT;
+		dicePacked = 0;
+		weapon = 0;
+		wielder = 0;
+	}
 };
 
 struct DispIoD20ActionTurnBased : DispIO{ // dispIoType = 12; matches dispTypes 36-38 

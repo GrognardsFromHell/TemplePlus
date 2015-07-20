@@ -387,6 +387,25 @@ int CritterSystem::GetBonusFromSizeCategory(int sizeCategory)
 	}
 	return result;
 }
+
+int CritterSystem::GetAttackIdx(objHndl obj, int attackIdx)
+{
+	int n =0;
+	for (int i = 0; i < 4; i++)
+	{
+		n += objects.getArrayFieldInt32(obj, obj_f_critter_attacks_idx, i);
+		if (n > attackIdx)
+			return n;
+	}
+	return 0;
+}
+
+int CritterSystem::GetCritterDamageDice(objHndl obj, int attackIdx)
+{
+	int damageIdx = GetAttackIdx(obj, attackIdx);
+	return objects.getArrayFieldInt32(obj, obj_f_critter_damage_idx, damageIdx);
+
+}
 #pragma region Critter Hooks
 uint32_t _isCritterCombatModeActive(objHndl objHnd)
 {

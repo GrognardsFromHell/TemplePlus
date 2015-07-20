@@ -13,6 +13,7 @@
 #include "float_line.h"
 #include "ui/ui_dialog.h"
 #include "party.h"
+#include "weapon.h"
 
 ConditionSystem conds;
 CondStructNew conditionDisableAoO;
@@ -30,6 +31,7 @@ CondStructNew condGreaterRage;
 CondStructNew condIndomitableWill ;
 CondStructNew condTirelessRage;
 CondStructNew condMightyRage;
+
 CondStructNew condDisarm;
 CondStructNew condDisarmed;
 
@@ -291,6 +293,11 @@ int ConditionPreventWithArg(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int CondResetArgs(DispatcherCallbackArgs args)
+{
+	memset(args.subDispNode->condNode->args, 0, args.subDispNode->condNode->condStruct->numArgs);
+	return 0;
+}
 
 int ConditionRemoveCallback(DispatcherCallbackArgs args)
 {
@@ -569,6 +576,45 @@ int GlobalGetArmorClass(DispatcherCallbackArgs args) // the basic AC value (init
 	return 0;
 }
 
+
+int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
+{
+	DispIoDamage * dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
+	objHndl weapon = combatSys.GetWeapon(&dispIo->attackPacket);
+	int polymorphedTo = d20Sys.d20Query(args.objHndCaller, DK_QUE_Polymorphed);
+	objHndl v34 = args.objHndCaller;
+	DispIoAttackDice dispIoAttackDice;
+	int attackDice;
+	int attackType;
+	const char * weaponName;
+
+	if (polymorphedTo)
+	{
+		v34 = objects.GetProtoHandle(polymorphedTo);
+	}
+
+	if (weapon)
+	{
+		dispIoAttackDice.flags = dispIo->attackPacket.flags;
+		dispIoAttackDice.wielder = args.objHndCaller;
+		dispIoAttackDice.weapon = weapon;
+		attackDice = dispatch.Dispatch60GetAttackDice(args.objHndCaller, &dispIoAttackDice);
+		attackType = dispIoAttackDice.attackType;
+		weaponName = description.getDisplayName(weapon, args.objHndCaller);
+	} 
+	else
+	{
+		int attackCode = dispIo->attackPacket.dispKey;
+		if (attackCode > ATTACK_CODE_NATURAL_ATTACK )
+		{
+			int attackIdx = attackCode - (ATTACK_CODE_NATURAL_ATTACK + 1);
+			int attackDiceUnarmed = critterSys.GetCritterDamageDice(v34, attackIdx);
+		}
+	}
+
+	return 0;
+}
+
 void _FeatConditionsRegister()
 {
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAttackOfOpportunity);
@@ -592,7 +638,7 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDisarm);
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDisarmed);
 	// conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondSuperiorExpertise); // will just be patched inside Combat Expertise callbacks
-
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondRend);
 	/*
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDeadlyPrecision);
 	
@@ -603,7 +649,7 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondMightyRage);
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondPersistentSpell);
 	
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondRend);
+	
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondTirelessRage);
 	*/
 
@@ -929,7 +975,7 @@ void ConditionSystem::RegisterNewConditions()
 	memset(condName, 0, sizeof(condName)); 	memcpy(condName, "Disarmed", sizeof("Disarmed"));
 
 	cond->condName = condName;
-	cond->numArgs = 6;
+	cond->numArgs = 8;
 
 	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
 	DispatcherHookInit(cond, 1, dispTypeD20Query, DK_QUE_Disarmed, DisarmedRetrieveQuery, 0, 0);
@@ -938,7 +984,19 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 4, dispTypeRadialMenuEntry, 0, DisarmedRetrieveWeaponRadialMenu, 0, 0);
 	DispatcherHookInit(cond, 5, dispTypeConditionAdd, 0, DisarmedOnAdd, 0, 0);
 
+	// Rend
 
+	mCondRend = &condRend;
+	cond = mCondRend; 	condName = mCondRendName;
+	memset(condName, 0, sizeof(condName)); 	memcpy(condName, "Rend", sizeof("Rend"));
+
+	cond->condName = condName;
+	cond->numArgs = 8;
+
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
+	DispatcherHookInit(cond, 1, dispTypeDealingDamage, 0, RendOnDamage, 0, 0);
+	DispatcherHookInit(cond, 2, dispTypeBeginRound, 0, CondResetArgs, 0, 0);
+	
 	/*
 	char mCondIndomitableWillName[100];
 	CondStructNew *mCondIndomitableWill;
@@ -952,8 +1010,7 @@ void ConditionSystem::RegisterNewConditions()
 	CondStructNew *mCondImprovedDisarm;
 
 	// monsters
-	char mCondRendName[100];
-	CondStructNew *mCondRend;
+	
 	
 	*/
 
@@ -1617,4 +1674,32 @@ int __cdecl SunderRadialMenu(DispatcherCallbackArgs args)
 	return 0;
 }
 
+
+
+int RendOnDamage(DispatcherCallbackArgs args)
+{
+	DispIoDamage * dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
+	objHndl weapon = combatSys.GetWeapon(&dispIo->attackPacket);
+	if (weapon)
+		return 0;
+	
+	
+
+	DamagePacket * dmgPacket = &dispIo->damage;
+	auto attackDescr = dmgPacket->dice[0].typeDescription; // e.g. Claw etc.
+	if (conds.CondNodeGetArg(args.subDispNode->condNode, 0) && attackDescr == (char*)conds.CondNodeGetArg(args.subDispNode->condNode, 1))
+	{
+		Dice dice(2, 6, 9);
+		damage.AddDamageDice(&dispIo->damage, dice.ToPacked(), DamageType::PiercingAndSlashing, 133);
+		floatSys.FloatCombatLine(args.objHndCaller, 203);
+		conds.CondNodeSetArg(args.subDispNode->condNode, 0, 0);
+	}
+	else
+	{
+		conds.CondNodeSetArg(args.subDispNode->condNode, 0, 1);
+		conds.CondNodeSetArg(args.subDispNode->condNode, 1, (int)attackDescr);
+	}
+		
+	return 0;
+}
 #pragma endregion
