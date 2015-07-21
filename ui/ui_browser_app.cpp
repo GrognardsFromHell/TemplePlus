@@ -19,7 +19,6 @@ void UiBrowserApp::OnBeforeCommandLineProcessing(const CefString& process_type,
 }
 
 void UiBrowserApp::OnRegisterCustomSchemes(CefRefPtr<CefSchemeRegistrar> registrar) {
-	// registrar->AddCustomScheme("tp", true, true, false);
 }
 
 CefRefPtr<CefResourceBundleHandler> UiBrowserApp::GetResourceBundleHandler() {

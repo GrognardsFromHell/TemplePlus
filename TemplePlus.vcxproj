@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -17,6 +17,11 @@
   <ItemGroup>
     <ClCompile Include="aas.cpp" />
     <ClCompile Include="action_sequence.cpp" />
+    <ClCompile Include="d3d8to9\dxerr.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="damage.cpp" />
     <ClCompile Include="dependencies\minhook\src\buffer.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -106,7 +111,9 @@
     <ClCompile Include="ui\ui_browser_input.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
     <ClCompile Include="ui\ui_render_handler.cpp" />
+    <ClCompile Include="ui\ui_request_handler.cpp" />
     <ClCompile Include="ui\ui_resourcebundlehandler.cpp" />
+    <ClCompile Include="ui\ui_resource_handler.cpp" />
     <ClCompile Include="ui\ui_tutorial.cpp" />
     <ClCompile Include="turn_based.cpp" />
     <ClCompile Include="ui\ui_picker.cpp" />
@@ -249,6 +256,7 @@
     <ClInclude Include="critter.h" />
     <ClInclude Include="d20_level.h" />
     <ClInclude Include="d20_status.h" />
+    <ClInclude Include="d3d8to9\dxerr.h" />
     <ClInclude Include="damage.h" />
     <ClInclude Include="dependencies\minhook\include\MinHook.h" />
     <ClInclude Include="dependencies\minhook\src\buffer.h" />
@@ -311,7 +319,9 @@
     <ClInclude Include="ui\ui_browser_input.h" />
     <ClInclude Include="ui\ui_dialog.h" />
     <ClInclude Include="ui\ui_render_handler.h" />
+    <ClInclude Include="ui\ui_request_handler.h" />
     <ClInclude Include="ui\ui_resourcebundlehandler.h" />
+    <ClInclude Include="ui\ui_resource_handler.h" />
     <ClInclude Include="ui\ui_tutorial.h" />
     <ClInclude Include="turn_based.h" />
     <ClInclude Include="ui\ui_picker.h" />
@@ -428,19 +438,19 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -487,7 +497,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>temple.lib;tio\tio.lib;winmm.lib;d3d9.lib;Crypt32.lib;ws2_32.lib;libeay32.lib;ssleay32.lib;python27_d.lib;dependencies\bin\debug\libcef.lib;libcef_dll_wrapper_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>temple.lib;tio\tio.lib;winmm.lib;d3d9.lib;Crypt32.lib;ws2_32.lib;python27_d.lib;d3dx9d.lib;dependencies\bin\debug\libcef.lib;libcef_dll_wrapper_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <AdditionalLibraryDirectories>dependencies\lib</AdditionalLibraryDirectories>
@@ -534,7 +544,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>temple.lib;tio\tio.lib;winmm.lib;d3d9.lib;Crypt32.lib;ws2_32.lib;libeay32.lib;ssleay32.lib;python27.lib;dependencies\bin\release\libcef.lib;libcef_dll_wrapper.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>temple.lib;tio\tio.lib;winmm.lib;d3d9.lib;Crypt32.lib;ws2_32.lib;python27.lib;dependencies\bin\release\libcef.lib;libcef_dll_wrapper.lib;d3dx9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>

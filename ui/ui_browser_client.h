@@ -4,6 +4,7 @@
 #include <include/cef_client.h>
 
 class UiRenderHandler;
+class UiRequestHandler;
 
 class UiBrowserClient : public CefClient,
 						public CefDisplayHandler,
@@ -20,6 +21,8 @@ public:
 	CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override;
 
 	CefRefPtr<CefLoadHandler> GetLoadHandler() override;
+
+	CefRefPtr<CefRequestHandler> GetRequestHandler() override;
 
 	/* CefLoadHandler callbacks */
 
@@ -43,4 +46,6 @@ private:
 	CefRefPtr<CefBrowser> mBrowser;
 
 	CefRefPtr<UiRenderHandler> mRenderHandler;
+
+	CefRefPtr<UiRequestHandler> mRequestHandler;
 };

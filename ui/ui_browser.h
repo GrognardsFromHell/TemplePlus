@@ -15,6 +15,8 @@ public:
 	void Update();
 	void Render();
 
+	void DoSomething();
+
 private:
 
 	void InitializeCef();

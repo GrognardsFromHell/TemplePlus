@@ -284,6 +284,11 @@
     <ClCompile Include="ui\ui_browser_client.cpp" />
     <ClCompile Include="ui\ui_render_handler.cpp" />
     <ClCompile Include="ui\ui_browser_input.cpp" />
+    <ClCompile Include="ui\ui_request_handler.cpp" />
+    <ClCompile Include="ui\ui_resource_handler.cpp" />
+    <ClCompile Include="d3d8to9\dxerr.cpp">
+      <Filter>d3d</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -581,6 +586,11 @@
     <ClInclude Include="ui\ui_browser_client.h" />
     <ClInclude Include="ui\ui_render_handler.h" />
     <ClInclude Include="ui\ui_browser_input.h" />
+    <ClInclude Include="ui\ui_request_handler.h" />
+    <ClInclude Include="ui\ui_resource_handler.h" />
+    <ClInclude Include="d3d8to9\dxerr.h">
+      <Filter>d3d</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
