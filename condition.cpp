@@ -14,6 +14,7 @@
 #include "ui/ui_dialog.h"
 #include "party.h"
 #include "weapon.h"
+#include "action_sequence.h"
 
 ConditionSystem conds;
 CondStructNew conditionDisableAoO;
@@ -586,7 +587,9 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 	DispIoAttackDice dispIoAttackDice;
 	int attackDice;
 	int attackType;
-	const char * weaponName;
+	DamageType damType;
+	const char * weaponName = feats.emptyString;
+	int damageMesLine = 100; // ~Weapon~[TAG_WEAPONS]
 
 	if (polymorphedTo)
 	{
@@ -602,13 +605,31 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 		attackType = dispIoAttackDice.attackType;
 		weaponName = description.getDisplayName(weapon, args.objHndCaller);
 	} 
-	else
+	else // unarmed
 	{
 		int attackCode = dispIo->attackPacket.dispKey;
-		if (attackCode > ATTACK_CODE_NATURAL_ATTACK )
+		if (attackCode > ATTACK_CODE_NATURAL_ATTACK ) // natural attack
 		{
 			int attackIdx = attackCode - (ATTACK_CODE_NATURAL_ATTACK + 1);
 			int attackDiceUnarmed = critterSys.GetCritterDamageDice(v34, attackIdx);
+			
+			attackType = critterSys.GetCritterAttackType(v34, attackIdx);
+			dispIoAttackDice.flags = dispIo->attackPacket.flags;
+			dispIoAttackDice.weapon = 0i64;
+			dispIoAttackDice.wielder = args.objHndCaller;
+			dispIoAttackDice.dicePacked = attackDiceUnarmed;
+			dispIoAttackDice.attackType = critterSys.GetCritterAttackDamageType(v34, attackIdx);
+			attackDice = dispatch.Dispatch60GetAttackDice(args.objHndCaller, &dispIoAttackDice);
+		} 
+		else
+		{
+			int monkLvl = objects.StatLevelGet(args.objHndCaller, stat_level_monk);
+			// sthg = 0;
+			damageMesLine = 113; // Unarmed
+			objHndl monkBelt = inventory.ItemWornAt(args.objHndCaller, 15);
+
+
+
 		}
 	}
 

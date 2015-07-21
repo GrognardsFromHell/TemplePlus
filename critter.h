@@ -186,9 +186,11 @@ struct CritterSystem : AddressTable
 	uint32_t IsSubtypeFire(objHndl objHnd);
 	float GetReach(objHndl objHndl, D20ActionType actType); // reach in feet
 	int GetBonusFromSizeCategory(int sizeCategory);
-	int GetAttackIdx(objHndl obj, int attackIdx);
+	int GetDamageIdx(objHndl obj, int attackIdx);
 	// bonus to hit from size
 	int GetCritterDamageDice(objHndl obj, int attackIdx);
+	int GetCritterAttackDamageType(objHndl obj, int attackIdx);
+	int GetCritterAttackType(objHndl obj, int attackIdx);
 #pragma endregion
 
 };

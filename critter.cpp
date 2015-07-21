@@ -388,7 +388,7 @@ int CritterSystem::GetBonusFromSizeCategory(int sizeCategory)
 	return result;
 }
 
-int CritterSystem::GetAttackIdx(objHndl obj, int attackIdx)
+int CritterSystem::GetDamageIdx(objHndl obj, int attackIdx)
 {
 	int n =0;
 	for (int i = 0; i < 4; i++)
@@ -402,9 +402,32 @@ int CritterSystem::GetAttackIdx(objHndl obj, int attackIdx)
 
 int CritterSystem::GetCritterDamageDice(objHndl obj, int attackIdx)
 {
-	int damageIdx = GetAttackIdx(obj, attackIdx);
+	int damageIdx = GetDamageIdx(obj, attackIdx);
 	return objects.getArrayFieldInt32(obj, obj_f_critter_damage_idx, damageIdx);
 
+}
+
+int CritterSystem::GetCritterAttackDamageType(objHndl obj, int attackIdx)
+{
+	int damType[7];
+	damType[0] = 6;
+	damType[1] = 4;
+	damType[2] = 4;
+	damType[3] = 1;
+	damType[4] = 0;
+	damType[5] = 0;
+	damType[6] = 1;
+	int damageIdx = GetDamageIdx(obj, attackIdx);
+	int x = objects.getArrayFieldInt32(obj, obj_f_attack_types_idx, damageIdx);
+	if (x > 6 || x < 0)
+		return 0;
+	return damType[x];
+}
+
+int CritterSystem::GetCritterAttackType(objHndl obj, int attackIdx)
+{
+	int damageIdx = GetDamageIdx(obj, attackIdx);
+	return objects.getArrayFieldInt32(obj, obj_f_attack_types_idx, damageIdx);
 }
 #pragma region Critter Hooks
 uint32_t _isCritterCombatModeActive(objHndl objHnd)
