@@ -11,3 +11,8 @@ release
 *.opensdf
 ipch
 /dist
+/dependencies/cef
+/dependencies/cef-build
+/dependencies/include
+/dependencies/lib
+/dependencies/python-lib
