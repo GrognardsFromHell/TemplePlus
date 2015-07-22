@@ -131,7 +131,7 @@ void Damage::DamagePacketInit(DamagePacket* dmgPkt)
 	bonusSys.initBonusList(&dmgPkt->bonuses);
 }
 
-int Damage::AddDamageBonus(DamagePacket* damage, int damBonus, int bonType, int bonusMesLine, char* desc)
+int Damage::AddDamageBonusWithDescr(DamagePacket* damage, int damBonus, int bonType, int bonusMesLine, char* desc)
 {
 	bonusSys.bonusAddToBonusListWithDescr(&damage->bonuses, damBonus, bonType, bonusMesLine, desc );
 	return 1;
@@ -160,6 +160,16 @@ int Damage::AddPhysicalDR(DamagePacket* damPkt, int DRAmount, int bypasserBitmas
 int Damage::AddDamageDice(DamagePacket* dmgPkt, int dicePacked, DamageType damType, unsigned damageMesLine)
 {
 	return addresses.AddDamageDice(dmgPkt, dicePacked, damType, damageMesLine);
+}
+
+int Damage::AddDamageDiceWithDescr(DamagePacket* dmgPkt, int dicePacked, DamageType damType, unsigned damageMesLine, char* descr)
+{
+	if (AddDamageDice(dmgPkt, dicePacked, damType, damageMesLine) == 1)
+	{
+		dmgPkt->dice[dmgPkt->diceCount - 1].causedBy = descr;
+		return 1;
+	}
+	return 0;
 }
 
 Damage::Damage()

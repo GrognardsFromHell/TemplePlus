@@ -189,7 +189,7 @@ struct CritterSystem : AddressTable
 	int GetDamageIdx(objHndl obj, int attackIdx);
 	// bonus to hit from size
 	int GetCritterDamageDice(objHndl obj, int attackIdx);
-	int GetCritterAttackDamageType(objHndl obj, int attackIdx);
+	DamageType GetCritterAttackDamageType(objHndl obj, int attackIdx);
 	int GetCritterAttackType(objHndl obj, int attackIdx);
 #pragma endregion
 

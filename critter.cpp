@@ -395,7 +395,7 @@ int CritterSystem::GetDamageIdx(objHndl obj, int attackIdx)
 	{
 		n += objects.getArrayFieldInt32(obj, obj_f_critter_attacks_idx, i);
 		if (n > attackIdx)
-			return n;
+			return i;
 	}
 	return 0;
 }
@@ -407,20 +407,20 @@ int CritterSystem::GetCritterDamageDice(objHndl obj, int attackIdx)
 
 }
 
-int CritterSystem::GetCritterAttackDamageType(objHndl obj, int attackIdx)
+DamageType CritterSystem::GetCritterAttackDamageType(objHndl obj, int attackIdx)
 {
-	int damType[7];
-	damType[0] = 6;
-	damType[1] = 4;
-	damType[2] = 4;
-	damType[3] = 1;
-	damType[4] = 0;
-	damType[5] = 0;
-	damType[6] = 1;
+	DamageType damType[7];
+	damType[0] = DamageType::SlashingAndBludgeoningAndPiercing;
+	damType[1] = DamageType::PiercingAndSlashing;
+	damType[2] = DamageType::PiercingAndSlashing;
+	damType[3] = DamageType::Piercing;
+	damType[4] = DamageType::Bludgeoning;
+	damType[5] = DamageType::Bludgeoning;
+	damType[6] = DamageType::Piercing;
 	int damageIdx = GetDamageIdx(obj, attackIdx);
 	int x = objects.getArrayFieldInt32(obj, obj_f_attack_types_idx, damageIdx);
 	if (x > 6 || x < 0)
-		return 0;
+		return DamageType::Bludgeoning;
 	return damType[x];
 }
 

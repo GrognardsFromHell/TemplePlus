@@ -294,7 +294,7 @@ struct DispIoAttackDice : DispIO // type 20
 	objHndl weapon;
 	objHndl wielder;
 	int dicePacked;
-	int attackType;
+	DamageType attackDamageType;
 	DispIoAttackDice()
 	{
 		dispIOType = dispIOType20;
@@ -303,7 +303,7 @@ struct DispIoAttackDice : DispIO // type 20
 		dicePacked = 0;
 		weapon = 0;
 		wielder = 0;
-	}
+	};
 };
 
 struct DispIoD20ActionTurnBased : DispIO{ // dispIoType = 12; matches dispTypes 36-38 

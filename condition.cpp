@@ -81,6 +81,7 @@ public:
 		replaceFunction(0x100ECF30, ConditionPrevent);
 		replaceFunction(0x100EE050, GlobalGetArmorClass);
 		replaceFunction(0x100EE280, GlobalToHitBonus);
+		replaceFunction(0x100EE760, GlobalOnDamage);
 		
 
 		replaceFunction(0x100F7B60, _FeatConditionsRegister);
@@ -586,8 +587,7 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 	objHndl v34 = args.objHndCaller;
 	DispIoAttackDice dispIoAttackDice;
 	int attackDice;
-	int attackType;
-	DamageType damType;
+	DamageType attackDamageType = DamageType::Bludgeoning;
 	const char * weaponName = feats.emptyString;
 	int damageMesLine = 100; // ~Weapon~[TAG_WEAPONS]
 
@@ -602,7 +602,7 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 		dispIoAttackDice.wielder = args.objHndCaller;
 		dispIoAttackDice.weapon = weapon;
 		attackDice = dispatch.Dispatch60GetAttackDice(args.objHndCaller, &dispIoAttackDice);
-		attackType = dispIoAttackDice.attackType;
+		attackDamageType = dispIoAttackDice.attackDamageType;
 		weaponName = description.getDisplayName(weapon, args.objHndCaller);
 	} 
 	else // unarmed
@@ -613,26 +613,167 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 			int attackIdx = attackCode - (ATTACK_CODE_NATURAL_ATTACK + 1);
 			int attackDiceUnarmed = critterSys.GetCritterDamageDice(v34, attackIdx);
 			
-			attackType = critterSys.GetCritterAttackType(v34, attackIdx);
+			damageMesLine = critterSys.GetCritterAttackType(v34, attackIdx) + 114;
+			attackDamageType = critterSys.GetCritterAttackDamageType(v34, attackIdx);
 			dispIoAttackDice.flags = dispIo->attackPacket.flags;
 			dispIoAttackDice.weapon = 0i64;
 			dispIoAttackDice.wielder = args.objHndCaller;
 			dispIoAttackDice.dicePacked = attackDiceUnarmed;
-			dispIoAttackDice.attackType = critterSys.GetCritterAttackDamageType(v34, attackIdx);
+			dispIoAttackDice.attackDamageType = attackDamageType;
 			attackDice = dispatch.Dispatch60GetAttackDice(args.objHndCaller, &dispIoAttackDice);
 		} 
 		else
 		{
 			int monkLvl = objects.StatLevelGet(args.objHndCaller, stat_level_monk);
-			// sthg = 0;
+			attackDamageType = DamageType::Bludgeoning;
 			damageMesLine = 113; // Unarmed
 			objHndl monkBelt = inventory.ItemWornAt(args.objHndCaller, 15);
+			// TODO: Monk's Belt
+			int attackDiceType = 3;
+			int attackDiceCount = 1;
+			int dudeSize = objects.StatLevelGet(args.objHndCaller, stat_size);
+			if (dudeSize< 5) // small monk
+			{
+				if (monkLvl <= 0)
+				{
+					attackDiceType = 2;
+					attackDamageType = DamageType::Subdual;
+				} else if (monkLvl < 4)
+				{
+					attackDiceType = 4;
+				} else 
+				if (monkLvl < 8)
+				{
+					attackDiceType = 6;
+				}
+				else if (monkLvl < 12)
+				{
+					attackDiceType = 8;
+				}
+				else if (monkLvl < 16)
+				{
+					attackDiceCount = 1;
+					attackDiceType = 10;
+				} else if (monkLvl < 20)
+				{
+					attackDiceCount = 2;
+					attackDiceType = 6;
+				} else
+				{
+					attackDiceCount = 2;
+					attackDiceType = 8;
+				}
+			}
+			else if (dudeSize > 5) // Large Monk
+			{
+				if (monkLvl <= 0)
+				{
+					attackDiceType = 4;
+					attackDamageType = DamageType::Subdual;
+				}
+				else if (monkLvl < 4)
+				{
+					attackDiceType = 8;
+				}
+				else if (monkLvl < 8)
+				{
+					attackDiceCount = 2;
+					attackDiceType = 6;
+				}
+				else if (monkLvl < 12)
+				{
+					attackDiceCount = 2;
+					attackDiceType = 8;
+				}
+				else if (monkLvl < 16)
+				{
+					attackDiceCount = 3;
+					attackDiceType = 6;
+				}
+				else if (monkLvl < 20)
+				{
+					attackDiceCount = 3;
+					attackDiceType = 8;
+				}
+				else
+				{
+					attackDiceCount = 4;
+					attackDiceType = 8;
+				}
+			}
+			else // normal monk
+			{
+				if (monkLvl <= 0)
+				{
+					attackDiceType = 3;
+					attackDamageType = DamageType::Subdual;
+				} else if (monkLvl < 4)
+				{
+					attackDiceType = 6;
+				} else 
+				if (monkLvl < 8)
+				{
+					attackDiceType = 8;
+				}
+				else if (monkLvl < 12)
+				{
+					attackDiceType = 10;
+				}
+				else if (monkLvl < 16)
+				{
+					attackDiceCount = 2;
+					attackDiceType = 6;
+				} else if (monkLvl < 20)
+				{
+					attackDiceCount = 2;
+					attackDiceType = 8;
+				} else
+				{
+					attackDiceCount = 2;
+					attackDiceType = 10;
+				}
 
+			}
 
+			Dice diceUnarmed(attackDiceCount, attackDiceType, 0);
+			attackDice = diceUnarmed.ToPacked();
 
 		}
-	}
 
+	}
+	damage.AddDamageDice(&dispIo->damage, attackDice, attackDamageType, damageMesLine);
+
+	int strScore = objects.StatLevelGet(args.objHndCaller, stat_strength);
+	int strMod = objects.GetModFromStatLevel(strScore);
+	D20CAF flags = dispIo->attackPacket.flags;
+	if (!(flags & D20CAF_RANGED) || (flags & D20CAF_THROWN))
+	{
+		int attackCode = dispIo->attackPacket.dispKey;
+		if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
+		{
+			if (strMod > 0)
+			{
+				strMod /= 2;
+			}
+				
+		} else if (d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_WieldedTwoHanded, (int)dispIo, 0) && strMod > 0 && inventory.GetWieldType(args.objHndCaller, weapon))
+		{
+			strMod += strMod / 2;
+		}
+		if (attackCode > ATTACK_CODE_NATURAL_ATTACK && strMod > 0 && critterSys.GetDamageIdx(args.objHndCaller, attackCode - (ATTACK_CODE_NATURAL_ATTACK + 1)) > 0)
+		{
+			strMod /= 2;
+		}
+		damage.AddDamageBonusWithDescr(&dispIo->damage, strMod, 2, 103, 0);
+		return 0;
+	}
+	if (!weapon)
+		return 0;
+	WeaponTypes weaponType = (WeaponTypes)objects.getInt32(weapon, obj_f_weapon_type);
+	if (weaponType == WeaponTypes::wt_sling || ((weaponType == wt_shortbow ||weaponType == wt_longbow )&& strMod < 0))
+	{
+		damage.AddDamageBonusWithDescr(&dispIo->damage, strMod, 2, 103, 0);
+	}
 	return 0;
 }
 
@@ -1355,7 +1496,7 @@ int __cdecl DivineMightDamageBonus(DispatcherCallbackArgs args)
 	DispIoDamage * dispIo = dispatch.DispIoCheckIoType4((DispIoDamage*)args.dispIO);
 	char * desc = feats.GetFeatName(FEAT_DIVINE_MIGHT);
 	int damBonus = conds.CondNodeGetArg(args.subDispNode->condNode, 0);
-	damage.AddDamageBonus(&dispIo->damage, damBonus, 0, 114, desc);
+	damage.AddDamageBonusWithDescr(&dispIo->damage, damBonus, 0, 114, desc);
 	return 0;
 }
 
@@ -1376,7 +1517,7 @@ int GreaterWeaponSpecializationDamage(DispatcherCallbackArgs args)
 	if (weaponType == wpnTypeFromCond)
 	{
 		featName = feats.GetFeatName(feat);
-		damage.AddDamageBonus(&dispIo->damage, 2, 0, 114, featName);
+		damage.AddDamageBonusWithDescr(&dispIo->damage, 2, 0, 114, featName);
 	}
 	return 0;
 }
