@@ -429,6 +429,23 @@ int CritterSystem::GetCritterAttackType(objHndl obj, int attackIdx)
 	int damageIdx = GetDamageIdx(obj, attackIdx);
 	return objects.getArrayFieldInt32(obj, obj_f_attack_types_idx, damageIdx);
 }
+
+bool CritterSystem::IsWarded(objHndl obj)
+{
+	if (d20Sys.d20QueryHasSpellCond(obj, 337) // spell_otilukes_resilient_sphere
+		|| d20Sys.d20QueryHasSpellCond(obj, 303 ) // spell_meld_into_stone
+		|| d20Sys.d20QueryHasSpellCond(obj, 505 ) ) // spell_tree_shape
+	{
+		return 1;
+	}
+
+	return 0;
+}
+
+bool CritterSystem::IsSummoned(objHndl obj)
+{
+	return 0;
+}
 #pragma region Critter Hooks
 uint32_t _isCritterCombatModeActive(objHndl objHnd)
 {

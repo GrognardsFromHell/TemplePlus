@@ -229,6 +229,14 @@ uint32_t D20System::d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, u
 	return dispIO.return_val;
 }
 
+uint32_t D20System::d20QueryHasSpellCond(objHndl obj, int spellEnum)
+{
+	auto cond = spellSys.GetCondFromSpellIdx(spellEnum);
+	if (!cond)
+		return 0;
+	return d20QueryWithData(obj, DK_QUE_Critter_Has_Condition, (uint32_t) cond, 0);
+}
+
 void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2)
 {
 	DispIoD20Signal dispIO;

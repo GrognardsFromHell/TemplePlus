@@ -457,7 +457,9 @@ int DispatcherSystem::Dispatch60GetAttackDice(objHndl obj, DispIoAttackDice* dis
 		return 0;
 	if (dispIo->weapon)
 	{
-		
+		int weaponDice = objects.getInt32(dispIo->weapon, obj_f_weapon_damage_dice);
+		dispIo->dicePacked = weaponDice;
+		dispIo->attackDamageType = (DamageType)objects.getInt32(dispIo->weapon, obj_f_weapon_attacktype);
 	}
 	DispatcherProcessor(dispatcher, dispTypeGetAttackDice, 0, dispIo);
 	int overallBonus = bonusSys.getOverallBonus(dispIo->bonlist);
