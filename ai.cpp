@@ -14,6 +14,8 @@
 #include "location.h"
 #include "critter.h"
 #include "weapon.h"
+#include "python/python_integration_obj.h"
+#include "python/python_object.h"
 struct AiSystem aiSys;
 
 
@@ -201,18 +203,133 @@ void AiSystem::SetWhoHitMeLast(objHndl npc, objHndl target) {
 
 int AiSystem::TargetClosest(AiTactic* aiTac)
 {
+	objHndl performer = aiTac->performer;
+	int performerIsIntelligent = (objects.StatLevelGet(performer, stat_intelligence) >= 3);
 	objHndl target; 
 	LocAndOffsets performerLoc; 
-	float dist = 0.0;
+	float dist = 1000000000.0;
 
+	
 	locSys.getLocAndOff(aiTac->performer, &performerLoc);
+	/*
 	if (combatSys.GetClosestEnemy(aiTac->performer, &performerLoc, &target, &dist, 0x21))
 	{
 		aiTac->target = target;
 		
 	}
+	*/
+
+	hooked_print_debug_message("\n %s targeting closest...\n", objects.description.getDisplayName(aiTac->performer));
+
+	ObjList objlist;
+	objlist.ListVicinity(performerLoc.location, OLC_CRITTERS );
+	for (int i = 0; i < objlist.size(); i++)
+	{
+		objHndl dude = objlist.get(i);
+
+
+		auto args = PyTuple_New(1);
+		PyTuple_SET_ITEM(args, 0, PyObjHndl_Create(dude));
+		auto result = pythonObjIntegration.ExecuteScript("combat", "IsWarded", args);
+		int isWarded = PyInt_AsLong(result);
+		Py_DECREF(result);
+		result = pythonObjIntegration.ExecuteScript("combat", "IsSummoned", args);
+		int isSummoned = PyInt_AsLong(result);
+		Py_DECREF(result);
+		result = pythonObjIntegration.ExecuteScript("combat", "IsSpiritualWeapon", args);
+		int isSpiritualWeapon = PyInt_AsLong(result);
+		Py_DECREF(result);
+		Py_DECREF(args);
+
+
+		if ( !critterSys.IsFriendly(dude, performer) 
+			 &&  !objects.IsUnconscious(dude)  
+			 && locSys.DistanceToObj(performer, dude)  < dist
+			 && !isSpiritualWeapon)
+		{
+			if (!performerIsIntelligent
+				|| (!isWarded && !isSummoned))
+			{
+				aiTac->target = dude;
+				dist = locSys.DistanceToObj(performer, dude);
+			}
+		}
+	}
+	hooked_print_debug_message("\n %s targeted.\n", objects.description.getDisplayName(aiTac->target, aiTac->performer));
+
 	return 0;
 }
+
+int AiSystem::TargetThreatened(AiTactic* aiTac)
+{
+	objHndl performer = aiTac->performer;
+	int performerIsIntelligent = (objects.StatLevelGet(performer, stat_intelligence) >= 3);
+	objHndl target;
+	LocAndOffsets performerLoc;
+	float dist = 1000000000.0;
+
+
+	locSys.getLocAndOff(aiTac->performer, &performerLoc);
+	/*
+	if (combatSys.GetClosestEnemy(aiTac->performer, &performerLoc, &target, &dist, 0x21))
+	{
+	aiTac->target = target;
+
+	}
+	*/
+
+	hooked_print_debug_message("\n %s targeting threatened...\n", objects.description.getDisplayName(aiTac->performer));
+
+	ObjList objlist;
+	objlist.ListVicinity(performerLoc.location, OLC_CRITTERS);
+	for (int i = 0; i < objlist.size(); i++)
+	{
+		objHndl dude = objlist.get(i);
+
+
+		auto args = PyTuple_New(1);
+		PyTuple_SET_ITEM(args, 0, PyObjHndl_Create(dude));
+		auto result = pythonObjIntegration.ExecuteScript("combat", "IsWarded", args);
+		int isWarded = PyInt_AsLong(result);
+		Py_DECREF(result);
+		result = pythonObjIntegration.ExecuteScript("combat", "IsSummoned", args);
+		int isSummoned = PyInt_AsLong(result);
+		Py_DECREF(result);
+		result = pythonObjIntegration.ExecuteScript("combat", "IsSpiritualWeapon", args);
+		int isSpiritualWeapon = PyInt_AsLong(result);
+		Py_DECREF(result);
+		Py_DECREF(args);
+
+
+		if (!critterSys.IsFriendly(dude, performer)
+			&& !objects.IsDeadNullDestroyed(dude)
+			&& locSys.DistanceToObj(performer, dude)  < dist
+			&& combatSys.IsWithinReach(performer, dude)
+			&& !isSpiritualWeapon)
+		{
+			if (!performerIsIntelligent
+				|| (!isWarded && !isSummoned))
+			{
+				aiTac->target = dude;
+				dist = locSys.DistanceToObj(performer, dude);
+			}
+		}
+	}
+	if (dist > 900000000.0)
+	{
+		aiTac->target = 0;
+		//hooked_print_debug_message("\n no target found. Attempting Target Closest instead.");
+		hooked_print_debug_message("\n no target found. ");
+		//TargetClosest(aiTac);
+	} 
+	else
+	{
+		hooked_print_debug_message("\n %s targeted.\n", objects.description.getDisplayName(aiTac->target, aiTac->performer));
+	}
+	
+
+	return 0;
+};
 
 int AiSystem::Approach(AiTactic* aiTac)
 {
@@ -484,6 +601,15 @@ int _AiApproach(AiTactic* aiTac)
 	return aiSys.Approach(aiTac);
 }
 
+int _AiTargetClosest(AiTactic * aiTac)
+{
+	return aiSys.TargetClosest(aiTac);
+}
+
+int _AiTargetThreatened(AiTactic * aiTac)
+{
+	return aiSys.TargetThreatened(aiTac);
+}
 
 
 void _StrategyTabLineParser(TabFileStatus* tabFile, int n, char** strings)
@@ -500,12 +626,12 @@ public:
 	{
 		logger->info("Replacing AI functions...");
 		
+		replaceFunction(0x100E3A00, _AiTargetClosest);
+		replaceFunction(0x100E46D0, _AiTargetThreatened);
 		replaceFunction(0x100E48D0, _AiApproach);
-		replaceFunction(0x100E50C0, _aiStrategyParse); 
-	//	replaceFunction(0x100E5500, _StrategyTabLineParser);
+		replaceFunction(0x100E50C0, _aiStrategyParse);
+		//	replaceFunction(0x100E5500, _StrategyTabLineParser);
 		replaceFunction(0x100E5DB0, _AiCoupDeGrace);
-
-
 		
 	}
 } aiReplacements;

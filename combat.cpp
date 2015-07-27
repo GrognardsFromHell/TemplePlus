@@ -53,8 +53,9 @@ char * CombatSystem::GetCombatMesLine(int line)
 
 int CombatSystem::IsWithinReach(objHndl attacker, objHndl target)
 {
-	auto reach = critterSys.GetReach(attacker, D20A_UNSPECIFIED_ATTACK);
-	return locSys.DistanceToObj(attacker, target) < reach;
+	float reach = critterSys.GetReach(attacker, D20A_UNSPECIFIED_ATTACK);
+	float distTo = locSys.DistanceToObj(attacker, target);
+	return distTo < reach;
 }
 
 bool CombatSystem::isCombatActive()

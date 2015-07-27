@@ -77,6 +77,7 @@ struct AiSystem : AddressTable
 	void SetWhoHitMeLast(objHndl npc, objHndl target);
 
 	int TargetClosest(AiTactic * aiTac);
+	int TargetThreatened(AiTactic * aiTac);
 	int Approach(AiTactic* aiTac);
 	int CoupDeGrace(AiTactic * aiTac);
 	int PickUpWeapon(AiTactic* aiTac);

@@ -1,7 +1,7 @@
 from toee import *
 from utilities import *
 from py00439script_daemon import record_time_stamp, get_v, set_v, get_f, set_f, npc_set, npc_unset, npc_get, tsc, tpsts, within_rect_by_corners
-from Livonya import break_free
+
 
 def should_modify_CR( attachee ):
 	return 0 # now done in the DLL properly!!! MWAHAHAHA
@@ -93,6 +93,8 @@ def create_break_free_potion( attachee ):
 	
 	
 def Spiritual_Weapon_Begone( attachee ):
+	# mwahaha this is no longer necessary!!!
+	'''
 	SW_BS_TIME = 45 # [ms] time lapse for the spiritual weapon being away
 	SW_BS_TIME_2 = 60 # a longer interval for the second ("failsafe") call
 	SW_BS_TIME_3 = 250
@@ -166,7 +168,7 @@ def Spiritual_Weapon_Begone( attachee ):
 		game.timevent_add( timed_restore_state, ( attachee, closest_jones, orig_strat ), SW_BS_TIME, 1 )
 		game.timevent_add( timed_restore_state, ( attachee, closest_jones, orig_strat ), SW_BS_TIME_2, 1 )
 		game.timevent_add( timed_restore_state, ( attachee, closest_jones, orig_strat ), SW_BS_TIME_3, 1 )
-		
+	'''	
 	
 	# Below script worked, but crashed the game for some people...
 		
@@ -202,7 +204,7 @@ def Spiritual_Weapon_Begone( attachee ):
 	
 	
 			#game.timevent_add( move_sw_back, ( obj, prev_loc, prev_x_off, prev_y_off , SW_BS_TIME_3), SW_BS_TIME_3, 1 )		
-			
+	return		
 			
 	
 def move_sw_back( obj, prev_loc, prev_x_off, prev_y_off, timeee = -1):

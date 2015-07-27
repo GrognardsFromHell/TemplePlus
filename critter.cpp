@@ -8,6 +8,8 @@
 #include "particles.h"
 #include "temple_functions.h"
 #include "util/config.h"
+#include "python/python_integration_obj.h"
+#include "python/python_object.h"
 
 static struct CritterAddresses : AddressTable {
 
@@ -320,10 +322,12 @@ uint32_t CritterSystem::IsSubtypeFire(objHndl objHnd)
 float CritterSystem::GetReach(objHndl obj, D20ActionType actType) 
 {
 	float naturalReach = objects.getInt32(obj, obj_f_critter_reach);
+	/*
 	__asm{
 		fild naturalReach;
 		fstp naturalReach;
 	}
+	*/
 	if (naturalReach < 0.01)
 		naturalReach = 5.0;
 	if (actType != D20A_TOUCH_ATTACK)
@@ -432,14 +436,16 @@ int CritterSystem::GetCritterAttackType(objHndl obj, int attackIdx)
 
 bool CritterSystem::IsWarded(objHndl obj)
 {
-	if (d20Sys.d20QueryHasSpellCond(obj, 337) // spell_otilukes_resilient_sphere
-		|| d20Sys.d20QueryHasSpellCond(obj, 303 ) // spell_meld_into_stone
-		|| d20Sys.d20QueryHasSpellCond(obj, 505 ) ) // spell_tree_shape
-	{
-		return 1;
-	}
+	auto args = PyTuple_New(1);
+	PyTuple_SET_ITEM(args, 0, PyObjHndl_Create(obj));
+	
 
-	return 0;
+	auto result = pythonObjIntegration.ExecuteScript("combat", "IsWarded", args);
+	int isWarded = PyInt_AsLong(result);
+	Py_DECREF(result);
+	Py_DECREF(args);
+	
+	return isWarded;
 }
 
 bool CritterSystem::IsSummoned(objHndl obj)
