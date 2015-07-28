@@ -222,37 +222,30 @@ int AiSystem::TargetClosest(AiTactic* aiTac)
 	hooked_print_debug_message("\n %s targeting closest...\n", objects.description.getDisplayName(aiTac->performer));
 
 	ObjList objlist;
-	objlist.ListVicinity(performerLoc.location, OLC_CRITTERS );
+	objlist.ListVicinity(performerLoc.location, OLC_CRITTERS);
+
+	auto args = PyTuple_New(2);
+	PyTuple_SET_ITEM(args, 0, PyObjHndl_Create(performer));
+
 	for (int i = 0; i < objlist.size(); i++)
 	{
 		objHndl dude = objlist.get(i);
+		PyTuple_SET_ITEM(args, 1, PyObjHndl_Create(dude));
 
-
-		auto args = PyTuple_New(1);
-		PyTuple_SET_ITEM(args, 0, PyObjHndl_Create(dude));
-		auto result = pythonObjIntegration.ExecuteScript("combat", "IsWarded", args);
-		int isWarded = PyInt_AsLong(result);
+		auto result = pythonObjIntegration.ExecuteScript("combat", "ShouldIgnoreTarget", args);
+		int ignoreTarget = PyInt_AsLong(result);
 		Py_DECREF(result);
-		result = pythonObjIntegration.ExecuteScript("combat", "IsSummoned", args);
-		int isSummoned = PyInt_AsLong(result);
-		Py_DECREF(result);
-		result = pythonObjIntegration.ExecuteScript("combat", "IsSpiritualWeapon", args);
-		int isSpiritualWeapon = PyInt_AsLong(result);
-		Py_DECREF(result);
-		Py_DECREF(args);
 
 
-		if ( !critterSys.IsFriendly(dude, performer) 
-			 &&  !objects.IsUnconscious(dude)  
-			 && locSys.DistanceToObj(performer, dude)  < dist
-			 && !isSpiritualWeapon)
+		if (!critterSys.IsFriendly(dude, performer)
+			&& !objects.IsUnconscious(dude)
+			&& locSys.DistanceToObj(performer, dude)  < dist
+			&& !ignoreTarget)
 		{
-			if (!performerIsIntelligent
-				|| (!isWarded && !isSummoned))
-			{
-				aiTac->target = dude;
-				dist = locSys.DistanceToObj(performer, dude);
-			}
+		
+			aiTac->target = dude;
+			dist = locSys.DistanceToObj(performer, dude);
+		
 		}
 	}
 	hooked_print_debug_message("\n %s targeted.\n", objects.description.getDisplayName(aiTac->target, aiTac->performer));
@@ -270,51 +263,36 @@ int AiSystem::TargetThreatened(AiTactic* aiTac)
 
 
 	locSys.getLocAndOff(aiTac->performer, &performerLoc);
-	/*
-	if (combatSys.GetClosestEnemy(aiTac->performer, &performerLoc, &target, &dist, 0x21))
-	{
-	aiTac->target = target;
-
-	}
-	*/
 
 	hooked_print_debug_message("\n %s targeting threatened...\n", objects.description.getDisplayName(aiTac->performer));
 
 	ObjList objlist;
 	objlist.ListVicinity(performerLoc.location, OLC_CRITTERS);
+
+	auto args = PyTuple_New(2);
+	PyTuple_SET_ITEM(args, 0, PyObjHndl_Create(performer));
+	
 	for (int i = 0; i < objlist.size(); i++)
 	{
 		objHndl dude = objlist.get(i);
+		PyTuple_SET_ITEM(args, 1, PyObjHndl_Create(dude));
 
-
-		auto args = PyTuple_New(1);
-		PyTuple_SET_ITEM(args, 0, PyObjHndl_Create(dude));
-		auto result = pythonObjIntegration.ExecuteScript("combat", "IsWarded", args);
-		int isWarded = PyInt_AsLong(result);
+		auto result = pythonObjIntegration.ExecuteScript("combat", "ShouldIgnoreTarget", args);
+		int ignoreTarget = PyInt_AsLong(result);
 		Py_DECREF(result);
-		result = pythonObjIntegration.ExecuteScript("combat", "IsSummoned", args);
-		int isSummoned = PyInt_AsLong(result);
-		Py_DECREF(result);
-		result = pythonObjIntegration.ExecuteScript("combat", "IsSpiritualWeapon", args);
-		int isSpiritualWeapon = PyInt_AsLong(result);
-		Py_DECREF(result);
-		Py_DECREF(args);
-
+		
 
 		if (!critterSys.IsFriendly(dude, performer)
 			&& !objects.IsDeadNullDestroyed(dude)
 			&& locSys.DistanceToObj(performer, dude)  < dist
-			&& combatSys.IsWithinReach(performer, dude)
-			&& !isSpiritualWeapon)
+			&& combatSys.IsWithinReach(performer, dude) 
+			&& !ignoreTarget)
 		{
-			if (!performerIsIntelligent
-				|| (!isWarded && !isSummoned))
-			{
-				aiTac->target = dude;
-				dist = locSys.DistanceToObj(performer, dude);
-			}
+			aiTac->target = dude;
+			dist = locSys.DistanceToObj(performer, dude);
 		}
 	}
+	Py_DECREF(args);
 	if (dist > 900000000.0)
 	{
 		aiTac->target = 0;
