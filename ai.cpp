@@ -233,6 +233,7 @@ int AiSystem::TargetClosest(AiTactic* aiTac)
 		PyTuple_SET_ITEM(args, 1, PyObjHndl_Create(dude));
 
 		auto result = pythonObjIntegration.ExecuteScript("combat", "ShouldIgnoreTarget", args);
+		//auto result2 = pythonObjIntegration.ExecuteScript("combat", "TargetClosest", args);
 		int ignoreTarget = PyInt_AsLong(result);
 		Py_DECREF(result);
 

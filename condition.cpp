@@ -100,8 +100,21 @@ public:
 		int writeVal = (int)QueryRetrun1GetArgs;
 		write(0x102E0F1C + 8, &writeVal, sizeof(int*)); // web on
 		write(0x102D7958 + 8, &writeVal, sizeof(int*)); // entangle on
+
+
+		//replaceFunction(0x100C7180, QueryRetrun1GetArgs); // caused a crash :(
+
+		writeVal = dispTypeD20Query;
+		SubDispDefNew sdd;
+		sdd.dispType = dispTypeD20Query;
+		sdd.data1 = 0x102DFC00;
+		sdd.data2 = 0;
+		sdd.dispCallback = QueryCritterHasCondition;
+		sdd.dispKey = DK_QUE_Critter_Has_Condition;
+		write(0x102DFD48, &sdd, sizeof(SubDispDefNew));
+
+
 		
-		//replaceFunction(0x100C7180, QueryRetrun1GetArgs);
 	}
 } condFuncReplacement;
 
@@ -319,6 +332,18 @@ int DivineMightEffectTooltipCallback(DispatcherCallbackArgs args)
 int __cdecl CondNodeSetArg0FromSubDispDef(DispatcherCallbackArgs args)
 {
 	conds.CondNodeSetArg(args.subDispNode->condNode, 0, args.subDispNode->subDispDef->data1);
+	return 0;
+}
+
+int QueryCritterHasCondition(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	if (dispIo->data1 == args.subDispNode->subDispDef->data1 && !dispIo->data2)
+	{
+		dispIo->return_val = 1;
+		dispIo->data1 = _CondNodeGetArg(args.subDispNode->condNode, 0); //spellId
+		dispIo->data2 = 0;
+	}
 	return 0;
 }
 
@@ -1159,6 +1184,8 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 1, dispTypeDealingDamage, 0, RendOnDamage, 0, 0);
 	DispatcherHookInit(cond, 2, dispTypeBeginRound, 0, CondResetArgs, 0, 0);
 	
+	// 
+	
 	/*
 	char mCondIndomitableWillName[100];
 	CondStructNew *mCondIndomitableWill;
@@ -1189,6 +1216,10 @@ void ConditionSystem::DispatcherHookInit(SubDispDefNew* sdd, enum_disp_type disp
 
 void ConditionSystem::DispatcherHookInit(CondStructNew* cond, int hookIdx, enum_disp_type dispType, int key, void* callback, int data1, int data2)
 {
+	if (cond->subDispDefs[hookIdx].dispType != 0)
+	{
+		int dummy = 1;
+	}
 	assert(cond->subDispDefs[hookIdx].dispType == 0);
 	DispatcherHookInit(&cond->subDispDefs[hookIdx], dispType, key, callback, data1, data2 );
 }

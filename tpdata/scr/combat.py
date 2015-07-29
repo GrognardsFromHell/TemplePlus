@@ -12,7 +12,7 @@ def IsWarded( obj ):
 
 
 def IsSpiritualWeapon( obj):
-	if (obj.d20_query_has_spell_condition(sp_Spiritual_Weapon) != 0):
+	if (obj.d20_query_with_data(Q_Critter_Has_Spell_Active, spell_spiritual_weapon, 1) != 0):
 		return 1
 	return 0
 	
@@ -49,7 +49,7 @@ def ShouldIgnoreTarget( attachee, target):
 	
 # return closest target but in a less dumb way than ToEE
 # unused for now because I need to figure out how to return objhandles to the C++ :(
-def TargetClosest( attachee ):
+def TargetClosest( attachee, target = OBJ_HANDLE_NULL ):
 	closest_jones = OBJ_HANDLE_NULL
 	closest_dist = 10000000
 	isIntelligent =  (attachee.stat_level_get(stat_intelligence) >= 3)
@@ -60,17 +60,12 @@ def TargetClosest( attachee ):
 			#print 'is not friendly and not unconscious'
 			if (obj.distance_to(attachee) < closest_dist):
 				#print 'is closer...'
-				if (not IsSpiritualWeapon(obj)):
-					#print 'is not spiritual weapon'
-					if (not isIntelligent or not IsWarded(obj)):
-						#print 'is not warded or critter is dumb...'
-						if (not isIntelligent or not IsSummoned(obj)):
-							#print 'is not summoned or critter is dumb... YES'
-							closest_jones = obj
-							closest_dist = obj.distance_to(attachee)
-							#print str(obj) + '\n'
+				if (not ShouldIgnoreTarget( attahcee, obj)):
+					closest_jones = obj
+					closest_dist = obj.distance_to(attachee)
+					#print str(obj) + '\n'
 	if (closest_jones != OBJ_HANDLE_NULL):
 		print 'combat.py returning ' + str(closest_jones)
-		return closest_jones
-	return 0
+		return (closest_jones,)
+	return (0,)
 	
