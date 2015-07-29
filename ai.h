@@ -80,6 +80,7 @@ struct AiSystem : AddressTable
 	int TargetThreatened(AiTactic * aiTac);
 	int Approach(AiTactic* aiTac);
 	int CoupDeGrace(AiTactic * aiTac);
+	int ChargeAttack(AiTactic * aiTac);
 	int PickUpWeapon(AiTactic* aiTac);
 	int BreakFree(AiTactic* aiTac);
 	void UpdateAiFightStatus(objHndl objIn, int* aiState, objHndl* target);

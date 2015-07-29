@@ -205,7 +205,7 @@ int AiSystem::TargetClosest(AiTactic* aiTac)
 {
 	objHndl performer = aiTac->performer;
 	int performerIsIntelligent = (objects.StatLevelGet(performer, stat_intelligence) >= 3);
-	objHndl target; 
+	//objHndl target; 
 	LocAndOffsets performerLoc; 
 	float dist = 1000000000.0;
 
@@ -258,7 +258,7 @@ int AiSystem::TargetThreatened(AiTactic* aiTac)
 {
 	objHndl performer = aiTac->performer;
 	int performerIsIntelligent = (objects.StatLevelGet(performer, stat_intelligence) >= 3);
-	objHndl target;
+//	objHndl target;
 	LocAndOffsets performerLoc;
 	float dist = 1000000000.0;
 
@@ -427,7 +427,6 @@ int AiSystem::CoupDeGrace(AiTactic* aiTac)
 {
 	int actNum; 
 	objHndl origTarget = aiTac->target;
-	signed int result; // eax@2
 
 	actNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
 	aiTac->target = 0i64;
@@ -452,6 +451,40 @@ int AiSystem::CoupDeGrace(AiTactic* aiTac)
 	return 0;
 
 
+}
+
+int AiSystem::ChargeAttack(AiTactic* aiTac)
+{
+	int actNum0 = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+	if (!aiTac->target)
+		return 0;
+	actSeqSys.curSeqReset(aiTac->performer);
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_CHARGE, 0);
+	objHndl weapon = inventory.ItemWornAt(aiTac->performer, 3);
+	if (!weapon)
+	{
+		//TurnBasedStatus tbStatCopy;
+		D20Actn d20aCopy;
+		//memcpy(&tbStatCopy, &(*actSeqSys.actSeqCur)->tbStatus, sizeof(TurnBasedStatus));
+		memcpy(&d20aCopy, d20Sys.globD20Action, sizeof(D20Actn));
+		int natAtk = dispatch.DispatchD20ActionCheck(&d20aCopy, 0, dispTypeGetCritterNaturalAttacksNum);
+		if (natAtk > 0)
+			d20Sys.GlobD20ActnSetTypeAndData1(D20A_CHARGE, ATTACK_CODE_NATURAL_ATTACK + 1);
+		else
+			d20Sys.GlobD20ActnSetTypeAndData1(D20A_CHARGE, 0);
+	}
+	else
+		d20Sys.GlobD20ActnSetTypeAndData1(D20A_CHARGE, 0);
+
+	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
+	actSeqSys.ActionAddToSeq();
+	if (actSeqSys.ActionSequenceChecksWithPerformerLocation())
+	{
+		actSeqSys.ActionSequenceRevertPath(actNum0);
+		return 0;
+	}
+	return 1;
 }
 
 void AiSystem::UpdateAiFightStatus(objHndl objIn, int* aiStatus, objHndl* target)
@@ -534,7 +567,7 @@ int AiSystem::StrategyTabLineParser(TabFileStatus* tabFile, int n, char** string
 	signed int i; 
 	char v6; 
 	char *stratName; 
-	int v8; 
+	unsigned int v8; 
 	char **v9; 
 
 	aiStrat = &((*aiStrategies)[n]);
@@ -580,6 +613,11 @@ int _AiApproach(AiTactic* aiTac)
 	return aiSys.Approach(aiTac);
 }
 
+int _AiCharge(AiTactic* aiTac)
+{
+	return aiSys.ChargeAttack(aiTac);
+}
+
 int _AiTargetClosest(AiTactic * aiTac)
 {
 	return aiSys.TargetClosest(aiTac);
@@ -608,6 +646,7 @@ public:
 		replaceFunction(0x100E3A00, _AiTargetClosest);
 		replaceFunction(0x100E46D0, _AiTargetThreatened);
 		replaceFunction(0x100E48D0, _AiApproach);
+		replaceFunction(0x100E4BD0, _AiCharge);
 		replaceFunction(0x100E50C0, _aiStrategyParse);
 		//	replaceFunction(0x100E5500, _StrategyTabLineParser);
 		replaceFunction(0x100E5DB0, _AiCoupDeGrace);

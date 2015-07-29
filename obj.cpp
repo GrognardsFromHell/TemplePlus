@@ -542,7 +542,7 @@ uint32_t Objects::IsUnconscious(objHndl obj)
 {
 	if (obj == 0){ return 1; }
 	if (GetFlags(obj) & OF_DESTROYED){ return 1; }
-	if (GetHPCur(obj) < -10){ return 1; }
+	if (GetHPCur(obj) <= -10){ return 1; }
 	return d20.d20Query(obj, DK_QUE_Unconscious) != 0;
 }
 
