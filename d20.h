@@ -218,7 +218,7 @@ struct AiTacticDef
 {
 	char * name;
 	uint32_t(__cdecl * aiFunc)(AiTactic *);
-	uint32_t pad;
+	int (__cdecl* onInitiativeAdd)(AiTactic*); // seem to be zero for all tactics; i.e. unused, maybe Arcanum leftover
 };
 
 

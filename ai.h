@@ -87,6 +87,7 @@ struct AiSystem : AddressTable
 	int UpdateAiFlags(objHndl ObjHnd, int aiFightStatus, objHndl target, int *soundMap);
 	void StrategyTabLineParseTactic(AiStrategy*, char * tacName, char * middleString, char* spellString);
 	int StrategyTabLineParser(TabFileStatus* tabFile, int n, char ** strings);
+	int AiOnInitiativeAdd(objHndl obj);
 
 
 private:

@@ -570,7 +570,9 @@ int AiSystem::StrategyTabLineParser(TabFileStatus* tabFile, int n, char** string
 	unsigned int v8; 
 	char **v9; 
 
-	aiStrat = &((*aiStrategies)[n]);
+	aiStrat = *aiStrategies;
+	aiStrat = &aiStrat[n];
+	
 	v4 = *strings;
 	i = 0;
 	do
@@ -591,7 +593,30 @@ int AiSystem::StrategyTabLineParser(TabFileStatus* tabFile, int n, char** string
 		v9 += 3;
 		++i;
 	} while (i < 20);
-	++aiStrategiesNum;
+	++(*aiStrategiesNum);
+	return 0;
+}
+
+int AiSystem::AiOnInitiativeAdd(objHndl obj)
+{
+	int critterStratIdx = objects.getInt32(obj, obj_f_critter_strategy);
+	
+	assert(critterStratIdx >= 0 && critterStratIdx < *aiStrategiesNum);
+	AiStrategy *aiStrats = *aiStrategies;
+	AiStrategy * aiStrat = &aiStrats[critterStratIdx];
+	AiTactic aiTac;
+	aiTac.performer = obj;
+
+	for (int i = 0; i < aiStrat->numTactics; i++)
+	{
+		aiTacticGetConfig(i, &aiTac, aiStrat);
+		auto func = aiTac.aiTac->onInitiativeAdd;
+		if (func)
+		{
+			if (func(&aiTac))
+				return 1;
+		}
+	}
 	return 0;
 }
 #pragma endregion
@@ -634,6 +659,10 @@ void _StrategyTabLineParser(TabFileStatus* tabFile, int n, char** strings)
 	aiSys.StrategyTabLineParser(tabFile, n, strings);
 }
 
+int _AiOnInitiativeAdd(objHndl obj)
+{
+	return aiSys.AiOnInitiativeAdd(obj);
+}
 
 class AiReplacements : public TempleFix
 {
@@ -648,8 +677,10 @@ public:
 		replaceFunction(0x100E48D0, _AiApproach);
 		replaceFunction(0x100E4BD0, _AiCharge);
 		replaceFunction(0x100E50C0, _aiStrategyParse);
-		//	replaceFunction(0x100E5500, _StrategyTabLineParser);
+		replaceFunction(0x100E5460, _AiOnInitiativeAdd);
+		replaceFunction(0x100E5500, _StrategyTabLineParser);
 		replaceFunction(0x100E5DB0, _AiCoupDeGrace);
+		
 		
 	}
 } aiReplacements;
