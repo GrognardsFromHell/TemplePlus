@@ -23,7 +23,7 @@ def dmp():
 	templeplus.debug.dump_conditions.run()
 #	templeplus.debug.dump_d20actions.run()
 #	templeplus.debug.dump_feats.run()
-	import templeplus.debug.dump_ai_tactics
+	import templeplus.debug.dump_ai_tactic_defs
 	templeplus.debug.dump_ai_tactic_defs.run()
 	return
 

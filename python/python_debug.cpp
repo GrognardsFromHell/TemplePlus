@@ -165,7 +165,7 @@ PyObject *PyDebug_DumpAiTactics() {
 
 	for (size_t i = 0; i < cap; ++i) {
 
-		auto c = Py_BuildValue("III", i,
+		auto c = Py_BuildValue("sII", 
 			aiTacDefs[i].name, aiTacDefs[i].aiFunc, aiTacDefs[i].onInitiativeAdd );
 
 		PyList_SET_ITEM(result, i, c);
