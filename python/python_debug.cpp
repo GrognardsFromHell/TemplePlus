@@ -5,6 +5,7 @@
 #include "../condition.h"
 #include "../radialmenu.h"
 #include "feat.h"
+#include <ai.h>
 
 /*
 	Dumps all conditions from the global hashtable to a Wiki article.
@@ -157,11 +158,28 @@ PyObject *PyDebug_DumpD20Actions() {
 	return result;
 }
 
+PyObject *PyDebug_DumpAiTactics() {
+	auto cap = 44;
+	auto result = PyList_New(cap);
+	AiTacticDef * aiTacDefs = aiSys.aiTacticDefs;
+
+	for (size_t i = 0; i < cap; ++i) {
+
+		auto c = Py_BuildValue("III", i,
+			aiTacDefs[i].name, aiTacDefs[i].aiFunc, aiTacDefs[i].onInitiativeAdd );
+
+		PyList_SET_ITEM(result, i, c);
+	}
+
+	return result;
+}
+
 static PyMethodDef PyDebug_Methods[] = {
 	{ "dump_conds", (PyCFunction) PyDebug_DumpConds, METH_NOARGS, NULL },
 	{ "dump_radial", (PyCFunction) PyDebug_DumpRadial, METH_NOARGS, NULL },
 	{ "dump_feats", (PyCFunction)PyDebug_DumpFeats, METH_NOARGS, NULL },
 	{ "dump_d20actions", (PyCFunction)PyDebug_DumpD20Actions, METH_NOARGS, NULL },
+	{ "dump_ai_tactics", (PyCFunction)PyDebug_DumpAiTactics, METH_NOARGS, NULL },
 	{ NULL, }
 };
 

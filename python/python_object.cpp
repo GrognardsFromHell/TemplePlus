@@ -1206,13 +1206,17 @@ static PyObject* PyObjHandle_ItemGet(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_PerformTouchAttack(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	D20Actn action(D20A_TOUCH_ATTACK);
-	if (!PyArg_ParseTuple(args, "O&:objhndl.perform_touch_attack", &ConvertObjHndl, &action.d20ATarget)) {
+	int isMelee = 0;
+	if (!PyArg_ParseTuple(args, "O&|i:objhndl.perform_touch_attack", &ConvertObjHndl, &action.d20ATarget, &isMelee)) {
 		return 0;
 	}
 
 	// Build a to-hit action, do hit processing and return the result
 	action.d20APerformer = self->handle;
-	action.d20Caf = D20CAF_TOUCH_ATTACK | D20CAF_RANGED;
+	if (!isMelee)
+		action.d20Caf = D20CAF_TOUCH_ATTACK | D20CAF_RANGED;
+	else
+		action.d20Caf = D20CAF_TOUCH_ATTACK ;
 	action.data1 = 1;
 
 	d20Sys.ToHitProc(&action);
