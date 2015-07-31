@@ -42,6 +42,7 @@ struct Objects : AddressTable {
 	uint32_t getInt32(objHndl obj, obj_f fieldIdx);
 	uint64_t getInt64(objHndl obj, obj_f fieldIdx);
 	objHndl getObjHnd(objHndl obj, obj_f fieldIdx);
+	void SetFieldObjHnd(objHndl obj, obj_f field, objHndl value);
 	void setInt32(objHndl obj, obj_f fieldIdx, uint32_t dataIn);
 	void setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, FieldDataMax data);
 	void setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, int data);
@@ -226,7 +227,7 @@ struct Objects : AddressTable {
 
 	void PropCollectionRemoveField(objHndl objHnd, obj_f objF);
 	int GetModFromStatLevel(int statLevel); // returns modifier from stat level e.g. Dex 15 -> +2
-
+	
 #pragma endregion
 
 #pragma region Subsystems

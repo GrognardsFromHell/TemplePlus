@@ -1518,6 +1518,17 @@ static PyObject* PyObjHandle_SetInt(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_SetObj(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	obj_f field;
+	objHndl value;
+	if (!PyArg_ParseTuple(args, "iO&:objhndl.obj_set_obj", &field, &ConvertObjHndl,&value)) {
+		return PyInt_FromLong(0);
+	}
+	objects.SetFieldObjHnd(self->handle, field, value);
+	return PyInt_FromLong(1);
+}
+
 static PyObject* PyObjHandle_GetInt(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	obj_f field;
@@ -1535,6 +1546,16 @@ static PyObject* PyObjHandle_GetInt64(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 	auto value = objects.getInt64(self->handle, field);
+	return PyLong_FromLongLong(value);
+}
+
+static PyObject* PyObjHandle_GetObj(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	obj_f field;
+	if (!PyArg_ParseTuple(args, "i:objhndl.obj_get_obj", &field)) {
+		return 0;
+	}
+	auto value = objects.getObjHnd(self->handle, field);
 	return PyLong_FromLongLong(value);
 }
 
@@ -1894,8 +1915,10 @@ static PyMethodDef PyObjHandleMethods[] = {
 	
 	{ "obj_get_int", PyObjHandle_GetInt, METH_VARARGS, NULL },
 	{ "obj_get_int64", PyObjHandle_GetInt64, METH_VARARGS, "Gets 64 bit field" },
+	{ "obj_get_obj", PyObjHandle_GetObj, METH_VARARGS, "Gets Object field" },
 	{ "obj_remove_from_all_groups", PyObjHandle_RemoveFromAllGroups, METH_VARARGS, "Removes the object from all the groups (GroupList, PCs, NPCs, AI controlled followers, Currently Selected" },
 	{ "obj_set_int", PyObjHandle_SetInt, METH_VARARGS, NULL },
+	{ "obj_set_obj", PyObjHandle_SetObj, METH_VARARGS, NULL },
 
 	{ "reaction_get", PyObjHandle_ReactionGet, METH_VARARGS, NULL },
 	{ "reaction_set", PyObjHandle_ReactionSet, METH_VARARGS, NULL },
@@ -2006,6 +2029,11 @@ static PyMethodDef PyObjHandleMethods[] = {
 static PyObject* PyObjHandle_GetNameId(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
 	return PyInt_FromLong(objects.GetNameId(self->handle));
+}
+
+static PyObject* PyObjHandle_GetProto(PyObject* obj, void*) {
+	auto self = GetSelf(obj);
+	return PyInt_FromLong(objects.GetProtoNum(self->handle));
 }
 
 static PyObject* PyObjHandle_GetLocation(PyObject* obj, void*) {
@@ -2132,6 +2160,34 @@ static PyObject* PyObjHandle_GetFeats(PyObject* obj, void*) {
 	return result;
 }
 
+static PyObject* PyObjHandle_GetFactions(PyObject* obj, void*) {
+	auto self = GetSelf(obj);
+	objHndl objHnd = self->handle;
+
+	auto feats = objects.feats.GetFeats(self->handle);
+	
+	int factionArray[50] = {0,};
+	int numFactions = 0;
+
+	for (int i = 0; i < 50; i++){
+		int fac = objects.getArrayFieldInt32(objHnd, obj_f_npc_faction, i);
+		if (fac == 0) break;
+		factionArray[i] = fac;
+		numFactions++;
+	}
+
+	auto outTup = PyTuple_New(numFactions);
+	for (int i = 0; i < numFactions; i++){
+		PyTuple_SET_ITEM(outTup, i, PyInt_FromLong(factionArray[i]));
+	};
+
+
+	return  outTup;
+}
+
+
+
+
 // This is the NPC looting behaviour
 static PyObject* PyObjHandle_GetLoots(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
@@ -2169,8 +2225,10 @@ static PyGetSetDef PyObjHandleGetSets[] = {
 	{"scripts", PyObjHandle_GetScripts, NULL, NULL},
 	{"origin", PyObjHandle_GetOriginMapId, PyObjHandle_SetOriginMapId, NULL},
 	{"substitute_inventory", PyObjHandle_GetSubstituteInventory, NULL, NULL},
+	{"factions", PyObjHandle_GetFactions, NULL, NULL },
 	{"feats", PyObjHandle_GetFeats, NULL, NULL},
 	{"loots", PyObjHandle_GetLoots, PyObjHandle_SetLoots, NULL},
+	{"proto", PyObjHandle_GetProto, NULL, NULL },
 	{"__safe_for_unpickling__", PyObjHandle_SafeForUnpickling, NULL, NULL},
 	{NULL, NULL, NULL, NULL}
 };

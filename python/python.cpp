@@ -50,24 +50,7 @@ static PyObject * pyObjHandleType_Set_Field_64bit(TemplePyObjHandle* obj, PyObje
 	return PyInt_FromLong(1);
 };
 
-static PyObject * pyObjHandleType_Get_Field_ObjHandle(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	_fieldIdx nFieldIdx = 0;
-	objHndl ObjHnd = 0;
-	if (!PyArg_ParseTuple(pyTupleIn, "i", &nFieldIdx)) {
-		return nullptr;
-	};
-	return PyLong_FromLongLong(templeFuncs.Obj_Get_Field_ObjHnd__fastout(obj->objHandle, nFieldIdx));
-};
 
-static PyObject * pyObjHandleType_Set_Field_ObjHandle(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	_fieldIdx nFieldIdx = 0;
-	objHndl ObjHnd = 0;
-	if (!PyArg_ParseTuple(pyTupleIn, "iL", &nFieldIdx, &ObjHnd)) {
-		return PyInt_FromLong(0);
-	};
-	templeFuncs.Obj_Set_Field_ObjHnd(obj->objHandle, nFieldIdx, ObjHnd);
-	return PyInt_FromLong(1);
-};
 
 static PyObject * pyObjHandleType_Get_IdxField_32bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	_fieldIdx nFieldIdx = 0;
@@ -223,8 +206,6 @@ static PyMethodDef pyObjHandleMethods_New[] = {
 	"inventory", (PyCFunction)PyObjHandle_Inventory, METH_VARARGS, "Fetches a tuple of the object's inventory (items are Python Objects). Optional argument int nModeSelect : 0 - backpack only (excludes equipped items); 1 - backpack + equipped; 2 - equipped only",
 	"inventory_item", (PyCFunction)PyObjHandle_InventoryItem, METH_VARARGS, "Fetches an inventory item of index n",
 	"obj_set_field_64bit", (PyCFunction)pyObjHandleType_Set_Field_64bit, METH_VARARGS, "Sets 64 bit field",
-	"obj_get_field_objHndl", (PyCFunction)pyObjHandleType_Get_Field_ObjHandle, METH_VARARGS, "Gets objHndl field",
-	"obj_set_field_objHndl", (PyCFunction)pyObjHandleType_Set_Field_ObjHandle, METH_VARARGS, "Sets objHndl field",
 	"obj_get_idxfield_32bit", (PyCFunction)pyObjHandleType_Get_IdxField_32bit, METH_VARARGS, "Gets 32 bit index field",
 	"obj_set_idxfield_32bit", (PyCFunction)pyObjHandleType_Set_IdxField_32bit, METH_VARARGS, "Sets 32 bit index field",
 	"obj_get_idxfield_64bit", (PyCFunction)pyObjHandleType_Get_IdxField_64bit, METH_VARARGS, "Gets 64 bit index field",
@@ -248,27 +229,7 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 		return  PyString_FromString(objects.description._getDisplayName(obj->objHandle,obj->objHandle));
 	}
 
-	if (!_strcmpi(name, "factions")) {
-		objHndl ObjHnd = obj->objHandle;
-		int a[50] = {};
-		int n = 0;
-
-		for (int i = 0; i < 50; i ++){
-			int fac = templeFuncs.Obj_Get_IdxField_32bit(ObjHnd, obj_f_npc_faction, i);
-			if (fac == 0) break;
-			a[i] = fac;
-			n++;
-		};
-
-		auto outTup = PyTuple_New(n);
-		for (int i = 0; i < n ; i++){
-			PyTuple_SetItem(outTup, i, PyInt_FromLong(a[i]));
-		};
-
 		
-		return  outTup; 
-	}
-	
 	if (!_strcmpi(name, "substitute_inventory"))
 	{
 		objHndl ObjSubsInv = objects.inventory.GetSubstituteInventory(obj->objHandle);

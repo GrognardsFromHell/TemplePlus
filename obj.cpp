@@ -24,6 +24,7 @@ struct ObjectSystemAddresses : AddressTable
 	uint32_t(__cdecl *GetArrayFieldNumItems)(objHndl obj, obj_f fieldIdx);
 	void(__cdecl *ClearArrayField)(objHndl, obj_f);
 	void(__cdecl * PropCollectionRemoveField)(objHndl objHnd, obj_f fieldIdx);
+	void(__cdecl* SetFieldObjHnd)(objHndl obj, obj_f field, objHndl value);
 	ObjectSystemAddresses()
 	{
 		rebase(GetProtoNum, 0x10039320);
@@ -31,6 +32,16 @@ struct ObjectSystemAddresses : AddressTable
 		rebase(GetArrayFieldNumItems, 0x1009E7E0);
 		rebase(ClearArrayField, 0x1009E860);
 		rebase(PropCollectionRemoveField, 0x1009E9C0);
+
+		rebase(SetFieldObjHnd, 0x100A0280);
+		/*
+		
+	rebase(Obj_Set_Field_32bit, 0x100A0190);
+	rebase(Obj_Set_Field_64bit, 0x100A0200);
+	rebase(Obj_Set_IdxField_byValue, 0x100A1310);
+	rebase(Obj_Set_IdxField_byPtr, 0x100A1540);
+	rebase(Obj_Set_IdxField_ObjHnd, 0x100A14A0);
+		*/
 	}
 } addresses;
 
@@ -130,6 +141,11 @@ uint64_t Objects::getInt64(objHndl obj, obj_f fieldIdx)
 	if (fieldIdx == obj_f_type){ return objType; }
 	PropFetcher(objBody, fieldIdx, dataOut);
 	return dataOut[0];
+}
+
+void Objects::SetFieldObjHnd(objHndl obj, obj_f field, objHndl value)
+{
+	addresses.SetFieldObjHnd(obj, field, value);
 }
 
 objHndl Objects::getObjHnd(objHndl obj, obj_f fieldIdx)
