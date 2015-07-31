@@ -16,9 +16,6 @@ ohn = OBJ_HANDLE_NULL
 ggv = game.global_vars
 ggf = game.global_flags
 
-walkables = {}
-LAST_RANDOM_WALK_PROTO_NAME = 20003
-
 def dmp():
 	import templeplus.debug.dump_conditions
 #	import templeplus.debug.dump_d20actions
@@ -26,63 +23,10 @@ def dmp():
 	templeplus.debug.dump_conditions.run()
 #	templeplus.debug.dump_d20actions.run()
 #	templeplus.debug.dump_feats.run()
+	import templeplus.debug.dump_ai_tactics
+	templeplus.debug.dump_ai_tactic_defs.run()
 	return
 
-def tmm(previous_critter = OBJ_HANDLE_NULL, xx = -1, yy = -1): # test map map
-
-	global walkables
-	if walkables == {}:
-		xx, yy = lta(game.leader.location+4)
-		last_point_x = -1
-		last_point_y = -1
-	if previous_critter == OBJ_HANDLE_NULL:
-		explorer_proto = 14004
-		off_x = 2
-		off_y = 0
-	elif previous_critter.name == 8054: #proto 14004
-		explorer_proto = 14005
-		off_x = -2
-		off_y = 0		
-	elif previous_critter.name == 20001: #proto 14005
-		explorer_proto = 14006
-		off_x = 0
-		off_y = 2
-	elif previous_critter.name == 8071: #proto 14006
-		explorer_proto = 14007
-		off_x = 0
-		off_y = -2
-	elif previous_critter.name == LAST_RANDOM_WALK_PROTO_NAME: # proto 14007
-		explorer_proto = 14004
-		xx, yy =  lta(game.leader.location)
-		off_x = 2
-		off_y = 0
-	if previous_critter != OBJ_HANDLE_NULL:
-		previous_critter.destroy()
-	for obj in game.obj_list_vicinity( lfa(xx,yy), OLC_NPC):
-		obj.object_flag_set(OF_OFF)
-	a1 = game.obj_create(explorer_proto, lfa(xx,yy))
-	a1.move( lfa(xx + off_x,yy + off_y), 0 ,0)
-	game.timevent_add(tmm2, (a1, xx, yy), 3000, 1)
-	
-def tmm2(previous_critter = OBJ_HANDLE_NULL, xx = -1, yy = -1): # test map map
-	global walkables
-	xn, yn = lta(previous_critter.location)
-	if xn == xx and yn == yy: # NPC returned to original creation location	
-		if not (xx,yy) in walkables:
-			walkables[(xx,yy)]  = (xn, yn)
-		#else:
-		#	walkables[(xx,yy)] += (xn, yn)
-	if previous_critter.name == LAST_RANDOM_WALK_PROTO_NAME: # last one
-		if not (xx,yy) in walkables:
-			walkables[(xx,yy)] = -1
-		if all_neighbours_not_walkable(xx,yy):
-			walkables[(xx,yy)] = -2
-	game.timevent_add(tmm, (previous_critter, xx, yy), 1000, 1)
-
-def all_neighbours_not_walkable(xx,yy):
-	if (xx,yy) in walkables and (xx+1, yy) in walkables and (xx, yy+1) in walkables and (xx+1, yy+1) in walkables and (xx-1, yy) in walkables and (xx, yy-1) in walkables and (xx-1, yy-1) in walkables and (xx-1, yy+1) in walkables and (xx+1, yy-1) in walkables:
-		pass
-	
 
 
 	

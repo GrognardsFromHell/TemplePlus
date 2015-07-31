@@ -352,6 +352,87 @@ PyObject* PyGame_ObjListVicinity(PyObject*, PyObject* args) {
 	return ObjListToTuple(objList);
 }
 
+PyObject* PyGame_FindNpcNear(PyObject*, PyObject* args) {
+	int flags = OLC_NPC;
+	int npcName = -1;
+	char * npcNameStr = 0;
+	int livingOnly = 1;
+	int multiple = 0; // unimplemented yet
+
+	if (PyTuple_GET_SIZE(args) >= 1)
+	{
+		auto arg1 = PyTuple_GET_ITEM(args, 0);
+		if (PyString_Check(arg1))
+		{
+			npcNameStr = PyString_AsString(arg1);
+		} 
+		else if (PyInt_Check(arg1))
+		{
+			npcName = PyInt_AsLong(arg1);
+		}
+	} 
+
+	LocAndOffsets loc;
+	objHndl gameLeader = pyGameAddresses.PartyGetLeader();
+	locSys.getLocAndOff(gameLeader, &loc);
+
+	ObjList objList;
+	objList.ListVicinity(loc.location, flags);
+
+	int numFound = 0;
+	objHndl handlesFound[100];
+	for (int i = 0; i < objList.size() && i < 100; i++)
+	{
+		objHndl dude = objList.get(i);
+		if (npcName != -1)
+		{
+			if (dude && objects.GetNameId(dude) == npcName)
+				handlesFound[numFound++] = dude;
+		} 
+		else if(npcNameStr != 0)
+		{
+			auto dudePyHndl = PyObjHndl_Create(dude);
+			char * dudeName = PyString_AsString( dudePyHndl->ob_type->tp_repr(dudePyHndl) );
+			
+			if (strstr(dudeName, npcNameStr))
+			{
+				handlesFound[numFound++] = dude;
+			}
+		}
+		
+	}
+	if (!numFound)
+		return PyInt_FromLong(0);
+	auto result = PyTuple_New(numFound);
+	for (int i = 0; i < numFound; i++)
+	{
+		PyTuple_SetItem(result, i, PyObjHndl_Create(handlesFound[i]));
+	}
+
+	if (multiple)
+		return result;
+	return PyObjHndl_Create(handlesFound[0]);
+}
+
+PyObject* PyGame_Vlist(PyObject*, PyObject* args) {
+	int objName;
+	int flags = OLC_NPC;
+	if (!PyArg_ParseTuple(args, "|ii:game.vlist", &objName, &flags)) {
+		return 0;
+	}
+	if (!flags)
+		flags = OLC_NPC;
+
+	LocAndOffsets loc;
+	objHndl gameLeader = pyGameAddresses.PartyGetLeader();
+	locSys.getLocAndOff(gameLeader, &loc);
+	
+	
+	ObjList objList;
+	objList.ListVicinity(loc.location, flags);
+	return ObjListToTuple(objList);
+}
+
 PyObject* PyGame_ObjListRange(PyObject*, PyObject* args) {
 	LocAndOffsets loc;
 	int radius;
@@ -921,6 +1002,7 @@ PyObject* PyGame_IsDaytime(PyObject*, PyObject* args) {
 static PyMethodDef PyGameMethods[]{
 	{"fade_and_teleport", PyGame_FadeAndTeleport, METH_VARARGS, NULL},
 	{"fade", PyGame_Fade, METH_VARARGS, NULL},
+	{ "fnn", PyGame_FindNpcNear, METH_VARARGS, NULL },
 	{"party_size", PyGame_PartySize, METH_VARARGS, NULL},
 	{"party_pc_size", PyGame_PartyPcSize, METH_VARARGS, NULL},
 	{"party_npc_size", PyGame_PartyNpcSize, METH_VARARGS, NULL},
@@ -969,6 +1051,7 @@ static PyMethodDef PyGameMethods[]{
 	{"combat_is_active", PyGame_CombatIsActive, METH_VARARGS, NULL},
 	{"written_ui_show", PyGame_WrittenUiShow, METH_VARARGS, NULL},
 	{"is_daytime", PyGame_IsDaytime, METH_VARARGS, NULL},
+	{"vlist", PyGame_Vlist, METH_VARARGS, NULL },
 	// This is some unfinished UI for which the graphics are missing
 	// {"charmap", PyGame_Charmap, METH_VARARGS, NULL},
 	{NULL, NULL, NULL, NULL}
