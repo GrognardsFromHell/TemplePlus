@@ -38,14 +38,7 @@ static struct PythonInternal : AddressTable {
 
 #pragma region Python Obj Field Get/Set Function Implementation
 
-static PyObject * PyObjHandle_GetField64(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	_fieldIdx nFieldIdx = 0;
-	uint64_t n64 = 0;
-	if (!PyArg_ParseTuple(pyTupleIn, "i", &nFieldIdx)) {
-		return nullptr;
-	};
-	return PyLong_FromLongLong( templeFuncs.Obj_Get_Field_64bit(obj->objHandle, nFieldIdx) );
-};
+
 
 static PyObject * pyObjHandleType_Set_Field_64bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
 	_fieldIdx nFieldIdx = 0;
@@ -208,21 +201,7 @@ UiPickerType operator&(const UiPickerType& lhs, const UiPickerType& rhs){
 	return (UiPickerType)((uint64_t)lhs & (uint64_t)rhs);
 };
 
-static PyObject * PyObjHandle_ObjFeatAdd(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	feat_enums nFeatCode;
-	if (!PyArg_ParseTuple(pyTupleIn, "i", &nFeatCode)) {
-		return nullptr;
-	};
 
-	if (nFeatCode == 0){
-		return PyInt_FromLong(0);
-	}
-
-	objects.feats.FeatAdd(obj->objHandle, nFeatCode);
-	objects.d20.d20Status->D20StatusRefresh(obj->objHandle);
-
-	return PyInt_FromLong(1);
-};
 
 
 
@@ -243,7 +222,6 @@ return PyInt_FromLong(1);
 static PyMethodDef pyObjHandleMethods_New[] = {
 	"inventory", (PyCFunction)PyObjHandle_Inventory, METH_VARARGS, "Fetches a tuple of the object's inventory (items are Python Objects). Optional argument int nModeSelect : 0 - backpack only (excludes equipped items); 1 - backpack + equipped; 2 - equipped only",
 	"inventory_item", (PyCFunction)PyObjHandle_InventoryItem, METH_VARARGS, "Fetches an inventory item of index n",
-	"obj_get_field_64bit", (PyCFunction)PyObjHandle_GetField64, METH_VARARGS, "Gets 64 bit field",
 	"obj_set_field_64bit", (PyCFunction)pyObjHandleType_Set_Field_64bit, METH_VARARGS, "Sets 64 bit field",
 	"obj_get_field_objHndl", (PyCFunction)pyObjHandleType_Get_Field_ObjHandle, METH_VARARGS, "Gets objHndl field",
 	"obj_set_field_objHndl", (PyCFunction)pyObjHandleType_Set_Field_ObjHandle, METH_VARARGS, "Sets objHndl field",
@@ -252,7 +230,6 @@ static PyMethodDef pyObjHandleMethods_New[] = {
 	"obj_get_idxfield_64bit", (PyCFunction)pyObjHandleType_Get_IdxField_64bit, METH_VARARGS, "Gets 64 bit index field",
 	"obj_set_idxfield_64bit", (PyCFunction)PyObjHandle_SetIdxField64bit, METH_VARARGS, "Sets 64 bit index field",
 	//"obj_set_idxfield_byvalue", (PyCFunction)pyObjHandleType_Set_IdxField_byValue, METH_VARARGS, "Sets index field - general (depending on nFieldIndex which the game looks up and fetches nFieldType to determine data size)",
-	"objfeatadd", (PyCFunction)PyObjHandle_ObjFeatAdd, METH_VARARGS, "Adds a feat. Feats can be added multiple times (at least some of them? like Toughness)",
 	0, 0, 0, 0
 };
 

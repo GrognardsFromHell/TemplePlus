@@ -1528,6 +1528,16 @@ static PyObject* PyObjHandle_GetInt(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(value);
 }
 
+static PyObject* PyObjHandle_GetInt64(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	obj_f field;
+	if (!PyArg_ParseTuple(args, "i:objhndl.obj_get_int64", &field)) {
+		return 0;
+	}
+	auto value = objects.getInt64(self->handle, field);
+	return PyLong_FromLongLong(value);
+}
+
 static PyObject* PyObjHandle_HasFeat(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	feat_enums feat;
@@ -1538,6 +1548,23 @@ static PyObject* PyObjHandle_HasFeat(PyObject* obj, PyObject* args) {
 	auto result = _HasFeatCountByClass(self->handle, feat, (Stat) 0, 0);
 	return PyInt_FromLong(result);
 }
+
+static PyObject * PyObjHandle_ObjFeatAdd(PyObject* obj, PyObject * args){
+	auto self = GetSelf(obj);
+	feat_enums featCode;
+	if (!PyArg_ParseTuple(args, "i:objhndl.feat_add", &featCode)) {
+		return nullptr;
+	};
+
+	if (featCode == 0){
+		return PyInt_FromLong(0);
+	}
+
+	objects.feats.FeatAdd(self->handle, featCode);
+	objects.d20.d20Status->D20StatusRefresh(self->handle);
+
+	return PyInt_FromLong(1);
+};
 
 static PyObject* PyObjHandle_SpellKnownAdd(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -1797,47 +1824,98 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"__getstate__", PyObjHandle_getstate, METH_VARARGS, NULL},
 	{"__reduce__", PyObjHandle_reduce, METH_VARARGS, NULL},
 	{"__setstate__", PyObjHandle_setstate, METH_VARARGS, NULL},
+	{ "ai_follower_add", PyObjHandle_AiFollowerAdd, METH_VARARGS, NULL },
+	{ "ai_follower_remove", ReturnZero, METH_VARARGS, NULL },
+	{ "ai_follower_atmax", ReturnZero, METH_VARARGS, NULL },
+	{ "ai_shitlist_add", PyObjHandle_AiShitlistAdd, METH_VARARGS, NULL },
+	{ "ai_shitlist_remove", PyObjHandle_AiShitlistRemove, METH_VARARGS, NULL },
+	{ "ai_stop_attacking", PyObjHandle_AiStopAttacking, METH_VARARGS, NULL },
+	{ "anim_callback", PyObjHandle_AnimCallback, METH_VARARGS, NULL },
+	{ "attack", PyObjHandle_Attack, METH_VARARGS, NULL },
+	{ "award_experience", PyObjHandle_AwardExperience, METH_VARARGS, NULL },
+
+
+	{ "balor_death", PyObjHandle_BalorDeath, METH_VARARGS, NULL },
 	{"begin_dialog", PyObjHandle_BeginDialog, METH_VARARGS, NULL},
 	{"begian_dialog", PyObjHandle_BeginDialog, METH_VARARGS, "I make this typo so much that I want it supported :P" },
 	{"barter", PyObjHandle_Barter, METH_VARARGS, NULL },
-	{"reaction_get", PyObjHandle_ReactionGet, METH_VARARGS, NULL},
-	{"reaction_set", PyObjHandle_ReactionSet, METH_VARARGS, NULL},
-	{"reaction_adj", PyObjHandle_ReactionAdjust, METH_VARARGS, NULL},
-	{"item_find", PyObjHandle_ItemFind, METH_VARARGS, NULL},
-	{"item_transfer_to", PyObjHandle_ItemTransferTo, METH_VARARGS, NULL},
-	{"item_find_by_proto", PyObjHandle_ItemFindByProto, METH_VARARGS, NULL},
-	{"item_transfer_to_by_proto", PyObjHandle_ItemTransferToByProto, METH_VARARGS, NULL},
-	{"money_get", PyObjHandle_MoneyGet, METH_VARARGS, NULL},
-	{"money_adj", PyObjHandle_MoneyAdj, METH_VARARGS, NULL},
-	{"cast_spell", PyObjHandle_CastSpell, METH_VARARGS, NULL},
+	{ "cast_spell", PyObjHandle_CastSpell, METH_VARARGS, NULL },
+	{ "can_see", PyObjHandle_HasLos, METH_VARARGS, NULL },
+	{ "concealed_set", PyObjHandle_ConcealedSet, METH_VARARGS, NULL },
+
+	{ "d20_query", PyObjHandle_D20Query, METH_VARARGS, NULL },
+	{ "d20_query_has_spell_condition", PyObjHandle_D20QueryHasSpellCond, METH_VARARGS, NULL },
+	{ "d20_query_with_data", PyObjHandle_D20QueryWithData, METH_VARARGS, NULL },
+	{ "d20_query_test_data", PyObjHandle_D20QueryTestData, METH_VARARGS, NULL },
+	{ "d20_query_get_data", PyObjHandle_D20QueryGetData, METH_VARARGS, NULL },
+	{ "d20_send_signal", PyObjHandle_D20SendSignal, METH_VARARGS, NULL },
+	{ "d20_send_signal_ex", PyObjHandle_D20SendSignalEx, METH_VARARGS, NULL },
+	{ "damage", PyObjHandle_Damage, METH_VARARGS, NULL },
+	{ "damage_with_reduction", PyObjHandle_DamageWithReduction, METH_VARARGS, NULL },
+	
+	{ "faction_has", PyObjHandle_FactionHas, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!" },
+	{ "faction_add", PyObjHandle_FactionAdd, METH_VARARGS, "Adds faction to NPC. Doesn't work on PCs!" },
+	{ "feat_add", PyObjHandle_ObjFeatAdd, METH_VARARGS, "Gives you a feat" },
+	{ "fall_down", PyObjHandle_FallDown, METH_VARARGS, "Makes a Critter fall down" },
+	{ "follower_add", PyObjHandle_FollowerAdd, METH_VARARGS, NULL },
+	{ "follower_remove", PyObjHandle_FollowerRemove, METH_VARARGS, NULL },
+	{ "follower_atmax", PyObjHandle_FollowerAtMax, METH_VARARGS, NULL },
+	{ "float_line", PyObjHandle_FloatLine, METH_VARARGS, NULL },
+	
+
+	{ "group_list", PyObjHandle_GroupList, METH_VARARGS, NULL },
+	
+	{ "has_atoned", PyObjHandle_HasAtoned, METH_VARARGS, NULL },
+	{ "has_feat", PyObjHandle_HasFeat, METH_VARARGS, NULL },
+	{ "has_follower", PyObjHandle_HasFollower, METH_VARARGS, NULL },
+	{ "has_item", PyObjHandle_HasItem, METH_VARARGS, NULL },
+	{ "has_los", PyObjHandle_HasLos, METH_VARARGS, NULL },
+	{ "has_met", PyObjHandle_HasMet, METH_VARARGS, NULL },
+	{ "has_wielded", PyObjHandle_HasWielded, METH_VARARGS, NULL },
+	{ "hasMet", PyObjHandle_HasMet, METH_VARARGS, NULL },
+	{ "heal", PyObjHandle_Heal, METH_VARARGS, NULL },
+	{ "healsubdual", PyObjHandle_HealSubdual, METH_VARARGS, NULL },
+	
+	
+
+
+	{ "item_find", PyObjHandle_ItemFind, METH_VARARGS, NULL },
+	{ "item_transfer_to", PyObjHandle_ItemTransferTo, METH_VARARGS, NULL },
+	{ "item_find_by_proto", PyObjHandle_ItemFindByProto, METH_VARARGS, NULL },
+	{ "item_transfer_to_by_proto", PyObjHandle_ItemTransferToByProto, METH_VARARGS, NULL },
+	{ "item_worn_at", PyObjHandle_ItemWornAt, METH_VARARGS, NULL },
+	
+	{ "make_wiz", PyObjHandle_MakeWizard, METH_VARARGS, "Makes you a wizard of level N" },
+	{ "make_class", PyObjHandle_MakeClass, METH_VARARGS, "Makes you a CLASS N of level M" },
+	{ "money_get", PyObjHandle_MoneyGet, METH_VARARGS, NULL},
+	{ "money_adj", PyObjHandle_MoneyAdj, METH_VARARGS, NULL},
+	{ "move", PyObjHandle_Move, METH_VARARGS, NULL },
+
+	
+	{ "obj_get_int", PyObjHandle_GetInt, METH_VARARGS, NULL },
+	{ "obj_get_int64", PyObjHandle_GetInt64, METH_VARARGS, "Gets 64 bit field" },
+	{ "obj_remove_from_all_groups", PyObjHandle_RemoveFromAllGroups, METH_VARARGS, "Removes the object from all the groups (GroupList, PCs, NPCs, AI controlled followers, Currently Selected" },
+	{ "obj_set_int", PyObjHandle_SetInt, METH_VARARGS, NULL },
+
+	{ "reaction_get", PyObjHandle_ReactionGet, METH_VARARGS, NULL },
+	{ "reaction_set", PyObjHandle_ReactionSet, METH_VARARGS, NULL },
+	{ "reaction_adj", PyObjHandle_ReactionAdjust, METH_VARARGS, NULL },
+
 	{"skill_level_get", PyObjHandle_SkillLevelGet, METH_VARARGS, NULL},
-	{"has_met", PyObjHandle_HasMet, METH_VARARGS, NULL},
-	{"hasMet", PyObjHandle_HasMet, METH_VARARGS, NULL},
-	{"has_follower", PyObjHandle_HasFollower, METH_VARARGS, NULL},
-	{"group_list", PyObjHandle_GroupList, METH_VARARGS, NULL},
+	
+	
 	{"stat_level_get", PyObjHandle_StatLevelGet, METH_VARARGS, NULL},
 	{"stat_base_get", PyObjHandle_StatLevelGetBase, METH_VARARGS, NULL},
 	{"stat_base_set", PyObjHandle_StatLevelSetBase, METH_VARARGS, NULL},
-	{"follower_add", PyObjHandle_FollowerAdd, METH_VARARGS, NULL},
-	{"follower_remove", PyObjHandle_FollowerRemove, METH_VARARGS, NULL},
-	{"follower_atmax", PyObjHandle_FollowerAtMax, METH_VARARGS, NULL},
-	{"ai_follower_add", PyObjHandle_AiFollowerAdd, METH_VARARGS, NULL},
-	{"ai_follower_remove", ReturnZero, METH_VARARGS, NULL},
-	{"ai_follower_atmax", ReturnZero, METH_VARARGS, NULL},
-	{"obj_remove_from_all_groups", PyObjHandle_RemoveFromAllGroups, METH_VARARGS, "Removes the object from all the groups (GroupList, PCs, NPCs, AI controlled followers, Currently Selected" },
+	
+
 	{"pc_add", PyObjHandle_PCAdd, METH_VARARGS, "Adds object as a PC party member." },
 	{"leader_get", PyObjHandle_LeaderGet, METH_VARARGS, NULL},
-	{"can_see", PyObjHandle_HasLos, METH_VARARGS, NULL},
-	{"has_wielded", PyObjHandle_HasWielded, METH_VARARGS, NULL},
-	{"has_item", PyObjHandle_HasItem, METH_VARARGS, NULL},
-	{"item_worn_at", PyObjHandle_ItemWornAt, METH_VARARGS, NULL},
-	{"attack", PyObjHandle_Attack, METH_VARARGS, NULL},
+	
+	
+	
 	{"turn_towards", PyObjHandle_TurnTowards, METH_VARARGS, NULL},
-	{"float_line", PyObjHandle_FloatLine, METH_VARARGS, NULL},
-	{"damage", PyObjHandle_Damage, METH_VARARGS, NULL},
-	{"damage_with_reduction", PyObjHandle_DamageWithReduction, METH_VARARGS, NULL},
-	{"heal", PyObjHandle_Heal, METH_VARARGS, NULL},
-	{"healsubdual", PyObjHandle_HealSubdual, METH_VARARGS, NULL},
+	
 	{"steal_from", PyObjHandle_StealFrom, METH_VARARGS, NULL},
 	{"reputation_has", PyObjHandle_ReputationHas, METH_VARARGS, NULL},
 	{"reputation_add", PyObjHandle_ReputationAdd, METH_VARARGS, NULL},
@@ -1847,7 +1925,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"condition_add", PyObjHandle_ConditionAddWithArgs, METH_VARARGS, NULL},
 	{"is_friendly", PyObjHandle_IsFriendly, METH_VARARGS, NULL},
 	{"fade_to", PyObjHandle_FadeTo, METH_VARARGS, NULL},
-	{"move", PyObjHandle_Move, METH_VARARGS, NULL},
+
 	{"float_mesfile_line", PyObjHandle_FloatMesFileLine, METH_VARARGS, NULL},
 	{"object_flags_get", GetFlags<obj_f_flags>, METH_VARARGS, NULL},
 	{"object_flag_set", PyObjHandle_ObjectFlagSet, METH_VARARGS, NULL},
@@ -1886,14 +1964,10 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"remove_from_initiative", PyObjHandle_RemoveFromInitiative, METH_VARARGS, NULL},
 	{"get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL},
 	{"set_initiative", PyObjHandle_SetInitiative, METH_VARARGS, NULL},
-	{"d20_query", PyObjHandle_D20Query, METH_VARARGS, NULL},
-	{"d20_query_has_spell_condition", PyObjHandle_D20QueryHasSpellCond, METH_VARARGS, NULL},
-	{"d20_query_with_data", PyObjHandle_D20QueryWithData, METH_VARARGS, NULL},
-	{"d20_query_test_data", PyObjHandle_D20QueryTestData, METH_VARARGS, NULL},
-	{"d20_query_get_data", PyObjHandle_D20QueryGetData, METH_VARARGS, NULL},
+	
 	{"critter_get_alignment", PyObjHandle_CritterGetAlignment, METH_VARARGS, NULL},
 	{"distance_to", PyObjHandle_DistanceTo, METH_VARARGS, NULL},
-	{"anim_callback", PyObjHandle_AnimCallback, METH_VARARGS, NULL},
+	
 	{"anim_goal_interrupt", PyObjHandle_AnimGoalInterrupt, METH_VARARGS, NULL},
 	{"d20_status_init", PyObjHandle_D20StatusInit, METH_VARARGS, NULL},
 	{"object_script_execute", PyObjHandle_ObjectScriptExecute, METH_VARARGS, NULL},
@@ -1904,9 +1978,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL},
 	{"is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL},
 	{"rumor_log_add", PyObjHandle_RumorLogAdd, METH_VARARGS, NULL},
-	{"obj_set_int", PyObjHandle_SetInt, METH_VARARGS, NULL},
-	{"obj_get_int", PyObjHandle_GetInt, METH_VARARGS, NULL},
-	{"has_feat", PyObjHandle_HasFeat, METH_VARARGS, NULL},
+
 	{"spell_known_add", PyObjHandle_SpellKnownAdd, METH_VARARGS, NULL},
 	{"spell_memorized_add", PyObjHandle_SpellMemorizedAdd, METH_VARARGS, NULL},
 	{"spell_damage", PyObjHandle_SpellDamage, METH_VARARGS, NULL},
@@ -1916,27 +1988,14 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"ai_flee_add", PyObjHandle_AiFleeAdd, METH_VARARGS, NULL},
 	{"get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL},
 	{"item_wield_best_all", PyObjHandle_WieldBestAll, METH_VARARGS, NULL},
-	{"award_experience", PyObjHandle_AwardExperience, METH_VARARGS, NULL},
-	{"has_los", PyObjHandle_HasLos, METH_VARARGS, NULL},
-	{"has_atoned", PyObjHandle_HasAtoned, METH_VARARGS, NULL},
-	{"d20_send_signal", PyObjHandle_D20SendSignal, METH_VARARGS, NULL},
-	{"d20_send_signal_ex", PyObjHandle_D20SendSignalEx, METH_VARARGS, NULL},
-	{"balor_death", PyObjHandle_BalorDeath, METH_VARARGS, NULL},
-	{"concealed_set", PyObjHandle_ConcealedSet, METH_VARARGS, NULL},
-	{"ai_shitlist_add", PyObjHandle_AiShitlistAdd, METH_VARARGS, NULL},
-	{"ai_shitlist_remove", PyObjHandle_AiShitlistRemove, METH_VARARGS, NULL},
+	
 	{"unconceal", PyObjHandle_Unconceal, METH_VARARGS, NULL},
 	{"spells_pending_to_memorized", PyObjHandle_PendingToMemorized, METH_VARARGS, NULL},
 	{"spells_memorized_forget", PyObjHandle_MemorizedForget, METH_VARARGS, NULL},
-	{"ai_stop_attacking", PyObjHandle_AiStopAttacking, METH_VARARGS, NULL},
 	{"resurrect", PyObjHandle_Resurrect, METH_VARARGS, NULL},
 	{"dominate", PyObjHandle_Dominate, METH_VARARGS, NULL},
 	{"is_unconscious", PyObjHandle_IsUnconscious, METH_VARARGS, NULL},
-	{"faction_has", PyObjHandle_FactionHas, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!" },
-	{"faction_add", PyObjHandle_FactionAdd, METH_VARARGS, "Adds faction to NPC. Doesn't work on PCs!" },
-	{"fall_down", PyObjHandle_FallDown, METH_VARARGS, "Makes a Critter fall down" },
-	{"make_wiz", PyObjHandle_MakeWizard, METH_VARARGS, "Makes you a wizard of level N" },
-	{ "make_class", PyObjHandle_MakeClass, METH_VARARGS, "Makes you a CLASS N of level M" },
+
 	{NULL, NULL, NULL, NULL}
 };
 
