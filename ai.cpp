@@ -46,6 +46,7 @@ AiSystem::AiSystem()
 	rebase(_ShitlistAdd, 0x1005CC10);
 	rebase(_StopAttacking, 0x1005E6A0);
 	rebase(_AiSetCombatStatus, 0x1005DA00);
+	RegisterNewAiTactics();
 }
 
 void AiSystem::aiTacticGetConfig(int tacIdx, AiTactic* aiTacOut, AiStrategy* aiStrat)
@@ -81,6 +82,7 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 	aiTac.performer = objHnd;
 	aiTac.target = target;
 
+	// check if disarmed, if so, try to pick up weapon
 	if (d20Sys.d20Query(aiTac.performer, DK_QUE_Disarmed))
 	{
 		hooked_print_debug_message("\n%s attempting to pickup weapon...\n", description.getDisplayName(objHnd));
@@ -538,24 +540,42 @@ int AiSystem::UpdateAiFlags(objHndl obj, int aiFightStatus, objHndl target, int*
 }
 
 void AiSystem::StrategyTabLineParseTactic(AiStrategy* aiStrat, char* tacName, char* middleString, char* spellString)
-{
+{ // this functions matches the tactic strings (3 strings) to a tactic def
 	int tacIdx = 0;
 	if (*tacName)
 	{
 		for (int i = 0; i < 44 && _stricmp(tacName, aiTacticDefs[i].name); i++){
 			++tacIdx;
 		}
-		if (tacIdx >= 44)
+		if (tacIdx < 44)
 		{
-			hooked_print_debug_message("\nError: No Such Tactic %s for Strategy %s", tacName, aiStrat->name);
+			aiStrat->aiTacDefs[aiStrat->numTactics] = &aiTacticDefs[tacIdx];
+			aiStrat->field54[aiStrat->numTactics] = 0;
+			aiStrat->spellsKnown[aiStrat->numTactics].spellEnum = -1;
+			if (*spellString)
+				spell->ParseSpellSpecString(&aiStrat->spellsKnown[aiStrat->numTactics], (char *)spellString);
+			++aiStrat->numTactics;
 			return;
 		}
-		aiStrat->aiTacDefs[aiStrat->numTactics] = &aiTacticDefs[tacIdx];
-		aiStrat->field54[aiStrat->numTactics] = 0;
-		aiStrat->spellsKnown[aiStrat->numTactics].spellEnum = -1;
-		if (*spellString)
-			spell->ParseSpellSpecString(&aiStrat->spellsKnown[aiStrat->numTactics], (char *)spellString);
-		++aiStrat->numTactics;
+		tacIdx = 0;
+		for (int i = 0; i < 100 && aiTacticDefsNew[i].name && _stricmp(tacName, aiTacticDefsNew[i].name); i++)
+		{
+			tacIdx++;
+		}
+		if (aiTacticDefsNew[tacIdx].name && tacIdx < 100)
+		{
+			aiStrat->aiTacDefs[aiStrat->numTactics] = &aiTacticDefsNew[tacIdx];
+			aiStrat->field54[aiStrat->numTactics] = 0;
+			aiStrat->spellsKnown[aiStrat->numTactics].spellEnum = -1;
+			if (*spellString)
+				spell->ParseSpellSpecString(&aiStrat->spellsKnown[aiStrat->numTactics], (char *)spellString);
+			++aiStrat->numTactics;
+			return;
+		}
+		hooked_print_debug_message("\nError: No Such Tactic %s for Strategy %s", tacName, aiStrat->name);
+		return;
+		
+		
 	}
 	return;
 }
@@ -619,6 +639,23 @@ int AiSystem::AiOnInitiativeAdd(objHndl obj)
 	}
 	return 0;
 }
+
+void AiSystem::RegisterNewAiTactics()
+{
+	memset(aiTacticDefsNew, 0, sizeof(AiTacticDef) * 100);
+
+	aiTacticDefsNew[0].name = new char[100];
+	aiTacticDefsNew[0].aiFunc = _AiAsplode;
+	memset(aiTacticDefsNew[0].name, 0, 100);
+	memcpy(aiTacticDefsNew[0].name, "asplode", sizeof("asplode"));
+}
+
+unsigned int AiSystem::Asplode(AiTactic* aiTac)
+{
+	auto performer = aiTac->performer;
+	critterSys.KillByEffect(performer);
+	return 0;
+}
 #pragma endregion
 
 #pragma region AI replacement functions
@@ -662,6 +699,11 @@ void _StrategyTabLineParser(TabFileStatus* tabFile, int n, char** strings)
 int _AiOnInitiativeAdd(objHndl obj)
 {
 	return aiSys.AiOnInitiativeAdd(obj);
+}
+
+unsigned int _AiAsplode(AiTactic * aiTac)
+{
+	return aiSys.Asplode(aiTac);
 }
 
 class AiReplacements : public TempleFix

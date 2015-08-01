@@ -52,6 +52,7 @@ struct AiSystem : AddressTable
 {
 	AiStrategy ** aiStrategies;
 	AiTacticDef * aiTacticDefs;
+	AiTacticDef aiTacticDefsNew[100];
 	uint32_t * aiStrategiesNum;
 	CombatSystem * combat;
 	D20System  * d20;
@@ -89,7 +90,8 @@ struct AiSystem : AddressTable
 	int StrategyTabLineParser(TabFileStatus* tabFile, int n, char ** strings);
 	int AiOnInitiativeAdd(objHndl obj);
 
-
+	void RegisterNewAiTactics();
+	unsigned int Asplode(AiTactic * aiTactic);
 private:
 	void (__cdecl *_ShitlistAdd)(objHndl npc, objHndl target);
 	void (__cdecl *_AiRemoveFromList)(objHndl npc, objHndl target, int listType);	
@@ -100,6 +102,6 @@ private:
 
 extern AiSystem aiSys;
 
-
+unsigned int _AiAsplode(AiTactic* aiTac);
 
 

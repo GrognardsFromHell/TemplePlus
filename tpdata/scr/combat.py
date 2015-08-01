@@ -33,6 +33,8 @@ def GetPowerLevel( obj):
 def ShouldIgnoreTarget( attachee, target):
 	if ( IsSpiritualWeapon(target)):
 		return 1
+	if ( target.object_flags_get() & OF_DONTDRAW):
+		return 1
 	
 	isIntelligent =  (attachee.stat_level_get(stat_intelligence) >= 3)
 	if (not isIntelligent):
