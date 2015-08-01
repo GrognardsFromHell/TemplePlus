@@ -7,6 +7,8 @@
 #include "d20.h"
 
 
+#define AI_TACTICS_NEW_SIZE 100
+
 struct Pathfinding;
 struct AiTacticDef;
 struct SpellSystem;
@@ -52,7 +54,7 @@ struct AiSystem : AddressTable
 {
 	AiStrategy ** aiStrategies;
 	AiTacticDef * aiTacticDefs;
-	AiTacticDef aiTacticDefsNew[100];
+	AiTacticDef aiTacticDefsNew[AI_TACTICS_NEW_SIZE];
 	uint32_t * aiStrategiesNum;
 	CombatSystem * combat;
 	D20System  * d20;

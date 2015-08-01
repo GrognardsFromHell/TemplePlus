@@ -642,12 +642,63 @@ int AiSystem::AiOnInitiativeAdd(objHndl obj)
 
 void AiSystem::RegisterNewAiTactics()
 {
-	memset(aiTacticDefsNew, 0, sizeof(AiTacticDef) * 100);
+	memset(aiTacticDefsNew, 0, sizeof(AiTacticDef) * AI_TACTICS_NEW_SIZE);
 
-	aiTacticDefsNew[0].name = new char[100];
-	aiTacticDefsNew[0].aiFunc = _AiAsplode;
-	memset(aiTacticDefsNew[0].name, 0, 100);
-	memcpy(aiTacticDefsNew[0].name, "asplode", sizeof("asplode"));
+	int n = 0;
+
+	aiTacticDefsNew[n].name = new char[100];
+	aiTacticDefsNew[n].aiFunc = _AiAsplode;
+	memset(aiTacticDefsNew[n].name, 0, 100);
+	sprintf(aiTacticDefsNew[n].name, "asplode");
+
+
+	n++;
+	aiTacticDefsNew[n].name = new char[100];
+	aiTacticDefsNew[n].aiFunc = _AiAsplode;
+	memset(aiTacticDefsNew[n].name, 0, 100);
+	sprintf(aiTacticDefsNew[n].name, "wake friend");
+
+	n++;
+	aiTacticDefsNew[n].name = new char[100];
+	aiTacticDefsNew[n].aiFunc = _AiAsplode;
+	memset(aiTacticDefsNew[n].name, 0, 100);
+	sprintf(aiTacticDefsNew[n].name, "use magic item");
+	
+	n++;
+	aiTacticDefsNew[n].name = new char[100];
+	aiTacticDefsNew[n].aiFunc = _AiAsplode;
+	memset(aiTacticDefsNew[n].name, 0, 100);
+	sprintf(aiTacticDefsNew[n].name, "improve position five foot step");
+
+	n++;
+	aiTacticDefsNew[n].name = new char[100];
+	aiTacticDefsNew[n].aiFunc = _AiAsplode;
+	memset(aiTacticDefsNew[n].name, 0, 100);
+	sprintf(aiTacticDefsNew[n].name, "disarm");
+
+	n++;
+	aiTacticDefsNew[n].name = new char[100];
+	aiTacticDefsNew[n].aiFunc = _AiAsplode;
+	memset(aiTacticDefsNew[n].name, 0, 100);
+	sprintf(aiTacticDefsNew[n].name, "sorcerer cast once single");
+
+	n++;
+	aiTacticDefsNew[n].name = new char[100];
+	aiTacticDefsNew[n].aiFunc = _AiAsplode;
+	memset(aiTacticDefsNew[n].name, 0, 100);
+	sprintf(aiTacticDefsNew[n].name, "coordinated strategy");
+
+	n++;
+	aiTacticDefsNew[n].name = new char[100];
+	aiTacticDefsNew[n].aiFunc = _AiAsplode;
+	memset(aiTacticDefsNew[n].name, 0, 100);
+	sprintf(aiTacticDefsNew[n].name, "cast best offensive");
+
+	n++;
+	aiTacticDefsNew[n].name = new char[100];
+	aiTacticDefsNew[n].aiFunc = _AiAsplode;
+	memset(aiTacticDefsNew[n].name, 0, 100);
+	sprintf(aiTacticDefsNew[n].name, "cast best crowd control");
 }
 
 unsigned int AiSystem::Asplode(AiTactic* aiTac)
