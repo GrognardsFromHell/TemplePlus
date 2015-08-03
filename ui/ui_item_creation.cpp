@@ -16,6 +16,7 @@
 #include <python/python_integration_obj.h>
 #include <python/python_object.h>
 #include <condition.h>
+#include <critter.h>
 //#include <condition.h>
 
 GlobalPrimitive<ItemCreationType, 0x10BEDF50> itemCreationType;
@@ -527,7 +528,8 @@ uint32_t CraftWandRadialMenu(DispatcherCallbackArgs args)
 	
 	setWandLevel.SetDefaults();
 	setWandLevel.minArg = 0;
-	setWandLevel.maxArg = 9;
+	setWandLevel.maxArg = min(9, 9);
+	
 	setWandLevel.field4 = (int)combatSys.GetCombatMesLine(5068);
 	setWandLevel.type = RadialMenuEntryType::Slider;
 	setWandLevel.actualArg = (int)conds.CondNodeGetArgPtr(args.subDispNode->condNode, 0);
@@ -550,6 +552,18 @@ uint32_t CraftWandRadialMenu(DispatcherCallbackArgs args)
 	
 	//return ItemCreationBuildRadialMenuEntry(args, CraftWand, "TAG_CRAFT_WAND", 5068);
 };
+
+uint32_t CraftWandOnAdd(DispatcherCallbackArgs args)
+{
+	vector< int> condArgs(2);
+	condArgs[0] = 0;
+	condArgs[1] = 0;
+	conds.AddTo(args.objHndCaller, "Craft Wand Level Set", { 0, 0 });
+	Dispatcher * dispatcher = objects.GetDispatcher(args.objHndCaller);
+	CondStruct * condStruct = conds.hashmethods.GetCondStruct(conds.hashmethods.StringHash("Craft Wand Level Set") );
+	conds.ConditionAddDispatchArgs(dispatcher, &dispatcher->conditions, condStruct, condArgs);
+	return 0;
+}
 
 uint32_t CraftRodRadialMenu(DispatcherCallbackArgs args)
 {

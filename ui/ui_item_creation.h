@@ -42,3 +42,4 @@ struct ButtonStateTextures {
 */
 
 uint32_t CraftWandRadialMenu(DispatcherCallbackArgs args);
+uint32_t CraftWandOnAdd(DispatcherCallbackArgs args);

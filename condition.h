@@ -151,6 +151,9 @@ public:
 	char mCondCraftWandName[100];
 	CondStructNew * mCondCraftWand;
 
+	char mCondCraftWandLevelSetName[100];
+	CondStructNew * mCondCraftWandLevelSet;
+
 	// monsters
 	char mCondRendName[100];
 	CondStructNew *mCondRend;
@@ -178,6 +181,8 @@ public:
 		object, but usually it should be a critter.
 	*/
 	bool AddTo(objHndl handle, const string &name, const vector<int> &args);
+
+	bool ConditionAddDispatchArgs(Dispatcher * dispatcher, CondNode **, CondStruct* condStruct, const vector<int> &args);
 
 	/*
 		Get/Set a Condition Node's arg. Often used in the init callbacks of various conditions.

@@ -827,6 +827,7 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDisarmed);
 	// conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondSuperiorExpertise); // will just be patched inside Combat Expertise callbacks
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondRend);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondCraftWandLevelSet);
 	/*
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDeadlyPrecision);
 	
@@ -962,6 +963,12 @@ bool ConditionSystem::AddTo(objHndl handle, const string& name, const vector<int
 	}
 
 	return AddTo(handle, cond, args);
+}
+
+bool ConditionSystem::ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** nodes, CondStruct* condStruct, const vector<int>& args)
+{
+	return _ConditionAddDispatchArgs(dispatcher, nodes, condStruct, args);
+
 }
 
 int32_t ConditionSystem::CondNodeGetArg(CondNode* condNode, uint32_t argIdx)
@@ -1192,12 +1199,23 @@ void ConditionSystem::RegisterNewConditions()
 	sprintf(condName, "Craft Wand");
 
 	cond->condName = condName;
+	cond->numArgs = 0;
+
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
+	//DispatcherHookInit(cond, 1, dispTypeConditionAdd, 0, CraftWandOnAdd, 0, 0);
+	DispatcherHookInit(cond, 1, dispTypeRadialMenuEntry, 0, CraftWandOnAdd, 0, 0);
+
+	mCondCraftWandLevelSet = new CondStructNew();
+	memset(mCondCraftWandLevelSet, 0, sizeof(CondStructNew));
+	cond = mCondCraftWandLevelSet;	condName = mCondCraftWandLevelSetName;
+	sprintf(condName, "Craft Wand Level Set");
+
+	cond->condName = condName;
 	cond->numArgs = 2;
 
 	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
-	DispatcherHookInit(cond, 1, dispTypeRadialMenuEntry, 0, CraftWandRadialMenu, 0, 0);
-	DispatcherHookInit(cond, 2, dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, (uint32_t)cond, 0);
-
+	DispatcherHookInit(cond, 1, dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, (uint32_t)cond, 0);
+	DispatcherHookInit(cond, 2, dispTypeRadialMenuEntry, 0, CraftWandRadialMenu, 0, 0);
 
 	// 
 	
