@@ -148,6 +148,9 @@ public:
 	char mCondImprovedDisarmName[100];
 	CondStructNew *mCondImprovedDisarm;
 
+	char mCondCraftWandName[100];
+	CondStructNew * mCondCraftWand;
+
 	// monsters
 	char mCondRendName[100];
 	CondStructNew *mCondRend;

@@ -2029,6 +2029,11 @@ static PyMethodDef PyObjHandleMethods[] = {
 
 #pragma region Getters and Setters
 
+static PyObject* PyObjHandle_GetDescription(PyObject* obj, void*) {
+	auto self = GetSelf(obj);
+	return  PyString_FromString(objects.description.getDisplayName(self->handle));
+}
+
 static PyObject* PyObjHandle_GetNameId(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
 	return PyInt_FromLong(objects.GetNameId(self->handle));
@@ -2213,6 +2218,7 @@ static PyObject* PyObjHandle_SafeForUnpickling(PyObject*, void*) {
 
 static PyGetSetDef PyObjHandleGetSets[] = {
 	PY_INT_PROP_RO("area", maps.GetCurrentAreaId, NULL),
+	{"description", PyObjHandle_GetDescription, NULL, NULL },
 	{"name", PyObjHandle_GetNameId, NULL, NULL},
 	{"location", PyObjHandle_GetLocation, NULL, NULL},
 	{"type", PyObjHandle_GetType, NULL, NULL},

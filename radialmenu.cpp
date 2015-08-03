@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "radialmenu.h"
 #include "condition.h"
+//#include "temple_functions.h"
 
 RadialMenus radialMenus;
 
@@ -61,6 +62,11 @@ static struct RadialMenuAddresses : AddressTable {
 
 } addresses;
 
+int return0()
+{
+	return 0;
+}
+
 const RadialMenu* RadialMenus::GetForObj(objHndl handle) {
 	return addresses.GetRadialMenu(handle);
 }
@@ -104,6 +110,56 @@ int RadialMenus::AddChildNode(objHndl objHnd, RadialMenuEntry* radialMenuEntry, 
 	return nodeCount;
 
 //	return addresses.AddChildNode(objHnd, (const RadialMenuEntry &)radialMenuEntry, parentIdx);
+}
+
+int RadialMenus::AddParentChildNode(objHndl objHnd, RadialMenuEntry* radialMenuEntry, int parentIdx)
+{
+	auto radMenu = GetForObj(objHnd);
+	auto nodeCount = radMenu->nodeCount;
+	RadialMenuNode * node = (RadialMenuNode*)&radMenu->nodes[nodeCount];
+	((RadialMenu*)radMenu)->nodeCount++;
+	
+	node->entry.SetDefaults();
+	memcpy(&node->entry, radialMenuEntry, sizeof(RadialMenuEntry));
+	node->entry.d20ActionType = D20A_NONE;
+	node->parent = parentIdx;
+	node->childCount = 0;
+	node->entry.callback = (void ( __cdecl*)(objHndl, RadialMenuEntry*) )return0;
+	node->entry.type = RadialMenuEntryType::Parent;
+	node->morphsTo = -1;
+	node->entry.textHash = conds.hashmethods.StringHash(radialMenuEntry->text);
+	if (parentIdx != -1)
+	{
+		RadialMenuNode * parentNode = (RadialMenuNode*)&radMenu->nodes[parentIdx];
+		parentNode->children[parentNode->childCount++] = nodeCount;
+	}
+
+	return nodeCount;
+}
+
+int RadialMenus::AddParentChildNodeClickable(objHndl objHnd, RadialMenuEntry* radialMenuEntry, int parentIdx)
+{
+	auto radMenu = GetForObj(objHnd);
+	auto nodeCount = radMenu->nodeCount;
+	RadialMenuNode * node = (RadialMenuNode*)&radMenu->nodes[nodeCount];
+	((RadialMenu*)radMenu)->nodeCount++;
+
+	node->entry.SetDefaults();
+	memcpy(&node->entry, radialMenuEntry, sizeof(RadialMenuEntry));
+	//node->entry.d20ActionType = D20A_NONE;
+	node->parent = parentIdx;
+	node->childCount = 0;
+	//node->entry.callback = (void(__cdecl*)(objHndl, RadialMenuEntry*))return0;
+	node->entry.type = RadialMenuEntryType::Parent;
+	node->morphsTo = -1;
+	node->entry.textHash = conds.hashmethods.StringHash(radialMenuEntry->text);
+	if (parentIdx != -1)
+	{
+		RadialMenuNode * parentNode = (RadialMenuNode*)&radMenu->nodes[parentIdx];
+		parentNode->children[parentNode->childCount++] = nodeCount;
+	}
+
+	return nodeCount;
 }
 
 void RadialMenuEntry::SetDefaults() {

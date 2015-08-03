@@ -47,6 +47,11 @@ char * CombatSystem::GetCombatMesLine(int line)
 		combatMes = combatSys.combatMesNew;
 
 	mesLine.key = line;
+	if (!mesFuncs.GetLine(combatMes, &mesLine))
+	{
+		mesFuncs.GetLine_Safe(combatSys.combatMesNew, &mesLine);
+		return (char*)mesLine.value;
+	}
 	mesFuncs.GetLine_Safe(combatMes, &mesLine);
 	return (char*)mesLine.value;
 }

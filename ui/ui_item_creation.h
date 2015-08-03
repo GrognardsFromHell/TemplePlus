@@ -2,7 +2,7 @@
 #include "stdafx.h"
 
 enum ItemCreationType : uint32_t {
-	Alchemy = 0,
+	IC_Alchemy = 0,
 	BrewPotion,
 	ScribeScroll,
 	CraftWand,
@@ -20,7 +20,7 @@ int32_t CreateItemResourceCheck(objHndl ObjHnd, objHndl ObjHndItem);
 void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCrafter);
 void CreateItemDebitXPGP(objHndl objHndCrafter, objHndl objHndItem);
 void UiItemCreationCraftingCostTexts(objHndl objHndItem);
-
+/*
 struct ButtonStateTextures {
 	int normal;
 	int hover;
@@ -39,3 +39,6 @@ struct ButtonStateTextures {
 		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclinePressed, pressed);
 	}
 };
+*/
+
+uint32_t CraftWandRadialMenu(DispatcherCallbackArgs args);

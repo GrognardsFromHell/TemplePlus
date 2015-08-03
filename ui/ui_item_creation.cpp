@@ -9,10 +9,14 @@
 #include "ui_item_creation.h"
 #include "combat.h"
 #include "obj.h"
-#include "radial_menu.h"
+//#include "radial_menu.h"
+#include "radialmenu.h"
 #include "common.h"
 #include "ui_render.h"
 #include <python/python_integration_obj.h>
+#include <python/python_object.h>
+#include <condition.h>
+//#include <condition.h>
 
 GlobalPrimitive<ItemCreationType, 0x10BEDF50> itemCreationType;
 GlobalPrimitive<objHndl, 0x10BECEE0> globObjHndCrafter;
@@ -30,14 +34,25 @@ GlobalPrimitive<TigTextStyle, 0x10BEE338> itemCreationTextStyle; // so far used 
 GlobalPrimitive<TigTextStyle, 0x10BED938> itemCreationTextStyle2; // so far used by "Value: %d"
 
 
+struct UiItemCreationAddresses : AddressTable
+{
+	int (__cdecl* Sub_100F0200)(objHndl a1, RadialMenuEntry *entry);
+	UiItemCreationAddresses()
+	{
+		rebase(Sub_100F0200, 0x100F0200);
+	}
+	
+} addresses;
+
+
 
 
 static MesHandle mesItemCreationText;
 static MesHandle mesItemCreationRules;
 static MesHandle mesItemCreationNamesText;
 static ImgFile *background = nullptr;
-static ButtonStateTextures acceptBtnTextures;
-static ButtonStateTextures declineBtnTextures;
+//static ButtonStateTextures acceptBtnTextures;
+//static ButtonStateTextures declineBtnTextures;
 static int disabledBtnTexture;
 
 
@@ -63,13 +78,13 @@ int32_t CreateItemResourceCheck(objHndl ObjHnd, objHndl ObjHndItem){
 
 	
 	// Check GP Section
-	if (itemCreationType == ItemCreationType(8) ){ 
+	if (itemCreationType == ItemCreationType::CraftMagicArmsAndArmor){
 		craftingCostCP = templeFuncs.ItemWorthFromEnhancements( 41 );
 	}
 	else
 	{
 		// current method for crafting stuff:
-		craftingCostCP =  templeFuncs.Obj_Get_Field_32bit(ObjHndItem, obj_f_item_worth) / 2;
+		craftingCostCP =  objects.getInt32(ObjHndItem, obj_f_item_worth) / 2;
 
 		// TODO: create new function
 		// // craftingCostCP = CraftedItemWorthDueToAppliedLevel()
@@ -89,7 +104,7 @@ int32_t CreateItemResourceCheck(objHndl ObjHnd, objHndl ObjHndItem){
 		};
 
 		// TODO make XP cost calculation take applied caster level into account
-		uint32_t itemXPCost = templeFuncs.Obj_Get_Field_32bit(ObjHndItem, obj_f_item_worth) / 2500; 
+		uint32_t itemXPCost = objects.getInt32(ObjHndItem, obj_f_item_worth) / 2500; 
 		xpCheck = surplusXP > itemXPCost;
 	} else 
 	{
@@ -113,24 +128,77 @@ void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCra
 
 	if (itemCreationType == CraftWand){
 		
-		// do wand specific stuff
+		SpellStoreData spellData;
+		objects.getArrayField(objHndItem, obj_f_item_spell_idx, 0, &spellData);
+		uint32_t spellLevelBasic = spellData.spellLevel;
+		uint32_t spellLevelFinal = spellData.spellLevel;
+
+		int slotLevelSet = d20Sys.d20QueryReturnData(globObjHndCrafter, DK_QUE_Craft_Wand_Spell_Level, 0, 0);
+
+		// get data from caster - make this optional!
+
+		uint32_t classCodes[SPELL_ENUM_MAX] = { 0, };
+		uint32_t spellLevels[SPELL_ENUM_MAX] = { 0, };
+		uint32_t spellFoundNum = 0;
+		int casterKnowsSpell = spellSys.spellKnownQueryGetData(objHndCrafter, spellData.spellEnum, classCodes, spellLevels, &spellFoundNum);
+		if (casterKnowsSpell){
+			uint32_t spellClassFinal = classCodes[0];
+			spellLevelFinal = 0;
+			uint32_t isClassSpell = classCodes[0] & (0x80);
+
+			if (isClassSpell){
+				spellLevelFinal = spellSys.GetMaxSpellSlotLevel(objHndCrafter, static_cast<Stat>(classCodes[0] & 0x7F), 0);
+			};
+			if (spellFoundNum > 1){
+				for (uint32_t i = 1; i < spellFoundNum; i++){
+					if (spellLevels[i] > spellLevelFinal){
+						spellData.classCode = classCodes[i];
+						spellLevelFinal = spellLevels[i];
+					}
+				}
+				spellData.spellLevel = spellLevelFinal;
+
+			}
+			spellData.spellLevel = spellLevelFinal;
+			if (slotLevelSet && slotLevelSet <= spellLevelFinal && slotLevelSet >= spellLevelBasic)
+				spellData.spellLevel = slotLevelSet;
+			else if (slotLevelSet && slotLevelSet < spellLevelBasic)
+				spellData.spellLevel = spellLevelBasic;
+			else if (spellLevelBasic == 0)
+			{
+				spellData.spellLevel = spellLevelBasic;
+				
+			}
+				
+			templeFuncs.Obj_Set_IdxField_byPtr(objHndItem, obj_f_item_spell_idx, 0, &spellData);
+			spellLevelFinal = spellData.spellLevel;
+
+
+		}
+
+		
+
+
 		if (config.newFeatureTestMode)
 		{
-			auto args = PyTuple_New(2);
-			PyTuple_SET_ITEM(args, 0, templeFuncs.PyObjFromObjHnd(objHndItem));
-			PyTuple_SET_ITEM(args, 1, templeFuncs.PyObjFromObjHnd(objHndCrafter));
+			auto args = PyTuple_New(3);
+			
+			PyTuple_SET_ITEM(args, 0, PyObjHndl_Create(objHndItem));
+			PyTuple_SET_ITEM(args, 1, PyObjHndl_Create(objHndCrafter));
+			PyTuple_SET_ITEM(args, 2, PyInt_FromLong(spellLevelFinal));
 
 			auto wandNameObj = pythonObjIntegration.ExecuteScript("crafting", "craft_wand_new_name", args);
 			char * wandNewName = PyString_AsString(wandNameObj);
 			
-			templeFuncs.Obj_Set_Field_32bit(objHndItem, obj_f_description, objects.description.CustomNameNew(wandNewName)); // TODO: create function that appends effect of caster level boost			
+			objects.setInt32(objHndItem, obj_f_description, objects.description.CustomNameNew(wandNewName)); // TODO: create function that appends effect of caster level boost			
 
 			Py_DECREF(wandNameObj);
 			Py_DECREF(args);
 		}
+		return;
 
 		//templeFuncs.GetGlo
-	};
+	}
 	if (itemCreationType == ScribeScroll){
 		// do scroll specific stuff
 		// templeFuncs.Obj_Set_Field_32bit(objHndItem, obj_f_description, templeFuncs.CustomNameNew("Scroll of LOL"));
@@ -141,15 +209,15 @@ void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCra
 		// templeFuncs.Obj_Set_Field_32bit(objHndItem, obj_f_description, templeFuncs.CustomNameNew("Potion of Commotion"));
 		// TODO: change it so it's 0xBAAD F00D just like spawned / mobbed potions
 	};
-
-	int numItemSpells = templeFuncs.Obj_Get_IdxField_NumItems(objHndItem, obj_f_item_spell_idx);
+	
+	int numItemSpells = objects.getArrayFieldNumItems(objHndItem, obj_f_item_spell_idx);
 
 	// loop thru the item's spells (can be more than one in principle, like Keoghthem's Ointment)
 
 	// Current code - change this at will...
 	for (int n = 0; n < numItemSpells; n++){
 		SpellStoreData spellData;
-		templeFuncs.Obj_Get_ArrayElem_Generic(objHndItem, obj_f_item_spell_idx, n, &spellData);
+		objects.getArrayField(objHndItem, obj_f_item_spell_idx, n, &spellData);
 
 		// get data from caster - make this optional!
 
@@ -170,22 +238,22 @@ void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCra
 					if (spellLevels[i] > spellLevelFinal){
 						spellData.classCode = classCodes[i];
 						spellLevelFinal = spellLevels[i];
-					};
+					}
 				}
 				spellData.spellLevel = spellLevelFinal;
 
-			};
+			}
 			spellData.spellLevel = spellLevelFinal;
 			templeFuncs.Obj_Set_IdxField_byPtr(objHndItem, obj_f_item_spell_idx, n, &spellData);
 
-		};
+		}
 
-	};
+	}
 };
 
 
 void CreateItemDebitXPGP(objHndl objHndCrafter, objHndl objHndItem){
-	uint32_t crafterXP = templeFuncs.Obj_Get_Field_32bit(objHndCrafter, obj_f_critter_experience);
+	uint32_t crafterXP = objects.getInt32(objHndCrafter, obj_f_critter_experience);
 	uint32_t craftingCostCP = 0;
 	uint32_t craftingCostXP = 0;
 
@@ -197,13 +265,14 @@ void CreateItemDebitXPGP(objHndl objHndCrafter, objHndl objHndItem){
 	{
 		// TODO make crafting costs take applied caster level into account
 		// currently this is what ToEE does	
-		craftingCostCP = templeFuncs.Obj_Get_Field_32bit(objHndItem, obj_f_item_worth) / 2;
-		craftingCostXP = templeFuncs.Obj_Get_Field_32bit(objHndItem, obj_f_item_worth) / 2500;
+
+		craftingCostCP = objects.getInt32(objHndItem, obj_f_item_worth) / 2;
+		craftingCostXP = objects.getInt32(objHndItem, obj_f_item_worth) / 2500;
 
 	};
 
 	templeFuncs.DebitPartyMoney(0, 0, 0, craftingCostCP);
-	templeFuncs.Obj_Set_Field_32bit(objHndCrafter, obj_f_critter_experience, crafterXP - craftingCostXP);
+	objects.setInt32(objHndCrafter, obj_f_critter_experience, crafterXP - craftingCostXP);
 };
 
 void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
@@ -222,8 +291,13 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 	};
 
 
-	uint32_t slowLevelNew = -1; // h4x!
+	uint32_t slotLevelNew = -1; // h4x!
+	
 	if (itemCreationType == CraftWand){
+		int slotLevelSet = d20Sys.d20QueryReturnData(globObjHndCrafter, DK_QUE_Craft_Wand_Spell_Level, 0, 0);
+		if (slotLevelSet)
+			slotLevelNew = slotLevelSet;
+
 		// do wand specific stuff
 		// slowLevelNew = 5; // jus for testing!
 	};
@@ -245,8 +319,8 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 	craftingCostXP = templeFuncs.Obj_Get_Field_32bit(objHndItem, obj_f_item_worth) / 2500;
 	*/
 
-	craftingCostCP = ItemWorthAdjustedForCasterLevel(objHndItem, slowLevelNew) / 2;
-	craftingCostXP = ItemWorthAdjustedForCasterLevel(objHndItem, slowLevelNew) / 2500;
+	craftingCostCP = ItemWorthAdjustedForCasterLevel(objHndItem, slotLevelNew) / 2;
+	craftingCostXP = ItemWorthAdjustedForCasterLevel(objHndItem, slotLevelNew) / 2500;
 	
 	string text;
 	// "Item Cost: %d"
@@ -266,7 +340,7 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 
 	// "Experience Cost: %d"  (or "Skill Req: " for alchemy - WIP)
 
-	if (itemCreationType == Alchemy){ 
+	if (itemCreationType == IC_Alchemy){ 
 		// placeholder - they do similar bullshit in the code :P but I guess it can be modified easily enough!
 		if (*globInsuffXP || *globInsuffFunds || *globSkillReqNotMet || *globB0){
 			text = format("{} @{}{}", *itemCreationUIStringSkillRequired.ptr(), *globSkillReqNotMet + 1, craftingCostXP);
@@ -290,7 +364,7 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 
 	// "Value: %d"
 	//_snprintf(text, 128, "%s @1%d", * (itemCreationUIStringValue.ptr() ), templeFuncs.Obj_Get_Field_32bit(objHndItem, obj_f_item_worth) / 100);
-	text = format("{} @1{}", *itemCreationUIStringValue.ptr(), ItemWorthAdjustedForCasterLevel(objHndItem, slowLevelNew) / 100);
+	text = format("{} @1{}", *itemCreationUIStringValue.ptr(), ItemWorthAdjustedForCasterLevel(objHndItem, slotLevelNew) / 100);
 
 	UiRenderer::DrawTextInWidget(widgetId, text, rect, itemCreationTextStyle2);
 
@@ -310,8 +384,8 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 
 
 uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t slotLevelNew){
-	uint32_t numItemSpells = templeFuncs.Obj_Get_IdxField_NumItems(objHndItem, obj_f_item_spell_idx);
-	uint32_t itemWorthBase = templeFuncs.Obj_Get_Field_32bit(objHndItem, obj_f_item_worth);
+	uint32_t numItemSpells = objects.getArrayFieldNumItems(objHndItem, obj_f_item_spell_idx);
+	uint32_t itemWorthBase = objects.getInt32(objHndItem, obj_f_item_worth);
 	if (slotLevelNew == -1){
 		return itemWorthBase;
 	}
@@ -396,15 +470,25 @@ uint32_t ItemCreationBuildRadialMenuEntry(DispatcherCallbackArgs args, ItemCreat
 {
 	if (combatSys.isCombatActive()) { return 0; }
 	MesLine mesLine;
-	RadialMenuStruct radmenu;
+	RadialMenuEntry radmenu;
+	radmenu.SetDefaults();
 	mesLine.key = combatMesLine;
 	mesFuncs.GetLine_Safe(*combatSys.combatMesfileIdx, &mesLine);
-	RadialMenuStructInit(&radmenu);
-	radmenu.field0 = (void*)mesLine.value;
-	radmenu.field20 = 37;
-	radmenu.field24 = itemCreationType;
-	radmenu.field40 = templeFuncs.StringHash(helpSystemString);
-	radialFuncs.RadialMenuCreateEntry(args.objHndCaller,  &radmenu , radialFuncs.RadialMenuArgMap_sub_100F12B0(3) ) ;
+	//RadialMenuStructInit(&radmenu);
+	radmenu.text = (char*)mesLine.value;
+	//radmenu.field0 = (void*)mesLine.value;
+	
+	radmenu.d20ActionType = D20A_ITEM_CREATION;
+	//radmenu.field20 = 37;
+
+	radmenu.d20ActionData1 = itemCreationType;
+	//radmenu.field24 = itemCreationType;
+
+	radmenu.helpId = templeFuncs.StringHash(helpSystemString);
+	//radmenu.field40 = templeFuncs.StringHash(helpSystemString);
+
+	radialMenus.AddChildNode(args.objHndCaller, &radmenu, radialMenus.GetStandardNode(RadialMenuStandardNode::Feats));
+	//radialFuncs.RadialMenuCreateEntry(args.objHndCaller,  &radmenu , radialFuncs.RadialMenuArgMap_sub_100F12B0(3) ) ;
 
 	return 0;
 };
@@ -423,7 +507,48 @@ uint32_t ScribeScrollRadialMenu(DispatcherCallbackArgs args)
 
 uint32_t CraftWandRadialMenu(DispatcherCallbackArgs args)
 {
-	return ItemCreationBuildRadialMenuEntry(args, CraftWand, "TAG_CRAFT_WAND", 5068);
+	
+	if (combatSys.isCombatActive()) { return 0; }
+	MesLine mesLine;
+	RadialMenuEntry radMenuCraftWand;
+	radMenuCraftWand.SetDefaults();
+	mesLine.key = 5068;
+	mesFuncs.GetLine_Safe(*combatSys.combatMesfileIdx, &mesLine);
+	radMenuCraftWand.text = (char*)mesLine.value;
+	radMenuCraftWand.d20ActionType = D20A_ITEM_CREATION;
+	radMenuCraftWand.d20ActionData1 = CraftWand;
+	radMenuCraftWand.helpId = templeFuncs.StringHash("TAG_CRAFT_WAND");
+	
+	int newParent = radialMenus.AddParentChildNode(args.objHndCaller, &radMenuCraftWand, radialMenus.GetStandardNode(RadialMenuStandardNode::Feats));
+
+	RadialMenuEntry useCraftWand;
+	RadialMenuEntry setWandLevel;
+	
+	
+	setWandLevel.SetDefaults();
+	setWandLevel.minArg = 0;
+	setWandLevel.maxArg = 9;
+	setWandLevel.field4 = (int)combatSys.GetCombatMesLine(5068);
+	setWandLevel.type = RadialMenuEntryType::Slider;
+	setWandLevel.actualArg = (int)conds.CondNodeGetArgPtr(args.subDispNode->condNode, 0);
+	setWandLevel.callback = (void (__cdecl*)(objHndl, RadialMenuEntry*))addresses.Sub_100F0200;
+	setWandLevel.text = combatSys.GetCombatMesLine(6017);
+	setWandLevel.helpId = templeFuncs.StringHash("TAG_CRAFT_WAND");
+	radialMenus.AddChildNode(args.objHndCaller, &setWandLevel, newParent);
+
+	useCraftWand.SetDefaults();
+	useCraftWand.type = RadialMenuEntryType::Action;
+	useCraftWand.text = combatSys.GetCombatMesLine(6018);
+	useCraftWand.helpId = templeFuncs.StringHash("TAG_CRAFT_WAND");
+	useCraftWand.d20ActionType = D20A_ITEM_CREATION;
+	useCraftWand.d20ActionData1 = CraftWand;
+	radialMenus.AddChildNode(args.objHndCaller, &useCraftWand, newParent);
+
+
+
+	return 0;
+	
+	//return ItemCreationBuildRadialMenuEntry(args, CraftWand, "TAG_CRAFT_WAND", 5068);
 };
 
 uint32_t CraftRodRadialMenu(DispatcherCallbackArgs args)
@@ -452,7 +577,7 @@ uint32_t CraftMagicArmsAndArmorRadialMenu(DispatcherCallbackArgs args)
 };
 
 #pragma endregion
-
+/*
 static int __cdecl systemInit(const GameSystemConf *conf) {
 
 	mesFuncs.Open("mes\\item_creation.mes", &mesItemCreationText);
@@ -479,11 +604,11 @@ static int __cdecl systemInit(const GameSystemConf *conf) {
     || tig_texture_register("art\\interface\\item_creation_ui\\add_button_grey.tga", &dword_10BED990)
     || tig_texture_register("art\\interface\\item_creation_ui\\add_button_hover.tga", &dword_10BEE2D8)
     || tig_texture_register("art\\interface\\item_creation_ui\\add_button_press.tga", &dword_10BED79C) )
-	*/
+	
 
 	return 0;
 }
-
+*/
 static void __cdecl systemReset() {
 }
 
@@ -517,7 +642,7 @@ public:
 		write(0x102EE250, &ptrToBrewPotion, sizeof(ptrToBrewPotion));
 		
 		write(0x102EE280, &ptrToScribeScroll, sizeof(ptrToScribeScroll));
-		write(0x102EE2B0, &ptrToCraftWand, sizeof(ptrToCraftWand));
+		//write(0x102EE2B0, &ptrToCraftWand, sizeof(ptrToCraftWand));
 		write(0x102EE2E0, &ptrToCraftRod, sizeof(ptrToCraftRod));
 
 		write(0x102EE310, &ptrToCraftWondrous, sizeof(ptrToCraftWondrous));

@@ -137,6 +137,8 @@ public:
 	*/
 	int Sub_100F0200(objHndl objHnd, RadialMenuEntry *radEntry);
 	int AddChildNode(objHndl objHndCaller, RadialMenuEntry* radialMenuEntry, int parentIdx);
+	int AddParentChildNode(objHndl objHndCaller, RadialMenuEntry* radialMenuEntry, int parentIdx); // adds a child who's a parent itself
+	int AddParentChildNodeClickable(objHndl objHndCaller, RadialMenuEntry* radialMenuEntry, int parentIdx); // adds a child who's a parent itself, and one that can eb clicked
 };
 
 extern RadialMenus radialMenus;

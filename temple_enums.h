@@ -1850,7 +1850,8 @@ enum D20DispatcherKey : uint32_t {
 	DK_QUE_Weapon_Get_Keen_Bonus = 0x140,
 	DK_QUE_Disarmed = 0x141,
 	DK_SIG_Destruction_Domain_Smite = 0x142,
-	DK_QUE_Can_Perform_Disarm = 0x143
+	DK_QUE_Can_Perform_Disarm = 0x143,
+	DK_QUE_Craft_Wand_Spell_Level = 0x144
 };
 
 enum enum_dispIO_type : uint32_t {

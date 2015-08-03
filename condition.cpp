@@ -15,6 +15,7 @@
 #include "party.h"
 #include "weapon.h"
 #include "action_sequence.h"
+#include "ui/ui_item_creation.h"
 
 ConditionSystem conds;
 CondStructNew conditionDisableAoO;
@@ -839,7 +840,7 @@ void _FeatConditionsRegister()
 	
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondTirelessRage);
 	*/
-
+	conds.FeatConditionDict[61].condStruct = (CondStruct*)conds.mCondCraftWand;
 	for (unsigned int i = 0; i < 84; i++)
 	{
 		conds.hashmethods.CondStructAddToHashtable(conds.FeatConditionDict[i].condStruct);
@@ -1184,6 +1185,20 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 1, dispTypeDealingDamage, 0, RendOnDamage, 0, 0);
 	DispatcherHookInit(cond, 2, dispTypeBeginRound, 0, CondResetArgs, 0, 0);
 	
+	// Craft Wand
+	mCondCraftWand = new CondStructNew();
+	memset(mCondCraftWand, 0, sizeof(CondStructNew));
+	cond = mCondCraftWand;	condName = mCondCraftWandName;
+	sprintf(condName, "Craft Wand");
+
+	cond->condName = condName;
+	cond->numArgs = 2;
+
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
+	DispatcherHookInit(cond, 1, dispTypeRadialMenuEntry, 0, CraftWandRadialMenu, 0, 0);
+	DispatcherHookInit(cond, 2, dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, (uint32_t)cond, 0);
+
+
 	// 
 	
 	/*
