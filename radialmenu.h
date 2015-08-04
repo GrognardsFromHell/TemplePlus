@@ -24,7 +24,7 @@ enum class RadialMenuEntryType : uint32_t {
 struct RadialMenuEntry;
 struct RadialMenuEntry {
 	char *text; // Text to display
-	int field4;
+	int field4; // string for popup dialog title, so far
 	uint32_t textHash; // ELF hash of "text"
 	int fieldc;
 	RadialMenuEntryType type; // May define how the children are ordered (seen 4 been used here)

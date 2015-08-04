@@ -4,9 +4,8 @@ def craft_wand(item, crafter):
 	return 1
 	
 def craft_wand_new_name(item, crafter, spellLevel = -1):
-	itemDescr = item.description
-	if itemDescr.lower().find('1st'):
-		dammitRanOutOfTime = 1
+	itemDescr = (item.description).lower()
+	
 	if spellLevel <= 0:
 		return item.description
 	if spellLevel == 1:

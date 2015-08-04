@@ -65,6 +65,10 @@ int CraftedWandSpellLevel(objHndl objHndItem)
 	uint32_t spellLevelBasic = spellData.spellLevel;
 	uint32_t spellLevelFinal = spellData.spellLevel;
 
+	if (spellData.spellEnum == 25)
+	{
+		int dummy = 1;
+	}
 	int slotLevelSet = d20Sys.d20QueryReturnData(globObjHndCrafter, DK_QUE_Craft_Wand_Spell_Level, 0, 0);
 
 	// get data from caster - make this optional!
@@ -96,13 +100,12 @@ int CraftedWandSpellLevel(objHndl objHndItem)
 			spellData.spellLevel = slotLevelSet;
 		else if (slotLevelSet > spellLevelFinal)
 			spellData.spellLevel = spellLevelFinal;
-		else if (slotLevelSet && slotLevelSet < spellLevelBasic)
+		else if (slotLevelSet < spellLevelBasic )
 			spellData.spellLevel = spellLevelBasic;
 		else if (spellLevelBasic == 0)
 		{
 			spellData.spellLevel = spellLevelBasic;
-
-		}
+		} 
 
 		//templeFuncs.Obj_Set_IdxField_byPtr(objHndItem, obj_f_item_spell_idx, 0, &spellData);
 		spellLevelFinal = spellData.spellLevel;
@@ -546,7 +549,7 @@ uint32_t CraftWandRadialMenu(DispatcherCallbackArgs args)
 	setWandLevel.minArg = 0;
 	setWandLevel.maxArg = min(9, 9);
 	
-	setWandLevel.field4 = (int)combatSys.GetCombatMesLine(5068);
+	setWandLevel.field4 = (int)combatSys.GetCombatMesLine(6019);
 	setWandLevel.type = RadialMenuEntryType::Slider;
 	setWandLevel.actualArg = (int)conds.CondNodeGetArgPtr(args.subDispNode->condNode, 0);
 	setWandLevel.callback = (void (__cdecl*)(objHndl, RadialMenuEntry*))addresses.Sub_100F0200;
