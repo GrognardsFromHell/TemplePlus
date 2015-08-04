@@ -948,7 +948,8 @@ bool ConditionSystem::AddTo(objHndl handle, const CondStruct* cond, const vector
 
 	auto dispatcher = objects.GetDispatcher(handle);
 
-	if (!dispatcher) {
+	if (!dispatch.dispatcherValid(dispatcher)) {
+		hooked_print_debug_message("Dispatcher invalid for %s", objects.description.getDisplayName(handle));
 		return false;
 	}
 
