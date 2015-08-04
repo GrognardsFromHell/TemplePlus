@@ -211,7 +211,7 @@ void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCra
 		char * wandNewName = PyString_AsString(wandNameObj);
 			
 		objects.setInt32(objHndItem, obj_f_description, objects.description.CustomNameNew(wandNewName)); // TODO: create function that appends effect of caster level boost			
-
+		objects.setInt32(objHndItem, obj_f_item_spell_charges_idx, 50); // as god intended it to be!
 		Py_DECREF(wandNameObj);
 		Py_DECREF(args);
 		
@@ -398,7 +398,25 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 		UiRenderer::DrawTextInWidget(widgetId, prereqString, rect, itemCreationTextStyle);
 	}
 	
-
+	if (itemCreationType == ItemCreationType::CraftWand)
+	{
+		rect.x = 210;
+		rect.y = 250;
+		rect.width = 150;
+		rect.height = 105;
+		char asdf[1000];
+		sprintf(asdf, "Crafted Caster Level: " );
+		int casterLevelNew = 1;
+		if (slotLevelNew > 1)
+		{
+			casterLevelNew = slotLevelNew * 2 - 1;
+		}
+		text = format("{} @1{}", asdf, casterLevelNew);
+		if (prereqString){
+			UiRenderer::DrawTextInWidget(widgetId, text, rect, itemCreationTextStyle);
+		}
+	}
+	
 	
 };
 
@@ -422,12 +440,15 @@ uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t slotLevelN
 		}
 	};
 
+	int casterLevelOld = itemSlotLevelBase * 2 - 1;
+	int casterLevelNew = slotLevelNew * 2 - 1;
+
 	if (itemSlotLevelBase == 0 && slotLevelNew > itemSlotLevelBase){
 		return itemWorthBase * slotLevelNew * 2;
 	}
 	else if (slotLevelNew > itemSlotLevelBase)
 	{
-		return itemWorthBase * slotLevelNew / itemSlotLevelBase;
+		return itemWorthBase * casterLevelNew / casterLevelOld;
 	};
 	return itemWorthBase;
 
