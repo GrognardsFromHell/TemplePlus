@@ -452,6 +452,19 @@ bool CritterSystem::IsSummoned(objHndl obj)
 {
 	return 0;
 }
+
+int CritterSystem::GetCasterLevel(objHndl obj)
+{
+	int result = 0;
+	for (int i = 0; i < NUM_CLASSES; i++)
+	{
+		if (d20ClassSys.IsCastingClass(d20ClassSys.classEnums[i])  )
+		{
+			result += objects.StatLevelGet(obj, d20ClassSys.classEnums[i]);
+		}
+	}
+	return result;
+}
 #pragma region Critter Hooks
 uint32_t _isCritterCombatModeActive(objHndl objHnd)
 {

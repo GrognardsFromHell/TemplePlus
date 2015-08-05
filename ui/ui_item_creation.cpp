@@ -69,7 +69,16 @@ int CraftedWandSpellLevel(objHndl objHndItem)
 	{
 		int dummy = 1;
 	}
-	int slotLevelSet = d20Sys.d20QueryReturnData(globObjHndCrafter, DK_QUE_Craft_Wand_Spell_Level, 0, 0);
+	int casterLevelSet = d20Sys.d20QueryReturnData(globObjHndCrafter, DK_QUE_Craft_Wand_Spell_Level, 0, 0);
+	casterLevelSet = 2 * ((casterLevelSet + 1) / 2) - 1;
+	if (casterLevelSet < 1)
+		casterLevelSet = 1;
+
+	int slotLevelSet = 1 + (casterLevelSet -1)/ 2;
+	if (spellLevelBasic == 0 && casterLevelSet <= 1)
+		slotLevelSet = 0;
+		
+	
 
 	// get data from caster - make this optional!
 
@@ -98,9 +107,9 @@ int CraftedWandSpellLevel(objHndl objHndItem)
 		spellData.spellLevel = spellLevelFinal; // that's the max possible at this point
 		if (slotLevelSet && slotLevelSet <= spellLevelFinal && slotLevelSet >= spellLevelBasic)
 			spellData.spellLevel = slotLevelSet;
-		else if (slotLevelSet > spellLevelFinal)
+		else if (slotLevelSet  > spellLevelFinal)
 			spellData.spellLevel = spellLevelFinal;
-		else if (slotLevelSet < spellLevelBasic )
+		else if (slotLevelSet < spellLevelBasic)
 			spellData.spellLevel = spellLevelBasic;
 		else if (spellLevelBasic == 0)
 		{
@@ -114,7 +123,13 @@ int CraftedWandSpellLevel(objHndl objHndItem)
 	return spellLevelFinal;
 }
 
-
+int CraftedWandCasterLevel(objHndl item)
+{
+	int result = CraftedWandSpellLevel(item);
+	if (result <= 1)
+		return 1;
+	return (result * 2) - 1;
+}
 
 int32_t CreateItemResourceCheck(objHndl obj, objHndl objHndItem){
 	bool canCraft = 1;
@@ -149,7 +164,8 @@ int32_t CreateItemResourceCheck(objHndl obj, objHndl objHndItem){
 		// TODO: create new function
 		if (itemCreationType == ItemCreationType::CraftWand)
 		{
-			itemWorth = ItemWorthAdjustedForCasterLevel(objHndItem, CraftedWandSpellLevel(objHndItem));
+
+			itemWorth = ItemWorthAdjustedForCasterLevel(objHndItem, CraftedWandCasterLevel(objHndItem));
 			craftingCostCP = itemWorth / 2;
 		}
 			
@@ -203,9 +219,12 @@ void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCra
 		
 		auto args = PyTuple_New(3);
 			
+		int casterLevelFinal = spellLevelFinal * 2 - 1;
+		if (casterLevelFinal < 1)
+			casterLevelFinal = 1;
 		PyTuple_SET_ITEM(args, 0, PyObjHndl_Create(objHndItem));
 		PyTuple_SET_ITEM(args, 1, PyObjHndl_Create(objHndCrafter));
-		PyTuple_SET_ITEM(args, 2, PyInt_FromLong(spellLevelFinal));
+		PyTuple_SET_ITEM(args, 2, PyInt_FromLong(casterLevelFinal));
 
 		auto wandNameObj = pythonObjIntegration.ExecuteScript("crafting", "craft_wand_new_name", args);
 		char * wandNewName = PyString_AsString(wandNameObj);
@@ -286,7 +305,7 @@ void CreateItemDebitXPGP(objHndl objHndCrafter, objHndl objHndItem){
 		// currently this is what ToEE does	
 		int itemWorth;
 		if (itemCreationType == ItemCreationType::CraftWand)
-			itemWorth = ItemWorthAdjustedForCasterLevel(objHndItem, CraftedWandSpellLevel(objHndItem));
+			itemWorth = ItemWorthAdjustedForCasterLevel(objHndItem, CraftedWandCasterLevel(objHndItem));
 		else
 			itemWorth = objects.getInt32(objHndItem, obj_f_item_worth);
 		craftingCostCP = itemWorth / 2;
@@ -314,12 +333,12 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 	};
 
 
-	uint32_t slotLevelNew = -1; // h4x!
+	uint32_t casterLevelNew = -1; // h4x!
 	
 
 	if (itemCreationType == CraftWand)
 	{
-		slotLevelNew = CraftedWandSpellLevel(objHndItem);
+		casterLevelNew = CraftedWandCasterLevel(objHndItem);
 	}
 	
 
@@ -339,8 +358,8 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 	craftingCostXP = templeFuncs.Obj_Get_Field_32bit(objHndItem, obj_f_item_worth) / 2500;
 	*/
 
-	craftingCostCP = ItemWorthAdjustedForCasterLevel(objHndItem, slotLevelNew) / 2;
-	craftingCostXP = ItemWorthAdjustedForCasterLevel(objHndItem, slotLevelNew) / 2500;
+	craftingCostCP = ItemWorthAdjustedForCasterLevel(objHndItem, casterLevelNew) / 2;
+	craftingCostXP = ItemWorthAdjustedForCasterLevel(objHndItem, casterLevelNew) / 2500;
 	
 	string text;
 	// "Item Cost: %d"
@@ -384,7 +403,7 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 
 	// "Value: %d"
 	//_snprintf(text, 128, "%s @1%d", * (itemCreationUIStringValue.ptr() ), templeFuncs.Obj_Get_Field_32bit(objHndItem, obj_f_item_worth) / 100);
-	text = format("{} @1{}", *itemCreationUIStringValue.ptr(), ItemWorthAdjustedForCasterLevel(objHndItem, slotLevelNew) / 100);
+	text = format("{} @1{}", *itemCreationUIStringValue.ptr(), ItemWorthAdjustedForCasterLevel(objHndItem, casterLevelNew) / 100);
 
 	UiRenderer::DrawTextInWidget(widgetId, text, rect, itemCreationTextStyle2);
 
@@ -406,12 +425,8 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 		rect.height = 105;
 		char asdf[1000];
 		sprintf(asdf, "Crafted Caster Level: " );
-		int casterLevelNew = 1;
-		if (slotLevelNew > 1)
-		{
-			casterLevelNew = slotLevelNew * 2 - 1;
-		}
-		text = format("{} @1{}", asdf, casterLevelNew);
+		
+		text = format("{} @3{}", asdf, casterLevelNew);
 		if (prereqString){
 			UiRenderer::DrawTextInWidget(widgetId, text, rect, itemCreationTextStyle);
 		}
@@ -421,10 +436,10 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 };
 
 
-uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t slotLevelNew){
+uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t casterLevelNew){
 	uint32_t numItemSpells = objects.getArrayFieldNumItems(objHndItem, obj_f_item_spell_idx);
 	uint32_t itemWorthBase = objects.getInt32(objHndItem, obj_f_item_worth);
-	if (slotLevelNew == -1){
+	if (casterLevelNew == -1){
 		return itemWorthBase;
 	}
 
@@ -441,15 +456,16 @@ uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t slotLevelN
 	};
 
 	int casterLevelOld = itemSlotLevelBase * 2 - 1;
-	int casterLevelNew = slotLevelNew * 2 - 1;
+	if (casterLevelOld < 1)
+		casterLevelOld = 1;
 
-	if (itemSlotLevelBase == 0 && slotLevelNew > itemSlotLevelBase){
-		return itemWorthBase * slotLevelNew * 2;
+	if (itemSlotLevelBase == 0 && casterLevelNew > casterLevelOld){
+		return itemWorthBase * casterLevelNew;
 	}
-	else if (slotLevelNew > itemSlotLevelBase)
+	if (casterLevelNew > casterLevelOld)
 	{
 		return itemWorthBase * casterLevelNew / casterLevelOld;
-	};
+	}
 	return itemWorthBase;
 
 	
@@ -567,8 +583,8 @@ uint32_t CraftWandRadialMenu(DispatcherCallbackArgs args)
 	
 	
 	setWandLevel.SetDefaults();
-	setWandLevel.minArg = 0;
-	setWandLevel.maxArg = min(9, 9);
+	setWandLevel.minArg = 1;
+	setWandLevel.maxArg = min(20, critterSys.GetCasterLevel(args.objHndCaller));
 	
 	setWandLevel.field4 = (int)combatSys.GetCombatMesLine(6019);
 	setWandLevel.type = RadialMenuEntryType::Slider;
@@ -595,13 +611,13 @@ uint32_t CraftWandRadialMenu(DispatcherCallbackArgs args)
 
 uint32_t CraftWandOnAdd(DispatcherCallbackArgs args)
 {
-	vector< int> condArgs(2);
-	condArgs[0] = 0;
-	condArgs[1] = 0;
-	conds.AddTo(args.objHndCaller, "Craft Wand Level Set", { 0, 0 });
-	Dispatcher * dispatcher = objects.GetDispatcher(args.objHndCaller);
-	CondStruct * condStruct = conds.hashmethods.GetCondStruct(conds.hashmethods.StringHash("Craft Wand Level Set") );
-	conds.ConditionAddDispatchArgs(dispatcher, &dispatcher->conditions, condStruct, condArgs);
+	//vector< int> condArgs(2);
+	//condArgs[0] = 1;
+	//condArgs[1] = 0;
+	conds.AddTo(args.objHndCaller, "Craft Wand Level Set", { 1, 0 });
+	//Dispatcher * dispatcher = objects.GetDispatcher(args.objHndCaller);
+	//CondStruct * condStruct = conds.hashmethods.GetCondStruct(conds.hashmethods.StringHash("Craft Wand Level Set") );
+	//conds.ConditionAddDispatchArgs(dispatcher, &dispatcher->conditions, condStruct, condArgs);
 	return 0;
 }
 

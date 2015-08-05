@@ -37,6 +37,12 @@ bool D20ClassSystem::isVancianCastingClass(Stat classEnum)
 	return 0;
 }
 
+bool D20ClassSystem::IsCastingClass(Stat classEnum)
+{
+	if (classEnum == stat_level_cleric || classEnum == stat_level_druid || classEnum == stat_level_paladin || classEnum == stat_level_ranger || classEnum == stat_level_wizard || classEnum == stat_level_bard || classEnum == stat_level_sorcerer) return 1;
+	return 0;
+}
+
 void D20ClassSystem::ClassPacketAlloc(ClassPacket* classPkt)
 {
 	addresses.ClassPacketAlloc(classPkt);

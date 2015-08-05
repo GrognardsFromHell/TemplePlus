@@ -13,6 +13,7 @@ public:
 	bool isNaturalCastingClass(Stat classEnum);
 	bool isNaturalCastingClass(uint32_t classEnum);
 	bool isVancianCastingClass(Stat classEnum);
+	bool IsCastingClass(Stat classEnum);
 	void ClassPacketAlloc(ClassPacket *classPkt); // allocates the three IdxTables within ClassPacket
 	void ClassPacketDealloc(ClassPacket *classPkt);
 	uint32_t GetClassPacket(Stat classEnum, ClassPacket *classPkt); // fills the struct with content based on classEnum (e.g. Barbarian Feats in the featsIdxTable). Also STUB FOR PRESTIGE CLASSES! TODO
