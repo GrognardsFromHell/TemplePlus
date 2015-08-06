@@ -697,6 +697,33 @@ static PyObject* PyObjHandle_ItemWornAt(PyObject* obj, PyObject* args) {
 	return PyObjHndl_Create(item);
 }
 
+
+
+
+static PyObject * PyObjHandle_InventoryItem(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+
+	objHndl objHnd = self->handle;
+	bool bRetunProtos = 0;
+	int invFieldType = inventory.GetInventoryListField(self->handle);
+	int n = 0;
+	if (PyArg_ParseTuple(args, "i", &n)){
+		int nMax = CRITTER_MAX_ITEMS + 100; // PLACEHOLDER!
+		if (invFieldType == obj_f_container_inventory_list_idx){
+			nMax = CONTAINER_MAX_ITEMS;
+		}
+		if (n < nMax){
+			return PyObjHndl_Create(objects.inventory.GetItemAtInvIdx(objHnd, n));
+		}
+
+	}
+	return PyObjHndl_Create(0);
+
+};
+
+
+
+
 static PyObject* PyObjHandle_Attack(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	objHndl target;
@@ -1539,6 +1566,18 @@ static PyObject* PyObjHandle_GetInt(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(value);
 }
 
+static PyObject* PyObjHandle_GetIdxInt(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	obj_f field;
+	int subIdx = 0;
+	if (!PyArg_ParseTuple(args, "i|i:objhndl.obj_get_idx_int", &field, &subIdx)) {
+		return 0;
+	}
+	assert(subIdx >= 0);
+	auto value = objects.getArrayFieldInt32(self->handle, field, subIdx);
+	return PyInt_FromLong(value);
+}
+
 static PyObject* PyObjHandle_GetInt64(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	obj_f field;
@@ -1906,14 +1945,30 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "healsubdual", PyObjHandle_HealSubdual, METH_VARARGS, NULL },
 	
 	
+	{ "identify_all", PyObjHandle_IdentifyAll, METH_VARARGS, NULL },
+	
+	{ "inventory_item", PyObjHandle_InventoryItem, METH_VARARGS, NULL },
+
+	{ "is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL },
+	{ "is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL },
+	{ "is_friendly", PyObjHandle_IsFriendly, METH_VARARGS, NULL },
+	{ "is_unconscious", PyObjHandle_IsUnconscious, METH_VARARGS, NULL },
 
 
+	{ "item_condition_add_with_args", PyObjHandle_ItemConditionAdd, METH_VARARGS, NULL },
 	{ "item_find", PyObjHandle_ItemFind, METH_VARARGS, NULL },
 	{ "item_transfer_to", PyObjHandle_ItemTransferTo, METH_VARARGS, NULL },
 	{ "item_find_by_proto", PyObjHandle_ItemFindByProto, METH_VARARGS, NULL },
 	{ "item_transfer_to_by_proto", PyObjHandle_ItemTransferToByProto, METH_VARARGS, NULL },
 	{ "item_worn_at", PyObjHandle_ItemWornAt, METH_VARARGS, NULL },
+	{ "item_flags_get", GetFlags<obj_f_item_flags>, METH_VARARGS, NULL },
+	{ "item_flag_set", SetFlag<obj_f_item_flags>, METH_VARARGS, NULL },
+	{ "item_flag_unset", ClearFlag<obj_f_item_flags>, METH_VARARGS, NULL },
+
 	
+
+	
+
 	{ "make_wiz", PyObjHandle_MakeWizard, METH_VARARGS, "Makes you a wizard of level N" },
 	{ "make_class", PyObjHandle_MakeClass, METH_VARARGS, "Makes you a CLASS N of level M" },
 	{ "money_get", PyObjHandle_MoneyGet, METH_VARARGS, NULL},
@@ -1922,6 +1977,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 
 	
 	{ "obj_get_int", PyObjHandle_GetInt, METH_VARARGS, NULL },
+	{ "obj_get_idx_int", PyObjHandle_GetIdxInt, METH_VARARGS, NULL },
 	{ "obj_get_int64", PyObjHandle_GetInt64, METH_VARARGS, "Gets 64 bit field" },
 	{ "obj_get_obj", PyObjHandle_GetObj, METH_VARARGS, "Gets Object field" },
 	{ "obj_remove_from_all_groups", PyObjHandle_RemoveFromAllGroups, METH_VARARGS, "Removes the object from all the groups (GroupList, PCs, NPCs, AI controlled followers, Currently Selected" },
@@ -1951,9 +2007,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"reputation_has", PyObjHandle_ReputationHas, METH_VARARGS, NULL},
 	{"reputation_add", PyObjHandle_ReputationAdd, METH_VARARGS, NULL},
 	{"reputation_remove", PyObjHandle_ReputationRemove, METH_VARARGS, NULL},
-	{"item_condition_add_with_args", PyObjHandle_ItemConditionAdd, METH_VARARGS, NULL},
 
-	{"is_friendly", PyObjHandle_IsFriendly, METH_VARARGS, NULL},
 	{"fade_to", PyObjHandle_FadeTo, METH_VARARGS, NULL},
 
 	{"float_mesfile_line", PyObjHandle_FloatMesFileLine, METH_VARARGS, NULL},
@@ -1966,10 +2020,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 
 	{"portal_toggle_open", PyObjHandle_PortalToggleOpen, METH_VARARGS, NULL},
 	{"container_toggle_open", PyObjHandle_ContainerToggleOpen, METH_VARARGS, NULL},
-	{"item_flags_get", GetFlags<obj_f_item_flags>, METH_VARARGS, NULL},
-	{"item_flag_set", SetFlag<obj_f_item_flags>, METH_VARARGS, NULL},
-	{"item_flag_unset", ClearFlag<obj_f_item_flags>, METH_VARARGS, NULL},
-
+	
 	{"npc_flags_get", GetFlags<obj_f_npc_flags>, METH_VARARGS, NULL},
 	{"npc_flag_set", SetFlag<obj_f_npc_flags>, METH_VARARGS, NULL},
 	{"npc_flag_unset", ClearFlag<obj_f_npc_flags>, METH_VARARGS, NULL},
@@ -2001,8 +2052,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"runoff", PyObjHandle_RunOff, METH_VARARGS, NULL},
 	{"run_to", PyObjHandle_RunTo, METH_VARARGS, NULL },
 	{"get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL},
-	{"is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL},
-	{"is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL},
+	
 	{"rumor_log_add", PyObjHandle_RumorLogAdd, METH_VARARGS, NULL},
 
 	{"spell_known_add", PyObjHandle_SpellKnownAdd, METH_VARARGS, NULL},
@@ -2010,7 +2060,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"spell_damage", PyObjHandle_SpellDamage, METH_VARARGS, NULL},
 	{"spell_damage_with_reduction", PyObjHandle_SpellDamageWithReduction, METH_VARARGS, NULL},
 	{"spell_heal", PyObjHandle_SpellHeal, METH_VARARGS, NULL},
-	{"identify_all", PyObjHandle_IdentifyAll, METH_VARARGS, NULL},
+	
 	{"ai_flee_add", PyObjHandle_AiFleeAdd, METH_VARARGS, NULL},
 	{"get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL},
 	{"item_wield_best_all", PyObjHandle_WieldBestAll, METH_VARARGS, NULL},
@@ -2020,7 +2070,6 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"spells_memorized_forget", PyObjHandle_MemorizedForget, METH_VARARGS, NULL},
 	{"resurrect", PyObjHandle_Resurrect, METH_VARARGS, NULL},
 	{"dominate", PyObjHandle_Dominate, METH_VARARGS, NULL},
-	{"is_unconscious", PyObjHandle_IsUnconscious, METH_VARARGS, NULL},
 
 	{NULL, NULL, NULL, NULL}
 };
