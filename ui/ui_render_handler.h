@@ -6,9 +6,11 @@
 #include <atlbase.h>
 #include <d3d9.h>
 
+class MainWindow;
+
 class UiRenderHandler : public CefRenderHandler {
 public:
-	UiRenderHandler();
+	UiRenderHandler(MainWindow &mainWindow);
 	~UiRenderHandler();
 
 	bool GetRootScreenRect(CefRefPtr<CefBrowser> browser, CefRect& rect);
@@ -40,6 +42,8 @@ public:
 
 private:
 	IMPLEMENT_REFCOUNTING(UiRenderHandler);
+
+	MainWindow &mMainWindow;
 
 	void EnsureTextureSize(int w, int h);
 

@@ -130,6 +130,7 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(debugMessageEnable),
 	CONF_BOOL(lockCursor),
 	CONF_BOOL(showExactHPforNPCs),
+	CONF_STRING(toeeDir),
 	CONF_STRING_LIST(additionalTioPaths, ';')
 };
 

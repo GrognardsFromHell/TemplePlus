@@ -158,12 +158,9 @@
     <ClCompile Include="ui\ui.cpp">
       <Filter>ui</Filter>
     </ClCompile>
-    <ClCompile Include="ui\ui_text.cpp" />
-    <ClCompile Include="ui\ui_render.cpp" />
     <ClCompile Include="ui\ui_mainmenu.cpp">
       <Filter>ui</Filter>
     </ClCompile>
-    <ClCompile Include="ui\ui_char_highresfix.cpp" />
     <ClCompile Include="ui\ui_item_creation.cpp">
       <Filter>ui</Filter>
     </ClCompile>
@@ -272,23 +269,57 @@
     <ClCompile Include="python\python_game.cpp" />
     <ClCompile Include="python\python_importer.cpp" />
     <ClCompile Include="traps.cpp" />
-    <ClCompile Include="ui\ui_dialog.cpp" />
-    <ClCompile Include="ui\ui_tutorial.cpp" />
     <ClCompile Include="ui\ui_browser.cpp">
       <Filter>ui</Filter>
     </ClCompile>
     <ClCompile Include="ui\ui_browser_app.cpp">
       <Filter>ui</Filter>
     </ClCompile>
-    <ClCompile Include="ui\ui_resourcebundlehandler.cpp" />
-    <ClCompile Include="ui\ui_browser_client.cpp" />
-    <ClCompile Include="ui\ui_render_handler.cpp" />
-    <ClCompile Include="ui\ui_browser_input.cpp" />
-    <ClCompile Include="ui\ui_request_handler.cpp" />
-    <ClCompile Include="ui\ui_resource_handler.cpp" />
     <ClCompile Include="d3d8to9\dxerr.cpp">
       <Filter>d3d</Filter>
     </ClCompile>
+    <ClCompile Include="ui\ui_browser_client.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_browser_input.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_char_highresfix.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_dialog.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_render.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_render_handler.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_request_handler.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_resource_handler.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_resourcebundlehandler.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_text.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_tutorial.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="temple_library.cpp" />
+    <ClCompile Include="util\stringutil.cpp" />
+    <ClCompile Include="templeplus.cpp" />
+    <ClCompile Include="ui\ui_legacy.cpp" />
+    <ClCompile Include="ui\ui_legacy_wrapper.cpp" />
+    <ClCompile Include="ui\js\js_interop.cpp" />
+    <ClCompile Include="ui\renderer\ui_render_process.cpp" />
+    <ClCompile Include="ui\screens\ui_screens.cpp" />
+    <ClCompile Include="ui\screens\ui_mm.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -448,8 +479,6 @@
       <Filter>python</Filter>
     </ClInclude>
     <ClInclude Include="goalfuncnames.h" />
-    <ClInclude Include="ui\ui_text.h" />
-    <ClInclude Include="ui\ui_render.h" />
     <ClInclude Include="ui\ui_mainmenu.h">
       <Filter>ui</Filter>
     </ClInclude>
@@ -571,8 +600,6 @@
     <ClInclude Include="python\python_importer.h" />
     <ClInclude Include="python\python_consoleout.h" />
     <ClInclude Include="traps.h" />
-    <ClInclude Include="ui\ui_dialog.h" />
-    <ClInclude Include="ui\ui_tutorial.h" />
     <ClInclude Include="util\mathutil.h" />
     <ClInclude Include="sound.h" />
     <ClInclude Include="util\stringutil.h" />
@@ -582,15 +609,46 @@
     <ClInclude Include="ui\ui_browser_app.h">
       <Filter>ui</Filter>
     </ClInclude>
-    <ClInclude Include="ui\ui_resourcebundlehandler.h" />
-    <ClInclude Include="ui\ui_browser_client.h" />
-    <ClInclude Include="ui\ui_render_handler.h" />
-    <ClInclude Include="ui\ui_browser_input.h" />
-    <ClInclude Include="ui\ui_request_handler.h" />
-    <ClInclude Include="ui\ui_resource_handler.h" />
     <ClInclude Include="d3d8to9\dxerr.h">
       <Filter>d3d</Filter>
     </ClInclude>
+    <ClInclude Include="ui\ui_browser_client.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_browser_input.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_dialog.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_render.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_render_handler.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_request_handler.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_resource_handler.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_resourcebundlehandler.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_text.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_tutorial.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="temple_library.h" />
+    <ClInclude Include="templeplus.h" />
+    <ClInclude Include="ui\ui_legacy.h" />
+    <ClInclude Include="ui\js\js_interop.h" />
+    <ClInclude Include="ui\renderer\ui_render_process.h" />
+    <ClInclude Include="ui\renderer\ui_render_app.h" />
+    <ClInclude Include="ui\ui_threads.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -683,6 +741,7 @@
     <Image Include="toee_gog_icon.ico">
       <Filter>resources</Filter>
     </Image>
+    <Image Include="E:\Games\ToEE\extracted\merged\data\art\interface\mainmenu_ui\MainMenu_Title.png" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc">

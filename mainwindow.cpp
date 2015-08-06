@@ -9,6 +9,7 @@
 #include "tig/tig_startup.h"
 #include "tig/tig_msg.h"
 #include "tig/tig_mouse.h"
+#include "templeplus.h"
 
 LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
@@ -27,110 +28,25 @@ struct WindowFuncs : AddressTable {
 
 GlobalPrimitive<uint32_t, 0x10D25C38> globalWwndproc;
 
-MessageFilterFn messageFilter = nullptr;
-
-void SetMessageFilter(MessageFilterFn filter) {
-	messageFilter = filter;
-}
-
 bool CreateMainWindow(TigConfig* settings) {
-	bool windowed = config.windowed;
-	bool unknownFlag = (settings->flags & 0x100) != 0;
-
 	video->hinstance = settings->hinstance;
 
 	// Is not actually used anymore, but messages.c checks for it being != 0
 	globalWwndproc = 1;
 
-	WNDCLASSA wndClass;
-	ZeroMemory(&wndClass, sizeof(WNDCLASSA));
-	wndClass.style = CS_DBLCLKS;
-	wndClass.lpfnWndProc = MainWindowProc;
-	wndClass.hInstance = video->hinstance;
-	wndClass.hIcon = LoadIconA(video->hinstance, "icon");
-	wndClass.hCursor = LoadCursorA(0, MAKEINTRESOURCEA(IDC_ARROW));
-	wndClass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-	wndClass.lpszClassName = "TIGClass";
+	auto hwnd = tp->mainWindow().GetHwnd();
+	video->hwnd = hwnd;
+	RECT rect;
+	GetClientRect(hwnd, &rect);
 
-	if (!RegisterClassA(&wndClass)) {
-		return false;
-	}
+	memcpy(&video->screenSizeRect, &rect, sizeof(RECT));
 
-	auto screenWidth = GetSystemMetrics(SM_CXSCREEN);
-	auto screenHeight = GetSystemMetrics(SM_CYSCREEN);
-
-	RECT windowRect;
-	HMENU menu;
-	DWORD dwStyle;
-	DWORD dwExStyle;
-
-	if (!windowed) {
-		windowRect.left = 0;
-		windowRect.top = 0;
-		windowRect.right = screenWidth;
-		windowRect.bottom = screenHeight;
-		menu = 0;
-		dwStyle = WS_POPUP;
-		// This is bad for debugging
-		if (!IsDebuggerPresent()) {
-			dwExStyle = WS_EX_APPWINDOW | WS_EX_TOPMOST;
-		} else {
-			dwExStyle = 0;
-		}
-		memcpy(&video->screenSizeRect, &windowRect, sizeof(RECT));
-	} else {
-		// Apparently this flag controls whether x,y are preset from the outside
-		if (unknownFlag) {
-			windowRect.left = settings->x;
-			windowRect.top = settings->y;
-			windowRect.right = settings->x + config.windowWidth;
-			windowRect.bottom = settings->y + config.windowHeight;
-		} else {
-			windowRect.left = (screenWidth - settings->width) / 2;
-			windowRect.top = (screenHeight - settings->height) / 2;
-			windowRect.right = windowRect.left + config.windowWidth;
-			windowRect.bottom = windowRect.top + config.windowHeight;
-		}
-
-		menu = NULL;
-		dwStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
-		dwExStyle = 0;
-
-  		AdjustWindowRect(&windowRect, dwStyle, FALSE);
-		int extraWidth = (windowRect.right - windowRect.left) - config.windowWidth;
-		int extraHeight = (windowRect.bottom - windowRect.top) - config.windowHeight;
-		windowRect.left = (screenWidth - config.windowWidth) / 2 - (extraWidth / 2);
-		windowRect.top = (screenHeight - config.windowHeight) / 2 - (extraHeight / 2);
-		windowRect.right = windowRect.left + config.windowWidth + extraWidth;
-		windowRect.bottom = windowRect.top + config.windowHeight + extraHeight;
-	}
-
-	dwStyle |= WS_VISIBLE;
 	video->width = settings->width;
 	video->height = settings->height;
 
 	temple_set<0x10D24E0C>(0);
 	temple_set<0x10D24E10>(0);
 	temple_set<0x10D24E14>(settings->width);
-
-	string windowTitle = "Temple of Elemental Evil - Co8";
-
-	DWORD windowWidth = windowRect.right - windowRect.left;
-	DWORD windowHeight = windowRect.bottom - windowRect.top;
-	logger->info("Creating window with dimensions {}x{}", windowWidth, windowHeight);
-	video->hwnd = CreateWindowExA(
-		dwExStyle,
-		"TIGClass",
-		windowTitle.c_str(),
-		dwStyle,
-		windowRect.left,
-		windowRect.top,
-		windowWidth,
-		windowHeight,
-		0,
-		menu,
-		settings->hinstance,
-		0);
 
 	if (video->hwnd) {
 		RECT clientRect;
@@ -178,10 +94,6 @@ static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARA
 	static int mousePosY = 0; // Replaces memory @ 10D25CF0
 	RECT rect;
 	TigMsg tigMsg;
-
-	if (messageFilter && messageFilter(hWnd, msg, wparam, lparam)) {
-		return DefWindowProcA(hWnd, msg, wparam, lparam);
-	}
 
 	switch (msg) {
 	case WM_SETCURSOR:
@@ -276,4 +188,175 @@ static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARA
 
 	// Previously, ToEE called a global window proc here but it did nothing useful.
 	return DefWindowProcA(hWnd, msg, wparam, lparam);
+}
+
+MainWindow::MainWindow(HINSTANCE instance) : mHInstance(instance)
+{
+	RegisterClass(instance);
+	CreateMainWindow(instance);
+}
+
+MainWindow::~MainWindow()
+{
+	DestroyMainWindow();
+	UnregisterClass();
+}
+
+void MainWindow::RegisterClass(HINSTANCE instance)
+{
+	WNDCLASS wndClass;
+	ZeroMemory(&wndClass, sizeof(WNDCLASS));
+	wndClass.style = CS_DBLCLKS;
+	wndClass.lpfnWndProc = MainWindow::HandleMessageDispatcher;
+	wndClass.hInstance = instance;
+	wndClass.hIcon = LoadIcon(instance, TEXT("icon"));
+	wndClass.hCursor = LoadCursor(nullptr, IDC_ARROW);
+	wndClass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+	wndClass.lpszClassName = L"TemplePlusWnd";
+	wndClass.cbWndExtra = sizeof(MainWindow*); // We store our this ptr in the HWND
+
+	mClass = ::RegisterClass(&wndClass);
+
+	if (!mClass) {
+		throw new TempleException("Unable to register Window Class");
+	}
+}
+
+void MainWindow::UnregisterClass()
+{
+	if (mClass) {
+		::UnregisterClass(MAKEINTATOM(mClass), nullptr);
+	}
+}
+
+void MainWindow::CreateMainWindow(HINSTANCE instance)
+{
+	DWORD style, styleEx;
+
+	RECT windowRect;
+	CalculateWindowRectAndStyle(windowRect, style, styleEx);
+
+	style |= WS_VISIBLE;
+
+	LPTSTR windowTitle = TEXT("Temple of Elemental Evil - Co8");
+
+	auto windowWidth = windowRect.right - windowRect.left;
+	auto windowHeight = windowRect.bottom - windowRect.top;
+	logger->info("Creating window with dimensions {}x{}", windowWidth, windowHeight);
+	
+	mHwnd = CreateWindowEx(
+		styleEx,
+		MAKEINTATOM(mClass),
+		windowTitle,
+		style,
+		windowRect.left,
+		windowRect.top,
+		windowWidth,
+		windowHeight,
+		nullptr, // No parent
+		nullptr, // No menu
+		instance,
+		this // Pointer to this
+	);
+
+	if (!mHwnd) {
+		throw new TempleException("Unable to create the TemplePlus main window");
+	}
+
+	// Process all outstanding messages
+	MSG msg;
+	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+
+}
+
+void MainWindow::DestroyMainWindow()
+{
+	if (mHwnd) {
+		DestroyWindow(mHwnd);
+		mHwnd = nullptr;
+	}
+}
+
+void MainWindow::CalculateWindowRectAndStyle(RECT &windowRect, DWORD &style, DWORD &styleEx)
+{
+	// Required for both fullscreen size and centering a window
+	auto screenWidth = GetSystemMetrics(SM_CXSCREEN);
+	auto screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+	if (!config.windowed) {
+		windowRect.left = 0;
+		windowRect.top = 0;
+		windowRect.right = screenWidth;
+		windowRect.bottom = screenHeight;
+		style = WS_POPUP;
+		
+		/*
+			App Window and Topmost leads to the window not being able to be tabbed away
+			from while it's being debugged. To make debugging easier, we disable this behaviour.
+		*/
+		if (!IsDebuggerPresent()) {
+			styleEx = WS_EX_APPWINDOW | WS_EX_TOPMOST;
+		} else {
+			styleEx = 0;
+		}
+	} else {
+		windowRect.left = (screenWidth - config.windowWidth) / 2;
+		windowRect.top = (screenHeight - config.windowHeight) / 2;
+		windowRect.right = windowRect.left + config.windowWidth;
+		windowRect.bottom = windowRect.top + config.windowHeight;
+
+		style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+		styleEx = 0;
+
+		AdjustWindowRect(&windowRect, style, FALSE);
+		int extraWidth = (windowRect.right - windowRect.left) - config.windowWidth;
+		int extraHeight = (windowRect.bottom - windowRect.top) - config.windowHeight;
+		windowRect.left = (screenWidth - config.windowWidth) / 2 - (extraWidth / 2);
+		windowRect.top = (screenHeight - config.windowHeight) / 2 - (extraHeight / 2);
+		windowRect.right = windowRect.left + config.windowWidth + extraWidth;
+		windowRect.bottom = windowRect.top + config.windowHeight + extraHeight;
+	}
+}
+
+LRESULT MainWindow::HandleMessage(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+
+	switch (msg) {
+	case WM_SIZE:
+		mClientWidth = LOWORD(lparam);
+		mClientHeight = HIWORD(lparam);
+		break;
+	}
+		
+	for (MsgHandler &handler : mMsgHandlers) {
+		LRESULT result;
+		if (handler(hWnd, msg, wparam, lparam, result)) {
+			return result;
+		}
+	}
+
+	return DefWindowProc(hWnd, msg, wparam, lparam);
+}
+
+LRESULT MainWindow::HandleMessageDispatcher(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+	MainWindow* mainWindow;
+
+	// Special handling for window creation
+	if (msg == WM_CREATE) {
+		auto data = (CREATESTRUCT*) lparam;
+		mainWindow = (MainWindow*) data->lpCreateParams;		
+		SetWindowLongPtr(hWnd, 0, (LONG) mainWindow);
+	} else {
+		mainWindow = (MainWindow*) GetWindowLongPtr(hWnd, 0);
+	}
+
+	if (mainWindow) {
+		return mainWindow->HandleMessage(hWnd, msg, wparam, lparam);
+	} else {		
+		return DefWindowProc(hWnd, msg, wparam, lparam);
+	}
 }

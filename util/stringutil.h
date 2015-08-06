@@ -39,3 +39,6 @@ inline vector<string> split(const string& s, char delim, bool trim = false, bool
 	split(s, delim, elems, trim, keepEmpty);
 	return elems;
 }
+
+string ToUTF8(const wstring &str);
+wstring FromUTF8(const string &str);

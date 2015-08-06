@@ -5,7 +5,7 @@
 
 class UiResourceBundleHandler;
 
-class UiBrowserApp : public CefApp {
+class UiBrowserApp : public CefApp, public CefRenderProcessHandler {
 public:
 	UiBrowserApp();
 	~UiBrowserApp();
@@ -15,6 +15,15 @@ public:
 	void OnRegisterCustomSchemes(CefRefPtr<CefSchemeRegistrar> registrar) override;
 
 	CefRefPtr<CefResourceBundleHandler> GetResourceBundleHandler() override;
+
+	CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() override {
+		return this;
+	}
+
+	void OnContextCreated(CefRefPtr<CefBrowser> browser,
+		CefRefPtr<CefFrame> frame,
+		CefRefPtr<CefV8Context> context) override;
+
 private:
 	IMPLEMENT_REFCOUNTING(UiBrowserApp);
 

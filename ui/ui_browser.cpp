@@ -8,16 +8,17 @@
 #include "../util/exception.h"
 #include "../util/stopwatch.h"
 #include "../graphics.h"
-
+#include "../mainwindow.h"
+#include "ui_threads.h"
 #include <include/cef_app.h>
 #include <include/cef_browser.h>
 
-UiBrowser::UiBrowser() {
+UiBrowser::UiBrowser(MainWindow &mainWindow) {
 	mApp = new UiBrowserApp;
-	mClient = new UiBrowserClient;
+	mClient = new UiBrowserClient(mainWindow);
 
-	InitializeCef();
-	CreateBrowser();
+	InitializeCef(mainWindow.GetHInstance());
+	CreateBrowser(mainWindow);
 	LoadUi();
 }
 
@@ -33,54 +34,62 @@ void UiBrowser::Render() {
 	mClient->Render();
 }
 
-void UiBrowser::InitializeCef() {
+void UiBrowser::InitializeCef(HINSTANCE instance) {
 	StopwatchReporter watch("Initialized browser in {}");
-
-	CefMainArgs mainArgs;
-	int exitCode;
-	if ((exitCode = CefExecuteProcess(mainArgs, mApp, nullptr)) >= 0) {
-		exit(exitCode);
-	}
 
 	CefSettings settings;
 	settings.no_sandbox = true;
 	settings.background_color = CefColorSetARGB(0, 0, 0, 0);
-	settings.single_process = true;
 	settings.command_line_args_disabled = true;
-	// settings.multi_threaded_message_loop = true;
+	settings.multi_threaded_message_loop = false;
 	settings.windowless_rendering_enabled = true;
+	settings.single_process = true;
 	settings.log_severity = LOGSEVERITY_VERBOSE;
 
-	if (!CefInitialize(mainArgs, settings, mApp.get(), NULL)) {
+	CefMainArgs mainArgs(instance);
+
+	CefExecuteProcess(mainArgs, mApp.get(), nullptr);
+	
+	bool result = CefInitialize(mainArgs, settings, mApp.get(), NULL); ;
+	/*UiThreads::PostUiTask<bool>([&] {
+		return CefInitialize(mainArgs, settings, mApp.get(), NULL);
+	}).get();*/
+	if (!result) {
 		throw new TempleException("Unable to initialize CEF.");
 	}
 }
 
-void UiBrowser::CreateBrowser() {
-	CefWindowInfo windowInfo;
-	windowInfo.windowless_rendering_enabled = true;
-	windowInfo.SetAsWindowless(video->hwnd, true);
+void UiBrowser::CreateBrowser(MainWindow &mainWindow) {
 
-	CefBrowserSettings settings;
-	settings.plugins = STATE_DISABLED;
-	settings.webgl = STATE_DISABLED;
-	settings.java = STATE_DISABLED;
-	settings.background_color = CefColorSetARGB(0, 0, 0, 0);
+	UiThreads::PostUiTask<bool>([&] {
+		CefWindowInfo windowInfo;
+		windowInfo.windowless_rendering_enabled = true;
+		windowInfo.SetAsWindowless(mainWindow.GetHwnd(), true);
+
+		CefBrowserSettings settings;
+		settings.plugins = STATE_DISABLED;
+		settings.webgl = STATE_DISABLED;
+		settings.java = STATE_DISABLED;
+		settings.background_color = CefColorSetARGB(0, 0, 0, 0);
+
+		if (!CefBrowserHost::CreateBrowserSync(windowInfo, mClient, "http://localhost:8000/", settings, nullptr)) {
+			throw new TempleException("Unable to create browser");
+		}
+
+		if (!mClient->browser()) {
+			throw new TempleException("Creation of browser did not succeed.");
+		}
+
+		mClient->browser()->GetHost()->WasResized();
+
+		mClient->browser()->GetHost()->SetWindowVisibility(true);
+
+		// This initializes the message filter that routes input events to the browser
+		mInput.reset(new UiBrowserInput(mClient->browser(), mainWindow));
+
+		return true;
+	}).wait();
 	
-	if (!CefBrowserHost::CreateBrowserSync(windowInfo, mClient, "http://localhost:8000/", settings, nullptr)) {
-		throw new TempleException("Unable to create browser");
-	}
-
-	if (!mClient->browser()) {
-		throw new TempleException("Creation of browser did not succeed.");
-	}
-
-	mClient->browser()->GetHost()->WasResized();
-
-	mClient->browser()->GetHost()->SetWindowVisibility(true);
-
-	// This initializes the message filter that routes input events to the browser
-	mInput.reset(new UiBrowserInput(mClient->browser()));
 }
 
 void UiBrowser::LoadUi() {

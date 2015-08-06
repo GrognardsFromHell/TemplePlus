@@ -34,6 +34,9 @@ struct TemplePlusConfig
 	int renderWidth = 1024;
 	int renderHeight = 768;
 
+	// Path to the ToEE directory
+	string toeeDir;
+
 	vector<string> additionalTioPaths; // Add these to the Python sys.path variable
 	
 	// This is some crazy editor stuff leftover from worlded

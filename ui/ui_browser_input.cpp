@@ -7,7 +7,7 @@
 
 #include <windowsx.h>
 
-UiBrowserInput::UiBrowserInput(CefRefPtr<CefBrowser> browser) : browser_(browser) {
+UiBrowserInput::UiBrowserInput(CefRefPtr<CefBrowser> browser, MainWindow &mainWindow) : browser_(browser), mMainWindow(mainWindow) {
 
 	mouse_tracking_ = true;
 	last_click_x_ = 0;
@@ -17,15 +17,15 @@ UiBrowserInput::UiBrowserInput(CefRefPtr<CefBrowser> browser) : browser_(browser
 	last_click_time_ = 0;
 
 	// Install our msg filter
-	SetMessageFilter([this](HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
-		return this->WndMessageFilter(hWnd, msg, wparam, lparam);
+	mMainWindow.AddMessageHandler([this](HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) {
+		return this->WndMessageFilter(hWnd, msg, wparam, lparam, result);
 	});
 }
 
 UiBrowserInput::~UiBrowserInput() {
 }
 
-bool UiBrowserInput::WndMessageFilter(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+bool UiBrowserInput::WndMessageFilter(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT &result) {
 	switch (message) {
 	case WM_LBUTTONDOWN:
 	case WM_RBUTTONDOWN:
@@ -36,7 +36,7 @@ bool UiBrowserInput::WndMessageFilter(HWND hWnd, UINT message, WPARAM wParam, LP
 	case WM_MOUSEMOVE:
 	case WM_MOUSELEAVE:
 	case WM_MOUSEWHEEL:		
-		HandleMouseEvent(hWnd, message, wParam, lParam);
+		HandleMouseEvent(hWnd, message, wParam, lParam, result);
 		return true;
 
 	case WM_SIZE:
@@ -65,7 +65,7 @@ bool UiBrowserInput::WndMessageFilter(HWND hWnd, UINT message, WPARAM wParam, LP
 	return false;
 }
 
-void UiBrowserInput::HandleMouseEvent(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+void UiBrowserInput::HandleMouseEvent(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT &result) {
 	LONG currentTime = 0;
 	bool cancelPreviousClick = false;
 

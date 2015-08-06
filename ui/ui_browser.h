@@ -2,28 +2,30 @@
 #pragma once
 
 #include <include/internal/cef_ptr.h>
+#include <include/internal/cef_win.h>
 
 class UiBrowserApp;
 class UiBrowserClient;
 class UiBrowserInput;
+class MainWindow;
 
 class UiBrowser {
 public:
-	UiBrowser();
+	UiBrowser(MainWindow &mainWindow);
 	~UiBrowser();
 	
 	void Update();
 	void Render();
-
-	void DoSomething();
-
+	
 private:
-
-	void InitializeCef();
-	void CreateBrowser();
+	UiBrowser(UiBrowser&) = delete;
+	UiBrowser &operator=(UiBrowser&) = delete;
+			
+	void InitializeCef(HINSTANCE instance);
+	void CreateBrowser(MainWindow &mainWindow);
 	void LoadUi();
 
 	CefRefPtr<UiBrowserApp> mApp;
 	CefRefPtr<UiBrowserClient> mClient;
-	std::unique_ptr<UiBrowserInput> mInput;
+	unique_ptr<UiBrowserInput> mInput;
 };

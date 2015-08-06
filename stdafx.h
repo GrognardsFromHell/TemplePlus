@@ -21,6 +21,8 @@
 #include <cassert>
 #include <memory>
 #include <algorithm>
+#include <locale>
+#include <future>
 
 #define _USE_MATH_DEFINES
 #include <math.h>

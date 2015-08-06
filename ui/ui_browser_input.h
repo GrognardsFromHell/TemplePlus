@@ -3,17 +3,19 @@
 
 #include <include/cef_browser.h>
 
+class MainWindow;
+
 class UiBrowserInput {
 public:
-	UiBrowserInput(CefRefPtr<CefBrowser> browser);
+	UiBrowserInput(CefRefPtr<CefBrowser> browser, MainWindow &mainWindow);
 	~UiBrowserInput();
 
 private:
 	CefRefPtr<CefBrowser> browser_;
 
-	bool WndMessageFilter(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam);
+	bool WndMessageFilter(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result);
 
-	void HandleMouseEvent(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+	void HandleMouseEvent(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT &result);
 	void HandleFocus(bool focus);
 	void HandleCaptureLost();
 	void HandleKeyEvent(UINT message, WPARAM wParam, LPARAM lParam);
@@ -30,4 +32,6 @@ private:
 	CefBrowserHost::MouseButtonType last_click_button_;
 	int last_click_count_;
 	double last_click_time_;
+
+	MainWindow &mMainWindow;
 };

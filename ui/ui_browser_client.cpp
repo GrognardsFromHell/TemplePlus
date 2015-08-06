@@ -7,8 +7,8 @@
 
 #include "util/exception.h"
 
-UiBrowserClient::UiBrowserClient() {
-	mRenderHandler = new UiRenderHandler;
+UiBrowserClient::UiBrowserClient(MainWindow &mainWindow) {
+	mRenderHandler = new UiRenderHandler(mainWindow);
 	mRequestHandler = new UiRequestHandler;
 }
 
@@ -29,6 +29,17 @@ CefRefPtr<CefLoadHandler> UiBrowserClient::GetLoadHandler() {
 
 CefRefPtr<CefRequestHandler> UiBrowserClient::GetRequestHandler() {
 	return mRequestHandler;
+}
+
+CefRefPtr<CefDisplayHandler> UiBrowserClient::GetDisplayHandler()
+{
+	return this;
+}
+
+bool UiBrowserClient::OnConsoleMessage(CefRefPtr<CefBrowser> browser, const CefString & message, const CefString & source, int line)
+{
+	logger->info("Console Message: {} ({}:{})", message.ToString(), source.ToString(), line);
+	return false;
 }
 
 void UiBrowserClient::OnLoadError(CefRefPtr<CefBrowser> browser,

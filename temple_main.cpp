@@ -17,6 +17,7 @@
 #include "util/stopwatch.h"
 #include "python/pythonglobal.h"
 #include "mainloop.h"
+#include "templeplus.h"
 
 class TempleMutex {
 public:
@@ -213,9 +214,7 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 
 	// Notify the UI system that the module has been loaded
 	UiModuleLoader uiModuleLoader(uiLoader);
-
-	UiBrowser browser;
-	
+		
 	if (!config.skipIntro) {
 		movieFuncs.PlayMovie("movies\\introcinematic.bik", 0, 0, 0);
 	}
@@ -236,7 +235,7 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	startupRelevantFuncs.RunBatchFile("Startup.txt");
 	logger->info("[Beginning Game]");		
 
-	RunMainLoop(browser);
+	RunMainLoop(tp->browser());
 	// startupRelevantFuncs.RunMainLoop();
 
 	return 0;

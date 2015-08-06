@@ -94,8 +94,17 @@
     <ClCompile Include="reputations.cpp" />
     <ClCompile Include="secret_door.cpp" />
     <ClCompile Include="skill.cpp" />
+    <ClCompile Include="templeplus.cpp" />
+    <ClCompile Include="ui\js\js_interop.cpp" />
+    <ClCompile Include="ui\renderer\ui_render_process.cpp" />
+    <ClCompile Include="ui\screens\ui_mm.cpp" />
+    <ClCompile Include="ui\screens\ui_screens.cpp" />
+    <ClCompile Include="ui\ui_legacy.cpp" />
+    <ClCompile Include="ui\ui_legacy_wrapper.cpp" />
+    <ClCompile Include="util\stringutil.cpp" />
     <ClCompile Include="tab_file.cpp" />
     <ClCompile Include="sound.cpp" />
+    <ClCompile Include="temple_library.cpp" />
     <ClCompile Include="textbubbles.cpp" />
     <ClCompile Include="tig\tig.cpp" />
     <ClCompile Include="tig\tig_sound.cpp" />
@@ -305,6 +314,8 @@
     <ClInclude Include="secret_door.h" />
     <ClInclude Include="skill.h" />
     <ClInclude Include="tab_file.h" />
+    <ClInclude Include="templeplus.h" />
+    <ClInclude Include="temple_library.h" />
     <ClInclude Include="textbubbles.h" />
     <ClInclude Include="tig\tig_sound.h" />
     <ClInclude Include="tig\tig_tabparser.h" />
@@ -313,15 +324,20 @@
     <ClInclude Include="python\python_importer.h" />
     <ClInclude Include="python\python_consoleout.h" />
     <ClInclude Include="traps.h" />
+    <ClInclude Include="ui\js\js_interop.h" />
+    <ClInclude Include="ui\renderer\ui_render_app.h" />
+    <ClInclude Include="ui\renderer\ui_render_process.h" />
     <ClInclude Include="ui\ui_browser.h" />
     <ClInclude Include="ui\ui_browser_app.h" />
     <ClInclude Include="ui\ui_browser_client.h" />
     <ClInclude Include="ui\ui_browser_input.h" />
     <ClInclude Include="ui\ui_dialog.h" />
+    <ClInclude Include="ui\ui_legacy.h" />
     <ClInclude Include="ui\ui_render_handler.h" />
     <ClInclude Include="ui\ui_request_handler.h" />
     <ClInclude Include="ui\ui_resourcebundlehandler.h" />
     <ClInclude Include="ui\ui_resource_handler.h" />
+    <ClInclude Include="ui\ui_threads.h" />
     <ClInclude Include="ui\ui_tutorial.h" />
     <ClInclude Include="turn_based.h" />
     <ClInclude Include="ui\ui_picker.h" />
@@ -426,6 +442,7 @@
     <ResourceCompile Include="resource.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="E:\Games\ToEE\extracted\merged\data\art\interface\mainmenu_ui\MainMenu_Title.png" />
     <Image Include="toee_gog_icon.ico" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -502,7 +519,7 @@
       </ModuleDefinitionFile>
       <AdditionalLibraryDirectories>dependencies\lib</AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll;libcef.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;D3DX9d_43.dll;shlwapi.dll;ole32.dll;libcef.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">
@@ -544,13 +561,13 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>temple.lib;tio\tio.lib;winmm.lib;d3d9.lib;Crypt32.lib;ws2_32.lib;python27.lib;dependencies\bin\release\libcef.lib;libcef_dll_wrapper.lib;d3dx9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tio\tio.lib;winmm.lib;d3d9.lib;Crypt32.lib;ws2_32.lib;python27.lib;dependencies\bin\release\libcef.lib;libcef_dll_wrapper.lib;d3dx9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>dependencies\lib</AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll;libcef.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

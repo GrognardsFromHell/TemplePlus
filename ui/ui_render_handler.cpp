@@ -5,8 +5,9 @@
 #include "ui_render.h"
 
 #include "../graphics.h"
+#include "../mainwindow.h"
 
-UiRenderHandler::UiRenderHandler() {
+UiRenderHandler::UiRenderHandler(MainWindow &mainWindow) : mMainWindow(mainWindow) {
 }
 
 UiRenderHandler::~UiRenderHandler() {
@@ -14,7 +15,7 @@ UiRenderHandler::~UiRenderHandler() {
 
 bool UiRenderHandler::GetRootScreenRect(CefRefPtr<CefBrowser> browser, CefRect& rect) {
 	RECT window_rect = { 0 };
-	HWND root_window = GetAncestor(video->hwnd, GA_ROOT);
+	HWND root_window = GetAncestor(mMainWindow.GetHwnd(), GA_ROOT);
 	if (::GetWindowRect(root_window, &window_rect)) {
 		rect = CefRect(window_rect.left,
 			window_rect.top,
@@ -31,12 +32,12 @@ bool UiRenderHandler::GetScreenPoint(CefRefPtr<CefBrowser> browser,
 	int& screenX,
 	int& screenY) {
 
-	if (!::IsWindow(video->hwnd))
+	if (!::IsWindow(mMainWindow.GetHwnd()))
 		return false;
 
 	// Convert the point from view coordinates to actual screen coordinates.
 	POINT screen_pt = { viewX, viewY };
-	ClientToScreen(video->hwnd, &screen_pt);
+	ClientToScreen(mMainWindow.GetHwnd(), &screen_pt);
 	screenX = screen_pt.x;
 	screenY = screen_pt.y;
 	return true;
@@ -45,8 +46,8 @@ bool UiRenderHandler::GetScreenPoint(CefRefPtr<CefBrowser> browser,
 bool UiRenderHandler::GetViewRect(CefRefPtr<CefBrowser> browser, CefRect& rect) {
 	rect.x = 0;
 	rect.y = 0;
-	rect.width = graphics.windowWidth();
-	rect.height = graphics.windowHeight();
+	rect.width = mMainWindow.GetClientWidth();
+	rect.height = mMainWindow.GetClientHeight();
 	return true;
 }
 
