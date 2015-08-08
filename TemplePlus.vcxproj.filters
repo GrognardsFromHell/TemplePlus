@@ -301,6 +301,9 @@
     <ClCompile Include="ui_pc_creation.cpp">
       <Filter>ui</Filter>
     </ClCompile>
+    <ClCompile Include="d3d8to9\dxerr.cpp">
+      <Filter>d3d</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -605,6 +608,9 @@
     </ClInclude>
     <ClInclude Include="ui_intgame_turnbased.h">
       <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="d3d8to9\dxerr.h">
+      <Filter>d3d</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

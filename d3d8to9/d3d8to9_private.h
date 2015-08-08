@@ -4,9 +4,11 @@
 #include "../util/addresses.h"
 #include "../util/config.h"
 
+#include "dxerr.h"
+
 inline HRESULT handleD3dError(const char* method, HRESULT result) {
 	if (result != S_OK) {
-		logger->warn("Direct3D Error @ {}: {}", method, DXGetErrorStringA(result));
+		logger->warn("Direct3D Error @ {}: {}", method, DXGetErrorString(result));
 	}
 	return result;
 }
