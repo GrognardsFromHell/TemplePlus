@@ -34,6 +34,11 @@ void UiBrowser::Render() {
 	mClient->Render();
 }
 
+CefRefPtr<CefBrowser> UiBrowser::GetBrowser()
+{
+	return this->mClient->browser();
+}
+
 void UiBrowser::InitializeCef(HINSTANCE instance) {
 	StopwatchReporter watch("Initialized browser in {}");
 
@@ -95,4 +100,10 @@ void UiBrowser::CreateBrowser(MainWindow &mainWindow) {
 void UiBrowser::LoadUi() {
 	// Wait until the browser says the page has loaded completely, since that means
 	// we can show it.
+	while (true) {
+		CefDoMessageLoopWork();
+		if (UiBrowserApp::GetMainJsContext()) {
+			return;
+		}
+	}
 }

@@ -3,6 +3,8 @@
 #include "ui_browser_app.h"
 #include "ui_resourcebundlehandler.h"
 
+CefRefPtr<CefV8Context> UiBrowserApp::mMainContext;
+
 UiBrowserApp::UiBrowserApp() {
 	mResourceBundleHandler = new UiResourceBundleHandler;
 }
@@ -51,6 +53,9 @@ private:
 
 void UiBrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context)
 {
+	if (!mMainContext) {
+		mMainContext = context;
+	}
 	context->Enter();
 
 	auto global = context->GetGlobal();

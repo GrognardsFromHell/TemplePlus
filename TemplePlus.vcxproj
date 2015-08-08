@@ -101,6 +101,7 @@
     <ClCompile Include="ui\screens\ui_screens.cpp" />
     <ClCompile Include="ui\ui_legacy.cpp" />
     <ClCompile Include="ui\ui_legacy_wrapper.cpp" />
+    <ClCompile Include="ui\ui_threads.cpp" />
     <ClCompile Include="util\stringutil.cpp" />
     <ClCompile Include="tab_file.cpp" />
     <ClCompile Include="sound.cpp" />

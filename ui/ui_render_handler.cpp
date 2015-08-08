@@ -57,6 +57,10 @@ void UiRenderHandler::OnPaint(CefRefPtr<CefBrowser> browser,
 	const void* buffer,
 	int width, int height) {
 
+	if (!graphics.device()) {
+		return; // D3d not initialized yet
+	}
+
 	EnsureTextureSize(width, height);
 
 	D3DLOCKED_RECT locked;

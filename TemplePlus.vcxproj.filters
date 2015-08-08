@@ -320,6 +320,7 @@
     <ClCompile Include="ui\renderer\ui_render_process.cpp" />
     <ClCompile Include="ui\screens\ui_screens.cpp" />
     <ClCompile Include="ui\screens\ui_mm.cpp" />
+    <ClCompile Include="ui\ui_threads.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />

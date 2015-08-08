@@ -8,6 +8,7 @@ class UiBrowserApp;
 class UiBrowserClient;
 class UiBrowserInput;
 class MainWindow;
+class CefBrowser;
 
 class UiBrowser {
 public:
@@ -16,6 +17,8 @@ public:
 	
 	void Update();
 	void Render();
+
+	CefRefPtr<CefBrowser> GetBrowser();
 	
 private:
 	UiBrowser(UiBrowser&) = delete;

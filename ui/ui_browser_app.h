@@ -24,8 +24,14 @@ public:
 		CefRefPtr<CefFrame> frame,
 		CefRefPtr<CefV8Context> context) override;
 
+	static CefRefPtr<CefV8Context> GetMainJsContext() {
+		return mMainContext;
+	}
+
 private:
 	IMPLEMENT_REFCOUNTING(UiBrowserApp);
+
+	static CefRefPtr<CefV8Context> mMainContext;
 
 	CefRefPtr<UiResourceBundleHandler> mResourceBundleHandler;
 };
