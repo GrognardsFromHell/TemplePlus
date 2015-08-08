@@ -7,6 +7,7 @@ install:
   - 7z x -odependencies dependencies.7z
 
 build_script:
+  - set PATH=C:\Program Files (x86)\MSBuild\14.0\Bin;%PATH%
   - msbuild TemplePlus.sln /p:Configuration=Release /p:MSBuildDefines="_TP_VERSION=%APPVEYOR_BUILD_VERSION%;_TP_COMMIT=%APPVEYOR_REPO_COMMIT%" /verbosity:minimal
 
 after_build:
