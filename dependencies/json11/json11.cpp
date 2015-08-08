@@ -21,7 +21,6 @@
 
 // MSVC++ fixes
 #define _CRT_SECURE_NO_WARNINGS
-#define snprintf _snprintf
 
 #include "json11.hpp"
 #include <cassert>

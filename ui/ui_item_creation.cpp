@@ -69,7 +69,7 @@ int CraftedWandSpellLevel(objHndl objHndItem)
 	{
 		int dummy = 1;
 	}
-	int casterLevelSet = d20Sys.d20QueryReturnData(globObjHndCrafter, DK_QUE_Craft_Wand_Spell_Level, 0, 0);
+	int casterLevelSet = (int) d20Sys.d20QueryReturnData(globObjHndCrafter, DK_QUE_Craft_Wand_Spell_Level, 0, 0);
 	casterLevelSet = 2 * ((casterLevelSet + 1) / 2) - 1;
 	if (casterLevelSet < 1)
 		casterLevelSet = 1;
