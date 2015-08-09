@@ -9,7 +9,10 @@ def IsWarded( obj ):
 		return 1
 	return 0
 
-
+def IsSleeping( obj):
+	if (obj.d20_query_has_spell_condition(sp_Sleep) != 0)
+		return 1
+	return 0
 
 def IsSpiritualWeapon( obj):
 	if (obj.d20_query_with_data(Q_Critter_Has_Spell_Active, spell_spiritual_weapon, 1) != 0):

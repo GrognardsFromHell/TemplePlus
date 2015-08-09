@@ -94,6 +94,7 @@ struct AiSystem : AddressTable
 
 	void RegisterNewAiTactics();
 	unsigned int Asplode(AiTactic * aiTactic);
+	unsigned int WakeFriend(AiTactic* aiTac);
 private:
 	void (__cdecl *_ShitlistAdd)(objHndl npc, objHndl target);
 	void (__cdecl *_AiRemoveFromList)(objHndl npc, objHndl target, int listType);	

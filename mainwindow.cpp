@@ -108,7 +108,7 @@ bool CreateMainWindow(TigConfig* settings) {
 	temple_set<0x10D24E10>(0);
 	temple_set<0x10D24E14>(settings->width);
 
-	string windowTitle = "Temple of Elemental Evil - Co8";
+	string windowTitle = "Temple of Elemental Evil (Temple+)";
 
 	DWORD windowWidth = windowRect.right - windowRect.left;
 	DWORD windowHeight = windowRect.bottom - windowRect.top;

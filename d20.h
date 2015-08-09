@@ -278,3 +278,7 @@ uint32_t _PerformDisarmedWeaponRetrieve(D20Actn* d20a);
 
 uint32_t _ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat);
 uint32_t _ActionFrameSunder(D20Actn* d20a);
+
+uint32_t _PerformAidAnotherWakeUp(D20Actn* d20a);
+uint32_t _ActionFrameAidAnotherWakeUp(D20Actn* d20a);
+uint32_t _ActionCheckAidAnotherWakeUp(D20Actn* d20a, TurnBasedStatus* tbStat);

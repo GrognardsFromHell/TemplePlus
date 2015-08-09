@@ -105,6 +105,7 @@ public:
 
 		//replaceFunction(0x100C7180, QueryRetrun1GetArgs); // caused a crash :(
 
+		// QueryCritterHasCondition for sp-Spiritual Weapon
 		writeVal = dispTypeD20Query;
 		SubDispDefNew sdd;
 		sdd.dispType = dispTypeD20Query;
@@ -113,6 +114,14 @@ public:
 		sdd.dispCallback = QueryCritterHasCondition;
 		sdd.dispKey = DK_QUE_Critter_Has_Condition;
 		write(0x102DFD48, &sdd, sizeof(SubDispDefNew));
+
+		// QueryCritterHasCondition for sp-Sleep
+		sdd.dispType = dispTypeD20Query;
+		sdd.data1 = 0x102DEB08;
+		sdd.data2 = 0;
+		sdd.dispCallback = QueryCritterHasCondition;
+		sdd.dispKey = DK_QUE_Critter_Has_Condition;
+		write(0x102DEC00, &sdd, sizeof(SubDispDefNew));
 
 
 		

@@ -169,6 +169,19 @@ void D20System::NewD20ActionsInit()
 	d20Defs[d20Type].flags = (D20ADF)(D20ADF_TargetSingleExcSelf | D20ADF_TriggersAoO | D20ADF_TriggersCombat
 		| D20ADF_Unk8000 | D20ADF_SimulsCompatible); // 0x28908; // same as Trip
 
+	d20Type = D20A_AID_ANOTHER_WAKE_UP;
+	d20Defs[d20Type].addToSeqFunc = _AddToSeqWithTarget;
+	d20Defs[d20Type].aiCheckMaybe = _StdAttackAiCheck;
+	d20Defs[d20Type].actionCheckFunc = _ActionCheckAidAnotherWakeUp;
+	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
+	d20Defs[d20Type].performFunc = _PerformAidAnotherWakeUp;
+	d20Defs[d20Type].actionFrameFunc = _ActionFrameAidAnotherWakeUp;
+	d20Defs[d20Type].actionCost = addresses.ActionCostStandardAttack;
+	d20Defs[d20Type].pickerFuncMaybe = addresses.sub_1008EDF0;
+	d20Defs[d20Type].flags = (D20ADF)(D20ADF_TargetSingleExcSelf | D20ADF_Unk8000 | D20ADF_SimulsCompatible); // 0x28908; // same as Trip // note : queryForAoO is used for resetting a flag
+
+
+
 	// *(int*)&d20Defs[D20A_USE_POTION].flags |= (int)D20ADF_SimulsCompatible;  // need to modify the SimulsEnqueue script because it also checks for san_start_combat being null
 	// *(int*)&d20Defs[D20A_TRIP].flags -= (int)D20ADF_Unk8000;
 
@@ -1070,5 +1083,32 @@ uint32_t _ActionFrameSunder(D20Actn* d20a)
 	}
 
 
+	return 0;
+}
+
+
+uint32_t _PerformAidAnotherWakeUp(D20Actn* d20a)
+{
+
+	if (animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget))
+	{
+		animationGoals.PushUseSkillOn(d20a->d20APerformer, d20a->d20ATarget, SkillEnum::skill_heal);
+		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
+		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
+	}
+	return 0;
+}
+
+uint32_t _ActionFrameAidAnotherWakeUp(D20Actn* d20a)
+{
+	if (d20a->d20ATarget)
+	{
+		objects.floats->FloatCombatLine(d20a->d20ATarget, 204); // woken up
+	}
+	return 0;
+}
+
+uint32_t _ActionCheckAidAnotherWakeUp(D20Actn* d20a, TurnBasedStatus* tbStat)
+{
 	return 0;
 };
