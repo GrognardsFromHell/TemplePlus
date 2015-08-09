@@ -231,11 +231,6 @@
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="damage.cpp" />
-    <ClCompile Include="dependencies\minhook\src\buffer.c" />
-    <ClCompile Include="dependencies\minhook\src\HDE\hde32.c" />
-    <ClCompile Include="dependencies\minhook\src\HDE\hde64.c" />
-    <ClCompile Include="dependencies\minhook\src\hook.c" />
-    <ClCompile Include="dependencies\minhook\src\trampoline.c" />
     <ClCompile Include="dialog.cpp" />
     <ClCompile Include="dice.cpp" />
     <ClCompile Include="fade.cpp" />
@@ -542,14 +537,6 @@
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
     <ClInclude Include="damage.h" />
-    <ClInclude Include="dependencies\minhook\include\MinHook.h" />
-    <ClInclude Include="dependencies\minhook\src\buffer.h" />
-    <ClInclude Include="dependencies\minhook\src\HDE\hde32.h" />
-    <ClInclude Include="dependencies\minhook\src\HDE\hde64.h" />
-    <ClInclude Include="dependencies\minhook\src\HDE\pstdint.h" />
-    <ClInclude Include="dependencies\minhook\src\HDE\table32.h" />
-    <ClInclude Include="dependencies\minhook\src\HDE\table64.h" />
-    <ClInclude Include="dependencies\minhook\src\trampoline.h" />
     <ClInclude Include="dialog.h" />
     <ClInclude Include="dice.h" />
     <ClInclude Include="fade.h" />
@@ -679,9 +666,6 @@
     </Filter>
     <Filter Include="Dependencies\cppformat">
       <UniqueIdentifier>{f337e661-8b3d-412c-8a28-5c1b90ea972a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Dependencies\minhook">
-      <UniqueIdentifier>{256b0e85-1958-4443-9c02-4a5fe6890179}</UniqueIdentifier>
     </Filter>
     <Filter Include="Dependencies\spdlog">
       <UniqueIdentifier>{67a9704a-41d0-406d-8b05-c5a034a5c44f}</UniqueIdentifier>
