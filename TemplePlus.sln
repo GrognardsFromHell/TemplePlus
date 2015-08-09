@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TemplePlus", "TemplePlus.vcxproj", "{3E3B6C43-8C76-4CD5-BCF8-3F2B9C5178FE}"
+	ProjectSection(ProjectDependencies) = postProject
+		{23AD6E36-FA90-4A0D-A1F4-6BFCDBCBDC7C} = {23AD6E36-FA90-4A0D-A1F4-6BFCDBCBDC7C}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MinHook", "MinHook\MinHook.vcxproj", "{23AD6E36-FA90-4A0D-A1F4-6BFCDBCBDC7C}"
 EndProject
