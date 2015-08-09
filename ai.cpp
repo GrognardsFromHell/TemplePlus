@@ -707,6 +707,81 @@ unsigned int AiSystem::Asplode(AiTactic* aiTac)
 	critterSys.KillByEffect(performer);
 	return 0;
 }
+
+unsigned AiSystem::WakeFriend(AiTactic* aiTac)
+{
+	objHndl performer = aiTac->performer;
+	objHndl target = 0;
+	int performerIsIntelligent = (objects.StatLevelGet(performer, stat_intelligence) >= 3);
+	if (!performerIsIntelligent)
+		return 0;
+
+	LocAndOffsets performerLoc;
+	float dist = 1000000000.0;
+
+
+	locSys.getLocAndOff(aiTac->performer, &performerLoc);
+
+	ObjList objlist;
+	objlist.ListVicinity(performerLoc.location, OLC_CRITTERS);
+
+	auto args = PyTuple_New(1);
+
+	for (int i = 0; i < objlist.size(); i++)
+	{
+		objHndl dude = objlist.get(i);
+		PyTuple_SET_ITEM(args, 0, PyObjHndl_Create(dude));
+
+		auto result = pythonObjIntegration.ExecuteScript("combat", "IsSleeping", args);
+
+		int isSleeping = PyInt_AsLong(result);
+		Py_DECREF(result);
+
+
+		if (isSleeping
+			&&critterSys.IsFriendly(dude, performer)
+			&& locSys.DistanceToObj(performer, dude)  < dist
+			)
+		{
+
+			target = dude;
+			dist = locSys.DistanceToObj(performer, dude);
+
+		}
+	}
+	if (!target)
+		return 0;
+
+
+	if (combatSys.IsWithinReach(performer, target) || (templeFuncs.RNG(1, 100) <= 40))
+	{
+
+		int actNum;
+		objHndl origTarget = aiTac->target;
+
+		actNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+		aiTac->target = target;
+
+		if (Approach(aiTac)
+			|| (d20Sys.GlobD20ActnInit(),
+				d20Sys.GlobD20ActnSetTypeAndData1(D20A_AID_ANOTHER_WAKE_UP, 0),
+				d20Sys.GlobD20ActnSetTarget(aiTac->target, 0),
+				actSeqSys.ActionAddToSeq(),
+				!actSeqSys.ActionSequenceChecksWithPerformerLocation()))
+		{
+			return 1;
+		}
+		actSeqSys.ActionSequenceRevertPath(actNum);
+
+		aiTac->target = origTarget;
+		return 0;
+
+
+	}
+
+	return 0;
+
+}
 #pragma endregion
 
 #pragma region AI replacement functions
