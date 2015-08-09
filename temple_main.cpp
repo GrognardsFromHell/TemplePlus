@@ -12,10 +12,9 @@
 #include "ui/ui.h"
 #include "ui/ui_mainmenu.h"
 #include "movies.h"
-#include "util/exception.h"
-#include "util/stopwatch.h"
 #include "python/pythonglobal.h"
 #include "mainloop.h"
+#include "util/config.h"
 
 class TempleMutex {
 public:

@@ -1,4 +1,5 @@
-#include "d3d8to9_private.h"
+
+#include "d3d.h"
 
 inline D3DFORMAT convert(d3d8::D3DFORMAT format)
 {

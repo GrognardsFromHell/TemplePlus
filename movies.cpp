@@ -11,7 +11,6 @@
 
 #include <d3dx9.h>
 #include <d3dx9tex.h>
-#include "util/stopwatch.h"
 
 MovieFuncs movieFuncs;
 

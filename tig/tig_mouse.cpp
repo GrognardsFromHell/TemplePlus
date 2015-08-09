@@ -61,15 +61,15 @@ static bool SetCursorFromShaderId(int shaderId) {
 		return false;
 	}
 
-	auto texture = textureEntry.buffer->d3dtexture->delegate;
+	auto texture = GetTextureDelegate(textureEntry.buffer->d3dtexture);
 	IDirect3DSurface9 *surface = nullptr;
-	if (handleD3dError("GetSurfaceLevel", texture->GetSurfaceLevel(0, &surface)) != D3D_OK) {
+	if (D3DLOG(texture->GetSurfaceLevel(0, &surface)) != D3D_OK) {
 		logger->error("Unable to get surface of cursor texture.");
 		return false;
 	}
 
-	auto device = video->d3dDevice->delegate;
-	if (handleD3dError("SetCursorProperties", device->SetCursorProperties(0, 0, surface)) != D3D_OK) {		
+	auto device = GetDeviceDelegate(video->d3dDevice);
+	if (D3DLOG(device->SetCursorProperties(0, 0, surface)) != D3D_OK) {
 		logger->error("Unable to set cursor properties.");
 	}
 	surface->Release();

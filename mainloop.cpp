@@ -9,7 +9,8 @@
 #include "graphics.h"
 #include "ui/ui_render.h"
 #include "ui/ui_text.h"
-#include "util/version.h"
+#include "util/config.h"
+#include "d3d.h"
 
 static struct MainLoop : AddressTable {
 	

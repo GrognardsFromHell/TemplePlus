@@ -1,5 +1,5 @@
 
-#include "stdafx.h"
+#include "version.h"
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
@@ -8,20 +8,21 @@
 const char *buildVersion = TOSTRING(_TP_VERSION);
 const char *buildCommitId = TOSTRING(_TP_COMMIT);
 #else
+#include "format.h"
 const char *buildVersion = "UNKNOWN";
 const char *buildCommitId = "UNKNOWN";
 #endif
 
-static string versionString;
-static string commitIdString;
+static std::string versionString;
+static std::string commitIdString;
 
-const string &GetTemplePlusVersion() {
+const std::string &GetTemplePlusVersion() {
 	if (versionString.empty()) {
 		if (strlen(buildVersion) && strlen(buildCommitId)) {
 #if NDEBUG
 			versionString = buildVersion;
 #else
-			versionString = format("{}.dbg", buildVersion);
+			versionString = fmt::format("{}.dbg", buildVersion);
 #endif
 		} else {
 			versionString = "UNKNOWN VERSION";
@@ -31,7 +32,7 @@ const string &GetTemplePlusVersion() {
 	return versionString;
 }
 
-const string& GetTemplePlusCommitId() {
+const std::string& GetTemplePlusCommitId() {
 	if (commitIdString.empty()) {
 		commitIdString = buildCommitId;
 	}

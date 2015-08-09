@@ -8,6 +8,8 @@
 #include "tig/tig_startup.h"
 #include "tig/tig_msg.h"
 #include "tig/tig_mouse.h"
+#include "util/config.h"
+#include "d3d8to9_device.h"
 
 LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam);
 

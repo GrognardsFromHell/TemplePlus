@@ -4,7 +4,6 @@
 #include "osdefs.h"
 #include "tio/tio.h"
 #include "python_importer.h"
-#include <util/exception.h>
 
 enum ImporterFileType {
 	IFT_NONE = 0,

@@ -32,7 +32,6 @@
 #include "python_support.h"
 #include "python_integration_obj.h"
 #include <timeevents.h>
-#include "util/mathutil.h"
 
 static PyObject *encounterQueue = nullptr;
 

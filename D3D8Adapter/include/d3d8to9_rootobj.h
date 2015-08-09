@@ -1,6 +1,6 @@
 #pragma once
 
-#include "d3d8to9_private.h"
+#include "d3d.h"
 
 struct Direct3D8Adapter : public d3d8::IDirect3D8
 {

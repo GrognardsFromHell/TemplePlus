@@ -17,11 +17,16 @@
 #include "ui/ui_text.h"
 #include <atlbase.h>
 
-// #include "d3d8/d3d8.h"
-#include "d3d8to9/d3d8to9.h"
-#include <d3d9.h>
+#include "d3d.h"
+#include "d3d8adapter.h"
+#include "d3d8to9_device.h"
+#include "d3d8to9_vertexbuffer.h"
+#include "d3d8to9_texture.h"
+#include "d3d8to9_rootobj.h"
+
 #include <map>
 #include <set>
+#include "util/config.h"
 
 Graphics graphics;
 VideoFuncs videoFuncs;

@@ -25,32 +25,8 @@
     <ClCompile Include="game_config.cpp" />
     <ClCompile Include="temple_main.cpp" />
     <ClCompile Include="testhelper.cpp" />
-    <ClCompile Include="d3d8to9\d3d8to9.cpp">
-      <Filter>d3d</Filter>
-    </ClCompile>
-    <ClCompile Include="d3d8to9\d3d8to9_device.cpp">
-      <Filter>d3d</Filter>
-    </ClCompile>
-    <ClCompile Include="d3d8to9\d3d8to9_indexbuffer.cpp">
-      <Filter>d3d</Filter>
-    </ClCompile>
-    <ClCompile Include="d3d8to9\d3d8to9_rootobj.cpp">
-      <Filter>d3d</Filter>
-    </ClCompile>
-    <ClCompile Include="d3d8to9\d3d8to9_surface.cpp">
-      <Filter>d3d</Filter>
-    </ClCompile>
-    <ClCompile Include="d3d8to9\d3d8to9_texture.cpp">
-      <Filter>d3d</Filter>
-    </ClCompile>
-    <ClCompile Include="d3d8to9\d3d8to9_vertexbuffer.cpp">
-      <Filter>d3d</Filter>
-    </ClCompile>
     <ClCompile Include="bonusspells.cpp">
       <Filter>Mods and Fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="dependencies\cppformat\format.cc">
-      <Filter>Dependencies\cppformat</Filter>
     </ClCompile>
     <ClCompile Include="dependencies\json11\json11.cpp">
       <Filter>Dependencies\json11</Filter>
@@ -182,7 +158,6 @@
     <ClCompile Include="util\libraryholder.cpp">
       <Filter>utils</Filter>
     </ClCompile>
-    <ClCompile Include="util\version.cpp" />
     <ClCompile Include="renderstates.cpp" />
     <ClCompile Include="tio\tio_utils.cpp" />
     <ClCompile Include="tig\tig.cpp" />
@@ -296,9 +271,6 @@
     <ClCompile Include="ui_pc_creation.cpp">
       <Filter>ui</Filter>
     </ClCompile>
-    <ClCompile Include="d3d8to9\dxerr.cpp">
-      <Filter>d3d</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -313,42 +285,6 @@
     <ClInclude Include="game_config.h" />
     <ClInclude Include="xp.h">
       <Filter>Mods and Fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8\d3d8.h">
-      <Filter>d3d</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8\d3d8caps.h">
-      <Filter>d3d</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8to9\d3d8to9.h">
-      <Filter>d3d</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8to9\d3d8to9_convert.h">
-      <Filter>d3d</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8to9\d3d8to9_device.h">
-      <Filter>d3d</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8to9\d3d8to9_indexbuffer.h">
-      <Filter>d3d</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8to9\d3d8to9_private.h">
-      <Filter>d3d</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8to9\d3d8to9_rootobj.h">
-      <Filter>d3d</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8to9\d3d8to9_surface.h">
-      <Filter>d3d</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8to9\d3d8to9_texture.h">
-      <Filter>d3d</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8to9\d3d8to9_vertexbuffer.h">
-      <Filter>d3d</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8\d3d8types.h">
-      <Filter>d3d</Filter>
     </ClInclude>
     <ClInclude Include="timeevents.h" />
     <ClInclude Include="anim.h" />
@@ -475,7 +411,6 @@
     <ClInclude Include="util\config.h">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="util\exception.h" />
     <ClInclude Include="util\fixes.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
@@ -483,10 +418,6 @@
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="util\libraryholder.h">
-      <Filter>utils</Filter>
-    </ClInclude>
-    <ClInclude Include="util\version.h" />
-    <ClInclude Include="util\stopwatch.h">
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="tio\tio.h" />
@@ -575,9 +506,7 @@
     <ClInclude Include="traps.h" />
     <ClInclude Include="ui\ui_dialog.h" />
     <ClInclude Include="ui\ui_tutorial.h" />
-    <ClInclude Include="util\mathutil.h" />
     <ClInclude Include="sound.h" />
-    <ClInclude Include="util\stringutil.h" />
     <ClInclude Include="char_creation.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
@@ -595,9 +524,6 @@
     </ClInclude>
     <ClInclude Include="ui_intgame_turnbased.h">
       <Filter>ui</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d8to9\dxerr.h">
-      <Filter>d3d</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -617,24 +543,6 @@
       <UniqueIdentifier>{ea100e12-e4d1-4df0-8ed7-e2ba3025f6e5}</UniqueIdentifier>
     </Filter>
     <ClInclude Include="aas.h" />
-    <ClInclude Include="dependencies\cppformat\format.h">
-      <Filter>Dependencies\cppformat</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\spdlog\async_logger.h">
-      <Filter>Dependencies\spdlog</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\spdlog\common.h">
-      <Filter>Dependencies\spdlog</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\spdlog\formatter.h">
-      <Filter>Dependencies\spdlog</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\spdlog\logger.h">
-      <Filter>Dependencies\spdlog</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\spdlog\spdlog.h">
-      <Filter>Dependencies\spdlog</Filter>
-    </ClInclude>
     <ClInclude Include="dependencies\feather-ini\INI.h">
       <Filter>Dependencies\featherini</Filter>
     </ClInclude>
@@ -678,9 +586,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="dependencies\spdlog\LICENSE">
-      <Filter>Dependencies\spdlog</Filter>
-    </None>
     <None Include="LICENSE" />
     <None Include="README.md" />
   </ItemGroup>

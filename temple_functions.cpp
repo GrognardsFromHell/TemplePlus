@@ -8,6 +8,7 @@
 #include "combat.h"
 //#include "spell.h"
 #include "common.h"
+#include "util/config.h"
 
 TempleFuncs templeFuncs;
 
