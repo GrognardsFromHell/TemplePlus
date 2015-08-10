@@ -123,6 +123,14 @@ public:
 		sdd.dispKey = DK_QUE_Critter_Has_Condition;
 		write(0x102DEC00, &sdd, sizeof(SubDispDefNew));
 
+		//  DK_SIG_AID_ANOTHER_WAKE_UP for sp-Sleep
+		sdd.dispType = dispTypeD20Signal;
+		sdd.data1 = 0;
+		sdd.data2 = 0;
+		sdd.dispCallback = RemoveSpellConditionAndMod; // TODO implement this
+		sdd.dispKey = DK_SIG_AID_ANOTHER_WAKE_UP;
+		write(0x102DEB9C, &sdd, sizeof(SubDispDefNew)); // overwriting S_Teleport_Reconnect since it does nothing (return_0 callback)
+
 
 		
 	}
@@ -327,6 +335,11 @@ int CondResetArgs(DispatcherCallbackArgs args)
 int ConditionRemoveCallback(DispatcherCallbackArgs args)
 {
 	conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+	return 0;
+}
+
+int RemoveSpellConditionAndMod(DispatcherCallbackArgs args)
+{
 	return 0;
 };
 

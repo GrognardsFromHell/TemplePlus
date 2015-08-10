@@ -1101,14 +1101,19 @@ uint32_t _PerformAidAnotherWakeUp(D20Actn* d20a)
 
 uint32_t _ActionFrameAidAnotherWakeUp(D20Actn* d20a)
 {
-	if (d20a->d20ATarget)
-	{
-		objects.floats->FloatCombatLine(d20a->d20ATarget, 204); // woken up
-	}
+	
+	objects.floats->FloatCombatLine(d20a->d20ATarget, 204); // woken up
+	d20Sys.d20SendSignal(d20a->d20ATarget, DK_SIG_AID_ANOTHER_WAKE_UP, d20a, 0);
+	
+	
 	return 0;
 }
 
 uint32_t _ActionCheckAidAnotherWakeUp(D20Actn* d20a, TurnBasedStatus* tbStat)
 {
+	if (!d20a->d20ATarget)
+	{
+		return 9;
+	}
 	return 0;
 };

@@ -277,6 +277,7 @@ void InitCondFromCondStructAndArgs(Dispatcher *dispatcher, CondStruct *condStruc
 
 int ConditionPrevent(DispatcherCallbackArgs args);
 int ConditionRemoveCallback(DispatcherCallbackArgs args);
+int RemoveSpellConditionAndMod(DispatcherCallbackArgs args);
 int CondNodeSetArg0FromSubDispDef(DispatcherCallbackArgs args);
 int QueryCritterHasCondition(DispatcherCallbackArgs args);
 int QuerySetReturnVal1(DispatcherCallbackArgs args);
