@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "util/fixes.h"
-#include "util/stopwatch.h"
 #include "tio/tio_utils.h"
 #include "ui/ui.h"
 #include "temple_functions.h"

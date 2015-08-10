@@ -13,13 +13,14 @@
 
 // This version only supports UNICODE.
 
+#include "stdafx.h"
+
 #include "dxerr.h"
 
 #include <stdio.h>
 
 #include <ddraw.h>
 #include <d3d9.h>
-#include <dsound.h>
 
 #define DIRECTINPUT_VERSION 0x800
 #include <dinput.h>
@@ -3232,36 +3233,6 @@ const CHAR* WINAPI DXGetErrorStringA( _In_ HRESULT hr )
         CHK_ERRA(D3DERR_PRESENT_STATISTICS_DISJOINT)
 
 // -------------------------------------------------------------
-// dsound.h error codes
-// -------------------------------------------------------------
-//      CHK_ERRA(DS_OK)
-        CHK_ERRA(DS_NO_VIRTUALIZATION)
-        CHK_ERRA(DSERR_ALLOCATED)
-        CHK_ERRA(DSERR_CONTROLUNAVAIL)
-//      CHK_ERRA(DSERR_INVALIDPARAM)
-        CHK_ERRA(DSERR_INVALIDCALL)
-//      CHK_ERRA(DSERR_GENERIC)
-        CHK_ERRA(DSERR_PRIOLEVELNEEDED)
-//      CHK_ERRA(DSERR_OUTOFMEMORY)
-        CHK_ERRA(DSERR_BADFORMAT)
-//      CHK_ERRA(DSERR_UNSUPPORTED)
-        CHK_ERRA(DSERR_NODRIVER)
-        CHK_ERRA(DSERR_ALREADYINITIALIZED)
-//      CHK_ERRA(DSERR_NOAGGREGATION)
-        CHK_ERRA(DSERR_BUFFERLOST)
-        CHK_ERRA(DSERR_OTHERAPPHASPRIO)
-        CHK_ERRA(DSERR_UNINITIALIZED)
-//      CHK_ERRA(DSERR_NOINTERFACE)
-//      CHK_ERRA(DSERR_ACCESSDENIED)
-        CHK_ERRA(DSERR_BUFFERTOOSMALL)
-        CHK_ERRA(DSERR_DS8_REQUIRED)
-        CHK_ERRA(DSERR_SENDLOOP)
-        CHK_ERRA(DSERR_BADSENDBUFFERGUID)
-        CHK_ERRA(DSERR_OBJECTNOTFOUND)
-
-    	CHK_ERRA(DSERR_FXUNAVAILABLE)
-
-// -------------------------------------------------------------
 // DXUT error codes
 // -------------------------------------------------------------
         CHK_ERRA(DXUTERR_NODIRECT3D)
@@ -3571,36 +3542,6 @@ void WINAPI DXGetErrorDescriptionA( _In_ HRESULT hr, _Out_cap_(count) CHAR* desc
         CHK_ERR(D3DERR_UNSUPPORTEDCRYPTO, "Unsupported cryptographic system" )
         CHK_ERR(D3DERR_PRESENT_STATISTICS_DISJOINT, "Presentation statistics are disjoint" )
 
-
-// -------------------------------------------------------------
-// dsound.h error codes
-// -------------------------------------------------------------
-//      CHK_ERR(DS_OK, "")
-        CHK_ERR(DS_NO_VIRTUALIZATION, "The call succeeded, but we had to substitute the 3D algorithm")
-        CHK_ERR(DSERR_ALLOCATED, "The call failed because resources (such as a priority level) were already being used by another caller")
-        CHK_ERR(DSERR_CONTROLUNAVAIL, "The control (vol, pan, etc.) requested by the caller is not available")
-//      CHK_ERR(DSERR_INVALIDPARAM, "DSERR_INVALIDPARAM")
-        CHK_ERR(DSERR_INVALIDCALL, "This call is not valid for the current state of this object")
-//      CHK_ERR(DSERR_GENERIC, "DSERR_GENERIC")
-        CHK_ERR(DSERR_PRIOLEVELNEEDED, "The caller does not have the priority level required for the function to succeed")
-//      CHK_ERR(DSERR_OUTOFMEMORY, "Not enough free memory is available to complete the operation")
-        CHK_ERR(DSERR_BADFORMAT, "The specified WAVE format is not supported")
-//      CHK_ERR(DSERR_UNSUPPORTED, "DSERR_UNSUPPORTED")
-        CHK_ERR(DSERR_NODRIVER, "No sound driver is available for use")
-        CHK_ERR(DSERR_ALREADYINITIALIZED, "This object is already initialized")
-//      CHK_ERR(DSERR_NOAGGREGATION, "DSERR_NOAGGREGATION")
-        CHK_ERR(DSERR_BUFFERLOST, "The buffer memory has been lost, and must be restored")
-        CHK_ERR(DSERR_OTHERAPPHASPRIO, "Another app has a higher priority level, preventing this call from succeeding")
-        CHK_ERR(DSERR_UNINITIALIZED, "This object has not been initialized")
-//      CHK_ERR(DSERR_NOINTERFACE, "DSERR_NOINTERFACE")
-//      CHK_ERR(DSERR_ACCESSDENIED, "DSERR_ACCESSDENIED")
-        CHK_ERR(DSERR_BUFFERTOOSMALL, "Tried to create a DSBCAPS_CTRLFX buffer shorter than DSBSIZE_FX_MIN milliseconds")
-        CHK_ERR(DSERR_DS8_REQUIRED, "Attempt to use DirectSound 8 functionality on an older DirectSound object")
-        CHK_ERR(DSERR_SENDLOOP, "A circular loop of send effects was detected")
-        CHK_ERR(DSERR_BADSENDBUFFERGUID, "The GUID specified in an audiopath file does not match a valid MIXIN buffer")
-        CHK_ERR(DSERR_OBJECTNOTFOUND, "The object requested was not found (numerically equal to DMUS_E_NOT_FOUND)")
-
-        CHK_ERR(DSERR_FXUNAVAILABLE, "Requested effects are not available")
 
 // -------------------------------------------------------------
 // d3d10.h error codes

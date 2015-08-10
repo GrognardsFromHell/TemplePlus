@@ -3,7 +3,7 @@
 
 #include "util/addresses.h"
 #include "idxtables.h"
-#include "d3d8to9/d3d8to9.h"
+#include "d3d8adapter.h"
 #include "tig.h"
 
 struct TigTexture

@@ -5,7 +5,6 @@
 #include "python_embed.h"
 #include "python_spell.h"
 #include <dialog.h>
-#include <util/stringutil.h>
 #include <critter.h>
 
 PythonObjIntegration pythonObjIntegration;

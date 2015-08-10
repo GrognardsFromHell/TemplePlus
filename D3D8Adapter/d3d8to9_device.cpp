@@ -7,6 +7,11 @@
 #include "d3d8to9_indexbuffer.h"
 #include "d3d8to9_surface.h"
 
+IDirect3DDevice9 *GetDeviceDelegate(Direct3DDevice8Adapter *adapter)
+{
+	return adapter->delegate;
+}
+
 HRESULT Direct3DDevice8Adapter::QueryInterface(THIS_ REFIID /*riid*/, void** /*ppvObj*/)
 {
 	return E_NOINTERFACE;
@@ -32,7 +37,7 @@ HRESULT Direct3DDevice8Adapter::TestCooperativeLevel(THIS)
 UINT Direct3DDevice8Adapter::GetAvailableTextureMem(THIS)
 {
 	// ToEE apparently seems to incorrectly use a 32-bit int
-	return min<UINT>(0x7FFFFFFF, delegate->GetAvailableTextureMem());
+	return std::min<UINT>(0x7FFFFFFF, delegate->GetAvailableTextureMem());
 }
 
 HRESULT Direct3DDevice8Adapter::ResourceManagerDiscardBytes(THIS_ DWORD Bytes)
@@ -163,13 +168,15 @@ void Direct3DDevice8Adapter::GetGammaRamp(THIS_ d3d8::D3DGAMMARAMP* pRamp)
 	delegate->GetGammaRamp(0, (D3DGAMMARAMP*)pRamp);
 }
 
+extern bool useDirect3d9Ex;
+
 HRESULT Direct3DDevice8Adapter::CreateTexture(THIS_ UINT Width, UINT Height, UINT Levels, DWORD Usage, d3d8::D3DFORMAT Format, d3d8::D3DPOOL Pool, d3d8::IDirect3DTexture8** ppTexture)
 {
 	auto adapter = new Direct3DTexture8Adapter;
 
 	auto d3d9format = convert(Format);
 	auto d3d9pool = (D3DPOOL)Pool;
-	if (config.useDirect3d9Ex && d3d9pool == D3DPOOL_MANAGED)
+	if (useDirect3d9Ex && d3d9pool == D3DPOOL_MANAGED)
 	{
 		d3d9pool = D3DPOOL_DEFAULT;
 		Usage |= D3DUSAGE_DYNAMIC;

@@ -16,6 +16,7 @@
 #include "ui/ui_render.h"
 #include "python/python_integration.h"
 #include "gamelib_private.h"
+#include "util/config.h"
 
 GameSystemFuncs gameSystemFuncs;
 

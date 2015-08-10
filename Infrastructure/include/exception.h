@@ -1,13 +1,15 @@
-
 #pragma once
+
+#include <exception>
+#include <string>
 
 class TempleException : std::exception {
 public:
-	TempleException(const string &msg) : mMsg(msg) {}
+	TempleException(const std::string &msg) : mMsg(msg) {}
 
 	const char* what() const override {
 		return mMsg.c_str();
 	}
 private:
-	string mMsg;
+	std::string mMsg;
 };

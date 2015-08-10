@@ -2,9 +2,10 @@
 #define GRAPHICS_H
 
 #include "stdafx.h"
+
 #include "tig/tig_startup.h"
 
-#include "d3d8to9/d3d8to9.h"
+#include "d3d8adapter.h"
 
 #include "tig/tig_font.h"
 #include "temple_functions.h"

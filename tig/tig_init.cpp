@@ -3,8 +3,6 @@
 #include "tig_init.h"
 
 #include "../util/config.h"
-#include "../util/stopwatch.h"
-#include "../util/exception.h"
 #include "../util/addresses.h"
 
 static struct TigInternal : AddressTable {

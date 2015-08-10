@@ -1,4 +1,7 @@
-#include "d3d8to9_private.h"
+
+#pragma once
+
+#include "d3d.h"
 
 struct Direct3DTexture8Adapter : public d3d8::IDirect3DTexture8
 {

@@ -1,7 +1,12 @@
 
 #include "stdafx.h"
-#include "d3d8to9_private.h"
+#include "d3d.h"
 #include "d3d8to9_texture.h"
+
+IDirect3DTexture9 *GetTextureDelegate(Direct3DTexture8Adapter *adapter)
+{
+	return adapter->delegate;
+}
 
 HRESULT Direct3DTexture8Adapter::QueryInterface(THIS_ REFIID /*riid*/, void** /*ppvObj*/)
 {

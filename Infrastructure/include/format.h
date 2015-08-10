@@ -28,6 +28,7 @@
 #ifndef FMT_FORMAT_H_
 #define FMT_FORMAT_H_
 
+#include <float.h>
 #include <stdint.h>
 
 #include <cassert>
@@ -447,7 +448,6 @@ class FixedBuffer : public fmt::internal::Buffer<Char> {
   void grow(std::size_t size);
 };
 
-#ifndef _MSC_VER
 // Portable version of signbit.
 inline int getsign(double x) {
   // When compiled in C++11 mode signbit is no longer a macro but a function
@@ -467,18 +467,6 @@ inline int isinfinity(long double x) { return isinf(x); }
 inline int isinfinity(double x) { return std::isinf(x); }
 inline int isinfinity(long double x) { return std::isinf(x); }
 # endif
-#else
-inline int getsign(double value) {
-  if (value < 0) return 1;
-  if (value == value) return 0;
-  int dec = 0, sign = 0;
-  char buffer[2];  // The buffer size must be >= 2 or _ecvt_s will fail.
-  _ecvt_s(buffer, sizeof(buffer), value, 0, &dec, &sign);
-  return sign;
-}
-inline int isinfinity(double x) { return !_finite(x); }
-inline int isinfinity(long double x) { return !_finite(static_cast<double>(x)); }
-#endif
 
 template <typename Char>
 class BasicCharTraits {

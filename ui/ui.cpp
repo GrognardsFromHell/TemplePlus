@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "ui.h"
 #include "tig/tig.h"
-#include "util/stopwatch.h"
 
 Ui ui;
 

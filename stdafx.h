@@ -7,6 +7,8 @@
 #include <Windows.h>
 #include <timeapi.h>
 
+#include "d3d.h"
+
 #include "Shlobj.h"
 #include "Shobjidl.h"
 #pragma comment(lib, "shell32.lib")
@@ -21,6 +23,7 @@
 #include <cassert>
 #include <memory>
 #include <algorithm>
+#include <unordered_map>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -32,11 +35,6 @@ using namespace std;
 
 #pragma comment(lib, "D3dx9.lib")
 
-namespace d3d8
-{
-#include "d3d8/d3d8.h"
-}
-
 #undef D3DMATRIX_DEFINED
 #undef D3DFVF_POSITION_MASK
 #undef D3DFVF_RESERVED2
@@ -46,15 +44,12 @@ namespace d3d8
 #include <d3d9.h>
 #include <D3dx9tex.h>
 
-#include "dependencies/cppformat/format.h"
+#include "infrastructure.h"
 using fmt::format;
 
 #include "MinHook.h"
-#include "dependencies/spdlog/spdlog.h"
 
 #define Py_NO_ENABLE_SHARED
 #include "Python.h"
 #undef _GNU_SOURCE // Defined by python for some reason
 #undef LONG_LONG
-
-extern shared_ptr<spdlog::logger> logger;

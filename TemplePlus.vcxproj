@@ -20,11 +20,6 @@
     <ClCompile Include="char_creation.cpp" />
     <ClCompile Include="d20_levelup.cpp" />
     <ClCompile Include="d20_obj_registry.cpp" />
-    <ClCompile Include="d3d8to9\dxerr.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="damage.cpp" />
     <ClCompile Include="dialog.cpp" />
     <ClCompile Include="dice.cpp" />
@@ -102,43 +97,7 @@
     <ClCompile Include="combat.cpp" />
     <ClCompile Include="condition.cpp" />
     <ClCompile Include="d20.cpp" />
-    <ClCompile Include="d3d8to9\d3d8to9.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="d3d8to9\d3d8to9_device.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="d3d8to9\d3d8to9_indexbuffer.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="d3d8to9\d3d8to9_rootobj.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="d3d8to9\d3d8to9_surface.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="d3d8to9\d3d8to9_texture.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="d3d8to9\d3d8to9_vertexbuffer.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="debugMessageToggles.cpp" />
-    <ClCompile Include="dependencies\cppformat\format.cc" />
     <ClCompile Include="dependencies\json11\json11.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -191,7 +150,6 @@
     <ClCompile Include="ui\ui_text.cpp" />
     <ClCompile Include="weapon.cpp" />
     <ClCompile Include="ui\ui_render.cpp" />
-    <ClCompile Include="util\version.cpp" />
     <ClCompile Include="xp.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -232,7 +190,6 @@
     <ClInclude Include="d20_levelup.h" />
     <ClInclude Include="d20_obj_registry.h" />
     <ClInclude Include="d20_status.h" />
-    <ClInclude Include="d3d8to9\dxerr.h" />
     <ClInclude Include="damage.h" />
     <ClInclude Include="dialog.h" />
     <ClInclude Include="dice.h" />
@@ -295,29 +252,10 @@
     <ClInclude Include="condition.h" />
     <ClInclude Include="d20.h" />
     <ClInclude Include="d20_defs.h" />
-    <ClInclude Include="d3d8to9\d3d8to9.h" />
-    <ClInclude Include="d3d8to9\d3d8to9_convert.h" />
-    <ClInclude Include="d3d8to9\d3d8to9_device.h" />
-    <ClInclude Include="d3d8to9\d3d8to9_indexbuffer.h" />
-    <ClInclude Include="d3d8to9\d3d8to9_private.h" />
-    <ClInclude Include="d3d8to9\d3d8to9_rootobj.h" />
-    <ClInclude Include="d3d8to9\d3d8to9_surface.h" />
-    <ClInclude Include="d3d8to9\d3d8to9_texture.h" />
-    <ClInclude Include="d3d8to9\d3d8to9_vertexbuffer.h" />
-    <ClInclude Include="d3d8\d3d8.h" />
-    <ClInclude Include="d3d8\d3d8caps.h" />
-    <ClInclude Include="d3d8\d3d8types.h" />
-    <ClInclude Include="dependencies\cppformat\format.h" />
     <ClInclude Include="dependencies\feather-ini\INI.h" />
     <ClInclude Include="dependencies\json11\json11.hpp" />
-    <ClInclude Include="dependencies\spdlog\async_logger.h" />
-    <ClInclude Include="dependencies\spdlog\common.h" />
-    <ClInclude Include="dependencies\spdlog\formatter.h" />
-    <ClInclude Include="dependencies\spdlog\logger.h" />
-    <ClInclude Include="dependencies\spdlog\spdlog.h" />
     <ClInclude Include="description.h" />
     <ClInclude Include="dispatcher.h" />
-    <ClInclude Include="util\exception.h" />
     <ClInclude Include="faction.h" />
     <ClInclude Include="feat.h" />
     <ClInclude Include="util\folderutils.h" />
@@ -346,9 +284,7 @@
     <ClInclude Include="tig\tig_loadingscreen.h" />
     <ClInclude Include="idxtables.h" />
     <ClInclude Include="obj.h" />
-    <ClInclude Include="util\mathutil.h" />
     <ClInclude Include="sound.h" />
-    <ClInclude Include="util\stopwatch.h" />
     <ClInclude Include="temple_enums.h" />
     <ClInclude Include="testhelper.h" />
     <ClInclude Include="tig\tig_startup.h" />
@@ -370,8 +306,6 @@
     <ClInclude Include="ui\ui_item_creation.h" />
     <ClInclude Include="ui\ui_render.h" />
     <ClInclude Include="ui\ui_text.h" />
-    <ClInclude Include="util\stringutil.h" />
-    <ClInclude Include="util\version.h" />
     <ClInclude Include="weapon.h" />
     <ClInclude Include="xp.h" />
     <ClInclude Include="ui\ui_mainmenu.h" />
@@ -381,7 +315,6 @@
     <Text Include="appveyor.yml" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="dependencies\spdlog\LICENSE" />
     <None Include="LICENSE" />
     <None Include="README.md" />
   </ItemGroup>
@@ -451,7 +384,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>ROCKET_STATIC_LIB;WIN32;_DEBUG;_WINDOWS;$(MSBuildDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;dependencies\include;$(SolutionDir)MinHook\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;dependencies\include;$(SolutionDir)MinHook\include;$(SolutionDir)Infrastructure\include;$(SolutionDir)D3D8Adapter\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
@@ -460,7 +393,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>temple.lib;tio\tio.lib;MinHook.lib;winmm.lib;d3d9.lib;ws2_32.lib;python27_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>temple.lib;tio\tio.lib;MinHook.lib;Infrastructure.lib;D3D8Adapter.lib;winmm.lib;d3d9.lib;ws2_32.lib;python27_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <AdditionalLibraryDirectories>dependencies\lib;$(TargetDir)</AdditionalLibraryDirectories>
@@ -474,7 +407,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;dependencies\include;$(SolutionDir)MinHook\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;dependencies\include;$(SolutionDir)MinHook\include;$(SolutionDir)Infrastructure\include;$(SolutionDir)D3D8Adapter\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -495,7 +428,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>ROCKET_STATIC_LIB;WIN32;NDEBUG;_WINDOWS;$(MSBuildDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;dependencies\include;$(SolutionDir)MinHook\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;dependencies\include;$(SolutionDir)MinHook\include;$(SolutionDir)Infrastructure\include;$(SolutionDir)D3D8Adapter\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <ForcedIncludeFiles>
@@ -507,7 +440,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>temple.lib;tio\tio.lib;MinHook.lib;winmm.lib;d3d9.lib;ws2_32.lib;python27.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>temple.lib;tio\tio.lib;MinHook.lib;Infrastructure.lib;D3D8Adapter.lib;winmm.lib;d3d9.lib;ws2_32.lib;python27.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
