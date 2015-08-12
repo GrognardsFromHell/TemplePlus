@@ -134,7 +134,8 @@ static ConfigSetting configSettings[] = {
 	CONF_INT(pointBuyPoints),
 	CONF_INT(maxPCs),
 	CONF_BOOL(maxPCsFlexible),
-	CONF_BOOL(usingCo8)
+	CONF_BOOL(usingCo8),
+	CONF_BOOL(disableScreenshots)
 };
 
 void TemplePlusConfig::Load() {
