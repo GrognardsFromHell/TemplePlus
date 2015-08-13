@@ -135,6 +135,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="breakpad\breakpad_types.h" />
+    <ClInclude Include="breakpad\crash_generation_client.h" />
+    <ClInclude Include="breakpad\guid_string.h" />
+    <ClInclude Include="breakpad\ipc_protocol.h" />
+    <ClInclude Include="breakpad\minidump_cpu_amd64.h" />
+    <ClInclude Include="breakpad\minidump_cpu_x86.h" />
+    <ClInclude Include="breakpad\minidump_exception_win32.h" />
+    <ClInclude Include="breakpad\minidump_format.h" />
+    <ClInclude Include="breakpad\scoped_ptr.h" />
+    <ClInclude Include="breakpad\string_utils-inl.h" />
+    <ClInclude Include="breakpad\exception_handler.h" />
+    <ClInclude Include="include\breakpad.h" />
     <ClInclude Include="include\exception.h" />
     <ClInclude Include="include\format.h" />
     <ClInclude Include="include\infrastructure.h" />
@@ -169,11 +181,16 @@
     <ClInclude Include="include\version.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="breakpad.cpp" />
+    <ClCompile Include="breakpad\crash_generation_client.cc" />
+    <ClCompile Include="breakpad\exception_handler.cc" />
+    <ClCompile Include="breakpad\guid_string.cc" />
     <ClCompile Include="format.cc" />
     <ClCompile Include="logging.cpp" />
     <ClCompile Include="version.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="breakpad\LICENSE" />
     <None Include="include\spdlog\LICENSE" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

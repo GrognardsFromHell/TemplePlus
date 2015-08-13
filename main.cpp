@@ -2,6 +2,7 @@
 #include "temple_functions.h"
 #include "util/fixes.h"
 #include "util/config.h"
+#include "breakpad.h"
 
 #include <psapi.h>
 
@@ -25,6 +26,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// Even though we are not using this function, we have to force the linker to not optimize our dependency away...
 	templeMainRefHack = &temple_main;
+
+	Breakpad breakpad;
+
+	throw "BLAHBLUBB";
 
 	config.Load();
 	config.Save();
