@@ -987,12 +987,17 @@ void Graphics::TakeScaledScreenshot(const string& filename, int width, int heigh
 	
 	auto device = graphics.device();
 
+	if (config.debugMessageEnable)
+		logger->debug("Device obtained {}\n", (int)device);
+
 	// Get display mode to get screen resolution
 	D3DDISPLAYMODE displayMode;
 	if (D3DLOG(device->GetDisplayMode(0, &displayMode)) != D3D_OK) {
 		logger->error("Unable to get the adapter display mode.");
 		return;
 	}
+	if (config.debugMessageEnable)
+		logger->debug("Display Mode obtained: {} {} {} {}\n", displayMode.Width, displayMode.Height, displayMode.RefreshRate , displayMode.Format );
 
 	// Create an offscreen surface to contain the frontbuffer data
 	CComPtr<IDirect3DSurface9> fbSurface;
@@ -1000,38 +1005,62 @@ void Graphics::TakeScaledScreenshot(const string& filename, int width, int heigh
 		logger->error("Unable to create offscreen surface for copying the frontbuffer");
 		return;
 	}
+	if (config.debugMessageEnable)
+		logger->debug("Offscreen surface created for copying the front buffer \n");
 
 	if (D3DLOG(device->GetFrontBufferData(0, fbSurface)) != D3D_OK) {
 		logger->error("Unable to copy the front buffer.");
 		return;
 	}
+	if (config.debugMessageEnable)
+		logger->debug("Front buffer copied.\n");
 
 	auto sceneSurface = graphics.sceneSurface();
+
+	if (config.debugMessageEnable)
+		logger->debug("Scene surface obtained: {}\n", (int)sceneSurface);
+
 	D3DSURFACE_DESC desc;
 	sceneSurface->GetDesc(&desc);
+	if (config.debugMessageEnable)
+		logger->debug("Scene Surface Desc. : Format {} Type {} Usage {}  Pool {} MultisampleType {} Quality {}  W {} H {}\n", desc.Format, desc.Type, desc.Usage, desc.Pool, desc.MultiSampleType, desc.MultiSampleQuality, desc.Width, desc.Height);
+
 	CComPtr<IDirect3DSurface9> stretchedScene;
 	if (D3DLOG(device->CreateRenderTarget(width, height, desc.Format, desc.MultiSampleType, desc.MultiSampleQuality, false, &stretchedScene, NULL)) != D3D_OK) {
 		return;
 	}
+
+	if (config.debugMessageEnable)
+		logger->debug("Stretched Scene CreateRenderTarget result obtained\n");
 	
 	if (D3DLOG(device->StretchRect(sceneSurface, nullptr, stretchedScene, nullptr, D3DTEXF_LINEAR)) != D3D_OK) {
 		logger->error("Unable to copy front buffer to target surface for screenshot");
 		return;
 	}
+	if (config.debugMessageEnable)
+		logger->debug("Stretched Scene copied from front buffer \n");
 
 	CComPtr<ID3DXBuffer> buffer;
 	if (!SUCCEEDED(D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_JPG, stretchedScene, nullptr, nullptr))) {
 		logger->error("Unable to save screenshot surface to JPEG file.");
 		return;
 	}
+	if (config.debugMessageEnable)
+		logger->debug("JPEG file buffer created from surface\n");
 
 	// We have to write using tio or else it goes god knows where
 	auto fh = tio_fopen(filename.c_str(), "w+b");
+
+	if (config.debugMessageEnable)
+		logger->debug("File created: {}\n", fh->filename);
+
 	if (tio_fwrite(buffer->GetBufferPointer(), 1, buffer->GetBufferSize(), fh) != buffer->GetBufferSize()) {
 		logger->error("Unable to write screenshot to disk due to an IO error.");
 		tio_fclose(fh);
 		tio_remove(filename.c_str());
 	} else {
+		if (config.debugMessageEnable)
+			logger->debug("File written! Closing... \n");
 		tio_fclose(fh);
 	}
 }

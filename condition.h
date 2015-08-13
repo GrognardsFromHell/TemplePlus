@@ -154,6 +154,10 @@ public:
 	char mCondCraftWandLevelSetName[100];
 	CondStructNew * mCondCraftWandLevelSet;
 
+	char mCondAidAnotherName[100];
+	CondStructNew * mCondAidAnother;
+
+
 	// monsters
 	char mCondRendName[100];
 	CondStructNew *mCondRend;
@@ -277,6 +281,7 @@ void InitCondFromCondStructAndArgs(Dispatcher *dispatcher, CondStruct *condStruc
 
 int ConditionPrevent(DispatcherCallbackArgs args);
 int ConditionRemoveCallback(DispatcherCallbackArgs args);
+int RemoveSpellConditionAndMod(DispatcherCallbackArgs args);
 int CondNodeSetArg0FromSubDispDef(DispatcherCallbackArgs args);
 int QueryCritterHasCondition(DispatcherCallbackArgs args);
 int QuerySetReturnVal1(DispatcherCallbackArgs args);
@@ -317,6 +322,8 @@ int DisarmedWeaponRetrieve(DispatcherCallbackArgs args);
 int DisarmedRetrieveWeaponRadialMenu(DispatcherCallbackArgs args);
 
 int RendOnDamage(DispatcherCallbackArgs args);
+
+int AidAnotherRadialMenu(DispatcherCallbackArgs args);
 
 void _FeatConditionsRegister();
 uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** ppCondStruct, uint32_t * arg2);

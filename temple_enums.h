@@ -1733,6 +1733,7 @@ enum D20DispatcherKey : uint32_t {
 	DK_SIG_Item_Remove_Enhancement = 0xCD,
 	DK_SIG_Disarmed_Weapon_Retrieve = 0xCE, // NEW
 	DK_SIG_Disarm = 0xCF, // NEW; resets the "took damage -> abort" flag
+	DK_SIG_AID_ANOTHER_WAKE_UP = 0xD0,
 
 	DK_QUE_Helpless = 0xCF,
 	DK_QUE_SneakAttack = 0xD0,

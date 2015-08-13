@@ -29,11 +29,6 @@ CondStructNew condDeadlyPrecision;
 CondStructNew condPersistentSpell;
 
 
-CondStructNew condGreaterRage;
-CondStructNew condIndomitableWill ;
-CondStructNew condTirelessRage;
-CondStructNew condMightyRage;
-
 CondStructNew condDisarm;
 CondStructNew condDisarmed;
 
@@ -46,10 +41,17 @@ CondStructNew condGreaterWeaponSpecialization;
 struct ConditionSystemAddresses : AddressTable
 {
 	void(__cdecl* SetPermanentModArgsFromDataFields)(Dispatcher* dispatcher, CondStruct* condStruct, int* condArgs);
+	int(__cdecl*RemoveSpellCondition)(DispatcherCallbackArgs args); 
+	int(__cdecl*RemoveSpellMod)(DispatcherCallbackArgs args);
 	ConditionSystemAddresses()
 	{
 		rebase(SetPermanentModArgsFromDataFields, 0x100E1B90);
+		rebase(RemoveSpellCondition, 0x100D7620);
+		rebase(RemoveSpellMod, 0x100CBAB0);
 	}
+
+	
+	
 } addresses;
 
 class ConditionFunctionReplacement : public TempleFix {
@@ -122,6 +124,14 @@ public:
 		sdd.dispCallback = QueryCritterHasCondition;
 		sdd.dispKey = DK_QUE_Critter_Has_Condition;
 		write(0x102DEC00, &sdd, sizeof(SubDispDefNew));
+
+		//  DK_SIG_AID_ANOTHER_WAKE_UP for sp-Sleep
+		sdd.dispType = dispTypeD20Signal;
+		sdd.data1 = 0;
+		sdd.data2 = 0;
+		sdd.dispCallback = RemoveSpellConditionAndMod; 
+		sdd.dispKey = DK_SIG_AID_ANOTHER_WAKE_UP;
+		write(0x102DEB9C, &sdd, sizeof(SubDispDefNew)); // overwriting S_Teleport_Reconnect since it does nothing (return_0 callback)
 
 
 		
@@ -327,6 +337,15 @@ int CondResetArgs(DispatcherCallbackArgs args)
 int ConditionRemoveCallback(DispatcherCallbackArgs args)
 {
 	conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+	return 0;
+}
+
+int RemoveSpellConditionAndMod(DispatcherCallbackArgs args)
+{
+	auto argsCopy = args;
+	argsCopy.dispKey = DK_SIG_Action_Recipient;
+	addresses.RemoveSpellCondition(argsCopy);
+	addresses.RemoveSpellMod(argsCopy);
 	return 0;
 };
 
@@ -837,6 +856,7 @@ void _FeatConditionsRegister()
 	// conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondSuperiorExpertise); // will just be patched inside Combat Expertise callbacks
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondRend);
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondCraftWandLevelSet);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondAidAnother);
 	/*
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDeadlyPrecision);
 	
@@ -1227,6 +1247,17 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 1, dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, (uint32_t)cond, 0);
 	DispatcherHookInit(cond, 2, dispTypeRadialMenuEntry, 0, CraftWandRadialMenu, 0, 0);
 
+	// Aid Another
+	mCondAidAnother = new CondStructNew();
+	memset(mCondAidAnother, 0, sizeof(CondStructNew));
+	cond = mCondAidAnother;	condName = mCondAidAnotherName;
+	sprintf(condName, "Aid Another");
+
+	cond->condName = condName;
+	cond->numArgs = 8;
+
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
+	DispatcherHookInit(cond, 1, dispTypeRadialMenuEntry, 0, AidAnotherRadialMenu, 0, 0);
 	// 
 	
 	/*
@@ -1936,6 +1967,50 @@ int RendOnDamage(DispatcherCallbackArgs args)
 		conds.CondNodeSetArg(args.subDispNode->condNode, 1, (int)attackDescr);
 	}
 		
+	return 0;
+}
+
+int AidAnotherRadialMenu(DispatcherCallbackArgs args)
+{
+	MesLine mesLine;
+	RadialMenuEntry radMenuAidAnotherMain;
+	radMenuAidAnotherMain.SetDefaults();
+	mesLine.key = 5112; // Aid Another
+	mesFuncs.GetLine_Safe(*combatSys.combatMesfileIdx, &mesLine);
+	radMenuAidAnotherMain.text = (char*)mesLine.value;
+	radMenuAidAnotherMain.d20ActionType = D20A_NONE;
+	radMenuAidAnotherMain.d20ActionData1 = 0;
+	radMenuAidAnotherMain.helpId = templeFuncs.StringHash("TAG_AID_ANOTHER");
+
+	int newParent = radialMenus.AddParentChildNode(args.objHndCaller, &radMenuAidAnotherMain, radialMenus.GetStandardNode(RadialMenuStandardNode::Feats));
+
+	RadialMenuEntry defensiveAssist;
+	RadialMenuEntry wakeUp;
+
+
+	wakeUp.SetDefaults();
+	wakeUp.type = RadialMenuEntryType::Action;
+	wakeUp.d20ActionType = D20A_AID_ANOTHER_WAKE_UP;
+	wakeUp.d20ActionData1 = 0;
+	wakeUp.text = combatSys.GetCombatMesLine(5113); // Wake Up
+	wakeUp.helpId = conds.hashmethods.StringHash("TAG_AID_ANOTHER");
+
+	radialMenus.AddChildNode(args.objHndCaller, &wakeUp, newParent);
+
+
+	
+	/*
+	defensiveAssist.SetDefaults();
+	defensiveAssist.type = RadialMenuEntryType::Action;
+	defensiveAssist.text = combatSys.GetCombatMesLine(6018);
+	defensiveAssist.helpId = templeFuncs.StringHash("TAG_AID_ANOTHER");
+	defensiveAssist.d20ActionType = D20A_ITEM_CREATION;
+	defensiveAssist.d20ActionData1 = CraftWand;
+	radialMenus.AddChildNode(args.objHndCaller, &defensiveAssist, newParent);
+	*/
+	
+
+
 	return 0;
 }
 #pragma endregion
