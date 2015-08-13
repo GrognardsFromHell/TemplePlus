@@ -11,6 +11,8 @@ build_script:
   - msbuild TemplePlus.sln /p:Configuration=Release /p:MSBuildDefines="_TP_VERSION=%APPVEYOR_BUILD_VERSION%;_TP_COMMIT=%APPVEYOR_REPO_COMMIT%" /verbosity:minimal
 
 after_build:
+  - tools\dump_syms.exe Release\TemplePlus.pdb > TemplePlus.sym
+  - 7z a TemplePlusSymbols-%APPVEYOR_BUILD_VERSION%.zip TemplePlus.sym
   - rd /s /q dist || cd .
   - mkdir dist
   - copy Release\TemplePlus.exe dist
