@@ -29,8 +29,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	Breakpad breakpad;
 
-	throw "BLAHBLUBB";
-
 	config.Load();
 	config.Save();
 
