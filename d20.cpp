@@ -20,6 +20,8 @@
 #include "combat.h"
 #include "float_line.h"
 #include "weapon.h"
+#include "party.h"
+#include "ui/ui_dialog.h"
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
@@ -1095,6 +1097,14 @@ uint32_t _PerformAidAnotherWakeUp(D20Actn* d20a)
 		animationGoals.PushUseSkillOn(d20a->d20APerformer, d20a->d20ATarget, SkillEnum::skill_heal);
 		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
+
+		//if (!party.IsInParty(d20a->d20APerformer) )
+		{
+			char blargh[1000];
+			memcpy(blargh, "Wake up!", sizeof("Wake up!"));
+			uiDialog.ShowTextBubble(d20a->d20APerformer, d20a->d20APerformer, { blargh }, -1);
+			
+		}
 	}
 	return 0;
 }
@@ -1102,7 +1112,7 @@ uint32_t _PerformAidAnotherWakeUp(D20Actn* d20a)
 uint32_t _ActionFrameAidAnotherWakeUp(D20Actn* d20a)
 {
 	
-	objects.floats->FloatCombatLine(d20a->d20ATarget, 204); // woken up
+	// objects.floats->FloatCombatLine(d20a->d20ATarget, 204); // woken up // not necessary - already gets applied with the removal of the sleep condition I think
 	d20Sys.d20SendSignal(d20a->d20ATarget, DK_SIG_AID_ANOTHER_WAKE_UP, d20a, 0);
 	
 	

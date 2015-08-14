@@ -93,8 +93,14 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 		}
 	}
 
-	
+	// wake up friends put to sleep; will do this if friend is within reach or otherwise at a 40% chance
+	if (WakeFriend(&aiTac))
+	{
+		actSeq->sequencePerform();
+		return 1;
+	}
 
+	// loop through tactics defined in strategy.tab
 	for (uint32_t i = 0; i < aiStrat->numTactics; i++)
 	{
 		aiTacticGetConfig(i, &aiTac, aiStrat);
@@ -654,7 +660,7 @@ void AiSystem::RegisterNewAiTactics()
 
 	n++;
 	aiTacticDefsNew[n].name = new char[100];
-	aiTacticDefsNew[n].aiFunc = _AiAsplode;
+	aiTacticDefsNew[n].aiFunc = _AiWakeFriend;
 	memset(aiTacticDefsNew[n].name, 0, 100);
 	sprintf(aiTacticDefsNew[n].name, "wake friend");
 
@@ -830,6 +836,11 @@ int _AiOnInitiativeAdd(objHndl obj)
 unsigned int _AiAsplode(AiTactic * aiTac)
 {
 	return aiSys.Asplode(aiTac);
+}
+
+unsigned int _AiWakeFriend(AiTactic * aiTac)
+{
+	return aiSys.WakeFriend(aiTac);
 }
 
 class AiReplacements : public TempleFix

@@ -106,5 +106,6 @@ private:
 extern AiSystem aiSys;
 
 unsigned int _AiAsplode(AiTactic* aiTac);
+unsigned int _AiWakeFriend(AiTactic* aiTac);
 
 

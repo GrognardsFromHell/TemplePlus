@@ -10,7 +10,7 @@ def IsWarded( obj ):
 	return 0
 
 def IsSleeping( obj):
-	if (obj.d20_query_has_spell_condition(sp_Sleep) != 0)
+	if (obj.d20_query_has_spell_condition(sp_Sleep) != 0):
 		return 1
 	return 0
 

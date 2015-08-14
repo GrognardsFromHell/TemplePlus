@@ -1975,14 +1975,13 @@ int AidAnotherRadialMenu(DispatcherCallbackArgs args)
 	MesLine mesLine;
 	RadialMenuEntry radMenuAidAnotherMain;
 	radMenuAidAnotherMain.SetDefaults();
-	mesLine.key = 5112; // Aid Another
-	mesFuncs.GetLine_Safe(*combatSys.combatMesfileIdx, &mesLine);
-	radMenuAidAnotherMain.text = (char*)mesLine.value;
+	
+	radMenuAidAnotherMain.text = combatSys.GetCombatMesLine(5112);
 	radMenuAidAnotherMain.d20ActionType = D20A_NONE;
 	radMenuAidAnotherMain.d20ActionData1 = 0;
 	radMenuAidAnotherMain.helpId = templeFuncs.StringHash("TAG_AID_ANOTHER");
 
-	int newParent = radialMenus.AddParentChildNode(args.objHndCaller, &radMenuAidAnotherMain, radialMenus.GetStandardNode(RadialMenuStandardNode::Feats));
+	int newParent = radialMenus.AddParentChildNode(args.objHndCaller, &radMenuAidAnotherMain, radialMenus.GetStandardNode(RadialMenuStandardNode::Tactical));
 
 	RadialMenuEntry defensiveAssist;
 	RadialMenuEntry wakeUp;
