@@ -39,6 +39,7 @@ void InitLogging()
 		DeleteFile(L"TemplePlus.log");
 		auto fileSink = std::make_shared<spdlog::sinks::simple_file_sink_mt>("TemplePlus.log", true);
 		auto debugSink = std::make_shared<OutputDebugStringSink>();
+		spdlog::drop_all(); // Reset all previous loggers
 		logger = spdlog::create("core", {fileSink, debugSink});
 	}
 	catch (const spdlog::spdlog_ex& e)
