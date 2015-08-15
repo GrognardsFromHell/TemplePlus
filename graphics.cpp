@@ -985,6 +985,9 @@ void Graphics::InitializeDirect3d() {
 void Graphics::TakeScaledScreenshot(const string& filename, int width, int height) {
 	logger->debug("Creating screenshot with size {}x{} in {}", width, height, filename);
 	
+	if (config.disableScreenshots)
+		return;
+
 	auto device = graphics.device();
 
 	if (config.debugMessageEnable)

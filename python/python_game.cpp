@@ -294,6 +294,7 @@ PyObject* PyGame_Fade(PyObject*, PyObject* args) {
 
 	if (fadeOutTime) {
 		TimeEvent evt;
+		fadeOutTime *= 1000;
 		evt.system = TimeEventSystem::Fade;
 		evt.params[0].int32 = 1;
 		evt.params[1].int32 = 0xFF000000;
