@@ -254,12 +254,12 @@ ModuleInfo PyTempleImporter::GetModuleInfo(const string& fullname) {
 		}
 
 		if (result.found) {
-			for (int i = 0; i < result.packagePath.size(); ++i) {
+			for (size_t i = 0; i < result.packagePath.size(); ++i) {
 				if (result.packagePath[i] == '\\') {
 					result.packagePath[i] = '/';	
 				}
 			}
-			for (int i = 0; i < result.sourcePath.size(); ++i) {
+			for (size_t i = 0; i < result.sourcePath.size(); ++i) {
 				if (result.sourcePath[i] == '\\') {
 					result.sourcePath[i] = '/';	
 				}	

@@ -154,6 +154,8 @@ public:
 	}
 };
 
+#include "tig/tig_partsys.h"
+
 int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 
 	if (!config.engineEnhancements) {
@@ -179,7 +181,7 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	applyGlobalConfig();
 
 	TigInitializer tig(hInstance);
-
+	
 	setMiles3dProvider();
 	addScreenshotHotkey();
 

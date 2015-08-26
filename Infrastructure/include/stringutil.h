@@ -5,6 +5,7 @@
 #include <functional>
 #include <vector>
 #include <sstream>
+#include <cctype>
 
 // Thanks Stackoverflow...
 
@@ -44,4 +45,17 @@ inline std::vector<std::string> split(const std::string& s, char delim, bool tri
 	std::vector<std::string> elems;
 	split(s, delim, elems, trim, keepEmpty);
 	return elems;
+}
+
+inline std::string tolower(const std::string &s) {
+	auto needsConversion = std::any_of(s.begin(), s.end(), [](char a) {
+		return std::tolower(a) != a;
+	});
+	if (needsConversion) {
+		std::string result = s;
+		std::transform(result.begin(), result.end(), result.begin(), std::tolower);
+		return result;
+	} else {
+		return s;
+	}
 }

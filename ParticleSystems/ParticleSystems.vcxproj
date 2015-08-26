@@ -18,10 +18,25 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\particles\parser.h" />
+    <ClInclude Include="include\particles\instances.h" />
+    <ClInclude Include="include\particles\params.h" />
+    <ClInclude Include="include\particles\spec.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="parser.cpp" />
+    <ClCompile Include="spec.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Infrastructure\Infrastructure.vcxproj">
+      <Project>{006f5b8a-f75f-413c-ad3a-e004ca8ddf26}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{006F5B8A-F75F-413C-AD3A-E004CA8DDF26}</ProjectGuid>
+    <ProjectGuid>{A806CAFA-9FF2-42DC-A02F-7E57EF2AB867}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Infrastructure</RootNamespace>
+    <RootNamespace>ParticleSystems</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -77,7 +92,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\Infrastructure\include;$(ProjectDir)\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -107,7 +122,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\Infrastructure\include;$(ProjectDir)\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -134,77 +149,6 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="breakpad\breakpad_types.h" />
-    <ClInclude Include="breakpad\crash_generation_client.h" />
-    <ClInclude Include="breakpad\guid_string.h" />
-    <ClInclude Include="breakpad\ipc_protocol.h" />
-    <ClInclude Include="breakpad\minidump_cpu_amd64.h" />
-    <ClInclude Include="breakpad\minidump_cpu_x86.h" />
-    <ClInclude Include="breakpad\minidump_exception_win32.h" />
-    <ClInclude Include="breakpad\minidump_format.h" />
-    <ClInclude Include="breakpad\scoped_ptr.h" />
-    <ClInclude Include="breakpad\string_utils-inl.h" />
-    <ClInclude Include="breakpad\exception_handler.h" />
-    <ClInclude Include="include\breakpad.h" />
-    <ClInclude Include="include\elfhash.h" />
-    <ClInclude Include="include\exception.h" />
-    <ClInclude Include="include\format.h" />
-    <ClInclude Include="include\infrastructure.h" />
-    <ClInclude Include="include\logging.h" />
-    <ClInclude Include="include\materials.h" />
-    <ClInclude Include="include\mathutil.h" />
-    <ClInclude Include="include\meshes.h" />
-    <ClInclude Include="include\mesparser.h" />
-    <ClInclude Include="include\spdlog\async_logger.h" />
-    <ClInclude Include="include\spdlog\common.h" />
-    <ClInclude Include="include\spdlog\details\async_logger_impl.h" />
-    <ClInclude Include="include\spdlog\details\async_log_helper.h" />
-    <ClInclude Include="include\spdlog\details\file_helper.h" />
-    <ClInclude Include="include\spdlog\details\line_logger.h" />
-    <ClInclude Include="include\spdlog\details\logger_impl.h" />
-    <ClInclude Include="include\spdlog\details\log_msg.h" />
-    <ClInclude Include="include\spdlog\details\mpmc_bounded_q.h" />
-    <ClInclude Include="include\spdlog\details\null_mutex.h" />
-    <ClInclude Include="include\spdlog\details\os.h" />
-    <ClInclude Include="include\spdlog\details\pattern_formatter_impl.h" />
-    <ClInclude Include="include\spdlog\details\registry.h" />
-    <ClInclude Include="include\spdlog\details\spdlog_impl.h" />
-    <ClInclude Include="include\spdlog\formatter.h" />
-    <ClInclude Include="include\spdlog\logger.h" />
-    <ClInclude Include="include\spdlog\sinks\base_sink.h" />
-    <ClInclude Include="include\spdlog\sinks\file_sinks.h" />
-    <ClInclude Include="include\spdlog\sinks\null_sink.h" />
-    <ClInclude Include="include\spdlog\sinks\ostream_sink.h" />
-    <ClInclude Include="include\spdlog\sinks\sink.h" />
-    <ClInclude Include="include\spdlog\sinks\stdout_sinks.h" />
-    <ClInclude Include="include\spdlog\sinks\syslog_sink.h" />
-    <ClInclude Include="include\spdlog\spdlog.h" />
-    <ClInclude Include="include\stopwatch.h" />
-    <ClInclude Include="include\stringutil.h" />
-    <ClInclude Include="include\tabparser.h" />
-    <ClInclude Include="include\version.h" />
-    <ClInclude Include="include\vfs.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="breakpad.cpp" />
-    <ClCompile Include="breakpad\crash_generation_client.cc" />
-    <ClCompile Include="breakpad\exception_handler.cc" />
-    <ClCompile Include="breakpad\guid_string.cc" />
-    <ClCompile Include="format.cc" />
-    <ClCompile Include="elfhash.cpp" />
-    <ClCompile Include="tabparser.cpp" />
-    <ClCompile Include="logging.cpp" />
-    <ClCompile Include="materials.cpp" />
-    <ClCompile Include="meshes.cpp" />
-    <ClCompile Include="mesparser.cpp" />
-    <ClCompile Include="version.cpp" />
-    <ClCompile Include="vfs.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="breakpad\LICENSE" />
-    <None Include="include\spdlog\LICENSE" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
