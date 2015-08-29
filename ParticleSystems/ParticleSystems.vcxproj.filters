@@ -27,12 +27,18 @@
     <ClInclude Include="include\particles\spec.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\particles\params_parser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="parser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="spec.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="params_parser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

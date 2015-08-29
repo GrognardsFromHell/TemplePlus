@@ -194,7 +194,7 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	mouseFuncs.HideCursor();
 
 	GameSystemsInitializer gameSystems(tig.config());
-
+	
 	/*
 		Process options applicable after initialization of game systems
 	*/

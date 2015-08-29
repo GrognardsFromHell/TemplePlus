@@ -1,4 +1,6 @@
 #include "particles/parser.h"
+#include "particles/params.h"
+#include "particles/params_parser.h"
 #include "tabparser.h"
 #include "logging.h"
 
@@ -173,10 +175,29 @@ void ParticleSystemParser::ParseMaterial(const TabFileRecord& record, PartSysEmi
 		auto material = materials->Resolve(colMaterial.AsString());
 		if (!material->IsValid()) {
 			logger->warn("Emitter on line {} has invalid material: '{}'",
-				record.GetLineNumber(), colMaterial);
+			             record.GetLineNumber(), colMaterial);
 		}
 		emitter->SetMaterial(material);
 	}
+}
+
+void ParticleSystemParser::ParseMesh(const TabFileRecord& record, PartSysEmitterSpecPtr emitter) {
+
+	// This only applies to emitters that emit 3D particles
+	if (emitter->GetParticleType() != PartSysParticleType::Model) {
+		return;
+	}
+
+	// The model filename is usually just the filename without path + extension
+	auto meshRef = meshes->Resolve(record[COL_MODEL].AsString());
+
+	if (!meshRef->IsValid()) {
+		logger->warn("Emitter on line {} has invalid mesh: '{}'",
+		             record.GetLineNumber(), record[COL_MODEL]);
+	}
+
+	emitter->SetMesh(meshRef);
+
 }
 
 void ParticleSystemParser::ParseEmitter(const TabFileRecord& record) {
@@ -226,16 +247,45 @@ void ParticleSystemParser::ParseEmitter(const TabFileRecord& record) {
 	ParseMaterial(record, emitter);
 
 	ParseOptionalEnum<PartSysCoordSys>(record, COL_PARTICLE_POS_COORD_SYS, "particle pos coord sys", CoordSysMapping, [&](auto coordSys) {
-		emitter->SetParticlePosCoordSys(coordSys);
-	});
+		                                   emitter->SetParticlePosCoordSys(coordSys);
+	                                   });
 	ParseOptionalEnum<PartSysCoordSys>(record, COL_PARTICLE_POS_COORD_SYS, "particle velocity coord sys", CoordSysMapping, [&](auto coordSys) {
-		emitter->SetParticleVelocityCoordSys(coordSys);
-	});
+		                                   emitter->SetParticleVelocityCoordSys(coordSys);
+	                                   });
 	ParseOptionalEnum<PartSysParticleSpace>(record, COL_PARTICLE_SPACE, "particle space", ParticleSpaceMapping, [&](auto space) {
-		emitter->SetParticleSpace(space);
-	});
+		                                        emitter->SetParticleSpace(space);
+	                                        });
 
-	// TODO: Mesh
+	ParseMesh(record, emitter);
+
+	// Parse the bounding box
+	ParseOptionalFloat(record, COL_BB_LEFT, "bb left", [&](float val) {
+		                   emitter->SetBoxLeft(val);
+	                   });
+	ParseOptionalFloat(record, COL_BB_TOP, "bb top", [&](float val) {
+		                   emitter->SetBoxTop(val);
+	                   });
+	ParseOptionalFloat(record, COL_BB_RIGHT, "bb right", [&](float val) {
+		                   emitter->SetBoxRight(val);
+	                   });
+	ParseOptionalFloat(record, COL_BB_BOTTOM, "bb bottom", [&](float val) {
+		                   emitter->SetBoxBottom(val);
+	                   });
+
+	for (int paramId = 0; paramId <= part_attractorBlend; paramId++) {
+		int colIdx = 22 + paramId;
+		auto col = record[colIdx];
+		if (col) {
+			bool success;
+			float defaultValue = 0.0f;
+			float lifespan = (paramId >= part_accel_X) ? emitter->GetParticleLifespan() : emitter->GetLifespan();
+			std::unique_ptr<PartSysParam> param(ParamsParser::Parse(col.AsString(), defaultValue, lifespan, success));
+			if (success) {
+				emitter->SetParam((PartSysParamId)paramId, param);
+			}
+		}
+	}
+
 }
 
 void ParticleSystemParser::ParseFile(const std::string& filename) {

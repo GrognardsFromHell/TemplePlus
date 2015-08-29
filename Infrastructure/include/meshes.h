@@ -39,6 +39,8 @@ typedef std::shared_ptr<Mesh> MeshRef;
 class MeshesManager {
 public:	
 
+	MeshRef Resolve(int meshId);
+
 	MeshRef Resolve(const std::string &name);
 
 	void LoadMapping(const std::string &filename);

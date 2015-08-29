@@ -39,5 +39,6 @@ private:
 	void ParseParticleRate(const TabFileRecord &record, PartSysEmitterSpecPtr emitter);
 	void ParseEmitterNodeName(const TabFileRecord &record, PartSysEmitterSpecPtr emitter);
 	void ParseMaterial(const TabFileRecord& record, PartSysEmitterSpecPtr emitter);
+	void ParseMesh(const TabFileRecord &record, PartSysEmitterSpecPtr emitter);
 	void ParseEmitter(const TabFileRecord& record);
 };

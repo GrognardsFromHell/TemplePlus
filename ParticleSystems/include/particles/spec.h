@@ -5,6 +5,11 @@
 #include <vector>
 
 #include <materials.h>
+#include <meshes.h>
+#include <exception.h>
+#include <format.h>
+
+#include "params.h"
 
 class PartSysSpec;
 class PartSysEmitterSpec;
@@ -77,7 +82,7 @@ enum class PartSysParticleSpace {
 class PartSysEmitterSpec {
 	friend class PartSysSpec;
 public:
-	PartSysEmitterSpec(const PartSysSpec& parent, const std::string& name) : mParent(parent), mName(name) {
+	PartSysEmitterSpec(const PartSysSpec& parent, const std::string& name) : mParent(parent), mName(name), mParams((int)part_attractorBlend + 1) {
 	}
 
 	const std::string& GetName() const {
@@ -240,6 +245,62 @@ public:
 		mParticleSpace = particleSpace;
 	}
 
+	const MeshRef &GetMesh() const {
+		return mMesh;
+	}
+
+	void SetMesh(const MeshRef& mesh) {
+		mMesh = mesh;
+	}
+
+	float GetBoxLeft() const {
+		return mBoxLeft;
+	}
+
+	void SetBoxLeft(float boxLeft) {
+		mBoxLeft = boxLeft;
+	}
+
+	float GetBoxTop() const {
+		return mBoxTop;
+	}
+
+	void SetBoxTop(float boxTop) {
+		mBoxTop = boxTop;
+	}
+
+	float GetBoxRight() const {
+		return mBoxRight;
+	}
+
+	void SetBoxRight(float boxRight) {
+		mBoxRight = boxRight;
+	}
+
+	float GetBoxBottom() const {
+		return mBoxBottom;
+	}
+
+	void SetBoxBottom(float boxBottom) {
+		mBoxBottom = boxBottom;
+	}
+
+	const PartSysParam* GetParam(PartSysParamId id) const {
+		if (id < mParams.size()) {
+			return mParams[id].get();
+		} else {
+			return nullptr;
+		}
+	}
+
+	void SetParam(PartSysParamId id, std::unique_ptr<PartSysParam> &param) {
+		if (id < mParams.size()) {
+			mParams[id].swap(param);
+		} else {
+			throw new TempleException(fmt::format("Parameter index out of range: {}", id));
+		}
+	}
+
 private:
 	const PartSysSpec& mParent;
 	std::string mName;
@@ -261,6 +322,12 @@ private:
 	PartSysCoordSys mParticlePosCoordSys = PartSysCoordSys::Cartesian;
 	PartSysCoordSys mParticleVelocityCoordSys = PartSysCoordSys::Cartesian;
 	PartSysParticleSpace mParticleSpace = PartSysParticleSpace::World;
-
+	MeshRef mMesh;
+	float mBoxLeft = -399.0f;
+	float mBoxTop = -299.0f;
+	float mBoxRight = 399.0f;
+	float mBoxBottom = 299.0f;
+	std::vector<std::unique_ptr<PartSysParam>> mParams;
+	
 	float mDelay = 0.0f;
 };

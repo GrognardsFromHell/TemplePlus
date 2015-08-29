@@ -14,5 +14,4 @@ public:
 
 	static Content ParseString(const std::string &content, const std::string& filename = "<string>");
 
-
 };

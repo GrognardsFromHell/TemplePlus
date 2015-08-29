@@ -62,29 +62,64 @@ enum PartSysParamType : uint32_t {
 };
 
 #pragma pack(push, 1)
-struct PartSysParam {
-	PartSysParamType type;
+class PartSysParam {
+public:
+	virtual ~PartSysParam() = 0;
+
+	virtual PartSysParamType GetType() const = 0;
+	
+	virtual float GetValue() const = 0;
 };
 
-struct PartSysParamKeyframe : public PartSysParam {
-	int frameCount;
-	float *startTimes;
-	float *values;
-	float *deltaPerTick;
-	// Variable length follows (frameCount * 12 bytes)
+inline PartSysParam::~PartSysParam() {
+}
 
-	PartSysParamKeyframe() {
-		type = PSPT_KEYFRAMES;
+struct PartSysParamKeyframe {
+	float start;
+	float value;
+	float deltaPerSec;
+};
+
+class PartSysParamKeyframes : public PartSysParam {
+public:
+	PartSysParamKeyframes(const std::vector<PartSysParamKeyframe> &frames) : mFrames(frames) {
 	}
+	
+	PartSysParamType GetType() const override {
+		return PSPT_KEYFRAMES;
+	}
+
+	float GetValue() const override {
+		return 0;
+	}
+
+	const std::vector<PartSysParamKeyframe> &GetFrames() const {
+		return mFrames;
+	}
+
+private:
+	std::vector<PartSysParamKeyframe> mFrames;
 };
 
-struct PartSysParamRandom : public PartSysParam {
+class PartSysParamConstant : public PartSysParam {
+public:
+	explicit PartSysParamConstant(float value) : mValue(value) {
+	}
+
+	float GetValue() const override {
+		return mValue;
+	}
+	
+	PartSysParamType GetType() const override {
+		return PSPT_CONSTANT;
+	}
+private:
+	float mValue;
+};
+
+class PartSysParamRandom : public PartSysParam {
 	float base;
 	float randomDelta;
-
-	PartSysParamRandom() {
-		type = PSPT_RANDOM;
-	}
 };
 
 struct PartSysParamState
@@ -100,7 +135,7 @@ struct PartSysParamStateRandom
 
 struct PartSysParamStateKeyframe
 {
-	PartSysParamKeyframe *param;
+	PartSysParamKeyframes *param;
 	PartSysEmitter *emitter;
 };
 #pragma pack(pop)
