@@ -118,8 +118,29 @@ private:
 };
 
 class PartSysParamRandom : public PartSysParam {
-	float base;
-	float randomDelta;
+public:
+	PartSysParamRandom(float base, float variance) : mBase(base), mVariance(variance) {
+	}
+
+	PartSysParamType GetType() const override {
+		return PSPT_RANDOM;
+	}
+
+	float GetValue() const override {
+		return mBase;
+	}
+
+	float GetBase() const {
+		return mBase;
+	}
+
+	float GetVariance() const {
+		return mVariance;
+	}
+
+private:
+	float mBase;
+	float mVariance;
 };
 
 struct PartSysParamState

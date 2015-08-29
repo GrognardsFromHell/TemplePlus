@@ -38,5 +38,8 @@
     <ClCompile Include="partsyskeyframes_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="partsysrandom_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,10 +1,7 @@
 #include "stdafx.h"
 
-#include <meshes.h>
 #include <particles/parser.h>
 #include <particles/params_parser.h>
-#include <vfs.h>
-#include <stringutil.h>
 #include <format.h>
 
 static std::string BuildFrameString(const std::vector<PartSysParamKeyframe> &frames) {
@@ -19,7 +16,13 @@ static std::string BuildFrameString(const std::vector<PartSysParamKeyframe> &fra
 }
 
 static std::vector<PartSysParamKeyframe> Parse(const std::string &spec, float lifetime) {
-	auto keyframes = std::unique_ptr<PartSysParamKeyframes>(ParamsParser::ParseKeyframes(spec, lifetime));
+	bool success;
+	std::unique_ptr<PartSysParamKeyframes> keyframes(
+		(PartSysParamKeyframes*) ParamsParser::Parse(spec, 0.0f, lifetime, success)
+	);
+	if (!success) {
+		throw new TempleException("Unable to parse...");
+	}
 	auto result = keyframes->GetFrames();
 
 	// Build nice debug output

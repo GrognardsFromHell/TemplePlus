@@ -1,3 +1,6 @@
+
+#include <regex>
+
 #include <stringutil.h>
 #include <logging.h>
 
@@ -19,7 +22,9 @@ PartSysParam* ParamsParser::Parse(const std::string& value, float defaultValue, 
 	}
 
 	if (value.find('?') != std::string::npos) {
-		return nullptr; // TODO
+		auto result = ParseRandom(value);
+		success = !!result;
+		return result;
 	}
 
 	if (value.find('#') != std::string::npos) {
@@ -161,4 +166,17 @@ PartSysParamKeyframes* ParamsParser::ParseKeyframes(const std::string& value, fl
 
 	return new PartSysParamKeyframes(frames);
 
+}
+
+PartSysParamRandom* ParamsParser::ParseRandom(const std::string& value) {
+#define FLOAT_PATTERN "(-?\\d*\\.\\d+|-?\\d+)"
+	static const std::regex re(FLOAT_PATTERN "\\?" FLOAT_PATTERN);
+	std::smatch match;
+	if (std::regex_search(value, match, re)) {
+		auto lower = std::stof(match[1]);
+		auto upper = std::stof(match[2]);
+		auto variance = upper - lower;
+		return new PartSysParamRandom(lower, variance);
+	}
+	return nullptr;
 }
