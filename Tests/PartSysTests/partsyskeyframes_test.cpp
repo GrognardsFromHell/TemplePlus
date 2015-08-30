@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include <particles/parser.h>
-#include <particles/params_parser.h>
+#include <particles/parser_params.h>
 #include <format.h>
 
 static std::string BuildFrameString(const std::vector<PartSysParamKeyframe> &frames) {
@@ -18,7 +18,7 @@ static std::string BuildFrameString(const std::vector<PartSysParamKeyframe> &fra
 static std::vector<PartSysParamKeyframe> Parse(const std::string &spec, float lifetime) {
 	bool success;
 	std::unique_ptr<PartSysParamKeyframes> keyframes(
-		(PartSysParamKeyframes*) ParamsParser::Parse(spec, 0.0f, lifetime, success)
+		(PartSysParamKeyframes*) ParserParams::Parse(spec, 0.0f, lifetime, success)
 	);
 	if (!success) {
 		throw new TempleException("Unable to parse...");

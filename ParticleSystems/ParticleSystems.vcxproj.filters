@@ -27,7 +27,10 @@
     <ClInclude Include="include\particles\spec.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\particles\params_parser.h">
+    <ClInclude Include="include\particles\parser_keyframes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\particles\parser_params.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -39,6 +42,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="params_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="parser_keyframes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

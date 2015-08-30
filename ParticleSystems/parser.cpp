@@ -1,6 +1,6 @@
 #include "particles/parser.h"
 #include "particles/params.h"
-#include "particles/params_parser.h"
+#include "particles/parser_params.h"
 #include "tabparser.h"
 #include "logging.h"
 
@@ -279,9 +279,12 @@ void ParticleSystemParser::ParseEmitter(const TabFileRecord& record) {
 			bool success;
 			float defaultValue = 0.0f;
 			float lifespan = (paramId >= part_accel_X) ? emitter->GetParticleLifespan() : emitter->GetLifespan();
-			std::unique_ptr<PartSysParam> param(ParamsParser::Parse(col.AsString(), defaultValue, lifespan, success));
+			std::unique_ptr<PartSysParam> param(ParserParams::Parse(col.AsString(), defaultValue, lifespan, success));
 			if (success) {
 				emitter->SetParam((PartSysParamId)paramId, param);
+			} else {
+				logger->warn("Unable to parse particle system param {} for particle system {} and emitter {} with value {}",
+					paramId, systemName, emitter->GetName(), col.AsString());
 			}
 		}
 	}

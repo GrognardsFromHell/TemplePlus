@@ -4,7 +4,7 @@
 
 #include "params.h"
 
-class ParamsParser {
+class ParserParams {
 public:
 		
 	static PartSysParam* Parse(const std::string& value,
@@ -15,5 +15,9 @@ public:
 	static PartSysParamKeyframes* ParseKeyframes(const std::string &value, float parentLifespan);
 
 	static PartSysParamRandom* ParseRandom(const std::string &value);
+
+	static PartSysParamSpecial* ParseSpecial(const std::string &value);
+	
+	static PartSysParamConstant* ParseConstant(const std::string &value, float defaultValue, bool &success);
 
 };

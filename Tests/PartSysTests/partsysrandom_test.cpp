@@ -2,12 +2,12 @@
 #include "stdafx.h"
 
 #include <particles/parser.h>
-#include <particles/params_parser.h>
+#include <particles/parser_params.h>
 
 static std::unique_ptr<PartSysParamRandom> Parse(const std::string &spec) {
 	bool success;
 	std::unique_ptr<PartSysParamRandom> result(
-		(PartSysParamRandom*)ParamsParser::Parse(spec, 0.0f, 0.0f, success)
+		(PartSysParamRandom*)ParserParams::Parse(spec, 0.0f, 0.0f, success)
 		);
 	if (!success) {
 		throw new TempleException("Unable to parse...");

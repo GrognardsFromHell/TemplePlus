@@ -143,6 +143,32 @@ private:
 	float mVariance;
 };
 
+enum PartSysParamSpecialType {
+	PSPST_RADIUS
+};
+
+class PartSysParamSpecial : public PartSysParam {
+public:
+	explicit PartSysParamSpecial(PartSysParamSpecialType specialType)
+		: mSpecialType(specialType) {
+	}
+
+	PartSysParamType GetType() const override {
+		return PSPT_SPECIAL;
+	}
+
+	float GetValue() const override {
+		return 0;
+	}
+
+	PartSysParamSpecialType GetSpecialType() const {
+		return mSpecialType;
+	}
+
+private:
+	PartSysParamSpecialType mSpecialType;
+};
+
 struct PartSysParamState
 {
 	PartSysParam *param;
