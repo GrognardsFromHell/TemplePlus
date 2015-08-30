@@ -27,7 +27,8 @@
     <ClInclude Include="include\particles\spec.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="params_parser.cpp" />
+    <ClCompile Include="params.cpp" />
+    <ClCompile Include="parser_params.cpp" />
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="parser_keyframes.cpp" />
     <ClCompile Include="spec.cpp" />

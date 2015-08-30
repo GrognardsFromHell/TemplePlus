@@ -41,10 +41,13 @@
     <ClCompile Include="spec.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="params_parser.cpp">
+    <ClCompile Include="parser_keyframes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="parser_keyframes.cpp">
+    <ClCompile Include="parser_params.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="params.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

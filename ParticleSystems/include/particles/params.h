@@ -2,6 +2,8 @@
 #pragma once
 
 #include <stdint.h>
+#include <vector>
+
 
 struct PartSysEmitter;
 
@@ -69,6 +71,12 @@ public:
 	virtual PartSysParamType GetType() const = 0;
 	
 	virtual float GetValue() const = 0;
+
+	/*
+		Returns the value a parameter shall have if it
+		is undefined
+	*/
+	static float GetDefaultValue(PartSysParamId id);
 };
 
 inline PartSysParam::~PartSysParam() {
@@ -113,6 +121,7 @@ public:
 	PartSysParamType GetType() const override {
 		return PSPT_CONSTANT;
 	}
+
 private:
 	float mValue;
 };

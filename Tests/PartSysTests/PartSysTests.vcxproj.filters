@@ -41,5 +41,8 @@
     <ClCompile Include="partsysrandom_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="parser_param_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

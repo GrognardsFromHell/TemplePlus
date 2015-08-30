@@ -150,6 +150,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mesparser_test.cpp" />
+    <ClCompile Include="parser_param_test.cpp" />
     <ClCompile Include="partsyskeyframes_test.cpp" />
     <ClCompile Include="partsysrandom_test.cpp" />
     <ClCompile Include="partsys_test.cpp" />

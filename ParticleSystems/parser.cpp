@@ -277,9 +277,8 @@ void ParticleSystemParser::ParseEmitter(const TabFileRecord& record) {
 		auto col = record[colIdx];
 		if (col) {
 			bool success;
-			float defaultValue = 0.0f;
-			float lifespan = (paramId >= part_accel_X) ? emitter->GetParticleLifespan() : emitter->GetLifespan();
-			std::unique_ptr<PartSysParam> param(ParserParams::Parse(col.AsString(), defaultValue, lifespan, success));
+			std::unique_ptr<PartSysParam> param(ParserParams::Parse((PartSysParamId) paramId, 
+				col.AsString(), emitter->GetLifespan(), emitter->GetParticleLifespan(), success));
 			if (success) {
 				emitter->SetParam((PartSysParamId)paramId, param);
 			} else {

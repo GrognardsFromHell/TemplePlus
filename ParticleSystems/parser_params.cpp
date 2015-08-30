@@ -7,8 +7,19 @@
 #include "particles/parser_params.h"
 #include "particles/params.h"
 
-PartSysParam* ParserParams::Parse(const std::string& value, float defaultValue, float parentLifespan, bool& success) {
+PartSysParam* ParserParams::Parse(PartSysParamId id, const std::string& value, float emitterLifespan, float particleLifespan, bool& success) {
 
+	// Look up the default value
+	auto defaultValue = PartSysParam::GetDefaultValue(id);
+
+	// Do we have to use the particle or emitter lifespan as reference for keyframes?
+	auto lifespan = (id >= part_accel_X) ? particleLifespan : emitterLifespan;
+
+	return Parse(value, defaultValue, lifespan, success);
+
+}
+
+PartSysParam* ParserParams::Parse(const std::string& value, float defaultValue, float parentLifespan, bool& success) {
 	success = false;
 
 	if (parentLifespan == 0) {
