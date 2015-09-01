@@ -33,6 +33,15 @@
     <ClInclude Include="include\particles\parser_params.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\particles\external.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\particles\types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\particles\particletypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="parser.cpp">
@@ -48,6 +57,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="params.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="instances.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="particletypes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

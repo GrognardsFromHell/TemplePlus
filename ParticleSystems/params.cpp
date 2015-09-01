@@ -1,5 +1,9 @@
 
 #include "particles/params.h"
+#include "particles/external.h"
+#include "particles/instances.h"
+
+uint32_t PartSysRandomGen::mState = 0x1127E5;
 
 static const float DefaultValues[] = {
 	0, // 0
@@ -51,4 +55,21 @@ static const float DefaultValues[] = {
 
 float PartSysParam::GetDefaultValue(PartSysParamId id) {
 	return DefaultValues[id];
+}
+
+float PartSysParamSpecial::GetValue(PartSysEmitter* emitter, int particleIdx, float lifetimeSec) {
+
+	// Returns the radius of the object associated with the emitter
+	auto obj = emitter->GetAttachedTo();
+	
+	if (!obj) {
+		return 0; // Fallback value
+	}
+
+	if (mSpecialType == PSPST_RADIUS) {
+		return IPartSysExternal::GetCurrent()->GetObjRadius(obj);
+	} else {
+		return 0;
+	}
+	
 }

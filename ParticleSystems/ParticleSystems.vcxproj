@@ -19,18 +19,23 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\particles\external.h" />
     <ClInclude Include="include\particles\parser_params.h" />
     <ClInclude Include="include\particles\parser.h" />
     <ClInclude Include="include\particles\instances.h" />
     <ClInclude Include="include\particles\params.h" />
     <ClInclude Include="include\particles\parser_keyframes.h" />
+    <ClInclude Include="include\particles\particletypes.h" />
     <ClInclude Include="include\particles\spec.h" />
+    <ClInclude Include="include\particles\types.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="instances.cpp" />
     <ClCompile Include="params.cpp" />
     <ClCompile Include="parser_params.cpp" />
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="parser_keyframes.cpp" />
+    <ClCompile Include="particletypes.cpp" />
     <ClCompile Include="spec.cpp" />
   </ItemGroup>
   <ItemGroup>

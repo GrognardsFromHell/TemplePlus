@@ -32,9 +32,6 @@
     <ClCompile Include="mesparser_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="partsys_test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="partsyskeyframes_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -42,6 +39,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="parser_param_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="parser_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="simulation_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

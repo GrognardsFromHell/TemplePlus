@@ -15,7 +15,7 @@ TEST(ParserParamsTest, GetDefaultValue) {
 TEST(ParserParamsTest, ParseConstant) {
 
 	bool success;
-	auto param = ParserParams::Parse(emit_accel_X, "1.5", 0, 0, success);
+	auto param = (PartSysParamConstant*) ParserParams::Parse(emit_accel_X, "1.5", 0, 0, success);
 
 	ASSERT_NE(nullptr, param);
 	ASSERT_TRUE(success);

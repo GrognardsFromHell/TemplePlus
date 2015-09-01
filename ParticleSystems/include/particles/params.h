@@ -3,9 +3,11 @@
 
 #include <stdint.h>
 #include <vector>
+#include <memory>
 
-
-struct PartSysEmitter;
+class IPartSysExternal;
+class PartSysParamState;
+class PartSysEmitter;
 
 enum PartSysParamId : uint32_t
 {
@@ -54,6 +56,7 @@ enum PartSysParamId : uint32_t
 	part_green = 0x2A,
 	part_blue = 0x2B,
 	part_attractorBlend = 0x2C,
+	PARTICLE_PARAM_COUNT
 };
 
 enum PartSysParamType : uint32_t {
@@ -63,14 +66,34 @@ enum PartSysParamType : uint32_t {
 	PSPT_SPECIAL = 5
 };
 
-#pragma pack(push, 1)
+/*
+Abstract base class that encapsulates the runtime state
+required to model a parameter.
+*/
+class PartSysEmitter;
+class PartSysParamState
+{
+public:
+	virtual void Free() {
+		delete this;
+	}
+
+	virtual float GetValue(PartSysEmitter * emitter, int particleIdx, float lifetimeSec) = 0;
+
+	virtual void InitParticle(int particleIdx) {
+	}
+
+protected:
+	virtual ~PartSysParamState() {}
+};
+
 class PartSysParam {
 public:
 	virtual ~PartSysParam() = 0;
 
 	virtual PartSysParamType GetType() const = 0;
 	
-	virtual float GetValue() const = 0;
+	virtual PartSysParamState* CreateState(size_t particleCount) const = 0;
 
 	/*
 		Returns the value a parameter shall have if it
@@ -88,7 +111,7 @@ struct PartSysParamKeyframe {
 	float deltaPerSec;
 };
 
-class PartSysParamKeyframes : public PartSysParam {
+class PartSysParamKeyframes : public PartSysParam, public PartSysParamState {
 public:
 	PartSysParamKeyframes(const std::vector<PartSysParamKeyframe> &frames) : mFrames(frames) {
 	}
@@ -97,33 +120,100 @@ public:
 		return PSPT_KEYFRAMES;
 	}
 
-	float GetValue() const override {
+	const std::vector<PartSysParamKeyframe> &GetFrames() const {
+		return mFrames;
+	}
+
+	PartSysParamState* CreateState(size_t /*particleCount*/) const override {
+		return const_cast<PartSysParamKeyframes*>(this);
+	}
+
+	float GetValue(PartSysEmitter*, int /*particleIdx*/, float /*lifetimeSec*/) override {
+		// TODO: Implement
 		return 0;
 	}
 
-	const std::vector<PartSysParamKeyframe> &GetFrames() const {
-		return mFrames;
+	void Free() override {
+		// Do nothing since we're owned by the particle system spec instead
 	}
 
 private:
 	std::vector<PartSysParamKeyframe> mFrames;
 };
 
-class PartSysParamConstant : public PartSysParam {
+class PartSysParamConstant : public PartSysParam, public PartSysParamState {
 public:
 	explicit PartSysParamConstant(float value) : mValue(value) {
 	}
 
-	float GetValue() const override {
+	float GetValue() const {
 		return mValue;
 	}
-	
+
 	PartSysParamType GetType() const override {
 		return PSPT_CONSTANT;
 	}
 
+	PartSysParamState* CreateState(size_t /*particleCount*/) const override {
+		return const_cast<PartSysParamConstant*>(this);
+	}
+	
+	float GetValue(PartSysEmitter*, int /*particleIdx*/, float /*lifetimeSec*/) override {
+		return mValue;
+	}
+
+	void Free() override {
+		// Do nothing since we're owned by the particle system spec instead
+	}
+
 private:
 	float mValue;
+};
+
+class PartSysRandomGen {
+public:
+	
+	static constexpr uint16_t MAX_VALUE = 0x7FFF;
+
+	static constexpr float MAX_VALUE_FACTOR = 1.0f / MAX_VALUE;
+
+	static uint16_t NextValue() {
+		mState = 0x19660D * mState + 0x3C6EF35F;
+		return (mState >> 8) & 0x7FFF;
+	}
+
+	static float NextValue(float rangeInclusive) {
+		return NextValue() * rangeInclusive / MAX_VALUE_FACTOR;
+	}
+	
+private:
+	static uint32_t mState;
+
+};
+
+class PartSysParamStateRandom : public PartSysParamState {
+public:
+	
+	explicit PartSysParamStateRandom(int particleCount, float base, float variance)
+		: mParticles(particleCount), mBase(base), mVariance(variance) {
+		// Create a value for each parameter
+		for (int i = 0; i < particleCount; ++i) {
+			PartSysParamStateRandom::InitParticle(i);
+		}
+	}
+
+	float GetValue(PartSysEmitter* /*emitter*/, int particleIdx, float /*lifetimeSec*/) override {
+		return mParticles[particleIdx];
+	}
+	
+	void InitParticle(int particleIdx) override {
+		mParticles[particleIdx] = mBase + PartSysRandomGen::NextValue(mVariance);
+	}
+
+private:
+	std::vector<float> mParticles;
+	float mBase;
+	float mVariance;
 };
 
 class PartSysParamRandom : public PartSysParam {
@@ -135,16 +225,16 @@ public:
 		return PSPT_RANDOM;
 	}
 
-	float GetValue() const override {
-		return mBase;
-	}
-
 	float GetBase() const {
 		return mBase;
 	}
 
 	float GetVariance() const {
 		return mVariance;
+	}
+
+	PartSysParamState* CreateState(size_t particleCount) const override {
+		return new PartSysParamStateRandom(particleCount, mBase, mVariance);
 	}
 
 private:
@@ -156,7 +246,7 @@ enum PartSysParamSpecialType {
 	PSPST_RADIUS
 };
 
-class PartSysParamSpecial : public PartSysParam {
+class PartSysParamSpecial : public PartSysParam, public PartSysParamState {
 public:
 	explicit PartSysParamSpecial(PartSysParamSpecialType specialType)
 		: mSpecialType(specialType) {
@@ -166,32 +256,19 @@ public:
 		return PSPT_SPECIAL;
 	}
 
-	float GetValue() const override {
-		return 0;
-	}
-
 	PartSysParamSpecialType GetSpecialType() const {
 		return mSpecialType;
 	}
 
+	PartSysParamState* CreateState(size_t /*particleCount*/) const override {
+		return const_cast<PartSysParamSpecial*>(this);
+	}
+	
+	float GetValue(PartSysEmitter* emitter, int particleIdx, float lifetimeSec) override;
+
+	void Free() override {
+		// Do nothing since we're owned by the particle system spec instead
+	}
 private:
 	PartSysParamSpecialType mSpecialType;
 };
-
-struct PartSysParamState
-{
-	PartSysParam *param;
-};
-
-struct PartSysParamStateRandom
-{
-  PartSysParamRandom *param;
-  float *particleValues;
-};
-
-struct PartSysParamStateKeyframe
-{
-	PartSysParamKeyframes *param;
-	PartSysEmitter *emitter;
-};
-#pragma pack(pop)

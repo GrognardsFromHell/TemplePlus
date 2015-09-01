@@ -10,6 +10,7 @@
 #include <format.h>
 
 #include "params.h"
+#include "particletypes.h"
 
 class PartSysSpec;
 class PartSysEmitterSpec;
@@ -197,11 +198,11 @@ public:
 		mOffsetCoordSys = offsetCoordSys;
 	}
 
-	PartSysParticleType GetParticleType() const {
+	const ParticleType* GetParticleType() const {
 		return mParticleType;
 	}
 
-	void SetParticleType(PartSysParticleType particleType) {
+	void SetParticleType(const ParticleType* particleType) {
 		mParticleType = particleType;
 	}
 
@@ -316,7 +317,6 @@ private:
 	std::string mNodeName;
 	PartSysCoordSys mCoordSys = PartSysCoordSys::Cartesian;
 	PartSysCoordSys mOffsetCoordSys = PartSysCoordSys::Cartesian;
-	PartSysParticleType mParticleType = PartSysParticleType::Point;
 	PartSysBlendMode mBlendMode = PartSysBlendMode::Add;
 	MaterialRef mMaterial;
 	PartSysCoordSys mParticlePosCoordSys = PartSysCoordSys::Cartesian;
@@ -328,6 +328,7 @@ private:
 	float mBoxRight = 399.0f;
 	float mBoxBottom = 299.0f;
 	std::vector<std::unique_ptr<PartSysParam>> mParams;
+	const ParticleType *mParticleType;
 	
 	float mDelay = 0.0f;
 };
