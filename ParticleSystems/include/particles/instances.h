@@ -37,10 +37,11 @@ enum ParticleStateField : uint32_t {
 	PSF_GREEN,
 	PSF_BLUE,
 	PSF_ALPHA,
-	PSF_UNK1,
-	PSF_UNK2,
-	PSF_UNK3,
-	PSF_UNK4,
+	// These seem to be used for polar coordinate based positioning
+	PSF_POS_INCLINATION,
+	PSF_POS_AZIMUTH,
+	PSF_POS_RADIUS,
+	PSF_ROTATION,
 	PSF_COUNT
 };
 
@@ -52,20 +53,30 @@ public:
 	int GetCount() const {
 		return mCount;
 	}
+
 	int GetCapacity() const {
 		return mCapacity;
 	}
-	float *GetState(ParticleStateField field) {
-		return mData + (mCapacity * (uint32_t) field);
+	
+	void SetState(ParticleStateField field, int particleIdx, float value) {
+		*GetStatePtr(field, particleIdx) = value;
 	}
 
-private:
-	ParticleState& operator=(const ParticleState&) = delete;
-	ParticleState(const ParticleState&) = delete;
+	float GetState(ParticleStateField field, int particleIdx) {
+		return *GetStatePtr(field, particleIdx);
+	}
 
+private:	
 	int mCapacity;
 	int mCount;
 	float *mData = nullptr;
+
+	ParticleState& operator=(const ParticleState&) = delete;
+	ParticleState(const ParticleState&) = delete;
+
+	float *GetStatePtr(ParticleStateField field, int particleIdx) {
+		return mData + (mCapacity * (uint32_t)field);
+	}
 };
 
 class PartSysEmitter
@@ -79,11 +90,24 @@ public:
 	}
 
 	const std::vector<float> &GetParticles() {
-		return mParticles;
+		return mParticleAges;
 	}
 
 	const std::vector<PartSysParamState*> &GetParamState() const {
 		return mParamState;
+	}
+
+	PartSysParamState* GetParamState(PartSysParamId paramId) const {
+		return mParamState[paramId];
+	}
+
+	float GetParamValue(PartSysParamId paramId, int particleIdx, float lifetime, float defaultValue = 0.0f) const {
+		auto state = GetParamState(paramId);
+		if (state) {
+			return state->GetValue(this, particleIdx, lifetime);
+		} else {
+			return defaultValue;
+		}
 	}
 
 	float GetAliveInSecs() const {
@@ -101,6 +125,38 @@ public:
 	const Vec3 &GetWorldPos() const {
 		return mWorldPos;
 	}
+	
+	const Vec3 &GetWorldPosVar() const {
+		return mWorldPosVar;
+	}
+
+	const Vec3& GetObjPos() const {
+		return mObjPos;
+	}
+
+	const Vec3& GetPrevObjPos() const {
+		return mPrevObjPos;
+	}
+
+	float GetObjRotation() const {
+		return mObjRotation;
+	}
+
+	float GetPrevObjRotation() const {
+		return mPrevObjRotation;
+	}
+
+	float GetParticleAge(int particleIdx) const {
+		return mParticleAges[particleIdx];
+	}
+
+	float GetParticleSpawnTime(int particleIdx) const {
+		return mAliveInSecs - GetParticleAge(particleIdx);
+	}
+
+	ParticleState &GetParticleState() {
+		return mParticleState;
+	}
 
 	void SimulateEmitterMovement(float timeToSimulateSecs);
 	int ReserveParticle(float spawnedAt);
@@ -109,7 +165,7 @@ public:
 
 private:
 	PartSysEmitterSpecPtr mSpec;
-	std::vector<float> mParticles;
+	std::vector<float> mParticleAges;
 	std::vector<PartSysParamState*> mParamState;
 	ParticleState mParticleState;
 	float mAliveInSecs = 0;

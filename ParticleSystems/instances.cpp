@@ -22,13 +22,13 @@ ParticleState::~ParticleState() {
 }
 
 PartSysEmitter::PartSysEmitter(const PartSysEmitterSpecPtr& spec) :
-	mSpec(spec), mParticles(spec->GetMaxParticles(), 0), mParamState(PARTICLE_PARAM_COUNT, nullptr), mParticleState(spec->GetMaxParticles()),
+	mSpec(spec), mParticleAges(spec->GetMaxParticles(), 0), mParamState(PARTICLE_PARAM_COUNT, nullptr), mParticleState(spec->GetMaxParticles()),
 	mWorldPos(0, 0, 0), mVelocity(0, 0, 0), mWorldPosVar(0, 0, 0) {
 
 	for (int i = 0; i < PARTICLE_PARAM_COUNT; ++i) {
 		auto param = mSpec->GetParam((PartSysParamId)i);
 		if (param) {
-			mParamState[i] = param->CreateState(mParticles.size());
+			mParamState[i] = param->CreateState(mParticleAges.size());
 		}
 	}
 
@@ -106,11 +106,11 @@ void PartSysEmitter::SimulateEmitterMovement(float timeToSimulateSecs) {
 	}
 }
 
-int PartSysEmitter::ReserveParticle(float spawnedAt) {
+int PartSysEmitter::ReserveParticle(float particleAge) {
 
 	auto result = mNextFreeParticle++;
 
-	mParticles[result] = spawnedAt;
+	mParticleAges[result] = particleAge;
 
 	// TODO UNKNOWN
 	// if (a1->particleParams->flags & 8)
@@ -198,6 +198,36 @@ void PartSysEmitter::Simulate(float timeToSimulateSecs, IPartSysExternal* extern
 		return;
 	}
 
+	// Scale the particle rate according to the fidelity setting
+	auto partsPerSec = mSpec->GetParticleRate() + (mSpec->GetParticleRate() - mSpec->GetParticleRateSecondary()) *
+		external->GetParticleFidelity();
+
+	// If this emitter will not emit anything in 1000 seconds, 
+	// because of the fidelity setting, simply set it to end
+	if (partsPerSec <= 0.001f) {
+		mAliveInSecs = mSpec->GetLifespan() + 1.0f;
+		return;
+	}
+
+	mOutstandingSimulation += timeToSimulateSecs;
+	mAliveInSecs += timeToSimulateSecs;
+
+	// Calculate how many seconds go by until the emitter spawns
+	// another particle
+	auto secsPerPart = 1.0f / partsPerSec;
+
+	while (mOutstandingSimulation >= secsPerPart) {
+		mOutstandingSimulation -= secsPerPart;
+		
+		// Simulate emitter movement just for the interval between two particle spawns
+		SimulateEmitterMovement(secsPerPart);
+
+		auto particleIdx = ReserveParticle(mOutstandingSimulation);
+
+		RefreshRandomness(particleIdx);
+
+		mSpec->GetParticleType()->SpawnParticle(this, particleIdx, timeToSimulateSecs);
+	}
 
 }
 

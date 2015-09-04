@@ -57,7 +57,7 @@ float PartSysParam::GetDefaultValue(PartSysParamId id) {
 	return DefaultValues[id];
 }
 
-float PartSysParamSpecial::GetValue(PartSysEmitter* emitter, int particleIdx, float lifetimeSec) {
+float PartSysParamSpecial::GetValue(const PartSysEmitter* emitter, int particleIdx, float lifetimeSec) {
 
 	// Returns the radius of the object associated with the emitter
 	auto obj = emitter->GetAttachedTo();

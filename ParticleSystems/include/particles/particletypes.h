@@ -24,32 +24,37 @@ public:
 
 	static const ParticleTypePoint *GetInstance();
 
+};
+
+class ParticleTypeComplex : public ParticleType {
+public:
+
 	void SpawnParticle(PartSysEmitter* emitter, int particleIdx, float timeToSimulate) const override;
 
 };
 
-class ParticleTypeSprite : public ParticleType {
+class ParticleTypeSprite : public ParticleTypeComplex {
 public:
 
 	static const ParticleTypeSprite *GetInstance();
 
 };
 
-class ParticleTypeDisc : public ParticleType {
+class ParticleTypeDisc : public ParticleTypeComplex {
 public:
 
 	static const ParticleTypeDisc *GetInstance();
 	
 };
 
-class ParticleTypeBillboard : public ParticleType {
+class ParticleTypeBillboard : public ParticleTypeComplex {
 public:
 
 	static const ParticleTypeBillboard *GetInstance();
 	
 };
 
-class ParticleTypeModel : public ParticleType {
+class ParticleTypeModel : public ParticleTypeComplex {
 public:
 
 	static const ParticleTypeModel *GetInstance();

@@ -78,7 +78,7 @@ public:
 		delete this;
 	}
 
-	virtual float GetValue(PartSysEmitter * emitter, int particleIdx, float lifetimeSec) = 0;
+	virtual float GetValue(const PartSysEmitter * emitter, int particleIdx, float lifetimeSec) = 0;
 
 	virtual void InitParticle(int particleIdx) {
 	}
@@ -128,7 +128,7 @@ public:
 		return const_cast<PartSysParamKeyframes*>(this);
 	}
 
-	float GetValue(PartSysEmitter*, int /*particleIdx*/, float /*lifetimeSec*/) override {
+	float GetValue(const PartSysEmitter*, int /*particleIdx*/, float /*lifetimeSec*/) override {
 		// TODO: Implement
 		return 0;
 	}
@@ -158,7 +158,7 @@ public:
 		return const_cast<PartSysParamConstant*>(this);
 	}
 	
-	float GetValue(PartSysEmitter*, int /*particleIdx*/, float /*lifetimeSec*/) override {
+	float GetValue(const PartSysEmitter*, int /*particleIdx*/, float /*lifetimeSec*/) override {
 		return mValue;
 	}
 
@@ -202,7 +202,7 @@ public:
 		}
 	}
 
-	float GetValue(PartSysEmitter* /*emitter*/, int particleIdx, float /*lifetimeSec*/) override {
+	float GetValue(const PartSysEmitter* /*emitter*/, int particleIdx, float /*lifetimeSec*/) override {
 		return mParticles[particleIdx];
 	}
 	
@@ -264,7 +264,7 @@ public:
 		return const_cast<PartSysParamSpecial*>(this);
 	}
 	
-	float GetValue(PartSysEmitter* emitter, int particleIdx, float lifetimeSec) override;
+	float GetValue(const PartSysEmitter* emitter, int particleIdx, float lifetimeSec) override;
 
 	void Free() override {
 		// Do nothing since we're owned by the particle system spec instead
