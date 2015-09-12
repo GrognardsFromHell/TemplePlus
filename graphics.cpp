@@ -740,7 +740,7 @@ void Graphics::FreeResources() {
 
 void Graphics::CreateResources() {
 
-	renderStates.Reset();
+	renderStates->Reset();
 
 	videoFuncs.buffersFreed = false;
 

@@ -1,0 +1,31 @@
+﻿<Window x:Class="ParticleEditor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ParticleEditor"
+        xmlns:interop="clr-namespace:System.Windows.Interop;assembly=PresentationCore"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="350" Width="525">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="0" Background="Black" x:Name="RenderOutput">
+            <Image>
+                <Image.Source>
+                    <interop:D3DImage x:Name="D3Dimg" />
+                </Image.Source>
+            </Image>
+        </Grid>
+        <GridSplitter Grid.Column="1" Width="5"/>
+        <Grid Grid.Column="2" MaxWidth="400" Width="200" Background="AliceBlue" >
+            <Label x:Name="CountLabel" Content="" ContentStringFormat="Active Particles: {0}" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" RenderTransformOrigin="1.3,0.385"/>
+            <Button Content="Save Video..." HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top" Width="96" Click="SaveVideo_OnClick" Height="28"/>
+            <ToggleButton x:Name="PauseButton" Content="Pause" Margin="10,74,94,217"></ToggleButton>
+        </Grid>
+
+    </Grid>
+</Window>

@@ -34,7 +34,7 @@ private:
 	int mLegacyId = -1;
 };
 
-typedef std::shared_ptr<Mesh> MeshRef;
+using MeshRef = std::shared_ptr<Mesh>;
 
 class MeshesManager {
 public:	

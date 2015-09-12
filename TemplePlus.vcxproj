@@ -32,6 +32,8 @@
     <ClCompile Include="d20_status.cpp" />
     <ClCompile Include="float_line.cpp" />
     <ClCompile Include="gameplay_configs.cpp" />
+    <ClCompile Include="gfx\legacymaterials.cpp" />
+    <ClCompile Include="gfx\legacytextures.cpp" />
     <ClCompile Include="history.cpp" />
     <ClCompile Include="hotkeys.cpp" />
     <ClCompile Include="location.cpp" />
@@ -62,7 +64,7 @@
     <ClCompile Include="quest.cpp" />
     <ClCompile Include="objlist.cpp" />
     <ClCompile Include="radialmenu.cpp" />
-    <ClCompile Include="renderstates.cpp" />
+    <ClCompile Include="legacyrenderstates.cpp" />
     <ClCompile Include="reputations.cpp" />
     <ClCompile Include="secret_door.cpp" />
     <ClCompile Include="skill.cpp" />
@@ -196,8 +198,11 @@
     <ClInclude Include="dice.h" />
     <ClInclude Include="fade.h" />
     <ClInclude Include="float_line.h" />
+    <ClInclude Include="gfx\legacymaterials.h" />
+    <ClInclude Include="gfx\legacytextures.h" />
     <ClInclude Include="history.h" />
     <ClInclude Include="hotkeys.h" />
+    <ClInclude Include="legacyrenderstates.h" />
     <ClInclude Include="location.h" />
     <ClInclude Include="maps.h" />
     <ClInclude Include="objlist.h" />
@@ -227,7 +232,6 @@
     <ClInclude Include="python\python_trap.h" />
     <ClInclude Include="quest.h" />
     <ClInclude Include="radialmenu.h" />
-    <ClInclude Include="renderstates.h" />
     <ClInclude Include="reputations.h" />
     <ClInclude Include="secret_door.h" />
     <ClInclude Include="skill.h" />

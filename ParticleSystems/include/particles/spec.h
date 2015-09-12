@@ -10,7 +10,6 @@
 #include <format.h>
 
 #include "params.h"
-#include "particletypes.h"
 
 class PartSysSpec;
 class PartSysEmitterSpec;
@@ -20,7 +19,7 @@ typedef std::shared_ptr<PartSysEmitterSpec> PartSysEmitterSpecPtr;
 
 class PartSysSpec {
 public:
-	explicit PartSysSpec(const std::string& name);
+	explicit PartSysSpec(const std::string &name);
 
 	/// The name of the particle system
 	const std::string& GetName() const {
@@ -83,7 +82,8 @@ enum class PartSysParticleSpace {
 class PartSysEmitterSpec {
 	friend class PartSysSpec;
 public:
-	PartSysEmitterSpec(const PartSysSpec& parent, const std::string& name) : mParent(parent), mName(name), mParams((int)part_attractorBlend + 1) {
+	PartSysEmitterSpec(const PartSysSpec& parent, const std::string& name) : mParent(parent), mName(name), mParams((int)part_attractorBlend + 1),
+	                                                                         mParticleType(PartSysParticleType::Point) {
 	}
 
 	const std::string& GetName() const {
@@ -198,14 +198,6 @@ public:
 		mOffsetCoordSys = offsetCoordSys;
 	}
 
-	const ParticleType* GetParticleType() const {
-		return mParticleType;
-	}
-
-	void SetParticleType(const ParticleType* particleType) {
-		mParticleType = particleType;
-	}
-
 	PartSysBlendMode GetBlendMode() const {
 		return mBlendMode;
 	}
@@ -214,11 +206,11 @@ public:
 		mBlendMode = blendMode;
 	}
 
-	const MaterialRef& GetMaterial() const {
+	const gfx::MaterialRef& GetMaterial() const {
 		return mMaterial;
 	}
 
-	void SetMaterial(const MaterialRef& material) {
+	void SetMaterial(const gfx::MaterialRef& material) {
 		mMaterial = material;
 	}
 
@@ -246,7 +238,7 @@ public:
 		mParticleSpace = particleSpace;
 	}
 
-	const MeshRef &GetMesh() const {
+	const MeshRef& GetMesh() const {
 		return mMesh;
 	}
 
@@ -294,7 +286,15 @@ public:
 		}
 	}
 
-	void SetParam(PartSysParamId id, std::unique_ptr<PartSysParam> &param) {
+	const PartSysParticleType& GetParticleType() const {
+		return mParticleType;
+	}
+
+	void SetParticleType(PartSysParticleType particleType) {
+		mParticleType = particleType;
+	}
+
+	void SetParam(PartSysParamId id, std::unique_ptr<PartSysParam>& param) {
 		if (id < mParams.size()) {
 			mParams[id].swap(param);
 		} else {
@@ -318,7 +318,7 @@ private:
 	PartSysCoordSys mCoordSys = PartSysCoordSys::Cartesian;
 	PartSysCoordSys mOffsetCoordSys = PartSysCoordSys::Cartesian;
 	PartSysBlendMode mBlendMode = PartSysBlendMode::Add;
-	MaterialRef mMaterial;
+	gfx::MaterialRef mMaterial;
 	PartSysCoordSys mParticlePosCoordSys = PartSysCoordSys::Cartesian;
 	PartSysCoordSys mParticleVelocityCoordSys = PartSysCoordSys::Cartesian;
 	PartSysParticleSpace mParticleSpace = PartSysParticleSpace::World;
@@ -328,7 +328,7 @@ private:
 	float mBoxRight = 399.0f;
 	float mBoxBottom = 299.0f;
 	std::vector<std::unique_ptr<PartSysParam>> mParams;
-	const ParticleType *mParticleType;
-	
+	PartSysParticleType mParticleType;
+
 	float mDelay = 0.0f;
 };

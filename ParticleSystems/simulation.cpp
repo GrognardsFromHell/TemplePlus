@@ -1,5 +1,4 @@
-#include "particles/particletypes.h"
-#include "particles/external.h"
+#include "particles/simulation.h"
 #include "particles/instances.h"
 
 inline float DegToRad(float degrees) {
@@ -42,10 +41,6 @@ inline void RotateAndMove(float dX, float dY, float dZ, float rotation, float& x
 	z += dZ;
 }
 
-void ParticleType::Simulate(PartSysEmitter* emitter, float simulTimeSecs) const {
-
-}
-
 inline float GetParticleValue(PartSysEmitter* emitter, int particleIdx, PartSysParamId paramId, float atLifetime, float defaultValue = 0.0f) {
 	auto state = emitter->GetParamState(paramId);
 	return state ? state->GetValue(emitter, particleIdx, atLifetime) : defaultValue;
@@ -57,11 +52,25 @@ inline void SetParticleParam(PartSysEmitter* emitter, int particleIdx, PartSysPa
 	emitter->GetParticleState().SetState(stateField, particleIdx, value);
 }
 
-void ParticleType::SpawnParticle(PartSysEmitter* emitter, int particleIdx, float timeToSimulate) const {
+void particles::SimulateParticleAging(PartSysEmitter* emitter, float timeToSimulateSec) {
+
+	auto it = emitter->NewIterator();
+	auto &ages = emitter->GetParticles();
+
+	while (it.HasNext()) {
+		auto particleIdx = it.Next();
+
+		ages[particleIdx] += timeToSimulateSec;
+	}
+
+}
+
+void particles::SimulateParticleSpawn(PartSysEmitter* emitter, int particleIdx, float timeToSimulate) {
+
 
 	const auto& spec = emitter->GetSpec();
 	auto partSpawnTime = emitter->GetParticleSpawnTime(particleIdx);
-	
+
 	auto& worldPosVar = emitter->GetWorldPosVar();
 	auto particleX = worldPosVar.x;
 	auto particleY = worldPosVar.y;
@@ -199,9 +208,9 @@ void ParticleType::SpawnParticle(PartSysEmitter* emitter, int particleIdx, float
 		partVelZ = cartesianVel.z;
 	}
 
-	state.SetState(PSF_X, particleIdx, partVelX);
-	state.SetState(PSF_Y, particleIdx, partVelY);
-	state.SetState(PSF_Z, particleIdx, partVelZ);
+	state.SetState(PSF_VEL_X, particleIdx, partVelX);
+	state.SetState(PSF_VEL_Y, particleIdx, partVelY);
+	state.SetState(PSF_VEL_Z, particleIdx, partVelZ);
 
 	// I don't know why it's taken at lifetime 0.
 	// TODO: Figure out if this actually *never* changes?
@@ -233,12 +242,12 @@ void ParticleType::SpawnParticle(PartSysEmitter* emitter, int particleIdx, float
 	state.SetState(PSF_POS_VAR_Z, particleIdx, posVarZ);
 
 	/*
-		The following code will apply particle movement after 
-		spawning a particle retroactively. This should only happen
-		for high frequency particle systems that spawn multiple particles
-		per frame.
-		Also note how particle age instead of particle lifetime is used here
-		to access parameters of the emitter.
+	The following code will apply particle movement after
+	spawning a particle retroactively. This should only happen
+	for high frequency particle systems that spawn multiple particles
+	per frame.
+	Also note how particle age instead of particle lifetime is used here
+	to access parameters of the emitter.
 	*/
 	auto partAge = emitter->GetParticleAge(particleIdx);
 	if (partAge != 0) {
@@ -293,37 +302,170 @@ void ParticleType::SpawnParticle(PartSysEmitter* emitter, int particleIdx, float
 		state.SetState(PSF_Z, particleIdx, particleZ);
 	}
 
+	// Simulate rotation for anything other than a point particle
+	if (spec->GetParticleType() != PartSysParticleType::Point) {
+		auto emitterAge = emitter->GetParticleSpawnTime(particleIdx);
+		auto rotation = emitter->GetParamValue(emit_yaw, particleIdx, emitterAge, 0.0f);
+		emitter->GetParticleState().SetState(PSF_ROTATION, particleIdx, rotation);
+	}
 }
 
-const ParticleTypePoint* ParticleTypePoint::GetInstance() {
-	static ParticleTypePoint instance;
-	return &instance;
-}
+// Simplifies access to particle parameter state that is based on a particular particles age
+struct ParticleValueSource {
 
-void ParticleTypeComplex::SpawnParticle(PartSysEmitter* emitter, int particleIdx, float timeToSimulate) const {
-	ParticleType::SpawnParticle(emitter, particleIdx, timeToSimulate);
+	const PartSysEmitter* emitter;
+	const int particleIdx;
+	const float particleAge;
 
-	auto particleAge = emitter->GetParticleSpawnTime(particleIdx);
-	auto rotation = emitter->GetParamValue(emit_yaw, particleIdx, particleAge, 0.0f);
-	emitter->GetParticleState().SetState(PSF_ROTATION, particleIdx, rotation);
-}
+	ParticleValueSource(const PartSysEmitter* emitter, int particleIdx, float particleAge)
+		: emitter(emitter),
+		  particleIdx(particleIdx),
+		  particleAge(particleAge) {
+	}
 
-const ParticleTypeSprite* ParticleTypeSprite::GetInstance() {
-	static ParticleTypeSprite instance;
-	return &instance;
-}
+	bool GetValue(PartSysParamId paramId, float* value) const {
+		auto state = emitter->GetParamState(paramId);
+		if (state) {
+			*value = state->GetValue(emitter, particleIdx, particleAge);
+			return true;
+		}
+		return false;
+	}
 
-const ParticleTypeDisc* ParticleTypeDisc::GetInstance() {
-	static ParticleTypeDisc instance;
-	return &instance;
-}
+};
 
-const ParticleTypeBillboard* ParticleTypeBillboard::GetInstance() {
-	static ParticleTypeBillboard instance;
-	return &instance;
-}
+void particles::SimulateParticleMovement(PartSysEmitter* emitter, float timeToSimulateSecs) {
 
-const ParticleTypeModel* ParticleTypeModel::GetInstance() {
-	static ParticleTypeModel instance;
-	return &instance;
+	const auto& spec = emitter->GetSpec();
+
+	// Used as a factor in integrating the acceleration to retroactively calculate
+	// its influence on the particle position
+	auto accelIntegrationFactor = timeToSimulateSecs * timeToSimulateSecs * 0.5f;
+
+	auto& state = emitter->GetParticleState();
+	auto it = emitter->NewIterator();
+	while (it.HasNext()) {
+		auto particleIdx = it.Next();
+		auto particleAge = emitter->GetParticleAge(particleIdx);
+
+		ParticleValueSource valueSource(emitter, particleIdx, particleAge);
+
+		auto x = state.GetState(PSF_X, particleIdx);
+		auto y = state.GetState(PSF_Y, particleIdx);
+		auto z = state.GetState(PSF_Z, particleIdx);
+
+		auto velX = state.GetState(PSF_VEL_X, particleIdx);
+		auto velY = state.GetState(PSF_VEL_Y, particleIdx);
+		auto velZ = state.GetState(PSF_VEL_Z, particleIdx);
+
+		// Calculate new position of particle based on velocity
+		x += timeToSimulateSecs * velX;
+		y += timeToSimulateSecs * velY;
+		z += timeToSimulateSecs * velZ;
+
+		// Apply acceleration to velocity (retroactively to position as well)
+		float value;
+		if (valueSource.GetValue(part_accel_X, &value)) {
+			x += accelIntegrationFactor * value;
+			velX += timeToSimulateSecs * value;
+		}
+		if (valueSource.GetValue(part_accel_Y, &value)) {
+			y += accelIntegrationFactor * value;
+			velY += timeToSimulateSecs * value;
+		}
+		if (valueSource.GetValue(part_accel_Z, &value)) {
+			z += accelIntegrationFactor * value;
+			velZ += timeToSimulateSecs * value;
+		}
+
+		/*
+			Apply Velocity Var
+		*/
+		if (spec->GetParticleVelocityCoordSys() == PartSysCoordSys::Polar) {
+			if (spec->GetParticlePosCoordSys() != PartSysCoordSys::Polar) {
+				// Velocity is polar, positions are not -> convert velocity
+				auto azimuth = emitter->GetParamValue(part_velVariation_X, particleIdx, particleAge);
+				auto inclination = emitter->GetParamValue(part_velVariation_Y, particleIdx, particleAge);
+				auto radius = emitter->GetParamValue(part_velVariation_Z, particleIdx, particleAge);
+
+				auto cartesianVel = SphericalDegToCartesian(azimuth, inclination, radius);
+				x += cartesianVel.x * timeToSimulateSecs;
+				y += cartesianVel.y * timeToSimulateSecs;
+				z += cartesianVel.z * timeToSimulateSecs;
+			} else {
+				// Modify the spherical coordinates of the particle directly
+				if (valueSource.GetValue(part_velVariation_X, &value)) {
+					auto azimuth = state.GetStatePtr(PSF_POS_AZIMUTH, particleIdx);
+					*azimuth += value * timeToSimulateSecs;
+				}
+				if (valueSource.GetValue(part_velVariation_Y, &value)) {
+					auto inclination = state.GetStatePtr(PSF_POS_INCLINATION, particleIdx);
+					*inclination += value * timeToSimulateSecs;
+				}
+				if (valueSource.GetValue(part_velVariation_Z, &value)) {
+					auto radius = state.GetStatePtr(PSF_POS_RADIUS, particleIdx);
+					*radius += value * timeToSimulateSecs;
+				}
+			}
+
+		} else {
+			// Cartesian velocity seems pretty simple here
+			if (valueSource.GetValue(part_velVariation_X, &value)) {
+				x += value * timeToSimulateSecs;
+			}
+			if (valueSource.GetValue(part_velVariation_Y, &value)) {
+				y += value * timeToSimulateSecs;
+			}
+			if (valueSource.GetValue(part_velVariation_Z, &value)) {
+				z += value * timeToSimulateSecs;
+			}
+		}
+		
+		/*
+			Apply Pos Var
+		*/
+		float xPosVar, yPosVar, zPosVar;
+
+		if (spec->GetParticlePosCoordSys() == PartSysCoordSys::Polar) {
+			// Get current particle spherical coordinates
+			auto azimuth = state.GetState(PSF_POS_AZIMUTH, particleIdx);
+			auto inclination = state.GetState(PSF_POS_INCLINATION, particleIdx);
+			auto radius = state.GetState(PSF_POS_RADIUS, particleIdx);
+
+			// Modify them according to position variation parameters
+			if (valueSource.GetValue(part_posVariation_X, &value)) {
+				azimuth += value;
+			}
+			if (valueSource.GetValue(part_posVariation_Y, &value)) {
+				inclination += value;
+			}
+			if (valueSource.GetValue(part_posVariation_Z, &value)) {
+				radius += value;
+			}
+
+			// Convert the position that has been modified this way to cartesian
+			auto cartesianPosVar = SphericalDegToCartesian(azimuth, inclination, radius);
+
+			// Add the current unmodified particle pos to get to the final position
+			xPosVar = cartesianPosVar.x;
+			yPosVar = cartesianPosVar.y;
+			zPosVar = cartesianPosVar.z;
+		} else {
+			xPosVar = emitter->GetParamValue(part_posVariation_X, particleIdx, particleAge);
+			yPosVar = emitter->GetParamValue(part_posVariation_Y, particleIdx, particleAge);
+			zPosVar = emitter->GetParamValue(part_posVariation_Z, particleIdx, particleAge);
+		}
+		
+		// Save new particle state
+		state.SetState(PSF_X, particleIdx, x);
+		state.SetState(PSF_Y, particleIdx, y);
+		state.SetState(PSF_Z, particleIdx, z);
+		state.SetState(PSF_VEL_X, particleIdx, velX);
+		state.SetState(PSF_VEL_Y, particleIdx, velY);
+		state.SetState(PSF_VEL_Z, particleIdx, velZ);
+		state.SetState(PSF_POS_VAR_X, particleIdx, x + xPosVar);
+		state.SetState(PSF_POS_VAR_Y, particleIdx, y + yPosVar);
+		state.SetState(PSF_POS_VAR_Z, particleIdx, z + zPosVar);
+	}
+
 }

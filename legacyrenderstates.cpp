@@ -2,13 +2,57 @@
 #include "stdafx.h"
 #include "renderstates.h"
 #include "util/addresses.h"
-#include "d3d8adapter.h"
 #include "d3d8to9_texture.h"
 #include "d3d8to9_vertexbuffer.h"
 #include "d3d8to9_indexbuffer.h"
 #include "d3d.h"
 
-RenderStates renderStates;
+class LegacyRenderStates : public RenderStates {
+public:
+	const D3DMATRIX& Get3dProjectionMatrix() override;
+	void SetProjectionMatrix(const D3DMATRIX &matrix) override;
+	void SetViewMatrix(const D3DMATRIX &matrix) override;
+	void SetZEnable(bool enable) override;
+	void SetFillMode(D3DFILLMODE fillMode) override;
+	void SetZWriteEnable(bool enable) override;
+	void SetAlphaTestEnable(bool enable) override;
+	void SetSrcBlend(D3DBLEND blend) override;
+	void SetCullMode(D3DCULL cullMode) override;
+	void SetAlphaBlend(bool enable) override;
+	void SetLighting(bool enable) override;
+	void SetColorVertex(bool enable) override; // D3DRS_COLORVERTEX
+	void SetColorWriteEnable(bool enable) override; // D3DRS_COLORWRITEENABLE
+	void SetZFunc(D3DCMPFUNC func) override; // D3DRS_ZFUNC
+	void SetSpecularEnable(bool enable) override;
+	void SetTexture(int sampler, IDirect3DTexture9 *texture) override;
+	void SetTextureColorOp(int sampler, D3DTEXTUREOP op) override;
+	void SetTextureColorArg1(int sampler, DWORD arg) override;
+	void SetTextureColorArg2(int sampler, DWORD arg) override;
+	void SetTextureAlphaOp(int sampler, D3DTEXTUREOP op) override;
+	void SetTextureAlphaArg1(int sampler, DWORD arg) override;
+	void SetTextureAlphaArg2(int sampler, DWORD arg) override;
+	void SetTextureCoordIndex(int sampler, int index) override;
+	void SetTextureMipFilter(int sampler, D3DTEXTUREFILTERTYPE type) override;
+	void SetTextureMagFilter(int sampler, D3DTEXTUREFILTERTYPE type) override;
+	void SetTextureMinFilter(int sampler, D3DTEXTUREFILTERTYPE type) override;
+	void SetTextureAddressU(int sampler, D3DTEXTUREADDRESS mode) override;
+	void SetTextureAddressV(int sampler, D3DTEXTUREADDRESS mode) override;
+	void SetTextureTransformFlags(int sampler, D3DTEXTURETRANSFORMFLAGS flags) override;
+
+	void SetDestBlend(D3DBLEND blend) override;
+	bool IsLighting() override;
+	void SetFVF(DWORD fvf) override;
+	void SetStreamSource(int streamIdx, IDirect3DVertexBuffer9 *buffer, int stride) override;
+	void SetIndexBuffer(IDirect3DIndexBuffer9 *buffer, int baseIdx) override;
+
+	void Commit() override;
+
+	void Reset() override;
+};
+
+std::unique_ptr<RenderStates> CreateLegacyRenderStates() {
+	return std::make_unique<LegacyRenderStates>();
+}
 
 #pragma pack(push, 1)
 struct TigRenderStates {
@@ -57,6 +101,8 @@ static struct RenderStatesAddresses : AddressTable {
 	// The render states that we believe are currently active on the device
 	TigRenderStates *comittedStates;
 
+	D3DMATRIX *projMatrix3d;
+
 	// Reads the current device state into comittedStates
 	void(__cdecl *ReadInitialState)();
 	
@@ -66,6 +112,7 @@ static struct RenderStatesAddresses : AddressTable {
 	RenderStatesAddresses() {
 		rebase(renderStates, 0x10EF2F10);
 		rebase(comittedStates, 0x10EF30D8);
+		rebase(projMatrix3d, 0x11E75788);
 				
 		rebase(ReadInitialState, 0x101F06F0);
 		rebase(CommitState, 0x101F0A20);
@@ -83,63 +130,67 @@ static struct RenderStatesAddresses : AddressTable {
 
 } addresses;
 
-void RenderStates::SetProjectionMatrix(const D3DMATRIX& matrix) {
+const D3DMATRIX& LegacyRenderStates::Get3dProjectionMatrix() {
+	return *addresses.projMatrix3d;
+}
+
+void LegacyRenderStates::SetProjectionMatrix(const D3DMATRIX& matrix) {
 	addresses.renderStates->projMatrix = matrix;
 }
 
-void RenderStates::SetViewMatrix(const D3DMATRIX& matrix) {
+void LegacyRenderStates::SetViewMatrix(const D3DMATRIX& matrix) {
 	addresses.renderStates->viewMatrix = matrix;
 }
 
-void RenderStates::SetZEnable(bool enable) {
+void LegacyRenderStates::SetZEnable(bool enable) {
 	addresses.renderStates->zEnable = enable;
 }
 
-void RenderStates::SetFillMode(D3DFILLMODE fillMode) {
+void LegacyRenderStates::SetFillMode(D3DFILLMODE fillMode) {
 	addresses.renderStates->fillMode = fillMode;
 }
 
-void RenderStates::SetZWriteEnable(bool enable) {
+void LegacyRenderStates::SetZWriteEnable(bool enable) {
 	addresses.renderStates->zwriteenable = enable;
 }
 
-void RenderStates::SetAlphaTestEnable(bool enable) {
+void LegacyRenderStates::SetAlphaTestEnable(bool enable) {
 	addresses.renderStates->alphatestenable = enable;
 }
 
-void RenderStates::SetSrcBlend(D3DBLEND blend) {
+void LegacyRenderStates::SetSrcBlend(D3DBLEND blend) {
 	addresses.renderStates->srcblend = blend;
 }
 
-void RenderStates::SetCullMode(D3DCULL cullMode) {
+void LegacyRenderStates::SetCullMode(D3DCULL cullMode) {
 	addresses.renderStates->cullmode = cullMode;
 }
 
-void RenderStates::SetAlphaBlend(bool enable) {
+void LegacyRenderStates::SetAlphaBlend(bool enable) {
 	addresses.renderStates->alphablendenable = enable;
 }
 
-void RenderStates::SetLighting(bool enable) {
+void LegacyRenderStates::SetLighting(bool enable) {
 	addresses.renderStates->lighting = enable;
 }
 
-void RenderStates::SetColorVertex(bool enable) {
+void LegacyRenderStates::SetColorVertex(bool enable) {
 	addresses.renderStates->colorvertex = enable;
 }
 
-void RenderStates::SetColorWriteEnable(bool enable) {
+void LegacyRenderStates::SetColorWriteEnable(bool enable) {
 	addresses.renderStates->colorwriteenable = enable;
 }
 
-void RenderStates::SetZFunc(D3DCMPFUNC func) {
+void LegacyRenderStates::SetZFunc(D3DCMPFUNC func) {
 	addresses.renderStates->zfunc = func;
 }
 
-void RenderStates::SetSpecularEnable(bool enable) {
+void LegacyRenderStates::SetSpecularEnable(bool enable) {
 	addresses.renderStates->specularenable = enable;
 }
 
-void RenderStates::SetTexture(int sampler, IDirect3DTexture9* texture) {
+void LegacyRenderStates::SetTexture(int sampler, IDirect3DTexture9* texture) {
 	// If our adapter is already set, we need to replace it with a new one...
 	if (addresses.renderStates->texture[sampler] == addresses.textureAdapters[sampler]
 		&& addresses.renderStates->texture[sampler]->delegate != texture) {
@@ -151,63 +202,71 @@ void RenderStates::SetTexture(int sampler, IDirect3DTexture9* texture) {
 	addresses.textureAdapters[sampler]->delegate = texture;
 }
 
-void RenderStates::SetTextureColorOp(int sampler, D3DTEXTUREOP op) {
+void LegacyRenderStates::SetTextureColorOp(int sampler, D3DTEXTUREOP op) {
 	addresses.renderStates->tex_colorop[sampler] = op;
 }
 
-void RenderStates::SetTextureColorArg1(int sampler, DWORD arg) {
+void LegacyRenderStates::SetTextureColorArg1(int sampler, DWORD arg) {
 	addresses.renderStates->tex_colorarg1[sampler] = arg;
 }
 
-void RenderStates::SetTextureColorArg2(int sampler, DWORD arg) {
+void LegacyRenderStates::SetTextureColorArg2(int sampler, DWORD arg) {
 	addresses.renderStates->tex_colorarg2[sampler] = arg;
 }
 
-void RenderStates::SetTextureAlphaOp(int sampler, D3DTEXTUREOP op) {
+void LegacyRenderStates::SetTextureAlphaOp(int sampler, D3DTEXTUREOP op) {
 	addresses.renderStates->tex_alphaop[sampler] = op;
 }
 
-void RenderStates::SetTextureAlphaArg1(int sampler, DWORD arg) {
+void LegacyRenderStates::SetTextureAlphaArg1(int sampler, DWORD arg) {
 	addresses.renderStates->tex_alphaarg1[sampler] = arg;
 }
 
-void RenderStates::SetTextureAlphaArg2(int sampler, DWORD arg) {
+void LegacyRenderStates::SetTextureAlphaArg2(int sampler, DWORD arg) {
 	addresses.renderStates->tex_alphaarg2[sampler] = arg;
 }
 
-void RenderStates::SetTextureCoordIndex(int sampler, int index) {
+void LegacyRenderStates::SetTextureCoordIndex(int sampler, int index) {
 	addresses.renderStates->tex_coordindex[sampler] = index;
 }
 
-void RenderStates::SetTextureMipFilter(int sampler, D3DTEXTUREFILTERTYPE type) {
+void LegacyRenderStates::SetTextureMipFilter(int sampler, D3DTEXTUREFILTERTYPE type) {
 	addresses.renderStates->tex_mipfilter[sampler] = type;
 }
 
-void RenderStates::SetTextureMagFilter(int sampler, D3DTEXTUREFILTERTYPE type) {
+void LegacyRenderStates::SetTextureMagFilter(int sampler, D3DTEXTUREFILTERTYPE type) {
 	addresses.renderStates->tex_magfilter[sampler] = type;
 }
 
-void RenderStates::SetTextureMinFilter(int sampler, D3DTEXTUREFILTERTYPE type) {
+void LegacyRenderStates::SetTextureMinFilter(int sampler, D3DTEXTUREFILTERTYPE type) {
 	addresses.renderStates->tex_minfilter[sampler] = type;
 }
 
-void RenderStates::SetTextureAddressU(int sampler, D3DTEXTUREADDRESS mode) {
+void LegacyRenderStates::SetTextureAddressU(int sampler, D3DTEXTUREADDRESS mode) {
 	addresses.renderStates->tex_addressu[sampler] = mode;
 }
 
-void RenderStates::SetTextureAddressV(int sampler, D3DTEXTUREADDRESS mode) {
+void LegacyRenderStates::SetTextureAddressV(int sampler, D3DTEXTUREADDRESS mode) {
 	addresses.renderStates->tex_addressv[sampler] = mode;
 }
 
-void RenderStates::SetTextureTransformFlags(int sampler, D3DTEXTURETRANSFORMFLAGS flags) {
+void LegacyRenderStates::SetTextureTransformFlags(int sampler, D3DTEXTURETRANSFORMFLAGS flags) {
 	addresses.renderStates->tex_transformflags[sampler] = flags;
 }
 
-void RenderStates::SetFVF(DWORD fvf) {
+void LegacyRenderStates::SetDestBlend(D3DBLEND blend) {
+	addresses.renderStates->destblend = blend;
+}
+
+bool LegacyRenderStates::IsLighting() {
+	return addresses.renderStates->lighting != FALSE;
+}
+
+void LegacyRenderStates::SetFVF(DWORD fvf) {
 	addresses.renderStates->vertexattribs = fvf;
 }
 
-void RenderStates::SetStreamSource(int streamIdx, IDirect3DVertexBuffer9* buffer, int stride) {
+void LegacyRenderStates::SetStreamSource(int streamIdx, IDirect3DVertexBuffer9* buffer, int stride) {
 	// If our adapter is already set, we need to replace it with a new one...
 	if (addresses.renderStates->vertexbuffers[streamIdx] == addresses.vertexBufferAdapters[streamIdx]
 		&& addresses.renderStates->vertexbuffers[streamIdx]->delegate != buffer) {
@@ -218,7 +277,7 @@ void RenderStates::SetStreamSource(int streamIdx, IDirect3DVertexBuffer9* buffer
 	addresses.vertexBufferAdapters[streamIdx]->delegate = buffer;
 }
 
-void RenderStates::SetIndexBuffer(IDirect3DIndexBuffer9* buffer, int baseIdx) {
+void LegacyRenderStates::SetIndexBuffer(IDirect3DIndexBuffer9* buffer, int baseIdx) {
 	// If our adapter is already set, we need to replace it with a new one...
 	if (addresses.renderStates->indexbuffer == addresses.indexBufferAdapter
 		&& addresses.renderStates->indexbuffer->delegate != buffer) {
@@ -230,13 +289,13 @@ void RenderStates::SetIndexBuffer(IDirect3DIndexBuffer9* buffer, int baseIdx) {
 	addresses.indexBufferAdapter->delegate = buffer;
 }
 
-void RenderStates::Commit() {
+void LegacyRenderStates::Commit() {
 	static_assert(sizeof(TigRenderStates) == 0x1C4, "TigRenderStates has the wrong size.");
 
 	addresses.CommitState(addresses.renderStates);
 }
 
-void RenderStates::Reset() {
+void LegacyRenderStates::Reset() {
 	addresses.ReadInitialState();
 	memcpy(addresses.renderStates, addresses.comittedStates, sizeof(TigRenderStates));
 }

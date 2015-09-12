@@ -1,4 +1,5 @@
 #include "particles/instances.h"
+#include "particles/simulation.h"
 
 IPartSysExternal *IPartSysExternal::mCurrent = nullptr;
 
@@ -51,6 +52,19 @@ void PartSysEmitter::ApplyAcceleration(PartSysParamId paramId, float timeToSimul
 		position += timeToSimulateSecs * timeToSimulateSecs * accel * 0.5f;
 		velocity += timeToSimulateSecs * accel;
 	}
+}
+
+void PartSysEmitter::Reset() {
+	mAliveInSecs = 0;
+	mVelocity.x = 0;
+	mVelocity.y = 0;
+	mVelocity.z = 0;
+	mPrevObjPos = mObjPos;
+	mPrevObjRotation = mObjRotation;
+	mEnded = false;
+	mOutstandingSimulation = 0;
+	mFirstUsedParticle = 0;
+	mNextFreeParticle = 0;
 }
 
 void PartSysEmitter::SimulateEmitterMovement(float timeToSimulateSecs) {
@@ -148,17 +162,15 @@ void PartSysEmitter::RefreshRandomness(int particleIdx) {
 void PartSysEmitter::Simulate(float timeToSimulateSecs, IPartSysExternal* external) {
 
 	UpdatePos(external);
+	
+	particles::SimulateParticleAging(this, timeToSimulateSecs);
+	particles::SimulateParticleMovement(this, timeToSimulateSecs);
 
 	// Emitter already dead or lifetime expired?
 	if (mEnded || (!mSpec->IsPermanent() && mAliveInSecs > mSpec->GetLifespan())) {
-		SimulateParticles(timeToSimulateSecs, external);
-		mSpec->GetParticleType()->Simulate(this, timeToSimulateSecs);
 		mAliveInSecs += timeToSimulateSecs;
 		return;
 	}
-
-	SimulateParticles(timeToSimulateSecs, external);
-	mSpec->GetParticleType()->Simulate(this, timeToSimulateSecs);
 
 	// Particle spawning logic
 	if (mSpec->IsInstant()) {
@@ -184,7 +196,7 @@ void PartSysEmitter::Simulate(float timeToSimulateSecs, IPartSysExternal* extern
 					
 					RefreshRandomness(particleIdx);
 					
-					mSpec->GetParticleType()->SpawnParticle(this, particleIdx, timeToSimulateSecs);
+					particles::SimulateParticleSpawn(this, particleIdx, timeToSimulateSecs);
 					--remaining;
 				} while (remaining);
 			}
@@ -226,7 +238,7 @@ void PartSysEmitter::Simulate(float timeToSimulateSecs, IPartSysExternal* extern
 
 		RefreshRandomness(particleIdx);
 
-		mSpec->GetParticleType()->SpawnParticle(this, particleIdx, timeToSimulateSecs);
+		particles::SimulateParticleSpawn(this, particleIdx, timeToSimulateSecs);
 	}
 
 }
@@ -235,10 +247,6 @@ static ObjHndl PartSysCurObj; // This is stupid, this is only used for radius de
 
 float PartSysEmitter::GetParamValue(PartSysParamState *state, int particleIdx) {
 	return state->GetValue(this, particleIdx, mAliveInSecs);
-}
-
-void PartSysEmitter::SimulateParticles(float timeToSimulateSecs, IPartSysExternal* external) {
-	// TODO
 }
 
 void PartSysEmitter::UpdatePos(IPartSysExternal* external) {
@@ -359,6 +367,15 @@ void PartSys::Simulate(float elapsedSecs) {
 		emitter->Simulate(secsToSimulate, external);
 	}
 
+}
+
+void PartSys::Reset() {
+	mAliveInSecs = 0.0f;
+	mLastSimulated = 0.0f;
+
+	for (auto& emitter : mEmitters) {
+		emitter->Reset();
+	}
 }
 
 bool PartSys::IsOnScreen(IPartSysExternal* external) const {

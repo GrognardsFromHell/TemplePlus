@@ -57,6 +57,31 @@ float PartSysParam::GetDefaultValue(PartSysParamId id) {
 	return DefaultValues[id];
 }
 
+float PartSysParamKeyframes::GetValue(const PartSysEmitter*, int, float lifetimeSec) {
+
+	for (size_t i = 0; i < mFrames.size() - 1; ++i) {
+		const auto& frame = mFrames[i];
+		const auto& nextFrame = mFrames[i + 1];
+		
+		// Don't LERP if we're right on the frame border
+		// (or in case of the first frame, possibly earlier)
+		if (lifetimeSec <= frame.start) {
+			return frame.value;
+		} else if (lifetimeSec >= nextFrame.start) {
+			continue; // The lifetime is beyond the current keyframe gap
+		}
+
+		// The lifetime is between start of frame and start of nextFrame
+		// So let's lerp the value.
+		auto timeSinceFrame = lifetimeSec - frame.start;
+		return frame.value + frame.deltaPerSec * timeSinceFrame;
+	}
+
+	// Return the value of the last frame since we seem to be beyond it
+	return mFrames.back().value;
+
+}
+
 float PartSysParamSpecial::GetValue(const PartSysEmitter* emitter, int particleIdx, float lifetimeSec) {
 
 	// Returns the radius of the object associated with the emitter

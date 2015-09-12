@@ -8,12 +8,17 @@
 #include "spec.h"
 
 class TabFileRecord;
+class gfx::MaterialManager;
 
-class ParticleSystemParser {
+class PartSysParser {
 public:
+
+	explicit PartSysParser(gfx::MaterialManager &materials);
+
 	typedef std::unordered_map<std::string, PartSysSpecPtr> SpecMap;
 
 	void ParseFile(const std::string &filename);
+	void ParseString(const std::string &spec);
 
 	PartSysSpecPtr GetSpec(const std::string &name) const {
 		auto it = mSpecs.find(tolower(name));
@@ -33,6 +38,7 @@ public:
 
 private:
 	SpecMap mSpecs;
+	gfx::MaterialManager &mMaterials;
 
 	void ParseLifespan(const TabFileRecord& record, PartSysEmitterSpecPtr emitter);
 	void ParseParticleLifespan(const TabFileRecord &record, PartSysEmitterSpecPtr emitter);

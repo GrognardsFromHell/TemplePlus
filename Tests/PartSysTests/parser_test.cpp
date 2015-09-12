@@ -6,32 +6,39 @@
 #include <stringutil.h>
 #include <format.h>
 
+#include "mock_materials.h"
+
 /*
 	This is a test fixture for particle system parser tests that only parses all particle systems once
 	to speed up the tests.
 */
 class PartSysParserTest : public testing::Test {
 protected:
-	static ParticleSystemParser parser;
+	static PartSysParser &GetParser() {
+		static testing::NiceMock<MaterialsMock> sMaterials;
+		auto defaultMaterial = std::make_shared<testing::NiceMock<MaterialMock>>();
+		testing::DefaultValue<gfx::MaterialRef>::Set(defaultMaterial);
+
+		static PartSysParser sParser(sMaterials);
+		return sParser;
+	}
 
 	static void SetUpTestCase() {
 		// Init VFS with mock/dummy code
 		vfs.reset(Vfs::CreateStdIoVfs());
-
-		materials.reset(new MaterialManager);
-
+		
 		meshes.reset(new MeshesManager);
 		meshes->LoadMapping("data\\meshes.mes");
 
-		parser.ParseFile("data\\partsys0.tab");
-		parser.ParseFile("data\\partsys1.tab");
-		parser.ParseFile("data\\partsys2.tab");
+		GetParser().ParseFile("data\\partsys0.tab");
+		GetParser().ParseFile("data\\partsys1.tab");
+		GetParser().ParseFile("data\\partsys2.tab");
 
-		ASSERT_NE(parser.begin(), parser.end()) << "No particle systems have been loaded";
+		ASSERT_NE(GetParser().begin(), GetParser().end()) << "No particle systems have been loaded";
 	}
 
 	void CheckModelId(const char* sysName, int emitterIdx, int modelId) {
-		auto sysSpec = parser.GetSpec(sysName);
+		auto sysSpec = GetParser().GetSpec(sysName);
 		ASSERT_TRUE(sysSpec);
 		auto emitters = sysSpec->GetEmitters();
 		auto emitter = emitters[emitterIdx];
@@ -41,12 +48,11 @@ protected:
 	}
 
 };
-ParticleSystemParser PartSysParserTest::parser;
 
 TEST_F(PartSysParserTest, TestBasicSystem) {
 
 	// Tests that the max particles are calculated correctly for all particle systems
-	auto flamingAxeEmitter = parser.GetSpec("ef-flaming axe");
+	auto flamingAxeEmitter = GetParser().GetSpec("ef-flaming axe");
 	ASSERT_TRUE(flamingAxeEmitter);
 	ASSERT_EQ(6, flamingAxeEmitter->GetEmitters().size());
 }
@@ -70,7 +76,7 @@ TEST_F(PartSysParserTest, TestKeyFrameParsing) {
 		size_t emitterIdx = stoi(parts[1]);
 		PartSysParamId paramIdx = (PartSysParamId) stoi(parts[2]);
 
-		auto partSys = parser.GetSpec(partSysName);
+		auto partSys = GetParser().GetSpec(partSysName);
 		if (!partSys) {
 			FAIL() << "Could not find particle system" << partSysName;
 		}
@@ -117,7 +123,7 @@ TEST_F(PartSysParserTest, TestMaxParticleCalculations) {
 		auto partSysName = parts[0];
 		size_t emitterIdx = stoi(parts[1]);
 
-		auto partSys = parser.GetSpec(partSysName);
+		auto partSys = GetParser().GetSpec(partSysName);
 		if (!partSys) {
 			FAIL() << "Could not find particle system" << partSysName;
 		}

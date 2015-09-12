@@ -128,10 +128,7 @@ public:
 		return const_cast<PartSysParamKeyframes*>(this);
 	}
 
-	float GetValue(const PartSysEmitter*, int /*particleIdx*/, float /*lifetimeSec*/) override {
-		// TODO: Implement
-		return 0;
-	}
+	float GetValue(const PartSysEmitter*, int /*particleIdx*/, float lifetimeSec) override;
 
 	void Free() override {
 		// Do nothing since we're owned by the particle system spec instead
@@ -183,7 +180,7 @@ public:
 	}
 
 	static float NextValue(float rangeInclusive) {
-		return NextValue() * rangeInclusive / MAX_VALUE_FACTOR;
+		return NextValue() * rangeInclusive * MAX_VALUE_FACTOR;
 	}
 	
 private:

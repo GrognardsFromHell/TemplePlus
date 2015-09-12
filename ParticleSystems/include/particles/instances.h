@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <vector>
@@ -7,16 +6,14 @@
 #include "spec.h"
 #include "external.h"
 
-enum PartSysEmitterRunFlags : uint32_t
-{
+enum PartSysEmitterRunFlags : uint32_t {
 	PSERF_ENDED = 0x1,
 };
 
 #pragma pack(push, 1)
-struct PartSysParticleValArray
-{
+struct PartSysParticleValArray {
 	int count;
-	float *val;
+	float* val;
 };
 
 class PartSysEmitterSpec;
@@ -45,6 +42,24 @@ enum ParticleStateField : uint32_t {
 	PSF_COUNT
 };
 
+class ParticleRange {
+public:
+	ParticleRange(int start, int end) : mStart(start), mEnd(end) {
+	}
+
+	int GetStart() const {
+		return mStart;
+	}
+
+	int GetEnd() const {
+		return mEnd;
+	}
+
+private:
+	const int mStart;
+	const int mEnd; // Exclusive
+};
+
 class ParticleState {
 public:
 	explicit ParticleState(int particleCount);
@@ -57,48 +72,97 @@ public:
 	int GetCapacity() const {
 		return mCapacity;
 	}
-	
+
 	void SetState(ParticleStateField field, int particleIdx, float value) {
 		*GetStatePtr(field, particleIdx) = value;
 	}
 
-	float GetState(ParticleStateField field, int particleIdx) {
+	float GetState(ParticleStateField field, int particleIdx) const {
 		return *GetStatePtr(field, particleIdx);
 	}
 
-private:	
+	float* GetStatePtr(ParticleStateField field, int particleIdx) {
+		return mData + (mCapacity * (uint32_t)field) + particleIdx;
+	}
+
+	float* GetStatePtr(ParticleStateField field, int particleIdx) const {
+		return mData + (mCapacity * (uint32_t)field) + particleIdx;
+	}
+
+private:
 	int mCapacity;
 	int mCount;
-	float *mData = nullptr;
+	float* mData = nullptr;
 
 	ParticleState& operator=(const ParticleState&) = delete;
 	ParticleState(const ParticleState&) = delete;
 
-	float *GetStatePtr(ParticleStateField field, int particleIdx) {
-		return mData + (mCapacity * (uint32_t)field);
-	}
 };
 
-class PartSysEmitter
-{
+class ParticleIterator {
 public:
-	explicit PartSysEmitter(const PartSysEmitterSpecPtr &spec);
+	explicit ParticleIterator(int start, int end, int size)
+		: mIndex(start), mEnd(end), mSize(size) {
+	}
+
+	bool HasNext() const {
+		return mIndex != mEnd;
+	}
+
+	int Next() {
+		auto result = mIndex++;
+		if (mIndex == mSize) {
+			mIndex = 0;
+		}
+		return result;
+	}
+
+private:
+	int mIndex;
+	const int mEnd;
+	const int mSize;
+};
+
+class PartSysEmitter {
+	friend class ParticleIterator;
+public:
+	explicit PartSysEmitter(const PartSysEmitterSpecPtr& spec);
 	~PartSysEmitter();
-	
-	const PartSysEmitterSpecPtr &GetSpec() const {
+
+	const PartSysEmitterSpecPtr& GetSpec() const {
 		return mSpec;
 	}
 
-	const std::vector<float> &GetParticles() {
+	int GetActiveCount() const {
+		if (mNextFreeParticle < mFirstUsedParticle) {
+			return (mParticleAges.size() - mFirstUsedParticle) + mNextFreeParticle;
+		} else {
+			return mNextFreeParticle - mFirstUsedParticle;
+		}
+	}
+
+	ParticleRange GetActiveRange() const {
+		return ParticleRange(mFirstUsedParticle, mNextFreeParticle);
+	}
+
+	const std::vector<float>& GetParticles() const {
+		return mParticleAges;
+	}
+	
+	std::vector<float>& GetParticles() {
 		return mParticleAges;
 	}
 
-	const std::vector<PartSysParamState*> &GetParamState() const {
+	const std::vector<PartSysParamState*>& GetParamState() const {
 		return mParamState;
 	}
 
 	PartSysParamState* GetParamState(PartSysParamId paramId) const {
 		return mParamState[paramId];
+	}
+
+	ParticleIterator NewIterator() const {
+		return ParticleIterator(mFirstUsedParticle, mNextFreeParticle, mParticleAges.size());
 	}
 
 	float GetParamValue(PartSysParamId paramId, int particleIdx, float lifetime, float defaultValue = 0.0f) const {
@@ -122,11 +186,11 @@ public:
 		return mAttachedTo;
 	}
 
-	const Vec3 &GetWorldPos() const {
+	const Vec3& GetWorldPos() const {
 		return mWorldPos;
 	}
-	
-	const Vec3 &GetWorldPosVar() const {
+
+	const Vec3& GetWorldPosVar() const {
 		return mWorldPosVar;
 	}
 
@@ -154,14 +218,24 @@ public:
 		return mAliveInSecs - GetParticleAge(particleIdx);
 	}
 
-	ParticleState &GetParticleState() {
+	ParticleState& GetParticleState() {
 		return mParticleState;
 	}
 
+	const ParticleState& GetParticleState() const {
+		return mParticleState;
+	}
+
+	void SetWorldPos(const Vec3 &worldPos) {
+		mWorldPos = worldPos;
+	}
+
+	void Reset();
+	
 	void SimulateEmitterMovement(float timeToSimulateSecs);
 	int ReserveParticle(float spawnedAt);
 	void RefreshRandomness(int particleIdx);
-	void Simulate(float timeToSimulateSecs, IPartSysExternal *external);
+	void Simulate(float timeToSimulateSecs, IPartSysExternal* external);	
 
 private:
 	PartSysEmitterSpecPtr mSpec;
@@ -186,36 +260,36 @@ private:
 	int mFirstUsedParticle = 0; // not sure what it is *exactly* yet
 	int mNextFreeParticle = 0; // not sure what it is *exactly* yet
 
-	float GetParamValue(PartSysParamState *state, int particleIdx = 0);
-	void SimulateParticles(float timeToSimulateSecs, IPartSysExternal *external);
-	void UpdatePos(IPartSysExternal *external);
-	void UpdateBonePos(IPartSysExternal *external);
+	float GetParamValue(PartSysParamState* state, int particleIdx = 0);
+	void UpdatePos(IPartSysExternal* external);
+	void UpdateBonePos(IPartSysExternal* external);
 	void ApplyAcceleration(PartSysParamId paramId,
-		float timeToSimulateSecs,
-		float &position,
-		float &velocity);
+	                       float timeToSimulateSecs,
+	                       float& position,
+	                       float& velocity);
 };
 
-struct PartSysEmitterBones
-{
+struct PartSysEmitterBones {
 	int childBoneCount;
 	int boneCount;
-	float *distFromParent;
+	float* distFromParent;
 	float distFromParentSum;
-	int *boneIds;
-	int *boneParentIds;
-	float *x;
-	float *y;
-	float *z;
-	float *prevX;
-	float *prevY;
-	float *prevZ;
+	int* boneIds;
+	int* boneParentIds;
+	float* x;
+	float* y;
+	float* z;
+	float* prevX;
+	float* prevY;
+	float* prevZ;
 };
 
 class PartSys {
 public:
-	explicit PartSys(const PartSysSpecPtr &spec);
-	
+	typedef std::vector<std::unique_ptr<PartSysEmitter>> EmitterList;
+
+	explicit PartSys(const PartSysSpecPtr& spec);
+
 	float GetAliveInSecs() const {
 		return mAliveInSecs;
 	}
@@ -231,7 +305,7 @@ public:
 	void SetLastSimulated(float lastSimulated) {
 		mLastSimulated = lastSimulated;
 	}
-		
+
 	void Simulate(float elapsedSecs);
 
 	ObjHndl GetAttachedTo() const {
@@ -242,27 +316,62 @@ public:
 		mAttachedTo = attachedTo;
 	}
 
+	const PartSysSpecPtr& GetSpec() const {
+		return mSpec;
+	}
+
+	void SetWorldPos(float x, float y, float z) {
+		Vec3 worldPos(x, y, z);
+		for (auto &emitter : mEmitters) {
+			if (emitter->GetSpec()->GetSpace() == PartSysEmitterSpace::World) {
+				emitter->SetWorldPos(worldPos);
+			}
+		}
+
+		mAttachedTo = 0;
+		// TODO: Update the screen bounding box here, see  PartSysUpdateWorldBoundingBox
+	}
+
+	const PartSysEmitter* GetEmitter(int emitterIdx) const {
+		return mEmitters.at(emitterIdx).get();
+	}
+
+	int GetEmitterCount() const {
+		return mEmitters.size();
+	}
+
+	EmitterList::const_iterator begin() const {
+		return mEmitters.cbegin();
+	}
+
+	EmitterList::const_iterator end() const {
+		return mEmitters.cend();
+	}
+
+	void Reset();
+
 private:
+
 	static int mIdSequence;
 	int mId = mIdSequence++;
 	ObjHndl mAttachedTo = 0;
 	float mAliveInSecs = 0.0f;
 	float mLastSimulated = 0.0f; // Also in Secs since creation
 	PartSysSpecPtr mSpec;
-	std::vector<std::unique_ptr<PartSysEmitter>> mEmitters;
+	EmitterList mEmitters;
 	Box2d mScreenBounds;
-	
+
 	/*
 		Does this particle system's bounding box intersect 
 		the screen?
 	*/
-	bool IsOnScreen(IPartSysExternal *external) const;
+	bool IsOnScreen(IPartSysExternal* external) const;
 
 	/*
 		Update this particle system's on screen bounding box according
 		to it's position in the world.
 	*/
-	void UpdateBoundingBox(IPartSysExternal *external);
+	void UpdateBoundingBox(IPartSysExternal* external);
 };
 
 typedef std::shared_ptr<PartSys> PartSysPtr;

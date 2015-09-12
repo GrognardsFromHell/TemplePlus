@@ -39,7 +39,16 @@
     <ClInclude Include="include\particles\types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\particles\particletypes.h">
+    <ClInclude Include="include\particles\render.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\particles\simulation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\particles\render_point.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\particles\alignedarray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -62,7 +71,13 @@
     <ClCompile Include="instances.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="particletypes.cpp">
+    <ClCompile Include="render.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="simulation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="render_point.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

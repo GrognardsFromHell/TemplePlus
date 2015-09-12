@@ -4,6 +4,8 @@
 #include "tabparser.h"
 #include "logging.h"
 
+#include <materials.h>
+
 static const std::map<std::string, PartSysCoordSys> CoordSysMapping = {
 	{"Cartesian", PartSysCoordSys::Cartesian},
 	{"Polar", PartSysCoordSys::Polar}
@@ -100,7 +102,7 @@ static void ParseOptionalEnum(const TabFileRecord& record,
 	}
 }
 
-void ParticleSystemParser::ParseLifespan(const TabFileRecord& record, PartSysEmitterSpecPtr emitter) {
+void PartSysParser::ParseLifespan(const TabFileRecord& record, PartSysEmitterSpecPtr emitter) {
 	auto colLifespan = record[COL_LIFESPAN];
 	float lifespan;
 	if (!colLifespan || colLifespan.EqualsIgnoreCase("perm")) {
@@ -116,7 +118,7 @@ void ParticleSystemParser::ParseLifespan(const TabFileRecord& record, PartSysEmi
 	}
 }
 
-void ParticleSystemParser::ParseParticleLifespan(const TabFileRecord& record, PartSysEmitterSpecPtr emitter) {
+void PartSysParser::ParseParticleLifespan(const TabFileRecord& record, PartSysEmitterSpecPtr emitter) {
 	auto colLifespan = record[COL_PART_LIFESPAN];
 	float lifespan;
 	if (!colLifespan || colLifespan.EqualsIgnoreCase("perm")) {
@@ -130,7 +132,7 @@ void ParticleSystemParser::ParseParticleLifespan(const TabFileRecord& record, Pa
 	}
 }
 
-void ParticleSystemParser::ParseParticleRate(const TabFileRecord& record, PartSysEmitterSpecPtr emitter) {
+void PartSysParser::ParseParticleRate(const TabFileRecord& record, PartSysEmitterSpecPtr emitter) {
 
 	auto rate = emitter->GetParticleRate();
 	auto maxParticles = emitter->GetMaxParticles();
@@ -162,17 +164,17 @@ void ParticleSystemParser::ParseParticleRate(const TabFileRecord& record, PartSy
 	}
 }
 
-void ParticleSystemParser::ParseEmitterNodeName(const TabFileRecord& record, PartSysEmitterSpecPtr emitter) {
+void PartSysParser::ParseEmitterNodeName(const TabFileRecord& record, PartSysEmitterSpecPtr emitter) {
 	auto col = record[COL_EMITTER_NODE_NAME];
 	if (col) {
 		emitter->SetNodeName(col.AsString());
 	}
 }
 
-void ParticleSystemParser::ParseMaterial(const TabFileRecord& record, PartSysEmitterSpecPtr emitter) {
+void PartSysParser::ParseMaterial(const TabFileRecord& record, PartSysEmitterSpecPtr emitter) {
 	auto colMaterial = record[COL_MATERIAL];
 	if (colMaterial) {
-		auto material = materials->Resolve(colMaterial.AsString());
+		auto material = mMaterials.Resolve(colMaterial.AsString());
 		if (!material->IsValid()) {
 			logger->warn("Emitter on line {} has invalid material: '{}'",
 			             record.GetLineNumber(), colMaterial);
@@ -181,10 +183,10 @@ void ParticleSystemParser::ParseMaterial(const TabFileRecord& record, PartSysEmi
 	}
 }
 
-void ParticleSystemParser::ParseMesh(const TabFileRecord& record, PartSysEmitterSpecPtr emitter) {
+void PartSysParser::ParseMesh(const TabFileRecord& record, PartSysEmitterSpecPtr emitter) {
 
 	// This only applies to emitters that emit 3D particles
-	if (!emitter->GetParticleType()->HasModel()) {
+	if (emitter->GetParticleType() != PartSysParticleType::Model) {
 		return;
 	}
 
@@ -200,7 +202,7 @@ void ParticleSystemParser::ParseMesh(const TabFileRecord& record, PartSysEmitter
 
 }
 
-void ParticleSystemParser::ParseEmitter(const TabFileRecord& record) {
+void PartSysParser::ParseEmitter(const TabFileRecord& record) {
 	auto systemName = record[COL_PARTSYS_NAME].AsString();
 
 	auto& system = mSpecs[tolower(systemName)];
@@ -237,24 +239,7 @@ void ParticleSystemParser::ParseEmitter(const TabFileRecord& record) {
 	                                   });
 
 	ParseOptionalEnum<PartSysParticleType>(record, COL_PARTICLE_TYPE, "particle type", ParticleTypeMapping, [&](PartSysParticleType type) {
-		                                       switch (type) {
-		                                       case PartSysParticleType::Sprite:
-			                                       emitter->SetParticleType(ParticleTypeSprite::GetInstance());
-			                                       break;
-		                                       case PartSysParticleType::Disc:
-			                                       emitter->SetParticleType(ParticleTypeDisc::GetInstance());
-			                                       break;
-		                                       case PartSysParticleType::Billboard:
-			                                       emitter->SetParticleType(ParticleTypeBillboard::GetInstance());
-			                                       break;
-		                                       case PartSysParticleType::Model:
-			                                       emitter->SetParticleType(ParticleTypeModel::GetInstance());
-			                                       break;
-		                                       case PartSysParticleType::Point:
-		                                       default:
-			                                       emitter->SetParticleType(ParticleTypePoint::GetInstance());
-			                                       break;
-		                                       }
+		                                       emitter->SetParticleType(type);
 	                                       });
 
 	ParseOptionalEnum<PartSysBlendMode>(record, COL_BLEND_MODE, "blend mode", BlendModeMapping, [&](auto mode) {
@@ -307,8 +292,17 @@ void ParticleSystemParser::ParseEmitter(const TabFileRecord& record) {
 
 }
 
-void ParticleSystemParser::ParseFile(const std::string& filename) {
+PartSysParser::PartSysParser(gfx::MaterialManager& materials) : mMaterials(materials) {
+}
+
+void PartSysParser::ParseFile(const std::string& filename) {
 	TabFile::ParseFile(filename, [this](const TabFileRecord& record) {
 		                   ParseEmitter(record);
 	                   });
+}
+
+void PartSysParser::ParseString(const std::string& spec) {
+	TabFile::ParseString(spec, [this](const TabFileRecord& record) {
+		                     ParseEmitter(record);
+	                     });
 }

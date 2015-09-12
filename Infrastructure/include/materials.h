@@ -1,41 +1,41 @@
-
 #pragma once
 
 #include <memory>
 #include <string>
 #include <unordered_map>
 
-class Material {
-public:
-	Material(const std::string &name, bool valid) : mName(name), mValid(valid) {
-	}
+#include "textures.h"
 
-	std::string GetName() const {
-		return mName;
-	}
+namespace gfx {
+
+	/*
+		This is basically a wrapper around tig_shader
+	*/
+	class Material {
+	public:
+		virtual ~Material() {
+		}
+
+		virtual std::string GetName() const = 0;
+
+		virtual bool IsValid() {
+			return true;
+		}
+
+		virtual TextureRef GetPrimaryTexture() = 0;
+	};
+
+	using MaterialRef = std::shared_ptr<Material>;
+
+	class MaterialManager {
+	public:
+
+		virtual ~MaterialManager();
+
+		virtual MaterialRef Resolve(const std::string& materialName) = 0;
+
+		static MaterialRef GetInvalidMaterial();
+
+	};
 	
-	bool IsValid() const {
-		return mValid;
-	}
-	
-private:
-	Material(Material&) = delete;
-	Material& operator=(Material&) = delete;
-
-	const std::string mName;
-	const bool mValid;
-};
-
-typedef std::shared_ptr<Material> MaterialRef;
-
-class MaterialManager {
-public:
-	MaterialManager();
-	~MaterialManager();
-
-	MaterialRef Resolve(const std::string& materialName);
-private:
-	std::unordered_map<std::string, MaterialRef> mMaterials;
-};
-
-extern std::unique_ptr<MaterialManager> materials;
+}

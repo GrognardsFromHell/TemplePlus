@@ -5,6 +5,8 @@
 #include <particles/instances.h>
 #include <vfs.h>
 
+#include "mock_materials.h"
+
 class PartSysExternalMock : public IPartSysExternal {
 public:
 	float GetParticleFidelity() override {
@@ -45,26 +47,29 @@ public:
 This is a test fixture for particle system parser tests that only parses all particle systems once
 to speed up the tests.
 */
+
+
 class PartSysSimulationTest : public testing::Test {
 protected:
-	static ParticleSystemParser parser;
+	static PartSysParser &GetParser() {
+		static MaterialsMock materials;
+		static PartSysParser sParser(materials);
+		return sParser;
+	}
 
 	static void SetUpTestCase() {
 		// Init VFS with mock/dummy code
 		vfs.reset(Vfs::CreateStdIoVfs());
-
-		materials.reset(new MaterialManager);
-		
-		parser.ParseFile("data\\minimal.tab");
+				
+		GetParser().ParseFile("data\\minimal.tab");
 	}
 };
-ParticleSystemParser PartSysSimulationTest::parser;
 
 TEST_F(PartSysSimulationTest, TestMovement) {
 
 	IPartSysExternal::SetCurrent(new PartSysExternalMock);
 
-	auto spec = parser.GetSpec("Brasier");
+	auto spec = GetParser().GetSpec("Brasier");
 	auto partSys = std::make_shared<PartSys>(spec);
 
 	partSys->Simulate(1.0f);

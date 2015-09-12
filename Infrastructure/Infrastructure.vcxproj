@@ -156,6 +156,7 @@
     <ClInclude Include="include\mathutil.h" />
     <ClInclude Include="include\meshes.h" />
     <ClInclude Include="include\mesparser.h" />
+    <ClInclude Include="include\renderstates.h" />
     <ClInclude Include="include\spdlog\async_logger.h" />
     <ClInclude Include="include\spdlog\common.h" />
     <ClInclude Include="include\spdlog\details\async_logger_impl.h" />
@@ -183,6 +184,7 @@
     <ClInclude Include="include\stopwatch.h" />
     <ClInclude Include="include\stringutil.h" />
     <ClInclude Include="include\tabparser.h" />
+    <ClInclude Include="include\textures.h" />
     <ClInclude Include="include\version.h" />
     <ClInclude Include="include\vfs.h" />
   </ItemGroup>
@@ -193,6 +195,7 @@
     <ClCompile Include="breakpad\guid_string.cc" />
     <ClCompile Include="format.cc" />
     <ClCompile Include="elfhash.cpp" />
+    <ClCompile Include="renderstates.cpp" />
     <ClCompile Include="tabparser.cpp" />
     <ClCompile Include="logging.cpp" />
     <ClCompile Include="materials.cpp" />
