@@ -29,26 +29,31 @@ ObjList::~ObjList() {
 void ObjList::ListTile(locXY loc, int flags) {
 	FreeResult();
 	addresses.ObjListTile(loc, flags, mResult);
+	mHasToFree = true;
 }
 
 void ObjList::ListVicinity(locXY loc, int flags) {
 	FreeResult();
 	addresses.ObjListVicinity(loc, flags, mResult);
+	mHasToFree = true;
 }
 
 void ObjList::ListRadius(LocAndOffsets loc, float radius, int flags) {
 	FreeResult();
 	addresses.ObjListRadius(loc, radius, 0.0f, (float)(M_PI * 2), flags, mResult);
+	mHasToFree = true;
 }
 
 void ObjList::ListCone(LocAndOffsets loc, float radius, float coneStartAngleRad, float coneArcRad, int flags) {
 	FreeResult();
 	addresses.ObjListRadius(loc, radius, coneStartAngleRad, coneArcRad, flags, mResult);
+	mHasToFree = true;
 }
 
 void ObjList::ListFollowers(objHndl critter) {
 	FreeResult();
 	addresses.ObjListFollowers(critter, mResult);
+	mHasToFree = true;
 }
 
 int ObjList::size() {
