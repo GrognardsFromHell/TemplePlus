@@ -112,7 +112,7 @@ private:
 static ConfigSetting configSettings[] = {
 	CONF_BOOL(skipIntro),
 	CONF_BOOL(skipLegal),
-	CONF_BOOL(engineEnhancements),
+	//CONF_BOOL(engineEnhancements),
 	//CONF_BOOL(editor),
 	CONF_BOOL(useDirect3d9Ex),
 	CONF_BOOL(windowed),

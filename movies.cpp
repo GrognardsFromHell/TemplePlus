@@ -319,11 +319,17 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 		renderStates.SetTexture(0, texture);
 		renderStates.SetTextureMinFilter(0, D3DTEXF_LINEAR);
 		renderStates.SetTextureMagFilter(0, D3DTEXF_LINEAR);
+		renderStates.SetTextureMipFilter(0, D3DTEXF_LINEAR);
 		renderStates.SetLighting(false);
 		renderStates.SetZEnable(false);
 		renderStates.SetCullMode(D3DCULL_NONE);
+		renderStates.SetTextureTransformFlags(0, D3DTTFF_DISABLE);
 		renderStates.SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1);
 		renderStates.SetStreamSource(0, vertexBuffer, sizeof(MovieVertex));
+		renderStates.SetTextureColorOp(0, D3DTOP_SELECTARG1);
+		renderStates.SetTextureColorArg1(0, D3DTA_TEXTURE);
+		renderStates.SetTextureAlphaOp(0, D3DTOP_SELECTARG1);
+		renderStates.SetTextureAlphaArg1(0, D3DTA_TEXTURE);
 		renderStates.Commit();
 
 		handleD3dError("DrawPrimitive", d3dDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, 2));
