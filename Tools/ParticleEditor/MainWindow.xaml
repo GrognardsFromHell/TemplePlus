@@ -13,8 +13,18 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <ToolBar Grid.Row="0">
-            <Button Content="Open" Click="OpenPartSysFile" />
-            <Button Content="Choose Data Path" Click="ChooseDataPath_OnClick" />
+            <Button Click="OpenPartSysFile" Margin="2">
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="Icons\Open_6529.png"></Image>
+                    <TextBlock Margin="4,0,0,0">Open File</TextBlock>
+                </StackPanel>
+            </Button>
+            <Button Click="ChooseDataPath_OnClick" Margin="2">
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="Icons\Property_501.png"></Image>
+                    <TextBlock Margin="4,0,0,0">Set Data Path</TextBlock>
+                </StackPanel>
+            </Button>
         </ToolBar>
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
@@ -49,23 +59,44 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <Label Content="Blend Mode:" Margin="4"/>
                         <ComboBox Grid.Row="0" Grid.Column="1" Margin="4" ItemsSource="{Binding BlendModes}" SelectedItem="{Binding SelectedEmitter.BlendMode}">
                         </ComboBox>
                         <Label Content="Material Name:" Grid.Row="1" Grid.Column="0" Margin="4" />
                         <TextBox Grid.Column="1" Grid.Row="1" Margin="4" Text="{Binding SelectedEmitter.Material}" />
+                        <Label Grid.Row="2" Grid.Column="0" Content="Particle Positions:" Margin="4"/>
+                        <ComboBox Grid.Row="2" Grid.Column="1" Margin="4" ItemsSource="{Binding CoordinateSystems}" SelectedItem="{Binding SelectedEmitter.ParticlePosCoordSys}" />
+                        <Label Grid.Row="2" Grid.Column="2" Content="Particle Velocity:" Margin="4"/>
+                        <ComboBox Grid.Row="2" Grid.Column="3" Margin="4" ItemsSource="{Binding CoordinateSystems}" SelectedItem="{Binding SelectedEmitter.ParticleVelocityCoordSys}" />
                     </Grid>
                 </StackPanel>
                 <GroupBox Header="Dynamic Parameters" Grid.Row="1">
-                    <ListView ItemsSource="{Binding SelectedEmitter.Params}">
-
+                    <ListView ItemsSource="{Binding SelectedEmitter.Params}" HorizontalContentAlignment="Stretch">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid d:DesignWidth="320" d:DesignHeight="70">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="125" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Label Content="{Binding Id}" Margin="4"></Label>
+                                    <TextBox Text="{Binding Path=Value}" Margin="0,4" Grid.Column="1"></TextBox>
+                                    <StackPanel Orientation="Horizontal" Grid.Column="2">
+                                        <Button Height="20" Width="20"><Image Source="Icons\action_Cancel_16xLG.png"></Image></Button>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
                     </ListView>
                 </GroupBox>
             </Grid>

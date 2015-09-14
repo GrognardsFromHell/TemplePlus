@@ -251,7 +251,7 @@ void PartSysParser::ParseEmitter(const TabFileRecord& record) {
 	ParseOptionalEnum<PartSysCoordSys>(record, COL_PARTICLE_POS_COORD_SYS, "particle pos coord sys", CoordSysMapping, [&](auto coordSys) {
 		                                   emitter->SetParticlePosCoordSys(coordSys);
 	                                   });
-	ParseOptionalEnum<PartSysCoordSys>(record, COL_PARTICLE_POS_COORD_SYS, "particle velocity coord sys", CoordSysMapping, [&](auto coordSys) {
+	ParseOptionalEnum<PartSysCoordSys>(record, COL_PARTICLE_VELOCITY_COORD_SYS, "particle velocity coord sys", CoordSysMapping, [&](auto coordSys) {
 		                                   emitter->SetParticleVelocityCoordSys(coordSys);
 	                                   });
 	ParseOptionalEnum<PartSysParticleSpace>(record, COL_PARTICLE_SPACE, "particle space", ParticleSpaceMapping, [&](auto space) {

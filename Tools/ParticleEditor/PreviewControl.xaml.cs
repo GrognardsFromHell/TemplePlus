@@ -236,7 +236,7 @@ namespace ParticleEditor
                 }
 
 
-                _activeSystem.Render(Device, w, h, 0, 0, 1f);
+                _activeSystem.Render(Device, w, h, 0, 0, 2f);
             }
 
             Device.EndScene();

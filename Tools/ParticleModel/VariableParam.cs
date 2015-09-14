@@ -56,6 +56,40 @@ namespace ParticleModel
         PartAttractorBlend = 0x2C
     }
 
+    public class VariableParamSpec : DependencyObject
+    {
+        public static readonly DependencyProperty IdProperty = DependencyProperty.Register(
+            "Id", typeof (ParamId), typeof (VariableParamSpec), new PropertyMetadata(default(ParamId)));
+
+        public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(
+            "Value", typeof (string), typeof (VariableParamSpec), new PropertyMetadata(default(string)));
+
+        public ParamId Id
+        {
+            get { return (ParamId) GetValue(IdProperty); }
+            set { SetValue(IdProperty, value); }
+        }
+
+        public string Value
+        {
+            get { return (string) GetValue(ValueProperty); }
+            set { SetValue(ValueProperty, value); }
+        }
+
+        public event EventHandler ParamChanged;
+        
+        protected virtual void OnChanged()
+        {
+            ParamChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
+        {
+            base.OnPropertyChanged(e);
+            OnChanged();
+        }
+    }
+
     public abstract class VariableParam : DependencyObject
     {
         public static readonly DependencyProperty IdProperty = DependencyProperty.Register(
@@ -205,9 +239,9 @@ namespace ParticleModel
         }
 
         /// <summary>
-        /// Vanilla ToEE particle systems contain keyframe values that are actually invalid: 100?200.
-        /// Apparently, designers tried to do random values inside of keyframes, but this actually
-        /// was never implemented and as such we skip it.
+        ///     Vanilla ToEE particle systems contain keyframe values that are actually invalid: 100?200.
+        ///     Apparently, designers tried to do random values inside of keyframes, but this actually
+        ///     was never implemented and as such we skip it.
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>

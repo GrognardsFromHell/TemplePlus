@@ -51,5 +51,7 @@ namespace ParticleEditor
         }
 
         public List<BlendMode> BlendModes => Enum.GetValues(typeof (BlendMode)).Cast<BlendMode>().ToList();
+
+        public List<CoordSys> CoordinateSystems => Enum.GetValues(typeof (CoordSys)).Cast<CoordSys>().ToList();
     }
 }

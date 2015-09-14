@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Globalization;
 using System.Text;
 using System.Windows;
@@ -86,7 +87,6 @@ namespace ParticleModel
                     return ParticleType.Point;
             }
         }
-
     }
 
     public static class BlendModeHelper
@@ -230,7 +230,7 @@ namespace ParticleModel
         private const int ColPartsysName = 0;
         private const int ColEmitterName = 1;
         private const int ColDelay = 2;
-        private const int ColEmitType = 3;// Unused
+        private const int ColEmitType = 3; // Unused
         private const int ColLifespan = 4;
         private const int ColParticleRate = 5;
         private const int ColBoundingRadius = 6; // Unused
@@ -259,63 +259,133 @@ namespace ParticleModel
         private const int ColMinParticles = 71;
         private const int ColCount = 72;
 
-        public static readonly DependencyProperty NameProperty = DependencyProperty.Register("Name", typeof (string), typeof (EmitterSpec), new PropertyMetadata(default(string)));
+        public static readonly DependencyProperty NameProperty = DependencyProperty.Register("Name", typeof (string),
+            typeof (EmitterSpec), new PropertyMetadata(default(string)));
 
-        public static readonly DependencyProperty ParticleTypeProperty = DependencyProperty.Register("ParticleType", typeof (ParticleType), typeof (EmitterSpec), new PropertyMetadata(ParticleType.Point));
+        public static readonly DependencyProperty ParticleTypeProperty = DependencyProperty.Register("ParticleType",
+            typeof (ParticleType), typeof (EmitterSpec), new PropertyMetadata(ParticleType.Point));
 
-        public static readonly DependencyProperty PermanentProperty = DependencyProperty.Register("Permanent", typeof (bool), typeof (EmitterSpec), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty PermanentProperty = DependencyProperty.Register("Permanent",
+            typeof (bool), typeof (EmitterSpec), new PropertyMetadata(default(bool)));
 
-        public static readonly DependencyProperty LifespanSecsProperty = DependencyProperty.Register("LifespanSecs", typeof (float), typeof (EmitterSpec), new PropertyMetadata(default(float)));
+        public static readonly DependencyProperty LifespanSecsProperty = DependencyProperty.Register("LifespanSecs",
+            typeof (float), typeof (EmitterSpec), new PropertyMetadata(default(float)));
 
-        public static readonly DependencyProperty DelaySecsProperty = DependencyProperty.Register("DelaySecs", typeof (float), typeof (EmitterSpec), new PropertyMetadata(default(float)));
+        public static readonly DependencyProperty DelaySecsProperty = DependencyProperty.Register("DelaySecs",
+            typeof (float), typeof (EmitterSpec), new PropertyMetadata(default(float)));
 
-        public static readonly DependencyProperty ParticlesPerSecProperty = DependencyProperty.Register("ParticlesPerSec", typeof (float), typeof (EmitterSpec), new PropertyMetadata(default(float)));
+        public static readonly DependencyProperty ParticlesPerSecProperty =
+            DependencyProperty.Register("ParticlesPerSec", typeof (float), typeof (EmitterSpec),
+                new PropertyMetadata(default(float)));
 
-        public static readonly DependencyProperty ParticleLifespanProperty = DependencyProperty.Register("ParticleLifespan", typeof (float), typeof (EmitterSpec), new PropertyMetadata(1.0f));
+        public static readonly DependencyProperty ParticleLifespanProperty =
+            DependencyProperty.Register("ParticleLifespan", typeof (float), typeof (EmitterSpec),
+                new PropertyMetadata(1.0f));
 
-        public static readonly DependencyProperty ParticlesPermanentProperty = DependencyProperty.Register("ParticlesPermanent", typeof (bool), typeof (EmitterSpec), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty ParticlesPermanentProperty =
+            DependencyProperty.Register("ParticlesPermanent", typeof (bool), typeof (EmitterSpec),
+                new PropertyMetadata(default(bool)));
 
-        public static readonly DependencyProperty MaterialProperty = DependencyProperty.Register("Material", typeof (string), typeof (EmitterSpec), new PropertyMetadata(default(string)));
+        public static readonly DependencyProperty MaterialProperty = DependencyProperty.Register("Material",
+            typeof (string), typeof (EmitterSpec), new PropertyMetadata(default(string)));
 
-        public static readonly DependencyProperty SpaceProperty = DependencyProperty.Register("Space", typeof (EmitterSpace), typeof (EmitterSpec), new PropertyMetadata(EmitterSpace.World));
+        public static readonly DependencyProperty SpaceProperty = DependencyProperty.Register("Space",
+            typeof (EmitterSpace), typeof (EmitterSpec), new PropertyMetadata(EmitterSpace.World));
 
-        public static readonly DependencyProperty NodeNameProperty = DependencyProperty.Register("NodeName", typeof (string), typeof (EmitterSpec), new PropertyMetadata(default(string)));
+        public static readonly DependencyProperty NodeNameProperty = DependencyProperty.Register("NodeName",
+            typeof (string), typeof (EmitterSpec), new PropertyMetadata(default(string)));
 
-        public static readonly DependencyProperty CoordSysProperty = DependencyProperty.Register("CoordSys", typeof (CoordSys), typeof (EmitterSpec), new PropertyMetadata(CoordSys.Cartesian));
+        public static readonly DependencyProperty CoordSysProperty = DependencyProperty.Register("CoordSys",
+            typeof (CoordSys), typeof (EmitterSpec), new PropertyMetadata(CoordSys.Cartesian));
 
-        public static readonly DependencyProperty OffsetCoordSysProperty = DependencyProperty.Register("OffsetCoordSys", typeof (CoordSys), typeof (EmitterSpec), new PropertyMetadata(CoordSys.Cartesian));
+        public static readonly DependencyProperty OffsetCoordSysProperty = DependencyProperty.Register(
+            "OffsetCoordSys", typeof (CoordSys), typeof (EmitterSpec), new PropertyMetadata(CoordSys.Cartesian));
 
-        public static readonly DependencyProperty ParticleSpaceProperty = DependencyProperty.Register("ParticleSpace", typeof (ParticleSpace), typeof (EmitterSpec), new PropertyMetadata(ParticleSpace.World));
+        public static readonly DependencyProperty ParticleSpaceProperty = DependencyProperty.Register("ParticleSpace",
+            typeof (ParticleSpace), typeof (EmitterSpec), new PropertyMetadata(ParticleSpace.World));
 
-        public static readonly DependencyProperty ParticlePosCoordSysProperty = DependencyProperty.Register("ParticlePosCoordSys", typeof (CoordSys), typeof (EmitterSpec), new PropertyMetadata(CoordSys.Cartesian));
+        public static readonly DependencyProperty ParticlePosCoordSysProperty =
+            DependencyProperty.Register("ParticlePosCoordSys", typeof (CoordSys), typeof (EmitterSpec),
+                new PropertyMetadata(CoordSys.Cartesian));
 
-        public static readonly DependencyProperty ParticleVelocityCoordSysProperty = DependencyProperty.Register("ParticleVelocityCoordSys", typeof (CoordSys), typeof (EmitterSpec), new PropertyMetadata(CoordSys.Cartesian));
+        public static readonly DependencyProperty ParticleVelocityCoordSysProperty =
+            DependencyProperty.Register("ParticleVelocityCoordSys", typeof (CoordSys), typeof (EmitterSpec),
+                new PropertyMetadata(CoordSys.Cartesian));
 
-        public static readonly DependencyProperty BlendModeProperty = DependencyProperty.Register("BlendMode", typeof (BlendMode), typeof (EmitterSpec), new PropertyMetadata(BlendMode.Add));
+        public static readonly DependencyProperty BlendModeProperty = DependencyProperty.Register("BlendMode",
+            typeof (BlendMode), typeof (EmitterSpec), new PropertyMetadata(BlendMode.Add));
 
-        public static readonly DependencyProperty BoundingBoxLeftProperty = DependencyProperty.Register("BoundingBoxLeft", typeof (float), typeof (EmitterSpec), new PropertyMetadata(-399.0f));
+        public static readonly DependencyProperty BoundingBoxLeftProperty =
+            DependencyProperty.Register("BoundingBoxLeft", typeof (float), typeof (EmitterSpec),
+                new PropertyMetadata(-399.0f));
 
-        public static readonly DependencyProperty BoundingBoxTopProperty = DependencyProperty.Register("BoundingBoxTop", typeof (float), typeof (EmitterSpec), new PropertyMetadata(-299.0f));
+        public static readonly DependencyProperty BoundingBoxTopProperty = DependencyProperty.Register(
+            "BoundingBoxTop", typeof (float), typeof (EmitterSpec), new PropertyMetadata(-299.0f));
 
-        public static readonly DependencyProperty BoundingBoxRightProperty = DependencyProperty.Register("BoundingBoxRight", typeof (float), typeof (EmitterSpec), new PropertyMetadata(399.0f));
+        public static readonly DependencyProperty BoundingBoxRightProperty =
+            DependencyProperty.Register("BoundingBoxRight", typeof (float), typeof (EmitterSpec),
+                new PropertyMetadata(399.0f));
 
-        public static readonly DependencyProperty BoundingBoxBottomProperty = DependencyProperty.Register("BoundingBoxBottom", typeof (float), typeof (EmitterSpec), new PropertyMetadata(299.0f));
+        public static readonly DependencyProperty BoundingBoxBottomProperty =
+            DependencyProperty.Register("BoundingBoxBottom", typeof (float), typeof (EmitterSpec),
+                new PropertyMetadata(299.0f));
 
-        public static readonly DependencyProperty MinActiveParticlesProperty = DependencyProperty.Register("MinActiveParticles", typeof (int?), typeof (EmitterSpec), new PropertyMetadata(default(int?)));
+        public static readonly DependencyProperty MinActiveParticlesProperty =
+            DependencyProperty.Register("MinActiveParticles", typeof (int?), typeof (EmitterSpec),
+                new PropertyMetadata(default(int?)));
 
-        public static readonly DependencyProperty ModelProperty = DependencyProperty.Register("Model", typeof (string), typeof (EmitterSpec), new PropertyMetadata(default(string)));
+        public static readonly DependencyProperty ModelProperty = DependencyProperty.Register("Model", typeof (string),
+            typeof (EmitterSpec), new PropertyMetadata(default(string)));
 
-        public static readonly DependencyProperty ParamsProperty = DependencyProperty.Register("Params", typeof (ObservableCollection<VariableParam>), typeof (EmitterSpec), new PropertyMetadata(default(ObservableCollection<VariableParam>)));
+        public static readonly DependencyProperty ParamsProperty = DependencyProperty.Register("Params",
+            typeof (ObservableCollection<VariableParamSpec>), typeof (EmitterSpec),
+            new PropertyMetadata(default(ObservableCollection<VariableParamSpec>)));
 
         public EmitterSpec()
         {
-            Params = new ObservableCollection<VariableParam>();
+            Params = new ObservableCollection<VariableParamSpec>();
         }
 
-        public ObservableCollection<VariableParam> Params
+        public ObservableCollection<VariableParamSpec> Params
         {
-            get { return (ObservableCollection<VariableParam>) GetValue(ParamsProperty); }
-            set { SetValue(ParamsProperty, value); }
+            get { return (ObservableCollection<VariableParamSpec>) GetValue(ParamsProperty); }
+            set
+            {
+                if (Params != null)
+                {
+                    Params.CollectionChanged -= ParamsChanged;
+                }
+                SetValue(ParamsProperty, value);
+                if (value != null)
+                {
+                    value.CollectionChanged += ParamsChanged;
+                }
+            }
+        }
+
+        private void ParamsChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.OldItems != null)
+            {
+                foreach (var oldItem in e.OldItems)
+                {
+                    ((VariableParamSpec) oldItem).ParamChanged -= ParamChanged;
+                }
+            }
+            if (e.NewItems != null)
+            {
+                foreach (var newItem in e.NewItems)
+                {
+                    ((VariableParamSpec)newItem).ParamChanged += ParamChanged;
+                }
+            }
+            OnEmitterChanged();
+        }
+
+        private void ParamChanged(object sender, EventArgs e)
+        {
+            // One of the parameters has changed, go ahead and notify listeners that this emitter may have changed
+            OnEmitterChanged();
         }
 
         public float BoundingBoxLeft
@@ -540,10 +610,13 @@ namespace ParticleModel
             foreach (ParamId paramId in Enum.GetValues(typeof (ParamId)))
             {
                 var col = ColFirstParam + (int) paramId;
-                var param = VariableParam.Parse(cols[col]);
-                if (param != null)
+                var param = new VariableParamSpec
                 {
-                    param.Id = paramId;
+                    Id = paramId,
+                    Value = cols[col]
+                };
+                if (!string.IsNullOrWhiteSpace(param.Value))
+                {
                     result.Params.Add(param);
                 }
             }
@@ -616,7 +689,7 @@ namespace ParticleModel
             {
                 if (param != null)
                 {
-                    cols[ColFirstParam + (int) param.Id] = param.ToSpec();
+                    cols[ColFirstParam + (int) param.Id] = param.Value;
                 }
             }
 
