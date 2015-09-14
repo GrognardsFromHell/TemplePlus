@@ -4,22 +4,69 @@
 #include <particles/render.h>
 #include <materials.h>
 #include <textures.h>
-#include <d3dx9math.h>
+#include <fstream>
 
 #include "external.h"
 #include "renderstates.h"
 #include "api.h"
+#include <regex>
 
 class EditorMaterialManager : public gfx::MaterialManager {
 public:
+	explicit EditorMaterialManager(const std::string& dataPath, IDirect3DDevice9 *device) 
+		: mDataPath(dataPath), mDevice(device) {
+	}
+
 	gfx::MaterialRef Resolve(const std::string& materialName) override;
+private:
+	std::string mDataPath;
+	CComPtr<IDirect3DDevice9> mDevice;
+};
+
+class EditorTexture : public gfx::Texture {
+public:
+	
+	EditorTexture(const std::string& name, const gfx::Size& size, IDirect3DTexture9* direct3DTexture9)
+		: mName(name), mSize(size), mContentRect{ 0, 0, size.width, size.height }, mTexture(direct3DTexture9) {
+	}
+
+	const std::string& GetName() const override {
+		return mName;
+	}
+
+	const gfx::ContentRect& GetContentRect() const override {
+		return mContentRect;
+	}
+
+	const gfx::Size& GetSize() const override {
+		return mSize;
+	}
+
+	IDirect3DTexture9* GetDeviceTexture() override {
+		return mTexture;
+	}
+
+private:
+	std::string mName;
+	gfx::ContentRect mContentRect;
+	gfx::Size mSize;
+	CComPtr<IDirect3DTexture9> mTexture;
 };
 
 class EditorMaterial : public gfx::Material {
 public:
 
-	explicit EditorMaterial(const std::string& name)
+	explicit EditorMaterial(const std::string& name, const std::string &texName, IDirect3DTexture9 *texture)
 		: mName(name) {
+		
+		if (texture) {
+			D3DSURFACE_DESC desc;
+			texture->GetLevelDesc(0, &desc);
+			gfx::Size size = { (int)desc.Width, (int)desc.Height };
+
+			mTexture = std::make_shared<EditorTexture>(texName, size, texture);
+		}
+
 	}
 
 	std::string GetName() const override {
@@ -27,19 +74,41 @@ public:
 	}
 
 	gfx::TextureRef GetPrimaryTexture() override {
-		return gfx::TextureRef(); // NYI
+		return mTexture;
 	}
 
 private:
 	std::string mName;
+	gfx::TextureRef mTexture;
 };
 
 gfx::MaterialRef EditorMaterialManager::Resolve(const std::string& materialName) {
-	return std::make_shared<EditorMaterial>(materialName);
+
+	auto filename = fmt::format("{}\\art\\meshes\\Particle\\{}.mdf", mDataPath, materialName);
+
+	std::regex r("\\s*Texture\\s+\"([^\\)]+)\"", std::regex_constants::icase);
+	std::smatch match;
+
+	std::ifstream infile(filename);
+	std::string line;
+
+	while (std::getline(infile, line)) {
+		if (std::regex_search(line, match, r)) {
+			auto textureFile = mDataPath + "\\" + match[1].str();
+
+			CComPtr<IDirect3DTexture9> texture;
+			HRESULT result = D3DXCreateTextureFromFileA(mDevice, textureFile.c_str(), &texture);
+			if (SUCCEEDED(result)) {
+				return std::make_shared<EditorMaterial>(materialName, textureFile, texture);
+			}			
+		}
+	}
+
+	return std::make_shared<EditorMaterial>(materialName, "", nullptr);
 }
 
 struct PartSysFacade {
-	PartSysFacade(const std::string& dataPath) : mDataPath(dataPath), mParser(mMaterials) {
+	PartSysFacade(const std::string& dataPath, IDirect3DDevice9 *device) : mDataPath(dataPath), mMaterials(mDataPath, device), mParser(mMaterials) {
 
 	}
 
@@ -52,12 +121,12 @@ struct PartSysFacade {
 extern "C" {
 
 	// This is an example of an exported function.
-	API PartSys* ParticleSystem_FromSpec(const char* dataPath, const char* specTabFile) {
+	API PartSys* ParticleSystem_FromSpec(IDirect3DDevice9 *device, const char* dataPath, const char* specTabFile) {
 		
 		// Set some required global state
 		IPartSysExternal::SetCurrent(&EditorExternal::GetInstance());
 		
-		PartSysFacade facade(dataPath);
+		PartSysFacade facade(dataPath, device);
 
 		auto& parser = facade.mParser;
 
@@ -81,7 +150,7 @@ extern "C" {
 		
 		InitRenderStates(device, w, h, scale);
 
-		if (sys->GetAliveInSecs() > 5) {
+		if (sys->IsDead()) {
 			sys->Reset();
 		}
 
@@ -103,6 +172,10 @@ extern "C" {
 		return sys->GetEmitter(idx);
 	}
 	
+	API bool ParticleSystem_IsDead(PartSys *sys) {
+		return sys->IsDead();
+	}
+
 	API void ParticleSystem_Free(PartSys* sys) {
 		delete sys;
 	}

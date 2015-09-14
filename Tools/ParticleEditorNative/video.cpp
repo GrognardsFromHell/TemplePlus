@@ -92,17 +92,38 @@ void VideoEncoder::Init(int width, int height, int fps) {
 	
 	mStream->time_base = AVRational{ 1, fps };
 	auto c = mStream->codec;
+	
 	c->codec_id = mOutputFormat->video_codec;
 	c->codec_type = AVMEDIA_TYPE_VIDEO;
-	c->bit_rate = 4000000;
+	c->bit_rate = 10000000;
 	c->width = width;
 	c->height = height;
 	c->time_base = { 1, fps };
 	c->pix_fmt = AV_PIX_FMT_YUV420P;
 	c->gop_size = 10; /* emit one intra frame every ten frames */
 	c->max_b_frames = 1;
-	c->profile = FF_PROFILE_H264_MAIN;
+	c->profile = FF_PROFILE_H264_HIGH;
 	av_opt_set(c->priv_data, "preset", "slow", 0);
+	av_opt_set(c->priv_data, "coder", "1", 0);
+	av_opt_set(c->priv_data, "flags", "+loop", 0);
+	av_opt_set(c->priv_data, "cmp", "+chroma", 0);
+	av_opt_set(c->priv_data, "partitions", "-parti8x8+parti4x4+partp8x8+partp4x4-partb8x8", 0);
+	av_opt_set(c->priv_data, "me_method", "hex", 0);
+	av_opt_set(c->priv_data, "subq", "5", 0);
+	av_opt_set(c->priv_data, "me_range", "16", 0);
+	av_opt_set(c->priv_data, "g", "250", 0);
+	av_opt_set(c->priv_data, "keyint_min", "25", 0);
+	av_opt_set(c->priv_data, "sc_threshold", "40", 0);
+	av_opt_set(c->priv_data, "i_qfactor", "0.71", 0);
+	av_opt_set(c->priv_data, "b_strategy", "1", 0);
+	av_opt_set(c->priv_data, "qcomp", "0.61", 0);
+	av_opt_set(c->priv_data, "qmin", "0", 0);
+	av_opt_set(c->priv_data, "qmax", "69", 0);
+	av_opt_set(c->priv_data, "qdiff", "4", 0);
+	av_opt_set(c->priv_data, "directpred", "1", 0);
+	av_opt_set(c->priv_data, "flags2", "+fastpskip", 0);
+	av_opt_set(c->priv_data, "cqp", "0", 0);
+	av_opt_set(c->priv_data, "wpredp", "2", 0);
 
 	if (mOutputFormat->flags & AVFMT_GLOBALHEADER)
 		c->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -191,12 +212,22 @@ std::string VideoEncoder::AvErrorStr(int errorCode) const {
 	return av_make_error_string(errorBuf, sizeof(errorBuf), errorCode);
 }
 
-static float GetTotalLifetime(const PartSysPtr& sys) {
+static float GetTotalLifetime(const PartSysPtr& sys, bool &permanent) {
 	auto result = 0.0f;
 
 	for (const auto& emitter : *sys) {
 		auto spec = emitter->GetSpec();
-		auto lifetime = spec->GetDelay() + spec->GetLifespan() + spec->GetParticleLifespan();
+		
+		auto lifetime = spec->GetDelay();
+		
+		if (emitter->GetSpec()->IsPermanent()) {
+			auto maxParticlesReachedIn = spec->GetMaxParticles() / (float)spec->GetParticleRate();
+			lifetime += maxParticlesReachedIn + spec->GetParticleLifespan();
+			permanent = true;
+		} else {
+			lifetime += spec->GetLifespan() + spec->GetParticleLifespan();
+		}
+		
 		if (lifetime > result) {
 			result = lifetime;
 		}
@@ -207,8 +238,18 @@ static float GetTotalLifetime(const PartSysPtr& sys) {
 
 bool ParticleSystem_RenderVideo(IDirect3DDevice9* device, PartSys* orgSys, D3DCOLOR background, const char* outputFile, int fps) {
 
-	const auto w = 1024;
-	const auto h = 768;
+	// The assumption is that the screen BB of the part sys encompasses the entire system
+	// so we use that to render it to a video file
+	auto screenBounds = orgSys->GetScreenBounds();
+	
+	auto w = (int)abs(screenBounds.right - screenBounds.left) + 10;
+	auto h = (int)abs(screenBounds.bottom - screenBounds.top) + 10;
+	// Needs to be divisible by 2 for h264
+	if (w % 2)
+		w++;
+	if (h % 2)
+		h++;
+
 	const auto scale = 1.0f;
 
 	VideoEncoder encoder(outputFile);
@@ -244,12 +285,19 @@ bool ParticleSystem_RenderVideo(IDirect3DDevice9* device, PartSys* orgSys, D3DCO
 
 	auto timeStepSec = 1.0f / fps;
 	auto elapsed = 0.0f;
-	auto totalTime = GetTotalLifetime(sys);
+	bool permanent;
+	auto totalTime = GetTotalLifetime(sys, permanent);
+	
+	if (permanent) {
+		sys->Simulate(5.0f);
+	}
+	
 
 	InitRenderStates(device, (float) w, (float) h, scale);
 
 	particles::ParticleRendererManager renderManager(device);
-
+	device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+	device->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, FALSE);
 	device->SetRenderTarget(0, renderTarget);
 	device->SetDepthStencilSurface(depthSurface);
 
@@ -258,7 +306,7 @@ bool ParticleSystem_RenderVideo(IDirect3DDevice9* device, PartSys* orgSys, D3DCO
 		elapsed += timeStepSec;
 
 		device->BeginScene();
-		result = device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, background, 1.0f, 0);
+		result = device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 32, 32, 32), 1.0f, 0);
 		if (!SUCCEEDED(result)) {
 			return false;
 		}
@@ -271,14 +319,14 @@ bool ParticleSystem_RenderVideo(IDirect3DDevice9* device, PartSys* orgSys, D3DCO
 		}
 
 		device->EndScene();
-		device->Present(nullptr, nullptr, 0, 0);
+		device->Present(nullptr, nullptr, nullptr, nullptr);
 
 		// Copy from video mem to system mem
 		result = device->GetRenderTargetData(renderTarget, sysMemSurface);
 		if (!SUCCEEDED(result)) {
 			return false;
 		}
-
+		
 		D3DLOCKED_RECT locked;
 		result = sysMemSurface->LockRect(&locked, nullptr, 0);
 		if (!SUCCEEDED(result)) {

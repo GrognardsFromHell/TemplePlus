@@ -1,7 +1,7 @@
 #include "particles/instances.h"
 #include "particles/simulation.h"
 
-IPartSysExternal *IPartSysExternal::mCurrent = nullptr;
+IPartSysExternal* IPartSysExternal::mCurrent = nullptr;
 
 int PartSys::mIdSequence = 0;
 
@@ -42,6 +42,26 @@ PartSysEmitter::~PartSysEmitter() {
 			state->Free();
 		}
 	}
+
+}
+
+bool PartSysEmitter::IsDead() const {
+
+	if (!mSpec->IsPermanent()) {
+		return false;
+	}
+
+	auto result = false;
+	if (mEnded) {
+		// TODO: Here's a check for that ominous "permanent particle" flag
+		// It only went into this, if it didn't have that flag, which is very odd
+		if (true) {
+			auto lifespanSum = mSpec->GetLifespan() + mSpec->GetParticleLifespan();
+			if (mAliveInSecs >= lifespanSum)
+				result = true;
+		}
+	}
+	return result;
 
 }
 
@@ -87,7 +107,7 @@ void PartSysEmitter::SimulateEmitterMovement(float timeToSimulateSecs) {
 	/*
 		This seems to be for constant or keyframe based velocity
 	*/
-	PartSysParamState *param;
+	PartSysParamState* param;
 	param = mParamState[emit_velVariation_X];
 	if (param) {
 		mWorldPos.x += GetParamValue(param) * timeToSimulateSecs;
@@ -129,12 +149,11 @@ int PartSysEmitter::ReserveParticle(float particleAge) {
 	// TODO UNKNOWN
 	// if (a1->particleParams->flags & 8)
 	//	a1->particles[v2] = (long double)(unsigned int)v2 * 0.12327 + a1->particles[v2];	
-	
+
 	if (mNextFreeParticle == mSpec->GetMaxParticles())
 		mNextFreeParticle = 0;
 
-	if (mFirstUsedParticle == mNextFreeParticle)
-	{
+	if (mFirstUsedParticle == mNextFreeParticle) {
 		// The following effectively frees up an existing particle
 		mFirstUsedParticle++;
 		if (mFirstUsedParticle == mSpec->GetMaxParticles())
@@ -162,7 +181,7 @@ void PartSysEmitter::RefreshRandomness(int particleIdx) {
 void PartSysEmitter::Simulate(float timeToSimulateSecs, IPartSysExternal* external) {
 
 	UpdatePos(external);
-	
+
 	particles::SimulateParticleAging(this, timeToSimulateSecs);
 	particles::SimulateParticleMovement(this, timeToSimulateSecs);
 
@@ -193,9 +212,9 @@ void PartSysEmitter::Simulate(float timeToSimulateSecs, IPartSysExternal* extern
 					mAliveInSecs += timeStep;
 
 					auto particleIdx = ReserveParticle(0.0f);
-					
+
 					RefreshRandomness(particleIdx);
-					
+
 					particles::SimulateParticleSpawn(this, particleIdx, timeToSimulateSecs);
 					--remaining;
 				} while (remaining);
@@ -230,7 +249,7 @@ void PartSysEmitter::Simulate(float timeToSimulateSecs, IPartSysExternal* extern
 
 	while (mOutstandingSimulation >= secsPerPart) {
 		mOutstandingSimulation -= secsPerPart;
-		
+
 		// Simulate emitter movement just for the interval between two particle spawns
 		SimulateEmitterMovement(secsPerPart);
 
@@ -245,7 +264,7 @@ void PartSysEmitter::Simulate(float timeToSimulateSecs, IPartSysExternal* extern
 
 static ObjHndl PartSysCurObj; // This is stupid, this is only used for radius determination as far as i can tell
 
-float PartSysEmitter::GetParamValue(PartSysParamState *state, int particleIdx) {
+float PartSysEmitter::GetParamValue(PartSysParamState* state, int particleIdx) {
 	return state->GetValue(this, particleIdx, mAliveInSecs);
 }
 
@@ -307,8 +326,24 @@ void PartSysEmitter::UpdateBonePos(IPartSysExternal* external) {
 PartSys::PartSys(const PartSysSpecPtr& spec) : mId(0), mSpec(spec), mEmitters(spec->GetEmitters().size()) {
 	// Instantiate the emitters
 	for (size_t i = 0; i < mSpec->GetEmitters().size(); ++i) {
-		mEmitters[i] = std::make_unique<PartSysEmitter>(spec->GetEmitters()[i]);
+		auto emitterSpec = spec->GetEmitters()[i];
+		mEmitters[i] = std::make_unique<PartSysEmitter>(emitterSpec);
+
+		// Update the screen bounds
+		mScreenBounds.left = std::min<float>(mScreenBounds.left, emitterSpec->GetBoxLeft());
+		mScreenBounds.top = std::min<float>(mScreenBounds.top, emitterSpec->GetBoxTop());
+		mScreenBounds.right = std::max<float>(mScreenBounds.right, emitterSpec->GetBoxRight());
+		mScreenBounds.bottom = std::max<float>(mScreenBounds.bottom, emitterSpec->GetBoxBottom());
 	}
+}
+
+bool PartSys::IsDead() const {
+	for (auto& emitter : mEmitters) {
+		if (!emitter->IsDead()) {
+			return false;
+		}
+	}
+	return true;
 }
 
 void PartSys::Simulate(float elapsedSecs) {

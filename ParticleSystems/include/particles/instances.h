@@ -133,6 +133,8 @@ public:
 		return mSpec;
 	}
 
+	bool IsDead() const;
+
 	int GetActiveCount() const {
 		if (mNextFreeParticle < mFirstUsedParticle) {
 			return (mParticleAges.size() - mFirstUsedParticle) + mNextFreeParticle;
@@ -306,6 +308,8 @@ public:
 		mLastSimulated = lastSimulated;
 	}
 
+	bool IsDead() const;
+
 	void Simulate(float elapsedSecs);
 
 	ObjHndl GetAttachedTo() const {
@@ -346,6 +350,10 @@ public:
 
 	EmitterList::const_iterator end() const {
 		return mEmitters.cend();
+	}
+
+	const Box2d &GetScreenBounds() const {
+		return mScreenBounds;
 	}
 
 	void Reset();
