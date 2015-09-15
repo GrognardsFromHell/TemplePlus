@@ -14,6 +14,7 @@
 #include "util/folderutils.h"
 #include "gamesystems.h"
 #include "renderstates.h"
+#include "legacyrenderstates.h"
 #include "ui/ui_text.h"
 #include <atlbase.h>
 
@@ -739,6 +740,11 @@ void Graphics::FreeResources() {
 }
 
 void Graphics::CreateResources() {
+
+	if (!renderStates) {
+		auto newRenderStates(CreateLegacyRenderStates());
+		renderStates.swap(newRenderStates);
+	}
 
 	renderStates->Reset();
 
