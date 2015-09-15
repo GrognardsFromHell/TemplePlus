@@ -56,7 +56,7 @@ namespace particles {
 		renderStates->SetZEnable(true);
 		renderStates->SetColorVertex(true);
 		renderStates->SetZWriteEnable(false);
-		
+
 		renderStates->SetTextureAlphaOp(0, D3DTOP_MODULATE);
 		renderStates->SetTextureAlphaArg1(0, D3DTA_TEXTURE);
 		renderStates->SetTextureAlphaArg2(0, D3DTA_DIFFUSE);
@@ -232,6 +232,7 @@ namespace particles {
 		}
 	}
 
+
 	void PointParticleRenderer::Render(const PartSysEmitter* emitter) {
 
 		D3DMATRIX worldMatrix;
@@ -240,7 +241,7 @@ namespace particles {
 		}
 
 		renderStates->SetProjectionMatrix(worldMatrix);
-		
+
 
 		// Apply particle drawing render states
 		SetupTextureState(mDevice, emitter);
@@ -282,7 +283,7 @@ namespace particles {
 		static constexpr DWORD FVF = D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1;
 	};
 
-	SpriteParticleRenderer::SpriteParticleRenderer(IDirect3DDevice9* device) : mDevice(device) {
+	QuadParticleRenderer::QuadParticleRenderer(IDirect3DDevice9* device) : mDevice(device) {
 
 		auto result = device->CreateVertexBuffer(sizeof(SpriteVertex) * 4 * MaxBatchSize,
 		                                         D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY,
@@ -345,7 +346,7 @@ namespace particles {
 
 	}
 
-	void SpriteParticleRenderer::Render(const PartSysEmitter* emitter) {
+	void QuadParticleRenderer::Render(const PartSysEmitter* emitter) {
 
 		D3DMATRIX worldMatrix;
 		if (!GetEmitterWorldMatrix(emitter, worldMatrix)) {
@@ -370,7 +371,46 @@ namespace particles {
 
 	}
 
-	void SpriteParticleRenderer::FillSpriteVertex(const PartSysEmitter* emitter, int particleIdx, SpriteVertex* vertex) {
+	void QuadParticleRenderer::RenderParticles(const PartSysEmitter* emitter) {
+		SpriteVertex* vertices;
+		auto it = emitter->NewIterator();
+		auto totalCount = emitter->GetActiveCount();
+
+		for (auto offset = 0; offset < totalCount; offset += MaxBatchSize) {
+
+			auto sizeOfBatch = std::min<int>(MaxBatchSize, totalCount - offset);
+
+			// Lock the vertex buffer for exactly the number of particles we're gonna draw
+			// We're using 4 vertices per particle (quads)
+			auto result = mBuffer->Lock(0, sizeOfBatch * 4 * sizeof(SpriteVertex), (void**)&vertices, D3DLOCK_DISCARD);
+			if (!SUCCEEDED(result)) {
+				logger->error("Unable to lock particle vertex buffer: {}", result);
+				return;
+			}
+
+			while (it.HasNext()) {
+				auto particleIdx = it.Next();
+
+				FillVertex(emitter, particleIdx, vertices);
+				vertices += 4;
+			}
+
+			result = mBuffer->Unlock();
+			if (!SUCCEEDED(result)) {
+				logger->error("Unable to unlock particle vertex buffer: {}", result);
+				return;
+			}
+
+			// Draw the batch
+			result = mDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4 * sizeOfBatch, 0, 2 * sizeOfBatch);
+			if (!SUCCEEDED(result)) {
+				logger->error("Unable to draw particles: {}", result);
+				return;
+			}
+		}
+	}
+
+	void SpriteParticleRenderer::FillVertex(const PartSysEmitter* emitter, int particleIdx, SpriteVertex* vertex) {
 
 		// Calculate the particle scale (default is 1)
 		auto scale = 1.0f;
@@ -396,10 +436,11 @@ namespace particles {
 			halfPartHeightY = screenSpaceUnitY * scale;
 		}
 
-		D3DXVECTOR3 partPos;
-		partPos.x = emitter->GetParticleState().GetState(PSF_POS_VAR_X, particleIdx);
-		partPos.y = emitter->GetParticleState().GetState(PSF_POS_VAR_Y, particleIdx);
-		partPos.z = emitter->GetParticleState().GetState(PSF_POS_VAR_Z, particleIdx);
+		D3DXVECTOR3 partPos{
+			emitter->GetParticleState().GetState(PSF_POS_VAR_X, particleIdx),
+			emitter->GetParticleState().GetState(PSF_POS_VAR_Y, particleIdx),
+			emitter->GetParticleState().GetState(PSF_POS_VAR_Z, particleIdx)
+		};
 
 		// Upper left corner
 		vertex[0].pos = partPos - halfPartHeightX - halfPartHeightY;
@@ -430,43 +471,64 @@ namespace particles {
 
 	}
 
-	void SpriteParticleRenderer::RenderParticles(const PartSysEmitter* emitter) {
-		SpriteVertex* vertices;
-		auto it = emitter->NewIterator();
-		auto totalCount = emitter->GetActiveCount();
+	void DiscParticleRenderer::FillVertex(const PartSysEmitter* emitter, int particleIdx, SpriteVertex* vertex) {
 
-		for (auto offset = 0; offset < totalCount; offset += MaxBatchSize) {
-
-			auto sizeOfBatch = std::min<int>(MaxBatchSize, totalCount - offset);
-
-			// Lock the vertex buffer for exactly the number of particles we're gonna draw
-			// We're using 4 vertices per particle (quads)
-			auto result = mBuffer->Lock(0, sizeOfBatch * 4 * sizeof(SpriteVertex), (void**)&vertices, D3DLOCK_DISCARD);
-			if (!SUCCEEDED(result)) {
-				logger->error("Unable to lock particle vertex buffer: {}", result);
-				return;
-			}
-
-			while (it.HasNext()) {
-				auto particleIdx = it.Next();
-
-				FillSpriteVertex(emitter, particleIdx, vertices);
-				vertices += 4;
-			}
-
-			result = mBuffer->Unlock();
-			if (!SUCCEEDED(result)) {
-				logger->error("Unable to unlock particle vertex buffer: {}", result);
-				return;
-			}
-
-			// Draw the batch
-			result = mDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4 * sizeOfBatch, 0, 2 * sizeOfBatch);
-			if (!SUCCEEDED(result)) {
-				logger->error("Unable to draw particles: {}", result);
-				return;
-			}
+		// Calculate the particle scale (default is 1)
+		auto scale = 1.0f;
+		auto scaleParam = emitter->GetParamState(part_scale_X);
+		if (scaleParam) {
+			scale = scaleParam->GetValue(emitter, particleIdx, emitter->GetParticleAge(particleIdx));
 		}
+
+		D3DXVECTOR3 halfPartHeightX;
+		D3DXVECTOR3 halfPartHeightY;
+		auto rotationParam = emitter->GetParamState(part_yaw);
+		if (rotationParam) {
+			auto rotation = rotationParam->GetValue(emitter, particleIdx, emitter->GetParticleAge(particleIdx));
+			rotation += emitter->GetParticleState().GetState(PSF_ROTATION, particleIdx);
+			rotation = D3DXToRadian(rotation);
+
+			auto cosRot = cosf(rotation) * scale;
+			auto sinRot = sinf(rotation) * scale;
+			halfPartHeightX = {-cosRot, 0, sinRot};
+			halfPartHeightY = {sinRot, 0, cosRot};
+		} else {
+			halfPartHeightX = {scale, 0, 0};
+			halfPartHeightY = {0, 0, scale};
+		}
+
+		D3DXVECTOR3 partPos;
+		partPos.x = emitter->GetParticleState().GetState(PSF_POS_VAR_X, particleIdx);
+		partPos.y = emitter->GetParticleState().GetState(PSF_POS_VAR_Y, particleIdx);
+		partPos.z = emitter->GetParticleState().GetState(PSF_POS_VAR_Z, particleIdx);
+
+		// Upper left corner
+		vertex[3].pos = partPos - halfPartHeightX - halfPartHeightY;
+		// Upper right corner
+		vertex[2].pos = partPos + halfPartHeightX - halfPartHeightY;
+		// Lower right corner
+		vertex[1].pos = partPos + halfPartHeightX + halfPartHeightY;
+		// Lower left corner
+		vertex[0].pos = partPos - halfPartHeightX + halfPartHeightY;
+
+		// Set the diffuse color for all corners
+		auto diffuse = GetParticleColor(emitter, particleIdx);
+		vertex[0].diffuse = diffuse;
+		vertex[1].diffuse = diffuse;
+		vertex[2].diffuse = diffuse;
+		vertex[3].diffuse = diffuse;
+
+		// Set UV coordinates for the sprite. We need to do this every frame 
+		// because we're using DISCARD for locking
+		vertex[0].u = 0;
+		vertex[0].v = 0;
+		vertex[1].u = 1;
+		vertex[1].v = 0;
+		vertex[2].u = 1;
+		vertex[2].v = 1;
+		vertex[3].u = 0;
+		vertex[3].v = 1;
+
 	}
 
 }

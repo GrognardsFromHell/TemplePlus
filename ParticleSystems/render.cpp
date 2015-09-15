@@ -38,11 +38,12 @@ namespace particles {
 
 	class ParticleRendererManager::Impl {
 	public:
-		explicit Impl(IDirect3DDevice9* device) : mPointRenderer(device), mSpriteRenderer(device) {
+		explicit Impl(IDirect3DDevice9* device) : mPointRenderer(device), mSpriteRenderer(device), mDiscRenderer(device) {
 		}
 
 		PointParticleRenderer mPointRenderer;
 		SpriteParticleRenderer mSpriteRenderer;
+		DiscParticleRenderer mDiscRenderer;
 	};
 
 	bool ParticleRenderer::GetEmitterWorldMatrix(const PartSysEmitter* emitter, D3DMATRIX& worldMatrix) {
@@ -162,6 +163,8 @@ namespace particles {
 			return &mImpl->mPointRenderer;
 		case PartSysParticleType::Sprite:
 			return &mImpl->mSpriteRenderer;
+		case PartSysParticleType::Disc:
+			return &mImpl->mDiscRenderer;
 		default:
 			throw new TempleException("Cannot render particle type");
 		}

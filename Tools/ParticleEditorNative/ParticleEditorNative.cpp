@@ -117,6 +117,21 @@ struct PartSysFacade {
 	PartSysParser mParser;
 };
 
+static Vec3 ScreenToWorld(float screenX, float screenY) {
+	if (!renderStates) {
+		return Vec3(0, 0, 0);
+	}
+	D3DXMATRIX invProjWorld;
+	D3DXMatrixTranspose(&invProjWorld, (D3DXMATRIX*)&renderStates->Get3dProjectionMatrix());
+	D3DXVECTOR3 screenSpaceUnitX = *(D3DVECTOR*)&invProjWorld._11;
+	D3DXVECTOR3 screenSpaceUnitY = *(D3DVECTOR *)&invProjWorld._21;
+	D3DXVec3Normalize(&screenSpaceUnitX, &screenSpaceUnitX);
+	D3DXVec3Normalize(&screenSpaceUnitY, &screenSpaceUnitY);
+
+	auto pos = screenX * screenSpaceUnitX - screenY * screenSpaceUnitY;
+	return Vec3(pos.x, pos.y, pos.z);
+}
+
 // This simplifies the function naming
 extern "C" {
 
@@ -144,6 +159,18 @@ extern "C" {
 
 	API void ParticleSystem_Simulate(PartSys* sys, float elapsedSecs) {
 		sys->Simulate(elapsedSecs);
+	}
+
+	API void ParticleSystem_SetPos(PartSys* sys, float screenX, float screenY) {
+		auto worldPos = ScreenToWorld(screenX, screenY);
+		for (auto &emitter : *sys) {
+			emitter->SetWorldPos(worldPos);
+		}
+	}
+	
+	API void ParticleSystem_SetObjPos(float screenX, float screenY) {
+		auto worldPos = ScreenToWorld(screenX, screenY);
+		EditorExternal::SetObjPos(worldPos.x, worldPos.y, worldPos.z);
 	}
 	
 	API void ParticleSystem_Render(IDirect3DDevice9 *device, PartSys* sys, float w, float h, float xTrans, float yTrans, float scale) {

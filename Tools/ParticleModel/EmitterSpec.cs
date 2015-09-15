@@ -525,7 +525,7 @@ namespace ParticleModel
             get { return (CoordSys) GetValue(OffsetCoordSysProperty); }
             set { SetValue(OffsetCoordSysProperty, value); }
         }
-
+        
         public event EventHandler EmitterChanged;
 
         public static EmitterSpec Parse(string line)

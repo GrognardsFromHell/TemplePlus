@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
+using SharpDX;
 using SharpDX.Direct3D9;
+using Color = System.Drawing.Color;
 
 namespace ParticleEditor
 {
@@ -11,9 +11,12 @@ namespace ParticleEditor
     {
         private IntPtr _handle;
 
+        public Vector2 ScreenPosition { get; set; }
+
         public ParticleSystem(IntPtr handle)
         {
             _handle = handle;
+            ScreenPosition = Vector2.Zero;
         }
 
         public List<ParticleSystemEmitter> Emitters
@@ -60,11 +63,17 @@ namespace ParticleEditor
 
         public void Render(Device device, float w, float h, float xTrans, float yTrans, float scale)
         {
+            ParticleSystem_SetObjPos(ScreenPosition.X, ScreenPosition.Y);
+            ParticleSystem_SetPos(_handle, ScreenPosition.X, ScreenPosition.Y);
+
             ParticleSystem_Render(device.NativePointer, _handle, w, h, xTrans, yTrans, scale);
         }
 
         public bool RenderVideo(Device device, Color background, string fileName)
         {
+            ParticleSystem_SetObjPos(ScreenPosition.X, ScreenPosition.Y);
+            ParticleSystem_SetPos(_handle, ScreenPosition.X, ScreenPosition.Y);
+
             return ParticleSystem_RenderVideo(device.NativePointer, _handle, background.ToArgb(), fileName, 60);
         }
 
@@ -82,6 +91,12 @@ namespace ParticleEditor
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl)]
         private static extern void ParticleSystem_Simulate(IntPtr handle, float timeInSecs);
+
+        [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl)]
+        private static extern void ParticleSystem_SetPos(IntPtr handle, float x, float y);
+
+        [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl)]
+        private static extern void ParticleSystem_SetObjPos(float x, float y);
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl)]
         private static extern bool ParticleSystem_IsDead(IntPtr handle);

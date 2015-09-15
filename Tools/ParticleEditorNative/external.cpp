@@ -1,16 +1,26 @@
 
 #include "external.h"
 
+#include <DirectXMath.h>
+
+float EditorExternal::mX = 0;
+float EditorExternal::mY = 0;
+float EditorExternal::mZ = 0;
+
 float EditorExternal::GetParticleFidelity() {
 	return 1.0f;
 }
 
 bool EditorExternal::GetObjLocation(ObjHndl obj, ::Vec3& worldPos) {
-	return false;
+	worldPos.x = mX;
+	worldPos.y = mY;
+	worldPos.z = mZ;
+	return true;
 }
 
 bool EditorExternal::GetObjRotation(ObjHndl obj, float& rotation) {
-	return false;
+	rotation = 0;
+	return true;
 }
 
 float EditorExternal::GetObjRadius(ObjHndl obj) {
@@ -18,11 +28,12 @@ float EditorExternal::GetObjRadius(ObjHndl obj) {
 }
 
 bool EditorExternal::GetBoneWorldMatrix(ObjHndl obj, const ::std::string& boneName, ::Matrix4x4& boneMatrix) {
-	return false;
+	DirectX::XMStoreFloat4x4(&boneMatrix, DirectX::XMMatrixIdentity());
+	return true;
 }
 
 int EditorExternal::GetBoneCount(ObjHndl obj) {
-	return 0;
+	return 1;
 }
 
 int EditorExternal::GetParentChildBonePos(ObjHndl obj, int boneIdx, ::Vec3& parentPos, ::Vec3& childPos) {
@@ -30,7 +41,10 @@ int EditorExternal::GetParentChildBonePos(ObjHndl obj, int boneIdx, ::Vec3& pare
 }
 
 bool EditorExternal::GetBonePos(ObjHndl obj, int boneIdx, ::Vec3& pos) {
-	return false;
+	pos.x = 0;
+	pos.y = 0;
+	pos.z = 0;
+	return true;
 }
 
 void EditorExternal::WorldToScreen(const ::Vec3& worldPos, ::Vec2& screenPos) {
@@ -49,4 +63,10 @@ bool EditorExternal::IsBoxVisible(const ::Box2d& box) {
 EditorExternal& EditorExternal::GetInstance() {
 	static EditorExternal sInstance;
 	return sInstance;
+}
+
+void EditorExternal::SetObjPos(float x, float y, float z) {
+	mX = x;
+	mY = y;
+	mZ = z;
 }

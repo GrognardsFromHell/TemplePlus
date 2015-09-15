@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "render.h"
@@ -12,8 +11,8 @@ namespace particles {
 
 	class PointParticleRenderer : public ParticleRenderer {
 	public:
-		explicit PointParticleRenderer(IDirect3DDevice9 *device);
-				
+		explicit PointParticleRenderer(IDirect3DDevice9* device);
+
 		void Render(const PartSysEmitter* emitter) override;
 
 	private:
@@ -23,23 +22,48 @@ namespace particles {
 
 		CComPtr<IDirect3DVertexBuffer9> mBuffer;
 		CComPtr<IDirect3DDevice9> mDevice;
-		
+
 	};
 
-	class SpriteParticleRenderer : public ParticleRenderer {
+	class QuadParticleRenderer : public ParticleRenderer {
 	public:
-		explicit SpriteParticleRenderer(IDirect3DDevice9 *device);
+		explicit QuadParticleRenderer(IDirect3DDevice9* device);
 
 		void Render(const PartSysEmitter* emitter) override;
 
-	private:
-
-		void FillSpriteVertex(const PartSysEmitter* emitter, int particleIdx, SpriteVertex* vertex);
-		void RenderParticles(const PartSysEmitter* emitter);
-
+	protected:
 		CComPtr<IDirect3DVertexBuffer9> mBuffer;
 		CComPtr<IDirect3DIndexBuffer9> mIndices;
 		CComPtr<IDirect3DDevice9> mDevice;
+
+	private:
+		void RenderParticles(const PartSysEmitter* emitter);
+
+		virtual void FillVertex(const PartSysEmitter* emitter, int particleIdx, SpriteVertex* vertex) = 0;
+
+	};
+
+	class SpriteParticleRenderer : public QuadParticleRenderer {
+	public:
+		explicit SpriteParticleRenderer(IDirect3DDevice9* device)
+			: QuadParticleRenderer(device) {
+		}
+
+	protected:
+
+		void FillVertex(const PartSysEmitter* emitter, int particleIdx, SpriteVertex* vertex) override;
+
+	};
+
+	class DiscParticleRenderer : public QuadParticleRenderer {
+	public:
+		explicit DiscParticleRenderer(IDirect3DDevice9* device)
+			: QuadParticleRenderer(device) {
+		}
+
+	protected:
+
+		void FillVertex(const PartSysEmitter* emitter, int particleIdx, SpriteVertex* vertex) override;
 
 	};
 

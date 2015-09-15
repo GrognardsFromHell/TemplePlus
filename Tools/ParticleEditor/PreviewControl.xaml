@@ -14,10 +14,11 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <StackPanel Grid.Row="0">
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
             <ToggleButton Content="Pause" HorizontalAlignment="Left" Margin="5" IsChecked="{Binding Path=Paused}" />
+            <Label ContentStringFormat="Scale: {0:P}" Content="{Binding Scale}"></Label>
         </StackPanel>
-        <Grid Grid.Row="1" x:Name="RenderOutput">
+        <Grid Grid.Row="1" x:Name="RenderOutput" MouseLeftButtonDown="RenderOutput_MouseLeftButtonDown" MouseMove="RenderOutput_MouseMove" MouseLeftButtonUp="RenderOutput_MouseLeftButtonUp" MouseWheel="RenderOutput_MouseWheel">
             <Image>
                 <Image.Source>
                     <interop:D3DImage x:Name="D3Dimg" />

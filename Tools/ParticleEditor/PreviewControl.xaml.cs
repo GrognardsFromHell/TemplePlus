@@ -1,17 +1,15 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
 using ParticleModel;
 using SharpDX;
 using SharpDX.Direct3D9;
-using Color = SharpDX.Color;
 
 namespace ParticleEditor
 {
@@ -33,15 +31,17 @@ namespace ParticleEditor
 
         private string _dataPath;
 
+        private bool _dragging;
+
         private TimeSpan _lastRender;
 
         private int _outputHeight;
 
         private int _outputWidth;
-
-        private Surface _renderTargetSurface;
         private Surface _renderTargetDepth;
         private int _renderTargetHeight;
+
+        private Surface _renderTargetSurface;
         private int _renderTargetWidth;
 
         private TimeSpan? _timeSinceLastSimul;
@@ -90,10 +90,7 @@ namespace ParticleEditor
         public PartSysSpec ActiveSystem
         {
             get { return (PartSysSpec) GetValue(ActiveSystemProperty); }
-            set
-            {
-                SetValue(ActiveSystemProperty, value);
-            }
+            set { SetValue(ActiveSystemProperty, value); }
         }
 
         public event EventHandler ConfigureDataPath;
@@ -191,7 +188,7 @@ namespace ParticleEditor
                         _renderTargetWidth,
                         _renderTargetHeight,
                         Format.D16,
-                        MultisampleType.None, 
+                        MultisampleType.None,
                         0,
                         true);
                 }
@@ -213,7 +210,7 @@ namespace ParticleEditor
         private void RenderParticleSystem(int w, int h, TimeSpan renderTime)
         {
             Device.BeginScene();
-            Device.Clear(ClearFlags.Target|ClearFlags.ZBuffer, new ColorBGRA(32, 32, 32, 255),  1, 0);
+            Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, new ColorBGRA(32, 32, 32, 255), 1, 0);
 
             if (_activeSystem != null)
             {
@@ -236,7 +233,7 @@ namespace ParticleEditor
                 }
 
 
-                _activeSystem.Render(Device, w, h, 0, 0, 2f);
+                _activeSystem.Render(Device, w, h, 0, 0, _model.Scale);
             }
 
             Device.EndScene();
@@ -256,6 +253,46 @@ namespace ParticleEditor
         protected virtual void OnConfigureDataPath()
         {
             ConfigureDataPath?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void RenderOutput_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            _dragging = true;
+        }
+
+        private void RenderOutput_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed && _dragging)
+            {
+                var pos = e.GetPosition(RenderOutput);
+                pos.X -= RenderOutput.ActualWidth*0.5;
+                pos.Y -= RenderOutput.ActualHeight*0.5;
+
+                // If the preview is scaled, we have to reverse the scaling here to get back
+                // to a 1:1 mapping of pixels
+                pos.X /= _model.Scale;
+                pos.Y /= _model.Scale;
+
+                if (ActiveSystem != null)
+                {
+                    _activeSystem.ScreenPosition = new Vector2((float) pos.X, (float) pos.Y);
+                }
+            }
+            else
+            {
+                _dragging = false;
+            }
+        }
+
+        private void RenderOutput_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            _dragging = false;
+        }
+
+        private void RenderOutput_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            // Effective delta only seems to come i multiples of 120. So 5 clicks mean double size
+            _model.Scale += e.Delta/(5*120.0f);
         }
     }
 }

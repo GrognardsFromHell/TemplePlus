@@ -9,7 +9,16 @@ namespace ParticleEditor
 
         public static readonly DependencyProperty ActiveParticlesProperty = DependencyProperty.Register(
             "ActiveParticles", typeof (int), typeof (PreviewControlModel), new PropertyMetadata(default(int)));
-        
+
+        public static readonly DependencyProperty ScaleProperty = DependencyProperty.Register(
+            "Scale", typeof (float), typeof (PreviewControlModel), new PropertyMetadata(1.0f));
+
+        public float Scale
+        {
+            get { return (float) GetValue(ScaleProperty); }
+            set { SetValue(ScaleProperty, value); }
+        }
+
         public int ActiveParticles
         {
             get { return (int) GetValue(ActiveParticlesProperty); }

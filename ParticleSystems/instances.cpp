@@ -24,7 +24,7 @@ ParticleState::~ParticleState() {
 
 PartSysEmitter::PartSysEmitter(const PartSysEmitterSpecPtr& spec) :
 	mSpec(spec), mParticleAges(spec->GetMaxParticles(), 0), mParamState(PARTICLE_PARAM_COUNT, nullptr), mParticleState(spec->GetMaxParticles()),
-	mWorldPos(0, 0, 0), mVelocity(0, 0, 0), mWorldPosVar(0, 0, 0) {
+	mWorldPos(0, 0, 0), mObjPos(0, 0, 0), mPrevObjPos(mObjPos), mVelocity(0, 0, 0), mWorldPosVar(0, 0, 0) {
 
 	for (int i = 0; i < PARTICLE_PARAM_COUNT; ++i) {
 		auto param = mSpec->GetParam((PartSysParamId)i);
@@ -47,20 +47,24 @@ PartSysEmitter::~PartSysEmitter() {
 
 bool PartSysEmitter::IsDead() const {
 
-	if (!mSpec->IsPermanent()) {
+	if (mSpec->IsPermanent()) {
 		return false;
 	}
 
-	auto result = false;
 	if (mEnded) {
-		// TODO: Here's a check for that ominous "permanent particle" flag
-		// It only went into this, if it didn't have that flag, which is very odd
-		if (true) {
-			auto lifespanSum = mSpec->GetLifespan() + mSpec->GetParticleLifespan();
-			if (mAliveInSecs >= lifespanSum)
-				result = true;
-		}
+		return true;
 	}
+
+	auto result = false;
+	
+	// TODO: Here's a check for that ominous "permanent particle" flag
+	// It only went into this, if it didn't have that flag, which is very odd
+	if (true) {
+		auto lifespanSum = mSpec->GetLifespan() + mSpec->GetParticleLifespan();
+		if (mAliveInSecs >= lifespanSum)
+			result = true;
+	}
+	
 	return result;
 
 }

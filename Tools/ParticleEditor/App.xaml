@@ -3,4 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:ParticleEditor"
              StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <local:BooleanInverter x:Key="inverter" />
+    </Application.Resources>
 </Application>

@@ -17,4 +17,8 @@ public:
 	bool IsPointUnfogged(const ::Vec2& point) override;
 	bool IsBoxVisible(const ::Box2d& box) override;	
 	static EditorExternal &GetInstance();
+
+	static void SetObjPos(float x, float y, float z);
+private:
+	static float mX, mY, mZ;
 };

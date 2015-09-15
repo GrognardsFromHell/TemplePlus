@@ -67,16 +67,43 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <Label Content="Blend Mode:" Margin="4"/>
-                        <ComboBox Grid.Row="0" Grid.Column="1" Margin="4" ItemsSource="{Binding BlendModes}" SelectedItem="{Binding SelectedEmitter.BlendMode}">
-                        </ComboBox>
-                        <Label Content="Material Name:" Grid.Row="1" Grid.Column="0" Margin="4" />
-                        <TextBox Grid.Column="1" Grid.Row="1" Margin="4" Text="{Binding SelectedEmitter.Material}" />
-                        <Label Grid.Row="2" Grid.Column="0" Content="Particle Positions:" Margin="4"/>
-                        <ComboBox Grid.Row="2" Grid.Column="1" Margin="4" ItemsSource="{Binding CoordinateSystems}" SelectedItem="{Binding SelectedEmitter.ParticlePosCoordSys}" />
-                        <Label Grid.Row="2" Grid.Column="2" Content="Particle Velocity:" Margin="4"/>
-                        <ComboBox Grid.Row="2" Grid.Column="3" Margin="4" ItemsSource="{Binding CoordinateSystems}" SelectedItem="{Binding SelectedEmitter.ParticleVelocityCoordSys}" />
+                        <Label Grid.Row="0" Grid.Column="0" Content="Emitter Lifetime:" Margin="4"/>
+                        <DockPanel Grid.Row="0" Grid.Column="1" LastChildFill="True">
+                            <ToggleButton IsChecked="{Binding SelectedEmitter.Permanent}" DockPanel.Dock="Left" Margin="4,4,0,4" FontWeight="Bold">&#x221e;</ToggleButton>
+                            <Label Margin="0,4,4,4" Content="sec" DockPanel.Dock="Right" />
+                            <TextBox Text="{Binding SelectedEmitter.LifespanSecs}" IsEnabled="{Binding SelectedEmitter.Permanent, Converter={StaticResource inverter}}" Margin="4,4,0,4" VerticalContentAlignment="Center" />
+                        </DockPanel>
+                        <Label Grid.Row="0" Grid.Column="2" Content="Node Name:" Margin="4"/>
+                        <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding SelectedEmitter.NodeName}" Margin="4" VerticalContentAlignment="Center"></TextBox>
+                        <Label Grid.Row="1" Grid.Column="2" Content="Particle Lifetime:" Margin="4"/>
+                        <DockPanel Grid.Row="1" Grid.Column="3" LastChildFill="True">
+                            <ToggleButton IsChecked="{Binding SelectedEmitter.ParticlesPermanent}" DockPanel.Dock="Left" Margin="4,4,0,4" FontWeight="Bold">&#x221e;</ToggleButton>
+                            <Label Margin="0,4,4,4" Content="sec" DockPanel.Dock="Right" />
+                            <TextBox Text="{Binding SelectedEmitter.ParticleLifespan}" IsEnabled="{Binding SelectedEmitter.ParticlesPermanent, Converter={StaticResource inverter}}" Margin="4,4,0,4" VerticalContentAlignment="Center" />
+                        </DockPanel>
+                        <Label Grid.Row="1" Grid.Column="0" Content="Particle Rate:" Margin="4"/>
+                        <DockPanel Grid.Row="1" Grid.Column="1" LastChildFill="True">
+                            <Label Margin="0,4,4,4" Content="per sec" DockPanel.Dock="Right" />
+                            <TextBox Text="{Binding SelectedEmitter.ParticlesPerSec}" Margin="4,4,0,4" VerticalContentAlignment="Center" />
+                        </DockPanel>
+                        <Label Grid.Row="2" Grid.Column="0" Content="Emitter Space:" Margin="4"/>
+                        <ComboBox Grid.Row="2" Grid.Column="1" Margin="4" ItemsSource="{Binding EmitterSpaces}" SelectedItem="{Binding SelectedEmitter.Space}" />
+                        <Label Grid.Row="2" Grid.Column="2" Content="Particle Space:" Margin="4"/>
+                        <ComboBox Grid.Row="2" Grid.Column="3" Margin="4" ItemsSource="{Binding ParticleSpaces}" SelectedItem="{Binding SelectedEmitter.ParticleSpace}" />
+                        <Label Grid.Row="3" Grid.Column="0" Content="Particle Type:" Margin="4"/>
+                        <ComboBox Grid.Row="3" Grid.Column="1" Margin="4" ItemsSource="{Binding ParticleTypes}" SelectedItem="{Binding SelectedEmitter.ParticleType}" />
+                        <Label Grid.Row="3" Grid.Column="2" Content="Blend Mode:" Margin="4"/>
+                        <ComboBox Grid.Row="3" Grid.Column="3" Margin="4" ItemsSource="{Binding BlendModes}" SelectedItem="{Binding SelectedEmitter.BlendMode}" />
+                        <Label Content="Material Name:" Grid.Row="4" Grid.Column="0" Margin="4" />
+                        <TextBox Grid.Column="1" Grid.Row="4" Margin="4" Text="{Binding SelectedEmitter.Material}" VerticalContentAlignment="Center" />
+                        <Label Grid.Row="5" Grid.Column="0" Content="Particle Positions:" Margin="4"/>
+                        <ComboBox Grid.Row="5" Grid.Column="1" Margin="4" ItemsSource="{Binding CoordinateSystems}" SelectedItem="{Binding SelectedEmitter.ParticlePosCoordSys}" />
+                        <Label Grid.Row="5" Grid.Column="2" Content="Particle Velocity:" Margin="4"/>
+                        <ComboBox Grid.Row="5" Grid.Column="3" Margin="4" ItemsSource="{Binding CoordinateSystems}" SelectedItem="{Binding SelectedEmitter.ParticleVelocityCoordSys}" />
                     </Grid>
                 </StackPanel>
                 <GroupBox Header="Dynamic Parameters" Grid.Row="1">
@@ -90,9 +117,11 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <Label Content="{Binding Id}" Margin="4"></Label>
-                                    <TextBox Text="{Binding Path=Value}" Margin="0,4" Grid.Column="1"></TextBox>
+                                    <TextBox Text="{Binding Path=Value}" Margin="0,4" Grid.Column="1" VerticalContentAlignment="Center"></TextBox>
                                     <StackPanel Orientation="Horizontal" Grid.Column="2">
-                                        <Button Height="20" Width="20"><Image Source="Icons\action_Cancel_16xLG.png"></Image></Button>
+                                        <Button Height="20" Width="20">
+                                            <Image Source="Icons\action_Cancel_16xLG.png"></Image>
+                                        </Button>
                                     </StackPanel>
                                 </Grid>
                             </DataTemplate>
