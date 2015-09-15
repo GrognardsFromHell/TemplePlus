@@ -78,6 +78,25 @@ void PartSysEmitter::ApplyAcceleration(PartSysParamId paramId, float timeToSimul
 	}
 }
 
+void PartSysEmitter::PruneExpiredParticles() {
+	// Cull expired particles	
+	if (mSpec->IsPermanentParticles()) {
+		return;
+	}
+
+	auto it = NewIterator();
+	auto maxAge = mSpec->GetParticleLifespan();
+	while (it.HasNext()) {
+		auto particleIdx = it.Next();
+		if (mParticleAges[particleIdx] > maxAge) {
+			mFirstUsedParticle = particleIdx + 1;
+			if (mFirstUsedParticle >= mParticleAges.size()) {
+				mFirstUsedParticle = 0;
+			}
+		}
+	}	
+}
+
 void PartSysEmitter::Reset() {
 	mAliveInSecs = 0;
 	mVelocity.x = 0;

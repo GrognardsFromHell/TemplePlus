@@ -47,6 +47,9 @@ namespace ParticleModel
                         continue; // Also probably not a valid line
                     }
 
+                    // Trim it by removing the vertical tab at the end
+                    systemName = systemName.Replace("\v", "");
+
                     var key = systemName.ToLowerInvariant();
                     if (!emittersBySystem.ContainsKey(key))
                     {

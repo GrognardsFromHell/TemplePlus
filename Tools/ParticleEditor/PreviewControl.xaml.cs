@@ -210,7 +210,7 @@ namespace ParticleEditor
         private void RenderParticleSystem(int w, int h, TimeSpan renderTime)
         {
             Device.BeginScene();
-            Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, new ColorBGRA(32, 32, 32, 255), 1, 0);
+            Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, new ColorBGRA(0, 0, 0, 255), 1, 0);
 
             if (_activeSystem != null)
             {

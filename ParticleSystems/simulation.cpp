@@ -59,9 +59,10 @@ void particles::SimulateParticleAging(PartSysEmitter* emitter, float timeToSimul
 
 	while (it.HasNext()) {
 		auto particleIdx = it.Next();
-
 		ages[particleIdx] += timeToSimulateSec;
 	}
+
+	emitter->PruneExpiredParticles();
 
 }
 

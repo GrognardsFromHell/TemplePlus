@@ -232,6 +232,8 @@ public:
 		mWorldPos = worldPos;
 	}
 
+	void PruneExpiredParticles();
+
 	void Reset();
 	
 	void SimulateEmitterMovement(float timeToSimulateSecs);
