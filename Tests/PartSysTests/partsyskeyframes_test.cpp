@@ -4,6 +4,8 @@
 #include <particles/parser_params.h>
 #include <format.h>
 
+using namespace particles;
+
 static std::string BuildFrameString(const std::vector<PartSysParamKeyframe> &frames) {
 	std::string debugOut = "";
 	for (auto frame : frames) {

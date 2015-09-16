@@ -5,11 +5,11 @@
 
 #define API __declspec(dllexport)
 
-class PartSys;
+class particles::PartSys;
 
 extern "C" {
 	API bool ParticleSystem_RenderVideo(IDirect3DDevice9* device,
-	                                    PartSys* sys,
+	                                    particles::PartSys* sys,
 	                                    D3DCOLOR background,
 	                                    const char* outputFile,
 	                                    int fps);

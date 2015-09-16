@@ -13,6 +13,8 @@ extern "C" {
 #include <libswresample/swresample.h>
 }
 
+using namespace particles;
+
 #include "api.h"
 
 class VideoEncoder {

@@ -1,27 +1,29 @@
-
 #pragma once
 
 #include <string>
 
-struct PartSysParamKeyframe;
-class PartSysParamKeyframes;
+namespace particles {
 
-/*
-	Extracted logic for parsing animated particle system values into
-	this class, since the initial parsing is the most complicated
-	of all the parameters.
+	struct PartSysParamKeyframe;
+	class PartSysParamKeyframes;
 
-	Keyframe animations in particle values can be spotted by looking for
-	commas. I.e. 0,255 would be a keyframed animation that goes from 0 -> 255
-	with two keyframes at the start and end.
-*/
-class ParserKeyframes {
-public:
+	/*
+		Extracted logic for parsing animated particle system values into
+		this class, since the initial parsing is the most complicated
+		of all the parameters.
 
-	static PartSysParamKeyframes* Parse(const std::string& value, float parentLifespan);
+		Keyframe animations in particle values can be spotted by looking for
+		commas. I.e. 0,255 would be a keyframed animation that goes from 0 -> 255
+		with two keyframes at the start and end.
+	*/
+	class ParserKeyframes {
+	public:
 
-private:
-	static bool ParseKeyframe(const std::string& value, float lifespan, PartSysParamKeyframe& frame);
-	static bool IsStartTimeAscending(const std::vector<PartSysParamKeyframe> &frames);
-	static void PostprocessFrames(std::vector<PartSysParamKeyframe> &frames);
-};
+		static PartSysParamKeyframes* Parse(const std::string& value, float parentLifespan);
+
+	private:
+		static bool ParseKeyframe(const std::string& value, float lifespan, PartSysParamKeyframe& frame);
+		static bool IsStartTimeAscending(const std::vector<PartSysParamKeyframe>& frames);
+		static void PostprocessFrames(std::vector<PartSysParamKeyframe>& frames);
+	};
+}

@@ -4,14 +4,14 @@
 #include <memory>
 #include <d3dx9math.h>
 
-class PartSysEmitter;
-enum class PartSysParticleType;
-class PartSys;
 struct IDirect3DDevice9;
 typedef struct _D3DMATRIX D3DMATRIX;
 
 namespace particles {
-	
+
+	class PartSysEmitter;
+	enum class PartSysParticleType;
+	class PartSys;
 
 	class ParticleRenderer {
 	public:

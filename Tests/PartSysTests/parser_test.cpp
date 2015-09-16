@@ -8,6 +8,8 @@
 
 #include "mock_materials.h"
 
+using namespace particles;
+
 /*
 	This is a test fixture for particle system parser tests that only parses all particle systems once
 	to speed up the tests.

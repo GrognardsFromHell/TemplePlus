@@ -1,9 +1,9 @@
 
 #pragma once
 
-class PartSysEmitter;
-
 namespace particles {
+
+	class PartSysEmitter;
 	
 	void SimulateParticleAging(PartSysEmitter *emitter, float timeToSimulateSec);
 

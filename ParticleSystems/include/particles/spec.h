@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string>
 #include <memory>
 #include <vector>
 
@@ -11,11 +10,13 @@
 
 #include "params.h"
 
+namespace particles {
+
 class PartSysSpec;
 class PartSysEmitterSpec;
 
-typedef std::shared_ptr<PartSysSpec> PartSysSpecPtr;
-typedef std::shared_ptr<PartSysEmitterSpec> PartSysEmitterSpecPtr;
+using PartSysSpecPtr = std::shared_ptr<PartSysSpec>;
+using PartSysEmitterSpecPtr = std::shared_ptr<PartSysEmitterSpec>;
 
 class PartSysSpec {
 public:
@@ -332,3 +333,5 @@ private:
 
 	float mDelay = 0.0f;
 };
+
+}

@@ -3,7 +3,7 @@
 
 #include <particles/external.h>
 
-class EditorExternal : public IPartSysExternal {
+class EditorExternal : public particles::IPartSysExternal {
 public:
 	float GetParticleFidelity() override;
 	bool GetObjLocation(ObjHndl obj, ::Vec3& worldPos) override;

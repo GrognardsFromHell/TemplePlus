@@ -1,6 +1,8 @@
 #include "particles/simulation.h"
 #include "particles/instances.h"
 
+namespace particles {
+
 inline float DegToRad(float degrees) {
 	return degrees * 0.0174532925f;
 }
@@ -52,7 +54,7 @@ inline void SetParticleParam(PartSysEmitter* emitter, int particleIdx, PartSysPa
 	emitter->GetParticleState().SetState(stateField, particleIdx, value);
 }
 
-void particles::SimulateParticleAging(PartSysEmitter* emitter, float timeToSimulateSec) {
+void SimulateParticleAging(PartSysEmitter* emitter, float timeToSimulateSec) {
 
 	auto it = emitter->NewIterator();
 	auto &ages = emitter->GetParticles();
@@ -66,7 +68,7 @@ void particles::SimulateParticleAging(PartSysEmitter* emitter, float timeToSimul
 
 }
 
-void particles::SimulateParticleSpawn(PartSysEmitter* emitter, int particleIdx, float timeToSimulate) {
+void SimulateParticleSpawn(PartSysEmitter* emitter, int particleIdx, float timeToSimulate) {
 
 
 	const auto& spec = emitter->GetSpec();
@@ -335,7 +337,7 @@ struct ParticleValueSource {
 
 };
 
-void particles::SimulateParticleMovement(PartSysEmitter* emitter, float timeToSimulateSecs) {
+void SimulateParticleMovement(PartSysEmitter* emitter, float timeToSimulateSecs) {
 
 	const auto& spec = emitter->GetSpec();
 
@@ -468,5 +470,7 @@ void particles::SimulateParticleMovement(PartSysEmitter* emitter, float timeToSi
 		state.SetState(PSF_POS_VAR_Y, particleIdx, y + yPosVar);
 		state.SetState(PSF_POS_VAR_Z, particleIdx, z + zPosVar);
 	}
+
+}
 
 }

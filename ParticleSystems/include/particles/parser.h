@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <string>
@@ -10,41 +9,45 @@
 class TabFileRecord;
 class gfx::MaterialManager;
 
-class PartSysParser {
-public:
+namespace particles {
 
-	explicit PartSysParser(gfx::MaterialManager &materials);
+	class PartSysParser {
+	public:
 
-	typedef std::unordered_map<std::string, PartSysSpecPtr> SpecMap;
+		explicit PartSysParser(gfx::MaterialManager& materials);
 
-	void ParseFile(const std::string &filename);
-	void ParseString(const std::string &spec);
+		typedef std::unordered_map<std::string, PartSysSpecPtr> SpecMap;
 
-	PartSysSpecPtr GetSpec(const std::string &name) const {
-		auto it = mSpecs.find(tolower(name));
-		if (it != mSpecs.end()) {
-			return it->second;
+		void ParseFile(const std::string& filename);
+		void ParseString(const std::string& spec);
+
+		PartSysSpecPtr GetSpec(const std::string& name) const {
+			auto it = mSpecs.find(tolower(name));
+			if (it != mSpecs.end()) {
+				return it->second;
+			}
+			return PartSysSpecPtr();
 		}
-		return PartSysSpecPtr();
-	}
 
-	SpecMap::const_iterator begin() const {
-		return mSpecs.cbegin();
-	}
+		SpecMap::const_iterator begin() const {
+			return mSpecs.cbegin();
+		}
 
-	SpecMap::const_iterator end() const {
-		return mSpecs.cend();
-	}
+		SpecMap::const_iterator end() const {
+			return mSpecs.cend();
+		}
 
-private:
-	SpecMap mSpecs;
-	gfx::MaterialManager &mMaterials;
+	private:
+		SpecMap mSpecs;
+		gfx::MaterialManager& mMaterials;
 
-	void ParseLifespan(const TabFileRecord& record, PartSysEmitterSpecPtr emitter);
-	void ParseParticleLifespan(const TabFileRecord &record, PartSysEmitterSpecPtr emitter);
-	void ParseParticleRate(const TabFileRecord &record, PartSysEmitterSpecPtr emitter);
-	void ParseEmitterNodeName(const TabFileRecord &record, PartSysEmitterSpecPtr emitter);
-	void ParseMaterial(const TabFileRecord& record, PartSysEmitterSpecPtr emitter);
-	void ParseMesh(const TabFileRecord &record, PartSysEmitterSpecPtr emitter);
-	void ParseEmitter(const TabFileRecord& record);
-};
+		void ParseLifespan(const TabFileRecord& record, PartSysEmitterSpecPtr emitter);
+		void ParseParticleLifespan(const TabFileRecord& record, PartSysEmitterSpecPtr emitter);
+		void ParseParticleRate(const TabFileRecord& record, PartSysEmitterSpecPtr emitter);
+		void ParseEmitterNodeName(const TabFileRecord& record, PartSysEmitterSpecPtr emitter);
+		void ParseMaterial(const TabFileRecord& record, PartSysEmitterSpecPtr emitter);
+		void ParseMesh(const TabFileRecord& record, PartSysEmitterSpecPtr emitter);
+		void ParseEmitter(const TabFileRecord& record);
+	};
+
+}

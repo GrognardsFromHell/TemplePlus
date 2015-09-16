@@ -7,6 +7,8 @@
 
 #include "mock_materials.h"
 
+using namespace particles;
+
 class PartSysExternalMock : public IPartSysExternal {
 public:
 	float GetParticleFidelity() override {

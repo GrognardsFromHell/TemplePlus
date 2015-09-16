@@ -4,6 +4,8 @@
 #include <particles/parser.h>
 #include <particles/parser_params.h>
 
+using namespace particles;
+
 static std::unique_ptr<PartSysParamRandom> Parse(const std::string &spec) {
 	bool success;
 	std::unique_ptr<PartSysParamRandom> result(

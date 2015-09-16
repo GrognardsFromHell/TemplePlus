@@ -5,11 +5,13 @@
 #include <materials.h>
 #include <textures.h>
 #include <fstream>
+#include <regex>
 
 #include "external.h"
 #include "renderstates.h"
 #include "api.h"
-#include <regex>
+
+using namespace particles;
 
 class EditorMaterialManager : public gfx::MaterialManager {
 public:
@@ -154,7 +156,10 @@ extern "C" {
 		auto name = parser.begin()->first;
 		auto spec = parser.GetSpec(name);
 
-		return new PartSys(spec);
+		auto result = new PartSys(spec);
+		// This is a dummy so the emiter is actually updated for obj position
+		result->SetAttachedTo(1);
+		return result;
 	}
 
 	API void ParticleSystem_Simulate(PartSys* sys, float elapsedSecs) {
@@ -163,9 +168,8 @@ extern "C" {
 
 	API void ParticleSystem_SetPos(PartSys* sys, float screenX, float screenY) {
 		auto worldPos = ScreenToWorld(screenX, screenY);
-		for (auto &emitter : *sys) {
-			emitter->SetWorldPos(worldPos);
-		}
+		EditorExternal editorExternal;
+		sys->SetWorldPos(&editorExternal, worldPos.x, worldPos.y, worldPos.z);
 	}
 	
 	API void ParticleSystem_SetObjPos(float screenX, float screenY) {

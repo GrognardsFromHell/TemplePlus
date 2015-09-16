@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\particles\alignedarray.h" />
+    <ClInclude Include="include\particles\bones.h" />
     <ClInclude Include="include\particles\external.h" />
     <ClInclude Include="include\particles\parser_params.h" />
     <ClInclude Include="include\particles\parser.h" />
@@ -33,6 +34,7 @@
     <ClInclude Include="include\particles\types.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="bones.cpp" />
     <ClCompile Include="instances.cpp" />
     <ClCompile Include="params.cpp" />
     <ClCompile Include="parser_params.cpp" />

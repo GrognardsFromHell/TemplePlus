@@ -4,6 +4,8 @@
 
 #include "params.h"
 
+namespace particles {
+
 class ParserParams {
 public:
 
@@ -27,3 +29,5 @@ public:
 	static PartSysParamConstant* ParseConstant(const std::string& value, float defaultValue, bool& success);
 
 };
+
+}

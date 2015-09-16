@@ -28,7 +28,7 @@ float EditorExternal::GetObjRadius(ObjHndl obj) {
 }
 
 bool EditorExternal::GetBoneWorldMatrix(ObjHndl obj, const ::std::string& boneName, ::Matrix4x4& boneMatrix) {
-	DirectX::XMStoreFloat4x4(&boneMatrix, DirectX::XMMatrixIdentity());
+	DirectX::XMStoreFloat4x4(&boneMatrix, DirectX::XMMatrixTranslation(mX, mY, mZ));
 	return true;
 }
 

@@ -2,6 +2,8 @@
 
 #include <particles/parser_params.h>
 
+using namespace particles;
+
 /*
 	Check the default value calculation of PartSysParam for a 
 	few examples
