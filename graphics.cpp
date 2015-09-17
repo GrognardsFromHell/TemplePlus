@@ -655,18 +655,18 @@ bool Graphics::Present() {
 		return false;
 	}
 
-	auto result = D3DLOG(mDevice->Present(nullptr, nullptr, nullptr, nullptr));
-	
-	if (result == D3DERR_DEVICELOST) {
-		ResetDevice();
-	}
-	
-	if (result != D3D_OK) {
+	auto result = mDevice->Present(nullptr, nullptr, nullptr, nullptr);
+
+	if (result != S_OK && result != S_PRESENT_OCCLUDED) {
+		LogD3dError("Present()", result);
+		if (result == D3DERR_DEVICELOST) {
+			ResetDevice();
+		}
 		return false;
 	}
 
 	/*
-		++dword_10D250F0; <- FPS counter frame count	
+	++dword_10D250F0; <- FPS counter frame count
 	*/
 	externalGraphicsFuncs.sub_101EF8B0();
 
