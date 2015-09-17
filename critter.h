@@ -194,6 +194,7 @@ struct CritterSystem : AddressTable
 	bool IsWarded(objHndl obj); // checks if creature is warded from melee attacks (by stuff like Meld Into Stone, Tree Shape, Otiluke's Resislient Sphere)
 	bool IsSummoned(objHndl obj);
 	int GetCasterLevel(objHndl obj); // returns sum of all casting-class levels
+	bool IsCaster(objHndl obj);
 #pragma endregion
 
 };

@@ -82,22 +82,29 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 	aiTac.performer = objHnd;
 	aiTac.target = target;
 
-	// check if disarmed, if so, try to pick up weapon
-	if (d20Sys.d20Query(aiTac.performer, DK_QUE_Disarmed))
+
+	AiCombatRole role = GetRole(objHnd);
+	if (role != AiCombatRole::caster)
 	{
-		hooked_print_debug_message("\n%s attempting to pickup weapon...\n", description.getDisplayName(objHnd));
-		if (PickUpWeapon(&aiTac))
+
+		// check if disarmed, if so, try to pick up weapon
+		if (d20Sys.d20Query(aiTac.performer, DK_QUE_Disarmed))
+		{
+			hooked_print_debug_message("\n%s attempting to pickup weapon...\n", description.getDisplayName(objHnd));
+			if (PickUpWeapon(&aiTac))
+			{
+				actSeq->sequencePerform();
+				return 1;
+			}
+		}
+
+		// wake up friends put to sleep; will do this if friend is within reach or otherwise at a 40% chance
+		if (WakeFriend(&aiTac))
 		{
 			actSeq->sequencePerform();
 			return 1;
 		}
-	}
 
-	// wake up friends put to sleep; will do this if friend is within reach or otherwise at a 40% chance
-	if (WakeFriend(&aiTac))
-	{
-		actSeq->sequencePerform();
-		return 1;
 	}
 
 	// loop through tactics defined in strategy.tab
@@ -644,6 +651,13 @@ int AiSystem::AiOnInitiativeAdd(objHndl obj)
 		}
 	}
 	return 0;
+}
+
+AiCombatRole AiSystem::GetRole(objHndl obj)
+{
+	if (critterSys.IsCaster(obj))
+		return AiCombatRole::caster;
+	return AiCombatRole::general;
 }
 
 void AiSystem::RegisterNewAiTactics()

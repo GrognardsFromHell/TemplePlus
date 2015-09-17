@@ -465,6 +465,12 @@ int CritterSystem::GetCasterLevel(objHndl obj)
 	}
 	return result;
 }
+
+bool CritterSystem::IsCaster(objHndl obj)
+{
+	return GetCasterLevel(obj) > 0;
+}
+
 #pragma region Critter Hooks
 uint32_t _isCritterCombatModeActive(objHndl objHnd)
 {

@@ -50,6 +50,21 @@ enum class AiFlag : uint64_t {
 	HasSpokenFlee = 0x800,
 };
 
+enum AiCombatRole: int32_t
+{
+	general = 0,
+	fighter = 1,
+	defender = 2,
+	caster = 3,
+	healer = 4,
+	flanker = 5,
+	sniper = 6,
+	magekiller = 7,
+	berzerker = 8,
+	tripper,
+	special
+};
+
 struct AiSystem : AddressTable
 {
 	AiStrategy ** aiStrategies;
@@ -91,6 +106,7 @@ struct AiSystem : AddressTable
 	void StrategyTabLineParseTactic(AiStrategy*, char * tacName, char * middleString, char* spellString);
 	int StrategyTabLineParser(TabFileStatus* tabFile, int n, char ** strings);
 	int AiOnInitiativeAdd(objHndl obj);
+	AiCombatRole GetRole(objHndl obj);
 
 	void RegisterNewAiTactics();
 	unsigned int Asplode(AiTactic * aiTactic);
