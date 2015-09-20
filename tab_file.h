@@ -15,7 +15,7 @@ struct TabFileStatus
 	uint32_t(__cdecl * lineParser)(TabFileStatus * tab, uint32_t numLinesParsed, const char ** tokens);
 };
 
-struct TabFileSystem : AddressTable
+struct TabFileSystem : temple::AddressTable
 {
 
 	void(__cdecl * tabFileStatusInit)(TabFileStatus * tab, uint32_t(__cdecl* tabLineParser)(TabFileStatus *, uint32_t, const char**));

@@ -23,7 +23,7 @@ struct GsiData {
 	int storyState;
 };
 
-static struct GameLibSaveAddresses : AddressTable {
+static struct GameLibSaveAddresses : temple::AddressTable {
 
 	int* isInSave;
 

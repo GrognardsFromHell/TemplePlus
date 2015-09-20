@@ -1,11 +1,11 @@
 
 #include "stdafx.h"
 #include "python_globalvars.h"
-#include <util/addresses.h>
+#include <temple/dll.h>
 #include <obj.h>
 #include "../party.h"
 
-static struct AreaAddresses : AddressTable {
+static struct AreaAddresses : temple::AddressTable {
 	void(__cdecl *AddKnownArea)(objHndl pc, int araId);
 	bool(__cdecl *IsAreaKnown)(objHndl pc, int araId);
 

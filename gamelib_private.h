@@ -34,4 +34,4 @@ struct GameSystems {
 	GameSystem systems[gameSystemCount];
 };
 
-extern GlobalStruct<GameSystems, 0x102AB368> gameSystems;
+extern temple::GlobalStruct<GameSystems, 0x102AB368> gameSystems;

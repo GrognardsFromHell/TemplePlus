@@ -33,7 +33,6 @@ namespace ParticleEditor
             set { SetValue(ModelProperty, value); }
         }
 
-
         private void SaveVideo_OnClick(object sender, RoutedEventArgs e)
         {
             if (Model.SelectedSystem == null)

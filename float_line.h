@@ -10,7 +10,7 @@ enum class FloatLineColor : uint32_t {
 	LightBlue = 5
 };
 
-struct FloatLineSystem : AddressTable
+struct FloatLineSystem : temple::AddressTable
 {
 	void(__cdecl * floatMesLine)(objHndl, int categoryBit, FloatLineColor color, const char *text);
 

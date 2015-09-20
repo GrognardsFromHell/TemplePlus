@@ -4,9 +4,9 @@
 #include "dice.h"
 #include "bonus.h"
 
-static_assert(validate_size<DispIoDamage, 0x550>::value, "DispIoDamage");
+static_assert(temple::validate_size<DispIoDamage, 0x550>::value, "DispIoDamage");
 
-static struct DamageAddresses : AddressTable {
+static struct DamageAddresses : temple::AddressTable {
 
 	int (__cdecl *DoDamage)(objHndl target, objHndl src, uint32_t dmgDice, DamageType type, int attackPowerType, signed int reduction, int damageDescMesKey, int actionType);
 

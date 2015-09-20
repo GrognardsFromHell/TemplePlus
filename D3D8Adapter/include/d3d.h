@@ -17,7 +17,6 @@ namespace d3d8
 #undef DIRECT3D_VERSION
 #undef D3D_SDK_VERSION
 #include <d3d9.h>
-#include <D3dx9tex.h>
 
 void LogD3dError(const char *methodName, HRESULT result);
 

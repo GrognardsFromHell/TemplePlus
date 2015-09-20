@@ -16,12 +16,15 @@ using namespace particles;
 */
 class PartSysParserTest : public testing::Test {
 protected:
+
+	static gfx::MeshesManagerPtr sMeshes;
+
 	static PartSysParser &GetParser() {
-		static testing::NiceMock<MaterialsMock> sMaterials;
+		static auto sMaterials = std::make_shared<testing::NiceMock<MaterialsMock>>();
 		auto defaultMaterial = std::make_shared<testing::NiceMock<MaterialMock>>();
 		testing::DefaultValue<gfx::MaterialRef>::Set(defaultMaterial);
-
-		static PartSysParser sParser(sMaterials);
+		
+		static PartSysParser sParser(sMaterials, sMeshes);
 		return sParser;
 	}
 
@@ -29,8 +32,8 @@ protected:
 		// Init VFS with mock/dummy code
 		vfs.reset(Vfs::CreateStdIoVfs());
 		
-		meshes.reset(new MeshesManager);
-		meshes->LoadMapping("data\\meshes.mes");
+		sMeshes = std::make_shared<gfx::MeshesManager>();
+		sMeshes->LoadMapping("data\\meshes.mes");
 
 		GetParser().ParseFile("data\\partsys0.tab");
 		GetParser().ParseFile("data\\partsys1.tab");
@@ -50,6 +53,8 @@ protected:
 	}
 
 };
+
+gfx::MeshesManagerPtr PartSysParserTest::sMeshes;
 
 TEST_F(PartSysParserTest, TestBasicSystem) {
 

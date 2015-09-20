@@ -6,7 +6,7 @@
 
 static void(__cdecl *ObjRenderInUi)(objHndl objId, int x, int y, float rotation, float scale);
 
-class MainMenuPartyPoolFix : public TempleFix, AddressTable {
+class MainMenuPartyPoolFix : public TempleFix, temple::AddressTable {
 public:
 	MainMenuPartyPoolFix() {
 		rebase(ObjRenderInUi, 0x100243B0);

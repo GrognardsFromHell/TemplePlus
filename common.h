@@ -1,7 +1,7 @@
 #pragma once
 
 #include "stdafx.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "util/fixes.h"
 #include "obj_structs.h"
 #include "spell_structs.h"

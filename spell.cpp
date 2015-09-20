@@ -16,7 +16,7 @@ struct SpellCondListEntry {
 	int unknown;
 };
 
-static struct SpellAddresses : AddressTable {
+static struct SpellAddresses : temple::AddressTable {
 	SpellCondListEntry *spellConds;
 
 
@@ -67,7 +67,7 @@ public:
 
 SpontCastSpellLists spontCastSpellLists;
 
-//GlobalPrimitive<uint16_t>
+//temple::GlobalPrimitive<uint16_t>
 //1028D09C
 
 class SpontaneousCastingExpansion : public TempleFix {

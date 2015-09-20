@@ -3,7 +3,7 @@
 
 UiPicker uiPicker;
 
-static struct PickerAddresses : AddressTable {
+static struct PickerAddresses : temple::AddressTable {
 	bool(__cdecl *ShowPicker)(const PickerArgs &args, void *callbackArgs);
 	bool(__cdecl *FreeCurrentPicker)();
 	uint32_t(__cdecl * sub_100BA030)(objHndl, PickerArgs*);

@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "util/addresses.h"
+#include <temple/dll.h>
 
 struct GameConfigEntry;
 typedef void(__cdecl *GameConfigChangedCallback)();
@@ -30,7 +30,7 @@ struct GameConfigEntry {
 /*
 	These functions relate to toee.cfg parsing and setting default values for it, etc.
 */
-struct GameConfigFuncs : AddressTable {
+struct GameConfigFuncs : temple::AddressTable {
 	// Sets entries to 0 and filename to the given filename.
 	void Init(const char *filename) {
 		_Init(gameConfig.ptr(), filename);
@@ -101,7 +101,7 @@ struct GameConfigFuncs : AddressTable {
 	}
 
 	// Global config struct used by ToEE
-	GlobalStruct<GameConfig, 0x11E726A0> gameConfig;
+	temple::GlobalStruct<GameConfig, 0x11E726A0> gameConfig;
 
 private:
 	void(__cdecl *_Init)(GameConfig *config, const char *filename);

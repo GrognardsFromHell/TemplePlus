@@ -377,13 +377,13 @@ enum AnimSlotFlag {
 };
 
 static void assertStructSizes() {
-	static_assert(validate_size<ObjectId, 0x18>::value, "Goal Stack entry has incorrect size.");
-	static_assert(validate_size<AnimParam, 0x10>::value, "Anim Param union has the wrong size.");
-	static_assert(validate_size<AnimSlotGoalStackEntry, 0x220>::value, "Goal Stack entry has incorrect size.");
-	static_assert(validate_size<AnimSlot, 0x2C98>::value, "AnimSlot has incorrect size");
+	static_assert(temple::validate_size<ObjectId, 0x18>::value, "Goal Stack entry has incorrect size.");
+	static_assert(temple::validate_size<AnimParam, 0x10>::value, "Anim Param union has the wrong size.");
+	static_assert(temple::validate_size<AnimSlotGoalStackEntry, 0x220>::value, "Goal Stack entry has incorrect size.");
+	static_assert(temple::validate_size<AnimSlot, 0x2C98>::value, "AnimSlot has incorrect size");
 }
 
-static class AnimAddressTable : AddressTable {
+static class AnimAddressTable : temple::AddressTable {
 public:
 	AnimGoal** goals;
 
@@ -870,7 +870,7 @@ public:
 	}
 } extension;
 
-static struct AnimationAdresses : AddressTable {
+static struct AnimationAdresses : temple::AddressTable {
 	
 	bool (__cdecl *PushRotate)(objHndl obj, float rotation);
 

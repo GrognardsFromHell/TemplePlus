@@ -6,7 +6,7 @@
 
 struct ClassPacket;
 
-struct D20ClassSystem : AddressTable
+struct D20ClassSystem : temple::AddressTable
 {
 public:
 	Stat classEnums[NUM_CLASSES];

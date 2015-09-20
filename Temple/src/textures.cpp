@@ -1,11 +1,8 @@
 
-#include "stdafx.h"
-
-#include <textures.h>
 #include <d3d8to9_texture.h>
+#include <textures.h>
 
-#include "legacytextures.h"
-#include "tig/tig_texture.h"
+#include "temple/textures.h"
 
 const std::string& LegacyTexture::GetName() const {
 	const_cast<LegacyTexture*>(this)->LoadMetadata();	
@@ -23,7 +20,7 @@ const gfx::Size& LegacyTexture::GetSize() const {
 }
 
 IDirect3DTexture9* LegacyTexture::GetDeviceTexture() {
-	TigTextureRegistryEntry entry;
+	/*TigTextureRegistryEntry entry;
 	if (textureFuncs.LoadTexture(mId, &entry)) {
 		return nullptr; // error
 	}
@@ -33,7 +30,7 @@ IDirect3DTexture9* LegacyTexture::GetDeviceTexture() {
 	// The TIG portion of the buffer still has a D3D8to9 adapter
 	if (entry.buffer->d3dtexture) {
 		return entry.buffer->d3dtexture->delegate;
-	}
+	}*/
 	return nullptr;
 }
 
@@ -42,7 +39,7 @@ void LegacyTexture::LoadMetadata() {
 		return;
 	}
 
-	TigTextureRegistryEntry entry;
+	/*TigTextureRegistryEntry entry;
 	textureFuncs.LoadTexture(mId, &entry);
 	mName = entry.name;
 	mContentRect.x = entry.rect.x;
@@ -51,5 +48,5 @@ void LegacyTexture::LoadMetadata() {
 	mContentRect.height = entry.rect.height;
 	mSize.width = entry.width;
 	mSize.height = entry.height;
-	mMetadataKnown = true;
+	mMetadataKnown = true;*/
 }

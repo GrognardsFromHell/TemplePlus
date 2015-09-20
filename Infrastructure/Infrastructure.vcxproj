@@ -156,6 +156,7 @@
     <ClInclude Include="include\mathutil.h" />
     <ClInclude Include="include\meshes.h" />
     <ClInclude Include="include\mesparser.h" />
+    <ClInclude Include="include\platform\windows.h" />
     <ClInclude Include="include\renderstates.h" />
     <ClInclude Include="include\spdlog\async_logger.h" />
     <ClInclude Include="include\spdlog\common.h" />
@@ -195,6 +196,7 @@
     <ClCompile Include="breakpad\guid_string.cc" />
     <ClCompile Include="format.cc" />
     <ClCompile Include="elfhash.cpp" />
+    <ClCompile Include="windows.cpp" />
     <ClCompile Include="renderstates.cpp" />
     <ClCompile Include="tabparser.cpp" />
     <ClCompile Include="logging.cpp" />

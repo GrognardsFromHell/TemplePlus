@@ -23,7 +23,7 @@ static std::vector<PartSysParamKeyframe> Parse(const std::string &spec, float li
 		(PartSysParamKeyframes*) ParserParams::Parse(spec, 0.0f, lifetime, success)
 	);
 	if (!success) {
-		throw new TempleException("Unable to parse...");
+		throw TempleException("Unable to parse...");
 	}
 	auto result = keyframes->GetFrames();
 

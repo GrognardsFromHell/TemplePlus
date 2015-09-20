@@ -16,7 +16,7 @@
 #include <set>
 #include "python_module.h"
 
-static struct PythonInitInternal : AddressTable {
+static struct PythonInitInternal : temple::AddressTable {
 
 	// Writes to the console window
 	size_t (__cdecl *PythonConsoleWrite)(const void* ptr, size_t size, size_t count, void* handle);

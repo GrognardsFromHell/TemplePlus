@@ -6,7 +6,7 @@
 struct HistoryEntry;
 struct HistoryArrayEntry;
 
-struct HistorySystem : AddressTable
+struct HistorySystem : temple::AddressTable
 {
 	int32_t(__cdecl * RollHistoryAdd)(HistoryEntry * hist);
 	// todo: the annoying AppendHistoryId

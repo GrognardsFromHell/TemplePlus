@@ -1,9 +1,9 @@
 
 #pragma once
 
-#include "util/addresses.h"
+#include <temple/dll.h>
 
-struct UiMainMenuFuncs : public AddressTable {
+struct UiMainMenuFuncs : temple::AddressTable {
 
 	void (__cdecl *ShowPage)(int page);
 

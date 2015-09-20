@@ -6,7 +6,7 @@ struct BonusSystem;
 struct SkillProps;
 enum SkillEnum : uint32_t;
 
-struct SkillSystem : AddressTable
+struct SkillSystem : temple::AddressTable
 {
 	SkillProps * skillPropsTable;
 

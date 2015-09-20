@@ -1,9 +1,9 @@
 
 #include "stdafx.h"
 #include "dice.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 
-static struct DiceAddresses : AddressTable {
+static struct DiceAddresses : temple::AddressTable {
 
 	int (__cdecl *DiceRoller)(int nNum_Die, int nDie_Type, int nBonus);
 	

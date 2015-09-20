@@ -1,6 +1,6 @@
 
 #include "stdafx.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "tig/tig.h"
 #include "graphics.h"
 
@@ -38,7 +38,7 @@ struct RenderWorldInfo {
 };
 #pragma pack(pop)
 
-static struct GameRenderFuncs : AddressTable {
+static struct GameRenderFuncs : temple::AddressTable {
 
 	/*
 		Given a rectangle in screen coordinates, calculates the rectangle in tile-space that
@@ -125,7 +125,7 @@ void GameSystemsRender() {
 		renderInfo.rectList = &dirtyRectPtr;
 		
 		typedef void (__cdecl *DelRendFn)(const RenderWorldInfo &);
-		DelRendFn delRenderFunc = temple_get<0x103072BC, DelRendFn>();
+		auto delRenderFunc = temple::GetRef<0x103072BC, DelRendFn>();
 		delRenderFunc(renderInfo);
 
 		renderFuncs.SectorListFree(sectorList);

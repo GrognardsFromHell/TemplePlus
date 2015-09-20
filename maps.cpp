@@ -1,10 +1,10 @@
 
 #include "stdafx.h"
 #include "maps.h"
-#include <util/addresses.h>
+#include <temple/dll.h>
 #include "location.h"
 
-struct MapAddresses : AddressTable {
+struct MapAddresses : temple::AddressTable {
 	
 	/*
 		Writes at most size visited map ids to pMapIdsOut and returns

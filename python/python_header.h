@@ -1,17 +1,17 @@
 
 #pragma once
 
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "obj.h"
 
 /*
 Define all type objects used by ToEE.
 */
 // ObjHandle
-static GlobalStruct<PyTypeObject, 0x102CF3B8> pyObjHandleType;
+static temple::GlobalStruct<PyTypeObject, 0x102CF3B8> pyObjHandleType;
 static getattrfunc pyObjHandleTypeGetAttr; // Original getattr of pyObjHandleType
 static setattrfunc pyObjHandleTypeSetAttr; // Original setattr of pyObjHandleType
-static GlobalStruct<PyMethodDef, 0x102CE9A8> pyObjHandleMethods;
+static temple::GlobalStruct<PyMethodDef, 0x102CE9A8> pyObjHandleMethods;
 
 
 struct TemplePyObjHandle : public PyObject {

@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "util/addresses.h"
+#include <temple/dll.h>
 
 struct SubtitleLine {
 	uint32_t startMs;
@@ -12,7 +12,7 @@ struct SubtitleLine {
 	SubtitleLine *nextLine;
 };
 
-struct MovieFuncs : AddressTable {	
+struct MovieFuncs : temple::AddressTable {	
 
 	/*
 		Plays a movie from movies.mes, which could either be a slide or binkw movie.
@@ -33,7 +33,7 @@ struct MovieFuncs : AddressTable {
 	void (__cdecl *MovieQueuePlay)();
 
 	// Seems to suppress input event processing if true
-	GlobalBool<0x10EF32A0> MovieIsPlaying;
+	temple::GlobalBool<0x10EF32A0> MovieIsPlaying;
 
 	MovieFuncs() {
 		rebase(PlayMovie, 0x10034100);

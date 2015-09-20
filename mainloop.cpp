@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "mainloop.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "temple_functions.h"
 #include "tig/tig_msg.h"
 #include "tig/tig_mouse.h"
@@ -12,7 +12,7 @@
 #include "util/config.h"
 #include "d3d.h"
 
-static struct MainLoop : AddressTable {
+static struct MainLoop : temple::AddressTable {
 	
 	void (__cdecl *sub_1002A580)(locXY loc);
 
@@ -124,7 +124,7 @@ void RunMainLoop() {
 
 }
 
-static struct RenderFuncs : AddressTable {
+static struct RenderFuncs : temple::AddressTable {
 
 	void (__cdecl *RenderUi)();
 	void (__cdecl *RenderMouseCursor)();

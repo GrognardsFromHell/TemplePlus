@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "tig/tig.h"
 #include <obj.h>
 
@@ -73,15 +73,15 @@ struct ActiveWidgetListEntry {
 /*
 	Tracks all active widgets with information about where they come frome.
 */
-extern GlobalPrimitive<ActiveWidgetListEntry*, 0x10EF68DC> activeWidgetAllocList;
+extern temple::GlobalPrimitive<ActiveWidgetListEntry*, 0x10EF68DC> activeWidgetAllocList;
 
 /*
 	The list of all active widgets
 */
-extern GlobalPrimitive<Widget**, 0x10EF68E0> activeWidgets;
-extern GlobalPrimitive<int, 0x10EF68D8> activeWidgetCount;
+extern temple::GlobalPrimitive<Widget**, 0x10EF68E0> activeWidgets;
+extern temple::GlobalPrimitive<int, 0x10EF68D8> activeWidgetCount;
 
-struct ImgFile : public TempleAlloc {
+struct ImgFile : temple::TempleAlloc {
 	int tilesX;
 	int tilesY;
 	int width;

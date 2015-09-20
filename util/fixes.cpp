@@ -18,11 +18,11 @@ TempleFix::~TempleFix() {
 
 void TempleFix::write(uint32_t offset, const void* buffer, size_t size) {
 	MemoryUnprotector unprotector(offset, size);
-	memcpy(temple_address(offset), buffer, size);
+	memcpy(temple::Dll::GetInstance().GetAddress(offset), buffer, size);
 }
 
 void TempleFix::read(uint32_t offset, void* buffer, size_t size) {
-	memcpy(buffer, temple_address(offset), size);
+	memcpy(buffer, temple::Dll::GetInstance().GetAddress(offset), size);
 }
 
 void TempleFix::writeHex(uint32_t offset, const string &hexPattern) {
@@ -44,12 +44,12 @@ void TempleFix::writeHex(uint32_t offset, const string &hexPattern) {
 	}
 
 	MemoryUnprotector unprotector(offset, totalSize);
-	memcpy(temple_address(offset), buffer, totalSize);
+	memcpy(temple::Dll::GetInstance().GetAddress(offset), buffer, totalSize);
 }
 
 void *TempleFix::replaceFunction(uint32_t offset, void* replaceWith) {
 	void* original = nullptr;
-	auto target = temple_address(offset);
+	auto target = temple::Dll::GetInstance().GetAddress(offset);
 	
 	auto status = MH_CreateHook(target, replaceWith, &original);
 	if (status != MH_OK) {
@@ -69,7 +69,7 @@ void *TempleFix::replaceFunction(uint32_t offset, void* replaceWith) {
 void TempleFix::redirectCall(uint32_t offset, void* redirectTo) {
 
 	// Read what's there...
-	auto realAddress = temple_address(offset);
+	auto realAddress = temple::Dll::GetInstance().GetAddress(offset);
 	hde32s oldInstruction;
 	hde32_disasm(realAddress, &oldInstruction);
 
@@ -95,7 +95,7 @@ void TempleFix::redirectCall(uint32_t offset, void* redirectTo) {
 void TempleFix::redirectJump(uint32_t offset, void* redirectTo) {
 
 	// Read what's there...
-	auto realAddress = temple_address(offset);
+	auto realAddress = temple::Dll::GetInstance().GetAddress(offset);
 	hde32s oldInstruction;
 	hde32_disasm(realAddress, &oldInstruction);
 
@@ -124,7 +124,7 @@ void TempleFix::writeCall(uint32_t offset, void* redirectTo) {
 		0x00000000              // Relative destination address
 	};
 
-	auto startOfNextInstruction = reinterpret_cast<int32_t>(temple_address(offset + 5));
+	auto startOfNextInstruction = reinterpret_cast<int32_t>(temple::Dll::GetInstance().GetAddress(offset + 5));
 	auto targetAddress = reinterpret_cast<int32_t>(redirectTo);
 	call.operand = targetAddress - startOfNextInstruction;
 	write(offset, &call, sizeof(call));	
@@ -137,7 +137,7 @@ void TempleFix::writeJump(uint32_t offset, void* redirectTo) {
 		0x00000000              // Relative destination address
 	};
 
-	auto startOfNextInstruction = reinterpret_cast<int32_t>(temple_address(offset + 5));
+	auto startOfNextInstruction = reinterpret_cast<int32_t>(temple::Dll::GetInstance().GetAddress(offset + 5));
 	auto targetAddress = reinterpret_cast<int32_t>(redirectTo);
 	call.operand = targetAddress - startOfNextInstruction;
 	write(offset, &call, sizeof(call));

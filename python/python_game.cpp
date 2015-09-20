@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "python_game.h"
-#include <util/addresses.h>
+#include <temple/dll.h>
 #include <tio/tio.h>
 #include "obj.h"
 #include "python_object.h"
@@ -43,7 +43,7 @@ struct PyGameObject {
 	PyObject *areas;
 };
 
-static struct PyGameAddresses : AddressTable {
+static struct PyGameAddresses : temple::AddressTable {
 
 	int* partyAlignment;
 	int* sid;

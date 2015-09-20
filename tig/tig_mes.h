@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "util/addresses.h"
+#include <temple/dll.h>
 
 typedef uint32_t MesHandle;
 
@@ -10,7 +10,7 @@ struct MesLine {
 	const char *value;
 };
 
-struct MesFuncs : public AddressTable {
+struct MesFuncs : temple::AddressTable {
 	bool (__cdecl *Open)(const char *name, MesHandle *handleOut);
 	bool (__cdecl *Close)(MesHandle handle);
 	MesLine *(__cdecl *GetLine)(MesHandle handle, MesLine *line);

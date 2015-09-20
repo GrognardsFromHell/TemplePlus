@@ -49,7 +49,7 @@ std::string Vfs::ReadAsString(const std::string & filename)
 {
 	auto fh = open(filename.c_str(), "rt");
 	if (!fh) {
-		throw new TempleException(fmt::format("Unable to find file {}", filename));
+		throw TempleException("Unable to find file {}", filename);
 	}
 	auto fileSize = length(fh);
 	std::string result;

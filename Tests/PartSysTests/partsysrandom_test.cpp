@@ -12,7 +12,7 @@ static std::unique_ptr<PartSysParamRandom> Parse(const std::string &spec) {
 		(PartSysParamRandom*)ParserParams::Parse(spec, 0.0f, 0.0f, success)
 		);
 	if (!success) {
-		throw new TempleException("Unable to parse...");
+		throw TempleException("Unable to parse...");
 	}
 	
 	return result;

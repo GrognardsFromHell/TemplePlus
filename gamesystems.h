@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "tio/tio.h"
 
 #pragma pack(push, 1)
@@ -32,7 +32,7 @@ struct RebuildBufferInfo {
 };
 #pragma pack(pop)
 
-struct GameSystemFuncs : AddressTable {
+struct GameSystemFuncs : temple::AddressTable {
 
 	void NewInit(const GameSystemConf &conf);
 

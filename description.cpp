@@ -2,7 +2,7 @@
 #include "stdafx.h"
 
 #include "common.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "description.h"
 
 DescriptionSystem description;

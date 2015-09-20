@@ -4,7 +4,7 @@
 
 Traps traps;
 
-static struct TrapsAddresses : AddressTable {
+static struct TrapsAddresses : temple::AddressTable {
 
 	const Trap* (__cdecl *GetById)(int id);
 	const Trap* (__cdecl *GetByName)(const char *name);

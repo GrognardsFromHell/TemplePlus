@@ -1,11 +1,11 @@
 
 #include "stdafx.h"
 #include "ui_dialog.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 
 UiDialog uiDialog;
 
-static struct UiDialogAddresses : AddressTable {
+static struct UiDialogAddresses : temple::AddressTable {
 	
 	void(__cdecl *Hide)();
 	bool(__cdecl *IsActive)();

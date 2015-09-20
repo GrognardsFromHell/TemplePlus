@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "tig_startup.h"
 #include "ui/ui.h"
 
@@ -53,7 +53,7 @@ struct LoadingSequence {
 /*
 	Functions relating to showing loading screens when the game starts or the map changes.
 */
-struct LoadingScreenFuncs : AddressTable {
+struct LoadingScreenFuncs : temple::AddressTable {
 
 	/*
 		Initializes the loading screen subsystem. Returns 0 on success.

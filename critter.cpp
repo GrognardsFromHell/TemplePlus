@@ -11,7 +11,7 @@
 #include "python/python_integration_obj.h"
 #include "python/python_object.h"
 
-static struct CritterAddresses : AddressTable {
+static struct CritterAddresses : temple::AddressTable {
 
 	uint32_t (__cdecl *HasMet)(objHndl critter, objHndl otherCritter);
 	uint32_t (__cdecl *AddFollower)(objHndl npc, objHndl pc, int unkFlag, bool asAiFollower);
@@ -162,7 +162,7 @@ void CritterSystem::KillByEffect(objHndl critter, objHndl killer) {
 	return addresses.KillByEffect(critter, killer);
 }
 
-static_assert(validate_size<StandPoint, 0x20>::value, "Invalid size");
+static_assert(temple::validate_size<StandPoint, 0x20>::value, "Invalid size");
 
 void CritterSystem::SetStandPoint(objHndl critter, StandPointType type, const StandPoint& standpoint) {
 	addresses.SetStandpoint(critter, type, &standpoint);

@@ -239,11 +239,11 @@ public:
 		mParticleSpace = particleSpace;
 	}
 
-	const MeshRef& GetMesh() const {
+	const gfx::MeshRef& GetMesh() const {
 		return mMesh;
 	}
 
-	void SetMesh(const MeshRef& mesh) {
+	void SetMesh(const gfx::MeshRef& mesh) {
 		mMesh = mesh;
 	}
 
@@ -299,7 +299,7 @@ public:
 		if (id < mParams.size()) {
 			mParams[id].swap(param);
 		} else {
-			throw new TempleException(fmt::format("Parameter index out of range: {}", id));
+			throw TempleException("Parameter index out of range: {}", id);
 		}
 	}
 
@@ -323,7 +323,7 @@ private:
 	PartSysCoordSys mParticlePosCoordSys = PartSysCoordSys::Cartesian;
 	PartSysCoordSys mParticleVelocityCoordSys = PartSysCoordSys::Cartesian;
 	PartSysParticleSpace mParticleSpace = PartSysParticleSpace::World;
-	MeshRef mMesh;
+	gfx::MeshRef mMesh;
 	float mBoxLeft = -399.0f;
 	float mBoxTop = -299.0f;
 	float mBoxRight = 399.0f;

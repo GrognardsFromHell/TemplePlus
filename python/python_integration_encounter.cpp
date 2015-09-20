@@ -5,7 +5,7 @@
 #include <structmember.h>
 #include <party.h>
 
-static struct PyRandomEncounterAddresses : AddressTable {
+static struct PyRandomEncounterAddresses : temple::AddressTable {
 	int* sleepStatus;
 
 	int(__cdecl *GetTerrainType)(locXY worldMapLoc);
@@ -210,9 +210,9 @@ static void __cdecl RandomEncounterCreate(RandomEncounter* encounter) {
 	}
 
 	if (encounter->enemies) {
-		allocFuncs.free(encounter->enemies);
+		free(encounter->enemies);
 	}
-	allocFuncs.free(encounter);
+	free(encounter);
 
 	if (encounterObj->map != -1) {
 		addresses.MapChange(); // No idea what this does
@@ -258,7 +258,7 @@ static BOOL __cdecl RandomEncounterExists(const RandomEncounterSetup* setup, Ran
 	Py_DECREF(result);
 
 	if (encounterExists) {
-		auto newEncounter = (RandomEncounter*) allocFuncs._malloc_0(sizeof(RandomEncounter));
+		auto newEncounter = (RandomEncounter*) malloc(sizeof(RandomEncounter));
 		*pEncounterOut = newEncounter;
 
 		// Copy over the props to the encounter structure
@@ -272,7 +272,7 @@ static BOOL __cdecl RandomEncounterExists(const RandomEncounterSetup* setup, Ran
 		// Convert the array of enemies
 		int count = PySequence_Size(encounter->enemies);
 		newEncounter->enemiesCount = count;
-		newEncounter->enemies = (RandomEncounterEnemy*) allocFuncs._malloc_0(sizeof(RandomEncounterEnemy) * count);
+		newEncounter->enemies = (RandomEncounterEnemy*) malloc(sizeof(RandomEncounterEnemy) * count);
 		for (int i = 0; i < count; ++i) {
 			auto item = PySequence_GetItem(encounter->enemies, i);
 			newEncounter->enemies[i].protoId = PyInt_AsLong(PySequence_GetItem(item, 0));

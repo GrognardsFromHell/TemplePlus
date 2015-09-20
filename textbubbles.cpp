@@ -1,11 +1,11 @@
 
 #include "stdafx.h"
 #include "textbubbles.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 
 TextBubbles textBubbles;
 
-static struct TextBubbleAddresses : AddressTable {
+static struct TextBubbleAddresses : temple::AddressTable {
 	void (__cdecl *HideAll)();
 
 	TextBubbleAddresses() {

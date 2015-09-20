@@ -88,7 +88,7 @@ struct BinkFuncs {
 } binkFuncs;
 
 // indicates that the bink sound system has been set
-GlobalBool<0x103010FC> binkInitialized;
+temple::GlobalBool<0x103010FC> binkInitialized;
 
 static bool binkRenderFrame(BinkMovie* movie, IDirect3DTexture9* texture) {
 	if (!binkFuncs.BinkWait(movie)) {

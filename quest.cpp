@@ -5,7 +5,7 @@
 
 Quests quests;
 
-static struct QuestsAddresses : AddressTable {
+static struct QuestsAddresses : temple::AddressTable {
 
 	QuestState (__cdecl *GetState)(objHndl pc, int questId);
 	void (__cdecl *SetState)(objHndl pc, int questId, QuestState state);

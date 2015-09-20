@@ -40,21 +40,21 @@ private:
 	HANDLE mMutex;
 };
 
-GlobalPrimitive<bool, 0x10BDDD9C> noRandomEncounters;
-GlobalPrimitive<bool, 0x10300974> msMouseZEnabled;
-GlobalPrimitive<uint32_t, 0x102AF7C0> pathLimit;
-GlobalPrimitive<uint32_t, 0x102AF7C4> pathTimeLimit;
-GlobalPrimitive<uint32_t, 0x10BD3B6C> bufferstuffFlag;
-GlobalPrimitive<uint32_t, 0x102F6A7C> bufferstuffWidth;
-GlobalPrimitive<uint32_t, 0x102F6A80> bufferstuffHeight;
-GlobalPrimitive<uint32_t, 0x108EDA9C> activeRngType;
-GlobalPrimitive<bool, 0x108ED0D0> showDialogLineNo;
-GlobalPrimitive<uint32_t, 0x10307374> scrollDistance;
-GlobalPrimitive<uint32_t, 0x108254A0> mapFoggingInited;
-GlobalPrimitive<uint32_t, 0x102F7778> uiOptionsSupportedModeCount;
-GlobalPrimitive<uint32_t, 0x10BD3A48> startMap;
+temple::GlobalPrimitive<bool, 0x10BDDD9C> noRandomEncounters;
+temple::GlobalPrimitive<bool, 0x10300974> msMouseZEnabled;
+temple::GlobalPrimitive<uint32_t, 0x102AF7C0> pathLimit;
+temple::GlobalPrimitive<uint32_t, 0x102AF7C4> pathTimeLimit;
+temple::GlobalPrimitive<uint32_t, 0x10BD3B6C> bufferstuffFlag;
+temple::GlobalPrimitive<uint32_t, 0x102F6A7C> bufferstuffWidth;
+temple::GlobalPrimitive<uint32_t, 0x102F6A80> bufferstuffHeight;
+temple::GlobalPrimitive<uint32_t, 0x108EDA9C> activeRngType;
+temple::GlobalPrimitive<bool, 0x108ED0D0> showDialogLineNo;
+temple::GlobalPrimitive<uint32_t, 0x10307374> scrollDistance;
+temple::GlobalPrimitive<uint32_t, 0x108254A0> mapFoggingInited;
+temple::GlobalPrimitive<uint32_t, 0x102F7778> uiOptionsSupportedModeCount;
+temple::GlobalPrimitive<uint32_t, 0x10BD3A48> startMap;
 
-struct StartupRelevantFuncs : AddressTable {
+struct StartupRelevantFuncs : temple::AddressTable {
 	
 
 	int (__cdecl *SetScreenshotKeyhandler)(TigMsgGlobalKeyCallback *callback);
@@ -118,8 +118,8 @@ public:
 		mConfig.editor = ::config.editor ? 1 : 0;
 		mConfig.width = tigConfig.width;
 		mConfig.height = tigConfig.height;
-		mConfig.field_10 = temple_address(0x10002530); // Callback 1
-		mConfig.renderfunc = temple_address(0x10002650); // Callback 1
+		mConfig.field_10 = temple::GetPointer(0x10002530); // Callback 1
+		mConfig.renderfunc = temple::GetPointer(0x10002650); // Callback 1
 		mConfig.bufferstuffIdx = tigBuffer.bufferIdx();
 
 		gameSystemFuncs.NewInit(mConfig);
@@ -159,10 +159,10 @@ public:
 int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 
 	if (!config.engineEnhancements) {
-		temple_set<0x10307284>(800);
-		temple_set<0x10307288>(600);
+		temple::GetRef<int>(0x10307284) = 800;
+		temple::GetRef<int>(0x10307288) = 600;
 		if (config.skipLegal) {
-			temple_set<0x102AB360>(0); // Disable legal movies
+			temple::GetRef<int>(0x102AB360) = 0; // Disable legal movies
 		}
 		const char *cmdLine = GetCommandLineA();
 
@@ -227,7 +227,7 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	} else {
 		startupRelevantFuncs.MapOpenInGame(5001, 0, 1);
 	}
-	temple_set<0x10BD3A68>(1); // Purpose unknown and unconfirmed, may be able to remove
+	temple::GetRef<int>(0x10BD3A68) = 1; // Purpose unknown and unconfirmed, may be able to remove
 
 	// Run console commands from "startup.txt" (working dir)
 	logger->info("[Running Startup.txt]");

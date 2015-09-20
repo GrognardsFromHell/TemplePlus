@@ -18,7 +18,7 @@ LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lpara
 */
 static bool creatingWindow = false;
 
-struct WindowFuncs : AddressTable {
+struct WindowFuncs : temple::AddressTable {
 	void (__cdecl *WindowActivationChanged)(bool active);
 
 	WindowFuncs() {
@@ -26,7 +26,7 @@ struct WindowFuncs : AddressTable {
 	}
 } windowFuncs;
 
-GlobalPrimitive<uint32_t, 0x10D25C38> globalWwndproc;
+temple::GlobalPrimitive<uint32_t, 0x10D25C38> globalWwndproc;
 
 bool CreateMainWindow(TigConfig* settings) {
 	bool windowed = config.windowed;
@@ -104,9 +104,9 @@ bool CreateMainWindow(TigConfig* settings) {
 	video->width = settings->width;
 	video->height = settings->height;
 
-	temple_set<0x10D24E0C>(0);
-	temple_set<0x10D24E10>(0);
-	temple_set<0x10D24E14>(settings->width);
+	temple::WriteMem<0x10D24E0C>(0);
+	temple::WriteMem<0x10D24E10>(0);
+	temple::WriteMem<0x10D24E14>(settings->width);
 
 	string windowTitle = "Temple of Elemental Evil (Temple+)";
 
@@ -138,8 +138,8 @@ bool CreateMainWindow(TigConfig* settings) {
 		// Scratchbuffer size sometimes doesn't seem to be set by ToEE itself
 		video->current_width = config.renderWidth;
 		video->current_height = config.renderHeight;
-		temple_set<0x10307284>(video->current_width);
-		temple_set<0x10307288>(video->current_height);
+		temple::WriteMem<0x10307284>(video->current_width);
+		temple::WriteMem<0x10307288>(video->current_height);
 
 		return true;
 	}

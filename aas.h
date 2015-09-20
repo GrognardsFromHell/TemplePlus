@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "util/addresses.h"
+#include <temple/dll.h>
 
 /*
 	AAS seems to be the animation system.
@@ -17,7 +17,7 @@ struct AasConfig {
 	void (__cdecl *runScript)(const char *command); // Python run script, probably for embedded animation scripts
 };
 
-struct AasFuncs : AddressTable {
+struct AasFuncs : temple::AddressTable {
 	int (__cdecl *Init)(const AasConfig *config);
 
 	AasFuncs() {

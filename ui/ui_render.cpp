@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "ui_render.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "tig/tig_font.h"
 #include "tig/tig_texture.h"
 
@@ -22,7 +22,7 @@ struct DrawTexturedQuadArgs {
 };
 #pragma pack(pop)
 
-static struct UiRenderFuncs : AddressTable {
+static struct UiRenderFuncs : temple::AddressTable {
 	
 	/*
 		This is one of the primary functions used to draw textured quads for UI purposes.
@@ -69,7 +69,7 @@ Texture UiRenderer::LoadTexture(const int textureId) {
 	result.height = textureEntry.height;
 	result.rect = textureEntry.rect;
 	strcpy(result.path, textureEntry.name);
-	result.unk = textureEntry.set_to_true_in_shader;
+	result.unk = textureEntry.comes_from_mdf;
 	result.field_124 = textureEntry.field_124;
 	result.buffer = textureEntry.buffer;
 

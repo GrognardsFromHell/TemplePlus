@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "idxtables.h"
 #include "d3d8adapter.h"
 #include "tig.h"
@@ -69,7 +69,7 @@ struct TigBuffer
 
 struct TigTextureRegistryEntry
 {
-	bool set_to_true_in_shader;
+	bool comes_from_mdf;
 	int textureId;
 	char name[260];
 	int width;
@@ -88,7 +88,7 @@ struct TigBufferCreateArgs {
 	int texturetype;
 };
 
-struct TextureFuncs : AddressTable {
+struct TextureFuncs : temple::AddressTable {
 
 	int(__cdecl *CreateBuffer)(TigBufferCreateArgs *createargs, TigBuffer **bufferOut);
 

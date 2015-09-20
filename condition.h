@@ -14,6 +14,12 @@ struct CondFeatDictionary;
 
 struct CondHashSystem : ToEEHashtableSystem < CondStruct >
 {
+	ToEEHashtable<CondStruct>* condHashTable = (ToEEHashtable<CondStruct>*)CondStructHastableAddr;
+
+	CondHashSystem() {
+		temple::Dll::RegisterAddressPtr((void**)&condHashTable);
+	}
+
 	uint32_t ConditionHashtableInit(ToEEHashtable<CondStruct> * hashtable)
 	{
 		return HashtableInit(hashtable, 1000);
@@ -23,17 +29,16 @@ struct CondHashSystem : ToEEHashtableSystem < CondStruct >
 	{
 		uint32_t key = StringHash(condStruct->condName);
 		CondStruct * condFound;
-		uint32_t result = HashtableSearch((ToEEHashtable < CondStruct >*)temple_address(CondStructHastableAddr), key, &condFound);
+		uint32_t result = HashtableSearch(condHashTable, key, &condFound);
 		if (result)
 		{
-			result = HashtableAddItem((ToEEHashtable < CondStruct >*)temple_address(CondStructHastableAddr), key, condStruct);
+			result = HashtableAddItem(condHashTable, key, condStruct);
 		}
 		return result;
 	}
 
 	int GetCondStructHashkey(CondStruct* condStruct)
 	{
-		auto condHashTable = (ToEEHashtable < CondStruct >*)temple_address(CondStructHastableAddr);
 		int N = HashtableNumItems(condHashTable);
 
 		for (int i = 0; i < N;i++)
@@ -49,7 +54,7 @@ struct CondHashSystem : ToEEHashtableSystem < CondStruct >
 	CondStruct * GetCondStruct(uint32_t key)
 	{
 		CondStruct * condOut = nullptr;
-		HashtableSearch((ToEEHashtable < CondStruct >*)temple_address(CondStructHastableAddr), key, &condOut);
+		HashtableSearch(condHashTable, key, &condOut);
 		return condOut;
 	}
 
@@ -57,19 +62,19 @@ struct CondHashSystem : ToEEHashtableSystem < CondStruct >
 	{
 		uint32_t key = StringHash(condStruct->condName);
 		CondStruct * condFound;
-		uint32_t result = HashtableSearch((ToEEHashtable < CondStruct >*)temple_address(CondStructHastableAddr), key, &condFound);
+		uint32_t result = HashtableSearch(condHashTable, key, &condFound);
 		if (!result)
 		{
 			logger->info("Condition Overwrite warning: Condition Struct not found, adding new.");
 		}
-		result = HashtableOverwriteItem((ToEEHashtable < CondStruct >*)temple_address(CondStructHastableAddr), key, condStruct);
+		result = HashtableOverwriteItem(condHashTable, key, condStruct);
 		return result;
 	}
 
 };
 
 
-struct ConditionSystem : AddressTable
+struct ConditionSystem : temple::AddressTable
 {
 #pragma region CondStruct definitions
 public:
@@ -236,10 +241,7 @@ public:
 		rebase(ConditionAutoendTurn, 0x102ED6C8);
 		
 		rebase(mCondStructHashtable, 0x11868F60);
-
-		RegisterNewConditions();
-
-		
+			
 	}
 
 	void SetPermanentModArgsFromDataFields(Dispatcher* dispatcher, CondStruct* condStruct, int *condArgs);

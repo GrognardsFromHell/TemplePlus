@@ -7,7 +7,7 @@
 
 HotkeySystem hotkeys;
 
-struct HotkeyAddresses : AddressTable
+struct HotkeyAddresses : temple::AddressTable
 {
 	int * assignableKeys; // size 39 int array, holding DirectX Input Key numbers
 	RadialMenuEntry * hotkeyTable; // 39 entries; index corresponds to key given in assignableKeys

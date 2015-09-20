@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "renderstates.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "d3d8to9_texture.h"
 #include "d3d8to9_vertexbuffer.h"
 #include "d3d8to9_indexbuffer.h"
@@ -94,7 +94,7 @@ struct TigRenderStates {
 };
 #pragma pack(pop)
 
-static struct RenderStatesAddresses : AddressTable {
+static struct RenderStatesAddresses : temple::AddressTable {
 	// The render states that are currently requested by the system
 	TigRenderStates *renderStates;
 

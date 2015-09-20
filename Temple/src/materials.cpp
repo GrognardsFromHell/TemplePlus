@@ -1,6 +1,4 @@
-
-#include "stdafx.h"
-
+/*
 #include "tig/tig_shader.h"
 
 #include <materials.h>
@@ -55,3 +53,4 @@ gfx::MaterialRef LegacyMaterialManager::Resolve(const std::string& name) {
 	return make_shared<LegacyMaterial>(shaderId);
 
 }
+*/

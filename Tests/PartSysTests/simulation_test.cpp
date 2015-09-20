@@ -54,8 +54,9 @@ to speed up the tests.
 class PartSysSimulationTest : public testing::Test {
 protected:
 	static PartSysParser &GetParser() {
-		static MaterialsMock materials;
-		static PartSysParser sParser(materials);
+		static std::shared_ptr<MaterialsMock> materials(std::make_shared<MaterialsMock>());
+		static auto meshes = std::make_shared<gfx::MeshesManager>();
+		static PartSysParser sParser(materials, meshes);
 		return sParser;
 	}
 

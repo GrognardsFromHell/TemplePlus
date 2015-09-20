@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "util/addresses.h"
+#include <temple/dll.h>
 
 enum class TigMsgType : uint32_t {
 	MOUSE = 0,
@@ -34,7 +34,7 @@ struct TigMsgGlobalKeyCallback {
 	void(__cdecl *callback)(uint32_t);
 };
 
-struct TigMsgFuncs : AddressTable {
+struct TigMsgFuncs : temple::AddressTable {
 	// Return code of 0 means a msg has been written to msgOut.
 	int(__cdecl *Process)(TigMsg *msgOut);
 	void(__cdecl *Enqueue)(TigMsg *msg);

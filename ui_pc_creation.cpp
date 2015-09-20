@@ -26,7 +26,7 @@ public:
 } pcCreationSys;
 
 
-struct PcCreationUiFeatsAddresses : AddressTable
+struct PcCreationUiFeatsAddresses : temple::AddressTable
 {
 	int * dword_10C75F30;
 	int * featsMultiselectNum_10C75F34;

@@ -349,7 +349,12 @@ namespace particles {
 			break;
 
 		case PartSysEmitterSpace::Bones:
-			// TODO
+			if (!mBoneState && mAttachedTo) {
+				mBoneState = std::make_unique<BonesState>(mAttachedTo);
+			}
+			if (mBoneState) {
+				mBoneState->UpdatePos();
+			}
 			break;
 		default:
 			break;

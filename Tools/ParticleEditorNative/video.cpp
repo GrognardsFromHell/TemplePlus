@@ -84,12 +84,12 @@ void VideoEncoder::Init(int width, int height, int fps) {
 
 	mCodec = avcodec_find_encoder(mOutputFormat->video_codec);
 	if (!mCodec) {
-		throw new std::exception("Unable to initialize VP9 codec.");
+		throw std::exception("Unable to initialize VP9 codec.");
 	}
 
 	mStream = avformat_new_stream(mContext, mCodec);
 	if (!mStream) {
-		throw new std::exception("Unable to initialize stream");
+		throw std::exception("Unable to initialize stream");
 	}
 	
 	mStream->time_base = AVRational{ 1, fps };
@@ -136,7 +136,7 @@ void VideoEncoder::Init(int width, int height, int fps) {
 	auto ret = avcodec_open2(c, mCodec, nullptr);
 	if (ret < 0) {
 		auto errorStr = fmt::format("Unable to open codec: {}", AvErrorStr(ret));
-		throw new std::exception(errorStr.c_str());
+		throw std::exception(errorStr.c_str());
 	}
 
 	mFrame = av_frame_alloc();
@@ -147,20 +147,20 @@ void VideoEncoder::Init(int width, int height, int fps) {
 	ret = av_frame_get_buffer(mFrame, 32);
 	if (ret < 0) {
 		auto errorStr = fmt::format("Unable to alloc frame buffer: {}", AvErrorStr(ret));
-		throw new std::exception(errorStr.c_str());
+		throw std::exception(errorStr.c_str());
 	}
 
 	ret = avio_open(&mContext->pb, mOutputName.c_str(), AVIO_FLAG_WRITE);
 	if (ret < 0) {
 		auto errorStr = fmt::format("Unable to open output file: {}", AvErrorStr(ret));
-		throw new std::exception(errorStr.c_str());
+		throw std::exception(errorStr.c_str());
 	}
 
 	/* Write the stream header, if any. */
 	ret = avformat_write_header(mContext, nullptr);
 	if (ret < 0) {
 		auto errorStr = fmt::format("Unable to write header: {}", AvErrorStr(ret));
-		throw new std::exception(errorStr.c_str());
+		throw std::exception(errorStr.c_str());
 	}
 
 	mConvertCtx = sws_getContext(mWidth, mHeight,
@@ -193,7 +193,7 @@ void VideoEncoder::WriteFrame(uint8_t* data, int stride) {
 	auto ret = avcodec_encode_video2(c, &pkt, mFrame, &gotPacket);
 	if (ret < 0) {
 		auto errorStr = fmt::format("Unable to alloc frame buffer: {}", AvErrorStr(ret));
-		throw new std::exception(errorStr.c_str());
+		throw std::exception(errorStr.c_str());
 	}
 
 	if (gotPacket) {		
@@ -204,7 +204,7 @@ void VideoEncoder::WriteFrame(uint8_t* data, int stride) {
 		ret = av_interleaved_write_frame(mContext, &pkt);
 		if (ret < 0) {
 			auto errorStr = fmt::format("Unable to write interleaved frame: {}", AvErrorStr(ret));
-			throw new std::exception(errorStr.c_str());
+			throw std::exception(errorStr.c_str());
 		}
 	}
 }

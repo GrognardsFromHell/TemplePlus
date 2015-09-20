@@ -143,9 +143,6 @@
     <ClCompile Include="ui\ui_item_creation.cpp">
       <Filter>ui</Filter>
     </ClCompile>
-    <ClCompile Include="util\addressess.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
     <ClCompile Include="util\config.cpp">
       <Filter>utils</Filter>
     </ClCompile>
@@ -274,8 +271,6 @@
       <Filter>tig</Filter>
     </ClCompile>
     <ClCompile Include="legacyrenderstates.cpp" />
-    <ClCompile Include="gfx\legacymaterials.cpp" />
-    <ClCompile Include="gfx\legacytextures.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -410,9 +405,6 @@
     <ClInclude Include="ui\ui.h">
       <Filter>ui</Filter>
     </ClInclude>
-    <ClInclude Include="util\addresses.h">
-      <Filter>utils</Filter>
-    </ClInclude>
     <ClInclude Include="util\config.h">
       <Filter>utils</Filter>
     </ClInclude>
@@ -533,8 +525,6 @@
       <Filter>tig</Filter>
     </ClInclude>
     <ClInclude Include="legacyrenderstates.h" />
-    <ClInclude Include="gfx\legacytextures.h" />
-    <ClInclude Include="gfx\legacymaterials.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

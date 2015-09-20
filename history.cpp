@@ -18,7 +18,7 @@ public:
 } historySysReplacements;
 
 
-struct HistorySystemAddresses : AddressTable
+struct HistorySystemAddresses : temple::AddressTable
 {
 
 	int32_t *rollSerialNumber; 

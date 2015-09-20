@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "aas.h"
 #include "gamesystems.h"
-#include "util/fixes.h"
-#include "temple_functions.h"
 #include "game_config.h"
 #include "tig/tig_mouse.h"
 #include "tig/tig_mes.h"
@@ -13,16 +11,15 @@
 #include "tig/tig_font.h"
 #include "tig/tig_texture.h"
 #include "tig/tig.h"
-#include "ui/ui_render.h"
 #include "python/python_integration.h"
 #include "gamelib_private.h"
 #include "util/config.h"
 
 GameSystemFuncs gameSystemFuncs;
 
-GlobalStruct<GameSystems, 0x102AB368> gameSystems;
+temple::GlobalStruct<GameSystems, 0x102AB368> gameSystems;
 
-struct GameSystemInitTable : AddressTable {
+struct GameSystemInitTable : temple::AddressTable {
 
 	// Called when config setting for game difficulty changes
 	GameConfigChangedCallback DifficultyChanged;
@@ -229,19 +226,19 @@ void GameSystemFuncs::NewInit(const GameSystemConf& conf) {
 
 	// For whatever reason these are set here
 	memcpy(gameSystemInitTable.gameSystemConf, &conf, sizeof(GameSystemConf));
-	gameSystemInitTable.gameSystemConf->field_10 = temple_address<0x10002530>();
-	gameSystemInitTable.gameSystemConf->renderfunc = temple_address<0x10002650>();
+	gameSystemInitTable.gameSystemConf->field_10 = temple::GetPointer<0x10002530>();
+	gameSystemInitTable.gameSystemConf->renderfunc = temple::GetPointer<0x10002650>();
 	
 	initBufferStuff(conf);
 	
 	// This seems to be the primary rendering function, it's called from the renderfunc above (0x10002650)
 	if (!conf.editor) {
-		temple_set<0x103072BC>(temple_address(0x100039E0));
+		temple::GetRef<0x103072BC, void*>() = temple::GetPointer(0x100039E0);
 	} else {
-		temple_set<0x103072BC>(temple_address(0x10003A50));
+		temple::GetRef<0x103072BC, void*>() = temple::GetPointer(0x10003A50);
 	}
 
-	temple_set<0x10306C10>(false); // always set to false, used by the renderfunc
+	temple::GetRef<0x10306C10, int>() = FALSE; // always set to false, used by the renderfunc
 
 	GameSystemLoadingScreen loadingScreen;
 
@@ -437,8 +434,8 @@ static void initAas() {
 	memset(&conf, 0, sizeof(conf));
 	conf.pixelPerWorldTile1 = *reinterpret_cast<float*>(&pixelPerWorldTile);
 	conf.pixelPerWorldTile2 = conf.pixelPerWorldTile1;
-	conf.getSkmFile = (uint32_t)temple_address<0x100041E0>();
-	conf.getSkaFile = (uint32_t)temple_address<0x10004230>();
+	conf.getSkmFile = (uint32_t)temple::GetPointer<0x100041E0>();
+	conf.getSkaFile = (uint32_t)temple::GetPointer<0x10004230>();
 	conf.runScript = RunAnimFramePythonScript;
 
 	if (aasFuncs.Init(&conf)) {

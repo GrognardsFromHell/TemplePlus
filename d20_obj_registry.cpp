@@ -6,7 +6,7 @@
 
 class D20ObjRegistrySystem  d20ObjRegistrySys;
 
-struct D20ObjRegistrySystemAddresses : AddressTable{
+struct D20ObjRegistrySystemAddresses : temple::AddressTable{
 
 	objHndl **d20ObjRegistry; // room for 1024
 	int * d20ObjRegistryNumItems; 

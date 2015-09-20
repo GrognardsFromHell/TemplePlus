@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "util/fixes.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "dependencies/python-2.2/Python.h"
 #include "temple_functions.h"
 #include "python_header.h"
@@ -16,7 +16,7 @@
 #include <location.h>
 #include <turn_based.h>
 
-static struct PythonInternal : AddressTable {
+static struct PythonInternal : temple::AddressTable {
 
 	/*
 		The python dictionary that contains all global Python objects.

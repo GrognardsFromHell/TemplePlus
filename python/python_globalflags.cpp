@@ -1,11 +1,11 @@
 
 #include "stdafx.h"
 #include "python_globalflags.h"
-#include <util/addresses.h>
+#include <temple/dll.h>
 
 const int GlobalFlagCount = 3200; // see script_init
 
-static struct GlobalFlagAddresses : AddressTable {
+static struct GlobalFlagAddresses : temple::AddressTable {
 	int **globalFlags;
 
 	bool Get(int flagIdx) {

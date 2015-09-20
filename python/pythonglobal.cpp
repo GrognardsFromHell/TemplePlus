@@ -1,9 +1,9 @@
 
 #include "stdafx.h"
 #include "pythonglobal.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 
-static struct TemplePythonData : AddressTable {
+static struct TemplePythonData : temple::AddressTable {
 
 	PyObject **globals;
 

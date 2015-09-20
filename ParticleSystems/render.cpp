@@ -166,7 +166,7 @@ namespace particles {
 		case PartSysParticleType::Disc:
 			return &mImpl->mDiscRenderer;
 		default:
-			throw new TempleException("Cannot render particle type");
+			throw TempleException("Cannot render particle type");
 		}
 	}
 }

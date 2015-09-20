@@ -9,11 +9,11 @@
 #include <vector>
 
 MouseFuncs mouseFuncs;
-GlobalStruct<TigMouseState, 0x10D25184> mouseState;
+temple::GlobalStruct<TigMouseState, 0x10D25184> mouseState;
 
 vector<int> stashedCursorShaderIds;
 
-struct OriginalMouseFuncs : AddressTable {
+struct OriginalMouseFuncs : temple::AddressTable {
 
 	int(__cdecl *SetCursor)(int shaderId);
 	void(__cdecl *ResetCursor)();

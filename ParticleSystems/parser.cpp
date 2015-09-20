@@ -176,7 +176,7 @@ namespace particles {
 	void PartSysParser::ParseMaterial(const TabFileRecord& record, PartSysEmitterSpecPtr emitter) {
 		auto colMaterial = record[COL_MATERIAL];
 		if (colMaterial) {
-			auto material = mMaterials.Resolve(colMaterial.AsString());
+			auto material = mMaterials->Resolve(colMaterial.AsString());
 			if (!material->IsValid()) {
 				logger->warn("Emitter on line {} has invalid material: '{}'",
 				             record.GetLineNumber(), colMaterial);
@@ -193,7 +193,7 @@ namespace particles {
 		}
 
 		// The model filename is usually just the filename without path + extension
-		auto meshRef = meshes->Resolve(record[COL_MODEL].AsString());
+		auto meshRef = mMeshes->Resolve(record[COL_MODEL].AsString());
 
 		if (!meshRef->IsValid()) {
 			logger->warn("Emitter on line {} has invalid mesh: '{}'",
@@ -297,7 +297,8 @@ namespace particles {
 
 	}
 
-	PartSysParser::PartSysParser(gfx::MaterialManager& materials) : mMaterials(materials) {
+	PartSysParser::PartSysParser(gfx::MaterialManagerPtr materials,
+	                             gfx::MeshesManagerPtr meshes) : mMaterials(materials), mMeshes(meshes) {
 	}
 
 	void PartSysParser::ParseFile(const std::string& filename) {

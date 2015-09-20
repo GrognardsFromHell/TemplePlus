@@ -65,7 +65,7 @@ enum AiCombatRole: int32_t
 	special
 };
 
-struct AiSystem : AddressTable
+struct AiSystem : temple::AddressTable
 {
 	AiStrategy ** aiStrategies;
 	AiTacticDef * aiTacticDefs;

@@ -27,7 +27,7 @@ struct ObjectScript {
 #pragma pack(pop)
 struct FieldDataMax { uint32_t data[8]; }; // for wrapping "objSetField" calls that get input by value; this is the largest data size that I know of
 
-struct Objects : AddressTable {
+struct Objects : temple::AddressTable {
 	friend struct CritterSystem;
 
 	// Verifies if the handle is valid

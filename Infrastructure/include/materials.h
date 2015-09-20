@@ -37,5 +37,7 @@ namespace gfx {
 		static MaterialRef GetInvalidMaterial();
 
 	};
+
+	using MaterialManagerPtr = std::shared_ptr<MaterialManager>;
 	
 }

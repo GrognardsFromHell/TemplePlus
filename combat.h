@@ -1,7 +1,7 @@
 #pragma once
 
 #include "stdafx.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "tig/tig_mes.h"
 
 
@@ -16,7 +16,7 @@ struct AiTactic;
 struct D20Actn;
 uint32_t Combat_GetMesfileIdx_CombatMes();
 
-struct CombatSystem : AddressTable {
+struct CombatSystem : temple::AddressTable {
 	MesHandle* combatMesfileIdx;
 	MesHandle combatMesNew;
 	GroupArray * groupInitiativeList;
