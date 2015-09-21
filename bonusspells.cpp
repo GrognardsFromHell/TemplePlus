@@ -52,10 +52,18 @@ int getMaxSpells(objHndl objHnd, uint32_t classCode, int slotLvl, uint32_t class
 		maxSpells += spellSys.getStatModBonusSpellCount(objHnd, classCode, slotLvl);
 		return maxSpells;
 	} 
-	else
+	else if ( d20ClassSys.IsLateCastingClass((Stat)classCode) 
+		      && (classLvl >= 4 && slotLvl == 1 
+				  || classLvl >= 8 && slotLvl == 2
+				  || classLvl >= 11 && slotLvl == 3
+				  || classLvl >= 14 && slotLvl == 4))
 	{
-		return 0;
+		maxSpells += spellSys.getStatModBonusSpellCount(objHnd, classCode, slotLvl);
+			return maxSpells;
 	}
+
+	return 0;
+	
 }
 
 void doSanitize(objHndl objHnd, uint32_t classCode, uint32_t classLvl)

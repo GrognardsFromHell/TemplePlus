@@ -43,6 +43,13 @@ bool D20ClassSystem::IsCastingClass(Stat classEnum)
 	return 0;
 }
 
+bool D20ClassSystem::IsLateCastingClass(Stat classEnum)
+{
+	if (classEnum == stat_level_paladin || classEnum == stat_level_ranger)
+		return 1;
+	return 0;
+}
+
 void D20ClassSystem::ClassPacketAlloc(ClassPacket* classPkt)
 {
 	addresses.ClassPacketAlloc(classPkt);
