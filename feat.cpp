@@ -1104,14 +1104,18 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 		 {
 		 case DEITY_CORELLON_LARETHIAN:
 			 if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_LONGSWORD || featEnum == FEAT_WEAPON_FOCUS_LONGSWORD){ return 1; }
+			 break;
 		 case DEITY_ERYTHNUL:
 			 if (featEnum == FEAT_WEAPON_FOCUS_MORNINGSTAR){ return 1; }
+			 break;
 		 case DEITY_GRUUMSH:
 			 if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_LONGSPEAR || featEnum == FEAT_WEAPON_FOCUS_LONGSPEAR){ return 1; }
+			 break;
 		 case DEITY_HEIRONEOUS:
 			 if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_LONGSWORD || featEnum == FEAT_WEAPON_FOCUS_LONGSWORD){ return 1; }
+			 break;
 		 case DEITY_HEXTOR:
-			 if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_HEAVY_FLAIL || FEAT_WEAPON_FOCUS_HEAVY_FLAIL){ return 1; }
+			 if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_HEAVY_FLAIL || featEnum == FEAT_WEAPON_FOCUS_HEAVY_FLAIL){ return 1; }
 		 }
 	 }
 
