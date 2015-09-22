@@ -12,8 +12,11 @@ build_script:
   - msbuild TemplePlus.sln /p:Configuration=Release /p:MSBuildDefines="_TP_VERSION=%APPVEYOR_BUILD_VERSION%;_TP_COMMIT=%APPVEYOR_REPO_COMMIT%" /verbosity:minimal
 
 after_build:
+  # Package the symbol files
   - dump_syms.exe Release\TemplePlus.pdb > TemplePlus.sym
   - 7z a TemplePlusSymbols-%APPVEYOR_BUILD_VERSION%.zip TemplePlus.sym
+
+  # Release TemplePlus for players
   - rd /s /q dist || cd .
   - mkdir dist
   - copy Release\TemplePlus.exe dist
@@ -21,8 +24,23 @@ after_build:
   - xcopy /E /I dependencies\python-lib dist\tpdata\python-lib
   - 7z a TemplePlus-%APPVEYOR_BUILD_VERSION%.zip %APPVEYOR_BUILD_FOLDER%\dist\*
 
+  # Release Full with tools and all binaries
+  - rd /s /q dist || cd .
+  - mkdir dist
+  - copy Release\*.exe dist
+  - del dist\TemplePlus.exe
+  - del dist\*Tests.exe
+  - del dist\*.vshost.exe
+  - copy Release\*.dll dist
+  - copy dependencies\bin\*.dll dist
+  - 7z a TemplePlusTools-%APPVEYOR_BUILD_VERSION%.zip %APPVEYOR_BUILD_FOLDER%\dist\*
+
 artifacts:
-  - path: 'TemplePlus*.zip'
+  - path: 'TemplePlus-*.zip'
     name: TemplePlus
+  - path: 'TemplePlusSymbols-*.zip'
+    name: TemplePlusSymbols
+  - path: 'TemplePlusTools-*.zip'
+    name: TemplePlusTools
 
 test: off
