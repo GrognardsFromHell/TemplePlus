@@ -83,7 +83,7 @@ namespace ParticleEditor
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private static extern int ParticleSystem_GetEmitterCount(IntPtr handle);
 
-        [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        [DllImport("ParticleEditorNative.dll", EntryPoint = "ParticleSystem_RenderVideo", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         private static extern bool ParticleSystem_RenderVideo(IntPtr deviceHandle, IntPtr handle, int backgroundColor, string outputFile, int fps);
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]

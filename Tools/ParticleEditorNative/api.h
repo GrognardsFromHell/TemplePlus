@@ -11,7 +11,7 @@ extern "C" {
 	API bool ParticleSystem_RenderVideo(IDirect3DDevice9* device,
 	                                    particles::PartSys* sys,
 	                                    D3DCOLOR background,
-	                                    const char* outputFile,
+	                                    const wchar_t* outputFile,
 	                                    int fps);
 }
 

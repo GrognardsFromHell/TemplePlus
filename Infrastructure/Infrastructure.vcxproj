@@ -199,6 +199,7 @@
     <ClCompile Include="format.cc" />
     <ClCompile Include="elfhash.cpp" />
     <ClCompile Include="json11.cpp" />
+    <ClCompile Include="stringutil.cpp" />
     <ClCompile Include="windows.cpp" />
     <ClCompile Include="renderstates.cpp" />
     <ClCompile Include="tabparser.cpp" />

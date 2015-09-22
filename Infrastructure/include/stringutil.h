@@ -9,6 +9,8 @@
 
 // Thanks Stackoverflow...
 
+std::string ucs2_to_local(const std::wstring &);
+
 // trim from start
 inline std::string &ltrim(std::string &s) {
 	s.erase(s.begin(), find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(isspace))));

@@ -27,6 +27,9 @@
     <ClCompile Include="video.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="video_avcodec.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="external.h">
@@ -36,6 +39,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="api.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="video.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

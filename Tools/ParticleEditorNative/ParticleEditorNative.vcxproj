@@ -160,11 +160,13 @@
     <ClCompile Include="ParticleEditorNative.cpp" />
     <ClCompile Include="renderstates.cpp" />
     <ClCompile Include="video.cpp" />
+    <ClCompile Include="video_avcodec.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="api.h" />
     <ClInclude Include="external.h" />
     <ClInclude Include="renderstates.h" />
+    <ClInclude Include="video.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\ParticleSystems\ParticleSystems.vcxproj">
