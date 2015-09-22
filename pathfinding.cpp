@@ -42,8 +42,14 @@ Pathfinding::Pathfinding() {
 
 	loc = &locSys;
 
+	
+	
+	//rebase(PathStraightLineIsClear, 0x10040A90); // signed int __usercall PathStraightLineIsClear@<eax>(PathQueryResult *pqr@<ebx>, PathQuery *pathQ, LocAndOffsets from, LocAndOffsets to)
+	rebase(PathDestIsClear, 0x10040C30);
+	// rebase(FindPathStraightLine, 0x100427F0); //  signed int __usercall FindPathStraightLine@<eax>(PathQueryResult *pqr@<eax>, PathQuery *pq@<edi>)
 	rebase(FindPath, 0x10043070);
-	macRebase(canPathToParty, 10057F80)
+
+	rebase(canPathToParty,0x10057F80); 
 	rebase(pathQArray, 0x1186AC60);
 	rebase(pathSthgFlag_10B3D5C8,0x10B3D5C8); 
 }
