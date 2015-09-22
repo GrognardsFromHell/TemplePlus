@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "idxtables.h"
 
 struct TigShaderData;
@@ -113,7 +113,7 @@ struct TigShaderRegistryEntry {
 	}
 };
 
-struct ShaderFuncs : AddressTable {
+struct ShaderFuncs : temple::AddressTable {
 
 	int(__cdecl *GetId)(const char *filename, int *shaderIdOut);
 	int(__cdecl *GetLoaded)(int shaderId, TigShader *shaderOut);

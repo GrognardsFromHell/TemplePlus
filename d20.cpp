@@ -3,7 +3,7 @@
 #include "d20.h"
 #include "temple_functions.h"
 #include "obj.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "feat.h"
 #include "util/fixes.h"
 #include "spell.h"
@@ -82,7 +82,7 @@ public:
 } d20Replacements;
 
 
-static struct D20SystemAddresses : AddressTable {
+static struct D20SystemAddresses : temple::AddressTable {
 
 	void(__cdecl*  GlobD20ActnSetTarget)(objHndl objHnd, LocAndOffsets * loc);
 	uint32_t(__cdecl* LocationCheckStdAttack)(D20Actn*, TurnBasedStatus*, LocAndOffsets*);

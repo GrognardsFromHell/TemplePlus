@@ -1,6 +1,6 @@
 
 #pragma once
-#include "util/addresses.h"
+#include <temple/dll.h>
 
 enum class MouseButton : uint32_t {
 	LEFT = 0,
@@ -25,9 +25,9 @@ struct TigMouseState {
 	int field24;
 };
 
-extern GlobalStruct<TigMouseState, 0x10D25184> mouseState;
+extern temple::GlobalStruct<TigMouseState, 0x10D25184> mouseState;
 
-struct MouseFuncs : AddressTable {
+struct MouseFuncs : temple::AddressTable {
 	
 	static int (__cdecl SetCursor)(int shaderId);
 	static void(__cdecl ResetCursor)();

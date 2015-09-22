@@ -38,7 +38,7 @@ CondStructNew condRend;
 CondStructNew condGreaterWeaponSpecialization;
 
 
-struct ConditionSystemAddresses : AddressTable
+struct ConditionSystemAddresses : temple::AddressTable
 {
 	void(__cdecl* SetPermanentModArgsFromDataFields)(Dispatcher* dispatcher, CondStruct* condStruct, int* condArgs);
 	int(__cdecl*RemoveSpellCondition)(DispatcherCallbackArgs args); 
@@ -62,6 +62,8 @@ public:
 
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
+		
+		conds.RegisterNewConditions();
 		
 		replaceFunction(0x100E19C0, _CondStructAddToHashtable);
 		replaceFunction(0x100E1A80, _GetCondStructFromHashcode);
@@ -240,7 +242,7 @@ void _CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNode) 
 	auto subDispDef = condNode->condStruct->subDispDefs;
 
 	while (subDispDef->dispType != 0) {
-		auto subDispNodeNew = (SubDispNode *)allocFuncs._malloc_0(sizeof(SubDispNode));
+		auto subDispNodeNew = (SubDispNode *)malloc(sizeof(SubDispNode));
 		subDispNodeNew->subDispDef = subDispDef;
 		subDispNodeNew->next = nullptr;
 		subDispNodeNew->condNode = condNode;
@@ -352,7 +354,7 @@ int RemoveSpellConditionAndMod(DispatcherCallbackArgs args)
 int DivineMightEffectTooltipCallback(DispatcherCallbackArgs args)
 {
 	void * dispIo = args.dispIO;
-	int (__cdecl* callback )(int, int, int)= (int(__cdecl*)(int, int, int))temple_address(0x100F4760);
+	int (__cdecl* callback )(int, int, int)= (int(__cdecl*)(int, int, int))temple::GetPointer(0x100F4760);
 	const char shit[] = "Divine Might";
 	callback( *((int*)dispIo + 1), args.subDispNode->subDispDef->data1, (int)shit);
 	return 0;
@@ -1461,12 +1463,12 @@ int* ConditionSystem::CondNodeGetArgPtr(CondNode* condNode, int argIdx)
 	radEntry.minArg = 0;
 	radEntry.type = RadialMenuEntryType::Toggle;
 	radEntry.actualArg = (int)conds.CondNodeGetArgPtr(args.subDispNode->condNode, 0);
-	radEntry.callback = (void (__cdecl*)(objHndl, RadialMenuEntry*))temple_address(0x100F0200);
+	radEntry.callback = (void (__cdecl*)(objHndl, RadialMenuEntry*))temple::GetPointer(0x100F0200);
 	MesLine mesLine;
 	mesLine.key = 5105; //disable AoOs
 	if (!mesFuncs.GetLine(*combatSys.combatMesfileIdx, &mesLine) )
 	{
-		//sprintf((char*)temple_address(0x10EEE228), "Disable Attacks of Opportunity");
+		//sprintf((char*)temple::GetPointer(0x10EEE228), "Disable Attacks of Opportunity");
 		mesLine.value = conds.mConditionDisableAoOName;
 	}
 	//mesFuncs.GetLine_Safe(*combatSys.combatMesfileIdx, &mesLine);
@@ -1585,7 +1587,7 @@ int __cdecl DivineMightRadial(DispatcherCallbackArgs args)
 	mesLine.key = 5106; // Divine Might
 	if (!mesFuncs.GetLine(*combatSys.combatMesfileIdx, &mesLine))
 	{
-		//sprintf((char*)temple_address(0x10EEE228), "Divine Might");
+		//sprintf((char*)temple::GetPointer(0x10EEE228), "Divine Might");
 		mesLine.value = conds.mCondDivineMightName;
 	};
 	radEntry.text = (char*)mesLine.value;
@@ -1635,12 +1637,12 @@ int __cdecl RecklessOffenseRadialMenuInit(DispatcherCallbackArgs args)
 	radEntry.minArg = 0;
 	radEntry.type = RadialMenuEntryType::Toggle;
 	radEntry.actualArg = (int)conds.CondNodeGetArgPtr(args.subDispNode->condNode, 0);
-	radEntry.callback = (void(__cdecl*)(objHndl, RadialMenuEntry*))temple_address(0x100F0200);
+	radEntry.callback = (void(__cdecl*)(objHndl, RadialMenuEntry*))temple::GetPointer(0x100F0200);
 	MesLine mesLine;
 	mesLine.key = 5107; // reckless offense
 	if (!mesFuncs.GetLine(*combatSys.combatMesfileIdx, &mesLine))
 	{
-		//sprintf((char*)temple_address(0x10EEE228), "Reckless Offense");
+		//sprintf((char*)temple::GetPointer(0x10EEE228), "Reckless Offense");
 		mesLine.value = conds.mCondRecklessOffenseName;
 	};
 	radEntry.text = (char*)mesLine.value;
@@ -1698,13 +1700,13 @@ int __cdecl CombatExpertiseRadialMenu(DispatcherCallbackArgs args)
 		radEntry.minArg = 0;
 		radEntry.type = RadialMenuEntryType::Slider;
 		radEntry.actualArg = (int)conds.CondNodeGetArgPtr(args.subDispNode->condNode, 0);
-		radEntry.callback = (void(__cdecl*)(objHndl, RadialMenuEntry*))temple_address(0x100F0200);
+		radEntry.callback = (void(__cdecl*)(objHndl, RadialMenuEntry*))temple::GetPointer(0x100F0200);
 		MesLine mesLine;
 		mesLine.key = 5007; // Combat Expertise
 		if (!mesFuncs.GetLine(*combatSys.combatMesfileIdx, &mesLine))
 		{
-			sprintf((char*)temple_address(0x10EEE228), "Combat Expertise");
-			mesLine.value = (char*)temple_address(0x10EEE228);
+			sprintf((char*)temple::GetPointer(0x10EEE228), "Combat Expertise");
+			mesLine.value = (char*)temple::GetPointer(0x10EEE228);
 		}
 		radEntry.text = (char*)mesLine.value;
 		radEntry.helpId = conds.hashmethods.StringHash("TAG_COMBAT_EXPERTISE");

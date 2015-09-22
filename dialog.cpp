@@ -4,7 +4,7 @@
 
 DialogScripts dialogScripts;
 
-static struct DialogScriptsAddresses : AddressTable {
+static struct DialogScriptsAddresses : temple::AddressTable {
 
 	bool (__cdecl *GetFilename)(int scriptId, char *filename);
 

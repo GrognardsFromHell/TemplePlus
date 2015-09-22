@@ -1,5 +1,5 @@
 #pragma once
-#include <util/addresses.h>
+#include <temple/dll.h>
 
 /*
 	The following structures and functions are used by ToEE to parse all
@@ -21,7 +21,7 @@ struct TigTabParser {
 };
 #pragma pack(pop)
 
-struct TigTabParserFuncs : AddressTable {
+struct TigTabParserFuncs : temple::AddressTable {
 
 	void (__cdecl *Init)(TigTabParser* parser);
 	int (__cdecl *Open)(TigTabParser* parser, const char* filename);

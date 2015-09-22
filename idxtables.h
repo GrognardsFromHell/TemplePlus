@@ -1,22 +1,22 @@
 #pragma once
 
-#include "util/addresses.h"
+#include <temple/dll.h>
 
 template <typename T>
-struct IdxTableNode : public TempleAlloc
+struct IdxTableNode : temple::TempleAlloc
 {
 	T* data;
 	IdxTableNode<T>* next;
 	int id;
 
 	IdxTableNode(int _id, const T&_data, IdxTableNode<T> *_next) : data(nullptr), next(_next), id(_id) {
-		data = allocFuncs.opNew(sizeof(T));
+		data = operator new(sizeof(T));
 		new (data)T(_data);
 	}
 };
 
 template <typename T>
-struct IdxTable : public TempleAlloc
+struct IdxTable : temple::TempleAlloc
 {
 	int bucketCount;
 	IdxTableNode<T>** buckets;
@@ -24,7 +24,7 @@ struct IdxTable : public TempleAlloc
 	int itemCount;
 };
 
-struct IdxTableListsNode : public TempleAlloc
+struct IdxTableListsNode : temple::TempleAlloc
 {
 	const char* sourceFile;
 	int lineNumber;
@@ -120,7 +120,7 @@ class IdxTableWrapper
 public:
 	IdxTableWrapper(uint32_t address) : mTable(reinterpret_cast<IdxTable<T>*>(address))
 	{
-		AddressInitializer::queueRebase(reinterpret_cast<void**>(&mTable));
+		temple::Dll::RegisterAddressPtr(reinterpret_cast<void**>(&mTable));
 	}
 
 	IdxTableWrapper(IdxTable<T>* pointer) : mTable(pointer)
@@ -230,4 +230,4 @@ private:
 	IdxTable<T>* mTable;
 };
 
-extern GlobalPrimitive<IdxTableListsNode*, 0x10EF2E70> idxTablesList;
+extern temple::GlobalPrimitive<IdxTableListsNode*, 0x10EF2E70> idxTablesList;

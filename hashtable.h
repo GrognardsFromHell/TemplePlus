@@ -1,11 +1,11 @@
 #pragma once
 
 #include "stdafx.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 
 
 template <typename T>
-struct ToEEHashtable : public TempleAlloc
+struct ToEEHashtable : temple::TempleAlloc
 {
 	uint32_t numItems;
 	uint32_t capacity;
@@ -17,7 +17,7 @@ struct ToEEHashtable : public TempleAlloc
 };
 
 template <typename T>
-struct ToEEHashtableSystem : AddressTable
+struct ToEEHashtableSystem : temple::AddressTable
 {
 	uint32_t HashtableInit(ToEEHashtable<T>* hashtableOut, uint32_t capacity)
 	{
@@ -142,12 +142,12 @@ private:
 
 	T ** _dataArrayNew(uint32_t capacity)
 	{
-		return (T**)allocFuncs._malloc_0(sizeof(T*) * capacity);
+		return (T**)operator new(sizeof(T*) * capacity);
 	}
 
 	uint32_t * _keyArrayNew(uint32_t capacity)
 	{
-		return (uint32_t *)allocFuncs._malloc_0(sizeof(uint32_t) * capacity);
+		return (uint32_t *)operator new(sizeof(uint32_t) * capacity);
 	}
 
 	uint32_t(__cdecl* ELFhash)(char * stringIn);

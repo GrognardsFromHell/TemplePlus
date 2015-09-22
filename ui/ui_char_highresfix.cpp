@@ -1,7 +1,6 @@
 
 #include "stdafx.h"
 #include "util/fixes.h"
-#include "temple_functions.h"
 #include "gamesystems.h"
 #include "util/config.h"
 
@@ -16,13 +15,15 @@ static int HookedUiCharInit(const GameSystemConf &conf) {
 
 	// Char Init reads the width/height from these values but only applies it to certain parts of the
 	// x/y calculation. I.e. scrollbars and the helptext are just misaligned in these cases.
-	temple_set<0x103012C8>(800);
-	temple_set<0x103012CC>(600);
+	auto& vidWidth = temple::GetRef<0x103012C8, int>();
+	auto& vidHeight = temple::GetRef<0x103012CC, int>();
+	vidWidth = 800;
+	vidHeight = 600;
 
 	auto result = uiCharInit(copyConf);	
 
-	temple_set<0x103012C8>(conf.width);
-	temple_set<0x103012CC>(conf.height);
+	vidWidth = conf.width;
+	vidHeight = conf.height;
 
 	return result;
 }

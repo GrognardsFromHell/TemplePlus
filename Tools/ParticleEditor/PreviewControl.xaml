@@ -1,0 +1,43 @@
+﻿<UserControl x:Class="ParticleEditor.PreviewControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:ParticleEditor"
+             xmlns:interop="clr-namespace:System.Windows.Interop;assembly=PresentationCore"
+             mc:Ignorable="d"
+             d:DesignHeight="300" d:DesignWidth="300"
+             d:DataContext="{d:DesignInstance d:Type=local:PreviewControlModel}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
+            <ToggleButton Content="Pause" HorizontalAlignment="Left" Margin="5" IsChecked="{Binding Path=Paused}" />
+            <Label ContentStringFormat="Scale: {0:P}" Content="{Binding Scale}"></Label>
+        </StackPanel>
+        <Grid Grid.Row="1" x:Name="RenderOutput" MouseLeftButtonDown="RenderOutput_MouseLeftButtonDown" MouseMove="RenderOutput_MouseMove" MouseLeftButtonUp="RenderOutput_MouseLeftButtonUp" MouseWheel="RenderOutput_MouseWheel">
+            <Image>
+                <Image.Source>
+                    <interop:D3DImage x:Name="D3Dimg" />
+                </Image.Source>
+            </Image>
+        </Grid>
+        <Grid Grid.Row="2" Height="100">
+            <StackPanel>
+                <GroupBox Header="Statistics" Margin="5">
+                    <StackPanel>
+                        <Label Content="{Binding ActiveParticles}" ContentStringFormat="Active Particles: {0}" />
+                    </StackPanel>
+                </GroupBox>
+            </StackPanel>
+        </Grid>
+        <Label x:Name="DataPathErrorLabel" Width="200" HorizontalAlignment="Center" Grid.Row="1" VerticalAlignment="Center" BorderThickness="1"
+               Background="White"
+               BorderBrush="Red">
+            <TextBlock TextWrapping="Wrap">Please configure your ToEE <Hyperlink Click="EmitConfigureDataPath">data path</Hyperlink> to use the preview feature</TextBlock>
+        </Label>
+    </Grid>
+</UserControl>

@@ -2,7 +2,7 @@
 #include "common.h"
 #include "dispatcher.h"
 
-struct InventorySystem : AddressTable
+struct InventorySystem : temple::AddressTable
 {
 	
 	objHndl(__cdecl *GetSubstituteInventory)  (objHndl);

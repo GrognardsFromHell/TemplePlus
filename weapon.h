@@ -2,7 +2,7 @@
 #include "common.h"
 
 
-struct WeaponSystem : AddressTable
+struct WeaponSystem : temple::AddressTable
 {
 	uint32_t IsSimple(WeaponTypes wpnType);
 	uint32_t IsMartial(WeaponTypes wpnType);

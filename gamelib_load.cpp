@@ -7,7 +7,7 @@
 
 #include "gamelib_private.h"
 
-static struct GameLibLoadAddresses : AddressTable {
+static struct GameLibLoadAddresses : temple::AddressTable {
 	/*
 		Signals to two other locations of the code, that a savegame is being loaded:
 		- map_sector_mapclose
@@ -118,9 +118,9 @@ bool GameSystemFuncs::LoadGame(const string& filename) {
 
 		// Other parts of toee may free this pointer so we have to use their free/alloc
 		if (*addresses.ironmanSaveName) {
-			allocFuncs.free(*addresses.ironmanSaveName);
+			free(*addresses.ironmanSaveName);
 		}
-		*addresses.ironmanSaveName = (char*) allocFuncs._malloc_0(savenameSize);
+		*addresses.ironmanSaveName = (char*) malloc(savenameSize);
 		
 		if (tio_fread(*addresses.ironmanSaveName, 1, savenameSize, file) != savenameSize) {
 			logger->error("Unable to read ironman savegame name.");

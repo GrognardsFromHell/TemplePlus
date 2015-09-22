@@ -1,12 +1,12 @@
 
 #include "stdafx.h"
 #include "python_time.h"
-#include <util/addresses.h>
+#include <temple/dll.h>
 #include "timeevents.h"
 
 static PyTypeObject *GetPyTimeStampType();
 
-static struct PyTimeStampAddresses : AddressTable {
+static struct PyTimeStampAddresses : temple::AddressTable {
 
 	// Returns the number of years (respecting the module starting year) in the given game time
 	int (__cdecl *GameTimeGetYear)(const GameTime *gameTime);

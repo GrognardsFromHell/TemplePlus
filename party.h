@@ -4,7 +4,7 @@
 
 #define PARTY_SIZE_MAX 8 // PCs and NPCs
 
-struct PartySystem : AddressTable
+struct PartySystem : temple::AddressTable
 {
 	void SetMaxPCs(char maxPCs);
 	

@@ -143,9 +143,6 @@
     <ClCompile Include="ui\ui_item_creation.cpp">
       <Filter>ui</Filter>
     </ClCompile>
-    <ClCompile Include="util\addressess.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
     <ClCompile Include="util\config.cpp">
       <Filter>utils</Filter>
     </ClCompile>
@@ -158,7 +155,6 @@
     <ClCompile Include="util\libraryholder.cpp">
       <Filter>utils</Filter>
     </ClCompile>
-    <ClCompile Include="renderstates.cpp" />
     <ClCompile Include="tio\tio_utils.cpp" />
     <ClCompile Include="tig\tig.cpp" />
     <ClCompile Include="tig\tig_sound.cpp" />
@@ -271,6 +267,10 @@
     <ClCompile Include="ui_pc_creation.cpp">
       <Filter>ui</Filter>
     </ClCompile>
+    <ClCompile Include="tig\tig_partsys.cpp">
+      <Filter>tig</Filter>
+    </ClCompile>
+    <ClCompile Include="legacyrenderstates.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -405,9 +405,6 @@
     <ClInclude Include="ui\ui.h">
       <Filter>ui</Filter>
     </ClInclude>
-    <ClInclude Include="util\addresses.h">
-      <Filter>utils</Filter>
-    </ClInclude>
     <ClInclude Include="util\config.h">
       <Filter>utils</Filter>
     </ClInclude>
@@ -421,7 +418,6 @@
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="tio\tio.h" />
-    <ClInclude Include="renderstates.h" />
     <ClInclude Include="tio\tio_utils.h" />
     <ClInclude Include="tig\tig_sound.h" />
     <ClInclude Include="float_line.h" />
@@ -525,6 +521,10 @@
     <ClInclude Include="ui_intgame_turnbased.h">
       <Filter>ui</Filter>
     </ClInclude>
+    <ClInclude Include="tig\tig_partsys.h">
+      <Filter>tig</Filter>
+    </ClInclude>
+    <ClInclude Include="legacyrenderstates.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -532,9 +532,6 @@
     </Filter>
     <Filter Include="tig">
       <UniqueIdentifier>{c43770f8-71a3-4e2c-b97f-6390dae5f4e6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="d3d">
-      <UniqueIdentifier>{4bd0836b-6efd-4244-81d1-83eb3c7635d5}</UniqueIdentifier>
     </Filter>
     <Filter Include="ui">
       <UniqueIdentifier>{195f3d3d-0968-44d0-8e72-4d9461dacce0}</UniqueIdentifier>
@@ -571,12 +568,6 @@
   <ItemGroup>
     <Filter Include="Dependencies">
       <UniqueIdentifier>{19c3791b-555a-4456-8131-5c09f9116f00}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Dependencies\cppformat">
-      <UniqueIdentifier>{f337e661-8b3d-412c-8a28-5c1b90ea972a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Dependencies\spdlog">
-      <UniqueIdentifier>{67a9704a-41d0-406d-8b05-c5a034a5c44f}</UniqueIdentifier>
     </Filter>
     <Filter Include="Dependencies\featherini">
       <UniqueIdentifier>{94170950-96c6-419a-91d3-0a01f9c5135d}</UniqueIdentifier>

@@ -18,7 +18,7 @@ struct CmbtIntrpts;
 struct TurnBasedSys;
 struct Objects;
 
-struct ActionSequenceSystem : AddressTable
+struct ActionSequenceSystem : temple::AddressTable
 {
 	
 	D20System * d20;

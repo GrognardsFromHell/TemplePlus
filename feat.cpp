@@ -30,6 +30,17 @@ public:
 
 	void apply() override {
 		//writeHex(0x10278078, "73 69 7A 65 5F 63 6F 6C 6F 73 73 61 6C");
+
+		auto classFeatTable = feats.classFeatTable;
+		classFeatTable->classEntries[0].entries[9].feat = FEAT_GREATER_RAGE;
+		classFeatTable->classEntries[0].entries[9].minLvl = 11;
+		classFeatTable->classEntries[0].entries[10].feat = FEAT_INDOMITABLE_WILL;
+		classFeatTable->classEntries[0].entries[10].minLvl = 14;
+		classFeatTable->classEntries[0].entries[11].feat = FEAT_TIRELESS_RAGE;
+		classFeatTable->classEntries[0].entries[11].minLvl = 17;
+		classFeatTable->classEntries[0].entries[12].feat = FEAT_MIGHTY_RAGE;
+		classFeatTable->classEntries[0].entries[12].minLvl = 20;
+		*(int*)&classFeatTable->classEntries[0].entries[13].feat = -1;
 		
 		replaceFunction(0x1007B990, _FeatExistsInArray);
 		replaceFunction(0x1007B9C0, _GetFeatName);
@@ -128,7 +139,6 @@ FeatSystem::FeatSystem()
 	rebase(featMes,   0x10AB7090);
 	rebase(featTabFile, 0x10AB7094);
 	
-	
 	rebase(classFeatTable, 0x102CAAF8); 		// TODO: export this to a mesfile
 	rebase(charEditorObjHnd, 0x11E741A0);		// TODO: move this to the appropriate system
 	rebase(charEditorClassCode, 0x11E72FC0);	// TODO: move this to the appropriate system
@@ -152,15 +162,7 @@ FeatSystem::FeatSystem()
 	featPropertiesTable[FEAT_GREATER_TWO_WEAPON_FIGHTING] = 0x10;
 	featPreReqTable[FEAT_GREATER_TWO_WEAPON_FIGHTING].featPrereqs[2].featPrereqCode = 266;
 	featPreReqTable[FEAT_GREATER_TWO_WEAPON_FIGHTING].featPrereqs[2].featPrereqCodeArg = 11;
-	classFeatTable->classEntries[0].entries[9].feat = FEAT_GREATER_RAGE;
-	classFeatTable->classEntries[0].entries[9].minLvl = 11;
-	classFeatTable->classEntries[0].entries[10].feat = FEAT_INDOMITABLE_WILL;
-	classFeatTable->classEntries[0].entries[10].minLvl = 14;
-	classFeatTable->classEntries[0].entries[11].feat = FEAT_TIRELESS_RAGE;
-	classFeatTable->classEntries[0].entries[11].minLvl = 17;
-	classFeatTable->classEntries[0].entries[12].feat = FEAT_MIGHTY_RAGE;
-	classFeatTable->classEntries[0].entries[12].minLvl = 20;
-	*(int*)&classFeatTable->classEntries[0].entries[13].feat = -1;
+
 	memset(emptyString, 0, 1);
 
 };

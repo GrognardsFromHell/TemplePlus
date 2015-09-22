@@ -6,7 +6,7 @@
 
 struct BonusList;
 
-struct BonusSystem : AddressTable
+struct BonusSystem : temple::AddressTable
 {
 	uint32_t isBonusNotMaximal(BonusList * bonList, uint32_t bonIdx, uint32_t * maxBonIdx);
 	uint32_t bonusAddToBonusList(BonusList* bonList, int bonValue, int bonType, unsigned bonMesLineNum);

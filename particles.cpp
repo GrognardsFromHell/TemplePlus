@@ -4,7 +4,7 @@
 
 Particles particles;
 
-static struct ParticleAddresses : AddressTable {
+static struct ParticleAddresses : temple::AddressTable {
 
 	uint32_t (__cdecl *Elf32Hash)(const char *name);
 	int (__cdecl *CreateAtObj)(uint32_t nameHash, objHndl handle);

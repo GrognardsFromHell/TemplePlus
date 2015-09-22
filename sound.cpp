@@ -4,7 +4,7 @@
 
 Sound sound;
 
-static struct SoundAddresses : AddressTable {
+static struct SoundAddresses : temple::AddressTable {
 	// Seems to return the sound stream id or -1 on failure
 	int(__cdecl *Sound)(int soundId, int loopCount);
 	int(__cdecl *SoundAtObj)(int soundId, int loopCount, objHndl obj);

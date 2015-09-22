@@ -6,7 +6,7 @@
 
 struct MapFindNodeData;
 
-struct MapObjSystem : AddressTable {
+struct MapObjSystem : temple::AddressTable {
 
 	MapFindNodeData *findNodeData;
 

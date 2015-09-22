@@ -3,7 +3,7 @@
 #include "party.h"
 #include "util/config.h"
 
-struct PartySystemAddresses : AddressTable
+struct PartySystemAddresses : temple::AddressTable
 {
 	GroupArray * groupNpcFollowers;
 	GroupArray * groupCurrentlySelected;  

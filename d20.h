@@ -31,7 +31,7 @@ struct Pathfinding;
 
 
 
-struct D20System : AddressTable
+struct D20System : temple::AddressTable
 {
 	D20Actn * globD20Action;
 	D20ActionDef * d20Defs;

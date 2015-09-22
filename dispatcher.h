@@ -37,7 +37,7 @@ struct DispatcherCallbackArgs;
 struct Dispatcher;
 
 
-struct DispatcherSystem : AddressTable
+struct DispatcherSystem : temple::AddressTable
 {
 	Dispatcher* DispatcherInit(objHndl objHnd);
 	bool dispatcherValid(Dispatcher * dispatcher);
@@ -105,7 +105,7 @@ struct DispIO {
 	enum_dispIO_type dispIOType;
 };
 
-struct CondNode : TempleAlloc {
+struct CondNode : temple::TempleAlloc {
 	CondStruct* condStruct;
 	CondNode* nextCondNode;
 	uint32_t flags; // 1 - expired; 2 - got arg data from info stored in field
@@ -114,7 +114,7 @@ struct CondNode : TempleAlloc {
 	explicit CondNode(CondStruct *cond);
 };
 
-struct SubDispNode : TempleAlloc {
+struct SubDispNode : temple::TempleAlloc {
 	SubDispDef* subDispDef;
 	CondNode* condNode;
 	SubDispNode* next;
@@ -312,7 +312,7 @@ struct DispIoD20ActionTurnBased : DispIO{ // dispIoType = 12; matches dispTypes 
 	TurnBasedStatus * tbStatus;
 };
 
-struct Dispatcher :TempleAlloc {
+struct Dispatcher : temple::TempleAlloc {
 	objHndl objHnd;
 	CondNode* permanentMods;
 	CondNode* itemConds;

@@ -4,7 +4,7 @@
 #include "obj.h"
 
 
-struct D20LevelupSystemAddresses : AddressTable
+struct D20LevelupSystemAddresses : temple::AddressTable
 {
 	int(__cdecl* LevelupApply)(objHndl objHnd, LevelupPacket* lvlPkt);
 	

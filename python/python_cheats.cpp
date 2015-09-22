@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "python_cheats.h"
-#include <util/addresses.h>
+#include <temple/dll.h>
 
 // Returns 1 if it can handle the command
 typedef int (__cdecl *CheatFn)(const char *command);
@@ -18,7 +18,7 @@ struct Cheat {
 };
 #pragma pack(pop)
 
-static struct PythonCheatsAddresses : AddressTable {
+static struct PythonCheatsAddresses : temple::AddressTable {
 	Cheat *cheats;
 
 	PythonCheatsAddresses() {

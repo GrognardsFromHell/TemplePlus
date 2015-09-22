@@ -6,7 +6,7 @@
 
 InventorySystem inventory;
 
-struct InventorySystemAddresses : AddressTable
+struct InventorySystemAddresses : temple::AddressTable
 {
 	int (__cdecl*ItemGetAdvanced)(objHndl item, objHndl parent, int slotIdx, int flags);
 	int(__cdecl*GetParent)(objHndl, objHndl*);

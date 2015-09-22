@@ -1,6 +1,6 @@
 
 #pragma once
-#include <util/addresses.h>
+#include <temple/dll.h>
 
 enum class TigSoundType : uint32_t {
 	Effects = 0,
@@ -9,7 +9,7 @@ enum class TigSoundType : uint32_t {
 	ThreeD = 3 // Positional
 };
 
-struct TigSoundAddresses : AddressTable {
+struct TigSoundAddresses : temple::AddressTable {
 
 	int *movieVolume;
 

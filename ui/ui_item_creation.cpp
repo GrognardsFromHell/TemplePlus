@@ -19,23 +19,23 @@
 #include <critter.h>
 //#include <condition.h>
 
-GlobalPrimitive<ItemCreationType, 0x10BEDF50> itemCreationType;
-GlobalPrimitive<objHndl, 0x10BECEE0> globObjHndCrafter;
+temple::GlobalPrimitive<ItemCreationType, 0x10BEDF50> itemCreationType;
+temple::GlobalPrimitive<objHndl, 0x10BECEE0> globObjHndCrafter;
 
-GlobalPrimitive<int32_t, 0x10BEE3A4> craftInsufficientXP;
-GlobalPrimitive<int32_t, 0x10BEE3A8> craftInsufficientFunds;
-GlobalPrimitive<int32_t, 0x10BEE3AC> craftSkillReqNotMet;
-GlobalPrimitive<int32_t, 0x10BEE3B0> dword_10BEE3B0;
+temple::GlobalPrimitive<int32_t, 0x10BEE3A4> craftInsufficientXP;
+temple::GlobalPrimitive<int32_t, 0x10BEE3A8> craftInsufficientFunds;
+temple::GlobalPrimitive<int32_t, 0x10BEE3AC> craftSkillReqNotMet;
+temple::GlobalPrimitive<int32_t, 0x10BEE3B0> dword_10BEE3B0;
 
-GlobalPrimitive<char *, 0x10BED6D4> itemCreationUIStringSkillRequired;
-GlobalPrimitive<char *, 0x10BEDB50> itemCreationUIStringItemCost;
-GlobalPrimitive<char *, 0x10BED8A4> itemCreationUIStringXPCost;
-GlobalPrimitive<char *, 0x10BED8A8> itemCreationUIStringValue;
-GlobalPrimitive<TigTextStyle, 0x10BEE338> itemCreationTextStyle; // so far used by "Item Cost: %d" and "Experience Cost: %d"
-GlobalPrimitive<TigTextStyle, 0x10BED938> itemCreationTextStyle2; // so far used by "Value: %d"
+temple::GlobalPrimitive<char *, 0x10BED6D4> itemCreationUIStringSkillRequired;
+temple::GlobalPrimitive<char *, 0x10BEDB50> itemCreationUIStringItemCost;
+temple::GlobalPrimitive<char *, 0x10BED8A4> itemCreationUIStringXPCost;
+temple::GlobalPrimitive<char *, 0x10BED8A8> itemCreationUIStringValue;
+temple::GlobalPrimitive<TigTextStyle, 0x10BEE338> itemCreationTextStyle; // so far used by "Item Cost: %d" and "Experience Cost: %d"
+temple::GlobalPrimitive<TigTextStyle, 0x10BED938> itemCreationTextStyle2; // so far used by "Value: %d"
 int WandCraftCostCp=0;
 
-struct UiItemCreationAddresses : AddressTable
+struct UiItemCreationAddresses : temple::AddressTable
 {
 	int (__cdecl* Sub_100F0200)(objHndl a1, RadialMenuEntry *entry);
 	UiItemCreationAddresses()

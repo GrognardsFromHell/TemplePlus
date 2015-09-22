@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "tig.h"
 
 enum TigTextStyleFlag {
@@ -96,7 +96,7 @@ struct TigFontData {
 	uint32_t dword_10EF2E5C;
 };
 
-struct TigFontFuncs : AddressTable
+struct TigFontFuncs : temple::AddressTable
 {
 	int(__cdecl *Measure)(const TigTextStyle &style, TigFontMetrics &metrics);
 	int(__cdecl *Draw)(const char *text, const TigRect& extents, const TigTextStyle& style);
@@ -113,5 +113,5 @@ struct TigFontFuncs : AddressTable
 	}
 };
 
-extern GlobalStruct<TigFontData, 0x10EEEEC8> fontData;
+extern temple::GlobalStruct<TigFontData, 0x10EEEEC8> fontData;
 extern TigFontFuncs tigFont;

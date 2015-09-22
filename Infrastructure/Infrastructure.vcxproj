@@ -147,11 +147,17 @@
     <ClInclude Include="breakpad\string_utils-inl.h" />
     <ClInclude Include="breakpad\exception_handler.h" />
     <ClInclude Include="include\breakpad.h" />
+    <ClInclude Include="include\elfhash.h" />
     <ClInclude Include="include\exception.h" />
     <ClInclude Include="include\format.h" />
     <ClInclude Include="include\infrastructure.h" />
     <ClInclude Include="include\logging.h" />
+    <ClInclude Include="include\materials.h" />
     <ClInclude Include="include\mathutil.h" />
+    <ClInclude Include="include\meshes.h" />
+    <ClInclude Include="include\mesparser.h" />
+    <ClInclude Include="include\platform\windows.h" />
+    <ClInclude Include="include\renderstates.h" />
     <ClInclude Include="include\spdlog\async_logger.h" />
     <ClInclude Include="include\spdlog\common.h" />
     <ClInclude Include="include\spdlog\details\async_logger_impl.h" />
@@ -178,7 +184,10 @@
     <ClInclude Include="include\spdlog\spdlog.h" />
     <ClInclude Include="include\stopwatch.h" />
     <ClInclude Include="include\stringutil.h" />
+    <ClInclude Include="include\tabparser.h" />
+    <ClInclude Include="include\textures.h" />
     <ClInclude Include="include\version.h" />
+    <ClInclude Include="include\vfs.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="breakpad.cpp" />
@@ -186,8 +195,16 @@
     <ClCompile Include="breakpad\exception_handler.cc" />
     <ClCompile Include="breakpad\guid_string.cc" />
     <ClCompile Include="format.cc" />
+    <ClCompile Include="elfhash.cpp" />
+    <ClCompile Include="windows.cpp" />
+    <ClCompile Include="renderstates.cpp" />
+    <ClCompile Include="tabparser.cpp" />
     <ClCompile Include="logging.cpp" />
+    <ClCompile Include="materials.cpp" />
+    <ClCompile Include="meshes.cpp" />
+    <ClCompile Include="mesparser.cpp" />
     <ClCompile Include="version.cpp" />
+    <ClCompile Include="vfs.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="breakpad\LICENSE" />

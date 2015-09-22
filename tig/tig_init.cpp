@@ -3,9 +3,9 @@
 #include "tig_init.h"
 
 #include "../util/config.h"
-#include "../util/addresses.h"
+#include <temple/dll.h>
 
-static struct TigInternal : AddressTable {
+static struct TigInternal : temple::AddressTable {
 	bool *consoleDisabled; // TODO: move to tig_console.h
 
 	_tig_init TigInit;

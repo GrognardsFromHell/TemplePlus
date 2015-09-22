@@ -19,7 +19,7 @@ struct TigMatrices {
 /*
 Container for ToEE functions related to video
 */
-struct VideoFuncs : AddressTable {
+struct VideoFuncs : temple::AddressTable {
 	bool(__fastcall *TigDirect3dInit)(TigConfig* settings) = nullptr;
 	void (__cdecl *SetVideoMode)(int adapter, int nWidth, int nHeight, int bpp, int refresh, int flags);
 	void (__cdecl *CleanUpBuffers)();
@@ -36,16 +36,16 @@ struct VideoFuncs : AddressTable {
 	void (__cdecl *GameCreateVideoBuffers)();
 	void (__cdecl *GameFreeVideoBuffers)();
 
-	GlobalBool<0x10D25144> buffersFreed;
-	GlobalPrimitive<uint32_t, 0x10D25148> currentFlags;
+	temple::GlobalBool<0x10D25144> buffersFreed;
+	temple::GlobalPrimitive<uint32_t, 0x10D25148> currentFlags;
 	TigMatrices *tigMatrices2;
 
 	/*
 	Used to take screenshots (copy front buffer)
 	and move video data into back buffer
 	*/
-	GlobalPrimitive<uint32_t, 0x11E7575C> backbufferWidth;
-	GlobalPrimitive<uint32_t, 0x11E75760> backbufferHeight;
+	temple::GlobalPrimitive<uint32_t, 0x11E7575C> backbufferWidth;
+	temple::GlobalPrimitive<uint32_t, 0x11E75760> backbufferHeight;
 
 	/*
 	Several subsystems use this to detect windowed mode.
@@ -53,16 +53,16 @@ struct VideoFuncs : AddressTable {
 	some portions of the game. We only write 0x20 (windowed) to this
 	statically.
 	*/
-	GlobalPrimitive<uint32_t, 0x11E75840> startupFlags;
+	temple::GlobalPrimitive<uint32_t, 0x11E75840> startupFlags;
 
-	GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D25120> globalFadeVBuffer;
-	GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D25124> sharedVBuffer1;
-	GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D25128> sharedVBuffer2;
-	GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D2512C> sharedVBuffer3;
-	GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D25130> sharedVBuffer4;
-	GlobalBool<0x103010FC> tigMovieInitialized;
+	temple::GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D25120> globalFadeVBuffer;
+	temple::GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D25124> sharedVBuffer1;
+	temple::GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D25128> sharedVBuffer2;
+	temple::GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D2512C> sharedVBuffer3;
+	temple::GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D25130> sharedVBuffer4;
+	temple::GlobalBool<0x103010FC> tigMovieInitialized;
 
-	GlobalPrimitive<float, 0x10D24D7C> fadeScreenRect;
+	temple::GlobalPrimitive<float, 0x10D24D7C> fadeScreenRect;
 
 	VideoFuncs() {
 		rebase(TigDirect3dInit, 0x101DAFB0);
@@ -137,9 +137,9 @@ struct VideoData {
 	TigMatrices viewParams;
 };
 
-extern GlobalBool<0x10D250EC> drawFps;
-extern GlobalStruct<TigTextStyle, 0x10D24DB0> drawFpsTextStyle;
-extern GlobalStruct<VideoData, 0x11E74580> video;
+extern temple::GlobalBool<0x10D250EC> drawFps;
+extern temple::GlobalStruct<TigTextStyle, 0x10D24DB0> drawFpsTextStyle;
+extern temple::GlobalStruct<VideoData, 0x11E74580> video;
 extern VideoFuncs videoFuncs;
 
 typedef chrono::high_resolution_clock graphics_clock;

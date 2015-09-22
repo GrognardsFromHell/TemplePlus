@@ -102,7 +102,7 @@ extern "C" {
 	TIOLIB void TIOAPI tio_path_guid();
 	TIOLIB void TIOAPI tio_fseek();
 	TIOLIB void TIOAPI tio_file_extract();
-	TIOLIB void TIOAPI tio_fgets();
+	TIOLIB void TIOAPI tio_fgets(char *buffer, int size, TioFile *file);
 	TIOLIB void TIOAPI tio_ftell();
 	TIOLIB void TIOAPI tio_fsetpos();
 	TIOLIB int TIOAPI tio_filelength(TioFile *file);

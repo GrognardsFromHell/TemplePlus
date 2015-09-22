@@ -124,7 +124,7 @@ struct TimeEventListEntry {
 
 #pragma pack(pop)
 
-extern struct TimeEvents : AddressTable {
+extern struct TimeEvents : temple::AddressTable {
 
 	void Schedule(const TimeEvent &evt, uint32_t delayInMs) {
 		GameTime delay(0, delayInMs);

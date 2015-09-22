@@ -3,7 +3,7 @@
 #include "common.h"
 
 
-struct SecretDoorSys : AddressTable
+struct SecretDoorSys : temple::AddressTable
 {
 	bool isSecretDoor(objHndl obj);
 	int getSecretDoorDC(objHndl obj);

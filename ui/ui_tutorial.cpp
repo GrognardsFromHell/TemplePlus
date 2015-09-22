@@ -1,11 +1,11 @@
 
 #include "stdafx.h"
 #include "ui_tutorial.h"
-#include <util/addresses.h>
+#include <temple/dll.h>
 
 UiTutorial uiTutorial;
 
-static struct UiTutorialAddresses : AddressTable {
+static struct UiTutorialAddresses : temple::AddressTable {
 
 	int (__cdecl *ShowTopic)(int topicId);
 	bool *active;

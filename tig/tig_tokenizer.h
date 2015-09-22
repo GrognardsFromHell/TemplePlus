@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "util/addresses.h"
+#include <temple/dll.h>
 
 enum class StringTokenType : uint32_t {
 	Invalid = 0,
@@ -24,7 +24,7 @@ struct StringToken {
 	const char *originalStr;
 };
 
-struct StringTokenizerFuncs : AddressTable {
+struct StringTokenizerFuncs : temple::AddressTable {
 	int(__cdecl *Create)(const char *line, int *strTokenId);
 	int(__cdecl *NextToken)(int *tokenizerId, StringToken *tokenOut);
 	int(__cdecl *Destroy)(int *tokenizerId);

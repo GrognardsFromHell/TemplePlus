@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "util/fixes.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "temple_functions.h"
 #include "util/config.h"
 #include "xp.h"
@@ -9,9 +9,9 @@
 #include "d20_level.h"
 
 
-GlobalPrimitive<float, 0x102CF708> experienceMultiplier;
-GlobalPrimitive<int, 0x10BCA850> numCrittersSlainByCR;
-GlobalPrimitive<int, 0x10BCA8BC> xpPile; // sum of all the XP given to party members before divinding by party size
+temple::GlobalPrimitive<float, 0x102CF708> experienceMultiplier;
+temple::GlobalPrimitive<int, 0x10BCA850> numCrittersSlainByCR;
+temple::GlobalPrimitive<int, 0x10BCA8BC> xpPile; // sum of all the XP given to party members before divinding by party size
 
 static_assert(CRMIN == -2, "CRMIN for XP award definition should be at most -2!");
 static_assert(CRMAX >= 20, "CRMAX for XP award definition should be at least 20!");

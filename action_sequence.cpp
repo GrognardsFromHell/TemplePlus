@@ -244,7 +244,7 @@ public:
 } actSeqReplacements;
 
 
-static struct ActnSeqAddresses : AddressTable{
+static struct ActnSeqAddresses : temple::AddressTable{
 
 	int(__cdecl *TouchAttackAddToSeq)(D20Actn* d20Actn, ActnSeq* actnSeq, TurnBasedStatus* turnBasedStatus);
 	void(__cdecl *ActionAddToSeq)();

@@ -52,7 +52,7 @@ public:
 	}
 } dispatcherReplacements;
 
-struct DispatcherSystemAddresses : AddressTable
+struct DispatcherSystemAddresses : temple::AddressTable
 {
 	int(__cdecl *DispatchAttackBonus)(objHndl attacker, objHndl victim, DispIoAttackBonus *dispIoIn, enum_disp_type, int key);
 	DispatcherSystemAddresses()
@@ -491,7 +491,7 @@ void __cdecl _DispatcherRemoveSubDispNodes(Dispatcher * dispatcher, CondNode * c
 			if ((*ppSubDispNode)->condNode == cond)
 			{
 				SubDispNode * savedNext = (*ppSubDispNode)->next;
-				allocFuncs.free(*ppSubDispNode);
+				free(*ppSubDispNode);
 				*ppSubDispNode = savedNext;
 
 			}
@@ -527,7 +527,7 @@ void __cdecl _DispatcherClearField(Dispatcher *dispatcher, CondNode ** dispCondL
 			subDispNode_TypeRemoveCond = subDispNode_TypeRemoveCond->next;
 		}
 		_DispatcherRemoveSubDispNodes(dispatcher, cond);
-		allocFuncs.free(cond);
+		free(cond);
 		cond = nextCond;
 
 	}
@@ -687,7 +687,7 @@ int32_t _dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut
 
 
 Dispatcher* _DispatcherInit(objHndl objHnd) {
-	Dispatcher* dispatcherNew = (Dispatcher *)allocFuncs._malloc_0(sizeof(Dispatcher));
+	Dispatcher* dispatcherNew = (Dispatcher *)malloc(sizeof(Dispatcher));
 	memset(&dispatcherNew->subDispNodes, 0, dispTypeCount * sizeof(SubDispNode*));
 	CondNode* condNode = *(conds.pCondNodeGlobal);
 	while (condNode != nullptr) {

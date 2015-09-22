@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\particles\instances.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\particles\params.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\particles\parser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\particles\spec.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\particles\parser_keyframes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\particles\parser_params.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\particles\external.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\particles\types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\particles\render.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\particles\simulation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\particles\render_point.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\particles\alignedarray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\particles\bones.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="spec.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="parser_keyframes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="parser_params.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="params.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="instances.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="render.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="simulation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="render_point.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bones.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

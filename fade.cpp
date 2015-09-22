@@ -4,7 +4,7 @@
 
 Fade fade;
 
-static struct FadeAddresses : AddressTable {
+static struct FadeAddresses : temple::AddressTable {
 	bool (__cdecl *FadeAndTeleport)(const FadeAndTeleportArgs &args);
 	void (__cdecl *Fade)(const FadeArgs &args);
 

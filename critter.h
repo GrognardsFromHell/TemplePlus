@@ -43,7 +43,7 @@ enum class ResurrectType : uint32_t {
 	CuthbertResurrect = 3
 };
 
-struct CritterSystem : AddressTable
+struct CritterSystem : temple::AddressTable
 {
 
 	uint32_t isCritterCombatModeActive(objHndl objHnd);

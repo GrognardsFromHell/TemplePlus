@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "common.h"
 #include "map_obj.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "obj.h"
 #include "python/python_debug.h"
 #include "temple_functions.h"
@@ -34,11 +34,11 @@ void MapObjSystem::objNodeAlloc()
 {
 	MapFindNodeObjPage ** objPages;
 	int objNodeCount = (*findNodeData).objNodeCount++ + 1;
-	if (findNodeData->objPages) objPages = (MapFindNodeObjPage **)allocFuncs._realloc(findNodeData->objPages, sizeof(void *) * objNodeCount);
-	else objPages = (MapFindNodeObjPage **)allocFuncs._malloc_0(sizeof(void *) * objNodeCount);
+	if (findNodeData->objPages) objPages = (MapFindNodeObjPage **)realloc(findNodeData->objPages, sizeof(void *) * objNodeCount);
+	else objPages = (MapFindNodeObjPage **)malloc(sizeof(void *) * objNodeCount);
 	findNodeData->objPages = objPages;
 
-	MapFindNodeObjPage * objPageNew = (MapFindNodeObjPage *)allocFuncs._malloc_0(0x1000);
+	MapFindNodeObjPage * objPageNew = (MapFindNodeObjPage *)malloc(0x1000);
 	findNodeData->objPages[findNodeData->objNodeCount - 1] = objPageNew;
 
 	auto objNode = &objPageNew[0];

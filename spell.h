@@ -102,7 +102,7 @@ const uint32_t TestSizeOfSpellPacket = sizeof(SpellPacket); // should be 0xAF0  
 
 struct CondStruct;
 
-struct SpellSystem : AddressTable
+struct SpellSystem : temple::AddressTable
 {
 	IdxTable<SpellPacket> * spellCastIdxTable;
 	
@@ -171,7 +171,7 @@ extern IdxTableWrapper<SpellEntry> spellEntryRegistry;
 extern IdxTableWrapper<SpellPacket> spellsCastRegistry;
 
 
-struct SpontCastSpellLists : AddressTable
+struct SpontCastSpellLists : temple::AddressTable
 {
 public:
 	uint32_t spontCastSpellsDruid[11];

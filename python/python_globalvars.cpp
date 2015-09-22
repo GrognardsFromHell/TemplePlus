@@ -1,11 +1,11 @@
 
 #include "stdafx.h"
 #include "python_globalvars.h"
-#include <util/addresses.h>
+#include <temple/dll.h>
 
 const int GlobalVarCount = 2000; // see script_init
 
-static struct GlobalVarAddresses : AddressTable {
+static struct GlobalVarAddresses : temple::AddressTable {
 	int **globalVars;
 
 	GlobalVarAddresses() {

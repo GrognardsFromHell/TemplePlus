@@ -4,8 +4,6 @@
 #include "util/config.h"
 #include "breakpad.h"
 
-#include <psapi.h>
-
 void InitLogging();
 
 // Defined in temple_main.cpp for now
@@ -13,19 +11,7 @@ int TempleMain(HINSTANCE hInstance, const string& commandLine);
 
 static wstring GetInstallationDir();
 
-string FindConflictingModule();
-
-void *templeMainRefHack;
-
-extern "C"
-{
-	int __declspec(dllimport) __cdecl temple_main(HINSTANCE hInstance, HINSTANCE hPrevInstance, const char* lpCommandLine, int nCmdShow);
-}
-
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int showCmd) {
-
-	// Even though we are not using this function, we have to force the linker to not optimize our dependency away...
-	templeMainRefHack = &temple_main;
 
 	Breakpad breakpad;
 
@@ -33,23 +19,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	config.Save();
 
 	InitLogging();
-	
+
 	logger->info("Starting Temple Plus");
 	logger->info("Version: {}", GetTemplePlusVersion());
 	logger->info("Commit: {}", GetTemplePlusCommitId());
-
-	HMODULE templeDllHandle = LoadLibraryW(L"temple.dll");
-	if (templeDllHandle != reinterpret_cast<HMODULE>(0x10000000)) {
-		auto moduleName = FindConflictingModule();
-
-		auto msg = format("Temple.dll has been loaded to a different base address than 0x10000000: 0x{:08x}\nConflicts with: {}", 
-			reinterpret_cast<uint32_t>(templeDllHandle), moduleName);
-
-		MessageBoxA(nullptr, msg.c_str(), "Rebase Warning", MB_OK | MB_ICONWARNING);
-	}
-
+	
 	try {
-		wstring toeeDir = GetInstallationDir();
+		auto& dll = temple::Dll::GetInstance();
+		dll.Load(".");
+
+		if (dll.HasBeenRebased()) {
+			auto moduleName = dll.FindConflictingModule();
+			auto msg = format("Module '{}' caused temple.dll to be loaded at a different address than usual.\n"
+				"This will most likely lead to crashes.", moduleName);
+			MessageBoxA(nullptr, msg.c_str(), "Module Conflict", MB_OK | MB_ICONWARNING);
+		}
+
+		auto toeeDir = GetInstallationDir();
 
 		// logger->info("Starting up with toee path: " << toeeDir;
 
@@ -60,10 +46,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			logger->error("Unable to change DLL search directory.");
 		}
 
-		// Initialize minhook
-		MH_Initialize();
-
-		init_functions();
 		init_hooks();
 
 		TempleFixes::apply();
@@ -71,18 +53,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		auto ourModule = GetModuleHandleA(nullptr);
 		auto result = TempleMain(ourModule, lpCmdLine);
 
-		MH_Uninitialize();
-
 		config.Save();
 
 		return result;
-	} catch (exception& e) {
-		string msg = format("Uncaught exception: {}", e.what());
-		MessageBoxA(NULL, msg.c_str(), "Fatal Error", MB_OK | MB_ICONERROR);
+	} catch (const std::exception& e) {
+		auto msg = format("Uncaught exception: {}", e.what());
+		MessageBoxA(nullptr, msg.c_str(), "Fatal Error", MB_OK | MB_ICONERROR);
 		return 1;
 	}
 }
-
 
 
 // TODO this should go elsewhere
@@ -105,37 +84,4 @@ static wstring GetInstallationDir() {
 	}
 
 	return path;
-}
-
-string FindConflictingModule() {
-	HMODULE hMods[1024];
-	DWORD cbNeeded;
-	char moduleName[MAX_PATH];
-
-	auto hProcess = GetCurrentProcess();
-
-	string conflicting = "";
-
-	const uint32_t templeImageSize = 0x01EB717E;
-	const uint32_t templeDesiredStart = 0x10000000;
-	const uint32_t templeDesiredEnd = templeDesiredStart + templeImageSize;
-
-	if (EnumProcessModules(hProcess, hMods, sizeof(hMods), &cbNeeded)) {
-		for (uint32_t i = 0; i < (cbNeeded / sizeof(HMODULE)); i++) {
-			GetModuleFileNameA(hMods[i], moduleName, MAX_PATH);
-			MODULEINFO moduleInfo;
-			GetModuleInformation(hProcess, hMods[i], &moduleInfo, cbNeeded);
-			auto fromAddress = reinterpret_cast<uint32_t>(moduleInfo.lpBaseOfDll);
-			auto toAddress = fromAddress + moduleInfo.SizeOfImage;
-			logger->debug(" Module {}: 0x{:08x}-0x{:08x}", moduleName, fromAddress, toAddress);
-
-			if (fromAddress <= templeDesiredEnd && toAddress > templeDesiredStart) {
-				conflicting = format("{} (0x{:08x}-0x{:08x})", moduleName, fromAddress, toAddress);
-			}
-		}
-	}
-
-	CloseHandle(hProcess);
-
-	return conflicting;
 }

@@ -1,6 +1,6 @@
 
 #include "stdafx.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "timeevents.h"
 
 /*

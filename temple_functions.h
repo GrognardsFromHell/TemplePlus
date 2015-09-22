@@ -2,7 +2,7 @@
 
 #include "stdafx.h"
 #include "tig/tig_font.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "dependencies/python-2.2/Python.h"
 #include "common.h"
 
@@ -21,7 +21,7 @@ struct locationSec {
 
 
 
-struct TempleFuncs : AddressTable {
+struct TempleFuncs : temple::AddressTable {
 	TempleFuncs();
 
 
@@ -118,7 +118,6 @@ const int CRITTER_EQUIPPED_ITEM_OFFSET = 200;
 
 void __cdecl hooked_print_debug_message(char* format, ...);
 
-void init_functions();
 void init_hooks();
 
 

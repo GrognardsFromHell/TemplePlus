@@ -4,7 +4,7 @@
 
 
 
-struct DescriptionSystem : AddressTable
+struct DescriptionSystem : temple::AddressTable
 {
 	uint32_t * customNamesCount;
 	char** customNamesArray;

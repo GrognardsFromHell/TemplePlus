@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "obj.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "d20.h"
 #include "common.h"
 #include "temple_functions.h"
@@ -15,9 +15,9 @@
 
 Objects objects;
 
-static_assert(validate_size<CondNode, 44>::value, "Condition node structure has incorrect size.");
+static_assert(temple::validate_size<CondNode, 44>::value, "Condition node structure has incorrect size.");
 
-struct ObjectSystemAddresses : AddressTable
+struct ObjectSystemAddresses : temple::AddressTable
 {
 	uint32_t(__cdecl *GetProtoNum)(objHndl);
 
@@ -67,7 +67,7 @@ public:
 const size_t objHeaderSize = 4; // Constant
 const size_t objBodySize = 168; // Passed in to Object_Tables_Init
 const size_t objSize = objHeaderSize + objBodySize;
-static_assert(validate_size<GameObject, objSize>::value, "Object structure has incorrect size.");
+static_assert(temple::validate_size<GameObject, objSize>::value, "Object structure has incorrect size.");
 
 
 
@@ -92,7 +92,7 @@ struct ObjFieldDef {
 	uint32_t FieldTypeCode;
 };
 
-static struct ObjInternal : AddressTable {
+static struct ObjInternal : temple::AddressTable {
 	ObjFieldDef** fieldDefs;
 
 	ObjectMasterTable** masterTable;

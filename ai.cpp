@@ -22,7 +22,7 @@ struct AiSystem aiSys;
 const auto TestSizeOfAiTactic = sizeof(AiTactic); // should be 2832 (0xB10 )
 const auto TestSizeOfAiStrategy = sizeof(AiStrategy); // should be 808 (0x324)
 
-struct AiSystemAddresses :AddressTable
+struct AiSystemAddresses : temple::AddressTable
 {
 	int (__cdecl*UpdateAiFlags)(objHndl obj, int aiFightStatus, objHndl target, int * soundMap);
 	AiSystemAddresses()
@@ -611,7 +611,7 @@ int AiSystem::StrategyTabLineParser(TabFileStatus* tabFile, int n, char** string
 	do
 		v6 = *v4++;
 	while (v6);
-	stratName = (char *)allocFuncs._malloc_0(v4 - ( (*strings )+ 1) + 1);
+	stratName = (char *)malloc(v4 - ( (*strings )+ 1) + 1);
 	aiStrat->name = stratName;
 	strcpy((char *)stratName, *strings);
 	aiStrat->numTactics = 0;

@@ -10,7 +10,7 @@
 #include "party.h"
 #include "obj.h"
 
-struct UiIntgameTurnbasedAddresses : AddressTable
+struct UiIntgameTurnbasedAddresses : temple::AddressTable
 {
 	void (__cdecl *sub_10097060)();
 	int(__cdecl *sub_10106F30)(void*, int);

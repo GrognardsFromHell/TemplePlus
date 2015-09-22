@@ -4,7 +4,7 @@
 
 const float tileToOffset = 12.0;
 
-struct LocationSys : AddressTable
+struct LocationSys : temple::AddressTable
 {
 	float distBtwnLocAndOffs(LocAndOffsets, LocAndOffsets);
 	void(__cdecl * getLocAndOff)(objHndl objHnd, LocAndOffsets * locAndOff);

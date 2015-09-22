@@ -6,7 +6,7 @@
 
 PythonSpellIntegration pythonSpellIntegration;
 
-static struct PythonIntegrationSpellsAddresses : AddressTable {
+static struct PythonIntegrationSpellsAddresses : temple::AddressTable {
 
 	//100BF0C0
 	char** spellEventNames;

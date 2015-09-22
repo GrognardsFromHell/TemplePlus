@@ -6,11 +6,11 @@
 
 RadialMenus radialMenus;
 
-static_assert(validate_size<RadialMenuEntry, 0x48>::value, "Structure has an incorrect size.");
-static_assert(validate_size<RadialMenuNode, 0x11C>::value, "Structure has an incorrect size.");
-static_assert(validate_size<RadialMenu, 0x45570>::value, "Structure has an incorrect size.");
+static_assert(temple::validate_size<RadialMenuEntry, 0x48>::value, "Structure has an incorrect size.");
+static_assert(temple::validate_size<RadialMenuNode, 0x11C>::value, "Structure has an incorrect size.");
+static_assert(temple::validate_size<RadialMenu, 0x45570>::value, "Structure has an incorrect size.");
 
-static struct RadialMenuAddresses : AddressTable {
+static struct RadialMenuAddresses : temple::AddressTable {
 
 	int *radialMenuCount;
 	RadialMenu *radialMenus; // 10 consecutive

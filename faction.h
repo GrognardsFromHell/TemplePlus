@@ -1,7 +1,7 @@
 #pragma once
 #include "common.h"
 
-struct FactionSystem : AddressTable
+struct FactionSystem : temple::AddressTable
 {
 	uint32_t(__cdecl *FactionHas)(objHndl, uint32_t nFaction);
 	uint32_t(__cdecl *PCHasFactionFromReputation)(objHndl, uint32_t nFaction);

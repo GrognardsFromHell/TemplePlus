@@ -4,9 +4,9 @@
 #include "osdefs.h"
 #include "marshal.h"
 #include "tio/tio.h"
-#include <util/addresses.h>
+#include <temple/dll.h>
 
-static struct PyConsoleOutAddresses : AddressTable {
+static struct PyConsoleOutAddresses : temple::AddressTable {
 	int (__cdecl *AppendLine)(const char *line);
 
 	PyConsoleOutAddresses() {

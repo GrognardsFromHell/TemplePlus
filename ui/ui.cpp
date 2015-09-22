@@ -37,7 +37,7 @@ const int UiSystemsCount = 43;
 */
 typedef void (__cdecl *SaveCallback)();
 
-static struct UiFuncs : AddressTable {
+static struct UiFuncs : temple::AddressTable {
 	bool (__cdecl *Init)(const GameSystemConf* conf);
 	bool (__cdecl *LoadModule)();
 	void (__cdecl *UnloadModule)();

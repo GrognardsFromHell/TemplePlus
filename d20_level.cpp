@@ -6,7 +6,7 @@
 
 D20LevelSystem d20LevelSys;
 
-struct D20LevelSystemAddresses : AddressTable
+struct D20LevelSystemAddresses : temple::AddressTable
 {
 	uint32_t * xpReqTable;
 	uint32_t (__cdecl *LevelPacketInit)(LevelPacket *lvlPkt);

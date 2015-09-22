@@ -4,4 +4,4 @@
 
 TigFontFuncs tigFont;
 
-GlobalStruct<TigFontData, 0x10EEEEC8> fontData;
+temple::GlobalStruct<TigFontData, 0x10EEEEC8> fontData;

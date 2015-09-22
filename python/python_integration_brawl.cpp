@@ -9,7 +9,7 @@
 #include <combat.h>
 #include <action_sequence.h>
 
-static struct BrawlAddresses : AddressTable {
+static struct BrawlAddresses : temple::AddressTable {
 
 	BOOL* inProgress;
 	BOOL* inResultHandler;

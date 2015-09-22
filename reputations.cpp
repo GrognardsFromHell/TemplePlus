@@ -1,13 +1,13 @@
 
 #include "stdafx.h"
 #include "reputations.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "obj.h"
 #include "party.h"
 
 PartyReputation partyReputation;
 
-static struct ReputationAddresses : AddressTable {
+static struct ReputationAddresses : temple::AddressTable {
 	bool(__cdecl *ReputationHas)(objHndl target, int repId);
 	void (__cdecl *ReputationAdd)(objHndl target, int repId);
 	void (__cdecl *ReputationRemove)(objHndl target, int repId);

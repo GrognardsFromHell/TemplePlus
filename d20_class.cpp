@@ -3,7 +3,7 @@
 
 D20ClassSystem d20ClassSys;
 
-struct D20ClassSystemAddresses : AddressTable
+struct D20ClassSystemAddresses : temple::AddressTable
 {
 	void(__cdecl *ClassPacketAlloc)(ClassPacket *classPkt); // allocates the three IdxTables within
 	void(__cdecl *ClassPacketDealloc)(ClassPacket *classPkt);

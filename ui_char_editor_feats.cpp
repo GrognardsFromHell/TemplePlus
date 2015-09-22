@@ -8,7 +8,7 @@
 
 int FeatUiPrereqCheckUsercallWrapper();
 
-struct UiCharEditorFeatsAddresses : AddressTable
+struct UiCharEditorFeatsAddresses : temple::AddressTable
 {
 	int * dword_10C75F30;
 	int * featsMultiselectNum_10C75F34;

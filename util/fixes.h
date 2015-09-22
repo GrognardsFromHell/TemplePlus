@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "util/addresses.h"
+#include <temple/dll.h>
 
 /*
 	A utility class that unprotects an area of memory while it is in scope.
@@ -10,8 +10,9 @@
 */
 class MemoryUnprotector {
 public:
-	explicit MemoryUnprotector(uint32_t dllAddress, size_t size) throw() : mAddress(temple_address(dllAddress)), mSize(size), mOldProtection(0) {
-		// rebase the address using temple_address
+	explicit MemoryUnprotector(uint32_t dllAddress, size_t size) throw() 
+		: mAddress(temple::Dll::GetInstance().GetAddress(dllAddress)), mSize(size), mOldProtection(0) {
+		// rebase the address using temple::GetPointer
 		auto result = VirtualProtect(mAddress, mSize, PAGE_READWRITE, &mOldProtection);
 		assert(result);
 	}

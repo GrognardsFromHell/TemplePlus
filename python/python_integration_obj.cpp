@@ -9,7 +9,7 @@
 
 PythonObjIntegration pythonObjIntegration;
 
-static struct IntegrationAddresses : AddressTable {
+static struct IntegrationAddresses : temple::AddressTable {
 	/*
 	spellId and unk1 actually seem to be a pair that can also be an obj hndl but this only seems to be used
 	for the legacy scripting system.

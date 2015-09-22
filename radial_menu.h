@@ -1,4 +1,4 @@
-#include "util/addresses.h"
+#include <temple/dll.h>
 //#include "obj.h"
 #include "common.h"
 
@@ -36,7 +36,7 @@ struct RadialMenuStruct
 void RadialMenuStructInit(RadialMenuStruct * radmenu);
 
 
-struct RadialFuncs : AddressTable
+struct RadialFuncs : temple::AddressTable
 {
 	uint32_t(__cdecl * D20ASthg_sub_100F0110)(objHndl objHnd, void *);
 	uint32_t(__cdecl * RadialMenuArgMap_sub_100F12B0)(uint32_t);

@@ -2,7 +2,7 @@
 #include "common.h"
 #include "char_creation.h"
 
-struct CharCreationAddresses : AddressTable
+struct CharCreationAddresses : temple::AddressTable
 {
 	uint32_t * pointBuyPointsRemaining;
 	CharCreationAddresses()

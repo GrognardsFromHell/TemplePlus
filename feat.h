@@ -43,7 +43,7 @@ struct FeatPrereqRow
 
 
 
-struct FeatSystem : AddressTable
+struct FeatSystem : temple::AddressTable
 {	/* feat property bit meaning:
 	0x00000001 - can gain multiple times
 	0x00000002 - Not implemented (cannot select)

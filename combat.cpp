@@ -25,7 +25,7 @@ public:
 	}
 } combatSysReplacements;
 
-struct CombatSystemAddresses : AddressTable
+struct CombatSystemAddresses : temple::AddressTable
 {
 	int(__cdecl* GetEnemiesCanMelee)(objHndl obj, objHndl* canMeleeList);
 	CombatSystemAddresses()

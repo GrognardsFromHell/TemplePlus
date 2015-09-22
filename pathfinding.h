@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "temple_functions.h"
 
 #define pfCacheSize  0x20
@@ -121,7 +121,7 @@ const uint32_t TestSizeofPathQueryResult = sizeof(PathQueryResult); // should be
 
 #pragma pack(pop)
 
-struct Pathfinding : AddressTable {
+struct Pathfinding : temple::AddressTable {
 
 	LocationSys * loc;
 

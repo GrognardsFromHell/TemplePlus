@@ -3,7 +3,7 @@
 #include "common.h"
 
 
-struct TurnBasedSys : AddressTable
+struct TurnBasedSys : temple::AddressTable
 {
 	objHndl * turnBasedCurrentActor;
 

@@ -2,7 +2,7 @@
 
 #include "graphics.h"
 #include "temple_functions.h"
-#include "util/addresses.h"
+#include <temple/dll.h>
 #include "idxtables.h"
 #include "util/fixes.h"
 #include "movies.h"
@@ -14,6 +14,7 @@
 #include "util/folderutils.h"
 #include "gamesystems.h"
 #include "renderstates.h"
+#include "legacyrenderstates.h"
 #include "ui/ui_text.h"
 #include <atlbase.h>
 
@@ -30,7 +31,7 @@
 
 Graphics graphics;
 VideoFuncs videoFuncs;
-GlobalStruct<VideoData, 0x11E74580> video;
+temple::GlobalStruct<VideoData, 0x11E74580> video;
 
 // Our precompiled header swallows this somehow...
 static const DWORD D3D_SDK_VERSION = 32;
@@ -225,7 +226,7 @@ void ResizeBuffers(int width, int height) {
 
 	graphics.UpdateScreenSize(width, height);
 
-	temple_set<0x10D24E14>(width);
+	temple::GetRef<0x10D24E14, int>() = width;
 
 	// Mouse cursor disasppers after resizing
 	mouseFuncs.RefreshCursor();
@@ -356,13 +357,13 @@ int __cdecl VideoStartup(TigConfig* settings) {
 	video->halfHeight = video->height * 0.5f;
 
 	// Seems always enabled in default config and never read
-	temple_set<0x11E7570C, int>((settings->flags & 4) != 0);
+	temple::GetRef<0x11E7570C, int>() = (settings->flags & 4) != 0;
 
 	video->current_bpp = settings->bpp;
 
-	temple_set<0x10D250E0, int>(0);
-	temple_set<0x10D250E4, int>(1);
-	temple_set<0x10300914, int>(-1);
+	temple::GetRef<0x10D250E0, int>() = 0;
+	temple::GetRef<0x10D250E4, int>() = 1;
+	temple::GetRef<0x10300914, int>() = -1;
 
 	// Unused mkscreenshot related pointer
 	// temple_set<0x10D2511C, int>(0);
@@ -372,21 +373,21 @@ int __cdecl VideoStartup(TigConfig* settings) {
 	*/
 	uint32_t v3 = 0x10D24CAC;
 	do {
-		temple_set(v3, 0);
+		temple::GetRef<int>(v3) = 0;
 		v3 += 12;
 	} while (v3 < 0x10D24D6C);
 
 	v3 = 0x10D24C8C;
 	do {
-		temple_set(v3, 0);
+		temple::GetRef<int>(v3) = 0;
 		v3 += 8;
 	} while (v3 < 0x10D24CAC);
 
 	// These may actually no longer be needed since we replaced the referencing subsystems directly
-	temple_set<0x10D25134>(settings->createBuffers);
-	temple_set<0x10D25138>(settings->freeBuffers);
+	temple::GetRef<void*>(0x10D25134) = settings->createBuffers;
+	temple::GetRef<void*>(0x10D25138) = settings->freeBuffers;
 
-	memcpy(temple_address<0x11E75840>(), settings, 0x4C);
+	memcpy(temple::GetPointer<0x11E75840>(), settings, 0x4C);
 
 	uiText.Initialize();
 
@@ -402,7 +403,7 @@ struct TempleTextureTypeTable {
 	TempleTextureType formats[8];
 };
 
-GlobalStruct<TempleTextureTypeTable, 0x102A05A8> textureFormatTable;
+temple::GlobalStruct<TempleTextureTypeTable, 0x102A05A8> textureFormatTable;
 
 bool __cdecl AllocTextureMemory(Direct3DDevice8Adapter* adapter, int w, int h, int flags, Direct3DTexture8Adapter** textureOut, int* textureTypePtr) {
 	auto device = adapter->delegate;
@@ -543,23 +544,23 @@ void hook_graphics() {
 	MH_CreateHook(videoFuncs.updateProjMatrices, HookedUpdateProjMatrices, reinterpret_cast<LPVOID*>(&videoFuncs.updateProjMatrices));
 
 	// Hook into present frame to do after-frame stuff
-	MH_CreateHook(temple_address(0x101DCB80), HookedPresentFrame, nullptr);
-	MH_CreateHook(temple_address(0x101D8870), HookedBeginFrame, nullptr);
+	MH_CreateHook(temple::GetPointer(0x101DCB80), HookedPresentFrame, nullptr);
+	MH_CreateHook(temple::GetPointer(0x101D8870), HookedBeginFrame, nullptr);
 
 	MH_CreateHook(videoFuncs.SetVideoMode, HookedSetVideoMode, reinterpret_cast<LPVOID*>(&videoFuncs.SetVideoMode));
 	MH_CreateHook(videoFuncs.CleanUpBuffers, HookedCleanUpBuffers, reinterpret_cast<LPVOID*>(&videoFuncs.CleanUpBuffers));
 
 	// We hook the entire video subsystem initialization function
-	MH_CreateHook(temple_address<0x101DC6E0>(), VideoStartup, nullptr);
-	MH_CreateHook(temple_address<0x101DBC80>(), AllocTextureMemory, nullptr);
-	MH_CreateHook(temple_address<0x101E0750>(), GetSystemMemory, nullptr);
-	MH_CreateHook(temple_address<0x101DBD80>(), TakeScreenshot, nullptr);
-	MH_CreateHook(temple_address<0x10002830>(), TakeSaveScreenshots, nullptr);
+	MH_CreateHook(temple::GetPointer<0x101DC6E0>(), VideoStartup, nullptr);
+	MH_CreateHook(temple::GetPointer<0x101DBC80>(), AllocTextureMemory, nullptr);
+	MH_CreateHook(temple::GetPointer<0x101E0750>(), GetSystemMemory, nullptr);
+	MH_CreateHook(temple::GetPointer<0x101DBD80>(), TakeScreenshot, nullptr);
+	MH_CreateHook(temple::GetPointer<0x10002830>(), TakeSaveScreenshots, nullptr);
 
 	hook_movies();
 }
 
-static struct ExternalGraphicsFuncs : AddressTable {
+static struct ExternalGraphicsFuncs : temple::AddressTable {
 
 	/*
 		Advances the clock used by the general shader to animate textures and such.
@@ -740,7 +741,12 @@ void Graphics::FreeResources() {
 
 void Graphics::CreateResources() {
 
-	renderStates.Reset();
+	if (!renderStates) {
+		auto newRenderStates(CreateLegacyRenderStates());
+		renderStates.swap(newRenderStates);
+	}
+
+	renderStates->Reset();
 
 	videoFuncs.buffersFreed = false;
 
