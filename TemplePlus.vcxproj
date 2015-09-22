@@ -320,6 +320,20 @@
   <ItemGroup>
     <Image Include="toee_gog_icon.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="D3D8Adapter\D3D8Adapter.vcxproj">
+      <Project>{1b31fa8f-05bb-4f59-98d5-6e0d7ce21b12}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Infrastructure\Infrastructure.vcxproj">
+      <Project>{006f5b8a-f75f-413c-ad3a-e004ca8ddf26}</Project>
+    </ProjectReference>
+    <ProjectReference Include="MinHook\MinHook.vcxproj">
+      <Project>{23ad6e36-fa90-4a0d-a1f4-6bfcdbcbdc7c}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Temple\Temple.vcxproj">
+      <Project>{a05549fb-a0d1-48aa-b586-fe333bbb4505}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3E3B6C43-8C76-4CD5-BCF8-3F2B9C5178FE}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
