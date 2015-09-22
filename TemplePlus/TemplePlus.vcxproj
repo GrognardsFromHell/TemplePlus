@@ -302,11 +302,6 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Spellslinger%27s Notes\bonusspells.txt" />
-    <Text Include="appveyor.yml" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="LICENSE" />
-    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
@@ -315,16 +310,16 @@
     <Image Include="toee_gog_icon.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="D3D8Adapter\D3D8Adapter.vcxproj">
+    <ProjectReference Include="..\D3D8Adapter\D3D8Adapter.vcxproj">
       <Project>{1b31fa8f-05bb-4f59-98d5-6e0d7ce21b12}</Project>
     </ProjectReference>
-    <ProjectReference Include="Infrastructure\Infrastructure.vcxproj">
+    <ProjectReference Include="..\Infrastructure\Infrastructure.vcxproj">
       <Project>{006f5b8a-f75f-413c-ad3a-e004ca8ddf26}</Project>
     </ProjectReference>
-    <ProjectReference Include="MinHook\MinHook.vcxproj">
+    <ProjectReference Include="..\MinHook\MinHook.vcxproj">
       <Project>{23ad6e36-fa90-4a0d-a1f4-6bfcdbcbdc7c}</Project>
     </ProjectReference>
-    <ProjectReference Include="Temple\Temple.vcxproj">
+    <ProjectReference Include="..\Temple\Temple.vcxproj">
       <Project>{a05549fb-a0d1-48aa-b586-fe333bbb4505}</Project>
     </ProjectReference>
   </ItemGroup>
@@ -388,7 +383,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>ROCKET_STATIC_LIB;WIN32;_DEBUG;_WINDOWS;$(MSBuildDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;dependencies\include;$(SolutionDir)MinHook\include;$(SolutionDir)Infrastructure\include;$(SolutionDir)D3D8Adapter\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;$(SolutionDir)dependencies\include;$(SolutionDir)MinHook\include;$(SolutionDir)Infrastructure\include;$(SolutionDir)D3D8Adapter\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
@@ -400,7 +395,7 @@
       <AdditionalDependencies>temple.lib;tio\tio.lib;MinHook.lib;Infrastructure.lib;D3D8Adapter.lib;winmm.lib;d3d9.lib;ws2_32.lib;python27_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
-      <AdditionalLibraryDirectories>dependencies\lib;$(TargetDir)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib;$(TargetDir)</AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
     </Link>
@@ -411,7 +406,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;dependencies\include;$(SolutionDir)MinHook\include;$(SolutionDir)Infrastructure\include;$(SolutionDir)D3D8Adapter\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;$(SolutionDir)dependencies\include;$(SolutionDir)MinHook\include;$(SolutionDir)Infrastructure\include;$(SolutionDir)D3D8Adapter\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -420,7 +415,7 @@
       <AdditionalDependencies>tio\tio.lib;winmm.lib;d3d9.lib;Crypt32.lib;ws2_32.lib;libeay32.lib;ssleay32.lib;pythonembed_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
-      <AdditionalLibraryDirectories>dependencies\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib;$(TargetDir)</AdditionalLibraryDirectories>
       <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
@@ -432,7 +427,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>ROCKET_STATIC_LIB;WIN32;NDEBUG;_WINDOWS;$(MSBuildDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;dependencies\include;$(SolutionDir)MinHook\include;$(SolutionDir)Infrastructure\include;$(SolutionDir)D3D8Adapter\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;$(SolutionDir)dependencies\include;$(SolutionDir)MinHook\include;$(SolutionDir)Infrastructure\include;$(SolutionDir)D3D8Adapter\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <ForcedIncludeFiles>
@@ -448,7 +443,7 @@
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
-      <AdditionalLibraryDirectories>dependencies\lib;$(TargetDir)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib;$(TargetDir)</AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;d3dx9_43.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
     </Link>

@@ -551,25 +551,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="appveyor.yml" />
     <Text Include="..\Spellslinger%27s Notes\bonusspells.txt">
       <Filter>Mods and Fixes\Spell Fixes</Filter>
     </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <Filter Include="Dependencies">
-      <UniqueIdentifier>{19c3791b-555a-4456-8131-5c09f9116f00}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Dependencies\featherini">
-      <UniqueIdentifier>{94170950-96c6-419a-91d3-0a01f9c5135d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Dependencies\json11">
-      <UniqueIdentifier>{97b9d78b-2f33-42c0-ab85-0761747bf9bd}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="LICENSE" />
-    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="toee_gog_icon.ico">
