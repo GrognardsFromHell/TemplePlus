@@ -128,7 +128,7 @@ void VideoEncoder::Init(int width, int height, int fps) {
 	av_opt_set(c->priv_data, "wpredp", "2", 0);
 
 	if (mOutputFormat->flags & AVFMT_GLOBALHEADER)
-		c->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+		c->flags |= CODEC_FLAG_GLOBAL_HEADER;
 
 	// avcodec_opt_set(c->priv_data, "quality", "realtime", AV_OPT_SEARCH_CHILDREN); //can be good, best or realtime
 	// av_opt_set(c->priv_data, "passes", "2", AV_OPT_SEARCH_CHILDREN);
