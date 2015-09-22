@@ -40,10 +40,10 @@ enum PathQueryFlags : uint32_t {
 	PQF_10 = 0x10,
 	PQF_20 = 0x20,
 	PQF_40 = 0x40,
-	PQF_80 = 0x80,
+	PQF_80 = 0x80, // path (pass) through critters apparently (maybe out of combat?)
 	PQF_100 = 0x100,
 	PQF_200 = 0x200,
-	PQF_400 = 0x400,
+	PQF_400 = 0x400, // something to do with the type of object
 	PQF_800 = 0x800,
 
 
@@ -131,6 +131,7 @@ struct Pathfinding : temple::AddressTable {
 	Pathfinding();
 	uint32_t ShouldUsePathnodes(PathQueryResult* pathQueryResult, PathQuery* pathQuery);
 	int(__cdecl* PopMinDist2Node)(FindPathNodeData* fpndOut); // output is 1 on success 0 on fail (if all nodes are negative distance)
+	int(__cdecl*PathDestIsClear)(PathQuery* pq, objHndl mover, LocAndOffsets destLoc); // checks if there's anything blocking the destination location (taking into account the mover's radius)
 	int(__cdecl*FindPathBetweenNodes)(int fromNodeId, int toNodeId, void*, int maxChainLength); // finds the node IDs for the To -> .. -> From course (locally optimal I think? Is this A*?); return value is chain length
 	bool (__cdecl *FindPath)(PathQuery *query, PathQueryResult *result);
 	void (__cdecl *ToEEpathDistBtwnToAndFrom)(Path *path); // outputs to FPU (st0);  apparently distance in feet (since it divides by 12)
