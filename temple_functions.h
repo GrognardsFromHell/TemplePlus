@@ -1,9 +1,7 @@
 #pragma once
 
 #include "stdafx.h"
-#include "tig/tig_font.h"
 #include <temple/dll.h>
-#include "dependencies/python-2.2/Python.h"
 #include "common.h"
 
 // Contains the function definitions for stuff found in temple.dll that we may want to call or override.

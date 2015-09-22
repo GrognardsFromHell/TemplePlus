@@ -1,7 +1,7 @@
 ﻿
 #include "stdafx.h"
 #include "config.h"
-#include "../dependencies/feather-ini/INI.h"
+#include <infrastructure/INI.h>
 
 TemplePlusConfig config;
 

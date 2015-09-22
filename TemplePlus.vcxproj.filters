@@ -28,9 +28,6 @@
     <ClCompile Include="bonusspells.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
-    <ClCompile Include="dependencies\json11\json11.cpp">
-      <Filter>Dependencies\json11</Filter>
-    </ClCompile>
     <ClCompile Include="timeevents.cpp" />
     <ClCompile Include="anim.cpp" />
     <ClCompile Include="pathfinding.cpp" />
@@ -540,12 +537,6 @@
       <UniqueIdentifier>{ea100e12-e4d1-4df0-8ed7-e2ba3025f6e5}</UniqueIdentifier>
     </Filter>
     <ClInclude Include="aas.h" />
-    <ClInclude Include="dependencies\feather-ini\INI.h">
-      <Filter>Dependencies\featherini</Filter>
-    </ClInclude>
-    <ClInclude Include="dependencies\json11\json11.hpp">
-      <Filter>Dependencies\json11</Filter>
-    </ClInclude>
     <Filter Include="utils">
       <UniqueIdentifier>{66b79c6d-b1d5-4441-b7c0-6af6c3fc49a8}</UniqueIdentifier>
     </Filter>
