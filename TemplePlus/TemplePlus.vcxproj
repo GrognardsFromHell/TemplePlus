@@ -66,11 +66,6 @@
     <ClCompile Include="reputations.cpp" />
     <ClCompile Include="secret_door.cpp" />
     <ClCompile Include="skill.cpp" />
-    <ClCompile Include="startup\errordialog.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="startup\installationdir.cpp" />
     <ClCompile Include="tab_file.cpp" />
     <ClCompile Include="sound.cpp" />
@@ -229,7 +224,6 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="secret_door.h" />
     <ClInclude Include="skill.h" />
-    <ClInclude Include="startup\errordialog.h" />
     <ClInclude Include="startup\installationdir.h" />
     <ClInclude Include="tab_file.h" />
     <ClInclude Include="textbubbles.h" />

@@ -7,7 +7,6 @@
 #include "util/config.h"
 #include <infrastructure/breakpad.h>
 #include "startup/installationdir.h"
-#include "startup/errordialog.h"
 
 void InitLogging();
 

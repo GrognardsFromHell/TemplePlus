@@ -269,7 +269,6 @@
     </ClCompile>
     <ClCompile Include="legacyrenderstates.cpp" />
     <ClCompile Include="startup\installationdir.cpp" />
-    <ClCompile Include="startup\errordialog.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -525,7 +524,6 @@
     </ClInclude>
     <ClInclude Include="legacyrenderstates.h" />
     <ClInclude Include="startup\installationdir.h" />
-    <ClInclude Include="startup\errordialog.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
