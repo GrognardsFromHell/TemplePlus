@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include <mesparser.h>
-#include <vfs.h>
-#include <stringutil.h>
+#include <infrastructure/mesparser.h>
+#include <infrastructure/vfs.h>
+#include <infrastructure/stringutil.h>
 
 TEST(MesFileTest, TestParseFile)
 {

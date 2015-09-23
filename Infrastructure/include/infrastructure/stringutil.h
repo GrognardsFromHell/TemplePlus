@@ -10,6 +10,8 @@
 // Thanks Stackoverflow...
 
 std::string ucs2_to_local(const std::wstring &);
+std::string ucs2_to_utf8(const std::wstring &);
+std::wstring utf8_to_ucs2(const std::string &);
 
 // trim from start
 inline std::string &ltrim(std::string &s) {

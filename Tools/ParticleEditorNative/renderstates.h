@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <renderstates.h>
+#include <infrastructure/renderstates.h>
 #include <atlcomcli.h>
 
 class EditorRenderStates : public RenderStates {

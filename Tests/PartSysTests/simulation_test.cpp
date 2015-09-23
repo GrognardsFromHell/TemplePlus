@@ -3,7 +3,7 @@
 
 #include <particles/parser.h>
 #include <particles/instances.h>
-#include <vfs.h>
+#include <infrastructure/vfs.h>
 
 #include "mock_materials.h"
 

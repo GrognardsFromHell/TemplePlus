@@ -15,24 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\infrastructure.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\exception.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\version.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\stringutil.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\stopwatch.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\format.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\spdlog\async_logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -105,12 +87,6 @@
     <ClInclude Include="include\spdlog\sinks\syslog_sink.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\logging.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\mathutil.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="breakpad\breakpad_types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -144,33 +120,6 @@
     <ClInclude Include="breakpad\string_utils-inl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\breakpad.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\tabparser.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vfs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\elfhash.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\materials.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\meshes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\mesparser.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\renderstates.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\textures.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\platform\windows.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -178,6 +127,57 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\infrastructure\INI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\breakpad.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\elfhash.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\exception.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\format.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\infrastructure.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\logging.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\materials.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\mathutil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\meshes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\mesparser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\renderstates.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\stopwatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\stringutil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\tabparser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\textures.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\vfs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

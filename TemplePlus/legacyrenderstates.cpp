@@ -1,6 +1,6 @@
 
 #include "stdafx.h"
-#include "renderstates.h"
+#include <infrastructure/renderstates.h>
 #include <temple/dll.h>
 #include "d3d8to9_texture.h"
 #include "d3d8to9_vertexbuffer.h"

@@ -44,7 +44,7 @@ using namespace std;
 #include <d3d9.h>
 #include <D3dx9tex.h>
 
-#include "infrastructure.h"
+#include <infrastructure/infrastructure.h>
 using fmt::format;
 
 #include "MinHook.h"

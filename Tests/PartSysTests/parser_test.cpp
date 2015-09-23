@@ -1,10 +1,10 @@
 #include "stdafx.h"
 
-#include <meshes.h>
+#include <infrastructure/meshes.h>
 #include <particles/parser.h>
-#include <vfs.h>
-#include <stringutil.h>
-#include <format.h>
+#include <infrastructure/vfs.h>
+#include <infrastructure/stringutil.h>
+#include <infrastructure/format.h>
 
 #include "mock_materials.h"
 

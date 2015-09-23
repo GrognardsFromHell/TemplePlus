@@ -22,11 +22,11 @@ namespace temple {
 	public:
 		void* GetAddress(uint32_t vanillaAddress) const;
 
-		void Load(const std::string &installationPath);
+		void Load(const std::wstring &installationPath);
 		void Unload();
 
 		bool HasBeenRebased();
-		std::string FindConflictingModule();
+		std::wstring FindConflictingModule();
 		
 		static Dll& GetInstance();
 
@@ -34,8 +34,6 @@ namespace temple {
 				
 	private:
 		std::shared_ptr<class DllImpl> mImpl;
-
-		void ReplaceAllocFunctions() const;
 	};
 
 	struct AddressTable

@@ -1,6 +1,6 @@
 
-#include "materials.h"
-#include "logging.h"
+#include "infrastructure/materials.h"
+#include "infrastructure/logging.h"
 
 namespace gfx {
 

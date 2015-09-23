@@ -1,6 +1,6 @@
 
 #include <d3d8to9_texture.h>
-#include <textures.h>
+#include <infrastructure/textures.h>
 
 #include "temple/textures.h"
 

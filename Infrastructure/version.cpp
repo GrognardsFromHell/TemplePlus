@@ -1,5 +1,5 @@
 
-#include "version.h"
+#include "infrastructure/version.h"
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
@@ -8,7 +8,7 @@
 const char *buildVersion = TOSTRING(_TP_VERSION);
 const char *buildCommitId = TOSTRING(_TP_COMMIT);
 #else
-#include "format.h"
+#include "infrastructure/format.h"
 const char *buildVersion = "UNKNOWN";
 const char *buildCommitId = "UNKNOWN";
 #endif

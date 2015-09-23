@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <textures.h>
+#include <infrastructure/textures.h>
 
 class LegacyTexture : public gfx::Texture {
 public:

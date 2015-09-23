@@ -1,7 +1,7 @@
 
-#include "breakpad.h"
+#include "infrastructure/breakpad.h"
 #include "breakpad\exception_handler.h"
-#include "format.h"
+#include "infrastructure/format.h"
 
 // Delegate back to breakpad
 static bool HandleCrashCallbackDelegate(const wchar_t* dump_path,

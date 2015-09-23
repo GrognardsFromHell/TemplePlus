@@ -5,7 +5,7 @@
 #include "tig/tig_msg.h"
 #include "tig/tig_sound.h"
 #include "ui/ui_render.h"
-#include "renderstates.h"
+#include <infrastructure/renderstates.h>
 #include "tio/tio_utils.h"
 #include "atlbase.h"
 

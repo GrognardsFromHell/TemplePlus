@@ -1,7 +1,7 @@
 #include <regex>
 
-#include <stringutil.h>
-#include <logging.h>
+#include <infrastructure/stringutil.h>
+#include <infrastructure/logging.h>
 
 #include "particles/parser_keyframes.h"
 #include "particles/parser_params.h"

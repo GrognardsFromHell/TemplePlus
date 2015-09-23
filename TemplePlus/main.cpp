@@ -1,8 +1,13 @@
 #include "stdafx.h"
+
+#include <infrastructure/stringutil.h>
+
 #include "temple_functions.h"
 #include "util/fixes.h"
 #include "util/config.h"
-#include "breakpad.h"
+#include <infrastructure/breakpad.h>
+#include "startup/installationdir.h"
+#include "startup/errordialog.h"
 
 void InitLogging();
 
@@ -10,6 +15,10 @@ void InitLogging();
 int TempleMain(HINSTANCE hInstance, const string& commandLine);
 
 static wstring GetInstallationDir();
+
+#pragma comment(linker,"\"/manifestdependency:type='win32' \
+name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
+processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int showCmd) {
 
@@ -23,21 +32,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	logger->info("Starting Temple Plus");
 	logger->info("Version: {}", GetTemplePlusVersion());
 	logger->info("Commit: {}", GetTemplePlusCommitId());
-	
+
 	try {
+		auto toeeDir = GetInstallationDir();
+
 		auto& dll = temple::Dll::GetInstance();
-		dll.Load(".");
+		dll.Load(toeeDir);
 
 		if (dll.HasBeenRebased()) {
 			auto moduleName = dll.FindConflictingModule();
-			auto msg = format("Module '{}' caused temple.dll to be loaded at a different address than usual.\n"
-				"This will most likely lead to crashes.", moduleName);
-			MessageBoxA(nullptr, msg.c_str(), "Module Conflict", MB_OK | MB_ICONWARNING);
+			auto msg = format(L"Module '{}' caused temple.dll to be loaded at a different address than usual.\n"
+			                  L"This will most likely lead to crashes.", moduleName);
+			MessageBox(nullptr, msg.c_str(), L"Module Conflict", MB_OK | MB_ICONWARNING);
 		}
-
-		auto toeeDir = GetInstallationDir();
-
-		// logger->info("Starting up with toee path: " << toeeDir;
 
 		if (!SetCurrentDirectory(toeeDir.c_str())) {
 			logger->error("Unable to change current working directory!");
@@ -63,25 +70,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 }
 
-
-// TODO this should go elsewhere
-#include <codecvt>
-typedef codecvt_utf8<wchar_t> convert_type;
-static wstring_convert<convert_type, wchar_t> converter;
-
-static wstring GetInstallationDir() {
-	WCHAR path[MAX_PATH];
-	GetModuleFileName(GetModuleHandle(L"temple"), path, MAX_PATH);
-
-	wstring pathStr(path);
-
-	if (!PathRemoveFileSpec(path)) {
-		logger->error("Unable to remove trailing filename in temple.dll path: {}", converter.to_bytes(pathStr));
+wstring GetInstallationDir() {
+	wstring toeeDir;
+	InstallationDir dir;
+	if (!config.toeeDir.empty()) {
+		toeeDir = utf8_to_ucs2(config.toeeDir);
+		if (dir.Validate(toeeDir)) {
+			return dir.Normalize(toeeDir);
+		}
 	}
 
-	if (!PathAddBackslash(path)) {
-		logger->error("Unable to append the backslash to the end of the installation directory: {}", converter.to_bytes(pathStr));
+	auto toeeDirs = dir.FindInstallations();
+	if (toeeDirs.empty()) {
+		throw TempleException("A Temple of Elemental Evil installation could not be found.");
 	}
 
-	return path;
+	config.toeeDir = ucs2_to_utf8(toeeDirs[0]);
+	config.Save();
+
+	toeeDir = toeeDirs[0];
+	logger->info("Using ToEE installation @ {}", ucs2_to_utf8(toeeDir));
+	return toeeDir;
 }

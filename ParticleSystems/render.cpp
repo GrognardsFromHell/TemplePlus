@@ -1,5 +1,5 @@
 #include <d3d9.h>
-#include <renderstates.h>
+#include <infrastructure/renderstates.h>
 
 #include "particles/render.h"
 #include "particles/render_point.h"

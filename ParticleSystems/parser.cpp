@@ -1,10 +1,11 @@
+
+#include <infrastructure/tabparser.h>
+#include <infrastructure/logging.h>
+#include <infrastructure/materials.h>
+
 #include "particles/parser.h"
 #include "particles/params.h"
 #include "particles/parser_params.h"
-#include "tabparser.h"
-#include "logging.h"
-
-#include <materials.h>
 
 namespace particles {
 

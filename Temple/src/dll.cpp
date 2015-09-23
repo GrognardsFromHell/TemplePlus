@@ -1,9 +1,12 @@
-#include <exception.h>
-#include <logging.h>
+
 #include <platform/windows.h>
 #include <Shlwapi.h>
 #include <MinHook.h>
 #include <psapi.h>
+
+#include <infrastructure/exception.h>
+#include <infrastructure/logging.h>
+#include <infrastructure/stringutil.h>
 
 #include "temple/dll.h"
 
@@ -58,28 +61,33 @@ namespace temple {
 
 	class DllImpl {
 	public:
-		DllImpl(const std::string& installationDir);
+		DllImpl(const std::wstring& installationDir);
 		~DllImpl();
+		
+		void* GetAddress(uint32_t vanillaAddress) const;
+		void ReplaceAllocFunctions() const;
 
 		int mDeltaFromVanilla = 0;
 		HINSTANCE mDllHandle = nullptr;
 	};
 
-	DllImpl::DllImpl(const std::string& installationDir) {
+	DllImpl::DllImpl(const std::wstring& installationDir) {
 
-		auto dllPath(installationDir + "\\temple.dll");
+		auto dllPath(installationDir + L"temple.dll");
 		
 		// Does it even exist?
-		if (!PathFileExistsA(installationDir.c_str())) {
-			auto msg(fmt::format("Temple.dll does not exist: {}", dllPath));
+		if (!PathFileExists(dllPath.c_str())) {
+			auto msg(fmt::format("Temple.dll does not exist: {}", ucs2_to_utf8(dllPath)));
 			throw TempleException(msg);
 		}
 
+		SetCurrentDirectory(installationDir.c_str());
+
 		// Try to load it
-		mDllHandle = LoadLibraryA(dllPath.c_str());
+		mDllHandle = LoadLibrary(dllPath.c_str());
 		if (!mDllHandle) {
 			throw TempleException("Unable to load temple.dll from {}: {}",
-				dllPath, GetLastWin32Error());
+				ucs2_to_utf8(dllPath), GetLastWin32Error());
 		}
 
 		// calculate the offset from the default 0x10000000 base address
@@ -96,6 +104,11 @@ namespace temple {
 	}
 
 	DllImpl::~DllImpl() {
+		auto status = MH_Uninitialize();
+		if (status != MH_OK) {
+			logger->error("Unable to shutdown MinHook: {}", MH_StatusToString(status));
+		}
+
 		if (mDllHandle) {
 			if (!FreeLibrary(mDllHandle)) {
 				logger->error("Unable to free the temple.dll library handle: {}",
@@ -103,10 +116,10 @@ namespace temple {
 			}
 		}
 
-		auto status = MH_Uninitialize();
-		if (status != MH_OK) {
-			logger->error("Unable to shutdown MinHook: {}", MH_StatusToString(status));
-		}
+	}
+
+	void* DllImpl::GetAddress(uint32_t vanillaAddress) const {
+		return reinterpret_cast<void*>(vanillaAddress + mDeltaFromVanilla);
 	}
 
 	Dll& Dll::GetInstance() {
@@ -120,10 +133,10 @@ namespace temple {
 			                      "been loaded is not possible.", vanillaAddress);
 		}
 
-		return reinterpret_cast<void*>(vanillaAddress + mImpl->mDeltaFromVanilla);
+		return mImpl->GetAddress(vanillaAddress);
 	}
 
-	void Dll::Load(const std::string& installationPath) {
+	void Dll::Load(const std::wstring& installationPath) {
 		if (mImpl) {
 			throw TempleException("DLL has already been loaded");
 		}
@@ -131,7 +144,7 @@ namespace temple {
 		mImpl = std::make_shared<DllImpl>(installationPath);
 
 		// Perform post-load actions
-		ReplaceAllocFunctions();
+		mImpl->ReplaceAllocFunctions();
 		AddressRegistry::GetInstance().Fixup(mImpl->mDeltaFromVanilla);
 	}
 
@@ -143,14 +156,14 @@ namespace temple {
 		return mImpl->mDeltaFromVanilla != 0;
 	}
 
-	std::string Dll::FindConflictingModule() {
+	std::wstring Dll::FindConflictingModule() {
 		HMODULE hMods[1024];
 		DWORD cbNeeded;
-		char moduleName[MAX_PATH];
+		TCHAR moduleName[MAX_PATH];
 
 		auto hProcess = GetCurrentProcess();
 
-		std::string conflicting = "";
+		std::wstring conflicting;
 
 		const uint32_t templeImageSize = 0x01EB717E;
 		const uint32_t templeDesiredStart = 0x10000000;
@@ -158,15 +171,15 @@ namespace temple {
 
 		if (EnumProcessModules(hProcess, hMods, sizeof(hMods), &cbNeeded)) {
 			for (uint32_t i = 0; i < (cbNeeded / sizeof(HMODULE)); i++) {
-				GetModuleFileNameA(hMods[i], moduleName, MAX_PATH);
+				GetModuleFileName(hMods[i], moduleName, MAX_PATH);
 				MODULEINFO moduleInfo;
 				GetModuleInformation(hProcess, hMods[i], &moduleInfo, cbNeeded);
 				auto fromAddress = reinterpret_cast<uint32_t>(moduleInfo.lpBaseOfDll);
 				auto toAddress = fromAddress + moduleInfo.SizeOfImage;
-				logger->debug(" Module {}: 0x{:08x}-0x{:08x}", moduleName, fromAddress, toAddress);
+				logger->debug(" Module {}: 0x{:08x}-0x{:08x}", ucs2_to_utf8(moduleName), fromAddress, toAddress);
 
 				if (fromAddress <= templeDesiredEnd && toAddress > templeDesiredStart) {
-					conflicting = fmt::format("{} (0x{:08x}-0x{:08x})", moduleName, fromAddress, toAddress);
+					conflicting = fmt::format(L"{} (0x{:08x}-0x{:08x})", moduleName, fromAddress, toAddress);
 				}
 			}
 		}
@@ -197,8 +210,7 @@ namespace temple {
 		module. This allows much safer exchange of data between the DLL and
 		this module. In addition, memory profiling tools dont get so confused.
 	*/
-	void Dll::ReplaceAllocFunctions() const {
-
+	void DllImpl::ReplaceAllocFunctions() const {
 		MH_CreateHook(GetAddress(0x10254241), &realloc, nullptr);
 		MH_CreateHook(GetAddress(0x10254B44), &calloc, nullptr);
 		MH_CreateHook(GetAddress(0x1025444F), &malloc, nullptr);
