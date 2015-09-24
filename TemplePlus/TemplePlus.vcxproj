@@ -69,6 +69,7 @@
     <ClCompile Include="skill.cpp" />
     <ClCompile Include="startup\installationdir.cpp" />
     <ClCompile Include="startup\installationdirpicker.cpp" />
+    <ClCompile Include="startup\installationdirs.cpp" />
     <ClCompile Include="tab_file.cpp" />
     <ClCompile Include="sound.cpp" />
     <ClCompile Include="textbubbles.cpp" />
@@ -229,6 +230,7 @@
     <ClInclude Include="skill.h" />
     <ClInclude Include="startup\installationdir.h" />
     <ClInclude Include="startup\installationdirpicker.h" />
+    <ClInclude Include="startup\installationdirs.h" />
     <ClInclude Include="tab_file.h" />
     <ClInclude Include="textbubbles.h" />
     <ClInclude Include="tig\tig_partsys.h" />

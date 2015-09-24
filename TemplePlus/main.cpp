@@ -7,6 +7,7 @@
 #include "util/fixes.h"
 #include "util/config.h"
 #include "startup/installationdir.h"
+#include "startup/installationdirs.h"
 #include "startup/installationdirpicker.h"
 
 void InitLogging();
@@ -15,7 +16,7 @@ void InitLogging();
 int TempleMain(HINSTANCE hInstance, const string& commandLine);
 
 InstallationDir GetInstallationDir(Guide::not_null<bool*> userCancelled);
-void ShowIncompatibilityWarning(const InstallationDir &dir);
+void ShowIncompatibilityWarning(const InstallationDir& dir);
 
 // This is required to get "new style" common dialogs like message boxes
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
@@ -47,8 +48,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			return 0; // Not an error, the user cancelled
 		}
 
-		ShowIncompatibilityWarning(toeeDir);
-
 		dll.Load(toeeDir.GetDirectory());
 
 		if (dll.HasBeenRebased()) {
@@ -76,7 +75,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 }
 
 // Shows a warning if the given ToEE installation may be incompatible
-static void ShowIncompatibilityWarning(const InstallationDir &dir) {
+static void ShowIncompatibilityWarning(const InstallationDir& dir) {
 
 	if (!dir.IsSupportedDllVersion()) {
 		auto msg = L"An unknown game version was encountered. Please use the GOG.com version or "
@@ -96,37 +95,24 @@ InstallationDir GetInstallationDir(Guide::not_null<bool*> userCancelled) {
 			return configuredDir;
 		}
 	}
-		
+
 	auto toeeDirs = InstallationDirs::FindInstallations();
+
+	InstallationDir toeeDir;
 	if (toeeDirs.empty()) {
-		auto title = L"Temple of Elemental Evil - Installation Directory";
-		MessageBox(nullptr, 
-			L"Sorry! TemplePlus could not find your Temple of Elemental Evil installation automatically.\n\n"
-			L"Please select your Temple of Elemental Evil installation directory manually.", 
-			title,
-			MB_OK|MB_ICONERROR);
-
-		InstallationDirPicker dirPicker;
-		do {
-			if (!dirPicker.PickDirectory()) {
-				*userCancelled = true;
-				return InstallationDir();
-			}
-
-			InstallationDir pickedDir(dirPicker.GetDirectory());
-			if (pickedDir.IsUsable()) {
-				return pickedDir;
-			}
-
-			auto msg = fmt::format(L"Oops! The selected directory '{}' cannot be used by TemplePlus for the following reasons:\n{}", 
-				pickedDir.GetDirectory(),
-				pickedDir.GetNotUsableReason());
-			MessageBox(nullptr, msg.c_str(), title, MB_OK | MB_ICONERROR);
-		} while (true);
+		// None could be found automatically, let the user pick
+		toeeDir = InstallationDirPicker::Pick(userCancelled);
+	} else {
+		toeeDir = toeeDirs[0];
 	}
 
-	config.toeeDir = ucs2_to_utf8(toeeDirs[0].GetDirectory());
-	config.Save();
+	// Save the new directory
+	if (!*userCancelled) {
+		ShowIncompatibilityWarning(toeeDir);
+		config.toeeDir = ucs2_to_utf8(toeeDir.GetDirectory());
+		config.Save();
+	}
 
-	return InstallationDir(toeeDirs[0].GetDirectory());
+	return toeeDir;
+
 }

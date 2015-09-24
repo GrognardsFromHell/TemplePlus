@@ -55,14 +55,3 @@ private:
 	                      const std::vector<uint8_t>& patched);
 
 };
-
-class InstallationDirs {
-public:
-	bool Validate(const std::wstring& path);
-
-	static std::vector<InstallationDir> FindInstallations();
-
-private:
-
-	static std::wstring ReadRegistryString(const std::wstring& keyName, const std::wstring& valueName);
-};

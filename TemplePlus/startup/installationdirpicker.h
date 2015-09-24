@@ -2,12 +2,16 @@
 
 #include <string>
 
+class InstallationDir;
+
 /*
 	Allows the user to pick the ToEE installation directory
 	and returns it.
 */
 class InstallationDirPicker {
 public:
+
+	static InstallationDir Pick(Guide::not_null<bool*> userCancelled);
 
 	// Returns true if the user did not cancel
 	bool PickDirectory();
