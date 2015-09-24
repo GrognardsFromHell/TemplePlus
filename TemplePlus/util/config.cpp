@@ -18,8 +18,18 @@ public:
 		return ConfigSetting(option, setter, getter, description);
 	}
 
+	static ConfigSetting WString(const char *option, Setter<wstring> setter, Getter<wstring> getter, const char *description = nullptr) {
+		auto getterAdapter = [=] {
+			return ucs2_to_utf8(getter());
+		};
+		auto setterAdapter = [=](string value) {
+			setter(utf8_to_ucs2(value));
+		};
+
+		return ConfigSetting(option, setterAdapter, getterAdapter, description);
+	}
 	static ConfigSetting StringList(const char *option, char sep, Setter<const vector<string>&> setter, Getter<vector<string>> getter, const char *description = nullptr) {
-		Getter<string> getterAdapter = [=] {
+		auto getterAdapter = [=] {
 			string result;
 			for (auto &str : getter()) {
 				if (!result.empty()) {
@@ -29,7 +39,7 @@ public:
 			}
 			return result;
 		};
-		Setter<string> setterAdapter = [=](string x) {
+		auto setterAdapter = [=](string x) {
 			vector<string> result;
 			stringstream ss(x);
 			string token;
@@ -45,10 +55,10 @@ public:
 	}
 
 	static ConfigSetting Bool(const char *option, Setter<bool> setter, Getter<bool> getter, const char *description = nullptr) {
-		Getter<string> getterAdapter = [=] {
+		auto getterAdapter = [=] {
 			return getter() ? "true" : "false";
 		};
-		Setter<string> setterAdapter = [=] (string x) {
+		auto setterAdapter = [=] (string x) {
 			setter(x == "true" || x == "1");
 		};
 
@@ -56,10 +66,10 @@ public:
 	}
 
 	static ConfigSetting Int(const char *option, Setter<int> setter, Getter<int> getter, const char *description = nullptr) {
-		Getter<string> getterAdapter = [=] {
+		auto getterAdapter = [=] {
 			return to_string(getter());
 		};
-		Setter<string> setterAdapter = [=](string x) {
+		auto setterAdapter = [=](string x) {
 			setter(stoi(x));
 		};
 
@@ -67,10 +77,10 @@ public:
 	}
 
 	static ConfigSetting Double(const char *option, Setter<double> setter, Getter<double> getter, const char *description = nullptr) {
-		Getter<string> getterAdapter = [=] {
+		auto getterAdapter = [=] {
 			return to_string(getter());
 		};
-		Setter<string> setterAdapter = [=](string x) {
+		auto setterAdapter = [=](string x) {
 			setter(stod(x));
 		};
 
@@ -104,6 +114,7 @@ private:
 };
 
 #define CONF_STRING(FIELDNAME) ConfigSetting::String(#FIELDNAME, [] (string val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
+#define CONF_WSTRING(FIELDNAME) ConfigSetting::WString(#FIELDNAME, [] (wstring val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
 #define CONF_STRING_LIST(FIELDNAME, SEP) ConfigSetting::StringList(#FIELDNAME, SEP, [] (const vector<string> &val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
 #define CONF_INT(FIELDNAME) ConfigSetting::Int(#FIELDNAME, [] (int val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
 #define CONF_BOOL(FIELDNAME) ConfigSetting::Bool(#FIELDNAME, [] (bool val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
@@ -136,7 +147,7 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(maxPCsFlexible),
 	CONF_BOOL(usingCo8),
 	CONF_BOOL(disableScreenshots),
-	CONF_STRING(toeeDir)
+	CONF_WSTRING(toeeDir)
 };
 
 void TemplePlusConfig::Load() {

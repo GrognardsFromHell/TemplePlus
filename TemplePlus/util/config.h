@@ -34,7 +34,7 @@ struct TemplePlusConfig
 	int windowHeight = 768;
 	int renderWidth = 1024;
 	int renderHeight = 768;
-	string toeeDir;
+	wstring toeeDir;
 
 	vector<string> additionalTioPaths; // Add these to the Python sys.path variable
 	

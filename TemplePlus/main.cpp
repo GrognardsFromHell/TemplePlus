@@ -1,6 +1,5 @@
 #include "stdafx.h"
 
-#include <infrastructure/stringutil.h>
 #include <infrastructure/breakpad.h>
 
 #include "temple_functions.h"
@@ -90,7 +89,7 @@ InstallationDir GetInstallationDir(Guide::not_null<bool*> userCancelled) {
 	*userCancelled = false;
 
 	if (!config.toeeDir.empty()) {
-		InstallationDir configuredDir(utf8_to_ucs2(config.toeeDir));
+		InstallationDir configuredDir(config.toeeDir);
 		if (configuredDir.IsUsable()) {
 			return configuredDir;
 		}
@@ -106,10 +105,10 @@ InstallationDir GetInstallationDir(Guide::not_null<bool*> userCancelled) {
 		toeeDir = toeeDirs[0];
 	}
 
-	// Save the new directory
+	// Save the new directory only if the user didn't cancel selection
 	if (!*userCancelled) {
 		ShowIncompatibilityWarning(toeeDir);
-		config.toeeDir = ucs2_to_utf8(toeeDir.GetDirectory());
+		config.toeeDir = toeeDir.GetDirectory();
 		config.Save();
 	}
 
