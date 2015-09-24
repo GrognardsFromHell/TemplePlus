@@ -531,6 +531,20 @@ static void TakeSaveScreenshots() {
 	graphics.TakeScaledScreenshot("save\\templ.jpg", 256, 192);	
 }
 
+/*
+	This is a temporary hack that forces alpha testing to be enabled when textured shaders are drawn.
+	Usually they rely on it being true, but never actually make sure to set it to true in the render 
+	states. In reality this is actually an issue with the *other* shader that sets it to false but
+	doesn't reset it, but that is harder to fix.
+	See GitHub issue #88
+*/
+typedef int(*FngHookedShaderTexturedRender)(int vertexCount, void *pos, void *normals, void *diffuse, void *uv, int primCount, void* indices, void* shaderData);
+FngHookedShaderTexturedRender OrgHookedShaderTexturedRender;
+static int HookedShaderTexturedRender(int vertexCount, void *pos, void *normals, void *diffuse, void *uv, int primCount, void* indices, void* shaderData) {
+	renderStates->SetAlphaTestEnable(true);
+	return OrgHookedShaderTexturedRender(vertexCount, pos, normals, diffuse, uv, primCount, indices, shaderData);
+}
+
 void hook_graphics() {
 	/*
 		These assertions are based on mallocs or memsets in the code that allow us to deduce the original struct
@@ -542,6 +556,9 @@ void hook_graphics() {
 	videoFuncs.startupFlags = SF_WINDOW;
 
 	MH_CreateHook(videoFuncs.updateProjMatrices, HookedUpdateProjMatrices, reinterpret_cast<LPVOID*>(&videoFuncs.updateProjMatrices));
+
+	// Fixes alpha testing inconsistencies with textured shaders
+	MH_CreateHook(temple::GetPointer(0x101E22B0), HookedShaderTexturedRender, (void**)&OrgHookedShaderTexturedRender);
 
 	// Hook into present frame to do after-frame stuff
 	MH_CreateHook(temple::GetPointer(0x101DCB80), HookedPresentFrame, nullptr);
