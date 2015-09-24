@@ -1,20 +1,23 @@
 #include "stdafx.h"
 
 #include <infrastructure/stringutil.h>
+#include <infrastructure/breakpad.h>
 
 #include "temple_functions.h"
 #include "util/fixes.h"
 #include "util/config.h"
-#include <infrastructure/breakpad.h>
 #include "startup/installationdir.h"
+#include "startup/installationdirpicker.h"
 
 void InitLogging();
 
 // Defined in temple_main.cpp for now
 int TempleMain(HINSTANCE hInstance, const string& commandLine);
 
-static wstring GetInstallationDir();
+InstallationDir GetInstallationDir(Guide::not_null<bool*> userCancelled);
+void ShowIncompatibilityWarning(const InstallationDir &dir);
 
+// This is required to get "new style" common dialogs like message boxes
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
@@ -33,23 +36,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	logger->info("Commit: {}", GetTemplePlusCommitId());
 
 	try {
-		auto toeeDir = GetInstallationDir();
+		bool userCancelled;
+		auto toeeDir = GetInstallationDir(&userCancelled);
+
+		if (userCancelled) {
+			return 0; // Not an error, the user cancelled
+		}
+
+		ShowIncompatibilityWarning(toeeDir);
 
 		auto& dll = temple::Dll::GetInstance();
-		dll.Load(toeeDir);
+		dll.Load(toeeDir.GetDirectory());
 
 		if (dll.HasBeenRebased()) {
 			auto moduleName = dll.FindConflictingModule();
 			auto msg = format(L"Module '{}' caused temple.dll to be loaded at a different address than usual.\n"
 			                  L"This will most likely lead to crashes.", moduleName);
 			MessageBox(nullptr, msg.c_str(), L"Module Conflict", MB_OK | MB_ICONWARNING);
-		}
-
-		if (!SetCurrentDirectory(toeeDir.c_str())) {
-			logger->error("Unable to change current working directory!");
-		}
-		if (!SetDllDirectory(toeeDir.c_str())) {
-			logger->error("Unable to change DLL search directory.");
 		}
 
 		init_hooks();
@@ -69,25 +72,58 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 }
 
-wstring GetInstallationDir() {
-	wstring toeeDir;
-	InstallationDir dir;
+// Shows a warning if the given ToEE installation may be incompatible
+static void ShowIncompatibilityWarning(const InstallationDir &dir) {
+
+	if (!dir.IsSupportedDllVersion()) {
+		auto msg = L"An unknown game version was encountered. Please use the GOG.com version or "
+			L"apply the Circle of Eight Modpack (www.co8.org).";
+		auto title = L"Temple of Elemental Evil - Installation Directory";
+		MessageBox(nullptr, msg, title, MB_OK | MB_ICONWARNING);
+	}
+
+}
+
+InstallationDir GetInstallationDir(Guide::not_null<bool*> userCancelled) {
+	*userCancelled = false;
+
 	if (!config.toeeDir.empty()) {
-		toeeDir = utf8_to_ucs2(config.toeeDir);
-		if (dir.Validate(toeeDir)) {
-			return dir.Normalize(toeeDir);
+		InstallationDir configuredDir(utf8_to_ucs2(config.toeeDir));
+		if (configuredDir.IsUsable()) {
+			return configuredDir;
 		}
 	}
-
-	auto toeeDirs = dir.FindInstallations();
+		
+	auto toeeDirs = InstallationDirs::FindInstallations();
 	if (toeeDirs.empty()) {
-		throw TempleException("A Temple of Elemental Evil installation could not be found.");
+		auto title = L"Temple of Elemental Evil - Installation Directory";
+		MessageBox(nullptr, 
+			L"Sorry! TemplePlus could not find your Temple of Elemental Evil installation automatically.\n\n"
+			L"Please select your Temple of Elemental Evil installation directory manually.", 
+			title,
+			MB_OK|MB_ICONERROR);
+
+		InstallationDirPicker dirPicker;
+		do {
+			if (!dirPicker.PickDirectory()) {
+				*userCancelled = true;
+				return InstallationDir();
+			}
+
+			InstallationDir pickedDir(dirPicker.GetDirectory());
+			if (pickedDir.IsUsable()) {
+				return pickedDir;
+			}
+
+			auto msg = fmt::format(L"Oops! The selected directory '{}' cannot be used by TemplePlus for the following reasons:\n{}", 
+				pickedDir.GetDirectory(),
+				pickedDir.GetNotUsableReason());
+			MessageBox(nullptr, msg.c_str(), title, MB_OK | MB_ICONERROR);
+		} while (true);
 	}
 
-	config.toeeDir = ucs2_to_utf8(toeeDirs[0]);
+	config.toeeDir = ucs2_to_utf8(toeeDirs[0].GetDirectory());
 	config.Save();
 
-	toeeDir = toeeDirs[0];
-	logger->info("Using ToEE installation @ {}", ucs2_to_utf8(toeeDir));
-	return toeeDir;
+	return InstallationDir(toeeDirs[0].GetDirectory());
 }

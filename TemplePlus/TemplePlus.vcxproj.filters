@@ -269,6 +269,7 @@
     </ClCompile>
     <ClCompile Include="legacyrenderstates.cpp" />
     <ClCompile Include="startup\installationdir.cpp" />
+    <ClCompile Include="startup\installationdirpicker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -525,6 +526,7 @@
     <ClInclude Include="legacyrenderstates.h" />
     <ClInclude Include="startup\installationdir.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="startup\installationdirpicker.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

@@ -1,4 +1,7 @@
+#include <Objbase.h>
+
 #include "platform/windows.h"
+#include "infrastructure/exception.h"
 
 std::string GetLastWin32Error() {
 	auto error = GetLastError();
@@ -32,4 +35,19 @@ std::string GetLastWin32Error() {
 
 	return{};
 
+}
+
+ComInitializer::ComInitializer() {
+	auto status = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	if (status != S_OK && status != S_FALSE) {
+		throw TempleException("Unable to initialize COM systems");
+	}
+
+	mAlreadyInitialized = (status == S_FALSE);
+}
+
+ComInitializer::~ComInitializer() {
+	if (!mAlreadyInitialized) {
+		CoUninitialize();
+	}
 }

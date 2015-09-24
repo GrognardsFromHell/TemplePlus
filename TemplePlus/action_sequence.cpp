@@ -425,8 +425,6 @@ uint32_t ActionSequenceSystem::AddToSeqSimple(D20Actn* d20a, ActnSeq * actSeq, T
 int ActionSequenceSystem::AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStatus)
 {
 	int result; 
-	int v6; 
-	D20Actn *v7; 
 	uint32_t(__cdecl *actionCheckFunc)(D20Actn *, TurnBasedStatus *); 
 	int actNum; 
 	float reach; 
@@ -1505,7 +1503,7 @@ int ActionSequenceSystem::ActionCostProcess(TurnBasedStatus* tbStat, D20Actn* d2
 		if ( actCost.chargeAfterPicker <= 0 
 			|| actCost.chargeAfterPicker + tbStat->attackModeCode <= tbStat->baseAttackNumCode + tbStat->numBonusAttacks)
 		{
-			if (tbStat->numBonusAttacks < actCost.chargeAfterPicker)
+			if ((int) tbStat->numBonusAttacks < actCost.chargeAfterPicker)
 				tbStat->attackModeCode += actCost.chargeAfterPicker;
 			else
 				tbStat->numBonusAttacks -= actCost.chargeAfterPicker;
