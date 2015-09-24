@@ -269,6 +269,7 @@
     </ClCompile>
     <ClCompile Include="legacyrenderstates.cpp" />
     <ClCompile Include="obj_iterator.cpp" />
+    <ClCompile Include="startup\installationdir.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -524,6 +525,8 @@
     </ClInclude>
     <ClInclude Include="legacyrenderstates.h" />
     <ClInclude Include="obj_iterator.h" />
+    <ClInclude Include="startup\installationdir.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -551,11 +554,6 @@
     <Filter Include="Mods and Fixes\Spell Fixes">
       <UniqueIdentifier>{0e53287e-d500-4b3d-a274-09c4e0cf6dbf}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\Spellslinger%27s Notes\bonusspells.txt">
-      <Filter>Mods and Fixes\Spell Fixes</Filter>
-    </Text>
   </ItemGroup>
   <ItemGroup>
     <Image Include="toee_gog_icon.ico">

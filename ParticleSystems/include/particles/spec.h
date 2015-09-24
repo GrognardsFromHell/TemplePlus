@@ -3,10 +3,10 @@
 #include <memory>
 #include <vector>
 
-#include <materials.h>
-#include <meshes.h>
-#include <exception.h>
-#include <format.h>
+#include <infrastructure/materials.h>
+#include <infrastructure/meshes.h>
+#include <infrastructure/exception.h>
+#include <infrastructure/format.h>
 
 #include "params.h"
 

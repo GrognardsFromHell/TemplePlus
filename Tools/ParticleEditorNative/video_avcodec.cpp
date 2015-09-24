@@ -10,8 +10,8 @@ extern "C" {
 }
 
 #include <string>
-#include <format.h>
-#include <stringutil.h>
+#include <infrastructure/format.h>
+#include <infrastructure/stringutil.h>
 
 #include "video.h"
 

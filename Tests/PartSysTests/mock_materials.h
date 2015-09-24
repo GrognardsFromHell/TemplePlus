@@ -2,7 +2,7 @@
 #pragma once
 
 #include <gmock/gmock.h>
-#include <materials.h>
+#include <infrastructure/materials.h>
 
 class MaterialsMock : public gfx::MaterialManager {
 public:

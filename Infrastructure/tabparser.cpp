@@ -2,9 +2,9 @@
 #include <vector>
 #include <sstream>
 
-#include "tabparser.h"
-#include "stringutil.h"
-#include "vfs.h"
+#include "infrastructure/tabparser.h"
+#include "infrastructure/stringutil.h"
+#include "infrastructure/vfs.h"
 
 std::string TabFileRecord::mMissingColumn;
 

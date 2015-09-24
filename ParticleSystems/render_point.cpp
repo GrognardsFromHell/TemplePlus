@@ -1,5 +1,5 @@
-#include <logging.h>
-#include <renderstates.h>
+#include <infrastructure/logging.h>
+#include <infrastructure/renderstates.h>
 #include <d3dx9math.h>
 
 #include "particles/render_point.h"

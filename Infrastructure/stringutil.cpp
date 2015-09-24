@@ -4,7 +4,7 @@
 
 #include <platform/windows.h>
 
-#include "stringutil.h"
+#include "infrastructure/stringutil.h"
 
 std::string ucs2_to_local(const std::wstring&s) {
 	
@@ -16,4 +16,14 @@ std::string ucs2_to_local(const std::wstring&s) {
 	result.resize(result.length());
 	return result;
 
+}
+
+std::string ucs2_to_utf8(const std::wstring &str) {
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+	return converter.to_bytes(str);
+}
+
+std::wstring utf8_to_ucs2(const std::string &str) {
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+	return converter.from_bytes(str);
 }

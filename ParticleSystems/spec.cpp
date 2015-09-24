@@ -1,6 +1,7 @@
 
+#include <infrastructure/elfhash.h>
+
 #include "particles/spec.h"
-#include "elfhash.h"
 
 namespace particles {
 

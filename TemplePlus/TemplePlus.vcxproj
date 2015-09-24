@@ -67,6 +67,7 @@
     <ClCompile Include="reputations.cpp" />
     <ClCompile Include="secret_door.cpp" />
     <ClCompile Include="skill.cpp" />
+    <ClCompile Include="startup\installationdir.cpp" />
     <ClCompile Include="tab_file.cpp" />
     <ClCompile Include="sound.cpp" />
     <ClCompile Include="textbubbles.cpp" />
@@ -222,8 +223,10 @@
     <ClInclude Include="quest.h" />
     <ClInclude Include="radialmenu.h" />
     <ClInclude Include="reputations.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="secret_door.h" />
     <ClInclude Include="skill.h" />
+    <ClInclude Include="startup\installationdir.h" />
     <ClInclude Include="tab_file.h" />
     <ClInclude Include="textbubbles.h" />
     <ClInclude Include="tig\tig_partsys.h" />
@@ -301,9 +304,6 @@
     <ClInclude Include="weapon.h" />
     <ClInclude Include="xp.h" />
     <ClInclude Include="ui\ui_mainmenu.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\Spellslinger%27s Notes\bonusspells.txt" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
@@ -453,4 +453,9 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="resource.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>

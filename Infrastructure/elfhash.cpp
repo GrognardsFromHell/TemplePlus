@@ -1,5 +1,5 @@
 
-#include "elfhash.h"
+#include "infrastructure/elfhash.h"
 
 uint32_t ElfHash::Hash(const char * text)
 {

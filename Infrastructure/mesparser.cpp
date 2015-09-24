@@ -1,7 +1,7 @@
 
-#include "mesparser.h"
-#include "vfs.h"
-#include "logging.h"
+#include "infrastructure/mesparser.h"
+#include "infrastructure/vfs.h"
+#include "infrastructure/logging.h"
 
 class MesLexer {
 public:

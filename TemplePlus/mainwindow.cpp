@@ -169,6 +169,10 @@ static void UpdateMousePos(int xAbs, int yAbs, int wheelDelta) {
 
 static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
+	if (hWnd != video->hwnd) {
+		return DefWindowProcA(hWnd, msg, wparam, lparam);
+	}
+
 	static int mousePosX = 0; // Replaces memory @ 10D25CEC
 	static int mousePosY = 0; // Replaces memory @ 10D25CF0
 	RECT rect;

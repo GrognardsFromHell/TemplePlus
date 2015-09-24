@@ -2,7 +2,7 @@
 
 #include <string>
 #include <unordered_map>
-#include <stringutil.h>
+#include <infrastructure/stringutil.h>
 
 #include "spec.h"
 

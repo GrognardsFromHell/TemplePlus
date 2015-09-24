@@ -1,8 +1,8 @@
 #include <particles/instances.h>
 #include <particles/parser.h>
 #include <particles/render.h>
-#include <materials.h>
-#include <textures.h>
+#include <infrastructure/materials.h>
+#include <infrastructure/textures.h>
 #include <fstream>
 #include <regex>
 

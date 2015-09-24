@@ -13,7 +13,7 @@
 #include "ui/ui.h"
 #include "util/folderutils.h"
 #include "gamesystems.h"
-#include "renderstates.h"
+#include <infrastructure/renderstates.h>
 #include "legacyrenderstates.h"
 #include "ui/ui_text.h"
 #include <atlbase.h>
