@@ -62,8 +62,53 @@ enum PathQueryFlags : uint32_t {
 
 	PQF_UNKNOWN4000h = 0x4000,
 
+	PQF_UNKNOWN20000h = 0x20000,
+	PQF_UNKNOWN40000h = 0x40000,
+
 	// Appears to mean that pathfinding should obey the time limit
 	PQF_A_STAR_TIME_CAPPED = 0x80000 // it is set when the D20 action has the flag D20CAF_TRUNCATED
+
+	// used in practice for unspecified move:
+	// with target critter
+	// pathQ.flags = (PathQueryFlags)0x23803;
+	//	PQF_TO_EXACT = 1
+	//  PQF_HAS_CRITTER = 1
+	//  PQF_UNK1 = 0 // (0x4) if not set, then sets field28 to 200 initially
+	//	PQF_UNK2 = 0 // appears to indicate a straight line path from->to
+	/*
+	PQF_10 = 0
+	PQF_20 = 0
+	PQF_40 = 0,
+	PQF_80 = 0 // path (pass) through critters apparently (gets set out of combat)
+	PQF_100 = 0,
+	PQF_200 = 0,
+	PQF_400 = 0, // something to do with the type of object
+	PQF_800 = 1,
+	*/
+
+	/*
+	Indicates that the query is to move to a target object.
+	WAS ERRONEOUSLY LISTED AS 0x10  (look out for those BYTE1() operators DS!)
+	*/
+	// PQF_TARGET_OBJ = 1,
+
+	/*
+	Indicates that the destination should be adjusted for the critter and target
+	radius.
+	WAS ERRONEOUSLY LISTED AS 0x20  (look out for those BYTE1() operators DS!)
+	*/
+	// PQF_ADJUST_RADIUS = 1
+
+	// PQF_UNKNOWN4000h = 0,
+
+	// Appears to mean that pathfinding should obey the time limit
+	// PQF_A_STAR_TIME_CAPPED = ? // it is set when the D20 action has the flag D20CAF_TRUNCATED (or D20CAF_UNNECESSARY???)
+
+
+	// WITHOUT TARGET CRITTER:
+	// pathQ.flags = static_cast<PathQueryFlags>(0x40803);
+	// PQF_TARGET_OBJ = 0
+	// PQF_ADJUST_RADIUS = 0
 };
 
 #pragma pack(push, 1)
@@ -125,6 +170,11 @@ struct Pathfinding : temple::AddressTable {
 
 	LocationSys * loc;
 
+	int astarTimeEnded[20];
+	int *pathTimeCumulative;
+	int * pathFindAttemptCount;
+	int * pathFindRefTime;
+
 	float pathLength(Path *path); // note: unlike the ToEE function, returns a float (and NOT to the FPU!)
 	bool pathQueryResultIsValid(PathQueryResult *pqr);
 
@@ -136,6 +186,9 @@ struct Pathfinding : temple::AddressTable {
 	bool (__cdecl *FindPath)(PathQuery *query, PathQueryResult *result);
 	void (__cdecl *ToEEpathDistBtwnToAndFrom)(Path *path); // outputs to FPU (st0);  apparently distance in feet (since it divides by 12)
 	objHndl(__cdecl * canPathToParty)(objHndl objHnd);
+	BOOL PathStraightLineIsClear(PathQueryResult* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo);
+	int GetDirection(int a1, int a2, int a3);
+	int FindPathShortDistance(PathQuery * pq, PathQueryResult * pqr);
 	PathQueryResult * pathQArray;
 	uint32_t * pathSthgFlag_10B3D5C8;
 
@@ -146,3 +199,4 @@ extern Pathfinding pathfindingSys;
 
 
 uint32_t _ShouldUsePathnodesUsercallWrapper();
+int _FindPathShortDistance(PathQuery * pq, PathQueryResult * pqr);

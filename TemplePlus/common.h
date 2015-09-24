@@ -78,7 +78,24 @@ struct locXY {
 			locy * INCH_PER_TILE + offsetY
 		};
 	}
+};
 
+struct Subtile // every tile is subdivided into 3x3 subtiles
+{
+	int32_t x;
+	int32_t y;
+
+	static Subtile fromField(int64_t location) {
+		return *(Subtile*)&location;
+	}
+
+	int64_t ToField() {
+		return *((int64_t*)this);
+	}
+
+	operator int64_t() const {
+		return *(int64_t*)this;
+	}
 };
 
 struct LocAndOffsets {
