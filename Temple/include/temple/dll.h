@@ -20,6 +20,8 @@ namespace temple {
 		
 	class Dll {
 	public:
+		~Dll();
+
 		void* GetAddress(uint32_t vanillaAddress) const;
 
 		void Load(const std::wstring &installationPath);
@@ -27,13 +29,15 @@ namespace temple {
 
 		bool HasBeenRebased();
 		std::wstring FindConflictingModule();
-		
+		void ReserveMemoryRange();
+
 		static Dll& GetInstance();
 
 		static void RegisterAddressPtr(void** ref);
 				
 	private:
 		std::shared_ptr<class DllImpl> mImpl;
+		void *mReservedMem;
 	};
 
 	struct AddressTable
