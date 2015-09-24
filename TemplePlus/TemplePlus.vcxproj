@@ -36,6 +36,7 @@
     <ClCompile Include="hotkeys.cpp" />
     <ClCompile Include="location.cpp" />
     <ClCompile Include="maps.cpp" />
+    <ClCompile Include="obj_iterator.cpp" />
     <ClCompile Include="particles.cpp" />
     <ClCompile Include="python\python_areas.cpp" />
     <ClCompile Include="python\python_cheats.cpp" />
@@ -195,6 +196,7 @@
     <ClInclude Include="location.h" />
     <ClInclude Include="maps.h" />
     <ClInclude Include="objlist.h" />
+    <ClInclude Include="obj_iterator.h" />
     <ClInclude Include="particles.h" />
     <ClInclude Include="gamelib_private.h" />
     <ClInclude Include="python\python_areas.h" />
