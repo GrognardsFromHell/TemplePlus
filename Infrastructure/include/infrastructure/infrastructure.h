@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "../gsl/gsl.h"
+
 #include "exception.h"
 #include "format.h"
 #include "mathutil.h"

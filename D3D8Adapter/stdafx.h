@@ -5,8 +5,9 @@
 
 #pragma once
 
+#include "infrastructure/infrastructure.h"
+
 #include "targetver.h"
 #include "d3d.h"
 
-#include "infrastructure/infrastructure.h"
 

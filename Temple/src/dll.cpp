@@ -13,6 +13,7 @@
 namespace temple {
 
 	constexpr uint32_t defaultBaseAddr = 0x10000000;
+	constexpr uint32_t defaultImageSize = 0x1EB717E;
 
 	// Helper function that will identify when a function pointer is 
 	// called before the DLL has been loaded
@@ -61,7 +62,7 @@ namespace temple {
 
 	class DllImpl {
 	public:
-		DllImpl(const std::wstring& installationDir);
+		explicit DllImpl(const std::wstring& installationDir);
 		~DllImpl();
 		
 		void* GetAddress(uint32_t vanillaAddress) const;
@@ -127,6 +128,12 @@ namespace temple {
 		return sInstance;
 	}
 
+	Dll::~Dll() {
+		if (mReservedMem) {
+			VirtualFree(mReservedMem, 0, MEM_RELEASE);
+		}
+	}
+
 	void* Dll::GetAddress(uint32_t vanillaAddress) const {
 		if (!mImpl) {
 			throw TempleException("Trying to get an address ({}) before the DLL has "
@@ -139,6 +146,12 @@ namespace temple {
 	void Dll::Load(const std::wstring& installationPath) {
 		if (mImpl) {
 			throw TempleException("DLL has already been loaded");
+		}
+
+		// Free the reserved memory
+		if (mReservedMem) {
+			VirtualFree(mReservedMem, 0, MEM_RELEASE);
+			mReservedMem = nullptr;
 		}
 
 		mImpl = std::make_shared<DllImpl>(installationPath);
@@ -187,6 +200,21 @@ namespace temple {
 		CloseHandle(hProcess);
 
 		return conflicting;
+	}
+
+	void Dll::ReserveMemoryRange() {
+		if (mReservedMem) {
+			throw TempleException("Memory has already been reserved.");
+		}
+		if (mImpl) {
+			throw TempleException("DLL has already been loaded.");
+		}
+
+		mReservedMem = VirtualAlloc(reinterpret_cast<void*>(defaultBaseAddr), 
+			defaultImageSize,
+			MEM_RESERVE, 
+			PAGE_NOACCESS);
+
 	}
 
 	void Dll::RegisterAddressPtr(void** ref) {

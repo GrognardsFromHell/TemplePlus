@@ -146,7 +146,12 @@
     <ClInclude Include="breakpad\scoped_ptr.h" />
     <ClInclude Include="breakpad\string_utils-inl.h" />
     <ClInclude Include="breakpad\exception_handler.h" />
+    <ClInclude Include="include\gsl\array_view.h" />
+    <ClInclude Include="include\gsl\fail_fast.h" />
+    <ClInclude Include="include\gsl\gsl.h" />
+    <ClInclude Include="include\gsl\string_view.h" />
     <ClInclude Include="include\infrastructure\breakpad.h" />
+    <ClInclude Include="include\infrastructure\crypto.h" />
     <ClInclude Include="include\infrastructure\elfhash.h" />
     <ClInclude Include="include\infrastructure\exception.h" />
     <ClInclude Include="include\infrastructure\format.h" />
@@ -196,6 +201,7 @@
     <ClCompile Include="breakpad\crash_generation_client.cc" />
     <ClCompile Include="breakpad\exception_handler.cc" />
     <ClCompile Include="breakpad\guid_string.cc" />
+    <ClCompile Include="crypto.cpp" />
     <ClCompile Include="format.cc" />
     <ClCompile Include="elfhash.cpp" />
     <ClCompile Include="json11.cpp" />

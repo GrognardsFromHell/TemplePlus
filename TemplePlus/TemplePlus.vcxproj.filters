@@ -270,6 +270,8 @@
     <ClCompile Include="legacyrenderstates.cpp" />
     <ClCompile Include="obj_iterator.cpp" />
     <ClCompile Include="startup\installationdir.cpp" />
+    <ClCompile Include="startup\installationdirpicker.cpp" />
+    <ClCompile Include="startup\installationdirs.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -527,6 +529,8 @@
     <ClInclude Include="obj_iterator.h" />
     <ClInclude Include="startup\installationdir.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="startup\installationdirpicker.h" />
+    <ClInclude Include="startup\installationdirs.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

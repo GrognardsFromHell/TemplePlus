@@ -1,25 +1,32 @@
 #include "stdafx.h"
 
-#include <infrastructure/stringutil.h>
+#include <infrastructure/breakpad.h>
 
 #include "temple_functions.h"
 #include "util/fixes.h"
 #include "util/config.h"
-#include <infrastructure/breakpad.h>
 #include "startup/installationdir.h"
+#include "startup/installationdirs.h"
+#include "startup/installationdirpicker.h"
 
 void InitLogging();
 
 // Defined in temple_main.cpp for now
 int TempleMain(HINSTANCE hInstance, const string& commandLine);
 
-static wstring GetInstallationDir();
+InstallationDir GetInstallationDir(Guide::not_null<bool*> userCancelled);
+void ShowIncompatibilityWarning(const InstallationDir& dir);
 
+// This is required to get "new style" common dialogs like message boxes
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int showCmd) {
+
+	// We reserve space for temple.dll as early as possible to avoid rebasing of temple.dll
+	auto& dll = temple::Dll::GetInstance();
+	dll.ReserveMemoryRange();
 
 	Breakpad breakpad;
 
@@ -33,23 +40,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	logger->info("Commit: {}", GetTemplePlusCommitId());
 
 	try {
-		auto toeeDir = GetInstallationDir();
+		bool userCancelled;
+		auto toeeDir = GetInstallationDir(&userCancelled);
 
-		auto& dll = temple::Dll::GetInstance();
-		dll.Load(toeeDir);
+		if (userCancelled) {
+			return 0; // Not an error, the user cancelled
+		}
+
+		dll.Load(toeeDir.GetDirectory());
 
 		if (dll.HasBeenRebased()) {
 			auto moduleName = dll.FindConflictingModule();
 			auto msg = format(L"Module '{}' caused temple.dll to be loaded at a different address than usual.\n"
 			                  L"This will most likely lead to crashes.", moduleName);
 			MessageBox(nullptr, msg.c_str(), L"Module Conflict", MB_OK | MB_ICONWARNING);
-		}
-
-		if (!SetCurrentDirectory(toeeDir.c_str())) {
-			logger->error("Unable to change current working directory!");
-		}
-		if (!SetDllDirectory(toeeDir.c_str())) {
-			logger->error("Unable to change DLL search directory.");
 		}
 
 		init_hooks();
@@ -69,25 +73,45 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 }
 
-wstring GetInstallationDir() {
-	wstring toeeDir;
-	InstallationDir dir;
+// Shows a warning if the given ToEE installation may be incompatible
+static void ShowIncompatibilityWarning(const InstallationDir& dir) {
+
+	if (!dir.IsSupportedDllVersion()) {
+		auto msg = L"An unknown game version was encountered. Please use the GOG.com version or "
+			L"apply the Circle of Eight Modpack (www.co8.org).";
+		auto title = L"Temple of Elemental Evil - Installation Directory";
+		MessageBox(nullptr, msg, title, MB_OK | MB_ICONWARNING);
+	}
+
+}
+
+InstallationDir GetInstallationDir(Guide::not_null<bool*> userCancelled) {
+	*userCancelled = false;
+
 	if (!config.toeeDir.empty()) {
-		toeeDir = utf8_to_ucs2(config.toeeDir);
-		if (dir.Validate(toeeDir)) {
-			return dir.Normalize(toeeDir);
+		InstallationDir configuredDir(config.toeeDir);
+		if (configuredDir.IsUsable()) {
+			return configuredDir;
 		}
 	}
 
-	auto toeeDirs = dir.FindInstallations();
+	auto toeeDirs = InstallationDirs::FindInstallations();
+
+	InstallationDir toeeDir;
 	if (toeeDirs.empty()) {
-		throw TempleException("A Temple of Elemental Evil installation could not be found.");
+		// None could be found automatically, let the user pick
+		toeeDir = InstallationDirPicker::Pick(userCancelled);
+	} else {
+		toeeDir = toeeDirs[0];
 	}
 
-	config.toeeDir = ucs2_to_utf8(toeeDirs[0]);
-	config.Save();
+	// Save the new directory only if the user didn't cancel selection
+	if (!*userCancelled) {
+		ShowIncompatibilityWarning(toeeDir);
+		config.toeeDir = toeeDir.GetDirectory();
+		config.Save();
+	}
 
-	toeeDir = toeeDirs[0];
-	logger->info("Using ToEE installation @ {}", ucs2_to_utf8(toeeDir));
 	return toeeDir;
+
 }
