@@ -30,7 +30,7 @@ enum PathQueryFlags : uint32_t {
 	PQF_HAS_CRITTER = 2,
 
 	/*
-		if not set, then sets field28 to 200 initially
+		if not set, then sets maxShortPathFindLength to 200 initially
 	*/
 	PQF_UNK1 = 4,
 
@@ -73,7 +73,7 @@ enum PathQueryFlags : uint32_t {
 	// pathQ.flags = (PathQueryFlags)0x23803;
 	//	PQF_TO_EXACT = 1
 	//  PQF_HAS_CRITTER = 1
-	//  PQF_UNK1 = 0 // (0x4) if not set, then sets field28 to 200 initially
+	//  PQF_UNK1 = 0 // (0x4) if not set, then sets maxShortPathFindLength to 200 initially
 	//	PQF_UNK2 = 0 // appears to indicate a straight line path from->to
 	/*
 	PQF_10 = 0
@@ -117,7 +117,7 @@ struct PathQuery {
 	int field_4;
 	LocAndOffsets from;
 	LocAndOffsets to;
-	int field28;
+	int maxShortPathFindLength;
 	int field2c;
 	objHndl critter;  // Set PQF_HAS_CRITTER
 	objHndl targetObj; // Set PQF_TARGET_OBJ

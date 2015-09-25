@@ -19,7 +19,7 @@ public:
 	void apply() override 
 	{
 		 replaceFunction(0x10040520, _ShouldUsePathnodesUsercallWrapper); 
-		 replaceFunction(0x10041730, _FindPathShortDistance);
+		 //replaceFunction(0x10041730, _FindPathShortDistance);
 	}
 } pathFindingReplacements;
 
@@ -193,7 +193,9 @@ int Pathfinding::GetDirection(int idx1, int n, int idx2)
 }
 
 int Pathfinding::FindPathShortDistance(PathQuery* pq, PathQueryResult* pqr)
-{
+{ // uses a form of A*
+	// pathfinding heuristic:
+	// taxicab metric h(dx,dy)=max(dx, dy), wwhere  dx,dy is the subtile difference
 	int referenceTime = 0;
 	Subtile fromSubtile;
 	Subtile toSubtile;
@@ -211,7 +213,7 @@ int Pathfinding::FindPathShortDistance(PathQuery* pq, PathQueryResult* pqr)
 		fromSubtile.y = 20;
 		toSubtile.x = 25;
 		toSubtile.y= 20;
-		pqLocal.field28 = 200;
+		pqLocal.maxShortPathFindLength = 200;
 		pq = &pqLocal;
 	}
 
@@ -276,174 +278,161 @@ int Pathfinding::FindPathShortDistance(PathQuery* pq, PathQueryResult* pqr)
 	halfDeltaShiftedY = lowerSubtileY + deltaSubtileY / 2 - 64;
 
 	int idxMinus0 = fromSubtileX - halfDeltaShiftedX + ((fromSubtileY - halfDeltaShiftedY) << 7);
-	int idxPlus0  = toSubtileX - halfDeltaShiftedX + ((toSubtileY - halfDeltaShiftedY) << 7);
+	int idxTarget  = toSubtileX - halfDeltaShiftedX + ((toSubtileY - halfDeltaShiftedY) << 7);
 	
-	int idxPlusX = idxPlus0 % 128;
-	int idxPlusY = idxPlus0 / 128;
+	int idxTgtX = idxTarget % 128;
+	int idxTgtY = idxTarget / 128;
 
 	struct PathSubtile
 	{
-		int idx;
+		int length;
 		int refererIdx;
-		int field8;
-		int fieldC;
+		int idxPreviousChain; // is actually +1 (0 means none); i.e. subtract 1 to get the actual idx
+		int idxNextChain; // same as above
 	};
-	PathSubtile pathSubtileMat[128 * 128];
-	memset(pathSubtileMat, 0, sizeof(pathSubtileMat));
+	PathSubtile pathFindAstar[128 * 128];
+	memset(pathFindAstar, 0, sizeof(pathFindAstar));
 
-	pathSubtileMat[idxMinus0].idx = 1;
-	pathSubtileMat[idxMinus0].refererIdx = -1;
+	pathFindAstar[idxMinus0].length = 1;
+	pathFindAstar[idxMinus0].refererIdx = -1;
 
 
-	int idx1 = idxMinus0;
-	int idx2 = idxMinus0;
+	int lastChainIdx = idxMinus0;
+	int firstChainIdx = idxMinus0;
 	int deltaIdxX;
-	int deltaIdxY;
+	int distanceMetric;
 	
-	int v17;
+	int refererIdx;
 	int curIdx;
-	int v21;
-	int v22;
-	int v23;
-	int v24;
+	int heuristic;
+	int minHeuristic = 0x7FFFffff;
+	int idxPrevChain;
+	int idxNextChain;
 	int v25;
 	int v26;
-	Subtile v27;
-	int v30;
-	int v31;
-	int v32;
-	int v33;
+	Subtile _fromsubtile;
+	int shiftedXidx;
+	int shiftedYidx;
+	int newIdx;
 	int v34;
 	int v35;
 	int v39;
 	int directionsCount;
-	int direction;
-	int _direction;
-	int v54;
-	int fieldC;
+
+
 	if (idxMinus0 == -1)
 		goto LABEL_74;
 
 	while(1)
 	{
-		v17 = -1;
+		refererIdx = -1;
 		curIdx = idxMinus0;
-		do
+		do // loop over the chain to find the node with minimal heuristic; initially the chain is just the "from" node
 		{
-			deltaIdxX = abs(curIdx % 128 - idxPlusX);
-			deltaIdxY = abs(curIdx / 128 - idxPlusY);
-			if (deltaIdxX > deltaIdxY)
-				deltaIdxY = deltaIdxX;
-			v21 = curIdx;
-			v22 = pathSubtileMat[curIdx].idx + 10 * deltaIdxY;
-			if ( (v22/10) <= pq->field28)
+			deltaIdxX = abs(curIdx % 128 - idxTgtX);
+			distanceMetric = abs(curIdx / 128 - idxTgtY);
+			if (deltaIdxX > distanceMetric)
+				distanceMetric = deltaIdxX;
+
+			heuristic = pathFindAstar[curIdx].length + 10 * distanceMetric;
+			if ( (heuristic/10) <= pq->maxShortPathFindLength)
 			{
-				if (v17 == -1 || v22 < deltaSubtileY)
+				if (refererIdx == -1 || heuristic < minHeuristic)
 				{
-					deltaSubtileY = pathSubtileMat[curIdx].idx + 10 * deltaIdxY;
-					v17 = curIdx;
+					minHeuristic = pathFindAstar[curIdx].length + 10 * distanceMetric;
+					refererIdx = curIdx;
 				}
-				fieldC = pathSubtileMat[v21].fieldC;
+				idxNextChain = pathFindAstar[curIdx].idxNextChain;
 			} else
 			{
-				v23 = pathSubtileMat[v21].field8;
-				pathSubtileMat[v21].idx = 0x80000000;
-				if (v23)
-					pathSubtileMat[v23 - 1].fieldC = pathSubtileMat[v21].fieldC;
+				idxPrevChain = pathFindAstar[curIdx].idxPreviousChain;
+				pathFindAstar[curIdx].length = 0x80000000;
+				if (idxPrevChain)
+					pathFindAstar[idxPrevChain - 1].idxNextChain = pathFindAstar[curIdx].idxNextChain;
 				else
-					idx2 = pathSubtileMat[v21].fieldC - 1;
-				v24 = pathSubtileMat[v21].fieldC;
-				if (v24)
-					pathSubtileMat[v24 - 1].field8 = pathSubtileMat[v21].field8;
+					firstChainIdx = pathFindAstar[curIdx].idxNextChain - 1;
+				idxNextChain = pathFindAstar[curIdx].idxNextChain;
+				if (idxNextChain)
+					pathFindAstar[idxNextChain - 1].idxPreviousChain = pathFindAstar[curIdx].idxPreviousChain;
 				else
-					idx1 = pathSubtileMat[v21].field8 - 1;
-				fieldC = pathSubtileMat[v21].fieldC;
-				pathSubtileMat[v21].field8 = 0;
-				pathSubtileMat[v21].fieldC = 0;
+					lastChainIdx = pathFindAstar[curIdx].idxPreviousChain - 1;
+				pathFindAstar[curIdx].idxPreviousChain = 0;
+				pathFindAstar[curIdx].idxNextChain = 0;
 			}
-			curIdx = fieldC - 1;
+			curIdx = idxNextChain - 1;
 		} while (curIdx >= 0);
-		v54 = v17;
-		if (v17 == -1)
-			goto LABEL_74;
-		if (v17 == idxPlus0) break;
-		v27.x = halfDeltaShiftedX + v17 % 128;
-		v27.y = halfDeltaShiftedY + v17 / 128;
-		direction = 0;
-		_fromSubtile = v27;
-		_direction = 0;
-		while (1)
-		{
-			if (!locSys.ShiftSubtileOnceByDirection(v27, direction, &shiftedSubtile))
-				goto LABEL_66;
-			_toSubtile = shiftedSubtile;
-			v30 = shiftedSubtile.x - halfDeltaShiftedX;
-			v31 = shiftedSubtile.y - halfDeltaShiftedY;
-			if (v30 < 0 || v30 >= 128
-				|| v31 < 0 || v31 >= 128
-				|| (v32 = v30 + (v31 << 7), v33 = v32,
-					pathSubtileMat[v32].idx == 0x80000000))
-			{
-				v17 = v54;
-			}
-			else
-			{
-				LocAndOffsets subPathFrom;
-				LocAndOffsets subPathTo;
-				locSys.SubtileToLocAndOff(_fromSubtile, &subPathFrom);
-				locSys.SubtileToLocAndOff(_toSubtile, &subPathTo);
-				v17 = v54;
-				if (!PathStraightLineIsClear(pqr, pq, subPathFrom, subPathTo))
-					goto LABEL_66;
-				int v36 = pathSubtileMat[v33].idx;
-				int v37 = pathSubtileMat[v54].idx - 4 * (_direction % 2) + 14;
-				int v38 = v36 == 0;
-				if (v36 < 0)
-				{
-					if (-v36 <= v37)
-						goto LABEL_66;
-				}
-				if (v36 <= 0 || v36 > v37)
-				{
-					pathSubtileMat[v33].idx = v37;
-					pathSubtileMat[v33].refererIdx = v54;
-					if (!pathSubtileMat[v33].field8 && !pathSubtileMat[v33].fieldC)
-					{
-						pathSubtileMat[idx1].fieldC = v32 + 1;
-						pathSubtileMat[v33].field8 = idx1 + 1;
-						pathSubtileMat[v33].fieldC = 0;
-						idx1 = v30 + (v31 << 7);
-					}
 
-				}
-			}
-		LABEL_66: direction = _direction + 1;
-			if (!(++_direction <= 7))
-				break;
-			v27 = _fromSubtile;
-		}
-		pathSubtileMat[v17].idx = -pathSubtileMat[v17].idx;
-		if (pathSubtileMat[v17].field8)
+		if (refererIdx == -1)
+			goto LABEL_74;
+		if (refererIdx == idxTarget) break;
+		_fromsubtile.x = halfDeltaShiftedX + (refererIdx % 128);
+		_fromsubtile.y = halfDeltaShiftedY + (refererIdx / 128);
+
+		// loop over all possible directions for better path
+		for (auto direction = 0; direction < 8 ; direction++)
 		{
-			pathSubtileMat[v17 - 1].fieldC = pathSubtileMat[v17].fieldC;
-			idxMinus0 = idx2;
+			if (!locSys.ShiftSubtileOnceByDirection(_fromsubtile, direction, &shiftedSubtile))
+				continue;
+			_toSubtile = shiftedSubtile;
+			shiftedXidx = shiftedSubtile.x - halfDeltaShiftedX;
+			shiftedYidx = shiftedSubtile.y - halfDeltaShiftedY;
+			if (shiftedXidx >= 0 && shiftedXidx < 128
+				&& shiftedYidx >= 0 && shiftedYidx < 128)
+				newIdx = shiftedXidx + (shiftedYidx << 7);
+			else
+				continue;
+
+			if (pathFindAstar[newIdx].length == 0x80000000)
+				continue;
+			
+			LocAndOffsets subPathFrom;
+			LocAndOffsets subPathTo;
+			locSys.SubtileToLocAndOff(_fromSubtile, &subPathFrom);
+			locSys.SubtileToLocAndOff(_toSubtile, &subPathTo);
+
+			if (!PathStraightLineIsClear(pqr, pq, subPathFrom, subPathTo))
+				continue;
+			int oldLength = pathFindAstar[newIdx].length;
+			int newLength = pathFindAstar[refererIdx].length + 14 - 4 * (direction % 2) ; // +14 for diagonal, +10 for straight
+
+			if (abs(oldLength) > newLength)
+			{
+				pathFindAstar[newIdx].length = newLength;
+				pathFindAstar[newIdx].refererIdx = refererIdx;
+				if (!pathFindAstar[newIdx].idxPreviousChain && !pathFindAstar[newIdx].idxNextChain)
+				{
+					pathFindAstar[lastChainIdx].idxNextChain = newIdx + 1;
+					pathFindAstar[newIdx].idxPreviousChain = lastChainIdx + 1;
+					pathFindAstar[newIdx].idxNextChain = 0;
+					lastChainIdx = shiftedXidx + (shiftedYidx << 7);
+				}
+
+			}
+			
+		}
+		pathFindAstar[refererIdx].length = -pathFindAstar[refererIdx].length;
+		if (pathFindAstar[refererIdx].idxPreviousChain)
+		{
+			pathFindAstar[refererIdx - 1].idxNextChain = pathFindAstar[refererIdx].idxNextChain;
+			idxMinus0 = firstChainIdx;
 		} else
 		{
-			idxMinus0 = pathSubtileMat[v17].fieldC - 1;
-			idx2 = idxMinus0;
+			idxMinus0 = pathFindAstar[refererIdx].idxNextChain - 1;
+			firstChainIdx = idxMinus0;
 		}
-		if (pathSubtileMat[v17].fieldC)
-			pathSubtileMat[pathSubtileMat[v17].fieldC - 1].field8 = pathSubtileMat[v17].field8;
+		if (pathFindAstar[refererIdx].idxNextChain)
+			pathFindAstar[pathFindAstar[refererIdx].idxNextChain - 1].idxPreviousChain 
+			 = pathFindAstar[refererIdx].idxPreviousChain;
 		else
-			idx1 = pathSubtileMat[v17].field8 - 1;
-		pathSubtileMat[v17].field8 = 0;
-		pathSubtileMat[v17].fieldC = 0;
+			lastChainIdx = pathFindAstar[refererIdx].idxPreviousChain - 1;
+		pathFindAstar[refererIdx].idxPreviousChain = 0;
+		pathFindAstar[refererIdx].idxNextChain = 0;
 		if (idxMinus0 == -1)
 			goto LABEL_74;
-		idxPlusX = idxPlus0 % 128;
+		idxTgtX = idxTarget % 128;
 	}
 
-	auto v47 = &pathSubtileMat[v17].refererIdx;
+	auto v47 = &pathFindAstar[refererIdx].refererIdx;
 	directionsCount = 0;
 	if (*v47 != -1)
 	{
@@ -452,25 +441,25 @@ int Pathfinding::FindPathShortDistance(PathQuery* pq, PathQueryResult* pqr)
 		do
 		{
 			v49 = *v47;
-			v50 = pathSubtileMat[v49].refererIdx;
-			v47 = &pathSubtileMat[v49].refererIdx;
+			v50 = pathFindAstar[v49].refererIdx;
+			v47 = &pathFindAstar[v49].refererIdx;
 			directionsCount++;
 				
 		} 
-		while (pathSubtileMat[*v47].refererIdx != -1);
+		while (pathFindAstar[*v47].refererIdx != -1);
 	}
 
-	if (directionsCount > pq->field28)
+	if (directionsCount > pq->maxShortPathFindLength)
 	{
 	LABEL_74: if (referenceTime)
 		*pathTimeCumulative += timeGetTime() - referenceTime;
 		return 0;
 	}
-	int v51 = idxPlus0;
-	auto v53 = &pathSubtileMat[v51].refererIdx;
+	int v51 = idxTarget;
+	auto v53 = &pathFindAstar[v51].refererIdx;
 	for (int i = directionsCount - 1; i >= 0; --i)
 	{
-		v53 = &pathSubtileMat[v51].refererIdx;
+		v53 = &pathFindAstar[v51].refererIdx;
 		pqr->field30[i] = GetDirection(*v53, 128, v51);
 		v51 = *v53;
 	}
