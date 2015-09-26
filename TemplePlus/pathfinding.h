@@ -40,7 +40,7 @@ enum PathQueryFlags : uint32_t {
 	PQF_10 = 0x10,
 	PQF_20 = 0x20,
 	PQF_40 = 0x40,
-	PQF_80 = 0x80, // path (pass) through critters apparently (maybe out of combat?)
+	PQF_IGNORE_CRITTERS = 0x80, // path (pass) through critters (flag is set when pathing out of combat)
 	PQF_100 = 0x100,
 	PQF_200 = 0x200,
 	PQF_400 = 0x400, // something to do with the type of object
@@ -79,7 +79,7 @@ enum PathQueryFlags : uint32_t {
 	PQF_10 = 0
 	PQF_20 = 0
 	PQF_40 = 0,
-	PQF_80 = 0 // path (pass) through critters apparently (gets set out of combat)
+	PQF_IGNORE_CRITTERS = 0 
 	PQF_100 = 0,
 	PQF_200 = 0,
 	PQF_400 = 0, // something to do with the type of object
@@ -144,7 +144,7 @@ struct Path {
 	LocAndOffsets from;
 	LocAndOffsets to;
 	objHndl mover;
-	int field30[50];
+	char directions[200];
 	int nodeCount3;
 	int initTo1;
 	int field100[800];

@@ -19,7 +19,7 @@ public:
 	void apply() override 
 	{
 		 replaceFunction(0x10040520, _ShouldUsePathnodesUsercallWrapper); 
-		 //replaceFunction(0x10041730, _FindPathShortDistance);
+		 replaceFunction(0x10041730, _FindPathShortDistance);
 	}
 } pathFindingReplacements;
 
@@ -108,7 +108,7 @@ BOOL Pathfinding::PathStraightLineIsClear(PathQueryResult* pqr, PathQuery* pq, L
 	{
 		objIt.flags = (ObjIteratorFlags)((int)objIt.flags | 6);
 		objIt.performer = pqr->mover;
-		objIt.radius = objects.GetRadius(pqr->mover) * 0.7;
+		objIt.radius = objects.GetRadius(pqr->mover) * (float)0.7;
 	}
 	if (objIt.TargettingSthg_100BACE0())
 	{
@@ -124,7 +124,7 @@ BOOL Pathfinding::PathStraightLineIsClear(PathQueryResult* pqr, PathQuery* pq, L
 				{
 					if (objType != obj_t_pc && objType != obj_t_npc)
 						break;
-					if (pathFlags & PQF_80 == 0 && objects.IsUnconscious(objIt.results[i].obj))
+					if ( !(pathFlags & PQF_IGNORE_CRITTERS) && !objects.IsUnconscious(objIt.results[i].obj))
 					{
 						if (!pqr->mover)
 							break;
@@ -134,6 +134,11 @@ BOOL Pathfinding::PathStraightLineIsClear(PathQueryResult* pqr, PathQuery* pq, L
 				}
 			}
 			++i;
+			if (i > 1)
+			{
+				int dummy = 1;
+			}
+				
 			if (i >= objIt.resultCount)
 				goto LABEL_19;
 		}
@@ -143,26 +148,26 @@ BOOL Pathfinding::PathStraightLineIsClear(PathQueryResult* pqr, PathQuery* pq, L
 	return result;
 }
 
-int Pathfinding::GetDirection(int idx1, int n, int idx2)
+int Pathfinding::GetDirection(int idxFrom, int n, int idxTo)
 {
 	int deltaX; 
 	int deltaY; 
 	int result; 
 
-	deltaX = idx2 % n - idx1 % n;
-	deltaY = idx2 / n - idx1 / n;
+	deltaX = idxTo % n - idxFrom % n;
+	deltaY = idxTo / n - idxFrom / n;
 	if (deltaY >= 0)
 	{
 		if (deltaX >= 0)
 		{
 			if (deltaY <= 0)
 			{
-				if (deltaY > -1)
+				if (deltaY >=0 )
 					result = (deltaY < 1) + 4;
 				else
 					result = 6;
 			}
-			else if (deltaX > -1)
+			else if (deltaX >= 0 )
 			{
 				result = (deltaX >= 1) + 3;
 			}
@@ -171,7 +176,7 @@ int Pathfinding::GetDirection(int idx1, int n, int idx2)
 				result = 2;
 			}
 		}
-		else if (deltaY > -1)
+		else if (deltaY >= 0)
 		{
 			result = (deltaY >= 1) + 1;
 		}
@@ -183,7 +188,7 @@ int Pathfinding::GetDirection(int idx1, int n, int idx2)
 	else
 	{
 		result = 0;
-		if (deltaX > -1)
+		if (deltaX >= 0)
 		{
 			result = deltaX < 1;
 			result += 6;
@@ -200,22 +205,11 @@ int Pathfinding::FindPathShortDistance(PathQuery* pq, PathQueryResult* pqr)
 	Subtile fromSubtile;
 	Subtile toSubtile;
 	Subtile _fromSubtile;
-	Subtile _toSubtile;
 	Subtile shiftedSubtile;
-	PathQuery pqLocal; // for testing
-	if (pqr)
-	{
-		fromSubtile = fromSubtile.fromField( locSys.subtileFromLoc(&pqr->from));
-		toSubtile = toSubtile.fromField(locSys.subtileFromLoc(&pqr->to));
-	} else //  TESTING
-	{
-		fromSubtile.x = 20;
-		fromSubtile.y = 20;
-		toSubtile.x = 25;
-		toSubtile.y= 20;
-		pqLocal.maxShortPathFindLength = 200;
-		pq = &pqLocal;
-	}
+	
+	fromSubtile = fromSubtile.fromField( locSys.subtileFromLoc(&pqr->from));
+	toSubtile = toSubtile.fromField(locSys.subtileFromLoc(&pqr->to));
+
 
 	if (pq->critter)
 	{
@@ -226,7 +220,9 @@ int Pathfinding::FindPathShortDistance(PathQuery* pq, PathQueryResult* pqr)
 			{
 				attemptCount = *pathFindAttemptCount;
 				if (*pathFindAttemptCount > 10 || *pathTimeCumulative > 250)
+				{
 					return 0;
+				}
 			} else
 			{
 				*pathFindRefTime = timeGetTime();
@@ -308,16 +304,12 @@ int Pathfinding::FindPathShortDistance(PathQuery* pq, PathQueryResult* pqr)
 	int minHeuristic = 0x7FFFffff;
 	int idxPrevChain;
 	int idxNextChain;
-	int v25;
-	int v26;
-	Subtile _fromsubtile;
+
 	int shiftedXidx;
 	int shiftedYidx;
 	int newIdx;
-	int v34;
-	int v35;
-	int v39;
-	int directionsCount;
+
+
 
 
 	if (idxMinus0 == -1)
@@ -365,20 +357,20 @@ int Pathfinding::FindPathShortDistance(PathQuery* pq, PathQueryResult* pqr)
 		if (refererIdx == -1)
 			goto LABEL_74;
 		if (refererIdx == idxTarget) break;
-		_fromsubtile.x = halfDeltaShiftedX + (refererIdx % 128);
-		_fromsubtile.y = halfDeltaShiftedY + (refererIdx / 128);
+		_fromSubtile.x = halfDeltaShiftedX + (refererIdx % 128);
+		_fromSubtile.y = halfDeltaShiftedY + (refererIdx / 128);
 
 		// loop over all possible directions for better path
 		for (auto direction = 0; direction < 8 ; direction++)
 		{
-			if (!locSys.ShiftSubtileOnceByDirection(_fromsubtile, direction, &shiftedSubtile))
+			if (!locSys.ShiftSubtileOnceByDirection(_fromSubtile, direction, &shiftedSubtile))
 				continue;
-			_toSubtile = shiftedSubtile;
 			shiftedXidx = shiftedSubtile.x - halfDeltaShiftedX;
 			shiftedYidx = shiftedSubtile.y - halfDeltaShiftedY;
-			if (shiftedXidx >= 0 && shiftedXidx < 128
-				&& shiftedYidx >= 0 && shiftedYidx < 128)
+			if (shiftedXidx >= 0 && shiftedXidx < 128 && shiftedYidx >= 0 && shiftedYidx < 128)
+			{
 				newIdx = shiftedXidx + (shiftedYidx << 7);
+			}
 			else
 				continue;
 
@@ -388,32 +380,33 @@ int Pathfinding::FindPathShortDistance(PathQuery* pq, PathQueryResult* pqr)
 			LocAndOffsets subPathFrom;
 			LocAndOffsets subPathTo;
 			locSys.SubtileToLocAndOff(_fromSubtile, &subPathFrom);
-			locSys.SubtileToLocAndOff(_toSubtile, &subPathTo);
+			locSys.SubtileToLocAndOff(shiftedSubtile, &subPathTo);
 
 			if (!PathStraightLineIsClear(pqr, pq, subPathFrom, subPathTo))
 				continue;
 			int oldLength = pathFindAstar[newIdx].length;
 			int newLength = pathFindAstar[refererIdx].length + 14 - 4 * (direction % 2) ; // +14 for diagonal, +10 for straight
 
-			if (abs(oldLength) > newLength)
+			if (oldLength == 0 || abs(oldLength) > newLength)
 			{
 				pathFindAstar[newIdx].length = newLength;
 				pathFindAstar[newIdx].refererIdx = refererIdx;
-				if (!pathFindAstar[newIdx].idxPreviousChain && !pathFindAstar[newIdx].idxNextChain)
+				if (!pathFindAstar[newIdx].idxPreviousChain && !pathFindAstar[newIdx].idxNextChain) //  if node is not part of chain
 				{
 					pathFindAstar[lastChainIdx].idxNextChain = newIdx + 1;
 					pathFindAstar[newIdx].idxPreviousChain = lastChainIdx + 1;
 					pathFindAstar[newIdx].idxNextChain = 0;
-					lastChainIdx = shiftedXidx + (shiftedYidx << 7);
+					lastChainIdx = newIdx;
 				}
 
 			}
 			
 		}
 		pathFindAstar[refererIdx].length = -pathFindAstar[refererIdx].length;
-		if (pathFindAstar[refererIdx].idxPreviousChain)
+		idxPrevChain = pathFindAstar[refererIdx].idxPreviousChain - 1;
+		if (idxPrevChain != -1)
 		{
-			pathFindAstar[refererIdx - 1].idxNextChain = pathFindAstar[refererIdx].idxNextChain;
+			pathFindAstar[idxPrevChain].idxNextChain = pathFindAstar[refererIdx].idxNextChain;
 			idxMinus0 = firstChainIdx;
 		} else
 		{
@@ -432,22 +425,16 @@ int Pathfinding::FindPathShortDistance(PathQuery* pq, PathQueryResult* pqr)
 		idxTgtX = idxTarget % 128;
 	}
 
-	auto v47 = &pathFindAstar[refererIdx].refererIdx;
-	directionsCount = 0;
-	if (*v47 != -1)
+
+	// count the directions
+	auto refIdx = &pathFindAstar[refererIdx].refererIdx;
+	int directionsCount = 0;
+	while( *refIdx != -1)
 	{
-		int v50;
-		auto v49 = *v47;
-		do
-		{
-			v49 = *v47;
-			v50 = pathFindAstar[v49].refererIdx;
-			v47 = &pathFindAstar[v49].refererIdx;
-			directionsCount++;
-				
-		} 
-		while (pathFindAstar[*v47].refererIdx != -1);
+		directionsCount++;
+		refIdx = &pathFindAstar[*refIdx].refererIdx;
 	}
+	
 
 	if (directionsCount > pq->maxShortPathFindLength)
 	{
@@ -455,13 +442,13 @@ int Pathfinding::FindPathShortDistance(PathQuery* pq, PathQueryResult* pqr)
 		*pathTimeCumulative += timeGetTime() - referenceTime;
 		return 0;
 	}
-	int v51 = idxTarget;
-	auto v53 = &pathFindAstar[v51].refererIdx;
+	int lastIdx = idxTarget;
+	refIdx = &pathFindAstar[lastIdx].refererIdx;
 	for (int i = directionsCount - 1; i >= 0; --i)
 	{
-		v53 = &pathFindAstar[v51].refererIdx;
-		pqr->field30[i] = GetDirection(*v53, 128, v51);
-		v51 = *v53;
+		refIdx = &pathFindAstar[lastIdx].refererIdx;
+		pqr->directions[i] = GetDirection(*refIdx, 128, lastIdx);
+		lastIdx = *refIdx;
 	}
 	if (pq->flags & PQF_10)
 		--directionsCount;
