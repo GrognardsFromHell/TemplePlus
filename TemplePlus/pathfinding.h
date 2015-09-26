@@ -186,7 +186,8 @@ struct Pathfinding : temple::AddressTable {
 	bool (__cdecl *FindPath)(PathQuery *query, PathQueryResult *result);
 	void (__cdecl *ToEEpathDistBtwnToAndFrom)(Path *path); // outputs to FPU (st0);  apparently distance in feet (since it divides by 12)
 	objHndl(__cdecl * canPathToParty)(objHndl objHnd);
-	BOOL PathStraightLineIsClear(PathQueryResult* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo);
+	BOOL PathStraightLineIsClear(PathQueryResult* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo); // including static obstacles it seems
+	BOOL PathStraightLineIsClearOfStaticObstacles(PathQueryResult* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo);
 	int GetDirection(int a1, int a2, int a3);
 	int FindPathShortDistance(PathQuery * pq, PathQueryResult * pqr);
 	PathQueryResult * pathQArray;

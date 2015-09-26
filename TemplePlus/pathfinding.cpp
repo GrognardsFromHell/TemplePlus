@@ -148,6 +148,29 @@ BOOL Pathfinding::PathStraightLineIsClear(PathQueryResult* pqr, PathQuery* pq, L
 	return result;
 }
 
+BOOL Pathfinding::PathStraightLineIsClearOfStaticObstacles(PathQueryResult* pqr, PathQuery* pq, LocAndOffsets from, LocAndOffsets to)
+{
+	BOOL result = 1;
+	ObjIterator objIt;
+	objIt.origin = from;
+	objIt.targetLoc = to;
+	objIt.flags = (ObjIteratorFlags)0x38;
+	objIt.radius = (float) 0.01;
+
+	if (objIt.TargettingSthg_100BACE0())
+	{
+		auto resultObj = objIt.results;
+		for (auto i = 0; i < objIt.resultCount; i++)
+		{
+			if (!objIt.results[i].obj
+				&& objIt.results[i].flags & 2)
+				return 0;
+		}
+	}
+
+	return result;
+}
+
 int Pathfinding::GetDirection(int idxFrom, int n, int idxTo)
 {
 	int deltaX; 
