@@ -147,7 +147,8 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(maxPCsFlexible),
 	CONF_BOOL(usingCo8),
 	CONF_BOOL(disableScreenshots),
-	CONF_WSTRING(toeeDir)
+	CONF_WSTRING(toeeDir),
+	CONF_INT(sectorCacheSize)
 };
 
 void TemplePlusConfig::Load() {

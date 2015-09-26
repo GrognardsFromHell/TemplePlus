@@ -272,6 +272,8 @@
     <ClCompile Include="startup\installationdir.cpp" />
     <ClCompile Include="startup\installationdirpicker.cpp" />
     <ClCompile Include="startup\installationdirs.cpp" />
+    <ClCompile Include="fixes\sector_cache_size.cpp" />
+    <ClCompile Include="fixes\light_load.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />

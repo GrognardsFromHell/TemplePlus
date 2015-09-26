@@ -40,9 +40,16 @@ protected:
 	void writeHex(uint32_t offset, const string &hexPattern);
 	void redirectCall(uint32_t offset, void* redirectTo);
 	void redirectJump(uint32_t offset, void* redirectTo);
-	void *replaceFunction(uint32_t offset, void *replaceWith);
+	
+	template<typename T>
+	T* replaceFunction(uint32_t offset, T* replaceWith) {
+		return (T*)replaceFunctionInternal(offset, replaceWith);
+	}
 	void writeCall(uint32_t offset, void* redirectTo);
 	void writeJump(uint32_t offset, void* redirectTo);
+
+private:
+	void *replaceFunctionInternal(uint32_t offset, void *replaceWith);
 };
 
 class TempleFixes {

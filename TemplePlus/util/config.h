@@ -35,6 +35,7 @@ struct TemplePlusConfig
 	int renderWidth = 1024;
 	int renderHeight = 768;
 	wstring toeeDir;
+	int sectorCacheSize = 128; // Default is 16
 
 	vector<string> additionalTioPaths; // Add these to the Python sys.path variable
 	
