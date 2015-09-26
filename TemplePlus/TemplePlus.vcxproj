@@ -30,7 +30,8 @@
     <ClCompile Include="d20_class.cpp" />
     <ClCompile Include="d20_level.cpp" />
     <ClCompile Include="d20_status.cpp" />
-    <ClCompile Include="fixes\light_load_fix.cpp" />
+    <ClCompile Include="fixes\light_load.cpp" />
+    <ClCompile Include="fixes\sector_cache_size.cpp" />
     <ClCompile Include="float_line.cpp" />
     <ClCompile Include="gameplay_configs.cpp" />
     <ClCompile Include="history.cpp" />
