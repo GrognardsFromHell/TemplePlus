@@ -109,7 +109,7 @@ struct Sector {
 
 #pragma pack(pop)
 
-static class SectorCacheFix : TempleFix {
+static class SectorLoadLightFix : TempleFix {
 public:
 	const char* name() override {
 		return "Fix for duplicate particle systems";
@@ -124,13 +124,13 @@ private:
 
 } sectorCacheFix;
 
-int (*SectorCacheFix::OrgReadLightFromDiff)(TioFile*, SectorLight**);
+int (*SectorLoadLightFix::OrgReadLightFromDiff)(TioFile*, SectorLight**);
 
-void SectorCacheFix::apply() {
+void SectorLoadLightFix::apply() {
 	OrgReadLightFromDiff = replaceFunction(0x100A8050, ReadLightFromDiff);
 }
 
-int SectorCacheFix::ReadLightFromDiff(TioFile* file, SectorLight** lightOut) {
+int SectorLoadLightFix::ReadLightFromDiff(TioFile* file, SectorLight** lightOut) {
 
 	/*
 		ToEE would let the light read from the original sector file leak,
