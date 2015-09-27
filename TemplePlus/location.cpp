@@ -5,6 +5,7 @@
 LocationSys locSys;
 
 const float PIXEL_PER_TILE = sqrt(800.0f);
+const float PIXEL_PER_TILE_HALF = PIXEL_PER_TILE / 2;
 
 float LocationSys::distBtwnLocAndOffs(LocAndOffsets loca, LocAndOffsets locb)
 {
@@ -17,6 +18,96 @@ float LocationSys::distBtwnLocAndOffs(LocAndOffsets loca, LocAndOffsets locb)
 	dx += (loca.off_x - locb.off_x) + intToFloat(dxi)*sqrt800;
 	dy += (loca.off_y - locb.off_y) + intToFloat(dyi)*sqrt800;
 	 return sqrt(pow(dx, 2) + pow(dy, 2)) ;
+}
+
+void LocationSys::RegularizeLoc(LocAndOffsets* loc)
+{
+	if ( abs(loc->off_x) > 14.142136)
+	{
+		while (loc->off_x >= 14.142136)
+		{
+			loc->off_x -= 28.284271;
+			loc->location.locx++;
+		}
+
+
+		while (loc->off_x < -14.142136)
+		{
+			loc->off_x += 28.284271;
+			loc->location.locx--;
+		}
+	}
+
+	if (abs(loc->off_y) > 14.142136)
+	{
+		while (loc->off_y >= 14.142136)
+		{
+		loc->off_y -= 28.284271;
+		loc->location.locy++;
+		}
+
+
+		while (loc->off_y < -14.142136)
+		{
+		loc->off_y += 28.284271;
+		loc->location.locy--;
+		}
+	}
+}
+
+void LocationSys::GetOverallOffset(LocAndOffsets loc, float* absX, float* absY)
+{
+	*absX = loc.location.locx * PIXEL_PER_TILE + PIXEL_PER_TILE_HALF + loc.off_x;
+	*absY = loc.location.locy * PIXEL_PER_TILE + PIXEL_PER_TILE_HALF + loc.off_y;
+}
+
+BOOL LocationSys::ShiftLocationByOneSubtile(LocAndOffsets* loc, char direction, LocAndOffsets* locOut)
+{
+	long double v3; // fst7@3
+	long double v4; // fst7@5
+
+	*locOut = *loc;
+	if (direction <= 7)
+	{
+		switch (direction)
+		{
+		case 0u:
+			v3 = locOut->off_x - 9.4280901;
+			goto LABEL_10;
+		case 1u:
+			locOut->off_x = locOut->off_x - 9.4280901;
+			break;
+		case 2u:
+			locOut->off_x = locOut->off_x - 9.4280901;
+			v4 = locOut->off_y + 9.4280901;
+			goto LABEL_12;
+		case 4u:
+			locOut->off_x = locOut->off_x + 9.4280901;
+			goto LABEL_7;
+		case 3u:
+			LABEL_7:
+				v4 = locOut->off_y + 9.4280901;
+				goto LABEL_12;
+		case 5u:
+			locOut->off_x = locOut->off_x + 9.4280901;
+			break;
+		case 6u:
+			v3 = locOut->off_x + 9.4280901;
+		LABEL_10:
+			locOut->off_x = v3;
+			goto LABEL_11;
+		case 7u:
+			LABEL_11:
+				v4 = locOut->off_y - 9.4280901;
+			LABEL_12:
+				locOut->off_y = v4;
+				break;
+		default:
+			break;
+		}
+	}
+	RegularizeLoc(locOut);
+	return 1;
 }
 
 float LocationSys::intToFloat(int32_t x)

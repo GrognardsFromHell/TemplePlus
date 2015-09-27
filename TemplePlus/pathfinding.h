@@ -4,6 +4,11 @@
 #include "temple_functions.h"
 
 #define pfCacheSize  0x20
+#define PATH_RESULT_CACHE_SIZE 0x28 // different from the above
+
+#pragma region structs
+//
+
 
 
 struct LocationSys;
@@ -32,11 +37,11 @@ enum PathQueryFlags : uint32_t {
 	/*
 		if not set, then sets maxShortPathFindLength to 200 initially
 	*/
-	PQF_UNK1 = 4,
+	PQF_MAX_PF_LENGTH_STHG = 4,
 
 
 	PQF_UNK2 = 8, // appears to indicate a straight line path from->to
-	
+
 	PQF_10 = 0x10,
 	PQF_20 = 0x20,
 	PQF_40 = 0x40,
@@ -56,14 +61,20 @@ enum PathQueryFlags : uint32_t {
 	/*
 	Indicates that the destination should be adjusted for the critter and target
 	radius.
-	WAS ERRONEOUSLY LISTED AS 0x20  (look out for those BYTE1() operators DS!)
+	makes PathInit add the radii of the targets to fields tolRadius and distanceToTarget
 	*/
 	PQF_ADJUST_RADIUS = 0x2000,
 
-	PQF_UNKNOWN4000h = 0x4000,
-
+	PQF_DONT_USE_PATHNODES = 0x4000,
+	PQF_DONT_USE_STRAIGHT_LINE = 0x8000,
+	PQF_FORCED_STRAIGHT_LINE =  0x10000,
 	PQF_UNKNOWN20000h = 0x20000,
-	PQF_UNKNOWN40000h = 0x40000,
+	/*
+		if the target destination is not cleared, and PQF_ADJUST_RADIUS is off, 
+		it will search in a 5x5 tile neighbourgood around the original target tile 
+		for a clear tile (i.e. one that the critter can fit in without colliding with anything)
+	*/
+	PQF_ALLOW_ALTERNATIVE_TARGET_TILE = 0x40000,
 
 	// Appears to mean that pathfinding should obey the time limit
 	PQF_A_STAR_TIME_CAPPED = 0x80000 // it is set when the D20 action has the flag D20CAF_TRUNCATED
@@ -73,7 +84,7 @@ enum PathQueryFlags : uint32_t {
 	// pathQ.flags = (PathQueryFlags)0x23803;
 	//	PQF_TO_EXACT = 1
 	//  PQF_HAS_CRITTER = 1
-	//  PQF_UNK1 = 0 // (0x4) if not set, then sets maxShortPathFindLength to 200 initially
+	//  PQF_MAX_PF_LENGTH_STHG = 0 // (0x4) if not set, then sets maxShortPathFindLength to 200 initially
 	//	PQF_UNK2 = 0 // appears to indicate a straight line path from->to
 	/*
 	PQF_10 = 0
@@ -99,7 +110,7 @@ enum PathQueryFlags : uint32_t {
 	*/
 	// PQF_ADJUST_RADIUS = 1
 
-	// PQF_UNKNOWN4000h = 0,
+	// PQF_DONT_USE_PATHNODES = 0,
 
 	// Appears to mean that pathfinding should obey the time limit
 	// PQF_A_STAR_TIME_CAPPED = ? // it is set when the D20 action has the flag D20CAF_TRUNCATED (or D20CAF_UNNECESSARY???)
@@ -135,7 +146,11 @@ const uint32_t TestSizeofPathQuery = sizeof(PathQuery); // should be 80 (0x50)
 
 enum PathFlags {
 	PF_COMPLETE = 0x1, // Seems to indicate that the path is complete (or valid?)
+	PF_2 = 0x2,
+	PF_4 = 0x4,
+	PF_STRAIGHT_LINE_SUCCEEDED = 0x8, // straight line succeeded perhaps?
 	PF_UNK1 = 0x10, // Seems to be set in response to query flag 0x80000
+	PF_20 = 0x20
 };
 
 struct Path {
@@ -147,7 +162,7 @@ struct Path {
 	char directions[200];
 	int nodeCount3;
 	int initTo1;
-	int field100[800];
+	LocAndOffsets tempNodes[200];
 	int nodeCount2;
 	int fieldd84;
 	LocAndOffsets nodes[200];
@@ -162,42 +177,88 @@ struct PathQueryResult : Path {
 	int someDelay;
 };
 
+struct PathResultCache : PathQuery
+{
+	Path path;
+};
+
 const uint32_t TestSizeofPathQueryResult = sizeof(PathQueryResult); // should be 6688 (0x1A20)
 
 #pragma pack(pop)
+
+#pragma endregion
 
 struct Pathfinding : temple::AddressTable {
 
 	LocationSys * loc;
 
-	int astarTimeEnded[20];
+
+	PathResultCache * pathCache; // 40 entries, used as a ring buffer
+	int * pathCacheIdx;
+	int * pathCacheCleared;
+	
+	int *aStarMaxTimeMs;
+	int * aStarMaxWindowMs;
+	int * aStarTimeIdx;
+	int * aStarTimeElapsed; // array 20
+	int * aStarTimeEnded; //  array 20
+
+
 	int *pathTimeCumulative;
 	int * pathFindAttemptCount;
 	int * pathFindRefTime;
+
+	int * npcPathStraightLineTimeRef;
+	int * npcPathStraightLineAttemps;
+	int * npcPathStraightLineCumulativeTime;
 
 	float pathLength(Path *path); // note: unlike the ToEE function, returns a float (and NOT to the FPU!)
 	bool pathQueryResultIsValid(PathQueryResult *pqr);
 
 	Pathfinding();
-	uint32_t ShouldUsePathnodes(PathQueryResult* pathQueryResult, PathQuery* pathQuery);
+
+	int PathCacheGet(PathQuery * pq, Path* path);
+	void PathCachePush(PathQuery* pq, Path* pqr);
+	int PathSumTime();
+	void PathRecordTimeElapsed(int time);
+
+
 	int(__cdecl* PopMinDist2Node)(FindPathNodeData* fpndOut); // output is 1 on success 0 on fail (if all nodes are negative distance)
 	int(__cdecl*PathDestIsClear)(PathQuery* pq, objHndl mover, LocAndOffsets destLoc); // checks if there's anything blocking the destination location (taking into account the mover's radius)
 	int(__cdecl*FindPathBetweenNodes)(int fromNodeId, int toNodeId, void*, int maxChainLength); // finds the node IDs for the To -> .. -> From course (locally optimal I think? Is this A*?); return value is chain length
-	bool (__cdecl *FindPath)(PathQuery *query, PathQueryResult *result);
+	bool (__cdecl *_FindPath)(PathQuery *query, PathQueryResult *result);
+
+	bool GetAlternativeTargetLocation(PathQueryResult* pqr, PathQuery* pq);
+
+
+
+	int FindPath(PathQuery* pq, PathQueryResult* result);
 	void (__cdecl *ToEEpathDistBtwnToAndFrom)(Path *path); // outputs to FPU (st0);  apparently distance in feet (since it divides by 12)
 	objHndl(__cdecl * canPathToParty)(objHndl objHnd);
 	BOOL PathStraightLineIsClear(PathQueryResult* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo); // including static obstacles it seems
 	BOOL PathStraightLineIsClearOfStaticObstacles(PathQueryResult* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo);
 	int GetDirection(int a1, int a2, int a3);
-	int FindPathShortDistance(PathQuery * pq, PathQueryResult * pqr);
+	int FindPathShortDistanceSansTarget(PathQuery * pq, PathQueryResult * pqr);
 	PathQueryResult * pathQArray;
 	uint32_t * pathSthgFlag_10B3D5C8;
 
+protected:
+	void PathInit(PathQueryResult* pqr, PathQuery* pq);
+
+	uint32_t ShouldUsePathnodes(PathQueryResult* pathQueryResult, PathQuery* pathQuery);
+	int FindPathUsingNodes(PathQuery* pq, PathQueryResult* pqr);
+	int FindPathStraightLine(PathQueryResult* pqr, PathQuery* pq);
+	LocAndOffsets * PathTempNodeAddByDirections(int idx, PathQueryResult* pqr, LocAndOffsets* newNode);
+	void PathNodesAddByDirections(PathQueryResult* pqr, PathQuery* pq);
+	int FindPathShortDistanceAdjRadius(PathQuery* pq, PathQueryResult* pqr);
+	int FindPathForcecdStraightLine(PathQueryResult* pqr, PathQuery* pq);
+	int FindPathSansNodes(PathQuery* pq, PathQueryResult* pqr);
 } ;
 
 extern Pathfinding pathfindingSys;
 
 
 
-uint32_t _ShouldUsePathnodesUsercallWrapper();
+//uint32_t _ShouldUsePathnodesUsercallWrapper();
 int _FindPathShortDistance(PathQuery * pq, PathQueryResult * pqr);
+int _FindPath(PathQuery* pq, PathQueryResult* pqr);
