@@ -171,8 +171,14 @@
     <ClInclude Include="video.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Infrastructure\Infrastructure.vcxproj">
+      <Project>{006f5b8a-f75f-413c-ad3a-e004ca8ddf26}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\ParticleSystems\ParticleSystems.vcxproj">
       <Project>{a806cafa-9ff2-42dc-a02f-7e57ef2ab867}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Temple\Temple.vcxproj">
+      <Project>{a05549fb-a0d1-48aa-b586-fe333bbb4505}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
