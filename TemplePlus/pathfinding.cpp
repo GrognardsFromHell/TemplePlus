@@ -190,7 +190,7 @@ uint32_t Pathfinding::ShouldUsePathnodes(Path* pathQueryResult, PathQuery* pathQ
 			}
 			
 		}
-		else if (locSys.distBtwnLocAndOffs(pathQueryResult->from, pathQueryResult->to) > (float)800.0)
+		else if (locSys.distBtwnLocAndOffs(pathQueryResult->from, pathQueryResult->to) > (float)600.0)
 		{
 			return true;
 		}
@@ -198,12 +198,7 @@ uint32_t Pathfinding::ShouldUsePathnodes(Path* pathQueryResult, PathQuery* pathQ
 	return result;
 }
 
-/*
-uint32_t __cdecl _ShouldUsePathnodesCDecl(PathQueryResult * pqr, PathQuery * pq)
-{
-	return pathfindingSys.ShouldUsePathnodes(pqr, pq);
-}
-*/
+
 
 void Pathfinding::PathInit(Path* pqr, PathQuery* pq)
 {
@@ -334,7 +329,10 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 	
 	chainLength = pathNodeSys.FindPathBetweenNodes(fromClosestId, toClosestId, nodeIds, MAX_PATH_NODE_CHAIN_LENGTH);
 	if (!chainLength)
+	{
 		return 0;
+	}
+		
 
 
 
@@ -606,6 +604,10 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	{
 		triedPathNodes = 1;
 		gotPath = FindPathUsingNodes(pq, pqr);
+		if (!gotPath)
+		{
+			int dummy = 1;
+		}
 	} 
 	else
 	{
@@ -617,6 +619,10 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 		if (!(pq->flags & PQF_DONT_USE_PATHNODES)  && !triedPathNodes)
 		{
 			gotPath = FindPathUsingNodes(pq, pqr);
+			if (!gotPath)
+			{
+				int dummy = 1;
+			}
 		}
 	}
 

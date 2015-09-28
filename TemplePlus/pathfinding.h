@@ -16,14 +16,7 @@ struct PathNodeSys;
 struct MapPathNode;
 struct MapPathNodeList;
 
-struct FindPathNodeData
-{
-	int nodeId;
-	int refererId; // for the From node is -1; together with the "distCumul = -1" nodes will form a chain leading From -> To
-	int distFrom; // distance to the From node; is set to 0 for the from node naturally :)
-	float distTo; // distance to the To node;
-	float distCumul; // can be set to -1
-};
+
 
 
 enum PathQueryFlags : uint32_t {
@@ -227,7 +220,7 @@ struct Pathfinding : temple::AddressTable {
 	void PathRecordTimeElapsed(int time);
 
 
-	int(__cdecl* PopMinDist2Node)(FindPathNodeData* fpndOut); // output is 1 on success 0 on fail (if all nodes are negative distance)
+
 	int(__cdecl*PathDestIsClear)(PathQuery* pq, objHndl mover, LocAndOffsets destLoc); // checks if there's anything blocking the destination location (taking into account the mover's radius)
 	int(__cdecl*FindPathBetweenNodes)(int fromNodeId, int toNodeId, void*, int maxChainLength); // finds the node IDs for the To -> .. -> From course (locally optimal I think? Is this A*?); return value is chain length
 	bool (__cdecl *_FindPath)(PathQuery *query, PathQueryResult *result);
