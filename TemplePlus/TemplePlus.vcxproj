@@ -40,6 +40,7 @@
     <ClCompile Include="maps.cpp" />
     <ClCompile Include="obj_iterator.cpp" />
     <ClCompile Include="particles.cpp" />
+    <ClCompile Include="path_node.cpp" />
     <ClCompile Include="python\python_areas.cpp" />
     <ClCompile Include="python\python_cheats.cpp" />
     <ClCompile Include="python\python_console.cpp" />
@@ -202,6 +203,7 @@
     <ClInclude Include="obj_iterator.h" />
     <ClInclude Include="particles.h" />
     <ClInclude Include="gamelib_private.h" />
+    <ClInclude Include="path_node.h" />
     <ClInclude Include="python\python_areas.h" />
     <ClInclude Include="python\python_cheats.h" />
     <ClInclude Include="python\python_console.h" />

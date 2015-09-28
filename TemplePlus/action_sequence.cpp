@@ -539,6 +539,10 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		if (reach < 0.1){ reach = 3.0; }
 		actSeq->targetObj = d20a->d20ATarget;
 		pathQ.distanceToTarget = distToTgt * twelve;
+		if (distToTgt != 0)
+		{
+			int dummy = 1;
+		}
 		pathQ.tolRadius = reach * twelve - fourPointSevenPlusEight;
 	} else
 	{
@@ -574,7 +578,8 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	{
 		if (pqResult->flags & 0x10) *pathfindingSys.pathSthgFlag_10B3D5C8 = 1;
 		hooked_print_debug_message("\nFAILED PATH...");
-		if (pqResult >= pathfindingSys.pathQArray && pqResult < &pathfindingSys.pathQArray[pfCacheSize]) pqResult->occupiedFlag = 0;
+		if (pqResult >= pathfindingSys.pathQArray && pqResult < &pathfindingSys.pathQArray[pfCacheSize]) 
+			pqResult->occupiedFlag = 0;
 		return 0x9;
 	}
 	
@@ -599,13 +604,13 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 			pathQueryStartToMid.flags = static_cast<PathQueryFlags>(0x40803);
 			*pathfindingSys.pathSthgFlag_10B3D5C8 = 0;
 			//pathQueryStartToMid.tolRadius = 30.0;
-			if (pathfinding->FindPath(&pathQueryStartToMid, pqResult))
+			if (pathfinding->_FindPath(&pathQueryStartToMid, pqResult))
 			{
 				*pathfindingSys.pathSthgFlag_10B3D5C8 = 0;
 				pathQueryMidToEnd.tolRadius = 25.0;
 				if (pqResult->nodeCount == 1)
 				{
-					if (pathfinding->FindPath(&pathQueryMidToEnd, pqResult))
+					if (pathfinding->_FindPath(&pathQueryMidToEnd, pqResult))
 					{
 						if (pqResult->nodeCount == 1)
 						{
@@ -618,7 +623,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 			}	else straightPathSuccess = 0;
 			if (!straightPathSuccess)
 			{
-				pathfinding->FindPath(&pathQ, pqResult);
+				pathfinding->_FindPath(&pathQ, pqResult);
 			}
 		}
 	}
