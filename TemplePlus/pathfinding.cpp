@@ -6,14 +6,15 @@
 #include "obj_iterator.h"
 #include "obj.h"
 #include "critter.h"
+#include "path_node.h"
 
 Pathfinding pathfindingSys;
 
 
 struct PathFindAddresses : temple::AddressTable
 {
-	int (__cdecl*FindPathUsingNodes) (PathQuery*pq, PathQueryResult *pqr);
-	int(__cdecl *FindPathShortDistanceAdjRadius)(PathQuery* pq, PathQueryResult* pqr);
+	int (__cdecl*FindPathUsingNodes) (PathQuery*pq, Path*pqr);
+	int(__cdecl *FindPathShortDistanceAdjRadius)(PathQuery* pq, Path* pqr);
 	PathFindAddresses()
 	{
 		rebase(FindPathShortDistanceAdjRadius, 0x10041E30);
@@ -32,7 +33,7 @@ public:
 	void apply() override 
 	{
 	//	 replaceFunction(0x10040520, _ShouldUsePathnodesUsercallWrapper); 
-		// replaceFunction(0x10041730, _FindPathShortDistance);
+		 replaceFunction(0x10041730, _FindPathShortDistanceSansTarget);
 		 replaceFunction(0x10043070, _FindPath);
 	}
 } pathFindingReplacements;
@@ -175,7 +176,7 @@ void Pathfinding::PathRecordTimeElapsed(int refTime)
 	aStarTimeElapsed[*aStarTimeIdx] = aStarTimeEnded[*aStarTimeIdx] - refTime;
 }
 
-uint32_t Pathfinding::ShouldUsePathnodes(PathQueryResult* pathQueryResult, PathQuery* pathQuery)
+uint32_t Pathfinding::ShouldUsePathnodes(Path* pathQueryResult, PathQuery* pathQuery)
 {
 	bool result = false;
 	LocAndOffsets from = pathQuery->from;
@@ -204,7 +205,7 @@ uint32_t __cdecl _ShouldUsePathnodesCDecl(PathQueryResult * pqr, PathQuery * pq)
 }
 */
 
-void Pathfinding::PathInit(PathQueryResult* pqr, PathQuery* pq)
+void Pathfinding::PathInit(Path* pqr, PathQuery* pq)
 {
 	PathQueryFlags pqFlags = pq->flags;
 
@@ -317,12 +318,106 @@ bool Pathfinding::GetAlternativeTargetLocation(PathQueryResult* pqr, PathQuery* 
 	return 1;
 }
 
-int Pathfinding::FindPathUsingNodes(PathQuery* pq, PathQueryResult* pqr)
+int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 {
-	return addresses.FindPathUsingNodes(pq, pqr);
+	auto from = path->from;
+	int nodeTotal = 0;
+	int fromClosestId, toClosestId;
+	int chainLength;
+	int nodeIds[MAX_PATH_NODE_CHAIN_LENGTH];
+
+	if (!pathNodeSys.FindClosestPathNode(&path->from, &fromClosestId))
+		return 0;
+
+	if (!pathNodeSys.FindClosestPathNode(&path->to, &toClosestId))
+		return 0;
+	
+	chainLength = pathNodeSys.FindPathBetweenNodes(fromClosestId, toClosestId, nodeIds, MAX_PATH_NODE_CHAIN_LENGTH);
+	if (!chainLength)
+		return 0;
+
+
+
+	MapPathNode nodeTemp1, nodeTemp0;
+	int i0 = 0;
+
+
+	if (chainLength>1)
+	{
+		pathNodeSys.GetPathNode(nodeIds[1], &nodeTemp1);
+		pathNodeSys.GetPathNode(nodeIds[0], &nodeTemp0);
+		float distFromSecond = locSys.distBtwnLocAndOffs(from, nodeTemp1.nodeLoc);
+		if (distFromSecond < 614.0)
+		{
+			if (locSys.distBtwnLocAndOffs(nodeTemp0.nodeLoc, nodeTemp1.nodeLoc) > distFromSecond)
+				i0 = 1;
+		}
+		pathNodeSys.GetPathNode(nodeIds[chainLength - 2], &nodeTemp1);
+		pathNodeSys.GetPathNode(nodeIds[chainLength - 1], &nodeTemp0);
+		float distSecondLastToDestination = locSys.distBtwnLocAndOffs(path->to, nodeTemp1.nodeLoc);
+		if (distSecondLastToDestination < 614.0)
+		{
+			if (locSys.distBtwnLocAndOffs(nodeTemp0.nodeLoc, nodeTemp1.nodeLoc) > distSecondLastToDestination)
+				chainLength--;
+		}
+	}
+
+	// add paths from node to node
+	PathQuery pathQueryLocal;
+	Path pathLocal;
+	for (int i = i0; i < chainLength; i++)
+	{
+		pathNodeSys.GetPathNode(nodeIds[i], &nodeTemp1);
+		memcpy(&pathQueryLocal, pq, sizeof(PathQuery));
+		pathQueryLocal.flags = (PathQueryFlags)(
+			(uint32_t)pathQueryLocal.flags & (~PQF_ADJUST_RADIUS) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
+			);
+		pathQueryLocal.from = from;
+		pathQueryLocal.to = nodeTemp1.nodeLoc;
+		
+		PathInit(&pathLocal, &pathQueryLocal);
+
+		memcpy(&pathQueryLocal, pq, sizeof(PathQuery));
+		pathQueryLocal.flags = (PathQueryFlags)(
+			(uint32_t)pathQueryLocal.flags & (~PQF_ADJUST_RADIUS) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
+			);
+		pathQueryLocal.from = from;
+		pathQueryLocal.to = nodeTemp1.nodeLoc;
+		pathLocal.from = from;
+
+		int nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
+		if (!nodeCountAdded || (nodeCountAdded + nodeTotal > pq->maxShortPathFindLength))
+			return 0;
+		memcpy(&path->nodes[nodeTotal], pathLocal.nodes, sizeof(LocAndOffsets) * nodeCountAdded);
+		nodeTotal += nodeCountAdded;
+		from = nodeTemp1.nodeLoc;
+	}
+
+
+	memcpy(&pathQueryLocal, pq, sizeof(PathQuery));
+	pathQueryLocal.from = from;
+	pathQueryLocal.to = path->to;
+
+	PathInit(&pathLocal, &pathQueryLocal);
+
+	memcpy(&pathQueryLocal, pq, sizeof(PathQuery));
+	pathQueryLocal.from = from;
+	pathQueryLocal.to = path->to;
+	pathLocal.from = from;
+
+	int nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
+	if (!nodeCountAdded || (nodeCountAdded + nodeTotal > pq->maxShortPathFindLength))
+		return 0;
+
+	memcpy(&path->nodes[nodeTotal], pathLocal.nodes, sizeof(LocAndOffsets) * nodeCountAdded);
+	int nodeCount = nodeTotal + nodeCountAdded;
+	path->nodeCount = nodeCount;
+	path->to = path->nodes[nodeCount - 1];
+	return nodeCount;
+	//return addresses.FindPathUsingNodes(pq, path);
 }
 
-int Pathfinding::FindPathStraightLine(PathQueryResult* pqr, PathQuery* pq)
+int Pathfinding::FindPathStraightLine(Path* pqr, PathQuery* pq)
 {
 	auto pqFlags = pq->flags;
 	if (!(pqFlags & PQF_ADJUST_RADIUS))
@@ -364,7 +459,7 @@ int Pathfinding::FindPathStraightLine(PathQueryResult* pqr, PathQuery* pq)
 	return 1;
 }
 
-LocAndOffsets* Pathfinding::PathTempNodeAddByDirections(int idx, PathQueryResult* pqr, LocAndOffsets* newNode)
+LocAndOffsets* Pathfinding::PathTempNodeAddByDirections(int idx, Path* pqr, LocAndOffsets* newNode)
 {
 	if (idx > pqr->nodeCount3)
 		idx = pqr->nodeCount3;
@@ -381,7 +476,7 @@ LocAndOffsets* Pathfinding::PathTempNodeAddByDirections(int idx, PathQueryResult
 	return newNode;
 }
 
-void Pathfinding::PathNodesAddByDirections(PathQueryResult* pqr, PathQuery* pq)
+void Pathfinding::PathNodesAddByDirections(Path* pqr, PathQuery* pq)
 {
 	auto pqFlags = pqr->flags;
 	if (pqFlags & PF_STRAIGHT_LINE_SUCCEEDED)
@@ -411,12 +506,12 @@ void Pathfinding::PathNodesAddByDirections(PathQueryResult* pqr, PathQuery* pq)
 	pqr->currentNode = 0;
 }
 
-int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, PathQueryResult* pqr)
+int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 {
 	return addresses.FindPathShortDistanceAdjRadius(pq, pqr);
 }
 
-int Pathfinding::FindPathForcecdStraightLine(PathQueryResult* pqr, PathQuery* pq)
+int Pathfinding::FindPathForcecdStraightLine(Path* pqr, PathQuery* pq)
 {
 	auto critter = pq->critter;
 	if (critter)
@@ -443,7 +538,7 @@ int Pathfinding::FindPathForcecdStraightLine(PathQueryResult* pqr, PathQuery* pq
 	return 0;
 }
 
-int Pathfinding::FindPathSansNodes(PathQuery* pq, PathQueryResult* pqr)
+int Pathfinding::FindPathSansNodes(PathQuery* pq, Path* pqr)
 {
 	auto pqFlags = pq->flags;
 	int result = 0;
@@ -467,7 +562,11 @@ int Pathfinding::FindPathSansNodes(PathQuery* pq, PathQueryResult* pqr)
 		else if (pqFlags & PQF_ADJUST_RADIUS)
 			result = FindPathShortDistanceAdjRadius(pq, pqr);
 		else if (!(pqFlags & PQF_FORCED_STRAIGHT_LINE))
-			result = FindPathShortDistanceSansTarget(pq, pqr);
+		{
+			//for (int i = 0; i < 100; i++)
+				result = FindPathShortDistanceSansTarget(pq, pqr);
+		}
+			
 		else
 			result = FindPathForcecdStraightLine(pqr, pq);
 
@@ -531,7 +630,7 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 
 }
 
-BOOL Pathfinding::PathStraightLineIsClear(PathQueryResult* pqr, PathQuery* pq, LocAndOffsets from, LocAndOffsets to)
+BOOL Pathfinding::PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffsets from, LocAndOffsets to)
 {
 	BOOL result = 1;
 	ObjIterator objIt;
@@ -544,6 +643,7 @@ BOOL Pathfinding::PathStraightLineIsClear(PathQueryResult* pqr, PathQuery* pq, L
 		objIt.performer = pqr->mover;
 		objIt.radius = objects.GetRadius(pqr->mover) * (float)0.7;
 	}
+	
 	if (objIt.TargettingSthg_100BACE0())
 	{
 		int i = 0;
@@ -578,7 +678,7 @@ BOOL Pathfinding::PathStraightLineIsClear(PathQueryResult* pqr, PathQuery* pq, L
 	return result;
 }
 
-BOOL Pathfinding::PathStraightLineIsClearOfStaticObstacles(PathQueryResult* pqr, PathQuery* pq, LocAndOffsets from, LocAndOffsets to)
+BOOL Pathfinding::PathStraightLineIsClearOfStaticObstacles(Path* pqr, PathQuery* pq, LocAndOffsets from, LocAndOffsets to)
 {
 	BOOL result = 1;
 	ObjIterator objIt;
@@ -650,7 +750,7 @@ int Pathfinding::GetDirection(int idxFrom, int n, int idxTo)
 	return result;
 }
 
-int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, PathQueryResult* pqr)
+int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 { // uses a form of A*
 	// pathfinding heuristic:
 	// taxicab metric h(dx,dy)=max(dx, dy), wwhere  dx,dy is the subtile difference
@@ -835,8 +935,18 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, PathQueryResult*
 			locSys.SubtileToLocAndOff(_fromSubtile, &subPathFrom);
 			locSys.SubtileToLocAndOff(shiftedSubtile, &subPathTo);
 
+			
 			if (!PathStraightLineIsClear(pqr, pq, subPathFrom, subPathTo))
+			{
 				continue;
+			}
+				
+			//else
+			//{
+				//for (int k = 0; k < 99; k++)
+				//	PathStraightLineIsClear(pqr, pq, subPathFrom, subPathTo);
+
+			//}
 			int oldLength = pathFindAstar[newIdx].length;
 			int newLength = pathFindAstar[refererIdx].length + 14 - 4 * (direction % 2) ; // +14 for diagonal, +10 for straight
 
@@ -912,22 +1022,8 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, PathQueryResult*
 	
 }
 
-/*
-uint32_t __declspec(naked) _ShouldUsePathnodesUsercallWrapper()
-{
-	macAsmProl
-		__asm{
-		push ecx;
-		push eax;
-		call _ShouldUsePathnodesCDecl;
-		add esp, 8;
-	}
-	macAsmEpil
-	__asm  retn; 
-}
-*/
 
-int _FindPathShortDistance(PathQuery* pq, PathQueryResult* pqr)
+int _FindPathShortDistanceSansTarget(PathQuery* pq, PathQueryResult* pqr)
 {
 	return pathfindingSys.FindPathShortDistanceSansTarget(pq, pqr);
 }

@@ -12,6 +12,9 @@
 
 
 struct LocationSys;
+struct PathNodeSys;
+struct MapPathNode;
+struct MapPathNodeList;
 
 struct FindPathNodeData
 {
@@ -182,6 +185,7 @@ struct PathResultCache : PathQuery
 	Path path;
 };
 
+
 const uint32_t TestSizeofPathQueryResult = sizeof(PathQueryResult); // should be 6688 (0x1A20)
 
 #pragma pack(pop)
@@ -191,20 +195,20 @@ const uint32_t TestSizeofPathQueryResult = sizeof(PathQueryResult); // should be
 struct Pathfinding : temple::AddressTable {
 
 	LocationSys * loc;
-
+	PathNodeSys * pathNode;
 
 	PathResultCache * pathCache; // 40 entries, used as a ring buffer
 	int * pathCacheIdx;
 	int * pathCacheCleared;
 	
-	int *aStarMaxTimeMs;
+	int * aStarMaxTimeMs;
 	int * aStarMaxWindowMs;
 	int * aStarTimeIdx;
 	int * aStarTimeElapsed; // array 20
 	int * aStarTimeEnded; //  array 20
 
 
-	int *pathTimeCumulative;
+	int * pathTimeCumulative;
 	int * pathFindAttemptCount;
 	int * pathFindRefTime;
 
@@ -235,24 +239,24 @@ struct Pathfinding : temple::AddressTable {
 	int FindPath(PathQuery* pq, PathQueryResult* result);
 	void (__cdecl *ToEEpathDistBtwnToAndFrom)(Path *path); // outputs to FPU (st0);  apparently distance in feet (since it divides by 12)
 	objHndl(__cdecl * canPathToParty)(objHndl objHnd);
-	BOOL PathStraightLineIsClear(PathQueryResult* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo); // including static obstacles it seems
-	BOOL PathStraightLineIsClearOfStaticObstacles(PathQueryResult* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo);
+	BOOL PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo); // including static obstacles it seems
+	BOOL PathStraightLineIsClearOfStaticObstacles(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo);
 	int GetDirection(int a1, int a2, int a3);
-	int FindPathShortDistanceSansTarget(PathQuery * pq, PathQueryResult * pqr);
+	int FindPathShortDistanceSansTarget(PathQuery * pq, Path* pqr);
 	PathQueryResult * pathQArray;
 	uint32_t * pathSthgFlag_10B3D5C8;
 
 protected:
-	void PathInit(PathQueryResult* pqr, PathQuery* pq);
+	void PathInit(Path* pqr, PathQuery* pq);
 
-	uint32_t ShouldUsePathnodes(PathQueryResult* pathQueryResult, PathQuery* pathQuery);
-	int FindPathUsingNodes(PathQuery* pq, PathQueryResult* pqr);
-	int FindPathStraightLine(PathQueryResult* pqr, PathQuery* pq);
-	LocAndOffsets * PathTempNodeAddByDirections(int idx, PathQueryResult* pqr, LocAndOffsets* newNode);
-	void PathNodesAddByDirections(PathQueryResult* pqr, PathQuery* pq);
-	int FindPathShortDistanceAdjRadius(PathQuery* pq, PathQueryResult* pqr);
-	int FindPathForcecdStraightLine(PathQueryResult* pqr, PathQuery* pq);
-	int FindPathSansNodes(PathQuery* pq, PathQueryResult* pqr);
+	uint32_t ShouldUsePathnodes(Path* pathQueryResult, PathQuery* pathQuery);
+	int FindPathUsingNodes(PathQuery* pq, Path* pqr);
+	int FindPathStraightLine(Path* pqr, PathQuery* pq);
+	LocAndOffsets * PathTempNodeAddByDirections(int idx, Path* pqr, LocAndOffsets* newNode);
+	void PathNodesAddByDirections(Path* pqr, PathQuery* pq);
+	int FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr);
+	int FindPathForcecdStraightLine(Path* pqr, PathQuery* pq);
+	int FindPathSansNodes(PathQuery* pq, Path* pqr);
 } ;
 
 extern Pathfinding pathfindingSys;
@@ -260,5 +264,5 @@ extern Pathfinding pathfindingSys;
 
 
 //uint32_t _ShouldUsePathnodesUsercallWrapper();
-int _FindPathShortDistance(PathQuery * pq, PathQueryResult * pqr);
+int _FindPathShortDistanceSansTarget(PathQuery * pq, PathQueryResult * pqr);
 int _FindPath(PathQuery* pq, PathQueryResult* pqr);
