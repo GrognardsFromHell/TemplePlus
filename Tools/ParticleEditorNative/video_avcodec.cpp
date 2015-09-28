@@ -96,7 +96,7 @@ void AvcodecVideoEncoder::Init(int width, int height, int fps) {
 		throw std::exception("Unable to initialize stream");
 	}
 
-	mStream->time_base = AVRational{ 1, fps };
+	mStream->time_base = AVRational{1, fps};
 	auto c = mStream->codec;
 
 	c->codec_id = mOutputFormat->video_codec;
@@ -104,7 +104,7 @@ void AvcodecVideoEncoder::Init(int width, int height, int fps) {
 	c->bit_rate = 8000000;
 	c->width = width;
 	c->height = height;
-	c->time_base = { 1, fps };
+	c->time_base = {1, fps};
 	c->pix_fmt = AV_PIX_FMT_YUV420P;
 	c->gop_size = 10; /* emit one intra frame every ten frames */
 	c->max_b_frames = 1;
@@ -132,7 +132,7 @@ void AvcodecVideoEncoder::Init(int width, int height, int fps) {
 	av_opt_set(c->priv_data, "wpredp", "2", 0);
 
 	if (mOutputFormat->flags & AVFMT_GLOBALHEADER)
-		c->flags |= CODEC_FLAG_GLOBAL_HEADER;
+		c->flags |= CODEC_FLAG_GLOBAL_HEADER ;
 
 	// avcodec_opt_set(c->priv_data, "quality", "realtime", AV_OPT_SEARCH_CHILDREN); //can be good, best or realtime
 	// av_opt_set(c->priv_data, "passes", "2", AV_OPT_SEARCH_CHILDREN);
@@ -168,10 +168,10 @@ void AvcodecVideoEncoder::Init(int width, int height, int fps) {
 	}
 
 	mConvertCtx = sws_getContext(mWidth, mHeight,
-		AV_PIX_FMT_BGRA,
-		mWidth, mHeight,
-		AV_PIX_FMT_YUV420P,
-		SWS_BICUBIC, NULL, NULL, NULL);
+	                             AV_PIX_FMT_BGRA,
+	                             mWidth, mHeight,
+	                             AV_PIX_FMT_YUV420P,
+	                             SWS_BICUBIC, NULL, NULL, NULL);
 
 }
 
@@ -183,11 +183,11 @@ void AvcodecVideoEncoder::WriteFrame(uint8_t* data, int stride) {
 
 	// Convert ARGBA to YUV
 	sws_scale(mConvertCtx,
-		&data, &stride,
-		0, mHeight,
-		mFrame->data, mFrame->linesize);
+	          &data, &stride,
+	          0, mHeight,
+	          mFrame->data, mFrame->linesize);
 
-	AVPacket pkt = { 0 };
+	AVPacket pkt = {0};
 	av_init_packet(&pkt);
 
 	mFrame->pts = mFrameNo++;
@@ -214,6 +214,6 @@ void AvcodecVideoEncoder::WriteFrame(uint8_t* data, int stride) {
 }
 
 std::string AvcodecVideoEncoder::AvErrorStr(int errorCode) const {
-	char errorBuf[AV_LOG_MAX_OFFSET] = { 0, };
+	char errorBuf[AV_LOG_MAX_OFFSET] = {0,};
 	return av_make_error_string(errorBuf, sizeof(errorBuf), errorCode);
 }

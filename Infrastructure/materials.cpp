@@ -26,12 +26,12 @@ namespace gfx {
 		}
 	};
 
-	std::unique_ptr<MaterialManager> materialManager;
+	std::unique_ptr<MaterialFactory> materialManager;
 	
-	MaterialManager::~MaterialManager() {
+	MaterialFactory::~MaterialFactory() {
 	}
 
-	MaterialRef MaterialManager::GetInvalidMaterial() {
+	MaterialRef MaterialFactory::GetInvalidMaterial() {
 		static MaterialRef result(new InvalidMaterial);
 		return result;
 	}

@@ -12,7 +12,7 @@
 
 using namespace particles;
 
-class EditorMaterialManager : public gfx::MaterialManager {
+class EditorMaterialManager : public gfx::MaterialFactory {
 public:
 	explicit EditorMaterialManager(const std::string& dataPath, IDirect3DDevice9* device)
 		: mDataPath(dataPath), mDevice(device) {

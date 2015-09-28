@@ -12,7 +12,7 @@
 */
 class Vfs {
 public:
-	virtual ~Vfs() = 0;
+	virtual ~Vfs() {};
 
 	static Vfs* CreateStdIoVfs();
 
@@ -20,16 +20,13 @@ public:
 		Reads a file fully into a string.
 	*/
 	std::string ReadAsString(const std::string &filename);
-
+		
 protected:
 	typedef void* FileHandle;
-	virtual FileHandle open(const char *name, const char *mode) = 0;
-	virtual size_t read(void* buffer, size_t size, FileHandle handle) = 0;
-	virtual size_t length(FileHandle handle) = 0;
-	virtual void close(FileHandle handle) = 0;
+	virtual FileHandle Open(const char *name, const char *mode) = 0;
+	virtual size_t Read(void* buffer, size_t size, FileHandle handle) = 0;
+	virtual size_t Length(FileHandle handle) = 0;
+	virtual void Close(FileHandle handle) = 0;
 };
-
-inline Vfs::~Vfs() {
-}
 
 extern std::unique_ptr<Vfs> vfs;

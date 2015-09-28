@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -38,6 +39,8 @@ namespace ParticleEditor
         private int _outputHeight;
 
         private int _outputWidth;
+
+        private AnimatedModel _previewModel;
         private Surface _renderTargetDepth;
         private int _renderTargetHeight;
 
@@ -83,6 +86,7 @@ namespace ParticleEditor
                 else
                 {
                     DataPathErrorLabel.Visibility = Visibility.Hidden;
+                    ReloadAnimatedModel();
                 }
             }
         }
@@ -91,6 +95,15 @@ namespace ParticleEditor
         {
             get { return (PartSysSpec) GetValue(ActiveSystemProperty); }
             set { SetValue(ActiveSystemProperty, value); }
+        }
+
+        private void ReloadAnimatedModel()
+        {
+            _previewModel = AnimatedModel.FromFiles(
+                TempleDll.Instance,
+                Path.Combine(_dataPath, @"art\meshes\PCs\PC_Human_Male\PC_Human_Male.SKM"),
+                Path.Combine(_dataPath, @"art\meshes\PCs\PC_Human_Male\PC_Human_Male.SKA")
+                );
         }
 
         public event EventHandler ConfigureDataPath;
@@ -197,6 +210,7 @@ namespace ParticleEditor
 
                 Device.SetRenderTarget(0, _renderTargetSurface);
                 Device.DepthStencilSurface = _renderTargetDepth;
+
                 RenderParticleSystem(w, h, args.RenderingTime);
 
                 D3Dimg.SetBackBuffer(D3DResourceType.IDirect3DSurface9, _renderTargetSurface.NativePointer);
@@ -212,29 +226,31 @@ namespace ParticleEditor
             Device.BeginScene();
             Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, new ColorBGRA(0, 0, 0, 255), 1, 0);
 
-            if (_activeSystem != null)
+            if (_timeSinceLastSimul.HasValue)
             {
-                if (_timeSinceLastSimul.HasValue)
+                var simulTime = (float)(renderTime.TotalSeconds - _timeSinceLastSimul.Value.TotalSeconds);
+                if (simulTime > 1 / 60.0f)
                 {
-                    var simulTime = (float) (renderTime.TotalSeconds - _timeSinceLastSimul.Value.TotalSeconds);
-                    if (simulTime > 1/60.0f)
+                    _previewModel.AdvanceTime(simulTime);
+
+                    if (!_model.Paused)
                     {
-                        if (!_model.Paused)
+                        if (_activeSystem != null)
                         {
                             _activeSystem.Simulate(simulTime);
                             UpdateParticleStatistics();
                         }
-                        _timeSinceLastSimul = renderTime;
                     }
-                }
-                else
-                {
                     _timeSinceLastSimul = renderTime;
                 }
-
-
-                _activeSystem.Render(Device, w, h, 0, 0, _model.Scale);
             }
+            else
+            {
+                _timeSinceLastSimul = renderTime;
+            }
+
+            _previewModel?.Render(Device, w, h, _model.Scale);
+            _activeSystem?.Render(Device, w, h, 0, 0, _model.Scale);
 
             Device.EndScene();
             Device.Present();

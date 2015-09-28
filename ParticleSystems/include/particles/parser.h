@@ -11,7 +11,7 @@ class TabFileRecord;
 namespace gfx {
 	class MaterialManager;
 	class MeshesManager;
-	using MaterialManagerPtr = std::shared_ptr<MaterialManager>;
+	using MaterialFactoryPtr = std::shared_ptr<MaterialFactory>;
 	using MeshesManagerPtr = std::shared_ptr<MeshesManager>;
 }
 
@@ -20,7 +20,7 @@ namespace particles {
 	class PartSysParser {
 	public:
 
-		PartSysParser(gfx::MaterialManagerPtr materials,
+		PartSysParser(gfx::MaterialFactoryPtr materials,
 		              gfx::MeshesManagerPtr meshes);
 
 		typedef std::unordered_map<std::string, PartSysSpecPtr> SpecMap;
@@ -46,7 +46,7 @@ namespace particles {
 
 	private:
 		SpecMap mSpecs;
-		gfx::MaterialManagerPtr mMaterials;
+		gfx::MaterialFactoryPtr mMaterials;
 		gfx::MeshesManagerPtr mMeshes;
 
 		void ParseLifespan(const TabFileRecord& record, PartSysEmitterSpecPtr emitter);

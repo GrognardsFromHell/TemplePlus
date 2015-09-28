@@ -298,7 +298,7 @@ namespace particles {
 
 	}
 
-	PartSysParser::PartSysParser(gfx::MaterialManagerPtr materials,
+	PartSysParser::PartSysParser(gfx::MaterialFactoryPtr materials,
 	                             gfx::MeshesManagerPtr meshes) : mMaterials(materials), mMeshes(meshes) {
 	}
 

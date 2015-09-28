@@ -1,4 +1,3 @@
-
 #include <atlcomcli.h>
 #include <particles/instances.h>
 #include <particles/render.h>
@@ -11,14 +10,14 @@ using namespace particles;
 #include "api.h"
 #include "video.h"
 
-static float GetTotalLifetime(const PartSysPtr& sys, bool &permanent) {
+static float GetTotalLifetime(const PartSysPtr& sys, bool& permanent) {
 	auto result = 0.0f;
 
 	for (const auto& emitter : *sys) {
 		auto spec = emitter->GetSpec();
-		
+
 		auto lifetime = spec->GetDelay();
-		
+
 		if (emitter->GetSpec()->IsPermanent()) {
 			auto maxParticlesReachedIn = spec->GetMaxParticles() / (float)spec->GetParticleRate();
 			lifetime += maxParticlesReachedIn + spec->GetParticleLifespan();
@@ -26,7 +25,7 @@ static float GetTotalLifetime(const PartSysPtr& sys, bool &permanent) {
 		} else {
 			lifetime += spec->GetLifespan() + spec->GetParticleLifespan();
 		}
-		
+
 		if (lifetime > result) {
 			result = lifetime;
 		}
@@ -40,7 +39,7 @@ bool ParticleSystem_RenderVideo(IDirect3DDevice9* device, PartSys* orgSys, D3DCO
 	// The assumption is that the screen BB of the part sys encompasses the entire system
 	// so we use that to render it to a video file
 	auto screenBounds = orgSys->GetScreenBounds();
-	
+
 	auto w = (int)abs(screenBounds.right - screenBounds.left) + 10;
 	auto h = (int)abs(screenBounds.bottom - screenBounds.top) + 10;
 	// Needs to be divisible by 2 for h264
@@ -48,7 +47,7 @@ bool ParticleSystem_RenderVideo(IDirect3DDevice9* device, PartSys* orgSys, D3DCO
 		w++;
 	if (h % 2)
 		h++;
-	
+
 	const auto scale = 1.0f;
 	w *= 1;
 	h *= 1;
@@ -88,7 +87,7 @@ bool ParticleSystem_RenderVideo(IDirect3DDevice9* device, PartSys* orgSys, D3DCO
 	auto elapsed = 0.0f;
 	bool permanent;
 	auto totalTime = GetTotalLifetime(sys, permanent);
-	
+
 	if (permanent) {
 		sys->Simulate(5.0f);
 	}
@@ -128,7 +127,7 @@ bool ParticleSystem_RenderVideo(IDirect3DDevice9* device, PartSys* orgSys, D3DCO
 		if (!SUCCEEDED(result)) {
 			return false;
 		}
-		
+
 #ifdef WRITE_FRAME_BMPS
 		wchar_t frameFile[MAX_PATH];
 		wcsncpy(frameFile, outputFile, wcslen(outputFile));

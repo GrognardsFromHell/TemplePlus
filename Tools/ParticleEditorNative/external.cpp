@@ -1,4 +1,3 @@
-
 #include "external.h"
 
 #include <DirectXMath.h>

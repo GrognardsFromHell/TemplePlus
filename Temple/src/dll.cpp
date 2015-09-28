@@ -1,4 +1,3 @@
-
 #include <platform/windows.h>
 #include <Shlwapi.h>
 #include <MinHook.h>
@@ -64,18 +63,27 @@ namespace temple {
 	public:
 		explicit DllImpl(const std::wstring& installationDir);
 		~DllImpl();
-		
+
 		void* GetAddress(uint32_t vanillaAddress) const;
 		void ReplaceAllocFunctions() const;
-
+		void ReplaceDebugFunctions() const;
+		void SetDebugOutputCallback(std::function<void(const std::string&)> function);
 		int mDeltaFromVanilla = 0;
 		HINSTANCE mDllHandle = nullptr;
+
+
+		std::function<void(const std::string& text)> mDebugOutputCallback;
+
+	private:
+		// This is injected into ToEE
+		static void DebugMessageFormat(const char* format, ...);
+		static void DebugMessage(const char* message);
 	};
 
 	DllImpl::DllImpl(const std::wstring& installationDir) {
 
 		auto dllPath(installationDir + L"temple.dll");
-		
+
 		// Does it even exist?
 		if (!PathFileExists(dllPath.c_str())) {
 			auto msg(fmt::format("Temple.dll does not exist: {}", ucs2_to_utf8(dllPath)));
@@ -88,7 +96,7 @@ namespace temple {
 		mDllHandle = LoadLibrary(dllPath.c_str());
 		if (!mDllHandle) {
 			throw TempleException("Unable to load temple.dll from {}: {}",
-				ucs2_to_utf8(dllPath), GetLastWin32Error());
+			                      ucs2_to_utf8(dllPath), GetLastWin32Error());
 		}
 
 		// calculate the offset from the default 0x10000000 base address
@@ -158,6 +166,7 @@ namespace temple {
 
 		// Perform post-load actions
 		mImpl->ReplaceAllocFunctions();
+		mImpl->ReplaceDebugFunctions();
 		AddressRegistry::GetInstance().Fixup(mImpl->mDeltaFromVanilla);
 	}
 
@@ -210,10 +219,10 @@ namespace temple {
 			throw TempleException("DLL has already been loaded.");
 		}
 
-		mReservedMem = VirtualAlloc(reinterpret_cast<void*>(defaultBaseAddr), 
-			defaultImageSize,
-			MEM_RESERVE, 
-			PAGE_NOACCESS);
+		mReservedMem = VirtualAlloc(reinterpret_cast<void*>(defaultBaseAddr),
+		                            defaultImageSize,
+		                            MEM_RESERVE,
+		                            PAGE_NOACCESS);
 
 	}
 
@@ -233,6 +242,14 @@ namespace temple {
 		AddressRegistry::GetInstance().Register(addressPtr, vanillaAddress);
 	}
 
+	void Dll::SetDebugOutputCallback(std::function<void(const std::string& text)> callback) {
+		if (!mImpl) {
+			throw TempleException("DLL has not been loaded.");
+		}
+
+		mImpl->SetDebugOutputCallback(callback);
+	}
+
 	/*
 		Replaces memory allocation in temple.dll with the heap from this 
 		module. This allows much safer exchange of data between the DLL and
@@ -245,6 +262,32 @@ namespace temple {
 		MH_CreateHook(GetAddress(0x10254209), &free, nullptr);
 		MH_CreateHook(GetAddress(0x10256432), static_cast<void*(*)(size_t)>(&::operator new), nullptr);
 
+	}
+
+	void DllImpl::ReplaceDebugFunctions() const {
+		MH_CreateHook(temple::GetPointer<0x101E48F0>(), DebugMessageFormat, nullptr);
+		MH_CreateHook(temple::GetPointer<0x101E4940>(), DebugMessage, nullptr);
+	}
+
+	void DllImpl::SetDebugOutputCallback(std::function<void(const std::string&)> function) {
+		mDebugOutputCallback = function;
+	}
+
+	void DllImpl::DebugMessageFormat(const char* format, ...) {
+		va_list args;
+		va_start(args, format);
+
+		char buffer[1024];
+		vsnprintf(buffer, sizeof(buffer), format, args);
+
+		DebugMessage(buffer);
+	}
+
+	void DllImpl::DebugMessage(const char* message) {
+		auto callback = Dll::GetInstance().mImpl->mDebugOutputCallback;
+		if (callback) {
+			callback(message);
+		}
 	}
 
 }
