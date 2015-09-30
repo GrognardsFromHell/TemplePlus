@@ -34,5 +34,17 @@ namespace ParticleEditor.Properties {
                 this["DataPath"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string TemplePath {
+            get {
+                return ((string)(this["TemplePath"]));
+            }
+            set {
+                this["TemplePath"] = value;
+            }
+        }
     }
 }

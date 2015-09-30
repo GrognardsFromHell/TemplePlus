@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <particles/external.h>
@@ -15,8 +14,8 @@ public:
 	bool GetBonePos(ObjHndl obj, int boneIdx, ::Vec3& pos) override;
 	void WorldToScreen(const ::Vec3& worldPos, ::Vec2& screenPos) override;
 	bool IsPointUnfogged(const ::Vec2& point) override;
-	bool IsBoxVisible(const ::Box2d& box) override;	
-	static EditorExternal &GetInstance();
+	bool IsBoxVisible(const ::Box2d& box) override;
+	static EditorExternal& GetInstance();
 
 	static void SetObjPos(float x, float y, float z);
 private:

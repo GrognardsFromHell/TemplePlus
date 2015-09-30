@@ -30,6 +30,12 @@
     <ClCompile Include="video_avcodec.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="animatedmodel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dll.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="external.h">

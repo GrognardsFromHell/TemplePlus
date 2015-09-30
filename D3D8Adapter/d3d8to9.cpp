@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "d3d.h"
 #include "d3d8to9_rootobj.h"
-#include "dxerr.h"
+#include <infrastructure/dxerr.h>
 
 bool useDirect3d9Ex = false;
 

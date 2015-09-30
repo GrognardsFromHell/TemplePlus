@@ -15,7 +15,7 @@ namespace gfx {
 	public:
 		virtual ~Material() {
 		}
-
+		
 		virtual std::string GetName() const = 0;
 
 		virtual bool IsValid() {
@@ -27,10 +27,10 @@ namespace gfx {
 
 	using MaterialRef = std::shared_ptr<Material>;
 
-	class MaterialManager {
+	class MaterialFactory {
 	public:
 
-		virtual ~MaterialManager();
+		virtual ~MaterialFactory();
 
 		virtual MaterialRef Resolve(const std::string& materialName) = 0;
 
@@ -38,6 +38,6 @@ namespace gfx {
 
 	};
 
-	using MaterialManagerPtr = std::shared_ptr<MaterialManager>;
+	using MaterialFactoryPtr = std::shared_ptr<MaterialFactory>;
 	
 }

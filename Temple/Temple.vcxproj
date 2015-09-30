@@ -22,6 +22,7 @@
     <ClInclude Include="include\temple\dll.h" />
     <ClInclude Include="include\temple\meshes.h" />
     <ClInclude Include="include\temple\materials.h" />
+    <ClInclude Include="include\temple\vfs.h" />
     <ClInclude Include="include\tig\texture.h" />
     <ClInclude Include="include\temple\textures.h" />
   </ItemGroup>
@@ -30,6 +31,7 @@
     <ClCompile Include="src\materials.cpp" />
     <ClCompile Include="src\meshes.cpp" />
     <ClCompile Include="src\textures.cpp" />
+    <ClCompile Include="src\vfs.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\D3D8Adapter\D3D8Adapter.vcxproj">
@@ -115,11 +117,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>Infrastructure.lib</AdditionalDependencies>
+      <AdditionalDependencies>Infrastructure.lib;MinHook.lib</AdditionalDependencies>
     </Lib>
     <Lib>
       <AdditionalLibraryDirectories>$(OutDir)</AdditionalLibraryDirectories>
     </Lib>
+    <ProjectReference />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -153,11 +156,12 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalDependencies>Infrastructure.lib</AdditionalDependencies>
+      <AdditionalDependencies>Infrastructure.lib;MinHook.lib</AdditionalDependencies>
     </Lib>
     <Lib>
       <AdditionalLibraryDirectories>$(OutDir)</AdditionalLibraryDirectories>
     </Lib>
+    <ProjectReference />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>

@@ -1,4 +1,3 @@
-
 #include <d3dx9math.h>
 
 #include "renderstates.h"
@@ -172,11 +171,11 @@ void EditorRenderStates::Update3dProjMatrix(float w, float h, float xTrans, floa
 	FLOAT det;
 	D3DXMatrixInverse(&projMatrixInv, &det, &projMatrix3d);
 
-	D3DXVECTOR3 vec = { 0, 0, 0 };
+	D3DXVECTOR3 vec = {0, 0, 0};
 	D3DXVECTOR3 vecOut1;
 	D3DXVec3TransformCoord(&vecOut1, &vec, &projMatrixInv);
 
-	vec = { 0, 0, 1 };
+	vec = {0, 0, 1};
 	D3DXVECTOR3 vecOut2;
 	D3DXVec3TransformCoord(&vecOut2, &vec, &projMatrixInv);
 

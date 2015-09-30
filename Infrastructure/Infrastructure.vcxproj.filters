@@ -195,6 +195,9 @@
     <ClInclude Include="include\gsl\string_view.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\infrastructure\dxerr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="version.cpp">
@@ -249,6 +252,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="crypto.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dxerr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

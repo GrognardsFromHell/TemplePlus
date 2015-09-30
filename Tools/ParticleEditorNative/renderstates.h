@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <infrastructure/renderstates.h>

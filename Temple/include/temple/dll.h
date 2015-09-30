@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 #include <type_traits>
+#include <functional>
 
 namespace temple {
 
@@ -19,7 +20,13 @@ namespace temple {
 	};
 		
 	class Dll {
+	friend class DllImpl;
 	public:
+		Dll(Dll&) = delete;
+		Dll(Dll&&) = delete;
+		Dll& operator=(const Dll&) = delete;
+		Dll& operator=(const Dll&&) = delete;
+
 		~Dll();
 
 		void* GetAddress(uint32_t vanillaAddress) const;
@@ -34,10 +41,14 @@ namespace temple {
 		static Dll& GetInstance();
 
 		static void RegisterAddressPtr(void** ref);
+
+		void SetDebugOutputCallback(std::function<void(const std::string &text)> callback);
 				
 	private:
 		std::shared_ptr<class DllImpl> mImpl;
 		void *mReservedMem;
+
+		Dll() {}
 	};
 
 	struct AddressTable

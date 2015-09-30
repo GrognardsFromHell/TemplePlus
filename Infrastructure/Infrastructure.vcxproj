@@ -152,6 +152,7 @@
     <ClInclude Include="include\gsl\string_view.h" />
     <ClInclude Include="include\infrastructure\breakpad.h" />
     <ClInclude Include="include\infrastructure\crypto.h" />
+    <ClInclude Include="include\infrastructure\dxerr.h" />
     <ClInclude Include="include\infrastructure\elfhash.h" />
     <ClInclude Include="include\infrastructure\exception.h" />
     <ClInclude Include="include\infrastructure\format.h" />
@@ -202,6 +203,7 @@
     <ClCompile Include="breakpad\exception_handler.cc" />
     <ClCompile Include="breakpad\guid_string.cc" />
     <ClCompile Include="crypto.cpp" />
+    <ClCompile Include="dxerr.cpp" />
     <ClCompile Include="format.cc" />
     <ClCompile Include="elfhash.cpp" />
     <ClCompile Include="json11.cpp" />

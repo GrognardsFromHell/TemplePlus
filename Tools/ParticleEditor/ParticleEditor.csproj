@@ -75,7 +75,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="AnimatedModel.cs" />
     <Compile Include="BooleanInverter.cs" />
+    <Compile Include="TempleDll.cs" />
     <Compile Include="VideoRenderer.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

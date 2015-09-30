@@ -93,13 +93,13 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;PARTICLEEDITORNATIVE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)\dependencies\include;$(SolutionDir)\ParticleSystems\include;$(SolutionDir)\Infrastructure\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\Temple\include;$(SolutionDir)\dependencies\include;$(SolutionDir)\ParticleSystems\include;$(SolutionDir)\Infrastructure\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(TargetDir);$(SolutionDir)\dependencies\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>swscale.lib;avcodec.lib;avformat.lib;avutil.lib;Infrastructure.lib;ParticleSystems.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>temple.lib;swscale.lib;avcodec.lib;avformat.lib;avutil.lib;Infrastructure.lib;ParticleSystems.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
@@ -126,7 +126,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;PARTICLEEDITORNATIVE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)\dependencies\include;$(SolutionDir)\ParticleSystems\include;$(SolutionDir)\Infrastructure\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\Temple\include;$(SolutionDir)\dependencies\include;$(SolutionDir)\ParticleSystems\include;$(SolutionDir)\Infrastructure\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -134,7 +134,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(TargetDir);$(SolutionDir)\dependencies\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>swscale.lib;avcodec.lib;avformat.lib;avutil.lib;Infrastructure.lib;ParticleSystems.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>temple.lib;swscale.lib;avcodec.lib;avformat.lib;avutil.lib;Infrastructure.lib;ParticleSystems.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
@@ -156,6 +156,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="animatedmodel.cpp" />
+    <ClCompile Include="dll.cpp" />
     <ClCompile Include="external.cpp" />
     <ClCompile Include="ParticleEditorNative.cpp" />
     <ClCompile Include="renderstates.cpp" />
@@ -169,8 +171,14 @@
     <ClInclude Include="video.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Infrastructure\Infrastructure.vcxproj">
+      <Project>{006f5b8a-f75f-413c-ad3a-e004ca8ddf26}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\ParticleSystems\ParticleSystems.vcxproj">
       <Project>{a806cafa-9ff2-42dc-a02f-7e57ef2ab867}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Temple\Temple.vcxproj">
+      <Project>{a05549fb-a0d1-48aa-b586-fe333bbb4505}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -149,7 +149,6 @@
     <ClInclude Include="include\d3d8\d3d8.h" />
     <ClInclude Include="include\d3d8\d3d8caps.h" />
     <ClInclude Include="include\d3d8\d3d8types.h" />
-    <ClInclude Include="dxerr.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
@@ -161,7 +160,6 @@
     <ClCompile Include="d3d8to9_surface.cpp" />
     <ClCompile Include="d3d8to9_texture.cpp" />
     <ClCompile Include="d3d8to9_vertexbuffer.cpp" />
-    <ClCompile Include="dxerr.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

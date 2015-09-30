@@ -16,12 +16,12 @@ public:
 protected:
 	
 	// Inherited via Vfs
-	virtual FileHandle open(const char * name, const char * mode) override
+	virtual FileHandle Open(const char * name, const char * mode) override
 	{
 		return (FileHandle)fopen(name, mode);
 	}
 
-	virtual size_t length(FileHandle handle) override
+	virtual size_t Length(FileHandle handle) override
 	{
 		struct stat st;
 		auto fn = _fileno((FILE*)handle);
@@ -29,12 +29,12 @@ protected:
 		return st.st_size;
 	}
 
-	virtual size_t read(void * buffer, size_t size, FileHandle handle) override
+	virtual size_t Read(void * buffer, size_t size, FileHandle handle) override
 	{
 		return fread(buffer, 1, size, (FILE*) handle);
 	}
 
-	virtual void close(FileHandle handle) override
+	virtual void Close(FileHandle handle) override
 	{
 		fclose((FILE*)handle);
 	}
@@ -47,14 +47,14 @@ Vfs* Vfs::CreateStdIoVfs() {
 
 std::string Vfs::ReadAsString(const std::string & filename)
 {
-	auto fh = open(filename.c_str(), "rt");
+	auto fh = Open(filename.c_str(), "rt");
 	if (!fh) {
 		throw TempleException("Unable to find file {}", filename);
 	}
-	auto fileSize = length(fh);
+	auto fileSize = Length(fh);
 	std::string result;
 	result.resize(fileSize);
-	read(const_cast<char*>(result.data()), fileSize, fh);
-	close(fh);
+	Read(const_cast<char*>(result.data()), fileSize, fh);
+	Close(fh);
 	return result;
 }
