@@ -56,6 +56,7 @@ struct TemplePlusConfig
 	int maxPCs = 5; // max number of PCs in the party
 	bool maxPCsFlexible = true; // makes the party PC/NPC composition fluid
 	bool usingCo8 = true;
+	int maxLevel = 20; // maximum character level
 	void Load();
 	void Save();
 };

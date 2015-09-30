@@ -41,11 +41,12 @@ uint32_t D20LevelSystem::GetLevelPacket(Stat classEnum, objHndl objHnd, uint32_t
 bool D20LevelSystem::CanLevelup(objHndl objHnd)
 {
 	auto lvl = objects.StatLevelGet(objHnd, stat_level);
-	if (d20Sys.d20Query(objHnd, DK_QUE_ExperienceExempt) || lvl < 0 || lvl >= d20LevelSys.maxLevel)
+	if (d20Sys.d20Query(objHnd, DK_QUE_ExperienceExempt) || lvl < 0 || lvl >= config.maxLevel)
 	{
 		return 0;
 	}
-	return objects.getInt32(objHnd, obj_f_critter_experience) >= addresses.xpReqTable[lvl + 1];
+	return objects.getInt32(objHnd, obj_f_critter_experience) >= xpReqTable[lvl + 1];
+		//addresses.xpReqTable[lvl + 1];
 
 }
 

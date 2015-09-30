@@ -87,6 +87,11 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 	if (foundStatus != 3)
 		return 0;
 
+	// testing neighbour IDs
+	int neighboursTest[100];
+	memcpy(neighboursTest, toNode.neighbours, toNode.neighboursCount * sizeof(int));
+	
+
 
 	// begin the A* algorithm
 	float distFromTo = locSys.distBtwnLocAndOffs(fromNode.nodeLoc, toNode.nodeLoc);
