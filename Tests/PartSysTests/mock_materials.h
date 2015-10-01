@@ -4,9 +4,9 @@
 #include <gmock/gmock.h>
 #include <infrastructure/materials.h>
 
-class MaterialsMock : public gfx::MaterialFactory {
+class MaterialsMock : public gfx::MdfMaterialFactory {
 public:
-	MOCK_METHOD1(Resolve, gfx::MaterialRef(const std::string& materialName));
+	MOCK_METHOD1(LoadMaterial, gfx::MaterialRef(const std::string& materialName));
 
 };
 

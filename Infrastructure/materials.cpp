@@ -1,8 +1,13 @@
+#include <sstream>
 
 #include "infrastructure/materials.h"
-#include "infrastructure/logging.h"
+#include "infrastructure/vfs.h"
+#include "infrastructure/exception.h"
+#include "infrastructure/stringutil.h"
 
 namespace gfx {
+
+	std::unique_ptr<MdfMaterialFactory> gMdfMaterialFactory;
 
 	/**
 		This class is used to represent an invalid material, which frees
@@ -26,14 +31,29 @@ namespace gfx {
 		}
 	};
 
-	std::unique_ptr<MaterialFactory> materialManager;
-	
-	MaterialFactory::~MaterialFactory() {
+	const MaterialRef& Material::GetInvalidMaterial() {
+		static MaterialRef result(std::make_shared<InvalidMaterial>());
+		return result;
 	}
 
-	MaterialRef MaterialFactory::GetInvalidMaterial() {
-		static MaterialRef result(new InvalidMaterial);
-		return result;
+	MaterialRef MdfMaterialFactory::LoadMaterial(const std::string& name) {
+		auto mdfContent(vfs->ReadAsString(name));
+
+		std::istringstream in(mdfContent);
+		std::string line;
+
+
+		// Parse the material type
+
+		while (std::getline(in, line)) {
+
+		}
+
+
+		// First line of MDF is always which type it is
+
+
+		return MaterialRef();
 	}
 
 }

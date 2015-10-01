@@ -12,13 +12,13 @@
 
 using namespace particles;
 
-class EditorMaterialManager : public gfx::MaterialFactory {
+class EditorMaterialManager : public gfx::MdfMaterialFactory {
 public:
 	explicit EditorMaterialManager(const std::string& dataPath, IDirect3DDevice9* device)
 		: mDataPath(dataPath), mDevice(device) {
 	}
 
-	gfx::MaterialRef Resolve(const std::string& materialName) override;
+	gfx::MaterialRef LoadMaterial(const std::string& materialName) override;
 private:
 	std::string mDataPath;
 	CComPtr<IDirect3DDevice9> mDevice;
@@ -83,7 +83,7 @@ private:
 	gfx::TextureRef mTexture;
 };
 
-gfx::MaterialRef EditorMaterialManager::Resolve(const std::string& materialName) {
+gfx::MaterialRef EditorMaterialManager::LoadMaterial(const std::string& materialName) {
 
 	auto filename = fmt::format("{}\\art\\meshes\\Particle\\{}.mdf", mDataPath, materialName);
 
@@ -113,7 +113,7 @@ struct PartSysFacade {
 		: mDataPath(dataPath),
 		  mMaterials(std::make_shared<EditorMaterialManager>(mDataPath, device)),
 		  mMeshes(std::make_shared<gfx::MeshesManager>()),
-		  mParser(mMaterials, mMeshes) {
+		  mParser(mMeshes) {
 
 	}
 

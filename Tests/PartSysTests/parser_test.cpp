@@ -19,16 +19,17 @@ protected:
 
 	static gfx::MeshesManagerPtr sMeshes;
 
-	static PartSysParser &GetParser() {
-		static auto sMaterials = std::make_shared<testing::NiceMock<MaterialsMock>>();
-		auto defaultMaterial = std::make_shared<testing::NiceMock<MaterialMock>>();
-		testing::DefaultValue<gfx::MaterialRef>::Set(defaultMaterial);
-		
-		static PartSysParser sParser(sMaterials, sMeshes);
+	static PartSysParser &GetParser() {	
+		static PartSysParser sParser(sMeshes);
 		return sParser;
 	}
 
 	static void SetUpTestCase() {
+		auto defaultMaterial = std::make_shared<testing::NiceMock<MaterialMock>>();
+		testing::DefaultValue<gfx::MaterialRef>::Set(defaultMaterial);
+
+		gfx::gMdfMaterialFactory.reset(new testing::NiceMock<MaterialsMock>);
+
 		// Init VFS with mock/dummy code
 		vfs.reset(Vfs::CreateStdIoVfs());
 		

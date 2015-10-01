@@ -162,8 +162,11 @@
     <ClInclude Include="include\infrastructure\logging.h" />
     <ClInclude Include="include\infrastructure\materials.h" />
     <ClInclude Include="include\infrastructure\mathutil.h" />
+    <ClInclude Include="include\infrastructure\mdfmaterial.h" />
+    <ClInclude Include="include\infrastructure\mdfparser.h" />
     <ClInclude Include="include\infrastructure\meshes.h" />
     <ClInclude Include="include\infrastructure\mesparser.h" />
+    <ClInclude Include="include\infrastructure\tokenizer.h" />
     <ClInclude Include="include\platform\windows.h" />
     <ClInclude Include="include\infrastructure\renderstates.h" />
     <ClInclude Include="include\spdlog\async_logger.h" />
@@ -206,6 +209,8 @@
     <ClCompile Include="dxerr.cpp" />
     <ClCompile Include="format.cc" />
     <ClCompile Include="elfhash.cpp" />
+    <ClCompile Include="mdfparser.cpp" />
+    <ClCompile Include="tokenizer.cpp" />
     <ClCompile Include="json11.cpp" />
     <ClCompile Include="stringutil.cpp" />
     <ClCompile Include="windows.cpp" />
