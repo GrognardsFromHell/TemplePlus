@@ -131,7 +131,7 @@ void GiveXPAwards(){
 
 		int xpGainRaw = 0; // raw means it's prior to applying multiclass penalties, which  is Someone Else's Problem :P
 
-		for (int n = 0; n < CRMAX - CRMIN + 1; n++){
+		for (int n = 0; n < CR_KILLED_TABLE_SIZE; n++){
 			float nkill = (float)killCountByCR[n];
 			float xp = (float)xpawarddd.XPAwardTable[level - 1][n];
 			if (nkill){
@@ -151,7 +151,7 @@ void GiveXPAwards(){
 		}
 	}
 
-	for (int n = 0; n < CRMAX - CRMIN + 1; n++){
+	for (int n = 0; n < CR_KILLED_TABLE_SIZE; n++){
 		killCountByCR[n] = 0;
 	};
 	*(xpPile.ptr()) = xpForxpPile;

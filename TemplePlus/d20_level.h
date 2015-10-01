@@ -2,21 +2,32 @@
 #include "stdafx.h"
 #include "common.h"
 #include "idxtables.h"
+#include "util/config.h"
 
 struct LevelPacket;
 struct LevelupPacket;
 
+#define XP_REQ_TABLE_MAX_LEVEL 100
+
 class D20LevelSystem
 {
 public:
-	uint32_t maxLevel;
+	uint32_t xpReqTable[XP_REQ_TABLE_MAX_LEVEL]; //  xp required to reach a certain level, starting from level 0 (will be 0,0,1000,3000,6000,...)
+	// uint32_t maxLevel; // now read from config
 	uint32_t LevelPacketInit(LevelPacket* lvlPkt);
 	uint32_t LevelPacketDealloc(LevelPacket *lvlPkt);
 	uint32_t GetLevelPacket(Stat classEnum, objHndl ObjHnd, uint32_t levelAdjustSthg, uint32_t classLevel, LevelPacket *lvlPkt);
 	bool CanLevelup(objHndl objHnd);
 	D20LevelSystem()
 	{
-		maxLevel = 20;
+		//maxLevel = 20;
+		
+		memset(xpReqTable, 0, sizeof(xpReqTable));
+		xpReqTable[2] = 1000;
+		for (int i = 3; i < XP_REQ_TABLE_MAX_LEVEL; i++)
+		{
+			xpReqTable[i] = 1000 * (i - 1)*i / 2;
+		}
 	}
 };
 

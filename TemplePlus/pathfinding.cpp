@@ -382,6 +382,9 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 		pathQueryLocal.from = from;
 		pathQueryLocal.to = nodeTemp1.nodeLoc;
 		pathLocal.from = from;
+		pathLocal.nodeCount = 0;
+		pathLocal.nodeCount2 = 0;
+		pathLocal.nodeCount3 = 0;
 
 		int nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
 		if (!nodeCountAdded || (nodeCountAdded + nodeTotal > pq->maxShortPathFindLength))

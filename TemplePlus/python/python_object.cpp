@@ -1866,7 +1866,7 @@ static PyObject * PyObjHandle_MakeClass(PyObject* obj, PyObject* args) {
 		return nullptr;
 	}
 
-	if (level <= 0 || level > 20){
+	if (level <= 0 || level > config.maxLevel){
 		return PyInt_FromLong(0);
 	}
 	for (uint32_t i = 0; i < level; i++)
