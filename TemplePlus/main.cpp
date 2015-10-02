@@ -51,11 +51,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		dll.Load(toeeDir.GetDirectory());
 
-		StringTokenizer tok("Texture \"\\x70 \\x6B art\\interface\\radial_menu\\icon_feats.tga\"");
-		while (tok.next()) {
-			logger->info("{}", tok.token().text);
-		}
-
 		if (dll.HasBeenRebased()) {
 			auto moduleName = dll.FindConflictingModule();
 			auto msg = format(L"Module '{}' caused temple.dll to be loaded at a different address than usual.\n"

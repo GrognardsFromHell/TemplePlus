@@ -4,7 +4,7 @@
 /*
 	Reads a binary file using TIO completely into memory.
 */
-vector<char> *TioReadBinaryFile(const string &filename);
+vector<uint8_t> *TioReadBinaryFile(const string &filename);
 
 /*
 	Checks if a given directory exists.

@@ -23,7 +23,6 @@ struct TemplePlusConfig
 	uint32_t scrollDistance = 10; // Not really sure what this is used for. Previously: -scrolldist
 	string defaultModule = "ToEE"; // Previousl: -mod: 
 	bool disableFogOfWar = false; // Previously: -nofog
-	bool disableScreenshots = false; // for debugging mushaden's crash
 	bool skipIntro = true;
 	bool skipLegal = true;
 	bool engineEnhancements = true;
@@ -36,6 +35,7 @@ struct TemplePlusConfig
 	int renderHeight = 768;
 	wstring toeeDir;
 	int sectorCacheSize = 128; // Default is 16
+	int screenshotQuality = 80; // 1-100, Default is 80
 
 	vector<string> additionalTioPaths; // Add these to the Python sys.path variable
 	
