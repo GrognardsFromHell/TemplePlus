@@ -18,10 +18,9 @@ struct ActionSequenceSystem;
 struct D20Actn;
 struct ActnSeq;
 struct TurnBasedStatus;
-enum SpontCastType;
 struct D20SpellData;
 enum D20CAF : uint32_t;
-enum SpontCastType : unsigned char;
+//enum SpontCastType : unsigned char;
 struct D20SpellData;
 struct D20Actn;
 struct D20ActionDef;
@@ -66,6 +65,7 @@ struct D20System : temple::AddressTable
 	objHndl GetAttackWeapon(objHndl obj, int attackCode, D20CAF flags);
 	int PerformStandardAttack(D20Actn* d20a);
 	int TargetWithinReachOfLoc(objHndl obj, objHndl target, LocAndOffsets* loc);
+	void D20ActnSetSetSpontCast(D20SpellData* d20SpellData, SpontCastType spontCastType);
 	void (__cdecl *D20StatusInitFromInternalFields)(objHndl objHnd, Dispatcher *dispatcher);
 	void (__cdecl *D20ObjRegistryAppend)(objHndl ObjHnd);
 	void(__cdecl * _d20aTriggerCombatCheck)(int32_t idx);//1008AE90    ActnSeq * @<eax>
@@ -88,17 +88,7 @@ extern D20System d20Sys;
 int _D20Init(GameSystemConf* conf);
 
 
-struct D20SpellData
-{
-	uint16_t spellEnumOrg;
-	MetaMagicData metaMagicData;
-	uint8_t spellClassCode;
-	uint8_t itemSpellData;
-	SpontCastType spontCastType : 4;
-	unsigned char spellSlotLevel : 4;
-};
 
-const uint32_t TestSizeOfD20SpellData = sizeof(D20SpellData);
 
 #pragma region D20 Action and Action Sequence Structs
 
@@ -191,13 +181,6 @@ struct D20ActionDef
 };
 
 
-
-
-enum SpontCastType : unsigned char{
-	spontCastGoodCleric = 2,
-	spontCastEvilCleric = 4,
-	spontCastDruid = 8
-};
 
 
 struct AiTacticDef;

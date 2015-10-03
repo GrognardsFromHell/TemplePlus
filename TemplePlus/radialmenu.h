@@ -34,11 +34,12 @@ struct RadialMenuEntry {
 	D20ActionType d20ActionType;
 	int d20ActionData1;
 	D20CAF d20Caf;
-	int spellEnumOrg;
-	uint32_t spellMetaMagic;
-	int field34;
+	D20SpellData d20SpellData;
+	//int spellEnumOrg;
+	//uint32_t spellMetaMagic;
+	int dispKey;
 	void (__cdecl *callback)(objHndl a1, RadialMenuEntry *entry);
-	int field3c;
+	int flags;
 	int helpId; // String hash for the help topic associated with this entry
 	int field44;
 
@@ -139,6 +140,10 @@ public:
 	int AddChildNode(objHndl objHndCaller, RadialMenuEntry* radialMenuEntry, int parentIdx);
 	int AddParentChildNode(objHndl objHndCaller, RadialMenuEntry* radialMenuEntry, int parentIdx); // adds a child who's a parent itself
 	int AddParentChildNodeClickable(objHndl objHndCaller, RadialMenuEntry* radialMenuEntry, int parentIdx); // adds a child who's a parent itself, and one that can eb clicked
+	int AddRootNode(objHndl obj, const RadialMenuEntry * entry); // might be more accurate to say "parentless node"; this is used for adding spontaneous spells, which are tucked away until needed
+	int RadialMenus::AddRootParentNode(objHndl obj, RadialMenuEntry* entry);
+	void SetMorphsTo(objHndl obj, int nodeIdx, int spontSpellNode);
+	void SetCallbackCopyEntryToSelected(RadialMenuEntry* radEntry);
 };
 
 extern RadialMenus radialMenus;

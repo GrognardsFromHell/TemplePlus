@@ -585,6 +585,17 @@ int D20System::TargetWithinReachOfLoc(objHndl obj, objHndl target, LocAndOffsets
 	return addresses.TargetWithinReachOfLoc(obj, target, loc);
 }
 
+void D20System::D20ActnSetSetSpontCast(D20SpellData* d20SpellData, SpontCastType spontCastType)
+{
+	d20SpellData->spontCastType = spontCastType;
+	d20SpellData->metaMagicData.metaMagicFlags = 0;
+	d20SpellData->metaMagicData.metaMagicEmpowerSpellCount = 0;
+	d20SpellData->metaMagicData.metaMagicEnlargeSpellCount = 0;
+	d20SpellData->metaMagicData.metaMagicExtendSpellCount = 0;
+	d20SpellData->metaMagicData.metaMagicHeightenSpellCount = 0;
+	d20SpellData->metaMagicData.metaMagicWidenSpellCount = 0;
+}
+
 uint64_t D20System::d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, ::uint32_t arg2)
 {
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);

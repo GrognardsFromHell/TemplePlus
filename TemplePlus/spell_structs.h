@@ -22,14 +22,37 @@ struct MetaMagicData
 	unsigned char metaMagicExtendSpellCount : 4;
 	unsigned char metaMagicHeightenSpellCount : 4;
 	unsigned char metaMagicWidenSpellCount : 4;
+	operator  uint32_t()
+	{
+		return (*(uint32_t*)this) & 0xFFFFFF;
+	}
 };
-
+const uint32_t TestSizeOfMetaMagicData = sizeof(MetaMagicData);
 
 struct SpellStoreState
 {
 	SpellStoreType spellStoreType;
 	uint8_t usedUp; // relevant only for spellStoreMemorized
 };
+
+enum SpontCastType : unsigned char {
+	spontCastGoodCleric = 2,
+	spontCastEvilCleric = 4,
+	spontCastDruid = 8
+};
+
+struct D20SpellData
+{
+	uint16_t spellEnumOrg;
+	MetaMagicData metaMagicData;
+	uint8_t spellClassCode;
+	uint8_t itemSpellData;
+	SpontCastType spontCastType : 4;
+	unsigned char spellSlotLevel : 4;
+};
+
+const uint32_t TestSizeOfD20SpellData = sizeof(D20SpellData);
+
 #pragma pack(push,4)
 struct SpellStoreData
 {
