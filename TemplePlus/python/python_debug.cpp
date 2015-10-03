@@ -68,11 +68,11 @@ PyObject* DumpRadialNode(const RadialMenuNode &node) {
 	SetDictItem(result, "d20ActionType", entry.d20ActionType);
 	SetDictItem(result, "d20ActionData1", entry.d20ActionData1);
 	SetDictItem(result, "d20Caf", entry.d20Caf);
-	SetDictItem(result, "spellEnumOrg", entry.spellEnumOrg);
-	SetDictItem(result, "spellMetaMagic", entry.spellMetaMagic);
-	SetDictItem(result, "field34", entry.field34);
+	SetDictItem(result, "spellEnumOrg", entry.d20SpellData.spellEnumOrg);
+	SetDictItem(result, "spellMetaMagic", entry.d20SpellData.metaMagicData.metaMagicFlags);
+	SetDictItem(result, "dispKey", entry.dispKey);
 	SetDictItem(result, "callback", (uint32_t) entry.callback);
-	SetDictItem(result, "field3c", (uint32_t) entry.field3c);
+	SetDictItem(result, "flags", (uint32_t) entry.flags);
 	SetDictItem(result, "helpId", (uint32_t) entry.helpId);
 	SetDictItem(result, "field44", (uint32_t) entry.field44);
 

@@ -106,11 +106,18 @@ struct SpellSystem : temple::AddressTable
 {
 	IdxTable<SpellPacket> * spellCastIdxTable;
 	
+	MesHandle * spellEnumMesHandle;
+	MesHandle * spellMes;
+	MesHandle * spellsRadialMenuOptionsMes;
+
 	uint32_t spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry);
 	uint32_t ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
 	uint32_t GetMaxSpellSlotLevel(objHndl objHnd, Stat classCode, int casterLvl);
 	int ParseSpellSpecString(SpellStoreData* spell, char* spellString);
-	MesHandle * spellEnumMesHandle;
+	const char* GetSpellMesline(uint32_t line);
+	const char* GetSpellEnumTAG(uint32_t spellEnum);
+	void SetSpontaneousCastingAltNode(objHndl obj, int nodeIdx, SpellStoreData* spellData);
+	
 
 	uint32_t getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t classLvl, uint32_t slotLvl, uint32_t unknown1);
 	uint32_t getWizSchool(objHndl objHnd);
@@ -127,6 +134,7 @@ struct SpellSystem : temple::AddressTable
 	bool numSpellsKnownTooHigh(objHndl objHnd);
 	bool numSpellsMemorizedTooHigh(objHndl objHnd);
 	bool isDomainSpell(uint32_t spellClassCode);
+	Stat GetCastingClass(uint32_t spellClassCode);
 	uint32_t pickerArgsFromSpellEntry(SpellEntry * spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLevel);
 
 	void (__cdecl *SpellEnd)(int, int);
@@ -141,7 +149,9 @@ struct SpellSystem : temple::AddressTable
 	SpellSystem()
 	{
 		rebase(spellCastIdxTable, 0x10AAF218);
-		macRebase(spellEnumMesHandle, 10AAF210)
+		rebase(spellEnumMesHandle,0x10AAF210); 
+		rebase(spellMes, 0x10AAF438);
+		rebase(spellsRadialMenuOptionsMes, 0x10BD0238);
 
 		rebase(SpellEnd, 0x10079980);
 		rebase(SpellRemove, 0x10079A20);
@@ -149,11 +159,11 @@ struct SpellSystem : temple::AddressTable
 		rebase(_getStatModBonusSpellCount, 0x100F4C30);
 		rebase(spellRemoveFromStorage, 0x100758A0);
 		rebase(spellsPendingToMemorized, 0x100757D0);
-		macRebase(_spellPacketBodyReset, 1008A350)
-		macRebase(_spellPacketSetCasterLevel, 10079B70)
+		rebase(_spellPacketBodyReset,0x1008A350); 
+		rebase(_spellPacketSetCasterLevel,0x10079B70); 
 		rebase(SpellKnownAdd, 0x10079EE0);
 		rebase(SpellMemorizedAdd, 0x10075A10);
-		macRebase(_pickerArgsFromSpellEntry, 100772A0)
+		rebase(_pickerArgsFromSpellEntry,0x100772A0); 
 	}
 private:
 
@@ -195,18 +205,6 @@ extern SpontCastSpellLists spontCastSpellLists;
 
 
 
-uint32_t _DruidRadialSelectSummons(uint32_t spellSlotLevel);
-void DruidRadialSelectSummonsHook();
-uint32_t _DruidRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel);
-void DruidRadialSpontCastSpellEnumHook();
-uint32_t _GoodClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel);
-uint32_t _EvilClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel);
-void EvilClericRadialSpontCastSpellEnumHook();
-void GoodClericRadialSpontCastSpellEnumHook();
-
-
-
-const uint32_t TestSizeOfMetaMagicData = sizeof(MetaMagicData);
 const uint32_t TestSizeOfSpellStoreType = sizeof(SpellStoreType);
 const uint32_t TestSizeOfSpellStoreState = sizeof(SpellStoreState);
 
@@ -221,7 +219,7 @@ uint32_t _spellCanCast(objHndl objHnd, uint32_t spellEnum, uint32_t spellClassCo
 uint32_t __cdecl _spellRegistryCopy(uint32_t spellEnum, SpellEntry * spellEntry);
 uint32_t _GetSpellEnumFromSpellId(uint32_t spellId);
 uint32_t _GetSpellPacketBody(uint32_t spellId, SpellPacketBody * spellPktBodyOut);
-
+void _SetSpontaneousCastingAltNode(objHndl obj, int nodeIdx, SpellStoreData* spellData);
 
 
 

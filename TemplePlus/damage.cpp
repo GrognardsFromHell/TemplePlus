@@ -144,7 +144,7 @@ int Damage::AddPhysicalDR(DamagePacket* damPkt, int DRAmount, int bypasserBitmas
 	if (damPkt->damResCount < 5u)
 	{
 		mesLine.key = damageMesLine;
-		mesFuncs.GetLine_Safe(*damageMes, &mesLine);
+		mesFuncs.GetLine_Safe(*addresses.damageMes, &mesLine);
 		damPkt->damageResistances[damPkt->damResCount].damageReductionAmount = DRAmount;
 		damPkt->damageResistances[damPkt->damResCount].dmgFactor = 0;
 		damPkt->damageResistances[damPkt->damResCount].type = DamageType::SlashingAndBludgeoningAndPiercing;

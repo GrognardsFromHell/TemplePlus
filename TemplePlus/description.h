@@ -1,11 +1,12 @@
 #pragma once
 
 #include "common.h"
-
+#include "tig/tig_mes.h"
 
 
 struct DescriptionSystem : temple::AddressTable
 {
+	MesHandle * descriptionMes;
 	uint32_t * customNamesCount;
 	char** customNamesArray;
 	const char* getDisplayName(objHndl obj);
@@ -20,6 +21,7 @@ struct DescriptionSystem : temple::AddressTable
 	{
 		rebase(customNamesCount, 0x10AB757C);
 		rebase(customNamesArray, 0x10AB7578);
+		rebase(descriptionMes, 0x10BD023C);
 
 		rebase(_getDisplayName, 0x1001FA80);
 		rebase(DescriptionIsCustom, 0x100869B0);

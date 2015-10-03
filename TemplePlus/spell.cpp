@@ -8,6 +8,9 @@
 #include "temple_functions.h"
 #include "ui\ui_picker.h"
 #include "temple_functions.h"
+#include "radialmenu.h"
+#include "critter.h"
+#include <infrastructure/elfhash.h>
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
@@ -60,7 +63,7 @@ public:
 		replaceFunction(0x100754B0, _spellRegistryCopy); 
 		replaceFunction(0x10075660, _GetSpellEnumFromSpellId); 
 		replaceFunction(0x100756E0, _GetSpellPacketBody); 
-		
+		replaceFunction(0x100F1010, _SetSpontaneousCastingAltNode);
 	}
 } spellFuncReplacements;
 
@@ -69,20 +72,6 @@ SpontCastSpellLists spontCastSpellLists;
 
 //temple::GlobalPrimitive<uint16_t>
 //1028D09C
-
-class SpontaneousCastingExpansion : public TempleFix {
-public:
-	const char* name() override {
-		return "Recreation of SpellSlinger's Spontaneous Casting for levels 6-9";
-	}
-
-	void apply() override {
-		writeCall(0x100F1127, DruidRadialSelectSummonsHook); // replaces SpellSlinger's hook for Druid Summon options
-		writeCall(0x100F113F, DruidRadialSpontCastSpellEnumHook);
-		writeCall(0x100F109D, GoodClericRadialSpontCastSpellEnumHook);
-		writeCall(0x100F10AE, EvilClericRadialSpontCastSpellEnumHook);
-	}
-} spellSpontCastExpansion;
 
 
 class SpellHostilityFlagFix : public TempleFix {
@@ -121,6 +110,96 @@ uint32_t SpellSystem::GetMaxSpellSlotLevel(objHndl objHnd, Stat classCode, int c
 int SpellSystem::ParseSpellSpecString(SpellStoreData* spell, char* spellString)
 {
 	return addresses.ParseSpellSpecString(spell, spellString);
+}
+
+const char* SpellSystem::GetSpellMesline(uint32_t lineNumber)
+{
+	MesLine mesLine;
+	mesLine.key = lineNumber;
+	mesFuncs.GetLine_Safe(*spellMes, &mesLine);
+	return mesLine.value;
+}
+
+const char* SpellSystem::GetSpellEnumTAG(uint32_t spellEnum)
+{
+	MesLine mesLine;
+	mesLine.key = spellEnum + 20000;
+	mesFuncs.GetLine_Safe(*spellEnumMesHandle, &mesLine);
+	return mesLine.value;
+}
+
+void SpellSystem::SetSpontaneousCastingAltNode(objHndl obj, int nodeIdx, SpellStoreData* spellData)
+{
+	auto spellClassCode = spellData->classCode;
+	if (isDomainSpell(spellClassCode))
+		return;
+	auto castingClassCode = GetCastingClass(spellClassCode);
+	if (castingClassCode == stat_level_cleric)
+	{
+		RadialMenuEntry radEntry;
+		radEntry.SetDefaults();
+		d20Sys.D20ActnSetSpellData(&radEntry.d20SpellData, spellData->spellEnum, spellData->classCode, spellData->spellLevel, 0xFF, spellData->metaMagicData);
+
+		radEntry.type = RadialMenuEntryType::Action;
+		radEntry.minArg = 0;
+		radEntry.maxArg = 0;
+		radEntry.actualArg = 0;
+		radEntry.d20ActionType = D20A_CAST_SPELL;
+		radEntry.d20ActionData1 = 0;
+		auto alignmentChoice = objects.getInt32(obj, obj_f_critter_alignment_choice);
+		auto spellLevel = spellData->spellLevel;
+		if (alignmentChoice == 0) // good aligned
+		{
+			if (spellLevel <= 9)
+				radEntry.text = (char*)GetSpellMesline(spontCastSpellLists.spontCastSpellsGoodCleric[spellLevel]);
+			d20Sys.D20ActnSetSetSpontCast(&radEntry.d20SpellData, SpontCastType::spontCastGoodCleric);
+		} else
+		{
+			if (spellLevel <= 9)
+				radEntry.text = (char*)GetSpellMesline(spontCastSpellLists.spontCastSpellsEvilCleric[spellLevel]);
+			d20Sys.D20ActnSetSetSpontCast(&radEntry.d20SpellData, SpontCastType::spontCastEvilCleric);
+		}
+		radEntry.helpId = ElfHash::Hash("TAG_CLASS_FEATURES_CLERIC_SPONTANEOUS_CASTING");
+		
+		radialMenus.SetMorphsTo(obj, nodeIdx, radialMenus.AddRootNode(obj, &radEntry));
+	} 
+	else if (castingClassCode == stat_level_druid && spellData->spellLevel > 0)
+	{
+		RadialMenuEntry radEntry;
+		radEntry.SetDefaults();
+		auto spellLevel = spellData->spellLevel;
+		if (spellLevel > 9)
+			spellLevel = 9;
+		auto radOptionsMesLine = spontCastSpellLists.spontCastSpellsDruidSummons[spellLevel]; // mes line inside spells_radial_menu_options
+		auto druidSpontSpell = spontCastSpellLists.spontCastSpellsDruid[spellLevel];
+		radEntry.text = (char*)GetSpellMesline(druidSpontSpell);
+		int parentIdx = radialMenus.AddRootParentNode(obj, &radEntry );
+		radialMenus.SetMorphsTo(obj, nodeIdx, parentIdx);
+		MesLine mesLine;
+		mesLine.key = radOptionsMesLine;
+		mesFuncs.GetLine_Safe(*spellsRadialMenuOptionsMes, &mesLine);
+		auto numSummons = atol(mesLine.value);
+		for (int i = 1; i <= numSummons; i++ )
+		{
+			mesLine.key = i + radOptionsMesLine;
+			mesFuncs.GetLine_Safe(*spellsRadialMenuOptionsMes, &mesLine);
+			auto protoNum = atol(mesLine.value);
+			auto protoHandle = objects.GetProtoHandle(protoNum);
+			mesLine.key = objects.getInt32(protoHandle, obj_f_description);
+			mesFuncs.GetLine_Safe(*description.descriptionMes, &mesLine);
+			
+			radEntry.SetDefaults();
+			radEntry.text = (char*)mesLine.value;
+			radEntry.d20ActionType = D20A_CAST_SPELL;
+			radEntry.d20ActionData1 = 0;
+			radialMenus.SetCallbackCopyEntryToSelected(&radEntry);
+			radEntry.minArg = protoNum;
+			d20Sys.D20ActnSetSpellData(&radEntry.d20SpellData, spellData->spellEnum, spellData->classCode, spellData->spellLevel, 0xFF, spellData->metaMagicData);
+			d20Sys.D20ActnSetSetSpontCast(&radEntry.d20SpellData, SpontCastType::spontCastDruid);
+			radEntry.helpId = ElfHash::Hash(GetSpellEnumTAG(spellData->spellEnum));
+			radialMenus.AddChildNode(obj, &radEntry, parentIdx);
+		}
+	}
 }
 
 uint32_t SpellSystem::getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t classLvl, uint32_t slotLvl, uint32_t unknown1)
@@ -369,83 +448,18 @@ bool SpellSystem::isDomainSpell(uint32_t spellClassCode)
 	return 1;
 }
 
+Stat SpellSystem::GetCastingClass(uint32_t spellClassCode)
+{
+	return (Stat)(spellClassCode & 0x7F);
+}
+
 uint32_t SpellSystem::pickerArgsFromSpellEntry(SpellEntry* spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLvl)
 {
 	return _pickerArgsFromSpellEntry(spellEntry, pickArgs, objHnd, casterLvl);
 }
 #pragma endregion
 
-#pragma region Spontaneous Summon Hooks
 
-void __declspec(naked) DruidRadialSelectSummonsHook()
-{
-	__asm{
-		push eax;
-		call _DruidRadialSelectSummons;
-		mov ebp, eax;
-		pop eax;
-		retn;
-	}
-};
-
-void __declspec(naked) DruidRadialSpontCastSpellEnumHook()
-{
-	__asm{
-		push eax;
-		call _DruidRadialSpontCastSpellEnumHook;
-		mov ecx, eax;
-		pop eax;
-		retn;
-	}
-};
-
-void __declspec(naked) GoodClericRadialSpontCastSpellEnumHook()
-{
-	__asm{
-		push eax;
-		call _GoodClericRadialSpontCastSpellEnumHook;
-		mov ecx, eax;
-		pop eax;
-		retn;
-	}
-};
-
-void __declspec(naked) EvilClericRadialSpontCastSpellEnumHook()
-{
-	__asm{
-		push eax;
-		call _EvilClericRadialSpontCastSpellEnumHook;
-		mov ecx, eax;
-		pop eax;
-		retn;
-	}
-};
-
-
-
-uint32_t _DruidRadialSelectSummons(uint32_t spellSlotLevel)
-{
-	return spontCastSpellLists.spontCastSpellsDruidSummons[spellSlotLevel];
-}
-
-uint32_t _DruidRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel)
-{
-	return spontCastSpellLists.spontCastSpellsDruid[spellSlotLevel];
-}
-
-uint32_t _GoodClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel)
-{
-	return spontCastSpellLists.spontCastSpellsGoodCleric[spellSlotLevel];
-}
-
-uint32_t _EvilClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel)
-{
-	return spontCastSpellLists.spontCastSpellsEvilCleric[spellSlotLevel];
-}
-
-
-
-#pragma endregion
 
 #pragma region Hooks
 
@@ -487,5 +501,10 @@ uint32_t _GetSpellEnumFromSpellId(uint32_t spellId)
 uint32_t _GetSpellPacketBody(uint32_t spellId, SpellPacketBody* spellPktBodyOut)
 {
 	return spellSys.GetSpellPacketBody(spellId, spellPktBodyOut);
+}
+
+void _SetSpontaneousCastingAltNode(objHndl obj, int nodeIdx, SpellStoreData* spellData)
+{
+	spellSys.SetSpontaneousCastingAltNode(obj, nodeIdx, spellData);
 }
 #pragma endregion 

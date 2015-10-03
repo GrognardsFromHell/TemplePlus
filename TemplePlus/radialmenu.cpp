@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "radialmenu.h"
 #include "condition.h"
+#include <infrastructure/elfhash.h>
 //#include "temple_functions.h"
 
 RadialMenus radialMenus;
@@ -34,13 +35,16 @@ static struct RadialMenuAddresses : temple::AddressTable {
 
 	int(__cdecl *SetSpontaneousCastingAltNode)(objHndl handle, int parentIdx, SpellStoreData * spellData);
 	int(__cdecl *AddSpell)(objHndl handle, SpellStoreData * spellData, int * idxOut, const RadialMenuEntry & entry); //adds a spell to the Radial Menu
-	int(__cdecl * Sub_100F0200)(objHndl objHnd, RadialMenuEntry* radialMenuEntry);
+	int(__cdecl * RadialMenuCheckboxSthgSub_100F0200)(objHndl objHnd, RadialMenuEntry* radialMenuEntry);
+	void(__cdecl * CopyEntryToSelected)(objHndl obj, RadialMenuEntry* entry);
 
 	RadialMenuAddresses() {
-		rebase(Sub_100F0200, 0x100F0200);
+		rebase(RadialMenuCheckboxSthgSub_100F0200, 0x100F0200);
+		rebase(CopyEntryToSelected, 0x100F0290);
 
 		rebase(GetRadialMenu, 0x100F04D0);
 		rebase(SetDefaults, 0x100F0AF0);
+		
 		
 		rebase(AddChildNode, 0x100F0670);
 		rebase(AddRootNode, 0x100F0710);
@@ -91,7 +95,7 @@ int RadialMenus::GetStandardNode(RadialMenuStandardNode node) {
 
 int RadialMenus::Sub_100F0200(objHndl objHnd, RadialMenuEntry* radEntry)
 {
-	return addresses.Sub_100F0200(objHnd, radEntry);
+	return addresses.RadialMenuCheckboxSthgSub_100F0200(objHnd, radEntry);
 }
 
 int RadialMenus::AddChildNode(objHndl objHnd, RadialMenuEntry* radialMenuEntry, int parentIdx)
@@ -160,6 +164,60 @@ int RadialMenus::AddParentChildNodeClickable(objHndl objHnd, RadialMenuEntry* ra
 	}
 
 	return nodeCount;
+}
+
+int RadialMenus::AddRootNode(objHndl obj, const RadialMenuEntry* entry)
+{
+	auto radMenu = GetForObj(obj);
+	auto nodeCount = radMenu->nodeCount;
+	RadialMenuNode * node = (RadialMenuNode*)&radMenu->nodes[nodeCount];
+	((RadialMenu*)radMenu)->nodeCount++;
+
+	memcpy(&node->entry, entry, sizeof(RadialMenuEntry));
+	node->parent = -1;
+	node->childCount = 0;
+	node->morphsTo = -1;
+	node->entry.textHash = ElfHash::Hash(entry->text);
+	return nodeCount;
+}
+
+int RadialMenus::AddRootParentNode(objHndl obj, RadialMenuEntry* entry)
+{
+	auto radMenu = GetForObj(obj);
+	auto nodeCount = radMenu->nodeCount;
+	RadialMenuNode * node = (RadialMenuNode*)&radMenu->nodes[nodeCount];
+	node->entry.SetDefaults();
+	((RadialMenu*)radMenu)->nodeCount++;
+	memcpy(&node->entry, entry, sizeof(RadialMenuEntry));
+
+	node->entry.d20ActionType = D20A_NONE;
+	node->childCount = 0;
+	node->entry.callback = (void(__cdecl*)(objHndl, RadialMenuEntry*))return0;
+	node->entry.type = RadialMenuEntryType::Parent;
+	node->morphsTo = -1;
+	node->entry.textHash = ElfHash::Hash(entry->text);
+	return nodeCount;
+
+}
+
+void RadialMenus::SetMorphsTo(objHndl obj, int nodeIdx, int spontSpellNode)
+{
+	RadialMenu* radMenu = (RadialMenu*)GetForObj(obj);
+	auto nodeCount = radMenu->nodeCount;
+	if (nodeCount >= nodeIdx)
+	{
+		if (nodeCount>= spontSpellNode)
+		{
+			radMenu->nodes[nodeIdx].morphsTo = spontSpellNode;
+		}
+	}
+}
+
+
+
+void RadialMenus::SetCallbackCopyEntryToSelected(RadialMenuEntry* radEntry)
+{
+	radEntry->callback = addresses.CopyEntryToSelected;
 }
 
 void RadialMenuEntry::SetDefaults() {
