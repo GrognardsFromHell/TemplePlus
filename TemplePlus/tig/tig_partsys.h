@@ -2,6 +2,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <obj.h>
 
 namespace legacypartsys {
 
@@ -172,6 +173,38 @@ namespace legacypartsys {
 		int model_id;
 		int field_68;
 		PartSysParam *params[45];
+	};
+
+	struct PartSysEmitter;
+
+	struct PartSys {
+		uint32_t id;
+		PartSysSpec *spec;
+		float aliveInSecs;
+		float lastAliveWhenUpdated;
+		float screenBBLeft;
+		float screenBBTop;
+		float screenBBRight;
+		float screenBBBottom;
+		float x;
+		float y;
+		float z;
+		int field2c;
+		objHndl obj;
+		PartSysEmitter** emitters;
+		PartSys *next;
+	};
+
+	struct PartSysEmitter {
+		void *particleParams;
+		void *particles;
+		void *field8;
+		void *fieldC;
+		PartSysEmitterSpec *spec;
+		uint32_t flags;
+		objHndl obj;
+		float aliveInSecs;
+		/* There's more here that is currently irrelevant */
 	};
 
 #pragma pack(pop)

@@ -148,7 +148,7 @@ namespace temple {
 	inline T* GetPointer(uint32_t address)
 	{
 		assert(address > 0x10000000 && address < 0x20000000);
-		return Dll::GetInstance().GetAddress(address);
+		return (T*) Dll::GetInstance().GetAddress(address);
 	}
 
 	// Get's a pointer into DLL memory accounting for any offset from vanilla addresses 

@@ -275,6 +275,7 @@
     <ClCompile Include="fixes\sector_cache_size.cpp" />
     <ClCompile Include="fixes\light_load.cpp" />
     <ClCompile Include="path_node.cpp" />
+    <ClCompile Include="fixes\partsyslag.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
