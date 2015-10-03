@@ -20,6 +20,7 @@ struct DispIoTooltip; // 9
 struct DispIoBonusAndObj; // 10
 struct DispIoDispelCheck; // 11
 struct DispIoD20ActionTurnBased; // 12
+struct DispIoMoveSpeed; //13
 struct DispIOBonusListAndSpellEntry; // 14
 struct DispIoAttackDice; // 20
 struct D20Actn;
@@ -72,12 +73,15 @@ struct DispatcherSystem : temple::AddressTable
 	DispIoBonusAndObj* DispIoCheckIoType10(DispIoBonusAndObj* dispIo);
 	DispIoDispelCheck* DispIOCheckIoType11(DispIoDispelCheck* dispIo);
 	DispIoD20ActionTurnBased* DispIOCheckIoType12(DispIoD20ActionTurnBased* dispIo);
+	DispIoMoveSpeed * DispIOCheckIoType13(DispIoMoveSpeed* dispIo);
+	DispIoMoveSpeed * DispIOCheckIoType13(DispIO* dispIo);
 	DispIOBonusListAndSpellEntry* DispIOCheckIoType14(DispIOBonusListAndSpellEntry* dispIo);
 	void PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher* dispatcher);
 	int DispatchAttackBonus(objHndl objHnd, objHndl victim, DispIoAttackBonus* dispIo, enum_disp_type dispType, int key);
 	int DispatchToHitBonusBase(objHndl objHndCaller, DispIoAttackBonus* dispIo);
 	int DispatchGetSizeCategory(objHndl objHndCaller);
 	void DispatchConditionRemove(Dispatcher* dispatcher, CondNode* cond);
+	
 #pragma endregion
 
 	uint32_t(__cdecl * dispatcherForCritters)(objHndl, DispIO *, enum_disp_type, uint32_t dispKey);
@@ -310,6 +314,12 @@ struct DispIoD20ActionTurnBased : DispIO{ // dispIoType = 12; matches dispTypes 
 	int returnVal;
 	D20Actn * d20a;
 	TurnBasedStatus * tbStatus;
+};
+
+struct DispIoMoveSpeed :  DispIO  // dispIoType = 13, matches dispTypes 40,41
+{
+	BonusList* bonlist;
+	float moveSpeed;
 };
 
 struct Dispatcher : temple::TempleAlloc {

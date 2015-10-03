@@ -268,6 +268,16 @@ DispIoD20ActionTurnBased* DispatcherSystem::DispIOCheckIoType12(DispIoD20ActionT
 	return dispIo;
 }
 
+DispIoMoveSpeed * DispatcherSystem::DispIOCheckIoType13(DispIoMoveSpeed* dispIo)
+{
+	if (dispIo->dispIOType != dispIOTypeMoveSpeed) return nullptr;
+	return dispIo;
+}
+
+DispIoMoveSpeed* DispatcherSystem::DispIOCheckIoType13(DispIO* dispIo)
+{
+	return DispIOCheckIoType13((DispIoMoveSpeed*)dispIo);
+}
 
 DispIOBonusListAndSpellEntry* DispatcherSystem::DispIOCheckIoType14(DispIOBonusListAndSpellEntry* dispIo)
 {

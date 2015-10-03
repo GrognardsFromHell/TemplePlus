@@ -1869,7 +1869,7 @@ enum enum_dispIO_type : uint32_t {
 	dispIOTypeSkillLevel, // also used for initiative level
 	dispIOTypeDispelCheck, // goes with dispTypeDispelCheck
 	dispIOTypeD20ActionTurnBased,
-	dispIOType13,
+	dispIOTypeMoveSpeed,
 	dispIoTypeBonusListAndSpellEntry,
 	dispIOType15,
 	dispIOType16,
