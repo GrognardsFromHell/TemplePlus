@@ -334,63 +334,6 @@ int __cdecl HookedSetVideoMode(int adapter, int nWidth, int nHeight, int bpp, in
 	return 0;
 }
 
-int __cdecl VideoStartup(TigConfig* settings) {
-	memset(video, 0, 4796);
-
-	bool windowed = config.windowed;
-
-	video->adapter = 0;
-
-	// create window call
-	if (!CreateMainWindow(settings)) {
-		return 17;
-	}
-
-	graphics.InitializeDirect3d();
-
-	video->width = settings->width;
-	video->height = settings->height;
-	video->halfWidth = video->width * 0.5f;
-	video->halfHeight = video->height * 0.5f;
-
-	// Seems always enabled in default config and never read
-	temple::GetRef<0x11E7570C, int>() = (settings->flags & 4) != 0;
-
-	video->current_bpp = settings->bpp;
-
-	temple::GetRef<0x10D250E0, int>() = 0;
-	temple::GetRef<0x10D250E4, int>() = 1;
-	temple::GetRef<0x10300914, int>() = -1;
-
-	// Unused mkscreenshot related pointer
-	// temple_set<0x10D2511C, int>(0);
-
-	/*
-		This stuff doesn't really seem to be used.
-	*/
-	uint32_t v3 = 0x10D24CAC;
-	do {
-		temple::GetRef<int>(v3) = 0;
-		v3 += 12;
-	} while (v3 < 0x10D24D6C);
-
-	v3 = 0x10D24C8C;
-	do {
-		temple::GetRef<int>(v3) = 0;
-		v3 += 8;
-	} while (v3 < 0x10D24CAC);
-
-	// These may actually no longer be needed since we replaced the referencing subsystems directly
-	temple::GetRef<void*>(0x10D25134) = settings->createBuffers;
-	temple::GetRef<void*>(0x10D25138) = settings->freeBuffers;
-
-	memcpy(temple::GetPointer<0x11E75840>(), settings, 0x4C);
-
-	uiText.Initialize();
-
-	return 0;
-}
-
 struct TempleTextureType {
 	D3DFORMAT d3dFormat;
 	int fallbackIndex;
@@ -551,7 +494,6 @@ void hook_graphics() {
 	MH_CreateHook(videoFuncs.CleanUpBuffers, HookedCleanUpBuffers, reinterpret_cast<LPVOID*>(&videoFuncs.CleanUpBuffers));
 
 	// We hook the entire video subsystem initialization function
-	MH_CreateHook(temple::GetPointer<0x101DC6E0>(), VideoStartup, nullptr);
 	MH_CreateHook(temple::GetPointer<0x101DBC80>(), AllocTextureMemory, nullptr);
 	MH_CreateHook(temple::GetPointer<0x101E0750>(), GetSystemMemory, nullptr);
 	MH_CreateHook(temple::GetPointer<0x101DBD80>(), TakeScreenshot, nullptr);
@@ -608,6 +550,73 @@ static struct ExternalGraphicsFuncs : temple::AddressTable {
 		rebase(ShakeScreen, 0x10005840);
 	}
 } externalGraphicsFuncs;
+
+VideoSystem::VideoSystem(MainWindow& mainWindow) : mMainWindow(mainWindow) {	
+
+	memset(video, 0, 4796);
+
+	video->adapter = 0;
+
+	// TODO: Validate necessity of all these	
+	video->hinstance = mainWindow.GetHinstance();
+	video->hwnd = mainWindow.GetHwnd(); // TODO: Check necessity
+	video->width = config.renderWidth;
+	video->height = config.renderHeight;
+	video->halfWidth = video->width * 0.5f;
+	video->halfHeight = video->height * 0.5f;
+	video->current_bpp = 32;
+	temple::WriteMem<0x10D24E0C>(0);
+	temple::WriteMem<0x10D24E10>(0);
+	temple::WriteMem<0x10D24E14>(config.renderWidth);	
+	// memcpy(&video->screenSizeRect, &windowRect, sizeof(RECT));
+
+	// Seems always enabled in default config and never read
+	// temple::GetRef<0x11E7570C, int>() = (settings->flags & 4) != 0;
+
+	// These may actually no longer be needed since we replaced the referencing subsystems directly
+	// temple::GetRef<void*>(0x10D25134) = settings->createBuffers;
+	// temple::GetRef<void*>(0x10D25138) = settings->freeBuffers;
+
+	// Scratchbuffer size sometimes doesn't seem to be set by ToEE itself
+	video->current_width = config.renderWidth;
+	video->current_height = config.renderHeight;
+	temple::WriteMem<0x10307284>(video->current_width);
+	temple::WriteMem<0x10307288>(video->current_height);
+
+	graphics.InitializeDirect3d();
+	
+	temple::GetRef<0x10D250E0, int>() = 0;
+	temple::GetRef<0x10D250E4, int>() = 1;
+	temple::GetRef<0x10300914, int>() = -1;
+
+	// Unused mkscreenshot related pointer
+	// temple_set<0x10D2511C, int>(0);
+
+	/*
+	This stuff doesn't really seem to be used.
+	*/
+	uint32_t v3 = 0x10D24CAC;
+	do {
+		temple::GetRef<int>(v3) = 0;
+		v3 += 12;
+	} while (v3 < 0x10D24D6C);
+
+	v3 = 0x10D24C8C;
+	do {
+		temple::GetRef<int>(v3) = 0;
+		v3 += 8;
+	} while (v3 < 0x10D24CAC);
+
+	uiText.Initialize();
+
+}
+
+VideoSystem::~VideoSystem() {
+
+	// TODO REPLACE THIS
+	reinterpret_cast<void(*)()>(temple::GetPointer<0x101D8540>())();
+
+}
 
 Graphics::Graphics() {
 	memset(mScreenCorners, 0, sizeof(mScreenCorners));

@@ -30,6 +30,7 @@
     <ClCompile Include="d20_class.cpp" />
     <ClCompile Include="d20_level.cpp" />
     <ClCompile Include="d20_status.cpp" />
+    <ClCompile Include="fixes\keyboard.cpp" />
     <ClCompile Include="fixes\light_load.cpp" />
     <ClCompile Include="fixes\partsyslag.cpp" />
     <ClCompile Include="fixes\sector_cache_size.cpp" />

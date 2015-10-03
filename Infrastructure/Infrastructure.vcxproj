@@ -173,6 +173,7 @@
     <ClInclude Include="include\infrastructure\INI.h" />
     <ClInclude Include="include\infrastructure\images.h" />
     <ClInclude Include="include\infrastructure\json11.hpp" />
+    <ClInclude Include="include\infrastructure\keyboard.h" />
     <ClInclude Include="include\infrastructure\logging.h" />
     <ClInclude Include="include\infrastructure\materials.h" />
     <ClInclude Include="include\infrastructure\mathutil.h" />
@@ -225,6 +226,7 @@
     <ClCompile Include="format.cc" />
     <ClCompile Include="elfhash.cpp" />
     <ClCompile Include="images.cpp" />
+    <ClCompile Include="keyboard.cpp" />
     <ClCompile Include="jpeg.cpp" />
     <ClCompile Include="mdfparser.cpp" />
     <ClCompile Include="tokenizer.cpp" />

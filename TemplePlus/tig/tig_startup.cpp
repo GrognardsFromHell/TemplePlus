@@ -2,6 +2,9 @@
 
 #include <temple/dll.h>
 
+#include "mainwindow.h"
+#include "graphics.h"
+
 #include "tig_startup.h"
 #include "../tio/tio.h"
 
@@ -16,7 +19,6 @@ using TigShutdownFunction = void();
 */
 static constexpr uint32_t TigStartupNoop = 0x10262530;
 static constexpr uint32_t TigShutdownNoop = 0x100027F0;
-
 
 class LegacyTigSystem : public TigSystem {
 public:
@@ -62,7 +64,9 @@ static TigConfig createTigConfig(HINSTANCE hInstance);
 TigSystem::~TigSystem() {
 }
 
-TigInitializer::TigInitializer(HINSTANCE hInstance) : mConfig(createTigConfig(hInstance)) {
+TigInitializer::TigInitializer(HINSTANCE hInstance)
+	: mConfig(createTigConfig(hInstance)) {
+
 	StopwatchReporter reporter("TIG initialized in {}");
 	logger->info("Initializing TIG");
 
@@ -71,20 +75,25 @@ TigInitializer::TigInitializer(HINSTANCE hInstance) : mConfig(createTigConfig(hI
 
 	// No longer used: mStartedSystems.emplace_back(StartSystem("memory.c", 0x101E04F0, 0x101E0510));
 	// No longer used: mStartedSystems.emplace_back(StartSystem("debug.c", 0x101E4DE0, TigShutdownNoop));
+	mMainWindow = std::make_unique<MainWindow>(hInstance);
 	mStartedSystems.emplace_back(StartSystem("idxtable.c", 0x101EC400, 0x101ECAD0));
 	mStartedSystems.emplace_back(StartSystem("trect.c", TigStartupNoop, 0x101E4E40));
 	mStartedSystems.emplace_back(StartSystem("color.c", 0x101ECB20, 0x101ED070));
-	mStartedSystems.emplace_back(StartSystem("video.c", 0x101DC6E0, 0x101D8540));
+
+	mVideoSystem = std::make_unique<VideoSystem>(*mMainWindow);
+
+	// mStartedSystems.emplace_back(StartSystem("video.c", 0x101DC6E0, 0x101D8540));
+	
 	mStartedSystems.emplace_back(StartSystem("shader", 0x101E3350, 0x101E2090));
 	mStartedSystems.emplace_back(StartSystem("palette.c", 0x101EBE30, 0x101EBEB0));
 	mStartedSystems.emplace_back(StartSystem("window.c", 0x101DED20, 0x101DF320));
 	mStartedSystems.emplace_back(StartSystem("timer.c", 0x101E34E0, 0x101E34F0));
-	mStartedSystems.emplace_back(StartSystem("dxinput.c", 0x101FF910, 0x101FF950));
-	mStartedSystems.emplace_back(StartSystem("keyboard.c", 0x101DE430, 0x101DE2D0));
+	// mStartedSystems.emplace_back(StartSystem("dxinput.c", 0x101FF910, 0x101FF950));
+	// mStartedSystems.emplace_back(StartSystem("keyboard.c", 0x101DE430, 0x101DE2D0));
 	mStartedSystems.emplace_back(StartSystem("texture.c", 0x101EDF60, 0x101EE0A0));
 	mStartedSystems.emplace_back(StartSystem("mouse.c", 0x101DDF50, 0x101DDE30));
 	mStartedSystems.emplace_back(StartSystem("message.c", 0x101DE460, 0x101DE4E0));
-	mStartedSystems.emplace_back(StartSystem("gfx.c", TigStartupNoop, TigShutdownNoop));
+	// startedSystems.emplace_back(StartSystem("gfx.c", TigStartupNoop, TigShutdownNoop));
 	mStartedSystems.emplace_back(StartSystem("strparse.c", 0x101EBF00, TigShutdownNoop));
 	mStartedSystems.emplace_back(StartSystem("filecache.c", TigStartupNoop, TigShutdownNoop));
 	if (!config.noSound) {

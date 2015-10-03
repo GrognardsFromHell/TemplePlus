@@ -86,6 +86,9 @@ private:
 
 	TigConfig mConfig;
 
+	std::unique_ptr<class MainWindow> mMainWindow;
+	std::unique_ptr<class VideoSystem> mVideoSystem;
+
 	// Contains all systems that have already been started
 	std::vector<TigSystemPtr> mStartedSystems;
 };

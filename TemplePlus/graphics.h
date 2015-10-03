@@ -144,6 +144,17 @@ extern VideoFuncs videoFuncs;
 
 typedef chrono::high_resolution_clock graphics_clock;
 
+class MainWindow;
+
+class VideoSystem {
+public:
+	explicit VideoSystem(MainWindow& mainWindow);
+	~VideoSystem();
+
+private:
+	MainWindow& mMainWindow;
+};
+
 class Graphics {
 public:
 	Graphics();

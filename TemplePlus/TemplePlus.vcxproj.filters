@@ -276,6 +276,7 @@
     <ClCompile Include="tig\tig_startup.cpp">
       <Filter>tig</Filter>
     </ClCompile>
+    <ClCompile Include="fixes\keyboard.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
