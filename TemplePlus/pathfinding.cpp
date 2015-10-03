@@ -7,18 +7,74 @@
 #include "obj.h"
 #include "critter.h"
 #include "path_node.h"
+#include "game_config.h"
 
 Pathfinding pathfindingSys;
 
 
 struct PathFindAddresses : temple::AddressTable
 {
+	PathResultCache * pathCache; // 40 entries, used as a ring buffer
+	int * pathCacheIdx;
+	int * pathCacheCleared;
+
+	int * aStarMaxTimeMs;
+	int * aStarMaxWindowMs;
+	int * aStarTimeIdx;
+	int * aStarTimeElapsed; // array 20
+	int * aStarTimeEnded; //  array 20
+
+
+	int * pathTimeCumulative;
+	int * pathFindAttemptCount;
+	int * pathFindRefTime;
+
+	int * npcPathStraightLineTimeRef;
+	int * npcPathStraightLineAttemps;
+	int * npcPathStraightLineCumulativeTime;
+
+	PathQueryResult * pathQArray;
+	uint32_t * pathSthgFlag_10B3D5C8;
+
+	int(__cdecl*PathDestIsClear)(PathQuery* pq, objHndl mover, LocAndOffsets destLoc); // checks if there's anything blocking the destination location (taking into account the mover's radius)
+	objHndl(__cdecl * canPathToParty)(objHndl objHnd);
+
+	bool(__cdecl *_FindPath)(PathQuery *query, PathQueryResult *result); // now replaced
 	int (__cdecl*FindPathUsingNodes) (PathQuery*pq, Path*pqr);
 	int(__cdecl *FindPathShortDistanceAdjRadius)(PathQuery* pq, Path* pqr);
 	PathFindAddresses()
 	{
+		rebase(PathDestIsClear, 0x10040C30);
+
 		rebase(FindPathShortDistanceAdjRadius, 0x10041E30);
 		rebase(FindPathUsingNodes, 0x10042B50);
+
+
+
+		rebase(_FindPath, 0x10043070);
+
+		rebase(canPathToParty, 0x10057F80);
+
+		rebase(pathQArray, 0x1186AC60);
+
+		rebase(aStarMaxTimeMs, 0x102AF7FC);
+		rebase(aStarMaxWindowMs, 0x102AF7F8);
+		rebase(aStarTimeIdx, 0x1094B0F8);
+		rebase(aStarTimeElapsed, 0x1095B180);
+		rebase(aStarTimeEnded, 0x1095B1D0);
+
+		rebase(pathCache, 0x1099B220);
+		rebase(pathCacheIdx, 0x109DD260);
+		rebase(pathCacheCleared, 0x109DD264);
+
+
+		rebase(pathFindRefTime, 0x109DD270);
+		rebase(pathFindAttemptCount, 0x109DD274);
+		rebase(pathTimeCumulative, 0x109DD278);
+		rebase(npcPathStraightLineTimeRef, 0x109DD288);
+		rebase(npcPathStraightLineAttemps, 0x109DD28C);
+		rebase(npcPathStraightLineCumulativeTime, 0x109DD290);
+		rebase(pathSthgFlag_10B3D5C8, 0x10B3D5C8);
 		
 	}
 } addresses;
@@ -35,6 +91,7 @@ public:
 	//	 replaceFunction(0x10040520, _ShouldUsePathnodesUsercallWrapper); 
 		 replaceFunction(0x10041730, _FindPathShortDistanceSansTarget);
 		 replaceFunction(0x10043070, _FindPath);
+		 replaceFunction(0x10042A00, _PathAstarInit);
 	}
 } pathFindingReplacements;
 
@@ -64,43 +121,24 @@ Pathfinding::Pathfinding() {
 	static_assert(sizeof(PathQueryResult) == 0x1a20, "Path Query Result has the wrong size");
 
 	loc = &locSys;
+	
+	aStarMaxTimeMs = 4000;
+	aStarMaxWindowMs = 5000;
+	aStarTimeIdx = -1;
 
-	
-	
-	//rebase(PathStraightLineIsClear, 0x10040A90); // signed int __usercall PathStraightLineIsClear@<eax>(PathQueryResult *pqr@<ebx>, PathQuery *pathQ, LocAndOffsets from, LocAndOffsets to)
-	rebase(PathDestIsClear, 0x10040C30);
-	// rebase(FindPathStraightLine, 0x100427F0); //  signed int __usercall FindPathStraightLine@<eax>(PathQueryResult *pqr@<eax>, PathQuery *pq@<edi>)
-	rebase(_FindPath, 0x10043070);
+	memset(pathCache, 0, sizeof(pathCache));
+	pathCacheIdx = 0;
+	pathCacheCleared = 1;
 
-	rebase(canPathToParty,0x10057F80); 
 
-	rebase(pathQArray, 0x1186AC60);
-	
-	rebase(aStarMaxTimeMs, 0x102AF7FC);
-	rebase(aStarMaxWindowMs, 0x102AF7F8);
-	rebase(aStarTimeIdx, 0x1094B0F8);
-	rebase(aStarTimeElapsed, 0x1095B180);
-	rebase(aStarTimeEnded, 0x1095B1D0);
-
-	rebase(pathCache, 0x1099B220);
-	rebase(pathCacheIdx, 0x109DD260);
-	rebase(pathCacheCleared, 0x109DD264);
-	
-	
-	rebase(pathFindRefTime, 0x109DD270);
-	rebase(pathFindAttemptCount, 0x109DD274);
-	rebase(pathTimeCumulative, 0x109DD278);
-	rebase(npcPathStraightLineTimeRef, 0x109DD288);
-	rebase(npcPathStraightLineAttemps, 0x109DD28C);
-	rebase(npcPathStraightLineCumulativeTime, 0x109DD290);
+	// these two are still used a lot in other places outside the pathfinding system so I'm keeping them here for the time being
 	rebase(pathSthgFlag_10B3D5C8,0x10B3D5C8); 
-	
-	
+	rebase(pathQArray, 0x1186AC60);	
 }
 
 int Pathfinding::PathCacheGet(PathQuery* pq, Path* pathOut)
 {
-	if (*pathCacheCleared)
+	if (pathCacheCleared)
 		return 0;
 
 	for (int i = 0; i < PATH_RESULT_CACHE_SIZE; i++ )
@@ -141,12 +179,12 @@ int Pathfinding::PathCacheGet(PathQuery* pq, Path* pathOut)
 
 void Pathfinding::PathCachePush(PathQuery* pq, Path* pqr)
 {
-	memcpy(&pathCache[*pathCacheIdx].path, pqr, sizeof(Path));
-	memcpy(&pathCache[(*pathCacheIdx)++], pq, sizeof(PathQuery));
+	memcpy(&pathCache[pathCacheIdx].path, pqr, sizeof(Path));
+	memcpy(&pathCache[pathCacheIdx++], pq, sizeof(PathQuery));
 
-	*pathCacheCleared = 0;
-	if (*pathCacheIdx >= 40)
-		*pathCacheIdx = 0;
+	pathCacheCleared = 0;
+	if (pathCacheIdx >= 40)
+		pathCacheIdx = 0;
 }
 
 int Pathfinding::PathSumTime()
@@ -155,12 +193,12 @@ int Pathfinding::PathSumTime()
 	int now = timeGetTime();
 	for (int i = 0; i < 20; i++)
 	{
-		int astarIdx = *aStarTimeIdx - i;
+		int astarIdx = aStarTimeIdx - i;
 		if (astarIdx < 0)
 			astarIdx += 20;
 		if (!aStarTimeEnded[astarIdx])
 			break;
-		if (now - aStarTimeEnded[astarIdx] > *aStarMaxWindowMs)
+		if (now - aStarTimeEnded[astarIdx] > aStarMaxWindowMs)
 			break;
 		totalTime += aStarTimeElapsed[i];
 	}
@@ -170,10 +208,39 @@ int Pathfinding::PathSumTime()
 
 void Pathfinding::PathRecordTimeElapsed(int refTime)
 {
-	if ((*aStarTimeIdx)++ >= 20)
-		*aStarTimeIdx = 0;
-	aStarTimeEnded[*aStarTimeIdx] = timeGetTime();
-	aStarTimeElapsed[*aStarTimeIdx] = aStarTimeEnded[*aStarTimeIdx] - refTime;
+	if ((aStarTimeIdx)++ >= 20)
+		aStarTimeIdx = 0;
+	aStarTimeEnded[aStarTimeIdx] = timeGetTime();
+	aStarTimeElapsed[aStarTimeIdx] = aStarTimeEnded[aStarTimeIdx] - refTime;
+}
+
+void Pathfinding::PathAstarInit()
+{
+	gameConfigFuncs.AddSetting("astar_max_window_ms", "5000", _aStarSettingChanged);
+	gameConfigFuncs.AddSetting("astar_max_time_ms", "4000", _aStarSettingChanged);
+	aStarMaxWindowMs = gameConfigFuncs.GetInt("astar_max_window_ms");
+	aStarMaxTimeMs = gameConfigFuncs.GetInt("astar_max_time_ms");
+	memset(aStarTimeElapsed, 0, sizeof(aStarTimeElapsed));
+	memset(aStarTimeEnded, 0, sizeof(aStarTimeEnded));
+	aStarTimeIdx = -1;
+}
+
+void Pathfinding::AStarSettingChanged()
+{
+	aStarMaxWindowMs = gameConfigFuncs.GetInt("astar_max_window_ms");
+	aStarMaxTimeMs = gameConfigFuncs.GetInt("a_star_max_time_ms");
+}
+
+void Pathfinding::PathCacheInit()
+{
+	if (!pathCacheCleared)
+		memset(pathCache, 0, sizeof(pathCache));
+	pathCacheCleared = 1;
+}
+
+int Pathfinding::PathDestIsClear(PathQuery* pq, objHndl mover, LocAndOffsets destLoc)
+{
+	return addresses.PathDestIsClear(pq, mover, destLoc);
 }
 
 uint32_t Pathfinding::ShouldUsePathnodes(Path* pathQueryResult, PathQuery* pathQuery)
@@ -514,25 +581,28 @@ int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 
 int Pathfinding::FindPathForcecdStraightLine(Path* pqr, PathQuery* pq)
 {
+	static int npcPathTimeRef = 0;
+	static int npcPathAttemps = 0;
+	static int npcPathCumulativeTime = 0;
+
 	auto critter = pq->critter;
 	if (critter)
 	{
 		// auto critterRadius = objects.GetRadius(pq->critter); //wtf? looks like they commented something out here
 		if (objects.GetType(critter) == obj_t_npc)
 		{
-			if (*npcPathStraightLineTimeRef 
-				&& (timeGetTime() - *npcPathStraightLineTimeRef) < 1000)
+			if (npcPathTimeRef 
+				&& (timeGetTime() - npcPathTimeRef) < 1000)
 			{
 				
-				if (*npcPathStraightLineAttemps > 10
-					|| *npcPathStraightLineCumulativeTime > 250)
+				if (npcPathAttemps > 10	|| npcPathCumulativeTime > 250)
 					return 0;
-				(*npcPathStraightLineAttemps)++;
+				(npcPathAttemps)++;
 			} else
 			{
-				*npcPathStraightLineAttemps = 1;
-				*npcPathStraightLineCumulativeTime = 0;
-				*npcPathStraightLineTimeRef = timeGetTime();
+				npcPathAttemps = 1;
+				npcPathCumulativeTime = 0;
+				npcPathTimeRef = timeGetTime();
 			}
 		}
 	}
@@ -595,7 +665,7 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	if (PathCacheGet(pq, pqr)) // has this query been done before? if so copies it and returns the result
 		return pqr->nodeCount;
 
-	if (pq->flags & PQF_A_STAR_TIME_CAPPED && PathSumTime() >= *aStarMaxTimeMs)
+	if (pq->flags & PQF_A_STAR_TIME_CAPPED && PathSumTime() >= aStarMaxTimeMs)
 	{
 		pqr->flags |= 16;
 		return 0;
@@ -637,6 +707,11 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	PathRecordTimeElapsed(refTime);
 	return gotPath;
 
+}
+
+objHndl Pathfinding::canPathToParty(objHndl objHnd)
+{
+	return addresses.canPathToParty(objHnd);
 }
 
 BOOL Pathfinding::PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffsets from, LocAndOffsets to)
@@ -772,26 +847,29 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 	fromSubtile = fromSubtile.fromField( locSys.subtileFromLoc(&pqr->from));
 	toSubtile = toSubtile.fromField(locSys.subtileFromLoc(&pqr->to));
 
+	static int npcPathFindRefTime = 0;
+	static int npcPathFindAttemptCount = 0;
+	static int npcPathTimeCumulative = 0;
 
 	if (pq->critter)
 	{
 		int attemptCount;
 		if (objects.GetType(pq->critter) == obj_t_npc)
 		{
-			if (*pathFindRefTime && (timeGetTime() - *pathFindRefTime) < 1000)
+			if (npcPathFindRefTime && (timeGetTime() - npcPathFindRefTime) < 1000)
 			{
-				attemptCount = *pathFindAttemptCount;
-				if (*pathFindAttemptCount > 10 || *pathTimeCumulative > 250)
+				attemptCount = npcPathFindAttemptCount;
+				if (npcPathFindAttemptCount > 10 || npcPathTimeCumulative > 250)
 				{
 					return 0;
 				}
 			} else
 			{
-				*pathFindRefTime = timeGetTime();
+				npcPathFindRefTime = timeGetTime();
 				attemptCount = 0;
-				*pathTimeCumulative = 0;
+				npcPathTimeCumulative = 0;
 			}
-			*pathFindAttemptCount = attemptCount + 1;
+			npcPathFindAttemptCount = attemptCount + 1;
 			referenceTime = timeGetTime();
 		}
 	}
@@ -1011,7 +1089,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 	if (directionsCount > pq->maxShortPathFindLength)
 	{
 	LABEL_74: if (referenceTime)
-		*pathTimeCumulative += timeGetTime() - referenceTime;
+		npcPathTimeCumulative += timeGetTime() - referenceTime;
 		return 0;
 	}
 	int lastIdx = idxTarget;
@@ -1025,7 +1103,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 	if (pq->flags & PQF_10)
 		--directionsCount;
 	if (referenceTime)
-		*pathTimeCumulative += timeGetTime() - referenceTime;
+		npcPathTimeCumulative += timeGetTime() - referenceTime;
 
 	return directionsCount;
 	
@@ -1040,4 +1118,14 @@ int _FindPathShortDistanceSansTarget(PathQuery* pq, PathQueryResult* pqr)
 int _FindPath(PathQuery* pq, PathQueryResult* pqr)
 {
 	return pathfindingSys.FindPath(pq, pqr);
+}
+
+void _PathAstarInit()
+{
+	pathfindingSys.PathAstarInit();
+}
+
+void _aStarSettingChanged()
+{
+	pathfindingSys.AStarSettingChanged();
 }

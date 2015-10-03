@@ -7,6 +7,7 @@
 #define PATH_RESULT_CACHE_SIZE 0x28 // different from the above
 
 #pragma region structs
+#include "game_config.h"
 //
 
 
@@ -190,24 +191,19 @@ struct Pathfinding : temple::AddressTable {
 	LocationSys * loc;
 	PathNodeSys * pathNode;
 
-	PathResultCache * pathCache; // 40 entries, used as a ring buffer
-	int * pathCacheIdx;
-	int * pathCacheCleared;
+	PathResultCache pathCache[40]; // 40 entries, used as a ring buffer
+	int pathCacheIdx;
+	int pathCacheCleared;
 	
-	int * aStarMaxTimeMs;
-	int * aStarMaxWindowMs;
-	int * aStarTimeIdx;
-	int * aStarTimeElapsed; // array 20
-	int * aStarTimeEnded; //  array 20
+	int aStarMaxTimeMs;
+	int aStarMaxWindowMs;
+	int aStarTimeIdx;
+	int aStarTimeElapsed[20]; // array 20
+	int aStarTimeEnded[20]; //  array 20
 
 
-	int * pathTimeCumulative;
-	int * pathFindAttemptCount;
-	int * pathFindRefTime;
-
-	int * npcPathStraightLineTimeRef;
-	int * npcPathStraightLineAttemps;
-	int * npcPathStraightLineCumulativeTime;
+	PathQueryResult * pathQArray;
+	uint32_t * pathSthgFlag_10B3D5C8;
 
 	float pathLength(Path *path); // note: unlike the ToEE function, returns a float (and NOT to the FPU!)
 	bool pathQueryResultIsValid(PathQueryResult *pqr);
@@ -219,11 +215,13 @@ struct Pathfinding : temple::AddressTable {
 	int PathSumTime();
 	void PathRecordTimeElapsed(int time);
 
+	void PathAstarInit();
+	void AStarSettingChanged();
+	void PathCacheInit();
 
-
-	int(__cdecl*PathDestIsClear)(PathQuery* pq, objHndl mover, LocAndOffsets destLoc); // checks if there's anything blocking the destination location (taking into account the mover's radius)
+	int PathDestIsClear(PathQuery* pq, objHndl mover, LocAndOffsets destLoc); // checks if there's anything blocking the destination location (taking into account the mover's radius)
 	int(__cdecl*FindPathBetweenNodes)(int fromNodeId, int toNodeId, void*, int maxChainLength); // finds the node IDs for the To -> .. -> From course (locally optimal I think? Is this A*?); return value is chain length
-	bool (__cdecl *_FindPath)(PathQuery *query, PathQueryResult *result);
+
 
 	bool GetAlternativeTargetLocation(PathQueryResult* pqr, PathQuery* pq);
 
@@ -231,13 +229,13 @@ struct Pathfinding : temple::AddressTable {
 
 	int FindPath(PathQuery* pq, PathQueryResult* result);
 	void (__cdecl *ToEEpathDistBtwnToAndFrom)(Path *path); // outputs to FPU (st0);  apparently distance in feet (since it divides by 12)
-	objHndl(__cdecl * canPathToParty)(objHndl objHnd);
+
+	objHndl canPathToParty(objHndl objHnd);
 	BOOL PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo); // including static obstacles it seems
 	BOOL PathStraightLineIsClearOfStaticObstacles(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo);
 	int GetDirection(int a1, int a2, int a3);
 	int FindPathShortDistanceSansTarget(PathQuery * pq, Path* pqr);
-	PathQueryResult * pathQArray;
-	uint32_t * pathSthgFlag_10B3D5C8;
+
 
 protected:
 	void PathInit(Path* pqr, PathQuery* pq);
@@ -255,7 +253,9 @@ protected:
 extern Pathfinding pathfindingSys;
 
 
-
+// hooks
 //uint32_t _ShouldUsePathnodesUsercallWrapper();
 int _FindPathShortDistanceSansTarget(PathQuery * pq, PathQueryResult * pqr);
 int _FindPath(PathQuery* pq, PathQueryResult* pqr);
+void _PathAstarInit();
+void _aStarSettingChanged();
