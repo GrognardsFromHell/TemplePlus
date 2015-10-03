@@ -177,7 +177,7 @@ namespace particles {
 	void PartSysParser::ParseMaterial(const TabFileRecord& record, PartSysEmitterSpecPtr emitter) {
 		auto colMaterial = record[COL_MATERIAL];
 		if (colMaterial) {
-			auto material = mMaterials->Resolve(colMaterial.AsString());
+			auto material = gfx::gMdfMaterialFactory->LoadMaterial(colMaterial.AsString());
 			if (!material->IsValid()) {
 				logger->warn("Emitter on line {} has invalid material: '{}'",
 				             record.GetLineNumber(), colMaterial);
@@ -298,8 +298,7 @@ namespace particles {
 
 	}
 
-	PartSysParser::PartSysParser(gfx::MaterialFactoryPtr materials,
-	                             gfx::MeshesManagerPtr meshes) : mMaterials(materials), mMeshes(meshes) {
+	PartSysParser::PartSysParser(gfx::MeshesManagerPtr meshes) : mMeshes(meshes) {
 	}
 
 	void PartSysParser::ParseFile(const std::string& filename) {

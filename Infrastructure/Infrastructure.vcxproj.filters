@@ -198,6 +198,18 @@
     <ClInclude Include="include\infrastructure\dxerr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\infrastructure\mdfparser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\tokenizer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\mdfmaterial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\infrastructure\images.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="version.cpp">
@@ -255,6 +267,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="dxerr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tokenizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mdfparser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jpeg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="images.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

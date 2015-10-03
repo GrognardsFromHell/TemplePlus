@@ -69,7 +69,14 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>$(SolutionDir)\dependencies\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(SolutionDir)\dependencies\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>$(SolutionDir)\dependencies\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(SolutionDir)\dependencies\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>
@@ -84,6 +91,9 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <AdditionalDependencies>turbojpeg-static_d.lib</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -116,6 +126,9 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <Lib>
+      <AdditionalDependencies>turbojpeg-static.lib</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -158,12 +171,16 @@
     <ClInclude Include="include\infrastructure\format.h" />
     <ClInclude Include="include\infrastructure\infrastructure.h" />
     <ClInclude Include="include\infrastructure\INI.h" />
+    <ClInclude Include="include\infrastructure\images.h" />
     <ClInclude Include="include\infrastructure\json11.hpp" />
     <ClInclude Include="include\infrastructure\logging.h" />
     <ClInclude Include="include\infrastructure\materials.h" />
     <ClInclude Include="include\infrastructure\mathutil.h" />
+    <ClInclude Include="include\infrastructure\mdfmaterial.h" />
+    <ClInclude Include="include\infrastructure\mdfparser.h" />
     <ClInclude Include="include\infrastructure\meshes.h" />
     <ClInclude Include="include\infrastructure\mesparser.h" />
+    <ClInclude Include="include\infrastructure\tokenizer.h" />
     <ClInclude Include="include\platform\windows.h" />
     <ClInclude Include="include\infrastructure\renderstates.h" />
     <ClInclude Include="include\spdlog\async_logger.h" />
@@ -206,6 +223,10 @@
     <ClCompile Include="dxerr.cpp" />
     <ClCompile Include="format.cc" />
     <ClCompile Include="elfhash.cpp" />
+    <ClCompile Include="images.cpp" />
+    <ClCompile Include="jpeg.cpp" />
+    <ClCompile Include="mdfparser.cpp" />
+    <ClCompile Include="tokenizer.cpp" />
     <ClCompile Include="json11.cpp" />
     <ClCompile Include="stringutil.cpp" />
     <ClCompile Include="windows.cpp" />

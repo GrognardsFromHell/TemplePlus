@@ -9,6 +9,8 @@
 #include "startup/installationdirs.h"
 #include "startup/installationdirpicker.h"
 
+#include "tig/tig_tokenizer.h"
+
 void InitLogging();
 
 // Defined in temple_main.cpp for now

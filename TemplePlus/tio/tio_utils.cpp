@@ -8,14 +8,14 @@ bool TioDirExists(const string &filename) {
 	return tio_fileexists(filename.c_str(), &f) && f.attribs & 0x20;
 }
 
-vector<char> *TioReadBinaryFile(const string &filename) {
+vector<uint8_t> *TioReadBinaryFile(const string &filename) {
 	TioFileListFile info;
 
 	if (!tio_fileexists(filename.c_str(), &info)) {
 		return nullptr;
 	}
 
-	auto result = new vector<char>(info.sizeInBytes);
+	auto result = new vector<uint8_t>(info.sizeInBytes);
 	
 	auto fh = tio_fopen(filename.c_str(), "rb");
 	if (tio_fread(result->data(), 1, result->size(), fh) != result->size()) {

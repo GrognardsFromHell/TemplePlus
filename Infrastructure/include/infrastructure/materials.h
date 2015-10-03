@@ -8,36 +8,35 @@
 
 namespace gfx {
 
-	/*
-		This is basically a wrapper around tig_shader
+	/**
+	Ownership of materials is generally shared between all those places that the
+	materials are referenced by.
 	*/
+	using MaterialRef = std::shared_ptr<class Material>;
+	
 	class Material {
 	public:
 		virtual ~Material() {
 		}
-		
+
 		virtual std::string GetName() const = 0;
 
 		virtual bool IsValid() {
 			return true;
 		}
 
+		static const MaterialRef &GetInvalidMaterial();
+
 		virtual TextureRef GetPrimaryTexture() = 0;
 	};
 
-	using MaterialRef = std::shared_ptr<Material>;
-
-	class MaterialFactory {
+	class MdfMaterialFactory {
 	public:
+		virtual ~MdfMaterialFactory() {}
 
-		virtual ~MaterialFactory();
-
-		virtual MaterialRef Resolve(const std::string& materialName) = 0;
-
-		static MaterialRef GetInvalidMaterial();
-
+		virtual MaterialRef LoadMaterial(const std::string& name);
 	};
 
-	using MaterialFactoryPtr = std::shared_ptr<MaterialFactory>;
+	extern std::unique_ptr<MdfMaterialFactory> gMdfMaterialFactory;
 	
 }

@@ -1,31 +1,28 @@
 #include "stdafx.h"
 
+#include <temple/dll.h>
+#include <infrastructure/renderstates.h>
+#include <infrastructure/images.h>
+
 #include "graphics.h"
 #include "temple_functions.h"
-#include <temple/dll.h>
-#include "idxtables.h"
-#include "util/fixes.h"
 #include "movies.h"
 #include "tig/tig_msg.h"
-#include "tig/tig_shader.h"
 #include "tig/tig_mouse.h"
 #include "mainwindow.h"
 #include "ui/ui.h"
 #include "util/folderutils.h"
 #include "gamesystems.h"
-#include <infrastructure/renderstates.h>
 #include "legacyrenderstates.h"
 #include "ui/ui_text.h"
 #include <atlbase.h>
 
 #include "d3d.h"
-#include "d3d8adapter.h"
 #include "d3d8to9_device.h"
 #include "d3d8to9_vertexbuffer.h"
 #include "d3d8to9_texture.h"
 #include "d3d8to9_rootobj.h"
 
-#include <map>
 #include <set>
 #include "util/config.h"
 
@@ -36,8 +33,8 @@ temple::GlobalStruct<VideoData, 0x11E74580> video;
 // Our precompiled header swallows this somehow...
 static const DWORD D3D_SDK_VERSION = 32;
 
-template<typename T>
-static void FreeD3dResource(T *&unk) {
+template <typename T>
+static void FreeD3dResource(T*& unk) {
 	if (unk) {
 		unk->Release();
 		unk = nullptr;
@@ -143,7 +140,7 @@ void CreateSharedVertexBuffers(IDirect3DDevice9* device) {
 		throw TempleException("Couldn't create shared vertex buffer");
 	}
 	video->blitVBuffer = new Direct3DVertexBuffer8Adapter(vbuffer);
-	
+
 	if (D3DLOG(device->CreateVertexBuffer(
 		140, // Space for 5 vertices
 		D3DUSAGE_DYNAMIC,
@@ -461,17 +458,7 @@ void GetSystemMemory(int* totalMem, int* availableMem) {
 }
 
 // They keycode parameter can be ignored
-void __cdecl TakeScreenshot(int) {
-
-	if (!video->d3dDevice) {
-		return;
-	}
-
-	// Calculate size of screenshot
-	RECT rect;
-	GetWindowRect(video->hwnd, &rect);
-	auto width = rect.right - rect.left;
-	auto height = rect.bottom - rect.top;
+void TakeScreenshot(int) {
 
 	// Calculate output filename
 	auto folder = GetScreenshotFolder();
@@ -486,15 +473,10 @@ void __cdecl TakeScreenshot(int) {
 		}
 	}
 
+	logger->info("Saving screenshot as {}", ucs2_to_local(path));
+
 	// Take screenshot
-	auto device = video->d3dDevice->delegate;
-	IDirect3DSurface9* surface;
-	device->CreateOffscreenPlainSurface(width, height, D3DFMT_A8R8G8B8, D3DPOOL_SCRATCH, &surface, nullptr);
-	if (surface) {
-		device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &surface);
-		D3DXSaveSurfaceToFileW(path.c_str(), D3DXIFF_JPG, surface, nullptr, nullptr);
-		surface->Release();
-	}
+	graphics.TakeScaledScreenshot(ucs2_to_local(path.c_str()), 0, 0);
 
 }
 
@@ -528,7 +510,7 @@ static void HookedUpdateProjMatrices(const TigMatrices& matrices) {
 // Take screenshots for the savegame
 static void TakeSaveScreenshots() {
 	graphics.TakeScaledScreenshot("save\\temps.jpg", 64, 48);
-	graphics.TakeScaledScreenshot("save\\templ.jpg", 256, 192);	
+	graphics.TakeScaledScreenshot("save\\templ.jpg", 256, 192);
 }
 
 /*
@@ -538,9 +520,10 @@ static void TakeSaveScreenshots() {
 	doesn't reset it, but that is harder to fix.
 	See GitHub issue #88
 */
-typedef int(*FngHookedShaderTexturedRender)(int vertexCount, void *pos, void *normals, void *diffuse, void *uv, int primCount, void* indices, void* shaderData);
+typedef int (*FngHookedShaderTexturedRender)(int vertexCount, void* pos, void* normals, void* diffuse, void* uv, int primCount, void* indices, void* shaderData);
 FngHookedShaderTexturedRender OrgHookedShaderTexturedRender;
-static int HookedShaderTexturedRender(int vertexCount, void *pos, void *normals, void *diffuse, void *uv, int primCount, void* indices, void* shaderData) {
+
+static int HookedShaderTexturedRender(int vertexCount, void* pos, void* normals, void* diffuse, void* uv, int primCount, void* indices, void* shaderData) {
 	renderStates->SetAlphaTestEnable(true);
 	return OrgHookedShaderTexturedRender(vertexCount, pos, normals, diffuse, uv, primCount, indices, shaderData);
 }
@@ -602,7 +585,7 @@ static struct ExternalGraphicsFuncs : temple::AddressTable {
 	/*
 		Converts from screen loc to tile.
 	*/
-	bool (__cdecl *ScreenToLoc)(int64_t x, int64_t y, locXY &locOut);
+	bool (__cdecl *ScreenToLoc)(int64_t x, int64_t y, locXY& locOut);
 
 	// Is the full-screen overlay for fading out/in enabled?
 	bool* gfadeEnable;
@@ -1007,86 +990,82 @@ void Graphics::InitializeDirect3d() {
 
 void Graphics::TakeScaledScreenshot(const string& filename, int width, int height) {
 	logger->debug("Creating screenshot with size {}x{} in {}", width, height, filename);
-	
-	if (config.disableScreenshots)
-		return;
 
 	auto device = graphics.device();
 
-	if (config.debugMessageEnable)
-		logger->debug("Device obtained {}\n", (int)device);
-
-	// Get display mode to get screen resolution
-	D3DDISPLAYMODE displayMode;
-	if (D3DLOG(device->GetDisplayMode(0, &displayMode)) != D3D_OK) {
-		logger->error("Unable to get the adapter display mode.");
-		return;
-	}
-	if (config.debugMessageEnable)
-		logger->debug("Display Mode obtained: {} {} {} {}\n", displayMode.Width, displayMode.Height, displayMode.RefreshRate , displayMode.Format );
-
-	// Create an offscreen surface to contain the frontbuffer data
-	CComPtr<IDirect3DSurface9> fbSurface;
-	if (D3DLOG(device->CreateOffscreenPlainSurface(displayMode.Width, displayMode.Height, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &fbSurface, nullptr)) != D3D_OK) {
-		logger->error("Unable to create offscreen surface for copying the frontbuffer");
-		return;
-	}
-	if (config.debugMessageEnable)
-		logger->debug("Offscreen surface created for copying the front buffer \n");
-
-	if (D3DLOG(device->GetFrontBufferData(0, fbSurface)) != D3D_OK) {
-		logger->error("Unable to copy the front buffer.");
-		return;
-	}
-	if (config.debugMessageEnable)
-		logger->debug("Front buffer copied.\n");
-
 	auto sceneSurface = graphics.sceneSurface();
-
-	if (config.debugMessageEnable)
-		logger->debug("Scene surface obtained: {}\n", (int)sceneSurface);
 
 	D3DSURFACE_DESC desc;
 	sceneSurface->GetDesc(&desc);
-	if (config.debugMessageEnable)
-		logger->debug("Scene Surface Desc. : Format {} Type {} Usage {}  Pool {} MultisampleType {} Quality {}  W {} H {}\n", desc.Format, desc.Type, desc.Usage, desc.Pool, desc.MultiSampleType, desc.MultiSampleQuality, desc.Width, desc.Height);
 
-	CComPtr<IDirect3DSurface9> stretchedScene;
-	if (D3DLOG(device->CreateRenderTarget(width, height, desc.Format, desc.MultiSampleType, desc.MultiSampleQuality, false, &stretchedScene, NULL)) != D3D_OK) {
+	// Support taking unscaled screenshots
+	auto stretch = true;
+	if (width == 0 || height == 0) {
+		width = desc.Width;
+		height = desc.Height;
+		stretch = false;
+	}
+
+	// Create system memory surface to copy the screenshot to
+	CComPtr<IDirect3DSurface9> sysMemSurface;
+	if (D3DLOG(device->CreateOffscreenPlainSurface(width, height, desc.Format, D3DPOOL_SYSTEMMEM, &sysMemSurface, nullptr)) != D3D_OK) {
+		logger->error("Unable to create offscreen surface for copying the screenshot");
 		return;
 	}
 
-	if (config.debugMessageEnable)
-		logger->debug("Stretched Scene CreateRenderTarget result obtained\n");
+	if (stretch) {
+		CComPtr<IDirect3DSurface9> stretchedScene;
+		if (D3DLOG(device->CreateRenderTarget(width, height, desc.Format, desc.MultiSampleType, desc.MultiSampleQuality, false, &stretchedScene, NULL)) != D3D_OK) {
+			return;
+		}
+
+		if (D3DLOG(device->StretchRect(sceneSurface, nullptr, stretchedScene, nullptr, D3DTEXF_LINEAR)) != D3D_OK) {
+			logger->error("Unable to copy front buffer to target surface for screenshot");
+			return;
+		}
+
+		if (D3DLOG(device->GetRenderTargetData(stretchedScene, sysMemSurface))) {
+			logger->error("Unable to copy stretched render target to system memory.");
+			return;
+		}
+	} else {
+		if (D3DLOG(device->GetRenderTargetData(sceneSurface, sysMemSurface))) {
+			logger->error("Unable to copy scene render target to system memory.");
+			return;
+		}
+	}
+
+	/*
+		Get access to the pixel data for the surface and encode it to a JPEG.
+	*/
+	D3DLOCKED_RECT locked;
+	if (D3DLOG(sysMemSurface->LockRect(&locked, nullptr, 0))) {
+		logger->error("Unable to lock screenshot surface.");
+		return;
+	}
+
+	// Quality is between 1 and 100
+	auto quality = std::min(100, std::max(1, config.screenshotQuality));
 	
-	if (D3DLOG(device->StretchRect(sceneSurface, nullptr, stretchedScene, nullptr, D3DTEXF_LINEAR)) != D3D_OK) {
-		logger->error("Unable to copy front buffer to target surface for screenshot");
-		return;
-	}
-	if (config.debugMessageEnable)
-		logger->debug("Stretched Scene copied from front buffer \n");
+	auto jpegData(gfx::EncodeJpeg(reinterpret_cast<uint8_t*>(locked.pBits),
+	                              gfx::JpegPixelFormat::BGRX,
+	                              width,
+	                              height,
+	                              quality,
+	                              locked.Pitch));
 
-	CComPtr<ID3DXBuffer> buffer;
-	if (!SUCCEEDED(D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_JPG, stretchedScene, nullptr, nullptr))) {
-		logger->error("Unable to save screenshot surface to JPEG file.");
+	if (D3DLOG(sysMemSurface->UnlockRect())) {
+		logger->error("Unable to unlock screenshot surface.");
 		return;
 	}
-	if (config.debugMessageEnable)
-		logger->debug("JPEG file buffer created from surface\n");
 
 	// We have to write using tio or else it goes god knows where
 	auto fh = tio_fopen(filename.c_str(), "w+b");
-
-	if (config.debugMessageEnable)
-		logger->debug("File created: {}\n", fh->filename);
-
-	if (tio_fwrite(buffer->GetBufferPointer(), 1, buffer->GetBufferSize(), fh) != buffer->GetBufferSize()) {
+	if (tio_fwrite(jpegData.data(), 1, jpegData.size(), fh) != jpegData.size()) {
 		logger->error("Unable to write screenshot to disk due to an IO error.");
 		tio_fclose(fh);
 		tio_remove(filename.c_str());
 	} else {
-		if (config.debugMessageEnable)
-			logger->debug("File written! Closing... \n");
 		tio_fclose(fh);
 	}
 }

@@ -6,11 +6,8 @@
 #include "tig/tig_sound.h"
 #include "ui/ui_render.h"
 #include <infrastructure/renderstates.h>
+#include <infrastructure/images.h>
 #include "tio/tio_utils.h"
-#include "atlbase.h"
-
-#include <d3dx9.h>
-#include <d3dx9tex.h>
 
 MovieFuncs movieFuncs;
 
@@ -146,7 +143,7 @@ struct MovieRect {
 	float bottom;
 };
 
-static MovieRect getMovieRect(BinkMovie *movie) {
+static MovieRect getMovieRect(BinkMovie* movie) {
 	auto screenWidth = graphics.backBufferDesc().Width;
 	auto screenHeight = graphics.backBufferDesc().Height;
 
@@ -172,11 +169,11 @@ static MovieRect getMovieRect(BinkMovie *movie) {
 
 class SubtitleRenderer {
 public:
-	SubtitleRenderer(const SubtitleLine *firstLine) : mLine(firstLine) {
+	SubtitleRenderer(const SubtitleLine* firstLine) : mLine(firstLine) {
 		mMovieStarted = timeGetTime();
 		InitializeSubtitleStyle();
 	}
-	
+
 	void Render() {
 		if (!mLine) {
 			return;
@@ -213,7 +210,7 @@ private:
 	}
 
 	void RenderCurrentLine() {
-		
+
 		UiRenderer::PushFont(mLine->fontname, 0, 0);
 
 		auto extents = UiRenderer::MeasureTextSize(mLine->text, mSubtitleStyle, 700, 150);
@@ -241,7 +238,7 @@ private:
 	ColorRect mSubtitleTextColor = ColorRect(D3DCOLOR_ARGB(255, 255, 255, 255));
 	ColorRect mSubtitleShadowColor = ColorRect(D3DCOLOR_ARGB(255, 0, 0, 0));
 	TigTextStyle mSubtitleStyle;
-	const SubtitleLine *mLine;
+	const SubtitleLine* mLine;
 	uint32_t mMovieStarted;
 	uint32_t mElapsedTime;
 };
@@ -284,33 +281,33 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 	}
 
 	// Clear screen with black color and present immediately
-	d3dDevice->Clear(0, nullptr, D3DCLEAR_TARGET|D3DCLEAR_ZBUFFER, 0, 0, 0);
+	d3dDevice->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0, 0);
 	d3dDevice->Present(nullptr, nullptr, nullptr, nullptr);
 
 	processTigMessages();
 
 	MovieRect movieRect = getMovieRect(movie);
-	
+
 	// TODO UV should be manipulated for certain vignettes since they have been letterboxed in the bink file!!!
 
 	// Set vertex shader
 	MovieVertex vertices[4] = {
-		{ movieRect.left, movieRect.top, 0, 0 },
-		{ movieRect.right, movieRect.top, 1, 0 },
-		{ movieRect.right, movieRect.bottom, 1, 1 },
-		{ movieRect.left, movieRect.bottom, 0, 1 }
+		{movieRect.left, movieRect.top, 0, 0},
+		{movieRect.right, movieRect.top, 1, 0},
+		{movieRect.right, movieRect.bottom, 1, 1},
+		{movieRect.left, movieRect.bottom, 0, 1}
 	};
 
 	IDirect3DVertexBuffer9* vertexBuffer;
 	handleD3dError("CreateVertexBuffer", d3dDevice->CreateVertexBuffer(sizeof(vertices), 0,
-		D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1, D3DPOOL_DEFAULT, &vertexBuffer, nullptr));
+	                                                                   D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1, D3DPOOL_DEFAULT, &vertexBuffer, nullptr));
 	void* data;
 	handleD3dError("Lock", vertexBuffer->Lock(0, 0, &data, 0));
 	memcpy(data, vertices, sizeof(vertices));
 	vertexBuffer->Unlock();
-	
+
 	SubtitleRenderer subtitleRenderer(subtitles);
-	
+
 	bool keyPressed = false;
 	while (!keyPressed && binkRenderFrame(movie, texture)) {
 		handleD3dError("Clear", d3dDevice->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0, 0));
@@ -339,9 +336,8 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 
 		templeFuncs.ProcessSystemEvents();
 
-		TigMsg msg;		
-		while (!msgFuncs.Process(&msg))
-		{			
+		TigMsg msg;
+		while (!msgFuncs.Process(&msg)) {
 			// Flags 1 seems to disable skip via keyboard. Also seems unused.
 			if (!(flags & 1) && msg.type == TigMsgType::KEYSTATECHANGE && LOBYTE(msg.arg2) == 1) {
 				// TODO Wait for the key to be unpressed again
@@ -370,47 +366,33 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 	return 0;
 }
 
-int __cdecl HookedPlayMovieSlide(const char *imageFile, const char *soundFile, const SubtitleLine *subtitles, int flags, int soundtrackId) {
+int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, const SubtitleLine* subtitles, int flags, int soundtrackId) {
 	logger->info("Play Movie Slide {} {} {} {}", imageFile, soundFile, flags, soundtrackId);
 
 	// Load img into memory using TIO
-	unique_ptr<vector<char>> imgData(TioReadBinaryFile(imageFile));
+	unique_ptr<vector<uint8_t>> imgData(TioReadBinaryFile(imageFile));
 
 	if (!imgData) {
 		logger->error("Unable to load the image file {}", imageFile);
 		return 1; // Can't play because we cant load the file
 	}
 
-	D3DXIMAGE_INFO imgInfo;
-	if (!SUCCEEDED(D3DXGetImageInfoFromFileInMemory(imgData->data(), imgData->size(), &imgInfo))) {		
-		logger->error("Unable to determine image format of {}", imageFile);
-		return 1;
-	}
-
 	auto device = graphics.device();
-	CComPtr<IDirect3DSurface9> imgSurface;
-	if (!SUCCEEDED(D3DLOG(device->CreateOffscreenPlainSurface(imgInfo.Width, imgInfo.Height, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &imgSurface, nullptr)))) {
-		logger->error("Unable to create offscreen surface for slide image.");
-		return 1;
-	}
-
-	if (!SUCCEEDED(D3DXLoadSurfaceFromFileInMemory(imgSurface, NULL, NULL, imgData->data(), imgData->size(), NULL, D3DX_DEFAULT, 0, &imgInfo))) {
-		logger->error("Unable to load slide image into a surface.");
-		return 1;
-	}
-		
+	gfx::ImageFileInfo info;
+	auto surface(gfx::LoadImageToSurface(graphics.device(), *imgData.get(), info));
+	
 	movieFuncs.MovieIsPlaying = true;
 
 	device->ShowCursor(FALSE);
-	
+
 	// Clear screen with black color and present immediately
 	device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0, 0);
 	device->Present(nullptr, nullptr, nullptr, nullptr);
-	
+
 	SubtitleRenderer subtitleRenderer(subtitles);
 
 	TigRect bbRect(0, 0, graphics.backBufferDesc().Width, graphics.backBufferDesc().Height);
-	TigRect destRect(0, 0, imgInfo.Width, imgInfo.Height);
+	TigRect destRect(0, 0, info.width, info.height);
 	destRect.FitInto(bbRect);
 	RECT fitDestRect = destRect.ToRect();
 
@@ -429,9 +411,9 @@ int __cdecl HookedPlayMovieSlide(const char *imageFile, const char *soundFile, c
 	bool keyPressed = false;
 	while (!keyPressed && (!stream.IsValid() || stream.IsPlaying() || sw.GetElapsedMs() < 3000)) {
 		D3DLOG(device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0, 0));
-				
+
 		D3DLOG(device->BeginScene());
-		D3DLOG(device->StretchRect(imgSurface, NULL, graphics.backBuffer(), &fitDestRect, D3DTEXF_LINEAR));
+		D3DLOG(device->StretchRect(surface, NULL, graphics.backBuffer(), &fitDestRect, D3DTEXF_LINEAR));
 		subtitleRenderer.Render();
 		D3DLOG(device->EndScene());
 		D3DLOG(device->Present(NULL, NULL, NULL, NULL));
@@ -439,8 +421,7 @@ int __cdecl HookedPlayMovieSlide(const char *imageFile, const char *soundFile, c
 		templeFuncs.ProcessSystemEvents();
 
 		TigMsg msg;
-		while (!msgFuncs.Process(&msg))
-		{
+		while (!msgFuncs.Process(&msg)) {
 			// Flags 1 seems to disable skip via keyboard. Also seems unused.
 			if (!(flags & 1) && msg.type == TigMsgType::KEYSTATECHANGE && LOBYTE(msg.arg2) == 1) {
 				// TODO Wait for the key to be unpressed again
