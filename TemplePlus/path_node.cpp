@@ -3,9 +3,222 @@
 #include "path_node.h"
 #include "pathfinding.h"
 #include "location.h"
+#include "tio/tio.h"
 
 PathNodeSys pathNodeSys;
+char PathNodeSys::pathNodesLoadDir[260];
+char PathNodeSys::pathNodesSaveDir[260];
+MapPathNodeList ** PathNodeSys::pathNodeList;
 
+struct PathNodeSysAddresses : temple::AddressTable
+{
+	
+} addresses;
+
+
+BOOL PathNodeSys::LoadNodeFromFile(TioFile* file, MapPathNodeList** nodeOut)
+{
+	int result = 0;
+
+	if (!file)
+		return 0;
+
+	if (!nodeOut)
+		return 0;
+
+	MapPathNodeList * newNode = new MapPathNodeList;
+	*nodeOut = newNode;
+
+	if (!newNode)
+		return 0;
+
+	newNode->flags = (PathNodeFlags)0;
+	newNode->node.neighbours = 0;
+	if (!tio_fread(&newNode->node.id, 4, 1, file)
+		|| !tio_fread(&newNode->node.nodeLoc, sizeof(LocAndOffsets), 1, file)
+		|| !tio_fread(&newNode->node.neighboursCount, 4, 1, file))
+		return 0;
+	
+	auto neighCnt = newNode->node.neighboursCount;
+	if (!neighCnt)
+		return 1;
+
+	newNode->node.neighbours = new int32_t[neighCnt];
+	if (tio_fread(newNode->node.neighbours, 4, neighCnt, file) == neighCnt)
+		return 1;
+
+	
+
+	return result;
+}
+
+BOOL PathNodeSys::LoadNodesCurrent()
+{
+	char fileName[260];
+
+	_snprintf(fileName, 260, "%s\\%s", pathNodesLoadDir, "pathnode.pnd");
+	auto file = tio_fopen(fileName, "rb");
+	if (!file)
+		return 1;
+
+	int nodeCount = 0;
+	int status = 0;
+	MapPathNodeList * newNode;
+	if (tio_fread(&nodeCount, 4, 1, file) == 1)
+	{
+		status = 1;
+		for (int i = 0; i < nodeCount; i++)
+		{
+			if (LoadNodeFromFile(file, &newNode ))
+			{
+				newNode->next = *pathNodeList;
+				*pathNodeList = newNode;
+			} else
+			{
+				logger->warn("path_node.cpp: LoadNodesCurrent(): failed to read from file");
+				status = 0;
+			}
+		}
+	}
+	tio_fclose(file);
+	return status;
+}
+
+void PathNodeSys::FreeNode(MapPathNodeList* pn)
+{
+	int neighCnt = pn->node.neighboursCount;
+
+	if (neighCnt)
+	{
+		for (int i = 0; i < neighCnt; i++)
+		{
+			auto neighId = pn->node.neighbours[i];
+			auto node = *pathNodeList;
+			while (node)
+			{
+				if (node->node.id == neighId)
+					*(int*)&node->flags |= PNF_REMOVED_FROM_NEIGHBOUR_LIST;
+				node = node->next;
+			}
+		}
+		free(pn->node.neighbours);
+	}
+	
+	free( pn);
+}
+
+BOOL PathNodeSys::FreeAndLoad(char* loadDir, char* saveDir)
+{
+	Reset();
+	SetDirs(loadDir, saveDir);
+	return LoadNodesCurrent();
+}
+
+void PathNodeSys::Reset()
+{
+	auto node = *pathNodeList;
+	while (node)
+	{
+		*pathNodeList = node->next;
+		FreeNode(node);
+		node = *pathNodeList;
+	}
+}
+
+void PathNodeSys::SetDirs(char* loadDir, char* saveDir)
+{
+	strncpy(pathNodesLoadDir, loadDir, 260);
+	strncpy(pathNodesSaveDir, saveDir, 260);
+}
+
+void PathNodeSys::RecalculateNeighbours(MapPathNodeList* node)
+{
+	if (!node)
+		return;
+	auto i = *pathNodeList;
+	PathQuery pathQ;
+	PathQueryResult path;
+	while (i)
+	{
+		if (node->node.id == i->node.id)
+			continue;
+		pathQ.from = node->node.nodeLoc;
+		pathQ.to = i->node.nodeLoc;
+		pathQ.flags = (PathQueryFlags) (PQF_DONT_USE_STRAIGHT_LINE | PQF_DONT_USE_PATHNODES | PQF_TO_EXACT);
+		pathQ.critter = 0;
+		pathQ.flags2 = 0;
+		if (pathfindingSys.FindPath(&pathQ, &path ) > 0)
+		{
+			int neighSizeNew = 4 * (node->node.neighboursCount + 1);
+			auto neighbours = node->node.neighbours;
+			++node->node.neighboursCount;
+			int * neighboursNew = (int*) realloc(neighbours, neighSizeNew);
+
+			node->node.neighbours = neighboursNew;
+			neighboursNew[node->node.neighboursCount - 1] = i->node.id;
+		}
+		i = i->next;
+	}
+}
+
+void PathNodeSys::RecalculateAllNeighbours()
+{
+	auto node = *pathNodeList;
+	while(node)
+	{
+		if (node->node.neighboursCount > 0)
+		{
+			free(node->node.neighbours);
+			*(int*)&node->flags &= ~PNF_REMOVED_FROM_NEIGHBOUR_LIST;
+			node->node.neighboursCount = 0;
+			node->node.neighbours = nullptr;
+		}
+		RecalculateNeighbours(node);
+		node = node->next;
+	}
+}
+
+BOOL PathNodeSys::FlushNodes()
+{
+	int status = 0;
+	int foundReleased = 0;
+	int numNodes = 0;
+	auto node = *pathNodeList;
+
+	while(node)
+	{
+		numNodes++;
+		if (node->flags & PNF_REMOVED_FROM_NEIGHBOUR_LIST)
+			foundReleased = 1;
+		node = node->next;
+	}
+	if (foundReleased)
+		RecalculateAllNeighbours();
+
+	char fileName[260];
+	_snprintf(fileName, 260, "s\\s", pathNodesSaveDir, "pathnode.pnd");
+	auto file = tio_fopen(fileName, "wb");
+	if (!file)
+		return 0;
+
+	if (tio_fwrite(&numNodes,4,1,file) == 1)
+	{
+		node = *pathNodeList;
+		status = 1;
+		while (node)
+		{
+			if (!WriteNodeToFile(node, file))
+			{
+				logger->warn("path_node.cpp: FlushNodes() error writing to file");
+				status = 0;
+			}
+			node = node->next;
+		}
+	}
+
+	tio_fclose(file);
+	return status;
+}
 
 void PathNodeSys::FindPathNodeAppend(FindPathNodeData* node)
 { /*
@@ -49,6 +262,34 @@ int PathNodeSys::PopMinCumulNode(FindPathNodeData* fpndOut)
 	memcpy(&fpbnData[idxMinCumul], &fpbnData[fpbnCount-1], sizeof(FindPathNodeData));
 	fpbnCount--;
 	return 1;
+}
+
+BOOL PathNodeSys::FindClosestPathNode(LocAndOffsets* loc, int* nodeIdOut)
+{
+	float closestDist = 100000.0;
+	float dist;
+	auto node = *pathNodeList;
+	MapPathNodeList * closestNode = nullptr;
+
+	while (node)
+	{
+		dist = locSys.distBtwnLocAndOffs(node->node.nodeLoc, *loc);
+		if (!closestNode || dist < closestDist)
+		{
+			closestNode = node;
+			closestDist = dist;
+		}
+		node = node->next;
+	}
+
+	if (closestNode )
+	{
+		if (nodeIdOut)
+			*nodeIdOut = closestNode->node.id;
+		return 1;
+	}
+
+	return 0;
 }
 
 int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds, int maxChainLength)
@@ -237,4 +478,41 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 
 
 	// return _FindPathBetweenNodes(fromNodeId, toNodeId, nodeIds, maxChainLength);
+}
+
+BOOL PathNodeSys::GetPathNode(int id, MapPathNode* pathNodeOut)
+{
+	auto node = *pathNodeList;
+	if (node)
+	{
+		while( node && node->node.id != id)
+		{
+			node = node->next;
+		}
+		if (!node)
+			return 0;
+		memcpy(pathNodeOut, &node->node, sizeof(MapPathNode));
+		return 1;
+	}
+	return 0;
+}
+
+BOOL PathNodeSys::WriteNodeToFile(MapPathNodeList* node, TioFile* file)
+{
+	BOOL result = 0;
+	if (!file)
+		return 0;
+	if (!node)
+		return 0;
+	if (!tio_fwrite(&node->node, 4, 1, file) == 1)
+		return 0;
+	if (!tio_fwrite(&node->node.nodeLoc, sizeof(LocAndOffsets), 1, file))
+		return 0;
+	int * count = &node->node.neighboursCount;
+	if (tio_fwrite(&node->node.neighboursCount, 4,1, file) == 1 
+		&& (!*count || tio_fwrite(node->node.neighbours, 4, *count , file) == *count) )
+	{
+		return 1;
+	}
+	return result;
 }
