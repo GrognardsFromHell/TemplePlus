@@ -1,4 +1,3 @@
-
 #pragma once
 
 // Functions used to init subsystems
@@ -8,8 +7,7 @@
 // 0x20 is windowed
 // 0x1000 is unknown
 // 0x10000 means anti aliasing is turned on
-enum StartupFlag
-{
+enum StartupFlag {
 	SF_FPS = 0x1, // -fps
 	SF_VSYNC = 0x4, // TODO: This is probably wrong. 0x4 gets tested against d3d flags, not these flags
 	SF_NOSOUND = 0x2000, // -nosound
@@ -36,8 +34,7 @@ enum StartupFlag
 };
 
 // 19 values total (guessed from memset 0 at start of main method)
-struct TigConfig
-{
+struct TigConfig {
 	uint32_t flags;
 	int32_t x;
 	int32_t y;
@@ -48,15 +45,47 @@ struct TigConfig
 	uint32_t unk7; // Set to 0
 	uint32_t unk8; // Set to 0
 	WNDPROC wndproc;
-	bool(__cdecl *windowMessageFilter)(MSG *msg);
-	int(__cdecl *findSound)(int soundId, char *filenameOut); // @1003B9E0
+	bool (__cdecl *windowMessageFilter)(MSG* msg);
+	int (__cdecl *findSound)(int soundId, char* filenameOut); // @1003B9E0
 	const char* soundSystem; // "miles"
 	uint32_t minTexWidth;
 	uint32_t minTexHeight;
 	uint32_t framelimit;
 	const char* windowTitle;
 	void (__cdecl *createBuffers)();
-	void(__cdecl *freeBuffers)();
+	void (__cdecl *freeBuffers)();
 };
 
-typedef int(__cdecl *_tig_init)(TigConfig* settings);
+class TigSystem {
+public:
+	virtual ~TigSystem();
+};
+
+// RAII for TIG initialization
+class TigInitializer {
+public:
+	explicit TigInitializer(HINSTANCE hInstance);
+	~TigInitializer();
+
+	const TigConfig& GetConfig() const {
+		return mConfig;
+	}
+
+private:
+
+	using TigSystemPtr = std::unique_ptr<class TigSystem>;
+
+	/*
+		Starts a legacy system still contained in temple.dll
+		and returns a TigSystem that will shutdown the system
+		when destroyed.
+	*/
+	TigSystemPtr StartSystem(const std::string& name,
+	                         uint32_t startAddress,
+	                         uint32_t shutdownAddr);
+
+	TigConfig mConfig;
+
+	// Contains all systems that have already been started
+	std::vector<TigSystemPtr> mStartedSystems;
+};

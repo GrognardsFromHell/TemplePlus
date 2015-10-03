@@ -101,9 +101,6 @@
     <ClCompile Include="tig\tig_tokenizer.cpp">
       <Filter>tig</Filter>
     </ClCompile>
-    <ClCompile Include="tig\tig_init.cpp">
-      <Filter>tig</Filter>
-    </ClCompile>
     <ClCompile Include="faction.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
@@ -276,6 +273,9 @@
     <ClCompile Include="fixes\light_load.cpp" />
     <ClCompile Include="path_node.cpp" />
     <ClCompile Include="fixes\partsyslag.cpp" />
+    <ClCompile Include="tig\tig_startup.cpp">
+      <Filter>tig</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
@@ -365,16 +365,10 @@
     <ClInclude Include="tig\tig_shader.h">
       <Filter>tig</Filter>
     </ClInclude>
-    <ClInclude Include="tig\tig_startup.h">
-      <Filter>tig</Filter>
-    </ClInclude>
     <ClInclude Include="tig\tig_texture.h">
       <Filter>tig</Filter>
     </ClInclude>
     <ClInclude Include="tig\tig_tokenizer.h">
-      <Filter>tig</Filter>
-    </ClInclude>
-    <ClInclude Include="tig\tig_init.h">
       <Filter>tig</Filter>
     </ClInclude>
     <ClInclude Include="faction.h">
@@ -536,6 +530,9 @@
     <ClInclude Include="startup\installationdirpicker.h" />
     <ClInclude Include="startup\installationdirs.h" />
     <ClInclude Include="path_node.h" />
+    <ClInclude Include="tig\tig_startup.h">
+      <Filter>tig</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

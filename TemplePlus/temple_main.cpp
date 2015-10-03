@@ -4,7 +4,6 @@
 #include "tig/tig_msg.h"
 #include "tig/tig_startup.h"
 #include "tig/tig_mouse.h"
-#include "tig/tig_init.h"
 #include "gamesystems.h"
 #include "util/fixes.h"
 #include "graphics.h"
@@ -154,8 +153,6 @@ public:
 	}
 };
 
-#include "tig/tig_partsys.h"
-
 int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 
 	if (!config.engineEnhancements) {
@@ -187,13 +184,13 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 
 	// It's pretty unclear what this is used for
 	bufferstuffFlag = bufferstuffFlag | 0x40;
-	bufferstuffWidth = tig.config().width;
-	bufferstuffHeight = tig.config().height;
+	bufferstuffWidth = tig.GetConfig().width;
+	bufferstuffHeight = tig.GetConfig().height;
 	
 	// Hides the cursor during loading
 	mouseFuncs.HideCursor();
 
-	GameSystemsInitializer gameSystems(tig.config());
+	GameSystemsInitializer gameSystems(tig.GetConfig());
 	
 	/*
 		Process options applicable after initialization of game systems
