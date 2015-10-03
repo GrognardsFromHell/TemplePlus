@@ -56,7 +56,7 @@ struct DispIoDamage : DispIO { // Io type 4
 class Damage {
 public:
 	
-	MesHandle * damageMes;
+	MesHandle * damageMes; // don't use this; TODO system initializer
 
 	void DealDamageFullUnk(objHndl victim, objHndl attacker, 
 		const Dice &dice, 
