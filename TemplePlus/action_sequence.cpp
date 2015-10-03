@@ -553,8 +553,8 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	if (d20a->d20Caf & D20CAF_UNNECESSARY)
 	{
 		auto asdf = &pathQ.flags;
-		*((int*)asdf) |= 0x80000;
-	}
+		*((int*)asdf) |= PQF_A_STAR_TIME_CAPPED;
+	} 
 
 
 	if (d20aCopy.path && d20aCopy.path >= pathfindingSys.pathQArray && d20aCopy.path < &pathfindingSys.pathQArray[pfCacheSize]) 

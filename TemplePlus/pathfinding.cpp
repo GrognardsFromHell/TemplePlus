@@ -208,7 +208,7 @@ int Pathfinding::PathSumTime()
 
 void Pathfinding::PathRecordTimeElapsed(int refTime)
 {
-	if ((aStarTimeIdx)++ >= 20)
+	if (++aStarTimeIdx >= 20)
 		aStarTimeIdx = 0;
 	aStarTimeEnded[aStarTimeIdx] = timeGetTime();
 	aStarTimeElapsed[aStarTimeIdx] = aStarTimeEnded[aStarTimeIdx] - refTime;
