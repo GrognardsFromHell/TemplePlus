@@ -205,17 +205,6 @@ extern SpontCastSpellLists spontCastSpellLists;
 
 
 
-uint32_t _DruidRadialSelectSummons(uint32_t spellSlotLevel);
-void DruidRadialSelectSummonsHook();
-uint32_t _DruidRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel);
-void DruidRadialSpontCastSpellEnumHook();
-uint32_t _GoodClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel);
-uint32_t _EvilClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel);
-void EvilClericRadialSpontCastSpellEnumHook();
-void GoodClericRadialSpontCastSpellEnumHook();
-
-
-
 const uint32_t TestSizeOfSpellStoreType = sizeof(SpellStoreType);
 const uint32_t TestSizeOfSpellStoreState = sizeof(SpellStoreState);
 

@@ -73,20 +73,6 @@ SpontCastSpellLists spontCastSpellLists;
 //temple::GlobalPrimitive<uint16_t>
 //1028D09C
 
-class SpontaneousCastingExpansion : public TempleFix {
-public:
-	const char* name() override {
-		return "Recreation of SpellSlinger's Spontaneous Casting for levels 6-9";
-	}
-
-	void apply() override {
-		writeCall(0x100F1127, DruidRadialSelectSummonsHook); // replaces SpellSlinger's hook for Druid Summon options
-		writeCall(0x100F113F, DruidRadialSpontCastSpellEnumHook);
-		writeCall(0x100F109D, GoodClericRadialSpontCastSpellEnumHook);
-		writeCall(0x100F10AE, EvilClericRadialSpontCastSpellEnumHook);
-	}
-} spellSpontCastExpansion;
-
 
 class SpellHostilityFlagFix : public TempleFix {
 public:
@@ -473,77 +459,7 @@ uint32_t SpellSystem::pickerArgsFromSpellEntry(SpellEntry* spellEntry, PickerArg
 }
 #pragma endregion
 
-#pragma region Spontaneous Summon Hooks
 
-void __declspec(naked) DruidRadialSelectSummonsHook()
-{
-	__asm{
-		push eax;
-		call _DruidRadialSelectSummons;
-		mov ebp, eax;
-		pop eax;
-		retn;
-	}
-};
-
-void __declspec(naked) DruidRadialSpontCastSpellEnumHook()
-{
-	__asm{
-		push eax;
-		call _DruidRadialSpontCastSpellEnumHook;
-		mov ecx, eax;
-		pop eax;
-		retn;
-	}
-};
-
-void __declspec(naked) GoodClericRadialSpontCastSpellEnumHook()
-{
-	__asm{
-		push eax;
-		call _GoodClericRadialSpontCastSpellEnumHook;
-		mov ecx, eax;
-		pop eax;
-		retn;
-	}
-};
-
-void __declspec(naked) EvilClericRadialSpontCastSpellEnumHook()
-{
-	__asm{
-		push eax;
-		call _EvilClericRadialSpontCastSpellEnumHook;
-		mov ecx, eax;
-		pop eax;
-		retn;
-	}
-};
-
-
-
-uint32_t _DruidRadialSelectSummons(uint32_t spellSlotLevel)
-{
-	return spontCastSpellLists.spontCastSpellsDruidSummons[spellSlotLevel];
-}
-
-uint32_t _DruidRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel)
-{
-	return spontCastSpellLists.spontCastSpellsDruid[spellSlotLevel];
-}
-
-uint32_t _GoodClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel)
-{
-	return spontCastSpellLists.spontCastSpellsGoodCleric[spellSlotLevel];
-}
-
-uint32_t _EvilClericRadialSpontCastSpellEnumHook(uint32_t spellSlotLevel)
-{
-	return spontCastSpellLists.spontCastSpellsEvilCleric[spellSlotLevel];
-}
-
-
-
-#pragma endregion
 
 #pragma region Hooks
 
