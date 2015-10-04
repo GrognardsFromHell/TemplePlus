@@ -98,7 +98,7 @@ public:
 float Pathfinding::pathLength(Path* path)
 {
 	float distTot;
-	if (path->flags & PQF_UNK2)	return loc->distBtwnLocAndOffs(path->to, path->from) / 12.0f;
+	if (path->flags & PF_STRAIGHT_LINE_SUCCEEDED)	return loc->distBtwnLocAndOffs(path->to, path->from) / 12.0f;
 	distTot = 0;
 	auto nodeFrom = path->from;
 	for (int i = 0; i < path->nodeCount; i++)
@@ -183,7 +183,7 @@ void Pathfinding::PathCachePush(PathQuery* pq, Path* pqr)
 	memcpy(&pathCache[pathCacheIdx++], pq, sizeof(PathQuery));
 
 	pathCacheCleared = 0;
-	if (pathCacheIdx >= 40)
+	if (pathCacheIdx >= PATH_RESULT_CACHE_SIZE)
 		pathCacheIdx = 0;
 }
 
@@ -240,7 +240,59 @@ void Pathfinding::PathCacheInit()
 
 int Pathfinding::PathDestIsClear(PathQuery* pq, objHndl mover, LocAndOffsets destLoc)
 {
-	return addresses.PathDestIsClear(pq, mover, destLoc);
+	ObjIterator objIt;
+	objIt.origin = destLoc;
+	objIt.targetLoc = destLoc;
+
+	*(int*)&objIt.flags |= (ObjItFlag_8 | ObjItFlag_10 | ObjItFlag_20);
+
+	if (mover)
+	{
+		*(int*)&objIt.flags |= (ObjItFlag_4 | ObjItFlag_2);
+		objIt.performer = mover;
+		objIt.radius = objects.GetRadius(mover);
+	}
+
+	ObjectType objType;
+	ObjectFlag objFlags;
+	auto pqFlags = pq->flags;
+	if (objIt.TargettingSthg_100BC750())
+	{
+
+		for (int i = 0; i < objIt.resultCount; i++)
+		{
+			if (!objIt.results[i].obj) // means it's a sector blocker
+				return 0;
+
+			objType = objects.GetType(objIt.results[i].obj);
+
+			if ((pqFlags & PQF_DOORS_ARE_BLOCKING) || objType != obj_t_portal)
+			{
+				objFlags = (ObjectFlag)objects.GetFlags(objIt.results[i].obj);
+				if (!(objFlags & OF_NO_BLOCK))
+				{
+					if ( (objType == obj_t_pc || objType == obj_t_npc ) 
+						&& !objects.IsUnconscious(objIt.results[i].obj) )
+					{
+						if ( (pqFlags & PQF_IGNORE_CRITTERS_ON_DESTINATION) == 0)
+						{
+							return 0;
+						}
+					}
+
+
+				}
+
+			}
+		}
+	}
+	//int result0 = addresses.PathDestIsClear(pq, mover, destLoc);
+	//if (!result0)
+	//{
+	//	int dummy = 1;
+	//}
+	return 1;
+
 }
 
 uint32_t Pathfinding::ShouldUsePathnodes(Path* pathQueryResult, PathQuery* pathQuery)
@@ -738,7 +790,7 @@ BOOL Pathfinding::PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffset
 			if (! (objFlags & OF_NO_BLOCK))
 			{
 				auto pathFlags = pq->flags;
-				if ( pathFlags & PQF_400 || objType)
+				if ( (pathFlags & PQF_DOORS_ARE_BLOCKING) || objType)
 				{
 					if (objType != obj_t_pc && objType != obj_t_npc)
 						break;
