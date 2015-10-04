@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 #include "tig_mouse.h"
 #include "tig_shader.h"
@@ -7,6 +6,7 @@
 #include "ui/ui_render.h"
 
 #include <vector>
+#include <atlcomcli.h>
 
 MouseFuncs mouseFuncs;
 temple::GlobalStruct<TigMouseState, 0x10D25184> mouseState;
@@ -15,24 +15,24 @@ vector<int> stashedCursorShaderIds;
 
 struct OriginalMouseFuncs : temple::AddressTable {
 
-	int(__cdecl *SetCursor)(int shaderId);
-	void(__cdecl *ResetCursor)();
+	int (__cdecl *SetCursor)(int shaderId);
+	void (__cdecl *ResetCursor)();
 
 	/*
 		If something is to be dragged around, this contains the texture id of the dragged item/object.
 		0 if nothing is to be drawn under the cursor.
 	*/
-	int *draggedTexId;
+	int* draggedTexId;
 
 	// Specifies the texture rectangle of the texture being dragged around (see draggedTexId).
-	RECT *draggedTexRect;
+	RECT* draggedTexRect;
 
 	// The X coordinate within the texture where the user clicked to initiate the drag.
-	int *draggedCenterX;
-	
+	int* draggedCenterX;
+
 	// The Y coordinate within the texture where the user clicked to initiate the drag.
-	int *draggedCenterY;
-	
+	int* draggedCenterY;
+
 	OriginalMouseFuncs() {
 		rebase(SetCursor, 0x101DDDD0);
 		rebase(ResetCursor, 0x101DD780);
@@ -53,7 +53,10 @@ static bool SetCursorFromShaderId(int shaderId) {
 	}
 
 	int textureId;
-	shader.GetTextureId(shader.data, &textureId);
+	if (shader.GetTextureId(shader.data, &textureId)) {
+		logger->info("Cannot set mouse cursor to shader {}, beacuse it has no texture.", shaderId);
+		return false;
+	}
 
 	TigTextureRegistryEntry textureEntry;
 	if (textureFuncs.LoadTexture(textureId, &textureEntry)) {
@@ -62,17 +65,27 @@ static bool SetCursorFromShaderId(int shaderId) {
 	}
 
 	auto texture = GetTextureDelegate(textureEntry.buffer->d3dtexture);
-	IDirect3DSurface9 *surface = nullptr;
+	CComPtr<IDirect3DSurface9> surface;
 	if (D3DLOG(texture->GetSurfaceLevel(0, &surface)) != D3D_OK) {
 		logger->error("Unable to get surface of cursor texture.");
 		return false;
 	}
 
+	int hotspotX = 0;
+	int hotspotY = 0;
+
+	// Special handling for cursors that don't have their hotspot on 0,0
+	if (strstr(textureEntry.name, "Map_GrabHand_Closed.tga")
+		|| strstr(textureEntry.name, "Map_GrabHand_Open.tga")
+		|| strstr(textureEntry.name, "SlidePortraits.tga")) {
+		hotspotX = textureEntry.rect.width / 2;
+		hotspotY = textureEntry.rect.height / 2;
+	}
+
 	auto device = GetDeviceDelegate(video->d3dDevice);
-	if (D3DLOG(device->SetCursorProperties(0, 0, surface)) != D3D_OK) {
+	if (D3DLOG(device->SetCursorProperties(hotspotX, hotspotY, surface)) != D3D_OK) {
 		logger->error("Unable to set cursor properties.");
 	}
-	surface->Release();
 	return true;
 }
 

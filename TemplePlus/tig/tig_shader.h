@@ -18,7 +18,7 @@ struct TigShaderType {
 struct TigShader {
 	int (__cdecl *vb_func)(); // Arguments not yet known
 	int field_4;
-	void(__cdecl *GetTextureId)(TigShaderData *shaderData, int *textureIdOut);
+	int(__cdecl *GetTextureId)(TigShaderData *shaderData, int *textureIdOut);
 	void (__cdecl *GetColor)(TigShaderData *shaderData, const char *name, D3DCOLOR *colorOut);
 	void(__cdecl *SetColor)(TigShaderData *shaderData, const char *name, D3DCOLOR *colorOut);
 	TigShaderData *data; // Shader type dependent data
