@@ -1,6 +1,6 @@
 #pragma once
-#include "stdafx.h"
 #include "common.h"
+#include <temple/dll.h>
 
 enum class EquipSlot : uint32_t {
 	Helmet = 0,

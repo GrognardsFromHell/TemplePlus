@@ -13,7 +13,7 @@
 
 
 struct LocationSys;
-struct PathNodeSys;
+class PathNodeSys;
 struct MapPathNode;
 struct MapPathNodeList;
 

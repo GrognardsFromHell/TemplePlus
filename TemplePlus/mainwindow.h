@@ -2,9 +2,11 @@
 #pragma once
 
 #include <platform/windows.h>
+#include <functional>
 
 class MainWindow {
 public:
+	
 	void CreateHwnd();
 	MainWindow(HINSTANCE hInstance);	
 	~MainWindow();
@@ -16,6 +18,10 @@ public:
 	HINSTANCE GetHinstance() const {
 		return mHinstance;
 	}
+
+	// Locks the mouse cursor to this window 
+	// if we're in the foreground
+	void LockCursor() const;
 private:
 	HINSTANCE mHinstance;
 	HWND mHwnd;

@@ -3,9 +3,7 @@
 #include "history.h"
 #include "damage.h"
 #include "tig/tig_mes.h"
-
-
-
+#include "util/fixes.h"
 
 class HistSysReplacements : public TempleFix
 {

@@ -8,6 +8,7 @@
 #include "action_sequence.h"
 #include "turn_based.h"
 #include "damage.h"
+#include "util/fixes.h"
 
 class DispatcherReplacements : public TempleFix {
 public:
@@ -435,7 +436,8 @@ int32_t DispatcherSystem::DispatchDamage(objHndl objHnd, DispIoDamage* dispIoDam
 		dispatch.DispIoDamageInit(&dispIoLocal);
 		dispIo = &dispIoLocal;
 	}
-	hooked_print_debug_message("Dispatching damage event for %s - type %d, key %d, victim %s", description.getDisplayName(objHnd), dispType, key, description.getDisplayName( dispIoDamage->attackPacket.victim) );
+	logger->info("Dispatching damage event for {} - type {}, key {}, victim {}", 
+		description.getDisplayName(objHnd), dispType, key, description.getDisplayName( dispIoDamage->attackPacket.victim) );
 	dispatch.DispatcherProcessor(dispatcher, dispType, key, dispIo);
 	return 1;
 }

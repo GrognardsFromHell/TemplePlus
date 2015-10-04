@@ -4,7 +4,7 @@
 #include <string>
 #include <unordered_map>
 
-#include <d3d9.h>
+#include "../platform/d3d.h"
 
 enum AasEventFlag;
 

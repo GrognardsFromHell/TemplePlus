@@ -1,5 +1,5 @@
-#include "stdafx.h"
 #include "common.h"
+#include <temple/dll.h>
 
 enum class FloatLineColor : uint32_t {
 	White = 0,

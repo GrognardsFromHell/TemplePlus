@@ -4,6 +4,7 @@
 struct Direct3DIndexBuffer8Adapter : public d3d8::IDirect3DIndexBuffer8
 {
 	Direct3DIndexBuffer8Adapter();
+	explicit Direct3DIndexBuffer8Adapter(IDirect3DIndexBuffer9*);
 	virtual ~Direct3DIndexBuffer8Adapter();
 
 	/*** IUnknown methods ***/

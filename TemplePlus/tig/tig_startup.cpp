@@ -3,7 +3,8 @@
 #include <temple/dll.h>
 
 #include "mainwindow.h"
-#include "graphics.h"
+#include "graphics/graphics.h"
+#include "graphics/legacyvideosystem.h"
 
 #include "tig_startup.h"
 #include "../tio/tio.h"
@@ -76,11 +77,12 @@ TigInitializer::TigInitializer(HINSTANCE hInstance)
 	// No longer used: mStartedSystems.emplace_back(StartSystem("memory.c", 0x101E04F0, 0x101E0510));
 	// No longer used: mStartedSystems.emplace_back(StartSystem("debug.c", 0x101E4DE0, TigShutdownNoop));
 	mMainWindow = std::make_unique<MainWindow>(hInstance);
+	mGraphics = std::make_unique<Graphics>(*mMainWindow);
 	mStartedSystems.emplace_back(StartSystem("idxtable.c", 0x101EC400, 0x101ECAD0));
 	mStartedSystems.emplace_back(StartSystem("trect.c", TigStartupNoop, 0x101E4E40));
 	mStartedSystems.emplace_back(StartSystem("color.c", 0x101ECB20, 0x101ED070));
 
-	mVideoSystem = std::make_unique<VideoSystem>(*mMainWindow);
+	mLegacyVideoSystem = std::make_unique<LegacyVideoSystem>(*mMainWindow, *mGraphics);
 
 	// mStartedSystems.emplace_back(StartSystem("video.c", 0x101DC6E0, 0x101D8540));
 	

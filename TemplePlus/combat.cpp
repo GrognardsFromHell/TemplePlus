@@ -10,6 +10,7 @@
 #include "bonus.h"
 #include "history.h"
 #include "ai.h"
+#include "util/fixes.h"
 
 
 class CombatSystemReplacements : public TempleFix

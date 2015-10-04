@@ -164,7 +164,8 @@ uint32_t __cdecl HookedFragarachAnswering(DispatcherCallbackArgs args) {
 	//hooked_print_debug_message("Prevented Scather AoO bug! TB Actor is %s , Attachee is %s,  target is %s", description.getDisplayName(curActor), description.getDisplayName(attachee), description.getDisplayName(tgtObj));
 	if (!tgtObj || !objects.IsCritter(tgtObj) || curActor == attachee)
 	{
-		hooked_print_debug_message("Prevented Scather AoO bug! TB Actor is %s , Attachee is %s,  target is %s", description.getDisplayName(curActor), description.getDisplayName(attachee), description.getDisplayName(tgtObj) );
+		logger->info("Prevented Scather AoO bug! TB Actor is {}, Attachee is {},  target is {}", 
+			description.getDisplayName(curActor), description.getDisplayName(attachee), description.getDisplayName(tgtObj) );
 		return 0;
 	}
 
@@ -228,7 +229,8 @@ uint32_t __cdecl BardicInspiredCourageInitArgs(DispatcherCallbackArgs args)
 	}
 	else
 	{
-		hooked_print_debug_message("Bardic Inspired Courage dispatched from non-critter! Mon seigneur %s", description.getDisplayName(args.objHndCaller));
+		logger->info("Bardic Inspired Courage dispatched from non-critter! Mon seigneur {}", 
+			description.getDisplayName(args.objHndCaller));
 	}
 	conds.CondNodeSetArg(args.subDispNode->condNode, 3, courageBonus);
 	return 0;

@@ -1,13 +1,15 @@
 #include "stdafx.h"
 
 #include "movies.h"
-#include "graphics.h"
+#include "graphics/graphics.h"
 #include "tig/tig_msg.h"
 #include "tig/tig_sound.h"
 #include "ui/ui_render.h"
 #include <infrastructure/renderstates.h>
 #include <infrastructure/images.h>
 #include "tio/tio_utils.h"
+#include "tig/tig_font.h"
+#include "temple_functions.h"
 
 MovieFuncs movieFuncs;
 
@@ -93,10 +95,9 @@ static bool binkRenderFrame(BinkMovie* movie, IDirect3DTexture9* texture) {
 
 		D3DLOCKED_RECT locked;
 		HRESULT result;
-		result = texture->LockRect(0, &locked, nullptr, D3DLOCK_DISCARD);
+		result = D3DLOG(texture->LockRect(0, &locked, nullptr, D3DLOCK_DISCARD));
 		if (result != D3D_OK) {
 			logger->error("Unable to lock texture for movie frame!");
-			handleD3dError("LockRect", result);
 			return false;
 		}
 
@@ -109,7 +110,7 @@ static bool binkRenderFrame(BinkMovie* movie, IDirect3DTexture9* texture) {
 			0,
 			0xF0000000 | 3);
 
-		handleD3dError("UnlockRect", texture->UnlockRect(0));
+		D3DLOG(texture->UnlockRect(0));
 
 		if (movie->currentFrame >= movie->frameCount)
 			return false;
@@ -144,8 +145,8 @@ struct MovieRect {
 };
 
 static MovieRect getMovieRect(BinkMovie* movie) {
-	auto screenWidth = graphics.backBufferDesc().Width;
-	auto screenHeight = graphics.backBufferDesc().Height;
+	auto screenWidth = graphics->backBufferDesc().Width;
+	auto screenHeight = graphics->backBufferDesc().Height;
 
 	// Fit movie into rect
 	float w = static_cast<float>(screenWidth);
@@ -215,8 +216,8 @@ private:
 
 		auto extents = UiRenderer::MeasureTextSize(mLine->text, mSubtitleStyle, 700, 150);
 
-		extents.x = (graphics.windowWidth() - extents.width) / 2;
-		extents.y = graphics.windowHeight() - graphics.windowHeight() / 10;
+		extents.x = (graphics->windowWidth() - extents.width) / 2;
+		extents.y = graphics->windowHeight() - graphics->windowHeight() / 10;
 
 		UiRenderer::RenderText(mLine->text, extents, mSubtitleStyle);
 
@@ -269,7 +270,7 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 	int binkVolume = (*tigSoundAddresses.movieVolume) * 258;
 	binkFuncs.BinkSetVolume(movie, 0, binkVolume);
 
-	auto d3dDevice = graphics.device();
+	auto d3dDevice = graphics->device();
 
 	d3dDevice->ShowCursor(FALSE);
 
@@ -299,10 +300,10 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 	};
 
 	IDirect3DVertexBuffer9* vertexBuffer;
-	handleD3dError("CreateVertexBuffer", d3dDevice->CreateVertexBuffer(sizeof(vertices), 0,
+	D3DLOG(d3dDevice->CreateVertexBuffer(sizeof(vertices), 0,
 	                                                                   D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1, D3DPOOL_DEFAULT, &vertexBuffer, nullptr));
 	void* data;
-	handleD3dError("Lock", vertexBuffer->Lock(0, 0, &data, 0));
+	D3DLOG(vertexBuffer->Lock(0, 0, &data, 0));
 	memcpy(data, vertices, sizeof(vertices));
 	vertexBuffer->Unlock();
 
@@ -310,8 +311,8 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 
 	bool keyPressed = false;
 	while (!keyPressed && binkRenderFrame(movie, texture)) {
-		handleD3dError("Clear", d3dDevice->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0, 0));
-		handleD3dError("BeginScene", d3dDevice->BeginScene());
+		D3DLOG(d3dDevice->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0, 0));
+		D3DLOG(d3dDevice->BeginScene());
 
 		renderStates->SetTexture(0, texture);
 		renderStates->SetTextureMinFilter(0, D3DTEXF_LINEAR);
@@ -329,10 +330,10 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 		renderStates->SetTextureAlphaArg1(0, D3DTA_TEXTURE);
 		renderStates->Commit();
 
-		handleD3dError("DrawPrimitive", d3dDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, 2));
+		D3DLOG(d3dDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, 2));
 		subtitleRenderer.Render();
-		handleD3dError("EndScene", d3dDevice->EndScene());
-		handleD3dError("Present", d3dDevice->Present(NULL, NULL, NULL, NULL));
+		D3DLOG(d3dDevice->EndScene());
+		D3DLOG(d3dDevice->Present(NULL, NULL, NULL, NULL));
 
 		templeFuncs.ProcessSystemEvents();
 
@@ -377,9 +378,9 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 		return 1; // Can't play because we cant load the file
 	}
 
-	auto device = graphics.device();
+	auto device = graphics->device();
 	gfx::ImageFileInfo info;
-	auto surface(gfx::LoadImageToSurface(graphics.device(), *imgData.get(), info));
+	auto surface(gfx::LoadImageToSurface(graphics->device(), *imgData.get(), info));
 	
 	movieFuncs.MovieIsPlaying = true;
 
@@ -391,7 +392,7 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 
 	SubtitleRenderer subtitleRenderer(subtitles);
 
-	TigRect bbRect(0, 0, graphics.backBufferDesc().Width, graphics.backBufferDesc().Height);
+	TigRect bbRect(0, 0, graphics->backBufferDesc().Width, graphics->backBufferDesc().Height);
 	TigRect destRect(0, 0, info.width, info.height);
 	destRect.FitInto(bbRect);
 	RECT fitDestRect = destRect.ToRect();
@@ -413,7 +414,7 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 		D3DLOG(device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0, 0));
 
 		D3DLOG(device->BeginScene());
-		D3DLOG(device->StretchRect(surface, NULL, graphics.backBuffer(), &fitDestRect, D3DTEXF_LINEAR));
+		D3DLOG(device->StretchRect(surface, NULL, graphics->backBuffer(), &fitDestRect, D3DTEXF_LINEAR));
 		subtitleRenderer.Render();
 		D3DLOG(device->EndScene());
 		D3DLOG(device->Present(NULL, NULL, NULL, NULL));

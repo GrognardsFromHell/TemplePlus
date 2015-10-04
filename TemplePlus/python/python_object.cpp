@@ -209,7 +209,7 @@ static PyObject* PyObjHandle_BeginDialog(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_Barter(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
-	hooked_print_debug_message("There was never any .barter() method in ToEE, you've been copypasting nonsense all along. Trolololo!");
+	logger->info("There was never any .barter() method in ToEE, you've been copypasting nonsense all along. Trolololo!");
 	Py_RETURN_NONE;
 }
 

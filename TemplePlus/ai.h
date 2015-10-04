@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include "stdafx.h"
 #include "common.h"
 #include "tig\tig_mes.h"
 #include "d20.h"

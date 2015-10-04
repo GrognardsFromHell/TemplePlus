@@ -1,5 +1,6 @@
 #pragma once
 #include "common.h"
+#include <temple/dll.h>
 
 struct FactionSystem : temple::AddressTable
 {

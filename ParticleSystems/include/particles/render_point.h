@@ -2,7 +2,7 @@
 
 #include "render.h"
 
-#include <d3d9.h>
+#include <platform/d3d.h>
 #include <atlcomcli.h>
 
 namespace particles {

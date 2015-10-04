@@ -6,10 +6,10 @@
 #include "float_line.h"
 #include "condition.h"
 #include "particles.h"
-#include "temple_functions.h"
 #include "util/config.h"
 #include "python/python_integration_obj.h"
 #include "python/python_object.h"
+#include "util/fixes.h"
 
 static struct CritterAddresses : temple::AddressTable {
 

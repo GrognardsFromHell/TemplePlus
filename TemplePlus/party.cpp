@@ -2,6 +2,7 @@
 #include "common.h"
 #include "party.h"
 #include "util/config.h"
+#include "util/fixes.h"
 
 struct PartySystemAddresses : temple::AddressTable
 {

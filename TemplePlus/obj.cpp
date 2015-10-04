@@ -12,6 +12,7 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include "util/fixes.h"
 
 Objects objects;
 
@@ -378,12 +379,12 @@ void Objects::setArrayFieldLowLevel(GameObjectBody* objBody, void* sourceData, o
 
 void Objects::fieldNonexistantDebug(unsigned long long obj, GameObjectBody* objBody, obj_f fieldIdx, unsigned objType, char* accessType)
 {
-	hooked_print_debug_message("%s Error: Accessing non-existant field [%s: %d] in object type [%d].",accessType, _DLLFieldNames[fieldIdx], fieldIdx, objType); // TODO: replace this with the corrected FieldNames. Fucking std::string, how does it work???. Not a big deal actually since the early fields exist for all objects.
+	logger->info("{} Error: Accessing non-existant field [{}: {}] in object type [{}].",accessType, _DLLFieldNames[fieldIdx], fieldIdx, objType); // TODO: replace this with the corrected FieldNames. Fucking std::string, how does it work???. Not a big deal actually since the early fields exist for all objects.
 	uint32_t subtype = objBody->id.subtype;
 	uint32_t protonum = 0;
 	if (subtype == 1)	protonum = objBody->id.guid.Data1;
 	else if (subtype == 2)	protonum = GetProtoNum(obj);
-	hooked_print_debug_message("Sonavabitch proto is %d", protonum);
+	logger->info("Sonavabitch proto is {}", protonum);
 	if (protonum < 12624 || protonum > 12680)
 	{
 		uint32_t breakpointDummy = 0;

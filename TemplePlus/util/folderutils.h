@@ -4,4 +4,4 @@
 /*
 	Helpers for dealing with Windows folders.
 */
-wstring GetScreenshotFolder();
+std::wstring GetScreenshotFolder();

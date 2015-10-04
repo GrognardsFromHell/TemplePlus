@@ -1,15 +1,10 @@
 #pragma once
 
-#include "stdafx.h"
-#include <temple/dll.h>
-#include "util/fixes.h"
+#include <d3dx9math.h>
+
 #include "obj_structs.h"
-#include "spell_structs.h"
-#include "temple_enums.h"
 #include "d20_defs.h"
-#include "util/fixes.h"
-
-
+#include "temple_enums.h"
 
 #define macAsmProl {\
 	__asm push ecx\

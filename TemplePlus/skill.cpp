@@ -2,6 +2,7 @@
 #include "common.h"
 #include "skill.h"
 #include "bonus.h"
+#include "util/fixes.h"
 
 class SkillSystemReplacements : public TempleFix
 {

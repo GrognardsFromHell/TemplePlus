@@ -1,6 +1,7 @@
 #pragma once
-#include "stdafx.h"
+
 #include "common.h"
+#include <temple/dll.h>
 
 #define PARTY_SIZE_MAX 8 // PCs and NPCs
 

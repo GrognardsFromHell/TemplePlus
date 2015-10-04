@@ -1,7 +1,7 @@
 #pragma once
-#include "stdafx.h"
-#include "common.h"
 
+#include "common.h"
+#include <temple/dll.h>
 
 struct HistoryEntry;
 struct HistoryArrayEntry;

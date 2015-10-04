@@ -4,6 +4,7 @@
 #include "hotkeys.h"
 #include "tio\tio.h"
 #include "gamesystems.h"
+#include "util/fixes.h"
 
 HotkeySystem hotkeys;
 

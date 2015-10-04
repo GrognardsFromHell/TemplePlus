@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "common.h"
 #include "char_creation.h"
+#include <temple/dll.h>
 
 struct CharCreationAddresses : temple::AddressTable
 {

@@ -36,6 +36,11 @@
     <ClCompile Include="fixes\sector_cache_size.cpp" />
     <ClCompile Include="float_line.cpp" />
     <ClCompile Include="gameplay_configs.cpp" />
+    <ClCompile Include="graphics\video_hooks.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="history.cpp" />
     <ClCompile Include="hotkeys.cpp" />
     <ClCompile Include="location.cpp" />
@@ -115,23 +120,22 @@
     <ClCompile Include="gamesystems_render.cpp" />
     <ClCompile Include="generalfixes.cpp" />
     <ClCompile Include="game_config.cpp" />
-    <ClCompile Include="graphics.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
+    <ClCompile Include="graphics\graphics.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="inventory.cpp" />
-    <ClCompile Include="util\libraryholder.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="mainloop.cpp" />
     <ClCompile Include="map_obj.cpp" />
     <ClCompile Include="obj_fieldnames.cpp" />
     <ClCompile Include="party.cpp" />
     <ClCompile Include="pathfinding.cpp" />
-    <ClCompile Include="portrait_in_mainmenu.cpp" />
+    <ClCompile Include="portrait_in_mainmenu.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="python\python.cpp" />
     <ClCompile Include="python\pythonglobal.cpp" />
     <ClCompile Include="python\python_debug.cpp" />
@@ -148,7 +152,6 @@
     <ClCompile Include="tig\tig_tokenizer.cpp" />
     <ClCompile Include="timeevents.cpp" />
     <ClCompile Include="ui\ui_char_highresfix.cpp" />
-    <ClCompile Include="ui\ui_text.cpp" />
     <ClCompile Include="weapon.cpp" />
     <ClCompile Include="ui\ui_render.cpp" />
     <ClCompile Include="xp.cpp" />
@@ -196,6 +199,8 @@
     <ClInclude Include="dice.h" />
     <ClInclude Include="fade.h" />
     <ClInclude Include="float_line.h" />
+    <ClInclude Include="graphics\legacyvideosystem.h" />
+    <ClInclude Include="graphics\video_hooks.h" />
     <ClInclude Include="history.h" />
     <ClInclude Include="hotkeys.h" />
     <ClInclude Include="legacyrenderstates.h" />
@@ -267,11 +272,10 @@
     <ClInclude Include="gamesystems.h" />
     <ClInclude Include="game_config.h" />
     <ClInclude Include="goalfuncnames.h" />
-    <ClInclude Include="graphics.h" />
+    <ClInclude Include="graphics\graphics.h" />
     <ClInclude Include="util\fixes.h" />
     <ClInclude Include="hashtable.h" />
     <ClInclude Include="inventory.h" />
-    <ClInclude Include="util\libraryholder.h" />
     <ClInclude Include="mainloop.h" />
     <ClInclude Include="map_obj.h" />
     <ClInclude Include="obj_fieldnames.h" />
@@ -309,7 +313,6 @@
     <ClInclude Include="ui\ui.h" />
     <ClInclude Include="ui\ui_item_creation.h" />
     <ClInclude Include="ui\ui_render.h" />
-    <ClInclude Include="ui\ui_text.h" />
     <ClInclude Include="weapon.h" />
     <ClInclude Include="xp.h" />
     <ClInclude Include="ui\ui_mainmenu.h" />

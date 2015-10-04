@@ -2,8 +2,33 @@
 #include "stdafx.h"
 #include "d3d8to9_indexbuffer.h"
 
+IDirect3DIndexBuffer9 *GetIndexBufferDelegate(Direct3DIndexBuffer8Adapter *adapter)
+{
+	return adapter->delegate;
+}
+
+Direct3DIndexBuffer8Adapter *CreateIndexBufferAdapter(IDirect3DIndexBuffer9 *delegate) {
+	return new Direct3DIndexBuffer8Adapter(delegate);
+}
+
+void DeleteIndexBufferAdapter(Direct3DIndexBuffer8Adapter *adapter) {
+	if (adapter->delegate) {
+		adapter->delegate->Release();
+	}
+	delete adapter;
+}
+
+void SetIndexBufferDelegate(Direct3DIndexBuffer8Adapter *adapter, IDirect3DIndexBuffer9 *delegate) {
+	// Free old delegate?
+	adapter->delegate = delegate;
+}
+
+
 Direct3DIndexBuffer8Adapter::Direct3DIndexBuffer8Adapter()
 {
+}
+
+Direct3DIndexBuffer8Adapter::Direct3DIndexBuffer8Adapter(IDirect3DIndexBuffer9*d) : delegate(d) {
 }
 
 Direct3DIndexBuffer8Adapter::~Direct3DIndexBuffer8Adapter()

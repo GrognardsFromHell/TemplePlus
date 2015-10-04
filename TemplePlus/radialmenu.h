@@ -12,6 +12,7 @@
 	without relation to where it is in the menu)
 */
 #pragma pack(push, 1)
+#include "spell_structs.h"
 
 enum class RadialMenuEntryType : uint32_t {
 	Action = 0,

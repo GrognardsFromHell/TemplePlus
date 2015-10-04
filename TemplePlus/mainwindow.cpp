@@ -4,12 +4,11 @@
 #include <windowsx.h>
 
 #include "util/fixes.h"
-#include "graphics.h"
+#include "graphics/graphics.h"
 #include "movies.h"
 #include "tig/tig_msg.h"
 #include "tig/tig_mouse.h"
 #include "util/config.h"
-#include "d3d8to9_device.h"
 #include "mainwindow.h"
 
 struct WindowFuncs : temple::AddressTable {
@@ -41,6 +40,16 @@ MainWindow::~MainWindow() {
 	}
 
 	UnregisterWndClass();
+
+}
+
+void MainWindow::LockCursor() const {
+
+	RECT rect;
+	if (GetForegroundWindow() == mHwnd
+		&& GetWindowRect(mHwnd, &rect)) {
+		ClipCursor(&rect);
+	}
 
 }
 
@@ -110,13 +119,6 @@ void MainWindow::CreateHwnd() {
 	// Store our this pointer in the window
 	SetWindowLongPtr(mHwnd, 0, reinterpret_cast<LONG>(this));
 
-	RECT clientRect;
-	GetClientRect(mHwnd, &clientRect);
-
-	auto w = clientRect.right - clientRect.left;
-	auto h = clientRect.bottom - clientRect.top;
-	graphics.UpdateWindowSize(w, h);
-
 }
 
 void MainWindow::CreateWindowRectAndStyles(RECT& windowRect, DWORD& style, DWORD& styleEx) {
@@ -172,7 +174,7 @@ LRESULT MainWindow::WndProcTrampoline(HWND hWnd, UINT msg, WPARAM wparam, LPARAM
 
 LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
-	if (hWnd != video->hwnd) {
+	if (hWnd != mHwnd || !graphics) {
 		return DefWindowProcA(hWnd, msg, wparam, lparam);
 	}
 
@@ -185,7 +187,8 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	case WM_SETCURSOR:
 		SetCursor(nullptr); // Disables default cursor
 		if (!movieFuncs.MovieIsPlaying) {
-			video->d3dDevice->delegate->ShowCursor(TRUE);
+			// TODO: Rip this out, circular dependency
+			graphics->device()->ShowCursor(TRUE);
 		}
 		return TRUE; // This prevents windows from setting the default cursor for us
 	case WM_LBUTTONDOWN:
@@ -304,7 +307,7 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 }
 
 void MainWindow::UpdateMousePos(int xAbs, int yAbs, int wheelDelta) {
-	auto rect = graphics.sceneRect();
+	auto rect = graphics->sceneRect();
 	int sw = rect.right - rect.left;
 	int sh = rect.bottom - rect.top;
 
@@ -313,8 +316,8 @@ void MainWindow::UpdateMousePos(int xAbs, int yAbs, int wheelDelta) {
 	yAbs -= rect.top;
 
 	// MOve it into the scene rectangle coordinate space
-	xAbs = (int)round(xAbs / graphics.sceneScale());
-	yAbs = (int)round(yAbs / graphics.sceneScale());
+	xAbs = (int)round(xAbs / graphics->sceneScale());
+	yAbs = (int)round(yAbs / graphics->sceneScale());
 
 	// Account for a resized screen
 	if (xAbs < 0 || yAbs < 0 || xAbs >= sw || yAbs >= sh)

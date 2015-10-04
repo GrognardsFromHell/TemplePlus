@@ -1,7 +1,9 @@
 
 #pragma once
 
-#include <temple/dll.h>
+#include <stdint.h>
+#include <string>
+#include <vector>
 
 /*
 	A utility class that unprotects an area of memory while it is in scope.
@@ -10,20 +12,16 @@
 */
 class MemoryUnprotector {
 public:
-	explicit MemoryUnprotector(uint32_t dllAddress, size_t size) throw() 
-		: mAddress(temple::Dll::GetInstance().GetAddress(dllAddress)), mSize(size), mOldProtection(0) {
-		// rebase the address using temple::GetPointer
-		auto result = VirtualProtect(mAddress, mSize, PAGE_READWRITE, &mOldProtection);
-		assert(result);
-	}
-	~MemoryUnprotector() throw() {
-		auto result = VirtualProtect(mAddress, mSize, mOldProtection, &mOldProtection);
-		assert(result);
-	}
+	explicit MemoryUnprotector(uint32_t dllAddress, size_t size) noexcept;
+	~MemoryUnprotector() noexcept;
+
+	MemoryUnprotector(const MemoryUnprotector&) = delete;
+	MemoryUnprotector(const MemoryUnprotector&&) = delete;
+	MemoryUnprotector& operator=(const MemoryUnprotector&) = delete;
 private:
 	void *mAddress; // This is the real address
 	size_t mSize;
-	DWORD mOldProtection;
+	uint32_t mOldProtection;
 };
 
 class TempleFix {
@@ -37,7 +35,7 @@ public:
 protected:
 	void write(uint32_t offset, const void *buffer, size_t size);
 	void read(uint32_t offset, void *buffer, size_t size);
-	void writeHex(uint32_t offset, const string &hexPattern);
+	void writeHex(uint32_t offset, const std::string &hexPattern);
 	void redirectCall(uint32_t offset, void* redirectTo);
 	void redirectJump(uint32_t offset, void* redirectTo);
 	
@@ -57,5 +55,5 @@ class TempleFixes {
 public:
 	static void apply();
 private:
-	static vector<TempleFix*> &fixes();
+	static std::vector<TempleFix*> &fixes();
 };

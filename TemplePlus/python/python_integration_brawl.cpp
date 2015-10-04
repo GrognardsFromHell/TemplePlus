@@ -8,6 +8,7 @@
 #include "python_integration_obj.h"
 #include <combat.h>
 #include <action_sequence.h>
+#include <util/fixes.h>
 
 static struct BrawlAddresses : temple::AddressTable {
 

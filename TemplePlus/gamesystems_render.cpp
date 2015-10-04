@@ -2,9 +2,11 @@
 #include "stdafx.h"
 #include <temple/dll.h>
 #include "tig/tig.h"
-#include "graphics.h"
+#include "graphics/graphics.h"
+#include "temple_functions.h"
 
 #pragma pack(push, 1)
+
 struct TileRect {
 	int64_t x1;
 	int64_t y1;
@@ -93,14 +95,14 @@ void GameSystemsRender() {
 	/*
 		Without this call, the ground JPGs will not be rendered.
 	*/
-	TigRect rect(0, 0, video->width, video->height);
+	// TigRect rect(0, 0, graphics->GetSceneWidth(), graphics->GetSceneHeight());
 	// renderFuncs.ScratchbufferRelated(rect);
 
 	TigRect viewportSize;
 	viewportSize.y = -256;
-	viewportSize.width = video->width + 512;
+	viewportSize.width = graphics->GetSceneWidth() + 512;
 	viewportSize.x = -256;
-	viewportSize.height = video->height + 512;
+	viewportSize.height = graphics->GetSceneHeight() + 512;
 
 	TileRect tiles;
 
@@ -119,7 +121,7 @@ void GameSystemsRender() {
 
 		// I think this maybe a 2D arcanum leftover when the map could be incrementally drawn based on "dirty rects"
 		TigRectList dirtyList;
-		dirtyList.rect = TigRect(0, 0, video->width, video->height);
+		dirtyList.rect = TigRect(0, 0, graphics->GetSceneWidth(), graphics->GetSceneHeight());
 		dirtyList.next = nullptr;
 		TigRectList *dirtyRectPtr = &dirtyList;
 		renderInfo.rectList = &dirtyRectPtr;

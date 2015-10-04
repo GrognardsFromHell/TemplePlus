@@ -1,6 +1,7 @@
 #pragma once
-#include "stdafx.h"
+
 #include "common.h"
+#include <temple/dll.h>
 
 const float tileToOffset = 12.0;
 

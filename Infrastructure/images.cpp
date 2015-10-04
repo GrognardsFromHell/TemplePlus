@@ -8,7 +8,7 @@
 
 #include <turbojpeg.h>
 
-#include <d3d9.h>
+#include "platform/d3d.h"
 
 namespace gfx {
 

@@ -1,5 +1,7 @@
 #pragma once
-#include "stdafx.h"
+
+#include <temple/dll.h>
+
 #include "common.h"
 
 struct BonusSystem;

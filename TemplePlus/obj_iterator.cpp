@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "common.h"
 #include "obj_iterator.h"
-
+#include <temple/dll.h>
 
 struct ObjIteratorAddresses: temple::AddressTable
 {

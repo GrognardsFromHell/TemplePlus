@@ -1,5 +1,8 @@
 
 #include "stdafx.h"
+
+#include <temple/dll.h>
+
 #include "util/fixes.h"
 #include "../src/trampoline.h"
 #include "../src/HDE/hde32.h"
@@ -7,6 +10,18 @@
 vector<TempleFix*> &TempleFixes::fixes() {
 	static vector<TempleFix*> activeFixes;
 	return activeFixes;
+}
+
+MemoryUnprotector::MemoryUnprotector(uint32_t dllAddress, size_t size) noexcept
+	: mAddress(temple::Dll::GetInstance().GetAddress(dllAddress)), mSize(size), mOldProtection(0) {
+	// rebase the address using temple::GetPointer
+	auto result = VirtualProtect(mAddress, mSize, PAGE_READWRITE, (DWORD*)&mOldProtection);
+	assert(result);
+}
+
+MemoryUnprotector::~MemoryUnprotector() noexcept {
+	auto result = VirtualProtect(mAddress, mSize, mOldProtection, (DWORD*)&mOldProtection);
+	assert(result);
 }
 
 TempleFix::TempleFix() {

@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <assert.h>
 #include <string>
 #include <memory>
 #include <type_traits>

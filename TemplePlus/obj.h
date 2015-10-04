@@ -6,10 +6,8 @@
 #include "feat.h"
 #include "description.h"
 #include "faction.h"
-#include "feat.h"
 #include "inventory.h"
 #include "dice.h"
-
 
 //forward declarations
 struct LocationSys;
@@ -207,7 +205,7 @@ struct Objects : temple::AddressTable {
 	bool IsNPC(objHndl obj);
 	bool IsPlayerControlled(objHndl obj);
 	uint32_t GetProtoNum(objHndl obj);
-	string GetDisplayName(objHndl obj, objHndl observer);
+	std::string GetDisplayName(objHndl obj, objHndl observer);
 
 	uint32_t StatLevelGet(objHndl obj, Stat stat);
 	int StatLevelGetBase(objHndl obj, Stat stat);

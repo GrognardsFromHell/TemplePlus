@@ -196,7 +196,7 @@ BOOL PathNodeSys::FlushNodes()
 		RecalculateAllNeighbours();
 
 	char fileName[260];
-	_snprintf(fileName, 260, "s\\s", pathNodesSaveDir, "pathnode.pnd");
+	_snprintf(fileName, 260, "%s\\%s", pathNodesSaveDir, "pathnode.pnd");
 	auto file = tio_fopen(fileName, "wb");
 	if (!file)
 		return 0;

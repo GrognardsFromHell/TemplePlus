@@ -2,6 +2,7 @@
 #include "radial_menu.h"
 #include "dispatcher.h"
 #include "obj.h"
+#include "util/fixes.h"
 
 temple::GlobalPrimitive<uint32_t, 0x1026C67B> menuArg;
 RadialFuncs radialFuncs;

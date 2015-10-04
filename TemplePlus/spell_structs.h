@@ -1,9 +1,5 @@
 #pragma once
 
-#include "stdafx.h"
-
-
-
 const uint32_t SPELL_ENUM_MAX = 4000;
 
 
