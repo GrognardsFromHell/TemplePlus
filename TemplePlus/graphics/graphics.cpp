@@ -1,5 +1,5 @@
 
-#define NOMINMAX
+#include "stdafx.h"
 
 #include <temple/dll.h>
 #include <infrastructure/renderstates.h>
