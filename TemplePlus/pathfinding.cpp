@@ -303,7 +303,7 @@ uint32_t Pathfinding::ShouldUsePathnodes(Path* pathQueryResult, PathQuery* pathQ
 	{
 		if (combatSys.isCombatActive())
 		{
-			if (locSys.distBtwnLocAndOffs(pathQueryResult->from, pathQueryResult->to) > (float)1200.0)
+			if (locSys.distBtwnLocAndOffs(pathQueryResult->from, pathQueryResult->to) > (float)600.0)
 			{
 				return true;
 			}
@@ -367,7 +367,7 @@ void Pathfinding::PathInit(Path* pqr, PathQuery* pq)
 	pqr->currentNode = 0;
 }
 
-bool Pathfinding::GetAlternativeTargetLocation(PathQueryResult* pqr, PathQuery* pq)
+bool Pathfinding::GetAlternativeTargetLocation(Path* pqr, PathQuery* pq)
 {
 	auto pqFlags = pq->flags;
 	if (!(pqFlags & PQF_ADJUST_RADIUS) 
@@ -487,7 +487,8 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 		pathNodeSys.GetPathNode(nodeIds[i], &nodeTemp1);
 		memcpy(&pathQueryLocal, pq, sizeof(PathQuery));
 		pathQueryLocal.flags = (PathQueryFlags)(
-			(uint32_t)pathQueryLocal.flags & (~PQF_ADJUST_RADIUS) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
+			(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
+			//(uint32_t)pathQueryLocal.flags | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
 			);
 		pathQueryLocal.from = from;
 		pathQueryLocal.to = nodeTemp1.nodeLoc;
@@ -496,18 +497,45 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 
 		memcpy(&pathQueryLocal, pq, sizeof(PathQuery));
 		pathQueryLocal.flags = (PathQueryFlags)(
-			(uint32_t)pathQueryLocal.flags & (~PQF_ADJUST_RADIUS) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
+			(uint32_t)pathQueryLocal.flags & (~ (PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
+			//(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
 			);
+
 		pathQueryLocal.from = from;
 		pathQueryLocal.to = nodeTemp1.nodeLoc;
 		pathLocal.from = from;
 		pathLocal.nodeCount = 0;
 		pathLocal.nodeCount2 = 0;
 		pathLocal.nodeCount3 = 0;
+		pathLocal.to = pathQueryLocal.to;
+
+		if (!GetAlternativeTargetLocation(&pathLocal, &pathQueryLocal)) // verifies that the destination is clear, and if not, tries to get an available tile
+		{
+			int dummmy = 1;
+		}
 
 		int nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
+		if (!nodeCountAdded)
+		{
+			memcpy(&pathQueryLocal, pq, sizeof(PathQuery));
+			pathQueryLocal.flags = (PathQueryFlags)(
+				(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS )) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
+				);
+			pathQueryLocal.from = from;
+			pathQueryLocal.to = nodeTemp1.nodeLoc;
+			pathLocal.from = from;
+			pathLocal.nodeCount = 0;
+			pathLocal.nodeCount2 = 0;
+			pathLocal.nodeCount3 = 0;
+			pathLocal.to = pathQueryLocal.to;
+
+			nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
+		}
 		if (!nodeCountAdded || (nodeCountAdded + nodeTotal > pq->maxShortPathFindLength))
+		{
 			return 0;
+		}
+			
 		memcpy(&path->nodes[nodeTotal], pathLocal.nodes, sizeof(LocAndOffsets) * nodeCountAdded);
 		nodeTotal += nodeCountAdded;
 		from = nodeTemp1.nodeLoc;

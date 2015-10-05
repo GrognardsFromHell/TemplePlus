@@ -224,7 +224,7 @@ struct Pathfinding : temple::AddressTable {
 	int(__cdecl*FindPathBetweenNodes)(int fromNodeId, int toNodeId, void*, int maxChainLength); // finds the node IDs for the To -> .. -> From course (locally optimal I think? Is this A*?); return value is chain length
 
 
-	bool GetAlternativeTargetLocation(PathQueryResult* pqr, PathQuery* pq);
+	bool GetAlternativeTargetLocation(Path* pqr, PathQuery* pq);
 
 
 

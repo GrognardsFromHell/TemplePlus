@@ -961,7 +961,7 @@ uint32_t _ActionFrameDisarm(D20Actn* d20a)
 		} disarmedArgs;
 		disarmedArgs.weapon = weapon;
 
-		conds.AddTo(d20a->d20ATarget, "Disarmed", { ((int*)&disarmedArgs)[0], ((int*)&disarmedArgs)[1],0,0,0,0 });
+		conds.AddTo(d20a->d20ATarget, "Disarmed", { ((int*)&disarmedArgs)[0], ((int*)&disarmedArgs)[1],0,0,0,0,0,0 });
 		return 0;
 	} 
 
