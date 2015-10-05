@@ -226,14 +226,21 @@ BOOL PathNodeSys::LoadNodesCurrent()
 	//int orphanNodes[PATH_NODE_CAP] ={};
 
 	char fileName[260];
+	char fileNameNew[260];
 	char supplem[260];
 
 	_snprintf(fileName, 260, "%s\\%s", pathNodesLoadDir, "pathnode.pnd");
+	_snprintf(fileNameNew, 260, "%s\\%s", pathNodesLoadDir, "pathnodenew.pnd");
 	_snprintf(supplem, 260, "%s\\%s", pathNodesLoadDir, "pathnodedist.pnd");
 
-	auto file = tio_fopen(fileName, "rb");
+	auto file = tio_fopen(fileNameNew, "rb");
 	if (!file)
-		return 1;
+	{
+		file = tio_fopen(fileName, "rb");
+		if (!file)
+			return 1;
+	}
+
 	auto fileSupplem = tio_fopen(supplem, "rb");
 	int nodeCountSupplem = 0;
 	if (fileSupplem)
