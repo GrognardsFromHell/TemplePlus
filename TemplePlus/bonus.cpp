@@ -2,6 +2,7 @@
 #include "common.h"
 #include "bonus.h"
 #include "tig/tig_mes.h"
+#include "util/fixes.h"
 
 int(__cdecl *OrgBonusInit)();
 class BonusSysReplacements : public TempleFix

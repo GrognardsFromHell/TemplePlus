@@ -3,6 +3,7 @@
 #include "python_integration_obj.h"
 #include "python_spell.h"
 #include "python_object.h"
+#include <util/fixes.h>
 
 PythonSpellIntegration pythonSpellIntegration;
 

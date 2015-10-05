@@ -8,6 +8,22 @@ IDirect3DTexture9 *GetTextureDelegate(Direct3DTexture8Adapter *adapter)
 	return adapter->delegate;
 }
 
+Direct3DTexture8Adapter *CreateTextureAdapter(IDirect3DTexture9 *delegate) {
+	return new Direct3DTexture8Adapter(delegate);
+}
+
+void DeleteTextureAdapter(Direct3DTexture8Adapter *adapter) {
+	if (adapter->delegate) {
+		adapter->delegate->Release();
+	}
+	delete adapter;
+}
+
+void SetTextureDelegate(Direct3DTexture8Adapter *adapter, IDirect3DTexture9 *delegate) {
+	// Free old delegate?
+	adapter->delegate = delegate;
+}
+
 HRESULT Direct3DTexture8Adapter::QueryInterface(THIS_ REFIID /*riid*/, void** /*ppvObj*/)
 {
 	return E_NOINTERFACE;
@@ -98,15 +114,12 @@ HRESULT Direct3DTexture8Adapter::GetSurfaceLevel(THIS_ UINT Level, d3d8::IDirect
 
 HRESULT Direct3DTexture8Adapter::LockRect(THIS_ UINT Level, d3d8::D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags)
 {
-	HRESULT result = delegate->LockRect(Level, (D3DLOCKED_RECT*)pLockedRect, pRect, Flags);
-	handleD3dError("LockRect", result);
-	return result;
+	return D3DLOG(delegate->LockRect(Level, (D3DLOCKED_RECT*)pLockedRect, pRect, Flags));	
 }
 
 HRESULT Direct3DTexture8Adapter::UnlockRect(THIS_ UINT Level)
 {
-	HRESULT result = delegate->UnlockRect(Level);
-	return handleD3dError("UnlockRect", result);
+	return D3DLOG(delegate->UnlockRect(Level));
 }
 
 HRESULT Direct3DTexture8Adapter::AddDirtyRect(THIS_ CONST RECT* pDirtyRect)

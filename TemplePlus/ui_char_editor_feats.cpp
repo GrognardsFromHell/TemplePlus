@@ -4,6 +4,7 @@
 #include "ui_char_editor.h"
 #include "obj.h"
 #include "ui/ui.h"
+#include "util/fixes.h"
 
 
 int FeatUiPrereqCheckUsercallWrapper();

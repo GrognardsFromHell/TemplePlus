@@ -16,6 +16,7 @@
 #include "weapon.h"
 #include "action_sequence.h"
 #include "ui/ui_item_creation.h"
+#include "util/fixes.h"
 
 ConditionSystem conds;
 CondStructNew conditionDisableAoO;
@@ -980,7 +981,7 @@ bool ConditionSystem::AddTo(objHndl handle, const CondStruct* cond, const vector
 	auto dispatcher = objects.GetDispatcher(handle);
 
 	if (!dispatch.dispatcherValid(dispatcher)) {
-		hooked_print_debug_message("Dispatcher invalid for %s", objects.description.getDisplayName(handle));
+		logger->info("Dispatcher invalid for {}", objects.description.getDisplayName(handle));
 		return false;
 	}
 

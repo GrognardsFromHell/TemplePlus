@@ -6,6 +6,7 @@
 #include "python_spell.h"
 #include <dialog.h>
 #include <critter.h>
+#include <util/fixes.h>
 
 PythonObjIntegration pythonObjIntegration;
 

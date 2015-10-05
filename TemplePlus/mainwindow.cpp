@@ -1,97 +1,154 @@
 #include "stdafx.h"
 
+#include <platform/windows.h>
 #include <windowsx.h>
 
 #include "util/fixes.h"
-#include "graphics.h"
+#include "graphics/graphics.h"
 #include "movies.h"
-#include "tig/tig_startup.h"
 #include "tig/tig_msg.h"
 #include "tig/tig_mouse.h"
 #include "util/config.h"
-#include "d3d8to9_device.h"
-
-LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam);
-
-/*
-	Indicates that incoming events are due to window creation.
-*/
-static bool creatingWindow = false;
+#include "mainwindow.h"
 
 struct WindowFuncs : temple::AddressTable {
-	void (__cdecl *WindowActivationChanged)(bool active);
+	void (*TigSoundSetActive)(BOOL active);
 
 	WindowFuncs() {
-		rebase(WindowActivationChanged, 0x101DF4E0);
+		rebase(TigSoundSetActive, 0x101E3EE0);
 	}
 } windowFuncs;
 
 temple::GlobalPrimitive<uint32_t, 0x10D25C38> globalWwndproc;
 
-bool CreateMainWindow(TigConfig* settings) {
-	bool windowed = config.windowed;
-	bool unknownFlag = (settings->flags & 0x100) != 0;
+/*
+	The window class name used for RegisterClass 
+	and CreateWindow.
+*/
+constexpr auto WindowClassName = L"TemplePlusMainWnd";
+constexpr auto WindowTitle = L"Temple of Elemental Evil (Temple+)";
 
-	video->hinstance = settings->hinstance;
+MainWindow::MainWindow(HINSTANCE hInstance) : mHinstance(hInstance), mHwnd(nullptr) {
+	RegisterWndClass();
+	CreateHwnd();
+}
+
+MainWindow::~MainWindow() {
+
+	if (mHwnd) {
+		DestroyWindow(mHwnd);
+	}
+
+	UnregisterWndClass();
+
+}
+
+void MainWindow::LockCursor() const {
+
+	RECT rect;
+	if (GetForegroundWindow() == mHwnd
+		&& GetWindowRect(mHwnd, &rect)) {
+		ClipCursor(&rect);
+	}
+
+}
+
+void MainWindow::RegisterWndClass() {
+
+	WNDCLASS wndClass;
+	ZeroMemory(&wndClass, sizeof(wndClass));
+	wndClass.style = CS_DBLCLKS;
+	wndClass.lpfnWndProc = WndProcTrampoline;
+	wndClass.hInstance = mHinstance;
+	wndClass.hIcon = LoadIcon(mHinstance, L"icon");
+	wndClass.hCursor = LoadCursor(0, IDC_ARROW);
+	wndClass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+	wndClass.lpszClassName = WindowClassName;
+	wndClass.cbWndExtra = sizeof(MainWindow*);
+
+	if (!RegisterClass(&wndClass)) {
+		throw TempleException("Unable to register window class: {}",
+		                      GetLastWin32Error());
+	}
+}
+
+void MainWindow::UnregisterWndClass() {
+
+	if (!UnregisterClass(WindowClassName, mHinstance)) {
+		logger->error("Unable to unregister window class: {}",
+		              GetLastWin32Error());
+	}
+
+}
+
+void MainWindow::CreateHwnd() {
 
 	// Is not actually used anymore, but messages.c checks for it being != 0
-	globalWwndproc = 1;
+	globalWwndproc = 1; // TODO: Validate necessity
 
-	WNDCLASSA wndClass;
-	ZeroMemory(&wndClass, sizeof(WNDCLASSA));
-	wndClass.style = CS_DBLCLKS;
-	wndClass.lpfnWndProc = MainWindowProc;
-	wndClass.hInstance = video->hinstance;
-	wndClass.hIcon = LoadIconA(video->hinstance, "icon");
-	wndClass.hCursor = LoadCursorA(0, MAKEINTRESOURCEA(IDC_ARROW));
-	wndClass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-	wndClass.lpszClassName = "TIGClass";
+	RECT windowRect;
+	DWORD style = 0;
+	DWORD styleEx = 0;
 
-	if (!RegisterClassA(&wndClass)) {
-		return false;
+	CreateWindowRectAndStyles(windowRect, style, styleEx);
+
+	style |= WS_VISIBLE;
+
+	DWORD windowWidth = windowRect.right - windowRect.left;
+	DWORD windowHeight = windowRect.bottom - windowRect.top;
+	logger->info("Creating window with dimensions {}x{}", windowWidth, windowHeight);
+	mHwnd = CreateWindowEx(
+		styleEx,
+		WindowClassName,
+		WindowTitle,
+		style,
+		windowRect.left,
+		windowRect.top,
+		windowWidth,
+		windowHeight,
+		0,
+		nullptr,
+		mHinstance,
+		nullptr);
+
+	if (!mHwnd) {
+		throw TempleException("Unable to create main window: {}",
+		                      GetLastWin32Error());
 	}
+
+	// Store our this pointer in the window
+	SetWindowLongPtr(mHwnd, 0, reinterpret_cast<LONG>(this));
+
+}
+
+void MainWindow::CreateWindowRectAndStyles(RECT& windowRect, DWORD& style, DWORD& styleEx) {
 
 	auto screenWidth = GetSystemMetrics(SM_CXSCREEN);
 	auto screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
-	RECT windowRect;
-	HMENU menu;
-	DWORD dwStyle;
-	DWORD dwExStyle;
-
-	if (!windowed) {
+	if (!config.windowed) {
 		windowRect.left = 0;
 		windowRect.top = 0;
 		windowRect.right = screenWidth;
 		windowRect.bottom = screenHeight;
-		menu = 0;
-		dwStyle = WS_POPUP;
+		style = WS_POPUP;
 		// This is bad for debugging
 		if (!IsDebuggerPresent()) {
-			dwExStyle = WS_EX_APPWINDOW | WS_EX_TOPMOST;
+			styleEx = WS_EX_APPWINDOW | WS_EX_TOPMOST;
 		} else {
-			dwExStyle = 0;
+			styleEx = 0;
 		}
-		memcpy(&video->screenSizeRect, &windowRect, sizeof(RECT));
 	} else {
 		// Apparently this flag controls whether x,y are preset from the outside
-		if (unknownFlag) {
-			windowRect.left = settings->x;
-			windowRect.top = settings->y;
-			windowRect.right = settings->x + config.windowWidth;
-			windowRect.bottom = settings->y + config.windowHeight;
-		} else {
-			windowRect.left = (screenWidth - settings->width) / 2;
-			windowRect.top = (screenHeight - settings->height) / 2;
-			windowRect.right = windowRect.left + config.windowWidth;
-			windowRect.bottom = windowRect.top + config.windowHeight;
-		}
+		windowRect.left = (screenWidth - config.windowWidth) / 2;
+		windowRect.top = (screenHeight - config.windowHeight) / 2;
+		windowRect.right = windowRect.left + config.windowWidth;
+		windowRect.bottom = windowRect.top + config.windowHeight;
 
-		menu = NULL;
-		dwStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
-		dwExStyle = 0;
+		style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+		styleEx = 0;
 
-  		AdjustWindowRect(&windowRect, dwStyle, FALSE);
+		AdjustWindowRect(&windowRect, style, FALSE);
 		int extraWidth = (windowRect.right - windowRect.left) - config.windowWidth;
 		int extraHeight = (windowRect.bottom - windowRect.top) - config.windowHeight;
 		windowRect.left = (screenWidth - config.windowWidth) / 2 - (extraWidth / 2);
@@ -100,76 +157,24 @@ bool CreateMainWindow(TigConfig* settings) {
 		windowRect.bottom = windowRect.top + config.windowHeight + extraHeight;
 	}
 
-	dwStyle |= WS_VISIBLE;
-	video->width = settings->width;
-	video->height = settings->height;
+}
 
-	temple::WriteMem<0x10D24E0C>(0);
-	temple::WriteMem<0x10D24E10>(0);
-	temple::WriteMem<0x10D24E14>(settings->width);
+LRESULT MainWindow::WndProcTrampoline(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
-	string windowTitle = "Temple of Elemental Evil (Temple+)";
+	// Retrieve our this pointer from the wnd
+	auto mainWindow = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, 0));
 
-	DWORD windowWidth = windowRect.right - windowRect.left;
-	DWORD windowHeight = windowRect.bottom - windowRect.top;
-	logger->info("Creating window with dimensions {}x{}", windowWidth, windowHeight);
-	video->hwnd = CreateWindowExA(
-		dwExStyle,
-		"TIGClass",
-		windowTitle.c_str(),
-		dwStyle,
-		windowRect.left,
-		windowRect.top,
-		windowWidth,
-		windowHeight,
-		0,
-		menu,
-		settings->hinstance,
-		0);
-
-	if (video->hwnd) {
-		RECT clientRect;
-		GetClientRect(video->hwnd, &clientRect);
-		
-		auto w = clientRect.right - clientRect.left;
-		auto h = clientRect.bottom - clientRect.top;
-		graphics.UpdateWindowSize(w, h);
-
-		// Scratchbuffer size sometimes doesn't seem to be set by ToEE itself
-		video->current_width = config.renderWidth;
-		video->current_height = config.renderHeight;
-		temple::WriteMem<0x10307284>(video->current_width);
-		temple::WriteMem<0x10307288>(video->current_height);
-
-		return true;
+	if (mainWindow) {
+		return mainWindow->WndProc(hWnd, msg, wparam, lparam);
 	}
-	
-	return false;
+
+	return DefWindowProc(hWnd, msg, wparam, lparam);
+
 }
 
-static void UpdateMousePos(int xAbs, int yAbs, int wheelDelta) {
-	auto rect = graphics.sceneRect();
-	int sw = rect.right - rect.left;
-	int sh = rect.bottom - rect.top;
-	
-	// Make the mouse pos relative to the scene rectangle
-	xAbs -= rect.left;
-	yAbs -= rect.top;
+LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
-	// MOve it into the scene rectangle coordinate space
-	xAbs = (int) round(xAbs / graphics.sceneScale());
-	yAbs = (int) round(yAbs / graphics.sceneScale());
-
-	// Account for a resized screen
-	if (xAbs < 0 || yAbs < 0 || xAbs >= sw || yAbs >= sh)
-		return;
-
-	mouseFuncs.SetPos(xAbs, yAbs, wheelDelta);
-}
-
-static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
-
-	if (hWnd != video->hwnd) {
+	if (hWnd != mHwnd || !graphics) {
 		return DefWindowProcA(hWnd, msg, wparam, lparam);
 	}
 
@@ -182,7 +187,8 @@ static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARA
 	case WM_SETCURSOR:
 		SetCursor(nullptr); // Disables default cursor
 		if (!movieFuncs.MovieIsPlaying) {
-			video->d3dDevice->delegate->ShowCursor(TRUE);
+			// TODO: Rip this out, circular dependency
+			graphics->device()->ShowCursor(TRUE);
 		}
 		return TRUE; // This prevents windows from setting the default cursor for us
 	case WM_LBUTTONDOWN:
@@ -210,6 +216,33 @@ static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARA
 			tigMsg.arg1 = wparam;
 			msgFuncs.Enqueue(&tigMsg);
 		}
+
+		tigMsg.createdMs = timeGetTime();
+		tigMsg.type = TigMsgType::KEYSTATECHANGE;
+		tigMsg.arg1 = ToDirectInputKey(wparam);
+		tigMsg.arg2 = 1; // Means it has changed to pressed
+		if (tigMsg.arg1 != 0) {
+			msgFuncs.Enqueue(&tigMsg);
+		}
+		break;
+	case WM_SYSKEYDOWN:
+		tigMsg.createdMs = timeGetTime();
+		tigMsg.type = TigMsgType::KEYSTATECHANGE;
+		tigMsg.arg1 = ToDirectInputKey(wparam);
+		tigMsg.arg2 = 1; // Means it has changed to pressed
+		if (tigMsg.arg1 != 0) {
+			msgFuncs.Enqueue(&tigMsg);
+		}
+		break;
+	case WM_KEYUP:
+	case WM_SYSKEYUP:
+		tigMsg.createdMs = timeGetTime();
+		tigMsg.type = TigMsgType::KEYSTATECHANGE;
+		tigMsg.arg1 = ToDirectInputKey(wparam);
+		tigMsg.arg2 = 0; // Means it has changed to unpressed
+		if (tigMsg.arg1 != 0) {
+			msgFuncs.Enqueue(&tigMsg);
+		}
 		break;
 	case WM_CHAR:
 		tigMsg.createdMs = timeGetTime();
@@ -223,7 +256,7 @@ static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARA
 		}
 		break;
 	case WM_ACTIVATEAPP:
-		windowFuncs.WindowActivationChanged(wparam == 1);
+		windowFuncs.TigSoundSetActive(wparam == 1);
 		break;
 	case WM_CLOSE:
 		tigMsg.createdMs = timeGetTime();
@@ -233,28 +266,28 @@ static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARA
 		return 0;
 		// Does not seem to be used:
 		/*case WM_CREATE:
-			GetClientRect(hWnd, &rect);
-			ClientToScreen(hWnd, (LPPOINT)&rect);
-			ClientToScreen(hWnd, (LPPOINT)&rect.right);
-			refresh_screen_rect(&rect);
-			break;			
+		GetClientRect(hWnd, &rect);
+		ClientToScreen(hWnd, (LPPOINT)&rect);
+		ClientToScreen(hWnd, (LPPOINT)&rect.right);
+		refresh_screen_rect(&rect);
+		break;
 		case WM_MOVE:
-			GetClientRect(hWnd, &rect);
-			ClientToScreen(hWnd, (LPPOINT)&rect);
-			ClientToScreen(hWnd, (LPPOINT)&rect.right);
-			refresh_screen_rect(&rect);
-			get_window_rect(&rect);
-			nullsub_1();
-			goto LABEL_40;*/
+		GetClientRect(hWnd, &rect);
+		ClientToScreen(hWnd, (LPPOINT)&rect);
+		ClientToScreen(hWnd, (LPPOINT)&rect.right);
+		refresh_screen_rect(&rect);
+		get_window_rect(&rect);
+		nullsub_1();
+		goto LABEL_40;*/
 	case WM_ERASEBKGND:
 		return 0;
 	case WM_MOUSEWHEEL:
 		GetWindowRect(hWnd, &rect);
 		UpdateMousePos(
 			GET_X_LPARAM(lparam) - rect.left,
-			GET_Y_LPARAM(lparam) - rect.top,
-			GET_WHEEL_DELTA_WPARAM(wparam)
-			);
+			                    GET_Y_LPARAM(lparam) - rect.top,
+			                    GET_WHEEL_DELTA_WPARAM(wparam)
+		);
 		break;
 	case WM_MOUSEMOVE:
 		mousePosX = GET_X_LPARAM(lparam);
@@ -271,4 +304,245 @@ static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARA
 
 	// Previously, ToEE called a global window proc here but it did nothing useful.
 	return DefWindowProcA(hWnd, msg, wparam, lparam);
+}
+
+void MainWindow::UpdateMousePos(int xAbs, int yAbs, int wheelDelta) {
+	auto rect = graphics->sceneRect();
+	int sw = rect.right - rect.left;
+	int sh = rect.bottom - rect.top;
+
+	// Make the mouse pos relative to the scene rectangle
+	xAbs -= rect.left;
+	yAbs -= rect.top;
+
+	// MOve it into the scene rectangle coordinate space
+	xAbs = (int)round(xAbs / graphics->sceneScale());
+	yAbs = (int)round(yAbs / graphics->sceneScale());
+
+	// Account for a resized screen
+	if (xAbs < 0 || yAbs < 0 || xAbs >= sw || yAbs >= sh)
+		return;
+
+	mouseFuncs.SetPos(xAbs, yAbs, wheelDelta);
+}
+
+int MainWindow::ToDirectInputKey(int vk) {
+
+	switch (vk) {
+	case VK_ESCAPE:
+		return 0x01; // DIK_ESCAPE
+	case '1':
+		return 0x02; // DIK_1
+	case '2':
+		return 0x03; // DIK_2
+	case '3':
+		return 0x04; // DIK_3
+	case '4':
+		return 0x05; // DIK_4
+	case '5':
+		return 0x06; // DIK_5
+	case '6':
+		return 0x07; // DIK_6
+	case '7':
+		return 0x08; // DIK_7
+	case '8':
+		return 0x09; // DIK_8
+	case '9':
+		return 0x0A; // DIK_9
+	case '0':
+		return 0x0B; // DIK_0
+	case VK_OEM_MINUS:
+		return 0x0C; // DIK_MINUS/* - on main keyboard */
+	case VK_OEM_PLUS:
+		return 0x0D; // DIK_EQUALS
+	case VK_BACK:
+		return 0x0E; // DIK_BACK/* backspace */
+	case VK_TAB:
+		return 0x0F; // DIK_TAB
+	case 'Q':
+		return 0x10; // DIK_Q
+	case 'W':
+		return 0x11; // DIK_W
+	case 'E':
+		return 0x12; // DIK_E
+	case 'R':
+		return 0x13; // DIK_R
+	case 'T':
+		return 0x14; // DIK_T
+	case 'Y':
+		return 0x15; // DIK_Y
+	case 'U':
+		return 0x16; // DIK_U
+	case 'I':
+		return 0x17; // DIK_I
+	case 'O':
+		return 0x18; // DIK_O
+	case 'P':
+		return 0x19; // DIK_P
+	case VK_OEM_4:
+		return 0x1A; // DIK_LBRACKET
+	case VK_OEM_6:
+		return 0x1B; // DIK_RBRACKET
+	case VK_RETURN:
+		return 0x1C; // DIK_RETURN/* Enter on main keyboard */
+	case VK_LCONTROL:
+		return 0x1D; // DIK_LCONTROL
+	case 'A':
+		return 0x1E; // DIK_A
+	case 'S':
+		return 0x1F; // DIK_S
+	case 'D':
+		return 0x20; // DIK_D
+	case 'F':
+		return 0x21; // DIK_F
+	case 'G':
+		return 0x22; // DIK_G
+	case 'H':
+		return 0x23; // DIK_H
+	case 'J':
+		return 0x24; // DIK_J
+	case 'K':
+		return 0x25; // DIK_K
+	case 'L':
+		return 0x26; // DIK_L
+	case VK_OEM_1:
+		return 0x27; // DIK_SEMICOLON
+	case VK_OEM_7:
+		return 0x28; // DIK_APOSTROPHE
+	case VK_OEM_3:
+		return 0x29; // DIK_GRAVE/* accent grave */
+	case VK_LSHIFT:
+		return 0x2A; // DIK_LSHIFT
+	case VK_OEM_5:
+		return 0x2B; // DIK_BACKSLASH
+	case 'Z':
+		return 0x2C; // DIK_Z
+	case 'X':
+		return 0x2D; // DIK_X
+	case 'C':
+		return 0x2E; // DIK_C
+	case 'V':
+		return 0x2F; // DIK_V
+	case 'B':
+		return 0x30; // DIK_B
+	case 'N':
+		return 0x31; // DIK_N
+	case 'M':
+		return 0x32; // DIK_M
+	case VK_OEM_COMMA:
+		return 0x33; // DIK_COMMA
+	case VK_OEM_PERIOD:
+		return 0x34; // DIK_PERIOD/* . on main keyboard */
+	case VK_OEM_2:
+		return 0x35; // DIK_SLASH/* / on main keyboard */
+	case VK_RSHIFT:
+		return 0x36; // DIK_RSHIFT
+	case VK_MULTIPLY:
+		return 0x37; // DIK_MULTIPLY/* * on numeric keypad */
+	case VK_LMENU:
+		return 0x38; // DIK_LMENU/* left Alt */
+	case VK_SPACE:
+		return 0x39; // DIK_SPACE
+	case VK_CAPITAL:
+		return 0x3A; // DIK_CAPITAL
+	case VK_F1:
+		return 0x3B; // DIK_F1
+	case VK_F2:
+		return 0x3C; // DIK_F2
+	case VK_F3:
+		return 0x3D; // DIK_F3
+	case VK_F4:
+		return 0x3E; // DIK_F4
+	case VK_F5:
+		return 0x3F; // DIK_F5
+	case VK_F6:
+		return 0x40; // DIK_F6
+	case VK_F7:
+		return 0x41; // DIK_F7
+	case VK_F8:
+		return 0x42; // DIK_F8
+	case VK_F9:
+		return 0x43; // DIK_F9
+	case VK_F10:
+		return 0x44; // DIK_F10
+	case VK_NUMLOCK:
+		return 0x45; // DIK_NUMLOCK
+	case VK_SCROLL:
+		return 0x46; // DIK_SCROLL/* Scroll Lock */
+	case VK_NUMPAD7:
+		return 0x47; // DIK_NUMPAD7
+	case VK_NUMPAD8:
+		return 0x48; // DIK_NUMPAD8
+	case VK_NUMPAD9:
+		return 0x49; // DIK_NUMPAD9
+	case VK_SUBTRACT:
+		return 0x4A; // DIK_SUBTRACT/* - on numeric keypad */
+	case VK_NUMPAD4:
+		return 0x4B; // DIK_NUMPAD4
+	case VK_NUMPAD5:
+		return 0x4C; // DIK_NUMPAD5
+	case VK_NUMPAD6:
+		return 0x4D; // DIK_NUMPAD6
+	case VK_ADD:
+		return 0x4E; // DIK_ADD/* + on numeric keypad */
+	case VK_NUMPAD1:
+		return 0x4F; // DIK_NUMPAD1
+	case VK_NUMPAD2:
+		return 0x50; // DIK_NUMPAD2
+	case VK_NUMPAD3:
+		return 0x51; // DIK_NUMPAD3
+	case VK_NUMPAD0:
+		return 0x52; // DIK_NUMPAD0
+	case VK_DECIMAL:
+		return 0x53; // DIK_DECIMAL/* . on numeric keypad */
+	case VK_F11:
+		return 0x57; // DIK_F11
+	case VK_F12:
+		return 0x58; // DIK_F12
+	case VK_F13:
+		return 0x64; // DIK_F13/*                     (NEC PC98) */
+	case VK_F14:
+		return 0x65; // DIK_F14/*                     (NEC PC98) */
+	case VK_F15:
+		return 0x66; // DIK_F15/*                     (NEC PC98) */
+	case VK_RCONTROL:
+		return 0x9D; // DIK_RCONTROL
+	case VK_DIVIDE:
+		return 0xB5; // DIK_DIVIDE/* / on numeric keypad */
+	case VK_RMENU:
+		return 0xB8; // DIK_RMENU/* right Alt */
+	case VK_HOME:
+		return 0xC7; // DIK_HOME/* Home on arrow keypad */
+	case VK_UP:
+		return 0xC8; // DIK_UP/* UpArrow on arrow keypad */
+	case VK_PRIOR:
+		return 0xC9; // DIK_PRIOR/* PgUp on arrow keypad */
+	case VK_LEFT:
+		return 0xCB; // DIK_LEFT/* LeftArrow on arrow keypad */
+	case VK_RIGHT:
+		return 0xCD; // DIK_RIGHT/* RightArrow on arrow keypad */
+	case VK_END:
+		return 0xCF; // DIK_END/* End on arrow keypad */
+	case VK_DOWN:
+		return 0xD0; // DIK_DOWN/* DownArrow on arrow keypad */
+	case VK_NEXT:
+		return 0xD1; // DIK_NEXT/* PgDn on arrow keypad */
+	case VK_INSERT:
+		return 0xD2; // DIK_INSERT/* Insert on arrow keypad */
+	case VK_DELETE:
+		return 0xD3; // DIK_DELETE/* Delete on arrow keypad */
+	case VK_LWIN:
+		return 0xDB; // DIK_LWIN/* Left Windows key */
+	case VK_RWIN:
+		return 0xDC; // DIK_RWIN/* Right Windows key */
+	case VK_APPS:
+		return 0xDD; // DIK_APPS/* AppMenu key */
+	case VK_PAUSE:
+		return 0xC5; // DIK_PAUSE
+	case VK_SNAPSHOT:
+		return 0xB7; // DIK_SYSRQ (print screen)
+	default:
+		return 0;
+	}
+
 }

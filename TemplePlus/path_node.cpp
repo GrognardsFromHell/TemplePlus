@@ -163,7 +163,7 @@ BOOL PathNodeSys::LoadNodeFromFile(TioFile* file, MapPathNodeList** nodeOut)
 		logger->info("Too many neighbours for node {}", newNode->node.id);
 		assert(neighCnt <= MAX_NEIGHBOURS);
 	}
-		
+
 
 	// newNode->node.neighbours = new int32_t[neighCnt];
 	newNode->node.neighbours = new int32_t[MAX_NEIGHBOURS];
@@ -175,12 +175,12 @@ BOOL PathNodeSys::LoadNodeFromFile(TioFile* file, MapPathNodeList** nodeOut)
 	newNode->node.neighDistances = new float[MAX_NEIGHBOURS];
 	memset(newNode->node.neighDistances, 0, sizeof(float)* newNode->node.neighboursCount);
 	
-	return 1;
+		return 1;
 }
 
 bool PathNodeSys::LoadNeighDistFromFile(TioFile* file, MapPathNodeList* node)
 {
-
+	
 	int result = 0;
 
 	if (!file)
@@ -209,7 +209,7 @@ bool PathNodeSys::LoadNeighDistFromFile(TioFile* file, MapPathNodeList* node)
 	if (!neighCnt)
 	{
 		return true;
-	}
+}
 
 	if (tio_fread(node->node.neighDistances, sizeof(float), neighCnt, file) == neighCnt)
 	{
@@ -306,7 +306,7 @@ void PathNodeSys::FreeNode(MapPathNodeList* pn)
 		//if (pn->node.flags & PNF_NEIGHBOUR_DISTANCES_SET)
 			free(pn->node.neighDistances);
 	}
-
+	
 	
 	free( pn);
 }
@@ -362,7 +362,7 @@ void PathNodeSys::RecalculateNeighbours(MapPathNodeList* node)
 
 			if ( pathLen < 6 * fromToDist && node->node.neighboursCount < MAX_NEIGHBOURS) // prevent extremely roundabout links
 			{
-				int neighSizeNew = 4 * (node->node.neighboursCount + 1);
+			int neighSizeNew = 4 * (node->node.neighboursCount + 1);
 				auto neighCntNew = ++node->node.neighboursCount;
 				// int * neighboursNew = (int*)realloc(neighbours, neighSizeNew);
 				
@@ -377,7 +377,7 @@ void PathNodeSys::RecalculateNeighbours(MapPathNodeList* node)
 				else
 					node->node.neighDistances[neighCntNew - 1] = pathLen;
 				
-				
+
 			}
 			else
 			{
@@ -575,7 +575,7 @@ int PathNodeSys::PopMinHeuristicNode(FindPathNodeData* fpndOut, bool useActualDi
 	{
 		if (fpbnData[i].distActualTotal >= 0.0
 			&& ( fpbnData[i].distActualTotal + fpbnData[i].distTo ) < minDistCumul)
-		{
+{
 			idxMin = i;
 			minDistCumul = fpbnData[idxMin].distActualTotal + fpbnData[idxMin].distTo;
 		}
@@ -604,7 +604,7 @@ int PathNodeSys::PopMinHeuristicNodeLegacy(FindPathNodeData* fpndOut)
 	float minDistCumul = fpbnData[idxMinCumul].distCumul;
 	for (int i = idxMinCumul + 1; i < fpbnCount; i++)
 	{
-		if (fpbnData[i].distCumul >= 0.0
+		if (fpbnData[i].distCumul >= 0.0 
 			&& fpbnData[i].distCumul < minDistCumul)
 		{
 			idxMinCumul = i;
@@ -768,11 +768,11 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 				} 
 				else
 				{
-					if (j == fpbnCount || fpTemp.distCumul < fpbnData[j].distCumul)
-						FindPathNodeAppend(&fpTemp);
-				}
-				
+				if (j == fpbnCount || fpTemp.distCumul < fpbnData[j].distCumul)
+					FindPathNodeAppend(&fpTemp);
 			}
+			
+		}
 			
 		}
 		fpMinCumul.distCumul = -1.0;

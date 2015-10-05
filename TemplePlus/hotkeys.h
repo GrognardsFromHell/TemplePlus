@@ -1,5 +1,4 @@
 #pragma once
-#include "stdafx.h"
 #include "common.h"
 
 #define NUM_ASSIGNABLE_HOTKEYS 39 

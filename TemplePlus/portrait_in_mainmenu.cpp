@@ -1,8 +1,10 @@
 
-#include "stdafx.h"
+#include <memory>
+#include <string>
+
+#include "graphics/video_hooks.h"
 #include "util/fixes.h"
 #include "obj.h"
-#include "graphics.h"
 
 static void(__cdecl *ObjRenderInUi)(objHndl objId, int x, int y, float rotation, float scale);
 

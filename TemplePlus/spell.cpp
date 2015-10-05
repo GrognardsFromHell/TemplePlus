@@ -379,7 +379,7 @@ uint32_t SpellSystem::spellCanCast(objHndl objHnd, uint32_t spellEnum, uint32_t 
 				&& spellLevels[i] <= spellLevel)
 			{
 				if (spellLevels[i] < spellLevel)
-					hooked_print_debug_message("Natural Spell Caster spellCanCast check - spell known is lower level than spellCanCast queried spell. Is this ok?? (this is vanilla code here...)");
+					logger->info("Natural Spell Caster spellCanCast check - spell known is lower level than spellCanCast queried spell. Is this ok?? (this is vanilla code here...)");
 				return 1;
 			}
 				
@@ -426,7 +426,7 @@ bool SpellSystem::numSpellsKnownTooHigh(objHndl objHnd)
 {
 	if (objects.getArrayFieldNumItems(objHnd, obj_f_critter_spells_known_idx) > MAX_SPELLS_KNOWN)
 	{
-		hooked_print_debug_message("spellCanCast(): ERROR! This critter knows WAAY too many spells! Returning 0.");
+		logger->info("spellCanCast(): ERROR! This critter knows WAAY too many spells! Returning 0.");
 		return 1;
 	}
 	return 0;
@@ -436,7 +436,7 @@ bool SpellSystem::numSpellsMemorizedTooHigh(objHndl objHnd)
 {
 	if (objects.getArrayFieldNumItems(objHnd, obj_f_critter_spells_memorized_idx) > MAX_SPELLS_KNOWN)
 	{
-		hooked_print_debug_message("spellCanCast(): ERROR! This critter memorized WAAY too many spells! Returning 0.");
+		logger->info("spellCanCast(): ERROR! This critter memorized WAAY too many spells! Returning 0.");
 		return 1;
 	}
 	return 0;

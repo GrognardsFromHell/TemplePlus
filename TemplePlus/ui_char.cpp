@@ -2,6 +2,7 @@
 #include "common.h"
 #include "util/config.h"
 #include "d20.h"
+#include "util/fixes.h"
 
 class CharUiSystem : TempleFix
 {

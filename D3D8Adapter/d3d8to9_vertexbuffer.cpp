@@ -2,6 +2,27 @@
 #include "stdafx.h"
 #include "d3d8to9_vertexbuffer.h"
 
+IDirect3DVertexBuffer9 *GetVertexBufferDelegate(Direct3DVertexBuffer8Adapter *adapter)
+{
+	return adapter->delegate;
+}
+
+Direct3DVertexBuffer8Adapter *CreateVertexBufferAdapter(IDirect3DVertexBuffer9 *delegate) {
+	return new Direct3DVertexBuffer8Adapter(delegate);
+}
+
+void DeleteVertexBufferAdapter(Direct3DVertexBuffer8Adapter *adapter) {
+	if (adapter->delegate) {
+		adapter->delegate->Release();
+	}
+	delete adapter;
+}
+
+void SetVertexBufferDelegate(Direct3DVertexBuffer8Adapter *adapter, IDirect3DVertexBuffer9 *delegate) {
+	// Free old delegate?
+	adapter->delegate = delegate;
+}
+
 Direct3DVertexBuffer8Adapter::Direct3DVertexBuffer8Adapter(): delegate(nullptr)
 {
 }
@@ -74,12 +95,12 @@ d3d8::D3DRESOURCETYPE Direct3DVertexBuffer8Adapter::GetType(THIS)
 HRESULT Direct3DVertexBuffer8Adapter::Lock(THIS_ UINT OffsetToLock, UINT SizeToLock, BYTE** ppbData, DWORD Flags)
 {
 	// TODO: Inspect flags
-	return handleD3dError("Lock", delegate->Lock(OffsetToLock, SizeToLock, (void**)ppbData, Flags));
+	return D3DLOG(delegate->Lock(OffsetToLock, SizeToLock, (void**)ppbData, Flags));
 }
 
 HRESULT Direct3DVertexBuffer8Adapter::Unlock(THIS)
 {
-	return handleD3dError("Unlock", delegate->Unlock());
+	return D3DLOG(delegate->Unlock());
 }
 
 HRESULT Direct3DVertexBuffer8Adapter::GetDesc(THIS_ d3d8::D3DVERTEXBUFFER_DESC* pDesc)

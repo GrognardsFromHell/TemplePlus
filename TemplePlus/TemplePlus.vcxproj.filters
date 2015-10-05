@@ -2,7 +2,6 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="gamesystems.cpp" />
-    <ClCompile Include="graphics.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="movies.cpp" />
     <ClCompile Include="stdafx.cpp" />
@@ -128,7 +127,6 @@
     <ClCompile Include="ui\ui.cpp">
       <Filter>ui</Filter>
     </ClCompile>
-    <ClCompile Include="ui\ui_text.cpp" />
     <ClCompile Include="ui\ui_render.cpp" />
     <ClCompile Include="ui\ui_mainmenu.cpp">
       <Filter>ui</Filter>
@@ -144,9 +142,6 @@
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="util\folderutils.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
-    <ClCompile Include="util\libraryholder.cpp">
       <Filter>utils</Filter>
     </ClCompile>
     <ClCompile Include="tio\tio_utils.cpp" />
@@ -276,10 +271,12 @@
     <ClCompile Include="tig\tig_startup.cpp">
       <Filter>tig</Filter>
     </ClCompile>
+    <ClCompile Include="fixes\keyboard.cpp" />
+    <ClCompile Include="graphics\graphics.cpp" />
+    <ClCompile Include="graphics\video_hooks.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
-    <ClInclude Include="graphics.h" />
     <ClInclude Include="movies.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="temple_functions.h" />
@@ -393,7 +390,6 @@
       <Filter>python</Filter>
     </ClInclude>
     <ClInclude Include="goalfuncnames.h" />
-    <ClInclude Include="ui\ui_text.h" />
     <ClInclude Include="ui\ui_render.h" />
     <ClInclude Include="ui\ui_mainmenu.h">
       <Filter>ui</Filter>
@@ -411,9 +407,6 @@
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
     <ClInclude Include="util\folderutils.h">
-      <Filter>utils</Filter>
-    </ClInclude>
-    <ClInclude Include="util\libraryholder.h">
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="tio\tio.h" />
@@ -533,6 +526,9 @@
     <ClInclude Include="tig\tig_startup.h">
       <Filter>tig</Filter>
     </ClInclude>
+    <ClInclude Include="graphics\graphics.h" />
+    <ClInclude Include="graphics\video_hooks.h" />
+    <ClInclude Include="graphics\legacyvideosystem.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

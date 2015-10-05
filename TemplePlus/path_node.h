@@ -4,6 +4,8 @@
 
 #define MAX_PATH_NODE_CHAIN_LENGTH 30
 #define PATH_NODE_CAP 30000 // hommlet has about 1000, so that should be enough! that would be 0.6MB
+#include "util/fixes.h"
+#include <temple/dll.h>
 #define MAX_NEIGHBOURS 64
 
 struct TioFile;

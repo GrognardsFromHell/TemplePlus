@@ -5,4 +5,5 @@
 
 #include <infrastructure/renderstates.h>
 
-std::unique_ptr<RenderStates> CreateLegacyRenderStates();
+class Graphics;
+std::unique_ptr<RenderStates> CreateLegacyRenderStates(Graphics &g);

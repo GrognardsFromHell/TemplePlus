@@ -1,7 +1,8 @@
+
 #include "stdafx.h"
 #include "common.h"
 #include "turn_based.h"
-
+#include "util/fixes.h"
 
 class TurnBasedReplacements : public TempleFix
 {

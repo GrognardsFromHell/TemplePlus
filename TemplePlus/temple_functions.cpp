@@ -2,13 +2,14 @@
 #include "stdafx.h"
 #include <temple/dll.h>
 #include "temple_functions.h"
-#include "graphics.h"
+#include "graphics/graphics.h"
 #include "tig/tig_mouse.h"
 #include "tig/tig_msg.h"
 
 //#include "spell.h"
 #include "common.h"
 #include "util/config.h"
+#include "util/fixes.h"
 
 TempleFuncs templeFuncs;
 
@@ -20,48 +21,9 @@ class TempleFuncReplacements : public TempleFix
 	}
 } templeFuncReplacements;
 
-/*
- *  Simply forward all logging to printf at this point.
- */
-void __cdecl hooked_print_debug_message(char* format, ...)
-{
-	if (config.debugMessageEnable)
-	{
-		static char buffer[32 * 1024];
-		va_list args;
-		va_start(args, format);
-		vsnprintf(buffer, sizeof(buffer), format, args);
-		int len = strlen(buffer) - 1;
-		// Strip trailing newlines
-		while (len > 0 && (buffer[len] == '\n' || buffer[len] == '\r' || buffer[len] == ' '))
-		{
-			buffer[len] = 0;
-			--len;
-		}
-		if (buffer[0] == 0)
-		{
-			return; // Trimmed completely
-		}
-
-		if (!strncmp("PyScript: call to", buffer, strlen("PyScript: call to"))) {
-
-		}
-
-		logger->info("{}", buffer);
-	}
-}
-
 void init_hooks()
 {
-	if (config.debugMessageEnable)
-	{
-		temple::GetRef<0x10EED638, int>() = 1; // Debug message enable	
-	}
-	
-	MH_CreateHook(temple::GetPointer<0x101E48F0>(), hooked_print_debug_message, NULL);
-
 	if (config.engineEnhancements) {
-		hook_graphics();
 		hook_mouse();
 		hook_msgs();
 	}

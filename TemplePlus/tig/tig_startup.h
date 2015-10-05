@@ -1,5 +1,8 @@
 #pragma once
 
+#include <vector>
+#include <memory>
+
 // Functions used to init subsystems
 
 // Observed in window mode: 0x11024
@@ -61,6 +64,8 @@ public:
 	virtual ~TigSystem();
 };
 
+class MainWindow;
+
 // RAII for TIG initialization
 class TigInitializer {
 public:
@@ -69,6 +74,10 @@ public:
 
 	const TigConfig& GetConfig() const {
 		return mConfig;
+	}
+
+	MainWindow &GetMainWindow() {
+		return *mMainWindow;
 	}
 
 private:
@@ -85,6 +94,10 @@ private:
 	                         uint32_t shutdownAddr);
 
 	TigConfig mConfig;
+
+	std::unique_ptr<MainWindow> mMainWindow;
+	std::unique_ptr<class Graphics> mGraphics;
+	std::unique_ptr<class LegacyVideoSystem> mLegacyVideoSystem;
 
 	// Contains all systems that have already been started
 	std::vector<TigSystemPtr> mStartedSystems;

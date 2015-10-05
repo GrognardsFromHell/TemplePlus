@@ -5,8 +5,7 @@
 #include "tig/tig_startup.h"
 #include "tig/tig_mouse.h"
 #include "gamesystems.h"
-#include "util/fixes.h"
-#include "graphics.h"
+#include "graphics/graphics.h"
 #include "tig/tig_shader.h"
 #include "ui/ui.h"
 #include "ui/ui_mainmenu.h"
@@ -215,7 +214,7 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 		movieFuncs.PlayMovie("movies\\introcinematic.bik", 0, 0, 0);
 	}
 
-	ui.ResizeScreen(0, video->current_width, video->current_height);
+	ui.ResizeScreen(0, graphics->GetSceneWidth(), graphics->GetSceneHeight());
 
 	// Show the main menu
 	mouseFuncs.ShowCursor();
@@ -231,7 +230,8 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	startupRelevantFuncs.RunBatchFile("Startup.txt");
 	logger->info("[Beginning Game]");		
 
-	RunMainLoop();
+	GameLoop loop(tig.GetMainWindow());
+	loop.Run();
 	// startupRelevantFuncs.RunMainLoop();
 
 	return 0;

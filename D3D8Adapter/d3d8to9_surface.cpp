@@ -74,15 +74,15 @@ HRESULT Direct3DSurface8Adapter::GetDesc(THIS_ d3d8::D3DSURFACE_DESC* pDesc)
 	pDesc->Width = desc.Width;
 	pDesc->Height = desc.Height;
 
-	return handleD3dError("GetDesc", result);
+	return D3DLOG(result);
 }
 
 HRESULT Direct3DSurface8Adapter::LockRect(THIS_ d3d8::D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags)
 {
-	return handleD3dError("LockRect", delegate->LockRect((D3DLOCKED_RECT*)pLockedRect, pRect, Flags));
+	return D3DLOG(delegate->LockRect((D3DLOCKED_RECT*)pLockedRect, pRect, Flags));
 }
 
 HRESULT Direct3DSurface8Adapter::UnlockRect(THIS)
 {
-	return handleD3dError("UnlockRect", delegate->UnlockRect());
+	return D3DLOG(delegate->UnlockRect());
 }

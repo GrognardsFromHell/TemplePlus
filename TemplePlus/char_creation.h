@@ -1,6 +1,6 @@
-#include "stdafx.h"
 #include "common.h"
 #include "util/config.h"
+#include "util/fixes.h"
 
 class CharCreationSystem : TempleFix
 {

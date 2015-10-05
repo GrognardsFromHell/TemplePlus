@@ -1,7 +1,8 @@
+
 #include "stdafx.h"
 #include "secret_door.h"
 #include "obj.h"
-
+#include "util/fixes.h"
 
 class SecretDoorReplacements : public TempleFix
 {

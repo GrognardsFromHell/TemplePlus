@@ -6,6 +6,7 @@
 #include "python/python_debug.h"
 #include "temple_functions.h"
 #include "map_obj.h"
+#include "util/fixes.h"
 
 /**/
 class MapObjReplacements : public TempleFix

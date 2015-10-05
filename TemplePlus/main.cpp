@@ -56,9 +56,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			MessageBox(nullptr, msg.c_str(), L"Module Conflict", MB_OK | MB_ICONWARNING);
 		}
 
-		init_hooks();
-
 		TempleFixes::apply();
+
+		init_hooks();
 
 		auto ourModule = GetModuleHandleA(nullptr);
 		auto result = TempleMain(ourModule, lpCmdLine);

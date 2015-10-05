@@ -1,8 +1,8 @@
 #pragma once
 
-#include "stdafx.h"
 #include <temple/dll.h>
 #include "common.h"
+#include "temple_enums.h"
 
 // Contains the function definitions for stuff found in temple.dll that we may want to call or override.
 
@@ -113,8 +113,6 @@ const int CONTAINER_MAX_ITEMS = 1000; // may need to be reduced
 const int CRITTER_MAX_ITEMS = 24; // definitely needs to be increased in the future :)
 const int CRITTER_EQUIPPED_ITEM_SLOTS = 16;
 const int CRITTER_EQUIPPED_ITEM_OFFSET = 200;
-
-void __cdecl hooked_print_debug_message(char* format, ...);
 
 void init_hooks();
 

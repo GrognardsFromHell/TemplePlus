@@ -2,6 +2,8 @@
 #include "stdafx.h"
 #include "objlist.h"
 
+#include <temple/dll.h>
+
 static struct ObjListAddresses : temple::AddressTable {
 	void(__cdecl *ObjListTile)(locXY loc, int flags, ObjListResult &result);
 	void(__cdecl *ObjListVicinity)(locXY loc, int flags, ObjListResult &result);

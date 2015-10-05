@@ -74,9 +74,8 @@ HRESULT Direct3D8Adapter::EnumAdapterModes(THIS_ UINT Adapter, UINT Mode, d3d8::
 HRESULT Direct3D8Adapter::GetAdapterDisplayMode(THIS_ UINT Adapter, d3d8::D3DDISPLAYMODE* pMode)
 {
 	// TODO structs are NOT equivalent
-	HRESULT result = delegate->GetAdapterDisplayMode(Adapter, (D3DDISPLAYMODE*)pMode);
+	HRESULT result = D3DLOG(delegate->GetAdapterDisplayMode(Adapter, (D3DDISPLAYMODE*)pMode));
 	pMode->Format = convert((D3DFORMAT)pMode->Format);
-	handleD3dError("GetAdapterDisplayMode", result);
 	return result;
 }
 
@@ -87,9 +86,7 @@ HRESULT Direct3D8Adapter::CheckDeviceType(THIS_ UINT Adapter, d3d8::D3DDEVTYPE C
 
 HRESULT Direct3D8Adapter::CheckDeviceFormat(THIS_ UINT Adapter, d3d8::D3DDEVTYPE DeviceType, d3d8::D3DFORMAT AdapterFormat, DWORD Usage, d3d8::D3DRESOURCETYPE RType, d3d8::D3DFORMAT CheckFormat)
 {
-	HRESULT result = delegate->CheckDeviceFormat(Adapter, (D3DDEVTYPE)DeviceType, convert(AdapterFormat), Usage, (D3DRESOURCETYPE)RType, convert(CheckFormat));
-	handleD3dError("CheckDeviceFormat", result);
-	return result;
+	return D3DLOG(delegate->CheckDeviceFormat(Adapter, (D3DDEVTYPE)DeviceType, convert(AdapterFormat), Usage, (D3DRESOURCETYPE)RType, convert(CheckFormat)));
 }
 
 HRESULT Direct3D8Adapter::CheckDeviceMultiSampleType(THIS_ UINT Adapter, d3d8::D3DDEVTYPE DeviceType, d3d8::D3DFORMAT SurfaceFormat, BOOL Windowed, d3d8::D3DMULTISAMPLE_TYPE MultiSampleType)

@@ -1,5 +1,4 @@
 #pragma once
-#include "stdafx.h"
 #include "common.h"
 
 #define D20_OBJ_REGISTRY_MAX 1024

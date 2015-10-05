@@ -1,13 +1,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-// We'd rather use std::min
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
+#include <platform/d3d.h>
 
-#include <Windows.h>
 #include <timeapi.h>
-
-#include "d3d.h"
 
 #include "Shlobj.h"
 #include "Shobjidl.h"
@@ -34,14 +29,6 @@ using namespace std;
 #include <math.h>
 
 #pragma comment(lib, "D3dx9.lib")
-
-#undef D3DMATRIX_DEFINED
-#undef D3DFVF_POSITION_MASK
-#undef D3DFVF_RESERVED2
-#undef D3DSP_REGNUM_MASK
-#undef DIRECT3D_VERSION
-#undef D3D_SDK_VERSION
-#include <d3d9.h>
 #include <D3dx9tex.h>
 
 #include <infrastructure/infrastructure.h>

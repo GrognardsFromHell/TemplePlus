@@ -2,15 +2,15 @@
 #include "stdafx.h"
 #include "mainloop.h"
 #include <temple/dll.h>
-#include "temple_functions.h"
+#include "mainwindow.h"
 #include "tig/tig_msg.h"
 #include "tig/tig_mouse.h"
 #include "gamesystems.h"
-#include "graphics.h"
+#include "graphics/graphics.h"
 #include "ui/ui_render.h"
-#include "ui/ui_text.h"
 #include "util/config.h"
-#include "d3d.h"
+#include "tig/tig_font.h"
+#include "obj.h"
 
 static struct MainLoop : temple::AddressTable {
 	
@@ -68,11 +68,11 @@ static void RenderFrame();
 	This replaces the main loop that is called by temple_main. Since we already replaced
 	temple_main, there is no need to hook this function in temple.dll
 */
-void RunMainLoop() {
+void GameLoop::Run() {
 		
 	// Is this a center map kind of deal?
 	locXY loc;
-	if (!graphics.ScreenToTile(400, 300, loc)) {
+	if (!graphics->ScreenToTile(400, 300, loc)) {
 		throw TempleException("Initial call to unknown main loop function failed!");
 	}
 	mainLoop.sub_1002A580(loc);
@@ -93,10 +93,8 @@ void RunMainLoop() {
 		gameSystemFuncs.AdvanceTime();
 
 		// This locks the cursor to our window if we are in the foreground and it's enabled
-		if (!config.windowed && config.lockCursor && GetForegroundWindow() == video->hwnd) {
-			RECT rect;
-			GetClientRect(video->hwnd, &rect);
-			ClipCursor(&rect);
+		if (!config.windowed && config.lockCursor) {
+			mMainWindow.LockCursor();
 		}
 
 		RenderFrame();
@@ -139,13 +137,13 @@ static void RenderVersion();
 
 // TODO: hook this?
 static void RenderFrame() {
-	graphics.BeginFrame();
+	graphics->BeginFrame();
 	
-	auto device = graphics.device();
+	auto device = graphics->device();
 	
 	// Set it as the render target
-	D3DLOG(device->SetRenderTarget(0, graphics.sceneSurface()));
-	D3DLOG(device->SetDepthStencilSurface(graphics.sceneDepthSurface()));
+	D3DLOG(device->SetRenderTarget(0, graphics->sceneSurface()));
+	D3DLOG(device->SetDepthStencilSurface(graphics->sceneDepthSurface()));
 
 	// Clear the new render target as well
 	auto clearColor = D3DCOLOR_ARGB(0, 0, 0, 0);
@@ -163,23 +161,20 @@ static void RenderFrame() {
 	mouseFuncs.DrawCursor(); // This draws dragged items
 	
 	// Reset the render target
-	D3DLOG(device->SetRenderTarget(0, graphics.backBuffer()));
-	D3DLOG(device->SetDepthStencilSurface(graphics.backBufferDepth()));
+	D3DLOG(device->SetRenderTarget(0, graphics->backBuffer()));
+	D3DLOG(device->SetDepthStencilSurface(graphics->backBufferDepth()));
 
 	// Copy from the actual render target to the back buffer and scale / position accordingly
-	auto destRect = graphics.sceneRect();
+	auto destRect = graphics->sceneRect();
 	device->StretchRect(
-		graphics.sceneSurface(),
+		graphics->sceneSurface(),
 		nullptr,
-		graphics.backBuffer(),
+		graphics->backBuffer(),
 		&destRect,
 		D3DTEXF_LINEAR
 	);
 
-	uiText.Update();
-	uiText.Render();
-			
-	graphics.Present();
+	graphics->Present();
 }
 
 void DoMouseScrolling() {
@@ -196,8 +191,8 @@ static void RenderVersion() {
 
 	auto version = GetTemplePlusVersion();
 	auto rect = UiRenderer::MeasureTextSize(version, style);
-	rect.x = video->width - rect.width - 10;
-	rect.y = video->height - rect.height - 10;
+	rect.x = graphics->GetSceneWidth() - rect.width - 10;
+	rect.y = graphics->GetSceneHeight() - rect.height - 10;
 	UiRenderer::RenderText(version, rect, style);
 
 	UiRenderer::PopFont();

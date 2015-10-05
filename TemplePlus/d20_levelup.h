@@ -1,9 +1,10 @@
 #pragma once
-#include "stdafx.h"
 #include "common.h"
 #include "idxtables.h"
 
 #pragma pack(push, 4)
+#include "spell_structs.h"
+
 struct LevelupPacket
 {
 	int flags;

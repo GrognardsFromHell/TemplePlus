@@ -16,6 +16,7 @@
 #include "weapon.h"
 #include "python/python_integration_obj.h"
 #include "python/python_object.h"
+#include "util/fixes.h"
 struct AiSystem aiSys;
 
 
@@ -90,7 +91,7 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 		// check if disarmed, if so, try to pick up weapon
 		if (d20Sys.d20Query(aiTac.performer, DK_QUE_Disarmed))
 		{
-			hooked_print_debug_message("\n%s attempting to pickup weapon...\n", description.getDisplayName(objHnd));
+			logger->info("\n{} attempting to pickup weapon...\n", description.getDisplayName(objHnd));
 			if (PickUpWeapon(&aiTac))
 			{
 				actSeq->sequencePerform();
@@ -111,7 +112,7 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 	for (uint32_t i = 0; i < aiStrat->numTactics; i++)
 	{
 		aiTacticGetConfig(i, &aiTac, aiStrat);
-		hooked_print_debug_message("\n%s attempting %s...\n", description._getDisplayName(objHnd, objHnd), aiTac.aiTac->name);
+		logger->info("\n{} attempting {}...\n", description._getDisplayName(objHnd, objHnd), aiTac.aiTac->name);
 		auto aiFunc = aiTac.aiTac->aiFunc;
 		if (!aiFunc) continue;
 		if (aiFunc(&aiTac)) {
@@ -124,7 +125,7 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 	aiTac.aiTac = &aiTacticDefs[0];
 	aiTac.field4 = 0;
 	aiTac.tacIdx = -1;
-	hooked_print_debug_message("\n%s attempting %s...\n", description._getDisplayName(objHnd, objHnd), aiTac.aiTac->name);
+	logger->info("\n{} attempting {}...\n", description._getDisplayName(objHnd, objHnd), aiTac.aiTac->name);
 	assert(aiTac.aiTac != nullptr);
 	if (aiTac.aiTac->aiFunc(&aiTac))
 	{
@@ -144,7 +145,7 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 	// if that doesn't work either, try to Break Free (NPC might be held back by Web / Entangle)
 	if (d20Sys.d20Query(aiTac.performer, DK_QUE_Is_BreakFree_Possible))
 	{
-		hooked_print_debug_message("\n%s attempting to break free...\n", description.getDisplayName(objHnd));
+		logger->info("\n{} attempting to break free...\n", description.getDisplayName(objHnd));
 		if (BreakFree(&aiTac))
 		{
 			actSeq->sequencePerform();
@@ -234,7 +235,7 @@ int AiSystem::TargetClosest(AiTactic* aiTac)
 	}
 	*/
 
-	hooked_print_debug_message("\n %s targeting closest...\n", objects.description.getDisplayName(aiTac->performer));
+	logger->info("\n {} targeting closest...\n", objects.description.getDisplayName(aiTac->performer));
 
 	ObjList objlist;
 	objlist.ListVicinity(performerLoc.location, OLC_CRITTERS);
@@ -264,7 +265,7 @@ int AiSystem::TargetClosest(AiTactic* aiTac)
 		
 		}
 	}
-	hooked_print_debug_message("\n %s targeted.\n", objects.description.getDisplayName(aiTac->target, aiTac->performer));
+	logger->info("\n {} targeted.\n", objects.description.getDisplayName(aiTac->target, aiTac->performer));
 
 	return 0;
 }
@@ -280,7 +281,7 @@ int AiSystem::TargetThreatened(AiTactic* aiTac)
 
 	locSys.getLocAndOff(aiTac->performer, &performerLoc);
 
-	hooked_print_debug_message("\n %s targeting threatened...\n", objects.description.getDisplayName(aiTac->performer));
+	logger->info("\n {} targeting threatened...\n", objects.description.getDisplayName(aiTac->performer));
 
 	ObjList objlist;
 	objlist.ListVicinity(performerLoc.location, OLC_CRITTERS);
@@ -313,12 +314,12 @@ int AiSystem::TargetThreatened(AiTactic* aiTac)
 	{
 		aiTac->target = 0;
 		//hooked_print_debug_message("\n no target found. Attempting Target Closest instead.");
-		hooked_print_debug_message("\n no target found. ");
+		logger->info("\n no target found. ");
 		//TargetClosest(aiTac);
 	} 
 	else
 	{
-		hooked_print_debug_message("\n %s targeted.\n", objects.description.getDisplayName(aiTac->target, aiTac->performer));
+		logger->info("\n {} targeted.\n", objects.description.getDisplayName(aiTac->target, aiTac->performer));
 	}
 	
 
@@ -585,7 +586,7 @@ void AiSystem::StrategyTabLineParseTactic(AiStrategy* aiStrat, char* tacName, ch
 			++aiStrat->numTactics;
 			return;
 		}
-		hooked_print_debug_message("\nError: No Such Tactic %s for Strategy %s", tacName, aiStrat->name);
+		logger->info("\nError: No Such Tactic {} for Strategy {}", tacName, aiStrat->name);
 		return;
 		
 		

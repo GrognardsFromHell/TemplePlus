@@ -91,7 +91,7 @@ struct FeatSystem : temple::AddressTable
 	uint32_t WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType);
 	uint32_t FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * featArray, uint32_t featArrayLen, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased);
 
-	vector<feat_enums> GetFeats(objHndl handle); // This is what objHndl.feats in python returns ??
+	std::vector<feat_enums> GetFeats(objHndl handle); // This is what objHndl.feats in python returns ??
 	char* GetFeatName(feat_enums feat);
 	char* GetFeatDescription(feat_enums feat);
 	char* GetFeatPrereqDescription(feat_enums feat);

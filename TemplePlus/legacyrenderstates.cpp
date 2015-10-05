@@ -1,14 +1,16 @@
 
 #include "stdafx.h"
+
 #include <infrastructure/renderstates.h>
 #include <temple/dll.h>
-#include "d3d8to9_texture.h"
-#include "d3d8to9_vertexbuffer.h"
-#include "d3d8to9_indexbuffer.h"
-#include "d3d.h"
+#include <d3d8adapter.h>
+
+#include "graphics/graphics.h"
 
 class LegacyRenderStates : public RenderStates {
 public:
+	LegacyRenderStates(Graphics &g) : mGraphics(g) {}
+
 	const D3DMATRIX& Get3dProjectionMatrix() override;
 	void SetProjectionMatrix(const D3DMATRIX &matrix) override;
 	void SetViewMatrix(const D3DMATRIX &matrix) override;
@@ -48,10 +50,13 @@ public:
 	void Commit() override;
 
 	void Reset() override;
+
+private:
+	Graphics &mGraphics;
 };
 
-std::unique_ptr<RenderStates> CreateLegacyRenderStates() {
-	return std::make_unique<LegacyRenderStates>();
+std::unique_ptr<RenderStates> CreateLegacyRenderStates(Graphics &g) {
+	return std::make_unique<LegacyRenderStates>(g);
 }
 
 #pragma pack(push, 1)
@@ -118,10 +123,10 @@ static struct RenderStatesAddresses : temple::AddressTable {
 		rebase(CommitState, 0x101F0A20);
 
 		for (int i = 0; i < 4; ++i) {
-			textureAdapters[i] = new Direct3DTexture8Adapter;
-			vertexBufferAdapters[i] = new Direct3DVertexBuffer8Adapter;
+			textureAdapters[i] = CreateTextureAdapter(nullptr);
+			vertexBufferAdapters[i] = CreateVertexBufferAdapter(nullptr);
 		}
-		indexBufferAdapter = new Direct3DIndexBuffer8Adapter;
+		indexBufferAdapter = CreateIndexBufferAdapter(nullptr);
 	}
 
 	Direct3DTexture8Adapter *textureAdapters[4];
@@ -193,13 +198,13 @@ void LegacyRenderStates::SetSpecularEnable(bool enable) {
 void LegacyRenderStates::SetTexture(int sampler, IDirect3DTexture9* texture) {
 	// If our adapter is already set, we need to replace it with a new one...
 	if (addresses.renderStates->texture[sampler] == addresses.textureAdapters[sampler]
-		&& addresses.renderStates->texture[sampler]->delegate != texture) {
-		delete addresses.textureAdapters[sampler];
-		addresses.textureAdapters[sampler] = new Direct3DTexture8Adapter;
+		&& GetTextureDelegate(addresses.renderStates->texture[sampler]) != texture) {
+		DeleteTextureAdapter(addresses.textureAdapters[sampler]);
+		addresses.textureAdapters[sampler] = CreateTextureAdapter(nullptr);
 	}
 
 	addresses.renderStates->texture[sampler] = addresses.textureAdapters[sampler];
-	addresses.textureAdapters[sampler]->delegate = texture;
+	SetTextureDelegate(addresses.textureAdapters[sampler], texture);
 }
 
 void LegacyRenderStates::SetTextureColorOp(int sampler, D3DTEXTUREOP op) {
@@ -269,24 +274,24 @@ void LegacyRenderStates::SetFVF(DWORD fvf) {
 void LegacyRenderStates::SetStreamSource(int streamIdx, IDirect3DVertexBuffer9* buffer, int stride) {
 	// If our adapter is already set, we need to replace it with a new one...
 	if (addresses.renderStates->vertexbuffers[streamIdx] == addresses.vertexBufferAdapters[streamIdx]
-		&& addresses.renderStates->vertexbuffers[streamIdx]->delegate != buffer) {
-		delete addresses.vertexBufferAdapters[streamIdx];
-		addresses.vertexBufferAdapters[streamIdx] = new Direct3DVertexBuffer8Adapter;
+		&& GetVertexBufferDelegate(addresses.renderStates->vertexbuffers[streamIdx]) != buffer) {
+		DeleteVertexBufferAdapter(addresses.vertexBufferAdapters[streamIdx]);
+		addresses.vertexBufferAdapters[streamIdx] = CreateVertexBufferAdapter(nullptr);
 	}
 	addresses.renderStates->vertexbuffers[streamIdx] = addresses.vertexBufferAdapters[streamIdx];
-	addresses.vertexBufferAdapters[streamIdx]->delegate = buffer;
+	SetVertexBufferDelegate(addresses.vertexBufferAdapters[streamIdx], buffer);
 }
 
 void LegacyRenderStates::SetIndexBuffer(IDirect3DIndexBuffer9* buffer, int baseIdx) {
 	// If our adapter is already set, we need to replace it with a new one...
 	if (addresses.renderStates->indexbuffer == addresses.indexBufferAdapter
-		&& addresses.renderStates->indexbuffer->delegate != buffer) {
-		delete addresses.indexBufferAdapter;
-		addresses.indexBufferAdapter = new Direct3DIndexBuffer8Adapter;
+		&& GetIndexBufferDelegate(addresses.renderStates->indexbuffer) != buffer) {
+		DeleteIndexBufferAdapter(addresses.indexBufferAdapter);
+		addresses.indexBufferAdapter = CreateIndexBufferAdapter(nullptr);
 	}
 
 	addresses.renderStates->indexbuffer = addresses.indexBufferAdapter;
-	addresses.indexBufferAdapter->delegate = buffer;
+	SetIndexBufferDelegate(addresses.indexBufferAdapter, buffer);
 }
 
 void LegacyRenderStates::Commit() {
@@ -296,6 +301,90 @@ void LegacyRenderStates::Commit() {
 }
 
 void LegacyRenderStates::Reset() {
-	addresses.ReadInitialState();
-	memcpy(addresses.renderStates, addresses.comittedStates, sizeof(TigRenderStates));
+
+	auto device = mGraphics.device();
+	auto states = addresses.comittedStates;
+
+	device->GetTransform(D3DTS_PROJECTION, &states->projMatrix);
+	device->GetTransform(D3DTS_VIEW, &states->viewMatrix);
+	device->GetRenderState(D3DRS_ZENABLE, (DWORD*) &states->zEnable);
+	device->GetRenderState(D3DRS_FILLMODE, (DWORD*)&states->fillMode);
+	device->GetRenderState(D3DRS_ZWRITEENABLE, (DWORD*)&states->zwriteenable);
+	device->GetRenderState(D3DRS_ALPHATESTENABLE, (DWORD*)&states->alphatestenable);
+	device->GetRenderState(D3DRS_SRCBLEND, (DWORD*)&states->srcblend);
+	device->GetRenderState(D3DRS_DESTBLEND, (DWORD*)&states->destblend);
+	device->GetRenderState(D3DRS_CULLMODE, (DWORD*)&states->cullmode);
+	device->GetRenderState(D3DRS_ALPHABLENDENABLE, (DWORD*)&states->alphablendenable);
+	device->GetRenderState(D3DRS_LIGHTING, (DWORD*)&states->lighting);
+	device->GetRenderState(D3DRS_COLORVERTEX, (DWORD*)&states->colorvertex);
+	device->GetRenderState(D3DRS_COLORWRITEENABLE, (DWORD*)&states->colorwriteenable);
+	device->GetRenderState(D3DRS_ZFUNC, (DWORD*)&states->zfunc);
+	device->GetRenderState(D3DRS_SPECULARENABLE, (DWORD*)&states->specularenable);
+	device->GetRenderState(D3DRS_DEPTHBIAS, (DWORD*)&states->zbias); // TODO: Validate
+	
+	for (int i = 0; i < 4; ++i) {
+		CComPtr<IDirect3DBaseTexture9> texture;
+		device->GetTexture(i, &texture);
+		if (states->texture[i]) {
+			DeleteTextureAdapter(states->texture[i]);
+			states->texture[i] = nullptr;
+		}
+		if (texture) {
+			IDirect3DTexture9 *tex2d;
+			if (SUCCEEDED(texture.QueryInterface<IDirect3DTexture9>(&tex2d))) {
+				tex2d->AddRef(); // TODO: Check the ownership semantics here...
+				states->texture[i] = CreateTextureAdapter(tex2d);
+			}
+		}
+		device->GetTextureStageState(i, D3DTSS_COLOROP, (DWORD*) &states->tex_colorop[i]);
+		device->GetTextureStageState(i, D3DTSS_COLORARG1, (DWORD*)&states->tex_colorarg1[i]);
+		device->GetTextureStageState(i, D3DTSS_COLORARG2, (DWORD*)&states->tex_colorarg2[i]);
+		device->GetTextureStageState(i, D3DTSS_ALPHAOP, (DWORD*)&states->tex_alphaop[i]);
+		device->GetTextureStageState(i, D3DTSS_ALPHAARG1, (DWORD*)&states->tex_alphaarg1[i]);
+		device->GetTextureStageState(i, D3DTSS_ALPHAARG2, (DWORD*)&states->tex_alphaarg2[i]);
+		device->GetTextureStageState(i, D3DTSS_TEXCOORDINDEX, (DWORD*)&states->tex_coordindex[i]);
+		device->GetSamplerState(i, D3DSAMP_MIPFILTER, (DWORD*)&states->tex_mipfilter[i]);
+		device->GetSamplerState(i, D3DSAMP_MAGFILTER, (DWORD*)&states->tex_magfilter[i]);
+		device->GetSamplerState(i, D3DSAMP_MINFILTER, (DWORD*)&states->tex_minfilter[i]);
+		device->GetSamplerState(i, D3DSAMP_ADDRESSU, (DWORD*)&states->tex_addressu[i]);
+		device->GetSamplerState(i, D3DSAMP_ADDRESSV, (DWORD*)&states->tex_addressv[i]);
+		device->GetTextureStageState(i, D3DTSS_TEXTURETRANSFORMFLAGS, (DWORD*)&states->tex_transformflags[i]);
+	}
+
+	device->GetFVF((DWORD*) &states->vertexattribs);
+	
+	for (int i = 0; i < 4; ++i) {
+		CComPtr<IDirect3DVertexBuffer9> vertexBuffer;
+		UINT offsetBytes, stride;
+		device->GetStreamSource(i, &vertexBuffer, &offsetBytes, &stride);
+
+		if (states->vertexbuffers[i]) {
+			DeleteVertexBufferAdapter(states->vertexbuffers[i]);
+			states->vertexbuffers[i] = nullptr;
+		}
+
+		if (vertexBuffer) {
+			IDirect3DVertexBuffer9* vbRaw = vertexBuffer;
+			vbRaw->AddRef(); // TODO: Check the ownership semantics here...
+			states->vertexbuffers[i] = CreateVertexBufferAdapter(vbRaw);
+		}
+
+		states->vertexstrides[i] = stride;
+	}
+
+	CComPtr<IDirect3DIndexBuffer9> indexBuffer;
+	device->GetIndices(&indexBuffer);
+
+	if (states->indexbuffer) {
+		DeleteIndexBufferAdapter(states->indexbuffer);
+		states->indexbuffer = nullptr;
+	}
+
+	if (indexBuffer) {
+		IDirect3DIndexBuffer9* indexBufferRaw = indexBuffer;
+		indexBufferRaw->AddRef();
+		states->indexbuffer = CreateIndexBufferAdapter(indexBufferRaw);
+	}
+
+	*addresses.renderStates = *addresses.comittedStates;
 }

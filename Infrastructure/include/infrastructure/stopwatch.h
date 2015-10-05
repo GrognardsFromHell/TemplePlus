@@ -7,19 +7,21 @@
 
 class Stopwatch {
 public:
+	using Clock = std::chrono::high_resolution_clock;
+
 	Stopwatch() {
-		mStart = std::chrono::high_resolution_clock::now();
+		mStart = Clock::now();
 	}
 
 	int GetElapsedMs() const {
 		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-			std::chrono::high_resolution_clock::now() - mStart
+			Clock::now() - mStart
 		);
 		return (int) duration.count();
 	}
 
 private:
-	std::chrono::time_point<std::chrono::high_resolution_clock> mStart;
+	std::chrono::time_point<Clock> mStart;
 };
 
 class StopwatchReporter {

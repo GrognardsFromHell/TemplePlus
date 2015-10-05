@@ -2,6 +2,7 @@
 #include "common.h"
 #include "d20_obj_registry.h"
 #include "description.h"
+#include "util/fixes.h"
 
 
 class D20ObjRegistrySystem  d20ObjRegistrySys;

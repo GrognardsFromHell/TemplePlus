@@ -17,6 +17,7 @@
 #include <python/python_object.h>
 #include <condition.h>
 #include <critter.h>
+#include <util/fixes.h>
 //#include <condition.h>
 
 temple::GlobalPrimitive<ItemCreationType, 0x10BEDF50> itemCreationType;

@@ -21,7 +21,7 @@ struct TemplePlusConfig
 	RngType rngType = RngType::MERSENNE_TWISTER; // Previously: -rng
 	bool showDialogLineNos = false; // Previously: -dialognumber
 	uint32_t scrollDistance = 10; // Not really sure what this is used for. Previously: -scrolldist
-	string defaultModule = "ToEE"; // Previousl: -mod: 
+	std::string defaultModule = "ToEE"; // Previousl: -mod: 
 	bool disableFogOfWar = false; // Previously: -nofog
 	bool skipIntro = true;
 	bool skipLegal = true;
@@ -33,11 +33,11 @@ struct TemplePlusConfig
 	int windowHeight = 768;
 	int renderWidth = 1024;
 	int renderHeight = 768;
-	wstring toeeDir;
+	std::wstring toeeDir;
 	int sectorCacheSize = 128; // Default is 16
 	int screenshotQuality = 80; // 1-100, Default is 80
 
-	vector<string> additionalTioPaths; // Add these to the Python sys.path variable
+	std::vector<std::string> additionalTioPaths; // Add these to the Python sys.path variable
 	
 	// This is some crazy editor stuff leftover from worlded
 	bool editor = false;

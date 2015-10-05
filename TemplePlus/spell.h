@@ -1,10 +1,9 @@
 #pragma once
 
-#include "stdafx.h"
 #include "common.h"
 #include "idxtables.h"
 #include "tig\tig_mes.h"
-
+#include "spell_structs.h"
 
 struct PickerArgs;
 

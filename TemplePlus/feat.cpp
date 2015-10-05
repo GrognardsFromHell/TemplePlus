@@ -10,6 +10,7 @@
 #include "weapon.h"
 #include "critter.h"
 #include "tab_file.h"
+#include "util/fixes.h"
 
 
 TabFileStatus featPropertiesTabFile;

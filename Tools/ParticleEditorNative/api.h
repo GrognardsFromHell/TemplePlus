@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <d3d9.h>
+#include <platform/d3d.h>
 
 #define API __declspec(dllexport)
 

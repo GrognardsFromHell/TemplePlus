@@ -105,7 +105,7 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 	}
 	else
 	{
-		hooked_print_debug_message("Attempted D20Status Init for non-critter %s", description.getDisplayName(objHnd));
+		logger->info("Attempted D20Status Init for non-critter {}", description.getDisplayName(objHnd));
 		debugLol++;
 		if (debugLol % 1000 == 1)
 		{
@@ -163,7 +163,7 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 void D20StatusSystem::D20StatusRefresh(objHndl objHnd)
 {
 	Dispatcher *dispatcher; 
-	hooked_print_debug_message("Refreshing D20 Status for %s", description.getDisplayName(objHnd));
+	logger->info("Refreshing D20 Status for {}", description.getDisplayName(objHnd));
 	dispatcher = objects.GetDispatcher(objHnd);
 	if (dispatch.dispatcherValid(dispatcher)){
 		dispatch.PackDispatcherIntoObjFields(objHnd, dispatcher);

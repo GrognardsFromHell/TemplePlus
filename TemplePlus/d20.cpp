@@ -258,7 +258,7 @@ void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t 
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (!dispatch.dispatcherValid(dispatcher))
 	{
-		hooked_print_debug_message("d20SendSignal(): Object %s (%I64x) lacks a Dispatcher", description._getDisplayName(objHnd, objHnd), objHnd);
+		logger->info("d20SendSignal(): Object {} ({}) lacks a Dispatcher", description._getDisplayName(objHnd, objHnd), objHnd);
 		return;
 	}
 	dispIO.dispIOType = dispIoTypeSendSignal;
@@ -273,7 +273,7 @@ void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, D20Actn*
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (!dispatch.dispatcherValid(dispatcher))
 	{
-		hooked_print_debug_message("d20SendSignal(): Object %s (%I64x) lacks a Dispatcher", description._getDisplayName(objHnd, objHnd), objHnd);
+		logger->info("d20SendSignal(): Object {} ({}) lacks a Dispatcher", description._getDisplayName(objHnd, objHnd), objHnd);
 		return;
 	}
 	dispIO.dispIOType = dispIoTypeSendSignal;
@@ -287,7 +287,7 @@ void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, objHndl 
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (!dispatch.dispatcherValid(dispatcher))
 	{
-		hooked_print_debug_message("d20SendSignal(): Object %s (%I64x) lacks a Dispatcher", description._getDisplayName(objHnd, objHnd), objHnd);
+		logger->info("d20SendSignal(): Object {} ({}) lacks a Dispatcher", description._getDisplayName(objHnd, objHnd), objHnd);
 		return;
 	}
 	dispIO.dispIOType = dispIoTypeSendSignal;
@@ -438,7 +438,7 @@ uint32_t D20System::tumbleCheck(D20Actn* d20a)
 	if (d20QueryWithData(d20a->d20ATarget, DK_QUE_Critter_Has_Spell_Active, 407, 0)) return 0; // spell_sanctuary active
 	if (actSeq->isPerforming(d20a->d20APerformer))
 	{
-		hooked_print_debug_message("movement aoo while performing...\n");
+		logger->info("movement aoo while performing...\n");
 		return 0;
 	}
 	if (!d20QueryWithData(d20a->d20ATarget, DK_QUE_AOOIncurs, (uint32_t)(d20a->d20APerformer & 0xFFFFffff), (uint32_t)(d20a->d20APerformer >> 32))){ return 0; }

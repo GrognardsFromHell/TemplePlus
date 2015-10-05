@@ -13,6 +13,7 @@
 #include "turn_based.h"
 #include "util/config.h"
 #include "critter.h"
+#include "util/fixes.h"
 
 
 class ActnSeqReplacements : public TempleFix
@@ -508,7 +509,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	LocAndOffsets * actSeqPerfLoc;
 	ActionCostPacket actCost;
 
-	//hooked_print_debug_message("Parsing move sequence for %s, d20 action %s", description.getDisplayName(d20aIn->d20APerformer), d20ActionNames[d20aIn->d20ActType]);
+	//logger->info("Parsing move sequence for {}, d20 action {}", description.getDisplayName(d20aIn->d20APerformer), d20ActionNames[d20aIn->d20ActType]);
 	
 	memcpy(&tbStatCopy, tbStat, sizeof(TurnBasedStatus));
 	seqCheckFuncs(&tbStatCopy);
@@ -577,7 +578,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	if (! pathfinding->FindPath(&pathQ, pqResult))
 	{
 		if (pqResult->flags & 0x10) *pathfindingSys.pathSthgFlag_10B3D5C8 = 1;
-		hooked_print_debug_message("\nFAILED PATH...");
+		logger->info("\nFAILED PATH...");
 		if (pqResult >= pathfindingSys.pathQArray && pqResult < &pathfindingSys.pathQArray[pfCacheSize]) 
 			pqResult->occupiedFlag = 0;
 		return 0x9;
@@ -767,6 +768,10 @@ const char* ActionSequenceSystem::ActionErrorString(uint32_t actnErrorCode)
 	return mesLine.value;
 }
 
+std::ostream &operator<<(std::ostream &os, const ActnSeq *d) {
+	return os << reinterpret_cast<uint32_t>(d);
+}
+
 uint32_t ActionSequenceSystem::AllocSeq(objHndl objHnd)
 {
 	// finds an available sequence and allocates it to objHnd
@@ -777,12 +782,15 @@ uint32_t ActionSequenceSystem::AllocSeq(objHndl objHnd)
 		if ( (actSeqArray[i].seqOccupied & 1 ) == 0)
 		{
 			*actSeqCur = &actSeqArray[i];
-			if (combat->isCombatActive())	hooked_print_debug_message("\nSequence Allocate[%d](%x)(%I64x): Resetting Sequence. \n", i, *actSeqCur, objHnd);
+			if (combat->isCombatActive())
+				logger->info("\nSequence Allocate[{}]({:x})({:x}): Resetting Sequence. \n", 
+					i, (void*)*actSeqCur, objHnd);
 			curSeqReset(objHnd);
 			return 1;
 		} 
 	}
-	hooked_print_debug_message("\nSequence Allocation for (%I64x) failed!  \nBad things imminent. All sequences were taken!\n",  *actSeqCur, objHnd);
+	logger->info("\nSequence Allocation for {:x} failed!  \nBad things imminent. All sequences were taken!\n", 
+		(void*)*actSeqCur, objHnd);
 	return 0;
 }
 
@@ -795,10 +803,10 @@ uint32_t ActionSequenceSystem::AssignSeq(objHndl objHnd)
 		{
 			if (prevSeq != nullptr)
 			{
-				hooked_print_debug_message("\nPushing sequence from for %s (%I64x) to %s (%I64x)", object->description._getDisplayName(prevSeq->performer, prevSeq->performer), prevSeq->performer, object->description._getDisplayName(objHnd, objHnd), objHnd);
+				logger->info("\nPushing sequence from for {} ({:x}) to {} ({:x})", object->description._getDisplayName(prevSeq->performer, prevSeq->performer), prevSeq->performer, object->description._getDisplayName(objHnd, objHnd), objHnd);
 			} else
 			{
-				hooked_print_debug_message("\nAllocating sequence for %s (%I64x) ", object->description._getDisplayName(objHnd, objHnd), objHnd);
+				logger->info("\nAllocating sequence for {} ({:x}) ", object->description._getDisplayName(objHnd, objHnd), objHnd);
 			}
 		}
 		(*actSeqCur)->prevSeq = prevSeq;
@@ -1140,7 +1148,8 @@ uint32_t ActionSequenceSystem::curSeqNext()
 {
 	ActnSeq* curSeq = *actSeqCur;
 	curSeq->seqOccupied &= 0xffffFFFE; //unset "occupied" flag
-	hooked_print_debug_message("\nSequence Completed for %s (%I64x) (sequence %x)",description._getDisplayName(curSeq->performer, curSeq->performer), curSeq->performer, curSeq);
+	logger->info("\nSequence Completed for {} ({}) (sequence {})",
+		description._getDisplayName(curSeq->performer, curSeq->performer), curSeq->performer, (void*)curSeq);
 
 	return _curSeqNext();
 }
@@ -1162,7 +1171,7 @@ void ActionSequenceSystem::actionPerform()
 		if (objects.IsUnconscious(performer))
 		{
 			curSeq->d20ActArrayNum = curSeq->d20aCurIdx;
-			hooked_print_debug_message("\nUnconscious actor %s - cutting sequence", objects.description._getDisplayName(performer, performer));
+			logger->info("\nUnconscious actor {} - cutting sequence", objects.description._getDisplayName(performer, performer));
 		}
 		if (curSeq->d20aCurIdx >= (int32_t)curSeq->d20ActArrayNum) break;	
 		
@@ -1175,7 +1184,8 @@ void ActionSequenceSystem::actionPerform()
 			
 			mesLine.key = errCode + 1000;
 			mesFuncs.GetLine_Safe(*actionMesHandle, &mesLine);
-			hooked_print_debug_message("Action unavailable for %s (%I64x): %s\n", objects.description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer, mesLine.value );
+			logger->info("Action unavailable for {} ({}): {}\n", 
+				objects.description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer, mesLine.value );
 			*actnProcState = errCode;
 			curSeq->tbStatus.errCode = errCode;
 			objects.floats->floatMesLine(performer, 1, FloatLineColor::Red, mesLine.value);
@@ -1191,7 +1201,7 @@ void ActionSequenceSystem::actionPerform()
 		{
 			if ( d20->D20ActionTriggersAoO(d20a, &tbStatus) && AOOSthg2_100981C0(d20a->d20APerformer))
 			{
-				hooked_print_debug_message("\nSequence Preempted %s (%I64x)", description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
+				logger->info("\nSequence Preempted {} ({})", description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
 				--*(curIdx);
 				sequencePerform();
 			} else
@@ -1199,7 +1209,7 @@ void ActionSequenceSystem::actionPerform()
 				memcpy(&curSeq->tbStatus, &tbStatus, sizeof(tbStatus));
 				*(uint32_t*)(&curSeq->tbStatus.tbsFlags) |= (uint32_t)D20CAF_NEED_ANIM_COMPLETED;
 				InterruptSthg_10099360(d20a);
-				hooked_print_debug_message("\nPerforming action for %s (%I64x)", description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
+				logger->info("\nPerforming action for {} ({})", description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
 				d20->d20Defs[d20a->d20ActType].performFunc(d20a);
 				InterruptSthg_10099320(d20a);
 			}
@@ -1227,28 +1237,28 @@ void ActionSequenceSystem::sequencePerform()
 	if (*actnProc_10B3D5A0){ return; }
 	if (!actSeqOkToPerform())
 	{
-		hooked_print_debug_message("Sequence given while performing previous action - aborted. \n");
+		logger->info("Sequence given while performing previous action - aborted. \n");
 		d20->D20ActnInit(d20->globD20Action->d20APerformer, d20->globD20Action);
 		return;
 	}
 	ActnSeq * curSeq = *actSeqCur;
 	if (combat->isCombatActive() || !actSeqSpellHarmful(curSeq) || !combatTriggerSthg(curSeq) ) // POSSIBLE BUG: I think this can cause spells to be overridden (e.g. when the temple priests prebuff simulataneously with you, and you get the spell effect instead) TODO
 	{
-		hooked_print_debug_message("\n%s performing sequence...", description._getDisplayName(curSeq->performer, curSeq->performer));
+		logger->info("\n{} performing sequence...", description._getDisplayName(curSeq->performer, curSeq->performer));
 		if (isSimultPerformer(curSeq->performer))
 		{ 
-			hooked_print_debug_message("simultaneously...");
+			logger->info("simultaneously...");
 			if (!simulsOk(curSeq))
 			{
-				if (simulsAbort(curSeq->performer)) hooked_print_debug_message("sequence not allowed... aborting simuls (pending).\n");
-				else hooked_print_debug_message("sequence not allowed... aborting subsequent simuls.\n");
+				if (simulsAbort(curSeq->performer)) logger->info("sequence not allowed... aborting simuls (pending).\n");
+				else logger->info("sequence not allowed... aborting subsequent simuls.\n");
 				return;
 			}
-			hooked_print_debug_message("succeeded...\n");
+			logger->info("succeeded...\n");
 			
 		} else
 		{
-			hooked_print_debug_message("independently.\n");
+			logger->info("independently.\n");
 		}
 		*actnProcState = 0;
 		curSeq->seqOccupied |= 1;
@@ -1333,7 +1343,7 @@ uint32_t ActionSequenceSystem::simulsOk(ActnSeq* actSeq)
 	{
 		*numSimultPerformers = 0;
 		*simultPerformerQueue = 0i64;
-		hooked_print_debug_message("first simul actor, proceeding");
+		logger->info("first simul actor, proceeding");
 
 	}
 	return 1;
@@ -1361,7 +1371,7 @@ uint32_t ActionSequenceSystem::simulsAbort(objHndl objHnd)
 			else{
 				*numSimultPerformers = *simulsIdx;
 				memcpy(tbStatus118CD3C0, &(*actSeqCur)->tbStatus, sizeof(TurnBasedStatus));
-				hooked_print_debug_message("Simul aborted %s (%d)", description._getDisplayName(objHnd, objHnd), *simulsIdx);
+				logger->info("Simul aborted {} ({})", description._getDisplayName(objHnd, objHnd), *simulsIdx);
 				return 1;
 			}
 		}

@@ -20,7 +20,7 @@
 #include "d20.h"
 #include "movies.h"
 #include "textbubbles.h"
-#include "graphics.h"
+#include "graphics/graphics.h"
 #include "party.h"
 #include "sound.h"
 #include "ui/ui.h"
@@ -560,7 +560,7 @@ PyObject* PyGame_ObjCreate(PyObject*, PyObject* args) {
 	// Use mouse position if no location was given
 	if (loc.locx == 0 && loc.locy == 0) {
 		auto mousePos = mouseFuncs.GetPos();
-		if (!graphics.ScreenToTile(mousePos.x, mousePos.y, loc)) {
+		if (!graphics->ScreenToTile(mousePos.x, mousePos.y, loc)) {
 			PyErr_SetString(PyExc_RuntimeError, "Could not get tile at mouse position to place object.");
 			return 0;
 		}
@@ -803,7 +803,7 @@ PyObject* PyGame_Shake(PyObject*, PyObject* args) {
 		return 0;
 	}
 
-	graphics.ShakeScreen(amount, duration);
+	graphics->ShakeScreen(amount, duration);
 	Py_RETURN_NONE;
 }
 

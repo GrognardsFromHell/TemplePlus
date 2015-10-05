@@ -13,7 +13,7 @@
 
 // This version only supports UNICODE.
 
-#include "infrastructure/dxerr.h"
+#include "platform/dxerr.h"
 
 #include <stdio.h>
 

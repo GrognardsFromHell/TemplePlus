@@ -9,6 +9,7 @@
 #include "critter.h"
 #include "party.h"
 #include "obj.h"
+#include "util/fixes.h"
 
 struct UiIntgameTurnbasedAddresses : temple::AddressTable
 {
