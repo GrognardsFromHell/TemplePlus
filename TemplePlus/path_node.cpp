@@ -665,25 +665,11 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 
 	// find the from/to nodes
 	pnIterator = pathNodeList;
-	int foundStatus = 0;
-	while (foundStatus != 3 && pnIterator )
-	{
-		if (pnIterator->node.id == fromNodeId)
-		{
-			memcpy(&fromNode, &pnIterator->node, sizeof(MapPathNode));
-			foundStatus |= 1;
-		}
-			
-		else if (pnIterator->node.id == toNodeId)
-		{
-			memcpy(&toNode, &pnIterator->node, sizeof(MapPathNode));
-			foundStatus |= 2;
-		}
-			
-		pnIterator = pnIterator->next;
-	}
-	if (foundStatus != 3)
+	if (!pathNodeSys.GetPathNode(fromNodeId, &fromNode))
 		return 0;
+	if (!pathNodeSys.GetPathNode(toNodeId, &toNode))
+		return 0;
+	
 
 
 	// determine if the pathnodes are using the supplemental information of Actual Travel Distance (NEW! TemplePlus only)
@@ -700,7 +686,7 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 
 
 	// begin the A* algorithm
-	float distFromTo = locSys.distBtwnLocAndOffs(fromNode.nodeLoc, toNode.nodeLoc);
+	float distFromTo = locSys.distBtwnLocAndOffs(fromNode.nodeLoc, toNode.nodeLoc)/12.0;
 	
 	FindPathNodeData fpMinCumul;
 	fpMinCumul.nodeId = fromNodeId;
@@ -720,13 +706,11 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 		return 0;
 	}
 
-	MapPathNodeList * neighbourListEntry;
 	MapPathNode minCumulNode, neighNode;
 	FindPathNodeData fpTemp, refererNode;
 
 	while(fpMinCumul.nodeId != toNodeId)
 	{
-		neighbourListEntry = pathNodeList;
 
 		// find the matching Path Node
 		pathNodeSys.GetPathNode(fpMinCumul.nodeId, &minCumulNode);
@@ -744,12 +728,13 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 			
 
 			// calculate its heuristic
-			fpTemp.distTo = locSys.distBtwnLocAndOffs(neighNode.nodeLoc, toNode.nodeLoc);
-			fpTemp.distFrom = locSys.distBtwnLocAndOffs(fromNode.nodeLoc, neighNode.nodeLoc);
+			fpTemp.distTo = locSys.distBtwnLocAndOffs(neighNode.nodeLoc, toNode.nodeLoc) / 12.0;
+			fpTemp.distFrom = locSys.distBtwnLocAndOffs(fromNode.nodeLoc, neighNode.nodeLoc) / 12.0;
 			fpTemp.distCumul = fpMinCumul.distCumul + fpTemp.distTo + fpTemp.distFrom;
 			if (useActualDistances)
 			{
 				fpTemp.distActualTotal = fpMinCumul.distActualTotal + minCumulNode.neighDistances[i];
+				fpTemp.heuristic = fpTemp.distActualTotal + fpTemp.distTo;
 			}
 				
 

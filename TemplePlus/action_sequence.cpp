@@ -783,13 +783,12 @@ uint32_t ActionSequenceSystem::AllocSeq(objHndl objHnd)
 		{
 			*actSeqCur = &actSeqArray[i];
 			if (combat->isCombatActive())
-				logger->info("\nSequence Allocate[{}]({:x})({:x}): Resetting Sequence. \n", 
-					i, (void*)*actSeqCur, objHnd);
+				logger->info("\nSequence Allocate[{}]({})({:x}): Resetting Sequence. \n", i, (void*)*actSeqCur, objHnd);
 			curSeqReset(objHnd);
 			return 1;
 		} 
 	}
-	logger->info("\nSequence Allocation for {:x} failed!  \nBad things imminent. All sequences were taken!\n", 
+	logger->info("\nSequence Allocation for {} failed!  \nBad things imminent. All sequences were taken!\n", 
 		(void*)*actSeqCur, objHnd);
 	return 0;
 }
