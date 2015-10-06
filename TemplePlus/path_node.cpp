@@ -71,6 +71,12 @@ void PathNodeSys::RecipDebug()
 		}
 		node = node->next;
 	}
+
+	bool isFixable = true;
+	if (n>0)
+	{
+		logger->info("There are {} nodes with non-reciprocating neighbours.", n);
+	}
 	for (int i = 0; i < n; i++)
 	{
 		for (int j = 0; j < oneSided[i].numNonRecip; j++)
@@ -118,10 +124,22 @@ void PathNodeSys::RecipDebug()
 					oneSided[i].distances2[j] = pathLen2;
 				} 
 				else
+				{
+					isFixable = false;
 					oneSided[i].distances2[j] = -1.0;
+				}
+					
 			}
 
 		}
+	}
+
+	if (!isFixable)
+	{
+		logger->info("Cannot reform all non-reciprocating path nodes!");
+	} else if (n > 0)
+	{
+		logger->info("Can reform all {} nodes with non-reciprocating neighbours.",n);
 	}
 
 	// hommlet results:
@@ -429,7 +447,7 @@ void PathNodeSys::RecalculateAllNeighbours()
 		}
 		node = node->next;
 	}
-
+	logger->info("Finished recalculating neighbours. Max neighbours is {}", maxNeighbours);
 	// verify reciprocity
 	node = pathNodeList;
 	while( node)
@@ -446,6 +464,7 @@ void PathNodeSys::RecalculateAllNeighbours()
 			}
 			if (!isReciprocal)
 			{
+				logger->info("Recalculate Neighbours - node {} has at least one shitty neighbour", node->node.id);
 				int dummy = 1;
 			}
 		}
@@ -474,7 +493,7 @@ BOOL PathNodeSys::FlushNodes()
 
 	char fileName[260];
 	char fileNameSupplem[260];
-	_snprintf(fileName, 260, "%s\\%s", pathNodesSaveDir, "pathnode.pnd");
+	_snprintf(fileName, 260, "%s\\%s", pathNodesSaveDir, "pathnodenew.pnd");
 	_snprintf(fileNameSupplem, 260, "%s\\%s", pathNodesSaveDir, "pathnodedist.pnd");
 	auto file = tio_fopen(fileName, "wb");
 	if (!file)

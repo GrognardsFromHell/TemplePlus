@@ -34,7 +34,7 @@ struct TemplePlusConfig
 	int renderWidth = 1024;
 	int renderHeight = 768;
 	std::wstring toeeDir;
-	int sectorCacheSize = 128; // Default is 16
+	int sectorCacheSize = 128; // Default is now 128 (ToEE was 16)
 	int screenshotQuality = 80; // 1-100, Default is 80
 
 	std::vector<std::string> additionalTioPaths; // Add these to the Python sys.path variable

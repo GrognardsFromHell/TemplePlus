@@ -274,6 +274,7 @@
     <ClCompile Include="fixes\keyboard.cpp" />
     <ClCompile Include="graphics\graphics.cpp" />
     <ClCompile Include="graphics\video_hooks.cpp" />
+    <ClCompile Include="worldmap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />

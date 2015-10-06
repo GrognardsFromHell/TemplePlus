@@ -1,8 +1,12 @@
 #include "stdafx.h"
 #include "ui.h"
 #include "tig/tig.h"
+#include <util/fixes.h>
 
 Ui ui;
+
+
+
 
 #pragma region UI System Specification
 /*
@@ -95,6 +99,89 @@ static struct UiFuncs : temple::AddressTable {
 		rebase(loadGameCallback, 0x103072C8);
 	}
 } uiFuncs;
+
+
+class UiReplacement : TempleFix
+{
+public:
+
+	static Widget* WidgetGet( int widIdx)
+	{
+		if (widIdx >= 0 && widIdx < ACTIVE_WIDGET_CAP)
+		{
+			Widget * widg = uiFuncs.activeWidgets[widIdx];
+			return widg;
+		}
+		return nullptr;
+	};
+
+	
+	static WidgetType2 * GetButton(int widId)
+	{
+		WidgetType2 * result = (WidgetType2 *)WidgetGet(widId);
+		if (!result || result->type != 2)
+			return nullptr;
+		return result;
+
+	}
+	
+	static int WidgetRemove(int widId)
+	{
+		return reinterpret_cast<int(*)(int)>(temple::GetPointer<0x101F9420>())(widId);
+	}
+
+	static int WidgetType1RemoveChild(int parentId, int widId)
+	{
+		WidgetType1 * parent = (WidgetType1*)WidgetGet(parentId);
+		if (parent && parent->type == 1)
+		{
+			for (int i = 0; i < parent->childrenCount;i++)
+			{
+				if (parent->children[i] == widId)
+				{
+					memcpy(&parent->children[i], &parent->children[i + 1], sizeof(int)* (parent->childrenCount - i - 1));
+					parent->childrenCount--;
+					auto child = WidgetGet(widId);
+					if (child)
+						child->parentId = -1;
+					return 0;
+				}
+			}
+		}
+		return 1;
+	};
+
+	/*
+		removes widget, incluing removing it from its parent's children list
+	*/
+	static int WidgetRemoveRegardParent(int widIdx)
+	{
+		Widget* widg = WidgetGet(widIdx);
+		if (widg)
+		{
+			auto parent = widg->parentId;
+			if (parent == -1)
+				return WidgetRemove(widIdx);
+			if (parent >= 0 && parent < ACTIVE_WIDGET_CAP)
+			{
+				if (WidgetType1RemoveChild(parent, widIdx) == 0)
+					return WidgetRemove(widIdx);
+			}
+		}
+		return 1;
+	}
+
+	const char* name() override
+	{
+		return "UiSys" "Function Replacements";
+	}
+	void apply() override
+	{
+		replaceFunction(0x101F94D0, WidgetRemoveRegardParent);
+		replaceFunction(0x101F90E0, WidgetGet);
+		replaceFunction(0x101F9570, GetButton);
+	}
+} uiReplacement;
 
 static UiSystem& getUiSystem(const char* name) {
 	// Search for the ui system to replace
