@@ -112,6 +112,7 @@
     <ClCompile Include="dispatcher.cpp" />
     <ClCompile Include="faction.cpp" />
     <ClCompile Include="feat.cpp" />
+    <ClCompile Include="ui_worldmap.cpp" />
     <ClCompile Include="util\fixes.cpp" />
     <ClCompile Include="util\folderutils.cpp" />
     <ClCompile Include="gamelib_load.cpp" />

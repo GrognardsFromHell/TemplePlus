@@ -275,6 +275,7 @@
     <ClCompile Include="graphics\graphics.cpp" />
     <ClCompile Include="graphics\video_hooks.cpp" />
     <ClCompile Include="worldmap.cpp" />
+    <ClCompile Include="ui_worldmap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamesystems.h" />
