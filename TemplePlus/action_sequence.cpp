@@ -305,7 +305,7 @@ ActionSequenceSystem::ActionSequenceSystem()
 	rebase(_actSeqSpellHarmful, 0x1008AD10);
 	rebase(_sub_1008BB40, 0x1008BB40);
 	rebase(getRemainingMaxMoveLength, 0x1008B8A0);
-	rebase(sub_1008B9A0, 0x1008B9A0);
+	rebase(TrimPathToRemainingMoveLength_1008B9A0, 0x1008B9A0);
 
 	rebase(_CrossBowSthgReload_1008E8A0, 0x1008E8A0);
 
@@ -575,6 +575,10 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 
 
 	*pathfindingSys.pathSthgFlag_10B3D5C8 = 0;
+	if ( (d20aCopy.d20Caf & D20CAF_CHARGE ) || d20a->d20ActType == D20A_RUN || d20a->d20ActType == D20A_DOUBLE_MOVE)
+	{
+		*(int*)&pathQ.flags |= PQF_DONT_USE_PATHNODES; // so it runs in a straight line
+	}
 	if (! pathfinding->FindPath(&pathQ, pqResult))
 	{
 		if (pqResult->flags & 0x10) *pathfindingSys.pathSthgFlag_10B3D5C8 = 1;
@@ -644,7 +648,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		if (static_cast<long double>(remainingMaxMoveLength) < pathLength)
 		{
 			auto temp = 1;;
-			if (sub_1008B9A0(&d20aCopy, remainingMaxMoveLength, &pathQ)){ releasePath(d20aCopy.path); return temp; }
+			if (TrimPathToRemainingMoveLength_1008B9A0(&d20aCopy, remainingMaxMoveLength, &pathQ)){ releasePath(d20aCopy.path); return temp; }
 			pqResult = d20aCopy.path;
 			pathLength = remainingMaxMoveLength;
 		}
@@ -783,13 +787,12 @@ uint32_t ActionSequenceSystem::AllocSeq(objHndl objHnd)
 		{
 			*actSeqCur = &actSeqArray[i];
 			if (combat->isCombatActive())
-				logger->info("\nSequence Allocate[{}]({:x})({:x}): Resetting Sequence. \n", 
-					i, (void*)*actSeqCur, objHnd);
+				logger->info("\nSequence Allocate[{}]({})({:x}): Resetting Sequence. \n", i, (void*)*actSeqCur, objHnd);
 			curSeqReset(objHnd);
 			return 1;
 		} 
 	}
-	logger->info("\nSequence Allocation for {:x} failed!  \nBad things imminent. All sequences were taken!\n", 
+	logger->info("\nSequence Allocation for {} failed!  \nBad things imminent. All sequences were taken!\n", 
 		(void*)*actSeqCur, objHnd);
 	return 0;
 }

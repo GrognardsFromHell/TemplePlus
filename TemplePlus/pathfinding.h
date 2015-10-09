@@ -45,7 +45,7 @@ enum PathQueryFlags : uint32_t {
 	PQF_IGNORE_CRITTERS = 0x80, // path (pass) through critters (flag is set when pathing out of combat)
 	PQF_100 = 0x100,
 	PQF_200 = 0x200,
-	PQF_400 = 0x400, // something to do with the type of object
+	PQF_DOORS_ARE_BLOCKING = 0x400, // if set, it will consider doors to block the path
 	PQF_800 = 0x800,
 
 
@@ -74,7 +74,8 @@ enum PathQueryFlags : uint32_t {
 	PQF_ALLOW_ALTERNATIVE_TARGET_TILE = 0x40000,
 
 	// Appears to mean that pathfinding should obey the time limit
-	PQF_A_STAR_TIME_CAPPED = 0x80000 // it is set when the D20 action has the flag D20CAF_TRUNCATED
+	PQF_A_STAR_TIME_CAPPED =			  0x80000, // it is set when the D20 action has the flag D20CAF_TRUNCATED
+	PQF_IGNORE_CRITTERS_ON_DESTINATION = 0x800000 // NEW! makes it ignored critters on the PathDestIsClear function
 
 	// used in practice for unspecified move:
 	// with target critter
@@ -90,7 +91,7 @@ enum PathQueryFlags : uint32_t {
 	PQF_IGNORE_CRITTERS = 0 
 	PQF_100 = 0,
 	PQF_200 = 0,
-	PQF_400 = 0, // something to do with the type of object
+	PQF_DOORS_ARE_BLOCKING = 0, // something to do with the type of object
 	PQF_800 = 1,
 	*/
 
@@ -191,7 +192,7 @@ struct Pathfinding : temple::AddressTable {
 	LocationSys * loc;
 	PathNodeSys * pathNode;
 
-	PathResultCache pathCache[40]; // 40 entries, used as a ring buffer
+	PathResultCache pathCache[PATH_RESULT_CACHE_SIZE]; // used as a ring buffer
 	int pathCacheIdx;
 	int pathCacheCleared;
 	
@@ -205,7 +206,7 @@ struct Pathfinding : temple::AddressTable {
 	PathQueryResult * pathQArray;
 	uint32_t * pathSthgFlag_10B3D5C8;
 
-	float pathLength(Path *path); // note: unlike the ToEE function, returns a float (and NOT to the FPU!)
+	float pathLength(Path *path); // path length in feet; note: unlike the ToEE function, returns a float (and NOT to the FPU!)
 	bool pathQueryResultIsValid(PathQueryResult *pqr);
 
 	Pathfinding();
@@ -223,7 +224,7 @@ struct Pathfinding : temple::AddressTable {
 	int(__cdecl*FindPathBetweenNodes)(int fromNodeId, int toNodeId, void*, int maxChainLength); // finds the node IDs for the To -> .. -> From course (locally optimal I think? Is this A*?); return value is chain length
 
 
-	bool GetAlternativeTargetLocation(PathQueryResult* pqr, PathQuery* pq);
+	bool GetAlternativeTargetLocation(Path* pqr, PathQuery* pq);
 
 
 

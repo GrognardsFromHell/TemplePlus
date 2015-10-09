@@ -73,7 +73,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	int GetHourglassTransition(int hourglassCurrent, int hourglassCost);
 	int ActionSequenceChecksWithPerformerLocation();
 	void ActionSequenceRevertPath(int d20ANum);
-	int (__cdecl *sub_1008B9A0)(D20Actn *d20a, float float1, PathQuery *pathQ);
+	int (__cdecl *TrimPathToRemainingMoveLength_1008B9A0)(D20Actn *d20a, float remainingMoveLength, PathQuery *pathQ);
 	void sub_1008BB40(ActnSeq*actSeq, D20Actn * d20a); // actSeq@<ebx>
 	int(CrossBowSthgReload_1008E8A0)(D20Actn *d20a, ActnSeq*actSeq); //, ActnSeq *actSeq@<ebx>
 	uint32_t SequencePathSthgSub_10096450(ActnSeq * actSeq, uint32_t idx, TurnBasedStatus* tbStat);

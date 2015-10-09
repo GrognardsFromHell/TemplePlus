@@ -5,6 +5,8 @@
 #include "tig/tig.h"
 #include <obj.h>
 
+#define ACTIVE_WIDGET_CAP 3000
+
 struct GameSystemConf;
 
 struct UiResizeArgs {
@@ -53,6 +55,22 @@ struct WidgetType1 : public Widget {
 	Examples: charmap_ui->c:203, options_ui->c:1342
 */
 struct WidgetType2 : public Widget {
+	int field7c;
+	int field80;
+	int field84;
+	int field88;
+	int field8C;
+	int field90;
+	int mouseState;
+	int field98;
+	int field9C;
+	int fieldA0;
+	int fieldA4;
+	int fieldA8;
+	int sndDown;
+	int sndClick;
+	int hoverOn;
+	int hoverOff;
 };
 
 /*
@@ -61,6 +79,19 @@ struct WidgetType2 : public Widget {
 	Only Example: wft\wft_scrollbar.c:138
 */
 struct WidgetType3 : public Widget {
+	int yMin;
+	int yMax;
+	int field84;
+	int field88;
+	int field8C;
+	int field90;
+	int field94;
+	int field98;
+	int field9C;
+	int fieldA0;
+	int fieldA4;
+	int fieldA8;
+	int fieldAC;
 };
 
 struct ActiveWidgetListEntry {
@@ -78,7 +109,7 @@ extern temple::GlobalPrimitive<ActiveWidgetListEntry*, 0x10EF68DC> activeWidgetA
 /*
 	The list of all active widgets
 */
-extern temple::GlobalPrimitive<Widget**, 0x10EF68E0> activeWidgets;
+extern temple::GlobalPrimitive<Widget**, 0x10EF68E0> activeWidgets; // [3000]
 extern temple::GlobalPrimitive<int, 0x10EF68D8> activeWidgetCount;
 
 struct ImgFile : temple::TempleAlloc {

@@ -246,7 +246,7 @@ enum D20CAF : uint32_t
 	D20CAF_COUNTERSPELLED =    0x8000000, //268435456,
 	D20CAF_THROWN_GRENADE =    0x10000000, //536870912,
 	D20CAF_FINAL_ATTACK_ROLL = 0x20000000, //1073741824,
-	D20CAF_TRUNCATED =         0x40000000, //0x80000000,
+	D20CAF_TRUNCATED =         0x40000000, //0x80000000,  indicates that the path has been truncated (since the destination was too far away)
 	D20CAF_UNNECESSARY =       0x80000000
 };
 

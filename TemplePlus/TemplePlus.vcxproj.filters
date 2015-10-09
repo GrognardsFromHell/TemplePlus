@@ -278,6 +278,8 @@
     <ClCompile Include="diag\diag.cpp" />
     <ClCompile Include="messages\messagequeue.cpp" />
     <ClCompile Include="fixes\messages.cpp" />
+    <ClCompile Include="worldmap.cpp" />
+    <ClCompile Include="ui_worldmap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />

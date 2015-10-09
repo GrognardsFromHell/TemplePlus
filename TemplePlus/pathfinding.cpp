@@ -98,7 +98,7 @@ public:
 float Pathfinding::pathLength(Path* path)
 {
 	float distTot;
-	if (path->flags & PQF_UNK2)	return loc->distBtwnLocAndOffs(path->to, path->from) / 12.0f;
+	if (path->flags & PF_STRAIGHT_LINE_SUCCEEDED)	return loc->distBtwnLocAndOffs(path->to, path->from) / 12.0f;
 	distTot = 0;
 	auto nodeFrom = path->from;
 	for (int i = 0; i < path->nodeCount; i++)
@@ -183,7 +183,7 @@ void Pathfinding::PathCachePush(PathQuery* pq, Path* pqr)
 	memcpy(&pathCache[pathCacheIdx++], pq, sizeof(PathQuery));
 
 	pathCacheCleared = 0;
-	if (pathCacheIdx >= 40)
+	if (pathCacheIdx >= PATH_RESULT_CACHE_SIZE)
 		pathCacheIdx = 0;
 }
 
@@ -240,7 +240,59 @@ void Pathfinding::PathCacheInit()
 
 int Pathfinding::PathDestIsClear(PathQuery* pq, objHndl mover, LocAndOffsets destLoc)
 {
-	return addresses.PathDestIsClear(pq, mover, destLoc);
+	ObjIterator objIt;
+	objIt.origin = destLoc;
+	objIt.targetLoc = destLoc;
+
+	*(int*)&objIt.flags |= (ObjItFlag_8 | ObjItFlag_10 | ObjItFlag_20);
+
+	if (mover)
+	{
+		*(int*)&objIt.flags |= (ObjItFlag_4 | ObjItFlag_2);
+		objIt.performer = mover;
+		objIt.radius = objects.GetRadius(mover);
+	}
+
+	ObjectType objType;
+	ObjectFlag objFlags;
+	auto pqFlags = pq->flags;
+	if (objIt.TargettingSthg_100BC750())
+	{
+
+		for (int i = 0; i < objIt.resultCount; i++)
+		{
+			if (!objIt.results[i].obj) // means it's a sector blocker
+				return 0;
+
+			objType = objects.GetType(objIt.results[i].obj);
+
+			if ((pqFlags & PQF_DOORS_ARE_BLOCKING) || objType != obj_t_portal)
+			{
+				objFlags = (ObjectFlag)objects.GetFlags(objIt.results[i].obj);
+				if (!(objFlags & OF_NO_BLOCK))
+				{
+					if ( (objType == obj_t_pc || objType == obj_t_npc ) 
+						&& !objects.IsUnconscious(objIt.results[i].obj) )
+					{
+						if ( (pqFlags & PQF_IGNORE_CRITTERS_ON_DESTINATION) == 0)
+						{
+							return 0;
+						}
+					}
+
+
+				}
+
+			}
+		}
+	}
+	//int result0 = addresses.PathDestIsClear(pq, mover, destLoc);
+	//if (!result0)
+	//{
+	//	int dummy = 1;
+	//}
+	return 1;
+
 }
 
 uint32_t Pathfinding::ShouldUsePathnodes(Path* pathQueryResult, PathQuery* pathQuery)
@@ -251,7 +303,7 @@ uint32_t Pathfinding::ShouldUsePathnodes(Path* pathQueryResult, PathQuery* pathQ
 	{
 		if (combatSys.isCombatActive())
 		{
-			if (locSys.distBtwnLocAndOffs(pathQueryResult->from, pathQueryResult->to) > (float)1200.0)
+			if (locSys.distBtwnLocAndOffs(pathQueryResult->from, pathQueryResult->to) > (float)600.0)
 			{
 				return true;
 			}
@@ -315,7 +367,7 @@ void Pathfinding::PathInit(Path* pqr, PathQuery* pq)
 	pqr->currentNode = 0;
 }
 
-bool Pathfinding::GetAlternativeTargetLocation(PathQueryResult* pqr, PathQuery* pq)
+bool Pathfinding::GetAlternativeTargetLocation(Path* pqr, PathQuery* pq)
 {
 	auto pqFlags = pq->flags;
 	if (!(pqFlags & PQF_ADJUST_RADIUS) 
@@ -435,7 +487,8 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 		pathNodeSys.GetPathNode(nodeIds[i], &nodeTemp1);
 		memcpy(&pathQueryLocal, pq, sizeof(PathQuery));
 		pathQueryLocal.flags = (PathQueryFlags)(
-			(uint32_t)pathQueryLocal.flags & (~PQF_ADJUST_RADIUS) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
+			(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
+			//(uint32_t)pathQueryLocal.flags | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
 			);
 		pathQueryLocal.from = from;
 		pathQueryLocal.to = nodeTemp1.nodeLoc;
@@ -444,18 +497,45 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 
 		memcpy(&pathQueryLocal, pq, sizeof(PathQuery));
 		pathQueryLocal.flags = (PathQueryFlags)(
-			(uint32_t)pathQueryLocal.flags & (~PQF_ADJUST_RADIUS) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
+			(uint32_t)pathQueryLocal.flags & (~ (PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
+			//(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
 			);
+
 		pathQueryLocal.from = from;
 		pathQueryLocal.to = nodeTemp1.nodeLoc;
 		pathLocal.from = from;
 		pathLocal.nodeCount = 0;
 		pathLocal.nodeCount2 = 0;
 		pathLocal.nodeCount3 = 0;
+		pathLocal.to = pathQueryLocal.to;
+
+		if (!GetAlternativeTargetLocation(&pathLocal, &pathQueryLocal)) // verifies that the destination is clear, and if not, tries to get an available tile
+		{
+			int dummmy = 1;
+		}
 
 		int nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
+		if (!nodeCountAdded)
+		{
+			memcpy(&pathQueryLocal, pq, sizeof(PathQuery));
+			pathQueryLocal.flags = (PathQueryFlags)(
+				(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS )) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
+				);
+			pathQueryLocal.from = from;
+			pathQueryLocal.to = nodeTemp1.nodeLoc;
+			pathLocal.from = from;
+			pathLocal.nodeCount = 0;
+			pathLocal.nodeCount2 = 0;
+			pathLocal.nodeCount3 = 0;
+			pathLocal.to = pathQueryLocal.to;
+
+			nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
+		}
 		if (!nodeCountAdded || (nodeCountAdded + nodeTotal > pq->maxShortPathFindLength))
+		{
 			return 0;
+		}
+			
 		memcpy(&path->nodes[nodeTotal], pathLocal.nodes, sizeof(LocAndOffsets) * nodeCountAdded);
 		nodeTotal += nodeCountAdded;
 		from = nodeTemp1.nodeLoc;
@@ -738,7 +818,7 @@ BOOL Pathfinding::PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffset
 			if (! (objFlags & OF_NO_BLOCK))
 			{
 				auto pathFlags = pq->flags;
-				if ( pathFlags & PQF_400 || objType)
+				if ( (pathFlags & PQF_DOORS_ARE_BLOCKING) || objType)
 				{
 					if (objType != obj_t_pc && objType != obj_t_npc)
 						break;

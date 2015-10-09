@@ -120,6 +120,7 @@
     <ClCompile Include="dispatcher.cpp" />
     <ClCompile Include="faction.cpp" />
     <ClCompile Include="feat.cpp" />
+    <ClCompile Include="ui_worldmap.cpp" />
     <ClCompile Include="util\fixes.cpp" />
     <ClCompile Include="util\folderutils.cpp" />
     <ClCompile Include="gamesystems\gamelib_load.cpp" />
@@ -156,6 +157,7 @@
     <ClCompile Include="ui\ui_char_highresfix.cpp" />
     <ClCompile Include="weapon.cpp" />
     <ClCompile Include="ui\ui_render.cpp" />
+    <ClCompile Include="worldmap.cpp" />
     <ClCompile Include="xp.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

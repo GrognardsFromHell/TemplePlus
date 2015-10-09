@@ -417,7 +417,7 @@ int AiSystem::BreakFree(AiTactic* aiTac)
 	d20aNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
 	if (!d20Sys.d20Query(performer, DK_QUE_Is_BreakFree_Possible))
 		return 0;
-	int spellId = d20Sys.d20QueryReturnData(performer, DK_QUE_Is_BreakFree_Possible, 0, 0);
+	int spellId = (int) d20Sys.d20QueryReturnData(performer, DK_QUE_Is_BreakFree_Possible, 0, 0);
 
 	locSys.getLocAndOff(aiTac->performer, &performerLoc);
 	if (combatSys.GetClosestEnemy(aiTac->performer, &performerLoc, &target, &dist, 0x21))

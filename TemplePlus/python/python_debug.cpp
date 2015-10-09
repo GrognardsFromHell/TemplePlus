@@ -6,6 +6,8 @@
 #include "../radialmenu.h"
 #include "feat.h"
 #include <ai.h>
+#include <path_node.h>
+#include <pathfinding.h>
 
 /*
 	Dumps all conditions from the global hashtable to a Wiki article.
@@ -174,12 +176,55 @@ PyObject *PyDebug_DumpAiTactics() {
 	return result;
 }
 
+
+PyObject *PyDebug_RecalculatePathNodeNeighbours()
+{
+	pathNodeSys.RecalculateAllNeighbours();
+	return PyLong_FromLongLong(1);
+}
+
+PyObject *PyDebug_FlushNodes()
+{
+	pathNodeSys.FlushNodes();
+	return PyLong_FromLongLong(1);
+}
+
+PyObject *PyDebug_ReciprocityDebug()
+{
+	pathNodeSys.RecipDebug();
+	return PyLong_FromLongLong(1);
+}
+
+PyObject *PyDebug_DestClear(PyObject*, PyObject* args)
+{
+	objHndl dude = 0;
+	LocAndOffsets loc ;
+	loc.location.locx = 0;
+	loc.location.locy = 0;
+	loc.off_x = 0;
+	loc.off_y = 0;
+
+	if (!PyArg_ParseTuple(args, "|O&iiff:game.obj_create", &ConvertObjHndl, &dude, &loc.location.locx, &loc.location.locy, &loc.off_x, &loc.off_y)) {
+		return 0;
+	}
+
+
+	PathQuery pathQ;
+	pathQ.flags = (PathQueryFlags)0;
+	int result = pathfindingSys.PathDestIsClear(&pathQ, dude, loc);
+	return PyLong_FromLongLong(result);
+}
+
 static PyMethodDef PyDebug_Methods[] = {
 	{ "dump_conds", (PyCFunction) PyDebug_DumpConds, METH_NOARGS, NULL },
 	{ "dump_radial", (PyCFunction) PyDebug_DumpRadial, METH_NOARGS, NULL },
 	{ "dump_feats", (PyCFunction)PyDebug_DumpFeats, METH_NOARGS, NULL },
 	{ "dump_d20actions", (PyCFunction)PyDebug_DumpD20Actions, METH_NOARGS, NULL },
 	{ "dump_ai_tactics", (PyCFunction)PyDebug_DumpAiTactics, METH_NOARGS, NULL },
+	{ "recalc_neighbours", (PyCFunction)PyDebug_RecalculatePathNodeNeighbours, METH_NOARGS, NULL },
+	{ "flush_nodes", (PyCFunction)PyDebug_FlushNodes, METH_NOARGS, NULL },
+	{ "recip", (PyCFunction)PyDebug_ReciprocityDebug, METH_NOARGS, NULL },
+	{ "destclear", (PyCFunction)PyDebug_DestClear, METH_VARARGS, NULL },
 	{ NULL, }
 };
 
