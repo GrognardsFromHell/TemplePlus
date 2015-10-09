@@ -18,7 +18,7 @@ struct TigRect {
 	int width;
 	int height;
 
-	TigRect() {}
+	TigRect() : x(0), y(0), width(0), height(0) {}
 	TigRect(int x, int y, int w, int h) {
 		this->x = x;
 		this->y = y;

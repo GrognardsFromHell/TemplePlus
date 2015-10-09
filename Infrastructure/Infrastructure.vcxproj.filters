@@ -284,9 +284,6 @@
     <ClCompile Include="mdfparser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="jpeg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="images.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -294,6 +291,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="d3d.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="textures.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="images_tga.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="images_jpeg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

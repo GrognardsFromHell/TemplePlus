@@ -3,7 +3,7 @@
 #include "tig/tig_mes.h"
 #include "hotkeys.h"
 #include "tio\tio.h"
-#include "gamesystems.h"
+#include "gamesystems/legacy.h"
 #include "util/fixes.h"
 
 HotkeySystem hotkeys;

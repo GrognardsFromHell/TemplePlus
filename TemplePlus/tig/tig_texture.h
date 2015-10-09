@@ -6,18 +6,6 @@
 #include "d3d8adapter.h"
 #include "tig.h"
 
-struct TigTexture
-{
-	int field_0;
-	int field_4;
-	int filename;
-	int buffer;
-	int field_10;
-	int field_14;
-	int field_18;
-	int field_1C;
-};
-
 struct TigBuffer
 {
 	int flags_or_type;
@@ -67,9 +55,21 @@ struct TigBuffer
 	int texturetype;
 };
 
+struct TigTexture
+{
+	int sizeCategory;
+	int textureId;
+	int framesNotUsed;
+	TigBuffer *buffer;
+	TigTexture* nextSameSize;
+	TigTexture* prevSameSize;
+	TigTexture* next;
+	TigTexture* prev;
+};
+
 struct TigTextureRegistryEntry
 {
-	bool comes_from_mdf;
+	bool comes_from_mdf; // Mipmapping related
 	int textureId;
 	char name[260];
 	int width;

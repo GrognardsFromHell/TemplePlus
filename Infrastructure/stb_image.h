@@ -5049,8 +5049,8 @@ static stbi_uc *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int 
       for (i=0; i < tga_width * tga_height; ++i)
       {
          unsigned char temp = tga_pixel[0];
-         tga_pixel[0] = tga_pixel[2];
-         tga_pixel[2] = temp;
+         //tga_pixel[0] = tga_pixel[2];
+        // tga_pixel[2] = temp;
          tga_pixel += tga_comp;
       }
    }

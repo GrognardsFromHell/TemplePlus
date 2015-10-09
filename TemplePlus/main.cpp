@@ -24,6 +24,7 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int showCmd) {
 
+
 	// We reserve space for temple.dll as early as possible to avoid rebasing of temple.dll
 	auto& dll = temple::Dll::GetInstance();
 	dll.ReserveMemoryRange();

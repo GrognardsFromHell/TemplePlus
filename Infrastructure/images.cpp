@@ -53,9 +53,16 @@ namespace gfx {
 			return info;
 		}
 
-		if (stbi__tga_info(&ctx, &info.width, &info.height, &comp)) {
-			info.hasAlpha = (comp == 4);
-			info.format = ImageFileFormat::TGA;
+		if (DetectTga(data, info)) {
+			return info;
+		}
+
+		// Not a very good heuristic
+		if (data.size() == 256 * 256) {
+			info.width = 256;
+			info.height = 256;
+			info.hasAlpha = true;
+			info.format = ImageFileFormat::FNTART;
 			return info;
 		}
 
@@ -77,6 +84,30 @@ namespace gfx {
 		return result;
 	}
 
+	DecodedImage DecodeFontArt(const array_view<uint8_t> data) {
+
+		// 256x256 image with 8bit alpha
+		Expects(data.size() == 256 * 256);
+
+		DecodedImage result;
+		result.info.width = 256;
+		result.info.height = 256;
+		result.info.format = ImageFileFormat::FNTART;
+		result.info.hasAlpha = true;
+		result.data = std::make_unique<uint8_t[]>(256 * 256 * 4);
+
+		auto *dest = result.data.get();
+		for (auto alpha : data) {			
+			*dest++ = 0xFF;
+			*dest++ = 0xFF;
+			*dest++ = 0xFF;
+			*dest++ = alpha;
+		}
+
+		return result;
+
+	}
+
 	DecodedImage DecodeImage(const array_view<uint8_t> data) {
 
 		DecodedImage result;
@@ -94,8 +125,11 @@ namespace gfx {
 			result.data = DecodeJpeg(data);
 			break;
 		case ImageFileFormat::TGA:
-			result.data.reset(stbi__tga_load(&ctx, &w, &h, &comp, 4));
+			result.data = DecodeTga(data);
 			break;
+		case ImageFileFormat::FNTART:
+			return DecodeFontArt(data);
+		default:
 		case ImageFileFormat::Unknown:
 			throw TempleException("Unrecognized image format.");
 		}

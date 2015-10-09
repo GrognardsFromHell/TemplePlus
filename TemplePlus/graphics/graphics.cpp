@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 
 #include <temple/dll.h>
@@ -12,6 +11,7 @@
 #include "graphics.h"
 #include "legacyrenderstates.h"
 #include "mainwindow.h"
+#include "textures.h"
 
 #include "util/config.h"
 #include <location.h>
@@ -27,11 +27,6 @@ static struct ExternalGraphicsFuncs : temple::AddressTable {
 		Advances the clock used by the general shader to animate textures and such.
 	*/
 	void (__cdecl *AdvanceShaderClock)(float timeInMs);
-
-	/*
-		Frees texture memory if more than the memory budget is allocated.
-	*/
-	void (__cdecl *FreeTextureMemory)();
 
 	/*
 		Renders a 2d quad on screen.
@@ -57,7 +52,6 @@ static struct ExternalGraphicsFuncs : temple::AddressTable {
 
 	ExternalGraphicsFuncs() {
 		rebase(AdvanceShaderClock, 0x101E0A30);
-		rebase(FreeTextureMemory, 0x101EDF00);
 
 		rebase(gfadeEnable, 0x10D25118);
 		rebase(gfadeColor, 0x10D24A28);
@@ -84,11 +78,19 @@ Graphics::Graphics(MainWindow& mainWindow) : mMainWindow(mainWindow) {
 		throw TempleException("There should only be a single graphics instance at a time");
 	}
 	graphics = this;
+
+	// Use 25% or at most 256 MB for textures
+	auto textureBudget = std::min<size_t>(16 * 1024 * 1024, mVideoMemory / 4);
+	mTextureManager = std::make_unique<TextureManager>(mDevice, textureBudget);
+	gfx::textureManager = mTextureManager.get();
 }
 
 Graphics::~Graphics() {
 	if (graphics == this) {
 		graphics = nullptr;
+	}
+	if (gfx::textureManager == mTextureManager.get()) {
+		gfx::textureManager = nullptr;
 	}
 }
 
@@ -126,7 +128,7 @@ bool Graphics::Present() {
 		return true;
 	}
 
-	externalGraphicsFuncs.FreeTextureMemory();
+	mTextureManager->FreeUnusedTextures();
 
 	RenderGFade();
 
@@ -214,6 +216,8 @@ void Graphics::FreeResources() {
 	mSceneSurface.Release();
 	mSceneDepthSurface.Release();
 
+	mTextureManager->FreeAllTextures();
+
 }
 
 void Graphics::CreateResources() {
@@ -257,13 +261,13 @@ void Graphics::CreateResources() {
 		TRUE,
 		&mSceneDepthSurface,
 		nullptr));
-	
+
 	for (auto listener : mResourcesListeners) {
 		listener->CreateResources(*this);
 	}
 
 	mResourcesCreated = true;
-	
+
 	// After a reset, the D3D cursor is hidden
 	mouseFuncs.RefreshCursor();
 }
@@ -321,6 +325,9 @@ void Graphics::AddResourceListener(ResourceListener* listener) {
 
 void Graphics::RemoveResourceListener(ResourceListener* listener) {
 	mResourcesListeners.remove(listener);
+	if (mResourcesCreated) {
+		listener->FreeResources(*this);
+	}
 }
 
 void Graphics::RenderGFade() {
@@ -386,7 +393,7 @@ void Graphics::InitializeDirect3d() {
 	// At this point we only do a GetDisplayMode to check the resolution. We could also do this elsewhere
 	D3DDISPLAYMODE displayMode;
 	d3dresult = D3DLOG(mDirect3d9->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &displayMode));
-	if (d3dresult != D3D_OK) {		
+	if (d3dresult != D3D_OK) {
 		throw TempleException("Unable to query display mode for primary adapter.");
 	}
 
@@ -405,9 +412,9 @@ void Graphics::InitializeDirect3d() {
 	if (config.useDirect3d9Ex) {
 		logger->info("Creating Direct3D9Ex device.");
 		d3dresult = D3DLOG(mDirect3d9->CreateDeviceEx(
-			D3DADAPTER_DEFAULT,
-			D3DDEVTYPE_HAL,
-			mMainWindow.GetHwnd(),
+				D3DADAPTER_DEFAULT,
+				D3DDEVTYPE_HAL,
+				mMainWindow.GetHwnd(),
 			D3DCREATE_HARDWARE_VERTEXPROCESSING,
 			&presentParams,
 			nullptr,
@@ -415,13 +422,14 @@ void Graphics::InitializeDirect3d() {
 	} else {
 		logger->info("Creating Direct3D9 device.");
 		d3dresult = D3DLOG(mDirect3d9->CreateDevice(
-			D3DADAPTER_DEFAULT,
-			D3DDEVTYPE_HAL,
-			mMainWindow.GetHwnd(),
+				D3DADAPTER_DEFAULT,
+				D3DDEVTYPE_HAL,
+				mMainWindow.GetHwnd(),
 			D3DCREATE_HARDWARE_VERTEXPROCESSING,
 			&presentParams,
 			reinterpret_cast<IDirect3DDevice9**>(&mDevice)));
 	}
+
 	if (d3dresult != D3D_OK) {
 		throw TempleException("Unable to create Direct3D9 device!");
 	}
@@ -440,6 +448,8 @@ static constexpr int minTexWidth = 1024;
 static constexpr int minTexHeight = 1024;
 
 void Graphics::ReadCaps() {
+
+	mVideoMemory = mDevice->GetAvailableTextureMem();
 
 	if (D3DLOG(mDevice->GetDeviceCaps(&mCaps)) != D3D_OK) {
 		throw TempleException("Unable to retrieve Direct3D device mCaps");
@@ -500,10 +510,10 @@ void Graphics::ReadCaps() {
 	}
 	if (mCaps.MaxTextureWidth < minTexWidth || mCaps.MaxTextureHeight < minTexHeight) {
 		auto msg = fmt::format("minimum texture resolution of {}x{} is not supported. Supported: {}x{}",
-		                  minTexWidth, minTexHeight, mCaps.MaxTextureWidth, mCaps.MaxTextureHeight);
+		                       minTexWidth, minTexHeight, mCaps.MaxTextureWidth, mCaps.MaxTextureHeight);
 		throw TempleException(msg);
 	}
-	
+
 	if ((mCaps.TextureCaps & D3DPTEXTURECAPS_POW2) != 0) {
 		logger->error("Textures must be power of two");
 	}
@@ -663,5 +673,5 @@ void Graphics::SetDefaultRenderStates() {
 
 	mDevice->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
 	mDevice->SetRenderState(D3DRS_ALPHAREF, 1);
-	mDevice->SetRenderState(D3DRS_ALPHAFUNC, 7);
+	mDevice->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
 }

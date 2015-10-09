@@ -4,7 +4,7 @@
 #include "tig/tig_msg.h"
 #include "tig/tig_startup.h"
 #include "tig/tig_mouse.h"
-#include "gamesystems.h"
+#include "gamesystems/gamesystems.h"
 #include "graphics/graphics.h"
 #include "tig/tig_shader.h"
 #include "ui/ui.h"
@@ -13,6 +13,7 @@
 #include "python/pythonglobal.h"
 #include "mainloop.h"
 #include "util/config.h"
+#include "gamesystems/gamemodule.h"
 
 class TempleMutex {
 public:
@@ -56,8 +57,6 @@ struct StartupRelevantFuncs : temple::AddressTable {
 	
 
 	int (__cdecl *SetScreenshotKeyhandler)(TigMsgGlobalKeyCallback *callback);
-	bool (__cdecl *TigWindowBufferstuffCreate)(int *bufferStuffIdx);
-	void (__cdecl *TigWindowBufferstuffFree)(int bufferStuffIdx);
 	void (__cdecl *RunBatchFile)(const char *filename);
 	void (__cdecl *RunMainLoop)();
 	int (__cdecl *TempleMain)(HINSTANCE hInstance, HINSTANCE hInstancePrev, const char *commandLine, int showCmd);
@@ -68,9 +67,7 @@ struct StartupRelevantFuncs : temple::AddressTable {
 	int(__cdecl *MapOpenInGame)(int mapId, int a3, int a4);
 
 	StartupRelevantFuncs() {
-		rebase(SetScreenshotKeyhandler, 0x101DCB30);
-		rebase(TigWindowBufferstuffCreate, 0x10113EB0);
-		rebase(TigWindowBufferstuffFree, 0x101DF2C0);		
+		rebase(SetScreenshotKeyhandler, 0x101DCB30);		
 		rebase(RunBatchFile, 0x101DFF10);
 		rebase(RunMainLoop, 0x100010F0);		
 		rebase(TempleMain, 0x100013D0);
@@ -85,72 +82,6 @@ static void setMiles3dProvider();
 static void addScreenshotHotkey();
 static void applyGameConfig();
 static bool setDefaultCursor();
-
-class TigBufferstuffInitializer {
-public:
-	TigBufferstuffInitializer() {
-		StopwatchReporter reporter("Game scratch buffer initialized in {}");
-		logger->info("Creating game scratch buffer");
-		if (!startupRelevantFuncs.TigWindowBufferstuffCreate(&mBufferIdx)) {
-			throw TempleException("Unable to initialize TIG buffer");
-		}
-	}
-	~TigBufferstuffInitializer() {
-		logger->info("Freeing game scratch buffer");
-		startupRelevantFuncs.TigWindowBufferstuffFree(mBufferIdx);
-	}
-	int bufferIdx() const {
-		return mBufferIdx;
-	}
-private:
-	int mBufferIdx = -1;
-};
-
-class GameSystemsInitializer {
-public:
-	GameSystemsInitializer(const TigConfig &tigConfig) {
-		StopwatchReporter reporter("Game systems initialized in {}");
-		logger->info("Loading game systems");
-
-		memset(&mConfig, 0, sizeof(mConfig));
-		mConfig.editor = ::config.editor ? 1 : 0;
-		mConfig.width = tigConfig.width;
-		mConfig.height = tigConfig.height;
-		mConfig.field_10 = temple::GetPointer(0x10002530); // Callback 1
-		mConfig.renderfunc = temple::GetPointer(0x10002650); // Callback 1
-		mConfig.bufferstuffIdx = tigBuffer.bufferIdx();
-
-		gameSystemFuncs.NewInit(mConfig);
-		// if (!gameSystemFuncs.Init(&mConfig)) {
-		//	throw TempleException("Unable to initialize game systems!");
-		// }
-	}
-	~GameSystemsInitializer() {
-		logger->info("Unloading game systems");
-		gameSystemFuncs.Shutdown();
-	}
-	const GameSystemConf &config() const {
-		return mConfig;
-	}
-private:
-	GameSystemConf mConfig;
-	TigBufferstuffInitializer tigBuffer;
-};
-
-class GameSystemsModuleInitializer {
-public:
-	GameSystemsModuleInitializer(const string &moduleName) {
-		StopwatchReporter reporter("Game module loaded in {}");
-		logger->info("Loading game module {}", moduleName);
-		if (!gameSystemFuncs.LoadModule(moduleName.c_str())) {
-			throw TempleException(format("Unable to load game module {}", moduleName));
-		}
-	}
-	~GameSystemsModuleInitializer() {
-		logger->info("Unloading game module");
-		gameSystemFuncs.UnloadModule();
-	}
-};
 
 int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 
@@ -189,7 +120,7 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	// Hides the cursor during loading
 	mouseFuncs.HideCursor();
 
-	GameSystemsInitializer gameSystems(tig.GetConfig());
+	GameSystems gameSystems(tig);
 	
 	/*
 		Process options applicable after initialization of game systems
@@ -200,9 +131,9 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 		return 1;
 	}
 
-	UiLoader uiLoader(gameSystems.config());
+	UiLoader uiLoader(gameSystems.GetConfig());
 
-	GameSystemsModuleInitializer gameModule(config.defaultModule);
+	GameModule gameModule(config.defaultModule);
 
 	// Python should now be initialized. Do the global hooks
 	PythonGlobalExtension::installExtensions();
@@ -230,7 +161,7 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	startupRelevantFuncs.RunBatchFile("Startup.txt");
 	logger->info("[Beginning Game]");		
 
-	GameLoop loop(tig.GetMainWindow());
+	GameLoop loop(tig.GetMainWindow(), gameSystems, tig.GetGraphics());
 	loop.Run();
 	// startupRelevantFuncs.RunMainLoop();
 

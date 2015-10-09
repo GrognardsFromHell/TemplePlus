@@ -16,40 +16,11 @@ enum class PredefinedFont {
 	SCURLOCK_48
 };
 
-// Represents a texture as it is loaded and maintained by ToEE
-struct Texture {
-	bool unk;
-	int id; // a.k.a artId
-	char path[260];
-	int width; // This is the original height BEFORE power of two stuff
-	int height;
-	TigRect rect;
-	int field_124;
-	TigBuffer *buffer;
-};
-
 /*
 	Helper methods for rendering UI elements.
 */
 class UiRenderer {
 public:
-
-	/*
-		Assigns a unique id to the given texture path in the texture registry.
-		Most drawing functions takes texture ids instead of texture paths.
-	*/	
-	static int RegisterTexture(const string &path);
-
-	/*
-		Loads a previously registered texture given its ID.
-	*/
-	static Texture LoadTexture(const int textureId);
-
-	/*
-		Loads a texture given its path. This will automatically register a texture
-		if it hasn't been registered before.
-	*/
-	static Texture LoadTexture(const string &path);
 
 	/*
 		Draws the full texture in the given screen rectangle.

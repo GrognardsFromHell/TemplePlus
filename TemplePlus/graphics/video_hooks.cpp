@@ -1,4 +1,3 @@
-
 #include "video_hooks.h"
 
 #include <MinHook.h>
@@ -253,13 +252,18 @@ public:
 	void FreeResources(Graphics&) override;
 
 private:
+	CComPtr<IDirect3DVertexBuffer9> mRenderQuadBuffer;
+	CComPtr<IDirect3DVertexBuffer9> mSharedVBuffer2;
+	CComPtr<IDirect3DVertexBuffer9> mSharedVBuffer3;
+	CComPtr<IDirect3DVertexBuffer9> mSharedVBuffer4;
+
 	ResourceListenerRegistration mRegistration;
 };
 
-void LegacyResourceManager::CreateResources(Graphics &g) {
+void LegacyResourceManager::CreateResources(Graphics& g) {
 
 	logger->info("Creating legacy graphics resources...");
-	
+
 	videoFuncs.buffersFreed = false;
 
 	// Store back buffer size
@@ -268,103 +272,79 @@ void LegacyResourceManager::CreateResources(Graphics &g) {
 	videoFuncs.backbufferHeight = backBufferDesc.Height;
 
 	auto device = g.device();
-
-	IDirect3DVertexBuffer9* vbuffer;
-	if (D3DLOG(device->CreateVertexBuffer(
-		112, // Space for 4 vertices
-		D3DUSAGE_DYNAMIC,
-		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
-		D3DPOOL_SYSTEMMEM,
-		&vbuffer,
-		nullptr)) != D3D_OK) {
-		throw TempleException("Couldn't create shared vertex buffer");
-	}
-	video->blitVBuffer = new Direct3DVertexBuffer8Adapter(vbuffer);
-
+	
 	if (D3DLOG(device->CreateVertexBuffer(
 		140, // Space for 5 vertices
 		D3DUSAGE_DYNAMIC,
 		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
 		D3DPOOL_SYSTEMMEM,
-		&vbuffer,
+		&mRenderQuadBuffer,
 		nullptr)) != D3D_OK) {
 		throw TempleException("Couldn't create shared vertex buffer");
 	}
-	videoFuncs.globalFadeVBuffer = new Direct3DVertexBuffer8Adapter(vbuffer);
-
-	if (D3DLOG(device->CreateVertexBuffer(
-		72, // 2 vertices (odd)
-		D3DUSAGE_DYNAMIC,
-		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_NORMAL | D3DFVF_XYZ, // 36 byte per vertex
-		D3DPOOL_SYSTEMMEM,
-		&vbuffer,
-		nullptr)) != D3D_OK) {
-		throw TempleException("Couldn't create shared vertex buffer");
-	}
-	videoFuncs.sharedVBuffer1 = new Direct3DVertexBuffer8Adapter(vbuffer);
+	videoFuncs.renderQuadBuffer = new Direct3DVertexBuffer8Adapter(mRenderQuadBuffer);
 
 	if (D3DLOG(device->CreateVertexBuffer(
 		56, // 2 vertices
 		D3DUSAGE_DYNAMIC,
 		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
 		D3DPOOL_SYSTEMMEM,
-		&vbuffer,
+		&mSharedVBuffer2,
 		nullptr)) != D3D_OK) {
 		throw TempleException("Couldn't create shared vertex buffer");
 	}
-	videoFuncs.sharedVBuffer2 = new Direct3DVertexBuffer8Adapter(vbuffer);
+	videoFuncs.sharedVBuffer2 = new Direct3DVertexBuffer8Adapter(mSharedVBuffer2);
 
 	if (D3DLOG(device->CreateVertexBuffer(
 		7168, // 256 vertices
 		D3DUSAGE_DYNAMIC,
 		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
 		D3DPOOL_SYSTEMMEM,
-		&vbuffer,
+		&mSharedVBuffer3,
 		nullptr)) != D3D_OK) {
 		throw TempleException("Couldn't create shared vertex buffer");
 	}
-	videoFuncs.sharedVBuffer3 = new Direct3DVertexBuffer8Adapter(vbuffer);
+	videoFuncs.sharedVBuffer3 = new Direct3DVertexBuffer8Adapter(mSharedVBuffer3);
 
 	if (D3DLOG(device->CreateVertexBuffer(
 		4644, // 129 device
 		D3DUSAGE_DYNAMIC,
 		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_NORMAL | D3DFVF_XYZ, // 36 byte per vertex
 		D3DPOOL_SYSTEMMEM,
-		&vbuffer,
+		&mSharedVBuffer4,
 		nullptr)) != D3D_OK) {
 		throw TempleException("Couldn't create shared vertex buffer");
 	}
-	videoFuncs.sharedVBuffer4 = new Direct3DVertexBuffer8Adapter(vbuffer);
+	videoFuncs.sharedVBuffer4 = new Direct3DVertexBuffer8Adapter(mSharedVBuffer4);
 
 	// This is always the same pointer although it's callback 2 of the GameStartConfig	
-	videoFuncs.create_partsys_vertex_buffers();
-	videoFuncs.GameCreateVideoBuffers();
+	videoFuncs.PartSysCreateBuffers();
+
 
 }
 
 void LegacyResourceManager::FreeResources(Graphics&) {
 
 	logger->info("Freeing legacy graphics resources...");
+
+	videoFuncs.buffersFreed = true;
 	
-	videoFuncs.buffersFreed = false;
-	videoFuncs.CleanUpBuffers();
-	// videoFuncs.GameFreeVideoBuffers();
+	videoFuncs.tigMatrices2 = videoFuncs.screenTransform;
 
-	// Handled by CleanUpBuffers
-	//FreeD3dResource(video->blitVBuffer);
-	//FreeD3dResource(videoFuncs.globalFadeVBuffer);
-	//FreeD3dResource(videoFuncs.sharedVBuffer1);
-	//FreeD3dResource(videoFuncs.sharedVBuffer2);
-	//FreeD3dResource(videoFuncs.sharedVBuffer3);
-	//FreeD3dResource(videoFuncs.sharedVBuffer4);
-
+	videoFuncs.PartSysFreeBuffers();
+	videoFuncs.TigShaderFreeBuffers();
+	
+	mRenderQuadBuffer.Release();
+	mSharedVBuffer2.Release();
+	mSharedVBuffer3.Release();
+	mSharedVBuffer4.Release();
 }
 
 LegacyVideoSystem::LegacyVideoSystem(MainWindow& mainWindow, Graphics& graphics) {
 	memset(video, 0, 4796);
 
 	video->adapter = 0;
-	
+
 	//video->d3d = new Direct3D8Adapter;
 	//video->d3d->delegate = mDirect3d9;
 
@@ -374,11 +354,11 @@ LegacyVideoSystem::LegacyVideoSystem(MainWindow& mainWindow, Graphics& graphics)
 
 	video->d3dDevice = new Direct3DDevice8Adapter;
 	video->d3dDevice->delegate = graphics.device();
-	
+
 	// Make some caps available for other legacy systems
-	const auto &caps = graphics.GetCaps();
+	const auto& caps = graphics.GetCaps();
 	video->maxActiveLights = std::min<DWORD>(8, caps.MaxActiveLights);
-	
+
 	/* Probably without effect */
 	if (video->makesSthLarger) {
 		video->neverReadFlag1 = 4096;
@@ -438,15 +418,13 @@ LegacyVideoSystem::LegacyVideoSystem(MainWindow& mainWindow, Graphics& graphics)
 
 	// temple::GetRef<0x10D250E0, int>() = 0; // Seems unused
 	temple::WriteMem(0x10D250E4, 1); // video_initialized
-									 // temple::GetRef<0x10300914, int>() = -1; Related to mk screenshot
+	// temple::GetRef<0x10300914, int>() = -1; Related to mk screenshot
 
-									 // Unused mkscreenshot related pointer
-									 // temple_set<0x10D2511C, int>(0);
+	// Unused mkscreenshot related pointer
+	// temple_set<0x10D2511C, int>(0);
 
-									 /*
-									 This stuff doesn't really seem to be used.
-									 */
-									 /*uint32_t v3 = 0x10D24CAC;
+	/* This stuff doesn't really seem to be used. */
+	/*uint32_t v3 = 0x10D24CAC;
 									 do {
 									 temple::GetRef<int>(v3) = 0;
 									 v3 += 12;
@@ -457,7 +435,7 @@ LegacyVideoSystem::LegacyVideoSystem(MainWindow& mainWindow, Graphics& graphics)
 									 temple::GetRef<int>(v3) = 0;
 									 v3 += 8;
 									 } while (v3 < 0x10D24CAC);*/
-	
+
 	D3DXMatrixIdentity(&video->stru_11E75788);
 	D3DXMatrixIdentity(&video->matrix_identity);
 
@@ -483,7 +461,6 @@ LegacyVideoSystem::LegacyVideoSystem(MainWindow& mainWindow, Graphics& graphics)
 		logger->error("Format init failed.");
 	}
 
-	videoFuncs.tigMovieInitialized = true;
 	videoFuncs.tig_font_related_init();
 	videoFuncs.updateProjMatrices(videoFuncs.tigMatrices2);
 
@@ -491,10 +468,4 @@ LegacyVideoSystem::LegacyVideoSystem(MainWindow& mainWindow, Graphics& graphics)
 }
 
 LegacyVideoSystem::~LegacyVideoSystem() {
-	
-	mResources.release();
-
-	// TODO REPLACE THIS
-	reinterpret_cast<void(*)()>(temple::GetPointer<0x101D8540>())();
-
 }
