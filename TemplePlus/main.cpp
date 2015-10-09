@@ -59,10 +59,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		TempleFixes::apply();
 
-		init_hooks();
+		MH_EnableHook(MH_ALL_HOOKS);
 
-		auto ourModule = GetModuleHandleA(nullptr);
-		auto result = TempleMain(ourModule, lpCmdLine);
+		auto result = TempleMain(hInstance, lpCmdLine);
 
 		config.Save();
 

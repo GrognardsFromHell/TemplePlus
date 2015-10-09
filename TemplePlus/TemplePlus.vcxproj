@@ -125,7 +125,7 @@
     <ClCompile Include="util\folderutils.cpp" />
     <ClCompile Include="gamesystems\gamelib_load.cpp" />
     <ClCompile Include="gamesystems\gamelib_save.cpp" />
-    <ClCompile Include="generalfixes.cpp" />
+    <ClCompile Include="fixes\generalfixes.cpp" />
     <ClCompile Include="game_config.cpp" />
     <ClCompile Include="graphics\graphics.cpp" />
     <ClCompile Include="inventory.cpp" />

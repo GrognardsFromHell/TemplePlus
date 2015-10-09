@@ -56,5 +56,3 @@ struct MouseFuncs : temple::AddressTable {
 };
 
 extern MouseFuncs mouseFuncs;
-
-void hook_mouse();

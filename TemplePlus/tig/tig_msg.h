@@ -54,5 +54,3 @@ inline void processTigMessages() {
 	while (!msgFuncs.Process(&msg))
 		;
 }
-
-void hook_msgs();

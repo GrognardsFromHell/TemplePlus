@@ -13,9 +13,6 @@
     <ClCompile Include="animalcompanion.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
-    <ClCompile Include="generalfixes.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
     <ClCompile Include="xp.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
@@ -278,6 +275,9 @@
     <ClCompile Include="ui_worldmap.cpp" />
     <ClCompile Include="worldmap.cpp" />
     <ClCompile Include="fixes\pointbuyconfig.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="fixes\generalfixes.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
   </ItemGroup>

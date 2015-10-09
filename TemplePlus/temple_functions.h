@@ -91,9 +91,7 @@ struct TempleFuncs : temple::AddressTable {
 	}
 	uint32_t(__cdecl *CraftMagicArmsAndArmorSthg)(uint32_t n);
 	char *(__cdecl *ItemCreationPrereqSthg_sub_101525B0)(objHndl, objHndl);
-
-	int (*temple_snprintf)(char *, size_t, const char *, ...);
-
+	
 	uint32_t(__cdecl *sub_100664B0)(objHndl objHnd, uint32_t);
 
 	// rebase on init
@@ -113,8 +111,5 @@ const int CONTAINER_MAX_ITEMS = 1000; // may need to be reduced
 const int CRITTER_MAX_ITEMS = 24; // definitely needs to be increased in the future :)
 const int CRITTER_EQUIPPED_ITEM_SLOTS = 16;
 const int CRITTER_EQUIPPED_ITEM_OFFSET = 200;
-
-void init_hooks();
-
 
 int32_t _diceRoll(uint32_t dieNum, uint32_t dieType, int32_t dieBonus);

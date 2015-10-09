@@ -4,7 +4,6 @@
 #include "common.h"
 #include "obj.h"
 #include "turn_based.h"
-#include "temple_functions.h"
 #include "critter.h"
 #include "condition.h"
 #include "bonus.h"
