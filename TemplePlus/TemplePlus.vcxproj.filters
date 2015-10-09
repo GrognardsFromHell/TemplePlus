@@ -221,9 +221,6 @@
     <ClCompile Include="traps.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
     <ClCompile Include="ui\ui_tutorial.cpp" />
-    <ClCompile Include="char_creation.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
     <ClCompile Include="ui_char.cpp">
       <Filter>ui</Filter>
     </ClCompile>
@@ -278,8 +275,11 @@
     <ClCompile Include="diag\diag.cpp" />
     <ClCompile Include="messages\messagequeue.cpp" />
     <ClCompile Include="fixes\messages.cpp" />
-    <ClCompile Include="worldmap.cpp" />
     <ClCompile Include="ui_worldmap.cpp" />
+    <ClCompile Include="worldmap.cpp" />
+    <ClCompile Include="fixes\pointbuyconfig.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -499,9 +499,6 @@
     <ClInclude Include="ui\ui_dialog.h" />
     <ClInclude Include="ui\ui_tutorial.h" />
     <ClInclude Include="sound.h" />
-    <ClInclude Include="char_creation.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
     <ClInclude Include="d20_levelup.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
