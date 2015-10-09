@@ -54,6 +54,10 @@ void TextureHooks::UnloadAll() {
 
 // Unloads a single texture by id
 void TextureHooks::UnloadId(int textureId) {
+	auto ref = gfx::textureManager->GetById(textureId);
+	if (ref) {
+		ref->FreeDeviceTexture();
+	}
 }
 
 // Used during map loading to register a function that resolves map tile ids -> filenames

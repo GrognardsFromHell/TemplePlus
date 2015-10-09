@@ -80,7 +80,7 @@ Graphics::Graphics(MainWindow& mainWindow) : mMainWindow(mainWindow) {
 	graphics = this;
 
 	// Use 25% or at most 256 MB for textures
-	auto textureBudget = std::min<size_t>(16 * 1024 * 1024, mVideoMemory / 4);
+	auto textureBudget = std::min<size_t>(128 * 1024 * 1024, mVideoMemory / 4);
 	mTextureManager = std::make_unique<TextureManager>(mDevice, textureBudget);
 	gfx::textureManager = mTextureManager.get();
 }
