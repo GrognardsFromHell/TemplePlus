@@ -3,6 +3,8 @@
 #include "maps.h"
 #include <temple/dll.h>
 #include "location.h"
+#include "gamesystems.h"
+#include "util/fixes.h"
 
 struct MapAddresses : temple::AddressTable {
 	
@@ -43,6 +45,8 @@ struct MapAddresses : temple::AddressTable {
 	*/
 	bool (__cdecl *GetJumpPoint)(int jmpPntID, char *mapNameOut, size_t mapNameOutSize, int *mapNumOut, locXY *locXYOut);
 	
+	int * mapLoaded;
+
 	MapAddresses() {
 		rebase(GetVisitedMaps, 0x1006FE50);
 		rebase(GetCurrentArea, 0x1006ED50);
@@ -51,10 +55,31 @@ struct MapAddresses : temple::AddressTable {
 		rebase(RevealFlag, 0x10128360);
 		rebase(IsCurrentMapOutdoor, 0x1006FE80);
 		rebase(GetJumpPoint, 0x100BDE20);
+		rebase(mapLoaded, 0x10AA9524);
 	}
 };
-
 MapAddresses mapAddresses;
+
+class GameSystemReplacements : TempleFix
+{
+public:
+	const char* name() override { return "GameSystems" "Function Replacements"; }
+
+	
+	static int(__cdecl*orgField1C)(GameSystemConf* conf);
+	static int field1c(GameSystemConf * conf) {
+		int dummy = 1;
+		return orgField1C(conf);
+	};
+
+	void apply() override
+	{
+		orgField1C = replaceFunction(0x1006FC60, field1c); // doesn't seem to get called anywhere, not even when editor mode is enabled. Possibly ripped out code.
+	}
+} gameSystemFix;
+
+int(__cdecl*GameSystemReplacements::orgField1C)(GameSystemConf*) ;
+
 Maps maps;
 
 vector<int> Maps::GetVisited() {
