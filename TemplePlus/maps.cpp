@@ -3,8 +3,8 @@
 #include "maps.h"
 #include <temple/dll.h>
 #include "location.h"
-#include "gamesystems.h"
 #include "util/fixes.h"
+#include "gamesystems/gamesystems.h"
 
 struct MapAddresses : temple::AddressTable {
 	
