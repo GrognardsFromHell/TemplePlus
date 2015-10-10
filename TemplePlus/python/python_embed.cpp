@@ -1,6 +1,5 @@
 
 #include "stdafx.h"
-#include <gamesystems.h>
 #include <util/fixes.h>
 #include "python_debug.h"
 #include "python_importer.h"
@@ -15,6 +14,8 @@
 #include "tio/tio.h"
 #include <set>
 #include "python_module.h"
+
+#include "../gamesystems/gamesystems.h"
 
 static struct PythonInitInternal : temple::AddressTable {
 

@@ -21,16 +21,6 @@ class TempleFuncReplacements : public TempleFix
 	}
 } templeFuncReplacements;
 
-void init_hooks()
-{
-	if (config.engineEnhancements) {
-		hook_mouse();
-		hook_msgs();
-	}
-
-	MH_EnableHook(MH_ALL_HOOKS);
-}
-
 #pragma region TempleFuncs Implementation
 
 int32_t TempleFuncs::diceRoll(uint32_t dieNum, uint32_t dieType, int32_t dieBonus)
@@ -98,9 +88,7 @@ TempleFuncs::TempleFuncs()
 	rebase(ItemCreationPrereqSthg_sub_101525B0, 0x101525B0);
 
 	rebase(TurnProcessing, 0x100634E0);
-
-	rebase(temple_snprintf, 0x10254680);
-
+	
 	rebase(sub_100664B0, 0x100664B0);
 
 }

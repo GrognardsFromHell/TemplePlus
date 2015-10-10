@@ -28,21 +28,22 @@ struct VideoFuncs : temple::AddressTable {
 	void(__cdecl *SetVideoMode)(int adapter, int nWidth, int nHeight, int bpp, int refresh, int flags);
 	void(__cdecl *CleanUpBuffers)();
 
-	void(__cdecl *create_partsys_vertex_buffers)();
-	void(__cdecl *tig_font_related_init)();
-	void(__cdecl *updateProjMatrices)(TigMatrices* matrices);
-	void(__cdecl *GamelibResizeScreen)(uint32_t adapter, int width, int height, int bpp, int refresh, int flags);
+	void (*TigShaderFreeBuffers)();
+
+	void (__cdecl *PartSysCreateBuffers)();
+	void (*PartSysFreeBuffers)();
+	void (__cdecl *tig_font_related_init)();
+	void (__cdecl *updateProjMatrices)(TigMatrices* matrices);
+	void (__cdecl *GamelibResizeScreen)(uint32_t adapter, int width, int height, int bpp, int refresh, int flags);
 
 	// current video format has to be in eax before calling this
 	bool(__cdecl *tig_d3d_init_handleformat)();
 
-	// These two callbacks are basically used by create buffers/free buffers to callback into the game layer (above tig layer)
-	void(__cdecl *GameCreateVideoBuffers)();
-	void(__cdecl *GameFreeVideoBuffers)();
-
+	
 	temple::GlobalBool<0x10D25144> buffersFreed;
 	temple::GlobalPrimitive<uint32_t, 0x10D25148> currentFlags;
 	TigMatrices *tigMatrices2;
+	TigMatrices *screenTransform;
 
 	/*
 	Used to take screenshots (copy front buffer)
@@ -59,12 +60,12 @@ struct VideoFuncs : temple::AddressTable {
 	*/
 	temple::GlobalPrimitive<uint32_t, 0x11E75840> startupFlags;
 		
-	temple::GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D25120> globalFadeVBuffer;
+	temple::GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D25120> renderQuadBuffer;
 	temple::GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D25124> sharedVBuffer1;
 	temple::GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D25128> sharedVBuffer2;
 	temple::GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D2512C> sharedVBuffer3;
 	temple::GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D25130> sharedVBuffer4;
-	temple::GlobalBool<0x103010FC> tigMovieInitialized;
+	temple::GlobalBool<0x103010FC> tigMovieInitialized; // Unused
 
 	temple::GlobalPrimitive<float, 0x10D24D7C> fadeScreenRect;
 
@@ -72,14 +73,15 @@ struct VideoFuncs : temple::AddressTable {
 		rebase(TigDirect3dInit, 0x101DAFB0);
 		rebase(SetVideoMode, 0x101DC870);
 		rebase(CleanUpBuffers, 0x101D8640);
-		rebase(create_partsys_vertex_buffers, 0x101E6E20);
 		rebase(tig_font_related_init, 0x101E85C0);
 		rebase(updateProjMatrices, 0x101D8910);
-		rebase(GameCreateVideoBuffers, 0x10001370);
-		rebase(GameFreeVideoBuffers, 0x100013A0);
 		rebase(tig_d3d_init_handleformat, 0x101D6F40);
 		rebase(GamelibResizeScreen, 0x10002370);
 		rebase(tigMatrices2, 0x10D24E00);
+		rebase(screenTransform, 0x11E75830);
+		rebase(PartSysCreateBuffers, 0x101E6E20);
+		rebase(PartSysFreeBuffers, 0x101E6E10);
+		rebase(TigShaderFreeBuffers, 0x101EEE10);
 	}
 };
 
@@ -131,7 +133,7 @@ struct VideoData {
 	DWORD mode; // seems to be an index to the current fullscreen mode
 	D3DFORMAT adapterformat;
 	DWORD current_refresh;
-	Direct3DVertexBuffer8Adapter* blitVBuffer;
+	Direct3DVertexBuffer8Adapter* blitVBuffer; // not used
 	D3DXMATRIX stru_11E75788;
 	D3DXMATRIX matrix_identity;
 	D3DVECTOR stru_11E75808;

@@ -13,7 +13,8 @@
 #include "python_spell.h"
 #include "tig/tig_mouse.h"
 #include "maps.h"
-#include "../gamesystems.h"
+#include "../gamesystems/gamesystems.h"
+#include "../gamesystems/legacy.h"
 #include "fade.h"
 #include "combat.h"
 #include "objlist.h"
@@ -28,7 +29,6 @@
 #include "ui/ui_tutorial.h"
 #include "ui/ui_picker.h"
 #include "particles.h"
-#include "gamesystems.h"
 #include "python_support.h"
 #include "python_integration_obj.h"
 #include <timeevents.h>
@@ -664,7 +664,7 @@ PyObject* PyGame_SaveGame(PyObject*, PyObject* args) {
 		return 0;
 	}
 
-	auto result = gameSystemFuncs.SaveGame(filename, displayName);
+	auto result = gameSystems->SaveGame(filename, displayName);
 	return PyInt_FromLong(result);
 }
 
@@ -674,8 +674,8 @@ PyObject* PyGame_LoadGame(PyObject*, PyObject* args) {
 		return 0;
 	}
 		
-	gameSystemFuncs.DestroyPlayerObject();
-	auto result = gameSystemFuncs.LoadGame(filename);
+	gameSystems->DestroyPlayerObject();
+	auto result = gameSystems->LoadGame(filename);
 	return PyInt_FromLong(result);
 }
 
@@ -823,7 +823,7 @@ PyObject* PyGame_MoviequeuePlay(PyObject*, PyObject* args) {
 
 PyObject* PyGame_MoviequeuePlayEndGame(PyObject*, PyObject* args) {
 	movieFuncs.MovieQueuePlay();
-	gameSystemFuncs.EndGame();
+	gameSystems->EndGame();
 	Py_RETURN_NONE;
 }
 

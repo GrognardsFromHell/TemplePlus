@@ -15,16 +15,16 @@ enum TigTextStyleFlag {
 #pragma pack(push, 1)
 struct TigTextStyle
 {
-	int field0;
+	int field0 = 0;
 	int tracking = 0;
 	int kerning = 1; // Anything less than this doesn't render properly
 	int leading = 0;
-	int field10;
-	int field14;
-	int field18;
-	int field1c;
-	int field20;
-	int field24;
+	int field10 = 0;
+	int field14 = 0;
+	int field18 = 0;
+	int field1c = 0;
+	int field20 = 0;
+	int field24 = 0;
 	/*
 		8 seems to be drop shadow
 		0x10 centers the text
@@ -36,15 +36,15 @@ struct TigTextStyle
 		0x4000 truncates text if too long for rect and appends "..."
 	*/
 	int flags = 0;
-	int field2c;
-	int field30;
+	int field2c = 0;
+	int field30 = 0;
 	ColorRect *textColor = nullptr;
 	ColorRect *colors2 = nullptr;
 	ColorRect *shadowColor = nullptr; // Use with flags |= 0x8
 	ColorRect *colors4 = nullptr;
 	ColorRect *bgColor = nullptr; // Use with flags |= 0x400
-	int field48;
-	int field4c;
+	int field48 = 0;
+	int field4c = 0;
 };
 #pragma pack(pop)
 

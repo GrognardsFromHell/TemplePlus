@@ -30,6 +30,10 @@ public:
 	EditorTexture(const std::string& name, const gfx::Size& size, IDirect3DTexture9* direct3DTexture9)
 		: mName(name), mSize(size), mContentRect{0, 0, size.width, size.height}, mTexture(direct3DTexture9) {
 	}
+	
+	int GetId() const override {
+		return -1;
+	}
 
 	const std::string& GetName() const override {
 		return mName;
@@ -46,7 +50,10 @@ public:
 	IDirect3DTexture9* GetDeviceTexture() override {
 		return mTexture;
 	}
-
+	
+	void FreeDeviceTexture() override {
+		throw TempleException("Unsupported operation");
+	}
 private:
 	std::string mName;
 	gfx::ContentRect mContentRect;

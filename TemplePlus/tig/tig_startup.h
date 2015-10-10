@@ -65,6 +65,7 @@ public:
 };
 
 class MainWindow;
+class Graphics;
 
 // RAII for TIG initialization
 class TigInitializer {
@@ -78,6 +79,10 @@ public:
 
 	MainWindow &GetMainWindow() {
 		return *mMainWindow;
+	}
+
+	Graphics& GetGraphics() {
+		return *mGraphics;
 	}
 
 private:
@@ -96,8 +101,9 @@ private:
 	TigConfig mConfig;
 
 	std::unique_ptr<MainWindow> mMainWindow;
-	std::unique_ptr<class Graphics> mGraphics;
+	std::unique_ptr<Graphics> mGraphics;
 	std::unique_ptr<class LegacyVideoSystem> mLegacyVideoSystem;
+	std::unique_ptr<class MessageQueue> mMessageQueue;
 
 	// Contains all systems that have already been started
 	std::vector<TigSystemPtr> mStartedSystems;

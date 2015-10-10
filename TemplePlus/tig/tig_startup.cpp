@@ -5,6 +5,7 @@
 #include "mainwindow.h"
 #include "graphics/graphics.h"
 #include "graphics/legacyvideosystem.h"
+#include "messages/messagequeue.h"
 
 #include "tig_startup.h"
 #include "../tio/tio.h"
@@ -92,9 +93,11 @@ TigInitializer::TigInitializer(HINSTANCE hInstance)
 	mStartedSystems.emplace_back(StartSystem("timer.c", 0x101E34E0, 0x101E34F0));
 	// mStartedSystems.emplace_back(StartSystem("dxinput.c", 0x101FF910, 0x101FF950));
 	// mStartedSystems.emplace_back(StartSystem("keyboard.c", 0x101DE430, 0x101DE2D0));
-	mStartedSystems.emplace_back(StartSystem("texture.c", 0x101EDF60, 0x101EE0A0));
+
+	// mStartedSystems.emplace_back(StartSystem("texture.c", 0x101EDF60, 0x101EE0A0));
 	mStartedSystems.emplace_back(StartSystem("mouse.c", 0x101DDF50, 0x101DDE30));
 	mStartedSystems.emplace_back(StartSystem("message.c", 0x101DE460, 0x101DE4E0));
+	// mMessageQueue = std::make_unique<MessageQueue>();
 	// startedSystems.emplace_back(StartSystem("gfx.c", TigStartupNoop, TigShutdownNoop));
 	mStartedSystems.emplace_back(StartSystem("strparse.c", 0x101EBF00, TigShutdownNoop));
 	mStartedSystems.emplace_back(StartSystem("filecache.c", TigStartupNoop, TigShutdownNoop));

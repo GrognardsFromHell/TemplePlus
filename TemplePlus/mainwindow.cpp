@@ -328,6 +328,13 @@ void MainWindow::UpdateMousePos(int xAbs, int yAbs, int wheelDelta) {
 
 int MainWindow::ToDirectInputKey(int vk) {
 
+	// This seems to map using scan codes, which
+	// actually look like original US keyboard ones
+	auto mapped = MapVirtualKey(vk, MAPVK_VK_TO_VSC);
+	if (mapped != 0) {
+		return mapped;
+	}
+
 	switch (vk) {
 	case VK_ESCAPE:
 		return 0x01; // DIK_ESCAPE

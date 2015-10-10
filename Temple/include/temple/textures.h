@@ -8,6 +8,10 @@ public:
 	explicit LegacyTexture(int id) : mId(id) {
 	}
 
+	int GetLegacyId() const {
+		return mId;
+	}
+
 	const std::string& GetName() const override;
 	
 	const gfx::ContentRect& GetContentRect() const override;

@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+
 #include "../platform/d3d.h"
 
 namespace gfx {
@@ -24,20 +25,26 @@ namespace gfx {
 	*/
 	class Texture {
 	public:
+
 		virtual ~Texture() {
 		}
-		
-		virtual const std::string &GetName() const = 0;
 
-		virtual const ContentRect &GetContentRect() const = 0;
-
-		virtual const Size &GetSize() const = 0;
+		virtual int GetId() const = 0;
 		
+		virtual const std::string& GetName() const = 0;
+
+		virtual const ContentRect& GetContentRect() const = 0;
+
+		virtual const Size& GetSize() const = 0;
+
 		virtual bool IsValid() const {
 			return true;
 		}
 
-		virtual IDirect3DTexture9 *GetDeviceTexture() = 0;
+		// Unloads the device texture (does't prevent it from being loaded again later)
+		virtual void FreeDeviceTexture() = 0;
+
+		virtual IDirect3DTexture9* GetDeviceTexture() = 0;
 
 	};
 
@@ -51,9 +58,13 @@ namespace gfx {
 		virtual ~TextureManager() {
 		}
 
-		virtual TextureRef Resolve(const std::string& filename) = 0;
+		virtual TextureRef Resolve(const std::string& filename,
+		                           bool withMipMaps = false) = 0;
+
+		virtual gfx::TextureRef GetById(int textureId) = 0;
+
 	};
 
-	extern std::unique_ptr<TextureManager> textureManager;
+	extern TextureManager* textureManager;
 
 }

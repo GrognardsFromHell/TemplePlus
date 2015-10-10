@@ -19,6 +19,7 @@ namespace gfx {
 		BMP,
 		JPEG,
 		TGA,
+		FNTART,
 		Unknown
 	};
 
@@ -34,6 +35,10 @@ namespace gfx {
 		inspecting the header only.
 	*/
 	ImageFileInfo DetectImageFormat(array_view<uint8_t> data);
+
+	bool DetectTga(array_view<uint8_t> data, ImageFileInfo &info);
+
+	std::unique_ptr<uint8_t[]> DecodeTga(array_view<uint8_t> data);
 
 	/*
 		Specifies the pixel format of the uncompressed data
@@ -64,6 +69,8 @@ namespace gfx {
 		std::unique_ptr<uint8_t[]> data;
 		ImageFileInfo info;
 	};
+
+	DecodedImage DecodeFontArt(const array_view<uint8_t> data);
 
 	DecodedImage DecodeImage(const array_view<uint8_t> data);
 

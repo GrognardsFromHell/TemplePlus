@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="gamesystems.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="movies.cpp" />
     <ClCompile Include="stdafx.cpp" />
@@ -12,9 +11,6 @@
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="animalcompanion.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="generalfixes.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="xp.cpp">
@@ -41,12 +37,6 @@
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="portrait_in_mainmenu.cpp" />
-    <ClCompile Include="gamelib_load.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="gamelib_save.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
     <ClCompile Include="obj_fieldnames.cpp">
       <Filter>utils</Filter>
     </ClCompile>
@@ -72,7 +62,6 @@
     <ClCompile Include="condition.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
-    <ClCompile Include="gamesystems_render.cpp" />
     <ClCompile Include="inventory.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
@@ -229,12 +218,6 @@
     <ClCompile Include="traps.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
     <ClCompile Include="ui\ui_tutorial.cpp" />
-    <ClCompile Include="gameplay_configs.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
-    <ClCompile Include="char_creation.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
     <ClCompile Include="ui_char.cpp">
       <Filter>ui</Filter>
     </ClCompile>
@@ -274,11 +257,31 @@
     <ClCompile Include="fixes\keyboard.cpp" />
     <ClCompile Include="graphics\graphics.cpp" />
     <ClCompile Include="graphics\video_hooks.cpp" />
-    <ClCompile Include="worldmap.cpp" />
+    <ClCompile Include="graphics\textures.cpp" />
+    <ClCompile Include="graphics\textures_hooks.cpp" />
+    <ClCompile Include="gamesystems\gamesystems.cpp" />
+    <ClCompile Include="gamesystems\legacy.cpp" />
+    <ClCompile Include="gamesystems\gamemodule.cpp" />
+    <ClCompile Include="gamesystems\gamerenderer.cpp" />
+    <ClCompile Include="gamesystems\gamelib_load.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="gamesystems\gamelib_save.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="diag\diag.cpp" />
+    <ClCompile Include="messages\messagequeue.cpp" />
+    <ClCompile Include="fixes\messages.cpp" />
     <ClCompile Include="ui_worldmap.cpp" />
+    <ClCompile Include="worldmap.cpp" />
+    <ClCompile Include="fixes\pointbuyconfig.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="fixes\generalfixes.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="gamesystems.h" />
     <ClInclude Include="movies.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="temple_functions.h" />
@@ -463,7 +466,6 @@
     <ClInclude Include="fade.h" />
     <ClInclude Include="maps.h" />
     <ClInclude Include="particles.h" />
-    <ClInclude Include="gamelib_private.h" />
     <ClInclude Include="python\python_areas.h" />
     <ClInclude Include="python\python_cheats.h" />
     <ClInclude Include="python\python_console.h" />
@@ -497,9 +499,6 @@
     <ClInclude Include="ui\ui_dialog.h" />
     <ClInclude Include="ui\ui_tutorial.h" />
     <ClInclude Include="sound.h" />
-    <ClInclude Include="char_creation.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
     <ClInclude Include="d20_levelup.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
@@ -531,6 +530,14 @@
     <ClInclude Include="graphics\graphics.h" />
     <ClInclude Include="graphics\video_hooks.h" />
     <ClInclude Include="graphics\legacyvideosystem.h" />
+    <ClInclude Include="graphics\textures.h" />
+    <ClInclude Include="gamesystems\gamesystems.h" />
+    <ClInclude Include="gamesystems\legacy.h" />
+    <ClInclude Include="gamesystems\loadingscreen.h" />
+    <ClInclude Include="gamesystems\gamemodule.h" />
+    <ClInclude Include="gamesystems\gamerenderer.h" />
+    <ClInclude Include="diag\diag.h" />
+    <ClInclude Include="messages\messagequeue.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

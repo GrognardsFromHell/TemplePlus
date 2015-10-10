@@ -104,6 +104,10 @@ public:
 		return mCaps;
 	}
 
+	size_t GetVideoMemory() const {
+		return mVideoMemory;
+	}
+	
 private:
 	friend class ResourceListenerRegistration;
 	void AddResourceListener(ResourceListener* resourceListener);
@@ -116,7 +120,7 @@ private:
 	void InitializeDirect3d();
 	void ReadCaps();
 	void SetDefaultRenderStates();
-
+	
 	// Free resources allocated in video memory
 	void FreeResources();
 
@@ -140,8 +144,11 @@ private:
 	D3DSURFACE_DESC mBackBufferDesc;
 
 	D3DCAPS9 mCaps;
+	size_t mVideoMemory = 0;
 
 	MainWindow& mMainWindow;
+
+	std::unique_ptr<class TextureManager> mTextureManager;
 
 	// Vertex Buffers used in ToEE for UI rendering
 

@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <atlcomcli.h>
+#include <util/fixes.h>
 
 MouseFuncs mouseFuncs;
 temple::GlobalStruct<TigMouseState, 0x10D25184> mouseState;
@@ -34,9 +35,6 @@ struct OriginalMouseFuncs : temple::AddressTable {
 	int* draggedCenterY;
 
 	OriginalMouseFuncs() {
-		rebase(SetCursor, 0x101DDDD0);
-		rebase(ResetCursor, 0x101DD780);
-
 		rebase(draggedTexId, 0x10D2558C);
 		rebase(draggedTexRect, 0x10D255B0);
 		rebase(draggedCenterX, 0x10D255C0);
@@ -137,9 +135,15 @@ void __cdecl MouseFuncs::ResetCursor() {
 	}
 }
 
-void hook_mouse() {
+static class MouseFixes : TempleFix {
+public:
+	const char* name() override {
+		return "Cursor fixes";
+	}
+	void apply() override;
+} fix;
 
-	MH_CreateHook(orgMouseFuncs.SetCursor, MouseFuncs::SetCursor, reinterpret_cast<void**>(&orgMouseFuncs.SetCursor));
-	MH_CreateHook(orgMouseFuncs.ResetCursor, MouseFuncs::ResetCursor, reinterpret_cast<void**>(&orgMouseFuncs.ResetCursor));
-
+void MouseFixes::apply() {
+	orgMouseFuncs.SetCursor = replaceFunction(0x101DDDD0, MouseFuncs::SetCursor);
+	orgMouseFuncs.ResetCursor = replaceFunction(0x101DD780, MouseFuncs::ResetCursor);
 }

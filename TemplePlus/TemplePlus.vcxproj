@@ -17,10 +17,11 @@
   <ItemGroup>
     <ClCompile Include="aas.cpp" />
     <ClCompile Include="action_sequence.cpp" />
-    <ClCompile Include="char_creation.cpp" />
+    <ClCompile Include="fixes\pointbuyconfig.cpp" />
     <ClCompile Include="d20_levelup.cpp" />
     <ClCompile Include="d20_obj_registry.cpp" />
     <ClCompile Include="damage.cpp" />
+    <ClCompile Include="diag\diag.cpp" />
     <ClCompile Include="dialog.cpp" />
     <ClCompile Include="dice.cpp" />
     <ClCompile Include="fade.cpp" />
@@ -32,10 +33,16 @@
     <ClCompile Include="d20_status.cpp" />
     <ClCompile Include="fixes\keyboard.cpp" />
     <ClCompile Include="fixes\light_load.cpp" />
+    <ClCompile Include="fixes\messages.cpp" />
     <ClCompile Include="fixes\partsyslag.cpp" />
     <ClCompile Include="fixes\sector_cache_size.cpp" />
     <ClCompile Include="float_line.cpp" />
-    <ClCompile Include="gameplay_configs.cpp" />
+    <ClCompile Include="gamesystems\gamemodule.cpp" />
+    <ClCompile Include="gamesystems\gamerenderer.cpp" />
+    <ClCompile Include="gamesystems\gamesystems.cpp" />
+    <ClCompile Include="gamesystems\legacy.cpp" />
+    <ClCompile Include="graphics\textures.cpp" />
+    <ClCompile Include="graphics\textures_hooks.cpp" />
     <ClCompile Include="graphics\video_hooks.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">NotUsing</PrecompiledHeader>
@@ -45,6 +52,7 @@
     <ClCompile Include="hotkeys.cpp" />
     <ClCompile Include="location.cpp" />
     <ClCompile Include="maps.cpp" />
+    <ClCompile Include="messages\messagequeue.cpp" />
     <ClCompile Include="obj_iterator.cpp" />
     <ClCompile Include="particles.cpp" />
     <ClCompile Include="path_node.cpp" />
@@ -115,17 +123,11 @@
     <ClCompile Include="ui_worldmap.cpp" />
     <ClCompile Include="util\fixes.cpp" />
     <ClCompile Include="util\folderutils.cpp" />
-    <ClCompile Include="gamelib_load.cpp" />
-    <ClCompile Include="gamelib_save.cpp" />
-    <ClCompile Include="gamesystems.cpp" />
-    <ClCompile Include="gamesystems_render.cpp" />
-    <ClCompile Include="generalfixes.cpp" />
+    <ClCompile Include="gamesystems\gamelib_load.cpp" />
+    <ClCompile Include="gamesystems\gamelib_save.cpp" />
+    <ClCompile Include="fixes\generalfixes.cpp" />
     <ClCompile Include="game_config.cpp" />
-    <ClCompile Include="graphics\graphics.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="graphics\graphics.cpp" />
     <ClCompile Include="inventory.cpp" />
     <ClCompile Include="mainloop.cpp" />
     <ClCompile Include="map_obj.cpp" />
@@ -189,7 +191,6 @@
     <ClInclude Include="action_sequence.h" />
     <ClInclude Include="ai.h" />
     <ClInclude Include="bonus.h" />
-    <ClInclude Include="char_creation.h" />
     <ClInclude Include="d20_class.h" />
     <ClInclude Include="critter.h" />
     <ClInclude Include="d20_level.h" />
@@ -197,21 +198,28 @@
     <ClInclude Include="d20_obj_registry.h" />
     <ClInclude Include="d20_status.h" />
     <ClInclude Include="damage.h" />
+    <ClInclude Include="diag\diag.h" />
     <ClInclude Include="dialog.h" />
     <ClInclude Include="dice.h" />
     <ClInclude Include="fade.h" />
     <ClInclude Include="float_line.h" />
+    <ClInclude Include="gamesystems\gamemodule.h" />
+    <ClInclude Include="gamesystems\gamerenderer.h" />
+    <ClInclude Include="gamesystems\gamesystems.h" />
+    <ClInclude Include="gamesystems\legacy.h" />
+    <ClInclude Include="gamesystems\loadingscreen.h" />
     <ClInclude Include="graphics\legacyvideosystem.h" />
+    <ClInclude Include="graphics\textures.h" />
     <ClInclude Include="graphics\video_hooks.h" />
     <ClInclude Include="history.h" />
     <ClInclude Include="hotkeys.h" />
     <ClInclude Include="legacyrenderstates.h" />
     <ClInclude Include="location.h" />
     <ClInclude Include="maps.h" />
+    <ClInclude Include="messages\messagequeue.h" />
     <ClInclude Include="objlist.h" />
     <ClInclude Include="obj_iterator.h" />
     <ClInclude Include="particles.h" />
-    <ClInclude Include="gamelib_private.h" />
     <ClInclude Include="path_node.h" />
     <ClInclude Include="python\python_areas.h" />
     <ClInclude Include="python\python_cheats.h" />
@@ -271,7 +279,6 @@
     <ClInclude Include="faction.h" />
     <ClInclude Include="feat.h" />
     <ClInclude Include="util\folderutils.h" />
-    <ClInclude Include="gamesystems.h" />
     <ClInclude Include="game_config.h" />
     <ClInclude Include="goalfuncnames.h" />
     <ClInclude Include="graphics\graphics.h" />

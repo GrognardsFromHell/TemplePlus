@@ -1,9 +1,11 @@
 
+
 #include "stdafx.h"
 #include <temple/dll.h>
 #include "tig/tig.h"
 #include "graphics/graphics.h"
 #include "temple_functions.h"
+#include "gamerenderer.h"
 
 #pragma pack(push, 1)
 
@@ -43,30 +45,30 @@ struct RenderWorldInfo {
 static struct GameRenderFuncs : temple::AddressTable {
 
 	/*
-		Given a rectangle in screen coordinates, calculates the rectangle in tile-space that
-		is visible.
+	Given a rectangle in screen coordinates, calculates the rectangle in tile-space that
+	is visible.
 	*/
-	bool (__cdecl *GetVisibleTileRect)(const TigRect &screenRect, TileRect &tiles);
-	
+	bool(__cdecl *GetVisibleTileRect)(const TigRect &screenRect, TileRect &tiles);
+
 	/*
-		These two functions build a linked list of all the sectors encompassed by the given tile
-		rectangle. The list is using shared global memory from a pool and it should be returned
-		to the pool using the second function.
+	These two functions build a linked list of all the sectors encompassed by the given tile
+	rectangle. The list is using shared global memory from a pool and it should be returned
+	to the pool using the second function.
 	*/
 	SectorList* (__cdecl *SectorListBuild)(const TileRect &tiles);
-	void (__cdecl *SectorListFree)(SectorList *sectorList);
+	void(__cdecl *SectorListFree)(SectorList *sectorList);
 
 	/*
-		Builds an unknown info blob in the second argument.
+	Builds an unknown info blob in the second argument.
 	*/
-	bool (__cdecl *BuildUnk)(const TileRect &tiles, RenderUnknown &unk);
+	bool(__cdecl *BuildUnk)(const TileRect &tiles, RenderUnknown &unk);
 
 	/*
-		Seems to be used to propagate the screen rectangle to the scratchbuffer.
+	Seems to be used to propagate the screen rectangle to the scratchbuffer.
 	*/
-	void (__cdecl *ScratchbufferRelated)(const TigRect &rect);
+	void(__cdecl *ScratchbufferRelated)(const TigRect &rect);
 
-	int *unkCounter1;
+	int *gameDrawEnableCount;
 	int *unkFlag2;
 
 	// Seems to be manipulated by ScratchbufferRelated
@@ -80,29 +82,36 @@ static struct GameRenderFuncs : temple::AddressTable {
 
 		rebase(ScratchbufferRelated, 0x10002530);
 
-		rebase(unkCounter1, 0x102ABED8);
+		rebase(gameDrawEnableCount, 0x102ABED8);
 		rebase(unkFlag2, 0x1030728C);
 		rebase(globalRectList, 0x10306C0C);
 	}
 
 } renderFuncs;
 
-void __cdecl GameSystemsRenderWorld(const RenderWorldInfo &renderInfo) {
-	
+GameRenderer::GameRenderer(Graphics &graphics) : mGraphics(graphics) {
 }
 
-void GameSystemsRender() {
+GameRenderer::~GameRenderer() {
+}
+
+void GameRenderer::Render() {
+
 	/*
-		Without this call, the ground JPGs will not be rendered.
+	Without this call, the ground JPGs will not be rendered.
 	*/
 	// TigRect rect(0, 0, graphics->GetSceneWidth(), graphics->GetSceneHeight());
 	// renderFuncs.ScratchbufferRelated(rect);
 
+	if (renderFuncs.gameDrawEnableCount <= 0) {
+		return;
+	}
+
 	TigRect viewportSize;
 	viewportSize.y = -256;
-	viewportSize.width = graphics->GetSceneWidth() + 512;
+	viewportSize.width = mGraphics.GetSceneWidth() + 512;
 	viewportSize.x = -256;
-	viewportSize.height = graphics->GetSceneHeight() + 512;
+	viewportSize.height = mGraphics.GetSceneHeight() + 512;
 
 	TileRect tiles;
 
@@ -121,12 +130,12 @@ void GameSystemsRender() {
 
 		// I think this maybe a 2D arcanum leftover when the map could be incrementally drawn based on "dirty rects"
 		TigRectList dirtyList;
-		dirtyList.rect = TigRect(0, 0, graphics->GetSceneWidth(), graphics->GetSceneHeight());
+		dirtyList.rect = TigRect(0, 0, mGraphics.GetSceneWidth(), mGraphics.GetSceneHeight());
 		dirtyList.next = nullptr;
 		TigRectList *dirtyRectPtr = &dirtyList;
 		renderInfo.rectList = &dirtyRectPtr;
-		
-		typedef void (__cdecl *DelRendFn)(const RenderWorldInfo &);
+
+		typedef void(__cdecl *DelRendFn)(const RenderWorldInfo &);
 		auto delRenderFunc = temple::GetRef<0x103072BC, DelRendFn>();
 		delRenderFunc(renderInfo);
 

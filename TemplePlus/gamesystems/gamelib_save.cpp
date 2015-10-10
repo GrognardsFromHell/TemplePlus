@@ -1,14 +1,15 @@
 #include "stdafx.h"
 #include "util/fixes.h"
 #include "tio/tio_utils.h"
-#include "gamesystems.h"
+#include "gamesystems/gamesystems.h"
 #include "ui/ui.h"
-#include "gamelib_private.h"
 #include "timeevents.h"
 #include "party.h"
 #include "maps.h"
 #include "critter.h"
 #include "python/python_integration_obj.h"
+#include <tio/tio.h>
+#include "gamesystems/legacy.h"
 
 struct GsiData {
 	string filename;
@@ -128,7 +129,7 @@ static bool SaveGsiData(const GsiData &saveInfo) {
 	return success;
 }
 
-bool GameSystemFuncs::SaveGame(const string& filename, const string& displayName) {
+bool GameSystems::SaveGame(const string& filename, const string& displayName) {
 
 	InSaveGame inSave;
 	addresses.UiMmRelated(63);
@@ -189,7 +190,7 @@ bool GameSystemFuncs::SaveGame(const string& filename, const string& displayName
 
 	for (int i = 0; i < gameSystemCount; ++i) {
 		addresses.UiMmRelated2(i + 1);
-		auto &system = gameSystems->systems[i];
+		auto &system = legacyGameSystems->systems[i];
 
 		if (!system.save) {
 			continue;
@@ -268,8 +269,8 @@ public:
 		return "GameLib Save replacement.";
 	}
 
-	static bool __cdecl SaveGame(const char *filename, const char *displayName) {
-		return gameSystemFuncs.SaveGame(filename, displayName);
+	static bool SaveGame(const char *filename, const char *displayName) {
+		return gameSystems->SaveGame(filename, displayName);
 	}
 
 	void apply() override {

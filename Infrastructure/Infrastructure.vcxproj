@@ -228,9 +228,11 @@
     <ClCompile Include="format.cc" />
     <ClCompile Include="elfhash.cpp" />
     <ClCompile Include="images.cpp" />
+    <ClCompile Include="images_tga.cpp" />
     <ClCompile Include="keyboard.cpp" />
-    <ClCompile Include="jpeg.cpp" />
+    <ClCompile Include="images_jpeg.cpp" />
     <ClCompile Include="mdfparser.cpp" />
+    <ClCompile Include="textures.cpp" />
     <ClCompile Include="tokenizer.cpp" />
     <ClCompile Include="json11.cpp" />
     <ClCompile Include="stringutil.cpp" />

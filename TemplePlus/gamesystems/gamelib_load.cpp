@@ -5,7 +5,9 @@
 #include "temple_functions.h"
 #include "python/python_integration_obj.h"
 
-#include "gamelib_private.h"
+#include "gamesystems/gamesystems.h"
+#include "tio/tio.h"
+#include "gamesystems/legacy.h"
 
 static struct GameLibLoadAddresses : temple::AddressTable {
 	/*
@@ -48,7 +50,7 @@ struct InLoadGame {
 	}
 };
 
-bool GameSystemFuncs::LoadGame(const string& filename) {
+bool GameSystems::LoadGame(const string& filename) {
 
 	logger->debug("Loading savegame from {}", filename);
 
@@ -141,7 +143,7 @@ bool GameSystemFuncs::LoadGame(const string& filename) {
 	saveFile.saveVersion = saveVersion;
 	
 	for (int i = 0; i < gameSystemCount; ++i) {
-		auto &sys = gameSystems->systems[i];
+		auto &sys = legacyGameSystems->systems[i];
 
 		if (!sys.load) {
 			addresses.UiMmRelated2(i + 1);
@@ -207,7 +209,7 @@ public:
 	}
 
 	static bool __cdecl LoadGame(const char *filename) {
-		return gameSystemFuncs.LoadGame(filename);
+		return gameSystems->LoadGame(filename);
 	}
 
 	void apply() override {

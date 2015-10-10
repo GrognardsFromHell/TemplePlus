@@ -43,44 +43,6 @@ static struct UiRenderFuncs : temple::AddressTable {
 	}
 } uiRenderFuncs;
 
-int UiRenderer::RegisterTexture(const string& path) {
-
-	int textureId;
-	if (textureFuncs.RegisterTexture(path.c_str(), &textureId) != 0) {
-		// TODO: this should probably instead of failing, return "bad art" or something similar
-		throw TempleException(format("Unable to register texture {}", path));
-	}
-
-	return textureId;
-
-}
-
-Texture UiRenderer::LoadTexture(const int textureId) {
-
-	TigTextureRegistryEntry textureEntry;
-	if (textureFuncs.LoadTexture(textureId, &textureEntry) != 0) {
-		// TODO: Probably should return bad art here
-		throw TempleException(format("Unable to load texture {}", textureId));
-	}
-
-	Texture result;
-	result.id = textureEntry.textureId;
-	result.width = textureEntry.width;
-	result.height = textureEntry.height;
-	result.rect = textureEntry.rect;
-	strcpy(result.path, textureEntry.name);
-	result.unk = textureEntry.comes_from_mdf;
-	result.field_124 = textureEntry.field_124;
-	result.buffer = textureEntry.buffer;
-
-	return result;
-	
-}
-
-Texture UiRenderer::LoadTexture(const string& path) {
-	return LoadTexture(RegisterTexture(path));
-}
-
 void UiRenderer::DrawTexture(int texId, const TigRect &destRect) {
 
 	DrawTexturedQuadArgs args;
