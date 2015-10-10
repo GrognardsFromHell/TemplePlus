@@ -212,7 +212,7 @@ BOOL PcCreationUiSystem::PcPortraitsInit(GameSystemConf* conf)
 
 BOOL PcCreationUiSystem::PcPortraitWidgetsInit(int height)
 {
-	pcPortraitsMain.WidgetType1Init(10, height - 80, 600, 63);
+	pcPortraitsMain.WidgetType1Init(10, height - 80, 650, 63);
 	pcPortraitsMain.widgetFlags = 1;
 	pcPortraitsMain.render = (int)return0;
 	pcPortraitsMain.handleMessage = (int)return0;
