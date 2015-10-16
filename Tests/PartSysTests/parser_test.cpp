@@ -28,7 +28,9 @@ protected:
 		auto defaultMaterial = std::make_shared<testing::NiceMock<MaterialMock>>();
 		testing::DefaultValue<gfx::MaterialRef>::Set(defaultMaterial);
 
-		gfx::gMdfMaterialFactory.reset(new testing::NiceMock<MaterialsMock>);
+		static std::unique_ptr<MaterialsMock> sMaterials;
+		sMaterials.reset(new testing::NiceMock<MaterialsMock>);
+		gfx::gMdfMaterialFactory = sMaterials.get();
 
 		// Init VFS with mock/dummy code
 		vfs.reset(Vfs::CreateStdIoVfs());

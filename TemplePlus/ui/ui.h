@@ -112,7 +112,7 @@ extern temple::GlobalPrimitive<ActiveWidgetListEntry*, 0x10EF68DC> activeWidgetA
 extern temple::GlobalPrimitive<Widget**, 0x10EF68E0> activeWidgets; // [3000]
 extern temple::GlobalPrimitive<int, 0x10EF68D8> activeWidgetCount;
 
-struct ImgFile : temple::TempleAlloc {
+struct ImgFile {
 	int tilesX;
 	int tilesY;
 	int width;

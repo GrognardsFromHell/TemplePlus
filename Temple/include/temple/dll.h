@@ -39,8 +39,10 @@ namespace temple {
 		std::wstring FindConflictingModule();
 		void ReserveMemoryRange();
 
-		static Dll& GetInstance();
+		bool IsVanillaDll() const;
 
+		static Dll& GetInstance();
+	
 		static void RegisterAddressPtr(void** ref);
 
 		void SetDebugOutputCallback(std::function<void(const std::string &text)> callback);

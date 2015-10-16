@@ -10,6 +10,6 @@ namespace crypto {
 		provided data view and return it as a lowercase hex
 		string.
 	*/
-	std::string MD5AsString(Guide::array_view<uint8_t> data);
+	std::string MD5AsString(gsl::array_view<uint8_t> data);
 
 }

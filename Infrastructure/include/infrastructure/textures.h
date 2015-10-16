@@ -40,11 +40,13 @@ namespace gfx {
 		virtual bool IsValid() const {
 			return true;
 		}
-
+		
 		// Unloads the device texture (does't prevent it from being loaded again later)
 		virtual void FreeDeviceTexture() = 0;
 
 		virtual IDirect3DTexture9* GetDeviceTexture() = 0;
+
+		static std::shared_ptr<class Texture> GetInvalidTexture();
 
 	};
 

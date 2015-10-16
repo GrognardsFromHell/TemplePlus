@@ -12,9 +12,6 @@ Direct3DVertexBuffer8Adapter *CreateVertexBufferAdapter(IDirect3DVertexBuffer9 *
 }
 
 void DeleteVertexBufferAdapter(Direct3DVertexBuffer8Adapter *adapter) {
-	if (adapter->delegate) {
-		adapter->delegate->Release();
-	}
 	delete adapter;
 }
 

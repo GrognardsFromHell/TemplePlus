@@ -8,13 +8,14 @@
 #include "startup/installationdir.h"
 #include "startup/installationdirs.h"
 #include "startup/installationdirpicker.h"
+#include "tig/tig.h"
 
 void InitLogging();
 
 // Defined in temple_main.cpp for now
 int TempleMain(HINSTANCE hInstance, const string& commandLine);
 
-InstallationDir GetInstallationDir(Guide::not_null<bool*> userCancelled);
+InstallationDir GetInstallationDir(gsl::not_null<bool*> userCancelled);
 void ShowIncompatibilityWarning(const InstallationDir& dir);
 
 // This is required to get "new style" common dialogs like message boxes
@@ -23,8 +24,6 @@ name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int showCmd) {
-
-
 	// We reserve space for temple.dll as early as possible to avoid rebasing of temple.dll
 	auto& dll = temple::Dll::GetInstance();
 	dll.ReserveMemoryRange();
@@ -85,7 +84,7 @@ static void ShowIncompatibilityWarning(const InstallationDir& dir) {
 
 }
 
-InstallationDir GetInstallationDir(Guide::not_null<bool*> userCancelled) {
+InstallationDir GetInstallationDir(gsl::not_null<bool*> userCancelled) {
 	*userCancelled = false;
 
 	if (!config.toeeDir.empty()) {

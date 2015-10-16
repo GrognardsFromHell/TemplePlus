@@ -20,7 +20,7 @@ namespace gfx {
 		virtual MdfType GetType() const = 0;
 	};
 
-	enum class MdfTextureBlendType {
+	enum class MdfTextureBlendType : uint32_t {
 		Modulate,
 		Add,
 		TextureAlpha,

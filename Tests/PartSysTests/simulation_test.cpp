@@ -52,7 +52,8 @@ to speed up the tests.
 
 
 class PartSysSimulationTest : public testing::Test {
-protected:
+protected:	
+
 	static PartSysParser &GetParser() {
 		static auto meshes = std::make_shared<gfx::MeshesManager>();
 		static PartSysParser sParser(meshes);
@@ -60,7 +61,9 @@ protected:
 	}
 
 	static void SetUpTestCase() {
-		gfx::gMdfMaterialFactory.reset(new MaterialsMock);
+		static std::unique_ptr<MaterialsMock> sMaterials;
+		sMaterials.reset(new MaterialsMock);
+		gfx::gMdfMaterialFactory = sMaterials.get();
 
 		// Init VFS with mock/dummy code
 		vfs.reset(Vfs::CreateStdIoVfs());

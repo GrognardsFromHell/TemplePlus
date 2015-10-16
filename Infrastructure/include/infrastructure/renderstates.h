@@ -2,7 +2,9 @@
 #pragma once
 
 #include "../platform/d3d.h"
+
 #include <memory>
+#include <functional>
 
 /*
 	Defines the state tracker to be used for Direct3D rendering.
@@ -29,7 +31,7 @@ public:
 	virtual void SetLighting(bool enable) = 0;
 	virtual bool IsLighting() = 0;
 	virtual void SetColorVertex(bool enable) = 0; // D3DRS_COLORVERTEX
-	virtual void SetColorWriteEnable(bool enable) = 0; // D3DRS_COLORWRITEENABLE
+	virtual void SetColorWriteEnable(bool enableRed, bool enableGreen, bool enableBlue, bool enableAlpha) = 0; // D3DRS_COLORWRITEENABLE
 	virtual void SetZFunc(D3DCMPFUNC func) = 0; // D3DRS_ZFUNC
 	virtual void SetSpecularEnable(bool enable) = 0;
 	virtual void SetTexture(int sampler, IDirect3DTexture9 *texture) = 0;
@@ -59,11 +61,22 @@ public:
 	*/
 	virtual void Commit() = 0;
 
+	using CommitCallback = std::function<void()>;	
+	const CommitCallback& GetCommitCallback() const {
+		return mCommitCallback;
+	}
+
+	void SetCommitCallback(const CommitCallback& commitCallback) {
+		mCommitCallback = commitCallback;
+	}
+
 	/*
 		Reads the current device state and resets the request state to it.
 	*/
 	virtual void Reset() = 0;
-	
+
+protected:
+	CommitCallback mCommitCallback = nullptr;	
 };
 
 inline RenderStates::~RenderStates() = default;

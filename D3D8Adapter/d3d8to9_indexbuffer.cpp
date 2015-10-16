@@ -13,7 +13,6 @@ Direct3DIndexBuffer8Adapter *CreateIndexBufferAdapter(IDirect3DIndexBuffer9 *del
 
 void DeleteIndexBufferAdapter(Direct3DIndexBuffer8Adapter *adapter) {
 	if (adapter->delegate) {
-		adapter->delegate->Release();
 	}
 	delete adapter;
 }

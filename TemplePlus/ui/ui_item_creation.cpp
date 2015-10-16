@@ -728,4 +728,4 @@ public:
 		write(0x102AADF8, &ptrToForgeRing, sizeof(ptrToForgeRing));
 		write(0x102EE340, &ptrToMAA, sizeof(ptrToMAA));
 	}
-} itemCreation;
+} /*itemCreation*/;

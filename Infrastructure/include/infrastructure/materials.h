@@ -34,9 +34,9 @@ namespace gfx {
 	public:
 		virtual ~MdfMaterialFactory() {}
 
-		virtual MaterialRef LoadMaterial(const std::string& name);
+		virtual MaterialRef LoadMaterial(const std::string& name) = 0;
 	};
 
-	extern std::unique_ptr<MdfMaterialFactory> gMdfMaterialFactory;
+	extern MdfMaterialFactory* gMdfMaterialFactory;
 	
 }

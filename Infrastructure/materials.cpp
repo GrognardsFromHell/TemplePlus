@@ -7,7 +7,7 @@
 
 namespace gfx {
 
-	std::unique_ptr<MdfMaterialFactory> gMdfMaterialFactory;
+	MdfMaterialFactory* gMdfMaterialFactory = nullptr;
 
 	/**
 		This class is used to represent an invalid material, which frees
@@ -34,26 +34,6 @@ namespace gfx {
 	const MaterialRef& Material::GetInvalidMaterial() {
 		static MaterialRef result(std::make_shared<InvalidMaterial>());
 		return result;
-	}
-
-	MaterialRef MdfMaterialFactory::LoadMaterial(const std::string& name) {
-		auto mdfContent(vfs->ReadAsString(name));
-
-		std::istringstream in(mdfContent);
-		std::string line;
-
-
-		// Parse the material type
-
-		while (std::getline(in, line)) {
-
-		}
-
-
-		// First line of MDF is always which type it is
-
-
-		return MaterialRef();
 	}
 
 }

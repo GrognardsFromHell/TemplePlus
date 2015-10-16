@@ -149,6 +149,7 @@ private:
 	MainWindow& mMainWindow;
 
 	std::unique_ptr<class TextureManager> mTextureManager;
+	std::unique_ptr<class MdfMaterialFactory> mMdfMaterialFactory;
 
 	// Vertex Buffers used in ToEE for UI rendering
 
@@ -178,6 +179,11 @@ public:
 	~ResourceListenerRegistration() {
 		mGraphics.RemoveResourceListener(mListener);
 	}
+
+	ResourceListenerRegistration(const ResourceListenerRegistration&) = delete;
+	ResourceListenerRegistration(const ResourceListenerRegistration&&) = delete;
+	ResourceListenerRegistration& operator =(const ResourceListenerRegistration&) = delete;
+	ResourceListenerRegistration& operator =(const ResourceListenerRegistration&&) = delete;
 
 private:
 	Graphics& mGraphics;

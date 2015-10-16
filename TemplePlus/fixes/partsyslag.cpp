@@ -145,7 +145,7 @@ float PartSysLagFix::GetPartSysMaxLifetime(legacypartsys::PartSys* sys) {
 	auto lifetime = 0.0f;
 
 	auto spec = sys->spec;
-	Guide::array_view<legacypartsys::PartSysEmitterSpec*> emitters(spec->emitters, spec->emitterCount);
+	gsl::array_view<legacypartsys::PartSysEmitterSpec*> emitters(spec->emitters, spec->emitterCount);
 
 	for (auto emitter : emitters) {
 		if (emitter->flags & legacypartsys::PSEF_PERM) {

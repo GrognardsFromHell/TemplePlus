@@ -7,7 +7,7 @@
 
 #include "../tig/tig_texture.h"
 
-static class TextureHooks : TempleFix {
+static class TexturesHooks : TempleFix {
 public:
 	const char* name() override {
 		return "Texture Registry Enhancements";
@@ -33,9 +33,9 @@ private:
 	static std::unordered_map<int, int> mapTileIdCache;
 } hooks;
 
-TextureHooks::MapArtResolverFn* TextureHooks::mapArtResolver = nullptr;
+TexturesHooks::MapArtResolverFn* TexturesHooks::mapArtResolver = nullptr;
 
-void TextureHooks::apply() {
+void TexturesHooks::apply() {
 
 	replaceFunction(0x101EE170, UnloadAll);
 	replaceFunction(0x101EE240, UnloadId);
@@ -49,11 +49,11 @@ void TextureHooks::apply() {
 }
 
 // Called by cleanup buffers, it's a noop because we handle this ourselves
-void TextureHooks::UnloadAll() {
+void TexturesHooks::UnloadAll() {
 }
 
 // Unloads a single texture by id
-void TextureHooks::UnloadId(int textureId) {
+void TexturesHooks::UnloadId(int textureId) {
 	auto ref = gfx::textureManager->GetById(textureId);
 	if (ref) {
 		ref->FreeDeviceTexture();
@@ -61,11 +61,11 @@ void TextureHooks::UnloadId(int textureId) {
 }
 
 // Used during map loading to register a function that resolves map tile ids -> filenames
-void TextureHooks::SetMapTileFilenameResolver(MapArtResolverFn* resolver) {
+void TexturesHooks::SetMapTileFilenameResolver(MapArtResolverFn* resolver) {
 	mapArtResolver = resolver;
 }
 
-int TextureHooks::GetMapTileArtId(uint16_t mapId, uint8_t x, uint8_t y, int* textureIdOut) {
+int TexturesHooks::GetMapTileArtId(uint16_t mapId, uint8_t x, uint8_t y, int* textureIdOut) {
 	auto tileId = (y << 16) | x;
 	std::string tileFilename;
 	if (!mapArtResolver) {
@@ -81,7 +81,7 @@ int TextureHooks::GetMapTileArtId(uint16_t mapId, uint8_t x, uint8_t y, int* tex
 	return texture->IsValid() ? 0 : 17;
 }
 
-int TextureHooks::RegisterUiTexture(const char* filename, int* textureIdOut) {
+int TexturesHooks::RegisterUiTexture(const char* filename, int* textureIdOut) {
 	auto ref = gfx::textureManager->Resolve(filename, false);
 
 	if (!ref->IsValid()) {
@@ -94,7 +94,7 @@ int TextureHooks::RegisterUiTexture(const char* filename, int* textureIdOut) {
 	return 0;
 }
 
-int TextureHooks::RegisterMdfTexture(const char* filename, int* textureIdOut) {
+int TexturesHooks::RegisterMdfTexture(const char* filename, int* textureIdOut) {
 	auto ref = gfx::textureManager->Resolve(filename, true);
 
 	if (!ref->IsValid()) {
@@ -107,7 +107,7 @@ int TextureHooks::RegisterMdfTexture(const char* filename, int* textureIdOut) {
 	return 0;
 }
 
-int TextureHooks::RegisterFontTexture(const char* filename, int* textureIdOut) {
+int TexturesHooks::RegisterFontTexture(const char* filename, int* textureIdOut) {
 	auto ref = gfx::textureManager->Resolve(filename, false);
 
 	if (!ref->IsValid()) {
@@ -120,7 +120,14 @@ int TextureHooks::RegisterFontTexture(const char* filename, int* textureIdOut) {
 	return 0;
 }
 
-int TextureHooks::LoadTexture(int textureId, TigTextureRegistryEntry* textureOut) {
+int TexturesHooks::LoadTexture(int textureId, TigTextureRegistryEntry* textureOut) {
+
+	// Texture ID 0 has the special meaning "no textures"
+	if (!textureId) {
+		memset(textureOut, 0, sizeof(TigTextureRegistryEntry));
+		return 0;
+	}
+
 	// Only one tig buffer can be returned at a time by this function,
 	// Since we don't want to memory manage
 	static TigBuffer buffer { 0, };

@@ -10,7 +10,7 @@
 static const GUID sDialogGuid =
 {0x42992164, 0x25e1, 0x4ff3,{0x9f, 0xfd, 0x1d, 0x65, 0xf2, 0x1a, 0xd4, 0xdf}};
 
-InstallationDir InstallationDirPicker::Pick(Guide::not_null<bool*> userCancelled) {
+InstallationDir InstallationDirPicker::Pick(gsl::not_null<bool*> userCancelled) {
 	*userCancelled = false;
 
 	auto title = L"Temple of Elemental Evil - Installation Directory";

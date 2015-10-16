@@ -11,7 +11,7 @@ class InstallationDir;
 class InstallationDirPicker {
 public:
 
-	static InstallationDir Pick(Guide::not_null<bool*> userCancelled);
+	static InstallationDir Pick(gsl::not_null<bool*> userCancelled);
 
 	// Returns true if the user did not cancel
 	bool PickDirectory();

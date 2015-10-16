@@ -836,6 +836,14 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 
 void _FeatConditionsRegister()
 {
+
+	// In moebiues DLL the condition table was moved and extended
+	auto condCount = 84;
+	if (temple::Dll::GetInstance().IsVanillaDll()) {
+		conds.FeatConditionDict = temple::GetPointer<CondFeatDictionary>(0x102EEC40);
+		condCount = 79;
+	}
+
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAttackOfOpportunity);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionCastDefensively);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionCombatCasting);
@@ -874,7 +882,8 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondTirelessRage);
 	*/
 	conds.FeatConditionDict[61].condStruct = (CondStruct*)conds.mCondCraftWand;
-	for (unsigned int i = 0; i < 84; i++)
+
+	for (unsigned int i = 0; i < condCount; i++)
 	{
 		conds.hashmethods.CondStructAddToHashtable(conds.FeatConditionDict[i].condStruct);
 	}

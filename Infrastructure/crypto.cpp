@@ -50,7 +50,7 @@ namespace crypto {
 
 	}
 
-	std::string MD5AsString(Guide::array_view<uint8_t> data) {
+	std::string MD5AsString(gsl::array_view<uint8_t> data) {
 
 		auto alg = GetMd5Alg();
 

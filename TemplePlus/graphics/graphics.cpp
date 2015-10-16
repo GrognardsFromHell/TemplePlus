@@ -9,9 +9,11 @@
 #include <platform/d3d.h>
 
 #include "graphics.h"
-#include "legacyrenderstates.h"
+#include "renderstates.h"
 #include "mainwindow.h"
 #include "textures.h"
+#include "materials.h"
+#include "renderstates_hooks.h"
 
 #include "util/config.h"
 #include <location.h>
@@ -79,10 +81,13 @@ Graphics::Graphics(MainWindow& mainWindow) : mMainWindow(mainWindow) {
 	}
 	graphics = this;
 
-	// Use 25% or at most 256 MB for textures
+	// Use 25% or at most 128 MB for textures
 	auto textureBudget = std::min<size_t>(128 * 1024 * 1024, mVideoMemory / 4);
 	mTextureManager = std::make_unique<TextureManager>(mDevice, textureBudget);
 	gfx::textureManager = mTextureManager.get();
+
+	mMdfMaterialFactory = std::make_unique<MdfMaterialFactory>();
+	gfx::gMdfMaterialFactory = mMdfMaterialFactory.get();	
 }
 
 Graphics::~Graphics() {
@@ -91,6 +96,9 @@ Graphics::~Graphics() {
 	}
 	if (gfx::textureManager == mTextureManager.get()) {
 		gfx::textureManager = nullptr;
+	}
+	if (gfx::gMdfMaterialFactory == mMdfMaterialFactory.get()) {
+		gfx::gMdfMaterialFactory = nullptr;
 	}
 }
 
@@ -227,6 +235,7 @@ void Graphics::CreateResources() {
 	}
 
 	renderStates->Reset();
+	ResetLegacyRenderStates();
 
 	// Get the currently attached backbuffer
 	if (D3DLOG(mDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &mBackBuffer)) != D3D_OK) {
@@ -607,13 +616,8 @@ void Graphics::TakeScaledScreenshot(const std::string& filename, int width, int 
 
 void Graphics::SetDefaultRenderStates() {
 	/*
-	SET DEFAULT RENDER STATES
+		Set the render states not being tracked by our state tracker.
 	*/
-	mDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
-	mDevice->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
-	mDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
-	mDevice->SetRenderState(D3DRS_LIGHTING, TRUE);
-
 	D3DLIGHT9 light;
 	memset(&light, 0, sizeof(light));
 	light.Type = D3DLIGHT_DIRECTIONAL;
@@ -645,33 +649,15 @@ void Graphics::SetDefaultRenderStates() {
 	material.Power = 50.0f;
 	mDevice->SetMaterial(&material);
 
-	D3DLOG(mDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE));
-	D3DLOG(mDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA));
-	D3DLOG(mDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA));
-
-	D3DLOG(mDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1));
-	D3DLOG(mDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTOP_SELECTARG1));
-	D3DLOG(mDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTOP_DISABLE));
-
 	for (DWORD i = 0; i < 4; ++i) {
-		D3DLOG(mDevice->SetSamplerState(i, D3DSAMP_MINFILTER, 1));
-		D3DLOG(mDevice->SetSamplerState(i, D3DSAMP_MAGFILTER, 2));
-		D3DLOG(mDevice->SetSamplerState(i, D3DSAMP_MIPFILTER, 1));
 		D3DLOG(mDevice->SetSamplerState(i, D3DSAMP_MIPMAPLODBIAS, 0));
-		D3DLOG(mDevice->SetSamplerState(i, D3DSAMP_MAXMIPLEVEL, 01));
-		D3DLOG(mDevice->SetSamplerState(i, D3DSAMP_MINFILTER, 1));
-		D3DLOG(mDevice->SetSamplerState(i, D3DSAMP_MINFILTER, 1));
-		D3DLOG(mDevice->SetSamplerState(i, D3DSAMP_ADDRESSU, 3));
-		D3DLOG(mDevice->SetSamplerState(i, D3DSAMP_ADDRESSV, 3));
-		D3DLOG(mDevice->SetTextureStageState(i, D3DTSS_TEXTURETRANSFORMFLAGS, 0));
-		D3DLOG(mDevice->SetTextureStageState(i, D3DTSS_TEXCOORDINDEX, 0));
+		D3DLOG(mDevice->SetSamplerState(i, D3DSAMP_MAXMIPLEVEL, 1));
 	}
 
 	D3DXMATRIX identity;
 	D3DXMatrixIdentity(&identity);
 	D3DLOG(mDevice->SetTransform(D3DTS_TEXTURE0, &identity));
 
-	mDevice->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
 	mDevice->SetRenderState(D3DRS_ALPHAREF, 1);
 	mDevice->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
 }

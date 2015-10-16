@@ -23,7 +23,7 @@ public:
 	void SetLighting(bool enable) override;
 	bool IsLighting() override;
 	void SetColorVertex(bool enable) override;
-	void SetColorWriteEnable(bool enable) override;
+	void SetColorWriteEnable(bool enableRed, bool enableGreen, bool enableBlue, bool enableAlpha) override;
 	void SetZFunc(D3DCMPFUNC func) override;
 	void SetSpecularEnable(bool enable) override;
 	void SetTexture(int sampler, IDirect3DTexture9* texture) override;

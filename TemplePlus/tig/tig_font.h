@@ -74,7 +74,7 @@ struct TigFontGlyph {
 
 struct TigFont {
 	uint32_t field0;
-	uint32_t largestHeight;
+	int largestHeight;
 	uint32_t fontsize;
 	uint32_t fieldc;
 	uint32_t glyphcount;

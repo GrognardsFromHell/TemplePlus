@@ -226,6 +226,14 @@ namespace temple {
 
 	}
 
+	bool Dll::IsVanillaDll() const {
+		// One of the differences between vanilla and GoG is the
+		// condition table referenced @ 100F7BC0
+		void** addrPtr = temple::GetPointer<void*>(0x100F7BC0 + 2);
+		return *addrPtr == temple::GetPointer(0x102EEC40);
+
+	}
+
 	void Dll::RegisterAddressPtr(void** ref) {
 		// We manipulate the actual pointer value as-if it were a 32-bit integer,
 		// so we treat the pointer to the function pointer like a pointer to an int

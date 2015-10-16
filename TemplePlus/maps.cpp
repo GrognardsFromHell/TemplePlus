@@ -3,8 +3,8 @@
 #include "maps.h"
 #include <temple/dll.h>
 #include "location.h"
-#include "gamesystems.h"
 #include "util/fixes.h"
+#include "gamesystems/gamesystems.h"
 
 struct MapAddresses : temple::AddressTable {
 	
@@ -68,7 +68,6 @@ public:
 	
 	static int(__cdecl*orgField1C)(GameSystemConf* conf);
 	static int field1c(GameSystemConf * conf) {
-		int dummy = 1;
 		return orgField1C(conf);
 	};
 

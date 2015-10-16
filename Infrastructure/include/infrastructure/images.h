@@ -5,7 +5,7 @@
 #include <gsl/gsl.h>
 #include <atlcomcli.h>
 
-using Guide::array_view;
+using gsl::array_view;
 
 struct IDirect3DDevice9;
 struct IDirect3DSurface9;

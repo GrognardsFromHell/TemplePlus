@@ -81,7 +81,7 @@ static void applyGlobalConfig();
 static void setMiles3dProvider();
 static void addScreenshotHotkey();
 static void applyGameConfig();
-static bool setDefaultCursor();
+static bool SetDefaultCursor();
 
 int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 
@@ -127,7 +127,8 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	*/
 	applyGameConfig();
 
-	if (!setDefaultCursor()) {
+	if (!SetDefaultCursor()) {
+		logger->error("Unable to set the default cursor");
 		return 1;
 	}
 
@@ -230,7 +231,7 @@ void applyGameConfig() {
 
 }
 
-bool setDefaultCursor() {
+bool SetDefaultCursor() {
 	int cursorShaderId;
 	auto result = shaderFuncs.GetId("art\\interface\\cursors\\MainCursor.mdf", &cursorShaderId);
 	if (result) {

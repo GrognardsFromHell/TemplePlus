@@ -31,10 +31,11 @@ namespace gfx {
 
 	bool MdfParser::GetLine() {
 		if (std::getline(mIn, mLine)) {
-			// Spaces at beginning and end of the line
-			// are ignored. This is more lenient than
-			// vanilla ToEE, but it is convenient
-			// trim(mLine);
+			// Skip trailing windows newline characters in case the /
+			// MDF file has been read in binary mode
+			if (!mLine.empty() && mLine.back() == '\r') {
+				mLine.resize(mLine.size() - 1);
+			}
 			mLineNo++;
 			return true;
 		}

@@ -2,6 +2,8 @@
 
 #include <temple/dll.h>
 
+#include <temple/vfs.h>
+
 #include "mainwindow.h"
 #include "graphics/graphics.h"
 #include "graphics/legacyvideosystem.h"
@@ -72,6 +74,8 @@ TigInitializer::TigInitializer(HINSTANCE hInstance)
 	StopwatchReporter reporter("TIG initialized in {}");
 	logger->info("Initializing TIG");
 
+	vfs = std::make_unique<temple::TioVfs>();
+
 	tio_path_add("tig.dat");
 	tio_path_add(".");
 
@@ -133,6 +137,8 @@ TigInitializer::~TigInitializer() {
 	     ++it) {
 		it->reset();
 	}
+
+	vfs.reset();
 
 }
 

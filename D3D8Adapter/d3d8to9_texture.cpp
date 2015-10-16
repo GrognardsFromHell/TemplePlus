@@ -14,7 +14,6 @@ Direct3DTexture8Adapter *CreateTextureAdapter(IDirect3DTexture9 *delegate) {
 
 void DeleteTextureAdapter(Direct3DTexture8Adapter *adapter) {
 	if (adapter->delegate) {
-		adapter->delegate->Release();
 	}
 	delete adapter;
 }

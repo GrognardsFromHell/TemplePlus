@@ -242,7 +242,6 @@
     <ClCompile Include="tig\tig_partsys.cpp">
       <Filter>tig</Filter>
     </ClCompile>
-    <ClCompile Include="legacyrenderstates.cpp" />
     <ClCompile Include="obj_iterator.cpp" />
     <ClCompile Include="startup\installationdir.cpp" />
     <ClCompile Include="startup\installationdirpicker.cpp" />
@@ -280,6 +279,14 @@
     <ClCompile Include="fixes\generalfixes.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="graphics\materials.cpp" />
+    <ClCompile Include="graphics\materials_hooks.cpp" />
+    <ClCompile Include="graphics\mdfrenderer.cpp" />
+    <ClCompile Include="graphics\renderstates.cpp" />
+    <ClCompile Include="graphics\renderstates_hooks.cpp" />
+    <ClCompile Include="graphics\render_hooks.cpp" />
+    <ClCompile Include="graphics\renderer.cpp" />
+    <ClCompile Include="fonts\fonts_render.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -517,7 +524,6 @@
     <ClInclude Include="tig\tig_partsys.h">
       <Filter>tig</Filter>
     </ClInclude>
-    <ClInclude Include="legacyrenderstates.h" />
     <ClInclude Include="obj_iterator.h" />
     <ClInclude Include="startup\installationdir.h" />
     <ClInclude Include="resource.h" />
@@ -538,6 +544,14 @@
     <ClInclude Include="gamesystems\gamerenderer.h" />
     <ClInclude Include="diag\diag.h" />
     <ClInclude Include="messages\messagequeue.h" />
+    <ClInclude Include="graphics\materials.h" />
+    <ClInclude Include="graphics\mdfrenderer.h" />
+    <ClInclude Include="graphics\materials_hooks.h" />
+    <ClInclude Include="graphics\renderstates.h" />
+    <ClInclude Include="graphics\renderstates_data.h" />
+    <ClInclude Include="graphics\renderstates_hooks.h" />
+    <ClInclude Include="graphics\renderer.h" />
+    <ClInclude Include="graphics\render_hooks.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

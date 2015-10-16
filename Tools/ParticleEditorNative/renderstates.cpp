@@ -60,8 +60,21 @@ void EditorRenderStates::SetColorVertex(bool enable) {
 	mDevice->SetRenderState(D3DRS_COLORVERTEX, enable ? TRUE : FALSE);
 }
 
-void EditorRenderStates::SetColorWriteEnable(bool enable) {
-	mDevice->SetRenderState(D3DRS_COLORWRITEENABLE, enable ? TRUE : FALSE);
+void EditorRenderStates::SetColorWriteEnable(bool enableRed, bool enableGreen, bool enableBlue, bool enableAlpha) {
+	DWORD mask = 0;
+	if (enableRed) {
+		mask |= D3DCOLORWRITEENABLE_RED;
+	}
+	if (enableGreen) {
+		mask |= D3DCOLORWRITEENABLE_GREEN;
+	}
+	if (enableBlue) {
+		mask |= D3DCOLORWRITEENABLE_BLUE;
+	}
+	if (enableAlpha) {
+		mask |= D3DCOLORWRITEENABLE_ALPHA;
+	}
+	mDevice->SetRenderState(D3DRS_COLORWRITEENABLE, mask);
 }
 
 void EditorRenderStates::SetZFunc(D3DCMPFUNC func) {

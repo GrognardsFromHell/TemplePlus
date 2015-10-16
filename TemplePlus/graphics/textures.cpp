@@ -8,39 +8,6 @@
 #include <tio/tio.h>
 #include <util/config.h>
 
-class InvalidTexture : public gfx::Texture {
-public:
-	const std::string& GetName() const override {
-		static std::string sInvalidName("<invalid>");
-		return sInvalidName;
-	}
-
-	int GetId() const override {
-		return -1;
-	}
-
-	const gfx::ContentRect& GetContentRect() const override {
-		static gfx::ContentRect rect{0,0,1,1};
-		return rect;
-	}
-
-	const gfx::Size& GetSize() const override {
-		static gfx::Size size{1, 1};
-		return size;
-	}
-
-	void FreeDeviceTexture() override {
-	}
-
-	IDirect3DTexture9* GetDeviceTexture() override {
-		return nullptr;
-	}
-
-	bool IsValid() const override {
-		return false;
-	}
-};
-
 class Texture;
 
 class TextureLoader {
@@ -298,8 +265,11 @@ void Texture::MarkUsed() {
 
 void Texture::MakeMru() {
 	if (mLoader->mMostRecentlyUsed) {
-		mLoader->mMostRecentlyUsed->mNextMoreRecentlyUsed = this;
+		Expects(!mLoader->mMostRecentlyUsed->mNextMoreRecentlyUsed);
+		mLoader->mMostRecentlyUsed->mNextMoreRecentlyUsed = this;		
 	}
+
+	mNextLessRecentlyUsed = mLoader->mMostRecentlyUsed;
 
 	mLoader->mMostRecentlyUsed = this;
 
@@ -310,22 +280,26 @@ void Texture::MakeMru() {
 
 void Texture::DisconnectMru() {
 	if (mNextLessRecentlyUsed) {
+		Expects(mNextLessRecentlyUsed->mNextMoreRecentlyUsed == this);
 		mNextLessRecentlyUsed->mNextMoreRecentlyUsed = mNextMoreRecentlyUsed;
 	}
 	if (mNextMoreRecentlyUsed) {
+		Expects(mNextMoreRecentlyUsed->mNextLessRecentlyUsed == this);
 		mNextMoreRecentlyUsed->mNextLessRecentlyUsed = mNextLessRecentlyUsed;
 	}
 	if (mLoader->mLeastRecentlyUsed == this) {
 		mLoader->mLeastRecentlyUsed = mNextLessRecentlyUsed;
+		Expects(!mNextLessRecentlyUsed
+			|| mLoader->mLeastRecentlyUsed->mNextLessRecentlyUsed == nullptr);
 	}
 	if (mLoader->mMostRecentlyUsed == this) {
 		mLoader->mMostRecentlyUsed = mNextMoreRecentlyUsed;
+		Expects(!mNextMoreRecentlyUsed 
+			|| mLoader->mMostRecentlyUsed->mNextMoreRecentlyUsed == nullptr);
 	}
 	mNextLessRecentlyUsed = nullptr;
 	mNextMoreRecentlyUsed = nullptr;
 }
-
-static gfx::TextureRef sInvalidTexture(std::make_shared<InvalidTexture>());
 
 TextureManager::TextureManager(IDirect3DDevice9* device, size_t memoryBudget)
 	: mLoader(std::make_shared<TextureLoader>(device, memoryBudget)) {
@@ -357,8 +331,9 @@ gfx::TextureRef TextureManager::Resolve(const std::string& filename, bool withMi
 	// Texture is not registered yet, so let's do that
 	if (!tio_fileexists(filename.c_str())) {
 		logger->error("Cannot register texture '{}', because it does not exist.", filename);
-		mTexturesByName[filenameLower] = sInvalidTexture;
-		return sInvalidTexture;
+		auto result = Texture::GetInvalidTexture();
+		mTexturesByName[filenameLower] = result;
+		return result;
 	}
 
 	auto id = mNextFreeId++;
@@ -382,7 +357,8 @@ gfx::TextureRef TextureManager::GetById(int textureId) {
 		return it->second;
 	}
 
-	return sInvalidTexture;
+	logger->info("Trying to retrieve unknown texture id {}", textureId);
+	return Texture::GetInvalidTexture();
 
 }
 
