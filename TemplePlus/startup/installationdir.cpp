@@ -6,6 +6,7 @@
 #include <experimental/filesystem>
 
 #include "installationdir.h"
+#include <util/config.h>
 
 InstallationDir::InstallationDir() {
 }
@@ -203,6 +204,7 @@ void InstallationDir::DetectDllVersion() {
 	if (RevertTfeXChanges(fileDataView)) {
 		logger->info("TFE-X changes detected");
 		mTfeXDetected = true;
+		config.usingCo8 = true;
 	}
 
 	auto md5Hash = crypto::MD5AsString(fileDataView);
@@ -210,10 +212,13 @@ void InstallationDir::DetectDllVersion() {
 
 	if (md5Hash == "f915db404bd5e765374581e8b05eb691") {
 		mTempleDllVersion = TempleDllVersion::CO8;
+		config.usingCo8 = true;
 	} else if (md5Hash == "67758f8d4841f9590d5ade9369d3c8e1") {
 		mTempleDllVersion = TempleDllVersion::GOG;
+		config.usingCo8 = false;
 	} else if (md5Hash == "f73c049fc2324a527f589533a0dfb8e0") {
 		mTempleDllVersion = TempleDllVersion::PATCH2;
+		config.usingCo8 = false;
 	} else {
 		mTempleDllVersion = TempleDllVersion::UNKNOWN;
 	}

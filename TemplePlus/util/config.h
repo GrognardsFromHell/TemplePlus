@@ -55,7 +55,7 @@ struct TemplePlusConfig
 	int pointBuyPoints = 25; // number of Point Buy points at chargen
 	int maxPCs = 5; // max number of PCs in the party
 	bool maxPCsFlexible = true; // makes the party PC/NPC composition fluid
-	bool usingCo8 = true;
+	bool usingCo8 = true;  // now autodetected; reset to false if GOG or Patch2 are detected
 	int maxLevel = 20; // maximum character level
 	void Load();
 	void Save();

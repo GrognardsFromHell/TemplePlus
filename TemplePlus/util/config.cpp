@@ -146,7 +146,7 @@ static ConfigSetting configSettings[] = {
 	CONF_INT(maxPCs),
 	CONF_BOOL(maxPCsFlexible),
 	CONF_INT(maxLevel),
-	CONF_BOOL(usingCo8),
+	// CONF_BOOL(usingCo8), // now autodetected; true by default but reset to false if GOG or Patch2 are detected
 	CONF_WSTRING(toeeDir),
 	CONF_INT(sectorCacheSize),
 	CONF_INT(screenshotQuality)
