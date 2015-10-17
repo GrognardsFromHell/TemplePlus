@@ -281,187 +281,161 @@ int FontRenderFix::FontDraw(const char* text, TigRect* extents, TigTextStyle* st
 	if (textLength <= 0)
 		return 0;
 
+	const auto tabWidth = style->field4c - extents->x;
+
 	size_t v80 = 0;
 	while (2) {
 		auto v89 = 0;
 		auto arg = ensure_z(text + v80, textLength);
-		auto v84 = MeasureCharRun(arg, *style, *extents, extentsWidth, font, v89, linePadding, v93);
+		auto wordsOnLine = MeasureCharRun(arg, *style, *extents, extentsWidth, font, v89, linePadding, v93);
 
-		auto v95 = 0;
-		if (v84 > 0) {
-			auto v36 = v80;
-			auto  curPosRight = v84 - 1;
-			TigFontDrawArgs drawArgs;
-			drawArgs.rect = extents;
-			drawArgs.yrlt = currentY;
-			while (1) {
-				auto v81 = 0;
-				auto v86 = 0;
-				auto v75 = 0;
-				auto v38 = v36;
-				auto curPosBottom = v36;
-				auto v77 = v36;
-				if (v36 >= textLength)
-					goto LABEL_94;
-				auto v78 = v36 + 1;
-				char v40;
-				while (1) {
-					v40 = text[v38];
-					if (v40 != '@')
-						break;
-					if (v78 >= textLength)
-						break;
-					if (!isdigit(text[v38 + 1]))
-						break;
-					++v38;
-					++v78;
-				LABEL_92:
-					++v38;
-					++v78;
-					if (v38 >= textLength)
-						goto LABEL_93;
+		// TODO: Check if v36 can be mapped to v80 1:1
+		auto v36 = v80;
+		for (auto wordIdx = 0; wordIdx < wordsOnLine && !drawEllipsis; ++wordIdx) {
+			auto v81 = 0;
+			auto v86 = 0;
+			auto wordWidth = 0;
+			auto v38 = v36;
+			auto firstIdx = v36;
+			auto v77 = v36;
+				
+			for (; v38 < textLength; v38++) {
+				char curCh = text[v38];
+				char nextCh = '\0';
+				if (v38 + 1 < textLength) {
+					nextCh = text[v38 + 1];
 				}
 
-				int v46;
-				char v50;
-								
-				if (v40 == '@' && v78 < textLength && text[v38 + 1] == 't') {
-					++v38;
-					++v78;
-					auto v42 = extents->x;
-					if (style->field4c - v42 > 0) {
-						auto v43 = v75 + currentX;
-						auto v44 = v42 + (style->field4c - v42) * ((v43 - v42) / (style->field4c - v42) + 1);
-						if (v43 < v44) {
-							v46 = v44 - v43;
-							auto v47 = v46 + v86;
-							v86 += v46;
-							if (style->flags & 0x4000) {
-								auto v48 = currentX + v47 - v42;
-								v50 = (extentsWidth + linePadding) < v48;
-								goto LABEL_89;
+				// Simply skip @t without increasing the width
+				if (curCh == '@' && isdigit(nextCh)) {
+					v38++; // Skip the number
+					continue;
+				}
+
+				// @t will advance the width up to the next tabstop
+				if (curCh == '@' && nextCh == 't') {
+					v38++; // Skip the t
+					if (tabWidth > 0) {
+						v86 += tabWidth;
+						if (style->flags & 0x4000) {
+							auto v48 = currentX - extents->x + v86;
+							if (v48 > extentsWidth + linePadding) {
+								drawEllipsis = true;
+								continue;
 							}
-							goto LABEL_91;
+							v81 = v38;
 						}
+						wordWidth += tabWidth;
 					}
+					continue;
 				}
 
 				glyphIdx = text[v38] - FirstFontChar;
 				if (tig_font_is_english) {
-					if ((glyphIdx < -1 || glyphIdx > '_') && glyphIdx != -23) {
+					if ((glyphIdx < -1 || glyphIdx > '_') && text[v38] != '\n') {
 						logger->warn("Tried to display character {} in text '{}'", glyphIdx, text);
 						glyphIdx = -1;
 					}
 				}
-				if (glyphIdx != -23) {
-					if (isspace(glyphIdx + FirstFontChar)) {
-					LABEL_93:
-						v77 = v38;
-						goto LABEL_94;
-					}
-					v46 = style->kerning + font.glyphs[glyphIdx].width_line;
-					if (style->flags & 0x4000) {
-						auto v61 = currentX + v86 - extents->x;
-						v50 = (extentsWidth + linePadding) < v61;
-					LABEL_89:
-						if (v50) {
-							drawEllipsis = true;
-							goto LABEL_92;
-						}
-						v81 = v38;
-					}
-				LABEL_91:
-					v75 += v46;
-					goto LABEL_92;
-				}
-				v77 = v38;
 
-				if (!v93)
+				if (curCh == '\n') {
+					v77 = v38;
+					if (v93) {
+						if (style->flags & 0x4000)
+							drawEllipsis = true;
+						break;
+					}
 					goto LABEL_168;
-				if (style->flags & 0x4000)
-					drawEllipsis = true;
-			LABEL_94:
-				if (!v93)
-					goto LABEL_168;
+				}
+					
+				if (isspace(curCh)) {
+					break;
+				}
 				if (style->flags & 0x4000) {
-					if (v38 < textLength) {
-						auto v53 = v77 + 1;
-						do {
-							auto v55 = text[v38];
-							if (v55 != '@' || v53 >= textLength || !isdigit(text[v38 + 1])) {
-								if (v55 == '@' && v53 < textLength && text[v38 + 1] == 't') {
-									++v38;
-									++v53;
-									auto extentsX = extents->x;
-									if (style->field4c - extentsX > 0) {
-										if (v75 + currentX < extentsX + (style->field4c - extentsX) * ((v75 + currentX - extentsX) / (style->field4c - extentsX) + 1))
-											goto LABEL_136;
-									}
-								}
-								auto curGlyph = text[v38] - FirstFontChar;
-								if (tig_font_is_english) {
-									if ((curGlyph < -1 || curGlyph > 95) && curGlyph != -23) {
-										logger->warn("Tried to display character {} in text '{}'", curGlyph, text);
-										curGlyph = -1;
-									}
-								}
-								auto v65 = curGlyph + FirstFontChar;
-								if (v65 != '\n' && !isspace(v65)) {
-									break;
-								}
-							} else {
-								++v38;
-								++v53;
-							}
-						LABEL_136:
-							++v38;
-							++v53;
-						} while (v38 < textLength);
-					}
-					if (currentX + v86 - extents->x <= extentsWidth) {
-						drawArgs.textLength = v77;
-						v36 = v77;
-						v80 = v77;
-						if (v38 == textLength) {
-							drawEllipsis = false;
-							v75 = v86;
-						}
-						goto LABEL_143;
-					}
-					drawArgs.textLength = v81;
-					v36 = v81;
-				} else {
-				LABEL_168:
-					drawArgs.textLength = v38;
-					v36 = v38;
-				}
-				v80 = v36;
-			LABEL_143:
-				int v70;
-				if (isspace(glyphIdx + FirstFontChar) || v36 == textLength) {
-					v70 = style->tracking + v75;
-				} else {
-					v70 = v75;
-				}
-				if (v95 < curPosRight) {
-					++v36;
-					v80 = v36;
-				}
-				drawArgs.xrlt = currentX;
-				// This centers the line
-				if (style->flags & 0x10) {
-					drawArgs.xrlt += (extentsWidth - v89) / 2;
-				}
-				drawArgs.field_c = curPosBottom;
-				FontDrawDoWork(style, text, drawArgs, font);
-				currentX += v70;
-				if (!drawEllipsis) {
-					++v95;
-					if (v95 < v84)
+					if ((extentsWidth + linePadding) < currentX + v86 - extents->x) {
+						drawEllipsis = true;
 						continue;
+					}
+					v81 = v38;
 				}
-				break;
+				wordWidth += font.glyphs[glyphIdx].width_line + style->kerning;
 			}
+
+			v77 = v38;
+
+			int lastIdx;
+
+			if (v93 && style->flags & 0x4000) {
+				// We're on the last line and truncation is active
+				// This will seek v38 to the next word
+				for (; v38 < textLength; ++v38) {
+					auto curChar = text[v38];
+					char nextChar = '\0';
+					if (v38 + 1 < textLength) {
+						nextChar = text[v38 + 1];
+					}
+
+					// Handles @0 - @9 and skips the number
+					if (curChar == '@' && isdigit(nextChar)) {
+						++v38;
+						continue;
+					}
+
+					if (curChar == '@' && nextChar == 't') {
+						++v38;
+						if (tabWidth > 0) {
+							continue;
+						}
+					}
+
+					if (curChar != '\n' && !isspace(curChar)) {
+						break;
+					}
+				}
+				bool lastWord = (v38 == textLength);
+
+				if (currentX + v86 - extents->x <= extentsWidth) {
+					lastIdx = v77;
+					v36 = v77;
+					v80 = v77;
+					if (lastWord) {
+						drawEllipsis = false;
+						wordWidth = v86;
+					}
+					goto LABEL_143;
+				}
+				lastIdx = v81;
+				v36 = v81;
+			} else {
+			LABEL_168:
+				lastIdx = v38;
+				v36 = v38;
+			}
+			v80 = v36;
+		LABEL_143:
+			if (isspace(glyphIdx + FirstFontChar) || v36 == textLength) {
+				wordWidth += style->tracking;
+			}
+
+			// This means this is not the last word in this line
+			if (wordIdx + 1 < wordsOnLine) {
+				++v36;
+				v80 = v36;
+			}
+
+			TigFontDrawArgs drawArgs;
+			drawArgs.rect = extents;
+			drawArgs.xrlt = currentX;
+			// This centers the line
+			if (style->flags & 0x10) {
+				drawArgs.xrlt += (extentsWidth - v89) / 2;
+			}
+			drawArgs.yrlt = currentY;
+			drawArgs.field_c = firstIdx;
+			drawArgs.textLength = lastIdx;
+
+			FontDrawDoWork(style, text, drawArgs, font);
+			currentX += wordWidth;
 		}
 
 		// Resets X, advances to next line, has not run out of vertical space (v93)
