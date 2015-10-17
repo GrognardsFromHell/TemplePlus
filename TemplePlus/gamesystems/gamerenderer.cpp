@@ -9,12 +9,6 @@
 
 #pragma pack(push, 1)
 
-struct TileRect {
-	int64_t x1;
-	int64_t y1;
-	int64_t x2;
-	int64_t y2;
-};
 
 struct SectorList {
 	locationSec sector;

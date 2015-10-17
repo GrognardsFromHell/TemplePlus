@@ -3,7 +3,7 @@
 #include "pathfinding.h"
 #include "location.h"
 #include "combat.h"
-#include "obj_iterator.h"
+#include "raycast.h"
 #include "obj.h"
 #include "critter.h"
 #include "path_node.h"
@@ -240,23 +240,23 @@ void Pathfinding::PathCacheInit()
 
 int Pathfinding::PathDestIsClear(PathQuery* pq, objHndl mover, LocAndOffsets destLoc)
 {
-	ObjIterator objIt;
+	RaycastPacket objIt;
 	objIt.origin = destLoc;
 	objIt.targetLoc = destLoc;
 
-	*(int*)&objIt.flags |= (ObjItFlag_8 | ObjItFlag_10 | ObjItFlag_20);
+	*(int*)&objIt.flags |= (ExcludeItemObjects | StopAfterFirstBlockerFound | StopAfterFirstFlyoverFound);
 
 	if (mover)
 	{
-		*(int*)&objIt.flags |= (ObjItFlag_4 | ObjItFlag_2);
-		objIt.performer = mover;
+		*(int*)&objIt.flags |= (HasSourceObj | HasRadius);
+		objIt.sourceObj = mover;
 		objIt.radius = objects.GetRadius(mover);
 	}
 
 	ObjectType objType;
 	ObjectFlag objFlags;
 	auto pqFlags = pq->flags;
-	if (objIt.TargettingSthg_100BC750())
+	if (objIt.RaycastShortRange())
 	{
 
 		for (int i = 0; i < objIt.resultCount; i++)
@@ -797,18 +797,18 @@ objHndl Pathfinding::canPathToParty(objHndl objHnd)
 BOOL Pathfinding::PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffsets from, LocAndOffsets to)
 {
 	BOOL result = 1;
-	ObjIterator objIt;
+	RaycastPacket objIt;
 	objIt.origin = from;
 	objIt.targetLoc = to;
-	objIt.flags = (ObjIteratorFlags)0x38;
+	objIt.flags = (RaycastFlags)0x38;
 	if (pqr->mover)
 	{
-		objIt.flags = (ObjIteratorFlags)((int)objIt.flags | 6);
-		objIt.performer = pqr->mover;
+		objIt.flags = (RaycastFlags)((int)objIt.flags | 6);
+		objIt.sourceObj = pqr->mover;
 		objIt.radius = objects.GetRadius(pqr->mover) * (float)0.7;
 	}
 	
-	if (objIt.TargettingSthg_100BACE0())
+	if (objIt.Raycast())
 	{
 		int i = 0;
 		while( objIt.results[i].obj)
@@ -845,13 +845,13 @@ BOOL Pathfinding::PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffset
 BOOL Pathfinding::PathStraightLineIsClearOfStaticObstacles(Path* pqr, PathQuery* pq, LocAndOffsets from, LocAndOffsets to)
 {
 	BOOL result = 1;
-	ObjIterator objIt;
+	RaycastPacket objIt;
 	objIt.origin = from;
 	objIt.targetLoc = to;
-	objIt.flags = (ObjIteratorFlags)0x38;
+	objIt.flags = (RaycastFlags)0x38;
 	objIt.radius = (float) 0.01;
 
-	if (objIt.TargettingSthg_100BACE0())
+	if (objIt.Raycast())
 	{
 		auto resultObj = objIt.results;
 		for (auto i = 0; i < objIt.resultCount; i++)

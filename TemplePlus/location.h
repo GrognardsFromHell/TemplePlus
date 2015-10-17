@@ -7,6 +7,8 @@ const float tileToOffset = 12.0;
 
 struct LocationSys : temple::AddressTable
 {
+	int64_t * locTransX;
+	int64_t*locTransY;
 	float distBtwnLocAndOffs(LocAndOffsets, LocAndOffsets);
 	void RegularizeLoc(LocAndOffsets* toLocTweaked); //  alters the location and offsets so that the offsets are within the tile
 	void GetOverallOffset(LocAndOffsets loc, float* absX, float* absY);

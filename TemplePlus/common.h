@@ -36,6 +36,9 @@
 #define INCH_PER_HALFTILE (INCH_PER_TILE/2.0f)
 #define INCH_PER_FEET 12
 
+// this is the number of tiles per sector in each direction (so the total is this squared i.e. 4096 in toee)
+#define SECTOR_SIDE_SIZE 64
+
 # pragma region Standard Structs
 
 #pragma pack(push, 1)
@@ -75,6 +78,59 @@ struct locXY {
 	}
 };
 
+struct SectorLoc
+{
+	uint64_t raw;
+
+	uint64_t x()
+	{
+		return raw & 0x3ffFFFF;
+	}
+
+	uint64_t y()
+	{
+		return raw >> 26 ;
+	}
+
+	uint64_t ToField() {
+		return this->raw;
+	}
+
+	operator uint64_t() const {
+			return this->raw;
+		}
+
+	operator int64_t() const {
+		return (int64_t)this->raw;
+	}
+
+	void GetFromLoc(locXY loc)
+	{
+		raw = loc.locx / SECTOR_SIDE_SIZE
+			 + ( (loc.locy / SECTOR_SIDE_SIZE) << 26 );
+	}
+
+	SectorLoc()
+	{
+		raw = 0;
+	}
+
+	SectorLoc(locXY loc)
+	{
+		raw = loc.locx / SECTOR_SIDE_SIZE
+			+ ((loc.locy / SECTOR_SIDE_SIZE) << 26);
+	}
+
+	locXY GetBaseTile()
+	{
+		locXY loc;
+		loc.locx = x() * SECTOR_SIDE_SIZE;
+		loc.locy = y() * SECTOR_SIDE_SIZE;
+		return loc;
+	}
+
+};
+
 struct Subtile // every tile is subdivided into 3x3 subtiles
 {
 	int32_t x;
@@ -91,6 +147,14 @@ struct Subtile // every tile is subdivided into 3x3 subtiles
 	operator int64_t() const {
 		return *(int64_t*)this;
 	}
+};
+
+struct TileRect
+{
+	int64_t x1;
+	int64_t y1;
+	int64_t x2;
+	int64_t y2;
 };
 
 struct LocAndOffsets {

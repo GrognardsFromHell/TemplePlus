@@ -41,6 +41,8 @@
     <ClCompile Include="gamesystems\gamerenderer.cpp" />
     <ClCompile Include="gamesystems\gamesystems.cpp" />
     <ClCompile Include="gamesystems\legacy.cpp" />
+    <ClCompile Include="gamesystems\map\sector.cpp" />
+    <ClCompile Include="gamesystems\map\tig_console.cpp" />
     <ClCompile Include="graphics\textures.cpp" />
     <ClCompile Include="graphics\textures_hooks.cpp" />
     <ClCompile Include="graphics\video_hooks.cpp">
@@ -53,7 +55,7 @@
     <ClCompile Include="location.cpp" />
     <ClCompile Include="maps.cpp" />
     <ClCompile Include="messages\messagequeue.cpp" />
-    <ClCompile Include="obj_iterator.cpp" />
+    <ClCompile Include="raycast.cpp" />
     <ClCompile Include="particles.cpp" />
     <ClCompile Include="path_node.cpp" />
     <ClCompile Include="python\python_areas.cpp" />
@@ -208,6 +210,8 @@
     <ClInclude Include="gamesystems\gamesystems.h" />
     <ClInclude Include="gamesystems\legacy.h" />
     <ClInclude Include="gamesystems\loadingscreen.h" />
+    <ClInclude Include="gamesystems\map\sector.h" />
+    <ClInclude Include="gamesystems\map\tig_console.h" />
     <ClInclude Include="graphics\legacyvideosystem.h" />
     <ClInclude Include="graphics\textures.h" />
     <ClInclude Include="graphics\video_hooks.h" />
@@ -218,7 +222,7 @@
     <ClInclude Include="maps.h" />
     <ClInclude Include="messages\messagequeue.h" />
     <ClInclude Include="objlist.h" />
-    <ClInclude Include="obj_iterator.h" />
+    <ClInclude Include="raycast.h" />
     <ClInclude Include="particles.h" />
     <ClInclude Include="path_node.h" />
     <ClInclude Include="python\python_areas.h" />

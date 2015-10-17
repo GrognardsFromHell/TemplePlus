@@ -7,6 +7,7 @@
 #include "critter.h"
 #include "condition.h"
 #include "bonus.h"
+#include <pathfinding.h>
 
 
 class SizeColossalFix : public TempleFix {
@@ -273,13 +274,41 @@ public: const char* name() override {
 
 
 
-class TestImprovedTWF : public TempleFix
+class WalkOnShortDistanceMod : public TempleFix
 {
-public: const char* name() override {
-	return "TWF TEst";
-};
-		void apply() override
-		{
+public: 
+
+	static int(__cdecl*orgSub_100437F0)(LocAndOffsets loc, int runFlag);
+	static int(__cdecl *orgShouldRun)(objHndl obj);
+	static int(__cdecl*orgAnimPushRunToTileWithPath)(objHndl obj, LocAndOffsets loc, Path* path);
+	static int ShouldRun(objHndl obj)
+	{
+		return 0;
+	};
+	static int Sub_100437F0(LocAndOffsets loc, int runFlag)
+	{
+		return orgSub_100437F0(loc, runFlag);
+	};
+
+	static int AnimPushRunToTileWithPath(objHndl obj, LocAndOffsets loc, Path* path)
+	{
+		return orgAnimPushRunToTileWithPath(obj, loc, path);
+	};
+	const char* name() override {
+		return "Walk on short distances mod";
+	};
+	void apply() override
+	{
 		//	replaceFunction(0x100FD1C0, sub_100FD1C0);
-		}
-} testImprovedTWF;
+		//orgSub_100437F0 = replaceFunction(0x100437F0, Sub_100437F0);
+		//orgShouldRun = replaceFunction(0x10014750, ShouldRun);
+		//writeHex(0x1001A922, "90 90 90 90");
+		//writeHex(0x1001A98F, "90 90 90 90");
+		//writeHex(0x1001A338 + 1, "05");
+		//writeHex(0x1001A346 + 1, "03");
+		//orgAnimPushRunToTileWithPath = replaceFunction(0x1001A2E0, AnimPushRunToTileWithPath);
+	}
+} walkOnShortDistMod;
+int(__cdecl*WalkOnShortDistanceMod::orgSub_100437F0)(LocAndOffsets loc, int runFlag);
+int(__cdecl*WalkOnShortDistanceMod::orgShouldRun)(objHndl obj);
+int(__cdecl*WalkOnShortDistanceMod::orgAnimPushRunToTileWithPath)(objHndl obj, LocAndOffsets loc, Path* path);

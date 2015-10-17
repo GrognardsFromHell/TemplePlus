@@ -243,13 +243,11 @@
       <Filter>tig</Filter>
     </ClCompile>
     <ClCompile Include="legacyrenderstates.cpp" />
-    <ClCompile Include="obj_iterator.cpp" />
     <ClCompile Include="startup\installationdir.cpp" />
     <ClCompile Include="startup\installationdirpicker.cpp" />
     <ClCompile Include="startup\installationdirs.cpp" />
     <ClCompile Include="fixes\sector_cache_size.cpp" />
     <ClCompile Include="fixes\light_load.cpp" />
-    <ClCompile Include="path_node.cpp" />
     <ClCompile Include="fixes\partsyslag.cpp" />
     <ClCompile Include="tig\tig_startup.cpp">
       <Filter>tig</Filter>
@@ -279,6 +277,16 @@
     </ClCompile>
     <ClCompile Include="fixes\generalfixes.cpp">
       <Filter>Mods and Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="raycast.cpp" />
+    <ClCompile Include="gamesystems\map\sector.cpp">
+      <Filter>Map System</Filter>
+    </ClCompile>
+    <ClCompile Include="path_node.cpp">
+      <Filter>Map System</Filter>
+    </ClCompile>
+    <ClCompile Include="gamesystems\map\tig_console.cpp">
+      <Filter>tig</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -518,12 +526,10 @@
       <Filter>tig</Filter>
     </ClInclude>
     <ClInclude Include="legacyrenderstates.h" />
-    <ClInclude Include="obj_iterator.h" />
     <ClInclude Include="startup\installationdir.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="startup\installationdirpicker.h" />
     <ClInclude Include="startup\installationdirs.h" />
-    <ClInclude Include="path_node.h" />
     <ClInclude Include="tig\tig_startup.h">
       <Filter>tig</Filter>
     </ClInclude>
@@ -538,6 +544,16 @@
     <ClInclude Include="gamesystems\gamerenderer.h" />
     <ClInclude Include="diag\diag.h" />
     <ClInclude Include="messages\messagequeue.h" />
+    <ClInclude Include="raycast.h" />
+    <ClInclude Include="gamesystems\map\sector.h">
+      <Filter>Map System</Filter>
+    </ClInclude>
+    <ClInclude Include="path_node.h">
+      <Filter>Map System</Filter>
+    </ClInclude>
+    <ClInclude Include="gamesystems\map\tig_console.h">
+      <Filter>tig</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -564,6 +580,9 @@
     </Filter>
     <Filter Include="Mods and Fixes\Spell Fixes">
       <UniqueIdentifier>{0e53287e-d500-4b3d-a274-09c4e0cf6dbf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Map System">
+      <UniqueIdentifier>{fb2e2871-e639-4102-bf7f-dfc52c18449f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

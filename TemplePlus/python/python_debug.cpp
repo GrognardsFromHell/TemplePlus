@@ -8,6 +8,7 @@
 #include <ai.h>
 #include <path_node.h>
 #include <pathfinding.h>
+#include <gamesystems/map/sector.h>
 
 /*
 	Dumps all conditions from the global hashtable to a Wiki article.
@@ -195,6 +196,9 @@ PyObject *PyDebug_ReciprocityDebug()
 	return PyLong_FromLongLong(1);
 }
 
+/*
+ check if destination is considered clear for inhabitation by a critter
+*/
 PyObject *PyDebug_DestClear(PyObject*, PyObject* args)
 {
 	objHndl dude = 0;
@@ -204,10 +208,9 @@ PyObject *PyDebug_DestClear(PyObject*, PyObject* args)
 	loc.off_x = 0;
 	loc.off_y = 0;
 
-	if (!PyArg_ParseTuple(args, "|O&iiff:game.obj_create", &ConvertObjHndl, &dude, &loc.location.locx, &loc.location.locy, &loc.off_x, &loc.off_y)) {
+	if (!PyArg_ParseTuple(args, "|O&iiff:destclear", &ConvertObjHndl, &dude, &loc.location.locx, &loc.location.locy, &loc.off_x, &loc.off_y)) {
 		return 0;
 	}
-
 
 	PathQuery pathQ;
 	pathQ.flags = (PathQueryFlags)0;
@@ -215,6 +218,17 @@ PyObject *PyDebug_DestClear(PyObject*, PyObject* args)
 	return PyLong_FromLongLong(result);
 }
 
+
+PyObject *PyDebug_GetTileFlags(PyObject*, PyObject* args)
+{
+	TileFlags flags = TileFlags::TILEFLAG_NONE;
+	LocAndOffsets loc = {};
+	if (!PyArg_ParseTuple(args, "ii|ff:tileflags", &loc.location.locx, &loc.location.locy, &loc.off_x, &loc.off_y)) {
+		return 0;
+	}
+	flags = sectorSys.GetTileFlags(loc);
+	return PyLong_FromLongLong(flags);
+}
 static PyMethodDef PyDebug_Methods[] = {
 	{ "dump_conds", (PyCFunction) PyDebug_DumpConds, METH_NOARGS, NULL },
 	{ "dump_radial", (PyCFunction) PyDebug_DumpRadial, METH_NOARGS, NULL },
@@ -225,6 +239,8 @@ static PyMethodDef PyDebug_Methods[] = {
 	{ "flush_nodes", (PyCFunction)PyDebug_FlushNodes, METH_NOARGS, NULL },
 	{ "recip", (PyCFunction)PyDebug_ReciprocityDebug, METH_NOARGS, NULL },
 	{ "destclear", (PyCFunction)PyDebug_DestClear, METH_VARARGS, NULL },
+	{ "tileflags", (PyCFunction)PyDebug_GetTileFlags, METH_VARARGS, NULL },
+	
 	{ NULL, }
 };
 

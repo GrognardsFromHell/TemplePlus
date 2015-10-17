@@ -1,8 +1,35 @@
 #include "stdafx.h"
 #include "location.h"
 #include "obj.h"
+#include "util/fixes.h"
 
 LocationSys locSys;
+
+typedef int(__cdecl*locfunc)(int64_t x, int64_t y, locXY *loc, float*offx, float*offy);
+
+class LocReplacement : public TempleFix
+{
+public: const char* name() override 
+{ return "Location" "Function Replacements";}
+
+		static locfunc orgGetLocFromScreenLoc;
+		/*
+			gets the game location tile from the screen pixel (screenX,screenY). often used for the center of the screen (W/2,H/2) and the corner (0,0).
+		*/
+		static BOOL GetLocFromScreenLoc(int64_t screenX, int64_t screenY, locXY *loc, float*offx, float*offy)
+{
+	int64_t xx = (screenX-*locSys.locTransX)/2;
+	int64_t yy = (screenY-*locSys.locTransY) / 2 * sqrt(2);
+	int result = orgGetLocFromScreenLoc(screenX,screenY,loc,offx,offy);
+	return result;
+};
+
+		void apply() override 
+	{
+	//	orgGetLocFromScreenLoc=replaceFunction(0x10029300, GetLocFromScreenLoc);
+	}
+}locRep;
+locfunc LocReplacement::orgGetLocFromScreenLoc;
 
 const float PIXEL_PER_TILE = sqrt(800.0f);
 const float PIXEL_PER_TILE_HALF = PIXEL_PER_TILE / 2;
@@ -133,6 +160,8 @@ float LocationSys::InchesToFeet(float inches) {
 
 LocationSys::LocationSys()
 {
+	rebase(locTransX,0x10808D00);
+	rebase(locTransY, 0x10808D48);
 	rebase(getLocAndOff, 0x10040080);
 	rebase(SubtileToLocAndOff, 0x100400C0);
 	rebase(subtileFromLoc,0x10040750); 
