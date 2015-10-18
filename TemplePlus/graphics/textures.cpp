@@ -288,13 +288,13 @@ void Texture::DisconnectMru() {
 		mNextMoreRecentlyUsed->mNextLessRecentlyUsed = mNextLessRecentlyUsed;
 	}
 	if (mLoader->mLeastRecentlyUsed == this) {
-		mLoader->mLeastRecentlyUsed = mNextLessRecentlyUsed;
-		Expects(!mNextLessRecentlyUsed
+		mLoader->mLeastRecentlyUsed = mNextMoreRecentlyUsed;
+		Expects(!mNextMoreRecentlyUsed
 			|| mLoader->mLeastRecentlyUsed->mNextLessRecentlyUsed == nullptr);
 	}
 	if (mLoader->mMostRecentlyUsed == this) {
-		mLoader->mMostRecentlyUsed = mNextMoreRecentlyUsed;
-		Expects(!mNextMoreRecentlyUsed 
+		mLoader->mMostRecentlyUsed = mNextLessRecentlyUsed;
+		Expects(!mNextLessRecentlyUsed
 			|| mLoader->mMostRecentlyUsed->mNextMoreRecentlyUsed == nullptr);
 	}
 	mNextLessRecentlyUsed = nullptr;

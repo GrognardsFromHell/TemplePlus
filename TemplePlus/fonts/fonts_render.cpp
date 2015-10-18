@@ -24,8 +24,8 @@ struct TigFontDrawArgs {
 	const TigRect* rect;
 	int xrlt;
 	int yrlt;
-	int field_c;
-	int textLength;
+	int firstIdx;
+	int lastIdx;
 };
 
 static class FontRenderFix : public TempleFix {
@@ -45,7 +45,6 @@ public:
 void FontRenderFix::apply() {
 	replaceFunction(0x101EAF30, FontDraw);
 }
-
 
 int FontRenderFix::FontDrawBg(TigRect* rect, TigTextStyle* style, const char* text) {
 	// srcRect doesnt really matter if we dont use a texture
@@ -109,13 +108,19 @@ constexpr auto FirstFontChar = '!';
 constexpr static auto sEllipsis = "...";
 constexpr static auto tig_font_is_english = true; // TODO
 
-static int MeasureCharRun(cstring_view<> text, const TigTextStyle& style, const TigRect& extents, int extentsWidth, const TigFont& font,
-                          int &v89, int linePadding, bool v93) {
-	int v84 = 0;
-	const auto tabWidth = style.field4c - extents.x;
-
+static std::pair<int, int> MeasureCharRun(cstring_view<> text,
+                                          const TigTextStyle& style,
+                                          const TigRect& extents,
+                                          int extentsWidth,
+                                          const TigFont& font,
+                                          int linePadding,
+                                          bool lastLine) {
 	auto lineWidth = 0;
-	auto v74 = 0;
+	auto wordCountWithPadding = 0;
+	auto wordWidth = 0;
+	auto wordCount = 0;
+
+	const auto tabWidth = style.field4c - extents.x;
 
 	// This seems to be special handling for the sequence "@t" and @0 - @9
 	auto it = text.begin();
@@ -129,79 +134,199 @@ static int MeasureCharRun(cstring_view<> text, const TigTextStyle& style, const 
 		// Handles @0 to @9
 		if (ch == '@' && isdigit(nextCh)) {
 			++it; // Skip the number
-		}
-		else if (ch == '@' && nextCh == 't') {
+		} else if (ch == '@' && nextCh == 't') {
 			++it; // Skip the t
 
 			if (tabWidth == 0) {
 				break;
 			}
 
-			lineWidth += tabWidth;
-		}
-		else if (ch == '\n') {
-			if (v89 + lineWidth <= extentsWidth) {
-				++v74;
-				if (v89 + lineWidth <= extentsWidth + linePadding)
-					v84 = v74;
-				v89 += lineWidth;
-				lineWidth = 0;
+			wordWidth += tabWidth;
+		} else if (ch == '\n') {
+			if (lineWidth + wordWidth <= extentsWidth) {
+				wordCount++;
+				if (lineWidth + wordWidth <= extentsWidth + linePadding) {
+					wordCountWithPadding++;
+				}
+				lineWidth += wordWidth;
+				wordWidth = 0;
 			}
 			break;
 		} else if (isspace(ch)) {
-			if (v89 + lineWidth > extentsWidth)
+			if (lineWidth + wordWidth <= extentsWidth) {
+				wordCount++;
+				if (lineWidth + wordWidth <= extentsWidth + linePadding) {
+					wordCountWithPadding++;
+				}
+				lineWidth += wordWidth + style.tracking;
+				wordWidth = 0;
+			} else {
+				// Stop if we have run out of space on this line
 				break;
-			++v74;
-			if (v89 + lineWidth <= extentsWidth + linePadding)
-				v84 = v74;
-			v89 += lineWidth + style.tracking;
-			lineWidth = 0;
+			}
 		} else {
-
 			auto glyphIdx = ch - FirstFontChar;
 			if (tig_font_is_english) {
-				if ((glyphIdx < -1 || glyphIdx > 95) && glyphIdx != 0xFFFFFFE9) {
+				if ((glyphIdx < -1 || glyphIdx > '_') && ch != '\n') {
 					logger->warn("Tried to display character {} in text '{}'", glyphIdx, text);
 					glyphIdx = -1;
 				}
 			}
 
-			lineWidth += style.kerning + font.glyphs[glyphIdx].width_line;
+			wordWidth += style.kerning + font.glyphs[glyphIdx].width_line;
 		}
 	}
 
-	if (it == text.end()) {
-		if (lineWidth) {
-			if (lineWidth + v89 > extentsWidth) {
-				if (style.flags & 0x4000) {
-					v89 += lineWidth;
-					++v74;
-					v84 = v74;
-				}
-			} else {
-				v89 += lineWidth;
-				v74++;
-				if (v89 + lineWidth <= extentsWidth + linePadding)
-					v84 = v74;
+	// Handle the last word, if we're at the end of the string
+	if (it == text.end() && wordWidth > 0) {
+		if (lineWidth + wordWidth <= extentsWidth) {
+			wordCount++;
+			lineWidth += wordWidth;
+			if (lineWidth + wordWidth <= extentsWidth + linePadding) {
+				wordCountWithPadding++;
+			}
+		} else if (style.flags & 0x4000) {
+			// The word would actually not fit, but we're the last
+			// thing in the string and we truncate with ...
+			lineWidth += wordWidth;
+			wordCount++;
+			wordCountWithPadding++;
+		}
+	}
+
+	// Ignore the padding if we'd not print ellipsis anyway
+	if (!lastLine || it == text.end() || !(style.flags & 0x4000)) {
+		wordCountWithPadding = wordCount;
+	}
+
+	return std::make_pair(wordCountWithPadding, lineWidth);
+}
+
+static bool HasMoreText(cstring_view<> text, int tabWidth) {
+	// We're on the last line and truncation is active
+	// This will seek to the next word
+	auto it = text.begin();
+	for (; it != text.end(); ++it) {
+		auto curChar = *it;
+		auto nextChar = '\0';
+		if (it + 1 != text.end()) {
+			nextChar = *(it + 1);
+		}
+
+		// Handles @0 - @9 and skips the number
+		if (curChar == '@' && isdigit(nextChar)) {
+			++it;
+			continue;
+		}
+
+		if (curChar == '@' && nextChar == 't') {
+			++it;
+			if (tabWidth > 0) {
+				continue;
 			}
 		}
-	}
-	if (!v93 || it == text.end() || !(style.flags & 0x4000))
-		v84 = v74;
 
-	return v84;
+		if (curChar != '\n' && !isspace(curChar)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+struct ScanWordResult {
+	size_t firstIdx;
+	size_t lastIdx;
+	int idxBeforePadding = 0;
+	int width = 0;
+	int fullWidth = 0; // Ignores padding
+	bool drawEllipsis = false;
+};
+
+static ScanWordResult ScanWord(const char* text,
+                               int firstIdx,
+                               int textLength,
+                               int tabWidth,
+                               bool lastLine,
+                               const TigFont& font,
+                               const TigTextStyle& style,
+                               int remainingSpace) {
+
+	ScanWordResult result;
+	result.firstIdx = firstIdx;
+
+	auto i = firstIdx;
+	for (; i < textLength; i++) {
+		auto curCh = text[i];
+		auto nextCh = '\0';
+		if (i + 1 < textLength) {
+			nextCh = text[i + 1];
+		}
+
+		// Simply skip @t without increasing the width
+		if (curCh == '@' && isdigit(nextCh)) {
+			i++; // Skip the number
+			continue;
+		}
+
+		// @t will advance the width up to the next tabstop
+		if (curCh == '@' && nextCh == 't') {
+			i++; // Skip the t
+			if (tabWidth > 0) {
+				if (style.flags & 0x4000) {
+					result.fullWidth += tabWidth;
+					if (result.fullWidth > remainingSpace) {
+						result.drawEllipsis = true;
+						continue;
+					}
+					// The idx right before the width - padding starts
+					result.idxBeforePadding = i;
+				}
+				result.width += tabWidth;
+			}
+			continue;
+		}
+
+		auto glyphIdx = curCh - FirstFontChar;
+		if (tig_font_is_english) {
+			if ((glyphIdx < -1 || glyphIdx > '_') && curCh != '\n') {
+				logger->warn("Tried to display character {} in text '{}'", glyphIdx, text);
+				glyphIdx = -1;
+			}
+		}
+
+		if (curCh == '\n') {
+			if (lastLine && style.flags & 0x4000) {
+				result.drawEllipsis = true;
+			}
+			break;
+		}
+
+		if (isspace(curCh)) {
+			break;
+		}
+
+		if (style.flags & 0x4000) {
+			result.fullWidth += font.glyphs[glyphIdx].width_line + style.kerning;
+			if (result.fullWidth > remainingSpace) {
+				result.drawEllipsis = true;
+				continue;
+			}
+			result.idxBeforePadding = i;
+		}
+		result.width += font.glyphs[glyphIdx].width_line + style.kerning;
+	}
+
+	result.lastIdx = i;
+	return result;
 }
 
 int FontRenderFix::FontDraw(const char* text, TigRect* extents, TigTextStyle* style) {
-	auto glyphIdx = 0;
-	auto v93 = false;
-	auto drawEllipsis = false;
+	auto lastLine = false;
 	style->field30 = 0;
 	if (*addresses.stackSize < 1)
 		return 3;
 
-	auto currentX = extents->x;
-	auto currentY = extents->y;
 	auto extentsWidth = extents->width;
 	auto extentsHeight = extents->height;
 	auto textLength = strlen(text);
@@ -259,22 +384,22 @@ int FontRenderFix::FontDraw(const char* text, TigRect* extents, TigTextStyle* st
 
 	if (!extentsWidth) {
 		TigFontDrawArgs args;
-		args.yrlt = currentY;
-		args.xrlt = currentX;
+		args.xrlt = extents->x;
+		args.yrlt = extents->y;
 		args.rect = extents;
-		args.field_c = 0;
-		args.textLength = strlen(text);
+		args.firstIdx = 0;
+		args.lastIdx = strlen(text);
 		FontDrawDoWork(style, text, args, font);
 		return 0;
 	}
 
 	// Haben nur Platz für eine Zeile???
+	const int ellipsisWidth = 3 * (style->kerning + font.glyphs['.' - FirstFontChar].width_line);
 	auto linePadding = 0;
-	if (currentY + 2 * font.largestHeight > extents->y + extents->height) {
-		v93 = true;
+	if (extents->y + 2 * font.largestHeight > extents->y + extents->height) {
+		lastLine = true;
 		if (style->flags & 0x4000) {
-			glyphIdx = *sEllipsis - FirstFontChar;
-			linePadding = -3 * (style->kerning + font.glyphs[glyphIdx].width_line);
+			linePadding = - ellipsisWidth;
 		}
 	}
 
@@ -283,191 +408,92 @@ int FontRenderFix::FontDraw(const char* text, TigRect* extents, TigTextStyle* st
 
 	const auto tabWidth = style->field4c - extents->x;
 
-	size_t v80 = 0;
-	while (2) {
-		auto v89 = 0;
-		auto arg = ensure_z(text + v80, textLength);
-		auto wordsOnLine = MeasureCharRun(arg, *style, *extents, extentsWidth, font, v89, linePadding, v93);
+	auto currentY = extents->y;
+	for (size_t startOfWord = 0; startOfWord < textLength; ++startOfWord) {
+		auto arg = ensure_z(text + startOfWord, textLength);
+		int wordsOnLine, lineWidth;
+		std::tie(wordsOnLine, lineWidth) = MeasureCharRun(arg,
+		                                                  *style,
+		                                                  *extents,
+		                                                  extentsWidth,
+		                                                  font,
+		                                                  linePadding,
+		                                                  lastLine);
 
-		// TODO: Check if v36 can be mapped to v80 1:1
-		auto v36 = v80;
-		for (auto wordIdx = 0; wordIdx < wordsOnLine && !drawEllipsis; ++wordIdx) {
-			auto v81 = 0;
-			auto v86 = 0;
-			auto wordWidth = 0;
-			auto v38 = v36;
-			auto firstIdx = v36;
-			auto v77 = v36;
-				
-			for (; v38 < textLength; v38++) {
-				char curCh = text[v38];
-				char nextCh = '\0';
-				if (v38 + 1 < textLength) {
-					nextCh = text[v38 + 1];
-				}
+		auto currentX = 0;
+		for (auto wordIdx = 0; wordIdx < wordsOnLine; ++wordIdx) {
 
-				// Simply skip @t without increasing the width
-				if (curCh == '@' && isdigit(nextCh)) {
-					v38++; // Skip the number
-					continue;
-				}
+			auto remainingSpace = extentsWidth + linePadding - currentX;
 
-				// @t will advance the width up to the next tabstop
-				if (curCh == '@' && nextCh == 't') {
-					v38++; // Skip the t
-					if (tabWidth > 0) {
-						v86 += tabWidth;
-						if (style->flags & 0x4000) {
-							auto v48 = currentX - extents->x + v86;
-							if (v48 > extentsWidth + linePadding) {
-								drawEllipsis = true;
-								continue;
-							}
-							v81 = v38;
-						}
-						wordWidth += tabWidth;
-					}
-					continue;
-				}
+			auto wordInfo(ScanWord(text, 
+				startOfWord, 
+				textLength, 
+				tabWidth, 
+				lastLine, 
+				font, 
+				*style, 
+				remainingSpace));
 
-				glyphIdx = text[v38] - FirstFontChar;
-				if (tig_font_is_english) {
-					if ((glyphIdx < -1 || glyphIdx > '_') && text[v38] != '\n') {
-						logger->warn("Tried to display character {} in text '{}'", glyphIdx, text);
-						glyphIdx = -1;
+			auto lastIdx = wordInfo.lastIdx;
+			auto wordWidth = wordInfo.width;
+
+			if (lastLine && style->flags & 0x4000) {
+				if (currentX + wordInfo.fullWidth > extentsWidth) {
+					lastIdx = wordInfo.idxBeforePadding;
+				} else {
+					auto remainingText = ensure_z(text + lastIdx, textLength);
+					if (!HasMoreText(remainingText, tabWidth)) {
+						wordInfo.drawEllipsis = false;
+						wordWidth = wordInfo.fullWidth;
 					}
 				}
-
-				if (curCh == '\n') {
-					v77 = v38;
-					if (v93) {
-						if (style->flags & 0x4000)
-							drawEllipsis = true;
-						break;
-					}
-					goto LABEL_168;
-				}
-					
-				if (isspace(curCh)) {
-					break;
-				}
-				if (style->flags & 0x4000) {
-					if ((extentsWidth + linePadding) < currentX + v86 - extents->x) {
-						drawEllipsis = true;
-						continue;
-					}
-					v81 = v38;
-				}
-				wordWidth += font.glyphs[glyphIdx].width_line + style->kerning;
 			}
 
-			v77 = v38;
-
-			int lastIdx;
-
-			if (v93 && style->flags & 0x4000) {
-				// We're on the last line and truncation is active
-				// This will seek v38 to the next word
-				for (; v38 < textLength; ++v38) {
-					auto curChar = text[v38];
-					char nextChar = '\0';
-					if (v38 + 1 < textLength) {
-						nextChar = text[v38 + 1];
-					}
-
-					// Handles @0 - @9 and skips the number
-					if (curChar == '@' && isdigit(nextChar)) {
-						++v38;
-						continue;
-					}
-
-					if (curChar == '@' && nextChar == 't') {
-						++v38;
-						if (tabWidth > 0) {
-							continue;
-						}
-					}
-
-					if (curChar != '\n' && !isspace(curChar)) {
-						break;
-					}
-				}
-				bool lastWord = (v38 == textLength);
-
-				if (currentX + v86 - extents->x <= extentsWidth) {
-					lastIdx = v77;
-					v36 = v77;
-					v80 = v77;
-					if (lastWord) {
-						drawEllipsis = false;
-						wordWidth = v86;
-					}
-					goto LABEL_143;
-				}
-				lastIdx = v81;
-				v36 = v81;
-			} else {
-			LABEL_168:
-				lastIdx = v38;
-				v36 = v38;
-			}
-			v80 = v36;
-		LABEL_143:
-			if (isspace(glyphIdx + FirstFontChar) || v36 == textLength) {
+			startOfWord = lastIdx;
+			if (startOfWord < textLength && isspace(text[startOfWord])) {
 				wordWidth += style->tracking;
 			}
 
 			// This means this is not the last word in this line
 			if (wordIdx + 1 < wordsOnLine) {
-				++v36;
-				v80 = v36;
+				startOfWord++;
 			}
 
+			// Draw the word
 			TigFontDrawArgs drawArgs;
 			drawArgs.rect = extents;
-			drawArgs.xrlt = currentX;
+			drawArgs.xrlt = extents->x + currentX;
 			// This centers the line
 			if (style->flags & 0x10) {
-				drawArgs.xrlt += (extentsWidth - v89) / 2;
+				drawArgs.xrlt += (extentsWidth - lineWidth) / 2;
 			}
 			drawArgs.yrlt = currentY;
-			drawArgs.field_c = firstIdx;
-			drawArgs.textLength = lastIdx;
+			drawArgs.firstIdx = wordInfo.firstIdx;
+			drawArgs.lastIdx = lastIdx;
 
 			FontDrawDoWork(style, text, drawArgs, font);
 			currentX += wordWidth;
-		}
 
-		// Resets X, advances to next line, has not run out of vertical space (v93)
-		if (!v93 || !(style->flags & 0x4000)) {
-			currentX = extents->x;
-			currentY += font.largestHeight;
-			if (currentY + 2 * font.largestHeight > extents->y + extents->height) {
-				v93 = true;
-				if (style->flags & 0x4000) {
-					glyphIdx = *sEllipsis - FirstFontChar;
-					linePadding = 3 * style->kerning - font.glyphs[glyphIdx].width_line;
-				}
-			}
-			++v80;
-			if (v80 >= textLength)
+			// We're on the last line, the word has been truncated, ellipsis needs to be drawn
+			if (lastLine && style->flags & 0x4000 && wordInfo.drawEllipsis) {
+				drawArgs.xrlt = extents->x + currentX;
+				drawArgs.firstIdx = 0;
+				drawArgs.lastIdx = strlen(sEllipsis);
+				auto ellipsis = sEllipsis;
+				FontDrawDoWork(style, ellipsis, drawArgs, font);
 				return 0;
-			continue;
+			}
 		}
 
-		break;
+		// Advance to next line
+		currentY += font.largestHeight;
+		if (currentY + 2 * font.largestHeight > extents->y + extents->height) {
+			lastLine = true;
+			if (style->flags & 0x4000) {
+				linePadding = ellipsisWidth;
+			}
+		}
 	}
 
-	if (drawEllipsis) {
-		TigFontDrawArgs drawArgs;
-		drawArgs.rect = extents;
-		drawArgs.xrlt = currentX;
-		drawArgs.yrlt = currentY;
-		drawArgs.field_c = 0;
-		drawArgs.textLength = strlen(sEllipsis);
-		auto ellipsis = sEllipsis;
-		FontDrawDoWork(style, ellipsis, drawArgs, font);
-	}
 	return 0;
-
 }
