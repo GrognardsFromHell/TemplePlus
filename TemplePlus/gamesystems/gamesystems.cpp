@@ -138,15 +138,6 @@ GameSystems::GameSystems(TigInitializer &tig) : mTig(tig) {
 
 	InitBufferStuff(mConfig);
 
-	// This seems to be the primary rendering function, it's called from the renderfunc above (0x10002650)
-	if (!mConfig.editor) {
-		temple::GetRef<0x103072BC, void*>() = temple::GetPointer(0x100039E0);
-	}
-	else {
-		temple::GetRef<0x103072BC, void*>() = temple::GetPointer(0x10003A50);
-	}
-
-	temple::GetRef<0x10306C10, int>() = FALSE; // always set to false, used by the renderfunc
 
 	GameSystemLoadingScreen loadingScreen;
 

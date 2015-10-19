@@ -28,4 +28,6 @@ struct TigRect {
 
 	RECT ToRect();
 	void FitInto(const TigRect &boundingRect);
+	bool Intersects(const TigRect &other);
+	bool Intersects(const TigRect &other, TigRect &intersection);
 };

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "util/fixes.h"
+
 struct TigBuffer;
 struct TigRect;
 struct ImgFile;

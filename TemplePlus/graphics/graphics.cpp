@@ -614,6 +614,20 @@ void Graphics::TakeScaledScreenshot(const std::string& filename, int width, int 
 	}
 }
 
+void Graphics::EnableLighting() {
+	renderStates->SetLighting(true);
+	renderStates->SetSpecularEnable(true);
+}
+
+void Graphics::DisableLighting() {
+	renderStates->SetLighting(false);
+	renderStates->SetSpecularEnable(false);
+
+	for (auto i = 0; i < GetMaxActiveLights(); ++i) {
+		D3DLOG(mDevice->LightEnable(i, FALSE));
+	}
+}
+
 void Graphics::SetDefaultRenderStates() {
 	/*
 		Set the render states not being tracked by our state tracker.

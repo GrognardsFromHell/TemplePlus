@@ -196,12 +196,15 @@ void GameLoop::RenderVersion() {
 
 	ColorRect textColor(0x7FFFFFFF);
 	TigTextStyle style;
+	style.flags = 0x0800;
+	style.field10 = 25;
 	style.textColor = &textColor;
 
 	auto version = GetTemplePlusVersion();
 	auto rect = UiRenderer::MeasureTextSize(version, style);
-	rect.x = graphics->GetSceneWidth() - rect.width - 10;
-	rect.y = graphics->GetSceneHeight() - rect.height - 10;
+	rect.x = graphics->GetSceneWidth() - rect.width - 10  - 250;
+	rect.y = graphics->GetSceneHeight() - rect.height - 10 - 250 ;
+	
 	UiRenderer::RenderText(version, rect, style);
 
 	UiRenderer::PopFont();

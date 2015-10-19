@@ -21,9 +21,9 @@ struct TigTextStyle
 	int leading = 0;
 	int field10 = 0;
 	int field14 = 0;
-	int field18 = 0;
-	int field1c = 0;
-	int field20 = 0;
+	float rotation = 0;
+	float rotationCenterX = 0;
+	float rotationCenterY = 0;
 	int field24 = 0;
 	/*
 		8 seems to be drop shadow
@@ -32,12 +32,15 @@ struct TigTextStyle
 		0x800 Draws a border box around the text, always black
 		0xC00 is used for tooltips
 		Not seen in the wild:
+		0x1000
 		0x2000
 		0x4000 truncates text if too long for rect and appends "..."
+		0x8000 seems to rotate
+		0x10000 offset for rotation is set
 	*/
 	int flags = 0;
 	int field2c = 0;
-	int field30 = 0;
+	int colorSlot = 0;
 	ColorRect *textColor = nullptr;
 	ColorRect *colors2 = nullptr;
 	ColorRect *shadowColor = nullptr; // Use with flags |= 0x8
@@ -62,26 +65,23 @@ struct TigFontMetrics
 };
 
 struct TigFontGlyph {
-	uint32_t x;
-	uint32_t y;
-	uint32_t width;
-	uint32_t height;
-	uint32_t field10;
-	uint32_t width_line;
-	uint32_t width_line_x_offset;
-	uint32_t base_line_y_offset;
+	TigRect rect;
+	int fileIdx;
+	int width_line;
+	int width_line_x_offset;
+	int base_line_y_offset;
 };
 
 struct TigFont {
-	uint32_t field0;
+	int baseline;
 	int largestHeight;
-	uint32_t fontsize;
-	uint32_t fieldc;
-	uint32_t glyphcount;
-	uint32_t field14;
+	int fontsize;
+	int antialiased;
+	int glyphCount;
+	int fileCount;
 	TigFontGlyph* glyphs;
 	const char* name;
-	uint32_t artIds[4];
+	int textureIds[4];
 };
 
 struct TigFontData {

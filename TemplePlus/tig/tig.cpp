@@ -32,6 +32,57 @@ void TigRect::FitInto(const TigRect& boundingRect) {
 	y = boundingRect.y + (boundingRect.height - height) / 2;
 }
 
+bool TigRect::Intersects(const TigRect& other) {
+
+	// Basically we select any component that leads to a 
+	// smaller surface area of the intersection and then
+	// discard if the surface area would become negative or zero
+	auto intersectionX = std::max(x, other.x);
+	auto intersectionY = std::max(y, other.y);
+
+	auto right = x + width;
+	auto otherRight = other.x + other.width;
+	auto intersectionWidth = std::min(right, otherRight) - intersectionX;
+	if (intersectionWidth <= 0) {
+		return false;
+	}
+
+	auto bottom = y + height;
+	auto otherBottom = other.y + other.height;
+	auto intersectionHeight = std::min(bottom, otherBottom) - intersectionY;
+
+	return intersectionHeight > 0;
+
+}
+
+bool TigRect::Intersects(const TigRect& other, TigRect& intersection) {
+	// Basically we select any component that leads to a 
+	// smaller surface area of the intersection and then
+	// discard if the surface area would become negative or zero
+	auto intersectionX = std::max(x, other.x);
+	auto intersectionY = std::max(y, other.y);
+
+	auto right = x + width;
+	auto otherRight = other.x + other.width;
+	auto intersectionWidth = std::min(right, otherRight) - intersectionX;
+	if (intersectionWidth <= 0) {
+		return false;
+	}
+
+	auto bottom = y + height;
+	auto otherBottom = other.y + other.height;
+	auto intersectionHeight = std::min(bottom, otherBottom) - intersectionY;
+	if (intersectionHeight <= 0) {
+		return false;
+	}
+
+	intersection.x = intersectionX;
+	intersection.y = intersectionY;
+	intersection.width = intersectionWidth;
+	intersection.height = intersectionHeight;
+	return true;	
+}
+
 RECT TigRect::ToRect() {
 	return{x, y, x + width, y + height};
 }

@@ -50,6 +50,12 @@ public:
 	*/
 	void TakeScaledScreenshot(const std::string& filename, int width, int height);
 
+	int GetMaxActiveLights() const {
+		return mCaps.MaxActiveLights;
+	}
+	void EnableLighting();
+	void DisableLighting();
+
 	// Returns the current back buffer surface description
 	const D3DSURFACE_DESC& backBufferDesc() {
 		return mBackBufferDesc;
@@ -161,7 +167,7 @@ private:
 
 	D3DVECTOR mScreenCorners[4];
 	int mFrameDepth = 0;
-
+	
 	bool mResourcesCreated = false;
 
 	using Clock = std::chrono::high_resolution_clock;

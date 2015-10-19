@@ -1,91 +1,52 @@
 #include <stdafx.h>
 
+#include <graphics/graphics.h>
+#include <infrastructure/renderstates.h>
+#include <infrastructure/textures.h>
+#include <graphics/render_hooks.h>
+
 #include "util/fixes.h"
 #include "tig/tig.h"
 #include "tig/tig_font.h"
-#include "graphics/render_hooks.h"
 
 using namespace gsl;
 
-static struct FontRenderAddresses : temple::AddressTable {
+// First character found in the FNT files
+constexpr auto FirstFontChar = '!';
 
-	int* stackSize;
-	TigFont* loadedFonts;
-	int* fontStack;
-
-	FontRenderAddresses() {
-		rebase(stackSize, 0x10EF2E50);
-		rebase(loadedFonts, 0x10EF1448);
-		rebase(fontStack, 0x10EF2C48);
-	}
-} addresses;
-
-struct TigFontDrawArgs {
-	const TigRect* rect;
-	int xrlt;
-	int yrlt;
-	int firstIdx;
-	int lastIdx;
+#pragma pack(push, 1)
+struct GlyphVertex2d {
+	float u;
+	float v;
+	float x;
+	float y;
+	D3DCOLOR diffuse;
 };
 
-static class FontRenderFix : public TempleFix {
-public:
-	const char* name() override {
-		return "Font Rendering Replacement";
-	}
+struct GlyphVertex3d {
+	D3DXVECTOR4 pos;
+	D3DCOLOR diffuse;
+	D3DXVECTOR2 uv;
+};
+#pragma pack(pop)
 
-	void apply() override;
+static void ConvertVertex(const GlyphVertex2d& vertex2d, GlyphVertex3d& vertex3d, const gfx::Size& textureSize) {
+	vertex3d.pos.x = vertex2d.x;
+	vertex3d.pos.y = vertex2d.y;
+	vertex3d.pos.z = 0.5f;
+	vertex3d.pos.w = 1.0f;
 
-	static int FontDraw(const char* text, TigRect* extents, TigTextStyle* style);
-	static int FontDrawBg(TigRect* rect, TigTextStyle* style, const char* text);
+	vertex3d.diffuse = vertex2d.diffuse;
 
-	static int FontDrawDoWork(TigTextStyle* style, const char*& text, const TigFontDrawArgs& args, const TigFont& font);
-} fix;
-
-void FontRenderFix::apply() {
-	replaceFunction(0x101EAF30, FontDraw);
+	vertex3d.uv.x = vertex2d.u / textureSize.width;
+	vertex3d.uv.y = vertex2d.v / textureSize.height;
 }
 
-int FontRenderFix::FontDrawBg(TigRect* rect, TigTextStyle* style, const char* text) {
-	// srcRect doesnt really matter if we dont use a texture
-	TigRect srcRect;
-	srcRect.width = 1;
-	srcRect.height = 1;
-	srcRect.x = 0;
-	srcRect.y = 0;
 
-	TigRect destRect;
-	destRect.x = rect->x;
-	destRect.y = rect->y;
+#if 0
+int FontDrawDoWork(TigTextStyle* style, const char*& text, const TigFontDrawArgs& args, const TigFont& font) {
 
-	if (rect->width) {
-		destRect.width = rect->width;
-		destRect.height = rect->height;
-	} else {
-		TigFontMetrics metrics;
-		metrics.text = text;
-		metrics.width = 0;
-		metrics.height = 0;
-		tigFont.Measure(*style, metrics);
-		destRect.width = metrics.width;
-		destRect.height = metrics.height;
-	}
-
-	Render2dArgs args;
-	args.flags = Render2dArgs::FLAG_VERTEXCOLORS
-		| Render2dArgs::FLAG_VERTEXALPHA;
-	args.textureId = 0;
-	args.srcRect = &srcRect;
-	args.destRect = &destRect;
-	args.vertexColors = &style->bgColor->topLeft;
-	args.vertexZ = (float) INT_MAX ;
-	return RenderHooks::TextureRender2d(&args);
-
-}
-
-int FontRenderFix::FontDrawDoWork(TigTextStyle* style, const char*& text, const TigFontDrawArgs& args, const TigFont& font) {
-
-	// signed int __usercall tig_font_draw_dowork@<eax>(tig_text_style *style@<ecx>, const char **text, TigFontDrawArgs *args, tig_font *font)
+// signed int __usercall tig_font_draw_dowork@<eax>(tig_text_style *style@<ecx>, const char **text, TigFontDrawArgs *args, tig_font *font)
 	auto func = temple::GetPointer<void*>(0x101E93E0);
 
 	__asm {
@@ -99,401 +60,352 @@ int FontRenderFix::FontDrawDoWork(TigTextStyle* style, const char*& text, const 
 		pop ecx;
 	}
 
-	// TODO
+// TODO
 	return 0;
 }
 
-// First character found in the FNT files
-constexpr auto FirstFontChar = '!';
-constexpr static auto sEllipsis = "...";
-constexpr static auto tig_font_is_english = true; // TODO
+int FontDrawDoWork0(const GlyphVertex2d* vertices, int textureId, signed int glyphCount) {
 
-static std::pair<int, int> MeasureCharRun(cstring_view<> text,
-                                          const TigTextStyle& style,
-                                          const TigRect& extents,
-                                          int extentsWidth,
-                                          const TigFont& font,
-                                          int linePadding,
-                                          bool lastLine) {
-	auto lineWidth = 0;
-	auto wordCountWithPadding = 0;
-	auto wordWidth = 0;
-	auto wordCount = 0;
+// signed int __usercall tig_font_draw_dowork@<eax>(tig_text_style *style@<ecx>, const char **text, TigFontDrawArgs *args, tig_font *font)
+	auto func = temple::GetPointer<void*>(0x101E8790);
+	__asm {
+		push ebx;
+		push ecx;
+		mov ecx, textureId;
+		mov eax, vertices;
+		mov ebx, glyphCount;
+		call func;
+		pop ecx;
+		pop ebx;
+	}
 
-	const auto tabWidth = style.field4c - extents.x;
+// TODO
+	return 0;
+}
+#endif
 
-	// This seems to be special handling for the sequence "@t" and @0 - @9
-	auto it = text.begin();
-	for (; it != text.end(); ++it) {
+static constexpr auto sMaxGlyphFiles = 4;
+
+struct GlyphFileState {
+	static constexpr auto MaxGlyphs = 800;
+	int glyphCount = 0;
+	std::array<GlyphVertex2d, MaxGlyphs * 4> vertices;
+};
+
+#include "fonts.h"
+
+struct FontRenderer::Impl : public ResourceListener {
+	
+	Impl(Graphics &g) : mRegistration(g, this) {
+	}
+	
+	void CreateResources(Graphics&) override;
+	void FreeResources(Graphics&) override;
+
+	CComPtr<IDirect3DIndexBuffer9> mIndexBuffer;
+	GlyphFileState mFileState[sMaxGlyphFiles];
+	ResourceListenerRegistration mRegistration;
+
+};
+
+
+FontRenderer::FontRenderer(Graphics& g) : mImpl(std::make_unique<Impl>(g)) {
+}
+
+FontRenderer::~FontRenderer() {
+}
+
+void FontRenderer::RenderRun(array_view<const char> text,
+                             int x,
+                             int y,
+                             const TigRect& bounds,
+                             TigTextStyle& style,
+                             const TigFont& font) {
+	for (auto& state : mImpl->mFileState) {
+		state.glyphCount = 0;
+	}
+
+	for (auto it = text.begin(); it != text.end(); ++it) {
 		auto ch = *it;
 		auto nextCh = '\0';
 		if (it + 1 != text.end()) {
 			nextCh = *(it + 1);
 		}
 
-		// Handles @0 to @9
+		// @0 to @9 select one of the text colors
 		if (ch == '@' && isdigit(nextCh)) {
-			++it; // Skip the number
-		} else if (ch == '@' && nextCh == 't') {
-			++it; // Skip the t
+			++it; // Skip the digit
+			style.colorSlot = nextCh - '0';
+			continue;
+		}
 
-			if (tabWidth == 0) {
-				break;
-			}
+		// Handle @t tabstop movement
+		if (ch == '@' && nextCh == 't') {
+			auto tabWidth = style.field4c - bounds.x;
 
-			wordWidth += tabWidth;
-		} else if (ch == '\n') {
-			if (lineWidth + wordWidth <= extentsWidth) {
-				wordCount++;
-				if (lineWidth + wordWidth <= extentsWidth + linePadding) {
-					wordCountWithPadding++;
-				}
-				lineWidth += wordWidth;
-				wordWidth = 0;
+			if (tabWidth > 0) {
+				++it; // Skip the t
+
+				auto tabCount = 1 + (x - bounds.x) / tabWidth;
+				x = bounds.x + tabCount * tabWidth;
 			}
-			break;
-		} else if (isspace(ch)) {
-			if (lineWidth + wordWidth <= extentsWidth) {
-				wordCount++;
-				if (lineWidth + wordWidth <= extentsWidth + linePadding) {
-					wordCountWithPadding++;
-				}
-				lineWidth += wordWidth + style.tracking;
-				wordWidth = 0;
+			continue;
+		}
+
+		auto glyphIdx = *it - FirstFontChar;
+		if (glyphIdx > font.glyphCount) {
+			return; // Trying to render invalid character
+		}
+
+		if (isspace(ch)) {
+			x += style.tracking;
+			continue;
+		}
+
+		auto glyph = font.glyphs[glyphIdx];
+
+		auto u1 = glyph.rect.x - 0.5f;
+		auto v1 = glyph.rect.y - 0.5f;
+		auto u2 = glyph.rect.x + glyph.rect.width + 0.5f;
+		auto v2 = glyph.rect.y + glyph.rect.height + 0.5f;
+
+		auto& state = mImpl->mFileState[glyph.fileIdx];
+
+		TigRect destRect;
+		destRect.x = x;
+		destRect.y = y + font.baseline - glyph.base_line_y_offset;
+		destRect.width = glyph.rect.width + 1;
+		destRect.height = glyph.rect.height + 1;
+
+		x += style.kerning + glyph.width_line;
+
+		Expects(!(style.flags & 0x1000));
+		Expects(!(style.flags & 0x2000));
+
+		// Drop Shadow
+		if (style.flags & 8) {
+			auto vertexIdx = state.glyphCount * 4;
+			auto shadowColor = 0xFF000000 | style.shadowColor->topLeft;
+
+			// Top Left
+			auto& vertexTL = state.vertices[vertexIdx];
+			vertexTL.x = destRect.x + 1.0f;
+			vertexTL.y = destRect.y + 1.0f;
+			vertexTL.u = u1;
+			vertexTL.v = v1;
+			vertexTL.diffuse = shadowColor;
+
+			// Top Right
+			auto& vertexTR = state.vertices[vertexIdx + 1];
+			vertexTR.x = destRect.x + destRect.width + 1.0f;
+			vertexTR.y = destRect.y + 1.0f;
+			vertexTR.u = u2;
+			vertexTR.v = v1;
+			vertexTR.diffuse = shadowColor;
+
+			// Bottom Right
+			auto& vertexBR = state.vertices[vertexIdx + 2];
+			vertexBR.x = destRect.x + destRect.width + 1.0f;
+			vertexBR.y = destRect.y + destRect.height + 1.0f;
+			vertexBR.u = u2;
+			vertexBR.v = v2;
+			vertexBR.diffuse = shadowColor;
+
+			// Bottom Left
+			auto& vertexBL = state.vertices[vertexIdx + 3];
+			vertexBL.x = destRect.x + 1.0f;
+			vertexBL.y = destRect.y + destRect.height + 1.0f;
+			vertexBL.u = u1;
+			vertexBL.v = v2;
+			vertexBL.diffuse = shadowColor;
+
+			state.glyphCount++;
+
+			if (state.glyphCount >= GlyphFileState::MaxGlyphs) {
+				RenderGlyphs(&state.vertices[0], font.textureIds[glyph.fileIdx], state.glyphCount);
+				state.glyphCount = 0;
+			}
+		}
+
+		auto vertexIdx = state.glyphCount * 4;
+		const auto& colorRect = style.textColor[style.colorSlot];
+
+		// Top Left
+		auto& vertexTL = state.vertices[vertexIdx];
+		vertexTL.x = (float)destRect.x;
+		vertexTL.y = (float)destRect.y;
+		vertexTL.u = u1;
+		vertexTL.v = v1;
+		vertexTL.diffuse = colorRect.topLeft;
+
+		// Top Right
+		auto& vertexTR = state.vertices[vertexIdx + 1];
+		vertexTR.x = (float)destRect.x + destRect.width;
+		vertexTR.y = (float)destRect.y;
+		vertexTR.u = u2;
+		vertexTR.v = v1;
+		vertexTR.diffuse = colorRect.topRight;
+
+		// Bottom Right
+		auto& vertexBR = state.vertices[vertexIdx + 2];
+		vertexBR.x = (float)destRect.x + destRect.width;
+		vertexBR.y = (float)destRect.y + destRect.height;
+		vertexBR.u = u2;
+		vertexBR.v = v2;
+		vertexBR.diffuse = colorRect.bottomRight;
+
+		// Bottom Left
+		auto& vertexBL = state.vertices[vertexIdx + 3];
+		vertexBL.x = (float)destRect.x;
+		vertexBL.y = (float)destRect.y + destRect.height;
+		vertexBL.u = u1;
+		vertexBL.v = v2;
+		vertexBL.diffuse = colorRect.bottomLeft;
+
+		// Support rotations (i.e. for the radial menu)
+		if (style.flags & 0x8000) {
+			float rotCenterX, rotCenterY;
+			if (style.flags & 0x10000) {
+				rotCenterX = style.rotationCenterX;
+				rotCenterY = style.rotationCenterY;
 			} else {
-				// Stop if we have run out of space on this line
-				break;
-			}
-		} else {
-			auto glyphIdx = ch - FirstFontChar;
-			if (tig_font_is_english) {
-				if ((glyphIdx < -1 || glyphIdx > '_') && ch != '\n') {
-					logger->warn("Tried to display character {} in text '{}'", glyphIdx, text);
-					glyphIdx = -1;
-				}
+				rotCenterX = (float)bounds.x;
+				rotCenterY = (float)bounds.y + font.baseline;
 			}
 
-			wordWidth += style.kerning + font.glyphs[glyphIdx].width_line;
+			auto rotCos = cosf(style.rotation);
+			auto rotSin = sinf(style.rotation);
+			Rotate2d(vertexTL.x, vertexTL.y, rotCos, rotSin, rotCenterX, rotCenterY);
+			Rotate2d(vertexTR.x, vertexTR.y, rotCos, rotSin, rotCenterX, rotCenterY);
+			Rotate2d(vertexBR.x, vertexBR.y, rotCos, rotSin, rotCenterX, rotCenterY);
+			Rotate2d(vertexBL.x, vertexBL.y, rotCos, rotSin, rotCenterX, rotCenterY);
+		}
+
+		state.glyphCount++;
+
+		if (state.glyphCount >= GlyphFileState::MaxGlyphs) {
+			RenderGlyphs(&state.vertices[0], font.textureIds[glyph.fileIdx], state.glyphCount);
+			state.glyphCount = 0;
 		}
 	}
 
-	// Handle the last word, if we're at the end of the string
-	if (it == text.end() && wordWidth > 0) {
-		if (lineWidth + wordWidth <= extentsWidth) {
-			wordCount++;
-			lineWidth += wordWidth;
-			if (lineWidth + wordWidth <= extentsWidth + linePadding) {
-				wordCountWithPadding++;
-			}
-		} else if (style.flags & 0x4000) {
-			// The word would actually not fit, but we're the last
-			// thing in the string and we truncate with ...
-			lineWidth += wordWidth;
-			wordCount++;
-			wordCountWithPadding++;
+	// Flush the remaining state
+	for (auto i = 0; i < sMaxGlyphFiles; ++i) {
+		auto& state = mImpl->mFileState[i];
+		if (state.glyphCount > 0) {
+			RenderGlyphs(&state.vertices[0], font.textureIds[i], state.glyphCount);
 		}
 	}
 
-	// Ignore the padding if we'd not print ellipsis anyway
-	if (!lastLine || it == text.end() || !(style.flags & 0x4000)) {
-		wordCountWithPadding = wordCount;
-	}
-
-	return std::make_pair(wordCountWithPadding, lineWidth);
 }
 
-static bool HasMoreText(cstring_view<> text, int tabWidth) {
-	// We're on the last line and truncation is active
-	// This will seek to the next word
-	auto it = text.begin();
-	for (; it != text.end(); ++it) {
-		auto curChar = *it;
-		auto nextChar = '\0';
-		if (it + 1 != text.end()) {
-			nextChar = *(it + 1);
-		}
+void FontRenderer::RenderGlyphs(const GlyphVertex2d* vertices2d, int textureId, int glyphCount) {
 
-		// Handles @0 - @9 and skips the number
-		if (curChar == '@' && isdigit(nextChar)) {
-			++it;
-			continue;
-		}
+	auto texture = gfx::textureManager->GetById(textureId);
+	auto deviceTexture = texture->GetDeviceTexture();
+	if (!deviceTexture) {
+		logger->error("Trying to render glyph from invalid device texture");
+		return;
+	}
+	renderStates->SetTexture(0, deviceTexture);
 
-		if (curChar == '@' && nextChar == 't') {
-			++it;
-			if (tabWidth > 0) {
-				continue;
-			}
-		}
+	auto device = graphics->device();
 
-		if (curChar != '\n' && !isspace(curChar)) {
-			return true;
-		}
+	CComPtr<IDirect3DVertexBuffer9> buffer;
+	const auto vertexCount = glyphCount * 4;
+	const auto bufferSize = sizeof(GlyphVertex3d) * vertexCount;
+	constexpr auto fvf = D3DFVF_XYZRHW | D3DFVF_DIFFUSE;
+
+	if (D3DLOG(device->CreateVertexBuffer(bufferSize,
+		D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY,
+		fvf,
+		D3DPOOL_DEFAULT,
+		&buffer,
+		nullptr)) != D3D_OK) {
+		return;
 	}
 
-	return false;
+	GlyphVertex3d* vertices;
+	if (D3DLOG(buffer->Lock(0, bufferSize, (void**)&vertices, D3DLOCK_DISCARD)) != D3D_OK) {
+		return;
+	}
+
+	auto textureSize = texture->GetSize();
+	for (auto i = 0; i < vertexCount; ++i) {
+		ConvertVertex(vertices2d[i], vertices[i], textureSize);
+	}
+
+	if (D3DLOG(buffer->Unlock()) != D3D_OK) {
+		return;
+	}
+
+	renderStates->SetTextureColorOp(0, D3DTOP_MODULATE);
+	renderStates->SetTextureColorArg1(0, D3DTA_TEXTURE);
+	renderStates->SetTextureColorArg2(0, D3DTA_CURRENT);
+
+	renderStates->SetTextureAlphaOp(0, D3DTOP_MODULATE);
+	renderStates->SetTextureAlphaArg1(0, D3DTA_TEXTURE);
+	renderStates->SetTextureAlphaArg2(0, D3DTA_CURRENT);
+
+	renderStates->SetTextureMipFilter(0, D3DTEXF_LINEAR);
+	renderStates->SetTextureMinFilter(0, D3DTEXF_LINEAR);
+	renderStates->SetTextureMagFilter(0, D3DTEXF_LINEAR);
+
+	renderStates->SetColorVertex(true);
+	renderStates->SetAlphaTestEnable(true);
+	renderStates->SetAlphaBlend(true);
+	renderStates->SetSrcBlend(D3DBLEND_SRCALPHA);
+	renderStates->SetDestBlend(D3DBLEND_INVSRCALPHA);
+
+	renderStates->SetStreamSource(0, buffer, sizeof(GlyphVertex3d));
+	renderStates->SetIndexBuffer(mImpl->mIndexBuffer, 0);
+	renderStates->Commit();
+
+	D3DLOG(device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, vertexCount, 0, glyphCount * 2));
 }
 
-struct ScanWordResult {
-	size_t firstIdx;
-	size_t lastIdx;
-	int idxBeforePadding = 0;
-	int width = 0;
-	int fullWidth = 0; // Ignores padding
-	bool drawEllipsis = false;
-};
-
-static ScanWordResult ScanWord(const char* text,
-                               int firstIdx,
-                               int textLength,
-                               int tabWidth,
-                               bool lastLine,
-                               const TigFont& font,
-                               const TigTextStyle& style,
-                               int remainingSpace) {
-
-	ScanWordResult result;
-	result.firstIdx = firstIdx;
-
-	auto i = firstIdx;
-	for (; i < textLength; i++) {
-		auto curCh = text[i];
-		auto nextCh = '\0';
-		if (i + 1 < textLength) {
-			nextCh = text[i + 1];
-		}
-
-		// Simply skip @t without increasing the width
-		if (curCh == '@' && isdigit(nextCh)) {
-			i++; // Skip the number
-			continue;
-		}
-
-		// @t will advance the width up to the next tabstop
-		if (curCh == '@' && nextCh == 't') {
-			i++; // Skip the t
-			if (tabWidth > 0) {
-				if (style.flags & 0x4000) {
-					result.fullWidth += tabWidth;
-					if (result.fullWidth > remainingSpace) {
-						result.drawEllipsis = true;
-						continue;
-					}
-					// The idx right before the width - padding starts
-					result.idxBeforePadding = i;
-				}
-				result.width += tabWidth;
-			}
-			continue;
-		}
-
-		auto glyphIdx = curCh - FirstFontChar;
-		if (tig_font_is_english) {
-			if ((glyphIdx < -1 || glyphIdx > '_') && curCh != '\n') {
-				logger->warn("Tried to display character {} in text '{}'", glyphIdx, text);
-				glyphIdx = -1;
-			}
-		}
-
-		if (curCh == '\n') {
-			if (lastLine && style.flags & 0x4000) {
-				result.drawEllipsis = true;
-			}
-			break;
-		}
-
-		if (isspace(curCh)) {
-			break;
-		}
-
-		if (style.flags & 0x4000) {
-			result.fullWidth += font.glyphs[glyphIdx].width_line + style.kerning;
-			if (result.fullWidth > remainingSpace) {
-				result.drawEllipsis = true;
-				continue;
-			}
-			result.idxBeforePadding = i;
-		}
-		result.width += font.glyphs[glyphIdx].width_line + style.kerning;
-	}
-
-	result.lastIdx = i;
-	return result;
+void FontRenderer::Rotate2d(float& x, float& y, float rotCos, float rotSin, float centerX, float centerY) {
+	auto newX = centerX + rotCos * (x - centerX) - rotSin * (y - centerY);
+	auto newY = centerY + rotSin * (x - centerX) + rotCos * (y - centerY);
+	x = newX;
+	y = newY;
 }
 
-int FontRenderFix::FontDraw(const char* text, TigRect* extents, TigTextStyle* style) {
-	auto lastLine = false;
-	style->field30 = 0;
-	if (*addresses.stackSize < 1)
-		return 3;
+void FontRenderer::Impl::CreateResources(Graphics& g) {
 
-	auto extentsWidth = extents->width;
-	auto extentsHeight = extents->height;
-	auto textLength = strlen(text);
-	auto font = addresses.loadedFonts[addresses.fontStack[0]];
-	if (!extentsWidth) {
-		TigFontMetrics metrics;
-		metrics.text = text;
-		metrics.width = extents->width;
-		metrics.height = extents->height;
-		tigFont.Measure(*style, metrics);
-
-		extents->width = metrics.width;
-		extents->height = metrics.height;
-		extentsWidth = metrics.width;
-		extentsHeight = metrics.height;
-	}
-	if (style->flags & 0x400) {
-		TigRect rect;
-		rect.x = extents->x - 3;
-		rect.y = extents->y - 3;
-
-		if (extents->width <= 0)
-			rect.width = extentsWidth + 6;
-		else
-			rect.width = extents->width + 6;
-		if (extents->height <= 0)
-			rect.height = extents->height + 6;
-		else
-			rect.height = extents->height + 6;
-		FontDrawBg(&rect, style, text);
+	auto device = g.device();
+	const auto idxBufferLength = sizeof(uint16_t) * 3 * 2 * GlyphFileState::MaxGlyphs;
+	if (D3DLOG(device->CreateIndexBuffer(idxBufferLength,
+		D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY,
+		D3DFMT_INDEX16,
+		D3DPOOL_DEFAULT,
+		&mIndexBuffer,
+		nullptr)) != D3D_OK) {
+		throw TempleException("Unable to create glyph index buffer");
 	}
 
-	if (style->flags & 0x800) {
-		D3DXVECTOR2 topLeft;
-		topLeft.x = extents->x - 1.0f - 3.0f;
-		topLeft.y = extents->y - 1.0f - 3.0f;
-
-		float width;
-		if (extents->width <= 0)
-			width = (float)extentsWidth;
-		else
-			width = (float)extents->width;
-
-		float height;
-		if (extents->height <= 0)
-			height = (float)extentsHeight;
-		else
-			height = (float)extents->height;
-
-		D3DXVECTOR2 bottomRight;
-		bottomRight.x = width + extents->x - 1.0f + 3.0f;
-		bottomRight.y = height + extents->y - 1.0f + 3.0f;
-		RenderHooks::RenderRect(topLeft, bottomRight, 0xFF000000);
+	uint16_t* indices;
+	if (D3DLOG(mIndexBuffer->Lock(0, idxBufferLength, (void**)&indices, D3DLOCK_DISCARD)) != D3D_OK) {
+		throw TempleException("Unable to lock glyph index buffer");
 	}
 
-	if (!extentsWidth) {
-		TigFontDrawArgs args;
-		args.xrlt = extents->x;
-		args.yrlt = extents->y;
-		args.rect = extents;
-		args.firstIdx = 0;
-		args.lastIdx = strlen(text);
-		FontDrawDoWork(style, text, args, font);
-		return 0;
+	auto vertexIdx = 0;
+	for (auto i = 0; i < GlyphFileState::MaxGlyphs; ++i) {
+		// Counter clockwise quad rendering
+		*indices++ = vertexIdx + 0;
+		*indices++ = vertexIdx + 1;
+		*indices++ = vertexIdx + 2;
+		*indices++ = vertexIdx + 0;
+		*indices++ = vertexIdx + 2;
+		*indices++ = vertexIdx + 3;
+		vertexIdx += 4;
 	}
 
-	// Haben nur Platz für eine Zeile???
-	const int ellipsisWidth = 3 * (style->kerning + font.glyphs['.' - FirstFontChar].width_line);
-	auto linePadding = 0;
-	if (extents->y + 2 * font.largestHeight > extents->y + extents->height) {
-		lastLine = true;
-		if (style->flags & 0x4000) {
-			linePadding = - ellipsisWidth;
-		}
+	if (D3DLOG(mIndexBuffer->Unlock()) != D3D_OK) {
+		throw TempleException("Unable to unlock glyph index buffer");
 	}
+}
 
-	if (textLength <= 0)
-		return 0;
-
-	const auto tabWidth = style->field4c - extents->x;
-
-	auto currentY = extents->y;
-	for (size_t startOfWord = 0; startOfWord < textLength; ++startOfWord) {
-		auto arg = ensure_z(text + startOfWord, textLength);
-		int wordsOnLine, lineWidth;
-		std::tie(wordsOnLine, lineWidth) = MeasureCharRun(arg,
-		                                                  *style,
-		                                                  *extents,
-		                                                  extentsWidth,
-		                                                  font,
-		                                                  linePadding,
-		                                                  lastLine);
-
-		auto currentX = 0;
-		for (auto wordIdx = 0; wordIdx < wordsOnLine; ++wordIdx) {
-
-			auto remainingSpace = extentsWidth + linePadding - currentX;
-
-			auto wordInfo(ScanWord(text, 
-				startOfWord, 
-				textLength, 
-				tabWidth, 
-				lastLine, 
-				font, 
-				*style, 
-				remainingSpace));
-
-			auto lastIdx = wordInfo.lastIdx;
-			auto wordWidth = wordInfo.width;
-
-			if (lastLine && style->flags & 0x4000) {
-				if (currentX + wordInfo.fullWidth > extentsWidth) {
-					lastIdx = wordInfo.idxBeforePadding;
-				} else {
-					auto remainingText = ensure_z(text + lastIdx, textLength);
-					if (!HasMoreText(remainingText, tabWidth)) {
-						wordInfo.drawEllipsis = false;
-						wordWidth = wordInfo.fullWidth;
-					}
-				}
-			}
-
-			startOfWord = lastIdx;
-			if (startOfWord < textLength && isspace(text[startOfWord])) {
-				wordWidth += style->tracking;
-			}
-
-			// This means this is not the last word in this line
-			if (wordIdx + 1 < wordsOnLine) {
-				startOfWord++;
-			}
-
-			// Draw the word
-			TigFontDrawArgs drawArgs;
-			drawArgs.rect = extents;
-			drawArgs.xrlt = extents->x + currentX;
-			// This centers the line
-			if (style->flags & 0x10) {
-				drawArgs.xrlt += (extentsWidth - lineWidth) / 2;
-			}
-			drawArgs.yrlt = currentY;
-			drawArgs.firstIdx = wordInfo.firstIdx;
-			drawArgs.lastIdx = lastIdx;
-
-			FontDrawDoWork(style, text, drawArgs, font);
-			currentX += wordWidth;
-
-			// We're on the last line, the word has been truncated, ellipsis needs to be drawn
-			if (lastLine && style->flags & 0x4000 && wordInfo.drawEllipsis) {
-				drawArgs.xrlt = extents->x + currentX;
-				drawArgs.firstIdx = 0;
-				drawArgs.lastIdx = strlen(sEllipsis);
-				auto ellipsis = sEllipsis;
-				FontDrawDoWork(style, ellipsis, drawArgs, font);
-				return 0;
-			}
-		}
-
-		// Advance to next line
-		currentY += font.largestHeight;
-		if (currentY + 2 * font.largestHeight > extents->y + extents->height) {
-			lastLine = true;
-			if (style->flags & 0x4000) {
-				linePadding = ellipsisWidth;
-			}
-		}
-	}
-
-	return 0;
+void FontRenderer::Impl::FreeResources(Graphics&) {
+	mIndexBuffer = nullptr;
 }

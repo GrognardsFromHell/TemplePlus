@@ -539,22 +539,22 @@ int RenderHooks::RenderRect(D3DXVECTOR2 topLeft, D3DXVECTOR2 bottomRight, D3DCOL
 	vertices[3].pos.w = 1.0f;
 	vertices[3].diffuse = color;
 
-	vertices[4] = vertices[0];
-
+	vertices[4].pos.x = topLeft.x;
+	vertices[4].pos.y = topLeft.y;
+	vertices[4].pos.z = 0.5f;
+	vertices[4].pos.z = 1.0f;
+	vertices[4].diffuse = color;
 	D3DLOG(vertexBuffer->Unlock());
 
 	renderStates->SetColorVertex(true);
 	renderStates->SetAlphaBlend(false);
+	renderStates->SetLighting(false);
 	
 	renderStates->SetSrcBlend(D3DBLEND_SRCALPHA);
 	renderStates->SetDestBlend(D3DBLEND_INVSRCALPHA);
 
-	renderStates->SetTextureAlphaOp(0, D3DTOP_MODULATE);
-	renderStates->SetTextureAlphaArg1(0, D3DTA_DIFFUSE);
-	renderStates->SetTextureAlphaArg2(0, D3DTA_DIFFUSE);
-	renderStates->SetTextureColorOp(0, D3DTOP_MODULATE);
-	renderStates->SetTextureColorArg1(0, D3DTA_DIFFUSE);
-	renderStates->SetTextureColorArg2(0, D3DTA_DIFFUSE);
+	renderStates->SetTextureAlphaOp(0, D3DTOP_DISABLE);
+	renderStates->SetTextureColorOp(0, D3DTOP_DISABLE);
 
 	renderStates->SetStreamSource(0, vertexBuffer, sizeof(RenderRectVertex));
 	renderStates->SetFVF(fvf);

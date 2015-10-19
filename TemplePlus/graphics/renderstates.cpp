@@ -72,7 +72,7 @@ public:
 	}
 
 	void SetTexture(int sampler, IDirect3DTexture9* texture) override {
-		mRequestedData.mActiveTexture[sampler] = texture;
+		mGraphics.device()->SetTexture(sampler, texture);
 	}
 
 	void SetTextureColorOp(int sampler, D3DTEXTUREOP op) override {
@@ -92,11 +92,11 @@ public:
 	}
 
 	void SetTextureAlphaArg1(int sampler, DWORD arg) override {
-		mRequestedData.mTextureColorArg1[sampler] = arg;
+		mRequestedData.mTextureAlphaArg1[sampler] = arg;
 	}
 
 	void SetTextureAlphaArg2(int sampler, DWORD arg) override {
-		mRequestedData.mTextureColorArg2[sampler] = arg;
+		mRequestedData.mTextureAlphaArg2[sampler] = arg;
 	}
 
 	void SetTextureCoordIndex(int sampler, int index) override {
@@ -136,12 +136,11 @@ public:
 	}
 
 	void SetStreamSource(int streamIdx, IDirect3DVertexBuffer9* buffer, int stride) override {
-		mRequestedData.mActiveBuffer[streamIdx] = buffer;
-		mRequestedData.mStrides[streamIdx] = stride;
+		mGraphics.device()->SetStreamSource(streamIdx, buffer, 0, stride);
 	}
 
 	void SetIndexBuffer(IDirect3DIndexBuffer9* buffer, int baseIdx) override {
-		mRequestedData.mActiveIndexBuffer = buffer;
+		mGraphics.device()->SetIndices(buffer);
 		mRequestedData.mBaseIdx = baseIdx;
 	}
 
@@ -246,7 +245,7 @@ void LegacyRenderStates::Commit() {
 	}
 	if (mRequestedData.mLighting != mCurrentData.mLighting) {
 		mCurrentData.mLighting = mRequestedData.mLighting;
-		device->SetRenderState(D3DRS_LIGHTING, mRequestedData.mLighting);
+		device->SetRenderState(D3DRS_LIGHTING, mRequestedData.mLighting ? TRUE : FALSE);
 	}
 	if (mRequestedData.mColorVertex != mCurrentData.mColorVertex) {
 		mCurrentData.mColorVertex = mRequestedData.mColorVertex;
@@ -262,7 +261,7 @@ void LegacyRenderStates::Commit() {
 	}
 	if (mRequestedData.mSpecularenable != mCurrentData.mSpecularenable) {
 		mCurrentData.mSpecularenable = mRequestedData.mSpecularenable;
-		device->SetRenderState(D3DRS_SPECULARENABLE, mRequestedData.mSpecularenable);
+		device->SetRenderState(D3DRS_SPECULARENABLE, mRequestedData.mSpecularenable ? TRUE : FALSE);
 	}
 	if (mRequestedData.mZBias != mCurrentData.mZBias) {
 		mCurrentData.mZBias = mRequestedData.mZBias;
@@ -270,10 +269,6 @@ void LegacyRenderStates::Commit() {
 	}
 
 	for (auto sampler = 0; sampler < 4; sampler++) {
-		if (mRequestedData.mActiveTexture[sampler] != mCurrentData.mActiveTexture[sampler]) {
-			mCurrentData.mActiveTexture[sampler] = mRequestedData.mActiveTexture[sampler];
-			device->SetTexture(sampler, mRequestedData.mActiveTexture[sampler]);
-		}
 		auto colorOp = mRequestedData.mTextureColorOp[sampler];
 		if (colorOp != mCurrentData.mTextureColorOp[sampler]) {
 			mCurrentData.mTextureColorOp[sampler] = colorOp;
@@ -347,23 +342,6 @@ void LegacyRenderStates::Commit() {
 		device->SetFVF(fvf);
 	}
 
-	for (auto stream = 0; stream < 4; ++stream) {
-		auto buffer = mRequestedData.mActiveBuffer[stream];
-		auto stride = mRequestedData.mStrides[stream];
-		if (buffer != mCurrentData.mActiveBuffer[stream]
-			|| stride != mCurrentData.mStrides[stream]) {
-			mCurrentData.mActiveBuffer[stream] = buffer;
-			mCurrentData.mStrides[stream] = stride;
-			D3DLOG(device->SetStreamSource(stream, buffer, 0, stride));
-		}
-	}
-
-	auto indexBuffer = mRequestedData.mActiveIndexBuffer;
-	if (indexBuffer != mCurrentData.mActiveIndexBuffer) {
-		mCurrentData.mActiveIndexBuffer = indexBuffer;
-		D3DLOG(device->SetIndices(indexBuffer));
-	}
-
 	// NOTE: We do not support base indices anymore
 
 	if (mCommitCallback) {
@@ -393,7 +371,6 @@ void LegacyRenderStates::WriteCurrentToDevice() {
 	// TODO device->SetRenderState(D3DRS_ZBIAS, new_state->zbias);
 
 	for (auto sampler = 0; sampler < 4; sampler++) {
-		device->SetTexture(sampler, mCurrentData.mActiveTexture[sampler]);
 		device->SetTextureStageState(sampler, D3DTSS_COLOROP, mCurrentData.mTextureColorOp[sampler]);
 		device->SetTextureStageState(sampler, D3DTSS_COLORARG1, mCurrentData.mTextureColorArg1[sampler]);
 		device->SetTextureStageState(sampler, D3DTSS_COLORARG2, mCurrentData.mTextureColorArg2[sampler]);
@@ -410,14 +387,6 @@ void LegacyRenderStates::WriteCurrentToDevice() {
 	}
 
 	device->SetFVF(mCurrentData.mFvf);
-
-	for (auto stream = 0; stream < 4; ++stream) {
-		auto buffer = mCurrentData.mActiveBuffer[stream];
-		auto stride = mCurrentData.mStrides[stream];
-		device->SetStreamSource(stream, buffer, 0, stride);
-	}
-
-	device->SetIndices(mCurrentData.mActiveIndexBuffer);
 
 	if (mCommitCallback) {
 		mCommitCallback();

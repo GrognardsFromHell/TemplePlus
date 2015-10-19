@@ -37,6 +37,8 @@
     <ClCompile Include="fixes\partsyslag.cpp" />
     <ClCompile Include="fixes\sector_cache_size.cpp" />
     <ClCompile Include="float_line.cpp" />
+    <ClCompile Include="fonts\fonts_hooks.cpp" />
+    <ClCompile Include="fonts\fonts_layout.cpp" />
     <ClCompile Include="fonts\fonts_render.cpp" />
     <ClCompile Include="gamesystems\gamemodule.cpp" />
     <ClCompile Include="gamesystems\gamerenderer.cpp" />
@@ -210,6 +212,7 @@
     <ClInclude Include="dice.h" />
     <ClInclude Include="fade.h" />
     <ClInclude Include="float_line.h" />
+    <ClInclude Include="fonts\fonts.h" />
     <ClInclude Include="gamesystems\gamemodule.h" />
     <ClInclude Include="gamesystems\gamerenderer.h" />
     <ClInclude Include="gamesystems\gamesystems.h" />

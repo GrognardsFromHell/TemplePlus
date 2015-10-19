@@ -8,6 +8,7 @@
 #include "renderstates_data.h"
 
 #pragma pack(push, 1)
+#include "graphics.h"
 
 struct TigRenderStates {
 	D3DXMATRIX projMatrix;
@@ -46,6 +47,17 @@ struct TigRenderStates {
 	Direct3DIndexBuffer8Adapter* indexbuffer;
 	int basevertexindex;
 };
+
+struct LegacyLight {
+	D3DLIGHTTYPE type;
+	float colorR;
+	float colorG;
+	float colorB;
+	D3DVECTOR pos;
+	D3DVECTOR dir;
+	float range;
+	float phi;
+};
 #pragma pack(pop)
 
 static struct RenderStatesAddresses : temple::AddressTable {
@@ -72,14 +84,29 @@ public:
 	// Commits the given states
 	static void CommitState(const TigRenderStates* states);
 
+	static void EnableLighting();
+	static void DisableLighting();
+	static int GetMaxActiveLights();
+	static void SetLight(int index, const LegacyLight* light);
+	static void EnableLight(int index);
+	static void DisableLight(int index);
+
+	static int SetZFunc(int type);
 } fix;
 
 void RenderStatesHooks::apply() {
 	replaceFunction(0x101F0A20, CommitState);
+	replaceFunction(0x101D82F0, EnableLighting);
+	replaceFunction(0x101D8300, DisableLighting);
+	replaceFunction(0x101D8350, GetMaxActiveLights);
+	replaceFunction(0x101D8360, EnableLight);
+	replaceFunction(0x101D8390, DisableLight);
+	replaceFunction(0x101D83C0, SetLight);
+	replaceFunction(0x101D60B0, SetZFunc);
 }
 
-void RenderStatesHooks::CommitState(const TigRenderStates*states) {
-	 
+void RenderStatesHooks::CommitState(const TigRenderStates* states) {
+	return;
 	// Make sure we know when lighting was changed
 	renderStates->SetCommitCallback([] {
 		addresses.renderStates->lighting = renderStates->IsLighting() ? TRUE : FALSE;
@@ -98,7 +125,7 @@ void RenderStatesHooks::CommitState(const TigRenderStates*states) {
 	renderStates->SetAlphaBlend(states->alphablendenable == TRUE);
 	renderStates->SetLighting(states->lighting == TRUE);
 	renderStates->SetColorVertex(states->colorvertex == TRUE);
-	
+
 	auto enableRed = !!(states->colorwriteenable & D3DCOLORWRITEENABLE_RED);
 	auto enableGreen = !!(states->colorwriteenable & D3DCOLORWRITEENABLE_GREEN);
 	auto enableBlue = !!(states->colorwriteenable & D3DCOLORWRITEENABLE_BLUE);
@@ -106,13 +133,13 @@ void RenderStatesHooks::CommitState(const TigRenderStates*states) {
 	renderStates->SetColorWriteEnable(enableRed, enableGreen, enableBlue, enableAlpha);
 
 	renderStates->SetZFunc(states->zfunc);
-	renderStates->SetSpecularEnable(states->specularenable == TRUE);	
+	renderStates->SetSpecularEnable(states->specularenable == TRUE);
 	// TODO	int zbias;
 
 	for (int sampler = 0; sampler < 4; ++sampler) {
-		auto texture = states->texture[sampler] 
-			? GetTextureDelegate(states->texture[sampler]) 
-			: nullptr;
+		auto texture = states->texture[sampler]
+			               ? GetTextureDelegate(states->texture[sampler])
+			               : nullptr;
 		renderStates->SetTexture(sampler, texture);
 
 		renderStates->SetTextureColorOp(sampler, states->tex_colorop[sampler]);
@@ -134,18 +161,105 @@ void RenderStatesHooks::CommitState(const TigRenderStates*states) {
 
 	for (int stream = 0; stream < 4; ++stream) {
 		auto buffer = states->vertexbuffers[stream]
-			? GetVertexBufferDelegate(states->vertexbuffers[stream])
-			: nullptr;
+			              ? GetVertexBufferDelegate(states->vertexbuffers[stream])
+			              : nullptr;
 		auto stride = states->vertexstrides[stream];
 		renderStates->SetStreamSource(stream, buffer, stride);
 	}
 
-	auto indexBuffer = states->indexbuffer 
-		? GetIndexBufferDelegate(states->indexbuffer) 
-		: nullptr;
+	auto indexBuffer = states->indexbuffer
+		                   ? GetIndexBufferDelegate(states->indexbuffer)
+		                   : nullptr;
 	renderStates->SetIndexBuffer(indexBuffer, states->basevertexindex);
-	
+
 	renderStates->Commit();
+}
+
+void RenderStatesHooks::EnableLighting() {
+	graphics->EnableLighting();
+
+	addresses.renderStates->lighting = 1;
+	addresses.renderStates->specularenable = 1;
+}
+
+void RenderStatesHooks::DisableLighting() {
+	graphics->DisableLighting();
+
+	addresses.renderStates->lighting = 0;
+	addresses.renderStates->specularenable = 0;
+}
+
+int RenderStatesHooks::GetMaxActiveLights() {
+	return graphics->GetMaxActiveLights();
+}
+
+void RenderStatesHooks::SetLight(int index, const LegacyLight* legacyLight) {
+
+	D3DLIGHT9 light;
+	memset(&light, 0, sizeof(light));
+
+	light.Type = legacyLight->type;
+	light.Diffuse.r = legacyLight->colorR;
+	light.Diffuse.g = legacyLight->colorG;
+	light.Diffuse.b = legacyLight->colorB;
+	light.Specular.r = legacyLight->colorR;
+	light.Specular.g = legacyLight->colorG;
+	light.Specular.b = legacyLight->colorB;
+
+	if (legacyLight->type == D3DLIGHT_DIRECTIONAL) {
+		light.Position.x = legacyLight->dir.x * 1000.0f;
+		light.Position.y = legacyLight->dir.y * 1000.0f;
+		light.Position.z = legacyLight->dir.z * 1000.0f;
+	} else {
+		light.Position = legacyLight->pos;
+	}
+
+	if (legacyLight->dir.x == 0 &&
+		legacyLight->dir.y == 0 &&
+		legacyLight->dir.z == 0) {
+		light.Direction.x = 0;
+		light.Direction.y = 0;
+		light.Direction.z = 1;
+	} else {
+		light.Direction = legacyLight->dir;
+	}
+
+	light.Range = legacyLight->range;
+	light.Attenuation0 = 0;
+	light.Attenuation1 = 0;
+	light.Attenuation2 = 4.0f / (legacyLight->range * legacyLight->range);
+	light.Phi = deg2rad(legacyLight->phi);
+	light.Theta = deg2rad(legacyLight->phi) * 0.60000002f;
+
+	D3DLOG(graphics->device()->SetLight(index, &light));
+	D3DLOG(graphics->device()->LightEnable(index, TRUE));
+}
+
+void RenderStatesHooks::EnableLight(int index) {
+	D3DLOG(graphics->device()->LightEnable(index, TRUE));
+}
+
+void RenderStatesHooks::DisableLight(int index) {
+	D3DLOG(graphics->device()->LightEnable(index, FALSE));
+}
+
+int RenderStatesHooks::SetZFunc(int type) {
+
+	switch (type) {
+	case 1:
+		renderStates->SetZFunc(D3DCMP_LESS);
+		break;
+	case 3:
+	case 4:
+		renderStates->SetZFunc(D3DCMP_GREATEREQUAL);
+		break;
+	default:
+		renderStates->SetZFunc(D3DCMP_LESSEQUAL);
+		break;
+	}
+
+	return 0;
+
 }
 
 // Copy from TP render states into the render states found in ToEE
@@ -202,6 +316,6 @@ void ResetLegacyRenderStates() {
 }
 
 void CopyLightingState() {
-	renderStates->SetLighting(addresses.renderStates->lighting == TRUE);
+	//renderStates->SetLighting(addresses.renderStates->lighting == TRUE);
 	renderStates->SetZEnable(addresses.renderStates->zEnable == TRUE);
 }

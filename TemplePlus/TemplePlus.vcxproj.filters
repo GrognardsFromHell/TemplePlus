@@ -287,6 +287,8 @@
     <ClCompile Include="graphics\render_hooks.cpp" />
     <ClCompile Include="graphics\renderer.cpp" />
     <ClCompile Include="fonts\fonts_render.cpp" />
+    <ClCompile Include="fonts\fonts_layout.cpp" />
+    <ClCompile Include="fonts\fonts_hooks.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -552,6 +554,7 @@
     <ClInclude Include="graphics\renderstates_hooks.h" />
     <ClInclude Include="graphics\renderer.h" />
     <ClInclude Include="graphics\render_hooks.h" />
+    <ClInclude Include="fonts\fonts.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

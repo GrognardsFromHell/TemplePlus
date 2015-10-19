@@ -1,5 +1,6 @@
 
 #pragma once
+#include <atlcomcli.h>
 
 struct RenderStatesData {
 	RenderStatesData();
@@ -102,13 +103,9 @@ struct RenderStatesData {
 		D3DTTFF_DISABLE,
 		D3DTTFF_DISABLE
 	};
-	SamplerState<IDirect3DTexture9*> mActiveTexture{};
 
-	IDirect3DIndexBuffer9* mActiveIndexBuffer = nullptr;
 	int mBaseIdx = 0;
 
 	DWORD mFvf = 0;
-	std::array<int, 4> mStrides{};
-	std::array<IDirect3DVertexBuffer9*, 4> mActiveBuffer{};
 };
 

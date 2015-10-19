@@ -74,6 +74,19 @@ static struct GameRenderFuncs : temple::AddressTable {
 	// Seems to be manipulated by ScratchbufferRelated
 	TigRectList **globalRectList;
 
+	void (*RenderGround)(RenderWorldInfo *info);
+	void (*RenderMapObj)(RenderWorldInfo *info);
+	void (*PerformFogChecks)();
+	void (*RenderClipping)();
+	void (*RenderGMesh)();
+	void (*RenderPfxLighting)();
+	void (*RenderPartSys)();
+	void (*RenderFogOfWar)();
+	void (*RenderOcclusion)(RenderWorldInfo *info);
+	void(*RenderUiRelated)(RenderWorldInfo *info);
+	void(*RenderTextBubbles)(RenderWorldInfo *info);
+	void(*RenderTextFloaters)(RenderWorldInfo *info);
+
 	GameRenderFuncs() {
 		rebase(GetVisibleTileRect, 0x1002A6B0);
 		rebase(SectorListBuild, 0x10084650);
@@ -85,6 +98,20 @@ static struct GameRenderFuncs : temple::AddressTable {
 		rebase(gameDrawEnableCount, 0x102ABED8);
 		rebase(unkFlag2, 0x1030728C);
 		rebase(globalRectList, 0x10306C0C);
+
+		rebase(RenderGround, 0x1002DC70);
+		rebase(PerformFogChecks, 0x100336B0);
+		rebase(RenderClipping, 0x100A4FB0);
+		rebase(RenderMapObj, 0x10028AC0);
+		rebase(RenderGMesh, 0x100A3AE0);
+		rebase(RenderPfxLighting, 0x10087E60);
+		rebase(RenderPartSys, 0x101E7B80);
+		rebase(RenderFogOfWar, 0x10030830);
+		rebase(RenderOcclusion, 0x10024750);
+
+		rebase(RenderUiRelated, 0x1014E190);
+		rebase(RenderTextBubbles, 0x100A3210);
+		rebase(RenderTextFloaters, 0x100A2600);
 	}
 
 } renderFuncs;
@@ -135,11 +162,38 @@ void GameRenderer::Render() {
 		TigRectList *dirtyRectPtr = &dirtyList;
 		renderInfo.rectList = &dirtyRectPtr;
 
-		typedef void(__cdecl *DelRendFn)(const RenderWorldInfo &);
-		auto delRenderFunc = temple::GetRef<0x103072BC, DelRendFn>();
-		delRenderFunc(renderInfo);
+		RenderWorld(&renderInfo);
 
 		renderFuncs.SectorListFree(sectorList);
+	}
+
+}
+
+void GameRenderer::RenderWorld(RenderWorldInfo* info) {
+
+	if (mGraphics.BeginFrame()) {
+		renderFuncs.RenderGround(info);
+		renderFuncs.PerformFogChecks();
+		renderFuncs.RenderClipping();
+
+		graphics->EnableLighting();
+		renderFuncs.RenderMapObj(info);
+		renderFuncs.RenderGMesh();
+		renderFuncs.RenderPfxLighting();
+		graphics->DisableLighting();
+		
+		renderFuncs.RenderPartSys();
+		renderFuncs.RenderFogOfWar();
+
+		graphics->EnableLighting();
+		renderFuncs.RenderOcclusion(info);
+		graphics->DisableLighting();
+
+		renderFuncs.RenderUiRelated(info);
+		renderFuncs.RenderTextBubbles(info);
+		renderFuncs.RenderTextFloaters(info);
+
+		graphics->Present();
 	}
 
 }
