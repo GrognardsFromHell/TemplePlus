@@ -148,7 +148,7 @@ void SpellSystem::SetSpontaneousCastingAltNode(objHndl obj, int nodeIdx, SpellSt
 		radEntry.d20ActionData1 = 0;
 		auto alignmentChoice = objects.getInt32(obj, obj_f_critter_alignment_choice);
 		auto spellLevel = spellData->spellLevel;
-		if (alignmentChoice == 0) // good aligned
+		if (alignmentChoice == 1) // good aligned
 		{
 			if (spellLevel <= 9)
 				radEntry.text = (char*)GetSpellMesline(spontCastSpellLists.spontCastSpellsGoodCleric[spellLevel]);

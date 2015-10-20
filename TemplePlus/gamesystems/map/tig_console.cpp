@@ -21,7 +21,7 @@ static struct TigConsoleAddresses : temple::AddressTable {
 		rebase(consolePos, 0x10D26EC4);
 		rebase(ConsoleKeyUpHandler, 0x101DF880);
 		rebase(ConsoleKeyDownHandler, 0x101DF900);
-		rebase(ConsoleKeyDeleteHandler, 0x101DF985);
+		rebase(ConsoleKeyDeleteHandler, 0x101DF980);
 		
 	}
 } addresses;

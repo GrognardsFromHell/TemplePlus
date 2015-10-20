@@ -4,12 +4,15 @@
 #include "pathfinding.h"
 #include "location.h"
 #include "tio/tio.h"
+#include "objlist.h"
+#include "obj.h"
 
 PathNodeSys pathNodeSys;
 char PathNodeSys::pathNodesLoadDir[260];
 char PathNodeSys::pathNodesSaveDir[260];
 MapPathNodeList * PathNodeSys::pathNodeList;
-
+char PathNodeSys::clearanceData[128][128][3][3];
+ClearanceProfile PathNodeSys::clearanceProfiles[30];
 struct PathNodeSysAddresses : temple::AddressTable
 {
 	
@@ -528,6 +531,27 @@ BOOL PathNodeSys::FlushNodes()
 	return status;
 }
 
+int PathNodeSys::CalcClearanceFromNearbyObjects(objHndl obj, float clearanceReq)
+{
+	memset(clearanceData, 255, sizeof(clearanceData));
+	ObjList objList;
+	LocAndOffsets objLoc = objects.GetLocationFull(obj);
+	objList.ListRadius(objLoc, INCH_PER_TILE * 64, OLC_ALL & ~(OLC_ITEMS | OLC_TRAP ));
+	char objRadiusInSubtiles;
+	if (clearanceReq > INCH_PER_TILE * MAX_OBJ_RADIUS_SUBTILES)
+		objRadiusInSubtiles = 255;
+	else
+		objRadiusInSubtiles = static_cast<unsigned char>(pow( (clearanceReq / (INCH_PER_TILE/3)) ,2)) ;
+	int objListSize = objList.size();
+	for (int i = 0; i < objListSize; i++)
+	{
+		objHndl objIter = objList.get(i);
+		float objIterRadius = objects.GetRadius(objIter);
+		char objIterRadiusInSubtiles = static_cast<unsigned char>(pow((objIterRadius / (INCH_PER_TILE / 3)), 2));
+		LocAndOffsets objIterLoc = objects.GetLocationFull(objIter);
+	}
+	return -1;
+}
 
 BOOL PathNodeSys::WriteNodeToFile(MapPathNodeList* node, TioFile* file)
 {
