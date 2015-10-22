@@ -69,10 +69,11 @@ static struct MainLoop : temple::AddressTable {
 } mainLoop;
 
 GameLoop::GameLoop(MainWindow& mainWindow, GameSystems& gameSystems, Graphics& graphics)
-	: mMainWindow(mainWindow), mGameSystems(gameSystems), mGameRenderer(graphics) {
+	: mMainWindow(mainWindow),
+	  mGameSystems(gameSystems),
+	  mGameRenderer(graphics, mGameSystems) {
 
 	mDiagScreen = std::make_unique<DiagScreen>(graphics);
-
 }
 
 GameLoop::~GameLoop() {
@@ -202,9 +203,9 @@ void GameLoop::RenderVersion() {
 
 	auto version = GetTemplePlusVersion();
 	auto rect = UiRenderer::MeasureTextSize(version, style);
-	rect.x = graphics->GetSceneWidth() - rect.width - 10  - 250;
+	rect.x = graphics->GetSceneWidth() - rect.width - 10 - 250;
 	rect.y = graphics->GetSceneHeight() - rect.height - 10 - 250 ;
-	
+
 	UiRenderer::RenderText(version, rect, style);
 
 	UiRenderer::PopFont();

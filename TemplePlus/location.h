@@ -19,6 +19,10 @@ struct LocationSys : temple::AddressTable
 	float (__cdecl * Distance3d)(LocAndOffsets loc1, LocAndOffsets loc2); // is basically  sqrt(dx^2+dy^2)/ 12 where a tile is sqrt(800)xsqrt(800);  I think it's in Inches because some functions divide this result by 12 (inches->feet)
 	float intToFloat(int32_t x);
 
+	void ToTranslation(int x, int y, int &xOut, int &yOut);
+	void TileToScreen(int x, int y, int &xOut, int &yOut);
+	void GetScrollTranslation(int &xOut, int &yOut);
+
 	// Distance between two objects in feet
 	float (__cdecl *DistanceToObj)(objHndl from, objHndl to);
 
@@ -26,6 +30,9 @@ struct LocationSys : temple::AddressTable
 	float DistanceToLoc(objHndl from, LocAndOffsets loc);
 
 	float InchesToFeet(float inches);
+
+	int64_t *translationX;
+	int64_t *translationY;
 
 	LocationSys();
 };

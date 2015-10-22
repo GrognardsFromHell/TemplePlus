@@ -18,6 +18,8 @@
 #include <movies.h>
 #include <python/python_integration.h>
 
+#include "mapsystems.h"
+
 /*
 Manages graphics engine resources used by
 legacy game systems.
@@ -162,6 +164,8 @@ GameSystems::GameSystems(TigInitializer &tig) : mTig(tig) {
 		}
 	}
 
+	mMapSystems = std::make_unique<MapSystems>(tig);
+
 	mLegacyResources
 		= std::make_unique<LegacyGameSystemResources>(tig.GetGraphics());
 
@@ -169,14 +173,24 @@ GameSystems::GameSystems(TigInitializer &tig) : mTig(tig) {
 
 	*gameSystemInitTable.ironmanFlag = false;
 	*gameSystemInitTable.ironmanSaveGame = 0;
+
+	if (!gameSystems) {
+		gameSystems = this;
+	}
 }
 
 GameSystems::~GameSystems() {
+
 	logger->info("Unloading game systems");
 
 	mLegacyResources.reset();
 
 	gameSystemFuncs.Shutdown();
+
+	if (gameSystems == this) {
+		gameSystems = nullptr;
+	}
+
 }
 
 TigBufferstuffInitializer::TigBufferstuffInitializer() {

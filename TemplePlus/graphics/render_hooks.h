@@ -27,7 +27,7 @@ struct Render2dArgs {
 	TigBuffer* texBuffer; // Unused for shaders
 	int shaderId;
 	TigRect* srcRect;
-	TigRect* destRect;
+	const TigRect* destRect;
 	D3DCOLOR* vertexColors;
 	float vertexZ;
 	float rotation;

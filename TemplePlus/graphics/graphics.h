@@ -5,9 +5,12 @@
 #include <list>
 #include <atlcomcli.h>
 
+#include <gsl/gsl.h>
+
 class Graphics;
 struct locXY;
 class MainWindow;
+class Shaders;
 
 class ResourceListener {
 public:
@@ -113,6 +116,11 @@ public:
 	size_t GetVideoMemory() const {
 		return mVideoMemory;
 	}
+
+	Shaders& GetShaders() {
+		Expects(!!mShaders);
+		return *mShaders;
+	}
 	
 private:
 	friend class ResourceListenerRegistration;
@@ -156,6 +164,7 @@ private:
 
 	std::unique_ptr<class TextureManager> mTextureManager;
 	std::unique_ptr<class MdfMaterialFactory> mMdfMaterialFactory;
+	std::unique_ptr<Shaders> mShaders;
 
 	// Vertex Buffers used in ToEE for UI rendering
 

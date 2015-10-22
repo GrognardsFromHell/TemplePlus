@@ -40,16 +40,22 @@
     <ClCompile Include="fonts\fonts_hooks.cpp" />
     <ClCompile Include="fonts\fonts_layout.cpp" />
     <ClCompile Include="fonts\fonts_render.cpp" />
+    <ClCompile Include="gamesystems\clipping\clippingmesh.cpp" />
+    <ClCompile Include="gamesystems\clipping\clipping_hooks.cpp" />
+    <ClCompile Include="gamesystems\clipping\clipping.cpp" />
     <ClCompile Include="gamesystems\gamemodule.cpp" />
     <ClCompile Include="gamesystems\gamerenderer.cpp" />
     <ClCompile Include="gamesystems\gamesystems.cpp" />
     <ClCompile Include="gamesystems\legacy.cpp" />
+    <ClCompile Include="gamesystems\mapsystems.cpp" />
+    <ClCompile Include="graphics\mapterrain.cpp" />
     <ClCompile Include="graphics\materials.cpp" />
     <ClCompile Include="graphics\materials_hooks.cpp" />
     <ClCompile Include="graphics\mdfrenderer.cpp" />
     <ClCompile Include="graphics\renderer.cpp" />
     <ClCompile Include="graphics\renderstates_hooks.cpp" />
     <ClCompile Include="graphics\render_hooks.cpp" />
+    <ClCompile Include="graphics\shaders.cpp" />
     <ClCompile Include="graphics\textures.cpp" />
     <ClCompile Include="graphics\textures_hooks.cpp" />
     <ClCompile Include="graphics\video_hooks.cpp">
@@ -93,6 +99,14 @@
     <ClCompile Include="graphics\renderstates.cpp" />
     <ClCompile Include="reputations.cpp" />
     <ClCompile Include="secret_door.cpp" />
+    <ClCompile Include="shader\shadercode.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Default</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Default</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Default</CompileAs>
+    </ClCompile>
     <ClCompile Include="skill.cpp" />
     <ClCompile Include="startup\installationdir.cpp" />
     <ClCompile Include="startup\installationdirpicker.cpp" />
@@ -213,12 +227,16 @@
     <ClInclude Include="fade.h" />
     <ClInclude Include="float_line.h" />
     <ClInclude Include="fonts\fonts.h" />
+    <ClInclude Include="gamesystems\clipping\clippingmesh.h" />
+    <ClInclude Include="gamesystems\clipping\clipping.h" />
     <ClInclude Include="gamesystems\gamemodule.h" />
     <ClInclude Include="gamesystems\gamerenderer.h" />
     <ClInclude Include="gamesystems\gamesystems.h" />
     <ClInclude Include="gamesystems\legacy.h" />
     <ClInclude Include="gamesystems\loadingscreen.h" />
+    <ClInclude Include="gamesystems\mapsystems.h" />
     <ClInclude Include="graphics\legacyvideosystem.h" />
+    <ClInclude Include="graphics\mapterrain.h" />
     <ClInclude Include="graphics\materials.h" />
     <ClInclude Include="graphics\materials_hooks.h" />
     <ClInclude Include="graphics\mdfrenderer.h" />
@@ -226,6 +244,7 @@
     <ClInclude Include="graphics\renderstates_data.h" />
     <ClInclude Include="graphics\renderstates_hooks.h" />
     <ClInclude Include="graphics\render_hooks.h" />
+    <ClInclude Include="graphics\shaders.h" />
     <ClInclude Include="graphics\textures.h" />
     <ClInclude Include="graphics\video_hooks.h" />
     <ClInclude Include="history.h" />
@@ -265,6 +284,7 @@
     <ClInclude Include="reputations.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="secret_door.h" />
+    <ClInclude Include="shader\shadercode.h" />
     <ClInclude Include="skill.h" />
     <ClInclude Include="startup\installationdir.h" />
     <ClInclude Include="startup\installationdirpicker.h" />
@@ -362,6 +382,48 @@
     <ProjectReference Include="..\Temple\Temple.vcxproj">
       <Project>{a05549fb-a0d1-48aa-b586-fe333bbb4505}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="shader\clipping_ps.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(Filename).h</HeaderFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">
+      </ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </ObjectFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename)</VariableName>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">%(Filename)</VariableName>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename)</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">$(OutDir)%(Filename).h</HeaderFileOutput>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(Filename).h</HeaderFileOutput>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">3.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">3.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">3.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="shader\clipping_vs.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(Filename).h</HeaderFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </ObjectFileOutput>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">$(OutDir)%(Filename).h</HeaderFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">
+      </ObjectFileOutput>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(Filename).h</HeaderFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </ObjectFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename)</VariableName>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">%(Filename)</VariableName>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename)</VariableName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">3.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">3.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">3.0</ShaderModel>
+    </FxCompile>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3E3B6C43-8C76-4CD5-BCF8-3F2B9C5178FE}</ProjectGuid>

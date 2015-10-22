@@ -163,6 +163,7 @@
     <ClInclude Include="include\gsl\fail_fast.h" />
     <ClInclude Include="include\gsl\gsl.h" />
     <ClInclude Include="include\gsl\string_view.h" />
+    <ClInclude Include="include\infrastructure\binaryreader.h" />
     <ClInclude Include="include\infrastructure\breakpad.h" />
     <ClInclude Include="include\infrastructure\crypto.h" />
     <ClInclude Include="include\platform\dxerr.h" />

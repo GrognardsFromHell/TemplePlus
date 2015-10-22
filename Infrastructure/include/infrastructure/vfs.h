@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 /*
 	Abstractions for accessing files in the virtual file system.
@@ -20,6 +21,11 @@ public:
 		Reads a file fully into a string.
 	*/
 	std::string ReadAsString(const std::string &filename);
+
+	/*
+		Reads a binary file fully into a vector of uint8_t.
+	*/
+	std::vector<uint8_t> ReadAsBinary(const std::string &filename);
 		
 protected:
 	typedef void* FileHandle;

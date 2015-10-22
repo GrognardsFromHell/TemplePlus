@@ -16,6 +16,7 @@
 #include <ui/ui.h>
 
 #include "render_hooks.h"
+#include <util/config.h>
 
 static RenderHooks fix;
 
@@ -127,8 +128,8 @@ int RenderHooks::ShaderRender2d(const Render2dArgs* args) {
 	}
 
 	auto destRect = args->destRect;
-	auto widthFactor = 1.0f / (graphics->GetSceneWidth() / 2);
-	auto heightFactor = 1.0f / (graphics->GetSceneHeight() / 2);
+	auto widthFactor = 1.0f / (config.renderWidth / 2);
+	auto heightFactor = 1.0f / (config.renderHeight / 2);
 
 	vertices[0].x = destRect->x * widthFactor - 1.0f;
 	vertices[0].y = 1.0f - destRect->y * heightFactor;

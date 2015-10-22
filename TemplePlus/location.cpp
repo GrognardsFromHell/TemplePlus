@@ -22,34 +22,34 @@ float LocationSys::distBtwnLocAndOffs(LocAndOffsets loca, LocAndOffsets locb)
 
 void LocationSys::RegularizeLoc(LocAndOffsets* loc)
 {
-	if ( abs(loc->off_x) > 14.142136)
+	if ( abs(loc->off_x) > 14.142136f)
 	{
-		while (loc->off_x >= 14.142136)
+		while (loc->off_x >= 14.142136f)
 		{
-			loc->off_x -= 28.284271;
+			loc->off_x -= 28.284271f;
 			loc->location.locx++;
 		}
 
 
-		while (loc->off_x < -14.142136)
+		while (loc->off_x < -14.142136f)
 		{
-			loc->off_x += 28.284271;
+			loc->off_x += 28.284271f;
 			loc->location.locx--;
 		}
 	}
 
-	if (abs(loc->off_y) > 14.142136)
+	if (abs(loc->off_y) > 14.142136f)
 	{
-		while (loc->off_y >= 14.142136)
+		while (loc->off_y >= 14.142136f)
 		{
-		loc->off_y -= 28.284271;
+		loc->off_y -= 28.284271f;
 		loc->location.locy++;
 		}
 
 
-		while (loc->off_y < -14.142136)
+		while (loc->off_y < -14.142136f)
 		{
-		loc->off_y += 28.284271;
+		loc->off_y += 28.284271f;
 		loc->location.locy--;
 		}
 	}
@@ -63,8 +63,8 @@ void LocationSys::GetOverallOffset(LocAndOffsets loc, float* absX, float* absY)
 
 BOOL LocationSys::ShiftLocationByOneSubtile(LocAndOffsets* loc, char direction, LocAndOffsets* locOut)
 {
-	long double v3; // fst7@3
-	long double v4; // fst7@5
+	float v3;
+	float v4;
 
 	*locOut = *loc;
 	if (direction <= 7)
@@ -72,33 +72,33 @@ BOOL LocationSys::ShiftLocationByOneSubtile(LocAndOffsets* loc, char direction, 
 		switch (direction)
 		{
 		case 0u:
-			v3 = locOut->off_x - 9.4280901;
+			v3 = locOut->off_x - 9.4280901f;
 			goto LABEL_10;
 		case 1u:
-			locOut->off_x = locOut->off_x - 9.4280901;
+			locOut->off_x = locOut->off_x - 9.4280901f;
 			break;
 		case 2u:
-			locOut->off_x = locOut->off_x - 9.4280901;
-			v4 = locOut->off_y + 9.4280901;
+			locOut->off_x = locOut->off_x - 9.4280901f;
+			v4 = locOut->off_y + 9.4280901f;
 			goto LABEL_12;
 		case 4u:
-			locOut->off_x = locOut->off_x + 9.4280901;
+			locOut->off_x = locOut->off_x + 9.4280901f;
 			goto LABEL_7;
 		case 3u:
 			LABEL_7:
-				v4 = locOut->off_y + 9.4280901;
+				v4 = locOut->off_y + 9.4280901f;
 				goto LABEL_12;
 		case 5u:
-			locOut->off_x = locOut->off_x + 9.4280901;
+			locOut->off_x = locOut->off_x + 9.4280901f;
 			break;
 		case 6u:
-			v3 = locOut->off_x + 9.4280901;
+			v3 = locOut->off_x + 9.4280901f;
 		LABEL_10:
 			locOut->off_x = v3;
 			goto LABEL_11;
 		case 7u:
 			LABEL_11:
-				v4 = locOut->off_y - 9.4280901;
+				v4 = locOut->off_y - 9.4280901f;
 			LABEL_12:
 				locOut->off_y = v4;
 				break;
@@ -118,6 +118,21 @@ float LocationSys::intToFloat(int32_t x)
 		fstp result;
 	}
 	return result;
+}
+
+void LocationSys::ToTranslation(int x, int y, int &xOut, int &yOut) {
+	xOut = (int) *translationX + (y - x - 1) * 20i64;
+	yOut = (int) *translationY + (x + y) * 14i64;
+}
+
+void LocationSys::TileToScreen(int x, int y, int& xOut, int& yOut) {
+	xOut = (y - x - 1) * 20;
+	yOut = (x + y) * 14;
+}
+
+void LocationSys::GetScrollTranslation(int& xOut, int& yOut) {
+	xOut = (int) *translationX;
+	yOut = (int) *translationY;
 }
 
 float LocationSys::DistanceToLoc(objHndl from, LocAndOffsets loc) {
@@ -140,6 +155,8 @@ LocationSys::LocationSys()
 	rebase(TOEEdistBtwnLocAndOffs,0x1002A0A0); 
 	rebase(DistanceToObj, 0x100236E0);
 	rebase(Distance3d, 0x1002A0A0);
+	rebase(translationX, 0x10808D00);
+	rebase(translationY, 0x10808D48);
 	
 }
 

@@ -24,6 +24,7 @@ private:
 };
 
 class TigInitializer;
+class MapSystems;
 
 class GameSystems {
 public:
@@ -31,6 +32,11 @@ public:
 	~GameSystems();
 	const GameSystemConf &GetConfig() const {
 		return mConfig;
+	}
+
+	MapSystems& GetMapSystems() {
+		Expects(!!mMapSystems);
+		return *mMapSystems;
 	}
 
 	// Makes a savegame.
@@ -64,6 +70,8 @@ private:
 	GameSystemConf mConfig;
 	TigBufferstuffInitializer mTigBuffer;
 	std::unique_ptr<class LegacyGameSystemResources> mLegacyResources;
+
+	std::unique_ptr<MapSystems> mMapSystems;
 };
 
 extern GameSystems *gameSystems;

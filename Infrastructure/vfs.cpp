@@ -58,3 +58,16 @@ std::string Vfs::ReadAsString(const std::string & filename)
 	Close(fh);
 	return result;
 }
+
+std::vector<uint8_t> Vfs::ReadAsBinary(const std::string& filename) {
+	auto fh = Open(filename.c_str(), "rt");
+	if (!fh) {
+		throw TempleException("Unable to find file {}", filename);
+	}
+	auto fileSize = Length(fh);
+	std::vector<uint8_t> result;
+	result.resize(fileSize);
+	Read(&result[0], fileSize, fh);
+	Close(fh);
+	return result;
+}

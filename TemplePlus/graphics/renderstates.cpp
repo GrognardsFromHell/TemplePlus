@@ -159,10 +159,10 @@ std::unique_ptr<RenderStates> CreateLegacyRenderStates(Graphics& g) {
 	return std::make_unique<LegacyRenderStates>(g);
 }
 
-static struct RenderStatesAddresses : temple::AddressTable {
+static struct RenderStatesDataAddresses : temple::AddressTable {
 	D3DMATRIX* projMatrix3d;
 
-	RenderStatesAddresses() {
+	RenderStatesDataAddresses() {
 		rebase(projMatrix3d, 0x11E75788);
 	}
 } addresses;

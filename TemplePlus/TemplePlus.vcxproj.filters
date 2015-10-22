@@ -289,6 +289,13 @@
     <ClCompile Include="fonts\fonts_render.cpp" />
     <ClCompile Include="fonts\fonts_layout.cpp" />
     <ClCompile Include="fonts\fonts_hooks.cpp" />
+    <ClCompile Include="graphics\mapterrain.cpp" />
+    <ClCompile Include="shader\shadercode.c" />
+    <ClCompile Include="graphics\shaders.cpp" />
+    <ClCompile Include="gamesystems\clipping\clippingmesh.cpp" />
+    <ClCompile Include="gamesystems\clipping\clipping_hooks.cpp" />
+    <ClCompile Include="gamesystems\clipping\clipping.cpp" />
+    <ClCompile Include="gamesystems\mapsystems.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -555,6 +562,12 @@
     <ClInclude Include="graphics\renderer.h" />
     <ClInclude Include="graphics\render_hooks.h" />
     <ClInclude Include="fonts\fonts.h" />
+    <ClInclude Include="graphics\mapterrain.h" />
+    <ClInclude Include="shader\shadercode.h" />
+    <ClInclude Include="graphics\shaders.h" />
+    <ClInclude Include="gamesystems\clipping\clippingmesh.h" />
+    <ClInclude Include="gamesystems\clipping\clipping.h" />
+    <ClInclude Include="gamesystems\mapsystems.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -592,5 +605,9 @@
     <ResourceCompile Include="resource.rc">
       <Filter>resources</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="shader\clipping_vs.hlsl" />
+    <FxCompile Include="shader\clipping_ps.hlsl" />
   </ItemGroup>
 </Project>

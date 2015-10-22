@@ -315,7 +315,7 @@ void MainWindow::UpdateMousePos(int xAbs, int yAbs, int wheelDelta) {
 	xAbs -= rect.left;
 	yAbs -= rect.top;
 
-	// MOve it into the scene rectangle coordinate space
+	// Move it into the scene rectangle coordinate space
 	xAbs = (int)round(xAbs / graphics->sceneScale());
 	yAbs = (int)round(yAbs / graphics->sceneScale());
 

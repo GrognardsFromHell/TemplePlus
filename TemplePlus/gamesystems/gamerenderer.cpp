@@ -1,13 +1,16 @@
-
-
 #include "stdafx.h"
 #include <temple/dll.h>
 #include "tig/tig.h"
 #include "graphics/graphics.h"
 #include "temple_functions.h"
 #include "gamerenderer.h"
+#include "maps.h"
+#include "gamesystems.h"
+#include "mapsystems.h"
+#include "clipping/clipping.h"
 
 #pragma pack(push, 1)
+#include <util/config.h>
 
 struct TileRect {
 	int64_t x1;
@@ -20,7 +23,7 @@ struct SectorList {
 	locationSec sector;
 	locXY someTile; // tile coords
 	locXY someTileInSec; // coords in sector
-	SectorList *next;
+	SectorList* next;
 	// There is 4 bytes padding here but we dont rely on the size here
 };
 
@@ -30,15 +33,15 @@ struct RenderUnknown {
 
 struct TigRectList {
 	TigRect rect;
-	TigRectList *next;
+	TigRectList* next;
 };
 
 struct RenderWorldInfo {
-	const TigRect *viewportSize;
-	const TileRect *tiles;
-	RenderUnknown *unknown;
-	const SectorList *sectors;
-	TigRectList **rectList;
+	const TigRect* viewportSize;
+	const TileRect* tiles;
+	RenderUnknown* unknown;
+	const SectorList* sectors;
+	TigRectList** rectList;
 };
 #pragma pack(pop)
 
@@ -48,44 +51,44 @@ static struct GameRenderFuncs : temple::AddressTable {
 	Given a rectangle in screen coordinates, calculates the rectangle in tile-space that
 	is visible.
 	*/
-	bool(__cdecl *GetVisibleTileRect)(const TigRect &screenRect, TileRect &tiles);
+	bool (__cdecl *GetVisibleTileRect)(const TigRect& screenRect, TileRect& tiles);
 
 	/*
 	These two functions build a linked list of all the sectors encompassed by the given tile
 	rectangle. The list is using shared global memory from a pool and it should be returned
 	to the pool using the second function.
 	*/
-	SectorList* (__cdecl *SectorListBuild)(const TileRect &tiles);
-	void(__cdecl *SectorListFree)(SectorList *sectorList);
+	SectorList* (__cdecl *SectorListBuild)(const TileRect& tiles);
+	void (__cdecl *SectorListFree)(SectorList* sectorList);
 
 	/*
 	Builds an unknown info blob in the second argument.
 	*/
-	bool(__cdecl *BuildUnk)(const TileRect &tiles, RenderUnknown &unk);
+	bool (__cdecl *BuildUnk)(const TileRect& tiles, RenderUnknown& unk);
 
 	/*
 	Seems to be used to propagate the screen rectangle to the scratchbuffer.
 	*/
-	void(__cdecl *ScratchbufferRelated)(const TigRect &rect);
+	void (__cdecl *ScratchbufferRelated)(const TigRect& rect);
 
-	int *gameDrawEnableCount;
-	int *unkFlag2;
+	int* gameDrawEnableCount;
+	int* unkFlag2;
 
 	// Seems to be manipulated by ScratchbufferRelated
-	TigRectList **globalRectList;
+	TigRectList** globalRectList;
 
-	void (*RenderGround)(RenderWorldInfo *info);
-	void (*RenderMapObj)(RenderWorldInfo *info);
+	void (*RenderGround)(RenderWorldInfo* info);
+	void (*RenderMapObj)(RenderWorldInfo* info);
 	void (*PerformFogChecks)();
 	void (*RenderClipping)();
 	void (*RenderGMesh)();
 	void (*RenderPfxLighting)();
 	void (*RenderPartSys)();
 	void (*RenderFogOfWar)();
-	void (*RenderOcclusion)(RenderWorldInfo *info);
-	void(*RenderUiRelated)(RenderWorldInfo *info);
-	void(*RenderTextBubbles)(RenderWorldInfo *info);
-	void(*RenderTextFloaters)(RenderWorldInfo *info);
+	void (*RenderOcclusion)(RenderWorldInfo* info);
+	void (*RenderUiRelated)(RenderWorldInfo* info);
+	void (*RenderTextBubbles)(RenderWorldInfo* info);
+	void (*RenderTextFloaters)(RenderWorldInfo* info);
 
 	GameRenderFuncs() {
 		rebase(GetVisibleTileRect, 0x1002A6B0);
@@ -116,10 +119,8 @@ static struct GameRenderFuncs : temple::AddressTable {
 
 } renderFuncs;
 
-GameRenderer::GameRenderer(Graphics &graphics) : mGraphics(graphics) {
-}
-
-GameRenderer::~GameRenderer() {
+GameRenderer::GameRenderer(Graphics& graphics, GameSystems &gameSystems) 
+	: mGraphics(graphics), mGameSystems(gameSystems) {
 }
 
 void GameRenderer::Render() {
@@ -136,14 +137,13 @@ void GameRenderer::Render() {
 
 	TigRect viewportSize;
 	viewportSize.y = -256;
-	viewportSize.width = mGraphics.GetSceneWidth() + 512;
+	viewportSize.width = config.renderWidth + 512;
 	viewportSize.x = -256;
-	viewportSize.height = mGraphics.GetSceneHeight() + 512;
+	viewportSize.height = config.renderHeight + 512;
 
 	TileRect tiles;
 
-	if (renderFuncs.GetVisibleTileRect(viewportSize, tiles))
-	{
+	if (renderFuncs.GetVisibleTileRect(viewportSize, tiles)) {
 		RenderUnknown unk;
 		renderFuncs.BuildUnk(tiles, unk);
 
@@ -157,9 +157,9 @@ void GameRenderer::Render() {
 
 		// I think this maybe a 2D arcanum leftover when the map could be incrementally drawn based on "dirty rects"
 		TigRectList dirtyList;
-		dirtyList.rect = TigRect(0, 0, mGraphics.GetSceneWidth(), mGraphics.GetSceneHeight());
+		dirtyList.rect = TigRect(0, 0, config.renderWidth, config.renderHeight);
 		dirtyList.next = nullptr;
-		TigRectList *dirtyRectPtr = &dirtyList;
+		TigRectList* dirtyRectPtr = &dirtyList;
 		renderInfo.rectList = &dirtyRectPtr;
 
 		RenderWorld(&renderInfo);
@@ -170,18 +170,23 @@ void GameRenderer::Render() {
 }
 
 void GameRenderer::RenderWorld(RenderWorldInfo* info) {
+	
+	auto& mapSystems(mGameSystems.GetMapSystems());
 
 	if (mGraphics.BeginFrame()) {
-		renderFuncs.RenderGround(info);
+		// renderFuncs.RenderGround(info);
+		// mapSystems.GetTerrain().Render();
+
 		renderFuncs.PerformFogChecks();
-		renderFuncs.RenderClipping();
+		mapSystems.GetClipping().Render();
+		/*renderFuncs.RenderClipping();
 
 		graphics->EnableLighting();
 		renderFuncs.RenderMapObj(info);
 		renderFuncs.RenderGMesh();
 		renderFuncs.RenderPfxLighting();
 		graphics->DisableLighting();
-		
+
 		renderFuncs.RenderPartSys();
 		renderFuncs.RenderFogOfWar();
 
@@ -192,7 +197,7 @@ void GameRenderer::RenderWorld(RenderWorldInfo* info) {
 		renderFuncs.RenderUiRelated(info);
 		renderFuncs.RenderTextBubbles(info);
 		renderFuncs.RenderTextFloaters(info);
-
+		*/
 		graphics->Present();
 	}
 

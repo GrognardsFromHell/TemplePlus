@@ -1,0 +1,185 @@
+#include "stdafx.h"
+#include "mapterrain.h"
+#include "maps.h"
+#include "graphics.h"
+#include <tig/tig.h>
+#include <infrastructure/textures.h>
+#include <infrastructure/mesparser.h>
+#include "render_hooks.h"
+#include <util/config.h>
+
+static struct MapTerrainAddresses : temple::AddressTable {	
+	int *mapArtId;
+	int *daytimeFlag;
+	uint32_t *timeMapEntered;
+
+	float *terrainTintRed;
+	float *terrainTintGreen;
+	float *terrainTintBlue;
+
+	MapTerrainAddresses() {
+		rebase(mapArtId, 0x1080FA58);
+		rebase(daytimeFlag, 0x1080AED8);
+		rebase(timeMapEntered, 0x1080ABB0);
+
+		rebase(terrainTintRed, 0x11E69574);
+		rebase(terrainTintGreen, 0x11E69570);
+		rebase(terrainTintBlue, 0x11E69564);
+	}
+} addresses;
+
+MapTerrain::MapTerrain() {
+
+	auto groundMapping = MesFile::ParseFile("art/ground/ground.mes");
+
+	for (auto& pair : groundMapping) {
+		mTerrainDirs[pair.first] = fmt::format("art/ground/{}/", pair.second);
+	}
+
+}
+
+void MapTerrain::Render() {
+
+	// Special dirty case for the 5000 map which has no terrain
+	if (maps.GetCurrentMapId() == 5000) {
+		return;
+	}
+
+	auto viewportWidth = config.renderWidth;
+	auto viewportHeight = config.renderHeight;
+
+	// The terrain is centered on the center tile of the map
+	// This is 480,480 for all vanilla maps, but theoretically it 
+	// depends on the map size specified in the map's map.prp file
+	auto mapCenter = maps.GetMapCenterTile();
+
+	// The center of the map in pixels relative to the current screen viewport
+	int terrainOriginX, terrainOriginY;
+	locSys.ToTranslation(mapCenter.locx, mapCenter.locy, terrainOriginX, terrainOriginY);
+
+	// Since the origin is still pointing at the map center, shift it left/up by half
+	// the terrains overall size
+	terrainOriginX -= MapWidthPixels / 2;
+	terrainOriginY -= MapHeightPixels / 2;
+
+	auto startX = - terrainOriginX / TileSize;
+	auto startY = - terrainOriginY / TileSize;
+
+	for (auto y = startY; y < MapHeightTiles; ++y) {
+		TigRect destRect;
+		destRect.y = terrainOriginY + y * TileSize;
+		destRect.height = TileSize;
+		for (auto x = startX; x < MapWidthTiles; ++x) {
+			destRect.x = terrainOriginX + x * TileSize;
+			destRect.width = TileSize;
+
+			// Get the correct texture for this tile
+			RenderTile(x, y, destRect);
+
+			// The next column would be out of view
+			if (destRect.x + TileSize >= viewportWidth) {
+				break;
+			}
+		}
+
+		// The next column would be out of view
+		if (destRect.y + TileSize >= viewportHeight) {
+			break;
+		}
+	}
+
+}
+
+void MapTerrain::RenderTile(int x, int y, const TigRect& destRect) {
+	auto mapArtId = *addresses.mapArtId;
+	auto primaryMapArtId = mapArtId;
+
+	auto isNightTime = ((*addresses.daytimeFlag) & 1) == 1;
+
+	// Handling transition
+	auto isTransitioning = ((*addresses.daytimeFlag) & 2) == 2;	
+	uint32_t timeSinceMapEntered = 0;
+	if (isTransitioning) {
+		timeSinceMapEntered = timeGetTime() - *addresses.timeMapEntered;
+		if (timeSinceMapEntered > TransitionTime) {
+			isTransitioning = false;
+			*addresses.daytimeFlag &= 1;
+		}
+
+		// This is flipped while we transition, since we have to draw 
+		// the old map first
+		if (!isNightTime) {
+			primaryMapArtId += NightArtIdOffset;
+		}
+	} else {
+		if (isNightTime) {
+			primaryMapArtId += NightArtIdOffset;
+		}
+	}
+	
+	auto textureName = GetTileTexture(primaryMapArtId, x, y);
+	auto texture = gfx::textureManager->Resolve(textureName);
+
+	Render2dArgs args;
+	args.flags = Render2dArgs::FLAG_VERTEXCOLORS
+		| Render2dArgs::FLAG_VERTEXZ;
+	args.textureId = texture->GetId();
+	args.destRect = &destRect;
+	args.vertexZ = 0;
+
+	TigRect srcRect{ 0, 0, TileSize, TileSize };
+	args.srcRect = &srcRect;
+
+	D3DCOLOR diffuse[4];	
+	diffuse[0] = D3DCOLOR_COLORVALUE(*addresses.terrainTintRed, 
+		*addresses.terrainTintGreen,
+		*addresses.terrainTintBlue,
+		1);
+	diffuse[1] = diffuse[0];
+	diffuse[2] = diffuse[0];
+	diffuse[3] = diffuse[0];
+	args.vertexColors = &diffuse[0];
+
+	RenderHooks::TextureRender2d(&args);
+
+	if (isTransitioning) {
+
+		// Use the real map here
+		if (isNightTime) {
+			primaryMapArtId = mapArtId + NightArtIdOffset;
+		} else {
+			primaryMapArtId = mapArtId;
+		}
+		textureName = GetTileTexture(primaryMapArtId, x, y);
+		texture = gfx::textureManager->Resolve(textureName);
+
+		args.textureId = texture->GetId();
+
+		// Draw the "new" map over the old one with alpha that is based on 
+		// the time since the transition started
+		diffuse[0] = D3DCOLOR_COLORVALUE(*addresses.terrainTintRed,
+			*addresses.terrainTintGreen,
+			*addresses.terrainTintBlue,
+			timeSinceMapEntered / (float) TransitionTime);
+		diffuse[1] = diffuse[0];
+		diffuse[2] = diffuse[0];
+		diffuse[3] = diffuse[0];
+		args.flags |= Render2dArgs::FLAG_VERTEXALPHA;
+
+		RenderHooks::TextureRender2d(&args);
+	}
+
+}
+
+std::string MapTerrain::GetTileTexture(int mapArtId, int x, int y) {
+
+	// Find the directory that the JPEGs are kept in
+	auto it = mTerrainDirs.find(mapArtId);
+
+	if (it == mTerrainDirs.end()) {
+		return std::string();
+	}
+	
+	return fmt::format("{}{:04x}{:04x}.jpg", it->second, y, x);
+
+}

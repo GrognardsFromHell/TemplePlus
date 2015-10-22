@@ -146,7 +146,7 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 		movieFuncs.PlayMovie("movies\\introcinematic.bik", 0, 0, 0);
 	}
 
-	ui.ResizeScreen(0, graphics->GetSceneWidth(), graphics->GetSceneHeight());
+	ui.ResizeScreen(0, config.renderWidth, config.renderHeight);
 
 	// Show the main menu
 	mouseFuncs.ShowCursor();

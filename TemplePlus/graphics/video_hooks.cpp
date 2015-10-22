@@ -103,6 +103,10 @@ void VideoFixes::apply() {
 	MH_CreateHook(temple::GetPointer<0x101DBD80>(), TakeScreenshot, nullptr);
 	MH_CreateHook(temple::GetPointer<0x10002830>(), TakeSaveScreenshots, nullptr);
 
+	// This was the old render function
+	void(*noopFunction)() = []() {};
+	replaceFunction(0x10002650, noopFunction);
+
 	hook_movies();
 
 }
@@ -233,7 +237,6 @@ void VideoFixes::UpdateProjMatrices(const TigMatrices& matrices) {
 	modifiedParams.scale = matrices.scale;
 
 	videoFuncs.updateProjMatrices(&modifiedParams);
-
 }
 
 // Take screenshots for the savegame

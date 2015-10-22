@@ -14,6 +14,7 @@
 #include "textures.h"
 #include "materials.h"
 #include "renderstates_hooks.h"
+#include "shaders.h"
 
 #include "util/config.h"
 #include <location.h>
@@ -88,6 +89,8 @@ Graphics::Graphics(MainWindow& mainWindow) : mMainWindow(mainWindow) {
 
 	mMdfMaterialFactory = std::make_unique<MdfMaterialFactory>();
 	gfx::gMdfMaterialFactory = mMdfMaterialFactory.get();	
+
+	mShaders = std::make_unique<Shaders>(*this);
 }
 
 Graphics::~Graphics() {

@@ -19,6 +19,8 @@ public:
 	void RevealFlag(int mapId, int flagId);
 	bool IsCurrentMapOutdoor();
 
+	locXY GetMapCenterTile();
+
 	/*
 		Retrieves information about a jump point.
 	*/
