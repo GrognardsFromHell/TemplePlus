@@ -71,7 +71,7 @@ Graphics::Graphics(MainWindow& mainWindow) : mMainWindow(mainWindow) {
 	memset(mScreenCorners, 0, sizeof(mScreenCorners));
 	InitializeDirect3d();
 
-	UpdateWindowSize(config.windowWidth, config.windowHeight);
+	UpdateWindowSize(mainWindow.GetWidth(), mainWindow.GetHeight());
 
 	// We should replace/remove this at some point
 	if (graphics) {
@@ -342,7 +342,7 @@ void Graphics::RenderGFade() {
 void Graphics::RefreshSceneRect() {
 
 	// GFade is drawn after the scene buffer, so this is in window space
-	UpdateScreenSize(config.windowWidth, config.windowHeight);
+	UpdateScreenSize(windowWidth(), windowHeight());
 
 	/*
 		Calculates the rectangle within the back buffer that the scene
