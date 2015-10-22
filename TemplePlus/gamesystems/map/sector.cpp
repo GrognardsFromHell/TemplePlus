@@ -83,3 +83,14 @@ TileFlags SectorSystem::GetTileFlags(LocAndOffsets loc)
 	SectorUnlock(secLoc);
 	return flags;
 }
+
+bool SectorSystem::GetTileFlagsArea(TileRect * tileRect, Subtile * out, int * count)
+{
+	TileListEntry tle[25];
+	assert(abs(tileRect->y2 - tileRect->y1) < 200);
+	assert(abs(tileRect->x2 - tileRect->x1) < 200);
+	BuildTileListFromRect(tileRect, tle);
+
+
+	return 1;
+}
