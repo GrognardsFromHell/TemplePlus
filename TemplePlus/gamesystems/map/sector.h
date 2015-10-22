@@ -17,13 +17,19 @@ struct RaycastPointSearchPacket;
 
 struct TileListEntry
 {
-	int64_t Ny; // number of sectors spanned in the Y direction minus one ( -1 ) 
-	 // is zero when only a single sector is invovled
-	int64_t Nx; // same as above but for X
+	union
+	{
+		uint32_t Ny; // number of sectors spanned in the Y direction minus one ( -1 ) 
+					// is zero when only a single sector is invovled
+		int yExtent; // the delta Y for the y-axis sector span; can be between 0 and 64
+	};
+	int pad0;
+	int32_t Nx; // same as above but for 
+	int pad1;
 	locXY tileLocs[4]; 
 	SectorLoc sectorLocs[4]; 
 	int sectorTileCoords[4]; // used as an index of a 2D array in the sectorTiles array
-	int xLimits[4]; // the deltas from the BuildTileList function; is 64 when a whole sector is spanned, otherwise it denotes the internal sector X coord limit
+	int xExtents[4]; // the delta X's for the x-axis sector span from the BuildTileList function; is 64 when a whole sector is spanned, otherwise it denotes the internal sector X coord span
 };
 
 struct SectorLightPartSys {
@@ -245,6 +251,8 @@ public:
 	static BOOL IsPointInterceptedBySegment(float absVx, float absVy, float radiusAdjAmt, RaycastPointSearchPacket * srchPkt);
 
 	TileFlags GetTileFlags(LocAndOffsets loc);
+
+	bool GetTileFlagsArea(TileRect * tileRect, Subtile *out, int * count);
 
 	void apply() override {
 	};
