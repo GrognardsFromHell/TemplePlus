@@ -3,7 +3,6 @@
 #include <platform/windows.h>
 #include <windowsx.h>
 
-#include "util/fixes.h"
 #include "graphics/graphics.h"
 #include "movies.h"
 #include "tig/tig_msg.h"
@@ -126,19 +125,14 @@ void MainWindow::CreateWindowRectAndStyles(RECT& windowRect, DWORD& style, DWORD
 	auto screenWidth = GetSystemMetrics(SM_CXSCREEN);
 	auto screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
+	styleEx = 0;
+
 	if (!config.windowed) {
 		windowRect.left = 0;
 		windowRect.top = 0;
 		windowRect.right = screenWidth;
 		windowRect.bottom = screenHeight;
 		style = WS_POPUP;
-		// This is bad for debugging
-		if (!IsDebuggerPresent()) {
-			styleEx = WS_EX_APPWINDOW | WS_EX_TOPMOST;
-		} else {
-			styleEx = 0;
-		}
-
 		mWidth = screenWidth;
 		mHeight = screenHeight;
 	} else {
@@ -149,7 +143,6 @@ void MainWindow::CreateWindowRectAndStyles(RECT& windowRect, DWORD& style, DWORD
 		windowRect.bottom = windowRect.top + config.windowHeight;
 
 		style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
-		styleEx = 0;
 
 		AdjustWindowRect(&windowRect, style, FALSE);
 		int extraWidth = (windowRect.right - windowRect.left) - config.windowWidth;
@@ -190,6 +183,18 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	TigMsg tigMsg;
 
 	switch (msg) {
+	case WM_SETFOCUS:
+		// Make our window topmost unless a debugger is attached
+		if ((HWND)wparam == mHwnd && !IsDebuggerPresent()) {
+			SetWindowPos(mHwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+		}
+		break;
+	case WM_KILLFOCUS:
+		// Make our window topmost unless a debugger is attached
+		if ((HWND)wparam == mHwnd && !IsDebuggerPresent()) {
+			SetWindowPos(mHwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+		}
+		break;
 	case WM_SETCURSOR:
 		SetCursor(nullptr); // Disables default cursor
 		if (!movieFuncs.MovieIsPlaying) {
