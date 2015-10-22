@@ -91,12 +91,12 @@ void MainWindow::CreateHwnd() {
 	DWORD styleEx = 0;
 
 	CreateWindowRectAndStyles(windowRect, style, styleEx);
-
+	
 	style |= WS_VISIBLE;
 
-	DWORD windowWidth = windowRect.right - windowRect.left;
-	DWORD windowHeight = windowRect.bottom - windowRect.top;
-	logger->info("Creating window with dimensions {}x{}", windowWidth, windowHeight);
+	auto width = windowRect.right - windowRect.left;
+	auto height = windowRect.bottom - windowRect.top;
+	logger->info("Creating window with dimensions {}x{}", width, height);
 	mHwnd = CreateWindowEx(
 		styleEx,
 		WindowClassName,
@@ -104,8 +104,8 @@ void MainWindow::CreateHwnd() {
 		style,
 		windowRect.left,
 		windowRect.top,
-		windowWidth,
-		windowHeight,
+		width,
+		height,
 		0,
 		nullptr,
 		mHinstance,
@@ -138,6 +138,9 @@ void MainWindow::CreateWindowRectAndStyles(RECT& windowRect, DWORD& style, DWORD
 		} else {
 			styleEx = 0;
 		}
+
+		mWidth = screenWidth;
+		mHeight = screenHeight;
 	} else {
 		// Apparently this flag controls whether x,y are preset from the outside
 		windowRect.left = (screenWidth - config.windowWidth) / 2;
@@ -155,6 +158,9 @@ void MainWindow::CreateWindowRectAndStyles(RECT& windowRect, DWORD& style, DWORD
 		windowRect.top = (screenHeight - config.windowHeight) / 2 - (extraHeight / 2);
 		windowRect.right = windowRect.left + config.windowWidth + extraWidth;
 		windowRect.bottom = windowRect.top + config.windowHeight + extraHeight;
+
+		mWidth = config.windowWidth;
+		mHeight = config.windowHeight;
 	}
 
 }

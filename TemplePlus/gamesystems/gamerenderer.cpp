@@ -7,9 +7,9 @@
 #include "temple_functions.h"
 #include "gamerenderer.h"
 
+#include <util/config.h>
+
 #pragma pack(push, 1)
-
-
 struct SectorList {
 	locationSec sector;
 	locXY someTile; // tile coords
@@ -103,9 +103,9 @@ void GameRenderer::Render() {
 
 	TigRect viewportSize;
 	viewportSize.y = -256;
-	viewportSize.width = mGraphics.GetSceneWidth() + 512;
+	viewportSize.width = config.renderWidth + 512;
 	viewportSize.x = -256;
-	viewportSize.height = mGraphics.GetSceneHeight() + 512;
+	viewportSize.height = config.renderHeight + 512;
 
 	TileRect tiles;
 
@@ -124,7 +124,7 @@ void GameRenderer::Render() {
 
 		// I think this maybe a 2D arcanum leftover when the map could be incrementally drawn based on "dirty rects"
 		TigRectList dirtyList;
-		dirtyList.rect = TigRect(0, 0, mGraphics.GetSceneWidth(), mGraphics.GetSceneHeight());
+		dirtyList.rect = TigRect(0, 0, config.renderWidth, config.renderHeight);
 		dirtyList.next = nullptr;
 		TigRectList *dirtyRectPtr = &dirtyList;
 		renderInfo.rectList = &dirtyRectPtr;

@@ -19,12 +19,22 @@ public:
 		return mHinstance;
 	}
 
+	DWORD GetWidth() const {
+		return mWidth;
+	}
+	
+	DWORD GetHeight() const {
+		return mHeight;
+	}
+
 	// Locks the mouse cursor to this window 
 	// if we're in the foreground
 	void LockCursor() const;
 private:
 	HINSTANCE mHinstance;
 	HWND mHwnd;
+	DWORD mWidth;
+	DWORD mHeight;
 
 	void RegisterWndClass();
 	void UnregisterWndClass();
