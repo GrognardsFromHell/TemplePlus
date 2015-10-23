@@ -144,7 +144,7 @@ public:
 		memset(clearanceData, MAX_OBJ_RADIUS_SUBTILES*MAX_OBJ_RADIUS_SUBTILES, sizeof(clearanceData));
 		for (int i = 1; i <= MAX_OBJ_RADIUS_SUBTILES;i++)
 		{
-			clearanceProfiles[i].InitWithRadius(i *INCH_PER_TILE/3);
+			clearanceProfiles[i-1].InitWithRadius(i *INCH_PER_TILE/3);
 		}
 	}
 	
