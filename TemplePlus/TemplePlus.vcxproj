@@ -41,6 +41,7 @@
     <ClCompile Include="gamesystems\gamerenderer.cpp" />
     <ClCompile Include="gamesystems\gamesystems.cpp" />
     <ClCompile Include="gamesystems\legacy.cpp" />
+    <ClCompile Include="gamesystems\map\d20_help.cpp" />
     <ClCompile Include="gamesystems\map\sector.cpp" />
     <ClCompile Include="gamesystems\map\tig_console.cpp" />
     <ClCompile Include="graphics\textures.cpp" />
@@ -210,6 +211,7 @@
     <ClInclude Include="gamesystems\gamesystems.h" />
     <ClInclude Include="gamesystems\legacy.h" />
     <ClInclude Include="gamesystems\loadingscreen.h" />
+    <ClInclude Include="gamesystems\map\d20_help.h" />
     <ClInclude Include="gamesystems\map\sector.h" />
     <ClInclude Include="gamesystems\map\tig_console.h" />
     <ClInclude Include="graphics\legacyvideosystem.h" />

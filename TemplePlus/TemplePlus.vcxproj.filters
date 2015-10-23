@@ -288,6 +288,7 @@
     <ClCompile Include="gamesystems\map\tig_console.cpp">
       <Filter>tig</Filter>
     </ClCompile>
+    <ClCompile Include="gamesystems\map\d20_help.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -554,6 +555,7 @@
     <ClInclude Include="gamesystems\map\tig_console.h">
       <Filter>tig</Filter>
     </ClInclude>
+    <ClInclude Include="gamesystems\map\d20_help.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
