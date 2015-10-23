@@ -1,0 +1,3 @@
+TEST				Title	Text
+TAG_RADIAL_MENU_DISABLE_AOOS	TAG_INGAME			Disable Attacks of Opportunity	Sometimes, you want to hold off on Attacks of Opportunity - for instance if you have an invisible Rogue whose sneak attack you wish to conserve for the right time. This will make your character skip their AoOs.
+TAG_DIVINE_MIGHT	TAG_FEATS_DES			Divine Might	As a ~free action~[TAG_FREE_ACTION], spend one of your ~turn or rebuke undead~[TAG_TURN] attempts to add your ~Charisma~[TAG_CHARISMA] bonus to your weapon damage for 1 full ~round~[TAG_COMBAT].

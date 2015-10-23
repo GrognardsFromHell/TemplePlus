@@ -224,3 +224,5 @@ FakesAssemblies/
 **/*.Server/ModelManifest.xml
 _Pvt_Extensions
 *.nvact
+/tpdata/bakmes
+/tpdata/scr/shit.py
