@@ -200,8 +200,10 @@ void GameLoop::RenderVersion() {
 
 	auto version = GetTemplePlusVersion();
 	auto rect = UiRenderer::MeasureTextSize(version, style);
-	rect.x = graphics->GetSceneWidth() - rect.width - 10;
-	rect.y = graphics->GetSceneHeight() - rect.height - 10;
+	auto scsca = graphics->sceneScale();
+	rect.x = graphics->GetSceneWidth() / scsca - rect.width - 10;
+	rect.y = graphics->GetSceneHeight()  / scsca - rect.height - 10;
+
 	UiRenderer::RenderText(version, rect, style);
 
 	UiRenderer::PopFont();
