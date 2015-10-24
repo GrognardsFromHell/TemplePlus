@@ -771,7 +771,7 @@ int Pathfinding::FindPathSansNodes(PathQuery* pq, Path* pqr)
 		}
 			
 		else
-			result = FindPathForcecdStraightLine(pqr, pq);
+			result = FindPathForcecdStraightLine(pqr, pq); // does nothing - looks like some WIP
 
 		pqr->nodeCount = result;
 		pqr->nodeCount2 = result;
@@ -1247,17 +1247,13 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 	// pathfinding heuristic:
 	// taxicab metric h(dx,dy)=max(dx, dy), wwhere  dx,dy is the subtile difference
 	int referenceTime = 0;
-	Subtile fromSubtile;
-	Subtile toSubtile;
-	Subtile _fromSubtile;
-	Subtile shiftedSubtile;
+	Subtile fromSubtile;	Subtile toSubtile;
+	Subtile _fromSubtile;	Subtile shiftedSubtile;
 
 	fromSubtile = fromSubtile.fromField(locSys.subtileFromLoc(&pqr->from));
 	toSubtile = toSubtile.fromField(locSys.subtileFromLoc(&pqr->to));
 
-	static int npcPathFindRefTime = 0;
-	static int npcPathFindAttemptCount = 0;
-	static int npcPathTimeCumulative = 0;
+	static int npcPathFindRefTime = 0;	static int npcPathFindAttemptCount = 0; 	static int npcPathTimeCumulative = 0;
 
 	if (pq->critter)
 	{
@@ -1283,42 +1279,19 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 		}
 	}
 
-	int fromSubtileX = fromSubtile.x;
-	int fromSubtileY = fromSubtile.y;
-	int toSubtileX = toSubtile.x;
-	int toSubtileY = toSubtile.y;
+	int fromSubtileX = fromSubtile.x;	int fromSubtileY = fromSubtile.y;
+	int toSubtileX = toSubtile.x;	int toSubtileY = toSubtile.y;
 
-	int deltaSubtileX;
-	int deltaSubtileY;
-	int lowerSubtileX;
-	int lowerSubtileY;
-	int halfDeltaShiftedX;
-	int halfDeltaShiftedY;
-
-	if (fromSubtileX <= toSubtileX)
-	{
-		deltaSubtileX = toSubtileX - fromSubtileX;
-		lowerSubtileX = fromSubtileX;
-	}
-	else
-	{
-		deltaSubtileX = fromSubtileX - toSubtileX;
-		lowerSubtileX = toSubtileX;
-	}
-
-	if (fromSubtileY <= toSubtileY)
-	{
-		deltaSubtileY = toSubtileY - fromSubtileY;
-		lowerSubtileY = fromSubtileY;
-	}
-	else
-	{
-		deltaSubtileY = fromSubtileY - toSubtileY;
-		lowerSubtileY = toSubtileY;
-	}
-
+	int deltaSubtileX = abs(toSubtileX - fromSubtileX);	
+	int deltaSubtileY = abs(toSubtileY - fromSubtileY);
 	if (deltaSubtileX > 64 || deltaSubtileY > 64)
 		return 0;
+	
+	int lowerSubtileX = min(fromSubtileX, toSubtileX);	
+	int lowerSubtileY = min(fromSubtileY, toSubtileY);
+
+	int halfDeltaShiftedX = lowerSubtileX + deltaSubtileX / 2 - 64;
+	int halfDeltaShiftedY = lowerSubtileY + deltaSubtileY / 2 - 64;
 
 
 	//TileRect tileR;
@@ -1327,10 +1300,6 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 	//Subtile blockedSubtiles[129*129];
 	//int count;
 	//sectorSys.GetTileFlagsArea(&tileR, blockedSubtiles, &count);
-
-
-	halfDeltaShiftedX = lowerSubtileX + deltaSubtileX / 2 - 64;
-	halfDeltaShiftedY = lowerSubtileY + deltaSubtileY / 2 - 64;
 
 	int idxMinus0 = fromSubtileX - halfDeltaShiftedX + ((fromSubtileY - halfDeltaShiftedY) << 7);
 	int idxTarget = toSubtileX - halfDeltaShiftedX + ((toSubtileY - halfDeltaShiftedY) << 7);

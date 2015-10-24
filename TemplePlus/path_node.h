@@ -95,7 +95,7 @@ public:
 		return "Path Node System";
 	}
 
-	void RecipDebug();
+	void RecipDebug(); // debugging for non-reciprocating neighbour nodes (i.e. finds situations where A->B but not B->A)
 	static char pathNodesLoadDir[260];
 	static char pathNodesSaveDir[260];
 	static ClearanceProfile clearanceProfiles[MAX_OBJ_RADIUS_SUBTILES];
@@ -121,6 +121,7 @@ public:
 	static void RecalculateAllNeighbours();
 	static bool WriteNodeDistToFile(MapPathNodeList* node, TioFile* tioFile);
 	static BOOL FlushNodes();
+
 
 	static int CalcClearanceFromNearbyObjects(objHndl obj, float clearanceReq);
 

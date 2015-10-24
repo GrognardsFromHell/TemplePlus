@@ -44,9 +44,13 @@ MainWindow::~MainWindow() {
 
 void MainWindow::LockCursor() const {
 
-	RECT rect;
-	if (GetForegroundWindow() == mHwnd
-		&& GetWindowRect(mHwnd, &rect)) {
+	
+	bool isForeground = GetForegroundWindow() == mHwnd;
+	RECT rect = graphics->sceneRect();
+//	if (isForeground && GetWindowRect(mHwnd, &rect)) {
+	//	ClipCursor(&rect);
+	
+	if (isForeground) {
 		ClipCursor(&rect);
 	}
 
