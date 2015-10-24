@@ -219,9 +219,11 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		mouseFuncs.SetButtonState(MouseButton::RIGHT, false);
 		break;
 	case WM_MBUTTONDOWN:
+		mouseFuncs.SetMmbReference();
 		mouseFuncs.SetButtonState(MouseButton::MIDDLE, true);
 		break;
 	case WM_MBUTTONUP:
+		mouseFuncs.ResetMmbReference();
 		mouseFuncs.SetButtonState(MouseButton::MIDDLE, false);
 		break;
 	case WM_KEYDOWN:
@@ -336,7 +338,26 @@ void MainWindow::UpdateMousePos(int xAbs, int yAbs, int wheelDelta) {
 
 	// Account for a resized screen
 	if (xAbs < 0 || yAbs < 0 || xAbs >= sw || yAbs >= sh)
+	{
+		if (config.windowed) 
+		{
+			if ( (xAbs > -7 && xAbs < sw + 7 && yAbs > -7 && yAbs < sh + 7))
+			{
+				if (xAbs < 0) xAbs = 0;
+				else if (xAbs > sw) xAbs = sw;
+				if (yAbs < 0) yAbs = 0;
+				else if (yAbs > sh) yAbs = sh;
+				mouseFuncs.MouseOutsideWndSet(false);
+				mouseFuncs.SetPos(xAbs, yAbs, wheelDelta);
+				return;
+			} else
+			{
+				mouseFuncs.MouseOutsideWndSet(true);
+			}
+		}	
 		return;
+	}
+	mouseFuncs.MouseOutsideWndSet(false);
 
 	mouseFuncs.SetPos(xAbs, yAbs, wheelDelta);
 }

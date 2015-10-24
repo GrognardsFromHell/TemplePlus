@@ -190,7 +190,58 @@ void GameLoop::RenderFrame() {
 
 void GameLoop::DoMouseScrolling() {
 
+	if (config.windowed && mouseFuncs.MouseOutsideWndGet())
+		return;
+
 	POINT mousePt = mouseFuncs.GetPos();
+	POINT mmbRef = mouseFuncs.GetMmbReference();
+	int scrollDir = -1;
+
+	if (mmbRef.x != -1 && mmbRef.y != -1)
+	{
+		int dx = mousePt.x - mmbRef.x;
+		int dy = mousePt.y - mmbRef.y;
+		if ( dx*dx+ dy*dy >= 60)
+		{
+			if (abs(dy) > 1.70*abs(dx))  // vertical
+			{
+				if (dy > 0)
+					scrollDir = 4;
+				else
+					scrollDir = 0;
+
+			} else if (abs(dx) > 1.70*abs(dy)) // horizontal
+			{
+				if (dx > 0)
+					scrollDir = 2;
+				else
+					scrollDir = 6;
+			} else  // diagonal
+			{
+				if (dx > 0)
+				{
+					if (dy > 0)
+						scrollDir = 3;
+					else
+						scrollDir = 1;
+				} else
+				{
+					if (dy > 0)
+						scrollDir = 5;
+					else
+						scrollDir = 7;
+				}
+			}
+		}
+	}
+	if (scrollDir != -1)
+	{
+		SetScrollDirection(scrollDir);
+		return;
+	}
+		
+
+
 	RECT rect = graphics->sceneRect();
 
 	mousePt.x = (int)round(mousePt.x * graphics->sceneScale());
@@ -208,7 +259,7 @@ void GameLoop::DoMouseScrolling() {
 		scrollMarginH = 7;
 	}
 
-	int scrollDir = -1;
+
 	if (mousePt.x < rect.left + scrollMarginH) // scroll left
 	{
 		if (mousePt.y < rect.top + scrollMarginV) // scroll upper left
