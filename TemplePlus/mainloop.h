@@ -19,6 +19,7 @@ public:
 private:
 
 	void DoMouseScrolling();
+	void SetScrollDirection(int direction);
 	void RenderVersion();
 	void RenderFrame();
 

@@ -11,6 +11,7 @@
 #include "tig/tig_font.h"
 #include "obj.h"
 #include "diag/diag.h"
+#include <windowsx.h>
 
 static struct MainLoop : temple::AddressTable {
 
@@ -31,7 +32,7 @@ static struct MainLoop : temple::AddressTable {
 	objHndl (__cdecl *GetPCGroupMemberN)(int nIdx);
 
 	void (__cdecl *DoMouseScrolling)();
-
+	void (__cdecl *SetScrollDirection)(int direction);
 
 	void (__cdecl *RenderUi)();
 	void (__cdecl *RenderMouseCursor)();
@@ -58,6 +59,7 @@ static struct MainLoop : temple::AddressTable {
 		rebase(IsMainMenuVisible, 0x101157F0);
 
 		rebase(DoMouseScrolling, 0x10001010);
+		rebase(SetScrollDirection, 0x10006480);
 
 		rebase(gameBuffersCreated, 0x102AB208);
 
@@ -187,8 +189,74 @@ void GameLoop::RenderFrame() {
 }
 
 void GameLoop::DoMouseScrolling() {
-	// TODO: This would be the place to implement better scrolling in windowed mode
-	mainLoop.DoMouseScrolling();
+
+	POINT mousePt = mouseFuncs.GetPos();
+	RECT rect = graphics->sceneRect();
+
+	mousePt.x = (int)round(mousePt.x * graphics->sceneScale());
+	mousePt.y = (int)round(mousePt.y * graphics->sceneScale());
+
+	mousePt.x += rect.left;
+	mousePt.y += rect.top;
+
+
+	int scrollMarginV = 2;
+	int scrollMarginH = 2;
+	if (config.windowed)
+	{
+		scrollMarginV = 7;
+		scrollMarginH = 7;
+	}
+
+	int scrollDir = -1;
+	if (mousePt.x < rect.left + scrollMarginH) // scroll left
+	{
+		if (mousePt.y < rect.top + scrollMarginV) // scroll upper left
+			scrollDir = 7;
+		else if (mousePt.y > rect.bottom - scrollMarginV) // scroll bottom left
+			scrollDir = 5;
+		else
+			scrollDir = 6;
+	} 
+	else if (mousePt.x > rect.right - scrollMarginH) // scroll right
+	{
+		if (mousePt.y < rect.top + scrollMarginV) // scroll top right
+			scrollDir = 1;
+		else if (mousePt.y > rect.bottom - scrollMarginV) // scroll bottom right
+			scrollDir = 3;
+		else
+			scrollDir = 2;
+	}
+	else // scroll vertical only
+	{
+		if (mousePt.y < rect.top + scrollMarginV) // scroll up
+			scrollDir = 0;
+		else if (mousePt.y > rect.bottom - scrollMarginV) // scroll down
+			scrollDir = 4;
+	}
+		
+	
+
+	if (scrollDir != -1)
+		SetScrollDirection(scrollDir);
+	else
+	{
+		int * asdf = (int*) temple::GetPointer(0x1030730C);
+		if (*asdf)
+		{
+			void(__cdecl* sub1009A5F0)() = (void(__cdecl*)())temple::GetPointer(0x1009A5F0);
+			sub1009A5F0();
+			*asdf = 0;
+		}
+	}
+
+		
+	// mainLoop.DoMouseScrolling();
+}
+
+void GameLoop::SetScrollDirection(int direction)
+{
+	mainLoop.SetScrollDirection(direction);
 }
 
 void GameLoop::RenderVersion() {
