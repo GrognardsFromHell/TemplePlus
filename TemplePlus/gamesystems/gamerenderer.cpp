@@ -73,10 +73,7 @@ static struct GameRenderFuncs : temple::AddressTable {
 
 	int* gameDrawEnableCount;
 	int* unkFlag2;
-
-	// Seems to be manipulated by ScratchbufferRelated
-	TigRectList** globalRectList;
-
+	
 	void (*RenderGround)(RenderWorldInfo* info);
 	void (*RenderMapObj)(RenderWorldInfo* info);
 	void (*PerformFogChecks)();
@@ -100,7 +97,6 @@ static struct GameRenderFuncs : temple::AddressTable {
 
 		rebase(gameDrawEnableCount, 0x102ABED8);
 		rebase(unkFlag2, 0x1030728C);
-		rebase(globalRectList, 0x10306C0C);
 
 		rebase(RenderGround, 0x1002DC70);
 		rebase(PerformFogChecks, 0x100336B0);
@@ -175,7 +171,7 @@ void GameRenderer::RenderWorld(RenderWorldInfo* info) {
 
 	if (mGraphics.BeginFrame()) {
 		// renderFuncs.RenderGround(info);
-		// mapSystems.GetTerrain().Render();
+		mapSystems.GetTerrain().Render();
 
 		renderFuncs.PerformFogChecks();
 		mapSystems.GetClipping().Render();
