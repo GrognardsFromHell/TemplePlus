@@ -33,6 +33,10 @@ void RenderHooks::apply() {
 
 int RenderHooks::ShaderRender3d(int vertexCount, D3DXVECTOR4* pos, D3DXVECTOR4* normals, D3DCOLOR* diffuse, D3DXVECTOR2* uv, int primCount, uint16_t* indices, int shaderId) {
 
+	// Remove special material marker in the upper byte and only 
+	// use the actual shader registration id
+	shaderId &= 0x00FFFFFF;
+
 	// Shader has to have been registered earlier
 	auto mdfFactory = static_cast<MdfMaterialFactory*>(gfx::gMdfMaterialFactory);
 	auto material = mdfFactory->GetById(shaderId);

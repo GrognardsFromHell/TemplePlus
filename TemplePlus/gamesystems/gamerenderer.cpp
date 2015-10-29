@@ -176,7 +176,7 @@ void GameRenderer::RenderWorld(RenderWorldInfo* info) {
 		renderFuncs.PerformFogChecks();
 		mapSystems.GetClipping().Render();
 		/*renderFuncs.RenderClipping();
-
+		*/
 		graphics->EnableLighting();
 		renderFuncs.RenderMapObj(info);
 		renderFuncs.RenderGMesh();
@@ -193,7 +193,7 @@ void GameRenderer::RenderWorld(RenderWorldInfo* info) {
 		renderFuncs.RenderUiRelated(info);
 		renderFuncs.RenderTextBubbles(info);
 		renderFuncs.RenderTextFloaters(info);
-		*/
+		
 		graphics->Present();
 	}
 

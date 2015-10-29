@@ -55,6 +55,7 @@ public:
 
 	static int LoadShader(int shaderId, LegacyShader* shaderOut);
 	static int RegisterShader(const char *filename, int *shaderIdOut);
+	static int RegisterReplacementMaterial(int specialMatIdx, const char *filename, int* shaderIdOut);
 
 	static void RenderShader(
 		int vertexCount,
@@ -87,6 +88,7 @@ std::shared_ptr<gfx::Material> MaterialsHooks::sLastMaterial;
 void MaterialsHooks::apply() {
 	replaceFunction(0x101E20C0, LoadShader);
 	replaceFunction(0x101E2160, RegisterShader);
+	replaceFunction(0x101E3410, RegisterReplacementMaterial);
 }
 
 int MaterialsHooks::LoadShader(int shaderId, LegacyShader* shaderOut) {
@@ -123,6 +125,20 @@ int MaterialsHooks::RegisterShader(const char* filename, int* shaderIdOut) {
 
 	auto mdfMaterial(std::static_pointer_cast<MdfRenderMaterial>(material));
 	*shaderIdOut = mdfMaterial->GetId();
+	return 0;
+
+}
+
+int MaterialsHooks::RegisterReplacementMaterial(int specialMatIdx, const char* filename, int* shaderIdOut) {
+
+	int shaderId;
+	if (RegisterShader(filename, &shaderId) != 0) {
+		*shaderIdOut = -1;
+		return 17;
+	}
+	
+	// Transform the shader id back to a special material id
+	*shaderIdOut = 0x80000000 | (specialMatIdx << 26) | shaderId;
 	return 0;
 
 }
