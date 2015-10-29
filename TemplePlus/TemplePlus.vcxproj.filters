@@ -300,9 +300,9 @@
     <ClCompile Include="graphics\imgfile.cpp" />
     <ClCompile Include="graphics\rectangle.cpp" />
     <ClCompile Include="gamesystems\mappreprocessor.cpp" />
-    <ClCompile Include="gamesystems\obj\objregistry.cpp" />
-    <ClCompile Include="gamesystems\obj\objregistry_hooks.cpp" />
-    <ClCompile Include="gamesystems\obj\objid_hooks.cpp" />
+    <ClCompile Include="gamesystems\objects\objid_hooks.cpp" />
+    <ClCompile Include="gamesystems\objects\objregistry.cpp" />
+    <ClCompile Include="gamesystems\objects\objregistry_hooks.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -579,7 +579,7 @@
     <ClInclude Include="graphics\rectangle.h" />
     <ClInclude Include="gamesystems\mappreprocessor.h" />
     <ClInclude Include="gamesystems\gamesystem.h" />
-    <ClInclude Include="gamesystems\obj\objregistry.h" />
+    <ClInclude Include="gamesystems\objects\objregistry.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

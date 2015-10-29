@@ -49,9 +49,9 @@
     <ClCompile Include="gamesystems\legacysystems.cpp" />
     <ClCompile Include="gamesystems\mappreprocessor.cpp" />
     <ClCompile Include="gamesystems\mapsystems.cpp" />
-    <ClCompile Include="gamesystems\obj\objid_hooks.cpp" />
-    <ClCompile Include="gamesystems\obj\objregistry.cpp" />
-    <ClCompile Include="gamesystems\obj\objregistry_hooks.cpp" />
+    <ClCompile Include="gamesystems\objects\objid_hooks.cpp" />
+    <ClCompile Include="gamesystems\objects\objregistry.cpp" />
+    <ClCompile Include="gamesystems\objects\objregistry_hooks.cpp" />
     <ClCompile Include="graphics\imgfile.cpp" />
     <ClCompile Include="graphics\loadingscreen.cpp" />
     <ClCompile Include="graphics\mapterrain.cpp" />
@@ -243,7 +243,7 @@
     <ClInclude Include="gamesystems\legacysystems.h" />
     <ClInclude Include="gamesystems\mappreprocessor.h" />
     <ClInclude Include="gamesystems\mapsystems.h" />
-    <ClInclude Include="gamesystems\obj\objregistry.h" />
+    <ClInclude Include="gamesystems\objects\objregistry.h" />
     <ClInclude Include="graphics\imgfile.h" />
     <ClInclude Include="graphics\legacyvideosystem.h" />
     <ClInclude Include="graphics\loadingscreen.h" />
