@@ -269,7 +269,6 @@ namespace temple {
 		MH_CreateHook(GetAddress(0x1025444F), &malloc, nullptr);
 		MH_CreateHook(GetAddress(0x10254209), &free, nullptr);
 		MH_CreateHook(GetAddress(0x10256432), static_cast<void*(*)(size_t)>(&::operator new), nullptr);
-
 	}
 
 	void DllImpl::ReplaceDebugFunctions() const {

@@ -76,6 +76,10 @@ public:
 		}
 
 	}
+	
+	gfx::LegacyShaderId GetId() const override {
+		return -1; // Not used here
+	}
 
 	std::string GetName() const override {
 		return mName;

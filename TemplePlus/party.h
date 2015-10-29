@@ -5,7 +5,7 @@
 
 #define PARTY_SIZE_MAX 8 // PCs and NPCs
 
-struct PartySystem : temple::AddressTable
+struct LegacyPartySystem : temple::AddressTable
 {
 	void SetMaxPCs(char maxPCs);
 	
@@ -34,7 +34,7 @@ struct PartySystem : temple::AddressTable
 		return GroupListGetMemberN(0);
 	}
 
-	PartySystem()
+	LegacyPartySystem()
 	{
 		rebase(GroupArrayMemberN, 0x100DF760);
 		rebase(GroupNPCFollowersGetMemberN, 0x1002B190);
@@ -56,7 +56,7 @@ struct PartySystem : temple::AddressTable
 	}
 };
 
-extern PartySystem party;
+extern LegacyPartySystem party;
 
 uint32_t AddToPcGroup(objHndl objHnd);
 uint32_t AddToNpcGroup(objHndl objHnd);

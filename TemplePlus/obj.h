@@ -12,7 +12,7 @@
 //forward declarations
 struct LocationSys;
 struct Pathfinding;
-struct SkillSystem;
+struct LegacySkillSystem;
 struct FloatLineSystem;
 
 // Stored in obj_f_script_idx array
@@ -26,7 +26,7 @@ struct ObjectScript {
 struct FieldDataMax { uint32_t data[8]; }; // for wrapping "objSetField" calls that get input by value; this is the largest data size that I know of
 
 struct Objects : temple::AddressTable {
-	friend struct CritterSystem;
+	friend struct LegacyCritterSystem;
 
 	// Verifies if the handle is valid
 	bool VerifyHandle(objHndl handle) {
@@ -189,9 +189,7 @@ struct Objects : temple::AddressTable {
 		return _HasSpellEffects(obj);
 	}
 
-	void Destroy(objHndl obj) {
-		_Destroy(obj);
-	}
+	void Destroy(objHndl obj);
 
 #pragma region Common
 	ObjectId GetId(objHndl handle);
@@ -206,6 +204,7 @@ struct Objects : temple::AddressTable {
 	bool IsPlayerControlled(objHndl obj);
 	uint32_t GetProtoNum(objHndl obj);
 	std::string GetDisplayName(objHndl obj, objHndl observer);
+	bool IsStatic(objHndl handle);
 
 	uint32_t StatLevelGet(objHndl obj, Stat stat);
 	int StatLevelGetBase(objHndl obj, Stat stat);
@@ -226,18 +225,19 @@ struct Objects : temple::AddressTable {
 	void PropCollectionRemoveField(objHndl objHnd, obj_f objF);
 	int GetModFromStatLevel(int statLevel); // returns modifier from stat level e.g. Dex 15 -> +2
 	
+	int GetTempId(objHndl handle);
 #pragma endregion
 
 #pragma region Subsystems
 	DispatcherSystem dispatch;
 
-	D20System d20;
+	LegacyD20System d20;
 
-	SkillSystem * skill;
+	LegacySkillSystem * skill;
 
-	FeatSystem feats;
+	LegacyFeatSystem feats;
 
-	DescriptionSystem description;
+	LegacyDescriptionSystem description;
 
 	FactionSystem factions;
 
@@ -319,11 +319,3 @@ private:
 extern Objects objects;
 
 // const auto TestSizeOfDispatcher = sizeof(Dispatcher); // 0x138 as it should be
-
-uint32_t _obj_get_int(objHndl obj, obj_f fieldIdx);
-void _obj_set_int(objHndl obj, obj_f fieldIdx, uint32_t dataIn);
-uint32_t _abilityScoreLevelGet(objHndl obj, Stat abScore, DispIO * dispIO);
-void _setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, FieldDataMax data);
-int32_t _getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx);
-uint64_t __cdecl _getInt64(objHndl obj, obj_f fieldIdx);
-objHndl __cdecl _getObjHnd(objHndl obj, obj_f fieldIdx);

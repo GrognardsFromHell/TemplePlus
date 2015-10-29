@@ -5,14 +5,14 @@
 #include <temple/dll.h>
 #include "description.h"
 
-DescriptionSystem description;
+LegacyDescriptionSystem description;
 
-const char* DescriptionSystem::getDisplayName(objHndl obj)
+const char* LegacyDescriptionSystem::getDisplayName(objHndl obj)
 {
 	return _getDisplayName(obj, obj);
 }
 
-const char* DescriptionSystem::getDisplayName(objHndl obj, objHndl observer)
+const char* LegacyDescriptionSystem::getDisplayName(objHndl obj, objHndl observer)
 {
 	return _getDisplayName(obj, observer);
 }

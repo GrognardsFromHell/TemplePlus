@@ -80,9 +80,20 @@ void MapClipping::LoadMeshes(const std::string& directory) {
 
 	for (auto i = 0; i < count; ++i) {
 		auto meshFilename(reader.ReadFixedString(260));
-		mImpl->mClippingMeshes.emplace_back(
-			std::make_unique<ClippingMesh>(mImpl->mGraphics, meshFilename)
-		);
+		if (meshFilename.empty()) {
+			logger->error("Failed to read filename of clipping mesh #{} from {}", i, filename);
+			mImpl->mClippingMeshes.push_back({});
+			continue;
+		}
+
+		try {
+			mImpl->mClippingMeshes.emplace_back(
+				std::make_unique<ClippingMesh>(mImpl->mGraphics, meshFilename)
+			);
+		} catch (TempleException &e) {
+			logger->error("Failed to load clipping mesh {}: {}", filename, e.what());
+			mImpl->mClippingMeshes.push_back({});
+		}
 	}
 
 }
@@ -106,7 +117,7 @@ void MapClipping::LoadObject(BinaryReader& reader) {
 	auto meshIdx = reader.Read<size_t>();
 
 	auto mesh = mImpl->mClippingMeshes[meshIdx].get();
-
+	
 	ClippingMeshObj obj;
 	obj.posX = reader.Read<float>();
 	obj.posY = reader.Read<float>();
@@ -115,6 +126,12 @@ void MapClipping::LoadObject(BinaryReader& reader) {
 	obj.scaleY = reader.Read<float>();
 	obj.scaleZ = reader.Read<float>();
 	obj.rotation = reader.Read<float>();
+
+	if (!mesh) {
+		logger->warn("Discarding clipping instance for invalid mesh #{}", meshIdx);
+		return;
+	}
+
 	mesh->AddInstance(obj);
 }
 
@@ -137,6 +154,10 @@ void MapClipping::Render() {
 	renderStates->SetFVF(0);
 
 	for (auto& mesh : mImpl->mClippingMeshes) {
+				
+		if (!mesh) {
+			continue; // This is a mesh that failed to load
+		}
 	
 		renderStates->SetStreamSource(0, mesh->GetVertexBuffer(), sizeof(D3DVECTOR));
 		renderStates->SetIndexBuffer(mesh->GetIndexBuffer(), 0);

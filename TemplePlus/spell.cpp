@@ -90,29 +90,29 @@ public:
 
 #pragma region Spell System Implementation
 
-SpellSystem spellSys;
+LegacySpellSystem spellSys;
 
-uint32_t SpellSystem::spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry)
+uint32_t LegacySpellSystem::spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry)
 {
 	return spellEntryRegistry.copy(spellEnum, spellEntry);
 }
 
-uint32_t SpellSystem::ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPktBody)
+uint32_t LegacySpellSystem::ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPktBody)
 {
 	return addresses.ConfigSpellTargetting(pickerArgs, spellPktBody);
 }
 
-uint32_t SpellSystem::GetMaxSpellSlotLevel(objHndl objHnd, Stat classCode, int casterLvl)
+uint32_t LegacySpellSystem::GetMaxSpellSlotLevel(objHndl objHnd, Stat classCode, int casterLvl)
 {
 	return addresses.GetMaxSpellSlotLevel(objHnd, classCode, casterLvl);
 }
 
-int SpellSystem::ParseSpellSpecString(SpellStoreData* spell, char* spellString)
+int LegacySpellSystem::ParseSpellSpecString(SpellStoreData* spell, char* spellString)
 {
 	return addresses.ParseSpellSpecString(spell, spellString);
 }
 
-const char* SpellSystem::GetSpellMesline(uint32_t lineNumber)
+const char* LegacySpellSystem::GetSpellMesline(uint32_t lineNumber)
 {
 	MesLine mesLine;
 	mesLine.key = lineNumber;
@@ -120,7 +120,7 @@ const char* SpellSystem::GetSpellMesline(uint32_t lineNumber)
 	return mesLine.value;
 }
 
-const char* SpellSystem::GetSpellEnumTAG(uint32_t spellEnum)
+const char* LegacySpellSystem::GetSpellEnumTAG(uint32_t spellEnum)
 {
 	MesLine mesLine;
 	mesLine.key = spellEnum + 20000;
@@ -128,7 +128,7 @@ const char* SpellSystem::GetSpellEnumTAG(uint32_t spellEnum)
 	return mesLine.value;
 }
 
-void SpellSystem::SetSpontaneousCastingAltNode(objHndl obj, int nodeIdx, SpellStoreData* spellData)
+void LegacySpellSystem::SetSpontaneousCastingAltNode(objHndl obj, int nodeIdx, SpellStoreData* spellData)
 {
 	auto spellClassCode = spellData->classCode;
 	if (isDomainSpell(spellClassCode))
@@ -202,7 +202,7 @@ void SpellSystem::SetSpontaneousCastingAltNode(objHndl obj, int nodeIdx, SpellSt
 	}
 }
 
-uint32_t SpellSystem::getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t classLvl, uint32_t slotLvl, uint32_t unknown1)
+uint32_t LegacySpellSystem::getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t classLvl, uint32_t slotLvl, uint32_t unknown1)
 {
 	__asm{
 		// ecx - classLvl
@@ -224,12 +224,12 @@ uint32_t SpellSystem::getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t c
 	}
 }
 
-uint32_t SpellSystem::getWizSchool(objHndl objHnd)
+uint32_t LegacySpellSystem::getWizSchool(objHndl objHnd)
 {
 	return ( objects.getInt32(objHnd, obj_f_critter_school_specialization) & 0x000000FF );
 }
 
-uint32_t SpellSystem::getStatModBonusSpellCount(objHndl objHnd, uint32_t classCode, uint32_t slotLvl)
+uint32_t LegacySpellSystem::getStatModBonusSpellCount(objHndl objHnd, uint32_t classCode, uint32_t slotLvl)
 {
 	uint32_t objHndLSB = (uint32_t)objHnd;
 	uint32_t objHndMSB = (uint32_t)(objHnd >> 32);
@@ -260,28 +260,28 @@ uint32_t SpellSystem::getStatModBonusSpellCount(objHndl objHnd, uint32_t classCo
 	return result;
 }
 
-void SpellSystem::spellPacketBodyReset(SpellPacketBody* spellPktBody)
+void LegacySpellSystem::spellPacketBodyReset(SpellPacketBody* spellPktBody)
 {
 	_spellPacketBodyReset(spellPktBody);
 }
 
-void SpellSystem::spellPacketSetCasterLevel(SpellPacketBody* spellPktBody)
+void LegacySpellSystem::spellPacketSetCasterLevel(SpellPacketBody* spellPktBody)
 {
 	_spellPacketSetCasterLevel(spellPktBody);
 }
 
-CondStruct* SpellSystem::GetCondFromSpellIdx(int id) {
+CondStruct* LegacySpellSystem::GetCondFromSpellIdx(int id) {
 	if (id >= 3 && id < 254) {
 		return addresses.spellConds[id - 1].condition;
 	}
 	return nullptr;
 }
 
-void SpellSystem::ForgetMemorized(objHndl handle) {
+void LegacySpellSystem::ForgetMemorized(objHndl handle) {
 	objects.ClearArrayField(handle, obj_f_critter_spells_memorized_idx);
 }
 
-uint32_t SpellSystem::getSpellEnum(const char* spellName)
+uint32_t LegacySpellSystem::getSpellEnum(const char* spellName)
 {
 	MesLine mesLine;
 	for (auto i = 0; i < SPELL_ENUM_MAX; i++)
@@ -294,7 +294,7 @@ uint32_t SpellSystem::getSpellEnum(const char* spellName)
 	return 0;
 }
 
-uint32_t SpellSystem::GetSpellEnumFromSpellId(uint32_t spellId)
+uint32_t LegacySpellSystem::GetSpellEnumFromSpellId(uint32_t spellId)
 {
 	SpellPacket spellPacket;
 	if (spellsCastRegistry.copy(spellId, &spellPacket))
@@ -305,7 +305,7 @@ uint32_t SpellSystem::GetSpellEnumFromSpellId(uint32_t spellId)
 	return 0;
 }
 
-uint32_t SpellSystem::GetSpellPacketBody(uint32_t spellId, SpellPacketBody* spellPktBodyOut)
+uint32_t LegacySpellSystem::GetSpellPacketBody(uint32_t spellId, SpellPacketBody* spellPktBodyOut)
 {
 	SpellPacket spellPkt;
 	if (spellsCastRegistry.copy(spellId, &spellPkt))
@@ -316,11 +316,11 @@ uint32_t SpellSystem::GetSpellPacketBody(uint32_t spellId, SpellPacketBody* spel
 	return 0;
 }
 
-void SpellSystem::UpdateSpellPacket(const SpellPacketBody& spellPktBody) {
+void LegacySpellSystem::UpdateSpellPacket(const SpellPacketBody& spellPktBody) {
 	addresses.UpdateSpellPacket(spellPktBody);
 }
 
-uint32_t SpellSystem::spellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count)
+uint32_t LegacySpellSystem::spellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count)
 {
 	uint32_t countLocal;
 	uint32_t * n = count;
@@ -342,7 +342,7 @@ uint32_t SpellSystem::spellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum,
 	return *n > 0;
 }
 
-uint32_t SpellSystem::spellCanCast(objHndl objHnd, uint32_t spellEnum, uint32_t spellClassCode, uint32_t spellLevel)
+uint32_t LegacySpellSystem::spellCanCast(objHndl objHnd, uint32_t spellEnum, uint32_t spellClassCode, uint32_t spellLevel)
 {
 	uint32_t count = 0;
 	uint32_t classCodes[10000];
@@ -400,7 +400,7 @@ uint32_t SpellSystem::spellCanCast(objHndl objHnd, uint32_t spellEnum, uint32_t 
 	return 0;
 }
 
-uint32_t SpellSystem::spellMemorizedQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count)
+uint32_t LegacySpellSystem::spellMemorizedQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count)
 {
 	uint32_t countLocal;
 	uint32_t * n = count;
@@ -422,7 +422,7 @@ uint32_t SpellSystem::spellMemorizedQueryGetData(objHndl objHnd, uint32_t spellE
 	return *n > 0;
 }
 
-bool SpellSystem::numSpellsKnownTooHigh(objHndl objHnd)
+bool LegacySpellSystem::numSpellsKnownTooHigh(objHndl objHnd)
 {
 	if (objects.getArrayFieldNumItems(objHnd, obj_f_critter_spells_known_idx) > MAX_SPELLS_KNOWN)
 	{
@@ -432,7 +432,7 @@ bool SpellSystem::numSpellsKnownTooHigh(objHndl objHnd)
 	return 0;
 }
 
-bool SpellSystem::numSpellsMemorizedTooHigh(objHndl objHnd)
+bool LegacySpellSystem::numSpellsMemorizedTooHigh(objHndl objHnd)
 {
 	if (objects.getArrayFieldNumItems(objHnd, obj_f_critter_spells_memorized_idx) > MAX_SPELLS_KNOWN)
 	{
@@ -442,18 +442,18 @@ bool SpellSystem::numSpellsMemorizedTooHigh(objHndl objHnd)
 	return 0;
 }
 
-bool SpellSystem::isDomainSpell(uint32_t spellClassCode)
+bool LegacySpellSystem::isDomainSpell(uint32_t spellClassCode)
 {
 	if (spellClassCode & 0x80) return 0;
 	return 1;
 }
 
-Stat SpellSystem::GetCastingClass(uint32_t spellClassCode)
+Stat LegacySpellSystem::GetCastingClass(uint32_t spellClassCode)
 {
 	return (Stat)(spellClassCode & 0x7F);
 }
 
-uint32_t SpellSystem::pickerArgsFromSpellEntry(SpellEntry* spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLvl)
+uint32_t LegacySpellSystem::pickerArgsFromSpellEntry(SpellEntry* spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLvl)
 {
 	return _pickerArgsFromSpellEntry(spellEntry, pickArgs, objHnd, casterLvl);
 }

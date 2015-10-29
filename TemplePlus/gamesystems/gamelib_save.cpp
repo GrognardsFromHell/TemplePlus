@@ -9,7 +9,7 @@
 #include "critter.h"
 #include "python/python_integration_obj.h"
 #include <tio/tio.h>
-#include "gamesystems/legacy.h"
+#include "gamesystem.h"
 
 struct GsiData {
 	string filename;
@@ -188,16 +188,13 @@ bool GameSystems::SaveGame(const string& filename, const string& displayName) {
 	uint64_t startOfData;
 	tio_fgetpos(file, &startOfData);
 
-	for (int i = 0; i < gameSystemCount; ++i) {
+	int i = 0;
+	for (auto system : mSaveGameAwareSystems) {
 		addresses.UiMmRelated2(i + 1);
-		auto &system = legacyGameSystems->systems[i];
+		i++;
 
-		if (!system.save) {
-			continue;
-		}
-
-		if (!system.save(file)) {
-			logger->error("Save function for game system {} failed.", system.name);
+		if (!system->SaveGame(file)) {
+			logger->error("Save function for game system {} failed.", system->GetName());
 			tio_fclose(file);
 			tio_remove(fullPath);
 			return false;

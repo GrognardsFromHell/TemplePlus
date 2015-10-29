@@ -125,7 +125,7 @@ void MapTerrain::RenderTile(int x, int y, const TigRect& destRect) {
 		| Render2dArgs::FLAG_VERTEXZ;
 	args.textureId = texture->GetId();
 	args.destRect = &destRect;
-	args.vertexZ = 0;
+	args.vertexZ = 1;
 
 	TigRect srcRect{ 0, 0, TileSize, TileSize };
 	args.srcRect = &srcRect;

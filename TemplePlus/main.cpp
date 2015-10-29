@@ -8,7 +8,6 @@
 #include "startup/installationdir.h"
 #include "startup/installationdirs.h"
 #include "startup/installationdirpicker.h"
-#include "tig/tig.h"
 
 void InitLogging();
 
@@ -24,6 +23,7 @@ name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int showCmd) {
+
 	// We reserve space for temple.dll as early as possible to avoid rebasing of temple.dll
 	auto& dll = temple::Dll::GetInstance();
 	dll.ReserveMemoryRange();
@@ -55,6 +55,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			                  L"This will most likely lead to crashes.", moduleName);
 			MessageBox(nullptr, msg.c_str(), L"Module Conflict", MB_OK | MB_ICONWARNING);
 		}
+
+		dll.SetDebugOutputCallback([](const std::string &msg) {
+			logger->info("{}", msg);
+		});
 
 		TempleFixes::apply();
 

@@ -4,7 +4,7 @@
 #include "tig/tig_mes.h"
 
 
-struct DescriptionSystem : temple::AddressTable
+struct LegacyDescriptionSystem : temple::AddressTable
 {
 	MesHandle * descriptionMes;
 	uint32_t * customNamesCount;
@@ -17,7 +17,7 @@ struct DescriptionSystem : temple::AddressTable
 	void(__cdecl *CustomNameChange)(char * pNewNameSource, uint32_t descrIdx);
 	const char *(__cdecl *_getDisplayName)(uint64_t obj, uint64_t observer);
 
-	DescriptionSystem()
+	LegacyDescriptionSystem()
 	{
 		rebase(customNamesCount, 0x10AB757C);
 		rebase(customNamesArray, 0x10AB7578);
@@ -30,4 +30,4 @@ struct DescriptionSystem : temple::AddressTable
 	};
 };
 
-extern DescriptionSystem description;
+extern LegacyDescriptionSystem description;

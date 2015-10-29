@@ -17,7 +17,7 @@ struct TimeEventSystemSpec {
 };
 
 static struct TimeEventSystems {
-	TimeEventSystem systems[38];
+	TimeEventType systems[38];
 } *systemsTable;
 
 TimeEvents timeEvents;

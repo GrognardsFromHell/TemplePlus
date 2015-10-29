@@ -8,7 +8,7 @@ class MesFile {
 public:
 
 	// This has to be ordered
-	typedef std::map<int, std::string> Content;
+	using Content = std::map<int, std::string>;
 
 	static Content ParseFile(const std::string &filename);
 

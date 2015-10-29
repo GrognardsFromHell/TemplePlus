@@ -5,4 +5,4 @@
 
 GameSystemInitTable gameSystemInitTable;
 GameSystemFuncs gameSystemFuncs;
-temple::GlobalStruct<LegacyGameSystems, 0x102AB368> legacyGameSystems;
+// temple::GlobalStruct<LegacyGameSystems, 0x102AB368> legacyGameSystems;

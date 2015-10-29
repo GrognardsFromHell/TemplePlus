@@ -21,6 +21,10 @@ namespace gfx {
 			static std::string name("<invalid>");
 			return name;
 		}
+		
+		LegacyShaderId GetId() const override {
+			return -1;
+		}
 
 		TextureRef GetPrimaryTexture() override {
 			return TextureRef(); // Null texture

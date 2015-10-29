@@ -24,7 +24,7 @@ using TigShutdownFunction = void();
 static constexpr uint32_t TigStartupNoop = 0x10262530;
 static constexpr uint32_t TigShutdownNoop = 0x100027F0;
 
-class LegacyTigSystem : public TigSystem {
+class LegacyTigSystem {
 public:
 
 	LegacyTigSystem(const TigConfig* config,
@@ -64,9 +64,6 @@ static struct TigInternal : temple::AddressTable {
 } tigInternal;
 
 static TigConfig createTigConfig(HINSTANCE hInstance);
-
-TigSystem::~TigSystem() {
-}
 
 TigInitializer::TigInitializer(HINSTANCE hInstance)
 	: mConfig(createTigConfig(hInstance)) {

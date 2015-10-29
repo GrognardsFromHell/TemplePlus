@@ -7,10 +7,9 @@
 
 struct LocationSys;
 struct PathQuery;
-struct CombatSystem;
-struct D20System;
+struct LegacyCombatSystem;
+struct LegacyD20System;
 struct ActnSeq;
-struct DescriptionSystem;
 struct TurnBasedStatus;
 struct Pathfinding;
 struct CmbtIntrpts;
@@ -20,8 +19,8 @@ struct Objects;
 struct ActionSequenceSystem : temple::AddressTable
 {
 	
-	D20System * d20;
-	CombatSystem * combat;
+	LegacyD20System * d20;
+	LegacyCombatSystem * combat;
 	Pathfinding * pathfinding;
 	LocationSys * location;
 	TurnBasedSys * turnbased;

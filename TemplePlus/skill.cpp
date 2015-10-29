@@ -13,9 +13,9 @@ class SkillSystemReplacements : public TempleFix
 } skillSysReplacements;
 
 #pragma region SkillSystem Implementation
-SkillSystem skillSys;
+LegacySkillSystem skillSys;
 
-SkillSystem::SkillSystem()
+LegacySkillSystem::LegacySkillSystem()
 {
 	bonus = &bonusSys;
 	macRebase(skillPropsTable, 102CBA30)

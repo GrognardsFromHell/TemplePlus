@@ -6,7 +6,7 @@ struct RenderStatesData {
 	RenderStatesData();
 	D3DMATRIX mProjMatrix;
 	D3DMATRIX mViewMatrix;
-	bool mZEnable = true;
+	bool mZEnable = false;
 	D3DFILLMODE mFillMode = D3DFILL_SOLID;
 	bool mZWriteenable = false;
 	bool mAlphatestenable = false;

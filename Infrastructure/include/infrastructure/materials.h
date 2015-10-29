@@ -8,6 +8,8 @@
 
 namespace gfx {
 
+	using LegacyShaderId = int;
+
 	/**
 	Ownership of materials is generally shared between all those places that the
 	materials are referenced by.
@@ -18,6 +20,8 @@ namespace gfx {
 	public:
 		virtual ~Material() {
 		}
+		
+		virtual LegacyShaderId GetId() const = 0;
 
 		virtual std::string GetName() const = 0;
 

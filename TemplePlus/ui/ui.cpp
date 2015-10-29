@@ -135,7 +135,7 @@ public:
 		WidgetType1 * parent = (WidgetType1*)WidgetGet(parentId);
 		if (parent && parent->type == 1)
 		{
-			for (int i = 0; i < parent->childrenCount;i++)
+			for (size_t i = 0; i < parent->childrenCount;i++)
 			{
 				if (parent->children[i] == widId)
 				{
@@ -171,6 +171,16 @@ public:
 		return 1;
 	}
 
+	static void Reset() {
+
+		for (auto i = 0; i < UiSystemsCount; ++i) {
+			auto resetFunc = uiFuncs.systems[i].reset;
+			if (resetFunc) {
+				resetFunc();
+			}
+		}
+	}
+
 	const char* name() override
 	{
 		return "UiSys" "Function Replacements";
@@ -180,6 +190,7 @@ public:
 		replaceFunction(0x101F94D0, WidgetRemoveRegardParent);
 		replaceFunction(0x101F90E0, WidgetGet);
 		replaceFunction(0x101F9570, GetButton);
+		replaceFunction(0x10115270, Reset);
 	}
 } uiReplacement;
 

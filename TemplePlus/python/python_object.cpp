@@ -28,6 +28,7 @@
 #include <action_sequence.h>
 #include <ui/ui_picker.h>
 #include <util/config.h>
+#include <infrastructure/mesparser.h>
 
 struct PyObjHandle {
 	PyObject_HEAD;
@@ -40,7 +41,7 @@ static PyObjHandle* GetSelf(PyObject* obj) {
 
 	auto self = (PyObjHandle*) obj;
 
-	if (!self->handle && self->id.subtype) {
+	if (!self->handle && self->id) {
 		self->handle = objects.GetHandle(self->id);
 	}
 	if (!objects.VerifyHandle(self->handle)) {
@@ -89,8 +90,8 @@ static int PyObjHandle_Cmp(PyObject* objA, PyObject* objB) {
 static PyObject* PyObjHandle_getstate(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	// Mobile GUID
-	if (self->id.subtype == 2) {
-		const auto& guid = self->id.guid;
+	if (self->id.IsPermanent()) {
+		const auto& guid = self->id.body.guid;
 		return Py_BuildValue("i(iii(iiiiiiii))",
 		                     2,
 		                     guid.Data1,
@@ -131,11 +132,11 @@ static PyObject* PyObjHandle_setstate(PyObject* obj, PyObject* args) {
 	PyObject* guidContent = 0;
 	if (!PyArg_ParseTuple(pickledData, "i|O:PyObjHandle.__setstate__", &self->id.subtype, &guidContent)) {
 		self->handle = 0;
-		self->id.subtype = 0;
+		self->id.subtype = ObjectIdKind::Null;
 		return 0;
 	}
 
-	if (self->id.subtype == 0) {
+	if (!self->id) {
 		// This is the null obj handle
 		self->handle = 0;
 		Py_RETURN_NONE;
@@ -144,12 +145,13 @@ static PyObject* PyObjHandle_setstate(PyObject* obj, PyObject* args) {
 	if (guidContent == 0) {
 		PyErr_SetString(PyExc_ValueError, "GUID type other than 0 is given, but GUID is missing.");
 		self->handle = 0;
-		self->id.subtype = 0;
+		self->id.subtype = ObjectIdKind::Null;
 		return 0;
 	}
 
 	// Try parsing the GUID tuple
-	auto& guid = self->id.guid;
+	self->id.subtype = ObjectIdKind::Permanent;
+	auto& guid = self->id.body.guid;
 	if (!PyArg_ParseTuple(guidContent, "iii(iiiiiiii)", &guid.Data1,
 	                      &guid.Data2,
 	                      &guid.Data3,
@@ -162,7 +164,7 @@ static PyObject* PyObjHandle_setstate(PyObject* obj, PyObject* args) {
 	                      &guid.Data4[6],
 	                      &guid.Data4[7])) {
 		self->handle = 0;
-		self->id.subtype = 0;
+		self->id.subtype = ObjectIdKind::Null;
 		return 0;
 	}
 
@@ -194,7 +196,7 @@ static PyObject* PyObjHandle_BeginDialog(PyObject* obj, PyObject* args) {
 	if ( critterSys.IsPC(self->handle))
 	{	
 		TimeEvent evt;
-		evt.system = TimeEventSystem::PythonDialog;
+		evt.system = TimeEventType::PythonDialog;
 		evt.params[0].handle = self->handle;
 		evt.params[1].handle = target;
 		evt.params[2].int32 = line;
@@ -1034,18 +1036,22 @@ static PyObject* PyObjHandle_FloatMesFileLine(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "si|i:", &mesFilename, &mesLineKey, &colorId)) {
 		return 0;
 	}
-	MesFile mesFile(mesFilename);
-	if (!mesFile.valid()) {
+
+	MesFile::Content content;
+	try {
+		content = MesFile::ParseFile(mesFilename);
+	} catch (TempleException&) {
 		PyErr_Format(PyExc_IOError, "Could not open mes file %s", mesFilename);
 		return 0;
 	}
-	const char* mesLine;
-	if (!mesFile.GetLine(mesLineKey, mesLine)) {
+
+	auto it = content.find(mesLineKey);
+	if (it == content.end()) {
 		PyErr_Format(PyExc_IOError, "Could not find line %d in mes file %s.", mesLineKey, mesFilename);
 		return 0;
 	}
 
-	floatSys.floatMesLine(self->handle, 1, colorId, mesLine);
+	floatSys.floatMesLine(self->handle, 1, colorId, it->second.c_str());
 	Py_RETURN_NONE;
 }
 
@@ -2326,18 +2332,18 @@ static int PyObjHandle_Init(PyObject* obj, PyObject* args, PyObject* kwargs) {
 	}
 
 	if (!self->handle) {
-		self->id.subtype = 0;
+		self->id.subtype = ObjectIdKind::Null;
 	} else {
 		// Get GUID from handle
 		self->id = objects.GetId(self->handle);
 
 		// The obj handle is invalid
-		if (!self->id.subtype) {
+		if (!self->id) {
 			auto msg = format("The object handle {} is invalid.", self->handle);
 			PyErr_SetString(PyExc_ValueError, msg.c_str());
 			// Reset the handle to the null handle
 			self->handle = 0;
-			self->id.subtype = 0;
+			self->id.subtype = ObjectIdKind::Null;
 			return -1;
 		}
 	}
@@ -2348,7 +2354,7 @@ static int PyObjHandle_Init(PyObject* obj, PyObject* args, PyObject* kwargs) {
 static PyObject* PyObjHandle_New(PyTypeObject*, PyObject*, PyObject*) {
 	auto self = PyObject_New(PyObjHandle, &PyObjHandleType);
 	self->handle = 0;
-	self->id.subtype = 0;
+	self->id.subtype = ObjectIdKind::Null;
 	return (PyObject*)self;
 }
 #pragma endregion

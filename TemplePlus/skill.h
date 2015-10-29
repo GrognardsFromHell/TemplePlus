@@ -8,16 +8,16 @@ struct BonusSystem;
 struct SkillProps;
 enum SkillEnum : uint32_t;
 
-struct SkillSystem : temple::AddressTable
+struct LegacySkillSystem : temple::AddressTable
 {
 	SkillProps * skillPropsTable;
 
 	BonusSystem * bonus;
 
-	SkillSystem();
+	LegacySkillSystem();
 };
 
-extern SkillSystem skillSys;
+extern LegacySkillSystem skillSys;
 
 
 struct SkillProps

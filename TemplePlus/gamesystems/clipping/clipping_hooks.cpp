@@ -34,7 +34,13 @@ int ClippingHooks::ClippingLoad(const char* mapDir, const char* mapSaveDir) {
 }
 
 int ClippingHooks::ClippingClose() {
-	gameSystems->GetMapSystems().GetClipping().Unload();
+	if (!gameSystems) {
+		return 1; // Game systems are shutting down already
+	}
+	auto& mapSystems = gameSystems->GetMapSystems();
+	if (mapSystems.IsClippingLoaded()) {
+		mapSystems.GetClipping().Unload();
+	}
 	return 1;
 }
 

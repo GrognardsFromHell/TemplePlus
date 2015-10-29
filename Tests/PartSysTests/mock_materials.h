@@ -13,6 +13,7 @@ public:
 class MaterialMock : public gfx::Material {
 public:
 	MOCK_METHOD0(IsValid, bool());
+	MOCK_CONST_METHOD0(GetId, gfx::LegacyShaderId());
 	MOCK_CONST_METHOD0(GetName, std::string());
 	MOCK_METHOD0(GetPrimaryTexture, gfx::TextureRef());
 };

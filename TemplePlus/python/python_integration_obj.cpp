@@ -7,6 +7,7 @@
 #include <dialog.h>
 #include <critter.h>
 #include <util/fixes.h>
+#include <infrastructure/mesparser.h>
 
 PythonObjIntegration pythonObjIntegration;
 
@@ -81,8 +82,9 @@ static void PcStart(objHndl pc) {
 			return;
 	}
 
-	MesFile mesFile("rules\\start_equipment.mes");
-	if (mesFile.valid()) {
+	try {
+		auto content(MesFile::ParseFile("rules\\start_equipment.mes"));
+		
 		auto key = classIndex;
 
 		// Modify for "small" races
@@ -90,10 +92,10 @@ static void PcStart(objHndl pc) {
 		if (race == race_halfling || race == race_gnome) {
 			key += 100;
 		}
-		
-		const char *line;
-		if (mesFile.GetLine(key, line)) {
-			auto protoIds = split(line, ' ', true);
+
+		auto it = content.find(key);
+		if (it != content.end()) {
+			auto protoIds = split(it->second, ' ', true);
 			for (auto protoIdStr : protoIds) {
 				auto protoId = stoi(protoIdStr);
 				critterSys.GiveItem(pc, protoId);
@@ -106,6 +108,8 @@ static void PcStart(objHndl pc) {
 		auto result = pythonObjIntegration.ExecuteScript("pc_start", "pc_start", args);
 		Py_DECREF(result);
 		Py_DECREF(args);
+	} catch (TempleException& e) {
+		logger->warn("Unable to load starting equipment: {}", e.what());
 	}
 
 	inventory.WieldBestAll(pc, 0);

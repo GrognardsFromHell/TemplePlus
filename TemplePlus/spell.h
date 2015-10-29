@@ -101,7 +101,7 @@ const uint32_t TestSizeOfSpellPacket = sizeof(SpellPacket); // should be 0xAF0  
 
 struct CondStruct;
 
-struct SpellSystem : temple::AddressTable
+struct LegacySpellSystem : temple::AddressTable
 {
 	IdxTable<SpellPacket> * spellCastIdxTable;
 	
@@ -145,7 +145,7 @@ struct SpellSystem : temple::AddressTable
 	int (__cdecl *SpellKnownAdd)(objHndl ObjHnd, int nSpellIdx, int nSpellClassCode, int nSpellCasterLevel, int nSpellStoreData, int nMetamagicData);
 	int (__cdecl *SpellMemorizedAdd)(objHndl ObjHnd, int nSpellIdx, int nSpellClassCode, int nSpellCasterLevel, int nSpellStoreData, int nMetamagicData);
 	void ForgetMemorized(objHndl handle);
-	SpellSystem()
+	LegacySpellSystem()
 	{
 		rebase(spellCastIdxTable, 0x10AAF218);
 		rebase(spellEnumMesHandle,0x10AAF210); 
@@ -174,7 +174,7 @@ private:
 	//uint32_t(__cdecl * Spell_Range_Sthg_From_SpellEntry_sub_100772A0)(SpellEntry *spellEntry, );
 };
 
-extern SpellSystem spellSys;
+extern LegacySpellSystem spellSys;
 
 extern IdxTableWrapper<SpellEntry> spellEntryRegistry;
 extern IdxTableWrapper<SpellPacket> spellsCastRegistry;

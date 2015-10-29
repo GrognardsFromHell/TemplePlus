@@ -15,7 +15,7 @@ struct AiTactic;
 struct D20Actn;
 uint32_t Combat_GetMesfileIdx_CombatMes();
 
-struct CombatSystem : temple::AddressTable {
+struct LegacyCombatSystem : temple::AddressTable {
 	MesHandle* combatMesfileIdx;
 	MesHandle combatMesNew;
 	GroupArray * groupInitiativeList;
@@ -50,7 +50,7 @@ struct CombatSystem : temple::AddressTable {
 	void (__cdecl *SetInitiative)(objHndl critter, int initiative);
 	int (__cdecl*_GetClosestEnemy)(objHndl obj, LocAndOffsets* locOut, objHndl * objOut, float* distOut, int flags);
 
-	CombatSystem() {
+	LegacyCombatSystem() {
 		rebase(combatModeActive, 0x10AA8418);
 		rebase(combatMesfileIdx, 0x10AA8408);
 		rebase(groupInitiativeList, 0x10BCAC78);
@@ -75,7 +75,7 @@ private:
 
 };
 
-extern CombatSystem combatSys;
+extern LegacyCombatSystem combatSys;
 
 
 uint32_t _isCombatActive();

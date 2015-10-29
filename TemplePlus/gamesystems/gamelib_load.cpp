@@ -2,7 +2,7 @@
 #include "util/fixes.h"
 #include "tio/tio_utils.h"
 #include "ui/ui.h"
-#include "temple_functions.h"
+#include "gamesystem.h"
 #include "python/python_integration_obj.h"
 
 #include "gamesystems/gamesystems.h"
@@ -142,18 +142,13 @@ bool GameSystems::LoadGame(const string& filename) {
 	saveFile.file = file;
 	saveFile.saveVersion = saveVersion;
 	
-	for (int i = 0; i < gameSystemCount; ++i) {
-		auto &sys = legacyGameSystems->systems[i];
+	int i = 0;
+	for (auto system : mSaveGameAwareSystems) {
 
-		if (!sys.load) {
-			addresses.UiMmRelated2(i + 1);
-			continue;
-		}
-
-		logger->debug("Loading savegame for system {} ({})", sys.name, i);
+		logger->debug("Loading savegame for system {} ({})", system->GetName(), i);
 		
-		if (!sys.load(&saveFile)) {
-			logger->error("Loading save game data for game system {} ({}) failed",  i, sys.name);
+		if (!system->LoadGame(&saveFile)) {
+			logger->error("Loading save game data for game system {} ({}) failed", system->GetName(), i);
 			tio_fclose(file);
 			return false;
 		}
@@ -179,6 +174,7 @@ bool GameSystems::LoadGame(const string& filename) {
 		}
 
 		addresses.UiMmRelated2(i + 1);
+		++i;
 	}
 	tio_fclose(file);
 

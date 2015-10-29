@@ -82,7 +82,7 @@ public:
 } d20Replacements;
 
 
-static struct D20SystemAddresses : temple::AddressTable {
+static struct LegacyD20SystemAddresses : temple::AddressTable {
 
 	void(__cdecl*  GlobD20ActnSetTarget)(objHndl objHnd, LocAndOffsets * loc);
 	uint32_t(__cdecl* LocationCheckStdAttack)(D20Actn*, TurnBasedStatus*, LocAndOffsets*);
@@ -92,7 +92,7 @@ static struct D20SystemAddresses : temple::AddressTable {
 	uint32_t(__cdecl*AiCheckStdAttack)(D20Actn*, TurnBasedStatus*);
 	uint32_t(__cdecl*ActionCheckStdAttack)(D20Actn*, TurnBasedStatus*);
 	int(__cdecl*TargetWithinReachOfLoc)(objHndl obj, objHndl target, LocAndOffsets* loc);
-	D20SystemAddresses()
+	LegacyD20SystemAddresses()
 	{
 		rebase(GlobD20ActnSetTarget,0x10092E50); 
 		rebase(LocationCheckStdAttack, 0x1008C910);
@@ -106,12 +106,12 @@ static struct D20SystemAddresses : temple::AddressTable {
 	}
 } addresses;
 
-#pragma region D20System Implementation
-D20System d20Sys;
+#pragma region LegacyD20System Implementation
+LegacyD20System d20Sys;
 D20ActionDef d20ActionDefsNew[1000];
 TabFileStatus _d20actionTabFile;
 
-void D20System::NewD20ActionsInit()
+void LegacyD20System::NewD20ActionsInit()
 {
 	tabSys.tabFileStatusInit(d20ActionsTabFile, d20actionTabLineParser);
 	if (tabSys.tabFileStatusBasicFormatter(d20ActionsTabFile, "tprules//d20actions.tab"))
@@ -191,7 +191,7 @@ void D20System::NewD20ActionsInit()
 	//d20Defs[d20Type].actionCost = _ActionCostNull; // just for testing - REMOVE!!!
 }
 
-D20System::D20System()
+LegacyD20System::LegacyD20System()
 {
 	pathfinding = &pathfindingSys;
 	actSeq = &actSeqSys;
@@ -218,7 +218,7 @@ D20System::D20System()
 
 #pragma region D20 Signal and D20 Query
 
-uint32_t D20System::d20Query(objHndl objHnd, D20DispatcherKey dispKey)
+uint32_t LegacyD20System::d20Query(objHndl objHnd, D20DispatcherKey dispKey)
 {
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (dispatcher == nullptr || (int32_t)dispatcher == -1){ return 0; }
@@ -231,7 +231,7 @@ uint32_t D20System::d20Query(objHndl objHnd, D20DispatcherKey dispKey)
 	return dispIO.return_val;
 }
 
-uint32_t D20System::d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2)
+uint32_t LegacyD20System::d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2)
 {
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (dispatcher == nullptr || (int32_t)dispatcher == -1){ return 0; }
@@ -244,7 +244,7 @@ uint32_t D20System::d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, u
 	return dispIO.return_val;
 }
 
-uint32_t D20System::d20QueryHasSpellCond(objHndl obj, int spellEnum)
+uint32_t LegacyD20System::d20QueryHasSpellCond(objHndl obj, int spellEnum)
 {
 	auto cond = spellSys.GetCondFromSpellIdx(spellEnum);
 	if (!cond)
@@ -252,7 +252,7 @@ uint32_t D20System::d20QueryHasSpellCond(objHndl obj, int spellEnum)
 	return d20QueryWithData(obj, DK_QUE_Critter_Has_Condition, (uint32_t) cond, 0);
 }
 
-void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2)
+void LegacyD20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2)
 {
 	DispIoD20Signal dispIO;
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
@@ -267,7 +267,7 @@ void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t 
 	dispatch.DispatcherProcessor(dispatcher, dispTypeD20Signal, dispKey, &dispIO);
 }
 
-void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, D20Actn* arg1, int32_t arg2)
+void LegacyD20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, D20Actn* arg1, int32_t arg2)
 {
 	DispIoD20Signal dispIO;
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
@@ -282,7 +282,7 @@ void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, D20Actn*
 	dispatch.DispatcherProcessor(dispatcher, dispTypeD20Signal, dispKey, &dispIO);
 }
 
-void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, objHndl arg) {
+void LegacyD20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, objHndl arg) {
 	DispIoD20Signal dispIO;
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (!dispatch.dispatcherValid(dispatcher))
@@ -297,7 +297,7 @@ void D20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, objHndl 
 
 #pragma endregion
 
-void D20System::D20ActnInit(objHndl objHnd, D20Actn* d20a)
+void LegacyD20System::D20ActnInit(objHndl objHnd, D20Actn* d20a)
 {
 	d20a->d20APerformer = objHnd;
 	d20a->d20ActType = D20A_NONE;
@@ -324,13 +324,13 @@ void D20System::D20ActnInit(objHndl objHnd, D20Actn* d20a)
 }
 
 #pragma region Global D20 Action
-void D20System::GlobD20ActnSetTypeAndData1(D20ActionType d20type, uint32_t data1)
+void LegacyD20System::GlobD20ActnSetTypeAndData1(D20ActionType d20type, uint32_t data1)
 {
 	globD20Action->d20ActType = d20type;
 	globD20Action->data1 = data1;
 }
 
-void D20System::globD20ActnSetPerformer(objHndl objHnd)
+void LegacyD20System::globD20ActnSetPerformer(objHndl objHnd)
 {
 	if (objHnd != (*globD20Action).d20APerformer)
 	{
@@ -341,23 +341,23 @@ void D20System::globD20ActnSetPerformer(objHndl objHnd)
 	(*globD20Action).d20APerformer = objHnd;
 }
 
-void D20System::GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc)
+void LegacyD20System::GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc)
 {
 	addresses.GlobD20ActnSetTarget(objHnd, loc);
 }
 
-void D20System::GlobD20ActnInit()
+void LegacyD20System::GlobD20ActnInit()
 {
 	D20ActnInit(globD20Action->d20APerformer, globD20Action);
 }
 
-void D20System::GlobD20ActnSetSpellData(D20SpellData* d20SpellData)
+void LegacyD20System::GlobD20ActnSetSpellData(D20SpellData* d20SpellData)
 {
 	d20Sys.globD20Action->d20SpellData = *d20SpellData;
 }
 #pragma endregion
 
-void D20System::d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx)
+void LegacyD20System::d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx)
 {
 	__asm{
 		push esi;
@@ -376,7 +376,7 @@ void D20System::d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx)
 	//void d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx);//1008AE90    ActnSeq * @<eax>
 }
 
-int32_t D20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tbStat)
+int32_t LegacyD20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tbStat)
 {
 	//uint32_t result = 0;
 	ActnSeq * actSeq = *actSeqSys.actSeqCur;
@@ -433,7 +433,7 @@ int32_t D20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tbStat)
 	*/
 }
 
-uint32_t D20System::tumbleCheck(D20Actn* d20a)
+uint32_t LegacyD20System::tumbleCheck(D20Actn* d20a)
 {
 	if (d20QueryWithData(d20a->d20ATarget, DK_QUE_Critter_Has_Spell_Active, 407, 0)) return 0; // spell_sanctuary active
 	if (actSeq->isPerforming(d20a->d20APerformer))
@@ -448,7 +448,7 @@ uint32_t D20System::tumbleCheck(D20Actn* d20a)
 	return _tumbleCheck(d20a);
 }
 
-void D20System::D20ActnSetSpellData(D20SpellData* d20SpellData, uint32_t spellEnumOrg, uint32_t spellClassCode, uint32_t spellSlotLevel, uint32_t itemSpellData, uint32_t metaMagicData)
+void LegacyD20System::D20ActnSetSpellData(D20SpellData* d20SpellData, uint32_t spellEnumOrg, uint32_t spellClassCode, uint32_t spellSlotLevel, uint32_t itemSpellData, uint32_t metaMagicData)
 {
 	*(uint32_t *)&d20SpellData->metaMagicData = metaMagicData;
 	d20SpellData->spellEnumOrg = spellEnumOrg;
@@ -460,12 +460,12 @@ void D20System::D20ActnSetSpellData(D20SpellData* d20SpellData, uint32_t spellEn
 
 
 
-bool D20System::UsingSecondaryWeapon(D20Actn* d20a)
+bool LegacyD20System::UsingSecondaryWeapon(D20Actn* d20a)
 {
 	return UsingSecondaryWeapon(d20a->d20APerformer, d20a->data1);
 }
 
-bool D20System::UsingSecondaryWeapon(objHndl obj, int attackCode)
+bool LegacyD20System::UsingSecondaryWeapon(objHndl obj, int attackCode)
 {
 	if (attackCode == ATTACK_CODE_OFFHAND + 2 || attackCode == ATTACK_CODE_OFFHAND + 4 || attackCode == ATTACK_CODE_OFFHAND + 6)
 	{
@@ -489,7 +489,7 @@ bool D20System::UsingSecondaryWeapon(objHndl obj, int attackCode)
 	return 0;
 }
 
-void D20System::ExtractAttackNumber(objHndl obj, int attackCode, int* attackNumber, int * dualWielding)
+void LegacyD20System::ExtractAttackNumber(objHndl obj, int attackCode, int* attackNumber, int * dualWielding)
 {
 	if (attackCode >= ATTACK_CODE_NATURAL_ATTACK)
 	{
@@ -526,7 +526,7 @@ void D20System::ExtractAttackNumber(objHndl obj, int attackCode, int* attackNumb
 	}
 }
 
-objHndl D20System::GetAttackWeapon(objHndl obj, int attackCode, D20CAF flags)
+objHndl LegacyD20System::GetAttackWeapon(objHndl obj, int attackCode, D20CAF flags)
 {
 	if (flags & D20CAF_TOUCH_ATTACK && !(flags & D20CAF_THROWN_GRENADE))
 	{
@@ -545,7 +545,7 @@ objHndl D20System::GetAttackWeapon(objHndl obj, int attackCode, D20CAF flags)
 	return inventory.ItemWornAt(obj, 3);
 }
 
-int D20System::PerformStandardAttack(D20Actn* d20a)
+int LegacyD20System::PerformStandardAttack(D20Actn* d20a)
 {
 	int v5 = templeFuncs.RNG(0, 2);
 
@@ -580,12 +580,12 @@ int D20System::PerformStandardAttack(D20Actn* d20a)
 	return 0;
 }
 
-int D20System::TargetWithinReachOfLoc(objHndl obj, objHndl target, LocAndOffsets* loc)
+int LegacyD20System::TargetWithinReachOfLoc(objHndl obj, objHndl target, LocAndOffsets* loc)
 {
 	return addresses.TargetWithinReachOfLoc(obj, target, loc);
 }
 
-void D20System::D20ActnSetSetSpontCast(D20SpellData* d20SpellData, SpontCastType spontCastType)
+void LegacyD20System::D20ActnSetSetSpontCast(D20SpellData* d20SpellData, SpontCastType spontCastType)
 {
 	d20SpellData->spontCastType = spontCastType;
 	d20SpellData->metaMagicData.metaMagicFlags = 0;
@@ -596,7 +596,7 @@ void D20System::D20ActnSetSetSpontCast(D20SpellData* d20SpellData, SpontCastType
 	d20SpellData->metaMagicData.metaMagicWidenSpellCount = 0;
 }
 
-uint64_t D20System::d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, ::uint32_t arg2)
+uint64_t LegacyD20System::d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, ::uint32_t arg2)
 {
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (!dispatch.dispatcherValid(dispatcher)){ return 0; }

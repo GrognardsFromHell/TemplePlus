@@ -23,6 +23,10 @@ TextLayouter::TextLayouter(Graphics& g) : mRenderer(g) {
 
 void TextLayouter::LayoutAndDraw(gsl::cstring_view<> text, const TigFont& font, TigRect& extents, TigTextStyle& style) {
 
+	if (text.length() == 0) {
+		return;
+	}
+
 	auto lastLine = false;
 	auto extentsWidth = extents.width;
 	auto extentsHeight = extents.height;

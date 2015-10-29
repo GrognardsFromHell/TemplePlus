@@ -13,7 +13,6 @@
 #include "python/pythonglobal.h"
 #include "mainloop.h"
 #include "util/config.h"
-#include "gamesystems/gamemodule.h"
 
 class TempleMutex {
 public:
@@ -134,7 +133,7 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 
 	UiLoader uiLoader(gameSystems.GetConfig());
 
-	GameModule gameModule(config.defaultModule);
+	gameSystems.LoadModule(config.defaultModule); // TODO: RAII
 
 	// Python should now be initialized. Do the global hooks
 	PythonGlobalExtension::installExtensions();

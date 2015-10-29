@@ -30,7 +30,7 @@ struct Pathfinding;
 
 
 
-struct D20System : temple::AddressTable
+struct LegacyD20System : temple::AddressTable
 {
 	D20Actn * globD20Action;
 	D20ActionDef * d20Defs;
@@ -79,11 +79,11 @@ struct D20System : temple::AddressTable
 	//char **ToEEd20ActionNames;
 	void NewD20ActionsInit();
 
-	D20System();
+	LegacyD20System();
 };
 
 
-extern D20System d20Sys;
+extern LegacyD20System d20Sys;
 
 int _D20Init(GameSystemConf* conf);
 

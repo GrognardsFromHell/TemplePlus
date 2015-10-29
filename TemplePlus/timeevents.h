@@ -27,7 +27,7 @@ enum class GameClockType : uint32_t {
 /*
 	The time event system that are available and can handle events.
 */
-enum class TimeEventSystem : uint32_t {
+enum class TimeEventType : uint32_t {
 	Debug = 0,
 	Anim = 1,
 	BkgAnim = 2,
@@ -109,7 +109,7 @@ struct TimeEventObjInfo {
 
 struct TimeEvent {
 	GameTime time;
-	TimeEventSystem system;
+	TimeEventType system;
 	int padding = 0;
 	TimeEventArg params[4];
 };

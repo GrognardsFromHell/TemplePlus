@@ -10,7 +10,7 @@ class ClipperMaterial : gfx::Material {
 
 };
 
-MdfRenderMaterial::MdfRenderMaterial(LegacyShaderId id,
+MdfRenderMaterial::MdfRenderMaterial(gfx::LegacyShaderId id,
                                      const std::string& name,
                                      std::unique_ptr<class gfx::MdfMaterial>&& spec)
 	: mId(id), mName(name), mSpec(std::move(spec)) {
@@ -74,6 +74,27 @@ void MdfRenderMaterial::LoadGeneralState(gfx::MdfGeneralMaterial* material) {
 
 }
 
+MdfMaterialFactory::MdfMaterialFactory() {
+
+	// Register material placeholders that have special names
+	auto head = std::make_shared<MaterialPlaceholder>(0x84000001, MaterialPlaceholderSlot::HEAD, "HEAD");
+	mIdRegistry[head->GetId()] = head;
+	mNameRegistry[tolower(head->GetName())] = head;
+
+	auto gloves = std::make_shared<MaterialPlaceholder>(0x88000001, MaterialPlaceholderSlot::GLOVES, "GLOVES");
+	mIdRegistry[gloves->GetId()] = gloves;
+	mNameRegistry[tolower(gloves->GetName())] = gloves;
+
+	auto chest = std::make_shared<MaterialPlaceholder>(0x90000001, MaterialPlaceholderSlot::CHEST, "CHEST");
+	mIdRegistry[chest->GetId()] = chest;
+	mNameRegistry[tolower(chest->GetName())] = chest;
+
+	auto boots = std::make_shared<MaterialPlaceholder>(0xA0000001, MaterialPlaceholderSlot::BOOTS, "BOOTS");
+	mIdRegistry[boots->GetId()] = boots;
+	mNameRegistry[tolower(boots->GetName())] = boots;
+
+}
+
 MdfMaterialFactory::~MdfMaterialFactory() {
 
 	// This is sad, but the hooks keep an owned reference to
@@ -94,26 +115,10 @@ gfx::MaterialRef MdfMaterialFactory::LoadMaterial(const std::string& name) {
 
 	auto nameLower = tolower(name);
 
-	auto it = mNameRegistry.find(name);
+	auto it = mNameRegistry.find(nameLower);
 	if (it != mNameRegistry.end()) {
 		return it->second;
 	}
-
-	// Handle special material alias
-	/*specialMatIdx = 0;
-	do
-	{
-		// Special handling here:
-		// HEAD / GLOVES / etc. materials are mapped to 0x80000001 + X
-		if ((&tig_shader_special_materials)[4 * specialMatIdx]
-			&& !_stricmp(filename, (&tig_shader_special_materials)[4 * specialMatIdx]))
-		{
-			// For example, idx 1 becomes 0x84000001
-			*shaderout = (specialMatIdx << 26) | 0x80000001;
-			return 0;
-		}
-		++specialMatIdx;
-	} while (specialMatIdx < 32);*/
 
 	try {
 		auto mdfContent = vfs->ReadAsString(name);

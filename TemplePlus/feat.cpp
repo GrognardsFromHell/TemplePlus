@@ -18,7 +18,7 @@ uint32_t featPropertiesTable[NUM_FEATS + 1000];
 FeatPrereqRow featPreReqTable[NUM_FEATS + 1000];
 
 
-FeatSystem feats;
+LegacyFeatSystem feats;
 
 
 
@@ -124,10 +124,10 @@ public:
 };
 FeatFixes featFixes;
 
-# pragma region FeatSystem Implementations
+# pragma region LegacyFeatSystem Implementations
 
 
-FeatSystem::FeatSystem()
+LegacyFeatSystem::LegacyFeatSystem()
 {
 	//rebase(featPropertiesTable, 0x102BFD78); 	
 	//rebase(featPreReqTable, 0x102C07A0); 			// now imported from file :)
@@ -211,7 +211,7 @@ int FeatInit()
 	return 0;
 }
 
-uint32_t FeatSystem::HasFeatCount(objHndl objHnd, feat_enums featEnum)
+uint32_t LegacyFeatSystem::HasFeatCount(objHndl objHnd, feat_enums featEnum)
 {
 	uint32_t featCount = 0;
 	uint32_t numFeats = templeFuncs.Obj_Get_IdxField_NumItems(objHnd, obj_f_critter_feat_idx);
@@ -226,28 +226,28 @@ uint32_t FeatSystem::HasFeatCount(objHndl objHnd, feat_enums featEnum)
 }
 
 
-uint32_t FeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classEnum, ::uint32_t rangerSpecializationFeat)
+uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classEnum, ::uint32_t rangerSpecializationFeat)
 {
 	return _HasFeatCountByClass(objHnd, featEnum, classEnum, rangerSpecializationFeat);
 }
 
-uint32_t FeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEnum)
+uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEnum)
 {
 	return _HasFeatCountByClass(objHnd, featEnum, (Stat)0, 0);
 };
 
-uint32_t FeatSystem::FeatListGet(objHndl objHnd, feat_enums* listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat)
+uint32_t LegacyFeatSystem::FeatListGet(objHndl objHnd, feat_enums* listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat)
 {
 	return _FeatListGet(objHnd, listOut, classBeingLevelled, rangerSpecFeat);
 }
 
 
-uint32_t FeatSystem::FeatListElective(objHndl objHnd, feat_enums* listOut)
+uint32_t LegacyFeatSystem::FeatListElective(objHndl objHnd, feat_enums* listOut)
 {
 	return FeatListGet(objHnd, listOut, (Stat)0, (feat_enums)0);
 }
 
-uint32_t FeatSystem::FeatExistsInArray(feat_enums featCode, feat_enums * featArray, uint32_t featArrayLen)
+uint32_t LegacyFeatSystem::FeatExistsInArray(feat_enums featCode, feat_enums * featArray, uint32_t featArrayLen)
 {
 	for (uint32_t i = 0; i < featArrayLen; i++)
 	{
@@ -256,17 +256,17 @@ uint32_t FeatSystem::FeatExistsInArray(feat_enums featCode, feat_enums * featArr
 	return 0;
 };
 
-uint32_t FeatSystem::WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType)
+uint32_t LegacyFeatSystem::WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType)
 {
 	return _WeaponFeatCheck( objHnd,  featArray,  featArrayLen,  classBeingLeveled,  wpnType);
 }
 
-uint32_t FeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums* featArray, uint32_t featArrayLen, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased)
+uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums* featArray, uint32_t featArrayLen, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased)
 {
 	return _FeatPrereqsCheck(objHnd, featIdx, featArray, featArrayLen, classCodeBeingLevelledUp, abilityScoreBeingIncreased);
 }
 
-vector<feat_enums> FeatSystem::GetFeats(objHndl handle) {
+vector<feat_enums> LegacyFeatSystem::GetFeats(objHndl handle) {
 
 	auto featCount = templeFuncs.Obj_Get_IdxField_NumItems(handle, obj_f_critter_feat_idx);
 	vector<feat_enums> result(featCount);
@@ -278,12 +278,12 @@ vector<feat_enums> FeatSystem::GetFeats(objHndl handle) {
 	return result;
 }
 
-char* FeatSystem::GetFeatName(feat_enums feat)
+char* LegacyFeatSystem::GetFeatName(feat_enums feat)
 {
 	return featNames[feat];
 }
 
-char* FeatSystem::GetFeatDescription(feat_enums feat)
+char* LegacyFeatSystem::GetFeatDescription(feat_enums feat)
 {
 	char getLineResult; 
 	const char *result; 
@@ -303,7 +303,7 @@ char* FeatSystem::GetFeatDescription(feat_enums feat)
 	return (char*)result;
 }
 
-char* FeatSystem::GetFeatPrereqDescription(feat_enums feat)
+char* LegacyFeatSystem::GetFeatPrereqDescription(feat_enums feat)
 {
 	char * result;
 	const char *v2;
@@ -340,34 +340,34 @@ char* FeatSystem::GetFeatPrereqDescription(feat_enums feat)
 	return result;
 }
 
-int FeatSystem::IsFeatEnabled(feat_enums feat)
+int LegacyFeatSystem::IsFeatEnabled(feat_enums feat)
 {
 	return (m_featPropertiesTable[feat] & 2 ) == 0;
 }
 
-int FeatSystem::IsMagicFeat(feat_enums feat)
+int LegacyFeatSystem::IsMagicFeat(feat_enums feat)
 {
 	return (m_featPropertiesTable[feat] & 0x20000 ) != 0;
 }
 
-int FeatSystem::IsFeatPartOfMultiselect(feat_enums feat)
+int LegacyFeatSystem::IsFeatPartOfMultiselect(feat_enums feat)
 {
 	return ( m_featPropertiesTable[feat] & 0x100 ) != 0;
 }
 
-int FeatSystem::IsFeatRacialOrClassAutomatic(feat_enums feat)
+int LegacyFeatSystem::IsFeatRacialOrClassAutomatic(feat_enums feat)
 {
 	return (m_featPropertiesTable[feat] & 0xC ) != 0;
 }
 
-int FeatSystem::IsClassFeat(feat_enums feat)
+int LegacyFeatSystem::IsClassFeat(feat_enums feat)
 {
 	if (feat > FEAT_NONE && feat < 664)
 		return 0;
 	return ( m_featPropertiesTable[feat] & 8 ) != 0;
 }
 
-int FeatSystem::IsFighterFeat(feat_enums feat)
+int LegacyFeatSystem::IsFighterFeat(feat_enums feat)
 {
 	if (feat > 649 && feat < 664)
 	{
@@ -380,7 +380,7 @@ int FeatSystem::IsFighterFeat(feat_enums feat)
 	return (m_featPropertiesTable[feat] & 0x10 ) != 0;
 }
 
-int FeatSystem::IsFeatPropertySet(feat_enums feat, int featProp)
+int LegacyFeatSystem::IsFeatPropertySet(feat_enums feat, int featProp)
 {
 	return (m_featPropertiesTable[feat] & featProp) == featProp;
 };

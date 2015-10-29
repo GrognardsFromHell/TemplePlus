@@ -295,7 +295,7 @@ PyObject* PyGame_Fade(PyObject*, PyObject* args) {
 	if (fadeOutTime) {
 		TimeEvent evt;
 		fadeOutTime *= 1000;
-		evt.system = TimeEventSystem::Fade;
+		evt.system = TimeEventType::Fade;
 		evt.params[0].int32 = 1;
 		evt.params[1].int32 = 0xFF000000;
 		evt.params[2].float32 = 2.0f;
@@ -601,9 +601,9 @@ PyObject* PyGame_TimeEventAdd(PyObject*, PyObject* args) {
 		return 0;
 	}
 
-	evt.system = TimeEventSystem::PythonScript;
+	evt.system = TimeEventType::PythonScript;
 	if (realtime) {
-		evt.system = TimeEventSystem::PythonRealtime;
+		evt.system = TimeEventType::PythonRealtime;
 	}
 	Py_INCREF(evt.params[0].pyobj);
 	Py_INCREF(evt.params[1].pyobj);

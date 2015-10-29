@@ -1,6 +1,6 @@
-
 #include "stdafx.h"
 
+#include <type_traits>
 #include <temple/dll.h>
 
 #include "gamesystems.h"
@@ -13,12 +13,18 @@
 #include <tig/tig_loadingscreen.h>
 #include <tig/tig_font.h>
 #include <tig/tig_msg.h>
-#include "loadingscreen.h"
 #include <aas.h>
 #include <movies.h>
 #include <python/python_integration.h>
+#include "legacysystems.h"
+#include "graphics/loadingscreen.h"
+#include "mappreprocessor.h"
 
 #include "mapsystems.h"
+#include <infrastructure/vfs.h>
+#include <temple/vfs.h>
+#include <infrastructure/mesparser.h>
+#include <util/fixes.h>
 
 /*
 Manages graphics engine resources used by
@@ -27,7 +33,7 @@ legacy game systems.
 class LegacyGameSystemResources : public ResourceListener {
 public:
 
-	explicit LegacyGameSystemResources(Graphics &graphics)
+	explicit LegacyGameSystemResources(Graphics& graphics)
 		: mRegistration(graphics, this) {
 	}
 
@@ -49,7 +55,12 @@ private:
 	ResourceListenerRegistration mRegistration;
 };
 
-GameSystems::GameSystems(TigInitializer &tig) : mTig(tig) {
+GameSystems::GameSystems(TigInitializer& tig) : mTig(tig) {
+
+	if (!gameSystems) {
+		gameSystems = this;
+	}
+
 	StopwatchReporter reporter("Game systems initialized in {}");
 	logger->info("Loading game systems");
 
@@ -140,31 +151,13 @@ GameSystems::GameSystems(TigInitializer &tig) : mTig(tig) {
 
 	InitBufferStuff(mConfig);
 
-
-	GameSystemLoadingScreen loadingScreen;
-
 	InitAnimationSystem();
 
 	tigFont.LoadAll("art\\interface\\fonts\\*.*");
 	tigFont.PushFont("priory-12", 12, true);
 
-	// Now we finally load all game systems
-	// TODO: RAII this
-	// TODO:before / after init callbacks should be placed directly in here
-	for (auto &system : legacyGameSystems->systems) {
-		logger->info("Loading game system {}", system.name);
-		msgFuncs.ProcessSystemEvents();
-		if (system.loadscreenMesIdx) {
-			loadingScreen.NextMessage();
-		}
-		if (system.init) {
-			if (!system.init(&mConfig)) {
-				throw TempleException(format("Game system {} failed to initialize", system.name));
-			}
-		}
-	}
-
-	mMapSystems = std::make_unique<MapSystems>(tig);
+	LoadingScreen loadingScreen(tig.GetGraphics());
+	InitializeSystems(loadingScreen);
 
 	mLegacyResources
 		= std::make_unique<LegacyGameSystemResources>(tig.GetGraphics());
@@ -174,22 +167,82 @@ GameSystems::GameSystems(TigInitializer &tig) : mTig(tig) {
 	*gameSystemInitTable.ironmanFlag = false;
 	*gameSystemInitTable.ironmanSaveGame = 0;
 
-	if (!gameSystems) {
-		gameSystems = this;
-	}
 }
 
 GameSystems::~GameSystems() {
 
-	logger->info("Unloading game systems");
-
-	mLegacyResources.reset();
-
-	gameSystemFuncs.Shutdown();
-
 	if (gameSystems == this) {
 		gameSystems = nullptr;
 	}
+
+	logger->info("Unloading game systems");
+
+	// Clear the loaded systems in reverse order
+	mLegacyResources.reset();
+
+	mPathX.reset();
+	mItemHighlight.reset();
+	mFormation.reset();
+	mObjectEvent.reset();
+	mRandomEncounter.reset();
+	mMapFogging.reset();
+	mSecretdoor.reset();
+	mD20Rolls.reset();
+	mCheats.reset();
+	mParticleSys.reset();
+	mUiArtManager.reset();
+	mDeity.reset();
+	mObjFade.reset();
+	mGround.reset();
+	mGameInit.reset();
+	mD20LoadSave.reset();
+	mParty.reset();
+	mMonsterGen.reset();
+	mTrap.reset();
+	mAntiTeleport.reset();
+	mGFade.reset();
+	mBrightness.reset();
+	mGMovie.reset();
+	mTownMap.reset();
+	mInvenSource.reset();
+	mWP.reset();
+	mSectorScript.reset();
+	mTileScript.reset();
+	mReaction.reset();
+	mReputation.reset();
+	mAnimPrivate.reset();
+	mAnim.reset();
+	mAI.reset();
+	mQuest.reset();
+	mRumor.reset();
+	mTimeEvent.reset();
+	mCombat.reset();
+	mItem.reset();
+	mSoundGame.reset();
+	mSoundMap.reset();
+	mDialog.reset();
+	mArea.reset();
+	mPlayer.reset();
+	mLightScheme.reset();
+	mMap.reset();
+	mD20.reset();
+	mLevel.reset();
+	mScript.reset();
+	mStat.reset();
+	mSpell.reset();
+	mFeat.reset();
+	mSkill.reset();
+	mPortrait.reset();
+	mScriptName.reset();
+	mCritter.reset();
+	mRandom.reset();
+	mSector.reset();
+	mTeleport.reset();
+	mItemEffect.reset();
+	mDescription.reset();
+	mVagrant.reset();
+
+	mLegacyResources.reset();
 
 }
 
@@ -222,16 +275,17 @@ void GameSystems::RegisterDataFiles() {
 
 	tio_filelist_destroy(&list);
 
-	tio_mkdir("tpdata");
-	tio_path_add("tpdata");
-
 	tio_mkdir("data");
 	tio_path_add("data");
 
-	for (auto &entry : config.additionalTioPaths) {
+	tio_mkdir("tpdata");
+	tio_path_add("tpdata");
+
+	for (auto& entry : config.additionalTioPaths) {
 		logger->info("Adding additional TIO path {}", entry);
 		tio_path_add(entry.c_str());
 	}
+
 }
 
 /*
@@ -248,12 +302,15 @@ void GameSystems::VerifyTemplePlusData() {
 
 // Gets the language of the current toee installation (i.e. "en")
 std::string GameSystems::GetLanguage() {
-	MesFile mesFile("mes\\language.mes");
-	if (!mesFile.valid()) {
+	try {
+		auto content(MesFile::ParseFile("mes\\language.mes"));
+		if (content[1].empty()) {
+			return "en";
+		}
+		return content[1];
+	} catch (TempleException&) {
 		return "en";
 	}
-	auto result = mesFile[1];
-	return result ? result : "en";
 }
 
 void GameSystems::PlayLegalMovies() {
@@ -262,12 +319,11 @@ void GameSystems::PlayLegalMovies() {
 	movieFuncs.PlayMovie("movies\\WotCLogo.bik", 0, 0, 0);
 }
 
-void GameSystems::InitBufferStuff(const GameSystemConf &conf) {
+void GameSystems::InitBufferStuff(const GameSystemConf& conf) {
 
 	// TODO: It is VERY dubious that this is actually used anywhere!!!
 	// scratchbuffer is never accessed
-	if (*gameSystemInitTable.scratchBuffer == nullptr)
-	{
+	if (*gameSystemInitTable.scratchBuffer == nullptr) {
 		TigBufferCreateArgs createArgs;
 		createArgs.flagsOrSth = 5;
 		createArgs.width = conf.width;
@@ -331,15 +387,117 @@ void GameSystems::AdvanceTime() {
 	// This is used from somewhere in the object system
 	*gameSystemInitTable.lastAdvanceTime = now;
 
-	// TODO: Insert pre advance hook here
+	for (auto system : mTimeAwareSystems) {
+		system->AdvanceTime(now);
+	}
 
-	for (auto &system : legacyGameSystems->systems) {
-		if (system.advanceTime) {
-			system.advanceTime(now);
+}
+
+void GameSystems::LoadModule(const std::string& moduleName) {
+
+	AddModulePaths(moduleName);
+
+	auto tioVfs = static_cast<temple::TioVfs*>(vfs.get());
+
+	constexpr char* saveDir = "Save\\Current";
+	if (vfs->DirExists(saveDir) && !tioVfs->IsDirEmpty(saveDir) && !tioVfs->CleanDir(saveDir)) {
+		throw TempleException("Unable to clean current savegame folder from previous data: {}", saveDir);
+	}
+
+	MapMobilePreprocessor preprocessor(mModuleGuid);
+
+	// Preprocess mob files for each map before we load the first map
+	for (const auto& entry : vfs->Search("maps\\*.*")) {
+		if (!entry.dir) {
+			continue;
+		}
+
+		preprocessor.Preprocess(entry.filename);
+	}
+
+	for (auto system : mModuleAwareSystems) {
+		system->LoadModule();
+	}
+
+}
+
+void GameSystems::AddModulePaths(const std::string& moduleName) {
+
+	std::string moduleBase;
+	if (!Path::IsFileSystem(moduleName)) {
+		moduleBase = Path::Concat(".\\Modules\\", moduleName);
+	} else {
+		moduleBase = moduleName;
+	}
+
+	auto moduleDatName = moduleBase + ".dat";
+	auto moduleDir = moduleBase;
+
+	auto tioVfs = static_cast<temple::TioVfs*>(vfs.get());
+
+	memset(&mModuleGuid, 0, sizeof(mModuleGuid));
+
+	logger->info("Module archive: {}", moduleDatName);
+	if (vfs->FileExists(moduleDatName)) {
+		if (!tioVfs->AddPath(moduleDatName)) {
+			throw TempleException("Unable to load module archive {}", moduleDatName);
+		}
+
+		tioVfs->GetArchiveGUID(moduleDatName, mModuleGuid);
+	}
+
+	mModuleArchivePath = moduleDatName;
+
+	logger->info("Module directory: {}", moduleDir);
+	if (!vfs->DirExists(moduleDir)) {
+		if (!vfs->MkDir(moduleDir)) {
+			if (!mModuleArchivePath.empty()) {
+				tioVfs->RemovePath(mModuleArchivePath);
+			}
+			throw TempleException("Unable to create module folder: {}", moduleDir);
 		}
 	}
 
-	// TODO: Insert post advance hook here
+	mModuleDirPath = moduleDir;
+
+	// The very last folder that is in the chain seems to be the target
+	// for save data. So this remains the module folder
+	if (!tioVfs->AddPath(mModuleDirPath)) {
+		throw TempleException("Unable to add module directory: {}", mModuleDirPath);
+	}
+
+}
+
+void GameSystems::UnloadModule() {
+	throw TempleException("Currently unsupported");
+}
+
+void GameSystems::RemoveModulePaths() {
+}
+
+void GameSystems::ResetGame() {
+	logger->info("Resetting game systems...");
+
+	mResetting = true;
+
+	if (vfs->DirExists("Save\\Current")) {
+		if (!vfs->CleanDir("Save\\Current")) {
+			logger->error("Unable to clean current save game directory.");
+		}
+	}
+
+	for (auto system : mResetAwareSystems) {
+		logger->debug("Resetting game system {}", system->GetName());
+		system->Reset();
+	}
+
+	*gameSystemInitTable.ironmanFlag = false;
+	if (*gameSystemInitTable.ironmanSaveGame) {
+		free(*gameSystemInitTable.ironmanSaveGame);
+	}
+	*gameSystemInitTable.ironmanSaveGame = nullptr;
+
+	mResetting = false;
 
 }
 
@@ -375,6 +533,152 @@ void GameSystems::ResizeScreen(int w, int h) {
 
 }
 
+void GameSystems::InitializeSystems(LoadingScreen& loadingScreen) {
+
+	loadingScreen.SetMessage("Loading...");
+
+	// Loading Screen ID: 2
+	loadingScreen.SetProgress(1 / 61.0f);
+	mVagrant = InitializeSystem<VagrantSystem>(loadingScreen, mConfig);
+	// Loading Screen ID: 2
+	loadingScreen.SetProgress(2 / 61.0f);
+	mDescription = InitializeSystem<DescriptionSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(3 / 61.0f);
+	mItemEffect = InitializeSystem<ItemEffectSystem>(loadingScreen, mConfig);
+	// Loading Screen ID: 3
+	loadingScreen.SetProgress(4 / 61.0f);
+	mTeleport = InitializeSystem<TeleportSystem>(loadingScreen, mConfig);
+	// Loading Screen ID: 4
+	loadingScreen.SetProgress(5 / 61.0f);
+	mSector = InitializeSystem<SectorSystem>(loadingScreen, mConfig);
+	// Loading Screen ID: 5
+	loadingScreen.SetProgress(6 / 61.0f);
+	mRandom = InitializeSystem<RandomSystem>(loadingScreen, mConfig);
+	// Loading Screen ID: 6
+	loadingScreen.SetProgress(7 / 61.0f);
+	mCritter = InitializeSystem<CritterSystem>(loadingScreen, mConfig);
+	// Loading Screen ID: 7
+	loadingScreen.SetProgress(8 / 61.0f);
+	mScriptName = InitializeSystem<ScriptNameSystem>(loadingScreen, mConfig);
+	// Loading Screen ID: 8
+	loadingScreen.SetProgress(9 / 61.0f);
+	mPortrait = InitializeSystem<PortraitSystem>(loadingScreen, mConfig);
+	// Loading Screen ID: 9
+	loadingScreen.SetProgress(10 / 61.0f);
+	mSkill = InitializeSystem<SkillSystem>(loadingScreen, mConfig);
+	// Loading Screen ID: 10
+	loadingScreen.SetProgress(11 / 61.0f);
+	mFeat = InitializeSystem<FeatSystem>(loadingScreen, mConfig);
+	// Loading Screen ID: 11
+	loadingScreen.SetProgress(12 / 61.0f);
+	mSpell = InitializeSystem<SpellSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(13 / 61.0f);
+	mStat = InitializeSystem<StatSystem>(loadingScreen, mConfig);
+	// Loading Screen ID: 12
+	loadingScreen.SetProgress(14 / 61.0f);
+	mScript = InitializeSystem<ScriptSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(15 / 61.0f);
+	mLevel = InitializeSystem<LevelSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(16 / 61.0f);
+	mD20 = InitializeSystem<D20System>(loadingScreen, mConfig);
+	// Loading Screen ID: 1
+	loadingScreen.SetProgress(17 / 61.0f);
+	mMapSystems = InitializeSystem<MapSystems>(loadingScreen, mTig);
+	mMap = InitializeSystem<MapSystem>(loadingScreen, mConfig);	
+	loadingScreen.SetProgress(18 / 61.0f);
+	mLightScheme = InitializeSystem<LightSchemeSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(19 / 61.0f);
+	mPlayer = InitializeSystem<PlayerSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(20 / 61.0f);
+	mArea = InitializeSystem<AreaSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(21 / 61.0f);
+	mDialog = InitializeSystem<DialogSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(22 / 61.0f);
+	mSoundMap = InitializeSystem<SoundMapSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(23 / 61.0f);
+	mSoundGame = InitializeSystem<SoundGameSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(24 / 61.0f);
+	mItem = InitializeSystem<ItemSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(25 / 61.0f);
+	mCombat = InitializeSystem<CombatSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(26 / 61.0f);
+	mTimeEvent = InitializeSystem<TimeEventSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(27 / 61.0f);
+	mRumor = InitializeSystem<RumorSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(28 / 61.0f);
+	mQuest = InitializeSystem<QuestSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(29 / 61.0f);
+	mAI = InitializeSystem<AISystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(30 / 61.0f);
+	mAnim = InitializeSystem<AnimSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(31 / 61.0f);
+	mAnimPrivate = InitializeSystem<AnimPrivateSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(32 / 61.0f);
+	mReputation = InitializeSystem<ReputationSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(33 / 61.0f);
+	mReaction = InitializeSystem<ReactionSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(34 / 61.0f);
+	mTileScript = InitializeSystem<TileScriptSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(35 / 61.0f);
+	mSectorScript = InitializeSystem<SectorScriptSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(36 / 61.0f);
+
+	// NOTE: This system is only used in worlded (rendering related)
+	mWP = InitializeSystem<WPSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(37 / 61.0f);
+
+	mInvenSource = InitializeSystem<InvenSourceSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(38 / 61.0f);
+	mTownMap = InitializeSystem<TownMapSystem>(loadingScreen);
+	loadingScreen.SetProgress(39 / 61.0f);
+	mGMovie = InitializeSystem<GMovieSystem>(loadingScreen);
+	loadingScreen.SetProgress(40 / 61.0f);
+	mBrightness = InitializeSystem<BrightnessSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(41 / 61.0f);
+	mGFade = InitializeSystem<GFadeSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(42 / 61.0f);
+	mAntiTeleport = InitializeSystem<AntiTeleportSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(43 / 61.0f);
+	mTrap = InitializeSystem<TrapSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(44 / 61.0f);
+	mMonsterGen = InitializeSystem<MonsterGenSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(45 / 61.0f);
+	mParty = InitializeSystem<PartySystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(46 / 61.0f);
+	mD20LoadSave = InitializeSystem<D20LoadSaveSystem>(loadingScreen);
+	loadingScreen.SetProgress(47 / 61.0f);
+	mGameInit = InitializeSystem<GameInitSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(48 / 61.0f);
+	mGround = InitializeSystem<GroundSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(49 / 61.0f);
+	mObjFade = InitializeSystem<ObjFadeSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(50 / 61.0f);
+	mDeity = InitializeSystem<DeitySystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(51 / 61.0f);
+	mUiArtManager = InitializeSystem<UiArtManagerSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(52 / 61.0f);
+	mParticleSys = InitializeSystem<ParticleSysSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(53 / 61.0f);
+	mCheats = InitializeSystem<CheatsSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(54 / 61.0f);
+	mD20Rolls = InitializeSystem<D20RollsSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(55 / 61.0f);
+	mSecretdoor = InitializeSystem<SecretdoorSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(56 / 61.0f);
+	mMapFogging = InitializeSystem<MapFoggingSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(57 / 61.0f);
+	mRandomEncounter = InitializeSystem<RandomEncounterSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(58 / 61.0f);
+	mObjectEvent = InitializeSystem<ObjectEventSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(59 / 61.0f);
+	mFormation = InitializeSystem<FormationSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(60 / 61.0f);
+	mItemHighlight = InitializeSystem<ItemHighlightSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(61 / 61.0f);
+	mPathX = InitializeSystem<PathXSystem>(loadingScreen, mConfig);
+
+}
+
 void GameSystems::EndGame() {
 	return gameSystemInitTable.EndGame();
 }
@@ -383,4 +687,59 @@ void GameSystems::DestroyPlayerObject() {
 	gameSystemInitTable.DestroyPlayerObject();
 }
 
-GameSystems *gameSystems = nullptr;
+template <typename Type, typename... Args>
+std::unique_ptr<Type> GameSystems::InitializeSystem(LoadingScreen& loadingScreen,
+                                                    Args&&... args) {
+	logger->info("Loading game system {}", Type::Name);
+	msgFuncs.ProcessSystemEvents();
+	loadingScreen.Render();
+
+	auto result(std::make_unique<Type>(std::forward<Args>(args)...));
+	mLoadedSystems.push_back(result.get());
+
+	if (std::is_convertible<Type*, TimeAwareGameSystem*>()) {
+		mTimeAwareSystems.push_back((TimeAwareGameSystem*)(result.get()));
+	}
+
+	if (std::is_convertible<Type*, ModuleAwareGameSystem*>()) {
+		mModuleAwareSystems.push_back((ModuleAwareGameSystem*)(result.get()));
+	}
+
+	if (std::is_convertible<Type*, ResetAwareGameSystem*>()) {
+		mResetAwareSystems.push_back((ResetAwareGameSystem*)(result.get()));
+	}
+
+	if (std::is_convertible<Type*, BufferResettingGameSystem*>()) {
+		mBufferResettingSystems.push_back((BufferResettingGameSystem*)(result.get()));
+	}
+
+	if (std::is_convertible<Type*, SaveGameAwareGameSystem*>()) {
+		mSaveGameAwareSystems.push_back((SaveGameAwareGameSystem*)(result.get()));
+	}
+
+	return std::move(result);
+}
+
+GameSystems* gameSystems = nullptr;
+
+static class GameSystemsHooks : public TempleFix {
+public:
+	const char* name() override {
+		return "Game System Fixes";
+	}
+	void apply() override {
+		replaceFunction(0x10001DB0, Reset);
+		replaceFunction(0x10002510, IsResetting);
+	}
+
+	static void Reset();
+	static BOOL IsResetting();
+} hooks;
+
+void GameSystemsHooks::Reset() {
+	gameSystems->ResetGame();
+}
+
+BOOL GameSystemsHooks::IsResetting() {
+	return gameSystems->IsResetting() ? TRUE : FALSE;
+}

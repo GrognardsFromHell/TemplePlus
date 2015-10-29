@@ -32,7 +32,7 @@ struct InventorySystem : temple::AddressTable
 	int IsThrowingWeapon(objHndl weapon);
 	ArmorType GetArmorType(int armorFlags);
 	int ItemDrop(objHndl item);
-	int GetParent(objHndl item);
+	objHndl GetParent(objHndl item);
 	/*
 		0 - light weapon; 1 - can wield one handed; 2 - must wield two handed; 3 (???)
 	*/

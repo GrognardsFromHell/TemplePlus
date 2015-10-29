@@ -123,6 +123,11 @@ public:
 	const char* name() override {
 		return "bonus spell fix";
 	}
+
+	static uint32_t _abilityScoreLevelGet(objHndl obj, Stat abScore, DispIO * dispIO)
+	{
+		return objects.abilityScoreLevelGet(obj, abScore, dispIO);
+	}
 	
 	void apply() override {
 		redirectCall(0x100F4C65, _abilityScoreLevelGet);

@@ -351,6 +351,10 @@ gfx::TextureRef TextureManager::Resolve(const std::string& filename, bool withMi
 
 gfx::TextureRef TextureManager::GetById(int textureId) {
 
+	if (textureId == -1) {
+		return gfx::Texture::GetInvalidTexture();
+	}
+
 	auto it = mTexturesById.find(textureId);
 
 	if (it != mTexturesById.end()) {

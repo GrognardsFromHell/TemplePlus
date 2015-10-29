@@ -10,10 +10,10 @@
 
 struct Pathfinding;
 struct AiTacticDef;
-struct SpellSystem;
+struct LegacySpellSystem;
 struct ActionSequenceSystem;
-struct D20System;
-struct CombatSystem;
+struct LegacyD20System;
+struct LegacyCombatSystem;
 struct AiStrategy;
 struct AiTactic;
 struct AiPacket
@@ -70,10 +70,10 @@ struct AiSystem : temple::AddressTable
 	AiTacticDef * aiTacticDefs;
 	AiTacticDef aiTacticDefsNew[AI_TACTICS_NEW_SIZE];
 	uint32_t * aiStrategiesNum;
-	CombatSystem * combat;
-	D20System  * d20;
+	LegacyCombatSystem * combat;
+	LegacyD20System  * d20;
 	ActionSequenceSystem * actSeq;
-	SpellSystem * spell;
+	LegacySpellSystem * spell;
 	Pathfinding * pathfinding;
 	AiSystem();
 	void aiTacticGetConfig(int i, AiTactic* aiTac, AiStrategy* aiStrat);

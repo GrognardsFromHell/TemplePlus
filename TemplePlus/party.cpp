@@ -4,7 +4,7 @@
 #include "util/config.h"
 #include "util/fixes.h"
 
-struct PartySystemAddresses : temple::AddressTable
+struct LegacyPartySystemAddresses : temple::AddressTable
 {
 	GroupArray * groupNpcFollowers;
 	GroupArray * groupCurrentlySelected;  
@@ -14,7 +14,7 @@ struct PartySystemAddresses : temple::AddressTable
 
 	void(__cdecl * AddToCurrentlySelected)(objHndl objHnd);
 
-	PartySystemAddresses()
+	LegacyPartySystemAddresses()
 	{
 		rebase(AddToCurrentlySelected, 0x1002B560);
 		rebase(groupNpcFollowers, 0x11E71BE0);
@@ -26,13 +26,13 @@ struct PartySystemAddresses : temple::AddressTable
 	
 } addresses;
 
-PartySystem party;
+LegacyPartySystem party;
 
-class PartySystemHacks : TempleFix
+class LegacyPartySystemHacks : TempleFix
 {
 public: 
 	const char* name() override { 
-		return "PartySystem Function Replacements";
+		return "LegacyPartySystem Function Replacements";
 	};
 	void SetMaxPCs(char maxPCs);
 
@@ -44,7 +44,7 @@ public:
 	}
 } partyHacks;
 
-void PartySystemHacks::SetMaxPCs(char maxPCs)
+void LegacyPartySystemHacks::SetMaxPCs(char maxPCs)
 {
 	char * maxPCsBuffer = &maxPCs;
 	char maxNPCs = 8 - maxPCs;
@@ -55,12 +55,12 @@ void PartySystemHacks::SetMaxPCs(char maxPCs)
 	
 }
 
-void PartySystem::SetMaxPCs(char maxPCs)
+void LegacyPartySystem::SetMaxPCs(char maxPCs)
 {
 	partyHacks.SetMaxPCs(maxPCs);
 }
 
-uint32_t PartySystem::AddToPCGroup(objHndl objHnd)
+uint32_t LegacyPartySystem::AddToPCGroup(objHndl objHnd)
 {
 	auto npcFollowers = GroupNPCFollowersLen();
 	auto pcs = GroupPCsLen();
@@ -82,7 +82,7 @@ uint32_t PartySystem::AddToPCGroup(objHndl objHnd)
 	return 0;
 }
 
-uint32_t PartySystem::AddToNpcGroup(objHndl objHnd)
+uint32_t LegacyPartySystem::AddToNpcGroup(objHndl objHnd)
 {
 	auto npcFollowers = GroupNPCFollowersLen();
 	if (npcFollowers >= 5) return 0;

@@ -517,8 +517,8 @@ static void getTransitionText(string& diagramText, int& j, AnimStateTransition& 
 */
 static void rescheduleEvent(int delayMs, const AnimSlot &slot, const TimeEvent *oldEvt) {
 	TimeEvent evt;
-	evt.system = TimeEventSystem::Anim;
-	evt.params[0].int32 = slot.id.slotIndex;
+	evt.system = TimeEventType::Anim;
+	evt.params[0].int32 = slot.id.slotIndex;	
 	evt.params[1].int32 = slot.id.uniqueId;
 	evt.params[2].int32 = 1111; // Some way to identify these rescheduled events???
 	

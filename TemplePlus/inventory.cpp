@@ -71,13 +71,12 @@ int InventorySystem::ItemDrop(objHndl item)
 	return _ItemDrop(item);
 }
 
-int InventorySystem::GetParent(objHndl item)
+objHndl InventorySystem::GetParent(objHndl item)
 {
 	objHndl parent = 0i64;
 	if (!addresses.GetParent(item, &parent))
 		return 0;
 	return parent;
-	
 }
 
 obj_f InventorySystem::GetInventoryListField(objHndl objHnd)

@@ -59,11 +59,6 @@ struct TigConfig {
 	void (__cdecl *freeBuffers)();
 };
 
-class TigSystem {
-public:
-	virtual ~TigSystem();
-};
-
 class MainWindow;
 class Graphics;
 
@@ -87,7 +82,7 @@ public:
 
 private:
 
-	using TigSystemPtr = std::unique_ptr<class TigSystem>;
+	using TigSystemPtr = std::unique_ptr<class LegacyTigSystem>;
 
 	/*
 		Starts a legacy system still contained in temple.dll

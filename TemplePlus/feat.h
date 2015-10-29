@@ -43,7 +43,7 @@ struct FeatPrereqRow
 
 
 
-struct FeatSystem : temple::AddressTable
+struct LegacyFeatSystem : temple::AddressTable
 {	/* feat property bit meaning:
 	0x00000001 - can gain multiple times
 	0x00000002 - Not implemented (cannot select)
@@ -110,10 +110,10 @@ struct FeatSystem : temple::AddressTable
 	uint32_t(__cdecl *FeatAdd)(objHndl, feat_enums);
 
 	uint32_t(__cdecl *featTabLineParser)(TabFileStatus*, uint32_t, const char**);
-	FeatSystem();
+	LegacyFeatSystem();
 };
 
-extern FeatSystem feats;
+extern LegacyFeatSystem feats;
 
 int FeatInit();
 

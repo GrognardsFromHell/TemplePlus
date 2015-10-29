@@ -14,6 +14,9 @@
 #include <math.h>
 #include "util/fixes.h"
 
+#include "python/python_integration_obj.h"
+#include <set>
+
 Objects objects;
 
 static_assert(temple::validate_size<CondNode, 44>::value, "Condition node structure has incorrect size.");
@@ -46,41 +49,12 @@ struct ObjectSystemAddresses : temple::AddressTable
 	}
 } addresses;
 
-
-class ObjectReplacements : public TempleFix {
-public:
-	const char* name() override {
-		return "Replacements for Object functions (mainly for debugging purposes now)";
-	}
-
-	void apply() override {
-		replaceFunction(0x1009E1D0, _obj_get_int);
-		replaceFunction(0x100A0190, _obj_set_int);
-		replaceFunction(0x1004E7F0, _abilityScoreLevelGet);
-		replaceFunction(0x100A1310, _setArrayFieldByValue); 
-		replaceFunction(0x1009E5C0, _getArrayFieldInt32); 
-		replaceFunction(0x1009E2E0, _getInt64); 
-		replaceFunction(0x1009E360, _getObjHnd); 
-	}
-} objReplacements;
-
 #pragma region Object Internals
-const size_t objHeaderSize = 4; // Constant
-const size_t objBodySize = 168; // Passed in to Object_Tables_Init
-const size_t objSize = objHeaderSize + objBodySize;
-static_assert(temple::validate_size<GameObject, objSize>::value, "Object structure has incorrect size.");
+static_assert(temple::validate_size<ObjectId, 24>::value, "Object ID structure has incorrect size.");
 
 
 
 // Root hashtable for all objects
-struct ObjectMasterTableRow {
-	GameObject objects[0x2000];
-};
-
-struct ObjectMasterTable {
-	ObjectMasterTableRow* rows[256];
-};
-
 const uint32_t ObjFieldDefCount = 430;
 
 struct ObjFieldDef {
@@ -96,18 +70,8 @@ struct ObjFieldDef {
 static struct ObjInternal : temple::AddressTable {
 	ObjFieldDef** fieldDefs;
 
-	ObjectMasterTable** masterTable;
-
-	// Starts at 1, Max is 256
-	int* masterTableSize;
-
-	int *poolSize;
-
 	ObjInternal() {
 		rebase(fieldDefs, 0x10B3D7D8);
-		rebase(masterTable, 0x10BCAC50);
-		rebase(masterTableSize, 0x10BCAC4C);
-		rebase(poolSize, 0x10BCAC30);
 	}
 } objInternal;
 #pragma endregion
@@ -116,7 +80,13 @@ static struct ObjInternal : temple::AddressTable {
 
 uint32_t Objects::getInt32(objHndl obj, obj_f fieldIdx)
 {
-	GameObjectBody * objBody = _GetMemoryAddress(obj);
+	if (!obj) {
+		logger->warn("Called getInt32 on a null handle!");
+		return 0;
+	}
+
+	auto objBody = _GetMemoryAddress(obj);
+	Expects(!!objBody);
 	uint32_t objType = objBody->type;
 	uint32_t dataOut[8] = {0,0,0,0, 0,0,0,0}; // so the game doesn't crash when the naive modder tries to read a non-32bit field at least ;)
 	if (!DoesTypeSupportField(objBody->type, fieldIdx))
@@ -152,8 +122,7 @@ void Objects::SetFieldObjHnd(objHndl obj, obj_f field, objHndl value)
 objHndl Objects::getObjHnd(objHndl obj, obj_f fieldIdx)
 {
 	GameObjectBody * objBody = _GetMemoryAddress(obj);
-	uint32_t objType = objBody->type;
-	ObjectId dataOut = { 0,}; 
+	uint32_t objType = objBody->type;	
 	if (!DoesTypeSupportField(objBody->type, fieldIdx))
 	{
 		fieldNonexistantDebug(obj, objBody, fieldIdx, objType, "getObjHnd");
@@ -170,9 +139,13 @@ objHndl Objects::getObjHnd(objHndl obj, obj_f fieldIdx)
 		return objBody->protoHandle;
 	} 
 
+	ObjectId dataOut;
 	PropFetcher(objBody, fieldIdx, &dataOut);
-	if (!dataOut.subtype || dataOut.subtype != 0xfffe) return 0i64;
-	return *(uint64_t*)&dataOut.guid.Data1;
+	if (dataOut.IsHandle()) {
+		return dataOut.GetHandle();
+	} else {
+		return 0;
+	}
 	
 }
 
@@ -380,15 +353,12 @@ void Objects::setArrayFieldLowLevel(GameObjectBody* objBody, void* sourceData, o
 void Objects::fieldNonexistantDebug(unsigned long long obj, GameObjectBody* objBody, obj_f fieldIdx, unsigned objType, char* accessType)
 {
 	logger->info("{} Error: Accessing non-existant field [{}: {}] in object type [{}].",accessType, _DLLFieldNames[fieldIdx], fieldIdx, objType); // TODO: replace this with the corrected FieldNames. Fucking std::string, how does it work???. Not a big deal actually since the early fields exist for all objects.
-	uint32_t subtype = objBody->id.subtype;
 	uint32_t protonum = 0;
-	if (subtype == 1)	protonum = objBody->id.guid.Data1;
-	else if (subtype == 2)	protonum = GetProtoNum(obj);
+	if (objBody->id.IsPrototype())
+		protonum = objBody->id.GetPrototypeId();
+	else if (objBody->id.IsPermanent())
+		protonum = GetProtoNum(obj);
 	logger->info("Sonavabitch proto is {}", protonum);
-	if (protonum < 12624 || protonum > 12680)
-	{
-		uint32_t breakpointDummy = 0;
-	}
 }
 
 void Objects::getArrayFieldInternal(GameObjectBody* objBody, void* outAddr, obj_f fieldIdx, uint32_t subIdx)
@@ -535,6 +505,100 @@ void Objects::Move(objHndl handle, LocAndOffsets toLocation) {
 	_Move(handle, toLocation);
 }
 
+#include "combat.h"
+#include "turn_based.h"
+
+void Objects::Destroy(objHndl ObjHnd) {
+	static set<objHndl> destroyed;
+	std::string name = this->GetDisplayName(ObjHnd, ObjHnd);
+	logger->info("Destroying {}", name);
+	if (destroyed.find(ObjHnd) != destroyed.end()) {
+		logger->error("Double destroying object {:x}", ObjHnd);
+	}
+	destroyed.insert(ObjHnd);
+
+	auto flags = _GetInternalFieldInt32(ObjHnd, obj_f_flags);
+
+	if (flags & OF_DESTROYED) {
+		return; // Already destroyed
+	}
+	
+	if (!pythonObjIntegration.ExecuteObjectScript(ObjHnd, ObjHnd, ObjScriptEvent::Destroy)) {
+		return; // Scripts tells us to skip it
+	}
+
+	auto moveContentToLoc = temple::GetPointer<void(objHndl, BOOL)>(0x1006DB80);
+
+	auto type = _GetInternalFieldInt32(ObjHnd, obj_f_type);
+	if (type != obj_t_pc && type != obj_t_npc)
+	{
+		if (type >= obj_t_weapon && type <= obj_t_generic || type == obj_t_bag)
+		{
+			auto parentObj = inventory.GetParent(ObjHnd);
+			if (parentObj)
+			{
+				auto loc = GetLocation(parentObj);
+				inventory.ItemRemove(ObjHnd);
+				auto moveObj = temple::GetPointer<void(objHndl, locXY)>(0x100252D0);
+				moveObj(ObjHnd, loc);
+			}
+		}
+		if (type == obj_t_container)
+		{
+			moveContentToLoc(ObjHnd, 1);
+		}
+	}
+	else
+	{
+		auto removeFromGroups = temple::GetPointer<int(objHndl)>(0x10080DA0);
+		removeFromGroups(ObjHnd);
+
+		auto removeAiTimer = temple::GetPointer<int(objHndl)>(0x100588D0);
+		removeAiTimer(ObjHnd);
+
+		if (type == obj_t_npc)
+		{
+			auto getDlgTarget = temple::GetPointer<objHndl(objHndl)>(0x10053CA0);
+			auto cancelDialog = temple::GetPointer<void(objHndl, int)>(0x1009A5D0);
+
+			auto v3 = getDlgTarget(ObjHnd);
+			if (v3)
+				cancelDialog(v3, 0);
+		}
+		moveContentToLoc(ObjHnd, 1);
+	}
+	
+	auto cancelAnims = temple::GetPointer<void(objHndl)>(0x1000C760);
+	cancelAnims(ObjHnd);
+	
+	if (combatSys.isCombatActive())
+	{
+		if (tbSys.turnBasedGetCurrentActor() == ObjHnd) {
+			templeFuncs.TurnProcessing(ObjHnd);
+		}
+	}
+	combatSys.RemoveFromInitiative(ObjHnd);
+	
+	
+	auto removeDispatcher = temple::GetPointer<int(objHndl)>(0x1004FEE0);
+	removeDispatcher(ObjHnd);
+
+	auto updateTbUi = temple::GetPointer<void(objHndl)>(0x1014DE90);
+	updateTbUi(ObjHnd);
+	
+	auto killRendering = temple::GetPointer<void(objHndl)>(0x10021290);
+	
+	auto v6 = getInt32(ObjHnd, obj_f_animation_handle);
+	if (v6) {
+		auto freeAasModel = temple::GetPointer<void(int)>(0x10264510);
+		freeAasModel(v6);
+		setInt32(ObjHnd, obj_f_animation_handle, 0);
+	}
+	
+	auto v7 = GetFlags(ObjHnd);
+	setInt32(ObjHnd, obj_f_flags, v7 | OF_DESTROYED);
+}
+
 ObjectId Objects::GetId(objHndl handle) {
 	ObjectId result;
 	_GetId(&result, handle);
@@ -596,6 +660,21 @@ string Objects::GetDisplayName(objHndl obj, objHndl observer) {
 	return name;
 		}
 
+bool Objects::IsStatic(objHndl handle) {
+
+	auto type = GetType(handle);
+	if (type == obj_t_projectile 
+		|| type == obj_t_container 
+		|| type == obj_t_pc 
+		|| type == obj_t_npc 
+		|| type >= obj_t_weapon && type <= obj_t_generic 
+		|| type == obj_t_bag)
+		return false;
+	
+	return (GetFlags(handle) & OF_DYNAMIC) == 0;
+
+}
+
 uint32_t Objects::StatLevelGet(objHndl obj, Stat stat)
 {
 	return _StatLevelGet(obj, stat);
@@ -621,6 +700,10 @@ int Objects::GetModFromStatLevel(int statLevel)
 	return (statLevel - 10) / 2;
 }
 
+int Objects::GetTempId(objHndl handle) {
+	return _GetInternalFieldInt32(handle, obj_f_temp_id);
+}
+
 bool Objects::IsContainer(objHndl objHnd)
 {
 	auto type = GetType(objHnd);
@@ -631,39 +714,61 @@ bool Objects::IsContainer(objHndl objHnd)
 
 #pragma region Hooks
 
-uint32_t _obj_get_int(objHndl obj, obj_f fieldIdx)
-{
-	return objects.getInt32(obj, fieldIdx);
-}
+class ObjectReplacements : public TempleFix {
+public:
+	const char* name() override {
+		return "Replacements for Object functions (mainly for debugging purposes now)";
+	}
 
-void _obj_set_int(objHndl obj, obj_f fieldIdx, uint32_t dataIn)
-{
-	objects.setInt32(obj, fieldIdx, dataIn);
-}
+	static uint32_t _obj_get_int(objHndl obj, obj_f fieldIdx)
+	{
+		return objects.getInt32(obj, fieldIdx);
+	}
 
-uint32_t _abilityScoreLevelGet(objHndl obj, Stat abScore, DispIO * dispIO)
-{
-	return objects.abilityScoreLevelGet(obj, abScore, dispIO);
-}
+	static void _obj_set_int(objHndl obj, obj_f fieldIdx, uint32_t dataIn)
+	{
+		objects.setInt32(obj, fieldIdx, dataIn);
+	}
 
+	static uint32_t _abilityScoreLevelGet(objHndl obj, Stat abScore, DispIO * dispIO)
+	{
+		return objects.abilityScoreLevelGet(obj, abScore, dispIO);
+	}
+	
+	static void _setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, FieldDataMax data)
+	{
+		objects.setArrayFieldByValue(obj, fieldIdx, subIdx, data);
+	}
 
-void _setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, FieldDataMax data)
-{
-	objects.setArrayFieldByValue(obj, fieldIdx, subIdx, data);
-}
+	static int32_t _getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx)
+	{
+		return objects.getArrayFieldInt32(obj, fieldIdx, subIdx);
+	}
 
-int32_t _getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx)
-{
-	return objects.getArrayFieldInt32(obj, fieldIdx, subIdx);
-}
+	static uint64_t _getInt64(objHndl obj, obj_f fieldIdx)
+	{
+		return objects.getInt64(obj, fieldIdx);
+	}
 
-uint64_t _getInt64(objHndl obj, obj_f fieldIdx)
-{
-	return objects.getInt64(obj, fieldIdx);
-}
+	static objHndl _getObjHnd(objHndl obj, obj_f fieldIdx)
+	{
+		return objects.getObjHnd(obj, fieldIdx);
+	}
 
-objHndl _getObjHnd(objHndl obj, obj_f fieldIdx)
-{
-	return objects.getObjHnd(obj, fieldIdx);
-}
+	static void _destroy(objHndl obj) {
+		objects.Destroy(obj);
+	}
+
+	void apply() override {
+		replaceFunction(0x1009E1D0, _obj_get_int);
+		replaceFunction(0x100A0190, _obj_set_int);
+		replaceFunction(0x1004E7F0, _abilityScoreLevelGet);
+		replaceFunction(0x100A1310, _setArrayFieldByValue);
+		replaceFunction(0x1009E5C0, _getArrayFieldInt32);
+		replaceFunction(0x1009E2E0, _getInt64);
+		replaceFunction(0x1009E360, _getObjHnd);
+		replaceFunction(0x100257A0, _destroy);
+	}
+} objReplacements;
+
 #pragma endregion

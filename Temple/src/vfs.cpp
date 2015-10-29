@@ -53,6 +53,14 @@ struct TioFileListFile {
 	TioFileListFile() {
 		name[0] = '\0';
 	}
+
+	bool IsFile() const {
+		return (attribs & TFA_SUBDIR) == 0;
+	}
+
+	bool IsDir() const {
+		return (attribs & TFA_SUBDIR) != 0;
+	}
 };
 #pragma pack(pop)
 
@@ -75,13 +83,39 @@ namespace temple {
 
 		// Adds a file (either a directory or a .dat file) to the TIO search path.
 		int (*AddPath)(const char* path);
+		
+		// Removes a previously added path
+		int (*RemovePath)(const char* path);
+
+		// Checks if a file exists
+		int (*FileExists)(const char* path, TioFileListFile *info);
+
+		// Creates a directory
+		int (*MkDir)(const char* path);
+
+		// Retrieves the GUID of a DAT file
+		int(*PathGuid)(const char *path, GUID *guidOut);
+
+		// Deletes a file
+		int (*RemoveFile)(const char* file);
+		
+		// Removes an empty directory
+		int (*RemoveDir)(const char* file);
 
 		TioVfsImpl() {
+			Resolve("tio_path_add", AddPath);
+			Resolve("tio_path_remove", RemovePath);
+			Resolve("tio_path_guid", PathGuid);
 			Resolve("tio_fopen", OpenFile);
 			Resolve("tio_fread", Read);
 			Resolve("tio_fclose", CloseFile);
 			Resolve("tio_filelength", FileLength);
-			Resolve("tio_path_add", AddPath);
+			Resolve("tio_fileexists", FileExists);
+			Resolve("tio_mkdir", MkDir);			
+			Resolve("tio_filelist_create", filelist_create);
+			Resolve("tio_filelist_destroy", filelist_destroy);
+			Resolve("tio_remove", RemoveFile);
+			Resolve("tio_rmdir", RemoveDir);
 		}
 
 		/*
@@ -107,7 +141,7 @@ namespace temple {
 
 		// The following functions have the wrong signature
 		void (*fgetpos)(TioFile* file, uint64_t* filePos);
-		int (*remove)(const char* file);
+
 		int (*fwrite)(const void* buffer, int size, int count, TioFile* file);
 		int (*fstat)(TioFile* file, TioFileListFile* pFileInfo);
 		bool (*fileexists)(const char* path, TioFileListFile* pInfoOut);
@@ -161,8 +195,66 @@ namespace temple {
 	TioVfs::~TioVfs() {
 	}
 
-	void TioVfs::AddPath(const std::string& path) {
-		mImpl->AddPath(path.c_str());
+	bool TioVfs::AddPath(const std::string& path) {
+		return mImpl->AddPath(path.c_str()) == 0;
+	}
+
+	bool TioVfs::RemovePath(const std::string& path) {
+		return mImpl->RemovePath(path.c_str()) == 0;
+	}
+
+	bool TioVfs::GetArchiveGUID(const std::string& path, GUID& guidOut) {
+		return mImpl->PathGuid(path.c_str(), &guidOut) == 0;
+	}
+
+	bool TioVfs::FileExists(const std::string& path) {
+		TioFileListFile info;
+		return mImpl->FileExists(path.c_str(), &info) != 0
+			&& info.IsFile();
+	}
+
+	bool TioVfs::DirExists(const std::string& path) {
+		TioFileListFile info;
+		return mImpl->FileExists(path.c_str(), &info) != 0
+			&& info.IsDir();
+	}
+
+	bool TioVfs::MkDir(const std::string& path) {
+		return mImpl->MkDir(path.c_str()) == 0;
+	}
+
+	std::vector<VfsSearchResult> TioVfs::Search(const std::string& globPattern) {
+
+		TioFileList list;
+		mImpl->filelist_create(&list, globPattern.c_str());
+
+		VfsSearchResult result;
+		std::vector<VfsSearchResult> results;
+		results.reserve(list.count);
+		for (auto i = 0; i < list.count; ++i) {
+			const auto &file = list.files[i];
+			result.sizeInBytes = file.sizeInBytes;
+			result.dir = (file.attribs & TFA_SUBDIR) != 0;
+			result.lastModified = file.lastModified;
+			result.filename = file.name;
+			if (result.filename == "." || result.filename == "..") {
+				continue;
+			}
+			results.emplace_back(result);
+		}
+	
+		mImpl->filelist_destroy(&list);
+
+		return results;
+
+	}
+
+	bool TioVfs::RemoveDir(const std::string& path) {
+		return (mImpl->RemoveDir(path.c_str()) == 0);
+	}
+
+	bool TioVfs::RemoveFile(const std::string& path) {
+		return (mImpl->RemoveFile(path.c_str()) == 0);
 	}
 
 	Vfs::FileHandle TioVfs::Open(const char* name, const char* mode) {

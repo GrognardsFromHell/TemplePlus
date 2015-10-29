@@ -2,6 +2,8 @@
 #pragma once
 
 #pragma pack(push, 1)
+class LoadingScreen;
+
 struct GameSystemConf {
 	int editor;
 	int width;
@@ -26,6 +28,70 @@ private:
 class TigInitializer;
 class MapSystems;
 
+class VagrantSystem;
+class DescriptionSystem;
+class ItemEffectSystem;
+class TeleportSystem;
+class SectorSystem;
+class RandomSystem;
+class CritterSystem;
+class ScriptNameSystem;
+class PortraitSystem;
+class SkillSystem;
+class FeatSystem;
+class SpellSystem;
+class StatSystem;
+class ScriptSystem;
+class LevelSystem;
+class D20System;
+class MapSystem;
+class LightSchemeSystem;
+class PlayerSystem;
+class AreaSystem;
+class DialogSystem;
+class SoundMapSystem;
+class SoundGameSystem;
+class ItemSystem;
+class CombatSystem;
+class TimeEventSystem;
+class RumorSystem;
+class QuestSystem;
+class AISystem;
+class AnimSystem;
+class AnimPrivateSystem;
+class ReputationSystem;
+class ReactionSystem;
+class TileScriptSystem;
+class SectorScriptSystem;
+class WPSystem;
+class InvenSourceSystem;
+class TownMapSystem;
+class GMovieSystem;
+class BrightnessSystem;
+class GFadeSystem;
+class AntiTeleportSystem;
+class TrapSystem;
+class MonsterGenSystem;
+class PartySystem;
+class D20LoadSaveSystem;
+class GameInitSystem;
+class GroundSystem;
+class ObjFadeSystem;
+class DeitySystem;
+class UiArtManagerSystem;
+class ParticleSysSystem;
+class CheatsSystem;
+class D20RollsSystem;
+class SecretdoorSystem;
+class MapFoggingSystem;
+class RandomEncounterSystem;
+class ObjectEventSystem;
+class FormationSystem;
+class ItemHighlightSystem;
+class PathXSystem;
+
+class GameSystemLoadingScreen;
+
 class GameSystems {
 public:
 	explicit GameSystems(TigInitializer &tig);
@@ -37,6 +103,251 @@ public:
 	MapSystems& GetMapSystems() {
 		Expects(!!mMapSystems);
 		return *mMapSystems;
+	}
+
+	VagrantSystem& GetVagrant() const {
+		Expects(!!mVagrant);
+		return *mVagrant;
+	}
+	DescriptionSystem& GetDescription() const {
+		Expects(!!mDescription);
+		return *mDescription;
+	}
+	ItemEffectSystem& GetItemEffect() const {
+		Expects(!!mItemEffect);
+		return *mItemEffect;
+	}
+	TeleportSystem& GetTeleport() const {
+		Expects(!!mTeleport);
+		return *mTeleport;
+	}
+	SectorSystem& GetSector() const {
+		Expects(!!mSector);
+		return *mSector;
+	}
+	RandomSystem& GetRandom() const {
+		Expects(!!mRandom);
+		return *mRandom;
+	}
+	CritterSystem& GetCritter() const {
+		Expects(!!mCritter);
+		return *mCritter;
+	}
+	ScriptNameSystem& GetScriptName() const {
+		Expects(!!mScriptName);
+		return *mScriptName;
+	}
+	PortraitSystem& GetPortrait() const {
+		Expects(!!mPortrait);
+		return *mPortrait;
+	}
+	SkillSystem& GetSkill() const {
+		Expects(!!mSkill);
+		return *mSkill;
+	}
+	FeatSystem& GetFeat() const {
+		Expects(!!mFeat);
+		return *mFeat;
+	}
+	SpellSystem& GetSpell() const {
+		Expects(!!mSpell);
+		return *mSpell;
+	}
+	StatSystem& GetStat() const {
+		Expects(!!mStat);
+		return *mStat;
+	}
+	ScriptSystem& GetScript() const {
+		Expects(!!mScript);
+		return *mScript;
+	}
+	LevelSystem& GetLevel() const {
+		Expects(!!mLevel);
+		return *mLevel;
+	}
+	D20System& GetD20() const {
+		Expects(!!mD20);
+		return *mD20;
+	}
+	MapSystem& GetMap() const {
+		Expects(!!mMap);
+		return *mMap;
+	}
+	LightSchemeSystem& GetLightScheme() const {
+		Expects(!!mLightScheme);
+		return *mLightScheme;
+	}
+	PlayerSystem& GetPlayer() const {
+		Expects(!!mPlayer);
+		return *mPlayer;
+	}
+	AreaSystem& GetArea() const {
+		Expects(!!mArea);
+		return *mArea;
+	}
+	DialogSystem& GetDialog() const {
+		Expects(!!mDialog);
+		return *mDialog;
+	}
+	SoundMapSystem& GetSoundMap() const {
+		Expects(!!mSoundMap);
+		return *mSoundMap;
+	}
+	SoundGameSystem& GetSoundGame() const {
+		Expects(!!mSoundGame);
+		return *mSoundGame;
+	}
+	ItemSystem& GetItem() const {
+		Expects(!!mItem);
+		return *mItem;
+	}
+	CombatSystem& GetCombat() const {
+		Expects(!!mCombat);
+		return *mCombat;
+	}
+	TimeEventSystem& GetTimeEvent() const {
+		Expects(!!mTimeEvent);
+		return *mTimeEvent;
+	}
+	RumorSystem& GetRumor() const {
+		Expects(!!mRumor);
+		return *mRumor;
+	}
+	QuestSystem& GetQuest() const {
+		Expects(!!mQuest);
+		return *mQuest;
+	}
+	AISystem& GetAI() const {
+		Expects(!!mAI);
+		return *mAI;
+	}
+	AnimSystem& GetAnim() const {
+		Expects(!!mAnim);
+		return *mAnim;
+	}
+	AnimPrivateSystem& GetAnimPrivate() const {
+		Expects(!!mAnimPrivate);
+		return *mAnimPrivate;
+	}
+	ReputationSystem& GetReputation() const {
+		Expects(!!mReputation);
+		return *mReputation;
+	}
+	ReactionSystem& GetReaction() const {
+		Expects(!!mReaction);
+		return *mReaction;
+	}
+	TileScriptSystem& GetTileScript() const {
+		Expects(!!mTileScript);
+		return *mTileScript;
+	}
+	SectorScriptSystem& GetSectorScript() const {
+		Expects(!!mSectorScript);
+		return *mSectorScript;
+	}
+	WPSystem& GetWP() const {
+		Expects(!!mWP);
+		return *mWP;
+	}
+	InvenSourceSystem& GetInvenSource() const {
+		Expects(!!mInvenSource);
+		return *mInvenSource;
+	}
+	TownMapSystem& GetTownMap() const {
+		Expects(!!mTownMap);
+		return *mTownMap;
+	}
+	GMovieSystem& GetGMovie() const {
+		Expects(!!mGMovie);
+		return *mGMovie;
+	}
+	BrightnessSystem& GetBrightness() const {
+		Expects(!!mBrightness);
+		return *mBrightness;
+	}
+	GFadeSystem& GetGFade() const {
+		Expects(!!mGFade);
+		return *mGFade;
+	}
+	AntiTeleportSystem& GetAntiTeleport() const {
+		Expects(!!mAntiTeleport);
+		return *mAntiTeleport;
+	}
+	TrapSystem& GetTrap() const {
+		Expects(!!mTrap);
+		return *mTrap;
+	}
+	MonsterGenSystem& GetMonsterGen() const {
+		Expects(!!mMonsterGen);
+		return *mMonsterGen;
+	}
+	PartySystem& GetParty() const {
+		Expects(!!mParty);
+		return *mParty;
+	}
+	D20LoadSaveSystem& GetD20LoadSave() const {
+		Expects(!!mD20LoadSave);
+		return *mD20LoadSave;
+	}
+	GameInitSystem& GetGameInit() const {
+		Expects(!!mGameInit);
+		return *mGameInit;
+	}
+	GroundSystem& GetGround() const {
+		Expects(!!mGround);
+		return *mGround;
+	}
+	ObjFadeSystem& GetObjFade() const {
+		Expects(!!mObjFade);
+		return *mObjFade;
+	}
+	DeitySystem& GetDeity() const {
+		Expects(!!mDeity);
+		return *mDeity;
+	}
+	UiArtManagerSystem& GetUiArtManager() const {
+		Expects(!!mUiArtManager);
+		return *mUiArtManager;
+	}
+	ParticleSysSystem& GetParticleSys() const {
+		Expects(!!mParticleSys);
+		return *mParticleSys;
+	}
+	CheatsSystem& GetCheats() const {
+		Expects(!!mCheats);
+		return *mCheats;
+	}
+	D20RollsSystem& GetD20Rolls() const {
+		Expects(!!mD20Rolls);
+		return *mD20Rolls;
+	}
+	SecretdoorSystem& GetSecretdoor() const {
+		Expects(!!mSecretdoor);
+		return *mSecretdoor;
+	}
+	MapFoggingSystem& GetMapFogging() const {
+		Expects(!!mMapFogging);
+		return *mMapFogging;
+	}
+	RandomEncounterSystem& GetRandomEncounter() const {
+		Expects(!!mRandomEncounter);
+		return *mRandomEncounter;
+	}
+	ObjectEventSystem& GetObjectEvent() const {
+		Expects(!!mObjectEvent);
+		return *mObjectEvent;
+	}
+	FormationSystem& GetFormation() const {
+		Expects(!!mFormation);
+		return *mFormation;
+	}
+	ItemHighlightSystem& GetItemHighlight() const {
+		Expects(!!mItemHighlight);
+		return *mItemHighlight;
+	}
+	PathXSystem& GetPathX() const {
+		Expects(!!mPathX);
+		return *mPathX;
 	}
 
 	// Makes a savegame.
@@ -56,6 +367,17 @@ public:
 
 	void AdvanceTime();
 
+	void LoadModule(const std::string &moduleName);
+	void AddModulePaths(const std::string &moduleName);
+
+	void UnloadModule();
+	void RemoveModulePaths();
+
+	void ResetGame();
+	bool IsResetting() const {
+		return mResetting;
+	}
+
 private:
 	void RegisterDataFiles();
 	void VerifyTemplePlusData();
@@ -65,13 +387,93 @@ private:
 	void InitAnimationSystem();
 	
 	void ResizeScreen(int w, int h);
+
+	void InitializeSystems(LoadingScreen &);
 	
+	template<typename T, typename... TArgs>
+	std::unique_ptr<T> InitializeSystem(LoadingScreen &loadingScreen, TArgs&&... args);
+
 	TigInitializer &mTig;
 	GameSystemConf mConfig;
 	TigBufferstuffInitializer mTigBuffer;
+
+	bool mResetting = false;
+	
+	std::vector<class GameSystem*> mLoadedSystems;
+	std::vector<class TimeAwareGameSystem*> mTimeAwareSystems;
+	std::vector<class ModuleAwareGameSystem*> mModuleAwareSystems;
+	std::vector<class ResetAwareGameSystem*> mResetAwareSystems;
+	std::vector<class BufferResettingGameSystem*> mBufferResettingSystems;
+	std::vector<class SaveGameAwareGameSystem*> mSaveGameAwareSystems;
+
+	std::unique_ptr<VagrantSystem> mVagrant;
+	std::unique_ptr<DescriptionSystem> mDescription;
+	std::unique_ptr<ItemEffectSystem> mItemEffect;
+	std::unique_ptr<TeleportSystem> mTeleport;
+	std::unique_ptr<SectorSystem> mSector;
+	std::unique_ptr<RandomSystem> mRandom;
+	std::unique_ptr<CritterSystem> mCritter;
+	std::unique_ptr<ScriptNameSystem> mScriptName;
+	std::unique_ptr<PortraitSystem> mPortrait;
+	std::unique_ptr<SkillSystem> mSkill;
+	std::unique_ptr<FeatSystem> mFeat;
+	std::unique_ptr<SpellSystem> mSpell;
+	std::unique_ptr<StatSystem> mStat;
+	std::unique_ptr<ScriptSystem> mScript;
+	std::unique_ptr<LevelSystem> mLevel;
+	std::unique_ptr<D20System> mD20;
+	std::unique_ptr<MapSystems> mMapSystems;
+	std::unique_ptr<MapSystem> mMap;
+	std::unique_ptr<LightSchemeSystem> mLightScheme;
+	std::unique_ptr<PlayerSystem> mPlayer;
+	std::unique_ptr<AreaSystem> mArea;
+	std::unique_ptr<DialogSystem> mDialog;
+	std::unique_ptr<SoundMapSystem> mSoundMap;
+	std::unique_ptr<SoundGameSystem> mSoundGame;
+	std::unique_ptr<ItemSystem> mItem;
+	std::unique_ptr<CombatSystem> mCombat;
+	std::unique_ptr<TimeEventSystem> mTimeEvent;
+	std::unique_ptr<RumorSystem> mRumor;
+	std::unique_ptr<QuestSystem> mQuest;
+	std::unique_ptr<AISystem> mAI;
+	std::unique_ptr<AnimSystem> mAnim;
+	std::unique_ptr<AnimPrivateSystem> mAnimPrivate;
+	std::unique_ptr<ReputationSystem> mReputation;
+	std::unique_ptr<ReactionSystem> mReaction;
+	std::unique_ptr<TileScriptSystem> mTileScript;
+	std::unique_ptr<SectorScriptSystem> mSectorScript;
+	std::unique_ptr<WPSystem> mWP;
+	std::unique_ptr<InvenSourceSystem> mInvenSource;
+	std::unique_ptr<TownMapSystem> mTownMap;
+	std::unique_ptr<GMovieSystem> mGMovie;
+	std::unique_ptr<BrightnessSystem> mBrightness;
+	std::unique_ptr<GFadeSystem> mGFade;
+	std::unique_ptr<AntiTeleportSystem> mAntiTeleport;
+	std::unique_ptr<TrapSystem> mTrap;
+	std::unique_ptr<MonsterGenSystem> mMonsterGen;
+	std::unique_ptr<PartySystem> mParty;
+	std::unique_ptr<D20LoadSaveSystem> mD20LoadSave;
+	std::unique_ptr<GameInitSystem> mGameInit;
+	std::unique_ptr<GroundSystem> mGround;
+	std::unique_ptr<ObjFadeSystem> mObjFade;
+	std::unique_ptr<DeitySystem> mDeity;
+	std::unique_ptr<UiArtManagerSystem> mUiArtManager;
+	std::unique_ptr<ParticleSysSystem> mParticleSys;
+	std::unique_ptr<CheatsSystem> mCheats;
+	std::unique_ptr<D20RollsSystem> mD20Rolls;
+	std::unique_ptr<SecretdoorSystem> mSecretdoor;
+	std::unique_ptr<MapFoggingSystem> mMapFogging;
+	std::unique_ptr<RandomEncounterSystem> mRandomEncounter;
+	std::unique_ptr<ObjectEventSystem> mObjectEvent;
+	std::unique_ptr<FormationSystem> mFormation;
+	std::unique_ptr<ItemHighlightSystem> mItemHighlight;
+	std::unique_ptr<PathXSystem> mPathX;
+
 	std::unique_ptr<class LegacyGameSystemResources> mLegacyResources;
 
-	std::unique_ptr<MapSystems> mMapSystems;
+	GUID mModuleGuid;
+	std::string mModuleArchivePath;
+	std::string mModuleDirPath;
 };
 
 extern GameSystems *gameSystems;

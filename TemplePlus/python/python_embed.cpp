@@ -102,12 +102,12 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 	return true;
 }
 
-static bool __cdecl PythonSaveGame(TioFile *file) {
-	return PyGame_Save(file);
+static BOOL __cdecl PythonSaveGame(TioFile *file) {
+	return PyGame_Save(file) ? TRUE : FALSE;
 }
 
-static bool __cdecl PythonLoadGame(GameSystemSaveFile *file) {
-	return PyGame_Load(file);
+static BOOL __cdecl PythonLoadGame(GameSystemSaveFile *file) {
+	return PyGame_Load(file) ? TRUE : FALSE;
 }
 
 static void __cdecl PythonReset() {

@@ -8,7 +8,13 @@
 
 #include "tio/tio.h"
 
+struct TigRectList;
+
 #pragma pack(push, 1)
+struct TigRectList {
+	TigRect rect;
+	TigRectList* next;
+};
 
 struct GameSystemSaveFile {
 	uint32_t saveVersion;
@@ -79,6 +85,8 @@ struct GameSystemInitTable : temple::AddressTable {
 	bool(__cdecl *TigWindowBufferstuffCreate)(int *bufferStuffIdx);
 	void(__cdecl *TigWindowBufferstuffFree)(int bufferStuffIdx);
 
+	BOOL(__cdecl *PreprocessMapMobiles)(const char *mapName);
+
 	// Initializes several random tables, vectors and shuffled int lists as well as the lightning material.
 	void(__cdecl *InitPfxLightning)();
 
@@ -104,13 +112,16 @@ struct GameSystemInitTable : temple::AddressTable {
 	// It's not even safe to assume these rects belong to the scratchbuffer
 	TigRect *scratchBufferRect;
 	TigRect *scratchBufferRectExtended;
+	
+	// Seems to be manipulated by ScratchbufferRelated
+	TigRectList** globalRectList;
 
 	/*
 	Stores the last timestamp when the game systems were processed.
 	Sadly, this is used from somewhere deep in the obj system.
 	*/
 	uint32_t *lastAdvanceTime;
-
+	
 	GameSystemInitTable() {
 		rebase(DifficultyChanged, 0x10003770);
 		rebase(SetDrawHp, 0x1002B910);
@@ -146,27 +157,31 @@ struct GameSystemInitTable : temple::AddressTable {
 		rebase(TigWindowBufferstuffCreate, 0x10113EB0);
 		rebase(TigWindowBufferstuffFree, 0x101DF2C0);
 
+		rebase(PreprocessMapMobiles, 0x10071350);
+
+		rebase(globalRectList, 0x10306C0C);
 	}
 };
 
+/*
+using GameSystemInit = bool(const GameSystemConf* conf);
+using GameSystemExit = void();
 
-typedef bool(__cdecl *GameSystemInit)(const GameSystemConf* conf);
 typedef void(__cdecl *GameSystemReset)();
 typedef bool(__cdecl *GameSystemModuleLoad)();
 typedef void(__cdecl *GameSystemModuleUnload)();
-typedef void(__cdecl *GameSystemExit)();
 typedef void(__cdecl *GameSystemAdvanceTime)(uint32_t time);
 typedef bool(__cdecl *GameSystemSave)(TioFile *file);
 typedef bool(__cdecl *GameSystemLoad)(GameSystemSaveFile* saveFile);
 typedef void(__cdecl *GameSystemResetBuffers)(RebuildBufferInfo* rebuildInfo);
 
-struct GameSystem {
+struct GameSystemTableEntry {
 	const char* name;
-	GameSystemInit init;
+	GameSystemInit* init;
 	GameSystemReset reset;
 	GameSystemModuleLoad moduleLoad;
 	GameSystemModuleUnload moduleUnload;
-	GameSystemExit exit;
+	GameSystemExit* exit;
 	GameSystemAdvanceTime advanceTime;
 	uint32_t field1c;
 	GameSystemSave save;
@@ -178,9 +193,11 @@ struct GameSystem {
 const uint32_t gameSystemCount = 61;
 
 struct LegacyGameSystems {
-	GameSystem systems[gameSystemCount];
+	GameSystemTableEntry systems[gameSystemCount];
 };
 
 extern temple::GlobalStruct<LegacyGameSystems, 0x102AB368> legacyGameSystems;
+*/
+
 extern GameSystemFuncs gameSystemFuncs;
 extern GameSystemInitTable gameSystemInitTable;

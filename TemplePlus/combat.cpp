@@ -13,7 +13,7 @@
 #include "util/fixes.h"
 
 
-class CombatSystemReplacements : public TempleFix
+class LegacyCombatSystemReplacements : public TempleFix
 {
 public:
 	const char* name() override {
@@ -26,19 +26,19 @@ public:
 	}
 } combatSysReplacements;
 
-struct CombatSystemAddresses : temple::AddressTable
+struct LegacyCombatSystemAddresses : temple::AddressTable
 {
 	int(__cdecl* GetEnemiesCanMelee)(objHndl obj, objHndl* canMeleeList);
-	CombatSystemAddresses()
+	LegacyCombatSystemAddresses()
 	{
 		rebase(GetEnemiesCanMelee, 0x100B90C0);
 	}
 } addresses;
 
 #pragma region Combat System Implementation
-CombatSystem combatSys;
+LegacyCombatSystem combatSys;
 
-char * CombatSystem::GetCombatMesLine(int line)
+char * LegacyCombatSystem::GetCombatMesLine(int line)
 {
 	MesLine mesLine;
 	MesHandle combatMes = *combatSys.combatMesfileIdx;
@@ -57,19 +57,19 @@ char * CombatSystem::GetCombatMesLine(int line)
 	return (char*)mesLine.value;
 }
 
-int CombatSystem::IsWithinReach(objHndl attacker, objHndl target)
+int LegacyCombatSystem::IsWithinReach(objHndl attacker, objHndl target)
 {
 	float reach = critterSys.GetReach(attacker, D20A_UNSPECIFIED_ATTACK);
 	float distTo = locSys.DistanceToObj(attacker, target);
 	return distTo < reach;
 }
 
-bool CombatSystem::isCombatActive()
+bool LegacyCombatSystem::isCombatActive()
 {
 	return *combatSys.combatModeActive != 0;
 }
 
-uint32_t CombatSystem::IsCloseToParty(objHndl objHnd)
+uint32_t LegacyCombatSystem::IsCloseToParty(objHndl objHnd)
 {
 	if (critterSys.IsPC(objHnd))  return 1;
 	for (uint32_t i = 0; i < party.GroupListGetLen(); i++)
@@ -81,12 +81,12 @@ uint32_t CombatSystem::IsCloseToParty(objHndl objHnd)
 	return 0;
 }
 
-int CombatSystem::GetEnemiesCanMelee(objHndl obj, objHndl* canMeleeList)
+int LegacyCombatSystem::GetEnemiesCanMelee(objHndl obj, objHndl* canMeleeList)
 {
 	return addresses.GetEnemiesCanMelee(obj, canMeleeList);
 }
 
-objHndl CombatSystem::GetWeapon(AttackPacket* attackPacket)
+objHndl LegacyCombatSystem::GetWeapon(AttackPacket* attackPacket)
 {
 	D20CAF flags = attackPacket->flags;
 	objHndl result = 0i64;
@@ -96,7 +96,7 @@ objHndl CombatSystem::GetWeapon(AttackPacket* attackPacket)
 	return result;
 }
 
-bool CombatSystem::DisarmCheck(objHndl attacker, objHndl defender, D20Actn* d20a)
+bool LegacyCombatSystem::DisarmCheck(objHndl attacker, objHndl defender, D20Actn* d20a)
 {
 	objHndl attackerWeapon = inventory.ItemWornAt(attacker, 3);
 	if (!attackerWeapon)
@@ -170,7 +170,7 @@ bool CombatSystem::DisarmCheck(objHndl attacker, objHndl defender, D20Actn* d20a
 	return attackerSucceeded;
 }
 
-bool CombatSystem::SunderCheck(objHndl attacker, objHndl defender, D20Actn* d20a)
+bool LegacyCombatSystem::SunderCheck(objHndl attacker, objHndl defender, D20Actn* d20a)
 {
 	objHndl attackerWeapon = inventory.ItemWornAt(attacker, 3);
 	if (!attackerWeapon)
@@ -236,22 +236,22 @@ bool CombatSystem::SunderCheck(objHndl attacker, objHndl defender, D20Actn* d20a
 	return attackerSucceeded;
 }
 
-int CombatSystem::GetClosestEnemy(objHndl obj, LocAndOffsets* locOut, objHndl* objOut, float* distOut, int flags)
+int LegacyCombatSystem::GetClosestEnemy(objHndl obj, LocAndOffsets* locOut, objHndl* objOut, float* distOut, int flags)
 {
 	return _GetClosestEnemy(obj, locOut, objOut, distOut, flags);
 }
 
-int CombatSystem::GetInitiativeListLength()
+int LegacyCombatSystem::GetInitiativeListLength()
 {
 	return _GetInitiativeListLength();
 }
 
-objHndl CombatSystem::GetInitiativeListMember(int n)
+objHndl LegacyCombatSystem::GetInitiativeListMember(int n)
 {
 	return _GetInitiativeListMember(n);
 }
 
-int CombatSystem::GetClosestEnemy(AiTactic* aiTac, int selectionType)
+int LegacyCombatSystem::GetClosestEnemy(AiTactic* aiTac, int selectionType)
 {
 	objHndl performer = aiTac->performer; 
 	objHndl combatant; 
@@ -297,7 +297,7 @@ int CombatSystem::GetClosestEnemy(AiTactic* aiTac, int selectionType)
 	return 0;
 }
 
-void CombatSystem::enterCombat(objHndl objHnd)
+void LegacyCombatSystem::enterCombat(objHndl objHnd)
 {
 	_enterCombat(objHnd);
 }
