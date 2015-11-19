@@ -6,12 +6,15 @@
 #include "tio/tio.h"
 #include "objlist.h"
 #include "obj.h"
+#include "gamesystems/map/sector.h"
+#include "raycast.h"
 
 PathNodeSys pathNodeSys;
 char PathNodeSys::pathNodesLoadDir[260];
 char PathNodeSys::pathNodesSaveDir[260];
 MapPathNodeList * PathNodeSys::pathNodeList;
-char PathNodeSys::clearanceData[128][128][3][3];
+MapClearanceData PathNodeSys::clearanceData;
+bool PathNodeSys::hasClearanceData;
 ClearanceProfile PathNodeSys::clearanceProfiles[30];
 struct PathNodeSysAddresses : temple::AddressTable
 {
@@ -249,10 +252,12 @@ BOOL PathNodeSys::LoadNodesCurrent()
 	char fileName[260];
 	char fileNameNew[260];
 	char supplem[260];
+	char clearanceFileName[260];
 
 	_snprintf(fileName, 260, "%s\\%s", pathNodesLoadDir, "pathnode.pnd");
 	_snprintf(fileNameNew, 260, "%s\\%s", pathNodesLoadDir, "pathnodenew.pnd");
 	_snprintf(supplem, 260, "%s\\%s", pathNodesLoadDir, "pathnodedist.pnd");
+	_snprintf(clearanceFileName, 260, "%s\\%s", pathNodesLoadDir, "clearance.clr");
 
 	auto file = tio_fopen(fileNameNew, "rb");
 	if (!file)
@@ -261,6 +266,18 @@ BOOL PathNodeSys::LoadNodesCurrent()
 		if (!file)
 			return 1;
 	}
+
+	auto clearanceFile = tio_fopen(clearanceFileName, "rb");
+	if (clearanceFile)
+	{
+	//	tio_fread(&clearanceData, sizeof(clearanceData), 1, clearanceFile);
+		//tio_fclose(clearanceFile);
+	//	hasClearanceData = true;
+	} else
+	{
+		hasClearanceData = false;
+	}
+
 
 	auto fileSupplem = tio_fopen(supplem, "rb");
 	int nodeCountSupplem = 0;
@@ -531,9 +548,76 @@ BOOL PathNodeSys::FlushNodes()
 	return status;
 }
 
+void PathNodeSys::GenerateClearanceFile()
+{	
+	int idx = -1;
+	auto secClrData = new SectorClearanceData();
+	for (int secY = 0; secY < 16; secY++)
+	{
+		for (int secX = 0; secX < 16; secX++)
+		{
+			SectorLoc secLoc;
+			secLoc.raw = secX + (secY << 26);
+			Sector * sect;
+			int lockStatus = sectorSys.SectorLock(secLoc, &sect);
+			if (!lockStatus)
+			{
+				clearanceData.clrIdx.clrAddr[secY][secX] = -1;
+				continue;
+			}
+			clearanceData.clrIdx.clrAddr[secY][secX] = idx++;
+			if (idx)
+				secClrData = (SectorClearanceData*)realloc(secClrData, (idx + 1)*sizeof(SectorClearanceData));
+			Subtile subtile;
+			for (int ny = 0; ny < 64 * 3; ny++)
+			{
+				subtile.y = secY * 64 * 3 + ny;
+				for (int nx = 0; nx < 64 * 3; nx++)
+				{
+					float clearance = MAX_OBJ_RADIUS_SUBTILES * (INCH_PER_TILE / 3);
+					
+					subtile.x = secX*64*3 + nx;
+					
+					LocAndOffsets loc;
+					locSys.SubtileToLocAndOff(subtile, &loc);
+					RaycastPacket rayPkt;
+					rayPkt.flags = (RaycastFlags)(RaycastFlags::HasToBeCleared | RaycastFlags::ExcludeItemObjects | RaycastFlags::ExcludePortals | RaycastFlags::HasRadius);
+					rayPkt.radius = MAX_OBJ_RADIUS_TILES * INCH_PER_TILE;
+					rayPkt.targetLoc = rayPkt.origin = loc;
+					rayPkt.Raycast();
+					int numFound = rayPkt.resultCount;
+					for (int i = 0; i < numFound; i++)
+					{
+						auto res = &rayPkt.results[i];
+						if (!res->obj)
+						{
+
+							float clrRad = locSys.Distance3d(loc, res->loc) / (INCH_PER_TILE / 3);
+							if (clrRad < clearance)
+								clearance = clrRad;
+							if (clearance == 0)
+								break;
+
+						}
+					}
+				//	clearanceData[ny][nx] = clearance;
+				}// nx
+			} // ny
+			sectorSys.SectorUnlock(secLoc);
+		}
+	}
+	
+	clearanceData.clrIdx.numSectors = idx + 1;
+	auto fil = tio_fopen("clearance.bin", "w" );
+	tio_fwrite(&clearanceData.clrIdx, sizeof(clearanceData.clrIdx), 1, fil);
+	tio_fwrite(clearanceData.secClr, sizeof(SectorClearanceData), clearanceData.clrIdx.numSectors, fil);
+	//tio_fwrite(clearanceData, sizeof(clearanceData), 1, fil);
+	tio_fclose(fil);
+}
+
 int PathNodeSys::CalcClearanceFromNearbyObjects(objHndl obj, float clearanceReq)
 {
-	memset(clearanceData, 255, sizeof(clearanceData));
+	//memset(clearanceData, 255, sizeof(clearanceData));
 	ObjList objList;
 	LocAndOffsets objLoc = objects.GetLocationFull(obj);
 	objList.ListRadius(objLoc, INCH_PER_TILE * 64, OLC_ALL & ~(OLC_ITEMS | OLC_TRAP ));

@@ -19,6 +19,14 @@ enum RaycastFlags : uint32_t
 	FoundCoverProvider = 0x80000000 // subtile marked as Blocker OR (FlyOver AND Cover)
 };
 
+enum RaycastResultFlags : int
+{
+	RaycastResultFlag1 = 1,
+	BlockerSubtile = 2,
+	FlyoverSubtile = 4,
+	RaycastResultFlag8 = 8
+};
+
 struct RaycastResultItem
 {
 	int flags;

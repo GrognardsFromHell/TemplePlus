@@ -1,6 +1,7 @@
 #pragma once
 
 #include <infrastructure/vfs.h>
+#include <vector>
 
 namespace temple {
 	
@@ -14,7 +15,8 @@ namespace temple {
 		
 		// Adds a data item to the vfs (i.e. .dat file, folder)
 		void AddPath(const std::string &path);
-
+		void Pack(const std::vector<std::string> &args);
+		
 	protected:
 		FileHandle Open(const char* name, const char* mode) override;
 		size_t Read(void* buffer, size_t size, FileHandle handle) override;

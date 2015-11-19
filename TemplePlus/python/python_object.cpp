@@ -1020,7 +1020,8 @@ static PyObject* PyObjHandle_Move(PyObject* obj, PyObject* args) {
 	newLoc.off_x = 0;
 	newLoc.off_y = 0;
 	if (!PyArg_ParseTuple(args, "L|ff:objhndl.move", &newLoc.location, &newLoc.off_x, &newLoc.off_y)) {
-		return 0;
+		if (!PyArg_ParseTuple(args, "ii|ff:objhndl.move", &newLoc.location.locx, &newLoc.location.locy, &newLoc.off_x, &newLoc.off_y)) 
+			return 0;
 	}
 	objects.Move(self->handle, newLoc);
 	Py_RETURN_NONE;

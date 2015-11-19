@@ -222,6 +222,7 @@ void GameSystems::RegisterDataFiles() {
 
 	tio_mkdir("data");
 	tio_path_add("data");
+	tio_path_add("tpdata\\clearances.dat");
 
 	for (auto &entry : config.additionalTioPaths) {
 		logger->info("Adding additional TIO path {}", entry);

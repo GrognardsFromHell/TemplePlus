@@ -183,7 +183,6 @@
     <ClCompile Include="dialog.cpp" />
     <ClCompile Include="dice.cpp" />
     <ClCompile Include="fade.cpp" />
-    <ClCompile Include="maps.cpp" />
     <ClCompile Include="particles.cpp" />
     <ClCompile Include="python\python_areas.cpp" />
     <ClCompile Include="python\python_cheats.cpp" />
@@ -289,6 +288,9 @@
       <Filter>tig</Filter>
     </ClCompile>
     <ClCompile Include="gamesystems\map\d20_help.cpp" />
+    <ClCompile Include="maps.cpp">
+      <Filter>Map System</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -473,7 +475,6 @@
     <ClInclude Include="dialog.h" />
     <ClInclude Include="dice.h" />
     <ClInclude Include="fade.h" />
-    <ClInclude Include="maps.h" />
     <ClInclude Include="particles.h" />
     <ClInclude Include="python\python_areas.h" />
     <ClInclude Include="python\python_cheats.h" />
@@ -556,6 +557,9 @@
       <Filter>tig</Filter>
     </ClInclude>
     <ClInclude Include="gamesystems\map\d20_help.h" />
+    <ClInclude Include="maps.h">
+      <Filter>Map System</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

@@ -129,6 +129,10 @@ struct SectorLoc
 		return loc;
 	}
 
+	bool operator ==(SectorLoc secLoc) {
+		return raw == secLoc.raw;
+	}
+
 };
 
 struct Subtile // every tile is subdivided into 3x3 subtiles

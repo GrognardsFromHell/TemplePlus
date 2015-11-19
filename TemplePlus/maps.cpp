@@ -46,6 +46,7 @@ struct MapAddresses : temple::AddressTable {
 	bool (__cdecl *GetJumpPoint)(int jmpPntID, char *mapNameOut, size_t mapNameOutSize, int *mapNumOut, locXY *locXYOut);
 	
 	int * mapLoaded;
+	int * mapIsOpen;
 
 	MapAddresses() {
 		rebase(GetVisitedMaps, 0x1006FE50);
@@ -56,6 +57,7 @@ struct MapAddresses : temple::AddressTable {
 		rebase(IsCurrentMapOutdoor, 0x1006FE80);
 		rebase(GetJumpPoint, 0x100BDE20);
 		rebase(mapLoaded, 0x10AA9524);
+		rebase(mapIsOpen, 0x10AA9588);
 	}
 };
 MapAddresses mapAddresses;
@@ -116,6 +118,11 @@ void Maps::RevealFlag(int mapId, int flagId) {
 
 bool Maps::IsCurrentMapOutdoor() {
 	return mapAddresses.IsCurrentMapOutdoor();
+}
+
+BOOL Maps::IsMapOpen()
+{
+	return *mapAddresses.mapIsOpen;
 }
 
 bool Maps::GetJumpPoint(int id, JumpPoint& jumpPoint, bool withMapName) {

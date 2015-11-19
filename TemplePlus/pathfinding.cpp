@@ -1084,7 +1084,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 
 
 
-	if (idxMinus0 == -1)
+	if (idxMinus0 == -1){}
 		goto LABEL_74;
 
 	while(1)
@@ -1290,8 +1290,8 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 	int lowerSubtileX = min(fromSubtileX, toSubtileX);	
 	int lowerSubtileY = min(fromSubtileY, toSubtileY);
 
-	int halfDeltaShiftedX = lowerSubtileX + deltaSubtileX / 2 - 64;
-	int halfDeltaShiftedY = lowerSubtileY + deltaSubtileY / 2 - 64;
+	int cornerX = lowerSubtileX + deltaSubtileX / 2 - 64;
+	int cornerY = lowerSubtileY + deltaSubtileY / 2 - 64;
 
 
 	//TileRect tileR;
@@ -1301,8 +1301,8 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 	//int count;
 	//sectorSys.GetTileFlagsArea(&tileR, blockedSubtiles, &count);
 
-	int idxMinus0 = fromSubtileX - halfDeltaShiftedX + ((fromSubtileY - halfDeltaShiftedY) << 7);
-	int idxTarget = toSubtileX - halfDeltaShiftedX + ((toSubtileY - halfDeltaShiftedY) << 7);
+	int curIdx = fromSubtileX - cornerX + ((fromSubtileY - cornerY) << 7);
+	int idxTarget = toSubtileX - cornerX + ((toSubtileY - cornerY) << 7);
 
 	int idxTgtX = idxTarget % 128;
 	int idxTgtY = idxTarget / 128;
@@ -1317,17 +1317,16 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 	PathSubtile pathFindAstar[128 * 128];
 	memset(pathFindAstar, 0, sizeof(pathFindAstar));
 
-	pathFindAstar[idxMinus0].length = 1;
-	pathFindAstar[idxMinus0].refererIdx = -1;
+	pathFindAstar[curIdx].length = 1;
+	pathFindAstar[curIdx].refererIdx = -1;
 
 
-	int lastChainIdx = idxMinus0;
-	int firstChainIdx = idxMinus0;
+	int lastChainIdx = curIdx;
+	int firstChainIdx = curIdx;
 	int deltaIdxX;
 	int distanceMetric;
 
 	int refererIdx;
-	int curIdx;
 	int heuristic;
 	int minHeuristic = 0x7FFFffff;
 	int idxPrevChain;
@@ -1337,16 +1336,25 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 	int shiftedYidx;
 	int newIdx;
 
+	float requisiteClearance = objects.GetRadius(pq->critter) / (INCH_PER_TILE / 3);
+	if (requisiteClearance > 4.3)
+		requisiteClearance *= 0.7;
+	else if (requisiteClearance > 2.0)
+		requisiteClearance -= 1;
 
 
 
-	if (idxMinus0 == -1)
-		goto LABEL_74;
+
+	if (curIdx == -1)
+	{
+		if (referenceTime)
+			npcPathTimeCumulative += timeGetTime() - referenceTime;
+		return 0;
+	}
 
 	while (1)
 	{
 		refererIdx = -1;
-		curIdx = idxMinus0;
 		do // loop over the chain to find the node with minimal heuristic; initially the chain is just the "from" node
 		{
 			deltaIdxX = abs(curIdx % 128 - idxTgtX);
@@ -1384,18 +1392,22 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 		} while (curIdx >= 0);
 
 		if (refererIdx == -1)
-			goto LABEL_74;
+		{
+			if (referenceTime)
+				npcPathTimeCumulative += timeGetTime() - referenceTime;
+			return 0;
+		}
 		if (refererIdx == idxTarget) break;
-		_fromSubtile.x = halfDeltaShiftedX + (refererIdx % 128);
-		_fromSubtile.y = halfDeltaShiftedY + (refererIdx / 128);
+		_fromSubtile.x = cornerX + (refererIdx % 128);
+		_fromSubtile.y = cornerY + (refererIdx / 128);
 
 		// loop over all possible directions for better path
 		for (auto direction = 0; direction < 8; direction++)
 		{
 			if (!locSys.ShiftSubtileOnceByDirection(_fromSubtile, direction, &shiftedSubtile))
 				continue;
-			shiftedXidx = shiftedSubtile.x - halfDeltaShiftedX;
-			shiftedYidx = shiftedSubtile.y - halfDeltaShiftedY;
+			shiftedXidx = shiftedSubtile.x - cornerX;
+			shiftedYidx = shiftedSubtile.y - cornerY;
 			if (shiftedXidx >= 0 && shiftedXidx < 128 && shiftedYidx >= 0 && shiftedYidx < 128)
 			{
 				newIdx = shiftedXidx + (shiftedYidx << 7);
@@ -1410,19 +1422,38 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 			LocAndOffsets subPathTo;
 			locSys.SubtileToLocAndOff(_fromSubtile, &subPathFrom);
 			locSys.SubtileToLocAndOff(shiftedSubtile, &subPathTo);
-
-
+			
+			if (PathNodeSys::hasClearanceData)
+			{
+			//	if (PathNodeSys::clearanceData[shiftedSubtile.y][shiftedSubtile.x] < requisiteClearance)
+				{
+					RaycastPacket objIt;
+					objIt.origin = subPathTo;
+					objIt.targetLoc = subPathTo;
+					objIt.flags = static_cast<RaycastFlags>( RaycastFlags::ExcludeItemObjects );
+					if (pqr->mover)
+					{
+						objIt.flags = (RaycastFlags)((int)objIt.flags | RaycastFlags::HasRadius | RaycastFlags::HasSourceObj);
+						objIt.sourceObj = pqr->mover;
+						objIt.radius = objects.GetRadius(pqr->mover) * (float)0.7;
+						if (objIt.Raycast())
+						{
+							for (int i = 0; i < objIt.resultCount; i++)
+							{
+								auto res = &objIt.results[i];
+							}
+						}
+					}
+					continue;
+				}
+					
+			}
+			
 			if (!PathStraightLineIsClear(pqr, pq, subPathFrom, subPathTo))
 			{
 				continue;
 			}
 
-			//else
-			//{
-			//for (int k = 0; k < 99; k++)
-			//	PathStraightLineIsClear(pqr, pq, subPathFrom, subPathTo);
-
-			//}
 			int oldLength = pathFindAstar[newIdx].length;
 			int newLength = pathFindAstar[refererIdx].length + 14 - 4 * (direction % 2); // +14 for diagonal, +10 for straight
 
@@ -1446,12 +1477,12 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 		if (idxPrevChain != -1)
 		{
 			pathFindAstar[idxPrevChain].idxNextChain = pathFindAstar[refererIdx].idxNextChain;
-			idxMinus0 = firstChainIdx;
+			curIdx = firstChainIdx;
 		}
 		else
 		{
-			idxMinus0 = pathFindAstar[refererIdx].idxNextChain - 1;
-			firstChainIdx = idxMinus0;
+			curIdx = pathFindAstar[refererIdx].idxNextChain - 1;
+			firstChainIdx = curIdx;
 		}
 		if (pathFindAstar[refererIdx].idxNextChain)
 			pathFindAstar[pathFindAstar[refererIdx].idxNextChain - 1].idxPreviousChain
@@ -1460,8 +1491,12 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 			lastChainIdx = pathFindAstar[refererIdx].idxPreviousChain - 1;
 		pathFindAstar[refererIdx].idxPreviousChain = 0;
 		pathFindAstar[refererIdx].idxNextChain = 0;
-		if (idxMinus0 == -1)
-			goto LABEL_74;
+		if (curIdx == -1)
+		{
+			if (referenceTime)
+				npcPathTimeCumulative += timeGetTime() - referenceTime;
+			return 0;
+		}
 		idxTgtX = idxTarget % 128;
 	}
 
@@ -1478,9 +1513,9 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 
 	if (directionsCount > pq->maxShortPathFindLength)
 	{
-	LABEL_74: if (referenceTime)
-		npcPathTimeCumulative += timeGetTime() - referenceTime;
-			  return 0;
+		if (referenceTime)
+			npcPathTimeCumulative += timeGetTime() - referenceTime;
+		return 0;
 	}
 	int lastIdx = idxTarget;
 	refIdx = &pathFindAstar[lastIdx].refererIdx;

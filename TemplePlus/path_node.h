@@ -49,6 +49,33 @@ struct ClearanceProfile
 
 };
 
+struct ClearanceIndex
+{
+	unsigned char numSectors;
+	uint16_t clrAddr[16][16]; // sectorY, sectorX
+	ClearanceIndex()
+	{
+		numSectors = 0;
+		for (int i = 0; i < 16 * 16; i++)
+		{
+			for (int j = 0; j < 16; j++)
+			{
+				clrAddr[i][j] = -1;
+			}
+		}
+	}
+};
+
+struct SectorClearanceData
+{
+	float val[64 * 3][64 * 3];
+};
+
+struct MapClearanceData
+{
+	ClearanceIndex clrIdx;
+	SectorClearanceData * secClr;
+};
 
 struct MapPathNode
 {
@@ -99,6 +126,9 @@ public:
 	static char pathNodesLoadDir[260];
 	static char pathNodesSaveDir[260];
 	static ClearanceProfile clearanceProfiles[MAX_OBJ_RADIUS_SUBTILES];
+	static MapClearanceData clearanceData;
+	static bool hasClearanceData;
+	//const int testSizeofClearanceData = sizeof(clearanceData);
 
 	static MapPathNodeList * pathNodeList;
 	MapPathNodeList _pathNodeList[PATH_NODE_CAP]; //  will replace the referenced list once we're done
@@ -106,8 +136,7 @@ public:
 	int fpbnCount;
 	FindPathNodeData fpbnData[PATH_NODE_CAP];
 
-	static char clearanceData[128][128][3][3];
-	//const int testSizeofClearanceData = sizeof(clearanceData);
+
 
 	static BOOL LoadNodeFromFile(TioFile* file, MapPathNodeList ** listOut );
 	static bool LoadNeighDistFromFile(TioFile* file, MapPathNodeList* node);
@@ -122,7 +151,7 @@ public:
 	static bool WriteNodeDistToFile(MapPathNodeList* node, TioFile* tioFile);
 	static BOOL FlushNodes();
 
-
+	static void GenerateClearanceFile();
 	static int CalcClearanceFromNearbyObjects(objHndl obj, float clearanceReq);
 
 	void FindPathNodeAppend(FindPathNodeData *);
@@ -142,7 +171,7 @@ public:
 		replaceFunction(0x100A9C00, LoadNodesCurrent);
 		replaceFunction(0x100A9DA0, Reset);
 		replaceFunction(0x100A9DD0, FreeAndLoad);
-		memset(clearanceData, MAX_OBJ_RADIUS_SUBTILES*MAX_OBJ_RADIUS_SUBTILES, sizeof(clearanceData));
+		//memset(clearanceData, MAX_OBJ_RADIUS_SUBTILES, sizeof(clearanceData));
 		for (int i = 1; i <= MAX_OBJ_RADIUS_SUBTILES;i++)
 		{
 			clearanceProfiles[i-1].InitWithRadius(i *INCH_PER_TILE/3);

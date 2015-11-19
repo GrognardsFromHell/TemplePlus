@@ -196,6 +196,12 @@ PyObject *PyDebug_ReciprocityDebug()
 	return PyLong_FromLongLong(1);
 }
 
+PyObject *PyDebug_GenerateClearanceFile()
+{
+	pathNodeSys.GenerateClearanceFile();
+	return PyLong_FromLongLong(1);
+}
+
 /*
  check if destination is considered clear for inhabitation by a critter
 */
@@ -240,6 +246,7 @@ static PyMethodDef PyDebug_Methods[] = {
 	{ "recip", (PyCFunction)PyDebug_ReciprocityDebug, METH_NOARGS, NULL },
 	{ "destclear", (PyCFunction)PyDebug_DestClear, METH_VARARGS, NULL },
 	{ "tileflags", (PyCFunction)PyDebug_GetTileFlags, METH_VARARGS, NULL },
+	{ "genclearance", (PyCFunction)PyDebug_GenerateClearanceFile, METH_VARARGS, NULL },
 	
 	{ NULL, }
 };

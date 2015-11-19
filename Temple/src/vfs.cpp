@@ -2,10 +2,13 @@
 #include <platform/windows.h>
 
 #include "temple/vfs.h"
+#include <vector>
 
 enum TioFileFlag {
 	TIO_FILE_NATIVE = 0x2,
 };
+
+typedef void(__cdecl* TioMsgCb)(const char* msg);
 
 #pragma pack(push, 1)
 struct TioFileFuncs {
@@ -76,12 +79,20 @@ namespace temple {
 		// Adds a file (either a directory or a .dat file) to the TIO search path.
 		int (*AddPath)(const char* path);
 
+		// Setter of function pointers for error and info output messages ( printf("[ERROR] %s", msg); )
+		void(__cdecl* TioPackFuncs)(TioMsgCb erroCb, TioMsgCb msgCb);
+
+		// Pack file(s)
+		void(__cdecl* TioPack)(int argc, char* argv[]);
+
 		TioVfsImpl() {
 			Resolve("tio_fopen", OpenFile);
 			Resolve("tio_fread", Read);
 			Resolve("tio_fclose", CloseFile);
 			Resolve("tio_filelength", FileLength);
 			Resolve("tio_path_add", AddPath);
+			Resolve("tio_pack_funcs", TioPackFuncs);
+			Resolve("tio_pack", TioPack);
 		}
 
 		/*
@@ -163,6 +174,16 @@ namespace temple {
 
 	void TioVfs::AddPath(const std::string& path) {
 		mImpl->AddPath(path.c_str());
+	}
+
+	void TioVfs::Pack(const std::vector<std::string>& args)
+	{
+		char * argsC[100];
+		for (int i = 0; i < args.size(); i++)
+		{
+			argsC[i] = (char*)args[i].c_str();
+		}
+		mImpl->TioPack(args.size(), argsC);
 	}
 
 	Vfs::FileHandle TioVfs::Open(const char* name, const char* mode) {

@@ -219,6 +219,16 @@ struct Sector
 const int testSizeofSector = sizeof(Sector); // should be 82528 (0x14260)
 
 
+struct SectorCacheEntry
+{
+	int isUsed;
+	int lockCount;
+	int lastLockId;
+	int field_C;
+	Sector sector;
+};
+
+
 class SectorSystem : TempleFix
 {
 public:
@@ -232,6 +242,9 @@ public:
 	*/
 	static BOOL BuildTileListFromRect(TileRect* tileRect, TileListEntry* tle);
 
+	static uint64_t GetSectorLimitX();
+	static uint64_t GetSectorLimitY();
+	static BOOL SectorCacheFind(SectorLoc secLoc, int* sectorCacheIdx);
 	/*
 	loads from file into a cache (with a recency information so old sector get unlocked first)
 	*/

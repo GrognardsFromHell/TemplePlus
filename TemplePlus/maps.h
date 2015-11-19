@@ -18,11 +18,14 @@ public:
 	bool IsValidMapId(int mapId);
 	void RevealFlag(int mapId, int flagId);
 	bool IsCurrentMapOutdoor();
+	BOOL IsMapOpen();
+
 
 	/*
 		Retrieves information about a jump point.
 	*/
 	bool GetJumpPoint(int id, JumpPoint &jumpPoint, bool withMapName = false);
+	
 };
 
 extern Maps maps;
