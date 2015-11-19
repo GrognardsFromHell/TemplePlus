@@ -1,4 +1,7 @@
 
+#include <graphics/device.h>
+#include <graphics/textures.h>
+
 #include "render_general.h"
 
 namespace particles {
@@ -43,14 +46,15 @@ Material GeneralEmitterRenderState::CreateMaterial(RenderingDevice &device,
   RasterizerState rasterizerState;
   PixelShaderPtr pixelShader;
   std::vector<MaterialSamplerBinding> samplers;
-  auto &material(emitter.GetSpec()->GetMaterial());
-  if (material && material->GetPrimaryTexture()) {
-    SamplerState samplerState;
-    samplers.push_back({material->GetPrimaryTexture(), samplerState});
-    pixelShader = device.GetShaders().LoadPixelShader("textured_simple_ps");
-  } else {
-    pixelShader = device.GetShaders().LoadPixelShader("diffuse_only_ps");
+
+  auto shaderName("diffuse_only_ps");
+  auto& textureName(emitter.GetSpec()->GetTextureName());  
+  if (!textureName.empty()) {
+	auto texture(device.GetTextures().Resolve(textureName, true));
+	samplers.push_back({ texture, {} });
+	shaderName = "textured_simple_ps";
   }
+  pixelShader = device.GetShaders().LoadPixelShader(shaderName);
   
   auto vsName = pointSprites ? "particles_points_vs" : "particles_quads_vs";
 

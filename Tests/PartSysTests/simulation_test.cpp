@@ -51,9 +51,8 @@ to speed up the tests.
 
 class PartSysSimulationTest : public testing::Test {
 protected:	
-
 	static PartSysParser &GetParser() {
-		static PartSysParser sParser(meshes);
+		static PartSysParser sParser;
 		return sParser;
 	}
 

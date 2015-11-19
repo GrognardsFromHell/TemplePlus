@@ -27,7 +27,7 @@ extern "C" {
 		dll->renderingDevice.GetCamera().CenterOn(0, 0, 0);
 
 		try {
-			PartSysParser parser(dll->mdfFactory);
+			PartSysParser parser;
 			parser.ParseString(specTabFile);
 
 			if (parser.begin() == parser.end()) {

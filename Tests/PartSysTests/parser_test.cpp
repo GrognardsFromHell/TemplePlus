@@ -6,8 +6,6 @@
 #include <infrastructure/stringutil.h>
 #include <infrastructure/format.h>
 
-#include "mock_materials.h"
-
 using namespace particles;
 
 /*
@@ -17,26 +15,15 @@ using namespace particles;
 class PartSysParserTest : public testing::Test {
 protected:
 
-	static gfx::MeshesManagerPtr sMeshes;
-
 	static PartSysParser &GetParser() {	
-		static PartSysParser sParser(sMeshes);
+		static PartSysParser sParser;
 		return sParser;
 	}
 
 	static void SetUpTestCase() {
-		auto defaultMaterial = std::make_shared<testing::NiceMock<MaterialMock>>();
-		testing::DefaultValue<gfx::MaterialRef>::Set(defaultMaterial);
-
-		static std::unique_ptr<MaterialsMock> sMaterials;
-		sMaterials.reset(new testing::NiceMock<MaterialsMock>);
-		gfx::gMdfMaterialFactory = sMaterials.get();
 
 		// Init VFS with mock/dummy code
 		vfs.reset(Vfs::CreateStdIoVfs());
-		
-		sMeshes = std::make_shared<gfx::MeshesManager>();
-		sMeshes->LoadMapping("data\\meshes.mes");
 
 		GetParser().ParseFile("data\\partsys0.tab");
 		GetParser().ParseFile("data\\partsys1.tab");
@@ -45,19 +32,7 @@ protected:
 		ASSERT_NE(GetParser().begin(), GetParser().end()) << "No particle systems have been loaded";
 	}
 
-	void CheckModelId(const char* sysName, int emitterIdx, int modelId) {
-		auto sysSpec = GetParser().GetSpec(sysName);
-		ASSERT_TRUE(sysSpec);
-		auto emitters = sysSpec->GetEmitters();
-		auto emitter = emitters[emitterIdx];
-		ASSERT_TRUE(!!emitter->GetMesh());
-		ASSERT_TRUE(emitter->GetMesh()->IsValid());
-		ASSERT_EQ(modelId, emitter->GetMesh()->GetLegacyId());
-	}
-
 };
-
-gfx::MeshesManagerPtr PartSysParserTest::sMeshes;
 
 TEST_F(PartSysParserTest, TestBasicSystem) {
 
@@ -68,12 +43,12 @@ TEST_F(PartSysParserTest, TestBasicSystem) {
 }
 
 TEST_F(PartSysParserTest, TestModelParsing) {
-	CheckModelId("sp-Bullstrength", 0, 14008); // Particle\bullstrength
+	/*CheckModelId("sp-Bullstrength", 0, 14008); // Particle\bullstrength
 	CheckModelId("sp-Chaos Hammer", 0, 14005); // Particle\Chaos-Hammer
 	CheckModelId("sp-cool stuff", 0, 14007); // Particle\Tree
 	CheckModelId("sp-Leomunds Secret Chest", 0, 11000); // Scenery\Containers\TreasureChest
 	CheckModelId("sp-Minor Globe of Invulnerability", 5, 14004); // Particle\MinorGlobe
-	CheckModelId("sp-Tree Shape", 0, 14007); // Particle\Tree
+	CheckModelId("sp-Tree Shape", 0, 14007); // Particle\Tree*/
 }
 
 TEST_F(PartSysParserTest, TestKeyFrameParsing) {

@@ -1,6 +1,8 @@
 
 #include <infrastructure/tabparser.h>
 #include <infrastructure/logging.h>
+#include <infrastructure/vfs.h>
+#include <infrastructure/mdfparser.h>
 #include <graphics/materials.h>
 
 #include "particles/parser.h"
@@ -176,14 +178,40 @@ namespace particles {
 
 	void PartSysParser::ParseMaterial(const TabFileRecord& record, PartSysEmitterSpecPtr emitter) {
 		auto colMaterial = record[COL_MATERIAL];
-		if (colMaterial) {
-			auto fullName(fmt::format("art/meshes/particle/{}.mdf", colMaterial.AsString()));
-			auto material = mMdfFactory.LoadMaterial(fullName);
-			if (!material) {
-				logger->warn("Emitter on line {} has invalid material: '{}'",
-				             record.GetLineNumber(), fullName);
+		if (!colMaterial) {
+			return;
+		}
+
+		auto materialName(colMaterial.AsString());
+
+		auto it = mTextureNameCache.find(materialName);
+		if (it != mTextureNameCache.end()) {
+			emitter->SetTextureName(it->second);
+			return;
+		}
+
+		/*
+			Since the renderer will only display a texture and ignore all other MDF properties,
+			we parse the texture from the MDF file here to speed this process up.
+			This also removes a dependency on the actual MDF material factory.
+		*/
+		auto fullName(fmt::format("art/meshes/particle/{}.mdf", materialName));
+		try {
+			auto mdfContent(vfs->ReadAsString(fullName));
+			gfx::MdfParser mdfParser(fullName, mdfContent);
+			auto mdfMaterial(mdfParser.Parse());
+			if (mdfMaterial->samplers.size() == 0) {
+				logger->warn("Emitter on line {} has material: '{}' with no associated textures.",
+					record.GetLineNumber(), fullName);
+				return;
 			}
-			emitter->SetMaterial(material);
+
+			auto textureName = mdfMaterial->samplers[0].filename;
+			emitter->SetTextureName(textureName);
+			mTextureNameCache[materialName] = textureName;
+		} catch (std::exception &e) {
+			logger->warn("Emitter on line {} has unknown material: '{}': {}",
+				record.GetLineNumber(), fullName, e.what());
 		}
 	}
 
@@ -290,10 +318,6 @@ namespace particles {
 			}
 		}
 
-	}
-
-	PartSysParser::PartSysParser(gfx::MdfMaterialFactory &mdfFactory) 
-		 : mMdfFactory(mdfFactory) {
 	}
 
 	void PartSysParser::ParseFile(const std::string& filename) {

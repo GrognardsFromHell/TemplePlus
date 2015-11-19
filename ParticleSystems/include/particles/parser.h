@@ -17,8 +17,6 @@ namespace particles {
 	class PartSysParser {
 	public:
 
-		PartSysParser(gfx::MdfMaterialFactory &mdfFactory);
-
 		typedef std::unordered_map<std::string, PartSysSpecPtr> SpecMap;
 
 		void ParseFile(const std::string& filename);
@@ -42,8 +40,10 @@ namespace particles {
 
 	private:
 		SpecMap mSpecs;
-		gfx::MdfMaterialFactory &mMdfFactory;
 
+		// To speed up loading
+		std::unordered_map<std::string, std::string> mTextureNameCache;
+		
 		void ParseLifespan(const TabFileRecord& record, PartSysEmitterSpecPtr emitter);
 		void ParseParticleLifespan(const TabFileRecord& record, PartSysEmitterSpecPtr emitter);
 		void ParseParticleRate(const TabFileRecord& record, PartSysEmitterSpecPtr emitter);

@@ -229,7 +229,7 @@ API void MdfPreviewNative_InitDevice(MdfPreviewNative *native,
 		*native->device, 
 		*native->materialFactory);
 
-	native->parser = std::make_unique<particles::PartSysParser>(*native->materialFactory);
+	native->parser = std::make_unique<particles::PartSysParser>();
 	native->parser->ParseFile("rules/partsys0.tab");
 	native->parser->ParseFile("rules/partsys1.tab");
 	native->parser->ParseFile("rules/partsys2.tab");

@@ -83,8 +83,11 @@ enum class PartSysParticleSpace {
 class PartSysEmitterSpec {
 	friend class PartSysSpec;
 public:
-	PartSysEmitterSpec(const PartSysSpec& parent, const std::string& name) : mParent(parent), mName(name), mParams((int)part_attractorBlend + 1),
-	                                                                         mParticleType(PartSysParticleType::Point) {
+	PartSysEmitterSpec(const PartSysSpec& parent, const std::string& name) 
+		: mParent(parent), 
+		  mName(name), 
+		  mParams((int)part_attractorBlend + 1),
+          mParticleType(PartSysParticleType::Point) {
 	}
 
 	const std::string& GetName() const {
@@ -207,12 +210,12 @@ public:
 		mBlendMode = blendMode;
 	}
 
-	const gfx::MdfRenderMaterialPtr& GetMaterial() const {
-		return mMaterial;
+	const std::string& GetTextureName() const {
+		return mTextureName;
 	}
 
-	void SetMaterial(const gfx::MdfRenderMaterialPtr& material) {
-		mMaterial = material;
+	void SetTextureName(const std::string& texture) {
+		mTextureName = texture;
 	}
 
 	PartSysCoordSys GetParticlePosCoordSys() const {
@@ -319,7 +322,7 @@ private:
 	PartSysCoordSys mCoordSys = PartSysCoordSys::Cartesian;
 	PartSysCoordSys mOffsetCoordSys = PartSysCoordSys::Cartesian;
 	PartSysBlendMode mBlendMode = PartSysBlendMode::Add;
-	gfx::MdfRenderMaterialPtr mMaterial;
+	std::string mTextureName;
 	PartSysCoordSys mParticlePosCoordSys = PartSysCoordSys::Cartesian;
 	PartSysCoordSys mParticleVelocityCoordSys = PartSysCoordSys::Cartesian;
 	PartSysParticleSpace mParticleSpace = PartSysParticleSpace::World;
