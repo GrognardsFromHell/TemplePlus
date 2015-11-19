@@ -32,18 +32,22 @@
     <ClInclude Include="include\particles\simulation.h" />
     <ClInclude Include="include\particles\spec.h" />
     <ClInclude Include="include\particles\types.h" />
+    <ClInclude Include="src\render_general.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="bones.cpp" />
-    <ClCompile Include="instances.cpp" />
-    <ClCompile Include="params.cpp" />
-    <ClCompile Include="parser_params.cpp" />
-    <ClCompile Include="parser.cpp" />
-    <ClCompile Include="parser_keyframes.cpp" />
-    <ClCompile Include="render.cpp" />
-    <ClCompile Include="render_point.cpp" />
-    <ClCompile Include="simulation.cpp" />
-    <ClCompile Include="spec.cpp" />
+    <ClCompile Include="src\bones.cpp" />
+    <ClCompile Include="src\instances.cpp" />
+    <ClCompile Include="src\params.cpp" />
+    <ClCompile Include="src\parser_params.cpp" />
+    <ClCompile Include="src\parser.cpp" />
+    <ClCompile Include="src\parser_keyframes.cpp" />
+    <ClCompile Include="src\render.cpp" />
+    <ClCompile Include="src\render_general.cpp" />
+    <ClCompile Include="src\render_model.cpp" />
+    <ClCompile Include="src\render_point.cpp" />
+    <ClCompile Include="src\render_quad.cpp" />
+    <ClCompile Include="src\simulation.cpp" />
+    <ClCompile Include="src\spec.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Infrastructure\Infrastructure.vcxproj">

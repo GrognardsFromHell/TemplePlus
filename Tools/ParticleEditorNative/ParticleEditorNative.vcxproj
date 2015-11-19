@@ -99,7 +99,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(TargetDir);$(SolutionDir)\dependencies\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>temple.lib;swscale.lib;avcodec.lib;avformat.lib;avutil.lib;Infrastructure.lib;ParticleSystems.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d9.lib;temple.lib;swscale.lib;avcodec.lib;avformat.lib;avutil.lib;Infrastructure.lib;ParticleSystems.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
@@ -134,7 +134,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(TargetDir);$(SolutionDir)\dependencies\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>temple.lib;swscale.lib;avcodec.lib;avformat.lib;avutil.lib;Infrastructure.lib;ParticleSystems.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d9.lib;temple.lib;swscale.lib;avcodec.lib;avformat.lib;avutil.lib;Infrastructure.lib;ParticleSystems.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>

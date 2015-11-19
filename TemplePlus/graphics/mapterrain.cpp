@@ -1,11 +1,11 @@
+
 #include "stdafx.h"
 #include "mapterrain.h"
 #include "maps.h"
-#include "graphics.h"
 #include <tig/tig.h>
-#include <infrastructure/textures.h>
+#include <graphics/device.h>
+#include <graphics/shaperenderer2d.h>
 #include <infrastructure/mesparser.h>
-#include "render_hooks.h"
 #include <util/config.h>
 
 static struct MapTerrainAddresses : temple::AddressTable {	
@@ -28,10 +28,10 @@ static struct MapTerrainAddresses : temple::AddressTable {
 	}
 } addresses;
 
-MapTerrain::MapTerrain() {
-
+MapTerrain::MapTerrain(gfx::RenderingDevice& device, gfx::ShapeRenderer2d& shapeRenderer)
+	: mDevice(device),mShapeRenderer(shapeRenderer) {
+	
 	auto groundMapping = MesFile::ParseFile("art/ground/ground.mes");
-
 	for (auto& pair : groundMapping) {
 		mTerrainDirs[pair.first] = fmt::format("art/ground/{}/", pair.second);
 	}
@@ -58,9 +58,10 @@ void MapTerrain::Render() {
 	locSys.ToTranslation(mapCenter.locx, mapCenter.locy, terrainOriginX, terrainOriginY);
 
 	// Since the origin is still pointing at the map center, shift it left/up by half
-	// the terrains overall size
-	terrainOriginX -= MapWidthPixels / 2;
-	terrainOriginY -= MapHeightPixels / 2;
+	// the terrains overall size. The Map is slightly off-center for *some* unknown
+	// reason. This may be a relic from Arkanum
+	terrainOriginX -= MapWidthPixels / 2 - 40;
+	terrainOriginY -= MapHeightPixels / 2 - 14;
 
 	auto startX = - terrainOriginX / TileSize;
 	auto startY = - terrainOriginY / TileSize;
@@ -118,29 +119,19 @@ void MapTerrain::RenderTile(int x, int y, const TigRect& destRect) {
 	}
 	
 	auto textureName = GetTileTexture(primaryMapArtId, x, y);
-	auto texture = gfx::textureManager->Resolve(textureName);
+	auto texture = mDevice.GetTextures().Resolve(textureName, false);
 
-	Render2dArgs args;
-	args.flags = Render2dArgs::FLAG_VERTEXCOLORS
-		| Render2dArgs::FLAG_VERTEXZ;
-	args.textureId = texture->GetId();
-	args.destRect = &destRect;
-	args.vertexZ = 1;
-
-	TigRect srcRect{ 0, 0, TileSize, TileSize };
-	args.srcRect = &srcRect;
-
-	D3DCOLOR diffuse[4];	
-	diffuse[0] = D3DCOLOR_COLORVALUE(*addresses.terrainTintRed, 
+	XMCOLOR color(*addresses.terrainTintRed,
 		*addresses.terrainTintGreen,
 		*addresses.terrainTintBlue,
 		1);
-	diffuse[1] = diffuse[0];
-	diffuse[2] = diffuse[0];
-	diffuse[3] = diffuse[0];
-	args.vertexColors = &diffuse[0];
 
-	RenderHooks::TextureRender2d(&args);
+	auto destX = (float)destRect.x;
+	auto destY = (float)destRect.y;
+	auto destWidth = (float)destRect.width;
+	auto destHeight = (float)destRect.height;
+
+	mShapeRenderer.DrawRectangle(destX, destY, destWidth, destHeight, texture, color);
 
 	if (isTransitioning) {
 
@@ -151,22 +142,16 @@ void MapTerrain::RenderTile(int x, int y, const TigRect& destRect) {
 			primaryMapArtId = mapArtId;
 		}
 		textureName = GetTileTexture(primaryMapArtId, x, y);
-		texture = gfx::textureManager->Resolve(textureName);
-
-		args.textureId = texture->GetId();
+		texture = mDevice.GetTextures().Resolve(textureName, false);
 
 		// Draw the "new" map over the old one with alpha that is based on 
 		// the time since the transition started
-		diffuse[0] = D3DCOLOR_COLORVALUE(*addresses.terrainTintRed,
+		color = XMCOLOR(*addresses.terrainTintRed,
 			*addresses.terrainTintGreen,
 			*addresses.terrainTintBlue,
 			timeSinceMapEntered / (float) TransitionTime);
-		diffuse[1] = diffuse[0];
-		diffuse[2] = diffuse[0];
-		diffuse[3] = diffuse[0];
-		args.flags |= Render2dArgs::FLAG_VERTEXALPHA;
 
-		RenderHooks::TextureRender2d(&args);
+		mShapeRenderer.DrawRectangle(destX, destY, destWidth, destHeight, texture, color);
 	}
 
 }

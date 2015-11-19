@@ -168,6 +168,7 @@ namespace temple {
 		mImpl->ReplaceAllocFunctions();
 		mImpl->ReplaceDebugFunctions();
 		AddressRegistry::GetInstance().Fixup(mImpl->mDeltaFromVanilla);
+		MH_EnableHook(nullptr);
 	}
 
 	void Dll::Unload() {

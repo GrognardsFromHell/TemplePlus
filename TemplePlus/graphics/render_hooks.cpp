@@ -1,22 +1,17 @@
 #include "stdafx.h"
 
-#include <infrastructure/materials.h>
-#include <infrastructure/renderstates.h>
+#include <graphics/shaperenderer2d.h>
+#include <graphics/textures.h>
+#include <graphics/device.h>
 
 #include <util/fixes.h>
 
-#include "mdfrenderer.h"
-#include "graphics.h"
-#include "materials.h"
-#include "renderer.h"
-#include "renderstates_hooks.h"
-
-#include <tig/tig.h>
-#include <tig/tig_texture.h>
 #include <ui/ui.h>
+#include "tig/tig_startup.h"
+#include "tig/tig_texture.h"
 
 #include "render_hooks.h"
-#include <util/config.h>
+#include <d3d8adapter.h>
 
 static RenderHooks fix;
 
@@ -29,10 +24,14 @@ void RenderHooks::apply() {
 	replaceFunction(0x101D8CE0, ShaderRender2d);
 	replaceFunction(0x101D9300, TextureRender2d);
 	replaceFunction(0x101E8460, RenderImgFile);
+	replaceFunction(0x101D90B0, RenderTexturedQuad);
+	replaceFunction(0x101D8B70, RenderRectIndirect);
+	replaceFunction(0x101D61F0, RenderLine3d);
+	replaceFunction(0x1018B200, RenderRectInt);
 }
 
 int RenderHooks::ShaderRender3d(int vertexCount, D3DXVECTOR4* pos, D3DXVECTOR4* normals, D3DCOLOR* diffuse, D3DXVECTOR2* uv, int primCount, uint16_t* indices, int shaderId) {
-
+	/*
 	// Remove special material marker in the upper byte and only 
 	// use the actual shader registration id
 	shaderId &= 0x00FFFFFF;
@@ -47,9 +46,6 @@ int RenderHooks::ShaderRender3d(int vertexCount, D3DXVECTOR4* pos, D3DXVECTOR4* 
 	}
 
 	auto mdfMaterial = static_cast<MdfRenderMaterial*>(material.get());
-
-	// Copy over lighting state from ToEE
-	CopyLightingState();
 
 	renderStates->SetProjectionMatrix(renderStates->Get3dProjectionMatrix());
 	renderStates->SetZEnable(true);
@@ -67,12 +63,12 @@ int RenderHooks::ShaderRender3d(int vertexCount, D3DXVECTOR4* pos, D3DXVECTOR4* 
 
 	renderStates->SetZEnable(false);
 	renderStates->SetZWriteEnable(false);
-
+	*/
 	return 0;
 }
 
 int RenderHooks::ShaderRender2d(const Render2dArgs* args) {
-
+	/*
 	if (!args->shaderId)
 		return 17;
 
@@ -166,13 +162,14 @@ int RenderHooks::ShaderRender2d(const Render2dArgs* args) {
 	auto mdfMaterial = static_cast<MdfRenderMaterial*>(material.get());
 	MdfRenderer renderer(*graphics);
 	renderer.Render(mdfMaterial, 4, &vertices[0], &normals[0], &diffuse[0], &uv[0], 2, &indices[0]);
+	*/
 	return 0;
-
 }
 
 int RenderHooks::TextureRender2d(const Render2dArgs* args) {
-
-	CopyLightingState();
+	
+	auto &shapeRenderer = tig->GetShapeRenderer2d();
+	auto &textures = tig->GetRenderingDevice().GetTextures();
 
 	float texwidth;
 	float texheight;
@@ -180,8 +177,7 @@ int RenderHooks::TextureRender2d(const Render2dArgs* args) {
 	float srcY;
 	float srcWidth;
 	float srcHeight;
-	std::array<D3DXVECTOR4, 4> vertices;
-	std::array<D3DXVECTOR2, 4> uv;
+	std::array<gfx::Vertex2d, 4> vertices;
 
 	// The townmap UI uses floating point coordinates for the srcrect
 	// for whatever reason. They are passed in place of the integer coordinates
@@ -206,37 +202,34 @@ int RenderHooks::TextureRender2d(const Render2dArgs* args) {
 	}
 
 	// Inherit vertex colors from the caller
-	std::array<D3DCOLOR, 4> diffuse;
 	if (args->flags & Render2dArgs::FLAG_VERTEXCOLORS) {
 		// Previously, ToEE tried to compute some gradient stuff here
 		// which we removed because it was never actually utilized properly
-		diffuse[0] = args->vertexColors[0] | 0xFF000000;
-		diffuse[1] = args->vertexColors[1] | 0xFF000000;
-		diffuse[2] = args->vertexColors[2] | 0xFF000000;
-		diffuse[3] = args->vertexColors[3] | 0xFF000000;
-		renderStates->SetColorVertex(true);
+		vertices[0].diffuse = args->vertexColors[0] | 0xFF000000;
+		vertices[1].diffuse = args->vertexColors[1] | 0xFF000000;
+		vertices[2].diffuse = args->vertexColors[2] | 0xFF000000;
+		vertices[3].diffuse = args->vertexColors[3] | 0xFF000000;
 	} else {
-		diffuse[3] = 0xFFFFFFFF;
-		diffuse[2] = 0xFFFFFFFF;
-		diffuse[1] = 0xFFFFFFFF;
-		diffuse[0] = 0xFFFFFFFF;
-		renderStates->SetColorVertex(false);
+		vertices[0].diffuse = 0xFFFFFFFF;
+		vertices[1].diffuse = 0xFFFFFFFF;
+		vertices[2].diffuse = 0xFFFFFFFF;		
+		vertices[3].diffuse = 0xFFFFFFFF;
 	}
 
 	// Only if this flag is set, is the alpha value of 
 	// the vertex colors used
 	if (args->flags & Render2dArgs::FLAG_VERTEXALPHA) {
-		diffuse[0] &= args->vertexColors[0] | 0xFFFFFF;
-		diffuse[1] &= args->vertexColors[1] | 0xFFFFFF;
-		diffuse[2] &= args->vertexColors[2] | 0xFFFFFF;
-		diffuse[3] &= args->vertexColors[3] | 0xFFFFFF;
+		vertices[0].diffuse.c &= args->vertexColors[0] | 0xFFFFFF;
+		vertices[1].diffuse.c &= args->vertexColors[1] | 0xFFFFFF;
+		vertices[2].diffuse.c &= args->vertexColors[2] | 0xFFFFFF;
+		vertices[3].diffuse.c &= args->vertexColors[3] | 0xFFFFFF;
 	}
 
 	// Load the associated texture
 	IDirect3DTexture9* deviceTexture = nullptr;
 	if (!(args->flags & Render2dArgs::FLAG_BUFFER)) {
 		if (args->textureId) {
-			auto texture = gfx::textureManager->GetById(args->textureId);
+			auto texture = textures.GetById(args->textureId);
 			if (!texture || !texture->IsValid()) {
 				return 17;
 			}
@@ -269,32 +262,35 @@ int RenderHooks::TextureRender2d(const Render2dArgs* args) {
 	auto contentRectTop = srcY;
 	auto contentRectRight = srcX + srcWidth;
 	auto contentRectBottom = srcY + srcHeight;
-	if (args->flags & Render2dArgs::FLAG_FLIPH) {
-		contentRectLeft = srcWidth - srcX - 1.0f;
-		contentRectRight = srcWidth - contentRectRight - 1.0f;
-	}
-	if (args->flags & Render2dArgs::FLAG_FLIPV) {
-		contentRectTop = srcHeight - srcY - 1.0f;
-		contentRectBottom = srcHeight - contentRectBottom - 1.0f;
-	}
 
 	// Create the UV coordinates to honor the contentRect based 
 	// on the real texture size
-	auto uvLeft = (contentRectLeft + 0.5f) / texwidth;
-	auto uvRight = (contentRectRight + 0.5f) / texwidth;
-	auto uvTop = (contentRectTop + 0.5f) / texheight;
-	auto uvBottom = (contentRectBottom + 0.5f) / texheight;
-	uv[0].x = uvLeft;
-	uv[0].y = uvTop;
-	uv[1].x = uvRight;
-	uv[1].y = uvTop;
-	uv[2].x = uvRight;
-	uv[2].y = uvBottom;
-	uv[3].x = uvLeft;
-	uv[3].y = uvBottom;
+	auto uvLeft = (contentRectLeft) / texwidth;
+	auto uvRight = (contentRectRight) / texwidth;
+	auto uvTop = (contentRectTop) / texheight;
+	auto uvBottom = (contentRectBottom) / texheight;
+	vertices[0].uv.x = uvLeft;
+	vertices[0].uv.y = uvTop;
+	vertices[1].uv.x = uvRight;
+	vertices[1].uv.y = uvTop;
+	vertices[2].uv.x = uvRight;
+	vertices[2].uv.y = uvBottom;
+	vertices[3].uv.x = uvLeft;
+	vertices[3].uv.y = uvBottom;
 
-	for (auto i = 0; i < 4; ++i) {
-		vertices[i].w = 1;
+	// Flip the U coordinates horizontally
+	if (args->flags & Render2dArgs::FLAG_FLIPH) {
+		// Top Left with Top Right
+		std::swap(vertices[0].uv.x, vertices[1].uv.x);
+		// Bottom Right with Bottom Left
+		std::swap(vertices[2].uv.x, vertices[3].uv.x);
+	}
+	// Flip the V coordinates horizontally
+	if (args->flags & Render2dArgs::FLAG_FLIPV) {
+		// Top Left with Bottom Left
+		std::swap(vertices[0].uv.y, vertices[3].uv.y);
+		// Top Right with Bottom Right
+		std::swap(vertices[1].uv.y, vertices[2].uv.y);
 	}
 
 	if (args->flags & Render2dArgs::FLAG_ROTATE) {
@@ -302,154 +298,108 @@ int RenderHooks::TextureRender2d(const Render2dArgs* args) {
 		auto cosRot = cosf(args->rotation);
 		auto sinRot = sinf(args->rotation);
 		auto destRect = args->destRect;
-		vertices[0].x = args->rotationX
+		vertices[0].pos.x = args->rotationX
 			+ (destRect->x - args->rotationX) * cosRot
 			- (destRect->y - args->rotationY) * sinRot;
-		vertices[0].y = args->rotationY
+		vertices[0].pos.y = args->rotationY
 			+ (destRect->y - args->rotationY) * cosRot
 			+ (destRect->x - args->rotationX) * sinRot;
-		vertices[0].z = vertexZ;
+		vertices[0].pos.z = vertexZ;
 
-		vertices[1].x = args->rotationX
+		vertices[1].pos.x = args->rotationX
 			+ ((destRect->x + destRect->width) - args->rotationX) * cosRot
 			- (destRect->y - args->rotationY) * sinRot;
-		vertices[1].y = args->rotationY
+		vertices[1].pos.y = args->rotationY
 			+ ((destRect->x + destRect->width) - args->rotationX) * sinRot
 			+ (destRect->y - args->rotationY) * cosRot;
-		vertices[1].z = vertexZ;
+		vertices[1].pos.z = vertexZ;
 
-		vertices[2].x = args->rotationX
+		vertices[2].pos.x = args->rotationX
 			+ ((destRect->x + destRect->width) - args->rotationX) * cosRot
 			- ((destRect->y + destRect->width) - args->rotationY) * sinRot;
-		vertices[2].y = args->rotationY
+		vertices[2].pos.y = args->rotationY
 			+ ((destRect->y + destRect->width) - args->rotationY) * cosRot
 			+ (destRect->x + destRect->width - args->rotationX) * sinRot;
-		vertices[2].z = vertexZ;
+		vertices[2].pos.z = vertexZ;
 
-		vertices[3].x = args->rotationX
+		vertices[3].pos.x = args->rotationX
 			+ (destRect->x - args->rotationX) * cosRot
 			- ((destRect->y + destRect->height) - args->rotationY) * sinRot;
-		vertices[3].y = args->rotationY
+		vertices[3].pos.y = args->rotationY
 			+ ((destRect->y + destRect->height) - args->rotationY) * cosRot
 			+ (destRect->x - args->rotationX) * sinRot;
-		vertices[3].z = vertexZ;
+		vertices[3].pos.z = vertexZ;
 	} else {
 		auto destRect = args->destRect;
-		vertices[0].x = (float) destRect->x;
-		vertices[0].y = (float) destRect->y;
-		vertices[0].z = vertexZ;
-		vertices[1].x = (float) destRect->x + destRect->width;
-		vertices[1].y = (float) destRect->y;
-		vertices[1].z = vertexZ;
-		vertices[2].x = (float) destRect->x + destRect->width;
-		vertices[2].y = (float) destRect->y + destRect->height;
-		vertices[2].z = vertexZ;
-		vertices[3].x = (float) destRect->x;
-		vertices[3].y = (float) destRect->y + destRect->height;
-		vertices[3].z = vertexZ;
+		vertices[0].pos.x = (float) destRect->x;
+		vertices[0].pos.y = (float) destRect->y;
+		vertices[0].pos.z = vertexZ;
+		vertices[1].pos.x = (float) destRect->x + destRect->width;
+		vertices[1].pos.y = (float) destRect->y;
+		vertices[1].pos.z = vertexZ;
+		vertices[2].pos.x = (float) destRect->x + destRect->width;
+		vertices[2].pos.y = (float) destRect->y + destRect->height;
+		vertices[2].pos.z = vertexZ;
+		vertices[3].pos.x = (float) destRect->x;
+		vertices[3].pos.y = (float) destRect->y + destRect->height;
+		vertices[3].pos.z = vertexZ;
 	}
-
-	renderStates->SetAlphaTestEnable(true);
-	renderStates->SetAlphaBlend(true);
-	renderStates->SetSrcBlend(D3DBLEND_SRCALPHA);
-	renderStates->SetDestBlend(D3DBLEND_INVSRCALPHA);
-
-	if (deviceTexture) {
-		renderStates->SetTexture(0, deviceTexture);
-
-		renderStates->SetTextureColorOp(0, D3DTOP_MODULATE);
-		renderStates->SetTextureColorArg1(0, D3DTA_TEXTURE);
-		renderStates->SetTextureColorArg2(0, D3DTA_CURRENT);
-		renderStates->SetTextureAlphaOp(0, D3DTOP_MODULATE);
-		renderStates->SetTextureAlphaArg1(0, D3DTA_TEXTURE);
-		renderStates->SetTextureAlphaArg2(0, D3DTA_CURRENT);
-
-		renderStates->SetTextureMipFilter(0, D3DTEXF_LINEAR);
-		renderStates->SetTextureMinFilter(0, D3DTEXF_LINEAR);
-		renderStates->SetTextureMagFilter(0, D3DTEXF_LINEAR);
-
-
-		// Seems to disable the texture alpha stage (-> discards)
-		if (args->flags & 0x800) {
-			renderStates->SetTextureAlphaOp(0, D3DTOP_DISABLE);
-			renderStates->SetTextureAlphaArg1(0, D3DTA_DIFFUSE);
-			renderStates->SetTextureAlphaArg2(0, D3DTA_DIFFUSE);
+	
+	IDirect3DTexture9 *maskTexture = nullptr;
+	// We have a secondary texture
+	if (args->flags & Render2dArgs::FLAG_MASK) {
+		auto texture = textures.GetById(args->textureId2);
+		if (!texture || !texture->IsValid() || !texture->GetDeviceTexture()) {
+			return 17;
 		}
-
-		// We have a secondary texture
-		if (args->flags & 0x400) {
-			auto texture = gfx::textureManager->GetById(args->textureId2);
-			if (!texture || !texture->IsValid() || !texture->GetDeviceTexture()) {
-				return 17;
-			}
-			auto secondDeviceTexture = texture->GetDeviceTexture();
-			renderStates->SetTexture(1, secondDeviceTexture);
-			renderStates->SetTextureCoordIndex(1, 0);
-
-			renderStates->SetTextureColorOp(1, D3DTOP_MODULATE);
-			renderStates->SetTextureColorArg1(1, D3DTA_TEXTURE);
-			renderStates->SetTextureColorArg2(1, D3DTA_CURRENT);
-			renderStates->SetTextureAlphaOp(1, D3DTOP_MODULATE);
-			renderStates->SetTextureAlphaArg1(1, D3DTA_TEXTURE);
-			renderStates->SetTextureAlphaArg2(1, D3DTA_CURRENT);
-
-			renderStates->SetTextureMipFilter(1, D3DTEXF_LINEAR);
-			renderStates->SetTextureMinFilter(1, D3DTEXF_LINEAR);
-			renderStates->SetTextureMagFilter(1, D3DTEXF_LINEAR);
-		}
-	} else {
-		// Disable texturing and instead grab the color/alpha
-		// from the vertex colors
-		renderStates->SetTexture(0, nullptr);
-		renderStates->SetTextureColorOp(0, D3DTOP_SELECTARG1);
-		renderStates->SetTextureColorArg1(0, D3DTA_DIFFUSE);
-		renderStates->SetTextureAlphaOp(0, D3DTOP_SELECTARG1);
-		renderStates->SetTextureAlphaArg1(0, D3DTA_DIFFUSE);
+		maskTexture = texture->GetDeviceTexture();
 	}
 
-	if (args->flags & 0x1000) {
-		renderStates->SetTextureAddressU(0, D3DTADDRESS_WRAP);
-		renderStates->SetTextureAddressV(0, D3DTADDRESS_WRAP);
-	}
+	auto wrap = ((args->flags & Render2dArgs::FLAG_WRAP) != 0);
+	shapeRenderer.DrawRectangle(vertices, deviceTexture, maskTexture, wrap);
+	
+	return 0;
+}
 
-	static std::array<uint16_t, 6> sIndices{0, 1, 2, 0, 2, 3};
+int RenderHooks::RenderTexturedQuad(D3DXVECTOR3* vertices, float* u, float* v, int textureId, D3DCOLOR color) {
+	/*
+	std::array<D3DXVECTOR4, 4> positions;
+	positions[0] = {vertices[0], 1};
+	positions[1] = {vertices[1], 1};
+	positions[2] = {vertices[2], 1};
+	positions[3] = {vertices[3], 1};
+
+	std::array<D3DCOLOR, 4> diffuse;
+	diffuse[0] = color;
+	diffuse[1] = color;
+	diffuse[2] = color;
+	diffuse[3] = color;
+
+	std::array<D3DXVECTOR2, 4> uv;
+	uv[0] = {u[0],v[0]};
+	uv[1] = {u[1],v[1]};
+	uv[2] = {u[2],v[2]};
+	uv[3] = {u[3],v[3]};
+
+	std::array<uint16_t, 6> indices;
+	indices[0] = 0;
+	indices[1] = 1;
+	indices[2] = 2;
+	indices[3] = 2;
+	indices[4] = 3;
+	indices[5] = 1;
 
 	Renderer renderer(*graphics);
-	renderer.DrawTrisScreenSpace(4, &vertices[0], &diffuse[0], &uv[0], 2, &sIndices[0]);
-
-	renderStates->SetTextureMipFilter(0, D3DTEXF_POINT);
-	renderStates->SetTextureMinFilter(0, D3DTEXF_POINT);
-	renderStates->SetTextureMagFilter(0, D3DTEXF_POINT);
-
-	if (args->flags & 0x1000) {
-		renderStates->SetTextureAddressU(0, D3DTADDRESS_CLAMP);
-		renderStates->SetTextureAddressV(0, D3DTADDRESS_CLAMP);
-	}
-	if (args->flags & 0x400) {
-		renderStates->SetTexture(1, nullptr);
-		renderStates->SetTextureAlphaOp(1, D3DTOP_DISABLE);
-		renderStates->SetTextureColorOp(1, D3DTOP_DISABLE);
-		renderStates->SetTextureMipFilter(1, D3DTEXF_POINT);
-		renderStates->SetTextureMinFilter(1, D3DTEXF_POINT);
-		renderStates->SetTextureMagFilter(1, D3DTEXF_POINT);
-	}
-	renderStates->SetAlphaBlend(false);
+	renderer.DrawTrisScreenSpace(4, &positions[0], &diffuse[0], &uv[0], 2, &indices[0]);*/
 	return 0;
 
 }
 
 void RenderHooks::RenderImgFile(ImgFile* img, int x, int y) {
 
-	TigRect srcRect;
-	srcRect.x = 0;
-	srcRect.y = 0;
-	TigRect destRect;
-
-	Render2dArgs drawArgs;
-	drawArgs.flags = 0;
-	drawArgs.srcRect = &srcRect;
-	drawArgs.destRect = &destRect;
-
+	auto &shapeRenderer = tig->GetShapeRenderer2d();
+	auto &textures = tig->GetRenderingDevice().GetTextures();
+	
 	auto texId = &img->textureIds[0];
 	auto curX = 0;
 
@@ -470,17 +420,13 @@ void RenderHooks::RenderImgFile(ImgFile* img, int x, int y) {
 			auto rowHeight = std::min(256, curY);
 			curY -= rowHeight;
 
-			srcRect.width = colWidth;
-			srcRect.height = rowHeight;
-
-			destRect.x = x + curX;
-			destRect.y = y + curY;
-			destRect.width = colWidth;
-			destRect.height = rowHeight;
-
-			drawArgs.textureId = *texId++;
-
-			TextureRender2d(&drawArgs);
+			auto texture = textures.GetById(*texId++);
+			
+			auto destX = static_cast<float>(x + curX);
+			auto destY = static_cast<float>(y + curY);
+			auto destWidth = static_cast<float>(colWidth);
+			auto destHeight = static_cast<float>(rowHeight);
+			shapeRenderer.DrawRectangle(destX, destY, destWidth, destHeight, texture);
 		}
 
 		curX += colWidth;
@@ -489,84 +435,36 @@ void RenderHooks::RenderImgFile(ImgFile* img, int x, int y) {
 
 }
 
-#pragma pack(push, 1)
-struct RenderRectVertex {
-	D3DXVECTOR4 pos;
-	D3DCOLOR diffuse;
-};
-#pragma pack(pop)
+void RenderHooks::RenderRect(float left, float top, float right, float bottom, D3DCOLOR color) {
 
-int RenderHooks::RenderRect(D3DXVECTOR2 topLeft, D3DXVECTOR2 bottomRight, D3DCOLOR color) {
-	auto device = graphics->device();
+	auto &shapeRenderer = tig->GetShapeRenderer2d();
 
-	constexpr auto fvf = D3DFVF_XYZRHW | D3DFVF_DIFFUSE;
-	constexpr auto vertexCount = 5;
-	auto bufferSize = sizeof(RenderRectVertex) * vertexCount;
+	shapeRenderer.DrawRectangle(left, top, right - left, bottom - top, nullptr, color);
 
-	CComPtr<IDirect3DVertexBuffer9> vertexBuffer;
-	if (D3DLOG(device->CreateVertexBuffer(bufferSize,
-		D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY,
-		fvf,
-		D3DPOOL_DEFAULT,
-		&vertexBuffer,
-		nullptr)) != D3D_OK) {
-		return 17;
-	}
+}
 
-	RenderRectVertex *vertices;
-	if (D3DLOG(vertexBuffer->Lock(0, bufferSize, (void**)&vertices, D3DLOCK_DISCARD)) != D3D_OK) {
-		return 17;
-	}
+void RenderHooks::RenderRectInt(int left, int top, int width, int height, D3DCOLOR color) {
 
-	// Set up vertices for a line strip that goes around the 
-	// rectangle
-	vertices[0].pos.x = topLeft.x;
-	vertices[0].pos.y = topLeft.y;
-	vertices[0].pos.z = 0.5f;
-	vertices[0].pos.z = 1.0f;
-	vertices[0].diffuse = color;
+	XMFLOAT2 topLeft{ (float) left, (float) top };
+	XMFLOAT2 bottomRight{ topLeft.x + width, topLeft.y + height };
 
-	vertices[1].pos.x = bottomRight.x;
-	vertices[1].pos.y = topLeft.y;
-	vertices[1].pos.z = 0.5f;
-	vertices[1].pos.w = 1.0f;
-	vertices[1].diffuse = color;
+	RenderRectIndirect(&topLeft, &bottomRight, color);
+}
 
-	vertices[2].pos.x = bottomRight.x;
-	vertices[2].pos.y = bottomRight.y;
-	vertices[2].pos.z = 0.5f;
-	vertices[2].pos.w = 1.0f;
-	vertices[2].diffuse = color;
+int RenderHooks::RenderRectIndirect(XMFLOAT2* topLeft, XMFLOAT2* bottomRight, XMCOLOR color) {
+	auto &shapeRenderer = tig->GetShapeRenderer2d();
 
-	vertices[3].pos.x = topLeft.x;
-	vertices[3].pos.y = bottomRight.y;
-	vertices[3].pos.z = 0.5f;
-	vertices[3].pos.w = 1.0f;
-	vertices[3].diffuse = color;
+	shapeRenderer.DrawRectangleOutline(*topLeft, *bottomRight, color);
 
-	vertices[4].pos.x = topLeft.x;
-	vertices[4].pos.y = topLeft.y;
-	vertices[4].pos.z = 0.5f;
-	vertices[4].pos.z = 1.0f;
-	vertices[4].diffuse = color;
-	D3DLOG(vertexBuffer->Unlock());
+	return 0;
+}
 
-	renderStates->SetColorVertex(true);
-	renderStates->SetAlphaBlend(false);
-	renderStates->SetLighting(false);
-	
-	renderStates->SetSrcBlend(D3DBLEND_SRCALPHA);
-	renderStates->SetDestBlend(D3DBLEND_INVSRCALPHA);
+int RenderHooks::RenderLine3d(D3DVECTOR* from, D3DVECTOR* to, D3DCOLOR color) {
+	/*std::vector<Line> lines{
+		{*from, *to ,color}
+	};
 
-	renderStates->SetTextureAlphaOp(0, D3DTOP_DISABLE);
-	renderStates->SetTextureColorOp(0, D3DTOP_DISABLE);
-
-	renderStates->SetStreamSource(0, vertexBuffer, sizeof(RenderRectVertex));
-	renderStates->SetFVF(fvf);
-	renderStates->Commit();
-	
-	if (D3DLOG(device->DrawPrimitive(D3DPT_LINESTRIP, 0, 4)) != D3D_OK) {
-		return 17;
-	}
+	Renderer renderer(*graphics);
+	renderer.DrawLines(lines);*/
 	return 0;
 }

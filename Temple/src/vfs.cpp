@@ -73,7 +73,10 @@ namespace temple {
 		TioFile* (*OpenFile)(const char* file, const char* mode);
 
 		// Reads data from an opened file. Largely equivalent to fread.
-		int (*Read)(void* buffer, size_t size, size_t count, TioFile* file);
+		int(*Read)(void* buffer, size_t size, size_t count, TioFile* file);
+
+		// Write data to an opened file. Largely equivalent to fwrite.
+		int(*Write)(void* buffer, size_t size, size_t count, TioFile* file);
 
 		// Close an opened file
 		void (*CloseFile)(TioFile*);
@@ -108,6 +111,7 @@ namespace temple {
 			Resolve("tio_path_guid", PathGuid);
 			Resolve("tio_fopen", OpenFile);
 			Resolve("tio_fread", Read);
+			Resolve("tio_fwrite", Write);
 			Resolve("tio_fclose", CloseFile);
 			Resolve("tio_filelength", FileLength);
 			Resolve("tio_fileexists", FileExists);
@@ -142,7 +146,6 @@ namespace temple {
 		// The following functions have the wrong signature
 		void (*fgetpos)(TioFile* file, uint64_t* filePos);
 
-		int (*fwrite)(const void* buffer, int size, int count, TioFile* file);
 		int (*fstat)(TioFile* file, TioFileListFile* pFileInfo);
 		bool (*fileexists)(const char* path, TioFileListFile* pInfoOut);
 		void (*rename)(const char* from, const char* to);
@@ -264,6 +267,11 @@ namespace temple {
 	size_t TioVfs::Read(void* buffer, size_t size, FileHandle handle) {
 		auto tioFile = static_cast<TioFile*>(handle);
 		return mImpl->Read(buffer, 1, size, tioFile);
+	}
+
+	size_t TioVfs::Write(void* buffer, size_t size, FileHandle handle) {
+		auto tioFile = static_cast<TioFile*>(handle);
+		return mImpl->Write(buffer, 1, size, tioFile);
 	}
 
 	size_t TioVfs::Length(FileHandle handle) {

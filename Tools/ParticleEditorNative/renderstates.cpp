@@ -145,6 +145,12 @@ void EditorRenderStates::SetFVF(DWORD fvf) {
 	mDevice->SetFVF(fvf);
 }
 
+DWORD EditorRenderStates::GetFVF() {
+	DWORD fvf;
+	mDevice->GetFVF(&fvf);
+	return fvf;
+}
+
 void EditorRenderStates::SetStreamSource(int streamIdx, IDirect3DVertexBuffer9* buffer, int stride) {
 	mDevice->SetStreamSource(streamIdx, buffer, 0, stride);
 }

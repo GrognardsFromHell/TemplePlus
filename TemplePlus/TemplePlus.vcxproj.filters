@@ -16,7 +16,6 @@
     <ClCompile Include="xp.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
-    <ClCompile Include="aas.cpp" />
     <ClCompile Include="game_config.cpp" />
     <ClCompile Include="temple_main.cpp" />
     <ClCompile Include="testhelper.cpp" />
@@ -254,9 +253,7 @@
       <Filter>tig</Filter>
     </ClCompile>
     <ClCompile Include="fixes\keyboard.cpp" />
-    <ClCompile Include="graphics\graphics.cpp" />
     <ClCompile Include="graphics\video_hooks.cpp" />
-    <ClCompile Include="graphics\textures.cpp" />
     <ClCompile Include="graphics\textures_hooks.cpp" />
     <ClCompile Include="gamesystems\gamesystems.cpp" />
     <ClCompile Include="gamesystems\legacy.cpp" />
@@ -278,19 +275,13 @@
     <ClCompile Include="fixes\generalfixes.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
-    <ClCompile Include="graphics\materials.cpp" />
     <ClCompile Include="graphics\materials_hooks.cpp" />
-    <ClCompile Include="graphics\mdfrenderer.cpp" />
     <ClCompile Include="graphics\renderstates.cpp" />
     <ClCompile Include="graphics\renderstates_hooks.cpp" />
     <ClCompile Include="graphics\render_hooks.cpp" />
     <ClCompile Include="graphics\renderer.cpp" />
-    <ClCompile Include="fonts\fonts_render.cpp" />
-    <ClCompile Include="fonts\fonts_layout.cpp" />
     <ClCompile Include="fonts\fonts_hooks.cpp" />
     <ClCompile Include="graphics\mapterrain.cpp" />
-    <ClCompile Include="shader\shadercode.c" />
-    <ClCompile Include="graphics\shaders.cpp" />
     <ClCompile Include="gamesystems\clipping\clippingmesh.cpp" />
     <ClCompile Include="gamesystems\clipping\clipping_hooks.cpp" />
     <ClCompile Include="gamesystems\clipping\clipping.cpp" />
@@ -303,6 +294,10 @@
     <ClCompile Include="gamesystems\objects\objid_hooks.cpp" />
     <ClCompile Include="gamesystems\objects\objregistry.cpp" />
     <ClCompile Include="gamesystems\objects\objregistry_hooks.cpp" />
+    <ClCompile Include="gamesystems\mapobjrender.cpp" />
+    <ClCompile Include="gamesystems\maps\sector.cpp" />
+    <ClCompile Include="fonts\fonts_layout.cpp" />
+    <ClCompile Include="fonts\fonts_render.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -311,7 +306,6 @@
     <ClInclude Include="mainwindow.h" />
     <ClInclude Include="temple_enums.h" />
     <ClInclude Include="testhelper.h" />
-    <ClInclude Include="aas.h" />
     <ClInclude Include="game_config.h" />
     <ClInclude Include="xp.h">
       <Filter>Mods and Fixes</Filter>
@@ -549,27 +543,20 @@
     <ClInclude Include="tig\tig_startup.h">
       <Filter>tig</Filter>
     </ClInclude>
-    <ClInclude Include="graphics\graphics.h" />
     <ClInclude Include="graphics\video_hooks.h" />
     <ClInclude Include="graphics\legacyvideosystem.h" />
-    <ClInclude Include="graphics\textures.h" />
     <ClInclude Include="gamesystems\gamesystems.h" />
     <ClInclude Include="gamesystems\legacy.h" />
     <ClInclude Include="gamesystems\gamerenderer.h" />
     <ClInclude Include="diag\diag.h" />
     <ClInclude Include="messages\messagequeue.h" />
-    <ClInclude Include="graphics\materials.h" />
-    <ClInclude Include="graphics\mdfrenderer.h" />
     <ClInclude Include="graphics\materials_hooks.h" />
     <ClInclude Include="graphics\renderstates.h" />
     <ClInclude Include="graphics\renderstates_data.h" />
     <ClInclude Include="graphics\renderstates_hooks.h" />
     <ClInclude Include="graphics\renderer.h" />
     <ClInclude Include="graphics\render_hooks.h" />
-    <ClInclude Include="fonts\fonts.h" />
     <ClInclude Include="graphics\mapterrain.h" />
-    <ClInclude Include="shader\shadercode.h" />
-    <ClInclude Include="graphics\shaders.h" />
     <ClInclude Include="gamesystems\clipping\clippingmesh.h" />
     <ClInclude Include="gamesystems\clipping\clipping.h" />
     <ClInclude Include="gamesystems\mapsystems.h" />
@@ -580,6 +567,9 @@
     <ClInclude Include="gamesystems\mappreprocessor.h" />
     <ClInclude Include="gamesystems\gamesystem.h" />
     <ClInclude Include="gamesystems\objects\objregistry.h" />
+    <ClInclude Include="gamesystems\mapobjrender.h" />
+    <ClInclude Include="gamesystems\maps\sector.h" />
+    <ClInclude Include="fonts\fonts.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -594,7 +584,6 @@
     <Filter Include="python">
       <UniqueIdentifier>{ea100e12-e4d1-4df0-8ed7-e2ba3025f6e5}</UniqueIdentifier>
     </Filter>
-    <ClInclude Include="aas.h" />
     <Filter Include="utils">
       <UniqueIdentifier>{66b79c6d-b1d5-4441-b7c0-6af6c3fc49a8}</UniqueIdentifier>
     </Filter>
@@ -617,9 +606,5 @@
     <ResourceCompile Include="resource.rc">
       <Filter>resources</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="shader\clipping_vs.hlsl" />
-    <FxCompile Include="shader\clipping_ps.hlsl" />
   </ItemGroup>
 </Project>

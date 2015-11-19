@@ -41,6 +41,7 @@ public:
 	void SetTextureAddressV(int sampler, D3DTEXTUREADDRESS mode) override;
 	void SetTextureTransformFlags(int sampler, D3DTEXTURETRANSFORMFLAGS flags) override;
 	void SetFVF(DWORD fvf) override;
+	DWORD GetFVF() override;
 	void SetStreamSource(int streamIdx, IDirect3DVertexBuffer9* buffer, int stride) override;
 	void SetIndexBuffer(IDirect3DIndexBuffer9* buffer, int baseIdx) override;
 	void Commit() override;

@@ -5,7 +5,12 @@
 
 #define API __declspec(dllexport)
 
+#include <graphics/device.h>
+#include <graphics/mdfmaterials.h>
 #include <infrastructure/meshes.h>
+#include <temple/meshes.h>
+#include <temple/aasrenderer.h>
+#include <particles/render.h>
 
 struct TempleDll;
 
@@ -16,24 +21,34 @@ namespace particles {
 #include <temple/meshes.h>
 
 struct TempleDll {
-
-	explicit TempleDll(const std::wstring &installationDir);
+	TempleDll(const std::wstring &installationDir, IDirect3DDevice9Ex* device);
 	~TempleDll();
 
-	temple::AasAnimatedModelFactory modelFactory;
+	static temple::AasConfig CreateAasConfig();
+
+	gfx::RenderingDevice renderingDevice;
+	gfx::MdfMaterialFactory mdfFactory;
+	temple::AasConfig aasConfig;
+	temple::AasAnimatedModelFactory aasFactory;
+	temple::AasRenderer aasRenderer;
+	particles::ParticleRendererManager renderManager;
+	std::unique_ptr<particles::PartSys> partSys;
 	
 };
 
 extern "C" {
 
-	API TempleDll* TempleDll_Load(const wchar_t* dllPath);
+	API TempleDll* TempleDll_Load(const wchar_t* dllPath,
+		const wchar_t *tpDataPath,
+		IDirect3DDevice9Ex* device);
 	API void TempleDll_Unload(TempleDll*);
+	API const char *TempleDll_GetLastError();
 
-	API bool ParticleSystem_RenderVideo(IDirect3DDevice9* device,
-	                                    particles::PartSys* sys,
+	API bool ParticleSystem_RenderVideo(TempleDll* dll,
 	                                    D3DCOLOR background,
 	                                    const wchar_t* outputFile,
 	                                    int fps);
+
 
 	API gfx::AnimatedModelPtr* AnimatedModel_FromFiles(TempleDll* dll,
 	                                                   const wchar_t* skmFilename,
@@ -46,5 +61,3 @@ extern "C" {
 	API void AnimatedModel_Free(gfx::AnimatedModelPtr* handle);
 
 }
-
-void InitRenderStates(IDirect3DDevice9* device, float w, float h, float scale);

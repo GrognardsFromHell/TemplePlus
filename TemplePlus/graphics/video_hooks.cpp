@@ -4,6 +4,8 @@
 
 #include <platform/windows.h>
 
+#include <graphics/device.h>
+
 #include <infrastructure/renderstates.h>
 #include <infrastructure/exception.h>
 #include <infrastructure/stringutil.h>
@@ -15,7 +17,6 @@
 #include <d3d8to9_texture.h>
 #include <d3d8to9_device.h>
 
-#include "graphics.h"
 #include "movies.h"
 #include "util/config.h"
 #include "util/fixes.h"
@@ -23,6 +24,8 @@
 #include <tig/tig_startup.h>
 
 #include "legacyvideosystem.h"
+
+using namespace gfx;
 
 VideoFuncs videoFuncs;
 temple::GlobalStruct<VideoData, 0x11E74580> video;
@@ -113,7 +116,8 @@ void VideoFixes::apply() {
 
 // Delegate to the new begin frame
 int VideoFixes::BeginFrame() {
-	if (!graphics->BeginFrame()) {
+	auto& device = tig->GetRenderingDevice();
+	if (!device.BeginFrame()) {
 		return 1;
 	}
 	return 0;
@@ -121,7 +125,8 @@ int VideoFixes::BeginFrame() {
 
 // Delegate to the new present frame
 int VideoFixes::PresentFrame() {
-	if (!graphics->Present()) {
+	auto& device = tig->GetRenderingDevice();
+	if (!device.Present()) {
 		return 1;
 	}
 	return 0;
@@ -224,35 +229,43 @@ void VideoFixes::TakeScreenshot(int) {
 	logger->info("Saving screenshot as {}", ucs2_to_local(path));
 
 	// Take screenshot
-	graphics->TakeScaledScreenshot(ucs2_to_local(path.c_str()), 0, 0);
+	auto& device = tig->GetRenderingDevice();
+	device.TakeScaledScreenshot(ucs2_to_local(path.c_str()), 0, 0, config.screenshotQuality);
 
 }
 
-
 void VideoFixes::UpdateProjMatrices(const TigMatrices& matrices) {
-	TigMatrices modifiedParams;
-	// - 0.5f might be better here
-	modifiedParams.xOffset = matrices.xOffset + 0.5f;
-	modifiedParams.yOffset = matrices.yOffset + 0.5f;
-	modifiedParams.scale = matrices.scale;
 
-	videoFuncs.updateProjMatrices(&modifiedParams);
+	auto transX = (float) temple::GetRef<int64_t>(0x10808D00);
+	auto transY = (float) temple::GetRef<int64_t>(0x10808D48);
+
+	auto& device = tig->GetRenderingDevice();
+
+	device.GetCamera().SetTranslation(transX, transY);
+	device.GetCamera().SetScale(matrices.scale);
+
+	auto viewProjNew(tig->GetRenderingDevice().GetCamera().GetViewProj());
+	auto viewProjOld(temple::GetRef<XMFLOAT4X4>(0x11E75788));
+	XMFLOAT4X4 diff;
+	XMStoreFloat4x4(&diff, XMLoadFloat4x4(&viewProjNew) - XMLoadFloat4x4(&viewProjOld));
+
 }
 
 // Take screenshots for the savegame
 void VideoFixes::TakeSaveScreenshots() {
-	graphics->TakeScaledScreenshot("save\\temps.jpg", 64, 48);
-	graphics->TakeScaledScreenshot("save\\templ.jpg", 256, 192);
+	auto& device = tig->GetRenderingDevice();
+	device.TakeScaledScreenshot("save\\temps.jpg", 64, 48);
+	device.TakeScaledScreenshot("save\\templ.jpg", 256, 192);
 }
 
 class LegacyResourceManager : public ResourceListener {
 public:
 
-	explicit LegacyResourceManager(Graphics& graphics) : mRegistration(graphics, this) {
-	}
+	explicit LegacyResourceManager(RenderingDevice& device) 
+		: mRegistration(device, this) {}
 
-	void CreateResources(Graphics&) override;
-	void FreeResources(Graphics&) override;
+	void CreateResources(RenderingDevice&) override;
+	void FreeResources(RenderingDevice&) override;
 
 private:
 	CComPtr<IDirect3DVertexBuffer9> mRenderQuadBuffer;
@@ -263,20 +276,19 @@ private:
 	ResourceListenerRegistration mRegistration;
 };
 
-void LegacyResourceManager::CreateResources(Graphics& g) {
+void LegacyResourceManager::CreateResources(RenderingDevice& device) {
 
 	logger->info("Creating legacy graphics resources...");
 
 	videoFuncs.buffersFreed = false;
 
 	// Store back buffer size
-	const auto& backBufferDesc = g.backBufferDesc();
-	videoFuncs.backbufferWidth = backBufferDesc.Width;
-	videoFuncs.backbufferHeight = backBufferDesc.Height;
+	videoFuncs.backbufferWidth = device.GetRenderWidth();
+	videoFuncs.backbufferHeight = device.GetRenderHeight();
 
-	auto device = g.device();
+	auto d3dDevice = device.GetDevice();
 	
-	if (D3DLOG(device->CreateVertexBuffer(
+	if (D3DLOG(d3dDevice->CreateVertexBuffer(
 		140, // Space for 5 vertices
 		D3DUSAGE_DYNAMIC,
 		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
@@ -287,7 +299,7 @@ void LegacyResourceManager::CreateResources(Graphics& g) {
 	}
 	videoFuncs.renderQuadBuffer = new Direct3DVertexBuffer8Adapter(mRenderQuadBuffer);
 
-	if (D3DLOG(device->CreateVertexBuffer(
+	if (D3DLOG(d3dDevice->CreateVertexBuffer(
 		56, // 2 vertices
 		D3DUSAGE_DYNAMIC,
 		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
@@ -298,7 +310,7 @@ void LegacyResourceManager::CreateResources(Graphics& g) {
 	}
 	videoFuncs.sharedVBuffer2 = new Direct3DVertexBuffer8Adapter(mSharedVBuffer2);
 
-	if (D3DLOG(device->CreateVertexBuffer(
+	if (D3DLOG(d3dDevice->CreateVertexBuffer(
 		7168, // 256 vertices
 		D3DUSAGE_DYNAMIC,
 		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
@@ -309,7 +321,7 @@ void LegacyResourceManager::CreateResources(Graphics& g) {
 	}
 	videoFuncs.sharedVBuffer3 = new Direct3DVertexBuffer8Adapter(mSharedVBuffer3);
 
-	if (D3DLOG(device->CreateVertexBuffer(
+	if (D3DLOG(d3dDevice->CreateVertexBuffer(
 		4644, // 129 device
 		D3DUSAGE_DYNAMIC,
 		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_NORMAL | D3DFVF_XYZ, // 36 byte per vertex
@@ -326,7 +338,7 @@ void LegacyResourceManager::CreateResources(Graphics& g) {
 
 }
 
-void LegacyResourceManager::FreeResources(Graphics&) {
+void LegacyResourceManager::FreeResources(RenderingDevice&) {
 
 	logger->info("Freeing legacy graphics resources...");
 
@@ -343,7 +355,7 @@ void LegacyResourceManager::FreeResources(Graphics&) {
 	mSharedVBuffer4.Release();
 }
 
-LegacyVideoSystem::LegacyVideoSystem(MainWindow& mainWindow, Graphics& graphics) {
+LegacyVideoSystem::LegacyVideoSystem(MainWindow& mainWindow, RenderingDevice& graphics) {
 	memset(video, 0, 4796);
 
 	video->adapter = 0;
@@ -356,11 +368,10 @@ LegacyVideoSystem::LegacyVideoSystem(MainWindow& mainWindow, Graphics& graphics)
 	video->gammaSupported = false;
 
 	video->d3dDevice = new Direct3DDevice8Adapter;
-	video->d3dDevice->delegate = graphics.device();
+	video->d3dDevice->delegate = graphics.GetDevice();
 
 	// Make some caps available for other legacy systems
-	const auto& caps = graphics.GetCaps();
-	video->maxActiveLights = std::min<DWORD>(8, caps.MaxActiveLights);
+	video->maxActiveLights = 8;
 
 	/* Probably without effect */
 	if (video->makesSthLarger) {
@@ -370,12 +381,8 @@ LegacyVideoSystem::LegacyVideoSystem(MainWindow& mainWindow, Graphics& graphics)
 		video->neverReadFlag1 = 2048;
 		video->neverReadFlag2 = 0;
 	}
-	if ((caps.TextureCaps & D3DPTEXTURECAPS_POW2) != 0) {
-		video->capPowerOfTwoTextures = true;
-	}
-	if ((caps.TextureCaps & D3DPTEXTURECAPS_SQUAREONLY) != 0) {
-		video->capSquareTextures = true;
-	}
+	video->capPowerOfTwoTextures = false;
+	video->capSquareTextures = false;
 
 	// TODO: Validate necessity of all these	
 	video->hinstance = mainWindow.GetHinstance();

@@ -32,9 +32,9 @@ namespace gfx {
 
 		bool GetLine();
 		MdfType ParseMaterialType();
-		std::unique_ptr<MdfClipperMaterial> ParseClipper();
-		std::unique_ptr<MdfTexturedMaterial> ParseTextured();
-		std::unique_ptr<MdfGeneralMaterial> ParseGeneral();
+		std::unique_ptr<MdfMaterial> ParseClipper();
+		std::unique_ptr<MdfMaterial> ParseTextured();
+		std::unique_ptr<MdfMaterial> ParseGeneral();
 
 		bool ParseTextureStageId(Tokenizer &tokenizer) const;
 		bool ParseFilename(Tokenizer &tokenizer, const char *logMsg) const;

@@ -1,15 +1,17 @@
-#include <stdafx.h>
 
-#include <graphics/graphics.h>
-#include <infrastructure/renderstates.h>
-#include <infrastructure/textures.h>
-#include <graphics/render_hooks.h>
+#include "stdafx.h"
 
-#include "util/fixes.h"
+#include <graphics/device.h>
+#include <graphics/shaders.h>
+#include <graphics/materials.h>
+#include <graphics/bufferbinding.h>
+
 #include "tig/tig.h"
 #include "tig/tig_font.h"
+#include "fonts.h"
 
 using namespace gsl;
+using namespace gfx;
 
 // First character found in the FNT files
 constexpr auto FirstFontChar = '!';
@@ -20,13 +22,13 @@ struct GlyphVertex2d {
 	float v;
 	float x;
 	float y;
-	D3DCOLOR diffuse;
+	XMCOLOR diffuse;
 };
 
 struct GlyphVertex3d {
-	D3DXVECTOR4 pos;
-	D3DCOLOR diffuse;
-	D3DXVECTOR2 uv;
+	XMFLOAT3 pos;
+	XMCOLOR diffuse;
+	XMFLOAT2 uv;
 };
 #pragma pack(pop)
 
@@ -34,14 +36,12 @@ static void ConvertVertex(const GlyphVertex2d& vertex2d, GlyphVertex3d& vertex3d
 	vertex3d.pos.x = vertex2d.x;
 	vertex3d.pos.y = vertex2d.y;
 	vertex3d.pos.z = 0.5f;
-	vertex3d.pos.w = 1.0f;
 
 	vertex3d.diffuse = vertex2d.diffuse;
 
 	vertex3d.uv.x = vertex2d.u / textureSize.width;
 	vertex3d.uv.y = vertex2d.v / textureSize.height;
 }
-
 
 #if 0
 int FontDrawDoWork(TigTextStyle* style, const char*& text, const TigFontDrawArgs& args, const TigFont& font) {
@@ -92,24 +92,57 @@ struct GlyphFileState {
 	std::array<GlyphVertex2d, MaxGlyphs * 4> vertices;
 };
 
-#include "fonts.h"
-
 struct FontRenderer::Impl : public ResourceListener {
 	
-	Impl(Graphics &g) : mRegistration(g, this) {
+	Impl(RenderingDevice &device) 
+		: mDevice(device), mRegistration(device, this), mMaterial(CreateMaterial(device)) {
 	}
 	
-	void CreateResources(Graphics&) override;
-	void FreeResources(Graphics&) override;
+	void CreateResources(RenderingDevice&) override;
+	void FreeResources(RenderingDevice&) override;
 
-	CComPtr<IDirect3DIndexBuffer9> mIndexBuffer;
+	RenderingDevice& mDevice;
+	IndexBufferPtr mIndexBuffer;
+	BufferBinding mBufferBinding;
 	GlyphFileState mFileState[sMaxGlyphFiles];
+
+	Material mMaterial;
+
 	ResourceListenerRegistration mRegistration;
+
+	static Material CreateMaterial(RenderingDevice &device);
 
 };
 
+Material FontRenderer::Impl::CreateMaterial(RenderingDevice &device) {
 
-FontRenderer::FontRenderer(Graphics& g) : mImpl(std::make_unique<Impl>(g)) {
+	BlendState blendState;
+	blendState.blendEnable = true;
+	blendState.srcBlend = D3DBLEND_SRCALPHA;
+	blendState.destBlend = D3DBLEND_INVSRCALPHA;
+
+	DepthStencilState depthStencilState;
+	depthStencilState.depthEnable = false;
+		
+	std::vector<MaterialSamplerBinding> samplers {
+		{ nullptr, SamplerState() }
+	};
+
+	auto vertexShader(device.GetShaders().LoadVertexShader("font_vs"));
+	auto pixelShader(device.GetShaders().LoadPixelShader("textured_simple_ps"));
+
+	return Material(
+		blendState,
+		depthStencilState,
+		RasterizerState(),
+		samplers,
+		vertexShader,
+		pixelShader
+	);
+}
+
+FontRenderer::FontRenderer(RenderingDevice& device)
+	: mImpl(std::make_unique<Impl>(device)) {
 }
 
 FontRenderer::~FontRenderer() {
@@ -300,68 +333,40 @@ void FontRenderer::RenderRun(array_view<const char> text,
 }
 
 void FontRenderer::RenderGlyphs(const GlyphVertex2d* vertices2d, int textureId, int glyphCount) {
+	auto device = mImpl->mDevice.GetDevice();
+	auto texture = mImpl->mDevice.GetTextures().GetById(textureId);
 
-	auto texture = gfx::textureManager->GetById(textureId);
 	auto deviceTexture = texture->GetDeviceTexture();
 	if (!deviceTexture) {
 		logger->error("Trying to render glyph from invalid device texture");
 		return;
 	}
-	renderStates->SetTexture(0, deviceTexture);
-
-	auto device = graphics->device();
-
-	CComPtr<IDirect3DVertexBuffer9> buffer;
+	mImpl->mDevice.SetMaterial(mImpl->mMaterial);
+	device->SetTexture(0, deviceTexture);
+	
 	const auto vertexCount = glyphCount * 4;
 	const auto bufferSize = sizeof(GlyphVertex3d) * vertexCount;
-	constexpr auto fvf = D3DFVF_XYZRHW | D3DFVF_DIFFUSE;
-
-	if (D3DLOG(device->CreateVertexBuffer(bufferSize,
-		D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY,
-		fvf,
-		D3DPOOL_DEFAULT,
-		&buffer,
-		nullptr)) != D3D_OK) {
-		return;
-	}
-
-	GlyphVertex3d* vertices;
-	if (D3DLOG(buffer->Lock(0, bufferSize, (void**)&vertices, D3DLOCK_DISCARD)) != D3D_OK) {
-		return;
-	}
+	
+	auto buffer = mImpl->mDevice.CreateEmptyVertexBuffer(bufferSize);
+	auto lock(buffer->Lock<GlyphVertex3d>());
 
 	auto textureSize = texture->GetSize();
 	for (auto i = 0; i < vertexCount; ++i) {
-		ConvertVertex(vertices2d[i], vertices[i], textureSize);
+		ConvertVertex(vertices2d[i], lock.GetData()[i], textureSize);
 	}
 
-	if (D3DLOG(buffer->Unlock()) != D3D_OK) {
-		return;
-	}
+	lock.Unlock();
 
-	renderStates->SetTextureColorOp(0, D3DTOP_MODULATE);
-	renderStates->SetTextureColorArg1(0, D3DTA_TEXTURE);
-	renderStates->SetTextureColorArg2(0, D3DTA_CURRENT);
+	mImpl->mBufferBinding
+		.SetBuffer(0, buffer)
+		.Bind();
+	device->SetIndices(mImpl->mIndexBuffer->GetBuffer());
 
-	renderStates->SetTextureAlphaOp(0, D3DTOP_MODULATE);
-	renderStates->SetTextureAlphaArg1(0, D3DTA_TEXTURE);
-	renderStates->SetTextureAlphaArg2(0, D3DTA_CURRENT);
-
-	renderStates->SetTextureMipFilter(0, D3DTEXF_LINEAR);
-	renderStates->SetTextureMinFilter(0, D3DTEXF_LINEAR);
-	renderStates->SetTextureMagFilter(0, D3DTEXF_LINEAR);
-
-	renderStates->SetColorVertex(true);
-	renderStates->SetAlphaTestEnable(true);
-	renderStates->SetAlphaBlend(true);
-	renderStates->SetSrcBlend(D3DBLEND_SRCALPHA);
-	renderStates->SetDestBlend(D3DBLEND_INVSRCALPHA);
-
-	renderStates->SetStreamSource(0, buffer, sizeof(GlyphVertex3d));
-	renderStates->SetIndexBuffer(mImpl->mIndexBuffer, 0);
-	renderStates->Commit();
-
+	// Set vertex shader properties (GUI specific)
+	device->SetVertexShaderConstantF(0, &mImpl->mDevice.GetCamera().GetUiProjection()._11, 4);
+	
 	D3DLOG(device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, vertexCount, 0, glyphCount * 2));
+
 }
 
 void FontRenderer::Rotate2d(float& x, float& y, float rotCos, float rotSin, float centerX, float centerY) {
@@ -371,41 +376,31 @@ void FontRenderer::Rotate2d(float& x, float& y, float rotCos, float rotSin, floa
 	y = newY;
 }
 
-void FontRenderer::Impl::CreateResources(Graphics& g) {
-
-	auto device = g.device();
-	const auto idxBufferLength = sizeof(uint16_t) * 3 * 2 * GlyphFileState::MaxGlyphs;
-	if (D3DLOG(device->CreateIndexBuffer(idxBufferLength,
-		D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY,
-		D3DFMT_INDEX16,
-		D3DPOOL_DEFAULT,
-		&mIndexBuffer,
-		nullptr)) != D3D_OK) {
-		throw TempleException("Unable to create glyph index buffer");
-	}
-
-	uint16_t* indices;
-	if (D3DLOG(mIndexBuffer->Lock(0, idxBufferLength, (void**)&indices, D3DLOCK_DISCARD)) != D3D_OK) {
-		throw TempleException("Unable to lock glyph index buffer");
-	}
+void FontRenderer::Impl::CreateResources(RenderingDevice& g) {
 
 	auto vertexIdx = 0;
+	std::array<uint16_t, GlyphFileState::MaxGlyphs * 6> indicesData;
+	int j = 0;
 	for (auto i = 0; i < GlyphFileState::MaxGlyphs; ++i) {
 		// Counter clockwise quad rendering
-		*indices++ = vertexIdx + 0;
-		*indices++ = vertexIdx + 1;
-		*indices++ = vertexIdx + 2;
-		*indices++ = vertexIdx + 0;
-		*indices++ = vertexIdx + 2;
-		*indices++ = vertexIdx + 3;
+		indicesData[j++] = vertexIdx + 0;
+		indicesData[j++] = vertexIdx + 1;
+		indicesData[j++] = vertexIdx + 2;
+		indicesData[j++] = vertexIdx + 0;
+		indicesData[j++] = vertexIdx + 2;
+		indicesData[j++] = vertexIdx + 3;
 		vertexIdx += 4;
 	}
 
-	if (D3DLOG(mIndexBuffer->Unlock()) != D3D_OK) {
-		throw TempleException("Unable to unlock glyph index buffer");
-	}
+	mIndexBuffer = g.CreateIndexBuffer(indicesData);
+	
+	mBufferBinding.AddBuffer(nullptr, 0, sizeof(GlyphVertex3d))
+		.AddElement(VertexElementType::Float3, VertexElementSemantic::Position)
+		.AddElement(VertexElementType::Color, VertexElementSemantic::Color)
+		.AddElement(VertexElementType::Float2, VertexElementSemantic::TexCoord);
+
 }
 
-void FontRenderer::Impl::FreeResources(Graphics&) {
+void FontRenderer::Impl::FreeResources(RenderingDevice&) {
 	mIndexBuffer = nullptr;
 }

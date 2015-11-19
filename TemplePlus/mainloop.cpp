@@ -4,13 +4,14 @@
 #include "mainwindow.h"
 #include "tig/tig_msg.h"
 #include "tig/tig_mouse.h"
+#include "tig/tig_startup.h"
 #include "gamesystems/gamesystems.h"
-#include "graphics/graphics.h"
 #include "ui/ui_render.h"
 #include "util/config.h"
 #include "tig/tig_font.h"
 #include "obj.h"
 #include "diag/diag.h"
+#include <graphics/device.h>
 
 static struct MainLoop : temple::AddressTable {
 
@@ -68,12 +69,12 @@ static struct MainLoop : temple::AddressTable {
 	}
 } mainLoop;
 
-GameLoop::GameLoop(MainWindow& mainWindow, GameSystems& gameSystems, Graphics& graphics)
-	: mMainWindow(mainWindow),
+GameLoop::GameLoop(TigInitializer& tig, GameSystems& gameSystems)
+	: mTig(tig),
 	  mGameSystems(gameSystems),
-	  mGameRenderer(graphics, mGameSystems) {
+	  mGameRenderer(tig, mGameSystems) {
 
-	mDiagScreen = std::make_unique<DiagScreen>(graphics);
+	mDiagScreen = std::make_unique<DiagScreen>(tig.GetRenderingDevice());
 }
 
 GameLoop::~GameLoop() {
@@ -84,12 +85,10 @@ GameLoop::~GameLoop() {
 	temple_main, there is no need to hook this function in temple.dll
 */
 void GameLoop::Run() {
-
+	auto& camera = mTig.GetRenderingDevice().GetCamera();
 	// Is this a center map kind of deal?
-	locXY loc;
-	if (!graphics->ScreenToTile(400, 300, loc)) {
-		throw TempleException("Initial call to unknown main loop function failed!");
-	}
+	auto worldPos = camera.ScreenToWorld(400, 300);
+	locXY loc{ (uint32_t)(worldPos.x / INCH_PER_TILE), (uint32_t)(worldPos.z / INCH_PER_TILE) };
 	mainLoop.sub_1002A580(loc);
 
 	mainLoop.QueueFidgetAnimEvent();
@@ -109,7 +108,7 @@ void GameLoop::Run() {
 
 		// This locks the cursor to our window if we are in the foreground and it's enabled
 		if (!config.windowed && config.lockCursor) {
-			mMainWindow.LockCursor();
+			tig->GetMainWindow().LockCursor();
 		}
 
 		RenderFrame();
@@ -145,17 +144,20 @@ void GameLoop::Run() {
 }
 
 void GameLoop::RenderFrame() {
-	graphics->BeginFrame();
 
-	auto device = graphics->device();
+	auto& device = tig->GetRenderingDevice();
+
+	device.BeginFrame();
+
+	auto d3dDevice = device.GetDevice();
 
 	// Set it as the render target
-	D3DLOG(device->SetRenderTarget(0, graphics->sceneSurface()));
-	D3DLOG(device->SetDepthStencilSurface(graphics->sceneDepthSurface()));
+	D3DLOG(d3dDevice->SetRenderTarget(0, device.GetRenderSurface()));
+	D3DLOG(d3dDevice->SetDepthStencilSurface(device.GetRenderDepthStencilSurface()));
 
 	// Clear the new render target as well
 	auto clearColor = D3DCOLOR_ARGB(0, 0, 0, 0);
-	D3DLOG(device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, clearColor, 1.0f, 0));
+	D3DLOG(d3dDevice->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, clearColor, 1.0f, 0));
 
 	mGameRenderer.Render();
 	mainLoop.RenderUi();
@@ -171,20 +173,20 @@ void GameLoop::RenderFrame() {
 	mouseFuncs.DrawCursor(); // This draws dragged items
 
 	// Reset the render target
-	D3DLOG(device->SetRenderTarget(0, graphics->backBuffer()));
-	D3DLOG(device->SetDepthStencilSurface(graphics->backBufferDepth()));
+	D3DLOG(d3dDevice->SetRenderTarget(0, device.GetBackBuffer()));
+	D3DLOG(d3dDevice->SetDepthStencilSurface(device.GetBackBufferDepthStencil()));
 
 	// Copy from the actual render target to the back buffer and scale / position accordingly
-	auto destRect = graphics->sceneRect();
-	device->StretchRect(
-		graphics->sceneSurface(),
+	RECT destRect{ 0, 0, device.GetRenderWidth(), device.GetRenderHeight() };
+	d3dDevice->StretchRect(
+		device.GetRenderSurface(),
 		nullptr,
-		graphics->backBuffer(),
+		device.GetBackBuffer(),
 		&destRect,
 		D3DTEXF_LINEAR
 	);
 
-	graphics->Present();
+	device.Present();
 }
 
 void GameLoop::DoMouseScrolling() {
@@ -200,11 +202,13 @@ void GameLoop::RenderVersion() {
 	style.flags = 0x0800;
 	style.field10 = 25;
 	style.textColor = &textColor;
+	
+	auto& device = mTig.GetRenderingDevice();
 
 	auto version = GetTemplePlusVersion();
 	auto rect = UiRenderer::MeasureTextSize(version, style);
-	rect.x = graphics->GetSceneWidth() - rect.width - 10 - 250;
-	rect.y = graphics->GetSceneHeight() - rect.height - 10 - 250 ;
+	rect.x = device.GetRenderWidth() - rect.width - 10 - 250;
+	rect.y = device.GetRenderHeight() - rect.height - 10 - 250 ;
 
 	UiRenderer::RenderText(version, rect, style);
 

@@ -54,36 +54,48 @@
     <ClInclude Include="include\particles\bones.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\render_general.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="parser.cpp">
+    <ClCompile Include="src\bones.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="spec.cpp">
+    <ClCompile Include="src\instances.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="parser_keyframes.cpp">
+    <ClCompile Include="src\params.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="parser_params.cpp">
+    <ClCompile Include="src\parser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="params.cpp">
+    <ClCompile Include="src\parser_keyframes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="instances.cpp">
+    <ClCompile Include="src\parser_params.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="render.cpp">
+    <ClCompile Include="src\render.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="simulation.cpp">
+    <ClCompile Include="src\render_point.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="render_point.cpp">
+    <ClCompile Include="src\simulation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="bones.cpp">
+    <ClCompile Include="src\spec.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render_quad.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render_general.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render_model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

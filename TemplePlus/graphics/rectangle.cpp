@@ -36,7 +36,7 @@ void UiRectangle::SetHeight(int height) {
 
 void UiRectangle::SetColor(uint32_t color) {
 	mColors.fill(color);
-	if (color & 0xFF000000 != 0xFF000000) {
+	if ((color & 0xFF000000) != 0xFF000000) {
 		mArgs->flags |= Render2dArgs::FLAG_VERTEXALPHA;
 	} else {
 		mArgs->flags &= ~Render2dArgs::FLAG_VERTEXALPHA;

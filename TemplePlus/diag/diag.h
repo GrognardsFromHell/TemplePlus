@@ -2,11 +2,13 @@
 
 #include <memory>
 
-class Graphics;
+namespace gfx {
+	class RenderingDevice;
+}
 
 class DiagScreen {
 public:
-	explicit DiagScreen(Graphics& g);
+	explicit DiagScreen(gfx::RenderingDevice& device);
 	~DiagScreen();
 		
 	void Render();
@@ -22,7 +24,7 @@ public:
 private:
 	class Impl;
 	std::unique_ptr<Impl> mImpl;
-	Graphics& mGraphics;
+	gfx::RenderingDevice& mDevice;
 
 	std::string FormatMemSize(size_t memory);
 

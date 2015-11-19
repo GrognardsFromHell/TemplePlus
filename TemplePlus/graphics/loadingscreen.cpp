@@ -7,20 +7,25 @@
 #include "rectangle.h"
 
 #include <util/config.h>
-#include <ui/ui.h>
 #include <ui/ui_render.h>
 #include <tig/tig_font.h>
+#include <graphics/shaperenderer2d.h>
+#include <graphics/device.h>
+
+using namespace gfx;
 
 struct LoadingScreen::Impl {
 
-	explicit Impl(Graphics& g) : graphics(g) {
+	explicit Impl(RenderingDevice& device, ShapeRenderer2d &shapeRenderer) 
+		: device(device), shapeRenderer(shapeRenderer) {
 	}
 
 	int barWidth = 512;
 	int barHeight = 18;
 	int barBorderSize = 1;
 
-	Graphics& graphics;
+	RenderingDevice& device;
+	ShapeRenderer2d& shapeRenderer;
 	float progress = 0;
 	std::string message;
 	std::unique_ptr<CombinedImgFile> imageFile;
@@ -73,7 +78,8 @@ void LoadingScreen::Impl::UpdateFilledBarWidth() {
 	barFilled.SetWidth((int)(fullWidth * std::min(1.0f, progress)));
 }
 
-LoadingScreen::LoadingScreen(Graphics& g) : mImpl(std::make_unique<Impl>(g)) {
+LoadingScreen::LoadingScreen(RenderingDevice &device, ShapeRenderer2d &shapeRenderer) 
+	: mImpl(std::make_unique<Impl>(device, shapeRenderer)) {
 	SetImage("art\\splash\\legal0322.img");
 
 	mImpl->barBorder.SetColor(0xFF808080);
@@ -123,7 +129,7 @@ void LoadingScreen::Render() {
 		return;
 	}
 
-	mImpl->graphics.BeginFrame();
+	mImpl->device.BeginFrame();
 	mImpl->imageFile->Render();
 	mImpl->barBorder.Render();
 	mImpl->barUnfilled.Render();
@@ -147,6 +153,6 @@ void LoadingScreen::Render() {
 
 		UiRenderer::PopFont();
 	}
-	mImpl->graphics.Present();
+	mImpl->device.Present();
 
 }

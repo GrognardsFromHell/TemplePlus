@@ -1,15 +1,15 @@
 #include "stdafx.h"
 
+#include <graphics/device.h>
 #include <platform/windows.h>
 #include <windowsx.h>
 
-#include "util/fixes.h"
-#include "graphics/graphics.h"
 #include "movies.h"
 #include "tig/tig_msg.h"
 #include "tig/tig_mouse.h"
 #include "util/config.h"
 #include "mainwindow.h"
+#include "tig/tig_startup.h"
 
 struct WindowFuncs : temple::AddressTable {
 	void (*TigSoundSetActive)(BOOL active);
@@ -57,7 +57,7 @@ void MainWindow::RegisterWndClass() {
 
 	WNDCLASS wndClass;
 	ZeroMemory(&wndClass, sizeof(wndClass));
-	wndClass.style = CS_DBLCLKS;
+	wndClass.style = 0;
 	wndClass.lpfnWndProc = WndProcTrampoline;
 	wndClass.hInstance = mHinstance;
 	wndClass.hIcon = LoadIcon(mHinstance, L"icon");
@@ -174,7 +174,7 @@ LRESULT MainWindow::WndProcTrampoline(HWND hWnd, UINT msg, WPARAM wparam, LPARAM
 
 LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
-	if (hWnd != mHwnd || !graphics) {
+	if (hWnd != mHwnd || !tig) {
 		return DefWindowProcA(hWnd, msg, wparam, lparam);
 	}
 
@@ -188,7 +188,7 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		SetCursor(nullptr); // Disables default cursor
 		if (!movieFuncs.MovieIsPlaying) {
 			// TODO: Rip this out, circular dependency
-			graphics->device()->ShowCursor(TRUE);
+			tig->GetRenderingDevice().GetDevice()->ShowCursor(TRUE);
 		}
 		return TRUE; // This prevents windows from setting the default cursor for us
 	case WM_LBUTTONDOWN:
@@ -307,20 +307,19 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 }
 
 void MainWindow::UpdateMousePos(int xAbs, int yAbs, int wheelDelta) {
-	auto rect = graphics->sceneRect();
-	int sw = rect.right - rect.left;
-	int sh = rect.bottom - rect.top;
-
-	// Make the mouse pos relative to the scene rectangle
-	xAbs -= rect.left;
-	yAbs -= rect.top;
+	auto &device(tig->GetRenderingDevice());
 
 	// Move it into the scene rectangle coordinate space
-	xAbs = (int)round(xAbs / graphics->sceneScale());
-	yAbs = (int)round(yAbs / graphics->sceneScale());
+	auto& sceneRect(device.GetSceneRect());
+	auto x = xAbs - sceneRect.x;
+	auto y = yAbs - sceneRect.y;
+
+	// Scale it to the coordinate system that was used to render the scene
+	xAbs = (int)round(x / device.GetSceneScale());
+	yAbs = (int)round(y / device.GetSceneScale());
 
 	// Account for a resized screen
-	if (xAbs < 0 || yAbs < 0 || xAbs >= sw || yAbs >= sh)
+	if (xAbs < 0 || yAbs < 0 || xAbs >= device.GetRenderWidth() || yAbs >= device.GetRenderHeight())
 		return;
 
 	mouseFuncs.SetPos(xAbs, yAbs, wheelDelta);

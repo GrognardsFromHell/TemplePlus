@@ -2,6 +2,11 @@
 
 struct TigRect;
 
+namespace gfx {
+	class RenderingDevice;
+	class ShapeRenderer2d;
+}
+
 class MapTerrain {
 public:
 
@@ -28,7 +33,8 @@ public:
 	// Offset for the map art ids for nighttime ids
 	static constexpr auto NightArtIdOffset = 1000;
 
-	MapTerrain();
+	MapTerrain(gfx::RenderingDevice &device,
+		gfx::ShapeRenderer2d &shapeRenderer);
 
 	void Render();
 
@@ -40,6 +46,9 @@ public:
 	MapTerrain& operator=(MapTerrain&&) = delete;
 
 private:
+	gfx::RenderingDevice& mDevice;
+	gfx::ShapeRenderer2d& mShapeRenderer;
+
 	std::unordered_map<int, std::string> mTerrainDirs;
 
 	std::string GetTileTexture(int mapArtId, int x, int y);

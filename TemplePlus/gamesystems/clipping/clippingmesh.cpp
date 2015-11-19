@@ -4,10 +4,9 @@
 
 #include "clippingmesh.h"
 #include <infrastructure/binaryreader.h>
-#include <graphics/graphics.h>
 
-ClippingMesh::ClippingMesh(Graphics &g, const std::string& filename)
-	: mFilename(filename), mRegistration(g, this) {	
+ClippingMesh::ClippingMesh(RenderingDevice &device, const std::string& filename)
+	: mFilename(filename), mRegistration(device, this) {	
 }
 
 ClippingMesh::~ClippingMesh() {
@@ -17,7 +16,7 @@ void ClippingMesh::AddInstance(const ClippingMeshObj& obj) {
 	mInstances.push_back(obj);
 }
 
-void ClippingMesh::CreateResources(Graphics &g) {
+void ClippingMesh::CreateResources(RenderingDevice &device) {
 
 	auto data(vfs->ReadAsBinary(mFilename));
 	BinaryReader reader(data);
@@ -41,8 +40,8 @@ void ClippingMesh::CreateResources(Graphics &g) {
 	auto indexDataStart = reader.Read<int>();
 
 	auto vertexBufferSize = mVertexCount * sizeof(D3DVECTOR);
-	auto device = g.device();
-	if (D3DLOG(device->CreateVertexBuffer(vertexBufferSize, 0, 0, D3DPOOL_DEFAULT, &mVertexBuffer, nullptr)) != D3D_OK) {
+	auto d3dDevice = device.GetDevice();
+	if (D3DLOG(d3dDevice->CreateVertexBuffer(vertexBufferSize, 0, 0, D3DPOOL_DEFAULT, &mVertexBuffer, nullptr)) != D3D_OK) {
 		return;
 	}
 
@@ -56,7 +55,7 @@ void ClippingMesh::CreateResources(Graphics &g) {
 	D3DLOG(mVertexBuffer->Unlock());
 
 	auto indexBufferSize = mTriCount * 3 * sizeof(uint16_t);
-	if (D3DLOG(device->CreateIndexBuffer(indexBufferSize, 0, D3DFMT_INDEX16, D3DPOOL_DEFAULT, &mIndexBuffer, nullptr)) != D3D_OK) {
+	if (D3DLOG(d3dDevice->CreateIndexBuffer(indexBufferSize, 0, D3DFMT_INDEX16, D3DPOOL_DEFAULT, &mIndexBuffer, nullptr)) != D3D_OK) {
 		return;
 	}
 
@@ -70,7 +69,7 @@ void ClippingMesh::CreateResources(Graphics &g) {
 	D3DLOG(mIndexBuffer->Unlock());
 }
 
-void ClippingMesh::FreeResources(Graphics&) {
+void ClippingMesh::FreeResources(RenderingDevice &device) {
 
 	mIndexBuffer.Release();
 	mVertexBuffer.Release();

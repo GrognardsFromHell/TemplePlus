@@ -1,200 +1,234 @@
 #include "stdafx.h"
+
+#include <graphics/device.h>
+#include <graphics/mdfmaterials.h>
+#include <temple/aasrenderer.h>
 #include <temple/dll.h>
-#include "tig/tig.h"
-#include "graphics/graphics.h"
+
+#include "tig/tig_startup.h"
 #include "temple_functions.h"
 #include "gamerenderer.h"
-#include "maps.h"
 #include "gamesystems.h"
 #include "mapsystems.h"
 #include "clipping/clipping.h"
+#include <util/config.h>
+#include "mapobjrender.h"
+
+using namespace gfx;
+using namespace temple;
 
 #pragma pack(push, 1)
-#include <util/config.h>
-
 struct TileRect {
-	int64_t x1;
-	int64_t y1;
-	int64_t x2;
-	int64_t y2;
+  int64_t x1;
+  int64_t y1;
+  int64_t x2;
+  int64_t y2;
 };
 
 struct SectorList {
-	locationSec sector;
-	locXY someTile; // tile coords
-	locXY someTileInSec; // coords in sector
-	SectorList* next;
-	// There is 4 bytes padding here but we dont rely on the size here
+  locationSec sector;
+  locXY someTile;      // tile coords
+  locXY someTileInSec; // coords in sector
+  SectorList *next;
+  // There is 4 bytes padding here but we dont rely on the size here
 };
 
 struct RenderUnknown {
-	int v[114];
+  int v[114];
 };
 
 struct TigRectList {
-	TigRect rect;
-	TigRectList* next;
+  TigRect rect;
+  TigRectList *next;
 };
 
 struct RenderWorldInfo {
-	const TigRect* viewportSize;
-	const TileRect* tiles;
-	RenderUnknown* unknown;
-	const SectorList* sectors;
-	TigRectList** rectList;
+  const TigRect *viewportSize;
+  const TileRect *tiles;
+  RenderUnknown *unknown;
+  const SectorList *sectors;
+  TigRectList **rectList;
 };
 #pragma pack(pop)
 
 static struct GameRenderFuncs : temple::AddressTable {
 
-	/*
-	Given a rectangle in screen coordinates, calculates the rectangle in tile-space that
-	is visible.
-	*/
-	bool (__cdecl *GetVisibleTileRect)(const TigRect& screenRect, TileRect& tiles);
+  /*
+  Given a rectangle in screen coordinates, calculates the rectangle in
+  tile-space that
+  is visible.
+  */
+  bool(__cdecl *GetVisibleTileRect)(const TigRect &screenRect, TileRect &tiles);
 
-	/*
-	These two functions build a linked list of all the sectors encompassed by the given tile
-	rectangle. The list is using shared global memory from a pool and it should be returned
-	to the pool using the second function.
-	*/
-	SectorList* (__cdecl *SectorListBuild)(const TileRect& tiles);
-	void (__cdecl *SectorListFree)(SectorList* sectorList);
+  /*
+  These two functions build a linked list of all the sectors encompassed by the
+  given tile
+  rectangle. The list is using shared global memory from a pool and it should be
+  returned
+  to the pool using the second function.
+  */
+  SectorList *(__cdecl *SectorListBuild)(const TileRect &tiles);
+  void(__cdecl *SectorListFree)(SectorList *sectorList);
 
-	/*
-	Builds an unknown info blob in the second argument.
-	*/
-	bool (__cdecl *BuildUnk)(const TileRect& tiles, RenderUnknown& unk);
+  /*
+  Builds an unknown info blob in the second argument.
+  */
+  bool(__cdecl *BuildUnk)(const TileRect &tiles, RenderUnknown &unk);
 
-	/*
-	Seems to be used to propagate the screen rectangle to the scratchbuffer.
-	*/
-	void (__cdecl *ScratchbufferRelated)(const TigRect& rect);
+  /*
+  Seems to be used to propagate the screen rectangle to the scratchbuffer.
+  */
+  void(__cdecl *ScratchbufferRelated)(const TigRect &rect);
 
-	int* gameDrawEnableCount;
-	int* unkFlag2;
-	
-	void (*RenderGround)(RenderWorldInfo* info);
-	void (*RenderMapObj)(RenderWorldInfo* info);
-	void (*PerformFogChecks)();
-	void (*RenderClipping)();
-	void (*RenderGMesh)();
-	void (*RenderPfxLighting)();
-	void (*RenderPartSys)();
-	void (*RenderFogOfWar)();
-	void (*RenderOcclusion)(RenderWorldInfo* info);
-	void (*RenderUiRelated)(RenderWorldInfo* info);
-	void (*RenderTextBubbles)(RenderWorldInfo* info);
-	void (*RenderTextFloaters)(RenderWorldInfo* info);
+  int *gameDrawEnableCount;
+  int *unkFlag2;
 
-	GameRenderFuncs() {
-		rebase(GetVisibleTileRect, 0x1002A6B0);
-		rebase(SectorListBuild, 0x10084650);
-		rebase(SectorListFree, 0x10081A30);
-		rebase(BuildUnk, 0x100824D0);
+  void (*RenderGround)(RenderWorldInfo *info);
+  void (*RenderMapObj)(RenderWorldInfo *info);
+  void (*PerformFogChecks)();
+  void (*RenderClipping)();
+  void (*RenderGMesh)();
+  void (*RenderPfxLighting)();
+  void (*RenderPartSys)();
+  void (*RenderFogOfWar)();
+  void (*RenderOcclusion)(RenderWorldInfo *info);
+  void (*RenderUiRelated)(RenderWorldInfo *info);
+  void (*RenderTextBubbles)(RenderWorldInfo *info);
+  void (*RenderTextFloaters)(RenderWorldInfo *info);
 
-		rebase(ScratchbufferRelated, 0x10002530);
+  GameRenderFuncs() {
+    rebase(GetVisibleTileRect, 0x1002A6B0);
+    rebase(SectorListBuild, 0x10084650);
+    rebase(SectorListFree, 0x10081A30);
+    rebase(BuildUnk, 0x100824D0);
 
-		rebase(gameDrawEnableCount, 0x102ABED8);
-		rebase(unkFlag2, 0x1030728C);
+    rebase(ScratchbufferRelated, 0x10002530);
 
-		rebase(RenderGround, 0x1002DC70);
-		rebase(PerformFogChecks, 0x100336B0);
-		rebase(RenderClipping, 0x100A4FB0);
-		rebase(RenderMapObj, 0x10028AC0);
-		rebase(RenderGMesh, 0x100A3AE0);
-		rebase(RenderPfxLighting, 0x10087E60);
-		rebase(RenderPartSys, 0x101E7B80);
-		rebase(RenderFogOfWar, 0x10030830);
-		rebase(RenderOcclusion, 0x10024750);
+    rebase(gameDrawEnableCount, 0x102ABED8);
+    rebase(unkFlag2, 0x1030728C);
 
-		rebase(RenderUiRelated, 0x1014E190);
-		rebase(RenderTextBubbles, 0x100A3210);
-		rebase(RenderTextFloaters, 0x100A2600);
-	}
+    rebase(RenderGround, 0x1002DC70);
+    rebase(PerformFogChecks, 0x100336B0);
+    rebase(RenderClipping, 0x100A4FB0);
+    rebase(RenderMapObj, 0x10028AC0);
+    rebase(RenderGMesh, 0x100A3AE0);
+    rebase(RenderPfxLighting, 0x10087E60);
+    rebase(RenderPartSys, 0x101E7B80);
+    rebase(RenderFogOfWar, 0x10030830);
+    rebase(RenderOcclusion, 0x10024750);
+
+    rebase(RenderUiRelated, 0x1014E190);
+    rebase(RenderTextBubbles, 0x100A3210);
+    rebase(RenderTextFloaters, 0x100A2600);
+  }
 
 } renderFuncs;
 
-GameRenderer::GameRenderer(Graphics& graphics, GameSystems &gameSystems) 
-	: mGraphics(graphics), mGameSystems(gameSystems) {
-}
+GameRenderer::GameRenderer(TigInitializer &tig,
+                           GameSystems &gameSystems)
+    : mRenderingDevice(tig.GetRenderingDevice()), 
+	  mGameSystems(gameSystems),
+      mAasRenderer(std::make_unique<temple::AasRenderer>(gameSystems.GetAAS(), tig.GetRenderingDevice(), tig.GetMdfFactory())),
+      mMapObjectRenderer(std::make_unique<MapObjectRenderer>(
+          gameSystems, tig.GetRenderingDevice(), *mAasRenderer)) {}
+
+GameRenderer::~GameRenderer() {}
+
+#pragma pack(push, 8)
+struct PreciseSectorCol {
+  int colCount;
+  uint64_t tiles[4];
+  uint64_t sectorIds[4];
+  int startTiles[4];
+  int strides[4];
+  int x;
+  int y;
+};
+
+struct PreciseSectorRows {
+  int rowCount;
+  PreciseSectorCol rows[4];
+};
+#pragma pack(pop)
 
 void GameRenderer::Render() {
 
-	/*
-	Without this call, the ground JPGs will not be rendered.
-	*/
-	// TigRect rect(0, 0, graphics->GetSceneWidth(), graphics->GetSceneHeight());
-	// renderFuncs.ScratchbufferRelated(rect);
+  /*
+  Without this call, the ground JPGs will not be rendered.
+  */
+  // TigRect rect(0, 0, graphics->GetSceneWidth(), graphics->GetSceneHeight());
+  // renderFuncs.ScratchbufferRelated(rect);
 
-	if (renderFuncs.gameDrawEnableCount <= 0) {
-		return;
-	}
+  if (renderFuncs.gameDrawEnableCount <= 0) {
+    return;
+  }
 
-	TigRect viewportSize;
-	viewportSize.y = -256;
-	viewportSize.width = config.renderWidth + 512;
-	viewportSize.x = -256;
-	viewportSize.height = config.renderHeight + 512;
+  TigRect viewportSize;
+  viewportSize.y = -256;
+  viewportSize.width = config.renderWidth + 512;
+  viewportSize.x = -256;
+  viewportSize.height = config.renderHeight + 512;
 
-	TileRect tiles;
+  TileRect tiles;
 
-	if (renderFuncs.GetVisibleTileRect(viewportSize, tiles)) {
-		RenderUnknown unk;
-		renderFuncs.BuildUnk(tiles, unk);
+  if (renderFuncs.GetVisibleTileRect(viewportSize, tiles)) {
+    RenderUnknown unk;
+    renderFuncs.BuildUnk(tiles, unk);
 
-		auto sectorList = renderFuncs.SectorListBuild(tiles);
+    PreciseSectorRows *list = reinterpret_cast<PreciseSectorRows *>(&unk);
 
-		RenderWorldInfo renderInfo;
-		renderInfo.sectors = sectorList;
-		renderInfo.unknown = &unk;
-		renderInfo.tiles = &tiles;
-		renderInfo.viewportSize = &viewportSize;
+    auto sectorList = renderFuncs.SectorListBuild(tiles);
 
-		// I think this maybe a 2D arcanum leftover when the map could be incrementally drawn based on "dirty rects"
-		TigRectList dirtyList;
-		dirtyList.rect = TigRect(0, 0, config.renderWidth, config.renderHeight);
-		dirtyList.next = nullptr;
-		TigRectList* dirtyRectPtr = &dirtyList;
-		renderInfo.rectList = &dirtyRectPtr;
+    RenderWorldInfo renderInfo;
+    renderInfo.sectors = sectorList;
+    renderInfo.unknown = &unk;
+    renderInfo.tiles = &tiles;
+    renderInfo.viewportSize = &viewportSize;
 
-		RenderWorld(&renderInfo);
+    // I think this maybe a 2D arcanum leftover when the map could be
+    // incrementally drawn based on "dirty rects"
+    TigRectList dirtyList;
+    dirtyList.rect = TigRect(0, 0, config.renderWidth, config.renderHeight);
+    dirtyList.next = nullptr;
+    TigRectList *dirtyRectPtr = &dirtyList;
+    renderInfo.rectList = &dirtyRectPtr;
 
-		renderFuncs.SectorListFree(sectorList);
-	}
+    RenderWorld(&renderInfo);
 
+    renderFuncs.SectorListFree(sectorList);
+  }
 }
 
-void GameRenderer::RenderWorld(RenderWorldInfo* info) {
-	
-	auto& mapSystems(mGameSystems.GetMapSystems());
+void GameRenderer::RenderWorld(RenderWorldInfo *info) {
 
-	if (mGraphics.BeginFrame()) {
-		// renderFuncs.RenderGround(info);
-		mapSystems.GetTerrain().Render();
+  auto &mapSystems(mGameSystems.GetMapSystems());
 
-		renderFuncs.PerformFogChecks();
-		mapSystems.GetClipping().Render();
-		/*renderFuncs.RenderClipping();
-		*/
-		graphics->EnableLighting();
-		renderFuncs.RenderMapObj(info);
-		renderFuncs.RenderGMesh();
-		renderFuncs.RenderPfxLighting();
-		graphics->DisableLighting();
+  if (mRenderingDevice.BeginFrame()) {
+    // renderFuncs.RenderGround(info);
+    mapSystems.GetTerrain().Render();
 
-		renderFuncs.RenderPartSys();
-		renderFuncs.RenderFogOfWar();
+    renderFuncs.PerformFogChecks();
+    mapSystems.GetClipping().Render();
+    // renderFuncs.RenderClipping();
 
-		graphics->EnableLighting();
-		renderFuncs.RenderOcclusion(info);
-		graphics->DisableLighting();
+    mMapObjectRenderer->RenderMapObjects(
+        (int)info->tiles->x1, (int)info->tiles->x2, (int)info->tiles->y1,
+        (int)info->tiles->y2);
+    /*renderFuncs.RenderMapObj(info);
+    renderFuncs.RenderGMesh();
+    renderFuncs.RenderPfxLighting();*/
 
-		renderFuncs.RenderUiRelated(info);
-		renderFuncs.RenderTextBubbles(info);
-		renderFuncs.RenderTextFloaters(info);
-		
-		graphics->Present();
-	}
+    /*renderFuncs.RenderPartSys();
+    renderFuncs.RenderFogOfWar();
 
+    graphics->EnableLighting();
+    renderFuncs.RenderOcclusion(info);
+    graphics->DisableLighting();
+*/
+    renderFuncs.RenderUiRelated(info);
+    renderFuncs.RenderTextBubbles(info);
+    renderFuncs.RenderTextFloaters(info);
+
+    mRenderingDevice.Present();
+  }
 }

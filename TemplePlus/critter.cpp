@@ -335,7 +335,7 @@ float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType)
 		objHndl weapon = inventory.GetItemAtInvIdx(obj, 203);
 		if (weapon)
 		{
-			WeaponTypes weapType = (WeaponTypes)objects.getInt32(weapon, obj_f_weapon_type);
+			auto weapType = objects.GetWeaponType(weapon);
 			switch (weapType)
 			{
 			case wt_glaive:

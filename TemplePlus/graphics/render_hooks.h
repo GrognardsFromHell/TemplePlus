@@ -3,11 +3,11 @@
 
 #include "util/fixes.h"
 
+#include <graphics/math.h>
+
 struct TigBuffer;
 struct TigRect;
 struct ImgFile;
-
-struct D3DXVECTOR2;
 
 #pragma pack(push, 1)
 struct Render2dArgs {
@@ -20,6 +20,8 @@ struct Render2dArgs {
 	static constexpr uint32_t FLAG_BUFFER = 0x80;
 	static constexpr uint32_t FLAG_FLOATSRCRECT = 0x100;
 	static constexpr uint32_t FLAG_ROTATE = 0x200;
+	static constexpr uint32_t FLAG_MASK = 0x400;
+	static constexpr uint32_t FLAG_WRAP = 0x1000;
 
 	uint32_t flags;
 	int textureId; // Unused for shaders
@@ -57,9 +59,20 @@ public:
 	// Mostly used by UI, but also by the map tiles
 	static int TextureRender2d(const Render2dArgs* args);
 
+	// Only used by radial menu checkboxes and the gfade overlay
+	static int RenderTexturedQuad(D3DXVECTOR3 *vertices, float *u, float *v, int textureId, D3DCOLOR color);
+
 	// Renders a tiled img on screen
 	static void RenderImgFile(ImgFile *img, int x, int y);
 
-	static int RenderRect(D3DXVECTOR2 topLeft, D3DXVECTOR2 bottomRight, D3DCOLOR color);
+	static void RenderRect(float left, float top, float right, float bottom, D3DCOLOR color);
+
+	static void RenderRectInt(int left, int top, int width, int height, D3DCOLOR color);
+	
+private:
+
+	static int RenderRectIndirect(XMFLOAT2 *topLeft, XMFLOAT2 *bottomRight, XMCOLOR color);
+
+	static int RenderLine3d(D3DVECTOR* from, D3DVECTOR* to, D3DCOLOR color);
 
 };

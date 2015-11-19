@@ -15,6 +15,8 @@ namespace particles {
 
 		void UpdatePos();
 
+		bool GetRandomPos(float timeScale, DirectX::XMFLOAT3 *posOut) const;
+
 	private:
 
 		ObjHndl mObject;

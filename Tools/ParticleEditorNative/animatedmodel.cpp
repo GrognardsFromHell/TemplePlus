@@ -5,6 +5,7 @@
 #include <atlcomcli.h>
 #include <infrastructure/exception.h>
 #include <infrastructure/renderstates.h>
+#include <graphics/math.h>
 
 #include <d3dx9math.h>
 #include <temple/dll.h>
@@ -16,10 +17,10 @@ API gfx::AnimatedModelPtr* AnimatedModel_FromFiles(TempleDll* dll,
 
 	gfx::AnimatedModelParams params;
 
-	auto model = dll->modelFactory.FromFilenames(ucs2_to_local(skmFilename),
-	                                             ucs2_to_local(skaFilename),
-	                                             gfx::EncodedAnimId(gfx::WeaponAnim::Idle),
-	                                             params);
+	auto model = dll->aasFactory.FromFilenames(ucs2_to_local(skmFilename),
+	                                           ucs2_to_local(skaFilename),
+	                                           gfx::EncodedAnimId(gfx::WeaponAnim::Idle),
+	                                           params);
 
 	return new gfx::AnimatedModelPtr(model);
 
@@ -139,16 +140,14 @@ API void AnimatedModel_Free(gfx::AnimatedModelPtr* handle) {
 }
 
 API void AnimatedModel_Render(gfx::AnimatedModelPtr* handle, IDirect3DDevice9* device, float w, float h, float scale) {
-
-	InitRenderStates(device, w, h, scale);
-
+	
 	auto model = (*handle).get();
 
 	PointCloud pointCloud(device);
 
 	auto boneCount = model->GetBoneCount();
 	gfx::AnimatedModelParams params;
-	D3DMATRIX matrix;
+	XMFLOAT4X4 matrix;
 	for (auto i = 0; i < boneCount; ++i) {
 		auto boneName = model->GetBoneName(i);
 		if (!model->GetBoneWorldMatrixByName(params, boneName, &matrix)) {

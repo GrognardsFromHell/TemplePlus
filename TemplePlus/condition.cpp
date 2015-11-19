@@ -826,8 +826,8 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 	}
 	if (!weapon)
 		return 0;
-	WeaponTypes weaponType = (WeaponTypes)objects.getInt32(weapon, obj_f_weapon_type);
-	if (weaponType == WeaponTypes::wt_sling || ((weaponType == wt_shortbow ||weaponType == wt_longbow )&& strMod < 0))
+	auto weaponType = objects.GetWeaponType(weapon);
+	if (weaponType == wt_sling || ((weaponType == wt_shortbow ||weaponType == wt_longbow )&& strMod < 0))
 	{
 		damage.AddDamageBonusWithDescr(&dispIo->damage, strMod, 2, 103, 0);
 	}
@@ -1628,7 +1628,7 @@ int GreaterWeaponSpecializationDamage(DispatcherCallbackArgs args)
 	DispIoDamage * dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
 	objHndl weapon = combatSys.GetWeapon(&dispIo->attackPacket);
 	if (weapon)
-		weaponType = objects.getInt32(weapon, obj_f_weapon_type);
+		weaponType = objects.GetWeaponType(weapon);
 	else
 		weaponType = 1;
 	if (weaponType == wpnTypeFromCond)

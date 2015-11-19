@@ -21,7 +21,6 @@
 #include "d20.h"
 #include "movies.h"
 #include "textbubbles.h"
-#include "graphics/graphics.h"
 #include "party.h"
 #include "sound.h"
 #include "ui/ui.h"
@@ -32,6 +31,8 @@
 #include "python_support.h"
 #include "python_integration_obj.h"
 #include <timeevents.h>
+#include "tig/tig_startup.h"
+#include <graphics/device.h>
 
 static PyObject *encounterQueue = nullptr;
 
@@ -68,6 +69,9 @@ static struct PyGameAddresses : temple::AddressTable {
 	// Flags is mostly 6 but for spells with different target types it differs
 	bool (__cdecl *GameRaycast)(int screenX, int screenY, objHndl* pObjHndlOut, int flags);
 
+	// Shakes the screen
+	void(__cdecl *ShakeScreen)(float amount, float duration);
+
 	PyGameAddresses() {
 		rebase(partyAlignment, 0x1080ABA4);
 		rebase(sid, 0x10BD2DA4);
@@ -85,6 +89,8 @@ static struct PyGameAddresses : temple::AddressTable {
 		rebase(PartyGetLeader, 0x1002BE60);
 
 		rebase(GameRaycast, 0x10022360);
+
+		rebase(ShakeScreen, 0x10005840);
 	}
 } pyGameAddresses;
 
@@ -540,8 +546,7 @@ PyObject* PyGame_Particles(PyObject*, PyObject* args) {
 		auto loc = locXY::fromField(PyLong_AsUnsignedLongLong(locOrObj));
 		auto partHandle = particles.CreateAt3dPos(name, loc.ToInches3D());
 		return PyInt_FromLong(partHandle);
-	}
-	else {
+	} else {
 		PyErr_SetString(PyExc_TypeError, "Location of particle system must be either a tile location (long) or an object handle.");
 		return 0;
 	}
@@ -560,10 +565,10 @@ PyObject* PyGame_ObjCreate(PyObject*, PyObject* args) {
 	// Use mouse position if no location was given
 	if (loc.locx == 0 && loc.locy == 0) {
 		auto mousePos = mouseFuncs.GetPos();
-		if (!graphics->ScreenToTile(mousePos.x, mousePos.y, loc)) {
-			PyErr_SetString(PyExc_RuntimeError, "Could not get tile at mouse position to place object.");
-			return 0;
-		}
+		auto& device = tig->GetRenderingDevice();
+		auto worldPos = device.GetCamera().ScreenToWorld((float) mousePos.x, (float) mousePos.y);
+		loc.locx = (int)(worldPos.x / INCH_PER_TILE);
+		loc.locy = (int)(worldPos.x / INCH_PER_TILE);		
 	}
 
 	// resolve the proto handle for the prototype number
@@ -803,7 +808,7 @@ PyObject* PyGame_Shake(PyObject*, PyObject* args) {
 		return 0;
 	}
 
-	graphics->ShakeScreen(amount, duration);
+	pyGameAddresses.ShakeScreen(amount, duration);
 	Py_RETURN_NONE;
 }
 

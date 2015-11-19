@@ -1,18 +1,25 @@
 #include "stdafx.h"
 
-#include <temple/dll.h>
+#include <graphics/device.h>
+#include <graphics/shaperenderer2d.h>
+#include <graphics/mdfmaterials.h>
 
+#include <temple/dll.h>
 #include <temple/vfs.h>
+#include <temple/soundsystem.h>
+#include <temple/moviesystem.h>
 
 #include "mainwindow.h"
-#include "graphics/graphics.h"
 #include "graphics/legacyvideosystem.h"
+#include "fonts/fonts.h"
 #include "messages/messagequeue.h"
 
 #include "tig_startup.h"
 #include "../tio/tio.h"
 
 #include "../util/config.h"
+
+TigInitializer* tig = nullptr;
 
 using TigStartupFunction = int(const TigConfig*);
 using TigShutdownFunction = void();
@@ -68,6 +75,9 @@ static TigConfig createTigConfig(HINSTANCE hInstance);
 TigInitializer::TigInitializer(HINSTANCE hInstance)
 	: mConfig(createTigConfig(hInstance)) {
 
+	Expects(tig == nullptr);
+	tig = this;
+
 	StopwatchReporter reporter("TIG initialized in {}");
 	logger->info("Initializing TIG");
 
@@ -75,16 +85,22 @@ TigInitializer::TigInitializer(HINSTANCE hInstance)
 
 	tio_path_add("tig.dat");
 	tio_path_add(".");
+	LoadDataFiles();
 
 	// No longer used: mStartedSystems.emplace_back(StartSystem("memory.c", 0x101E04F0, 0x101E0510));
 	// No longer used: mStartedSystems.emplace_back(StartSystem("debug.c", 0x101E4DE0, TigShutdownNoop));
 	mMainWindow = std::make_unique<MainWindow>(hInstance);
-	mGraphics = std::make_unique<Graphics>(*mMainWindow);
+	mRenderingDevice = std::make_unique<gfx::RenderingDevice>(mMainWindow->GetHwnd(),
+		config.renderWidth,
+		config.renderHeight);
+	mMdfFactory = std::make_unique<gfx::MdfMaterialFactory>(*mRenderingDevice);
+	mShapeRenderer2d = std::make_unique<gfx::ShapeRenderer2d>(*mRenderingDevice);
+	mTextLayouter = std::make_unique<TextLayouter>(*mRenderingDevice, *mShapeRenderer2d);
 	mStartedSystems.emplace_back(StartSystem("idxtable.c", 0x101EC400, 0x101ECAD0));
 	mStartedSystems.emplace_back(StartSystem("trect.c", TigStartupNoop, 0x101E4E40));
 	mStartedSystems.emplace_back(StartSystem("color.c", 0x101ECB20, 0x101ED070));
 
-	mLegacyVideoSystem = std::make_unique<LegacyVideoSystem>(*mMainWindow, *mGraphics);
+	mLegacyVideoSystem = std::make_unique<LegacyVideoSystem>(*mMainWindow, *mRenderingDevice);
 
 	// mStartedSystems.emplace_back(StartSystem("video.c", 0x101DC6E0, 0x101D8540));
 	
@@ -105,13 +121,45 @@ TigInitializer::TigInitializer(HINSTANCE hInstance)
 	if (!config.noSound) {
 		mStartedSystems.emplace_back(StartSystem("sound.c", 0x101E3FA0, 0x101E48A0));
 	}
-	mStartedSystems.emplace_back(StartSystem("movie.c", 0x101F1090, TigShutdownNoop));
+	mSoundSystem = std::make_unique<temple::SoundSystem>();
+	mMovieSystem = std::make_unique<temple::MovieSystem>(*mSoundSystem);
+	// mStartedSystems.emplace_back(StartSystem("movie.c", 0x101F1090, TigShutdownNoop));
 	mStartedSystems.emplace_back(StartSystem("wft.c", 0x101F98A0, 0x101F9770));
 	mStartedSystems.emplace_back(StartSystem("font.c", 0x101EAEC0, 0x101EA140));
 	mStartedSystems.emplace_back(StartSystem("console.c", 0x101E0290, 0x101DFBC0));
 	mStartedSystems.emplace_back(StartSystem("loadscreen.c", 0x101E8260, TigShutdownNoop));
 
 	*tigInternal.consoleDisabled = false; // tig init disables console by default
+}
+
+void TigInitializer::LoadDataFiles() {
+
+	// TODO: Migrate to use of vfs
+	TioFileList list;
+	tio_filelist_create(&list, "*.dat");
+
+	for (int i = 0; i < list.count; ++i) {
+		auto file = list.files[i];
+		logger->info("Registering archive {}", file.name);
+		int result = tio_path_add(file.name);
+		if (result != 0) {
+			logger->trace("Unable to add archive {}: {}", file.name, result);
+		}
+	}
+
+	tio_filelist_destroy(&list);
+
+	tio_mkdir("data");
+	tio_path_add("data");
+
+	tio_mkdir("tpdata");
+	tio_path_add("tpdata");
+
+	for (auto& entry : config.additionalTioPaths) {
+		logger->info("Adding additional TIO path {}", entry);
+		tio_path_add(entry.c_str());
+	}
+
 }
 
 TigInitializer::TigSystemPtr TigInitializer::StartSystem(const std::string& name,
@@ -125,6 +173,8 @@ TigInitializer::TigSystemPtr TigInitializer::StartSystem(const std::string& name
 }
 
 TigInitializer::~TigInitializer() {
+	
+	tig = nullptr;
 
 	StopwatchReporter reporter("TIG shut down in {}");
 	logger->info("Shutting down TIG");

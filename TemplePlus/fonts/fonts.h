@@ -10,11 +10,14 @@ struct TigTextStyle;
 struct TigRect;
 using namespace gsl;
 
-class Graphics;
+namespace gfx {
+	class RenderingDevice;
+	class ShapeRenderer2d;
+}
 
 class FontRenderer {
 public:
-	explicit FontRenderer(Graphics& g);
+	explicit FontRenderer(gfx::RenderingDevice& g);
 	~FontRenderer();
 
 	void RenderRun(array_view<const char> text,
@@ -42,7 +45,7 @@ on lines and renders them.
 */
 class TextLayouter {
 public:
-	explicit TextLayouter(Graphics &g);
+	TextLayouter(gfx::RenderingDevice& device, gfx::ShapeRenderer2d& shapeRenderer);
 
 	void LayoutAndDraw(gsl::cstring_view<> text, const TigFont &font, TigRect& extents, TigTextStyle& style);
 
@@ -68,4 +71,5 @@ private:
 
 	static const char *sEllipsis;
 	FontRenderer mRenderer;
+	gfx::ShapeRenderer2d& mShapeRenderer;
 };

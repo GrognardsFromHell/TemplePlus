@@ -60,7 +60,7 @@ public:
 	int ExecuteObjectScript(objHndl triggerer, objHndl attachee, int spellId, ObjScriptEvent evt);
 	int ExecuteObjectScript(objHndl triggerer, objHndl attachee, ObjScriptEvent evt);
 	
-	void RunAnimFrameScript(const char *command);
+	void RunAnimFrameScript(const std::string &command);
 		
 	PyObject *ExecuteScript(const char *moduleName, const char *functionName, PyObject *args);
 	

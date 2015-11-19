@@ -4,7 +4,7 @@
 #include "tig/tig_font.h"
 #include "util/fixes.h"
 #include "fonts.h"
-#include <graphics/graphics.h>
+#include "tig/tig_startup.h"
 
 static struct FontRenderAddresses : temple::AddressTable {
 
@@ -42,7 +42,7 @@ int FontRenderFix::FontDraw(const char* text, TigRect* extents, TigTextStyle* st
 
 	auto font = addresses.loadedFonts[addresses.fontStack[0]];
 
-	TextLayouter layouter(*graphics);
+	auto& layouter = tig->GetTextLayouter();
 	layouter.LayoutAndDraw({ text, strlen(text) }, font, *extents, *style);
 
 	return 0;

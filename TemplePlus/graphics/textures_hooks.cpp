@@ -1,10 +1,12 @@
 #include "stdafx.h"
 
-#include <util/fixes.h>
-#include <infrastructure/textures.h>
+#include <graphics/textures.h>
+#include <graphics/device.h>
 
 #include <d3d8adapter.h>
 
+#include "util/fixes.h"
+#include "tig/tig_startup.h"
 #include "../tig/tig_texture.h"
 
 static class TexturesHooks : TempleFix {
@@ -54,7 +56,8 @@ void TexturesHooks::UnloadAll() {
 
 // Unloads a single texture by id
 void TexturesHooks::UnloadId(int textureId) {
-	auto ref = gfx::textureManager->GetById(textureId);
+	auto& textures = tig->GetRenderingDevice().GetTextures();
+	auto ref = textures.GetById(textureId);
 	if (ref) {
 		ref->FreeDeviceTexture();
 	}
@@ -75,14 +78,16 @@ int TexturesHooks::GetMapTileArtId(uint16_t mapId, uint8_t x, uint8_t y, int* te
 		tileFilename = fmt::format("art\\ground\\{}\\{:08x}.jpg", mapDirname, tileId);
 	}
 
-	auto texture = gfx::textureManager->Resolve(tileFilename);
+	auto& textures = tig->GetRenderingDevice().GetTextures();
+	auto texture = textures.Resolve(tileFilename, false);
 
 	*textureIdOut = texture->GetId();
 	return texture->IsValid() ? 0 : 17;
 }
 
 int TexturesHooks::RegisterUiTexture(const char* filename, int* textureIdOut) {
-	auto ref = gfx::textureManager->Resolve(filename, false);
+	auto& textures = tig->GetRenderingDevice().GetTextures();
+	auto ref = textures.Resolve(filename, false);
 
 	if (!ref->IsValid()) {
 		*textureIdOut = -1;
@@ -95,7 +100,8 @@ int TexturesHooks::RegisterUiTexture(const char* filename, int* textureIdOut) {
 }
 
 int TexturesHooks::RegisterMdfTexture(const char* filename, int* textureIdOut) {
-	auto ref = gfx::textureManager->Resolve(filename, true);
+	auto& textures = tig->GetRenderingDevice().GetTextures();
+	auto ref = textures.Resolve(filename, true);
 
 	if (!ref->IsValid()) {
 		*textureIdOut = -1;
@@ -108,7 +114,8 @@ int TexturesHooks::RegisterMdfTexture(const char* filename, int* textureIdOut) {
 }
 
 int TexturesHooks::RegisterFontTexture(const char* filename, int* textureIdOut) {
-	auto ref = gfx::textureManager->Resolve(filename, false);
+	auto& textures = tig->GetRenderingDevice().GetTextures();
+	auto ref = textures.Resolve(filename, false);
 
 	if (!ref->IsValid()) {
 		*textureIdOut = -1;
@@ -132,7 +139,8 @@ int TexturesHooks::LoadTexture(int textureId, TigTextureRegistryEntry* textureOu
 	// Since we don't want to memory manage
 	static TigBuffer buffer { 0, };
 
-	auto texture = gfx::textureManager->GetById(textureId);
+	auto& textures = tig->GetRenderingDevice().GetTextures();
+	auto texture = textures.GetById(textureId);
 	if (!texture->IsValid()) {
 		return 17;
 	}

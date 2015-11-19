@@ -2,16 +2,14 @@
 
 #include "gamesystems/gamerenderer.h"
 
-class MainWindow;
-class Graphics;
+class TigInitializer;
 class GameSystems;
 
 class GameLoop {
 public:
 
-	GameLoop(MainWindow& mainWindow,
-	         GameSystems& gameSystems,
-	         Graphics& graphics);
+	GameLoop(TigInitializer& mainWindow,
+	         GameSystems& gameSystems);
 	~GameLoop();
 
 	void Run();
@@ -22,7 +20,7 @@ private:
 	void RenderVersion();
 	void RenderFrame();
 
-	MainWindow& mMainWindow;
+	TigInitializer& mTig;
 	GameSystems& mGameSystems;
 	GameRenderer mGameRenderer;
 	std::unique_ptr<class DiagScreen> mDiagScreen;

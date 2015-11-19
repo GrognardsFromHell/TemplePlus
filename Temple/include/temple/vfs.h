@@ -34,6 +34,7 @@ namespace temple {
 	protected:
 		FileHandle Open(const char* name, const char* mode) override;
 		size_t Read(void* buffer, size_t size, FileHandle handle) override;
+		size_t Write(void* buffer, size_t size, FileHandle handle) override;
 		size_t Length(FileHandle handle) override;
 		void Close(FileHandle handle) override;
 

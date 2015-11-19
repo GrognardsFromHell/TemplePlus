@@ -28,12 +28,12 @@ namespace legacypartsys {
 		starts[0] = 0;
 
 		if (sscanf(paramVal, "%f", &values[0]) != 1) {
-			throw new TempleException("ERROR");
+			throw TempleException("ERROR");
 		}
 
 		float start = 1.0f;
 		if (parseKfV(paramVal, &start, lifetime)) {
-			throw new TempleException("ERROR");
+			throw TempleException("ERROR");
 		}
 
 		char *fd = paramVal;
@@ -50,12 +50,12 @@ namespace legacypartsys {
 			curStart += timePerFrame;
 			starts[frameIdx] = curStart;
 			if (parseKfV(fd, &starts[frameIdx], lifetime))
-				throw new TempleException("BLAHFASEL");
+				throw TempleException("BLAHFASEL");
 			values[frameIdx] = values[frameIdx - 1];
 			if (*fd)
 			{
 				if (sscanf(fd, "%f", &values[frameIdx]) != 1)
-					throw new TempleException("BLAHFASEL");
+					throw TempleException("BLAHFASEL");
 			}
 			fd = nextKf(fd);
 			++frameIdx;

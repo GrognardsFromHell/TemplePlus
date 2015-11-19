@@ -5,11 +5,14 @@
 #include <string>
 #include <cstdint>
 
-class Graphics;
+namespace gfx {
+	class RenderingDevice;
+	class ShapeRenderer2d;
+}
 
 class LoadingScreen {
 public:
-	explicit LoadingScreen(Graphics &g);
+	explicit LoadingScreen(gfx::RenderingDevice &device, gfx::ShapeRenderer2d &shapeRenderer);
 	~LoadingScreen();
 
 	void SetProgress(float progress);

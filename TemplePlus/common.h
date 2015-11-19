@@ -32,9 +32,9 @@
 #define BonusListMax 40
 
 // This is the number of pixels per tile on the x and y axis. Derived from sqrt(800)
-#define INCH_PER_TILE 28.284271247461900976033774484194f
-#define INCH_PER_HALFTILE (INCH_PER_TILE/2.0f)
-#define INCH_PER_FEET 12
+constexpr float INCH_PER_TILE = 28.284271247461900976033774484194f;
+constexpr float INCH_PER_HALFTILE = (INCH_PER_TILE / 2.0f);
+constexpr int INCH_PER_FEET = 12;
 
 # pragma region Standard Structs
 
@@ -102,10 +102,21 @@ struct LocAndOffsets {
 		return location.ToInches2D(off_x, off_y);
 	}
 
+	// Same as ToInches2d, but translates to center of tile
+	vector2f ToCenterOfTileAbs();
+
 	vector3f ToInches3D(float offsetZ = 0) {
 		return location.ToInches3D(off_x, off_y, offsetZ);
 	}
+		
 };
+
+inline vector2f LocAndOffsets::ToCenterOfTileAbs() {
+	auto result = ToInches2D();
+	result.x += INCH_PER_HALFTILE;
+	result.y += INCH_PER_HALFTILE;
+	return result;
+}
 
 struct LocFull {
 	LocAndOffsets location;

@@ -5,65 +5,95 @@
 #include <platform/d3d.h>
 #include <atlcomcli.h>
 
+#include <graphics/device.h>
+
+namespace gfx {
+	class AnimatedModelFactory;
+	class AnimatedModelRenderer;
+}
+namespace temple {
+	class AasRenderer;
+}
+
 namespace particles {
 	struct PointVertex;
 	struct SpriteVertex;
 
+	using namespace gfx;
+
 	class PointParticleRenderer : public ParticleRenderer {
 	public:
-		explicit PointParticleRenderer(IDirect3DDevice9* device);
+		explicit PointParticleRenderer(RenderingDevice& device);
 
-		void Render(const PartSysEmitter* emitter) override;
+		void Render(PartSysEmitter& emitter) override;
 
 	private:
+		void FillPointVertex(const PartSysEmitter& emitter, int particleIdx, PointVertex& vertex);
+		void RenderParticles(PartSysEmitter& emitter);
 
-		void FillPointVertex(const PartSysEmitter* emitter, int particleIdx, PointVertex* vertex);
-		void RenderParticles(const PartSysEmitter* emitter);
+		void EnablePointStates();
+		void DisablePointStates();
 
-		CComPtr<IDirect3DVertexBuffer9> mBuffer;
-		CComPtr<IDirect3DDevice9> mDevice;
+		RenderingDevice& mDevice;
+	};
 
+	class ModelParticleRenderer : public ParticleRenderer {
+	public:
+		explicit ModelParticleRenderer(RenderingDevice& device,
+			AnimatedModelFactory &aasFactory,
+			AnimatedModelRenderer &aasRenderer);
+
+		void Render(PartSysEmitter& emitter) override;
+
+	private:
+		RenderingDevice& mDevice;
+		AnimatedModelFactory& mModelFactory;
+		AnimatedModelRenderer& mModelRenderer;
 	};
 
 	class QuadParticleRenderer : public ParticleRenderer {
 	public:
-		explicit QuadParticleRenderer(IDirect3DDevice9* device);
+		explicit QuadParticleRenderer(RenderingDevice& device);
 
-		void Render(const PartSysEmitter* emitter) override;
+		void Render(PartSysEmitter& emitter) override;
 
 	protected:
-		CComPtr<IDirect3DVertexBuffer9> mBuffer;
-		CComPtr<IDirect3DIndexBuffer9> mIndices;
-		CComPtr<IDirect3DDevice9> mDevice;
+		IndexBufferPtr mIndexBuffer;
+		RenderingDevice &mDevice;
 
 	private:
-		void RenderParticles(const PartSysEmitter* emitter);
+		void RenderParticles(PartSysEmitter& emitter);
 
-		virtual void FillVertex(const PartSysEmitter* emitter, int particleIdx, SpriteVertex* vertex) = 0;
+		virtual void FillVertex(const PartSysEmitter& emitter, 
+			int particleIdx, 
+			gsl::array_view<SpriteVertex, 4> vertices) = 0;
 
 	};
 
 	class SpriteParticleRenderer : public QuadParticleRenderer {
 	public:
-		explicit SpriteParticleRenderer(IDirect3DDevice9* device)
+		explicit SpriteParticleRenderer(RenderingDevice& device)
 			: QuadParticleRenderer(device) {
 		}
 
 	protected:
 
-		void FillVertex(const PartSysEmitter* emitter, int particleIdx, SpriteVertex* vertex) override;
-
+		void FillVertex(const PartSysEmitter& emitter,
+			int particleIdx,
+			gsl::array_view<SpriteVertex, 4> vertices) override;
 	};
 
 	class DiscParticleRenderer : public QuadParticleRenderer {
 	public:
-		explicit DiscParticleRenderer(IDirect3DDevice9* device)
+		explicit DiscParticleRenderer(RenderingDevice& device)
 			: QuadParticleRenderer(device) {
 		}
 
 	protected:
 
-		void FillVertex(const PartSysEmitter* emitter, int particleIdx, SpriteVertex* vertex) override;
+		void FillVertex(const PartSysEmitter& emitter,
+			int particleIdx,
+			gsl::array_view<SpriteVertex, 4> vertices) override;
 
 	};
 

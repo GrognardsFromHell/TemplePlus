@@ -3,9 +3,9 @@
 #include <infrastructure/renderstates.h>
 #include <temple/dll.h>
 
-#include "graphics/graphics.h"
 #include "renderstates_data.h"
 
+/*
 class LegacyRenderStates : public RenderStates {
 public:
 	explicit LegacyRenderStates(Graphics& g);
@@ -135,6 +135,10 @@ public:
 		mRequestedData.mFvf = fvf;
 	}
 
+	DWORD GetFVF() override {
+		return mRequestedData.mFvf;
+	}
+
 	void SetStreamSource(int streamIdx, IDirect3DVertexBuffer9* buffer, int stride) override {
 		mGraphics.device()->SetStreamSource(streamIdx, buffer, 0, stride);
 	}
@@ -201,6 +205,8 @@ void LegacyRenderStates::SetColorWriteEnable(bool enableRed, bool enableGreen, b
 }
 
 void LegacyRenderStates::Commit() {
+	return;
+
 	auto device = mGraphics.device();
 
 	if (memcmp(&mRequestedData.mProjMatrix, &mCurrentData.mProjMatrix, sizeof(mRequestedData.mProjMatrix))) {
@@ -335,13 +341,6 @@ void LegacyRenderStates::Commit() {
 			device->SetSamplerState(sampler, D3DSAMP_ADDRESSV, addressV);
 		}
 	}
-
-	auto fvf = mRequestedData.mFvf;
-	if (fvf != mCurrentData.mFvf) {
-		mCurrentData.mFvf = fvf;
-		device->SetFVF(fvf);
-	}
-
 	// NOTE: We do not support base indices anymore
 
 	if (mCommitCallback) {
@@ -350,7 +349,7 @@ void LegacyRenderStates::Commit() {
 }
 
 void LegacyRenderStates::WriteCurrentToDevice() {
-
+	return;
 	auto device = mGraphics.device();
 
 	device->SetTransform(D3DTS_PROJECTION, &mCurrentData.mProjMatrix);
@@ -401,3 +400,4 @@ void LegacyRenderStates::Reset() {
 	WriteCurrentToDevice();
 
 }
+*/

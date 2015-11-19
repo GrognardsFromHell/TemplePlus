@@ -3,7 +3,7 @@
 #include <atlcomcli.h>
 
 struct RenderStatesData {
-	RenderStatesData();
+	RenderStatesData() {}
 	D3DMATRIX mProjMatrix;
 	D3DMATRIX mViewMatrix;
 	bool mZEnable = false;

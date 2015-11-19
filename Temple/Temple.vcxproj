@@ -19,18 +19,22 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\temple\aasrenderer.h" />
     <ClInclude Include="include\temple\dll.h" />
     <ClInclude Include="include\temple\meshes.h" />
     <ClInclude Include="include\temple\materials.h" />
+    <ClInclude Include="include\temple\moviesystem.h" />
+    <ClInclude Include="include\temple\soundsystem.h" />
     <ClInclude Include="include\temple\vfs.h" />
     <ClInclude Include="include\tig\texture.h" />
-    <ClInclude Include="include\temple\textures.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\aasrenderer.cpp" />
     <ClCompile Include="src\dll.cpp" />
     <ClCompile Include="src\materials.cpp" />
     <ClCompile Include="src\meshes.cpp" />
-    <ClCompile Include="src\textures.cpp" />
+    <ClCompile Include="src\moviesystem.cpp" />
+    <ClCompile Include="src\soundsystem.cpp" />
     <ClCompile Include="src\vfs.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -1,13 +1,21 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <infrastructure/meshes.h>
 #include <infrastructure/exception.h>
+#include <infrastructure/logging.h>
+#include <infrastructure/mesparser.h>
+
+#include <MinHook.h>
 
 #include "temple/dll.h"
 #include "temple/meshes.h"
+#include <gsl/gsl.h>
 
 namespace temple {
 
 	enum AasStatus : uint32_t {
-		AAS_OK
+		AAS_OK = 0,
+		AAS_ERROR = 1
 	};
 
 #pragma pack(push, 1)
@@ -20,8 +28,6 @@ namespace temple {
 		float* uv;
 		uint16_t* indices;
 	};
-
-	using AasHandle = uint32_t;
 
 	struct AasAnimParams {
 		uint32_t flags;
@@ -57,7 +63,7 @@ namespace temple {
 	typedef AasStatus (*FnAasGetAnimName)(int animid, char* nameOut);
 	typedef void (*FnAasRunScript)(const char* script);
 
-	struct AasConfig {
+	struct LegacyAasConfig {
 		float scaleX = 28.284271f;
 		float scaleY = 28.284271f;
 		FnAasGetFilename getSkaFilename = nullptr;
@@ -72,7 +78,7 @@ namespace temple {
 
 	static struct AasFunctions : AddressTable {
 
-		int (*Init)(const AasConfig* config);
+		int (*Init)(const LegacyAasConfig* config);
 		int (*Exit)();
 
 		int (__cdecl *FreeSubmesh)(AasSubmesh* submesh);
@@ -102,7 +108,7 @@ namespace temple {
 		                       const AasAnimParams* params,
 		                       AasEventFlag* eventOut);
 
-		int (__cdecl *Free)(AasHandle aasHandle);
+		AasStatus (__cdecl *Free)(AasHandle aasHandle);
 
 		int (__cdecl *GetAnimId)(AasHandle aasHandle, int* animIdOut);
 
@@ -114,13 +120,13 @@ namespace temple {
 
 		int (__cdecl *GetBoneWorldMatrixByName)(AasHandle aasHandle,
 		                                        const AasAnimParams* params,
-		                                        D3DMATRIX* worldMatrixOut,
+												DirectX::XMFLOAT4X4* worldMatrixOut,
 		                                        const char* boneName);
 
 		int (__cdecl *GetBoneWorldMatrixByNameForChild)(AasHandle parentAasHandle,
 		                                                AasHandle childAasHandle,
 		                                                const AasAnimParams* params,
-		                                                D3DMATRIX* worldMatrixOut,
+														DirectX::XMFLOAT4X4* worldMatrixOut,
 		                                                const char* boneName);
 
 		float (__cdecl *GetDistPerSec)(AasHandle handle);
@@ -171,7 +177,7 @@ namespace temple {
 			rebase(GetAnimId, 0x102627E0);
 			rebase(GetBoneCount, 0x10262F40);
 			rebase(GetBoneNameById, 0x10262F80);
-			rebase(GetBoneParentId, 0x10262F80);
+			rebase(GetBoneParentId, 0x10262FC0);
 			rebase(GetBoneWorldMatrixByName, 0x10263000);
 			rebase(GetBoneWorldMatrixByNameForChild, 0x102631E0);
 			rebase(GetDistPerSec, 0x10263DA0);
@@ -198,20 +204,23 @@ namespace temple {
 			return mSubmesh->primCount;
 		}
 
-		float* GetPositions() override {
-			return mSubmesh->positions;
+		gsl::array_view<DirectX::XMFLOAT4> GetPositions() override {
+			auto data = reinterpret_cast<DirectX::XMFLOAT4*>(mSubmesh->positions);
+			return {data, (size_t) GetVertexCount()};
 		}
 
-		float* GetNormals() override {
-			return mSubmesh->normals;
+		gsl::array_view<DirectX::XMFLOAT4> GetNormals() override {
+			auto data = reinterpret_cast<DirectX::XMFLOAT4*>(mSubmesh->normals);
+			return {data, (size_t)GetVertexCount()};
 		}
 
-		float* GetUV() override {
-			return mSubmesh->uv;
+		gsl::array_view<DirectX::XMFLOAT2> GetUV() override {
+			auto data = reinterpret_cast<DirectX::XMFLOAT2*>(mSubmesh->uv);
+			return {data, (size_t)GetVertexCount()};
 		}
 
-		uint16_t* GetIndices() override {
-			return mSubmesh->indices;
+		gsl::array_view<uint16_t> GetIndices() override {
+			return {mSubmesh->indices, GetPrimitiveCount() * 3u};
 		}
 
 	private:
@@ -231,14 +240,21 @@ namespace temple {
 			functions.FreeSubmesh(mSubmesh);
 		}
 	}
-	
+
 	class AasAnimatedModel : public gfx::AnimatedModel {
 	public:
 
 		explicit AasAnimatedModel(AasHandle handle) : mHandle(handle) {
 		}
 
+		AasAnimatedModel(AasHandle handle, bool borrowed) : mHandle(handle), mBorrowed(borrowed) {
+		}
+
 		~AasAnimatedModel();
+
+		uint32_t GetHandle() const override {
+			return mHandle;
+		}
 
 		bool AddAddMesh(const ::std::string& filename) override;
 		bool ClearAddMeshes() override;
@@ -247,14 +263,15 @@ namespace temple {
 		int GetBoneCount() const override;
 		::std::string GetBoneName(int boneId) override;
 		int GetBoneParentId(int boneId) override;
-		bool GetBoneWorldMatrixByName(const ::gfx::AnimatedModelParams& params, const ::std::string& boneName, ::D3DMATRIX* worldMatrixOut) override;
-		bool GetBoneWorldMatrixByNameForChild(const gfx::AnimatedModelPtr& child, const gfx::AnimatedModelParams& params, const std::string& boneName, D3DMATRIX* worldMatrixOut) override;
+		bool GetBoneWorldMatrixByName(const ::gfx::AnimatedModelParams& params, const ::std::string& boneName, DirectX::XMFLOAT4X4* worldMatrixOut) override;
+		bool GetBoneWorldMatrixByNameForChild(const gfx::AnimatedModelPtr& child, const gfx::AnimatedModelParams& params, const std::string& boneName, DirectX::XMFLOAT4X4* worldMatrixOut) override;
 		float GetDistPerSec() const override;
 		float GetRotationPerSec() const override;
 		bool HasAnim(::gfx::EncodedAnimId animId) const override;
 		void SetTime(const ::gfx::AnimatedModelParams& params, float timeInSecs) override;
 		bool HasBone(const ::std::string& boneName) const override;
 		void AddReplacementMaterial(int materialId) override;
+		void SetSpecialMaterial(gfx::SpecialMaterialSlot slot, int materialId) override;
 		void SetAnimId(int animId) override;
 		void SetClothFlag() override;
 		::std::vector<int> GetSubmeshes() override;
@@ -265,6 +282,7 @@ namespace temple {
 
 	private:
 		AasHandle mHandle;
+		bool mBorrowed = false;
 	};
 
 	AasAnimParams AasAnimatedModel::Convert(const gfx::AnimatedModelParams& params) {
@@ -286,14 +304,18 @@ namespace temple {
 		auto parentAnim = std::static_pointer_cast<AasAnimatedModel>(params.parentAnim);
 		if (parentAnim) {
 			result.parentAnim = parentAnim->mHandle;
+			result.flags = 2;
 		} else {
 			result.parentAnim = 0;
+			result.flags = 1;
 		}
 		return result;
 	}
 
 	AasAnimatedModel::~AasAnimatedModel() {
-		functions.Free(mHandle);
+		if (!mBorrowed) {
+			functions.Free(mHandle);
+		}
 	}
 
 	bool AasAnimatedModel::AddAddMesh(const ::std::string& filename) {
@@ -309,7 +331,7 @@ namespace temple {
 		auto aasParams(Convert(params));
 		functions.Advance(mHandle, deltaTime, deltaDistance, deltaRotation, &aasParams, &eventsTriggered);
 
-		return{
+		return {
 			(eventsTriggered & AEF_END) != 0,
 			(eventsTriggered & AEF_ACTION) != 0
 		};
@@ -333,12 +355,14 @@ namespace temple {
 		return functions.GetBoneParentId(mHandle, boneId);
 	}
 
-	bool AasAnimatedModel::GetBoneWorldMatrixByName(const ::gfx::AnimatedModelParams& params, const ::std::string& boneName, ::D3DMATRIX* worldMatrixOut) {
+	bool AasAnimatedModel::GetBoneWorldMatrixByName(const gfx::AnimatedModelParams& params, 
+		const std::string& boneName, 
+		DirectX::XMFLOAT4X4* worldMatrixOut) {
 		auto aasParams(Convert(params));
 		return functions.GetBoneWorldMatrixByName(mHandle, &aasParams, worldMatrixOut, boneName.c_str()) == AAS_OK;
 	}
 
-	bool AasAnimatedModel::GetBoneWorldMatrixByNameForChild(const gfx::AnimatedModelPtr& child, const gfx::AnimatedModelParams& params, const std::string& boneName, D3DMATRIX* worldMatrixOut) {
+	bool AasAnimatedModel::GetBoneWorldMatrixByNameForChild(const gfx::AnimatedModelPtr& child, const gfx::AnimatedModelParams& params, const std::string& boneName, DirectX::XMFLOAT4X4* worldMatrixOut) {
 		auto realChild = std::static_pointer_cast<AasAnimatedModel>(child);
 		auto aasParams(Convert(params));
 		return functions.GetBoneWorldMatrixByNameForChild(mHandle, realChild->mHandle, &aasParams, worldMatrixOut, boneName.c_str()) == AAS_OK;
@@ -369,6 +393,25 @@ namespace temple {
 		functions.ReplaceSpecialMaterial(mHandle, materialId);
 	}
 
+	void AasAnimatedModel::SetSpecialMaterial(gfx::SpecialMaterialSlot slot, int materialId) {
+		switch (slot) {
+		case gfx::SpecialMaterialSlot::Head:
+			materialId |= 0x84000000;
+			break;
+		case gfx::SpecialMaterialSlot::Gloves:
+			materialId |= 0x88000000;
+			break;
+		case gfx::SpecialMaterialSlot::Boots:
+			materialId |= 0xA0000000;
+			break;
+		case gfx::SpecialMaterialSlot::Chest:
+			materialId |= 0x90000000;
+			break;
+		}
+
+		AddReplacementMaterial(materialId);
+	}
+
 	void AasAnimatedModel::SetAnimId(int animId) {
 		functions.SetAnimId(mHandle, animId);
 	}
@@ -381,7 +424,7 @@ namespace temple {
 		int* materialIds;
 		int submeshCount;
 		if (functions.GetSubmeshes(mHandle, &materialIds, &submeshCount) != AAS_OK) {
-			return{};
+			return {};
 		}
 
 		return ::std::vector<int>(materialIds, materialIds + submeshCount);
@@ -397,17 +440,94 @@ namespace temple {
 		return std::make_unique<AasSubmeshAdapter>(mHandle, aasParams, submeshIdx, true);
 	}
 
-	AasAnimatedModelFactory::AasAnimatedModelFactory() {
+	AasAnimatedModelFactory* AasAnimatedModelFactory::sInstance = nullptr;
+	
+	int __stdcall AasAnimatedModelFactory::AasResolveMaterial(const char *filename, int, int) {
 
-		AasConfig config;
-		if (functions.Init(&config)) {
+		std::string name(filename);
+
+		// Handle material replacement slots
+		if (name == "HEAD") {
+			return 0x84000000;
+		} else if (name == "GLOVES") {
+			return 0x88000000;
+		} else if (name == "CHEST") {
+			return 0x90000000;
+		} else if (name == "BOOTS") {
+			return 0xA0000000;
+		}
+
+		if (sInstance->mConfig.resolveMaterial) {
+			return sInstance->mConfig.resolveMaterial(name);
+		}
+		return 0;
+	}
+
+	int AasAnimatedModelFactory::AasFreeModel(temple::AasHandle handle)
+	{
+		for (auto &listener : sInstance->mListeners) {
+			listener(handle);
+		}
+
+		return sInstance->mOrgModelFree(handle);
+	}
+
+	AasAnimatedModelFactory::AasAnimatedModelFactory(const AasConfig& config) : mConfig(config) {
+		Expects(!sInstance);
+		sInstance = this;
+
+		LegacyAasConfig legacyConfig;
+		legacyConfig.scaleX = config.scaleX;
+		legacyConfig.scaleY = config.scaleY;
+		legacyConfig.getSkaFilename = [](int meshId, char* filenameOut) -> AasStatus {
+			if (sInstance->mConfig.resolveSkaFile) {
+				auto filename(sInstance->mConfig.resolveSkaFile(meshId));
+				if (!filename.empty()) {
+					Expects(filename.size() < MAX_PATH);
+					strncpy(filenameOut, filename.c_str(), MAX_PATH);
+					return AAS_OK;
+				}
+			}
+			return AAS_ERROR;
+		};
+		legacyConfig.getSkmFilename = [](int meshId, char* filenameOut) -> AasStatus {
+			if (sInstance->mConfig.resolveSkmFile) {
+				auto filename(sInstance->mConfig.resolveSkmFile(meshId));
+				if (!filename.empty()) {
+					Expects(filename.size() < MAX_PATH);
+					strncpy(filenameOut, filename.c_str(), MAX_PATH);
+					return AAS_OK;
+				}
+			}
+			return AAS_ERROR;
+		};
+		legacyConfig.runScript = [](const char* script) {
+			if (sInstance->mConfig.runScript) {
+				sInstance->mConfig.runScript(script);
+			}
+		};
+
+		if (functions.Init(&legacyConfig)) {
 			throw TempleException("Unable to initialize the animation system.");
 		}
+
+		// The MDF resolver is not configurable, so we have to set it here manually
+		MH_CreateHook(temple::GetPointer<void*>(0x10269430), &AasResolveMaterial, nullptr);
+		MH_CreateHook(functions.Free, &AasFreeModel, (void**)&mOrgModelFree);
+		MH_EnableHook(nullptr);
+
+		auto meshesMapping = MesFile::ParseFile("art/meshes/meshes.mes");
+		mMapping.insert(meshesMapping.begin(), meshesMapping.end());
+		logger->debug("Loaded mapping for {} meshes from art/meshes/meshes.mes", 
+			meshesMapping.size());
 
 	}
 
 	AasAnimatedModelFactory::~AasAnimatedModelFactory() {
 		functions.Exit();
+		MH_RemoveHook(temple::GetPointer<void*>(0x10269430));
+		MH_RemoveHook(functions.Free);
+		sInstance = nullptr;
 	}
 
 	gfx::AnimatedModelPtr AasAnimatedModelFactory::FromIds(int meshId,
@@ -433,11 +553,29 @@ namespace temple {
 		AasHandle handle;
 		auto aasParams(AasAnimatedModel::Convert(params));
 		if (functions.CreateModelByNames(meshFilename.c_str(), skeletonFilename.c_str(), idleAnimId, &aasParams, &handle) != AAS_OK) {
-			throw new TempleException("Could not load model {} with skeleton {}.", meshFilename, skeletonFilename);
+			throw TempleException("Could not load model {} with skeleton {}.", meshFilename, skeletonFilename);
 		}
 
 		return std::make_shared<AasAnimatedModel>(handle);
 
 	}
 
+	std::unique_ptr<gfx::AnimatedModel> AasAnimatedModelFactory::BorrowByHandle(AasHandle handle) {
+		return std::make_unique<AasAnimatedModel>(handle, true);
+	}
+
+	AasFreeListenerHandle AasAnimatedModelFactory::AddFreeListener(AasFreeListener listener)
+	{
+		mListeners.push_back(listener);
+		auto it = mListeners.end();
+		--it;
+		return it;
+	}
+
+	void AasAnimatedModelFactory::RemoveFreeListener(AasFreeListenerHandle it)
+	{
+		mListeners.erase(it);
+	}
+
 }
+

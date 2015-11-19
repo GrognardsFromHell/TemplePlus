@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <map>
+
 #pragma pack(push, 1)
 class LoadingScreen;
 
@@ -27,6 +29,10 @@ private:
 
 class TigInitializer;
 class MapSystems;
+
+namespace temple {
+	class AasAnimatedModelFactory;
+}
 
 class VagrantSystem;
 class DescriptionSystem;
@@ -350,6 +356,11 @@ public:
 		return *mPathX;
 	}
 
+	temple::AasAnimatedModelFactory& GetAAS() const {
+		Expects(!!mAAS);
+		return *mAAS;
+	}
+
 	// Makes a savegame.
 	bool SaveGame(const std::string &filename, const std::string &displayName);
 	
@@ -379,12 +390,14 @@ public:
 	}
 
 private:
-	void RegisterDataFiles();
 	void VerifyTemplePlusData();
 	std::string GetLanguage();
 	void PlayLegalMovies();
 	void InitBufferStuff(const GameSystemConf& conf);
 	void InitAnimationSystem();
+	std::string ResolveSkaFile(int meshId) const;
+	std::string ResolveSkmFile(int meshId) const;
+	int ResolveMaterial(const std::string &material) const;
 	
 	void ResizeScreen(int w, int h);
 
@@ -392,10 +405,13 @@ private:
 	
 	template<typename T, typename... TArgs>
 	std::unique_ptr<T> InitializeSystem(LoadingScreen &loadingScreen, TArgs&&... args);
-
+	
 	TigInitializer &mTig;
 	GameSystemConf mConfig;
 	TigBufferstuffInitializer mTigBuffer;
+
+	std::unique_ptr<temple::AasAnimatedModelFactory> mAAS;
+	std::map<int, std::string> mMeshesById;
 
 	bool mResetting = false;
 	

@@ -1,7 +1,15 @@
 
 #pragma once
 
-class Graphics;
+class TigInitializer;
+namespace gfx {
+	class RenderingDevice;
+}
+namespace temple {
+	struct AasConfig;
+	class AasAnimatedModelFactory;
+	class AasRenderer;
+}
 
 struct RenderWorldInfo;
 
@@ -10,7 +18,8 @@ class GameSystems;
 
 class GameRenderer {
 public:
-	GameRenderer(Graphics &graphics, GameSystems &gameSystems);
+	GameRenderer(TigInitializer &tig, GameSystems &gameSystems);
+	~GameRenderer();
 
 	void Render();
 
@@ -18,6 +27,9 @@ private:
 
 	void RenderWorld(RenderWorldInfo *info);
 	
-	Graphics &mGraphics;
+	gfx::RenderingDevice& mRenderingDevice;
 	GameSystems &mGameSystems;
+
+	std::unique_ptr<class temple::AasRenderer> mAasRenderer;
+	std::unique_ptr<class MapObjectRenderer> mMapObjectRenderer;
 };

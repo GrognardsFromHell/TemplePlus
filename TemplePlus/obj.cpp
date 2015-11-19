@@ -508,6 +508,10 @@ void Objects::Move(objHndl handle, LocAndOffsets toLocation) {
 #include "combat.h"
 #include "turn_based.h"
 
+SecretDoorFlag Objects::GetSecretDoorFlags(objHndl handle) {
+	return (SecretDoorFlag) _GetInternalFieldInt32(handle, obj_f_secretdoor_flags);
+}
+
 void Objects::Destroy(objHndl ObjHnd) {
 	static set<objHndl> destroyed;
 	std::string name = this->GetDisplayName(ObjHnd, ObjHnd);
@@ -587,11 +591,12 @@ void Objects::Destroy(objHndl ObjHnd) {
 	updateTbUi(ObjHnd);
 	
 	auto killRendering = temple::GetPointer<void(objHndl)>(0x10021290);
+	killRendering(ObjHnd);
 	
-	auto v6 = getInt32(ObjHnd, obj_f_animation_handle);
-	if (v6) {
+	auto aasHandle = getInt32(ObjHnd, obj_f_animation_handle);
+	if (aasHandle) {
 		auto freeAasModel = temple::GetPointer<void(int)>(0x10264510);
-		freeAasModel(v6);
+		freeAasModel(aasHandle);
 		setInt32(ObjHnd, obj_f_animation_handle, 0);
 	}
 	
@@ -702,6 +707,10 @@ int Objects::GetModFromStatLevel(int statLevel)
 
 int Objects::GetTempId(objHndl handle) {
 	return _GetInternalFieldInt32(handle, obj_f_temp_id);
+}
+
+int Objects::GetAlpha(objHndl handle) {
+	return _GetInternalFieldInt32(handle, obj_f_transparency);
 }
 
 bool Objects::IsContainer(objHndl objHnd)

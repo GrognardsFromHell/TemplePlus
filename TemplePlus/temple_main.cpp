@@ -5,7 +5,6 @@
 #include "tig/tig_startup.h"
 #include "tig/tig_mouse.h"
 #include "gamesystems/gamesystems.h"
-#include "graphics/graphics.h"
 #include "tig/tig_shader.h"
 #include "ui/ui.h"
 #include "ui/ui_mainmenu.h"
@@ -161,7 +160,7 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	startupRelevantFuncs.RunBatchFile("Startup.txt");
 	logger->info("[Beginning Game]");		
 
-	GameLoop loop(tig.GetMainWindow(), gameSystems, tig.GetGraphics());
+	GameLoop loop(tig, gameSystems);
 	loop.Run();
 	// startupRelevantFuncs.RunMainLoop();
 

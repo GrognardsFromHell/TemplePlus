@@ -3,9 +3,10 @@
 #include <type_traits>
 #include <temple/dll.h>
 
+#include <graphics/mdfmaterials.h>
+
 #include "gamesystems.h"
 #include "util/config.h"
-#include "graphics/graphics.h"
 #include "legacy.h"
 #include <tig/tig_texture.h>
 #include "../tig/tig_startup.h"
@@ -13,9 +14,8 @@
 #include <tig/tig_loadingscreen.h>
 #include <tig/tig_font.h>
 #include <tig/tig_msg.h>
-#include <aas.h>
 #include <movies.h>
-#include <python/python_integration.h>
+#include <python/python_integration_obj.h>
 #include "legacysystems.h"
 #include "graphics/loadingscreen.h"
 #include "mappreprocessor.h"
@@ -23,8 +23,12 @@
 #include "mapsystems.h"
 #include <infrastructure/vfs.h>
 #include <temple/vfs.h>
+#include <temple/meshes.h>
 #include <infrastructure/mesparser.h>
 #include <util/fixes.h>
+#include <graphics/device.h>
+
+using namespace gfx;
 
 /*
 Manages graphics engine resources used by
@@ -33,17 +37,17 @@ legacy game systems.
 class LegacyGameSystemResources : public ResourceListener {
 public:
 
-	explicit LegacyGameSystemResources(Graphics& graphics)
-		: mRegistration(graphics, this) {
+	explicit LegacyGameSystemResources(RenderingDevice& device)
+		: mRegistration(device, this) {
 	}
 
-	void CreateResources(Graphics&) override {
+	void CreateResources(RenderingDevice&) override {
 
 		gameSystemInitTable.CreateTownmapFogBuffer();
 		gameSystemInitTable.CreateShadowMapBuffer();
 	}
 
-	void FreeResources(Graphics&) override {
+	void FreeResources(RenderingDevice&) override {
 
 		gameSystemInitTable.GameDisableDrawingForce();
 		gameSystemInitTable.ReleaseTownmapFogBuffer();
@@ -131,7 +135,6 @@ GameSystems::GameSystems(TigInitializer& tig) : mTig(tig) {
 	// TODO: Once we reimplement the gamelib_mod_load function, this can be removed since it's only read from there
 	*gameSystemInitTable.fullInstall = true;
 
-	RegisterDataFiles();
 	VerifyTemplePlusData();
 
 	auto lang = GetLanguage();
@@ -156,11 +159,11 @@ GameSystems::GameSystems(TigInitializer& tig) : mTig(tig) {
 	tigFont.LoadAll("art\\interface\\fonts\\*.*");
 	tigFont.PushFont("priory-12", 12, true);
 
-	LoadingScreen loadingScreen(tig.GetGraphics());
+	LoadingScreen loadingScreen(tig.GetRenderingDevice(), tig.GetShapeRenderer2d());
 	InitializeSystems(loadingScreen);
 
 	mLegacyResources
-		= std::make_unique<LegacyGameSystemResources>(tig.GetGraphics());
+		= std::make_unique<LegacyGameSystemResources>(tig.GetRenderingDevice());
 
 	gameSystemInitTable.InitPfxLightning();
 
@@ -259,35 +262,6 @@ TigBufferstuffInitializer::~TigBufferstuffInitializer() {
 	gameSystemInitTable.TigWindowBufferstuffFree(mBufferIdx);
 }
 
-
-void GameSystems::RegisterDataFiles() {
-	TioFileList list;
-	tio_filelist_create(&list, "*.dat");
-
-	for (int i = 0; i < list.count; ++i) {
-		auto file = list.files[i];
-		logger->info("Registering archive {}", file.name);
-		int result = tio_path_add(file.name);
-		if (result != 0) {
-			logger->trace("Unable to add archive {}: {}", file.name, result);
-		}
-	}
-
-	tio_filelist_destroy(&list);
-
-	tio_mkdir("data");
-	tio_path_add("data");
-
-	tio_mkdir("tpdata");
-	tio_path_add("tpdata");
-
-	for (auto& entry : config.additionalTioPaths) {
-		logger->info("Adding additional TIO path {}", entry);
-		tio_path_add(entry.c_str());
-	}
-
-}
-
 /*
 Checks that the TemplePlus data file has been loaded in some way.
 */
@@ -360,25 +334,57 @@ void GameSystems::InitBufferStuff(const GameSystemConf& conf) {
 }
 
 void GameSystems::InitAnimationSystem() {
-	// This is probably loaded here because gamelib also provides the skm/ska filename lookup functions
-	if (!mesFuncs.Open("art\\meshes\\meshes.mes", gameSystemInitTable.meshesMes)) {
-		throw TempleException("Unable to open meshes.mes");
-	}
+	
+	mMeshesById = MesFile::ParseFile("art\\meshes\\meshes.mes");
 
-	DWORD pixelPerWorldTile = 0x41E24630;
-	AasConfig conf;
-	memset(&conf, 0, sizeof(conf));
-	conf.pixelPerWorldTile1 = *reinterpret_cast<float*>(&pixelPerWorldTile);
-	conf.pixelPerWorldTile2 = conf.pixelPerWorldTile1;
-	conf.getSkmFile = (uint32_t)temple::GetPointer<0x100041E0>();
-	conf.getSkaFile = (uint32_t)temple::GetPointer<0x10004230>();
-	conf.runScript = RunAnimFramePythonScript;
+	temple::AasConfig config;
+	config.runScript = [] (const std::string &command) {
+		pythonObjIntegration.RunAnimFrameScript(command);
+	};
+	config.resolveSkaFile = [=](int modelId) {
+		return ResolveSkaFile(modelId);
+	};
+	config.resolveSkmFile = [=](int modelId) {
+		return ResolveSkmFile(modelId);
+	};
+	config.resolveMaterial = [=](const std::string &material) {
+		return ResolveMaterial(material);
+	};
 
-	if (aasFuncs.Init(&conf)) {
-		throw TempleException("Failed to initialize animation system.");
-	}
+	mAAS = std::make_unique<temple::AasAnimatedModelFactory>(config);
+
 }
 
+std::string GameSystems::ResolveSkaFile(int meshId) const {
+
+	auto it = mMeshesById.find(meshId);
+	if (it == mMeshesById.end()) {
+		return std::string();
+	}
+
+	return fmt::format("art\\meshes\\{}.ska", it->second);
+
+}
+
+std::string GameSystems::ResolveSkmFile(int meshId) const {
+
+	auto it = mMeshesById.find(meshId);
+	if (it == mMeshesById.end()) {
+		return std::string();
+	}
+
+	return fmt::format("art\\meshes\\{}.skm", it->second);
+
+}
+
+int GameSystems::ResolveMaterial(const std::string& materialName) const {
+	auto material(mTig.GetMdfFactory().LoadMaterial(materialName));
+	if (!material) {
+		logger->error("Unable to load material {}", materialName);
+		return -1;
+	}
+	return material->GetId();
+}
 
 void GameSystems::AdvanceTime() {
 

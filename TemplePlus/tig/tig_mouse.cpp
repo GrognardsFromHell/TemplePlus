@@ -2,8 +2,11 @@
 #include "tig_mouse.h"
 #include "tig_shader.h"
 #include "tig_texture.h"
-#include "graphics/graphics.h"
 #include "ui/ui_render.h"
+
+#include "tig/tig_startup.h"
+
+#include <graphics/device.h>
 
 #include <vector>
 #include <atlcomcli.h>
@@ -80,7 +83,7 @@ static bool SetCursorFromShaderId(int shaderId) {
 		hotspotY = textureEntry.rect.height / 2;
 	}
 
-	auto device = graphics->device();
+	auto device = tig->GetRenderingDevice().GetDevice();
 	if (D3DLOG(device->SetCursorProperties(hotspotX, hotspotY, surface)) != D3D_OK) {
 		logger->error("Unable to set cursor properties.");
 	}

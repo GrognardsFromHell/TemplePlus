@@ -2,11 +2,17 @@
 #pragma once
 
 #include <memory>
-#include <d3dx9math.h>
+#include <DirectXMath.h>
+
+#include "infrastructure/macros.h"
+
+namespace gfx {
+	class RenderingDevice;
+	class AnimatedModelFactory;
+	class AnimatedModelRenderer;
+}
 
 struct IDirect3DDevice9;
-typedef struct _D3DMATRIX D3DMATRIX;
-
 namespace particles {
 
 	class PartSysEmitter;
@@ -15,32 +21,39 @@ namespace particles {
 
 	class ParticleRenderer {
 	public:
-		virtual void Render(const PartSysEmitter *emitter) = 0;
+		virtual void Render(PartSysEmitter &emitter) = 0;
 	protected:
+		ParticleRenderer(gfx::RenderingDevice &device) : mDevice(device) {
+		}
 		virtual ~ParticleRenderer() = 0;
 
-		bool GetEmitterWorldMatrix(const PartSysEmitter *emitter, D3DMATRIX &matrix);
+		bool GetEmitterWorldMatrix(const PartSysEmitter &emitter, DirectX::XMFLOAT4X4 &matrix);
 		
 		/*
 		These vectors can be multiplied with screen space
 		coordinates to get world coordinates.
 		*/
-		D3DXVECTOR3 screenSpaceUnitX;
-		D3DXVECTOR3 screenSpaceUnitY;
-		D3DXVECTOR3 screenSpaceUnitZ;
+		DirectX::XMFLOAT3 screenSpaceUnitX;
+		DirectX::XMFLOAT3 screenSpaceUnitY;
+		DirectX::XMFLOAT3 screenSpaceUnitZ;
+
+		NO_COPY_OR_MOVE(ParticleRenderer);
 	private:
-		void ExtractScreenSpaceUnitVectors(const D3DXMATRIX& projWorldMatrix);
-		void ExtractScreenSpaceUnitVectors2(const D3DXMATRIX& projWorldMatrix);
+		void ExtractScreenSpaceUnitVectors(const DirectX::XMFLOAT4X4& projWorldMatrix);
+		void ExtractScreenSpaceUnitVectors2(const DirectX::XMFLOAT4X4& projWorldMatrix);
+		gfx::RenderingDevice &mDevice;
 	};
 
 	inline ParticleRenderer::~ParticleRenderer() = default;
 
 	class ParticleRendererManager {
 	public:
-		explicit ParticleRendererManager(IDirect3DDevice9 *device);
+		explicit ParticleRendererManager(gfx::RenderingDevice &device,
+			gfx::AnimatedModelFactory &modelFactory,
+			gfx::AnimatedModelRenderer &modelRenderer);
 		~ParticleRendererManager();
 
-		ParticleRenderer *GetRenderer(PartSysParticleType type);
+		ParticleRenderer &GetRenderer(PartSysParticleType type);
 
 	private:
 		class Impl;

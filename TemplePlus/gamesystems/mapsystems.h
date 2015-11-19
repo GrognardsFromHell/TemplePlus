@@ -9,6 +9,10 @@
 class TigInitializer;
 class MapClipping;
 
+namespace gfx {
+	class RenderingDevice;
+}
+
 class MapSystems : public GameSystem, public ModuleAwareGameSystem {
 public:
 
@@ -44,7 +48,7 @@ public:
 
 private:
 
-	Graphics &mGraphics;
+	TigInitializer& mTig;
 
 	std::unique_ptr<MapClipping> mClipping;
 	std::unique_ptr<MapTerrain> mTerrain;

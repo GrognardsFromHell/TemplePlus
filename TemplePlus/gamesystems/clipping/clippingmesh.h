@@ -3,7 +3,9 @@
 #include <string>
 #include <vector>
 #include <atlcomcli.h>
-#include <graphics/graphics.h>
+
+#include <graphics/device.h>
+#include <graphics/buffers.h>
 
 struct ClippingMeshObj {
 	float posX;
@@ -15,9 +17,11 @@ struct ClippingMeshObj {
 	float rotation;
 };
 
+using namespace gfx;
+
 class ClippingMesh : public ResourceListener {
 public:
-	explicit ClippingMesh(Graphics &g, const std::string& filename);
+	explicit ClippingMesh(RenderingDevice &device, const std::string& filename);
 	~ClippingMesh();
 
 	void AddInstance(const ClippingMeshObj& obj);
@@ -42,8 +46,8 @@ public:
 		return mTriCount;
 	}
 
-	void CreateResources(Graphics&) override;
-	void FreeResources(Graphics&) override;
+	void CreateResources(RenderingDevice &device) override;
+	void FreeResources(RenderingDevice &device) override;
 private:
 	CComPtr<IDirect3DVertexBuffer9> mVertexBuffer;
 	CComPtr<IDirect3DIndexBuffer9> mIndexBuffer;

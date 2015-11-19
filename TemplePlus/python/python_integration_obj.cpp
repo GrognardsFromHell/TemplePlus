@@ -176,10 +176,6 @@ static int RunPythonObjScript(ObjScriptInvocation* invoc) {
 	return result;
 }
 
-void RunAnimFramePythonScript(const char* command) {
-	pythonObjIntegration.RunAnimFrameScript(command);
-}
-
 static void SetAnimatedObject(objHndl handle) {
 	pythonObjIntegration.SetAnimatedObject(handle);
 }
@@ -314,7 +310,7 @@ int PythonObjIntegration::ExecuteObjectScript(objHndl triggerer, objHndl attache
 }
 
 
-void PythonObjIntegration::RunAnimFrameScript(const char* command) {
+void PythonObjIntegration::RunAnimFrameScript(const std::string &command) {
 	logger->trace("Running Python command {}", command);
 
 	auto locals = PyDict_New();
@@ -324,7 +320,7 @@ void PythonObjIntegration::RunAnimFrameScript(const char* command) {
 	PyDict_SetItemString(locals, "anim_obj", animObj);
 	Py_DECREF(animObj);
 
-	auto result = PyRun_String(command, Py_eval_input, MainModuleDict, locals);
+	auto result = PyRun_String(command.c_str(), Py_eval_input, MainModuleDict, locals);
 
 	Py_DECREF(locals);
 

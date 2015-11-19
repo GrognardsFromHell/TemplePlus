@@ -1,11 +1,13 @@
+
 #include "stdafx.h"
-#include "materials.h"
+
+#include <graphics/materials.h>
+#include <graphics/mdfmaterials.h>
+
 #include "util/fixes.h"
+#include "tig/tig_startup.h"
 
-#include <d3dx9math.h>
-
-#include "mdfrenderer.h"
-#include "graphics.h"
+using namespace gfx;
 
 /*
 	This structure is allocated by the caller on the stack and
@@ -15,7 +17,7 @@
 
 using vector4 = D3DXVECTOR4;
 using vector2 = D3DXVECTOR2;
-using PrivateShaderData = MdfRenderMaterial*;
+using PrivateShaderData = gfx::MdfRenderMaterial*;
 using LegacyRenderFunc = void(int vertexCount,
                               vector4* pos,
                               vector4* normal,
@@ -51,7 +53,7 @@ public:
 
 	void apply() override;
 
-	static std::shared_ptr<gfx::Material> sLastMaterial;
+	static MdfRenderMaterialPtr sLastMaterial;
 
 	static int LoadShader(int shaderId, LegacyShader* shaderOut);
 	static int RegisterShader(const char *filename, int *shaderIdOut);
@@ -83,7 +85,7 @@ public:
 	);
 } fix;
 
-std::shared_ptr<gfx::Material> MaterialsHooks::sLastMaterial;
+MdfRenderMaterialPtr MaterialsHooks::sLastMaterial;
 
 void MaterialsHooks::apply() {
 	replaceFunction(0x101E20C0, LoadShader);
@@ -94,10 +96,9 @@ void MaterialsHooks::apply() {
 int MaterialsHooks::LoadShader(int shaderId, LegacyShader* shaderOut) {
 
 	// Shader has to have been registered earlier
-	auto mdfFactory = static_cast<MdfMaterialFactory*>(gfx::gMdfMaterialFactory);
-	auto material = mdfFactory->GetById(shaderId);
+	auto material = tig->GetMdfFactory().GetById(shaderId);
 
-	if (!material->IsValid()) {
+	if (!material) {
 		logger->error("Legacy shader with id {} wasn't found.", shaderId);
 		return 17;
 	}
@@ -111,15 +112,15 @@ int MaterialsHooks::LoadShader(int shaderId, LegacyShader* shaderOut) {
 	shaderOut->setColorFunc = &SetColor;
 	shaderOut->getColorFunc = &GetColor;
 	// Pointer to the gfx::Material
-	shaderOut->privateShaderData = static_cast<MdfRenderMaterial*>(sLastMaterial.get()); 
+	shaderOut->privateShaderData = sLastMaterial.get();
 
 	return 0;
 }
 
 int MaterialsHooks::RegisterShader(const char* filename, int* shaderIdOut) {
 
-	auto material = gfx::gMdfMaterialFactory->LoadMaterial(filename);
-	if (!material->IsValid()) {
+	auto material = tig->GetMdfFactory().LoadMaterial(filename);
+	if (!material) {
 		return 17;
 	}
 
@@ -152,7 +153,7 @@ void MaterialsHooks::RenderShader(int vertexCount,
                                   uint16_t* indices,
                                   PrivateShaderData shaderData) {
 
-	MdfRenderer renderer(*graphics);
+	/*MdfRenderer renderer(*graphics);
 	renderer.Render(shaderData,
 		vertexCount,
 		pos,
@@ -160,7 +161,8 @@ void MaterialsHooks::RenderShader(int vertexCount,
 		diffuse,
 		uv,
 		primCount,
-		indices);
+		indices);*/
+	throw TempleException("");
 
 }
 

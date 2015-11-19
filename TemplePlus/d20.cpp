@@ -937,9 +937,8 @@ uint32_t _ActionFrameDisarm(D20Actn* d20a)
 			weapon = inventory.ItemWornAt(d20a->d20ATarget, 4);
 		if (!attackerWeapon && !attackerOffhand)
 		{
-			int itemWearFlags;
 			if ( (inventory.GetWieldType(d20a->d20APerformer, weapon) != 2 || !attackerShield
-				|| ( itemWearFlags = objects.getInt32(attackerShield, obj_f_item_wear_flags), itemWearFlags & OIF_WEAR_BUCKLER) ) 
+				|| objects.GetItemWearFlags(attackerShield) & OIF_WEAR_BUCKLER ) 
 				&& objects.StatLevelGet(d20a->d20APerformer, stat_level_monk) == 0)
 				inventory.ItemGetAdvanced(weapon, d20a->d20APerformer, 203, 0);
 			else

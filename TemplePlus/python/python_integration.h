@@ -49,4 +49,3 @@ private:
 	string mFilenameRegexp;
 };
 
-void RunAnimFramePythonScript(const char *command);

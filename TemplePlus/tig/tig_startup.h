@@ -60,7 +60,16 @@ struct TigConfig {
 };
 
 class MainWindow;
-class Graphics;
+namespace gfx {
+	class RenderingDevice;
+	class ShapeRenderer2d;
+	class MdfMaterialFactory;
+}
+namespace temple {
+	class SoundSystem;
+	class MovieSystem;
+}
+class TextLayouter;
 
 // RAII for TIG initialization
 class TigInitializer {
@@ -76,13 +85,39 @@ public:
 		return *mMainWindow;
 	}
 
-	Graphics& GetGraphics() {
-		return *mGraphics;
+	//Graphics& GetGraphics() {
+	//	return *mGraphics;
+	//}
+
+	gfx::RenderingDevice &GetRenderingDevice() {
+		return *mRenderingDevice;
+	}
+	
+	TextLayouter& GetTextLayouter() {
+		return *mTextLayouter;
+	}
+
+	gfx::MdfMaterialFactory& GetMdfFactory() {
+		return *mMdfFactory;
+	}
+
+	gfx::ShapeRenderer2d& GetShapeRenderer2d() {
+		return *mShapeRenderer2d;
+	}
+
+	temple::SoundSystem& GetSoundSystem() {
+		return *mSoundSystem;
+	}
+
+	temple::MovieSystem& GetMovieSystem() {
+		return *mMovieSystem;
 	}
 
 private:
 
 	using TigSystemPtr = std::unique_ptr<class LegacyTigSystem>;
+
+	void LoadDataFiles();
 
 	/*
 		Starts a legacy system still contained in temple.dll
@@ -96,10 +131,17 @@ private:
 	TigConfig mConfig;
 
 	std::unique_ptr<MainWindow> mMainWindow;
-	std::unique_ptr<Graphics> mGraphics;
+	std::unique_ptr<gfx::RenderingDevice> mRenderingDevice;
+	std::unique_ptr<TextLayouter> mTextLayouter;
+	std::unique_ptr<gfx::MdfMaterialFactory> mMdfFactory;
+	std::unique_ptr<gfx::ShapeRenderer2d> mShapeRenderer2d;
+	std::unique_ptr<temple::SoundSystem> mSoundSystem;
+	std::unique_ptr<temple::MovieSystem> mMovieSystem;
 	std::unique_ptr<class LegacyVideoSystem> mLegacyVideoSystem;
 	std::unique_ptr<class MessageQueue> mMessageQueue;
 
 	// Contains all systems that have already been started
 	std::vector<TigSystemPtr> mStartedSystems;
 };
+
+extern TigInitializer* tig;

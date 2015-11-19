@@ -2,8 +2,11 @@
 
 #include <infrastructure/renderstates.h>
 
+/*
 #include "renderer.h"
 #include "graphics.h"
+#include "shaders.h"
+#include <util/config.h>
 
 constexpr auto CalcVertexSize(bool hasNormals, bool hasDiffuse, int texCoords) {
 	return sizeof(D3DXVECTOR3)
@@ -212,13 +215,11 @@ void Renderer::DrawTrisScreenSpace(int vertexCount,
                                    uint16_t* indices) {
 
 	auto device = mGraphics.device();
-
 	
-	auto fvf = D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1;
 	auto bufferSize = vertexCount * sizeof(ScreenSpaceVertex);
 
 	CComPtr<IDirect3DVertexBuffer9> buffer;
-	if (D3DLOG(device->CreateVertexBuffer(bufferSize, D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, fvf, D3DPOOL_DEFAULT, &buffer, nullptr)) != D3D_OK) {
+	if (D3DLOG(device->CreateVertexBuffer(bufferSize, D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 0, D3DPOOL_DEFAULT, &buffer, nullptr)) != D3D_OK) {
 		return;
 	}
 
@@ -252,13 +253,125 @@ void Renderer::DrawTrisScreenSpace(int vertexCount,
 	if (D3DLOG(indexBuffer->Unlock()) != D3D_OK) {
 		return;
 	}
-	renderStates->SetFVF(fvf);
+	
+	CComPtr<IDirect3DVertexDeclaration9> mVertexDecl;
+	
+	D3DVERTEXELEMENT9 elements[] = {
+		{ 0, 0, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
+		{ 0, 16, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0 },
+		{ 0, 20, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 },
+		D3DDECL_END()
+	};
+	D3DLOG(device->CreateVertexDeclaration(&elements[0], &mVertexDecl));
 
 	renderStates->SetStreamSource(0, buffer, sizeof(ScreenSpaceVertex));
 	renderStates->SetIndexBuffer(indexBuffer, 0);
-
 	renderStates->Commit();
+	
+	device->SetVertexDeclaration(mVertexDecl);
+
+	auto vs = mGraphics.GetShaders().LoadVertexShader("gui_vs");
+	vs->Bind();
+
+	D3DXVECTOR4 dim{ (float) config.renderWidth, (float) config.renderHeight, 0, 0 };
+	device->SetVertexShaderConstantF(0, &dim[0], 1);
 
 	D3DLOG(device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, vertexCount, 0, primCount));
+	
+}
+
+#pragma pack(push, 1)
+struct LineVertex {
+	D3DVECTOR pos;
+	D3DCOLOR diffuse;
+};
+#pragma pack(pop)
+
+void Renderer::DrawLines(const std::vector<Line>& lines, bool screenSpace) {
+
+	auto device = mGraphics.device();
+
+	auto fvf = D3DFVF_XYZ | D3DFVF_DIFFUSE;
+	auto bufferSize = lines.size() * 2 * sizeof(LineVertex);
+
+	CComPtr<IDirect3DVertexBuffer9> buffer;
+	if (D3DLOG(device->CreateVertexBuffer(bufferSize, D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, fvf, D3DPOOL_DEFAULT, &buffer, nullptr)) != D3D_OK) {
+		return;
+	}
+
+	LineVertex* vertexData;
+	if (D3DLOG(buffer->Lock(0, bufferSize, (void**)&vertexData, D3DLOCK_DISCARD)) != D3D_OK) {
+		return;
+	}
+
+	for (const auto &line : lines) {
+		vertexData->pos = line.from;
+		vertexData->diffuse = line.diffuse;
+		vertexData++;
+		vertexData->pos = line.to;
+		vertexData->diffuse = line.diffuse;
+		vertexData++;
+	}
+
+	if (D3DLOG(buffer->Unlock()) != D3D_OK) {
+		return;
+	}
+
+	PixelShaderPtr ps;
+	VertexShaderPtr vs; 
+	CComPtr<IDirect3DVertexDeclaration9> vertexDecl; // Should be cached
+
+	renderStates->SetAlphaBlend(true);
+	renderStates->SetSrcBlend(D3DBLEND_SRCALPHA);
+	renderStates->SetDestBlend(D3DBLEND_INVSRCALPHA);
+	if (screenSpace) {
+		renderStates->SetProjectionMatrix(renderStates->Get3dProjectionMatrix());
+		ps = mGraphics.GetShaders().LoadPixelShader("diffuse_only_ps");
+		ps->Bind();
+		vs = mGraphics.GetShaders().LoadVertexShader("gui_vs");
+		vs->Bind();
+
+		D3DVERTEXELEMENT9 elements[] = {
+			{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
+			{ 0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0 },
+			D3DDECL_END()
+		};
+		D3DLOG(device->CreateVertexDeclaration(&elements[0], &vertexDecl));
+		device->SetVertexDeclaration(vertexDecl);
+
+		renderStates->SetZEnable(false);
+		renderStates->SetZWriteEnable(false);
+
+	} else {
+		renderStates->SetZEnable(true);
+		renderStates->SetZWriteEnable(false);
+		renderStates->SetTexture(0, nullptr);
+		renderStates->SetColorVertex(true);
+		renderStates->SetTextureColorOp(0, D3DTOP_SELECTARG1);
+		renderStates->SetTextureColorArg1(0, D3DTA_DIFFUSE);
+		renderStates->SetTextureAlphaOp(0, D3DTOP_SELECTARG1);
+		renderStates->SetTextureAlphaArg1(0, D3DTA_DIFFUSE);
+		renderStates->SetProjectionMatrix(renderStates->Get3dProjectionMatrix());
+		renderStates->SetFVF(fvf);
+		renderStates->SetLighting(false);
+	}	
+
+	renderStates->SetStreamSource(0, buffer, sizeof(LineVertex));
+	renderStates->SetIndexBuffer(nullptr, 0);
+	renderStates->Commit();
+
+	D3DLOG(device->DrawPrimitive(D3DPT_LINELIST, 0, lines.size()));
+
+	if (ps) {
+		ps->Unbind();
+	}
+	if (vs) {
+		vs->Unbind();
+	}
+	if (vertexDecl) {
+		device->SetVertexDeclaration(nullptr);
+	}
 
 }
+
+*/

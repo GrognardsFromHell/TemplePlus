@@ -5,8 +5,6 @@
 #include <particles/instances.h>
 #include <infrastructure/vfs.h>
 
-#include "mock_materials.h"
-
 using namespace particles;
 
 class PartSysExternalMock : public IPartSysExternal {
@@ -55,16 +53,11 @@ class PartSysSimulationTest : public testing::Test {
 protected:	
 
 	static PartSysParser &GetParser() {
-		static auto meshes = std::make_shared<gfx::MeshesManager>();
 		static PartSysParser sParser(meshes);
 		return sParser;
 	}
 
 	static void SetUpTestCase() {
-		static std::unique_ptr<MaterialsMock> sMaterials;
-		sMaterials.reset(new MaterialsMock);
-		gfx::gMdfMaterialFactory = sMaterials.get();
-
 		// Init VFS with mock/dummy code
 		vfs.reset(Vfs::CreateStdIoVfs());
 				

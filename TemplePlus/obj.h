@@ -66,6 +66,9 @@ struct Objects : temple::AddressTable {
 	float GetOffsetY(objHndl handle) {
 		return _GetInternalFieldFloat(handle, obj_f_offset_y);
 	}
+	float GetOffsetZ(objHndl handle) {
+		return _GetInternalFieldFloat(handle, obj_f_offset_z);
+	}
 	int GetOriginMapId(objHndl handle) {
 		return _GetInternalFieldInt32(handle, obj_f_critter_teleport_map);
 	}
@@ -89,8 +92,27 @@ struct Objects : temple::AddressTable {
 	}
 	float GetRotation(objHndl handle) {
 		return _GetInternalFieldFloat(handle, obj_f_rotation);
+	}	
+	float GetRotationPitch(objHndl handle) {
+		return _GetInternalFieldFloat(handle, obj_f_rotation_pitch);
+	}
+	int GetScalePercent(objHndl handle) {
+		return _GetInternalFieldInt32(handle, obj_f_model_scale);
 	}
 	void SetRotation(objHndl handle, float rotation);
+
+	ItemFlag GetItemFlags(objHndl handle) {
+		return (ItemFlag)_GetInternalFieldInt32(handle, obj_f_item_flags);
+	}
+	OIF_WEAR GetItemWearFlags(objHndl handle) {
+		return (OIF_WEAR)_GetInternalFieldInt32(handle, obj_f_item_wear_flags);
+	}
+	WeaponTypes GetWeaponType(objHndl handle) {
+		return (WeaponTypes)_GetInternalFieldInt32(handle, obj_f_weapon_type);
+	}
+	int GetItemInventoryLocation(objHndl handle) {
+		return _GetInternalFieldInt32(handle, obj_f_item_inv_location);
+	}
 
 	int GetScript(objHndl handle, int index);
 	void SetScript(objHndl handle, int index, int scriptId);
@@ -185,6 +207,8 @@ struct Objects : temple::AddressTable {
 		return _SecretdoorDetect(door, viewer);
 	}
 
+	SecretDoorFlag GetSecretDoorFlags(objHndl handle);
+
 	bool HasSpellEffects(objHndl obj) {
 		return _HasSpellEffects(obj);
 	}
@@ -226,6 +250,7 @@ struct Objects : temple::AddressTable {
 	int GetModFromStatLevel(int statLevel); // returns modifier from stat level e.g. Dex 15 -> +2
 	
 	int GetTempId(objHndl handle);
+	int GetAlpha(objHndl handle);	
 #pragma endregion
 
 #pragma region Subsystems

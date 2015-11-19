@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 
-#include <infrastructure/materials.h>
+#include <graphics/mdfmaterials.h>
 #include <infrastructure/meshes.h>
 #include <infrastructure/exception.h>
 #include <infrastructure/format.h>
@@ -207,11 +207,11 @@ public:
 		mBlendMode = blendMode;
 	}
 
-	const gfx::MaterialRef& GetMaterial() const {
+	const gfx::MdfRenderMaterialPtr& GetMaterial() const {
 		return mMaterial;
 	}
 
-	void SetMaterial(const gfx::MaterialRef& material) {
+	void SetMaterial(const gfx::MdfRenderMaterialPtr& material) {
 		mMaterial = material;
 	}
 
@@ -239,12 +239,12 @@ public:
 		mParticleSpace = particleSpace;
 	}
 
-	const gfx::MeshRef& GetMesh() const {
-		return mMesh;
+	const std::string& GetMeshName() const {
+		return mMeshName;
 	}
 
-	void SetMesh(const gfx::MeshRef& mesh) {
-		mMesh = mesh;
+	void SetMeshName(const std::string& meshName) {
+		mMeshName = meshName;
 	}
 
 	float GetBoxLeft() const {
@@ -319,11 +319,11 @@ private:
 	PartSysCoordSys mCoordSys = PartSysCoordSys::Cartesian;
 	PartSysCoordSys mOffsetCoordSys = PartSysCoordSys::Cartesian;
 	PartSysBlendMode mBlendMode = PartSysBlendMode::Add;
-	gfx::MaterialRef mMaterial;
+	gfx::MdfRenderMaterialPtr mMaterial;
 	PartSysCoordSys mParticlePosCoordSys = PartSysCoordSys::Cartesian;
 	PartSysCoordSys mParticleVelocityCoordSys = PartSysCoordSys::Cartesian;
 	PartSysParticleSpace mParticleSpace = PartSysParticleSpace::World;
-	gfx::MeshRef mMesh;
+	std::string mMeshName;
 	float mBoxLeft = -399.0f;
 	float mBoxTop = -299.0f;
 	float mBoxRight = 399.0f;

@@ -1,11 +1,14 @@
 #pragma once
 
-class Graphics;
+namespace gfx {
+	class RenderingDevice;
+}
+
 class BinaryReader;
 
 class MapClipping {
 public:
-	explicit MapClipping(Graphics& g);
+	explicit MapClipping(gfx::RenderingDevice& g);
 	~MapClipping();
 
 	void Load(const std::string& directory);

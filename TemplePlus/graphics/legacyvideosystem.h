@@ -4,11 +4,14 @@
 #include <memory>
 
 class MainWindow;
-class Graphics;
+
+namespace gfx {
+	class RenderingDevice;
+}
 
 class LegacyVideoSystem {
 public:
-	LegacyVideoSystem(MainWindow &mainWindow, Graphics &graphics);
+	LegacyVideoSystem(MainWindow &mainWindow, gfx::RenderingDevice &device);
 	~LegacyVideoSystem();
 
 private:

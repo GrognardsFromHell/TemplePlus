@@ -4,11 +4,15 @@
 #include <string>
 #include <unordered_map>
 
-#include "../platform/d3d.h"
+#include <DirectXMath.h>
+#include <gsl/array_view.h>
 
 enum AasEventFlag;
 
 namespace gfx {
+
+	struct Light3d;
+	struct MdfRenderOverrides;
 
 	struct AnimatedModelParams;
 	using AnimatedModelPtr = std::shared_ptr<class AnimatedModel>;
@@ -88,6 +92,13 @@ namespace gfx {
 		Monk
 	};
 
+	enum class SpecialMaterialSlot : int {
+		Head,
+		Chest,
+		Gloves,
+		Boots
+	};
+
 	/*
 	Represents an encoded animation id.
 	*/
@@ -150,16 +161,18 @@ namespace gfx {
 
 		virtual int GetVertexCount() = 0;
 		virtual int GetPrimitiveCount() = 0;
-		virtual float* GetPositions() = 0;
-		virtual float* GetNormals() = 0;
-		virtual float* GetUV() = 0;
-		virtual uint16_t* GetIndices() = 0;
+		virtual gsl::array_view<DirectX::XMFLOAT4> GetPositions() = 0;
+		virtual gsl::array_view<DirectX::XMFLOAT4> GetNormals() = 0;
+		virtual gsl::array_view<DirectX::XMFLOAT2> GetUV() = 0;
+		virtual gsl::array_view<uint16_t> GetIndices() = 0;
 	};
 
 	class AnimatedModel {
 	public:
 		virtual ~AnimatedModel() {
 		}
+
+		virtual uint32_t GetHandle() const = 0;
 
 		virtual bool AddAddMesh(const std::string& filename) = 0;
 
@@ -181,12 +194,12 @@ namespace gfx {
 		virtual bool GetBoneWorldMatrixByName(
 			const AnimatedModelParams& params,
 			const std::string& boneName,
-			D3DMATRIX* worldMatrixOut) = 0;
+			DirectX::XMFLOAT4X4* worldMatrixOut) = 0;
 
 		virtual bool GetBoneWorldMatrixByNameForChild(const AnimatedModelPtr& child,
 		                                              const AnimatedModelParams& params,
 		                                              const std::string& boneName,
-		                                              D3DMATRIX* worldMatrixOut) = 0;
+				DirectX::XMFLOAT4X4* worldMatrixOut) = 0;
 
 
 		virtual float GetDistPerSec() const = 0;
@@ -199,7 +212,9 @@ namespace gfx {
 
 		virtual bool HasBone(const std::string& boneName) const = 0;
 
-		virtual void AddReplacementMaterial(int materialId) = 0;
+		virtual void AddReplacementMaterial(int encodedMaterialId) = 0;
+
+		virtual void SetSpecialMaterial(SpecialMaterialSlot slot, int materialId) = 0;
 
 		virtual void SetAnimId(int animId) = 0;
 
@@ -244,56 +259,17 @@ namespace gfx {
 			const std::string& skeletonFilename,
 			EncodedAnimId idleAnimId,
 			const AnimatedModelParams& params) = 0;
+
 	};
 
-	class Mesh {
+	class AnimatedModelRenderer {
 	public:
-		Mesh(const std::string& name, bool valid) : mName(name),
-		                                            mValid(valid) {
-		}
+		virtual ~AnimatedModelRenderer() {}
 
-		bool IsValid() const {
-			return mValid;
-		}
-
-		std::string GetName() const {
-			return mName;
-		}
-
-		int GetLegacyId() const {
-			return mLegacyId;
-		}
-
-		void SetLegacyId(int legacyId) {
-			mLegacyId = legacyId;
-		}
-
-	private:
-		const std::string mName;
-		const bool mValid;
-		int mLegacyId = -1;
+		virtual void Render(AnimatedModel *model,
+			const AnimatedModelParams& params,
+			gsl::array_view<Light3d> lights,
+			const MdfRenderOverrides *materialOverrides = nullptr) = 0;
 	};
-
-	using MeshRef = std::shared_ptr<Mesh>;
-
-	class MeshesManager {
-	public:
-
-		MeshRef Resolve(int meshId);
-
-		MeshRef Resolve(const std::string& name);
-
-		void LoadMapping(const std::string& filename);
-
-	private:
-
-		std::unordered_map<std::string, MeshRef> mMeshesByName;
-
-		// This is the mapping loaded from meshes.mes
-		std::unordered_map<int, std::string> mMapping;
-
-	};
-
-	using MeshesManagerPtr = std::shared_ptr<MeshesManager>;
 
 }

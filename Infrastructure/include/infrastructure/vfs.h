@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "gsl/array_view.h"
+
 struct VfsSearchResult {
 	std::string filename;
 	bool dir;
@@ -77,9 +79,15 @@ public:
 	 */
 	bool IsDirEmpty(const std::string& path);
 
+	/**
+	 * Writes binary data to a file.
+	 */
+	void WriteBinaryFile(const std::string &path, gsl::array_view<uint8_t> data);
+
 	using FileHandle = void*;
 	virtual FileHandle Open(const char* name, const char* mode) = 0;
 	virtual size_t Read(void* buffer, size_t size, FileHandle handle) = 0;
+	virtual size_t Write(void* buffer, size_t size, FileHandle handle) = 0;
 	virtual size_t Length(FileHandle handle) = 0;
 	virtual void Close(FileHandle handle) = 0;
 	

@@ -60,21 +60,24 @@ namespace gfx {
 		}
 	}
 
-	std::unique_ptr<MdfClipperMaterial> MdfParser::ParseClipper() {
-		auto zFill = false;
-		auto outline = false;
-		auto wireframe = false;
+	std::unique_ptr<MdfMaterial> MdfParser::ParseClipper() {
+		auto result(std::make_unique<MdfMaterial>(MdfType::Clipper));
+
+		result->enableZWrite = false;
+		result->enableColorWrite = false;
 
 		Tokenizer tokenizer(mContent);
 		tokenizer.NextToken(); // Skip material type
 
 		while (tokenizer.NextToken()) {
 			if (tokenizer.IsIdentifier("wire")) {
-				wireframe = true;
+				result->wireframe = true;
+				result->enableColorWrite = true;
 			} else if (tokenizer.IsIdentifier("zfill")) {
-				zFill = true;
+				result->enableZWrite = true;
 			} else if (tokenizer.IsIdentifier("outline")) {
-				outline = true;
+				result->outline = true;
+				result->enableColorWrite = true;
 			} else {
 				if (mStrict) {
 					throw CreateError("Unrecognized token '{}'", tokenizer.GetTokenText());
@@ -82,12 +85,12 @@ namespace gfx {
 			}
 		}
 
-		return std::make_unique<MdfClipperMaterial>(zFill, outline, wireframe);
+		return result;
 	}
 
-	std::unique_ptr<MdfTexturedMaterial> MdfParser::ParseTextured() {
+	std::unique_ptr<MdfMaterial> MdfParser::ParseTextured() {
 
-		auto result(std::make_unique<MdfTexturedMaterial>());
+		auto result(std::make_unique<MdfMaterial>(MdfType::Textured));
 
 		Tokenizer tokenizer(mContent);
 		/*
@@ -100,31 +103,30 @@ namespace gfx {
 
 		while (tokenizer.NextToken()) {
 			if (tokenizer.IsIdentifier("color")) {
-				uint32_t diffuse;
-				if (!ParseRgba(tokenizer, "Color", diffuse)) {
-					continue;
+				if (!ParseRgba(tokenizer, "Color", result->diffuse)) {
+					throw CreateError("Unable to parse diffuse color");
 				}
-				result->SetDiffuse(diffuse);
 			} else if (tokenizer.IsIdentifier("texture")) {
 				if (!tokenizer.NextToken() || !tokenizer.IsQuotedString()) {
 					throw CreateError("Missing filename for texture");
 				}
 
-				result->SetTexture(tokenizer.GetTokenText());
+				result->samplers[0].filename = tokenizer.GetTokenText();
 			} else if (tokenizer.IsIdentifier("colorfillonly")) {
-				result->SetColorFillOnly(true);
+				result->enableZWrite = false;
+				result->enableColorWrite = true;
 			} else if (tokenizer.IsIdentifier("notlit")) {
-				result->SetNotLit(true);
+				result->notLit = true;
 			} else if (tokenizer.IsIdentifier("notlite")) {
 				// The original ToEE parser only does prefix parsing, which is why 
 				// "notlite" was accepted as "notlit".
-				result->SetNotLit(true);
+				result->notLit = true;
 			} else if (tokenizer.IsIdentifier("disablez")) {
-				result->SetDisableZ(true);
+				result->disableZ = true;
 			} else if (tokenizer.IsIdentifier("double")) {
-				result->SetDouble(true);
+				result->faceCulling = false;
 			} else if (tokenizer.IsIdentifier("clamp")) {
-				result->SetClamp(true);
+				result->clamp = true;
 			} else {
 				if (mStrict) {
 					throw CreateError("Unrecognized token '{}'", tokenizer.GetTokenText());
@@ -136,8 +138,8 @@ namespace gfx {
 
 	}
 
-	std::unique_ptr<MdfGeneralMaterial> MdfParser::ParseGeneral() {
-		auto result(std::make_unique<MdfGeneralMaterial>());
+	std::unique_ptr<MdfMaterial> MdfParser::ParseGeneral() {
+		auto result(std::make_unique<MdfMaterial>(MdfType::General));
 
 		Tokenizer tokenizer(mContent);
 		tokenizer.NextToken(); // Skip material type
@@ -359,12 +361,14 @@ namespace gfx {
 			}
 
 			if (tokenizer.IsIdentifier("zfillonly")) {
-				result->zFillOnly = true;
+				result->enableColorWrite = false;
+				result->enableZWrite = true;
 				continue;
 			}
 
 			if (tokenizer.IsIdentifier("colorfillonly")) {
-				result->colorFillOnly = true;
+				result->enableColorWrite = true;
+				result->enableZWrite = false;
 				continue;
 			}
 

@@ -1,140 +1,108 @@
+
 #include "stdafx.h"
 
+#include <platform/d3d.h>
+#include <graphics/device.h>
+#include <graphics/materials.h>
+#include <graphics/shaders.h>
+#include <graphics/bufferbinding.h>
+#include <infrastructure/images.h>
+
+#include <temple/moviesystem.h>
+
 #include "movies.h"
-#include "graphics/graphics.h"
 #include "tig/tig_msg.h"
 #include "tig/tig_sound.h"
 #include "ui/ui_render.h"
-#include <infrastructure/renderstates.h>
-#include <infrastructure/images.h>
+
 #include "tio/tio_utils.h"
 #include "tig/tig_font.h"
+#include "tig/tig_startup.h"
 #include "temple_functions.h"
+
+using namespace gfx;
+using namespace temple;
 
 MovieFuncs movieFuncs;
 
-/*
-	This is an incomplete description of the bink structure that is returned by
-	BinkOpen. It represents what is currently loaded for a given movie.
-*/
-struct BinkMovie {
-	uint32_t width;
-	uint32_t height;
-	uint32_t frameCount;
-	uint32_t currentFrame;
+class MovieMaterial {
+public:
+	explicit MovieMaterial(RenderingDevice &device);
+	void Bind();
+private:
+	RenderingDevice& mDevice;
+	Material mMaterial;
+
+	static Material CreateMaterial(RenderingDevice &device);
 };
 
-inline void* getBinkProc(HMODULE module, const char* funcName) {
-	void* result = GetProcAddress(module, funcName);
-	if (!result) {
-		logger->error("Could not find function {} in binkw32.dll", funcName);
-	}
-	return result;
+MovieMaterial::MovieMaterial(RenderingDevice& device)
+	: mDevice(device), mMaterial(CreateMaterial(device)) {
 }
 
-struct BinkFuncs {
-	void* BinkOpenMiles; // Only passed to BinkSetSoundSystem
-	typedef int (__stdcall *FNBinkSetSoundSystem)(void*, void*);
-	typedef void (__stdcall *FNBinkSetSoundTrack)(uint32_t trackCount, uint32_t* trackIds);
-	typedef BinkMovie*(__stdcall *FNBinkOpen)(const char* name, uint32_t flags);
-	typedef void (__stdcall *FNBinkSetVolume)(BinkMovie* movie, uint32_t trackId, int volume);
-	typedef void (__stdcall *FNBinkNextFrame)(BinkMovie* movie);
-	typedef int (__stdcall *FNBinkWait)(BinkMovie* movie);
-	typedef int (__stdcall *FNBinkDoFrame)(BinkMovie* movie);
-	typedef int (__stdcall *FNBinkCopyToBuffer)(BinkMovie* movie, void* dest, int destpitch, int destheight, int destx, int desty, int flags);
-	typedef void (__stdcall *FNBinkClose)(BinkMovie* movie);
+void MovieMaterial::Bind() {
+	mDevice.SetMaterial(mMaterial);
 
-	FNBinkSetSoundSystem BinkSetSoundSystem;
-	FNBinkSetSoundTrack BinkSetSoundTrack;
-	FNBinkOpen BinkOpen;
-	FNBinkSetVolume BinkSetVolume;
-	FNBinkNextFrame BinkNextFrame;
-	FNBinkWait BinkWait;
-	FNBinkDoFrame BinkDoFrame;
-	FNBinkCopyToBuffer BinkCopyToBuffer;
-	FNBinkClose BinkClose;
+	auto device(mDevice.GetDevice());
+	device->SetVertexShaderConstantF(0, &mDevice.GetCamera().GetUiProjection()._11, 4);
+}
 
-	void initialize() {
-		static bool initialized = false;
-		if (initialized) {
-			return;
-		}
+Material MovieMaterial::CreateMaterial(RenderingDevice& device) {
+	BlendState blendState;
+	DepthStencilState depthStencilState;
+	depthStencilState.depthEnable = false;
+	RasterizerState rasterizerState;
+	SamplerState samplerState;
+	samplerState.magFilter = D3DTEXF_LINEAR;
+	samplerState.minFilter = D3DTEXF_LINEAR;
+	samplerState.mipFilter = D3DTEXF_LINEAR;
+	std::vector<MaterialSamplerBinding> samplers{
+		{ nullptr, samplerState }
+	};
+	auto vs(device.GetShaders().LoadVertexShader("gui_vs"));
+	auto ps(device.GetShaders().LoadPixelShader("textured_simple_ps"));
+	
+	return Material(blendState, depthStencilState, rasterizerState, samplers,
+		vs, ps);
+}
 
-		initialized = true;
-
-		auto module = GetModuleHandleA("binkw32");
-
-		if (!module) {
-			logger->error("Unable to find binkw32.dll in memory!");
-			abort();
-		}
-
-		// Not used or set by us, but rather by tig_movie_init
-		BinkOpenMiles = getBinkProc(module, "_BinkOpenMiles@4");
-		BinkSetSoundSystem = reinterpret_cast<FNBinkSetSoundSystem>(getBinkProc(module, "_BinkSetSoundSystem@8"));
-
-		BinkSetSoundTrack = reinterpret_cast<FNBinkSetSoundTrack>(getBinkProc(module, "_BinkSetSoundTrack@8"));
-		BinkOpen = reinterpret_cast<FNBinkOpen>(getBinkProc(module, "_BinkOpen@8"));
-		BinkSetVolume = reinterpret_cast<FNBinkSetVolume>(getBinkProc(module, "_BinkSetVolume@12"));
-		BinkNextFrame = reinterpret_cast<FNBinkNextFrame>(getBinkProc(module, "_BinkNextFrame@4"));
-		BinkWait = reinterpret_cast<FNBinkWait>(getBinkProc(module, "_BinkWait@4"));
-		BinkDoFrame = reinterpret_cast<FNBinkDoFrame>(getBinkProc(module, "_BinkDoFrame@4"));
-		BinkCopyToBuffer = reinterpret_cast<FNBinkCopyToBuffer>(getBinkProc(module, "_BinkCopyToBuffer@28"));
-		BinkClose = reinterpret_cast<FNBinkClose>(getBinkProc(module, "_BinkClose@4"));
-
+static bool binkRenderFrame(MovieFile &movie, IDirect3DTexture9* texture) {
+	if (movie.WaitForNextFrame()) {
+		return true;
 	}
 
-} binkFuncs;
+	movie.DecodeFrame();
 
-// indicates that the bink sound system has been set
-temple::GlobalBool<0x103010FC> binkInitialized;
-
-static bool binkRenderFrame(BinkMovie* movie, IDirect3DTexture9* texture) {
-	if (!binkFuncs.BinkWait(movie)) {
-		binkFuncs.BinkDoFrame(movie);
-
-		D3DLOCKED_RECT locked;
-		HRESULT result;
-		result = D3DLOG(texture->LockRect(0, &locked, nullptr, D3DLOCK_DISCARD));
-		if (result != D3D_OK) {
-			logger->error("Unable to lock texture for movie frame!");
-			return false;
-		}
-
-		binkFuncs.BinkCopyToBuffer(
-			movie,
-			locked.pBits,
-			locked.Pitch,
-			movie->height,
-			0,
-			0,
-			0xF0000000 | 3);
-
-		D3DLOG(texture->UnlockRect(0));
-
-		if (movie->currentFrame >= movie->frameCount)
-			return false;
-
-		binkFuncs.BinkNextFrame(movie);
+	D3DLOCKED_RECT locked;
+	HRESULT result;
+	result = D3DLOG(texture->LockRect(0, &locked, nullptr, D3DLOCK_DISCARD));
+	if (result != D3D_OK) {
+		logger->error("Unable to lock texture for movie frame!");
+		return false;
 	}
+
+	movie.CopyFramePixels(
+		locked.pBits,
+		locked.Pitch,
+		movie.GetHeight());
+
+	D3DLOG(texture->UnlockRect(0));
+
+	if (movie.AtEnd()) {
+		return false;
+	}
+
+	movie.NextFrame();	
 	return true;
 }
 
 struct MovieVertex {
-	float x;
-	float y;
-	float z = 0;
-	float rhw = 1;
-	D3DCOLOR color = 0xFFFFFFFF;
-	float u;
-	float v;
+	XMFLOAT3 pos;
+	XMCOLOR color = 0xFFFFFFFF;
+	XMFLOAT2 uv;
 
 	MovieVertex(float x, float y, float u, float v)
-		: x(x - 0.5f),
-		  y(y - 0.5f),
-		  u(u),
-		  v(v) {
-	}
+		: pos{ x, y, 0 }, uv{ u,v } {}
 };
 
 struct MovieRect {
@@ -144,18 +112,18 @@ struct MovieRect {
 	float bottom;
 };
 
-static MovieRect getMovieRect(BinkMovie* movie) {
-	auto screenWidth = graphics->backBufferDesc().Width;
-	auto screenHeight = graphics->backBufferDesc().Height;
+static MovieRect GetMovieRect(int movieWidth, int movieHeight) {
+	auto &device = tig->GetRenderingDevice();
+
+	auto screenWidth = device.GetScreenWidthF();
+	auto screenHeight = device.GetScreenHeightF();
 
 	// Fit movie into rect
-	float w = static_cast<float>(screenWidth);
-	float h = static_cast<float>(screenHeight);
-	float wFactor = w / movie->width;
-	float hFactor = h / movie->height;
+	float wFactor = screenWidth / movieWidth;
+	float hFactor = screenHeight / movieHeight;
 	float scale = min(wFactor, hFactor);
-	float movieW = scale * movie->width;
-	float movieH = scale * movie->height;
+	float movieW = scale * movieWidth;
+	float movieH = scale * movieHeight;
 
 	// Center on screen
 	MovieRect result;
@@ -165,12 +133,12 @@ static MovieRect getMovieRect(BinkMovie* movie) {
 	result.bottom = result.top + movieH;
 
 	return result;
-
 }
 
 class SubtitleRenderer {
 public:
-	SubtitleRenderer(const SubtitleLine* firstLine) : mLine(firstLine) {
+	SubtitleRenderer(gfx::RenderingDevice &device, const SubtitleLine* firstLine) 
+		: mDevice(device), mLine(firstLine) {
 		mMovieStarted = timeGetTime();
 		InitializeSubtitleStyle();
 	}
@@ -202,7 +170,7 @@ private:
 		}
 	}
 
-	bool IsCurrentLineVisible() {
+	bool IsCurrentLineVisible() const {
 		if (!mLine) {
 			return false;
 		}
@@ -210,14 +178,14 @@ private:
 			&& mLine->startMs + mLine->durationMs > mElapsedTime;
 	}
 
-	void RenderCurrentLine() {
+	void RenderCurrentLine() const {
 
 		UiRenderer::PushFont(mLine->fontname, 0, 0);
 
 		auto extents = UiRenderer::MeasureTextSize(mLine->text, mSubtitleStyle, 700, 150);
 
-		extents.x = (graphics->windowWidth() - extents.width) / 2;
-		extents.y = graphics->windowHeight() - graphics->windowHeight() / 10;
+		extents.x = (mDevice.GetScreenWidth() - extents.width) / 2;
+		extents.y = mDevice.GetScreenHeight() - mDevice.GetScreenHeight() / 10;
 
 		UiRenderer::RenderText(mLine->text, extents, mSubtitleStyle);
 
@@ -235,6 +203,7 @@ private:
 		mSubtitleStyle.tracking = 4;
 	}
 
+	RenderingDevice& mDevice;
 	ColorRect mSubtitleBgColor = ColorRect(D3DCOLOR_ARGB(153, 17, 17, 17));
 	ColorRect mSubtitleTextColor = ColorRect(D3DCOLOR_ARGB(255, 255, 255, 255));
 	ColorRect mSubtitleShadowColor = ColorRect(D3DCOLOR_ARGB(255, 0, 0, 0));
@@ -246,37 +215,26 @@ private:
 
 int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int flags, uint32_t soundtrackId) {
 
-	if (!binkInitialized) {
-		return 0;
-	}
-
 	movieFuncs.MovieIsPlaying = true;
 
-	binkFuncs.initialize();
-
-	uint32_t openFlags = 0;
-	if (soundtrackId) {
-		binkFuncs.BinkSetSoundTrack(1, &soundtrackId);
-		openFlags |= 0x4000; // Apparently tells BinkOpen a soundtrack was used
-	}
-
-	auto movie = binkFuncs.BinkOpen(filename, openFlags);
+	auto movie(tig->GetMovieSystem().OpenMovie(filename, soundtrackId));
 	if (!movie) {
-		logger->error("Unable to load BINK movie {} with flags {}", filename, openFlags);
 		return 13;
 	}
 
 	// The disasm apparently goes crazy for the conversion here
-	int binkVolume = (*tigSoundAddresses.movieVolume) * 258;
-	binkFuncs.BinkSetVolume(movie, 0, binkVolume);
+	auto binkVolume = (*tigSoundAddresses.movieVolume) / 127.0f;
+	movie->SetVolume(binkVolume);
 
-	auto d3dDevice = graphics->device();
+	auto& device(tig->GetRenderingDevice());
+	auto d3dDevice = device.GetDevice();
 
 	d3dDevice->ShowCursor(FALSE);
-
+	
 	// Create the movie texture we write to
-	IDirect3DTexture9* texture;
-	if (D3DLOG(d3dDevice->CreateTexture(movie->width, movie->height, 1, D3DUSAGE_DYNAMIC, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &texture, nullptr)) != D3D_OK) {
+	CComPtr<IDirect3DTexture9> texture;
+	if (D3DLOG(d3dDevice->CreateTexture(movie->GetWidth(), movie->GetHeight(), 
+		1, D3DUSAGE_DYNAMIC, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &texture, nullptr)) != D3D_OK) {
 		logger->error("Unable to create texture for bink video");
 		return 0;
 	}
@@ -287,48 +245,35 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 
 	processTigMessages();
 
-	MovieRect movieRect = getMovieRect(movie);
+	auto movieRect(GetMovieRect(movie->GetWidth(), movie->GetHeight()));
 
 	// TODO UV should be manipulated for certain vignettes since they have been letterboxed in the bink file!!!
 
 	// Set vertex shader
-	MovieVertex vertices[4] = {
+	std::vector<MovieVertex> vertices {
 		{movieRect.left, movieRect.top, 0, 0},
 		{movieRect.right, movieRect.top, 1, 0},
 		{movieRect.right, movieRect.bottom, 1, 1},
 		{movieRect.left, movieRect.bottom, 0, 1}
 	};
+	auto vertexBuffer(device.CreateVertexBuffer<MovieVertex>(vertices));
 
-	IDirect3DVertexBuffer9* vertexBuffer;
-	D3DLOG(d3dDevice->CreateVertexBuffer(sizeof(vertices), 0,
-	                                                                   D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1, D3DPOOL_DEFAULT, &vertexBuffer, nullptr));
-	void* data;
-	D3DLOG(vertexBuffer->Lock(0, 0, &data, 0));
-	memcpy(data, vertices, sizeof(vertices));
-	vertexBuffer->Unlock();
+	BufferBinding binding;
+	binding.AddBuffer(vertexBuffer, 0, sizeof(MovieVertex))
+		.AddElement(VertexElementType::Float3, VertexElementSemantic::Position)
+		.AddElement(VertexElementType::Color, VertexElementSemantic::Color)
+		.AddElement(VertexElementType::Float2, VertexElementSemantic::TexCoord);
+	binding.Bind();
 
-	SubtitleRenderer subtitleRenderer(subtitles);
+	MovieMaterial material(device);
+	material.Bind();
 
-	bool keyPressed = false;
-	while (!keyPressed && binkRenderFrame(movie, texture)) {
+	SubtitleRenderer subtitleRenderer(device, subtitles);
+	
+	auto keyPressed = false;
+	while (!keyPressed && binkRenderFrame(*movie, texture)) {
 		D3DLOG(d3dDevice->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0, 0));
 		D3DLOG(d3dDevice->BeginScene());
-
-		renderStates->SetTexture(0, texture);
-		renderStates->SetTextureMinFilter(0, D3DTEXF_LINEAR);
-		renderStates->SetTextureMagFilter(0, D3DTEXF_LINEAR);
-		renderStates->SetTextureMipFilter(0, D3DTEXF_LINEAR);
-		renderStates->SetLighting(false);
-		renderStates->SetZEnable(false);
-		renderStates->SetCullMode(D3DCULL_NONE);
-		renderStates->SetTextureTransformFlags(0, D3DTTFF_DISABLE);
-		renderStates->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1);
-		renderStates->SetStreamSource(0, vertexBuffer, sizeof(MovieVertex));
-		renderStates->SetTextureColorOp(0, D3DTOP_SELECTARG1);
-		renderStates->SetTextureColorArg1(0, D3DTA_TEXTURE);
-		renderStates->SetTextureAlphaOp(0, D3DTOP_SELECTARG1);
-		renderStates->SetTextureAlphaArg1(0, D3DTA_TEXTURE);
-		renderStates->Commit();
 
 		D3DLOG(d3dDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, 2));
 		subtitleRenderer.Render();
@@ -347,11 +292,7 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 			}
 		}
 	}
-
-	binkFuncs.BinkClose(movie);
-	texture->Release();
-	vertexBuffer->Release();
-
+	
 	// Unclear what this did (black out screen after last frame?)
 	/*
 		Haven't found a single occasion where it's used.
@@ -378,9 +319,9 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 		return 1; // Can't play because we cant load the file
 	}
 
-	auto device = graphics->device();
+	auto device = tig->GetRenderingDevice().GetDevice();
 	gfx::ImageFileInfo info;
-	auto surface(gfx::LoadImageToSurface(graphics->device(), *imgData.get(), info));
+	auto surface(gfx::LoadImageToSurface(device, *imgData.get(), info));
 	
 	movieFuncs.MovieIsPlaying = true;
 
@@ -390,9 +331,9 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 	device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0, 0);
 	device->Present(nullptr, nullptr, nullptr, nullptr);
 
-	SubtitleRenderer subtitleRenderer(subtitles);
+	SubtitleRenderer subtitleRenderer(tig->GetRenderingDevice(), subtitles);
 
-	TigRect bbRect(0, 0, graphics->backBufferDesc().Width, graphics->backBufferDesc().Height);
+	TigRect bbRect(0, 0, tig->GetRenderingDevice().GetScreenWidth(), tig->GetRenderingDevice().GetScreenHeight());
 	TigRect destRect(0, 0, info.width, info.height);
 	destRect.FitInto(bbRect);
 	RECT fitDestRect = destRect.ToRect();
@@ -408,13 +349,16 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 			stream.SetVolume(*tigSoundAddresses.movieVolume);
 		}
 	}
+	
+	CComPtr<IDirect3DSurface9> backBuffer;
+	device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &backBuffer);
 
 	bool keyPressed = false;
 	while (!keyPressed && (!stream.IsValid() || stream.IsPlaying() || sw.GetElapsedMs() < 3000)) {
 		D3DLOG(device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0, 0));
-
+		
 		D3DLOG(device->BeginScene());
-		D3DLOG(device->StretchRect(surface, NULL, graphics->backBuffer(), &fitDestRect, D3DTEXF_LINEAR));
+		D3DLOG(device->StretchRect(surface, NULL, backBuffer, &fitDestRect, D3DTEXF_LINEAR));
 		subtitleRenderer.Render();
 		D3DLOG(device->EndScene());
 		D3DLOG(device->Present(NULL, NULL, NULL, NULL));

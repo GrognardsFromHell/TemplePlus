@@ -12,9 +12,9 @@ namespace ParticleEditor
         {
             var specStr = spec.ToSpec();
 
-            var activeSys = ParticleSystem.FromSpec(device, dataPath, specStr);
+            var activeSys = ParticleSystem.FromSpec(specStr);
 
-            return activeSys.RenderVideo(device, Color.FromArgb(255, 32, 32, 32), filename);
+            return activeSys.RenderVideo(Color.FromArgb(255, 32, 32, 32), filename);
         }
     }
 }

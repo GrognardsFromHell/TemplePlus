@@ -2,7 +2,6 @@
 #include "stdafx.h"
 #include <temple/dll.h>
 #include "temple_functions.h"
-#include "graphics/graphics.h"
 #include "tig/tig_mouse.h"
 #include "tig/tig_msg.h"
 

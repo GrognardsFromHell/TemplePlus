@@ -38,7 +38,7 @@ int InventorySystem::IsNormalCrossbow(objHndl weapon)
 {
 	if (objects.GetType(weapon) == obj_t_weapon)
 	{
-		int weapType = objects.getInt32(weapon, obj_f_weapon_type);
+		auto weapType = objects.GetWeaponType(weapon);
 		if (weapType == wt_heavy_crossbow || weapType == wt_light_crossbow)
 			return 1; // TODO: should this include repeating crossbow? I think the context is reloading action in some cases
 		// || weapType == wt_hand_crossbow

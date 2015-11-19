@@ -159,6 +159,15 @@
     <ClInclude Include="breakpad\scoped_ptr.h" />
     <ClInclude Include="breakpad\string_utils-inl.h" />
     <ClInclude Include="breakpad\exception_handler.h" />
+    <ClInclude Include="include\graphics\bufferbinding.h" />
+    <ClInclude Include="include\graphics\buffers.h" />
+    <ClInclude Include="include\graphics\camera.h" />
+    <ClInclude Include="include\graphics\device.h" />
+    <ClInclude Include="include\graphics\materials.h" />
+    <ClInclude Include="include\graphics\math.h" />
+    <ClInclude Include="include\graphics\mdfmaterials.h" />
+    <ClInclude Include="include\graphics\shaders.h" />
+    <ClInclude Include="include\graphics\shaperenderer2d.h" />
     <ClInclude Include="include\gsl\array_view.h" />
     <ClInclude Include="include\gsl\fail_fast.h" />
     <ClInclude Include="include\gsl\gsl.h" />
@@ -166,6 +175,7 @@
     <ClInclude Include="include\infrastructure\binaryreader.h" />
     <ClInclude Include="include\infrastructure\breakpad.h" />
     <ClInclude Include="include\infrastructure\crypto.h" />
+    <ClInclude Include="include\infrastructure\macros.h" />
     <ClInclude Include="include\platform\dxerr.h" />
     <ClInclude Include="include\infrastructure\elfhash.h" />
     <ClInclude Include="include\infrastructure\exception.h" />
@@ -176,7 +186,6 @@
     <ClInclude Include="include\infrastructure\json11.hpp" />
     <ClInclude Include="include\infrastructure\keyboard.h" />
     <ClInclude Include="include\infrastructure\logging.h" />
-    <ClInclude Include="include\infrastructure\materials.h" />
     <ClInclude Include="include\infrastructure\mathutil.h" />
     <ClInclude Include="include\infrastructure\mdfmaterial.h" />
     <ClInclude Include="include\infrastructure\mdfparser.h" />
@@ -213,9 +222,10 @@
     <ClInclude Include="include\infrastructure\stopwatch.h" />
     <ClInclude Include="include\infrastructure\stringutil.h" />
     <ClInclude Include="include\infrastructure\tabparser.h" />
-    <ClInclude Include="include\infrastructure\textures.h" />
     <ClInclude Include="include\infrastructure\version.h" />
     <ClInclude Include="include\infrastructure\vfs.h" />
+    <ClInclude Include="include\graphics\textures.h" />
+    <ClInclude Include="src\graphics\shaders_compiler.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
@@ -233,7 +243,15 @@
     <ClCompile Include="keyboard.cpp" />
     <ClCompile Include="images_jpeg.cpp" />
     <ClCompile Include="mdfparser.cpp" />
-    <ClCompile Include="textures.cpp" />
+    <ClCompile Include="src\graphics\shaders_compiler.cpp" />
+    <ClCompile Include="src\graphics\bufferbinding.cpp" />
+    <ClCompile Include="src\graphics\buffers.cpp" />
+    <ClCompile Include="src\graphics\camera.cpp" />
+    <ClCompile Include="src\graphics\device.cpp" />
+    <ClCompile Include="src\graphics\mdfmaterials.cpp" />
+    <ClCompile Include="src\graphics\shaders.cpp" />
+    <ClCompile Include="src\graphics\shaperenderer2d.cpp" />
+    <ClCompile Include="src\graphics\textures.cpp" />
     <ClCompile Include="tokenizer.cpp" />
     <ClCompile Include="json11.cpp" />
     <ClCompile Include="stringutil.cpp" />
@@ -241,8 +259,6 @@
     <ClCompile Include="renderstates.cpp" />
     <ClCompile Include="tabparser.cpp" />
     <ClCompile Include="logging.cpp" />
-    <ClCompile Include="materials.cpp" />
-    <ClCompile Include="meshes.cpp" />
     <ClCompile Include="mesparser.cpp" />
     <ClCompile Include="version.cpp" />
     <ClCompile Include="vfs.cpp" />

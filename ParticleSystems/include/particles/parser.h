@@ -9,9 +9,7 @@
 class TabFileRecord;
 
 namespace gfx {
-	class MaterialManager;
-	class MeshesManager;
-	using MeshesManagerPtr = std::shared_ptr<MeshesManager>;
+	class MdfMaterialFactory;
 }
 
 namespace particles {
@@ -19,7 +17,7 @@ namespace particles {
 	class PartSysParser {
 	public:
 
-		PartSysParser(gfx::MeshesManagerPtr meshes);
+		PartSysParser(gfx::MdfMaterialFactory &mdfFactory);
 
 		typedef std::unordered_map<std::string, PartSysSpecPtr> SpecMap;
 
@@ -44,7 +42,7 @@ namespace particles {
 
 	private:
 		SpecMap mSpecs;
-		gfx::MeshesManagerPtr mMeshes;
+		gfx::MdfMaterialFactory &mMdfFactory;
 
 		void ParseLifespan(const TabFileRecord& record, PartSysEmitterSpecPtr emitter);
 		void ParseParticleLifespan(const TabFileRecord& record, PartSysEmitterSpecPtr emitter);

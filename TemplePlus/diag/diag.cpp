@@ -1,9 +1,11 @@
 #include "stdafx.h"
 #include "diag.h"
 #include "tig/tig_font.h"
-#include <graphics/graphics.h>
-#include <graphics/textures.h>
 #include <ui/ui_render.h>
+#include <graphics/device.h>
+#include <graphics/textures.h>
+
+using namespace gfx;
 
 class DiagScreen::Impl {
 public:
@@ -18,7 +20,7 @@ public:
 
 };
 
-DiagScreen::DiagScreen(Graphics& g) : mImpl(std::make_unique<Impl>()), mGraphics(g) {
+DiagScreen::DiagScreen(RenderingDevice& device) : mImpl(std::make_unique<Impl>()), mDevice(device) {
 	if (diagScreen == nullptr) {
 		diagScreen = this;
 	}
@@ -38,16 +40,16 @@ void DiagScreen::Render() {
 
 	UiRenderer::PushFont(PredefinedFont::ARIAL_10);
 
-	auto textureManager = static_cast<TextureManager*>(gfx::textureManager);
+	auto& textureManager = mDevice.GetTextures();
 
-	auto loaded = textureManager->GetLoaded();
-	auto registered = textureManager->GetRegistered();
+	auto loaded = textureManager.GetLoaded();
+	auto registered = textureManager.GetRegistered();
 	std::vector<std::string> lines;
 
 	lines.push_back(fmt::format("#Textures"));
 	lines.push_back(fmt::format("{} of {} loaded", loaded, registered));
-	lines.push_back(fmt::format("Memory Budget: {}", FormatMemSize(textureManager->GetMemoryBudget())));
-	lines.push_back(fmt::format("Used (est.): {}", FormatMemSize(textureManager->GetUsageEstimate())));
+	lines.push_back(fmt::format("Memory Budget: {}", FormatMemSize(textureManager.GetMemoryBudget())));
+	lines.push_back(fmt::format("Used (est.): {}", FormatMemSize(textureManager.GetUsageEstimate())));
 
 	TigRect rect;
 	rect.x = 25;

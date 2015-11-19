@@ -7,6 +7,7 @@
 
 #include <infrastructure/mdfparser.h>
 #include <infrastructure/stringutil.h>
+#include <array>
 
 struct LintStats {
 	int processed = 0;
@@ -81,7 +82,50 @@ static int LintFile(const std::wstring& filename, LintStats& stats) {
 		if (!result) {
 			return false;
 		}
-		switch (result->GetType()) {
+
+		bool hasDrift = std::any_of(result->samplers.begin(), result->samplers.end(), [](gfx::MdfGeneralMaterialSampler sampler) {
+			return sampler.uvType == gfx::MdfUvType::Drift;
+		});
+		bool hasWavey = std::any_of(result->samplers.begin(), result->samplers.end(), [](gfx::MdfGeneralMaterialSampler sampler) {
+			return sampler.uvType == gfx::MdfUvType::Wavey;
+		});
+		bool hasEnv = std::any_of(result->samplers.begin(), result->samplers.end(), [](gfx::MdfGeneralMaterialSampler sampler) {
+			return sampler.uvType == gfx::MdfUvType::Environment;
+		});
+		bool hasSwirl = std::any_of(result->samplers.begin(), result->samplers.end(), [](gfx::MdfGeneralMaterialSampler sampler) {
+			return sampler.uvType == gfx::MdfUvType::Swirl;
+		});
+		std::array<std::string, 4> texOp{ {
+				"none", "none", "none", "none"
+			} };
+		for (size_t i = 0; i < result->samplers.size(); ++i) {
+			if (result->samplers[i].filename.empty())
+				continue;
+			switch (result->samplers[i].blendType) {
+			case gfx::MdfTextureBlendType::Modulate:
+				texOp[i] = "modulate";
+				break;
+			case gfx::MdfTextureBlendType::Add:
+				texOp[i] = "add";
+				break;
+			case gfx::MdfTextureBlendType::TextureAlpha:
+				texOp[i] = "textureAlpha";
+				break;
+			case gfx::MdfTextureBlendType::CurrentAlpha:
+				texOp[i] = "currentAlpha";
+				break;
+			case gfx::MdfTextureBlendType::CurrentAlphaAdd:
+				texOp[i] = "currentAlphaAdd";
+				break;
+			}
+		}
+
+		std::cout << localFilename << ";" << !result->notLit << ";"
+			<< hasDrift << ";" << hasSwirl << ";" << hasEnv << ";" << hasWavey << ";" <<
+			fmt::format("{:08x}", result->diffuse) << ";" << texOp[0] << ";" << texOp[1]
+			<< ";" << texOp[2] << ";" << texOp[3] << std::endl;
+
+		switch (result->type) {
 		case gfx::MdfType::Textured:
 			stats.textured++;
 			break;
@@ -124,7 +168,6 @@ static void IterateDirectory(const wchar_t* globPattern,
 void LintFilesIn(const std::wstring& directory, LintStats& stats) {
 	wchar_t searchPath[MAX_PATH];
 
-
 	// Search for files to process
 	PathCombine(searchPath, directory.c_str(), L"*.mdf");
 
@@ -148,3 +191,4 @@ void LintFilesIn(const std::wstring& directory, LintStats& stats) {
 	                 });
 
 }
+

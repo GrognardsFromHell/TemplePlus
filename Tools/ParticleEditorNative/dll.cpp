@@ -1,27 +1,74 @@
 #include "api.h"
 
+#include <infrastructure/stringutil.h>
 #include <temple/dll.h>
 #include <temple/vfs.h>
+#include <particles/instances.h>
 
-TempleDll::TempleDll(const std::wstring& installDir) {
+#include "external.h"
 
-	auto tioVfs = std::make_unique<temple::TioVfs>();
+using namespace temple;
 
-	// Add the archives we expect in the install dir
+std::string lastError;
 
-	vfs.reset(tioVfs.release());
-	
+TempleDll::TempleDll(const std::wstring &installationDir, IDirect3DDevice9Ex* device)
+	: renderingDevice(device, 1024, 1024),
+	mdfFactory(renderingDevice),
+	aasConfig(CreateAasConfig()),
+	aasFactory(aasConfig),
+	aasRenderer(aasFactory, renderingDevice, mdfFactory),
+	renderManager(renderingDevice, aasFactory, aasRenderer) {
+
+	particles::IPartSysExternal::SetCurrent(&EditorExternal::GetInstance());
+
 }
 
 TempleDll::~TempleDll() {
 }
 
-TempleDll* TempleDll_Load(const wchar_t* installationDir) {
+temple::AasConfig TempleDll::CreateAasConfig() {
+	AasConfig config;
+	return config;
+}
+
+const char *TempleDll_GetLastError() {
+	return lastError.c_str();
+}
+
+TempleDll* TempleDll_Load(const wchar_t* installationDir, 
+	const wchar_t* tpDataPath,
+	IDirect3DDevice9Ex* device) {
+
+	// Make sure it has a trailing path separator
+	std::wstring installDirStr(installationDir);
+	if (!installDirStr.empty() && installDirStr.back() != L'\\') {
+		installDirStr += L"\\";
+	}
+	SetCurrentDirectoryW(installDirStr.c_str());
+
 	auto& dll = temple::Dll::GetInstance();
-	dll.Load(installationDir);
+	dll.Load(installDirStr);
+
+	auto tioVfs = std::make_unique<temple::TioVfs>();
+
+	// Add the archives we expect in the install dir
+	tioVfs->AddPath("ToEE1.dat");
+	tioVfs->AddPath("ToEE2.dat");
+	tioVfs->AddPath("ToEE3.dat");
+	tioVfs->AddPath("ToEE4.dat");
+	tioVfs->AddPath(".\\data");
+	auto cTpDataPath(ucs2_to_local(tpDataPath));
+	tioVfs->AddPath(cTpDataPath.c_str());
+
+	vfs.reset(tioVfs.release());
 
 	// Init the subsystems we need
-	return new TempleDll(installationDir);
+	try {
+		return new TempleDll(installDirStr, device);
+	} catch (std::exception &e) {
+		lastError = e.what();
+		return nullptr;
+	}
 }
 
 void TempleDll_Unload(TempleDll* templeDll) {

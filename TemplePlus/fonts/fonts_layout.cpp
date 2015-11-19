@@ -2,10 +2,13 @@
 
 #include "stdafx.h"
 
-#include <graphics/render_hooks.h>
 #include <tig/tig_font.h>
 
+#include <graphics/shaperenderer2d.h>
+
 #include "fonts.h"
+
+using namespace gfx;
 
 const char* TextLayouter::sEllipsis = "...";
 
@@ -18,7 +21,8 @@ struct ScanWordResult {
 	bool drawEllipsis = false;
 };
 
-TextLayouter::TextLayouter(Graphics& g) : mRenderer(g) {
+TextLayouter::TextLayouter(RenderingDevice& device, ShapeRenderer2d &shapeRenderer) 
+	: mRenderer(device), mShapeRenderer(shapeRenderer) {
 }
 
 void TextLayouter::LayoutAndDraw(gsl::cstring_view<> text, const TigFont& font, TigRect& extents, TigTextStyle& style) {
@@ -61,7 +65,7 @@ void TextLayouter::LayoutAndDraw(gsl::cstring_view<> text, const TigFont& font, 
 	}
 
 	if (style.flags & 0x800) {
-		D3DXVECTOR2 topLeft;
+		XMFLOAT2 topLeft;
 		topLeft.x = extents.x - 1.0f - 3.0f;
 		topLeft.y = extents.y - 1.0f - 3.0f;
 
@@ -77,10 +81,15 @@ void TextLayouter::LayoutAndDraw(gsl::cstring_view<> text, const TigFont& font, 
 		else
 			height = (float)extents.height;
 
-		D3DXVECTOR2 bottomRight;
+		XMFLOAT2 bottomRight;
 		bottomRight.x = width + extents.x - 1.0f + 3.0f;
 		bottomRight.y = height + extents.y - 1.0f + 3.0f;
-		RenderHooks::RenderRect(topLeft, bottomRight, 0xFF000000);
+
+		mShapeRenderer.DrawRectangleOutline(
+			topLeft,
+			bottomRight,
+			XMCOLOR(0, 0, 0, 1.0f)
+		);
 	}
 
 	// TODO: Check if this can even happen since we measure the text
@@ -203,24 +212,30 @@ void TextLayouter::LayoutAndDraw(gsl::cstring_view<> text, const TigFont& font, 
 }
 
 void TextLayouter::DrawBackground(const TigRect& rect, const TigTextStyle& style) {
-	// srcRect doesnt really matter if we dont use a texture
-	TigRect srcRect;
-	srcRect.width = 1;
-	srcRect.height = 1;
-	srcRect.x = 0;
-	srcRect.y = 0;
+	
+	float left = (float)rect.x;
+	float top = (float)rect.y;
+	float right = left + rect.width;
+	float bottom = top + rect.height;
 
-	auto destRect = rect;
+	std::array<Vertex2d, 4> corners;
+	corners[0].pos = XMFLOAT3(left, top, 0.5f);
+	corners[1].pos = XMFLOAT3(right, top, 0.5f);
+	corners[2].pos = XMFLOAT3(right, bottom, 0.5f);
+	corners[3].pos = XMFLOAT3(left, bottom, 0.5f);
 
-	Render2dArgs args;
-	args.flags = Render2dArgs::FLAG_VERTEXCOLORS
-		| Render2dArgs::FLAG_VERTEXALPHA;
-	args.textureId = 0;
-	args.srcRect = &srcRect;
-	args.destRect = &destRect;
-	args.vertexColors = &style.bgColor->topLeft;
-	args.vertexZ = (float)INT_MAX ;
-	RenderHooks::TextureRender2d(&args);
+	corners[0].diffuse = style.bgColor->topLeft;
+	corners[1].diffuse = style.bgColor->topRight;
+	corners[2].diffuse = style.bgColor->bottomRight;
+	corners[3].diffuse = style.bgColor->bottomLeft;
+
+	corners[0].uv = XMFLOAT2(0, 0);
+	corners[1].uv = XMFLOAT2(0, 0);
+	corners[2].uv = XMFLOAT2(0, 0);
+	corners[3].uv = XMFLOAT2(0, 0);
+	
+	// Draw an untexture rectangle
+	mShapeRenderer.DrawRectangle(corners, nullptr);
 
 }
 

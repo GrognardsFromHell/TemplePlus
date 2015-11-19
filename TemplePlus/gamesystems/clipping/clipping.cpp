@@ -10,14 +10,14 @@
 
 class MapClipping::Impl : public ResourceListener {
 public:
-	explicit Impl(Graphics& g);
+	explicit Impl(RenderingDevice& g);
 
-	void CreateResources(Graphics&) override;
-	void FreeResources(Graphics&) override;
+	void CreateResources(RenderingDevice&) override;
+	void FreeResources(RenderingDevice&) override;
 
 	std::vector<std::unique_ptr<ClippingMesh>> mClippingMeshes;
 
-	Graphics& mGraphics;
+	RenderingDevice& mDevice;
 	VertexShaderPtr mVertexShader;
 	PixelShaderPtr mPixelShader;
 	CComPtr<IDirect3DVertexDeclaration9> mVertexDecl;
@@ -25,29 +25,29 @@ public:
 	ResourceListenerRegistration mRegistration;
 };
 
-MapClipping::Impl::Impl(Graphics& g) : mGraphics(g), mRegistration(g, this) {
+MapClipping::Impl::Impl(RenderingDevice& g) : mDevice(g), mRegistration(g, this) {
 
 	mVertexShader = g.GetShaders().LoadVertexShader("clipping_vs");
 	mPixelShader = g.GetShaders().LoadPixelShader("clipping_ps");
 
 }
 
-void MapClipping::Impl::CreateResources(Graphics& g) {
+void MapClipping::Impl::CreateResources(RenderingDevice& g) {
 	D3DVERTEXELEMENT9 elements[] = {
 		{0, 0,D3DDECLTYPE_FLOAT3 , D3DDECLMETHOD_DEFAULT , D3DDECLUSAGE_POSITION , 0},
 		D3DDECL_END()
 	};
 
 	// Resources are created on-demand
-	auto device = g.device();
-	D3DLOG(device->CreateVertexDeclaration(&elements[0], &mVertexDecl));
+	auto d3dDevice = g.GetDevice();
+	D3DLOG(d3dDevice->CreateVertexDeclaration(&elements[0], &mVertexDecl));
 }
 
-void MapClipping::Impl::FreeResources(Graphics&) {
+void MapClipping::Impl::FreeResources(RenderingDevice&) {
 	mVertexDecl.Release();
 }
 
-MapClipping::MapClipping(Graphics& g) : mImpl(std::make_unique<Impl>(g)) {
+MapClipping::MapClipping(RenderingDevice& g) : mImpl(std::make_unique<Impl>(g)) {
 }
 
 MapClipping::~MapClipping() {
@@ -88,7 +88,7 @@ void MapClipping::LoadMeshes(const std::string& directory) {
 
 		try {
 			mImpl->mClippingMeshes.emplace_back(
-				std::make_unique<ClippingMesh>(mImpl->mGraphics, meshFilename)
+				std::make_unique<ClippingMesh>(mImpl->mDevice, meshFilename)
 			);
 		} catch (TempleException &e) {
 			logger->error("Failed to load clipping mesh {}: {}", filename, e.what());
@@ -141,10 +141,10 @@ void MapClipping::Render() {
 		return;
 	}
 
-	auto device = mImpl->mGraphics.device();
+	auto device = mImpl->mDevice.GetDevice();
 
-	mImpl->mVertexShader->Bind(mImpl->mGraphics);
-	mImpl->mPixelShader->Bind(mImpl->mGraphics);
+	mImpl->mVertexShader->Bind();
+	mImpl->mPixelShader->Bind();
 
 	auto projMatrix = renderStates->Get3dProjectionMatrix();
 	D3DLOG(device->SetVertexShaderConstantF(0, &projMatrix._11, 4));
@@ -161,6 +161,7 @@ void MapClipping::Render() {
 	
 		renderStates->SetStreamSource(0, mesh->GetVertexBuffer(), sizeof(D3DVECTOR));
 		renderStates->SetIndexBuffer(mesh->GetIndexBuffer(), 0);
+		renderStates->SetFVF(0);
 		renderStates->Commit();
 		
 		D3DLOG(device->SetVertexDeclaration(mImpl->mVertexDecl));
@@ -202,7 +203,7 @@ void MapClipping::Render() {
 
 	renderStates->SetFillMode(D3DFILL_SOLID);
 
-	mImpl->mVertexShader->Unbind(mImpl->mGraphics);
-	mImpl->mPixelShader->Unbind(mImpl->mGraphics);
+	mImpl->mVertexShader->Unbind();
+	mImpl->mPixelShader->Unbind();
 
 }

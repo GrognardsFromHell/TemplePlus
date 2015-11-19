@@ -1,9 +1,6 @@
 ﻿using System;
 using System.IO;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Media;
-using System.Windows.Threading;
 using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using ParticleEditor.Properties;
@@ -19,10 +16,9 @@ namespace ParticleEditor
         public static readonly DependencyProperty ModelProperty = DependencyProperty.Register(
             "Model", typeof (EditorViewModel), typeof (MainWindow), new PropertyMetadata(default(EditorViewModel)));
 
-        public MainWindow()
-        {
+        public MainWindow() {
             InitializeComponent();
-            PreviewControl.DataPath = Settings.Default.DataPath;
+            PreviewControl.DataPath = Settings.Default.TemplePath;
             Model = new EditorViewModel();
             DataContext = Model;
         }
@@ -52,7 +48,7 @@ namespace ParticleEditor
             if (result.Value)
             {
                 VideoRenderer.RenderVideo(PreviewControl.Device, 
-                    Settings.Default.DataPath,
+                    Settings.Default.TemplePath,
                     Model.SelectedSystem,
                     ofd.FileName);
             }
@@ -61,9 +57,9 @@ namespace ParticleEditor
         private void OpenPartSysFile(object sender, RoutedEventArgs e)
         {
             var ofd = new OpenFileDialog {Filter = "Particle System Files|*.tab|All Files|*.*"};
-            if (!string.IsNullOrWhiteSpace(Settings.Default.DataPath))
+            if (!string.IsNullOrWhiteSpace(Settings.Default.TemplePath))
             {
-                ofd.InitialDirectory = Path.Combine(Settings.Default.DataPath, "rules");
+                ofd.InitialDirectory = Path.Combine(Settings.Default.TemplePath, "data", "rules");
             }
             var result = ofd.ShowDialog(this);
             if (result.Value)
@@ -81,22 +77,22 @@ namespace ParticleEditor
             var dialog = new CommonOpenFileDialog
             {
                 IsFolderPicker = true,
-                InitialDirectory = Settings.Default.DataPath
+                InitialDirectory = Settings.Default.TemplePath
             };
 
             var result = dialog.ShowDialog();
             if (result == CommonFileDialogResult.Ok)
             {
-                var particleDir = Path.Combine(dialog.FileName, "art", "meshes", "Particle");
-                if (!Directory.Exists(particleDir))
+                var templeDll = Path.Combine(dialog.FileName, "temple.dll");
+                if (!File.Exists(templeDll))
                 {
-                    MessageBox.Show("The chosen data directory does not seem to be valid.\n"
-                                    + "Couldn't find subdirectory art\\meshes\\Particle.",
-                        "Invalid Data Directory");
+                    MessageBox.Show("The chosen ToEE installation directory does not seem to be valid.\n"
+                                    + "Couldn't find temple.dll.",
+                        "Invalid ToEE Directory");
                     return;
                 }
 
-                Settings.Default.DataPath = dialog.FileName;
+                Settings.Default.TemplePath = dialog.FileName;
                 Settings.Default.Save();
                 PreviewControl.DataPath = dialog.FileName;
             }

@@ -199,7 +199,7 @@ bool WeaponSystem::IsSlashingOrBludgeoning(objHndl weapon)
 {
 	if (!weapon)
 		return 0;
-	WeaponTypes weaponType = (WeaponTypes)objects.getInt32(weapon, obj_f_weapon_type);
+	auto weaponType = objects.GetWeaponType(weapon);
 	return IsSlashingOrBludgeoning(weaponType);
 }
 
@@ -257,7 +257,7 @@ int WeaponSystem::GetBaseHardness(objHndl item)
 		return -1;
 	if (objects.GetType(item) == obj_t_weapon)
 	{
-		WeaponTypes weaponType = (WeaponTypes)objects.getInt32(item, obj_f_weapon_type);
+		auto weaponType = objects.GetWeaponType(item);
 		return GetBaseHardness(weaponType);
 	}
 	if (objects.GetType(item) == obj_t_armor)

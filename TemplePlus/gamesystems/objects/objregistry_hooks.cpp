@@ -206,6 +206,8 @@ GameObjectBody* ObjRegistry::Get(objHndl handle) {
 		return nullptr;
 	}
 
+	lastObj = it->first;
+	lastObjBody = it->second.get();
 	return it->second.get();
 
 }

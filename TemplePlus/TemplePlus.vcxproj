@@ -15,7 +15,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="aas.cpp" />
     <ClCompile Include="action_sequence.cpp" />
     <ClCompile Include="fixes\pointbuyconfig.cpp" />
     <ClCompile Include="d20_levelup.cpp" />
@@ -47,23 +46,29 @@
     <ClCompile Include="gamesystems\gamesystems.cpp" />
     <ClCompile Include="gamesystems\legacy.cpp" />
     <ClCompile Include="gamesystems\legacysystems.cpp" />
+    <ClCompile Include="gamesystems\mapobjrender.cpp" />
     <ClCompile Include="gamesystems\mappreprocessor.cpp" />
     <ClCompile Include="gamesystems\mapsystems.cpp" />
+    <ClCompile Include="gamesystems\maps\sector.cpp" />
     <ClCompile Include="gamesystems\objects\objid_hooks.cpp" />
     <ClCompile Include="gamesystems\objects\objregistry.cpp" />
-    <ClCompile Include="gamesystems\objects\objregistry_hooks.cpp" />
+    <ClCompile Include="gamesystems\objects\objregistry_hooks.cpp">
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_SCL_SECURE_NO_WARNINGS;WIN32;_WINDOWS;$(MSBuildDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MaxSpeed</Optimization>
+      <IntrinsicFunctions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</IntrinsicFunctions>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ProgramDatabase</DebugInformationFormat>
+      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Default</BasicRuntimeChecks>
+      <BufferSecurityCheck Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</BufferSecurityCheck>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="graphics\imgfile.cpp" />
     <ClCompile Include="graphics\loadingscreen.cpp" />
     <ClCompile Include="graphics\mapterrain.cpp" />
-    <ClCompile Include="graphics\materials.cpp" />
     <ClCompile Include="graphics\materials_hooks.cpp" />
-    <ClCompile Include="graphics\mdfrenderer.cpp" />
     <ClCompile Include="graphics\rectangle.cpp" />
     <ClCompile Include="graphics\renderer.cpp" />
     <ClCompile Include="graphics\renderstates_hooks.cpp" />
     <ClCompile Include="graphics\render_hooks.cpp" />
-    <ClCompile Include="graphics\shaders.cpp" />
-    <ClCompile Include="graphics\textures.cpp" />
     <ClCompile Include="graphics\textures_hooks.cpp" />
     <ClCompile Include="graphics\video_hooks.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -106,14 +111,6 @@
     <ClCompile Include="graphics\renderstates.cpp" />
     <ClCompile Include="reputations.cpp" />
     <ClCompile Include="secret_door.cpp" />
-    <ClCompile Include="shader\shadercode.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Default</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Default</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Default</CompileAs>
-    </ClCompile>
     <ClCompile Include="skill.cpp" />
     <ClCompile Include="startup\installationdir.cpp" />
     <ClCompile Include="startup\installationdirpicker.cpp" />
@@ -157,7 +154,6 @@
     <ClCompile Include="gamesystems\gamelib_save.cpp" />
     <ClCompile Include="fixes\generalfixes.cpp" />
     <ClCompile Include="game_config.cpp" />
-    <ClCompile Include="graphics\graphics.cpp" />
     <ClCompile Include="inventory.cpp" />
     <ClCompile Include="mainloop.cpp" />
     <ClCompile Include="map_obj.cpp" />
@@ -217,7 +213,6 @@
     <ClCompile Include="ui\ui_mainmenu.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="aas.h" />
     <ClInclude Include="action_sequence.h" />
     <ClInclude Include="ai.h" />
     <ClInclude Include="bonus.h" />
@@ -241,23 +236,21 @@
     <ClInclude Include="gamesystems\gamesystems.h" />
     <ClInclude Include="gamesystems\legacy.h" />
     <ClInclude Include="gamesystems\legacysystems.h" />
+    <ClInclude Include="gamesystems\mapobjrender.h" />
     <ClInclude Include="gamesystems\mappreprocessor.h" />
     <ClInclude Include="gamesystems\mapsystems.h" />
+    <ClInclude Include="gamesystems\maps\sector.h" />
     <ClInclude Include="gamesystems\objects\objregistry.h" />
     <ClInclude Include="graphics\imgfile.h" />
     <ClInclude Include="graphics\legacyvideosystem.h" />
     <ClInclude Include="graphics\loadingscreen.h" />
     <ClInclude Include="graphics\mapterrain.h" />
-    <ClInclude Include="graphics\materials.h" />
     <ClInclude Include="graphics\materials_hooks.h" />
-    <ClInclude Include="graphics\mdfrenderer.h" />
     <ClInclude Include="graphics\rectangle.h" />
     <ClInclude Include="graphics\renderer.h" />
     <ClInclude Include="graphics\renderstates_data.h" />
     <ClInclude Include="graphics\renderstates_hooks.h" />
     <ClInclude Include="graphics\render_hooks.h" />
-    <ClInclude Include="graphics\shaders.h" />
-    <ClInclude Include="graphics\textures.h" />
     <ClInclude Include="graphics\video_hooks.h" />
     <ClInclude Include="history.h" />
     <ClInclude Include="hotkeys.h" />
@@ -296,7 +289,6 @@
     <ClInclude Include="reputations.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="secret_door.h" />
-    <ClInclude Include="shader\shadercode.h" />
     <ClInclude Include="skill.h" />
     <ClInclude Include="startup\installationdir.h" />
     <ClInclude Include="startup\installationdirpicker.h" />
@@ -330,7 +322,6 @@
     <ClInclude Include="util\folderutils.h" />
     <ClInclude Include="game_config.h" />
     <ClInclude Include="goalfuncnames.h" />
-    <ClInclude Include="graphics\graphics.h" />
     <ClInclude Include="util\fixes.h" />
     <ClInclude Include="hashtable.h" />
     <ClInclude Include="inventory.h" />
@@ -394,48 +385,6 @@
     <ProjectReference Include="..\Temple\Temple.vcxproj">
       <Project>{a05549fb-a0d1-48aa-b586-fe333bbb4505}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="shader\clipping_ps.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(Filename).h</HeaderFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">
-      </ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </ObjectFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename)</VariableName>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">%(Filename)</VariableName>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">$(OutDir)%(Filename).h</HeaderFileOutput>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(Filename).h</HeaderFileOutput>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">3.0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">3.0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">3.0</ShaderModel>
-    </FxCompile>
-    <FxCompile Include="shader\clipping_vs.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(Filename).h</HeaderFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </ObjectFileOutput>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">$(OutDir)%(Filename).h</HeaderFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">
-      </ObjectFileOutput>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(Filename).h</HeaderFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </ObjectFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename)</VariableName>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">%(Filename)</VariableName>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename)</VariableName>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">3.0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">3.0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">3.0</ShaderModel>
-    </FxCompile>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3E3B6C43-8C76-4CD5-BCF8-3F2B9C5178FE}</ProjectGuid>

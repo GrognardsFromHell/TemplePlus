@@ -1,6 +1,9 @@
-#include <atlcomcli.h>
+
 #include <particles/instances.h>
 #include <particles/render.h>
+#include <graphics/device.h>
+#include <temple/aasrenderer.h>
+#include <atlcomcli.h>
 #include <Shlwapi.h>
 
 #pragma comment(lib, "Shlwapi")
@@ -34,7 +37,10 @@ static float GetTotalLifetime(const PartSysPtr& sys, bool& permanent) {
 	return result;
 }
 
-bool ParticleSystem_RenderVideo(IDirect3DDevice9* device, PartSys* orgSys, D3DCOLOR background, const wchar_t* outputFile, int fps) {
+bool ParticleSystem_RenderVideo(TempleDll *dll, D3DCOLOR background, const wchar_t* outputFile, int fps) {
+
+	auto orgSys = dll->partSys.get();
+	auto d3dDevice = dll->renderingDevice.GetDevice();
 
 	// The assumption is that the screen BB of the part sys encompasses the entire system
 	// so we use that to render it to a video file
@@ -61,24 +67,24 @@ bool ParticleSystem_RenderVideo(IDirect3DDevice9* device, PartSys* orgSys, D3DCO
 	// Save the old render target
 	CComPtr<IDirect3DSurface9> orgRenderTarget;
 	CComPtr<IDirect3DSurface9> orgDepthSurface;
-	device->GetRenderTarget(0, &orgRenderTarget);
-	device->GetDepthStencilSurface(&orgDepthSurface);
+	d3dDevice->GetRenderTarget(0, &orgRenderTarget);
+	d3dDevice->GetDepthStencilSurface(&orgDepthSurface);
 
 	// Create a render target
 	CComPtr<IDirect3DSurface9> depthSurface;
 	CComPtr<IDirect3DSurface9> renderTarget;
-	auto result = device->CreateRenderTarget(w, h, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &renderTarget, nullptr);
+	auto result = d3dDevice->CreateRenderTarget(w, h, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &renderTarget, nullptr);
 	if (!SUCCEEDED(result)) {
 		return false;
 	}
 
-	result = device->CreateDepthStencilSurface(w, h, D3DFMT_D16, D3DMULTISAMPLE_NONE, 0, TRUE, &depthSurface, nullptr);
+	result = d3dDevice->CreateDepthStencilSurface(w, h, D3DFMT_D16, D3DMULTISAMPLE_NONE, 0, TRUE, &depthSurface, nullptr);
 	if (!SUCCEEDED(result)) {
 		return false;
 	}
 
 	CComPtr<IDirect3DSurface9> sysMemSurface;
-	result = device->CreateOffscreenPlainSurface(w, h, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &sysMemSurface, nullptr);
+	result = d3dDevice->CreateOffscreenPlainSurface(w, h, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &sysMemSurface, nullptr);
 	if (!SUCCEEDED(result)) {
 		return false;
 	}
@@ -91,14 +97,12 @@ bool ParticleSystem_RenderVideo(IDirect3DDevice9* device, PartSys* orgSys, D3DCO
 	if (permanent) {
 		sys->Simulate(5.0f);
 	}
+	
+	d3dDevice->SetRenderTarget(0, renderTarget);
+	d3dDevice->SetDepthStencilSurface(depthSurface);
 
-	InitRenderStates(device, (float) w, (float) h, scale);
-
-	particles::ParticleRendererManager renderManager(device);
-	device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-	device->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, FALSE);
-	device->SetRenderTarget(0, renderTarget);
-	device->SetDepthStencilSurface(depthSurface);
+	dll->renderingDevice.GetCamera().SetScreenWidth((float)w, (float)h);
+	dll->renderingDevice.GetCamera().CenterOn(0, 0, 0);
 
 	int frameId = 0;
 
@@ -106,24 +110,22 @@ bool ParticleSystem_RenderVideo(IDirect3DDevice9* device, PartSys* orgSys, D3DCO
 		sys->Simulate(timeStepSec);
 		elapsed += timeStepSec;
 
-		device->BeginScene();
-		result = device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 0, 0, 0), 1.0f, 0);
+		d3dDevice->BeginScene();
+		result = d3dDevice->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 0, 0, 0), 1.0f, 0);
 		if (!SUCCEEDED(result)) {
 			return false;
 		}
 
 		for (auto& emitter : *sys) {
-			auto renderer = renderManager.GetRenderer(emitter->GetSpec()->GetParticleType());
-			if (renderer) {
-				renderer->Render(emitter.get());
-			}
+			auto& renderer = dll->renderManager.GetRenderer(emitter->GetSpec()->GetParticleType());
+			renderer.Render(*emitter);
 		}
 
-		device->EndScene();
-		device->Present(nullptr, nullptr, nullptr, nullptr);
+		d3dDevice->EndScene();
+		d3dDevice->Present(nullptr, nullptr, nullptr, nullptr);
 
 		// Copy from video mem to system mem
-		result = device->GetRenderTargetData(renderTarget, sysMemSurface);
+		result = d3dDevice->GetRenderTargetData(renderTarget, sysMemSurface);
 		if (!SUCCEEDED(result)) {
 			return false;
 		}
@@ -151,8 +153,8 @@ bool ParticleSystem_RenderVideo(IDirect3DDevice9* device, PartSys* orgSys, D3DCO
 	encoder->Finish();
 
 	// Restore the org render target
-	device->SetRenderTarget(0, orgRenderTarget);
-	device->SetDepthStencilSurface(orgDepthSurface);
+	d3dDevice->SetRenderTarget(0, orgRenderTarget);
+	d3dDevice->SetDepthStencilSurface(orgDepthSurface);
 
 	return true;
 

@@ -9,13 +9,11 @@ namespace ParticleEditor
 {
     public class ParticleSystem : IDisposable
     {
-        private IntPtr _handle;
 
         public Vector2 ScreenPosition { get; set; }
 
-        public ParticleSystem(IntPtr handle)
+        public ParticleSystem()
         {
-            _handle = handle;
             ScreenPosition = Vector2.Zero;
         }
 
@@ -27,85 +25,89 @@ namespace ParticleEditor
                 var result = new List<ParticleSystemEmitter>(count);
                 for (var i = 0; i < count; ++i)
                 {
-                    var emitterHandle = ParticleSystem_GetEmitter(_handle, i);
+                    var emitterHandle = ParticleSystem_GetEmitter(TempleDll.Instance.Handle, i);
                     result.Add(new ParticleSystemEmitter(emitterHandle));
                 }
                 return result;
             }
         }
 
-        public int EmitterCount => ParticleSystem_GetEmitterCount(_handle);
+        public int EmitterCount => ParticleSystem_GetEmitterCount(TempleDll.Instance.Handle);
 
-        public bool IsDead => ParticleSystem_IsDead(_handle);
+        public bool IsDead => ParticleSystem_IsDead(TempleDll.Instance.Handle);
 
         public void Dispose()
         {
-            if (_handle == IntPtr.Zero) return;
-            ParticleSystem_Free(_handle);
-            _handle = IntPtr.Zero;
+            ParticleSystem_Free(TempleDll.Instance.Handle);
         }
 
-        public static ParticleSystem FromSpec(Device device, string dataPath, string spec)
+        public static ParticleSystem FromSpec(string spec)
         {
-            var handle = ParticleSystem_FromSpec(device.NativePointer, dataPath, spec);
-            if (handle == IntPtr.Zero)
+            if (!ParticleSystem_FromSpec(TempleDll.Instance.Handle, spec))
             {
-                throw new InvalidOperationException("Unable to parse particle system spec: " + spec);
+                throw new InvalidOperationException("Unable to parse particle system spec: " + spec + ".\n"
+                    + TempleDll.LastError);
             }
 
-            return new ParticleSystem(handle);
+            return new ParticleSystem();
         }
 
         public void Simulate(float elapsedSecs)
         {
-            ParticleSystem_Simulate(_handle, elapsedSecs);
+            ParticleSystem_Simulate(TempleDll.Instance.Handle, elapsedSecs);
         }
 
-        public void Render(Device device, float w, float h, float xTrans, float yTrans, float scale)
+        public void Render(float w, float h, float xTrans, float yTrans, float scale)
         {
-            ParticleSystem_SetObjPos(ScreenPosition.X, ScreenPosition.Y);
-            ParticleSystem_SetPos(_handle, ScreenPosition.X, ScreenPosition.Y);
+            ParticleSystem_SetObjPos(TempleDll.Instance.Handle, ScreenPosition.X, ScreenPosition.Y);
+            ParticleSystem_SetPos(TempleDll.Instance.Handle, ScreenPosition.X, ScreenPosition.Y);
 
-            ParticleSystem_Render(device.NativePointer, _handle, w, h, xTrans, yTrans, scale);
+            ParticleSystem_Render(TempleDll.Instance.Handle, w, h, xTrans, yTrans, scale);
         }
 
-        public bool RenderVideo(Device device, Color background, string fileName)
+        public bool RenderVideo(Color background, string fileName)
         {
-            ParticleSystem_SetObjPos(ScreenPosition.X, ScreenPosition.Y);
-            ParticleSystem_SetPos(_handle, ScreenPosition.X, ScreenPosition.Y);
-
-            return ParticleSystem_RenderVideo(device.NativePointer, _handle, background.ToArgb(), fileName, 60);
+            ParticleSystem_SetObjPos(TempleDll.Instance.Handle, ScreenPosition.X, ScreenPosition.Y);
+            ParticleSystem_SetPos(TempleDll.Instance.Handle, ScreenPosition.X, ScreenPosition.Y);
+            
+            return ParticleSystem_RenderVideo(TempleDll.Instance.Handle, background.ToArgb(), fileName, 60);
         }
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private static extern IntPtr ParticleSystem_FromSpec(IntPtr deviceHandle, string dataPath, string spec);
+        private static extern bool ParticleSystem_FromSpec(IntPtr dllHandle, string spec);
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private static extern int ParticleSystem_GetEmitterCount(IntPtr handle);
+        private static extern int ParticleSystem_GetEmitterCount(IntPtr dllHandle);
 
         [DllImport("ParticleEditorNative.dll", EntryPoint = "ParticleSystem_RenderVideo", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        private static extern bool ParticleSystem_RenderVideo(IntPtr deviceHandle, IntPtr handle, int backgroundColor, string outputFile, int fps);
+        private static extern bool ParticleSystem_RenderVideo(IntPtr dllHandle, int backgroundColor, string outputFile, int fps);
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private static extern IntPtr ParticleSystem_GetEmitter(IntPtr handle, int idx);
+        private static extern IntPtr ParticleSystem_GetEmitter(IntPtr dllHandle, int idx);
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern void ParticleSystem_Simulate(IntPtr handle, float timeInSecs);
+        private static extern void ParticleSystem_Simulate(IntPtr dllHandle, float timeInSecs);
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern void ParticleSystem_SetPos(IntPtr handle, float x, float y);
+        private static extern void ParticleSystem_SetPos(IntPtr dllHandle, float x, float y);
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern void ParticleSystem_SetObjPos(float x, float y);
+        private static extern void ParticleSystem_SetObjPos(IntPtr dllHandle, float x, float y);
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern bool ParticleSystem_IsDead(IntPtr handle);
+        private static extern void ParticleSystem_Resize(IntPtr dllHandle, float x, float y);
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern void ParticleSystem_Render(IntPtr deviceHandle, IntPtr handle, float w, float h, float xTrans, float yTrans, float scale);
+        private static extern void ParticleSystem_SetScale(IntPtr dllHandle, float scale);
+
+        [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl)]
+        private static extern bool ParticleSystem_IsDead(IntPtr dllHandle);
+
+        [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl)]
+        private static extern void ParticleSystem_Render(IntPtr dllHandle, float w, float h, float xTrans, float yTrans, float scale);
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private static extern void ParticleSystem_Free(IntPtr particleSys);
+        private static extern void ParticleSystem_Free(IntPtr dllHandle);
 
     }
 }

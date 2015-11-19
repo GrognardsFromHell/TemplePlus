@@ -49,6 +49,8 @@ namespace ParticleEditor
 
         private TimeSpan? _timeSinceLastSimul;
 
+        private TempleDll _templeDll;
+
         public PreviewControl()
         {
             InitializeComponent();
@@ -99,6 +101,11 @@ namespace ParticleEditor
 
         private void ReloadAnimatedModel()
         {
+            if (TempleDll.Instance == null)
+            {
+                return;
+            }
+
             _previewModel = AnimatedModel.FromFiles(
                 TempleDll.Instance,
                 Path.Combine(_dataPath, @"art\meshes\PCs\PC_Human_Male\PC_Human_Male.SKM"),
@@ -173,11 +180,18 @@ namespace ParticleEditor
                     IntPtr.Zero,
                     CreateFlags.HardwareVertexProcessing | CreateFlags.Multithreaded | CreateFlags.FpuPreserve,
                     presentParams);
+                try {
+                    _templeDll = new TempleDll(DataPath, Device);
+                } catch (Exception ex) {
+                    MessageBox.Show("Unable to initialize temple.dll: " + ex.Message);
+                    DisableRendering = true;
+                    return;
+                }
             }
 
             if (_activeSystem == null && ActiveSystem != null)
             {
-                _activeSystem = ParticleSystem.FromSpec(Device, DataPath, ActiveSystem.ToSpec());
+                _activeSystem = ParticleSystem.FromSpec(ActiveSystem.ToSpec());
             }
 
             if (D3Dimg.IsFrontBufferAvailable && _lastRender != args.RenderingTime)
@@ -231,7 +245,10 @@ namespace ParticleEditor
                 var simulTime = (float)(renderTime.TotalSeconds - _timeSinceLastSimul.Value.TotalSeconds);
                 if (simulTime > 1 / 60.0f)
                 {
-                    _previewModel.AdvanceTime(simulTime);
+                    if (_previewModel != null)
+                    {
+                        _previewModel.AdvanceTime(simulTime);
+                    }
 
                     if (!_model.Paused)
                     {
@@ -250,10 +267,9 @@ namespace ParticleEditor
             }
 
             _previewModel?.Render(Device, w, h, _model.Scale);
-            _activeSystem?.Render(Device, w, h, 0, 0, _model.Scale);
+            _activeSystem?.Render(w, h, 0, 0, _model.Scale);
 
             Device.EndScene();
-            Device.Present();
         }
 
         private void UpdateParticleStatistics()

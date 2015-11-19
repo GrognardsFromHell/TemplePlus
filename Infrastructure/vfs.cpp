@@ -30,7 +30,11 @@ protected:
 	}
 
 	virtual size_t Read(void* buffer, size_t size, FileHandle handle) override {
-		return fread(buffer, 1, size, (FILE*) handle);
+		return fread(buffer, 1, size, (FILE*)handle);
+	}
+	
+	virtual size_t Write(void* buffer, size_t size, FileHandle handle) override {
+		return fwrite(buffer, 1, size, (FILE*)handle);
 	}
 
 	virtual void Close(FileHandle handle) override {
@@ -60,13 +64,13 @@ public:
 	}
 
 	std::vector<VfsSearchResult> Search(const std::string& globPattern) override {
-		throw new TempleException("Unsupported Operation");
+		throw TempleException("Unsupported Operation");
 	}
 	bool RemoveDir(const std::string& path) override {
-		throw new TempleException("Unsupported Operation");
+		throw TempleException("Unsupported Operation");
 	}
 	bool RemoveFile(const std::string& path) override {
-		throw new TempleException("Unsupported Operation");
+		throw TempleException("Unsupported Operation");
 	}
 };
 
@@ -88,7 +92,7 @@ std::string Vfs::ReadAsString(const std::string& filename) {
 }
 
 std::vector<uint8_t> Vfs::ReadAsBinary(const std::string& filename) {
-	auto fh = Open(filename.c_str(), "rt");
+	auto fh = Open(filename.c_str(), "rb");
 	if (!fh) {
 		throw TempleException("Unable to find file {}", filename);
 	}
@@ -107,6 +111,18 @@ bool Vfs::IsDirEmpty(const std::string& path) {
 
 	auto globPattern(Path::Concat(path, "*.*"));
 	return Search(globPattern).empty();
+}
+
+void Vfs::WriteBinaryFile(const std::string &path, gsl::array_view<uint8_t> data) {
+	
+	auto fh(Open(path.c_str(), "wb"));
+	if (Write(&data[0], data.size(), fh) != data.size()) {
+		Close(fh);
+		RemoveFile(path.c_str());
+		throw TempleException("Unable to write file {}", path);
+	}
+	Close(fh);
+
 }
 
 bool Vfs::CleanDir(const std::string& path) {

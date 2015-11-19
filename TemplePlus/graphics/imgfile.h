@@ -1,10 +1,8 @@
 
 #pragma once
 
-#include <infrastructure/textures.h>
+#include <graphics/textures.h>
 #include <string>
-
-#include "graphics.h"
 
 struct ImgFile;
 
