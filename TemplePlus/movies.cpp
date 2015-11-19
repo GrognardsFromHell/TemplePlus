@@ -258,15 +258,11 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 	};
 	auto vertexBuffer(device.CreateVertexBuffer<MovieVertex>(vertices));
 
-	BufferBinding binding;
-	binding.AddBuffer(vertexBuffer, 0, sizeof(MovieVertex))
-		.AddElement(VertexElementType::Float3, VertexElementSemantic::Position)
-		.AddElement(VertexElementType::Color, VertexElementSemantic::Color)
-		.AddElement(VertexElementType::Float2, VertexElementSemantic::TexCoord);
-	binding.Bind();
-
-	MovieMaterial material(device);
-	material.Bind();
+	std::vector<uint16_t> indices{
+		0, 1, 2,
+		0, 2, 3
+	};
+	auto indexBuffer(device.CreateIndexBuffer(indices));
 
 	SubtitleRenderer subtitleRenderer(device, subtitles);
 	
@@ -275,7 +271,21 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 		D3DLOG(d3dDevice->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0, 0));
 		D3DLOG(d3dDevice->BeginScene());
 
-		D3DLOG(d3dDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, 2));
+		BufferBinding binding;
+		binding.AddBuffer(vertexBuffer, 0, sizeof(MovieVertex))
+			.AddElement(VertexElementType::Float3, VertexElementSemantic::Position)
+			.AddElement(VertexElementType::Color, VertexElementSemantic::Color)
+			.AddElement(VertexElementType::Float2, VertexElementSemantic::TexCoord);
+		binding.Bind();
+
+		MovieMaterial material(device);
+		material.Bind();
+
+		d3dDevice->SetIndices(indexBuffer->GetBuffer());
+
+		d3dDevice->SetTexture(0, texture);
+		D3DLOG(d3dDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2));
+
 		subtitleRenderer.Render();
 		D3DLOG(d3dDevice->EndScene());
 		D3DLOG(d3dDevice->Present(NULL, NULL, NULL, NULL));
