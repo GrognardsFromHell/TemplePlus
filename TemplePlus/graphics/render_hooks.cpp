@@ -505,6 +505,9 @@ int RenderHooks::RenderLine3d(XMFLOAT3* from, XMFLOAT3* to, XMCOLOR color) {
 	with argument 3, then called again afterwards with argument 2.
 	Instead of propagating that to all draws, we store it here
 	for the next draw circle call.
+
+	The use case for this is to draw circles that are occluded 
+	by walls in a slightly less opaque color.
 */
 void RenderHooks::SetDrawCircleZMode(int type) {
 	if (type == 3) {
