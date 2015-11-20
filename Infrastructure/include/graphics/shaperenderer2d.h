@@ -10,7 +10,8 @@
 struct IDirect3DTexture9;
 
 namespace gfx {
-
+	using MdfRenderMaterialPtr = std::shared_ptr<class MdfRenderMaterial>;
+	
 	class RenderingDevice;
 	using TextureRef = std::shared_ptr<class Texture>;
 	
@@ -52,16 +53,29 @@ namespace gfx {
 			uint32_t color
 			);
 
-		void DrawRectangle(gsl::array_view<Vertex2d> corners,
+		void DrawRectangle(gsl::array_view<Vertex2d, 4> corners,
 			IDirect3DTexture9* texture,
 			IDirect3DTexture9* mask = nullptr,
 			bool wrap = false);
+
+		void DrawRectangle(gsl::array_view<Vertex2d, 4> corners,
+			const gfx::MdfRenderMaterialPtr &material);
 
 		void DrawRectangle(gsl::array_view<Vertex2d, 4> corners);
 
 		void DrawLines(gsl::array_view<Line2d> lines);
 
 		void DrawRectangleOutline(XMFLOAT2 topLeft, XMFLOAT2 bottomRight, XMCOLOR color);
+
+		/**
+		 * Renders a circle/pie segment for use with the radial menu.
+  		 */
+		void DrawPieSegment(int segments,
+			int x, int y,
+			float angleCenter, float angleWidth,
+			int innerRadius, int innerOffset,
+			int outerRadius, int outerOffset,
+			XMCOLOR color1, XMCOLOR color2);
 		
 		NO_COPY_OR_MOVE(ShapeRenderer2d);
 

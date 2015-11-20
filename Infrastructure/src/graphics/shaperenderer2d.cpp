@@ -3,6 +3,7 @@
 #include "graphics/buffers.h"
 #include "graphics/bufferbinding.h"
 #include "graphics/materials.h"
+#include "graphics/mdfmaterials.h"
 #include "graphics/shaders.h"
 #include "graphics/textures.h"
 #include "graphics/shaperenderer2d.h"
@@ -23,6 +24,7 @@ struct ShapeRenderer2d::Impl {
 	VertexBufferPtr lineVertexBuffer;
 	BufferBinding lineBufferBinding;
 
+	Material outlineMaterial;
 	Material lineMaterial;
 	Material untexturedMaterial;
 	Material texturedMaterial;
@@ -33,6 +35,7 @@ struct ShapeRenderer2d::Impl {
 	static Material CreateMaterial(RenderingDevice &device,
 		const char *pixelShaderName,
 		bool forLines = false);
+	static Material CreateOutlineMaterial(RenderingDevice &device);
 };
 
 ShapeRenderer2d::Impl::Impl(RenderingDevice &device)
@@ -40,7 +43,8 @@ ShapeRenderer2d::Impl::Impl(RenderingDevice &device)
 	untexturedMaterial(CreateMaterial(device, "diffuse_only_ps")),
 	texturedMaterial(CreateMaterial(device, "textured_simple_ps")),
 	texturedWithMaskMaterial(CreateMaterial(device, "textured_two_ps")),
-	lineMaterial(CreateMaterial(device, "diffuse_only_ps", true)) {
+	lineMaterial(CreateMaterial(device, "diffuse_only_ps", true)),
+	outlineMaterial(CreateOutlineMaterial(device)) {
 
 	samplerWrapState.minFilter = D3DTEXF_LINEAR;
 	samplerWrapState.magFilter = D3DTEXF_LINEAR;
@@ -86,9 +90,22 @@ Material ShapeRenderer2d::Impl::CreateMaterial(RenderingDevice &device,
 	auto pixelShader(device.GetShaders().LoadPixelShader(pixelShaderName));
 
 	return Material(blendState, depthStencilState, rasterizerState,
-	{},
-		vertexShader, pixelShader);
+	{}, vertexShader, pixelShader);
 
+}
+
+Material ShapeRenderer2d::Impl::CreateOutlineMaterial(RenderingDevice& device) {
+	BlendState blendState;
+	blendState.blendEnable = true;
+	blendState.srcBlend = D3DBLEND_SRCALPHA;
+	blendState.destBlend = D3DBLEND_INVSRCALPHA;
+	DepthStencilState depthStencilState;
+	depthStencilState.depthEnable = false;
+	auto vertexShader(device.GetShaders().LoadVertexShader("line_vs"));
+	auto pixelShader(device.GetShaders().LoadPixelShader("diffuse_only_ps"));
+
+	return Material(blendState, depthStencilState, {},
+	{}, vertexShader, pixelShader);
 }
 
 ShapeRenderer2d::ShapeRenderer2d(RenderingDevice& device) : mImpl(std::make_unique<Impl>(device)) {
@@ -140,7 +157,7 @@ void ShapeRenderer2d::DrawRectangle(float x, float y, float width, float height,
 	DrawRectangle(x, y, width, height, nullptr, color);
 }
 
-void ShapeRenderer2d::DrawRectangle(gsl::array_view<Vertex2d> corners,
+void ShapeRenderer2d::DrawRectangle(gsl::array_view<Vertex2d, 4> corners,
 	IDirect3DTexture9* texture,
 	IDirect3DTexture9* mask,
 	bool wrap) {
@@ -174,7 +191,21 @@ void ShapeRenderer2d::DrawRectangle(gsl::array_view<Vertex2d> corners,
 
 }
 
-void ShapeRenderer2d::DrawRectangle(gsl::array_view<Vertex2d, 4> corners) {
+	void ShapeRenderer2d::DrawRectangle(gsl::array_view<Vertex2d, 4> corners, 
+		const gfx::MdfRenderMaterialPtr& material) {
+
+		MdfRenderOverrides overrides;
+		overrides.ignoreLighting = true;
+		material->Bind(mImpl->device, {}, &overrides);
+
+		DepthStencilState depthState;
+		depthState.depthEnable = false;
+		mImpl->device.SetDepthStencilState(depthState);
+
+		DrawRectangle(corners);
+	}
+
+	void ShapeRenderer2d::DrawRectangle(gsl::array_view<Vertex2d, 4> corners) {
 	// Copy the vertices
 	auto locked(mImpl->vertexBuffer->Lock<Vertex2d>());
 	locked[0] = corners[0];
@@ -248,245 +279,85 @@ void ShapeRenderer2d::DrawLines(gsl::array_view<Line2d> lines) {
 
 	}
 
-	/*
-	float texwidth;
-	float texheight;
-	float srcX;
-	float srcY;
-	float srcWidth;
-	float srcHeight;
-	std::array<D3DXVECTOR4, 4> vertices;
-	std::array<D3DXVECTOR2, 4> uv;
-	
-	// The townmap UI uses floating point coordinates for the srcrect
-	// for whatever reason. They are passed in place of the integer coordinates
-	// And need to be reinterpreted
-	if (args->flags & Render2dArgs::FLAG_FLOATSRCRECT) {
-	srcX = *(float *)&args->srcRect->x;
-	srcY = *(float *)&args->srcRect->y;
-	srcWidth = *(float *)&args->srcRect->width;
-	srcHeight = *(float *)&args->srcRect->height;
+	void ShapeRenderer2d::DrawPieSegment(int segments, 
+		int x, int y, 
+		float angleCenter, float angleWidth, 
+		int innerRadius, int innerOffset, 
+		int outerRadius, int outerOffset, 
+		XMCOLOR color1, 
+		XMCOLOR color2) {
+		
+		Expects(segments <= 99);
+		std::array<XMFLOAT3, 100> positions;
+
+		auto angleStep = angleWidth / segments;
+		auto angleStart = angleCenter - angleWidth / 2;
+
+		for (auto i = 0; i < segments - 1; ++i) {
+			auto angle = angleStart + i * angleStep;
+			auto& pos = positions[i];
+
+			// The generated positions alternate between the outside
+			// and inner circle
+			float radius, offset;
+			if (i % 2 == 0) {
+				radius = (float)innerRadius;
+				offset = (float)innerOffset;
+			} else {
+				radius = (float)outerRadius;
+				offset = (float)outerOffset;
+			}
+
+			pos.x = x + cosf(angle) * radius - sinf(angle) * offset;
+			pos.y = y + sinf(angle) * radius + cosf(angle) * offset;
+			pos.z = 0;
+		}
+
+		auto& device = mImpl->device;
+
+		device.SetMaterial(mImpl->outlineMaterial);
+
+		gfx::BufferBinding bufferBinding;
+		bufferBinding.AddBuffer(device.CreateVertexBuffer<XMFLOAT3>(positions), 0, sizeof(XMFLOAT3))
+			.AddElement(gfx::VertexElementType::Float3, gfx::VertexElementSemantic::Position);
+		bufferBinding.Bind();
+
+		device.GetDevice()->SetVertexShaderConstantF(0, &device.GetCamera().GetUiProjection()._11, 4);
+		XMFLOAT4 colors;
+		XMStoreFloat4(&colors, PackedVector::XMLoadColor(&color1));
+		device.GetDevice()->SetVertexShaderConstantF(4, &colors.x, 1);
+
+		device.GetDevice()->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, segments - 2);
+
+		// Change to the outline color
+		XMStoreFloat4(&colors, PackedVector::XMLoadColor(&color2));
+		device.GetDevice()->SetVertexShaderConstantF(4, &colors.x, 1);
+
+		/*
+			Build an index buffer that draws an outline around the pie
+			segment using the previously generated positions.
+		*/
+		std::array<uint16_t, 99> outlineIndices;
+		auto i = 0;
+		auto j = 0;
+		// The first run of indices is along the inner radius
+		while (i < segments / 2) {
+			outlineIndices[i++] = j;
+			j += 2;
+		}
+		// Then backwards along the outer radius
+		j = segments - 2;
+		while (i < segments - 1) {
+			outlineIndices[i++] = j;
+			j -= 2;
+		}
+		// And finally it goes back to the starting point
+		outlineIndices[segments - 1] = 0;
+		auto ib(device.CreateIndexBuffer(outlineIndices));
+		device.GetDevice()->SetIndices(ib->GetBuffer());
+
+		device.GetDevice()->DrawIndexedPrimitive(D3DPT_LINESTRIP, 0, 0, segments, 0, segments - 1);
+		
 	}
-	else {
-	srcX = (float)args->srcRect->x;
-	srcY = (float)args->srcRect->y;
-	srcWidth = (float)args->srcRect->width;
-	srcHeight = (float)args->srcRect->height;
-	}
-	
-	// Has a special vertex z value been set? Otherwise we render all UI
-	// on the same level
-	auto vertexZ = 0.5f;
-	if (args->flags & Render2dArgs::FLAG_VERTEXZ) {
-	vertexZ = args->vertexZ;
-	}
-	
-	// Inherit vertex colors from the caller
-	std::array<D3DCOLOR, 4> diffuse;
-	if (args->flags & Render2dArgs::FLAG_VERTEXCOLORS) {
-	// Previously, ToEE tried to compute some gradient stuff here
-	// which we removed because it was never actually utilized properly
-	diffuse[0] = args->vertexColors[0] | 0xFF000000;
-	diffuse[1] = args->vertexColors[1] | 0xFF000000;
-	diffuse[2] = args->vertexColors[2] | 0xFF000000;
-	diffuse[3] = args->vertexColors[3] | 0xFF000000;
-	}
-	else {
-	diffuse[3] = 0xFFFFFFFF;
-	diffuse[2] = 0xFFFFFFFF;
-	diffuse[1] = 0xFFFFFFFF;
-	diffuse[0] = 0xFFFFFFFF;
-	}
-	
-	// Only if this flag is set, is the alpha value of
-	// the vertex colors used
-	if (args->flags & Render2dArgs::FLAG_VERTEXALPHA) {
-	diffuse[0] &= args->vertexColors[0] | 0xFFFFFF;
-	diffuse[1] &= args->vertexColors[1] | 0xFFFFFF;
-	diffuse[2] &= args->vertexColors[2] | 0xFFFFFF;
-	diffuse[3] &= args->vertexColors[3] | 0xFFFFFF;
-	}
-	
-	// Load the associated texture
-	IDirect3DTexture9* deviceTexture = nullptr;
-	if (!(args->flags & Render2dArgs::FLAG_BUFFER)) {
-	if (args->textureId) {
-	auto texture = gfx::textureManager->GetById(args->textureId);
-	if (!texture || !texture->IsValid()) {
-	return 17;
-	}
-	
-	deviceTexture = texture->GetDeviceTexture();
-	if (deviceTexture == nullptr) {
-	return 17;
-	}
-	
-	auto size = texture->GetSize();
-	texwidth = (float)size.width;
-	texheight = (float)size.height;
-	}
-	else {
-	texwidth = (float)args->destRect->width;
-	texheight = (float)args->destRect->height;
-	}
-	}
-	else {
-	if (!args->texBuffer) {
-	return 17;
-	}
-	deviceTexture = GetTextureDelegate(args->texBuffer->d3dtexture);
-	if (!deviceTexture) {
-	return 17;
-	}
-	texwidth = (float)args->texBuffer->texturewidth;
-	texheight = (float)args->texBuffer->textureheight;
-	}
-	
-	auto contentRectLeft = srcX;
-	auto contentRectTop = srcY;
-	auto contentRectRight = srcX + srcWidth;
-	auto contentRectBottom = srcY + srcHeight;
-	if (args->flags & Render2dArgs::FLAG_FLIPH) {
-	contentRectLeft = srcWidth - srcX - 1.0f;
-	contentRectRight = srcWidth - contentRectRight - 1.0f;
-	}
-	if (args->flags & Render2dArgs::FLAG_FLIPV) {
-	contentRectTop = srcHeight - srcY - 1.0f;
-	contentRectBottom = srcHeight - contentRectBottom - 1.0f;
-	}
-	
-	// Create the UV coordinates to honor the contentRect based
-	// on the real texture size
-	auto uvLeft = (contentRectLeft + 0.5f) / texwidth;
-	auto uvRight = (contentRectRight + 0.5f) / texwidth;
-	auto uvTop = (contentRectTop + 0.5f) / texheight;
-	auto uvBottom = (contentRectBottom + 0.5f) / texheight;
-	uv[0].x = uvLeft;
-	uv[0].y = uvTop;
-	uv[1].x = uvRight;
-	uv[1].y = uvTop;
-	uv[2].x = uvRight;
-	uv[2].y = uvBottom;
-	uv[3].x = uvLeft;
-	uv[3].y = uvBottom;
-	
-	for (auto i = 0; i < 4; ++i) {
-	vertices[i].w = 1;
-	}
-	
-	if (args->flags & Render2dArgs::FLAG_ROTATE) {
-	// Rotation?
-	auto cosRot = cosf(args->rotation);
-	auto sinRot = sinf(args->rotation);
-	auto destRect = args->destRect;
-	vertices[0].x = args->rotationX
-	+ (destRect->x - args->rotationX) * cosRot
-	- (destRect->y - args->rotationY) * sinRot;
-	vertices[0].y = args->rotationY
-	+ (destRect->y - args->rotationY) * cosRot
-	+ (destRect->x - args->rotationX) * sinRot;
-	vertices[0].z = vertexZ;
-	
-	vertices[1].x = args->rotationX
-	+ ((destRect->x + destRect->width) - args->rotationX) * cosRot
-	- (destRect->y - args->rotationY) * sinRot;
-	vertices[1].y = args->rotationY
-	+ ((destRect->x + destRect->width) - args->rotationX) * sinRot
-	+ (destRect->y - args->rotationY) * cosRot;
-	vertices[1].z = vertexZ;
-	
-	vertices[2].x = args->rotationX
-	+ ((destRect->x + destRect->width) - args->rotationX) * cosRot
-	- ((destRect->y + destRect->width) - args->rotationY) * sinRot;
-	vertices[2].y = args->rotationY
-	+ ((destRect->y + destRect->width) - args->rotationY) * cosRot
-	+ (destRect->x + destRect->width - args->rotationX) * sinRot;
-	vertices[2].z = vertexZ;
-	
-	vertices[3].x = args->rotationX
-	+ (destRect->x - args->rotationX) * cosRot
-	- ((destRect->y + destRect->height) - args->rotationY) * sinRot;
-	vertices[3].y = args->rotationY
-	+ ((destRect->y + destRect->height) - args->rotationY) * cosRot
-	+ (destRect->x - args->rotationX) * sinRot;
-	vertices[3].z = vertexZ;
-	}
-	else {
-	auto destRect = args->destRect;
-	vertices[0].x = (float)destRect->x;
-	vertices[0].y = (float)destRect->y;
-	vertices[0].z = vertexZ;
-	vertices[1].x = (float)destRect->x + destRect->width;
-	vertices[1].y = (float)destRect->y;
-	vertices[1].z = vertexZ;
-	vertices[2].x = (float)destRect->x + destRect->width;
-	vertices[2].y = (float)destRect->y + destRect->height;
-	vertices[2].z = vertexZ;
-	vertices[3].x = (float)destRect->x;
-	vertices[3].y = (float)destRect->y + destRect->height;
-	vertices[3].z = vertexZ;
-	}
-	
-	renderStates->SetAlphaTestEnable(true);
-	renderStates->SetAlphaBlend(true);
-	renderStates->SetSrcBlend(D3DBLEND_SRCALPHA);
-	renderStates->SetDestBlend(D3DBLEND_INVSRCALPHA);
-	
-	const char* shaderName;
-	
-	if (deviceTexture) {
-	renderStates->SetTexture(0, deviceTexture);
-	shaderName = "textured_simple_ps";
-	
-	// Seems to disable the texture alpha stage (-> discards)
-	if (args->flags & 0x800) {
-	renderStates->SetTextureAlphaOp(0, D3DTOP_DISABLE);
-	renderStates->SetTextureAlphaArg1(0, D3DTA_DIFFUSE);
-	renderStates->SetTextureAlphaArg2(0, D3DTA_DIFFUSE);
-	}
-	
-	// We have a secondary texture
-	if (args->flags & 0x400) {
-	auto texture = gfx::textureManager->GetById(args->textureId2);
-	if (!texture || !texture->IsValid() || !texture->GetDeviceTexture()) {
-	return 17;
-	}
-	auto secondDeviceTexture = texture->GetDeviceTexture();
-	renderStates->SetTexture(1, secondDeviceTexture);
-	
-	shaderName = "textured_two_ps";
-	}
-	}
-	else {
-	// Disable texturing and instead grab the color/alpha
-	// from the vertex colors
-	shaderName = "diffuse_only_ps";
-	}
-	
-	if (args->flags & Render2dArgs::FLAG_WRAP) {
-	renderStates->SetTextureAddressU(0, D3DTADDRESS_WRAP);
-	renderStates->SetTextureAddressV(0, D3DTADDRESS_WRAP);
-	}
-	
-	auto ps = graphics->GetShaders().LoadPixelShader(shaderName);
-	ps->Bind();
-	
-	static std::array<uint16_t, 6> sIndices{ 0, 1, 2, 0, 2, 3 };
-	
-	Renderer renderer(*graphics);
-	renderer.DrawTrisScreenSpace(4, &vertices[0], &diffuse[0], &uv[0], 2, &sIndices[0]);
-	
-	ps->Unbind();
-	
-	if (args->flags & Render2dArgs::FLAG_WRAP) {
-	renderStates->SetTextureAddressU(0, D3DTADDRESS_CLAMP);
-	renderStates->SetTextureAddressV(0, D3DTADDRESS_CLAMP);
-	}
-	if (args->flags & 0x400) {
-	renderStates->SetTexture(1, nullptr);
-	}
-	renderStates->SetAlphaBlend(false);
-	return 0;
-	*/
 
 }

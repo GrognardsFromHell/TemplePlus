@@ -33,9 +33,11 @@ void RenderHooks::apply() {
 	replaceFunction(0x1018B200, RenderRectInt);
 
 	replaceFunction(0x10107050, RenderDisc3d);
-	replaceFunction(0x101D9FC0, RenderUnk3d);
 	replaceFunction(0x101D60B0, SetDrawCircleZMode);
 	replaceFunction(0x10106B70, DrawCircle3d);
+
+	redirectCall(0x1013C556, DrawRadialMenuSegment1); // 17 segments
+	redirectCall(0x1013D4B7, DrawRadialMenuSegment2); // 99 segments
 	
 }
 
@@ -77,6 +79,49 @@ int RenderHooks::ShaderRender3d(int vertexCount, D3DXVECTOR4* pos, D3DXVECTOR4* 
 }
 
 int RenderHooks::ShaderRender2d(const Render2dArgs* args) {
+
+	if (!args->shaderId) {
+		return 17;
+	}
+
+	// Resolve the MDF
+	auto material(tig->GetMdfFactory().GetById(args->shaderId));
+
+	if (!material) {
+		return 17; // Unknown shader id
+	}
+	
+	std::array<gfx::Vertex2d, 4> corners;
+
+	auto left = (float)args->destRect->x;
+	auto top = (float)args->destRect->y;
+	auto right = (float)args->destRect->x + args->destRect->width;
+	auto bottom = (float) args->destRect->y + args->destRect->height;
+	
+	if (!args->vertexColors) {
+		corners[0].diffuse = { 1, 1, 1, 1 };
+		corners[1].diffuse = { 1, 1, 1, 1 };
+		corners[2].diffuse = { 1, 1, 1, 1 };
+		corners[3].diffuse = { 1, 1, 1, 1 };
+	} else {
+		corners[0].diffuse = args->vertexColors[0];
+		corners[1].diffuse = args->vertexColors[1];
+		corners[2].diffuse = args->vertexColors[2];
+		corners[3].diffuse = args->vertexColors[3];
+	}
+
+	corners[0].pos = { left, top, 0 };
+	
+	corners[0].uv = { 0, 0 };
+	corners[1].pos = { right, top, 0 };
+	corners[1].uv = { 1, 0 };
+	corners[2].pos = { right, bottom, 0 };
+	corners[2].uv = { 1, 1 };
+	corners[3].pos = { left, bottom, 0 };
+	corners[3].uv = { 0, 1 };
+
+	tig->GetShapeRenderer2d().DrawRectangle(corners, material);
+
 	/*
 	if (!args->shaderId)
 		return 17;
@@ -370,36 +415,38 @@ int RenderHooks::TextureRender2d(const Render2dArgs* args) {
 	return 0;
 }
 
-int RenderHooks::RenderTexturedQuad(D3DXVECTOR3* vertices, float* u, float* v, int textureId, D3DCOLOR color) {
-	/*
-	std::array<D3DXVECTOR4, 4> positions;
-	positions[0] = {vertices[0], 1};
-	positions[1] = {vertices[1], 1};
-	positions[2] = {vertices[2], 1};
-	positions[3] = {vertices[3], 1};
+int RenderHooks::RenderTexturedQuad(XMFLOAT3* vertices, float* u, float* v, int textureId, XMCOLOR color) {
 
-	std::array<D3DCOLOR, 4> diffuse;
-	diffuse[0] = color;
-	diffuse[1] = color;
-	diffuse[2] = color;
-	diffuse[3] = color;
+	auto texture(tig->GetRenderingDevice().GetTextures().GetById(textureId));
 
-	std::array<D3DXVECTOR2, 4> uv;
-	uv[0] = {u[0],v[0]};
-	uv[1] = {u[1],v[1]};
-	uv[2] = {u[2],v[2]};
-	uv[3] = {u[3],v[3]};
+	if (!texture->IsValid()) {
+		return 17;
+	}
 
-	std::array<uint16_t, 6> indices;
-	indices[0] = 0;
-	indices[1] = 1;
-	indices[2] = 2;
-	indices[3] = 2;
-	indices[4] = 3;
-	indices[5] = 1;
+	auto deviceTexture = texture->GetDeviceTexture();
 
-	Renderer renderer(*graphics);
-	renderer.DrawTrisScreenSpace(4, &positions[0], &diffuse[0], &uv[0], 2, &indices[0]);*/
+	if (!deviceTexture) {
+		return 17;
+	}
+
+	std::array<gfx::Vertex2d, 4> corners;
+
+	corners[0].pos = vertices[0];
+	corners[1].pos = vertices[1];
+	corners[2].pos = vertices[2];
+	corners[3].pos = vertices[3];
+
+	corners[0].diffuse = color;
+	corners[1].diffuse = color;
+	corners[2].diffuse = color;
+	corners[3].diffuse = color;
+
+	corners[0].uv = {u[0],v[0]};
+	corners[1].uv = {u[1],v[1]};
+	corners[2].uv = {u[2],v[2]};
+	corners[3].uv = {u[3],v[3]};
+
+	tig->GetShapeRenderer2d().DrawRectangle(corners, deviceTexture);
 	return 0;
 
 }
@@ -474,12 +521,6 @@ void RenderHooks::RenderDisc3d(LocAndOffsets& loc, int shaderId, float rotation,
 
 }
 
-int RenderHooks::RenderUnk3d(int posCount, XMFLOAT3* positions, XMCOLOR color, int unk1, int unk2) {
-
-	return 0;
-
-}
-
 int RenderHooks::RenderRectIndirect(XMFLOAT2* topLeft, XMFLOAT2* bottomRight, XMCOLOR color) {
 	auto &shapeRenderer = tig->GetShapeRenderer2d();
 
@@ -498,6 +539,32 @@ int RenderHooks::RenderLine3d(XMFLOAT3* from, XMFLOAT3* to, XMCOLOR color) {
 
 	return 0;
 
+}
+
+int RenderHooks::DrawRadialMenuSegment1(int x, int y,
+	float angleCenter, float angleWidth,
+	int innerRadius, int innerOffset,
+	int outerRadius, int outerOffset,
+	XMCOLOR color1, XMCOLOR color2) {
+
+	tig->GetShapeRenderer2d()
+		.DrawPieSegment(17, x, y, angleCenter, angleWidth, innerRadius, innerOffset,
+			outerRadius, outerOffset, color1, color2);
+
+	return 0;
+}
+
+int RenderHooks::DrawRadialMenuSegment2(int x, int y, 
+	float angleCenter, float angleWidth, 
+	int innerRadius, int innerOffset, 
+	int outerRadius, int outerOffset, 
+	XMCOLOR color1, XMCOLOR color2) {
+
+	tig->GetShapeRenderer2d()
+		.DrawPieSegment(99, x, y, angleCenter, angleWidth, innerRadius, innerOffset,
+			outerRadius, outerOffset, color1, color2);
+
+	return 0;
 }
 
 /*
