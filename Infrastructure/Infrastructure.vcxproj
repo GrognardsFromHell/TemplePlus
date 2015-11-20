@@ -168,6 +168,7 @@
     <ClInclude Include="include\graphics\mdfmaterials.h" />
     <ClInclude Include="include\graphics\shaders.h" />
     <ClInclude Include="include\graphics\shaperenderer2d.h" />
+    <ClInclude Include="include\graphics\shaperenderer3d.h" />
     <ClInclude Include="include\gsl\array_view.h" />
     <ClInclude Include="include\gsl\fail_fast.h" />
     <ClInclude Include="include\gsl\gsl.h" />
@@ -251,6 +252,7 @@
     <ClCompile Include="src\graphics\mdfmaterials.cpp" />
     <ClCompile Include="src\graphics\shaders.cpp" />
     <ClCompile Include="src\graphics\shaperenderer2d.cpp" />
+    <ClCompile Include="src\graphics\shaperenderer3d.cpp" />
     <ClCompile Include="src\graphics\textures.cpp" />
     <ClCompile Include="tokenizer.cpp" />
     <ClCompile Include="json11.cpp" />

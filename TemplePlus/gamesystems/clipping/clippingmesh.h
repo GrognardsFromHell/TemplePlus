@@ -2,7 +2,6 @@
 
 #include <string>
 #include <vector>
-#include <atlcomcli.h>
 
 #include <graphics/device.h>
 #include <graphics/buffers.h>
@@ -30,11 +29,11 @@ public:
 		return mInstances;
 	}
 
-	IDirect3DVertexBuffer9* GetVertexBuffer() const {
+	const VertexBufferPtr &GetVertexBuffer() const {
 		return mVertexBuffer;
 	}
 
-	IDirect3DIndexBuffer9* GetIndexBuffer() const {
+	const IndexBufferPtr &GetIndexBuffer() const {
 		return mIndexBuffer;
 	}
 
@@ -49,8 +48,8 @@ public:
 	void CreateResources(RenderingDevice &device) override;
 	void FreeResources(RenderingDevice &device) override;
 private:
-	CComPtr<IDirect3DVertexBuffer9> mVertexBuffer;
-	CComPtr<IDirect3DIndexBuffer9> mIndexBuffer;
+	VertexBufferPtr mVertexBuffer;
+	IndexBufferPtr mIndexBuffer;
 
 	size_t mVertexCount = 0;
 	size_t mTriCount = 0;

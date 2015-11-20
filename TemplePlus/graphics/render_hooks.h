@@ -8,6 +8,7 @@
 struct TigBuffer;
 struct TigRect;
 struct ImgFile;
+struct LocAndOffsets;
 
 #pragma pack(push, 1)
 struct Render2dArgs {
@@ -68,11 +69,25 @@ public:
 	static void RenderRect(float left, float top, float right, float bottom, D3DCOLOR color);
 
 	static void RenderRectInt(int left, int top, int width, int height, D3DCOLOR color);
-	
+
+	static void RenderDisc3d(LocAndOffsets &loc, int shaderId, float rotation, float radius);
+
+	static int RenderUnk3d(int posCount, XMFLOAT3 *positions, XMCOLOR color, int unk1, int unk2);
+
+	static void SetDrawCircleZMode(int type);
+
+	static void DrawCircle3d(LocAndOffsets center, 
+		float unk, 
+		XMCOLOR fillColor, 
+		XMCOLOR borderColor, 
+		float radius);
+		
 private:
 
 	static int RenderRectIndirect(XMFLOAT2 *topLeft, XMFLOAT2 *bottomRight, XMCOLOR color);
 
-	static int RenderLine3d(D3DVECTOR* from, D3DVECTOR* to, D3DCOLOR color);
+	static int RenderLine3d(XMFLOAT3* from, XMFLOAT3* to, XMCOLOR color);
+
+	static bool specialZ;
 
 };

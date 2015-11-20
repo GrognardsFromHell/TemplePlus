@@ -53,6 +53,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shaders", "Shaders", "{D7FE
 		tpdata\shaders\font_vs.hlsl = tpdata\shaders\font_vs.hlsl
 		tpdata\shaders\gui_vs.hlsl = tpdata\shaders\gui_vs.hlsl
 		tpdata\shaders\lighting.h = tpdata\shaders\lighting.h
+		tpdata\shaders\line_vs.hlsl = tpdata\shaders\line_vs.hlsl
 		tpdata\shaders\mdf_ps.hlsl = tpdata\shaders\mdf_ps.hlsl
 		tpdata\shaders\mdf_vs.hlsl = tpdata\shaders\mdf_vs.hlsl
 		tpdata\shaders\particles_points_vs.hlsl = tpdata\shaders\particles_points_vs.hlsl
