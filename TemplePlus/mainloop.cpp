@@ -12,6 +12,7 @@
 #include "obj.h"
 #include "diag/diag.h"
 #include <graphics/device.h>
+#include "../Infrastructure/include/infrastructure/stopwatch.h"
 
 static struct MainLoop : temple::AddressTable {
 
@@ -92,10 +93,14 @@ void GameLoop::Run() {
 	mainLoop.sub_1002A580(loc);
 
 	mainLoop.QueueFidgetAnimEvent();
-
+	
 	TigMsg msg;
 	auto quit = false;
+	static int fpsCounter = 0;
+	static int timeElapsed = 0, timeElapsed2=0;
 	while (!quit) {
+
+		Stopwatch sw1;
 
 		// Read user input and external system events (such as time)
 		msgFuncs.ProcessSystemEvents();
@@ -110,8 +115,11 @@ void GameLoop::Run() {
 		if (!config.windowed && config.lockCursor) {
 			tig->GetMainWindow().LockCursor();
 		}
+		Stopwatch sw2;
 
 		RenderFrame();
+		
+		timeElapsed2 += sw2.GetElapsedMs();
 
 		// Why does it process msgs AFTER rendering???		
 		while (!msgFuncs.Process(&msg)) {
@@ -138,7 +146,18 @@ void GameLoop::Run() {
 			if (mainLoop.sub_10113D40(unk)) {
 				DoMouseScrolling();
 			}
+			timeElapsed+= sw1.GetElapsedMs();
+			if (fpsCounter++ >= 100)
+			{
+				fpsCounter = 0;
+				logger->info("Time per frame: {}ms ,  FPS: {}", timeElapsed / 100, 1000*100/(timeElapsed) );
+				logger->info("Time per frame - Render: {}ms ,  Rendering FPS: {}", timeElapsed2 / 100, 1000 * 100 / (timeElapsed2));
+				timeElapsed = 0;
+				timeElapsed2 = 0;
+			}
 		}
+
+		
 	}
 
 }
