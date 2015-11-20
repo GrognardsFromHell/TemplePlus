@@ -39,9 +39,15 @@ void ClippingMesh::CreateResources(RenderingDevice &device) {
 	auto vertexDataStart = reader.Read<int>();
 	auto indexDataStart = reader.Read<int>();
 
+	// Swap the indices to achieve clock wise tri ordering
+	auto indices = reinterpret_cast<uint16_t*>(&data[indexDataStart]);
+	for (size_t i = 0; i < mTriCount * 3; i += 3) {
+		std::swap(indices[i], indices[i + 2]);
+	}
+
 	auto vertexBufferSize = mVertexCount * sizeof(D3DVECTOR);
 	mVertexBuffer = device.CreateVertexBufferRaw({ &data[vertexDataStart], vertexBufferSize });
-	mIndexBuffer = device.CreateIndexBuffer({ reinterpret_cast<uint16_t*>(&data[indexDataStart]), mTriCount * 3 });
+	mIndexBuffer = device.CreateIndexBuffer({ indices, mTriCount * 3 });
 }
 
 void ClippingMesh::FreeResources(RenderingDevice &device) {

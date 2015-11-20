@@ -19,13 +19,20 @@ public:
 	std::vector<std::unique_ptr<ClippingMesh>> mClippingMeshes;
 
 	RenderingDevice& mDevice;
-	Material mMaterial;
+	Material material;
+	Material debugMaterial;
 	BufferBinding mBufferBinding;
+	bool debug = false;
 
 	static Material CreateMaterial(RenderingDevice &device);
+	static Material CreateDebugMaterial(RenderingDevice &device);
 };
 
-MapClipping::Impl::Impl(RenderingDevice& g) : mDevice(g), mMaterial(CreateMaterial(g)) {
+MapClipping::Impl::Impl(RenderingDevice& g) 
+	: mDevice(g), 
+	  material(CreateMaterial(g)),
+	  debugMaterial(CreateDebugMaterial(g))
+{
 
 	mBufferBinding.AddBuffer(nullptr, 0, sizeof(XMFLOAT3))
 		.AddElement(VertexElementType::Float3, VertexElementSemantic::Position);
@@ -40,10 +47,23 @@ Material MapClipping::Impl::CreateMaterial(RenderingDevice& device) {
 	blendState.writeRed = false;
 	blendState.writeGreen = false;
 	blendState.writeBlue = false;
-	blendState.writeAlpha = false;
 	DepthStencilState depthStencilState;
 	RasterizerState rasterizerState;
-	
+
+	auto vs(device.GetShaders().LoadVertexShader("clipping_vs"));
+	auto ps(device.GetShaders().LoadPixelShader("clipping_ps"));
+
+	return Material(blendState, depthStencilState, rasterizerState, {}, vs, ps);
+
+}
+
+Material MapClipping::Impl::CreateDebugMaterial(RenderingDevice& device) {
+
+	BlendState blendState;
+	DepthStencilState depthStencilState;
+	RasterizerState rasterizerState;
+	rasterizerState.fillMode = D3DFILL_WIREFRAME;
+
 	auto vs(device.GetShaders().LoadVertexShader("clipping_vs"));
 	auto ps(device.GetShaders().LoadPixelShader("clipping_ps"));
 
@@ -67,9 +87,15 @@ void MapClipping::Load(const std::string& directory) {
 }
 
 void MapClipping::Unload() {
-
 	mImpl->mClippingMeshes.clear();
+}
 
+void MapClipping::SetDebug(bool enable) {
+	mImpl->debug = enable;
+}
+
+bool MapClipping::IsDebug() const {
+	return mImpl->debug;
 }
 
 void MapClipping::LoadMeshes(const std::string& directory) {
@@ -147,11 +173,14 @@ void MapClipping::Render() {
 
 	auto device = mImpl->mDevice.GetDevice();
 
-	mImpl->mDevice.SetMaterial(mImpl->mMaterial);
+	if (mImpl->debug) {
+		mImpl->mDevice.SetMaterial(mImpl->debugMaterial);
+	} else {
+		mImpl->mDevice.SetMaterial(mImpl->material);
+	}
 
 	auto viewProjMatrix = mImpl->mDevice.GetCamera().GetViewProj();
 	D3DLOG(device->SetVertexShaderConstantF(0, &viewProjMatrix._11, 4));
-
 
 	for (auto& mesh : mImpl->mClippingMeshes) {
 				
