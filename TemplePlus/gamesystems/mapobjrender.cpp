@@ -103,7 +103,7 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 
 	auto aasHandle = addresses.GetAasHandle(handle);
 
-	logger->info("Rendering {}", handle);
+	//logger->info("Rendering {}", handle);
 
 	auto animParams(GetAnimParamsForObject(handle));
 
