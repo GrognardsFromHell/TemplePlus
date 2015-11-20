@@ -62,7 +62,7 @@ namespace gfx {
 		void DrawLines(gsl::array_view<Line2d> lines);
 
 		void DrawRectangleOutline(XMFLOAT2 topLeft, XMFLOAT2 bottomRight, XMCOLOR color);
-
+		
 		NO_COPY_OR_MOVE(ShapeRenderer2d);
 
 	private:

@@ -39,39 +39,20 @@ void ClippingMesh::CreateResources(RenderingDevice &device) {
 	auto vertexDataStart = reader.Read<int>();
 	auto indexDataStart = reader.Read<int>();
 
+	// Swap the indices to achieve clock wise tri ordering
+	auto indices = reinterpret_cast<uint16_t*>(&data[indexDataStart]);
+	for (size_t i = 0; i < mTriCount * 3; i += 3) {
+		std::swap(indices[i], indices[i + 2]);
+	}
+
 	auto vertexBufferSize = mVertexCount * sizeof(D3DVECTOR);
-	auto d3dDevice = device.GetDevice();
-	if (D3DLOG(d3dDevice->CreateVertexBuffer(vertexBufferSize, 0, 0, D3DPOOL_DEFAULT, &mVertexBuffer, nullptr)) != D3D_OK) {
-		return;
-	}
-
-	void *vertexBufferData;
-	if (D3DLOG(mVertexBuffer->Lock(0, vertexBufferSize, &vertexBufferData, D3DLOCK_DISCARD)) != D3D_OK) {
-		return;
-	}
-
-	memcpy(vertexBufferData, &data[vertexDataStart], vertexBufferSize);
-
-	D3DLOG(mVertexBuffer->Unlock());
-
-	auto indexBufferSize = mTriCount * 3 * sizeof(uint16_t);
-	if (D3DLOG(d3dDevice->CreateIndexBuffer(indexBufferSize, 0, D3DFMT_INDEX16, D3DPOOL_DEFAULT, &mIndexBuffer, nullptr)) != D3D_OK) {
-		return;
-	}
-
-	void *indexBufferData;
-	if (D3DLOG(mIndexBuffer->Lock(0, indexBufferSize, &indexBufferData, D3DLOCK_DISCARD)) != D3D_OK) {
-		return;
-	}
-
-	memcpy(indexBufferData, &data[indexDataStart], indexBufferSize);
-
-	D3DLOG(mIndexBuffer->Unlock());
+	mVertexBuffer = device.CreateVertexBufferRaw({ &data[vertexDataStart], vertexBufferSize });
+	mIndexBuffer = device.CreateIndexBuffer({ indices, mTriCount * 3 });
 }
 
 void ClippingMesh::FreeResources(RenderingDevice &device) {
 
-	mIndexBuffer.Release();
-	mVertexBuffer.Release();
+	mIndexBuffer.reset();
+	mVertexBuffer.reset();
 
 }

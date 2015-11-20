@@ -79,7 +79,6 @@ public:
 	static void EnableLight(int index);
 	static void DisableLight(int index);
 
-	static int SetZFunc(int type);
 } fix;
 
 void RenderStatesHooks::apply() {
@@ -90,7 +89,6 @@ void RenderStatesHooks::apply() {
 	replaceFunction(0x101D8360, EnableLight);
 	replaceFunction(0x101D8390, DisableLight);
 	replaceFunction(0x101D83C0, SetLight);
-	replaceFunction(0x101D60B0, SetZFunc);
 }
 
 void RenderStatesHooks::CommitState(const TigRenderStates* states) {
@@ -220,26 +218,6 @@ void RenderStatesHooks::EnableLight(int index) {
 void RenderStatesHooks::DisableLight(int index) {
 	//D3DLOG(graphics->device()->LightEnable(index, FALSE));
 	throw TempleException("Unsupported!");
-}
-
-int RenderStatesHooks::SetZFunc(int type) {
-	/*
-	switch (type) {
-	case 1:
-		renderStates->SetZFunc(D3DCMP_LESS);
-		break;
-	case 3:
-	case 4:
-		renderStates->SetZFunc(D3DCMP_GREATEREQUAL);
-		break;
-	default:
-		renderStates->SetZFunc(D3DCMP_LESSEQUAL);
-		break;
-	}
-	*/
-	throw TempleException("Unsupported!");
-	return 0;
-
 }
 
 // Copy from TP render states into the render states found in ToEE

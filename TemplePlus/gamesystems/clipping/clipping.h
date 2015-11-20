@@ -20,6 +20,9 @@ public:
 	MapClipping& operator=(MapClipping&) = delete;
 	MapClipping& operator=(MapClipping&&) = delete;
 
+	void SetDebug(bool enable);
+	bool IsDebug() const;
+
 private:
 	class Impl;
 

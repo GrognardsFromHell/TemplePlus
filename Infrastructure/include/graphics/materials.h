@@ -15,11 +15,11 @@ namespace gfx {
 	}
 
 	inline uint8_t GetD3DColorGreen(D3DCOLOR color) {
-		return (color >> 16) & 0xFF;
+		return (color >> 8) & 0xFF;
 	}
 
 	inline uint8_t GetD3DColorBlue(D3DCOLOR color) {
-		return (color >> 16) & 0xFF;
+		return color& 0xFF;
 	}
 
 	inline DirectX::XMFLOAT4 D3DColorToFloat4(D3DCOLOR color) {

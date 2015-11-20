@@ -1,50 +1,74 @@
 #include "stdafx.h"
 
+#include <graphics/bufferbinding.h>
+#include <graphics/materials.h>
+
 #include <infrastructure/vfs.h>
 #include <infrastructure/binaryreader.h>
-#include <infrastructure/renderstates.h>
 
 #include "clipping.h"
 #include "graphics/shaders.h"
 #include "clippingmesh.h"
 
-class MapClipping::Impl : public ResourceListener {
+using namespace gfx;
+
+class MapClipping::Impl {
 public:
 	explicit Impl(RenderingDevice& g);
-
-	void CreateResources(RenderingDevice&) override;
-	void FreeResources(RenderingDevice&) override;
 
 	std::vector<std::unique_ptr<ClippingMesh>> mClippingMeshes;
 
 	RenderingDevice& mDevice;
-	VertexShaderPtr mVertexShader;
-	PixelShaderPtr mPixelShader;
-	CComPtr<IDirect3DVertexDeclaration9> mVertexDecl;
+	Material material;
+	Material debugMaterial;
+	BufferBinding mBufferBinding;
+	bool debug = false;
 
-	ResourceListenerRegistration mRegistration;
+	static Material CreateMaterial(RenderingDevice &device);
+	static Material CreateDebugMaterial(RenderingDevice &device);
 };
 
-MapClipping::Impl::Impl(RenderingDevice& g) : mDevice(g), mRegistration(g, this) {
+MapClipping::Impl::Impl(RenderingDevice& g) 
+	: mDevice(g), 
+	  material(CreateMaterial(g)),
+	  debugMaterial(CreateDebugMaterial(g))
+{
 
-	mVertexShader = g.GetShaders().LoadVertexShader("clipping_vs");
-	mPixelShader = g.GetShaders().LoadPixelShader("clipping_ps");
+	mBufferBinding.AddBuffer(nullptr, 0, sizeof(XMFLOAT3))
+		.AddElement(VertexElementType::Float3, VertexElementSemantic::Position);
 
 }
 
-void MapClipping::Impl::CreateResources(RenderingDevice& g) {
-	D3DVERTEXELEMENT9 elements[] = {
-		{0, 0,D3DDECLTYPE_FLOAT3 , D3DDECLMETHOD_DEFAULT , D3DDECLUSAGE_POSITION , 0},
-		D3DDECL_END()
-	};
+Material MapClipping::Impl::CreateMaterial(RenderingDevice& device) {
 
-	// Resources are created on-demand
-	auto d3dDevice = g.GetDevice();
-	D3DLOG(d3dDevice->CreateVertexDeclaration(&elements[0], &mVertexDecl));
+	BlendState blendState;
+	// Clipping geometry does not write color
+	blendState.writeAlpha = false;
+	blendState.writeRed = false;
+	blendState.writeGreen = false;
+	blendState.writeBlue = false;
+	DepthStencilState depthStencilState;
+	RasterizerState rasterizerState;
+
+	auto vs(device.GetShaders().LoadVertexShader("clipping_vs"));
+	auto ps(device.GetShaders().LoadPixelShader("clipping_ps"));
+
+	return Material(blendState, depthStencilState, rasterizerState, {}, vs, ps);
+
 }
 
-void MapClipping::Impl::FreeResources(RenderingDevice&) {
-	mVertexDecl.Release();
+Material MapClipping::Impl::CreateDebugMaterial(RenderingDevice& device) {
+
+	BlendState blendState;
+	DepthStencilState depthStencilState;
+	RasterizerState rasterizerState;
+	rasterizerState.fillMode = D3DFILL_WIREFRAME;
+
+	auto vs(device.GetShaders().LoadVertexShader("clipping_vs"));
+	auto ps(device.GetShaders().LoadPixelShader("clipping_ps"));
+
+	return Material(blendState, depthStencilState, rasterizerState, {}, vs, ps);
+
 }
 
 MapClipping::MapClipping(RenderingDevice& g) : mImpl(std::make_unique<Impl>(g)) {
@@ -63,9 +87,15 @@ void MapClipping::Load(const std::string& directory) {
 }
 
 void MapClipping::Unload() {
-
 	mImpl->mClippingMeshes.clear();
+}
 
+void MapClipping::SetDebug(bool enable) {
+	mImpl->debug = enable;
+}
+
+bool MapClipping::IsDebug() const {
+	return mImpl->debug;
 }
 
 void MapClipping::LoadMeshes(const std::string& directory) {
@@ -143,15 +173,14 @@ void MapClipping::Render() {
 
 	auto device = mImpl->mDevice.GetDevice();
 
-	mImpl->mVertexShader->Bind();
-	mImpl->mPixelShader->Bind();
+	if (mImpl->debug) {
+		mImpl->mDevice.SetMaterial(mImpl->debugMaterial);
+	} else {
+		mImpl->mDevice.SetMaterial(mImpl->material);
+	}
 
-	auto projMatrix = renderStates->Get3dProjectionMatrix();
-	D3DLOG(device->SetVertexShaderConstantF(0, &projMatrix._11, 4));
-
-	renderStates->SetColorWriteEnable(false, false, false, false);
-	renderStates->SetZWriteEnable(true);
-	renderStates->SetFVF(0);
+	auto viewProjMatrix = mImpl->mDevice.GetCamera().GetViewProj();
+	D3DLOG(device->SetVertexShaderConstantF(0, &viewProjMatrix._11, 4));
 
 	for (auto& mesh : mImpl->mClippingMeshes) {
 				
@@ -159,13 +188,10 @@ void MapClipping::Render() {
 			continue; // This is a mesh that failed to load
 		}
 	
-		renderStates->SetStreamSource(0, mesh->GetVertexBuffer(), sizeof(D3DVECTOR));
-		renderStates->SetIndexBuffer(mesh->GetIndexBuffer(), 0);
-		renderStates->SetFVF(0);
-		renderStates->Commit();
+		mImpl->mBufferBinding.SetBuffer(0, mesh->GetVertexBuffer());
+		mImpl->mBufferBinding.Bind();
+		mImpl->mDevice.GetDevice()->SetIndices(mesh->GetIndexBuffer()->GetBuffer());
 		
-		D3DLOG(device->SetVertexDeclaration(mImpl->mVertexDecl));
-
 		for (auto& obj : mesh->GetInstances()) {
 			D3DXVECTOR4 constants = { 0, 0, 0, 0 };
 			constants.x = cosf(obj.rotation);
@@ -191,19 +217,8 @@ void MapClipping::Render() {
 				mesh->GetVertexCount(),
 				0, 
 				mesh->GetTriCount()));
-
-			continue;
 		}
 
 	}
-
-	renderStates->SetColorWriteEnable(true, true, true, true);
-
-	D3DLOG(device->SetVertexDeclaration(nullptr));
-
-	renderStates->SetFillMode(D3DFILL_SOLID);
-
-	mImpl->mVertexShader->Unbind();
-	mImpl->mPixelShader->Unbind();
 
 }

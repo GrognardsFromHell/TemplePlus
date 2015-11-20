@@ -63,6 +63,7 @@ class MainWindow;
 namespace gfx {
 	class RenderingDevice;
 	class ShapeRenderer2d;
+	class ShapeRenderer3d;
 	class MdfMaterialFactory;
 }
 namespace temple {
@@ -105,6 +106,10 @@ public:
 		return *mShapeRenderer2d;
 	}
 
+	gfx::ShapeRenderer3d& GetShapeRenderer3d() {
+		return *mShapeRenderer3d;
+	}
+
 	temple::SoundSystem& GetSoundSystem() {
 		return *mSoundSystem;
 	}
@@ -135,6 +140,7 @@ private:
 	std::unique_ptr<TextLayouter> mTextLayouter;
 	std::unique_ptr<gfx::MdfMaterialFactory> mMdfFactory;
 	std::unique_ptr<gfx::ShapeRenderer2d> mShapeRenderer2d;
+	std::unique_ptr<gfx::ShapeRenderer3d> mShapeRenderer3d;
 	std::unique_ptr<temple::SoundSystem> mSoundSystem;
 	std::unique_ptr<temple::MovieSystem> mMovieSystem;
 	std::unique_ptr<class LegacyVideoSystem> mLegacyVideoSystem;

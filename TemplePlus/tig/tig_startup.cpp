@@ -2,6 +2,7 @@
 
 #include <graphics/device.h>
 #include <graphics/shaperenderer2d.h>
+#include <graphics/shaperenderer3d.h>
 #include <graphics/mdfmaterials.h>
 
 #include <temple/dll.h>
@@ -95,6 +96,7 @@ TigInitializer::TigInitializer(HINSTANCE hInstance)
 		config.renderHeight);
 	mMdfFactory = std::make_unique<gfx::MdfMaterialFactory>(*mRenderingDevice);
 	mShapeRenderer2d = std::make_unique<gfx::ShapeRenderer2d>(*mRenderingDevice);
+	mShapeRenderer3d = std::make_unique<gfx::ShapeRenderer3d>(*mRenderingDevice);
 	mTextLayouter = std::make_unique<TextLayouter>(*mRenderingDevice, *mShapeRenderer2d);
 	mStartedSystems.emplace_back(StartSystem("idxtable.c", 0x101EC400, 0x101ECAD0));
 	mStartedSystems.emplace_back(StartSystem("trect.c", TigStartupNoop, 0x101E4E40));

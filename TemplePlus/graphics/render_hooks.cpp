@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include <graphics/shaperenderer2d.h>
+#include <graphics/shaperenderer3d.h>
 #include <graphics/textures.h>
 #include <graphics/device.h>
 
@@ -15,6 +16,8 @@
 
 static RenderHooks fix;
 
+bool RenderHooks::specialZ = false;
+
 const char* RenderHooks::name() {
 	return "Rendering Replacements";
 }
@@ -28,6 +31,12 @@ void RenderHooks::apply() {
 	replaceFunction(0x101D8B70, RenderRectIndirect);
 	replaceFunction(0x101D61F0, RenderLine3d);
 	replaceFunction(0x1018B200, RenderRectInt);
+
+	replaceFunction(0x10107050, RenderDisc3d);
+	replaceFunction(0x101D9FC0, RenderUnk3d);
+	replaceFunction(0x101D60B0, SetDrawCircleZMode);
+	replaceFunction(0x10106B70, DrawCircle3d);
+	
 }
 
 int RenderHooks::ShaderRender3d(int vertexCount, D3DXVECTOR4* pos, D3DXVECTOR4* normals, D3DCOLOR* diffuse, D3DXVECTOR2* uv, int primCount, uint16_t* indices, int shaderId) {
@@ -451,6 +460,26 @@ void RenderHooks::RenderRectInt(int left, int top, int width, int height, D3DCOL
 	RenderRectIndirect(&topLeft, &bottomRight, color);
 }
 
+void RenderHooks::RenderDisc3d(LocAndOffsets& loc, int shaderId, float rotation, float radius) {
+
+	auto material(tig->GetMdfFactory().GetById(shaderId));
+	if (!material) {
+		return;
+	}
+		
+	auto center2d(loc.ToCenterOfTileAbs());
+	XMFLOAT3 center{ center2d.x, 0, center2d.y };
+
+	tig->GetShapeRenderer3d().DrawDisc(center, rotation, radius, material);
+
+}
+
+int RenderHooks::RenderUnk3d(int posCount, XMFLOAT3* positions, XMCOLOR color, int unk1, int unk2) {
+
+	return 0;
+
+}
+
 int RenderHooks::RenderRectIndirect(XMFLOAT2* topLeft, XMFLOAT2* bottomRight, XMCOLOR color) {
 	auto &shapeRenderer = tig->GetShapeRenderer2d();
 
@@ -459,12 +488,49 @@ int RenderHooks::RenderRectIndirect(XMFLOAT2* topLeft, XMFLOAT2* bottomRight, XM
 	return 0;
 }
 
-int RenderHooks::RenderLine3d(D3DVECTOR* from, D3DVECTOR* to, D3DCOLOR color) {
-	/*std::vector<Line> lines{
-		{*from, *to ,color}
-	};
+int RenderHooks::RenderLine3d(XMFLOAT3* from, XMFLOAT3* to, XMCOLOR color) {
 
-	Renderer renderer(*graphics);
-	renderer.DrawLines(lines);*/
+	tig->GetShapeRenderer3d().DrawLine(
+		*from,
+		*to,
+		color
+	);
+
 	return 0;
+
+}
+
+/*
+	This function is called right before a draw_circle function
+	with argument 3, then called again afterwards with argument 2.
+	Instead of propagating that to all draws, we store it here
+	for the next draw circle call.
+
+	The use case for this is to draw circles that are occluded 
+	by walls in a slightly less opaque color.
+*/
+void RenderHooks::SetDrawCircleZMode(int type) {
+	if (type == 3) {
+		specialZ = true; // D3DCMP_GREATEREQUAL
+	} else if(type == 2) {
+		specialZ = false;
+	} else {
+		throw TempleException("Unsupported depth type: {}", type);
+	}
+}
+
+void RenderHooks::DrawCircle3d(LocAndOffsets center, 
+	float negElevation, 
+	XMCOLOR fillColor,
+	XMCOLOR borderColor,
+	float radius) {
+		
+	auto y = -(sinf(-0.77539754f) * negElevation);
+	auto center2d(center.ToCenterOfTileAbs());
+	XMFLOAT3 center3d{ center2d.x, y, center2d.y };
+
+	tig->GetShapeRenderer3d().DrawFilledCircle(
+		center3d, radius, borderColor, fillColor, specialZ
+	);
+
 }
