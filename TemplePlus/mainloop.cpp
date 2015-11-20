@@ -97,7 +97,7 @@ void GameLoop::Run() {
 	TigMsg msg;
 	auto quit = false;
 	static int fpsCounter = 0;
-	static int timeElapsed = 0;
+	static int timeElapsed = 0, timeElapsed2=0;
 	while (!quit) {
 
 		Stopwatch sw1;
@@ -115,8 +115,11 @@ void GameLoop::Run() {
 		if (!config.windowed && config.lockCursor) {
 			tig->GetMainWindow().LockCursor();
 		}
+		Stopwatch sw2;
 
 		RenderFrame();
+		
+		timeElapsed2 += sw2.GetElapsedMs();
 
 		// Why does it process msgs AFTER rendering???		
 		while (!msgFuncs.Process(&msg)) {
@@ -148,7 +151,9 @@ void GameLoop::Run() {
 			{
 				fpsCounter = 0;
 				logger->info("Time per frame: {}ms ,  FPS: {}", timeElapsed / 100, 1000*100/(timeElapsed) );
+				logger->info("Time per frame - Render: {}ms ,  Rendering FPS: {}", timeElapsed2 / 100, 1000 * 100 / (timeElapsed2));
 				timeElapsed = 0;
+				timeElapsed2 = 0;
 			}
 		}
 
