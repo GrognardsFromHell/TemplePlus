@@ -121,6 +121,10 @@ void MapTerrain::RenderTile(int x, int y, const TigRect& destRect) {
 	auto textureName = GetTileTexture(primaryMapArtId, x, y);
 	auto texture = mDevice.GetTextures().Resolve(textureName, false);
 
+	if (!texture->IsValid()) {
+		return;
+	}
+
 	XMCOLOR color(*addresses.terrainTintRed,
 		*addresses.terrainTintGreen,
 		*addresses.terrainTintBlue,
