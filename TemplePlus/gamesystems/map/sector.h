@@ -228,6 +228,12 @@ struct SectorCacheEntry
 	Sector sector;
 };
 
+struct SectorTime // used as a timestap for sector locking
+{
+	SectorLoc secLoc;
+	GameTime gameTime;
+};
+
 
 class SectorSystem : TempleFix
 {
@@ -245,6 +251,17 @@ public:
 	static uint64_t GetSectorLimitX();
 	static uint64_t GetSectorLimitY();
 	static BOOL SectorCacheFind(SectorLoc secLoc, int* sectorCacheIdx);
+	/* 
+	save sector to hdd; uses a different function in editor mode 
+	*/
+	static void SectorSave(Sector* sect);
+	/*
+	save sector to hdd; uses a different function in editor mode
+	*/
+	static BOOL SectorLoad(SectorLoc secLoc, Sector* sect);
+
+	static void SectorCacheEntryFree(Sector* sect);
+	static BOOL SectorCacheFindUnusedIdx(int * idxUnused);
 	/*
 	loads from file into a cache (with a recency information so old sector get unlocked first)
 	*/
@@ -268,6 +285,8 @@ public:
 	bool GetTileFlagsArea(TileRect * tileRect, Subtile *out, int * count);
 
 	void apply() override {
+		replaceFunction(0x10081FA0, SectorCacheFind);
+		replaceFunction(0x10082700, SectorLock);
 	};
 };
 

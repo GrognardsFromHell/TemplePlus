@@ -15,19 +15,33 @@ struct SectorAddresses : temple::AddressTable
 	BOOL(__cdecl*SectorCacheLocExists)(SectorLoc secLoc);
 	int(__cdecl*SectorUnlock)(SectorLoc secLoc);
 	void(__cdecl* SectorCacheUnlockAll)();
+	void(*SectorCacheEntryFree)(); // Sector* @<esi>
+
 	int(__cdecl* SectorSystemInit)();
+
+	BOOL(_cdecl**SectorSaveFunc)(Sector* sect);
+	BOOL(_cdecl**SectorLoadFunc)(SectorLoc secLoc, Sector* sect);
+
 	BOOL(__cdecl* GetPointAlongSegmentNearestToOriginDistanceRfromV)(float absVx, float absVy, float radiusAdjAmt, RaycastPointSearchPacket * srchPkt, PointAlongSegment* pnt);
 	BOOL(__cdecl* IsPointCloseToSegment)(float absVx, float absVy, float radiusAdjAmt, RaycastPointSearchPacket * srchPkt);
+
+	GameTime * sectorLockTimeBase;
+
+	SectorTime ** sectorTimes;
+	int * sectorTimesCount;
 	int *sectorLockSthg_10AB7458;
-	int * sectorCacheIdx;
+	int * sectorCacheIndicesCurIdx;
 	int ** sectorCacheIndices;
 	BOOL * sectorLocking;
 	SectorCacheEntry ** sectorCache;
 	int * sectorLockSerial;
 	int * secCountSthg_10AB74AC;
+	int * sectorCacheLockedCount;
+	int * sectorCacheSize;
 
 	SectorAddresses()
 	{
+		rebase(SectorCacheEntryFree,  0x10081E10);
 		rebase(SectorCacheFind,		  0x10081FA0);
 		rebase(BuildTileListFromRect, 0x100824D0);
 		rebase(SectorCacheFindUnusedIdx, 0x10082030);
@@ -39,11 +53,20 @@ struct SectorAddresses : temple::AddressTable
 		rebase(IsPointCloseToSegment, 0x100BA980);
 		rebase(GetPointAlongSegmentNearestToOriginDistanceRfromV,0x100BAA30);
 
+		rebase(sectorLockTimeBase,		0x102CC130);
+
+		rebase(sectorTimes,				0x10AB73F8);
+		rebase(sectorCache,				0x10AB7408);
 		rebase(sectorLockSerial,		0x10AB7410);
-		rebase(sectorCacheIdx,			0x10AB7430);
+		rebase(SectorLoadFunc,			0x10AB7420);
+		rebase(sectorCacheIndicesCurIdx,	0x10AB7430);
+		rebase(sectorCacheLockedCount,	0x10AB7434);
+		rebase(sectorCacheSize, 		0x10AB7450);
+		rebase(sectorTimesCount,		0x10AB7454);
 		rebase(sectorLockSthg_10AB7458, 0x10AB7458);
 		rebase(sectorCacheIndices,		0x10AB7478);
 		rebase(sectorLocking,			0x10AB747C);
+		rebase(SectorSaveFunc,			0x10AB74A0);
 		rebase(secCountSthg_10AB74AC,	0x10AB74AC);
 	}
 } addresses;
@@ -65,14 +88,107 @@ uint64_t SectorSystem::GetSectorLimitY()
 	return temple::GetRef<uint64_t>(0x10AB7448);
 }
 
-BOOL SectorSystem::SectorCacheFind(SectorLoc secLoc, int* sectorCacheIdx)
+BOOL SectorSystem::SectorCacheFind(SectorLoc secLoc, int* secCacheIdx)
 {
-	return addresses.SectorCacheFind(secLoc, sectorCacheIdx);
+
+	SectorCacheEntry * secCache = *addresses.sectorCache;
+	int * secCacheIndices = *addresses.sectorCacheIndices;
+
+
+	static SectorLoc lastSecLoc;
+	static int idxMid;
+	//static int searchDepthHist[128];
+	if (secLoc == lastSecLoc)
+	{
+		if (secCache[secCacheIndices[idxMid]].sector.secLoc == secLoc)
+		{
+			*secCacheIdx = idxMid;
+			//searchDepthHist[0]++;
+			return 1;
+		}
+	}
+
+	int idxLo=0;
+	int idxHi = *addresses.sectorCacheLockedCount - 1;
+
+	if (idxHi < 1)
+	{
+		*secCacheIdx = idxLo;
+		return false;
+	}
+
+	int searchCount = 0;
+	while(idxHi >= idxLo)
+	{
+		searchCount++;
+		idxMid = (idxLo + idxHi) / 2;
+		int idx = secCacheIndices[idxMid];
+		if ( secCache[idx].sector.secLoc.raw >= secLoc.raw)
+		{
+			if (secCache[idx].sector.secLoc.raw == secLoc.raw)
+			{
+				*secCacheIdx = idxMid;
+				lastSecLoc = secLoc;
+				//searchDepthHist[searchCount]++;
+				return 1;
+				
+			} else
+			{
+				idxHi = idxMid - 1;
+			}
+		} else
+		{
+			idxLo = idxMid + 1;
+		}
+	}
+	*secCacheIdx = idxLo;
+	return 0;
+	// return addresses.SectorCacheFind(secLoc, secCacheIdx);
+}
+
+void SectorSystem::SectorSave(Sector* sect)
+{
+	(*addresses.SectorSaveFunc)(sect);
+}
+
+BOOL SectorSystem::SectorLoad(SectorLoc secLoc, Sector* sect)
+{
+	return (*addresses.SectorLoadFunc)(secLoc, sect);
+}
+
+void __declspec(naked) SectorSystem::SectorCacheEntryFree(Sector* sect)
+{
+	{  __asm push esi  __asm push edi};
+	__asm {
+		mov esi, sect;
+		mov edi, addresses.SectorCacheEntryFree;
+		call edi;
+	}
+	{ __asm pop edi  __asm pop esi } 
+
+}
+
+BOOL SectorSystem::SectorCacheFindUnusedIdx(int* idxUnused)
+{
+	int secCacheSize = *addresses.sectorCacheSize;
+	auto cacheEntry = *addresses.sectorCache;
+	for (int i = 0; i < secCacheSize;i++)
+	{
+		if (cacheEntry[i].isUsed == 0)
+		{
+			*idxUnused = i;
+			return true;
+		}
+	}
+	return false;
+	// return addresses.SectorCacheFindUnusedIdx(idxUnused);
 }
 
 int SectorSystem::SectorLock(SectorLoc secLoc, Sector** sectorOut)
 {
-/*	int	unlockedSecIdx = -1;
+	int	unlockedSecIdx = -1;
+	static int sectorCacheIndicesCurIdx = 0;
+
 	if ( *addresses.sectorLocking )
 	{
 	logger->warn("Warning: recursive sector lock detected\n");
@@ -91,15 +207,15 @@ int SectorSystem::SectorLock(SectorLoc secLoc, Sector** sectorOut)
 
 	
 	int * secIndices = *addresses.sectorCacheIndices;
-	auto secCahceIdx = secIndices[*addresses.sectorCacheIdx];
+	auto secCacheIdx = secIndices[sectorCacheIndicesCurIdx];
 	auto secCache = *addresses.sectorCache;
-	SectorCacheEntry * secCacheEntry = &secCache[secCahceIdx];
+	SectorCacheEntry * secCacheEntry = &secCache[secCacheIdx];
 
 	// begin locking!
 	*addresses.sectorLocking = 1;
 	int lockSerial = ++*addresses.sectorLockSerial;
 
-	if (secCache[secCahceIdx].isUsed && secCacheEntry->sector.secLoc == secLoc)
+	if (secCache[secCacheIdx].isUsed && secCacheEntry->sector.secLoc == secLoc)
 	{
 		++secCacheEntry->lockCount;
 		secCacheEntry->lastLockId = lockSerial;
@@ -109,13 +225,97 @@ int SectorSystem::SectorLock(SectorLoc secLoc, Sector** sectorOut)
 		return 1;
 	}
 
-	if (SectorCacheFind(secLoc,addresses.sectorCacheIdx))
+	if (SectorCacheFind(secLoc , &sectorCacheIndicesCurIdx))
 	{
-		
+		auto secEntry = &secCache[secIndices[sectorCacheIndicesCurIdx]];
+		secEntry->lockCount++;
+		secEntry->lastLockId = lockSerial;
+		*sectorOut = &secCache[secIndices[sectorCacheIndicesCurIdx]].sector;
+		++*addresses.secCountSthg_10AB74AC;
+		*addresses.sectorLocking = false;
+		return 1;
 	}
-	*addresses.sectorLocking = 0;
-	*/
-	return addresses.SectorLock(secLoc, sectorOut);
+
+	if (*addresses.sectorCacheLockedCount >= *addresses.sectorCacheSize)
+	{
+		for (int i = 0; i < *addresses.sectorCacheSize; i++)
+		{
+			int _secIdx = secIndices[i];
+			int secCacheEntryLockCnt = secCache[_secIdx].lockCount;
+			if (secCacheEntryLockCnt != 0) continue;
+			if (unlockedSecIdx == -1)
+			{
+				unlockedSecIdx = i;
+				continue;
+			}
+			if (secCache[_secIdx].lastLockId < secCache[secIndices[unlockedSecIdx]].lastLockId )
+				unlockedSecIdx = i;
+		}
+		if (unlockedSecIdx == -1 || *addresses.sectorCacheSize == 0)
+		{
+			logger->error("Warning: attempt to lock sector in cache failed due to lack of unlocked slots available.  This is bad.  Help.");
+			*addresses.sectorLocking = false;
+			return 0;
+		}
+		logger->info("Sector Cache full, removing oldest unlocked entry (%I64u)...",secCache[secIndices[unlockedSecIdx]].sector.secLoc.raw);
+		auto unlockedEntry = &secCache[secIndices[unlockedSecIdx]];
+		SectorSave(&unlockedEntry->sector);
+		SectorCacheEntryFree(&unlockedEntry->sector);
+		unlockedEntry->isUsed = 0;
+		int * idxToRemove = addresses.sectorCacheIndices[unlockedSecIdx];
+		memcpy(idxToRemove, idxToRemove + 1, sizeof(int) * (*addresses.sectorCacheLockedCount - unlockedSecIdx - 1) );
+		--*addresses.sectorCacheLockedCount;
+		SectorCacheFind(secLoc, &sectorCacheIndicesCurIdx);
+	}
+
+	int idxUnused;
+	if ( !SectorCacheFindUnusedIdx(&idxUnused))
+	{
+		logger->error("SectorCacheFindUnused failed to find an available slot in the art cache!\n");
+		*addresses.sectorLocking = false;
+		return 0;
+	}
+
+	GameTime gameTimeElapsed = *addresses.sectorLockTimeBase;
+	SectorTime * sectorTimes = *addresses.sectorTimes;
+	for (int i = 0; i < *addresses.sectorTimesCount; i++)
+	{
+		auto time = &sectorTimes[i];
+		if ( time->secLoc == secLoc )
+		{
+			gameTimeElapsed = gameTimeSys.ElapsedGetDelta(&sectorTimes[i].gameTime);
+			memcpy(&sectorTimes[i], &sectorTimes[i + 1], sizeof(SectorTime) * (*addresses.sectorTimesCount - i - 1));
+			--*addresses.sectorTimesCount;
+			break;
+		}
+	}
+
+
+	secCache[idxUnused].sector.timeElapsed = gameTimeElapsed;
+	if (!SectorLoad(secLoc, &secCache[idxUnused].sector))
+	{
+		logger->error("attempt to lock sector %I64u in cache failed due to error in load.  This is bad.  Help.\n", secLoc.raw);
+		*addresses.sectorLocking = false;
+		return false;
+	}
+
+
+	memcpy(&(*addresses.sectorCacheIndices)[sectorCacheIndicesCurIdx+1],
+		&(*addresses.sectorCacheIndices)[sectorCacheIndicesCurIdx],
+		sizeof(int) * (*addresses.sectorCacheLockedCount - sectorCacheIndicesCurIdx));
+	secIndices[sectorCacheIndicesCurIdx] = idxUnused;
+	secCacheEntry = &secCache[idxUnused];
+	secCacheEntry->lockCount = 1;
+	secCacheEntry->isUsed = 1;
+	secCacheEntry->lastLockId = lockSerial;
+	secCacheEntry->sector.secLoc = secLoc;
+	++*addresses.sectorCacheLockedCount;
+	*sectorOut = &secCacheEntry->sector;
+	++*addresses.secCountSthg_10AB74AC;
+	*addresses.sectorLocking = false;
+	return true;
+	
+	// return addresses.SectorLock(secLoc, sectorOut);
 }
 
 int SectorSystem::SectorUnlock(SectorLoc secLoc)

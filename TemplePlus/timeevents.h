@@ -1,6 +1,7 @@
 #pragma once
 
 #include "temple_functions.h"
+#include "gametime.h"
 
 #pragma pack(push, 1)
 
@@ -68,6 +69,7 @@ enum class TimeEventSystem : uint32_t {
 	PythonRealtime = 37
 };
 
+/*
 struct GameTime {
 	int timeInDays = 0;
 	int timeInMs = 0;
@@ -91,6 +93,7 @@ struct GameTime {
 		}
 	}
 };
+*/
 
 union TimeEventArg {
 	int int32;

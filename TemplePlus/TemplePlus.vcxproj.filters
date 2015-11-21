@@ -291,6 +291,7 @@
     <ClCompile Include="maps.cpp">
       <Filter>Map System</Filter>
     </ClCompile>
+    <ClCompile Include="gametime.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -560,6 +561,7 @@
     <ClInclude Include="maps.h">
       <Filter>Map System</Filter>
     </ClInclude>
+    <ClInclude Include="gametime.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

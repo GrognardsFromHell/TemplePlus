@@ -44,6 +44,7 @@
     <ClCompile Include="gamesystems\map\d20_help.cpp" />
     <ClCompile Include="gamesystems\map\sector.cpp" />
     <ClCompile Include="gamesystems\map\tig_console.cpp" />
+    <ClCompile Include="gametime.cpp" />
     <ClCompile Include="graphics\textures.cpp" />
     <ClCompile Include="graphics\textures_hooks.cpp" />
     <ClCompile Include="graphics\video_hooks.cpp">
@@ -214,6 +215,7 @@
     <ClInclude Include="gamesystems\map\d20_help.h" />
     <ClInclude Include="gamesystems\map\sector.h" />
     <ClInclude Include="gamesystems\map\tig_console.h" />
+    <ClInclude Include="gametime.h" />
     <ClInclude Include="graphics\legacyvideosystem.h" />
     <ClInclude Include="graphics\textures.h" />
     <ClInclude Include="graphics\video_hooks.h" />
