@@ -19,6 +19,7 @@
 #include "legacysystems.h"
 #include "graphics/loadingscreen.h"
 #include "mappreprocessor.h"
+#include "partsystems.h"
 
 #include "mapsystems.h"
 #include <infrastructure/vfs.h>
@@ -663,7 +664,7 @@ void GameSystems::InitializeSystems(LoadingScreen& loadingScreen) {
 	loadingScreen.SetProgress(51 / 61.0f);
 	mUiArtManager = InitializeSystem<UiArtManagerSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(52 / 61.0f);
-	mParticleSys = InitializeSystem<ParticleSysSystem>(loadingScreen, mConfig);
+	mParticleSys = InitializeSystem<ParticleSysSystem>(loadingScreen);
 	loadingScreen.SetProgress(53 / 61.0f);
 	mCheats = InitializeSystem<CheatsSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(54 / 61.0f);

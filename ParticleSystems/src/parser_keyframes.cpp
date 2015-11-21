@@ -6,12 +6,12 @@
 
 namespace particles {
 
-	bool ParserKeyframes::ParseKeyframe(const std::string& value, float lifespan, PartSysParamKeyframe& frame) {
+	bool ParserKeyframes::ParseKeyframe(gsl::cstring_view<> value, float lifespan, PartSysParamKeyframe& frame) {
 
 		// percentage based on lifespan
-		if (value.find('%') != std::string::npos) {
+		if (std::find(value.begin(), value.end(), '%') != value.end()) {
 			float percentage;
-			if (sscanf_s(value.c_str(), "%f(%f%%)", &frame.value, &percentage) == 2) {
+			if (_snscanf_s(value.data(), value.size(), "%f(%f%%)", &frame.value, &percentage) == 2) {
 				frame.start = lifespan * percentage / 100.0f;
 				if (frame.start < 0) {
 					frame.start += lifespan;
@@ -20,7 +20,7 @@ namespace particles {
 			}
 		}
 
-		int tokenCount = sscanf_s(value.c_str(), "%f(%f)", &frame.value, &frame.start);
+		int tokenCount = _snscanf_s(value.data(), value.size(), "%f(%f)", &frame.value, &frame.start);
 
 		// Got a frame count in the 2nd argument
 		if (tokenCount == 2) {
@@ -63,7 +63,7 @@ namespace particles {
 
 	}
 
-	PartSysParamKeyframes* ParserKeyframes::Parse(const std::string& value, float parentLifespan) {
+	PartSysParamKeyframes* ParserKeyframes::Parse(gsl::cstring_view<> value, float parentLifespan) {
 
 		auto frameDefs = split(value, ',', true, true);
 

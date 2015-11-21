@@ -504,15 +504,6 @@ public:
 	const std::string &GetName() const override;
 };
 
-class ParticleSysSystem : public GameSystem, public TimeAwareGameSystem {
-public:
-	static constexpr auto Name = "ParticleSys";
-	ParticleSysSystem(const GameSystemConf &config);
-	~ParticleSysSystem();
-	void AdvanceTime(uint32_t time) override;
-	const std::string &GetName() const override;
-};
-
 class CheatsSystem : public GameSystem {
 public:
 	static constexpr auto Name = "Cheats";

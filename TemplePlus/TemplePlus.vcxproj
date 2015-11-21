@@ -61,10 +61,12 @@
       <BufferSecurityCheck Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</BufferSecurityCheck>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="gamesystems\partsystems.cpp" />
     <ClCompile Include="graphics\imgfile.cpp" />
     <ClCompile Include="graphics\loadingscreen.cpp" />
     <ClCompile Include="graphics\mapterrain.cpp" />
     <ClCompile Include="graphics\materials_hooks.cpp" />
+    <ClCompile Include="gamesystems\partsystems_hooks.cpp" />
     <ClCompile Include="graphics\rectangle.cpp" />
     <ClCompile Include="graphics\renderer.cpp" />
     <ClCompile Include="graphics\renderstates_hooks.cpp" />
@@ -241,6 +243,7 @@
     <ClInclude Include="gamesystems\mapsystems.h" />
     <ClInclude Include="gamesystems\maps\sector.h" />
     <ClInclude Include="gamesystems\objects\objregistry.h" />
+    <ClInclude Include="gamesystems\partsystems.h" />
     <ClInclude Include="graphics\imgfile.h" />
     <ClInclude Include="graphics\legacyvideosystem.h" />
     <ClInclude Include="graphics\loadingscreen.h" />
@@ -382,6 +385,9 @@
     <ProjectReference Include="..\MinHook\MinHook.vcxproj">
       <Project>{23ad6e36-fa90-4a0d-a1f4-6bfcdbcbdc7c}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\ParticleSystems\ParticleSystems.vcxproj">
+      <Project>{a806cafa-9ff2-42dc-a02f-7e57ef2ab867}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Temple\Temple.vcxproj">
       <Project>{a05549fb-a0d1-48aa-b586-fe333bbb4505}</Project>
     </ProjectReference>
@@ -427,17 +433,17 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)\Temple\include;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;C:\Program Files (x86)\Microsoft DirectX SDK\Include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\Temple\include;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;C:\Program Files (x86)\Microsoft DirectX SDK\Include;$(SolutionDir)\ParticleSystems\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;C:\Program Files (x86)\Microsoft DirectX SDK\Lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)\Temple\include;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;C:\Program Files (x86)\Microsoft DirectX SDK\Include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\Temple\include;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;C:\Program Files (x86)\Microsoft DirectX SDK\Include;$(SolutionDir)\ParticleSystems\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;C:\Program Files (x86)\Microsoft DirectX SDK\Lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)\Temple\include;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;C:\Program Files (x86)\Microsoft DirectX SDK\Include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\Temple\include;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;C:\Program Files (x86)\Microsoft DirectX SDK\Include;$(SolutionDir)\ParticleSystems\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;C:\Program Files (x86)\Microsoft DirectX SDK\Lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -457,7 +463,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>temple.lib;tio\tio.lib;MinHook.lib;Infrastructure.lib;D3D8Adapter.lib;winmm.lib;d3d9.lib;ws2_32.lib;python27_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>particlesystems.lib;temple.lib;tio\tio.lib;MinHook.lib;Infrastructure.lib;D3D8Adapter.lib;winmm.lib;d3d9.lib;ws2_32.lib;python27_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib;$(TargetDir)</AdditionalLibraryDirectories>
@@ -507,7 +513,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>temple.lib;tio\tio.lib;MinHook.lib;Infrastructure.lib;D3D8Adapter.lib;winmm.lib;d3d9.lib;ws2_32.lib;python27.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>particlesystems.lib;temple.lib;tio\tio.lib;MinHook.lib;Infrastructure.lib;D3D8Adapter.lib;winmm.lib;d3d9.lib;ws2_32.lib;python27.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>

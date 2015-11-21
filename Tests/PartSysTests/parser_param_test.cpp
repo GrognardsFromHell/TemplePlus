@@ -1,6 +1,5 @@
 #include "stdafx.h"
 
-#include <particles/parser_params.h>
 
 using namespace particles;
 

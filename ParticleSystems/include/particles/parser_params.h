@@ -1,5 +1,6 @@
 #pragma once
 
+#include <gsl/string_view.h>
 #include <string>
 
 #include "params.h"
@@ -10,23 +11,23 @@ class ParserParams {
 public:
 
 	static PartSysParam* Parse(PartSysParamId id,
-	                           const std::string& value,
+							   gsl::cstring_view<> value,
 	                           float emitterLifespan,
 	                           float particleLifespan,
 	                           bool& success);
 
-	static PartSysParam* Parse(const std::string& value,
+	static PartSysParam* Parse(gsl::cstring_view<> value,
 	                           float defaultValue,
 	                           float parentLifespan,
 	                           bool& success);
 
-	static PartSysParamKeyframes* ParseKeyframes(const std::string& value, float parentLifespan);
+	static PartSysParamKeyframes* ParseKeyframes(gsl::cstring_view<> value, float parentLifespan);
 
-	static PartSysParamRandom* ParseRandom(const std::string& value);
+	static PartSysParamRandom* ParseRandom(gsl::cstring_view<> value);
 
-	static PartSysParamSpecial* ParseSpecial(const std::string& value);
+	static PartSysParamSpecial* ParseSpecial(gsl::cstring_view<> value);
 
-	static PartSysParamConstant* ParseConstant(const std::string& value, float defaultValue, bool& success);
+	static PartSysParamConstant* ParseConstant(gsl::cstring_view<> value, float defaultValue, bool& success);
 
 };
 

@@ -1348,29 +1348,6 @@ const std::string &UiArtManagerSystem::GetName() const {
 }
 
 //*****************************************************************************
-//* ParticleSys
-//*****************************************************************************
-
-ParticleSysSystem::ParticleSysSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x1004a150);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system ParticleSys");
-	}
-}
-ParticleSysSystem::~ParticleSysSystem() {
-	auto shutdown = temple::GetPointer<void()>(0x10049b60);
-	shutdown();
-}
-void ParticleSysSystem::AdvanceTime(uint32_t time) {
-	auto advanceTime = temple::GetPointer<void(uint32_t)>(0x10049af0);
-	advanceTime(time);
-}
-const std::string &ParticleSysSystem::GetName() const {
-	static std::string name("ParticleSys");
-	return name;
-}
-
-//*****************************************************************************
 //* Cheats
 //*****************************************************************************
 

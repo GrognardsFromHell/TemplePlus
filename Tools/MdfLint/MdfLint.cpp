@@ -1,13 +1,14 @@
+
+#include <infrastructure/mdfparser.h>
+#include <infrastructure/stringutil.h>
+#include <array>
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
 
 #include <Shlwapi.h>
 #pragma comment(lib, "shlwapi.lib")
-
-#include <infrastructure/mdfparser.h>
-#include <infrastructure/stringutil.h>
-#include <array>
 
 struct LintStats {
 	int processed = 0;

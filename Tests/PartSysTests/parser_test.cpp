@@ -56,7 +56,7 @@ TEST_F(PartSysParserTest, TestKeyFrameParsing) {
 
 	auto fh = fopen("data\\keyframedump.txt", "rt");
 	while (fgets(line, sizeof(line), fh)) {
-		auto parts = split(line, '|');
+		auto parts = split(std::string(line), '|');
 		auto partSysName = parts[0];
 		size_t emitterIdx = stoi(parts[1]);
 		PartSysParamId paramIdx = (PartSysParamId) stoi(parts[2]);
@@ -104,7 +104,7 @@ TEST_F(PartSysParserTest, TestMaxParticleCalculations) {
 
 	auto fh = fopen("data\\partsysdump.txt", "rt");
 	while (fgets(line, sizeof(line), fh)) {
-		auto parts = split(line, '|');
+		auto parts = split(std::string(line), '|');
 		auto partSysName = parts[0];
 		size_t emitterIdx = stoi(parts[1]);
 

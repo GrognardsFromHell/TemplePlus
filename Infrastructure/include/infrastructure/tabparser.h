@@ -1,43 +1,44 @@
 
 #pragma once
 
-#include <string>
 #include <functional>
 #include <vector>
 #include <map>
+
+#include <gsl/string_view.h>
 
 class TabFileColumn {
 	friend class TabFileRecord;
 public:
 
 	bool IsEmpty() const {
-		return mValue.empty();
+		return mValue.size() == 0;
 	}
 
 	operator bool() const {
 		return !IsEmpty();
 	}
 
-	operator const std::string &() const {
+	operator gsl::cstring_view<>() const {
 		return mValue;
 	}
 
-	const std::string &AsString() {
-		return mValue;
+	std::string AsString() const {
+		return std::string(mValue.begin(), mValue.end());
 	}
 
-	bool EqualsIgnoreCase(const char *text) {
-		return !_stricmp(mValue.c_str(), text);
+	bool EqualsIgnoreCase(const char *text) const {
+		return !_strnicmp(mValue.data(), text, mValue.size());
 	}
 
-	bool TryGetFloat(float &value) {
-		return sscanf_s(mValue.c_str(), "%f", &value) == 1;
+	bool TryGetFloat(float &value) const {
+		return _snscanf_s(mValue.data(), mValue.size(), "%f", &value) == 1;
 	}
 
 	template<typename T>
 	bool TryGetEnum(const std::map<std::string, T> &mapping, T& value) {
 		for (auto it = mapping.begin(); it != mapping.end(); ++it) {
-			if (!_stricmp(it->first.c_str(), mValue.c_str())) {
+			if (!_strnicmp(it->first.c_str(), mValue.data(), mValue.size())) {
 				value = it->second;
 				return true;
 			}
@@ -46,9 +47,9 @@ public:
 	}
 
 private:
-	TabFileColumn(const std::string &value) : mValue(value) {
+	explicit TabFileColumn(gsl::cstring_view<> value) : mValue(value) {
 	}
-	const std::string &mValue;	
+	gsl::cstring_view<> mValue;	
 };
 
 class TabFileRecord {
@@ -73,7 +74,7 @@ private:
 	static std::string mMissingColumn;
 
 	int mLineNumber = 0;
-	std::vector<std::string> mColumns;
+	std::vector<gsl::cstring_view<>> mColumns;
 };
 
 class TabFile {

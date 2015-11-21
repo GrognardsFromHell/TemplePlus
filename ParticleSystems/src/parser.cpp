@@ -143,14 +143,17 @@ namespace particles {
 		auto maxParticles = emitter->GetMaxParticles();
 		if (!record[COL_PARTICLE_RATE].TryGetFloat(rate) || rate == 0) {
 			logger->warn("Emitter on line {} has invalid particle rate: '{}'",
-			             record.GetLineNumber(), record[COL_PARTICLE_RATE]);
-		} else if (emitter->IsPermanent()) {
+				record.GetLineNumber(), record[COL_PARTICLE_RATE]);
+		}
+		else if (emitter->IsPermanent()) {
 			// For a permanent emitter, the max. number of particles is how many spawn per time unit multiplied 
 			// by how many time units they will exist
 			maxParticles = static_cast<int>(emitter->GetParticleLifespan() * rate) + 1;
-		} else if (emitter->IsInstant() || emitter->IsPermanentParticles()) {
+		}
+		else if (emitter->IsInstant() || emitter->IsPermanentParticles()) {
 			maxParticles = static_cast<int>(rate) + 1;
-		} else {
+		}
+		else {
 			// If the emitter lifespan limits the number of particles more, use that to calculate the max. particles
 			auto lifespan = std::min<float>(emitter->GetLifespan(), emitter->GetParticleLifespan());
 			maxParticles = static_cast<int>(rate * lifespan) + 1;
@@ -159,13 +162,18 @@ namespace particles {
 		emitter->SetParticleRate(rate);
 		emitter->SetParticleRateSecondary(rate);
 
-		// Not sure what this is for at the moment
+		// This secondary particle rate is the minimum that is used for scaling
+		// down particle systems using the particle fidelity slider in the game 
+		// settings
 		float rateSecondary;
-		if (record[COL_PARTICLE_RATE_SECONDARY].TryGetFloat(rateSecondary)) {
-			emitter->SetParticleRateSecondary(rateSecondary);
-		} else {
-			logger->warn("Emitter on line {} has invalid secondary particle rate: '{}'",
-			             record.GetLineNumber(), record[COL_PARTICLE_RATE_SECONDARY]);
+		auto minRateCol = record[COL_PARTICLE_RATE_SECONDARY];
+		if (!minRateCol.IsEmpty()) {
+			if (minRateCol.TryGetFloat(rateSecondary)) {
+				emitter->SetParticleRateSecondary(rateSecondary);
+			} else {
+				logger->warn("Emitter on line {} has invalid secondary particle rate: '{}'",
+					record.GetLineNumber(), minRateCol);
+			}
 		}
 	}
 
@@ -305,7 +313,7 @@ namespace particles {
 			if (col) {
 				bool success;
 				std::unique_ptr<PartSysParam> param(ParserParams::Parse((PartSysParamId) paramId,
-				                                                        col.AsString(),
+				                                                        col,
 				                                                        emitter->GetLifespan(),
 				                                                        emitter->GetParticleLifespan(),
 				                                                        success));
