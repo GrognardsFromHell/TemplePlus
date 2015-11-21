@@ -4,6 +4,9 @@
 #include <graphics/mdfmaterials.h>
 #include <temple/aasrenderer.h>
 #include <temple/dll.h>
+#include <particles/render.h>
+#include <particles/instances.h>
+#include "partsystems.h"
 
 #include "tig/tig_startup.h"
 #include "temple_functions.h"
@@ -16,6 +19,7 @@
 
 using namespace gfx;
 using namespace temple;
+using namespace particles;
 
 #pragma pack(push, 1)
 struct TileRect {
@@ -129,8 +133,13 @@ GameRenderer::GameRenderer(TigInitializer &tig,
     : mRenderingDevice(tig.GetRenderingDevice()), 
 	  mGameSystems(gameSystems),
       mAasRenderer(std::make_unique<temple::AasRenderer>(gameSystems.GetAAS(), tig.GetRenderingDevice(), tig.GetMdfFactory())),
-      mMapObjectRenderer(std::make_unique<MapObjectRenderer>(
-          gameSystems, tig.GetRenderingDevice(), *mAasRenderer)) {}
+      mMapObjectRenderer(std::make_unique<MapObjectRenderer>(gameSystems, tig.GetRenderingDevice(), *mAasRenderer)),
+	  mParticleRenderer(std::make_unique<ParticleRendererManager>(tig.GetRenderingDevice(),
+		  gameSystems.GetAAS(),
+		  *mAasRenderer))
+{
+
+}
 
 GameRenderer::~GameRenderer() {}
 
@@ -218,6 +227,7 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
     renderFuncs.RenderGMesh();
     renderFuncs.RenderPfxLighting();*/
 
+	RenderParticleSystems();
     /*renderFuncs.RenderPartSys();
     renderFuncs.RenderFogOfWar();
 
@@ -231,4 +241,22 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
 
     mRenderingDevice.Present();
   }
+}
+
+void GameRenderer::RenderParticleSystems()
+{
+
+	for (auto &entry : mGameSystems.GetParticleSys()) {
+
+		// each emitter is rendered individually
+		for (auto &emitter : *entry.second) {
+
+			auto type = emitter->GetSpec()->GetParticleType();
+			auto& renderer = mParticleRenderer->GetRenderer(type);
+			renderer.Render(*emitter);
+
+		}
+
+	}
+
 }

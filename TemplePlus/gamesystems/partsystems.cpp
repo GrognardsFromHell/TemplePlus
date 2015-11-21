@@ -23,7 +23,7 @@ public:
 };
 
 ParticleSysSystem::ParticleSysSystem() {
-
+	
 	PartSysParser parser;
 	parser.ParseFile("rules\\partsys0.tab");
 	parser.ParseFile("rules\\partsys1.tab");
@@ -35,6 +35,7 @@ ParticleSysSystem::ParticleSysSystem() {
 	}
 
 	mExternal = std::make_unique<PartSysExternal>();
+	IPartSysExternal::SetCurrent(mExternal.get());
 
 	/*config_add_default(&config, "partsys_fidelity", "100", sub_10049EC0);
 	a1 = (long double)config_get_int(&config, "partsys_fidelity") * 0.0099999998;
@@ -43,16 +44,35 @@ ParticleSysSystem::ParticleSysSystem() {
 }
 
 ParticleSysSystem::~ParticleSysSystem() {
+	IPartSysExternal::SetCurrent(nullptr);
 }
 
 void ParticleSysSystem::AdvanceTime(uint32_t time) {
 
-	float timeInSecs = time / 1000.0f;
+	// First call
+	if (mLastSimTime == 0) {
+		mLastSimTime = time;
+		return;
+	}
+
+	auto sinceLastSim = time - mLastSimTime;
+	mLastSimTime = time;
+
+	auto timeInSecs = sinceLastSim / 1000.0f;
+
+	if (timeInSecs > 0.5f) {
+		timeInSecs = 0.5f;
+	}
 
 	for (auto it = mActiveSys.begin(); it != mActiveSys.end(); ++it) {
 		auto& sys = *it->second;
 
 		sys.Simulate(timeInSecs);
+
+		// Remove dead systems
+		if (sys.IsDead()) {
+			it = mActiveSys.erase(it);
+		}
 	}
 
 }
