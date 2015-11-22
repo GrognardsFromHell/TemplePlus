@@ -2,10 +2,14 @@
 
 #include <graphics/device.h>
 #include <graphics/mdfmaterials.h>
+#include <graphics/shaperenderer2d.h>
+#include <fonts/fonts.h>
 #include <temple/aasrenderer.h>
 #include <temple/dll.h>
 #include <particles/render.h>
 #include <particles/instances.h>
+#include "ui/ui_render.h"
+#include "tig/tig_font.h"
 #include "partsystems.h"
 
 #include "tig/tig_startup.h"
@@ -16,6 +20,7 @@
 #include "clipping/clipping.h"
 #include <util/config.h>
 #include "mapobjrender.h"
+#include "partsystemsrenderer.h"
 
 using namespace gfx;
 using namespace temple;
@@ -131,13 +136,23 @@ static struct GameRenderFuncs : temple::AddressTable {
 GameRenderer::GameRenderer(TigInitializer &tig,
                            GameSystems &gameSystems)
     : mRenderingDevice(tig.GetRenderingDevice()), 
-	  mGameSystems(gameSystems),
-      mAasRenderer(std::make_unique<temple::AasRenderer>(gameSystems.GetAAS(), tig.GetRenderingDevice(), tig.GetMdfFactory())),
-      mMapObjectRenderer(std::make_unique<MapObjectRenderer>(gameSystems, tig.GetRenderingDevice(), *mAasRenderer)),
-	  mParticleRenderer(std::make_unique<ParticleRendererManager>(tig.GetRenderingDevice(),
-		  gameSystems.GetAAS(),
-		  *mAasRenderer))
+	  mGameSystems(gameSystems)      
 {
+
+	mAasRenderer = std::make_unique<temple::AasRenderer>(
+		gameSystems.GetAAS(), 
+		tig.GetRenderingDevice(), 
+		tig.GetMdfFactory());
+	mMapObjectRenderer = std::make_unique<MapObjectRenderer>(
+		gameSystems, 
+		tig.GetRenderingDevice(), 
+		*mAasRenderer);
+	mParticleSysRenderer = std::make_unique<ParticleSystemsRenderer>(
+		tig.GetRenderingDevice(),
+		tig.GetShapeRenderer2d(),
+		gameSystems.GetAAS(),
+		*mAasRenderer,
+		gameSystems.GetParticleSys());
 
 }
 
@@ -227,7 +242,7 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
     renderFuncs.RenderGMesh();
     renderFuncs.RenderPfxLighting();*/
 
-	RenderParticleSystems();
+	mParticleSysRenderer->Render();
     /*renderFuncs.RenderPartSys();
     renderFuncs.RenderFogOfWar();
 
@@ -241,22 +256,4 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
 
     mRenderingDevice.Present();
   }
-}
-
-void GameRenderer::RenderParticleSystems()
-{
-
-	for (auto &entry : mGameSystems.GetParticleSys()) {
-
-		// each emitter is rendered individually
-		for (auto &emitter : *entry.second) {
-
-			auto type = emitter->GetSpec()->GetParticleType();
-			auto& renderer = mParticleRenderer->GetRenderer(type);
-			renderer.Render(*emitter);
-
-		}
-
-	}
-
 }

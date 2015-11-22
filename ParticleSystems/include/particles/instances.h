@@ -295,6 +295,8 @@ public:
   EmitterList::const_iterator end() const { return mEmitters.cend(); }
 
   const Box2d &GetScreenBounds() const { return mScreenBounds; }
+  
+  XMFLOAT2 GetScreenPosAbs() const { return mScreenPosAbs; }
 
   void Reset();
 
@@ -307,6 +309,7 @@ private:
   PartSysSpecPtr mSpec;
   EmitterList mEmitters;
   Box2d mScreenBounds;
+  XMFLOAT2 mScreenPosAbs;
 
   /*
           Does this particle system's bounding box intersect

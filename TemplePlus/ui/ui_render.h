@@ -2,6 +2,7 @@
 #pragma once
 
 #include "tig/tig.h"
+#include "tig/tig_font.h"
 
 struct TigTextStyle;
 struct TigBuffer;

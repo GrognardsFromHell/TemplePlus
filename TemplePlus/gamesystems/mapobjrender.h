@@ -29,10 +29,6 @@ private:
 
 	void DrawBoundingCylinder(float x, float y, float z, float radius, float height);
 
-	gfx::AnimatedModelParams GetAnimParamsForObject(objHndl handle);
-
-	const std::string& GetAttachedBoneName(objHndl handle);
-
 	std::vector<gfx::Light3d> FindLights(LocAndOffsets atLocation, float radius);
 
 	/*

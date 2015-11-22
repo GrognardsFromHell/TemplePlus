@@ -29,23 +29,6 @@ namespace temple {
 		uint16_t* indices;
 	};
 
-	struct AasAnimParams {
-		uint32_t flags;
-		uint32_t unknown;
-		uint64_t locX;
-		uint64_t locY;
-		float offsetX;
-		float offsetY;
-		float offsetZ;
-		float rotation;
-		float scale;
-		float rotationRoll;
-		float rotationPitch;
-		float rotationYaw;
-		AasHandle parentAnim;
-		char attachedBoneName[48];
-	};
-
 	/*
 	Bitfield that indicates once-per-animation events that happened
 	during advancing the animation's time.

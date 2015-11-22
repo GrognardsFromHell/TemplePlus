@@ -95,3 +95,38 @@ int InventorySystem::ItemGetAdvanced(objHndl item, objHndl parent, int slotIdx, 
 {
 	return addresses.ItemGetAdvanced(item, parent, slotIdx, flags);
 }
+
+const std::string & InventorySystem::GetAttachBone(objHndl handle)
+{
+	auto wearFlags = objects.GetItemWearFlags(handle);
+	auto slot = objects.GetItemInventoryLocation(handle);
+	static std::string sNoBone;
+	static std::string sBoneLeftForearm = "Bip01 L Forearm";
+	static std::array<std::string, 9> sBoneNames = {
+		"HEAD_REF",
+		"CHEST_REF",
+		"",
+		"HANDR_REF",
+		"HANDL_REF",
+		"CHEST_REF",
+		"HANDR_REF",
+		"HANDL_REF",
+		""
+	};
+
+	if (slot < 200) {
+		return sNoBone; // Apparently not equipped
+	}
+
+	auto type = objects.GetType(handle);
+	if (wearFlags & OIF_WEAR_2HAND_REQUIRED && type == obj_t_weapon) {
+		auto weaponType = objects.GetWeaponType(handle);
+		if (weaponType == wt_shortbow || weaponType == wt_longbow || weaponType == wt_spike_chain)
+			return sBoneNames[4]; // HANDL_REF
+	}
+	else if (type == obj_t_armor) {
+		return sBoneLeftForearm;
+	}
+
+	return sBoneNames[slot - 200];
+}

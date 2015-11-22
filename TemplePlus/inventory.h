@@ -58,6 +58,9 @@ struct InventorySystem : temple::AddressTable
 	int ItemRemove(objHndl item);
 	int ItemGetAdvanced(objHndl item, objHndl parent, int slotIdx, int flags);
 
+	// When equipped, which bone of the parent obj does this item attach to?
+	const std::string &GetAttachBone(objHndl item);
+
 	InventorySystem()
 	{
 		rebase(GetSubstituteInventory, 0x1007F5B0);

@@ -14,12 +14,10 @@ using namespace gfx;
 using namespace temple;
 
 static struct MapRenderAddresses : temple::AddressTable {
-	int (*GetAasHandle)(objHndl obj);
 	bool (*IsPosExplored)(locXY loc, float offsetX, float offsetY);
 	void (*WorldToLocalScreen)(vector3f pos, float* xOut, float* yOut);
 	void (*ObjUpdateRenderHeight)(objHndl obj, int animId);
 	void (*EnableLights)(LocAndOffsets forLocation, float radius);
-	int8_t (*SectorGetElevation)(LocAndOffsets forLocation);
 
 	void (*Particles_Kill)(int handle);
 	int (*Particles_CreateAtPos)(int hashcode, float x, float y, float z);
@@ -29,12 +27,10 @@ static struct MapRenderAddresses : temple::AddressTable {
 	BOOL* isNight;
 
 	MapRenderAddresses() {
-		rebase(GetAasHandle, 0x10021A40);
 		rebase(IsPosExplored, 0x1002ECB0);
 		rebase(WorldToLocalScreen, 0x10029040);
 		rebase(ObjUpdateRenderHeight, 0x10021360);
 		rebase(EnableLights, 0x100A5BA0);
-		rebase(SectorGetElevation, 0x100A8CB0);
 		rebase(isNight, 0x10B5DC80);
 
 		rebase(Particles_Kill, 0x10049BE0);
@@ -101,11 +97,9 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 			return;
 	}
 
-	auto aasHandle = addresses.GetAasHandle(handle);
+	auto animatedModel = objects.GetAnimHandle(handle);
 
-	//logger->info("Rendering {}", handle);
-
-	auto animParams(GetAnimParamsForObject(handle));
+	auto animParams(objects.GetAnimParams(handle));
 
 	locXY worldLoc;
 
@@ -154,7 +148,7 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 
 	// Take render height from the animation if necessary
 	if (renderHeight < 0) {
-		addresses.ObjUpdateRenderHeight(handle, aasHandle);
+		addresses.ObjUpdateRenderHeight(handle, animatedModel->GetAnimId());
 		renderHeight = objects.GetRenderHeight(handle);
 	}
 
@@ -200,8 +194,6 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 		diffuse = &sDiffuse[0];
 	}
 
-	auto& aas = mGameSystems.GetAAS();
-	auto animatedModel = aas.BorrowByHandle(aasHandle);
 	// renderStates->SetLighting(true);
 	
 	mAasRenderer.Render(animatedModel.get(), animParams, lights);
@@ -280,98 +272,6 @@ void MapObjectRenderer::DrawBoundingCylinder(float x, float y, float z, float ra
 	/*Renderer renderer(*graphics);
 	renderer.DrawLines(lines);*/
 
-}
-
-gfx::AnimatedModelParams MapObjectRenderer::GetAnimParamsForObject(objHndl handle) {
-	gfx::AnimatedModelParams result;
-
-	result.scale = objects.GetScalePercent(handle) / 100.0f;
-
-	auto type = objects.GetType(handle);
-
-	// Special case for equippable items
-	if ((type >= obj_t_weapon && type <= obj_t_generic || type == obj_t_bag)) {
-		auto itemFlags = objects.GetItemFlags(handle);
-		if ((itemFlags & OIF_DRAW_WHEN_PARENTED) != 0) {
-			auto parent = inventory.GetParent(handle);
-			if (parent) {
-				result.scale *= objects.GetScalePercent(parent) / 100.0f;
-
-				result.attachedBoneName = GetAttachedBoneName(handle);
-				if (!result.attachedBoneName.empty()) {
-					auto parentLoc = objects.GetLocationFull(parent);
-					result.x = parentLoc.location.locx;
-					result.y = parentLoc.location.locy;
-					result.offsetX = parentLoc.off_x;
-					result.offsetY = parentLoc.off_y;
-
-					auto elevation = addresses.SectorGetElevation(parentLoc);
-					auto offsetZ = objects.GetOffsetZ(parent);
-					result.offsetZ = offsetZ - elevation;
-
-					result.rotation = objects.GetRotation(parent);
-					result.rotationPitch = objects.GetRotationPitch(parent);
-
-					auto aasHandle = addresses.GetAasHandle(parent);
-					if (aasHandle) {
-						auto& aas = mGameSystems.GetAAS();
-						result.parentAnim = aas.BorrowByHandle(aasHandle);
-					}
-					return result;
-				}
-			}
-		}
-	}
-
-	auto loc = objects.GetLocationFull(handle);
-	result.x = loc.location.locx;
-	result.y = loc.location.locy;
-	result.offsetX = loc.off_x;
-	result.offsetY = loc.off_y;
-
-	auto flags = objects.GetFlags(handle);
-	int8_t elevation = 0; // TODO: This may be "depth" instead of elevation.
-	if (!(flags & OF_NOHEIGHT)) {
-		elevation = addresses.SectorGetElevation(loc);
-	}
-	result.offsetZ = objects.GetOffsetZ(handle) - elevation;
-	result.rotation = objects.GetRotation(handle);
-	result.rotationPitch = objects.GetRotationPitch(handle);
-
-	return result;
-}
-
-const std::string& MapObjectRenderer::GetAttachedBoneName(objHndl handle) {
-	auto wearFlags = objects.GetItemWearFlags(handle);
-	auto slot = objects.GetItemInventoryLocation(handle);
-	static std::string sNoBone;
-	static std::string sBoneLeftForearm = "Bip01 L Forearm";
-	static std::array<std::string, 9> sBoneNames = {
-		"HEAD_REF",
-		"CHEST_REF",
-		"",
-		"HANDR_REF",
-		"HANDL_REF",
-		"CHEST_REF",
-		"HANDR_REF",
-		"HANDL_REF",
-		""
-	};
-
-	if (slot < 200) {
-		return sNoBone; // Apparently not equipped
-	}
-
-	auto type = objects.GetType(handle);
-	if (wearFlags & OIF_WEAR_2HAND_REQUIRED && type == obj_t_weapon) {
-		auto weaponType = objects.GetWeaponType(handle);
-		if (weaponType == wt_shortbow || weaponType == wt_longbow || weaponType == wt_spike_chain)
-			return sBoneNames[4]; // HANDL_REF
-	} else if (type == obj_t_armor) {
-		return sBoneLeftForearm;
-	}
-
-	return sBoneNames[slot - 200];
 }
 
 class SectorIterator {

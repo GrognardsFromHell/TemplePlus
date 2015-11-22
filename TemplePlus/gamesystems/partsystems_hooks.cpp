@@ -52,7 +52,7 @@ void PartSysHooks::KillAll() {
 	if (!gameSystems) {
 		return; // Already all destroyed
 	}
-	auto &particles = gameSystems->GetParticleSys();
+	gameSystems->GetParticleSys().RemoveAll();
 }
 
 PartSysHandle PartSysHooks::CreateAt(uint32_t hash, XMFLOAT3 pos) {

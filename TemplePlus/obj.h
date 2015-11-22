@@ -25,6 +25,11 @@ struct ObjectScript {
 #pragma pack(pop)
 struct FieldDataMax { uint32_t data[8]; }; // for wrapping "objSetField" calls that get input by value; this is the largest data size that I know of
 
+namespace gfx {
+	struct AnimatedModelParams;
+	using AnimatedModelPtr = std::shared_ptr<class AnimatedModel>;
+}
+
 struct Objects : temple::AddressTable {
 	friend struct LegacyCritterSystem;
 
@@ -48,6 +53,8 @@ struct Objects : temple::AddressTable {
 	void getArrayField(objHndl obj, obj_f fieldIdx, uint32_t subIdx, void * dataOut);
 	uint32_t getArrayFieldNumItems(objHndl obj, obj_f fieldIdx);
 	void ClearArrayField(objHndl objHnd, obj_f objF);
+	gfx::AnimatedModelPtr GetAnimHandle(objHndl obj);
+	gfx::AnimatedModelParams GetAnimParams(objHndl obj);
 
 	uint32_t abilityScoreLevelGet(objHndl, Stat, DispIO *);
 	locXY GetLocation(objHndl handle) {

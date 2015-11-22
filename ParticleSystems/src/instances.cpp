@@ -489,15 +489,7 @@ namespace particles {
 	void PartSys::UpdateScreenBoundingBox(IPartSysExternal* external, const Vec3& worldPos) {
 
 		// Where is the obj center in screen coords?
-		Vec2 screenPos;
-		external->WorldToScreen(worldPos, screenPos);
-
-		// Translate the first emitters bounding box to the screen center
-		auto firstSpec = mEmitters[0]->GetSpec();
-		mScreenBounds.left = screenPos.x + firstSpec->GetBoxLeft();
-		mScreenBounds.top = screenPos.y + firstSpec->GetBoxTop();
-		mScreenBounds.right = screenPos.x + firstSpec->GetBoxRight();
-		mScreenBounds.bottom = screenPos.y + firstSpec->GetBoxBottom();
+		external->WorldToScreen(worldPos, mScreenPosAbs);
 
 	}
 

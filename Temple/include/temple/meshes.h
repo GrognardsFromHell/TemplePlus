@@ -62,4 +62,23 @@ namespace temple {
 
 	};
 
+#pragma pack(push, 1)
+	struct AasAnimParams {
+		uint32_t flags;
+		uint32_t unknown;
+		uint64_t locX;
+		uint64_t locY;
+		float offsetX;
+		float offsetY;
+		float offsetZ;
+		float rotation;
+		float scale;
+		float rotationRoll;
+		float rotationPitch;
+		float rotationYaw;
+		AasHandle parentAnim;
+		char attachedBoneName[48];
+	};
+#pragma pack(pop)
+
 }

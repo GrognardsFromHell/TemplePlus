@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "obj.h"
 #include <temple/dll.h>
+#include <temple/meshes.h>
 #include "d20.h"
 #include "common.h"
 #include "temple_functions.h"
@@ -9,6 +10,7 @@
 #include "location.h"
 #include "pathfinding.h"
 #include "float_line.h"
+#include "gamesystems/gamesystems.h"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -29,6 +31,9 @@ struct ObjectSystemAddresses : temple::AddressTable
 	void(__cdecl *ClearArrayField)(objHndl, obj_f);
 	void(__cdecl * PropCollectionRemoveField)(objHndl objHnd, obj_f fieldIdx);
 	void(__cdecl* SetFieldObjHnd)(objHndl obj, obj_f field, objHndl value);
+	int8_t(*SectorGetElevation)(LocAndOffsets forLocation);
+	int(*GetAasHandle)(objHndl obj);
+	
 	ObjectSystemAddresses()
 	{
 		rebase(GetProtoNum, 0x10039320);
@@ -38,6 +43,9 @@ struct ObjectSystemAddresses : temple::AddressTable
 		rebase(PropCollectionRemoveField, 0x1009E9C0);
 
 		rebase(SetFieldObjHnd, 0x100A0280);
+		rebase(SectorGetElevation, 0x100A8CB0);
+		rebase(GetAasHandle, 0x10021A40);
+
 		/*
 		
 	rebase(Obj_Set_Field_32bit, 0x100A0190);
@@ -217,6 +225,77 @@ uint32_t Objects::getArrayFieldNumItems(objHndl obj, obj_f fieldIdx)
 void Objects::ClearArrayField(objHndl objHnd, obj_f objF)
 {
 	addresses.ClearArrayField(objHnd, objF);
+}
+
+gfx::AnimatedModelPtr Objects::GetAnimHandle(objHndl obj)
+{
+	if (!obj) {
+		return nullptr;
+	}
+	
+	auto handle = addresses.GetAasHandle(obj);
+	
+	return gameSystems->GetAAS().BorrowByHandle(handle);
+}
+
+gfx::AnimatedModelParams Objects::GetAnimParams(objHndl handle)
+{
+	gfx::AnimatedModelParams result;
+
+	result.scale = objects.GetScalePercent(handle) / 100.0f;
+
+	auto type = objects.GetType(handle);
+
+	// Special case for equippable items
+	if ((type >= obj_t_weapon && type <= obj_t_generic || type == obj_t_bag)) {
+		auto itemFlags = objects.GetItemFlags(handle);
+		if ((itemFlags & OIF_DRAW_WHEN_PARENTED) != 0) {
+			auto parent = inventory.GetParent(handle);
+			if (parent) {
+				result.scale *= objects.GetScalePercent(parent) / 100.0f;
+
+				result.attachedBoneName = inventory.GetAttachBone(handle);
+				if (!result.attachedBoneName.empty()) {
+					auto parentLoc = objects.GetLocationFull(parent);
+					result.x = parentLoc.location.locx;
+					result.y = parentLoc.location.locy;
+					result.offsetX = parentLoc.off_x;
+					result.offsetY = parentLoc.off_y;
+
+					auto elevation = addresses.SectorGetElevation(parentLoc);
+					auto offsetZ = objects.GetOffsetZ(parent);
+					result.offsetZ = offsetZ - elevation;
+
+					result.rotation = objects.GetRotation(parent);
+					result.rotationPitch = objects.GetRotationPitch(parent);
+
+					auto aasHandle = addresses.GetAasHandle(parent);
+					if (aasHandle) {
+						auto& aas = gameSystems->GetAAS();
+						result.parentAnim = aas.BorrowByHandle(aasHandle);
+					}
+					return result;
+				}
+			}
+		}
+	}
+
+	auto loc = objects.GetLocationFull(handle);
+	result.x = loc.location.locx;
+	result.y = loc.location.locy;
+	result.offsetX = loc.off_x;
+	result.offsetY = loc.off_y;
+
+	auto flags = objects.GetFlags(handle);
+	int8_t elevation = 0; // TODO: This may be "depth" instead of elevation.
+	if (!(flags & OF_NOHEIGHT)) {
+		elevation = addresses.SectorGetElevation(loc);
+	}
+	result.offsetZ = objects.GetOffsetZ(handle) - elevation;
+	result.rotation = objects.GetRotation(handle);
+	result.rotationPitch = objects.GetRotationPitch(handle);
+
+	return result;
 }
 
 void Objects::InsertDataIntoInternalStack(GameObjectBody * objBody, obj_f fieldIdx, void * dataIn)

@@ -29,12 +29,11 @@ public:
 private:
 
 	void RenderWorld(RenderWorldInfo *info);
-	void RenderParticleSystems();
 	
 	gfx::RenderingDevice& mRenderingDevice;
 	GameSystems &mGameSystems;
 
 	std::unique_ptr<class temple::AasRenderer> mAasRenderer;
 	std::unique_ptr<class MapObjectRenderer> mMapObjectRenderer;
-	std::unique_ptr<particles::ParticleRendererManager> mParticleRenderer;
+	std::unique_ptr<class ParticleSystemsRenderer> mParticleSysRenderer;
 };

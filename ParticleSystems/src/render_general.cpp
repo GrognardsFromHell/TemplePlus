@@ -50,8 +50,15 @@ Material GeneralEmitterRenderState::CreateMaterial(RenderingDevice &device,
   auto shaderName("diffuse_only_ps");
   auto& textureName(emitter.GetSpec()->GetTextureName());  
   if (!textureName.empty()) {
+	SamplerState samplerState;
+	samplerState.addressU = D3DTADDRESS_CLAMP;
+	samplerState.addressV = D3DTADDRESS_CLAMP;
+	samplerState.minFilter = D3DTEXF_LINEAR;
+	samplerState.magFilter = D3DTEXF_LINEAR;
+	samplerState.mipFilter = D3DTEXF_LINEAR;
+
 	auto texture(device.GetTextures().Resolve(textureName, true));
-	samplers.push_back({ texture, {} });
+	samplers.push_back({ texture, samplerState });
 	shaderName = "textured_simple_ps";
   }
   pixelShader = device.GetShaders().LoadPixelShader(shaderName);

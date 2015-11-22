@@ -300,6 +300,7 @@
     <ClCompile Include="fonts\fonts_render.cpp" />
     <ClCompile Include="gamesystems\partsystems.cpp" />
     <ClCompile Include="gamesystems\partsystems_hooks.cpp" />
+    <ClCompile Include="gamesystems\partsystemsrenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -573,6 +574,7 @@
     <ClInclude Include="gamesystems\maps\sector.h" />
     <ClInclude Include="fonts\fonts.h" />
     <ClInclude Include="gamesystems\partsystems.h" />
+    <ClInclude Include="gamesystems\partsystemsrenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

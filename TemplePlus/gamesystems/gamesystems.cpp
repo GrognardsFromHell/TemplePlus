@@ -664,7 +664,8 @@ void GameSystems::InitializeSystems(LoadingScreen& loadingScreen) {
 	loadingScreen.SetProgress(51 / 61.0f);
 	mUiArtManager = InitializeSystem<UiArtManagerSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(52 / 61.0f);
-	mParticleSys = InitializeSystem<ParticleSysSystem>(loadingScreen);
+	mParticleSys = InitializeSystem<ParticleSysSystem>(loadingScreen, 
+		mTig.GetRenderingDevice().GetCamera());
 	loadingScreen.SetProgress(53 / 61.0f);
 	mCheats = InitializeSystem<CheatsSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(54 / 61.0f);

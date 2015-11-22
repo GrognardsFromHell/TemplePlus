@@ -149,7 +149,8 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(usingCo8),
 	CONF_WSTRING(toeeDir),
 	CONF_INT(sectorCacheSize),
-	CONF_INT(screenshotQuality)
+	CONF_INT(screenshotQuality),
+	CONF_BOOL(debugPartSys)
 };
 
 void TemplePlusConfig::Load() {

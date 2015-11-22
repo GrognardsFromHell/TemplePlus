@@ -165,13 +165,13 @@ namespace particles {
 		// Set UV coordinates for the sprite. We need to do this every frame
 		// because we're using DISCARD for locking
 		vertices[0].u = 0;
-		vertices[0].v = 0;
+		vertices[0].v = 1;
 		vertices[1].u = 1;
-		vertices[1].v = 0;
+		vertices[1].v = 1;
 		vertices[2].u = 1;
-		vertices[2].v = 1;
+		vertices[2].v = 0;
 		vertices[3].u = 0;
-		vertices[3].v = 1;
+		vertices[3].v = 0;
 	}
 
 	void DiscParticleRenderer::FillVertex(const PartSysEmitter &emitter,

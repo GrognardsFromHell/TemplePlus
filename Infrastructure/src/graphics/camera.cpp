@@ -1,27 +1,68 @@
 
 #include "graphics/camera.h"
 
-XMFLOAT2 WorldCamera::WorldToScreen(XMFLOAT3 worldPos)
-{
-	auto viewMatrix(XMLoadFloat4x4(&mView));
+namespace gfx {
 
-	auto pos(XMVector3TransformCoord(XMLoadFloat3(&worldPos), viewMatrix));
+	bool WorldCamera::IsBoxOnScreen(XMFLOAT2 screenCenter, float left, float top, float right, float bottom) const
+	{
+		auto dx = mCurScreenOffset.x;
+		auto dy = mCurScreenOffset.y;
 
-	XMFLOAT2 screenPos;
-	XMStoreFloat2(&screenPos, pos);
+		auto screenX = dx - screenCenter.x;
+		auto screenY = dy - screenCenter.y;
 
-	return screenPos;
-}
+		// calculate viewport
+		float viewportRight = mScreenWidth * 0.5f / mScale;
+		float viewportLeft = -viewportRight;
+		float viewportBottom = mScreenHeight * 0.5f / mScale;
+		float viewportTop = -viewportBottom;
+		
+		if (screenX + left >= viewportRight)
+			return false;
+		
+		if (screenX + right <= viewportLeft)
+			return false;
 
-XMFLOAT3 WorldCamera::ScreenToWorld(float x, float y)
-{
-	auto screenVecFar(XMVectorSet(x, y, 0, 1));
-	auto worldFar(XMVector3Unproject(
+		if (screenY + top >= viewportBottom)
+			return false;
+
+		if (screenY + bottom <= viewportTop)
+			return false;
+
+		return true;
+	}
+
+	XMFLOAT2 WorldCamera::WorldToScreen(XMFLOAT3 worldPos)
+	{
+		if (mDirty) {
+			Update();
+		}
+
+		auto viewMatrix(XMLoadFloat4x4(&mView));
+
+		auto pos(XMVector3TransformCoord(XMLoadFloat3(&worldPos), viewMatrix));
+
+		XMFLOAT2 screenPos;
+		XMStoreFloat2(&screenPos, pos);
+		screenPos.x *= -1;
+		
+		return screenPos;
+	}
+
+	XMFLOAT3 WorldCamera::ScreenToWorld(float x, float y)
+	{
+
+		if (mDirty) {
+			Update();
+		}
+
+		auto screenVecFar(XMVectorSet(x, y, 0, 1));
+		auto worldFar(XMVector3Unproject(
 			screenVecFar,
 			0,
 			0,
 			mScreenWidth,
-			mScreenWidth,
+			mScreenHeight,
 			zNear,
 			zFar,
 			XMLoadFloat4x4(&mProjection),
@@ -29,95 +70,114 @@ XMFLOAT3 WorldCamera::ScreenToWorld(float x, float y)
 			XMMatrixIdentity()
 			));
 
-	auto screenVecClose(XMVectorSet(x, y, 1, 1));
-	auto worldClose(XMVector3Unproject(
-		screenVecClose,
-		0,
-		0,
-		mScreenWidth,
-		mScreenWidth,
-		zNear,
-		zFar,
-		XMLoadFloat4x4(&mProjection),
-		XMLoadFloat4x4(&mView),
-		XMMatrixIdentity()
-		));
-	
-	auto worldRay(worldFar - worldClose);
-	auto dist = XMVectorGetY(worldFar) / XMVectorGetY(worldRay);
+		auto screenVecClose(XMVectorSet(x, y, 1, 1));
+		auto worldClose(XMVector3Unproject(
+			screenVecClose,
+			0,
+			0,
+			mScreenWidth,
+			mScreenHeight,
+			zNear,
+			zFar,
+			XMLoadFloat4x4(&mProjection),
+			XMLoadFloat4x4(&mView),
+			XMMatrixIdentity()
+			));
 
-	XMFLOAT3 result;
-	XMStoreFloat3(&result, worldFar - worldRay * dist);
+		auto worldRay(worldFar - worldClose);
+		auto dist = XMVectorGetY(worldFar) / XMVectorGetY(worldRay);
 
-	return result;
-}
+		XMFLOAT3 result;
+		XMStoreFloat3(&result, worldFar - worldRay * dist);
 
-void WorldCamera::CenterOn(float x, float y, float z) {
-
-	if (mDirty) {
-		Update();
+		return result;
 	}
 
-	auto targetScreenPos(WorldToScreen(XMFLOAT3(x, y, z)));
+	void WorldCamera::CenterOn(float x, float y, float z) {
 
-	// Y is flipped
-	targetScreenPos.y *= -1;
-	
-	mXTranslation = - targetScreenPos.x;
-	mYTranslation = - targetScreenPos.y;
-	mDirty = true;
-}
+		if (mDirty) {
+			Update();
+		}
 
-void WorldCamera::Update()
-{
+		auto targetScreenPos(WorldToScreen(XMFLOAT3(x, y, z)));
 
-	if (mIdentityTransform) {
-		XMStoreFloat4x4(&mViewProjection, XMMatrixIdentity());
-		return;
+		// Y is flipped
+		targetScreenPos.y *= -1;
+
+		mXTranslation = -targetScreenPos.x;
+		mYTranslation = -targetScreenPos.y;
+		mDirty = true;
 	}
 
-	auto projection(XMMatrixOrthographicLH(mScreenWidth, mScreenHeight, zNear, zFar));
+	void WorldCamera::Update()
+	{
 
-	XMStoreFloat4x4(&mProjection, projection);
+		if (mIdentityTransform) {
+			XMStoreFloat4x4(&mViewProjection, XMMatrixIdentity());
+			return;
+		}
+
+		auto projection(XMMatrixOrthographicLH(mScreenWidth / mScale, 
+			mScreenHeight / mScale, 
+			zNear, 
+			zFar));
+
+		XMStoreFloat4x4(&mProjection, projection);
 		
-	XMMATRIX view;
-	if (mScale != 1) {
-		view = XMMatrixScaling(mScale, mScale, mScale);
-	} else {
-		view = XMMatrixIdentity();
+		/*
+			This is x for sin(x) = 0.7, so x is roughly 44.42°.
+			The reason here is, that Troika used a 20 by 14 grid
+			and 14 / 20 = 0,7. So this ensures that the rotation
+			to the isometric perspective makes the height of tiles
+			70% of the width.
+		*/
+		auto view = XMMatrixRotationX(-0.77539754f); // Roughly 45° (but not exact)
+
+		auto dxOrigin = - mScreenWidth * 0.5f;
+		auto dyOrigin = - mScreenHeight * 0.5f;
+		dyOrigin = dyOrigin * 20.f / 14.f;
+		XMFLOAT2 transformOrigin;
+		XMStoreFloat2(&transformOrigin, 
+			XMVector3TransformCoord(
+				XMVectorZero(), 
+				XMMatrixTranslation(dxOrigin, 0, -dyOrigin) * view
+			)
+		);
+
+		/*
+			We apply the translation before rotating the camera down,
+			because otherwise the Z value is broken.
+		*/
+		auto dx = mXTranslation - mScreenWidth * 0.5f;
+		auto dy = mYTranslation - mScreenHeight * 0.5f;
+		dy = dy * 20.f / 14.f;
+		view = XMMatrixTranslation(dx, 0, -dy) * view;
+
+		// Calculate how much the screen has moved in x,y coordinates
+		// using the current camera position
+		XMStoreFloat2(&mCurScreenOffset, XMVector3TransformCoord(XMVectorZero(), view));
+		mCurScreenOffset.x -= transformOrigin.x;
+		// mCurScreenOffset.x *= -1;
+		mCurScreenOffset.y -= transformOrigin.y;
+		mCurScreenOffset.y *= -1;
+
+		view = XMMatrixRotationY(2.3561945f) * view;  // 135°
+
+		XMStoreFloat4x4(&mView, view);
+
+		XMStoreFloat4x4(&mViewProjection, view * projection);
+
+		XMStoreFloat4x4(&mInvViewProjection, XMMatrixInverse(nullptr, projection));
+
+		// Build a projection matrix that maps [0,w] and [0,h] to the screen.
+		// To be used for UI drawing
+		XMStoreFloat4x4(
+			&mUiProjection,
+			XMMatrixOrthographicOffCenterLH(0, mScreenWidth, mScreenHeight, 0, 1, 0)
+			);
+
+		mDirty = false;
+
 	}
-	
-	/*
-		This is x for sin(x) = 0.7, so x is roughly 44.42°.
-		The reason here is, that Troika used a 20 by 14 grid
-		and 14 / 20 = 0,7. So this ensures that the rotation
-		to the isometric perspective makes the height of tiles
-		70% of the width.
-	*/
-	view = XMMatrixRotationX(-0.77539754f) * view; 	// Roughly 45° (but not exact)
-	
-	/*
-		We apply the translation before rotating the camera down,
-		because otherwise the Z value is broken.
-	*/
-	auto dx = mXTranslation - mScreenWidth * 0.5f;
-	auto dy = mYTranslation - mScreenHeight * 0.5f;
-	dy = dy * 20.f / 14.f;
-	view = XMMatrixTranslation(dx, 0, -dy) * view;
-
-	view = XMMatrixRotationY(2.3561945f) * view;  // 135°
-
-	XMStoreFloat4x4(&mView, view);
-
-	XMStoreFloat4x4(&mViewProjection, view * projection);
-
-	XMStoreFloat4x4(&mInvViewProjection, XMMatrixInverse(nullptr, projection));
-	
-	// Build a projection matrix that maps [0,w] and [0,h] to the screen.
-	// To be used for UI drawing
-	XMStoreFloat4x4(
-		&mUiProjection,
-		XMMatrixOrthographicOffCenterLH(0, mScreenWidth, mScreenHeight, 0, 1, 0)
-	);
 
 }
