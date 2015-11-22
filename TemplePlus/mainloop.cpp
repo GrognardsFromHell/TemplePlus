@@ -75,7 +75,9 @@ GameLoop::GameLoop(TigInitializer& tig, GameSystems& gameSystems)
 	  mGameSystems(gameSystems),
 	  mGameRenderer(tig, mGameSystems) {
 
-	mDiagScreen = std::make_unique<DiagScreen>(tig.GetRenderingDevice());
+	mDiagScreen = std::make_unique<DiagScreen>(tig.GetRenderingDevice(),
+		gameSystems,
+		mGameRenderer);
 }
 
 GameLoop::~GameLoop() {

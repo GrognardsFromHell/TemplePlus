@@ -51,11 +51,7 @@ void EditorExternal::WorldToScreen(const ::Vec3& worldPos, ::Vec2& screenPos) {
 	screenPos.y = 0;
 }
 
-bool EditorExternal::IsPointUnfogged(const ::Vec2& point) {
-	return true; // Always visible in editor
-}
-
-bool EditorExternal::IsBoxVisible(const ::Box2d& box) {
+bool EditorExternal::IsBoxVisible(const ::Vec2& screenPos, const ::Box2d& bounds) {
 	return true; // Always visible in editor
 }
 

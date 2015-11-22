@@ -13,8 +13,7 @@ public:
 	int GetParentChildBonePos(ObjHndl obj, int boneIdx, ::Vec3& parentPos, ::Vec3& childPos) override;
 	bool GetBonePos(ObjHndl obj, int boneIdx, ::Vec3& pos) override;
 	void WorldToScreen(const ::Vec3& worldPos, ::Vec2& screenPos) override;
-	bool IsPointUnfogged(const ::Vec2& point) override;
-	bool IsBoxVisible(const ::Box2d& box) override;
+	bool IsBoxVisible(const ::Vec2& screenPos, const ::Box2d& box) override;
 	static EditorExternal& GetInstance();
 
 	static void SetObjPos(float x, float y, float z);

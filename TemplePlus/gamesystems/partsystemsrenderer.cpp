@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "partsystemsrenderer.h"
-#include "partsystems.h"
+#include "particlesystems.h"
 
 #include <graphics/device.h>
 #include <graphics/shaperenderer2d.h>
@@ -33,6 +33,10 @@ ParticleSystemsRenderer::ParticleSystemsRenderer(
 		modelRenderer
 	);
 
+	for (size_t i = 0; i < mRenderTimes.size(); ++i) {
+		mRenderTimes[i] = 0;
+	}
+
 }
 
 void ParticleSystemsRenderer::Render()
@@ -40,13 +44,15 @@ void ParticleSystemsRenderer::Render()
 
 	auto& camera = mRenderingDevice.GetCamera();
 
-	size_t total = 0;
-	size_t rendered = 0;
+	mTotalLastFrame = 0;
+	mRenderedLastFrame = 0;
+
+	Stopwatch sw;
 
 	for (auto &entry : mParticleSysSystem) {
 
 		auto& partSys = *entry.second;
-		total++;
+		mTotalLastFrame++;
 
 		auto screenBounds(partSys.GetScreenBounds());
 
@@ -56,7 +62,7 @@ void ParticleSystemsRenderer::Render()
 			continue;
 		}
 
-		rendered++;
+		mRenderedLastFrame++;
 
 		// each emitter is rendered individually
 		for (auto &emitter : partSys) {
@@ -64,11 +70,17 @@ void ParticleSystemsRenderer::Render()
 			auto& renderer = mRendererManager->GetRenderer(type);
 			renderer.Render(*emitter);
 		}
+		
 
 		if (config.debugPartSys) {
 			RenderDebugInfo(partSys);
 		}
 
+	}
+
+	mRenderTimes[mRenderTimesPos++] = sw.GetElapsedMs();
+	if (mRenderTimesPos >= mRenderTimes.size()) {
+		mRenderTimesPos = 0;
 	}
 
 }

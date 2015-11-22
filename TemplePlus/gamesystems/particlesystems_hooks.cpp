@@ -3,7 +3,7 @@
 
 #include "util/fixes.h"
 #include "gamesystems.h"
-#include "partsystems.h"
+#include "particlesystems.h"
 
 #include <graphics/math.h>
 #include <obj.h>

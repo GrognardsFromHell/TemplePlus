@@ -409,21 +409,9 @@ namespace particles {
 		// whether this particle system is permanent
 		bool permanent = mEmitters[0]->GetSpec()->IsPermanent();
 
-		// Permanent particle systems are not simulated until they have been unfogged
-		if (permanent) {
-			/*
-			The following "samples" whether the corners of the particle system's bounding box
-			or the center is unfogged yet. And if none of those samples are, the particle
-			system will not be simulated.
-		*/
-			if (!external->IsPointUnfogged(mScreenBounds.GetTopLeft())
-				&& !external->IsPointUnfogged(mScreenBounds.GetTopRight())
-				&& !external->IsPointUnfogged(mScreenBounds.GetBottomLeft())
-				&& !external->IsPointUnfogged(mScreenBounds.GetBottomRight())
-				&& !external->IsPointUnfogged(mScreenBounds.GetCenter())) {
-				return;
-			}
-		}
+		// Previously, permanent systems were not being simulated while 
+		// being offscreen, for which i dont really see a reason since 
+		// there i an off-screen check above.
 
 		// Even if the particle system is offscreen, we advance "mAliveInSecs"
 		// so this ensures that if the particle system has been off screen for 2 
@@ -473,7 +461,7 @@ namespace particles {
 	}
 
 	bool PartSys::IsOnScreen(IPartSysExternal* external) const {
-		return external->IsBoxVisible(mScreenBounds);
+		return external->IsBoxVisible(mScreenPosAbs, mScreenBounds);
 	}
 
 	// Updates the bounding box of the particle system if it's attached to an object

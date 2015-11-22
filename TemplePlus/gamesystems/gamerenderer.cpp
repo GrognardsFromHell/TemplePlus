@@ -1,3 +1,4 @@
+
 #include "stdafx.h"
 
 #include <graphics/device.h>
@@ -10,7 +11,7 @@
 #include <particles/instances.h>
 #include "ui/ui_render.h"
 #include "tig/tig_font.h"
-#include "partsystems.h"
+#include "particlesystems.h"
 
 #include "tig/tig_startup.h"
 #include "temple_functions.h"

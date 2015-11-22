@@ -117,6 +117,12 @@ void AasRenderer::Render(gfx::AnimatedModel *model,
 		// use the actual shader registration id
 		materialId &= 0x00FFFFFF;
 
+		// Usually this should not happen, since it means there's  
+		// an unbound replacement material
+		if (materialId == 0) {
+			continue;
+		}
+
 		auto material = mMdfFactory.GetById(materialId);
 		
 		if (!material) {

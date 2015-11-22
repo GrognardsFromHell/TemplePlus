@@ -35,10 +35,7 @@ public:
 	}
 	void WorldToScreen(const Vec3& worldPos, Vec2& screenPos) override {
 	}
-	bool IsPointUnfogged(const Vec2& point) override {
-		return true;
-	}
-	bool IsBoxVisible(const Box2d& box) override {
+	bool IsBoxVisible(const Vec2& screenPos, const Box2d& box) override {
 		return true;
 	}
 };

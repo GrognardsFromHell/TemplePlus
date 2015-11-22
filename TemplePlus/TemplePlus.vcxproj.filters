@@ -298,9 +298,9 @@
     <ClCompile Include="gamesystems\maps\sector.cpp" />
     <ClCompile Include="fonts\fonts_layout.cpp" />
     <ClCompile Include="fonts\fonts_render.cpp" />
-    <ClCompile Include="gamesystems\partsystems.cpp" />
-    <ClCompile Include="gamesystems\partsystems_hooks.cpp" />
     <ClCompile Include="gamesystems\partsystemsrenderer.cpp" />
+    <ClCompile Include="gamesystems\particlesystems.cpp" />
+    <ClCompile Include="gamesystems\particlesystems_hooks.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -573,8 +573,8 @@
     <ClInclude Include="gamesystems\mapobjrender.h" />
     <ClInclude Include="gamesystems\maps\sector.h" />
     <ClInclude Include="fonts\fonts.h" />
-    <ClInclude Include="gamesystems\partsystems.h" />
     <ClInclude Include="gamesystems\partsystemsrenderer.h" />
+    <ClInclude Include="gamesystems\particlesystems.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

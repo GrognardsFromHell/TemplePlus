@@ -19,7 +19,7 @@
 #include "legacysystems.h"
 #include "graphics/loadingscreen.h"
 #include "mappreprocessor.h"
-#include "partsystems.h"
+#include "particlesystems.h"
 
 #include "mapsystems.h"
 #include <infrastructure/vfs.h>

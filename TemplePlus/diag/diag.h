@@ -6,9 +6,14 @@ namespace gfx {
 	class RenderingDevice;
 }
 
+class GameSystems;
+class GameRenderer;
+
 class DiagScreen {
 public:
-	explicit DiagScreen(gfx::RenderingDevice& device);
+	explicit DiagScreen(gfx::RenderingDevice& device,
+		GameSystems &gameSystems,
+		GameRenderer &gameRenderer);
 	~DiagScreen();
 		
 	void Render();
@@ -16,6 +21,7 @@ public:
 	void SetEnabled(bool enabled) {
 		mEnabled = enabled;
 	}
+
 	bool IsEnabled() const {
 		return mEnabled;
 	}
@@ -25,6 +31,8 @@ private:
 	class Impl;
 	std::unique_ptr<Impl> mImpl;
 	gfx::RenderingDevice& mDevice;
+	GameSystems &mGameSystems;
+	GameRenderer &mGameRenderer;
 
 	std::string FormatMemSize(size_t memory);
 

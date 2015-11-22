@@ -89,15 +89,9 @@ Returns the radius of the given object.
   virtual void WorldToScreen(const Vec3 &worldPos, Vec2 &screenPos) = 0;
 
   /*
-  Checks if the fog of war at the given point on screen is uncovered.
-  TODO: Verify which coordinate system is used for x,y
-*/
-  virtual bool IsPointUnfogged(const Vec2 &point) = 0;
-
-  /*
   Checks if the given box (in screen space) is visible or not
 */
-  virtual bool IsBoxVisible(const Box2d &box) = 0;
+  virtual bool IsBoxVisible(const Vec2& screenPos, const Box2d &box) = 0;
 
   static void SetCurrent(IPartSysExternal *external) { mCurrent = external; }
 

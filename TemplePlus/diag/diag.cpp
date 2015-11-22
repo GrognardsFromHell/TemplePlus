@@ -5,6 +5,10 @@
 #include <graphics/device.h>
 #include <graphics/textures.h>
 
+#include "../gamesystems/gamesystems.h"
+#include "../gamesystems/gamerenderer.h"
+#include "../gamesystems/partsystemsrenderer.h"
+
 using namespace gfx;
 
 class DiagScreen::Impl {
@@ -20,7 +24,13 @@ public:
 
 };
 
-DiagScreen::DiagScreen(RenderingDevice& device) : mImpl(std::make_unique<Impl>()), mDevice(device) {
+DiagScreen::DiagScreen(RenderingDevice& device,
+	GameSystems &gameSystems,
+	GameRenderer &gameRenderer) 
+	  : mImpl(std::make_unique<Impl>()), 
+		mDevice(device), 
+		mGameSystems(gameSystems),
+		mGameRenderer(gameRenderer) {
 	if (diagScreen == nullptr) {
 		diagScreen = this;
 	}
@@ -50,6 +60,12 @@ void DiagScreen::Render() {
 	lines.push_back(fmt::format("{} of {} loaded", loaded, registered));
 	lines.push_back(fmt::format("Memory Budget: {}", FormatMemSize(textureManager.GetMemoryBudget())));
 	lines.push_back(fmt::format("Used (est.): {}", FormatMemSize(textureManager.GetUsageEstimate())));
+
+	auto& particleRenderer = mGameRenderer.GetParticleSysRenderer();
+	lines.push_back(fmt::format("#Particle Systems"));
+	lines.push_back(fmt::format("{} of {} rendered", particleRenderer.GetRenderedLastFrame(), 
+		particleRenderer.GetTotalLastFrame()));
+	lines.push_back(fmt::format("Avg Render Time: {} ms", particleRenderer.GetRenderTimeAvg()));
 
 	TigRect rect;
 	rect.x = 25;

@@ -1,6 +1,6 @@
 
 #include "stdafx.h"
-#include "partsystems.h"
+#include "particlesystems.h"
 
 #include <graphics/device.h>
 #include <graphics/camera.h>
@@ -28,8 +28,7 @@ public:
 	int GetParentChildBonePos(ObjHndl obj, int boneIdx, Vec3& parentPos, Vec3& childPos) override;
 	bool GetBonePos(ObjHndl obj, int boneIdx, Vec3& pos) override;
 	void WorldToScreen(const Vec3& worldPos, Vec2& screenPos) override;
-	bool IsPointUnfogged(const Vec2& point) override;
-	bool IsBoxVisible(const Box2d& box) override;
+	bool IsBoxVisible(const Vec2& screenPos, const Box2d& box) override;
 private:
 	WorldCamera &mCamera;
 };
@@ -280,13 +279,10 @@ void PartSysExternal::WorldToScreen(const Vec3& worldPos, Vec2& screenPos) {
 	screenPos.y += offset2d.y;
 }
 
-bool PartSysExternal::IsPointUnfogged(const Vec2& point) {
-	return true; // TODO
-}
+bool PartSysExternal::IsBoxVisible(const Vec2& screenPos, const Box2d& box) {
 
-bool PartSysExternal::IsBoxVisible(const Box2d& box) {
+	return mCamera.IsBoxOnScreen(screenPos,
+		box.left, box.top,
+		box.right, box.bottom);
 
-	auto translation = mCamera.GetTranslation();
-	
-	return true; // TODO
 }
