@@ -971,17 +971,12 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 	// pathfinding heuristic:
 	// taxicab metric h(dx,dy)=max(dx, dy), wwhere  dx,dy is the subtile difference
 	int referenceTime = 0;
-	Subtile fromSubtile;
-	Subtile toSubtile;
-	Subtile _fromSubtile;
-	Subtile shiftedSubtile;
+	Subtile fromSubtile, toSubtile, _fromSubtile, shiftedSubtile;
 	
 	fromSubtile = fromSubtile.fromField( locSys.subtileFromLoc(&pqr->from));
 	toSubtile = toSubtile.fromField(locSys.subtileFromLoc(&pqr->to));
 
-	static int npcPathFindRefTime = 0;
-	static int npcPathFindAttemptCount = 0;
-	static int npcPathTimeCumulative = 0;
+	static int npcPathFindRefTime = 0;	static int npcPathFindAttemptCount = 0;	static int npcPathTimeCumulative = 0;
 
 	if (pq->critter)
 	{
@@ -1006,47 +1001,21 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 		}
 	}
 
-	int fromSubtileX = fromSubtile.x;
-	int fromSubtileY = fromSubtile.y;
-	int toSubtileX = toSubtile.x;
-	int toSubtileY = toSubtile.y;
+	int fromSubtileX = fromSubtile.x;	int fromSubtileY = fromSubtile.y;
+	int toSubtileX = toSubtile.x;		int toSubtileY = toSubtile.y;
 
-	int deltaSubtileX;
-	int deltaSubtileY;
-	int lowerSubtileX;
-	int lowerSubtileY;
-	int halfDeltaShiftedX;
-	int halfDeltaShiftedY;
 
-	if (fromSubtileX <= toSubtileX)
-	{
-		deltaSubtileX = toSubtileX - fromSubtileX;
-		lowerSubtileX = fromSubtileX;
-	} else
-	{
-		deltaSubtileX = fromSubtileX - toSubtileX;
-		lowerSubtileX = toSubtileX;
-	}
-
-	if (fromSubtileY <= toSubtileY)
-	{
-		deltaSubtileY = toSubtileY - fromSubtileY;
-		lowerSubtileY = fromSubtileY;
-	}
-	else
-	{
-		deltaSubtileY = fromSubtileY - toSubtileY;
-		lowerSubtileY = toSubtileY;
-	}
-
+	int deltaSubtileX = abs(toSubtileX - fromSubtileX);	int deltaSubtileY = abs(toSubtileY - fromSubtileY);
 	if (deltaSubtileX > 64 || deltaSubtileY > 64)
 		return 0;
-	
-	halfDeltaShiftedX = lowerSubtileX + deltaSubtileX / 2 - 64;
-	halfDeltaShiftedY = lowerSubtileY + deltaSubtileY / 2 - 64;
+	int lowerSubtileX = min(fromSubtileX, toSubtileX);	int lowerSubtileY = min(fromSubtileY, toSubtileY);
 
-	int idxMinus0 = fromSubtileX - halfDeltaShiftedX + ((fromSubtileY - halfDeltaShiftedY) << 7);
-	int idxTarget  = toSubtileX - halfDeltaShiftedX + ((toSubtileY - halfDeltaShiftedY) << 7);
+	
+	int cornerX = lowerSubtileX + deltaSubtileX / 2 - 64;
+	int cornerY = lowerSubtileY + deltaSubtileY / 2 - 64;
+
+	int idxMinus0 = fromSubtileX - cornerX + ((fromSubtileY - cornerY) << 7);
+	int idxTarget  = toSubtileX - cornerX + ((toSubtileY - cornerY) << 7);
 	
 	int idxTgtX = idxTarget % 128;
 	int idxTgtY = idxTarget / 128;
@@ -1129,16 +1098,16 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 		if (refererIdx == -1)
 			goto LABEL_74;
 		if (refererIdx == idxTarget) break;
-		_fromSubtile.x = halfDeltaShiftedX + (refererIdx % 128);
-		_fromSubtile.y = halfDeltaShiftedY + (refererIdx / 128);
+		_fromSubtile.x = cornerX + (refererIdx % 128);
+		_fromSubtile.y = cornerY + (refererIdx / 128);
 
 		// loop over all possible directions for better path
 		for (auto direction = 0; direction < 8 ; direction++)
 		{
 			if (!locSys.ShiftSubtileOnceByDirection(_fromSubtile, direction, &shiftedSubtile))
 				continue;
-			shiftedXidx = shiftedSubtile.x - halfDeltaShiftedX;
-			shiftedYidx = shiftedSubtile.y - halfDeltaShiftedY;
+			shiftedXidx = shiftedSubtile.x - cornerX;
+			shiftedYidx = shiftedSubtile.y - cornerY;
 			if (shiftedXidx >= 0 && shiftedXidx < 128 && shiftedYidx >= 0 && shiftedYidx < 128)
 			{
 				newIdx = shiftedXidx + (shiftedYidx << 7);
@@ -1246,12 +1215,11 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 	// uses a form of A*
 	// pathfinding heuristic:
 	// taxicab metric h(dx,dy)=max(dx, dy), wwhere  dx,dy is the subtile difference
+	#pragma region Preamble
 	int referenceTime = 0;
-	Subtile fromSubtile;	Subtile toSubtile;
-	Subtile _fromSubtile;	Subtile shiftedSubtile;
+	Subtile fromSubtile, toSubtile, _fromSubtile, shiftedSubtile;
 
-	fromSubtile = fromSubtile.fromField(locSys.subtileFromLoc(&pqr->from));
-	toSubtile = toSubtile.fromField(locSys.subtileFromLoc(&pqr->to));
+	fromSubtile = fromSubtile.fromField(locSys.subtileFromLoc(&pqr->from));	toSubtile = toSubtile.fromField(locSys.subtileFromLoc(&pqr->to));
 
 	static int npcPathFindRefTime = 0;	static int npcPathFindAttemptCount = 0; 	static int npcPathTimeCumulative = 0;
 
@@ -1282,16 +1250,13 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 	int fromSubtileX = fromSubtile.x;	int fromSubtileY = fromSubtile.y;
 	int toSubtileX = toSubtile.x;	int toSubtileY = toSubtile.y;
 
-	int deltaSubtileX = abs(toSubtileX - fromSubtileX);	
-	int deltaSubtileY = abs(toSubtileY - fromSubtileY);
+	int deltaSubtileX = abs(toSubtileX - fromSubtileX);	int deltaSubtileY = abs(toSubtileY - fromSubtileY);
 	if (deltaSubtileX > 64 || deltaSubtileY > 64)
 		return 0;
 	
-	int lowerSubtileX = min(fromSubtileX, toSubtileX);	
-	int lowerSubtileY = min(fromSubtileY, toSubtileY);
+	int lowerSubtileX = min(fromSubtileX, toSubtileX);	int lowerSubtileY = min(fromSubtileY, toSubtileY);
 
-	int cornerX = lowerSubtileX + deltaSubtileX / 2 - 64;
-	int cornerY = lowerSubtileY + deltaSubtileY / 2 - 64;
+	int cornerX = lowerSubtileX + deltaSubtileX / 2 - 64;	int cornerY = lowerSubtileY + deltaSubtileY / 2 - 64;
 
 
 	//TileRect tileR;
@@ -1326,17 +1291,13 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 	int deltaIdxX;
 	int distanceMetric;
 
-	int refererIdx;
-	int heuristic;
+	int refererIdx, heuristic;
 	int minHeuristic = 0x7FFFffff;
-	int idxPrevChain;
-	int idxNextChain;
+	int idxPrevChain, idxNextChain;
 
-	int shiftedXidx;
-	int shiftedYidx;
-	int newIdx;
+	int shiftedXidx, shiftedYidx, newIdx;
 
-	float requisiteClearance = objects.GetRadius(pq->critter) / (INCH_PER_TILE / 3);
+	float requisiteClearance = objects.GetRadius(pq->critter);
 	if (requisiteClearance > 4.3)
 		requisiteClearance *= 0.7;
 	else if (requisiteClearance > 2.0)
@@ -1352,6 +1313,54 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 		return 0;
 	}
 
+	#pragma endregion
+
+	struct ProximityList
+	{
+		void Append(objHndl obj)
+		{
+			
+		}
+	} proxList;
+
+	RaycastPacket objIt;
+	objIt.origin = pqr->from;
+	objIt.targetLoc = pqr->from;
+	objIt.flags = static_cast<RaycastFlags>(RaycastFlags::ExcludeItemObjects);
+	if (pqr->mover)
+	{
+		objIt.flags = (RaycastFlags)((int)objIt.flags | RaycastFlags::HasRadius | RaycastFlags::HasSourceObj);
+		objIt.sourceObj = pqr->mover;
+		objIt.radius = INCH_PER_TILE * 40;
+		if (objIt.Raycast())
+		{
+			for (int i = 0; i < objIt.resultCount; i++)
+			{
+				auto res = &objIt.results[i];
+				if (res->obj)
+				{
+					auto obj = res->obj;
+					auto objFlags = objects.GetFlags(obj);
+					auto objType = objects.GetType(obj);
+					if (!(objFlags & OF_NO_BLOCK))
+					{
+						if ((pq->flags & PQF_DOORS_ARE_BLOCKING) || (objType != obj_t_portal))
+						{
+							if (objType == obj_t_pc || objType == obj_t_npc)
+							{
+								if (critterSys.IsFriendly(obj, pqr->mover))
+									continue;
+							} 
+							proxList.Append(obj);
+
+						}
+
+					}
+				}
+			}
+		}
+	}
+	
 	while (1)
 	{
 		refererIdx = -1;
@@ -1425,31 +1434,26 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 			
 			if (PathNodeSys::hasClearanceData)
 			{
-			//	if (PathNodeSys::clearanceData[shiftedSubtile.y][shiftedSubtile.x] < requisiteClearance)
-				{
-					RaycastPacket objIt;
-					objIt.origin = subPathTo;
-					objIt.targetLoc = subPathTo;
-					objIt.flags = static_cast<RaycastFlags>( RaycastFlags::ExcludeItemObjects );
-					if (pqr->mover)
-					{
-						objIt.flags = (RaycastFlags)((int)objIt.flags | RaycastFlags::HasRadius | RaycastFlags::HasSourceObj);
-						objIt.sourceObj = pqr->mover;
-						objIt.radius = objects.GetRadius(pqr->mover) * (float)0.7;
-						if (objIt.Raycast())
-						{
-							for (int i = 0; i < objIt.resultCount; i++)
-							{
-								auto res = &objIt.results[i];
-							}
-						}
-					}
+				SectorLoc secLoc(subPathTo.location);
+				//secLoc.GetFromLoc(subPathTo.location);
+				int secX = secLoc.x(), secY = secLoc.y();
+				int secClrIdx = PathNodeSys::clearanceData.clrIdx.clrAddr[secLoc.y()][secLoc.x()];
+				auto secBaseTile = secLoc.GetBaseTile();
+				int ssty = shiftedSubtile.y % 192;
+				int sstx = shiftedSubtile.x % 192;
+				if (PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y%192][shiftedSubtile.x % 192] < requisiteClearance)
 					continue;
-				}
-					
-			}
-			
-			if (!PathStraightLineIsClear(pqr, pq, subPathFrom, subPathTo))
+		
+				bool foundBlockers = false;
+
+				/*
+				TODO insert code for detecting collision with objects
+				*/
+				if (foundBlockers)
+					continue;
+				
+			} 
+			else if (!PathStraightLineIsClear(pqr, pq, subPathFrom, subPathTo))
 			{
 				continue;
 			}
@@ -1535,7 +1539,7 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 
 int _FindPathShortDistanceSansTarget(PathQuery* pq, PathQueryResult* pqr)
 {
-	return pathfindingSys.FindPathShortDistanceSansTarget(pq, pqr);
+	return pathfindingSys.FindPathShortDistanceSansTargetTemplePlus(pq, pqr);
 }
 
 int _FindPath(PathQuery* pq, PathQueryResult* pqr)

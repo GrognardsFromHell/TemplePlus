@@ -58,3 +58,4 @@ std::string Vfs::ReadAsString(const std::string & filename)
 	Close(fh);
 	return result;
 }
+

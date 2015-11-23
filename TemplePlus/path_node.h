@@ -55,6 +55,10 @@ struct ClearanceIndex
 	uint16_t clrAddr[16][16]; // sectorY, sectorX
 	ClearanceIndex()
 	{
+		Reset();
+	}
+	void Reset()
+	{
 		numSectors = 0;
 		for (int i = 0; i < 16 * 16; i++)
 		{
@@ -68,7 +72,7 @@ struct ClearanceIndex
 
 struct SectorClearanceData
 {
-	float val[64 * 3][64 * 3];
+	float val[64 * 3][64 * 3]; // in feet (matched to the Distance3d function return value)
 };
 
 struct MapClearanceData
@@ -171,7 +175,7 @@ public:
 		replaceFunction(0x100A9C00, LoadNodesCurrent);
 		replaceFunction(0x100A9DA0, Reset);
 		replaceFunction(0x100A9DD0, FreeAndLoad);
-		//memset(clearanceData, MAX_OBJ_RADIUS_SUBTILES, sizeof(clearanceData));
+		hasClearanceData = false;
 		for (int i = 1; i <= MAX_OBJ_RADIUS_SUBTILES;i++)
 		{
 			clearanceProfiles[i-1].InitWithRadius(i *INCH_PER_TILE/3);

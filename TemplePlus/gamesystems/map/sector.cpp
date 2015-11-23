@@ -3,6 +3,8 @@
 #include <temple/dll.h>
 #include <raycast.h>
 #include <maps.h>
+#include <temple/vfs.h>
+#include <tio/tio.h>
 
 
 struct SectorAddresses : temple::AddressTable
@@ -28,6 +30,7 @@ struct SectorAddresses : temple::AddressTable
 	GameTime * sectorLockTimeBase;
 
 	SectorTime ** sectorTimes;
+	char ** sectorFolder;
 	int * sectorTimesCount;
 	int *sectorLockSthg_10AB7458;
 	int * sectorCacheIndicesCurIdx;
@@ -56,6 +59,7 @@ struct SectorAddresses : temple::AddressTable
 		rebase(sectorLockTimeBase,		0x102CC130);
 
 		rebase(sectorTimes,				0x10AB73F8);
+		rebase(sectorFolder,			0x10AB73FC);
 		rebase(sectorCache,				0x10AB7408);
 		rebase(sectorLockSerial,		0x10AB7410);
 		rebase(SectorLoadFunc,			0x10AB7420);
@@ -72,6 +76,18 @@ struct SectorAddresses : temple::AddressTable
 } addresses;
 
 SectorSystem  sectorSys;
+
+int Sector::GetTileOffset(LocAndOffsets* loc)
+{
+	auto baseLoc = secLoc.GetBaseTile();
+	return loc->location.locx - baseLoc.locx + SECTOR_SIDE_SIZE * (loc->location.locy - baseLoc.locy);
+}
+
+TileFlags Sector::GetTileFlags(LocAndOffsets* loc)
+{
+	int tileOffset = GetTileOffset(loc);
+	return tilePkt.tiles[tileOffset].flags;
+}
 
 BOOL SectorSystem::BuildTileListFromRect(TileRect* tileRect, TileListEntry* tle)
 {
@@ -154,6 +170,23 @@ void SectorSystem::SectorSave(Sector* sect)
 BOOL SectorSystem::SectorLoad(SectorLoc secLoc, Sector* sect)
 {
 	return (*addresses.SectorLoadFunc)(secLoc, sect);
+}
+
+bool SectorSystem::SectorFileExists(SectorLoc secLoc)
+{
+	char sectorFileName[256]={0,};
+	
+	strcpy(sectorFileName, *addresses.sectorFolder);
+	int strLength = strlen(sectorFileName);
+	sectorFileName[strLength++] = '\\';
+	_ui64toa(secLoc.raw, &sectorFileName[strLength], 10);
+	strLength = strlen(sectorFileName);
+	strcpy(&sectorFileName[strLength], ".sec");
+	
+	if (tio_fileexists(sectorFileName))
+		return true;
+
+	return false;
 }
 
 void __declspec(naked) SectorSystem::SectorCacheEntryFree(Sector* sect)

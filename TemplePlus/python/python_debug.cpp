@@ -235,6 +235,26 @@ PyObject *PyDebug_GetTileFlags(PyObject*, PyObject* args)
 	flags = sectorSys.GetTileFlags(loc);
 	return PyLong_FromLongLong(flags);
 }
+
+PyObject *PyDebug_GetLocClearance(PyObject*, PyObject* args)
+{
+	if (!PathNodeSys::hasClearanceData)
+		return PyInt_FromLong(-1);
+
+	LocAndOffsets loc = {};
+	if (!PyArg_ParseTuple(args, "ii|ff:tileflags", &loc.location.locx, &loc.location.locy, &loc.off_x, &loc.off_y)) {
+		return 0;
+	}
+
+	SectorLoc secLoc;
+	secLoc.GetFromLoc(loc.location);
+	auto secAddr = PathNodeSys::clearanceData.clrIdx.clrAddr[secLoc.y()][secLoc.x()];
+	auto baseTile = secLoc.GetBaseTile();
+	float result = PathNodeSys::clearanceData.secClr[secAddr].val[3*(loc.location.locy - baseTile.locy)][3*(loc.location.locx - baseTile.locx)];
+	return PyFloat_FromDouble(result);
+}
+
+
 static PyMethodDef PyDebug_Methods[] = {
 	{ "dump_conds", (PyCFunction) PyDebug_DumpConds, METH_NOARGS, NULL },
 	{ "dump_radial", (PyCFunction) PyDebug_DumpRadial, METH_NOARGS, NULL },
@@ -247,6 +267,8 @@ static PyMethodDef PyDebug_Methods[] = {
 	{ "destclear", (PyCFunction)PyDebug_DestClear, METH_VARARGS, NULL },
 	{ "tileflags", (PyCFunction)PyDebug_GetTileFlags, METH_VARARGS, NULL },
 	{ "genclearance", (PyCFunction)PyDebug_GenerateClearanceFile, METH_VARARGS, NULL },
+	{ "genclr", (PyCFunction)PyDebug_GenerateClearanceFile, METH_VARARGS, NULL },
+	{ "getclr", (PyCFunction)PyDebug_GetLocClearance, METH_VARARGS, NULL },
 	
 	{ NULL, }
 };

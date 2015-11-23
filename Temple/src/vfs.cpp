@@ -85,6 +85,8 @@ namespace temple {
 		// Pack file(s)
 		void(__cdecl* TioPack)(int argc, char* argv[]);
 
+		BOOL(*FileExists)(const char* file, int unk);
+
 		TioVfsImpl() {
 			Resolve("tio_fopen", OpenFile);
 			Resolve("tio_fread", Read);
@@ -93,6 +95,7 @@ namespace temple {
 			Resolve("tio_path_add", AddPath);
 			Resolve("tio_pack_funcs", TioPackFuncs);
 			Resolve("tio_pack", TioPack);
+			Resolve("tio_fileexists", FileExists);
 		}
 
 		/*

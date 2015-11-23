@@ -214,6 +214,11 @@ struct Sector
 	SectorSoundListPacket soundList;
 	SectorObjectsPacket objects;
 	int field1425C;
+	/*
+	return an offset for getting a proper index in the TilePacket
+	*/
+	int GetTileOffset(LocAndOffsets* loc);
+	TileFlags GetTileFlags(LocAndOffsets* loc);
 };
 
 const int testSizeofSector = sizeof(Sector); // should be 82528 (0x14260)
@@ -256,9 +261,11 @@ public:
 	*/
 	static void SectorSave(Sector* sect);
 	/*
-	save sector to hdd; uses a different function in editor mode
+	load sector from hdd; uses a different function in editor mode
+	NOTE: will return TRUE for non-existant file! (it just won't load any actual data)
 	*/
 	static BOOL SectorLoad(SectorLoc secLoc, Sector* sect);
+	static bool SectorFileExists(SectorLoc secLoc);
 
 	static void SectorCacheEntryFree(Sector* sect);
 	static BOOL SectorCacheFindUnusedIdx(int * idxUnused);

@@ -14,7 +14,7 @@ char PathNodeSys::pathNodesLoadDir[260];
 char PathNodeSys::pathNodesSaveDir[260];
 MapPathNodeList * PathNodeSys::pathNodeList;
 MapClearanceData PathNodeSys::clearanceData;
-bool PathNodeSys::hasClearanceData;
+bool PathNodeSys::hasClearanceData = false;
 ClearanceProfile PathNodeSys::clearanceProfiles[30];
 struct PathNodeSysAddresses : temple::AddressTable
 {
@@ -257,7 +257,7 @@ BOOL PathNodeSys::LoadNodesCurrent()
 	_snprintf(fileName, 260, "%s\\%s", pathNodesLoadDir, "pathnode.pnd");
 	_snprintf(fileNameNew, 260, "%s\\%s", pathNodesLoadDir, "pathnodenew.pnd");
 	_snprintf(supplem, 260, "%s\\%s", pathNodesLoadDir, "pathnodedist.pnd");
-	_snprintf(clearanceFileName, 260, "%s\\%s", pathNodesLoadDir, "clearance.clr");
+	_snprintf(clearanceFileName, 260, "%s\\%s", pathNodesLoadDir, "clearance.bin");
 
 	auto file = tio_fopen(fileNameNew, "rb");
 	if (!file)
@@ -268,14 +268,23 @@ BOOL PathNodeSys::LoadNodesCurrent()
 	}
 
 	auto clearanceFile = tio_fopen(clearanceFileName, "rb");
+	if (hasClearanceData)
+	{
+		free(clearanceData.secClr);
+	}
+	hasClearanceData = false;
 	if (clearanceFile)
 	{
-	//	tio_fread(&clearanceData, sizeof(clearanceData), 1, clearanceFile);
-		//tio_fclose(clearanceFile);
-	//	hasClearanceData = true;
-	} else
-	{
-		hasClearanceData = false;
+		int readStatus = tio_fread(&clearanceData.clrIdx, sizeof(clearanceData.clrIdx), 1, clearanceFile);
+		if (readStatus)
+		{	
+			clearanceData.secClr = new SectorClearanceData[clearanceData.clrIdx.numSectors];
+			readStatus = tio_fread(clearanceData.secClr, sizeof(SectorClearanceData), clearanceData.clrIdx.numSectors, clearanceFile);
+		}
+			
+		tio_fclose(clearanceFile);
+		if (readStatus)
+			hasClearanceData = true;
 	}
 
 
@@ -552,6 +561,7 @@ void PathNodeSys::GenerateClearanceFile()
 {	
 	int idx = -1;
 	auto secClrData = new SectorClearanceData();
+	clearanceData.clrIdx.Reset();
 	for (int secY = 0; secY < 16; secY++)
 	{
 		for (int secX = 0; secX < 16; secX++)
@@ -559,13 +569,18 @@ void PathNodeSys::GenerateClearanceFile()
 			SectorLoc secLoc;
 			secLoc.raw = secX + (secY << 26);
 			Sector * sect;
-			int lockStatus = sectorSys.SectorLock(secLoc, &sect);
+			int lockStatus = 0;
+			if (sectorSys.SectorFileExists(secLoc))
+			{
+				lockStatus = sectorSys.SectorLock(secLoc, &sect);
+			}
+			
 			if (!lockStatus)
 			{
 				clearanceData.clrIdx.clrAddr[secY][secX] = -1;
 				continue;
 			}
-			clearanceData.clrIdx.clrAddr[secY][secX] = idx++;
+			clearanceData.clrIdx.clrAddr[secY][secX] = ++idx;
 			if (idx)
 				secClrData = (SectorClearanceData*)realloc(secClrData, (idx + 1)*sizeof(SectorClearanceData));
 			Subtile subtile;
@@ -574,17 +589,28 @@ void PathNodeSys::GenerateClearanceFile()
 				subtile.y = secY * 64 * 3 + ny;
 				for (int nx = 0; nx < 64 * 3; nx++)
 				{
-					float clearance = MAX_OBJ_RADIUS_SUBTILES * (INCH_PER_TILE / 3);
+					float clearancesInch = MAX_OBJ_RADIUS_SUBTILES * (INCH_PER_TILE / 3) ;
 					
 					subtile.x = secX*64*3 + nx;
-					
 					LocAndOffsets loc;
 					locSys.SubtileToLocAndOff(subtile, &loc);
+					auto flags = sect->GetTileFlags(&loc);
+					if (flags)
+					{
+						//auto tileFlags = sectorSys.GetTileFlags(loc);
+						TileFlags flagsToCheck = (TileFlags)((TileFlags::BlockX0Y0 + TileFlags::FlyOverX0Y0) << (nx % 3 + 3 * (ny % 3)));
+						if (flagsToCheck & flags)
+						{
+							secClrData[idx].val[ny][nx] = 0;
+							continue;
+						}
+					}
+
 					RaycastPacket rayPkt;
 					rayPkt.flags = (RaycastFlags)(RaycastFlags::HasToBeCleared | RaycastFlags::ExcludeItemObjects | RaycastFlags::ExcludePortals | RaycastFlags::HasRadius);
 					rayPkt.radius = MAX_OBJ_RADIUS_TILES * INCH_PER_TILE;
 					rayPkt.targetLoc = rayPkt.origin = loc;
-					rayPkt.Raycast();
+					rayPkt.RaycastShortRange();
 					int numFound = rayPkt.resultCount;
 					for (int i = 0; i < numFound; i++)
 					{
@@ -592,15 +618,15 @@ void PathNodeSys::GenerateClearanceFile()
 						if (!res->obj)
 						{
 
-							float clrRad = locSys.Distance3d(loc, res->loc) / (INCH_PER_TILE / 3);
-							if (clrRad < clearance)
-								clearance = clrRad;
-							if (clearance == 0)
+							float clrRad = locSys.Distance3d(loc, res->loc) ;
+							if (clrRad < clearancesInch)
+								clearancesInch = clrRad;
+							if (clearancesInch == 0)
 								break;
 
 						}
 					}
-				//	clearanceData[ny][nx] = clearance;
+					secClrData[idx].val[ny][nx] = clearancesInch;
 				}// nx
 			} // ny
 			sectorSys.SectorUnlock(secLoc);
@@ -608,10 +634,10 @@ void PathNodeSys::GenerateClearanceFile()
 	}
 	
 	clearanceData.clrIdx.numSectors = idx + 1;
-	auto fil = tio_fopen("clearance.bin", "w" );
+	clearanceData.secClr = secClrData;
+	auto fil = tio_fopen("clearance.bin", "wb" );
 	tio_fwrite(&clearanceData.clrIdx, sizeof(clearanceData.clrIdx), 1, fil);
 	tio_fwrite(clearanceData.secClr, sizeof(SectorClearanceData), clearanceData.clrIdx.numSectors, fil);
-	//tio_fwrite(clearanceData, sizeof(clearanceData), 1, fil);
 	tio_fclose(fil);
 }
 

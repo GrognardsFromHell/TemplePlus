@@ -151,6 +151,11 @@ struct Subtile // every tile is subdivided into 3x3 subtiles
 	operator int64_t() const {
 		return *(int64_t*)this;
 	}
+
+	operator Subtile() const
+	{
+		return *(Subtile*)this;
+	}
 };
 
 struct TileRect
