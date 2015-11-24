@@ -23,7 +23,7 @@ namespace gfx {
 	/*
 	Used as placeholders for special material such as HEAD, GLOVES, etc.
 	*/
-	enum class MaterialPlaceholderSlot : uint32_t {
+	enum class MaterialPlaceholderSlot {
 		HEAD,
 		GLOVES,
 		CHEST,
@@ -92,12 +92,22 @@ namespace gfx {
 		MdfRenderMaterialPtr GetById(int id);
 
 		MdfRenderMaterialPtr LoadMaterial(const std::string& name);
+
+		// Retrieves a material replacement set from rules/materials.mes
+		using ReplacementSet = std::map<MaterialPlaceholderSlot, MdfRenderMaterialPtr>;
+		const ReplacementSet& GetReplacementSet(uint32_t id);
+		void LoadReplacementSets(const std::string &filename);
+
 	private:
 		std::unordered_map<LegacyShaderId, MdfRenderMaterialPtr> mIdRegistry;
 		std::unordered_map<std::string, MdfRenderMaterialPtr> mNameRegistry;
 		RenderingDevice &mDevice;
 		Textures& mTextures;
 		int mNextFreeId = 1;
+
+		// Loaded from rules/materials.mes
+		std::unordered_map<uint32_t, ReplacementSet> mReplacementSets;
+		void AddReplacementSetEntry(uint32_t id, const std::string &entry);
 
 		Material CreateDeviceMaterial(const std::string &name, MdfMaterial &spec);
 	};

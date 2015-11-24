@@ -28,6 +28,7 @@ struct FieldDataMax { uint32_t data[8]; }; // for wrapping "objSetField" calls t
 namespace gfx {
 	struct AnimatedModelParams;
 	using AnimatedModelPtr = std::shared_ptr<class AnimatedModel>;
+	class EncodedAnimId;
 }
 
 struct Objects : temple::AddressTable {
@@ -55,6 +56,11 @@ struct Objects : temple::AddressTable {
 	void ClearArrayField(objHndl objHnd, obj_f objF);
 	gfx::AnimatedModelPtr GetAnimHandle(objHndl obj);
 	gfx::AnimatedModelParams GetAnimParams(objHndl obj);
+	gfx::EncodedAnimId GetIdleAnim(objHndl obj);
+	bool IsDoorOpen(objHndl obj);
+	PortalFlag GetPortalFlags(objHndl obj) {
+		return (PortalFlag)getInt32(obj, obj_f_portal_flags);
+	}
 
 	uint32_t abilityScoreLevelGet(objHndl, Stat, DispIO *);
 	locXY GetLocation(objHndl handle) {
@@ -220,14 +226,20 @@ struct Objects : temple::AddressTable {
 		return _HasSpellEffects(obj);
 	}
 
+	bool IsRenderHeightSet(objHndl handle) {
+		return (GetFlags(handle) & OF_HEIGHT_SET) != 0;
+	}
+
+	bool IsRadiusSet(objHndl handle) {
+		return (GetFlags(handle) & OF_RADIUS_SET) != 0;
+	}
+
 	void Destroy(objHndl obj);
 
 #pragma region Common
 	ObjectId GetId(objHndl handle);
 	objHndl GetHandle(const ObjectId &id);
 	ObjectType GetType(objHndl obj);
-	uint32_t IsDeadNullDestroyed(objHndl obj);
-	uint32_t IsUnconscious(objHndl obj);
 	int32_t GetHPCur(objHndl obj);
 	bool IsCritter(objHndl obj);
 	bool IsContainer(objHndl objHnd);
@@ -291,6 +303,9 @@ struct Objects : temple::AddressTable {
 
 	int ObjectIdPrint(char * printOut, ObjectId objId);
 #pragma endregion 
+	
+	void(*UpdateRenderHeight)(objHndl obj, int animId);
+	void(*UpdateRadius)(objHndl obj, int animId);
 
 	Objects();
 #pragma region Privates
@@ -345,6 +360,7 @@ private:
 	void (__cdecl *_Destroy)(objHndl obj);
 
 	int(__cdecl * _ObjectIdPrint)(char * printOut, ObjectId objId);
+
 #pragma endregion
 } ;
 

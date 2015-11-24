@@ -4,6 +4,7 @@
 #include <temple/meshes.h>
 #include "d20.h"
 #include "common.h"
+#include "critter.h"
 #include "temple_functions.h"
 #include "condition.h"
 #include "obj_fieldnames.h"
@@ -229,13 +230,60 @@ void Objects::ClearArrayField(objHndl objHnd, obj_f objF)
 
 gfx::AnimatedModelPtr Objects::GetAnimHandle(objHndl obj)
 {
+	// I think this belongs to the map_obj subsystem
+
 	if (!obj) {
 		return nullptr;
 	}
+
+	// An animation handle was already created
+	auto handle = _GetInternalFieldInt32(obj, obj_f_animation_handle);
+	if (handle) {
+		return gameSystems->GetAAS().BorrowByHandle(handle);
+	}
+
+	// Which object to retrieve the model properties from (this indirection
+	// is used for polymorph)
+	auto modelSrcObj = obj;
+
+	// If the obj is polymorphed, use the polymorph proto instead
+	int polyProto = d20.d20Query(obj, DK_QUE_Polymorphed);
+	if (polyProto) {
+		modelSrcObj = GetProtoHandle(polyProto);
+	}
+
+	auto meshId = getInt32(modelSrcObj, obj_f_base_mesh);
+	auto skeletonId = getInt32(modelSrcObj, obj_f_base_anim);
+	auto idleAnimId = GetIdleAnim(obj);
+	auto animParams = GetAnimParams(obj);
+
+	// Create the model from the meshes.mes IDs and store the result in the obj
+	auto model = gameSystems->GetAAS().FromIds(
+		meshId, 
+		skeletonId,
+		idleAnimId,
+		animParams,
+		true // Borrowed since we store the handle in the obj
+	);
+	setInt32(obj, obj_f_animation_handle, model->GetHandle());
+
+	if (IsCritter(obj)) {
+		critterSys.UpdateModelEquipment(obj);
+	}
+
+	if (IsNPC(obj)) {
+		critterSys.AddNpcAddMeshes(obj);
+	}
+
+	if (!IsRenderHeightSet(obj)) {
+		UpdateRenderHeight(obj, model->GetHandle());
+	}
+	if (!IsRadiusSet(obj)) {
+		UpdateRadius(obj, model->GetHandle());
+	}
+
+	return model;
 	
-	auto handle = addresses.GetAasHandle(obj);
-	
-	return gameSystems->GetAAS().BorrowByHandle(handle);
 }
 
 gfx::AnimatedModelParams Objects::GetAnimParams(objHndl handle)
@@ -296,6 +344,68 @@ gfx::AnimatedModelParams Objects::GetAnimParams(objHndl handle)
 	result.rotationPitch = objects.GetRotationPitch(handle);
 
 	return result;
+}
+
+gfx::EncodedAnimId Objects::GetIdleAnim(objHndl obj)
+{
+	using gfx::EncodedAnimId;
+
+	auto idleAnimObj = obj;
+
+	// If polymorphed, compute for the polymorph target
+	auto polyProtoNum = d20.d20Query(obj, DK_QUE_Polymorphed);
+	if (polyProtoNum) {
+		idleAnimObj = GetProtoHandle(polyProtoNum);
+	}
+
+	auto objType = GetType(idleAnimObj);
+	if (objType != obj_t_pc && objType != obj_t_npc) {
+		if (objType == obj_t_portal && IsDoorOpen(obj)) {
+			return EncodedAnimId(78);
+		}
+		return EncodedAnimId(35);
+	}
+
+	if (critterSys.IsDeadNullDestroyed(obj)) {
+		return EncodedAnimId(12);
+	}
+	else if (critterSys.IsDeadOrUnconscious(obj))
+	{
+		return EncodedAnimId(14);
+	}
+	else if (critterSys.IsProne(obj))
+	{
+		return EncodedAnimId(1);
+	}
+	else if (critterSys.IsConcealed(obj))
+	{
+		return EncodedAnimId(33);
+	}
+	else if (critterSys.IsMovingSilently(obj))
+	{
+		return EncodedAnimId(44);
+	}
+	else if (critterSys.IsCombatModeActive(obj))
+	{
+		return critterSys.GetAnimId(idleAnimObj, gfx::WeaponAnim::CombatIdle);
+	}
+	else
+	{
+		return critterSys.GetAnimId(idleAnimObj, gfx::WeaponAnim::Idle);
+	}
+}
+
+bool Objects::IsDoorOpen(objHndl obj)
+{
+	// Undetected secret doors are never open
+	auto secretDoorFlags = GetSecretDoorFlags(obj);
+	if (secretDoorFlags & OSDF_SECRET_DOOR 
+		&& !(secretDoorFlags & OSDF_SECRET_DOOR_FOUND)) {
+		return false;
+	}
+
+	auto portalFlags = GetPortalFlags(obj);
+	return (portalFlags & OPF_OPEN) == OPF_OPEN;
 }
 
 void Objects::InsertDataIntoInternalStack(GameObjectBody * objBody, obj_f fieldIdx, void * dataIn)
@@ -392,6 +502,9 @@ Objects::Objects()
 	rebase(_ContainerToggleOpen, 0x1010EA00);
 
 	rebase(_DLLFieldNames,		0x102CD840);
+	
+	rebase(UpdateRenderHeight, 0x10021360);
+	rebase(UpdateRadius, 0x10021500);
 }
 
 void Objects::PropFetcher(GameObjectBody* objBody, obj_f fieldIdx, void * dataOut) {
@@ -696,19 +809,6 @@ objHndl Objects::GetHandle(const ObjectId &id) {
 ObjectType Objects::GetType(objHndl obj)
 {
 	return static_cast<ObjectType>(getInt32(obj, obj_f_type));
-}
-
-uint32_t Objects::IsDeadNullDestroyed(objHndl obj)
-{
-	return _IsObjDeadNullDestroyed(obj);
-}
-
-uint32_t Objects::IsUnconscious(objHndl obj)
-{
-	if (obj == 0){ return 1; }
-	if (GetFlags(obj) & OF_DESTROYED){ return 1; }
-	if (GetHPCur(obj) <= -10){ return 1; }
-	return d20.d20Query(obj, DK_QUE_Unconscious) != 0;
 }
 
 int32_t Objects::GetHPCur(objHndl obj)

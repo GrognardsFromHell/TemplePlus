@@ -2,6 +2,7 @@
 #include "platform/d3d.h"
 
 #include "infrastructure/mdfparser.h"
+#include "infrastructure/mesparser.h"
 #include "infrastructure/vfs.h"
 #include "infrastructure/logging.h"
 #include "infrastructure/stringutil.h"
@@ -298,6 +299,83 @@ namespace gfx {
 			return nullptr;
 		}
 
+	}
+
+	void MdfMaterialFactory::LoadReplacementSets(const std::string & filename)
+	{
+
+		auto mapping = MesFile::ParseFile(filename);
+
+		for (auto &entry : mapping) {
+			AddReplacementSetEntry((uint32_t) entry.first, entry.second);
+		}
+
+	}
+
+	void MdfMaterialFactory::AddReplacementSetEntry(uint32_t id, const std::string & entry)
+	{
+		static std::map<std::string, MaterialPlaceholderSlot> sSlotMapping {
+			{ "CHEST", MaterialPlaceholderSlot::CHEST },
+			{ "BOOTS", MaterialPlaceholderSlot::BOOTS },
+			{ "GLOVES", MaterialPlaceholderSlot::GLOVES },
+			{ "HEAD", MaterialPlaceholderSlot::HEAD }
+		};
+
+		if (entry.empty()) {
+			return;
+		}
+
+		ReplacementSet set;
+
+		using gsl::cstring_view;
+		std::vector<cstring_view<>> elems;
+		std::vector<cstring_view<>> subElems;
+		std::string slotName, mdfName;
+		split(entry, ' ', elems, true);
+
+		for (auto &elem : elems) {
+			split(elem, ':', subElems, false);
+
+			if (subElems.size() < 2) {
+				logger->warn("Invalid material replacement set {}: {}", id, entry);
+				continue;
+			}
+
+			slotName.assign(subElems[0].data(), subElems[0].size());
+			mdfName.assign(subElems[1].data(), subElems[1].size());
+
+			// Map the slot name to the enum literal for it
+			auto slotIt = sSlotMapping.find(slotName);
+			if (slotIt == sSlotMapping.end()) {
+				logger->warn("Invalid material replacement set {}: {}", id, entry);
+				continue;
+			}
+
+			// Resolve the referenced material
+			auto material = LoadMaterial(mdfName);
+			if (!material) {
+				logger->warn("Material replacement set {} references unknown MDF: {}", id, mdfName);
+				continue;
+			}
+
+			set[slotIt->second] = material;
+		}
+
+		mReplacementSets[id] = set;
+
+	}
+
+	const MdfMaterialFactory::ReplacementSet &MdfMaterialFactory::GetReplacementSet(uint32_t id)
+	{
+		static const ReplacementSet sEmptyResult;
+
+		auto it = mReplacementSets.find(id);
+
+		if (it != mReplacementSets.end()) {
+			return it->second;
+		}
+
+		return sEmptyResult;
 	}
 
 	Material MdfMaterialFactory::CreateDeviceMaterial(const std::string &name, MdfMaterial & spec)

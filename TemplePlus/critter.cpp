@@ -5,11 +5,19 @@
 #include "inventory.h"
 #include "float_line.h"
 #include "condition.h"
+#include "d20.h"
 #include "particles.h"
 #include "util/config.h"
 #include "python/python_integration_obj.h"
 #include "python/python_object.h"
+#include "tig/tig_startup.h"
 #include "util/fixes.h"
+#include <graphics/mdfmaterials.h>
+#include <infrastructure/meshes.h>
+#include <infrastructure/vfs.h>
+#include <temple/meshes.h>
+#include <infrastructure/mesparser.h>
+#include "gamesystems/gamesystems.h"
 
 static struct CritterAddresses : temple::AddressTable {
 
@@ -40,6 +48,8 @@ static struct CritterAddresses : temple::AddressTable {
 	void(__cdecl *TakeMoney)(objHndl critter, int platinum, int gold, int silver, int copper);
 	void(__cdecl *GiveMoney)(objHndl critter, int platinum, int gold, int silver, int copper);
 
+	int (*GetWeaponAnim)(objHndl critter, objHndl primaryWeapon, objHndl secondary, gfx::WeaponAnim animId);
+
 	CritterAddresses() {
 		rebase(HasMet, 0x10053CD0);
 		rebase(AddFollower, 0x100812F0);
@@ -62,6 +72,7 @@ static struct CritterAddresses : temple::AddressTable {
 
 		rebase(GiveMoney, 0x1007F960);
 		rebase(TakeMoney, 0x1007FA40);
+		rebase(GetWeaponAnim, 0x10020B60);
 	}
 
 } addresses;
@@ -212,8 +223,53 @@ uint32_t LegacyCritterSystem::Dominate(objHndl critter, objHndl caster) {
 	return conds.AddTo(critter, cond, args);
 }
 
-uint32_t LegacyCritterSystem::IsDeadOrUnconscious(objHndl critter) {
-	return addresses.IsDeadOrUnconscious(critter);
+bool LegacyCritterSystem::IsDeadNullDestroyed(objHndl critter)
+{
+	if (!critter) {
+		return true;
+	}
+
+	auto flags = objects.GetFlags(critter);
+	if (flags & OF_OFF) {
+		return true;
+	}
+
+	return objects.GetHPCur(critter) <= -10;
+}
+
+bool LegacyCritterSystem::IsDeadOrUnconscious(objHndl critter) {
+	if (IsDeadNullDestroyed(critter)) {
+		return true;
+	}
+	return objects.d20.d20Query(critter, DK_QUE_Unconscious) != 0;
+}
+
+bool LegacyCritterSystem::IsProne(objHndl critter)
+{
+	return objects.d20.d20Query(critter, DK_QUE_Prone) != 0;
+}
+
+CritterFlag LegacyCritterSystem::GetCritterFlags(objHndl critter)
+{
+	return (CritterFlag) objects.getInt32(critter, obj_f_critter_flags);
+}
+
+bool LegacyCritterSystem::IsMovingSilently(objHndl critter)
+{
+	auto flags = GetCritterFlags(critter);
+	return (flags & OCF_MOVING_SILENTLY) == OCF_MOVING_SILENTLY;
+}
+
+bool LegacyCritterSystem::IsCombatModeActive(objHndl critter)
+{
+	auto flags = GetCritterFlags(critter);
+	return (flags & OCF_COMBAT_MODE_ACTIVE) == OCF_COMBAT_MODE_ACTIVE;
+}
+
+bool LegacyCritterSystem::IsConcealed(objHndl critter)
+{
+	auto flags = GetCritterFlags(critter);
+	return (flags & OCF_IS_CONCEALED) == OCF_IS_CONCEALED;
 }
 
 int LegacyCritterSystem::GetPortraitId(objHndl leader) {
@@ -226,6 +282,386 @@ int LegacyCritterSystem::GetLevel(objHndl critter) {
 
 Race LegacyCritterSystem::GetRace(objHndl critter) {
 	return (Race)objects.StatLevelGet(critter, stat_race);
+}
+
+Gender LegacyCritterSystem::GetGender(objHndl critter) {
+	return (Gender)objects.StatLevelGet(critter, stat_gender);
+}
+
+std::string LegacyCritterSystem::GetHairStylePreviewTexture(HairStyle style)
+{
+	return GetHairStyleFile(style, "tga");
+}
+
+std::string LegacyCritterSystem::GetHairStyleModel(HairStyle style)
+{
+	return GetHairStyleFile(style, "skm");
+}
+
+gfx::EncodedAnimId LegacyCritterSystem::GetAnimId(objHndl critter, gfx::WeaponAnim anim)
+{
+	auto weaponPrim = GetWornItem(critter, EquipSlot::WeaponPrimary);
+	auto weaponSec = GetWornItem(critter, EquipSlot::WeaponSecondary);
+	if (!weaponSec) {
+		weaponSec = GetWornItem(critter, EquipSlot::Shield);
+	}
+
+	int rawAnimId = addresses.GetWeaponAnim(critter, weaponPrim, weaponSec, anim);
+	return gfx::EncodedAnimId(rawAnimId);
+}
+
+int LegacyCritterSystem::GetModelRaceOffset(objHndl obj)
+{
+	// Meshes above 1000 are monsters, they dont get a creature type
+	auto meshId = objects.getInt32(obj, obj_f_base_mesh);
+	if (meshId >= 1000) {
+		return -1;
+	}
+
+	auto race = GetRace(obj);
+	auto gender = GetGender(obj);
+	bool isMale = (gender == Gender::Male);
+
+	/*
+		The following table comes from materials.mes, where
+		the offsets into the materials and addmesh table are listed.
+	*/
+	int result;
+	switch (race)
+	{
+	case race_human:
+		result = (isMale ? 0 : 1);
+		break;
+	case race_elf:
+		result = (isMale ? 2 : 3);
+		break;
+	case race_halforc:
+		result = (isMale ? 4 : 5);
+		break;
+	case race_dwarf:
+		result = (isMale ? 6 : 7);
+		break;
+	case race_gnome:
+		result = (isMale ? 8 : 9);
+		break;
+	case race_halfelf:
+		result = (isMale ? 10 : 11);
+		break;
+	case race_halfling:
+		result = (isMale ? 12 : 13);
+		break;
+	default:
+		result = 0;
+		break;
+	}
+
+	return result;
+}
+
+void LegacyCritterSystem::UpdateAddMeshes(objHndl obj)
+{
+
+	auto raceOffset = GetModelRaceOffset(obj);
+
+	// For monsters, normal addmeshes are not processed
+	if (raceOffset == -1) {
+		return;
+	}
+
+	auto model(objects.GetAnimHandle(obj));
+
+	if (!model) {
+		return;
+	}
+
+	// Reset all existing add meshes
+	model->ClearAddMeshes();
+
+	// Do not process add meshes if the user is polymorphed
+	if (objects.d20.d20Query(obj, DK_QUE_Polymorphed)) {
+		return;
+	}
+
+	// Adjust the hair style size based on the worn helmet
+	auto helmet = GetWornItem(obj, EquipSlot::Helmet);
+
+	// This seems to be the helmet type (0 = small, 2 = large)
+	int helmetType = 0;
+	if (helmet) {
+		auto wearFlags = objects.GetItemWearFlags(helmet);
+		if (wearFlags & OIF_WEAR_HELMET) {
+			helmetType = (objects.getInt32(helmet, obj_f_armor_flags) >> 2) & 3;
+		}
+	}
+
+	auto robes = GetWornItem(obj, EquipSlot::Robes);
+
+	for (int slotId = 0; slotId < (int) EquipSlot::Count; ++slotId) {
+		auto slot = (EquipSlot)slotId;
+		auto item = GetWornItem(obj, slot);
+		if (!item) {
+			continue;
+		}
+
+		// Armor is hidden by a robe
+		if (robes && slot == EquipSlot::Armor) {
+			continue;
+		}
+
+		// Addmesh / Material index of the item
+		auto matIdx = objects.getInt32(item, obj_f_item_material_slot);
+		if (matIdx == -1) {
+			continue; // No assigned addmesh or material replacement
+		}
+		
+		auto& addMeshes(GetAddMeshes(matIdx, raceOffset));
+
+		if (!addMeshes.empty()) {
+			model->AddAddMesh(addMeshes[0]);
+		}
+
+		// Only add the helmet part if there's no real helmet
+		if (helmetType == 0 && addMeshes.size() >= 2) {
+			model->AddAddMesh(addMeshes[1]);
+			helmetType = 2; // The addmesh counts as a large helmet
+		}
+
+	}
+
+	// Add the hair model
+	auto packedHairStyle = objects.getInt32(obj, obj_f_critter_hair_style);
+	HairStyle hairStyle{ packedHairStyle };
+
+	// Modify the hair style size based on the used helmet, 
+	// since it might cover it
+	if (helmetType == 2) {
+		// Large helmets remove most of the hair
+		hairStyle.size = HairStyleSize::None;
+	} else if (helmetType == 1) {
+		// Smaller helmets only part of it
+		hairStyle.size = HairStyleSize::Small;
+	} else {
+		hairStyle.size = HairStyleSize::Big;
+	}
+
+	auto hairModel{GetHairStyleModel(hairStyle)};
+	if (!hairModel.empty()) {
+		model->AddAddMesh(hairModel);
+	}
+}
+
+const std::vector<std::string>& LegacyCritterSystem::GetAddMeshes(int matIdx, int raceOffset) {
+
+	static std::vector<std::string> sEmptyAddMeshes;
+	
+	// Lazily load the addmesh rules
+	if (mAddMeshes.empty()) {
+		auto mapping(MesFile::ParseFile("rules\\addmesh.mes"));
+		for (auto &entry : mapping) {
+			mAddMeshes[entry.first] = split(entry.second, ';', true);
+		}
+	}
+
+	auto it = mAddMeshes.find(matIdx + raceOffset);
+	if (it != mAddMeshes.end()) {
+		return it->second;
+	}
+
+	return sEmptyAddMeshes;
+}
+
+void LegacyCritterSystem::ApplyReplacementMaterial(gfx::AnimatedModelPtr model, int mesId)
+{
+	auto& replacementSet = tig->GetMdfFactory().GetReplacementSet(mesId);
+	for (auto& entry : replacementSet) {
+		model->AddReplacementMaterial(entry.first, entry.second);
+	}
+}
+
+static const char *GetHairStyleRaceName(HairStyleRace race) {
+	switch (race) {
+	case HairStyleRace::Human:
+		return "hu";
+	case HairStyleRace::Dwarf:
+		return "dw";
+	case HairStyleRace::Elf:
+		return "el";
+	case HairStyleRace::Gnome:
+		return "gn";
+	case HairStyleRace::HalfElf:
+		return "he";
+	case HairStyleRace::HalfOrc:
+		return "ho";
+	case HairStyleRace::Halfling:
+		return "hl";
+	default:
+		throw TempleException("Unsupported hair style race: {}", (int)race);
+	}
+}
+
+static const char *GetHairStyleSizeName(HairStyleSize size) {
+	switch (size) {
+	case HairStyleSize::Big:
+		return "big";
+	case HairStyleSize::Small:
+		return "small";
+	case HairStyleSize::None:
+		return "none";
+	default:
+		throw TempleException("Unsupported hair style size: {}", (int)size);
+	}
+}
+
+// Gets the race that should be fallen back to if there's 
+// no model for the given race. If it returns race again
+// there's no more fallback
+static HairStyleRace GetHairStyleFallbackRace(HairStyleRace race) {
+	switch (race) {
+	case HairStyleRace::Human:
+		return HairStyleRace::Human;
+	case HairStyleRace::Dwarf:
+		return HairStyleRace::Dwarf;
+	case HairStyleRace::Elf:
+		return HairStyleRace::Human;
+	case HairStyleRace::Gnome:
+		return HairStyleRace::Human;
+	case HairStyleRace::HalfElf:
+		return HairStyleRace::Human;
+	case HairStyleRace::HalfOrc:
+		return HairStyleRace::HalfOrc;
+	case HairStyleRace::Halfling:
+		return HairStyleRace::Human;
+	default:
+		throw TempleException("Unsupported hair style race: {}", (int)race);
+	}
+}
+
+static HairStyleSize GetHairStyleFallbackSize(HairStyleSize size) {
+	switch (size) {
+	case HairStyleSize::Big:
+		return HairStyleSize::Small;
+	case HairStyleSize::Small:
+		return HairStyleSize::None;
+	case HairStyleSize::None:
+		return HairStyleSize::None;
+	default:
+		throw TempleException("Unsupported hair style size: {}", (int)size);
+	}
+}
+
+std::string LegacyCritterSystem::GetHairStyleFile(HairStyle style, const char * extension)
+{
+	const char *genderShortName;
+	const char *genderDir;
+	if (style.gender == Gender::Male) {
+		genderShortName = "m";
+		genderDir = "male";
+	} else {
+		genderShortName = "f";
+		genderDir = "female";
+	}
+	
+	// These will be modified if a fallback is needed, so copy them here
+	auto race = style.race;
+	auto size = style.size;
+	auto styleNr = style.style;
+
+	while (true)
+	{
+		while (true)
+		{
+			while (true)
+			{
+				auto filename(fmt::format("art\\meshes\\hair\\{}\\s{}\\{}_{}_s{}_c{}_{}.{}",
+					genderDir,
+					style.style,
+					GetHairStyleRaceName(race),
+					genderShortName,
+					style.style,
+					style.color,
+					GetHairStyleSizeName(size),
+					extension
+					));
+				
+				if (vfs->FileExists(filename))
+					return filename;
+
+				// Fall back to a compatible race, if no model for this 
+				// race exists
+				auto fallbackRace = GetHairStyleFallbackRace(race);
+				if (fallbackRace == race) {
+					break;
+				}
+				race = fallbackRace;
+			}
+
+			// Fall back to a smaller size of the model
+			auto fallbackSize = GetHairStyleFallbackSize(size);
+			if (fallbackSize == size) {
+				break;
+			}
+			size = fallbackSize;
+		}
+
+		// Fall back to style 5 if no other options exist
+		if (styleNr == 5)
+			break;
+		styleNr = 5;
+	}
+
+	return std::string();
+}
+
+void LegacyCritterSystem::UpdateModelEquipment(objHndl obj)
+{
+
+	UpdateAddMeshes(obj);
+	auto raceOffset = GetModelRaceOffset(obj);
+	if (raceOffset == -1) {
+		return;
+	}
+
+	auto model = objects.GetAnimHandle(obj);
+	if (!model) {
+		return; // No animation really present
+	}
+
+	// This is a bit shit but since AAS will just splice the
+	// add meshes into the list of model parts, 
+	// we have to reset the render buffers
+	gameSystems->GetAAS().InvalidateBuffers(model->GetHandle());
+
+	// Apply the naked replacement materials for
+	// equipment slots that support them
+	ApplyReplacementMaterial(model, 0 + raceOffset); // Helmet
+	ApplyReplacementMaterial(model, 100 + raceOffset); // Cloak
+	ApplyReplacementMaterial(model, 200 + raceOffset); // Gloves
+	ApplyReplacementMaterial(model, 500 + raceOffset); // Armor
+	ApplyReplacementMaterial(model, 800 + raceOffset); // Boots
+	
+	// Now apply it for the actual equipment
+	for (uint32_t slotId = 0; slotId < (uint32_t)EquipSlot::Count; ++slotId) {
+		auto slot = (EquipSlot) slotId;
+		auto item = GetWornItem(obj, slot);
+		if (item) {
+			auto materialSlot = objects.getInt32(item, obj_f_item_material_slot);
+			if (materialSlot != -1) {
+				ApplyReplacementMaterial(model, materialSlot + raceOffset);
+			}
+		}
+	}
+}
+
+void LegacyCritterSystem::AddNpcAddMeshes(objHndl obj)
+{
+
+	auto id = objects.getInt32(obj, obj_f_npc_add_mesh);
+	auto model = objects.GetAnimHandle(obj);
+
+	for (auto &addMesh : GetAddMeshes(id, 0)) {
+		model->AddAddMesh(addMesh);
+	}
+
 }
 
 objHndl LegacyCritterSystem::GiveItem(objHndl critter, int protoId) {
@@ -321,7 +757,7 @@ uint32_t LegacyCritterSystem::IsSubtypeFire(objHndl objHnd)
 
 float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType) 
 {
-	float naturalReach = objects.getInt32(obj, obj_f_critter_reach);
+	float naturalReach = (float) objects.getInt32(obj, obj_f_critter_reach);
 	/*
 	__asm{
 		fild naturalReach;
@@ -343,14 +779,14 @@ float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType)
 			case wt_longspear:
 			case wt_ranseur:
 			case wt_spike_chain:
-				return naturalReach + 3.0; // +5.0 - 2.0
+				return naturalReach + 3.0f; // +5.0 - 2.0
 			default:
-				return naturalReach - 2.0;
+				return naturalReach - 2.0f;
 			}
 				
 		}
 	}
-	return naturalReach - 2.0;
+	return naturalReach - 2.0f;
 }
 
 int LegacyCritterSystem::GetBonusFromSizeCategory(int sizeCategory)
@@ -445,11 +881,12 @@ bool LegacyCritterSystem::IsWarded(objHndl obj)
 	Py_DECREF(result);
 	Py_DECREF(args);
 	
-	return isWarded;
+	return isWarded != 0;
 }
 
 bool LegacyCritterSystem::IsSummoned(objHndl obj)
 {
+	// TODO
 	return 0;
 }
 

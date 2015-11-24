@@ -1,6 +1,15 @@
 #pragma once
+
 #include "common.h"
+
+#include <memory>
 #include <temple/dll.h>
+
+namespace gfx {
+	enum class WeaponAnim;
+	class EncodedAnimId;
+	using AnimatedModelPtr = std::shared_ptr<class AnimatedModel>;
+}
 
 enum class EquipSlot : uint32_t {
 	Helmet = 0,
@@ -41,6 +50,53 @@ enum class ResurrectType : uint32_t {
 	Resurrect = 1,
 	ResurrectTrue = 2,
 	CuthbertResurrect = 3
+};
+
+enum class Gender : uint32_t {
+	Female = 0,
+	Male = 1
+};
+
+enum class HairStyleRace {
+	Human = 0,
+	Dwarf,
+	Elf,
+	Gnome,
+	HalfElf,
+	HalfOrc,
+	Halfling
+};
+
+enum class HairStyleSize {
+	Big = 0,
+	Small,
+	None
+};
+
+struct HairStyle {
+	HairStyleRace race;
+	Gender gender;
+	HairStyleSize size;
+	int color;
+	int style;
+
+	HairStyle(uint32_t packed) {
+		race = (HairStyleRace)(packed & 7);
+		gender = (Gender)((packed >> 3) & 1);
+		size = (HairStyleSize)((packed >> 10) & 3);
+		style = (packed >> 4) & 7;
+		color = (packed >> 7) & 7;
+	}
+	HairStyle() {
+	}
+
+	uint32_t Pack() const {
+		return ((int)race & 7)
+			| ((int)gender) & 1 << 3
+			| ((int)size) & 3 << 10
+			| style & 7 << 4
+			| color & 7 << 7;
+	}
 };
 
 struct LegacyCritterSystem : temple::AddressTable
@@ -144,7 +200,19 @@ struct LegacyCritterSystem : temple::AddressTable
 	*/
 	uint32_t Dominate(objHndl critter, objHndl caster);
 
-	uint32_t IsDeadOrUnconscious(objHndl critter);
+	bool IsDeadNullDestroyed(objHndl critter);
+
+	bool IsDeadOrUnconscious(objHndl critter);
+
+	bool IsProne(objHndl critter);
+
+	CritterFlag GetCritterFlags(objHndl critter);
+		
+	bool IsMovingSilently(objHndl critter);
+	
+	bool IsCombatModeActive(objHndl critter);
+
+	bool IsConcealed(objHndl critter);
 	
 	int GetPortraitId(objHndl critter);
 
@@ -152,9 +220,27 @@ struct LegacyCritterSystem : temple::AddressTable
 
 	Race GetRace(objHndl critter);
 
+	Gender GetGender(objHndl critter);
+
+	std::string GetHairStylePreviewTexture(HairStyle style);
+	std::string GetHairStyleModel(HairStyle style);
+	
+	/**
+	 * Gets the concrete animation id for a weapon based animation using
+	 * the currently equipped weapon of a critter.
+	 */
+	gfx::EncodedAnimId GetAnimId(objHndl critter, gfx::WeaponAnim anim);
+
+	void UpdateModelEquipment(objHndl obj);
+
+	/**
+	 * This is called initially when the model is loaded for an object
+	 * and adds NPC specific add meshes.
+	 */
+	void AddNpcAddMeshes(objHndl obj);
+
 	// Create and give an item to a critter
 	objHndl GiveItem(objHndl critter, int protoId);
-
 
 	/*
 		Takes money from a critter. If the critter is a PC, money is taken from the party instead.
@@ -197,6 +283,16 @@ struct LegacyCritterSystem : temple::AddressTable
 	bool IsCaster(objHndl obj);
 #pragma endregion
 
+private:
+	int GetModelRaceOffset(objHndl obj);
+	void UpdateAddMeshes(objHndl obj);
+	void ApplyReplacementMaterial(gfx::AnimatedModelPtr model, int mesId);
+
+	std::string GetHairStyleFile(HairStyle style, const char *extension);
+
+	std::unordered_map<int, std::vector<std::string>> mAddMeshes;
+
+	const std::vector<std::string>& GetAddMeshes(int matIdx, int raceOffset);
 };
 
 extern LegacyCritterSystem critterSys;

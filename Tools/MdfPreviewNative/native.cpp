@@ -326,13 +326,13 @@ API bool MdfPreviewNative_SetModel(MdfPreviewNative *native,
 			);
 
 		auto headMdf(native->materialFactory->LoadMaterial("art\\meshes\\PCs\\PC_Human_Male\\head.mdf"));
-		native->model->SetSpecialMaterial(gfx::SpecialMaterialSlot::Head, headMdf->GetId());
+		native->model->AddReplacementMaterial(gfx::MaterialPlaceholderSlot::HEAD, headMdf);
 		auto handsMdf(native->materialFactory->LoadMaterial("art\\meshes\\PCs\\PC_Human_Male\\hands.mdf"));
-		native->model->SetSpecialMaterial(gfx::SpecialMaterialSlot::Gloves, handsMdf->GetId());
+		native->model->AddReplacementMaterial(gfx::MaterialPlaceholderSlot::GLOVES, handsMdf);
 		auto chestMdf(native->materialFactory->LoadMaterial("art\\meshes\\PCs\\PC_Human_Male\\chest.mdf"));
-		native->model->SetSpecialMaterial(gfx::SpecialMaterialSlot::Chest, chestMdf->GetId());
+		native->model->AddReplacementMaterial(gfx::MaterialPlaceholderSlot::CHEST, chestMdf);
 		auto feetMdf(native->materialFactory->LoadMaterial("art\\meshes\\PCs\\PC_Human_Male\\feet.mdf"));
-		native->model->SetSpecialMaterial(gfx::SpecialMaterialSlot::Boots, feetMdf->GetId());
+		native->model->AddReplacementMaterial(gfx::MaterialPlaceholderSlot::BOOTS, feetMdf);
 
 		return true;
 	} catch (std::exception &e) {

@@ -4,6 +4,7 @@
 #include <infrastructure/exception.h>
 #include <infrastructure/logging.h>
 #include <infrastructure/mesparser.h>
+#include <graphics/mdfmaterials.h>
 
 #include <MinHook.h>
 
@@ -241,10 +242,10 @@ namespace temple {
 
 		bool AddAddMesh(const ::std::string& filename) override;
 		bool ClearAddMeshes() override;
-		::gfx::AnimatedModelEvents Advance(float deltaTime, float deltaDistance, float deltaRotation, const ::gfx::AnimatedModelParams& params) override;
-		::gfx::EncodedAnimId GetAnimId() const override;
+		gfx::AnimatedModelEvents Advance(float deltaTime, float deltaDistance, float deltaRotation, const ::gfx::AnimatedModelParams& params) override;
+		gfx::EncodedAnimId GetAnimId() const override;
 		int GetBoneCount() const override;
-		::std::string GetBoneName(int boneId) override;
+		std::string GetBoneName(int boneId) override;
 		int GetBoneParentId(int boneId) override;
 		bool GetBoneWorldMatrixByName(const ::gfx::AnimatedModelParams& params, const ::std::string& boneName, DirectX::XMFLOAT4X4* worldMatrixOut) override;
 		bool GetBoneWorldMatrixByNameForChild(const gfx::AnimatedModelPtr& child, const gfx::AnimatedModelParams& params, const std::string& boneName, DirectX::XMFLOAT4X4* worldMatrixOut) override;
@@ -253,13 +254,13 @@ namespace temple {
 		bool HasAnim(::gfx::EncodedAnimId animId) const override;
 		void SetTime(const ::gfx::AnimatedModelParams& params, float timeInSecs) override;
 		bool HasBone(const ::std::string& boneName) const override;
-		void AddReplacementMaterial(int materialId) override;
-		void SetSpecialMaterial(gfx::SpecialMaterialSlot slot, int materialId) override;
+		void AddReplacementMaterial(gfx::MaterialPlaceholderSlot slot,
+			const gfx::MdfRenderMaterialPtr &material) override;
 		void SetAnimId(int animId) override;
 		void SetClothFlag() override;
-		::std::vector<int> GetSubmeshes() override;
-		::std::unique_ptr<::gfx::Submesh> GetSubmesh(const ::gfx::AnimatedModelParams& params, int submeshIdx) override;
-		::std::unique_ptr<::gfx::Submesh> GetSubmeshForParticles(const ::gfx::AnimatedModelParams& params, int submeshIdx) override;
+		std::vector<int> GetSubmeshes() override;
+		std::unique_ptr<gfx::Submesh> GetSubmesh(const ::gfx::AnimatedModelParams& params, int submeshIdx) override;
+		std::unique_ptr<gfx::Submesh> GetSubmeshForParticles(const ::gfx::AnimatedModelParams& params, int submeshIdx) override;
 
 		static AasAnimParams Convert(const gfx::AnimatedModelParams& params);
 
@@ -372,27 +373,27 @@ namespace temple {
 		return functions.HasBone(mHandle, boneName.c_str()) == AAS_OK;
 	}
 
-	void AasAnimatedModel::AddReplacementMaterial(int materialId) {
-		functions.ReplaceSpecialMaterial(mHandle, materialId);
-	}
+	void AasAnimatedModel::AddReplacementMaterial(gfx::MaterialPlaceholderSlot slot,
+		const gfx::MdfRenderMaterialPtr &material) {
 
-	void AasAnimatedModel::SetSpecialMaterial(gfx::SpecialMaterialSlot slot, int materialId) {
+		uint32_t materialId = material->GetId();
+
 		switch (slot) {
-		case gfx::SpecialMaterialSlot::Head:
+		case gfx::MaterialPlaceholderSlot::HEAD:
 			materialId |= 0x84000000;
 			break;
-		case gfx::SpecialMaterialSlot::Gloves:
+		case gfx::MaterialPlaceholderSlot::GLOVES:
 			materialId |= 0x88000000;
 			break;
-		case gfx::SpecialMaterialSlot::Boots:
+		case gfx::MaterialPlaceholderSlot::BOOTS:
 			materialId |= 0xA0000000;
 			break;
-		case gfx::SpecialMaterialSlot::Chest:
+		case gfx::MaterialPlaceholderSlot::CHEST:
 			materialId |= 0x90000000;
 			break;
 		}
 
-		AddReplacementMaterial(materialId);
+		functions.ReplaceSpecialMaterial(mHandle, materialId);
 	}
 
 	void AasAnimatedModel::SetAnimId(int animId) {
@@ -516,7 +517,8 @@ namespace temple {
 	gfx::AnimatedModelPtr AasAnimatedModelFactory::FromIds(int meshId,
 	                                                       int skeletonId,
 	                                                       gfx::EncodedAnimId idleAnimId,
-	                                                       const gfx::AnimatedModelParams& params) {
+	                                                       const gfx::AnimatedModelParams& params,
+														   bool borrow) {
 
 		AasHandle handle;
 		auto aasParams(AasAnimatedModel::Convert(params));
@@ -524,7 +526,7 @@ namespace temple {
 			throw TempleException("Could not load model {} with skeleton {}.", meshId, skeletonId);
 		}
 
-		return std::make_shared<AasAnimatedModel>(handle);
+		return std::make_shared<AasAnimatedModel>(handle, borrow);
 
 	}
 
@@ -558,6 +560,12 @@ namespace temple {
 	void AasAnimatedModelFactory::RemoveFreeListener(AasFreeListenerHandle it)
 	{
 		mListeners.erase(it);
+	}
+
+	void AasAnimatedModelFactory::InvalidateBuffers(AasHandle handle) {
+		for (auto &listener : sInstance->mListeners) {
+			listener(handle);
+		}
 	}
 
 }

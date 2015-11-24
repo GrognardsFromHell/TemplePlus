@@ -123,7 +123,7 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 
 	if (objects.IsCritter(objHnd))
 	{
-		if (!objects.IsDeadNullDestroyed(objHnd))
+		if (!critterSys.IsDeadNullDestroyed(objHnd))
 		{
 			uint32_t hpCur = objects.StatLevelGet(objHnd, stat_hp_current);
 			uint32_t subdualDam = objects.getInt32(objHnd, obj_f_critter_subdual_damage);

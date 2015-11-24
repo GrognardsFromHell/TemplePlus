@@ -16,7 +16,6 @@ using namespace temple;
 static struct MapRenderAddresses : temple::AddressTable {
 	bool (*IsPosExplored)(locXY loc, float offsetX, float offsetY);
 	void (*WorldToLocalScreen)(vector3f pos, float* xOut, float* yOut);
-	void (*ObjUpdateRenderHeight)(objHndl obj, int animId);
 	void (*EnableLights)(LocAndOffsets forLocation, float radius);
 
 	void (*Particles_Kill)(int handle);
@@ -29,7 +28,6 @@ static struct MapRenderAddresses : temple::AddressTable {
 	MapRenderAddresses() {
 		rebase(IsPosExplored, 0x1002ECB0);
 		rebase(WorldToLocalScreen, 0x10029040);
-		rebase(ObjUpdateRenderHeight, 0x10021360);
 		rebase(EnableLights, 0x100A5BA0);
 		rebase(isNight, 0x10B5DC80);
 
@@ -148,7 +146,7 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 
 	// Take render height from the animation if necessary
 	if (renderHeight < 0) {
-		addresses.ObjUpdateRenderHeight(handle, animatedModel->GetAnimId());
+		objects.UpdateRenderHeight(handle, animatedModel->GetAnimId());
 		renderHeight = objects.GetRenderHeight(handle);
 	}
 

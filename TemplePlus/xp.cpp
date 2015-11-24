@@ -5,6 +5,7 @@
 #include "util/config.h"
 #include "xp.h"
 #include "obj.h"
+#include "critter.h"
 #include "party.h"
 #include "d20_level.h"
 
@@ -101,13 +102,13 @@ void GiveXPAwards(){
 
 	for (uint32_t i = 0; i < party.GroupPCsLen(); i++){
 		objHndl objHndPC = party.GroupPCsGetMemberN(i);
-		if (!objects.IsDeadNullDestroyed(objHndPC)){
+		if (!critterSys.IsDeadNullDestroyed(objHndPC)){
 			fNumLivingPartyMembers += 1.0;
 		}
 	};
 	for (uint32_t i = 0; i < party.GroupNPCFollowersLen(); i++){
 		objHndl objHndNPCFollower = party.GroupNPCFollowersGetMemberN(i);
-		if (!objects.IsDeadNullDestroyed(objHndNPCFollower) 
+		if (!critterSys.IsDeadNullDestroyed(objHndNPCFollower) 
 			&& !objects.d20.d20Query(objHndNPCFollower, DK_QUE_ExperienceExempt)){
 			fNumLivingPartyMembers += 1.0;
 		}
@@ -122,7 +123,7 @@ void GiveXPAwards(){
 
 	for (uint32_t i = 0; i < party.GroupListGetLen(); i++){
 		objHndl objHnd = party.GroupListGetMemberN(i);
-		if (objects.IsDeadNullDestroyed(objHnd)){ continue; };
+		if (critterSys.IsDeadNullDestroyed(objHnd)){ continue; };
 		if (objects.d20.d20Query(objHnd, DK_QUE_ExperienceExempt)) { continue; };
 		if (party.ObjIsAIFollower(objHnd)) { continue; };
 

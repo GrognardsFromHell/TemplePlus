@@ -273,7 +273,7 @@ int LegacyCombatSystem::GetClosestEnemy(AiTactic* aiTac, int selectionType)
 			customCondition = d20Sys.d20Query(combatant, DK_QUE_CoupDeGrace);
 			break;
 		default:
-			customCondition = !objects.IsUnconscious(combatant);
+			customCondition = !critterSys.IsDeadOrUnconscious(combatant);
 		}
 
 		if (combatant != performer

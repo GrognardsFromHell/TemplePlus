@@ -29,7 +29,8 @@ namespace temple {
 			int meshId,
 			int skeletonId,
 			gfx::EncodedAnimId idleAnimId,
-			const gfx::AnimatedModelParams& params) override;
+			const gfx::AnimatedModelParams& params,
+			bool borrow = false) override;
 
 		gfx::AnimatedModelPtr FromFilenames(
 			const std::string& meshFilename,
@@ -47,6 +48,8 @@ namespace temple {
 		AasFreeListenerHandle AddFreeListener(AasFreeListener listener);
 		void RemoveFreeListener(AasFreeListenerHandle handle);
 
+		void InvalidateBuffers(AasHandle handle);
+
 	private:
 		AasConfig mConfig;
 		using FnAasModelFree = int(temple::AasHandle);
@@ -56,7 +59,7 @@ namespace temple {
 
 		// This is the mapping loaded from meshes.mes
 		std::unordered_map<int, std::string> mMapping;
-
+		
 		static int __stdcall AasResolveMaterial(const char *filename, int, int);
 		static int AasFreeModel(temple::AasHandle handle);
 

@@ -1171,7 +1171,7 @@ void ActionSequenceSystem::actionPerform()
 		mesLine.key = (uint32_t)curIdx;
 
 		objHndl performer = curSeq->performer;
-		if (objects.IsUnconscious(performer))
+		if (critterSys.IsDeadOrUnconscious(performer))
 		{
 			curSeq->d20ActArrayNum = curSeq->d20aCurIdx;
 			logger->info("\nUnconscious actor {} - cutting sequence", objects.description._getDisplayName(performer, performer));

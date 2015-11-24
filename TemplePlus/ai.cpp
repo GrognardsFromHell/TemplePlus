@@ -255,7 +255,7 @@ int AiSystem::TargetClosest(AiTactic* aiTac)
 
 
 		if (!critterSys.IsFriendly(dude, performer)
-			&& !objects.IsUnconscious(dude)
+			&& !critterSys.IsDeadOrUnconscious(dude)
 			&& locSys.DistanceToObj(performer, dude)  < dist
 			&& !ignoreTarget)
 		{
@@ -300,7 +300,7 @@ int AiSystem::TargetThreatened(AiTactic* aiTac)
 		
 
 		if (!critterSys.IsFriendly(dude, performer)
-			&& !objects.IsDeadNullDestroyed(dude)
+			&& !critterSys.IsDeadNullDestroyed(dude)
 			&& locSys.DistanceToObj(performer, dude)  < dist
 			&& combatSys.IsWithinReach(performer, dude) 
 			&& !ignoreTarget)

@@ -83,6 +83,7 @@
     <ClCompile Include="location.cpp" />
     <ClCompile Include="maps.cpp" />
     <ClCompile Include="messages\messagequeue.cpp" />
+    <ClCompile Include="obj_hooks.cpp" />
     <ClCompile Include="obj_iterator.cpp" />
     <ClCompile Include="particles.cpp" />
     <ClCompile Include="path_node.cpp" />

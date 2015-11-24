@@ -5,6 +5,7 @@
 #include "timeevents.h"
 #include "util/config.h"
 #include "obj.h"
+#include "critter.h"
 #include "pathfinding.h"
 #include "dice.h"
 
@@ -844,7 +845,7 @@ static PyObject* animDump(PyObject* ignore, PyObject* args) {
 
 	for (uint32_t i = 0; i < party.GroupPCsLen(); i++) {
 		objHndl objHndPC = party.GroupPCsGetMemberN(i);
-		if (!objects.IsDeadNullDestroyed(objHndPC)) {
+		if (!critterSys.IsDeadNullDestroyed(objHndPC)) {
 			animAddresses.PushGoalDying(objHndPC, 1);
 		}
 	}

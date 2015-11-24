@@ -13,9 +13,11 @@ namespace gfx {
 
 	struct Light3d;
 	struct MdfRenderOverrides;
+	enum class MaterialPlaceholderSlot;
 
 	struct AnimatedModelParams;
 	using AnimatedModelPtr = std::shared_ptr<class AnimatedModel>;
+	using MdfRenderMaterialPtr = std::shared_ptr<class MdfRenderMaterial>;
 
 	enum class WeaponAnim : int {
 		None = 0,
@@ -90,13 +92,6 @@ namespace gfx {
 		TwoHandedFlail,
 		Shuriken,
 		Monk
-	};
-
-	enum class SpecialMaterialSlot : int {
-		Head,
-		Chest,
-		Gloves,
-		Boots
 	};
 
 	/*
@@ -212,9 +207,8 @@ namespace gfx {
 
 		virtual bool HasBone(const std::string& boneName) const = 0;
 
-		virtual void AddReplacementMaterial(int encodedMaterialId) = 0;
-
-		virtual void SetSpecialMaterial(SpecialMaterialSlot slot, int materialId) = 0;
+		virtual void AddReplacementMaterial(gfx::MaterialPlaceholderSlot slot,
+			const gfx::MdfRenderMaterialPtr &material) = 0;
 
 		virtual void SetAnimId(int animId) = 0;
 
@@ -252,7 +246,8 @@ namespace gfx {
 			int meshId,
 			int skeletonId,
 			EncodedAnimId idleAnimId,
-			const AnimatedModelParams& params) = 0;
+			const AnimatedModelParams& params,
+			bool borrow = false) = 0;
 
 		virtual AnimatedModelPtr FromFilenames(
 			const std::string& meshFilename,

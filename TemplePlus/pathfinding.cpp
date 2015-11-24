@@ -272,7 +272,7 @@ int Pathfinding::PathDestIsClear(PathQuery* pq, objHndl mover, LocAndOffsets des
 				if (!(objFlags & OF_NO_BLOCK))
 				{
 					if ( (objType == obj_t_pc || objType == obj_t_npc ) 
-						&& !objects.IsUnconscious(objIt.results[i].obj) )
+						&& !critterSys.IsDeadOrUnconscious(objIt.results[i].obj) )
 					{
 						if ( (pqFlags & PQF_IGNORE_CRITTERS_ON_DESTINATION) == 0)
 						{
@@ -822,7 +822,7 @@ BOOL Pathfinding::PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffset
 				{
 					if (objType != obj_t_pc && objType != obj_t_npc)
 						break;
-					if ( !(pathFlags & PQF_IGNORE_CRITTERS) && !objects.IsUnconscious(objIt.results[i].obj))
+					if ( !(pathFlags & PQF_IGNORE_CRITTERS) && !critterSys.IsDeadOrUnconscious(objIt.results[i].obj))
 					{
 						if (!pqr->mover)
 							break;

@@ -1869,7 +1869,8 @@ int __cdecl DisarmCanPerform(DispatcherCallbackArgs args)
 
 int DisarmedReminder(DispatcherCallbackArgs args)
 {
-	if (args.subDispNode->condNode->args[7] < 2 && party.IsInParty(args.objHndCaller) && !objects.IsUnconscious(args.objHndCaller))
+	if (args.subDispNode->condNode->args[7] < 2 && party.IsInParty(args.objHndCaller) 
+		&& !critterSys.IsDeadOrUnconscious(args.objHndCaller))
 	{
 		char blargh[1000];
 		memcpy(blargh, "I was disarmed.", sizeof("I was disarmed."));
