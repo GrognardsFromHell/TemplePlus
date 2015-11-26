@@ -7,6 +7,8 @@ namespace gfx {
 	class RenderingDevice;
 	struct Light3d;
 	class AnimatedModel;
+	using MdfRenderMaterialPtr = std::shared_ptr<class MdfRenderMaterial>;
+	using RenderTargetTexturePtr = std::shared_ptr<class RenderTargetTexture>;
 }
 namespace temple {
 	class AasRenderer;
@@ -29,11 +31,25 @@ public:
 	void RenderMapObjects(int tileX1, int tileX2, int tileY1, int tileY2);
 	void RenderObject(objHndl handle, bool showInvisible);
 
+	void RenderObjectHighlight(objHndl handle, const gfx::MdfRenderMaterialPtr &material);
+
+	size_t GetRenderedLastFrame() const {
+		return mRenderedLastFrame;
+	}
+	size_t GetTotalLastFrame() const {
+		return mTotalLastFrame;
+	}
+
 private:
 	GameSystems& mGameSystems;
 	gfx::RenderingDevice& mDevice;
 	temple::AasRenderer &mAasRenderer;
 	ShadowType mShadowType = ShadowType::ShadowMap;
+	gfx::RenderTargetTexturePtr mShadowTarget;
+	gfx::RenderTargetTexturePtr mShadowTargetTmp;
+
+	size_t mRenderedLastFrame = 0;
+	size_t mTotalLastFrame = 0;
 
 	void DrawBoundingCylinder(float x, float y, float z, float radius, float height);
 
@@ -54,6 +70,7 @@ private:
 		const gfx::AnimatedModelParams &animParams, 
 		gfx::AnimatedModel &model, 
 		const gfx::Light3d& globalLight);
+	void ApplyGaussianBlur();
 	void RenderBlobShadow(objHndl handle, gfx::AnimatedModel &model);
 
 	objHndl GiantFrogGetGrappledOpponent(objHndl giantFrog);

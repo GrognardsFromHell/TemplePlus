@@ -31,7 +31,7 @@ struct ShapeRenderer2d::Impl {
 	Material texturedWithMaskMaterial;
 	SamplerState samplerWrapState;
 	SamplerState samplerClampState;
-
+	
 	static Material CreateMaterial(RenderingDevice &device,
 		const char *pixelShaderName,
 		bool forLines = false);

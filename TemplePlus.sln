@@ -51,6 +51,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shaders", "Shaders", "{D7FE
 		tpdata\shaders\clipping_vs.hlsl = tpdata\shaders\clipping_vs.hlsl
 		tpdata\shaders\diffuse_only_ps.hlsl = tpdata\shaders\diffuse_only_ps.hlsl
 		tpdata\shaders\font_vs.hlsl = tpdata\shaders\font_vs.hlsl
+		tpdata\shaders\gaussian_blur_ps.hlsl = tpdata\shaders\gaussian_blur_ps.hlsl
+		tpdata\shaders\gaussian_blur_vs.hlsl = tpdata\shaders\gaussian_blur_vs.hlsl
 		tpdata\shaders\gui_vs.hlsl = tpdata\shaders\gui_vs.hlsl
 		tpdata\shaders\lighting.fxh = tpdata\shaders\lighting.fxh
 		tpdata\shaders\line_vs.hlsl = tpdata\shaders\line_vs.hlsl
@@ -59,6 +61,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shaders", "Shaders", "{D7FE
 		tpdata\shaders\particles_points_vs.hlsl = tpdata\shaders\particles_points_vs.hlsl
 		tpdata\shaders\particles_quads_vs.hlsl = tpdata\shaders\particles_quads_vs.hlsl
 		tpdata\shaders\shadow_geom_vs.hlsl = tpdata\shaders\shadow_geom_vs.hlsl
+		tpdata\shaders\shadowmap_geom_vs.hlsl = tpdata\shaders\shadowmap_geom_vs.hlsl
 		tpdata\shaders\textured_simple_ps.hlsl = tpdata\shaders\textured_simple_ps.hlsl
 		tpdata\shaders\textured_two_ps.hlsl = tpdata\shaders\textured_two_ps.hlsl
 	EndProjectSection

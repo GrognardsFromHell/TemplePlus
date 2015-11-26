@@ -32,4 +32,25 @@ namespace gfx {
 		mTexture->UnlockRect(0);
 	}
 
+	RenderTargetTexture::RenderTargetTexture(IDirect3DTexture9* texture, const Size &size) : mTexture(texture), mSize(size) {
+		mContentRect = { 0, 0, size.width, size.height };
+		D3DLOG(mTexture->GetSurfaceLevel(0, &mSurface));
+	}
+
+	int RenderTargetTexture::GetId() const {
+		throw TempleException("Unsupported operation for render target textures.");
+	}
+
+	const std::string & gfx::RenderTargetTexture::GetName() const
+	{
+		static std::string sDynamicName("<rt>");
+		return sDynamicName;
+	}
+
+	void RenderTargetTexture::FreeDeviceTexture()
+	{
+		mSurface.Release();
+		mTexture.Release();
+	}
+
 }

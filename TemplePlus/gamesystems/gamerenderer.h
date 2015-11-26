@@ -19,6 +19,7 @@ struct RenderWorldInfo;
 class MapClipping;
 class GameSystems;
 class ParticleSystemsRenderer;
+class MapObjectRenderer;
 
 class GameRenderer {
 public:
@@ -31,6 +32,10 @@ public:
 		return *mParticleSysRenderer;
 	}
 
+	MapObjectRenderer& GetMapObjectRenderer() const {
+		return *mMapObjectRenderer;
+	}
+
 private:
 
 	void RenderWorld(RenderWorldInfo *info);
@@ -39,6 +44,8 @@ private:
 	GameSystems &mGameSystems;
 
 	std::unique_ptr<class temple::AasRenderer> mAasRenderer;
-	std::unique_ptr<class MapObjectRenderer> mMapObjectRenderer;
+	std::unique_ptr<MapObjectRenderer> mMapObjectRenderer;
 	std::unique_ptr<ParticleSystemsRenderer> mParticleSysRenderer;
 };
+
+extern GameRenderer *gameRenderer;

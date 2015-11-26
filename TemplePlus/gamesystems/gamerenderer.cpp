@@ -27,6 +27,8 @@ using namespace gfx;
 using namespace temple;
 using namespace particles;
 
+GameRenderer *gameRenderer = nullptr;
+
 #pragma pack(push, 1)
 struct TileRect {
   int64_t x1;
@@ -140,6 +142,8 @@ GameRenderer::GameRenderer(TigInitializer &tig,
 	  mGameSystems(gameSystems)      
 {
 
+	Expects(!gameRenderer);
+
 	mAasRenderer = std::make_unique<temple::AasRenderer>(
 		gameSystems.GetAAS(), 
 		tig.GetRenderingDevice(), 
@@ -155,9 +159,13 @@ GameRenderer::GameRenderer(TigInitializer &tig,
 		*mAasRenderer,
 		gameSystems.GetParticleSys());
 
+	gameRenderer = this;
+
 }
 
-GameRenderer::~GameRenderer() {}
+GameRenderer::~GameRenderer() {
+	gameRenderer = nullptr;
+}
 
 #pragma pack(push, 8)
 struct PreciseSectorCol {

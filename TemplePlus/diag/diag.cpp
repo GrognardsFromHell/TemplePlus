@@ -7,6 +7,7 @@
 
 #include "../gamesystems/gamesystems.h"
 #include "../gamesystems/gamerenderer.h"
+#include "../gamesystems/mapobjrender.h"
 #include "../gamesystems/partsystemsrenderer.h"
 
 using namespace gfx;
@@ -66,6 +67,11 @@ void DiagScreen::Render() {
 	lines.push_back(fmt::format("{} of {} rendered", particleRenderer.GetRenderedLastFrame(), 
 		particleRenderer.GetTotalLastFrame()));
 	lines.push_back(fmt::format("Avg Render Time: {} ms", particleRenderer.GetRenderTimeAvg()));
+
+	auto& mapObjRenderer = mGameRenderer.GetMapObjectRenderer();
+	lines.push_back(fmt::format("# Map Objects"));
+	lines.push_back(fmt::format("{} of {} rendered", mapObjRenderer.GetRenderedLastFrame(),
+		mapObjRenderer.GetTotalLastFrame()));
 
 	TigRect rect;
 	rect.x = 25;

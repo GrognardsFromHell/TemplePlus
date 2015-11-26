@@ -44,6 +44,7 @@ namespace gfx {
 	};
 
 	using DynamicTexturePtr = std::shared_ptr<class DynamicTexture>;
+	using RenderTargetTexturePtr = std::shared_ptr<class RenderTargetTexture>;
 
 	class RenderingDevice {
 	public:
@@ -109,10 +110,11 @@ namespace gfx {
 		IDirect3DSurface9* GetBackBufferDepthStencil() {
 			return mBackBufferDepth;
 		}
-		
+				
 		std::shared_ptr<class IndexBuffer> CreateEmptyIndexBuffer(size_t count);
 		std::shared_ptr<class VertexBuffer> CreateEmptyVertexBuffer(size_t count, bool forPoints = false);
 		DynamicTexturePtr CreateDynamicTexture(D3DFORMAT format, int width, int height);
+		RenderTargetTexturePtr CreateRenderTargetTexture(D3DFORMAT format, int width, int height);
 
 		template<typename T>
 		VertexBufferPtr CreateVertexBuffer(gsl::array_view<T> data);

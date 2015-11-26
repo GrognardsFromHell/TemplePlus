@@ -604,5 +604,25 @@ namespace gfx {
 
 	}
 
+	RenderTargetTexturePtr RenderingDevice::CreateRenderTargetTexture(D3DFORMAT format, int width, int height) {
 
+		CComPtr<IDirect3DTexture9> texture;
+
+		if (D3DLOG(mDevice->CreateTexture(width,
+			height,
+			1,
+			D3DUSAGE_RENDERTARGET,
+			format,
+			D3DPOOL_DEFAULT,
+			&texture,
+			nullptr)) != D3D_OK) {
+			return nullptr;
+		}
+
+		Size size{ width, height };
+
+		return std::make_shared<RenderTargetTexture>(texture, size);
+
+	}
+	
 }

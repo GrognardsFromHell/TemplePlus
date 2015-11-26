@@ -10,6 +10,7 @@
 #include <graphics/renderstates_hooks.h>
 #include <infrastructure/images.h>
 #include <graphics/shaperenderer3d.h>
+#include <graphics/shaperenderer2d.h>
 #include <temple/aasrenderer.h>
 #include "../critter.h"
 #include <graphics/dynamictexture.h>
@@ -55,6 +56,8 @@ MapObjectRenderer::~MapObjectRenderer() {
 }
 
 void MapObjectRenderer::RenderMapObjects(int tileX1, int tileX2, int tileY1, int tileY2) {
+	mTotalLastFrame = 0;
+	mRenderedLastFrame = 0;
 
 	for (auto secY = tileY1 / 64; secY <= tileY2 / 64; ++secY) {
 		for (auto secX = tileX1 / 64; secX <= tileX2 / 64; ++secX) {
@@ -78,6 +81,8 @@ void MapObjectRenderer::RenderMapObjects(int tileX1, int tileX2, int tileY1, int
 }
 
 void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
+
+	mTotalLastFrame++;
 
 	auto type = objects.GetType(handle);
 	auto flags = objects.GetFlags(handle);
@@ -187,7 +192,8 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 		}
 		diffuse = &sDiffuse[0];
 	}
-	
+
+	mRenderedLastFrame++;	
 	mAasRenderer.Render(animatedModel.get(), animParams, lights);
 
 	Light3d globalLight;
@@ -247,6 +253,11 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 
 	RenderGiantFrogTongue(handle);
 
+}
+
+void MapObjectRenderer::RenderObjectHighlight(objHndl handle, const gfx::MdfRenderMaterialPtr & material)
+{
+	// TODO
 }
 
 void MapObjectRenderer::DrawBoundingCylinder(float x, float y, float z, float radius, float height) {
@@ -866,164 +877,57 @@ void MapObjectRenderer::RenderGiantFrogTongue(objHndl handle) {
 		*/
 }
 
-static void RasterizeTri(int width, int height, XMCOLOR *pixelData, std::array<XMFLOAT2, 3> vertices, XMCOLOR color) {
+void MapObjectRenderer::ApplyGaussianBlur() {
 
-	// This rasterization function only works with already clipped tris
-	for (auto &vertex : vertices) {
-		if (vertex.x < 0 || vertex.x >= width || vertex.y < 0 && vertex.y >= height) {
-			return;
-		}
-	}
+	BlendState blendState;
+	SamplerState samplerState;
+	samplerState.addressU = D3DTADDRESS_CLAMP;
+	samplerState.addressV = D3DTADDRESS_CLAMP;
+	samplerState.magFilter = D3DTEXF_LINEAR;	
+	samplerState.minFilter = D3DTEXF_LINEAR;
+	samplerState.mipFilter = D3DTEXF_LINEAR;
+	RasterizerState rasterizerState;
+	rasterizerState.cullMode = D3DCULL_NONE;
+	DepthStencilState depthStencilState;
+	depthStencilState.depthEnable = false;
 
-	// Sort the three vertices by Y value into top, middle, bottom
-	XMFLOAT2 topVertex, middleVertex, bottomVertex;
-	if (vertices[0].y <= vertices[2].y) {
-		if (vertices[1].y < vertices[0].y) {
-			middleVertex = vertices[0];
-			topVertex = vertices[1];
-			bottomVertex = vertices[2];
-		} else {
-			topVertex = vertices[0];
-			if (vertices[1].y <= vertices[2].y)
-			{
-				middleVertex = vertices[1];
-				bottomVertex = vertices[2];
-			} else {
-				middleVertex = vertices[2];
-				bottomVertex = vertices[1];
-			}
-		}
-	} else {
-		if (vertices[2].y > vertices[1].y) {
-			topVertex = vertices[1];
-			middleVertex = vertices[2];
-			bottomVertex = vertices[0];
-		} else {
-			topVertex.y = vertices[2].y;
-			topVertex.x = vertices[2].x;
-			if (vertices[0].y <= vertices[1].y) {
-				middleVertex = vertices[0];
-				bottomVertex = vertices[1];
-			} else {
-				middleVertex = vertices[1];
-				bottomVertex = vertices[0];
-			}
-		}
-	}
+	auto vs(mDevice.GetShaders().LoadVertexShader("gaussian_blur_vs"));
+	Shaders::ShaderDefines horDefines;
+	horDefines["HOR"] = "1";
+	auto psHor(mDevice.GetShaders().LoadPixelShader("gaussian_blur_ps", horDefines));
+	auto psVer(mDevice.GetShaders().LoadPixelShader("gaussian_blur_ps"));
 
-	float v11; // fst6@20
-	float v12; // edx@21
-	float v13; // fst7@22
-	float v14; // fst6@23
-	float v15; // fst5@23
-	int v16; // esi@23
-	int v17; // edi@23
-	int v18; // ebp@23
-	float v19; // ST14_4@27
-	int v20; // ebx@24
-	signed int v21; // esi@25
-	unsigned __int64 v22; // rax@25
-	char v23; // zf@27
-	float v24; // fst7@31
-	float v25; // fst6@31
-	int v26; // esi@31
-	int v27; // edi@31
-	int v28; // ebx@32
-	int v29; // ebp@32
-	signed int v30; // esi@33
-	unsigned __int64 v31; // rax@33
-	int v33; // [sp+4h] [bp-2Ch]@24
-	float v34; // [sp+8h] [bp-28h]@31
-	float v35; // [sp+Ch] [bp-24h]@23
-	float v36; // [sp+Ch] [bp-24h]@31
-	float v38; // [sp+10h] [bp-20h]@22
-	float v40; // [sp+14h] [bp-1Ch]@22
-	float v41; // [sp+18h] [bp-18h]@22
-	float v43; // [sp+1Ch] [bp-14h]@22
-	float v45; // [sp+20h] [bp-10h]@22
-	float v47; // [sp+24h] [bp-Ch]@22
-	float v48; // [sp+28h] [bp-8h]@20
-	float v49; // [sp+28h] [bp-8h]@22
-	float v50; // [sp+2Ch] [bp-4h]@22
-	v11 = (middleVertex.y - topVertex.y) * (bottomVertex.x - topVertex.x) / (bottomVertex.y - topVertex.y) + topVertex.x;
-	v48 = v11;
-	if ((v11 < middleVertex.x))
-	{
-		v12 = v11;
-		v48 = middleVertex.x;
-		middleVertex.x = v12;
-	}
-	v38 = floor(topVertex.x);
-	v40 = floor(topVertex.y);
-	v41 = floor(middleVertex.x);
-	v13 = floor(middleVertex.y);
-	v45 = floor(bottomVertex.x);
-	v47 = floor(bottomVertex.y);
-	v43 = v13;
-	v49 = floor(v48);
-	v50 = v13;
-	if ((v40 < v13) )
-	{
-		v14 = v38;
-		v15 = v38;
-		v16 = (unsigned __int64)v13;
-		v17 = (unsigned __int64)v40;
-		v35 = (v41 - v38) / (long double)(v16 - v17);
-		v18 = width;
-		if (v17 <= v16)
-		{
-			v20 = width * v17;
-			v33 = v16 - v17 + 1;
-			do
-			{
-				v21 = (int)v14;
-				v22 = (int)v15;
-				if (v21 <= (int)v15) {
-					for (size_t i = 0; i < v22 - v21 + 1; ++i) {
-						pixelData[v20 + (int) v14 + i] = color;
-					}
-				}
-				v14 += v35;
-				v20 += width;
-				v23 = v33-- == 1;
-				v19 = (v49 - v38) / (float)(int)((int)v50 - v17);
-				v15 += v19;
-			} while (!v23);
-		}
-	}
-	else
-	{
-		v18 = width;
-	}
-	if (v13 < v47)
-	{
-		v24 = v41;
-		v25 = v49;
-		v26 = (unsigned __int64)v47;
-		v27 = (unsigned __int64)v43;
-		v34 = (v45 - v41) / (long double)(v26 - v27);
-		v36 = (v45 - v49) / (long double)(signed int)(v26 - (unsigned __int64)v50);
-		if (v27 <= v26)
-		{
-			v28 = v18 * v27;
-			v29 = v26 - v27 + 1;
-			do
-			{
-				v30 = (unsigned __int64)v24;
-				v31 = (unsigned __int64)v25;
-				if (v30 <= (signed int)(unsigned __int64)v25) {
-					for (size_t i = 0; i < v31 - v30 + 1; ++i) {
-						pixelData[v28 + (int)v24 + i] = color;
-					}
-				}
-				v24 += v34;
-				v28 += width;
-				--v29;
-				v25 = v25 + v36;
-			} while (v29);
-		}
-	}
+	std::vector<MaterialSamplerBinding> samplersHor{
+		{ mShadowTarget, samplerState }
+	};
+	std::vector<MaterialSamplerBinding> samplersVer{
+		{ mShadowTargetTmp, samplerState }
+	};
 
+	Material materialHor{ blendState, depthStencilState, rasterizerState, samplersHor, vs, psHor };
+	Material materialVer{ blendState, depthStencilState, rasterizerState, samplersVer, vs, psVer };
+
+	mDevice.SetMaterial(materialHor);
+	mDevice.GetDevice()->SetRenderTarget(0, mShadowTargetTmp->GetSurface());
+	
+	auto sw = mDevice.GetCamera().GetScreenWidth();
+	auto sh = mDevice.GetCamera().GetScreenHeight();
+
+	std::array<Vertex2d, 4> fullScreenCorners;
+	fullScreenCorners[0].pos = { -1, -1, 0 };
+	fullScreenCorners[0].uv = { 0, 0 };
+	fullScreenCorners[1].pos = { 1, -1, 0 };
+	fullScreenCorners[1].uv = { 1, 0 };
+	fullScreenCorners[2].pos = { 1, 1, 0 };
+	fullScreenCorners[2].uv = { 1, 1 };
+	fullScreenCorners[3].pos = { -1, 1, 0 };
+	fullScreenCorners[3].uv = { 0, 1 };
+	tig->GetShapeRenderer2d().DrawRectangle(fullScreenCorners);
+
+	mDevice.SetMaterial(materialVer);
+	mDevice.GetDevice()->SetRenderTarget(0, mShadowTarget->GetSurface());
+	tig->GetShapeRenderer2d().DrawRectangle(fullScreenCorners);
+	
 }
 
 void MapObjectRenderer::RenderShadowMapShadow(objHndl obj,
@@ -1036,19 +940,16 @@ void MapObjectRenderer::RenderShadowMapShadow(objHndl obj,
 	auto worldPos{ loc.ToCenterOfTileAbs() };
 
 	auto objRadius = objects.GetRadius(obj);
+	auto renderHeight = objects.GetRenderHeight(obj);
 
 	constexpr auto shadowMapWidth = 256;
 	constexpr auto shadowMapHeight = 256;
 	
-	XMCOLOR textureData[shadowMapWidth * shadowMapHeight];
-	memset(textureData, 0, sizeof(textureData));
-
 	XMFLOAT4 lightDir = globalLight.dir;
 
 	float shadowMapWorldX, shadowMapWorldWidth, 
 		shadowMapWorldZ, shadowMapWorldHeight;
 
-	auto renderHeight = objects.GetRenderHeight(obj);
 	if (lightDir.x < 0.0) {
 		shadowMapWorldX = worldPos.x - 2 * objRadius + lightDir.x * renderHeight;
 		shadowMapWorldWidth = 4 * objRadius - lightDir.x * renderHeight;
@@ -1064,44 +965,47 @@ void MapObjectRenderer::RenderShadowMapShadow(objHndl obj,
 		shadowMapWorldZ = worldPos.y - 2 * objRadius;
 		shadowMapWorldHeight = lightDir.z + renderHeight + 4 * objRadius;
 	}
-
-	auto materialIds{ model.GetSubmeshes() };
-	for (size_t i = 0; i < materialIds.size(); ++i) {
-		auto &submesh{ model.GetSubmesh(animParams, i) };
-
-		static std::array<XMFLOAT2, 0x7FFFF> sShadowMapPos;
-
-		auto textureWidth = (float)shadowMapWidth;
-		auto textureHeight = (float)shadowMapHeight;
-		for (int j = 0; j < submesh->GetVertexCount(); ++j) {
-			auto &posIn = submesh->GetPositions()[j];
-			sShadowMapPos[j].x = posIn.x - (posIn.y - animParams.offsetZ) * lightDir.x / lightDir.y;
-			sShadowMapPos[j].y = posIn.z - (posIn.y - animParams.offsetZ) * lightDir.z / lightDir.y;
-			sShadowMapPos[j].x = (sShadowMapPos[j].x - shadowMapWorldX) / shadowMapWorldWidth * textureWidth;
-			sShadowMapPos[j].y = (sShadowMapPos[j].y - shadowMapWorldZ) / shadowMapWorldHeight * textureHeight;
-		}
-
-		for (int j = 0; j < submesh->GetPrimitiveCount(); ++j) {
-			auto idx1 = submesh->GetIndices()[j * 3];
-			auto idx2 = submesh->GetIndices()[j * 3 + 1];
-			auto idx3 = submesh->GetIndices()[j * 3 + 2];
-
-			std::array<XMFLOAT2, 3> vertices{
-				sShadowMapPos[idx1],
-				sShadowMapPos[idx2],
-				sShadowMapPos[idx3]
-			};
-			RasterizeTri(shadowMapWidth, shadowMapHeight, textureData, vertices, 0x80000000);
-		}
+	
+	/* RTT */
+	if (!mShadowTarget) {
+		mShadowTarget = mDevice.CreateRenderTargetTexture(D3DFMT_A8R8G8B8, shadowMapWidth, shadowMapHeight);
+		mShadowTargetTmp = mDevice.CreateRenderTargetTexture(D3DFMT_A8R8G8B8, shadowMapWidth, shadowMapHeight);
 	}
+	CComPtr<IDirect3DSurface9> currentTarget;
+	mDevice.GetDevice()->GetRenderTarget(0, &currentTarget);
+	mDevice.GetDevice()->SetRenderTarget(0, mShadowTarget->GetSurface());
 
-	/* 	
-	TODO
+	BlendState blendState;
+	RasterizerState rasterizerState;
+	DepthStencilState depthStencilState;
+	depthStencilState.depthEnable = false;
+	auto vs{ mDevice.GetShaders().LoadVertexShader("shadowmap_geom_vs") };
+	auto ps{ mDevice.GetShaders().LoadPixelShader("diffuse_only_ps") };
+
+	Material material{ blendState, depthStencilState, rasterizerState,{}, vs, ps };
+	mDevice.SetMaterial(material);
+
+	// Set shader params
+	XMFLOAT4 floats{ shadowMapWorldX, shadowMapWorldZ, shadowMapWorldWidth, shadowMapWorldHeight };
+	mDevice.GetDevice()->SetVertexShaderConstantF(0, &floats.x, 1);
+	mDevice.GetDevice()->SetVertexShaderConstantF(1, &lightDir.x, 1);
+	floats.x = animParams.offsetZ;
+	mDevice.GetDevice()->SetVertexShaderConstantF(2, &floats.x, 1);
+	XMCOLOR color(0, 0, 0, 0.5f);
+	XMStoreFloat4(&floats, PackedVector::XMLoadColor(&color));
+	mDevice.GetDevice()->SetVertexShaderConstantF(4, &floats.x, 1);
+
+	mDevice.GetDevice()->Clear(0, nullptr, D3DCLEAR_TARGET, 0, 0, 0);
+	mAasRenderer.RenderWithoutMaterial(&model, animParams);
+
+	/* RTT */
+
 	auto primaryWeapon = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
 	if (primaryWeapon)
 	{
 		auto weaponAnim = objects.GetAnimHandle(primaryWeapon);
 		auto weaponAnimParams = objects.GetAnimParams(primaryWeapon);
+		mAasRenderer.RenderWithoutMaterial(weaponAnim.get(), weaponAnimParams);
 	}
 
 	auto secondaryWeapon = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);
@@ -1109,7 +1013,12 @@ void MapObjectRenderer::RenderShadowMapShadow(objHndl obj,
 	{
 		auto weaponAnim = objects.GetAnimHandle(secondaryWeapon);
 		auto weaponAnimParams = objects.GetAnimParams(secondaryWeapon);
-	}*/
+		mAasRenderer.RenderWithoutMaterial(weaponAnim.get(), weaponAnimParams);
+	}
+
+	ApplyGaussianBlur();
+
+	mDevice.GetDevice()->SetRenderTarget(0, currentTarget);
 	
 	auto shadowMapWorldBottom = shadowMapWorldZ + shadowMapWorldHeight;
 	auto shadowMapWorldRight = shadowMapWorldX + shadowMapWorldWidth;
@@ -1124,9 +1033,7 @@ void MapObjectRenderer::RenderShadowMapShadow(objHndl obj,
 	corners[2].uv = { 1, 1 };
 	corners[3].uv = { 1, 0 };
 
-	auto texture{ mDevice.CreateDynamicTexture(D3DFMT_A8R8G8B8, shadowMapWidth, shadowMapHeight) };
-	texture->Update<XMCOLOR>(textureData);
-	tig->GetShapeRenderer3d().DrawQuad(corners, 0xFFFFFFFF, texture);
+	tig->GetShapeRenderer3d().DrawQuad(corners, 0xFFFFFFFF, mShadowTarget);
 
 }
 
@@ -1181,6 +1088,7 @@ static class RenderFix : public TempleFix {
 public:
 
 	static void obj_render(objHndl handle, int flag, locXY unk, int x);
+	static void obj_render_highlight(objHndl handle, int shaderId);
 
 	const char* name() override {
 		return "B";
@@ -1188,11 +1096,19 @@ public:
 
 	void apply() override {
 		replaceFunction(0x10026560, obj_render);
+		replaceFunction(0x10023EC0, obj_render_highlight);
+
 	}
 
 } fix;
 
 void RenderFix::obj_render(objHndl handle, int flag, locXY loc, int x) {
+	throw TempleException("Should not be called directly.");
+}
+
+void RenderFix::obj_render_highlight(objHndl handle, int shaderId)
+{
+	auto mdfMaterial{ tig->GetMdfFactory().GetById(shaderId) };
 }
 
 #pragma pack(push, 8)

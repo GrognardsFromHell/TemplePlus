@@ -203,6 +203,28 @@ void AasRenderer::Render(gfx::AnimatedModel *model,
 
 }
 
+void AasRenderer::RenderWithoutMaterial(gfx::AnimatedModel *model, 
+	const gfx::AnimatedModelParams& params) {
+
+	// Find or create render caching data for the model
+	auto &renderData = mRenderDataCache[model->GetHandle()];
+	if (!renderData) {
+		renderData = std::make_unique<AasRenderData>();
+	}
+
+	auto materialIds(model->GetSubmeshes());
+	for (size_t i = 0; i < materialIds.size(); ++i) {
+		auto submesh(model->GetSubmesh(params, i));
+
+		auto &submeshData = GetSubmeshData(*renderData, i, *submesh);
+		submeshData.binding.Bind();
+
+		auto d3d = mDevice.GetDevice();
+		d3d->SetIndices(submeshData.idxBuffer->GetBuffer());
+		D3DLOG(d3d->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, submesh->GetVertexCount(), 0, submesh->GetPrimitiveCount()));
+	}
+}
+
 void AasRenderer::RenderGeometryShadow(gfx::AnimatedModel * model, 
 	const gfx::AnimatedModelParams & params, 
 	const gfx::Light3d & globalLight)

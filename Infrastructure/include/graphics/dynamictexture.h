@@ -8,6 +8,7 @@
 #include "textures.h"
 
 struct IDirect3DTexture9;
+struct IDirect3DSurface9;
 
 namespace gfx {
 
@@ -52,5 +53,44 @@ namespace gfx {
 	};
 
 	using DynamicTexturePtr = std::shared_ptr<DynamicTexture>;
+
+	class RenderTargetTexture : public Texture {
+	public:
+
+		RenderTargetTexture(IDirect3DTexture9* texture, const Size &size);
+
+		int GetId() const override;
+
+		const std::string& GetName() const;
+
+		const ContentRect& GetContentRect() const override {
+			return mContentRect;
+		}
+
+		const Size& GetSize() const override {
+			return mSize;
+		}
+
+		// Unloads the device texture (does't prevent it from being loaded again later)
+		void FreeDeviceTexture() override;
+
+		IDirect3DTexture9* GetDeviceTexture() override {
+			return mTexture;
+		}
+
+		IDirect3DSurface9* GetSurface() const {
+			return mSurface;
+		}
+
+	private:
+
+		CComPtr<IDirect3DTexture9> mTexture;
+		CComPtr<IDirect3DSurface9> mSurface;
+		Size mSize;
+		ContentRect mContentRect;
+
+	};
+
+	using RenderTargetTexturePtr = std::shared_ptr<RenderTargetTexture>;
 
 }

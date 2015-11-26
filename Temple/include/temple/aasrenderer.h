@@ -30,6 +30,9 @@ namespace temple {
 			gsl::array_view<gfx::Light3d> lights,
 			const gfx::MdfRenderOverrides *materialOverrides = nullptr) override;
 
+		void RenderWithoutMaterial(gfx::AnimatedModel *model,
+			const gfx::AnimatedModelParams& params);
+
 		void RenderGeometryShadow(gfx::AnimatedModel *model,
 			const gfx::AnimatedModelParams& params,
 			const gfx::Light3d &globalLight);
