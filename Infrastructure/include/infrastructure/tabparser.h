@@ -32,6 +32,9 @@ public:
 	}
 
 	bool TryGetFloat(float &value) const {
+		if (mValue.size() == 0) {
+			return false;
+		}
 		return _snscanf_s(mValue.data(), mValue.size(), "%f", &value) == 1;
 	}
 

@@ -241,9 +241,27 @@ struct Objects : temple::AddressTable {
 	objHndl GetHandle(const ObjectId &id);
 	ObjectType GetType(objHndl obj);
 	int32_t GetHPCur(objHndl obj);
-	bool IsCritter(objHndl obj);
-	bool IsContainer(objHndl objHnd);
-	bool IsNPC(objHndl obj);
+	bool IsCritter(objHndl obj) {
+		return IsCritterType(GetType(obj));
+	}
+	bool IsCritterType(ObjectType type) const {
+		return type == obj_t_npc || type == obj_t_pc;
+	}
+	bool IsContainer(objHndl objHnd) {
+		return IsContainerType(GetType(objHnd));
+	}
+	bool IsContainerType(ObjectType type) const {
+		return type == obj_t_container || type == obj_t_bag;
+	}
+	bool IsEquipment(objHndl obj) {
+		return IsEquipmentType(GetType(obj));
+	}
+	bool IsEquipmentType(ObjectType type) const {
+		return type >= obj_t_weapon && type <= obj_t_generic || type == obj_t_bag;
+	}
+	bool IsNPC(objHndl obj) {
+		return GetType(obj) == obj_t_npc;
+	}
 	bool IsPlayerControlled(objHndl obj);
 	uint32_t GetProtoNum(objHndl obj);
 	std::string GetDisplayName(objHndl obj, objHndl observer);

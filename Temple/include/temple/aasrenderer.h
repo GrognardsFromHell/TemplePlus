@@ -15,6 +15,8 @@ namespace temple {
 
 	using AasStatePtr = std::unique_ptr<struct AasRenderData>;
 
+	struct AasRenderSubmeshData;
+
 	class AasRenderer : public gfx::AnimatedModelRenderer {
 	public:
 		AasRenderer(
@@ -28,12 +30,23 @@ namespace temple {
 			gsl::array_view<gfx::Light3d> lights,
 			const gfx::MdfRenderOverrides *materialOverrides = nullptr) override;
 
+		void RenderGeometryShadow(gfx::AnimatedModel *model,
+			const gfx::AnimatedModelParams& params,
+			const gfx::Light3d &globalLight);
+
 	private:
 		AasAnimatedModelFactory &mAasFactory;
 		gfx::RenderingDevice &mDevice;
+		gfx::Material mGeometryShadowMaterial;
 		gfx::MdfMaterialFactory &mMdfFactory;
 		AasFreeListenerHandle mListenerHandle;
 		std::unordered_map<AasHandle, AasStatePtr> mRenderDataCache;
+
+		AasRenderSubmeshData &GetSubmeshData(AasRenderData& aasState,
+			int submeshId,
+			gfx::Submesh &submesh);
+
+		static gfx::Material CreateGeometryShadowMaterial(gfx::RenderingDevice &device);
 
 		void RecalcNormals(
 			int vertexCount,

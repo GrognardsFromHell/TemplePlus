@@ -1,4 +1,3 @@
-
 sampler texSampler : register(s0);
 
 struct PS_INPUT

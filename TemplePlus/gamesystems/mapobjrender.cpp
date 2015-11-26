@@ -8,7 +8,13 @@
 #include <temple/meshes.h>
 #include "gamesystems/gamesystems.h"
 #include <graphics/renderstates_hooks.h>
+#include <infrastructure/images.h>
+#include <graphics/shaperenderer3d.h>
 #include <temple/aasrenderer.h>
+#include "../critter.h"
+#include <graphics/dynamictexture.h>
+
+#include "tig/tig_startup.h"
 
 using namespace gfx;
 using namespace temple;
@@ -76,6 +82,8 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 	auto type = objects.GetType(handle);
 	auto flags = objects.GetFlags(handle);
 
+	auto displayName{ objects.GetDisplayName(handle, handle) };
+
 	// Dont render destroyed or disabled objects
 	constexpr auto dontDrawFlags = OF_OFF | OF_DESTROYED | OF_DONTDRAW;
 	if ((flags & dontDrawFlags) != 0) {
@@ -102,7 +110,7 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 	locXY worldLoc;
 
 	objHndl parent = 0;
-	if (type >= obj_t_weapon && type <= obj_t_generic || type == obj_t_bag) {
+	if (objects.IsEquipmentType(type)) {
 		parent = inventory.GetParent(handle);
 	}
 
@@ -124,10 +132,8 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 	// Handle fog occlusion of the world position
 	if (type != obj_t_container
 		&& (type == obj_t_projectile
-			|| type == obj_t_pc
-			|| type == obj_t_npc
-			|| type >= obj_t_weapon && type <= obj_t_generic
-			|| type == obj_t_bag)
+			|| objects.IsCritterType(type)
+			|| objects.IsEquipmentType(type))
 		&& !addresses.IsPosExplored(worldLoc, animParams.offsetX, animParams.offsetY)) {
 		return;
 	}
@@ -136,11 +142,7 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 	worldPosFull.off_x = animParams.offsetX;
 	worldPosFull.off_y = animParams.offsetY;
 	worldPosFull.location = worldLoc;
-	auto centerOfTile = worldPosFull.ToCenterOfTileAbs();
-	vector3f centerOfTileFull{centerOfTile.x, centerOfTile.y, 0};
-	float screenX, screenY;
-	addresses.WorldToLocalScreen(centerOfTileFull, &screenX, &screenY);
-
+	
 	auto radius = objects.GetRadius(handle);
 	auto renderHeight = objects.GetRenderHeight(handle);
 
@@ -150,13 +152,7 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 		renderHeight = objects.GetRenderHeight(handle);
 	}
 
-	// This checks if the object's screen bounding box is off screen
-	auto bbLeft = (int)(screenX - radius);
-	auto bbRight = (int)(screenX + radius);
-	auto bbTop = (int)(screenY - (animParams.offsetZ + renderHeight + radius) * cos45);
-	auto bbBottom = (bbTop + (int)((2 * radius + renderHeight) * cos45));
-
-	if (bbRight < 0 || bbBottom < 0 || bbLeft > config.renderWidth || bbTop > config.renderHeight) {
+	if (!IsObjectOnScreen(worldPosFull, animParams.offsetZ, radius, renderHeight)) {
 		return;
 	}
 
@@ -191,26 +187,65 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 		}
 		diffuse = &sDiffuse[0];
 	}
-
-	// renderStates->SetLighting(true);
 	
 	mAasRenderer.Render(animatedModel.get(), animParams, lights);
 
-	/*auto materialIds(animatedModel->GetSubmeshes());
-	for (size_t i = 0; i < materialIds.size(); ++i) {
-		auto materialId = materialIds[i];
-		auto submesh(animatedModel->GetSubmesh(animParams, i));
-		RenderHooks::ShaderRender3d(
-			submesh->GetVertexCount(),
-			(D3DXVECTOR4*)&submesh->GetPositions()[0],
-			(D3DXVECTOR4*)&submesh->GetNormals()[0],
-			diffuse,
-			(D3DXVECTOR2*)&submesh->GetUV()[0],
-			submesh->GetPrimitiveCount(),
-			&submesh->GetIndices()[0],
-			materialId
-		);
-	}*/
+	Light3d globalLight;
+	if (!lights.empty()) {
+		globalLight = lights[0];
+	}
+
+	if (objects.IsCritterType(type)) {
+		if (alpha > 16) {
+			if (mShadowType == ShadowType::ShadowMap)
+			{
+				// TODO: pos
+				RenderShadowMapShadow(handle, animParams, *animatedModel, globalLight);
+			}
+			else if (mShadowType == ShadowType::Geometry)
+			{
+				mAasRenderer.RenderGeometryShadow(animatedModel.get(),
+					animParams,
+					globalLight);
+			}
+			else if (mShadowType == ShadowType::Blob)
+			{
+				RenderBlobShadow(handle, *animatedModel);
+			}
+		}
+
+		/*
+			This renders the equipment in a critter's hand separately, but
+			I am not certain *why* exactly. I thought this would have been
+			handled by addmeshes, but it might be that there's a distinct
+			difference between addmeshes that are skinned onto the mobile's
+			skeleton and equipment that is unskinned and just positioned 
+			in the player's hands.
+		*/
+		auto weaponPrim = critterSys.GetWornItem(handle, EquipSlot::WeaponPrimary);
+		if (weaponPrim) {
+			RenderObject(weaponPrim, showInvisible);
+		}
+		auto weaponSec = critterSys.GetWornItem(handle, EquipSlot::WeaponSecondary);
+		if (weaponSec) {
+			RenderObject(weaponSec, showInvisible);
+		}
+		auto shield = critterSys.GetWornItem(handle, EquipSlot::Shield);
+		if (shield) {
+			RenderObject(shield, showInvisible);
+		}
+
+	}
+	else if (!objects.IsEquipmentType(type) && mShadowType == ShadowType::Geometry)
+	{
+		mAasRenderer.RenderGeometryShadow(animatedModel.get(),
+			animParams,
+			globalLight);
+	}
+
+	RenderMirrorImages(handle);
+
+	RenderGiantFrogTongue(handle);
 
 }
 
@@ -463,6 +498,683 @@ std::vector<Light3d> MapObjectRenderer::FindLights(LocAndOffsets atLocation, flo
 
 	return lights;
 
+}
+
+bool MapObjectRenderer::IsObjectOnScreen(LocAndOffsets &location, float offsetZ, float radius, float renderHeight)
+{
+
+	auto centerOfTile3d = location.ToCenterOfTileAbs3D();
+	auto screenPos = mDevice.GetCamera().WorldToScreenUi(centerOfTile3d);
+
+	// This checks if the object's screen bounding box is off screen
+	auto bbLeft = screenPos.x - radius;
+	auto bbRight = screenPos.x + radius;
+	auto bbTop = screenPos.y - (offsetZ + renderHeight + radius) * cos45;
+	auto bbBottom = bbTop + (2 * radius + renderHeight) * cos45;
+
+	auto screenWidth = mDevice.GetCamera().GetScreenWidth();
+	auto screenHeight = mDevice.GetCamera().GetScreenHeight();
+	if (bbRight < 0 || bbBottom < 0 || bbLeft > screenWidth || bbTop > screenHeight) {
+		return false;
+	}
+
+	return true;
+
+}
+
+void MapObjectRenderer::RenderMirrorImages(objHndl obj)
+{
+	auto mirrorImage = objects.d20.d20Query(obj, DK_QUE_Critter_Has_Mirror_Image);
+
+	if (!mirrorImage) {
+		return;
+	}
+
+	throw TempleException("NYI"); // TODO
+}
+
+void MapObjectRenderer::RenderGiantFrogTongue(objHndl handle) {
+		
+	// Special rendering for giant frogs of various types
+	auto protoNum = objects.GetProtoNum(handle);
+	if (protoNum != 14057 && protoNum != 14445 && protoNum != 14300) {
+		return;
+	}
+
+	throw TempleException("NYI"); // TODO
+
+	auto grappleState = objects.getInt32(handle, obj_f_grapple_state);
+	if (!grappleState) {
+		return;
+	}
+	/*
+		v138 = GiantFrogGetGrappledOpponent(ObjHnd);
+		colorOnlyAlpha = (unsigned __int16)v137;
+		if (grappleState)
+		{
+			aasHandle = (v137 >> 16) & 0xFF;
+			v139 = (long double)(signed int)aasHandle;
+			aasHandle = (unsigned int)v137 >> 24;
+			submeshIdxh = v139;
+			radius = (long double)((unsigned int)v137 >> 24);
+			AasAnimatedModelGetBoneWorldMatrixByName(aas_handle, &animParams, (D3DMATRIX *)&v225, "Tongue_Ref");
+			if (__PAIR__(v138, HIDWORD(v138)))
+			{
+				*(float *)&shaderId = COERCE_FLOAT(obj_get_aas_handle((ObjHndl)v138));
+				worldLoc = (location2d)Obj_Get_Internal_Field_64bit((ObjHndl)v138, 1);
+				animParams.locx = (unsigned int)worldLoc.x;
+				animParams.locy = (unsigned int)worldLoc.y;
+				animParams.offsetx = Obj_Get_Internal_Field_Float((ObjHndl)v138, obj_f_offset_x);
+				animParams.offsety = Obj_Get_Internal_Field_Float((ObjHndl)v138, obj_f_offset_y);
+				parentOpacity = Obj_Get_Internal_Field_Float((ObjHndl)v138, obj_f_offset_z);
+				aasHandle = (unsigned __int8)sector_get_elevation(
+					worldLoc.x,
+					worldLoc.y,
+					animParams.offsetx,
+					animParams.offsety);
+				animParams.offsetz = parentOpacity - (long double)(signed int)aasHandle;
+				animParams.rotation = Obj_Get_Internal_Field_Float((ObjHndl)v138, obj_f_rotation);
+				LODWORD(animParams.rotationpitch) = 0;
+				*(float *)&aasHandle = COERCE_FLOAT(Obj_Get_Internal_Field_32bit_Int((ObjHndl)v138, 8));
+				animParams.scale = (long double)(signed int)aasHandle * 0.0099999998;
+				AasAnimatedModelGetBoneWorldMatrixByName(shaderId, &animParams, (D3DMATRIX *)&infoOut, "Bip01 Spine1");
+				objFlags = v245;
+				offsetY = v247;
+				Obj_Get_Internal_Field_Float((ObjHndl)v138, obj_f_3d_render_height);
+				v140 = v246 - v237;
+				v141 = v247 - absY;
+				parentOpacity = v141;
+				v142 = v245 - v236;
+				*(float *)&aasHandle = v142;
+				*(float *)&aas_handle = sqrt(v142 * v142 + v141 * v141 + v140 * v140);
+				v143 = 1.0 / *(float *)&aas_handle;
+				v233 = *(float *)&aasHandle * v143;
+				v234 = v143 * v140;
+				v235 = v143 * parentOpacity;
+				if (*(float *)&aas_handle > 0.0)
+					*(float *)&aas_handle = *(float *)&aas_handle - 6.0;
+			}
+			else
+			{
+				*(float *)&aas_handle = 120.0;
+				objFlags = v233 * 120.0 + v236;
+				offsetY = v235 * 120.0 + absY;
+			}
+			if (dword_102ACB64 == -1)
+				tig_shader_register("art/meshes/Monsters/GiantFrog/tongue.mdf", &dword_102ACB64);
+			obj_get_radius(ObjHnd);
+			switch (colorOnlyAlpha)
+			{
+			case 1u:
+				v144 = submeshIdxh + 28.284271;
+				submeshIdxh = v144;
+				if (v144 > *(float *)&aas_handle)
+				{
+					LOWORD(v137) = 2;
+					submeshIdxh = *(float *)&aas_handle;
+				}
+				break;
+			case 2u:
+				v145 = submeshIdxh - 28.284271;
+				submeshIdxh = v145;
+				if ((v145 < 0.0) | __UNORDERED__(v145, 0.0))
+				{
+					Object_Set_Field_32bit(ObjHnd, obj_f_grapple_state, 7);
+					LOWORD(v137) = 0;
+					submeshIdxh = 0.0;
+				}
+				break;
+			case 3u:
+				v146 = submeshIdxh + 28.284271;
+				submeshIdxh = v146;
+				if (v146 > *(float *)&aas_handle)
+				{
+					LOWORD(v137) = 4;
+					submeshIdxh = *(float *)&aas_handle;
+					v147 = CritterGetWeaponAnimId(ObjHnd, 34);
+					anim_obj_set_aas_anim_id(ObjHnd, (AnimationIds)v147);
+					v148 = CritterGetWeaponAnimId((ObjHndl)v138, 28);
+					anim_obj_set_aas_anim_id((ObjHndl)v138, (AnimationIds)v148);
+				}
+				break;
+			case 4u:
+				submeshIdxh = *(float *)&aas_handle;
+				break;
+			case 5u:
+				v149 = *(float *)&aas_handle - 12.0;
+				radius = v149;
+				if ((v149 < 0.0) | __UNORDERED__(v149, 0.0))
+					radius = 0.0;
+				LOWORD(v137) = 6;
+				goto LABEL_205;
+			case 6u:
+				LABEL_205:
+					submeshIdxh = submeshIdxh - 14.142136;
+					absX_4 = offsetY - v235 * 14.142136;
+					absX = objFlags - v233 * 14.142136;
+					abs_coord_to_location(absX, absX_4, &worldLoc, &objFlags, &offsetY);
+					*(_QWORD *)&v152.offsetx = __PAIR__(LODWORD(offsetY), LODWORD(objFlags));
+					v152.xy = worldLoc;
+					Obj_Move((ObjHndl)v138, v152);
+					if ((submeshIdxh < (long double)radius) | __UNORDERED__(submeshIdxh, radius))
+					{
+						v153 = v235 * radius + absY;
+						v154 = v233 * radius + v236;
+						abs_coord_to_location(v154, v153, &worldLoc, &objFlags, &offsetY);
+						*(_QWORD *)&v155.offsetx = __PAIR__(LODWORD(offsetY), LODWORD(objFlags));
+						v155.xy = worldLoc;
+						Obj_Move((ObjHndl)v138, v155);
+						submeshIdxh = radius;
+						LOWORD(v137) = 4;
+					}
+					break;
+			case 7u:
+				submeshIdxh = submeshIdxh - 14.142136;
+				v156 = offsetY - v235 * 14.142136;
+				v157 = objFlags - v233 * 14.142136;
+				abs_coord_to_location(v157, v156, &worldLoc, &objFlags, &offsetY);
+				*(_QWORD *)&v158.offsetx = __PAIR__(LODWORD(offsetY), LODWORD(objFlags));
+				v158.xy = worldLoc;
+				Obj_Move((ObjHndl)v138, v158);
+				if ((submeshIdxh < 0.0) | __UNORDERED__(submeshIdxh, 0.0))
+				{
+					abs_coord_to_location(v236, absY, &worldLoc, &objFlags, &offsetY);
+					*(_QWORD *)&v159.offsetx = __PAIR__(LODWORD(offsetY), LODWORD(objFlags));
+					v159.xy = worldLoc;
+					Obj_Move((ObjHndl)v138, v159);
+					Obj_Fade_To((ObjHndl)v138, 0, 0, 16, 0);
+					LOWORD(v137) = 0;
+					submeshIdxh = 0.0;
+					v160 = CritterGetWeaponAnimId(ObjHnd, 35);
+					anim_obj_set_aas_anim_id(ObjHnd, (AnimationIds)v160);
+				}
+				break;
+			default:
+				break;
+			}
+			Object_Set_Field_32bit(
+				ObjHnd,
+				obj_f_grapple_state,
+				(unsigned __int16)v137 | ((((unsigned __int64)radius << 8) | (unsigned __int8)(unsigned __int64)submeshIdxh) << 16));
+			v161 = 0;
+			*(float *)&colorOnlyAlpha = v233 * 0.0;
+			memset32(&obj_render_diffuse_96, color, 0x60u);
+			obj_render_height = 0.0;
+			v216 = v234 * 0.0;
+			v162 = (char *)&obj_render_uv_96.v;
+			*(float *)&objType__ = v235 * 0.0;
+			do
+			{
+				v163 = (long double)SLODWORD(obj_render_height);
+				*(float *)&v164 = 0.0;
+				*(float *)&aasHandle = 0.0;
+				v165 = (signed int)v162;
+				v166 = v161;
+				parentOpacity = ((cos(6.2831855 * v163 * 0.06666666666666667) - 1.0) * (submeshIdxh * 0.0014285714) * 0.5 + 1.0)
+					* 3.0;
+				v167 = submeshIdxh * v163 * 0.06666667;
+				*(float *)&shaderId = v233 * v167;
+				offsetY = v234 * v167;
+				objFlags = v167 * v235;
+				v168 = v163 * 0.06666667;
+				do
+				{
+					v169 = (long double)(signed int)aasHandle;
+					++v164;
+					v166 += 16;
+					v165 += 8;
+					v170 = 1.0471976 * v169 + flt_10808CFC;
+					*(float *)&aasHandle = v170;
+					v171 = cos(v170);
+					*(float *)&aas_handle = parentOpacity * v171;
+					v172 = *(float *)&aasHandle;
+					aasHandle = v164;
+					v173 = sin(v172);
+					v174 = parentOpacity * v173;
+					*(float *)((char *)&flt_10307550 + v166) = v229 * v174
+						+ v225 * *(float *)&aas_handle
+						+ v236
+						+ *(float *)&shaderId;
+					*(float *)((char *)&flt_10307554 + v166) = v230 * v174 + v226 * *(float *)&aas_handle + v237 + offsetY;
+					*(float *)((char *)&map_trap_mes + v166) = v231 * v174 + v227 * *(float *)&aas_handle + absY + objFlags;
+					*(float *)&aas_handle = v171;
+					*(float *)((char *)&flt_10788230 + v166) = v229 * v173
+						+ v225 * *(float *)&aas_handle
+						+ *(float *)&colorOnlyAlpha;
+					*(float *)((char *)&map_obj_lighting + v166) = v230 * v173 + v226 * *(float *)&aas_handle + v216;
+					*(float *)((char *)&map_object_rectlist + v166) = v231 * v173
+						+ v227 * *(float *)&aas_handle
+						+ *(float *)&objType__;
+					*(float *)(v165 - 12) = v169 * 0.2;
+					*(float *)(v165 - 8) = v168;
+				} while ((signed int)v164 < 6);
+				++LODWORD(obj_render_height);
+				v162 = (char *)v165;
+				v161 = v166;
+			} while (v165 < (signed int)&dword_10307EA4);
+			dword_10788228 = color;
+			v175 = flt_10808CFC - 0.5235987901687622;
+			*(float *)&aas_handle = cos(v175) * 4.5;
+			offsetY = sin(v175) * 4.5;
+			v176 = submeshIdxh + 9.0;
+			flt_10307B60 = v229 * offsetY + v225 * *(float *)&aas_handle + v176 * v233 + v236;
+			flt_10307B64 = v230 * offsetY + v226 * *(float *)&aas_handle + v176 * v234 + v237;
+			flt_10307B68 = v231 * offsetY + v227 * *(float *)&aas_handle + v176 * v235 + absY;
+			v177 = (v229 + v225) * 0.0 + v233;
+			flt_10788840 = v177;
+			v178 = (v230 + v226) * 0.0 + v234;
+			*(float *)&aasHandle = v178;
+			flt_10788844 = v178;
+			v179 = (v231 + v227) * 0.0 + v235;
+			parentOpacity = v179;
+			flt_10788848 = v179;
+			v180 = flt_10808CFC + 1.570796370506287;
+			v181 = cos(v180) * 4.5;
+			v182 = sin(v180) * 4.5;
+			flt_10307B70 = v229 * v182 + v225 * v181 + v176 * v233 + v236;
+			dword_10788854 = aasHandle;
+			dword_10788858 = LODWORD(parentOpacity);
+			dword_1078822C = color;
+			dword_10788864 = aasHandle;
+			dword_10788868 = LODWORD(parentOpacity);
+			dword_10307EA0 = 1065353216;
+			dword_10307EA4 = 1065353216;
+			LODWORD(flt_10788230) = color;
+			obj_render_height = 0.0;
+			*(float *)&aasHandle = 0.0;
+			LODWORD(offsetY) = &obj_render_indices180[1];
+			flt_10307B74 = v230 * v182 + v226 * v181 + v176 * v234 + v237;
+			flt_10307B78 = v231 * v182 + v227 * v181 + v176 * v235 + absY;
+			flt_10788850 = v177;
+			v183 = flt_10808CFC + 3.665191531181335;
+			v184 = v183;
+			v185 = cos(v183) * 4.5;
+			v186 = sin(v184) * 4.5;
+			flt_10307B80 = v229 * v186 + v225 * v185 + v176 * v233 + v236;
+			flt_10307B84 = v230 * v186 + v226 * v185 + v176 * v234 + v237;
+			flt_10307B88 = v231 * v186 + v227 * v185 + v176 * v235 + absY;
+			flt_10788860 = v177;
+			do
+			{
+				v187 = offsetY;
+				v188 = 0;
+				v189 = 6 * LODWORD(obj_render_height);
+				v190 = 6 * LODWORD(obj_render_height) + 6;
+				do
+				{
+					*(_WORD *)(LODWORD(v187) - 2) = v189 + v188;
+					*LODWORD(v187) = v189 + v188 + 1;
+					v191 = v189 + v188 + 7;
+					*(_WORD *)(LODWORD(v187) + 4) = v189 + v188;
+					*(_WORD *)(LODWORD(v187) + 2) = v191;
+					*(_WORD *)(LODWORD(v187) + 6) = v191;
+					*(_WORD *)(LODWORD(v187) + 8) = v190 + v188++;
+					LODWORD(v187) += 12;
+				} while (v188 < 5);
+				v192 = aasHandle;
+				v193 = 6 * (v188 + aasHandle);
+				obj_render_indices180[v193 + 1] = v189;
+				obj_render_indices180[v193 + 2] = v190;
+				obj_render_indices180[v193 + 4] = v190;
+				v194 = obj_render_height;
+				obj_render_indices180[v193] = v189 + 5;
+				obj_render_indices180[v193 + 3] = v189 + 5;
+				obj_render_indices180[v193 + 5] = v189 + 11;
+				v196 = __OFSUB__(LODWORD(offsetY) + 72, &word_10788CAA);
+				v195 = LODWORD(offsetY) + 72 - (signed int)&word_10788CAA < 0;
+				LODWORD(obj_render_height) = LODWORD(v194) + 1;
+				LODWORD(offsetY) += 72;
+				aasHandle = v192 + 6;
+			} while (v195 ^ v196);
+			word_10788CA8 = 90;
+			word_10788CAE = 90;
+			word_10788CB8 = 98;
+			word_10788CBC = 98;
+			word_10788CCA = 98;
+			word_10788CD6 = 98;
+			word_10788CDC = 98;
+			word_10788CAA = 91;
+			word_10788CAC = 97;
+			word_10788CB0 = 97;
+			word_10788CB2 = 96;
+			word_10788CB4 = 92;
+			word_10788CB6 = 93;
+			word_10788CBA = 92;
+			word_10788CBE = 97;
+			word_10788CC0 = 94;
+			word_10788CC2 = 95;
+			word_10788CC4 = 96;
+			word_10788CC6 = 94;
+			word_10788CC8 = 96;
+			word_10788CCC = 91;
+			word_10788CCE = 92;
+			word_10788CD0 = 97;
+			word_10788CD2 = 93;
+			word_10788CD4 = 94;
+			word_10788CD8 = 96;
+			word_10788CDA = 97;
+			tig_shader_render_3d(
+				96,
+				&obj_render_pos_96,
+				&obj_render_normals96,
+				&obj_render_diffuse_96,
+				&obj_render_uv_96,
+				180,
+				obj_render_indices180,
+				dword_102ACB64);
+		}
+		*/
+}
+
+static void RasterizeTri(int width, int height, XMCOLOR *pixelData, std::array<XMFLOAT2, 3> vertices, XMCOLOR color) {
+
+	// This rasterization function only works with already clipped tris
+	for (auto &vertex : vertices) {
+		if (vertex.x < 0 || vertex.x >= width || vertex.y < 0 && vertex.y >= height) {
+			return;
+		}
+	}
+
+	// Sort the three vertices by Y value into top, middle, bottom
+	XMFLOAT2 topVertex, middleVertex, bottomVertex;
+	if (vertices[0].y <= vertices[2].y) {
+		if (vertices[1].y < vertices[0].y) {
+			middleVertex = vertices[0];
+			topVertex = vertices[1];
+			bottomVertex = vertices[2];
+		} else {
+			topVertex = vertices[0];
+			if (vertices[1].y <= vertices[2].y)
+			{
+				middleVertex = vertices[1];
+				bottomVertex = vertices[2];
+			} else {
+				middleVertex = vertices[2];
+				bottomVertex = vertices[1];
+			}
+		}
+	} else {
+		if (vertices[2].y > vertices[1].y) {
+			topVertex = vertices[1];
+			middleVertex = vertices[2];
+			bottomVertex = vertices[0];
+		} else {
+			topVertex.y = vertices[2].y;
+			topVertex.x = vertices[2].x;
+			if (vertices[0].y <= vertices[1].y) {
+				middleVertex = vertices[0];
+				bottomVertex = vertices[1];
+			} else {
+				middleVertex = vertices[1];
+				bottomVertex = vertices[0];
+			}
+		}
+	}
+
+	float v11; // fst6@20
+	float v12; // edx@21
+	float v13; // fst7@22
+	float v14; // fst6@23
+	float v15; // fst5@23
+	int v16; // esi@23
+	int v17; // edi@23
+	int v18; // ebp@23
+	float v19; // ST14_4@27
+	int v20; // ebx@24
+	signed int v21; // esi@25
+	unsigned __int64 v22; // rax@25
+	char v23; // zf@27
+	float v24; // fst7@31
+	float v25; // fst6@31
+	int v26; // esi@31
+	int v27; // edi@31
+	int v28; // ebx@32
+	int v29; // ebp@32
+	signed int v30; // esi@33
+	unsigned __int64 v31; // rax@33
+	int v33; // [sp+4h] [bp-2Ch]@24
+	float v34; // [sp+8h] [bp-28h]@31
+	float v35; // [sp+Ch] [bp-24h]@23
+	float v36; // [sp+Ch] [bp-24h]@31
+	float v38; // [sp+10h] [bp-20h]@22
+	float v40; // [sp+14h] [bp-1Ch]@22
+	float v41; // [sp+18h] [bp-18h]@22
+	float v43; // [sp+1Ch] [bp-14h]@22
+	float v45; // [sp+20h] [bp-10h]@22
+	float v47; // [sp+24h] [bp-Ch]@22
+	float v48; // [sp+28h] [bp-8h]@20
+	float v49; // [sp+28h] [bp-8h]@22
+	float v50; // [sp+2Ch] [bp-4h]@22
+	v11 = (middleVertex.y - topVertex.y) * (bottomVertex.x - topVertex.x) / (bottomVertex.y - topVertex.y) + topVertex.x;
+	v48 = v11;
+	if ((v11 < middleVertex.x))
+	{
+		v12 = v11;
+		v48 = middleVertex.x;
+		middleVertex.x = v12;
+	}
+	v38 = floor(topVertex.x);
+	v40 = floor(topVertex.y);
+	v41 = floor(middleVertex.x);
+	v13 = floor(middleVertex.y);
+	v45 = floor(bottomVertex.x);
+	v47 = floor(bottomVertex.y);
+	v43 = v13;
+	v49 = floor(v48);
+	v50 = v13;
+	if ((v40 < v13) )
+	{
+		v14 = v38;
+		v15 = v38;
+		v16 = (unsigned __int64)v13;
+		v17 = (unsigned __int64)v40;
+		v35 = (v41 - v38) / (long double)(v16 - v17);
+		v18 = width;
+		if (v17 <= v16)
+		{
+			v20 = width * v17;
+			v33 = v16 - v17 + 1;
+			do
+			{
+				v21 = (int)v14;
+				v22 = (int)v15;
+				if (v21 <= (int)v15) {
+					for (size_t i = 0; i < v22 - v21 + 1; ++i) {
+						pixelData[v20 + (int) v14 + i] = color;
+					}
+				}
+				v14 += v35;
+				v20 += width;
+				v23 = v33-- == 1;
+				v19 = (v49 - v38) / (float)(int)((int)v50 - v17);
+				v15 += v19;
+			} while (!v23);
+		}
+	}
+	else
+	{
+		v18 = width;
+	}
+	if (v13 < v47)
+	{
+		v24 = v41;
+		v25 = v49;
+		v26 = (unsigned __int64)v47;
+		v27 = (unsigned __int64)v43;
+		v34 = (v45 - v41) / (long double)(v26 - v27);
+		v36 = (v45 - v49) / (long double)(signed int)(v26 - (unsigned __int64)v50);
+		if (v27 <= v26)
+		{
+			v28 = v18 * v27;
+			v29 = v26 - v27 + 1;
+			do
+			{
+				v30 = (unsigned __int64)v24;
+				v31 = (unsigned __int64)v25;
+				if (v30 <= (signed int)(unsigned __int64)v25) {
+					for (size_t i = 0; i < v31 - v30 + 1; ++i) {
+						pixelData[v28 + (int)v24 + i] = color;
+					}
+				}
+				v24 += v34;
+				v28 += width;
+				--v29;
+				v25 = v25 + v36;
+			} while (v29);
+		}
+	}
+
+}
+
+void MapObjectRenderer::RenderShadowMapShadow(objHndl obj,
+	const gfx::AnimatedModelParams &animParams,
+	gfx::AnimatedModel & model,
+	const Light3d &globalLight)
+{
+	
+	LocAndOffsets loc{ {animParams.x, animParams.y}, animParams.offsetX, animParams.offsetY };
+	auto worldPos{ loc.ToCenterOfTileAbs() };
+
+	auto objRadius = objects.GetRadius(obj);
+
+	constexpr auto shadowMapWidth = 256;
+	constexpr auto shadowMapHeight = 256;
+	
+	XMCOLOR textureData[shadowMapWidth * shadowMapHeight];
+	memset(textureData, 0, sizeof(textureData));
+
+	XMFLOAT4 lightDir = globalLight.dir;
+
+	float shadowMapWorldX, shadowMapWorldWidth, 
+		shadowMapWorldZ, shadowMapWorldHeight;
+
+	auto renderHeight = objects.GetRenderHeight(obj);
+	if (lightDir.x < 0.0) {
+		shadowMapWorldX = worldPos.x - 2 * objRadius + lightDir.x * renderHeight;
+		shadowMapWorldWidth = 4 * objRadius - lightDir.x * renderHeight;
+	} else {
+		shadowMapWorldX = worldPos.x - objRadius - objRadius;
+		shadowMapWorldWidth = lightDir.x * renderHeight + 4 * objRadius;
+	}
+
+	if (lightDir.z < 0.0) {
+		shadowMapWorldZ = worldPos.y - 2 * objRadius + lightDir.z * renderHeight;
+		shadowMapWorldHeight = 4 * objRadius - lightDir.z * renderHeight;
+	} else {
+		shadowMapWorldZ = worldPos.y - 2 * objRadius;
+		shadowMapWorldHeight = lightDir.z + renderHeight + 4 * objRadius;
+	}
+
+	auto materialIds{ model.GetSubmeshes() };
+	for (size_t i = 0; i < materialIds.size(); ++i) {
+		auto &submesh{ model.GetSubmesh(animParams, i) };
+
+		static std::array<XMFLOAT2, 0x7FFFF> sShadowMapPos;
+
+		auto textureWidth = (float)shadowMapWidth;
+		auto textureHeight = (float)shadowMapHeight;
+		for (int j = 0; j < submesh->GetVertexCount(); ++j) {
+			auto &posIn = submesh->GetPositions()[j];
+			sShadowMapPos[j].x = posIn.x - (posIn.y - animParams.offsetZ) * lightDir.x / lightDir.y;
+			sShadowMapPos[j].y = posIn.z - (posIn.y - animParams.offsetZ) * lightDir.z / lightDir.y;
+			sShadowMapPos[j].x = (sShadowMapPos[j].x - shadowMapWorldX) / shadowMapWorldWidth * textureWidth;
+			sShadowMapPos[j].y = (sShadowMapPos[j].y - shadowMapWorldZ) / shadowMapWorldHeight * textureHeight;
+		}
+
+		for (int j = 0; j < submesh->GetPrimitiveCount(); ++j) {
+			auto idx1 = submesh->GetIndices()[j * 3];
+			auto idx2 = submesh->GetIndices()[j * 3 + 1];
+			auto idx3 = submesh->GetIndices()[j * 3 + 2];
+
+			std::array<XMFLOAT2, 3> vertices{
+				sShadowMapPos[idx1],
+				sShadowMapPos[idx2],
+				sShadowMapPos[idx3]
+			};
+			RasterizeTri(shadowMapWidth, shadowMapHeight, textureData, vertices, 0x80000000);
+		}
+	}
+
+	/* 	
+	TODO
+	auto primaryWeapon = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
+	if (primaryWeapon)
+	{
+		auto weaponAnim = objects.GetAnimHandle(primaryWeapon);
+		auto weaponAnimParams = objects.GetAnimParams(primaryWeapon);
+	}
+
+	auto secondaryWeapon = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);
+	if (secondaryWeapon)
+	{
+		auto weaponAnim = objects.GetAnimHandle(secondaryWeapon);
+		auto weaponAnimParams = objects.GetAnimParams(secondaryWeapon);
+	}*/
+	
+	auto shadowMapWorldBottom = shadowMapWorldZ + shadowMapWorldHeight;
+	auto shadowMapWorldRight = shadowMapWorldX + shadowMapWorldWidth;
+
+	std::array<gfx::ShapeVertex3d, 4> corners;
+	corners[0].pos = { shadowMapWorldX, animParams.offsetZ, shadowMapWorldZ };
+	corners[1].pos = { shadowMapWorldX, animParams.offsetZ, shadowMapWorldBottom };
+	corners[2].pos = { shadowMapWorldRight, animParams.offsetZ, shadowMapWorldBottom };
+	corners[3].pos = { shadowMapWorldRight, animParams.offsetZ, shadowMapWorldZ };
+	corners[0].uv = { 0, 0 };
+	corners[1].uv = { 0, 1 };
+	corners[2].uv = { 1, 1 };
+	corners[3].uv = { 1, 0 };
+
+	auto texture{ mDevice.CreateDynamicTexture(D3DFMT_A8R8G8B8, shadowMapWidth, shadowMapHeight) };
+	texture->Update<XMCOLOR>(textureData);
+	tig->GetShapeRenderer3d().DrawQuad(corners, 0xFFFFFFFF, texture);
+
+}
+
+void MapObjectRenderer::RenderBlobShadow(objHndl handle, gfx::AnimatedModel & model)
+{
+	/*if (shadow_shader_id == -1)
+		tig_shader_register("art/meshes/shadow.mdf", &shadow_shader_id);
+	v216 = obj_get_radius(ObjHnd);
+	obj_render_pos4[1].y = animParams.offsetz;
+	v64 = (long double)animParams.locx * 28.284271;
+	obj_render_diffuse4[0] = color;
+	obj_render_diffuse4[1] = color;
+	offsetY = v64;
+	obj_render_diffuse4[2] = color;
+	obj_render_diffuse4[3] = color;
+	v65 = v64 - v216 + animParams.offsetx + 14.142136;
+	obj_render_pos4[0].x = v65;
+	obj_render_pos4[0].y = animParams.offsetz;
+	obj_render_pos4[2].y = animParams.offsetz;
+	v66 = (long double)animParams.locy * 28.284271;
+	obj_render_pos4[3].y = animParams.offsetz;
+	*(float *)&shaderId = v66;
+	v67 = v66 - v216 + animParams.offsety + 14.142136;
+	obj_render_pos4[0].z = v67;
+	v68 = v67;
+	obj_render_pos4[1].x = v65;
+	v69 = v216 + *(float *)&shaderId + animParams.offsety + 14.142136;
+	obj_render_pos4[1].z = v69;
+	v70 = v216 + offsetY + animParams.offsetx + 14.142136;
+	obj_render_pos4[2].x = v70;
+	obj_render_pos4[2].z = v69;
+	obj_render_pos4[3].x = v70;
+	obj_render_pos4[3].z = v68;
+	tig_shader_render_3d(
+		4,
+		obj_render_pos4,
+		obj_render_normals4,
+		obj_render_diffuse4,
+		obj_render_uv4,
+		2,
+		obj_render_indices6,
+		shadow_shader_id);*/
+}
+
+objHndl MapObjectRenderer::GiantFrogGetGrappledOpponent(objHndl giantFrog)
+{
+	// TODO
+	throw TempleException("NYI");
 }
 
 static class RenderFix : public TempleFix {

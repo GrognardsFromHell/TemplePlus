@@ -60,7 +60,7 @@ VertexBuffer::VertexBuffer(CComPtr<IDirect3DVertexBuffer9> vertexBuffer, size_t 
 VertexBuffer::~VertexBuffer() {
 }
 
-void VertexBuffer::Update(gsl::array_view<uint8_t> data) {
+void VertexBuffer::Update(gsl::array_view<const uint8_t> data) {
 	auto lock(Lock<uint8_t>());
 	memcpy(&lock.GetData()[0], &data[0], data.size() * sizeof(uint8_t));
 }

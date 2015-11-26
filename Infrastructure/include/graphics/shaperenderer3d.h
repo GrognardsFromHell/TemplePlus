@@ -11,10 +11,21 @@ namespace gfx {
 
 class RenderingDevice;
 
+#pragma pack(push, 1)
+struct ShapeVertex3d {
+	XMFLOAT3 pos;
+	XMFLOAT2 uv;
+};
+#pragma pack(pop)
+
 class ShapeRenderer3d {
 public:
 	explicit ShapeRenderer3d(RenderingDevice& device);
 	~ShapeRenderer3d();
+
+	void DrawQuad(const std::array<ShapeVertex3d, 4> &corners,
+		XMCOLOR color,
+		const gfx::TextureRef &texture);
 
 	void DrawDisc(const XMFLOAT3 &center, 
 		float rotation, 

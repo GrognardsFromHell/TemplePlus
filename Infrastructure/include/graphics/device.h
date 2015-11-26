@@ -43,6 +43,8 @@ namespace gfx {
 		ResourceListener* mListener;
 	};
 
+	using DynamicTexturePtr = std::shared_ptr<class DynamicTexture>;
+
 	class RenderingDevice {
 	public:
 		RenderingDevice(HWND mWindowHandle, int renderWidth, int renderHeight);
@@ -110,6 +112,7 @@ namespace gfx {
 		
 		std::shared_ptr<class IndexBuffer> CreateEmptyIndexBuffer(size_t count);
 		std::shared_ptr<class VertexBuffer> CreateEmptyVertexBuffer(size_t count, bool forPoints = false);
+		DynamicTexturePtr CreateDynamicTexture(D3DFORMAT format, int width, int height);
 
 		template<typename T>
 		VertexBufferPtr CreateVertexBuffer(gsl::array_view<T> data);

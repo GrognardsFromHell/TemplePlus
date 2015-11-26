@@ -1,6 +1,6 @@
 
 #if LIGHTING
-#include "lighting.h"
+#include "lighting.fxh"
 #endif
 
 // Texture animation types

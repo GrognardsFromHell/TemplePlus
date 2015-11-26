@@ -80,6 +80,12 @@ namespace gfx {
 		XMFLOAT2 WorldToScreen(XMFLOAT3 worldPos);
 
 		/**
+		* Transforms a world coordinate into the local coordinate
+		* space of the screen (in pixels).
+		*/
+		XMFLOAT2 WorldToScreenUi(XMFLOAT3 worldPos);
+
+		/**
 		 * Transforms a screen coordinate relative to the upper left
 		 * corner of the screen into a world position with y = 0.
 		 */

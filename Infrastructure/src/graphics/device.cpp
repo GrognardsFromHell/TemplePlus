@@ -4,6 +4,7 @@
 #include "infrastructure/vfs.h"
 #include "graphics/device.h"
 #include "graphics/materials.h"
+#include "graphics/dynamictexture.h"
 
 namespace gfx {
 
@@ -581,5 +582,27 @@ namespace gfx {
 
 		}
 	}
+	
+	gfx::DynamicTexturePtr RenderingDevice::CreateDynamicTexture(D3DFORMAT format, int width, int height) {
+
+		CComPtr<IDirect3DTexture9> texture;
+
+		if (D3DLOG(mDevice->CreateTexture(width, 
+			                              height, 
+										  1, 
+									      D3DUSAGE_DYNAMIC, 
+									      format, 
+								          D3DPOOL_DEFAULT, 
+								          &texture, 
+			                              nullptr)) != D3D_OK) {
+			return nullptr;
+		}
+
+		Size size{ width, height };
+		
+		return std::make_shared<DynamicTexture>(texture, size);
+
+	}
+
 
 }

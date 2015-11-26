@@ -6,12 +6,19 @@ namespace gfx {
 	struct AnimatedModelParams;
 	class RenderingDevice;
 	struct Light3d;
+	class AnimatedModel;
 }
 namespace temple {
 	class AasRenderer;
 }
 
 class GameSystems;
+
+enum class ShadowType {
+	ShadowMap,
+	Geometry,
+	Blob
+};
 
 class MapObjectRenderer {
 public:
@@ -26,6 +33,7 @@ private:
 	GameSystems& mGameSystems;
 	gfx::RenderingDevice& mDevice;
 	temple::AasRenderer &mAasRenderer;
+	ShadowType mShadowType = ShadowType::ShadowMap;
 
 	void DrawBoundingCylinder(float x, float y, float z, float radius, float height);
 
@@ -37,5 +45,17 @@ private:
 	according to the camera inclination of 45°.
 	*/
 	static constexpr float cos45 = 0.70709997f;
+
+	bool IsObjectOnScreen(LocAndOffsets &location, float offsetZ, float radius, float renderHeight);
+	void RenderMirrorImages(objHndl handle);
+	void RenderGiantFrogTongue(objHndl handle);
+
+	void RenderShadowMapShadow(objHndl handle, 
+		const gfx::AnimatedModelParams &animParams, 
+		gfx::AnimatedModel &model, 
+		const gfx::Light3d& globalLight);
+	void RenderBlobShadow(objHndl handle, gfx::AnimatedModel &model);
+
+	objHndl GiantFrogGetGrappledOpponent(objHndl giantFrog);
 
 };

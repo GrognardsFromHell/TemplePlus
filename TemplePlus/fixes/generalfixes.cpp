@@ -283,3 +283,26 @@ public: const char* name() override {
 		//	replaceFunction(0x100FD1C0, sub_100FD1C0);
 		}
 } testImprovedTWF;
+
+static class PartyPoolUiLagFix : public TempleFix {
+public:
+	const char *name() override {
+		return "PartyPool UI Fix";
+	}
+
+	void apply() override {
+		OrgUiPartyPoolLoadObj = replaceFunction(0x10025F10, UiPartyPoolLoadObj);
+	}
+
+	static int UiPartyPoolLoadObj(char *objData, objHndl *handleOut, locXY loc);
+	static int (*OrgUiPartyPoolLoadObj)(char *objData, objHndl *handleOut, locXY loc);
+} partyPoolUiLagFix;
+
+int PartyPoolUiLagFix::UiPartyPoolLoadObj(char * objData, objHndl * handleOut, locXY loc)
+{
+	// Load the characters on a sector that is offscreen.
+	locXY nullLoc{ 0, 0 };
+	return OrgUiPartyPoolLoadObj(objData, handleOut, nullLoc);
+}
+
+int (*PartyPoolUiLagFix::OrgUiPartyPoolLoadObj)(char *objData, objHndl *handleOut, locXY loc);

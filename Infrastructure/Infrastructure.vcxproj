@@ -163,6 +163,7 @@
     <ClInclude Include="include\graphics\buffers.h" />
     <ClInclude Include="include\graphics\camera.h" />
     <ClInclude Include="include\graphics\device.h" />
+    <ClInclude Include="include\graphics\dynamictexture.h" />
     <ClInclude Include="include\graphics\materials.h" />
     <ClInclude Include="include\graphics\math.h" />
     <ClInclude Include="include\graphics\mdfmaterials.h" />
@@ -244,6 +245,7 @@
     <ClCompile Include="keyboard.cpp" />
     <ClCompile Include="images_jpeg.cpp" />
     <ClCompile Include="mdfparser.cpp" />
+    <ClCompile Include="src\graphics\dynamictexture.cpp" />
     <ClCompile Include="src\graphics\shaders_compiler.cpp" />
     <ClCompile Include="src\graphics\bufferbinding.cpp" />
     <ClCompile Include="src\graphics\buffers.cpp" />

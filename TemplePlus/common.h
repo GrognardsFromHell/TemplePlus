@@ -1,6 +1,7 @@
 #pragma once
 
 #include <d3dx9math.h>
+#include <graphics/math.h>
 
 #include "obj_structs.h"
 #include "d20_defs.h"
@@ -105,6 +106,9 @@ struct LocAndOffsets {
 	// Same as ToInches2d, but translates to center of tile
 	vector2f ToCenterOfTileAbs();
 
+	// Same as ToInches3d, but translates to center of tile
+	XMFLOAT3 ToCenterOfTileAbs3D(float offsetZ = 0);
+
 	vector3f ToInches3D(float offsetZ = 0) {
 		return location.ToInches3D(off_x, off_y, offsetZ);
 	}
@@ -115,6 +119,14 @@ inline vector2f LocAndOffsets::ToCenterOfTileAbs() {
 	auto result = ToInches2D();
 	result.x += INCH_PER_HALFTILE;
 	result.y += INCH_PER_HALFTILE;
+	return result;
+}
+
+inline XMFLOAT3 LocAndOffsets::ToCenterOfTileAbs3D(float offsetZ) {
+	auto abs2d(ToInches2D());
+	XMFLOAT3 result{ abs2d.x, offsetZ, abs2d.y };
+	result.x += INCH_PER_HALFTILE;
+	result.z += INCH_PER_HALFTILE;
 	return result;
 }
 

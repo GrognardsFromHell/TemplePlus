@@ -49,6 +49,19 @@ namespace gfx {
 		return screenPos;
 	}
 
+	XMFLOAT2 WorldCamera::WorldToScreenUi(XMFLOAT3 worldPos)
+	{
+		auto result(WorldToScreen(worldPos));
+		result.x *= -1;
+		result.y *= -1;
+
+		// Move the origin to the top left instead of the center of the screen
+		result.x += mScreenWidth / 2;
+		result.y += mScreenHeight / 2;
+
+		return result;
+	}
+
 	XMFLOAT3 WorldCamera::ScreenToWorld(float x, float y)
 	{
 

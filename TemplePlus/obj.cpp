@@ -292,10 +292,8 @@ gfx::AnimatedModelParams Objects::GetAnimParams(objHndl handle)
 
 	result.scale = objects.GetScalePercent(handle) / 100.0f;
 
-	auto type = objects.GetType(handle);
-
 	// Special case for equippable items
-	if ((type >= obj_t_weapon && type <= obj_t_generic || type == obj_t_bag)) {
+	if (IsEquipment(handle)) {
 		auto itemFlags = objects.GetItemFlags(handle);
 		if ((itemFlags & OIF_DRAW_WHEN_PARENTED) != 0) {
 			auto parent = inventory.GetParent(handle);
@@ -816,18 +814,6 @@ int32_t Objects::GetHPCur(objHndl obj)
 	return _StatLevelGet(obj, stat_hp_current);
 }
 
-bool Objects::IsCritter(objHndl obj)
-{
-	auto type = GetType(obj);
-	return type == obj_t_npc || type == obj_t_pc;
-}
-
-bool Objects::IsNPC(objHndl obj)
-{
-	auto type = GetType(obj);
-	return type == obj_t_npc;
-}
-
 bool Objects::IsPlayerControlled(objHndl obj)
 {
 	return _IsPlayerControlled(obj);
@@ -892,11 +878,6 @@ int Objects::GetAlpha(objHndl handle) {
 	return _GetInternalFieldInt32(handle, obj_f_transparency);
 }
 
-bool Objects::IsContainer(objHndl objHnd)
-{
-	auto type = GetType(objHnd);
-	return type == obj_t_container || type == obj_t_bag;
-}
 #pragma endregion
 
 

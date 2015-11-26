@@ -2,13 +2,6 @@
 #include "graphics/bufferbinding.h"
 #include "graphics/shaperenderer3d.h"
 
-#pragma pack(push, 1)
-struct ShapeVertex3d {
-	XMFLOAT3 pos;
-	XMFLOAT2 uv;
-};
-#pragma pack(pop)
-
 // When drawing circles, how many segments do we use?
 constexpr static int sCircleSegments = 74;
 
@@ -21,6 +14,7 @@ namespace gfx {
 		VertexBufferPtr discVertexBuffer;
 		IndexBufferPtr discIndexBuffer;
 		BufferBinding discBufferBinding;
+		Material quadMaterial;
 		Material lineMaterial;
 		Material lineOccludedMaterial;
 		VertexBufferPtr lineVertexBuffer;
@@ -37,11 +31,11 @@ namespace gfx {
 		void FreeResources(RenderingDevice&) override;
 
 		static Material CreateLineMaterial(RenderingDevice &device, bool occludedOnly);
+		static Material CreateQuadMaterial(RenderingDevice &device);
 
 		void BindLineMaterial(XMCOLOR color, bool occludedOnly = false);
+		void BindQuadMaterial(XMCOLOR color, const gfx::TextureRef &texture);
 	};
-
-	
 
 	void ShapeRenderer3d::Impl::CreateResources(RenderingDevice&) {
 
@@ -134,6 +128,31 @@ namespace gfx {
 		return Material(blendState, depthState, rasterizerState, {}, vs, ps);
 	}
 
+	Material ShapeRenderer3d::Impl::CreateQuadMaterial(RenderingDevice & device)
+	{
+		BlendState blendState;
+		blendState.blendEnable = true;
+		blendState.srcBlend = D3DBLEND_SRCALPHA;
+		blendState.destBlend = D3DBLEND_INVSRCALPHA;
+		DepthStencilState depthState;
+		depthState.depthEnable = true;
+		depthState.depthWrite = false;
+		RasterizerState rasterizerState;
+		rasterizerState.cullMode = D3DCULL_NONE;
+		Shaders::ShaderDefines vsDefines;
+		vsDefines["TEXTURE_STAGES"] = "1";
+		auto vs = device.GetShaders().LoadVertexShader("mdf_vs", vsDefines);
+		auto ps = device.GetShaders().LoadPixelShader("textured_simple_ps");
+		SamplerState samplerState;
+		samplerState.addressU = D3DTADDRESS_CLAMP;
+		samplerState.addressV = D3DTADDRESS_CLAMP;
+		samplerState.minFilter = D3DTEXF_LINEAR;
+		samplerState.magFilter = D3DTEXF_LINEAR;
+		samplerState.mipFilter = D3DTEXF_LINEAR;
+		std::vector<MaterialSamplerBinding> samplers{ { nullptr, samplerState } };
+		return Material(blendState, depthState, rasterizerState, samplers, vs, ps);
+	}
+
 	void ShapeRenderer3d::Impl::BindLineMaterial(XMCOLOR color, bool occludedOnly) {
 		if (occludedOnly) {
 			device.SetMaterial(lineOccludedMaterial);
@@ -147,10 +166,23 @@ namespace gfx {
 		device.GetDevice()->SetVertexShaderConstantF(4, &colors.x, 4);
 	}
 
+	void ShapeRenderer3d::Impl::BindQuadMaterial(XMCOLOR color, const gfx::TextureRef & texture)
+	{
+		device.SetMaterial(quadMaterial);
+		device.GetDevice()->SetVertexShaderConstantF(0, &device.GetCamera().GetViewProj()._11, 4);
+		XMFLOAT4 colors;
+		XMStoreFloat4(&colors, PackedVector::XMLoadColor(&color));
+		colors = XMFLOAT4(1, 1, 1, 1);
+		device.GetDevice()->SetVertexShaderConstantF(4, &colors.x, 4);
+
+		device.GetDevice()->SetTexture(0, texture->GetDeviceTexture());
+	}
+
 	ShapeRenderer3d::Impl::Impl(RenderingDevice& device)
 		: device(device), 
 		  mRegistration(device, this), 
 		  lineMaterial(CreateLineMaterial(device, false)),
+		  quadMaterial(CreateQuadMaterial(device)),
 		  lineOccludedMaterial(CreateLineMaterial(device, true)) {
 	}
 
@@ -198,6 +230,20 @@ namespace gfx {
 
 		mImpl->device.GetDevice()->SetIndices(mImpl->discIndexBuffer->GetBuffer());
 		mImpl->device.GetDevice()->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 16, 0, 8);
+
+	}
+
+	void ShapeRenderer3d::DrawQuad(const std::array<ShapeVertex3d, 4> &corners,
+		XMCOLOR color,
+		const gfx::TextureRef &texture) {
+
+		mImpl->discVertexBuffer->Update<const ShapeVertex3d>(corners);
+		mImpl->discBufferBinding.Bind();
+
+		mImpl->BindQuadMaterial(color, texture);
+
+		mImpl->device.GetDevice()->SetIndices(mImpl->discIndexBuffer->GetBuffer());
+		mImpl->device.GetDevice()->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
 
 	}
 

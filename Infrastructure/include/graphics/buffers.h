@@ -106,11 +106,11 @@ public:
 	VertexBuffer(CComPtr<IDirect3DVertexBuffer9> vertexBuffer, size_t size);
 	~VertexBuffer();
 
-	void Update(gsl::array_view<uint8_t> data);
+	void Update(gsl::array_view<const uint8_t> data);
 
 	template <typename T>
 	void Update(gsl::array_view<T> data) {
-		Update({ reinterpret_cast<uint8_t*>(&data[0]), data.size() * sizeof(T) });
+		Update({ reinterpret_cast<const uint8_t*>(&data[0]), data.size() * sizeof(T) });
 	}
 
 	template <typename T>
