@@ -4,12 +4,18 @@
 #include "pathfinding.h"
 #include "location.h"
 #include "tio/tio.h"
+#include "objlist.h"
+#include "obj.h"
+#include "gamesystems/map/sector.h"
+#include "raycast.h"
 
 PathNodeSys pathNodeSys;
 char PathNodeSys::pathNodesLoadDir[260];
 char PathNodeSys::pathNodesSaveDir[260];
 MapPathNodeList * PathNodeSys::pathNodeList;
-
+MapClearanceData PathNodeSys::clearanceData;
+bool PathNodeSys::hasClearanceData = false;
+ClearanceProfile PathNodeSys::clearanceProfiles[30];
 struct PathNodeSysAddresses : temple::AddressTable
 {
 	
@@ -38,7 +44,7 @@ void PathNodeSys::RecipDebug()
 		}
 	};
 
-	auto oneSided = new RecipCheck[PATH_NODE_CAP];
+	auto oneSided = new RecipCheck[MaxPathNodes];
 	int n = 0;
 
 	auto node = pathNodeList;
@@ -241,15 +247,17 @@ bool PathNodeSys::LoadNeighDistFromFile(TioFile* file, MapPathNodeList* node)
 BOOL PathNodeSys::LoadNodesCurrent()
 {
 	//int orphanNodeCount = 0;
-	//int orphanNodes[PATH_NODE_CAP] ={};
+	//int orphanNodes[MaxPathNodes] ={};
 
 	char fileName[260];
 	char fileNameNew[260];
 	char supplem[260];
+	char clearanceFileName[260];
 
 	_snprintf(fileName, 260, "%s\\%s", pathNodesLoadDir, "pathnode.pnd");
 	_snprintf(fileNameNew, 260, "%s\\%s", pathNodesLoadDir, "pathnodenew.pnd");
 	_snprintf(supplem, 260, "%s\\%s", pathNodesLoadDir, "pathnodedist.pnd");
+	_snprintf(clearanceFileName, 260, "%s\\%s", pathNodesLoadDir, "clearance.bin");
 
 	auto file = tio_fopen(fileNameNew, "rb");
 	if (!file)
@@ -258,6 +266,27 @@ BOOL PathNodeSys::LoadNodesCurrent()
 		if (!file)
 			return 1;
 	}
+
+	auto clearanceFile = tio_fopen(clearanceFileName, "rb");
+	if (hasClearanceData)
+	{
+		free(clearanceData.secClr);
+	}
+	hasClearanceData = false;
+	if (clearanceFile)
+	{
+		int readStatus = tio_fread(&clearanceData.clrIdx, sizeof(clearanceData.clrIdx), 1, clearanceFile);
+		if (readStatus)
+		{	
+			clearanceData.secClr = new SectorClearanceData[clearanceData.clrIdx.numSectors];
+			readStatus = tio_fread(clearanceData.secClr, sizeof(SectorClearanceData), clearanceData.clrIdx.numSectors, clearanceFile);
+		}
+			
+		tio_fclose(clearanceFile);
+		if (readStatus)
+			hasClearanceData = true;
+	}
+
 
 	auto fileSupplem = tio_fopen(supplem, "rb");
 	int nodeCountSupplem = 0;
@@ -422,7 +451,7 @@ void PathNodeSys::RecalculateAllNeighbours()
 	{
 		int prevNeighCnt = node->node.neighboursCount;
 		int prevNeighs[MAX_NEIGHBOURS] = {};
-		memcpy(prevNeighs, node->node.neighbours, sizeof(int)*prevNeighCnt);
+		memcpy(prevNeighs, node->node.neighbours, sizeof(int) * prevNeighCnt);
 		if (node->node.neighboursCount > 0)
 		{
 			free(node->node.neighbours);
@@ -528,6 +557,111 @@ BOOL PathNodeSys::FlushNodes()
 	return status;
 }
 
+void PathNodeSys::GenerateClearanceFile()
+{	
+	int idx = -1;
+	auto secClrData = new SectorClearanceData();
+	clearanceData.clrIdx.Reset();
+	for (int secY = 0; secY < 16; secY++)
+	{
+		for (int secX = 0; secX < 16; secX++)
+		{
+			SectorLoc secLoc;
+			secLoc.raw = secX + (secY << 26);
+			Sector * sect;
+			int lockStatus = 0;
+			if (sectorSys.SectorFileExists(secLoc))
+			{
+				lockStatus = sectorSys.SectorLock(secLoc, &sect);
+			}
+			
+			if (!lockStatus)
+			{
+				clearanceData.clrIdx.clrAddr[secY][secX] = -1;
+				continue;
+			}
+			clearanceData.clrIdx.clrAddr[secY][secX] = ++idx;
+			if (idx)
+				secClrData = (SectorClearanceData*)realloc(secClrData, (idx + 1)*sizeof(SectorClearanceData));
+			Subtile subtile;
+			for (int ny = 0; ny < 64 * 3; ny++)
+			{
+				subtile.y = secY * 64 * 3 + ny;
+				for (int nx = 0; nx < 64 * 3; nx++)
+				{
+					float clearancesInch = MAX_OBJ_RADIUS_SUBTILES * (INCH_PER_TILE / 3) ;
+					
+					subtile.x = secX*64*3 + nx;
+					LocAndOffsets loc;
+					locSys.SubtileToLocAndOff(subtile, &loc);
+					auto flags = sect->GetTileFlags(&loc);
+					if (flags)
+					{
+						//auto tileFlags = sectorSys.GetTileFlags(loc);
+						TileFlags flagsToCheck = (TileFlags)((TileFlags::BlockX0Y0 + TileFlags::FlyOverX0Y0) << (nx % 3 + 3 * (ny % 3)));
+						if (flagsToCheck & flags)
+						{
+							secClrData[idx].val[ny][nx] = 0;
+							continue;
+						}
+					}
+
+					RaycastPacket rayPkt;
+					rayPkt.flags = (RaycastFlags)(RaycastFlags::HasToBeCleared | RaycastFlags::ExcludeItemObjects | RaycastFlags::ExcludePortals | RaycastFlags::HasRadius);
+					rayPkt.radius = MAX_OBJ_RADIUS_TILES * INCH_PER_TILE;
+					rayPkt.targetLoc = rayPkt.origin = loc;
+					rayPkt.RaycastShortRange();
+					int numFound = rayPkt.resultCount;
+					for (int i = 0; i < numFound; i++)
+					{
+						auto res = &rayPkt.results[i];
+						if (!res->obj)
+						{
+
+							float clrRad = locSys.Distance3d(loc, res->loc) ;
+							if (clrRad < clearancesInch)
+								clearancesInch = clrRad;
+							if (clearancesInch == 0)
+								break;
+
+						}
+					}
+					secClrData[idx].val[ny][nx] = clearancesInch;
+				}// nx
+			} // ny
+			sectorSys.SectorUnlock(secLoc);
+		}
+	}
+	
+	clearanceData.clrIdx.numSectors = idx + 1;
+	clearanceData.secClr = secClrData;
+	auto fil = tio_fopen("clearance.bin", "wb" );
+	tio_fwrite(&clearanceData.clrIdx, sizeof(clearanceData.clrIdx), 1, fil);
+	tio_fwrite(clearanceData.secClr, sizeof(SectorClearanceData), clearanceData.clrIdx.numSectors, fil);
+	tio_fclose(fil);
+}
+
+int PathNodeSys::CalcClearanceFromNearbyObjects(objHndl obj, float clearanceReq)
+{
+	//memset(clearanceData, 255, sizeof(clearanceData));
+	ObjList objList;
+	LocAndOffsets objLoc = objects.GetLocationFull(obj);
+	objList.ListRadius(objLoc, INCH_PER_TILE * 64, OLC_ALL & ~(OLC_ITEMS | OLC_TRAP ));
+	uint8_t objRadiusInSubtiles;
+	if (clearanceReq > INCH_PER_TILE * MAX_OBJ_RADIUS_SUBTILES)
+		objRadiusInSubtiles = 255;
+	else
+		objRadiusInSubtiles = static_cast<unsigned char>(pow( (clearanceReq / (INCH_PER_TILE/3)) ,2)) ;
+	int objListSize = objList.size();
+	for (int i = 0; i < objListSize; i++)
+	{
+		objHndl objIter = objList.get(i);
+		float objIterRadius = objects.GetRadius(objIter);
+		char objIterRadiusInSubtiles = static_cast<unsigned char>(pow((objIterRadius / (INCH_PER_TILE / 3)), 2));
+		LocAndOffsets objIterLoc = objects.GetLocationFull(objIter);
+	}
+	return -1;
+}
 
 BOOL PathNodeSys::WriteNodeToFile(MapPathNodeList* node, TioFile* file)
 {
@@ -551,7 +685,6 @@ BOOL PathNodeSys::WriteNodeToFile(MapPathNodeList* node, TioFile* file)
 
 bool PathNodeSys::WriteNodeDistToFile(MapPathNodeList* node, TioFile* file)
 {
-	BOOL result = 0;
 	if (!file)
 		return 0;
 	if (!node)
@@ -559,26 +692,18 @@ bool PathNodeSys::WriteNodeDistToFile(MapPathNodeList* node, TioFile* file)
 	if (!tio_fwrite(&node->node.id, 4, 1, file) == 1)
 		return 0;
 
-	int *count = &node->node.neighboursCount;
-	if (tio_fwrite(count, 4, 1, file) == 1
-		&& (!*count || tio_fwrite(node->node.neighDistances, sizeof(float), *count, file) == *count)
+	int count = node->node.neighboursCount;
+	if (tio_fwrite(&count, 4, 1, file) == 1
+		&& (!count || tio_fwrite(node->node.neighDistances, sizeof(float), count, file) == count)
 		)
 	{
-		return 1;
+		return true;
 	}
-	return result;
+	return false;
 }
 
-void PathNodeSys::FindPathNodeAppend(FindPathNodeData* node)
-{ /*
-	if (fpbnCount >= fpbnCap)
-	{
-		fpbnCap *= 2;
-		fpbnData = (FindPathNodeData*)realloc(fpbnData, sizeof(FindPathNodeData)*fpbnCap);
-	}
-	*/
-	memcpy(&fpbnData[fpbnCount], node, sizeof(FindPathNodeData));
-	fpbnCount++;
+void PathNodeSys::FindPathNodeAppend(const FindPathNodeData& node) {
+	fpbnData[fpbnCount++] = node;
 }
 
 int PathNodeSys::PopMinHeuristicNode(FindPathNodeData* fpndOut, bool useActualDist)
@@ -608,10 +733,10 @@ int PathNodeSys::PopMinHeuristicNode(FindPathNodeData* fpndOut, bool useActualDi
 	}
 
 	// copy it out
-	memcpy(fpndOut, &fpbnData[idxMin], sizeof(FindPathNodeData));
+	*fpndOut = fpbnData[idxMin];
 
 	// pop the found entry
-	memcpy(&fpbnData[idxMin], &fpbnData[fpbnCount - 1], sizeof(FindPathNodeData));
+	fpbnData[idxMin] = fpbnData[fpbnCount - 1];
 	fpbnCount--;
 	return 1;
 }
@@ -639,10 +764,10 @@ int PathNodeSys::PopMinHeuristicNodeLegacy(FindPathNodeData* fpndOut)
 	}
 
 	// copy it out
-	memcpy(fpndOut, &fpbnData[idxMinCumul], sizeof(FindPathNodeData));
+	*fpndOut = fpbnData[idxMinCumul];
 
 	// pop the found entry
-	memcpy(&fpbnData[idxMinCumul], &fpbnData[fpbnCount - 1], sizeof(FindPathNodeData));
+	fpbnData[idxMinCumul] = fpbnData[fpbnCount - 1];
 	fpbnCount--;
 	return 1;
 }
@@ -684,10 +809,7 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 	for (numNodes = 0; pnIterator; ++numNodes)
 		pnIterator = pnIterator->next;
 
-	//fpbnCap = numNodes;
-	//fpbnData = new FindPathNodeData[numNodes];
 	fpbnCount = 0;
-
 
 	// find the from/to nodes
 	pnIterator = pathNodeList;
@@ -712,7 +834,7 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 
 
 	// begin the A* algorithm
-	float distFromTo = locSys.distBtwnLocAndOffs(fromNode.nodeLoc, toNode.nodeLoc)/12.0;
+	float distFromTo = locSys.distBtwnLocAndOffs(fromNode.nodeLoc, toNode.nodeLoc) / 12.0f;
 	
 	FindPathNodeData fpMinCumul;
 	fpMinCumul.nodeId = fromNodeId;
@@ -724,7 +846,7 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 	fpMinCumul.heuristic = 0;
 	fpMinCumul.usingActualDistance = useActualDistances;
 
-	FindPathNodeAppend(&fpMinCumul);
+	FindPathNodeAppend(fpMinCumul);
 
 	if (!PopMinHeuristicNode(&fpMinCumul, useActualDistances))
 	{
@@ -733,62 +855,82 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 	}
 
 	MapPathNode minCumulNode, neighNode;
-	FindPathNodeData fpTemp, refererNode;
+	FindPathNodeData fpTemp;
 
 	while(fpMinCumul.nodeId != toNodeId)
 	{
-
 		// find the matching Path Node
 		pathNodeSys.GetPathNode(fpMinCumul.nodeId, &minCumulNode);
 
 		// loop thru its neighbours, searching 
 		for (int i = 0; i < minCumulNode.neighboursCount; i++)
 		{
-			
 			fpTemp.refererId = fpMinCumul.nodeId;
 			fpTemp.nodeId = minCumulNode.neighbours[i];
 			
 			// find the neighbour node
 			int neighbourId = minCumulNode.neighbours[i];
 			pathNodeSys.GetPathNode(neighbourId, &neighNode);
-			
 
 			// calculate its heuristic
-			fpTemp.distTo = locSys.distBtwnLocAndOffs(neighNode.nodeLoc, toNode.nodeLoc) / 12.0;
-			fpTemp.distFrom = locSys.distBtwnLocAndOffs(fromNode.nodeLoc, neighNode.nodeLoc) / 12.0;
+			fpTemp.distTo = locSys.distBtwnLocAndOffs(neighNode.nodeLoc, toNode.nodeLoc) / 12.0f;
+			fpTemp.distFrom = locSys.distBtwnLocAndOffs(fromNode.nodeLoc, neighNode.nodeLoc) / 12.0f;
 			fpTemp.distCumul = fpMinCumul.distCumul + fpTemp.distTo + fpTemp.distFrom;
 			if (useActualDistances)
 			{
 				fpTemp.distActualTotal = fpMinCumul.distActualTotal + minCumulNode.neighDistances[i];
 				fpTemp.heuristic = fpTemp.distActualTotal + fpTemp.distTo;
 			}
-				
 
-			// append node if it's optimal
-			if (fpbnCount <= 0)
-				FindPathNodeAppend(&fpTemp);
-			else
-			{
-				int j = 0;;
-				while (j < fpbnCount && fpbnData[j].nodeId != fpTemp.nodeId)
-					j++;
-				if (useActualDistances)
-				{
-					if (j == fpbnCount || (fpTemp.distActualTotal + fpTemp.distTo )< (fpbnData[j].distActualTotal + fpbnData[j].distTo))
-						FindPathNodeAppend(&fpTemp);
-				} 
-				else
-				{
-				if (j == fpbnCount || fpTemp.distCumul < fpbnData[j].distCumul)
-					FindPathNodeAppend(&fpTemp);
+			bool foundNode = false;			
+			for (auto j = 0; j < fpbnCount; ++j) {
+				auto &node = fpbnData[j];
+				if (node.nodeId != fpTemp.nodeId) {
+					continue;
+				}
+
+				foundNode = true;
+
+				// Effectively the same path segment (TODO: Is getting here a bug already? Is it searching in cycles?)
+				if (node.refererId == fpTemp.refererId || true) {
+					if (useActualDistances) {
+						if (fpTemp.distActualTotal + fpTemp.distTo < node.distActualTotal + node.distTo) {
+							node = fpTemp;
+							break;
+						}
+					}
+					else {
+						if (fpTemp.distCumul < node.distCumul) {
+							node = fpTemp;
+							break;
+						}
+					}
+				}
+				/*
+				if (useActualDistances) {
+					if (fpTemp.distActualTotal + fpTemp.distTo < node.distActualTotal + node.distTo) {
+						FindPathNodeAppend(fpTemp);
+						break;
+					}
+				} else {
+					if (fpTemp.distCumul < node.distCumul) {
+						FindPathNodeAppend(fpTemp);
+						break;
+					}
+				}
+				*/
 			}
-			
+
+			// append node if it's not in the list yet
+			if (!foundNode) {
+				FindPathNodeAppend(fpTemp);
+			}
+
 		}
-			
-		}
+
 		fpMinCumul.distCumul = -1.0;
 		fpMinCumul.distActualTotal = -1.0;
-		FindPathNodeAppend(&fpMinCumul);
+		FindPathNodeAppend(fpMinCumul);
 
 		if (!PopMinHeuristicNode(&fpMinCumul, useActualDistances))
 		{
@@ -797,28 +939,24 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 		}
 	}
 
-	memcpy(&fpTemp, &fpMinCumul, sizeof(FindPathNodeData));
+	fpTemp = fpMinCumul;
 
 	int refId0 = fpMinCumul.refererId; // the node leading up to the last node
 	chainLength = 1;
 
 	// get the chain length
 	int refererId = fpTemp.refererId;
-	while (refererId != -1)
-	{
+	while (refererId != -1) {
 		int refererFound = 0;
-		for (int i = 0; i < fpbnCount; i++)
-		{
-			if (fpbnData[i].nodeId == refererId)
-			{
-				memcpy(&fpTemp, &fpbnData[i], sizeof(FindPathNodeData));
+		for (int i = 0; i < fpbnCount; i++) {
+			if (fpbnData[i].nodeId == refererId) {
+				fpTemp = fpbnData[i];
 				refererFound = 1;
 				break;
 			}
 				
 		}
-		if (!refererFound)
-		{
+		if (!refererFound) {
 			break;
 			//shit
 		}
@@ -834,7 +972,7 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 	}
 
 	// dump node chain into nodeIds
-	memcpy(&fpTemp, &fpMinCumul, sizeof(FindPathNodeData));
+	fpTemp = fpMinCumul;
 	refererId = fpMinCumul.refererId;
 	for (int i = chainLength -1 ; i >= 0 ; i--)
 	{
@@ -844,7 +982,7 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 		{
 			if (fpbnData[refIdx].nodeId == refererId)
 			{
-				memcpy(&fpTemp, &fpbnData[refIdx], sizeof(FindPathNodeData));
+				fpTemp = fpbnData[refIdx];
 				refererId = fpTemp.refererId;
 				refererFound = 1;
 				break;
@@ -877,7 +1015,7 @@ BOOL PathNodeSys::GetPathNode(int id, MapPathNode* pathNodeOut)
 		}
 		if (!node)
 			return 0;
-		memcpy(pathNodeOut, &node->node, sizeof(MapPathNode));
+		*pathNodeOut = node->node;
 		return 1;
 	}
 	return 0;

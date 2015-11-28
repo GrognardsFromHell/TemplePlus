@@ -1,6 +1,6 @@
 #pragma once
 
-const uint32_t SPELL_ENUM_MAX = 4000;
+const uint32_t SPELL_ENUM_MAX = 802;
 
 
 enum SpellStoreType : uint8_t

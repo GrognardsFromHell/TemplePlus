@@ -7,6 +7,9 @@
 
 #define ACTIVE_WIDGET_CAP 3000
 
+#pragma region UI Structs
+
+struct TigMsg;
 struct GameSystemConf;
 
 struct UiResizeArgs {
@@ -47,6 +50,49 @@ struct WidgetType1 : public Widget {
 	uint32_t field_288;
 	uint32_t field_28c;
 	uint32_t field_290;
+
+
+	WidgetType1()
+	{
+		widgetId = -1;
+		parentId = -1;
+		type = 1;
+		x = 0;
+		y = 0;
+		xrelated = 0;
+		yrelated = 0;
+		height = 0;
+		width = 0;
+		render = 0;
+		handleMessage = 0;
+		renderTooltip = 0;
+		childrenCount = 0;
+		field_288 = 0;
+		field_28c = 0;
+		windowId = 0;
+		widgetFlags = 0;
+	}
+
+	void WidgetType1Init(int xin, int yin, int widthin, int heightin)
+	{
+		widgetId = -1;
+		parentId = -1;
+		type = 1;
+		x = xin;
+		y = yin;
+		xrelated = xin;
+		yrelated = yin;
+		height = heightin;
+		width = widthin;
+		render = 0;
+		handleMessage = 0;
+		renderTooltip = 0;
+		childrenCount = 0;
+		field_288 = 0;
+		field_28c = 0;
+		windowId = 0;
+		widgetFlags = 0;
+	}
 };
 
 /*
@@ -61,7 +107,7 @@ struct WidgetType2 : public Widget {
 	int field88;
 	int field8C;
 	int field90;
-	int mouseState;
+	int buttonState;
 	int field98;
 	int field9C;
 	int fieldA0;
@@ -101,16 +147,8 @@ struct ActiveWidgetListEntry {
 	ActiveWidgetListEntry *next;
 };
 
-/*
-	Tracks all active widgets with information about where they come frome.
-*/
-extern temple::GlobalPrimitive<ActiveWidgetListEntry*, 0x10EF68DC> activeWidgetAllocList;
 
-/*
-	The list of all active widgets
-*/
-extern temple::GlobalPrimitive<Widget**, 0x10EF68E0> activeWidgets; // [3000]
-extern temple::GlobalPrimitive<int, 0x10EF68D8> activeWidgetCount;
+
 
 struct ImgFile {
 	int tilesX;
@@ -138,6 +176,22 @@ enum class UiGenericAsset : uint32_t {
 	DisabledNormal,
 	GenericDialogueCheck
 };
+
+typedef int(*UiMsgFunc)(int, TigMsg*);
+
+#pragma endregion
+
+/*
+Tracks all active widgets with information about where they come frome.
+*/
+extern temple::GlobalPrimitive<ActiveWidgetListEntry*, 0x10EF68DC> activeWidgetAllocList;
+
+/*
+The list of all active widgets
+*/
+extern temple::GlobalPrimitive<Widget**, 0x10EF68E0> activeWidgets; // [3000]
+extern temple::GlobalPrimitive<int, 0x10EF68D8> activeWidgetCount;
+
 
 class Ui {
 public:
@@ -186,6 +240,22 @@ public:
 		Not quite clear what this is.
 	*/
 	bool ShowWrittenUi(objHndl handle);
+
+	BOOL AddWindow(Widget* widget, unsigned size, int* widgetId, const char * codeFileName, int lineNumber);
+	BOOL ButtonInit(WidgetType2 * widg, char* buttonName, int parentId, int x, int y, int width, int height);
+	BOOL AddButton(WidgetType2* button, unsigned size, int* widgId, const char * codeFileName, int lineNumber);
+	/*
+		sets the button's parent, and also does a bunch of mouse handling (haven't delved too deep there yet)
+	*/
+	BOOL BindButton(int parentId, int buttonId);
+	BOOL ButtonSetButtonState(int widgetId, int newState);
+	BOOL WidgetRemoveRegardParent(int widIdx);
+	BOOL WidgetAndWindowRemove(int widId);
+	BOOL WidgetSetHidden(int widId, int hiddenState);
+	BOOL WidgetCopy(int widId, Widget* widgetOut);
+	BOOL GetButtonState(int widId, int* state);
+	void WidgetBringToFront(int widId);
+	int WidgetlistIndexof(int widgetId, int * widgetlist, int size);
 };
 extern Ui ui;
 

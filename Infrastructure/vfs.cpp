@@ -16,7 +16,7 @@ public:
 	}
 
 protected:
-
+	
 	// Inherited via Vfs
 	virtual FileHandle Open(const char* name, const char* mode) override {
 		return (FileHandle)fopen(name, mode);
@@ -180,3 +180,4 @@ std::string Path::Concat(const std::string& a, const std::string& b) {
 	return result;
 
 }
+

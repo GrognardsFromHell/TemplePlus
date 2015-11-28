@@ -237,15 +237,18 @@ int AiSystem::TargetClosest(AiTactic* aiTac)
 
 	logger->info("\n {} targeting closest...\n", objects.description.getDisplayName(aiTac->performer));
 
-	ObjList objlist;
-	objlist.ListVicinity(performerLoc.location, OLC_CRITTERS);
+	// ObjList objlist;
+	// objlist.ListVicinity(performerLoc.location, OLC_CRITTERS);
+
+	combatSys.groupInitiativeList->GroupSize;
 
 	auto args = PyTuple_New(2);
 	PyTuple_SET_ITEM(args, 0, PyObjHndl_Create(performer));
 
-	for (int i = 0; i < objlist.size(); i++)
+	for ( uint32_t i = 0; i < combatSys.groupInitiativeList->GroupSize; i++)
 	{
-		objHndl dude = objlist.get(i);
+		// objHndl dude = objlist.get(i);
+		objHndl dude = combatSys.groupInitiativeList->GroupMembers[i];
 		PyTuple_SET_ITEM(args, 1, PyObjHndl_Create(dude));
 
 		auto result = pythonObjIntegration.ExecuteScript("combat", "ShouldIgnoreTarget", args);

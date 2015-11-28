@@ -178,7 +178,6 @@
     <ClCompile Include="dialog.cpp" />
     <ClCompile Include="dice.cpp" />
     <ClCompile Include="fade.cpp" />
-    <ClCompile Include="maps.cpp" />
     <ClCompile Include="particles.cpp" />
     <ClCompile Include="python\python_areas.cpp" />
     <ClCompile Include="python\python_cheats.cpp" />
@@ -237,13 +236,11 @@
     <ClCompile Include="tig\tig_partsys.cpp">
       <Filter>tig</Filter>
     </ClCompile>
-    <ClCompile Include="obj_iterator.cpp" />
     <ClCompile Include="startup\installationdir.cpp" />
     <ClCompile Include="startup\installationdirpicker.cpp" />
     <ClCompile Include="startup\installationdirs.cpp" />
     <ClCompile Include="fixes\sector_cache_size.cpp" />
     <ClCompile Include="fixes\light_load.cpp" />
-    <ClCompile Include="path_node.cpp" />
     <ClCompile Include="fixes\partsyslag.cpp" />
     <ClCompile Include="tig\tig_startup.cpp">
       <Filter>tig</Filter>
@@ -291,7 +288,6 @@
     <ClCompile Include="gamesystems\objects\objregistry.cpp" />
     <ClCompile Include="gamesystems\objects\objregistry_hooks.cpp" />
     <ClCompile Include="gamesystems\mapobjrender.cpp" />
-    <ClCompile Include="gamesystems\maps\sector.cpp" />
     <ClCompile Include="fonts\fonts_layout.cpp" />
     <ClCompile Include="fonts\fonts_render.cpp" />
     <ClCompile Include="gamesystems\partsystemsrenderer.cpp" />
@@ -302,6 +298,22 @@
     <ClCompile Include="config\config.cpp">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="raycast.cpp" />
+    <ClCompile Include="gamesystems\map\sector.cpp">
+      <Filter>Map System</Filter>
+    </ClCompile>
+    <ClCompile Include="path_node.cpp">
+      <Filter>Map System</Filter>
+    </ClCompile>
+    <ClCompile Include="gamesystems\map\tig_console.cpp">
+      <Filter>tig</Filter>
+    </ClCompile>
+    <ClCompile Include="gamesystems\map\d20_help.cpp" />
+    <ClCompile Include="maps.cpp">
+      <Filter>Map System</Filter>
+    </ClCompile>
+    <ClCompile Include="gametime.cpp" />
+    <ClCompile Include="gamesystems\maps\sectors.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -481,7 +493,6 @@
     <ClInclude Include="dialog.h" />
     <ClInclude Include="dice.h" />
     <ClInclude Include="fade.h" />
-    <ClInclude Include="maps.h" />
     <ClInclude Include="particles.h" />
     <ClInclude Include="python\python_areas.h" />
     <ClInclude Include="python\python_cheats.h" />
@@ -534,12 +545,10 @@
     <ClInclude Include="tig\tig_partsys.h">
       <Filter>tig</Filter>
     </ClInclude>
-    <ClInclude Include="obj_iterator.h" />
     <ClInclude Include="startup\installationdir.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="startup\installationdirpicker.h" />
     <ClInclude Include="startup\installationdirs.h" />
-    <ClInclude Include="path_node.h" />
     <ClInclude Include="tig\tig_startup.h">
       <Filter>tig</Filter>
     </ClInclude>
@@ -568,13 +577,29 @@
     <ClInclude Include="gamesystems\gamesystem.h" />
     <ClInclude Include="gamesystems\objects\objregistry.h" />
     <ClInclude Include="gamesystems\mapobjrender.h" />
-    <ClInclude Include="gamesystems\maps\sector.h" />
     <ClInclude Include="fonts\fonts.h" />
     <ClInclude Include="gamesystems\partsystemsrenderer.h" />
     <ClInclude Include="gamesystems\particlesystems.h" />
     <ClInclude Include="config\config.h">
       <Filter>utils</Filter>
     </ClInclude>
+    <ClInclude Include="raycast.h" />
+    <ClInclude Include="gamesystems\map\sector.h">
+      <Filter>Map System</Filter>
+    </ClInclude>
+    <ClInclude Include="path_node.h">
+      <Filter>Map System</Filter>
+    </ClInclude>
+    <ClInclude Include="gamesystems\map\tig_console.h">
+      <Filter>tig</Filter>
+    </ClInclude>
+    <ClInclude Include="gamesystems\map\d20_help.h" />
+    <ClInclude Include="maps.h">
+      <Filter>Map System</Filter>
+    </ClInclude>
+    <ClInclude Include="gametime.h" />
+    <ClInclude Include="gamesystems\loadingscreen.h" />
+    <ClInclude Include="gamesystems\maps\sectors.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -600,6 +625,9 @@
     </Filter>
     <Filter Include="Mods and Fixes\Spell Fixes">
       <UniqueIdentifier>{0e53287e-d500-4b3d-a274-09c4e0cf6dbf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Map System">
+      <UniqueIdentifier>{fb2e2871-e639-4102-bf7f-dfc52c18449f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

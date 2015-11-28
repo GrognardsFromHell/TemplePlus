@@ -1,8 +1,35 @@
 #include "stdafx.h"
 #include "location.h"
 #include "obj.h"
+#include "util/fixes.h"
 
 LocationSys locSys;
+
+typedef int(__cdecl*locfunc)(int64_t x, int64_t y, locXY *loc, float*offx, float*offy);
+
+class LocReplacement : public TempleFix
+{
+public: const char* name() override 
+{ return "Location" "Function Replacements";}
+
+		static locfunc orgGetLocFromScreenLoc;
+		/*
+			gets the game location tile from the screen pixel (screenX,screenY). often used for the center of the screen (W/2,H/2) and the corner (0,0).
+		*/
+		static BOOL GetLocFromScreenLoc(int64_t screenX, int64_t screenY, locXY *loc, float*offx, float*offy)
+{
+	int64_t xx = (screenX-*locSys.locTransX)/2;
+	int64_t yy = (screenY-*locSys.locTransY) / 2 * sqrt(2);
+	int result = orgGetLocFromScreenLoc(screenX,screenY,loc,offx,offy);
+	return result;
+};
+
+		void apply() override 
+	{
+	//	orgGetLocFromScreenLoc=replaceFunction(0x10029300, GetLocFromScreenLoc);
+	}
+}locRep;
+locfunc LocReplacement::orgGetLocFromScreenLoc;
 
 const float PIXEL_PER_TILE = sqrt(800.0f);
 const float PIXEL_PER_TILE_HALF = PIXEL_PER_TILE / 2;
@@ -61,46 +88,40 @@ void LocationSys::GetOverallOffset(LocAndOffsets loc, float* absX, float* absY)
 	*absY = loc.location.locy * PIXEL_PER_TILE + PIXEL_PER_TILE_HALF + loc.off_y;
 }
 
-BOOL LocationSys::ShiftLocationByOneSubtile(LocAndOffsets* loc, char direction, LocAndOffsets* locOut)
+BOOL LocationSys::ShiftLocationByOneSubtile(LocAndOffsets* loc, ScreenDirections direction, LocAndOffsets* locOut)
 {
-	float v3;
-	float v4;
-
 	*locOut = *loc;
-	if (direction <= 7)
+	if (direction < ScreenDirections::DirectionsNum)
 	{
 		switch (direction)
 		{
-		case 0u:
-			v3 = locOut->off_x - 9.4280901f;
-			goto LABEL_10;
-		case 1u:
-			locOut->off_x = locOut->off_x - 9.4280901f;
+		case ScreenDirections::Top: 
+			locOut->off_x -= 9.4280901;
+			locOut->off_y -= 9.4280901;
 			break;
-		case 2u:
-			locOut->off_x = locOut->off_x - 9.4280901f;
-			v4 = locOut->off_y + 9.4280901f;
-			goto LABEL_12;
-		case 4u:
-			locOut->off_x = locOut->off_x + 9.4280901f;
-			goto LABEL_7;
-		case 3u:
-			LABEL_7:
-				v4 = locOut->off_y + 9.4280901f;
-				goto LABEL_12;
-		case 5u:
-			locOut->off_x = locOut->off_x + 9.4280901f;
+		case ScreenDirections::TopRight: 
+			locOut->off_x -= 9.4280901;
 			break;
-		case 6u:
-			v3 = locOut->off_x + 9.4280901f;
-		LABEL_10:
-			locOut->off_x = v3;
-			goto LABEL_11;
-		case 7u:
-			LABEL_11:
-				v4 = locOut->off_y - 9.4280901f;
-			LABEL_12:
-				locOut->off_y = v4;
+		case ScreenDirections::Right:
+			locOut->off_x -= 9.4280901;
+			locOut->off_y += 9.4280901;
+			break;
+		case ScreenDirections::BottomRight:
+			locOut->off_y += 9.4280901;
+			break;
+		case ScreenDirections::Bottom:
+			locOut->off_x += 9.4280901;
+			locOut->off_y += 9.4280901;
+			break;
+		case ScreenDirections::BottomLeft:
+			locOut->off_x += 9.4280901;
+			break;
+		case ScreenDirections::Left:
+			locOut->off_x += 9.4280901;
+			locOut->off_y -= 9.4280901;
+			break;
+		case ScreenDirections::TopLeft:
+			locOut->off_y -= 9.4280901;
 				break;
 		default:
 			break;
@@ -170,4 +191,21 @@ float AngleBetweenPoints(LocAndOffsets fromPoint, LocAndOffsets toPoint) {
 
 	auto angle = atan2(dir.y, dir.x);
 	return angle + 2.3561945f; // + 135 degrees
+}
+
+bool operator!=(const LocAndOffsets& to, const LocAndOffsets& rhs)
+{
+	if (to.location.locx != rhs.location.locx 
+		|| to.location.locy != rhs.location.locy
+		|| abs(to.off_x - rhs.off_x) > LOCATION_OFFSET_TOL
+		|| abs(to.off_y - rhs.off_y) > LOCATION_OFFSET_TOL)
+		return true;
+	return false;
+}
+
+bool operator==(const LocAndOffsets& to, const LocAndOffsets& rhs)
+{
+	if (to != rhs)
+		return false;
+	return true;
 }

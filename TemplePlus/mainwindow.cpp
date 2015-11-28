@@ -44,13 +44,21 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::LockCursor() const {
+	bool isForeground = GetForegroundWindow() == mHwnd;
 
-	RECT rect;
-	if (GetForegroundWindow() == mHwnd
-		&& GetWindowRect(mHwnd, &rect)) {
+	auto &device(tig->GetRenderingDevice());
+
+
+	XMFLOAT4 sceneRect = device.GetSceneRect();
+	RECT rect = {
+		(int)sceneRect.x,
+		(int)sceneRect.y,
+		(int)sceneRect.z,
+		(int)sceneRect.w,
+	};
+	if (isForeground) {
 		ClipCursor(&rect);
 	}
-
 }
 
 void MainWindow::RegisterWndClass() {
@@ -94,9 +102,9 @@ void MainWindow::CreateHwnd() {
 
 	style |= WS_VISIBLE;
 
-	DWORD windowWidth = windowRect.right - windowRect.left;
-	DWORD windowHeight = windowRect.bottom - windowRect.top;
-	logger->info("Creating window with dimensions {}x{}", windowWidth, windowHeight);
+	auto width = windowRect.right - windowRect.left;
+	auto height = windowRect.bottom - windowRect.top;
+	logger->info("Creating window with dimensions {}x{}", width, height);
 	mHwnd = CreateWindowEx(
 		styleEx,
 		WindowClassName,
@@ -104,8 +112,8 @@ void MainWindow::CreateHwnd() {
 		style,
 		windowRect.left,
 		windowRect.top,
-		windowWidth,
-		windowHeight,
+		width,
+		height,
 		0,
 		nullptr,
 		mHinstance,
@@ -126,19 +134,17 @@ void MainWindow::CreateWindowRectAndStyles(RECT& windowRect, DWORD& style, DWORD
 	auto screenWidth = GetSystemMetrics(SM_CXSCREEN);
 	auto screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
+	styleEx = 0;
+
 	if (!config.windowed) {
 		windowRect.left = 0;
 		windowRect.top = 0;
 		windowRect.right = screenWidth;
 		windowRect.bottom = screenHeight;
 		style = WS_POPUP;
-		// This is bad for debugging
-		if (!IsDebuggerPresent()) {
-			styleEx = WS_EX_APPWINDOW | WS_EX_TOPMOST;
+		mWidth = screenWidth;
+		mHeight = screenHeight;
 		} else {
-			styleEx = 0;
-		}
-	} else {
 		// Apparently this flag controls whether x,y are preset from the outside
 		windowRect.left = (screenWidth - config.windowWidth) / 2;
 		windowRect.top = (screenHeight - config.windowHeight) / 2;
@@ -146,7 +152,6 @@ void MainWindow::CreateWindowRectAndStyles(RECT& windowRect, DWORD& style, DWORD
 		windowRect.bottom = windowRect.top + config.windowHeight;
 
 		style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
-		styleEx = 0;
 
 		AdjustWindowRect(&windowRect, style, FALSE);
 		int extraWidth = (windowRect.right - windowRect.left) - config.windowWidth;
@@ -155,6 +160,9 @@ void MainWindow::CreateWindowRectAndStyles(RECT& windowRect, DWORD& style, DWORD
 		windowRect.top = (screenHeight - config.windowHeight) / 2 - (extraHeight / 2);
 		windowRect.right = windowRect.left + config.windowWidth + extraWidth;
 		windowRect.bottom = windowRect.top + config.windowHeight + extraHeight;
+
+		mWidth = config.windowWidth;
+		mHeight = config.windowHeight;
 	}
 
 }
@@ -184,6 +192,18 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	TigMsg tigMsg;
 
 	switch (msg) {
+	case WM_SETFOCUS:
+		// Make our window topmost unless a debugger is attached
+		if ((HWND)wparam == mHwnd && !IsDebuggerPresent()) {
+			SetWindowPos(mHwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+		}
+		break;
+	case WM_KILLFOCUS:
+		// Make our window topmost unless a debugger is attached
+		if ((HWND)wparam == mHwnd && !IsDebuggerPresent()) {
+			SetWindowPos(mHwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+		}
+		break;
 	case WM_SETCURSOR:
 		SetCursor(nullptr); // Disables default cursor
 		if (!movieFuncs.MovieIsPlaying) {
@@ -204,9 +224,11 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		mouseFuncs.SetButtonState(MouseButton::RIGHT, false);
 		break;
 	case WM_MBUTTONDOWN:
+		mouseFuncs.SetMmbReference();
 		mouseFuncs.SetButtonState(MouseButton::MIDDLE, true);
 		break;
 	case WM_MBUTTONUP:
+		mouseFuncs.ResetMmbReference();
 		mouseFuncs.SetButtonState(MouseButton::MIDDLE, false);
 		break;
 	case WM_KEYDOWN:
@@ -320,7 +342,30 @@ void MainWindow::UpdateMousePos(int xAbs, int yAbs, int wheelDelta) {
 
 	// Account for a resized screen
 	if (xAbs < 0 || yAbs < 0 || xAbs >= device.GetRenderWidth() || yAbs >= device.GetRenderHeight())
+	{
+		if (config.windowed) 
+		{
+			if ( (xAbs > -7 && xAbs < device.GetRenderWidth() + 7 && yAbs > -7 && yAbs < device.GetRenderHeight() + 7))
+			{
+				if (xAbs < 0) 
+					xAbs = 0;
+				else if (xAbs > device.GetRenderWidth()) 
+					xAbs = device.GetRenderWidth();
+				if (yAbs < 0) 
+					yAbs = 0;
+				else if (yAbs > device.GetRenderHeight()) 
+					yAbs = device.GetRenderHeight();
+				mouseFuncs.MouseOutsideWndSet(false);
+				mouseFuncs.SetPos(xAbs, yAbs, wheelDelta);
+				return;
+			} else
+			{
+				mouseFuncs.MouseOutsideWndSet(true);
+			}
+		}	
 		return;
+	}
+	mouseFuncs.MouseOutsideWndSet(false);
 
 	mouseFuncs.SetPos(xAbs, yAbs, wheelDelta);
 }

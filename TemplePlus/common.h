@@ -37,6 +37,9 @@ constexpr float INCH_PER_TILE = 28.284271247461900976033774484194f;
 constexpr float INCH_PER_HALFTILE = (INCH_PER_TILE / 2.0f);
 constexpr int INCH_PER_FEET = 12;
 
+// this is the number of tiles per sector in each direction (so the total is this squared i.e. 4096 in toee)
+#define SECTOR_SIDE_SIZE 64
+
 # pragma region Standard Structs
 
 #pragma pack(push, 1)
@@ -76,6 +79,63 @@ struct locXY {
 	}
 };
 
+struct SectorLoc
+{
+	uint64_t raw;
+
+	uint64_t x()
+	{
+		return raw & 0x3ffFFFF;
+	}
+
+	uint64_t y()
+	{
+		return raw >> 26 ;
+	}
+
+	uint64_t ToField() {
+		return this->raw;
+	}
+
+	operator uint64_t() const {
+			return this->raw;
+		}
+
+	operator int64_t() const {
+		return (int64_t)this->raw;
+	}
+
+	void GetFromLoc(locXY loc)
+	{
+		raw = loc.locx / SECTOR_SIDE_SIZE
+			 + ( (loc.locy / SECTOR_SIDE_SIZE) << 26 );
+	}
+
+	SectorLoc()
+	{
+		raw = 0;
+	}
+
+	SectorLoc(locXY loc)
+	{
+		raw = loc.locx / SECTOR_SIDE_SIZE
+			+ ((loc.locy / SECTOR_SIDE_SIZE) << 26);
+	}
+
+	locXY GetBaseTile()
+	{
+		locXY loc;
+		loc.locx = (int) x() * SECTOR_SIDE_SIZE;
+		loc.locy = (int) y() * SECTOR_SIDE_SIZE;
+		return loc;
+	}
+
+	bool operator ==(SectorLoc secLoc) {
+		return raw == secLoc.raw;
+	}
+
+};
+
 struct Subtile // every tile is subdivided into 3x3 subtiles
 {
 	int32_t x;
@@ -92,6 +152,19 @@ struct Subtile // every tile is subdivided into 3x3 subtiles
 	operator int64_t() const {
 		return *(int64_t*)this;
 	}
+
+	operator Subtile() const
+	{
+		return *(Subtile*)this;
+	}
+};
+
+struct TileRect
+{
+	int64_t x1;
+	int64_t y1;
+	int64_t x2;
+	int64_t y2;
 };
 
 struct LocAndOffsets {
@@ -113,6 +186,8 @@ struct LocAndOffsets {
 		return location.ToInches3D(off_x, off_y, offsetZ);
 	}
 		
+
+
 };
 
 inline vector2f LocAndOffsets::ToCenterOfTileAbs() {
@@ -130,6 +205,15 @@ inline XMFLOAT3 LocAndOffsets::ToCenterOfTileAbs3D(float offsetZ) {
 	return result;
 }
 
+inline std::ostream& operator<<(std::ostream& os, const LocAndOffsets & loc) {
+
+	return os
+		<< std::to_string(loc.location.locx)
+		+ "," + std::to_string(loc.location.locy)
+		+ "," + std::to_string(loc.off_x)
+		+ "," + std::to_string(loc.off_y);
+}
+
 struct LocFull {
 	LocAndOffsets location;
 	float off_z;
@@ -137,7 +221,7 @@ struct LocFull {
 
 struct GroupArray {
 	objHndl GroupMembers[32];
-	uint32_t * GroupSize;
+	uint32_t GroupSize;
 	int (__cdecl*sortFunc)(void*, void*); // used for comparing two items (e.g. alphabetic sorting)
 };
 
@@ -212,5 +296,17 @@ struct AttackPacket
 	int field_1C;
 	objHndl weaponUsed;
 	objHndl ammoItem;
+};
+
+enum ScreenDirections : char {
+	Top = 0,
+	TopRight = 1,
+	Right,
+	BottomRight,
+	Bottom,
+	BottomLeft,
+	Left,
+	TopLeft,
+	DirectionsNum // 8
 };
 #pragma endregion

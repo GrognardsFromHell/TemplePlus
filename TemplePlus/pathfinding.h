@@ -7,17 +7,12 @@
 #define PATH_RESULT_CACHE_SIZE 0x28 // different from the above
 
 #pragma region structs
-//
-
-
 
 struct LocationSys;
 class PathNodeSys;
 struct MapPathNode;
 struct MapPathNodeList;
-
-
-
+struct ProximityList;
 
 enum PathQueryFlags : uint32_t {
 	/*
@@ -36,14 +31,14 @@ enum PathQueryFlags : uint32_t {
 	PQF_MAX_PF_LENGTH_STHG = 4,
 
 
-	PQF_UNK2 = 8, // appears to indicate a straight line path from->to
+	PQF_STRAIGHT_LINE = 8, // appears to indicate a straight line path from->to
 
 	PQF_10 = 0x10,
 	PQF_20 = 0x20,
 	PQF_40 = 0x40,
 	PQF_IGNORE_CRITTERS = 0x80, // path (pass) through critters (flag is set when pathing out of combat)
 	PQF_100 = 0x100,
-	PQF_200 = 0x200,
+	PQF_STRAIGHT_LINE_ONLY_FOR_SANS_NODE = 0x200,
 	PQF_DOORS_ARE_BLOCKING = 0x400, // if set, it will consider doors to block the path
 	PQF_800 = 0x800,
 
@@ -57,14 +52,14 @@ enum PathQueryFlags : uint32_t {
 	/*
 	Indicates that the destination should be adjusted for the critter and target
 	radius.
-	makes PathInit add the radii of the targets to fields tolRadius and distanceToTarget
+	makes PathInit add the radii of the targets to fields tolRadius and distanceToTargetMin
 	*/
 	PQF_ADJUST_RADIUS = 0x2000,
 
 	PQF_DONT_USE_PATHNODES = 0x4000,
 	PQF_DONT_USE_STRAIGHT_LINE = 0x8000,
 	PQF_FORCED_STRAIGHT_LINE =  0x10000,
-	PQF_UNKNOWN20000h = 0x20000,
+	PQF_ADJ_RADIUS_REQUIRE_LOS = 0x20000,
 	/*
 		if the target destination is not cleared, and PQF_ADJUST_RADIUS is off, 
 		it will search in a 5x5 tile neighbourgood around the original target tile 
@@ -76,47 +71,6 @@ enum PathQueryFlags : uint32_t {
 	PQF_A_STAR_TIME_CAPPED =			  0x80000, // it is set when the D20 action has the flag D20CAF_TRUNCATED
 	PQF_IGNORE_CRITTERS_ON_DESTINATION = 0x800000 // NEW! makes it ignored critters on the PathDestIsClear function
 
-	// used in practice for unspecified move:
-	// with target critter
-	// pathQ.flags = (PathQueryFlags)0x23803;
-	//	PQF_TO_EXACT = 1
-	//  PQF_HAS_CRITTER = 1
-	//  PQF_MAX_PF_LENGTH_STHG = 0 // (0x4) if not set, then sets maxShortPathFindLength to 200 initially
-	//	PQF_UNK2 = 0 // appears to indicate a straight line path from->to
-	/*
-	PQF_10 = 0
-	PQF_20 = 0
-	PQF_40 = 0,
-	PQF_IGNORE_CRITTERS = 0 
-	PQF_100 = 0,
-	PQF_200 = 0,
-	PQF_DOORS_ARE_BLOCKING = 0, // something to do with the type of object
-	PQF_800 = 1,
-	*/
-
-	/*
-	Indicates that the query is to move to a target object.
-	WAS ERRONEOUSLY LISTED AS 0x10  (look out for those BYTE1() operators DS!)
-	*/
-	// PQF_TARGET_OBJ = 1,
-
-	/*
-	Indicates that the destination should be adjusted for the critter and target
-	radius.
-	WAS ERRONEOUSLY LISTED AS 0x20  (look out for those BYTE1() operators DS!)
-	*/
-	// PQF_ADJUST_RADIUS = 1
-
-	// PQF_DONT_USE_PATHNODES = 0,
-
-	// Appears to mean that pathfinding should obey the time limit
-	// PQF_A_STAR_TIME_CAPPED = ? // it is set when the D20 action has the flag D20CAF_TRUNCATED (or D20CAF_UNNECESSARY???)
-
-
-	// WITHOUT TARGET CRITTER:
-	// pathQ.flags = static_cast<PathQueryFlags>(0x40803);
-	// PQF_TARGET_OBJ = 0
-	// PQF_ADJUST_RADIUS = 0
 };
 
 #pragma pack(push, 1)
@@ -129,7 +83,12 @@ struct PathQuery {
 	int field2c;
 	objHndl critter;  // Set PQF_HAS_CRITTER
 	objHndl targetObj; // Set PQF_TARGET_OBJ
-	float distanceToTarget; // Related to the targetObj's radius
+	/*
+	 When ADJ_RADIUS is set, (usually when there's a TARGET_OBJ)
+	 this is the minimum distance required. Should be equal
+	 to the sum of radii of critter + target.
+	*/
+	float distanceToTargetMin; 
 	float tolRadius; // Tolerance (How far away from the exact destination you are allowed to be)
 	int flags2;
 	int field_4c;
@@ -145,8 +104,8 @@ enum PathFlags {
 	PF_COMPLETE = 0x1, // Seems to indicate that the path is complete (or valid?)
 	PF_2 = 0x2,
 	PF_4 = 0x4,
-	PF_STRAIGHT_LINE_SUCCEEDED = 0x8, // straight line succeeded perhaps?
-	PF_UNK1 = 0x10, // Seems to be set in response to query flag 0x80000
+	PF_STRAIGHT_LINE_SUCCEEDED = 0x8, 
+	PF_UNK1 = 0x10, // Seems to be set in response to query flag PQF_A_STAR_TIME_CAPPED (maybe timeout flag?)
 	PF_20 = 0x20
 };
 
@@ -156,7 +115,7 @@ struct Path {
 	LocAndOffsets from;
 	LocAndOffsets to;
 	objHndl mover;
-	char directions[200];
+	ScreenDirections directions[200];
 	int nodeCount3;
 	int initTo1;
 	LocAndOffsets tempNodes[200];
@@ -232,8 +191,9 @@ struct Pathfinding : temple::AddressTable {
 
 	objHndl canPathToParty(objHndl objHnd);
 	BOOL PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo); // including static obstacles it seems
-	BOOL PathStraightLineIsClearOfStaticObstacles(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo);
-	int GetDirection(int a1, int a2, int a3);
+	BOOL PathAdjRadiusLosClear(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo);
+	ScreenDirections GetDirection(int a1, int a2, int a3);
+	int FindPathShortDistanceSansTargetLegacy(PathQuery * pq, Path* pqr);
 	int FindPathShortDistanceSansTarget(PathQuery * pq, Path* pqr);
 
 
@@ -259,3 +219,6 @@ int _FindPathShortDistanceSansTarget(PathQuery * pq, PathQueryResult * pqr);
 int _FindPath(PathQuery* pq, PathQueryResult* pqr);
 void _PathAstarInit();
 void _aStarSettingChanged();
+
+
+

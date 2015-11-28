@@ -1,6 +1,7 @@
 #pragma once
 
 #include <infrastructure/vfs.h>
+#include <vector>
 
 namespace temple {
 	
@@ -30,7 +31,8 @@ namespace temple {
 		bool RemoveDir(const std::string &path) override;
 		
 		bool RemoveFile(const std::string &path) override;
-		
+		void Pack(const std::vector<std::string> &args);
+
 	protected:
 		FileHandle Open(const char* name, const char* mode) override;
 		size_t Read(void* buffer, size_t size, FileHandle handle) override;

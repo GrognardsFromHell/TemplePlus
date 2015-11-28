@@ -33,6 +33,7 @@ struct TemplePlusConfig
 	bool skipIntro = true;
 	bool skipLegal = true;
 	bool engineEnhancements = true;
+	bool pathfindingDebugMode = false;
 	bool useDirect3d9Ex = true;
 	bool windowed = true;
 	bool lockCursor = true; // When in fullscreen, lock cursor

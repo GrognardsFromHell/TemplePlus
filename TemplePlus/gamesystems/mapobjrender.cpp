@@ -2,7 +2,7 @@
 #include "mapobjrender.h"
 #include <util/fixes.h>
 #include <obj.h>
-#include "gamesystems/maps/sector.h"
+#include "gamesystems/maps/sectors.h"
 #include <config/config.h>
 #include <graphics/renderer.h>
 #include <temple/meshes.h>

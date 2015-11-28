@@ -12,7 +12,8 @@
 #include "obj.h"
 #include "diag/diag.h"
 #include <graphics/device.h>
-#include "../Infrastructure/include/infrastructure/stopwatch.h"
+#include "infrastructure/stopwatch.h"
+#include <windowsx.h>
 
 static struct MainLoop : temple::AddressTable {
 
@@ -33,7 +34,7 @@ static struct MainLoop : temple::AddressTable {
 	objHndl (__cdecl *GetPCGroupMemberN)(int nIdx);
 
 	void (__cdecl *DoMouseScrolling)();
-
+	void (__cdecl *SetScrollDirection)(int direction);
 
 	void (__cdecl *RenderUi)();
 	void (__cdecl *RenderMouseCursor)();
@@ -60,6 +61,7 @@ static struct MainLoop : temple::AddressTable {
 		rebase(IsMainMenuVisible, 0x101157F0);
 
 		rebase(DoMouseScrolling, 0x10001010);
+		rebase(SetScrollDirection, 0x10006480);
 
 		rebase(gameBuffersCreated, 0x102AB208);
 
@@ -95,7 +97,7 @@ void GameLoop::Run() {
 	mainLoop.sub_1002A580(loc);
 
 	mainLoop.QueueFidgetAnimEvent();
-	
+
 	TigMsg msg;
 	auto quit = false;
 	static int fpsCounter = 0;
@@ -120,7 +122,7 @@ void GameLoop::Run() {
 		Stopwatch sw2;
 
 		RenderFrame();
-		
+
 		timeElapsed2 += sw2.GetElapsedMs();
 
 		// Why does it process msgs AFTER rendering???		
@@ -156,11 +158,11 @@ void GameLoop::Run() {
 				logger->info("Time per frame - Render: {}ms ,  Rendering FPS: {}", timeElapsed2 / 100, 1000 * 100 / (timeElapsed2));
 				timeElapsed = 0;
 				timeElapsed2 = 0;
-			}
 		}
+	}
 
 		
-	}
+}
 
 }
 
@@ -211,8 +213,130 @@ void GameLoop::RenderFrame() {
 }
 
 void GameLoop::DoMouseScrolling() {
-	// TODO: This would be the place to implement better scrolling in windowed mode
-	mainLoop.DoMouseScrolling();
+
+	if (config.windowed && mouseFuncs.MouseOutsideWndGet())
+		return;
+
+	POINT mousePt = mouseFuncs.GetPos();
+	POINT mmbRef = mouseFuncs.GetMmbReference();
+	int scrollDir = -1;
+
+	if (mmbRef.x != -1 && mmbRef.y != -1)
+	{
+		int dx = mousePt.x - mmbRef.x;
+		int dy = mousePt.y - mmbRef.y;
+		if ( dx*dx+ dy*dy >= 60)
+		{
+			if (abs(dy) > 1.70*abs(dx))  // vertical
+			{
+				if (dy > 0)
+					scrollDir = 4;
+				else
+					scrollDir = 0;
+
+			} else if (abs(dx) > 1.70*abs(dy)) // horizontal
+			{
+				if (dx > 0)
+					scrollDir = 2;
+				else
+					scrollDir = 6;
+			} else  // diagonal
+			{
+				if (dx > 0)
+				{
+					if (dy > 0)
+						scrollDir = 3;
+					else
+						scrollDir = 1;
+				} else
+				{
+					if (dy > 0)
+						scrollDir = 5;
+					else
+						scrollDir = 7;
+				}
+			}
+		}
+	}
+	if (scrollDir != -1)
+	{
+		SetScrollDirection(scrollDir);
+		return;
+	}
+		
+	auto sceneRect = mTig.GetRenderingDevice().GetSceneRect();
+	auto sceneScale = mTig.GetRenderingDevice().GetSceneScale();
+
+	mousePt.x = (int)round(mousePt.x * sceneScale);
+	mousePt.y = (int)round(mousePt.y * sceneScale);
+
+	RECT rect{
+		(int) sceneRect.x,
+		(int) sceneRect.y,
+		(int) sceneRect.z,
+		(int) sceneRect.w
+	};
+
+	mousePt.x += rect.left;
+	mousePt.y += rect.top;
+	
+	int scrollMarginV = 2;
+	int scrollMarginH = 2;
+	if (config.windowed)
+	{
+		scrollMarginV = 7;
+		scrollMarginH = 7;
+	}
+
+
+	if (mousePt.x < rect.left + scrollMarginH) // scroll left
+	{
+		if (mousePt.y < rect.top + scrollMarginV) // scroll upper left
+			scrollDir = 7;
+		else if (mousePt.y > rect.bottom - scrollMarginV) // scroll bottom left
+			scrollDir = 5;
+		else
+			scrollDir = 6;
+	} 
+	else if (mousePt.x > rect.right - scrollMarginH) // scroll right
+	{
+		if (mousePt.y < rect.top + scrollMarginV) // scroll top right
+			scrollDir = 1;
+		else if (mousePt.y > rect.bottom - scrollMarginV) // scroll bottom right
+			scrollDir = 3;
+		else
+			scrollDir = 2;
+	}
+	else // scroll vertical only
+	{
+		if (mousePt.y < rect.top + scrollMarginV) // scroll up
+			scrollDir = 0;
+		else if (mousePt.y > rect.bottom - scrollMarginV) // scroll down
+			scrollDir = 4;
+	}
+		
+	
+
+	if (scrollDir != -1)
+		SetScrollDirection(scrollDir);
+	else
+	{
+		int * asdf = (int*) temple::GetPointer(0x1030730C);
+		if (*asdf)
+		{
+			void(__cdecl* sub1009A5F0)() = (void(__cdecl*)())temple::GetPointer(0x1009A5F0);
+			sub1009A5F0();
+			*asdf = 0;
+		}
+	}
+
+		
+	// mainLoop.DoMouseScrolling();
+}
+
+void GameLoop::SetScrollDirection(int direction)
+{
+	mainLoop.SetScrollDirection(direction);
 }
 
 void GameLoop::RenderVersion() {
@@ -223,13 +347,13 @@ void GameLoop::RenderVersion() {
 	style.flags = 0x0800;
 	style.field10 = 25;
 	style.textColor = &textColor;
-	
+
 	auto& device = mTig.GetRenderingDevice();
 
 	auto version = GetTemplePlusVersion();
 	auto rect = UiRenderer::MeasureTextSize(version, style);
-	rect.x = device.GetRenderWidth() - rect.width - 10 - 250;
-	rect.y = device.GetRenderHeight() - rect.height - 10 - 250 ;
+	rect.x = device.GetRenderWidth() - rect.width - 10;
+	rect.y = device.GetRenderHeight() - rect.height - 10;
 
 	UiRenderer::RenderText(version, rect, style);
 

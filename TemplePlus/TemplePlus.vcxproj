@@ -50,7 +50,7 @@
     <ClCompile Include="gamesystems\mapobjrender.cpp" />
     <ClCompile Include="gamesystems\mappreprocessor.cpp" />
     <ClCompile Include="gamesystems\mapsystems.cpp" />
-    <ClCompile Include="gamesystems\maps\sector.cpp" />
+    <ClCompile Include="gamesystems\maps\sectors.cpp" />
     <ClCompile Include="gamesystems\objects\objid_hooks.cpp" />
     <ClCompile Include="gamesystems\objects\objregistry.cpp" />
     <ClCompile Include="gamesystems\objects\objregistry_hooks.cpp">
@@ -73,6 +73,10 @@
     <ClCompile Include="graphics\renderer.cpp" />
     <ClCompile Include="graphics\renderstates_hooks.cpp" />
     <ClCompile Include="graphics\render_hooks.cpp" />
+    <ClCompile Include="gamesystems\map\d20_help.cpp" />
+    <ClCompile Include="gamesystems\map\sector.cpp" />
+    <ClCompile Include="gamesystems\map\tig_console.cpp" />
+    <ClCompile Include="gametime.cpp" />
     <ClCompile Include="graphics\textures_hooks.cpp" />
     <ClCompile Include="graphics\video_hooks.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -84,8 +88,8 @@
     <ClCompile Include="location.cpp" />
     <ClCompile Include="maps.cpp" />
     <ClCompile Include="messages\messagequeue.cpp" />
+    <ClCompile Include="raycast.cpp" />
     <ClCompile Include="obj_hooks.cpp" />
-    <ClCompile Include="obj_iterator.cpp" />
     <ClCompile Include="particles.cpp" />
     <ClCompile Include="path_node.cpp" />
     <ClCompile Include="python\python_areas.cpp" />
@@ -239,11 +243,16 @@
     <ClInclude Include="gamesystems\gamesystem.h" />
     <ClInclude Include="gamesystems\gamesystems.h" />
     <ClInclude Include="gamesystems\legacy.h" />
+    <ClInclude Include="gamesystems\loadingscreen.h" />
+    <ClInclude Include="gamesystems\map\d20_help.h" />
+    <ClInclude Include="gamesystems\map\sector.h" />
+    <ClInclude Include="gamesystems\map\tig_console.h" />
+    <ClInclude Include="gametime.h" />
     <ClInclude Include="gamesystems\legacysystems.h" />
     <ClInclude Include="gamesystems\mapobjrender.h" />
     <ClInclude Include="gamesystems\mappreprocessor.h" />
     <ClInclude Include="gamesystems\mapsystems.h" />
-    <ClInclude Include="gamesystems\maps\sector.h" />
+    <ClInclude Include="gamesystems\maps\sectors.h" />
     <ClInclude Include="gamesystems\objects\objregistry.h" />
     <ClInclude Include="gamesystems\particlesystems.h" />
     <ClInclude Include="gamesystems\partsystemsrenderer.h" />
@@ -265,7 +274,7 @@
     <ClInclude Include="maps.h" />
     <ClInclude Include="messages\messagequeue.h" />
     <ClInclude Include="objlist.h" />
-    <ClInclude Include="obj_iterator.h" />
+    <ClInclude Include="raycast.h" />
     <ClInclude Include="particles.h" />
     <ClInclude Include="path_node.h" />
     <ClInclude Include="python\python_areas.h" />

@@ -57,6 +57,15 @@ static struct UiFuncs : temple::AddressTable {
 	void (__cdecl *ShowCharUi)(int page);
 	bool (__cdecl *ShowWrittenUi)(objHndl handle);
 
+	BOOL(__cdecl*BindButton)(int parentId, int buttonId);
+	BOOL(__cdecl*AddWindow)(Widget* widget, unsigned size, int* widgetId, const char* codeFileName, int lineNumber);
+	BOOL(__cdecl*AddButton)(WidgetType2* button, unsigned size, int* widgId, const char* codeFileName, int lineNumber);
+	BOOL(__cdecl*ButtonSetButtonState)(int widgetId, int newState);
+	BOOL(__cdecl*WidgetAndWindowRemove)(int widId);
+	BOOL(__cdecl*WidgetSetHidden)(int widId, int hiddenState);
+	BOOL(__cdecl*GetButtonState)(int widId, int* state);
+	void(__cdecl*WidgetBringToFront)(int widId);
+
 	ActiveWidgetListEntry* activeWidgetAllocList;
 	Widget** activeWidgets;
 	int* activeWidgetCount;
@@ -97,7 +106,19 @@ static struct UiFuncs : temple::AddressTable {
 		rebase(systems, 0x102F6C10);
 		rebase(saveGameCallback, 0x103072C4);
 		rebase(loadGameCallback, 0x103072C8);
+
+		rebase(WidgetBringToFront, 0x101F8E40);
+		rebase(BindButton, 0x101F8950);
+		rebase(AddWindow,  0x101F8FD0);
+		rebase(AddButton,  0x101F9460);
+		rebase(ButtonSetButtonState, 0x101F9510);
+		rebase(WidgetAndWindowRemove, 0x101F9010);
+		rebase(WidgetSetHidden, 0x101F9100);
+		rebase(GetButtonState,  0x101F9740);
+		
 	}
+
+	
 } uiFuncs;
 
 
@@ -181,12 +202,25 @@ public:
 		}
 	}
 
+	static int WidgetlistIndexof(int widId, int* widlist, int size)
+	{
+
+		for (int i = 0; i < size; i++)
+		{
+			if (widlist[i] == widId)
+				return i;
+		}
+
+		return -1;
+	}
+
 	const char* name() override
 	{
 		return "UiSys" "Function Replacements";
 	}
 	void apply() override
 	{
+		replaceFunction(0x1011DFE0, WidgetlistIndexof);
 		replaceFunction(0x101F94D0, WidgetRemoveRegardParent);
 		replaceFunction(0x101F90E0, WidgetGet);
 		replaceFunction(0x101F9570, GetButton);
@@ -260,6 +294,93 @@ bool Ui::ShowWrittenUi(objHndl handle) {
 	return uiFuncs.ShowWrittenUi(handle);
 }
 
+BOOL Ui::AddWindow(Widget* widget, unsigned size, int* widgetId, const char* codeFileName, int lineNumber)
+{
+	return uiFuncs.AddWindow(widget, size, widgetId, codeFileName, lineNumber);
+}
+
+BOOL Ui::ButtonInit(WidgetType2* widg, char* buttonName, int parentId, int x, int y, int width, int height)
+{
+	if (buttonName)
+	{
+		char * c = buttonName;
+		memcpy(widg->name, buttonName, min(sizeof(widg->name), strlen(buttonName)));
+	}
+	widg->x = x;
+	widg->xrelated = x;
+	widg->y = y;
+	widg->yrelated = y;
+	widg->parentId = parentId;
+	widg->width = width;
+	widg->height = height;
+	widg->widgetFlags = 0;
+	widg->buttonState = 0;
+	widg->renderTooltip = 0;
+	widg->field98 = 0;
+	widg->type = 2;
+	widg->widgetId = -1;
+	widg->field8C = -1;
+	widg->field90 = -1;
+	widg->field84 = -1;
+	widg->field88 = -1;
+	widg->sndDown = -1;
+	widg->sndClick = -1;
+	widg->hoverOn = -1;
+	widg->hoverOff = -1;
+	return 0;
+}
+
+BOOL Ui::AddButton(WidgetType2* button, unsigned size, int* widgId, const char* codeFileName, int lineNumber)
+{
+	return uiFuncs.AddButton(button, size, widgId, codeFileName, lineNumber);
+}
+
+BOOL Ui::BindButton(int parentId, int buttonId)
+{
+	return uiFuncs.BindButton(parentId, buttonId);
+}
+
+BOOL Ui::ButtonSetButtonState(int widgetId, int newState)
+{
+	return uiFuncs.ButtonSetButtonState(widgetId, newState);
+}
+
+BOOL Ui::WidgetRemoveRegardParent(int widIdx)
+{
+	return uiReplacement.WidgetRemoveRegardParent(widIdx);
+}
+
+BOOL Ui::WidgetAndWindowRemove(int widId)
+{
+	return uiFuncs.WidgetAndWindowRemove(widId);
+}
+
+BOOL Ui::WidgetSetHidden(int widId, int hiddenState)
+{
+	return uiFuncs.WidgetSetHidden(widId, hiddenState);
+}
+
+BOOL Ui::WidgetCopy(int widId, Widget* widgetOut)
+{
+	memcpy(widgetOut, uiFuncs.activeWidgets[widId], uiFuncs.activeWidgets[widId]->size);
+	return 0;
+}
+
+BOOL Ui::GetButtonState(int widId, int* state)
+{
+	
+	return uiFuncs.GetButtonState(widId, state);
+}
+
+void Ui::WidgetBringToFront(int widId)
+{
+	return uiFuncs.WidgetBringToFront(widId);
+}
+
+int Ui::WidgetlistIndexof(int widgetId, int* widgetlist, int size)
+{
+	return uiReplacement.WidgetlistIndexof(widgetId, widgetlist, size);
+}
 #pragma region Loading and Unloading
 UiLoader::UiLoader(const GameSystemConf& conf) {
 

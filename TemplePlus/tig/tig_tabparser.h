@@ -17,13 +17,13 @@ struct TigTabParser {
 	int curLineIdx;
 	char* fileContent;
 	int fileContentLen;
-	TigTabLineParser lineParser;
+	TigTabLineParser * lineParser;
 };
 #pragma pack(pop)
 
 struct TigTabParserFuncs : temple::AddressTable {
 
-	void (__cdecl *Init)(TigTabParser* parser);
+	void (__cdecl *Init)(TigTabParser* parser, TigTabLineParser* tabParserFunc);
 	int (__cdecl *Open)(TigTabParser* parser, const char* filename);
 	int (__cdecl *GetLineCount)(TigTabParser* parser);
 	int (__cdecl *Process)(TigTabParser* parser);

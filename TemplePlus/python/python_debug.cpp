@@ -8,6 +8,8 @@
 #include <ai.h>
 #include <path_node.h>
 #include <pathfinding.h>
+#include <gamesystems/map/sector.h>
+#include <location.h>
 
 /*
 	Dumps all conditions from the global hashtable to a Wiki article.
@@ -195,6 +197,15 @@ PyObject *PyDebug_ReciprocityDebug()
 	return PyLong_FromLongLong(1);
 }
 
+PyObject *PyDebug_GenerateClearanceFile()
+{
+	pathNodeSys.GenerateClearanceFile();
+	return PyLong_FromLongLong(1);
+}
+
+/*
+ check if destination is considered clear for inhabitation by a critter
+*/
 PyObject *PyDebug_DestClear(PyObject*, PyObject* args)
 {
 	objHndl dude = 0;
@@ -204,16 +215,73 @@ PyObject *PyDebug_DestClear(PyObject*, PyObject* args)
 	loc.off_x = 0;
 	loc.off_y = 0;
 
-	if (!PyArg_ParseTuple(args, "|O&iiff:game.obj_create", &ConvertObjHndl, &dude, &loc.location.locx, &loc.location.locy, &loc.off_x, &loc.off_y)) {
+	if (!PyArg_ParseTuple(args, "|O&iiff:destclear", &ConvertObjHndl, &dude, &loc.location.locx, &loc.location.locy, &loc.off_x, &loc.off_y)) {
 		return 0;
 	}
-
 
 	PathQuery pathQ;
 	pathQ.flags = (PathQueryFlags)0;
 	int result = pathfindingSys.PathDestIsClear(&pathQ, dude, loc);
 	return PyLong_FromLongLong(result);
 }
+
+
+PyObject *PyDebug_GetTileFlags(PyObject*, PyObject* args)
+{
+	TileFlags flags = TileFlags::TILEFLAG_NONE;
+	LocAndOffsets loc = {};
+	if (!PyArg_ParseTuple(args, "ii|ff:tileflags", &loc.location.locx, &loc.location.locy, &loc.off_x, &loc.off_y)) {
+		return 0;
+	}
+	flags = sectorSys.GetTileFlags(loc);
+	return PyLong_FromLongLong(flags);
+}
+
+PyObject *PyDebug_GetLocClearance(PyObject*, PyObject* args)
+{
+	if (!PathNodeSys::hasClearanceData)
+		return PyInt_FromLong(-1);
+
+	LocAndOffsets loc = {};
+	if (!PyArg_ParseTuple(args, "ii|ff:tileflags", &loc.location.locx, &loc.location.locy, &loc.off_x, &loc.off_y)) {
+		return 0;
+	}
+
+	SectorLoc secLoc;
+	secLoc.GetFromLoc(loc.location);
+	auto secAddr = PathNodeSys::clearanceData.clrIdx.clrAddr[secLoc.y()][secLoc.x()];
+	auto baseTile = secLoc.GetBaseTile();
+	float result = PathNodeSys::clearanceData.secClr[secAddr].val[3*(loc.location.locy - baseTile.locy)][3*(loc.location.locx - baseTile.locx)];
+	return PyFloat_FromDouble(result);
+}
+
+PyObject *PyDebug_PathTo(PyObject*, PyObject* args)
+{
+	objHndl dude = 0;
+	LocAndOffsets loc;
+	loc.location.locx = 0;
+	loc.location.locy = 0;
+	loc.off_x = 0;
+	loc.off_y = 0;
+
+	if (!PyArg_ParseTuple(args, "|O&iiff:pathto", &ConvertObjHndl, &dude, &loc.location.locx, &loc.location.locy, &loc.off_x, &loc.off_y)) {
+		return 0;
+	}
+
+	PathQuery pathQ;
+	pathQ.flags = (PathQueryFlags)0;
+	int result = pathfindingSys.PathDestIsClear(&pathQ, dude, loc);
+	if (!result)
+		return PyInt_FromLong(0);
+	PathQueryResult pqr;
+	pathQ.flags = PathQueryFlags::PQF_HAS_CRITTER;
+	pathQ.from = objects.GetLocationFull(dude);
+	pathQ.to = loc;
+	pathQ.critter = dude;
+	result = pathfindingSys.FindPath(&pathQ, &pqr);
+	return PyLong_FromLongLong(result);
+}
+
 
 static PyMethodDef PyDebug_Methods[] = {
 	{ "dump_conds", (PyCFunction) PyDebug_DumpConds, METH_NOARGS, NULL },
@@ -225,6 +293,11 @@ static PyMethodDef PyDebug_Methods[] = {
 	{ "flush_nodes", (PyCFunction)PyDebug_FlushNodes, METH_NOARGS, NULL },
 	{ "recip", (PyCFunction)PyDebug_ReciprocityDebug, METH_NOARGS, NULL },
 	{ "destclear", (PyCFunction)PyDebug_DestClear, METH_VARARGS, NULL },
+	{ "tileflags", (PyCFunction)PyDebug_GetTileFlags, METH_VARARGS, NULL },
+	{ "genclearance", (PyCFunction)PyDebug_GenerateClearanceFile, METH_VARARGS, NULL },
+	{ "genclr", (PyCFunction)PyDebug_GenerateClearanceFile, METH_VARARGS, NULL },
+	{ "getclr", (PyCFunction)PyDebug_GetLocClearance, METH_VARARGS, NULL },
+	{ "pathto", (PyCFunction)PyDebug_PathTo, METH_VARARGS, NULL },
 	{ NULL, }
 };
 
