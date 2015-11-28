@@ -4,7 +4,7 @@
 
 #include "temple_functions.h"
 #include "util/fixes.h"
-#include "util/config.h"
+#include "config/config.h"
 #include "startup/installationdir.h"
 #include "startup/installationdirs.h"
 #include "startup/installationdirpicker.h"

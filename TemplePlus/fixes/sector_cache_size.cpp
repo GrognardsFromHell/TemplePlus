@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "util/fixes.h"
-#include "util/config.h"
+#include "config/config.h"
 
 /*
 	Overrides the sector cache size which defaults to 16 with the size from

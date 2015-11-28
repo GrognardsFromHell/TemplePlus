@@ -2,7 +2,6 @@
 #pragma once
 
 #include <temple/dll.h>
-#include <game_config.h>
 #include <tig/tig_mes.h>
 #include <tig/tig_texture.h>
 
@@ -55,7 +54,7 @@ struct GameSystemFuncs : temple::AddressTable {
 struct GameSystemInitTable : temple::AddressTable {
 
 	// Called when config setting for game difficulty changes
-	GameConfigChangedCallback DifficultyChanged;
+	void (*DifficultyChanged)();
 
 	// Used by module load to determine whether the module has already been loaded
 	bool *moduleLoaded;

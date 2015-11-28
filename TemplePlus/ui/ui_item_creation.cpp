@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "ui.h"
-#include "util/config.h"
+#include "config/config.h"
 #include "tig/tig_mes.h"
 #include "tig/tig_font.h"
 #include "temple_functions.h"

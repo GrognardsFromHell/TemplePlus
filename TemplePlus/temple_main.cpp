@@ -11,7 +11,7 @@
 #include "movies.h"
 #include "python/pythonglobal.h"
 #include "mainloop.h"
-#include "util/config.h"
+#include "config/config.h"
 
 class TempleMutex {
 public:

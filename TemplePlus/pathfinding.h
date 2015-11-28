@@ -7,7 +7,6 @@
 #define PATH_RESULT_CACHE_SIZE 0x28 // different from the above
 
 #pragma region structs
-#include "game_config.h"
 //
 
 

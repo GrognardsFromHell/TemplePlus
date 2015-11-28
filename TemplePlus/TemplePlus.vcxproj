@@ -16,6 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="action_sequence.cpp" />
+    <ClCompile Include="config\config_hooks.cpp" />
     <ClCompile Include="fixes\pointbuyconfig.cpp" />
     <ClCompile Include="d20_levelup.cpp" />
     <ClCompile Include="d20_obj_registry.cpp" />
@@ -157,7 +158,6 @@
     <ClCompile Include="gamesystems\gamelib_load.cpp" />
     <ClCompile Include="gamesystems\gamelib_save.cpp" />
     <ClCompile Include="fixes\generalfixes.cpp" />
-    <ClCompile Include="game_config.cpp" />
     <ClCompile Include="inventory.cpp" />
     <ClCompile Include="mainloop.cpp" />
     <ClCompile Include="map_obj.cpp" />
@@ -194,7 +194,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="util\config.cpp" />
+    <ClCompile Include="config\config.cpp" />
     <ClCompile Include="temple_functions.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">Use</PrecompiledHeader>
@@ -326,7 +326,6 @@
     <ClInclude Include="faction.h" />
     <ClInclude Include="feat.h" />
     <ClInclude Include="util\folderutils.h" />
-    <ClInclude Include="game_config.h" />
     <ClInclude Include="goalfuncnames.h" />
     <ClInclude Include="util\fixes.h" />
     <ClInclude Include="hashtable.h" />
@@ -355,7 +354,7 @@
     <ClInclude Include="tig\tig_mouse.h" />
     <ClInclude Include="movies.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="util\config.h" />
+    <ClInclude Include="config\config.h" />
     <ClInclude Include="temple_functions.h" />
     <ClInclude Include="tig\tig_font.h" />
     <ClInclude Include="tig\tig_msg.h" />

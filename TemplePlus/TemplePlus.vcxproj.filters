@@ -16,7 +16,6 @@
     <ClCompile Include="xp.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
-    <ClCompile Include="game_config.cpp" />
     <ClCompile Include="temple_main.cpp" />
     <ClCompile Include="testhelper.cpp" />
     <ClCompile Include="bonusspells.cpp">
@@ -122,9 +121,6 @@
     <ClCompile Include="ui\ui_char_highresfix.cpp" />
     <ClCompile Include="ui\ui_item_creation.cpp">
       <Filter>ui</Filter>
-    </ClCompile>
-    <ClCompile Include="util\config.cpp">
-      <Filter>utils</Filter>
     </ClCompile>
     <ClCompile Include="util\fixes.cpp">
       <Filter>Mods and Fixes</Filter>
@@ -302,6 +298,10 @@
     <ClCompile Include="gamesystems\particlesystems.cpp" />
     <ClCompile Include="gamesystems\particlesystems_hooks.cpp" />
     <ClCompile Include="obj_hooks.cpp" />
+    <ClCompile Include="config\config_hooks.cpp" />
+    <ClCompile Include="config\config.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -310,7 +310,6 @@
     <ClInclude Include="mainwindow.h" />
     <ClInclude Include="temple_enums.h" />
     <ClInclude Include="testhelper.h" />
-    <ClInclude Include="game_config.h" />
     <ClInclude Include="xp.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
@@ -425,9 +424,6 @@
     </ClInclude>
     <ClInclude Include="ui\ui.h">
       <Filter>ui</Filter>
-    </ClInclude>
-    <ClInclude Include="util\config.h">
-      <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="util\fixes.h">
       <Filter>Mods and Fixes</Filter>
@@ -576,6 +572,9 @@
     <ClInclude Include="fonts\fonts.h" />
     <ClInclude Include="gamesystems\partsystemsrenderer.h" />
     <ClInclude Include="gamesystems\particlesystems.h" />
+    <ClInclude Include="config\config.h">
+      <Filter>utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

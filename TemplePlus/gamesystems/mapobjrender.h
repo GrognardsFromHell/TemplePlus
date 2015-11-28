@@ -44,11 +44,18 @@ public:
 		return mTotalLastFrame;
 	}
 
+	ShadowType GetShadowType() const {
+		return mShadowType;
+	}
+	void SetShadowType(ShadowType type) {
+		mShadowType = type;
+	}
+
 private:
 	GameSystems& mGameSystems;
 	gfx::RenderingDevice& mDevice;
 	temple::AasRenderer &mAasRenderer;
-	ShadowType mShadowType = ShadowType::Blob;
+	ShadowType mShadowType = ShadowType::ShadowMap;
 	gfx::MdfRenderMaterialPtr mBlobShadowMaterial;
 
 	size_t mRenderedLastFrame = 0;

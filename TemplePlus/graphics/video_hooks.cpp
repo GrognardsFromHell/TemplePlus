@@ -18,7 +18,7 @@
 #include <d3d8to9_device.h>
 
 #include "movies.h"
-#include "util/config.h"
+#include "config/config.h"
 #include "util/fixes.h"
 #include "mainwindow.h"
 #include <tig/tig_startup.h>

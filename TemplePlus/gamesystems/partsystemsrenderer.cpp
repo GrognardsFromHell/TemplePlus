@@ -12,7 +12,7 @@
 
 #include "ui/ui_render.h"
 
-#include "util/config.h"
+#include "config/config.h"
 
 using namespace gfx;
 using namespace particles;

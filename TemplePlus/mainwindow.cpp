@@ -7,7 +7,7 @@
 #include "movies.h"
 #include "tig/tig_msg.h"
 #include "tig/tig_mouse.h"
-#include "util/config.h"
+#include "config/config.h"
 #include "mainwindow.h"
 #include "tig/tig_startup.h"
 

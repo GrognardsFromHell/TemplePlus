@@ -6,7 +6,7 @@
 #include "renderer.h"
 #include "graphics.h"
 #include "shaders.h"
-#include <util/config.h>
+#include <config/config.h>
 
 constexpr auto CalcVertexSize(bool hasNormals, bool hasDiffuse, int texCoords) {
 	return sizeof(D3DXVECTOR3)

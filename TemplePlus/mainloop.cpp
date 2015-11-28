@@ -7,7 +7,7 @@
 #include "tig/tig_startup.h"
 #include "gamesystems/gamesystems.h"
 #include "ui/ui_render.h"
-#include "util/config.h"
+#include "config/config.h"
 #include "tig/tig_font.h"
 #include "obj.h"
 #include "diag/diag.h"

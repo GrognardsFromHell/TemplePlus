@@ -167,6 +167,13 @@ void TemplePlusConfig::Load() {
 
 	}
 
+	if (ini.select("Vanilla")) {
+
+		for (auto& entry : *ini.current) {
+			SetVanillaString(entry.first, entry.second);
+		}
+
+	}
 }
 
 void TemplePlusConfig::Save() {
@@ -177,5 +184,78 @@ void TemplePlusConfig::Save() {
 		ini.set(setting.option(), setting.getter()());
 	}
 
+	ini.create("Vanilla");
+
+	for (auto& entry : vanillaSettings) {
+		ini.set(entry.first, entry.second.value);
+	}
+
 	ini.save();
+}
+
+void TemplePlusConfig::AddVanillaSetting(const std::string& name, 
+										 const std::string& defaultValue, 
+								         ConfigChangedCallback changeCallback) {
+	auto nameLower(tolower(name));
+	
+	auto it = vanillaSettings.find(nameLower);
+	if (it == vanillaSettings.end()) {
+		vanillaSettings[nameLower].value = defaultValue;
+		vanillaSettings[nameLower].callback = changeCallback;
+	} else {
+		vanillaSettings[nameLower].callback = changeCallback;
+	}
+}
+
+void TemplePlusConfig::RemoveVanillaCallback(const std::string & name)
+{
+	auto nameLower(tolower(name));
+
+	auto it = vanillaSettings.find(nameLower);
+	if (it != vanillaSettings.end()) {
+		it->second.callback = nullptr;
+	}
+}
+
+int TemplePlusConfig::GetVanillaInt(const std::string & name) const {
+	auto nameLower(tolower(name));
+
+	auto it = vanillaSettings.find(nameLower);
+	if (it == vanillaSettings.end()) {
+		return 0;
+	} else {
+		return std::stoi(it->second.value);
+	}
+}
+
+std::string TemplePlusConfig::GetVanillaString(const std::string & name) const {
+	static std::string sEmptySetting;
+	auto nameLower(tolower(name));
+
+	auto it = vanillaSettings.find(nameLower);
+	if (it == vanillaSettings.end()) {
+		return sEmptySetting;
+	} else {
+		return it->second.value;
+	}
+}
+
+void TemplePlusConfig::SetVanillaString(const std::string & name, const std::string & value)
+{
+	auto nameLower(tolower(name));
+
+	auto it = vanillaSettings.find(nameLower);
+	if (it != vanillaSettings.end()) {
+		it->second.value = value;
+		if (it->second.callback) {
+			it->second.callback();
+		}
+	} else {
+		AddVanillaSetting(name, value);
+	}
+}
+
+void TemplePlusConfig::SetVanillaInt(const std::string & name, int value)
+{
+	SetVanillaString(name, std::to_string(value));
 }

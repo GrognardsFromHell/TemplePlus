@@ -6,6 +6,13 @@ enum class RngType {
 	ARCANUM
 };
 
+using ConfigChangedCallback = std::function<void()>;
+
+struct VanillaSetting {
+	std::string value;
+	ConfigChangedCallback callback;
+};
+
 struct TemplePlusConfig
 {
 	bool showFps = false; // Previously -fps
@@ -58,8 +65,20 @@ struct TemplePlusConfig
 	bool maxPCsFlexible = true; // makes the party PC/NPC composition fluid
 	bool usingCo8 = true;
 	int maxLevel = 20; // maximum character level
+
+	std::unordered_map<std::string, VanillaSetting> vanillaSettings;
+	void AddVanillaSetting(const std::string &name, 
+		const std::string &defaultValue, 
+		ConfigChangedCallback changeCallback = ConfigChangedCallback());
+	void RemoveVanillaCallback(const std::string &name);
+	int GetVanillaInt(const std::string &name) const;
+	std::string GetVanillaString(const std::string &name) const;
+	void SetVanillaString(const std::string &name, const std::string &value);
+	void SetVanillaInt(const std::string &name, int value);
+
 	void Load();
 	void Save();
+	
 };
 
 extern TemplePlusConfig config;

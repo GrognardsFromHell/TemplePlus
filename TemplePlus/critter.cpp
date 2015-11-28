@@ -7,7 +7,7 @@
 #include "condition.h"
 #include "d20.h"
 #include "particles.h"
-#include "util/config.h"
+#include "config/config.h"
 #include "python/python_integration_obj.h"
 #include "python/python_object.h"
 #include "tig/tig_startup.h"

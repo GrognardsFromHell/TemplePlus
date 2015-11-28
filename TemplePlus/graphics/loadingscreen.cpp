@@ -6,7 +6,7 @@
 #include "imgfile.h"
 #include "rectangle.h"
 
-#include <util/config.h>
+#include <config/config.h>
 #include <ui/ui_render.h>
 #include <tig/tig_font.h>
 #include <graphics/shaperenderer2d.h>

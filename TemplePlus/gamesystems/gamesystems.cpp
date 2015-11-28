@@ -6,7 +6,7 @@
 #include <graphics/mdfmaterials.h>
 
 #include "gamesystems.h"
-#include "util/config.h"
+#include "config/config.h"
 #include "legacy.h"
 #include <tig/tig_texture.h>
 #include "../tig/tig_startup.h"
@@ -77,50 +77,47 @@ GameSystems::GameSystems(TigInitializer& tig) : mTig(tig) {
 	mConfig.renderfunc = temple::GetPointer(0x10002650); // Callback 1
 	mConfig.bufferstuffIdx = mTigBuffer.bufferIdx();
 
-	gameConfigFuncs.Init("ToEE.cfg");
-	gameConfigFuncs.Load();
-
-	gameConfigFuncs.AddSetting("difficulty", "1", gameSystemInitTable.DifficultyChanged);
+	config.AddVanillaSetting("difficulty", "1", gameSystemInitTable.DifficultyChanged);
 	gameSystemInitTable.DifficultyChanged(); // Read initial setting
-	gameConfigFuncs.AddSetting("autosave_between_maps", "1");
-	gameConfigFuncs.AddSetting("movies_seen", "(304,-1)");
-	gameConfigFuncs.AddSetting("startup_tip", "0");
-	gameConfigFuncs.AddSetting("video_adapter", "0");
-	gameConfigFuncs.AddSetting("video_width", "800");
-	gameConfigFuncs.AddSetting("video_height", "600");
-	gameConfigFuncs.AddSetting("video_bpp", "32");
-	gameConfigFuncs.AddSetting("video_refresh_rate", "60");
-	gameConfigFuncs.AddSetting("video_antialiasing", "0");
-	gameConfigFuncs.AddSetting("video_quad_blending", "1");
-	gameConfigFuncs.AddSetting("particle_fidelity", "100");
-	gameConfigFuncs.AddSetting("env_mapping", "1");
-	gameConfigFuncs.AddSetting("cloth_frame_skip", "0");
-	gameConfigFuncs.AddSetting("concurrent_turnbased", "1");
-	gameConfigFuncs.AddSetting("end_turn_time", "1");
-	gameConfigFuncs.AddSetting("end_turn_default", "1");
-	gameConfigFuncs.AddSetting("draw_hp", "0");
+	config.AddVanillaSetting("autosave_between_maps", "1");
+	config.AddVanillaSetting("movies_seen", "(304,-1)");
+	config.AddVanillaSetting("startup_tip", "0");
+	config.AddVanillaSetting("video_adapter", "0");
+	config.AddVanillaSetting("video_width", "800");
+	config.AddVanillaSetting("video_height", "600");
+	config.AddVanillaSetting("video_bpp", "32");
+	config.AddVanillaSetting("video_refresh_rate", "60");
+	config.AddVanillaSetting("video_antialiasing", "0");
+	config.AddVanillaSetting("video_quad_blending", "1");
+	config.AddVanillaSetting("particle_fidelity", "100");
+	config.AddVanillaSetting("env_mapping", "1");
+	config.AddVanillaSetting("cloth_frame_skip", "0");
+	config.AddVanillaSetting("concurrent_turnbased", "1");
+	config.AddVanillaSetting("end_turn_time", "1");
+	config.AddVanillaSetting("end_turn_default", "1");
+	config.AddVanillaSetting("draw_hp", "0");
 
 	// Some of these are also registered as value change callbacks and could be replaced by simply calling all 
 	// value change callbacks here, which makes sense anyway.
-	auto particleFidelity = gameConfigFuncs.GetInt("particle_fidelity") / 100.0f;
+	auto particleFidelity = config.GetVanillaInt("particle_fidelity") / 100.0f;
 	gameSystemInitTable.SetParticleFidelity(particleFidelity);
 
-	auto envMappingEnabled = gameConfigFuncs.GetInt("env_mapping");
+	auto envMappingEnabled = config.GetVanillaInt("env_mapping");
 	gameSystemInitTable.SetEnvMapping(envMappingEnabled);
 
-	auto clothFrameSkip = gameConfigFuncs.GetInt("cloth_frame_skip");
+	auto clothFrameSkip = config.GetVanillaInt("cloth_frame_skip");
 	gameSystemInitTable.SetClothFrameSkip(clothFrameSkip);
 
-	auto concurrentTurnbased = gameConfigFuncs.GetInt("concurrent_turnbased");
+	auto concurrentTurnbased = config.GetVanillaInt("concurrent_turnbased");
 	gameSystemInitTable.SetConcurrentTurnbased(concurrentTurnbased);
 
-	auto endTurnTime = gameConfigFuncs.GetInt("end_turn_time");
+	auto endTurnTime = config.GetVanillaInt("end_turn_time");
 	gameSystemInitTable.SetEndTurnTime(endTurnTime);
 
-	auto endTurnDefault = gameConfigFuncs.GetInt("end_turn_default");
+	auto endTurnDefault = config.GetVanillaInt("end_turn_default");
 	gameSystemInitTable.SetEndTurnDefault(endTurnDefault);
 
-	auto drawHp = gameConfigFuncs.GetInt("draw_hp");
+	auto drawHp = config.GetVanillaInt("draw_hp");
 	gameSystemInitTable.SetDrawHp(drawHp != 0);
 
 	*gameSystemInitTable.moduleLoaded = 0;

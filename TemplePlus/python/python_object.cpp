@@ -27,7 +27,7 @@
 #include "python_integration_obj.h"
 #include <action_sequence.h>
 #include <ui/ui_picker.h>
-#include <util/config.h>
+#include <config/config.h>
 #include <infrastructure/mesparser.h>
 
 struct PyObjHandle {

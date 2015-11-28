@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include <temple/dll.h>
-#include "util/config.h"
+#include "config/config.h"
 #include "util/fixes.h"
 
 struct CharCreationAddresses : temple::AddressTable {

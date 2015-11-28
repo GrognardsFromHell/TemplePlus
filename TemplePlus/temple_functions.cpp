@@ -7,7 +7,7 @@
 
 //#include "spell.h"
 #include "common.h"
-#include "util/config.h"
+#include "config/config.h"
 #include "util/fixes.h"
 
 TempleFuncs templeFuncs;

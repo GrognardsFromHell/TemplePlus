@@ -3,7 +3,7 @@
 #include "util/fixes.h"
 #include "temple_functions.h"
 #include "timeevents.h"
-#include "util/config.h"
+#include "config/config.h"
 #include "obj.h"
 #include "critter.h"
 #include "pathfinding.h"

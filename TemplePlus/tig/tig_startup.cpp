@@ -18,7 +18,7 @@
 #include "tig_startup.h"
 #include "../tio/tio.h"
 
-#include "../util/config.h"
+#include "../config/config.h"
 
 TigInitializer* tig = nullptr;
 

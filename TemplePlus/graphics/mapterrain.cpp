@@ -6,7 +6,7 @@
 #include <graphics/device.h>
 #include <graphics/shaperenderer2d.h>
 #include <infrastructure/mesparser.h>
-#include <util/config.h>
+#include <config/config.h>
 
 static struct MapTerrainAddresses : temple::AddressTable {	
 	int *mapArtId;

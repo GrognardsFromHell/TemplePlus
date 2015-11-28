@@ -7,7 +7,7 @@
 #include "obj.h"
 #include "critter.h"
 #include "path_node.h"
-#include "game_config.h"
+#include "config/config.h"
 
 Pathfinding pathfindingSys;
 
@@ -216,10 +216,10 @@ void Pathfinding::PathRecordTimeElapsed(int refTime)
 
 void Pathfinding::PathAstarInit()
 {
-	gameConfigFuncs.AddSetting("astar_max_window_ms", "5000", _aStarSettingChanged);
-	gameConfigFuncs.AddSetting("astar_max_time_ms", "4000", _aStarSettingChanged);
-	aStarMaxWindowMs = gameConfigFuncs.GetInt("astar_max_window_ms");
-	aStarMaxTimeMs = gameConfigFuncs.GetInt("astar_max_time_ms");
+	config.AddVanillaSetting("astar_max_window_ms", "5000", _aStarSettingChanged);
+	config.AddVanillaSetting("astar_max_time_ms", "4000", _aStarSettingChanged);
+	aStarMaxWindowMs = config.GetVanillaInt("astar_max_window_ms");
+	aStarMaxTimeMs = config.GetVanillaInt("astar_max_time_ms");
 	memset(aStarTimeElapsed, 0, sizeof(aStarTimeElapsed));
 	memset(aStarTimeEnded, 0, sizeof(aStarTimeEnded));
 	aStarTimeIdx = -1;
@@ -227,8 +227,8 @@ void Pathfinding::PathAstarInit()
 
 void Pathfinding::AStarSettingChanged()
 {
-	aStarMaxWindowMs = gameConfigFuncs.GetInt("astar_max_window_ms");
-	aStarMaxTimeMs = gameConfigFuncs.GetInt("a_star_max_time_ms");
+	aStarMaxWindowMs = config.GetVanillaInt("astar_max_window_ms");
+	aStarMaxTimeMs = config.GetVanillaInt("a_star_max_time_ms");
 }
 
 void Pathfinding::PathCacheInit()

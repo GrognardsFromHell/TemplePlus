@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "common.h"
-#include "util/config.h"
+#include "config/config.h"
 #include "d20.h"
 #include "util/fixes.h"
 

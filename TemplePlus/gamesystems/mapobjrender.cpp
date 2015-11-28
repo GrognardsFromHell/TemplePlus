@@ -3,7 +3,7 @@
 #include <util/fixes.h>
 #include <obj.h>
 #include "gamesystems/maps/sector.h"
-#include <util/config.h>
+#include <config/config.h>
 #include <graphics/renderer.h>
 #include <temple/meshes.h>
 #include "gamesystems/gamesystems.h"
@@ -56,9 +56,26 @@ MapObjectRenderer::MapObjectRenderer(GameSystems& gameSystems,
 	  mAasRenderer(aasRenderer) {
 
 	mBlobShadowMaterial = mdfFactory.LoadMaterial("art/meshes/shadow.mdf");
+
+	config.AddVanillaSetting("shadow_type", "2", [&]() {
+		int shadowType = config.GetVanillaInt("shadow_type");
+		switch (shadowType) {
+		case 0:
+			mShadowType = ShadowType::Blob;
+			break;
+		case 1:
+			mShadowType = ShadowType::Geometry;
+			break;
+		case 2:
+			mShadowType = ShadowType::ShadowMap;
+			break;
+		}
+	});
+	mShadowType = (ShadowType)config.GetVanillaInt("shadow_type");
 }
 
 MapObjectRenderer::~MapObjectRenderer() {
+	config.RemoveVanillaCallback("shadow_type");
 }
 
 void MapObjectRenderer::RenderMapObjects(int tileX1, int tileX2, int tileY1, int tileY2) {
@@ -985,6 +1002,8 @@ public:
 
 	static void obj_render(objHndl handle, int flag, locXY unk, int x);
 	static void obj_render_highlight(objHndl handle, int shaderId);
+	static void SetShadowType(int type);
+	static int GetShadowType();
 
 	const char* name() override {
 		return "B";
@@ -993,7 +1012,8 @@ public:
 	void apply() override {
 		replaceFunction(0x10026560, obj_render);
 		replaceFunction(0x10023EC0, obj_render_highlight);
-
+		replaceFunction(0x10020AA0, SetShadowType);
+		replaceFunction(0x10020B00, GetShadowType);
 	}
 
 } fix;
@@ -1008,6 +1028,14 @@ void RenderFix::obj_render_highlight(objHndl handle, int shaderId)
 
 	gameRenderer->GetMapObjectRenderer().RenderObjectHighlight(handle, mdfMaterial);
 
+}
+
+void RenderFix::SetShadowType(int type) {
+	config.SetVanillaInt("shadow_type", type);
+}
+
+int RenderFix::GetShadowType() {
+	return config.GetVanillaInt("shadow_type");
 }
 
 #pragma pack(push, 8)

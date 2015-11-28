@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "util/fixes.h"
-#include "util/config.h"
+#include "config/config.h"
 #include "gamesystems/gamesystems.h"
 #include <temple/dll.h>
 

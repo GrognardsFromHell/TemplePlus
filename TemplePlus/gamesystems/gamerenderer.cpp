@@ -19,7 +19,7 @@
 #include "gamesystems.h"
 #include "mapsystems.h"
 #include "clipping/clipping.h"
-#include <util/config.h>
+#include <config/config.h>
 #include "mapobjrender.h"
 #include "partsystemsrenderer.h"
 

@@ -11,7 +11,7 @@
 #include "location.h"
 #include "pathfinding.h"
 #include "turn_based.h"
-#include "util/config.h"
+#include "config/config.h"
 #include "critter.h"
 #include "util/fixes.h"
 

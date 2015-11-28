@@ -59,6 +59,10 @@
   #include <map>
 #endif
 
+#ifdef _T
+#undef _T
+#endif
+
 #ifdef FINI_WIDE_SUPPORT
   #include <wchar.h>
 

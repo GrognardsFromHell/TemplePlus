@@ -2,7 +2,7 @@
 #include "util/fixes.h"
 #include <temple/dll.h>
 #include "temple_functions.h"
-#include "util/config.h"
+#include "config/config.h"
 #include "xp.h"
 #include "obj.h"
 #include "critter.h"
