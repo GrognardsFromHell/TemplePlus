@@ -124,8 +124,8 @@ struct SectorLoc
 	locXY GetBaseTile()
 	{
 		locXY loc;
-		loc.locx = x() * SECTOR_SIDE_SIZE;
-		loc.locy = y() * SECTOR_SIDE_SIZE;
+		loc.locx = (int) x() * SECTOR_SIDE_SIZE;
+		loc.locy = (int) y() * SECTOR_SIDE_SIZE;
 		return loc;
 	}
 

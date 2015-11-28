@@ -3,7 +3,6 @@
 
 
 #define MAX_PATH_NODE_CHAIN_LENGTH 30
-#define PATH_NODE_CAP 30000 // hommlet has about 1000, so that should be enough! that would be 0.6MB
 #include "util/fixes.h"
 #include <temple/dll.h>
 #define MAX_NEIGHBOURS 64
@@ -24,7 +23,7 @@ struct ClearanceProfile
 	}
 	void InitWithRadius(float radiusF)
 	{
-		radius = radiusF / (INCH_PER_TILE / 3);
+		radius = static_cast<uint8_t>(radiusF / (INCH_PER_TILE / 3));
 		memset(clearance, 255, sizeof(clearance));
 		int i0 = MAX_OBJ_RADIUS_SUBTILES * 6 / 2;
 		for (int ny = 0; ny < MAX_OBJ_RADIUS_SUBTILES * 6 + 1; ny++)
@@ -35,10 +34,10 @@ struct ClearanceProfile
 				{
 					int dummy = 1;
 				}
-				clearance[ny][nx]=max(0.0001,sqrt(
-					min({ pow(nx - i0, 2), pow(nx - i0 - 1,2), pow(nx-i0+1,2) })
-					+ min({ pow(ny - i0, 2), pow(ny - i0 - 1,2), pow(ny - i0 + 1,2) }
-				))-radius);
+				clearance[ny][nx] = (uint8_t) max(0.0001f, sqrtf(
+					min({ powf(nx - 0.0f, 2.0f), powf(nx - 0.0f - 1, 2.0f), powf(nx - i0 + 1.0f, 2.0f) })
+					+ min({ powf(ny - 0.0f, 2.0f), powf(ny - 0.0f - 1, 2.0f), powf(ny - i0 + 1.0f, 2.0f) }
+				)) - radius);
 				//		clearance[ny][nx] = sqrt(
 				//			min( pow(nx -i0 ,2), pow(nx-i0+1,2), pow(nx-i0-1,2) )
 				//			+ min(pow(ny-i0, 2), pow(ny-i0 + 1, 2), pow(ny-i0 - 1, 2))
@@ -126,6 +125,8 @@ public:
 		return "Path Node System";
 	}
 
+	static constexpr int MaxPathNodes = 30000; // hommlet has about 1000, so that should be enough! that would be 0.6MB
+
 	void RecipDebug(); // debugging for non-reciprocating neighbour nodes (i.e. finds situations where A->B but not B->A)
 	static char pathNodesLoadDir[260];
 	static char pathNodesSaveDir[260];
@@ -135,10 +136,10 @@ public:
 	//const int testSizeofClearanceData = sizeof(clearanceData);
 
 	static MapPathNodeList * pathNodeList;
-	MapPathNodeList _pathNodeList[PATH_NODE_CAP]; //  will replace the referenced list once we're done
-	int fpbnCap;
-	int fpbnCount;
-	FindPathNodeData fpbnData[PATH_NODE_CAP];
+	MapPathNodeList _pathNodeList[MaxPathNodes]; //  will replace the referenced list once we're done
+
+	int fpbnCount; // Current number of used nodes in fpbnData
+	std::array<FindPathNodeData, MaxPathNodes> fpbnData;
 
 
 
@@ -158,7 +159,7 @@ public:
 	static void GenerateClearanceFile();
 	static int CalcClearanceFromNearbyObjects(objHndl obj, float clearanceReq);
 
-	void FindPathNodeAppend(FindPathNodeData *);
+	void FindPathNodeAppend(const FindPathNodeData &);
 	int PopMinHeuristicNode(FindPathNodeData* fpndOut, bool useActualDistances); // output is 1 on success 0 on fail (if all nodes are negative distance)
 	int PopMinHeuristicNodeLegacy(FindPathNodeData* fpndOut); // output is 1 on success 0 on fail (if all nodes are negative distance)
 	BOOL FindClosestPathNode(LocAndOffsets * loc, int * nodeIdOut);

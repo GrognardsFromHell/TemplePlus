@@ -44,7 +44,7 @@ void PathNodeSys::RecipDebug()
 		}
 	};
 
-	auto oneSided = new RecipCheck[PATH_NODE_CAP];
+	auto oneSided = new RecipCheck[MaxPathNodes];
 	int n = 0;
 
 	auto node = pathNodeList;
@@ -247,7 +247,7 @@ bool PathNodeSys::LoadNeighDistFromFile(TioFile* file, MapPathNodeList* node)
 BOOL PathNodeSys::LoadNodesCurrent()
 {
 	//int orphanNodeCount = 0;
-	//int orphanNodes[PATH_NODE_CAP] ={};
+	//int orphanNodes[MaxPathNodes] ={};
 
 	char fileName[260];
 	char fileNameNew[260];
@@ -451,7 +451,7 @@ void PathNodeSys::RecalculateAllNeighbours()
 	{
 		int prevNeighCnt = node->node.neighboursCount;
 		int prevNeighs[MAX_NEIGHBOURS] = {};
-		memcpy(prevNeighs, node->node.neighbours, sizeof(int)*prevNeighCnt);
+		memcpy(prevNeighs, node->node.neighbours, sizeof(int) * prevNeighCnt);
 		if (node->node.neighboursCount > 0)
 		{
 			free(node->node.neighbours);
@@ -647,7 +647,7 @@ int PathNodeSys::CalcClearanceFromNearbyObjects(objHndl obj, float clearanceReq)
 	ObjList objList;
 	LocAndOffsets objLoc = objects.GetLocationFull(obj);
 	objList.ListRadius(objLoc, INCH_PER_TILE * 64, OLC_ALL & ~(OLC_ITEMS | OLC_TRAP ));
-	char objRadiusInSubtiles;
+	uint8_t objRadiusInSubtiles;
 	if (clearanceReq > INCH_PER_TILE * MAX_OBJ_RADIUS_SUBTILES)
 		objRadiusInSubtiles = 255;
 	else
@@ -685,7 +685,6 @@ BOOL PathNodeSys::WriteNodeToFile(MapPathNodeList* node, TioFile* file)
 
 bool PathNodeSys::WriteNodeDistToFile(MapPathNodeList* node, TioFile* file)
 {
-	BOOL result = 0;
 	if (!file)
 		return 0;
 	if (!node)
@@ -693,26 +692,18 @@ bool PathNodeSys::WriteNodeDistToFile(MapPathNodeList* node, TioFile* file)
 	if (!tio_fwrite(&node->node.id, 4, 1, file) == 1)
 		return 0;
 
-	int *count = &node->node.neighboursCount;
-	if (tio_fwrite(count, 4, 1, file) == 1
-		&& (!*count || tio_fwrite(node->node.neighDistances, sizeof(float), *count, file) == *count)
+	int count = node->node.neighboursCount;
+	if (tio_fwrite(&count, 4, 1, file) == 1
+		&& (!count || tio_fwrite(node->node.neighDistances, sizeof(float), count, file) == count)
 		)
 	{
-		return 1;
+		return true;
 	}
-	return result;
+	return false;
 }
 
-void PathNodeSys::FindPathNodeAppend(FindPathNodeData* node)
-{ /*
-	if (fpbnCount >= fpbnCap)
-	{
-		fpbnCap *= 2;
-		fpbnData = (FindPathNodeData*)realloc(fpbnData, sizeof(FindPathNodeData)*fpbnCap);
-	}
-	*/
-	memcpy(&fpbnData[fpbnCount], node, sizeof(FindPathNodeData));
-	fpbnCount++;
+void PathNodeSys::FindPathNodeAppend(const FindPathNodeData& node) {
+	fpbnData[fpbnCount++] = node;
 }
 
 int PathNodeSys::PopMinHeuristicNode(FindPathNodeData* fpndOut, bool useActualDist)
@@ -742,10 +733,10 @@ int PathNodeSys::PopMinHeuristicNode(FindPathNodeData* fpndOut, bool useActualDi
 	}
 
 	// copy it out
-	memcpy(fpndOut, &fpbnData[idxMin], sizeof(FindPathNodeData));
+	*fpndOut = fpbnData[idxMin];
 
 	// pop the found entry
-	memcpy(&fpbnData[idxMin], &fpbnData[fpbnCount - 1], sizeof(FindPathNodeData));
+	fpbnData[idxMin] = fpbnData[fpbnCount - 1];
 	fpbnCount--;
 	return 1;
 }
@@ -773,10 +764,10 @@ int PathNodeSys::PopMinHeuristicNodeLegacy(FindPathNodeData* fpndOut)
 	}
 
 	// copy it out
-	memcpy(fpndOut, &fpbnData[idxMinCumul], sizeof(FindPathNodeData));
+	*fpndOut = fpbnData[idxMinCumul];
 
 	// pop the found entry
-	memcpy(&fpbnData[idxMinCumul], &fpbnData[fpbnCount - 1], sizeof(FindPathNodeData));
+	fpbnData[idxMinCumul] = fpbnData[fpbnCount - 1];
 	fpbnCount--;
 	return 1;
 }
@@ -818,10 +809,7 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 	for (numNodes = 0; pnIterator; ++numNodes)
 		pnIterator = pnIterator->next;
 
-	//fpbnCap = numNodes;
-	//fpbnData = new FindPathNodeData[numNodes];
 	fpbnCount = 0;
-
 
 	// find the from/to nodes
 	pnIterator = pathNodeList;
@@ -846,7 +834,7 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 
 
 	// begin the A* algorithm
-	float distFromTo = locSys.distBtwnLocAndOffs(fromNode.nodeLoc, toNode.nodeLoc)/12.0;
+	float distFromTo = locSys.distBtwnLocAndOffs(fromNode.nodeLoc, toNode.nodeLoc) / 12.0f;
 	
 	FindPathNodeData fpMinCumul;
 	fpMinCumul.nodeId = fromNodeId;
@@ -858,7 +846,7 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 	fpMinCumul.heuristic = 0;
 	fpMinCumul.usingActualDistance = useActualDistances;
 
-	FindPathNodeAppend(&fpMinCumul);
+	FindPathNodeAppend(fpMinCumul);
 
 	if (!PopMinHeuristicNode(&fpMinCumul, useActualDistances))
 	{
@@ -867,62 +855,81 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 	}
 
 	MapPathNode minCumulNode, neighNode;
-	FindPathNodeData fpTemp, refererNode;
+	FindPathNodeData fpTemp;
 
 	while(fpMinCumul.nodeId != toNodeId)
 	{
-
 		// find the matching Path Node
 		pathNodeSys.GetPathNode(fpMinCumul.nodeId, &minCumulNode);
 
 		// loop thru its neighbours, searching 
 		for (int i = 0; i < minCumulNode.neighboursCount; i++)
 		{
-			
 			fpTemp.refererId = fpMinCumul.nodeId;
 			fpTemp.nodeId = minCumulNode.neighbours[i];
 			
 			// find the neighbour node
 			int neighbourId = minCumulNode.neighbours[i];
 			pathNodeSys.GetPathNode(neighbourId, &neighNode);
-			
 
 			// calculate its heuristic
-			fpTemp.distTo = locSys.distBtwnLocAndOffs(neighNode.nodeLoc, toNode.nodeLoc) / 12.0;
-			fpTemp.distFrom = locSys.distBtwnLocAndOffs(fromNode.nodeLoc, neighNode.nodeLoc) / 12.0;
+			fpTemp.distTo = locSys.distBtwnLocAndOffs(neighNode.nodeLoc, toNode.nodeLoc) / 12.0f;
+			fpTemp.distFrom = locSys.distBtwnLocAndOffs(fromNode.nodeLoc, neighNode.nodeLoc) / 12.0f;
 			fpTemp.distCumul = fpMinCumul.distCumul + fpTemp.distTo + fpTemp.distFrom;
 			if (useActualDistances)
 			{
 				fpTemp.distActualTotal = fpMinCumul.distActualTotal + minCumulNode.neighDistances[i];
 				fpTemp.heuristic = fpTemp.distActualTotal + fpTemp.distTo;
 			}
-				
 
-			// append node if it's optimal
-			if (fpbnCount <= 0)
-				FindPathNodeAppend(&fpTemp);
-			else
-			{
-				int j = 0;;
-				while (j < fpbnCount && fpbnData[j].nodeId != fpTemp.nodeId)
-					j++;
-				if (useActualDistances)
-				{
-					if (j == fpbnCount || (fpTemp.distActualTotal + fpTemp.distTo )< (fpbnData[j].distActualTotal + fpbnData[j].distTo))
-						FindPathNodeAppend(&fpTemp);
-				} 
-				else
-				{
-				if (j == fpbnCount || fpTemp.distCumul < fpbnData[j].distCumul)
-					FindPathNodeAppend(&fpTemp);
+			bool foundNode = false;			
+			for (auto j = 0; j < fpbnCount; ++j) {
+				auto &node = fpbnData[j];
+				if (node.nodeId != fpTemp.nodeId) {
+					continue;
+				}
+
+				foundNode = true;
+
+				// Effectively the same path segment (TODO: Is getting here a bug already? Is it searching in cycles?)
+				if (node.refererId == fpTemp.refererId) {
+					if (useActualDistances) {
+						if (fpTemp.distActualTotal + fpTemp.distTo < node.distActualTotal + node.distTo) {
+							node = fpTemp;
+							break;
+						}
+					}
+					else {
+						if (fpTemp.distCumul < node.distCumul) {
+							node = fpTemp;
+							break;
+						}
+					}
+				}
+
+				if (useActualDistances) {
+					if (fpTemp.distActualTotal + fpTemp.distTo < node.distActualTotal + node.distTo) {
+						FindPathNodeAppend(fpTemp);
+						break;
+					}
+				} else {
+					if (fpTemp.distCumul < node.distCumul) {
+						FindPathNodeAppend(fpTemp);
+						break;
+					}
+				}
 			}
-			
+
+			// append node if it's not in the list yet
+			if (!foundNode) {
+				FindPathNodeAppend(fpTemp);
+			}
+
 		}
-			
-		}
+
 		fpMinCumul.distCumul = -1.0;
 		fpMinCumul.distActualTotal = -1.0;
-		FindPathNodeAppend(&fpMinCumul);
+		FindPathNodeAppend(fpMinCumul);
 
 		if (!PopMinHeuristicNode(&fpMinCumul, useActualDistances))
 		{
@@ -931,28 +938,24 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 		}
 	}
 
-	memcpy(&fpTemp, &fpMinCumul, sizeof(FindPathNodeData));
+	fpTemp = fpMinCumul;
 
 	int refId0 = fpMinCumul.refererId; // the node leading up to the last node
 	chainLength = 1;
 
 	// get the chain length
 	int refererId = fpTemp.refererId;
-	while (refererId != -1)
-	{
+	while (refererId != -1) {
 		int refererFound = 0;
-		for (int i = 0; i < fpbnCount; i++)
-		{
-			if (fpbnData[i].nodeId == refererId)
-			{
-				memcpy(&fpTemp, &fpbnData[i], sizeof(FindPathNodeData));
+		for (int i = 0; i < fpbnCount; i++) {
+			if (fpbnData[i].nodeId == refererId) {
+				fpTemp = fpbnData[i];
 				refererFound = 1;
 				break;
 			}
 				
 		}
-		if (!refererFound)
-		{
+		if (!refererFound) {
 			break;
 			//shit
 		}
@@ -968,7 +971,7 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 	}
 
 	// dump node chain into nodeIds
-	memcpy(&fpTemp, &fpMinCumul, sizeof(FindPathNodeData));
+	fpTemp = fpMinCumul;
 	refererId = fpMinCumul.refererId;
 	for (int i = chainLength -1 ; i >= 0 ; i--)
 	{
@@ -978,7 +981,7 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 		{
 			if (fpbnData[refIdx].nodeId == refererId)
 			{
-				memcpy(&fpTemp, &fpbnData[refIdx], sizeof(FindPathNodeData));
+				fpTemp = fpbnData[refIdx];
 				refererId = fpTemp.refererId;
 				refererFound = 1;
 				break;
@@ -1011,7 +1014,7 @@ BOOL PathNodeSys::GetPathNode(int id, MapPathNode* pathNodeOut)
 		}
 		if (!node)
 			return 0;
-		memcpy(pathNodeOut, &node->node, sizeof(MapPathNode));
+		*pathNodeOut = node->node;
 		return 1;
 	}
 	return 0;
