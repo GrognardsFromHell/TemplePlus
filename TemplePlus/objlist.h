@@ -26,8 +26,9 @@ enum ObjectListFilter {
 	OLC_CRITTERS = 0x18000,
 	OLC_MOBILE = 0x1FFF4,
 	OLC_TRAP = 0x20000,
-	OLC_IMMOBILE = 0x2000A, // This will cause sectors to be locked as far as I can tell
+	OLC_IMMOBILE = 0x2000A,
 	OLC_ALL = 0x3FFFE,
+	OLC_PATH_BLOCKER = 0x18006 // added for pathfinding purposes
 };
 
 #pragma pack(push, 1)

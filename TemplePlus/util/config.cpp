@@ -133,6 +133,7 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(NPCsLevelLikePCs),
 	//CONF_DOUBLE(randomEncounterExperienceFactor),
 	CONF_BOOL(newFeatureTestMode),
+	CONF_BOOL(pathfindingDebugMode),
 	CONF_STRING(defaultModule),
 	CONF_INT(windowWidth),
 	CONF_INT(windowHeight),
@@ -150,6 +151,7 @@ static ConfigSetting configSettings[] = {
 	CONF_WSTRING(toeeDir),
 	CONF_INT(sectorCacheSize),
 	CONF_INT(screenshotQuality)
+	
 };
 
 void TemplePlusConfig::Load() {

@@ -2,7 +2,7 @@
 
 #include <temple/dll.h>
 #include "temple_functions.h"
-#include "game_config.h"
+// #include "game_config.h"
 
 #define pfCacheSize  0x20
 #define PATH_RESULT_CACHE_SIZE 0x28 // different from the above
@@ -13,7 +13,7 @@ struct LocationSys;
 class PathNodeSys;
 struct MapPathNode;
 struct MapPathNodeList;
-
+struct ProximityList;
 
 enum PathQueryFlags : uint32_t {
 	/*
@@ -53,14 +53,14 @@ enum PathQueryFlags : uint32_t {
 	/*
 	Indicates that the destination should be adjusted for the critter and target
 	radius.
-	makes PathInit add the radii of the targets to fields tolRadius and distanceToTarget
+	makes PathInit add the radii of the targets to fields tolRadius and distanceToTargetMin
 	*/
 	PQF_ADJUST_RADIUS = 0x2000,
 
 	PQF_DONT_USE_PATHNODES = 0x4000,
 	PQF_DONT_USE_STRAIGHT_LINE = 0x8000,
 	PQF_FORCED_STRAIGHT_LINE =  0x10000,
-	PQF_UNKNOWN20000h = 0x20000,
+	PQF_ADJ_RADIUS_REQUIRE_LOS = 0x20000,
 	/*
 		if the target destination is not cleared, and PQF_ADJUST_RADIUS is off, 
 		it will search in a 5x5 tile neighbourgood around the original target tile 
@@ -84,7 +84,12 @@ struct PathQuery {
 	int field2c;
 	objHndl critter;  // Set PQF_HAS_CRITTER
 	objHndl targetObj; // Set PQF_TARGET_OBJ
-	float distanceToTarget; // Related to the targetObj's radius
+	/*
+	 When ADJ_RADIUS is set, (usually when there's a TARGET_OBJ)
+	 this is the minimum distance required. Should be equal
+	 to the sum of radii of critter + target.
+	*/
+	float distanceToTargetMin; 
 	float tolRadius; // Tolerance (How far away from the exact destination you are allowed to be)
 	int flags2;
 	int field_4c;
@@ -111,7 +116,7 @@ struct Path {
 	LocAndOffsets from;
 	LocAndOffsets to;
 	objHndl mover;
-	char directions[200];
+	ScreenDirections directions[200];
 	int nodeCount3;
 	int initTo1;
 	LocAndOffsets tempNodes[200];
@@ -187,8 +192,8 @@ struct Pathfinding : temple::AddressTable {
 
 	objHndl canPathToParty(objHndl objHnd);
 	BOOL PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo); // including static obstacles it seems
-	BOOL PathStraightLineIsClearOfStaticObstacles(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo);
-	int GetDirection(int a1, int a2, int a3);
+	BOOL PathAdjRadiusLosClear(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo);
+	ScreenDirections GetDirection(int a1, int a2, int a3);
 	int FindPathShortDistanceSansTarget(PathQuery * pq, Path* pqr);
 	int FindPathShortDistanceSansTargetTemplePlus(PathQuery * pq, Path* pqr);
 
@@ -215,3 +220,6 @@ int _FindPathShortDistanceSansTarget(PathQuery * pq, PathQueryResult * pqr);
 int _FindPath(PathQuery* pq, PathQueryResult* pqr);
 void _PathAstarInit();
 void _aStarSettingChanged();
+
+
+

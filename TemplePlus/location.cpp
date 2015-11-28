@@ -88,47 +88,41 @@ void LocationSys::GetOverallOffset(LocAndOffsets loc, float* absX, float* absY)
 	*absY = loc.location.locy * PIXEL_PER_TILE + PIXEL_PER_TILE_HALF + loc.off_y;
 }
 
-BOOL LocationSys::ShiftLocationByOneSubtile(LocAndOffsets* loc, char direction, LocAndOffsets* locOut)
+BOOL LocationSys::ShiftLocationByOneSubtile(LocAndOffsets* loc, ScreenDirections direction, LocAndOffsets* locOut)
 {
-	long double v3; // fst7@3
-	long double v4; // fst7@5
-
 	*locOut = *loc;
-	if (direction <= 7)
+	if (direction < ScreenDirections::DirectionsNum)
 	{
 		switch (direction)
 		{
-		case 0u:
-			v3 = locOut->off_x - 9.4280901;
-			goto LABEL_10;
-		case 1u:
-			locOut->off_x = locOut->off_x - 9.4280901;
+		case ScreenDirections::Top: 
+			locOut->off_x -= 9.4280901;
+			locOut->off_y -= 9.4280901;
 			break;
-		case 2u:
-			locOut->off_x = locOut->off_x - 9.4280901;
-			v4 = locOut->off_y + 9.4280901;
-			goto LABEL_12;
-		case 4u:
-			locOut->off_x = locOut->off_x + 9.4280901;
-			goto LABEL_7;
-		case 3u:
-			LABEL_7:
-				v4 = locOut->off_y + 9.4280901;
-				goto LABEL_12;
-		case 5u:
-			locOut->off_x = locOut->off_x + 9.4280901;
+		case ScreenDirections::TopRight: 
+			locOut->off_x -= 9.4280901;
 			break;
-		case 6u:
-			v3 = locOut->off_x + 9.4280901;
-		LABEL_10:
-			locOut->off_x = v3;
-			goto LABEL_11;
-		case 7u:
-			LABEL_11:
-				v4 = locOut->off_y - 9.4280901;
-			LABEL_12:
-				locOut->off_y = v4;
-				break;
+		case ScreenDirections::Right:
+			locOut->off_x -= 9.4280901;
+			locOut->off_y += 9.4280901;
+			break;
+		case ScreenDirections::BottomRight:
+			locOut->off_y += 9.4280901;
+			break;
+		case ScreenDirections::Bottom:
+			locOut->off_x += 9.4280901;
+			locOut->off_y += 9.4280901;
+			break;
+		case ScreenDirections::BottomLeft:
+			locOut->off_x += 9.4280901;
+			break;
+		case ScreenDirections::Left:
+			locOut->off_x += 9.4280901;
+			locOut->off_y -= 9.4280901;
+			break;
+		case ScreenDirections::TopLeft:
+			locOut->off_y -= 9.4280901;
+			break;
 		default:
 			break;
 		}
@@ -182,4 +176,21 @@ float AngleBetweenPoints(LocAndOffsets fromPoint, LocAndOffsets toPoint) {
 
 	auto angle = atan2(dir.y, dir.x);
 	return angle + 2.3561945f; // + 135 degrees
+}
+
+bool operator!=(const LocAndOffsets& to, const LocAndOffsets& rhs)
+{
+	if (to.location.locx != rhs.location.locx 
+		|| to.location.locy != rhs.location.locy
+		|| abs(to.off_x - rhs.off_x) > LOCATION_OFFSET_TOL
+		|| abs(to.off_y - rhs.off_y) > LOCATION_OFFSET_TOL)
+		return true;
+	return false;
+}
+
+bool operator==(const LocAndOffsets& to, const LocAndOffsets& rhs)
+{
+	if (to != rhs)
+		return false;
+	return true;
 }

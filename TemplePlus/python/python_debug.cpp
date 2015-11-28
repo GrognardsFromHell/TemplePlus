@@ -9,6 +9,7 @@
 #include <path_node.h>
 #include <pathfinding.h>
 #include <gamesystems/map/sector.h>
+#include <location.h>
 
 /*
 	Dumps all conditions from the global hashtable to a Wiki article.
@@ -254,6 +255,33 @@ PyObject *PyDebug_GetLocClearance(PyObject*, PyObject* args)
 	return PyFloat_FromDouble(result);
 }
 
+PyObject *PyDebug_PathTo(PyObject*, PyObject* args)
+{
+	objHndl dude = 0;
+	LocAndOffsets loc;
+	loc.location.locx = 0;
+	loc.location.locy = 0;
+	loc.off_x = 0;
+	loc.off_y = 0;
+
+	if (!PyArg_ParseTuple(args, "|O&iiff:pathto", &ConvertObjHndl, &dude, &loc.location.locx, &loc.location.locy, &loc.off_x, &loc.off_y)) {
+		return 0;
+	}
+
+	PathQuery pathQ;
+	pathQ.flags = (PathQueryFlags)0;
+	int result = pathfindingSys.PathDestIsClear(&pathQ, dude, loc);
+	if (!result)
+		return PyInt_FromLong(0);
+	PathQueryResult pqr;
+	pathQ.flags = PathQueryFlags::PQF_HAS_CRITTER;
+	pathQ.from = objects.GetLocationFull(dude);
+	pathQ.to = loc;
+	pathQ.critter = dude;
+	result = pathfindingSys.FindPath(&pathQ, &pqr);
+	return PyLong_FromLongLong(result);
+}
+
 
 static PyMethodDef PyDebug_Methods[] = {
 	{ "dump_conds", (PyCFunction) PyDebug_DumpConds, METH_NOARGS, NULL },
@@ -269,7 +297,7 @@ static PyMethodDef PyDebug_Methods[] = {
 	{ "genclearance", (PyCFunction)PyDebug_GenerateClearanceFile, METH_VARARGS, NULL },
 	{ "genclr", (PyCFunction)PyDebug_GenerateClearanceFile, METH_VARARGS, NULL },
 	{ "getclr", (PyCFunction)PyDebug_GetLocClearance, METH_VARARGS, NULL },
-	
+	{ "pathto", (PyCFunction)PyDebug_PathTo, METH_VARARGS, NULL },
 	{ NULL, }
 };
 

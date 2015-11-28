@@ -9,8 +9,80 @@
 #include "path_node.h"
 #include "game_config.h"
 #include "gamesystems/map/sector.h"
+#include "objlist.h"
+#include "util/config.h"
 
 Pathfinding pathfindingSys;
+
+struct ProximityList
+{
+	int count = 0;
+	struct ProxListObj
+	{
+		objHndl obj;
+		float radius;
+		LocAndOffsets loc;
+
+	} proxListObjs[256];
+
+	void Append(objHndl obj)
+	{
+		if (count >= 256)
+		{
+			logger->error("Error: Proximity list cap reached");
+			assert(count < 256);
+		}
+		proxListObjs[count].obj = obj;
+		proxListObjs[count].radius = objects.GetRadius(obj);
+		proxListObjs[count].loc = objects.GetLocationFull(obj);
+		count++;
+	}
+
+	bool FindNear(LocAndOffsets loc, float radius)
+	{
+		for (int i = 0; i < count; i++)
+		{
+			if (abs((int)loc.location.locx - (int)proxListObjs[i].loc.location.locx) < radius + proxListObjs[i].radius)
+			{
+				if (abs((int)loc.location.locy - (int)proxListObjs[i].loc.location.locy) < radius)
+				{
+					if (locSys.Distance3d(loc, proxListObjs[i].loc) < radius + proxListObjs[i].radius)
+						return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	void Populate(PathQuery * pq, Path * pqr, float radius)
+	{
+		ObjList objlist;
+		objlist.ListRadius(pqr->from, INCH_PER_TILE * 40, OLC_PATH_BLOCKER);
+		int objlistSize = objlist.size();
+		if (pqr->mover)
+		{
+			for (int i = 0; i < objlistSize; i++)
+			{
+				objHndl obj = objlist.get(i);
+				auto objFlags = objects.GetFlags(obj);
+				auto objType = objects.GetType(obj);
+				if (!(objFlags & OF_NO_BLOCK))
+				{
+					if ((pq->flags & PQF_DOORS_ARE_BLOCKING) || (objType != obj_t_portal))
+					{
+						if (objType == obj_t_pc || objType == obj_t_npc)
+						{
+							if (critterSys.IsFriendly(obj, pqr->mover))
+								continue;
+						}
+						Append(obj);
+					}
+
+				}
+			}
+		}
+	}
+};
 
 
 struct PathFindAddresses : temple::AddressTable
@@ -166,7 +238,7 @@ int Pathfinding::PathCacheGet(PathQuery* pq, Path* pathOut)
 		}
 
 		if (abs(pq->tolRadius - pathCacheQ->tolRadius) > 0.0001
-			|| abs(pq->distanceToTarget - pathCacheQ->distanceToTarget) > 0.0001
+			|| abs(pq->distanceToTargetMin - pathCacheQ->distanceToTargetMin) > 0.0001
 			|| pq->maxShortPathFindLength != pathCacheQ->maxShortPathFindLength
 			)
 			continue;
@@ -339,12 +411,12 @@ void Pathfinding::PathInit(Path* pqr, PathQuery* pq)
 		if (pqFlags & PQF_ADJUST_RADIUS)
 		{
 			float tgtRadius = objects.GetRadius(pq->targetObj);
-			pq->distanceToTarget = tgtRadius + pq->distanceToTarget;
+			pq->distanceToTargetMin = tgtRadius + pq->distanceToTargetMin;
 			pq->tolRadius = tgtRadius + pq->tolRadius;
 			if (pqFlags & PQF_HAS_CRITTER)
 			{
 				float critterRadius = objects.GetRadius(pq->critter);
-				pq->distanceToTarget = critterRadius + pq->distanceToTarget;
+				pq->distanceToTargetMin = critterRadius + pq->distanceToTargetMin;
 				pq->tolRadius = critterRadius + pq->tolRadius;
 			}
 		}
@@ -433,6 +505,7 @@ bool Pathfinding::GetAlternativeTargetLocation(Path* pqr, PathQuery* pq)
 	return 1;
 }
 
+
 int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 {
 	PathQuery pathQueryLocal;
@@ -499,6 +572,9 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 			if (locSys.distBtwnLocAndOffs(nodeTemp0.nodeLoc, nodeTemp1.nodeLoc) > distFromSecond)
 				i0 = 1;
 		}
+
+		// attempt straight line from 2nd last pathnode to destination
+		// if this is possible, it will shorten the path and avoid a zigzag going from the last node to destination
 		pathNodeSys.GetPathNode(nodeIds[chainLength - 2], &nodeTemp1);
 		pathNodeSys.GetPathNode(nodeIds[chainLength - 1], &nodeTemp0);
 		if (! (pathQueryLocal.flags & PQF_TARGET_OBJ))
@@ -553,18 +629,19 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 			//(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
 			);
 
-		pathQueryLocal.from = from;
-		pathQueryLocal.to = nodeTemp1.nodeLoc;
-		pathLocal.from = from;
-		pathLocal.nodeCount = 0;
-		pathLocal.nodeCount2 = 0;
-		pathLocal.nodeCount3 = 0;
-		pathLocal.to = pathQueryLocal.to;
-
+		pathLocal.from = pathQueryLocal.from = from;
+		pathLocal.to = pathQueryLocal.to = nodeTemp1.nodeLoc;
+		pathLocal.nodeCount = pathLocal.nodeCount2 = pathLocal.nodeCount3 = 0;
+		
 		if (!GetAlternativeTargetLocation(&pathLocal, &pathQueryLocal)) // verifies that the destination is clear, and if not, tries to get an available tile
 		{
-			int dummmy = 1;
+			logger->warn("Warning: pathnode not clear");
 		}
+		if (pathLocal.to != nodeTemp1.nodeLoc) //  path "To" location has been adjusted
+		{
+			nodeTemp1.nodeLoc = pathLocal.to;
+		}
+
 
 		int nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
 		if (!nodeCountAdded)
@@ -593,7 +670,7 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 		from = nodeTemp1.nodeLoc;
 	}
 
-
+	// now path from the last location (can be an adjusted path node) to the final destination
 	memcpy(&pathQueryLocal, pq, sizeof(PathQuery));
 	pathQueryLocal.from = from;
 	pathQueryLocal.to = path->to;
@@ -601,13 +678,19 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 	PathInit(&pathLocal, &pathQueryLocal);
 
 	memcpy(&pathQueryLocal, pq, sizeof(PathQuery));
-	pathQueryLocal.from = from;
-	pathQueryLocal.to = path->to;
-	pathLocal.from = from;
+	pathLocal.from = pathQueryLocal.from = from;
+	pathLocal.to = pathQueryLocal.to = path->to;
 
 	int nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
 	if (!nodeCountAdded || (nodeCountAdded + nodeTotal > pq->maxShortPathFindLength))
+	{
+		if (config.pathfindingDebugMode)
+		{
+			nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
+		}
 		return 0;
+	}
+		
 
 	memcpy(&path->nodes[nodeTotal], pathLocal.nodes, sizeof(LocAndOffsets) * nodeCountAdded);
 	int nodeCount = nodeTotal + nodeCountAdded;
@@ -708,7 +791,303 @@ void Pathfinding::PathNodesAddByDirections(Path* pqr, PathQuery* pq)
 
 int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 {
-	return addresses.FindPathShortDistanceAdjRadius(pq, pqr);
+
+#pragma region Preamble
+	const unsigned int gridSize = 160; // number of subtiles spanned in the grid (vanilla: 128)
+	int referenceTime = 0;
+	Subtile fromSubtile, toSubtile, _fromSubtile, shiftedSubtile;
+
+	fromSubtile = fromSubtile.fromField(locSys.subtileFromLoc(&pqr->from));	toSubtile = toSubtile.fromField(locSys.subtileFromLoc(&pqr->to));
+
+	static int npcPathFindRefTime = 0;	static int npcPathFindAttemptCount = 0; 	static int npcPathTimeCumulative = 0;
+
+	if (pq->critter)
+	{
+		int attemptCount;
+		if (objects.GetType(pq->critter) == obj_t_npc)
+		{
+			if (npcPathFindRefTime && (timeGetTime() - npcPathFindRefTime) < 1000)
+			{
+				attemptCount = npcPathFindAttemptCount;
+				if (npcPathFindAttemptCount > 10 || npcPathTimeCumulative > 250)
+				{
+					return 0;
+				}
+			}
+			else
+			{
+				npcPathFindRefTime = timeGetTime();
+				attemptCount = 0;
+				npcPathTimeCumulative = 0;
+			}
+			npcPathFindAttemptCount = attemptCount + 1;
+			referenceTime = timeGetTime();
+		}
+	}
+
+	int fromSubtileX = fromSubtile.x;	int fromSubtileY = fromSubtile.y;
+	int toSubtileX = toSubtile.x;	int toSubtileY = toSubtile.y;
+
+	int deltaSubtileX = abs(toSubtileX - fromSubtileX);	int deltaSubtileY = abs(toSubtileY - fromSubtileY);
+	if (deltaSubtileX > gridSize / 2 || deltaSubtileY > gridSize / 2)
+		return 0;
+
+	int lowerSubtileX = min(fromSubtileX, toSubtileX);	int lowerSubtileY = min(fromSubtileY, toSubtileY);
+
+	int cornerX = lowerSubtileX + deltaSubtileX / 2 - gridSize / 2;	int cornerY = lowerSubtileY + deltaSubtileY / 2 - gridSize / 2;
+
+	int curIdx = fromSubtileX - cornerX + ((fromSubtileY - cornerY) * gridSize);
+	int idxTarget = toSubtileX - cornerX + ((toSubtileY - cornerY) * gridSize);
+
+	int idxTgtX = idxTarget % gridSize;
+	int idxTgtY = idxTarget / gridSize;
+
+	struct PathSubtile
+	{
+		int length;
+		int refererIdx;
+		int idxPreviousChain; // is actually +1 (0 means none); i.e. subtract 1 to get the actual idx
+		int idxNextChain; // same as above
+	};
+	PathSubtile pathFindAstar[gridSize * gridSize];
+	memset(pathFindAstar, 0, sizeof(pathFindAstar));
+
+	pathFindAstar[curIdx].length = 1;
+	pathFindAstar[curIdx].refererIdx = -1;
+
+
+	int lastChainIdx = curIdx, firstChainIdx = curIdx;
+	int newIdx, shiftedXidx, shiftedYidx, deltaIdxX, distanceMetric, refererIdx, heuristic, idxPrevChain, idxNextChain;
+	int minHeuristic = 0x7FFFffff;
+
+	float requisiteClearance = objects.GetRadius(pq->critter);
+	if (requisiteClearance > 4.3)
+		requisiteClearance *= 0.7;
+	else if (requisiteClearance > 2.0)
+		requisiteClearance -= 1;
+
+	if (curIdx == -1)
+	{
+		if (referenceTime)
+			npcPathTimeCumulative += timeGetTime() - referenceTime;
+		return 0;
+	}
+
+	ProximityList proxList;
+	proxList.Populate(pq, pqr, INCH_PER_TILE * 40);
+
+	LocAndOffsets subPathFrom;
+	LocAndOffsets subPathTo;
+#pragma endregion
+
+	while(1)
+	{
+		curIdx = firstChainIdx;
+		refererIdx = -1;
+
+		do // loop over the Open Set chain to find the node with minimal valid heuristic; initially the chain is just the "from" node
+		{
+			deltaIdxX = abs((int)(curIdx % gridSize - idxTgtX));
+			distanceMetric = abs((int)(curIdx / gridSize - idxTgtY)); // deltaIdxY
+			if (deltaIdxX > distanceMetric)
+				distanceMetric = deltaIdxX;
+
+			heuristic = pathFindAstar[curIdx].length + 10 * distanceMetric;
+			if ((heuristic / 10) <= pq->maxShortPathFindLength)
+			{
+				if (refererIdx == -1 || heuristic < minHeuristic)
+				{
+					minHeuristic = pathFindAstar[curIdx].length + 10 * distanceMetric;
+					refererIdx = curIdx;
+				}
+				idxNextChain = pathFindAstar[curIdx].idxNextChain;
+			}
+			else
+			{	// node has exceeded max length, dump it
+				idxPrevChain = pathFindAstar[curIdx].idxPreviousChain;
+				pathFindAstar[curIdx].length = 0x80000000;
+				if (idxPrevChain)
+					pathFindAstar[idxPrevChain - 1].idxNextChain = pathFindAstar[curIdx].idxNextChain;
+				else
+					firstChainIdx = pathFindAstar[curIdx].idxNextChain - 1;
+				idxNextChain = pathFindAstar[curIdx].idxNextChain;
+				if (idxNextChain)
+					pathFindAstar[idxNextChain - 1].idxPreviousChain = pathFindAstar[curIdx].idxPreviousChain;
+				else
+					lastChainIdx = pathFindAstar[curIdx].idxPreviousChain - 1;
+				pathFindAstar[curIdx].idxPreviousChain = 0;
+				pathFindAstar[curIdx].idxNextChain = 0;
+			}
+			curIdx = idxNextChain - 1;
+		} while (curIdx >= 0);
+
+		if (refererIdx == -1) 
+		{ // none found, return 0
+			if (referenceTime)
+				npcPathTimeCumulative += timeGetTime() - referenceTime;
+			return 0;
+		}
+			
+		// Halt condition - within reach of the target
+		_fromSubtile.x = cornerX + (refererIdx % gridSize);
+		_fromSubtile.y = cornerY + (refererIdx / gridSize);
+
+		locSys.SubtileToLocAndOff(_fromSubtile, &subPathFrom);
+		locSys.SubtileToLocAndOff(toSubtile, &subPathTo);
+		float distToTgt = locSys.distBtwnLocAndOffs(subPathFrom, pqr->to);
+
+		if (distToTgt >= pq->distanceToTargetMin && distToTgt <= pq->tolRadius)
+		{
+			if (!(pq->flags & PQF_ADJ_RADIUS_REQUIRE_LOS) || PathAdjRadiusLosClear(pqr, pq, subPathFrom, subPathTo))
+			{
+				if ( pq->flags & (PQF_20 | PQF_10) || PathDestIsClear(pq, pqr->mover, subPathFrom ))
+				{
+					break;
+				}
+			}
+		}
+
+
+		/* 
+			find the best adjacent node
+		*/
+		_fromSubtile.x = cornerX + (refererIdx % gridSize);
+		_fromSubtile.y = cornerY + (refererIdx / gridSize);
+
+		// loop over all possible directions for better path
+		for (auto direction = 0; direction < 8; direction++)
+		{
+			if (!locSys.ShiftSubtileOnceByDirection(_fromSubtile, direction, &shiftedSubtile))
+				continue;
+			shiftedXidx = shiftedSubtile.x - cornerX;
+			shiftedYidx = shiftedSubtile.y - cornerY;
+			if (shiftedXidx >= 0 && shiftedXidx < gridSize && shiftedYidx >= 0 && shiftedYidx < gridSize)
+			{
+				newIdx = shiftedXidx + (shiftedYidx * gridSize);
+			}
+			else
+				continue;
+
+			if (pathFindAstar[newIdx].length == 0x80000000)
+				continue;
+
+			locSys.SubtileToLocAndOff(_fromSubtile, &subPathFrom);
+			locSys.SubtileToLocAndOff(shiftedSubtile, &subPathTo);
+
+			if (PathNodeSys::hasClearanceData)
+			{
+				SectorLoc secLoc(subPathTo.location);
+				//secLoc.GetFromLoc(subPathTo.location);
+				int secX = secLoc.x(), secY = secLoc.y();
+				int secClrIdx = PathNodeSys::clearanceData.clrIdx.clrAddr[secLoc.y()][secLoc.x()];
+				auto secBaseTile = secLoc.GetBaseTile();
+				int ssty = shiftedSubtile.y % 192;
+				int sstx = shiftedSubtile.x % 192;
+				if (PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192] < requisiteClearance)
+					continue;
+
+				bool foundBlockers = false;
+
+				if (proxList.FindNear(subPathTo, requisiteClearance))
+					foundBlockers = true;
+
+				if (foundBlockers)
+					continue;
+
+			}
+			else if (!PathStraightLineIsClear(pqr, pq, subPathFrom, subPathTo))
+			{
+				continue;
+			}
+
+			int oldLength = pathFindAstar[newIdx].length;
+			int newLength = pathFindAstar[refererIdx].length + 14 - 4 * (direction % 2); // +14 for diagonal, +10 for straight
+
+			if (oldLength == 0 || abs(oldLength) > newLength)
+			{
+				pathFindAstar[newIdx].length = newLength;
+				pathFindAstar[newIdx].refererIdx = refererIdx;
+				if (!pathFindAstar[newIdx].idxPreviousChain && !pathFindAstar[newIdx].idxNextChain) //  if node is not part of chain
+				{
+					pathFindAstar[lastChainIdx].idxNextChain = newIdx + 1;
+					pathFindAstar[newIdx].idxPreviousChain = lastChainIdx + 1;
+					pathFindAstar[newIdx].idxNextChain = 0;
+					lastChainIdx = newIdx;
+				}
+
+			}
+
+		}
+
+
+		/*
+		remove the referer from the Open Set chain
+		and prepare the chain for looping it over again
+		*/
+		pathFindAstar[refererIdx].length = -pathFindAstar[refererIdx].length; 
+		// connect referer's previous to its next
+		idxPrevChain = pathFindAstar[refererIdx].idxPreviousChain - 1;
+		if (idxPrevChain != -1)
+		{
+			pathFindAstar[idxPrevChain].idxNextChain = pathFindAstar[refererIdx].idxNextChain;
+			curIdx = firstChainIdx;
+		}
+		else // if no "previous" exists, set the First Chain as the referer's next
+		{
+			firstChainIdx = curIdx = pathFindAstar[refererIdx].idxNextChain - 1;
+		}
+		//connect its next to its previous
+		if (pathFindAstar[refererIdx].idxNextChain)
+			pathFindAstar[pathFindAstar[refererIdx].idxNextChain - 1].idxPreviousChain
+			= pathFindAstar[refererIdx].idxPreviousChain;
+		else // if no "next" exists, set the last chain as its previous
+			lastChainIdx = pathFindAstar[refererIdx].idxPreviousChain - 1;
+		pathFindAstar[refererIdx].idxPreviousChain = 0;
+		pathFindAstar[refererIdx].idxNextChain = 0;
+		if (curIdx == -1)
+		{
+			if (referenceTime)
+				npcPathTimeCumulative += timeGetTime() - referenceTime;
+			return 0;
+		}
+
+	} //  major loop
+
+	// count the directions
+	auto refIdx = &pathFindAstar[refererIdx].refererIdx;
+	int directionsCount = 0;
+	while (*refIdx != -1)
+	{
+		directionsCount++;
+		refIdx = &pathFindAstar[*refIdx].refererIdx;
+	}
+
+
+	if (directionsCount > pq->maxShortPathFindLength)
+	{
+		if (referenceTime)
+			npcPathTimeCumulative += timeGetTime() - referenceTime;
+		return 0;
+	}
+
+	int lastIdx = refererIdx;
+	for (int i = directionsCount - 1; i >= 0; --i)
+	{
+		refIdx = &pathFindAstar[lastIdx].refererIdx;
+		pqr->directions[i] = GetDirection(*refIdx, gridSize, lastIdx);
+		lastIdx = *refIdx;
+	}
+	if (pq->flags & PQF_10)
+		--directionsCount;
+	if (referenceTime)
+		npcPathTimeCumulative += timeGetTime() - referenceTime;
+
+	// modify the destination to the found location
+	pqr->to = subPathFrom;
+
+	return directionsCount;
+
+	// return addresses.FindPathShortDistanceAdjRadius(pq, pqr);
 }
 
 int Pathfinding::FindPathForcecdStraightLine(Path* pqr, PathQuery* pq)
@@ -794,8 +1173,9 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	if (locSys.subtileFromLoc(&pqr->from) == toSubtile || !GetAlternativeTargetLocation(pqr, pq))
 		return 0;
 
-	if (PathCacheGet(pq, pqr)) // has this query been done before? if so copies it and returns the result
-		return pqr->nodeCount;
+	if (!config.pathfindingDebugMode )
+		if (PathCacheGet(pq, pqr)) // has this query been done before? if so copies it and returns the result
+			return pqr->nodeCount;
 
 	if (pq->flags & PQF_A_STAR_TIME_CAPPED && PathSumTime() >= aStarMaxTimeMs)
 	{
@@ -894,14 +1274,14 @@ BOOL Pathfinding::PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffset
 	return result;
 }
 
-BOOL Pathfinding::PathStraightLineIsClearOfStaticObstacles(Path* pqr, PathQuery* pq, LocAndOffsets from, LocAndOffsets to)
+BOOL Pathfinding::PathAdjRadiusLosClear(Path* pqr, PathQuery* pq, LocAndOffsets from, LocAndOffsets to)
 {
 	BOOL result = 1;
 	RaycastPacket objIt;
 	objIt.origin = from;
 	objIt.targetLoc = to;
-	objIt.flags = (RaycastFlags)0x38;
-	objIt.radius = (float) 0.01;
+	objIt.flags = static_cast<RaycastFlags>(RaycastFlags::StopAfterFirstBlockerFound | RaycastFlags::StopAfterFirstFlyoverFound | RaycastFlags::ExcludeItemObjects);
+	objIt.radius = static_cast<float>(0.01);
 
 	if (objIt.Raycast())
 	{
@@ -909,7 +1289,7 @@ BOOL Pathfinding::PathStraightLineIsClearOfStaticObstacles(Path* pqr, PathQuery*
 		for (auto i = 0; i < objIt.resultCount; i++)
 		{
 			if (!objIt.results[i].obj
-				&& objIt.results[i].flags & 2)
+				&& objIt.results[i].flags & RaycastResultFlags::BlockerSubtile)
 				return 0;
 		}
 	}
@@ -917,52 +1297,42 @@ BOOL Pathfinding::PathStraightLineIsClearOfStaticObstacles(Path* pqr, PathQuery*
 	return result;
 }
 
-int Pathfinding::GetDirection(int idxFrom, int n, int idxTo)
+ScreenDirections Pathfinding::GetDirection(int idxFrom, int gridSize, int idxTo)
 {
 	int deltaX; 
 	int deltaY; 
-	int result; 
+	ScreenDirections result;
 
-	deltaX = idxTo % n - idxFrom % n;
-	deltaY = idxTo / n - idxFrom / n;
-	if (deltaY >= 0)
+	deltaX = (idxTo % gridSize) - (idxFrom % gridSize);
+	deltaY = (idxTo / gridSize) - (idxFrom / gridSize);
+	assert(abs(deltaX) + abs(deltaY) > 0);
+	if (deltaY < 0)
 	{
-		if (deltaX >= 0)
-		{
-			if (deltaY <= 0)
-			{
-				if (deltaY >=0 )
-					result = (deltaY < 1) + 4;
-				else
-					result = 6;
-			}
-			else if (deltaX >= 0 )
-			{
-				result = (deltaX >= 1) + 3;
-			}
-			else
-			{
-				result = 2;
-			}
-		}
-		else if (deltaY >= 0)
-		{
-			result = (deltaY >= 1) + 1;
-		}
-		else
-		{
-			result = 0;
-		}
-	}
-	else
+		if ( deltaX < 0)
+			result = ScreenDirections::Top;
+		else if (deltaX > 0)
+			result = ScreenDirections::Left;
+		else // deltaX == 0
+			result = ScreenDirections::TopLeft;
+	} 
+	else if (deltaY > 0)
 	{
-		result = 0;
-		if (deltaX >= 0)
-		{
-			result = deltaX < 1;
-			result += 6;
-		}
+		if (deltaX > 0)
+			result = ScreenDirections::Bottom;
+		else if ( deltaX < 0)
+			result = ScreenDirections::Right;
+		else // deltaX == 0
+			result = ScreenDirections::BottomRight;
+	} 
+	else // deltaY == 0
+	{
+		if (deltaX < 0)
+			result = ScreenDirections::TopRight;
+		else // deltaX > 0
+			result = ScreenDirections::BottomLeft;
 	}
+
+	
 	return result;
 }
 
@@ -1216,6 +1586,7 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 	// pathfinding heuristic:
 	// taxicab metric h(dx,dy)=max(dx, dy), wwhere  dx,dy is the subtile difference
 	#pragma region Preamble
+	const unsigned int gridSize = 160; // number of subtiles spanned in the grid (vanilla: 128)
 	int referenceTime = 0;
 	Subtile fromSubtile, toSubtile, _fromSubtile, shiftedSubtile;
 
@@ -1251,12 +1622,12 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 	int toSubtileX = toSubtile.x;	int toSubtileY = toSubtile.y;
 
 	int deltaSubtileX = abs(toSubtileX - fromSubtileX);	int deltaSubtileY = abs(toSubtileY - fromSubtileY);
-	if (deltaSubtileX > 64 || deltaSubtileY > 64)
+	if (deltaSubtileX > gridSize/2 || deltaSubtileY > gridSize/2)
 		return 0;
 	
 	int lowerSubtileX = min(fromSubtileX, toSubtileX);	int lowerSubtileY = min(fromSubtileY, toSubtileY);
 
-	int cornerX = lowerSubtileX + deltaSubtileX / 2 - 64;	int cornerY = lowerSubtileY + deltaSubtileY / 2 - 64;
+	int cornerX = lowerSubtileX + deltaSubtileX / 2 - gridSize/2;	int cornerY = lowerSubtileY + deltaSubtileY / 2 - gridSize/2;
 
 
 	//TileRect tileR;
@@ -1266,11 +1637,11 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 	//int count;
 	//sectorSys.GetTileFlagsArea(&tileR, blockedSubtiles, &count);
 
-	int curIdx = fromSubtileX - cornerX + ((fromSubtileY - cornerY) << 7);
-	int idxTarget = toSubtileX - cornerX + ((toSubtileY - cornerY) << 7);
+	int curIdx = fromSubtileX - cornerX + ((fromSubtileY - cornerY) * gridSize);
+	int idxTarget = toSubtileX - cornerX + ((toSubtileY - cornerY) * gridSize);
 
-	int idxTgtX = idxTarget % 128;
-	int idxTgtY = idxTarget / 128;
+	int idxTgtX = idxTarget % gridSize;
+	int idxTgtY = idxTarget / gridSize;
 
 	struct PathSubtile
 	{
@@ -1279,7 +1650,7 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 		int idxPreviousChain; // is actually +1 (0 means none); i.e. subtract 1 to get the actual idx
 		int idxNextChain; // same as above
 	};
-	PathSubtile pathFindAstar[128 * 128];
+	PathSubtile pathFindAstar[gridSize * gridSize];
 	memset(pathFindAstar, 0, sizeof(pathFindAstar));
 
 	pathFindAstar[curIdx].length = 1;
@@ -1313,61 +1684,20 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 		return 0;
 	}
 
-	#pragma endregion
 
-	struct ProximityList
-	{
-		void Append(objHndl obj)
-		{
-			
-		}
-	} proxList;
 
-	RaycastPacket objIt;
-	objIt.origin = pqr->from;
-	objIt.targetLoc = pqr->from;
-	objIt.flags = static_cast<RaycastFlags>(RaycastFlags::ExcludeItemObjects);
-	if (pqr->mover)
-	{
-		objIt.flags = (RaycastFlags)((int)objIt.flags | RaycastFlags::HasRadius | RaycastFlags::HasSourceObj);
-		objIt.sourceObj = pqr->mover;
-		objIt.radius = INCH_PER_TILE * 40;
-		if (objIt.Raycast())
-		{
-			for (int i = 0; i < objIt.resultCount; i++)
-			{
-				auto res = &objIt.results[i];
-				if (res->obj)
-				{
-					auto obj = res->obj;
-					auto objFlags = objects.GetFlags(obj);
-					auto objType = objects.GetType(obj);
-					if (!(objFlags & OF_NO_BLOCK))
-					{
-						if ((pq->flags & PQF_DOORS_ARE_BLOCKING) || (objType != obj_t_portal))
-						{
-							if (objType == obj_t_pc || objType == obj_t_npc)
-							{
-								if (critterSys.IsFriendly(obj, pqr->mover))
-									continue;
-							} 
-							proxList.Append(obj);
+	struct ProximityList proxList;
+	proxList.Populate(pq, pqr, INCH_PER_TILE * 40);
 
-						}
-
-					}
-				}
-			}
-		}
-	}
+#pragma endregion
 	
 	while (1)
 	{
 		refererIdx = -1;
 		do // loop over the chain to find the node with minimal heuristic; initially the chain is just the "from" node
 		{
-			deltaIdxX = abs(curIdx % 128 - idxTgtX);
-			distanceMetric = abs(curIdx / 128 - idxTgtY);
+			deltaIdxX = abs((int) (curIdx % gridSize - idxTgtX));
+			distanceMetric = abs( (int) (curIdx / gridSize - idxTgtY));
 			if (deltaIdxX > distanceMetric)
 				distanceMetric = deltaIdxX;
 
@@ -1406,9 +1736,12 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 				npcPathTimeCumulative += timeGetTime() - referenceTime;
 			return 0;
 		}
+		
+		// halt condition
 		if (refererIdx == idxTarget) break;
-		_fromSubtile.x = cornerX + (refererIdx % 128);
-		_fromSubtile.y = cornerY + (refererIdx / 128);
+		
+		_fromSubtile.x = cornerX + (refererIdx % gridSize);
+		_fromSubtile.y = cornerY + (refererIdx / gridSize);
 
 		// loop over all possible directions for better path
 		for (auto direction = 0; direction < 8; direction++)
@@ -1417,9 +1750,9 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 				continue;
 			shiftedXidx = shiftedSubtile.x - cornerX;
 			shiftedYidx = shiftedSubtile.y - cornerY;
-			if (shiftedXidx >= 0 && shiftedXidx < 128 && shiftedYidx >= 0 && shiftedYidx < 128)
+			if (shiftedXidx >= 0 && shiftedXidx < gridSize && shiftedYidx >= 0 && shiftedYidx < gridSize)
 			{
-				newIdx = shiftedXidx + (shiftedYidx << 7);
+				newIdx = shiftedXidx + (shiftedYidx * gridSize);
 			}
 			else
 				continue;
@@ -1446,9 +1779,9 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 		
 				bool foundBlockers = false;
 
-				/*
-				TODO insert code for detecting collision with objects
-				*/
+				if (proxList.FindNear(subPathTo, requisiteClearance))
+					foundBlockers = true;
+
 				if (foundBlockers)
 					continue;
 				
@@ -1476,22 +1809,26 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 			}
 
 		}
-		pathFindAstar[refererIdx].length = -pathFindAstar[refererIdx].length;
+
+		pathFindAstar[refererIdx].length = -pathFindAstar[refererIdx].length; // mark the referer as used
+		// remove the referer from the chain
+		// connect its previous to its next
 		idxPrevChain = pathFindAstar[refererIdx].idxPreviousChain - 1;
 		if (idxPrevChain != -1)
 		{
 			pathFindAstar[idxPrevChain].idxNextChain = pathFindAstar[refererIdx].idxNextChain;
 			curIdx = firstChainIdx;
 		}
-		else
+		else // if no "previous" exists, set the First Chain as the referer's next
 		{
 			curIdx = pathFindAstar[refererIdx].idxNextChain - 1;
 			firstChainIdx = curIdx;
 		}
+		//connect its next to its previous
 		if (pathFindAstar[refererIdx].idxNextChain)
 			pathFindAstar[pathFindAstar[refererIdx].idxNextChain - 1].idxPreviousChain
 			= pathFindAstar[refererIdx].idxPreviousChain;
-		else
+		else // if no "next" exists, set the last chain as its previous
 			lastChainIdx = pathFindAstar[refererIdx].idxPreviousChain - 1;
 		pathFindAstar[refererIdx].idxPreviousChain = 0;
 		pathFindAstar[refererIdx].idxNextChain = 0;
@@ -1501,7 +1838,7 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 				npcPathTimeCumulative += timeGetTime() - referenceTime;
 			return 0;
 		}
-		idxTgtX = idxTarget % 128;
+		idxTgtX = idxTarget % gridSize;
 	}
 
 
@@ -1526,7 +1863,7 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 	for (int i = directionsCount - 1; i >= 0; --i)
 	{
 		refIdx = &pathFindAstar[lastIdx].refererIdx;
-		pqr->directions[i] = GetDirection(*refIdx, 128, lastIdx);
+		pqr->directions[i] = GetDirection(*refIdx, gridSize, lastIdx);
 		lastIdx = *refIdx;
 	}
 	if (pq->flags & PQF_10)
@@ -1556,3 +1893,4 @@ void _aStarSettingChanged()
 {
 	pathfindingSys.AStarSettingChanged();
 }
+

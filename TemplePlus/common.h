@@ -178,7 +178,18 @@ struct LocAndOffsets {
 	vector3f ToInches3D(float offsetZ = 0) {
 		return location.ToInches3D(off_x, off_y, offsetZ);
 	}
+
+
 };
+
+inline std::ostream& operator<<(std::ostream& os, const LocAndOffsets & loc) {
+
+	return os
+		<< std::to_string(loc.location.locx)
+		+ "," + std::to_string(loc.location.locy)
+		+ "," + std::to_string(loc.off_x)
+		+ "," + std::to_string(loc.off_y);
+}
 
 struct LocFull {
 	LocAndOffsets location;
@@ -187,7 +198,7 @@ struct LocFull {
 
 struct GroupArray {
 	objHndl GroupMembers[32];
-	uint32_t * GroupSize;
+	uint32_t GroupSize;
 	int (__cdecl*sortFunc)(void*, void*); // used for comparing two items (e.g. alphabetic sorting)
 };
 
@@ -262,5 +273,17 @@ struct AttackPacket
 	int field_1C;
 	objHndl weaponUsed;
 	objHndl ammoItem;
+};
+
+enum ScreenDirections : char {
+	Top = 0,
+	TopRight = 1,
+	Right,
+	BottomRight,
+	Bottom,
+	BottomLeft,
+	Left,
+	TopLeft,
+	DirectionsNum // 8
 };
 #pragma endregion
