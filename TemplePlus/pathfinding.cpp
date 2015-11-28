@@ -682,7 +682,8 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 	pathLocal.to = pathQueryLocal.to = path->to;
 
 	int nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
-	if (!nodeCountAdded || (nodeCountAdded + nodeTotal > pq->maxShortPathFindLength))
+	if (   (!nodeCountAdded  && (pathLocal.to != pathLocal.from) )  // there's a possibility that the "from" is within reach, in which case the search will set the To same as From
+		|| (nodeCountAdded + nodeTotal > pq->maxShortPathFindLength))
 	{
 		if (config.pathfindingDebugMode)
 		{
@@ -690,12 +691,14 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 		}
 		return 0;
 	}
-		
-
-	memcpy(&path->nodes[nodeTotal], pathLocal.nodes, sizeof(LocAndOffsets) * nodeCountAdded);
+	
 	int nodeCount = nodeTotal + nodeCountAdded;
-	path->nodeCount = nodeCount;
-	path->to = path->nodes[nodeCount - 1];
+	if (nodeCountAdded)
+	{
+		memcpy(&path->nodes[nodeTotal], pathLocal.nodes, sizeof(LocAndOffsets) * nodeCountAdded);
+		path->nodeCount = nodeCount;
+		path->to = path->nodes[nodeCount - 1];
+	}
 	return nodeCount;
 	//return addresses.FindPathUsingNodes(pq, path);
 }
@@ -1084,6 +1087,8 @@ int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 
 	// modify the destination to the found location
 	pqr->to = subPathFrom;
+	if (directionsCount == 0) // in case the destination is already within reach
+		pqr->to = pqr->from;
 
 	return directionsCount;
 
