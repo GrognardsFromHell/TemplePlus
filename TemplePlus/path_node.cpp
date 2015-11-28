@@ -892,7 +892,7 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 				foundNode = true;
 
 				// Effectively the same path segment (TODO: Is getting here a bug already? Is it searching in cycles?)
-				if (node.refererId == fpTemp.refererId) {
+				if (node.refererId == fpTemp.refererId || true) {
 					if (useActualDistances) {
 						if (fpTemp.distActualTotal + fpTemp.distTo < node.distActualTotal + node.distTo) {
 							node = fpTemp;
@@ -906,7 +906,7 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 						}
 					}
 				}
-
+				/*
 				if (useActualDistances) {
 					if (fpTemp.distActualTotal + fpTemp.distTo < node.distActualTotal + node.distTo) {
 						FindPathNodeAppend(fpTemp);
@@ -918,6 +918,7 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 						break;
 					}
 				}
+				*/
 			}
 
 			// append node if it's not in the list yet

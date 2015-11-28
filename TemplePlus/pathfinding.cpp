@@ -583,12 +583,14 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 			pathQueryLocal.to = path->to;
 			pathQueryLocal.from = nodeTemp1.nodeLoc;
 			pathQueryLocal.flags = (PathQueryFlags)(
-				(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE | PQF_STRAIGHT_LINE_ONLY_FOR_SANS_NODE);
+				(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) 
+				| PQF_ALLOW_ALTERNATIVE_TARGET_TILE | ((!pathNodeSys.hasClearanceData)* PQF_STRAIGHT_LINE_ONLY_FOR_SANS_NODE));
 			PathInit(&pathLocal, &pathQueryLocal);
 			pathQueryLocal.to = path->to;
 			pathQueryLocal.from = nodeTemp1.nodeLoc;
 			pathQueryLocal.flags = (PathQueryFlags)(
-				(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE | PQF_STRAIGHT_LINE_ONLY_FOR_SANS_NODE);
+				(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ))
+				| PQF_ALLOW_ALTERNATIVE_TARGET_TILE | ( (!pathNodeSys.hasClearanceData)* PQF_STRAIGHT_LINE_ONLY_FOR_SANS_NODE));
 			pathLocal.from = nodeTemp1.nodeLoc;
 			pathLocal.to = pathQueryLocal.to;
 			int nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
@@ -698,6 +700,10 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 		memcpy(&path->nodes[nodeTotal], pathLocal.nodes, sizeof(LocAndOffsets) * nodeCountAdded);
 		path->nodeCount = nodeCount;
 		path->to = path->nodes[nodeCount - 1];
+	} else
+	{
+		path->nodes[path->nodeCount++] = pathLocal.to;
+		path->to = pathLocal.to;
 	}
 	return nodeCount;
 	//return addresses.FindPathUsingNodes(pq, path);
@@ -864,8 +870,9 @@ int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 	int minHeuristic = 0x7FFFffff;
 
 	float requisiteClearance = objects.GetRadius(pq->critter);
+	float requisiteClearanceCritters = requisiteClearance * 0.7;
 	if (requisiteClearance > 4.3)
-		requisiteClearance *= 0.7;
+		requisiteClearance *= 0.85;
 	else if (requisiteClearance > 2.0)
 		requisiteClearance -= 1;
 
@@ -1145,13 +1152,13 @@ int Pathfinding::FindPathSansNodes(PathQuery* pq, Path* pqr)
 
 	if (!(pqFlags&PQF_STRAIGHT_LINE_ONLY_FOR_SANS_NODE)) {
 		if (pqFlags &PQF_100)
-			result = FindPathShortDistanceSansTargetTemplePlus(pq, pqr);
+			result = FindPathShortDistanceSansTarget(pq, pqr);
 		else if (pqFlags & PQF_ADJUST_RADIUS)
 			result = FindPathShortDistanceAdjRadius(pq, pqr);
 		else if (!(pqFlags & PQF_FORCED_STRAIGHT_LINE))
 		{
 			//for (int i = 0; i < 100; i++)
-				result = FindPathShortDistanceSansTargetTemplePlus(pq, pqr);
+				result = FindPathShortDistanceSansTarget(pq, pqr);
 		}
 			
 		else
@@ -1218,6 +1225,16 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 
 	if (gotPath)
 	{
+		if (config.pathfindingDebugMode)
+		try
+		{
+			if (pq->critter)
+				logger->info("{} pathed successfully to {}", description.getDisplayName(pq->critter), pqr->to);
+		} catch (...)
+		{
+			logger->info("Corrupt handle: {}", pq->critter);
+		}
+		
 		pqr->flags |= PF_COMPLETE;
 	}
 	PathCachePush(pq, pqr);
@@ -1237,6 +1254,10 @@ BOOL Pathfinding::PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffset
 	RaycastPacket objIt;
 	objIt.origin = from;
 	objIt.targetLoc = to;
+	auto dx = abs(static_cast<int>(to.location.locx - from.location.locx));
+	auto dy = abs(static_cast<int>(to.location.locy - from.location.locy));
+	if ( max( dx, dy) >= SECTOR_SIDE_SIZE * 3) // RayCast supports up to a span of 4 sectors
+		return 0;
 	objIt.flags = static_cast<RaycastFlags>(RaycastFlags::StopAfterFirstFlyoverFound| RaycastFlags::StopAfterFirstBlockerFound | RaycastFlags::ExcludeItemObjects);
 	if (pqr->mover)
 	{
@@ -1341,7 +1362,7 @@ ScreenDirections Pathfinding::GetDirection(int idxFrom, int gridSize, int idxTo)
 	return result;
 }
 
-int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
+int Pathfinding::FindPathShortDistanceSansTargetLegacy(PathQuery* pq, Path* pqr)
 { // uses a form of A*
 	// pathfinding heuristic:
 	// taxicab metric h(dx,dy)=max(dx, dy), wwhere  dx,dy is the subtile difference
@@ -1504,12 +1525,6 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 				continue;
 			}
 				
-			//else
-			//{
-				//for (int k = 0; k < 99; k++)
-				//	PathStraightLineIsClear(pqr, pq, subPathFrom, subPathTo);
-
-			//}
 			int oldLength = pathFindAstar[newIdx].length;
 			int newLength = pathFindAstar[refererIdx].length + 14 - 4 * (direction % 2) ; // +14 for diagonal, +10 for straight
 
@@ -1517,7 +1532,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 			{
 				pathFindAstar[newIdx].length = newLength;
 				pathFindAstar[newIdx].refererIdx = refererIdx;
-				if (!pathFindAstar[newIdx].idxPreviousChain && !pathFindAstar[newIdx].idxNextChain) //  if node is not part of chain
+				if (!pathFindAstar[newIdx].idxPreviousChain && !pathFindAstar[newIdx].idxNextChain) //  if node is not part of Open Set chain
 				{
 					pathFindAstar[lastChainIdx].idxNextChain = newIdx + 1;
 					pathFindAstar[newIdx].idxPreviousChain = lastChainIdx + 1;
@@ -1585,7 +1600,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 	
 }
 
-int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* pqr)
+int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 {
 	// uses a form of A*
 	// pathfinding heuristic:
@@ -1674,8 +1689,9 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 	int shiftedXidx, shiftedYidx, newIdx;
 
 	float requisiteClearance = objects.GetRadius(pq->critter);
+	float requisiteClearanceCritters = requisiteClearance * 0.7;
 	if (requisiteClearance > 4.3)
-		requisiteClearance *= 0.7;
+		requisiteClearance *= 0.85;
 	else if (requisiteClearance > 2.0)
 		requisiteClearance -= 1;
 
@@ -1784,7 +1800,7 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 		
 				bool foundBlockers = false;
 
-				if (proxList.FindNear(subPathTo, requisiteClearance))
+				if (proxList.FindNear(subPathTo, requisiteClearanceCritters))
 					foundBlockers = true;
 
 				if (foundBlockers)
@@ -1881,7 +1897,7 @@ int Pathfinding::FindPathShortDistanceSansTargetTemplePlus(PathQuery* pq, Path* 
 
 int _FindPathShortDistanceSansTarget(PathQuery* pq, PathQueryResult* pqr)
 {
-	return pathfindingSys.FindPathShortDistanceSansTargetTemplePlus(pq, pqr);
+	return pathfindingSys.FindPathShortDistanceSansTarget(pq, pqr);
 }
 
 int _FindPath(PathQuery* pq, PathQueryResult* pqr)
