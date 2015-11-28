@@ -146,11 +146,14 @@ GameRenderer::GameRenderer(TigInitializer &tig,
 
 	mAasRenderer = std::make_unique<temple::AasRenderer>(
 		gameSystems.GetAAS(), 
-		tig.GetRenderingDevice(), 
+		tig.GetRenderingDevice(),
+		tig.GetShapeRenderer2d(),
+		tig.GetShapeRenderer3d(),
 		tig.GetMdfFactory());
 	mMapObjectRenderer = std::make_unique<MapObjectRenderer>(
 		gameSystems, 
 		tig.GetRenderingDevice(), 
+		tig.GetMdfFactory(),
 		*mAasRenderer);
 	mParticleSysRenderer = std::make_unique<ParticleSystemsRenderer>(
 		tig.GetRenderingDevice(),

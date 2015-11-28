@@ -67,6 +67,8 @@ namespace gfx {
 
 		void DrawRectangleOutline(XMFLOAT2 topLeft, XMFLOAT2 bottomRight, XMCOLOR color);
 
+		void DrawFullScreenQuad();
+
 		/**
 		 * Renders a circle/pie segment for use with the radial menu.
   		 */

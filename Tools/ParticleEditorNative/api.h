@@ -7,6 +7,8 @@
 
 #include <graphics/device.h>
 #include <graphics/mdfmaterials.h>
+#include <graphics/shaperenderer2d.h>
+#include <graphics/shaperenderer3d.h>
 #include <infrastructure/meshes.h>
 #include <temple/meshes.h>
 #include <temple/aasrenderer.h>
@@ -29,6 +31,8 @@ struct TempleDll {
 	gfx::RenderingDevice renderingDevice;
 	gfx::MdfMaterialFactory mdfFactory;
 	temple::AasConfig aasConfig;
+	gfx::ShapeRenderer2d shapeRenderer2d;
+	gfx::ShapeRenderer3d shapeRenderer3d;
 	temple::AasAnimatedModelFactory aasFactory;
 	temple::AasRenderer aasRenderer;
 	particles::ParticleRendererManager renderManager;

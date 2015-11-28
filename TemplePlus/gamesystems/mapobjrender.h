@@ -7,6 +7,7 @@ namespace gfx {
 	class RenderingDevice;
 	struct Light3d;
 	class AnimatedModel;
+	class MdfMaterialFactory;
 	using MdfRenderMaterialPtr = std::shared_ptr<class MdfRenderMaterial>;
 	using RenderTargetTexturePtr = std::shared_ptr<class RenderTargetTexture>;
 }
@@ -25,7 +26,10 @@ enum class ShadowType {
 class MapObjectRenderer {
 public:
 
-	MapObjectRenderer(GameSystems& gameSystems, gfx::RenderingDevice& device, temple::AasRenderer &aasRenderer);
+	MapObjectRenderer(GameSystems& gameSystems, 
+		gfx::RenderingDevice& device, 
+		gfx::MdfMaterialFactory &mdfFactory,
+		temple::AasRenderer &aasRenderer);
 	~MapObjectRenderer();
 
 	void RenderMapObjects(int tileX1, int tileX2, int tileY1, int tileY2);
@@ -44,9 +48,8 @@ private:
 	GameSystems& mGameSystems;
 	gfx::RenderingDevice& mDevice;
 	temple::AasRenderer &mAasRenderer;
-	ShadowType mShadowType = ShadowType::ShadowMap;
-	gfx::RenderTargetTexturePtr mShadowTarget;
-	gfx::RenderTargetTexturePtr mShadowTargetTmp;
+	ShadowType mShadowType = ShadowType::Blob;
+	gfx::MdfRenderMaterialPtr mBlobShadowMaterial;
 
 	size_t mRenderedLastFrame = 0;
 	size_t mTotalLastFrame = 0;
@@ -70,8 +73,10 @@ private:
 		const gfx::AnimatedModelParams &animParams, 
 		gfx::AnimatedModel &model, 
 		const gfx::Light3d& globalLight);
-	void ApplyGaussianBlur();
-	void RenderBlobShadow(objHndl handle, gfx::AnimatedModel &model);
+	void RenderBlobShadow(objHndl handle, 
+		gfx::AnimatedModel &model, 
+		gfx::AnimatedModelParams &animParams,
+		int alpha);
 
 	objHndl GiantFrogGetGrappledOpponent(objHndl giantFrog);
 

@@ -7,6 +7,7 @@
 #include <graphics/renderer.h>
 #include <temple/meshes.h>
 #include "gamesystems/gamesystems.h"
+#include "gamesystems/gamerenderer.h"
 #include <graphics/renderstates_hooks.h>
 #include <infrastructure/images.h>
 #include <graphics/shaperenderer3d.h>
@@ -46,10 +47,15 @@ static struct MapRenderAddresses : temple::AddressTable {
 	}
 } addresses;
 
-MapObjectRenderer::MapObjectRenderer(GameSystems& gameSystems, gfx::RenderingDevice& device, temple::AasRenderer &aasRenderer)
+MapObjectRenderer::MapObjectRenderer(GameSystems& gameSystems, 
+	gfx::RenderingDevice& device, 
+	gfx::MdfMaterialFactory &mdfFactory,
+	temple::AasRenderer &aasRenderer)
 	: mGameSystems(gameSystems),
 	  mDevice(device),
 	  mAasRenderer(aasRenderer) {
+
+	mBlobShadowMaterial = mdfFactory.LoadMaterial("art/meshes/shadow.mdf");
 }
 
 MapObjectRenderer::~MapObjectRenderer() {
@@ -216,7 +222,7 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 			}
 			else if (mShadowType == ShadowType::Blob)
 			{
-				RenderBlobShadow(handle, *animatedModel);
+				RenderBlobShadow(handle, *animatedModel, animParams, alpha);
 			}
 		}
 
@@ -877,205 +883,95 @@ void MapObjectRenderer::RenderGiantFrogTongue(objHndl handle) {
 		*/
 }
 
-void MapObjectRenderer::ApplyGaussianBlur() {
-
-	BlendState blendState;
-	SamplerState samplerState;
-	samplerState.addressU = D3DTADDRESS_CLAMP;
-	samplerState.addressV = D3DTADDRESS_CLAMP;
-	samplerState.magFilter = D3DTEXF_LINEAR;	
-	samplerState.minFilter = D3DTEXF_LINEAR;
-	samplerState.mipFilter = D3DTEXF_LINEAR;
-	RasterizerState rasterizerState;
-	rasterizerState.cullMode = D3DCULL_NONE;
-	DepthStencilState depthStencilState;
-	depthStencilState.depthEnable = false;
-
-	auto vs(mDevice.GetShaders().LoadVertexShader("gaussian_blur_vs"));
-	Shaders::ShaderDefines horDefines;
-	horDefines["HOR"] = "1";
-	auto psHor(mDevice.GetShaders().LoadPixelShader("gaussian_blur_ps", horDefines));
-	auto psVer(mDevice.GetShaders().LoadPixelShader("gaussian_blur_ps"));
-
-	std::vector<MaterialSamplerBinding> samplersHor{
-		{ mShadowTarget, samplerState }
-	};
-	std::vector<MaterialSamplerBinding> samplersVer{
-		{ mShadowTargetTmp, samplerState }
-	};
-
-	Material materialHor{ blendState, depthStencilState, rasterizerState, samplersHor, vs, psHor };
-	Material materialVer{ blendState, depthStencilState, rasterizerState, samplersVer, vs, psVer };
-
-	mDevice.SetMaterial(materialHor);
-	mDevice.GetDevice()->SetRenderTarget(0, mShadowTargetTmp->GetSurface());
-	
-	auto sw = mDevice.GetCamera().GetScreenWidth();
-	auto sh = mDevice.GetCamera().GetScreenHeight();
-
-	std::array<Vertex2d, 4> fullScreenCorners;
-	fullScreenCorners[0].pos = { -1, -1, 0 };
-	fullScreenCorners[0].uv = { 0, 0 };
-	fullScreenCorners[1].pos = { 1, -1, 0 };
-	fullScreenCorners[1].uv = { 1, 0 };
-	fullScreenCorners[2].pos = { 1, 1, 0 };
-	fullScreenCorners[2].uv = { 1, 1 };
-	fullScreenCorners[3].pos = { -1, 1, 0 };
-	fullScreenCorners[3].uv = { 0, 1 };
-	tig->GetShapeRenderer2d().DrawRectangle(fullScreenCorners);
-
-	mDevice.SetMaterial(materialVer);
-	mDevice.GetDevice()->SetRenderTarget(0, mShadowTarget->GetSurface());
-	tig->GetShapeRenderer2d().DrawRectangle(fullScreenCorners);
-	
-}
-
 void MapObjectRenderer::RenderShadowMapShadow(objHndl obj,
 	const gfx::AnimatedModelParams &animParams,
 	gfx::AnimatedModel & model,
 	const Light3d &globalLight)
 {
 	
-	LocAndOffsets loc{ {animParams.x, animParams.y}, animParams.offsetX, animParams.offsetY };
-	auto worldPos{ loc.ToCenterOfTileAbs() };
+	LocAndOffsets loc{ { animParams.x, animParams.y }, animParams.offsetX, animParams.offsetY };
+	auto worldPos{ loc.ToCenterOfTileAbs3D(animParams.offsetZ) };
 
-	auto objRadius = objects.GetRadius(obj);
-	auto renderHeight = objects.GetRenderHeight(obj);
+	auto radius = objects.GetRadius(obj);
+	auto height = objects.GetRenderHeight(obj);
 
-	constexpr auto shadowMapWidth = 256;
-	constexpr auto shadowMapHeight = 256;
+	std::array<AnimatedModel*, 3> models;
+	std::array<const AnimatedModelParams*, 3> params;
 	
-	XMFLOAT4 lightDir = globalLight.dir;
-
-	float shadowMapWorldX, shadowMapWorldWidth, 
-		shadowMapWorldZ, shadowMapWorldHeight;
-
-	if (lightDir.x < 0.0) {
-		shadowMapWorldX = worldPos.x - 2 * objRadius + lightDir.x * renderHeight;
-		shadowMapWorldWidth = 4 * objRadius - lightDir.x * renderHeight;
-	} else {
-		shadowMapWorldX = worldPos.x - objRadius - objRadius;
-		shadowMapWorldWidth = lightDir.x * renderHeight + 4 * objRadius;
-	}
-
-	if (lightDir.z < 0.0) {
-		shadowMapWorldZ = worldPos.y - 2 * objRadius + lightDir.z * renderHeight;
-		shadowMapWorldHeight = 4 * objRadius - lightDir.z * renderHeight;
-	} else {
-		shadowMapWorldZ = worldPos.y - 2 * objRadius;
-		shadowMapWorldHeight = lightDir.z + renderHeight + 4 * objRadius;
-	}
-	
-	/* RTT */
-	if (!mShadowTarget) {
-		mShadowTarget = mDevice.CreateRenderTargetTexture(D3DFMT_A8R8G8B8, shadowMapWidth, shadowMapHeight);
-		mShadowTargetTmp = mDevice.CreateRenderTargetTexture(D3DFMT_A8R8G8B8, shadowMapWidth, shadowMapHeight);
-	}
-	CComPtr<IDirect3DSurface9> currentTarget;
-	mDevice.GetDevice()->GetRenderTarget(0, &currentTarget);
-	mDevice.GetDevice()->SetRenderTarget(0, mShadowTarget->GetSurface());
-
-	BlendState blendState;
-	RasterizerState rasterizerState;
-	DepthStencilState depthStencilState;
-	depthStencilState.depthEnable = false;
-	auto vs{ mDevice.GetShaders().LoadVertexShader("shadowmap_geom_vs") };
-	auto ps{ mDevice.GetShaders().LoadPixelShader("diffuse_only_ps") };
-
-	Material material{ blendState, depthStencilState, rasterizerState,{}, vs, ps };
-	mDevice.SetMaterial(material);
-
-	// Set shader params
-	XMFLOAT4 floats{ shadowMapWorldX, shadowMapWorldZ, shadowMapWorldWidth, shadowMapWorldHeight };
-	mDevice.GetDevice()->SetVertexShaderConstantF(0, &floats.x, 1);
-	mDevice.GetDevice()->SetVertexShaderConstantF(1, &lightDir.x, 1);
-	floats.x = animParams.offsetZ;
-	mDevice.GetDevice()->SetVertexShaderConstantF(2, &floats.x, 1);
-	XMCOLOR color(0, 0, 0, 0.5f);
-	XMStoreFloat4(&floats, PackedVector::XMLoadColor(&color));
-	mDevice.GetDevice()->SetVertexShaderConstantF(4, &floats.x, 1);
-
-	mDevice.GetDevice()->Clear(0, nullptr, D3DCLEAR_TARGET, 0, 0, 0);
-	mAasRenderer.RenderWithoutMaterial(&model, animParams);
-
-	/* RTT */
+	// The critter model always has a shadow
+	size_t modelCount = 1;
+	models[0] = &model;
+	params[0] = &animParams;
 
 	auto primaryWeapon = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
+	gfx::AnimatedModelPtr primaryWeaponModel, secondaryWeaponModel;
+	gfx::AnimatedModelParams primaryWeaponParams, secondaryWeaponParams;
 	if (primaryWeapon)
 	{
-		auto weaponAnim = objects.GetAnimHandle(primaryWeapon);
-		auto weaponAnimParams = objects.GetAnimParams(primaryWeapon);
-		mAasRenderer.RenderWithoutMaterial(weaponAnim.get(), weaponAnimParams);
+		primaryWeaponModel = objects.GetAnimHandle(primaryWeapon);
+		primaryWeaponParams = objects.GetAnimParams(primaryWeapon);
+		
+		models[modelCount] = primaryWeaponModel.get();
+		params[modelCount] = &primaryWeaponParams;
+		modelCount++;
 	}
 
 	auto secondaryWeapon = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);
-	if (secondaryWeapon)
-	{
-		auto weaponAnim = objects.GetAnimHandle(secondaryWeapon);
-		auto weaponAnimParams = objects.GetAnimParams(secondaryWeapon);
-		mAasRenderer.RenderWithoutMaterial(weaponAnim.get(), weaponAnimParams);
+	if (secondaryWeapon) {
+		secondaryWeaponModel = objects.GetAnimHandle(secondaryWeapon);
+		secondaryWeaponParams = objects.GetAnimParams(secondaryWeapon);
+
+		models[modelCount] = secondaryWeaponModel.get();
+		params[modelCount] = &secondaryWeaponParams;
+		modelCount++;
 	}
 
-	ApplyGaussianBlur();
-
-	mDevice.GetDevice()->SetRenderTarget(0, currentTarget);
-	
-	auto shadowMapWorldBottom = shadowMapWorldZ + shadowMapWorldHeight;
-	auto shadowMapWorldRight = shadowMapWorldX + shadowMapWorldWidth;
-
-	std::array<gfx::ShapeVertex3d, 4> corners;
-	corners[0].pos = { shadowMapWorldX, animParams.offsetZ, shadowMapWorldZ };
-	corners[1].pos = { shadowMapWorldX, animParams.offsetZ, shadowMapWorldBottom };
-	corners[2].pos = { shadowMapWorldRight, animParams.offsetZ, shadowMapWorldBottom };
-	corners[3].pos = { shadowMapWorldRight, animParams.offsetZ, shadowMapWorldZ };
-	corners[0].uv = { 0, 0 };
-	corners[1].uv = { 0, 1 };
-	corners[2].uv = { 1, 1 };
-	corners[3].uv = { 1, 0 };
-
-	tig->GetShapeRenderer3d().DrawQuad(corners, 0xFFFFFFFF, mShadowTarget);
+	mAasRenderer.RenderShadowMapShadow(
+		{ &models[0], modelCount },
+		{ &params[0], modelCount },
+		worldPos,
+		radius,
+		height,
+		globalLight.dir,
+		true
+	);
 
 }
 
-void MapObjectRenderer::RenderBlobShadow(objHndl handle, gfx::AnimatedModel & model)
+void MapObjectRenderer::RenderBlobShadow(objHndl handle, gfx::AnimatedModel &model, gfx::AnimatedModelParams &animParams, int alpha)
 {
-	/*if (shadow_shader_id == -1)
-		tig_shader_register("art/meshes/shadow.mdf", &shadow_shader_id);
-	v216 = obj_get_radius(ObjHnd);
-	obj_render_pos4[1].y = animParams.offsetz;
-	v64 = (long double)animParams.locx * 28.284271;
-	obj_render_diffuse4[0] = color;
-	obj_render_diffuse4[1] = color;
-	offsetY = v64;
-	obj_render_diffuse4[2] = color;
-	obj_render_diffuse4[3] = color;
-	v65 = v64 - v216 + animParams.offsetx + 14.142136;
-	obj_render_pos4[0].x = v65;
-	obj_render_pos4[0].y = animParams.offsetz;
-	obj_render_pos4[2].y = animParams.offsetz;
-	v66 = (long double)animParams.locy * 28.284271;
-	obj_render_pos4[3].y = animParams.offsetz;
-	*(float *)&shaderId = v66;
-	v67 = v66 - v216 + animParams.offsety + 14.142136;
-	obj_render_pos4[0].z = v67;
-	v68 = v67;
-	obj_render_pos4[1].x = v65;
-	v69 = v216 + *(float *)&shaderId + animParams.offsety + 14.142136;
-	obj_render_pos4[1].z = v69;
-	v70 = v216 + offsetY + animParams.offsetx + 14.142136;
-	obj_render_pos4[2].x = v70;
-	obj_render_pos4[2].z = v69;
-	obj_render_pos4[3].x = v70;
-	obj_render_pos4[3].z = v68;
-	tig_shader_render_3d(
-		4,
-		obj_render_pos4,
-		obj_render_normals4,
-		obj_render_diffuse4,
-		obj_render_uv4,
-		2,
-		obj_render_indices6,
-		shadow_shader_id);*/
+	auto& shapeRenderer3d = tig->GetShapeRenderer3d();
+
+	std::array<gfx::ShapeVertex3d, 4> corners;
+
+	LocAndOffsets loc{ { animParams.x, animParams.y}, animParams.offsetX, animParams.offsetY };
+	auto center = loc.ToCenterOfTileAbs3D(animParams.offsetZ);
+
+	auto radius = objects.GetRadius(handle);
+
+	corners[0].pos.x = center.x - radius;
+	corners[0].pos.y = center.y;
+	corners[0].pos.z = center.z - radius;
+	corners[0].uv = { 0, 0 };
+	
+	corners[1].pos.x = center.x + radius;
+	corners[1].pos.y = center.y;
+	corners[1].pos.z = center.z - radius;
+	corners[1].uv = { 1, 0 };
+
+	corners[2].pos.x = center.x + radius;
+	corners[2].pos.y = center.y;
+	corners[2].pos.z = center.z + radius;
+	corners[2].uv = { 1, 1 };
+			
+	corners[3].pos.x = center.x - radius;
+	corners[3].pos.y = center.y;
+	corners[3].pos.z = center.z + radius;
+	corners[3].uv = { 0, 1 };
+
+	XMCOLOR color(mBlobShadowMaterial->GetSpec()->diffuse);
+	color.a = (color.a * alpha) / 255;
+	shapeRenderer3d.DrawQuad(corners, *mBlobShadowMaterial, color);
 }
 
 objHndl MapObjectRenderer::GiantFrogGetGrappledOpponent(objHndl giantFrog)
@@ -1109,6 +1005,9 @@ void RenderFix::obj_render(objHndl handle, int flag, locXY loc, int x) {
 void RenderFix::obj_render_highlight(objHndl handle, int shaderId)
 {
 	auto mdfMaterial{ tig->GetMdfFactory().GetById(shaderId) };
+
+	gameRenderer->GetMapObjectRenderer().RenderObjectHighlight(handle, mdfMaterial);
+
 }
 
 #pragma pack(push, 8)

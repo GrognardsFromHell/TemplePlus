@@ -247,6 +247,23 @@ namespace gfx {
 
 	}
 
+	void ShapeRenderer3d::DrawQuad(const std::array<ShapeVertex3d, 4> &corners,
+		gfx::MdfRenderMaterial &material,
+		XMCOLOR color) {
+
+		mImpl->discVertexBuffer->Update<const ShapeVertex3d>(corners);
+		mImpl->discBufferBinding.Bind();
+
+		MdfRenderOverrides overrides;
+		overrides.overrideDiffuse = true;
+		overrides.overrideColor = color;
+		material.Bind(mImpl->device, {}, &overrides);
+
+		mImpl->device.GetDevice()->SetIndices(mImpl->discIndexBuffer->GetBuffer());
+		mImpl->device.GetDevice()->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
+
+	}
+
 	void ShapeRenderer3d::DrawLine(const XMFLOAT3& from, const XMFLOAT3& to, XMCOLOR color) {
 
 		std::array<XMFLOAT3, 2> positions{

@@ -279,6 +279,21 @@ void ShapeRenderer2d::DrawLines(gsl::array_view<Line2d> lines) {
 
 	}
 
+	void ShapeRenderer2d::DrawFullScreenQuad() {
+
+		std::array<Vertex2d, 4> fullScreenCorners;
+		fullScreenCorners[0].pos = { -1, -1, 0 };
+		fullScreenCorners[0].uv = { 0, 0 };
+		fullScreenCorners[1].pos = { 1, -1, 0 };
+		fullScreenCorners[1].uv = { 1, 0 };
+		fullScreenCorners[2].pos = { 1, 1, 0 };
+		fullScreenCorners[2].uv = { 1, 1 };
+		fullScreenCorners[3].pos = { -1, 1, 0 };
+		fullScreenCorners[3].uv = { 0, 1 };
+		DrawRectangle(fullScreenCorners);
+
+	}
+
 	void ShapeRenderer2d::DrawPieSegment(int segments, 
 		int x, int y, 
 		float angleCenter, float angleWidth, 

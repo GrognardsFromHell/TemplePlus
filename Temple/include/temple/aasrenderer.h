@@ -9,6 +9,8 @@ namespace gfx {
 	class RenderingDevice;
 	class MdfMaterialFactory;
 	struct MdfRenderOverrides;
+	class ShapeRenderer2d;
+	class ShapeRenderer3d;
 }
 
 namespace temple {
@@ -22,6 +24,8 @@ namespace temple {
 		AasRenderer(
 			AasAnimatedModelFactory &aasFactory,
 			gfx::RenderingDevice &device,
+			gfx::ShapeRenderer2d &shapeRenderer2d,
+			gfx::ShapeRenderer3d &shapeRenderer3d,
 			gfx::MdfMaterialFactory &mdfFactory);
 		~AasRenderer();
 
@@ -37,19 +41,40 @@ namespace temple {
 			const gfx::AnimatedModelParams& params,
 			const gfx::Light3d &globalLight);
 
+		void RenderShadowMapShadow(gsl::array_view<gfx::AnimatedModel*> models,
+			gsl::array_view<const gfx::AnimatedModelParams*> modelParams,
+			const XMFLOAT3 &center,
+			float radius,
+			float height,
+			const XMFLOAT4 &lightDir,
+			bool softShadows);
+
 	private:
 		AasAnimatedModelFactory &mAasFactory;
 		gfx::RenderingDevice &mDevice;
+		gfx::ShapeRenderer2d &mShapeRenderer2d;
+		gfx::ShapeRenderer3d &mShapeRenderer3d;
 		gfx::Material mGeometryShadowMaterial;
 		gfx::MdfMaterialFactory &mMdfFactory;
 		AasFreeListenerHandle mListenerHandle;
 		std::unordered_map<AasHandle, AasStatePtr> mRenderDataCache;
+		
+		// Shadow map related state
+		gfx::RenderTargetTexturePtr mShadowTarget; // Shadow map texture
+		gfx::RenderTargetTexturePtr mShadowTargetTmp; // Temp buffer for gauss blur
+		gfx::Material mShadowMapMaterial;
+		gfx::Material mGaussBlurHor; // Material for horizontal pass of gauss blur
+		gfx::Material mGaussBlurVer; // Material for vertical pass of gauss blur
 
 		AasRenderSubmeshData &GetSubmeshData(AasRenderData& aasState,
 			int submeshId,
 			gfx::Submesh &submesh);
 
 		static gfx::Material CreateGeometryShadowMaterial(gfx::RenderingDevice &device);
+		static gfx::Material CreateShadowMapMaterial(gfx::RenderingDevice &device);
+		static gfx::Material CreateGaussBlurMaterial(gfx::RenderingDevice &device,
+			const gfx::RenderTargetTexturePtr &texture,
+			bool horizontal);
 
 		void RecalcNormals(
 			int vertexCount,
@@ -57,6 +82,9 @@ namespace temple {
 			DirectX::XMFLOAT4* normals,
 			int primCount,
 			const uint16_t* indices);
+
+		static constexpr int ShadowMapWidth = 256;
+		static constexpr int ShadowMapHeight = 256;
 	};
 
 }

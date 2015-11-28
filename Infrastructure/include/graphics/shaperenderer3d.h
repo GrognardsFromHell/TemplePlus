@@ -27,6 +27,10 @@ public:
 		XMCOLOR color,
 		const gfx::TextureRef &texture);
 
+	void DrawQuad(const std::array<ShapeVertex3d, 4> &corners,
+		gfx::MdfRenderMaterial &material,
+		XMCOLOR color);
+
 	void DrawDisc(const XMFLOAT3 &center, 
 		float rotation, 
 		float radius,

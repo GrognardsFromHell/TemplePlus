@@ -16,7 +16,9 @@ TempleDll::TempleDll(const std::wstring &installationDir, IDirect3DDevice9Ex* de
 	mdfFactory(renderingDevice),
 	aasConfig(CreateAasConfig()),
 	aasFactory(aasConfig),
-	aasRenderer(aasFactory, renderingDevice, mdfFactory),
+	shapeRenderer2d(renderingDevice),
+	shapeRenderer3d(renderingDevice),
+	aasRenderer(aasFactory, renderingDevice, shapeRenderer2d, shapeRenderer3d, mdfFactory),
 	renderManager(renderingDevice, aasFactory, aasRenderer) {
 
 	particles::IPartSysExternal::SetCurrent(&EditorExternal::GetInstance());

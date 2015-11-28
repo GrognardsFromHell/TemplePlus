@@ -1,18 +1,17 @@
-#include "..\include\temple\aasrenderer.h"
-#include "..\include\temple\aasrenderer.h"
-#include "..\include\temple\aasrenderer.h"
-#include "..\include\temple\aasrenderer.h"
+
+#include <infrastructure/logging.h>
 
 #include <graphics/materials.h>
 #include <graphics/buffers.h>
 #include <graphics/bufferbinding.h>
+#include <graphics/shaperenderer2d.h>
+#include <graphics/shaperenderer3d.h>
 #include <graphics/device.h>
 #include <graphics/shaders.h>
 #include <graphics/mdfmaterials.h>
+#include <graphics/dynamictexture.h>
 
 #include "temple/aasrenderer.h"
-
-#include <infrastructure/logging.h>
 
 using namespace gfx;
 
@@ -44,11 +43,20 @@ struct AasRenderData {
 
 AasRenderer::AasRenderer(AasAnimatedModelFactory &aasFactory, 
 						 RenderingDevice& device, 
+						 ShapeRenderer2d &shapeRenderer2d,
+						 ShapeRenderer3d &shapeRenderer3d,
 						 MdfMaterialFactory &mdfFactory) 
 	: mDevice(device), 
 	  mMdfFactory(mdfFactory), 
+	  mShapeRenderer2d(shapeRenderer2d),
+	  mShapeRenderer3d(shapeRenderer3d),
 	  mAasFactory(aasFactory),
-	  mGeometryShadowMaterial(CreateGeometryShadowMaterial(device)) {
+	  mGeometryShadowMaterial(CreateGeometryShadowMaterial(device)),
+	  mShadowTarget(device.CreateRenderTargetTexture(D3DFMT_A8R8G8B8, ShadowMapWidth, ShadowMapHeight)),
+	  mShadowTargetTmp(device.CreateRenderTargetTexture(D3DFMT_A8R8G8B8, ShadowMapWidth, ShadowMapHeight)),
+	  mShadowMapMaterial(CreateShadowMapMaterial(device)),
+	  mGaussBlurHor(CreateGaussBlurMaterial(device, mShadowTarget, true)),
+	  mGaussBlurVer(CreateGaussBlurMaterial(device, mShadowTargetTmp, false)) {
 	Expects(!aasRenderer);
 
 	/*
@@ -108,6 +116,43 @@ Material AasRenderer::CreateGeometryShadowMaterial(gfx::RenderingDevice &device)
 	auto ps{ device.GetShaders().LoadPixelShader("diffuse_only_ps") };
 
 	return Material(blendState, depthStencilState, rasterizerState, {}, vs, ps);
+}
+
+Material AasRenderer::CreateShadowMapMaterial(gfx::RenderingDevice &device) {
+	BlendState blendState;
+	RasterizerState rasterizerState;
+	DepthStencilState depthStencilState;
+	depthStencilState.depthEnable = false;
+	auto vs{ device.GetShaders().LoadVertexShader("shadowmap_geom_vs") };
+	auto ps{ device.GetShaders().LoadPixelShader("diffuse_only_ps") };
+
+	return { blendState, depthStencilState, rasterizerState,{}, vs, ps };
+}
+
+Material AasRenderer::CreateGaussBlurMaterial(gfx::RenderingDevice &device, const gfx::RenderTargetTexturePtr &texturePtr, bool horizontal) {
+	BlendState blendState;
+	SamplerState samplerState;
+	samplerState.addressU = D3DTADDRESS_CLAMP;
+	samplerState.addressV = D3DTADDRESS_CLAMP;
+	samplerState.magFilter = D3DTEXF_LINEAR;
+	samplerState.minFilter = D3DTEXF_LINEAR;
+	samplerState.mipFilter = D3DTEXF_LINEAR;
+	RasterizerState rasterizerState;
+	rasterizerState.cullMode = D3DCULL_NONE;
+	DepthStencilState depthStencilState;
+	depthStencilState.depthEnable = false;
+
+	auto vs(device.GetShaders().LoadVertexShader("gaussian_blur_vs"));
+	Shaders::ShaderDefines horDefines;
+	if (horizontal) {
+		horDefines["HOR"] = "1";
+	}
+	auto ps(device.GetShaders().LoadPixelShader("gaussian_blur_ps", horDefines));
+
+	std::vector<MaterialSamplerBinding> samplers {
+		{ texturePtr, samplerState }
+	};
+	return { blendState, depthStencilState, rasterizerState, samplers, vs, ps };
 }
 
 void AasRenderer::RecalcNormals(int vertexCount, const XMFLOAT4* pos, XMFLOAT4* normals, int primCount, const uint16_t* indices) {
@@ -254,6 +299,86 @@ void AasRenderer::RenderGeometryShadow(gfx::AnimatedModel * model,
 		d3d->SetIndices(submeshData.idxBuffer->GetBuffer());
 		D3DLOG(d3d->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, submesh->GetVertexCount(), 0, submesh->GetPrimitiveCount()));
 	}
+
+}
+
+void AasRenderer::RenderShadowMapShadow(gsl::array_view<gfx::AnimatedModel*> models, 
+										gsl::array_view<const gfx::AnimatedModelParams*> modelParams,
+										const XMFLOAT3 &center,
+										float radius,
+										float height,
+										const XMFLOAT4 &lightDir,
+										bool softShadows) {
+
+	Expects(models.size() == modelParams.size());
+
+	float shadowMapWorldX, shadowMapWorldWidth,
+		shadowMapWorldZ, shadowMapWorldHeight;
+
+	if (lightDir.x < 0.0) {
+		shadowMapWorldX = center.x - 2 * radius + lightDir.x * height;
+		shadowMapWorldWidth = 4 * radius - lightDir.x * height;
+	} else {
+		shadowMapWorldX = center.x - 2 * radius;
+		shadowMapWorldWidth = lightDir.x * height + 4 * radius;
+	}
+
+	if (lightDir.z < 0.0) {
+		shadowMapWorldZ = center.z - 2 * radius + lightDir.z * height;
+		shadowMapWorldHeight = 4 * radius - lightDir.z * height;
+	} else {
+		shadowMapWorldZ = center.z - 2 * radius;
+		shadowMapWorldHeight = lightDir.z + height + 4 * radius;
+	}
+
+	CComPtr<IDirect3DSurface9> currentTarget;
+	mDevice.GetDevice()->GetRenderTarget(0, &currentTarget);
+	mDevice.GetDevice()->SetRenderTarget(0, mShadowTarget->GetSurface());
+
+	mDevice.SetMaterial(mShadowMapMaterial);
+
+	// Set shader params
+	XMFLOAT4 floats{ shadowMapWorldX, shadowMapWorldZ, shadowMapWorldWidth, shadowMapWorldHeight };
+	mDevice.GetDevice()->SetVertexShaderConstantF(0, &floats.x, 1);
+	mDevice.GetDevice()->SetVertexShaderConstantF(1, &lightDir.x, 1);
+	floats.x = center.y;
+	mDevice.GetDevice()->SetVertexShaderConstantF(2, &floats.x, 1);
+	XMCOLOR color(0, 0, 0, 0.5f);
+	XMStoreFloat4(&floats, PackedVector::XMLoadColor(&color));
+	mDevice.GetDevice()->SetVertexShaderConstantF(4, &floats.x, 1);
+
+	mDevice.GetDevice()->Clear(0, nullptr, D3DCLEAR_TARGET, 0, 0, 0);
+
+	for (size_t i = 0; i < models.size(); ++i) {
+		RenderWithoutMaterial(models[i], *modelParams[i]);
+	}
+
+	if (softShadows) {
+		mDevice.SetMaterial(mGaussBlurHor);
+		mDevice.GetDevice()->SetRenderTarget(0, mShadowTargetTmp->GetSurface());
+		mShapeRenderer2d.DrawFullScreenQuad();
+
+		mDevice.SetMaterial(mGaussBlurVer);
+		mDevice.GetDevice()->SetRenderTarget(0, mShadowTarget->GetSurface());
+		mShapeRenderer2d.DrawFullScreenQuad();
+	}
+
+	mDevice.GetDevice()->SetRenderTarget(0, currentTarget);
+
+	auto shadowMapWorldBottom = shadowMapWorldZ + shadowMapWorldHeight;
+	auto shadowMapWorldRight = shadowMapWorldX + shadowMapWorldWidth;
+
+	std::array<gfx::ShapeVertex3d, 4> corners;
+	corners[0].pos = { shadowMapWorldX, center.y, shadowMapWorldZ };
+	corners[1].pos = { shadowMapWorldX, center.y, shadowMapWorldBottom };
+	corners[2].pos = { shadowMapWorldRight, center.y, shadowMapWorldBottom };
+	corners[3].pos = { shadowMapWorldRight, center.y, shadowMapWorldZ };
+	corners[0].uv = { 0, 0 };
+	corners[1].uv = { 0, 1 };
+	corners[2].uv = { 1, 1 };
+	corners[3].uv = { 1, 0 };
+
+	mShapeRenderer3d.DrawQuad(corners, 0xFFFFFFFF, mShadowTarget);	
 
 }
 
