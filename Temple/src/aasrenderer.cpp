@@ -111,6 +111,7 @@ Material AasRenderer::CreateGeometryShadowMaterial(gfx::RenderingDevice &device)
 	RasterizerState rasterizerState;
 	rasterizerState.cullMode = D3DCULL_NONE;
 	DepthStencilState depthStencilState;
+	depthStencilState.depthEnable = false;
 
 	auto vs{ device.GetShaders().LoadVertexShader("shadow_geom_vs") };
 	auto ps{ device.GetShaders().LoadPixelShader("diffuse_only_ps") };
