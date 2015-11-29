@@ -293,7 +293,7 @@ public:
 
 	void apply() override {
 		replaceFunction(0x10081FA0, SectorCacheFind);
-		replaceFunction(0x10082700, SectorLock);
+	//	replaceFunction(0x10082700, SectorLock);
 	};
 };
 
