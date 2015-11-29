@@ -75,7 +75,8 @@ void ParticleSysSystem::AdvanceTime(uint32_t time) {
 		timeInSecs = 0.5f;
 	}
 
-	for (auto it = mActiveSys.begin(); it != mActiveSys.end(); ++it) {
+	auto it = mActiveSys.begin();
+	while (it != mActiveSys.end()) {
 		auto& sys = *it->second;
 
 		sys.Simulate(timeInSecs);
@@ -83,6 +84,8 @@ void ParticleSysSystem::AdvanceTime(uint32_t time) {
 		// Remove dead systems
 		if (sys.IsDead()) {
 			it = mActiveSys.erase(it);
+		} else {
+			it++;
 		}
 	}
 

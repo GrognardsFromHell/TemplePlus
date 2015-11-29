@@ -25,6 +25,7 @@ struct ShapeRenderer2d::Impl {
 	BufferBinding lineBufferBinding;
 
 	Material outlineMaterial;
+	Material pieFillMaterial;
 	Material lineMaterial;
 	Material untexturedMaterial;
 	Material texturedMaterial;
@@ -36,6 +37,7 @@ struct ShapeRenderer2d::Impl {
 		const char *pixelShaderName,
 		bool forLines = false);
 	static Material CreateOutlineMaterial(RenderingDevice &device);
+	static Material CreatePieFillMaterial(RenderingDevice &device);
 };
 
 ShapeRenderer2d::Impl::Impl(RenderingDevice &device)
@@ -44,7 +46,8 @@ ShapeRenderer2d::Impl::Impl(RenderingDevice &device)
 	texturedMaterial(CreateMaterial(device, "textured_simple_ps")),
 	texturedWithMaskMaterial(CreateMaterial(device, "textured_two_ps")),
 	lineMaterial(CreateMaterial(device, "diffuse_only_ps", true)),
-	outlineMaterial(CreateOutlineMaterial(device)) {
+	outlineMaterial(CreateOutlineMaterial(device)),
+	pieFillMaterial(CreatePieFillMaterial(device)) {
 
 	samplerWrapState.minFilter = D3DTEXF_LINEAR;
 	samplerWrapState.magFilter = D3DTEXF_LINEAR;
@@ -105,6 +108,23 @@ Material ShapeRenderer2d::Impl::CreateOutlineMaterial(RenderingDevice& device) {
 	auto pixelShader(device.GetShaders().LoadPixelShader("diffuse_only_ps"));
 
 	return Material(blendState, depthStencilState, {},
+	{}, vertexShader, pixelShader);
+}
+
+Material ShapeRenderer2d::Impl::CreatePieFillMaterial(RenderingDevice& device) {
+	BlendState blendState;
+	blendState.blendEnable = true;
+	blendState.srcBlend = D3DBLEND_SRCALPHA;
+	blendState.destBlend = D3DBLEND_INVSRCALPHA;
+	DepthStencilState depthStencilState;
+	depthStencilState.depthEnable = false;
+	RasterizerState rasterizerState;
+	rasterizerState.cullMode = D3DCULL_NONE;
+
+	auto vertexShader(device.GetShaders().LoadVertexShader("gui_vs"));
+	auto pixelShader(device.GetShaders().LoadPixelShader("diffuse_only_ps"));
+
+	return Material(blendState, depthStencilState, rasterizerState,
 	{}, vertexShader, pixelShader);
 }
 
@@ -294,6 +314,8 @@ void ShapeRenderer2d::DrawLines(gsl::array_view<Line2d> lines) {
 
 	}
 
+	static constexpr size_t MaxSegments = 50;
+
 	void ShapeRenderer2d::DrawPieSegment(int segments, 
 		int x, int y, 
 		float angleCenter, float angleWidth, 
@@ -301,40 +323,46 @@ void ShapeRenderer2d::DrawLines(gsl::array_view<Line2d> lines) {
 		int outerRadius, int outerOffset, 
 		XMCOLOR color1, 
 		XMCOLOR color2) {
+				
+		Expects(segments <= MaxSegments);
+
+		auto posCount = segments * 2 + 2;
 		
-		Expects(segments <= 99);
-		std::array<XMFLOAT3, 100> positions;
+		// There are two positions for the start and 2 more for each segment thereafter
+		static constexpr size_t MaxPositions = MaxSegments * 2 + 2;
+		std::array<Vertex2d, MaxPositions> vertices;
 
-		auto angleStep = angleWidth / segments;
-		auto angleStart = angleCenter - angleWidth / 2;
+		auto angleStep = angleWidth / (posCount);
+		auto angleStart = angleCenter - angleWidth * 0.5f;
 
-		for (auto i = 0; i < segments - 1; ++i) {
+		// We generate one more position because of the starting points
+		for (auto i = 0; i < posCount; ++i) {
 			auto angle = angleStart + i * angleStep;
-			auto& pos = positions[i];
+			auto& pos = vertices[i].pos;
+			vertices[i].diffuse = color1;
 
 			// The generated positions alternate between the outside
 			// and inner circle
-			float radius, offset;
 			if (i % 2 == 0) {
-				radius = (float)innerRadius;
-				offset = (float)innerOffset;
+				pos.x = x + cosf(angle) * innerRadius - sinf(angle) * innerOffset;
+				pos.y = y + sinf(angle) * innerRadius + cosf(angle) * innerOffset;
+				pos.z = 0;
 			} else {
-				radius = (float)outerRadius;
-				offset = (float)outerOffset;
+				pos.x = x + cosf(angle) * outerRadius - sinf(angle) * outerOffset;
+				pos.y = y + sinf(angle) * outerRadius + cosf(angle) * outerOffset;
+				pos.z = 0;
 			}
-
-			pos.x = x + cosf(angle) * radius - sinf(angle) * offset;
-			pos.y = y + sinf(angle) * radius + cosf(angle) * offset;
-			pos.z = 0;
 		}
 
 		auto& device = mImpl->device;
 
-		device.SetMaterial(mImpl->outlineMaterial);
+		device.SetMaterial(mImpl->pieFillMaterial);
 
 		gfx::BufferBinding bufferBinding;
-		bufferBinding.AddBuffer(device.CreateVertexBuffer<XMFLOAT3>(positions), 0, sizeof(XMFLOAT3))
-			.AddElement(gfx::VertexElementType::Float3, gfx::VertexElementSemantic::Position);
+		auto buffer(device.CreateVertexBuffer<Vertex2d>(vertices));
+		bufferBinding.AddBuffer(buffer, 0, sizeof(Vertex2d))
+			.AddElement(gfx::VertexElementType::Float3, gfx::VertexElementSemantic::Position)
+			.AddElement(gfx::VertexElementType::Color, gfx::VertexElementSemantic::Color);
 		bufferBinding.Bind();
 
 		device.GetDevice()->SetVertexShaderConstantF(0, &device.GetCamera().GetUiProjection()._11, 4);
@@ -342,36 +370,45 @@ void ShapeRenderer2d::DrawLines(gsl::array_view<Line2d> lines) {
 		XMStoreFloat4(&colors, PackedVector::XMLoadColor(&color1));
 		device.GetDevice()->SetVertexShaderConstantF(4, &colors.x, 1);
 
-		device.GetDevice()->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, segments - 2);
+		device.GetDevice()->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, segments * 2);
+
+		device.SetMaterial(mImpl->pieFillMaterial);
 
 		// Change to the outline color
 		XMStoreFloat4(&colors, PackedVector::XMLoadColor(&color2));
 		device.GetDevice()->SetVertexShaderConstantF(4, &colors.x, 1);
 
+		// We generate one more position because of the starting points
+		for (auto i = 0; i < segments + 1; ++i) {
+			vertices[i * 2].diffuse = color2;
+			vertices[i * 2 + 1].diffuse = color2;
+		}
+		buffer->Update<Vertex2d>(vertices);
+
 		/*
 			Build an index buffer that draws an outline around the pie
 			segment using the previously generated positions.
 		*/
-		std::array<uint16_t, 99> outlineIndices;
+		std::array<uint16_t, MaxPositions + 1> outlineIndices;
 		auto i = 0;
 		auto j = 0;
 		// The first run of indices is along the inner radius
-		while (i < segments / 2) {
+		while (i < posCount / 2) {
 			outlineIndices[i++] = j;
 			j += 2;
 		}
 		// Then backwards along the outer radius
-		j = segments - 2;
-		while (i < segments - 1) {
+		j = posCount - 1;
+		while (i < posCount) {
 			outlineIndices[i++] = j;
 			j -= 2;
 		}
 		// And finally it goes back to the starting point
-		outlineIndices[segments - 1] = 0;
+		outlineIndices[posCount] = 0;
 		auto ib(device.CreateIndexBuffer(outlineIndices));
 		device.GetDevice()->SetIndices(ib->GetBuffer());
 
-		device.GetDevice()->DrawIndexedPrimitive(D3DPT_LINESTRIP, 0, 0, segments, 0, segments - 1);
+		device.GetDevice()->DrawIndexedPrimitive(D3DPT_LINESTRIP, 0, 0, posCount, 0, posCount);
 		
 	}
 

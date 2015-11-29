@@ -221,7 +221,7 @@ int RenderHooks::ShaderRender2d(const Render2dArgs* args) {
 }
 
 int RenderHooks::TextureRender2d(const Render2dArgs* args) {
-	
+
 	auto &shapeRenderer = tig->GetShapeRenderer2d();
 	auto &textures = tig->GetRenderingDevice().GetTextures();
 
@@ -347,55 +347,58 @@ int RenderHooks::TextureRender2d(const Render2dArgs* args) {
 		std::swap(vertices[1].uv.y, vertices[2].uv.y);
 	}
 
+	float destX = (float) args->destRect->x;
+	float destY = (float) args->destRect->y;
+
 	if (args->flags & Render2dArgs::FLAG_ROTATE) {
 		// Rotation?
 		auto cosRot = cosf(args->rotation);
 		auto sinRot = sinf(args->rotation);
 		auto destRect = args->destRect;
 		vertices[0].pos.x = args->rotationX
-			+ (destRect->x - args->rotationX) * cosRot
-			- (destRect->y - args->rotationY) * sinRot;
+			+ (destX - args->rotationX) * cosRot
+			- (destY - args->rotationY) * sinRot;
 		vertices[0].pos.y = args->rotationY
-			+ (destRect->y - args->rotationY) * cosRot
-			+ (destRect->x - args->rotationX) * sinRot;
+			+ (destY - args->rotationY) * cosRot
+			+ (destX - args->rotationX) * sinRot;
 		vertices[0].pos.z = vertexZ;
 
 		vertices[1].pos.x = args->rotationX
-			+ ((destRect->x + destRect->width) - args->rotationX) * cosRot
-			- (destRect->y - args->rotationY) * sinRot;
+			+ ((destX + destRect->width) - args->rotationX) * cosRot
+			- (destY - args->rotationY) * sinRot;
 		vertices[1].pos.y = args->rotationY
-			+ ((destRect->x + destRect->width) - args->rotationX) * sinRot
-			+ (destRect->y - args->rotationY) * cosRot;
+			+ ((destX + destRect->width) - args->rotationX) * sinRot
+			+ (destY - args->rotationY) * cosRot;
 		vertices[1].pos.z = vertexZ;
 
 		vertices[2].pos.x = args->rotationX
-			+ ((destRect->x + destRect->width) - args->rotationX) * cosRot
-			- ((destRect->y + destRect->width) - args->rotationY) * sinRot;
+			+ ((destX + destRect->width) - args->rotationX) * cosRot
+			- ((destY + destRect->width) - args->rotationY) * sinRot;
 		vertices[2].pos.y = args->rotationY
-			+ ((destRect->y + destRect->width) - args->rotationY) * cosRot
-			+ (destRect->x + destRect->width - args->rotationX) * sinRot;
+			+ ((destY + destRect->width) - args->rotationY) * cosRot
+			+ (destX + destRect->width - args->rotationX) * sinRot;
 		vertices[2].pos.z = vertexZ;
 
 		vertices[3].pos.x = args->rotationX
-			+ (destRect->x - args->rotationX) * cosRot
-			- ((destRect->y + destRect->height) - args->rotationY) * sinRot;
+			+ (destX - args->rotationX) * cosRot
+			- ((destY + destRect->height) - args->rotationY) * sinRot;
 		vertices[3].pos.y = args->rotationY
-			+ ((destRect->y + destRect->height) - args->rotationY) * cosRot
-			+ (destRect->x - args->rotationX) * sinRot;
+			+ ((destY + destRect->height) - args->rotationY) * cosRot
+			+ (destX - args->rotationX) * sinRot;
 		vertices[3].pos.z = vertexZ;
 	} else {
 		auto destRect = args->destRect;
-		vertices[0].pos.x = (float) destRect->x;
-		vertices[0].pos.y = (float) destRect->y;
+		vertices[0].pos.x = destX;
+		vertices[0].pos.y = destY;
 		vertices[0].pos.z = vertexZ;
-		vertices[1].pos.x = (float) destRect->x + destRect->width;
-		vertices[1].pos.y = (float) destRect->y;
+		vertices[1].pos.x = destX + destRect->width;
+		vertices[1].pos.y = destY;
 		vertices[1].pos.z = vertexZ;
-		vertices[2].pos.x = (float) destRect->x + destRect->width;
-		vertices[2].pos.y = (float) destRect->y + destRect->height;
+		vertices[2].pos.x = destX + destRect->width;
+		vertices[2].pos.y = destY + destRect->height;
 		vertices[2].pos.z = vertexZ;
-		vertices[3].pos.x = (float) destRect->x;
-		vertices[3].pos.y = (float) destRect->y + destRect->height;
+		vertices[3].pos.x = destX;
+		vertices[3].pos.y = destY + destRect->height;
 		vertices[3].pos.z = vertexZ;
 	}
 	
@@ -548,7 +551,7 @@ int RenderHooks::DrawRadialMenuSegment1(int x, int y,
 	XMCOLOR color1, XMCOLOR color2) {
 
 	tig->GetShapeRenderer2d()
-		.DrawPieSegment(17, x, y, angleCenter, angleWidth, innerRadius, innerOffset,
+		.DrawPieSegment(9, x, y, angleCenter, angleWidth, innerRadius, innerOffset,
 			outerRadius, outerOffset, color1, color2);
 
 	return 0;
@@ -561,7 +564,7 @@ int RenderHooks::DrawRadialMenuSegment2(int x, int y,
 	XMCOLOR color1, XMCOLOR color2) {
 
 	tig->GetShapeRenderer2d()
-		.DrawPieSegment(99, x, y, angleCenter, angleWidth, innerRadius, innerOffset,
+		.DrawPieSegment(50, x, y, angleCenter, angleWidth, innerRadius, innerOffset,
 			outerRadius, outerOffset, color1, color2);
 
 	return 0;
