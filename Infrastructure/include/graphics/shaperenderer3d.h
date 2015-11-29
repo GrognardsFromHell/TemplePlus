@@ -40,6 +40,8 @@ public:
 		const XMFLOAT3 &to,
 		XMCOLOR color);
 
+	void DrawCylinder(const XMFLOAT3 &pos, float radius, float height);
+
 	/*
 		occludedOnly means that the circle will only draw
 		in already occluded areas (based on depth buffer)

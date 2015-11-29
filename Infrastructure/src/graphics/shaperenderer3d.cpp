@@ -312,4 +312,62 @@ namespace gfx {
 		mImpl->device.GetDevice()->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, sCircleSegments);
 
 	}
+
+	static constexpr float cos45 = 0.70709997f;
+
+	void ShapeRenderer3d::DrawCylinder(const XMFLOAT3 &pos, float radius, float height) {
+		// Draw the 3d bounding cylinder of the object
+		static XMCOLOR diffuse(0, 1.0f, 0, 0.5f);
+
+		float x = pos.x;
+		float y = pos.y;
+		float z = pos.z;
+
+		auto scaledRadius = radius * cos45;
+		XMFLOAT3 from, to;
+
+		from.x = x + scaledRadius;
+		from.y = y;
+		from.z = z - scaledRadius;
+		to.x = from.x;
+		to.y = y + height;
+		to.z = from.z;
+
+		DrawLine(from, to, diffuse);
+
+		from.x = x - scaledRadius;
+		from.z = z + scaledRadius;
+		to.x = from.x;
+		to.z = from.z;
+		DrawLine(from, to, diffuse);
+
+		/*
+		Draw the circle on top and on the bottom
+		of the cylinder.
+		*/
+		for (auto i = 0; i < 24; ++i) {
+			// We rotate 360° in 24 steps of 15° each
+			auto rot = i * XMConvertToRadians(15);
+			auto nextRot = rot + XMConvertToRadians(15);
+
+			// This is the bottom cap
+			from.x = x + cosf(rot) * radius;
+			from.y = y;
+			from.z = z - sinf(rot) * radius;
+			to.x = x + cosf(nextRot) * radius;
+			to.y = y;
+			to.z = z - sinf(nextRot) * radius;
+			DrawLine(from, to, diffuse);
+
+			// This is the top cap
+			from.x = x + cosf(rot) * radius;
+			from.y = y + height;
+			from.z = z - sinf(rot) * radius;
+			to.x = x + cosf(nextRot) * radius;
+			to.y = y + height;
+			to.z = z - sinf(nextRot) * radius;
+			DrawLine(from, to, diffuse);
+		}
+	}
+
 }

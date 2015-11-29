@@ -183,17 +183,15 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 	if (!IsObjectOnScreen(worldPosFull, animParams.offsetZ, radius, renderHeight)) {
 		return;
 	}
-
-	/*
-	DrawBoundingCylinder(
-		centerOfTile.x,
-		animParams.offsetZ,
-		centerOfTile.y,
-		radius,
-		renderHeight
-	);
-	*/
-
+	
+	if (config.drawObjCylinders) {
+		tig->GetShapeRenderer3d().DrawCylinder(
+			worldPosFull.ToCenterOfTileAbs3D(animParams.offsetZ),
+			radius,
+			renderHeight
+			);
+	}
+	
 	auto lightSearchRadius = 0.0f;
 	if (!(flags & OF_DONTLIGHT)) {
 		lightSearchRadius = radius;
@@ -230,16 +228,12 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 			{
 				// TODO: pos
 				RenderShadowMapShadow(handle, animParams, *animatedModel, globalLight, alpha);
-			}
-			else if (mShadowType == ShadowType::Geometry)
-			{
+			} else if (mShadowType == ShadowType::Geometry) {
 				mAasRenderer.RenderGeometryShadow(animatedModel.get(),
 					animParams,
 					globalLight,
 					alpha / 255.0f);
-			}
-			else if (mShadowType == ShadowType::Blob)
-			{
+			} else if (mShadowType == ShadowType::Blob) {
 				RenderBlobShadow(handle, *animatedModel, animParams, alpha);
 			}
 		}
@@ -266,12 +260,12 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 		}
 
 	}
-	else if (!objects.IsEquipmentType(type) && mShadowType == ShadowType::Geometry)
+	else if (objects.IsEquipmentType(type) && mShadowType == ShadowType::Geometry)
 	{
 		mAasRenderer.RenderGeometryShadow(animatedModel.get(),
 			animParams,
 			globalLight,
-			alpha);
+			alpha / 255.0f);
 	}
 
 	RenderMirrorImages(handle);
@@ -283,64 +277,6 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 void MapObjectRenderer::RenderObjectHighlight(objHndl handle, const gfx::MdfRenderMaterialPtr & material)
 {
 	// TODO
-}
-
-void MapObjectRenderer::DrawBoundingCylinder(float x, float y, float z, float radius, float height) {
-
-	// Draw the 3d bounding cylinder of the object
-	std::vector<Line> lines;
-	constexpr auto diffuse = D3DCOLOR_ARGB(128, 0, 255, 0);
-
-	auto scaledRadius = radius * cos45;
-	D3DXVECTOR3 from, to;
-
-	from.x = x + scaledRadius;
-	from.y = y;
-	from.z = z - scaledRadius;
-	to.x = from.x;
-	to.y = y + height;
-	to.z = from.z;
-
-	lines.push_back({from, to, diffuse});
-
-	from.x = x - scaledRadius;
-	from.z = z + scaledRadius;
-	to.x = from.x;
-	to.z = from.z;
-	lines.push_back({from, to, diffuse});
-
-	/*
-		Draw the circle on top and on the bottom 
-		of the cylinder.
-	*/
-	for (auto i = 0; i < 24; ++i) {
-		// We rotate 360° in 24 steps of 15° each
-		auto rot = i * deg2rad(15);
-		auto nextRot = rot + deg2rad(15);
-
-		// This is the bottom cap
-		from.x = x + cosf(rot) * radius;
-		from.y = y;
-		from.z = z - sinf(rot) * radius;
-		to.x = x + cosf(nextRot) * radius;
-		to.y = y;
-		to.z = z - sinf(nextRot) * radius;
-		lines.push_back({from, to, diffuse});
-
-		// This is the top cap
-		from.x = x + cosf(rot) * radius;
-		from.y = y + height;
-		from.z = z - sinf(rot) * radius;
-		to.x = x + cosf(nextRot) * radius;
-		to.y = y + height;
-		to.z = z - sinf(nextRot) * radius;
-		lines.push_back({from, to, diffuse});
-	}
-
-	// TODO
-	/*Renderer renderer(*graphics);
-	renderer.DrawLines(lines);*/
-
 }
 
 class SectorIterator {

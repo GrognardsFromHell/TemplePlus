@@ -61,8 +61,6 @@ private:
 	size_t mRenderedLastFrame = 0;
 	size_t mTotalLastFrame = 0;
 
-	void DrawBoundingCylinder(float x, float y, float z, float radius, float height);
-
 	std::vector<gfx::Light3d> FindLights(LocAndOffsets atLocation, float radius);
 
 	/*
