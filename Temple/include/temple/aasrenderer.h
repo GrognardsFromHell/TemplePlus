@@ -39,7 +39,8 @@ namespace temple {
 
 		void RenderGeometryShadow(gfx::AnimatedModel *model,
 			const gfx::AnimatedModelParams& params,
-			const gfx::Light3d &globalLight);
+			const gfx::Light3d &globalLight,
+			float alpha);
 
 		void RenderShadowMapShadow(gsl::array_view<gfx::AnimatedModel*> models,
 			gsl::array_view<const gfx::AnimatedModelParams*> modelParams,
@@ -47,6 +48,7 @@ namespace temple {
 			float radius,
 			float height,
 			const XMFLOAT4 &lightDir,
+			float alpha,
 			bool softShadows);
 
 	private:

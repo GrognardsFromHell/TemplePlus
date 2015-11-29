@@ -273,7 +273,8 @@ void AasRenderer::RenderWithoutMaterial(gfx::AnimatedModel *model,
 
 void AasRenderer::RenderGeometryShadow(gfx::AnimatedModel * model, 
 	const gfx::AnimatedModelParams & params, 
-	const gfx::Light3d & globalLight)
+	const gfx::Light3d & globalLight,
+	float alpha)
 {
 	
 	// Find or create render caching data for the submesh
@@ -289,6 +290,8 @@ void AasRenderer::RenderGeometryShadow(gfx::AnimatedModel * model,
 	d3d->SetVertexShaderConstantF(4, &globalLight.dir.x, 1);
 	XMFLOAT4 floats{ params.offsetZ, 0, 0, 0 };
 	d3d->SetVertexShaderConstantF(5, &floats.x, 1);
+	floats.x = alpha;
+	d3d->SetVertexShaderConstantF(6, &floats.x, 1);
 
 	auto materialIds(model->GetSubmeshes());
 	for (size_t i = 0; i < materialIds.size(); ++i) {
@@ -309,6 +312,7 @@ void AasRenderer::RenderShadowMapShadow(gsl::array_view<gfx::AnimatedModel*> mod
 										float radius,
 										float height,
 										const XMFLOAT4 &lightDir,
+										float alpha,
 										bool softShadows) {
 
 	Expects(models.size() == modelParams.size());

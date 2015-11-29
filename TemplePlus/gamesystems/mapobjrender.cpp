@@ -229,13 +229,14 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 			if (mShadowType == ShadowType::ShadowMap)
 			{
 				// TODO: pos
-				RenderShadowMapShadow(handle, animParams, *animatedModel, globalLight);
+				RenderShadowMapShadow(handle, animParams, *animatedModel, globalLight, alpha);
 			}
 			else if (mShadowType == ShadowType::Geometry)
 			{
 				mAasRenderer.RenderGeometryShadow(animatedModel.get(),
 					animParams,
-					globalLight);
+					globalLight,
+					alpha / 255.0f);
 			}
 			else if (mShadowType == ShadowType::Blob)
 			{
@@ -269,7 +270,8 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 	{
 		mAasRenderer.RenderGeometryShadow(animatedModel.get(),
 			animParams,
-			globalLight);
+			globalLight,
+			alpha);
 	}
 
 	RenderMirrorImages(handle);
@@ -903,7 +905,8 @@ void MapObjectRenderer::RenderGiantFrogTongue(objHndl handle) {
 void MapObjectRenderer::RenderShadowMapShadow(objHndl obj,
 	const gfx::AnimatedModelParams &animParams,
 	gfx::AnimatedModel & model,
-	const Light3d &globalLight)
+	const Light3d &globalLight,
+	int alpha)
 {
 	
 	LocAndOffsets loc{ { animParams.x, animParams.y }, animParams.offsetX, animParams.offsetY };
@@ -950,6 +953,7 @@ void MapObjectRenderer::RenderShadowMapShadow(objHndl obj,
 		radius,
 		height,
 		globalLight.dir,
+		alpha / 255.0f,
 		true
 	);
 

@@ -79,7 +79,8 @@ private:
 	void RenderShadowMapShadow(objHndl handle, 
 		const gfx::AnimatedModelParams &animParams, 
 		gfx::AnimatedModel &model, 
-		const gfx::Light3d& globalLight);
+		const gfx::Light3d& globalLight,
+		int alpha);
 	void RenderBlobShadow(objHndl handle, 
 		gfx::AnimatedModel &model, 
 		gfx::AnimatedModelParams &animParams,

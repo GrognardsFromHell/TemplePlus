@@ -2,6 +2,7 @@
 float4x4 projMat : register(c0);
 float3 lightDir : register(c4);
 float offsetZ : register(c5);
+float critterAlpha : register(c6);
 
 struct VS_IN {
 	float4 pos : POSITION;
@@ -31,6 +32,7 @@ VS_OUT main(VS_IN input)
 	} else {
 		alpha = 0;
 	}
+	alpha *= critterAlpha;
 	result.diffuse = float4(0, 0, 0, alpha * 0.5f);
 
 	fixedPos.x = fixedPos.x - (y - offsetZ) * lightDir.x / lightDir.y;
