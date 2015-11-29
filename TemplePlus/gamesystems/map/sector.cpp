@@ -76,6 +76,7 @@ struct SectorAddresses : temple::AddressTable
 } addresses;
 
 SectorSystem  sectorSys;
+BOOL(__cdecl * SectorSystem::orgSectorCacheFind)(SectorLoc secLoc, int * secCacheIdx);
 
 int Sector::GetTileOffset(LocAndOffsets* loc)
 {
@@ -107,6 +108,8 @@ uint64_t SectorSystem::GetSectorLimitY()
 BOOL SectorSystem::SectorCacheFind(SectorLoc secLoc, int* secCacheIdx)
 {
 
+	int result = orgSectorCacheFind(secLoc, secCacheIdx);
+
 	SectorCacheEntry * secCache = *addresses.sectorCache;
 	int * secCacheIndices = *addresses.sectorCacheIndices;
 
@@ -127,10 +130,10 @@ BOOL SectorSystem::SectorCacheFind(SectorLoc secLoc, int* secCacheIdx)
 	int idxLo=0;
 	int idxHi = *addresses.sectorCacheLockedCount - 1;
 
-	if (idxHi < 1)
+	if (idxHi < 0)
 	{
 		*secCacheIdx = idxLo;
-		return false;
+		return 0;
 	}
 
 	int searchCount = 0;
@@ -143,6 +146,10 @@ BOOL SectorSystem::SectorCacheFind(SectorLoc secLoc, int* secCacheIdx)
 		{
 			if (secCache[idx].sector.secLoc.raw == secLoc.raw)
 			{
+				if (idxMid != *secCacheIdx)
+				{
+					int dummy = 1;
+				}
 				*secCacheIdx = idxMid;
 				lastSecLoc = secLoc;
 				//searchDepthHist[searchCount]++;

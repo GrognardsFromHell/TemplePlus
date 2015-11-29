@@ -373,6 +373,8 @@ const char* AnimGoalDataNames[] = {
 enum AnimSlotFlag {
 	ASF_ACTIVE = 1,
 	ASF_UNK2 = 2,
+	ASF_RUNNING = 0x40,
+	ASF_SPEED_RECALC = 0x80,
 	ASF_UNK1 = 0x10000
 };
 

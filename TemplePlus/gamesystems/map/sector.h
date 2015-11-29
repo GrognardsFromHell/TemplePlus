@@ -291,8 +291,11 @@ public:
 
 	bool GetTileFlagsArea(TileRect * tileRect, Subtile *out, int * count);
 
+
+	static BOOL(__cdecl * orgSectorCacheFind)(SectorLoc secLoc, int * secCacheIdx);
+
 	void apply() override {
-		replaceFunction(0x10081FA0, SectorCacheFind);
+		orgSectorCacheFind = replaceFunction(0x10081FA0, SectorCacheFind);
 	//	replaceFunction(0x10082700, SectorLock);
 	};
 };

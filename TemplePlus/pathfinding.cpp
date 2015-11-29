@@ -72,7 +72,7 @@ struct ProximityList
 					{
 						if (objType == obj_t_pc || objType == obj_t_npc)
 						{
-							if (critterSys.IsFriendly(obj, pqr->mover))
+							if (critterSys.IsFriendly(obj, pqr->mover) || critterSys.IsDeadOrUnconscious(obj))
 								continue;
 						}
 						Append(obj);

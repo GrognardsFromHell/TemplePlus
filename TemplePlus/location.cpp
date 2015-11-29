@@ -12,20 +12,32 @@ class LocReplacement : public TempleFix
 public: const char* name() override 
 { return "Location" "Function Replacements";}
 
-		static locfunc orgGetLocFromScreenLoc;
-		/*
-			gets the game location tile from the screen pixel (screenX,screenY). often used for the center of the screen (W/2,H/2) and the corner (0,0).
-		*/
-		static BOOL GetLocFromScreenLoc(int64_t screenX, int64_t screenY, locXY *loc, float*offx, float*offy)
-{
-	int64_t xx = (screenX-*locSys.locTransX)/2;
-	int64_t yy = (screenY-*locSys.locTransY) / 2 * sqrt(2);
-	int result = orgGetLocFromScreenLoc(screenX,screenY,loc,offx,offy);
-	return result;
-};
+	static locfunc orgGetLocFromScreenLoc;
+	/*
+		gets the game location tile from the screen pixel (screenX,screenY). often used for the center of the screen (W/2,H/2) and the corner (0,0).
+	*/
+	static BOOL GetLocFromScreenLoc(int64_t screenX, int64_t screenY, locXY *loc, float*offx, float*offy)
+	{
+		int64_t xx = (screenX-*locSys.locTransX)/2;
+		int64_t yy = (screenY-*locSys.locTransY) / 2 * sqrt(2);
+		int result = orgGetLocFromScreenLoc(screenX,screenY,loc,offx,offy);
+		return result;
+	};
+	/*
+		checks if two locations are identical (up to floating point tolerance)
+	*/
+	static BOOL LocationCompare(LocAndOffsets * loc1, LocAndOffsets * loc2)
+	{
+		return loc1 == loc2
+			|| loc1->location.locx == loc2->location.locx
+			&& loc1->location.locy == loc2->location.locy
+			&& fabs(loc1->off_x - loc2->off_x) < 0.0000001192092895507812
+			&& fabs(loc1->off_y - loc2->off_y) < 0.0000001192092895507812;
+	};
 
 		void apply() override 
 	{
+		replaceFunction(0x1003FFC0, LocationCompare);
 	//	orgGetLocFromScreenLoc=replaceFunction(0x10029300, GetLocFromScreenLoc);
 	}
 }locRep;
