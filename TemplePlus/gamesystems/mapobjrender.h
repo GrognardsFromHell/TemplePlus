@@ -71,7 +71,10 @@ private:
 	static constexpr float cos45 = 0.70709997f;
 
 	bool IsObjectOnScreen(LocAndOffsets &location, float offsetZ, float radius, float renderHeight);
-	void RenderMirrorImages(objHndl handle);
+	void RenderMirrorImages(objHndl handle,
+		const gfx::AnimatedModelParams &animParams,
+		gfx::AnimatedModel &model,
+		gsl::array_view<gfx::Light3d> lights);
 	void RenderGiantFrogTongue(objHndl handle);
 
 	void RenderShadowMapShadow(objHndl handle, 

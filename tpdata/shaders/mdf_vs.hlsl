@@ -66,14 +66,29 @@ VS_OUT main(VS_IN input)
 {
 	VS_OUT result = (VS_OUT) 0;
 	float4 fixedPos = float4(input.pos.xyz, 1);
-	result.pos = mul(projMat, fixedPos);
 	float3 normal = normalize(input.normal.xyz);
 
+	float4 diffuse = matDiffuse;
+
+#if HIGHLIGHT
+	float alpha = abs((normal.x + normal.z) * 0.504798f
+		+ normal.y * 0.7f);
+	diffuse.a = alpha * alpha;
+
+	// Extend the object "outwards" a bit
+	fixedPos.x += 2 * normal.x;
+	fixedPos.y += 2 * normal.y;
+	fixedPos.z += 2 * normal.z;
+	normal = -normal; // Simulate light from "behind"
+#endif
+
+	result.pos = mul(projMat, fixedPos);
+
 #if LIGHTING	
-	result.diffuse = DoLights(fixedPos, normal, matDiffuse);
-	result.diffuse.a = matDiffuse.a;
+	result.diffuse = DoLights(fixedPos, normal, diffuse);
+	result.diffuse.a = diffuse.a;
 #else
-	result.diffuse = matDiffuse;
+	result.diffuse = diffuse;
 #endif
 
 #if TEXTURE_STAGES >= 1	

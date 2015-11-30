@@ -66,17 +66,28 @@ namespace gfx {
 		const MdfRenderOverrides *overrides) const {
 
 		auto d3d = device.GetDevice();
-		
-		d3d->SetVertexShaderConstantF(MDF_REG_VIEWPROJ,
-			&device.GetCamera().GetViewProj()._11,
-			4);
 
+		// Should we use a separate world matrix?
+		if (overrides && overrides->useWorldMatrix) {
+			// Build a world * view * proj matrix
+			auto worldViewProj{ XMLoadFloat4x4(&overrides->worldMatrix) * XMLoadFloat4x4(&device.GetCamera().GetViewProj()) };
+			XMFLOAT4X4A worldViewProjMat;
+			XMStoreFloat4x4A(&worldViewProjMat, worldViewProj);
+
+			d3d->SetVertexShaderConstantF(MDF_REG_VIEWPROJ, &worldViewProjMat._11, 4);
+		} else {
+			d3d->SetVertexShaderConstantF(MDF_REG_VIEWPROJ, &device.GetCamera().GetViewProj()._11, 4);
+		}
+		
 		// Set material diffuse color for shader
 		DirectX::XMFLOAT4 floats;
 		if (overrides && overrides->overrideColor) {
 			floats = D3DColorToFloat4(overrides->overrideColor);
 		} else {
 			floats = D3DColorToFloat4(mSpec->diffuse);
+		}
+		if (overrides && overrides->alpha != 1.0f) {
+			floats.w *= overrides->alpha;
 		}
 		d3d->SetVertexShaderConstantF(MDF_REG_MATDIFFUSE, &floats.x, 1);
 
@@ -532,7 +543,14 @@ namespace gfx {
 			vsDefines["LIGHTING"] = "1";
 		}
 
-		PixelShaderPtr pixelShader(mDevice.GetShaders().LoadPixelShader("mdf_ps", psDefines));
+		// Special case for highlight shaders until we're able to encode this
+		// in the material file itself
+		if (name == "art/meshes/mouseover.mdf") {
+			rasterizerState.cullMode = D3DCULL_CW;
+			vsDefines["HIGHLIGHT"] = "1";
+		}
+
+		auto pixelShader(mDevice.GetShaders().LoadPixelShader("mdf_ps", psDefines));
 
 		// Select the right vertex shader to use
 		auto vertexShader(mDevice.GetShaders().LoadVertexShader("mdf_vs", vsDefines));

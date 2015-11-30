@@ -13,6 +13,9 @@ namespace gfx {
 		bool ignoreLighting = false;
 		bool overrideDiffuse = false;
 		XMCOLOR overrideColor = 0;
+		float alpha = 1;
+		bool useWorldMatrix = false;
+		XMFLOAT4X4 worldMatrix;
 	};
 
 	/*

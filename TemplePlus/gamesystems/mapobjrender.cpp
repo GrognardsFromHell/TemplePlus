@@ -110,8 +110,6 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 	auto type = objects.GetType(handle);
 	auto flags = objects.GetFlags(handle);
 
-	auto displayName{ objects.GetDisplayName(handle, handle) };
-
 	// Dont render destroyed or disabled objects
 	constexpr auto dontDrawFlags = OF_OFF | OF_DESTROYED | OF_DONTDRAW;
 	if ((flags & dontDrawFlags) != 0) {
@@ -205,17 +203,10 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 
 	// TODO: Render highlighting and barbarian rage highlighting for weapons here
 
-	static D3DCOLOR sDiffuse[32767];
-	D3DCOLOR* diffuse = nullptr;
-	if (alpha != 255) {
-		for (auto i = 0; i < 32767; ++i) {
-			sDiffuse[i] = D3DCOLOR_ARGB(alpha, 255, 255, 255);
-		}
-		diffuse = &sDiffuse[0];
-	}
-
 	mRenderedLastFrame++;	
-	mAasRenderer.Render(animatedModel.get(), animParams, lights);
+	MdfRenderOverrides overrides;
+	overrides.alpha = alpha / 255.0f;
+	mAasRenderer.Render(animatedModel.get(), animParams, lights, &overrides);
 
 	Light3d globalLight;
 	if (!lights.empty()) {
@@ -268,7 +259,10 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 			alpha / 255.0f);
 	}
 
-	RenderMirrorImages(handle);
+	RenderMirrorImages(handle,
+		animParams,
+		*animatedModel,
+		lights);
 
 	RenderGiantFrogTongue(handle);
 
@@ -276,7 +270,103 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 
 void MapObjectRenderer::RenderObjectHighlight(objHndl handle, const gfx::MdfRenderMaterialPtr & material)
 {
-	// TODO
+
+	mTotalLastFrame++;
+
+	auto type = objects.GetType(handle);
+	auto flags = objects.GetFlags(handle);
+
+	// Dont render destroyed or disabled objects
+	constexpr auto dontDrawFlags = OF_OFF | OF_DESTROYED | OF_DONTDRAW;
+	if ((flags & dontDrawFlags) != 0) {
+		return;
+	}
+
+	// Hide invisible objects we're supposed to show them
+	if ((flags & OF_INVISIBLE) != 0) {
+		return;
+	}
+
+	// Dont draw secret doors that haven't been found yet
+	auto secretDoorFlags = objects.GetSecretDoorFlags(handle);
+	if (secretDoorFlags & OSDF_SECRET_DOOR) {
+		auto found = ((secretDoorFlags & OSDF_SECRET_DOOR_FOUND) != 0);
+		if (!found && type != obj_t_portal)
+			return;
+	}
+
+	auto animatedModel = objects.GetAnimHandle(handle);
+
+	auto animParams(objects.GetAnimParams(handle));
+
+	locXY worldLoc;
+
+	objHndl parent = 0;
+	if (objects.IsEquipmentType(type)) {
+		parent = inventory.GetParent(handle);
+	}
+
+	auto alpha = objects.GetAlpha(handle);
+
+	if (parent) {
+		auto parentAlpha = objects.GetAlpha(parent);
+		alpha = (alpha + parentAlpha) / 2;
+
+		worldLoc = objects.GetLocation(parent);
+	}
+	else {
+		worldLoc = objects.GetLocation(handle);
+	}
+
+	if (alpha == 0) {
+		return;
+	}
+
+	// Handle fog occlusion of the world position
+	if (type != obj_t_container
+		&& (type == obj_t_projectile
+			|| objects.IsCritterType(type)
+			|| objects.IsEquipmentType(type))
+		&& !addresses.IsPosExplored(worldLoc, animParams.offsetX, animParams.offsetY)) {
+		return;
+	}
+
+	LocAndOffsets worldPosFull;
+	worldPosFull.off_x = animParams.offsetX;
+	worldPosFull.off_y = animParams.offsetY;
+	worldPosFull.location = worldLoc;
+
+	auto radius = objects.GetRadius(handle);
+	auto renderHeight = objects.GetRenderHeight(handle);
+
+	// Take render height from the animation if necessary
+	if (renderHeight < 0) {
+		objects.UpdateRenderHeight(handle, animatedModel->GetAnimId());
+		renderHeight = objects.GetRenderHeight(handle);
+	}
+
+	if (!IsObjectOnScreen(worldPosFull, animParams.offsetZ, radius, renderHeight)) {
+		return;
+	}
+
+	auto lightSearchRadius = 0.0f;
+	if (!(flags & OF_DONTLIGHT)) {
+		lightSearchRadius = radius;
+	}
+
+	LocAndOffsets locAndOffsets;
+	locAndOffsets.location = worldLoc;
+	locAndOffsets.off_x = animParams.offsetX;
+	locAndOffsets.off_y = animParams.offsetY;
+	auto lights(FindLights(locAndOffsets, lightSearchRadius));
+
+	mRenderedLastFrame++;
+
+	MdfRenderOverrides overrides;
+	overrides.alpha = alpha / 255.0f;
+	material->Bind(mDevice, lights, &overrides);
+	mAasRenderer.RenderWithoutMaterial(animatedModel.get(), animParams);
+
 }
 
 class SectorIterator {
@@ -494,15 +584,54 @@ bool MapObjectRenderer::IsObjectOnScreen(LocAndOffsets &location, float offsetZ,
 
 }
 
-void MapObjectRenderer::RenderMirrorImages(objHndl obj)
+void MapObjectRenderer::RenderMirrorImages(objHndl obj,
+										   const gfx::AnimatedModelParams &animParams,
+										   gfx::AnimatedModel &model,
+										   gsl::array_view<Light3d> lights)
 {
-	auto mirrorImage = objects.d20.d20Query(obj, DK_QUE_Critter_Has_Mirror_Image);
+	auto mirrorImages = objects.d20.d20Query(obj, DK_QUE_Critter_Has_Mirror_Image);
 
-	if (!mirrorImage) {
+	if (!mirrorImages) {
 		return;
 	}
 
-	throw TempleException("NYI"); // TODO
+	// The rotation of the mirror images is animated
+	static uint32_t lastRenderTime = -1;
+	static float rotation = 0;
+	if (lastRenderTime != -1)
+	{
+		float elapsedSecs = (timeGetTime() - lastRenderTime) / 1000.0f;
+		// One full rotation (2PI) in 16 seconds
+		rotation += elapsedSecs * XM_2PI / 16.0f;
+		
+		// Wrap the rotation around
+		while (rotation >= XM_2PI) {
+			rotation -= XM_2PI;
+		}
+	}
+	lastRenderTime = timeGetTime();
+
+	// The images should partially overlap the actual model
+	auto radius = objects.GetRadius(obj) * 0.75f;
+
+	for (size_t i = 0; i < mirrorImages; ++i) {
+		// Draw one half on the left and the other on the right, 
+	    // if there are an uneven number, the excess image is drawn on the left
+		int pos = i + 1;
+		if (pos > (int) mirrorImages / 2) {
+			pos = pos - mirrorImages - 1;
+		}
+
+		// Generate a world matrix that applies the translation
+		MdfRenderOverrides overrides;
+		overrides.useWorldMatrix = true;
+		auto xTrans = cosf(rotation) * pos * radius;
+		auto yTrans = sinf(rotation) * pos * radius;
+		XMStoreFloat4x4(&overrides.worldMatrix, XMMatrixTranslation(xTrans, 0, yTrans));
+		overrides.alpha = 0.31f;
+
+		mAasRenderer.Render(&model, animParams, lights, &overrides);
+	}
 }
 
 void MapObjectRenderer::RenderGiantFrogTongue(objHndl handle) {
