@@ -29,6 +29,8 @@ static struct MapRenderAddresses : temple::AddressTable {
 	void (*Particles_Kill)(int handle);
 	int (*Particles_CreateAtPos)(int hashcode, float x, float y, float z);
 
+	uint32_t (*GetWeaponGlowType)(objHndl wielder, objHndl item);
+
 	bool* globalLightEnabled;
 	LegacyLight* globalLight;
 	BOOL* isNight;
@@ -38,6 +40,7 @@ static struct MapRenderAddresses : temple::AddressTable {
 		rebase(WorldToLocalScreen, 0x10029040);
 		rebase(EnableLights, 0x100A5BA0);
 		rebase(isNight, 0x10B5DC80);
+		rebase(GetWeaponGlowType, 0x1004E620);
 
 		rebase(Particles_Kill, 0x10049BE0);
 		rebase(Particles_CreateAtPos, 0x10049BD0);
@@ -55,6 +58,7 @@ MapObjectRenderer::MapObjectRenderer(GameSystems& gameSystems,
 	  mDevice(device),
 	  mAasRenderer(aasRenderer) {
 
+	mHighlightMaterial = mdfFactory.LoadMaterial("art/meshes/hilight.mdf");
 	mBlobShadowMaterial = mdfFactory.LoadMaterial("art/meshes/shadow.mdf");
 
 	config.AddVanillaSetting("shadow_type", "2", [&]() {
@@ -72,6 +76,18 @@ MapObjectRenderer::MapObjectRenderer(GameSystems& gameSystems,
 		}
 	});
 	mShadowType = (ShadowType)config.GetVanillaInt("shadow_type");
+
+	// Load the weapon glow effect files
+	mGlowMaterials[0] = mdfFactory.LoadMaterial("art/meshes/wg_magic.mdf");
+	mGlowMaterials[1] = mdfFactory.LoadMaterial("art/meshes/wg_acid.mdf");
+	mGlowMaterials[2] = mdfFactory.LoadMaterial("art/meshes/wg_bane.mdf");
+	mGlowMaterials[3] = mdfFactory.LoadMaterial("art/meshes/wg_chaotic.mdf");
+	mGlowMaterials[4] = mdfFactory.LoadMaterial("art/meshes/wg_cold.mdf");
+	mGlowMaterials[5] = mdfFactory.LoadMaterial("art/meshes/wg_fire.mdf");
+	mGlowMaterials[6] = mdfFactory.LoadMaterial("art/meshes/wg_holy.mdf");
+	mGlowMaterials[7] = mdfFactory.LoadMaterial("art/meshes/wg_law.mdf");
+	mGlowMaterials[8] = mdfFactory.LoadMaterial("art/meshes/wg_shock.mdf");
+	mGlowMaterials[9] = mdfFactory.LoadMaterial("art/meshes/wg_unholy.mdf");
 }
 
 MapObjectRenderer::~MapObjectRenderer() {
@@ -201,7 +217,39 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 	locAndOffsets.off_y = animParams.offsetY;
 	auto lights(FindLights(locAndOffsets, lightSearchRadius));
 
-	// TODO: Render highlighting and barbarian rage highlighting for weapons here
+	// TODO: Render barbarian rage highlighting for weapons here
+	if (type == obj_t_weapon) {
+		uint32_t glowType;
+		if ((flags & OF_INVENTORY) && parent) {
+			glowType = addresses.GetWeaponGlowType(parent, handle);
+		} else {
+			glowType = addresses.GetWeaponGlowType(0, handle);
+		}
+
+		if (glowType && glowType <= mGlowMaterials.size()) {
+			auto& glowMaterial = mGlowMaterials[glowType - 1];
+			if (glowMaterial) {
+				RenderObjectHighlight(handle, glowMaterial);
+			}
+		}
+	}
+
+	if (mShowHighlights
+		&& (objects.IsEquipmentType(type) && !(flags & (OF_INVENTORY | OF_CLICK_THROUGH))
+			|| critterSys.IsLootableCorpse(handle)
+			|| type == obj_t_portal))
+	{
+		RenderObjectHighlight(handle, mHighlightMaterial);
+
+		// Add a single light with full ambient color to make the object appear fully lit
+		lights.clear();
+		Light3d fullBrightLight;
+		fullBrightLight.ambient = XMFLOAT4(1, 1, 1, 1);
+		fullBrightLight.color = XMFLOAT4(0, 0, 0, 0);
+		fullBrightLight.dir = XMFLOAT4(0, 0, 1, 0);
+		fullBrightLight.type = Light3dType::Directional;
+		lights.push_back(fullBrightLight);
+	}
 
 	mRenderedLastFrame++;	
 	MdfRenderOverrides overrides;
@@ -1073,6 +1121,7 @@ public:
 	static void obj_render_highlight(objHndl handle, int shaderId);
 	static void SetShadowType(int type);
 	static int GetShadowType();
+	static void SetShowHighlight(BOOL enable);
 
 	const char* name() override {
 		return "B";
@@ -1083,6 +1132,7 @@ public:
 		replaceFunction(0x10023EC0, obj_render_highlight);
 		replaceFunction(0x10020AA0, SetShadowType);
 		replaceFunction(0x10020B00, GetShadowType);
+		replaceFunction(0x1001D7D0, SetShowHighlight);
 	}
 
 } fix;
@@ -1105,6 +1155,14 @@ void RenderFix::SetShadowType(int type) {
 
 int RenderFix::GetShadowType() {
 	return config.GetVanillaInt("shadow_type");
+}
+
+void RenderFix::SetShowHighlight(BOOL enable)
+{
+	if (!gameRenderer) {
+		return;
+	}
+	gameRenderer->GetMapObjectRenderer().SetShowHighlight(enable == TRUE);
 }
 
 #pragma pack(push, 8)

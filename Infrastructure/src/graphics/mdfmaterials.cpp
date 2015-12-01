@@ -190,9 +190,9 @@ namespace gfx {
 				lightDir[lightIdx].y = light.dir.y;
 				lightDir[lightIdx].z = light.dir.z;
 
-				lightAmbient[lightIdx].x = 0;
-				lightAmbient[lightIdx].y = 0;
-				lightAmbient[lightIdx].z = 0;
+				lightAmbient[lightIdx].x = light.ambient.x;
+				lightAmbient[lightIdx].y = light.ambient.y;
+				lightAmbient[lightIdx].z = light.ambient.z;
 				lightAmbient[lightIdx].w = 0;
 
 				lightDiffuse[lightIdx].x = light.color.x;
@@ -545,7 +545,9 @@ namespace gfx {
 
 		// Special case for highlight shaders until we're able to encode this
 		// in the material file itself
-		if (name == "art/meshes/mouseover.mdf") {
+		if (name == "art/meshes/mouseover.mdf"
+			 || name == "art/meshes/hilight.mdf"
+			 || name.find("art/meshes/wg_") == 0) {
 			rasterizerState.cullMode = D3DCULL_CW;
 			vsDefines["HIGHLIGHT"] = "1";
 		}

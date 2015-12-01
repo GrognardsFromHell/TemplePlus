@@ -206,6 +206,23 @@ int32_t Objects::getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx
 	return dataOut[0];
 }
 
+objHndl Objects::getArrayFieldObj(objHndl obj, obj_f fieldIdx, uint32_t subIdx)
+{
+	GameObjectBody * objBody = _GetMemoryAddress(obj);
+	uint32_t objType = objBody->type;
+	ObjectId id;
+	if (!DoesTypeSupportField(objBody->type, fieldIdx))
+	{
+		fieldNonexistantDebug(obj, objBody, fieldIdx, objType, "getArrayFieldObj");
+		return 0;
+	}
+	getArrayFieldInternal(objBody, &id, fieldIdx, subIdx);
+	if (!id.IsHandle()) {
+		return 0;
+	}
+	return id.GetHandle();
+}
+
 void Objects::getArrayField(objHndl obj, obj_f fieldIdx, uint32_t subIdx, void* dataOut)
 {
 	GameObjectBody * objBody = _GetMemoryAddress(obj);

@@ -97,7 +97,11 @@ namespace gfx {
 	};
 
 	struct Light3d {
+		Light3d() : ambient(0, 0, 0, 0) {
+		}
+
 		Light3dType type;
+		XMFLOAT4 ambient;
 		XMFLOAT4 color;
 		XMFLOAT4 pos;
 		XMFLOAT4 dir;

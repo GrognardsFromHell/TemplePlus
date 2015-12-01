@@ -51,12 +51,22 @@ public:
 		mShadowType = type;
 	}
 
+	void SetShowHighlight(bool enable) {
+		mShowHighlights = enable;
+	}
+	bool GetShowHighlights() const {
+		return mShowHighlights;
+	}
+
 private:
 	GameSystems& mGameSystems;
 	gfx::RenderingDevice& mDevice;
 	temple::AasRenderer &mAasRenderer;
 	ShadowType mShadowType = ShadowType::ShadowMap;
 	gfx::MdfRenderMaterialPtr mBlobShadowMaterial;
+	gfx::MdfRenderMaterialPtr mHighlightMaterial;
+	std::array<gfx::MdfRenderMaterialPtr, 10> mGlowMaterials;
+	bool mShowHighlights = false;
 
 	size_t mRenderedLastFrame = 0;
 	size_t mTotalLastFrame = 0;

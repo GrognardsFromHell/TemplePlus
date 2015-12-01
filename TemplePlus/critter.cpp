@@ -707,6 +707,36 @@ int LegacyCritterSystem::IsWearingLightOrNoArmor(objHndl critter)
 	return 1;
 }
 
+bool LegacyCritterSystem::IsLootableCorpse(objHndl critter)
+{	
+	if (!objects.IsCritter(critter)) {
+		return false;
+	}
+
+	if (!critterSys.IsDeadNullDestroyed(critter)) {
+		return false; // It's still alive
+	}
+
+	// Find any item in the critters inventory that would be considered lootable
+	auto invenCount = objects.getInt32(critter, obj_f_critter_inventory_num);
+	for (size_t i = 0; i < invenCount; ++i) {
+		auto item = objects.getArrayFieldObj(critter, obj_f_critter_inventory_list_idx, i);
+		auto invLocation = objects.GetItemInventoryLocation(item);
+		if (invLocation >= 200 && invLocation <= 216) {
+			continue; // Currently equipped on the corpse
+		}
+
+		auto itemFlags = objects.GetItemFlags(item);
+		if (itemFlags & OIF_NO_LOOT) {
+			continue; // Flagged as unlootable
+		}
+
+		return true; // Found an item that is lootable
+	}
+
+	return false;
+}
+
 MonsterCategory LegacyCritterSystem::GetCategory(objHndl objHnd)
 {
 	if (objHnd != 0) {

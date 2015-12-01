@@ -263,6 +263,12 @@ struct LegacyCritterSystem : temple::AddressTable
 	*/
 	int IsWearingLightOrNoArmor(objHndl critter);
 
+	/*
+		Checks if the given critter is dead and still holds
+		lootable items.
+	*/
+	bool IsLootableCorpse(objHndl critter);
+
 #pragma region Category
 	MonsterCategory GetCategory(objHndl objHnd);
 	uint32_t IsCategoryType(objHndl objHnd, MonsterCategory categoryType);

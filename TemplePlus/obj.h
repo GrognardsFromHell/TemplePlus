@@ -51,6 +51,7 @@ struct Objects : temple::AddressTable {
 	void setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, FieldDataMax data);
 	void setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, int data);
 	int32_t getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx);
+	objHndl getArrayFieldObj(objHndl obj, obj_f fieldIdx, uint32_t subIdx);
 	void getArrayField(objHndl obj, obj_f fieldIdx, uint32_t subIdx, void * dataOut);
 	uint32_t getArrayFieldNumItems(objHndl obj, obj_f fieldIdx);
 	void ClearArrayField(objHndl objHnd, obj_f objF);
