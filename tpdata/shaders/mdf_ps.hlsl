@@ -70,6 +70,11 @@ float4 DoTexStage(float4 current, float4 diffuse, sampler sampl, float2 uv, int 
 		current.rgb = current.rgb * (1 - current.a) + texel.rgb * current.a;
 		current.a = diffuse.a;
 		return current;
+	} else if (mode == TEXBLEND_CURRENT_ALPHA_ADD) {
+		float4 texel = tex2D(sampl, uv);
+		current.rgb += (texel.rgb * current.a);
+		current.a = diffuse.a;
+		return current;
 	}
 }
 
