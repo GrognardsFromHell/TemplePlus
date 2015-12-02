@@ -217,7 +217,6 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 	locAndOffsets.off_y = animParams.offsetY;
 	auto lights(FindLights(locAndOffsets, lightSearchRadius));
 
-	// TODO: Render barbarian rage highlighting for weapons here
 	if (type == obj_t_weapon) {
 		uint32_t glowType;
 		if ((flags & OF_INVENTORY) && parent) {

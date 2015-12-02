@@ -225,3 +225,5 @@ _Pvt_Extensions
 *.nvact
 /tpdata/bakmes
 /tpdata/scr/shit.py
+
+*.VC.opendb

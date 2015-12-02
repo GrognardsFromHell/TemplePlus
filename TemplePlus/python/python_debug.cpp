@@ -11,6 +11,40 @@
 #include <gamesystems/map/sector.h>
 #include <location.h>
 
+static std::string GetNiceName(void* ptr) {
+	
+	auto startAddr = temple::GetPointer<char>(0x10000001) - 1;
+	// Heuristic to try to determine whether it's a valid ptr
+	if (ptr < startAddr || ptr > (startAddr + 0x10000000))
+		return std::string();
+
+	auto cap = conds.mCondStructHashtable->numItems;
+	auto result = PyList_New(cap);
+
+	for (size_t i = 0; i < cap; ++i) {
+		auto idx = conds.mCondStructHashtable->idxArray[i];
+		auto data = conds.mCondStructHashtable->dataArray[idx];
+
+		if (data == ptr) {
+			return fmt::format("{} (Cond Ref)", data->condName);
+		}
+	}
+
+	// Can we read a string?
+	char* charPtr = (char*)ptr;
+	for (int i = 0; i < 64; ++i) {
+		if (charPtr[i] < 0 || !isalnum(charPtr[i]) && !isspace(charPtr[i]) && charPtr[i]) {
+			return std::string();
+		}
+		if (!charPtr) {
+			return charPtr;
+		}
+	}
+
+	return std::string(); // Pointed to string longer than 64 chars
+
+}
+
 /*
 	Dumps all conditions from the global hashtable to a Wiki article.
 */
@@ -26,7 +60,20 @@ PyObject *PyDebug_DumpConds() {
 		auto hooks = PyList_New(0);
 		auto hook = data->subDispDefs;
 		while (hook->dispType) {
-			auto v = Py_BuildValue("IIIII", hook->dispCallback, hook->data1, hook->data2, hook->dispType, hook->dispKey);
+			std::string nameData1(GetNiceName(reinterpret_cast<void*>(hook->data1)));
+			std::string nameData2(GetNiceName(reinterpret_cast<void*>(hook->data2)));
+			
+			PyObject* v;
+			if (!nameData1.empty() && !nameData2.empty()) {
+				v = Py_BuildValue("IssII", hook->dispCallback, &nameData1[0], &nameData2[0], hook->dispType, hook->dispKey);
+			} else if (!nameData1.empty()) {
+				v = Py_BuildValue("IsIII", hook->dispCallback, &nameData1[0], hook->data2, hook->dispType, hook->dispKey);
+			} else if (!nameData2.empty()) {
+				v = Py_BuildValue("IIsII", hook->dispCallback, hook->data1, &nameData2[0], hook->dispType, hook->dispKey);
+			} else {
+				v = Py_BuildValue("IIIII", hook->dispCallback, hook->data1, hook->data2, hook->dispType, hook->dispKey);
+			}
+
 			PyList_Append(hooks, v);
 			hook++;
 		}
@@ -123,7 +170,7 @@ PyObject *PyDebug_DumpFeats() {
 	uint32_t * featPropertiesTable = feats.m_featPropertiesTable;
 	FeatPrereqRow * featPreReqTable = feats.m_featPreReqTable;
 
-	for (size_t i = 0; i < cap; ++i) {
+	for (int i = 0; i < cap; ++i) {
 		feat_enums feat = (feat_enums)i;
 		char * featName = feats.GetFeatName(feat);
 
@@ -148,7 +195,7 @@ PyObject *PyDebug_DumpD20Actions() {
 	auto result = PyList_New(cap);
 	D20ActionDef * d20Defs = d20Sys.d20Defs;
 	
-	for (size_t i = 0; i < cap; ++i) {
+	for (int i = 0; i < cap; ++i) {
 
 		auto c = Py_BuildValue("IIIIIIIIIIIII", i, 
 			d20Defs[i].addToSeqFunc, d20Defs[i].aiCheckMaybe, d20Defs[i].actionCheckFunc,
@@ -167,7 +214,7 @@ PyObject *PyDebug_DumpAiTactics() {
 	auto result = PyList_New(cap);
 	AiTacticDef * aiTacDefs = aiSys.aiTacticDefs;
 
-	for (size_t i = 0; i < cap; ++i) {
+	for (int i = 0; i < cap; ++i) {
 
 		auto c = Py_BuildValue("sII", 
 			aiTacDefs[i].name, aiTacDefs[i].aiFunc, aiTacDefs[i].onInitiativeAdd );

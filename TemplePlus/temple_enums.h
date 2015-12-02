@@ -1871,7 +1871,7 @@ enum enum_dispIO_type : uint32_t {
 	dispIOTypeD20ActionTurnBased,
 	dispIOTypeMoveSpeed,
 	dispIoTypeBonusListAndSpellEntry,
-	dispIOType15,
+	dispIOTypeReflexThrow,
 	dispIOType16,
 	dispIOType17,
 	dispIOType18,
@@ -1916,8 +1916,8 @@ enum enum_disp_type : uint32_t {
 	dispTypeTakingDamage,
 	dispTypeDealingDamage2, 
 	dispTypeTakingDamage2,
-	dispType22,
-	dispType23,
+	dispTypeReceiveHealing, // Healing
+	dispTypeGetCriticalHitRange, // first hit roll that is a critical hit
 	dispTypeGetCriticalHitExtraDice, // runs for the attacker's dispatcher
 	dispTypeCurrentHP,
 	dispTypeMaxHP,
@@ -1943,32 +1943,32 @@ enum enum_disp_type : uint32_t {
 	dispTypeSpellDcBase, // haven't seen this actually used, just the mod dispatch (for Spell Focus and the Gnome bonus for Illusion spells)
 	dispTypeSpellDcMod,
 	dispTypeBeginRound, // immediately followed by the OnBeginRound spell trigger. Commonly used for spell countdown / removal when finished
-	dispType49,
+	dispTypeReflexThrow,
 	dispTypeDeflectArrows,
 	dispTypeGetNumAttacksBase,
 	dispTypeGetBonusAttacks,
 	dispTypeGetCritterNaturalAttacksNum,
-	dispType54,
-	dispType55,
-	dispType56,
-	dispType57,
-	dispType58, // not actual use
+	dispTypeObjectEvent, // Enter or leaving the area of effect of an object event
+	dispTypeProjectileCreated, // Used to create the particle effects for arrows and such
+	dispTypeProjectileDestroyed, // Used to stop the particle effects for arrows
+	dispType57, // Unused
+	dispType58, // Unused
 	dispType59,
 
 	dispTypeGetAttackDice,
-	dispType61,
+	dispTypeGetLevel, // Class or Character Level (using stat enum)
 	dispTypeImmunityTrigger,
 	dispType63,
 	dispTypeSpellImmunityCheck, 
 	dispTypeEffectTooltip, // for those little bonus flags on top of portraits
 	dispTypeStatBaseGet, // looks like this is intended to replace StatBaseGet function for Critters with Dispatchers
-	dispType67,
+	dispTypeWeaponGlowType, // Returns the ID of the weapon glow to use (0 = no glow, 1-10 are specific glow types, check mapobjrenderer)
 	dispTypeItemForceRemove, // has a single function associated with this - 10104410 int __cdecl ItemForceRemoveCallback_SetItemPadWielderArgs(Dispatcher_Callback_Args args);
 	dispTypeArmorToHitPenalty, // none exist apparently
 
 	dispTypeMaxDexAcBonus,
 	dispTypeGetSizeCategory,
-	dispType72,
+	dispTypeBucklerAcPenalty,
 
 
 	dispTypeCount // used just for size definition purposes

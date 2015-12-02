@@ -34,7 +34,6 @@
     <ClCompile Include="fixes\keyboard.cpp" />
     <ClCompile Include="fixes\light_load.cpp" />
     <ClCompile Include="fixes\messages.cpp" />
-    <ClCompile Include="fixes\partsyslag.cpp" />
     <ClCompile Include="fixes\sector_cache_size.cpp" />
     <ClCompile Include="float_line.cpp" />
     <ClCompile Include="fonts\fonts_hooks.cpp" />
@@ -128,7 +127,6 @@
     <ClCompile Include="sound.cpp" />
     <ClCompile Include="textbubbles.cpp" />
     <ClCompile Include="tig\tig.cpp" />
-    <ClCompile Include="tig\tig_partsys.cpp" />
     <ClCompile Include="tig\tig_sound.cpp" />
     <ClCompile Include="tio\tio_utils.cpp" />
     <ClCompile Include="python\python_consoleout.cpp" />
@@ -310,7 +308,6 @@
     <ClInclude Include="startup\installationdirs.h" />
     <ClInclude Include="tab_file.h" />
     <ClInclude Include="textbubbles.h" />
-    <ClInclude Include="tig\tig_partsys.h" />
     <ClInclude Include="tig\tig_sound.h" />
     <ClInclude Include="tig\tig_tabparser.h" />
     <ClInclude Include="tio\tio_utils.h" />

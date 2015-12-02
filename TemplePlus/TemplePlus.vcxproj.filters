@@ -233,15 +233,11 @@
     <ClCompile Include="ui_pc_creation.cpp">
       <Filter>ui</Filter>
     </ClCompile>
-    <ClCompile Include="tig\tig_partsys.cpp">
-      <Filter>tig</Filter>
-    </ClCompile>
     <ClCompile Include="startup\installationdir.cpp" />
     <ClCompile Include="startup\installationdirpicker.cpp" />
     <ClCompile Include="startup\installationdirs.cpp" />
     <ClCompile Include="fixes\sector_cache_size.cpp" />
     <ClCompile Include="fixes\light_load.cpp" />
-    <ClCompile Include="fixes\partsyslag.cpp" />
     <ClCompile Include="tig\tig_startup.cpp">
       <Filter>tig</Filter>
     </ClCompile>
@@ -541,9 +537,6 @@
     </ClInclude>
     <ClInclude Include="ui_intgame_turnbased.h">
       <Filter>ui</Filter>
-    </ClInclude>
-    <ClInclude Include="tig\tig_partsys.h">
-      <Filter>tig</Filter>
     </ClInclude>
     <ClInclude Include="startup\installationdir.h" />
     <ClInclude Include="resource.h" />

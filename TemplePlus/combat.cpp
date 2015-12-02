@@ -135,7 +135,7 @@ bool LegacyCombatSystem::DisarmCheck(objHndl attacker, objHndl defender, D20Actn
 		
 
 	dispIoAtkBonus.attackPacket.weaponUsed = attackerWeapon;
-	dispatch.DispatchAttackBonus(attacker, defender, &dispIoAtkBonus, dispType72, 0); // buckler penalty
+	dispatch.DispatchAttackBonus(attacker, defender, &dispIoAtkBonus, dispTypeBucklerAcPenalty, 0); // buckler penalty
 	dispatch.DispatchAttackBonus(attacker, 0, &dispIoAtkBonus, dispTypeToHitBonus2, 0); // to hit bonus2
 	int atkToHitBonus = dispatch.DispatchAttackBonus(defender, 0, &dispIoAtkBonus, dispTypeToHitBonusFromDefenderCondition, 0); 
 	int attackerResult = attackerRoll + bonusSys.getOverallBonus(&dispIoAtkBonus.bonlist);
@@ -158,7 +158,7 @@ bool LegacyCombatSystem::DisarmCheck(objHndl attacker, objHndl defender, D20Actn
 	}
 	
 	dispIoDefBonus.attackPacket.weaponUsed = attackerWeapon;
-	dispatch.DispatchAttackBonus(defender, 0, &dispIoDefBonus, dispType72, 0); // buckler penalty
+	dispatch.DispatchAttackBonus(defender, 0, &dispIoDefBonus, dispTypeBucklerAcPenalty, 0); // buckler penalty
 	dispatch.DispatchAttackBonus(defender, 0, &dispIoDefBonus, dispTypeToHitBonus2, 0); // to hit bonus2
 	int defToHitBonus = dispatch.DispatchAttackBonus(attacker, 0, &dispIoDefBonus, dispTypeToHitBonusFromDefenderCondition, 0);
 	int defenderResult = defenderRoll + bonusSys.getOverallBonus(&dispIoDefBonus.bonlist);
@@ -204,7 +204,7 @@ bool LegacyCombatSystem::SunderCheck(objHndl attacker, objHndl defender, D20Actn
 
 
 	dispIoAtkBonus.attackPacket.weaponUsed = attackerWeapon;
-	dispatch.DispatchAttackBonus(attacker, defender, &dispIoAtkBonus, dispType72, 0); // buckler penalty
+	dispatch.DispatchAttackBonus(attacker, defender, &dispIoAtkBonus, dispTypeBucklerAcPenalty, 0); // buckler penalty
 	dispatch.DispatchAttackBonus(attacker, 0, &dispIoAtkBonus, dispTypeToHitBonus2, 0); // to hit bonus2
 	int atkToHitBonus = dispatch.DispatchAttackBonus(defender, 0, &dispIoAtkBonus, dispTypeToHitBonusFromDefenderCondition, 0);
 	int attackerResult = attackerRoll + bonusSys.getOverallBonus(&dispIoAtkBonus.bonlist);
@@ -224,7 +224,7 @@ bool LegacyCombatSystem::SunderCheck(objHndl attacker, objHndl defender, D20Actn
 	}
 
 	dispIoDefBonus.attackPacket.weaponUsed = attackerWeapon;
-	dispatch.DispatchAttackBonus(defender, 0, &dispIoDefBonus, dispType72, 0); // buckler penalty
+	dispatch.DispatchAttackBonus(defender, 0, &dispIoDefBonus, dispTypeBucklerAcPenalty, 0); // buckler penalty
 	dispatch.DispatchAttackBonus(defender, 0, &dispIoDefBonus, dispTypeToHitBonus2, 0); // to hit bonus2
 	int defToHitBonus = dispatch.DispatchAttackBonus(attacker, 0, &dispIoDefBonus, dispTypeToHitBonusFromDefenderCondition, 0);
 	int defenderResult = defenderRoll + bonusSys.getOverallBonus(&dispIoDefBonus.bonlist);
