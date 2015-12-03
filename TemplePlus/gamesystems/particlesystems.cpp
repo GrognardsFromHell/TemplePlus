@@ -119,6 +119,29 @@ int ParticleSysSystem::CreateAt(uint32_t nameHash, XMFLOAT3 pos) {
 
 }
 
+bool ParticleSysSystem::DoesNameExist(const std::string & name)
+{
+	return mPartSysByName.find(tolower(name)) != mPartSysByName.end();
+}
+
+bool ParticleSysSystem::DoesNameHashExist(uint32_t nameHash)
+{
+	return mPartSysByHash.find(nameHash) != mPartSysByHash.end();
+}
+
+particles::PartSysPtr ParticleSysSystem::GetByHandle(Handle handle) {
+	auto it = mActiveSys.find(handle);
+	if (it != mActiveSys.end()) {
+		return it->second;
+	}
+	return nullptr;
+}
+
+void ParticleSysSystem::Remove(Handle handle)
+{
+	mActiveSys.erase(handle);
+}
+
 void ParticleSysSystem::RemoveAll() {
 	mActiveSys.clear();
 }

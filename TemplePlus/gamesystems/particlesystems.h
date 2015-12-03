@@ -30,7 +30,14 @@ public:
 	const std::string &GetName() const override;
 		
 	Handle CreateAt(uint32_t nameHash, XMFLOAT3 pos);
+	
+	bool DoesNameExist(const std::string &name);
+	bool DoesNameHashExist(uint32_t nameHash);
 
+	particles::PartSysPtr GetByHandle(Handle handle);
+
+	void Remove(Handle handle);
+	
 	Map::const_iterator begin() const {
 		return mActiveSys.begin();
 	}
@@ -38,7 +45,7 @@ public:
 	Map::const_iterator end() const {
 		return mActiveSys.end();
 	}
-
+	
 	/**
 	 * Removes all active particle systems i.e. for changing the map.
 	 */

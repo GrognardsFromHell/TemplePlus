@@ -1,3 +1,5 @@
+#include "..\include\particles\instances.h"
+#include "..\include\particles\instances.h"
 #include "particles/instances.h"
 #include "particles/simulation.h"
 #include "particles/bones.h"
@@ -300,6 +302,11 @@ namespace particles {
 
 	}
 
+	void PartSysEmitter::EndPrematurely()
+	{
+		mEnded = true;
+	}
+
 	static ObjHndl PartSysCurObj; // This is stupid, this is only used for radius determination as far as i can tell
 
 	float PartSysEmitter::GetParamValue(PartSysParamState* state, int particleIdx) {
@@ -378,7 +385,14 @@ namespace particles {
 
 	bool PartSys::IsDead() const {
 		for (auto& emitter : mEmitters) {
-			if (!emitter->IsDead()) {
+
+			if (emitter->GetSpec()->IsPermanent())
+				continue;
+
+			float lifespanSum = emitter->GetSpec()->GetLifespan() +
+				emitter->GetSpec()->GetParticleLifespan();
+
+			if (mAliveInSecs < lifespanSum) {
 				return false;
 			}
 		}
@@ -418,15 +432,28 @@ namespace particles {
 		// seconds, those two seconds will be simulated once it is on screen again
 		float secsToSimulate = mAliveInSecs - mLastSimulated;
 		mLastSimulated = mAliveInSecs;
-
+		
 		for (auto& emitter : mEmitters) {
+			float simForEmitter = secsToSimulate;
+			if (emitter->GetSpec()->IsPermanent()) {
+				// If the emitter is permanent, simulate at most 0.5s
+				simForEmitter = std::min<float>(0.5f, simForEmitter);
+			} else {
+				// Otherwise at most it's lifespan
+				float remainingLifespan = emitter->GetSpec()->GetLifespan() - (mAliveInSecs - secsToSimulate);
+				if (remainingLifespan < 0) {
+					continue;
+				}
+				simForEmitter = std::min<float>(remainingLifespan, simForEmitter);
+			}
+
 			// Emitters with a delay are not simulated until the particle system
 			// has been alive longer than the delay
 			if (emitter->GetSpec()->GetDelay() > mAliveInSecs) {
 				continue;
 			}
 
-			emitter->Simulate(secsToSimulate, external);
+			emitter->Simulate(simForEmitter, external);
 		}
 
 	}
@@ -449,6 +476,12 @@ namespace particles {
 
 		mAttachedTo = 0;
 		UpdateScreenBoundingBox(external, worldPos);
+	}
+
+	void PartSys::EndPrematurely() {
+		for (auto& emitter : mEmitters) {
+			emitter->EndPrematurely();
+		}
 	}
 
 	void PartSys::Reset() {

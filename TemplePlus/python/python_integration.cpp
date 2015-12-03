@@ -110,9 +110,12 @@ bool PythonIntegration::LoadScript(int scriptId, ScriptRecord &scriptOut) {
 		return false; // cannot execute a script we previously failed to load
 	}
 
+	auto func = PyDict_GetItemString(MainModuleDict, "critter_is_unconscious");
+	Expects(func != nullptr);
+
 	// We have not yet loaded the Python module
 	if (!script.module) {
-		script.module = PyImport_ImportModule(script.moduleName.c_str());
+		script.module = PyImport_ImportModule(&script.moduleName[0]);
 		if (!script.module) {
 			// Loading error
 			logger->error("Could not load script {}.", script.filename);
@@ -136,10 +139,5 @@ bool PythonIntegration::LoadScript(int scriptId, ScriptRecord &scriptOut) {
 	will import them automatically.
 */
 void PythonIntegration::AddGlobalsOnDemand(PyObject* dict) {
-
-	if (PyDict_GetItemString(dict, "stat_strength")) {
-		return; // Already imported
-	}
-
 	PyDict_Merge(dict, MainModuleDict, 0);
 }

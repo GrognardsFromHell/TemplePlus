@@ -5,6 +5,8 @@
 #include "gamesystems.h"
 #include "particlesystems.h"
 
+#include <particles/instances.h>
+
 #include <graphics/math.h>
 #include <obj.h>
 
@@ -40,12 +42,17 @@ public:
 
 uint32_t PartSysHooks::GetNameHashByHandle(PartSysHandle handle) {
 	auto &particles = gameSystems->GetParticleSys();
-	return 0; // TODO
+	auto &sys = particles.GetByHandle(handle);
+	if (!sys) {
+		logger->error("Trying to get name hash for invalid particle system handle: {}", handle);
+		return 0;
+	}
+	return sys->GetSpec()->GetNameHash();
 }
 
 BOOL PartSysHooks::DoesHashExist(uint32_t hash) {
 	auto &particles = gameSystems->GetParticleSys();
-	return FALSE;
+	return particles.DoesNameHashExist(hash) ? TRUE : FALSE;
 }
 
 void PartSysHooks::KillAll() {
@@ -65,6 +72,7 @@ void PartSysHooks::Kill(PartSysHandle handle) {
 		return; // Already all destroyed
 	}
 	auto &particles = gameSystems->GetParticleSys();
+	particles.Remove(handle);
 }
 
 void PartSysHooks::End(PartSysHandle handle) {
@@ -72,10 +80,22 @@ void PartSysHooks::End(PartSysHandle handle) {
 		return; // Already all destroyed
 	}
 	auto &particles = gameSystems->GetParticleSys();
+	auto &sys = particles.GetByHandle(handle);
+	if (!sys) {
+		logger->error("Trying to set object for invalid particle system handle: {}", handle);
+		return;
+	}
+	sys->EndPrematurely();
 }
 
 void PartSysHooks::SetObj(PartSysHandle handle, objHndl obj) {
 	auto &particles = gameSystems->GetParticleSys();
+	auto &sys = particles.GetByHandle(handle);
+	if (!sys) {
+		logger->error("Trying to set object for invalid particle system handle: {}", handle);
+		return;
+	}
+	sys->SetAttachedTo(obj);
 }
 
 void PartSysHooks::InvalidateObj(objHndl obj) {

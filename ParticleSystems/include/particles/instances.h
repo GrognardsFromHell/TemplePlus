@@ -209,8 +209,9 @@ public:
   void RefreshRandomness(int particleIdx);
   void Simulate(float timeToSimulateSecs, IPartSysExternal *external);
 
-  void
-  SetRenderState(std::unique_ptr<PartSysEmitterRenderState> &&renderState) {
+  void EndPrematurely();
+
+  void SetRenderState(std::unique_ptr<PartSysEmitterRenderState> &&renderState) {
     mRenderState = std::move(renderState);
   }
   bool HasRenderState() const { return !!mRenderState; }
@@ -289,6 +290,8 @@ public:
   }
 
   int GetEmitterCount() const { return mEmitters.size(); }
+
+  void EndPrematurely();
 
   EmitterList::const_iterator begin() const { return mEmitters.cbegin(); }
 
