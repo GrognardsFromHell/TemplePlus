@@ -361,6 +361,38 @@ gfx::AnimatedModelParams Objects::GetAnimParams(objHndl handle)
 	return result;
 }
 
+void Objects::SetAnimId(objHndl obj, gfx::EncodedAnimId animId) {
+
+	// Propagate animations to main/off hand equipment for critters
+	if (IsCritter(obj)) {
+		auto mainHand = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
+		auto offHand = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);		
+		if (!offHand) {
+			offHand = critterSys.GetWornItem(obj, EquipSlot::Shield);
+		}
+
+		// Apparently certain anim IDs cause weapons to disappear, 
+		// possibly skill use/casting?
+		int opacity = 0;
+		if (animId & 0xC0000000) {
+			opacity = 255;
+		}
+
+		if (mainHand) {
+			FadeTo(mainHand, opacity, 10, 16, 0);
+			SetAnimId(mainHand, animId);
+		}
+		if (offHand) {
+			FadeTo(offHand, opacity, 10, 16, 0);
+			SetAnimId(offHand, animId);
+		}
+	}
+
+	auto model = GetAnimHandle(obj);
+	model->SetAnimId(animId);
+
+}
+
 gfx::EncodedAnimId Objects::GetIdleAnim(objHndl obj)
 {
 	using gfx::EncodedAnimId;

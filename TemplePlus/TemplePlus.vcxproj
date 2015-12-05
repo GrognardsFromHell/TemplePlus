@@ -42,6 +42,7 @@
     <ClCompile Include="gamesystems\clipping\clippingmesh.cpp" />
     <ClCompile Include="gamesystems\clipping\clipping_hooks.cpp" />
     <ClCompile Include="gamesystems\clipping\clipping.cpp" />
+    <ClCompile Include="gamesystems\froggrapplecontroller.cpp" />
     <ClCompile Include="gamesystems\gamerenderer.cpp" />
     <ClCompile Include="gamesystems\gamesystems.cpp" />
     <ClCompile Include="gamesystems\legacy.cpp" />
@@ -237,6 +238,7 @@
     <ClInclude Include="fonts\fonts.h" />
     <ClInclude Include="gamesystems\clipping\clippingmesh.h" />
     <ClInclude Include="gamesystems\clipping\clipping.h" />
+    <ClInclude Include="gamesystems\froggrapplecontroller.h" />
     <ClInclude Include="gamesystems\gamerenderer.h" />
     <ClInclude Include="gamesystems\gamesystem.h" />
     <ClInclude Include="gamesystems\gamesystems.h" />
@@ -477,7 +479,7 @@
       </ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib;$(TargetDir)</AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;shlwapi.dll;ole32.dll;d3dx9_43.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">
@@ -497,7 +499,7 @@
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib;$(TargetDir)</AdditionalLibraryDirectories>
-      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;shlwapi.dll;ole32.dll;d3dx9_43.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -528,7 +530,7 @@
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib;$(TargetDir)</AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;shlwapi.dll;ole32.dll;d3dx9_43.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;shlwapi.dll;ole32.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

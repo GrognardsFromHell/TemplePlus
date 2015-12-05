@@ -56,7 +56,7 @@ namespace particles {
 			return false;
 		}
 
-		if (mEnded) {
+		if (mEnded && GetActiveCount() == 0) {
 			return true;
 		}
 

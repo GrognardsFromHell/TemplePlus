@@ -13,10 +13,12 @@
 
 static std::string GetNiceName(void* ptr) {
 	
-	auto startAddr = temple::GetPointer<char>(0x10000001) - 1;
 	// Heuristic to try to determine whether it's a valid ptr
-	if (ptr < startAddr || ptr > (startAddr + 0x10000000))
+	if (reinterpret_cast<uint32_t>(ptr) < 0x10000000 
+		|| reinterpret_cast<uint32_t>(ptr) > 0x20000000)
 		return std::string();
+
+	ptr = temple::GetPointer<void*>(reinterpret_cast<uint32_t>(ptr));
 
 	auto cap = conds.mCondStructHashtable->numItems;
 	auto result = PyList_New(cap);

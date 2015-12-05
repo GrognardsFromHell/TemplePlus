@@ -310,6 +310,7 @@
     </ClCompile>
     <ClCompile Include="gametime.cpp" />
     <ClCompile Include="gamesystems\maps\sectors.cpp" />
+    <ClCompile Include="gamesystems\froggrapplecontroller.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -593,6 +594,7 @@
     <ClInclude Include="gametime.h" />
     <ClInclude Include="gamesystems\loadingscreen.h" />
     <ClInclude Include="gamesystems\maps\sectors.h" />
+    <ClInclude Include="gamesystems\froggrapplecontroller.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

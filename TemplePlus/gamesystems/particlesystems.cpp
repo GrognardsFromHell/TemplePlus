@@ -9,6 +9,7 @@
 #include <particles/parser.h>
 #include <particles/instances.h>
 #include "../obj.h"
+#include "../config/config.h"
 
 #include "ui/ui_render.h"
 
@@ -17,7 +18,8 @@ using namespace particles;
 
 class PartSysExternal : public IPartSysExternal {
 public:
-	PartSysExternal(WorldCamera &camera) : mCamera(camera) {}
+	PartSysExternal(ParticleSysSystem &system, WorldCamera &camera) 
+		: mSystem(system), mCamera(camera) {}
 
 	float GetParticleFidelity() override;
 	bool GetObjLocation(ObjHndl obj, Vec3& worldPos) override;
@@ -30,7 +32,8 @@ public:
 	void WorldToScreen(const Vec3& worldPos, Vec2& screenPos) override;
 	bool IsBoxVisible(const Vec2& screenPos, const Box2d& box) override;
 private:
-	WorldCamera &mCamera;
+	ParticleSysSystem &mSystem;
+	WorldCamera &mCamera;	
 };
 
 ParticleSysSystem::ParticleSysSystem(WorldCamera& camera) {
@@ -45,13 +48,14 @@ ParticleSysSystem::ParticleSysSystem(WorldCamera& camera) {
 		mPartSysByHash[spec.second->GetNameHash()] = spec.second;
 	}
 
-	mExternal = std::make_unique<PartSysExternal>(camera);
+	mExternal = std::make_unique<PartSysExternal>(*this, camera);
 	IPartSysExternal::SetCurrent(mExternal.get());
 
-	/*config_add_default(&config, "partsys_fidelity", "100", sub_10049EC0);
-	a1 = (long double)config_get_int(&config, "partsys_fidelity") * 0.0099999998;
-	set_particle_fidelity(a1);*/
-
+	// Register a config for the partsys fidelity
+	config.AddVanillaSetting("partsys_fidelity", "100", [=]() {
+		SetFidelity(config.GetVanillaInt("partsys_fidelity") / 100.0f);
+	});
+	SetFidelity(config.GetVanillaInt("partsys_fidelity") / 100.0f);
 }
 
 ParticleSysSystem::~ParticleSysSystem() {
@@ -147,8 +151,7 @@ void ParticleSysSystem::RemoveAll() {
 }
 
 float PartSysExternal::GetParticleFidelity() {
-	// TODO: Read config
-	return 1.0f;
+	return mSystem.GetFidelity();
 }
 
 bool PartSysExternal::GetObjLocation(ObjHndl obj, Vec3& worldPos) {
@@ -164,7 +167,6 @@ bool PartSysExternal::GetObjLocation(ObjHndl obj, Vec3& worldPos) {
 bool PartSysExternal::GetObjRotation(ObjHndl obj, float& rotation) {
 	rotation = objects.GetRotation(obj);
 	return true;
-
 }
 
 float PartSysExternal::GetObjRadius(ObjHndl obj) {

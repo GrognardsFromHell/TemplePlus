@@ -185,8 +185,18 @@ struct LocAndOffsets {
 	vector3f ToInches3D(float offsetZ = 0) {
 		return location.ToInches3D(off_x, off_y, offsetZ);
 	}
-		
+	
+	static LocAndOffsets FromInches(float x, float y) {
+		float tileX = x / INCH_PER_TILE;
+		float tileY = y / INCH_PER_TILE;
 
+		LocAndOffsets result;		
+		result.location.locx = (int)tileX;
+		result.location.locy = (int)tileY;
+		result.off_x = (tileX - floor(tileX) - 0.5f) * INCH_PER_TILE;
+		result.off_y = (tileY - floor(tileY) - 0.5f) * INCH_PER_TILE;
+		return result;
+	}
 
 };
 

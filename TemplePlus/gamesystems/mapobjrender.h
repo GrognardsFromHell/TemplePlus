@@ -65,6 +65,7 @@ private:
 	ShadowType mShadowType = ShadowType::ShadowMap;
 	gfx::MdfRenderMaterialPtr mBlobShadowMaterial;
 	gfx::MdfRenderMaterialPtr mHighlightMaterial;
+	std::unique_ptr<class FrogGrappleController> mGrappleController;
 	std::array<gfx::MdfRenderMaterialPtr, 10> mGlowMaterials;
 	bool mShowHighlights = false;
 
@@ -85,7 +86,6 @@ private:
 		const gfx::AnimatedModelParams &animParams,
 		gfx::AnimatedModel &model,
 		gsl::array_view<gfx::Light3d> lights);
-	void RenderGiantFrogTongue(objHndl handle);
 
 	void RenderShadowMapShadow(objHndl handle, 
 		const gfx::AnimatedModelParams &animParams, 
@@ -96,7 +96,5 @@ private:
 		gfx::AnimatedModel &model, 
 		gfx::AnimatedModelParams &animParams,
 		int alpha);
-
-	objHndl GiantFrogGetGrappledOpponent(objHndl giantFrog);
 
 };

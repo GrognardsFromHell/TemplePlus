@@ -16,6 +16,8 @@
 #include "../critter.h"
 #include <graphics/dynamictexture.h>
 
+#include "froggrapplecontroller.h"
+
 #include "tig/tig_startup.h"
 
 using namespace gfx;
@@ -60,6 +62,8 @@ MapObjectRenderer::MapObjectRenderer(GameSystems& gameSystems,
 
 	mHighlightMaterial = mdfFactory.LoadMaterial("art/meshes/hilight.mdf");
 	mBlobShadowMaterial = mdfFactory.LoadMaterial("art/meshes/shadow.mdf");
+
+	mGrappleController = std::make_unique<FrogGrappleController>(device, mdfFactory);
 
 	config.AddVanillaSetting("shadow_type", "2", [&]() {
 		int shadowType = config.GetVanillaInt("shadow_type");
@@ -311,7 +315,13 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 		*animatedModel,
 		lights);
 
-	RenderGiantFrogTongue(handle);
+	if (mGrappleController->IsGiantFrog(handle)) {
+		mGrappleController->AdvanceAndRender(handle, 
+			animParams, 
+			*animatedModel, 
+			lights, 
+			alpha / 255.0f);
+	}
 
 }
 
@@ -681,339 +691,6 @@ void MapObjectRenderer::RenderMirrorImages(objHndl obj,
 	}
 }
 
-void MapObjectRenderer::RenderGiantFrogTongue(objHndl handle) {
-		
-	// Special rendering for giant frogs of various types
-	auto protoNum = objects.GetProtoNum(handle);
-	if (protoNum != 14057 && protoNum != 14445 && protoNum != 14300) {
-		return;
-	}
-
-	throw TempleException("NYI"); // TODO
-
-	auto grappleState = objects.getInt32(handle, obj_f_grapple_state);
-	if (!grappleState) {
-		return;
-	}
-	/*
-		v138 = GiantFrogGetGrappledOpponent(ObjHnd);
-		colorOnlyAlpha = (unsigned __int16)v137;
-		if (grappleState)
-		{
-			aasHandle = (v137 >> 16) & 0xFF;
-			v139 = (long double)(signed int)aasHandle;
-			aasHandle = (unsigned int)v137 >> 24;
-			submeshIdxh = v139;
-			radius = (long double)((unsigned int)v137 >> 24);
-			AasAnimatedModelGetBoneWorldMatrixByName(aas_handle, &animParams, (D3DMATRIX *)&v225, "Tongue_Ref");
-			if (__PAIR__(v138, HIDWORD(v138)))
-			{
-				*(float *)&shaderId = COERCE_FLOAT(obj_get_aas_handle((ObjHndl)v138));
-				worldLoc = (location2d)Obj_Get_Internal_Field_64bit((ObjHndl)v138, 1);
-				animParams.locx = (unsigned int)worldLoc.x;
-				animParams.locy = (unsigned int)worldLoc.y;
-				animParams.offsetx = Obj_Get_Internal_Field_Float((ObjHndl)v138, obj_f_offset_x);
-				animParams.offsety = Obj_Get_Internal_Field_Float((ObjHndl)v138, obj_f_offset_y);
-				parentOpacity = Obj_Get_Internal_Field_Float((ObjHndl)v138, obj_f_offset_z);
-				aasHandle = (unsigned __int8)sector_get_elevation(
-					worldLoc.x,
-					worldLoc.y,
-					animParams.offsetx,
-					animParams.offsety);
-				animParams.offsetz = parentOpacity - (long double)(signed int)aasHandle;
-				animParams.rotation = Obj_Get_Internal_Field_Float((ObjHndl)v138, obj_f_rotation);
-				LODWORD(animParams.rotationpitch) = 0;
-				*(float *)&aasHandle = COERCE_FLOAT(Obj_Get_Internal_Field_32bit_Int((ObjHndl)v138, 8));
-				animParams.scale = (long double)(signed int)aasHandle * 0.0099999998;
-				AasAnimatedModelGetBoneWorldMatrixByName(shaderId, &animParams, (D3DMATRIX *)&infoOut, "Bip01 Spine1");
-				objFlags = v245;
-				offsetY = v247;
-				Obj_Get_Internal_Field_Float((ObjHndl)v138, obj_f_3d_render_height);
-				v140 = v246 - v237;
-				v141 = v247 - absY;
-				parentOpacity = v141;
-				v142 = v245 - v236;
-				*(float *)&aasHandle = v142;
-				*(float *)&aas_handle = sqrt(v142 * v142 + v141 * v141 + v140 * v140);
-				v143 = 1.0 / *(float *)&aas_handle;
-				v233 = *(float *)&aasHandle * v143;
-				v234 = v143 * v140;
-				v235 = v143 * parentOpacity;
-				if (*(float *)&aas_handle > 0.0)
-					*(float *)&aas_handle = *(float *)&aas_handle - 6.0;
-			}
-			else
-			{
-				*(float *)&aas_handle = 120.0;
-				objFlags = v233 * 120.0 + v236;
-				offsetY = v235 * 120.0 + absY;
-			}
-			if (dword_102ACB64 == -1)
-				tig_shader_register("art/meshes/Monsters/GiantFrog/tongue.mdf", &dword_102ACB64);
-			obj_get_radius(ObjHnd);
-			switch (colorOnlyAlpha)
-			{
-			case 1u:
-				v144 = submeshIdxh + 28.284271;
-				submeshIdxh = v144;
-				if (v144 > *(float *)&aas_handle)
-				{
-					LOWORD(v137) = 2;
-					submeshIdxh = *(float *)&aas_handle;
-				}
-				break;
-			case 2u:
-				v145 = submeshIdxh - 28.284271;
-				submeshIdxh = v145;
-				if ((v145 < 0.0) | __UNORDERED__(v145, 0.0))
-				{
-					Object_Set_Field_32bit(ObjHnd, obj_f_grapple_state, 7);
-					LOWORD(v137) = 0;
-					submeshIdxh = 0.0;
-				}
-				break;
-			case 3u:
-				v146 = submeshIdxh + 28.284271;
-				submeshIdxh = v146;
-				if (v146 > *(float *)&aas_handle)
-				{
-					LOWORD(v137) = 4;
-					submeshIdxh = *(float *)&aas_handle;
-					v147 = CritterGetWeaponAnimId(ObjHnd, 34);
-					anim_obj_set_aas_anim_id(ObjHnd, (AnimationIds)v147);
-					v148 = CritterGetWeaponAnimId((ObjHndl)v138, 28);
-					anim_obj_set_aas_anim_id((ObjHndl)v138, (AnimationIds)v148);
-				}
-				break;
-			case 4u:
-				submeshIdxh = *(float *)&aas_handle;
-				break;
-			case 5u:
-				v149 = *(float *)&aas_handle - 12.0;
-				radius = v149;
-				if ((v149 < 0.0) | __UNORDERED__(v149, 0.0))
-					radius = 0.0;
-				LOWORD(v137) = 6;
-				goto LABEL_205;
-			case 6u:
-				LABEL_205:
-					submeshIdxh = submeshIdxh - 14.142136;
-					absX_4 = offsetY - v235 * 14.142136;
-					absX = objFlags - v233 * 14.142136;
-					abs_coord_to_location(absX, absX_4, &worldLoc, &objFlags, &offsetY);
-					*(_QWORD *)&v152.offsetx = __PAIR__(LODWORD(offsetY), LODWORD(objFlags));
-					v152.xy = worldLoc;
-					Obj_Move((ObjHndl)v138, v152);
-					if ((submeshIdxh < (long double)radius) | __UNORDERED__(submeshIdxh, radius))
-					{
-						v153 = v235 * radius + absY;
-						v154 = v233 * radius + v236;
-						abs_coord_to_location(v154, v153, &worldLoc, &objFlags, &offsetY);
-						*(_QWORD *)&v155.offsetx = __PAIR__(LODWORD(offsetY), LODWORD(objFlags));
-						v155.xy = worldLoc;
-						Obj_Move((ObjHndl)v138, v155);
-						submeshIdxh = radius;
-						LOWORD(v137) = 4;
-					}
-					break;
-			case 7u:
-				submeshIdxh = submeshIdxh - 14.142136;
-				v156 = offsetY - v235 * 14.142136;
-				v157 = objFlags - v233 * 14.142136;
-				abs_coord_to_location(v157, v156, &worldLoc, &objFlags, &offsetY);
-				*(_QWORD *)&v158.offsetx = __PAIR__(LODWORD(offsetY), LODWORD(objFlags));
-				v158.xy = worldLoc;
-				Obj_Move((ObjHndl)v138, v158);
-				if ((submeshIdxh < 0.0) | __UNORDERED__(submeshIdxh, 0.0))
-				{
-					abs_coord_to_location(v236, absY, &worldLoc, &objFlags, &offsetY);
-					*(_QWORD *)&v159.offsetx = __PAIR__(LODWORD(offsetY), LODWORD(objFlags));
-					v159.xy = worldLoc;
-					Obj_Move((ObjHndl)v138, v159);
-					Obj_Fade_To((ObjHndl)v138, 0, 0, 16, 0);
-					LOWORD(v137) = 0;
-					submeshIdxh = 0.0;
-					v160 = CritterGetWeaponAnimId(ObjHnd, 35);
-					anim_obj_set_aas_anim_id(ObjHnd, (AnimationIds)v160);
-				}
-				break;
-			default:
-				break;
-			}
-			Object_Set_Field_32bit(
-				ObjHnd,
-				obj_f_grapple_state,
-				(unsigned __int16)v137 | ((((unsigned __int64)radius << 8) | (unsigned __int8)(unsigned __int64)submeshIdxh) << 16));
-			v161 = 0;
-			*(float *)&colorOnlyAlpha = v233 * 0.0;
-			memset32(&obj_render_diffuse_96, color, 0x60u);
-			obj_render_height = 0.0;
-			v216 = v234 * 0.0;
-			v162 = (char *)&obj_render_uv_96.v;
-			*(float *)&objType__ = v235 * 0.0;
-			do
-			{
-				v163 = (long double)SLODWORD(obj_render_height);
-				*(float *)&v164 = 0.0;
-				*(float *)&aasHandle = 0.0;
-				v165 = (signed int)v162;
-				v166 = v161;
-				parentOpacity = ((cos(6.2831855 * v163 * 0.06666666666666667) - 1.0) * (submeshIdxh * 0.0014285714) * 0.5 + 1.0)
-					* 3.0;
-				v167 = submeshIdxh * v163 * 0.06666667;
-				*(float *)&shaderId = v233 * v167;
-				offsetY = v234 * v167;
-				objFlags = v167 * v235;
-				v168 = v163 * 0.06666667;
-				do
-				{
-					v169 = (long double)(signed int)aasHandle;
-					++v164;
-					v166 += 16;
-					v165 += 8;
-					v170 = 1.0471976 * v169 + flt_10808CFC;
-					*(float *)&aasHandle = v170;
-					v171 = cos(v170);
-					*(float *)&aas_handle = parentOpacity * v171;
-					v172 = *(float *)&aasHandle;
-					aasHandle = v164;
-					v173 = sin(v172);
-					v174 = parentOpacity * v173;
-					*(float *)((char *)&flt_10307550 + v166) = v229 * v174
-						+ v225 * *(float *)&aas_handle
-						+ v236
-						+ *(float *)&shaderId;
-					*(float *)((char *)&flt_10307554 + v166) = v230 * v174 + v226 * *(float *)&aas_handle + v237 + offsetY;
-					*(float *)((char *)&map_trap_mes + v166) = v231 * v174 + v227 * *(float *)&aas_handle + absY + objFlags;
-					*(float *)&aas_handle = v171;
-					*(float *)((char *)&flt_10788230 + v166) = v229 * v173
-						+ v225 * *(float *)&aas_handle
-						+ *(float *)&colorOnlyAlpha;
-					*(float *)((char *)&map_obj_lighting + v166) = v230 * v173 + v226 * *(float *)&aas_handle + v216;
-					*(float *)((char *)&map_object_rectlist + v166) = v231 * v173
-						+ v227 * *(float *)&aas_handle
-						+ *(float *)&objType__;
-					*(float *)(v165 - 12) = v169 * 0.2;
-					*(float *)(v165 - 8) = v168;
-				} while ((signed int)v164 < 6);
-				++LODWORD(obj_render_height);
-				v162 = (char *)v165;
-				v161 = v166;
-			} while (v165 < (signed int)&dword_10307EA4);
-			dword_10788228 = color;
-			v175 = flt_10808CFC - 0.5235987901687622;
-			*(float *)&aas_handle = cos(v175) * 4.5;
-			offsetY = sin(v175) * 4.5;
-			v176 = submeshIdxh + 9.0;
-			flt_10307B60 = v229 * offsetY + v225 * *(float *)&aas_handle + v176 * v233 + v236;
-			flt_10307B64 = v230 * offsetY + v226 * *(float *)&aas_handle + v176 * v234 + v237;
-			flt_10307B68 = v231 * offsetY + v227 * *(float *)&aas_handle + v176 * v235 + absY;
-			v177 = (v229 + v225) * 0.0 + v233;
-			flt_10788840 = v177;
-			v178 = (v230 + v226) * 0.0 + v234;
-			*(float *)&aasHandle = v178;
-			flt_10788844 = v178;
-			v179 = (v231 + v227) * 0.0 + v235;
-			parentOpacity = v179;
-			flt_10788848 = v179;
-			v180 = flt_10808CFC + 1.570796370506287;
-			v181 = cos(v180) * 4.5;
-			v182 = sin(v180) * 4.5;
-			flt_10307B70 = v229 * v182 + v225 * v181 + v176 * v233 + v236;
-			dword_10788854 = aasHandle;
-			dword_10788858 = LODWORD(parentOpacity);
-			dword_1078822C = color;
-			dword_10788864 = aasHandle;
-			dword_10788868 = LODWORD(parentOpacity);
-			dword_10307EA0 = 1065353216;
-			dword_10307EA4 = 1065353216;
-			LODWORD(flt_10788230) = color;
-			obj_render_height = 0.0;
-			*(float *)&aasHandle = 0.0;
-			LODWORD(offsetY) = &obj_render_indices180[1];
-			flt_10307B74 = v230 * v182 + v226 * v181 + v176 * v234 + v237;
-			flt_10307B78 = v231 * v182 + v227 * v181 + v176 * v235 + absY;
-			flt_10788850 = v177;
-			v183 = flt_10808CFC + 3.665191531181335;
-			v184 = v183;
-			v185 = cos(v183) * 4.5;
-			v186 = sin(v184) * 4.5;
-			flt_10307B80 = v229 * v186 + v225 * v185 + v176 * v233 + v236;
-			flt_10307B84 = v230 * v186 + v226 * v185 + v176 * v234 + v237;
-			flt_10307B88 = v231 * v186 + v227 * v185 + v176 * v235 + absY;
-			flt_10788860 = v177;
-			do
-			{
-				v187 = offsetY;
-				v188 = 0;
-				v189 = 6 * LODWORD(obj_render_height);
-				v190 = 6 * LODWORD(obj_render_height) + 6;
-				do
-				{
-					*(_WORD *)(LODWORD(v187) - 2) = v189 + v188;
-					*LODWORD(v187) = v189 + v188 + 1;
-					v191 = v189 + v188 + 7;
-					*(_WORD *)(LODWORD(v187) + 4) = v189 + v188;
-					*(_WORD *)(LODWORD(v187) + 2) = v191;
-					*(_WORD *)(LODWORD(v187) + 6) = v191;
-					*(_WORD *)(LODWORD(v187) + 8) = v190 + v188++;
-					LODWORD(v187) += 12;
-				} while (v188 < 5);
-				v192 = aasHandle;
-				v193 = 6 * (v188 + aasHandle);
-				obj_render_indices180[v193 + 1] = v189;
-				obj_render_indices180[v193 + 2] = v190;
-				obj_render_indices180[v193 + 4] = v190;
-				v194 = obj_render_height;
-				obj_render_indices180[v193] = v189 + 5;
-				obj_render_indices180[v193 + 3] = v189 + 5;
-				obj_render_indices180[v193 + 5] = v189 + 11;
-				v196 = __OFSUB__(LODWORD(offsetY) + 72, &word_10788CAA);
-				v195 = LODWORD(offsetY) + 72 - (signed int)&word_10788CAA < 0;
-				LODWORD(obj_render_height) = LODWORD(v194) + 1;
-				LODWORD(offsetY) += 72;
-				aasHandle = v192 + 6;
-			} while (v195 ^ v196);
-			word_10788CA8 = 90;
-			word_10788CAE = 90;
-			word_10788CB8 = 98;
-			word_10788CBC = 98;
-			word_10788CCA = 98;
-			word_10788CD6 = 98;
-			word_10788CDC = 98;
-			word_10788CAA = 91;
-			word_10788CAC = 97;
-			word_10788CB0 = 97;
-			word_10788CB2 = 96;
-			word_10788CB4 = 92;
-			word_10788CB6 = 93;
-			word_10788CBA = 92;
-			word_10788CBE = 97;
-			word_10788CC0 = 94;
-			word_10788CC2 = 95;
-			word_10788CC4 = 96;
-			word_10788CC6 = 94;
-			word_10788CC8 = 96;
-			word_10788CCC = 91;
-			word_10788CCE = 92;
-			word_10788CD0 = 97;
-			word_10788CD2 = 93;
-			word_10788CD4 = 94;
-			word_10788CD8 = 96;
-			word_10788CDA = 97;
-			tig_shader_render_3d(
-				96,
-				&obj_render_pos_96,
-				&obj_render_normals96,
-				&obj_render_diffuse_96,
-				&obj_render_uv_96,
-				180,
-				obj_render_indices180,
-				dword_102ACB64);
-		}
-		*/
-}
-
 void MapObjectRenderer::RenderShadowMapShadow(objHndl obj,
 	const gfx::AnimatedModelParams &animParams,
 	gfx::AnimatedModel & model,
@@ -1105,12 +782,6 @@ void MapObjectRenderer::RenderBlobShadow(objHndl handle, gfx::AnimatedModel &mod
 	XMCOLOR color(mBlobShadowMaterial->GetSpec()->diffuse);
 	color.a = (color.a * alpha) / 255;
 	shapeRenderer3d.DrawQuad(corners, *mBlobShadowMaterial, color);
-}
-
-objHndl MapObjectRenderer::GiantFrogGetGrappledOpponent(objHndl giantFrog)
-{
-	// TODO
-	throw TempleException("NYI");
 }
 
 static class RenderFix : public TempleFix {

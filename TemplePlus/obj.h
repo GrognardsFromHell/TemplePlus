@@ -57,6 +57,7 @@ struct Objects : temple::AddressTable {
 	void ClearArrayField(objHndl objHnd, obj_f objF);
 	gfx::AnimatedModelPtr GetAnimHandle(objHndl obj);
 	gfx::AnimatedModelParams GetAnimParams(objHndl obj);
+	void SetAnimId(objHndl obj, gfx::EncodedAnimId id);
 	gfx::EncodedAnimId GetIdleAnim(objHndl obj);
 	bool IsDoorOpen(objHndl obj);
 	PortalFlag GetPortalFlags(objHndl obj) {
