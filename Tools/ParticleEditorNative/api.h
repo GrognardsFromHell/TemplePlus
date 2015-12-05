@@ -37,6 +37,9 @@ struct TempleDll {
 	temple::AasRenderer aasRenderer;
 	particles::ParticleRendererManager renderManager;
 	std::unique_ptr<particles::PartSys> partSys;
+	gfx::AnimatedModelPtr currentModel;
+	gfx::AnimatedModelParams animParams;
+	std::unique_ptr<class EditorExternal> external;
 	
 };
 
@@ -58,7 +61,7 @@ extern "C" {
 	                                                   const wchar_t* skmFilename,
 	                                                   const wchar_t* skaFilename);
 
-	API void AnimatedModel_Render(gfx::AnimatedModelPtr* handle, IDirect3DDevice9*, float w, float h, float scale);
+	API void AnimatedModel_Render(TempleDll* dll, gfx::AnimatedModelPtr* handle, float w, float h, float scale);
 
 	API void AnimatedModel_AdvanceTime(gfx::AnimatedModelPtr* handle, float time);
 

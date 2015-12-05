@@ -21,7 +21,10 @@ TempleDll::TempleDll(const std::wstring &installationDir, IDirect3DDevice9Ex* de
 	aasRenderer(aasFactory, renderingDevice, shapeRenderer2d, shapeRenderer3d, mdfFactory),
 	renderManager(renderingDevice, aasFactory, aasRenderer) {
 
-	particles::IPartSysExternal::SetCurrent(&EditorExternal::GetInstance());
+	animParams.rotation = XMConvertToRadians(135.0f);
+
+	external = std::make_unique<EditorExternal>(*this);
+	particles::IPartSysExternal::SetCurrent(external.get());
 
 }
 

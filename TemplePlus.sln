@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MinHook", "MinHook\MinHook.vcxproj", "{23AD6E36-FA90-4A0D-A1F4-6BFCDBCBDC7C}"
 EndProject
@@ -25,6 +25,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ParticleEditorNative", "Tools\ParticleEditorNative\ParticleEditorNative.vcxproj", "{76A16770-4B67-46E0-94F9-27677924B9C6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParticleEditor", "Tools\ParticleEditor\ParticleEditor.csproj", "{4FE2387E-C44D-465C-A95D-373476AAA0C6}"
+	ProjectSection(ProjectDependencies) = postProject
+		{76A16770-4B67-46E0-94F9-27677924B9C6} = {76A16770-4B67-46E0-94F9-27677924B9C6}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParticleEditorTests", "Tools\ParticleEditorTests\ParticleEditorTests.csproj", "{B5F786F8-5F0F-4CF3-B0C4-7A7443C02F29}"
 EndProject

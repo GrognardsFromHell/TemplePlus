@@ -438,13 +438,6 @@ namespace particles {
 			if (emitter->GetSpec()->IsPermanent()) {
 				// If the emitter is permanent, simulate at most 0.5s
 				simForEmitter = std::min<float>(0.5f, simForEmitter);
-			} else {
-				// Otherwise at most it's lifespan
-				float remainingLifespan = emitter->GetSpec()->GetLifespan() - (mAliveInSecs - secsToSimulate);
-				if (remainingLifespan < 0) {
-					continue;
-				}
-				simForEmitter = std::min<float>(remainingLifespan, simForEmitter);
 			}
 
 			// Emitters with a delay are not simulated until the particle system

@@ -54,26 +54,23 @@ extern "C" {
 
 	API void ParticleSystem_SetPos(TempleDll* dll, float screenX, float screenY) {
 		auto worldPos = dll->renderingDevice.GetCamera().ScreenToWorld(screenX, screenY);
-		EditorExternal editorExternal;
-		//dll->partSys->SetWorldPos(&editorExternal, worldPos.x, worldPos.y, worldPos.z);
 	}
 
 	API void ParticleSystem_SetObjPos(TempleDll* dll, float screenX, float screenY) {
 		auto worldPos = dll->renderingDevice.GetCamera().ScreenToWorld(screenX, screenY);
-		//EditorExternal::SetObjPos(worldPos.x, worldPos.y, worldPos.z);
 	}
 
 	API void ParticleSystem_SetScale(TempleDll* dll, float scale) {
 		dll->renderingDevice.GetCamera().SetScale(scale);
+		dll->renderingDevice.GetCamera().CenterOn(0, 0, 0);
 	}
 
 	API void ParticleSystem_Resize(TempleDll* dll, float w, float h) {
 		dll->renderingDevice.GetCamera().SetScreenWidth(w, h);
+		dll->renderingDevice.GetCamera().CenterOn(0, 0, 0);
 	}
 
 	API void ParticleSystem_Render(TempleDll* dll) {
-		dll->renderingDevice.GetCamera().SetScale(1);
-
 		if (dll->partSys->IsDead()) {
 			dll->partSys->Reset();
 		}

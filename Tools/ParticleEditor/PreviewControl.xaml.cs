@@ -108,8 +108,8 @@ namespace ParticleEditor
 
             _previewModel = AnimatedModel.FromFiles(
                 TempleDll.Instance,
-                Path.Combine(_dataPath, @"art\meshes\PCs\PC_Human_Male\PC_Human_Male.SKM"),
-                Path.Combine(_dataPath, @"art\meshes\PCs\PC_Human_Male\PC_Human_Male.SKA")
+                @"art\meshes\PCs\PC_Human_Male\PC_Human_Male.SKM",
+                @"art\meshes\PCs\PC_Human_Male\PC_Human_Male.SKA"
                 );
         }
 
@@ -266,7 +266,7 @@ namespace ParticleEditor
                 _timeSinceLastSimul = renderTime;
             }
 
-            _previewModel?.Render(Device, w, h, _model.Scale);
+            _previewModel?.Render(TempleDll.Instance, w, h, _model.Scale);
             _activeSystem?.Render(w, h, 0, 0, _model.Scale);
 
             Device.EndScene();

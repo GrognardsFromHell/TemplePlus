@@ -22,16 +22,16 @@ namespace ParticleEditor
             _handle = IntPtr.Zero;
         }
 
-        public void Render(Device device, float w, float h, float scale)
+        public void Render(TempleDll templeDll, float w, float h, float scale)
         {
             if (_handle != IntPtr.Zero)
             {
-                AnimatedModel_Render(_handle, device.NativePointer, w, h, scale);
+                AnimatedModel_Render(templeDll.Handle, _handle, w, h, scale);
             }
         }
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern void AnimatedModel_Render(IntPtr handle, IntPtr d3DDeviceHandle, float w, float h,
+        private static extern void AnimatedModel_Render(IntPtr templeDll, IntPtr handle, float w, float h,
             float scale);
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]

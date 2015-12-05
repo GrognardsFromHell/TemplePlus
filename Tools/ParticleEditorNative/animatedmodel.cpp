@@ -22,116 +22,19 @@ API gfx::AnimatedModelPtr* AnimatedModel_FromFiles(TempleDll* dll,
 	                                           gfx::EncodedAnimId(gfx::WeaponAnim::Idle),
 	                                           params);
 
+	auto headMdf(dll->mdfFactory.LoadMaterial("art/meshes/PCs/PC_Human_Male/Head.mdf"));
+	auto chestMdf(dll->mdfFactory.LoadMaterial("art/meshes/PCs/PC_Human_Male/Chest.mdf"));
+	auto glovesMdf(dll->mdfFactory.LoadMaterial("art/meshes/PCs/PC_Human_Male/Hands.mdf"));
+	auto bootsMdf(dll->mdfFactory.LoadMaterial("art/meshes/PCs/PC_Human_Male/Feet.mdf"));
+
+	model->AddReplacementMaterial(gfx::MaterialPlaceholderSlot::HEAD, headMdf);
+	model->AddReplacementMaterial(gfx::MaterialPlaceholderSlot::CHEST, chestMdf);
+	model->AddReplacementMaterial(gfx::MaterialPlaceholderSlot::GLOVES, glovesMdf);
+	model->AddReplacementMaterial(gfx::MaterialPlaceholderSlot::BOOTS, bootsMdf);
+
+	dll->currentModel = model;
+
 	return new gfx::AnimatedModelPtr(model);
-
-}
-
-#pragma pack(push, 4)
-struct PointVertex {
-	D3DVECTOR pos;
-	float size;
-	D3DCOLOR color;
-};
-#pragma pack(pop)
-static_assert(temple::validate_size<PointVertex, 20>::value, "PointVertex has incorrect size");
-
-class PointCloud {
-public:
-	explicit PointCloud(const CComPtr<IDirect3DDevice9>& iDirect3DDevice9)
-		: mDevice(iDirect3DDevice9) {
-	}
-
-	void AddPoint(D3DVECTOR pos, D3DCOLOR color, float size) {
-		PointVertex vertex{pos, size, color};
-		mVertices.emplace_back(vertex);
-	}
-
-	void Render();
-
-private:
-	static constexpr DWORD sFvf = D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_PSIZE;
-
-	CComPtr<IDirect3DVertexBuffer9> mBuffer;
-	CComPtr<IDirect3DDevice9> mDevice;
-	std::vector<PointVertex> mVertices;
-	int mBufferSize = 0;
-
-	void UpdateBuffer();
-};
-
-void PointCloud::UpdateBuffer() {
-	int neededSize = sizeof(PointVertex) * mVertices.size();
-
-	if (neededSize > mBufferSize) {
-		mBuffer.Release();
-		mBufferSize = neededSize;
-		auto result = mDevice->CreateVertexBuffer(mBufferSize,
-		                                          D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY | D3DUSAGE_POINTS,
-		                                          sFvf,
-		                                          D3DPOOL_DEFAULT,
-		                                          &mBuffer,
-		                                          nullptr
-		);
-		if (!SUCCEEDED(result)) {
-			throw TempleException("Unable to create vertex buffer for point cloud rendering.");
-		}
-	}
-
-	PointVertex* bufferData;
-	auto result = mBuffer->Lock(0, neededSize, (void**)&bufferData, D3DLOCK_DISCARD);
-	if (!SUCCEEDED(result)) {
-		throw TempleException("Unable to lock vertex buffer while updating the point cloud");
-	}
-
-	memcpy(bufferData, mVertices.data(), neededSize);
-
-	result = mBuffer->Unlock();
-	if (!SUCCEEDED(result)) {
-		throw TempleException("Unable to unlock vertex buffer while updating the point cloud");
-	}
-}
-
-static DWORD CoerceToInteger(float value) {
-	return *(DWORD*)&value;
-}
-
-void PointCloud::Render() {
-
-	UpdateBuffer();
-
-	renderStates->SetProjectionMatrix(renderStates->Get3dProjectionMatrix());
-
-	renderStates->SetZEnable(true);
-	renderStates->SetColorVertex(true);
-	renderStates->SetZWriteEnable(false);
-	renderStates->SetLighting(false);
-
-	renderStates->SetFVF(sFvf);
-	renderStates->SetStreamSource(0, mBuffer, sizeof(PointVertex));
-	renderStates->SetTexture(0, nullptr);
-	renderStates->SetTexture(1, nullptr);
-	renderStates->SetTexture(2, nullptr);
-	renderStates->SetTexture(3, nullptr);
-	renderStates->SetIndexBuffer(nullptr, 0);
-	renderStates->Commit();
-
-	mDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, TRUE);
-	mDevice->SetRenderState(D3DRS_POINTSCALEENABLE, FALSE);
-	mDevice->SetRenderState(D3DRS_POINTSIZE, CoerceToInteger(30.08f));
-	mDevice->SetRenderState(D3DRS_POINTSIZE_MIN, CoerceToInteger(10.0f));
-	mDevice->SetRenderState(D3DRS_POINTSIZE_MAX, CoerceToInteger(64.0f));
-	mDevice->SetRenderState(D3DRS_POINTSCALE_A, CoerceToInteger(10.0f));
-	mDevice->SetRenderState(D3DRS_POINTSCALE_B, CoerceToInteger(10.0f));
-	mDevice->SetRenderState(D3DRS_POINTSCALE_C, CoerceToInteger(10.0f));
-
-	mDevice->DrawPrimitive(D3DPT_POINTLIST, 0, mVertices.size());
-
-	mDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, FALSE);
-	mDevice->SetRenderState(D3DRS_POINTSCALEENABLE, FALSE);
-
-	renderStates->SetZEnable(false);
-	renderStates->SetAlphaBlend(false);
-	renderStates->SetZWriteEnable(true);
 
 }
 
@@ -139,29 +42,27 @@ API void AnimatedModel_Free(gfx::AnimatedModelPtr* handle) {
 	delete handle;
 }
 
-API void AnimatedModel_Render(gfx::AnimatedModelPtr* handle, IDirect3DDevice9* device, float w, float h, float scale) {
-	
+API void AnimatedModel_Render(TempleDll* dll, gfx::AnimatedModelPtr* handle, float w, float h, float scale) {
+
+	auto &camera = dll->renderingDevice.GetCamera();
+	camera.SetScale(scale);
+	camera.SetScreenWidth(w, h);
+	camera.CenterOn(0, 0, 0);
+
 	auto model = (*handle).get();
 
-	PointCloud pointCloud(device);
+	gfx::Light3d light;
+	light.type = gfx::Light3dType::Directional;
+	light.color = XMFLOAT4(1, 1, 1, 1);
+	light.dir = XMFLOAT4(-0.7070000171661377f, -0.8659999966621399f, 0, 0);
 
-	auto boneCount = model->GetBoneCount();
-	gfx::AnimatedModelParams params;
-	XMFLOAT4X4 matrix;
-	for (auto i = 0; i < boneCount; ++i) {
-		auto boneName = model->GetBoneName(i);
-		if (!model->GetBoneWorldMatrixByName(params, boneName, &matrix)) {
-			continue;
-		}
+	std::vector<gfx::Light3d> lights;
+	lights.push_back(light);
 
-		D3DXVECTOR3 pos{0,0,0};
-		D3DVECTOR posWorld;
-		D3DXVec3TransformCoord((D3DXVECTOR3*)&posWorld, &pos, (D3DXMATRIX*)&matrix);
-
-		pointCloud.AddPoint(posWorld, D3DCOLOR_ARGB(255, 255, 255, 255), 1);
-	}
-
-	pointCloud.Render();
+	gfx::MdfRenderOverrides overrides;
+	//overrides.ignoreLighting = true;
+	
+	dll->aasRenderer.Render(handle->get(), dll->animParams, lights, &overrides);
 
 }
 

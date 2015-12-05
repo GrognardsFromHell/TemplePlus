@@ -108,17 +108,15 @@ namespace gfx {
 
 	void WorldCamera::CenterOn(float x, float y, float z) {
 
-		if (mDirty) {
-			Update();
-		}
+		mDirty = true;
+		mXTranslation = 0;
+		mYTranslation = 0;
+		Update();
 
 		auto targetScreenPos(WorldToScreen(XMFLOAT3(x, y, z)));
-
-		// Y is flipped
-		targetScreenPos.y *= -1;
-
-		mXTranslation = -targetScreenPos.x;
-		mYTranslation = -targetScreenPos.y;
+		
+		mXTranslation = targetScreenPos.x;
+		mYTranslation = targetScreenPos.y;
 		mDirty = true;
 	}
 
