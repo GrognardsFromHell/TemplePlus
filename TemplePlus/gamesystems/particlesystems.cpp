@@ -101,9 +101,6 @@ const std::string &ParticleSysSystem::GetName() const {
 }
 
 int ParticleSysSystem::CreateAt(uint32_t nameHash, XMFLOAT3 pos) {
-
-	static std::string sEmptyName;
-
 	auto it = mPartSysByHash.find(nameHash);
 
 	if (it == mPartSysByHash.end()) {
@@ -121,6 +118,48 @@ int ParticleSysSystem::CreateAt(uint32_t nameHash, XMFLOAT3 pos) {
 	mActiveSys[assignedId] = sys;
 	return assignedId;
 
+}
+
+ParticleSysSystem::Handle ParticleSysSystem::CreateAtObj(const std::string &name, objHndl obj) {
+	auto it = mPartSysByName.find(tolower(name));
+
+	if (it == mPartSysByName.end()) {
+		logger->warn("Unable to spawn unknown particle system: {}", name);
+		return -1;
+	}
+
+	auto& spec = it->second;
+
+	auto loc = objects.GetLocationFull(obj);
+	auto absLoc = loc.ToCenterOfTileAbs3D(objects.GetOffsetZ(obj));
+
+	auto sys(std::make_shared<PartSys>(spec));
+	sys->SetWorldPos(mExternal.get(), absLoc.x, absLoc.y, absLoc.z);
+	sys->SetAttachedTo(obj);
+
+	auto assignedId = mNextId++;
+
+	mActiveSys[assignedId] = sys;
+	return assignedId;
+}
+
+ParticleSysSystem::Handle ParticleSysSystem::CreateAtPos(const std::string &name, XMFLOAT3 pos) {
+	auto it = mPartSysByName.find(tolower(name));
+
+	if (it == mPartSysByName.end()) {
+		logger->warn("Unable to spawn unknown particle system: {}", name);
+		return -1;
+	}
+
+	auto& spec = it->second;
+
+	auto sys(std::make_shared<PartSys>(spec));
+	sys->SetWorldPos(mExternal.get(), pos.x, pos.y, pos.z);
+
+	auto assignedId = mNextId++;
+
+	mActiveSys[assignedId] = sys;
+	return assignedId;
 }
 
 bool ParticleSysSystem::DoesNameExist(const std::string & name)

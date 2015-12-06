@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "particles.h"
 
-Particles particles;
+LegacyParticles legacyParticles;
 
 static struct ParticleAddresses : temple::AddressTable {
 
@@ -28,32 +28,32 @@ static struct ParticleAddresses : temple::AddressTable {
 
 } addresses;
 
-int Particles::CreateAtObj(const char *name, objHndl atObj) {
+int LegacyParticles::CreateAtObj(const char *name, objHndl atObj) {
 	auto nameHash = addresses.Elf32Hash(name);
 	return addresses.CreateAtObj(nameHash, atObj);
 }
 
-int Particles::CreateAt3dPos(const char *name, vector3f pos) {
+int LegacyParticles::CreateAt3dPos(const char *name, vector3f pos) {
 	auto nameHash = addresses.Elf32Hash(name);
 	return addresses.CreateAtPos(nameHash, pos);
 }
 
-void Particles::Kill(int partSysId) {
+void LegacyParticles::Kill(int partSysId) {
 	addresses.Kill(partSysId);
 }
 
-void Particles::End(int partSysId) {
+void LegacyParticles::End(int partSysId) {
 	addresses.End(partSysId);
 }
 
-void Particles::CallLightning(LocAndOffsets location) {
+void LegacyParticles::CallLightning(LocAndOffsets location) {
 	addresses.CallLightning(location);
 }
 
-void Particles::LightningBolt(objHndl caster, LocAndOffsets target) {
+void LegacyParticles::LightningBolt(objHndl caster, LocAndOffsets target) {
 	addresses.LightningBolt(caster, target);
 }
 
-void Particles::ChainLightning(objHndl caster, const vector<objHndl>& targets) {
+void LegacyParticles::ChainLightning(objHndl caster, const vector<objHndl>& targets) {
 	addresses.ChainLightning(caster, targets.size(), targets.data());
 }

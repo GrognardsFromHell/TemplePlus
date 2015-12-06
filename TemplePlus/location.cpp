@@ -18,8 +18,8 @@ public: const char* name() override
 		*/
 		static BOOL GetLocFromScreenLoc(int64_t screenX, int64_t screenY, locXY *loc, float*offx, float*offy)
 {
-	int64_t xx = (screenX-*locSys.locTransX)/2;
-	int64_t yy = (screenY-*locSys.locTransY) / 2 * sqrt(2);
+	int64_t xx = (screenX - *locSys.locTransX) / 2;
+	int64_t yy = (int64_t)((screenY - *locSys.locTransY) / 2 * sqrt(2));
 	int result = orgGetLocFromScreenLoc(screenX,screenY,loc,offx,offy);
 	return result;
 };
@@ -96,32 +96,32 @@ BOOL LocationSys::ShiftLocationByOneSubtile(LocAndOffsets* loc, ScreenDirections
 		switch (direction)
 		{
 		case ScreenDirections::Top: 
-			locOut->off_x -= 9.4280901;
-			locOut->off_y -= 9.4280901;
+			locOut->off_x -= 9.4280901f;
+			locOut->off_y -= 9.4280901f;
 			break;
 		case ScreenDirections::TopRight: 
-			locOut->off_x -= 9.4280901;
+			locOut->off_x -= 9.4280901f;
 			break;
 		case ScreenDirections::Right:
-			locOut->off_x -= 9.4280901;
-			locOut->off_y += 9.4280901;
+			locOut->off_x -= 9.4280901f;
+			locOut->off_y += 9.4280901f;
 			break;
 		case ScreenDirections::BottomRight:
-			locOut->off_y += 9.4280901;
+			locOut->off_y += 9.4280901f;
 			break;
 		case ScreenDirections::Bottom:
-			locOut->off_x += 9.4280901;
-			locOut->off_y += 9.4280901;
+			locOut->off_x += 9.4280901f;
+			locOut->off_y += 9.4280901f;
 			break;
 		case ScreenDirections::BottomLeft:
-			locOut->off_x += 9.4280901;
+			locOut->off_x += 9.4280901f;
 			break;
 		case ScreenDirections::Left:
-			locOut->off_x += 9.4280901;
-			locOut->off_y -= 9.4280901;
+			locOut->off_x += 9.4280901f;
+			locOut->off_y -= 9.4280901f;
 			break;
 		case ScreenDirections::TopLeft:
-			locOut->off_y -= 9.4280901;
+			locOut->off_y -= 9.4280901f;
 				break;
 		default:
 			break;
@@ -187,7 +187,10 @@ float AngleBetweenPoints(LocAndOffsets fromPoint, LocAndOffsets toPoint) {
 	auto toCoord = fromPoint.ToInches2D();
 	
 	// Create the vector from->to
-	auto dir = toCoord - fromCoord;
+	auto dir = XMFLOAT2(
+		toCoord.x - fromCoord.x,
+		toCoord.y - fromCoord.y
+	);
 
 	auto angle = atan2(dir.y, dir.x);
 	return angle + 2.3561945f; // + 135 degrees

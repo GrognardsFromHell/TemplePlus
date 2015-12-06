@@ -44,8 +44,8 @@ constexpr int INCH_PER_FEET = 12;
 
 #pragma pack(push, 1)
 
-typedef D3DXVECTOR2 vector2f;
-typedef D3DXVECTOR3 vector3f;
+typedef XMFLOAT2 vector2f;
+typedef XMFLOAT3 vector3f;
 
 struct locXY {
 	uint32_t locx;

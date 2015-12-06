@@ -12,6 +12,7 @@
 #include "python/python_object.h"
 #include "tig/tig_startup.h"
 #include "util/fixes.h"
+#include "gamesystems/particlesystems.h"
 #include <graphics/mdfmaterials.h>
 #include <infrastructure/meshes.h>
 #include <infrastructure/vfs.h>
@@ -215,7 +216,7 @@ uint32_t LegacyCritterSystem::Dominate(objHndl critter, objHndl caster) {
 
 	vector<int> args(3);
 
-	args[0] = particles.CreateAtObj("sp-Dominate Person", critter);
+	args[0] = gameSystems->GetParticleSys().CreateAtObj("sp-Dominate Person", critter);
 	args[1] = (caster >> 32) & 0xFFFFFFFF;
 	args[2] = caster & 0xFFFFFFFF;
 

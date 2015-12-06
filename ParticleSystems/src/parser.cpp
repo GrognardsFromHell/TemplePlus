@@ -248,7 +248,7 @@ namespace particles {
 		auto emitter = system->CreateEmitter(record[COL_EMITTER_NAME].AsString());
 
 		ParseOptionalFloat(record, COL_DELAY, "Delay", [&] (float value) {
-			                   emitter->SetDelay(value);
+			                   emitter->SetDelay(value / 30.0f);
 		                   });
 
 		ParseLifespan(record, emitter);

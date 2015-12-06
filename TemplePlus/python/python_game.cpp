@@ -14,6 +14,7 @@
 #include "tig/tig_mouse.h"
 #include "maps.h"
 #include "../gamesystems/gamesystems.h"
+#include "../gamesystems/particlesystems.h"
 #include "../gamesystems/legacy.h"
 #include "fade.h"
 #include "combat.h"
@@ -33,6 +34,7 @@
 #include <timeevents.h>
 #include "tig/tig_startup.h"
 #include <graphics/device.h>
+#include <particles/instances.h>
 
 static PyObject *encounterQueue = nullptr;
 
@@ -537,6 +539,8 @@ PyObject* PyGame_Particles(PyObject*, PyObject* args) {
 		return 0;
 	}
 
+	auto& particles = gameSystems->GetParticleSys();
+
 	if (PyObjHndl_Check(locOrObj)) {
 		auto objHandle = PyObjHndl_AsObjHndl(locOrObj);
 		auto partHandle = particles.CreateAtObj(name, objHandle);
@@ -544,7 +548,8 @@ PyObject* PyGame_Particles(PyObject*, PyObject* args) {
 	}
 	else if (PyLong_Check(locOrObj)) {
 		auto loc = locXY::fromField(PyLong_AsUnsignedLongLong(locOrObj));
-		auto partHandle = particles.CreateAt3dPos(name, loc.ToInches3D());
+		auto pos = loc.ToInches3D();
+		auto partHandle = particles.CreateAtPos(name, pos);
 		return PyInt_FromLong(partHandle);
 	} else {
 		PyErr_SetString(PyExc_TypeError, "Location of particle system must be either a tile location (long) or an object handle.");
@@ -645,7 +650,8 @@ PyObject* PyGame_ParticlesKill(PyObject*, PyObject* args) {
 		PyErr_SetString(PyExc_ValueError, "Cannot kill particle system id 0. Invalid value.");
 		return 0;
 	}
-	particles.Kill(partSysId);
+
+	gameSystems->GetParticleSys().Remove(partSysId);
 	Py_RETURN_NONE;
 }
 
@@ -658,7 +664,10 @@ PyObject* PyGame_ParticlesEnd(PyObject*, PyObject* args) {
 		PyErr_SetString(PyExc_ValueError, "Cannot kill particle system id 0. Invalid value.");
 		return 0;
 	}
-	particles.End(partSysId);
+	auto& partSys = gameSystems->GetParticleSys().GetByHandle(partSysId);
+	if (partSys) {
+		partSys->EndPrematurely();
+	}
 	Py_RETURN_NONE;
 }
 
@@ -750,7 +759,7 @@ PyObject* PyGame_PfxCallLightning(PyObject*, PyObject* args) {
 		return 0;
 	}
 
-	particles.CallLightning(loc);
+	legacyParticles.CallLightning(loc);
 	Py_RETURN_NONE;
 }
 
@@ -769,7 +778,7 @@ PyObject* PyGame_PfxChainLightning(PyObject*, PyObject* args) {
 	for (int i = 0; i < targetCount; ++i) {
 		targets.push_back(PySpell_GetTargetHandle(spell, i));
 	}
-	particles.ChainLightning(caster, targets);	
+	legacyParticles.ChainLightning(caster, targets);
 	Py_RETURN_NONE;
 }
 
@@ -781,7 +790,7 @@ PyObject* PyGame_PfxLightningBolt(PyObject*, PyObject* args) {
 		return 0;
 	}
 
-	particles.LightningBolt(caster, target);
+	legacyParticles.LightningBolt(caster, target);
 	Py_RETURN_NONE;
 }
 

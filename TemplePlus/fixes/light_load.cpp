@@ -4,7 +4,9 @@
 #include <temple_functions.h>
 #include <timeevents.h>
 #include <particles.h>
+#include <gamesystems/gamesystems.h>
 #include <gamesystems/map/sector.h>
+#include <gamesystems/particlesystems.h>
 
 /*
 	This is the fix for bug #104, which causes particle systems to be
@@ -50,6 +52,8 @@ void SectorLoadLightFix::apply() {
 
 int SectorLoadLightFix::ReadLightFromDiff(TioFile* file, SectorLight** lightOut) {
 
+	auto& particles = gameSystems->GetParticleSys();
+
 	/*
 		ToEE would let the light read from the original sector file leak,
 		so we take care of it here and destroy the light and the particle
@@ -60,13 +64,13 @@ int SectorLoadLightFix::ReadLightFromDiff(TioFile* file, SectorLight** lightOut)
 		if (lightOrg->flags & 0x50) {
 			auto partSys1 = lightOrg->partSys;
 			if (partSys1.id) {
-				particles.Kill(partSys1.id);
+				particles.Remove(partSys1.id);
 			}
 		}
 		if (lightOrg->flags & 0x40) {
 			auto partSys2 = lightOrg->light2.partSys;
 			if (partSys2.id) {
-				particles.Kill(partSys2.id);
+				particles.Remove(partSys2.id);
 			}
 		}
 

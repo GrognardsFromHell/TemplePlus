@@ -66,6 +66,9 @@ void ParticleSystemsRenderer::Render()
 
 		// each emitter is rendered individually
 		for (auto &emitter : partSys) {
+			if (emitter->GetActiveCount() == 0) {
+				continue; // Skip emitters with no particles
+			}
 			auto type = emitter->GetSpec()->GetParticleType();
 			auto& renderer = mRendererManager->GetRenderer(type);
 			renderer.Render(*emitter);

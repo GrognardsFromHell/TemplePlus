@@ -3,6 +3,8 @@
 
 #include "gamesystem.h"
 
+#include "obj.h"
+
 #include <graphics/math.h>
 
 struct GameSystemConf;
@@ -30,6 +32,8 @@ public:
 	const std::string &GetName() const override;
 
 	Handle CreateAt(uint32_t nameHash, XMFLOAT3 pos);
+	Handle CreateAtObj(const std::string &name, objHndl obj);
+	Handle CreateAtPos(const std::string &name, XMFLOAT3 pos);
 
 	bool DoesNameExist(const std::string &name);
 	bool DoesNameHashExist(uint32_t nameHash);

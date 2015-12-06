@@ -6,7 +6,7 @@
 /*
 	Wraps particle system related functions.
 */
-class Particles {
+class LegacyParticles {
 public:	
 
 	/*
@@ -39,4 +39,5 @@ public:
 	void ChainLightning(objHndl caster, const vector<objHndl> &targets);
 };
 
-extern Particles particles;
+extern LegacyParticles legacyParticles;
+
