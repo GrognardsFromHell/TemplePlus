@@ -30,6 +30,21 @@ using namespace gfx;
 VideoFuncs videoFuncs;
 temple::GlobalStruct<VideoData, 0x11E74580> video;
 
+#pragma pack(push, 1)
+struct TigAdapterMode {
+	int width;
+	int height;
+	int bpp;
+	int refreshRate;
+	int flags;
+};
+struct TigAdapterInfo {
+	const char *name;
+	int modeCount;
+	TigAdapterMode *modes;
+};
+#pragma pack(pop)
+
 static class VideoFixes : TempleFix {
 public:
 
@@ -55,6 +70,17 @@ private:
 	                        int bpp,
 	                        int refresh,
 	                        int flags);
+
+	static int GetAdapterCount();
+	static TigAdapterInfo* GetAdapterInfo(int adapter);
+
+	static int ChangeVideoSettings(int adapter,
+		int nWidth,
+		int nHeight,
+		int bpp,
+		int refresh,
+		int flags);
+	static BOOL GetAntiAliasing();
 
 	static void GetSystemMemory(int* totalMem, int* availableMem);
 	static void TakeScreenshot(int);
@@ -99,6 +125,14 @@ void VideoFixes::apply() {
 
 	MH_CreateHook(videoFuncs.SetVideoMode, SetVideoMode, reinterpret_cast<LPVOID*>(&videoFuncs.SetVideoMode));
 	MH_CreateHook(videoFuncs.CleanUpBuffers, CleanUpBuffers, reinterpret_cast<LPVOID*>(&videoFuncs.CleanUpBuffers));
+
+	// Replace the call from the options ui to set_video_mode because we want to actually act on that one
+	replaceFunction(0x10002370, ChangeVideoSettings);
+	replaceFunction(0x101D61E0, GetAntiAliasing);
+
+	// Without any adapters, the video settings are *never* saved
+	replaceFunction(0x101D6070, GetAdapterCount);
+	replaceFunction(0x101D6080, GetAdapterInfo);
 
 	// We hook the entire video subsystem initialization function
 	MH_CreateHook(temple::GetPointer<0x101DBC80>(), AllocTextureMemory, nullptr);
@@ -195,6 +229,46 @@ Video mode switching no longer needs to happen.
 */
 int VideoFixes::SetVideoMode(int adapter, int nWidth, int nHeight, int bpp, int refresh, int flags) {
 	return 0;
+}
+
+int VideoFixes::GetAdapterCount()
+{
+	return 1;
+}
+
+TigAdapterInfo * VideoFixes::GetAdapterInfo(int adapter)
+{
+	static TigAdapterMode fallbackMode{
+		config.renderWidth,
+		config.renderHeight,
+		32,
+		60,
+		0
+	};
+	static TigAdapterInfo fallbackInfo {
+		"Primary Adapter",
+		1,
+		&fallbackMode
+	};
+
+
+	return &fallbackInfo;
+}
+
+int VideoFixes::ChangeVideoSettings(int adapter, int nWidth, int nHeight, int bpp, int refresh, int flags)
+{
+	// We only use the anti aliasing part of this
+	bool antiAliasing = (flags & 1);
+	config.antialiasing = antiAliasing;
+	config.Save();
+	renderingDevice->SetAntiAliasing(antiAliasing);
+
+	return TRUE;
+}
+
+BOOL VideoFixes::GetAntiAliasing()
+{
+	return config.antialiasing ? TRUE : FALSE;
 }
 
 /*
