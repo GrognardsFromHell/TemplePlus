@@ -48,7 +48,7 @@ namespace gfx {
 
 	class RenderingDevice {
 	public:
-		RenderingDevice(HWND mWindowHandle, int renderWidth, int renderHeight);
+		RenderingDevice(HWND mWindowHandle, int renderWidth, int renderHeight, bool antiAliasing = true);
 		RenderingDevice(IDirect3DDevice9Ex *device, int renderWidth, int renderHeight);
 		~RenderingDevice();
 
@@ -97,7 +97,7 @@ namespace gfx {
 		const XMFLOAT4 &GetSceneRect() const {
 			return mSceneRect;
 		}
-
+		
 		IDirect3DSurface9* GetRenderSurface() {
 			return mSceneSurface;
 		}
@@ -150,6 +150,8 @@ namespace gfx {
 			return mCamera;
 		}
 
+		void SetAntiAliasing(bool enable);
+
 	private:
 		friend class ResourceListenerRegistration;
 		void AddResourceListener(ResourceListener* resourceListener);
@@ -166,6 +168,7 @@ namespace gfx {
 		
 		// The rectangle (x,y,w,h) where the scene is Drawn on the backbuffer
 		XMFLOAT4 mSceneRect;
+		bool mAntiAliasing;
 		
 		HWND mWindowHandle;
 		
@@ -173,6 +176,7 @@ namespace gfx {
 		D3DCAPS9 mCaps;
 		size_t mVideoMemory = 0;
 		D3DSURFACE_DESC mBackBufferDesc;
+		std::vector<D3DMULTISAMPLE_TYPE> mSupportedAaSamples;
 
 		CComPtr<IDirect3D9Ex> mDirect3d9;
 		CComPtr<IDirect3DDevice9Ex> mDevice;
@@ -182,7 +186,7 @@ namespace gfx {
 		// than the screen resolution
 		CComPtr<IDirect3DSurface9> mSceneSurface;
 		CComPtr<IDirect3DSurface9> mSceneDepthSurface;
-
+		
 		std::list<ResourceListener*> mResourcesListeners;
 		bool mResourcesCreated = false;
 		

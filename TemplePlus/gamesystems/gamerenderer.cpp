@@ -237,6 +237,9 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
     mapSystems.GetTerrain().Render();
 
     renderFuncs.PerformFogChecks();
+
+	mRenderingDevice.GetDevice()->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
+
     mapSystems.GetClipping().Render();
     // renderFuncs.RenderClipping();
 
@@ -246,6 +249,8 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
     /*renderFuncs.RenderMapObj(info);
     renderFuncs.RenderGMesh();
     renderFuncs.RenderPfxLighting();*/
+
+	mRenderingDevice.GetDevice()->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, FALSE);
 
 	mParticleSysRenderer->Render();
     /*renderFuncs.RenderPartSys();

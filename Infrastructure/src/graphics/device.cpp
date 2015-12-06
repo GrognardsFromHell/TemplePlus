@@ -25,12 +25,13 @@ namespace gfx {
 		mDevice.RemoveResourceListener(mListener);
 	}
 	
-	RenderingDevice::RenderingDevice(HWND windowHandle, int renderWidth, int renderHeight) 
+	RenderingDevice::RenderingDevice(HWND windowHandle, int renderWidth, int renderHeight, bool antiAliasing) 
 		  : mWindowHandle(windowHandle), 
 			mRenderWidth(renderWidth),
 			mRenderHeight(renderHeight),
 			mShaders(*this),
-			mTextures(*this, 128 * 1024 * 1024) {
+			mTextures(*this, 128 * 1024 * 1024),
+			mAntiAliasing(antiAliasing) {
 		Expects(!renderingDevice);
 		renderingDevice = this;
 		
@@ -46,6 +47,32 @@ namespace gfx {
 		status = D3DLOG(mDirect3d9->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &displayMode));
 		if (status != D3D_OK) {
 			throw TempleException("Unable to query display mode for primary adapter.");
+		}
+
+		D3DMULTISAMPLE_TYPE aaTypes[] = {
+			D3DMULTISAMPLE_2_SAMPLES,
+			D3DMULTISAMPLE_3_SAMPLES,
+			D3DMULTISAMPLE_4_SAMPLES,
+			D3DMULTISAMPLE_5_SAMPLES,
+			D3DMULTISAMPLE_6_SAMPLES,
+			D3DMULTISAMPLE_7_SAMPLES,
+			D3DMULTISAMPLE_8_SAMPLES,
+			D3DMULTISAMPLE_9_SAMPLES,
+			D3DMULTISAMPLE_10_SAMPLES,
+			D3DMULTISAMPLE_11_SAMPLES,
+			D3DMULTISAMPLE_12_SAMPLES,
+			D3DMULTISAMPLE_13_SAMPLES,
+			D3DMULTISAMPLE_14_SAMPLES,
+			D3DMULTISAMPLE_15_SAMPLES,
+			D3DMULTISAMPLE_16_SAMPLES
+		};
+
+		for (auto type : aaTypes) {
+			status = mDirect3d9->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, TRUE, type, nullptr);
+			if (status == D3D_OK) {
+				logger->trace("AA method {} is available", type);
+				mSupportedAaSamples.push_back(type);
+			}
 		}
 
 		// We need at least 1024x768
@@ -123,13 +150,17 @@ namespace gfx {
 			throw TempleException("Unable to retrieve back buffer description");
 		}
 
+		DWORD qualLevels;
+		HRESULT msResult = mDirect3d9->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, mBackBufferDesc.Format, TRUE,
+			D3DMULTISAMPLE_16_SAMPLES, &qualLevels);
+
 		// Create surfaces for the scene
 		D3DLOG(mDevice->CreateRenderTarget(
 			mRenderWidth,
 			mRenderHeight,
 			mBackBufferDesc.Format,
-			mBackBufferDesc.MultiSampleType,
-			mBackBufferDesc.MultiSampleQuality,
+			D3DMULTISAMPLE_16_SAMPLES,
+			0,
 			FALSE,
 			&mSceneSurface,
 			nullptr));
@@ -138,8 +169,8 @@ namespace gfx {
 			mRenderWidth,
 			mRenderHeight,
 			D3DFMT_D16,
-			mBackBufferDesc.MultiSampleType,
-			mBackBufferDesc.MultiSampleQuality,
+			D3DMULTISAMPLE_16_SAMPLES,
+			0,
 			TRUE,
 			&mSceneDepthSurface,
 			nullptr));
@@ -242,6 +273,14 @@ namespace gfx {
 		}
 		if ((mCaps.TextureCaps & D3DPTEXTURECAPS_SQUAREONLY) != 0) {
 			logger->error("Textures must be square");
+		}
+	}
+
+	void RenderingDevice::SetAntiAliasing(bool enable)
+	{
+		if (mAntiAliasing != enable) {
+			mAntiAliasing = enable;
+			SetRenderSize(mRenderWidth, mRenderHeight);
 		}
 	}
 
@@ -483,14 +522,19 @@ namespace gfx {
 
 		mSceneSurface.Release();
 		mSceneDepthSurface.Release();
+
+		auto aaType = D3DMULTISAMPLE_NONE;
+		if (mAntiAliasing && !mSupportedAaSamples.empty()) {
+			aaType = mSupportedAaSamples.back();
+		}
 		
 		// Create surfaces for the scene
 		D3DLOG(mDevice->CreateRenderTarget(
 			mRenderWidth,
 			mRenderHeight,
 			mBackBufferDesc.Format,
-			mBackBufferDesc.MultiSampleType,
-			mBackBufferDesc.MultiSampleQuality,
+			aaType,
+			0,
 			FALSE,
 			&mSceneSurface,
 			nullptr));
@@ -499,8 +543,8 @@ namespace gfx {
 			mRenderWidth,
 			mRenderHeight,
 			D3DFMT_D16,
-			mBackBufferDesc.MultiSampleType,
-			mBackBufferDesc.MultiSampleQuality,
+			aaType,
+			0,
 			TRUE,
 			&mSceneDepthSurface,
 			nullptr));
