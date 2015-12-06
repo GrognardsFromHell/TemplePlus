@@ -227,3 +227,14 @@ _Pvt_Extensions
 /tpdata/scr/shit.py
 
 *.VC.opendb
+/Tools/RuleEditor/RuleEditor.csproj
+/Tools/RuleEditor/Properties/Settings.settings
+/Tools/RuleEditor/Properties/Settings.Designer.cs
+/Tools/RuleEditor/Properties/Resources.resx
+/Tools/RuleEditor/Properties/Resources.Designer.cs
+/Tools/RuleEditor/Properties/AssemblyInfo.cs
+/Tools/RuleEditor/MainWindow.xaml.cs
+/Tools/RuleEditor/MainWindow.xaml
+/Tools/RuleEditor/App.xaml.cs
+/Tools/RuleEditor/App.xaml
+/Tools/RuleEditor/App.config

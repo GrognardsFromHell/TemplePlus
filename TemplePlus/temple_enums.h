@@ -1181,6 +1181,8 @@ enum obj_f : uint32_t {
 
 };
 
+const char *GetObjectFieldName(obj_f field);
+
 /*
 Flags supported by all object types.
 Query with objects.GetFlags

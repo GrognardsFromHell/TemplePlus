@@ -17,6 +17,7 @@
   <ItemGroup>
     <ClCompile Include="action_sequence.cpp" />
     <ClCompile Include="config\config_hooks.cpp" />
+    <ClCompile Include="diag\proto_cols.cpp" />
     <ClCompile Include="fixes\pointbuyconfig.cpp" />
     <ClCompile Include="d20_levelup.cpp" />
     <ClCompile Include="d20_obj_registry.cpp" />
@@ -126,6 +127,7 @@
     <ClCompile Include="startup\installationdirs.cpp" />
     <ClCompile Include="tab_file.cpp" />
     <ClCompile Include="sound.cpp" />
+    <ClCompile Include="temple_enums.cpp" />
     <ClCompile Include="textbubbles.cpp" />
     <ClCompile Include="tig\tig.cpp" />
     <ClCompile Include="tig\tig_sound.cpp" />

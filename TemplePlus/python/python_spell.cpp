@@ -102,7 +102,7 @@ enum TargetSortCriteria {
 static PyObject *PySpell_SpellTargetListSort(PyObject *obj, PyObject *args) {
 	auto self = (PySpell*)obj;
 	TargetSortCriteria criteria;
-	bool descending;
+	BOOL descending;
 	if (!PyArg_ParseTuple(args, "ii:pyspell.spell_target_list_sort", &criteria, &descending)) {
 		return 0;
 	}

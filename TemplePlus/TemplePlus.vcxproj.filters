@@ -311,6 +311,8 @@
     <ClCompile Include="gametime.cpp" />
     <ClCompile Include="gamesystems\maps\sectors.cpp" />
     <ClCompile Include="gamesystems\froggrapplecontroller.cpp" />
+    <ClCompile Include="temple_enums.cpp" />
+    <ClCompile Include="diag\proto_cols.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />

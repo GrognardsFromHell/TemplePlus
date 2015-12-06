@@ -387,7 +387,7 @@ namespace particles {
 		for (auto& emitter : mEmitters) {
 
 			if (emitter->GetSpec()->IsPermanent())
-				continue;
+				return false;
 
 			float lifespanSum = emitter->GetSpec()->GetLifespan() +
 				emitter->GetSpec()->GetParticleLifespan();
