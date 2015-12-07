@@ -126,16 +126,22 @@ namespace gfx {
 
 		auto d3d = device.GetDevice();
 
+		constexpr auto MaxLights = 8;
+
+		if (lights.size() > MaxLights) {
+			lights = lights.sub(0, MaxLights);
+		}
+
 		// To make indexing in the HLSL shader more efficient, we sort the
 		// lights here in the following order: directional, point lights, spot lights
-		std::array<DirectX::XMFLOAT4A, 8> lightPos;
-		std::array<DirectX::XMFLOAT4A, 8> lightDir;
-		std::array<DirectX::XMFLOAT4A, 8> lightAmbient;
-		std::array<DirectX::XMFLOAT4A, 8> lightDiffuse;
-		std::array<DirectX::XMFLOAT4A, 8> lightSpecular;
-		std::array<DirectX::XMFLOAT4A, 8> lightRange;
-		std::array<DirectX::XMFLOAT4A, 8> lightAttenuation;
-		std::array<DirectX::XMFLOAT4A, 8> lightSpot;
+		std::array<DirectX::XMFLOAT4A, MaxLights> lightPos;
+		std::array<DirectX::XMFLOAT4A, MaxLights> lightDir;
+		std::array<DirectX::XMFLOAT4A, MaxLights> lightAmbient;
+		std::array<DirectX::XMFLOAT4A, MaxLights> lightDiffuse;
+		std::array<DirectX::XMFLOAT4A, MaxLights> lightSpecular;
+		std::array<DirectX::XMFLOAT4A, MaxLights> lightRange;
+		std::array<DirectX::XMFLOAT4A, MaxLights> lightAttenuation;
+		std::array<DirectX::XMFLOAT4A, MaxLights> lightSpot;
 
 		auto directionalCount = 0;
 		auto pointCount = 0;

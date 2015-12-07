@@ -45,9 +45,21 @@ public:
 		return mTriCount;
 	}
 
+	const XMFLOAT3 &GetBoundingSphereOrigin() const {
+		return mBoundingSphereOrigin;
+	}
+
+	float GetBoundingSphereRadius() const {
+		return mBoundingSphereRadius;
+	}
+
 	void CreateResources(RenderingDevice &device) override;
 	void FreeResources(RenderingDevice &device) override;
 private:
+
+	XMFLOAT3 mBoundingSphereOrigin;
+	float mBoundingSphereRadius;
+
 	VertexBufferPtr mVertexBuffer;
 	IndexBufferPtr mIndexBuffer;
 

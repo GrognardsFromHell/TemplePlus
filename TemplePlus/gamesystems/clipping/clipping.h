@@ -23,6 +23,9 @@ public:
 	void SetDebug(bool enable);
 	bool IsDebug() const;
 
+	size_t GetTotal() const;
+	size_t GetRenderered() const;
+
 private:
 	class Impl;
 

@@ -10,6 +10,8 @@
 #include "graphics/shaders.h"
 #include "clippingmesh.h"
 
+#include "config/config.h"
+
 using namespace gfx;
 
 class MapClipping::Impl {
@@ -23,6 +25,7 @@ public:
 	Material debugMaterial;
 	BufferBinding mBufferBinding;
 	bool debug = false;
+	size_t rendered = 0;
 
 	static Material CreateMaterial(RenderingDevice &device);
 	static Material CreateDebugMaterial(RenderingDevice &device);
@@ -42,13 +45,14 @@ MapClipping::Impl::Impl(RenderingDevice& g)
 Material MapClipping::Impl::CreateMaterial(RenderingDevice& device) {
 
 	BlendState blendState;
+	DepthStencilState depthStencilState;
+	RasterizerState rasterizerState;
+	rasterizerState.cullMode = D3DCULL_NONE;
 	// Clipping geometry does not write color
 	blendState.writeAlpha = false;
 	blendState.writeRed = false;
 	blendState.writeGreen = false;
 	blendState.writeBlue = false;
-	DepthStencilState depthStencilState;
-	RasterizerState rasterizerState;
 
 	auto vs(device.GetShaders().LoadVertexShader("clipping_vs"));
 	auto ps(device.GetShaders().LoadPixelShader("clipping_ps"));
@@ -96,6 +100,22 @@ void MapClipping::SetDebug(bool enable) {
 
 bool MapClipping::IsDebug() const {
 	return mImpl->debug;
+}
+
+size_t MapClipping::GetTotal() const
+{
+	size_t total = 0;
+	for (auto &mesh : mImpl->mClippingMeshes) {
+		if (mesh) {
+			total += mesh->GetInstances().size();
+		}
+	}
+	return total;
+}
+
+size_t MapClipping::GetRenderered() const
+{
+	return mImpl->rendered;
 }
 
 void MapClipping::LoadMeshes(const std::string& directory) {
@@ -167,6 +187,8 @@ void MapClipping::LoadObject(BinaryReader& reader) {
 
 void MapClipping::Render() {
 
+	mImpl->rendered = 0;
+
 	if (mImpl->mClippingMeshes.empty()) {
 		return;
 	}
@@ -179,8 +201,15 @@ void MapClipping::Render() {
 		mImpl->mDevice.SetMaterial(mImpl->material);
 	}
 
-	auto viewProjMatrix = mImpl->mDevice.GetCamera().GetViewProj();
+	auto& camera = mImpl->mDevice.GetCamera();
+	auto viewProjMatrix = camera.GetViewProj();
 	D3DLOG(device->SetVertexShaderConstantF(0, &viewProjMatrix._11, 4));
+
+	// For clipping purposes
+	auto screenCenterWorld = camera.ScreenToWorld(
+		camera.GetScreenWidth() * 0.5f, 
+		camera.GetScreenHeight() * 0.5f
+	);
 
 	for (auto& mesh : mImpl->mClippingMeshes) {
 				
@@ -193,7 +222,28 @@ void MapClipping::Render() {
 		mImpl->mDevice.GetDevice()->SetIndices(mesh->GetIndexBuffer()->GetBuffer());
 		
 		for (auto& obj : mesh->GetInstances()) {
-			D3DXVECTOR4 constants = { 0, 0, 0, 0 };
+			XMFLOAT3 sphereCenter = mesh->GetBoundingSphereOrigin();
+
+			// Sphere pos relative to computed screen center
+			auto relXPos = obj.posX - sphereCenter.x - screenCenterWorld.x;
+			auto relZPos = obj.posZ - sphereCenter.y - screenCenterWorld.z;
+
+			// Distance of the sphere center in screen coordinates from the screen center
+			auto distX = fabs(relZPos * 0.70710599f - relXPos * 0.70710599f);
+			auto distY = fabs(relZPos * 0.50497407f + relXPos * 0.50497407f - (sphereCenter.z + obj.posY) * 0.7f);
+			
+			auto maxScale = std::max(std::max(obj.scaleX, obj.scaleY), obj.scaleZ);
+			auto scaledRadius = maxScale * mesh->GetBoundingSphereRadius();
+			bool culled = (distX > (long double)(camera.GetScreenWidth() / 2.0f) + scaledRadius
+				|| distY > (camera.GetScreenHeight() / 2.0f) + scaledRadius);
+
+			if (culled) {
+				continue;
+			}
+				
+			mImpl->rendered++;
+
+			XMFLOAT4 constants = { 0, 0, 0, 0 };
 			constants.x = cosf(obj.rotation);
 			D3DLOG(device->SetVertexShaderConstantF(4, &constants.x, 1));
 

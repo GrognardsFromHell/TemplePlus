@@ -21,8 +21,8 @@ void ClippingMesh::CreateResources(RenderingDevice &device) {
 	auto data(vfs->ReadAsBinary(mFilename));
 	BinaryReader reader(data);
 
-	auto boundingSphereOffset = reader.Read<D3DVECTOR>();
-	auto boundingSphereRadius = reader.Read<float>();
+	mBoundingSphereOrigin = reader.Read<XMFLOAT3>();
+	mBoundingSphereRadius = reader.Read<float>();
 	auto objCount = reader.Read<int>();
 	auto dataStart = reader.Read<int>();
 

@@ -8,7 +8,9 @@
 #include "../gamesystems/gamesystems.h"
 #include "../gamesystems/gamerenderer.h"
 #include "../gamesystems/mapobjrender.h"
+#include "../gamesystems/mapsystems.h"
 #include "../gamesystems/partsystemsrenderer.h"
+#include "../gamesystems/clipping/clipping.h"
 
 using namespace gfx;
 
@@ -72,6 +74,11 @@ void DiagScreen::Render() {
 	lines.push_back(fmt::format("# Map Objects"));
 	lines.push_back(fmt::format("{} of {} rendered", mapObjRenderer.GetRenderedLastFrame(),
 		mapObjRenderer.GetTotalLastFrame()));
+
+	auto& clipping = mGameSystems.GetMapSystems().GetClipping();
+	lines.push_back(fmt::format("# Clipping Objects"));
+	lines.push_back(fmt::format("{} of {} rendered", clipping.GetRenderered(),
+		clipping.GetTotal()));
 
 	TigRect rect;
 	rect.x = 25;
