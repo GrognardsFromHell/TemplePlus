@@ -27,7 +27,15 @@ struct D20ActionDef;
 struct ActnSeq;
 struct PathQueryResult;
 struct Pathfinding;
-
+enum D20TargetClassification : int {
+	Target0 = 0,
+	D20TC_Movement = 1,
+	D20TC_SingleExcSelf,
+	D20TC_CastSpell,
+	D20TC_SingleIncSelf,
+	D20TC_CallLightning,
+	D20TC_ItemInteraction // includes: portals, container, dead critters
+};
 
 
 struct D20System : temple::AddressTable
@@ -66,6 +74,8 @@ struct D20System : temple::AddressTable
 	int PerformStandardAttack(D20Actn* d20a);
 	int TargetWithinReachOfLoc(objHndl obj, objHndl target, LocAndOffsets* loc);
 	void D20ActnSetSetSpontCast(D20SpellData* d20SpellData, SpontCastType spontCastType);
+	D20TargetClassification TargetClassification(D20Actn* d20A);
+	int TargetCheck(D20Actn* d20a);
 	void (__cdecl *D20StatusInitFromInternalFields)(objHndl objHnd, Dispatcher *dispatcher);
 	void (__cdecl *D20ObjRegistryAppend)(objHndl ObjHnd);
 	void(__cdecl * _d20aTriggerCombatCheck)(int32_t idx);//1008AE90    ActnSeq * @<eax>
@@ -111,7 +121,20 @@ struct D20Actn
 	uint32_t animID;
 	PathQueryResult * path;
 
-	D20Actn() {}
+	D20Actn()
+	{
+		rollHist1 = -1;
+		rollHist2 = -1;
+		rollHist3 = -1;
+		//d20ActType = 0;
+		d20APerformer = 0;
+		d20ATarget = 0;
+		d20Caf = 0;
+		distTraversed = 0;
+		path = 0;
+		spellId = 0;
+		data1 = 0;
+	}
 
 	D20Actn(D20ActionType type) {
 		rollHist1 = -1;

@@ -471,6 +471,18 @@ bool CritterSystem::IsCaster(objHndl obj)
 	return GetCasterLevel(obj) > 0;
 }
 
+bool CritterSystem::IsWieldingRangedWeapon(objHndl obj)
+{
+	auto weapon = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
+	if (!weapon)
+		return 0;
+	return (objects.getInt32(weapon, obj_f_weapon_flags) & OWF_RANGED_WEAPON ) != 0;
+}
+
+CritterFlag CritterSystem::GetCritterFlags(objHndl obj)
+{
+	return static_cast<CritterFlag>(objects.getInt32(obj, obj_f_critter_flags));
+}
 #pragma region Critter Hooks
 uint32_t _isCritterCombatModeActive(objHndl objHnd)
 {

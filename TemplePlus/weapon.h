@@ -19,6 +19,7 @@ struct WeaponSystem : temple::AddressTable
 	bool IsSlashingOrBludgeoning(WeaponTypes wpnType);
 	int GetBaseHardness(objHndl item);
 	int GetBaseHardness(WeaponTypes weapon);
+	bool AmmoMatchesWeapon(objHndl weapon, objHndl ammoItem);
 };
 
 extern WeaponSystem weapons;

@@ -40,10 +40,10 @@ struct SpellEntry
 	uint64_t flagsTargetBitmask;
 	uint64_t incFlagsTargetBitmask;
 	uint64_t excFlagsTargetBitmask;
-	uint64_t modeTargetSemiBitmask;
+	uint64_t modeTargetSemiBitmask; // UiPickerType
 	uint32_t minTarget;
 	uint32_t maxTarget;
-	uint32_t radiusTarget; //note:	if it's negative, it means it's an index(up to - 7); if it's positive, it's a specified number(in feet ? )
+	int radiusTarget; //note:	if it's negative, it means it's an index(up to - 7); if it's positive, it's a specified number(in feet ? )
 	float_t degreesTarget;
 	uint32_t aiTypeBitmask;
 	uint32_t pad;
@@ -59,8 +59,8 @@ struct SpellPacketBody
 	void * pSthg;
 	objHndl objHndCaster;
 	uint32_t casterPartsysId;
-	uint32_t casterClassCode;
-	uint32_t spellKnownSlotLevel;
+	uint32_t casterClassCode; // aka spellClass
+	uint32_t spellKnownSlotLevel; // aka spellLevel
 	uint32_t baseCasterLevel;
 	uint32_t spellDC;
 	uint32_t unknowns[515];
@@ -73,14 +73,14 @@ struct SpellPacketBody
 	uint32_t field_9C8;
 	uint32_t field_9CC;
 	SpellPacketBody * spellPktBods[8];
-	LocFull locFull;
+	LocFull locFull; // aoe Center location
 	uint32_t field_A04;
 	SpellEntry spellEntry;
 	uint32_t spellDuration;
 	int field_ACC;
 	uint32_t spellRange;
 	uint32_t field_AD4;
-	uint32_t field_AD8_maybe_itemSpellLevel;
+	uint32_t invIdx;
 	uint32_t metaMagicData;
 	uint32_t spellId;
 	uint32_t field_AE4;
@@ -135,7 +135,8 @@ struct SpellSystem : temple::AddressTable
 	bool isDomainSpell(uint32_t spellClassCode);
 	Stat GetCastingClass(uint32_t spellClassCode);
 	uint32_t pickerArgsFromSpellEntry(SpellEntry * spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLevel);
-
+	uint32_t GetSpellRangeExact(SpellRangeType spellRangeType, uint32_t casterLevel, objHndl caster);
+	uint32_t GetSpellRange(SpellEntry* spellEntry, uint32_t baseCasterLevel, objHndl caster);
 	void (__cdecl *SpellEnd)(int, int);
 	void (__cdecl *SpellRemove)(int);
 

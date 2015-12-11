@@ -179,7 +179,13 @@ struct LocAndOffsets {
 		return location.ToInches3D(off_x, off_y, offsetZ);
 	}
 
-
+	void FromAbsolute(double overallOffX, double overallOffY)
+	{
+		location.locx = overallOffX / INCH_PER_TILE;
+		location.locy = overallOffY / INCH_PER_TILE;
+		off_x = (location.locx - (static_cast<long double>(location.locx) - 0.5) * INCH_PER_TILE);
+		off_y = (location.locy - (static_cast<long double>(location.locy) - 0.5) * INCH_PER_TILE);
+	};
 };
 
 inline std::ostream& operator<<(std::ostream& os, const LocAndOffsets & loc) {

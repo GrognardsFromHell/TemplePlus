@@ -34,6 +34,7 @@ struct MouseFuncs : temple::AddressTable {
 	void (__cdecl *SetButtonState)(MouseButton button, bool pressed);
 	void (__cdecl *SetPos)(int x, int y, int wheelDelta);
 	void RefreshCursor();
+	int (__cdecl*GetState)(TigMouseState * mouseState);
 	
 	void SetMmbReference()
 	{
@@ -78,8 +79,9 @@ struct MouseFuncs : temple::AddressTable {
 
 	MouseFuncs() {
 		rebase(SetButtonState, 0x101DD1B0);
-		rebase(SetPos, 0x101DD070);
+		rebase(SetPos,    0x101DD070);
 		rebase(SetBounds, 0x101DD010);
+		rebase(GetState,  0x101DDEA0);
 		mMouseOutsideWnd = false;
 		mmbReference.x = -1;
 		mmbReference.y = -1;

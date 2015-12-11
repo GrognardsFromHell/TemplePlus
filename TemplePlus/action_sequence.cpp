@@ -14,6 +14,9 @@
 #include "util/config.h"
 #include "critter.h"
 #include "util/fixes.h"
+#include "condition.h"
+#include "ui/ui_picker.h"
+#include "ui/ui_turn_based.h"
 
 
 class ActnSeqReplacements : public TempleFix
@@ -22,235 +25,38 @@ public:
 	const char* name() override {
 		return "ActionSequence Replacements";
 	}
+
+	static int(__cdecl* orgChooseTargetCallback)(void *);
+	
+	
+	static int ChooseTargetCallback(void* a)
+	{
+		logger->info("Choose Target Callback");
+		return orgChooseTargetCallback(a); // doesn't seem to be used in practice???
+	}
+
+	static int ActionAddToSeq();
+	static void ActSeqGetPicker();
+	void ActSeqApply();
+	void NaturalAttackOverwrites();
+
 	void apply() override{
-		
-		replaceFunction(0x10089F70, _curSeqGetTurnBasedStatus); 
-		replaceFunction(0x10089FA0, _ActSeqCurSetSpellPacket); 
-
-		replaceFunction(0x1008A050, _isPerforming); 
-		replaceFunction(0x1008A100, _addD20AToSeq); 
-		replaceFunction(0x1008A1B0, _ActionErrorString); 
-		replaceFunction(0x1008A980, _actSeqOkToPerform); 
-		replaceFunction(0x1008BFA0, _AddToSeqSimple); 
-
-		replaceFunction(0x1008C4F0, _StdAttackAiCheck);
-		replaceFunction(0x1008C6A0, _ActionCostFullAttack);
-		
-
-
-		replaceFunction(0x100925E0, _isSimultPerformer); 
-
-		replaceFunction(0x10094910, _GetNewHourglassState);
-		replaceFunction(0x10094A00, _curSeqReset); 
-		replaceFunction(0x10094CA0, _seqCheckFuncsCdecl); 
-		replaceFunction(0x10094C60, _seqCheckAction); 
-		
-		
-		replaceFunction(0x10094E20, _allocSeq); 
-		
-		replaceFunction(0x10094EB0, _assignSeq); 
-
-		replaceFunction(0x10094F70, _moveSequenceParseUsercallWrapper); 
-		
-		replaceFunction(0x10095450, _AddToSeqWithTarget);
-
-		replaceFunction(0x10095FD0, _turnBasedStatusInit); 
-		
-		
-		replaceFunction(0x100961C0, _sequencePerform); 
-		replaceFunction(0x100968B0, _UnspecifiedAttackAddToSeq);
-		replaceFunction(0x100996E0, _actionPerform); 
-		
-		
-		
-		replaceFunction(0x10095860, _unspecifiedMoveAddToSeq); 
-		
-		int writeVal = ATTACK_CODE_NATURAL_ATTACK;
-		write(0x1008C542 + 3, &writeVal, 4);
-
-		
-		// new D20Defs
-
-		// addD20AToSeq
-		
-		writeVal = (int)&d20Sys.d20Defs[0].addToSeqFunc;
-	    write(0x1008A125 + 2, &writeVal, sizeof(int));
-
-		//sub_1008A180
-		writeVal = (int)&d20Sys.d20Defs[0].flags;
-		write(0x1008A18A + 2, &writeVal, sizeof(int));
-
-
-		//1008A4B0
-		writeVal = (int)&d20Sys.d20Defs[0].flags;
-		write(0x1008A4B8 + 2, &writeVal, sizeof(int));
-
-
-		// D20ActionTriggersAoO
-		writeVal = (int)&d20Sys.d20Defs[0].flags;
-		write(0x1008A9DA + 2, &writeVal, sizeof(int));
-		write(0x1008AA10 + 2, &writeVal, sizeof(int));
-
-
-		//projectileCheckBeforeNextAction
-		writeVal = (int)&d20Sys.d20Defs[0].projectilePerformFunc;
-		write(0x1008AC99 + 2, &writeVal, sizeof(int));
-
-		// sub_1008ACC0
-		writeVal = (int)&d20Sys.d20Defs[0].flags;
-		write(0x1008ACCA + 2, &writeVal, sizeof(int));
-
-		// actSeqSpellHarmful
-		//  flags
-		writeVal = (int)&d20Sys.d20Defs[0].flags;
-		write(0x1008AD59 + 2, &writeVal, sizeof(int));
-
-		// d20aTriggerCombatCheck
-		//  flags
-		writeVal = (int)&d20Sys.d20Defs[0].flags;
-		write(0x1008AEBD + 2, &writeVal, sizeof(int));
-
-
-		// ActionCostProcess
-		// 1008B052 actionCost
-		writeVal = (int)&d20Sys.d20Defs[0].actionCost;
-		write(0x1008B052 + 2, &writeVal, sizeof(int));
-
-
-		// isSimulsOk
-		// 100926B8 flags + 2 (BYTE2)
-		writeVal = ((int)&d20Sys.d20Defs[0].flags) + 2;
-		write(0x100926B8 + 2, &writeVal, sizeof(int));
-
-
-		// ActionFrameProcess
-		writeVal = (int)&d20Sys.d20Defs[0].actionFrameFunc;
-		write(0x100934BB + 2, &writeVal, sizeof(int));
-
-		// TurnBasedStatusUpdate
-		// 10093980  aiCheck
-		writeVal = (int)&d20Sys.d20Defs[0].aiCheckMaybe;
-		write(0x10093980 + 2, &writeVal, sizeof(int));
-
-
-		// seqCheckAction
-		// 10094C85 actionCheckFunc 
-		writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
-		write(0x10094C85 + 2, &writeVal, sizeof(int));
-
-
-		// seqCheckFuncs
-		writeVal = (int)&d20Sys.d20Defs[0].tgtCheckFunc;
-		write(0x10094D1C + 2, &writeVal, sizeof(int));
-		writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
-		write(0x10094D57 + 2, &writeVal, sizeof(int));
-		writeVal = (int)&d20Sys.d20Defs[0].locCheckFunc;
-		write(0x10094D81 + 2, &writeVal, sizeof(int));
-		// 10094D1C  tgtCheck
-		// 10094D57 actionCheckFunc
-		// 10094D81 locCheckFunc
-
-		// moveSequenceParse
-		// 1009538C actionCost
-		writeVal = (int)&d20Sys.d20Defs[0].actionCost;
-		write(0x1009538C + 2, &writeVal, sizeof(int));
-
-		// seqAddWithTarget
-		writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
-		write(0x1009559F + 2, &writeVal, sizeof(int));
-		
-
-		// sub_100960B0
-		writeVal = (int)&d20Sys.d20Defs[0].tgtCheckFunc;
-		write(0x10096100 + 2, &writeVal, sizeof(int));
-		writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
-		write(0x1009613C + 2, &writeVal, sizeof(int));
-		writeVal = (int)&d20Sys.d20Defs[0].locCheckFunc;
-		write(0x1009615D + 2, &writeVal, sizeof(int));
-		
-		//  sub_10096390
-		writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
-		write(0x10096424 + 2, &writeVal, sizeof(int));
-		
-		// SequencePathSthgSub_10096450
-		writeVal = (int)&d20Sys.d20Defs[0].tgtCheckFunc;
-		write(0x10096493 + 2, &writeVal, sizeof(int));
-		writeVal = (int)&d20Sys.d20Defs[0].locCheckFunc;
-		write(0x100964C9 + 2, &writeVal, sizeof(int));
-		writeVal = ((int)&d20Sys.d20Defs[0].flags) + 2;
-		write(0x100964F9 + 2, &writeVal, sizeof(int));
-
-		// sub_10097060
-		// 100970BB pickerMaybe
-		// 100970EB pickerMaybe
-		// 10097111 pickerMaybe
-		writeVal = (int)&d20Sys.d20Defs[0].pickerFuncMaybe;
-		write(0x100970BB + 2, &writeVal, sizeof(int));
-		writeVal = (int)&d20Sys.d20Defs[0].pickerFuncMaybe;
-		write(0x100970EB + 2, &writeVal, sizeof(int));
-		writeVal = (int)&d20Sys.d20Defs[0].pickerFuncMaybe;
-		write(0x10097111 + 2, &writeVal, sizeof(int));
-
-		// sub_10097320
-		writeVal = (int)&d20Sys.d20Defs[0].flags;
-		write(0x10097330 + 2, &writeVal, sizeof(int));
-		writeVal = (int)&d20Sys.d20Defs[0].flags;
-		write(0x1009753B + 2, &writeVal, sizeof(int));
-		writeVal = (int)&d20Sys.d20Defs[0].aiCheckMaybe;
-		write(0x1009754D + 2, &writeVal, sizeof(int));
-		writeVal = (int)&d20Sys.d20Defs[0].pickerFuncMaybe;
-		write(0x100976C9 + 2, &writeVal, sizeof(int));
-
-		// sub_100977A0
-		// 100977C2 flags
-		// 10097825 flags
-		// 100978EF flags
-		writeVal = (int)&d20Sys.d20Defs[0].flags;
-		write(0x100977C2 + 2, &writeVal, sizeof(int));
-		writeVal = (int)&d20Sys.d20Defs[0].flags;
-		write(0x10097825 + 2, &writeVal, sizeof(int));
-		writeVal = (int)&d20Sys.d20Defs[0].flags;
-		write(0x100978EF + 2, &writeVal, sizeof(int));
-
-		// ActionAddToSeq
-		writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
-		write(0x10097C7E + 2, &writeVal, sizeof(int));
-		
-		// curSeqNext
-		// 10099026 flags+1 (BYTE1)
-		writeVal = ((int)&d20Sys.d20Defs[0].flags) + 1;
-		write(0x10099026 + 2, &writeVal, sizeof(int));
-
-
-		//actionPerform
-		// 100998D4 performFunc
-		writeVal = (int)&d20Sys.d20Defs[0].performFunc;
-		write(0x100998D4 + 2, &writeVal, sizeof(int));
-
-
-		// sub_10099B10
-		// 10099C2E projectilePerformFunc
-		writeVal = (int)&d20Sys.d20Defs[0].projectilePerformFunc;
-		write(0x10099C2E + 2, &writeVal, sizeof(int));
-
-
-
-
-		
-
-		
-
-		
+		ActSeqApply();
+		NaturalAttackOverwrites();
 	}
 } actSeqReplacements;
+
+int(__cdecl* ActnSeqReplacements::orgChooseTargetCallback)(void * );
 
 
 static struct ActnSeqAddresses : temple::AddressTable{
 
 	int(__cdecl *TouchAttackAddToSeq)(D20Actn* d20Actn, ActnSeq* actnSeq, TurnBasedStatus* turnBasedStatus);
-	void(__cdecl *ActionAddToSeq)();
+	int(__cdecl *ActionAddToSeq)();
 	int(__cdecl*ActionSequenceChecksWithPerformerLocation)();
 	void(__cdecl* ActionSequenceRevertPath)(int d20ActnNum);
+	PickerArgs * actSeqPicker;
+	D20Actn * actSeqPickerAction;
 	
 	ActnSeqAddresses()
 	{
@@ -258,8 +64,8 @@ static struct ActnSeqAddresses : temple::AddressTable{
 		rebase(TouchAttackAddToSeq, 0x10096760);
 		rebase(ActionSequenceChecksWithPerformerLocation, 0x10097000);
 		rebase(ActionAddToSeq,0x10097C20); 
-		
-		
+		rebase(actSeqPicker, 0x118CD460);
+		rebase(actSeqPickerAction, 0x118CD400);
 	}
 
 	
@@ -289,7 +95,7 @@ ActionSequenceSystem::ActionSequenceSystem()
 	
 	rebase(actionMesHandle, 0x10B3BF48);
 	rebase(seqFlag_10B3D5C0, 0x10B3D5C0);
-	rebase(actnProc_10B3D5A0, 0x10B3D5A0);
+	rebase(actSeqPickerActive, 0x10B3D5A0);
 	rebase(actSeqArray, 0x118A09A0);
 
 
@@ -375,9 +181,170 @@ void ActionSequenceSystem::curSeqReset(objHndl objHnd)
 	*seqFlag_10B3D5C0 = 0;
 }
 
-void ActionSequenceSystem::ActionAddToSeq()
+void ActionSequenceSystem::ActSeqGetPicker()
 {
-	addresses.ActionAddToSeq();
+	auto tgtClassif = d20Sys.TargetClassification(d20Sys.globD20Action);
+	if (tgtClassif == D20TargetClassification::D20TC_ItemInteraction)
+	{
+		if (d20Sys.d20Defs[d20Sys.globD20Action->d20ActType].flags & D20ADF_Unk8000)
+		{
+			temple::GetRef<int>(0x118A0980) = d20Sys.globD20Action->d20ActType;
+			temple::GetRef<int>(0x118CD570) = d20Sys.globD20Action->data1;
+			temple::GetRef<int>(0x118CD3B8) = D20TC_ItemInteraction;
+			return;
+		}
+		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::None;
+		addresses.actSeqPicker->modeTarget = UiPickerType::Single;
+		addresses.actSeqPicker->incFlags = UiPickerIncFlags::NonCritter;
+		addresses.actSeqPicker->excFlags = UiPickerIncFlags::None;
+		addresses.actSeqPicker->callback = reinterpret_cast<PickerCallback>(0x10096570);//(int)ChooseTargetCallback;
+		addresses.actSeqPicker->spellEnum = 0;
+		addresses.actSeqPicker->caster = d20Sys.globD20Action->d20APerformer;
+		*actSeqPickerActive = 1;
+		uiTurnBased.ShowPicker(addresses.actSeqPicker,nullptr);
+		*addresses.actSeqPickerAction = *d20Sys.globD20Action;
+		return;
+	}
+
+	if (tgtClassif == D20TargetClassification::D20TC_SingleIncSelf)
+	{
+		if (d20Sys.d20Defs[d20Sys.globD20Action->d20ActType].flags & D20ADF_Unk8000)
+		{
+			temple::GetRef<int>(0x118A0980) = d20Sys.globD20Action->d20ActType;
+			temple::GetRef<int>(0x118CD570) = d20Sys.globD20Action->data1;
+			temple::GetRef<int>(0x118CD3B8) = D20TC_SingleIncSelf;
+			return;
+		}
+		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::None;
+		addresses.actSeqPicker->modeTarget = UiPickerType::Single;
+		addresses.actSeqPicker->incFlags = static_cast<UiPickerIncFlags>((uint64_t)UiPickerIncFlags::Self | (uint64_t)UiPickerIncFlags::Other | (uint64_t)UiPickerIncFlags::Dead);
+		addresses.actSeqPicker->excFlags = UiPickerIncFlags::NonCritter;
+		addresses.actSeqPicker->callback = reinterpret_cast<PickerCallback>(0x10096570);//(int)ChooseTargetCallback;
+		addresses.actSeqPicker->spellEnum = 0;
+		addresses.actSeqPicker->caster = d20Sys.globD20Action->d20APerformer;
+
+		*actSeqPickerActive = 1;
+		uiTurnBased.ShowPicker(addresses.actSeqPicker, nullptr);
+		*addresses.actSeqPickerAction = *d20Sys.globD20Action;
+		return;
+	}
+
+	if (tgtClassif == D20TargetClassification::D20TC_SingleExcSelf)
+	{
+		if (d20Sys.d20Defs[d20Sys.globD20Action->d20ActType].flags & D20ADF_Unk8000)
+		{
+			temple::GetRef<int>(0x118A0980) = d20Sys.globD20Action->d20ActType;
+			temple::GetRef<int>(0x118CD570) = d20Sys.globD20Action->data1;
+			temple::GetRef<int>(0x118CD3B8) = D20TC_SingleExcSelf;
+			return;
+		}
+		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::None;
+		addresses.actSeqPicker->modeTarget = UiPickerType::Single;
+		addresses.actSeqPicker->incFlags = static_cast<UiPickerIncFlags>((uint64_t)UiPickerIncFlags::Other | (uint64_t)UiPickerIncFlags::Dead);
+		addresses.actSeqPicker->excFlags = static_cast<UiPickerIncFlags>((uint64_t)UiPickerIncFlags::Self | (uint64_t)UiPickerIncFlags::NonCritter);
+		addresses.actSeqPicker->callback = reinterpret_cast<PickerCallback>(0x10096570);//(int)ChooseTargetCallback;
+		addresses.actSeqPicker->spellEnum = 0;
+		addresses.actSeqPicker->caster = d20Sys.globD20Action->d20APerformer;
+		*actSeqPickerActive = 1;
+		uiTurnBased.ShowPicker(addresses.actSeqPicker, nullptr);
+		*addresses.actSeqPickerAction = *d20Sys.globD20Action;
+		return;
+	}
+
+	if (tgtClassif == D20TC_CallLightning)
+	{
+		if (d20Sys.globD20Action->d20ActType == D20A_SPELL_CALL_LIGHTNING)
+		{
+			int callLightningId = d20Sys.d20QueryReturnData(d20Sys.globD20Action->d20APerformer, DK_QUE_Critter_Can_Call_Lightning, 0, 0);
+			SpellPacketBody spellPkt;
+			spellSys.GetSpellPacketBody(callLightningId, &spellPkt);
+			auto baseCasterLevelMod = dispatch.Dispatch35BaseCasterLevelModify(d20Sys.globD20Action->d20APerformer, &spellPkt);
+			addresses.actSeqPicker->range = spellSys.GetSpellRangeExact(SpellRangeType::SRT_Medium, baseCasterLevelMod, d20Sys.globD20Action->d20APerformer);
+			addresses.actSeqPicker->radiusTarget = 5;
+		} else
+		{
+			addresses.actSeqPicker->range = 0;
+			addresses.actSeqPicker->radiusTarget = 0;
+		}
+		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::Range;
+		addresses.actSeqPicker->modeTarget = UiPickerType::Area;
+		addresses.actSeqPicker->incFlags = static_cast<UiPickerIncFlags>((uint64_t)UiPickerIncFlags::Self | (uint64_t)UiPickerIncFlags::Other );
+		addresses.actSeqPicker->excFlags = static_cast<UiPickerIncFlags>( (uint64_t)UiPickerIncFlags::Dead | (uint64_t)UiPickerIncFlags::NonCritter);
+		addresses.actSeqPicker->callback = reinterpret_cast<PickerCallback>(0x10096570);//(int)ChooseTargetCallback;
+		addresses.actSeqPicker->spellEnum = 0;
+		addresses.actSeqPicker->caster = d20Sys.globD20Action->d20APerformer;
+		*actSeqPickerActive = 1;
+		uiTurnBased.ShowPicker(addresses.actSeqPicker, nullptr);
+		*addresses.actSeqPickerAction = *d20Sys.globD20Action;
+		return;
+	}
+
+	if (tgtClassif == D20TC_CastSpell)
+	{
+		unsigned int spellEnum, spellClass, spellLevel, metaMagicData;
+		D20SpellDataExtractInfo(&d20Sys.globD20Action->d20SpellData,
+			&spellEnum, nullptr, &spellClass, &spellLevel,nullptr,&metaMagicData);
+		auto curSeq = *actSeqSys.actSeqCur;
+		curSeq->spellPktBody.spellRange *= ((MetaMagicData)metaMagicData).metaMagicEnlargeSpellCount + 1;
+		SpellEntry spellEntry;
+		if (spellSys.spellRegistryCopy(spellEnum, &spellEntry))
+		{
+			spellEntry.radiusTarget *= ((MetaMagicData)metaMagicData).metaMagicWidenSpellCount + 1;
+		}
+		PickerArgs pickArgs;
+		spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, curSeq->spellPktBody.objHndCaster, curSeq->spellPktBody.baseCasterLevel);
+		pickArgs.spellEnum = spellEnum;
+		pickArgs.callback = reinterpret_cast<PickerCallback>(0x10096CC0);
+		*actSeqPickerActive = 1;
+		// uiTurnBased.ShowPicker(&pickArgs, &curSeq->spellPktBody); //0x10B3D5D0
+		uiPicker.ShowPicker(pickArgs, &curSeq->spellPktBody);
+		*addresses.actSeqPickerAction = *d20Sys.globD20Action;
+		return;
+	}
+
+}
+
+int ActionSequenceSystem::ActionAddToSeq()
+{
+	auto curSeq = *actSeqCur;
+	auto d20ActnType = d20Sys.globD20Action->d20ActType;
+	int actnCheckResult = 0;
+	TurnBasedStatus tbStatus = curSeq->tbStatus;
+	if (d20ActnType == D20A_CAST_SPELL
+		&& curSeq->spellPktBody.spellEnum >= 600)
+	{
+		curSeq->tbStatus.tbsFlags |= 0x16; // perhaps bug that it's not affecting the local copy?? TODO
+		curSeq->spellPktBody.spellEnumOriginal = curSeq->spellPktBody.spellEnum;
+	}
+	auto actnCheckFunc = d20Sys.d20Defs[d20ActnType].actionCheckFunc;
+	if (actnCheckFunc)
+		actnCheckResult = actnCheckFunc(d20Sys.globD20Action, &tbStatus);
+	if (objects.IsPlayerControlled(curSeq->performer))
+	{
+		if (actnCheckResult)
+		{
+			if (actnCheckResult == 9)
+			{
+				actSeqSys.ActSeqGetPicker();
+				return 9;
+			}
+			if (actnCheckResult != 8)
+			{
+				auto errorString = actSeqSys.ActionErrorString(actnCheckResult);
+				floatSys.floatMesLine(curSeq->performer, 1, FloatLineColor::Red, errorString);
+				return actnCheckResult;
+			}
+		} else if (!d20Sys.TargetCheck(d20Sys.globD20Action))
+		{
+			actSeqSys.ActSeqGetPicker();
+			return 9;
+		}
+	} else
+	{
+		d20Sys.TargetCheck(d20Sys.globD20Action);
+	}
+	return actSeqSys.addD20AToSeq(d20Sys.globD20Action, curSeq);
+	// return addresses.ActionAddToSeq();
 }
 
 uint32_t ActionSequenceSystem::addD20AToSeq(D20Actn* d20a, ActnSeq* actSeq)
@@ -484,13 +451,13 @@ int ActionSequenceSystem::AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, Tur
 	return result;
 }
 
-void ActionSequenceSystem::IntrrptSthgsub_100939D0(D20Actn* d20a, CmbtIntrpts* str84)
+void ActionSequenceSystem::IntrrptSthgsub_100939D0(D20Actn* d20a, CmbtIntrpts* intrpts)
 {
 	{ __asm push ecx __asm push esi __asm push ebx __asm push edi}
 	__asm{
 		mov ecx, this;
 		mov esi, [ecx]._sub_100939D0;
-		mov eax, str84;
+		mov eax, intrpts;
 		push eax;
 		mov eax, d20a;
 		call esi;
@@ -544,10 +511,6 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		if (reach < 0.1){ reach = 3.0; }
 		actSeq->targetObj = d20a->d20ATarget;
 		pathQ.distanceToTargetMin = distToTgtMin * twelve;
-		if (distToTgtMin != 0)
-		{
-			int dummy = 1;
-		}
 		pathQ.tolRadius = reach * twelve - fourPointSevenPlusEight;
 	} else
 	{
@@ -588,7 +551,18 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	if (!pathResult)
 	{
 		if (pqResult->flags & 0x10) *pathfindingSys.pathSthgFlag_10B3D5C8 = 1;
-		logger->info("\nFAILED PATH... attempted from {} to {}",pqResult->from, pqResult->to);
+		try
+		{
+			if (pathQ.targetObj)
+				logger->info("MoveSequenceParse: FAILED PATH... {} attempted from {} to {} ({})", description.getDisplayName(pqResult->mover), pqResult->from, pqResult->to, description.getDisplayName(pathQ.targetObj));
+			else
+				logger->info("MoveSequenceParse: FAILED PATH... {} attempted from {} to {}", description.getDisplayName(pqResult->mover), pqResult->from, pqResult->to);
+		}
+		catch (...)
+		{
+			
+		}
+
 		if (config.pathfindingDebugMode)
 		{
 			pathResult = pathfinding->FindPath(&pathQ, pqResult);
@@ -873,6 +847,19 @@ void ActionSequenceSystem::ActionSequenceRevertPath(int d20ANum)
 	return addresses.ActionSequenceRevertPath(d20ANum);
 }
 
+bool ActionSequenceSystem::GetPathTargetLocFromCurD20Action(LocAndOffsets* loc)
+{
+	int actNum = (*actSeqCur)->d20ActArrayNum;
+	if (actNum <=0 )
+		return 0;
+	Path * d20Path = (*actSeqCur)->d20ActArray[actNum - 1].path;
+	if (d20Path == nullptr)
+		return 0;
+	*loc = d20Path->to;
+	return 1;
+	
+}
+
 uint32_t ActionSequenceSystem::ActionCostNull(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, ActionCostPacket* actionCostPacket)
 {
 	actionCostPacket->hourglassCost = 0;
@@ -1106,7 +1093,8 @@ uint32_t ActionSequenceSystem::seqCheckAction(D20Actn* d20a, TurnBasedStatus* iO
 	uint32_t a = TurnBasedStatusUpdate(d20a, iO);
 	if (a)
 	{
-		*((uint32_t*)iO + 8) = a;
+		iO->idxSthg = a;
+		//*((uint32_t*)iO + 8) = a;
 		return a;
 	}
 	
@@ -1208,7 +1196,7 @@ void ActionSequenceSystem::actionPerform()
 
 void ActionSequenceSystem::sequencePerform()
 {
-	if (*actnProc_10B3D5A0){ return; }
+	if (*actSeqPickerActive){ return; }
 	if (!actSeqOkToPerform())
 	{
 		logger->info("Sequence given while performing previous action - aborted. \n");
@@ -1905,3 +1893,243 @@ int _GetNewHourglassState(objHndl performer, D20ActionType d20aType, int d20Data
 	return actSeqSys.GetNewHourglassState(performer, d20aType, d20Data1, radMenuActualArg, d20SpellData);
 }
 #pragma endregion
+
+
+void ActnSeqReplacements::ActSeqGetPicker()
+{
+
+	actSeqSys.ActSeqGetPicker();
+	
+	//addresses.actSeqPicker;
+	//int dummy = 1;
+
+	//orgActSeq_100977A0();
+
+	// dummy = 1;
+
+}
+
+int ActnSeqReplacements::ActionAddToSeq()
+{
+	return actSeqSys.ActionAddToSeq();
+}
+
+void ActnSeqReplacements::ActSeqApply()
+{
+	replaceFunction(0x10089F70, _curSeqGetTurnBasedStatus);
+	replaceFunction(0x10089FA0, _ActSeqCurSetSpellPacket);
+
+	replaceFunction(0x1008A050, _isPerforming);
+	replaceFunction(0x1008A100, _addD20AToSeq);
+	replaceFunction(0x1008A1B0, _ActionErrorString);
+	replaceFunction(0x1008A980, _actSeqOkToPerform);
+	replaceFunction(0x1008BFA0, _AddToSeqSimple);
+
+	replaceFunction(0x1008C4F0, _StdAttackAiCheck);
+	replaceFunction(0x1008C6A0, _ActionCostFullAttack);
+
+
+
+	replaceFunction(0x100925E0, _isSimultPerformer);
+
+	replaceFunction(0x10094910, _GetNewHourglassState);
+	replaceFunction(0x10094A00, _curSeqReset);
+	replaceFunction(0x10094CA0, _seqCheckFuncsCdecl);
+	replaceFunction(0x10094C60, _seqCheckAction);
+
+
+	replaceFunction(0x10094E20, _allocSeq);
+
+	replaceFunction(0x10094EB0, _assignSeq);
+
+	replaceFunction(0x10094F70, _moveSequenceParseUsercallWrapper);
+
+	replaceFunction(0x10095450, _AddToSeqWithTarget);
+	replaceFunction(0x10095860, _unspecifiedMoveAddToSeq);
+
+	replaceFunction(0x10095FD0, _turnBasedStatusInit);
+
+
+	replaceFunction(0x100961C0, _sequencePerform);
+
+	orgChooseTargetCallback = replaceFunction(0x10096570, ChooseTargetCallback);
+
+	replaceFunction(0x100968B0, _UnspecifiedAttackAddToSeq);
+	replaceFunction(0x100996E0, _actionPerform);
+
+	replaceFunction(0x100977A0, ActSeqGetPicker);
+	replaceFunction(0x10097C20, ActionAddToSeq);
+
+}
+
+void ActnSeqReplacements::NaturalAttackOverwrites()
+{
+
+	int writeVal = ATTACK_CODE_NATURAL_ATTACK;
+	write(0x1008C542 + 3, &writeVal, 4);
+
+
+	// new D20Defs
+
+	// addD20AToSeq
+
+	writeVal = (int)&d20Sys.d20Defs[0].addToSeqFunc;
+	write(0x1008A125 + 2, &writeVal, sizeof(int));
+
+	//sub_1008A180
+	writeVal = (int)&d20Sys.d20Defs[0].flags;
+	write(0x1008A18A + 2, &writeVal, sizeof(int));
+
+
+	//1008A4B0
+	writeVal = (int)&d20Sys.d20Defs[0].flags;
+	write(0x1008A4B8 + 2, &writeVal, sizeof(int));
+
+
+	// D20ActionTriggersAoO
+	writeVal = (int)&d20Sys.d20Defs[0].flags;
+	write(0x1008A9DA + 2, &writeVal, sizeof(int));
+	write(0x1008AA10 + 2, &writeVal, sizeof(int));
+
+
+	//projectileCheckBeforeNextAction
+	writeVal = (int)&d20Sys.d20Defs[0].projectilePerformFunc;
+	write(0x1008AC99 + 2, &writeVal, sizeof(int));
+
+	// sub_1008ACC0
+	writeVal = (int)&d20Sys.d20Defs[0].flags;
+	write(0x1008ACCA + 2, &writeVal, sizeof(int));
+
+	// actSeqSpellHarmful
+	//  flags
+	writeVal = (int)&d20Sys.d20Defs[0].flags;
+	write(0x1008AD59 + 2, &writeVal, sizeof(int));
+
+	// d20aTriggerCombatCheck
+	//  flags
+	writeVal = (int)&d20Sys.d20Defs[0].flags;
+	write(0x1008AEBD + 2, &writeVal, sizeof(int));
+
+
+	// ActionCostProcess
+	// 1008B052 actionCost
+	writeVal = (int)&d20Sys.d20Defs[0].actionCost;
+	write(0x1008B052 + 2, &writeVal, sizeof(int));
+
+
+	// isSimulsOk
+	// 100926B8 flags + 2 (BYTE2)
+	writeVal = ((int)&d20Sys.d20Defs[0].flags) + 2;
+	write(0x100926B8 + 2, &writeVal, sizeof(int));
+
+
+	// ActionFrameProcess
+	writeVal = (int)&d20Sys.d20Defs[0].actionFrameFunc;
+	write(0x100934BB + 2, &writeVal, sizeof(int));
+
+	// TurnBasedStatusUpdate
+	// 10093980  aiCheck
+	writeVal = (int)&d20Sys.d20Defs[0].aiCheckMaybe;
+	write(0x10093980 + 2, &writeVal, sizeof(int));
+
+
+	// seqCheckAction
+	// 10094C85 actionCheckFunc 
+	writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
+	write(0x10094C85 + 2, &writeVal, sizeof(int));
+
+
+	// seqCheckFuncs
+	writeVal = (int)&d20Sys.d20Defs[0].tgtCheckFunc;
+	write(0x10094D1C + 2, &writeVal, sizeof(int));
+	writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
+	write(0x10094D57 + 2, &writeVal, sizeof(int));
+	writeVal = (int)&d20Sys.d20Defs[0].locCheckFunc;
+	write(0x10094D81 + 2, &writeVal, sizeof(int));
+	// 10094D1C  tgtCheck
+	// 10094D57 actionCheckFunc
+	// 10094D81 locCheckFunc
+
+	// moveSequenceParse
+	// 1009538C actionCost
+	writeVal = (int)&d20Sys.d20Defs[0].actionCost;
+	write(0x1009538C + 2, &writeVal, sizeof(int));
+
+	// seqAddWithTarget
+	writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
+	write(0x1009559F + 2, &writeVal, sizeof(int));
+
+
+	// sub_100960B0
+	writeVal = (int)&d20Sys.d20Defs[0].tgtCheckFunc;
+	write(0x10096100 + 2, &writeVal, sizeof(int));
+	writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
+	write(0x1009613C + 2, &writeVal, sizeof(int));
+	writeVal = (int)&d20Sys.d20Defs[0].locCheckFunc;
+	write(0x1009615D + 2, &writeVal, sizeof(int));
+
+	//  sub_10096390
+	writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
+	write(0x10096424 + 2, &writeVal, sizeof(int));
+
+	// SequencePathSthgSub_10096450
+	writeVal = (int)&d20Sys.d20Defs[0].tgtCheckFunc;
+	write(0x10096493 + 2, &writeVal, sizeof(int));
+	writeVal = (int)&d20Sys.d20Defs[0].locCheckFunc;
+	write(0x100964C9 + 2, &writeVal, sizeof(int));
+	writeVal = ((int)&d20Sys.d20Defs[0].flags) + 2;
+	write(0x100964F9 + 2, &writeVal, sizeof(int));
+
+	// sub_10097060
+	// 100970BB pickerMaybe
+	// 100970EB pickerMaybe
+	// 10097111 pickerMaybe
+	writeVal = (int)&d20Sys.d20Defs[0].pickerFuncMaybe;
+	write(0x100970BB + 2, &writeVal, sizeof(int));
+	writeVal = (int)&d20Sys.d20Defs[0].pickerFuncMaybe;
+	write(0x100970EB + 2, &writeVal, sizeof(int));
+	writeVal = (int)&d20Sys.d20Defs[0].pickerFuncMaybe;
+	write(0x10097111 + 2, &writeVal, sizeof(int));
+
+	// sub_10097320
+	writeVal = (int)&d20Sys.d20Defs[0].flags;
+	write(0x10097330 + 2, &writeVal, sizeof(int));
+	writeVal = (int)&d20Sys.d20Defs[0].flags;
+	write(0x1009753B + 2, &writeVal, sizeof(int));
+	writeVal = (int)&d20Sys.d20Defs[0].aiCheckMaybe;
+	write(0x1009754D + 2, &writeVal, sizeof(int));
+	writeVal = (int)&d20Sys.d20Defs[0].pickerFuncMaybe;
+	write(0x100976C9 + 2, &writeVal, sizeof(int));
+
+	// sub_100977A0
+	// 100977C2 flags
+	// 10097825 flags
+	// 100978EF flags
+	writeVal = (int)&d20Sys.d20Defs[0].flags;
+	write(0x100977C2 + 2, &writeVal, sizeof(int));
+	writeVal = (int)&d20Sys.d20Defs[0].flags;
+	write(0x10097825 + 2, &writeVal, sizeof(int));
+	writeVal = (int)&d20Sys.d20Defs[0].flags;
+	write(0x100978EF + 2, &writeVal, sizeof(int));
+
+	// ActionAddToSeq
+	writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
+	write(0x10097C7E + 2, &writeVal, sizeof(int));
+
+	// curSeqNext
+	// 10099026 flags+1 (BYTE1)
+	writeVal = ((int)&d20Sys.d20Defs[0].flags) + 1;
+	write(0x10099026 + 2, &writeVal, sizeof(int));
+
+
+	//actionPerform
+	// 100998D4 performFunc
+	writeVal = (int)&d20Sys.d20Defs[0].performFunc;
+	write(0x100998D4 + 2, &writeVal, sizeof(int));
+
+
+	// sub_10099B10
+	// 10099C2E projectilePerformFunc
+	writeVal = (int)&d20Sys.d20Defs[0].projectilePerformFunc;
+	write(0x10099C2E + 2, &writeVal, sizeof(int));
+}

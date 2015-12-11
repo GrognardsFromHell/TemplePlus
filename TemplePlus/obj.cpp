@@ -53,6 +53,11 @@ public:
 		return "Replacements for Object functions (mainly for debugging purposes now)";
 	}
 
+	static float GetFloat(objHndl obj, obj_f field)
+	{
+		return objects.GetFloat(obj, field);
+	};
+
 	void apply() override {
 		replaceFunction(0x1009E1D0, _obj_get_int);
 		replaceFunction(0x100A0190, _obj_set_int);
@@ -61,6 +66,7 @@ public:
 		replaceFunction(0x1009E5C0, _getArrayFieldInt32); 
 		replaceFunction(0x1009E2E0, _getInt64); 
 		replaceFunction(0x1009E360, _getObjHnd); 
+		replaceFunction(0x1009E260, GetFloat);
 	}
 } objReplacements;
 
@@ -125,6 +131,21 @@ uint32_t Objects::getInt32(objHndl obj, obj_f fieldIdx)
 		return 0;
 	}
 	if (fieldIdx == obj_f_type){ return objType; }
+	PropFetcher(objBody, fieldIdx, dataOut);
+	return dataOut[0];
+}
+
+float Objects::GetFloat(objHndl obj, obj_f fieldIdx)
+{
+	GameObjectBody * objBody = _GetMemoryAddress(obj);
+	uint32_t objType = objBody->type;
+	float dataOut[8] = { 0,0,0,0, 0,0,0,0 }; // so the game doesn't crash when the naive modder tries to read a non-32bit field at least ;)
+	if (!DoesTypeSupportField(objBody->type, fieldIdx))
+	{
+		fieldNonexistantDebug(obj, objBody, fieldIdx, objType, "GetFloat");
+		return 0.0;
+	}
+	if (fieldIdx == obj_f_type) { return objType; }
 	PropFetcher(objBody, fieldIdx, dataOut);
 	return dataOut[0];
 }
@@ -234,6 +255,21 @@ void Objects::getArrayField(objHndl obj, obj_f fieldIdx, uint32_t subIdx, void* 
 		return ;
 	}
 	getArrayFieldInternal(objBody, dataOut, fieldIdx, subIdx);
+}
+
+objHndl Objects::GetArrayFieldObjHndl(objHndl obj, obj_f fieldIdx, uint32_t subIdx)
+{
+	ObjectId dataOut = { 0, };
+	GameObjectBody * objBody = _GetMemoryAddress(obj);
+	uint32_t objType = objBody->type;
+	if (!DoesTypeSupportField(objBody->type, fieldIdx))
+	{
+		fieldNonexistantDebug(obj, objBody, fieldIdx, objType, "GetArrayFieldObjHndl");
+		return 0i64;
+	}
+	getArrayFieldInternal(objBody, &dataOut, fieldIdx, subIdx);
+	if (!dataOut.subtype || dataOut.subtype != 0xfffe) return 0i64;
+	return *(uint64_t*)&dataOut.guid.Data1;
 }
 
 uint32_t Objects::getArrayFieldNumItems(objHndl obj, obj_f fieldIdx)
@@ -625,6 +661,16 @@ bool Objects::IsContainer(objHndl objHnd)
 {
 	auto type = GetType(objHnd);
 	return type == obj_t_container || type == obj_t_bag;
+}
+
+bool Objects::IsItem(objHndl item)
+{
+	if (!item)
+		return 0;
+	ObjectType objType = objects.GetType(item);
+	if (objType >= obj_t_weapon && objType <= obj_t_generic || objType == obj_t_bag)
+		return 1;
+	return 0;
 }
 #pragma endregion
 

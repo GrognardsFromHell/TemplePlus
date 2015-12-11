@@ -160,6 +160,14 @@ float LocationSys::DistanceToLoc(objHndl from, LocAndOffsets loc) {
 	return distance - radius;
 }
 
+float LocationSys::DistanceToLocFeet(objHndl obj, LocAndOffsets* loc)
+{
+	auto objLoc = objects.GetLocationFull(obj);
+	auto distance =  Distance3d(objLoc, *loc);
+	auto radius = objects.GetRadius(obj);
+	return InchesToFeet(distance - radius);
+}
+
 float LocationSys::InchesToFeet(float inches) {
 	return inches / 12.0f;
 }

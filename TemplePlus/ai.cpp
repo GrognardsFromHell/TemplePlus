@@ -112,10 +112,11 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 	for (uint32_t i = 0; i < aiStrat->numTactics; i++)
 	{
 		aiTacticGetConfig(i, &aiTac, aiStrat);
-		logger->info("\n{} attempting {}...\n", description._getDisplayName(objHnd, objHnd), aiTac.aiTac->name);
+		logger->info("{} attempting {}...", description._getDisplayName(objHnd, objHnd), aiTac.aiTac->name);
 		auto aiFunc = aiTac.aiTac->aiFunc;
 		if (!aiFunc) continue;
 		if (aiFunc(&aiTac)) {
+			logger->info("AI tactic succeeded; performing.");
 			actSeq->sequencePerform();
 			return 1;
 		}
@@ -125,18 +126,21 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 	aiTac.aiTac = &aiTacticDefs[0];
 	aiTac.field4 = 0;
 	aiTac.tacIdx = -1;
-	logger->info("\n{} attempting {}...\n", description._getDisplayName(objHnd, objHnd), aiTac.aiTac->name);
+	logger->info("{} attempting {}...", description._getDisplayName(objHnd, objHnd), aiTac.aiTac->name);
 	assert(aiTac.aiTac != nullptr);
 	if (aiTac.aiTac->aiFunc(&aiTac))
 	{
 		actSeq->sequencePerform();
 		return 1;
 	}
-	objHndl pathablePartyMember = pathfinding->canPathToParty(objHnd);
+	logger->info("Default FAILED. Attempting to find pathable party member as target...");
+	objHndl pathablePartyMember = pathfindingSys.CanPathToParty(objHnd);
 	if (pathablePartyMember)
 	{
+		aiTac.target = pathablePartyMember;
 		if (aiTac.aiTac->aiFunc(&aiTac))
 		{
+			logger->info("Default tactic succeeded; performing.");
 			actSeq->sequencePerform();
 			return 1;
 		}
@@ -235,7 +239,7 @@ int AiSystem::TargetClosest(AiTactic* aiTac)
 	}
 	*/
 
-	logger->info("\n {} targeting closest...\n", objects.description.getDisplayName(aiTac->performer));
+	logger->info("{} targeting closest...", objects.description.getDisplayName(performer));
 
 	// ObjList objlist;
 	// objlist.ListVicinity(performerLoc.location, OLC_CRITTERS);
@@ -248,8 +252,8 @@ int AiSystem::TargetClosest(AiTactic* aiTac)
 	for ( uint32_t i = 0; i < combatSys.groupInitiativeList->GroupSize; i++)
 	{
 		// objHndl dude = objlist.get(i);
-		objHndl dude = combatSys.groupInitiativeList->GroupMembers[i];
-		PyTuple_SET_ITEM(args, 1, PyObjHndl_Create(dude));
+		objHndl combatant = combatSys.groupInitiativeList->GroupMembers[i];
+		PyTuple_SET_ITEM(args, 1, PyObjHndl_Create(combatant));
 
 		auto result = pythonObjIntegration.ExecuteScript("combat", "ShouldIgnoreTarget", args);
 		//auto result2 = pythonObjIntegration.ExecuteScript("combat", "TargetClosest", args);
@@ -257,18 +261,23 @@ int AiSystem::TargetClosest(AiTactic* aiTac)
 		Py_DECREF(result);
 
 
-		if (!critterSys.IsFriendly(dude, performer)
-			&& !objects.IsUnconscious(dude)
-			&& locSys.DistanceToObj(performer, dude)  < dist
+		if (!critterSys.IsFriendly(combatant, performer)
+			&& !objects.IsUnconscious(combatant)
 			&& !ignoreTarget)
 		{
-		
-			aiTac->target = dude;
-			dist = locSys.DistanceToObj(performer, dude);
-		
+			auto distToCombatant = locSys.DistanceToObj(performer, combatant);
+			if (d20Sys.d20Query(combatant, DK_QUE_Critter_Is_Invisible)
+				&& !d20Sys.d20Query(performer, DK_QUE_Critter_Can_See_Invisible))
+				distToCombatant = (distToCombatant + 5.0) * 2.5; // makes invisibile chars less likely to be attacked; also takes into accout stuff like Hide From Animals (albeit in a shitty manner)
+			if (distToCombatant < dist )
+			{
+				aiTac->target = combatant;
+				dist = locSys.DistanceToObj(performer, combatant);
+			}
 		}
+
 	}
-	logger->info("\n {} targeted.\n", objects.description.getDisplayName(aiTac->target, aiTac->performer));
+	logger->info("{} targeted.", objects.description.getDisplayName(aiTac->target, aiTac->performer));
 
 	return 0;
 }
@@ -284,7 +293,7 @@ int AiSystem::TargetThreatened(AiTactic* aiTac)
 
 	locSys.getLocAndOff(aiTac->performer, &performerLoc);
 
-	logger->info("\n {} targeting threatened...\n", objects.description.getDisplayName(aiTac->performer));
+	logger->info("{} targeting threatened...", objects.description.getDisplayName(aiTac->performer));
 
 	ObjList objlist;
 	objlist.ListVicinity(performerLoc.location, OLC_CRITTERS);
@@ -317,12 +326,12 @@ int AiSystem::TargetThreatened(AiTactic* aiTac)
 	{
 		aiTac->target = 0;
 		//hooked_print_debug_message("\n no target found. Attempting Target Closest instead.");
-		logger->info("\n no target found. ");
+		logger->info("no target found. ");
 		//TargetClosest(aiTac);
 	} 
 	else
 	{
-		logger->info("\n {} targeted.\n", objects.description.getDisplayName(aiTac->target, aiTac->performer));
+		logger->info("{} targeted.", objects.description.getDisplayName(aiTac->target, aiTac->performer));
 	}
 	
 
@@ -440,6 +449,60 @@ int AiSystem::BreakFree(AiTactic* aiTac)
 	}
 
 	return 1;
+}
+
+int AiSystem::GoMelee(AiTactic* aiTac)
+{
+	logger->info("Attempting Go Melee...");
+	auto performer = aiTac->performer;
+	auto tbStat = actSeqSys.curSeqGetTurnBasedStatus();
+	auto weapon = critterSys.GetWornItem(performer, EquipSlot::WeaponPrimary);
+	if (!weapon)
+		return 0;
+	if (!inventory.IsRangedWeapon(weapon))
+		return 0;
+	objHndl * inventoryArray;
+	auto invenCount = inventory.GetInventory(performer, &inventoryArray);
+	
+	for (int i = 0; i < invenCount; i++)
+	{
+		if (objects.GetType(inventoryArray[i]) == obj_t_weapon)
+		{
+			auto weapFlags = objects.getInt32(inventoryArray[i], obj_f_weapon_flags);
+			if ( (weapFlags & OWF_RANGED_WEAPON) == 0 )
+			{
+				inventory.ItemUnwieldByIdx(performer, 203);
+				inventory.ItemUnwieldByIdx(performer, 204);
+				inventory.ItemPlaceInIdx(inventoryArray[i], 203);
+				tbStat->hourglassState = actSeqSys.GetHourglassTransition(tbStat->hourglassState, 1);
+				free(inventoryArray);
+				logger->info("Go Melee succeeded.");
+				return 1;
+			}
+
+		}
+	}
+	
+	free(inventoryArray);
+	return 0;
+	
+}
+
+int AiSystem::Sniper(AiTactic* aiTac)
+{
+	auto weapon = critterSys.GetWornItem(aiTac->performer, EquipSlot::WeaponPrimary);
+	if (!weapon)
+		return 0;
+	if (!inventory.IsRangedWeapon(weapon))
+		return 0;
+	if (!combatSys.AmmoMatchesItemAtSlot(aiTac->performer, EquipSlot::WeaponPrimary))
+	{
+		GoMelee(aiTac);
+		return 0;
+	}
+	if (!AiFiveFootStepAttempt(aiTac))
+		GoMelee(aiTac);
+	return Default(aiTac);
 }
 
 int AiSystem::CoupDeGrace(AiTactic* aiTac)
@@ -664,6 +727,40 @@ AiCombatRole AiSystem::GetRole(objHndl obj)
 	return AiCombatRole::general;
 }
 
+BOOL AiSystem::AiFiveFootStepAttempt(AiTactic* aiTac)
+{
+	objHndl threateners[40];
+	auto actNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+	if (!combatSys.GetEnemiesCanMelee(aiTac->performer, threateners))
+		return 1;
+	float overallOffX, overallOffY;
+	LocAndOffsets loc;
+	locSys.getLocAndOff(aiTac->performer, &loc);
+	locSys.GetOverallOffset(loc, &overallOffX, &overallOffY);
+	for (float angleDeg = 0.0; angleDeg += 45.0; angleDeg <= 360.0)
+	{
+
+		float angleRad = angleDeg * 0.017453292; // to radians
+		auto cosTheta = cosf(angleRad);
+		auto sinTheta = sinf(angleRad);
+		auto fiveFootStepX = overallOffX - cosTheta * 60.0; // five feet radius
+		auto fiveFootStepY = overallOffY + sinTheta * 60.0;
+		loc.FromAbsolute(fiveFootStepX, fiveFootStepY);
+		if (!combatSys.GetThreateningCrittersAtLoc(aiTac->performer, &loc, threateners))
+		{
+			d20Sys.GlobD20ActnSetTypeAndData1(D20A_5FOOTSTEP, 0);
+			d20Sys.GlobD20ActnSetTarget(0, &loc);
+			if (!actSeqSys.ActionAddToSeq()
+				&& actSeqSys.GetPathTargetLocFromCurD20Action(&loc)
+				&& !combatSys.GetThreateningCrittersAtLoc(aiTac->performer, &loc, threateners)
+				&& !actSeqSys.ActionSequenceChecksWithPerformerLocation())
+				return 1;
+			actSeqSys.ActionSequenceRevertPath(actNum);
+		}
+	}
+	return 0;
+}
+
 void AiSystem::RegisterNewAiTactics()
 {
 	memset(aiTacticDefsNew, 0, sizeof(AiTacticDef) * AI_TACTICS_NEW_SIZE);
@@ -806,6 +903,39 @@ unsigned AiSystem::WakeFriend(AiTactic* aiTac)
 	return 0;
 
 }
+
+int AiSystem::Default(AiTactic* aiTac)
+{
+	if (actSeqSys.curSeqGetTurnBasedStatus()->hourglassState < 2)
+		return 0;
+	if (!aiTac->target)
+		return 0;
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_ATTACK, 0);
+	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
+	actSeqSys.ActionAddToSeq();
+	int performError = actSeqSys.ActionSequenceChecksWithPerformerLocation();
+	if (!performError)
+		return 1;
+	if (!critterSys.IsWieldingRangedWeapon(aiTac->performer))
+	{
+		logger->info("\nAi Action Perform: Resetting sequence; Do Unspecified Move Action");
+		actSeqSys.curSeqReset(aiTac->performer);
+		d20Sys.GlobD20ActnInit();
+		d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_MOVE, 0);
+		d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
+		actSeqSys.ActionAddToSeq();
+		performError = actSeqSys.ActionSequenceChecksWithPerformerLocation();
+	}
+	return performError == 0;
+}
+
+int AiSystem::AttackThreatened(AiTactic* aiTac)
+{
+	if (!aiTac->target || !combatSys.CanMeleeTarget(aiTac->performer, aiTac->target))
+		return 0;
+	return Default(aiTac);
+}
 #pragma endregion
 
 #pragma region AI replacement functions
@@ -865,11 +995,20 @@ class AiReplacements : public TempleFix
 {
 public: 
 	const char* name() override { return "AI Function Replacements";} 
+
+	static int AiDefault(AiTactic* aiTac);
+	static int AiAttack(AiTactic* aiTac);
+	static int AiGoMelee(AiTactic* aiTac);
+	static int AiSniper(AiTactic* aiTac);
+	static int AiAttackThreatened(AiTactic* aiTac);
+
 	void apply() override 
 	{
 		logger->info("Replacing AI functions...");
 		
+		replaceFunction(0x100E3270, AiDefault);
 		replaceFunction(0x100E3A00, _AiTargetClosest);
+		replaceFunction(0x100E46C0, AiAttack);
 		replaceFunction(0x100E46D0, _AiTargetThreatened);
 		replaceFunction(0x100E48D0, _AiApproach);
 		replaceFunction(0x100E4BD0, _AiCharge);
@@ -878,9 +1017,36 @@ public:
 		replaceFunction(0x100E5500, _StrategyTabLineParser);
 		replaceFunction(0x100E5DB0, _AiCoupDeGrace);
 		
+		replaceFunction(0x100E55A0, AiGoMelee);
+		replaceFunction(0x100E58D0, AiSniper);
 		
 	}
 } aiReplacements;
+
+int AiReplacements::AiDefault(AiTactic* aiTac)
+{
+	return aiSys.Default(aiTac);
+}
+
+int AiReplacements::AiAttack(AiTactic* aiTac)
+{
+	return aiSys.Default(aiTac);
+}
+
+int AiReplacements::AiGoMelee(AiTactic* aiTac)
+{
+	return aiSys.GoMelee(aiTac);
+}
+
+int AiReplacements::AiSniper(AiTactic* aiTac)
+{
+	return aiSys.Sniper(aiTac);
+}
+
+int AiReplacements::AiAttackThreatened(AiTactic* aiTac)
+{
+	return aiSys.AttackThreatened(aiTac);
+}
 #pragma endregion 
 AiPacket::AiPacket(objHndl objIn)
 {

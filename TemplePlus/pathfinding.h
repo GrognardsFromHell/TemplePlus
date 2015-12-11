@@ -190,7 +190,7 @@ struct Pathfinding : temple::AddressTable {
 	int FindPath(PathQuery* pq, PathQueryResult* result);
 	void (__cdecl *ToEEpathDistBtwnToAndFrom)(Path *path); // outputs to FPU (st0);  apparently distance in feet (since it divides by 12)
 
-	objHndl canPathToParty(objHndl objHnd);
+	objHndl CanPathToParty(objHndl objHnd);
 	BOOL PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo); // including static obstacles it seems
 	BOOL PathAdjRadiusLosClear(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo);
 	ScreenDirections GetDirection(int a1, int a2, int a3);

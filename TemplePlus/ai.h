@@ -100,16 +100,21 @@ struct AiSystem : temple::AddressTable
 	int ChargeAttack(AiTactic * aiTac);
 	int PickUpWeapon(AiTactic* aiTac);
 	int BreakFree(AiTactic* aiTac);
+	int GoMelee(AiTactic* aiTac);
+	int Sniper(AiTactic *aiTac);
 	void UpdateAiFightStatus(objHndl objIn, int* aiState, objHndl* target);
 	int UpdateAiFlags(objHndl ObjHnd, int aiFightStatus, objHndl target, int *soundMap);
 	void StrategyTabLineParseTactic(AiStrategy*, char * tacName, char * middleString, char* spellString);
 	int StrategyTabLineParser(TabFileStatus* tabFile, int n, char ** strings);
 	int AiOnInitiativeAdd(objHndl obj);
 	AiCombatRole GetRole(objHndl obj);
+	BOOL AiFiveFootStepAttempt(AiTactic * aiTac);
 
 	void RegisterNewAiTactics();
 	unsigned int Asplode(AiTactic * aiTactic);
 	unsigned int WakeFriend(AiTactic* aiTac);
+	int Default(AiTactic* aiTac);
+	int AttackThreatened(AiTactic* aiTac);
 private:
 	void (__cdecl *_ShitlistAdd)(objHndl npc, objHndl target);
 	void (__cdecl *_AiRemoveFromList)(objHndl npc, objHndl target, int listType);	

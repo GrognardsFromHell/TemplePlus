@@ -195,6 +195,8 @@ struct CritterSystem : temple::AddressTable
 	bool IsSummoned(objHndl obj);
 	int GetCasterLevel(objHndl obj); // returns sum of all casting-class levels
 	bool IsCaster(objHndl obj);
+	bool IsWieldingRangedWeapon(objHndl performer);
+	CritterFlag GetCritterFlags(objHndl obj);
 #pragma endregion
 
 };

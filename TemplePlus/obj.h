@@ -38,6 +38,7 @@ struct Objects : temple::AddressTable {
 		return getInt32(obj, obj_f_flags);
 	}
 	uint32_t getInt32(objHndl obj, obj_f fieldIdx);
+	float GetFloat(objHndl obj, obj_f field);
 	uint64_t getInt64(objHndl obj, obj_f fieldIdx);
 	objHndl getObjHnd(objHndl obj, obj_f fieldIdx);
 	void SetFieldObjHnd(objHndl obj, obj_f field, objHndl value);
@@ -46,6 +47,7 @@ struct Objects : temple::AddressTable {
 	void setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, int data);
 	int32_t getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx);
 	void getArrayField(objHndl obj, obj_f fieldIdx, uint32_t subIdx, void * dataOut);
+	objHndl GetArrayFieldObjHndl(objHndl obj, obj_f fieldIdx, uint32_t subIdx);
 	uint32_t getArrayFieldNumItems(objHndl obj, obj_f fieldIdx);
 	void ClearArrayField(objHndl objHnd, obj_f objF);
 
@@ -65,6 +67,10 @@ struct Objects : temple::AddressTable {
 	}
 	float GetOffsetY(objHndl handle) {
 		return _GetInternalFieldFloat(handle, obj_f_offset_y);
+	}
+	float GetOffsetZ(objHndl handle)
+	{
+		return _GetInternalFieldFloat(handle, obj_f_offset_z);
 	}
 	int GetOriginMapId(objHndl handle) {
 		return _GetInternalFieldInt32(handle, obj_f_critter_teleport_map);
@@ -202,6 +208,7 @@ struct Objects : temple::AddressTable {
 	int32_t GetHPCur(objHndl obj);
 	bool IsCritter(objHndl obj);
 	bool IsContainer(objHndl objHnd);
+	bool IsItem(objHndl item);
 	bool IsNPC(objHndl obj);
 	bool IsPlayerControlled(objHndl obj);
 	uint32_t GetProtoNum(objHndl obj);
@@ -225,7 +232,6 @@ struct Objects : temple::AddressTable {
 
 	void PropCollectionRemoveField(objHndl objHnd, obj_f objF);
 	int GetModFromStatLevel(int statLevel); // returns modifier from stat level e.g. Dex 15 -> +2
-	
 #pragma endregion
 
 #pragma region Subsystems

@@ -331,3 +331,15 @@ int WeaponSystem::GetBaseHardness(WeaponTypes weapon)
 		return 10;
 	}
 }
+
+bool WeaponSystem::AmmoMatchesWeapon(objHndl weapon, objHndl ammoItem)
+{
+	if (objects.GetType(weapon) != obj_t_weapon)
+		return 0;
+	auto ammoType = objects.getInt32(weapon, obj_f_weapon_ammo_type);
+	if (ammoType >= 4 && ammoType < 18) // no ammo required??
+		return 1;
+	if (!ammoItem)
+		return 0;
+	return ammoType == objects.getInt32(ammoItem, obj_f_ammo_type);
+}

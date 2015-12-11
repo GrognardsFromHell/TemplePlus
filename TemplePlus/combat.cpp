@@ -11,6 +11,7 @@
 #include "history.h"
 #include "ai.h"
 #include "util/fixes.h"
+#include "weapon.h"
 
 
 class CombatSystemReplacements : public TempleFix
@@ -19,12 +20,32 @@ public:
 	const char* name() override {
 		return "Combat System Replacements";
 	}
+
+	static objHndl CheckRangedWeaponAmmo(objHndl obj);
+	static objHndl(__cdecl *orgCheckRangedWeaponAmmo)(objHndl obj);
 	void apply() override{
+		
 		replaceFunction(0x100628D0, _isCombatActive);
 		replaceFunction(0x100629B0, _IsCloseToParty);
+		orgCheckRangedWeaponAmmo = replaceFunction(0x100654E0, CheckRangedWeaponAmmo);
 		replaceFunction(0x100B4B30, _GetCombatMesLine);
 	}
 } combatSysReplacements;
+
+objHndl(__cdecl* CombatSystemReplacements::orgCheckRangedWeaponAmmo)(objHndl obj);
+
+objHndl CombatSystemReplacements::CheckRangedWeaponAmmo(objHndl obj)
+{
+	objHndl result = orgCheckRangedWeaponAmmo(obj);
+	/*if (result)
+	{
+		auto secondaryWeapon = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);
+		auto primaryWeapon = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
+		auto ammoItem = critterSys.GetWornItem(obj, EquipSlot::Ammo);
+		int dummy = 1;
+	}*/
+	return result;
+}
 
 struct CombatSystemAddresses : temple::AddressTable
 {
@@ -62,6 +83,158 @@ int CombatSystem::IsWithinReach(objHndl attacker, objHndl target)
 	float reach = critterSys.GetReach(attacker, D20A_UNSPECIFIED_ATTACK);
 	float distTo = locSys.DistanceToObj(attacker, target);
 	return distTo < reach;
+}
+
+BOOL CombatSystem::CanMeleeTargetAtLocRegardItem(objHndl obj, objHndl weapon, objHndl target, LocAndOffsets* loc)
+{
+	if (weapon)
+	{
+		if (objects.GetType(obj) != obj_t_weapon)
+			return 0;
+		if (inventory.IsRangedWeapon(weapon))
+			return 0;
+	} else
+	{
+		CritterFlag critterFlags = critterSys.GetCritterFlags(obj);
+		if ((critterFlags & OCF_MONSTER) == 0 && !feats.HasFeatCountByClass(obj, FEAT_IMPROVED_UNARMED_STRIKE))
+			return 0;
+	}
+	float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
+	auto distToLoc = max((float)0.0,locSys.DistanceToLocFeet(obj, loc));
+	if (locSys.InchesToFeet(objects.GetRadius(target)) + objReach < distToLoc)
+		return 0;
+	return 1;
+}
+
+BOOL CombatSystem::CanMeleeTargetAtLoc(objHndl obj, objHndl target, LocAndOffsets* loc)
+{
+	objHndl weapon = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
+	if (!combatSys.CanMeleeTargetAtLocRegardItem(obj, weapon, target, loc))
+	{
+		objHndl secondaryWeapon = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);
+		if (!combatSys.CanMeleeTargetAtLocRegardItem(obj, secondaryWeapon, target, loc))
+		{
+			if (!objects.getArrayFieldInt32(obj, obj_f_critter_attacks_idx, 0))
+				return 0;
+			float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
+			float tgtRadius = objects.GetRadius(target) / 12.0;
+			if (max(static_cast<float>(0.0),
+				locSys.DistanceToLocFeet(obj, loc)) - tgtRadius > objReach)
+				return 0;
+		}
+	}
+	return 1;
+}
+
+BOOL CombatSystem::CanMeleeTarget(objHndl obj, objHndl target)
+{
+	if (objects.GetFlags(obj) & (OF_OFF | OF_DESTROYED))
+		return 0;
+	auto targetObjFlags = objects.GetFlags(target);
+	if (targetObjFlags & (OF_OFF | OF_DESTROYED | OF_INVULNERABLE))
+		return 0;
+	if (objects.IsUnconscious(obj))
+		return 0;
+	if (d20Sys.d20QueryWithData(target, DK_QUE_Critter_Has_Spell_Active, 407, 0)) // spell_sanctuary
+		return 0;
+	if (d20Sys.d20QueryWithData(obj, DK_QUE_Critter_Has_Spell_Active, 407, 0)) // presumably so the AI doesn't break its sanctuary protection?
+		return 0;
+	auto weapon = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
+	if (CanMeleeTargetRegardWeapon(obj, weapon, target))
+		return 1;
+	auto offhandWeapon = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);
+	if (CanMeleeTargetRegardWeapon(obj, offhandWeapon, target))
+		return 1;
+	if (!objects.getArrayFieldInt32(obj, obj_f_critter_attacks_idx, 0))
+		return 0;
+	auto objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
+	if (objReach > max(static_cast<float>(0.0), locSys.DistanceToObj(obj, target)))
+		return 1;
+	return 0;
+}
+
+BOOL CombatSystem::CanMeleeTargetRegardWeapon(objHndl obj, objHndl weapon, objHndl target)
+{
+	if (weapon)
+	{
+		if (objects.GetType(obj) != obj_t_weapon)
+			return 0;
+		if (inventory.IsRangedWeapon(weapon))
+			return 0;
+	}
+	else
+	{
+		CritterFlag critterFlags = critterSys.GetCritterFlags(obj);
+		if ((critterFlags & OCF_MONSTER) == 0 && !feats.HasFeatCountByClass(obj, FEAT_IMPROVED_UNARMED_STRIKE))
+			return 0;
+	}
+	float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
+	auto distToTgt = max((float)0.0, locSys.DistanceToObj(obj, target));
+	if ( objReach <= distToTgt)
+		return 0;
+	return 1;
+}
+
+BOOL CombatSystem::AffiliationSame(objHndl obj, objHndl obj2)
+{
+	int objInParty = party.IsInParty(obj);
+	return party.IsInParty(obj2) == objInParty;
+}
+
+int CombatSystem::GetThreateningCrittersAtLoc(objHndl obj, LocAndOffsets* loc, objHndl threateners[40])
+{
+	int n = 0;
+	int initListLength = GetInitiativeListLength();
+	for (int i = 0; i < initListLength; i++)
+	{
+		objHndl combatant = GetInitiativeListMember(i);
+		if (combatant != obj && !AffiliationSame(obj, combatant))
+		{
+			if (combatSys.CanMeleeTargetAtLoc(combatant, obj, loc))
+			{
+				threateners[n++] = combatant;
+				if (n == 40)
+					return n;
+			}
+		}
+	}
+	return n;
+}
+
+objHndl CombatSystem::CheckRangedWeaponAmmo(objHndl obj)
+{
+	if (d20Sys.d20Query(obj, DK_QUE_Polymorphed))
+		return 0;
+	auto objType = objects.GetType(obj);
+	auto invenNumField = obj_f_critter_inventory_num;
+	auto invenField = obj_f_critter_inventory_list_idx;
+	if (objType == obj_t_container)
+	{
+		invenField = obj_f_container_inventory_list_idx;
+		invenNumField = obj_f_container_inventory_num;
+		logger->warn("Check ammo for a container???");
+	}
+	int numItems = objects.getInt32(obj, invenNumField);
+	if (numItems <= 0)
+		return 0i64;
+	auto ammoItem = critterSys.GetWornItem(obj, EquipSlot::Ammo);
+	auto weapon = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
+	if (!weapon || !weapons.AmmoMatchesWeapon(weapon, ammoItem))
+		weapon = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);
+	
+	if (!weapon || !weapons.AmmoMatchesWeapon(weapon, ammoItem))
+		return 0;
+	return ammoItem;
+	
+}
+
+bool CombatSystem::AmmoMatchesItemAtSlot(objHndl obj, EquipSlot equipSlot)
+{
+	objHndl ammoItem = CheckRangedWeaponAmmo(obj);
+	auto weapon = critterSys.GetWornItem(obj, equipSlot);
+	if (!weapon)
+		return 0;
+	return weapons.AmmoMatchesWeapon(weapon, ammoItem);
 }
 
 bool CombatSystem::isCombatActive()

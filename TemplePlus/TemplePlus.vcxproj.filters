@@ -292,6 +292,8 @@
       <Filter>Map System</Filter>
     </ClCompile>
     <ClCompile Include="gametime.cpp" />
+    <ClCompile Include="ui\ui_turn_based.cpp" />
+    <ClCompile Include="ui\ui_intgame_select.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -562,6 +564,8 @@
       <Filter>Map System</Filter>
     </ClInclude>
     <ClInclude Include="gametime.h" />
+    <ClInclude Include="ui\ui_turn_based.h" />
+    <ClInclude Include="ui\ui_intgame_select.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

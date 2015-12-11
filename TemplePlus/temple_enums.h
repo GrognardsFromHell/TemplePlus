@@ -1962,7 +1962,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeSpellImmunityCheck, 
 	dispTypeEffectTooltip, // for those little bonus flags on top of portraits
 	dispTypeStatBaseGet, // looks like this is intended to replace StatBaseGet function for Critters with Dispatchers
-	dispType67,
+	dispTypeGetWeaponGlow,
 	dispTypeItemForceRemove, // has a single function associated with this - 10104410 int __cdecl ItemForceRemoveCallback_SetItemPadWielderArgs(Dispatcher_Callback_Args args);
 	dispTypeArmorToHitPenalty, // none exist apparently
 
@@ -2156,7 +2156,8 @@ enum ItemFlag : uint32_t {
 	OIF_EXPIRES_AFTER_USE = 0x800000,
 	OIF_NO_LOOT = 0x1000000,
 	OIF_USES_WAND_ANIM = 0x2000000,
-	OIF_NO_TRANSFER = 0x4000000
+	OIF_NO_TRANSFER = 0x4000000,
+	OIF_NO_TRANSFER_SPECIAL = 0x8000000
 };
 
 enum OIF_WEAR : uint32_t

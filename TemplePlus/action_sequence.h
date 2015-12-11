@@ -33,7 +33,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	uint32_t * actnProcState;
 	MesHandle  * actionMesHandle; 
 	uint32_t * seqFlag_10B3D5C0; // init to 0
-	uint32_t * actnProc_10B3D5A0;
+	uint32_t * actSeqPickerActive;
 	TurnBasedStatus * tbStatus118CD3C0;
 
 	int32_t * seqSthg_118CD3B8; // init to -1
@@ -44,7 +44,8 @@ struct ActionSequenceSystem : temple::AddressTable
 	objHndl * simultPerformerQueue;
 	int turnBasedStatusTransitionMatrix[7][5]; // describes the new hourglass state when current state is i after doing an action that costs j
 	void curSeqReset(objHndl objHnd);
-	void ActionAddToSeq();
+	void ActSeqGetPicker();
+	int ActionAddToSeq();
 		uint32_t addD20AToSeq(D20Actn * d20a, ActnSeq * actSeq);
 		uint32_t AddToSeqSimple(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
 		int AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
@@ -73,6 +74,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	int GetHourglassTransition(int hourglassCurrent, int hourglassCost);
 	int ActionSequenceChecksWithPerformerLocation();
 	void ActionSequenceRevertPath(int d20ANum);
+	bool GetPathTargetLocFromCurD20Action(LocAndOffsets* loc);
 	int (__cdecl *TrimPathToRemainingMoveLength_1008B9A0)(D20Actn *d20a, float remainingMoveLength, PathQuery *pathQ);
 	void sub_1008BB40(ActnSeq*actSeq, D20Actn * d20a); // actSeq@<ebx>
 	int(CrossBowSthgReload_1008E8A0)(D20Actn *d20a, ActnSeq*actSeq); //, ActnSeq *actSeq@<ebx>

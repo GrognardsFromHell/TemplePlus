@@ -4,7 +4,7 @@
 #include "skill.h"
 
 #define DISPATCHER_MAX  250 // max num of simultaneous Dispatches going on (static int counter inside _DispatcherProcessor)
-
+#include "spell.h"
 
 
 struct DispIO;
@@ -81,7 +81,7 @@ struct DispatcherSystem : temple::AddressTable
 	int DispatchToHitBonusBase(objHndl objHndCaller, DispIoAttackBonus* dispIo);
 	int DispatchGetSizeCategory(objHndl objHndCaller);
 	void DispatchConditionRemove(Dispatcher* dispatcher, CondNode* cond);
-	
+	unsigned int Dispatch35BaseCasterLevelModify(objHndl obj, SpellPacketBody* spellPkt);
 #pragma endregion
 
 	uint32_t(__cdecl * dispatcherForCritters)(objHndl, DispIO *, enum_disp_type, uint32_t dispKey);

@@ -10,6 +10,7 @@
 	limitation
 */
 #define COMBAT_ACTIVATION_DISTANCE 42.5 
+#include "critter.h"
 
 struct AiTactic;
 struct D20Actn;
@@ -22,9 +23,22 @@ struct CombatSystem : temple::AddressTable {
 
 	char * GetCombatMesLine(int line);
 	int IsWithinReach(objHndl attacker, objHndl target);
+	BOOL CanMeleeTargetAtLocRegardItem(objHndl obj, objHndl weapon, objHndl target, LocAndOffsets* loc);
+	BOOL CanMeleeTargetAtLoc(objHndl obj, objHndl target, LocAndOffsets* loc);
+	BOOL CanMeleeTarget(objHndl obj, objHndl target);
+	BOOL CanMeleeTargetRegardWeapon(objHndl obj, objHndl weapon, objHndl target);
+	int GetThreateningCrittersAtLoc(objHndl obj, LocAndOffsets* loc, objHndl threateners[40]);
+	objHndl CheckRangedWeaponAmmo(objHndl obj); // checks if the ammo slot item matches a wielded weapon (primary or secondary), and if so, returns it
+	bool AmmoMatchesItemAtSlot(objHndl obj, EquipSlot equipSlot);
+	
 	uint32_t* combatModeActive;
 	bool isCombatActive();
 	uint32_t IsCloseToParty(objHndl objHnd);
+	/*
+	// in vanilla, checks if obj are both in the party or both NOT in the party; kinda used like IsFriendly in the code, so be careful!
+	TODO: make this take into account "innocents" or friendly factions
+	*/
+	BOOL AffiliationSame(objHndl obj, objHndl obj2); 
 	/*
 		retrieves a list of enemies that the obj can melee with; return val is that number of such enemies
 	*/
