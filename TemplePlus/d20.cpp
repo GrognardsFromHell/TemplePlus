@@ -250,6 +250,11 @@ uint32_t D20System::d20QueryWithData(objHndl objHnd, D20DispatcherKey dispKey, u
 	return dispIO.return_val;
 }
 
+uint32_t D20System::d20QueryWithData(objHndl obj, D20DispatcherKey dispKey, objHndl argObj)
+{
+	return d20QueryWithData(obj, dispKey, (uint32_t)argObj, (argObj>>32));
+}
+
 uint32_t D20System::d20QueryHasSpellCond(objHndl obj, int spellEnum)
 {
 	auto cond = spellSys.GetCondFromSpellIdx(spellEnum);
@@ -316,7 +321,7 @@ void D20System::D20ActnInit(objHndl objHnd, D20Actn* d20a)
 	d20a->spellId = 0;
 	d20a->d20Caf = 0;
 
-	if (pq && pq >= pathfinding->pathQArray && pq < (pathfinding->pathQArray + pfCacheSize))
+	if (pq && pq >= pathfinding->pathQArray && pq < (pathfinding->pathQArray + PQR_CACHE_SIZE))
 	{
 		pq->occupiedFlag = 0;
 	}

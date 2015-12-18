@@ -30,7 +30,7 @@ struct CombatSystem : temple::AddressTable {
 	int GetThreateningCrittersAtLoc(objHndl obj, LocAndOffsets* loc, objHndl threateners[40]);
 	objHndl CheckRangedWeaponAmmo(objHndl obj); // checks if the ammo slot item matches a wielded weapon (primary or secondary), and if so, returns it
 	bool AmmoMatchesItemAtSlot(objHndl obj, EquipSlot equipSlot);
-	
+	objHndl * GetHostileCombatantList(objHndl obj, int* count);
 	uint32_t* combatModeActive;
 	bool isCombatActive();
 	uint32_t IsCloseToParty(objHndl objHnd);

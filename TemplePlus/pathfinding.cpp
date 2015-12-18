@@ -49,8 +49,10 @@ struct ProximityList
 				{
 					if (locSys.Distance3d(loc, proxListObjs[i].loc) < radius + proxListObjs[i].radius)
 					{
+						/*
 						if (config.pathfindingDebugMode)
 							logger->info("Pathfinding bump into critter: {} at location {}", description.getDisplayName(proxListObjs[i].obj), proxListObjs[i].loc);
+							*/
 						return true;
 					}
 						
@@ -121,16 +123,16 @@ struct PathFindAddresses : temple::AddressTable
 	bool(__cdecl *_FindPath)(PathQuery *query, PathQueryResult *result); // now replaced
 	int (__cdecl*FindPathUsingNodes) (PathQuery*pq, Path*pqr);
 	int(__cdecl *FindPathShortDistanceAdjRadius)(PathQuery* pq, Path* pqr);
+	int(__cdecl*TruncatePathToDistance)(Path* path, LocAndOffsets* truncatedLoc, float truncateLengthFeet);
+	int(__cdecl*GetPartialPath)(Path* path, Path* pathTrunc, float startDistFeet, float endDistFeet);
 	PathFindAddresses()
 	{
-		rebase(PathDestIsClear, 0x10040C30);
-
+		rebase(TruncatePathToDistance,  0x10040200);
+		rebase(PathDestIsClear,			0x10040C30);
+		rebase(GetPartialPath, 0x10041630);
 		rebase(FindPathShortDistanceAdjRadius, 0x10041E30);
 		rebase(FindPathUsingNodes, 0x10042B50);
-
-
-
-		rebase(_FindPath, 0x10043070);
+		rebase(_FindPath,              0x10043070);
 
 		rebase(canPathToParty, 0x10057F80);
 
@@ -156,6 +158,8 @@ struct PathFindAddresses : temple::AddressTable
 		rebase(pathSthgFlag_10B3D5C8, 0x10B3D5C8);
 		
 	}
+
+	
 } addresses;
 
 
@@ -191,7 +195,7 @@ float Pathfinding::pathLength(Path* path)
 
 bool Pathfinding::pathQueryResultIsValid(PathQueryResult* pqr)
 {
-	return pqr != nullptr && pqr >= pathQArray && pqr < &pathQArray[pfCacheSize];
+	return pqr != nullptr && pqr >= pathQArray && pqr < &pathQArray[PQR_CACHE_SIZE];
 }
 
 Pathfinding::Pathfinding() {
@@ -372,6 +376,19 @@ int Pathfinding::PathDestIsClear(PathQuery* pq, objHndl mover, LocAndOffsets des
 	//}
 	return 1;
 
+}
+
+PathQueryResult* Pathfinding::FetchAvailablePQRCacheSlot()
+{
+	for (int i = 0; i < PQR_CACHE_SIZE; i++)
+	{
+		if (pathQArray[i].occupiedFlag == 0)
+		{
+			pathQArray[i].occupiedFlag = 1;
+			return &pathQArray[i];
+		}
+	}
+	return nullptr;
 }
 
 uint32_t Pathfinding::ShouldUsePathnodes(Path* pathQueryResult, PathQuery* pathQuery)
@@ -1988,6 +2005,16 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 
 
 	return directionsCount;
+}
+
+int Pathfinding::GetPartialPath(Path* path, Path* pathTrunc, float startDistFeet, float endDistFeet)
+{
+	return addresses.GetPartialPath(path, pathTrunc, startDistFeet, endDistFeet);
+}
+
+int Pathfinding::TruncatePathToDistance(Path* path, LocAndOffsets* truncatedLoc, float truncateLengthFeet)
+{
+	return addresses.TruncatePathToDistance(path, truncatedLoc, truncateLengthFeet);
 }
 
 int _FindPathShortDistanceSansTarget(PathQuery* pq, PathQueryResult* pqr)

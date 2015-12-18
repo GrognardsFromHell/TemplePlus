@@ -4,6 +4,7 @@
 
 
 #define actSeqArraySize 0x20
+#define READIED_ACTION_CACHE_SIZE 0x20
 
 struct LocationSys;
 struct PathQuery;
@@ -16,6 +17,7 @@ struct Pathfinding;
 struct CmbtIntrpts;
 struct TurnBasedSys;
 struct Objects;
+struct AoOPacket;
 
 struct ActionSequenceSystem : temple::AddressTable
 {
@@ -57,7 +59,6 @@ struct ActionSequenceSystem : temple::AddressTable
 
 	int StdAttackAiCheck(D20Actn *d20a, TurnBasedStatus *tbStat);
 	uint32_t isPerforming(objHndl objHnd);
-	void IntrrptSthgsub_100939D0(D20Actn * d20a, CmbtIntrpts * str84);
 	uint32_t moveSequenceParse(D20Actn * d20aIn, ActnSeq* actSeq, TurnBasedStatus *actnSthg, float distSthg, float reach, int a5);
 		void releasePath(PathQueryResult*);
 		void addReadiedInterrupts(ActnSeq* actSeq, CmbtIntrpts * intrpts);
@@ -75,8 +76,16 @@ struct ActionSequenceSystem : temple::AddressTable
 	int ActionSequenceChecksWithPerformerLocation();
 	void ActionSequenceRevertPath(int d20ANum);
 	bool GetPathTargetLocFromCurD20Action(LocAndOffsets* loc);
-	int (__cdecl *TrimPathToRemainingMoveLength_1008B9A0)(D20Actn *d20a, float remainingMoveLength, PathQuery *pathQ);
-	void sub_1008BB40(ActnSeq*actSeq, D20Actn * d20a); // actSeq@<ebx>
+	int TrimPathToRemainingMoveLength(D20Actn *d20a, float remainingMoveLength, PathQuery *pathQ);
+	/*
+		cuts the path short and readies an interrupt action
+	*/
+	void ProcessPathForReadiedActions(D20Actn * d20a, CmbtIntrpts * interrupts);
+	void ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr, AoOPacket* aooPacket, float distFeet);
+	/*
+		splits up the movement to move -> aoo movement -> move as necessary
+	*/
+	void ProcessSequenceForAoOs(ActnSeq*actSeq, D20Actn * d20a); // actSeq@<ebx>
 	int(CrossBowSthgReload_1008E8A0)(D20Actn *d20a, ActnSeq*actSeq); //, ActnSeq *actSeq@<ebx>
 	uint32_t SequencePathSthgSub_10096450(ActnSeq * actSeq, uint32_t idx, TurnBasedStatus* tbStat);
 	//10097C20
@@ -84,8 +93,10 @@ struct ActionSequenceSystem : temple::AddressTable
 	uint32_t seqCheckFuncs(TurnBasedStatus *tbStatus);
 	void AOOSthgSub_10097D50(objHndl, objHndl);
 	int32_t AOOSthg2_100981C0(objHndl);
-	int32_t InterruptSthg_10099320(D20Actn *d20a);
-	int32_t InterruptSthg_10099360(D20Actn *d20a);
+	int32_t InterruptNonCounterspell(D20Actn *d20a);
+	int32_t InterruptCounterspell(D20Actn *d20a);
+	int ReadyVsApproachOrWithdrawalCount();
+
 	uint32_t combatTriggerSthg(ActnSeq* actSeq);
 
 	unsigned seqCheckAction(D20Actn* d20a, TurnBasedStatus* iO);
@@ -115,14 +126,14 @@ private:
 	int(__cdecl* _CrossBowSthgReload_1008E8A0)(D20Actn *d20a); //, ActnSeq *actSeq@<ebx>
 	uint32_t (__cdecl *getRemainingMaxMoveLength)(D20Actn *d20a, TurnBasedStatus *actnSthg, float *floatOut); // doesn't take things like having made 5 foot step into account, just a raw calculation
 	int(__cdecl*_TurnBasedStatusUpdate)(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus);
-	void (__cdecl *_sub_100939D0)(CmbtIntrpts* d20a); // D20Actn*@<eax>
+	void (__cdecl *_ProcessPathForReadiedActions)(CmbtIntrpts* d20a); // D20Actn*@<eax>
 	uint32_t (__cdecl* _sub_10096450)(ActnSeq * actSeq, uint32_t); // void * iO @<ebx>
 	void(__cdecl* _AOOSthgSub_10097D50)(objHndl, objHndl);
 	void(__cdecl *_actionPerformRecursion)();
 	int32_t(__cdecl *_AOOSthg2_100981C0)(objHndl);
 	uint32_t (__cdecl *_curSeqNext)();
-	int32_t(__cdecl * _InterruptSthg_10099360)();
-	int32_t(__cdecl * _InterruptSthg_10099320)();
+	int32_t(__cdecl * _InterruptCounterspell)();
+	int32_t(__cdecl * _InterruptNonCounterspell)();
 	uint32_t (__cdecl *_actSeqSpellHarmful)(); // ActnSeq* @<ebx> 
 	uint32_t(__cdecl *_combatTriggerSthg)(); // ActnSeq* @<ebx> 
 	uint32_t(__cdecl * _moveSeqD20Sthg)(ActnSeq* actSeq, TurnBasedStatus *actnSthg, float a3, float reach, int a5); //, D20Actn * d20aIn @<eax>
@@ -178,20 +189,38 @@ struct ActnSeq
 };
 #pragma pack(pop)
 
-struct IntrptSthg
+enum ReadyVsTypeEnum : uint32_t
 {
-	uint32_t field0;
+	RV_Spell =0,
+	RV_Counterspell,
+	RV_Approach,
+	RV_Withdrawal
+};
+
+struct ReadiedActionPacket
+{
+	uint32_t flags;
 	uint32_t field4;
 	objHndl interrupter;
+	ReadyVsTypeEnum readyType;
+	int field14;
 };
 
 struct CmbtIntrpts
 {
-	IntrptSthg* intrptSthgs[32];
+	ReadiedActionPacket* readyPackets[32];
 	int32_t numItems;
 };
 
-
+struct AoOPacket
+{
+	objHndl obj;
+	PathQueryResult * path;
+	unsigned int numAoOs;
+	objHndl interrupters[32];
+	float aooDistFeet[32];
+	LocAndOffsets aooLocs[32];
+};
 
 const uint32_t TestSizeOfActionSequence = sizeof(ActnSeq); // should be 0x1648 (5704)
 

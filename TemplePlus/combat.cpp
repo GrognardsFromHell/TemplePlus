@@ -89,7 +89,7 @@ BOOL CombatSystem::CanMeleeTargetAtLocRegardItem(objHndl obj, objHndl weapon, ob
 {
 	if (weapon)
 	{
-		if (objects.GetType(obj) != obj_t_weapon)
+		if (objects.GetType(weapon) != obj_t_weapon)
 			return 0;
 		if (inventory.IsRangedWeapon(weapon))
 			return 0;
@@ -235,6 +235,25 @@ bool CombatSystem::AmmoMatchesItemAtSlot(objHndl obj, EquipSlot equipSlot)
 	if (!weapon)
 		return 0;
 	return weapons.AmmoMatchesWeapon(weapon, ammoItem);
+}
+
+objHndl * CombatSystem::GetHostileCombatantList(objHndl obj, int * count)
+{
+	int initListLen = GetInitiativeListLength();
+	objHndl hostileTempList[100];
+	int hostileCount = 0;
+	for (int i = 0; i < initListLen; i++)
+	{
+		auto combatant = GetInitiativeListMember(i);
+		if (obj != combatant && !critterSys.IsFriendly(obj,combatant))
+		{
+			hostileTempList[hostileCount++] = combatant;
+		}
+	}
+	objHndl *result = new objHndl[hostileCount];
+	memcpy(result, hostileTempList, hostileCount * sizeof(objHndl));
+	*count = hostileCount;
+	return result;
 }
 
 bool CombatSystem::isCombatActive()

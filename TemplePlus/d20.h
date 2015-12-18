@@ -54,6 +54,7 @@ struct D20System : temple::AddressTable
 
 	uint32_t d20Query(objHndl ObjHnd, D20DispatcherKey dispKey);
 	uint32_t d20QueryWithData(objHndl ObjHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
+	uint32_t d20QueryWithData(objHndl ObjHnd, D20DispatcherKey dispKey, objHndl argObj);
 	uint32_t d20QueryHasSpellCond(objHndl ObjHnd, int spellEnum);
 	uint64_t d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
 

@@ -4,8 +4,8 @@
 #include "temple_functions.h"
 // #include "game_config.h"
 
-#define pfCacheSize  0x20
-#define PATH_RESULT_CACHE_SIZE 0x28 // different from the above
+#define PQR_CACHE_SIZE  0x20 // cache used for storing paths for specific action sequences
+#define PATH_RESULT_CACHE_SIZE 0x28 // different from the above, used for storing past results to minimize PF time
 
 #pragma region structs
 
@@ -163,10 +163,12 @@ struct Pathfinding : temple::AddressTable {
 
 
 	PathQueryResult * pathQArray;
+	bool pathQueryResultIsValid(PathQueryResult *pqr);
+	PathQueryResult* FetchAvailablePQRCacheSlot();
 	uint32_t * pathSthgFlag_10B3D5C8;
 
 	float pathLength(Path *path); // path length in feet; note: unlike the ToEE function, returns a float (and NOT to the FPU!)
-	bool pathQueryResultIsValid(PathQueryResult *pqr);
+
 
 	Pathfinding();
 
@@ -180,6 +182,7 @@ struct Pathfinding : temple::AddressTable {
 	void PathCacheInit();
 
 	int PathDestIsClear(PathQuery* pq, objHndl mover, LocAndOffsets destLoc); // checks if there's anything blocking the destination location (taking into account the mover's radius)
+	
 	int(__cdecl*FindPathBetweenNodes)(int fromNodeId, int toNodeId, void*, int maxChainLength); // finds the node IDs for the To -> .. -> From course (locally optimal I think? Is this A*?); return value is chain length
 
 
@@ -197,6 +200,11 @@ struct Pathfinding : temple::AddressTable {
 	int FindPathShortDistanceSansTargetLegacy(PathQuery * pq, Path* pqr);
 	int FindPathShortDistanceSansTarget(PathQuery * pq, Path* pqr);
 
+	/*
+		gets a partial path (based on path) starting from startDistFeet to endDistFeet and writes it to pathTrunc
+	*/
+	int GetPartialPath(Path* path, Path* pathTrunc, float startDistFeet, float endDistFeet);
+	int TruncatePathToDistance(Path* path, LocAndOffsets* truncatedLoc, float truncateLengthFeet);
 
 protected:
 	void PathInit(Path* pqr, PathQuery* pq);

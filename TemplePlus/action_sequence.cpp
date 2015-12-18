@@ -17,6 +17,7 @@
 #include "condition.h"
 #include "ui/ui_picker.h"
 #include "ui/ui_turn_based.h"
+#include "party.h"
 
 
 class ActnSeqReplacements : public TempleFix
@@ -57,6 +58,7 @@ static struct ActnSeqAddresses : temple::AddressTable{
 	void(__cdecl* ActionSequenceRevertPath)(int d20ActnNum);
 	PickerArgs * actSeqPicker;
 	D20Actn * actSeqPickerAction;
+	ReadiedActionPacket * readiedActionCache;
 	
 	ActnSeqAddresses()
 	{
@@ -64,8 +66,9 @@ static struct ActnSeqAddresses : temple::AddressTable{
 		rebase(TouchAttackAddToSeq, 0x10096760);
 		rebase(ActionSequenceChecksWithPerformerLocation, 0x10097000);
 		rebase(ActionAddToSeq,0x10097C20); 
-		rebase(actSeqPicker, 0x118CD460);
+		rebase(readiedActionCache, 0x1186A900);
 		rebase(actSeqPickerAction, 0x118CD400);
+		rebase(actSeqPicker,       0x118CD460);
 	}
 
 	
@@ -111,7 +114,7 @@ ActionSequenceSystem::ActionSequenceSystem()
 	rebase(_actSeqSpellHarmful, 0x1008AD10);
 	rebase(_sub_1008BB40, 0x1008BB40);
 	rebase(getRemainingMaxMoveLength, 0x1008B8A0);
-	rebase(TrimPathToRemainingMoveLength_1008B9A0, 0x1008B9A0);
+	//rebase(TrimPathToRemainingMoveLength, 0x1008B9A0);
 
 	rebase(_CrossBowSthgReload_1008E8A0, 0x1008E8A0);
 
@@ -119,7 +122,7 @@ ActionSequenceSystem::ActionSequenceSystem()
 
 	rebase(_TurnBasedStatusUpdate, 0x10093950);
 	rebase(_combatTriggerSthg, 0x10093890);
-	rebase(_sub_100939D0,      0x100939D0); 
+	rebase(_ProcessPathForReadiedActions,      0x100939D0); 
 
 	rebase(_actionPerformRecursion, 0x100961C0);
 	rebase(_sub_10096450,           0x10096450);
@@ -130,8 +133,8 @@ ActionSequenceSystem::ActionSequenceSystem()
 	rebase(_AOOSthg2_100981C0, 0x100981C0);
 	rebase(_curSeqNext,        0x10098ED0);
 
-	rebase(_InterruptSthg_10099320, 0x10099320);
-	rebase(_InterruptSthg_10099360, 0x10099360);
+	rebase(_InterruptNonCounterspell, 0x10099320);
+	rebase(_InterruptCounterspell, 0x10099360);
 	
 	rebase(seqSthg_118CD3B8,0x118CD3B8); 
 	rebase(seqSthg_118A0980,0x118A0980); 
@@ -451,12 +454,12 @@ int ActionSequenceSystem::AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, Tur
 	return result;
 }
 
-void ActionSequenceSystem::IntrrptSthgsub_100939D0(D20Actn* d20a, CmbtIntrpts* intrpts)
+void ActionSequenceSystem::ProcessPathForReadiedActions(D20Actn* d20a, CmbtIntrpts* intrpts)
 {
 	{ __asm push ecx __asm push esi __asm push ebx __asm push edi}
 	__asm{
 		mov ecx, this;
-		mov esi, [ecx]._sub_100939D0;
+		mov esi, [ecx]._ProcessPathForReadiedActions;
 		mov eax, intrpts;
 		push eax;
 		mov eax, d20a;
@@ -464,6 +467,63 @@ void ActionSequenceSystem::IntrrptSthgsub_100939D0(D20Actn* d20a, CmbtIntrpts* i
 		add esp, 4;
 	}
 	{ __asm pop edi __asm pop ebx __asm pop esi __asm pop ecx} 
+}
+
+void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr, AoOPacket* aooPacket, float aooFreeDistFeet)
+{// aooFreeDistFeet specifies the minimum distance traveled before an AoO is registered (e.g. for Withdrawal it will receive 5 feet)
+	auto truncateLengthFeet = aooFreeDistFeet;
+	auto aooDistFeet = aooFreeDistFeet;
+	aooPacket->obj = obj;
+	aooPacket->path = pqr;
+	aooPacket->numAoOs = 0;
+	auto pathLength = pathfindingSys.pathLength(pqr);
+	if (aooFreeDistFeet > pathLength)
+		truncateLengthFeet = pathLength;
+	LocAndOffsets truncatedLoc;
+	pathfindingSys.TruncatePathToDistance(aooPacket->path, &truncatedLoc, truncateLengthFeet);
+	int enemyCount = 0;
+	objHndl* enemies = combatSys.GetHostileCombatantList(obj, &enemyCount );
+	try
+	{
+		while (truncateLengthFeet < 2.0 + pathLength)
+		{
+			// loop over enemies to catch interceptions
+			for (int i = 0; i < enemyCount; i++)
+			{
+				auto enemy = enemies[i];
+				int interrupterIdx = 0;
+				for (interrupterIdx = 0; interrupterIdx < aooPacket->numAoOs; interrupterIdx++)
+				{
+					if (enemy == aooPacket->interrupters[interrupterIdx])
+						break;
+				}
+				if (enemy != aooPacket->interrupters[interrupterIdx])
+				{
+					if (d20Sys.d20QueryWithData(enemy, DK_QUE_AOOPossible, obj ))
+					{
+						if (combatSys.CanMeleeTargetAtLoc(enemy, obj, &truncatedLoc))
+						{
+							aooPacket->interrupters[aooPacket->numAoOs] = enemy;
+							aooPacket->aooDistFeet[aooPacket->numAoOs] = aooDistFeet;
+							aooPacket->aooLocs[aooPacket->numAoOs++] = truncatedLoc;
+							if (aooPacket->numAoOs >= 32)
+								return;
+						}
+					}
+				}
+			}
+ 			truncateLengthFeet = truncateLengthFeet + 4.0; // fishy!!!
+			aooDistFeet = truncateLengthFeet;
+			if (truncateLengthFeet < pathLength)
+				pathfindingSys.TruncatePathToDistance(aooPacket->path, &truncatedLoc, truncateLengthFeet);
+		}
+		delete enemies;
+	}
+	catch (...)
+	{
+		delete enemies;
+	}
+	return;
 }
 
 uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSeq, TurnBasedStatus* tbStat, float distToTgtMin, float reach, int nonspecificMoveType)
@@ -526,10 +586,10 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	} 
 
 
-	if (d20aCopy.path && d20aCopy.path >= pathfindingSys.pathQArray && d20aCopy.path < &pathfindingSys.pathQArray[pfCacheSize]) 
+	if (d20aCopy.path && d20aCopy.path >= pathfindingSys.pathQArray && d20aCopy.path < &pathfindingSys.pathQArray[PQR_CACHE_SIZE]) 
 		d20aCopy.path->occupiedFlag = 0; // frees the last path used in the d20a
 
-	for (int i = 0; i < pfCacheSize; i++)
+	for (int i = 0; i < PQR_CACHE_SIZE; i++)
 	{
 		if (pathfindingSys.pathQArray[i].occupiedFlag == 0)
 		{
@@ -573,7 +633,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		}
 		if (!pathResult)
 		{
-			if (pqResult >= pathfindingSys.pathQArray && pqResult < &pathfindingSys.pathQArray[pfCacheSize])
+			if (pqResult >= pathfindingSys.pathQArray && pqResult < &pathfindingSys.pathQArray[PQR_CACHE_SIZE])
 				pqResult->occupiedFlag = 0;
 			return 0x9;
 		}
@@ -593,7 +653,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		if (static_cast<long double>(remainingMaxMoveLength) < pathLength)
 		{
 			auto temp = 1;;
-			if (TrimPathToRemainingMoveLength_1008B9A0(&d20aCopy, remainingMaxMoveLength, &pathQ)){ releasePath(d20aCopy.path); return temp; }
+			if (TrimPathToRemainingMoveLength(&d20aCopy, remainingMaxMoveLength, &pathQ)){ releasePath(d20aCopy.path); return temp; }
 			pqResult = d20aCopy.path;
 			pathLength = remainingMaxMoveLength;
 		}
@@ -635,11 +695,20 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		else	{	releasePath(pqResult); return 8;	}
 	}
 
-LABEL_53: *actSeqPerfLoc = pqResult->to;
+LABEL_53:
+	if (config.pathfindingDebugMode)
+	{
+		if (!critterSys.IsPC(d20a->d20APerformer))
+		{
+			int dummy = 1;
+		}
+	}
+
+	 *actSeqPerfLoc = pqResult->to;
 	CmbtIntrpts intrpts;
 	intrpts.numItems = 0;
-	IntrrptSthgsub_100939D0(&d20aCopy, &intrpts);
-	sub_1008BB40(actSeq, &d20aCopy);
+	ProcessPathForReadiedActions(&d20aCopy, &intrpts);
+	ProcessSequenceForAoOs(actSeq, &d20aCopy);
 	addReadiedInterrupts(actSeq, &intrpts);
 	updateDistTraversed(actSeq);
 	return 0;
@@ -649,7 +718,7 @@ void ActionSequenceSystem::releasePath(PathQueryResult* pqr)
 {
 	if (pqr)
 	{
-		if (pqr >= pathfinding->pathQArray && pqr < &pathfinding->pathQArray[pfCacheSize])
+		if (pqr >= pathfinding->pathQArray && pqr < &pathfinding->pathQArray[PQR_CACHE_SIZE])
 		{
 			pqr->occupiedFlag = 0;
 		}
@@ -667,11 +736,11 @@ void ActionSequenceSystem::addReadiedInterrupts(ActnSeq* actSeq, CmbtIntrpts* in
 	d20aNew.d20ActType = D20A_READIED_INTERRUPT;
 	d20aNew.data1 = 1;
 	d20aNew.path = nullptr;
-	IntrptSthg * intrptSthg ;
+	ReadiedActionPacket * readied ;
 	for (int i = 0; i < intrptNum; i++)
 	{
-		intrptSthg = intrpts->intrptSthgs[i];
-		d20aNew.d20APerformer = intrptSthg->interrupter;
+		readied = intrpts->readyPackets[i];
+		d20aNew.d20APerformer = readied->interrupter;
 		memcpy(&(actSeq->d20ActArray[actSeq->d20ActArrayNum]), &d20aNew, sizeof(d20aNew));
 		++actSeq->d20ActArrayNum;
 	}
@@ -860,6 +929,30 @@ bool ActionSequenceSystem::GetPathTargetLocFromCurD20Action(LocAndOffsets* loc)
 	
 }
 
+int ActionSequenceSystem::TrimPathToRemainingMoveLength(D20Actn* d20a, float remainingMoveLength, PathQuery* pathQ)
+{ //1008B9A0
+
+	auto pqrTrimmed = pathfindingSys.FetchAvailablePQRCacheSlot();
+	auto pathLengthTrimmed = remainingMoveLength - 0.1;
+	
+	
+	pathfindingSys.GetPartialPath(d20a->path, pqrTrimmed, 0.0, pathLengthTrimmed);
+	
+	
+	if (pathfindingSys.pathQueryResultIsValid(d20a->path))
+	{
+		d20a->path->occupiedFlag = 0;
+	}
+	d20a->path = pqrTrimmed;
+	auto destination = pqrTrimmed->to;
+	if (!pathfindingSys.PathDestIsClear(pathQ, d20a->d20APerformer, destination))
+	{
+		d20a->d20Caf |= D20CAF_ALTERNATE;
+	}
+	d20a->d20Caf |= D20CAF_TRUNCATED;
+	return 0;
+}
+
 uint32_t ActionSequenceSystem::ActionCostNull(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, ActionCostPacket* actionCostPacket)
 {
 	actionCostPacket->hourglassCost = 0;
@@ -868,9 +961,104 @@ uint32_t ActionSequenceSystem::ActionCostNull(D20Actn* d20Actn, TurnBasedStatus*
 	return 0;
 }
 
-void ActionSequenceSystem::sub_1008BB40(ActnSeq* actSeq, D20Actn* d20a)
+void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a)
 {
-	{ __asm push ecx __asm push esi __asm push ebx __asm push edi};;
+	AoOPacket aooPacket;
+
+	float distFeet = 0.0;
+	auto pqr = d20a->path;
+	auto d20ActionTypePostAoO = d20a->d20ActType;
+	bool addingAoOStatus = 1;
+	if (d20ActionTypePostAoO == D20A_5FOOTSTEP)
+	{
+		actSeq->d20ActArray[actSeq->d20ActArrayNum++] = *d20a;
+		return;
+	}
+	if (d20ActionTypePostAoO == D20A_DOUBLE_MOVE)
+	{
+		distFeet = 5.0;
+		d20ActionTypePostAoO = D20A_MOVE;
+	}
+	ProcessPathForAoOs(d20a->d20APerformer, d20a->path, &aooPacket, distFeet);
+	if (aooPacket.numAoOs == 0)
+	{
+		actSeq->d20ActArray[actSeq->d20ActArrayNum++] = *d20a;
+		return;
+	}
+	D20Actn d20aAoOMovement(D20A_AOO_MOVEMENT);
+	LocAndOffsets truncLoc;
+	pathfindingSys.TruncatePathToDistance(pqr, &truncLoc, 0.0);
+	float startDistFeet = 0.0, endDistFeet = pathfindingSys.pathLength(d20a->path), aooDistFeet;
+	PathQueryResult * pqrTrunc;
+	for (int i = 0; i < aooPacket.numAoOs;i++)
+	{
+		if (aooPacket.aooDistFeet[i] != startDistFeet)
+		{
+			d20aAoOMovement = *d20a;
+			pqrTrunc = pathfindingSys.FetchAvailablePQRCacheSlot();
+			aooDistFeet = aooPacket.aooDistFeet[i];
+			d20aAoOMovement.path = pqrTrunc;
+			if (!pathfindingSys.GetPartialPath(pqr, pqrTrunc, startDistFeet, aooDistFeet))
+			{
+				if (pathfindingSys.pathQueryResultIsValid(pqrTrunc))
+					pqrTrunc->occupiedFlag = 0;
+				if (pathfindingSys.pathQueryResultIsValid(pqr))
+					pqr->occupiedFlag = 0;
+				return;
+			}
+			startDistFeet = aooPacket.aooDistFeet[i];
+			d20aAoOMovement.destLoc = aooPacket.aooLocs[i];
+			d20aAoOMovement.distTraversed = pathfindingSys.pathLength(pqrTrunc);
+			actSeq->d20ActArray[actSeq->d20ActArrayNum] = d20aAoOMovement;
+			if (!addingAoOStatus)
+				actSeq->d20ActArray[actSeq->d20ActArrayNum].d20ActType = d20ActionTypePostAoO;
+			addingAoOStatus = 0;
+			actSeq->d20ActArrayNum++;
+			if ( actSeq->d20ActArrayNum >= 32)
+			{
+				if (pathfindingSys.pathQueryResultIsValid(pqr))
+					pqr->occupiedFlag = 0;
+				return;
+			}
+		}
+		d20aAoOMovement.d20APerformer = aooPacket.interrupters[i];
+		d20aAoOMovement.d20ATarget = d20a->d20APerformer;
+		d20aAoOMovement.destLoc = aooPacket.aooLocs[i];
+		d20aAoOMovement.d20Caf = 0;
+		d20aAoOMovement.distTraversed = 0;
+		d20aAoOMovement.path = nullptr;
+		d20aAoOMovement.d20ActType = D20A_AOO_MOVEMENT;
+		d20aAoOMovement.data1 = 1;
+		actSeq->d20ActArray[actSeq->d20ActArrayNum++] = d20aAoOMovement;
+		if (actSeq->d20ActArrayNum >= 32)
+		{
+			if (pathfindingSys.pathQueryResultIsValid(pqr))
+				pqr->occupiedFlag = 0;
+			return;
+		}
+	}
+	d20aAoOMovement = *d20a;
+	auto pqrLastStretch = pathfindingSys.FetchAvailablePQRCacheSlot();
+	d20aAoOMovement.path = pqrLastStretch;
+	if (!pathfindingSys.GetPartialPath(pqr, pqrLastStretch, startDistFeet, endDistFeet))
+	{
+		if (pathfindingSys.pathQueryResultIsValid(pqr))
+			pqr->occupiedFlag = 0;
+		if (pathfindingSys.pathQueryResultIsValid(pqrLastStretch))
+			pqrLastStretch->occupiedFlag = 0;
+		return;
+	}
+	d20aAoOMovement.destLoc = d20a->destLoc;
+	d20aAoOMovement.distTraversed = pathfindingSys.pathLength(pqrLastStretch);
+	d20aAoOMovement.d20ActType = d20ActionTypePostAoO;
+	actSeq->d20ActArray[actSeq->d20ActArrayNum++] = d20aAoOMovement;
+	if (actSeq->d20ActArrayNum != 32)
+	{
+		pqr->occupiedFlag = 0;
+	}
+	return;
+
+	/*{ __asm push ecx __asm push esi __asm push ebx __asm push edi};
 	__asm{
 		mov ecx, this;
 		mov esi, [ecx]._sub_1008BB40;
@@ -880,7 +1068,7 @@ void ActionSequenceSystem::sub_1008BB40(ActnSeq* actSeq, D20Actn* d20a)
 		call esi;
 		add esp, 4;
 	}
-	{ __asm pop edi __asm pop ebx __asm pop esi __asm pop ecx} ;
+	{ __asm pop edi __asm pop ebx __asm pop esi __asm pop ecx}*/
 }
 
 int ActionSequenceSystem::CrossBowSthgReload_1008E8A0(D20Actn* d20a, ActnSeq* actSeq)
@@ -1035,14 +1223,14 @@ int32_t ActionSequenceSystem::AOOSthg2_100981C0(objHndl objHnd)
 	return _AOOSthg2_100981C0(objHnd);
 }
 
-int32_t ActionSequenceSystem::InterruptSthg_10099320(D20Actn* d20a)
+int32_t ActionSequenceSystem::InterruptNonCounterspell(D20Actn* d20a)
 {
 	uint32_t result = 0;
 	__asm{
 		push esi;
 		push ecx;
 		mov ecx, this;
-		mov esi, [ecx]._InterruptSthg_10099320;
+		mov esi, [ecx]._InterruptNonCounterspell;
 		mov eax, d20a;
 		call esi;
 		mov result, eax;
@@ -1052,7 +1240,7 @@ int32_t ActionSequenceSystem::InterruptSthg_10099320(D20Actn* d20a)
 	return result;
 }
 
-int32_t ActionSequenceSystem::InterruptSthg_10099360(D20Actn* d20a)
+int32_t ActionSequenceSystem::InterruptCounterspell(D20Actn* d20a)
 {
 	uint32_t result = 0;
 	__asm{
@@ -1060,7 +1248,7 @@ int32_t ActionSequenceSystem::InterruptSthg_10099360(D20Actn* d20a)
 		push ecx;
 		push ebx;
 		mov ecx, this;
-		mov esi, [ecx]._InterruptSthg_10099360;
+		mov esi, [ecx]._InterruptCounterspell;
 		mov ebx, d20a;
 		call esi;
 		mov result, eax;
@@ -1070,6 +1258,20 @@ int32_t ActionSequenceSystem::InterruptSthg_10099360(D20Actn* d20a)
 	}
 	return result;
 
+}
+
+int ActionSequenceSystem::ReadyVsApproachOrWithdrawalCount()
+{
+	int result = 0;
+	auto readiedCache = addresses.readiedActionCache;
+	for (int i = 0; i < READIED_ACTION_CACHE_SIZE; i++)
+	{
+		if (readiedCache[i].flags == 1
+			&&	(readiedCache[i].readyType == ReadyVsTypeEnum::RV_Approach
+				|| readiedCache[i].readyType == ReadyVsTypeEnum::RV_Withdrawal ))
+			result++;
+	}
+	return result;
 }
 
 uint32_t ActionSequenceSystem::combatTriggerSthg(ActnSeq* actSeq)
@@ -1170,10 +1372,10 @@ void ActionSequenceSystem::actionPerform()
 			{
 				memcpy(&curSeq->tbStatus, &tbStatus, sizeof(tbStatus));
 				*(uint32_t*)(&curSeq->tbStatus.tbsFlags) |= (uint32_t)D20CAF_NEED_ANIM_COMPLETED;
-				InterruptSthg_10099360(d20a);
+				InterruptCounterspell(d20a);
 				logger->info("\nPerforming action for {} ({})", description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
 				d20->d20Defs[d20a->d20ActType].performFunc(d20a);
-				InterruptSthg_10099320(d20a);
+				InterruptNonCounterspell(d20a);
 			}
 			return;
 		}
