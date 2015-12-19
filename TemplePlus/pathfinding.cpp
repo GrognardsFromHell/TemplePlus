@@ -537,7 +537,7 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 	}
 	PathQuery pathQueryLocal;
 	Path pathLocal;
-	memcpy(&pathQueryLocal, pq, sizeof(PathQuery));
+	pathQueryLocal = * pq;
 	pathQueryLocal.to = path->to;
 	pathQueryLocal.from = path->from;
 	pathQueryLocal.flags = (PathQueryFlags)(
@@ -606,7 +606,7 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 		pathNodeSys.GetPathNode(nodeIds[chainLength - 1], &nodeTemp0);
 		if (! (pathQueryLocal.flags & PQF_TARGET_OBJ))
 		{
-			memcpy(&pathQueryLocal, pq, sizeof(PathQuery));
+			pathQueryLocal = * pq;
 			pathQueryLocal.to = path->to;
 			pathQueryLocal.from = nodeTemp1.nodeLoc;
 			pathQueryLocal.flags = (PathQueryFlags)(
@@ -638,40 +638,45 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 	}
 
 	// add paths from node to node
-
+	bool destinationReached = false;
 	for (int i = i0; i < chainLength; i++)
 	{
-		pathNodeSys.GetPathNode(nodeIds[i], &nodeTemp1);
-		memcpy(&pathQueryLocal, pq, sizeof(PathQuery));
-		pathQueryLocal.flags = (PathQueryFlags)(
-			(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
-			//(uint32_t)pathQueryLocal.flags | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
-			);
-		pathQueryLocal.from = from;
-		pathQueryLocal.to = nodeTemp1.nodeLoc;
+		// define the queries, init etc.
 		
-		PathInit(&pathLocal, &pathQueryLocal);
-
-		memcpy(&pathQueryLocal, pq, sizeof(PathQuery));
-		pathQueryLocal.flags = (PathQueryFlags)(
-			(uint32_t)pathQueryLocal.flags & (~ (PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
-			//(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
-			);
-
-		pathLocal.from = pathQueryLocal.from = from;
-		pathLocal.to = pathQueryLocal.to = nodeTemp1.nodeLoc;
-		pathLocal.nodeCount = pathLocal.nodeCount2 = pathLocal.nodeCount3 = 0;
 		
-		if (!GetAlternativeTargetLocation(&pathLocal, &pathQueryLocal)) // verifies that the destination is clear, and if not, tries to get an available tile
 		{
-			logger->warn("Warning: pathnode not clear");
-		}
-		if (pathLocal.to != nodeTemp1.nodeLoc) //  path "To" location has been adjusted
-		{
-			nodeTemp1.nodeLoc = pathLocal.to;
-		}
+			pathNodeSys.GetPathNode(nodeIds[i], &nodeTemp1);
+			pathQueryLocal = *pq;
+			pathQueryLocal.flags = (PathQueryFlags)(
+				(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
+				//(uint32_t)pathQueryLocal.flags | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
+				);
+			pathQueryLocal.from = from;
+			pathQueryLocal.to = nodeTemp1.nodeLoc;
 
+			PathInit(&pathLocal, &pathQueryLocal);
 
+			pathQueryLocal = *pq;
+			pathQueryLocal.flags = (PathQueryFlags)(
+				(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
+				//(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
+				);
+
+			pathLocal.from = pathQueryLocal.from = from;
+			pathLocal.to = pathQueryLocal.to = nodeTemp1.nodeLoc;
+			pathLocal.nodeCount = pathLocal.nodeCount2 = pathLocal.nodeCount3 = 0;
+
+			if (!GetAlternativeTargetLocation(&pathLocal, &pathQueryLocal)) // verifies that the destination is clear, and if not, tries to get an available tile
+			{
+				logger->warn("Warning: pathnode not clear");
+			}
+			if (pathLocal.to != nodeTemp1.nodeLoc) //  path "To" location has been adjusted
+			{
+				nodeTemp1.nodeLoc = pathLocal.to;
+			}
+		}
+		
+		// attempt PF
 		int nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
 		if (!nodeCountAdded)
 		{
@@ -697,16 +702,50 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 		memcpy(&path->nodes[nodeTotal], pathLocal.nodes, sizeof(LocAndOffsets) * nodeCountAdded);
 		nodeTotal += nodeCountAdded;
 		from = nodeTemp1.nodeLoc;
+
+		if (i == chainLength - 2 && (pq->flags & PQF_TARGET_OBJ)) // the before last node - try bypassing and going directly to critter
+		{
+			pathQueryLocal = *pq;
+			pathQueryLocal.from = from;
+			pathQueryLocal.to = path->to;
+
+			PathInit(&pathLocal, &pathQueryLocal);
+
+			pathQueryLocal = *pq;
+			pathLocal.from = pathQueryLocal.from = from;
+			pathLocal.to = pathQueryLocal.to = path->to;
+			
+			nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
+			if (nodeCountAdded )
+			{
+				memcpy(&path->nodes[nodeTotal], pathLocal.nodes, sizeof(LocAndOffsets) * nodeCountAdded);
+				nodeTotal += nodeCountAdded;
+				path->nodeCount = nodeTotal;
+				path->to = pathLocal.to;
+				return nodeTotal;
+			} 
+			if ( pathLocal.to == pathLocal.from)
+			{
+				path->nodes[path->nodeCount++] = pathLocal.to;
+				path->to = pathLocal.to;
+				return nodeTotal;
+			}
+		}
+	}
+
+	if (destinationReached)
+	{
+		return nodeTotal;
 	}
 
 	// now path from the last location (can be an adjusted path node) to the final destination
-	memcpy(&pathQueryLocal, pq, sizeof(PathQuery));
+	pathQueryLocal = *pq;
 	pathQueryLocal.from = from;
 	pathQueryLocal.to = path->to;
 
 	PathInit(&pathLocal, &pathQueryLocal);
 
-	memcpy(&pathQueryLocal, pq, sizeof(PathQuery));
+	pathQueryLocal= * pq;
 	pathLocal.from = pathQueryLocal.from = from;
 	pathLocal.to = pathQueryLocal.to = path->to;
 

@@ -745,14 +745,14 @@ BOOL AiSystem::AiFiveFootStepAttempt(AiTactic* aiTac)
 	LocAndOffsets loc;
 	locSys.getLocAndOff(aiTac->performer, &loc);
 	locSys.GetOverallOffset(loc, &overallOffX, &overallOffY);
-	for (float angleDeg = 0.0; angleDeg += 45.0; angleDeg <= 360.0)
+	for (float angleDeg = 0.0; angleDeg <= 360.0;  angleDeg += 45.0 )
 	{
 
 		float angleRad = angleDeg * 0.017453292; // to radians
 		auto cosTheta = cosf(angleRad);
 		auto sinTheta = sinf(angleRad);
-		auto fiveFootStepX = overallOffX - cosTheta * 60.0; // five feet radius
-		auto fiveFootStepY = overallOffY + sinTheta * 60.0;
+		double fiveFootStepX = overallOffX - cosTheta * 60.0; // five feet radius
+		double fiveFootStepY = overallOffY + sinTheta * 60.0;
 		loc.FromAbsolute(fiveFootStepX, fiveFootStepY);
 		if (!combatSys.GetThreateningCrittersAtLoc(aiTac->performer, &loc, threateners))
 		{
@@ -921,7 +921,7 @@ int AiSystem::Default(AiTactic* aiTac)
 	d20Sys.GlobD20ActnInit();
 	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_ATTACK, 0);
 	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
-	actSeqSys.ActionAddToSeq();
+	auto addToSeqRes = actSeqSys.ActionAddToSeq();
 	int performError = actSeqSys.ActionSequenceChecksWithPerformerLocation();
 	if (!performError)
 		return 1;

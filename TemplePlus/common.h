@@ -183,8 +183,8 @@ struct LocAndOffsets {
 	{
 		location.locx = overallOffX / INCH_PER_TILE;
 		location.locy = overallOffY / INCH_PER_TILE;
-		off_x = (location.locx - (static_cast<long double>(location.locx) - 0.5) * INCH_PER_TILE);
-		off_y = (location.locy - (static_cast<long double>(location.locy) - 0.5) * INCH_PER_TILE);
+		off_x = overallOffX - (static_cast<long double>(location.locx) + 0.5) * INCH_PER_TILE;
+		off_y = overallOffY - (static_cast<long double>(location.locy) + 0.5) * INCH_PER_TILE;
 	};
 };
 
