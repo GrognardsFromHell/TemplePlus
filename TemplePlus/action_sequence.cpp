@@ -1050,7 +1050,8 @@ void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a
 	}
 	d20aAoOMovement.destLoc = d20a->destLoc;
 	d20aAoOMovement.distTraversed = pathfindingSys.pathLength(pqrLastStretch);
-	d20aAoOMovement.d20ActType = d20ActionTypePostAoO;
+	if (!addingAoOStatus)
+		d20aAoOMovement.d20ActType = d20ActionTypePostAoO;
 	actSeq->d20ActArray[actSeq->d20ActArrayNum++] = d20aAoOMovement;
 	if (actSeq->d20ActArrayNum != 32)
 	{

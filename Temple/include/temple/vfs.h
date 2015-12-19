@@ -15,7 +15,7 @@ namespace temple {
 		
 		// Adds a data item to the vfs (i.e. .dat file, folder)
 		void AddPath(const std::string &path);
-		void Pack(const std::vector<std::string> &args);
+		// void Pack(const std::vector<std::string> &args);
 		
 	protected:
 		FileHandle Open(const char* name, const char* mode) override;
