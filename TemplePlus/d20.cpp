@@ -85,7 +85,7 @@ public:
 
 static struct D20SystemAddresses : temple::AddressTable {
 
-	void(__cdecl*  GlobD20ActnSetTarget)(objHndl objHnd, LocAndOffsets * loc);
+	int (__cdecl*  GlobD20ActnSetTarget)(objHndl objHnd, LocAndOffsets * loc);
 	uint32_t(__cdecl* LocationCheckStdAttack)(D20Actn*, TurnBasedStatus*, LocAndOffsets*);
 	uint32_t (__cdecl*ActionCostStandardAttack)(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp);
 	uint32_t(__cdecl*sub_1008EDF0)(D20Actn * d20a, int flags);
@@ -352,9 +352,9 @@ void D20System::globD20ActnSetPerformer(objHndl objHnd)
 	(*globD20Action).d20APerformer = objHnd;
 }
 
-void D20System::GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc)
+int D20System::GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc)
 {
-	addresses.GlobD20ActnSetTarget(objHnd, loc);
+	return addresses.GlobD20ActnSetTarget(objHnd, loc);
 }
 
 void D20System::GlobD20ActnInit()

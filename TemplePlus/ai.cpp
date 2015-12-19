@@ -122,13 +122,21 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 		}
 	}
 
+	// if no tactics defined (e.g. frogs), do target closest first to avoid all kinds of sillyness
+	if (aiStrat->numTactics == 0)
+	{
+		TargetClosest(&aiTac);
+	}
+
 	// if none of those work, use default
 	aiTac.aiTac = &aiTacticDefs[0];
 	aiTac.field4 = 0;
 	aiTac.tacIdx = -1;
-	logger->info("{} attempting {}...", description._getDisplayName(objHnd, objHnd), aiTac.aiTac->name);
+	logger->info("{} attempting default...", description._getDisplayName(objHnd, objHnd));
+	if (aiTac.target)
+		logger->info("Target: {}", description.getDisplayName(aiTac.target));
 	assert(aiTac.aiTac != nullptr);
-	if (aiTac.aiTac->aiFunc(&aiTac))
+	if (Default(&aiTac))
 	{
 		actSeq->sequencePerform();
 		return 1;

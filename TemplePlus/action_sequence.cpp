@@ -358,19 +358,12 @@ uint32_t ActionSequenceSystem::addD20AToSeq(D20Actn* d20a, ActnSeq* actSeq)
 	*actnProcState =  d20->d20Defs[d20aType].addToSeqFunc(d20a, actSeq, &actSeq->tbStatus);
 
 	ActnSeq * curSeq = *actSeqCur;
-	int32_t d20aIdx = curSeq->d20aCurIdx + 1;
-	if (d20aIdx < curSeq->d20ActArrayNum)
+	for (int d20aIdx = curSeq->d20aCurIdx + 1; d20aIdx < curSeq->d20ActArrayNum; d20aIdx++)
 	{
-		do
+		if (actSeq->tbStatus.tbsFlags & 0x40)
 		{
-			uint32_t caflags = curSeq->d20ActArray[d20aIdx].d20Caf;
-			if (caflags & D20CAF_ATTACK_OF_OPPORTUNITY)
-			{
-				caflags |= (uint32_t)D20CAF_FULL_ATTACK;
-				curSeq->d20ActArray[d20aIdx].d20Caf = (D20CAF)caflags;
-			}
-			++d20aIdx;
-		} while (d20aIdx < curSeq->d20ActArrayNum);
+			curSeq->d20ActArray[d20aIdx].d20Caf |= D20CAF_FULL_ATTACK;
+		}
 	}
 	return *actnProcState;
 }
@@ -531,7 +524,6 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	D20Actn d20aCopy;
 	TurnBasedStatus tbStatCopy;
 	PathQuery pathQ;
-	PathQueryResult * pqResult = nullptr;
 	LocAndOffsets locAndOffCopy = d20aIn->destLoc;
 	LocAndOffsets * actSeqPerfLoc;
 	ActionCostPacket actCost;
@@ -563,7 +555,6 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		const float twelve = 12.0;
 		const float fourPointSevenPlusEight = 4.714045f + 8.0f;
 		pathQ.targetObj = d20a->d20ATarget;
-		pathQ.flags = (PathQueryFlags)0x23803; 
 		pathQ.flags = static_cast<PathQueryFlags>(PathQueryFlags::PQF_TO_EXACT | PathQueryFlags::PQF_HAS_CRITTER | PathQueryFlags::PQF_800
 			| PathQueryFlags::PQF_TARGET_OBJ | PathQueryFlags::PQF_ADJUST_RADIUS | PathQueryFlags::PQF_ADJ_RADIUS_REQUIRE_LOS);
 		
@@ -575,7 +566,6 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	} else
 	{
 		pathQ.to = d20aIn->destLoc;
-		pathQ.flags = static_cast<PathQueryFlags>(0x40803);
 		pathQ.flags = static_cast<PathQueryFlags>(PathQueryFlags::PQF_TO_EXACT | PathQueryFlags::PQF_HAS_CRITTER | PathQueryFlags::PQF_800 
 			 | PathQueryFlags::PQF_ALLOW_ALTERNATIVE_TARGET_TILE);
 	}
@@ -589,17 +579,9 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	if (d20aCopy.path && d20aCopy.path >= pathfindingSys.pathQArray && d20aCopy.path < &pathfindingSys.pathQArray[PQR_CACHE_SIZE]) 
 		d20aCopy.path->occupiedFlag = 0; // frees the last path used in the d20a
 
-	for (int i = 0; i < PQR_CACHE_SIZE; i++)
-	{
-		if (pathfindingSys.pathQArray[i].occupiedFlag == 0)
-		{
-			pathfindingSys.pathQArray[i].occupiedFlag = 1;
-			pqResult = &pathfindingSys.pathQArray[i];
-			break;
-		}
-	}
+	auto pqResult = pathfindingSys.FetchAvailablePQRCacheSlot();
 	d20aCopy.path = pqResult;
-	if (!pqResult) return 0x9;
+	if (!pqResult) return ActionErrorCode::AEC_TARGET_INVALID;
 
 
 	*pathfindingSys.pathSthgFlag_10B3D5C8 = 0;

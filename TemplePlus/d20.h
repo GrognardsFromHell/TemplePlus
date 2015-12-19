@@ -61,7 +61,7 @@ struct D20System : temple::AddressTable
 	void D20ActnInit(objHndl objHnd, D20Actn * d20a);
 	void GlobD20ActnSetTypeAndData1(D20ActionType d20type, uint32_t data1);
 	void globD20ActnSetPerformer(objHndl objHnd);
-	void GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc);
+	int GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc);
 	void GlobD20ActnInit();
 	void d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx);//1008AE90    ActnSeq * @<eax>
 	int D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tbStat);// 1008A9C0
