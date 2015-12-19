@@ -480,6 +480,7 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 	{
 		while (truncateLengthFeet < 2.0 + pathLength)
 		{
+			aooDistFeet = truncateLengthFeet;
 			// loop over enemies to catch interceptions
 			for (int i = 0; i < enemyCount; i++)
 			{
@@ -505,10 +506,13 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 					}
 				}
 			}
- 			truncateLengthFeet = truncateLengthFeet + 4.0; // fishy!!!
-			aooDistFeet = truncateLengthFeet;
+
+			
+
 			if (truncateLengthFeet < pathLength)
 				pathfindingSys.TruncatePathToDistance(aooPacket->path, &truncatedLoc, truncateLengthFeet);
+			truncateLengthFeet = truncateLengthFeet + 4.0; // fishy!!!
+			
 		}
 		delete enemies;
 	}
