@@ -480,8 +480,10 @@ BOOL ActionSequenceSystem::HasReadiedAction(objHndl obj)
 	auto readiedActionCache = addresses.readiedActionCache;
 	for (int i = 0; i < READIED_ACTION_CACHE_SIZE ; i++)
 	{
-		if (readiedActionCache[i].interrupter == obj || readiedActionCache[i].flags == 1) // TODO: bug?
+		if (readiedActionCache[i].interrupter == obj && readiedActionCache[i].flags == 1) {
+			// TODO: bug?
 			return 1;
+		}
 	}
 	return 0;
 }
