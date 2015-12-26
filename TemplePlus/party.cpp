@@ -106,6 +106,23 @@ uint32_t PartySystem::AddToNpcGroup(objHndl objHnd)
 	return 0;
 }
 
+void PartySystem::AddToCurrentlySelected(objHndl obj)
+{
+	if (ObjIsInGroupArray(addresses.groupList, obj))
+		ObjAddToGroupArray(addresses.groupCurrentlySelected, obj);
+}
+
+void PartySystem::GroupArrayClearMembers(GroupArray* groupArray)
+{
+	groupArray->GroupSize = 0;
+	memset(groupArray->GroupMembers, 0, sizeof(groupArray->GroupMembers));
+}
+
+void PartySystem::CurrentlySelectedClear()
+{
+	GroupArrayClearMembers(addresses.groupCurrentlySelected);
+}
+
 uint32_t AddToPcGroup(objHndl objHnd)
 {
 	return party.AddToPCGroup(objHnd);

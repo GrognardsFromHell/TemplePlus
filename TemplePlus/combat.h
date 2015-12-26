@@ -22,6 +22,7 @@ struct CombatSystem : temple::AddressTable {
 	GroupArray * groupInitiativeList;
 
 	char * GetCombatMesLine(int line);
+	void FloatCombatLine(objHndl obj, int line);
 	int IsWithinReach(objHndl attacker, objHndl target);
 	BOOL CanMeleeTargetAtLocRegardItem(objHndl obj, objHndl weapon, objHndl target, LocAndOffsets* loc);
 	BOOL CanMeleeTargetAtLoc(objHndl obj, objHndl target, LocAndOffsets* loc);
@@ -31,6 +32,9 @@ struct CombatSystem : temple::AddressTable {
 	objHndl CheckRangedWeaponAmmo(objHndl obj); // checks if the ammo slot item matches a wielded weapon (primary or secondary), and if so, returns it
 	bool AmmoMatchesItemAtSlot(objHndl obj, EquipSlot equipSlot);
 	objHndl * GetHostileCombatantList(objHndl obj, int* count);
+
+	void TurnProcessing_100635E0(objHndl obj);
+	void TurnProcessing(objHndl obj);
 	uint32_t* combatModeActive;
 	bool isCombatActive();
 	uint32_t IsCloseToParty(objHndl objHnd);

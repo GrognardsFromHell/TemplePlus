@@ -18,6 +18,10 @@
 #include "ui/ui_picker.h"
 #include "ui/ui_turn_based.h"
 #include "party.h"
+#include "history.h"
+#include "ui/ui.h"
+#include "ai.h"
+#include "game_config.h"
 
 
 class ActnSeqReplacements : public TempleFix
@@ -56,12 +60,17 @@ static struct ActnSeqAddresses : temple::AddressTable{
 	int(__cdecl *ActionAddToSeq)();
 	int(__cdecl*ActionSequenceChecksWithPerformerLocation)();
 	void(__cdecl* ActionSequenceRevertPath)(int d20ActnNum);
+	void(__cdecl*Counterspell_sthg)(ReadiedActionPacket* readiedAction);
 	PickerArgs * actSeqPicker;
 	D20Actn * actSeqPickerAction;
 	ReadiedActionPacket * readiedActionCache;
-	
+	ActnSeq** actSeqInterrupt;
+	int* seqSthg_10B3D59C;
+	int* seqSthg_10B3D5C4;
+
 	ActnSeqAddresses()
 	{
+		rebase(Counterspell_sthg, 0x10091710);
 		rebase(ActionSequenceRevertPath, 0x10093180);
 		rebase(TouchAttackAddToSeq, 0x10096760);
 		rebase(ActionSequenceChecksWithPerformerLocation, 0x10097000);
@@ -69,6 +78,10 @@ static struct ActnSeqAddresses : temple::AddressTable{
 		rebase(readiedActionCache, 0x1186A900);
 		rebase(actSeqPickerAction, 0x118CD400);
 		rebase(actSeqPicker,       0x118CD460);
+		rebase(actSeqInterrupt,	   0x118CD574);
+
+		rebase(seqSthg_10B3D59C, 0x10B3D59C);
+		rebase(seqSthg_10B3D5C4, 0x10B3D5C4);
 	}
 
 	
@@ -136,9 +149,9 @@ ActionSequenceSystem::ActionSequenceSystem()
 	rebase(_InterruptNonCounterspell, 0x10099320);
 	rebase(_InterruptCounterspell, 0x10099360);
 	
-	rebase(seqSthg_118CD3B8,0x118CD3B8); 
-	rebase(seqSthg_118A0980,0x118A0980); 
-	rebase(seqSthg_118CD570,0x118CD570); 
+	rebase(seqSthg_118CD3B8_targetingType,0x118CD3B8); 
+	rebase(seqSthg_118A0980_D20ActnType,0x118A0980); 
+	rebase(seqSthg_118CD570_D20ActnData1,0x118CD570); 
 
 	int _transMatrix[7*5] = { 0, - 1, -1, -1, -1,
 		1, 0, -1, -1, -1,
@@ -167,13 +180,13 @@ void ActionSequenceSystem::curSeqReset(objHndl objHnd)
 	curSeq->d20ActArrayNum = 0;
 	curSeq->d20aCurIdx = -1;
 	curSeq->prevSeq = nullptr;
-	curSeq->field_B0C = 0;
+	curSeq->interruptSeq = nullptr;
 	curSeq->seqOccupied = 0;
 	if (objHnd != d20->globD20Action->d20APerformer)
 	{
-		*seqSthg_118CD3B8 = -1;
-		*seqSthg_118A0980 = 1;
-		*seqSthg_118CD570 = 0;
+		*seqSthg_118CD3B8_targetingType = -1;
+		*seqSthg_118A0980_D20ActnType = 1;
+		*seqSthg_118CD570_D20ActnData1 = 0;
 	}
 
 	d20->globD20Action->d20APerformer = objHnd;
@@ -460,6 +473,17 @@ void ActionSequenceSystem::ProcessPathForReadiedActions(D20Actn* d20a, CmbtIntrp
 		add esp, 4;
 	}
 	{ __asm pop edi __asm pop ebx __asm pop esi __asm pop ecx} 
+}
+
+BOOL ActionSequenceSystem::HasReadiedAction(objHndl obj)
+{
+	auto readiedActionCache = addresses.readiedActionCache;
+	for (int i = 0; i < READIED_ACTION_CACHE_SIZE ; i++)
+	{
+		if (readiedActionCache[i].interrupter == obj || readiedActionCache[i].flags == 1) // TODO: bug?
+			return 1;
+	}
+	return 0;
 }
 
 void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr, AoOPacket* aooPacket, float aooFreeDistFeet)
@@ -787,12 +811,12 @@ uint32_t ActionSequenceSystem::AllocSeq(objHndl objHnd)
 		{
 			*actSeqCur = &actSeqArray[i];
 			if (combat->isCombatActive())
-				logger->info("\nSequence Allocate[{}]({})({:x}): Resetting Sequence. \n", i, (void*)*actSeqCur, objHnd);
+				logger->info("Sequence Allocate[{}]({})({:x}): Resetting Sequence. ", i, (void*)*actSeqCur, objHnd);
 			curSeqReset(objHnd);
 			return 1;
 		} 
 	}
-	logger->info("\nSequence Allocation for {} failed!  \nBad things imminent. All sequences were taken!\n", 
+	logger->info("Sequence Allocation for {} failed!  Bad things imminent. All sequences were taken!\n", 
 		(void*)*actSeqCur, objHnd);
 	return 0;
 }
@@ -806,10 +830,10 @@ uint32_t ActionSequenceSystem::AssignSeq(objHndl objHnd)
 		{
 			if (prevSeq != nullptr)
 			{
-				logger->info("\nPushing sequence from for {} ({:x}) to {} ({:x})", object->description._getDisplayName(prevSeq->performer, prevSeq->performer), prevSeq->performer, object->description._getDisplayName(objHnd, objHnd), objHnd);
+				logger->info("Pushing sequence from for {} ({:x}) to {} ({:x})", object->description._getDisplayName(prevSeq->performer, prevSeq->performer), prevSeq->performer, object->description._getDisplayName(objHnd, objHnd), objHnd);
 			} else
 			{
-				logger->info("\nAllocating sequence for {} ({:x}) ", object->description._getDisplayName(objHnd, objHnd), objHnd);
+				logger->info("Allocating sequence for {} ({:x}) ", object->description._getDisplayName(objHnd, objHnd), objHnd);
 			}
 		}
 		(*actSeqCur)->prevSeq = prevSeq;
@@ -1212,7 +1236,20 @@ int32_t ActionSequenceSystem::AOOSthg2_100981C0(objHndl objHnd)
 
 int32_t ActionSequenceSystem::InterruptNonCounterspell(D20Actn* d20a)
 {
-	uint32_t result = 0;
+	auto readiedAction = ReadiedActionGetNext(nullptr, d20a);
+	if (!readiedAction)
+		return 0;
+
+	while (readiedAction->readyType == RV_Counterspell)
+	{
+		readiedAction = ReadiedActionGetNext(readiedAction, d20a);
+		if (!readiedAction)
+			return 0;
+	}
+	InterruptSwitchActionSequence(readiedAction);
+	return 1;
+
+	/*uint32_t result = 0;
 	__asm{
 		push esi;
 		push ecx;
@@ -1224,7 +1261,7 @@ int32_t ActionSequenceSystem::InterruptNonCounterspell(D20Actn* d20a)
 		pop ecx;
 		pop esi;
 	}
-	return result;
+	return result;*/
 }
 
 int32_t ActionSequenceSystem::InterruptCounterspell(D20Actn* d20a)
@@ -1259,6 +1296,107 @@ int ActionSequenceSystem::ReadyVsApproachOrWithdrawalCount()
 			result++;
 	}
 	return result;
+}
+
+ReadiedActionPacket* ActionSequenceSystem::ReadiedActionGetNext(ReadiedActionPacket* prevReadiedAction, D20Actn* d20a)
+{
+	auto readiedActionCache = addresses.readiedActionCache;
+	int i0=0;
+
+	// find the prevReadiedAction in the array (kinda retarded since it's a pointer???)
+	if (prevReadiedAction)
+	{
+		for (i0 = 0; i0 < READIED_ACTION_CACHE_SIZE; i0++)
+		{
+			if (&readiedActionCache[i0] == prevReadiedAction)
+			{
+				i0++;
+				break;
+			}
+		}
+		if (i0 >= READIED_ACTION_CACHE_SIZE) return nullptr;
+	}
+
+
+	for (int i = i0; i < READIED_ACTION_CACHE_SIZE; i++)
+	{
+		if (!(readiedActionCache[i].flags & 1))
+			continue;
+		switch (readiedActionCache[i].readyType)
+		{
+			case RV_Spell:
+			case RV_Counterspell:
+				if (!critterSys.IsFriendly(d20a->d20APerformer, readiedActionCache[i].interrupter))
+					continue;
+				if (d20a->d20ActType == D20A_CAST_SPELL)
+					return &readiedActionCache[i];
+				break;
+			case RV_Approach:
+			case RV_Withdrawal:
+			default:
+				if (d20a->d20ActType != D20A_READIED_INTERRUPT)
+					continue;
+				if (d20a->d20APerformer != readiedActionCache[i].interrupter)
+					continue;
+				return &readiedActionCache[i];
+		}
+	}
+
+	return nullptr;
+	
+}
+
+void ActionSequenceSystem::InterruptSwitchActionSequence(ReadiedActionPacket* readiedAction)
+{
+	if (readiedAction->readyType == RV_Counterspell)
+		return addresses.Counterspell_sthg(readiedAction);
+	
+	(*actSeqCur)->interruptSeq = *addresses.actSeqInterrupt;
+	*addresses.actSeqInterrupt = *actSeqCur;
+	combatSys.FloatCombatLine((*actSeqCur)->performer, 158); // Action Interrupted
+	logger->info("{} interrupted by {}!", description.getDisplayName((*actSeqCur)->performer), description.getDisplayName( readiedAction->interrupter));
+	histSys.CreateRollHistoryLineFromMesfile(7, readiedAction->interrupter, (*addresses.actSeqInterrupt)->performer);
+	AssignSeq(readiedAction->interrupter);
+	(*actSeqCur)->prevSeq = nullptr;
+	auto curActor = tbSys.turnBasedGetCurrentActor();
+	tbSys.CloneInitiativeFromObj(readiedAction->interrupter, curActor);
+	tbSys.turnBasedSetCurrentActor(readiedAction->interrupter);
+	(*actSeqCur)->performer = readiedAction->interrupter;
+	d20Sys.globD20ActnSetPerformer(readiedAction->interrupter);
+	(*actSeqCur)->tbStatus.hourglassState = 3;
+	(*actSeqCur)->tbStatus.tbsFlags = 0;
+	(*actSeqCur)->tbStatus.idxSthg = -1;
+	(*actSeqCur)->tbStatus.surplusMoveDistance = 0;
+	(*actSeqCur)->tbStatus.attackModeCode = 0;
+	(*actSeqCur)->tbStatus.baseAttackNumCode = 0;
+	(*actSeqCur)->tbStatus.numBonusAttacks = 0;
+	(*actSeqCur)->tbStatus.numAttacks = 0;
+	(*actSeqCur)->tbStatus.errCode = 0;
+	(*actSeqCur)->seqOccupied &= 0xFFFFfffe;
+	d20Sys.D20ActnInit(d20Sys.globD20Action->d20APerformer, d20Sys.globD20Action);
+	readiedAction->flags = 0;
+	party.CurrentlySelectedClear();
+	if (objects.IsPlayerControlled(readiedAction->interrupter))
+	{
+		party.AddToCurrentlySelected(readiedAction->interrupter);
+	} else
+	{
+		combatSys.TurnProcessing_100635E0(readiedAction->interrupter);
+	}
+
+	if (d20Sys.d20Query(readiedAction->interrupter, DK_QUE_Prone))
+	{
+		if ((*actSeqCur)->tbStatus.hourglassState >= 1 )
+		{
+			d20Sys.D20ActnInit(d20Sys.globD20Action->d20APerformer, d20Sys.globD20Action);
+			d20Sys.globD20Action->d20ActType = D20A_STAND_UP;
+			d20Sys.globD20Action->data1 = 0;
+			ActionAddToSeq();
+			sequencePerform();
+		}
+	}
+	ui.UpdateCombatUi();
+
 }
 
 uint32_t ActionSequenceSystem::combatTriggerSthg(ActnSeq* actSeq)
@@ -1298,11 +1436,227 @@ uint32_t ActionSequenceSystem::seqCheckAction(D20Actn* d20a, TurnBasedStatus* iO
 uint32_t ActionSequenceSystem::curSeqNext()
 {
 	ActnSeq* curSeq = *actSeqCur;
+	objHndl performer = curSeq->performer;
+	SpellPacketBody spellPktBody;
 	curSeq->seqOccupied &= 0xffffFFFE; //unset "occupied" flag
-	logger->info("\nSequence Completed for {} ({}) (sequence {})",
-		description._getDisplayName(curSeq->performer, curSeq->performer), curSeq->performer, (void*)curSeq);
+	logger->info("Sequence Completed for {} ({}) (sequence {})",
+		description._getDisplayName(curSeq->performer, curSeq->performer),
+		curSeq->performer, (void*)curSeq);
 
-	return _curSeqNext();
+	int d20ActArrayNum = curSeq->d20ActArrayNum;
+	if (d20ActArrayNum > 0)
+	{
+		d20Sys.d20SendSignal(
+			(*actSeqCur)->d20ActArray[d20ActArrayNum - 1].d20APerformer,
+			DK_SIG_Sequence,
+			(int)*actSeqCur, 0);
+	}
+		
+
+	// do d20SendSignal for DK_SIG_Action_Recipient
+	for (int d20aIdx = 0; d20aIdx < (*actSeqCur)->d20ActArrayNum; d20aIdx++)
+	{
+		D20Actn* d20a = &(*actSeqCur)->d20ActArray[d20aIdx];
+		auto d20aType = d20a->d20ActType;
+		if (d20aType == D20A_CAST_SPELL)
+		{
+			auto spellId = d20a->spellId;
+			if (spellId)
+			{
+				if (spellSys.GetSpellPacketBody(spellId, &spellPktBody ))
+				{
+					for (int i = 0; i < spellPktBody.targetListNumItemsCopy; i++)
+					{
+						if (spellPktBody.targetListHandles[i])
+						{
+							d20Sys.d20SendSignal(spellPktBody.targetListHandles[i],
+								DK_SIG_Action_Recipient,
+								(int)d20a,0);
+						}
+					}
+				} else
+				{
+					logger->warn("CurSeqNext(): unable to retrieve spell packet!");
+				}
+			}
+		}
+		else
+		{
+			auto d20aTarget = d20a->d20ATarget;
+			bool triggersCombat = (d20Sys.d20Defs[d20aType].flags & D20ADF_TriggersCombat) != 0;
+			if (triggersCombat || (d20aType == D20A_LAY_ON_HANDS_USE && critterSys.IsUndead(d20aTarget)) )
+			{
+				if (d20aTarget)
+				{
+					d20Sys.d20SendSignal(d20aTarget,
+						DK_SIG_Action_Recipient,
+						(int)d20a, 0);
+				}
+			} else
+			{
+				d20Sys.d20SendSignal((*actSeqCur)->performer, DK_SIG_Action_Recipient,
+					(int)d20a, 0);
+			}
+		}
+	}
+
+	if (SequencePop())
+	{
+		if ((*actSeqCur)->d20aCurIdx + 1 < (*actSeqCur)->d20ActArrayNum)
+			actionPerform();
+		return 0;
+	}
+
+	AssignSeq(performer);
+	logger->info("CurSeqNext: Resetting Sequence");
+	curSeqReset(d20Sys.globD20Action->d20APerformer);
+	if (combatSys.isCombatActive())
+	{
+		// look for stuff that terminates / interrupts the turn
+		if (HasReadiedAction(d20Sys.globD20Action->d20APerformer))
+		{
+			logger->info("Action for {} ({}) ending turn (readied action)...",
+				description.getDisplayName(d20Sys.globD20Action->d20APerformer),
+				d20Sys.globD20Action->d20APerformer);
+			combatSys.TurnProcessing(tbSys.turnBasedGetCurrentActor());
+			return 1;
+		}
+		if (ShouldAutoendTurn(&(*actSeqCur)->tbStatus))
+		{
+			logger->info("Action for {} ({}) ending turn (autoend)...",
+				description.getDisplayName(d20Sys.globD20Action->d20APerformer),
+				d20Sys.globD20Action->d20APerformer);
+			combatSys.TurnProcessing(tbSys.turnBasedGetCurrentActor());
+			return 1;
+		}
+		if (!objects.IsPlayerControlled((*actSeqCur)->performer))
+		{
+			if (isSimultPerformer((*actSeqCur)->performer)
+				|| *actnProcState || *addresses.seqSthg_10B3D59C > 5)
+			{
+				combatSys.TurnProcessing(tbSys.turnBasedGetCurrentActor());
+			}
+			else
+			{
+				(*actSeqCur)->seqOccupied &= 0xFFFFfffe;
+				(*addresses.seqSthg_10B3D59C )++;
+				aiSys.AiTurnSthg_1005EEC0((*actSeqCur)->performer);
+			}
+		}
+		if (combatSys.isCombatActive()
+			&& !(*actSeqPickerActive)
+			&& (*actSeqCur)
+			&& objects.IsPlayerControlled((*actSeqCur)->performer)
+			&& (*actSeqCur)->tbStatus.baseAttackNumCode
+			+ (*actSeqCur)->tbStatus.numBonusAttacks
+					> (*actSeqCur)->tbStatus.attackModeCode
+			)
+		{
+			*seqSthg_118A0980_D20ActnType = D20A_STANDARD_ATTACK;
+			*seqSthg_118CD570_D20ActnData1 = 0;
+			*seqSthg_118CD3B8_targetingType = 2;
+		}
+	}
+	return 1;
+	//return _curSeqNext();
+}
+
+int ActionSequenceSystem::SequencePop()
+{
+	ActnSeq*  curSeq = *actSeqCur;
+	ActnSeq*  prevSeq = (*actSeqCur)->prevSeq;
+	curSeq->seqOccupied &= 0xFFFFfffe;
+	logger->info("Popping sequence ({})", (int)curSeq);
+	*actSeqCur = prevSeq;
+	curSeq->prevSeq = nullptr;
+	if (!prevSeq)
+		return 0;
+	auto curSeqPerformer = curSeq->performer;
+	auto prevSeqPerformer = prevSeq->performer;
+	logger->info("Popping sequence from {} ({}) to {} ({})", 
+		description.getDisplayName(curSeqPerformer),
+		curSeqPerformer,
+		description.getDisplayName(prevSeqPerformer),
+		prevSeqPerformer);
+	TurnBasedStatus tbStatNew;
+	tbStatNew.hourglassState = 4;
+	tbStatNew.tbsFlags = 0;
+	tbStatNew.idxSthg = -1;
+	tbStatNew.surplusMoveDistance = 0.0;
+	tbStatNew.attackModeCode = 0;
+	tbStatNew.baseAttackNumCode = 0;
+	tbStatNew.numBonusAttacks = 0;
+	tbStatNew.errCode = 0;
+	DispIOTurnBasedStatus dispIo;
+	dispatch.dispIOTurnBasedStatusInit(&dispIo);
+	dispIo.tbStatus = &tbStatNew;
+	d20Sys.globD20ActnSetPerformer(prevSeqPerformer);
+	auto dispatcher = objects.GetDispatcher(prevSeqPerformer);
+	if (dispatch.dispatcherValid(dispatcher))
+	{
+		dispatch.DispatcherProcessor(dispatcher, dispTypeTurnBasedStatusInit, 0, &dispIo);
+	}
+	if (objects.IsUnconscious(prevSeqPerformer) && prevSeq->spellPktBody.spellEnum)
+		spellSys.spellPacketBodyReset(&prevSeq->spellPktBody);
+	if ( d20Sys.d20Query(prevSeqPerformer, DK_QUE_Prone) && prevSeq->tbStatus.hourglassState >= 1)
+	{
+		prevSeq->d20ActArrayNum = 0;
+		d20Sys.D20ActnInit(d20Sys.globD20Action->d20APerformer, d20Sys.globD20Action);
+		d20Sys.globD20Action->d20ActType = D20A_STAND_UP;
+		d20Sys.globD20Action->data1 = 0;
+		ActionAddToSeq();
+	}
+	*addresses.actSeqInterrupt = prevSeq->interruptSeq;
+	prevSeq->interruptSeq = nullptr;
+	return 1;
+}
+
+bool ActionSequenceSystem::ShouldAutoendTurn(TurnBasedStatus* tbStat)
+{
+	auto curActor = tbSys.turnBasedGetCurrentActor();
+	if (gameConfigFuncs.GetInt("end_turn_default") && (*addresses.seqSthg_10B3D5C4 ) || objects.IsUnconscious(curActor))
+	{
+		return 1;
+	}
+
+	int endTurnTimeValue = gameConfigFuncs.GetInt("end_turn_time");
+	
+	if (endTurnTimeValue)
+	{
+		if (endTurnTimeValue == 1)
+		{
+			if (tbStat->hourglassState > 0)
+				return 0;
+		}
+		if (endTurnTimeValue == 2)
+		{
+			if (tbStat->hourglassState > 1)
+				return 0;
+		}
+		
+	} 
+	else if ( tbStat->hourglassState > 0)
+	{
+		return 0;
+	}
+
+	if (tbStat->surplusMoveDistance > 4.0)
+	{
+		if (endTurnTimeValue != 2
+			|| tbStat->hourglassState > 0
+			|| dispatch.Dispatch29hGetMoveSpeed(curActor,nullptr) < tbStat->surplusMoveDistance)
+		{
+			return 0;
+		}
+	}
+
+	if (tbStat->attackModeCode < tbStat->baseAttackNumCode
+		|| tbStat->numBonusAttacks
+		|| !(tbStat->tbsFlags & 3) && !endTurnTimeValue)
+	{
+		return 0;
+	}
+	return 1;
 }
 
 void ActionSequenceSystem::actionPerform()
@@ -1322,7 +1676,7 @@ void ActionSequenceSystem::actionPerform()
 		if (objects.IsUnconscious(performer))
 		{
 			curSeq->d20ActArrayNum = curSeq->d20aCurIdx;
-			logger->info("\nUnconscious actor {} - cutting sequence", objects.description._getDisplayName(performer, performer));
+			logger->info("Unconscious actor {} - cutting sequence", objects.description._getDisplayName(performer, performer));
 		}
 		if (curSeq->d20aCurIdx >= (int32_t)curSeq->d20ActArrayNum) break;	
 		
@@ -1335,7 +1689,7 @@ void ActionSequenceSystem::actionPerform()
 			
 			mesLine.key = errCode + 1000;
 			mesFuncs.GetLine_Safe(*actionMesHandle, &mesLine);
-			logger->info("Action unavailable for {} ({}): {}\n", 
+			logger->info("Action unavailable for {} ({}): {}", 
 				objects.description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer, mesLine.value );
 			*actnProcState = errCode;
 			curSeq->tbStatus.errCode = errCode;
@@ -1352,7 +1706,7 @@ void ActionSequenceSystem::actionPerform()
 		{
 			if ( d20->D20ActionTriggersAoO(d20a, &tbStatus) && AOOSthg2_100981C0(d20a->d20APerformer))
 			{
-				logger->info("\nSequence Preempted {} ({})", description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
+				logger->info("Sequence Preempted {} ({})", description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
 				--*(curIdx);
 				sequencePerform();
 			} else
@@ -1360,7 +1714,10 @@ void ActionSequenceSystem::actionPerform()
 				memcpy(&curSeq->tbStatus, &tbStatus, sizeof(tbStatus));
 				*(uint32_t*)(&curSeq->tbStatus.tbsFlags) |= (uint32_t)D20CAF_NEED_ANIM_COMPLETED;
 				InterruptCounterspell(d20a);
-				logger->info("\nPerforming action for {} ({})", description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
+				logger->info("Performing action for {} ({}): {}",
+					description.getDisplayName(d20a->d20APerformer), 
+					d20a->d20APerformer,
+					(int)d20a->d20ActType);
 				d20->d20Defs[d20a->d20ActType].performFunc(d20a);
 				InterruptNonCounterspell(d20a);
 			}
@@ -1388,28 +1745,28 @@ void ActionSequenceSystem::sequencePerform()
 	if (*actSeqPickerActive){ return; }
 	if (!actSeqOkToPerform())
 	{
-		logger->info("Sequence given while performing previous action - aborted. \n");
+		logger->info("Sequence given while performing previous action - aborted.");
 		d20->D20ActnInit(d20->globD20Action->d20APerformer, d20->globD20Action);
 		return;
 	}
 	ActnSeq * curSeq = *actSeqCur;
 	if (combat->isCombatActive() || !actSeqSpellHarmful(curSeq) || !combatTriggerSthg(curSeq) ) // POSSIBLE BUG: I think this can cause spells to be overridden (e.g. when the temple priests prebuff simulataneously with you, and you get the spell effect instead) TODO
 	{
-		logger->info("\n{} performing sequence...", description._getDisplayName(curSeq->performer, curSeq->performer));
+		logger->info("{} performing sequence...", description._getDisplayName(curSeq->performer, curSeq->performer));
 		if (isSimultPerformer(curSeq->performer))
 		{ 
 			logger->info("simultaneously...");
 			if (!simulsOk(curSeq))
 			{
-				if (simulsAbort(curSeq->performer)) logger->info("sequence not allowed... aborting simuls (pending).\n");
-				else logger->info("sequence not allowed... aborting subsequent simuls.\n");
+				if (simulsAbort(curSeq->performer)) logger->info("sequence not allowed... aborting simuls (pending).");
+				else logger->info("sequence not allowed... aborting subsequent simuls.");
 				return;
 			}
-			logger->info("succeeded...\n");
+			logger->info("succeeded...");
 			
 		} else
 		{
-			logger->info("independently.\n");
+			logger->info("independently.");
 		}
 		*actnProcState = 0;
 		curSeq->seqOccupied |= 1;

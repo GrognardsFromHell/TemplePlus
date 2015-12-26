@@ -345,9 +345,9 @@ void D20System::globD20ActnSetPerformer(objHndl objHnd)
 {
 	if (objHnd != (*globD20Action).d20APerformer)
 	{
-		*actSeq->seqSthg_118CD3B8 = -1;
-		*actSeq->seqSthg_118A0980 = 1;
-		*actSeq->seqSthg_118CD570 = 0;
+		*actSeqSys.seqSthg_118CD3B8_targetingType = -1;
+		*actSeqSys.seqSthg_118A0980_D20ActnType = D20A_UNSPECIFIED_ATTACK;
+		*actSeqSys.seqSthg_118CD570_D20ActnData1 = 0;
 	}
 	(*globD20Action).d20APerformer = objHnd;
 }

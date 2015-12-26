@@ -17,6 +17,7 @@ static struct CritterAddresses : temple::AddressTable {
 	uint32_t (__cdecl *AddFollower)(objHndl npc, objHndl pc, int unkFlag, bool asAiFollower);
 	uint32_t (__cdecl *RemoveFollower)(objHndl npc, int unkFlag);
 	objHndl (__cdecl *GetLeader)(objHndl critter);
+	objHndl(__cdecl *GetLeaderRecursive)(objHndl critter);
 	int (__cdecl *HasLineOfSight)(objHndl critter, objHndl target);
 	void (__cdecl *Attack)(objHndl target, objHndl attacker, int n1, int n2);
 	uint32_t (__cdecl *IsFriendly)(objHndl pc, objHndl npc);
@@ -45,6 +46,7 @@ static struct CritterAddresses : temple::AddressTable {
 		rebase(AddFollower, 0x100812F0);
 		rebase(RemoveFollower, 0x10080FD0);
 		rebase(GetLeader, 0x1007EA70);
+		rebase(GetLeaderRecursive, 0x10080430);
 		rebase(HasLineOfSight, 0x10059470);
 		rebase(Attack, 0x1005E8D0);
 		rebase(IsFriendly, 0x10080E00);
@@ -132,6 +134,11 @@ uint32_t CritterSystem::RemoveFollower(objHndl npc, int unkFlag) {
 
 objHndl CritterSystem::GetLeader(objHndl critter) {
 	return addresses.GetLeader(critter);
+}
+
+objHndl CritterSystem::GetLeaderRecursive(objHndl critter)
+{
+	return addresses.GetLeaderRecursive(critter);
 }
 
 int CritterSystem::HasLineOfSight(objHndl critter, objHndl target) {

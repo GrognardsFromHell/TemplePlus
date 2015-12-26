@@ -14,6 +14,7 @@ struct ActnSeq;
 struct DescriptionSystem;
 struct TurnBasedStatus;
 struct Pathfinding;
+struct ReadiedActionPacket;
 struct CmbtIntrpts;
 struct TurnBasedSys;
 struct Objects;
@@ -70,9 +71,9 @@ struct ActionSequenceSystem : temple::AddressTable
 	uint32_t * actSeqPickerActive;
 	TurnBasedStatus * tbStatus118CD3C0;
 
-	int32_t * seqSthg_118CD3B8; // init to -1
-	int32_t * seqSthg_118A0980; // init to 1
-	int32_t * seqSthg_118CD570; // init to 0
+	int32_t * seqSthg_118CD3B8_targetingType; // init to -1
+	int32_t * seqSthg_118A0980_D20ActnType; // init to 1
+	int32_t * seqSthg_118CD570_D20ActnData1; // init to 0
 	uint32_t * numSimultPerformers;
 	uint32_t * simulsIdx;  //10B3D5BC
 	objHndl * simultPerformerQueue;
@@ -113,6 +114,8 @@ struct ActionSequenceSystem : temple::AddressTable
 		cuts the path short and readies an interrupt action
 	*/
 	void ProcessPathForReadiedActions(D20Actn * d20a, CmbtIntrpts * interrupts);
+	BOOL HasReadiedAction(objHndl d20APerformer);
+	
 	void ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr, AoOPacket* aooPacket, float distFeet);
 	/*
 		splits up the movement to move -> aoo movement -> move as necessary
@@ -125,14 +128,22 @@ struct ActionSequenceSystem : temple::AddressTable
 	uint32_t seqCheckFuncs(TurnBasedStatus *tbStatus);
 	void AOOSthgSub_10097D50(objHndl, objHndl);
 	int32_t AOOSthg2_100981C0(objHndl);
+	
 	int32_t InterruptNonCounterspell(D20Actn *d20a);
 	int32_t InterruptCounterspell(D20Actn *d20a);
 	int ReadyVsApproachOrWithdrawalCount();
+	ReadiedActionPacket * ReadiedActionGetNext(ReadiedActionPacket * prevReadiedAction, D20Actn* d20a);
+	void InterruptSwitchActionSequence(ReadiedActionPacket* readiedAction);
 
 	uint32_t combatTriggerSthg(ActnSeq* actSeq);
 
 	unsigned seqCheckAction(D20Actn* d20a, TurnBasedStatus* iO);
+
+
+	
 	uint32_t curSeqNext();
+		int SequencePop(); // 10098010
+		bool ShouldAutoendTurn(TurnBasedStatus* tbStat);
 	void actionPerform();
 	void sequencePerform();
 	bool projectileCheckBeforeNextAction();
@@ -177,8 +188,8 @@ extern ActionSequenceSystem actSeqSys;
 
 struct TurnBasedStatus
 {
-	uint32_t hourglassState; // 4 - full action remaining; 2 - single action remaining; 1 - move action remaining
-	int tbsFlags; // 0x40 full attack
+	uint32_t hourglassState; // 4 - full action remaining; 3 - partial?? used in interrupts, checked by partial charge; 2 - single action remaining; 1 - move action remaining
+	int tbsFlags; // 0x40 full attack, 0x1 0x2 sthg to do with turn ending?
 	uint32_t idxSthg;
 	float surplusMoveDistance; // is nonzero when you have started a move action already and haven't used it all up
 	uint32_t baseAttackNumCode; // is composed of the base number of attacks (dispatch 51 or 53) + a code number: 99 for dual wielding (+1 for extra offhand attack), 999 for natural attacks
@@ -209,8 +220,8 @@ struct ActnSeq
 	int32_t d20ActArrayNum;
 	int32_t d20aCurIdx;
 	ActnSeq * prevSeq;
-	uint32_t field_B0C;
-	uint32_t seqOccupied;
+	ActnSeq * interruptSeq;
+	uint32_t seqOccupied; // is actually flags
 	TurnBasedStatus tbStatus;
 	objHndl performer;
 	LocAndOffsets performerLoc;

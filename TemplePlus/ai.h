@@ -115,6 +115,7 @@ struct AiSystem : temple::AddressTable
 	unsigned int WakeFriend(AiTactic* aiTac);
 	int Default(AiTactic* aiTac);
 	int AttackThreatened(AiTactic* aiTac);
+	void AiTurnSthg_1005EEC0(objHndl obj);
 private:
 	void (__cdecl *_ShitlistAdd)(objHndl npc, objHndl target);
 	void (__cdecl *_AiRemoveFromList)(objHndl npc, objHndl target, int listType);	

@@ -26,10 +26,14 @@ const auto TestSizeOfAiStrategy = sizeof(AiStrategy); // should be 808 (0x324)
 struct AiSystemAddresses : temple::AddressTable
 {
 	int (__cdecl*UpdateAiFlags)(objHndl obj, int aiFightStatus, objHndl target, int * soundMap);
+	void(__cdecl*AiTurnSthg_1005EEC0)(objHndl obj);
 	AiSystemAddresses()
 	{
 		rebase(UpdateAiFlags, 0x1005DA00);
+		rebase(AiTurnSthg_1005EEC0, 0x1005EEC0);
 	}
+
+	
 }addresses;
 
 AiSystem::AiSystem()
@@ -943,6 +947,11 @@ int AiSystem::AttackThreatened(AiTactic* aiTac)
 	if (!aiTac->target || !combatSys.CanMeleeTarget(aiTac->performer, aiTac->target))
 		return 0;
 	return Default(aiTac);
+}
+
+void AiSystem::AiTurnSthg_1005EEC0(objHndl obj)
+{
+	return addresses.AiTurnSthg_1005EEC0(obj);
 }
 #pragma endregion
 

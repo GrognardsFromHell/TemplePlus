@@ -23,6 +23,7 @@ struct TurnBasedSys tbSys;
 TurnBasedSys::TurnBasedSys()
 {
 	rebase(turnBasedCurrentActor,0x10BCAD88); 
+	rebase(_CloneInitiativeFromObj, 0x100DF570);
 }
 
 objHndl TurnBasedSys::turnBasedGetCurrentActor()
@@ -33,6 +34,11 @@ objHndl TurnBasedSys::turnBasedGetCurrentActor()
 void TurnBasedSys::turnBasedSetCurrentActor(objHndl objHnd)
 {
 	*turnBasedCurrentActor = objHnd;
+}
+
+void TurnBasedSys::CloneInitiativeFromObj(objHndl obj, objHndl sourceObj)
+{
+	_CloneInitiativeFromObj(obj, sourceObj);
 }
 
 void _turnBasedSetCurrentActor(objHndl objHnd)

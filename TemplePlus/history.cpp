@@ -27,6 +27,7 @@ struct HistorySystemAddresses : temple::AddressTable
 	int (__cdecl *RollHistoryType3Add)(objHndl obj, int DC, int saveType, int flags, int dicePacked, int rollResult, BonusList *bonListIn);
 	int (__cdecl *RollHistoryAddType6OpposedCheck)(objHndl attacker, objHndl defender, int attackerRoll, int defenderRoll, BonusList* attackerBonlist, BonusList* defenderBonlist, int combatMesLineTitle, int combatMesLineResult, int flag);
 	int (__cdecl*CreateRollHistoryString)(int histId);
+	int(__cdecl*CreateRollHistoryLineFromMesfile)(int historyMesLine, objHndl obj, objHndl obj2);
 	HistorySystemAddresses()
 	{
 
@@ -38,6 +39,7 @@ struct HistorySystemAddresses : temple::AddressTable
 		rebase(rollUiMesHandle, 0x102B0168);
 		rebase(rollSerialNumber, 0x102B016C);
 		rebase(histArray, 0x109DDA20);
+		rebase(CreateRollHistoryLineFromMesfile, 0x100E01F0);
 	}
 } addresses;
 
@@ -60,6 +62,11 @@ int HistorySystem::CreateRollHistoryString(int histId)
 HistorySystem::HistorySystem()
 {
 	rebase(RollHistoryAdd, 0x10047430);
+}
+
+int HistorySystem::CreateRollHistoryLineFromMesfile(int historyMesLine, objHndl obj, objHndl obj2)
+{
+	return addresses.CreateRollHistoryLineFromMesfile(historyMesLine, obj, obj2);
 }
 #pragma endregion
 

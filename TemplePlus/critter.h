@@ -69,6 +69,10 @@ struct CritterSystem : temple::AddressTable
 		Gets the current leader of the given critter. Might be 0.
 	*/
 	objHndl GetLeader(objHndl critter);
+	/*
+	Gets the current leader of the given critter (recursive in case it's an NPC charmed by an NPC). Might be 0.
+	*/
+	objHndl GetLeaderRecursive(objHndl critter);
 
 	/*
 		Checks for line of sight betwen a critter and a target obj.

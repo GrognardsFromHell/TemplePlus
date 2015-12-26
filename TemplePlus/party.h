@@ -24,6 +24,9 @@ struct PartySystem : temple::AddressTable
 	uint32_t(__cdecl *ObjAddToGroupArray)(GroupArray *, objHndl);
 	uint32_t AddToPCGroup(objHndl objHnd);
 	uint32_t AddToNpcGroup(objHndl objHnd);
+	void AddToCurrentlySelected(objHndl obj);
+	void GroupArrayClearMembers(GroupArray * groupArray);
+	void CurrentlySelectedClear();
 
 	void (__cdecl *RumorLogAdd)(objHndl pc, int rumor);
 

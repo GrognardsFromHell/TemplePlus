@@ -12,6 +12,7 @@
 #include "ai.h"
 #include "util/fixes.h"
 #include "weapon.h"
+#include "float_line.h"
 
 
 class CombatSystemReplacements : public TempleFix
@@ -50,10 +51,17 @@ objHndl CombatSystemReplacements::CheckRangedWeaponAmmo(objHndl obj)
 struct CombatSystemAddresses : temple::AddressTable
 {
 	int(__cdecl* GetEnemiesCanMelee)(objHndl obj, objHndl* canMeleeList);
+	void(__cdecl*TurnProcessing_100635E0)(objHndl obj);
+	void(__cdecl*TurnProcessing)(objHndl obj);
 	CombatSystemAddresses()
 	{
 		rebase(GetEnemiesCanMelee, 0x100B90C0);
+		rebase(TurnProcessing, 0x100634E0);
+		rebase(TurnProcessing_100635E0, 0x100635E0);
+		
 	}
+
+	
 } addresses;
 
 #pragma region Combat System Implementation
@@ -76,6 +84,24 @@ char * CombatSystem::GetCombatMesLine(int line)
 	}
 	mesFuncs.GetLine_Safe(combatMes, &mesLine);
 	return (char*)mesLine.value;
+}
+
+void CombatSystem::FloatCombatLine(objHndl obj, int line)
+{
+	auto objType = objects.GetType(obj);
+	FloatLineColor floatColor = FloatLineColor::White;
+	if (objType == obj_t_npc )
+	{
+		auto npcLeader = critterSys.GetLeaderRecursive(obj);
+		if (!party.IsInParty(npcLeader))
+			floatColor = FloatLineColor::Red;
+		else
+			floatColor = FloatLineColor::Yellow;
+	}
+
+	auto combatLineText = GetCombatMesLine(line);
+	if (combatLineText)
+		floatSys.floatMesLine(obj, 1, floatColor, combatLineText);
 }
 
 int CombatSystem::IsWithinReach(objHndl attacker, objHndl target)
@@ -254,6 +280,16 @@ objHndl * CombatSystem::GetHostileCombatantList(objHndl obj, int * count)
 	memcpy(result, hostileTempList, hostileCount * sizeof(objHndl));
 	*count = hostileCount;
 	return result;
+}
+
+void CombatSystem::TurnProcessing_100635E0(objHndl obj)
+{
+	return addresses.TurnProcessing_100635E0(obj);
+}
+
+void CombatSystem::TurnProcessing(objHndl obj)
+{
+	return addresses.TurnProcessing(obj);
 }
 
 bool CombatSystem::isCombatActive()
