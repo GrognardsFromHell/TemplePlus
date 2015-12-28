@@ -17,6 +17,8 @@
 #include "action_sequence.h"
 #include "ui/ui_item_creation.h"
 #include "util/fixes.h"
+#include <infrastructure/elfhash.h>
+#include "particles.h"
 
 ConditionSystem conds;
 CondStructNew conditionDisableAoO;
@@ -30,11 +32,14 @@ CondStructNew condDeadlyPrecision;
 CondStructNew condPersistentSpell;
 
 
-CondStructNew condDisarm;
-CondStructNew condDisarmed;
+CondStructNew ConditionSystem::mCondDisarm;
+CondStructNew ConditionSystem::mCondDisarmed;
 
 // monsters
 CondStructNew condRend;
+
+CondStructNew ConditionSystem::mCondCaptivatingSong;
+CondStructNew ConditionSystem::mCondCaptivated;
 
 CondStructNew condGreaterWeaponSpecialization;
 
@@ -336,6 +341,24 @@ int CondResetArgs(DispatcherCallbackArgs args)
 	memset(args.subDispNode->condNode->args, 0, args.subDispNode->condNode->condStruct->numArgs);
 	return 0;
 }
+/*
+used in BeginRound callback to update the remaining duration and remove condition when it ends
+*/
+int ConditionDurationTicker(DispatcherCallbackArgs args)
+{
+	auto argIdx = args.subDispNode->subDispDef->data1;
+	auto condArg = _CondNodeGetArg(args.subDispNode->condNode, args.subDispNode->subDispDef->data1);
+	auto dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
+	int durationRemaining = condArg - static_cast<int>(dispIo->data1);
+	if (durationRemaining >= 0)
+	{
+		_CondNodeSetArg(args.subDispNode->condNode, argIdx, durationRemaining);
+	} else
+	{
+		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+	}
+	return 0;
+}
 
 int ConditionRemoveCallback(DispatcherCallbackArgs args)
 {
@@ -352,6 +375,34 @@ int RemoveSpellConditionAndMod(DispatcherCallbackArgs args)
 	return 0;
 };
 
+/*
+data1 - argIdx (to store partsys ID)
+data2 - char * to particle system name
+*/
+int PlayParticlesSavePartsysId(DispatcherCallbackArgs args)
+{
+	auto partsysName = reinterpret_cast<char*>(args.subDispNode->subDispDef->data2);
+	if (partsysName)
+	{
+		auto partsysId = particles.CreateAtObj(partsysName, args.objHndCaller);
+		_CondNodeSetArg(args.subDispNode->condNode,
+			args.subDispNode->subDispDef->data1, partsysId);
+	}
+	return 0;
+}
+
+int EndParticlesFromArg(DispatcherCallbackArgs args)
+{
+	auto partsysId = _CondNodeGetArg(args.subDispNode->condNode, args.subDispNode->subDispDef->data1);
+	if (partsysId)
+	{
+		particles.End(partsysId);
+		_CondNodeSetArg(args.subDispNode->condNode,
+			args.subDispNode->subDispDef->data1, 0);
+	}
+	return 0;
+}
+
 int DivineMightEffectTooltipCallback(DispatcherCallbackArgs args)
 {
 	void * dispIo = args.dispIO;
@@ -360,6 +411,31 @@ int DivineMightEffectTooltipCallback(DispatcherCallbackArgs args)
 	callback( *((int*)dispIo + 1), args.subDispNode->subDispDef->data1, (int)shit);
 	return 0;
 };
+
+/*
+gets a tooltip string from combat.mes
+*/
+int TooltipNoRepetitionCallback(DispatcherCallbackArgs args)
+{
+	DispIoTooltip *dispIo = dispatch.DispIoCheckIoType9(args.dispIO);
+	auto mesLine = combatSys.GetCombatMesLine(args.subDispNode->subDispDef->data1);
+	int numstrings = dispIo->numStrings;
+	if (numstrings >= 10)
+		return 0;
+	int idx = 0;
+	for (idx = 0; idx < numstrings && idx < 10 ; idx++)
+	{
+		if (!strcmp(dispIo->strings[idx], mesLine))
+			break;
+	}
+	if (idx == numstrings) // reached the end and not found
+	{
+		strncpy(dispIo->strings[numstrings], mesLine, 0x100);
+	}
+	return 0;
+};
+
+
 
 int __cdecl CondNodeSetArg0FromSubDispDef(DispatcherCallbackArgs args)
 {
@@ -383,6 +459,13 @@ int QuerySetReturnVal1(DispatcherCallbackArgs args)
 {
 	DispIoD20Query * dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
 	dispIo->return_val = 1;
+	return 0;
+};
+
+int QuerySetReturnVal0(DispatcherCallbackArgs args)
+{
+	DispIoD20Query * dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	dispIo->return_val = 0;
 	return 0;
 };
 
@@ -834,6 +917,9 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 	return 0;
 }
 
+
+int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args);
+
 void _FeatConditionsRegister()
 {
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAttackOfOpportunity);
@@ -854,8 +940,8 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondRecklessOffense);
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterWeaponSpecialization);
 	
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDisarm);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDisarmed);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondDisarm);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondDisarmed);
 	// conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondSuperiorExpertise); // will just be patched inside Combat Expertise callbacks
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondRend);
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondCraftWandLevelSet);
@@ -1061,6 +1147,8 @@ void ConditionSystem::RegisterNewConditions()
 	CondStructNew * cond;
 	char * condName;
 
+#pragma region Feats
+
 	// Disable AoO
 	mConditionDisableAoO = &conditionDisableAoO;
 	cond = mConditionDisableAoO; 	condName = mConditionDisableAoOName;
@@ -1183,24 +1271,21 @@ void ConditionSystem::RegisterNewConditions()
 	cond->numArgs = 2;
 
 	// Disarm
-	mCondDisarm = &condDisarm;
-	cond = mCondDisarm; 	condName = mCondDisarmName;
-	memset(condName, 0, sizeof(condName)); 	memcpy(condName, "Disarm", sizeof("Disarm"));
+	cond = &mCondDisarm; 	condName = (char*)mCondDisarmName;
 
 	cond->condName = condName;
 	cond->numArgs = 2;
 
-	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)mCondDisarm, 0);
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
 	DispatcherHookInit(cond, 1, dispTypeRadialMenuEntry, 0, DisarmRadialMenu, 0, 0);
 	DispatcherHookInit(cond, 2, dispTypeD20Signal, DK_SIG_HP_Changed, DisarmHpChanged, 0, 0);
 	DispatcherHookInit(cond, 3, dispTypeD20Query, DK_QUE_ActionTriggersAOO, DisarmQueryAoOResetArg, 1, 1);
 	DispatcherHookInit(cond, 4, dispTypeD20Query, DK_QUE_Can_Perform_Disarm, DisarmCanPerform, 0, 0);
 	//DispatcherHookInit(cond, 5, dispTypeD20Query, DK_QUE_ActionTriggersAOO, QuerySetReturnVal1, 0, 0);
 
+#pragma endregion
 	// Disarmed
-	mCondDisarmed = &condDisarmed;
-	cond = mCondDisarmed; 	condName = mCondDisarmedName;
-	memset(condName, 0, sizeof(condName)); 	memcpy(condName, "Disarmed", sizeof("Disarmed"));
+	cond = &mCondDisarmed; 	condName = (char*)mCondDisarmedName;
 
 	cond->condName = condName;
 	cond->numArgs = 8;
@@ -1225,6 +1310,35 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 1, dispTypeDealingDamage, 0, RendOnDamage, 0, 0);
 	DispatcherHookInit(cond, 2, dispTypeBeginRound, 0, CondResetArgs, 0, 0);
 	
+	// Captivating Song
+
+	cond = &mCondCaptivatingSong; 	condName = (char*)mCondCaptivatingSongName;
+
+	cond->condName = condName;
+	cond->numArgs = 8;
+
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
+	DispatcherHookInit(cond, 1, dispTypeConditionAdd, 0, CaptivatingSongOnConditionAdd, 1, 0x1028C7C8);
+
+	// Captivated
+
+	cond = &mCondCaptivated; 	condName = (char*)mCondCaptivatedName;
+
+	cond->condName = condName;
+	cond->numArgs = 8;
+
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
+	DispatcherHookInit(cond, 1, dispTypeD20Query, DK_QUE_SneakAttack, QuerySetReturnVal1, 0, 0);
+	DispatcherHookInit(cond, 2, dispTypeD20Query, DK_QUE_CannotCast, QuerySetReturnVal1, 0, 0);
+	DispatcherHookInit(cond, 3, dispTypeD20Query, DK_QUE_AOOPossible, QuerySetReturnVal0, 0, 0);
+	DispatcherHookInit(cond, 4, dispTypeD20Signal, DK_SIG_Killed, ConditionRemoveCallback, 0, 0);
+	DispatcherHookInit(cond, 5, dispTypeTooltip, 0, TooltipNoRepetitionCallback, 205, 0); // Captivated
+	DispatcherHookInit(cond, 6, dispTypeConditionAdd, 0, PlayParticlesSavePartsysId, 1, 0x1028C7C8); // 'Bardic-Fascinate-hit'
+	DispatcherHookInit(cond, 7, dispTypeConditionAddFromD20StatusInit, 0, PlayParticlesSavePartsysId, 1, 0x1028C7C8); // 'Bardic-Fascinate-hit'
+	DispatcherHookInit(cond, 8, dispTypeConditionRemove, 0, EndParticlesFromArg, 1, 0);
+	DispatcherHookInit(cond, 9, dispTypeBeginRound, 0, ConditionDurationTicker, 0, 0);
+
+
 	// Craft Wand
 	mCondCraftWand = new CondStructNew();
 	memset(mCondCraftWand, 0, sizeof(CondStructNew));
@@ -1973,9 +2087,28 @@ int RendOnDamage(DispatcherCallbackArgs args)
 	return 0;
 }
 
+
+int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args)
+{
+	
+	int spellId = conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+	// int duration = conds.CondNodeGetArg(args.subDispNode->condNode, 1);
+	int duration = 2;
+	if (!spellId)
+		return 0;
+	SpellPacketBody spellPktBody;
+	spellSys.GetSpellPacketBody(spellId, &spellPktBody);
+	objHndl singer = spellPktBody.objHndCaster;
+	ObjectId singerId = objects.GetId(singer);
+	memcpy(&args.subDispNode->condNode->args[2], &singerId, sizeof(ObjectId));
+
+	conds.AddTo(args.objHndCaller, "Captivated", { duration,0 });
+	return 0;
+}
+
 int AidAnotherRadialMenu(DispatcherCallbackArgs args)
 {
-	MesLine mesLine;
+	//MesLine mesLine;
 	RadialMenuEntry radMenuAidAnotherMain;
 	radMenuAidAnotherMain.SetDefaults();
 	

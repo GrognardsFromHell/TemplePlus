@@ -106,7 +106,10 @@ struct ActionSequenceSystem : temple::AddressTable
 	void ActSeqCurSetSpellPacket(SpellPacketBody* spellPacketBody, int flag);
 	int GetNewHourglassState(objHndl performer, D20ActionType d20ActionType, int d20Data1, int radMenuActualArg, D20SpellData* d20SpellData);
 	int GetHourglassTransition(int hourglassCurrent, int hourglassCost);
-	int ActionSequenceChecksWithPerformerLocation();
+	
+	ActionErrorCode ActionSequenceChecksRegardLoc(LocAndOffsets* loc, TurnBasedStatus * tbStatus, int d20aIdx, ActnSeq* actSeq);
+	ActionErrorCode ActionSequenceChecksWithPerformerLocation();
+	
 	void ActionSequenceRevertPath(int d20ANum);
 	bool GetPathTargetLocFromCurD20Action(LocAndOffsets* loc);
 	int TrimPathToRemainingMoveLength(D20Actn *d20a, float remainingMoveLength, PathQuery *pathQ);

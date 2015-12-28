@@ -26,6 +26,8 @@ struct ObjectId {
 	GUID guid;
 };
 
+// const int sizeofObjId =  sizeof(ObjectId); // should be 24 (6 ints)
+
 struct TransientProps {
 	uint32_t renderColor;
 	uint32_t renderColors;

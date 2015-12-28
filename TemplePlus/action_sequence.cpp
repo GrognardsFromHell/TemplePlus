@@ -540,11 +540,11 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 			truncateLengthFeet = truncateLengthFeet + 4.0; // fishy!!!
 			
 		}
-		delete enemies;
+		delete [] enemies;
 	}
 	catch (...)
 	{
-		delete enemies;
+		delete [] enemies;
 	}
 	return;
 }
@@ -918,9 +918,79 @@ int ActionSequenceSystem::GetHourglassTransition(int hourglassCurrent, int hourg
 	return turnBasedStatusTransitionMatrix[hourglassCurrent][hourglassCost];
 }
 
-int ActionSequenceSystem::ActionSequenceChecksWithPerformerLocation()
+ActionErrorCode ActionSequenceSystem::ActionSequenceChecksRegardLoc(LocAndOffsets* loc, TurnBasedStatus * tbStatus, int d20aIdx, ActnSeq* actSeq)
 {
-	return addresses.ActionSequenceChecksWithPerformerLocation();
+	TurnBasedStatus tbStatCopy = *tbStatus;
+	LocAndOffsets locCopy = *loc;
+	int d20aNum = actSeq->d20ActArrayNum;
+	ActionErrorCode result = AEC_OK;
+
+	if (d20aIdx >= d20aNum)
+		return AEC_OK;
+	
+	for (int i = d20aIdx; i < d20aNum; i++)
+	{
+		auto d20a = &actSeq->d20ActArray[i];
+		auto d20aType = d20a->d20ActType;
+		auto tgtCheckFunc = d20Sys.d20Defs[d20aType].tgtCheckFunc;
+		if (tgtCheckFunc)
+		{
+			result = static_cast<ActionErrorCode>(tgtCheckFunc(d20a, &tbStatCopy));
+			if (result != AEC_OK)
+			{
+				return result;
+			}
+		}
+		result = static_cast<ActionErrorCode>(TurnBasedStatusUpdate(d20a, &tbStatCopy));
+		if (result != AEC_OK)
+		{
+			tbStatCopy.errCode = result; // ??? WTF maybe debug leftover
+			return result;
+		}
+			
+		auto actionCheckFunc = d20Sys.d20Defs[d20aType].actionCheckFunc;
+		if (actionCheckFunc)
+		{
+			result = static_cast<ActionErrorCode>(actionCheckFunc(d20a,&tbStatCopy));
+			if (result != AEC_OK)
+			{
+				return result;
+			}
+				
+		}
+
+		auto locCheckFunc = d20Sys.d20Defs[d20aType].locCheckFunc;
+		if (locCheckFunc)
+		{
+			result = static_cast<ActionErrorCode>(locCheckFunc(d20a,&tbStatCopy, &locCopy));
+			if (result != AEC_OK)
+			{
+				return result;
+			}
+		}
+
+		auto path = d20a->path;
+		if (path)
+		{
+			locCopy = path->to;
+		}
+
+	}
+	tbStatCopy.errCode = result;
+	return result;
+}
+
+ActionErrorCode ActionSequenceSystem::ActionSequenceChecksWithPerformerLocation()
+{
+	LocAndOffsets loc;
+	locSys.getLocAndOff((*actSeqCur)->performer, &loc);
+	if ((*actSeqCur)->d20ActArrayNum)
+	{
+		return ActionSequenceChecksRegardLoc(&loc, &(*actSeqCur)->tbStatus, 0, *actSeqCur);
+	}
+	return ActionErrorCode::AEC_NO_ACTIONS;
+
+	// return addresses.ActionSequenceChecksWithPerformerLocation();
 }
 
 void ActionSequenceSystem::ActionSequenceRevertPath(int d20ANum)

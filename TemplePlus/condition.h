@@ -146,10 +146,10 @@ public:
 	CondStructNew *mCondTirelessRage;
 	char mCondMightyRageName[100];
 	CondStructNew *mCondMightyRage;
-	char mCondDisarmName[100];
-	CondStructNew *mCondDisarm;
-	char mCondDisarmedName[100];
-	CondStructNew *mCondDisarmed;
+	const char mCondDisarmName[100] = "Disarm";
+	static CondStructNew mCondDisarm;
+	const char mCondDisarmedName[100] = "Disarmed";
+	static CondStructNew mCondDisarmed;
 	char mCondImprovedDisarmName[100];
 	CondStructNew *mCondImprovedDisarm;
 
@@ -166,6 +166,12 @@ public:
 	// monsters
 	char mCondRendName[100];
 	CondStructNew *mCondRend;
+
+	const char mCondCaptivatingSongName[100] = { "Captivating Song" };
+	static CondStructNew mCondCaptivatingSong;
+	const char mCondCaptivatedName[100] = { "Captivated" };
+	static CondStructNew mCondCaptivated;
+
 
 	/*
 		Returns the condition definition with the given name,

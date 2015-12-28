@@ -181,10 +181,10 @@ struct LocAndOffsets {
 
 	void FromAbsolute(double overallOffX, double overallOffY)
 	{
-		location.locx = overallOffX / INCH_PER_TILE;
-		location.locy = overallOffY / INCH_PER_TILE;
-		off_x = overallOffX - (static_cast<long double>(location.locx) + 0.5) * INCH_PER_TILE;
-		off_y = overallOffY - (static_cast<long double>(location.locy) + 0.5) * INCH_PER_TILE;
+		location.locx = static_cast<uint32_t>(overallOffX / INCH_PER_TILE);
+		location.locy = static_cast<uint32_t>(overallOffY / INCH_PER_TILE);
+		off_x = static_cast<float>(overallOffX - (static_cast<double>(location.locx) + 0.5) * INCH_PER_TILE);
+		off_y = static_cast<float>(overallOffY - (static_cast<double>(location.locy) + 0.5) * INCH_PER_TILE);
 	};
 };
 

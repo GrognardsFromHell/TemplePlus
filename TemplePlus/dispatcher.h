@@ -69,6 +69,7 @@ struct DispatcherSystem : temple::AddressTable
 	DispIoD20Query* DispIoCheckIoType7(DispIoD20Query* dispIo);
 	DispIoD20Query* DispIoCheckIoType7(DispIO* dispIo);
 	DispIOTurnBasedStatus* DispIoCheckIoType8(DispIOTurnBasedStatus* dispIo);
+	DispIoTooltip* DispIoCheckIoType9(DispIO* dispIo);
 	DispIoTooltip* DispIoCheckIoType9(DispIoTooltip* dispIo);
 	DispIoBonusAndObj* DispIoCheckIoType10(DispIoBonusAndObj* dispIo);
 	DispIoDispelCheck* DispIOCheckIoType11(DispIoDispelCheck* dispIo);

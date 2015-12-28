@@ -16,3 +16,6 @@ additionalTioPaths=D:\TemplePlus\tpdata;D:\TemplePlus\dependencies
 ```
 * Download the latest [binary dependency release](https://github.com/GrognardsFromHell/TemplePlusDependencies/releases/) and unzip it into the ``dependencies`` folder inside your dev folder.
 * Press F5 :)
+
+Special thanks to Deleaker for providing a free copy and supporting open source :)  
+www.deleaker.com

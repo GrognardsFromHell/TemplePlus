@@ -280,7 +280,7 @@ int AiSystem::TargetClosest(AiTactic* aiTac)
 			auto distToCombatant = locSys.DistanceToObj(performer, combatant);
 			if (d20Sys.d20Query(combatant, DK_QUE_Critter_Is_Invisible)
 				&& !d20Sys.d20Query(performer, DK_QUE_Critter_Can_See_Invisible))
-				distToCombatant = (distToCombatant + 5.0) * 2.5; // makes invisibile chars less likely to be attacked; also takes into accout stuff like Hide From Animals (albeit in a shitty manner)
+				distToCombatant = static_cast<float>( (distToCombatant + 5.0) * 2.5 ); // makes invisibile chars less likely to be attacked; also takes into accout stuff like Hide From Animals (albeit in a shitty manner)
 			if (distToCombatant < dist )
 			{
 				aiTac->target = combatant;
@@ -752,7 +752,7 @@ BOOL AiSystem::AiFiveFootStepAttempt(AiTactic* aiTac)
 	for (float angleDeg = 0.0; angleDeg <= 360.0;  angleDeg += 45.0 )
 	{
 
-		float angleRad = angleDeg * 0.017453292; // to radians
+		float angleRad = static_cast<float>(angleDeg * 0.017453292); // to radians
 		auto cosTheta = cosf(angleRad);
 		auto sinTheta = sinf(angleRad);
 		double fiveFootStepX = overallOffX - cosTheta * 60.0; // five feet radius

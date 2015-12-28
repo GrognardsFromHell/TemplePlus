@@ -125,10 +125,10 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 	{
 		if (!objects.IsDeadNullDestroyed(objHnd))
 		{
-			uint32_t hpCur = objects.StatLevelGet(objHnd, stat_hp_current);
+			int hpCur = static_cast<int>(objects.StatLevelGet(objHnd, stat_hp_current));
 			uint32_t subdualDam = objects.getInt32(objHnd, obj_f_critter_subdual_damage);
 
-			if ((uint32_t)hpCur != 0xFFFF0001)
+			if (hpCur != -65535)
 			{
 				if (hpCur < 0)
 				{
@@ -234,8 +234,8 @@ void D20StatusSystem::initFeats(objHndl objHnd)
 	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionDealSubdualDamage);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionDealNormalDamage);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionFightDefensively);
-	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)conds.mConditionDisableAoO);
-	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)conds.mCondDisarm);
+	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)&conds.mConditionDisableAoO);
+	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)&conds.mCondDisarm);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)conds.mCondAidAnother);
 }
 

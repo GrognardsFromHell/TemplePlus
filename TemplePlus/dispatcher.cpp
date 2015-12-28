@@ -251,6 +251,12 @@ DispIoTooltip* DispatcherSystem::DispIoCheckIoType9(DispIoTooltip* dispIo)
 	return dispIo;
 }
 
+DispIoTooltip* DispatcherSystem::DispIoCheckIoType9(DispIO* dispIo)
+{
+	if (dispIo->dispIOType != dispIoTypeTooltip) return nullptr;
+	return static_cast<DispIoTooltip*>(dispIo);
+}
+
 DispIoBonusAndObj* DispatcherSystem::DispIoCheckIoType10(DispIoBonusAndObj* dispIo)
 {
 	if (dispIo->dispIOType != dispIOTypeSkillLevel) return nullptr;
