@@ -141,7 +141,7 @@ void D20System::NewD20ActionsInit()
 
 	d20Type = D20A_DISARM;
 	d20Defs[d20Type].addToSeqFunc = _AddToSeqWithTarget;
-	d20Defs[d20Type].aiCheckMaybe = _StdAttackAiCheck;
+	d20Defs[d20Type].turnBasedStatusCheck = _StdAttackAiCheck;
 	d20Defs[d20Type].actionCheckFunc = _ActionCheckDisarm;
 	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
 	d20Defs[d20Type].performFunc = _PerformDisarm;
@@ -154,7 +154,7 @@ void D20System::NewD20ActionsInit()
 
 	d20Type = D20A_DISARMED_WEAPON_RETRIEVE;
 	d20Defs[d20Type].addToSeqFunc = _AddToSeqSimple;
-	d20Defs[d20Type].aiCheckMaybe = 0;
+	d20Defs[d20Type].turnBasedStatusCheck = 0;
 	d20Defs[d20Type].actionCheckFunc = _ActionCheckDisarmedWeaponRetrieve;
 	d20Defs[d20Type].locCheckFunc = LocationCheckDisarmedWeaponRetrieve;
 	d20Defs[d20Type].performFunc = _PerformDisarmedWeaponRetrieve;
@@ -167,7 +167,7 @@ void D20System::NewD20ActionsInit()
 
 	d20Type = D20A_SUNDER;
 	d20Defs[d20Type].addToSeqFunc = _AddToSeqWithTarget;
-	d20Defs[d20Type].aiCheckMaybe = _StdAttackAiCheck;
+	d20Defs[d20Type].turnBasedStatusCheck = _StdAttackAiCheck;
 	d20Defs[d20Type].actionCheckFunc = _ActionCheckSunder;
 	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
 	d20Defs[d20Type].performFunc = _PerformDisarm;
@@ -179,7 +179,7 @@ void D20System::NewD20ActionsInit()
 
 	d20Type = D20A_AID_ANOTHER_WAKE_UP;
 	d20Defs[d20Type].addToSeqFunc = _AddToSeqWithTarget;
-	d20Defs[d20Type].aiCheckMaybe = _StdAttackAiCheck;
+	d20Defs[d20Type].turnBasedStatusCheck = _StdAttackAiCheck;
 	d20Defs[d20Type].actionCheckFunc = _ActionCheckAidAnotherWakeUp;
 	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
 	d20Defs[d20Type].performFunc = _PerformAidAnotherWakeUp;

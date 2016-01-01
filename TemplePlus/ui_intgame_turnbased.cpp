@@ -181,9 +181,9 @@ void HourglassUpdate(int a3, int a4, int flags)
 		{
 			tbStat1.tbsFlags = tbStat->tbsFlags;
 			tbStat1.surplusMoveDistance = tbStat->surplusMoveDistance;
-			if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].aiCheckMaybe)
+			if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].turnBasedStatusCheck)
 			{
-				if (d20Sys.d20Defs[d20aType].aiCheckMaybe(d20Sys.globD20Action, &tbStat1))
+				if (d20Sys.d20Defs[d20aType].turnBasedStatusCheck(d20Sys.globD20Action, &tbStat1))
 				{
 					v32 = 0.0;
 					moveDistance = 0.0;

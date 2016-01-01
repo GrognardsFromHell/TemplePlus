@@ -50,7 +50,19 @@ enum ActionErrorCode : uint32_t
 	AEC_NOT_IN_COMBAT,
 	AEC_AREA_NOT_SAFE
 };
-
+enum TurnBasedStatusFlags : uint32_t
+{
+	TBSF_NONE = 0,
+	TBSF_1 = 1,
+	TBSF_Movement = 2,
+	TBSF_Movement2 = 4,
+	TBSF_8 = 8,
+	TBSF_CritterSpell = 0x10,
+	TBSF_20 = 0x20,
+	TBSF_FullAttack = 0x40,
+	TBSF_80 = 0x80,
+	TBSF_100 = 0x100
+};
 
 struct ActionSequenceSystem : temple::AddressTable
 {
@@ -140,7 +152,7 @@ struct ActionSequenceSystem : temple::AddressTable
 
 	uint32_t combatTriggerSthg(ActnSeq* actSeq);
 
-	unsigned seqCheckAction(D20Actn* d20a, TurnBasedStatus* iO);
+	ActionErrorCode seqCheckAction(D20Actn* d20a, TurnBasedStatus* iO);
 
 
 	
@@ -192,7 +204,7 @@ extern ActionSequenceSystem actSeqSys;
 struct TurnBasedStatus
 {
 	uint32_t hourglassState; // 4 - full action remaining; 3 - partial?? used in interrupts, checked by partial charge; 2 - single action remaining; 1 - move action remaining
-	int tbsFlags; // 0x40 full attack, 0x1 0x2 sthg to do with turn ending?
+	int tbsFlags; // 0x40 full attack, 0x1 0x2 sthg to do with turn ending?, 0x2 0x4 sthg to do with movement, 0x10 spell?
 	uint32_t idxSthg;
 	float surplusMoveDistance; // is nonzero when you have started a move action already and haven't used it all up
 	uint32_t baseAttackNumCode; // is composed of the base number of attacks (dispatch 51 or 53) + a code number: 99 for dual wielding (+1 for extra offhand attack), 999 for natural attacks

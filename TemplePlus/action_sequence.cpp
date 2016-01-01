@@ -329,7 +329,7 @@ int ActionSequenceSystem::ActionAddToSeq()
 	if (d20ActnType == D20A_CAST_SPELL
 		&& curSeq->spellPktBody.spellEnum >= 600)
 	{
-		curSeq->tbStatus.tbsFlags |= 0x16; // perhaps bug that it's not affecting the local copy?? TODO
+		curSeq->tbStatus.tbsFlags |= TBSF_CritterSpell; // perhaps bug that it's not affecting the local copy?? TODO
 		curSeq->spellPktBody.spellEnumOriginal = curSeq->spellPktBody.spellEnum;
 	}
 	auto actnCheckFunc = d20Sys.d20Defs[d20ActnType].actionCheckFunc;
@@ -342,9 +342,9 @@ int ActionSequenceSystem::ActionAddToSeq()
 			if (actnCheckResult == 9)
 			{
 				actSeqSys.ActSeqGetPicker();
-				return 9;
+				return AEC_TARGET_INVALID;
 			}
-			if (actnCheckResult != 8)
+			if (actnCheckResult != AEC_TARGET_TOO_FAR)
 			{
 				auto errorString = actSeqSys.ActionErrorString(actnCheckResult);
 				floatSys.floatMesLine(curSeq->performer, 1, FloatLineColor::Red, errorString);
@@ -353,7 +353,7 @@ int ActionSequenceSystem::ActionAddToSeq()
 		} else if (!d20Sys.TargetCheck(d20Sys.globD20Action))
 		{
 			actSeqSys.ActSeqGetPicker();
-			return 9;
+			return AEC_TARGET_INVALID;
 		}
 	} else
 	{
@@ -880,7 +880,7 @@ uint32_t ActionSequenceSystem::TurnBasedStatusInit(objHndl objHnd)
 
 void ActionSequenceSystem::ActSeqCurSetSpellPacket(SpellPacketBody* spellPktBody, int flag)
 {
-	memcpy(&(*actSeqCur)->spellPktBody, spellPktBody, sizeof(SpellPacketBody));
+	(*actSeqCur)->spellPktBody = *spellPktBody;
 	(*actSeqCur)->aiSpellFlagSthg_maybe = flag;
 }
 
@@ -1186,10 +1186,10 @@ uint32_t ActionSequenceSystem::TurnBasedStatusUpdate(D20Actn* d20a, TurnBasedSta
 		return 0;
 	}
 
-	auto aiCheck = d20Sys.d20Defs[d20a->d20ActType].aiCheckMaybe;
-	if (aiCheck)
+	auto tbsCheckFunc = d20Sys.d20Defs[d20a->d20ActType].turnBasedStatusCheck;
+	if (tbsCheckFunc)
 	{
-		if (aiCheck(d20a, &tbStatCopy))
+		if (tbsCheckFunc(d20a, &tbStatCopy))
 		{
 			return actProcResult;
 		}
@@ -1487,22 +1487,21 @@ uint32_t ActionSequenceSystem::combatTriggerSthg(ActnSeq* actSeq)
 	return result;
 }
 
-uint32_t ActionSequenceSystem::seqCheckAction(D20Actn* d20a, TurnBasedStatus* iO)
+ActionErrorCode ActionSequenceSystem::seqCheckAction(D20Actn* d20a, TurnBasedStatus* tbStat)
 {
-	uint32_t a = TurnBasedStatusUpdate(d20a, iO);
-	if (a)
+	ActionErrorCode errorCode = (ActionErrorCode)TurnBasedStatusUpdate(d20a, tbStat);
+	if (errorCode)
 	{
-		iO->idxSthg = a;
-		//*((uint32_t*)iO + 8) = a;
-		return a;
+		tbStat->errCode = errorCode;
+		return errorCode;
 	}
 	
-	auto checkFunc = d20->d20Defs[ d20a->d20ActType].actionCheckFunc;
-	if (checkFunc)
+	auto actionCheckFunc = d20->d20Defs[ d20a->d20ActType].actionCheckFunc;
+	if (actionCheckFunc)
 	{
-		return checkFunc(d20a, iO);
+		return (ActionErrorCode)actionCheckFunc(d20a, tbStat);
 	}
-	return 0;
+	return AEC_OK;
 }
 
 uint32_t ActionSequenceSystem::curSeqNext()
@@ -2647,7 +2646,7 @@ void ActnSeqReplacements::NaturalAttackOverwrites()
 
 	// TurnBasedStatusUpdate
 	// 10093980  aiCheck
-	writeVal = (int)&d20Sys.d20Defs[0].aiCheckMaybe;
+	writeVal = (int)&d20Sys.d20Defs[0].turnBasedStatusCheck;
 	write(0x10093980 + 2, &writeVal, sizeof(int));
 
 
@@ -2714,7 +2713,7 @@ void ActnSeqReplacements::NaturalAttackOverwrites()
 	write(0x10097330 + 2, &writeVal, sizeof(int));
 	writeVal = (int)&d20Sys.d20Defs[0].flags;
 	write(0x1009753B + 2, &writeVal, sizeof(int));
-	writeVal = (int)&d20Sys.d20Defs[0].aiCheckMaybe;
+	writeVal = (int)&d20Sys.d20Defs[0].turnBasedStatusCheck;
 	write(0x1009754D + 2, &writeVal, sizeof(int));
 	writeVal = (int)&d20Sys.d20Defs[0].pickerFuncMaybe;
 	write(0x100976C9 + 2, &writeVal, sizeof(int));

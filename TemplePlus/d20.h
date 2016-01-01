@@ -191,7 +191,7 @@ enum D20ADF : int{
 struct D20ActionDef
 {
 	uint32_t (__cdecl *addToSeqFunc)(D20Actn *, ActnSeq *, TurnBasedStatus*iO);
-	uint32_t (__cdecl* aiCheckMaybe)(D20Actn* d20a, TurnBasedStatus* iO);
+	uint32_t (__cdecl* turnBasedStatusCheck)(D20Actn* d20a, TurnBasedStatus* iO);
 	uint32_t (__cdecl * actionCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO);
 	uint32_t (__cdecl * tgtCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO);
 	uint32_t (__cdecl * locCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO, LocAndOffsets * locAndOff); // also seems to double as a generic check function (e.g. for move silently it checks if combat is active and nothing to do with location)

@@ -17,6 +17,7 @@
 #include "python/python_integration_obj.h"
 #include "python/python_object.h"
 #include "util/fixes.h"
+#include "party.h"
 struct AiSystem aiSys;
 
 
@@ -367,6 +368,38 @@ int AiSystem::Approach(AiTactic* aiTac)
 	if (actSeqSys.ActionSequenceChecksWithPerformerLocation())
 	{
 		actSeqSys.ActionSequenceRevertPath(d20aNum);
+		return 0;
+	}
+	return 1;
+}
+
+int AiSystem::CastParty(AiTactic* aiTac)
+{
+	auto initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+	if (!aiTac->target)
+		return 0;
+	objHndl enemiesCanMelee[40];
+	int castDefensively = 0;
+	if (combatSys.GetEnemiesCanMelee(aiTac->performer, enemiesCanMelee) > 0)
+		castDefensively = 1;
+	d20Sys.d20SendSignal(aiTac->performer, DK_SIG_SetCastDefensively, castDefensively, 0);
+	LocAndOffsets targetLoc =	objects.GetLocationFull(aiTac->target);
+	auto partyLen = party.GroupListGetLen();
+	for (int i = 0; i < partyLen; i++)
+	{
+		aiTac->spellPktBody.targetListHandles[i] = party.GroupListGetMemberN(i);
+	}
+	aiTac->spellPktBody.targetListNumItems = partyLen;
+
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_CAST_SPELL, 0);
+	actSeqSys.ActSeqCurSetSpellPacket(&aiTac->spellPktBody, 1); // ignore LOS changed to 1, was originally 0
+	d20Sys.GlobD20ActnSetSpellData(&aiTac->d20SpellData);
+	d20Sys.GlobD20ActnSetTarget(aiTac->target, &targetLoc); // originally fetched a concious party member, seems like a bug so I changed it to the target
+	actSeqSys.ActionAddToSeq();
+	if (actSeqSys.ActionSequenceChecksWithPerformerLocation() != AEC_OK)
+	{
+		actSeqSys.ActionSequenceRevertPath(initialActNum);
 		return 0;
 	}
 	return 1;
@@ -925,7 +958,7 @@ int AiSystem::Default(AiTactic* aiTac)
 	d20Sys.GlobD20ActnInit();
 	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_ATTACK, 0);
 	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
-	auto addToSeqRes = actSeqSys.ActionAddToSeq();
+	ActionErrorCode addToSeqRes = (ActionErrorCode)actSeqSys.ActionAddToSeq();
 	int performError = actSeqSys.ActionSequenceChecksWithPerformerLocation();
 	if (!performError)
 		return 1;
@@ -1018,6 +1051,7 @@ public:
 	static int AiGoMelee(AiTactic* aiTac);
 	static int AiSniper(AiTactic* aiTac);
 	static int AiAttackThreatened(AiTactic* aiTac);
+	static int AiCastParty(AiTactic* aiTac);
 
 	void apply() override 
 	{
@@ -1025,6 +1059,7 @@ public:
 		
 		replaceFunction(0x100E3270, AiDefault);
 		replaceFunction(0x100E3A00, _AiTargetClosest);
+		replaceFunction(0x100E43F0, AiCastParty);
 		replaceFunction(0x100E46C0, AiAttack);
 		replaceFunction(0x100E46D0, _AiTargetThreatened);
 		replaceFunction(0x100E48D0, _AiApproach);
@@ -1036,6 +1071,7 @@ public:
 		
 		replaceFunction(0x100E55A0, AiGoMelee);
 		replaceFunction(0x100E58D0, AiSniper);
+		
 		
 	}
 } aiReplacements;
@@ -1064,6 +1100,12 @@ int AiReplacements::AiAttackThreatened(AiTactic* aiTac)
 {
 	return aiSys.AttackThreatened(aiTac);
 }
+
+int AiReplacements::AiCastParty(AiTactic* aiTac)
+{
+	return aiSys.CastParty(aiTac);
+}
+
 #pragma endregion 
 AiPacket::AiPacket(objHndl objIn)
 {

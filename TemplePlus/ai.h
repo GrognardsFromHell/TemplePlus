@@ -96,6 +96,7 @@ struct AiSystem : temple::AddressTable
 	int TargetClosest(AiTactic * aiTac);
 	int TargetThreatened(AiTactic * aiTac);
 	int Approach(AiTactic* aiTac);
+	int CastParty(AiTactic * aiTac);
 	int CoupDeGrace(AiTactic * aiTac);
 	int ChargeAttack(AiTactic * aiTac);
 	int PickUpWeapon(AiTactic* aiTac);

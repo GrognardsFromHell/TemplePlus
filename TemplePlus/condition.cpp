@@ -431,6 +431,7 @@ int TooltipNoRepetitionCallback(DispatcherCallbackArgs args)
 	if (idx == numstrings) // reached the end and not found
 	{
 		strncpy(dispIo->strings[numstrings], mesLine, 0x100);
+		dispIo->numStrings++;
 	}
 	return 0;
 };
@@ -944,6 +945,8 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondDisarmed);
 	// conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondSuperiorExpertise); // will just be patched inside Combat Expertise callbacks
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondRend);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondCaptivatingSong);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondCaptivated);
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondCraftWandLevelSet);
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondAidAnother);
 	/*
@@ -1297,6 +1300,7 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 4, dispTypeRadialMenuEntry, 0, DisarmedRetrieveWeaponRadialMenu, 0, 0);
 	DispatcherHookInit(cond, 5, dispTypeConditionAdd, 0, DisarmedOnAdd, 0, 0);
 
+#pragma region Monster Abilities
 	// Rend
 
 	mCondRend = &condRend;
@@ -1338,7 +1342,7 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 8, dispTypeConditionRemove, 0, EndParticlesFromArg, 1, 0);
 	DispatcherHookInit(cond, 9, dispTypeBeginRound, 0, ConditionDurationTicker, 0, 0);
 
-
+#pragma endregion
 	// Craft Wand
 	mCondCraftWand = new CondStructNew();
 	memset(mCondCraftWand, 0, sizeof(CondStructNew));
@@ -2102,7 +2106,7 @@ int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args)
 	ObjectId singerId = objects.GetId(singer);
 	memcpy(&args.subDispNode->condNode->args[2], &singerId, sizeof(ObjectId));
 
-	conds.AddTo(args.objHndCaller, "Captivated", { duration,0 });
+	conds.AddTo(args.objHndCaller, "Captivated", { duration,0, 0,0,0,0,0,0 });
 	return 0;
 }
 
