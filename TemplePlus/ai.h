@@ -93,16 +93,25 @@ struct AiSystem : temple::AddressTable
 	void SetCombatFocus(objHndl npc, objHndl target);
 	void SetWhoHitMeLast(objHndl npc, objHndl target);
 
-	int TargetClosest(AiTactic * aiTac);
-	int TargetThreatened(AiTactic * aiTac);
+	// AI Tactic functions
+	// These generate action sequences for the AI and/or change the AI target
 	int Approach(AiTactic* aiTac);
+	int AttackThreatened(AiTactic* aiTac);
+	int BreakFree(AiTactic* aiTac);
 	int CastParty(AiTactic * aiTac);
 	int CoupDeGrace(AiTactic * aiTac);
 	int ChargeAttack(AiTactic * aiTac);
-	int PickUpWeapon(AiTactic* aiTac);
-	int BreakFree(AiTactic* aiTac);
+	int Default(AiTactic* aiTac);
+	int Flank(AiTactic * aiTac);
 	int GoMelee(AiTactic* aiTac);
+	int PickUpWeapon(AiTactic* aiTac);	
 	int Sniper(AiTactic *aiTac);
+	int TargetClosest(AiTactic * aiTac);
+	int TargetThreatened(AiTactic * aiTac);
+
+	unsigned int Asplode(AiTactic * aiTactic);
+	unsigned int WakeFriend(AiTactic* aiTac);
+
 	void UpdateAiFightStatus(objHndl objIn, int* aiState, objHndl* target);
 	int UpdateAiFlags(objHndl ObjHnd, int aiFightStatus, objHndl target, int *soundMap);
 	void StrategyTabLineParseTactic(AiStrategy*, char * tacName, char * middleString, char* spellString);
@@ -112,10 +121,9 @@ struct AiSystem : temple::AddressTable
 	BOOL AiFiveFootStepAttempt(AiTactic * aiTac);
 
 	void RegisterNewAiTactics();
-	unsigned int Asplode(AiTactic * aiTactic);
-	unsigned int WakeFriend(AiTactic* aiTac);
-	int Default(AiTactic* aiTac);
-	int AttackThreatened(AiTactic* aiTac);
+	
+	
+	
 	void AiTurnSthg_1005EEC0(objHndl obj);
 private:
 	void (__cdecl *_ShitlistAdd)(objHndl npc, objHndl target);

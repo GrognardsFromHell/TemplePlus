@@ -185,10 +185,16 @@ struct Pathfinding : temple::AddressTable {
 	
 	int(__cdecl*FindPathBetweenNodes)(int fromNodeId, int toNodeId, void*, int maxChainLength); // finds the node IDs for the To -> .. -> From course (locally optimal I think? Is this A*?); return value is chain length
 
-
+	/*
+		if target tile is not clear (blocked, or not enough space for the obj), find another one
+		irrelevant for ADJ_RADIUS
+	*/
 	bool GetAlternativeTargetLocation(Path* pqr, PathQuery* pq);
-
-
+	/*
+		For ADJ_RADIUS: test if the target is surrounded and thus unreachable.
+		Use in combat only.
+	*/
+	bool TargetSurrounded(Path* pqr, PathQuery* pq);
 
 	int FindPath(PathQuery* pq, PathQueryResult* result);
 	void (__cdecl *ToEEpathDistBtwnToAndFrom)(Path *path); // outputs to FPU (st0);  apparently distance in feet (since it divides by 12)
@@ -206,8 +212,9 @@ struct Pathfinding : temple::AddressTable {
 	int GetPartialPath(Path* path, Path* pathTrunc, float startDistFeet, float endDistFeet);
 	int TruncatePathToDistance(Path* path, LocAndOffsets* truncatedLoc, float truncateLengthFeet);
 
-protected:
 	void PathInit(Path* pqr, PathQuery* pq);
+protected:
+	
 
 	uint32_t ShouldUsePathnodes(Path* pathQueryResult, PathQuery* pathQuery);
 	int FindPathUsingNodes(PathQuery* pq, Path* pqr);

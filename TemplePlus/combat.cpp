@@ -13,6 +13,7 @@
 #include "util/fixes.h"
 #include "weapon.h"
 #include "float_line.h"
+#include "pathfinding.h"
 
 
 class CombatSystemReplacements : public TempleFix
@@ -110,6 +111,7 @@ int CombatSystem::IsWithinReach(objHndl attacker, objHndl target)
 	float distTo = locSys.DistanceToObj(attacker, target);
 	return distTo < reach;
 }
+
 
 BOOL CombatSystem::CanMeleeTargetAtLocRegardItem(objHndl obj, objHndl weapon, objHndl target, LocAndOffsets* loc)
 {

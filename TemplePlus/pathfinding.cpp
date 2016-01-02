@@ -528,6 +528,79 @@ bool Pathfinding::GetAlternativeTargetLocation(Path* pqr, PathQuery* pq)
 	return 1;
 }
 
+bool Pathfinding::TargetSurrounded(Path* pqr, PathQuery* pq)
+{
+	if (    (pq->flags & PQF_IGNORE_CRITTERS) 
+		|| !(pq->flags & PQF_TARGET_OBJ ) 
+		|| !(pq->flags & PQF_HAS_CRITTER) )
+	{ // do outside combat and only for paths with target critter
+		return 0;
+	}
+
+	auto tgtObj = pq->targetObj;
+	
+
+	float overallOffX, overallOffY, maxDist = pq->tolRadius, minDist = pq->distanceToTargetMin;
+	int maxSubtileDist = static_cast<int>(maxDist / (INCH_PER_TILE / 3)),
+		minSubtileDist = static_cast<int>(minDist / (INCH_PER_TILE / 3)),
+		minSubtileDistSqr = static_cast<int>(minDist*minDist),
+		maxSubtileDistSqr = static_cast<int>(maxDist*maxDist);
+		
+	LocAndOffsets tgtLoc, tweakedLoc;
+	locSys.getLocAndOff(tgtObj, &tgtLoc);
+	locSys.GetOverallOffset(tgtLoc, &overallOffX, &overallOffY);
+	const float INCH_PER_SUBTILE = INCH_PER_TILE / 3;
+	for (int i = 1; i <= maxSubtileDist; i++)
+	{
+		float iOff = i * INCH_PER_SUBTILE;
+		for (int j = -i; j <= i; j++)
+		{
+			float jOff = j * INCH_PER_SUBTILE;
+
+			int digitalDistSqr = (i * i + j * j);
+			if (digitalDistSqr < minSubtileDistSqr
+				|| digitalDistSqr > maxSubtileDistSqr)
+				continue;
+			tweakedLoc = tgtLoc;
+			tweakedLoc.off_x += jOff;
+			tweakedLoc.off_y -= iOff;
+			locSys.RegularizeLoc(&tweakedLoc);
+			if (PathDestIsClear(pq, pqr->mover, tweakedLoc))
+			{
+				return 0;
+			}
+
+			tweakedLoc = tgtLoc;
+			tweakedLoc.off_x -= jOff;
+			tweakedLoc.off_y += iOff;
+			locSys.RegularizeLoc(&tweakedLoc);
+			if (PathDestIsClear(pq, pqr->mover, tweakedLoc))
+			{
+				return 0;
+			}
+
+			tweakedLoc = tgtLoc;
+			tweakedLoc.off_x += jOff;
+			tweakedLoc.off_y += iOff;
+			locSys.RegularizeLoc(&tweakedLoc);
+			if (PathDestIsClear(pq, pqr->mover, tweakedLoc))
+			{
+				return 0;
+			}
+
+			tweakedLoc = tgtLoc;
+			tweakedLoc.off_x -= jOff;
+			tweakedLoc.off_y -= iOff;
+			locSys.RegularizeLoc(&tweakedLoc);
+			if (PathDestIsClear(pq, pqr->mover, tweakedLoc))
+			{
+				return 0;
+			}
+		}
+	}
+	return 1;
+
+}
 
 int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 {
@@ -1275,6 +1348,11 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	auto toSubtile = locSys.subtileFromLoc(&pqr->to);
 	if (locSys.subtileFromLoc(&pqr->from) == toSubtile || !GetAlternativeTargetLocation(pqr, pq))
 		return 0;
+
+	if (TargetSurrounded(pqr, pq))
+	{
+		return 0;
+	}
 
 	if (!config.pathfindingDebugMode )
 		if (PathCacheGet(pq, pqr)) // has this query been done before? if so copies it and returns the result

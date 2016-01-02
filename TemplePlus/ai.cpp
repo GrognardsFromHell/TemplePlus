@@ -975,6 +975,93 @@ int AiSystem::Default(AiTactic* aiTac)
 	return performError == 0;
 }
 
+int AiSystem::Flank(AiTactic* aiTac)
+{
+	auto initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum; // used for resetting in case of failure
+	auto target = aiTac->target;
+	if (!target)
+		return 0;
+	auto performer = aiTac->performer;
+
+	// if wielding ranged, go melee
+	GoMelee(aiTac); // checks internally for weapon etc.
+
+	// preliminary checks
+	{
+		if (!d20Sys.d20QueryWithData(target, DK_QUE_CanBeFlanked, aiTac->performer))
+			return 0;
+		if (combatSys.IsFlankedBy(target, performer))
+		{
+			return 0;
+		}
+		if (actSeqSys.isSimultPerformer(performer) && actSeqSys.simulsAbort(performer))
+		{
+			actSeqSys.curSeqReset(performer);
+			return 1;
+		}
+	
+		// added check for surroundment for performance reasons
+		PathQuery pq;
+		Path pqr;
+		pq.flags = static_cast<PathQueryFlags>(PQF_HAS_CRITTER | PQF_TARGET_OBJ | PQF_ADJUST_RADIUS);
+		pq.critter = performer;
+		pq.targetObj = target;
+		pathfindingSys.PathInit(&pqr, &pq);
+		if (pathfindingSys.TargetSurrounded(&pqr, &pq))
+		{
+			return 0;
+		}
+	}
+
+	// cycle through surrounding allies and attempt to move to their opposite location
+	objHndl allies[40];
+	auto numAllies = combatSys.GetEnemiesCanMelee(target, allies);
+	if (numAllies <= 0)
+		return 0;
+
+
+	LocAndOffsets tgtLoc = objects.GetLocationFull(target);
+	float tgtAbsX, tgtAbsY, 
+		tgtRadius = objects.GetRadius(target), 
+		flankDist = objects.GetRadius(performer)+ tgtRadius + 8.0;
+
+	locSys.GetOverallOffset(tgtLoc, &tgtAbsX, &tgtAbsY);
+	for (int i = 0; i < numAllies; i++)
+	{
+		if (allies[i] == performer)
+			continue;
+
+		LocAndOffsets allyLoc = objects.GetLocationFull(allies[i]),
+			flankLoc;
+		float allyAbsX, allyAbsY, flankAbsX, flankAbsY, deltaX, deltaY, normalization;
+		// get the diametrically opposed location
+		{
+			locSys.GetOverallOffset(allyLoc, &allyAbsX, &allyAbsY);
+			deltaX = allyAbsX - tgtAbsX;
+			deltaY = allyAbsY - tgtAbsY;
+			normalization = 1.0 / sqrt(deltaY*deltaY + deltaX*deltaX);
+			flankAbsX = tgtAbsX - (normalization * deltaX) * flankDist;
+			flankAbsY = tgtAbsY - (normalization * deltaY) * flankDist;
+			flankLoc.FromAbsolute(flankAbsX, flankAbsY);
+		}
+
+		// create a d20 action using that location
+		d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_MOVE, 0);
+		d20Sys.GlobD20ActnSetTarget(0i64, &flankLoc);
+		LocAndOffsets pathTgt;
+		if (!actSeqSys.ActionAddToSeq()
+			&& actSeqSys.GetPathTargetLocFromCurD20Action(&pathTgt)
+			&& combatSys.CanMeleeTargetAtLoc(performer, target, &pathTgt)
+			&& actSeqSys.ActionSequenceChecksWithPerformerLocation() == AEC_OK)
+		{
+			return 1;
+		}
+		actSeqSys.ActionSequenceRevertPath(initialActNum);
+	}
+	return 0;
+	
+}
+
 int AiSystem::AttackThreatened(AiTactic* aiTac)
 {
 	if (!aiTac->target || !combatSys.CanMeleeTarget(aiTac->performer, aiTac->target))
@@ -1015,11 +1102,6 @@ int _AiTargetClosest(AiTactic * aiTac)
 	return aiSys.TargetClosest(aiTac);
 }
 
-int _AiTargetThreatened(AiTactic * aiTac)
-{
-	return aiSys.TargetThreatened(aiTac);
-}
-
 
 void _StrategyTabLineParser(TabFileStatus* tabFile, int n, char** strings)
 {
@@ -1051,7 +1133,9 @@ public:
 	static int AiGoMelee(AiTactic* aiTac);
 	static int AiSniper(AiTactic* aiTac);
 	static int AiAttackThreatened(AiTactic* aiTac);
+	static int AiTargetThreatened(AiTactic* aiTac);
 	static int AiCastParty(AiTactic* aiTac);
+	static int AiFlank(AiTactic* aiTac);
 
 	void apply() override 
 	{
@@ -1061,17 +1145,16 @@ public:
 		replaceFunction(0x100E3A00, _AiTargetClosest);
 		replaceFunction(0x100E43F0, AiCastParty);
 		replaceFunction(0x100E46C0, AiAttack);
-		replaceFunction(0x100E46D0, _AiTargetThreatened);
+		replaceFunction(0x100E46D0, AiTargetThreatened);
 		replaceFunction(0x100E48D0, _AiApproach);
 		replaceFunction(0x100E4BD0, _AiCharge);
 		replaceFunction(0x100E50C0, _aiStrategyParse);
 		replaceFunction(0x100E5460, _AiOnInitiativeAdd);
 		replaceFunction(0x100E5500, _StrategyTabLineParser);
-		replaceFunction(0x100E5DB0, _AiCoupDeGrace);
-		
 		replaceFunction(0x100E55A0, AiGoMelee);
 		replaceFunction(0x100E58D0, AiSniper);
-		
+		replaceFunction(0x100E5950, AiFlank);
+		replaceFunction(0x100E5DB0, _AiCoupDeGrace);
 		
 	}
 } aiReplacements;
@@ -1084,6 +1167,11 @@ int AiReplacements::AiDefault(AiTactic* aiTac)
 int AiReplacements::AiAttack(AiTactic* aiTac)
 {
 	return aiSys.Default(aiTac);
+}
+
+int AiReplacements::AiTargetThreatened(AiTactic* aiTac)
+{
+	return aiSys.TargetThreatened(aiTac);
 }
 
 int AiReplacements::AiGoMelee(AiTactic* aiTac)
@@ -1106,6 +1194,10 @@ int AiReplacements::AiCastParty(AiTactic* aiTac)
 	return aiSys.CastParty(aiTac);
 }
 
+int AiReplacements::AiFlank(AiTactic* aiTac)
+{
+	return aiSys.Flank(aiTac);
+}
 #pragma endregion 
 AiPacket::AiPacket(objHndl objIn)
 {
