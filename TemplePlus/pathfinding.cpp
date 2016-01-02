@@ -543,8 +543,8 @@ bool Pathfinding::TargetSurrounded(Path* pqr, PathQuery* pq)
 	float overallOffX, overallOffY, maxDist = pq->tolRadius, minDist = pq->distanceToTargetMin;
 	int maxSubtileDist = static_cast<int>(maxDist / (INCH_PER_TILE / 3)),
 		minSubtileDist = static_cast<int>(minDist / (INCH_PER_TILE / 3)),
-		minSubtileDistSqr = static_cast<int>(minDist*minDist),
-		maxSubtileDistSqr = static_cast<int>(maxDist*maxDist);
+		minSubtileDistSqr = static_cast<int>(minDist / (INCH_PER_TILE / 3) * minDist / (INCH_PER_TILE / 3)),
+		maxSubtileDistSqr = static_cast<int>(maxDist / (INCH_PER_TILE / 3) * maxDist / (INCH_PER_TILE / 3));
 		
 	LocAndOffsets tgtLoc, tweakedLoc;
 	locSys.getLocAndOff(tgtObj, &tgtLoc);

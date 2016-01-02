@@ -1007,6 +1007,7 @@ int AiSystem::Flank(AiTactic* aiTac)
 		pq.critter = performer;
 		pq.targetObj = target;
 		pathfindingSys.PathInit(&pqr, &pq);
+		pq.tolRadius += critterSys.GetReach(performer, D20A_UNSPECIFIED_ATTACK);
 		if (pathfindingSys.TargetSurrounded(&pqr, &pq))
 		{
 			return 0;
