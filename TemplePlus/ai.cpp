@@ -989,9 +989,14 @@ int AiSystem::Flank(AiTactic* aiTac)
 	// preliminary checks
 	{
 		if (!d20Sys.d20QueryWithData(target, DK_QUE_CanBeFlanked, aiTac->performer))
+		{
+			logger->info("Target inherently unflankable; next.");
 			return 0;
+		}
+			
 		if (combatSys.IsFlankedBy(target, performer))
 		{
+			logger->info("Already flanking; next.");
 			return 0;
 		}
 		if (actSeqSys.isSimultPerformer(performer) && actSeqSys.simulsAbort(performer))
@@ -1010,6 +1015,7 @@ int AiSystem::Flank(AiTactic* aiTac)
 		pq.tolRadius += critterSys.GetReach(performer, D20A_UNSPECIFIED_ATTACK);
 		if (pathfindingSys.TargetSurrounded(&pqr, &pq))
 		{
+			logger->info("Target surrounded; next.");
 			return 0;
 		}
 	}
@@ -1018,8 +1024,12 @@ int AiSystem::Flank(AiTactic* aiTac)
 	objHndl allies[40];
 	auto numAllies = combatSys.GetEnemiesCanMelee(target, allies);
 	if (numAllies <= 0)
+	{
+		logger->info("No allies to flank with; next.");
 		return 0;
-
+	}
+		
+	logger->info("Flank preliminary checks passed; {} allies found in melee range", numAllies);
 
 	LocAndOffsets tgtLoc = objects.GetLocationFull(target);
 	float tgtAbsX, tgtAbsY, 
@@ -1041,22 +1051,62 @@ int AiSystem::Flank(AiTactic* aiTac)
 			deltaX = allyAbsX - tgtAbsX;
 			deltaY = allyAbsY - tgtAbsY;
 			normalization = 1.0 / sqrt(deltaY*deltaY + deltaX*deltaX);
-			flankAbsX = tgtAbsX - (normalization * deltaX) * flankDist;
-			flankAbsY = tgtAbsY - (normalization * deltaY) * flankDist;
-			flankLoc.FromAbsolute(flankAbsX, flankAbsY);
-		}
+			float xHat = deltaX * normalization, // components of unit vector from target to ally
+					yHat = deltaY * normalization;
 
+			flankAbsX = tgtAbsX - xHat * flankDist;
+			flankAbsY = tgtAbsY - yHat * flankDist;
+			flankLoc.FromAbsolute(flankAbsX, flankAbsY);
+			if (!pathfindingSys.PathDestIsClear(performer, &flankLoc))
+			{
+				bool foundFlankLoc = false;
+				// try to tweak the angle; the flank check looks for the range of 120 - 240°, so we'll try 135,165,195,225
+				float tweakAngles[4] = { -15.0, 15.0, -45.0, 45.0 };
+				for (int i = 0; i < 4; i++)
+				{
+					float tweakAngle = tweakAngles[i] * M_PI / 180;
+					float xHat2 = xHat * cosf(tweakAngle) + yHat * sinf(tweakAngle),
+						yHat2 =  -xHat * sinf(tweakAngle) + yHat * cosf(tweakAngle) ;
+					flankAbsX = tgtAbsX - xHat2 * flankDist;
+					flankAbsY = tgtAbsY - yHat2 * flankDist;
+					flankLoc.FromAbsolute(flankAbsX, flankAbsY);
+					if (pathfindingSys.PathDestIsClear(performer, &flankLoc))
+					{
+						foundFlankLoc = true;
+						break;
+					}		
+				}
+				if (!foundFlankLoc)
+				{
+					if (i == numAllies-1)
+						logger->info("No clear flanking position found; next ai tactic.");
+					return 0;
+				}	
+			}
+		}
+		logger->info("Found flanking position: {} ; attempting move to position.", flankLoc);
 		// create a d20 action using that location
 		d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_MOVE, 0);
 		d20Sys.GlobD20ActnSetTarget(0i64, &flankLoc);
 		LocAndOffsets pathTgt;
-		if (!actSeqSys.ActionAddToSeq()
-			&& actSeqSys.GetPathTargetLocFromCurD20Action(&pathTgt)
-			&& combatSys.CanMeleeTargetAtLoc(performer, target, &pathTgt)
-			&& actSeqSys.ActionSequenceChecksWithPerformerLocation() == AEC_OK)
+		auto actionCheckResult = actSeqSys.ActionAddToSeq();
+		if (actionCheckResult != AEC_OK)
 		{
-			return 1;
+			logger->info("Failed move to position when adding to sequence.");
 		}
+		else if (actSeqSys.GetPathTargetLocFromCurD20Action(&pathTgt)
+			&& combatSys.CanMeleeTargetFromLoc(performer, target, &pathTgt))
+		{
+			actionCheckResult = actSeqSys.ActionSequenceChecksWithPerformerLocation();
+			if (actionCheckResult == AEC_OK)
+			{
+				return 1;
+			}
+		} 
+		if (actionCheckResult)
+			logger->info("Failed move to position due to sequence checks. Error Code: {}", actionCheckResult);
+		else
+			logger->info("Failed move to position due to CanMeleeTargetAtLoc check! Location was {}", pathTgt);
 		actSeqSys.ActionSequenceRevertPath(initialActNum);
 	}
 	return 0;

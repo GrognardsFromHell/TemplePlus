@@ -127,9 +127,10 @@ BOOL CombatSystem::CanMeleeTargetAtLocRegardItem(objHndl obj, objHndl weapon, ob
 		if ((critterFlags & OCF_MONSTER) == 0 && !feats.HasFeatCountByClass(obj, FEAT_IMPROVED_UNARMED_STRIKE))
 			return 0;
 	}
-	float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
+	float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK),
+		tgtRadius = locSys.InchesToFeet(objects.GetRadius(target));
 	auto distToLoc = max((float)0.0,locSys.DistanceToLocFeet(obj, loc));
-	if (locSys.InchesToFeet(objects.GetRadius(target)) + objReach < distToLoc)
+	if (tgtRadius + objReach < distToLoc)
 		return 0;
 	return 1;
 }
@@ -151,6 +152,50 @@ BOOL CombatSystem::CanMeleeTargetAtLoc(objHndl obj, objHndl target, LocAndOffset
 				return 0;
 		}
 	}
+	return 1;
+}
+
+BOOL CombatSystem::CanMeleeTargetFromLoc(objHndl obj, objHndl target, LocAndOffsets* objLoc)
+{
+	objHndl weapon = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
+	if (!combatSys.CanMeleeTargetFromLocRegardItem(obj, weapon, target, objLoc))
+	{
+		objHndl secondaryWeapon = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);
+		if (!combatSys.CanMeleeTargetFromLocRegardItem(obj, secondaryWeapon, target, objLoc))
+		{
+			if (!objects.getArrayFieldInt32(obj, obj_f_critter_attacks_idx, 0))
+				return 0;
+			float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
+			float tgtRadius = objects.GetRadius(target) / 12.0;
+			if (max(static_cast<float>(0.0),
+				locSys.DistanceToLocFeet(target, objLoc)) - tgtRadius > objReach)
+				return 0;
+		}
+	}
+	return 1;
+}
+
+bool CombatSystem::CanMeleeTargetFromLocRegardItem(objHndl obj, objHndl weapon, objHndl target, LocAndOffsets* objLoc)
+{
+	if (weapon)
+	{
+		if (objects.GetType(weapon) != obj_t_weapon)
+			return 0;
+		if (inventory.IsRangedWeapon(weapon))
+			return 0;
+	}
+	else
+	{
+		CritterFlag critterFlags = critterSys.GetCritterFlags(obj);
+		if ((critterFlags & OCF_MONSTER) == 0 && !feats.HasFeatCountByClass(obj, FEAT_IMPROVED_UNARMED_STRIKE))
+			return 0;
+	}
+	float objReach  = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK),
+		  tgtRadius = locSys.InchesToFeet(objects.GetRadius(target));
+	auto distToLoc = max((float)0.0, locSys.DistanceToLocFeet(target, objLoc));
+
+	if (tgtRadius + objReach < distToLoc)
+		return 0;
 	return 1;
 }
 

@@ -24,8 +24,11 @@ struct CombatSystem : temple::AddressTable {
 	char * GetCombatMesLine(int line);
 	void FloatCombatLine(objHndl obj, int line);
 	int IsWithinReach(objHndl attacker, objHndl target);
+	
+	BOOL CanMeleeTargetAtLoc(objHndl obj, objHndl target, LocAndOffsets* loc); // checks if obj is able to hit target if the TARGET is at loc	
 	BOOL CanMeleeTargetAtLocRegardItem(objHndl obj, objHndl weapon, objHndl target, LocAndOffsets* loc);
-	BOOL CanMeleeTargetAtLoc(objHndl obj, objHndl target, LocAndOffsets* loc);
+	BOOL CanMeleeTargetFromLoc(objHndl obj, objHndl target, LocAndOffsets* objLoc); // checks if OBJ is able to hit TARGET if OBJ is at loc
+	bool CanMeleeTargetFromLocRegardItem(objHndl obj, objHndl weapon, objHndl target, LocAndOffsets* objLoc);
 	BOOL CanMeleeTarget(objHndl obj, objHndl target);
 	BOOL CanMeleeTargetRegardWeapon(objHndl obj, objHndl weapon, objHndl target);
 	int GetThreateningCrittersAtLoc(objHndl obj, LocAndOffsets* loc, objHndl threateners[40]);
@@ -35,6 +38,7 @@ struct CombatSystem : temple::AddressTable {
 
 	void TurnProcessing_100635E0(objHndl obj);
 	void TurnProcessing(objHndl obj);
+	
 	uint32_t* combatModeActive;
 	bool isCombatActive();
 	uint32_t IsCloseToParty(objHndl objHnd);

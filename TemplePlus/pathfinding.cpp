@@ -378,6 +378,51 @@ int Pathfinding::PathDestIsClear(PathQuery* pq, objHndl mover, LocAndOffsets des
 
 }
 
+int Pathfinding::PathDestIsClear(objHndl mover, LocAndOffsets* destLoc)
+{
+
+	RaycastPacket objIt;
+	objIt.origin = *destLoc;
+	objIt.targetLoc = *destLoc;
+
+	*(int*)&objIt.flags |= (ExcludeItemObjects | StopAfterFirstBlockerFound | StopAfterFirstFlyoverFound);
+
+	if (mover)
+	{
+		*(int*)&objIt.flags |= (HasSourceObj | HasRadius);
+		objIt.sourceObj = mover;
+		objIt.radius = objects.GetRadius(mover);
+	}
+
+	ObjectType objType;
+	ObjectFlag objFlags;
+	if (objIt.RaycastShortRange())
+	{
+
+		for (int i = 0; i < objIt.resultCount; i++)
+		{
+			if (!objIt.results[i].obj) // means it's a sector blocker
+				return 0;
+
+			objType = objects.GetType(objIt.results[i].obj);
+
+			if (objType != obj_t_portal)
+			{
+				objFlags = (ObjectFlag)objects.GetFlags(objIt.results[i].obj);
+				if (!(objFlags & OF_NO_BLOCK))
+				{
+					if ((objType == obj_t_pc || objType == obj_t_npc)
+						&& !objects.IsUnconscious(objIt.results[i].obj))
+					{
+						return 0;
+					}
+				}
+			}
+		}
+	}
+	return 1;
+}
+
 PathQueryResult* Pathfinding::FetchAvailablePQRCacheSlot()
 {
 	for (int i = 0; i < PQR_CACHE_SIZE; i++)

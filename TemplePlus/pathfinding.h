@@ -182,6 +182,7 @@ struct Pathfinding : temple::AddressTable {
 	void PathCacheInit();
 
 	int PathDestIsClear(PathQuery* pq, objHndl mover, LocAndOffsets destLoc); // checks if there's anything blocking the destination location (taking into account the mover's radius)
+	int PathDestIsClear(objHndl mover, LocAndOffsets* destLoc); // simpler version without the path query flags
 	
 	int(__cdecl*FindPathBetweenNodes)(int fromNodeId, int toNodeId, void*, int maxChainLength); // finds the node IDs for the To -> .. -> From course (locally optimal I think? Is this A*?); return value is chain length
 
