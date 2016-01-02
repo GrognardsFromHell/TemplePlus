@@ -1118,11 +1118,11 @@ static PyObject* PyObjHandle_ContainerToggleOpen(PyObject* obj, PyObject* args) 
 
 static PyObject* PyObjHandle_SavingThrow(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
-	int dc;
+	int dc, d20aType;
 	SavingThrowType type;
 	auto flags = (D20SavingThrowFlag) 0;
 	objHndl attacker = 0;
-	if (!PyArg_ParseTuple(args, "iii|O&:objhndl:saving_throw", &dc, &type, &flags, &ConvertObjHndl, &attacker)) {
+	if (!PyArg_ParseTuple(args, "iii|O&i:objhndl:saving_throw", &dc, &type, &flags, &ConvertObjHndl, &attacker, &d20aType)) {
 		return 0;
 	}
 
