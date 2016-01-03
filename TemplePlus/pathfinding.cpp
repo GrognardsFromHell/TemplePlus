@@ -217,6 +217,10 @@ Pathfinding::Pathfinding() {
 	// these two are still used a lot in other places outside the pathfinding system so I'm keeping them here for the time being
 	rebase(pathSthgFlag_10B3D5C8,0x10B3D5C8); 
 	rebase(pathQArray, 0x1186AC60);	
+
+	pdbgMover = 0i64;
+	pdbgGotPath = 0;
+	pdbgTargetObj = 0i64;
 }
 
 int Pathfinding::PathCacheGet(PathQuery* pq, Path* pathOut)
@@ -1390,9 +1394,31 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	int refTime;
 
 	PathInit(pqr, pq);
+	if (config.pathfindingDebugMode)
+	{
+		pdbgGotPath = 0;
+		if (pq->critter)
+			pdbgMover = pq->critter;
+		pdbgFrom = pq->from;
+		if (pq->targetObj)
+		{
+			pdbgTargetObj = pq->targetObj;
+			pdbgTo = objects.GetLocationFull(pdbgTargetObj);
+		}
+			
+		else
+		{
+			pdbgTargetObj = 0i64;
+			pdbgTo = pqr->to;
+		}
+	}
 	auto toSubtile = locSys.subtileFromLoc(&pqr->to);
 	if (locSys.subtileFromLoc(&pqr->from) == toSubtile || !GetAlternativeTargetLocation(pqr, pq))
+	{
+		pdbgGotPath = 0;
 		return 0;
+	}
+		
 
 	if (TargetSurrounded(pqr, pq))
 	{
@@ -1440,19 +1466,20 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	if (gotPath)
 	{
 		if (config.pathfindingDebugMode)
-		try
 		{
 			if (pq->critter)
 				logger->info("{} pathed successfully to {}", description.getDisplayName(pq->critter), pqr->to);
-		} catch (...)
-		{
-			logger->info("Corrupt handle: {}", pq->critter);
 		}
-		
+			
 		pqr->flags |= PF_COMPLETE;
 	}
 	PathCachePush(pq, pqr);
 	PathRecordTimeElapsed(refTime);
+	if (config.pathfindingDebugMode)
+	{
+		pdbgGotPath = gotPath;
+		pdbgTo = pqr->to;
+	}
 	return gotPath;
 
 }

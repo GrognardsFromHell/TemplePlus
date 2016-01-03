@@ -161,6 +161,11 @@ struct Pathfinding : temple::AddressTable {
 	int aStarTimeElapsed[20]; // array 20
 	int aStarTimeEnded[20]; //  array 20
 
+#pragma region Debug stuff for diagnostic render
+	LocAndOffsets pdbgFrom, pdbgTo;
+	objHndl pdbgMover, pdbgTargetObj;
+	int pdbgGotPath;
+#pragma endregion
 
 	PathQueryResult * pathQArray;
 	bool pathQueryResultIsValid(PathQueryResult *pqr);

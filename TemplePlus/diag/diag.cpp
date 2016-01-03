@@ -4,6 +4,9 @@
 #include <graphics/graphics.h>
 #include <graphics/textures.h>
 #include <ui/ui_render.h>
+#include <util/config.h>
+#include <pathfinding.h>
+#include <description.h>
 
 class DiagScreen::Impl {
 public:
@@ -48,6 +51,17 @@ void DiagScreen::Render() {
 	lines.push_back(fmt::format("{} of {} loaded", loaded, registered));
 	lines.push_back(fmt::format("Memory Budget: {}", FormatMemSize(textureManager->GetMemoryBudget())));
 	lines.push_back(fmt::format("Used (est.): {}", FormatMemSize(textureManager->GetUsageEstimate())));
+	if (config.pathfindingDebugMode)
+	{
+		lines.push_back(fmt::format("#Pathfinding"));
+		lines.push_back(fmt::format("State: {}", pathfindingSys.pdbgGotPath));
+		if (pathfindingSys.pdbgMover)
+			lines.push_back(fmt::format("Mover Obj: {}", description.getDisplayName( pathfindingSys.pdbgMover)));
+		if (pathfindingSys.pdbgTargetObj)
+			lines.push_back(fmt::format("Target Obj: {}", description.getDisplayName(pathfindingSys.pdbgTargetObj)));
+		lines.push_back(fmt::format("From: {}", pathfindingSys.pdbgFrom));
+		lines.push_back(fmt::format("To: {}", pathfindingSys.pdbgTo));
+	}
 
 	TigRect rect;
 	rect.x = 25;
