@@ -61,6 +61,19 @@ void DiagScreen::Render() {
 			lines.push_back(fmt::format("Target Obj: {}", description.getDisplayName(pathfindingSys.pdbgTargetObj)));
 		lines.push_back(fmt::format("From: {}", pathfindingSys.pdbgFrom));
 		lines.push_back(fmt::format("To: {}", pathfindingSys.pdbgTo));
+		if (pathfindingSys.pdbgUsingNodes && !pathfindingSys.pdbgAbortedSansNodes)
+		{
+			lines.push_back(fmt::format("Using {} pathnodes", pathfindingSys.pdbgNodeNum));
+		} else
+		{
+			if (pathfindingSys.pdbgAbortedSansNodes)
+			{
+				lines.push_back(fmt::format("Using {} direction steps, failed, then tried {} pathnodes", pathfindingSys.pdbgDirectionsCount, pathfindingSys.pdbgNodeNum));
+			} else
+			{
+				lines.push_back(fmt::format("Using {} direction steps", pathfindingSys.pdbgDirectionsCount));
+			}
+		}
 	}
 
 	TigRect rect;

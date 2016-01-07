@@ -165,6 +165,9 @@ struct Pathfinding : temple::AddressTable {
 	LocAndOffsets pdbgFrom, pdbgTo;
 	objHndl pdbgMover, pdbgTargetObj;
 	int pdbgGotPath;
+	bool pdbgUsingNodes, pdbgAbortedSansNodes;
+	int pdbgNodeNum;
+	int pdbgDirectionsCount;
 #pragma endregion
 
 	PathQueryResult * pathQArray;

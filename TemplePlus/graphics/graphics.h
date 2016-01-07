@@ -43,6 +43,7 @@ public:
 	bool ScreenToTile(int x, int y, locXY& tileOut);
 
 	void ShakeScreen(float amount, float duration);
+	void ScrollToLoc(locXY loc);
 
 	/*
 		Take a screenshot with the given size. The image will be stretched to the given

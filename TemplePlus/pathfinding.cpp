@@ -221,6 +221,10 @@ Pathfinding::Pathfinding() {
 	pdbgMover = 0i64;
 	pdbgGotPath = 0;
 	pdbgTargetObj = 0i64;
+	pdbgNodeNum = 0;
+	pdbgUsingNodes = false;
+	pdbgAbortedSansNodes = false;
+	pdbgDirectionsCount = 0;
 }
 
 int Pathfinding::PathCacheGet(PathQuery* pq, Path* pathOut)
@@ -704,7 +708,11 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 		return 0;
 	}
 		
-
+	if (config.pathfindingDebugMode)
+	{
+		pdbgUsingNodes = true;
+		pdbgNodeNum = chainLength;
+	}
 
 
 	MapPathNode nodeTemp1, nodeTemp0;
@@ -982,6 +990,10 @@ void Pathfinding::PathNodesAddByDirections(Path* pqr, PathQuery* pq)
 			}
 		}
 		pqr->nodes[pqr->nodeCount++] = pqr->to;
+	}
+	if (pqr->nodeCount == 0)
+	{
+		int dummy = 1;
 	}
 	pqr->currentNode = 0;
 }
@@ -1370,8 +1382,7 @@ int Pathfinding::FindPathSansNodes(PathQuery* pq, Path* pqr)
 			result = FindPathShortDistanceAdjRadius(pq, pqr);
 		else if (!(pqFlags & PQF_FORCED_STRAIGHT_LINE))
 		{
-			//for (int i = 0; i < 100; i++)
-				result = FindPathShortDistanceSansTarget(pq, pqr);
+			result = FindPathShortDistanceSansTarget(pq, pqr);
 		}
 			
 		else
@@ -1396,6 +1407,9 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	PathInit(pqr, pq);
 	if (config.pathfindingDebugMode)
 	{
+		pdbgUsingNodes = false;
+		pdbgAbortedSansNodes = false;
+		pdbgNodeNum = 0;
 		pdbgGotPath = 0;
 		if (pq->critter)
 			pdbgMover = pq->critter;
@@ -1455,6 +1469,11 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	{
 		if (!(pq->flags & PQF_DONT_USE_PATHNODES)  && !triedPathNodes)
 		{
+			if (config.pathfindingDebugMode)
+			{
+				pdbgAbortedSansNodes = true;
+				logger->info("Failed Sans Nodes attempt... trying nodes.");
+			}
 			gotPath = FindPathUsingNodes(pq, pqr);
 			if (!gotPath)
 			{
@@ -1472,6 +1491,12 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 		}
 			
 		pqr->flags |= PF_COMPLETE;
+	} else
+	{
+		if (config.pathfindingDebugMode)
+		{
+			logger->info("PF to {} failed!", pqr->to);
+		}
 	}
 	PathCachePush(pq, pqr);
 	PathRecordTimeElapsed(refTime);
@@ -1979,6 +2004,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 	if (config.pathfindingDebugMode)
 	{
 		logger->info("*** START OF PF ATTEMPT SANS TARGET - DESTINATION {} ***", pqr->to);
+		pdbgDirectionsCount = 0;
 	}
 	while (1)
 	{
@@ -2190,6 +2216,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 	if (config.pathfindingDebugMode)
 	{
 		logger->info("*** END OF PF ATTEMPT SANS TARGET - {} DIRECTIONS USED ***", directionsCount);
+		pdbgDirectionsCount = directionsCount;
 	}
 
 

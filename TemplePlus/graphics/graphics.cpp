@@ -48,7 +48,9 @@ static struct ExternalGraphicsFuncs : temple::AddressTable {
 	// If it's enabled, what color does it have?
 	D3DCOLOR* gfadeColor;
 
+	
 	void (__cdecl *ShakeScreen)(float amount, float duration);
+	void(__cdecl *ScrollToLoc)(locXY centerLoc);
 
 	ExternalGraphicsFuncs() {
 		rebase(AdvanceShaderClock, 0x101E0A30);
@@ -60,7 +62,9 @@ static struct ExternalGraphicsFuncs : temple::AddressTable {
 		rebase(sub_101EF8B0, 0x101EF8B0);
 
 		rebase(ScreenToLoc, 0x100290C0);
+		
 		rebase(ShakeScreen, 0x10005840);
+		rebase(ScrollToLoc, 0x10005BC0);
 	}
 } externalGraphicsFuncs;
 
@@ -314,6 +318,11 @@ bool Graphics::ScreenToTile(int x, int y, locXY& tileOut) {
 
 void Graphics::ShakeScreen(float amount, float duration) {
 	externalGraphicsFuncs.ShakeScreen(amount, duration);
+}
+
+void Graphics::ScrollToLoc(locXY loc)
+{
+	externalGraphicsFuncs.ScrollToLoc(loc);
 }
 
 void Graphics::AddResourceListener(ResourceListener* listener) {
