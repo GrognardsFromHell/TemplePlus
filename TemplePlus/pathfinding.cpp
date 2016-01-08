@@ -219,7 +219,7 @@ Pathfinding::Pathfinding() {
 	rebase(pathQArray, 0x1186AC60);	
 
 	pdbgMover = 0i64;
-	pdbgGotPath = 0;
+	pdbgGotPath = pdbgShortRangeError =  0;
 	pdbgTargetObj = 0i64;
 	pdbgNodeNum = 0;
 	pdbgUsingNodes = false;
@@ -1369,6 +1369,10 @@ int Pathfinding::FindPathSansNodes(PathQuery* pq, Path* pqr)
 		pqr->nodeCount3 = 0;
 		if (result)
 		{
+			if (config.pathfindingDebugMode)
+			{
+				logger->info("Straight line succeeded.");
+			}
 			PathNodesAddByDirections(pqr, pq);
 			return pqr->nodeCount;
 		}
@@ -1407,12 +1411,16 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	PathInit(pqr, pq);
 	if (config.pathfindingDebugMode)
 	{
+		
 		pdbgUsingNodes = false;
 		pdbgAbortedSansNodes = false;
 		pdbgNodeNum = 0;
 		pdbgGotPath = 0;
 		if (pq->critter)
+		{
 			pdbgMover = pq->critter;
+			logger->info("Starting path attempt for {}", description.getDisplayName(pdbgMover));
+		}
 		pdbgFrom = pq->from;
 		if (pq->targetObj)
 		{
@@ -1462,6 +1470,10 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	} 
 	else
 	{
+		if (config.pathfindingDebugMode)
+		{
+			logger->info("Attempting sans nodes...");
+		}
 		gotPath = FindPathSansNodes(pq, pqr);
 	}
 		
@@ -1910,11 +1922,26 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 		int attemptCount;
 		if (objects.GetType(pq->critter) == obj_t_npc)
 		{
-			if (npcPathFindRefTime && (timeGetTime() - npcPathFindRefTime) < 1000)
+			if (npcPathFindRefTime && (timeGetTime() - npcPathFindRefTime) < 1000  ) // && !pathNodeSys.hasClearanceData limits the number of attempt to 10 per second and cumulative time to 250 sec
 			{
 				attemptCount = npcPathFindAttemptCount;
-				if (npcPathFindAttemptCount > 10 || npcPathTimeCumulative > 250)
+				if ( (npcPathFindAttemptCount > 10 + (40 * (pathNodeSys.hasClearanceData == true))  ) || npcPathTimeCumulative > 250)
 				{
+					if (config.pathfindingDebugMode)
+					{
+						pdbgDirectionsCount = 0;
+						if (npcPathFindAttemptCount > 10 + (40 * (pathNodeSys.hasClearanceData == true)))
+						{
+							logger->info("NPC pathing attempt count exceeded, aborting.");
+							pdbgShortRangeError = -(10 + (40 * (pathNodeSys.hasClearanceData == true)));
+						}
+						else
+						{
+							pdbgShortRangeError = -250;
+							logger->info("NPC pathing cumulative time exceeded, aborting.");
+						}
+							
+					}
 					return 0;
 				}
 			}
@@ -1934,7 +1961,13 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 
 	int deltaSubtileX = abs(toSubtileX - fromSubtileX);	int deltaSubtileY = abs(toSubtileY - fromSubtileY);
 	if (deltaSubtileX > gridSize/2 || deltaSubtileY > gridSize/2)
+	{
+		pdbgDirectionsCount = 0;
+		pdbgShortRangeError = gridSize;
+		logger->info("Desitnation too far for short distance PF grid! Aborting.");
 		return 0;
+	}
+		
 	
 	int lowerSubtileX = min(fromSubtileX, toSubtileX);	int lowerSubtileY = min(fromSubtileY, toSubtileY);
 
@@ -1992,6 +2025,12 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 	{
 		if (referenceTime)
 			npcPathTimeCumulative += timeGetTime() - referenceTime;
+		if (config.pathfindingDebugMode)
+		{
+			pdbgDirectionsCount = 0;
+			pdbgShortRangeError = -1;
+			logger->info("curIdx is -1, aborting.");
+		}
 		return 0;
 	}
 
@@ -2005,6 +2044,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 	{
 		logger->info("*** START OF PF ATTEMPT SANS TARGET - DESTINATION {} ***", pqr->to);
 		pdbgDirectionsCount = 0;
+		pdbgShortRangeError = 0;
 	}
 	while (1)
 	{
@@ -2050,6 +2090,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 			if (referenceTime)
 				npcPathTimeCumulative += timeGetTime() - referenceTime;
 			if (config.pathfindingDebugMode) {
+				pdbgShortRangeError = -999;
 				logger->info("*** END OF PF ATTEMPT SANS TARGET - OPEN SET EMPTY; from {} to {} ***", pqr->from, pqr->to);
 			}
 			return 0;
@@ -2217,6 +2258,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 	{
 		logger->info("*** END OF PF ATTEMPT SANS TARGET - {} DIRECTIONS USED ***", directionsCount);
 		pdbgDirectionsCount = directionsCount;
+		pdbgShortRangeError = 0;
 	}
 
 

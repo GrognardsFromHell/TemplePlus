@@ -164,7 +164,7 @@ struct Pathfinding : temple::AddressTable {
 #pragma region Debug stuff for diagnostic render
 	LocAndOffsets pdbgFrom, pdbgTo;
 	objHndl pdbgMover, pdbgTargetObj;
-	int pdbgGotPath;
+	int pdbgGotPath, pdbgShortRangeError;
 	bool pdbgUsingNodes, pdbgAbortedSansNodes;
 	int pdbgNodeNum;
 	int pdbgDirectionsCount;

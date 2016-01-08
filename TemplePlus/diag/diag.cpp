@@ -68,7 +68,8 @@ void DiagScreen::Render() {
 		{
 			if (pathfindingSys.pdbgAbortedSansNodes)
 			{
-				lines.push_back(fmt::format("Using {} direction steps, failed, then tried {} pathnodes", pathfindingSys.pdbgDirectionsCount, pathfindingSys.pdbgNodeNum));
+
+				lines.push_back(fmt::format("Using {} direction steps, failed because of {}, then tried {} pathnodes", pathfindingSys.pdbgDirectionsCount, pathfindingSys.pdbgShortRangeError, pathfindingSys.pdbgNodeNum));
 			} else
 			{
 				lines.push_back(fmt::format("Using {} direction steps", pathfindingSys.pdbgDirectionsCount));
