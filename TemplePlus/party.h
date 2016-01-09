@@ -8,7 +8,7 @@
 struct PartySystem : temple::AddressTable
 {
 	void SetMaxPCs(char maxPCs);
-	
+	objHndl (__cdecl*GetFellowPc)(objHndl obj); // fetches a PC who is not identical to the object. For NPCs this will try to fetch their leader.
 	objHndl(__cdecl *GroupArrayMemberN)(GroupArray *, uint32_t nIdx);
 	objHndl(__cdecl *GroupNPCFollowersGetMemberN)(uint32_t nIdx);
 	uint32_t(__cdecl *GroupNPCFollowersLen)();
@@ -39,6 +39,7 @@ struct PartySystem : temple::AddressTable
 
 	PartySystem()
 	{
+		rebase(GetFellowPc, 0x10034A40);
 		rebase(GroupArrayMemberN, 0x100DF760);
 		rebase(GroupNPCFollowersGetMemberN, 0x1002B190);
 		rebase(GroupNPCFollowersLen, 0x1002B360);

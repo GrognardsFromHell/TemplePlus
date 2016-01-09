@@ -32,8 +32,14 @@ TimeEvents::TimeEvents() {
 	rebase(systemsTable, 0x102BD900);
 	rebase(_Schedule, 0x10060720);
 	rebase(_AdvanceTime, 0x10060C90);
-	rebase(_AddTime, 0x10062390);
 	rebase(_GetTime, 0x1005FC90);
-	rebase(_FormatTime, 0x10061310);
 	rebase(_IsDaytime, 0x100600E0);
+	rebase(_ExpireAll, 0x10060970);
+	rebase(_FormatTime, 0x10061310);
+	rebase(_AddTime, 0x10062390);
+}
+
+int TimeEvents::TimeEventExpireAll(TimeEventSystem evtSys)
+{
+	return _ExpireAll(evtSys);
 }

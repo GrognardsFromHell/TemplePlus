@@ -12,16 +12,23 @@
 #include "util/fixes.h"
 #include "tig/tig_msg.h"
 #include "ui/ui.h"
+#include "ui/ui_picker.h"
+#include "radialmenu.h"
+#include "timeevents.h"
+#include "raycast.h"
+#include "location.h"
+#include <infrastructure/keyboard.h>
 
 
 struct UiIntgameTurnbasedAddresses : temple::AddressTable
 {
-	void (__cdecl *CursorSthg_10097060)();
+	BOOL (__cdecl*GameRayCast)(int x, int y, objHndl* obj, int flags);
+	void (__cdecl *CursorRenderUpdate)();
 	int(__cdecl *AooIndicatorDraw)(AooShaderPacket*, int shaderId);
 	int(__cdecl *GetHourglassDepletionState)();
 	int * cursorState;
 	int(__cdecl * UiActiveRadialMenuHasActiveNode)();
-	
+	void(__cdecl* UiActionBarGetValuesFromMovement)();
 
 	AooShaderPacket * aooShaderLocations;
 	int * aooShaderLocationsNum;
@@ -35,30 +42,73 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable
 	int * uiIntgameActionErrorCode;
 	float * movementFeet;
 	int* uiWidgetMouseHandlerWidgetId;
+	int *uiIntgameAcquireByRaycastOn;
+	int *uiIntgameSelectionConfirmed;
+	int *uiIntgameWidgetEnteredForRender;
+	int *uiIntgameWidgetEnteredForGameplay;
+	WidgetType1 ** uiIntgameMainWnd;
+	int* uiIntgameWaypointMode;
+	objHndl * intgameActor;
+	objHndl * uiIntgameTargetObjFromPortraits;
+	LocAndOffsets * locFromScreenLoc;
+	objHndl * uiIntgameObjFromRaycast;
+	int * activePickerIdx;
+	ActnSeq* uiIntgameCurSeqBackup;
+	LocAndOffsets * uiIntgamePathPreviewDestLoc;
+	
 
 	UiIntgameTurnbasedAddresses()
 	{
+		rebase(GameRayCast, 0x10022360);
+		rebase(CursorRenderUpdate, 0x10097060);
 		
-		rebase(CursorSthg_10097060, 0x10097060);
+		
+		
+		rebase(UiActiveRadialMenuHasActiveNode, 0x1009AB40);
+
+
+		rebase(AooIndicatorDraw, 0x10106F30);
+		
 		rebase(GetHourglassDepletionState, 0x10109D10);
+
+		rebase(UiActionBarGetValuesFromMovement, 0x10173440);
+
+
+		rebase(activePickerIdx, 0x102F920C);
+		rebase(uiIntgameWidgetEnteredForRender, 0x102FC640);
+		rebase(uiIntgameWidgetEnteredForGameplay,0x102FC644);
+
+		rebase(uiWidgetMouseHandlerWidgetId, 0x10301324);
+
+		rebase(aooShaderLocations, 0x10B3B948);
 		rebase(aooShaderLocationsNum, 0x10B3D598);
 		rebase(cursorState, 0x10B3D5AC);
-		rebase(UiActiveRadialMenuHasActiveNode, 0x1009AB40);
+
+		rebase(locFromScreenLoc, 0x10C040D0);
+		rebase(uiIntgameObjFromRaycast, 0x10C040E8);
+		rebase(uiIntgamePathPreviewDestLoc, 0x10C040F8);
+		rebase(uiIntgameMainWnd, 0x10C04108);
+		rebase(uiIntgameAcquireByRaycastOn, 0x10C0410C);
+		rebase(uiIntgameSelectionConfirmed, 0x10C04110);
+		rebase(uiIntgameWaypointMode, 0x10C04114);
+		rebase(intgameActor, 0x10C04118);
+		rebase(uiIntgameTargetObjFromPortraits, 0x10C04120);
+		
+
 
 		rebase(uiIntgamePathpreviewState, 0x115B1E40);
 		rebase(uiIntgameGreenMoveLength, 0x115B1E44);
 		rebase(uiIntgameTotalMoveLength, 0x115B1E48);
 		rebase(uiIntgamePathdrawCumulativeDist, 0x115B1E60);
 		rebase(uiIntgamePathpreviewFromToDist, 0x115B1E78);
-		rebase(AooIndicatorDraw, 0x10106F30);
-		rebase(uiWidgetMouseHandlerWidgetId, 0x10301324);
-		rebase(aooShaderLocations, 0x10B3B948);
 
-		
 		rebase(objectHoverTooltipIdx, 0x11869294);
 		rebase(uiIntgameActionErrorCode, 0x11869298);
 		rebase(movementFeet, 0x11869240);
+		rebase(uiIntgameCurSeqBackup, 0x118692A0);
 	}
+
+	
 } addresses;
 
  
@@ -68,13 +118,199 @@ class UiIntegameTurnbased : public TempleFix
 public: 
 	const char* name() override { return "UI Intgame Turnbased" "Function Replacements";} 
 
+	static void IntgameTurnbasedRender(int widId);
+	static void (__cdecl* orgIntgameTurnbasedRender)(int widId);
+	static void UiIntgameBackupCurSeq();
+	static void SeqPickerTargetingTypeReset();
+	static int UiIntgamePathPreviewHandler(TigMsgMouse* msg);
+	static int(__cdecl* orgUiIntgamePathPreviewHandler)(TigMsgMouse*msg);
+	static void UiIntgameGenerateSequence(int isUnnecessary);
+	static void(__cdecl*orgUiIntgameGenerateSequence)(int isUnnecessary);
+	static BOOL UiIntgameRaycast(objHndl* obj, int x, int y, int flags);
+	static int IntgameValidateMouseSelection(TigMsgMouse*msg);
+
 	void apply() override 
 	{
 		replaceFunction(0x10097320, HourglassUpdate);
-
+		orgIntgameTurnbasedRender = replaceFunction(0x10173F70, IntgameTurnbasedRender);
+		orgUiIntgamePathPreviewHandler = replaceFunction(0x10174790, UiIntgamePathPreviewHandler);
+		orgUiIntgameGenerateSequence = replaceFunction(0x10174100, UiIntgameGenerateSequence);
 	}
 } uiIntgameTurnbasedReplacements;
 
+void UiIntegameTurnbased::IntgameTurnbasedRender(int widId)
+{
+	auto shit1 = *addresses.uiIntgameAcquireByRaycastOn;
+	if (shit1)
+	{
+		int dummy = 1;
+	}
+	auto shit4 = *addresses.uiIntgameSelectionConfirmed;
+	if (shit4)
+	{
+		int dummy = 1;
+	}
+	auto shit2 = *addresses.uiIntgameWidgetEnteredForRender;
+	if (shit2)
+	{
+		int dummy = 1;
+	}
+
+	auto shit3 = *addresses.uiIntgameWidgetEnteredForGameplay;
+	if (shit3)
+	{
+		int dummy = 1;
+	}
+	auto shit5 = *addresses.activePickerIdx;
+	if (shit5 >= 0)
+	{
+		int dummy = 1;
+	}
+
+	orgIntgameTurnbasedRender(widId);
+}
+
+void UiIntegameTurnbased::UiIntgameBackupCurSeq()
+{
+	*addresses.uiIntgameCurSeqBackup = *(*actSeqSys.actSeqCur);
+}
+
+void UiIntegameTurnbased::SeqPickerTargetingTypeReset()
+{
+	*actSeqSys.seqPickerTargetingType = -1;
+	*actSeqSys.seqPickerD20ActnType = D20A_UNSPECIFIED_ATTACK;
+	*actSeqSys.seqPickerD20ActnData1 = 0;
+}
+
+int UiIntegameTurnbased::UiIntgamePathPreviewHandler(TigMsgMouse* msg)
+{
+	if (uiPicker.PickerActiveCheck())
+	{
+		return 0;
+	}
+
+	bool performSeq = true;
+	objHndl actor = tbSys.turnBasedGetCurrentActor();
+	if (*addresses.uiIntgameAcquireByRaycastOn)
+	{
+		
+		if (*addresses.uiIntgameSelectionConfirmed && !actSeqSys.isPerforming(actor))
+		{
+			if ( (infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) || infrastructure::gKeyboard.IsKeyPressed(VK_RMENU) || *addresses.uiIntgameWaypointMode)
+				&& !*addresses.uiIntgameObjFromRaycast)
+			{
+				LocAndOffsets curd20aTgtLoc;
+				actSeqSys.GetPathTargetLocFromCurD20Action(&curd20aTgtLoc);
+				if (locSys.Distance3d(curd20aTgtLoc, *addresses.locFromScreenLoc) >= 24.0)
+				{
+					performSeq = false;
+				} else if ( *addresses.uiIntgameWaypointMode == 0
+					|| addresses.locFromScreenLoc->location != addresses.uiIntgamePathPreviewDestLoc->location)
+				{
+
+					*addresses.uiIntgameWaypointMode = 1;
+					*addresses.uiIntgamePathPreviewDestLoc = *addresses.locFromScreenLoc;
+					UiIntgameBackupCurSeq();
+					performSeq = false;
+				}
+			}
+		} else
+		{
+			performSeq = false;
+		}
+	}
+
+	if (performSeq)
+	{
+		addresses.UiActionBarGetValuesFromMovement();
+		actSeqSys.sequencePerform();
+		*addresses.uiIntgameTargetObjFromPortraits = 0i64;
+		*addresses.uiIntgameWaypointMode = 0;
+		SeqPickerTargetingTypeReset();
+		auto comrade = party.GetFellowPc(actor);
+		char text[1000];
+		int soundId;
+		critterSys.GetCritterVoiceLine(actor, comrade, text, &soundId);
+		critterSys.PlayCritterVoiceLine(actor, comrade, text, soundId);
+	}
+	*addresses.uiIntgameAcquireByRaycastOn = 0;
+	*addresses.uiIntgameObjFromRaycast = 0i64;
+	IntgameValidateMouseSelection(msg);
+	return 1;
+	// return orgUiIntgamePathPreviewHandler(msg);
+}
+
+void UiIntegameTurnbased::UiIntgameGenerateSequence(int isUnnecessary)
+{
+	orgUiIntgameGenerateSequence(isUnnecessary);
+}
+
+BOOL UiIntegameTurnbased::UiIntgameRaycast(objHndl* obj, int x, int y, int flags)
+{
+	if (*addresses.uiIntgameTargetObjFromPortraits)
+	{
+		*obj = *addresses.uiIntgameTargetObjFromPortraits;
+		return 1;
+	} else
+	{
+		return addresses.GameRayCast(x, y, obj, flags);
+	}
+}
+
+int UiIntegameTurnbased::IntgameValidateMouseSelection(TigMsgMouse* msg)
+{
+	objHndl obj = 0i64;
+	if (uiPicker.PickerActiveCheck() || radialMenus.ActiveRadialMenuHasActiveNode())
+	{
+		return 0;
+	}
+	auto actor = tbSys.turnBasedGetCurrentActor();
+	auto actorRadiusSqr = objects.GetRadius(actor);
+	actorRadiusSqr *= actorRadiusSqr;
+	int a = timeEvents.TimeEventExpireAll(TimeEventSystem::IntgameTurnbased);
+	if (!(*addresses.uiIntgameAcquireByRaycastOn))
+	{
+		UiIntgameGenerateSequence(1);
+		return 0;
+	}
+	objHndl objFromRaycast;
+	LocAndOffsets locFromScreen;
+	PointNode prevPntNode, pntNode;
+	float distSqr;
+	if (UiIntgameRaycast(&obj, msg->x, msg->y, 6))
+	{
+		objFromRaycast = obj;
+	} else
+	{
+		locSys.GetLocFromScreenLocPrecise(msg->x, msg->y, &locFromScreen.location, &locFromScreen.off_x, &locFromScreen.off_y);
+		locSys.PointNodeInit(addresses.locFromScreenLoc,  &prevPntNode);
+		locSys.PointNodeInit(&locFromScreen, &pntNode);
+		objFromRaycast = 0i64;
+		distSqr = (prevPntNode.absY - pntNode.absY) * (prevPntNode.absY - pntNode.absY)
+			+ (prevPntNode.absX - pntNode.absX) * (prevPntNode.absX - pntNode.absX);
+	}
+
+	if (*addresses.uiIntgameSelectionConfirmed)
+	{
+		if (objFromRaycast != *addresses.uiIntgameObjFromRaycast
+			|| !*addresses.uiIntgameObjFromRaycast && distSqr > actorRadiusSqr)
+		{
+			*addresses.uiIntgameSelectionConfirmed = 0;
+			return 0;
+		}
+	} else if ( objFromRaycast == *addresses.uiIntgameObjFromRaycast
+		&& (*addresses.uiIntgameObjFromRaycast || distSqr < actorRadiusSqr))
+	{
+		*addresses.uiIntgameSelectionConfirmed = 1;
+		return 0;
+	}
+
+	return 0;
+}
+
+void(__cdecl*UiIntegameTurnbased::orgIntgameTurnbasedRender)(int widId);
+int(__cdecl* UiIntegameTurnbased::orgUiIntgamePathPreviewHandler)(TigMsgMouse*msg);
+void(__cdecl*UiIntegameTurnbased::orgUiIntgameGenerateSequence)(int isUnnecessary);
 
 void HourglassUpdate(int a3, int a4, int flags)
 {
@@ -113,11 +349,11 @@ void HourglassUpdate(int a3, int a4, int flags)
 	if (addresses.UiActiveRadialMenuHasActiveNode())
 	{
 		*addresses.cursorState = 0;
-		addresses.CursorSthg_10097060();
+		addresses.CursorRenderUpdate();
 		return;
 	}
 	if (!combatSys.isCombatActive())
-		addresses.CursorSthg_10097060();
+		addresses.CursorRenderUpdate();
 
 	if (v3 || v4)
 	{
@@ -280,5 +516,5 @@ void HourglassUpdate(int a3, int a4, int flags)
 	if (*addresses.cursorState == 3 
 		&& addresses.GetHourglassDepletionState() == 1)
 		*addresses.cursorState = 4;
-	addresses.CursorSthg_10097060();
+	addresses.CursorRenderUpdate();
 }

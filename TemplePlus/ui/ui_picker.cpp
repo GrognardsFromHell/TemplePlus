@@ -12,10 +12,13 @@ static struct PickerAddresses : temple::AddressTable {
 	bool(__cdecl *FreeCurrentPicker)();
 	uint32_t(__cdecl * sub_100BA030)(objHndl, PickerArgs*);
 	int * activePickerIdx; 
+	BOOL(__cdecl* PickerActiveCheck)();
 
 	PickerAddresses() {
 		rebase(ShowPicker, 0x101357E0);
+		rebase(PickerActiveCheck, 0x10135970);
 		rebase(FreeCurrentPicker, 0x10137680);
+		
 		rebase(activePickerIdx, 0x102F920C);
 		macRebase(sub_100BA030, 100BA030)
 		macRebase(sub_100BA480, 100BA480)
@@ -27,6 +30,11 @@ static struct PickerAddresses : temple::AddressTable {
 	void (__cdecl *sub_100BA6A0)(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs);
 	uint32_t (__cdecl * sub_100BA480)(objHndl objHnd, PickerArgs* pickerArgs);
 } addresses;
+
+BOOL UiPicker::PickerActiveCheck()
+{
+	return (*addresses.activePickerIdx) >= 0;
+}
 
 int UiPicker::ShowPicker(const PickerArgs& args, void* callbackArgs) {
 	//if (maps.GetCurrentMapId() == 5118 ) // tutorial map

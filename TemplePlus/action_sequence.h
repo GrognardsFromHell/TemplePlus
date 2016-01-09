@@ -83,9 +83,9 @@ struct ActionSequenceSystem : temple::AddressTable
 	uint32_t * actSeqPickerActive;
 	TurnBasedStatus * tbStatus118CD3C0;
 
-	int32_t * seqSthg_118CD3B8_targetingType; // init to -1
-	int32_t * seqSthg_118A0980_D20ActnType; // init to 1
-	int32_t * seqSthg_118CD570_D20ActnData1; // init to 0
+	int32_t * seqPickerTargetingType; // init to -1
+	int32_t * seqPickerD20ActnType; // init to 1
+	int32_t * seqPickerD20ActnData1; // init to 0
 	uint32_t * numSimultPerformers;
 	uint32_t * simulsIdx;  //10B3D5BC
 	objHndl * simultPerformerQueue;

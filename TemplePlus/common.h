@@ -317,4 +317,12 @@ inline std::ostream& operator<<(std::ostream& os, const ScreenDirections & direc
 		return os << "NA";
 	}
 }
+
+
+struct PointNode
+{
+	float absX;
+	int initTo0;
+	float absY;
+};
 #pragma endregion

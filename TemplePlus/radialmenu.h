@@ -145,6 +145,8 @@ public:
 	int RadialMenus::AddRootParentNode(objHndl obj, RadialMenuEntry* entry);
 	void SetMorphsTo(objHndl obj, int nodeIdx, int spontSpellNode);
 	void SetCallbackCopyEntryToSelected(RadialMenuEntry* radEntry);
+	int GetActiveRadialMenuNode();
+	BOOL ActiveRadialMenuHasActiveNode();
 };
 
 extern RadialMenus radialMenus;

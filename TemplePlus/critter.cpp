@@ -40,8 +40,11 @@ static struct CritterAddresses : temple::AddressTable {
 
 	void(__cdecl *TakeMoney)(objHndl critter, int platinum, int gold, int silver, int copper);
 	void(__cdecl *GiveMoney)(objHndl critter, int platinum, int gold, int silver, int copper);
-
+	void(__cdecl*GetCritterVoiceLine)(objHndl obj, objHndl fellow, char* str, int* soundId);
+	int (__cdecl*PlayCritterVoiceLine)(objHndl obj, objHndl fellow, char* str, int soundId);
 	CritterAddresses() {
+		rebase(PlayCritterVoiceLine, 0x10036120);
+		rebase(GetCritterVoiceLine, 0x100373C0);
 		rebase(HasMet, 0x10053CD0);
 		rebase(AddFollower, 0x100812F0);
 		rebase(RemoveFollower, 0x10080FD0);
@@ -66,6 +69,7 @@ static struct CritterAddresses : temple::AddressTable {
 		rebase(TakeMoney, 0x1007FA40);
 	}
 
+	
 } addresses;
 
 class CritterReplacements : public TempleFix
@@ -489,6 +493,16 @@ bool CritterSystem::IsWieldingRangedWeapon(objHndl obj)
 CritterFlag CritterSystem::GetCritterFlags(objHndl obj)
 {
 	return static_cast<CritterFlag>(objects.getInt32(obj, obj_f_critter_flags));
+}
+
+void CritterSystem::GetCritterVoiceLine(objHndl obj, objHndl fellow, char* text, int* soundId)
+{
+	addresses.GetCritterVoiceLine(obj, fellow, text, soundId);
+}
+
+int CritterSystem::PlayCritterVoiceLine(objHndl obj, objHndl fellow, char* text, int soundId)
+{
+	return addresses.PlayCritterVoiceLine(obj, fellow, text, soundId);
 }
 #pragma region Critter Hooks
 uint32_t _isCritterCombatModeActive(objHndl objHnd)

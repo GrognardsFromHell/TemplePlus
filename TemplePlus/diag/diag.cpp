@@ -54,6 +54,39 @@ void DiagScreen::Render() {
 	if (config.pathfindingDebugMode)
 	{
 		lines.push_back(fmt::format("#Pathfinding"));
+
+		lines.push_back(fmt::format("Active Picker Idx: {}", temple::GetRef<int>(0x102F920C)));
+		lines.push_back(fmt::format("uiIntgameAcquireByRaycastOn: {}", temple::GetRef<int>(0x10C0410C)));
+		auto uiIntgameSelectionConfirmed = temple::GetRef<int>(0x10C04110);
+		if (uiIntgameSelectionConfirmed)
+		{
+			int dummy = 1;
+		}
+		lines.push_back(fmt::format("uiIntgameSelectionConfirmed: {}", uiIntgameSelectionConfirmed));
+		lines.push_back(fmt::format("uiIntgameWaypointMode: {}", temple::GetRef<int>(0x10C04114)));
+		lines.push_back(fmt::format("uiIntgameWidgetEnteredForRender: {}", temple::GetRef<int>(0x102FC640)));
+		lines.push_back(fmt::format("uiIntgameWidgetEnteredForGameplay: {}", temple::GetRef<int>(0x102FC644)));
+		
+		objHndl asshole = temple::GetRef<objHndl>(0x10C04118);
+		if (asshole)
+		{
+			lines.push_back(fmt::format("intgameActor: {}", description.getDisplayName(asshole)));
+		}
+		asshole = temple::GetRef<objHndl>(0x10C04120);
+		if (asshole)
+		{
+			lines.push_back(fmt::format("uiIntgameTargetObjFromPortraits: {}", description.getDisplayName(asshole)));
+		}
+		asshole = temple::GetRef<objHndl>(0x10C040E8);
+		if (asshole)
+		{
+			lines.push_back(fmt::format("uiIntgameObjFromRaycast: {}", description.getDisplayName(asshole)));
+		}
+			
+		auto uiIntgamePathPreviewDestLoc = temple::GetRef<LocAndOffsets>(0x10C040F8);
+		lines.push_back(fmt::format("uiIntgamePathPreviewDestLoc: {}", uiIntgamePathPreviewDestLoc));
+
+
 		lines.push_back(fmt::format("State: {}", pathfindingSys.pdbgGotPath));
 		if (pathfindingSys.pdbgMover)
 			lines.push_back(fmt::format("Mover Obj: {}", description.getDisplayName( pathfindingSys.pdbgMover)));

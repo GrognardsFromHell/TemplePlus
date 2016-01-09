@@ -92,6 +92,8 @@ const auto TestSizeOfPickerArgs = sizeof(PickerArgs);
 
 class UiPicker {
 public:
+	BOOL PickerActiveCheck();
+	
 	int ShowPicker(const PickerArgs &args, void *callbackArgs);
 	uint32_t sub_100BA030(objHndl objHnd, PickerArgs * pickerArgs);
 

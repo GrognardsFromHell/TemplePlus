@@ -149,9 +149,9 @@ ActionSequenceSystem::ActionSequenceSystem()
 	rebase(_InterruptNonCounterspell, 0x10099320);
 	rebase(_InterruptCounterspell, 0x10099360);
 	
-	rebase(seqSthg_118CD3B8_targetingType,0x118CD3B8); 
-	rebase(seqSthg_118A0980_D20ActnType,0x118A0980); 
-	rebase(seqSthg_118CD570_D20ActnData1,0x118CD570); 
+	rebase(seqPickerTargetingType,0x118CD3B8); 
+	rebase(seqPickerD20ActnType,0x118A0980); 
+	rebase(seqPickerD20ActnData1,0x118CD570); 
 
 	int _transMatrix[7*5] = { 0, - 1, -1, -1, -1,
 		1, 0, -1, -1, -1,
@@ -184,9 +184,9 @@ void ActionSequenceSystem::curSeqReset(objHndl objHnd)
 	curSeq->seqOccupied = 0;
 	if (objHnd != d20->globD20Action->d20APerformer)
 	{
-		*seqSthg_118CD3B8_targetingType = -1;
-		*seqSthg_118A0980_D20ActnType = 1;
-		*seqSthg_118CD570_D20ActnData1 = 0;
+		*seqPickerTargetingType = -1;
+		*seqPickerD20ActnType = 1;
+		*seqPickerD20ActnData1 = 0;
 	}
 
 	d20->globD20Action->d20APerformer = objHnd;
@@ -1623,9 +1623,9 @@ uint32_t ActionSequenceSystem::curSeqNext()
 					> (*actSeqCur)->tbStatus.attackModeCode
 			)
 		{
-			*seqSthg_118A0980_D20ActnType = D20A_STANDARD_ATTACK;
-			*seqSthg_118CD570_D20ActnData1 = 0;
-			*seqSthg_118CD3B8_targetingType = 2;
+			*seqPickerD20ActnType = D20A_STANDARD_ATTACK;
+			*seqPickerD20ActnData1 = 0;
+			*seqPickerTargetingType = 2;
 		}
 	}
 	return 1;

@@ -164,7 +164,11 @@ extern struct TimeEvents : temple::AddressTable {
 	string FormatTime(const GameTime &time);
 
 	TimeEvents();
-
+	/*
+	frees all time events for the system (and runs the expireAlways func)
+	*/
+	int TimeEventExpireAll(TimeEventSystem evtSys);
+	
 private:
 	/*
 		Adds a timed event to be executed later.
@@ -180,4 +184,5 @@ private:
 	void (__cdecl *_AddTime)(int timeInMs);
 	GameTime (__cdecl *_GetTime)();
 	void (__cdecl *_FormatTime)(const GameTime &time, char *pOut);
+	int(__cdecl* _ExpireAll)(TimeEventSystem evtSys);
 } timeEvents;

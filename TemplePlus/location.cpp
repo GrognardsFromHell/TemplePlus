@@ -143,6 +143,8 @@ BOOL LocationSys::ShiftLocationByOneSubtile(LocAndOffsets* loc, ScreenDirections
 	return 1;
 }
 
+
+
 float LocationSys::intToFloat(int32_t x)
 {
 	float result;
@@ -179,10 +181,13 @@ LocationSys::LocationSys()
 	rebase(getLocAndOff, 0x10040080);
 	rebase(SubtileToLocAndOff, 0x100400C0);
 	rebase(subtileFromLoc,0x10040750); 
-	rebase(ShiftSubtileOnceByDirection, 0x10029DC0);
-	rebase(TOEEdistBtwnLocAndOffs,0x1002A0A0); 
+	rebase(PointNodeInit, 0x100408A0);
+
 	rebase(DistanceToObj, 0x100236E0);
+	rebase(GetLocFromScreenLocPrecise, 0x10029300);
+	rebase(ShiftSubtileOnceByDirection, 0x10029DC0);
 	rebase(Distance3d, 0x1002A0A0);
+	rebase(TOEEdistBtwnLocAndOffs, 0x1002A0A0);
 	
 }
 

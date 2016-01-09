@@ -201,6 +201,8 @@ struct CritterSystem : temple::AddressTable
 	bool IsCaster(objHndl obj);
 	bool IsWieldingRangedWeapon(objHndl performer);
 	CritterFlag GetCritterFlags(objHndl obj);
+	void GetCritterVoiceLine(objHndl obj, objHndl fellow, char *str, int* soundId);
+	int PlayCritterVoiceLine(objHndl obj, objHndl fellow, char* text, int soundId);
 #pragma endregion
 
 };
