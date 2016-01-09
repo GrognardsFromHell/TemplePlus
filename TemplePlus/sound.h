@@ -27,6 +27,10 @@ public:
 	*/
 	int PlaySoundAtLoc(int soundId, locXY loc, int loopCount = 1);
 
+	/*
+	low level sound player?
+	*/
+	int MssPlaySound(int soundId);
 };
 
 extern Sound sound;

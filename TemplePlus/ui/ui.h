@@ -9,6 +9,7 @@
 
 #pragma region UI Structs
 
+struct TigMouseMsg;
 struct TigMsg;
 struct GameSystemConf;
 
@@ -19,12 +20,12 @@ struct UiResizeArgs {
 };
 
 struct Widget {
-	uint32_t type;
+	uint32_t type; // 1 - window 2 - button 3 - scrollbar
 	uint32_t size;
 	int parentId;
 	int widgetId;
 	char name[64];
-	uint32_t widgetFlags;
+	uint32_t widgetFlags; // 1 - hidden?
 	int x;
 	int y;
 	int xrelated;
@@ -107,7 +108,7 @@ struct WidgetType2 : public Widget {
 	int field88;
 	int field8C;
 	int field90;
-	int buttonState;
+	int buttonState; // 1 - hovered 2 - down  3 - released
 	int field98;
 	int field9C;
 	int fieldA0;
@@ -253,9 +254,23 @@ public:
 	BOOL WidgetAndWindowRemove(int widId);
 	BOOL WidgetSetHidden(int widId, int hiddenState);
 	BOOL WidgetCopy(int widId, Widget* widgetOut);
+	WidgetType1* WidgetGetType1(int widId);
+	Widget* WidgetGet(int widId);
+	int GetWindowContainingPoint(int x, int y);
 	BOOL GetButtonState(int widId, int* state);
 	void WidgetBringToFront(int widId);
 	int WidgetlistIndexof(int widgetId, int * widgetlist, int size);
+	BOOL WidgetContainsPoint(int widgetId, int x, int y);
+	
+	/*
+			gets widget at x,y including children
+			*/
+	int GetAtInclChildren(int x, int y);
+
+	void(__cdecl *__cdecl GetCursorTextDrawCallback())(int x, int y, void *data);
+
+	void SetCursorTextDrawCallback(void(* cursorTextDrawCallback)(int, int, void*), void* data);
+	int UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg);
 };
 extern Ui ui;
 

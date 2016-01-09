@@ -228,6 +228,11 @@ protected:
 	uint32_t ShouldUsePathnodes(Path* pathQueryResult, PathQuery* pathQuery);
 	int FindPathUsingNodes(PathQuery* pq, Path* pqr);
 	int FindPathStraightLine(Path* pqr, PathQuery* pq);
+	
+	/*
+		if idx is empty, this function will fill the slot with the location defined by the cumulative result of the "direction" steps.
+		whether it appends or not, it returns the tempnode in that idx.
+	*/
 	LocAndOffsets * PathTempNodeAddByDirections(int idx, Path* pqr, LocAndOffsets* newNode);
 	void PathNodesAddByDirections(Path* pqr, PathQuery* pq);
 	int FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr);

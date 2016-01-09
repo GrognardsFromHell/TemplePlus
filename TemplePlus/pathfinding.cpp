@@ -967,34 +967,62 @@ LocAndOffsets* Pathfinding::PathTempNodeAddByDirections(int idx, Path* pqr, LocA
 void Pathfinding::PathNodesAddByDirections(Path* pqr, PathQuery* pq)
 {
 	auto pqFlags = pqr->flags;
+	// check if straight line succeeded
 	if (pqFlags & PF_STRAIGHT_LINE_SUCCEEDED)
 	{
 		pqr->flags = pqr->flags - PF_STRAIGHT_LINE_SUCCEEDED;
 		pqr->nodes[0] = pqr->to;
 		pqr->nodeCount = 1;
+		pqr->currentNode = 0;
+		return;
+	} 
+	
+	// else use the directions to build the nodes
+	LocAndOffsets newNode, curNode;
+	LocAndOffsets fromLoc = pqr->from;
+	PathTempNodeAddByDirections(pqr->nodeCount3, pqr, &curNode);
+	newNode = curNode;
+	pqr->nodeCount = 0;
+	int lastIdx = 0;
+	ScreenDirections fromLocDirection = pqr->directions[0];
+	bool directionChanged = false;
 
-	} else
+	for (int i = 2; i < pqr->nodeCount2; i++)
 	{
-		LocAndOffsets newNode;
-		LocAndOffsets fromLoc = pqr->from;
-		PathTempNodeAddByDirections(pqr->nodeCount3, pqr, &newNode);
-		pqr->nodeCount = 0;
-		for (int i = 2; i < pqr->nodeCount2; i++)
+		PathTempNodeAddByDirections(i, pqr, &curNode);
+		if (fromLocDirection != pqr->directions[i-1])
 		{
-			PathTempNodeAddByDirections(i, pqr, &newNode);
-			if (!PathStraightLineIsClear(pqr, pq, fromLoc, newNode))
+			directionChanged = true;
+		}
+		if (!PathStraightLineIsClear(pqr, pq, fromLoc, curNode))
+		{
+			// unable to go from the intermediate fromLoc to curNode
+			// first, check if the direction has change. If it hasn't, it's not logical and may be due to the discrepancy in the PathStraightLineIsClear and the new clearance based method.
+			if (directionChanged)
 			{
-				PathTempNodeAddByDirections(i - 1, pqr, &newNode);
+				// get the previous node, which was the last "successful" one
+				newNode = *PathTempNodeAddByDirections(i - 1, pqr, &newNode);
 				fromLoc = newNode;
+				// append it to nodes
 				pqr->nodes[pqr->nodeCount++] = newNode;
+				lastIdx = i - 1;
+				fromLocDirection = pqr->directions[i - 1];
+				directionChanged = false;
+			} else
+			{
+				int dummy = 1;
 			}
 		}
-		pqr->nodes[pqr->nodeCount++] = pqr->to;
+		else
+		{
+			if (lastIdx == i-2)
+			{
+				int dummy = 1;
+			}
+		}
+			
 	}
-	if (pqr->nodeCount == 0)
-	{
-		int dummy = 1;
-	}
+	pqr->nodes[pqr->nodeCount++] = pqr->to;
 	pqr->currentNode = 0;
 }
 
@@ -1404,6 +1432,19 @@ int Pathfinding::FindPathSansNodes(PathQuery* pq, Path* pqr)
 
 int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 {
+
+	auto ui_intgame_turnbased_10C0410C = temple::GetRef<int>(0x10C0410C);
+	if (ui_intgame_turnbased_10C0410C)
+	{
+		int dummy = 1;
+	}
+	auto ui_intgame_turnbased_10C04110 = temple::GetRef<int>(0x10C04110);
+	if (ui_intgame_turnbased_10C04110)
+	{
+		int dummy = 1;
+	}
+	
+
 	int gotPath = 0;
 	int triedPathNodes = 0;
 	int refTime;
