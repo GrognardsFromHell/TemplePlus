@@ -239,7 +239,7 @@ public:
 		replaceFunction(0x101F94D0, WidgetRemoveRegardParent);
 		replaceFunction(0x101F90E0, WidgetGet);
 		replaceFunction(0x101F9570, GetButton);
-		orgUiWidgetHandleMouseMsg = replaceFunction(0x101F9970, UiWidgetHandleMouseMsg);
+		 orgUiWidgetHandleMouseMsg = replaceFunction(0x101F9970, UiWidgetHandleMouseMsg);
 	}
 } uiReplacement;
 
@@ -643,11 +643,11 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 						return 0;
 					}
 				}
-				newTigMsg.widgetEventType = 0;
-				newTigMsg.widgetId = widIdAtCursor2;
-				*uiFuncs.uiMouseButtonId = widIdAtCursor2;
-				msgFuncs.Enqueue(&newTigMsg);
 			}
+			newTigMsg.widgetEventType = 0;
+			newTigMsg.widgetId = widIdAtCursor2;
+			*uiFuncs.uiMouseButtonId = widIdAtCursor2;
+			msgFuncs.Enqueue(&newTigMsg);
 		}
 	}
 
