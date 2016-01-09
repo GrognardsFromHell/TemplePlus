@@ -116,6 +116,7 @@ struct TimeEvent {
 	int padding = 0;
 	TimeEventArg params[4];
 };
+const int asd = sizeof(TimeEvent);
 
 struct TimeEventListEntry {
 	TimeEvent evt;
@@ -123,7 +124,10 @@ struct TimeEventListEntry {
 	TimeEventObjInfo objects[4];
 	// Linked list ptr to next entry
 	TimeEventListEntry* nextEvent;
+	int pad;
 };
+
+const int asdsda=  sizeof(TimeEventListEntry);
 
 #pragma pack(pop)
 

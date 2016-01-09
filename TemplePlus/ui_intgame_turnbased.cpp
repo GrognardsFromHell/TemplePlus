@@ -18,46 +18,46 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable
 {
 	void (__cdecl *CursorSthg_10097060)();
 	int(__cdecl *AooIndicatorDraw)(AooShaderPacket*, int shaderId);
-	int(__cdecl *sub_10109D10)();
-	int * cursorState_10B3D5AC;
+	int(__cdecl *GetHourglassDepletionState)();
+	int * cursorState;
 	int(__cdecl * UiActiveRadialMenuHasActiveNode)();
 	
 
 	AooShaderPacket * aooShaderLocations;
 	int * aooShaderLocationsNum;
-	int * dword_115B1E40;
-	float * flt_115B1E44;
-	float * flt_115B1E48;
-	int * dword_115B1E60;
-	float * flt_115B1E78;
+	int * uiIntgamePathpreviewState;
+	float * uiIntgameGreenMoveLength;
+	float * uiIntgameTotalMoveLength;
+	float * uiIntgamePathdrawCumulativeDist;
+	float * uiIntgamePathpreviewFromToDist;
 
 	int * objectHoverTooltipIdx;
-	int * dword_11869298;
-	float * flt_11869240;
+	int * uiIntgameActionErrorCode;
+	float * movementFeet;
 	int* uiWidgetMouseHandlerWidgetId;
 
 	UiIntgameTurnbasedAddresses()
 	{
 		
 		rebase(CursorSthg_10097060, 0x10097060);
-		rebase(sub_10109D10, 0x10109D10);
+		rebase(GetHourglassDepletionState, 0x10109D10);
 		rebase(aooShaderLocationsNum, 0x10B3D598);
-		rebase(cursorState_10B3D5AC, 0x10B3D5AC);
+		rebase(cursorState, 0x10B3D5AC);
 		rebase(UiActiveRadialMenuHasActiveNode, 0x1009AB40);
 
-		rebase(dword_115B1E40, 0x115B1E40);
-		rebase(flt_115B1E44, 0x115B1E44);
-		rebase(flt_115B1E48, 0x115B1E48);
-		rebase(dword_115B1E60, 0x115B1E60);
-		rebase(flt_115B1E78, 0x115B1E78);
+		rebase(uiIntgamePathpreviewState, 0x115B1E40);
+		rebase(uiIntgameGreenMoveLength, 0x115B1E44);
+		rebase(uiIntgameTotalMoveLength, 0x115B1E48);
+		rebase(uiIntgamePathdrawCumulativeDist, 0x115B1E60);
+		rebase(uiIntgamePathpreviewFromToDist, 0x115B1E78);
 		rebase(AooIndicatorDraw, 0x10106F30);
 		rebase(uiWidgetMouseHandlerWidgetId, 0x10301324);
 		rebase(aooShaderLocations, 0x10B3B948);
 
 		
 		rebase(objectHoverTooltipIdx, 0x11869294);
-		rebase(dword_11869298, 0x11869298);
-		rebase(flt_11869240, 0x11869240);
+		rebase(uiIntgameActionErrorCode, 0x11869298);
+		rebase(movementFeet, 0x11869240);
 	}
 } addresses;
 
@@ -109,10 +109,10 @@ void HourglassUpdate(int a3, int a4, int flags)
 		v3 = flags;
 		v4 = a3;
 	}
-	*addresses.cursorState_10B3D5AC = 0;
+	*addresses.cursorState = 0;
 	if (addresses.UiActiveRadialMenuHasActiveNode())
 	{
-		*addresses.cursorState_10B3D5AC = 0;
+		*addresses.cursorState = 0;
 		addresses.CursorSthg_10097060();
 		return;
 	}
@@ -126,9 +126,9 @@ void HourglassUpdate(int a3, int a4, int flags)
 			v33 = 5;
 	}
 	*addresses.aooShaderLocationsNum = 0;
-	*addresses.flt_11869240 = 0;
+	*addresses.movementFeet = 0;
 	*addresses.objectHoverTooltipIdx = 0;
-	*addresses.dword_11869298 = 0;
+	*addresses.uiIntgameActionErrorCode = 0;
 
 	if (!actSeq)
 		return;
@@ -236,11 +236,11 @@ void HourglassUpdate(int a3, int a4, int flags)
 
 	}
 
-	*addresses.dword_115B1E40 = v34;
-	*addresses.flt_115B1E44 = moveDistance;
-	*addresses.flt_115B1E48 = v32;
-	*addresses.dword_115B1E60 = 0;
-	*addresses.flt_115B1E78 = 0;
+	*addresses.uiIntgamePathpreviewState = v34;
+	*addresses.uiIntgameGreenMoveLength = moveDistance;
+	*addresses.uiIntgameTotalMoveLength = v32;
+	*addresses.uiIntgamePathdrawCumulativeDist = 0;
+	*addresses.uiIntgamePathpreviewFromToDist = 0;
 
 	if (combatSys.isCombatActive() && (!v4 || a4))
 	{
@@ -277,7 +277,8 @@ void HourglassUpdate(int a3, int a4, int flags)
 			addresses.aooShaderLocations[i].shaderId  );
 	}
 
-	if (*addresses.cursorState_10B3D5AC == 3 && addresses.sub_10109D10() == 1)
-		*addresses.cursorState_10B3D5AC = 4;
+	if (*addresses.cursorState == 3 
+		&& addresses.GetHourglassDepletionState() == 1)
+		*addresses.cursorState = 4;
 	addresses.CursorSthg_10097060();
 }

@@ -500,6 +500,7 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 	int flags = mouseMsg->flags;
 	int x = mouseMsg->x, y = mouseMsg->y;
 	TigMsgWidget newTigMsg;
+	newTigMsg.createdMs = temple::GetRef<int>(0x11E74578); // system time as recorded by the Msg Process function
 	newTigMsg.type = TigMsgType::WIDGET;
 	newTigMsg.x = x;
 	newTigMsg.y = y;
