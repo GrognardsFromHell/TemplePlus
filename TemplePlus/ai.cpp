@@ -281,11 +281,13 @@ int AiSystem::TargetClosest(AiTactic* aiTac)
 			auto distToCombatant = locSys.DistanceToObj(performer, combatant);
 			if (d20Sys.d20Query(combatant, DK_QUE_Critter_Is_Invisible)
 				&& !d20Sys.d20Query(performer, DK_QUE_Critter_Can_See_Invisible))
-				distToCombatant = static_cast<float>( (distToCombatant + 5.0) * 2.5 ); // makes invisibile chars less likely to be attacked; also takes into accout stuff like Hide From Animals (albeit in a shitty manner)
+			{
+				distToCombatant = static_cast<float>((distToCombatant + 5.0) * 2.5); // makes invisibile chars less likely to be attacked; also takes into accout stuff like Hide From Animals (albeit in a shitty manner)
+			}
 			if (distToCombatant < dist )
 			{
 				aiTac->target = combatant;
-				dist = locSys.DistanceToObj(performer, combatant);
+				dist = distToCombatant;
 			}
 		}
 
