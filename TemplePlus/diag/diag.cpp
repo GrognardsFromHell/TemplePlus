@@ -84,7 +84,7 @@ void DiagScreen::Render() {
 		}
 			
 		auto uiIntgamePathPreviewDestLoc = temple::GetRef<LocAndOffsets>(0x10C040F8);
-		lines.push_back(fmt::format("uiIntgamePathPreviewDestLoc: {}", uiIntgamePathPreviewDestLoc));
+		lines.push_back(fmt::format("uiIntgameWaypointLoc: {}", uiIntgamePathPreviewDestLoc));
 
 
 		lines.push_back(fmt::format("State: {}", pathfindingSys.pdbgGotPath));

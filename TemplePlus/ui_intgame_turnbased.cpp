@@ -54,7 +54,7 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable
 	objHndl * uiIntgameObjFromRaycast;
 	int * activePickerIdx;
 	ActnSeq* uiIntgameCurSeqBackup;
-	LocAndOffsets * uiIntgamePathPreviewDestLoc;
+	LocAndOffsets * uiIntgameWaypointLoc; // the last fixed waypoint in waypoint mode
 	
 
 	UiIntgameTurnbasedAddresses()
@@ -86,7 +86,7 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable
 
 		rebase(locFromScreenLoc, 0x10C040D0);
 		rebase(uiIntgameObjFromRaycast, 0x10C040E8);
-		rebase(uiIntgamePathPreviewDestLoc, 0x10C040F8);
+		rebase(uiIntgameWaypointLoc, 0x10C040F8);
 		rebase(uiIntgameMainWnd, 0x10C04108);
 		rebase(uiIntgameAcquireByRaycastOn, 0x10C0410C);
 		rebase(uiIntgameSelectionConfirmed, 0x10C04110);
@@ -122,7 +122,11 @@ public:
 	static void (__cdecl* orgIntgameTurnbasedRender)(int widId);
 	static void UiIntgameBackupCurSeq();
 	static void SeqPickerTargetingTypeReset();
-	static int UiIntgamePathPreviewHandler(TigMsgMouse* msg);
+	
+	/*
+	this function is in charge of either executing the action sequence
+	*/
+	static int UiIntgamePathSequenceHandler(TigMsgMouse* msg);
 	static int(__cdecl* orgUiIntgamePathPreviewHandler)(TigMsgMouse*msg);
 	static void UiIntgameGenerateSequence(int isUnnecessary);
 	static void(__cdecl*orgUiIntgameGenerateSequence)(int isUnnecessary);
@@ -133,7 +137,7 @@ public:
 	{
 		replaceFunction(0x10097320, HourglassUpdate);
 		orgIntgameTurnbasedRender = replaceFunction(0x10173F70, IntgameTurnbasedRender);
-		orgUiIntgamePathPreviewHandler = replaceFunction(0x10174790, UiIntgamePathPreviewHandler);
+		orgUiIntgamePathPreviewHandler = replaceFunction(0x10174790, UiIntgamePathSequenceHandler);
 		orgUiIntgameGenerateSequence = replaceFunction(0x10174100, UiIntgameGenerateSequence);
 	}
 } uiIntgameTurnbasedReplacements;
@@ -182,7 +186,7 @@ void UiIntegameTurnbased::SeqPickerTargetingTypeReset()
 	*actSeqSys.seqPickerD20ActnData1 = 0;
 }
 
-int UiIntegameTurnbased::UiIntgamePathPreviewHandler(TigMsgMouse* msg)
+int UiIntegameTurnbased::UiIntgamePathSequenceHandler(TigMsgMouse* msg)
 {
 	if (uiPicker.PickerActiveCheck())
 	{
@@ -204,12 +208,13 @@ int UiIntegameTurnbased::UiIntgamePathPreviewHandler(TigMsgMouse* msg)
 				if (locSys.Distance3d(curd20aTgtLoc, *addresses.locFromScreenLoc) >= 24.0)
 				{
 					performSeq = false;
-				} else if ( *addresses.uiIntgameWaypointMode == 0
-					|| addresses.locFromScreenLoc->location != addresses.uiIntgamePathPreviewDestLoc->location)
+				} 
+				else if ( *addresses.uiIntgameWaypointMode == 0
+					|| addresses.locFromScreenLoc->location != addresses.uiIntgameWaypointLoc->location)
 				{
-
+					// this initiates waypoint mode
 					*addresses.uiIntgameWaypointMode = 1;
-					*addresses.uiIntgamePathPreviewDestLoc = *addresses.locFromScreenLoc;
+					*addresses.uiIntgameWaypointLoc = *addresses.locFromScreenLoc;
 					UiIntgameBackupCurSeq();
 					performSeq = false;
 				}
