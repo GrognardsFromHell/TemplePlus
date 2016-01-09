@@ -33,9 +33,9 @@ struct PartySystem : temple::AddressTable
 	int (__cdecl *GetStoryState)();
 	void (__cdecl *SetStoryState)(int newState);
 
-	objHndl GetLeader() {
-		return GroupListGetMemberN(0);
-	}
+	objHndl GetLeader();
+	objHndl(__cdecl*GetConsciousPartyLeader)();
+	
 
 	PartySystem()
 	{
@@ -47,6 +47,7 @@ struct PartySystem : temple::AddressTable
 		rebase(GroupPCsLen, 0x1002B370);
 		rebase(GroupListGetMemberN, 0x1002B150);
 		rebase(GroupListGetLen, 0x1002B2B0);
+		rebase(GetConsciousPartyLeader, 0x1002BE60);
 		rebase(ObjFindInGroupArray, 0x100DF780);
 		rebase(ObjIsInGroupArray, 0x100DF960);
 		rebase(ObjIsAIFollower, 0x1002B220);
@@ -57,6 +58,7 @@ struct PartySystem : temple::AddressTable
 		rebase(RumorLogAdd, 0x1005FC20);
 		rebase(GetStoryState, 0x10006A20);
 		rebase(SetStoryState, 0x10006A30);
+		
 	}
 };
 

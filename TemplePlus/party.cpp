@@ -3,6 +3,8 @@
 #include "party.h"
 #include "util/config.h"
 #include "util/fixes.h"
+#include "critter.h"
+#include "obj.h"
 
 struct PartySystemAddresses : temple::AddressTable
 {
@@ -121,6 +123,16 @@ void PartySystem::GroupArrayClearMembers(GroupArray* groupArray)
 void PartySystem::CurrentlySelectedClear()
 {
 	GroupArrayClearMembers(addresses.groupCurrentlySelected);
+}
+
+objHndl PartySystem::GetLeader()
+{
+	objHndl leader = GroupListGetMemberN(0);
+	if (objects.IsNPC(leader))
+	{
+		leader = GetConsciousPartyLeader();
+	}
+	return leader;
 }
 
 uint32_t AddToPcGroup(objHndl objHnd)
