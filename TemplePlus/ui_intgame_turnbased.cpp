@@ -18,7 +18,10 @@
 #include "raycast.h"
 #include "location.h"
 #include <infrastructure/keyboard.h>
+#include "graphics/graphics.h"
 
+
+UiIntgameTurnbased uiIntgameTb;
 
 struct UiIntgameTurnbasedAddresses : temple::AddressTable
 {
@@ -29,6 +32,11 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable
 	int * cursorState;
 	int(__cdecl * UiActiveRadialMenuHasActiveNode)();
 	void(__cdecl* UiActionBarGetValuesFromMovement)();
+	void(__cdecl*CreateMovePreview)(PathQueryResult* pqr, UiIntgameTurnbasedFlags flags);
+	int(__cdecl*PathpreviewGetFromToDist)(PathQueryResult* path);
+	void(__cdecl*RenderCircle)(LocAndOffsets loc, float zoffset, int color1, int color2, float radius);
+	void(__cdecl*RenderPositioningBlueCircle)(LocAndOffsets loc, objHndl obj);
+	int (__cdecl*PathRenderEndpointCircle)(LocAndOffsets* loc, objHndl obj, float scaleFactor);
 
 	AooShaderPacket * aooShaderLocations;
 	int * aooShaderLocationsNum;
@@ -66,10 +74,15 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable
 		
 		rebase(UiActiveRadialMenuHasActiveNode, 0x1009AB40);
 
-
+		rebase(RenderCircle, 0x10106B70);
 		rebase(AooIndicatorDraw, 0x10106F30);
 		
+		rebase(RenderPositioningBlueCircle, 0x10107580);
+		rebase(PathRenderEndpointCircle, 0x10109BE0);
+		rebase(PathpreviewGetFromToDist,0x10109C80);
 		rebase(GetHourglassDepletionState, 0x10109D10);
+		rebase(CreateMovePreview, 0x10109D50);
+		
 
 		rebase(UiActionBarGetValuesFromMovement, 0x10173440);
 
@@ -113,7 +126,7 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable
 
  
 
-class UiIntegameTurnbased : public TempleFix
+class UiIntegameTurnbasedRepl : public TempleFix
 {
 public: 
 	const char* name() override { return "UI Intgame Turnbased" "Function Replacements";} 
@@ -142,9 +155,9 @@ public:
 	}
 } uiIntgameTurnbasedReplacements;
 
-void UiIntegameTurnbased::IntgameTurnbasedRender(int widId)
+void UiIntegameTurnbasedRepl::IntgameTurnbasedRender(int widId)
 {
-	auto shit1 = *addresses.uiIntgameAcquireByRaycastOn;
+	/*auto shit1 = *addresses.uiIntgameAcquireByRaycastOn;
 	if (shit1)
 	{
 		int dummy = 1;
@@ -169,24 +182,24 @@ void UiIntegameTurnbased::IntgameTurnbasedRender(int widId)
 	if (shit5 >= 0)
 	{
 		int dummy = 1;
-	}
+	}*/
 
 	orgIntgameTurnbasedRender(widId);
 }
 
-void UiIntegameTurnbased::UiIntgameBackupCurSeq()
+void UiIntegameTurnbasedRepl::UiIntgameBackupCurSeq()
 {
 	*addresses.uiIntgameCurSeqBackup = *(*actSeqSys.actSeqCur);
 }
 
-void UiIntegameTurnbased::SeqPickerTargetingTypeReset()
+void UiIntegameTurnbasedRepl::SeqPickerTargetingTypeReset()
 {
 	*actSeqSys.seqPickerTargetingType = -1;
 	*actSeqSys.seqPickerD20ActnType = D20A_UNSPECIFIED_ATTACK;
 	*actSeqSys.seqPickerD20ActnData1 = 0;
 }
 
-int UiIntegameTurnbased::UiIntgamePathSequenceHandler(TigMsgMouse* msg)
+int UiIntegameTurnbasedRepl::UiIntgamePathSequenceHandler(TigMsgMouse* msg)
 {
 	if (uiPicker.PickerActiveCheck())
 	{
@@ -245,12 +258,12 @@ int UiIntegameTurnbased::UiIntgamePathSequenceHandler(TigMsgMouse* msg)
 	// return orgUiIntgamePathPreviewHandler(msg);
 }
 
-void UiIntegameTurnbased::UiIntgameGenerateSequence(int isUnnecessary)
+void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary)
 {
 	orgUiIntgameGenerateSequence(isUnnecessary);
 }
 
-BOOL UiIntegameTurnbased::UiIntgameRaycast(objHndl* obj, int x, int y, int flags)
+BOOL UiIntegameTurnbasedRepl::UiIntgameRaycast(objHndl* obj, int x, int y, int flags)
 {
 	if (*addresses.uiIntgameTargetObjFromPortraits)
 	{
@@ -262,7 +275,7 @@ BOOL UiIntegameTurnbased::UiIntgameRaycast(objHndl* obj, int x, int y, int flags
 	}
 }
 
-int UiIntegameTurnbased::IntgameValidateMouseSelection(TigMsgMouse* msg)
+int UiIntegameTurnbasedRepl::IntgameValidateMouseSelection(TigMsgMouse* msg)
 {
 	objHndl obj = 0i64;
 	if (uiPicker.PickerActiveCheck() || radialMenus.ActiveRadialMenuHasActiveNode())
@@ -313,15 +326,40 @@ int UiIntegameTurnbased::IntgameValidateMouseSelection(TigMsgMouse* msg)
 	return 0;
 }
 
-void(__cdecl*UiIntegameTurnbased::orgIntgameTurnbasedRender)(int widId);
-int(__cdecl* UiIntegameTurnbased::orgUiIntgamePathPreviewHandler)(TigMsgMouse*msg);
-void(__cdecl*UiIntegameTurnbased::orgUiIntgameGenerateSequence)(int isUnnecessary);
+void(__cdecl*UiIntegameTurnbasedRepl::orgIntgameTurnbasedRender)(int widId);
+int(__cdecl* UiIntegameTurnbasedRepl::orgUiIntgamePathPreviewHandler)(TigMsgMouse*msg);
+void(__cdecl*UiIntegameTurnbasedRepl::orgUiIntgameGenerateSequence)(int isUnnecessary);
+
+void UiIntgameTurnbased::CreateMovePreview(PathQueryResult* pqr, UiIntgameTurnbasedFlags flags)
+{
+	addresses.CreateMovePreview(pqr, flags);
+}
+
+int UiIntgameTurnbased::PathpreviewGetFromToDist(PathQueryResult* path)
+{
+	return addresses.PathpreviewGetFromToDist(path);
+}
+
+void UiIntgameTurnbased::RenderCircle(LocAndOffsets loc, float zoffset, int fillColor, int outlineColor, float radius)
+{
+	addresses.RenderCircle(loc, zoffset, fillColor, outlineColor, radius);
+}
+
+void UiIntgameTurnbased::PathRenderEndpointCircle(LocAndOffsets* loc, objHndl obj, float zoffset)
+{
+	addresses.PathRenderEndpointCircle(loc, obj, zoffset);
+}
+
+void UiIntgameTurnbased::RenderPositioningBlueCircle(LocAndOffsets loc, objHndl obj)
+{
+	addresses.RenderPositioningBlueCircle(loc, obj);
+}
 
 void HourglassUpdate(int a3, int a4, int flags)
 {
 	int v3 = flags; int v4 = a3;
-	int v33 = 0; int v34 = 0;
-	float moveDistance = 0.0; float v32 = 0.0;
+	int v33 = 0; int pathPreviewState = 0;
+	float greenMoveLength = 0.0; float totalMoveLength = 0.0;
 	ActnSeq * actSeq = *actSeqSys.actSeqCur;
 	TurnBasedStatus * tbStat = nullptr;
 	int hourglassState = -1;
@@ -329,15 +367,6 @@ void HourglassUpdate(int a3, int a4, int flags)
 	D20ActionType d20aType = d20Sys.globD20Action->d20ActType;
 	TurnBasedStatus tbStat1 ;
 
-
-	auto shit = temple::GetRef<int>(0x102FC644);
-	if (shit)
-	{
-		int dummy = 1;
-	} else
-	{
-		int dummy = 1;
-	}
 
 	if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].flags & D20ADF::D20ADF_DrawPathByDefault)
 	{
@@ -376,13 +405,13 @@ void HourglassUpdate(int a3, int a4, int flags)
 	objHndl actor = tbSys.turnBasedGetCurrentActor();
 	if (actSeqSys.isPerforming(actor))
 	{
-		v34 = 3;
+		pathPreviewState = 3;
 	} else if (v4)
 	{
-		v34 = (a4 == 0) + 1;
+		pathPreviewState = (a4 == 0) + 1;
 	} else
 	{
-		v34 = 0;
+		pathPreviewState = 0;
 	}
 
 	if (combatSys.isCombatActive())
@@ -391,46 +420,46 @@ void HourglassUpdate(int a3, int a4, int flags)
 			tbStat = &actSeq->tbStatus;
 		hourglassState = tbStat->hourglassState;
 
-		if (tbStat->surplusMoveDistance >= 0.01)
+		if (tbStat->surplusMoveDistance >= 0.01) // has surplus moves
 		{
-			if (hourglassState == -1 || actSeqSys.turnBasedStatusTransitionMatrix[hourglassState][1] == -1)
+			if (hourglassState == -1 || actSeqSys.turnBasedStatusTransitionMatrix[hourglassState][1] == -1) // no move action remaining
 			{
-				moveDistance = -1.0;
-				v32 = tbStat->surplusMoveDistance;
-			} else
+				greenMoveLength = -1.0;
+				totalMoveLength = tbStat->surplusMoveDistance;
+			} else // has a move function remaining, thus the surplus move distance must leftover from the "green"
 			{
-				moveDistance = tbStat->surplusMoveDistance;
-				moveSpeed = dispatch.Dispatch29hGetMoveSpeed(actSeq->performer, 0) + moveDistance;
-				v32 = moveSpeed;
+				greenMoveLength = tbStat->surplusMoveDistance;
+				moveSpeed = dispatch.Dispatch29hGetMoveSpeed(actSeq->performer, 0) + greenMoveLength;
+				totalMoveLength = moveSpeed;
 			}
-		} else
+		} else // no surplus move dist
 		{
-			if (hourglassState == -1 || actSeqSys.turnBasedStatusTransitionMatrix[hourglassState][1] == -1)
+			if (hourglassState == -1 || actSeqSys.turnBasedStatusTransitionMatrix[hourglassState][1] == -1) // no move action remaining
 			{
-				v32 = -1.0;
+				totalMoveLength = -1.0;
 				if (!(tbStat->tbsFlags & 3))
 				{
-					moveDistance = 5.0;
+					greenMoveLength = 5.0; // five foot step remaining
 				} else
 				{
-					moveDistance = -1.0;
+					greenMoveLength = -1.0;
 				}
 			} else
 			{
-				moveDistance = dispatch.Dispatch29hGetMoveSpeed(actSeq->performer, 0);
+				greenMoveLength = dispatch.Dispatch29hGetMoveSpeed(actSeq->performer, 0);
 				if (tbStat->tbsFlags & 3)
 				{
-					moveDistance = -1.0;
+					greenMoveLength = -1.0;
 				}
 				else if (actSeqSys.GetHourglassTransition(tbStat->hourglassState, 4) == -1)
 				{
-					v32 = moveDistance;
-					moveDistance = -1.0;
+					totalMoveLength = greenMoveLength;
+					greenMoveLength = -1.0;
 				}
 				else
 				{
-					moveSpeed = moveDistance + moveDistance;
-					v32 = moveSpeed;
+					moveSpeed = greenMoveLength + greenMoveLength;
+					totalMoveLength = moveSpeed;
 				}
 					
 			}
@@ -444,20 +473,20 @@ void HourglassUpdate(int a3, int a4, int flags)
 			if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].turnBasedStatusCheck)
 			{
 				if (d20Sys.d20Defs[d20aType].turnBasedStatusCheck(d20Sys.globD20Action, &tbStat1))
-				{
-					v32 = 0.0;
-					moveDistance = 0.0;
+				{ // error in the check
+					totalMoveLength = 0.0;
+					greenMoveLength = 0.0;
 				}
 				else
 				{
-					v32 = tbStat1.surplusMoveDistance;
-					moveDistance = tbStat1.surplusMoveDistance;
+					totalMoveLength = tbStat1.surplusMoveDistance;
+					greenMoveLength = tbStat1.surplusMoveDistance;
 				}
 			}
-			if (actSeq->d20ActArray[0].d20Caf & D20CAF_ALTERNATE)
+			if (actSeq->d20ActArray[0].d20Caf & D20CAF_ALTERNATE) // D20CAF_ALTERNATE indicates an invalid path (perhaps due to truncation)
 			{
-				v32 = 0.0;
-				moveDistance = 0.0;
+				totalMoveLength = 0.0;
+				greenMoveLength = 0.0;
 			}
 
 		}
@@ -468,8 +497,8 @@ void HourglassUpdate(int a3, int a4, int flags)
 				PathQueryResult * pathQueryResult = actSeq->d20ActArray[i].path;
 				if (actSeq->d20ActArray[i].d20ActType == D20A_RUN && pathQueryResult && pathQueryResult->nodeCount != 1)
 				{
-					v32 = 0.0;
-					moveDistance = 0.0;
+					greenMoveLength = 0.0;
+					totalMoveLength = 0.0;
 				}
 			}
 		}
@@ -477,9 +506,9 @@ void HourglassUpdate(int a3, int a4, int flags)
 
 	}
 
-	*addresses.uiIntgamePathpreviewState = v34;
-	*addresses.uiIntgameGreenMoveLength = moveDistance;
-	*addresses.uiIntgameTotalMoveLength = v32;
+	*addresses.uiIntgamePathpreviewState = pathPreviewState;
+	*addresses.uiIntgameGreenMoveLength = greenMoveLength;
+	*addresses.uiIntgameTotalMoveLength = totalMoveLength;
 	*addresses.uiIntgamePathdrawCumulativeDist = 0;
 	*addresses.uiIntgamePathpreviewFromToDist = 0;
 

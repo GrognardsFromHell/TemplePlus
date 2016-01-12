@@ -22,6 +22,7 @@
 #include "ui/ui.h"
 #include "ai.h"
 #include "game_config.h"
+#include "ui_intgame_turnbased.h"
 
 
 class ActnSeqReplacements : public TempleFix
@@ -32,6 +33,7 @@ public:
 	}
 
 	static int(__cdecl* orgChooseTargetCallback)(void *);
+	static int(__cdecl*orgSeqRenderFuncMove) (D20Actn* d20a, UiIntgameTurnbasedFlags flags);
 	
 	
 	static int ChooseTargetCallback(void* a)
@@ -42,17 +44,19 @@ public:
 
 	static int ActionAddToSeq();
 	static void ActSeqGetPicker();
+	static int SeqRenderFuncMove(D20Actn* d20a, UiIntgameTurnbasedFlags flags);
 	void ActSeqApply();
 	void NaturalAttackOverwrites();
 
 	void apply() override{
 		ActSeqApply();
 		NaturalAttackOverwrites();
+		orgSeqRenderFuncMove = replaceFunction(0x1008D090, SeqRenderFuncMove);
 	}
 } actSeqReplacements;
 
 int(__cdecl* ActnSeqReplacements::orgChooseTargetCallback)(void * );
-
+int(__cdecl* ActnSeqReplacements::orgSeqRenderFuncMove) (D20Actn* d20a, UiIntgameTurnbasedFlags flags);
 
 static struct ActnSeqAddresses : temple::AddressTable{
 
@@ -67,6 +71,7 @@ static struct ActnSeqAddresses : temple::AddressTable{
 	ActnSeq** actSeqInterrupt;
 	int* seqSthg_10B3D59C;
 	int* seqSthg_10B3D5C4;
+	int * cursorState;
 
 	ActnSeqAddresses()
 	{
@@ -81,6 +86,7 @@ static struct ActnSeqAddresses : temple::AddressTable{
 		rebase(actSeqInterrupt,	   0x118CD574);
 
 		rebase(seqSthg_10B3D59C, 0x10B3D59C);
+		rebase(cursorState, 0x10B3D5AC);
 		rebase(seqSthg_10B3D5C4, 0x10B3D5C4);
 	}
 
@@ -2524,6 +2530,46 @@ void ActnSeqReplacements::ActSeqGetPicker()
 
 	// dummy = 1;
 
+}
+
+int ActnSeqReplacements::SeqRenderFuncMove(D20Actn* d20a, UiIntgameTurnbasedFlags flags)
+{
+	if (d20a == nullptr)
+	{
+		return 0;
+	}
+	auto pqr = d20a->path;
+	if (pqr && (flags & UITB_ShowPathPreview ) && (pqr->flags & PF_COMPLETE) )
+	{
+		uiIntgameTb.CreateMovePreview(pqr, (UiIntgameTurnbasedFlags)(flags & UITB_IsLastSequenceActionWithPath));
+	} 
+
+	
+	if (config.pathfindingDebugMode)
+	{
+		// draw the nodes
+		for (int i = 0; i < pqr->nodeCount; i++)
+		{
+			uiIntgameTb.RenderCircle(pqr->nodes[i], 0.0, 0x8078e9dd, 0xf078e9dd, 14.0);
+		}
+		// draw the d20 destination
+		uiIntgameTb.RenderCircle(d20a->destLoc, 1.0, 0x80ffFFff, 0xefff0000, 9.0);
+			
+	}
+	
+
+	*addresses.cursorState = 3;
+	if (d20a->d20Caf & D20CAF_TRUNCATED)
+	{
+		*addresses.cursorState = 19;
+	}
+
+	/*if (d20a->path)
+	{
+		uiIntgameTb.PathpreviewGetFromToDist(d20a->path);
+	}*/
+	return 0;
+	//return orgSeqRenderFuncMove(d20a, flags);
 }
 
 int ActnSeqReplacements::ActionAddToSeq()
