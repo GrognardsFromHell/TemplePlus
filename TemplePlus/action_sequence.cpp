@@ -34,8 +34,9 @@ public:
 
 	static int(__cdecl* orgChooseTargetCallback)(void *);
 	static int(__cdecl*orgSeqRenderFuncMove) (D20Actn* d20a, UiIntgameTurnbasedFlags flags);
-	
-	
+	static void AooShaderPacketAppend(LocAndOffsets* loc, int aooShaderId);
+	//static int(__cdecl*orgSeqRenderAooMovement)(D20Actn*, UiIntgameTurnbasedFlags);
+	static int SeqRenderAooMovement(D20Actn*, UiIntgameTurnbasedFlags);
 	static int ChooseTargetCallback(void* a)
 	{
 		logger->info("Choose Target Callback");
@@ -52,6 +53,8 @@ public:
 		ActSeqApply();
 		NaturalAttackOverwrites();
 		orgSeqRenderFuncMove = replaceFunction(0x1008D090, SeqRenderFuncMove);
+		//orgSeqRenderAooMovement =
+		replaceFunction(0x10091D60, SeqRenderAooMovement);
 	}
 } actSeqReplacements;
 
@@ -72,6 +75,9 @@ static struct ActnSeqAddresses : temple::AddressTable{
 	int* seqSthg_10B3D59C;
 	int* seqSthg_10B3D5C4;
 	int * cursorState;
+	int *aooShaderId;
+	int * aooShaderLocationsNum;
+	AooShaderPacket * aooShaderLocations; // size 64 array
 
 	ActnSeqAddresses()
 	{
@@ -80,14 +86,20 @@ static struct ActnSeqAddresses : temple::AddressTable{
 		rebase(TouchAttackAddToSeq, 0x10096760);
 		rebase(ActionSequenceChecksWithPerformerLocation, 0x10097000);
 		rebase(ActionAddToSeq,0x10097C20); 
+		
+		rebase(aooShaderLocations, 0x10B3B948);
+		rebase(aooShaderLocationsNum, 0x10B3D598);
+		rebase(seqSthg_10B3D59C, 0x10B3D59C);
+		rebase(cursorState, 0x10B3D5AC);
+		rebase(seqSthg_10B3D5C4, 0x10B3D5C4);
+
 		rebase(readiedActionCache, 0x1186A900);
 		rebase(actSeqPickerAction, 0x118CD400);
 		rebase(actSeqPicker,       0x118CD460);
 		rebase(actSeqInterrupt,	   0x118CD574);
 
-		rebase(seqSthg_10B3D59C, 0x10B3D59C);
-		rebase(cursorState, 0x10B3D5AC);
-		rebase(seqSthg_10B3D5C4, 0x10B3D5C4);
+		rebase(aooShaderId, 0x1186A8E8);
+		
 	}
 
 	
@@ -508,50 +520,54 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 	pathfindingSys.TruncatePathToDistance(aooPacket->path, &truncatedLoc, truncateLengthFeet);
 	int enemyCount = 0;
 	objHndl* enemies = combatSys.GetHostileCombatantList(obj, &enemyCount );
-	try
+
+	while (truncateLengthFeet < 2.0 + pathLength)
 	{
-		while (truncateLengthFeet < 2.0 + pathLength)
+		// obj is moving away from truncatedLoc
+		// if an enemy can hit you from when you're in the current truncatedLoc
+		// it means you incur an AOO
+
+		// loop over enemies to catch interceptions
+		for (int enemyIdx = 0; enemyIdx < enemyCount; enemyIdx++)
 		{
-			aooDistFeet = truncateLengthFeet;
-			// loop over enemies to catch interceptions
-			for (int i = 0; i < enemyCount; i++)
+			auto enemy = enemies[enemyIdx];
+			int interrupterIdx = 0;
+			bool hasInterrupted = false;
+			for (interrupterIdx = 0; interrupterIdx < aooPacket->numAoOs; interrupterIdx++)
 			{
-				auto enemy = enemies[i];
-				int interrupterIdx = 0;
-				for (interrupterIdx = 0; interrupterIdx < aooPacket->numAoOs; interrupterIdx++)
+				if (enemy == aooPacket->interrupters[interrupterIdx])
 				{
-					if (enemy == aooPacket->interrupters[interrupterIdx])
-						break;
+					hasInterrupted = true;
+					break;
 				}
-				if (enemy != aooPacket->interrupters[interrupterIdx])
+					
+			}
+			if (!hasInterrupted && enemy != aooPacket->interrupters[interrupterIdx])
+			{
+				if (d20Sys.d20QueryWithData(enemy, DK_QUE_AOOPossible, obj ))
 				{
-					if (d20Sys.d20QueryWithData(enemy, DK_QUE_AOOPossible, obj ))
+					if (combatSys.CanMeleeTargetAtLoc(enemy, obj, &truncatedLoc))
 					{
-						if (combatSys.CanMeleeTargetAtLoc(enemy, obj, &truncatedLoc))
-						{
-							aooPacket->interrupters[aooPacket->numAoOs] = enemy;
-							aooPacket->aooDistFeet[aooPacket->numAoOs] = aooDistFeet;
-							aooPacket->aooLocs[aooPacket->numAoOs++] = truncatedLoc;
-							if (aooPacket->numAoOs >= 32)
-								return;
-						}
+						aooPacket->interrupters[aooPacket->numAoOs] = enemy;
+						aooPacket->aooDistFeet[aooPacket->numAoOs] = aooDistFeet;
+						aooPacket->aooLocs[aooPacket->numAoOs++] = truncatedLoc;
+						if (aooPacket->numAoOs >= 32)
+							return;
 					}
 				}
 			}
-
-			
-
-			if (truncateLengthFeet < pathLength)
-				pathfindingSys.TruncatePathToDistance(aooPacket->path, &truncatedLoc, truncateLengthFeet);
-			truncateLengthFeet = truncateLengthFeet + 4.0; // fishy!!!
-			
 		}
-		delete [] enemies;
+
+		// advanced the truncatedLoc by 4 feet along the path
+		truncateLengthFeet = truncateLengthFeet + 4.0;
+		aooDistFeet = truncateLengthFeet;
+		if (truncateLengthFeet < pathLength)
+			pathfindingSys.TruncatePathToDistance(aooPacket->path, &truncatedLoc, truncateLengthFeet);
+		
+			
 	}
-	catch (...)
-	{
-		delete [] enemies;
-	}
+	delete [] enemies;
+	
 	return;
 }
 
@@ -2554,6 +2570,7 @@ int ActnSeqReplacements::SeqRenderFuncMove(D20Actn* d20a, UiIntgameTurnbasedFlag
 		}
 		// draw the d20 destination
 		uiIntgameTb.RenderCircle(d20a->destLoc, 1.0, 0x80ffFFff, 0xefff0000, 9.0);
+		uiIntgameTb.RenderCircle(pqr->to, 1.0, 0x00ffFFff, 0xefFFffFF, 16.0);
 			
 	}
 	
@@ -2570,6 +2587,32 @@ int ActnSeqReplacements::SeqRenderFuncMove(D20Actn* d20a, UiIntgameTurnbasedFlag
 	}*/
 	return 0;
 	//return orgSeqRenderFuncMove(d20a, flags);
+}
+
+void ActnSeqReplacements::AooShaderPacketAppend(LocAndOffsets* loc, int aooShaderId)
+{
+	auto shaderNum = *addresses.aooShaderLocationsNum;
+	if (shaderNum < MAX_AOO_SHADER_LOCATIONS)
+	{
+		addresses.aooShaderLocations[shaderNum].loc = *loc;
+		addresses.aooShaderLocations[shaderNum].shaderId = aooShaderId;
+		++(*addresses.aooShaderLocationsNum);
+	}
+}
+
+int ActnSeqReplacements::SeqRenderAooMovement(D20Actn* d20a, UiIntgameTurnbasedFlags flags)
+{
+	if (d20a && (flags & UITB_ShowPathPreview))
+	{
+		auto perfLoc = objects.GetLocationFull(d20a->d20APerformer); // this is the critter doing the aoo
+		AooShaderPacketAppend(&d20a->destLoc, *addresses.aooShaderId);
+		uiIntgameTb.AooInterceptArrowDraw(&perfLoc, &d20a->destLoc);
+		if (config.pathfindingDebugMode)
+		{
+			uiIntgameTb.RenderCircle(d20a->destLoc, -1, 0x90af30af, 0, 23);
+		}
+	}
+	return 0;
 }
 
 int ActnSeqReplacements::ActionAddToSeq()

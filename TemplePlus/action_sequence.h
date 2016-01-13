@@ -5,6 +5,7 @@
 
 #define actSeqArraySize 0x20
 #define READIED_ACTION_CACHE_SIZE 0x20
+#define MAX_AOO_SHADER_LOCATIONS 64
 
 struct LocationSys;
 struct PathQuery;

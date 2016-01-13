@@ -24,6 +24,7 @@ public:
 	void RenderCircle(LocAndOffsets loc, float zoffset, int fillColor, int outlineColor, float radius); // used in rendering path related circles; color is in 0xAARRGGBB format
 	void PathRenderEndpointCircle(LocAndOffsets* loc, objHndl obj, float zoffset); // the circle that gets drawn when previewing a path in combat mode
 	void RenderPositioningBlueCircle(LocAndOffsets loc, objHndl obj); // the circle that gets drawn when you click a destination and persists until you arrive there
+	void AooInterceptArrowDraw(LocAndOffsets* perfLoc, LocAndOffsets* targetLoc);
 };
 
 extern UiIntgameTurnbased uiIntgameTb;

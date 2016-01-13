@@ -37,6 +37,7 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable
 	void(__cdecl*RenderCircle)(LocAndOffsets loc, float zoffset, int color1, int color2, float radius);
 	void(__cdecl*RenderPositioningBlueCircle)(LocAndOffsets loc, objHndl obj);
 	int (__cdecl*PathRenderEndpointCircle)(LocAndOffsets* loc, objHndl obj, float scaleFactor);
+	void(__cdecl*AooInterceptArrowDraw)(LocAndOffsets* perfLoc, LocAndOffsets* targetLoc);
 
 	AooShaderPacket * aooShaderLocations;
 	int * aooShaderLocationsNum;
@@ -68,6 +69,8 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable
 	UiIntgameTurnbasedAddresses()
 	{
 		rebase(GameRayCast, 0x10022360);
+
+		
 		rebase(CursorRenderUpdate, 0x10097060);
 		
 		
@@ -78,6 +81,7 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable
 		rebase(AooIndicatorDraw, 0x10106F30);
 		
 		rebase(RenderPositioningBlueCircle, 0x10107580);
+		rebase(AooInterceptArrowDraw, 0x101090E0);
 		rebase(PathRenderEndpointCircle, 0x10109BE0);
 		rebase(PathpreviewGetFromToDist,0x10109C80);
 		rebase(GetHourglassDepletionState, 0x10109D10);
@@ -353,6 +357,11 @@ void UiIntgameTurnbased::PathRenderEndpointCircle(LocAndOffsets* loc, objHndl ob
 void UiIntgameTurnbased::RenderPositioningBlueCircle(LocAndOffsets loc, objHndl obj)
 {
 	addresses.RenderPositioningBlueCircle(loc, obj);
+}
+
+void UiIntgameTurnbased::AooInterceptArrowDraw(LocAndOffsets* perfLoc, LocAndOffsets* targetLoc)
+{
+	addresses.AooInterceptArrowDraw(perfLoc, targetLoc);
 }
 
 void HourglassUpdate(int a3, int a4, int flags)
