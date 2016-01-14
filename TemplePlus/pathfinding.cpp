@@ -438,6 +438,26 @@ PathQueryResult* Pathfinding::FetchAvailablePQRCacheSlot()
 		if (pathQArray[i].occupiedFlag == 0)
 		{
 			pathQArray[i].occupiedFlag = 1;
+			if ( i > 5)
+			{
+				int dummy = 1;
+			}
+			if ( i > 10)
+			{
+				int dummy = 1;
+			}
+			if (i > 15)
+			{
+				int dummy = 1;
+			}
+			if (i > 20)
+			{
+				int dummy = 1;
+			}
+			if (i > 25)
+			{
+				int dummy = 1;
+			}
 			return &pathQArray[i];
 		}
 	}
@@ -1466,6 +1486,10 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	auto toSubtile = locSys.subtileFromLoc(&pqr->to);
 	if (locSys.subtileFromLoc(&pqr->from) == toSubtile || !GetAlternativeTargetLocation(pqr, pq))
 	{
+		if (locSys.subtileFromLoc(&pqr->from) == toSubtile)
+			logger->info("Aborting because from = to.");
+		else
+			logger->info("Aborting because target tile is occupied and cannot find alternative tile.");
 		pdbgGotPath = 0;
 		return 0;
 	}
@@ -1473,15 +1497,21 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 
 	if (TargetSurrounded(pqr, pq))
 	{
+		logger->info("Aborting because target is surrounded.");
 		return 0;
 	}
 
 	//if (!config.pathfindingDebugModeFlushCache )
 	if (PathCacheGet(pq, pqr)) // has this query been done before? if so copies it and returns the result
+	{
+		logger->info("Query found in cache, fetching result.");
 		return pqr->nodeCount;
+	}
+		
 
 	if (pq->flags & PQF_A_STAR_TIME_CAPPED && PathSumTime() >= aStarMaxTimeMs)
 	{
+		logger->info("Astar timed out, aborting.");
 		pqr->flags |= PF_TIMED_OUT;
 		return 0;
 	}

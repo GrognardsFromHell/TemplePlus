@@ -671,7 +671,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		{
 			if (pqResult >= pathfindingSys.pathQArray && pqResult < &pathfindingSys.pathQArray[PQR_CACHE_SIZE])
 				pqResult->occupiedFlag = 0;
-			return 0x9;
+			return AEC_TARGET_INVALID;
 		}
 	}
 
@@ -679,13 +679,18 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	d20aCopy.destLoc = pqResult->to;
 	d20aCopy.distTraversed = pathLength;
 
-	if (pathLength < 0.1) return 0;
+	if (pathLength < 0.1)
+	{
+		// logger->info("Path length zero! Leak??");
+		releasePath(pqResult);
+		return 0;
+	}
 	if (!combat->isCombatActive()){	d20aCopy.distTraversed = 0;		pathLength = 0.0;	}
 
 	float remainingMaxMoveLength = 0;
 	if (getRemainingMaxMoveLength(d20a, &tbStatCopy, &remainingMaxMoveLength)) // deducting moves that have already been spent, but also a raw calculation (not taking 5' step and such into account)
 	{
-		if (remainingMaxMoveLength < 0.1)	{releasePath(d20aCopy.path);	return 0x8;	}
+		if (remainingMaxMoveLength < 0.1)	{releasePath(d20aCopy.path);	return AEC_TARGET_TOO_FAR;	}
 		if (static_cast<long double>(remainingMaxMoveLength) < pathLength)
 		{
 			auto temp = 1;;
@@ -728,7 +733,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 			d20aCopy.d20ActType = D20A_MOVE;
 		} 
 		else if ( 2* baseMoveDist >= (long double)pathLength) d20aCopy.d20ActType = D20A_RUN;	
-		else	{	releasePath(pqResult); return 8;	}
+		else	{	releasePath(pqResult); return AEC_TARGET_TOO_FAR;	}
 	}
 
 LABEL_53:
