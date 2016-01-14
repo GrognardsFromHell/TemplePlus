@@ -106,7 +106,7 @@ enum PathFlags {
 	PF_2 = 0x2,
 	PF_4 = 0x4,
 	PF_STRAIGHT_LINE_SUCCEEDED = 0x8, 
-	PF_UNK1 = 0x10, // Seems to be set in response to query flag PQF_A_STAR_TIME_CAPPED (maybe timeout flag?)
+	PF_TIMED_OUT = 0x10, // Seems to be set in response to query flag PQF_A_STAR_TIME_CAPPED (maybe timeout flag?)
 	PF_20 = 0x20
 };
 
@@ -173,7 +173,7 @@ struct Pathfinding : temple::AddressTable {
 	PathQueryResult * pathQArray;
 	bool pathQueryResultIsValid(PathQueryResult *pqr);
 	PathQueryResult* FetchAvailablePQRCacheSlot();
-	uint32_t * pathSthgFlag_10B3D5C8;
+	uint32_t * rollbackSequenceFlag;
 
 	float pathLength(Path *path); // path length in feet; note: unlike the ToEE function, returns a float (and NOT to the FPU!)
 

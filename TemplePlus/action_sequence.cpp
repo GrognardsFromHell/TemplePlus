@@ -559,10 +559,12 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 		}
 
 		// advanced the truncatedLoc by 4 feet along the path
-		truncateLengthFeet = truncateLengthFeet + 4.0;
-		aooDistFeet = truncateLengthFeet;
 		if (truncateLengthFeet < pathLength)
 			pathfindingSys.TruncatePathToDistance(aooPacket->path, &truncatedLoc, truncateLengthFeet);
+
+		truncateLengthFeet = truncateLengthFeet + 4.0;
+		aooDistFeet = truncateLengthFeet;
+
 		
 			
 	}
@@ -636,7 +638,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	if (!pqResult) return ActionErrorCode::AEC_TARGET_INVALID;
 
 
-	*pathfindingSys.pathSthgFlag_10B3D5C8 = 0;
+	*pathfindingSys.rollbackSequenceFlag = 0;
 	if ( (d20aCopy.d20Caf & D20CAF_CHARGE ) || d20a->d20ActType == D20A_RUN || d20a->d20ActType == D20A_DOUBLE_MOVE)
 	{
 		*reinterpret_cast<int*>(&pathQ.flags) |= PQF_DONT_USE_PATHNODES; // so it runs in a straight line
@@ -644,27 +646,27 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	int pathResult = pathfinding->FindPath(&pathQ, pqResult);
 	if (!pathResult)
 	{
-		if (pqResult->flags & 0x10) *pathfindingSys.pathSthgFlag_10B3D5C8 = 1;
-		try
+		if (pqResult->flags & PF_TIMED_OUT) 
 		{
-			if (pathQ.targetObj)
-				logger->info("MoveSequenceParse: FAILED PATH... {} attempted from {} to {} ({})", description.getDisplayName(pqResult->mover), pqResult->from, pqResult->to, description.getDisplayName(pathQ.targetObj));
-			else
-				logger->info("MoveSequenceParse: FAILED PATH... {} attempted from {} to {}", description.getDisplayName(pqResult->mover), pqResult->from, pqResult->to);
-		}
-		catch (...)
-		{
-			
+			*pathfindingSys.rollbackSequenceFlag = 1;
 		}
 
-		if (config.pathfindingDebugMode)
-		{
+		if (pathQ.targetObj)
+			logger->info("MoveSequenceParse: FAILED PATH... {} attempted from {} to {} ({})", description.getDisplayName(pqResult->mover), pqResult->from, pqResult->to, description.getDisplayName(pathQ.targetObj));
+		else
+			logger->info("MoveSequenceParse: FAILED PATH... {} attempted from {} to {}", description.getDisplayName(pqResult->mover), pqResult->from, pqResult->to);
+		
+
+
+		/*if (config.pathfindingDebugMode)
+		{ 
 			pathResult = pathfinding->FindPath(&pathQ, pqResult);
 			if (pathResult)
 			{
+				*pathfindingSys.rollbackSequenceFlag = 0;
 				logger->info("Second time's the charm... from {} to {}", pqResult->from, pqResult->to);
 			}
-		}
+		}*/
 		if (!pathResult)
 		{
 			if (pqResult >= pathfindingSys.pathQArray && pqResult < &pathfindingSys.pathQArray[PQR_CACHE_SIZE])

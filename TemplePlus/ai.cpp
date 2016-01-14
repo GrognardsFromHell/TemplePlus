@@ -961,6 +961,10 @@ int AiSystem::Default(AiTactic* aiTac)
 	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_ATTACK, 0);
 	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
 	ActionErrorCode addToSeqRes = (ActionErrorCode)actSeqSys.ActionAddToSeq();
+	if (addToSeqRes)
+	{
+		logger->info("Ai Default failed, error code: {}", (int)addToSeqRes);
+	}
 	int performError = actSeqSys.ActionSequenceChecksWithPerformerLocation();
 	if (!performError)
 		return 1;

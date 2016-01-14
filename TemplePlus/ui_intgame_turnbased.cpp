@@ -161,33 +161,6 @@ public:
 
 void UiIntegameTurnbasedRepl::IntgameTurnbasedRender(int widId)
 {
-	/*auto shit1 = *addresses.uiIntgameAcquireByRaycastOn;
-	if (shit1)
-	{
-		int dummy = 1;
-	}
-	auto shit4 = *addresses.uiIntgameSelectionConfirmed;
-	if (shit4)
-	{
-		int dummy = 1;
-	}
-	auto shit2 = *addresses.uiIntgameWidgetEnteredForRender;
-	if (shit2)
-	{
-		int dummy = 1;
-	}
-
-	auto shit3 = *addresses.uiIntgameWidgetEnteredForGameplay;
-	if (shit3)
-	{
-		int dummy = 1;
-	}
-	auto shit5 = *addresses.activePickerIdx;
-	if (shit5 >= 0)
-	{
-		int dummy = 1;
-	}*/
-
 	orgIntgameTurnbasedRender(widId);
 }
 

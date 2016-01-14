@@ -215,7 +215,7 @@ Pathfinding::Pathfinding() {
 
 
 	// these two are still used a lot in other places outside the pathfinding system so I'm keeping them here for the time being
-	rebase(pathSthgFlag_10B3D5C8,0x10B3D5C8); 
+	rebase(rollbackSequenceFlag,0x10B3D5C8); 
 	rebase(pathQArray, 0x1186AC60);	
 
 	pdbgMover = 0i64;
@@ -1432,19 +1432,7 @@ int Pathfinding::FindPathSansNodes(PathQuery* pq, Path* pqr)
 
 int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 {
-
-	auto ui_intgame_turnbased_10C0410C = temple::GetRef<int>(0x10C0410C);
-	if (ui_intgame_turnbased_10C0410C)
-	{
-		int dummy = 1;
-	}
-	auto ui_intgame_turnbased_10C04110 = temple::GetRef<int>(0x10C04110);
-	if (ui_intgame_turnbased_10C04110)
-	{
-		int dummy = 1;
-	}
 	
-
 	int gotPath = 0;
 	int triedPathNodes = 0;
 	int refTime;
@@ -1488,13 +1476,13 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 		return 0;
 	}
 
-	if (!config.pathfindingDebugMode )
-		if (PathCacheGet(pq, pqr)) // has this query been done before? if so copies it and returns the result
-			return pqr->nodeCount;
+	//if (!config.pathfindingDebugModeFlushCache )
+	if (PathCacheGet(pq, pqr)) // has this query been done before? if so copies it and returns the result
+		return pqr->nodeCount;
 
 	if (pq->flags & PQF_A_STAR_TIME_CAPPED && PathSumTime() >= aStarMaxTimeMs)
 	{
-		pqr->flags |= 16;
+		pqr->flags |= PF_TIMED_OUT;
 		return 0;
 	}
 
