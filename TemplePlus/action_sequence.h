@@ -65,6 +65,12 @@ enum TurnBasedStatusFlags : uint32_t
 	TBSF_100 = 0x100
 };
 
+enum SequenceFlags : int {
+	SEQF_NONE = 0,
+	SEQF_OCCUPIED = 1,
+	SEQF_2 = 2
+};
+
 struct ActionSequenceSystem : temple::AddressTable
 {
 	
@@ -142,7 +148,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	//10097C20
 	
 	uint32_t seqCheckFuncs(TurnBasedStatus *tbStatus);
-	void AOOSthgSub_10097D50(objHndl, objHndl);
+	void DoAoo(objHndl, objHndl);
 	int32_t DoAoosByAdjcentEnemies(objHndl);
 	
 	int32_t InterruptNonCounterspell(D20Actn *d20a);
@@ -237,7 +243,7 @@ struct ActnSeq
 	int32_t d20aCurIdx;
 	ActnSeq * prevSeq;
 	ActnSeq * interruptSeq;
-	uint32_t seqOccupied; // is actually flags
+	uint32_t seqOccupied; // is actually flags; 1 - performing; 2 - aoo maybe?
 	TurnBasedStatus tbStatus;
 	objHndl performer;
 	LocAndOffsets performerLoc;

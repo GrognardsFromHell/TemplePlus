@@ -1268,19 +1268,19 @@ uint32_t ActionSequenceSystem::SequencePathSthgSub_10096450(ActnSeq* actSeq, uin
 		mov ecx, this;
 
 
-		mov esi, idx;
-		push esi;
-		mov esi, [ecx]._sub_10096450;
-		mov ebx, tbStat;
-		mov eax, actSeq;
-		push eax;
-		call esi;
-		add esp, 8;
+mov esi, idx;
+push esi;
+mov esi, [ecx]._sub_10096450;
+mov ebx, tbStat;
+mov eax, actSeq;
+push eax;
+call esi;
+add esp, 8;
 
-		mov result, eax;
-		pop ebx;
-		pop ecx;
-		pop esi;
+mov result, eax;
+pop ebx;
+pop ecx;
+pop esi;
 	}
 	return result;
 }
@@ -1290,9 +1290,11 @@ uint32_t ActionSequenceSystem::seqCheckFuncs(TurnBasedStatus* tbStatus)
 	LocAndOffsets seqPerfLoc;
 	ActnSeq * curSeq = *actSeqCur;
 	uint32_t result = 0;
-	
+
 	if (!curSeq)
-		{	memset(tbStatus, 0, sizeof(TurnBasedStatus));		return 0;	}
+	{
+		memset(tbStatus, 0, sizeof(TurnBasedStatus));		return 0;
+	}
 
 	memcpy(tbStatus, &curSeq->tbStatus, sizeof(TurnBasedStatus));
 	objects.loc->getLocAndOff(curSeq->performer, &seqPerfLoc);
@@ -1305,38 +1307,94 @@ uint32_t ActionSequenceSystem::seqCheckFuncs(TurnBasedStatus* tbStatus)
 		auto d20type = curSeq->d20ActArray[i].d20ActType;
 		auto tgtCheckFunc = d20->d20Defs[d20type].tgtCheckFunc;
 		if (tgtCheckFunc)
-			{ result = tgtCheckFunc(&curSeq->d20ActArray[i], tbStatus);	if (result) break; }
+		{
+			result = tgtCheckFunc(&curSeq->d20ActArray[i], tbStatus);	if (result) break;
+		}
 
-			
+
 		result = TurnBasedStatusUpdate(d20a, tbStatus);
-		if (result)	
-			{ tbStatus->errCode = result;	break; }
+		if (result)
+		{
+			tbStatus->errCode = result;	break;
+		}
 
 		auto actCheckFunc = d20->d20Defs[d20a->d20ActType].actionCheckFunc;
 		if (actCheckFunc)
-			{ result = actCheckFunc(d20a, tbStatus);		if (result) break; }
+		{
+			result = actCheckFunc(d20a, tbStatus);		if (result) break;
+		}
 
 		auto locCheckFunc = d20->d20Defs[d20type].locCheckFunc;
 		if (locCheckFunc)
-			{ result = locCheckFunc(d20a, tbStatus, &seqPerfLoc); if (result) break; }
+		{
+			result = locCheckFunc(d20a, tbStatus, &seqPerfLoc); if (result) break;
+		}
 
 		auto path = curSeq->d20ActArray[i].path;
-		if (path) 
+		if (path)
 			seqPerfLoc = path->to;
 	}
 	if (result)
 	{
-		if (!*actSeqCur){ memset(tbStatus, 0, sizeof(TurnBasedStatus)); }
-		else{ memcpy(tbStatus, &(*actSeqCur)->tbStatus, sizeof(TurnBasedStatus)); }
+		if (!*actSeqCur) { memset(tbStatus, 0, sizeof(TurnBasedStatus)); }
+		else { memcpy(tbStatus, &(*actSeqCur)->tbStatus, sizeof(TurnBasedStatus)); }
 	}
-	
+
 	return result;
 
 }
 
-void ActionSequenceSystem::AOOSthgSub_10097D50(objHndl objHnd1, objHndl objHnd2)
+void ActionSequenceSystem::DoAoo(objHndl obj, objHndl target)
 {
-	_AOOSthgSub_10097D50(objHnd1, objHnd2);
+	AssignSeq(obj);
+	auto curSeq = *actSeqCur;
+	curSeq->performer = obj;
+
+	logger->info("AOO - {} ({}) is interrupting {} ({})",
+		description.getDisplayName(obj), obj,
+		description.getDisplayName(target), target);
+
+	if (obj != d20Sys.globD20Action->d20APerformer)
+	{
+		*seqPickerTargetingType = -1;
+		*seqPickerD20ActnType = D20A_UNSPECIFIED_ATTACK;
+		*seqPickerD20ActnData1 = 0;
+	}
+	d20Sys.globD20Action->d20APerformer = obj;
+	auto tbStat = &curSeq->tbStatus;
+	tbStat->tbsFlags = TBSF_NONE;
+	tbStat->surplusMoveDistance = 0.0;
+	tbStat->attackModeCode = 0;
+	tbStat->baseAttackNumCode = 0;
+	tbStat->numBonusAttacks = 0;
+	tbStat->numAttacks = 0;
+	tbStat->errCode = 0;
+	tbStat->hourglassState = 2;
+	tbStat->idxSthg = -1;
+	curSeq->seqOccupied |= SEQF_2;
+
+	d20Sys.D20ActnInit(obj, d20Sys.globD20Action);
+	if (critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary))
+	{
+		d20Sys.globD20Action->data1 = ATTACK_CODE_PRIMARY + 1;
+	}
+	else
+	{
+		if (dispatch.DispatchD20ActionCheck(d20Sys.globD20Action, tbStat, dispTypeGetCritterNaturalAttacksNum) <= 0 )
+		{
+			d20Sys.globD20Action->data1 = ATTACK_CODE_PRIMARY + 1;
+		} else
+		{
+			d20Sys.globD20Action->data1 = ATTACK_CODE_NATURAL_ATTACK + 1;
+		}
+	}
+	d20Sys.globD20Action->d20Caf |= D20CAF_ATTACK_OF_OPPORTUNITY;
+	d20Sys.globD20Action->d20ActType = D20A_ATTACK_OF_OPPORTUNITY;
+	auto tgtLoc = objects.GetLocationFull(target);
+	d20Sys.GlobD20ActnSetTarget(target, &tgtLoc);
+	ActionAddToSeq();
+	d20Sys.d20SendSignal(obj, DK_SIG_AOOPerformed, target);
+	// _AOOSthgSub_10097D50(objHnd1, objHnd2);
 }
 
 int32_t ActionSequenceSystem::DoAoosByAdjcentEnemies(objHndl obj)
@@ -1373,7 +1431,7 @@ int32_t ActionSequenceSystem::DoAoosByAdjcentEnemies(objHndl obj)
 			continue;
 		if (!d20Sys.d20QueryWithData(enemy, DK_QUE_AOOWillTake, obj))
 			continue;
-		AOOSthgSub_10097D50(enemy, obj);
+		DoAoo(enemy, obj);
 		status = 1;
 	}
 
@@ -1871,7 +1929,7 @@ void ActionSequenceSystem::actionPerform()
 		}
 		if (d20->tumbleCheck(d20a))
 		{
-			AOOSthgSub_10097D50(d20a->d20APerformer, d20a->d20ATarget);
+			DoAoo(d20a->d20APerformer, d20a->d20ATarget);
 			curSeq->d20ActArray[curSeq->d20ActArrayNum - 1].d20Caf |= D20CAF_AOO_MOVEMENT;
 			sequencePerform();
 			return;
