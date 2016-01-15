@@ -3,7 +3,7 @@
 #include "tig/tig_mes.h"
 
 
-#define actSeqArraySize 0x20
+#define ACT_SEQ_ARRAY_SIZE 0x20
 #define READIED_ACTION_CACHE_SIZE 0x20
 #define MAX_AOO_SHADER_LOCATIONS 64
 
@@ -143,7 +143,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	
 	uint32_t seqCheckFuncs(TurnBasedStatus *tbStatus);
 	void AOOSthgSub_10097D50(objHndl, objHndl);
-	int32_t AOOSthg2_100981C0(objHndl);
+	int32_t DoAoosByAdjcentEnemies(objHndl);
 	
 	int32_t InterruptNonCounterspell(D20Actn *d20a);
 	int32_t InterruptCounterspell(D20Actn *d20a);

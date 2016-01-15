@@ -38,6 +38,8 @@ public:
 		return "D20 Function Replacements";
 	}
 
+	static int PerformActivateReadiedAction(D20Actn* d20a);
+
 	void apply() override {
 		
 		OrgD20Init = (int(__cdecl *)(GameSystemConf* conf))replaceFunction(0x1004C8A0, _D20Init);
@@ -69,6 +71,8 @@ public:
 
 		replaceFunction(0x1008CE30, _PerformStandardAttack);
 		
+		replaceFunction(0x100920B0, PerformActivateReadiedAction);
+
 		replaceFunction(0x100949E0, _GlobD20ActnInit);
 		
 
@@ -82,6 +86,17 @@ public:
 	}
 } d20Replacements;
 
+int D20Replacements::PerformActivateReadiedAction(D20Actn* d20a)
+{
+	logger->info("Performing Readied Interrupt - cutting sequence short.");
+	auto curSeq = *actSeqSys.actSeqCur;
+	int curIdx = curSeq->d20aCurIdx;
+	if (curIdx < curSeq->d20ActArrayNum && curSeq->d20ActArray[curIdx+1].d20ATarget != D20A_READIED_INTERRUPT)
+	{
+		curSeq->d20ActArrayNum = curIdx;
+	}
+	return 0;
+}
 
 static struct D20SystemAddresses : temple::AddressTable {
 

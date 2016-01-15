@@ -43,6 +43,13 @@ public:
 		return orgChooseTargetCallback(a); // doesn't seem to be used in practice???
 	}
 
+	static void(__cdecl*orgTurnStart)(objHndl obj);
+	static void TurnStart(objHndl obj)
+	{
+		logger->info("Next turn for {}", description.getDisplayName(obj));
+		orgTurnStart(obj);
+	};
+
 	static int ActionAddToSeq();
 	static void ActSeqGetPicker();
 	static int SeqRenderFuncMove(D20Actn* d20a, UiIntgameTurnbasedFlags flags);
@@ -55,11 +62,13 @@ public:
 		orgSeqRenderFuncMove = replaceFunction(0x1008D090, SeqRenderFuncMove);
 		//orgSeqRenderAooMovement =
 		replaceFunction(0x10091D60, SeqRenderAooMovement);
+		orgTurnStart = replaceFunction(0x10099430, TurnStart);
 	}
 } actSeqReplacements;
 
 int(__cdecl* ActnSeqReplacements::orgChooseTargetCallback)(void * );
 int(__cdecl* ActnSeqReplacements::orgSeqRenderFuncMove) (D20Actn* d20a, UiIntgameTurnbasedFlags flags);
+void(__cdecl* ActnSeqReplacements::orgTurnStart)(objHndl obj);
 
 static struct ActnSeqAddresses : temple::AddressTable{
 
@@ -401,7 +410,7 @@ uint32_t ActionSequenceSystem::addD20AToSeq(D20Actn* d20a, ActnSeq* actSeq)
 
 uint32_t ActionSequenceSystem::isPerforming(objHndl objHnd)
 {
-	for (auto i = 0; i < actSeqArraySize; i++)
+	for (auto i = 0; i < ACT_SEQ_ARRAY_SIZE; i++)
 	{
 		if (actSeqArray[i].performer == objHnd && (actSeqArray[i].seqOccupied & 1))
 		{
@@ -836,7 +845,7 @@ uint32_t ActionSequenceSystem::AllocSeq(objHndl objHnd)
 	// finds an available sequence and allocates it to objHnd
 	ActnSeq * curSeq = *actSeqCur;
 	if (curSeq && !(curSeq->seqOccupied & 1)) { *actSeqCur = nullptr; }
-	for (auto i = 0; i < actSeqArraySize; i++)
+	for (auto i = 0; i < ACT_SEQ_ARRAY_SIZE; i++)
 	{
 		if ( (actSeqArray[i].seqOccupied & 1 ) == 0)
 		{
@@ -861,10 +870,10 @@ uint32_t ActionSequenceSystem::AssignSeq(objHndl objHnd)
 		{
 			if (prevSeq != nullptr)
 			{
-				logger->info("Pushing sequence from for {} ({:x}) to {} ({:x})", object->description._getDisplayName(prevSeq->performer, prevSeq->performer), prevSeq->performer, object->description._getDisplayName(objHnd, objHnd), objHnd);
+				logger->info("Pushing sequence from {} ({:x}) to {} ({:x})", object->description._getDisplayName(prevSeq->performer, prevSeq->performer), prevSeq->performer, object->description._getDisplayName(objHnd, objHnd), objHnd);
 			} else
 			{
-				logger->info("Allocating sequence for {} ({:x}) ", object->description._getDisplayName(objHnd, objHnd), objHnd);
+				logger->info("Allocating sequence for {} ({:x} / {}) ", object->description._getDisplayName(objHnd, objHnd), objHnd, objHnd);
 			}
 		}
 		(*actSeqCur)->prevSeq = prevSeq;
@@ -1330,9 +1339,46 @@ void ActionSequenceSystem::AOOSthgSub_10097D50(objHndl objHnd1, objHndl objHnd2)
 	_AOOSthgSub_10097D50(objHnd1, objHnd2);
 }
 
-int32_t ActionSequenceSystem::AOOSthg2_100981C0(objHndl objHnd)
+int32_t ActionSequenceSystem::DoAoosByAdjcentEnemies(objHndl obj)
 {
-	return _AOOSthg2_100981C0(objHnd);
+	int status = 0;
+
+	objHndl enemies[40];
+
+	int numEnemies = combatSys.GetEnemiesCanMelee(obj, enemies);
+
+	for (int i = 0; i < numEnemies; i++)
+	{
+		auto enemy = enemies[i];
+		bool okToAoo = true;
+		if (objects.GetFlags(enemy) & OF_INVULNERABLE) // bug? or maybe it also assumes the obj is "trapped" somehow, like in otiluke's resilient sphere
+			continue;
+		
+		
+		for (int j = 0; j < ACT_SEQ_ARRAY_SIZE; j++)
+		{
+			if ( (actSeqArray[j].seqOccupied & 1)
+				&& actSeqArray[j].performer == enemy)
+			{
+				okToAoo = false;
+				logger->info("Action Aoo while performing...");
+			}
+		}
+
+		if (!okToAoo)
+			continue;
+		if (critterSys.IsFriendly(obj, enemy))
+			continue;
+		if (!d20Sys.d20QueryWithData(enemy, DK_QUE_AOOPossible, obj))
+			continue;
+		if (!d20Sys.d20QueryWithData(enemy, DK_QUE_AOOWillTake, obj))
+			continue;
+		AOOSthgSub_10097D50(enemy, obj);
+		status = 1;
+	}
+
+	return status;
+	// return _AOOSthg2_100981C0(obj);
 }
 
 int32_t ActionSequenceSystem::InterruptNonCounterspell(D20Actn* d20a)
@@ -1804,7 +1850,7 @@ void ActionSequenceSystem::actionPerform()
 
 		if (d20a->d20ActType != D20A_AOO_MOVEMENT)
 		{
-			if ( d20->D20ActionTriggersAoO(d20a, &tbStatus) && AOOSthg2_100981C0(d20a->d20APerformer))
+			if ( d20->D20ActionTriggersAoO(d20a, &tbStatus) && DoAoosByAdjcentEnemies(d20a->d20APerformer))
 			{
 				logger->info("Sequence Preempted {} ({})", description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
 				--*(curIdx);
@@ -1999,7 +2045,7 @@ uint32_t ActionSequenceSystem::isSomeoneAlreadyActingSimult(objHndl objHnd)
 		if (objHnd == simultPerformerQueue[i]) return 0;
 
 		auto perf = simultPerformerQueue[i];
-		for (auto j = 0; j < actSeqArraySize; j++)
+		for (auto j = 0; j < ACT_SEQ_ARRAY_SIZE; j++)
 		{
 			if (actSeqArray[j].seqOccupied &&actSeqArray[j].performer == perf) return 1;
 		}

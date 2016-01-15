@@ -13,6 +13,7 @@ struct TurnBasedSys : temple::AddressTable
 	objHndl turnBasedGetCurrentActor();
 	void turnBasedSetCurrentActor(objHndl objHnd);
 	void CloneInitiativeFromObj(objHndl obj, objHndl sourceObj);
+	void TbSysNextSthg_100DF5A0(objHndl obj, int idx);
 };
 
 extern TurnBasedSys tbSys;

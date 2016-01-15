@@ -438,26 +438,6 @@ PathQueryResult* Pathfinding::FetchAvailablePQRCacheSlot()
 		if (pathQArray[i].occupiedFlag == 0)
 		{
 			pathQArray[i].occupiedFlag = 1;
-			if ( i > 5)
-			{
-				int dummy = 1;
-			}
-			if ( i > 10)
-			{
-				int dummy = 1;
-			}
-			if (i > 15)
-			{
-				int dummy = 1;
-			}
-			if (i > 20)
-			{
-				int dummy = 1;
-			}
-			if (i > 25)
-			{
-				int dummy = 1;
-			}
 			return &pathQArray[i];
 		}
 	}
@@ -1504,7 +1484,8 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	//if (!config.pathfindingDebugModeFlushCache )
 	if (PathCacheGet(pq, pqr)) // has this query been done before? if so copies it and returns the result
 	{
-		logger->info("Query found in cache, fetching result.");
+		if (config.pathfindingDebugMode)
+			logger->info("Query found in cache, fetching result.");
 		return pqr->nodeCount;
 	}
 		

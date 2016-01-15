@@ -237,6 +237,7 @@ int UiIntegameTurnbasedRepl::UiIntgamePathSequenceHandler(TigMsgMouse* msg)
 
 void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary)
 {
+	// replacing this just for debug purposes really
 	orgUiIntgameGenerateSequence(isUnnecessary);
 }
 
