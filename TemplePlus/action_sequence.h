@@ -67,7 +67,7 @@ enum TurnBasedStatusFlags : uint32_t
 
 enum SequenceFlags : int {
 	SEQF_NONE = 0,
-	SEQF_OCCUPIED = 1,
+	SEQF_PERFORMING = 1,
 	SEQF_2 = 2
 };
 
@@ -119,13 +119,24 @@ struct ActionSequenceSystem : temple::AddressTable
 	TurnBasedStatus* curSeqGetTurnBasedStatus();
 	const char * ActionErrorString(uint32_t actnErrorCode);
 
-	uint32_t AllocSeq(objHndl objHnd);
+	/*
+	// finds available sequence slot, allocates it to obj and makes it the Current Sequence
+	*/
+	uint32_t AllocSeq(objHndl obj); 
+
+	/*
+	 uses the above does some extra handling
+	*/
 	uint32_t AssignSeq(objHndl objHnd);
 	uint32_t TurnBasedStatusInit(objHndl objHnd);
 	void ActSeqCurSetSpellPacket(SpellPacketBody* spellPacketBody, int flag);
 	int GetNewHourglassState(objHndl performer, D20ActionType d20ActionType, int d20Data1, int radMenuActualArg, D20SpellData* d20SpellData);
 	int GetHourglassTransition(int hourglassCurrent, int hourglassCost);
-	
+
+	BOOL SequenceSwitch(objHndl obj);
+	void GreybarReset();
+
+
 	ActionErrorCode ActionSequenceChecksRegardLoc(LocAndOffsets* loc, TurnBasedStatus * tbStatus, int d20aIdx, ActnSeq* actSeq);
 	ActionErrorCode ActionSequenceChecksWithPerformerLocation();
 	
@@ -168,14 +179,24 @@ struct ActionSequenceSystem : temple::AddressTable
 		bool ShouldAutoendTurn(TurnBasedStatus* tbStat);
 	void actionPerform();
 	void sequencePerform();
+	void ActionBroadcastAndSignalMoved();
+	int ActionFrameProcess(objHndl obj);
+	void AnimationComplete(objHndl obj, int animId); // runs any actions that need to be run when the animation finishes
+
+
 	bool projectileCheckBeforeNextAction();
 	uint32_t actSeqSpellHarmful(ActnSeq* actSeq);
 	uint32_t isSimultPerformer(objHndl);
 	uint32_t simulsOk(ActnSeq* actSeq);
 	uint32_t simulsAbort(objHndl);
 	uint32_t isSomeoneAlreadyActingSimult(objHndl objHnd);
+	BOOL IsSimulsCompleted();
+	BOOL IsLastSimultPopped(objHndl obj); // last one that was popped, that is
+	BOOL IsLastSimulsPerformer(objHndl obj);
+	BOOL SimulsAdvance();
 
 	uint32_t ActionCostNull(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, ActionCostPacket* actionCostPacket);
+	
 	int (__cdecl *ActionCostReload)(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp); 
 	int ActionCostFullAttack(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp);
 	void FullAttackCostCalculate(D20Actn *d20a, TurnBasedStatus *tbStatus, int *baseAttackNumCode, int *bonusAttacks, int *numAttacks, int *attackModeCode);

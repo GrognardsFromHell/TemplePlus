@@ -14,7 +14,49 @@
 #include "weapon.h"
 #include "float_line.h"
 #include "pathfinding.h"
+#include "action_sequence.h"
+#include "turn_based.h"
+#include "gametime.h"
+#include "ui/ui_combat.h"
 
+
+struct CombatSystemAddresses : temple::AddressTable
+{
+	int(__cdecl* GetEnemiesCanMelee)(objHndl obj, objHndl* canMeleeList);
+	void(__cdecl*TurnProcessing_100635E0)(objHndl obj);
+	void(__cdecl*CombatTurnAdvance)(objHndl obj);
+	BOOL (__cdecl*CheckFleeCombatMap)();
+	int(__cdecl*GetFleecombatMap)(void*); // MapPacket
+	int (*GetFleeStatus)();
+	int* combatTimeEventIndicator;
+	int * combatTimeEventSthg; 
+		objHndl * combatActor; 
+		int * combatRoundCount;
+	ActionBar** barPkt;
+
+	CombatSystemAddresses()
+	{
+		rebase(GetEnemiesCanMelee, 0x100B90C0);
+		rebase(EndTurn, 0x100632B0);
+		rebase(CombatPerformFleeCombat, 0x100633C0);
+		rebase(CombatTurnAdvance, 0x100634E0);
+		rebase(TurnProcessing_100635E0, 0x100635E0);
+		rebase(Subturn, 0x10063760);
+		rebase(GetFleecombatMap, 0x1006F970);
+		rebase(CheckFleeCombatMap, 0x1006F990);
+		rebase(GetFleeStatus, 0x1006F9B0);
+
+		rebase(barPkt, 0x10AA8404);
+		rebase(combatRoundCount,0x10AA841C);
+		rebase(combatActor, 0x10AA8438);
+		rebase(combatTimeEventSthg, 0x10AA8440);
+		rebase(combatTimeEventIndicator, 0x10AA8444);
+	}
+
+	void (*Subturn)();
+	void (*EndTurn)();
+	void (*CombatPerformFleeCombat)(objHndl obj);
+} addresses;
 
 class CombatSystemReplacements : public TempleFix
 {
@@ -25,16 +67,57 @@ public:
 
 	static objHndl CheckRangedWeaponAmmo(objHndl obj);
 	static objHndl(__cdecl *orgCheckRangedWeaponAmmo)(objHndl obj);
+
+	static void CombatTurnAdvance(objHndl obj);
+	static void (__cdecl*orgCombatTurnAdvance)(objHndl obj);
+
+	static void ActionBarResetCallback(int resetArg)
+	{
+		if (resetArg != 0)
+		{
+			int dumm = 1;
+			// seems to be 0 always... might've been some debug thing
+		}
+		
+		auto actor = tbSys.turnBasedGetCurrentActor();
+		if (actor)
+			logger->info("Greybar Reset! Current actor: {} ({})", description.getDisplayName(actor), actor);
+		else
+			logger->info("Greybar Reset! Actor is null.");
+		if (actor && objects.VerifyHandle(actor) && !objects.IsPlayerControlled(actor))
+		{
+			actSeqSys.GreybarReset();
+		}
+		// orgActionBarResetCallback();
+	};
+	static void (__cdecl*orgActionBarResetCallback)(int);
+
+
+	static void TurnStart2(int idx)
+	{
+		combatSys.TurnStart2(idx);
+	};
+	static void(__cdecl*orgTurnStart2)(int);
+
 	void apply() override{
 		
 		replaceFunction(0x100628D0, _isCombatActive);
 		replaceFunction(0x100629B0, _IsCloseToParty);
+		orgActionBarResetCallback = replaceFunction(0x10062E60, ActionBarResetCallback);
+		orgTurnStart2 = replaceFunction(0x100638F0, TurnStart2);
+		orgCombatTurnAdvance = replaceFunction(0x100634E0, CombatTurnAdvance);
+
 		orgCheckRangedWeaponAmmo = replaceFunction(0x100654E0, CheckRangedWeaponAmmo);
+		
 		replaceFunction(0x100B4B30, _GetCombatMesLine);
+		
 	}
 } combatSysReplacements;
 
 objHndl(__cdecl* CombatSystemReplacements::orgCheckRangedWeaponAmmo)(objHndl obj);
+void(__cdecl*CombatSystemReplacements::orgCombatTurnAdvance)(objHndl obj);
+void(__cdecl*CombatSystemReplacements::orgActionBarResetCallback)(int);
+void(__cdecl*CombatSystemReplacements::orgTurnStart2)(int);
 
 objHndl CombatSystemReplacements::CheckRangedWeaponAmmo(objHndl obj)
 {
@@ -49,21 +132,19 @@ objHndl CombatSystemReplacements::CheckRangedWeaponAmmo(objHndl obj)
 	return result;
 }
 
-struct CombatSystemAddresses : temple::AddressTable
+void CombatSystemReplacements::CombatTurnAdvance(objHndl obj)
 {
-	int(__cdecl* GetEnemiesCanMelee)(objHndl obj, objHndl* canMeleeList);
-	void(__cdecl*TurnProcessing_100635E0)(objHndl obj);
-	void(__cdecl*TurnProcessing)(objHndl obj);
-	CombatSystemAddresses()
-	{
-		rebase(GetEnemiesCanMelee, 0x100B90C0);
-		rebase(TurnProcessing, 0x100634E0);
-		rebase(TurnProcessing_100635E0, 0x100635E0);
-		
-	}
+	combatSys.CombatAdvanceTurn(obj);
 
-	
-} addresses;
+	//auto curSeq = *actSeqSys.actSeqCur;
+	//orgCombatTurnAdvance(obj);
+	//if (curSeq != *actSeqSys.actSeqCur)
+	//{
+	//	logger->info("Combat Turn Advance changed sequence to {}", (void*)*actSeqSys.actSeqCur);
+	//}
+}
+
+
 
 #pragma region Combat System Implementation
 CombatSystem combatSys;
@@ -334,9 +415,94 @@ void CombatSystem::TurnProcessing_100635E0(objHndl obj)
 	return addresses.TurnProcessing_100635E0(obj);
 }
 
-void CombatSystem::TurnProcessing(objHndl obj)
+void CombatSystem::EndTurn()
 {
-	return addresses.TurnProcessing(obj);
+	addresses.EndTurn();
+}
+
+void CombatSystem::CombatSubturnEnd()
+{
+	GameTime timeDelta (0,1000);
+	gameTimeSys.GameTimeAdd(&timeDelta);
+	if (party.GetConsciousPartyLeader())
+	{
+		++(*addresses.combatRoundCount);
+		*addresses.combatActor = 0i64;
+		*addresses.combatTimeEventSthg = 0;
+		*addresses.combatTimeEventIndicator = 0;
+	}
+}
+
+void CombatSystem::Subturn()
+{
+	addresses.Subturn();
+}
+
+void CombatSystem::TurnStart2(int initiativeIdx)
+{
+	auto actor = tbSys.turnBasedGetCurrentActor();
+	int curActorInitIdx = tbSys.GetInitiativeListIdx();
+	if (initiativeIdx > curActorInitIdx)
+	{
+		logger->info("TurnStart2: \t End Subturn. Cur Actor: {} ({}), Initiative Idx: {}; New Initiative Idx: {} ", description.getDisplayName(actor), actor, curActorInitIdx, initiativeIdx);
+		CombatSubturnEnd();
+	}
+
+	// start new turn for current actor
+	actor = tbSys.turnBasedGetCurrentActor();
+	curActorInitIdx = tbSys.GetInitiativeListIdx();
+	logger->info("TurnStart2: \t Starting new turn for {} ({}). InitiativeIdx: {}", description.getDisplayName(actor), actor, curActorInitIdx);
+	Subturn();
+
+	// set action bar values
+	uiCombat.ActionBarUnsetFlag1(*addresses.barPkt);
+	if (!objects.IsPlayerControlled(actor))
+	{
+		uiCombat.ActionBarSetMovementValues(*addresses.barPkt, 0.0, 20.0, 1.0);
+	}
+	
+	// handle simuls
+	if (actSeqSys.SimulsAdvance())
+	{
+		actor = tbSys.turnBasedGetCurrentActor();
+		logger->info("TurnStart2: \t Actor {} ({}) starting turn...(simul)", description.getDisplayName(actor), actor);
+		CombatAdvanceTurn(actor);
+	}
+}
+
+void CombatSystem::CombatAdvanceTurn(objHndl obj)
+{
+	if (addresses.CheckFleeCombatMap() && addresses.GetFleeStatus())
+	{
+		addresses.CombatPerformFleeCombat(obj);
+	}
+	if (!isCombatActive())
+		return;
+	tbSys.InitiativeListSort();
+	if (!tbSys.turnBasedGetCurrentActor() == obj && !(actSeqSys.isSimultPerformer(obj) || actSeqSys.IsSimulsCompleted()))
+	{
+		logger->warn("Combat Advance Turn: Not {}'s turn...", description.getDisplayName(obj));
+		return;
+	}
+	if ( actSeqSys.IsLastSimulsPerformer(obj))
+	{
+		logger->warn("Combat Advance Turn: Next turn waiting on simuls actions...");
+		return;
+	}
+	static int combatInitiative = 0;
+	combatInitiative++;
+	auto curSeq = *actSeqSys.actSeqCur;
+	logger->info("Combat Advance Turn: Actor {} ({}) ending his turn. CurSeq: {}", description.getDisplayName(obj), obj, (void*)curSeq);
+	if (combatInitiative <= GetInitiativeListLength())
+	{
+		int initListIdx = tbSys.GetInitiativeListIdx();
+		EndTurn();
+		if (isCombatActive())
+			TurnStart2(initListIdx);
+	}
+	combatInitiative--;
+
+	// return addresses.CombatTurnAdvance(obj);
 }
 
 bool CombatSystem::isCombatActive()

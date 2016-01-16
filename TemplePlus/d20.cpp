@@ -23,6 +23,7 @@
 #include "party.h"
 #include "ui/ui_dialog.h"
 #include "ui/ui_picker.h"
+#include "d20_obj_registry.h"
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
@@ -734,6 +735,8 @@ int D20System::TargetCheck(D20Actn* d20a)
 			return 1;
 	}
 }
+
+
 
 uint64_t D20System::d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, ::uint32_t arg2)
 {

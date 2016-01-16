@@ -64,7 +64,8 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable
 	int * activePickerIdx;
 	ActnSeq* uiIntgameCurSeqBackup;
 	LocAndOffsets * uiIntgameWaypointLoc; // the last fixed waypoint in waypoint mode
-	
+	int64_t * screenXfromMouseEvent;
+	int64_t * screenYfromMouseEvent;
 
 	UiIntgameTurnbasedAddresses()
 	{
@@ -102,7 +103,9 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable
 		rebase(cursorState, 0x10B3D5AC);
 
 		rebase(locFromScreenLoc, 0x10C040D0);
+		rebase(screenYfromMouseEvent, 0x10C040E0);
 		rebase(uiIntgameObjFromRaycast, 0x10C040E8);
+		rebase(screenXfromMouseEvent, 0x10C040F0);
 		rebase(uiIntgameWaypointLoc, 0x10C040F8);
 		rebase(uiIntgameMainWnd, 0x10C04108);
 		rebase(uiIntgameAcquireByRaycastOn, 0x10C0410C);
@@ -144,9 +147,14 @@ public:
 	this function is in charge of either executing the action sequence
 	*/
 	static int UiIntgamePathSequenceHandler(TigMsgMouse* msg);
-	static int(__cdecl* orgUiIntgamePathPreviewHandler)(TigMsgMouse*msg);
+	static int(__cdecl* orgUiIntgamePathSequenceHandler)(TigMsgMouse*msg);
+
 	static void UiIntgameGenerateSequence(int isUnnecessary);
 	static void(__cdecl*orgUiIntgameGenerateSequence)(int isUnnecessary);
+
+	static int UiIntgameMsgHandler(int widId, TigMsg* msg);
+	static int (__cdecl*orgUiIntgameMsgHandler)(int widId, TigMsg* msg);
+
 	static BOOL UiIntgameRaycast(objHndl* obj, int x, int y, int flags);
 	static int IntgameValidateMouseSelection(TigMsgMouse*msg);
 
@@ -154,8 +162,9 @@ public:
 	{
 		replaceFunction(0x10097320, HourglassUpdate);
 		orgIntgameTurnbasedRender = replaceFunction(0x10173F70, IntgameTurnbasedRender);
-		orgUiIntgamePathPreviewHandler = replaceFunction(0x10174790, UiIntgamePathSequenceHandler);
 		orgUiIntgameGenerateSequence = replaceFunction(0x10174100, UiIntgameGenerateSequence);
+		orgUiIntgamePathSequenceHandler = replaceFunction(0x10174790, UiIntgamePathSequenceHandler);
+		orgUiIntgameMsgHandler = replaceFunction(0x10174A30, UiIntgameMsgHandler);
 	}
 } uiIntgameTurnbasedReplacements;
 
@@ -237,8 +246,41 @@ int UiIntegameTurnbasedRepl::UiIntgamePathSequenceHandler(TigMsgMouse* msg)
 
 void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary)
 {
+	auto curSeq = *actSeqSys.actSeqCur;
 	// replacing this just for debug purposes really
 	orgUiIntgameGenerateSequence(isUnnecessary);
+	if (*actSeqSys.actSeqCur != curSeq)
+	{
+		logger->info("Sequence switch from Generate Sequence to {}", (void*)*actSeqSys.actSeqCur);
+		int dummy = 1;
+	};
+}
+
+int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg)
+{
+	auto curSeq = *actSeqSys.actSeqCur;
+	int result = 0;
+	if (msg->type == TigMsgType::MOUSE)
+	{
+		*addresses.screenXfromMouseEvent = ((TigMsgMouse*)msg)->x;
+		*addresses.screenYfromMouseEvent = ((TigMsgMouse*)msg)->y;
+	}
+	
+	if (!combatSys.isCombatActive() || radialMenus.ActiveRadialMenuHasActiveNode())
+	{
+		*addresses.intgameActor = 0i64;
+		*addresses.uiIntgameAcquireByRaycastOn = 0;
+		*addresses.uiIntgameSelectionConfirmed = 0;
+	}
+	result  = orgUiIntgameMsgHandler(widId, msg);
+
+
+	if ( *actSeqSys.actSeqCur != curSeq)
+	{
+		logger->info("Sequence switch from Ui Intgame Msg Handler to {}" , (void*)*actSeqSys.actSeqCur);
+		int dummy = 1;
+	};
+	return result;
 }
 
 BOOL UiIntegameTurnbasedRepl::UiIntgameRaycast(objHndl* obj, int x, int y, int flags)
@@ -305,8 +347,9 @@ int UiIntegameTurnbasedRepl::IntgameValidateMouseSelection(TigMsgMouse* msg)
 }
 
 void(__cdecl*UiIntegameTurnbasedRepl::orgIntgameTurnbasedRender)(int widId);
-int(__cdecl* UiIntegameTurnbasedRepl::orgUiIntgamePathPreviewHandler)(TigMsgMouse*msg);
+int(__cdecl* UiIntegameTurnbasedRepl::orgUiIntgamePathSequenceHandler)(TigMsgMouse*msg);
 void(__cdecl*UiIntegameTurnbasedRepl::orgUiIntgameGenerateSequence)(int isUnnecessary);
+int(__cdecl*UiIntegameTurnbasedRepl::orgUiIntgameMsgHandler)(int widId, TigMsg* msg);
 
 void UiIntgameTurnbased::CreateMovePreview(PathQueryResult* pqr, UiIntgameTurnbasedFlags flags)
 {

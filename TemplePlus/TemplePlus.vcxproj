@@ -104,6 +104,7 @@
     <ClCompile Include="python\python_game.cpp" />
     <ClCompile Include="python\python_importer.cpp" />
     <ClCompile Include="traps.cpp" />
+    <ClCompile Include="ui\ui_combat.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
     <ClCompile Include="ui\ui_intgame_select.cpp" />
     <ClCompile Include="ui\ui_turn_based.cpp" />
@@ -272,6 +273,7 @@
     <ClInclude Include="python\python_importer.h" />
     <ClInclude Include="python\python_consoleout.h" />
     <ClInclude Include="traps.h" />
+    <ClInclude Include="ui\ui_combat.h" />
     <ClInclude Include="ui\ui_dialog.h" />
     <ClInclude Include="ui\ui_intgame_select.h" />
     <ClInclude Include="ui\ui_turn_based.h" />

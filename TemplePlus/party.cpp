@@ -15,16 +15,18 @@ struct PartySystemAddresses : temple::AddressTable
 	GroupArray * groupList; // the entire party (PCs, NPCs and AI followers)
 
 	void(__cdecl * AddToCurrentlySelected)(objHndl objHnd);
-
+	void(*ArraySort)(void* arr, size_t arrSize, size_t elementSize, int(*sortFunc)(void*, void*));
 	PartySystemAddresses()
 	{
 		rebase(AddToCurrentlySelected, 0x1002B560);
+		rebase(ArraySort, 0x10254750);
 		rebase(groupNpcFollowers, 0x11E71BE0);
 		rebase(groupCurrentlySelected, 0x11E71D00);
 		rebase(groupAiFollowers, 0x11E71E20);
 		rebase(groupPcs , 0x11E71F40);
 		rebase(groupList, 0x11E721E0);
 	}
+
 	
 } addresses;
 
@@ -60,6 +62,14 @@ void PartySystemHacks::SetMaxPCs(char maxPCs)
 void PartySystem::SetMaxPCs(char maxPCs)
 {
 	partyHacks.SetMaxPCs(maxPCs);
+}
+
+void PartySystem::GroupArraySort(GroupArray* groupArray)
+{
+	if (groupArray->sortFunc)
+	{
+		addresses.ArraySort(groupArray, groupArray->GroupSize, sizeof(objHndl), groupArray->sortFunc);
+	}
 }
 
 uint32_t PartySystem::AddToPCGroup(objHndl objHnd)

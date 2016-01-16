@@ -294,6 +294,7 @@
     <ClCompile Include="gametime.cpp" />
     <ClCompile Include="ui\ui_turn_based.cpp" />
     <ClCompile Include="ui\ui_intgame_select.cpp" />
+    <ClCompile Include="ui\ui_combat.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -566,6 +567,7 @@
     <ClInclude Include="gametime.h" />
     <ClInclude Include="ui\ui_turn_based.h" />
     <ClInclude Include="ui\ui_intgame_select.h" />
+    <ClInclude Include="ui\ui_combat.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

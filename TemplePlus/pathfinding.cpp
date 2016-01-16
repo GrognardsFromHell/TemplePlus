@@ -1466,10 +1466,13 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	auto toSubtile = locSys.subtileFromLoc(&pqr->to);
 	if (locSys.subtileFromLoc(&pqr->from) == toSubtile || !GetAlternativeTargetLocation(pqr, pq))
 	{
-		if (locSys.subtileFromLoc(&pqr->from) == toSubtile)
-			logger->info("Aborting because from = to.");
-		else
-			logger->info("Aborting because target tile is occupied and cannot find alternative tile.");
+		if (config.pathfindingDebugMode)
+		{
+			if (locSys.subtileFromLoc(&pqr->from) == toSubtile)
+				logger->info("Aborting because from = to.");
+			else
+				logger->info("Aborting because target tile is occupied and cannot find alternative tile.");
+		}
 		pdbgGotPath = 0;
 		return 0;
 	}

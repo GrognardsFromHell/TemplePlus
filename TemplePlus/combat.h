@@ -37,8 +37,11 @@ struct CombatSystem : temple::AddressTable {
 	objHndl * GetHostileCombatantList(objHndl obj, int* count);
 
 	void TurnProcessing_100635E0(objHndl obj);
-	void TurnProcessing(objHndl obj);
-	
+	void EndTurn();
+	void CombatSubturnEnd();
+	void Subturn();
+	void TurnStart2( int initiativeIdx);
+	void CombatAdvanceTurn(objHndl obj);
 	uint32_t* combatModeActive;
 	bool isCombatActive();
 	uint32_t IsCloseToParty(objHndl objHnd);

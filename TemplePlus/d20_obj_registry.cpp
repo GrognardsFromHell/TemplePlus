@@ -3,6 +3,7 @@
 #include "d20_obj_registry.h"
 #include "description.h"
 #include "util/fixes.h"
+#include "d20.h"
 
 
 class D20ObjRegistrySystem  d20ObjRegistrySys;
@@ -98,6 +99,14 @@ void D20ObjRegistrySystem::Remove(objHndl objHnd)
 		}
 	}
 	return;
+}
+
+void D20ObjRegistrySystem::D20ObjRegistrySendSignalAll(D20DispatcherKey dispKey, D20Actn* d20a, int32_t arg2)
+{
+	for (int i = 0; i < *addresses.d20ObjRegistryNumItems; i++)
+	{
+		d20Sys.d20SendSignal( (*addresses.d20ObjRegistry)[i], dispKey, d20a, arg2);
+	}
 }
 
 void _D20ObjRegistryAppend(objHndl objHnd)

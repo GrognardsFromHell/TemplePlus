@@ -96,7 +96,7 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 		// check if disarmed, if so, try to pick up weapon
 		if (d20Sys.d20Query(aiTac.performer, DK_QUE_Disarmed))
 		{
-			logger->info("\n{} attempting to pickup weapon...\n", description.getDisplayName(objHnd));
+			logger->info("AiStrategy: \t {} attempting to pickup weapon...", description.getDisplayName(objHnd));
 			if (PickUpWeapon(&aiTac))
 			{
 				actSeq->sequencePerform();
@@ -117,11 +117,11 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 	for (uint32_t i = 0; i < aiStrat->numTactics; i++)
 	{
 		aiTacticGetConfig(i, &aiTac, aiStrat);
-		logger->info("{} attempting {}...", description._getDisplayName(objHnd, objHnd), aiTac.aiTac->name);
+		logger->info("AiStrategy: \t {} attempting {}...", description._getDisplayName(objHnd, objHnd), aiTac.aiTac->name);
 		auto aiFunc = aiTac.aiTac->aiFunc;
 		if (!aiFunc) continue;
 		if (aiFunc(&aiTac)) {
-			logger->info("AI tactic succeeded; performing.");
+			logger->info("AiStrategy: \t AI tactic succeeded; performing.");
 			actSeq->sequencePerform();
 			return 1;
 		}
@@ -137,7 +137,7 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 	aiTac.aiTac = &aiTacticDefs[0];
 	aiTac.field4 = 0;
 	aiTac.tacIdx = -1;
-	logger->info("{} attempting default...", description._getDisplayName(objHnd, objHnd));
+	logger->info("AiStrategy: \t {} attempting default...", description._getDisplayName(objHnd, objHnd));
 	if (aiTac.target)
 		logger->info("Target: {}", description.getDisplayName(aiTac.target));
 	assert(aiTac.aiTac != nullptr);
@@ -146,14 +146,14 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 		actSeq->sequencePerform();
 		return 1;
 	}
-	logger->info("Default FAILED. Attempting to find pathable party member as target...");
+	logger->info("AiStrategy: \t Default FAILED. Attempting to find pathable party member as target...");
 	objHndl pathablePartyMember = pathfindingSys.CanPathToParty(objHnd);
 	if (pathablePartyMember)
 	{
 		aiTac.target = pathablePartyMember;
 		if (aiTac.aiTac->aiFunc(&aiTac))
 		{
-			logger->info("Default tactic succeeded; performing.");
+			logger->info("AiStrategy: \t Default tactic succeeded; performing.");
 			actSeq->sequencePerform();
 			return 1;
 		}
@@ -162,7 +162,7 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 	// if that doesn't work either, try to Break Free (NPC might be held back by Web / Entangle)
 	if (d20Sys.d20Query(aiTac.performer, DK_QUE_Is_BreakFree_Possible))
 	{
-		logger->info("\n{} attempting to break free...\n", description.getDisplayName(objHnd));
+		logger->info("AiStrategy: \t {} attempting to break free...", description.getDisplayName(objHnd));
 		if (BreakFree(&aiTac))
 		{
 			actSeq->sequencePerform();
@@ -340,7 +340,7 @@ int AiSystem::TargetThreatened(AiTactic* aiTac)
 	if (dist > 900000000.0)
 	{
 		aiTac->target = 0;
-		//hooked_print_debug_message("\n no target found. Attempting Target Closest instead.");
+		//hooked_print_debug_message(" no target found. Attempting Target Closest instead.");
 		logger->info("no target found. ");
 		//TargetClosest(aiTac);
 	} 
@@ -699,7 +699,7 @@ void AiSystem::StrategyTabLineParseTactic(AiStrategy* aiStrat, char* tacName, ch
 			++aiStrat->numTactics;
 			return;
 		}
-		logger->info("\nError: No Such Tactic {} for Strategy {}", tacName, aiStrat->name);
+		logger->warn("Error: No Such Tactic {} for Strategy {}", tacName, aiStrat->name);
 		return;
 		
 		
@@ -963,14 +963,14 @@ int AiSystem::Default(AiTactic* aiTac)
 	ActionErrorCode addToSeqRes = (ActionErrorCode)actSeqSys.ActionAddToSeq();
 	if (addToSeqRes)
 	{
-		logger->info("Ai Default failed, error code: {}", (int)addToSeqRes);
+		logger->info("AI Default failed, error code: {}", (int)addToSeqRes);
 	}
 	int performError = actSeqSys.ActionSequenceChecksWithPerformerLocation();
 	if (!performError)
 		return 1;
 	if (!critterSys.IsWieldingRangedWeapon(aiTac->performer))
 	{
-		logger->info("\nAi Action Perform: Resetting sequence; Do Unspecified Move Action");
+		logger->info("AI Action Perform: Resetting sequence; Do Unspecified Move Action");
 		actSeqSys.curSeqReset(aiTac->performer);
 		d20Sys.GlobD20ActnInit();
 		d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_MOVE, 0);
