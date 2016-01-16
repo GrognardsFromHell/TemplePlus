@@ -227,6 +227,7 @@ int UiIntegameTurnbasedRepl::UiIntgamePathSequenceHandler(TigMsgMouse* msg)
 	if (performSeq)
 	{
 		addresses.UiActionBarGetValuesFromMovement();
+		logger->info("UiIntgame: \t Issuing Sequence for current actor {} ({}), cur seq: {}", description.getDisplayName(actor), actor, (void*)(*actSeqSys.actSeqCur));
 		actSeqSys.sequencePerform();
 		*addresses.uiIntgameTargetObjFromPortraits = 0i64;
 		*addresses.uiIntgameWaypointMode = 0;

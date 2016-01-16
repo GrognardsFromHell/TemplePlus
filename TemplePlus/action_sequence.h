@@ -181,7 +181,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	void sequencePerform();
 	void ActionBroadcastAndSignalMoved();
 	int ActionFrameProcess(objHndl obj);
-	void AnimationComplete(objHndl obj, int animId); // runs any actions that need to be run when the animation finishes
+	void PerformOnAnimComplete(objHndl obj, int animId); // runs any actions that need to be run when the animation finishes
 
 
 	bool projectileCheckBeforeNextAction();

@@ -14,6 +14,7 @@ public:
 	int Find(objHndl objHnd);
 	void Remove(objHndl objHnd);
 	void D20ObjRegistrySendSignalAll(D20DispatcherKey dispKey, D20Actn* d20a, int32_t arg2);
+	int InitiativeRefresh(int actorInitiative, int initiativeNext);
 private:
 	int GetNum(); // get number of items
 	void IncNum();

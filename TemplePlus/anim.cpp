@@ -13,6 +13,7 @@
 #include <fstream>
 #include "python/pythonglobal.h"
 #include "party.h"
+#include "action_sequence.h"
 
 #pragma pack(push, 1)
 
@@ -777,7 +778,15 @@ public:
 		return "Anim Fix";
 	}
 
+
+	static void AnimationComplete();
+	static void AnimCompleteQueueAppendNaked(objHndl obj);
+	static void AnimCompleteQueueAppend(objHndl obj, int animId);
+
 	void apply() override {
+
+		replaceFunction(0x10016A00, AnimCompleteQueueAppendNaked);
+		replaceFunction(0x10016A30, AnimationComplete);
 
 		return; // Currently not used
 
@@ -841,6 +850,62 @@ public:
 		logger->info("DONE");
 	}
 } animFix;
+
+void AnimFix::AnimationComplete()
+{
+
+	int queueSize = *animAddresses.completeQueueSize;
+	for (int i = 0; i < queueSize; i++)
+	{
+		//logger->debug("");
+		auto obj = animAddresses.completeQueueObjects[i];
+		//if (animAddresses.completeQueueAnimIds[i])
+		//{
+			actSeqSys.PerformOnAnimComplete(obj, animAddresses.completeQueueAnimIds[i]);
+		////} else
+		//{
+		//	logger->debug("Anim ID 0 detected");
+		//}
+		
+		animAddresses.completeQueueObjects[i] = 0i64;
+	}
+	*animAddresses.completeQueueSize = 0;;
+}
+
+void __declspec(naked) AnimFix::AnimCompleteQueueAppendNaked(objHndl obj)
+{
+	//__asm mov animId, ecx
+	//AnimCompleteQueueAppend(obj, animId);
+	{ __asm push ecx __asm push esi __asm push ebx __asm push edi}
+	
+	__asm mov ebx, [esp + 0x14]
+	__asm mov eax, [esp + 0x18]
+	__asm push ecx
+	__asm push eax;
+	__asm push ebx;
+	__asm call AnimFix::AnimCompleteQueueAppend;
+	__asm add esp, 0xC;
+
+
+	{ __asm pop edi __asm pop ebx __asm pop esi __asm pop ecx} 
+	__asm ret
+}
+
+void __cdecl AnimFix::AnimCompleteQueueAppend(objHndl obj, int animId)
+{
+	if (animId == 0 )
+	{
+		int dummy = 1;
+	}
+	int queueSize = *animAddresses.completeQueueSize;
+	if (queueSize < 20)
+	{
+		animAddresses.completeQueueAnimIds[queueSize] = animId;
+		animAddresses.completeQueueObjects[queueSize] = obj;
+		++(*animAddresses.completeQueueSize);
+	}
+}
+
 
 static PyObject* animDump(PyObject* ignore, PyObject* args) {
 

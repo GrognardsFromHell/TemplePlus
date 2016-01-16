@@ -81,9 +81,9 @@ public:
 		
 		auto actor = tbSys.turnBasedGetCurrentActor();
 		if (actor)
-			logger->info("Greybar Reset! Current actor: {} ({})", description.getDisplayName(actor), actor);
+			logger->debug("Greybar Reset! Current actor: {} ({})", description.getDisplayName(actor), actor);
 		else
-			logger->info("Greybar Reset! Actor is null.");
+			logger->debug("Greybar Reset! Actor is null.");
 		if (actor && objects.VerifyHandle(actor) && !objects.IsPlayerControlled(actor))
 		{
 			actSeqSys.GreybarReset();
@@ -140,7 +140,7 @@ void CombatSystemReplacements::CombatTurnAdvance(objHndl obj)
 	//orgCombatTurnAdvance(obj);
 	//if (curSeq != *actSeqSys.actSeqCur)
 	//{
-	//	logger->info("Combat Turn Advance changed sequence to {}", (void*)*actSeqSys.actSeqCur);
+	//	logger->debug("Combat Turn Advance changed sequence to {}", (void*)*actSeqSys.actSeqCur);
 	//}
 }
 
@@ -444,14 +444,14 @@ void CombatSystem::TurnStart2(int initiativeIdx)
 	int curActorInitIdx = tbSys.GetInitiativeListIdx();
 	if (initiativeIdx > curActorInitIdx)
 	{
-		logger->info("TurnStart2: \t End Subturn. Cur Actor: {} ({}), Initiative Idx: {}; New Initiative Idx: {} ", description.getDisplayName(actor), actor, curActorInitIdx, initiativeIdx);
+		logger->debug("TurnStart2: \t End Subturn. Cur Actor: {} ({}), Initiative Idx: {}; New Initiative Idx: {} ", description.getDisplayName(actor), actor, curActorInitIdx, initiativeIdx);
 		CombatSubturnEnd();
 	}
 
 	// start new turn for current actor
 	actor = tbSys.turnBasedGetCurrentActor();
 	curActorInitIdx = tbSys.GetInitiativeListIdx();
-	logger->info("TurnStart2: \t Starting new turn for {} ({}). InitiativeIdx: {}", description.getDisplayName(actor), actor, curActorInitIdx);
+	logger->debug("TurnStart2: \t Starting new turn for {} ({}). InitiativeIdx: {}", description.getDisplayName(actor), actor, curActorInitIdx);
 	Subturn();
 
 	// set action bar values
@@ -465,7 +465,7 @@ void CombatSystem::TurnStart2(int initiativeIdx)
 	if (actSeqSys.SimulsAdvance())
 	{
 		actor = tbSys.turnBasedGetCurrentActor();
-		logger->info("TurnStart2: \t Actor {} ({}) starting turn...(simul)", description.getDisplayName(actor), actor);
+		logger->debug("TurnStart2: \t Actor {} ({}) starting turn...(simul)", description.getDisplayName(actor), actor);
 		CombatAdvanceTurn(actor);
 	}
 }
@@ -492,7 +492,7 @@ void CombatSystem::CombatAdvanceTurn(objHndl obj)
 	static int combatInitiative = 0;
 	combatInitiative++;
 	auto curSeq = *actSeqSys.actSeqCur;
-	logger->info("Combat Advance Turn: Actor {} ({}) ending his turn. CurSeq: {}", description.getDisplayName(obj), obj, (void*)curSeq);
+	logger->debug("Combat Advance Turn: Actor {} ({}) ending his turn. CurSeq: {}", description.getDisplayName(obj), obj, (void*)curSeq);
 	if (combatInitiative <= GetInitiativeListLength())
 	{
 		int initListIdx = tbSys.GetInitiativeListIdx();

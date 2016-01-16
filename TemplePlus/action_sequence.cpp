@@ -87,7 +87,7 @@ public:
 	static int SeqRenderAooMovement(D20Actn*, UiIntgameTurnbasedFlags);
 	static int ChooseTargetCallback(void* a)
 	{
-		logger->info("Choose Target Callback");
+		logger->debug("Choose Target Callback");
 		return orgChooseTargetCallback(a); // doesn't seem to be used in practice???
 	}
 
@@ -106,14 +106,14 @@ public:
 		return actSeqSys.ActionFrameProcess(obj);
 	}
 
-	static void AnimationComplete(objHndl obj, int animId)
+	static void PerformOnAnimComplete(objHndl obj, int animId)
 	{
-		return actSeqSys.AnimationComplete(obj, animId);
+		return actSeqSys.PerformOnAnimComplete(obj, animId);
 	}
 
 	static void TurnStart(objHndl obj)
 	{
-		logger->info("*** NEXT TURN *** starting for {} ({}). CurSeq: {}", description.getDisplayName(obj),obj, (void*)(*actSeqSys.actSeqCur));
+		logger->debug("*** NEXT TURN *** starting for {} ({}). CurSeq: {}", description.getDisplayName(obj),obj, (void*)(*actSeqSys.actSeqCur));
 		auto interruptSeq  = *addresses.actSeqInterrupt;
 		if (interruptSeq)
 		{
@@ -139,7 +139,7 @@ public:
 		replaceFunction(0x100933F0, ActionFrameProcess);
 		orgTurnStart = replaceFunction(0x10099430, TurnStart);
 		replaceFunction(0x100999E0, GreybarReset);
-		replaceFunction(0x10099CF0, AnimationComplete);
+		replaceFunction(0x10099CF0, PerformOnAnimComplete);
 		
 	}
 } actSeqReplacements;
@@ -620,26 +620,27 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSeq, TurnBasedStatus* tbStat, float distToTgtMin, float reach, int nonspecificMoveType)
 {
 	D20Actn d20aCopy;
-	TurnBasedStatus tbStatCopy;
+	TurnBasedStatus tbStatCopy = *tbStat;
 	PathQuery pathQ;
 	LocAndOffsets locAndOffCopy = d20aIn->destLoc;
 	LocAndOffsets * actSeqPerfLoc;
 	ActionCostPacket actCost;
 
-	//logger->info("Parsing move sequence for {}, d20 action {}", description.getDisplayName(d20aIn->d20APerformer), d20ActionNames[d20aIn->d20ActType]);
+	//logger->debug("Parsing move sequence for {}, d20 action {}", description.getDisplayName(d20aIn->d20APerformer), d20ActionNames[d20aIn->d20ActType]);
 	
-	memcpy(&tbStatCopy, tbStat, sizeof(TurnBasedStatus));
 	seqCheckFuncs(&tbStatCopy);
 	
+	// if prone, add a standup action
 	if (d20->d20Query(d20aIn->d20APerformer, DK_QUE_Prone))
 	{
-		memcpy(&d20aCopy, d20aIn, sizeof(D20Actn));
+		d20aCopy=* d20aIn;
 		auto nextd20a = &actSeq->d20ActArray[actSeq->d20ActArrayNum];
 		d20aCopy.d20ActType = D20A_STAND_UP;
-		memcpy(nextd20a, &d20aCopy, sizeof(D20Actn));
+		*nextd20a = d20aCopy;
 		++actSeq->d20ActArrayNum; 
 	}
-	memcpy(&d20aCopy, d20aIn, sizeof(D20Actn));
+
+	d20aCopy = *d20aIn;
 	auto d20a = d20aIn;
 
 
@@ -650,9 +651,12 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 
 	if (d20a->d20ATarget)
 	{
+		pathQ.targetObj = d20a->d20ATarget;
+		if (pathQ.critter == pathQ.targetObj)
+			return ActionErrorCode::AEC_TARGET_INVALID;
+
 		const float twelve = 12.0;
 		const float fourPointSevenPlusEight = 4.714045f + 8.0f;
-		pathQ.targetObj = d20a->d20ATarget;
 		pathQ.flags = static_cast<PathQueryFlags>(PathQueryFlags::PQF_TO_EXACT | PathQueryFlags::PQF_HAS_CRITTER | PathQueryFlags::PQF_800
 			| PathQueryFlags::PQF_TARGET_OBJ | PathQueryFlags::PQF_ADJUST_RADIUS | PathQueryFlags::PQF_ADJ_RADIUS_REQUIRE_LOS);
 		
@@ -677,11 +681,14 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	if (d20aCopy.path && d20aCopy.path >= pathfindingSys.pathQArray && d20aCopy.path < &pathfindingSys.pathQArray[PQR_CACHE_SIZE]) 
 		d20aCopy.path->occupiedFlag = 0; // frees the last path used in the d20a
 
+
+	// get new path result slot
 	auto pqResult = pathfindingSys.FetchAvailablePQRCacheSlot();
 	d20aCopy.path = pqResult;
-	if (!pqResult) return ActionErrorCode::AEC_TARGET_INVALID;
+	if (!pqResult) 
+		return ActionErrorCode::AEC_TARGET_INVALID;
 
-
+	// find path
 	*pathfindingSys.rollbackSequenceFlag = 0;
 	if ( (d20aCopy.d20Caf & D20CAF_CHARGE ) || d20a->d20ActType == D20A_RUN || d20a->d20ActType == D20A_DOUBLE_MOVE)
 	{
@@ -696,9 +703,9 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		}
 
 		if (pathQ.targetObj)
-			logger->info("MoveSequenceParse: FAILED PATH... {} attempted from {} to {} ({})", description.getDisplayName(pqResult->mover), pqResult->from, pqResult->to, description.getDisplayName(pathQ.targetObj));
+			logger->debug("MoveSequenceParse: FAILED PATH... {} attempted from {} to {} ({})", description.getDisplayName(pqResult->mover), pqResult->from, pqResult->to, description.getDisplayName(pathQ.targetObj));
 		else
-			logger->info("MoveSequenceParse: FAILED PATH... {} attempted from {} to {}", description.getDisplayName(pqResult->mover), pqResult->from, pqResult->to);
+			logger->debug("MoveSequenceParse: FAILED PATH... {} attempted from {} to {}", description.getDisplayName(pqResult->mover), pqResult->from, pqResult->to);
 		
 
 
@@ -708,7 +715,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 			if (pathResult)
 			{
 				*pathfindingSys.rollbackSequenceFlag = 0;
-				logger->info("Second time's the charm... from {} to {}", pqResult->from, pqResult->to);
+				logger->debug("Second time's the charm... from {} to {}", pqResult->from, pqResult->to);
 			}
 		}*/
 		if (!pathResult)
@@ -725,7 +732,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 
 	if (pathLength < 0.1)
 	{
-		// logger->info("Path length zero! Leak??");
+		// logger->debug("Path length zero! Leak??");
 		releasePath(pqResult);
 		return 0;
 	}
@@ -888,12 +895,12 @@ uint32_t ActionSequenceSystem::AllocSeq(objHndl objHnd)
 		{
 			*actSeqCur = &actSeqArray[i];
 			if (combat->isCombatActive())
-				logger->info("AllocSeq: \t Sequence Allocate[{}]({})({}): Resetting Sequence. ", i, (void*)*actSeqCur, objHnd);
+				logger->debug("AllocSeq: \t Sequence Allocate[{}]({})({}): Resetting Sequence. ", i, (void*)*actSeqCur, objHnd);
 			curSeqReset(objHnd);
 			return 1;
 		} 
 	}
-	logger->info("Sequence Allocation for {} failed!  Bad things imminent. All sequences were taken!\n", 
+	logger->debug("Sequence Allocation for {} failed!  Bad things imminent. All sequences were taken!\n", 
 		(void*)*actSeqCur, objHnd);
 	return 0;
 }
@@ -907,10 +914,10 @@ uint32_t ActionSequenceSystem::AssignSeq(objHndl objHnd)
 		{
 			if (prevSeq != nullptr)
 			{
-				logger->info("Pushing sequence from {} ({}) to {} ({})", object->description.getDisplayName(prevSeq->performer), prevSeq->performer, object->description._getDisplayName(objHnd, objHnd), objHnd);
+				logger->debug("Pushing sequence from {} ({}) to {} ({})", object->description.getDisplayName(prevSeq->performer), prevSeq->performer, object->description._getDisplayName(objHnd, objHnd), objHnd);
 			} else
 			{
-				logger->info("Allocated sequence for {} ({}) ", object->description.getDisplayName(objHnd), objHnd, objHnd);
+				logger->debug("Allocated sequence for {} ({}) ", object->description.getDisplayName(objHnd), objHnd, objHnd);
 			}
 		}
 		(*actSeqCur)->prevSeq = prevSeq;
@@ -1020,9 +1027,9 @@ BOOL ActionSequenceSystem::SequenceSwitch(objHndl obj)
 
 	if (seqIdx >= 0)
 	{
-		logger->info("SequenceSwitch: \t doing for {} ({}). Previous Current Seq: {}", description.getDisplayName(obj), obj, (void*)(*actSeqCur));
+		logger->debug("SequenceSwitch: \t doing for {} ({}). Previous Current Seq: {}", description.getDisplayName(obj), obj, (void*)(*actSeqCur));
 		*actSeqCur = &actSeqArray[seqIdx];
-		logger->info("SequenceSwitch: \t new Current Seq: {}", (void*)(*actSeqCur));
+		logger->debug("SequenceSwitch: \t new Current Seq: {}", (void*)(*actSeqCur));
 		return 1;
 	}
 	return 0;
@@ -1033,14 +1040,14 @@ void ActionSequenceSystem::GreybarReset()
 	if (!combatSys.isCombatActive())
 		return;
 	auto actor = tbSys.turnBasedGetCurrentActor();
-	if ( !isPerforming(actor) && IsSimulsCompleted() && IsLastSimultPopped(actor))
+	if ( !isPerforming(actor) && IsSimulsCompleted() && !IsLastSimultPopped(actor))
 	{
-		logger->info("GREYBAR DEHANGER for {} ({}) ending turn...", description.getDisplayName(actor), actor);
+		logger->debug("GREYBAR DEHANGER for {} ({}) ending turn...", description.getDisplayName(actor), actor);
 		combatSys.CombatAdvanceTurn(actor);
 		return;
 	}
 
-	logger->info("Greybar reset function");
+	logger->debug("Greybar reset function");
 	for (int i = 0; i < ACT_SEQ_ARRAY_SIZE; i++)
 	{
 		auto seq = &actSeqArray[i];
@@ -1422,7 +1429,7 @@ uint32_t ActionSequenceSystem::seqCheckFuncs(TurnBasedStatus* tbStatus)
 		memset(tbStatus, 0, sizeof(TurnBasedStatus));		return 0;
 	}
 
-	memcpy(tbStatus, &curSeq->tbStatus, sizeof(TurnBasedStatus));
+	*tbStatus = curSeq->tbStatus;
 	objects.loc->getLocAndOff(curSeq->performer, &seqPerfLoc);
 	for (int32_t i = 0; i < curSeq->d20ActArrayNum; i++)
 	{
@@ -1463,7 +1470,10 @@ uint32_t ActionSequenceSystem::seqCheckFuncs(TurnBasedStatus* tbStatus)
 	if (result)
 	{
 		if (!*actSeqCur) { memset(tbStatus, 0, sizeof(TurnBasedStatus)); }
-		else { memcpy(tbStatus, &(*actSeqCur)->tbStatus, sizeof(TurnBasedStatus)); }
+		else
+		{
+			*tbStatus = (*actSeqCur)->tbStatus;
+		}
 	}
 
 	return result;
@@ -1476,7 +1486,7 @@ void ActionSequenceSystem::DoAoo(objHndl obj, objHndl target)
 	auto curSeq = *actSeqCur;
 	curSeq->performer = obj;
 
-	logger->info("AOO - {} ({}) is interrupting {} ({})",
+	logger->debug("AOO - {} ({}) is interrupting {} ({})",
 		description.getDisplayName(obj), obj,
 		description.getDisplayName(target), target);
 
@@ -1545,7 +1555,7 @@ int32_t ActionSequenceSystem::DoAoosByAdjcentEnemies(objHndl obj)
 				&& actSeqArray[j].performer == enemy)
 			{
 				okToAoo = false;
-				logger->info("DoAoosByAdjacentEnemies({}({})): Action Aoo for {} ({}) while they are performing...", description.getDisplayName(obj), obj , description.getDisplayName(enemy), enemy);
+				logger->debug("DoAoosByAdjacentEnemies({}({})): Action Aoo for {} ({}) while they are performing...", description.getDisplayName(obj), obj , description.getDisplayName(enemy), enemy);
 			}
 		}
 
@@ -1685,7 +1695,7 @@ void ActionSequenceSystem::InterruptSwitchActionSequence(ReadiedActionPacket* re
 	(*actSeqCur)->interruptSeq = *addresses.actSeqInterrupt;
 	*addresses.actSeqInterrupt = *actSeqCur;
 	combatSys.FloatCombatLine((*actSeqCur)->performer, 158); // Action Interrupted
-	logger->info("{} interrupted by {}!", description.getDisplayName((*actSeqCur)->performer), description.getDisplayName( readiedAction->interrupter));
+	logger->debug("{} interrupted by {}!", description.getDisplayName((*actSeqCur)->performer), description.getDisplayName( readiedAction->interrupter));
 	histSys.CreateRollHistoryLineFromMesfile(7, readiedAction->interrupter, (*addresses.actSeqInterrupt)->performer);
 	AssignSeq(readiedAction->interrupter);
 	(*actSeqCur)->prevSeq = nullptr;
@@ -1769,7 +1779,7 @@ uint32_t ActionSequenceSystem::curSeqNext()
 	objHndl performer = curSeq->performer;
 	SpellPacketBody spellPktBody;
 	curSeq->seqOccupied &= 0xffffFFFE; //unset "occupied" flag
-	logger->info("CurSeqNext: \t Sequence Completed for {} ({}) (sequence {})",
+	logger->debug("CurSeqNext: \t Sequence Completed for {} ({}) (sequence {})",
 		description._getDisplayName(curSeq->performer, curSeq->performer),
 		curSeq->performer, (void*)curSeq);
 
@@ -1838,14 +1848,14 @@ uint32_t ActionSequenceSystem::curSeqNext()
 	}
 
 	AssignSeq(performer);
-	logger->info("CurSeqNext: \t  Resetting Sequence ({})", (void*)*actSeqCur);
+	logger->debug("CurSeqNext: \t  Resetting Sequence ({})", (void*)*actSeqCur);
 	curSeqReset(d20Sys.globD20Action->d20APerformer);
 	if (combatSys.isCombatActive())
 	{
 		// look for stuff that terminates / interrupts the turn
 		if (HasReadiedAction(d20Sys.globD20Action->d20APerformer))
 		{
-			logger->info("CurSeqNext: \t Action for {} ({}) ending turn (readied action)...",
+			logger->debug("CurSeqNext: \t Action for {} ({}) ending turn (readied action)...",
 				description.getDisplayName(d20Sys.globD20Action->d20APerformer),
 				d20Sys.globD20Action->d20APerformer);
 			combatSys.CombatAdvanceTurn(tbSys.turnBasedGetCurrentActor());
@@ -1853,7 +1863,7 @@ uint32_t ActionSequenceSystem::curSeqNext()
 		}
 		if (ShouldAutoendTurn(&(*actSeqCur)->tbStatus))
 		{
-			logger->info("CurSeqNext: \t Action for {} ({}) ending turn (autoend)...",
+			logger->debug("CurSeqNext: \t Action for {} ({}) ending turn (autoend)...",
 				description.getDisplayName(d20Sys.globD20Action->d20APerformer),
 				d20Sys.globD20Action->d20APerformer);
 			combatSys.CombatAdvanceTurn(tbSys.turnBasedGetCurrentActor());
@@ -1896,14 +1906,14 @@ int ActionSequenceSystem::SequencePop()
 	ActnSeq*  curSeq = *actSeqCur;
 	ActnSeq*  prevSeq = (*actSeqCur)->prevSeq;
 	curSeq->seqOccupied &= 0xFFFFfffe;
-	logger->info("Popping sequence ( {} )", (void*)curSeq);
+	logger->debug("Popping sequence ( {} )", (void*)curSeq);
 	*actSeqCur = prevSeq;
 	curSeq->prevSeq = nullptr;
 	if (!prevSeq)
 		return 0;
 	auto curSeqPerformer = curSeq->performer;
 	auto prevSeqPerformer = prevSeq->performer;
-	logger->info("Popping sequence from {} ({}) to {} ({})", 
+	logger->debug("Popping sequence from {} ({}) to {} ({})", 
 		description.getDisplayName(curSeqPerformer),
 		curSeqPerformer,
 		description.getDisplayName(prevSeqPerformer),
@@ -2006,7 +2016,7 @@ void ActionSequenceSystem::actionPerform()
 		if (objects.IsUnconscious(performer))
 		{
 			curSeq->d20ActArrayNum = curSeq->d20aCurIdx;
-			logger->info("ActionPerform: \t Unconscious actor {} - cutting sequence", objects.description._getDisplayName(performer, performer));
+			logger->debug("ActionPerform: \t Unconscious actor {} - cutting sequence", objects.description._getDisplayName(performer, performer));
 		}
 		if (curSeq->d20aCurIdx >= (int32_t)curSeq->d20ActArrayNum) break;	
 		
@@ -2019,7 +2029,7 @@ void ActionSequenceSystem::actionPerform()
 			
 			mesLine.key = errCode + 1000;
 			mesFuncs.GetLine_Safe(*actionMesHandle, &mesLine);
-			logger->info("ActionPerform: \t Action unavailable for {} ({}): {}", 
+			logger->debug("ActionPerform: \t Action unavailable for {} ({}): {}", 
 				objects.description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer, mesLine.value );
 			*actnProcState = errCode;
 			curSeq->tbStatus.errCode = errCode;
@@ -2036,7 +2046,7 @@ void ActionSequenceSystem::actionPerform()
 		{
 			if ( d20->D20ActionTriggersAoO(d20a, &tbStatus) && DoAoosByAdjcentEnemies(d20a->d20APerformer))
 			{
-				logger->info("ActionPerform: \t Sequence Preempted {} ({})", description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
+				logger->debug("ActionPerform: \t Sequence Preempted {} ({})", description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
 				--*(curIdx);
 				sequencePerform();
 			} else
@@ -2044,7 +2054,7 @@ void ActionSequenceSystem::actionPerform()
 				memcpy(&curSeq->tbStatus, &tbStatus, sizeof(tbStatus));
 				*(uint32_t*)(&curSeq->tbStatus.tbsFlags) |= (uint32_t)D20CAF_NEED_ANIM_COMPLETED;
 				InterruptCounterspell(d20a);
-				logger->info("ActionPerform: \t Performing action for {} ({}): {}",
+				logger->debug("ActionPerform: \t Performing action for {} ({}): {}",
 					description.getDisplayName(d20a->d20APerformer), 
 					d20a->d20APerformer,
 					(int)d20a->d20ActType);
@@ -2080,7 +2090,7 @@ void ActionSequenceSystem::sequencePerform()
 
 	if (!actSeqOkToPerform())
 	{
-		logger->info("SequencePerform: \t Sequence given while performing previous action - aborted.");
+		logger->debug("SequencePerform: \t Sequence given while performing previous action - aborted.");
 		d20->D20ActnInit(d20->globD20Action->d20APerformer, d20->globD20Action);
 		return;
 	}
@@ -2098,21 +2108,21 @@ void ActionSequenceSystem::sequencePerform()
 	ActnSeq * curSeq = *actSeqCur;
 	if (combat->isCombatActive() || !actSeqSpellHarmful(curSeq) || !combatTriggerSthg(curSeq) ) // POSSIBLE BUG: I think this can cause spells to be overridden (e.g. when the temple priests prebuff simulataneously with you, and you get the spell effect instead) TODO
 	{
-		logger->info("SequencePerform: \t {} performing sequence ({})...", description.getDisplayName(curSeq->performer), (void*)curSeq);
+		logger->debug("SequencePerform: \t {} performing sequence ({})...", description.getDisplayName(curSeq->performer), (void*)curSeq);
 		if (isSimultPerformer(curSeq->performer))
 		{ 
-			logger->info("simultaneously...");
+			logger->debug("simultaneously...");
 			if (!simulsOk(curSeq))
 			{
-				if (simulsAbort(curSeq->performer)) logger->info("sequence not allowed... aborting simuls (pending).");
-				else logger->info("sequence not allowed... aborting subsequent simuls.");
+				if (simulsAbort(curSeq->performer)) logger->debug("sequence not allowed... aborting simuls (pending).");
+				else logger->debug("sequence not allowed... aborting subsequent simuls.");
 				return;
 			}
-			logger->info("succeeded...");
+			logger->debug("succeeded...");
 			
 		} else
 		{
-			logger->info("independently.");
+			logger->debug("independently.");
 		}
 		*actnProcState = 0;
 		curSeq->seqOccupied |= SEQF_PERFORMING;
@@ -2156,30 +2166,30 @@ void ActionSequenceSystem::ActionBroadcastAndSignalMoved()
 
 int ActionSequenceSystem::ActionFrameProcess(objHndl obj)
 {
-	logger->info("ActionFrameProcess: \t for {} ({})", description.getDisplayName(obj), obj);
+	logger->debug("ActionFrameProcess: \t for {} ({})", description.getDisplayName(obj), obj);
 	if (!isPerforming(obj))
 	{
-		logger->info("Not performing!");
+		logger->debug("Not performing!");
 		return 0;
 	}
 
 	auto curSeq = *actSeqCur;
 	if (curSeq == nullptr)
 	{
-		logger->info("No sequence!");
+		logger->debug("No sequence!");
 		return 0;
 	}
 
 	if (curSeq->performer != obj)
 	{
-		logger->info("..Switching sequence from {}", (void*)curSeq);
+		logger->debug("..Switching sequence from {}", (void*)curSeq);
 		if (!SequenceSwitch(obj))
 		{
-			logger->info("..failed!");
+			logger->debug("..failed!");
 			return 0;
 		}
 		curSeq = *actSeqCur;
-		logger->info("..to {}", (void*)curSeq);
+		logger->debug("..to {}", (void*)curSeq);
 	}
 
 	auto d20a = &curSeq->d20ActArray[curSeq->d20aCurIdx];
@@ -2189,7 +2199,7 @@ int ActionSequenceSystem::ActionFrameProcess(objHndl obj)
 	}
 	if (d20a->d20Caf & D20CAF_ACTIONFRAME_PROCESSED)
 	{
-		logger->info("ActionFrameProcess: \t Action frame already processed.");
+		logger->debug("ActionFrameProcess: \t Action frame already processed.");
 		return 0;
 	}
 	d20a->d20Caf |= D20CAF_ACTIONFRAME_PROCESSED;
@@ -2197,11 +2207,11 @@ int ActionSequenceSystem::ActionFrameProcess(objHndl obj)
 	if (!actFrameFunc)
 		return 0;
 	
-	logger->info("ActionFrameProcess: \t Calling action frame function");
+	logger->debug("ActionFrameProcess: \t Calling action frame function");
 	return actFrameFunc(d20a);	
 }
 
-void ActionSequenceSystem::AnimationComplete(objHndl obj, int animId)
+void ActionSequenceSystem::PerformOnAnimComplete(objHndl obj, int animId)
 {
 	// do checks:
 
@@ -2210,38 +2220,39 @@ void ActionSequenceSystem::AnimationComplete(objHndl obj, int animId)
 	{
 		if (animId)
 		{
-			logger->info("AnimationComplete: \t Animation {} Completed for {} ({}); Not performing.", animId, description.getDisplayName(obj), obj);
+			logger->debug("PerformOnAnimComplete: \t Animation {} Completed for {} ({}); Not performing.", animId, description.getDisplayName(obj), obj);
 		}
 		return;
 	}
 
-	logger->info("AnimationComplete: \t Animation {} Completed for {} ({})", animId, description.getDisplayName(obj), obj);
+	logger->debug("PerformOnAnimComplete: \t Animation {} Completed for {} ({})", animId, description.getDisplayName(obj), obj);
 
 	// does the Current Sequence belong to obj?
 	auto curSeq = *actSeqCur;
 	if (!curSeq || curSeq->performer != obj || !(curSeq->seqOccupied & SEQF_PERFORMING))
 	{
-		logger->info("Switching sequences...");
+		logger->debug("\tCurrent sequence performer is {} ({}), Switching sequence...", description.getDisplayName(curSeq->performer),curSeq->performer);
 		if (!SequenceSwitch(obj))
 		{
-			logger->info("Failed.");
+			logger->debug("\tFailed.");
 			return;
 		}
 		curSeq = *actSeqCur;
+		logger->debug("\tNew Current sequence performer is {} ({})", description.getDisplayName(curSeq->performer), curSeq->performer);
 	}
 
 	// is the animId ok?
 	auto d20a = &curSeq->d20ActArray[curSeq->d20aCurIdx];
-	if (animId != -1 && d20a->animID != animId)
+	if ( (animId != -1 && animId != 0xccccCCCC) && d20a->animID != animId)
 	{
-		logger->info("AnimationComplete: \t Wrong anim ID!");
+		logger->debug("PerformOnAnimComplete: \t Wrong anim ID!");
 		return;
 	}
 
 	// is the action performer correct?
 	if (obj != d20a->d20APerformer)
 	{
-		logger->info("AnimationComplete: \t Wrong performer!");
+		logger->debug("PerformOnAnimComplete: \t Wrong performer!");
 		return;
 	}
 	
@@ -2250,7 +2261,7 @@ void ActionSequenceSystem::AnimationComplete(objHndl obj, int animId)
 	if (!(d20caf & D20CAF_NEED_ANIM_COMPLETED))
 		return;
 
-	logger->info("AnimationComplete: \t Performing.");
+	logger->debug("PerformOnAnimComplete: \t Performing.");
 	d20a->d20Caf &= ~D20CAF_NEED_ANIM_COMPLETED;
 
 	if (!(d20caf & D20CAF_ACTIONFRAME_PROCESSED))
@@ -2334,7 +2345,7 @@ uint32_t ActionSequenceSystem::simulsOk(ActnSeq* actSeq)
 	{
 		*numSimultPerformers = 0;
 		*simultPerformerQueue = 0i64;
-		logger->info("first simul actor, proceeding");
+		logger->debug("first simul actor, proceeding");
 
 	}
 	return 1;
@@ -2362,7 +2373,7 @@ uint32_t ActionSequenceSystem::simulsAbort(objHndl objHnd)
 			else{
 				*numSimultPerformers = *simulsIdx;
 				memcpy(tbStatus118CD3C0, &(*actSeqCur)->tbStatus, sizeof(TurnBasedStatus));
-				logger->info("Simul aborted {} ({})", description._getDisplayName(objHnd, objHnd), *simulsIdx);
+				logger->debug("Simul aborted {} ({})", description._getDisplayName(objHnd, objHnd), *simulsIdx);
 				return 1;
 			}
 		}
@@ -2420,7 +2431,7 @@ BOOL ActionSequenceSystem::SimulsAdvance()
 	}
 	if (*simulsIdx >= *numSimultPerformers - 1)
 		return 0;
-	logger->info("Advancing to simul current {}", ++*simulsIdx);
+	logger->debug("Advancing to simul current {}", ++*simulsIdx);
 	return 1;
 }
 

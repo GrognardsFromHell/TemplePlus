@@ -114,9 +114,9 @@ struct D20Actn
 	LocAndOffsets destLoc;
 	float distTraversed;
 	uint32_t radialMenuActualArg;
-	uint32_t rollHist3;
-	uint32_t rollHist1;
-	uint32_t rollHist2;
+	int rollHist3;
+	int rollHist1;
+	int rollHist2;
 	D20SpellData d20SpellData;
 	uint32_t spellId;
 	uint32_t animID;
@@ -135,6 +135,7 @@ struct D20Actn
 		path = 0;
 		spellId = 0;
 		data1 = 0;
+		//animID = -1;
 	}
 
 	D20Actn(D20ActionType type) {
@@ -149,6 +150,7 @@ struct D20Actn
 		path = 0;
 		spellId = 0;
 		data1 = 0;
+		//animID = -1;
 	}
 };
 

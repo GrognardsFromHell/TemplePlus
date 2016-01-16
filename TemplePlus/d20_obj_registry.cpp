@@ -16,7 +16,10 @@ struct D20ObjRegistrySystemAddresses : temple::AddressTable{
 	{
 		rebase(d20ObjRegistry,			0x10BCAD94);
 		rebase(d20ObjRegistryNumItems,	0x10BCAD98);
+		rebase(InitiativeRefresh, 0x100DFE40);
 	}
+
+	int (*InitiativeRefresh)(int initiative, int initiativeNext);
 }addresses;
 
 
@@ -107,6 +110,12 @@ void D20ObjRegistrySystem::D20ObjRegistrySendSignalAll(D20DispatcherKey dispKey,
 	{
 		d20Sys.d20SendSignal( (*addresses.d20ObjRegistry)[i], dispKey, d20a, arg2);
 	}
+}
+
+int D20ObjRegistrySystem::InitiativeRefresh(int initiative, int initiativeNext)
+{
+	return addresses.InitiativeRefresh(initiative, initiativeNext);
+		
 }
 
 void _D20ObjRegistryAppend(objHndl objHnd)

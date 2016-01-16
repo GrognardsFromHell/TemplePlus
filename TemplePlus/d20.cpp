@@ -96,7 +96,11 @@ int D20Replacements::PerformActivateReadiedAction(D20Actn* d20a)
 	{
 		curSeq->d20ActArrayNum = curIdx;
 	}
+	
+	//curSeq->seqOccupied &= ~SEQF_PERFORMING;
+
 	return 0;
+	
 }
 
 static struct D20SystemAddresses : temple::AddressTable {
@@ -344,6 +348,7 @@ void D20System::D20ActnInit(objHndl objHnd, D20Actn* d20a)
 	d20a->path = nullptr;
 	d20a->d20SpellData.spellEnumOrg = 0;
 	d20a->animID = 0;
+	//d20a->animID = -1;  // was 0 in vanilla, probably bug?
 	d20a->rollHist1 = -1;
 	d20a->rollHist2 = -1;
 	d20a->rollHist3 = -1;
