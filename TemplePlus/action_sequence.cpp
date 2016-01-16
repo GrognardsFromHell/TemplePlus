@@ -1060,7 +1060,7 @@ void ActionSequenceSystem::GreybarReset()
 		}
 		while (1)
 		{
-			actionPerform();
+			ActionPerform();
 			bool foundOtherSeq = false;
 			for (int j = 0; j < ACT_SEQ_ARRAY_SIZE;j++)
 			{
@@ -1843,7 +1843,7 @@ uint32_t ActionSequenceSystem::curSeqNext()
 	if (SequencePop())
 	{
 		if ((*actSeqCur)->d20aCurIdx + 1 < (*actSeqCur)->d20ActArrayNum)
-			actionPerform();
+			ActionPerform();
 		return 0;
 	}
 
@@ -1999,28 +1999,33 @@ bool ActionSequenceSystem::ShouldAutoendTurn(TurnBasedStatus* tbStat)
 	return 1;
 }
 
-void ActionSequenceSystem::actionPerform()
+void ActionSequenceSystem::ActionPerform()
 {
+	// in principle this cycles through actions,
+	// but if it succeeds in performing one it will return
 	MesLine mesLine;
 	TurnBasedStatus tbStatus;
-	int32_t * curIdx ;
+	int32_t * curIdx ; 
 	D20Actn * d20a = nullptr;
 	while (1)
 	{
 		ActnSeq * curSeq = *actSeqCur;
-		curIdx = &curSeq->d20aCurIdx;
+		curIdx = &curSeq->d20aCurIdx; // the action idx is inited to -1 for fresh sequences
 		++*curIdx;
-		mesLine.key = (uint32_t)curIdx;
 
+		// if the performer has become unconscious, abort
 		objHndl performer = curSeq->performer;
 		if (objects.IsUnconscious(performer))
 		{
 			curSeq->d20ActArrayNum = curSeq->d20aCurIdx;
-			logger->debug("ActionPerform: \t Unconscious actor {} - cutting sequence", objects.description._getDisplayName(performer, performer));
+			logger->debug("PerformActions: \t Unconscious actor {} - cutting sequence", objects.description._getDisplayName(performer, performer));
 		}
-		if (curSeq->d20aCurIdx >= (int32_t)curSeq->d20ActArrayNum) break;	
+
+		// if have finished up the actions - do CurSeqNext
+		if (curSeq->d20aCurIdx >= (int32_t)curSeq->d20ActArrayNum) 
+			break;	
 		
-		memcpy(&tbStatus, &curSeq->tbStatus, sizeof(tbStatus));
+		tbStatus = curSeq->tbStatus;
 		d20a = &curSeq->d20ActArray[*curIdx];
 		
 		auto errCode = SequencePathSthgSub_10096450( curSeq, *curIdx,&tbStatus);
@@ -2029,8 +2034,8 @@ void ActionSequenceSystem::actionPerform()
 			
 			mesLine.key = errCode + 1000;
 			mesFuncs.GetLine_Safe(*actionMesHandle, &mesLine);
-			logger->debug("ActionPerform: \t Action unavailable for {} ({}): {}", 
-				objects.description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer, mesLine.value );
+			logger->debug("PerformActions: \t Action unavailable for {} ({}): {}", 
+				objects.description.getDisplayName(d20a->d20APerformer), d20a->d20APerformer, mesLine.value );
 			*actnProcState = errCode;
 			curSeq->tbStatus.errCode = errCode;
 			objects.floats->floatMesLine(performer, 1, FloatLineColor::Red, mesLine.value);
@@ -2046,7 +2051,7 @@ void ActionSequenceSystem::actionPerform()
 		{
 			if ( d20->D20ActionTriggersAoO(d20a, &tbStatus) && DoAoosByAdjcentEnemies(d20a->d20APerformer))
 			{
-				logger->debug("ActionPerform: \t Sequence Preempted {} ({})", description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
+				logger->debug("PerformActions: \t Sequence Preempted {} ({})", description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
 				--*(curIdx);
 				sequencePerform();
 			} else
@@ -2054,7 +2059,7 @@ void ActionSequenceSystem::actionPerform()
 				memcpy(&curSeq->tbStatus, &tbStatus, sizeof(tbStatus));
 				*(uint32_t*)(&curSeq->tbStatus.tbsFlags) |= (uint32_t)D20CAF_NEED_ANIM_COMPLETED;
 				InterruptCounterspell(d20a);
-				logger->debug("ActionPerform: \t Performing action for {} ({}): {}",
+				logger->debug("PerformActions: \t Performing action for {} ({}): {}",
 					description.getDisplayName(d20a->d20APerformer), 
 					d20a->d20APerformer,
 					(int)d20a->d20ActType);
@@ -2063,6 +2068,8 @@ void ActionSequenceSystem::actionPerform()
 			}
 			return;
 		}
+
+		// otherwise, this is an AOO Movement - do an AoO check
 		if (d20->tumbleCheck(d20a))
 		{
 			DoAoo(d20a->d20APerformer, d20a->d20ATarget);
@@ -2088,6 +2095,7 @@ void ActionSequenceSystem::sequencePerform()
 		return;
 	}
 
+	// is curSeq ok to perform?
 	if (!actSeqOkToPerform())
 	{
 		logger->debug("SequencePerform: \t Sequence given while performing previous action - aborted.");
@@ -2126,7 +2134,7 @@ void ActionSequenceSystem::sequencePerform()
 		}
 		*actnProcState = 0;
 		curSeq->seqOccupied |= SEQF_PERFORMING;
-		actionPerform();
+		ActionPerform();
 		for (curSeq = *actSeqCur; isPerforming(curSeq->performer); curSeq = *actSeqCur) // I think actionPerform can modify the sequence, so better be safe
 		{
 			if (curSeq->seqOccupied & SEQF_PERFORMING)
@@ -2139,7 +2147,7 @@ void ActionSequenceSystem::sequencePerform()
 					break;
 				}
 			}
-			actionPerform();
+			ActionPerform();
 		}
 	}
 }
@@ -2229,6 +2237,7 @@ void ActionSequenceSystem::PerformOnAnimComplete(objHndl obj, int animId)
 
 	// does the Current Sequence belong to obj?
 	auto curSeq = *actSeqCur;
+	auto curSeq0 = curSeq;
 	if (!curSeq || curSeq->performer != obj || !(curSeq->seqOccupied & SEQF_PERFORMING))
 	{
 		logger->debug("\tCurrent sequence performer is {} ({}), Switching sequence...", description.getDisplayName(curSeq->performer),curSeq->performer);
@@ -2243,9 +2252,11 @@ void ActionSequenceSystem::PerformOnAnimComplete(objHndl obj, int animId)
 
 	// is the animId ok?
 	auto d20a = &curSeq->d20ActArray[curSeq->d20aCurIdx];
-	if ( (animId != -1 && animId != 0xccccCCCC) && d20a->animID != animId)
+	if ( (animId != -1 && animId != 0xccccCCCC & (animId != 0 )) 
+		&& d20a->animID != animId)
 	{
 		logger->debug("PerformOnAnimComplete: \t Wrong anim ID!");
+		*actSeqCur = curSeq0;
 		return;
 	}
 
@@ -2253,6 +2264,7 @@ void ActionSequenceSystem::PerformOnAnimComplete(objHndl obj, int animId)
 	if (obj != d20a->d20APerformer)
 	{
 		logger->debug("PerformOnAnimComplete: \t Wrong performer!");
+		*actSeqCur = curSeq0;
 		return;
 	}
 	
@@ -2272,12 +2284,12 @@ void ActionSequenceSystem::PerformOnAnimComplete(objHndl obj, int animId)
 	if (actSeqOkToPerform())
 	{
 		ActionBroadcastAndSignalMoved();
-		actionPerform();
+		ActionPerform();
 		while( isPerforming((*actSeqCur)->performer))
 		{
 			if (!actSeqOkToPerform())
 				break;
-			actionPerform();
+			ActionPerform();
 		}
 	}
 }
@@ -2838,7 +2850,7 @@ uint32_t _actSeqOkToPerform()
 
 void _actionPerform()
 {
-	actSeqSys.actionPerform();
+	actSeqSys.ActionPerform();
 };
 
 

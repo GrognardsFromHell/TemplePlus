@@ -177,7 +177,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	uint32_t curSeqNext();
 		int SequencePop(); // 10098010
 		bool ShouldAutoendTurn(TurnBasedStatus* tbStat);
-	void actionPerform();
+	void ActionPerform();
 	void sequencePerform();
 	void ActionBroadcastAndSignalMoved();
 	int ActionFrameProcess(objHndl obj);
@@ -261,7 +261,7 @@ struct ActnSeq
 {
 	D20Actn d20ActArray[32];
 	int32_t d20ActArrayNum;
-	int32_t d20aCurIdx;
+	int32_t d20aCurIdx; // inited to -1
 	ActnSeq * prevSeq;
 	ActnSeq * interruptSeq;
 	uint32_t seqOccupied; // is actually flags; 1 - performing; 2 - aoo maybe?
