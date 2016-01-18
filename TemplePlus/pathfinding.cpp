@@ -585,8 +585,9 @@ bool Pathfinding::TargetSurrounded(Path* pqr, PathQuery* pq)
 {
 	if (    (pq->flags & PQF_IGNORE_CRITTERS) 
 		|| !(pq->flags & PQF_TARGET_OBJ ) 
-		|| !(pq->flags & PQF_HAS_CRITTER) )
-	{ // do outside combat and only for paths with target critter
+		|| !(pq->flags & PQF_HAS_CRITTER)
+		|| objects.IsPlayerControlled(pq->critter))
+	{ // do this only in combat and only for paths with target critter
 		return 0;
 	}
 

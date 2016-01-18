@@ -559,14 +559,16 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 	aooPacket->numAoOs = 0;
 	auto pathLength = pathfindingSys.pathLength(pqr);
 	if (aooFreeDistFeet > pathLength)
-		truncateLengthFeet = pathLength;
+		return;
+	//truncateLengthFeet = pathLength;
 	LocAndOffsets truncatedLoc;
-	pathfindingSys.TruncatePathToDistance(aooPacket->path, &truncatedLoc, truncateLengthFeet);
+	pathfindingSys.TruncatePathToDistance(aooPacket->path, &truncatedLoc, truncateLengthFeet); // this is the first possible distance where an Aoo might occur
 	int enemyCount = 0;
 	objHndl* enemies = combatSys.GetHostileCombatantList(obj, &enemyCount );
 
-	while (truncateLengthFeet < 2.0 + pathLength)
+	while (truncateLengthFeet <  pathLength - 0.5)
 	{
+
 		// obj is moving away from truncatedLoc
 		// if an enemy can hit you from when you're in the current truncatedLoc
 		// it means you incur an AOO
@@ -603,11 +605,18 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 		}
 
 		// advanced the truncatedLoc by 4 feet along the path
-		if (truncateLengthFeet < pathLength)
-			pathfindingSys.TruncatePathToDistance(aooPacket->path, &truncatedLoc, truncateLengthFeet);
-
 		truncateLengthFeet = truncateLengthFeet + 4.0;
 		aooDistFeet = truncateLengthFeet;
+
+		if (truncateLengthFeet < pathLength - 0.5)
+			pathfindingSys.TruncatePathToDistance(aooPacket->path, &truncatedLoc, truncateLengthFeet);
+
+
+		/*
+		if (aooDistFeet >= pathLength)
+		{
+			aooDistFeet = pathLength - 0.0001;
+		}*/
 
 		
 			
