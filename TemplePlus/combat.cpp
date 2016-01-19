@@ -311,7 +311,7 @@ BOOL CombatSystem::CanMeleeTargetRegardWeapon(objHndl obj, objHndl weapon, objHn
 {
 	if (weapon)
 	{
-		if (objects.GetType(obj) != obj_t_weapon)
+		if (objects.GetType(weapon) != obj_t_weapon)
 			return 0;
 		if (inventory.IsRangedWeapon(weapon))
 			return 0;

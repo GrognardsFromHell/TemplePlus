@@ -879,13 +879,13 @@ unsigned int AiSystem::Asplode(AiTactic* aiTac)
 unsigned AiSystem::WakeFriend(AiTactic* aiTac)
 {
 	objHndl performer = aiTac->performer;
-	objHndl target = 0;
+	objHndl sleeper = 0;
 	int performerIsIntelligent = (objects.StatLevelGet(performer, stat_intelligence) >= 3);
 	if (!performerIsIntelligent)
 		return 0;
 
 	LocAndOffsets performerLoc;
-	float dist = 1000000000.0;
+	float sleeperDist = 1000000000.0, enemyDist = 100000.0;
 
 
 	locSys.getLocAndOff(aiTac->performer, &performerLoc);
@@ -905,48 +905,66 @@ unsigned AiSystem::WakeFriend(AiTactic* aiTac)
 		int isSleeping = PyInt_AsLong(result);
 		Py_DECREF(result);
 
-
-		if (isSleeping
-			&&critterSys.IsFriendly(dude, performer)
-			&& locSys.DistanceToObj(performer, dude)  < dist
-			)
+		if (critterSys.IsFriendly(dude, performer))
 		{
-
-			target = dude;
-			dist = locSys.DistanceToObj(performer, dude);
-
-		}
+			if (isSleeping && locSys.DistanceToObj(performer, dude)  < sleeperDist)
+			{
+				sleeper = dude;
+				sleeperDist = locSys.DistanceToObj(performer, dude);
+			}
+		} 
+		
 	}
-	if (!target)
+	if (!sleeper)
 		return 0;
 
-
-	if (combatSys.IsWithinReach(performer, target) || (templeFuncs.RNG(1, 100) <= 40))
+	// if a sleeper is within reach, do it
+	bool shouldWake = combatSys.IsWithinReach(performer, sleeper);
+	
+	// if not:
+	// first of all check if anyone threatens the ai actor
+	// if no threats, then 40% chance that you'll try to wake up
+	if (!shouldWake )
 	{
-
-		int actNum;
-		objHndl origTarget = aiTac->target;
-
-		actNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
-		aiTac->target = target;
-
-		if (Approach(aiTac)
-			|| (d20Sys.GlobD20ActnInit(),
-				d20Sys.GlobD20ActnSetTypeAndData1(D20A_AID_ANOTHER_WAKE_UP, 0),
-				d20Sys.GlobD20ActnSetTarget(aiTac->target, 0),
-				actSeqSys.ActionAddToSeq(),
-				!actSeqSys.ActionSequenceChecksWithPerformerLocation()))
+		int enemyCount;
+		auto enemies = combatSys.GetHostileCombatantList(performer, &enemyCount);
+		bool isThreatened = false;
+		for (int i = 0; i < enemyCount; i++)
 		{
-			return 1;
+			//logger->debug("Enemy under test: {}", description.getDisplayName(enemies[i]));
+			if (combatSys.CanMeleeTarget(enemies[i], performer))
+			{
+				isThreatened = true;
+				break;
+			}
 		}
-		actSeqSys.ActionSequenceRevertPath(actNum);
-
-		aiTac->target = origTarget;
-		return 0;
-
-
+		delete [] enemies;
+		if (!isThreatened)
+			shouldWake = (templeFuncs.RNG(1, 100) <= 40);
 	}
 
+	if (!shouldWake)
+		return 0;
+
+	// do wake action
+	int actNum;
+	objHndl origTarget = aiTac->target;
+
+	actNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+	aiTac->target = sleeper;
+
+	if (Approach(aiTac)
+		|| (d20Sys.GlobD20ActnInit(),
+			d20Sys.GlobD20ActnSetTypeAndData1(D20A_AID_ANOTHER_WAKE_UP, 0),
+			d20Sys.GlobD20ActnSetTarget(aiTac->target, 0),
+			actSeqSys.ActionAddToSeq(),
+			!actSeqSys.ActionSequenceChecksWithPerformerLocation()))
+	{
+		return 1;
+	}
+	actSeqSys.ActionSequenceRevertPath(actNum);
+
+	aiTac->target = origTarget;
 	return 0;
 
 }
