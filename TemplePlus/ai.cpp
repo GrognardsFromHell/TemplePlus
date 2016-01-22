@@ -240,8 +240,9 @@ int AiSystem::TargetClosest(AiTactic* aiTac)
 	int performerIsIntelligent = (objects.StatLevelGet(performer, stat_intelligence) >= 3);
 	//objHndl target; 
 	LocAndOffsets performerLoc; 
-	float dist = 1000000000.0;
-
+	float dist = 1000000000.0, reach = critterSys.GetReach(performer, D20A_UNSPECIFIED_ATTACK);
+	bool hasGoodTarget = false;
+	
 	
 	locSys.getLocAndOff(aiTac->performer, &performerLoc);
 	/*
@@ -252,7 +253,7 @@ int AiSystem::TargetClosest(AiTactic* aiTac)
 	}
 	*/
 
-	logger->info("{} targeting closest...", objects.description.getDisplayName(performer));
+	logger->debug("{} targeting closest...", objects.description.getDisplayName(performer));
 
 	// ObjList objlist;
 	// objlist.ListVicinity(performerLoc.location, OLC_CRITTERS);
@@ -279,16 +280,35 @@ int AiSystem::TargetClosest(AiTactic* aiTac)
 			&& !ignoreTarget)
 		{
 			auto distToCombatant = locSys.DistanceToObj(performer, combatant);
+			//logger->debug("Checking line of attack for target: {}", description.getDisplayName(combatant));
+			bool hasLineOfAttack = combatSys.HasLineOfAttack(performer, combatant);
 			if (d20Sys.d20Query(combatant, DK_QUE_Critter_Is_Invisible)
 				&& !d20Sys.d20Query(performer, DK_QUE_Critter_Can_See_Invisible))
 			{
 				distToCombatant = static_cast<float>((distToCombatant + 5.0) * 2.5); // makes invisibile chars less likely to be attacked; also takes into accout stuff like Hide From Animals (albeit in a shitty manner)
 			}
-			if (distToCombatant < dist )
+			bool isGoodTarget = distToCombatant <= reach && hasLineOfAttack;
+			
+			if (isGoodTarget)
+			{
+				if (distToCombatant < dist ) // best
+				{
+					aiTac->target = combatant;
+					dist = distToCombatant;
+					hasGoodTarget = true;
+				}
+				else if (!hasGoodTarget) // is a good target within reach, not necessarily the closest so far, but other good targets haven't been found yet
+				{
+					aiTac->target = combatant;
+					dist = distToCombatant;
+					hasGoodTarget = true;
+				}
+			}
+			else if (distToCombatant < dist && !hasGoodTarget)
 			{
 				aiTac->target = combatant;
 				dist = distToCombatant;
-			}
+			} 
 		}
 
 	}
@@ -985,7 +1005,12 @@ int AiSystem::Default(AiTactic* aiTac)
 	}
 	int performError = actSeqSys.ActionSequenceChecksWithPerformerLocation();
 	if (!performError)
+	{
 		return 1;
+	} else
+	{
+		logger->info("AI Default SequenceCheck failed, error code: {}", static_cast<int>(performError));
+	}
 	if (!critterSys.IsWieldingRangedWeapon(aiTac->performer))
 	{
 		logger->info("AI Action Perform: Resetting sequence; Do Unspecified Move Action");

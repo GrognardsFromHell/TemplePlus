@@ -18,6 +18,7 @@
 #include "turn_based.h"
 #include "gametime.h"
 #include "ui/ui_combat.h"
+#include "raycast.h"
 
 
 struct CombatSystemAddresses : temple::AddressTable
@@ -408,6 +409,61 @@ objHndl * CombatSystem::GetHostileCombatantList(objHndl obj, int * count)
 	memcpy(result, hostileTempList, hostileCount * sizeof(objHndl));
 	*count = hostileCount;
 	return result;
+}
+
+bool CombatSystem::HasLineOfAttack(objHndl obj, objHndl target)
+{
+	BOOL result = 1;
+	RaycastPacket objIt;
+	objIt.origin = objects.GetLocationFull(obj);
+	LocAndOffsets tgtLoc = objects.GetLocationFull(target);
+	objIt.targetLoc = tgtLoc;
+	objIt.flags = static_cast<RaycastFlags>(RaycastFlags::StopAfterFirstBlockerFound | RaycastFlags::ExcludeItemObjects | RaycastFlags::HasTargetObj | RaycastFlags::HasSourceObj | RaycastFlags::HasRadius);
+	objIt.radius = static_cast<float>(0.1);
+	bool blockerFound = false;
+	if (objIt.Raycast())
+	{
+		auto results = objIt.results;
+		for (auto i = 0; i < objIt.resultCount; i++)
+		{
+			objHndl resultObj = results[i].obj;
+			if (!resultObj)
+			{
+				if (results[i].flags & RaycastResultFlags::BlockerSubtile)
+				{
+					blockerFound = true;
+				}
+				continue;
+			}
+
+			auto objType = objects.GetType(resultObj);
+			if (objType == obj_t_portal)
+			{
+				if (!objects.IsPortalOpen(resultObj))
+				{
+					blockerFound = 1;
+				}
+				continue;
+			}
+			if (objType == obj_t_pc || objType == obj_t_npc)
+			{
+				if (objects.IsDeadNullDestroyed(resultObj)
+					|| d20Sys.d20Query(resultObj, DK_QUE_Prone)
+					|| objects.IsUnconscious(resultObj))
+				{
+					continue;
+				}
+				// TODO: flag for Cover 
+			}
+		}
+	}
+	objIt.RaycastPacketFree();
+	if (!blockerFound)
+	{
+		return 1;
+	}
+
+	return 0;
 }
 
 void CombatSystem::TurnProcessing_100635E0(objHndl obj)

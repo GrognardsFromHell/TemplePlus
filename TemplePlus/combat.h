@@ -35,6 +35,7 @@ struct CombatSystem : temple::AddressTable {
 	objHndl CheckRangedWeaponAmmo(objHndl obj); // checks if the ammo slot item matches a wielded weapon (primary or secondary), and if so, returns it
 	bool AmmoMatchesItemAtSlot(objHndl obj, EquipSlot equipSlot);
 	objHndl * GetHostileCombatantList(objHndl obj, int* count);
+	bool HasLineOfAttack(objHndl obj, objHndl target); // can shoot or attack target (i.e. target isn't behind a wall or sthg)
 
 	void TurnProcessing_100635E0(objHndl obj);
 	void EndTurn();

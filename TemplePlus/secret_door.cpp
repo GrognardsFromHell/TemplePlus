@@ -11,9 +11,9 @@ public:
 		return "SecretDoor Replacements";
 	}
 	void apply() override{
-		macReplaceFun(10046470, _isSecretDoor)
-		macReplaceFun(10046510, _getSecretDoorDC)
-		macReplaceFun(100464A0, _secretDoorIsRevealed)
+		replaceFunction(0x10046470, _isSecretDoor); 
+		replaceFunction(0x10046510, _getSecretDoorDC); 
+		replaceFunction(0x100464A0, _secretDoorIsRevealed); 
 	}
 } secDoorReplacements;
 

@@ -657,6 +657,14 @@ int Objects::GetModFromStatLevel(int statLevel)
 	return (statLevel - 10) / 2;
 }
 
+BOOL Objects::IsPortalOpen(objHndl obj)
+{
+	auto sdFlags = objects.getInt32(obj, obj_f_secretdoor_flags);
+	if ((sdFlags & OSDF_SECRET_DOOR) && !(sdFlags & OSDF_SECRET_DOOR_FOUND))
+		return 0;
+	return (objects.getInt32(obj, obj_f_portal_flags) & OPF_OPEN) != 0;
+}
+
 bool Objects::IsContainer(objHndl objHnd)
 {
 	auto type = GetType(objHnd);

@@ -231,7 +231,8 @@ struct Objects : temple::AddressTable {
 	}
 
 	void PropCollectionRemoveField(objHndl objHnd, obj_f objF);
-	int GetModFromStatLevel(int statLevel); // returns modifier from stat level e.g. Dex 15 -> +2
+	static int GetModFromStatLevel(int statLevel); // returns modifier from stat level e.g. Dex 15 -> +2
+	static BOOL IsPortalOpen(objHndl obj);
 #pragma endregion
 
 #pragma region Subsystems
