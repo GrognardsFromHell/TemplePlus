@@ -87,8 +87,9 @@ public:
 	using FileHandle = void*;
 	virtual FileHandle Open(const char* name, const char* mode) = 0;
 	virtual size_t Read(void* buffer, size_t size, FileHandle handle) = 0;
-	virtual size_t Write(void* buffer, size_t size, FileHandle handle) = 0;
+	virtual size_t Write(const void* buffer, size_t size, FileHandle handle) = 0;
 	virtual size_t Length(FileHandle handle) = 0;
+	virtual size_t Tell(FileHandle handle) = 0;
 	virtual void Close(FileHandle handle) = 0;
 	
 };

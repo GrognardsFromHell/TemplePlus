@@ -6,6 +6,9 @@
 #include <temple/vfs.h>
 #include <tio/tio.h>
 
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/mapsystem.h"
+
 
 struct LegacySectorAddresses : temple::AddressTable
 {
@@ -230,10 +233,10 @@ int LegacySectorSystem::SectorLock(SectorLoc secLoc, Sector** sectorOut)
 	if ( *addresses.sectorLockSthg_10AB7458 )
 	return 0;
 
-	if ( !maps.IsMapOpen() )
+	if ( !gameSystems->GetMap().IsMapOpen() )
 	{
-	logger->error("ERROR: Attempt to lock a sector when the map is not valid!!!\n");
-	return 0;
+		logger->error("ERROR: Attempt to lock a sector when the map is not valid!!!\n");
+		return 0;
 	}
 	if (secLoc.x() >= GetSectorLimitX() || secLoc.y() >= GetSectorLimitY())
 		return 0;

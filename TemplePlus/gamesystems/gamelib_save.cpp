@@ -3,13 +3,14 @@
 #include "tio/tio_utils.h"
 #include "gamesystems/gamesystems.h"
 #include "ui/ui.h"
-#include "timeevents.h"
+#include "gamesystems/timeevents.h"
 #include "party.h"
 #include "maps.h"
 #include "critter.h"
 #include "python/python_integration_obj.h"
 #include <tio/tio.h>
 #include "gamesystem.h"
+#include "util/savegame.h"
 
 struct GsiData {
 	string filename;
@@ -230,8 +231,11 @@ bool GameSystems::SaveGame(const string& filename, const string& displayName) {
 
 	// Create savegame archive
 	auto archiveName = format("save\\{}", filename);
-	if (!addresses.PackArchive(archiveName.c_str(), "Save\\Current")) {
-		logger->error("Unable to compress game save archive.");
+
+	try {
+		SaveGameArchive::Create("Save\\Current", archiveName);
+	} catch (const std::exception &e) {
+		logger->error("Unable to create save game archive: {}", e.what());
 		return false;
 	}
 

@@ -4,16 +4,18 @@
 #include "common.h"
 #include "temple_functions.h"
 #include "obj.h"
-
+#include "gamesystems/objects/objsystem.h"
 
 
 void removeSurplusSpells(int surplus, objHndl objHnd, uint32_t classCode, int slotLvl)
 {
-	int numMemorized = templeFuncs.Obj_Get_IdxField_NumItems(objHnd, obj_f_critter_spells_memorized_idx);
-	SpellStoreData spellData;
-	for (int i = numMemorized - 1; i>=0 && surplus > 0 ; i--)
+	auto obj = objSystem->GetObject(objHnd);
+
+	auto numMemorized = obj->GetSpellArray(obj_f_critter_spells_memorized_idx).GetSize();
+	
+	for (size_t i = numMemorized - 1; i>=0 && surplus > 0 ; i--)
 	{
-		templeFuncs.Obj_Get_ArrayElem_Generic(objHnd, obj_f_critter_spells_memorized_idx, i, &spellData);
+		auto spellData = obj->GetSpell(obj_f_critter_spells_memorized_idx, i);
 		if (spellData.classCode == (classCode | 0x80) && slotLvl == spellData.spellLevel)
 		{
 			spellSys.spellRemoveFromStorage(objHnd, obj_f_critter_spells_memorized_idx, &spellData, 0);
@@ -26,11 +28,13 @@ void removeSurplusSpells(int surplus, objHndl objHnd, uint32_t classCode, int sl
 int getMemorizedSpells(objHndl objHnd, uint32_t classCode, int slotLvl)
 {
 	int numMemorizedThisLvl = 0;
-	int memorizedTotal = templeFuncs.Obj_Get_IdxField_NumItems(objHnd, obj_f_critter_spells_memorized_idx);
-	SpellStoreData spellData ;
-	for (int i = 0; i < memorizedTotal; i++)
+
+	auto obj = objSystem->GetObject(objHnd);
+	auto memorizedTotal = obj->GetSpellArray(obj_f_critter_spells_memorized_idx).GetSize();
+
+	for (size_t i = 0; i < memorizedTotal; i++)
 	{
-		templeFuncs.Obj_Get_ArrayElem_Generic(objHnd, obj_f_critter_spells_memorized_idx, i, &spellData);
+		auto spellData = obj->GetSpell(obj_f_critter_spells_memorized_idx, i);
 		if (spellData.classCode == (classCode | 0x80 ) && spellData.spellLevel == slotLvl)
 		{
 			numMemorizedThisLvl++;

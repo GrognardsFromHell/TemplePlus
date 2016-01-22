@@ -3,7 +3,8 @@
 #include "python_support.h"
 #include "../maps.h"
 #include "../inventory.h"
-#include "../timeevents.h"
+#include "../gamesystems/timeevents.h"
+#include "../gamesystems/gamesystems.h"
 #include "../reputations.h"
 #include "../critter.h"
 #include "../anim.h"
@@ -21,6 +22,7 @@
 #include "../skill.h"
 #include "../ui/ui_dialog.h"
 #include "../dialog.h"
+#include "../gamesystems/objects/objsystem.h"
 #include "python_dice.h"
 #include "python_objectscripts.h"
 #include <objlist.h>
@@ -29,6 +31,7 @@
 #include <ui/ui_picker.h>
 #include <config/config.h>
 #include <infrastructure/mesparser.h>
+#include "temple_functions.h"
 
 struct PyObjHandle {
 	PyObject_HEAD;
@@ -42,10 +45,11 @@ static PyObjHandle* GetSelf(PyObject* obj) {
 	auto self = (PyObjHandle*) obj;
 
 	if (!self->handle && self->id) {
-		self->handle = objects.GetHandle(self->id);
+		self->handle = gameSystems->GetObj().GetHandleById(self->id);
 	}
-	if (!objects.VerifyHandle(self->handle)) {
-		self->handle = objects.GetHandle(self->id);
+
+	if (!gameSystems->GetObj().IsValidHandle(self->handle)) {
+		self->handle = gameSystems->GetObj().GetHandleById(self->id);
 	}
 
 	return self;
@@ -169,7 +173,7 @@ static PyObject* PyObjHandle_setstate(PyObject* obj, PyObject* args) {
 	}
 
 	// Finally look up the handle for the GUID
-	self->handle = objects.GetHandle(self->id);
+	self->handle = gameSystems->GetObj().GetHandleById(self->id);
 
 	Py_RETURN_NONE;
 }
@@ -200,7 +204,7 @@ static PyObject* PyObjHandle_BeginDialog(PyObject* obj, PyObject* args) {
 		evt.params[0].handle = self->handle;
 		evt.params[1].handle = target;
 		evt.params[2].int32 = line;
-		timeEvents.Schedule(evt, 1);
+		gameSystems->GetTimeEvent().Schedule(evt, 1);
 	} else
 	{
 		// TODO: Add a "Party Leader Override" option that attempts to initiate dialogue with the Party Leader if possible
@@ -1854,9 +1858,11 @@ static PyObject * PyObjHandle_MakeWizard(PyObject* obj, PyObject* args) {
 	if (level <= 0 || level > 20){
 		return PyInt_FromLong(0);
 	}
-	for (uint32_t i = 0; i < level; i++)
-	{
-		templeFuncs.Obj_Set_IdxField_byValue(self->handle, obj_f_critter_level_idx, i, stat_level_wizard);
+
+	auto gameObj = objSystem->GetObject(self->handle);
+
+	for (uint32_t i = 0; i < level; i++) {
+		gameObj->SetInt32(obj_f_critter_level_idx, i, stat_level_wizard);
 	}
 
 	objects.d20.d20Status->D20StatusRefresh(self->handle);
@@ -1876,9 +1882,10 @@ static PyObject * PyObjHandle_MakeClass(PyObject* obj, PyObject* args) {
 	if (level <= 0 || level > config.maxLevel){
 		return PyInt_FromLong(0);
 	}
-	for (uint32_t i = 0; i < level; i++)
-	{
-		templeFuncs.Obj_Set_IdxField_byValue(self->handle, obj_f_critter_level_idx, i, statClass);
+
+	auto gameObj = objSystem->GetObject(self->handle);
+	for (uint32_t i = 0; i < level; i++) {
+		gameObj->SetInt32(obj_f_critter_level_idx, i, statClass);
 	}
 
 	objects.d20.d20Status->D20StatusRefresh(self->handle);
@@ -2097,7 +2104,7 @@ static PyObject* PyObjHandle_GetNameId(PyObject* obj, void*) {
 
 static PyObject* PyObjHandle_GetProto(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
-	return PyInt_FromLong(objects.GetProtoNum(self->handle));
+	return PyInt_FromLong(gameSystems->GetObj().GetProtoId(self->handle));
 }
 
 static PyObject* PyObjHandle_GetLocation(PyObject* obj, void*) {

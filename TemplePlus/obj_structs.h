@@ -2,7 +2,8 @@
 
 #include <gsl/gsl.h>
 
-#pragma pack(push, 1)
+#include "temple_enums.h"
+
 
 typedef uint64_t objHndl;
 typedef uint32_t _fieldIdx;
@@ -57,6 +58,15 @@ struct ObjectId {
 	bool IsHandle() const {
 		return subtype == ObjectIdKind::Handle;
 	}
+	
+	bool IsBlocked() const {
+		return subtype == ObjectIdKind::Blocked;
+	}
+
+	// Can this object id be persisted and later restored to a handle?
+	bool IsPersistable() const {
+		return IsNull() || IsPermanent() || IsPrototype() || IsPositional();
+	}
 
 	int GetPrototypeId() const {
 		Expects(IsPrototype());
@@ -76,46 +86,23 @@ struct ObjectId {
 
 	std::string ToString() const;
 
-};
-#pragma pack(pop)
+	// Randomly generates a GUID and returns an object id that contains it
+	static ObjectId CreatePermanent();
 
-struct TransientProps {
-	uint32_t renderColor;
-	uint32_t renderColors;
-	uint32_t renderPalette;
-	uint32_t renderScale;
-	uint32_t renderAlpha;
-	uint32_t renderX;
-	uint32_t renderY;
-	uint32_t renderWidth;
-	uint32_t renderHeight;
-	uint32_t palette;
-	uint32_t color;
-	uint32_t colors;
-	uint32_t renderFlags;
-	uint32_t tempId;
-	uint32_t lightHandle;
-	uint32_t overlayLightHandles;
-	uint32_t internalFlags;
-	uint32_t findNode;
-	uint32_t animationHandle;
-	uint32_t grappleState;
-};
+	// Creates a positional object id
+	static ObjectId CreatePositional(int mapId, int tileX, int tileY, int tempId);
 
-struct GameObjectBody {
-	uint32_t type;
-	uint32_t field4;
-	ObjectId id;
-	ObjectId protoId;
-	uint64_t protoHandle;
-	uint32_t field40;
-	uint16_t propCollectionHas;
-	uint16_t propCollectionItems;
-	uint32_t propBitmap1;
-	uint32_t propBitmap2;
-	uint32_t propCollection;
-	TransientProps transientProps;
-	uint32_t padding;
-};
+	// Creates a prototype object id
+	static ObjectId CreatePrototype(uint16_t prototypeId);
 
+	// Creates a null object id
+	static ObjectId CreateNull() {
+		ObjectId result;
+		result.subtype = ObjectIdKind::Null;
+		return result;
+	}
+
+	static ObjectId CreateHandle(objHndl handle);
+
+};
 #pragma pack(pop)

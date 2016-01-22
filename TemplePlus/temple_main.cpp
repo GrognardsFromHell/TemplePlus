@@ -81,6 +81,36 @@ static void addScreenshotHotkey();
 static void applyGameConfig();
 static bool SetDefaultCursor();
 
+#pragma pack(push, 1)
+struct ObjPropDef {
+	uint32_t protoPropIdx;
+	uint32_t field_4;
+	uint32_t PropBitmap_idx1;
+	uint32_t PropBitmask;
+	uint32_t PropBitmap_idx2;
+	uint32_t storedInPropColl;
+	uint32_t FieldTypeCode;
+};
+#pragma pack(pop)
+const char *PropTypes[] = {
+	"None",
+	"BeginSection",
+	"EndSection",
+	"Int32",
+	"Int64",
+	"AbilityArray",
+	"UnkArray",
+	"Int32Array",
+	"Int64Array",
+	"ScriptArray",
+	"Unk2Array",
+	"String",
+	"Obj",
+	"ObjArray",
+	"SpellArray",
+	"Float32"
+};
+
 int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 
 	if (!config.engineEnhancements) {
@@ -158,7 +188,7 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	// Run console commands from "startup.txt" (working dir)
 	logger->info("[Running Startup.txt]");
 	startupRelevantFuncs.RunBatchFile("Startup.txt");
-	logger->info("[Beginning Game]");		
+	logger->info("[Beginning Game]");	
 
 	GameLoop loop(tig, gameSystems);
 	loop.Run();

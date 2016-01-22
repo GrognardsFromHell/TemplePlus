@@ -29,6 +29,10 @@ public:
 		return result;
 	}
 
+	bool AtEnd() const {
+		return mData.size() == 0;
+	}
+
 private:
 	gsl::array_view<uint8_t> mData;
 };

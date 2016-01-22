@@ -64,6 +64,15 @@ public:
 
 inline BufferResettingGameSystem::~BufferResettingGameSystem() = default;
 
+class MapCloseAwareGameSystem : virtual public NamedGameSystem {
+public:
+	virtual ~MapCloseAwareGameSystem() = 0;
+
+	virtual void CloseMap() = 0;
+};
+
+inline MapCloseAwareGameSystem::~MapCloseAwareGameSystem() = default;
+
 class GameSystem : virtual public NamedGameSystem {
 public:
 	virtual ~GameSystem() = default;

@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "python_timeevents.h"
-#include "../timeevents.h"
+#include "../gamesystems/timeevents.h"
 #include "python_tio.h"
 #include <util/fixes.h>
 #include <tio/tio.h>
@@ -54,8 +54,6 @@ static int SerializeEvent(PyObject *obj, TioFile *file) {
 	auto dumpsFunc = PyDict_GetItemString(pickleDict, "dumps");
 
 	if (dumpsFunc) {
-		auto fileWrapper = PyTioFile_FromTioFile(file);
-
 		auto res = PyObject_CallFunctionObjArgs(dumpsFunc, obj, NULL);
 
 		if (!res) {
@@ -74,9 +72,6 @@ static int SerializeEvent(PyObject *obj, TioFile *file) {
 
 			Py_DECREF(res);			
 		}
-
-		PyTioFile_Invalidate(fileWrapper);
-		Py_DECREF(fileWrapper);
 	}
 
 	Py_DECREF(pickleModule);

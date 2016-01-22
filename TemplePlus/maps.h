@@ -18,7 +18,6 @@ public:
 	bool IsValidMapId(int mapId);
 	void RevealFlag(int mapId, int flagId);
 	bool IsCurrentMapOutdoor();
-	BOOL IsMapOpen();
 
 
 	locXY GetMapCenterTile();

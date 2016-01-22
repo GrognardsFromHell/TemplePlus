@@ -50,6 +50,8 @@ namespace temple {
 
 		void InvalidateBuffers(AasHandle handle);
 
+		void FreeAll();
+
 	private:
 		AasConfig mConfig;
 		using FnAasModelFree = int(temple::AasHandle);

@@ -2,7 +2,7 @@
 #include "util/fixes.h"
 #include <obj.h>
 #include <temple_functions.h>
-#include <timeevents.h>
+#include "gamesystems/timeevents.h"
 #include <particles.h>
 #include <gamesystems/gamesystems.h>
 #include <gamesystems/map/sector.h>

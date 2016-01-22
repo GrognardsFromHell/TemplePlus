@@ -1,8 +1,10 @@
+#include "..\include\temple\soundsystem.h"
+
+#include "temple/soundsystem.h"
+#include "temple/dll.h"
 
 #include <platform/windows.h>
 #include <infrastructure/exception.h>
-
-#include "temple/soundsystem.h"
 
 namespace temple {
 
@@ -49,5 +51,15 @@ namespace temple {
 		mImpl->GetQuickHandles(&handle, nullptr, nullptr);
 		return handle;
 
+	}
+	void SoundSystem::ProcessEvents()
+	{
+		auto processEvents = temple::GetPointer<void()>(0x101E4360);
+		processEvents();
+	}
+	void SoundSystem::SetReverb(int roomType, int reverbDry, int reverbWet)
+	{
+		static auto tig_sound_set_reverb = temple::GetPointer<void(int, int, int)>(0x101e3f30);
+		tig_sound_set_reverb(roomType, reverbDry, reverbWet);
 	}
 }

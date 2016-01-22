@@ -8,7 +8,7 @@
 #include "critter.h"
 #include "party.h"
 #include "d20_level.h"
-
+#include "gamesystems/objects/objsystem.h"
 
 temple::GlobalPrimitive<float, 0x102CF708> experienceMultiplier;
 temple::GlobalPrimitive<int, 0x10BCA850> numCrittersSlainByCR;
@@ -123,6 +123,7 @@ void GiveXPAwards(){
 
 	for (uint32_t i = 0; i < party.GroupListGetLen(); i++){
 		objHndl objHnd = party.GroupListGetMemberN(i);
+
 		if (critterSys.IsDeadNullDestroyed(objHnd)){ continue; };
 		if (objects.d20.d20Query(objHnd, DK_QUE_ExperienceExempt)) { continue; };
 		if (party.ObjIsAIFollower(objHnd)) { continue; };
@@ -145,8 +146,9 @@ void GiveXPAwards(){
 		}
 		xpForxpPile += xpGainRaw;
 		xpGainRaw = int((float)(xpGainRaw) / fNumLivingPartyMembers);
-		if (templeFuncs.ObjXPGainProcess(objHnd, xpGainRaw)){
-			if (templeFuncs.Obj_Get_Field_32bit(objHnd, obj_f_type) == obj_t_pc || config.NPCsLevelLikePCs){
+		if (templeFuncs.ObjXPGainProcess(objHnd, xpGainRaw)) {
+			auto obj = objSystem->GetObject(objHnd);
+			if (obj->IsPC() || config.NPCsLevelLikePCs){
 				bShouldUpdatePartyUI = true;
 			}
 		}

@@ -6,6 +6,8 @@
 #include "froggrapplecontroller.h"
 #include "condition.h"
 #include "critter.h"
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/objects/objsystem.h"
 
 struct GrappleState {
 	uint16_t state;
@@ -42,7 +44,7 @@ FrogGrappleController::FrogGrappleController(gfx::RenderingDevice & device, gfx:
 bool FrogGrappleController::IsGiantFrog(objHndl obj) const
 {
 	// Special rendering for giant frogs of various types
-	auto protoNum = objects.GetProtoNum(obj);
+	auto protoNum = gameSystems->GetObj().GetProtoId(obj);
 	if (protoNum != 14057 && protoNum != 14445 && protoNum != 14300) {
 		return false;
 	}

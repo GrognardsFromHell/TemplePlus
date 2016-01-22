@@ -8,6 +8,7 @@
 #include "faction.h"
 #include "inventory.h"
 #include "dice.h"
+#include "gamesystems/objects/gameobject.h"
 
 //forward declarations
 struct LocationSys;
@@ -15,14 +16,6 @@ struct Pathfinding;
 struct LegacySkillSystem;
 struct FloatLineSystem;
 
-// Stored in obj_f_script_idx array
-#pragma pack(push, 1)
-struct ObjectScript {
-	int unk1;
-	uint32_t counters;
-	int scriptId;
-};
-#pragma pack(pop)
 struct FieldDataMax { uint32_t data[8]; }; // for wrapping "objSetField" calls that get input by value; this is the largest data size that I know of
 
 namespace gfx {
@@ -34,27 +27,20 @@ namespace gfx {
 struct Objects : temple::AddressTable {
 	friend struct LegacyCritterSystem;
 
-	// Verifies if the handle is valid
-	bool VerifyHandle(objHndl handle) {
-		return _VerifyHandle(handle);
-	}
-
 	// Retrieves the object flags for the given object handle
-	uint32_t GetFlags(objHndl obj) {
-		return getInt32(obj, obj_f_flags);
+	ObjectFlag GetFlags(objHndl obj) {
+		return (ObjectFlag)getInt32(obj, obj_f_flags);
 	}
-	uint32_t getInt32(objHndl obj, obj_f fieldIdx);
-	uint64_t getInt64(objHndl obj, obj_f fieldIdx);
-	objHndl getObjHnd(objHndl obj, obj_f fieldIdx);
+	void SetFlags(objHndl obj, ObjectFlag flags) {
+		setInt32(obj, obj_f_flags, flags);
+	}
+	uint32_t getInt32(objHndl obj, obj_f field);
+	uint64_t getInt64(objHndl obj, obj_f field);
+	objHndl getObjHnd(objHndl obj, obj_f field);
 	void SetFieldObjHnd(objHndl obj, obj_f field, objHndl value);
-	void setInt32(objHndl obj, obj_f fieldIdx, uint32_t dataIn);
-	void setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, FieldDataMax data);
-	void setArrayFieldByValue(objHndl obj, obj_f fieldIdx, uint32_t subIdx, int data);
-	int32_t getArrayFieldInt32(objHndl obj, obj_f fieldIdx, uint32_t subIdx);
-	objHndl getArrayFieldObj(objHndl obj, obj_f fieldIdx, uint32_t subIdx);
-	void getArrayField(objHndl obj, obj_f fieldIdx, uint32_t subIdx, void * dataOut);
-	uint32_t getArrayFieldNumItems(objHndl obj, obj_f fieldIdx);
-	void ClearArrayField(objHndl objHnd, obj_f objF);
+	void setInt32(objHndl obj, obj_f field, uint32_t dataIn);
+	int32_t getArrayFieldInt32(objHndl obj, obj_f field, uint32_t index);
+	objHndl getArrayFieldObj(objHndl obj, obj_f field, uint32_t index);
 	gfx::AnimatedModelPtr GetAnimHandle(objHndl obj);
 	gfx::AnimatedModelParams GetAnimParams(objHndl obj);
 	void SetAnimId(objHndl obj, gfx::EncodedAnimId id);
@@ -240,7 +226,6 @@ struct Objects : temple::AddressTable {
 
 #pragma region Common
 	ObjectId GetId(objHndl handle);
-	objHndl GetHandle(const ObjectId &id);
 	ObjectType GetType(objHndl obj);
 	int32_t GetHPCur(objHndl obj);
 	bool IsCritter(objHndl obj) {
@@ -265,7 +250,6 @@ struct Objects : temple::AddressTable {
 		return GetType(obj) == obj_t_npc;
 	}
 	bool IsPlayerControlled(objHndl obj);
-	uint32_t GetProtoNum(objHndl obj);
 	std::string GetDisplayName(objHndl obj, objHndl observer);
 	bool IsStatic(objHndl handle);
 
@@ -276,16 +260,9 @@ struct Objects : temple::AddressTable {
 
 #pragma region Dispatcher Stuff
 
-	Dispatcher* GetDispatcher(objHndl obj) {
-		return (Dispatcher *)getInt32(obj, obj_f_dispatcher);
-	}
+	Dispatcher* GetDispatcher(objHndl obj);
+	void SetDispatcher(objHndl obj, uint32_t data32);
 
-	void SetDispatcher(objHndl obj, uint32_t data32) {
-		setInt32(obj, obj_f_dispatcher, data32);
-		return;
-	}
-
-	void PropCollectionRemoveField(objHndl objHnd, obj_f objF);
 	int GetModFromStatLevel(int statLevel); // returns modifier from stat level e.g. Dex 15 -> +2
 	
 	int GetTempId(objHndl handle);
@@ -313,58 +290,36 @@ struct Objects : temple::AddressTable {
 
 	FloatLineSystem  * floats;
 #pragma endregion
-
-#pragma region Memory Internals
-	uint32_t DoesTypeSupportField(uint32_t objType, _fieldIdx objField);
-
-	void PropFetcher(GameObjectBody* objBody, obj_f fieldIdx, void * dataOut);
-
-	void InsertDataIntoInternalStack(GameObjectBody * objBody, obj_f fieldIdx, void * dataIn);
-
-	int ObjectIdPrint(char * printOut, ObjectId objId);
-#pragma endregion 
-	
+		
 	void(*UpdateRenderHeight)(objHndl obj, int animId);
 	void(*UpdateRadius)(objHndl obj, int animId);
 
 	Objects();
 #pragma region Privates
 private:
-	bool (__cdecl *_VerifyHandle)(objHndl handle);
 	ObjectId *(__cdecl *_GetId)(ObjectId *pIdOut, objHndl handle);
-	objHndl (__cdecl *_GetHandle)(ObjectId id);
 	int(__cdecl *_GetReaction)(objHndl of, objHndl towards);
 	void(__cdecl *_AdjustReaction)(objHndl of, objHndl towards, int change);
 	void(__cdecl *_GetDisplayName)(objHndl obj, objHndl observer, char *pNameOut);
 	float(__cdecl *_GetRadius)(objHndl ObjHnd);
-	void setArrayFieldLowLevel(GameObjectBody * objBody, void * sourceData, obj_f fieldIdx, uint32_t subIdx);
-	void fieldNonexistantDebug(objHndl obj, GameObjectBody* objBody, obj_f fieldIdx, uint32_t objType, char* accessType);
-	void getArrayFieldInternal(GameObjectBody * objBody, void * outAddr, obj_f fieldIdx, uint32_t subIdx); // _nFieldIdx@<eax>, _nFieldSubIdx@<ecx>
 
-	int(__cdecl *_GetInternalFieldInt32)(objHndl ObjHnd, int nFieldIdx);
-	int(__cdecl *_GetInternalFieldInt32Array)(objHndl ObjHnd, int nFieldIdx, int index);
-	float(__cdecl *_GetInternalFieldFloat)(objHndl ObjHnd, int nFieldIdx);
-	int64_t(__cdecl *_GetInternalFieldInt64)(objHndl ObjHnd, int nFieldIdx);
+	int(__cdecl *_GetInternalFieldInt32)(objHndl ObjHnd, int nfield);
+	int(__cdecl *_GetInternalFieldInt32Array)(objHndl ObjHnd, int nfield, int index);
+	float(__cdecl *_GetInternalFieldFloat)(objHndl ObjHnd, int nfield);
+	int64_t(__cdecl *_GetInternalFieldInt64)(objHndl ObjHnd, int nfield);
 	int32_t(__cdecl *_StatLevelGet)(objHndl ObjHnd, Stat);
 	int(__cdecl *_StatLevelGetBase)(objHndl ObjHnd, Stat);
 	int(__cdecl *_StatLevelSetBase)(objHndl ObjHnd, Stat, int);
 	int(__cdecl *_GetSize)(objHndl handle);
-	void(__cdecl *_SetInternalFieldInt32)(objHndl objHnd, obj_f fieldIdx, uint32_t data32);
-	void(__cdecl * _setArrayFieldLowLevel)(obj_f fieldIdx, uint32_t subIdx); // GameObjectBody *@<ecx>, sourceData *@<eax>
-	void(__cdecl *_SetInternalFieldFloat)(objHndl objHnd, obj_f fieldIdx, float data);
+	void(__cdecl *_SetInternalFieldInt32)(objHndl objHnd, obj_f field, uint32_t data32);
+	void(__cdecl *_SetInternalFieldFloat)(objHndl objHnd, obj_f field, float data);
 	bool(__cdecl * _IsPlayerControlled)(objHndl objHnd);
 	uint32_t(__cdecl *_IsObjDeadNullDestroyed)(objHndl);
-	GameObjectBody * (__cdecl *_GetMemoryAddress)(objHndl ObjHnd);
-	bool(__cdecl *_DoesObjectFieldExist)();
-	void(__cdecl * _ObjectPropFetcher)();
 	void (__cdecl *_Move)(objHndl handle, LocAndOffsets toLocation);
 	bool(__cdecl * _FindFreeSpot)(LocAndOffsets loc, float radius, LocAndOffsets &freeSpot);
 	bool (__cdecl *_Create)(objHndl proto, locXY tile, objHndl *pHandleOut);
 	bool (__cdecl *_AiForceSpreadOut)(objHndl handle, LocAndOffsets *location);
-	void (__cdecl *_getArrayFieldInternal)(GameObjectBody * objBody, void * out); // _nFieldIdx@<eax>, _nFieldSubIdx@<ecx>
-	objHndl(__cdecl*_lookupInHandlesList)(ObjectId objId);
 	char ** _DLLFieldNames;
-	void(__cdecl * _InsetDataIntoInternalStack)();//(int nFieldIdx, void *, ToEEObjBody *@<eax>);
 	void (__cdecl *_TargetRandomTileNear)(objHndl handle, int distance, locXY *pLocOut);
 
 	void(__cdecl *_FadeTo)(objHndl obj, int targetOpacity, int fadeTime, int unk1, int unk2);

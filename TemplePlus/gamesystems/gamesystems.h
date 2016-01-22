@@ -3,6 +3,12 @@
 
 #include <map>
 
+#include "gamesystem.h"
+
+#ifdef GetObject
+#undef GetObject
+#endif
+
 #pragma pack(push, 1)
 class LoadingScreen;
 
@@ -28,7 +34,6 @@ private:
 };
 
 class TigInitializer;
-class MapSystems;
 
 namespace temple {
 	class AasAnimatedModelFactory;
@@ -95,7 +100,25 @@ class ObjectEventSystem;
 class FormationSystem;
 class ItemHighlightSystem;
 class PathXSystem;
-
+class ScrollSystem;
+class LocationSystem;
+class LightSystem;
+class TileSystem;
+class ONameSystem;
+class ObjectNodeSystem;
+class ObjSystem;
+class ProtoSystem;
+class ObjectSystem;
+class MapSectorSystem;
+class SectorVBSystem;
+class TextBubbleSystem;
+class TextFloaterSystem;
+class JumpPointSystem;
+class TerrainSystem;
+class ClippingSystem;
+class HeightSystem;
+class GMeshSystem;
+class PathNodeSystem;
 class GameSystemLoadingScreen;
 
 class GameSystems {
@@ -104,11 +127,6 @@ public:
 	~GameSystems();
 	const GameSystemConf &GetConfig() const {
 		return mConfig;
-	}
-
-	MapSystems& GetMapSystems() {
-		Expects(!!mMapSystems);
-		return *mMapSystems;
 	}
 
 	VagrantSystem& GetVagrant() const {
@@ -178,6 +196,82 @@ public:
 	MapSystem& GetMap() const {
 		Expects(!!mMap);
 		return *mMap;
+	}
+	ScrollSystem& GetScroll() const {
+		Expects(!!mScroll);
+		return *mScroll;
+	}
+	LocationSystem& GetLocation() const {
+		Expects(!!mLocation);
+		return *mLocation;
+	}
+	LightSystem& GetLight() const {
+		Expects(!!mLight);
+		return *mLight;
+	}
+	TileSystem& GetTile() const {
+		Expects(!!mTile);
+		return *mTile;
+	}
+	ONameSystem& GetOName() const {
+		Expects(!!mOName);
+		return *mOName;
+	}
+	ObjectNodeSystem& GetObjectNode() const {
+		Expects(!!mObjectNode);
+		return *mObjectNode;
+	}
+	ObjSystem& GetObj() const {
+		Expects(!!mObj);
+		return *mObj;
+	}
+	ProtoSystem& GetProto() const {
+		Expects(!!mProto);
+		return *mProto;
+	}
+	ObjectSystem& GetObject() const {
+		Expects(!!mObject);
+		return *mObject;
+	}
+	MapSectorSystem& GetMapSector() const {
+		Expects(!!mMapSector);
+		return *mMapSector;
+	}
+	SectorVBSystem& GetSectorVB() const {
+		Expects(!!mSectorVB);
+		return *mSectorVB;
+	}
+	TextBubbleSystem& GetTextBubble() const {
+		Expects(!!mTextBubble);
+		return *mTextBubble;
+	}
+	TextFloaterSystem& GetTextFloater() const {
+		Expects(!!mTextFloater);
+		return *mTextFloater;
+	}
+	JumpPointSystem& GetJumpPoint() const {
+		Expects(!!mJumpPoint);
+		return *mJumpPoint;
+	}
+	TerrainSystem& GetTerrain() const {
+		Expects(!!mTerrain);
+		return *mTerrain;
+	}
+	ClippingSystem& GetClipping() const {
+		Expects(!!mClipping);
+		return *mClipping;
+	}
+	HeightSystem& GetHeight() const {
+		Expects(!!mHeight);
+		return *mHeight;
+	}
+	GMeshSystem& GetGMesh() const {
+		Expects(!!mGMesh);
+		return *mGMesh;
+	}
+	PathNodeSystem& GetPathNode() const {
+		Expects(!!mPathNode);
+		return *mPathNode;
 	}
 	LightSchemeSystem& GetLightScheme() const {
 		Expects(!!mLightScheme);
@@ -355,6 +449,11 @@ public:
 		Expects(!!mPathX);
 		return *mPathX;
 	}
+	
+	// All systems that want to listen to map events
+	const std::vector<MapCloseAwareGameSystem*> &GetMapCloseAwareSystems() const {
+		return mMapCloseAwareSystems;
+	}
 
 	temple::AasAnimatedModelFactory& GetAAS() const {
 		Expects(!!mAAS);
@@ -421,6 +520,7 @@ private:
 	std::vector<class ResetAwareGameSystem*> mResetAwareSystems;
 	std::vector<class BufferResettingGameSystem*> mBufferResettingSystems;
 	std::vector<class SaveGameAwareGameSystem*> mSaveGameAwareSystems;
+	std::vector<class MapCloseAwareGameSystem*> mMapCloseAwareSystems;
 
 	std::unique_ptr<VagrantSystem> mVagrant;
 	std::unique_ptr<DescriptionSystem> mDescription;
@@ -437,9 +537,30 @@ private:
 	std::unique_ptr<StatSystem> mStat;
 	std::unique_ptr<ScriptSystem> mScript;
 	std::unique_ptr<LevelSystem> mLevel;
+	// The D20 system actually holds on to object handles until it's destroyed,
+	// which is why this system has to be here instead of where it originally was
+	std::unique_ptr<ObjSystem> mObj;
 	std::unique_ptr<D20System> mD20;
-	std::unique_ptr<MapSystems> mMapSystems;
+	std::unique_ptr<ParticleSysSystem> mParticleSys;
 	std::unique_ptr<MapSystem> mMap;
+	std::unique_ptr<ScrollSystem> mScroll;
+	std::unique_ptr<LocationSystem> mLocation;
+	std::unique_ptr<LightSystem> mLight;
+	std::unique_ptr<TileSystem> mTile;
+	std::unique_ptr<ONameSystem> mOName;
+	std::unique_ptr<ObjectNodeSystem> mObjectNode;	
+	std::unique_ptr<ProtoSystem> mProto;
+	std::unique_ptr<ObjectSystem> mObject;
+	std::unique_ptr<MapSectorSystem> mMapSector;
+	std::unique_ptr<SectorVBSystem> mSectorVB;
+	std::unique_ptr<TextBubbleSystem> mTextBubble;
+	std::unique_ptr<TextFloaterSystem> mTextFloater;
+	std::unique_ptr<JumpPointSystem> mJumpPoint;
+	std::unique_ptr<TerrainSystem> mTerrain;
+	std::unique_ptr<ClippingSystem> mClipping;	
+	std::unique_ptr<HeightSystem> mHeight;
+	std::unique_ptr<GMeshSystem> mGMesh;
+	std::unique_ptr<PathNodeSystem> mPathNode;
 	std::unique_ptr<LightSchemeSystem> mLightScheme;
 	std::unique_ptr<PlayerSystem> mPlayer;
 	std::unique_ptr<AreaSystem> mArea;
@@ -474,7 +595,6 @@ private:
 	std::unique_ptr<ObjFadeSystem> mObjFade;
 	std::unique_ptr<DeitySystem> mDeity;
 	std::unique_ptr<UiArtManagerSystem> mUiArtManager;
-	std::unique_ptr<ParticleSysSystem> mParticleSys;
 	std::unique_ptr<CheatsSystem> mCheats;
 	std::unique_ptr<D20RollsSystem> mD20Rolls;
 	std::unique_ptr<SecretdoorSystem> mSecretdoor;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../gamesystems/gamesystem.h"
+
 struct TigRect;
 
 namespace gfx {
@@ -7,8 +9,9 @@ namespace gfx {
 	class ShapeRenderer2d;
 }
 
-class MapTerrain {
+class TerrainSystem : public GameSystem, public ModuleAwareGameSystem {
 public:
+	static constexpr auto Name = "Terrain";
 
 	/**
 	 * Both width and height of a single tile in pixels.
@@ -33,17 +36,23 @@ public:
 	// Offset for the map art ids for nighttime ids
 	static constexpr auto NightArtIdOffset = 1000;
 
-	MapTerrain(gfx::RenderingDevice &device,
+	TerrainSystem(gfx::RenderingDevice &device,
 		gfx::ShapeRenderer2d &shapeRenderer);
 
 	void Render();
 
 	void RenderTile(int x, int y, const TigRect& destRect);
+	
+	const std::string &GetName(void) const override;
 
-	MapTerrain(MapTerrain&) = delete;
-	MapTerrain(MapTerrain&&) = delete;
-	MapTerrain& operator=(MapTerrain&) = delete;
-	MapTerrain& operator=(MapTerrain&&) = delete;
+	void Load(int groundArtId);
+	
+	void LoadModule() override;
+
+	TerrainSystem(TerrainSystem&) = delete;
+	TerrainSystem(TerrainSystem&&) = delete;
+	TerrainSystem& operator=(TerrainSystem&) = delete;
+	TerrainSystem& operator=(TerrainSystem&&) = delete;
 
 private:
 	gfx::RenderingDevice& mDevice;

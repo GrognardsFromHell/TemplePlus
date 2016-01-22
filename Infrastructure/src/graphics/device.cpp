@@ -573,8 +573,11 @@ namespace gfx {
 		}
 
 		if (stretch) {
+			/*
+				Create the secondary render target without multi sampling.
+			*/
 			CComPtr<IDirect3DSurface9> stretchedScene;
-			if (D3DLOG(mDevice->CreateRenderTarget(width, height, desc.Format, desc.MultiSampleType, desc.MultiSampleQuality, false, &stretchedScene, NULL)) != D3D_OK) {
+			if (D3DLOG(mDevice->CreateRenderTarget(width, height, desc.Format, D3DMULTISAMPLE_NONE, 0, false, &stretchedScene, NULL)) != D3D_OK) {
 				return;
 			}
 

@@ -9,6 +9,7 @@
 #include "temple_functions.h"
 #include "pathfinding.h"
 #include "objlist.h"
+#include "gamesystems/objects/objsystem.h"
 
 #pragma region AI System Implementation
 #include "location.h"
@@ -157,21 +158,24 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 }
 
 bool AiSystem::HasAiFlag(objHndl npc, AiFlag flag) {
-	auto aiFlags = templeFuncs.Obj_Get_Field_64bit(npc, obj_f_npc_ai_flags64);
+	auto obj = objSystem->GetObject(npc);
+	auto aiFlags = obj->GetInt64(obj_f_npc_ai_flags64);
 	auto flagBit = (uint64_t)flag;
 	return (aiFlags & flagBit) != 0;
 }
 
 void AiSystem::SetAiFlag(objHndl npc, AiFlag flag) {
-	auto aiFlags = templeFuncs.Obj_Get_Field_64bit(npc, obj_f_npc_ai_flags64);
+	auto obj = objSystem->GetObject(npc);
+	auto aiFlags = obj->GetInt64(obj_f_npc_ai_flags64);
 	aiFlags |= (uint64_t) flag;
-	templeFuncs.Obj_Set_Field_64bit(npc, obj_f_npc_ai_flags64, aiFlags);
+	obj->SetInt64(obj_f_npc_ai_flags64, aiFlags);
 }
 
 void AiSystem::ClearAiFlag(objHndl npc, AiFlag flag) {
-	auto aiFlags = templeFuncs.Obj_Get_Field_64bit(npc, obj_f_npc_ai_flags64);
+	auto obj = objSystem->GetObject(npc);
+	auto aiFlags = obj->GetInt64(obj_f_npc_ai_flags64);
 	aiFlags &= ~ (uint64_t)flag;
-	templeFuncs.Obj_Set_Field_64bit(npc, obj_f_npc_ai_flags64, aiFlags);
+	obj->SetInt64(obj_f_npc_ai_flags64, aiFlags);
 }
 
 void AiSystem::ShitlistAdd(objHndl npc, objHndl target) {
@@ -202,19 +206,23 @@ void AiSystem::StopAttacking(objHndl npc) {
 }
 
 objHndl AiSystem::GetCombatFocus(objHndl npc) {
-	return templeFuncs.Obj_Get_Field_ObjHnd__fastout(npc, obj_f_npc_combat_focus);
+	auto obj = objSystem->GetObject(npc);
+	return obj->GetObjHndl(obj_f_npc_combat_focus);
 }
 
 objHndl AiSystem::GetWhoHitMeLast(objHndl npc) {
-	return templeFuncs.Obj_Get_Field_ObjHnd__fastout(npc, obj_f_npc_who_hit_me_last);
+	auto obj = objSystem->GetObject(npc);
+	return obj->GetObjHndl(obj_f_npc_who_hit_me_last);
 }
 
 void AiSystem::SetCombatFocus(objHndl npc, objHndl target) {
-	templeFuncs.Obj_Set_Field_ObjHnd(npc, obj_f_npc_combat_focus, target);
+	auto obj = objSystem->GetObject(npc);
+	obj->SetObjHndl(obj_f_npc_combat_focus, target);
 }
 
 void AiSystem::SetWhoHitMeLast(objHndl npc, objHndl target) {
-	templeFuncs.Obj_Set_Field_ObjHnd(npc, obj_f_npc_who_hit_me_last, target);
+	auto obj = objSystem->GetObject(npc);
+	obj->SetObjHndl(obj_f_npc_who_hit_me_last, target);
 }
 
 int AiSystem::TargetClosest(AiTactic* aiTac)

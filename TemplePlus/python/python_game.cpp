@@ -16,6 +16,7 @@
 #include "../gamesystems/gamesystems.h"
 #include "../gamesystems/particlesystems.h"
 #include "../gamesystems/legacy.h"
+#include "../gamesystems/objects/objsystem.h"
 #include "fade.h"
 #include "combat.h"
 #include "objlist.h"
@@ -31,7 +32,7 @@
 #include "particles.h"
 #include "python_support.h"
 #include "python_integration_obj.h"
-#include <timeevents.h>
+#include "../gamesystems/timeevents.h"
 #include "tig/tig_startup.h"
 #include <graphics/device.h>
 #include <particles/instances.h>
@@ -284,7 +285,7 @@ PyObject* PyGame_Fade(PyObject*, PyObject* args) {
 
 	if (timeToAdvance > 0) {
 		auto time = GameTime::FromSeconds(timeToAdvance);
-		timeEvents.AdvanceTime(time);
+		gameSystems->GetTimeEvent().AdvanceTime(time);
 	}
 
 	if (movieId) {
@@ -308,7 +309,7 @@ PyObject* PyGame_Fade(PyObject*, PyObject* args) {
 		evt.params[1].int32 = 0xFF000000;
 		evt.params[2].float32 = 2.0f;
 		evt.params[3].int32 = 48;
-		timeEvents.Schedule(evt, fadeOutTime);
+		gameSystems->GetTimeEvent().Schedule(evt, fadeOutTime);
 	} else {
 		fadeArgs.field0 = 1;
 		fade.PerformFade(fadeArgs);
@@ -441,6 +442,21 @@ PyObject* PyGame_Vlist(PyObject*, PyObject* args) {
 	ObjList objList;
 	objList.ListVicinity(loc.location, flags);
 	return ObjListToTuple(objList);
+}
+
+PyObject* PyGame_GetProto(PyObject*, PyObject* args) {
+	int32_t protoId;
+	if (!PyArg_ParseTuple(args, "i:game.getproto", &protoId)) {
+		return nullptr;
+	}
+
+	auto handle = objSystem->GetProtoHandle(protoId);
+	if (!handle) {
+		return PyErr_Format(PyExc_RuntimeError, 
+			"Unknown prototype id: %d", protoId);
+	}
+	
+	return PyObjHndl_Create(handle);
 }
 
 PyObject* PyGame_ObjListRange(PyObject*, PyObject* args) {
@@ -617,7 +633,7 @@ PyObject* PyGame_TimeEventAdd(PyObject*, PyObject* args) {
 	}
 	Py_INCREF(evt.params[0].pyobj);
 	Py_INCREF(evt.params[1].pyobj);
-	timeEvents.Schedule(evt, timeInMsec);
+	gameSystems->GetTimeEvent().Schedule(evt, timeInMsec);
 	Py_RETURN_NONE;
 }
 
@@ -664,7 +680,7 @@ PyObject* PyGame_ParticlesEnd(PyObject*, PyObject* args) {
 		PyErr_SetString(PyExc_ValueError, "Cannot kill particle system id 0. Invalid value.");
 		return 0;
 	}
-	auto& partSys = gameSystems->GetParticleSys().GetByHandle(partSysId);
+	auto partSys = gameSystems->GetParticleSys().GetByHandle(partSysId);
 	if (partSys) {
 		partSys->EndPrematurely();
 	}
@@ -800,9 +816,9 @@ PyObject* PyGame_GametimeAdd(PyObject*, PyObject* args) {
 		return 0;
 	}
 
-	timeEvents.AddTime(timeInMs);
-	auto time = timeEvents.GetTime();
-	auto formattedTime = timeEvents.FormatTime(time);
+	gameSystems->GetTimeEvent().AddTime(timeInMs);
+	auto time = gameSystems->GetTimeEvent().GetTime();
+	auto formattedTime = gameSystems->GetTimeEvent().FormatTime(time);
 	return PyString_FromString(formattedTime.c_str());
 }
 
@@ -1012,7 +1028,7 @@ PyObject* PyGame_WrittenUiShow(PyObject*, PyObject* args) {
 }
 
 PyObject* PyGame_IsDaytime(PyObject*, PyObject* args) {
-	return PyInt_FromLong(timeEvents.IsDaytime());
+	return PyInt_FromLong(gameSystems->GetTimeEvent().IsDaytime());
 }
 
 static PyMethodDef PyGameMethods[]{
@@ -1068,6 +1084,7 @@ static PyMethodDef PyGameMethods[]{
 	{"written_ui_show", PyGame_WrittenUiShow, METH_VARARGS, NULL},
 	{"is_daytime", PyGame_IsDaytime, METH_VARARGS, NULL},
 	{"vlist", PyGame_Vlist, METH_VARARGS, NULL },
+	{"getproto", PyGame_GetProto, METH_VARARGS, NULL },
 	// This is some unfinished UI for which the graphics are missing
 	// {"charmap", PyGame_Charmap, METH_VARARGS, NULL},
 	{NULL, NULL, NULL, NULL}

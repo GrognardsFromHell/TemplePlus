@@ -727,6 +727,10 @@ enum ObjectType : uint32_t {
 	obj_t_bag = 16
 };
 
+static constexpr auto ObjectTypeCount = 17; // Number of literals in ObjectType
+
+const char *GetObjectTypeName(ObjectType type);
+
 enum obj_f : uint32_t {
 
 	obj_f_begin = 0,
@@ -1154,6 +1158,7 @@ enum obj_f : uint32_t {
 	obj_f_trap_pad_i64as_1 = 403,
 	obj_f_trap_end = 404,
 	obj_f_total_normal = 405,
+
 	obj_f_transient_begin = 406,
 	obj_f_render_color = 407,
 	obj_f_render_colors = 408,

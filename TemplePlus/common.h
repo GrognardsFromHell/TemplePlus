@@ -122,6 +122,14 @@ struct SectorLoc
 			+ ((loc.locy / SECTOR_SIDE_SIZE) << 26);
 	}
 
+	SectorLoc(uint64_t sectorLoc) {
+		raw = sectorLoc;
+	}
+
+	SectorLoc(int sectorX, int sectorY) {
+		raw = (sectorX & 0x3ffFFFF) | (sectorY << 26);
+	}
+
 	locXY GetBaseTile()
 	{
 		locXY loc;
@@ -291,6 +299,22 @@ struct BonusList
 		this->overallCapHigh = 0x7fffFFFF;
 		this->overallCapLow = 0x80000001;
 	}
+
+	int GetEffectiveBonusSum() const;
+
+	/**
+	 * Returns true if the given bonus is suppressed by another bonus (i.e. of the same type and
+	 * the bonus type does not stack). If true is returned, the idx of the supressing bonus is returned
+	 * in suppressedByIdx.
+	 */
+	bool IsBonusSuppressed(size_t bonusIdx, size_t* suppressedByIdx) const;
+	
+	/**
+	 * Returns true if the given bonus is capped by one of the caps in this bonus list and returns the
+	 * index of the lowest cap in cappedByIdx, if the pointer is not null.
+	 */
+	bool IsBonusCapped(size_t bonusIdx, size_t* cappedByIdx) const;
+
 };
 
 const int TestSizeOfBonusList = sizeof(BonusList); // should be 888 (0x378)

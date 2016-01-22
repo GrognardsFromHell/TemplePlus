@@ -33,7 +33,7 @@ protected:
 		return fread(buffer, 1, size, (FILE*)handle);
 	}
 	
-	virtual size_t Write(void* buffer, size_t size, FileHandle handle) override {
+	virtual size_t Write(const void* buffer, size_t size, FileHandle handle) override {
 		return fwrite(buffer, 1, size, (FILE*)handle);
 	}
 
@@ -72,6 +72,9 @@ public:
 	bool RemoveFile(const std::string& path) override {
 		throw TempleException("Unsupported Operation");
 	}
+	size_t Tell(FileHandle handle) override {
+		return ftell((FILE*)handle);
+	}
 };
 
 Vfs* Vfs::CreateStdIoVfs() {
@@ -98,8 +101,10 @@ std::vector<uint8_t> Vfs::ReadAsBinary(const std::string& filename) {
 	}
 	auto fileSize = Length(fh);
 	std::vector<uint8_t> result;
-	result.resize(fileSize);
-	Read(&result[0], fileSize, fh);
+	if (fileSize > 0) {
+		result.resize(fileSize);
+		Read(&result[0], fileSize, fh);
+	}
 	Close(fh);
 	return result;
 }

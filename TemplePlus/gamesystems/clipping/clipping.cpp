@@ -14,7 +14,7 @@
 
 using namespace gfx;
 
-class MapClipping::Impl {
+class ClippingSystem::Impl {
 public:
 	explicit Impl(RenderingDevice& g);
 
@@ -31,7 +31,7 @@ public:
 	static Material CreateDebugMaterial(RenderingDevice &device);
 };
 
-MapClipping::Impl::Impl(RenderingDevice& g) 
+ClippingSystem::Impl::Impl(RenderingDevice& g) 
 	: mDevice(g), 
 	  material(CreateMaterial(g)),
 	  debugMaterial(CreateDebugMaterial(g))
@@ -42,7 +42,7 @@ MapClipping::Impl::Impl(RenderingDevice& g)
 
 }
 
-Material MapClipping::Impl::CreateMaterial(RenderingDevice& device) {
+Material ClippingSystem::Impl::CreateMaterial(RenderingDevice& device) {
 
 	BlendState blendState;
 	DepthStencilState depthStencilState;
@@ -61,7 +61,7 @@ Material MapClipping::Impl::CreateMaterial(RenderingDevice& device) {
 
 }
 
-Material MapClipping::Impl::CreateDebugMaterial(RenderingDevice& device) {
+Material ClippingSystem::Impl::CreateDebugMaterial(RenderingDevice& device) {
 
 	BlendState blendState;
 	DepthStencilState depthStencilState;
@@ -75,13 +75,13 @@ Material MapClipping::Impl::CreateDebugMaterial(RenderingDevice& device) {
 
 }
 
-MapClipping::MapClipping(RenderingDevice& g) : mImpl(std::make_unique<Impl>(g)) {
+ClippingSystem::ClippingSystem(RenderingDevice& g) : mImpl(std::make_unique<Impl>(g)) {
 }
 
-MapClipping::~MapClipping() {
+ClippingSystem::~ClippingSystem() {
 }
 
-void MapClipping::Load(const std::string& directory) {
+void ClippingSystem::Load(const std::string& directory) {
 
 	Unload();
 
@@ -90,19 +90,19 @@ void MapClipping::Load(const std::string& directory) {
 
 }
 
-void MapClipping::Unload() {
+void ClippingSystem::Unload() {
 	mImpl->mClippingMeshes.clear();
 }
 
-void MapClipping::SetDebug(bool enable) {
+void ClippingSystem::SetDebug(bool enable) {
 	mImpl->debug = enable;
 }
 
-bool MapClipping::IsDebug() const {
+bool ClippingSystem::IsDebug() const {
 	return mImpl->debug;
 }
 
-size_t MapClipping::GetTotal() const
+size_t ClippingSystem::GetTotal() const
 {
 	size_t total = 0;
 	for (auto &mesh : mImpl->mClippingMeshes) {
@@ -113,12 +113,18 @@ size_t MapClipping::GetTotal() const
 	return total;
 }
 
-size_t MapClipping::GetRenderered() const
+size_t ClippingSystem::GetRenderered() const
 {
 	return mImpl->rendered;
 }
 
-void MapClipping::LoadMeshes(const std::string& directory) {
+const std::string & ClippingSystem::GetName() const
+{
+	static std::string sName = "Clipping";
+	return sName;
+}
+
+void ClippingSystem::LoadMeshes(const std::string& directory) {
 
 	auto filename(fmt::format("{}\\clipping.cgf", directory));
 	auto data(vfs->ReadAsBinary(filename));
@@ -148,7 +154,7 @@ void MapClipping::LoadMeshes(const std::string& directory) {
 
 }
 
-void MapClipping::LoadObjects(const std::string& directory) {
+void ClippingSystem::LoadObjects(const std::string& directory) {
 
 	auto indexFileName(fmt::format("{}\\clipping.cif", directory));
 	auto data(vfs->ReadAsBinary(indexFileName));
@@ -162,7 +168,7 @@ void MapClipping::LoadObjects(const std::string& directory) {
 	}
 }
 
-void MapClipping::LoadObject(BinaryReader& reader) {
+void ClippingSystem::LoadObject(BinaryReader& reader) {
 
 	auto meshIdx = reader.Read<size_t>();
 
@@ -185,7 +191,7 @@ void MapClipping::LoadObject(BinaryReader& reader) {
 	mesh->AddInstance(obj);
 }
 
-void MapClipping::Render() {
+void ClippingSystem::Render() {
 
 	mImpl->rendered = 0;
 

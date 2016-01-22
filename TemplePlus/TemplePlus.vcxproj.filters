@@ -17,11 +17,9 @@
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="temple_main.cpp" />
-    <ClCompile Include="testhelper.cpp" />
     <ClCompile Include="bonusspells.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
-    <ClCompile Include="timeevents.cpp" />
     <ClCompile Include="anim.cpp" />
     <ClCompile Include="pathfinding.cpp" />
     <ClCompile Include="mainloop.cpp" />
@@ -274,14 +272,12 @@
     <ClCompile Include="gamesystems\clipping\clippingmesh.cpp" />
     <ClCompile Include="gamesystems\clipping\clipping_hooks.cpp" />
     <ClCompile Include="gamesystems\clipping\clipping.cpp" />
-    <ClCompile Include="gamesystems\mapsystems.cpp" />
     <ClCompile Include="gamesystems\legacysystems.cpp" />
     <ClCompile Include="graphics\loadingscreen.cpp" />
     <ClCompile Include="graphics\imgfile.cpp" />
     <ClCompile Include="graphics\rectangle.cpp" />
     <ClCompile Include="gamesystems\mappreprocessor.cpp" />
     <ClCompile Include="gamesystems\objects\objid_hooks.cpp" />
-    <ClCompile Include="gamesystems\objects\objregistry.cpp" />
     <ClCompile Include="gamesystems\objects\objregistry_hooks.cpp" />
     <ClCompile Include="gamesystems\mapobjrender.cpp" />
     <ClCompile Include="fonts\fonts_layout.cpp" />
@@ -313,6 +309,26 @@
     <ClCompile Include="gamesystems\froggrapplecontroller.cpp" />
     <ClCompile Include="temple_enums.cpp" />
     <ClCompile Include="diag\proto_cols.cpp" />
+    <ClCompile Include="gamesystems\staticmeshes.cpp" />
+    <ClCompile Include="gamesystems\mapsystem.cpp" />
+    <ClCompile Include="gamesystems\legacymapsystems.cpp" />
+    <ClCompile Include="gamesystems\mapsystem_hooks.cpp" />
+    <ClCompile Include="gamesystems\timeevents.cpp" />
+    <ClCompile Include="gamesystems\objects\objsystem.cpp" />
+    <ClCompile Include="gamesystems\objects\objsystem_hooks.cpp" />
+    <ClCompile Include="gamesystems\objects\objregistry.cpp" />
+    <ClCompile Include="gamesystems\objects\objfields.cpp" />
+    <ClCompile Include="gamesystems\objects\arrayidxbitmaps.cpp" />
+    <ClCompile Include="gamesystems\objects\arrayidxbitmaps_hooks.cpp" />
+    <ClCompile Include="gamesystems\objects\objprotos.cpp" />
+    <ClCompile Include="gamesystems\objects\gameobject.cpp" />
+    <ClCompile Include="gamesystems\objects\objfind.cpp" />
+    <ClCompile Include="gamesystems\d20\d20stats.cpp" />
+    <ClCompile Include="gamesystems\d20\d20stats_hooks.cpp" />
+    <ClCompile Include="common.cpp" />
+    <ClCompile Include="util\savegame.cpp" />
+    <ClCompile Include="util\streams.cpp" />
+    <ClCompile Include="util\datadump.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -320,11 +336,9 @@
     <ClInclude Include="temple_functions.h" />
     <ClInclude Include="mainwindow.h" />
     <ClInclude Include="temple_enums.h" />
-    <ClInclude Include="testhelper.h" />
     <ClInclude Include="xp.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
-    <ClInclude Include="timeevents.h" />
     <ClInclude Include="anim.h" />
     <ClInclude Include="pathfinding.h" />
     <ClInclude Include="mainloop.h" />
@@ -564,14 +578,12 @@
     <ClInclude Include="graphics\mapterrain.h" />
     <ClInclude Include="gamesystems\clipping\clippingmesh.h" />
     <ClInclude Include="gamesystems\clipping\clipping.h" />
-    <ClInclude Include="gamesystems\mapsystems.h" />
     <ClInclude Include="gamesystems\legacysystems.h" />
     <ClInclude Include="graphics\loadingscreen.h" />
     <ClInclude Include="graphics\imgfile.h" />
     <ClInclude Include="graphics\rectangle.h" />
     <ClInclude Include="gamesystems\mappreprocessor.h" />
     <ClInclude Include="gamesystems\gamesystem.h" />
-    <ClInclude Include="gamesystems\objects\objregistry.h" />
     <ClInclude Include="gamesystems\mapobjrender.h" />
     <ClInclude Include="fonts\fonts.h" />
     <ClInclude Include="gamesystems\partsystemsrenderer.h" />
@@ -597,6 +609,21 @@
     <ClInclude Include="gamesystems\loadingscreen.h" />
     <ClInclude Include="gamesystems\maps\sectors.h" />
     <ClInclude Include="gamesystems\froggrapplecontroller.h" />
+    <ClInclude Include="gamesystems\staticmeshes.h" />
+    <ClInclude Include="gamesystems\mapsystem.h" />
+    <ClInclude Include="gamesystems\legacymapsystems.h" />
+    <ClInclude Include="gamesystems\timeevents.h" />
+    <ClInclude Include="gamesystems\objects\objsystem.h" />
+    <ClInclude Include="gamesystems\objects\objregistry.h" />
+    <ClInclude Include="gamesystems\objects\objfields.h" />
+    <ClInclude Include="gamesystems\objects\arrayidxbitmaps.h" />
+    <ClInclude Include="gamesystems\objects\objarrays.h" />
+    <ClInclude Include="gamesystems\objects\gameobject.h" />
+    <ClInclude Include="gamesystems\objects\objfind.h" />
+    <ClInclude Include="gamesystems\d20\d20stats.h" />
+    <ClInclude Include="util\savegame.h" />
+    <ClInclude Include="util\streams.h" />
+    <ClInclude Include="util\datadump.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

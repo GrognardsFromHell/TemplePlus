@@ -3,216 +3,15 @@
 #include <temple/dll.h>
 
 #include "util/fixes.h"
-
 #include "obj_structs.h"
+
+#include "objregistry.h"
+#include "objsystem.h"
+#include "../gamesystems.h"
+
 #include <obj.h>
 #include <objlist.h>
 #include <maps.h>
-
-const size_t objBodySize = 168; // Passed in to Object_Tables_Init
-static_assert(temple::validate_size<GameObjectBody, objBodySize>::value, "Object structure has incorrect size.");
-
-static struct ObjAdresses : temple::AddressTable {
-
-	void (*ObjFindRemove)(objHndl handle);
-
-	ObjAdresses() {
-		rebase(ObjFindRemove, 0x1009E0D0);
-	}
-} addresses;
-
-namespace std {
-	template <>
-	struct hash<ObjectId> {
-		typedef ObjectId argument_type;
-		typedef std::size_t result_type;
-
-		std::hash<int> mIntHasher;
-		std::hash<uint64_t> mHandleHasher;
-
-		result_type operator()(argument_type const& id) const {
-			result_type result;
-			switch (id.subtype) {
-			default:
-			case ObjectIdKind::Null:
-				return 0;
-			case ObjectIdKind::Prototype:
-				return mIntHasher(id.GetPrototypeId());
-			case ObjectIdKind::Permanent:
-				result = mHandleHasher(*(uint64_t*)&id.body.guid.Data1);
-				result ^= mHandleHasher(*(uint64_t*)&id.body.guid.Data4[0]);
-				return result;
-			case ObjectIdKind::Positional:
-				result = mHandleHasher(*(uint64_t*)&id.body.pos.x);
-				result ^= mHandleHasher(*(uint64_t*)&id.body.pos.tempId);
-				return result;
-			case ObjectIdKind::Handle:
-				return mHandleHasher(id.GetHandle());
-			case ObjectIdKind::Blocked:
-				return 0;
-			}
-		}
-	};
-}
-
-class ObjRegistry {
-public:
-	ObjRegistry();
-
-	using Container = std::unordered_map<objHndl, std::unique_ptr<GameObjectBody>>;
-	using It = Container::iterator;
-
-	ObjectId GetIdByHandle(objHndl handle);
-	objHndl GetHandleById(ObjectId id);
-	void AddToIndex(objHndl handle, ObjectId objectId);
-
-	// Remove any object from the index that is not a prototype
-	void RemoveDynamicObjectsFromIndex();
-
-	void Clear();
-	It Remove(objHndl handle);
-	bool Contains(objHndl handle);
-
-	objHndl Add(std::unique_ptr<GameObjectBody>&& ptr);
-
-	GameObjectBody* Get(objHndl handle);
-
-	It begin() {
-		return mObjects.begin();
-	}
-
-	It end() {
-		return mObjects.end();
-	}
-
-private:
-	Container mObjects;
-	std::unordered_map<ObjectId, objHndl> mObjectIndex;
-	objHndl mNextId = 1;
-
-	objHndl lastObj = 0;
-	GameObjectBody* lastObjBody = nullptr;
-};
-
-ObjRegistry::ObjRegistry() {
-	mObjects.reserve(8192);
-}
-
-ObjectId ObjRegistry::GetIdByHandle(objHndl handle) {
-
-	auto obj = Get(handle);
-
-	if (obj == nullptr) {
-		ObjectId nullId;
-		nullId.subtype = ObjectIdKind::Null;
-		return nullId;
-	}
-
-	return obj->id;
-
-}
-
-objHndl ObjRegistry::GetHandleById(ObjectId id) {
-
-	auto it = mObjectIndex.find(id);
-
-	if (it == mObjectIndex.end()) {
-		return 0;
-	}
-
-	return it->second;
-
-}
-
-void ObjRegistry::AddToIndex(objHndl handle, ObjectId objectId) {
-	mObjectIndex[objectId] = handle;
-}
-
-void ObjRegistry::RemoveDynamicObjectsFromIndex() {
-	auto idIt = mObjectIndex.begin();
-	while (idIt != mObjectIndex.end()) {
-		if (!idIt->first.IsPrototype()) {
-			idIt = mObjectIndex.erase(idIt);
-		} else {
-			++idIt;
-		}
-	}
-}
-
-void ObjRegistry::Clear() {
-
-	lastObj = 0;
-	lastObjBody = nullptr;
-
-	// We will concurrently modify the object handle list when we remove them,
-	// so we make a copy here first
-	std::vector<objHndl> toRemove;
-	toRemove.reserve(mObjects.size());
-	for (auto& it : mObjects) {
-		toRemove.push_back(it.first);
-	}
-
-	logger->info("Destroying {} leftover objects.", toRemove.size());
-
-	for (auto handle : toRemove) {
-		addresses.ObjFindRemove(handle);
-	}
-
-	mObjectIndex.clear();
-
-}
-
-ObjRegistry::It ObjRegistry::Remove(objHndl handle) {
-
-	if (lastObj == handle) {
-		lastObj = 0;
-		lastObjBody = nullptr;
-	}
-
-	auto it = mObjects.find(handle);
-	if (it != mObjects.end()) {
-		return mObjects.erase(it);
-	}
-	return it;
-}
-
-bool ObjRegistry::Contains(objHndl handle) {
-	return mObjects.find(handle) != end();
-}
-
-objHndl ObjRegistry::Add(std::unique_ptr<GameObjectBody>&& ptr) {
-
-	auto id = mNextId++;
-	auto obj = ptr.get();
-
-	mObjects.emplace(std::make_pair(id, std::move(ptr)));
-
-	// Cache for later use
-	lastObj = id;
-	lastObjBody = obj;
-
-	return id;
-
-}
-
-GameObjectBody* ObjRegistry::Get(objHndl handle) {
-
-	if (lastObj == handle) {
-		return lastObjBody;
-	}
-
-	auto it = mObjects.find(handle);
-	if (it == mObjects.end()) {
-		return nullptr;
-	}
-
-	lastObj = it->first;
-	lastObjBody = it->second.get();
-	return it->second.get();
-
-}
-
-std::unique_ptr<ObjRegistry> objRegistry;
 
 static class ObjRegistryHooks : public TempleFix {
 public:
@@ -264,38 +63,28 @@ ObjRegistry::It ObjRegistryHooks::it;
 void ObjRegistryHooks::Object_Tables_Init(int nToEEObject_BodySize, BOOL editor) {
 	Expects(nToEEObject_BodySize == sizeof(GameObjectBody));
 	Expects(editor == FALSE);
-
-	objRegistry = std::make_unique<ObjRegistry>();
 }
 
 ObjectId* ObjRegistryHooks::Object_Tables_GetIdByHandle(ObjectId* idOut, objHndl handle) {
-
-	*idOut = objRegistry->GetIdByHandle(handle);
+	*idOut = gameSystems->GetObj().GetIdByHandle(handle);
 	return idOut;
 
 }
 
 void ObjRegistryHooks::Object_Tables_CompactIdx() {
-	objRegistry->RemoveDynamicObjectsFromIndex();
+	gameSystems->GetObj().CompactIndex();
 }
-
-/*BOOL ObjRegistryHooks::_Object_Tables_AddBucket() {
-
-}
-
-BOOL ObjRegistryHooks::_Object_Tables_FindInIdx(ObjectId id, int* idxOut) {
-}*/
 
 void ObjRegistryHooks::Object_Tables_Destroy() {
-	objRegistry->Clear();
+	// NOOP
 }
 
 GameObjectBody* ObjRegistryHooks::Object_Tables_GetItem(objHndl handle) {
-	return objRegistry->Get(handle);
+	throw TempleException("Should not be called.");
 }
 
-void ObjRegistryHooks::Object_Tables_AddToIndex(ObjectId ObjectId, objHndl handle) {
-	objRegistry->AddToIndex(handle, ObjectId);
+void ObjRegistryHooks::Object_Tables_AddToIndex(ObjectId id, objHndl handle) {
+	gameSystems->GetObj().AddToIndex(id, handle);
 }
 
 /**
@@ -305,9 +94,8 @@ void ObjRegistryHooks::Object_Tables_AddToIndex(ObjectId ObjectId, objHndl handl
 	will be unaffected by item removal unless they point to the removed item.
 */
 BOOL ObjRegistryHooks::Object_Tables_FirstHandle(objHndl* handleOut, int* iteratorOut) {
-
-	it = objRegistry->begin();
-	if (it == objRegistry->end()) {
+	it = gameSystems->GetObj().mObjRegistry->begin();
+	if (it == gameSystems->GetObj().mObjRegistry->end()) {
 		*handleOut = 0;
 		return FALSE;
 	}
@@ -320,7 +108,7 @@ BOOL ObjRegistryHooks::Object_Tables_FirstHandle(objHndl* handleOut, int* iterat
 
 BOOL ObjRegistryHooks::Object_Tables_NextHandle(objHndl* handleOut, int* iteratorIn) {
 
-	if (it == objRegistry->end()) {
+	if (it == gameSystems->GetObj().mObjRegistry->end()) {
 		*handleOut = 0;
 		return FALSE;
 	}
@@ -332,63 +120,19 @@ BOOL ObjRegistryHooks::Object_Tables_NextHandle(objHndl* handleOut, int* iterato
 }
 
 BOOL ObjRegistryHooks::Object_Tables_IsValidHandle(objHndl handle) {
-	if (!handle) {
-		return TRUE;
-	}
-	if (!objRegistry->Contains(handle)) {
-		logger->debug("Invalid handle {} checked for validity.", handle);
-		return FALSE;
-	}
-	return TRUE;
+	return gameSystems->GetObj().IsValidHandle(handle) ? TRUE : FALSE;
 }
 
 GameObjectBody* ObjRegistryHooks::Object_Tables_Add(objHndl* handleOut) {
-
-	auto obj = std::make_unique<GameObjectBody>();
-	auto result = obj.get();
-
-	*handleOut = objRegistry->Add(std::move(obj));
-	return result;
-
+	throw TempleException("Should not be called.");
 }
 
 void ObjRegistryHooks::Object_Tables_Remove(objHndl handle) {
-	objRegistry->Remove(handle);
+	gameSystems->GetObj().mObjRegistry->Remove(handle);
 }
 
 objHndl ObjRegistryHooks::Object_Tables_perm_lookup(ObjectId id) {
 
-	auto handle = objRegistry->GetHandleById(id);
-
-	if (handle) {
-		return handle;
-	}
-
-	// Check for positional IDs in the map
-	if (!id.IsPositional())
-		return 0;
-
-	auto pos = id.body.pos;
-
-	if (maps.GetCurrentMapId() != pos.mapId) {
-		return 0;
-	}
-
-	ObjList list;
-	locXY loc;
-	loc.locx = pos.x;
-	loc.locy = pos.y;
-	list.ListTile(loc, 0x2000A);
-
-	for (auto i = 0; i < list.size(); ++i) {
-		auto candidate = list.get(i);
-		auto tempId = objects.GetTempId(candidate);
-		if (tempId == pos.tempId) {
-			objRegistry->AddToIndex(candidate, id);
-			return candidate;
-		}
-	}
-
-	return 0;
+	return gameSystems->GetObj().GetHandleById(id);
 
 }

@@ -19,6 +19,7 @@
 #include <critter.h>
 #include <util/fixes.h>
 //#include <condition.h>
+#include "gamesystems/objects/objsystem.h"
 
 temple::GlobalPrimitive<ItemCreationType, 0x10BEDF50> itemCreationType;
 temple::GlobalPrimitive<objHndl, 0x10BECEE0> globObjHndCrafter;
@@ -61,8 +62,7 @@ static int disabledBtnTexture;
 
 int CraftedWandSpellLevel(objHndl objHndItem)
 {
-	SpellStoreData spellData;
-	objects.getArrayField(objHndItem, obj_f_item_spell_idx, 0, &spellData);
+	auto spellData = objSystem->GetObject(objHndItem)->GetSpell(obj_f_item_spell_idx, 0);
 	uint32_t spellLevelBasic = spellData.spellLevel;
 	uint32_t spellLevelFinal = spellData.spellLevel;
 
@@ -140,8 +140,8 @@ int32_t CreateItemResourceCheck(objHndl obj, objHndl objHndItem){
 	int32_t *globSkillReqNotMet = craftSkillReqNotMet.ptr();
 	int32_t *globB0 = dword_10BEE3B0.ptr();
 	uint32_t crafterLevel = objects.StatLevelGet(obj, stat_level);
-	uint32_t minXPForCurrentLevel = templeFuncs.XPReqForLevel(crafterLevel); 
-	uint32_t crafterXP = templeFuncs.Obj_Get_Field_32bit(obj, obj_f_critter_experience);
+	uint32_t minXPForCurrentLevel = templeFuncs.XPReqForLevel(crafterLevel);
+	uint32_t crafterXP = objSystem->GetObject(obj)->GetInt32(obj_f_critter_experience);
 	uint32_t surplusXP = crafterXP - minXPForCurrentLevel;
 	uint32_t craftingCostCP = 0;
 	uint32_t partyMoney = templeFuncs.PartyMoney();
@@ -208,15 +208,15 @@ void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCra
 
 	// the new and improved Wands/Scroll Property Setting Function
 
+	auto obj = objSystem->GetObject(objHndItem);
+
 	if (itemCreationType == CraftWand){
 		
-		SpellStoreData spellData;
-		objects.getArrayField(objHndItem, obj_f_item_spell_idx, 0, &spellData);
+		auto spellData = obj->GetSpell(obj_f_item_spell_idx, 0);
 		uint32_t spellLevelBasic = spellData.spellLevel;
 		uint32_t spellLevelFinal = CraftedWandSpellLevel(objHndItem);
-		spellData.spellLevel = spellLevelFinal;
-
-		templeFuncs.Obj_Set_IdxField_byPtr(objHndItem, obj_f_item_spell_idx, 0, &spellData);
+		spellData.spellLevel = spellLevelFinal;				
+		obj->SetSpell(obj_f_item_spell_idx, 0, spellData);
 		
 		auto args = PyTuple_New(3);
 			
@@ -249,14 +249,13 @@ void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCra
 		// TODO: change it so it's 0xBAAD F00D just like spawned / mobbed potions
 	};
 	
-	int numItemSpells = objects.getArrayFieldNumItems(objHndItem, obj_f_item_spell_idx);
+	auto numItemSpells = obj->GetSpellArray(obj_f_item_spell_idx).GetSize();
 
 	// loop thru the item's spells (can be more than one in principle, like Keoghthem's Ointment)
 
 	// Current code - change this at will...
 	for (int n = 0; n < numItemSpells; n++){
-		SpellStoreData spellData;
-		objects.getArrayField(objHndItem, obj_f_item_spell_idx, n, &spellData);
+		auto spellData = obj->GetSpell(obj_f_item_spell_idx, n);
 
 		// get data from caster - make this optional!
 
@@ -283,7 +282,7 @@ void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCra
 
 			}
 			spellData.spellLevel = spellLevelFinal;
-			templeFuncs.Obj_Set_IdxField_byPtr(objHndItem, obj_f_item_spell_idx, n, &spellData);
+			obj->SetSpell(obj_f_item_spell_idx, n, spellData);
 
 		}
 
@@ -438,8 +437,9 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 
 
 uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t casterLevelNew){
-	uint32_t numItemSpells = objects.getArrayFieldNumItems(objHndItem, obj_f_item_spell_idx);
-	uint32_t itemWorthBase = objects.getInt32(objHndItem, obj_f_item_worth);
+	auto obj = objSystem->GetObject(objHndItem);
+	auto numItemSpells = obj->GetSpellArray(obj_f_item_spell_idx).GetSize();
+	auto itemWorthBase = obj->GetInt32(obj_f_item_worth);
 	if (casterLevelNew == -1){
 		return itemWorthBase;
 	}
@@ -449,8 +449,7 @@ uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t casterLeve
 	// loop thru the item's spells (can be more than one in principle, like Keoghthem's Ointment)
 
 	for (uint32_t n = 0; n < numItemSpells; n++){
-		SpellStoreData spellData;
-		templeFuncs.Obj_Get_ArrayElem_Generic(objHndItem, obj_f_item_spell_idx, n, &spellData);
+		auto spellData = obj->GetSpell(obj_f_item_spell_idx, n);
 		if (spellData.spellLevel > itemSlotLevelBase){
 			itemSlotLevelBase = spellData.spellLevel;
 		}

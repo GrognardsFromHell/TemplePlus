@@ -64,10 +64,14 @@ inline std::vector<gsl::cstring_view<>>& split(gsl::cstring_view<> s,
 			if (ch == delim) {
 				break; // reached the end of the item
 			}
-			if (trimItems && isspace(ch)) {
-				continue; // Not part of the item
-			}
 			count++;
+		}
+
+		// Trim whitespace at the end of the string
+		if (trimItems) {
+			while (count > 0 && isspace(s[start + count - 1])) {
+				count--;
+			}
 		}
 
 		if (count != 0) {
@@ -78,16 +82,6 @@ inline std::vector<gsl::cstring_view<>>& split(gsl::cstring_view<> s,
 
 	}
 
-	std::stringstream ss(s);
-	std::string item;
-	while (getline(ss, item, delim)) {
-		if (trimItems) {
-			item = trim(item);
-		}
-		if (keepEmpty || !item.empty()) {
-			elems.push_back(item);
-		}
-	}
 	return elems;
 }
 

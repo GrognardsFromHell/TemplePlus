@@ -35,23 +35,18 @@ public:
 } hooks;
 
 void ObjectIdHooks::GeneratePermanentId(ObjectId* idOut) {
-	GUID guid;
-	if (!SUCCEEDED(CoCreateGuid(&guid))) {
-		throw TempleException("Unable to generate a permanent GUID");
-	}
-
-	idOut->subtype = ObjectIdKind::Permanent;
-	idOut->body.guid = guid;
+	*idOut = ObjectId::CreatePermanent();
 }
 
 void ObjectIdHooks::GeneratePositionalId(ObjectId* idOut, objHndl handle) {
 	if (objects.IsStatic(handle)) {
 		auto loc = objects.GetLocation(handle);
-		idOut->subtype = ObjectIdKind::Positional;
-		idOut->body.pos.x = loc.locx;
-		idOut->body.pos.y = loc.locy;
-		idOut->body.pos.tempId = objects.GetTempId(handle);
-		idOut->body.pos.mapId = maps.GetCurrentMapId();
+		*idOut = ObjectId::CreatePositional(
+			maps.GetCurrentMapId(),
+			loc.locx,
+			loc.locy,
+			objects.GetTempId(handle)
+		);
 	} else {
 		logger->error("Tried to get a positional id for a permanent object.");
 		idOut->subtype = ObjectIdKind::Null;
@@ -59,8 +54,7 @@ void ObjectIdHooks::GeneratePositionalId(ObjectId* idOut, objHndl handle) {
 }
 
 ObjectId* ObjectIdHooks::GeneratePrototypeId(ObjectId* idOut, int prototypeId) {
-	idOut->subtype = ObjectIdKind::Prototype;
-	idOut->body.protoId = prototypeId;
+	*idOut = ObjectId::CreatePrototype((uint16_t) prototypeId);
 	return idOut;
 }
 
@@ -258,4 +252,44 @@ std::string ObjectId::ToString() const {
 	default:
 		return "UNKNOWN";
 	}
+}
+
+ObjectId ObjectId::CreatePermanent()
+{
+	GUID guid;
+	if (!SUCCEEDED(CoCreateGuid(&guid))) {
+		throw TempleException("Unable to generate a permanent GUID");
+	}
+
+	ObjectId result;
+	result.subtype = ObjectIdKind::Permanent;
+	result.body.guid = guid;
+	return result;
+}
+
+ObjectId ObjectId::CreatePositional(int mapId, int tileX, int tileY, int tempId)
+{
+	ObjectId result;
+	result.subtype = ObjectIdKind::Positional;
+	result.body.pos.x = tileX;
+	result.body.pos.y = tileY;
+	result.body.pos.tempId = tempId;
+	result.body.pos.mapId = maps.GetCurrentMapId();
+	return result;
+}
+
+ObjectId ObjectId::CreatePrototype(uint16_t prototypeId)
+{
+	ObjectId result;
+	result.subtype = ObjectIdKind::Prototype;
+	result.body.protoId = prototypeId;
+	return result;
+}
+
+ObjectId ObjectId::CreateHandle(objHndl handle)
+{
+	ObjectId result;
+	result.subtype = ObjectIdKind::Handle;
+	result.body.handle = handle;
+	return result;
 }

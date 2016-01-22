@@ -102,14 +102,14 @@ extern "C" {
 	TIOLIB void TIOAPI tio_path_guid();
 	TIOLIB void TIOAPI tio_fseek();
 	TIOLIB void TIOAPI tio_file_extract();
-	TIOLIB void TIOAPI tio_fgets(char *buffer, int size, TioFile *file);
-	TIOLIB void TIOAPI tio_ftell();
+	TIOLIB int TIOAPI tio_fgets(char *buffer, int size, TioFile *file);
+	TIOLIB uint32_t TIOAPI tio_ftell(TioFile *file);
 	TIOLIB void TIOAPI tio_fsetpos();
 	TIOLIB int TIOAPI tio_filelength(TioFile *file);
-	TIOLIB void TIOAPI tio_feof();
+	TIOLIB BOOL TIOAPI tio_feof(TioFile *file);
 	TIOLIB void TIOAPI tio_fprintf();
-	TIOLIB void TIOAPI tio_fputc();
-	TIOLIB void TIOAPI tio_fputs();
+	TIOLIB int TIOAPI tio_fputc(int ch, TioFile *file);
+	TIOLIB int TIOAPI tio_fputs(const char *str, TioFile *file);
 	TIOLIB void TIOAPI tio_ungetc();
 	TIOLIB TioFile* TIOAPI tio_file_from_funcs(const TioFileFuncs* funcs, void* handle); // flags to 0x8
 	TIOLIB void TIOAPI tio_rewind();

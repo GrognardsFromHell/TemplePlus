@@ -1,3 +1,4 @@
+#include "..\include\temple\meshes.h"
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <infrastructure/meshes.h>
@@ -92,7 +93,9 @@ namespace temple {
 		                       const AasAnimParams* params,
 		                       AasEventFlag* eventOut);
 
-		AasStatus (__cdecl *Free)(AasHandle aasHandle);
+		AasStatus(__cdecl *Free)(AasHandle aasHandle);
+		
+		void (__cdecl *FreeAll)();
 
 		int (__cdecl *GetAnimId)(AasHandle aasHandle, int* animIdOut);
 
@@ -172,6 +175,7 @@ namespace temple {
 			rebase(SetAnimId, 0x10262540);
 			rebase(SetClothFlagSth, 0x102633C0);
 			rebase(SetTime, 0x10263B90);
+			rebase(FreeAll, 0x10264650);
 		}
 	} functions;
 
@@ -566,6 +570,11 @@ namespace temple {
 		for (auto &listener : sInstance->mListeners) {
 			listener(handle);
 		}
+	}
+
+	void AasAnimatedModelFactory::FreeAll()
+	{
+		functions.FreeAll();
 	}
 
 }

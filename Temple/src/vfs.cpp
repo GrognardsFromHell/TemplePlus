@@ -79,7 +79,7 @@ namespace temple {
 		int(*Read)(void* buffer, size_t size, size_t count, TioFile* file);
 
 		// Write data to an opened file. Largely equivalent to fwrite.
-		int(*Write)(void* buffer, size_t size, size_t count, TioFile* file);
+		int(*Write)(const void* buffer, size_t size, size_t count, TioFile* file);
 
 		// Close an opened file
 		void (*CloseFile)(TioFile*);
@@ -114,6 +114,9 @@ namespace temple {
 		// Pack file(s)
 		void(__cdecl* TioPack)(int argc, char* argv[]);
 
+		// Returns current pos of file handle
+		int(*Tell)(TioFile *file);
+
 		TioVfsImpl() {
 			Resolve("tio_path_add", AddPath);
 			Resolve("tio_path_remove", RemovePath);
@@ -131,6 +134,7 @@ namespace temple {
 			Resolve("tio_rmdir", RemoveDir);
 			Resolve("tio_pack_funcs", TioPackFuncs);
 			Resolve("tio_pack", TioPack);
+			Resolve("tio_ftell", Tell);
 		}
 
 		/*
@@ -164,7 +168,6 @@ namespace temple {
 		void (*fseek)();
 		void (*file_extract)();
 		void (*fgets)(char* buffer, int size, TioFile* file);
-		void (*ftell)();
 		void (*fsetpos)();
 		void (*feof)();
 		void (*fprintf)();
@@ -274,7 +277,7 @@ namespace temple {
 	void TioVfs::Pack(const std::vector<std::string>& args)
 	{
 		char * argsC[100];
-		for (int i = 0; i < args.size(); i++)
+		for (size_t i = 0; i < args.size(); i++)
 		{
 			argsC[i] = (char*)args[i].c_str();
 		}
@@ -290,7 +293,7 @@ namespace temple {
 		return mImpl->Read(buffer, 1, size, tioFile);
 	}
 
-	size_t TioVfs::Write(void* buffer, size_t size, FileHandle handle) {
+	size_t TioVfs::Write(const void* buffer, size_t size, FileHandle handle) {
 		auto tioFile = static_cast<TioFile*>(handle);
 		return mImpl->Write(buffer, 1, size, tioFile);
 	}
@@ -305,4 +308,8 @@ namespace temple {
 		return mImpl->CloseFile(tioFile);
 	}
 
+	size_t TioVfs::Tell(FileHandle handle) {
+		auto tioFile = static_cast<TioFile*>(handle);
+		return mImpl->Tell(tioFile);
+	}
 }

@@ -5,6 +5,7 @@
 #include "obj.h"
 #include "temple_functions.h"
 #include "d20_obj_registry.h"
+#include "gamesystems/objects/objsystem.h"
 
 
 D20StatusSystem d20StatusSys;
@@ -241,27 +242,30 @@ void D20StatusSystem::initFeats(objHndl objHnd)
 
 void D20StatusSystem::initItemConditions(objHndl objHnd)
 {
-	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
-	if (dispatcher == 0 || (int32_t)dispatcher == -1){ return; }
-	if (objects.IsCritter(objHnd))
-	{
+	auto obj = objSystem->GetObject(objHnd);
+
+	auto dispatcher = obj->GetDispatcher();
+	if (!dispatcher) {
+		return;
+	}
+
+	if (obj->IsCritter()) {
 		objects.dispatch.DispatcherClearItemConds(dispatcher);
 		if (!objects.d20.d20Query(objHnd, DK_QUE_Polymorphed))
 		{
-			uint32_t invenCount = objects.getInt32(objHnd, obj_f_critter_inventory_num);
+			uint32_t invenCount = obj->GetInt32(obj_f_critter_inventory_num);
 			for (uint32_t i = 0; i < invenCount; i++)
 			{
-				objHndl objHndItem = templeFuncs.Obj_Get_IdxField_ObjHnd(objHnd, obj_f_critter_inventory_list_idx, i);
-				uint32_t itemInvLocation = objects.getInt32(objHndItem, obj_f_item_inv_location);
-				if (inventory.IsItemEffectingConditions(objHndItem, itemInvLocation))
-				{
+				objHndl objHndItem = obj->GetObjHndl(obj_f_critter_inventory_list_idx, i);
+				auto item = objSystem->GetObject(objHndItem);
+				uint32_t itemInvLocation = item->GetInt32(obj_f_item_inv_location);
+				if (inventory.IsItemEffectingConditions(objHndItem, itemInvLocation)) {
 					inventory.sub_100FF500(dispatcher, objHndItem, itemInvLocation);
 				}
 			}
 		}
 
 	}
-	return;
 }
 
 void D20StatusSystem::D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher* dispatcher)
@@ -269,25 +273,27 @@ void D20StatusSystem::D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher
 	CondStruct *condStruct;
 	int condArgs[64];
 
+	auto obj = objSystem->GetObject(objHnd);
+
 	dispatch.DispatcherClearConds(dispatcher);
-	int numConds = objects.getArrayFieldNumItems(objHnd, obj_f_conditions);
-	int numPermMods = objects.getArrayFieldNumItems(objHnd, obj_f_permanent_mods);
+	int numConds = obj->GetInt32Array(obj_f_conditions).GetSize();
+	int numPermMods = obj->GetInt32Array(obj_f_permanent_mods).GetSize();
 	for (int i=0,j= 0; i < numConds; i++)
 	{
-		condStruct = conds.hashmethods.GetCondStruct(objects.getArrayFieldInt32(objHnd, obj_f_conditions, i));
+		condStruct = conds.hashmethods.GetCondStruct(obj->GetInt32(obj_f_conditions, i));
 		if (condStruct)
 		{
 			for (unsigned int k = 0; k < condStruct->numArgs; k++)
 			{
-				condArgs[k] = objects.getArrayFieldInt32(objHnd, obj_f_condition_arg0, j++);
+				condArgs[k] = obj->GetInt32(obj_f_condition_arg0, j++);
 			}
-			if (memcmp(condStruct->condName, "Unconscious", 12u))
+			if (strncmp(condStruct->condName, "Unconscious", 12))
 				conds.InitCondFromCondStructAndArgs(dispatcher, condStruct, condArgs);
 		}
 	}
 	for ( int i=0,j = 0 ; i < numPermMods; ++i)
 	{
-		condStruct  = conds.hashmethods.GetCondStruct(objects.getArrayFieldInt32(objHnd, obj_f_permanent_mods, i));
+		condStruct  = conds.hashmethods.GetCondStruct(obj->GetInt32(obj_f_permanent_mods, i));
 		if (!condStruct)
 		{
 			logger->debug("Missing condStruct for {}", description.getDisplayName(objHnd));
@@ -296,7 +302,7 @@ void D20StatusSystem::D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher
 
 		for (unsigned int k = 0; k < condStruct->numArgs; k++)
 		{
-			condArgs[k] = objects.getArrayFieldInt32(objHnd, obj_f_permanent_mod_data, j++);
+			condArgs[k] = obj->GetInt32(obj_f_permanent_mod_data, j++);
 		}
 		conds.SetPermanentModArgsFromDataFields(dispatcher, condStruct, condArgs);
 	}

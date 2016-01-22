@@ -157,6 +157,12 @@ const std::string &SectorSystem::GetName() const {
 	return name;
 }
 
+void SectorSystem::SetLimits(uint64_t limitX, uint64_t limitY)
+{
+	static auto set_sector_limit = temple::GetPointer<BOOL(uint64_t, uint64_t)>(0x10081940);
+	set_sector_limit(limitX, limitY);
+}
+
 //*****************************************************************************
 //* Random
 //*****************************************************************************
@@ -189,6 +195,12 @@ CritterSystem::~CritterSystem() {
 const std::string &CritterSystem::GetName() const {
 	static std::string name("Critter");
 	return name;
+}
+
+void CritterSystem::UpdateNpcHealingTimers()
+{
+	auto updateHealing = temple::GetPointer<void()>(0x10080490);
+	updateHealing();
 }
 
 //*****************************************************************************
@@ -308,6 +320,16 @@ const std::string &SpellSystem::GetName() const {
 	return name;
 }
 
+bool SpellSystem::Save(TioFile* file) {
+	static auto spell_save = temple::GetPointer<BOOL(TioFile *file)>(0x10079220);
+	return spell_save(file) == TRUE;
+}
+
+bool SpellSystem::Load(GameSystemSaveFile* file) {
+	static auto spell__spell_load = temple::GetPointer<BOOL(GameSystemSaveFile*)>(0x100792a0);
+	return spell__spell_load(file) == TRUE;
+}
+
 //*****************************************************************************
 //* Stat
 //*****************************************************************************
@@ -414,53 +436,17 @@ const std::string &D20System::GetName() const {
 	return name;
 }
 
-//*****************************************************************************
-//* Map
-//*****************************************************************************
+void D20System::RemoveDispatcher(objHndl obj)
+{
+	using FnRemoveDispatcher = void(objHndl);
+	static FnRemoveDispatcher* removeDispatcher = temple::GetPointer<FnRemoveDispatcher>(0x1004FEE0);
+	removeDispatcher(obj);
+}
 
-MapSystem::MapSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x1006f4d0);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system Map");
-	}
-}
-MapSystem::~MapSystem() {
-	auto shutdown = temple::GetPointer<void()>(0x10071fd0);
-	shutdown();
-}
-void MapSystem::LoadModule() {
-	auto loadModule = temple::GetPointer<int()>(0x10070ba0);
-	if (!loadModule()) {
-		throw TempleException("Unable to load module data for game system Map");
-	}
-}
-void MapSystem::UnloadModule() {
-	auto unloadModule = temple::GetPointer<void()>(0x1006f880);
-	unloadModule();
-}
-void MapSystem::ResetBuffers(const RebuildBufferInfo& rebuildInfo) {
-	auto resetBuffers = temple::GetPointer<void(const RebuildBufferInfo*)>(0x1006f850);
-	resetBuffers(&rebuildInfo);
-}
-void MapSystem::Reset() {
-	auto reset = temple::GetPointer<void()>(0x10071e40);
-	reset();
-}
-bool MapSystem::SaveGame(TioFile *file) {
-	auto save = temple::GetPointer<int(TioFile*)>(0x10072050);
-	return save(file) == 1;
-}
-bool MapSystem::LoadGame(GameSystemSaveFile* saveFile) {
-	auto load = temple::GetPointer<int(GameSystemSaveFile*)>(0x10072c40);
-	return load(saveFile) == 1;
-}
-void MapSystem::AdvanceTime(uint32_t time) {
-	auto advanceTime = temple::GetPointer<void(uint32_t)>(0x1006f8c0);
-	advanceTime(time);
-}
-const std::string &MapSystem::GetName() const {
-	static std::string name("Map");
-	return name;
+void D20System::ResetRadialMenus()
+{
+	static auto radialmenu_reset = temple::GetPointer<void()>(0x100eff40);
+	radialmenu_reset();
 }
 
 //*****************************************************************************
@@ -502,6 +488,24 @@ bool LightSchemeSystem::LoadGame(GameSystemSaveFile* saveFile) {
 const std::string &LightSchemeSystem::GetName() const {
 	static std::string name("LightScheme");
 	return name;
+}
+
+void LightSchemeSystem::SetLightSchemeId(int schemeId)
+{
+	static auto set_map_lightscheme_id = temple::GetPointer<BOOL(int)>(0x1006efd0);
+	set_map_lightscheme_id(schemeId);
+}
+
+void LightSchemeSystem::SetLightScheme(int schemeId, int hour)
+{
+	static auto set_lightscheme = temple::GetPointer<signed int(int lightSchemeId, int hourOfDay)>(0x1006f350);
+	set_lightscheme(schemeId, hour);
+}
+
+int LightSchemeSystem::GetHourOfDay()
+{
+	static auto lightscheme_get_hour = temple::GetPointer<int()>(0x1006f0b0);
+	return lightscheme_get_hour();
 }
 
 //*****************************************************************************
@@ -651,6 +655,12 @@ const std::string &SoundGameSystem::GetName() const {
 	return name;
 }
 
+void SoundGameSystem::SetSoundSchemeIds(int scheme1, int scheme2)
+{
+	static auto soundscheme_set = temple::GetPointer<void(int, int)>(0x1003c4d0);
+	soundscheme_set(scheme1, scheme2);
+}
+
 //*****************************************************************************
 //* Item
 //*****************************************************************************
@@ -706,41 +716,6 @@ void CombatSystem::AdvanceTime(uint32_t time) {
 }
 const std::string &CombatSystem::GetName() const {
 	static std::string name("Combat");
-	return name;
-}
-
-//*****************************************************************************
-//* TimeEvent
-//*****************************************************************************
-
-TimeEventSystem::TimeEventSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x100616a0);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system TimeEvent");
-	}
-}
-TimeEventSystem::~TimeEventSystem() {
-	auto shutdown = temple::GetPointer<void()>(0x10061820);
-	shutdown();
-}
-void TimeEventSystem::Reset() {
-	auto reset = temple::GetPointer<void()>(0x100617a0);
-	reset();
-}
-bool TimeEventSystem::SaveGame(TioFile *file) {
-	auto save = temple::GetPointer<int(TioFile*)>(0x10061840);
-	return save(file) == 1;
-}
-bool TimeEventSystem::LoadGame(GameSystemSaveFile* saveFile) {
-	auto load = temple::GetPointer<int(GameSystemSaveFile*)>(0x10061f90);
-	return load(saveFile) == 1;
-}
-void TimeEventSystem::AdvanceTime(uint32_t time) {
-	auto advanceTime = temple::GetPointer<void(uint32_t)>(0x100620c0);
-	advanceTime(time);
-}
-const std::string &TimeEventSystem::GetName() const {
-	static std::string name("TimeEvent");
 	return name;
 }
 
@@ -835,6 +810,12 @@ const std::string &AISystem::GetName() const {
 	return name;
 }
 
+void AISystem::AddAiTimer(objHndl handle)
+{
+	static auto ai_schedule_npc_timer = temple::GetPointer<void(objHndl)>(0x1005d5e0);
+	ai_schedule_npc_timer(handle);
+}
+
 //*****************************************************************************
 //* Anim
 //*****************************************************************************
@@ -864,6 +845,18 @@ bool AnimSystem::LoadGame(GameSystemSaveFile* saveFile) {
 const std::string &AnimSystem::GetName() const {
 	static std::string name("Anim");
 	return name;
+}
+
+void AnimSystem::ClearGoalDestinations()
+{
+	static auto clear = temple::GetPointer<void()>(0x100BACC0);
+	clear();
+}
+
+void AnimSystem::InterruptAll()
+{
+	static auto anim_interrupt_all = temple::GetPointer<BOOL()>(0x1000c890);
+	anim_interrupt_all();
 }
 
 //*****************************************************************************
@@ -1201,6 +1194,36 @@ const std::string &PartySystem::GetName() const {
 	return name;
 }
 
+void PartySystem::SaveCurrent()
+{
+	auto saveCurrent = temple::GetPointer<void()>(0x1002BA40);
+	saveCurrent();
+}
+
+void PartySystem::RestoreCurrent()
+{
+	auto restoreCurrent = temple::GetPointer<void()>(0x1002AEA0);
+	restoreCurrent();
+}
+
+bool PartySystem::IsInParty(objHndl obj) const
+{
+	static auto IsInParty = temple::GetPointer<BOOL(objHndl)>(0x1002b1b0);
+	return IsInParty(obj) == TRUE;
+}
+
+void PartySystem::ForEachInParty(std::function<void(objHndl)> callback) {
+	static auto party_size = temple::GetPointer<size_t()>(0x1002b2b0);
+	static auto party_get = temple::GetPointer<objHndl(size_t)>(0x1002b150);
+
+	auto count = party_size();
+	for (size_t i = 0; i < count; ++i) {
+		auto handle = party_get(i);
+		callback(handle);
+	}
+
+}
+
 //*****************************************************************************
 //* D20LoadSave
 //*****************************************************************************
@@ -1445,6 +1468,40 @@ void MapFoggingSystem::Reset() {
 const std::string &MapFoggingSystem::GetName() const {
 	static std::string name("MapFogging");
 	return name;
+}
+
+void MapFoggingSystem::LoadFogColor(const std::string & dataDir)
+{
+	static auto loadFogColor = temple::GetPointer<void(const char*)>(0x10030BF0);
+	loadFogColor(dataDir.c_str());
+}
+
+void MapFoggingSystem::Enable()
+{
+	static auto map_fogging_enable = temple::GetPointer<void()>(0x1002ec80);
+	map_fogging_enable();
+}
+
+void MapFoggingSystem::Disable()
+{
+	static auto map_fogging_disable = temple::GetPointer<void()>(0x1002ec90);
+	map_fogging_disable();
+}
+
+void MapFoggingSystem::LoadExploredTileData(int mapId)
+{
+	static auto map_fogging_load_etd = temple::GetPointer<void(int)>(0x10030d10);
+	map_fogging_load_etd(mapId);
+}
+
+void MapFoggingSystem::SaveExploredTileData(int mapId) {
+	static auto map_fogging_save_etd = temple::GetPointer<void(int)>(0x10030e20);
+	map_fogging_save_etd(mapId);
+}
+
+void MapFoggingSystem::SaveEsd() {
+	static auto map_flush_esd = temple::GetPointer<void()>(0x10030f40);
+	map_flush_esd();
 }
 
 //*****************************************************************************

@@ -11,7 +11,7 @@
 #include "critter.h"
 #include "tab_file.h"
 #include "util/fixes.h"
-
+#include "gamesystems/objects/objsystem.h"
 
 TabFileStatus featPropertiesTabFile;
 uint32_t featPropertiesTable[NUM_FEATS + 1000];
@@ -214,11 +214,10 @@ int FeatInit()
 uint32_t LegacyFeatSystem::HasFeatCount(objHndl objHnd, feat_enums featEnum)
 {
 	uint32_t featCount = 0;
-	uint32_t numFeats = templeFuncs.Obj_Get_IdxField_NumItems(objHnd, obj_f_critter_feat_idx);
-	for (uint32_t i = 0; i < numFeats; i++)
-	{
-		if (templeFuncs.Obj_Get_IdxField_32bit(objHnd, obj_f_critter_feat_idx, i) == featEnum)
-		{
+	auto obj = objSystem->GetObject(objHnd);
+	auto feats = obj->GetInt32Array(obj_f_critter_feat_idx);
+	for (size_t i = 0; i < feats.GetSize(); i++) {
+		if (feats[i] == featEnum) {
 			featCount++;
 		}
 	}
@@ -268,11 +267,14 @@ uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, 
 
 vector<feat_enums> LegacyFeatSystem::GetFeats(objHndl handle) {
 
-	auto featCount = templeFuncs.Obj_Get_IdxField_NumItems(handle, obj_f_critter_feat_idx);
+	auto obj = objSystem->GetObject(handle);
+	auto feats = obj->GetInt32Array(obj_f_critter_feat_idx);
+
+	auto featCount = feats.GetSize();
 	vector<feat_enums> result(featCount);
 
-	for (int i = 0; i < featCount; ++i) {
-		result[i] = (feat_enums) templeFuncs.Obj_Get_IdxField_32bit(handle, obj_f_critter_feat_idx, i);
+	for (size_t i = 0; i < featCount; ++i) {
+		result[i] = (feat_enums) feats[i];
 	}
 
 	return result;
@@ -972,17 +974,7 @@ uint32_t _RogueSpecialFeat(feat_enums featIdx, uint32_t newLevel)
 
 uint32_t _HasFeatCount(objHndl objHnd, feat_enums featEnum)
 {
-
-	uint32_t featCount = 0;
-	uint32_t numFeats = templeFuncs.Obj_Get_IdxField_NumItems(objHnd, obj_f_critter_feat_idx);
-	for (uint32_t i = 0; i < numFeats; i++)
-	{
-		if (templeFuncs.Obj_Get_IdxField_32bit(objHnd, obj_f_critter_feat_idx, i) == featEnum)
-		{
-			featCount++;
-		}
-	}
-	return featCount;
+	return feats.HasFeatCount(objHnd, featEnum);
 };
 
 

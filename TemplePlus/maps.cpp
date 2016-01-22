@@ -126,11 +126,6 @@ locXY Maps::GetMapCenterTile() {
 	return mapAddresses.GetMapCenterTile();
 }
 
-BOOL Maps::IsMapOpen()
-{
-	return *mapAddresses.mapIsOpen;
-}
-
 bool Maps::GetJumpPoint(int id, JumpPoint& jumpPoint, bool withMapName) {
 	char mapName[256];
 	size_t mapNameLen = withMapName ? 256 : 0;

@@ -7,7 +7,7 @@
 #include "gamesystem.h"
 
 #include "legacy.h"
-
+#include "obj.h"
 
 class VagrantSystem : public GameSystem, public TimeAwareGameSystem {
 public:
@@ -60,6 +60,8 @@ public:
 	bool SaveGame(TioFile *file) override;
 	bool LoadGame(GameSystemSaveFile* saveFile) override;
 	const std::string &GetName() const override;
+
+	void SetLimits(uint64_t limitX, uint64_t limitY);
 };
 
 class RandomSystem : public GameSystem {
@@ -75,6 +77,11 @@ public:
 	CritterSystem(const GameSystemConf &config);
 	~CritterSystem();
 	const std::string &GetName() const override;
+
+	/**
+	 * Creates or refreshes the subdual and normal healing timers for all loaded NPCs.
+	 */
+	void UpdateNpcHealingTimers();
 };
 
 class ScriptNameSystem : public GameSystem, public ModuleAwareGameSystem {
@@ -120,6 +127,9 @@ public:
 	~SpellSystem();
 	void Reset() override;
 	const std::string &GetName() const override;
+	
+	bool Save(TioFile *file);
+	bool Load(GameSystemSaveFile *file);
 };
 
 class StatSystem : public GameSystem {
@@ -159,21 +169,10 @@ public:
 	void Reset() override;
 	void AdvanceTime(uint32_t time) override;
 	const std::string &GetName() const override;
-};
 
-class MapSystem : public GameSystem, public SaveGameAwareGameSystem, public ModuleAwareGameSystem, public BufferResettingGameSystem, public ResetAwareGameSystem, public TimeAwareGameSystem {
-public:
-	static constexpr auto Name = "Map";
-	MapSystem(const GameSystemConf &config);
-	~MapSystem();
-	void LoadModule() override;
-	void UnloadModule() override;
-	void Reset() override;
-	bool SaveGame(TioFile *file) override;
-	bool LoadGame(GameSystemSaveFile* saveFile) override;
-	void AdvanceTime(uint32_t time) override;
-	void ResetBuffers(const RebuildBufferInfo& rebuildInfo) override;
-	const std::string &GetName() const override;
+	void RemoveDispatcher(objHndl obj);
+
+	void ResetRadialMenus();
 };
 
 class LightSchemeSystem : public GameSystem, public SaveGameAwareGameSystem, public ModuleAwareGameSystem, public ResetAwareGameSystem {
@@ -187,6 +186,12 @@ public:
 	bool SaveGame(TioFile *file) override;
 	bool LoadGame(GameSystemSaveFile* saveFile) override;
 	const std::string &GetName() const override;
+
+	void SetLightSchemeId(int schemeId);
+	void SetLightScheme(int schemeId, int hour);
+	int GetHourOfDay();
+
+
 };
 
 class PlayerSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem {
@@ -239,6 +244,8 @@ public:
 	bool LoadGame(GameSystemSaveFile* saveFile) override;
 	void AdvanceTime(uint32_t time) override;
 	const std::string &GetName() const override;
+
+	void SetSoundSchemeIds(int scheme1, int scheme2);
 };
 
 class ItemSystem : public GameSystem, public BufferResettingGameSystem {
@@ -255,18 +262,6 @@ public:
 	static constexpr auto Name = "Combat";
 	CombatSystem(const GameSystemConf &config);
 	~CombatSystem();
-	void Reset() override;
-	bool SaveGame(TioFile *file) override;
-	bool LoadGame(GameSystemSaveFile* saveFile) override;
-	void AdvanceTime(uint32_t time) override;
-	const std::string &GetName() const override;
-};
-
-class TimeEventSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem, public TimeAwareGameSystem {
-public:
-	static constexpr auto Name = "TimeEvent";
-	TimeEventSystem(const GameSystemConf &config);
-	~TimeEventSystem();
 	void Reset() override;
 	bool SaveGame(TioFile *file) override;
 	bool LoadGame(GameSystemSaveFile* saveFile) override;
@@ -303,6 +298,8 @@ public:
 	AISystem(const GameSystemConf &config);
 	void LoadModule() override;
 	const std::string &GetName() const override;
+
+	void AddAiTimer(objHndl handle);
 };
 
 class AnimSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem {
@@ -314,6 +311,10 @@ public:
 	bool SaveGame(TioFile *file) override;
 	bool LoadGame(GameSystemSaveFile* saveFile) override;
 	const std::string &GetName() const override;
+
+	void ClearGoalDestinations();
+	void InterruptAll();
+
 };
 
 class AnimPrivateSystem : public GameSystem, public ResetAwareGameSystem {
@@ -446,6 +447,13 @@ public:
 	bool SaveGame(TioFile *file) override;
 	bool LoadGame(GameSystemSaveFile* saveFile) override;
 	const std::string &GetName() const override;
+
+	void SaveCurrent();
+	void RestoreCurrent();
+
+	bool IsInParty(objHndl obj) const;
+
+	void ForEachInParty(std::function<void(objHndl)> callback);
 };
 
 class D20LoadSaveSystem : public GameSystem, public SaveGameAwareGameSystem {
@@ -540,6 +548,17 @@ public:
 	void Reset() override;
 	void ResetBuffers(const RebuildBufferInfo& rebuildInfo) override;
 	const std::string &GetName() const override;
+
+	void LoadFogColor(const std::string &dataDir);
+
+	void Enable();
+	void Disable();
+
+	// The ETD data seems to be used for the townmap
+	void LoadExploredTileData(int mapId);
+	void SaveExploredTileData(int mapId);
+	
+	void SaveEsd();
 };
 
 class RandomEncounterSystem : public GameSystem, public SaveGameAwareGameSystem {

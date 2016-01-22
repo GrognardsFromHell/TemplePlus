@@ -9,6 +9,7 @@
 #include "turn_based.h"
 #include "damage.h"
 #include "util/fixes.h"
+#include "gamesystems/objects/objsystem.h"
 
 class DispatcherReplacements : public TempleFix {
 public:
@@ -295,20 +296,21 @@ void DispatcherSystem::PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher* d
 	int condArgs[64] = {0,};
 	const char* name = description.getDisplayName(objHnd);
 
+	auto obj = objSystem->GetObject(objHnd);
+
 	k = 0;
 	d20Sys.d20SendSignal(objHnd, DK_SIG_Pack, 0, 0);
-	objects.PropCollectionRemoveField(objHnd, obj_f_conditions);
-	objects.PropCollectionRemoveField(objHnd, obj_f_condition_arg0);
-	objects.ClearArrayField(objHnd, obj_f_permanent_mods);
-	objects.ClearArrayField(objHnd, obj_f_permanent_mod_data);
+	obj->ResetField(obj_f_conditions);
+	obj->ResetField(obj_f_condition_arg0);
+	obj->ClearArray(obj_f_permanent_mods);
+	obj->ClearArray(obj_f_permanent_mod_data);
 	numConds = conds.GetActiveCondsNum(dispatcher);
 	for (int i = 0; i < numConds; i++)
 	{
 		numArgs = conds.ConditionsExtractInfo(dispatcher, i, &hashkey, condArgs);
-		objects.setArrayFieldByValue(objHnd, obj_f_conditions, i, hashkey);
-		for (int j = 0; j < numArgs; ++k)
-		{
-			objects.setArrayFieldByValue(objHnd, obj_f_condition_arg0, k, condArgs[j++]);
+		obj->SetInt32(obj_f_conditions, i, hashkey);
+		for (int j = 0; j < numArgs; ++k) {
+			obj->SetInt32(obj_f_condition_arg0, k, condArgs[j++]);
 		}
 			
 	}
@@ -319,10 +321,9 @@ void DispatcherSystem::PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher* d
 		numArgs = conds.PermanentAndItemModsExtractInfo(dispatcher, i, &hashkey, condArgs);
 		if (hashkey)
 		{
-			objects.setArrayFieldByValue(objHnd, obj_f_permanent_mods, i, hashkey);
-			for (int j = 0; j < numArgs; ++k)
-			{
-				objects.setArrayFieldByValue(objHnd, obj_f_permanent_mod_data, k, condArgs[j++]);
+			obj->SetInt32(obj_f_permanent_mods, i, hashkey);
+			for (int j = 0; j < numArgs; ++k) {
+				obj->SetInt32(obj_f_permanent_mod_data, k, condArgs[j++]);
 			}
 				
 		}
@@ -483,6 +484,31 @@ int DispatcherSystem::Dispatch60GetAttackDice(objHndl obj, DispIoAttackDice* dis
 	Dice diceNew2(diceNum, diceType, bonus);
 	return diceNew.ToPacked();
 
+
+}
+
+int DispatcherSystem::DispatchGetBonus(objHndl critter, DispIoBonusList* bonusListOut, enum_disp_type dispType, D20DispatcherKey key) {
+
+	DispIoBonusList dispIo;
+	if (!bonusListOut) {
+		dispIo.dispIOType = dispIOTypeBonusList;
+		dispIo.flags = 0;
+		bonusListOut = &dispIo;
+	}
+
+	auto obj = objSystem->GetObject(critter);
+	if (!obj->IsCritter()) {
+		return 0;
+	}
+
+	auto dispatcher = obj->GetDispatcher();
+	if (!dispatcher) {
+		return 0;
+	}
+
+	DispatcherProcessor(dispatcher, dispType, key, &dispIo);
+
+	return bonusListOut->bonlist.GetEffectiveBonusSum();
 
 }
 #pragma endregion

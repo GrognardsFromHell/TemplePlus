@@ -5,7 +5,6 @@
 #include <Python.h>
 #include "temple_functions.h"
 #include "python_header.h"
-#include "testhelper.h"
 #include "python_debug.h"
 #include "party.h"
 #include "common.h"
@@ -15,6 +14,9 @@
 #include <ui/ui_picker.h>
 #include <location.h>
 #include <turn_based.h>
+
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/objects/objsystem.h"
 
 static struct PythonInternal : temple::AddressTable {
 
@@ -41,56 +43,63 @@ static struct PythonInternal : temple::AddressTable {
 
 
 static PyObject * pyObjHandleType_Set_Field_64bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	_fieldIdx nFieldIdx = 0;
-	uint64_t n64 = 0;
-	if (!PyArg_ParseTuple(pyTupleIn, "iL", &nFieldIdx, &n64)) {
+	obj_f field;
+	int64_t value;
+	if (!PyArg_ParseTuple(pyTupleIn, "iL", &field, &value)) {
 		return PyInt_FromLong(0);
 	};
-	templeFuncs.Obj_Set_Field_64bit(obj->objHandle, nFieldIdx, n64);
+	auto gameObj = objSystem->GetObject(obj->objHandle);
+	gameObj->SetInt64(field, value);
 	return PyInt_FromLong(1);
 };
 
 
 
 static PyObject * pyObjHandleType_Get_IdxField_32bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	_fieldIdx nFieldIdx = 0;
-	_fieldSubIdx nFieldSubIdx = 0;
-	if (!PyArg_ParseTuple(pyTupleIn, "ii", &nFieldIdx, &nFieldSubIdx)) {
+	obj_f field;
+	size_t index;
+	if (!PyArg_ParseTuple(pyTupleIn, "ii", &field, &index)) {
 		return nullptr;
 	};
-	uint32_t n32 = templeFuncs.Obj_Get_IdxField_32bit(obj->objHandle, nFieldIdx, nFieldSubIdx);
-	return PyInt_FromLong(n32);
+
+	auto gameObj = objSystem->GetObject(obj->objHandle);
+	auto value = gameObj->GetInt32(field, index);
+	return PyInt_FromLong(value);
 };
 
 static PyObject * pyObjHandleType_Set_IdxField_32bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	_fieldIdx nFieldIdx = 0;
-	_fieldSubIdx nFieldSubIdx = 0;
-	uint32_t n32 = 0;
-	if (!PyArg_ParseTuple(pyTupleIn, "iii", &nFieldIdx, &nFieldSubIdx, &n32)) {
-		return PyInt_FromLong(0);
+	obj_f field;
+	size_t index;
+	int32_t value;
+	if (!PyArg_ParseTuple(pyTupleIn, "iii", &field, &index, &value)) {
+		return nullptr;
 	};
-	templeFuncs.Obj_Set_IdxField_byValue(obj->objHandle, nFieldIdx, nFieldSubIdx, n32);
+	auto gameObj = objSystem->GetObject(obj->objHandle);
+	gameObj->SetInt32(field, index, value);
 	return PyInt_FromLong(1);
 };
 
 static PyObject * pyObjHandleType_Get_IdxField_64bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	_fieldIdx nFieldIdx = 0;
-	_fieldSubIdx nFieldSubIdx = 0;
-	if (!PyArg_ParseTuple(pyTupleIn, "ii", &nFieldIdx, &nFieldSubIdx)) {
+	obj_f field;
+	size_t index;
+	if (!PyArg_ParseTuple(pyTupleIn, "ii", &field, &index)) {
 		return nullptr;
 	};
-	uint64_t n64 = templeFuncs.Obj_Get_IdxField_64bit(obj->objHandle, nFieldIdx, nFieldSubIdx);
-	return PyLong_FromLongLong(n64);
+
+	auto gameObj = objSystem->GetObject(obj->objHandle);
+	auto value = gameObj->GetInt64(field, index);
+	return PyLong_FromLongLong(value);
 };
 
 static PyObject * PyObjHandle_SetIdxField64bit(TemplePyObjHandle* obj, PyObject * pyTupleIn){
-	_fieldIdx nFieldIdx = 0;
-	_fieldSubIdx nFieldSubIdx = 0;
-	uint64_t n64 = 0;
-	if (!PyArg_ParseTuple(pyTupleIn, "iiL", &nFieldIdx, &nFieldSubIdx, &n64)) {
-		return PyInt_FromLong(0);
+	obj_f field;
+	size_t index;
+	int64_t value;
+	if (!PyArg_ParseTuple(pyTupleIn, "iiL", &field, &index, &value)) {
+		return nullptr;
 	};
-	templeFuncs.Obj_Set_IdxField_byValue(obj->objHandle, nFieldIdx, nFieldSubIdx, n64);
+	auto gameObj = objSystem->GetObject(obj->objHandle);
+	gameObj->SetInt64(field, index, value);
 	return PyInt_FromLong(1);
 };
 
@@ -105,9 +114,10 @@ static PyObject * PyObjHandle_Inventory(TemplePyObjHandle* obj, PyObject * pyTup
 	bool bIncludeBackpack = 1;
 	bool bIncludeEquipped = 0;
 	bool bRetunProtos = 0;
-	int invFieldType = inventory.GetInventoryListField(obj->objHandle);
+	obj_f invFieldType = (obj_f) inventory.GetInventoryListField(obj->objHandle);
 
-	int nItems = templeFuncs.Obj_Get_IdxField_NumItems(ObjHnd, invFieldType);
+	auto gameObj = objSystem->GetObject(obj->objHandle);
+	auto nItems = gameObj->GetObjectIdArray(invFieldType).GetSize();
 
 	if (nArgs == 1){ // returns the entire non-worn inventory
 		if (!PyArg_ParseTuple(pyTupleIn, "i", &nModeSelect)) {
@@ -129,7 +139,7 @@ static PyObject * PyObjHandle_Inventory(TemplePyObjHandle* obj, PyObject * pyTup
 		nMax = CONTAINER_MAX_ITEMS;
 	};
 
-	int j = 0;
+	size_t j = 0;
 	if (bIncludeBackpack){
 		for (int i = 0; (j < nItems) & (i < nMax); i++){
 			ItemObjHnds[j] = objects.inventory.GetItemAtInvIdx(ObjHnd, i);
@@ -146,7 +156,7 @@ static PyObject * PyObjHandle_Inventory(TemplePyObjHandle* obj, PyObject * pyTup
 
 	auto ItemPyTuple = PyTuple_New(j);
 	if (!bRetunProtos){
-		for (int i = 0; i < j; i++){
+		for (size_t i = 0; i < j; i++){
 			PyTuple_SetItem(ItemPyTuple, i, templeFuncs.PyObjFromObjHnd(ItemObjHnds[i]));
 		}
 	}
@@ -223,7 +233,7 @@ PyObject* __cdecl  pyObjHandleType_getAttrNew(TemplePyObjHandle *obj, char *name
 	}
 	else if (!_strcmpi(name, "proto"))
 	{
-		return  PyLong_FromLongLong(objects.GetProtoNum(obj->objHandle));
+		return  PyLong_FromLongLong(gameSystems->GetObj().GetProtoId(obj->objHandle));
 	}
 	else if (!_strcmpi(name, "description")){
 		return  PyString_FromString(objects.description._getDisplayName(obj->objHandle,obj->objHandle));
@@ -325,7 +335,8 @@ int __cdecl  pyObjHandleType_setAttrNew(TemplePyObjHandle *obj, char *name, Temp
 
 		if (obj2 != nullptr)  {
 			if (obj->ob_type == obj2->ob_type){
-				templeFuncs.Obj_Set_Field_ObjHnd(obj->objHandle, obj_f_npc_substitute_inventory, obj2->objHandle);
+				auto gameObj = objSystem->GetObject(obj->objHandle);
+				gameObj->SetObjHndl(obj_f_npc_substitute_inventory, obj2->objHandle);
 			}
 		}
 		return 0;

@@ -435,6 +435,30 @@ static const char *ObjFieldNames[] = {
 	"obj_f_prototype_handle" // 429
 };
 
-const char *GetObjectFieldName(obj_f field) {
+static const char *ObjTypeNames[] = {
+	"obj_t_portal", // 0
+	"obj_t_container", // 1
+	"obj_t_scenery", // 2
+	"obj_t_projectile", // 3
+	"obj_t_weapon", // 4
+	"obj_t_ammo", // 5
+	"obj_t_armor", // 6
+	"obj_t_money", // 7
+	"obj_t_food", // 8
+	"obj_t_scroll", // 9
+	"obj_t_key", // 10
+	"obj_t_written", // 11
+	"obj_t_generic", // 12
+	"obj_t_pc", // 13
+	"obj_t_npc", // 14
+	"obj_t_trap", // 15
+	"obj_t_bag" // 16
+};
+
+const char* GetObjectTypeName(ObjectType type) {
+	return ObjTypeNames[type];
+}
+
+const char* GetObjectFieldName(obj_f field) {
 	return ObjFieldNames[field];
 }

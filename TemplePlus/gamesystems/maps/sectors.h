@@ -66,6 +66,7 @@ private:
 class LockedMapSector {
 public:
 	LockedMapSector(int secX, int secY);
+	LockedMapSector(SectorLoc loc);
 	~LockedMapSector();
 
 	SectorObjectsNode* GetObjectsAt(int x, int y) const;
@@ -76,6 +77,8 @@ public:
 	LockedMapSector& operator=(LockedMapSector&&) = delete;
 	
 	SectorLightIterator GetLights();
+
+	void AddObject(objHndl handle);
 private:
 	Sector* mSector = nullptr;
 };

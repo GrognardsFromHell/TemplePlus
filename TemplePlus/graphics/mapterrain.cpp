@@ -8,7 +8,7 @@
 #include <infrastructure/mesparser.h>
 #include <config/config.h>
 
-static struct MapTerrainAddresses : temple::AddressTable {	
+static struct TerrainSystemAddresses : temple::AddressTable {	
 	int *mapArtId;
 	int *daytimeFlag;
 	uint32_t *timeMapEntered;
@@ -17,7 +17,7 @@ static struct MapTerrainAddresses : temple::AddressTable {
 	float *terrainTintGreen;
 	float *terrainTintBlue;
 
-	MapTerrainAddresses() {
+	TerrainSystemAddresses() {
 		rebase(mapArtId, 0x1080FA58);
 		rebase(daytimeFlag, 0x1080AED8);
 		rebase(timeMapEntered, 0x1080ABB0);
@@ -28,17 +28,11 @@ static struct MapTerrainAddresses : temple::AddressTable {
 	}
 } addresses;
 
-MapTerrain::MapTerrain(gfx::RenderingDevice& device, gfx::ShapeRenderer2d& shapeRenderer)
+TerrainSystem::TerrainSystem(gfx::RenderingDevice& device, gfx::ShapeRenderer2d& shapeRenderer)
 	: mDevice(device),mShapeRenderer(shapeRenderer) {
-	
-	auto groundMapping = MesFile::ParseFile("art/ground/ground.mes");
-	for (auto& pair : groundMapping) {
-		mTerrainDirs[pair.first] = fmt::format("art/ground/{}/", pair.second);
-	}
-
 }
 
-void MapTerrain::Render() {
+void TerrainSystem::Render() {
 
 	// Special dirty case for the 5000 map which has no terrain
 	if (maps.GetCurrentMapId() == 5000) {
@@ -91,7 +85,7 @@ void MapTerrain::Render() {
 
 }
 
-void MapTerrain::RenderTile(int x, int y, const TigRect& destRect) {
+void TerrainSystem::RenderTile(int x, int y, const TigRect& destRect) {
 	auto mapArtId = *addresses.mapArtId;
 	auto primaryMapArtId = mapArtId;
 
@@ -160,7 +154,27 @@ void MapTerrain::RenderTile(int x, int y, const TigRect& destRect) {
 
 }
 
-std::string MapTerrain::GetTileTexture(int mapArtId, int x, int y) {
+const std::string & TerrainSystem::GetName(void) const
+{
+	static std::string sName = "Terrain";
+	return sName;
+}
+
+void TerrainSystem::Load(int groundArtId)
+{
+	static auto map_open_load_terrain = temple::GetPointer<void(int artId)>(0x1002d710);
+	map_open_load_terrain(groundArtId);
+}
+
+void TerrainSystem::LoadModule()
+{
+	auto groundMapping = MesFile::ParseFile("art/ground/ground.mes");
+	for (auto& pair : groundMapping) {
+		mTerrainDirs[pair.first] = fmt::format("art/ground/{}/", pair.second);
+	}
+}
+
+std::string TerrainSystem::GetTileTexture(int mapArtId, int x, int y) {
 
 	// Find the directory that the JPEGs are kept in
 	auto it = mTerrainDirs.find(mapArtId);

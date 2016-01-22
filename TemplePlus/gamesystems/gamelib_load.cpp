@@ -8,6 +8,8 @@
 #include "gamesystems/gamesystems.h"
 #include "tio/tio.h"
 #include "gamesystems/legacy.h"
+#include "util/savegame.h"
+#include <infrastructure/vfs.h>
 
 static struct GameLibLoadAddresses : temple::AddressTable {
 	/*
@@ -25,9 +27,9 @@ static struct GameLibLoadAddresses : temple::AddressTable {
 	void (__cdecl *UiMmRelated)(int arg);
 	void (__cdecl *UiMmRelated2)(int arg);
 
-	bool (__cdecl *UnpackArchive)(const char *filename, const char *destPath);
+	BOOL (__cdecl *UnpackArchive)(const char *filename, const char *destPath);
 
-	bool(__cdecl *UiLoadGame)();
+	BOOL (__cdecl *UiLoadGame)();
 
 	GameLibLoadAddresses() {
 		rebase(isInLoad, 0x103072D4);
@@ -58,14 +60,14 @@ bool GameSystems::LoadGame(const string& filename) {
 	
 	addresses.UiMmRelated(63);
 
-	if (!TioDirExists("Save\\Current")) {
+	if (!vfs->DirExists("Save\\Current")) {
 		logger->error("Could not find save folder Save\\Current");
 		return false;
 	}
 	
 	logger->info("begin removing files...");
 	
-	if (!TioClearDir("Save\\Current")) {
+	if (!vfs->CleanDir("Save\\Current")) {
 		logger->error("Error clearing folder Save\\Current");
 		return false;
 	}
@@ -73,10 +75,15 @@ bool GameSystems::LoadGame(const string& filename) {
 	logger->info("Restoring save archive...");
 	
 	auto path = format("save\\{}", filename);
-	if (!addresses.UnpackArchive(path.c_str(), "Save\\Current")) {
-		logger->error("Error restoring archive {} to save\\test", path);
+	try {
+		SaveGameArchive::Unpack(path.c_str(), "Save\\Current");
+	} catch (const std::exception &e) {
+		logger->error("Error restoring savegame archive {} to Save\\Current: {}", path, e.what());
 		return false;
 	}
+
+	::SaveGame saveGame;
+	saveGame.Load("Save\\Current");
 
 	auto file = tio_fopen("Save\\Current\\data.sav", "rb");
 	if (!file) {

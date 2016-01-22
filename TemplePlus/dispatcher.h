@@ -84,16 +84,16 @@ struct DispatcherSystem : temple::AddressTable
 	
 #pragma endregion
 
-	uint32_t(__cdecl * dispatcherForCritters)(objHndl, DispIO *, enum_disp_type, uint32_t dispKey);
 	void DispIoDamageInit(DispIoDamage *dispIoDamage);
 	int32_t DispatchDamage(objHndl objHnd, DispIoDamage* dispIoDamage, enum_disp_type enumDispType, D20DispatcherKey d20DispatcherKey);
 	int DispatchD20ActionCheck(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, enum_disp_type dispType);
 	int Dispatch60GetAttackDice(objHndl obj, DispIoAttackDice * dispIo);
+
+	int DispatchGetBonus(objHndl critter, DispIoBonusList* bonusListOut, enum_disp_type dispType, D20DispatcherKey key);
+
 	DispatcherSystem()
 	{
 		rebase(_Dispatch29hMovementSthg,0x1004D080); 
-		rebase(dispatcherForCritters, 0x1004DD00);
-	
 	};
 private:
 	void(__cdecl *_Dispatch29hMovementSthg)(objHndl objHnd, void *);

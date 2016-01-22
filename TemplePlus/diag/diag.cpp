@@ -8,7 +8,6 @@
 #include "../gamesystems/gamesystems.h"
 #include "../gamesystems/gamerenderer.h"
 #include "../gamesystems/mapobjrender.h"
-#include "../gamesystems/mapsystems.h"
 #include "../gamesystems/partsystemsrenderer.h"
 #include "../gamesystems/clipping/clipping.h"
 
@@ -75,7 +74,7 @@ void DiagScreen::Render() {
 	lines.push_back(fmt::format("{} of {} rendered", mapObjRenderer.GetRenderedLastFrame(),
 		mapObjRenderer.GetTotalLastFrame()));
 
-	auto& clipping = mGameSystems.GetMapSystems().GetClipping();
+	auto& clipping = mGameSystems.GetClipping();
 	lines.push_back(fmt::format("# Clipping Objects"));
 	lines.push_back(fmt::format("{} of {} rendered", clipping.GetRenderered(),
 		clipping.GetTotal()));

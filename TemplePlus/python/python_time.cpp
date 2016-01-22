@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "python_time.h"
 #include <temple/dll.h>
-#include "timeevents.h"
+#include "gamesystems/timeevents.h"
 
 static PyTypeObject *GetPyTimeStampType();
 

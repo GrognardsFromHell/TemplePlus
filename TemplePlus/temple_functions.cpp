@@ -37,36 +37,10 @@ TempleFuncs::TempleFuncs()
 	rebase(ProcessSystemEvents, 0x101DF440);
 	rebase(StringHash, 0x101EBB00);
 	rebase(RNG, 0x10038DF0);
-	rebase(encodeTriplet,0x10038C50); 
+	rebase(dicePack,0x10038C50); 
 	rebase(UpdatePartyUI, 0x10134CB0);
 	rebase(PartyMoney, 0x1002B750);
 	rebase(DebitPartyMoney, 0x1002C020);
-
-
-
-# pragma region Obj Get/Set General
-
-	rebase(Obj_Get_Field_32bit, 0x1009E1D0);
-	rebase(Obj_Get_Field_64bit, 0x1009E2E0);
-	rebase(Obj_Get_Field_Float, 0x1009E260);
-	rebase(Obj_Get_Field_ObjHnd__fastout, 0x1009E360);
-
-
-	rebase(Obj_Get_IdxField_NumItems, 0x1009E7E0);
-
-	rebase(Obj_Get_IdxField_32bit, 0x1009E5C0);
-	rebase(Obj_Get_IdxField_64bit, 0x1009E640);
-	rebase(Obj_Get_IdxField_ObjHnd, 0x1009E6D0);
-	rebase(Obj_Get_ArrayElem_Generic, 0x1009E770);
-
-	rebase(Obj_Set_Field_32bit, 0x100A0190);
-	rebase(Obj_Set_Field_64bit, 0x100A0200);
-	rebase(Obj_Set_Field_ObjHnd, 0x100A0280);
-	rebase(Obj_Set_IdxField_byValue, 0x100A1310);
-	rebase(Obj_Set_IdxField_byPtr, 0x100A1540);
-	rebase(Obj_Set_IdxField_ObjHnd, 0x100A14A0);
-
-#pragma endregion
 
 	rebase(PyObjFromObjHnd, 0x100AF1D0);
 	rebase(GetProtoHandle, 0x1003AD70);

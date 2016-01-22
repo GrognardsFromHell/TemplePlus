@@ -16,6 +16,10 @@ namespace temple {
 
 		SoundDriverHandle GetSoundDriverHandle();
 
+		void ProcessEvents();
+
+		void SetReverb(int roomType, int reverbDry, int reverbWet);
+
 	private:
 		struct Impl;
 		std::unique_ptr<Impl> mImpl;

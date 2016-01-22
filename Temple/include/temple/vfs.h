@@ -33,13 +33,12 @@ namespace temple {
 		bool RemoveFile(const std::string &path) override;
 		void Pack(const std::vector<std::string> &args);
 
-	protected:
 		FileHandle Open(const char* name, const char* mode) override;
 		size_t Read(void* buffer, size_t size, FileHandle handle) override;
-		size_t Write(void* buffer, size_t size, FileHandle handle) override;
+		size_t Write(const void* buffer, size_t size, FileHandle handle) override;
 		size_t Length(FileHandle handle) override;
 		void Close(FileHandle handle) override;
-
+		size_t Tell(FileHandle handle) override;
 	private:
 
 		std::unique_ptr<class TioVfsImpl> mImpl;

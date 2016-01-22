@@ -17,10 +17,10 @@
 #include "temple_functions.h"
 #include "gamerenderer.h"
 #include "gamesystems.h"
-#include "mapsystems.h"
 #include "clipping/clipping.h"
 #include <config/config.h>
 #include "mapobjrender.h"
+#include "graphics/mapterrain.h"
 #include "partsystemsrenderer.h"
 
 using namespace gfx;
@@ -229,18 +229,16 @@ void GameRenderer::Render() {
 }
 
 void GameRenderer::RenderWorld(RenderWorldInfo *info) {
-
-  auto &mapSystems(mGameSystems.GetMapSystems());
-
+	
   if (mRenderingDevice.BeginFrame()) {
     // renderFuncs.RenderGround(info);
-    mapSystems.GetTerrain().Render();
+    mGameSystems.GetTerrain().Render();
 
     renderFuncs.PerformFogChecks();
 
 	mRenderingDevice.GetDevice()->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
 
-    mapSystems.GetClipping().Render();
+    mGameSystems.GetClipping().Render();
     // renderFuncs.RenderClipping();
 
     mMapObjectRenderer->RenderMapObjects(

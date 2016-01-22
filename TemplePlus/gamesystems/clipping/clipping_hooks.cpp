@@ -4,7 +4,6 @@
 
 #include "clipping.h"
 #include "../gamesystems.h"
-#include <gamesystems/mapsystems.h>
 
 static class ClippingHooks : public TempleFix {
 public:
@@ -29,7 +28,7 @@ void ClippingHooks::apply() {
 
 int ClippingHooks::ClippingLoad(const char* mapDir, const char* mapSaveDir) {
 
-	gameSystems->GetMapSystems().GetClipping().Load(mapDir);
+	gameSystems->GetClipping().Load(mapDir);
 	return 1;
 }
 
@@ -37,10 +36,8 @@ int ClippingHooks::ClippingClose() {
 	if (!gameSystems) {
 		return 1; // Game systems are shutting down already
 	}
-	auto& mapSystems = gameSystems->GetMapSystems();
-	if (mapSystems.IsClippingLoaded()) {
-		mapSystems.GetClipping().Unload();
-	}
+	auto& clipping = gameSystems->GetClipping();
+	clipping.Unload();
 	return 1;
 }
 

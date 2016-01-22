@@ -17,6 +17,8 @@
 #include "action_sequence.h"
 #include "ui/ui_item_creation.h"
 #include "util/fixes.h"
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/objects/objsystem.h"
 
 ConditionSystem conds;
 CondStructNew conditionDisableAoO;
@@ -402,7 +404,7 @@ int DisarmedRetrieveQuery(DispatcherCallbackArgs args)
 	objHndl weapon;
 	ObjectId objId;
 	memcpy(&objId, args.subDispNode->condNode->args, sizeof(ObjectId));
-	weapon = objects.GetHandle(objId);
+	weapon = gameSystems->GetObj().GetHandleById(objId);
 	*(uint64_t*)&dispIo->data1 = weapon;
 	return 0;
 };
@@ -970,16 +972,17 @@ CondStruct* ConditionSystem::GetByName(const string& name) {
 void ConditionSystem::AddToItem(objHndl item, const CondStruct* cond, const vector<int>& args) {
 	assert(args.size() == cond->numArgs);
 
-	auto curCondCount = templeFuncs.Obj_Get_IdxField_NumItems(item, obj_f_item_pad_wielder_condition_array);
-	auto curCondArgCount = templeFuncs.Obj_Get_IdxField_NumItems(item, obj_f_item_pad_wielder_argument_array);
+	auto obj = objSystem->GetObject(item);
+	auto curCondCount = obj->GetInt32Array(obj_f_item_pad_wielder_condition_array).GetSize();
+	auto curCondArgCount = obj->GetInt32Array(obj_f_item_pad_wielder_argument_array).GetSize();
 
 	// Add the condition name hash to the list
 	auto key = templeFuncs.StringHash(cond->condName);
-	templeFuncs.Obj_Set_IdxField_byValue(item, obj_f_item_pad_wielder_condition_array, curCondCount, key);
+	obj->SetInt32(obj_f_item_pad_wielder_condition_array, curCondCount, key);
 
 	auto idx = curCondArgCount;
 	for (auto arg : args) {
-		templeFuncs.Obj_Set_IdxField_byValue(item, obj_f_item_pad_wielder_argument_array, idx, arg);
+		obj->SetInt32(obj_f_item_pad_wielder_argument_array, idx, arg);
 		idx++;
 	}
 }
@@ -1903,7 +1906,7 @@ int DisarmedWeaponRetrieve(DispatcherCallbackArgs args)
 	{
 		ObjectId objId;
 		memcpy(&objId, args.subDispNode->condNode->args, sizeof(ObjectId));
-		weapon = objects.GetHandle(objId);
+		weapon = gameSystems->GetObj().GetHandleById(objId);
 	}
 	if (!weapon || (inventory.GetParent(weapon) && combatSys.isCombatActive())|| objects.GetType(weapon) != obj_t_weapon)
 	{

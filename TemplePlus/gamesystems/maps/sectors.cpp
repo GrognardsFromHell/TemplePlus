@@ -3,7 +3,7 @@
 
 #include <temple/dll.h>
 
-#include <timeevents.h>
+#include "gamesystems/timeevents.h"
 
 static int64_t MakeSectorLoc(int x, int y) {
 	return ((int64_t)(y & 0x3FFFFFF) << 26) | (x & 0x3FFFFFF);
@@ -102,9 +102,14 @@ LockedMapSector::LockedMapSector(int secX, int secY) {
 	auto sectorLoc = MakeSectorLoc(secX, secY);
 
 	if (!addresses.MapSectorLock(sectorLoc, &mSector)) {
+		logger->warn("Unable to lock sector {}, {}", secX, secY);
 		mSector = nullptr;
 	}
 
+}
+
+LockedMapSector::LockedMapSector(SectorLoc loc) : LockedMapSector(loc.x(), loc.y())
+{
 }
 
 LockedMapSector::~LockedMapSector() {
@@ -124,4 +129,10 @@ SectorObjectsNode* LockedMapSector::GetObjectsAt(int x, int y) const {
 
 SectorLightIterator LockedMapSector::GetLights() {
 	return SectorLightIterator(mSector->lights.head);
+}
+
+void LockedMapSector::AddObject(objHndl handle)
+{
+	static auto map_sector_objects_add = temple::GetPointer<BOOL(SectorObjects*objects, objHndl ObjHnd)>(0x100c1ad0);
+	map_sector_objects_add(&mSector->objects, handle);
 }

@@ -10,6 +10,7 @@
 #include "temple_functions.h"
 #include "radialmenu.h"
 #include "critter.h"
+#include "gamesystems/objects/objsystem.h"
 #include <infrastructure/elfhash.h>
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
@@ -278,7 +279,7 @@ CondStruct* LegacySpellSystem::GetCondFromSpellIdx(int id) {
 }
 
 void LegacySpellSystem::ForgetMemorized(objHndl handle) {
-	objects.ClearArrayField(handle, obj_f_critter_spells_memorized_idx);
+	objSystem->GetObject(handle)->ClearArray(obj_f_critter_spells_memorized_idx);
 }
 
 uint32_t LegacySpellSystem::getSpellEnum(const char* spellName)
@@ -326,12 +327,13 @@ uint32_t LegacySpellSystem::spellKnownQueryGetData(objHndl objHnd, uint32_t spel
 	uint32_t * n = count;
 	if (count == nullptr) n = &countLocal;
 
+	auto obj = objSystem->GetObject(objHnd);
+
 	*n = 0;
-	uint32_t numSpellsKnown = objects.getArrayFieldNumItems(objHnd, obj_f_critter_spells_known_idx);
-	for (uint32_t i = 0; i < numSpellsKnown; i++)
+	auto numSpellsKnown = obj->GetSpellArray(obj_f_critter_spells_known_idx).GetSize();
+	for (size_t i = 0; i < numSpellsKnown; i++)
 	{
-		SpellStoreData spellData;
-		objects.getArrayField(objHnd, obj_f_critter_spells_known_idx, i, &spellData);
+		auto spellData = obj->GetSpell(obj_f_critter_spells_known_idx, i);
 		if (spellData.spellEnum == spellEnum)
 		{
 			if (classCodesOut) classCodesOut[*n] = spellData.classCode;
@@ -406,12 +408,12 @@ uint32_t LegacySpellSystem::spellMemorizedQueryGetData(objHndl objHnd, uint32_t 
 	uint32_t * n = count;
 	if (count == nullptr) n = &countLocal;
 
+	auto obj = objSystem->GetObject(objHnd);
+
 	*n = 0;
-	uint32_t numSpellsMemod = objects.getArrayFieldNumItems(objHnd, obj_f_critter_spells_memorized_idx);
-	for (int32_t i = 0; i < (int32_t)numSpellsMemod; i++)
-	{
-		SpellStoreData spellData;
-		objects.getArrayField(objHnd, obj_f_critter_spells_memorized_idx, i, &spellData);
+	auto numSpellsMemod = obj->GetSpellArray(obj_f_critter_spells_memorized_idx).GetSize();
+	for (size_t i = 0; i < numSpellsMemod; i++) {
+		auto spellData = obj->GetSpell(obj_f_critter_spells_memorized_idx, i);
 		if (spellData.spellEnum == spellEnum && !spellData.spellStoreState.usedUp)
 		{
 			if (classCodesOut) classCodesOut[*n] = spellData.classCode;
@@ -424,7 +426,9 @@ uint32_t LegacySpellSystem::spellMemorizedQueryGetData(objHndl objHnd, uint32_t 
 
 bool LegacySpellSystem::numSpellsKnownTooHigh(objHndl objHnd)
 {
-	if (objects.getArrayFieldNumItems(objHnd, obj_f_critter_spells_known_idx) > MAX_SPELLS_KNOWN)
+	auto obj = objSystem->GetObject(objHnd);
+
+	if (obj->GetSpellArray(obj_f_critter_spells_known_idx).GetSize() > MAX_SPELLS_KNOWN)
 	{
 		logger->info("spellCanCast(): ERROR! This critter knows WAAY too many spells! Returning 0.");
 		return 1;
@@ -434,7 +438,9 @@ bool LegacySpellSystem::numSpellsKnownTooHigh(objHndl objHnd)
 
 bool LegacySpellSystem::numSpellsMemorizedTooHigh(objHndl objHnd)
 {
-	if (objects.getArrayFieldNumItems(objHnd, obj_f_critter_spells_memorized_idx) > MAX_SPELLS_KNOWN)
+	auto obj = objSystem->GetObject(objHnd);
+
+	if (obj->GetSpellArray(obj_f_critter_spells_memorized_idx).GetSize() > MAX_SPELLS_KNOWN)
 	{
 		logger->info("spellCanCast(): ERROR! This critter memorized WAAY too many spells! Returning 0.");
 		return 1;
