@@ -58,6 +58,8 @@ public:
 		return mShowHighlights;
 	}
 
+	std::vector<gfx::Light3d> FindLights(LocAndOffsets atLocation, float radius);
+
 private:
 	GameSystems& mGameSystems;
 	gfx::RenderingDevice& mDevice;
@@ -71,8 +73,6 @@ private:
 
 	size_t mRenderedLastFrame = 0;
 	size_t mTotalLastFrame = 0;
-
-	std::vector<gfx::Light3d> FindLights(LocAndOffsets atLocation, float radius);
 
 	/*
 	Same as sin45 incidentally.

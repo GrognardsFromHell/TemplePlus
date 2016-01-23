@@ -18,6 +18,7 @@
 #include "obj.h"
 #include "gamesystems/legacysystems.h"
 #include "gamesystems/objects/objsystem.h"
+#include "gamesystems/map/gmesh.h"
 #include "tig/tig_startup.h"
 #include "temple/soundsystem.h"
 

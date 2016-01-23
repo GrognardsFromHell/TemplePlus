@@ -57,6 +57,7 @@
     <ClCompile Include="gamesystems\mapsystem.cpp" />
     <ClCompile Include="gamesystems\mapsystem_hooks.cpp" />
     <ClCompile Include="gamesystems\maps\sectors.cpp" />
+    <ClCompile Include="gamesystems\map\gmesh.cpp" />
     <ClCompile Include="gamesystems\objects\arrayidxbitmaps.cpp" />
     <ClCompile Include="gamesystems\objects\arrayidxbitmaps_hooks.cpp" />
     <ClCompile Include="gamesystems\objects\gameobject.cpp" />
@@ -266,6 +267,7 @@
     <ClInclude Include="gamesystems\loadingscreen.h" />
     <ClInclude Include="gamesystems\mapsystem.h" />
     <ClInclude Include="gamesystems\map\d20_help.h" />
+    <ClInclude Include="gamesystems\map\gmesh.h" />
     <ClInclude Include="gamesystems\map\sector.h" />
     <ClInclude Include="gamesystems\map\tig_console.h" />
     <ClInclude Include="gamesystems\objects\arrayidxbitmaps.h" />

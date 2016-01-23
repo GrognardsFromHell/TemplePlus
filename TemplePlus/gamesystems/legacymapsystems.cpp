@@ -446,33 +446,6 @@ void HeightSystem::Clear()
 }
 
 //*****************************************************************************
-//* GMesh
-//*****************************************************************************
-
-GMeshSystem::GMeshSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x100a3440);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system GMesh");
-	}
-}
-GMeshSystem::~GMeshSystem() {
-	auto shutdown = temple::GetPointer<void()>(0x100a3de0);
-	shutdown();
-}
-const std::string &GMeshSystem::GetName() const {
-	static std::string name("GMesh");
-	return name;
-}
-
-void GMeshSystem::Load(const std::string & dataDir)
-{
-	static auto load = temple::GetPointer<BOOL(const char*)>(0x100A3770);
-	if (!load(dataDir.c_str())) {
-		throw TempleException("Unable to load GMesh data from {}", dataDir);
-	}
-}
-
-//*****************************************************************************
 //* PathNode
 //*****************************************************************************
 

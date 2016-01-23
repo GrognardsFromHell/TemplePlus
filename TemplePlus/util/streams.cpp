@@ -23,6 +23,27 @@ void InputStream::CopyTo(OutputStream& out, size_t bytes) {
 
 }
 
+VfsInputStream::VfsInputStream(const std::string& filename) : mFilename(filename) {
+	mHandle = vfs->Open(filename.c_str(), "rb");
+	if (!mHandle) {
+		throw TempleException("Cannot open {} for reading.", filename);
+	}
+}
+
+VfsInputStream::~VfsInputStream() {
+	vfs->Close(mHandle);
+}
+
+void VfsInputStream::ReadRaw(void* buffer, size_t count) {
+	if (vfs->Read(buffer, count, mHandle) != count) {
+		throw TempleException("Error while reading {} bytes from {}", count, mFilename);
+	}
+}
+
+size_t VfsInputStream::GetPos() const {
+	return vfs->Tell(mHandle);
+}
+
 VfsOutputStream::VfsOutputStream(const std::string& filename) : mFilename(filename) {
 	mHandle = vfs->Open(filename.c_str(), "wb");
 	if (!mHandle) {

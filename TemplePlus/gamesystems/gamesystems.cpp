@@ -24,6 +24,7 @@
 #include "clipping/clipping.h"
 #include "gamesystems/timeevents.h"
 #include "gamesystems/objects/objsystem.h"
+#include "gamesystems/map/gmesh.h"
 
 #include "mapsystem.h"
 #include <infrastructure/vfs.h>
@@ -655,7 +656,7 @@ void GameSystems::InitializeSystems(LoadingScreen& loadingScreen) {
 	loadingScreen.SetProgress(33 / 79.0f);
 	mHeight = InitializeSystem<HeightSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(34 / 79.0f);
-	mGMesh = InitializeSystem<GMeshSystem>(loadingScreen, mConfig);
+	mGMesh = InitializeSystem<GMeshSystem>(loadingScreen, *mAAS);
 	loadingScreen.SetProgress(35 / 79.0f);
 	mPathNode = InitializeSystem<PathNodeSystem>(loadingScreen, mConfig);
 	/* END Former Map Subsystems */

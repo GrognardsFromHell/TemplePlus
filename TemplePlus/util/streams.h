@@ -118,6 +118,17 @@ public:
 		return result;
 	}
 
+	/**
+	 * Reads a fixed length string from the file. Ensures the string is properly null terminated.
+	 */
+	std::string ReadStringFixed(size_t size) {
+		std::vector<char> buffer(size + 1, 0);
+		ReadRaw(&buffer[0], size);
+		std::string result;
+		result.assign(buffer.data(), size);
+		return result;
+	}
+
 	LocFull ReadLocFull() {
 		LocFull result;
 		result.location.location = locXY::fromField(ReadUInt64());
@@ -130,9 +141,28 @@ public:
 	locXY ReadLoc() {
 		return locXY::fromField(ReadUInt64());
 	}
+
+	XMFLOAT3 ReadXMFLOAT3() {
+		XMFLOAT3 result;
+		ReadRaw(&result, sizeof(result));
+		return result;
+	}
+
 protected:
 	virtual void ReadRaw(void* buffer, size_t count) = 0;
 	virtual size_t GetPos() const = 0;
+};
+
+class VfsInputStream : public InputStream {
+public:
+	VfsInputStream(const std::string &filename);
+	~VfsInputStream();
+protected:
+	void ReadRaw(void* buffer, size_t count) override;
+	size_t GetPos() const override;
+private:
+	void* mHandle = nullptr;
+	std::string mFilename;
 };
 
 class MemoryInputStream : public InputStream {

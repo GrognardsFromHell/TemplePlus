@@ -174,16 +174,6 @@ public:
 	void Clear();
 };
 
-class GMeshSystem : public GameSystem {
-public:
-	static constexpr auto Name = "GMesh";
-	GMeshSystem(const GameSystemConf &config);
-	~GMeshSystem();
-	const std::string &GetName() const override;
-
-	void Load(const std::string &dataDir);
-};
-
 class PathNodeSystem : public GameSystem, public ResetAwareGameSystem {
 public:
 	static constexpr auto Name = "PathNode";

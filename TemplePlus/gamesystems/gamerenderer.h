@@ -20,6 +20,7 @@ class MapClipping;
 class GameSystems;
 class ParticleSystemsRenderer;
 class MapObjectRenderer;
+class GMeshRenderer;
 
 class GameRenderer {
 public:
@@ -46,6 +47,7 @@ private:
 	std::unique_ptr<class temple::AasRenderer> mAasRenderer;
 	std::unique_ptr<MapObjectRenderer> mMapObjectRenderer;
 	std::unique_ptr<ParticleSystemsRenderer> mParticleSysRenderer;
+	std::unique_ptr<GMeshRenderer> mGmeshRenderer;
 };
 
 extern GameRenderer *gameRenderer;

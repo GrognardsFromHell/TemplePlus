@@ -22,6 +22,7 @@
 #include "mapobjrender.h"
 #include "graphics/mapterrain.h"
 #include "partsystemsrenderer.h"
+#include "map/gmesh.h"
 
 using namespace gfx;
 using namespace temple;
@@ -154,6 +155,9 @@ GameRenderer::GameRenderer(TigInitializer &tig,
 		gameSystems.GetAAS(),
 		*mAasRenderer,
 		gameSystems.GetParticleSys());
+	mGmeshRenderer = std::make_unique<GMeshRenderer>(*mAasRenderer,
+		*mMapObjectRenderer,
+		gameSystems.GetGMesh());
 
 	gameRenderer = this;
 
@@ -244,8 +248,10 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
     mMapObjectRenderer->RenderMapObjects(
         (int)info->tiles->x1, (int)info->tiles->x2, (int)info->tiles->y1,
         (int)info->tiles->y2);
-    /*renderFuncs.RenderMapObj(info);
-    renderFuncs.RenderGMesh();
+    //renderFuncs.RenderMapObj(info);
+    
+	mGmeshRenderer->Render();
+	/*renderFuncs.RenderGMesh();
     renderFuncs.RenderPfxLighting();*/
 
 	mRenderingDevice.GetDevice()->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, FALSE);
