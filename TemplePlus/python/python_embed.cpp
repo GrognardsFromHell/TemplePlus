@@ -52,7 +52,7 @@ void PythonPrepareGlobalNamespace() {
 	Py_DECREF(toeeModule);
 	
 	auto utilsModule = PyImport_ImportModule("utilities");
-	auto utilsDict = PyModule_GetDict(toeeModule);
+	auto utilsDict = PyModule_GetDict(utilsModule);
 	if (PyDict_Merge(MainModuleDict, utilsDict, FALSE) == -1) {
 		logger->error("Unable to import utilities.* into __main__");
 		PyErr_Print();

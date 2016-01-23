@@ -12,6 +12,8 @@
 #include "objlist.h"
 #include "util/config.h"
 #include "party.h"
+#include "python/python_integration_obj.h"
+#include "python/python_object.h"
 
 Pathfinding pathfindingSys;
 
@@ -35,6 +37,19 @@ struct ProximityList
 		}
 		proxListObjs[count].obj = obj;
 		proxListObjs[count].radius = objects.GetRadius(obj);
+		proxListObjs[count].loc = objects.GetLocationFull(obj);
+		count++;
+	}
+
+	void Append(objHndl obj, float radius)
+	{
+		if (count >= 256)
+		{
+			logger->error("Error: Proximity list cap reached");
+			assert(count < 256);
+		}
+		proxListObjs[count].obj = obj;
+		proxListObjs[count].radius = radius;
 		proxListObjs[count].loc = objects.GetLocationFull(obj);
 		count++;
 	}
@@ -83,7 +98,34 @@ struct ProximityList
 							if (critterSys.IsFriendly(obj, pqr->mover) || critterSys.IsDeadOrUnconscious(obj))
 								continue;
 						}
-						Append(obj);
+
+						if (!(pq->flags & PQF_AVOID_AOOS))
+							Append(obj); 
+						else
+						{
+							auto args = PyTuple_New(2);
+							PyTuple_SET_ITEM(args, 0, PyObjHndl_Create(pq->critter));
+							PyTuple_SET_ITEM(args, 1, PyObjHndl_Create(obj));
+							auto result = pythonObjIntegration.ExecuteScript("combat", "ShouldIgnoreTarget", args);
+							//auto result2 = pythonObjIntegration.ExecuteScript("combat", "TargetClosest", args);
+							int ignoreTarget = PyInt_AsLong(result);
+							Py_DECREF(result);
+							if (!ignoreTarget)
+							{
+								if (critterSys.IsWieldingRangedWeapon(obj))
+								{
+									Append(obj);
+								} else
+								{
+									float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
+									float objRadius = objects.GetRadius(obj);
+									Append(obj, objReach + objRadius);
+								}
+							} else
+							{
+								Append(obj);
+							}
+						}
 					}
 
 				}
@@ -1121,6 +1163,7 @@ int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 	{
 		logger->info("*** START OF PF ATTEMPT ADJ RADIUS - DESTINATION {} ***", pqr->to);
 	}
+
 	while(1)
 	{
 		curIdx = firstChainIdx;

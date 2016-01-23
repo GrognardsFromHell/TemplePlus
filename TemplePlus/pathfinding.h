@@ -59,19 +59,20 @@ enum PathQueryFlags : uint32_t {
 
 	PQF_DONT_USE_PATHNODES = 0x4000,
 	PQF_DONT_USE_STRAIGHT_LINE = 0x8000,
-	PQF_FORCED_STRAIGHT_LINE =  0x10000,
+	PQF_FORCED_STRAIGHT_LINE = 0x10000,
 	PQF_ADJ_RADIUS_REQUIRE_LOS = 0x20000,
 	/*
-		if the target destination is not cleared, and PQF_ADJUST_RADIUS is off, 
-		it will search in a 5x5 tile neighbourgood around the original target tile 
+		if the target destination is not cleared, and PQF_ADJUST_RADIUS is off,
+		it will search in a 5x5 tile neighbourgood around the original target tile
 		for a clear tile (i.e. one that the critter can fit in without colliding with anything)
 	*/
 	PQF_ALLOW_ALTERNATIVE_TARGET_TILE = 0x40000,
 
 	// Appears to mean that pathfinding should obey the time limit
-	PQF_A_STAR_TIME_CAPPED =			  0x80000, // it is set when the D20 action has the flag D20CAF_TRUNCATED
-	PQF_IGNORE_CRITTERS_ON_DESTINATION = 0x800000 // NEW! makes it ignored critters on the PathDestIsClear function
+	PQF_A_STAR_TIME_CAPPED = 0x80000, // it is set when the D20 action has the flag D20CAF_TRUNCATED
 
+	PQF_IGNORE_CRITTERS_ON_DESTINATION = 0x800000, // NEW! makes it ignored critters on the PathDestIsClear function
+	PQF_AVOID_AOOS = 0x1000000 // NEW! Make the PF attempt avoid Aoos (using the ShouldIgnore function in combat.py to ignore insiginificant threats)
 };
 
 #pragma pack(push, 1)

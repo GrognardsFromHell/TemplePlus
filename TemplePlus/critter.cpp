@@ -486,6 +486,10 @@ bool CritterSystem::IsWieldingRangedWeapon(objHndl obj)
 {
 	auto weapon = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
 	if (!weapon)
+	{
+		weapon = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);
+	}
+	if (!weapon)
 		return 0;
 	return (objects.getInt32(weapon, obj_f_weapon_flags) & OWF_RANGED_WEAPON ) != 0;
 }

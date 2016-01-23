@@ -566,7 +566,7 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 	int enemyCount = 0;
 	objHndl* enemies = combatSys.GetHostileCombatantList(obj, &enemyCount );
 
-	while (truncateLengthFeet <  pathLength - 0.5)
+	while (truncateLengthFeet <  pathLength - 2.0)
 	{
 
 		// obj is moving away from truncatedLoc
@@ -608,7 +608,7 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 		truncateLengthFeet = truncateLengthFeet + 4.0;
 		aooDistFeet = truncateLengthFeet;
 
-		if (truncateLengthFeet < pathLength - 0.5)
+		if (truncateLengthFeet < pathLength - 2.0)
 			pathfindingSys.TruncatePathToDistance(aooPacket->path, &truncatedLoc, truncateLengthFeet);
 
 
