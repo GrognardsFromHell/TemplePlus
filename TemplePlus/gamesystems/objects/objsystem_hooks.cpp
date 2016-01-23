@@ -107,6 +107,10 @@ public:
 
 		// obj_get_int32
 		replaceFunction<int32_t(objHndl, obj_f)>(0x1009e1d0, [](objHndl handle, obj_f field) {
+			// Special handling for some spellslinger methods that do not check for null-handles
+			if (!handle) {
+				return 0;
+			}
 			return GetObj(handle)->GetInt32(field);
 		});
 

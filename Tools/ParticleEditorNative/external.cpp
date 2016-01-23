@@ -12,7 +12,7 @@ float EditorExternal::GetParticleFidelity() {
 	return 1.0f;
 }
 
-bool EditorExternal::GetObjLocation(ObjHndl obj, ::Vec3& worldPos) {
+bool EditorExternal::GetObjLocation(ObjHndl obj, XMFLOAT3& worldPos) {
 	worldPos.x = mDll.animParams.offsetX;
 	worldPos.y = mDll.animParams.offsetY;
 	worldPos.z = mDll.animParams.offsetZ;

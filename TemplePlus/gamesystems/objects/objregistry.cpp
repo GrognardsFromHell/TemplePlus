@@ -2,17 +2,36 @@
 #include "stdafx.h"
 #include "objregistry.h"
 
+#include "../../obj.h"
+
 const size_t objBodySize = 168; // Passed in to Object_Tables_Init
 static_assert(temple::validate_size<GameObjectBody, objBodySize>::value, "Object structure has incorrect size.");
 
-static struct ObjAdresses : temple::AddressTable {
+static std::hash<int> sIntHasher;
+static std::hash<uint64_t> sHandleHasher;
 
-	void(*ObjUnload)(objHndl handle);
-
-	ObjAdresses() {
-		rebase(ObjUnload, 0x1009E0D0);
+hash<ObjectId>::result_type hash<ObjectId>::operator()(argument_type const& id) const {
+	result_type result;
+	switch (id.subtype) {
+	default:
+	case ObjectIdKind::Null:
+		return 0;
+	case ObjectIdKind::Prototype:
+		return sIntHasher(id.GetPrototypeId());
+	case ObjectIdKind::Permanent:
+		result = sHandleHasher(*(uint64_t*)&id.body.guid.Data1);
+		result ^= sHandleHasher(*(uint64_t*)&id.body.guid.Data4[0]);
+		return result;
+	case ObjectIdKind::Positional:
+		result = sHandleHasher(*(uint64_t*)&id.body.pos.x);
+		result ^= sHandleHasher(*(uint64_t*)&id.body.pos.tempId);
+		return result;
+	case ObjectIdKind::Handle:
+		return sHandleHasher(id.GetHandle());
+	case ObjectIdKind::Blocked:
+		return 0;
 	}
-} addresses;
+}
 
 ObjRegistry::ObjRegistry() {
 	mObjects.reserve(8192);
@@ -73,11 +92,7 @@ void ObjRegistry::Clear() {
 		toRemove.push_back(it.first);
 	}
 
-	logger->info("Destroying {} leftover objects.", toRemove.size());
-
-	for (auto handle : toRemove) {
-		addresses.ObjUnload(handle);
-	}
+	logger->info("Letting {} leftover objects leak.", toRemove.size());
 
 	mObjectIndex.clear();
 
@@ -103,8 +118,10 @@ bool ObjRegistry::Contains(objHndl handle) {
 
 objHndl ObjRegistry::Add(std::unique_ptr<GameObjectBody>&& ptr) {
 
-	auto id = mNextId++;
+	objHndl id = mNextId++;
 	auto obj = ptr.get();
+
+	id |= ((uint64_t)obj) << 32;
 
 	mObjects.emplace(std::make_pair(id, std::move(ptr)));
 
@@ -118,6 +135,11 @@ objHndl ObjRegistry::Add(std::unique_ptr<GameObjectBody>&& ptr) {
 
 GameObjectBody* ObjRegistry::Get(objHndl handle) {
 
+	if (!handle) {
+		return nullptr;
+	}
+
+	return (GameObjectBody*)(handle >> 32);
 	if (lastObj == handle) {
 		return lastObjBody;
 	}

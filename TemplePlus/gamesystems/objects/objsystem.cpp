@@ -453,7 +453,7 @@ objHndl ObjSystem::LoadFromBuffer(void* bufferPtr) {
 
 	uint16_t propCount = buffer.Read<uint16_t>();
 
-	for (auto i = 0; i < propCount; ++i) {
+	for (auto i = 0; i < propLen; ++i) {
 		obj->propCollBitmap[i] = buffer.Read<uint32_t>();
 	}
 

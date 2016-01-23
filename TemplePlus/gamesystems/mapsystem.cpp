@@ -74,6 +74,7 @@ public:
 		rebase(FirstNonProtoHandle, 0x1009CC10);
 		rebase(NextNonProtoHandle, 0x1009CCB0);
 		rebase(call_ui_tutorial_isactive, 0x1009AB80);
+		rebase(ui_show_tip, 0x1009AC40);
 	}
 
 } addresses;
