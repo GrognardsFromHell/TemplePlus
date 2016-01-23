@@ -89,14 +89,13 @@ std::string Vfs::ReadAsString(const std::string& filename) {
 	// Length is just an upper bound because it will count the \r's in the string
 	auto fileSize = Length(fh);
 	std::string result;
-	result.resize(fileSize);
-	size_t actualSize = 0;
+	result.reserve(fileSize);
 	size_t bytesRead;
-	while ((bytesRead = Read(&result[actualSize], 4096, fh)) != 0) {
-		actualSize += bytesRead;
-	}
-	// Now resize to the actual size without the \r's
-	result.resize(actualSize);
+	do {
+		char buffer[4096];
+		bytesRead = Read(&buffer[0], 4096, fh);
+		result.append(&buffer[0], bytesRead);
+	} while (bytesRead == 4096);
 	Close(fh);
 	return result;
 }

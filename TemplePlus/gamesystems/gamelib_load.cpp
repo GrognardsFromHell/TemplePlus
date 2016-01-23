@@ -82,8 +82,9 @@ bool GameSystems::LoadGame(const string& filename) {
 		return false;
 	}
 
-	::SaveGame saveGame;
-	saveGame.Load("Save\\Current");
+	// this is for later
+	// ::SaveGame saveGame;
+	// saveGame.Load("Save\\Current");
 
 	auto file = tio_fopen("Save\\Current\\data.sav", "rb");
 	if (!file) {

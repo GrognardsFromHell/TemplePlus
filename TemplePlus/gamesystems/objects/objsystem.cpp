@@ -789,7 +789,7 @@ void ObjSystem::ReadFieldValue(obj_f field, void** storageLoc, TioFile *file) {
 		arr->elSize = header.elSize;
 		arr->count = header.count;
 
-		if (tio_fread(arr->GetData(), header.elSize * header.count, 1, file) != 1) {
+		if (tio_fread(arr->GetData(), header.elSize, header.count, file) != header.count) {
 			free(arr);
 			break;
 		}

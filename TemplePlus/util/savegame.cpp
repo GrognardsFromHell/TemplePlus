@@ -298,6 +298,7 @@ void SaveGame::LoadDataSav(InputStream &in) {
 	// Gamesystem "area"
 	mKnownAreas.clear();
 	// Vanilla ToEE has 13 areas
+	// Co8 has more, so this needs adjustment
 	for (size_t i = 0; i < 13; ++i) {
 		if (in.ReadUInt8()) {
 			mKnownAreas.insert(i);

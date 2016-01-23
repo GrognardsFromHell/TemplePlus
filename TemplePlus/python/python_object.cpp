@@ -673,7 +673,7 @@ static PyObject* PyObjHandle_HasWielded(PyObject* obj, PyObject* args) {
 
 	for (auto i = 0; i < (int) EquipSlot::Count; ++i) {
 		auto item = critterSys.GetWornItem(self->handle, (EquipSlot) i);
-		if (objects.GetNameId(item) == nameId) {
+		if (item && objects.GetNameId(item) == nameId) {
 			return PyInt_FromLong(1);
 		}
 	}
