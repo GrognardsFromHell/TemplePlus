@@ -251,8 +251,9 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
     //renderFuncs.RenderMapObj(info);
     
 	mGmeshRenderer->Render();
-	/*renderFuncs.RenderGMesh();
-    renderFuncs.RenderPfxLighting();*/
+	// renderFuncs.RenderGMesh();
+    
+	// renderFuncs.RenderPfxLighting();
 
 	mRenderingDevice.GetDevice()->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, FALSE);
 

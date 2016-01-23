@@ -26,10 +26,14 @@ class GameObjectArrayHelper {
 public:
 	GameObjectArrayHelper(ArrayHeader** storageLocation) 
 		: mStorageLocation(storageLocation) {
-		Expects(!(*mStorageLocation) || (*mStorageLocation)->elSize == sizeof(T));
+		Expects(!mStorageLocation || !(*mStorageLocation) || (*mStorageLocation)->elSize == sizeof(T));
 	}
 
 	size_t GetSize() const {
+		if (!mStorageLocation) {
+			// The type of the object didn't support this field
+			return 0;
+		}
 		if (!*mStorageLocation) {
 			return 0;
 		}
@@ -37,12 +41,21 @@ public:
 	}
 
 	bool HasIndex(size_t index) const {
+		if (!mStorageLocation) {
+			// The type of the object didn't support this field
+			return false;
+		}
 		return arrayIdxBitmaps.HasIndex((*mStorageLocation)->idxBitmapId, index);
 	}
 
 	const T& operator[](size_t index) const;
 
 	void Set(size_t index, const T& value) {
+		if (!mStorageLocation) {
+			// The type of the object didn't support this field
+			return;
+		}
+
 		// Initialize the array storage if necessary
 		if (!*mStorageLocation) {
 			*mStorageLocation = (ArrayHeader*)malloc(sizeof(ArrayHeader));
@@ -76,6 +89,11 @@ public:
 	}
 
 	void Remove(size_t index) {
+		if (!mStorageLocation) {
+			// The type of the object didn't support this field
+			return;
+		}
+
 		if (!*mStorageLocation) {
 			return; // No storage allocated anyway
 		}
@@ -105,6 +123,11 @@ public:
 	}
 
 	void Clear() {
+		if (!mStorageLocation) {
+			// The type of the object didn't support this field
+			return;
+		}
+
 		if (!*mStorageLocation) {
 			return; // Already reset
 		}
@@ -118,6 +141,11 @@ public:
 	 * Also passes a mutable data pointer.
 	 */
 	void ForEachIndex(std::function<void(size_t)> callback) {
+		if (!mStorageLocation) {
+			// The type of the object didn't support this field
+			return;
+		}
+
 		if (!*mStorageLocation) {
 			return;
 		}
@@ -148,6 +176,13 @@ using GameSpellArray = GameObjectArrayHelper<SpellStoreData>;
 template<typename T>
 inline const T & GameObjectArrayHelper<T>::operator[](size_t index) const
 {
+	if (!mStorageLocation) {
+		static T empty;
+		memset(&empty, 0, sizeof(empty));
+		// The type of the object didn't support this field
+		return empty;
+	}
+
 	static T sEmpty = T();
 	if (!*mStorageLocation || !HasIndex(index)) {
 		return sEmpty;

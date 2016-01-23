@@ -86,10 +86,17 @@ std::string Vfs::ReadAsString(const std::string& filename) {
 	if (!fh) {
 		throw TempleException("Unable to find file {}", filename);
 	}
+	// Length is just an upper bound because it will count the \r's in the string
 	auto fileSize = Length(fh);
 	std::string result;
 	result.resize(fileSize);
-	Read(const_cast<char*>(result.data()), fileSize, fh);
+	size_t actualSize = 0;
+	size_t bytesRead;
+	while ((bytesRead = Read(&result[actualSize], 4096, fh)) != 0) {
+		actualSize += bytesRead;
+	}
+	// Now resize to the actual size without the \r's
+	result.resize(actualSize);
 	Close(fh);
 	return result;
 }

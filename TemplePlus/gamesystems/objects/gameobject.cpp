@@ -485,6 +485,11 @@ void GameObjectBody::SetInt32(obj_f field, int32_t value)
 {
 	Expects(objectFields.GetFieldDef(field).type == ObjectFieldType::Int32);
 	auto storageLoc = GetMutableStorageLocation<int32_t>(field);
+	if (!storageLoc) {
+		logger->error("Trying to set field {} on object {}, whose type doesn't support it.", 
+			GetObjectFieldName(field), id.ToString());
+		return;
+	}
 	*storageLoc = value;
 }
 
@@ -492,6 +497,11 @@ void GameObjectBody::SetFloat(obj_f field, float value)
 {
 	Expects(objectFields.GetFieldDef(field).type == ObjectFieldType::Float32);
 	auto storageLoc = GetMutableStorageLocation<float>(field);
+	if (!storageLoc) {
+		logger->error("Trying to set field {} on object {}, whose type doesn't support it.",
+			GetObjectFieldName(field), id.ToString());
+		return;
+	}
 	*storageLoc = value;
 }
 
@@ -499,6 +509,11 @@ void GameObjectBody::SetInt64(obj_f field, int64_t value)
 {
 	Expects(objectFields.GetFieldDef(field).type == ObjectFieldType::Int64);
 	auto storageLoc = GetMutableStorageLocation<int64_t*>(field);
+	if (!storageLoc) {
+		logger->error("Trying to set field {} on object {}, whose type doesn't support it.",
+			GetObjectFieldName(field), id.ToString());
+		return;
+	}
 	if (*storageLoc) {
 		**storageLoc = value;
 	} else {
@@ -535,6 +550,11 @@ void GameObjectBody::SetObjectId(obj_f field, const ObjectId &value)
 	// this id is valid for the id storage state of this object (persistent ids vs. handles)
 	Expects(objectFields.GetFieldDef(field).type == ObjectFieldType::Obj);
 	auto storageLoc = GetMutableStorageLocation<ObjectId*>(field);
+	if (!storageLoc) {
+		logger->error("Trying to set field {} on object {}, whose type doesn't support it.",
+			GetObjectFieldName(field), id.ToString());
+		return;
+	}
 	if (*storageLoc) {
 		**storageLoc = value;
 	} else {
@@ -1105,6 +1125,8 @@ template<typename T>
 const T * GameObjectBody::GetStorageLocation(obj_f field) const
 {
 	if (!ValidateFieldForType(field)) {
+		logger->error("Trying to get field {} on object {}, whose type doesn't support it.",
+			GetObjectFieldName(field), id.ToString());
 		return nullptr;
 	}
 
