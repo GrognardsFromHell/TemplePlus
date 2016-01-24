@@ -140,6 +140,9 @@ GameObjectBody* ObjRegistry::Get(objHndl handle) {
 	}
 
 	return (GameObjectBody*)(handle >> 32);
+
+	// This would be the traditional way and it does detect when handles
+	// are no longer valid
 	if (lastObj == handle) {
 		return lastObjBody;
 	}

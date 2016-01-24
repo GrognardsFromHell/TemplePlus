@@ -330,6 +330,7 @@
     <ClCompile Include="util\streams.cpp" />
     <ClCompile Include="util\datadump.cpp" />
     <ClCompile Include="gamesystems\map\gmesh.cpp" />
+    <ClCompile Include="gamesystems\lightningrenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -626,6 +627,7 @@
     <ClInclude Include="util\streams.h" />
     <ClInclude Include="util\datadump.h" />
     <ClInclude Include="gamesystems\map\gmesh.h" />
+    <ClInclude Include="gamesystems\lightningrenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

@@ -41,6 +41,7 @@ IndexBufferLock IndexBuffer::Lock() {
 void IndexBuffer::Unlock() {
 	Expects(mLocked);
 	D3DLOG(mIndexBuffer->Unlock());
+	mLocked = false;
 }
 
 void IndexBuffer::Update(gsl::array_view<uint16_t> data) {

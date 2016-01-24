@@ -23,6 +23,7 @@
 #include "graphics/mapterrain.h"
 #include "partsystemsrenderer.h"
 #include "map/gmesh.h"
+#include "lightningrenderer.h"
 
 using namespace gfx;
 using namespace temple;
@@ -158,6 +159,9 @@ GameRenderer::GameRenderer(TigInitializer &tig,
 	mGmeshRenderer = std::make_unique<GMeshRenderer>(*mAasRenderer,
 		*mMapObjectRenderer,
 		gameSystems.GetGMesh());
+	mLightningRenderer = std::make_unique<LightningRenderer>(
+		tig.GetMdfFactory(),
+		tig.GetRenderingDevice());
 
 	gameRenderer = this;
 
@@ -253,6 +257,7 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
 	mGmeshRenderer->Render();
 	// renderFuncs.RenderGMesh();
     
+	mLightningRenderer->Render();
 	// renderFuncs.RenderPfxLighting();
 
 	mRenderingDevice.GetDevice()->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, FALSE);

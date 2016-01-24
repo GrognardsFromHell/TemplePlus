@@ -52,6 +52,7 @@
     <ClCompile Include="gamesystems\legacy.cpp" />
     <ClCompile Include="gamesystems\legacymapsystems.cpp" />
     <ClCompile Include="gamesystems\legacysystems.cpp" />
+    <ClCompile Include="gamesystems\lightningrenderer.cpp" />
     <ClCompile Include="gamesystems\mapobjrender.cpp" />
     <ClCompile Include="gamesystems\mappreprocessor.cpp" />
     <ClCompile Include="gamesystems\mapsystem.cpp" />
@@ -264,6 +265,7 @@
     <ClInclude Include="gamesystems\gamesystems.h" />
     <ClInclude Include="gamesystems\legacy.h" />
     <ClInclude Include="gamesystems\legacymapsystems.h" />
+    <ClInclude Include="gamesystems\lightningrenderer.h" />
     <ClInclude Include="gamesystems\loadingscreen.h" />
     <ClInclude Include="gamesystems\mapsystem.h" />
     <ClInclude Include="gamesystems\map\d20_help.h" />
