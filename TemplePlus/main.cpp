@@ -50,8 +50,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 		dll.Load(toeeDir.GetDirectory());
-	
-		dump::DumpTimeEventSystems();
 
 		if (dll.HasBeenRebased()) {
 			auto moduleName = dll.FindConflictingModule();

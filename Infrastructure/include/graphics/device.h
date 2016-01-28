@@ -30,6 +30,10 @@ namespace gfx {
 		virtual void FreeResources(RenderingDevice&) = 0;
 	};
 
+	enum class StandardSlotSemantic {
+		ViewProjMatrix
+	};
+
 	// RAII class for managing resource listener registrations
 	class ResourceListenerRegistration {
 	public:
@@ -122,6 +126,8 @@ namespace gfx {
 		IndexBufferPtr CreateIndexBuffer(gsl::array_view<uint16_t> data);
 
 		void SetMaterial(const Material &material);
+		void SetVertexShaderConstant(uint32_t startRegister, StandardSlotSemantic semantic);
+		void SetPixelShaderConstant(uint32_t startRegister, StandardSlotSemantic semantic);
 
 		void SetRasterizerState(const RasterizerState &state);
 		void SetBlendState(const BlendState &state);

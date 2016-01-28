@@ -1,7 +1,6 @@
 
 #include "stdafx.h"
 #include "lightningrenderer.h"
-#include <complex>
 #include <util/fixes.h>
 #include <temple/dll.h>
 

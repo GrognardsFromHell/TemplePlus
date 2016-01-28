@@ -385,6 +385,26 @@ namespace gfx {
 		material.GetPixelShader()->Bind();
 	}
 
+	void RenderingDevice::SetVertexShaderConstant(uint32_t startRegister, StandardSlotSemantic semantic) {
+		switch (semantic) {
+		case StandardSlotSemantic::ViewProjMatrix:
+			mDevice->SetVertexShaderConstantF(startRegister, &mCamera.GetViewProj()._11, 4);
+			break;
+		default:
+			break;
+		}
+	}
+
+	void RenderingDevice::SetPixelShaderConstant(uint32_t startRegister, StandardSlotSemantic semantic) {
+		switch (semantic) {
+		case StandardSlotSemantic::ViewProjMatrix:
+			mDevice->SetPixelShaderConstantF(startRegister, &mCamera.GetViewProj()._11, 4);
+			break;
+		default: 
+			break;
+		}
+	}
+
 	IndexBufferPtr RenderingDevice::CreateEmptyIndexBuffer(size_t count) {
 		CComPtr<IDirect3DIndexBuffer9> buffer;
 
