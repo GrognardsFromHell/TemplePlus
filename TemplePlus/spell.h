@@ -135,7 +135,7 @@ struct LegacySpellSystem : temple::AddressTable
 	bool isDomainSpell(uint32_t spellClassCode);
 	Stat GetCastingClass(uint32_t spellClassCode);
 	uint32_t pickerArgsFromSpellEntry(SpellEntry * spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLevel);
-
+	const char* GetSpellEnumNameFromEnum(int spellEnum);
 	void (__cdecl *SpellEnd)(int, int);
 	void (__cdecl *SpellRemove)(int);
 

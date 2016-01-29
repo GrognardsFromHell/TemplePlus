@@ -463,6 +463,14 @@ uint32_t LegacySpellSystem::pickerArgsFromSpellEntry(SpellEntry* spellEntry, Pic
 {
 	return _pickerArgsFromSpellEntry(spellEntry, pickArgs, objHnd, casterLvl);
 }
+
+const char* LegacySpellSystem::GetSpellEnumNameFromEnum(int spellEnum)
+{
+	MesLine mesline;
+	mesline.key = spellEnum;
+	mesFuncs.GetLine(*spellEnumMesHandle, &mesline);
+	return mesline.value;
+}
 #pragma endregion
 
 

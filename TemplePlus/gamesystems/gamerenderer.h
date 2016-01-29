@@ -22,6 +22,7 @@ class ParticleSystemsRenderer;
 class MapObjectRenderer;
 class GMeshRenderer;
 class LightningRenderer;
+class IntgameRenderer;
 
 class GameRenderer {
 public:
@@ -50,6 +51,7 @@ private:
 	std::unique_ptr<ParticleSystemsRenderer> mParticleSysRenderer;
 	std::unique_ptr<GMeshRenderer> mGmeshRenderer;
 	std::unique_ptr<LightningRenderer> mLightningRenderer;
+	std::unique_ptr<IntgameRenderer> mIntgameRenderer;
 };
 
 extern GameRenderer *gameRenderer;

@@ -24,6 +24,7 @@
 #include "partsystemsrenderer.h"
 #include "map/gmesh.h"
 #include "lightningrenderer.h"
+#include "ui_intgame_renderer.h"
 
 using namespace gfx;
 using namespace temple;
@@ -160,6 +161,9 @@ GameRenderer::GameRenderer(TigInitializer &tig,
 		*mMapObjectRenderer,
 		gameSystems.GetGMesh());
 	mLightningRenderer = std::make_unique<LightningRenderer>(
+		tig.GetMdfFactory(),
+		tig.GetRenderingDevice());
+	mIntgameRenderer = std::make_unique<IntgameRenderer>(
 		tig.GetMdfFactory(),
 		tig.GetRenderingDevice());
 
