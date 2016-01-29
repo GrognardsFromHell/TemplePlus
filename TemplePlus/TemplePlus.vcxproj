@@ -46,6 +46,7 @@
     <ClCompile Include="gamesystems\clipping\clipping.cpp" />
     <ClCompile Include="gamesystems\d20\d20stats.cpp" />
     <ClCompile Include="gamesystems\d20\d20stats_hooks.cpp" />
+    <ClCompile Include="gamesystems\fogrenderer.cpp" />
     <ClCompile Include="gamesystems\froggrapplecontroller.cpp" />
     <ClCompile Include="gamesystems\gamerenderer.cpp" />
     <ClCompile Include="gamesystems\gamesystems.cpp" />
@@ -260,6 +261,7 @@
     <ClInclude Include="gamesystems\clipping\clippingmesh.h" />
     <ClInclude Include="gamesystems\clipping\clipping.h" />
     <ClInclude Include="gamesystems\d20\d20stats.h" />
+    <ClInclude Include="gamesystems\fogrenderer.h" />
     <ClInclude Include="gamesystems\froggrapplecontroller.h" />
     <ClInclude Include="gamesystems\gamerenderer.h" />
     <ClInclude Include="gamesystems\gamesystem.h" />

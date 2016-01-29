@@ -25,6 +25,7 @@
 #include "map/gmesh.h"
 #include "lightningrenderer.h"
 #include "ui_intgame_renderer.h"
+#include "fogrenderer.h"
 
 using namespace gfx;
 using namespace temple;
@@ -163,6 +164,9 @@ GameRenderer::GameRenderer(TigInitializer &tig,
 	mLightningRenderer = std::make_unique<LightningRenderer>(
 		tig.GetMdfFactory(),
 		tig.GetRenderingDevice());
+	mFogOfWarRenderer = std::make_unique<FogOfWarRenderer>(
+		tig.GetMdfFactory(),
+		tig.GetRenderingDevice());
 	mIntgameRenderer = std::make_unique<IntgameRenderer>(
 		tig.GetMdfFactory(),
 		tig.GetRenderingDevice());
@@ -267,13 +271,15 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
 	mRenderingDevice.GetDevice()->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, FALSE);
 
 	mParticleSysRenderer->Render();
-    /*renderFuncs.RenderPartSys();
-    renderFuncs.RenderFogOfWar();
+    // renderFuncs.RenderPartSys();
 
-    graphics->EnableLighting();
+	mFogOfWarRenderer->Render();
+    // renderFuncs.RenderFogOfWar();
+
+    /*graphics->EnableLighting();
     renderFuncs.RenderOcclusion(info);
-    graphics->DisableLighting();
-*/
+    graphics->DisableLighting();*/
+
     renderFuncs.RenderUiRelated(info);
     renderFuncs.RenderTextBubbles(info);
     renderFuncs.RenderTextFloaters(info);
