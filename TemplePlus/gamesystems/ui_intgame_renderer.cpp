@@ -18,6 +18,13 @@ public:
 		redirectCall(0x10108E7A, Render);
 		redirectCall(0x101DCDAD, Render);
 		redirectCall(0x101DCE38, Render);
+
+		// hooks for the render calls for the path preview in combat
+		redirectCall(0x10107524, Render);
+		redirectCall(0x10107547, Render);
+
+		// Aoo Intercept Arrow
+		redirectCall(0x10109287, Render);
 	}
 
 	static IntgameRenderer* renderer;
