@@ -82,6 +82,7 @@
     <ClCompile Include="gamesystems\particlesystems.cpp" />
     <ClCompile Include="gamesystems\partsystemsrenderer.cpp" />
     <ClCompile Include="gamesystems\staticmeshes.cpp" />
+    <ClCompile Include="gamesystems\ui_intgame_renderer.cpp" />
     <ClCompile Include="graphics\imgfile.cpp" />
     <ClCompile Include="graphics\loadingscreen.cpp" />
     <ClCompile Include="graphics\mapterrain.cpp" />
@@ -281,6 +282,7 @@
     <ClInclude Include="gamesystems\objects\objfind.h" />
     <ClInclude Include="gamesystems\objects\objregistry.h" />
     <ClInclude Include="gamesystems\objects\objsystem.h" />
+    <ClInclude Include="gamesystems\ui_intgame_renderer.h" />
     <ClInclude Include="util\datadump.h" />
     <ClInclude Include="util\streams.h" />
     <ClInclude Include="gamesystems\staticmeshes.h" />

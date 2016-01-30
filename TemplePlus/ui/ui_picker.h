@@ -47,7 +47,7 @@ enum UiPickerFlagsTarget : uint64_t
 	Degrees = 0x20,
 	FixedRadius = 0x40,
 	Unknown80h = 0x80, // these are not supported by the spell rules importer, but apparently used in at least one place (the py cast_spell function)
-	Unknown100h = 0x100
+	LosNotRequired = 0x100
 };
 
 enum PickerResultFlags {

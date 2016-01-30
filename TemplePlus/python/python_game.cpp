@@ -912,7 +912,7 @@ PyObject* PyGame_Picker(PyObject*, PyObject* args) {
 	dialogPickerArgs.validTargetLine = PyInt_AsLong(PyList_GET_ITEM(dialogLines, 2));
 
 	PickerArgs picker;
-	picker.flagsTarget = Unknown100h;
+	picker.flagsTarget = LosNotRequired;
 	picker.modeTarget = UiPickerType::Single;
 	picker.incFlags = UiPickerIncFlags::Other;
 	picker.excFlags = UiPickerIncFlags::None;

@@ -421,7 +421,7 @@ static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 			continue;
 		pickArgs.result = {0,};
 		pickArgs.flagsTarget = (UiPickerFlagsTarget)(
-			(uint64_t)pickArgs.flagsTarget | (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::Unknown100h
+			(uint64_t)pickArgs.flagsTarget | (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::LosNotRequired
 			- (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::Range
 		);
 

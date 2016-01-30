@@ -24,6 +24,7 @@
 #include "partsystemsrenderer.h"
 #include "map/gmesh.h"
 #include "lightningrenderer.h"
+#include "ui_intgame_renderer.h"
 #include "fogrenderer.h"
 
 using namespace gfx;
@@ -164,6 +165,9 @@ GameRenderer::GameRenderer(TigInitializer &tig,
 		tig.GetMdfFactory(),
 		tig.GetRenderingDevice());
 	mFogOfWarRenderer = std::make_unique<FogOfWarRenderer>(
+		tig.GetMdfFactory(),
+		tig.GetRenderingDevice());
+	mIntgameRenderer = std::make_unique<IntgameRenderer>(
 		tig.GetMdfFactory(),
 		tig.GetRenderingDevice());
 

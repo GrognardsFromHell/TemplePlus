@@ -23,6 +23,7 @@ class MapObjectRenderer;
 class GMeshRenderer;
 class LightningRenderer;
 class FogOfWarRenderer;
+class IntgameRenderer;
 
 class GameRenderer {
 public:
@@ -52,6 +53,7 @@ private:
 	std::unique_ptr<GMeshRenderer> mGmeshRenderer;
 	std::unique_ptr<LightningRenderer> mLightningRenderer;
 	std::unique_ptr<FogOfWarRenderer> mFogOfWarRenderer;
+	std::unique_ptr<IntgameRenderer> mIntgameRenderer;
 };
 
 extern GameRenderer *gameRenderer;
