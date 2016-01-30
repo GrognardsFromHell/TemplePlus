@@ -487,13 +487,13 @@ int DispatcherSystem::Dispatch60GetAttackDice(objHndl obj, DispIoAttackDice* dis
 
 }
 
-int DispatcherSystem::DispatchGetBonus(objHndl critter, DispIoBonusList* bonusListOut, enum_disp_type dispType, D20DispatcherKey key) {
+int DispatcherSystem::DispatchGetBonus(objHndl critter, DispIoBonusList* eventObj, enum_disp_type dispType, D20DispatcherKey key) {
 
 	DispIoBonusList dispIo;
-	if (!bonusListOut) {
+	if (!eventObj) {
 		dispIo.dispIOType = dispIOTypeBonusList;
 		dispIo.flags = 0;
-		bonusListOut = &dispIo;
+		eventObj = &dispIo;
 	}
 
 	auto obj = objSystem->GetObject(critter);
@@ -506,9 +506,9 @@ int DispatcherSystem::DispatchGetBonus(objHndl critter, DispIoBonusList* bonusLi
 		return 0;
 	}
 
-	DispatcherProcessor(dispatcher, dispType, key, &dispIo);
+	DispatcherProcessor(dispatcher, dispType, key, eventObj);
 
-	return bonusListOut->bonlist.GetEffectiveBonusSum();
+	return eventObj->bonlist.GetEffectiveBonusSum();
 
 }
 #pragma endregion
