@@ -220,7 +220,14 @@ void InstallationDir::DetectDllVersion() {
 		mTempleDllVersion = TempleDllVersion::PATCH2;
 		config.usingCo8 = false;
 	} else {
-		mTempleDllVersion = TempleDllVersion::UNKNOWN;
+		if (fileSize > 4000 * 1000) // cheap but works :P
+		{
+			mTempleDllVersion = TempleDllVersion::CO8;
+		} 
+		else
+		{
+			mTempleDllVersion = TempleDllVersion::UNKNOWN;
+		}
 	}
 
 }
