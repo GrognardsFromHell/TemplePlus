@@ -11,6 +11,7 @@ public:
 	const char* name() override {
 		return "Lightning Render Hooks";
 	}
+	void RedirectChainLightningTargets();
 	void apply() override {
 		redirectCall(0x10088147, Render);
 		redirectCall(0x100882FC, Render);
@@ -22,6 +23,8 @@ public:
 		redirectCall(0x10089933, Render);
 		redirectCall(0x10089C96, Render);
 		redirectCall(0x10089EBC, Render);
+
+		RedirectChainLightningTargets();
 	}
 
 	static LightningRenderer* renderer;
@@ -34,6 +37,8 @@ public:
 		int primCount,
 		uint16_t *indices,
 		int shaderId);
+
+	ChainLightningTarget chainTargets[30];
 
 } hooks;
 
@@ -110,6 +115,45 @@ void LightningRenderer::Render(size_t vertexCount, XMFLOAT4* positions, XMFLOAT4
 		0,
 		primCount);
 
+}
+
+void LightningRenderHooks::RedirectChainLightningTargets()
+{
+	int writeval;
+	
+	writeval = (int)&chainTargets[0].obj;
+	write(0x1008866E + 1, &writeval, sizeof(void*));
+	writeval = sizeof(int) + (int)&chainTargets[0].obj;
+	write(0x10088673 + 2, &writeval, sizeof(void*));
+
+
+	writeval = sizeof(int) + (int)&chainTargets[0].obj;
+	write(0x1008868D + 1, &writeval, sizeof(void*));
+	writeval = (int)&chainTargets[0].obj;
+	write(0x10088692 + 2, &writeval, sizeof(void*));
+	
+
+	writeval = (int)&chainTargets[0].obj;
+	write(0x100886B3 + 2, &writeval, sizeof(void*));
+	writeval = sizeof(int) + (int)&chainTargets[0].obj;
+	write(0x100886B9 + 2, &writeval, sizeof(void*));
+	
+
+	writeval = (int)&chainTargets[0].vec.x;
+	write(0x100886BF + 2, &writeval, sizeof(void*));
+	writeval = (int)&chainTargets[0].vec.y;
+	write(0x100886DC + 2, &writeval, sizeof(void*));
+	writeval = (int)&chainTargets[0].vec.z;
+	write(0x100886EC + 2, &writeval, sizeof(void*));
+	
+
+	writeval = (int)&chainTargets[1];
+	write(0x10088DAF + 1, &writeval, sizeof(void*));
+
+
+	writeval = (int)&chainTargets[0].vec.z;
+	write(0x100874FE + 1, &writeval, sizeof(void*));
+	
 }
 
 int LightningRenderHooks::Render(int vertexCount, XMFLOAT4* vertices, XMFLOAT4* normals, XMCOLOR* diffuse, XMFLOAT2* uv, int primCount, uint16_t* indices, int shaderId) {
