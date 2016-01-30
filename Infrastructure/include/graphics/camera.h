@@ -91,6 +91,8 @@ namespace gfx {
 		 */
 		XMFLOAT3 ScreenToWorld(float x, float y);
 
+		XMFLOAT2 ScreenToTileLegacy(int x, int y);
+
 		void CenterOn(float x, float y, float z);
 
 		const XMFLOAT4X4 &GetUiProjection() {

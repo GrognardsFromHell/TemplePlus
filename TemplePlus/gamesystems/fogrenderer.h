@@ -25,14 +25,22 @@ private:
 		size_t primCount,
 		uint16_t *indices);
 
+	void DivideIntoSquares(int a, int b, int c, int d);
+
 	gfx::MdfMaterialFactory &mMdfFactory;
 	gfx::RenderingDevice &mDevice;
 
 	std::unique_ptr<gfx::Material> mMaterial;
 
+	std::array<uint8_t, 0xFFFF> mBlurredFog;
+
 	gfx::VertexBufferPtr mVertexBuffer;
 	gfx::IndexBufferPtr mIndexBuffer;
 	gfx::BufferBinding mBufferBinding;
+
+	static constexpr auto sSubtilesPerRow = 256;
+
+	XMFLOAT2 mFogOrigin;
 
 	void RenderNew();
 

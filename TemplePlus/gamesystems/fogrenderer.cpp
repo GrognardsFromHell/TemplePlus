@@ -4,6 +4,7 @@
 #include "fogrenderer.h"
 #include <util/fixes.h>
 #include <temple/dll.h>
+#include <common.h>
 
 using namespace gfx;
 
@@ -101,6 +102,36 @@ void FogOfWarRenderer::Render(size_t vertexCount, XMFLOAT4* positions, XMCOLOR *
 
 }
 
+// This calculates the highest power of two that is still less than w and h
+static int GetFittingPowerOfTwoSquare(int w, int h) {
+	auto dim = std::min<int>(w, h);
+	
+	for (auto i = dim & (dim - 1); i; i &= i - 1) {
+		dim = i;
+	}
+	
+	return dim;
+}
+
+void FogOfWarRenderer::DivideIntoSquares(int a, int b, int w, int h) {
+
+	auto dim = GetFittingPowerOfTwoSquare(w, h);
+
+	if (dim < w) {
+		DivideIntoSquares(a - dim, b + dim, w - dim, h);
+	}
+	if (dim < h) {
+		DivideIntoSquares(a + dim, b + dim, dim, h - dim);
+	}
+
+	// Tesellate the square
+	logger->info("Tesellating {} {} {}", a, b, dim);
+
+//	if (render_fogging_related_3(a, b, dim))
+//		render_fogging_related_4(v6, *(float *)&v5, *(float *)&v4);
+
+}
+
 struct FogBlurKernel {
 	// 4 kernels (shifted by 0,1,2,3 pixels right), each has
 	// 5 rows with 8 columns (for shift-compensation)
@@ -113,11 +144,63 @@ struct FogBlurKernel {
 };
 
 void FogOfWarRenderer::RenderNew() {
+	static auto& sFoggingEnabled = temple::GetRef<uint32_t>(0x108254A0);
+	if (!(sFoggingEnabled & 1)) {
+		return;
+	}
+
 	static auto sOpaquePattern = FogBlurKernel::Create(0xFF);
 	static auto sHalfTransparentPattern = FogBlurKernel::Create(0xA0);
+	
+	static auto& numSubtilesY = temple::GetRef<uint64_t>(0x10824490);
+	static auto& fogCheckData = temple::GetRef<uint8_t*>(0x108A5498);
+
+	memset(&mBlurredFog[0], 0, (size_t) numSubtilesY * sSubtilesPerRow);
+
+	static auto& numSubtilesX = temple::GetRef<uint64_t>(0x10820458);
+
+	// Get [1,1] of the subtile data
+	auto fogCheckSubtile = &fogCheckData[numSubtilesX + 1];
+
+	for (auto y = 1; y < numSubtilesY - 1; y++) {		
+		for (auto x = 1; x < numSubtilesX - 1; x++) {
+			auto fogState = *fogCheckSubtile;
+
+			// Bit 2 -> Currently in LoS of the party
+			if (!(fogState & 2)) {
+				uint8_t *patternSrc;
+				// Bit 3 -> Explored
+				if (fogState & 4) {
+					patternSrc = &sHalfTransparentPattern.patterns[x & 3][0][0];
+				} else {
+					patternSrc = &sOpaquePattern.patterns[x & 3][0][0];
+				}
+
+				// Now we copy 5 rows of 2 dwords each, to apply
+				// the filter-kernel to the blurred fog map
+				for (auto row = 0; row < 5; ++row) {
+					auto src = &patternSrc[row * 8];
+					auto dest = &mBlurredFog[(y + row) * sSubtilesPerRow + (x / 4) * 4];
+					// Due to how the kernel is layed out, the individual bytes in this 8-byte addition will never carry
+					// over to the next higher byte, thus this is equivalent to 8 separate 1-byte additions
+					*((uint64_t*)dest) += *((uint64_t*)src);
+				}
+			}
+			++fogCheckSubtile;
+		}
+
+		// Skips the last subtile of the row and the first of the next row
+		fogCheckSubtile += 2;
+
+	}
 
 	// Validation code
-	/*static auto render_fogging_related_0 = temple::GetPointer<void(int a1, uint8_t *aout)>(0x1002f020);
+	/*
+	auto blurredFogOld = temple::GetPointer<uint8_t>(0x108103C8);
+	if (memcmp(&mBlurredFog[0], blurredFogOld, (size_t)numSubtilesY * sSubtilesPerRow)) {
+		throw TempleException("Blah");
+	}
+	static auto render_fogging_related_0 = temple::GetPointer<void(int a1, uint8_t *aout)>(0x1002f020);
 	uint8_t opaqueRef[160];
 	uint8_t transpRef[160];
 	render_fogging_related_0(0xFF, &opaqueRef[0]);
@@ -129,6 +212,67 @@ void FogOfWarRenderer::RenderNew() {
 	if (memcmp(opaqueRef, sOpaquePattern.patterns, 160)) {
 		throw TempleException("Blah");
 	}*/
+
+	static auto& fogMinX = temple::GetRef<uint64_t>(0x10824468);
+	static auto& fogMinY = temple::GetRef<uint64_t>(0x108EC4C8);
+	static auto& fogOriginXOrg = temple::GetRef<float>(0x108A549C);
+	static auto& fogOriginYOrg = temple::GetRef<float>(0x10820460);
+
+	mFogOrigin.x = fogMinX * INCH_PER_TILE;
+	mFogOrigin.y = fogMinY * INCH_PER_TILE;
+
+	if (fogOriginXOrg != mFogOrigin.x || fogOriginYOrg != mFogOrigin.y) {
+		throw TempleException("Blah");
+	}
+
+	auto topLeft = mDevice.GetCamera().ScreenToTileLegacy(0, 0);
+	auto topRight = mDevice.GetCamera().ScreenToTileLegacy((int) mDevice.GetCamera().GetScreenWidth(), 0);
+	auto bottomLeft = mDevice.GetCamera().ScreenToTileLegacy(0, (int) mDevice.GetCamera().GetScreenHeight());
+
+	static auto screen_to_world = temple::GetPointer<void(int64_t x, int64_t y, float *a3, float *a4)>(0x10029570);
+
+	float xOut, yOut;
+	screen_to_world(0, 0, &xOut, &yOut);
+	if (abs(xOut - topLeft.x) > 0.01 || abs(yOut - topLeft.y) > 0.01) {
+		throw TempleException("Blah");
+	}
+
+	screen_to_world((int)mDevice.GetCamera().GetScreenWidth(), 0, &xOut, &yOut);
+	if (abs(xOut - topRight.x) > 0.01 || abs(yOut - topRight.y) > 0.01) {
+		throw TempleException("Blah");
+	}
+
+	screen_to_world(0, (int)mDevice.GetCamera().GetScreenHeight(), &xOut, &yOut);
+	if (abs(xOut - bottomLeft.x) > 0.01 || abs(yOut - bottomLeft.y) > 0.01) {
+		throw TempleException("Blah");
+	}
+
+	auto subtileXTopLeft = ceilf(topLeft.x / INCH_PER_SUBTILE);
+	auto subtileYTopLeft = floorf(topLeft.y / INCH_PER_SUBTILE);
+	
+	auto subtileScreenWidth = (int)(subtileXTopLeft - fogMinX * 3);
+	auto subtileScreenHeight = (int)(subtileYTopLeft - fogMinY * 3);
+
+	auto v13 = subtileXTopLeft - (topRight.x / INCH_PER_SUBTILE);
+	auto v14 = topRight.y / INCH_PER_SUBTILE - subtileYTopLeft;
+	if (v14 > v13)
+		v13 = v14;
+	v13 = ceilf(v13);
+
+	auto v15 = (bottomLeft.x / INCH_PER_SUBTILE) - subtileXTopLeft;
+	auto v16 = (bottomLeft.y / INCH_PER_SUBTILE) - subtileYTopLeft;
+	if (v16 > v15)
+		v15 = v16;
+	v15 = ceilf(v15);
+
+	auto w1 = ((int)v13 + 3) & 0xFFFFFFFC;
+	auto w2 = ((int)v15 + 4) & 0xFFFFFFFC;
+	
+	DivideIntoSquares(subtileScreenWidth, subtileScreenHeight, w1, w2);
+
+	/*render_fogging_related_1(subtileScreenWidth, subtileScreenHeight, w1, w2);
+	if (fog_vertex_count)
+		render_fogging_triangles();*/
 
 }
 
