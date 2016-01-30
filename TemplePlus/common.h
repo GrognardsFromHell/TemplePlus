@@ -35,6 +35,7 @@
 // This is the number of pixels per tile on the x and y axis. Derived from sqrt(800)
 constexpr float INCH_PER_TILE = 28.284271247461900976033774484194f;
 constexpr float INCH_PER_HALFTILE = (INCH_PER_TILE / 2.0f);
+constexpr float INCH_PER_SUBTILE = (INCH_PER_TILE / 3.0f);
 constexpr int INCH_PER_FEET = 12;
 
 // this is the number of tiles per sector in each direction (so the total is this squared i.e. 4096 in toee)

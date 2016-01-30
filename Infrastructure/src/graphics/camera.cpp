@@ -1,10 +1,11 @@
-
 #include "graphics/camera.h"
 
 namespace gfx {
 
-	bool WorldCamera::IsBoxOnScreen(XMFLOAT2 screenCenter, float left, float top, float right, float bottom) const
-	{
+	constexpr float INCH_PER_TILE = 28.284271247461900976033774484194f;
+	constexpr float INCH_PER_HALFTILE = (INCH_PER_TILE / 2.0f);
+
+	bool WorldCamera::IsBoxOnScreen(XMFLOAT2 screenCenter, float left, float top, float right, float bottom) const {
 		auto dx = mCurScreenOffset.x;
 		auto dy = mCurScreenOffset.y;
 
@@ -16,10 +17,10 @@ namespace gfx {
 		float viewportLeft = -viewportRight;
 		float viewportBottom = mScreenHeight * 0.5f / mScale;
 		float viewportTop = -viewportBottom;
-		
+
 		if (screenX + left >= viewportRight)
 			return false;
-		
+
 		if (screenX + right <= viewportLeft)
 			return false;
 
@@ -32,8 +33,7 @@ namespace gfx {
 		return true;
 	}
 
-	XMFLOAT2 WorldCamera::WorldToScreen(XMFLOAT3 worldPos)
-	{
+	XMFLOAT2 WorldCamera::WorldToScreen(XMFLOAT3 worldPos) {
 		if (mDirty) {
 			Update();
 		}
@@ -45,12 +45,11 @@ namespace gfx {
 		XMFLOAT2 screenPos;
 		XMStoreFloat2(&screenPos, pos);
 		screenPos.x *= -1;
-		
+
 		return screenPos;
 	}
 
-	XMFLOAT2 WorldCamera::WorldToScreenUi(XMFLOAT3 worldPos)
-	{
+	XMFLOAT2 WorldCamera::WorldToScreenUi(XMFLOAT3 worldPos) {
 		auto result(WorldToScreen(worldPos));
 		result.x *= -1;
 		result.y *= -1;
@@ -62,8 +61,7 @@ namespace gfx {
 		return result;
 	}
 
-	XMFLOAT3 WorldCamera::ScreenToWorld(float x, float y)
-	{
+	XMFLOAT3 WorldCamera::ScreenToWorld(float x, float y) {
 
 		if (mDirty) {
 			Update();
@@ -81,7 +79,7 @@ namespace gfx {
 			XMLoadFloat4x4(&mProjection),
 			XMLoadFloat4x4(&mView),
 			XMMatrixIdentity()
-			));
+		));
 
 		auto screenVecClose(XMVectorSet(x, y, 1, 1));
 		auto worldClose(XMVector3Unproject(
@@ -95,7 +93,7 @@ namespace gfx {
 			XMLoadFloat4x4(&mProjection),
 			XMLoadFloat4x4(&mView),
 			XMMatrixIdentity()
-			));
+		));
 
 		auto worldRay(worldFar - worldClose);
 		auto dist = XMVectorGetY(worldFar) / XMVectorGetY(worldRay);
@@ -106,6 +104,19 @@ namespace gfx {
 		return result;
 	}
 
+	// This is equivalent to 10029570
+	XMFLOAT2 WorldCamera::ScreenToTileLegacy(int x, int y) {
+
+		auto tmpX = (x - mXTranslation) * 20 / INCH_PER_TILE;
+		auto tmpY = (y - mYTranslation) * INCH_PER_TILE / 14 * 0.5f;
+
+		return {
+			tmpY - tmpX - INCH_PER_HALFTILE,
+			tmpY + tmpX - INCH_PER_HALFTILE
+		};
+
+	}
+
 	void WorldCamera::CenterOn(float x, float y, float z) {
 
 		mDirty = true;
@@ -114,27 +125,26 @@ namespace gfx {
 		Update();
 
 		auto targetScreenPos(WorldToScreen(XMFLOAT3(x, y, z)));
-		
+
 		mXTranslation = targetScreenPos.x;
 		mYTranslation = targetScreenPos.y;
 		mDirty = true;
 	}
 
-	void WorldCamera::Update()
-	{
+	void WorldCamera::Update() {
 
 		if (mIdentityTransform) {
 			XMStoreFloat4x4(&mViewProjection, XMMatrixIdentity());
 			return;
 		}
 
-		auto projection(XMMatrixOrthographicLH(mScreenWidth / mScale, 
-			mScreenHeight / mScale, 
-			zNear, 
-			zFar));
+		auto projection(XMMatrixOrthographicLH(mScreenWidth / mScale,
+		                                       mScreenHeight / mScale,
+		                                       zNear,
+		                                       zFar));
 
 		XMStoreFloat4x4(&mProjection, projection);
-		
+
 		/*
 			This is x for sin(x) = 0.7, so x is roughly 44.42°.
 			The reason here is, that Troika used a 20 by 14 grid
@@ -148,11 +158,11 @@ namespace gfx {
 		auto dyOrigin = - mScreenHeight * 0.5f;
 		dyOrigin = dyOrigin * 20.f / 14.f;
 		XMFLOAT2 transformOrigin;
-		XMStoreFloat2(&transformOrigin, 
-			XMVector3TransformCoord(
-				XMVectorZero(), 
-				XMMatrixTranslation(dxOrigin, 0, -dyOrigin) * view
-			)
+		XMStoreFloat2(&transformOrigin,
+		              XMVector3TransformCoord(
+			              XMVectorZero(),
+			              XMMatrixTranslation(dxOrigin, 0, -dyOrigin) * view
+		              )
 		);
 
 		/*
@@ -172,7 +182,7 @@ namespace gfx {
 		mCurScreenOffset.y -= transformOrigin.y;
 		mCurScreenOffset.y *= -1;
 
-		view = XMMatrixRotationY(2.3561945f) * view;  // 135°
+		view = XMMatrixRotationY(2.3561945f) * view; // 135°
 
 		XMStoreFloat4x4(&mView, view);
 
@@ -185,10 +195,11 @@ namespace gfx {
 		XMStoreFloat4x4(
 			&mUiProjection,
 			XMMatrixOrthographicOffCenterLH(0, mScreenWidth, mScreenHeight, 0, 1, 0)
-			);
+		);
 
 		mDirty = false;
 
 	}
 
 }
+

@@ -107,6 +107,9 @@ ObjRegistry::It ObjRegistry::Remove(objHndl handle) {
 
 	auto it = mObjects.find(handle);
 	if (it != mObjects.end()) {
+		// Destroy index entries as well
+		mObjectIndex.erase(it->second->id);
+
 		return mObjects.erase(it);
 	}
 	return it;
