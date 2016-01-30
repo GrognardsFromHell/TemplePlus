@@ -13,6 +13,15 @@ public:
 	}
 	void apply() override {
 		redirectCall(0x10088147, Render);
+		redirectCall(0x100882FC, Render);
+		redirectCall(0x100885F5, Render);
+		redirectCall(0x10088A43, Render);
+		redirectCall(0x10088D75, Render);
+		redirectCall(0x100891BB, Render);
+		redirectCall(0x100894FB, Render);
+		redirectCall(0x10089933, Render);
+		redirectCall(0x10089C96, Render);
+		redirectCall(0x10089EBC, Render);
 	}
 
 	static LightningRenderer* renderer;
