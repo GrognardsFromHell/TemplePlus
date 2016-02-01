@@ -34,6 +34,7 @@ private:
 
 	void DivideIntoSquares(int x, int y, int w, int h);
 	bool TesellateSquare(int x, int y, int sideLength);
+	void AddUniformSquare(int x, int y, int sideLength);
 	void FlushBufferedTriangles();
 
 	gfx::MdfMaterialFactory &mMdfFactory;

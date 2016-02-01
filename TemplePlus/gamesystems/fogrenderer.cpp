@@ -146,18 +146,20 @@ bool FogOfWarRenderer::TesellateSquare(int x, int y, int sideLength) {
 			return true;
 		}
 
-		/*if (upperLeft) {
-		render_fogging_related_4(x, y, halfLength);
+		// Not all quadrants returned true, so we need to handle the ones that did,
+		// because nothing has been rendered for them yet
+		if (upperLeft) {
+			AddUniformSquare(x, y, halfLength);
 		}
 		if (upperRight) {
-			render_fogging_related_4(x - halfLength, y + halfLength, halfLength);
+			AddUniformSquare(x - halfLength, y + halfLength, halfLength);
 		}
 		if (lowerLeft) {
-			render_fogging_related_4(x + halfLength, y + halfLength, halfLength);
+			AddUniformSquare(x + halfLength, y + halfLength, halfLength);
 		}
-		if (v159) {
-			render_fogging_related_4(x, y + 2 * halfLength, halfLength);
-		}*/
+		if (lowerRight) {
+			AddUniformSquare(x, y + 2 * halfLength, halfLength);
+		}
 		return false;
 	}
 
@@ -257,6 +259,35 @@ bool FogOfWarRenderer::TesellateSquare(int x, int y, int sideLength) {
 	AddTriangle(leftIdx, bottomIdx, centerIdx); // Lower left
 	AddTriangle(bottomIdx, rightIdx, centerIdx); // Lower right
 	AddTriangle(rightIdx, topIdx, centerIdx); // Upper right
+
+	return false;
+}
+
+void FogOfWarRenderer::AddUniformSquare(int x, int y, int sideLength) {
+
+	// These coordinates basically assume a 45° rotated coordinate system
+	auto fogTopLeft = GetBlurredFog(x + 2, y + 2);
+	auto fogBottomRight = GetBlurredFog(x + 2, y + 2 + 2 * sideLength);
+	auto fogTopRight = GetBlurredFog(x + 2 - sideLength, y + 2 + sideLength);
+	auto fogBottomLeft = GetBlurredFog(x + 2 + sideLength, y + 2 + sideLength);
+
+	if (fogTopLeft < 4 && fogTopRight < 4 && fogBottomLeft < 4 && fogBottomRight < 4) {
+		return; // The quad is basically transparent
+	}
+
+	// Ensure enough space in the buffers
+	if (mVertexCount + 4 > mVertices.size() || mIndexCount + 6 > mIndices.size()) {
+		FlushBufferedTriangles();
+	}
+
+	// Add a quad to the buffer that covers the entire area
+	auto topLeftIdx = AddVertex(x, y, fogTopLeft);
+	auto topRightIdx = AddVertex(x - sideLength, y + sideLength, fogTopRight);
+	auto bottomLeftIdx = AddVertex(x + sideLength, y + sideLength, fogBottomLeft);
+	auto bottomRightIdx = AddVertex(x, y + 2 * sideLength, fogBottomRight);
+
+	AddTriangle(topLeftIdx, bottomLeftIdx, bottomRightIdx);
+	AddTriangle(topLeftIdx, bottomRightIdx, topRightIdx);
 }
 
 void FogOfWarRenderer::FlushBufferedTriangles() {
@@ -300,7 +331,7 @@ uint16_t FogOfWarRenderer::AddVertex(int x, int y, int alpha) {
 
 	auto vertexIdx = GetVertexIdx(x, y);
 	if (vertexIdx >= mVertexCount || !IsVertexForSubtile(vertexIdx, x, y)) {
-		vertexIdx = mVertexCount++;
+		vertexIdx = (uint16_t) mVertexCount++;
 
 		SetVertexIdx(x, y, vertexIdx);
 		SetVertexForSubtile(vertexIdx, x, y);
