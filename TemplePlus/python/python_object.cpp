@@ -32,6 +32,7 @@
 #include <config/config.h>
 #include <infrastructure/mesparser.h>
 #include "temple_functions.h"
+#include <gamesystems/objects/objfields.h>
 
 struct PyObjHandle {
 	PyObject_HEAD;
@@ -1551,7 +1552,19 @@ static PyObject* PyObjHandle_SetInt(PyObject* obj, PyObject* args) {
 	if (field == obj_f_critter_subdual_damage) {
 		critterSys.SetSubdualDamage(self->handle, value);
 	} else {
-		objects.setInt32(self->handle, field, value);
+
+		if (objectFields.GetType(field) == ObjectFieldType::Int32)
+		{
+			objects.setInt32(self->handle, field, value);
+		}
+		else if (objectFields.GetType(field) == ObjectFieldType::Float32)
+		{
+			objSystem->GetObject(self->handle)->SetFloat(field, value);
+		} 
+		else
+		{
+			logger->warn("Wrong field type for set_int, {}", (int)(field));
+		}
 	}
 	Py_RETURN_NONE;
 }
@@ -1573,7 +1586,15 @@ static PyObject* PyObjHandle_GetInt(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "i:objhndl.obj_get_int", &field)) {
 		return 0;
 	}
-	auto value = objects.getInt32(self->handle, field);
+	int value = 0;
+	if (objectFields.GetType(field) == ObjectFieldType::Int32)
+	{
+		value = objects.getInt32(self->handle, field);
+	} else if (objectFields.GetType(field) == ObjectFieldType::Float32)
+	{
+		value = objSystem->GetObject(self->handle)->GetFloat(field);
+	}
+	
 	return PyInt_FromLong(value);
 }
 

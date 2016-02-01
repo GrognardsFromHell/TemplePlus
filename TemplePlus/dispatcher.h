@@ -194,7 +194,12 @@ struct DispIoReflexThrow : DispIO { // DispIoType = 15
 
 struct DispIoBonusList : DispIO { // DispIoType = 2  used for fetching ability scores (dispType 10, 66), and Cur/Max HP 
 	BonusList bonlist;
-	uint32_t flags;
+	uint32_t flags; 
+	DispIoBonusList()
+	{
+		dispIOType = dispIOTypeBonusList;
+		flags = 0;
+	}
 };
 
 

@@ -90,7 +90,7 @@ objHndl GameObjectBody::GetObjHndl(obj_f field) const
 
 	// Keep in mind that handles are stored in the form of ObjectIds
 	auto storageLoc = GetStorageLocation<ObjectId*>(field);
-	if (!storageLoc || !(*storageLoc)->IsHandle()) {
+	if (!storageLoc || !(*storageLoc) || !(*storageLoc)->IsHandle()) {
 		return objHndl();
 	} else {
 		return (*storageLoc)->GetHandle();

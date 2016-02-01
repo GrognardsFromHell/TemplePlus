@@ -5,6 +5,16 @@
 #include <graphics/device.h>
 #include <graphics/mdfmaterials.h>
 #include <graphics/bufferbinding.h>
+#include "common.h"
+
+
+struct ChainLightningTarget
+{
+	objHndl obj;
+	XMFLOAT4 vec;
+};
+
+// const int testSizeofChainTgt = sizeof(ChainLightningTarget); // should be 24
 
 /**
  * Handles rendering of such effects as chain lightning and lightning strike.
@@ -17,7 +27,6 @@ public:
 	~LightningRenderer();
 
 	void Render();
-
 private:
 	void Render(size_t vertexCount,
 		XMFLOAT4 *vertices,
