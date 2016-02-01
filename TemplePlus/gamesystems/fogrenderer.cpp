@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 
 #include "fogrenderer.h"
@@ -13,6 +12,7 @@ public:
 	const char* name() override {
 		return "Lightning Render Hooks";
 	}
+
 	void apply() override {
 		replaceFunction(0x1002F180, Render);
 	}
@@ -25,22 +25,15 @@ public:
 
 FogOfWarRenderer* FogOfWarRendererHooks::renderer = nullptr;
 
-#pragma pack(push, 1)
-struct FogOfWarVertex {
-	XMFLOAT3 pos;
-	XMCOLOR diffuse;
-};
-#pragma pack(pop)
-
 FogOfWarRenderer::FogOfWarRenderer(MdfMaterialFactory& mdfFactory,
-	RenderingDevice& device) : mMdfFactory(mdfFactory), mDevice(device) {
+                                   RenderingDevice& device) : mMdfFactory(mdfFactory), mDevice(device) {
 
 	auto vs = device.GetShaders().LoadVertexShader("fogofwar_vs");
 	auto ps = device.GetShaders().LoadPixelShader("fogofwar_ps");
 	BlendState blendState;
 	blendState.blendEnable = true;
 	blendState.srcBlend = D3DBLEND_SRCALPHA;
-	blendState.destBlend = D3DBLEND_INVSRCALPHA; 
+	blendState.destBlend = D3DBLEND_INVSRCALPHA;
 	DepthStencilState depthStencilState;
 	depthStencilState.depthEnable = false;
 	RasterizerState rasterizerState;
@@ -52,8 +45,8 @@ FogOfWarRenderer::FogOfWarRenderer(MdfMaterialFactory& mdfFactory,
 	mVertexBuffer = device.CreateEmptyVertexBuffer(sizeof(FogOfWarVertex) * 0x400);
 
 	mBufferBinding.AddBuffer(mVertexBuffer, 0, sizeof(FogOfWarVertex))
-		.AddElement(VertexElementType::Float3, VertexElementSemantic::Position)
-		.AddElement(VertexElementType::Color, VertexElementSemantic::Color);
+	              .AddElement(VertexElementType::Float3, VertexElementSemantic::Position)
+	              .AddElement(VertexElementType::Color, VertexElementSemantic::Color);
 
 	FogOfWarRendererHooks::renderer = this;
 }
@@ -69,12 +62,12 @@ void FogOfWarRenderer::Render() {
 	RenderNew();
 }
 
-void FogOfWarRenderer::Render(size_t vertexCount, XMFLOAT4* positions, XMCOLOR *diffuse, size_t primCount, uint16_t* indices) {
+void FogOfWarRenderer::Render(size_t vertexCount, XMFLOAT4* positions, XMCOLOR* diffuse, size_t primCount, uint16_t* indices) {
 
 	auto vbLock = mVertexBuffer->Lock<FogOfWarVertex>(vertexCount);
 
 	for (size_t i = 0; i < vertexCount; ++i) {
-		auto &vertex = vbLock[i];
+		auto& vertex = vbLock[i];
 		vertex.pos.x = positions[i].x;
 		vertex.pos.y = positions[i].y;
 		vertex.pos.z = positions[i].z;
@@ -84,7 +77,7 @@ void FogOfWarRenderer::Render(size_t vertexCount, XMFLOAT4* positions, XMCOLOR *
 
 	vbLock.Unlock();
 
-	mIndexBuffer->Update({ indices, primCount * 3 });
+	mIndexBuffer->Update({indices, primCount * 3});
 
 	mBufferBinding.Bind();
 	mDevice.GetDevice()->SetIndices(mIndexBuffer->GetBuffer());
@@ -105,30 +98,220 @@ void FogOfWarRenderer::Render(size_t vertexCount, XMFLOAT4* positions, XMCOLOR *
 // This calculates the highest power of two that is still less than w and h
 static int GetFittingPowerOfTwoSquare(int w, int h) {
 	auto dim = std::min<int>(w, h);
-	
+
 	for (auto i = dim & (dim - 1); i; i &= i - 1) {
 		dim = i;
 	}
-	
+
 	return dim;
 }
 
-void FogOfWarRenderer::DivideIntoSquares(int a, int b, int w, int h) {
+void FogOfWarRenderer::DivideIntoSquares(int x, int y, int w, int h) {
 
-	auto dim = GetFittingPowerOfTwoSquare(w, h);
+	auto sideLength = GetFittingPowerOfTwoSquare(w, h);
 
-	if (dim < w) {
-		DivideIntoSquares(a - dim, b + dim, w - dim, h);
+	// Recursively handle the remainder of the rectangle defined by w,h
+	if (sideLength < w) {
+		DivideIntoSquares(x - sideLength, y + sideLength, w - sideLength, h);
 	}
-	if (dim < h) {
-		DivideIntoSquares(a + dim, b + dim, dim, h - dim);
+	if (sideLength < h) {
+		// TODO: It seems odd that it would pass "sideLength" here for width
+		DivideIntoSquares(x + sideLength, y + sideLength, sideLength, h - sideLength);
 	}
 
 	// Tesellate the square
-	logger->info("Tesellating {} {} {}", a, b, dim);
+	logger->info("Tesellating {} {} {}", x, y, sideLength);
 
-//	if (render_fogging_related_3(a, b, dim))
-//		render_fogging_related_4(v6, *(float *)&v5, *(float *)&v4);
+	TesellateSquare(x, y, sideLength);
+
+	//	if (render_fogging_related_3(x, y, dim))
+	//		render_fogging_related_4(v6, *(float *)&v5, *(float *)&v4);
+
+	FlushBufferedTriangles();
+
+}
+
+bool FogOfWarRenderer::TesellateSquare(int x, int y, int sideLength) {
+
+	if (sideLength > 1) {
+		auto halfLength = sideLength / 2;
+
+		// Recurse for each quadrant
+		auto upperLeft = TesellateSquare(x, y, halfLength);
+		auto upperRight = TesellateSquare(x - halfLength, halfLength + y, halfLength);
+		auto lowerLeft = TesellateSquare(halfLength + x, halfLength + y, halfLength);
+		auto lowerRight = TesellateSquare(x, y + 2 * halfLength, halfLength);
+		if (upperRight && lowerLeft && lowerRight && upperLeft) {
+			// Returns true if all quadrants returned true
+			return true;
+		}
+
+		/*if (upperLeft) {
+		render_fogging_related_4(x, y, halfLength);
+		}
+		if (upperRight) {
+			render_fogging_related_4(x - halfLength, y + halfLength, halfLength);
+		}
+		if (lowerLeft) {
+			render_fogging_related_4(x + halfLength, y + halfLength, halfLength);
+		}
+		if (v159) {
+			render_fogging_related_4(x, y + 2 * halfLength, halfLength);
+		}*/
+		return false;
+	}
+
+	auto fogTop = GetBlurredFog(x + 2, y + 2);
+	auto fogLeft = GetBlurredFog(x + 1, y + 3);
+	auto fogRight = GetBlurredFog(x + 3, y + 3);
+	auto fogBottom = GetBlurredFog(x + 2, y + 4);
+	auto fogCenter = GetBlurredFog(x + 2, y + 3);
+
+	// True if all of them are mostly transparent (none has value > 7)
+	// OR if the center is not different from any of the sides (tolerance of 3)
+	if ((fogTop < 4 && fogRight < 4 && fogBottom < 4 && fogLeft < 4 && fogCenter < 4)
+		|| (abs(fogTop - fogCenter) | abs(fogLeft - fogCenter) | abs(fogRight - fogCenter) | abs(fogBottom - fogCenter)) < 4) {
+		return true;
+	}
+
+	// In the worst case we need 12 indices and 5 vertices
+	if (mIndexCount + 12 > mIndices.size() || mVertexCount + 5 > mVertices.size()) {
+		FlushBufferedTriangles();
+	}
+
+	// Top / Center / Bottom are nearly uniform
+	if (abs(fogTop - fogCenter) < 4 && abs(fogBottom - fogCenter) < 4) {
+
+		// Right / Center are nearly transparent
+		if (fogRight < 4 && fogCenter < 4) {
+			// One triangle for the left half
+			AddTriangle(
+				AddVertex(x, y, fogTop),
+				AddVertex(x - 1, y + 1, fogLeft),
+				AddVertex(x, y + 2, fogBottom)
+			);
+			return false;
+		}
+		// Right / Center are nearly transparent
+		if (fogLeft < 4 && fogCenter < 4) {
+			// One triangle for the right half
+			AddTriangle(
+				AddVertex(x, y, fogTop),
+				AddVertex(x + 1, y + 1, fogRight),
+				AddVertex(x, y + 2, fogBottom)
+			);
+			return false;
+		}
+
+		// Two triangles: Left half / right half
+		auto rightIdx = AddVertex(x + 1, y + 1, fogRight);
+		auto bottomIdx = AddVertex(x, y + 2, fogBottom);
+		auto topIdx = AddVertex(x, y, fogTop);
+		auto leftIdx = AddVertex(x - 1, y + 1, fogLeft);
+		AddTriangle(topIdx, rightIdx, bottomIdx);
+		AddTriangle(topIdx, bottomIdx, leftIdx);
+		return false;
+	}
+
+	if (abs(fogLeft - fogCenter) < 4 && abs(fogRight - fogCenter) < 4) {
+
+		// Top/Center are nearly transparent
+		if (fogTop < 4 && fogCenter < 4) {
+			// Triangle for the lower half
+			AddTriangle(
+				AddVertex(x - 1, y + 1, fogLeft),
+				AddVertex(x + 1, y + 1, fogRight),
+				AddVertex(x, y + 2, fogBottom)
+				);
+			return false;
+		}
+		
+		// Bottom/Center are nearly transparent
+		if (fogBottom < 4 && fogCenter < 4) {
+			// Triangle for the upper half
+			AddTriangle(
+				AddVertex(x, y, fogTop),
+				AddVertex(x + 1, y + 1, fogRight),
+				AddVertex(x - 1, y + 1, fogLeft)				
+				);
+			return false;
+		}
+
+		// Two triangles: upper half / lower half
+		auto rightIdx = AddVertex(x + 1, y + 1, fogRight);
+		auto bottomIdx = AddVertex(x, y + 2, fogBottom);
+		auto topIdx = AddVertex(x, y, fogTop);
+		auto leftIdx = AddVertex(x - 1, y + 1, fogLeft);
+		AddTriangle(topIdx, leftIdx, rightIdx);
+		AddTriangle(leftIdx, bottomIdx, rightIdx);
+		return false;
+	}
+
+	// This is the worst case scenario in which we have to generate 4 triangles around the center
+	auto rightIdx = AddVertex(x + 1, y + 1, fogRight);
+	auto bottomIdx = AddVertex(x, y + 2, fogBottom);
+	auto topIdx = AddVertex(x, y, fogTop);
+	auto leftIdx = AddVertex(x - 1, y + 1, fogLeft);
+	auto centerIdx = AddVertex(x, y + 1, fogCenter);
+	AddTriangle(topIdx, leftIdx, centerIdx); // Upper left
+	AddTriangle(leftIdx, bottomIdx, centerIdx); // Lower left
+	AddTriangle(bottomIdx, rightIdx, centerIdx); // Lower right
+	AddTriangle(rightIdx, topIdx, centerIdx); // Upper right
+}
+
+void FogOfWarRenderer::FlushBufferedTriangles() {
+
+	if (mIndexCount == 0) {
+		return; // Nothing to do
+	}
+
+	mIndexCount = 0;
+	mVertexCount = 0;
+	
+}
+
+uint8_t FogOfWarRenderer::GetBlurredFog(int x, int y) const {
+	return mBlurredFog[y * sSubtilesPerRow + x];
+}
+
+uint16_t FogOfWarRenderer::GetVertexIdx(int x, int y) const {
+	return mVertexIdx[y * sSubtilesPerRow + x];
+}
+
+void FogOfWarRenderer::SetVertexIdx(int x, int y, uint16_t vertexIdx) {
+	mVertexIdx[y * sSubtilesPerRow + x] = vertexIdx;
+}
+
+bool FogOfWarRenderer::IsVertexForSubtile(uint16_t idx, int x, int y) const {
+	return mVertexLocs[idx] == x * sSubtilesPerRow + y;
+}
+
+void FogOfWarRenderer::SetVertexForSubtile(uint16_t idx, int x, int y) {
+	mVertexLocs[idx] = x * sSubtilesPerRow + y;
+}
+
+void FogOfWarRenderer::AddTriangle(uint16_t idx1, uint16_t idx2, uint16_t idx3) {
+	mIndices[mIndexCount++] = idx1;
+	mIndices[mIndexCount++] = idx2;
+	mIndices[mIndexCount++] = idx3;
+}
+
+uint16_t FogOfWarRenderer::AddVertex(int x, int y, int alpha) {
+
+	auto vertexIdx = GetVertexIdx(x, y);
+	if (vertexIdx >= mVertexCount || !IsVertexForSubtile(vertexIdx, x, y)) {
+		vertexIdx = mVertexCount++;
+
+		SetVertexIdx(x, y, vertexIdx);
+		SetVertexForSubtile(vertexIdx, x, y);
+
+		mVertices[vertexIdx].pos.x = mFogOrigin.x + x * INCH_PER_SUBTILE;
+		mVertices[vertexIdx].pos.y = 0;
+		mVertices[vertexIdx].pos.z = mFogOrigin.y + y * INCH_PER_SUBTILE;
+		mVertices[vertexIdx].diffuse = alpha << 24;		
+	}
+
+	return vertexIdx;
 
 }
 
@@ -151,7 +334,7 @@ void FogOfWarRenderer::RenderNew() {
 
 	static auto sOpaquePattern = FogBlurKernel::Create(0xFF);
 	static auto sHalfTransparentPattern = FogBlurKernel::Create(0xA0);
-	
+
 	static auto& numSubtilesY = temple::GetRef<uint64_t>(0x10824490);
 	static auto& fogCheckData = temple::GetRef<uint8_t*>(0x108A5498);
 
@@ -162,13 +345,13 @@ void FogOfWarRenderer::RenderNew() {
 	// Get [1,1] of the subtile data
 	auto fogCheckSubtile = &fogCheckData[numSubtilesX + 1];
 
-	for (auto y = 1; y < numSubtilesY - 1; y++) {		
+	for (auto y = 1; y < numSubtilesY - 1; y++) {
 		for (auto x = 1; x < numSubtilesX - 1; x++) {
 			auto fogState = *fogCheckSubtile;
 
 			// Bit 2 -> Currently in LoS of the party
 			if (!(fogState & 2)) {
-				uint8_t *patternSrc;
+				uint8_t* patternSrc;
 				// Bit 3 -> Explored
 				if (fogState & 4) {
 					patternSrc = &sHalfTransparentPattern.patterns[x & 3][0][0];
@@ -229,7 +412,7 @@ void FogOfWarRenderer::RenderNew() {
 	auto topRight = mDevice.GetCamera().ScreenToTileLegacy((int) mDevice.GetCamera().GetScreenWidth(), 0);
 	auto bottomLeft = mDevice.GetCamera().ScreenToTileLegacy(0, (int) mDevice.GetCamera().GetScreenHeight());
 
-	static auto screen_to_world = temple::GetPointer<void(int64_t x, int64_t y, float *a3, float *a4)>(0x10029570);
+	static auto screen_to_world = temple::GetPointer<void(int64_t x, int64_t y, float* a3, float* a4)>(0x10029570);
 
 	float xOut, yOut;
 	screen_to_world(0, 0, &xOut, &yOut);
@@ -249,7 +432,7 @@ void FogOfWarRenderer::RenderNew() {
 
 	auto subtileXTopLeft = ceilf(topLeft.x / INCH_PER_SUBTILE);
 	auto subtileYTopLeft = floorf(topLeft.y / INCH_PER_SUBTILE);
-	
+
 	auto subtileScreenWidth = (int)(subtileXTopLeft - fogMinX * 3);
 	auto subtileScreenHeight = (int)(subtileYTopLeft - fogMinY * 3);
 
@@ -267,7 +450,7 @@ void FogOfWarRenderer::RenderNew() {
 
 	auto w1 = ((int)v13 + 3) & 0xFFFFFFFC;
 	auto w2 = ((int)v15 + 4) & 0xFFFFFFFC;
-	
+
 	DivideIntoSquares(subtileScreenWidth, subtileScreenHeight, w1, w2);
 
 	/*render_fogging_related_1(subtileScreenWidth, subtileScreenHeight, w1, w2);
@@ -293,11 +476,11 @@ int FogOfWarRendererHooks::Render() {
 }
 
 FogBlurKernel FogBlurKernel::Create(uint8_t totalPatternValue) {
-	
+
 	FogBlurKernel result;
 
 	// Precompute 5x5 inverted blur kernel for distributing the total pattern value
-	float weights[5][5];	
+	float weights[5][5];
 	auto weightSum = 0.0f;
 	auto weightOut = &weights[0][0];
 	for (auto y = -2; y <= 2; y++) {
@@ -310,7 +493,7 @@ FogBlurKernel FogBlurKernel::Create(uint8_t totalPatternValue) {
 
 	// Now use the computed weights to calculate the actual pattern based on the requested total value
 	auto patternSum = 0;
-	
+
 	for (auto y = 0; y < 5; ++y) {
 		for (auto x = 0; x < 5; ++x) {
 			auto pixelValue = (uint8_t)(weights[y][x] / weightSum * totalPatternValue);
@@ -333,7 +516,8 @@ FogBlurKernel FogBlurKernel::Create(uint8_t totalPatternValue) {
 				result.patterns[xShift][y][x + xShift] = result.patterns[0][y][x];
 			}
 		}
-	}	
+	}
 
 	return result;
 }
+
