@@ -37,7 +37,7 @@ FogOfWarRenderer::FogOfWarRenderer(MdfMaterialFactory& mdfFactory,
 	DepthStencilState depthStencilState;
 	depthStencilState.depthEnable = false;
 	RasterizerState rasterizerState;
-	rasterizerState.cullMode = D3DCULL_NONE;
+	// rasterizerState.cullMode = D3DCULL_NONE;
 	std::vector<MaterialSamplerBinding> samplers;
 	mMaterial = std::make_unique<Material>(blendState, depthStencilState, rasterizerState, samplers, vs, ps);
 
@@ -57,7 +57,7 @@ FogOfWarRenderer::~FogOfWarRenderer() {
 
 void FogOfWarRenderer::Render() {
 	static auto fog_of_war_render = temple::GetPointer<int()>(0x10030830);
-	fog_of_war_render();
+	// fog_of_war_render();
 
 	RenderNew();
 }
@@ -119,15 +119,9 @@ void FogOfWarRenderer::DivideIntoSquares(int x, int y, int w, int h) {
 		DivideIntoSquares(x + sideLength, y + sideLength, sideLength, h - sideLength);
 	}
 
-	// Tesellate the square
-	logger->info("Tesellating {} {} {}", x, y, sideLength);
-
-	TesellateSquare(x, y, sideLength);
-
-	//	if (render_fogging_related_3(x, y, dim))
-	//		render_fogging_related_4(v6, *(float *)&v5, *(float *)&v4);
-
-	FlushBufferedTriangles();
+	if (TesellateSquare(x, y, sideLength)) {
+		AddUniformSquare(x, y, sideLength);
+	}
 
 }
 
@@ -188,7 +182,7 @@ bool FogOfWarRenderer::TesellateSquare(int x, int y, int sideLength) {
 		if (fogRight < 4 && fogCenter < 4) {
 			// One triangle for the left half
 			AddTriangle(
-				AddVertex(x, y, fogTop),
+				AddVertex(x, y, fogTop),				
 				AddVertex(x - 1, y + 1, fogLeft),
 				AddVertex(x, y + 2, fogBottom)
 			);
@@ -198,9 +192,9 @@ bool FogOfWarRenderer::TesellateSquare(int x, int y, int sideLength) {
 		if (fogLeft < 4 && fogCenter < 4) {
 			// One triangle for the right half
 			AddTriangle(
-				AddVertex(x, y, fogTop),
-				AddVertex(x + 1, y + 1, fogRight),
-				AddVertex(x, y + 2, fogBottom)
+				AddVertex(x, y, fogTop),				
+				AddVertex(x, y + 2, fogBottom),
+				AddVertex(x + 1, y + 1, fogRight)
 			);
 			return false;
 		}
@@ -210,8 +204,8 @@ bool FogOfWarRenderer::TesellateSquare(int x, int y, int sideLength) {
 		auto bottomIdx = AddVertex(x, y + 2, fogBottom);
 		auto topIdx = AddVertex(x, y, fogTop);
 		auto leftIdx = AddVertex(x - 1, y + 1, fogLeft);
-		AddTriangle(topIdx, rightIdx, bottomIdx);
-		AddTriangle(topIdx, bottomIdx, leftIdx);
+		AddTriangle(topIdx, bottomIdx, rightIdx);
+		AddTriangle(topIdx, leftIdx, bottomIdx);
 		return false;
 	}
 
@@ -222,20 +216,20 @@ bool FogOfWarRenderer::TesellateSquare(int x, int y, int sideLength) {
 			// Triangle for the lower half
 			AddTriangle(
 				AddVertex(x - 1, y + 1, fogLeft),
-				AddVertex(x + 1, y + 1, fogRight),
-				AddVertex(x, y + 2, fogBottom)
-				);
+				AddVertex(x, y + 2, fogBottom),
+				AddVertex(x + 1, y + 1, fogRight)
+			);
 			return false;
 		}
-		
+
 		// Bottom/Center are nearly transparent
 		if (fogBottom < 4 && fogCenter < 4) {
 			// Triangle for the upper half
 			AddTriangle(
 				AddVertex(x, y, fogTop),
-				AddVertex(x + 1, y + 1, fogRight),
-				AddVertex(x - 1, y + 1, fogLeft)				
-				);
+				AddVertex(x - 1, y + 1, fogLeft),
+				AddVertex(x + 1, y + 1, fogRight)
+			);
 			return false;
 		}
 
@@ -286,8 +280,8 @@ void FogOfWarRenderer::AddUniformSquare(int x, int y, int sideLength) {
 	auto bottomLeftIdx = AddVertex(x + sideLength, y + sideLength, fogBottomLeft);
 	auto bottomRightIdx = AddVertex(x, y + 2 * sideLength, fogBottomRight);
 
-	AddTriangle(topLeftIdx, bottomLeftIdx, bottomRightIdx);
-	AddTriangle(topLeftIdx, bottomRightIdx, topRightIdx);
+	AddTriangle(topLeftIdx, bottomRightIdx, bottomLeftIdx);
+	AddTriangle(topLeftIdx, topRightIdx, bottomRightIdx);
 }
 
 void FogOfWarRenderer::FlushBufferedTriangles() {
@@ -296,9 +290,26 @@ void FogOfWarRenderer::FlushBufferedTriangles() {
 		return; // Nothing to do
 	}
 
+	mIndexBuffer->Update({&mIndices[0], mIndexCount});
+	mVertexBuffer->Update<FogOfWarVertex>({&mVertices[0], mVertexCount});
+
+	mBufferBinding.Bind();
+	mDevice.GetDevice()->SetIndices(mIndexBuffer->GetBuffer());
+
+	mDevice.SetMaterial(*mMaterial);
+	mDevice.SetVertexShaderConstant(0, StandardSlotSemantic::ViewProjMatrix);
+
+	mDevice.GetDevice()->DrawIndexedPrimitive(
+		D3DPT_TRIANGLELIST,
+		0,
+		0,
+		mVertexCount,
+		0,
+		mIndexCount / 3);
+
 	mIndexCount = 0;
 	mVertexCount = 0;
-	
+
 }
 
 uint8_t FogOfWarRenderer::GetBlurredFog(int x, int y) const {
@@ -339,7 +350,7 @@ uint16_t FogOfWarRenderer::AddVertex(int x, int y, int alpha) {
 		mVertices[vertexIdx].pos.x = mFogOrigin.x + x * INCH_PER_SUBTILE;
 		mVertices[vertexIdx].pos.y = 0;
 		mVertices[vertexIdx].pos.z = mFogOrigin.y + y * INCH_PER_SUBTILE;
-		mVertices[vertexIdx].diffuse = alpha << 24;		
+		mVertices[vertexIdx].diffuse = alpha << 24;
 	}
 
 	return vertexIdx;
@@ -435,9 +446,9 @@ void FogOfWarRenderer::RenderNew() {
 	mFogOrigin.x = fogMinX * INCH_PER_TILE;
 	mFogOrigin.y = fogMinY * INCH_PER_TILE;
 
-	if (fogOriginXOrg != mFogOrigin.x || fogOriginYOrg != mFogOrigin.y) {
+	/*if (fogOriginXOrg != mFogOrigin.x || fogOriginYOrg != mFogOrigin.y) {
 		throw TempleException("Blah");
-	}
+	}*/
 
 	auto topLeft = mDevice.GetCamera().ScreenToTileLegacy(0, 0);
 	auto topRight = mDevice.GetCamera().ScreenToTileLegacy((int) mDevice.GetCamera().GetScreenWidth(), 0);
@@ -482,7 +493,25 @@ void FogOfWarRenderer::RenderNew() {
 	auto w1 = ((int)v13 + 3) & 0xFFFFFFFC;
 	auto w2 = ((int)v15 + 4) & 0xFFFFFFFC;
 
+	if (subtileScreenWidth < 0) {
+		w1 += subtileScreenWidth;
+		subtileScreenWidth = 0;
+		if (w1 <= 0) {
+			return; // This really should not happen...
+		}
+	}
+
+	if (subtileScreenHeight < 0) {
+		w2 += subtileScreenHeight;
+		subtileScreenHeight = 0;
+		if (w2 <= 0) {
+			return; // This really should not happen...
+		}
+	}
+
 	DivideIntoSquares(subtileScreenWidth, subtileScreenHeight, w1, w2);
+
+	FlushBufferedTriangles();
 
 	/*render_fogging_related_1(subtileScreenWidth, subtileScreenHeight, w1, w2);
 	if (fog_vertex_count)
