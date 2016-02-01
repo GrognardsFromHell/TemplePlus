@@ -9,6 +9,7 @@
 #pragma pack(push, 1)
 struct FogOfWarVertex {
 	XMFLOAT3 pos;
+	XMFLOAT2 uv;
 	XMCOLOR diffuse;
 };
 #pragma pack(pop)
@@ -44,9 +45,9 @@ private:
 
 	std::array<uint8_t, 0xFFFF> mBlurredFog;
 	std::array<uint16_t, 0xFFFF> mVertexIdx;
-	std::array<uint16_t, 0x400> mVertexLocs;
-	std::array<FogOfWarVertex, 0x400> mVertices;
-	std::array<uint16_t, 0x1800> mIndices;
+	std::array<uint16_t, 0x2400> mVertexLocs;
+	std::array<FogOfWarVertex, 0x2400> mVertices;
+	std::array<uint16_t, 0x7FFF> mIndices;
 	uint8_t GetBlurredFog(int x, int y) const;
 	uint16_t GetVertexIdx(int x, int y) const;
 	void SetVertexIdx(int x, int y, uint16_t vertexIdx);
@@ -59,6 +60,8 @@ private:
 	size_t mVertexCount = 0;
 	size_t mIndexCount = 0;
 
+	gfx::DynamicTexturePtr mBlurredFogTexture;
+
 	gfx::VertexBufferPtr mVertexBuffer;
 	gfx::IndexBufferPtr mIndexBuffer;
 	gfx::BufferBinding mBufferBinding;
@@ -66,6 +69,8 @@ private:
 	static constexpr auto sSubtilesPerRow = 256;
 
 	XMFLOAT2 mFogOrigin;
+	uint32_t mFogOriginX = 0;
+	uint32_t mFogOriginY = 0;
 
 	void RenderNew();
 

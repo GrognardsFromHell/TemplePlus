@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#include <graphics/dynamictexture.h>
+
 #include "fogrenderer.h"
 #include <util/fixes.h>
 #include <temple/dll.h>
@@ -28,6 +30,8 @@ FogOfWarRenderer* FogOfWarRendererHooks::renderer = nullptr;
 FogOfWarRenderer::FogOfWarRenderer(MdfMaterialFactory& mdfFactory,
                                    RenderingDevice& device) : mMdfFactory(mdfFactory), mDevice(device) {
 
+	mBlurredFogTexture = mDevice.CreateDynamicTexture(D3DFMT_A8, 256, 256);
+
 	auto vs = device.GetShaders().LoadVertexShader("fogofwar_vs");
 	auto ps = device.GetShaders().LoadPixelShader("fogofwar_ps");
 	BlendState blendState;
@@ -38,14 +42,21 @@ FogOfWarRenderer::FogOfWarRenderer(MdfMaterialFactory& mdfFactory,
 	depthStencilState.depthEnable = false;
 	RasterizerState rasterizerState;
 	// rasterizerState.cullMode = D3DCULL_NONE;
-	std::vector<MaterialSamplerBinding> samplers;
+	SamplerState samplerState;
+	samplerState.addressU = D3DTADDRESS_CLAMP;
+	samplerState.addressV = D3DTADDRESS_CLAMP;
+	std::vector<MaterialSamplerBinding> samplers {
+		MaterialSamplerBinding(mBlurredFogTexture, samplerState)
+	};
+
 	mMaterial = std::make_unique<Material>(blendState, depthStencilState, rasterizerState, samplers, vs, ps);
 
-	mIndexBuffer = device.CreateEmptyIndexBuffer(0x1800);
-	mVertexBuffer = device.CreateEmptyVertexBuffer(sizeof(FogOfWarVertex) * 0x400);
+	mIndexBuffer = device.CreateEmptyIndexBuffer(mIndices.size());
+	mVertexBuffer = device.CreateEmptyVertexBuffer(sizeof(FogOfWarVertex) * mVertices.size());
 
 	mBufferBinding.AddBuffer(mVertexBuffer, 0, sizeof(FogOfWarVertex))
 	              .AddElement(VertexElementType::Float3, VertexElementSemantic::Position)
+	              .AddElement(VertexElementType::Float2, VertexElementSemantic::TexCoord)
 	              .AddElement(VertexElementType::Color, VertexElementSemantic::Color);
 
 	FogOfWarRendererHooks::renderer = this;
@@ -347,9 +358,9 @@ uint16_t FogOfWarRenderer::AddVertex(int x, int y, int alpha) {
 		SetVertexIdx(x, y, vertexIdx);
 		SetVertexForSubtile(vertexIdx, x, y);
 
-		mVertices[vertexIdx].pos.x = mFogOrigin.x + x * INCH_PER_SUBTILE;
+		mVertices[vertexIdx].pos.x = (mFogOriginX * 3 + x) * INCH_PER_SUBTILE;
 		mVertices[vertexIdx].pos.y = 0;
-		mVertices[vertexIdx].pos.z = mFogOrigin.y + y * INCH_PER_SUBTILE;
+		mVertices[vertexIdx].pos.z = (mFogOriginY * 3 + y) * INCH_PER_SUBTILE;
 		mVertices[vertexIdx].diffuse = alpha << 24;
 	}
 
@@ -443,6 +454,8 @@ void FogOfWarRenderer::RenderNew() {
 	static auto& fogOriginXOrg = temple::GetRef<float>(0x108A549C);
 	static auto& fogOriginYOrg = temple::GetRef<float>(0x10820460);
 
+	mFogOriginX = (uint32_t) fogMinX;
+	mFogOriginY = (uint32_t) fogMinY;
 	mFogOrigin.x = fogMinX * INCH_PER_TILE;
 	mFogOrigin.y = fogMinY * INCH_PER_TILE;
 
@@ -509,7 +522,38 @@ void FogOfWarRenderer::RenderNew() {
 		}
 	}
 
-	DivideIntoSquares(subtileScreenWidth, subtileScreenHeight, w1, w2);
+	// DivideIntoSquares(subtileScreenWidth, subtileScreenHeight, w1, w2);
+
+	mBlurredFogTexture->Update<uint8_t>({ &mBlurredFog[0], mBlurredFog.size() });
+
+	mVertices[0].pos.x = (mFogOriginX * 3) * INCH_PER_SUBTILE;
+	mVertices[0].pos.y = 0;
+	mVertices[0].pos.z = (mFogOriginY * 3) * INCH_PER_SUBTILE;
+	mVertices[0].diffuse = 0xFFFFFFFF;
+	mVertices[0].uv = { 0, 0 };
+
+	mVertices[1].pos.x = (mFogOriginX * 3 + 256) * INCH_PER_SUBTILE;
+	mVertices[1].pos.y = 0;
+	mVertices[1].pos.z = (mFogOriginY * 3) * INCH_PER_SUBTILE;
+	mVertices[1].diffuse = 0xFFFFFFFF;
+	mVertices[1].uv = { 1, 0 };
+
+	mVertices[2].pos.x = (mFogOriginX * 3 + 256) * INCH_PER_SUBTILE;
+	mVertices[2].pos.y = 0;
+	mVertices[2].pos.z = (mFogOriginY * 3 + 256) * INCH_PER_SUBTILE;
+	mVertices[2].diffuse = 0xFFFFFFFF;
+	mVertices[2].uv = { 1, 1 };
+
+	mVertices[3].pos.x = (mFogOriginX * 3) * INCH_PER_SUBTILE;
+	mVertices[3].pos.y = 0;
+	mVertices[3].pos.z = (mFogOriginY * 3 + 256) * INCH_PER_SUBTILE;
+	mVertices[3].diffuse = 0xFFFFFFFF;
+	mVertices[3].uv = { 0, 1 };
+	mVertexCount = 4;
+	mIndexCount = 0;
+
+	AddTriangle(0, 2, 1);
+	AddTriangle(2, 0, 3);
 
 	FlushBufferedTriangles();
 
