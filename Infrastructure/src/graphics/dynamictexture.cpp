@@ -24,11 +24,21 @@ namespace gfx {
 		mTexture.Release();
 	}
 
-	void DynamicTexture::UpdateRaw(gsl::array_view<uint8_t> data)
+	void DynamicTexture::UpdateRaw(gsl::array_view<uint8_t> data, size_t pitch)
 	{
 		D3DLOCKED_RECT locked;
 		mTexture->LockRect(0, &locked, nullptr, D3DLOCK_DISCARD);
-		memcpy(locked.pBits, &data[0], data.size());
+		if (locked.Pitch == pitch) {
+			memcpy(locked.pBits, &data[0], data.size());
+		} else {
+			auto dest = (uint8_t*) locked.pBits;
+			auto src = data.data();
+			for (size_t y = 0; y < (size_t) mSize.height; ++y) {
+				memcpy(dest, src, pitch);
+				dest += locked.Pitch;
+				src += pitch;
+			}
+		}
 		mTexture->UnlockRect(0);
 	}
 

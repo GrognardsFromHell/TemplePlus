@@ -39,12 +39,15 @@ namespace gfx {
 
 		template<typename T>
 		void Update(gsl::array_view<T> data) {
-			UpdateRaw({ reinterpret_cast<uint8_t*>(&data[0]), data.size() * sizeof(T) });
+			UpdateRaw(
+				{ reinterpret_cast<uint8_t*>(&data[0]), data.size() * sizeof(T) }, 
+				mSize.width * sizeof(T)
+			);
 		}
 
 	private:
 
-		void UpdateRaw(gsl::array_view<uint8_t> data);
+		void UpdateRaw(gsl::array_view<uint8_t> data, size_t pitch);
 
 		CComPtr<IDirect3DTexture9> mTexture;
 		Size mSize;
