@@ -173,7 +173,7 @@ bool InstallationDir::RevertTfeXChanges(Guide::array_view<uint8_t> dllData) {
 		dllData[0x00001656] = 0x03;
 		dllData[0x00001657] = 0x00;
 	}
-	return resHackPresent;
+	return changeDetected;
 }
 
 void InstallationDir::DetectDllVersion() {
