@@ -67,6 +67,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		return result;
 	} catch (const std::exception& e) {
+		logger->error("Uncaught exception: {}", e.what());
 		auto msg = format("Uncaught exception: {}", e.what());
 		MessageBoxA(nullptr, msg.c_str(), "Fatal Error", MB_OK | MB_ICONERROR);
 		return 1;
