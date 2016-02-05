@@ -32,10 +32,10 @@ public:
 			GetObj(obj)->ResetDiffs();
 		});
 
-		// obj_supports_field
-		replaceFunction<BOOL(objHndl, obj_f)>(0x1009ca00, [](objHndl obj, obj_f field) {
-			return objectFields.DoesTypeSupportField(GetObj(obj)->type, field) ? TRUE : FALSE;
-		});
+		//// obj_supports_field
+		//replaceFunction<BOOL(objHndl, obj_f)>(0x1009ca00, [](objHndl obj, obj_f field) {
+		//	return objectFields.DoesTypeSupportField(GetObj(obj)->type, field) ? TRUE : FALSE;
+		//});
 
 		// obj_get_id
 		replaceFunction<ObjectId *(ObjectId *, objHndl)>(0x1009ca40, [](ObjectId *objectId, objHndl handle) {			

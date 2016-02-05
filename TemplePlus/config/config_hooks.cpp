@@ -16,7 +16,7 @@ static class ConfigHooks : public TempleFix {
 
 	void apply() override;
 
-	void(*Init)(GameConfig *config, const char *filename);
+	static void Init(GameConfig *config, const char *filename);
 	static void AddSetting(GameConfig *config,
 		const char *key,
 		const char *defaultValue,
@@ -39,6 +39,9 @@ void ConfigHooks::apply() {
 	replaceFunction(0x100870B0, GetString);
 	replaceFunction(0x100871C0, SetInt);
 	replaceFunction(0x10087000, SetString);
+}
+
+void ConfigHooks::Init(GameConfig* config, const char* filename) {
 }
 
 void ConfigHooks::AddSetting(GameConfig*, const char * key, const char * defaultValue, GameConfigChangedCallback changedCallback)
