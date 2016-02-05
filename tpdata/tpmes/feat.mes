@@ -123,8 +123,7 @@
 {5673} Persistent Spell {A persistent spell has a duration of 24 hours. The persistent spell must have a personal range or a fixed range. Uses up a spell slot six levels higher than the spell's actual level.}
 {5674} Power Critical {When using the weapon you selected, you gain a +4 bonus on the roll to confirm a threat.}
 {5675} Greater Rage {At 11th level, a barbarian's bonuses to Strength and Constitution during his rage each increase to +6, and his morale bonus on Will saves increases to +3. The penalty to AC remains at -2.}
-{5676} Tireless Rage {}
-{5677} Greater Weapon Specialization Gauntlet {You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
+{5676} Greater Weapon Specialization Gauntlet {You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
 {5677}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
 {5678}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
 {5679}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
@@ -134,7 +133,7 @@
 {5683}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
 {5684}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
 {5685}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
-{5687}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
+{5686}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
 {5687}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
 {5688}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
 {5689}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
@@ -144,7 +143,7 @@
 {5693}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
 {5694}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
 {5695}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
-{5697}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
+{5696}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
 {5697}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
 {5698}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
 {5699}{You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization.}
@@ -223,7 +222,6 @@
 {10675} Greater Rage {}
 {10676}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
 {10677}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
-{10677}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
 {10678}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
 {10679}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
 {10680}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
@@ -232,7 +230,7 @@
 {10683}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
 {10684}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
 {10685}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
-{10687}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
+{10686}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
 {10687}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
 {10688}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
 {10689}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
@@ -242,7 +240,7 @@
 {10693}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
 {10694}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
 {10695}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
-{10697}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
+{10696}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
 {10697}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
 {10698}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
 {10699}{Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
