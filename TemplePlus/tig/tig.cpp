@@ -2,8 +2,181 @@
 #include "tig.h"
 #include "tig_tabparser.h"
 #include <util/fixes.h>
+#include <tio/tio.h>
+#include <temple/vfs.h>
 
 TigTabParserFuncs tigTabParserFuncs;
+
+void TigTabParser::Init(TigTabLineParser* parserFunc)
+{
+	filename = nullptr;
+	lineCount = 0;
+	maxColumns = 0;
+	curLineIdx = 0;
+	fileContent = nullptr;
+	fileContentEndPos = 0;
+	lineParser = parserFunc;
+}
+
+BOOL TigTabParser::Open(const char* filenameIn)
+{
+	if (filename)
+		free(filename);
+	if (fileContent)
+		free(fileContent);
+	filename = new char[strlen(filenameIn) + 1];
+	strcpy(filename, filenameIn);
+	auto file = tio_fopen(filenameIn, "rb");
+	if (!file)
+		return 17;
+
+	// read the file
+	auto fileLen = tio_filelength(file);
+	fileContent = new char[fileLen + 1];
+	fileContentEndPos = &fileContent[tio_fread(fileContent, 1, fileLen, file)];
+	tio_fclose(file);
+
+
+	// format the raw file string
+	auto tabStartPos = fileContent;
+	char * endPos = (char*)fileContentEndPos;
+	int numTabs = 0;
+	lineCount = 0;
+	maxColumns = 0;
+
+	for (auto curPos = fileContent; curPos < endPos; curPos++)
+	{
+		if (*curPos == '\n')
+		{
+			if (maxColumns < numTabs)
+				maxColumns = numTabs;
+			numTabs = 0;
+			lineCount++;
+			tabStartPos = curPos + 1;
+		}
+
+		if (*curPos == '\t' ||  *curPos == '\n' )
+		{ // end of column
+
+			if (*curPos == '\n' && curPos > fileContent && *(curPos-1) == '\r')
+			{
+				*(curPos - 1) = ' ';
+			}
+			// trim whitespace
+			auto tabPos = curPos - 1;
+			for ( ; tabPos >= tabStartPos; tabPos--)
+			{
+				if (*tabPos == ' ' || *tabPos == '\v' || *curPos == '\r')
+				{
+					*tabPos = '\x15'; // replace whitespace and vertical tabs
+				}
+				else
+				{
+					break;
+				}	
+			}
+
+			if (*curPos != '\n')
+			{
+				if (tabPos != curPos - 1 && curPos < endPos) // meaning whitespace conversion has taken place; we need to prevent two column stops being in place!
+				{
+					*curPos = '\x15';
+				}
+				tabPos[1] = 0; // terminate string
+			} else
+			{
+				*curPos = '\x15';
+				tabPos[1] = '\n';
+			}
+			numTabs++;
+			tabStartPos = curPos + 1;
+
+
+		}
+	}
+
+	return 0;
+
+}
+
+void TigTabParser::Process()
+{
+	auto emptyStr = temple::GetPointer<char>(0x1026C67B); // in case some other functions compares the address, we'll use Troika's...
+	if (!fileContent)
+		return;
+
+	std::vector<char*> columns(maxColumns );
+	auto endPos = (char*)fileContentEndPos;
+	curLineIdx = 0;
+
+	// loop over lines
+	for (auto curPos = fileContent; curPos < endPos; curPos++, curLineIdx++)
+	{
+		// loop over columns
+		int colIdx = 0;
+		for ( ; *curPos != '\n' && colIdx < maxColumns; colIdx++)
+		{
+			//Expects(colIdx < maxColumns);
+			if (colIdx >= 5 && curLineIdx == 9)
+			{
+				int dummy = 1;
+			}
+			columns[colIdx] = curPos;
+			bool trimmedCharsSkipped = false;
+			while (*curPos != '\n')
+			{
+				auto curPosChar = *(curPos++);
+				if (!curPosChar)
+				{
+					break;
+				}
+				if (curPosChar == '\t')
+				{
+					break;
+				}
+			}
+			if (*curPos == '\x15')
+			{
+				trimmedCharsSkipped = true;
+				while (*curPos == '\x15')
+					curPos++;
+			}
+			if (curPos > endPos)
+				break;
+		}
+		// if reached EOL before maxColumns, fill the rest with emptyStr
+		for ( ; colIdx < maxColumns; colIdx++)
+		{
+			columns[colIdx] = emptyStr;
+		}
+			
+		if (curPos < endPos && *curPos == '\n')
+			*curPos = 0;
+		if (curPos < endPos && *curPos == ' ')
+			*curPos = 0;
+		if (lineParser(this, curLineIdx, &columns[0]))
+		{
+			break;
+		}
+			
+	}
+
+}
+
+void TigTabParser::Close()
+{
+	if (filename)
+		free(filename);
+	if (fileContent)
+		free(fileContent);
+	filename = nullptr;
+	lineCount = 0;
+	maxColumns = 0;
+	curLineIdx = 0;
+	fileContent = nullptr;
+	fileContentEndPos = nullptr;
+	lineParser = nullptr;
+}
 
 TigTabParserFuncs::TigTabParserFuncs() {
 	rebase(Init, 0x101F2C10);

@@ -13,7 +13,7 @@ struct D20HelpTopic
 	int prevId;
 	int siblingId;
 	int vParentsSize;
-	int ** virtualParents; // ids for topics which will list this topic when using the command [CMD_CHILDREN] inside the text body
+	uint32_t * virtualParents; // ids for topics which will list this topic when using the command [CMD_CHILDREN] inside the text body
 	int vChildrenSize;
 	int ** virtualChildren;
 	char * title;

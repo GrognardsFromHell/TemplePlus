@@ -16,8 +16,13 @@ struct TigTabParser {
 	int maxColumns;
 	int curLineIdx;
 	char* fileContent;
-	int fileContentLen;
+	char* fileContentEndPos;
 	TigTabLineParser * lineParser;
+
+	void Init(TigTabLineParser* lineparser);
+	BOOL Open(const char *filepath);
+	void Process();
+	void Close();
 };
 #pragma pack(pop)
 
