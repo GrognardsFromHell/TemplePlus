@@ -2,6 +2,19 @@
 #include "stdafx.h"
 #include "common.h"
 
+static void NormalizeAxis(float& offset, uint32_t &tilePos) {
+	auto tiles = (int) (offset / INCH_PER_TILE);
+	if (tiles != 0) {
+		tilePos += tiles;
+		offset -= tiles * INCH_PER_TILE;
+	}
+}
+
+void LocAndOffsets::Normalize() {
+	NormalizeAxis(off_x, location.locx);
+	NormalizeAxis(off_y, location.locy);
+}
+
 int BonusList::GetEffectiveBonusSum() const {
 
 	int result = 0;

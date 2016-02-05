@@ -24,7 +24,7 @@ using namespace gfx;
 using namespace temple;
 
 static struct MapRenderAddresses : temple::AddressTable {
-	bool (*IsPosExplored)(locXY loc, float offsetX, float offsetY);
+	uint8_t (*GetFogStatus)(locXY loc, float offsetX, float offsetY);
 	void (*WorldToLocalScreen)(vector3f pos, float* xOut, float* yOut);
 	void (*EnableLights)(LocAndOffsets forLocation, float radius);
 
@@ -38,7 +38,7 @@ static struct MapRenderAddresses : temple::AddressTable {
 	BOOL* isNight;
 
 	MapRenderAddresses() {
-		rebase(IsPosExplored, 0x1002ECB0);
+		rebase(GetFogStatus, 0x1002ECB0);
 		rebase(WorldToLocalScreen, 0x10029040);
 		rebase(EnableLights, 0x100A5BA0);
 		rebase(isNight, 0x10B5DC80);
@@ -62,6 +62,7 @@ MapObjectRenderer::MapObjectRenderer(GameSystems& gameSystems,
 
 	mHighlightMaterial = mdfFactory.LoadMaterial("art/meshes/hilight.mdf");
 	mBlobShadowMaterial = mdfFactory.LoadMaterial("art/meshes/shadow.mdf");
+	mOccludedMaterial = mdfFactory.LoadMaterial("art/meshes/occlusion.mdf");
 
 	mGrappleController = std::make_unique<FrogGrappleController>(device, mdfFactory);
 
@@ -180,7 +181,7 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 		&& (type == obj_t_projectile
 			|| objects.IsCritterType(type)
 			|| objects.IsEquipmentType(type))
-		&& !addresses.IsPosExplored(worldLoc, animParams.offsetX, animParams.offsetY)) {
+		&& !(addresses.GetFogStatus(worldLoc, animParams.offsetX, animParams.offsetY) & 1)) {
 		return;
 	}
 
@@ -325,6 +326,159 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 
 }
 
+void MapObjectRenderer::RenderOccludedMapObjects(int tileX1, int tileX2, int tileY1, int tileY2) {
+
+
+	for (auto secY = tileY1 / 64; secY <= tileY2 / 64; ++secY) {
+		for (auto secX = tileX1 / 64; secX <= tileX2 / 64; ++secX) {
+
+			LockedMapSector sector(secX, secY);
+
+			for (auto tx = 0; tx < 64; ++tx) {
+				for (auto ty = 0; ty < 64; ++ty) {
+
+					auto obj = sector.GetObjectsAt(tx, ty);
+					while (obj) {
+						RenderOccludedObject(obj->handle);
+						obj = obj->next;
+					}
+
+				}
+			}
+		}
+	}
+
+}
+
+void MapObjectRenderer::RenderOccludedObject(objHndl handle) {
+
+	mTotalLastFrame++;
+
+	auto type = objects.GetType(handle);
+	auto flags = objects.GetFlags(handle);
+
+	// Dont render destroyed or disabled objects
+	constexpr auto dontDrawFlags = OF_OFF | OF_DESTROYED | OF_DONTDRAW;
+	if ((flags & dontDrawFlags) != 0) {
+		return;
+	}
+
+	// Dont draw secret doors that haven't been found yet
+	auto secretDoorFlags = objects.GetSecretDoorFlags(handle);
+	if (secretDoorFlags & OSDF_SECRET_DOOR) {
+		auto found = ((secretDoorFlags & OSDF_SECRET_DOOR_FOUND) != 0);
+		if (!found && type != obj_t_portal)
+			return;
+	}
+
+	auto animatedModel = objects.GetAnimHandle(handle);
+
+	auto animParams(objects.GetAnimParams(handle));
+
+	locXY worldLoc;
+
+	objHndl parent = 0;
+	if (objects.IsEquipmentType(type)) {
+		parent = inventory.GetParent(handle);
+	}
+
+	auto alpha = objects.GetAlpha(handle);
+
+	if (parent) {
+		auto parentAlpha = objects.GetAlpha(parent);
+		alpha = (alpha + parentAlpha) / 2;
+
+		worldLoc = objects.GetLocation(parent);
+	}
+	else {
+		worldLoc = objects.GetLocation(handle);
+	}
+
+	if (alpha == 0) {
+		return;
+	}
+
+	// Handle fog occlusion of the world position, but handle it differently for portals
+	if (type != obj_t_portal) {
+		auto fogStatus = addresses.GetFogStatus(worldLoc, animParams.offsetX, animParams.offsetY);
+		if (!(fogStatus & 0xB0) || !(fogStatus & 1)) {
+			return;
+		}
+	} else {
+		LocAndOffsets loc;
+		loc.location = worldLoc;
+		loc.off_x = animParams.offsetX - INCH_PER_SUBTILE;
+		loc.off_y = animParams.offsetY - INCH_PER_SUBTILE;
+		loc.Normalize();
+
+		auto fogStatus = addresses.GetFogStatus(loc.location, loc.off_x, loc.off_y);
+		if (!(fogStatus & 0xB0) || !(fogStatus & 1)) {
+			return;
+		}
+	}
+	
+	LocAndOffsets worldPosFull;
+	worldPosFull.off_x = animParams.offsetX;
+	worldPosFull.off_y = animParams.offsetY;
+	worldPosFull.location = worldLoc;
+
+	auto radius = objects.GetRadius(handle);
+	auto renderHeight = objects.GetRenderHeight(handle);
+
+	// Take render height from the animation if necessary
+	if (renderHeight < 0) {
+		objects.UpdateRenderHeight(handle, animatedModel->GetAnimId());
+		renderHeight = objects.GetRenderHeight(handle);
+	}
+
+	if (!IsObjectOnScreen(worldPosFull, animParams.offsetZ, radius, renderHeight)) {
+		return;
+	}
+	
+	auto lightSearchRadius = 0.0f;
+	if (!(flags & OF_DONTLIGHT)) {
+		lightSearchRadius = radius;
+	}
+
+	LocAndOffsets locAndOffsets;
+	locAndOffsets.location = worldLoc;
+	locAndOffsets.off_x = animParams.offsetX;
+	locAndOffsets.off_y = animParams.offsetY;
+	auto lights(FindLights(locAndOffsets, lightSearchRadius));
+	
+	mRenderedLastFrame++;
+	MdfRenderOverrides overrides;
+	overrides.alpha = alpha / 255.0f;
+
+	mOccludedMaterial->Bind(mDevice, lights, &overrides);
+	mAasRenderer.RenderWithoutMaterial(animatedModel.get(), animParams);
+	
+	if (objects.IsCritterType(type)) {
+		/*
+		This renders the equipment in a critter's hand separately, but
+		I am not certain *why* exactly. I thought this would have been
+		handled by addmeshes, but it might be that there's a distinct
+		difference between addmeshes that are skinned onto the mobile's
+		skeleton and equipment that is unskinned and just positioned
+		in the player's hands.
+		*/
+		auto weaponPrim = critterSys.GetWornItem(handle, EquipSlot::WeaponPrimary);
+		if (weaponPrim) {
+			RenderOccludedObject(weaponPrim);
+		}
+		auto weaponSec = critterSys.GetWornItem(handle, EquipSlot::WeaponSecondary);
+		if (weaponSec) {
+			RenderOccludedObject(weaponSec);
+		}
+		auto shield = critterSys.GetWornItem(handle, EquipSlot::Shield);
+		if (shield) {
+			RenderOccludedObject(shield);
+		}
+
+	}
+
+}
+
 void MapObjectRenderer::RenderObjectHighlight(objHndl handle, const gfx::MdfRenderMaterialPtr & material)
 {
 
@@ -384,7 +538,7 @@ void MapObjectRenderer::RenderObjectHighlight(objHndl handle, const gfx::MdfRend
 		&& (type == obj_t_projectile
 			|| objects.IsCritterType(type)
 			|| objects.IsEquipmentType(type))
-		&& !addresses.IsPosExplored(worldLoc, animParams.offsetX, animParams.offsetY)) {
+		&& !(addresses.GetFogStatus(worldLoc, animParams.offsetX, animParams.offsetY) & 1)) {
 		return;
 	}
 

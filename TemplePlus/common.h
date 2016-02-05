@@ -185,6 +185,8 @@ struct LocAndOffsets {
 		return location.ToInches2D(off_x, off_y);
 	}
 
+	void Normalize();
+
 	// Same as ToInches2d, but translates to center of tile
 	vector2f ToCenterOfTileAbs();
 

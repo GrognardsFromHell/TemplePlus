@@ -34,6 +34,8 @@ public:
 
 	void RenderMapObjects(int tileX1, int tileX2, int tileY1, int tileY2);
 	void RenderObject(objHndl handle, bool showInvisible);
+	void RenderOccludedMapObjects(int tileX1, int tileX2, int tileY1, int tileY2);
+	void RenderOccludedObject(objHndl handle);
 
 	void RenderObjectHighlight(objHndl handle, const gfx::MdfRenderMaterialPtr &material);
 
@@ -67,6 +69,7 @@ private:
 	ShadowType mShadowType = ShadowType::ShadowMap;
 	gfx::MdfRenderMaterialPtr mBlobShadowMaterial;
 	gfx::MdfRenderMaterialPtr mHighlightMaterial;
+	gfx::MdfRenderMaterialPtr mOccludedMaterial;
 	std::unique_ptr<class FrogGrappleController> mGrappleController;
 	std::array<gfx::MdfRenderMaterialPtr, 10> mGlowMaterials;
 	bool mShowHighlights = false;

@@ -276,6 +276,8 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
 	mFogOfWarRenderer->Render();
     // renderFuncs.RenderFogOfWar();
 
+	mMapObjectRenderer->RenderOccludedMapObjects((int)info->tiles->x1, (int)info->tiles->x2, (int)info->tiles->y1,
+		(int)info->tiles->y2);
     /*graphics->EnableLighting();
     renderFuncs.RenderOcclusion(info);
     graphics->DisableLighting();*/
