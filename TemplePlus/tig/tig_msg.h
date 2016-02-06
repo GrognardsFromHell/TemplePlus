@@ -5,7 +5,7 @@
 
 enum class TigMsgType : uint32_t {
 	MOUSE = 0,
-	TMT_UNK1 = 1, // seems to be sent in response to type0 msg, also from int __cdecl sub_101F9E20(int a1, int a2) and sub_101FA410
+	WIDGET = 1, // seems to be sent in response to type0 msg, also from int __cdecl sub_101F9E20(int a1, int a2) and sub_101FA410
 	TMT_UNK2 = 2,
 	EXIT, // may be exit game, queued on WM_CLOSE and WM_QUIT
 	CHAR = 4,
