@@ -649,10 +649,20 @@ public:
 		objects.Destroy(obj);
 	}
 
+	static int(*orgMove)(objHndl, LocAndOffsets);
+	static int Move(objHndl obj, LocAndOffsets loc)
+	{
+		return orgMove(obj, loc);
+	};
+
+
 	void apply() override {
 		replaceFunction(0x1004E7F0, _abilityScoreLevelGet);
 		replaceFunction(0x100257A0, _destroy);
+		//orgMove = replaceFunction(0x10025950, Move);
+		//orgMoveUpdateLoc = replaceFunction(0x100C1990, MoveUpdateLoc);
 	}
 } objReplacements;
 
+int(*ObjectReplacements::orgMove)(objHndl, LocAndOffsets);
 #pragma endregion
