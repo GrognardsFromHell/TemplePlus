@@ -244,7 +244,7 @@ public:
 		// obj_array_set_int32
 		replaceFunction<void(objHndl, obj_f, size_t, int32_t)>(0x100a1310, [](objHndl obj, obj_f field, size_t idx, int32_t value) {
 			// Fixes a bug in vanilla ToEE
-			if (field == obj_f_critter_seen_maplist) {
+			if (field == obj_f_critter_seen_maplist || field == obj_f_npc_standpoints) {
 				GetObj(obj)->SetInt64(field, idx, value);
 			} else {
 				GetObj(obj)->SetInt32(field, idx, value);
@@ -344,7 +344,7 @@ public:
 			auto result = GetObj(obj)->GetInt64(field, index);
 			// Fix for misuse of int-64 field in vanilla. 
 			// Setter for 32-bit was used, so the upper 32-bit might be junk in old saves
-			if (field == obj_f_critter_seen_maplist) {
+			if (field == obj_f_critter_seen_maplist || field == obj_f_npc_standpoints) {
 				result &= 0xFFFFFFFF;
 			}
 			return result;
