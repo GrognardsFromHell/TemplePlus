@@ -362,6 +362,23 @@ void MapObjectRenderer::RenderOccludedObject(objHndl handle) {
 	if ((flags & dontDrawFlags) != 0) {
 		return;
 	}
+	if (flags & OF_INVISIBLE || flags & OF_INVENTORY) {
+		return;
+	}
+
+	switch (type) {
+		case obj_t_scenery:
+		case obj_t_trap:
+			return;
+		case obj_t_pc:
+		case obj_t_npc:
+			if (critterSys.IsConcealed(handle)) {
+				return;
+			}
+			break;
+		default:
+			break;
+	}
 
 	// Dont draw secret doors that haven't been found yet
 	auto secretDoorFlags = objects.GetSecretDoorFlags(handle);
