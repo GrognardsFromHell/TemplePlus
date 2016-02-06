@@ -66,7 +66,7 @@ struct ToEEHashtableSystem : temple::AddressTable
 		}
 		if (storedKey == key)
 		{
-			logger->info("Hashtable collission detected!");
+			logger->info("Hashtable collision detected!");
 			assert(key != storedKey);
 			return 0x11;
 		}
@@ -95,7 +95,8 @@ struct ToEEHashtableSystem : temple::AddressTable
 
 		if (idx != -1)
 		{
-			*structOut = hashtable->dataArray[idx];
+			if (structOut)
+				*structOut = hashtable->dataArray[idx];
 			return 0;
 		}
 		return 0x11;	

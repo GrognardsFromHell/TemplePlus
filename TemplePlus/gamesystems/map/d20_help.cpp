@@ -179,7 +179,8 @@ int HelpSystemReplacements::TabLineParserPriliminary(TigTabParser const* tabPars
 	d20ht->virtualChildren = nullptr;
 	d20ht->title = new char[strlen(tabEntry->title)+1];
 	strcpy(d20ht->title, tabEntry->title);
-	hashtableSystem.HashtableAddItem(addresses.helpSysHashTable, d20ht->topicId, d20ht);
+	hashtableSystem.HashtableOverwriteItem(addresses.helpSysHashTable, d20ht->topicId, d20ht); // will overwrite if key exists, add item otherwise
+	
 	return 0;
 }
 
