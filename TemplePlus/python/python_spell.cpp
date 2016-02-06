@@ -47,8 +47,7 @@ struct PySpell {
 	PySpellTarget targets[32];
 	SpellPacketBody* spellPacketBodies[8];
 	MetaMagicData metaMagic;
-	int field_270;
-	int field_274;
+	objHndl projectiles;
 };
 
 // Contains all active spells
@@ -574,15 +573,14 @@ static void PySpell_UpdateFromPacket(PySpell* self, const SpellPacketBody& spell
 	self->rangeExact = spell.spellRange;
 	self->dc = spell.spellDC;
 	self->duration = spell.spellDuration;
-	self->field_58 = spell.field_ACC;
+	self->field_58 = spell.durationRemaining;
 	self->rangeExact = spell.spellRange;
 	self->targetCountCopy = spell.targetListNumItemsCopy;
 	self->targetCount = spell.targetListNumItems;
 	self->projectileCount = spell.numProjectiles;
 	*((uint32_t*)&self->metaMagic) = spell.metaMagicData;
-	self->targetLocation = spell.locFull;
-	self->field_270 = spell.field_9C8;
-	self->field_274 = spell.field_9CC;
+	self->targetLocation = spell.aoeCenter;
+	self->projectiles = spell.projectiles; // TODO fix the rest of it (should be 5 projectiles)
 	self->spellPacketBodies[0] = spell.spellPktBods[0];
 	self->spellPacketBodies[1] = spell.spellPktBods[1];
 	self->spellPacketBodies[2] = spell.spellPktBods[2];
@@ -660,9 +658,8 @@ void PySpell_UpdatePacket(PyObject* pySpell) {
 	spell.targetListNumItemsCopy = self->targetCount;
 	spell.numProjectiles = self->projectileCount;
 	spell.metaMagicData = *((uint32_t*)&self->metaMagic);
-	spell.locFull = self->targetLocation;
-	spell.field_9C8 = self->field_270;
-	spell.field_9CC = self->field_274;
+	spell.aoeCenter = self->targetLocation;
+	spell.projectiles = self->projectiles;
 
 	for (int i = 0; i < 8; ++i) {
 		spell.spellPktBods[i] = self->spellPacketBodies[i];
@@ -671,8 +668,8 @@ void PySpell_UpdatePacket(PyObject* pySpell) {
 	spell.baseCasterLevel = self->casterLevel;
 	spell.targetListNumItems = self->targetCount;
 	spell.spellDuration = self->duration;
-	if (spell.field_ACC <= 0)
-		spell.field_ACC = self->duration;
+	if (spell.durationRemaining <= 0)
+		spell.durationRemaining = self->duration;
 	spell.spellRange = self->rangeExact;
 
 	for (int i = 0; i < self->targetCount; ++i) {

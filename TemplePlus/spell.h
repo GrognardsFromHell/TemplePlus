@@ -63,24 +63,30 @@ struct SpellPacketBody
 	uint32_t spellKnownSlotLevel;
 	uint32_t baseCasterLevel;
 	uint32_t spellDC;
-	uint32_t unknowns[515];
+	int field_2C;
+	objHndl unknownObj;
+	struct SpellObj
+	{
+		objHndl obj;
+		int partySysId;
+		int field_C;
+	}	spellObjs[128];
 	uint32_t targetListNumItemsCopy;
 	uint32_t targetListNumItems;
 	objHndl targetListHandles[32];
 	uint32_t targetListPartsysIds[32];
 	uint32_t numProjectiles;
 	uint32_t field_9C4;
-	uint32_t field_9C8;
-	uint32_t field_9CC;
+	objHndl projectiles; // TODO: fix (should be 5 projectiles and not 8 spellpackets!)
 	SpellPacketBody * spellPktBods[8];
-	LocFull locFull;
+	LocFull aoeCenter;
 	uint32_t field_A04;
 	SpellEntry spellEntry;
 	uint32_t spellDuration;
-	int field_ACC;
+	int durationRemaining;
 	uint32_t spellRange;
-	uint32_t field_AD4;
-	uint32_t field_AD8_maybe_itemSpellLevel;
+	uint32_t savingThrowResult;
+	uint32_t invIdx; // inventory index, used for casting spells from items e.g. scrolls
 	uint32_t metaMagicData;
 	uint32_t spellId;
 	uint32_t field_AE4;
