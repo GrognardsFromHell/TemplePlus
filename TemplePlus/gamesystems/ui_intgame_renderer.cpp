@@ -79,25 +79,25 @@ void IntgameRenderer::Render() {
 
 int IntgameRenderer::LoadIntgameShader(int spellEnum, int tgtResultClassif, int* shaderOut, int isFogged)
 {
-	// incomplete stub
-	const char * spellEnumName = spellSys.GetSpellEnumNameFromEnum(spellEnum);
-	char filename[260];
+	//// incomplete stub
+	//const char * spellEnumName = spellSys.GetSpellEnumNameFromEnum(spellEnum);
+	//char filename[260];
 
-	std::string ocString = "_oc";
-	if (!isFogged)
-	{
-		ocString = "";
-	}
+	//std::string ocString = "_oc";
+	//if (!isFogged)
+	//{
+	//	ocString = "";
+	//}
 
-	
-	int shaderGetError = 0;
+	//
+	//int shaderGetError = 0;
 
-	if (spellEnumName)
-	{
-		_snprintf(filename, 260, "art\\interface\\intgame_select\\%s-%s%s.mdf", spellEnumName, intgamePickerTargetResultOutcomes[tgtResultClassif] , ocString.c_str());
-		//RegisterShader
-		//auto shaderGetError = mMdfFactory.LoadMaterial(filename);
-	}
+	//if (spellEnumName)
+	//{
+	//	_snprintf(filename, 260, "art\\interface\\intgame_select\\%s-%s%s.mdf", spellEnumName, intgamePickerTargetResultOutcomes[tgtResultClassif] , ocString.c_str());
+	//	//RegisterShader
+	//	//auto shaderGetError = mMdfFactory.LoadMaterial(filename);
+	//}
 
 	return 0;
 }

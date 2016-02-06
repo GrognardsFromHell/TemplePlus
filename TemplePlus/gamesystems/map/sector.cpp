@@ -130,10 +130,10 @@ BOOL LegacySectorSystem::SectorCacheFind(SectorLoc secLoc, int* secCacheIdx)
 	int idxLo=0;
 	int idxHi = *addresses.sectorCacheLockedCount - 1;
 
-	if (idxHi < 1)
+	if (idxHi < 0)
 	{
 		*secCacheIdx = idxLo;
-		return false;
+		return 0;
 	}
 
 	int searchCount = 0;
