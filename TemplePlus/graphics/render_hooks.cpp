@@ -281,7 +281,15 @@ int RenderHooks::TextureRender2d(const Render2dArgs* args) {
 
 	// Load the associated texture
 	IDirect3DTexture9* deviceTexture = nullptr;
-	if (!(args->flags & Render2dArgs::FLAG_BUFFER)) {
+	if (args->flags & Render2dArgs::FLAG_BUFFERTEXTURE) {
+		// This is a custom flag we introduced for TP
+		auto texture = (gfx::Texture*) args->texBuffer;
+		deviceTexture = texture->GetDeviceTexture();
+		
+		auto size = texture->GetSize();
+		texwidth = (float)size.width;
+		texheight = (float)size.height;
+	} else if (!(args->flags & Render2dArgs::FLAG_BUFFER)) {
 		if (args->textureId) {
 			auto texture = textures.GetById(args->textureId);
 			if (!texture || !texture->IsValid()) {

@@ -24,6 +24,7 @@ struct Render2dArgs {
 	static constexpr uint32_t FLAG_ROTATE = 0x200;
 	static constexpr uint32_t FLAG_MASK = 0x400;
 	static constexpr uint32_t FLAG_WRAP = 0x1000;
+	static constexpr uint32_t FLAG_BUFFERTEXTURE = 0x2000;
 
 	uint32_t flags;
 	int textureId; // Unused for shaders

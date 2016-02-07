@@ -80,7 +80,7 @@ static class MapSystemHooks : public TempleFix {
 	static void map_mark_visited_map(objHndl obj);
 	static void _map_close();
 	// _read_map_mobiles: BOOL __usercall@<eax>(char *mapDataDir@<eax>, char *mapSaveDir)
-	static BOOL map_is_unfogged(int mapId);
+	static BOOL map_has_fog_of_war(int mapId);
 	static void map_get_startpos(int mapId, uint64_t *a2, uint64_t *a3);
 	// map_reset: None
 	// map_exit: int()
@@ -142,7 +142,7 @@ static class MapSystemHooks : public TempleFix {
 		replaceFunction(0x10071700, map_mark_visited_map);
 		// replaceFunction(0x10071780, _map_close);
 		// replaceFunction(0x100717e0, _read_map_mobiles);
-		replaceFunction(0x10071d70, map_is_unfogged);
+		replaceFunction(0x10071d70, map_has_fog_of_war);
 		replaceFunction(0x10071dd0, map_get_startpos);
 		// replaceFunction(0x10071e40, map_reset);
 		// replaceFunction(0x10071fd0, map_exit);
@@ -368,9 +368,9 @@ void MapSystemHooks::map_mark_visited_map(objHndl obj)
 	gameSystems->GetMap().MarkVisitedMap(obj);
 }
 
-BOOL MapSystemHooks::map_is_unfogged(int mapId)
+BOOL MapSystemHooks::map_has_fog_of_war(int mapId)
 {
-	return gameSystems->GetMap().IsUnfogged(mapId) ? TRUE : FALSE;
+	return gameSystems->GetMap().IsUnfogged(mapId) ? FALSE : TRUE;
 }
 
 void MapSystemHooks::map_get_startpos(int mapId, uint64_t * startX, uint64_t * startY)

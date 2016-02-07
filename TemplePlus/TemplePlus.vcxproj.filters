@@ -333,6 +333,7 @@
     <ClCompile Include="gamesystems\lightningrenderer.cpp" />
     <ClCompile Include="gamesystems\fogrenderer.cpp" />
     <ClCompile Include="gamesystems\ui_intgame_renderer.cpp" />
+    <ClCompile Include="ui\ui_townmap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />

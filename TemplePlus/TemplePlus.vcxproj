@@ -156,6 +156,7 @@
     <ClCompile Include="python\python_importer.cpp" />
     <ClCompile Include="traps.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
+    <ClCompile Include="ui\ui_townmap.cpp" />
     <ClCompile Include="ui\ui_tutorial.cpp" />
     <ClCompile Include="turn_based.cpp" />
     <ClCompile Include="ui\ui_picker.cpp" />
