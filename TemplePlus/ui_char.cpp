@@ -138,6 +138,14 @@ public:
 	};
 	static BOOL(*orgSpellbookSpellsMsg)(int widId, TigMsg* tigMsg);
 
+	static void SpellsShow(objHndl obj)
+	{
+		orgSpellsShow(obj);
+		auto shit = &addresses.uiCharSpellPackets[0];
+		int dummy = 1;
+	};
+	static void(*orgSpellsShow)(objHndl obj);
+
 
 	void apply() override 
 	{
@@ -155,9 +163,10 @@ public:
 		
 		//orgSpellbookSpellsMsg = replaceFunction(0x101B8F10, SpellbookSpellsMsg);
 		//orgMemorizeSpellMsg= replaceFunction(   0x101B9360, MemorizeSpellMsg);
-
+		orgSpellsShow = replaceFunction(0x101B5D80, SpellsShow);
 	}
 } charUiSys;
 
 BOOL(*CharUiSystem::orgSpellbookSpellsMsg)(int widId, TigMsg* tigMsg);
 BOOL(*CharUiSystem::orgMemorizeSpellMsg)(int widId, TigMsg* tigMsg);
+void(*CharUiSystem::orgSpellsShow)(objHndl obj);
