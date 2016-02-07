@@ -326,7 +326,7 @@ void PcCreationUiSystem::PcPortraitsDisable()
 int PcCreationUiSystem::PcPortraitsMsgFunc(int widgetId, TigMsg* tigMsg)
 {
 	int i;
-	if (tigMsg->type != TigMsgType::TMT_UNK1
+	if (tigMsg->type != TigMsgType::WIDGET
 		|| tigMsg->arg2 != 1
 		|| (i = ui.WidgetlistIndexof(widgetId, pcPortraitWidgIds, MAX_PC_CREATION_PORTRAITS), i == -1))
 		return 0;

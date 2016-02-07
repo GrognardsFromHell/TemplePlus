@@ -176,14 +176,14 @@ void TextLayouter::LayoutAndDraw(gsl::cstring_view<> text, const TigFont& font, 
 			if (style.flags & 0x10) {
 				x += (extentsWidth - lineWidth) / 2;
 			}
-
-			mRenderer.RenderRun(
-				text.sub(wordInfo.firstIdx, lastIdx - wordInfo.firstIdx),
-				x,
-				currentY,
-				extents,
-				style,
-				font);
+			if(lastIdx >= wordInfo.firstIdx)
+				mRenderer.RenderRun(
+					text.sub(wordInfo.firstIdx, lastIdx - wordInfo.firstIdx),
+					x,
+					currentY,
+					extents,
+					style,
+					font);
 
 			currentX += wordWidth;
 

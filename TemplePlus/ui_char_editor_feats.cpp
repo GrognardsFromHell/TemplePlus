@@ -151,6 +151,12 @@ public:
 		return "UiCharEditor Function Replacements";
 	} 
 
+	static void ExistingFeatRender(int widgetId)
+	{
+		orgExistingFeatRender(widgetId);
+	};
+	static void(*orgExistingFeatRender)(int);
+
 	void apply() override 
 	{
 		replaceFunction(0x101A8D70, FeatUiPrereqCheckUsercallWrapper);
@@ -163,9 +169,11 @@ public:
 		writeHex(0x101A9E57, "90 90 90  90 90 90"); // affects drag n' drop
 
 		replaceFunction(0x101A8D20, GetMultiselectShortNameUsercall);
+
+		//orgFeatRender = replaceFunction(0x101A8850, FeatRender);
 	}
 } uiCharEdFeatsReplacements;
-
+void(*UiCharEditorFeatsReplacements::orgExistingFeatRender)(int);
 
 
 int __cdecl FeatUiPrereqCheck(feat_enums feat)
