@@ -344,7 +344,7 @@ public:
 			auto result = GetObj(obj)->GetInt64(field, index);
 			// Fix for misuse of int-64 field in vanilla. 
 			// Setter for 32-bit was used, so the upper 32-bit might be junk in old saves
-			if (field == obj_f_critter_seen_maplist || field == obj_f_npc_standpoints) {
+			if (field == obj_f_critter_seen_maplist ) {
 				result &= 0xFFFFFFFF;
 			}
 			return result;
