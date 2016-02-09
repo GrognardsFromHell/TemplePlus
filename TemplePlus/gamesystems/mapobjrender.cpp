@@ -326,6 +326,36 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 
 }
 
+void MapObjectRenderer::RenderObjectInUi(objHndl handle, int x, int y, float rotation, float scale) {
+
+	auto worldPos = mDevice.GetCamera().ScreenToWorld((float)x, (float)y);
+
+	auto animatedModel = objects.GetAnimHandle(handle);
+
+	auto animParams = objects.GetAnimParams(handle);
+	animParams.x = 0;
+	animParams.y = 0;
+	animParams.offsetX = worldPos.x + 865.70398f;
+	animParams.offsetZ = 1200.0f;
+	animParams.offsetY = worldPos.z + 865.70398f;
+	animParams.scale *= scale;
+	animParams.rotation = XM_PI + rotation;
+	animParams.rotationPitch = 0;
+	
+	std::vector<gfx::Light3d> lights;
+	lights.resize(2);
+	lights[0].type = gfx::Light3dType::Directional;
+	lights[0].color = { 1, 1, 1, 0 };
+	lights[0].dir = { -0.7071200013160706f, -0.7071200013160706f , 0, 0};
+
+	lights[1].type = gfx::Light3dType::Directional;
+	lights[1].color = { 1, 1, 1, 0 };
+	lights[1].dir = { 0, 0.7071200013160706, -0.7071200013160706f, 0 };
+
+	mAasRenderer.Render(animatedModel.get(), animParams, lights);
+
+}
+
 void MapObjectRenderer::RenderOccludedMapObjects(int tileX1, int tileX2, int tileY1, int tileY2) {
 
 
@@ -974,6 +1004,11 @@ public:
 		replaceFunction(0x10020AA0, SetShadowType);
 		replaceFunction(0x10020B00, GetShadowType);
 		replaceFunction(0x1001D7D0, SetShowHighlight);
+		// obj_render_in_ui
+		replaceFunction<int(objHndl, int, int, float, float)>(0x100243b0, [](objHndl objId, int x, int y, float rotation, float a5) {
+			gameRenderer->GetMapObjectRenderer().RenderObjectInUi(objId, x, y, rotation, a5);
+			return 0;
+		});
 	}
 
 } fix;

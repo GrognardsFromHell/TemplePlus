@@ -34,6 +34,7 @@ public:
 
 	void RenderMapObjects(int tileX1, int tileX2, int tileY1, int tileY2);
 	void RenderObject(objHndl handle, bool showInvisible);
+	void RenderObjectInUi(objHndl handle, int x, int y, float rotation, float scale);
 	void RenderOccludedMapObjects(int tileX1, int tileX2, int tileY1, int tileY2);
 	void RenderOccludedObject(objHndl handle);
 
