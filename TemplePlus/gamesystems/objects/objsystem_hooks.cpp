@@ -242,10 +242,14 @@ public:
 		});
 
 		// obj_array_set_int32
-		replaceFunction<void(objHndl, obj_f, size_t, int32_t)>(0x100a1310, [](objHndl obj, obj_f field, size_t idx, int32_t value) {
+		replaceFunction<void(objHndl, obj_f, size_t, int32_t, int32_t)>(0x100a1310, [](objHndl obj, obj_f field, size_t idx, int32_t value, int32_t value2) {
 			// Fixes a bug in vanilla ToEE
-			if (field == obj_f_critter_seen_maplist || field == obj_f_npc_standpoints) {
+			if (field == obj_f_critter_seen_maplist)
+			{
 				GetObj(obj)->SetInt64(field, idx, value);
+			}
+			else if(field == obj_f_npc_standpoints) {
+				GetObj(obj)->SetInt64(field, idx, value | (static_cast<int64_t>(value2) << 32) );
 			} else {
 				GetObj(obj)->SetInt32(field, idx, value);
 			}
