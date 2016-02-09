@@ -56,7 +56,7 @@ struct locXY {
 		return *(locXY*)&location;
 	}
 
-	uint64_t ToField() {
+	uint64_t ToField() const {
 		return *((uint64_t*)this);
 	}
 
@@ -64,14 +64,14 @@ struct locXY {
 		return *(uint64_t*)this;
 	}
 
-	vector2f ToInches2D(float offsetX = 0, float offsetY = 0) {
+	vector2f ToInches2D(float offsetX = 0, float offsetY = 0) const {
 		return{
 			locx * INCH_PER_TILE + offsetX,
 			locy * INCH_PER_TILE + offsetY
 		};
 	}
 
-	vector3f ToInches3D(float offsetX = 0, float offsetY = 0, float offsetZ = 0) {
+	vector3f ToInches3D(float offsetX = 0, float offsetY = 0, float offsetZ = 0) const {
 		return {
 			locx * INCH_PER_TILE + offsetX,
 			offsetZ,
@@ -181,17 +181,17 @@ struct LocAndOffsets {
 	float off_x;
 	float off_y;
 	
-	vector2f ToInches2D() {
+	vector2f ToInches2D() const {
 		return location.ToInches2D(off_x, off_y);
 	}
 
 	void Normalize();
 
 	// Same as ToInches2d, but translates to center of tile
-	vector2f ToCenterOfTileAbs();
+	vector2f ToCenterOfTileAbs() const;
 
 	// Same as ToInches3d, but translates to center of tile
-	XMFLOAT3 ToCenterOfTileAbs3D(float offsetZ = 0);
+	XMFLOAT3 ToCenterOfTileAbs3D(float offsetZ = 0) const;
 
 	vector3f ToInches3D(float offsetZ = 0) {
 		return location.ToInches3D(off_x, off_y, offsetZ);
@@ -211,14 +211,14 @@ struct LocAndOffsets {
 
 };
 
-inline vector2f LocAndOffsets::ToCenterOfTileAbs() {
+inline vector2f LocAndOffsets::ToCenterOfTileAbs() const {
 	auto result = ToInches2D();
 	result.x += INCH_PER_HALFTILE;
 	result.y += INCH_PER_HALFTILE;
 	return result;
 }
 
-inline XMFLOAT3 LocAndOffsets::ToCenterOfTileAbs3D(float offsetZ) {
+inline XMFLOAT3 LocAndOffsets::ToCenterOfTileAbs3D(float offsetZ) const {
 	auto abs2d(ToInches2D());
 	XMFLOAT3 result{ abs2d.x, offsetZ, abs2d.y };
 	result.x += INCH_PER_HALFTILE;

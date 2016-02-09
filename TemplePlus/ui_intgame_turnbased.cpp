@@ -15,10 +15,13 @@
 #include "ui/ui_picker.h"
 #include "radialmenu.h"
 #include "gamesystems/gamesystems.h"
+#include "tig/tig_startup.h"
 #include "gamesystems/timeevents.h"
 #include "raycast.h"
 #include "location.h"
 #include <infrastructure/keyboard.h>
+#include <graphics/mdfmaterials.h>
+#include <graphics/shaperenderer2d.h>
 
 UiIntgameTurnbased uiIntgameTb;
 
@@ -26,7 +29,7 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable
 {
 	BOOL (__cdecl*GameRayCast)(int x, int y, objHndl* obj, int flags);
 	void (__cdecl *CursorRenderUpdate)();
-	int(__cdecl *AooIndicatorDraw)(AooShaderPacket*, int shaderId);
+	int(__cdecl *AooIndicatorDraw)(LocAndOffsets*, int shaderId);
 	int(__cdecl *GetHourglassDepletionState)();
 	int * cursorState;
 	int(__cdecl * UiActiveRadialMenuHasActiveNode)();
@@ -156,6 +159,10 @@ public:
 
 	static BOOL UiIntgameRaycast(objHndl* obj, int x, int y, int flags);
 	static int IntgameValidateMouseSelection(TigMsgMouse*msg);
+
+	static void RenderAooIndicator(const LocAndOffsets &location, int materialId);
+
+	static void HourglassUpdate(int a3, int a4, int flags);
 
 	void apply() override 
 	{
@@ -347,6 +354,27 @@ int UiIntegameTurnbasedRepl::IntgameValidateMouseSelection(TigMsgMouse* msg)
 	return 0;
 }
 
+void UiIntegameTurnbasedRepl::RenderAooIndicator(const LocAndOffsets& location, int materialId) {
+
+	auto material = tig->GetMdfFactory().GetById(materialId);
+
+	auto texture = material->GetPrimaryTexture();
+
+	if (!texture) {
+		return;
+	}
+
+	auto texWidth = (float) texture->GetContentRect().width;
+	auto texHeight = (float) texture->GetContentRect().height;
+
+	auto screenPos = tig->GetRenderingDevice().GetCamera().WorldToScreenUi(location.ToCenterOfTileAbs3D());
+	auto x = (float)(screenPos.x - texWidth / 2);
+	auto y = (float)(screenPos.y - texHeight / 2);
+
+	tig->GetShapeRenderer2d().DrawRectangle(x, y, texWidth, texHeight, texture);
+
+}
+
 void(__cdecl*UiIntegameTurnbasedRepl::orgIntgameTurnbasedRender)(int widId);
 int(__cdecl* UiIntegameTurnbasedRepl::orgUiIntgamePathSequenceHandler)(TigMsgMouse*msg);
 void(__cdecl*UiIntegameTurnbasedRepl::orgUiIntgameGenerateSequence)(int isUnnecessary);
@@ -382,7 +410,7 @@ void UiIntgameTurnbased::AooInterceptArrowDraw(LocAndOffsets* perfLoc, LocAndOff
 	addresses.AooInterceptArrowDraw(perfLoc, targetLoc);
 }
 
-void HourglassUpdate(int a3, int a4, int flags)
+void UiIntegameTurnbasedRepl::HourglassUpdate(int a3, int a4, int flags)
 {
 	int v3 = flags; int v4 = a3;
 	int v33 = 0; int pathPreviewState = 0;
@@ -567,11 +595,11 @@ void HourglassUpdate(int a3, int a4, int flags)
 		return;
 	}
 
-	for (int i = 0; i < *addresses.aooShaderLocationsNum ; i++)
-	{
-		addresses.AooIndicatorDraw(
-			&addresses.aooShaderLocations[i],
-			addresses.aooShaderLocations[i].shaderId  );
+	for (auto i = 0; i < *addresses.aooShaderLocationsNum; i++) {
+		RenderAooIndicator(
+			addresses.aooShaderLocations[i].loc,
+			addresses.aooShaderLocations[i].shaderId
+		);
 	}
 
 	if (*addresses.cursorState == 3 

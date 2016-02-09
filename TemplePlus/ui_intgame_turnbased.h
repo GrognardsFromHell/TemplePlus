@@ -28,6 +28,3 @@ public:
 };
 
 extern UiIntgameTurnbased uiIntgameTb;
-
-
-void HourglassUpdate(int, int, int);
