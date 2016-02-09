@@ -680,6 +680,11 @@ std::string TimeEventSystem::FormatTime(const GameTime& time) {
 	return buffer;
 }
 
+void TimeEventSystem::RemoveAll(TimeEventType type) {
+	static auto timeevent_remove_all = temple::GetPointer<signed int(int systemType)>(0x10060970);
+	timeevent_remove_all((int)type);
+}
+
 bool TimeEventSystem::Schedule(TimeEvent * evt, const GameTime * delay, const GameTime * baseTime, GameTime * triggerTime, const char * sourceFile, int sourceLine)
 {
 	using ScheduleFn = BOOL(TimeEvent* createArgs, const GameTime *time, const GameTime *curTime, GameTime *pTriggerTimeOut, const char *sourceFile, int sourceLine);

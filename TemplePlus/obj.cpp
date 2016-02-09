@@ -41,10 +41,10 @@ struct ObjectSystemAddresses : temple::AddressTable
 static_assert(temple::validate_size<ObjectId, 24>::value, "Object ID structure has incorrect size.");
 
 #pragma region Objects implementation
-
+		
 uint32_t Objects::getInt32(objHndl obj, obj_f field) {
 	return objSystem->GetObject(obj)->GetInt32(field);
-}
+	}
 
 uint64_t Objects::getInt64(objHndl obj, obj_f field) {
 	return objSystem->GetObject(obj)->GetInt64(field);
@@ -52,11 +52,11 @@ uint64_t Objects::getInt64(objHndl obj, obj_f field) {
 
 void Objects::SetFieldObjHnd(objHndl obj, obj_f field, objHndl value) {
 	objSystem->GetObject(obj)->SetObjHndl(field, value);
-}
+	}
 
 objHndl Objects::getObjHnd(objHndl obj, obj_f field) {
 	return objSystem->GetObject(obj)->GetObjHndl(field);
-}
+	}
 
 void Objects::setInt32(objHndl obj, obj_f field, uint32_t value) {
 	objSystem->GetObject(obj)->SetInt32(field, value);
@@ -122,7 +122,7 @@ gfx::AnimatedModelPtr Objects::GetAnimHandle(objHndl obj)
 	}
 	if (!IsRadiusSet(obj)) {
 		UpdateRadius(obj, model->GetHandle());
-	}
+}
 
 	return model;
 	
@@ -161,10 +161,10 @@ gfx::AnimatedModelParams Objects::GetAnimParams(objHndl handle)
 					if (aasHandle) {
 						auto& aas = gameSystems->GetAAS();
 						result.parentAnim = aas.BorrowByHandle(aasHandle);
-					}
+	}
 					return result;
-				}
-			}
+		}
+	} 
 		}
 	}
 
@@ -173,18 +173,18 @@ gfx::AnimatedModelParams Objects::GetAnimParams(objHndl handle)
 	result.y = loc.location.locy;
 	result.offsetX = loc.off_x;
 	result.offsetY = loc.off_y;
-
+	
 	auto flags = objects.GetFlags(handle);
 	int8_t elevation = 0; // TODO: This may be "depth" instead of elevation.
 	if (!(flags & OF_NOHEIGHT)) {
 		elevation = addresses.SectorGetElevation(loc);
-	}
+}
 	result.offsetZ = objects.GetOffsetZ(handle) - elevation;
 	result.rotation = objects.GetRotation(handle);
 	result.rotationPitch = objects.GetRotationPitch(handle);
 
 	return result;
-}
+	}
 
 void Objects::SetAnimId(objHndl obj, gfx::EncodedAnimId animId) {
 
@@ -194,19 +194,19 @@ void Objects::SetAnimId(objHndl obj, gfx::EncodedAnimId animId) {
 		auto offHand = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);		
 		if (!offHand) {
 			offHand = critterSys.GetWornItem(obj, EquipSlot::Shield);
-		}
+}
 
 		// Apparently certain anim IDs cause weapons to disappear, 
 		// possibly skill use/casting?
 		int opacity = 0;
 		if (animId & 0xC0000000) {
 			opacity = 255;
-		}
+	}
 
 		if (mainHand) {
 			FadeTo(mainHand, opacity, 10, 16, 0);
 			SetAnimId(mainHand, animId);
-		}
+}
 		if (offHand) {
 			FadeTo(offHand, opacity, 10, 16, 0);
 			SetAnimId(offHand, animId);
@@ -234,7 +234,7 @@ gfx::EncodedAnimId Objects::GetIdleAnim(objHndl obj)
 	if (objType != obj_t_pc && objType != obj_t_npc) {
 		if (objType == obj_t_portal && IsDoorOpen(obj)) {
 			return EncodedAnimId(78);
-		}
+}
 		return EncodedAnimId(35);
 	}
 
@@ -242,7 +242,7 @@ gfx::EncodedAnimId Objects::GetIdleAnim(objHndl obj)
 		return EncodedAnimId(12);
 	}
 	else if (critterSys.IsDeadOrUnconscious(obj))
-	{
+{
 		return EncodedAnimId(14);
 	}
 	else if (critterSys.IsProne(obj))
@@ -252,17 +252,17 @@ gfx::EncodedAnimId Objects::GetIdleAnim(objHndl obj)
 	else if (critterSys.IsConcealed(obj))
 	{
 		return EncodedAnimId(33);
-	}
+}
 	else if (critterSys.IsMovingSilently(obj))
-	{
+{
 		return EncodedAnimId(44);
-	}
+}
 	else if (critterSys.IsCombatModeActive(obj))
-	{
+{
 		return critterSys.GetAnimId(idleAnimObj, gfx::WeaponAnim::CombatIdle);
-	}
+}
 	else
-	{
+{
 		return critterSys.GetAnimId(idleAnimObj, gfx::WeaponAnim::Idle);
 	}
 }
@@ -316,7 +316,7 @@ Objects::Objects()
 	rebase(_IsObjDeadNullDestroyed, 0x1007E650);
 
 	rebase(_GetId, 0x1009CA40);
-	
+
 	rebase(_GetInternalFieldInt32,		0x1009E1D0);
 	rebase(_GetInternalFieldInt64,		0x1009E2E0);
 	rebase(_GetInternalFieldFloat,		0x1009E260);
@@ -336,7 +336,7 @@ Objects::Objects()
 	rebase(_ContainerToggleOpen, 0x1010EA00);
 
 	rebase(_DLLFieldNames,		0x102CD840);
-	
+
 	rebase(UpdateRenderHeight, 0x10021360);
 	rebase(UpdateRadius, 0x10021500);
 }
@@ -470,11 +470,11 @@ void Objects::Destroy(objHndl ObjHnd) {
 
 	if (flags & OF_DESTROYED) {
 		return; // Already destroyed
-	}
-	
+}
+
 	if (!pythonObjIntegration.ExecuteObjectScript(ObjHnd, ObjHnd, ObjScriptEvent::Destroy)) {
 		return; // Scripts tells us to skip it
-	}
+}
 
 	auto moveContentToLoc = temple::GetPointer<void(objHndl, BOOL)>(0x1006DB80);
 
@@ -493,10 +493,10 @@ void Objects::Destroy(objHndl ObjHnd) {
 			}
 		}
 		if (type == obj_t_container)
-		{
+{
 			moveContentToLoc(ObjHnd, 1);
 		}
-	}
+}
 	else
 	{
 		auto removeFromGroups = temple::GetPointer<int(objHndl)>(0x10080DA0);
@@ -506,7 +506,7 @@ void Objects::Destroy(objHndl ObjHnd) {
 		removeAiTimer(ObjHnd);
 
 		if (type == obj_t_npc)
-		{
+{
 			auto getDlgTarget = temple::GetPointer<objHndl(objHndl)>(0x10053CA0);
 			auto cancelDialog = temple::GetPointer<void(objHndl, int)>(0x1009A5D0);
 
@@ -515,13 +515,13 @@ void Objects::Destroy(objHndl ObjHnd) {
 				cancelDialog(v3, 0);
 		}
 		moveContentToLoc(ObjHnd, 1);
-	}
-	
+}
+
 	auto cancelAnims = temple::GetPointer<void(objHndl)>(0x1000C760);
 	cancelAnims(ObjHnd);
 	
 	if (combatSys.isCombatActive())
-	{
+{
 		if (tbSys.turnBasedGetCurrentActor() == ObjHnd) {
 			templeFuncs.TurnProcessing(ObjHnd);
 		}
@@ -621,6 +621,13 @@ int Objects::GetModFromStatLevel(int statLevel)
 	return (statLevel - 10) / 2;
 }
 
+bool Objects::IsPortalOpen(objHndl obj) {
+	auto sdFlags = objects.getInt32(obj, obj_f_secretdoor_flags);
+	if ((sdFlags & OSDF_SECRET_DOOR) && !(sdFlags & OSDF_SECRET_DOOR_FOUND))
+		return 0;
+	return (objects.getInt32(obj, obj_f_portal_flags) & OPF_OPEN) != 0;
+}
+
 int Objects::GetTempId(objHndl handle) {
 	return _GetInternalFieldInt32(handle, obj_f_temp_id);
 }
@@ -638,20 +645,20 @@ class ObjectReplacements : public TempleFix {
 public:
 	const char* name() override {
 		return "Replacements for Object functions (mainly for debugging purposes now)";
-	}
+}
 
 	static uint32_t _abilityScoreLevelGet(objHndl obj, Stat abScore, DispIO * dispIO)
-	{
-		return objects.abilityScoreLevelGet(obj, abScore, dispIO);
-	}
+{
+	return objects.abilityScoreLevelGet(obj, abScore, dispIO);
+}
 
 	static void _destroy(objHndl obj) {
 		objects.Destroy(obj);
-	}
+}
 
 	static int(*orgMove)(objHndl, LocAndOffsets);
 	static int Move(objHndl obj, LocAndOffsets loc)
-	{
+{
 		return orgMove(obj, loc);
 	};
 
@@ -661,7 +668,7 @@ public:
 		replaceFunction(0x100257A0, _destroy);
 		//orgMove = replaceFunction(0x10025950, Move);
 		//orgMoveUpdateLoc = replaceFunction(0x100C1990, MoveUpdateLoc);
-	}
+}
 } objReplacements;
 
 int(*ObjectReplacements::orgMove)(objHndl, LocAndOffsets);

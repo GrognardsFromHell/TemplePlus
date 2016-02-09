@@ -26,6 +26,7 @@ static struct CritterAddresses : temple::AddressTable {
 	uint32_t (__cdecl *AddFollower)(objHndl npc, objHndl pc, int unkFlag, bool asAiFollower);
 	uint32_t (__cdecl *RemoveFollower)(objHndl npc, int unkFlag);
 	objHndl (__cdecl *GetLeader)(objHndl critter);
+	objHndl(__cdecl *GetLeaderRecursive)(objHndl critter);
 	int (__cdecl *HasLineOfSight)(objHndl critter, objHndl target);
 	void (__cdecl *Attack)(objHndl target, objHndl attacker, int n1, int n2);
 	uint32_t (__cdecl *IsFriendly)(objHndl pc, objHndl npc);
@@ -51,11 +52,16 @@ static struct CritterAddresses : temple::AddressTable {
 
 	int (*GetWeaponAnim)(objHndl critter, objHndl primaryWeapon, objHndl secondary, gfx::WeaponAnim animId);
 
+	void(__cdecl*GetCritterVoiceLine)(objHndl obj, objHndl fellow, char* str, int* soundId);
+	int (__cdecl*PlayCritterVoiceLine)(objHndl obj, objHndl fellow, char* str, int soundId);
 	CritterAddresses() {
+		rebase(PlayCritterVoiceLine, 0x10036120);
+		rebase(GetCritterVoiceLine, 0x100373C0);
 		rebase(HasMet, 0x10053CD0);
 		rebase(AddFollower, 0x100812F0);
 		rebase(RemoveFollower, 0x10080FD0);
 		rebase(GetLeader, 0x1007EA70);
+		rebase(GetLeaderRecursive, 0x10080430);
 		rebase(HasLineOfSight, 0x10059470);
 		rebase(Attack, 0x1005E8D0);
 		rebase(IsFriendly, 0x10080E00);
@@ -76,6 +82,7 @@ static struct CritterAddresses : temple::AddressTable {
 		rebase(GetWeaponAnim, 0x10020B60);
 	}
 
+	
 } addresses;
 
 class CritterReplacements : public TempleFix
@@ -144,6 +151,11 @@ uint32_t LegacyCritterSystem::RemoveFollower(objHndl npc, int unkFlag) {
 
 objHndl LegacyCritterSystem::GetLeader(objHndl critter) {
 	return addresses.GetLeader(critter);
+}
+
+objHndl LegacyCritterSystem::GetLeaderRecursive(objHndl critter)
+{
+	return addresses.GetLeaderRecursive(critter);
 }
 
 int LegacyCritterSystem::HasLineOfSight(objHndl critter, objHndl target) {
@@ -231,7 +243,7 @@ bool LegacyCritterSystem::IsDeadNullDestroyed(objHndl critter)
 	}
 
 	auto flags = objects.GetFlags(critter);
-	if (flags & OF_OFF) {
+	if (flags & OF_DESTROYED) {
 		return true;
 	}
 
@@ -939,6 +951,27 @@ bool LegacyCritterSystem::IsCaster(objHndl obj)
 	return GetCasterLevel(obj) > 0;
 }
 
+bool LegacyCritterSystem::IsWieldingRangedWeapon(objHndl obj)
+{
+	auto weapon = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
+	if (!weapon)
+	{
+		weapon = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);
+	}
+	if (!weapon)
+		return 0;
+	return (objects.getInt32(weapon, obj_f_weapon_flags) & OWF_RANGED_WEAPON ) != 0;
+}
+
+void LegacyCritterSystem::GetCritterVoiceLine(objHndl obj, objHndl fellow, char* text, int* soundId)
+{
+	addresses.GetCritterVoiceLine(obj, fellow, text, soundId);
+}
+
+int LegacyCritterSystem::PlayCritterVoiceLine(objHndl obj, objHndl fellow, char* text, int soundId)
+{
+	return addresses.PlayCritterVoiceLine(obj, fellow, text, soundId);
+}
 #pragma region Critter Hooks
 uint32_t _isCritterCombatModeActive(objHndl objHnd)
 {

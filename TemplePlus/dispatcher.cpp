@@ -252,6 +252,12 @@ DispIoTooltip* DispatcherSystem::DispIoCheckIoType9(DispIoTooltip* dispIo)
 	return dispIo;
 }
 
+DispIoTooltip* DispatcherSystem::DispIoCheckIoType9(DispIO* dispIo)
+{
+	if (dispIo->dispIOType != dispIoTypeTooltip) return nullptr;
+	return static_cast<DispIoTooltip*>(dispIo);
+}
+
 DispIoBonusAndObj* DispatcherSystem::DispIoCheckIoType10(DispIoBonusAndObj* dispIo)
 {
 	if (dispIo->dispIOType != dispIOTypeSkillLevel) return nullptr;
@@ -410,6 +416,18 @@ void DispatcherSystem::DispatchConditionRemove(Dispatcher* dispatcher, CondNode*
 		}
 	}
 	cond->flags |= 1;
+}
+
+unsigned DispatcherSystem::Dispatch35BaseCasterLevelModify(objHndl obj, SpellPacketBody* spellPkt)
+{
+	auto _dispatcher = objects.GetDispatcher(obj);
+	if (!dispatch.dispatcherValid(_dispatcher))
+		return 0;
+	DispIoD20Query dispIo;
+	dispIo.return_val = spellPkt->baseCasterLevel;
+	DispatcherProcessor(_dispatcher, dispTypeBaseCasterLevelMod, 0, &dispIo);
+	spellPkt->baseCasterLevel = dispIo.return_val;
+	return dispIo.return_val;
 }
 
 void DispatcherSystem::DispIoDamageInit(DispIoDamage* dispIoDamage)

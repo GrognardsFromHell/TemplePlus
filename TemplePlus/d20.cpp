@@ -22,6 +22,8 @@
 #include "weapon.h"
 #include "party.h"
 #include "ui/ui_dialog.h"
+#include "ui/ui_picker.h"
+#include "d20_obj_registry.h"
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
@@ -36,6 +38,8 @@ public:
 	const char* name() override {
 		return "D20 Function Replacements";
 	}
+
+	static int PerformActivateReadiedAction(D20Actn* d20a);
 
 	void apply() override {
 		
@@ -68,6 +72,8 @@ public:
 
 		replaceFunction(0x1008CE30, _PerformStandardAttack);
 		
+		replaceFunction(0x100920B0, PerformActivateReadiedAction);
+
 		replaceFunction(0x100949E0, _GlobD20ActnInit);
 		
 
@@ -81,10 +87,25 @@ public:
 	}
 } d20Replacements;
 
+int D20Replacements::PerformActivateReadiedAction(D20Actn* d20a)
+{
+	logger->info("Performing Readied Interrupt - cutting sequence short.");
+	auto curSeq = *actSeqSys.actSeqCur;
+	int curIdx = curSeq->d20aCurIdx;
+	if (curIdx < curSeq->d20ActArrayNum && curSeq->d20ActArray[curIdx+1].d20ATarget != D20A_READIED_INTERRUPT)
+	{
+		curSeq->d20ActArrayNum = curIdx;
+	}
+
+	//curSeq->seqOccupied &= ~SEQF_PERFORMING;
+
+	return 0;
+	
+}
 
 static struct LegacyD20SystemAddresses : temple::AddressTable {
 
-	void(__cdecl*  GlobD20ActnSetTarget)(objHndl objHnd, LocAndOffsets * loc);
+	int (__cdecl*  GlobD20ActnSetTarget)(objHndl objHnd, LocAndOffsets * loc);
 	uint32_t(__cdecl* LocationCheckStdAttack)(D20Actn*, TurnBasedStatus*, LocAndOffsets*);
 	uint32_t (__cdecl*ActionCostStandardAttack)(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp);
 	uint32_t(__cdecl*sub_1008EDF0)(D20Actn * d20a, int flags);
@@ -92,6 +113,9 @@ static struct LegacyD20SystemAddresses : temple::AddressTable {
 	uint32_t(__cdecl*AiCheckStdAttack)(D20Actn*, TurnBasedStatus*);
 	uint32_t(__cdecl*ActionCheckStdAttack)(D20Actn*, TurnBasedStatus*);
 	int(__cdecl*TargetWithinReachOfLoc)(objHndl obj, objHndl target, LocAndOffsets* loc);
+	int * actSeqTargetsIdx;
+	objHndl * actSeqTargets; // size 32
+
 	LegacyD20SystemAddresses()
 	{
 		rebase(GlobD20ActnSetTarget,0x10092E50); 
@@ -103,6 +127,8 @@ static struct LegacyD20SystemAddresses : temple::AddressTable {
 		rebase(ActionCheckStdAttack, 0x1008C910);
 
 		rebase(TargetWithinReachOfLoc, 0x100B86C0);
+		rebase(actSeqTargetsIdx, 0x118CD2A0);
+		rebase(actSeqTargets, 0x118CD2A8);
 	}
 } addresses;
 
@@ -135,7 +161,7 @@ void LegacyD20System::NewD20ActionsInit()
 
 	d20Type = D20A_DISARM;
 	d20Defs[d20Type].addToSeqFunc = _AddToSeqWithTarget;
-	d20Defs[d20Type].aiCheckMaybe = _StdAttackAiCheck;
+	d20Defs[d20Type].turnBasedStatusCheck = _StdAttackAiCheck;
 	d20Defs[d20Type].actionCheckFunc = _ActionCheckDisarm;
 	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
 	d20Defs[d20Type].performFunc = _PerformDisarm;
@@ -148,7 +174,7 @@ void LegacyD20System::NewD20ActionsInit()
 
 	d20Type = D20A_DISARMED_WEAPON_RETRIEVE;
 	d20Defs[d20Type].addToSeqFunc = _AddToSeqSimple;
-	d20Defs[d20Type].aiCheckMaybe = 0;
+	d20Defs[d20Type].turnBasedStatusCheck = 0;
 	d20Defs[d20Type].actionCheckFunc = _ActionCheckDisarmedWeaponRetrieve;
 	d20Defs[d20Type].locCheckFunc = LocationCheckDisarmedWeaponRetrieve;
 	d20Defs[d20Type].performFunc = _PerformDisarmedWeaponRetrieve;
@@ -161,7 +187,7 @@ void LegacyD20System::NewD20ActionsInit()
 
 	d20Type = D20A_SUNDER;
 	d20Defs[d20Type].addToSeqFunc = _AddToSeqWithTarget;
-	d20Defs[d20Type].aiCheckMaybe = _StdAttackAiCheck;
+	d20Defs[d20Type].turnBasedStatusCheck = _StdAttackAiCheck;
 	d20Defs[d20Type].actionCheckFunc = _ActionCheckSunder;
 	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
 	d20Defs[d20Type].performFunc = _PerformDisarm;
@@ -173,7 +199,7 @@ void LegacyD20System::NewD20ActionsInit()
 
 	d20Type = D20A_AID_ANOTHER_WAKE_UP;
 	d20Defs[d20Type].addToSeqFunc = _AddToSeqWithTarget;
-	d20Defs[d20Type].aiCheckMaybe = _StdAttackAiCheck;
+	d20Defs[d20Type].turnBasedStatusCheck = _StdAttackAiCheck;
 	d20Defs[d20Type].actionCheckFunc = _ActionCheckAidAnotherWakeUp;
 	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
 	d20Defs[d20Type].performFunc = _PerformAidAnotherWakeUp;
@@ -244,6 +270,11 @@ uint32_t LegacyD20System::d20QueryWithData(objHndl objHnd, D20DispatcherKey disp
 	return dispIO.return_val;
 }
 
+uint32_t LegacyD20System::d20QueryWithData(objHndl obj, D20DispatcherKey dispKey, objHndl argObj)
+{
+	return d20QueryWithData(obj, dispKey, (uint32_t)argObj, (argObj>>32));
+}
+
 uint32_t LegacyD20System::d20QueryHasSpellCond(objHndl obj, int spellEnum)
 {
 	auto cond = spellSys.GetCondFromSpellIdx(spellEnum);
@@ -310,13 +341,14 @@ void LegacyD20System::D20ActnInit(objHndl objHnd, D20Actn* d20a)
 	d20a->spellId = 0;
 	d20a->d20Caf = 0;
 
-	if (pq && pq >= pathfinding->pathQArray && pq < (pathfinding->pathQArray + pfCacheSize))
+	if (pq && pq >= pathfinding->pathQArray && pq < (pathfinding->pathQArray + PQR_CACHE_SIZE))
 	{
 		pq->occupiedFlag = 0;
 	}
 	d20a->path = nullptr;
 	d20a->d20SpellData.spellEnumOrg = 0;
 	d20a->animID = 0;
+	//d20a->animID = -1;  // was 0 in vanilla, probably bug?
 	d20a->rollHist1 = -1;
 	d20a->rollHist2 = -1;
 	d20a->rollHist3 = -1;
@@ -334,16 +366,16 @@ void LegacyD20System::globD20ActnSetPerformer(objHndl objHnd)
 {
 	if (objHnd != (*globD20Action).d20APerformer)
 	{
-		*actSeq->seqSthg_118CD3B8 = -1;
-		*actSeq->seqSthg_118A0980 = 1;
-		*actSeq->seqSthg_118CD570 = 0;
+		*actSeqSys.seqPickerTargetingType = -1;
+		*actSeqSys.seqPickerD20ActnType = D20A_UNSPECIFIED_ATTACK;
+		*actSeqSys.seqPickerD20ActnData1 = 0;
 	}
 	(*globD20Action).d20APerformer = objHnd;
 }
 
-void LegacyD20System::GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc)
+int LegacyD20System::GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc)
 {
-	addresses.GlobD20ActnSetTarget(objHnd, loc);
+	return addresses.GlobD20ActnSetTarget(objHnd, loc);
 }
 
 void LegacyD20System::GlobD20ActnInit()
@@ -595,6 +627,120 @@ void LegacyD20System::D20ActnSetSetSpontCast(D20SpellData* d20SpellData, SpontCa
 	d20SpellData->metaMagicData.metaMagicHeightenSpellCount = 0;
 	d20SpellData->metaMagicData.metaMagicWidenSpellCount = 0;
 }
+
+D20TargetClassification LegacyD20System::TargetClassification(D20Actn* d20a)
+{
+	auto d20DefFlags = d20Defs[d20a->d20ActType].flags;
+	if (d20DefFlags & D20ADF::D20ADF_Movement)
+	{
+		return D20TargetClassification::D20TC_Movement;
+	} 
+	if (d20DefFlags & D20ADF_TargetSingleIncSelf)
+		return D20TargetClassification::D20TC_SingleIncSelf;
+	if (d20DefFlags & D20ADF_TargetSingleExcSelf)
+		return D20TargetClassification::D20TC_SingleExcSelf;
+	if (d20DefFlags & D20ADF_MagicEffectTargeting)
+		return D20TargetClassification::D20TC_CastSpell;
+	if (d20DefFlags & D20ADF_CallLightningTargeting)
+		return D20TargetClassification::D20TC_CallLightning;
+	if (d20DefFlags & D20ADF_TargetContainer)
+		return D20TargetClassification::D20TC_ItemInteraction;
+	if (d20DefFlags * D20ADF_TargetingBasedOnD20Data)
+	{
+		switch (d20a->data1)
+		{
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+			return D20TargetClassification::D20TC_SingleExcSelf;
+		default:
+			return D20TargetClassification::Target0;
+		}
+	}
+	return D20TargetClassification::Target0;
+}
+
+int LegacyD20System::TargetCheck(D20Actn* d20a)
+{
+
+	auto target = d20a->d20ATarget;
+	ObjectType tgtType;
+	if (target)
+		tgtType = objects.GetType(target);
+
+	auto curSeq = (*actSeqSys.actSeqCur);
+	switch( TargetClassification(d20a))
+	{
+		case D20TC_SingleExcSelf:
+			if (target == d20a->d20APerformer)
+				return 0;
+		case D20TC_SingleIncSelf:
+			if (!target)
+				return 0;
+			if (tgtType == obj_t_pc || tgtType == obj_t_npc)
+				return 1; 
+			else
+				return 0;
+			break;
+		case D20TC_ItemInteraction:
+			if (!target)
+				return 0;
+			if (tgtType == obj_t_container)
+				return 1;
+			if (objects.IsCritterType(tgtType))
+				return critterSys.IsDeadNullDestroyed(target);
+			if (tgtType == obj_t_portal)
+				return 1;
+			return 0;
+		case D20TC_CallLightning:
+			return (*addresses.actSeqTargetsIdx) >= 0;
+		case D20TC_CastSpell:
+			curSeq->d20Action = d20a;
+			if (curSeq->spellPktBody.objHndCaster || curSeq->spellPktBody.spellEnum)
+				return 1;
+			unsigned spellEnum, spellEnumOrg, spellClassCode, spellSlotLevel, itemSpellData, spellMetaMagicData;
+			D20SpellDataExtractInfo(&d20a->d20SpellData, &spellEnum, &spellEnumOrg, &spellClassCode, &spellSlotLevel, &itemSpellData, &spellMetaMagicData);
+			spellSys.spellPacketBodyReset(&curSeq->spellPktBody);
+			curSeq->spellPktBody.spellEnum = spellEnum;
+			curSeq->spellPktBody.spellEnumOriginal= spellEnumOrg;
+			curSeq->spellPktBody.objHndCaster = d20a->d20APerformer;
+			curSeq->spellPktBody.casterClassCode = spellClassCode;
+			curSeq->spellPktBody.spellKnownSlotLevel = spellSlotLevel;
+			curSeq->spellPktBody.metaMagicData = spellMetaMagicData;
+			curSeq->spellPktBody.invIdx = itemSpellData;
+			SpellEntry spellEntry;
+			if (!spellSys.spellRegistryCopy(spellEnum, &spellEntry))
+			{
+				logger->warn("Perform Cast Spell: failed to retrieve spell entry %d!\n", spellEnum);
+				return 1;
+			}
+			if (itemSpellData == 255)
+				spellSys.spellPacketSetCasterLevel(&curSeq->spellPktBody);
+			else
+				curSeq->spellPktBody.baseCasterLevel = max(1, 2 * static_cast<int>(spellSlotLevel) - 1);
+			curSeq->spellPktBody.spellRange = spellSys.GetSpellRange(&spellEntry, curSeq->spellPktBody.baseCasterLevel, curSeq->spellPktBody.objHndCaster);
+			if ((spellEntry.modeTargetSemiBitmask & 0xFF) != static_cast<unsigned>(UiPickerType::Personal)
+				|| spellEntry.radiusTarget < 0
+				|| (spellEntry.flagsTargetBitmask & UiPickerFlagsTarget::Radius))
+				return 0;
+			curSeq->spellPktBody.targetListNumItemsCopy = 1;
+			curSeq->spellPktBody.targetListNumItems = 1;
+			curSeq->spellPktBody.targetListHandles[0] = curSeq->spellPktBody.objHndCaster;
+			curSeq->spellPktBody.aoeCenter.location =
+				objects.GetLocationFull(curSeq->spellPktBody.objHndCaster);
+			curSeq->spellPktBody.aoeCenter.off_z =
+				objects.GetOffsetZ(curSeq->spellPktBody.objHndCaster);
+			if (spellEntry.radiusTarget > 0)
+				curSeq->spellPktBody.spellRange = spellEntry.radiusTarget;
+			return 1;
+
+		default:
+			return 1;
+	}
+}
+
+
 
 uint64_t LegacyD20System::d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, ::uint32_t arg2)
 {

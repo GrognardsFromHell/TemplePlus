@@ -3,8 +3,8 @@
 #include <temple/dll.h>
 #include "temple_functions.h"
 
-#define pfCacheSize  0x20
-#define PATH_RESULT_CACHE_SIZE 0x28 // different from the above
+#define PQR_CACHE_SIZE  0x20 // cache used for storing paths for specific action sequences
+#define PATH_RESULT_CACHE_SIZE 0x28 // different from the above, used for storing past results to minimize PF time
 
 #pragma region structs
 
@@ -58,19 +58,20 @@ enum PathQueryFlags : uint32_t {
 
 	PQF_DONT_USE_PATHNODES = 0x4000,
 	PQF_DONT_USE_STRAIGHT_LINE = 0x8000,
-	PQF_FORCED_STRAIGHT_LINE =  0x10000,
+	PQF_FORCED_STRAIGHT_LINE = 0x10000,
 	PQF_ADJ_RADIUS_REQUIRE_LOS = 0x20000,
 	/*
-		if the target destination is not cleared, and PQF_ADJUST_RADIUS is off, 
-		it will search in a 5x5 tile neighbourgood around the original target tile 
+		if the target destination is not cleared, and PQF_ADJUST_RADIUS is off,
+		it will search in a 5x5 tile neighbourgood around the original target tile
 		for a clear tile (i.e. one that the critter can fit in without colliding with anything)
 	*/
 	PQF_ALLOW_ALTERNATIVE_TARGET_TILE = 0x40000,
 
 	// Appears to mean that pathfinding should obey the time limit
-	PQF_A_STAR_TIME_CAPPED =			  0x80000, // it is set when the D20 action has the flag D20CAF_TRUNCATED
-	PQF_IGNORE_CRITTERS_ON_DESTINATION = 0x800000 // NEW! makes it ignored critters on the PathDestIsClear function
+	PQF_A_STAR_TIME_CAPPED = 0x80000, // it is set when the D20 action has the flag D20CAF_TRUNCATED
 
+	PQF_IGNORE_CRITTERS_ON_DESTINATION = 0x800000, // NEW! makes it ignored critters on the PathDestIsClear function
+	PQF_AVOID_AOOS = 0x1000000 // NEW! Make the PF attempt avoid Aoos (using the ShouldIgnore function in combat.py to ignore insiginificant threats)
 };
 
 #pragma pack(push, 1)
@@ -105,7 +106,7 @@ enum PathFlags {
 	PF_2 = 0x2,
 	PF_4 = 0x4,
 	PF_STRAIGHT_LINE_SUCCEEDED = 0x8, 
-	PF_UNK1 = 0x10, // Seems to be set in response to query flag PQF_A_STAR_TIME_CAPPED (maybe timeout flag?)
+	PF_TIMED_OUT = 0x10, // Seems to be set in response to query flag PQF_A_STAR_TIME_CAPPED (maybe timeout flag?)
 	PF_20 = 0x20
 };
 
@@ -160,12 +161,22 @@ struct Pathfinding : temple::AddressTable {
 	int aStarTimeElapsed[20]; // array 20
 	int aStarTimeEnded[20]; //  array 20
 
+#pragma region Debug stuff for diagnostic render
+	LocAndOffsets pdbgFrom, pdbgTo;
+	objHndl pdbgMover, pdbgTargetObj;
+	int pdbgGotPath, pdbgShortRangeError;
+	bool pdbgUsingNodes, pdbgAbortedSansNodes;
+	int pdbgNodeNum;
+	int pdbgDirectionsCount;
+#pragma endregion
 
 	PathQueryResult * pathQArray;
-	uint32_t * pathSthgFlag_10B3D5C8;
+	bool pathQueryResultIsValid(PathQueryResult *pqr);
+	PathQueryResult* FetchAvailablePQRCacheSlot();
+	uint32_t * rollbackSequenceFlag;
 
 	float pathLength(Path *path); // path length in feet; note: unlike the ToEE function, returns a float (and NOT to the FPU!)
-	bool pathQueryResultIsValid(PathQueryResult *pqr);
+
 
 	Pathfinding();
 
@@ -179,30 +190,49 @@ struct Pathfinding : temple::AddressTable {
 	void PathCacheInit();
 
 	int PathDestIsClear(PathQuery* pq, objHndl mover, LocAndOffsets destLoc); // checks if there's anything blocking the destination location (taking into account the mover's radius)
+	int PathDestIsClear(objHndl mover, LocAndOffsets* destLoc); // simpler version without the path query flags
+	
 	int(__cdecl*FindPathBetweenNodes)(int fromNodeId, int toNodeId, void*, int maxChainLength); // finds the node IDs for the To -> .. -> From course (locally optimal I think? Is this A*?); return value is chain length
 
-
+	/*
+		if target tile is not clear (blocked, or not enough space for the obj), find another one
+		irrelevant for ADJ_RADIUS
+	*/
 	bool GetAlternativeTargetLocation(Path* pqr, PathQuery* pq);
-
-
+	/*
+		For ADJ_RADIUS: test if the target is surrounded and thus unreachable.
+		Use in combat only.
+	*/
+	bool TargetSurrounded(Path* pqr, PathQuery* pq);
 
 	int FindPath(PathQuery* pq, PathQueryResult* result);
 	void (__cdecl *ToEEpathDistBtwnToAndFrom)(Path *path); // outputs to FPU (st0);  apparently distance in feet (since it divides by 12)
 
-	objHndl canPathToParty(objHndl objHnd);
+	objHndl CanPathToParty(objHndl objHnd);
 	BOOL PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo); // including static obstacles it seems
 	BOOL PathAdjRadiusLosClear(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo);
 	ScreenDirections GetDirection(int a1, int a2, int a3);
 	int FindPathShortDistanceSansTargetLegacy(PathQuery * pq, Path* pqr);
 	int FindPathShortDistanceSansTarget(PathQuery * pq, Path* pqr);
 
+	/*
+		gets a partial path (based on path) starting from startDistFeet to endDistFeet and writes it to pathTrunc
+	*/
+	int GetPartialPath(Path* path, Path* pathTrunc, float startDistFeet, float endDistFeet);
+	int TruncatePathToDistance(Path* path, LocAndOffsets* truncatedLoc, float truncateLengthFeet);
 
-protected:
 	void PathInit(Path* pqr, PathQuery* pq);
+protected:
+	
 
 	uint32_t ShouldUsePathnodes(Path* pathQueryResult, PathQuery* pathQuery);
 	int FindPathUsingNodes(PathQuery* pq, Path* pqr);
 	int FindPathStraightLine(Path* pqr, PathQuery* pq);
+	
+	/*
+		if idx is empty, this function will fill the slot with the location defined by the cumulative result of the "direction" steps.
+		whether it appends or not, it returns the tempnode in that idx.
+	*/
 	LocAndOffsets * PathTempNodeAddByDirections(int idx, Path* pqr, LocAndOffsets* newNode);
 	void PathNodesAddByDirections(Path* pqr, PathQuery* pq);
 	int FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr);

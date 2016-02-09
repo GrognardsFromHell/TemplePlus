@@ -2,6 +2,8 @@
 #include "ui.h"
 #include "tig/tig.h"
 #include <util/fixes.h>
+#include <tig/tig_msg.h>
+#include <sound.h>
 
 Ui ui;
 
@@ -56,7 +58,7 @@ static struct UiFuncs : temple::AddressTable {
 	void (__cdecl *ShowPartyPool)(bool ingame);
 	void (__cdecl *ShowCharUi)(int page);
 	bool (__cdecl *ShowWrittenUi)(objHndl handle);
-
+	
 	BOOL(__cdecl*BindButton)(int parentId, int buttonId);
 	BOOL(__cdecl*AddWindow)(Widget* widget, unsigned size, int* widgetId, const char* codeFileName, int lineNumber);
 	BOOL(__cdecl*AddButton)(WidgetType2* button, unsigned size, int* widgId, const char* codeFileName, int lineNumber);
@@ -65,10 +67,13 @@ static struct UiFuncs : temple::AddressTable {
 	BOOL(__cdecl*WidgetSetHidden)(int widId, int hiddenState);
 	BOOL(__cdecl*GetButtonState)(int widId, int* state);
 	void(__cdecl*WidgetBringToFront)(int widId);
+	void(*UiMouseMsgHandlerRenderTooltipCallback)(int x, int y, void* data); //
+
 
 	ActiveWidgetListEntry* activeWidgetAllocList;
 	Widget** activeWidgets;
 	int* activeWidgetCount;
+	int* visibleWindowCnt;
 
 	// List of all UI subsystems (top level dialogs, basically)
 	UiSystem* systems;
@@ -81,6 +86,11 @@ static struct UiFuncs : temple::AddressTable {
 	SaveCallback* saveGameCallback;
 	// Called to load UI related functions from the savegame in data2.sav
 	SaveCallback* loadGameCallback;
+	int *visibleWidgetWindows;
+	void(__cdecl ** cursorTextDrawCallback)(int x, int y, void*data);
+	void** cursorTextDrawCallbackData;
+	int* uiWidgetMouseHandlerWidgetId;
+	int* uiMouseButtonId;
 
 	UiFuncs() {
 		rebase(Init, 0x101156F0);
@@ -100,21 +110,33 @@ static struct UiFuncs : temple::AddressTable {
 		rebase(GameLoad, 0x101154B0);
 		rebase(GameSave, 0x101152F0);
 
-		rebase(activeWidgetAllocList, 0x10EF68DC);
-		rebase(activeWidgets, 0x10EF68E0);
-		rebase(activeWidgetCount, 0x10EF68D8);
+
+		
 		rebase(systems, 0x102F6C10);
+		rebase(uiWidgetMouseHandlerWidgetId, 0x10301324);
+		rebase(uiMouseButtonId, 0x10301328);
 		rebase(saveGameCallback, 0x103072C4);
 		rebase(loadGameCallback, 0x103072C8);
+
 
 		rebase(WidgetBringToFront, 0x101F8E40);
 		rebase(BindButton, 0x101F8950);
 		rebase(AddWindow,  0x101F8FD0);
 		rebase(AddButton,  0x101F9460);
-		rebase(ButtonSetButtonState, 0x101F9510);
 		rebase(WidgetAndWindowRemove, 0x101F9010);
 		rebase(WidgetSetHidden, 0x101F9100);
+		rebase(ButtonSetButtonState, 0x101F9510);
 		rebase(GetButtonState,  0x101F9740);
+		rebase(UiMouseMsgHandlerRenderTooltipCallback, 0x101F9870);
+		
+		rebase(cursorTextDrawCallback, 0x10D255C8);
+		rebase(cursorTextDrawCallbackData, 0x10D255CC);
+
+		rebase(visibleWidgetWindows, 0x10EF39F0);
+		rebase(visibleWindowCnt, 0x10EF68D0);
+		rebase(activeWidgetCount, 0x10EF68D8);
+		rebase(activeWidgetAllocList, 0x10EF68DC);
+		rebase(activeWidgets, 0x10EF68E0);
 		
 	}
 
@@ -173,7 +195,7 @@ public:
 	};
 
 	/*
-		removes widget, incluing removing it from its parent's children list
+		removes widget, including removing it from its parent's children list
 	*/
 	static int WidgetRemoveRegardParent(int widIdx)
 	{
@@ -214,6 +236,9 @@ public:
 		return -1;
 	}
 
+	static int UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg);
+	static int(__cdecl*orgUiWidgetHandleMouseMsg)(TigMouseMsg*);
+
 	const char* name() override
 	{
 		return "UiSys" "Function Replacements";
@@ -225,8 +250,16 @@ public:
 		replaceFunction(0x101F90E0, WidgetGet);
 		replaceFunction(0x101F9570, GetButton);
 		replaceFunction(0x10115270, Reset);
+		 orgUiWidgetHandleMouseMsg = replaceFunction(0x101F9970, UiWidgetHandleMouseMsg);
 	}
 } uiReplacement;
+
+int(__cdecl*UiReplacement::orgUiWidgetHandleMouseMsg)(TigMouseMsg*);
+
+int UiReplacement::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
+{
+	return ui.UiWidgetHandleMouseMsg(mouseMsg);
+}
 
 static UiSystem& getUiSystem(const char* name) {
 	// Search for the ui system to replace
@@ -366,6 +399,42 @@ BOOL Ui::WidgetCopy(int widId, Widget* widgetOut)
 	return 0;
 }
 
+WidgetType1* Ui::WidgetGetType1(int widId)
+{
+	Widget* result = WidgetGet(widId);
+	if (result->type == 1)
+	{
+		return static_cast<WidgetType1*>(result);
+	}
+	return nullptr;
+}
+
+Widget* Ui::WidgetGet(int widId)
+{
+	if (widId == -1)
+		return nullptr;
+	return uiFuncs.activeWidgets[widId];
+}
+
+int Ui::GetWindowContainingPoint(int x, int y)
+{
+	for (int i = 0; i < *uiFuncs.visibleWindowCnt; i++)
+	{
+		Widget* widg = WidgetGet(uiFuncs.visibleWidgetWindows[i]);
+		if (widg)
+		{
+			if (widg->type == 1 && !(widg->widgetFlags & 1)
+				&& WidgetContainsPoint(uiFuncs.visibleWidgetWindows[i], x,y)
+				)
+			{
+				return uiFuncs.visibleWidgetWindows[i];
+			}
+
+		}
+	}
+	return -1;
+}
+
 BOOL Ui::GetButtonState(int widId, int* state)
 {
 	
@@ -380,6 +449,249 @@ void Ui::WidgetBringToFront(int widId)
 int Ui::WidgetlistIndexof(int widgetId, int* widgetlist, int size)
 {
 	return uiReplacement.WidgetlistIndexof(widgetId, widgetlist, size);
+}
+
+BOOL Ui::WidgetContainsPoint(int widgetId, int x, int y)
+{
+	if (widgetId == -1)
+		return false;
+	auto widg = uiFuncs.activeWidgets[widgetId];
+	if (widg == nullptr)
+		return false;
+	if (x < widg->x || x > (widg->x + widg->width) )
+		return false;
+	if (y < widg->y || y >(widg->y + widg->height))
+		return false;
+	return true;
+}
+
+int Ui::GetAtInclChildren(int x, int y)
+{
+	int windowId = GetWindowContainingPoint(x, y);
+	if (windowId == -1)
+		return windowId;
+	auto wndWidget = WidgetGetType1(windowId);
+	if (wndWidget == nullptr)
+		return windowId;
+	if (wndWidget->widgetFlags & 1)
+		return windowId;
+
+	for (int i = wndWidget->childrenCount - 1; i >= 0; i-- )
+	{
+		auto childId = wndWidget->children[i];
+		if (childId != -1)
+		{
+			auto childWid = uiFuncs.activeWidgets[childId];
+			if (childWid != nullptr
+				&& !(childWid->widgetFlags & 1)
+				&& WidgetContainsPoint(childId, x,y))
+			{
+				return childId;
+			}
+		}
+		
+	}
+	return windowId;
+}
+
+void(* Ui::GetCursorTextDrawCallback())(int x, int y, void* data)
+{
+	return *uiFuncs.cursorTextDrawCallback;
+}
+
+void Ui::SetCursorTextDrawCallback(void(* cursorTextDrawCallback)(int, int, void*), void* data)
+{
+	*uiFuncs.cursorTextDrawCallback = cursorTextDrawCallback;
+	*uiFuncs.cursorTextDrawCallbackData = data;
+
+}
+
+int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
+{
+	int flags = mouseMsg->flags;
+	int x = mouseMsg->x, y = mouseMsg->y;
+	TigMsgWidget newTigMsg;
+	newTigMsg.createdMs = temple::GetRef<int>(0x11E74578); // system time as recorded by the Msg Process function
+	newTigMsg.type = TigMsgType::WIDGET;
+	newTigMsg.x = x;
+	newTigMsg.y = y;
+
+	int widIdAtCursor = GetAtInclChildren(x, y);
+
+	int globalWidId = *uiFuncs.uiWidgetMouseHandlerWidgetId;
+
+	// moused widget changed
+	if ((flags & 0x1000) && widIdAtCursor != globalWidId)
+	{
+		if (widIdAtCursor != -1 
+			&& ui.GetCursorTextDrawCallback() == uiFuncs.UiMouseMsgHandlerRenderTooltipCallback)
+		{
+			SetCursorTextDrawCallback(nullptr, nullptr);
+		}
+
+		if (globalWidId != -1)
+		{
+			bool enqueue4 = false;
+			auto globalWid = WidgetGet(globalWidId);
+			// if window
+			if (globalWid->type == 1)
+			{
+				auto globalWndWid = WidgetGetType1(globalWidId);
+				if (globalWndWid->field_288 && globalWndWid->field_288 != 6)
+				{
+					if (globalWndWid->field_288 == 7)
+						globalWndWid->field_288 = 8;
+				} else
+				{
+					globalWndWid->field_288 = 0;
+				}
+				enqueue4 = true;
+			} 
+			// button
+			else if (globalWid->type == 2 && !(globalWid->widgetFlags & 1))
+			{
+				auto buttonWid = uiReplacement.GetButton(globalWidId);
+				if (buttonWid->buttonState >=0)
+				{
+					if (buttonWid->buttonState == 1)
+					{
+						buttonWid->buttonState = 0;
+						sound.MssPlaySound(buttonWid->hoverOff);
+
+					} else if (buttonWid->buttonState == 2)
+					{
+						buttonWid->buttonState = 3;
+					}
+				}
+				if (!(WidgetGet(globalWid->parentId)->widgetFlags & 1))
+				{
+					enqueue4 = true;
+				}
+			}
+			// scrollbar
+			else if (globalWid->type == 3)
+			{
+				if (globalWid->widgetFlags & 1 || (WidgetGet(globalWid->parentId)->widgetFlags & 1 ))
+					enqueue4 = false;
+				else
+					enqueue4 = true;
+			} else if (globalWid->type > 3)
+			{
+				enqueue4 = true;
+				logger->warn("Unknown widget type {} encountered!", globalWid->type);
+			}
+
+			if (enqueue4)
+			{
+				newTigMsg.widgetId = globalWidId;
+				newTigMsg.widgetEventType = 4;
+				msgFuncs.Enqueue(&newTigMsg);
+			}
+		}
+
+		if (widIdAtCursor != -1)
+		{
+			auto widAtCursor = WidgetGet(widIdAtCursor);
+			if (widAtCursor->type == 1)
+			{
+				auto widAtCursorWindow = WidgetGetType1(widIdAtCursor);
+				if (widAtCursorWindow->field_288)
+				{
+					if (widAtCursorWindow->field_288 == 8)
+					{
+						widAtCursorWindow->field_288 = 7;
+					}
+				} else
+				{
+					widAtCursorWindow->field_288 = 6;
+				}
+			} else if (widAtCursor->type == 2)
+			{
+				auto buttonWid = uiReplacement.GetButton(widIdAtCursor);
+				if (buttonWid->buttonState)
+				{
+					if (buttonWid->buttonState == 3)
+					{
+						buttonWid->buttonState = 2;
+					}
+				} 
+				else
+				{
+					buttonWid->buttonState = 1;
+					sound.MssPlaySound(buttonWid->hoverOn);
+				}
+			}
+			newTigMsg.widgetId = widIdAtCursor;
+			newTigMsg.widgetEventType = 3;
+			msgFuncs.Enqueue(&newTigMsg);
+		}
+		globalWidId = *uiFuncs.uiWidgetMouseHandlerWidgetId = widIdAtCursor;
+	}
+	
+	if (mouseMsg->flags &0x2000 && globalWidId != -1 && !GetCursorTextDrawCallback())
+	{
+		SetCursorTextDrawCallback(*uiFuncs.UiMouseMsgHandlerRenderTooltipCallback, uiFuncs.uiWidgetMouseHandlerWidgetId);
+	}
+
+	if (mouseMsg->flags & 1)
+	{
+		auto widIdAtCursor2 = GetAtInclChildren(mouseMsg->x, mouseMsg->y); // probably redundant to do again, but just to be safe...
+		if (widIdAtCursor2 != -1)
+		{
+			auto button = uiReplacement.GetButton(widIdAtCursor2);
+			if (button)
+			{
+				int buttonState = button->buttonState;
+				if(buttonState >= 0)
+				{
+					if (buttonState == 1)
+					{
+						button->buttonState = 2;
+						sound.MssPlaySound(button->sndDown);
+					}
+					else if (buttonState == 4)
+					{
+						return 0;
+					}
+				}
+			}
+			newTigMsg.widgetEventType = 0;
+			newTigMsg.widgetId = widIdAtCursor2;
+			*uiFuncs.uiMouseButtonId = widIdAtCursor2;
+			msgFuncs.Enqueue(&newTigMsg);
+		}
+	}
+
+	if ( (mouseMsg->flags & 4) && *uiFuncs.uiMouseButtonId != -1)
+	{
+		auto button = uiReplacement.GetButton(*uiFuncs.uiMouseButtonId);
+		if (button)
+		{
+			switch (button->buttonState)
+			{
+			case 2:
+				button->buttonState = 1;
+				sound.MssPlaySound(button->sndClick);
+				break;
+			case 3:
+				button->buttonState = 0;
+				sound.MssPlaySound(button->sndClick);
+				break;
+			case 4:
+				return 0;
+			}
+		}
+		auto widIdAtCursor2 = GetAtInclChildren(mouseMsg->x, mouseMsg->y); // probably redundant to do again, but just to be safe...
+		newTigMsg.widgetId = *uiFuncs.uiMouseButtonId;
+		newTigMsg.widgetEventType = 1 + (widIdAtCursor2 != *uiFuncs.uiMouseButtonId);
+		msgFuncs.Enqueue(&newTigMsg);
+		*uiFuncs.uiMouseButtonId = -1;
+	}
+
+	// int result = uiReplacement.orgUiWidgetHandleMouseMsg(mouseMsg);
+
+	// return result;
+	return 0;
 }
 #pragma region Loading and Unloading
 UiLoader::UiLoader(const GameSystemConf& conf) {

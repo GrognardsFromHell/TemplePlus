@@ -22,6 +22,29 @@ struct MetaMagicData
 	{
 		return (*(uint32_t*)this) & 0xFFFFFF;
 	}
+
+	MetaMagicData()
+	{
+		metaMagicFlags = 0;
+		metaMagicEmpowerSpellCount = 0;
+		metaMagicEnlargeSpellCount = 0;
+		metaMagicExtendSpellCount = 0;
+		metaMagicHeightenSpellCount = 0;
+		metaMagicWidenSpellCount = 0;
+
+	}
+
+	MetaMagicData(unsigned int raw)
+	{
+		metaMagicFlags = raw & 0xF;
+		metaMagicEmpowerSpellCount =  (raw & 0xF0) >> 4;
+		metaMagicEnlargeSpellCount =  (raw & 0xF00) >> 8;
+		metaMagicExtendSpellCount =   (raw & 0xF000) >> 12;
+		metaMagicHeightenSpellCount = (raw & 0xF0000) >> 16;
+		metaMagicWidenSpellCount =    (raw & 0xF00000) >> 20;
+	}
+
+	
 };
 const uint32_t TestSizeOfMetaMagicData = sizeof(MetaMagicData);
 

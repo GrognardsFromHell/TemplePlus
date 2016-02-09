@@ -173,6 +173,11 @@ public:
 
 	string FormatTime(const GameTime &time);
 
+	/**
+	 * Removes all time events of the given system type without calling their expiry function.
+	 */
+	void RemoveAll(TimeEventType type);
+
 private:
 	/*
 	Adds a timed event to be executed later.

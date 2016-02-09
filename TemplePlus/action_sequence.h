@@ -3,7 +3,9 @@
 #include "tig/tig_mes.h"
 
 
-#define actSeqArraySize 0x20
+#define ACT_SEQ_ARRAY_SIZE 0x20
+#define READIED_ACTION_CACHE_SIZE 0x20
+#define MAX_AOO_SHADER_LOCATIONS 64
 
 struct LocationSys;
 struct PathQuery;
@@ -12,9 +14,61 @@ struct LegacyD20System;
 struct ActnSeq;
 struct TurnBasedStatus;
 struct Pathfinding;
+struct ReadiedActionPacket;
 struct CmbtIntrpts;
 struct TurnBasedSys;
 struct Objects;
+struct AoOPacket;
+
+enum ActionErrorCode : uint32_t
+{
+	AEC_OK = 0,
+	AEC_NOT_ENOUGH_TIME1,
+	AEC_NOT_ENOUGH_TIME2,
+	AEC_NOT_ENOUGH_TIME3,
+	AEC_ALREADY_MOVED,
+	AEC_TARGET_OUT_OF_RANGE,
+	AEC_TARGET_TOO_CLOSE,
+	AEC_TARGET_BLOCKED,
+	AEC_TARGET_TOO_FAR,
+	AEC_TARGET_INVALID,
+	AEC_NO_LOS,
+	AEC_OUT_OF_AMMO,
+	AEC_NEED_MELEE_WEAPON,
+	AEC_CANT_WHILE_PRONE,
+	AEC_INVALID_ACTION,
+	AEC_CANNOT_CAST_SPELLS,
+	AEC_OUT_OF_CHARGES,
+	AEC_WRONG_WEAPON_TYPE,
+	AEC_CANNOT_CAST_OUT_OF_AVAILABLE_SPELLS,
+	AEC_CANNOT_CAST_NOT_ENOUGH_XP,
+	AEC_CANNOT_CAST_NOT_ENOUGH_GP,
+	AEC_OUT_OF_COMBAT_ONLY,
+	AEC_CANNOT_USE_MUST_USE_BEFORE_ATTACKING,
+	AEC_NEED_A_STRAIGHT_LINE,
+	AEC_NO_ACTIONS,
+	AEC_NOT_IN_COMBAT,
+	AEC_AREA_NOT_SAFE
+};
+enum TurnBasedStatusFlags : uint32_t
+{
+	TBSF_NONE = 0,
+	TBSF_1 = 1,
+	TBSF_Movement = 2,
+	TBSF_Movement2 = 4,
+	TBSF_8 = 8,
+	TBSF_CritterSpell = 0x10,
+	TBSF_20 = 0x20,
+	TBSF_FullAttack = 0x40,
+	TBSF_80 = 0x80,
+	TBSF_100 = 0x100
+};
+
+enum SequenceFlags : int {
+	SEQF_NONE = 0,
+	SEQF_PERFORMING = 1,
+	SEQF_2 = 2
+};
 
 struct ActionSequenceSystem : temple::AddressTable
 {
@@ -32,18 +86,19 @@ struct ActionSequenceSystem : temple::AddressTable
 	uint32_t * actnProcState;
 	MesHandle  * actionMesHandle; 
 	uint32_t * seqFlag_10B3D5C0; // init to 0
-	uint32_t * actnProc_10B3D5A0;
+	uint32_t * actSeqPickerActive;
 	TurnBasedStatus * tbStatus118CD3C0;
 
-	int32_t * seqSthg_118CD3B8; // init to -1
-	int32_t * seqSthg_118A0980; // init to 1
-	int32_t * seqSthg_118CD570; // init to 0
+	int32_t * seqPickerTargetingType; // init to -1
+	int32_t * seqPickerD20ActnType; // init to 1
+	int32_t * seqPickerD20ActnData1; // init to 0
 	uint32_t * numSimultPerformers;
 	uint32_t * simulsIdx;  //10B3D5BC
 	objHndl * simultPerformerQueue;
 	int turnBasedStatusTransitionMatrix[7][5]; // describes the new hourglass state when current state is i after doing an action that costs j
 	void curSeqReset(objHndl objHnd);
-	void ActionAddToSeq();
+	void ActSeqGetPicker();
+	int ActionAddToSeq();
 		uint32_t addD20AToSeq(D20Actn * d20a, ActnSeq * actSeq);
 		uint32_t AddToSeqSimple(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
 		int AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
@@ -55,7 +110,6 @@ struct ActionSequenceSystem : temple::AddressTable
 
 	int StdAttackAiCheck(D20Actn *d20a, TurnBasedStatus *tbStat);
 	uint32_t isPerforming(objHndl objHnd);
-	void IntrrptSthgsub_100939D0(D20Actn * d20a, CmbtIntrpts * str84);
 	uint32_t moveSequenceParse(D20Actn * d20aIn, ActnSeq* actSeq, TurnBasedStatus *actnSthg, float distSthg, float reach, int a5);
 		void releasePath(PathQueryResult*);
 		void addReadiedInterrupts(ActnSeq* actSeq, CmbtIntrpts * intrpts);
@@ -64,39 +118,84 @@ struct ActionSequenceSystem : temple::AddressTable
 	TurnBasedStatus* curSeqGetTurnBasedStatus();
 	const char * ActionErrorString(uint32_t actnErrorCode);
 
-	uint32_t AllocSeq(objHndl objHnd);
+	/*
+	// finds available sequence slot, allocates it to obj and makes it the Current Sequence
+	*/
+	uint32_t AllocSeq(objHndl obj); 
+
+	/*
+	 uses the above does some extra handling
+	*/
 	uint32_t AssignSeq(objHndl objHnd);
 	uint32_t TurnBasedStatusInit(objHndl objHnd);
 	void ActSeqCurSetSpellPacket(SpellPacketBody* spellPacketBody, int flag);
 	int GetNewHourglassState(objHndl performer, D20ActionType d20ActionType, int d20Data1, int radMenuActualArg, D20SpellData* d20SpellData);
 	int GetHourglassTransition(int hourglassCurrent, int hourglassCost);
-	int ActionSequenceChecksWithPerformerLocation();
+
+	BOOL SequenceSwitch(objHndl obj);
+	void GreybarReset();
+
+
+	ActionErrorCode ActionSequenceChecksRegardLoc(LocAndOffsets* loc, TurnBasedStatus * tbStatus, int d20aIdx, ActnSeq* actSeq);
+	ActionErrorCode ActionSequenceChecksWithPerformerLocation();
+	
 	void ActionSequenceRevertPath(int d20ANum);
-	int (__cdecl *TrimPathToRemainingMoveLength_1008B9A0)(D20Actn *d20a, float remainingMoveLength, PathQuery *pathQ);
-	void sub_1008BB40(ActnSeq*actSeq, D20Actn * d20a); // actSeq@<ebx>
+	bool GetPathTargetLocFromCurD20Action(LocAndOffsets* loc);
+	int TrimPathToRemainingMoveLength(D20Actn *d20a, float remainingMoveLength, PathQuery *pathQ);
+	/*
+		cuts the path short and readies an interrupt action
+	*/
+	void ProcessPathForReadiedActions(D20Actn * d20a, CmbtIntrpts * interrupts);
+	BOOL HasReadiedAction(objHndl d20APerformer);
+	
+	void ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr, AoOPacket* aooPacket, float distFeet);
+	/*
+		splits up the movement to move -> aoo movement -> move as necessary
+	*/
+	void ProcessSequenceForAoOs(ActnSeq*actSeq, D20Actn * d20a); // actSeq@<ebx>
 	int(CrossBowSthgReload_1008E8A0)(D20Actn *d20a, ActnSeq*actSeq); //, ActnSeq *actSeq@<ebx>
 	uint32_t SequencePathSthgSub_10096450(ActnSeq * actSeq, uint32_t idx, TurnBasedStatus* tbStat);
 	//10097C20
 	
 	uint32_t seqCheckFuncs(TurnBasedStatus *tbStatus);
-	void AOOSthgSub_10097D50(objHndl, objHndl);
-	int32_t AOOSthg2_100981C0(objHndl);
-	int32_t InterruptSthg_10099320(D20Actn *d20a);
-	int32_t InterruptSthg_10099360(D20Actn *d20a);
+	void DoAoo(objHndl, objHndl);
+	int32_t DoAoosByAdjcentEnemies(objHndl);
+	
+	int32_t InterruptNonCounterspell(D20Actn *d20a);
+	int32_t InterruptCounterspell(D20Actn *d20a);
+	int ReadyVsApproachOrWithdrawalCount();
+	ReadiedActionPacket * ReadiedActionGetNext(ReadiedActionPacket * prevReadiedAction, D20Actn* d20a);
+	void InterruptSwitchActionSequence(ReadiedActionPacket* readiedAction);
+
 	uint32_t combatTriggerSthg(ActnSeq* actSeq);
 
-	unsigned seqCheckAction(D20Actn* d20a, TurnBasedStatus* iO);
+	ActionErrorCode seqCheckAction(D20Actn* d20a, TurnBasedStatus* iO);
+
+
+	
 	uint32_t curSeqNext();
-	void actionPerform();
+		int SequencePop(); // 10098010
+		bool ShouldAutoendTurn(TurnBasedStatus* tbStat);
+	void ActionPerform();
 	void sequencePerform();
+	void ActionBroadcastAndSignalMoved();
+	int ActionFrameProcess(objHndl obj);
+	void PerformOnAnimComplete(objHndl obj, int animId); // runs any actions that need to be run when the animation finishes
+
+
 	bool projectileCheckBeforeNextAction();
 	uint32_t actSeqSpellHarmful(ActnSeq* actSeq);
 	uint32_t isSimultPerformer(objHndl);
 	uint32_t simulsOk(ActnSeq* actSeq);
 	uint32_t simulsAbort(objHndl);
 	uint32_t isSomeoneAlreadyActingSimult(objHndl objHnd);
+	BOOL IsSimulsCompleted();
+	BOOL IsLastSimultPopped(objHndl obj); // last one that was popped, that is
+	BOOL IsLastSimulsPerformer(objHndl obj);
+	BOOL SimulsAdvance();
 
 	uint32_t ActionCostNull(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, ActionCostPacket* actionCostPacket);
+	
 	int (__cdecl *ActionCostReload)(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp); 
 	int ActionCostFullAttack(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp);
 	void FullAttackCostCalculate(D20Actn *d20a, TurnBasedStatus *tbStatus, int *baseAttackNumCode, int *bonusAttacks, int *numAttacks, int *attackModeCode);
@@ -112,14 +211,14 @@ private:
 	int(__cdecl* _CrossBowSthgReload_1008E8A0)(D20Actn *d20a); //, ActnSeq *actSeq@<ebx>
 	uint32_t (__cdecl *getRemainingMaxMoveLength)(D20Actn *d20a, TurnBasedStatus *actnSthg, float *floatOut); // doesn't take things like having made 5 foot step into account, just a raw calculation
 	int(__cdecl*_TurnBasedStatusUpdate)(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus);
-	void (__cdecl *_sub_100939D0)(CmbtIntrpts* d20a); // D20Actn*@<eax>
+	void (__cdecl *_ProcessPathForReadiedActions)(CmbtIntrpts* d20a); // D20Actn*@<eax>
 	uint32_t (__cdecl* _sub_10096450)(ActnSeq * actSeq, uint32_t); // void * iO @<ebx>
 	void(__cdecl* _AOOSthgSub_10097D50)(objHndl, objHndl);
 	void(__cdecl *_actionPerformRecursion)();
 	int32_t(__cdecl *_AOOSthg2_100981C0)(objHndl);
 	uint32_t (__cdecl *_curSeqNext)();
-	int32_t(__cdecl * _InterruptSthg_10099360)();
-	int32_t(__cdecl * _InterruptSthg_10099320)();
+	int32_t(__cdecl * _InterruptCounterspell)();
+	int32_t(__cdecl * _InterruptNonCounterspell)();
 	uint32_t (__cdecl *_actSeqSpellHarmful)(); // ActnSeq* @<ebx> 
 	uint32_t(__cdecl *_combatTriggerSthg)(); // ActnSeq* @<ebx> 
 	uint32_t(__cdecl * _moveSeqD20Sthg)(ActnSeq* actSeq, TurnBasedStatus *actnSthg, float a3, float reach, int a5); //, D20Actn * d20aIn @<eax>
@@ -131,8 +230,8 @@ extern ActionSequenceSystem actSeqSys;
 
 struct TurnBasedStatus
 {
-	uint32_t hourglassState; // 4 - full action remaining; 2 - single action remaining; 1 - move action remaining
-	int tbsFlags; // 0x40 full attack
+	uint32_t hourglassState; // 4 - full action remaining; 3 - partial?? used in interrupts, checked by partial charge; 2 - single action remaining; 1 - move action remaining
+	int tbsFlags; // 0x40 full attack, 0x1 0x2 sthg to do with turn ending?, 0x2 0x4 sthg to do with movement, 0x10 spell?
 	uint32_t idxSthg;
 	float surplusMoveDistance; // is nonzero when you have started a move action already and haven't used it all up
 	uint32_t baseAttackNumCode; // is composed of the base number of attacks (dispatch 51 or 53) + a code number: 99 for dual wielding (+1 for extra offhand attack), 999 for natural attacks
@@ -161,10 +260,10 @@ struct ActnSeq
 {
 	D20Actn d20ActArray[32];
 	int32_t d20ActArrayNum;
-	int32_t d20aCurIdx;
+	int32_t d20aCurIdx; // inited to -1
 	ActnSeq * prevSeq;
-	uint32_t field_B0C;
-	uint32_t seqOccupied;
+	ActnSeq * interruptSeq;
+	uint32_t seqOccupied; // is actually flags; 1 - performing; 2 - aoo maybe?
 	TurnBasedStatus tbStatus;
 	objHndl performer;
 	LocAndOffsets performerLoc;
@@ -175,20 +274,38 @@ struct ActnSeq
 };
 #pragma pack(pop)
 
-struct IntrptSthg
+enum ReadyVsTypeEnum : uint32_t
 {
-	uint32_t field0;
+	RV_Spell =0,
+	RV_Counterspell,
+	RV_Approach,
+	RV_Withdrawal
+};
+
+struct ReadiedActionPacket
+{
+	uint32_t flags;
 	uint32_t field4;
 	objHndl interrupter;
+	ReadyVsTypeEnum readyType;
+	int field14;
 };
 
 struct CmbtIntrpts
 {
-	IntrptSthg* intrptSthgs[32];
+	ReadiedActionPacket* readyPackets[32];
 	int32_t numItems;
 };
 
-
+struct AoOPacket
+{
+	objHndl obj;
+	PathQueryResult * path;
+	unsigned int numAoOs;
+	objHndl interrupters[32];
+	float aooDistFeet[32];
+	LocAndOffsets aooLocs[32];
+};
 
 const uint32_t TestSizeOfActionSequence = sizeof(ActnSeq); // should be 0x1648 (5704)
 

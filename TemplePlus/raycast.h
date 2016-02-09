@@ -68,6 +68,7 @@ struct RaycastPacket
 
 	int Raycast();
 	int RaycastShortRange();
+	void RaycastPacketFree();
 	~RaycastPacket();
 };
 

@@ -37,6 +37,8 @@ static struct RadialMenuAddresses : temple::AddressTable {
 	int(__cdecl *AddSpell)(objHndl handle, SpellStoreData * spellData, int * idxOut, const RadialMenuEntry & entry); //adds a spell to the Radial Menu
 	int(__cdecl * RadialMenuCheckboxSthgSub_100F0200)(objHndl objHnd, RadialMenuEntry* radialMenuEntry);
 	void(__cdecl * CopyEntryToSelected)(objHndl obj, RadialMenuEntry* entry);
+	RadialMenu * activeRadialMenu;
+	int * activeRadialMenuNode;
 
 	RadialMenuAddresses() {
 		rebase(RadialMenuCheckboxSthgSub_100F0200, 0x100F0200);
@@ -57,6 +59,9 @@ static struct RadialMenuAddresses : temple::AddressTable {
 		rebase(AddSpell, 0x100F1470);
 		
 		rebase(radialMenuCount, 0x10BD0230);
+
+		rebase(activeRadialMenu, 0x115B2048);
+		rebase(activeRadialMenuNode, 0x115B204C);
 		rebase(radialMenus, 0x115B2060);
 		rebase(selectedEntry, 0x10BD01E0);
 		rebase(standardNodeIndices, 0x11E76CE4);
@@ -218,6 +223,22 @@ void RadialMenus::SetMorphsTo(objHndl obj, int nodeIdx, int spontSpellNode)
 void RadialMenus::SetCallbackCopyEntryToSelected(RadialMenuEntry* radEntry)
 {
 	radEntry->callback = addresses.CopyEntryToSelected;
+}
+
+int RadialMenus::GetActiveRadialMenuNode()
+{
+	if (addresses.activeRadialMenu)
+	{
+		return *addresses.activeRadialMenuNode;
+	} else
+	{
+		return -1;
+	}
+}
+
+BOOL RadialMenus::ActiveRadialMenuHasActiveNode()
+{
+	return GetActiveRadialMenuNode() != -1;
 }
 
 void RadialMenuEntry::SetDefaults() {

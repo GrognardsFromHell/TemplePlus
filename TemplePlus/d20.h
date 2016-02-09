@@ -27,7 +27,15 @@ struct D20ActionDef;
 struct ActnSeq;
 struct PathQueryResult;
 struct Pathfinding;
-
+enum D20TargetClassification : int {
+	Target0 = 0,
+	D20TC_Movement = 1,
+	D20TC_SingleExcSelf,
+	D20TC_CastSpell,
+	D20TC_SingleIncSelf,
+	D20TC_CallLightning,
+	D20TC_ItemInteraction // includes: portals, container, dead critters
+};
 
 
 struct LegacyD20System : temple::AddressTable
@@ -46,13 +54,14 @@ struct LegacyD20System : temple::AddressTable
 
 	uint32_t d20Query(objHndl ObjHnd, D20DispatcherKey dispKey);
 	uint32_t d20QueryWithData(objHndl ObjHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
+	uint32_t d20QueryWithData(objHndl ObjHnd, D20DispatcherKey dispKey, objHndl argObj);
 	uint32_t d20QueryHasSpellCond(objHndl ObjHnd, int spellEnum);
 	uint64_t d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
 
 	void D20ActnInit(objHndl objHnd, D20Actn * d20a);
 	void GlobD20ActnSetTypeAndData1(D20ActionType d20type, uint32_t data1);
 	void globD20ActnSetPerformer(objHndl objHnd);
-	void GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc);
+	int GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc);
 	void GlobD20ActnInit();
 	void d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx);//1008AE90    ActnSeq * @<eax>
 	int D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tbStat);// 1008A9C0
@@ -66,6 +75,8 @@ struct LegacyD20System : temple::AddressTable
 	int PerformStandardAttack(D20Actn* d20a);
 	int TargetWithinReachOfLoc(objHndl obj, objHndl target, LocAndOffsets* loc);
 	void D20ActnSetSetSpontCast(D20SpellData* d20SpellData, SpontCastType spontCastType);
+	D20TargetClassification TargetClassification(D20Actn* d20A);
+	int TargetCheck(D20Actn* d20a);
 	void (__cdecl *D20StatusInitFromInternalFields)(objHndl objHnd, Dispatcher *dispatcher);
 	void (__cdecl *D20ObjRegistryAppend)(objHndl ObjHnd);
 	void(__cdecl * _d20aTriggerCombatCheck)(int32_t idx);//1008AE90    ActnSeq * @<eax>
@@ -103,15 +114,29 @@ struct D20Actn
 	LocAndOffsets destLoc;
 	float distTraversed;
 	uint32_t radialMenuActualArg;
-	uint32_t rollHist3;
-	uint32_t rollHist1;
-	uint32_t rollHist2;
+	int rollHist3;
+	int rollHist1;
+	int rollHist2;
 	D20SpellData d20SpellData;
 	uint32_t spellId;
 	uint32_t animID;
 	PathQueryResult * path;
 
-	D20Actn() {}
+	D20Actn()
+	{
+		rollHist1 = -1;
+		rollHist2 = -1;
+		rollHist3 = -1;
+		//d20ActType = 0;
+		d20APerformer = 0;
+		d20ATarget = 0;
+		d20Caf = 0;
+		distTraversed = 0;
+		path = 0;
+		spellId = 0;
+		data1 = 0;
+		//animID = -1;
+	}
 
 	D20Actn(D20ActionType type) {
 		rollHist1 = -1;
@@ -125,6 +150,7 @@ struct D20Actn
 		path = 0;
 		spellId = 0;
 		data1 = 0;
+		//animID = -1;
 	}
 };
 
@@ -167,7 +193,7 @@ enum D20ADF : int{
 struct D20ActionDef
 {
 	uint32_t (__cdecl *addToSeqFunc)(D20Actn *, ActnSeq *, TurnBasedStatus*iO);
-	uint32_t (__cdecl* aiCheckMaybe)(D20Actn* d20a, TurnBasedStatus* iO);
+	uint32_t (__cdecl* turnBasedStatusCheck)(D20Actn* d20a, TurnBasedStatus* iO);
 	uint32_t (__cdecl * actionCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO);
 	uint32_t (__cdecl * tgtCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO);
 	uint32_t (__cdecl * locCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO, LocAndOffsets * locAndOff); // also seems to double as a generic check function (e.g. for move silently it checks if combat is active and nothing to do with location)

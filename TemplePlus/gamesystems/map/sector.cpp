@@ -79,6 +79,7 @@ struct LegacySectorAddresses : temple::AddressTable
 } addresses;
 
 LegacySectorSystem  sectorSys;
+BOOL(__cdecl * LegacySectorSystem::orgSectorCacheFind)(SectorLoc secLoc, int * secCacheIdx);
 
 int Sector::GetTileOffset(LocAndOffsets* loc)
 {
@@ -109,6 +110,8 @@ uint64_t LegacySectorSystem::GetSectorLimitY()
 
 BOOL LegacySectorSystem::SectorCacheFind(SectorLoc secLoc, int* secCacheIdx)
 {
+
+	int result = orgSectorCacheFind(secLoc, secCacheIdx);
 
 	SectorCacheEntry * secCache = *addresses.sectorCache;
 	int * secCacheIndices = *addresses.sectorCacheIndices;
@@ -146,6 +149,10 @@ BOOL LegacySectorSystem::SectorCacheFind(SectorLoc secLoc, int* secCacheIdx)
 		{
 			if (secCache[idx].sector.secLoc.raw == secLoc.raw)
 			{
+				if (idxMid != *secCacheIdx)
+				{
+					int dummy = 1;
+				}
 				*secCacheIdx = idxMid;
 				lastSecLoc = secLoc;
 				//searchDepthHist[searchCount]++;
@@ -235,8 +242,8 @@ int LegacySectorSystem::SectorLock(SectorLoc secLoc, Sector** sectorOut)
 
 	if ( !gameSystems->GetMap().IsMapOpen() )
 	{
-		logger->error("ERROR: Attempt to lock a sector when the map is not valid!!!\n");
-		return 0;
+	logger->error("ERROR: Attempt to lock a sector when the map is not valid!!!\n");
+	return 0;
 	}
 	if (secLoc.x() >= GetSectorLimitX() || secLoc.y() >= GetSectorLimitY())
 		return 0;

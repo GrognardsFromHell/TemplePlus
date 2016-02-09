@@ -147,7 +147,7 @@ void PathNodeSys::RecipDebug()
 	{
 		logger->info("Can reform all {} nodes with non-reciprocating neighbours.",n);
 	}
-
+	free(oneSided);
 	// hommlet results:
 	// 90 cases of nodes with non-reciprocatig neighbours
 	// all of them are actually pathable so long as you ignore critters on the destination tile

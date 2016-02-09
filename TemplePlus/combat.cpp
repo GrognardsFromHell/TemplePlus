@@ -11,29 +11,142 @@
 #include "history.h"
 #include "ai.h"
 #include "util/fixes.h"
+#include "weapon.h"
+#include "float_line.h"
+#include "pathfinding.h"
+#include "action_sequence.h"
+#include "turn_based.h"
+#include "gametime.h"
+#include "ui/ui_combat.h"
+#include "raycast.h"
+#include "gamesystems/objects/objsystem.h"
 
 
-class LegacyCombatSystemReplacements : public TempleFix
+struct CombatSystemAddresses : temple::AddressTable
+{
+	int(__cdecl* GetEnemiesCanMelee)(objHndl obj, objHndl* canMeleeList);
+	void(__cdecl*TurnProcessing_100635E0)(objHndl obj);
+	void(__cdecl*CombatTurnAdvance)(objHndl obj);
+	BOOL (__cdecl*CheckFleeCombatMap)();
+	int(__cdecl*GetFleecombatMap)(void*); // MapPacket
+	int (*GetFleeStatus)();
+	int* combatTimeEventIndicator;
+	int * combatTimeEventSthg; 
+		objHndl * combatActor; 
+		int * combatRoundCount;
+	ActionBar** barPkt;
+
+	CombatSystemAddresses()
+	{
+		rebase(GetEnemiesCanMelee, 0x100B90C0);
+		rebase(EndTurn, 0x100632B0);
+		rebase(CombatPerformFleeCombat, 0x100633C0);
+		rebase(CombatTurnAdvance, 0x100634E0);
+		rebase(TurnProcessing_100635E0, 0x100635E0);
+		rebase(Subturn, 0x10063760);
+		rebase(GetFleecombatMap, 0x1006F970);
+		rebase(CheckFleeCombatMap, 0x1006F990);
+		rebase(GetFleeStatus, 0x1006F9B0);
+
+		rebase(barPkt, 0x10AA8404);
+		rebase(combatRoundCount,0x10AA841C);
+		rebase(combatActor, 0x10AA8438);
+		rebase(combatTimeEventSthg, 0x10AA8440);
+		rebase(combatTimeEventIndicator, 0x10AA8444);
+	}
+
+	void (*Subturn)();
+	void (*EndTurn)();
+	void (*CombatPerformFleeCombat)(objHndl obj);
+} addresses;
+
+class CombatSystemReplacements : public TempleFix
 {
 public:
 	const char* name() override {
 		return "Combat System Replacements";
 	}
+
+	static objHndl CheckRangedWeaponAmmo(objHndl obj);
+	static objHndl(__cdecl *orgCheckRangedWeaponAmmo)(objHndl obj);
+
+	static void CombatTurnAdvance(objHndl obj);
+	static void (__cdecl*orgCombatTurnAdvance)(objHndl obj);
+
+	static void ActionBarResetCallback(int resetArg)
+	{
+		if (resetArg != 0)
+		{
+			int dumm = 1;
+			// seems to be 0 always... might've been some debug thing
+		}
+		
+		auto actor = tbSys.turnBasedGetCurrentActor();
+		if (actor)
+			logger->debug("Greybar Reset! Current actor: {} ({})", description.getDisplayName(actor), actor);
+		else
+			logger->debug("Greybar Reset! Actor is null.");
+		if (actor && objSystem->IsValidHandle(actor) && !objects.IsPlayerControlled(actor))
+		{
+			actSeqSys.GreybarReset();
+		}
+		// orgActionBarResetCallback();
+	};
+	static void (__cdecl*orgActionBarResetCallback)(int);
+
+
+	static void TurnStart2(int idx)
+	{
+		combatSys.TurnStart2(idx);
+	};
+	static void(__cdecl*orgTurnStart2)(int);
+
 	void apply() override{
+		
 		replaceFunction(0x100628D0, _isCombatActive);
 		replaceFunction(0x100629B0, _IsCloseToParty);
+		orgActionBarResetCallback = replaceFunction(0x10062E60, ActionBarResetCallback);
+		orgTurnStart2 = replaceFunction(0x100638F0, TurnStart2);
+		orgCombatTurnAdvance = replaceFunction(0x100634E0, CombatTurnAdvance);
+
+		orgCheckRangedWeaponAmmo = replaceFunction(0x100654E0, CheckRangedWeaponAmmo);
+		
 		replaceFunction(0x100B4B30, _GetCombatMesLine);
+		
 	}
 } combatSysReplacements;
 
-struct LegacyCombatSystemAddresses : temple::AddressTable
+objHndl(__cdecl* CombatSystemReplacements::orgCheckRangedWeaponAmmo)(objHndl obj);
+void(__cdecl*CombatSystemReplacements::orgCombatTurnAdvance)(objHndl obj);
+void(__cdecl*CombatSystemReplacements::orgActionBarResetCallback)(int);
+void(__cdecl*CombatSystemReplacements::orgTurnStart2)(int);
+
+objHndl CombatSystemReplacements::CheckRangedWeaponAmmo(objHndl obj)
 {
-	int(__cdecl* GetEnemiesCanMelee)(objHndl obj, objHndl* canMeleeList);
-	LegacyCombatSystemAddresses()
+	objHndl result = orgCheckRangedWeaponAmmo(obj);
+	/*if (result)
 	{
-		rebase(GetEnemiesCanMelee, 0x100B90C0);
+		auto secondaryWeapon = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);
+		auto primaryWeapon = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
+		auto ammoItem = critterSys.GetWornItem(obj, EquipSlot::Ammo);
+		int dummy = 1;
+	}*/
+	return result;
 	}
-} addresses;
+
+void CombatSystemReplacements::CombatTurnAdvance(objHndl obj)
+{
+	combatSys.CombatAdvanceTurn(obj);
+
+	//auto curSeq = *actSeqSys.actSeqCur;
+	//orgCombatTurnAdvance(obj);
+	//if (curSeq != *actSeqSys.actSeqCur)
+	//{
+	//	logger->debug("Combat Turn Advance changed sequence to {}", (void*)*actSeqSys.actSeqCur);
+	//}
+}
+
+
 
 #pragma region Combat System Implementation
 LegacyCombatSystem combatSys;
@@ -57,11 +170,395 @@ char * LegacyCombatSystem::GetCombatMesLine(int line)
 	return (char*)mesLine.value;
 }
 
+void LegacyCombatSystem::FloatCombatLine(objHndl obj, int line)
+{
+	auto objType = objects.GetType(obj);
+	FloatLineColor floatColor = FloatLineColor::White;
+	if (objType == obj_t_npc )
+	{
+		auto npcLeader = critterSys.GetLeaderRecursive(obj);
+		if (!party.IsInParty(npcLeader))
+			floatColor = FloatLineColor::Red;
+		else
+			floatColor = FloatLineColor::Yellow;
+	}
+
+	auto combatLineText = GetCombatMesLine(line);
+	if (combatLineText)
+		floatSys.floatMesLine(obj, 1, floatColor, combatLineText);
+}
+
 int LegacyCombatSystem::IsWithinReach(objHndl attacker, objHndl target)
 {
 	float reach = critterSys.GetReach(attacker, D20A_UNSPECIFIED_ATTACK);
 	float distTo = locSys.DistanceToObj(attacker, target);
 	return distTo < reach;
+}
+
+
+BOOL LegacyCombatSystem::CanMeleeTargetAtLocRegardItem(objHndl obj, objHndl weapon, objHndl target, LocAndOffsets* loc)
+{
+	if (weapon)
+	{
+		if (objects.GetType(weapon) != obj_t_weapon)
+			return 0;
+		if (inventory.IsRangedWeapon(weapon))
+			return 0;
+	} else
+	{
+		CritterFlag critterFlags = critterSys.GetCritterFlags(obj);
+		if ((critterFlags & OCF_MONSTER) == 0 && !feats.HasFeatCountByClass(obj, FEAT_IMPROVED_UNARMED_STRIKE))
+			return 0;
+	}
+	float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK),
+		tgtRadius = locSys.InchesToFeet(objects.GetRadius(target));
+	auto distToLoc = max((float)0.0,locSys.DistanceToLocFeet(obj, loc));
+	if (tgtRadius + objReach < distToLoc)
+		return 0;
+	return 1;
+}
+
+BOOL LegacyCombatSystem::CanMeleeTargetAtLoc(objHndl obj, objHndl target, LocAndOffsets* loc)
+{
+	objHndl weapon = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
+	if (!combatSys.CanMeleeTargetAtLocRegardItem(obj, weapon, target, loc))
+	{
+		objHndl secondaryWeapon = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);
+		if (!combatSys.CanMeleeTargetAtLocRegardItem(obj, secondaryWeapon, target, loc))
+		{
+			if (!objects.getArrayFieldInt32(obj, obj_f_critter_attacks_idx, 0))
+				return 0;
+			float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
+			float tgtRadius = objects.GetRadius(target) / 12.0;
+			if (max(static_cast<float>(0.0),
+				locSys.DistanceToLocFeet(obj, loc)) - tgtRadius > objReach)
+				return 0;
+		}
+	}
+	return 1;
+}
+
+BOOL LegacyCombatSystem::CanMeleeTargetFromLoc(objHndl obj, objHndl target, LocAndOffsets* objLoc)
+{
+	objHndl weapon = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
+	if (!combatSys.CanMeleeTargetFromLocRegardItem(obj, weapon, target, objLoc))
+	{
+		objHndl secondaryWeapon = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);
+		if (!combatSys.CanMeleeTargetFromLocRegardItem(obj, secondaryWeapon, target, objLoc))
+		{
+			if (!objects.getArrayFieldInt32(obj, obj_f_critter_attacks_idx, 0))
+				return 0;
+			float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
+			float tgtRadius = objects.GetRadius(target) / 12.0;
+			if (max(static_cast<float>(0.0),
+				locSys.DistanceToLocFeet(target, objLoc)) - tgtRadius > objReach)
+				return 0;
+		}
+	}
+	return 1;
+}
+
+bool LegacyCombatSystem::CanMeleeTargetFromLocRegardItem(objHndl obj, objHndl weapon, objHndl target, LocAndOffsets* objLoc)
+{
+	if (weapon)
+	{
+		if (objects.GetType(weapon) != obj_t_weapon)
+			return 0;
+		if (inventory.IsRangedWeapon(weapon))
+			return 0;
+	}
+	else
+	{
+		CritterFlag critterFlags = critterSys.GetCritterFlags(obj);
+		if ((critterFlags & OCF_MONSTER) == 0 && !feats.HasFeatCountByClass(obj, FEAT_IMPROVED_UNARMED_STRIKE))
+			return 0;
+	}
+	float objReach  = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK),
+		  tgtRadius = locSys.InchesToFeet(objects.GetRadius(target));
+	auto distToLoc = max((float)0.0, locSys.DistanceToLocFeet(target, objLoc));
+
+	if (tgtRadius + objReach < distToLoc)
+		return 0;
+	return 1;
+}
+
+BOOL LegacyCombatSystem::CanMeleeTarget(objHndl obj, objHndl target)
+{
+	if (objects.GetFlags(obj) & (OF_OFF | OF_DESTROYED))
+		return 0;
+	auto targetObjFlags = objects.GetFlags(target);
+	if (targetObjFlags & (OF_OFF | OF_DESTROYED | OF_INVULNERABLE))
+		return 0;
+	if (critterSys.IsDeadOrUnconscious(obj))
+		return 0;
+	if (d20Sys.d20QueryWithData(target, DK_QUE_Critter_Has_Spell_Active, 407, 0)) // spell_sanctuary
+		return 0;
+	if (d20Sys.d20QueryWithData(obj, DK_QUE_Critter_Has_Spell_Active, 407, 0)) // presumably so the AI doesn't break its sanctuary protection?
+		return 0;
+	auto weapon = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
+	if (CanMeleeTargetRegardWeapon(obj, weapon, target))
+		return 1;
+	auto offhandWeapon = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);
+	if (CanMeleeTargetRegardWeapon(obj, offhandWeapon, target))
+		return 1;
+	if (!objects.getArrayFieldInt32(obj, obj_f_critter_attacks_idx, 0))
+		return 0;
+	auto objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
+	if (objReach > max(static_cast<float>(0.0), locSys.DistanceToObj(obj, target)))
+		return 1;
+	return 0;
+}
+
+BOOL LegacyCombatSystem::CanMeleeTargetRegardWeapon(objHndl obj, objHndl weapon, objHndl target)
+{
+	if (weapon)
+	{
+		if (objects.GetType(weapon) != obj_t_weapon)
+			return 0;
+		if (inventory.IsRangedWeapon(weapon))
+			return 0;
+	}
+	else
+	{
+		CritterFlag critterFlags = critterSys.GetCritterFlags(obj);
+		if ((critterFlags & OCF_MONSTER) == 0 && !feats.HasFeatCountByClass(obj, FEAT_IMPROVED_UNARMED_STRIKE))
+			return 0;
+	}
+	float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
+	auto distToTgt = max((float)0.0, locSys.DistanceToObj(obj, target));
+	if ( objReach <= distToTgt)
+		return 0;
+	return 1;
+}
+
+BOOL LegacyCombatSystem::AffiliationSame(objHndl obj, objHndl obj2)
+{
+	int objInParty = party.IsInParty(obj);
+	return party.IsInParty(obj2) == objInParty;
+}
+
+int LegacyCombatSystem::GetThreateningCrittersAtLoc(objHndl obj, LocAndOffsets* loc, objHndl threateners[40])
+{
+	int n = 0;
+	int initListLength = GetInitiativeListLength();
+	for (int i = 0; i < initListLength; i++)
+	{
+		objHndl combatant = GetInitiativeListMember(i);
+		if (combatant != obj && !AffiliationSame(obj, combatant))
+		{
+			if (combatSys.CanMeleeTargetAtLoc(combatant, obj, loc))
+			{
+				threateners[n++] = combatant;
+				if (n == 40)
+					return n;
+			}
+		}
+	}
+	return n;
+}
+
+objHndl LegacyCombatSystem::CheckRangedWeaponAmmo(objHndl obj)
+{
+	if (d20Sys.d20Query(obj, DK_QUE_Polymorphed))
+		return 0;
+	auto objType = objects.GetType(obj);
+	auto invenNumField = obj_f_critter_inventory_num;
+	auto invenField = obj_f_critter_inventory_list_idx;
+	if (objType == obj_t_container)
+	{
+		invenField = obj_f_container_inventory_list_idx;
+		invenNumField = obj_f_container_inventory_num;
+		logger->warn("Check ammo for a container???");
+	}
+	int numItems = objects.getInt32(obj, invenNumField);
+	if (numItems <= 0)
+		return 0i64;
+	auto ammoItem = critterSys.GetWornItem(obj, EquipSlot::Ammo);
+	auto weapon = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
+	if (!weapon || !weapons.AmmoMatchesWeapon(weapon, ammoItem))
+		weapon = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);
+	
+	if (!weapon || !weapons.AmmoMatchesWeapon(weapon, ammoItem))
+		return 0;
+	return ammoItem;
+	
+}
+
+bool LegacyCombatSystem::AmmoMatchesItemAtSlot(objHndl obj, EquipSlot equipSlot)
+{
+	objHndl ammoItem = CheckRangedWeaponAmmo(obj);
+	auto weapon = critterSys.GetWornItem(obj, equipSlot);
+	if (!weapon)
+		return 0;
+	return weapons.AmmoMatchesWeapon(weapon, ammoItem);
+}
+
+objHndl * LegacyCombatSystem::GetHostileCombatantList(objHndl obj, int * count)
+{
+	int initListLen = GetInitiativeListLength();
+	objHndl hostileTempList[100];
+	int hostileCount = 0;
+	for (int i = 0; i < initListLen; i++)
+	{
+		auto combatant = GetInitiativeListMember(i);
+		if (obj != combatant && !critterSys.IsFriendly(obj,combatant))
+		{
+			hostileTempList[hostileCount++] = combatant;
+		}
+	}
+	objHndl *result = new objHndl[hostileCount];
+	memcpy(result, hostileTempList, hostileCount * sizeof(objHndl));
+	*count = hostileCount;
+	return result;
+}
+
+bool LegacyCombatSystem::HasLineOfAttack(objHndl obj, objHndl target)
+{
+	BOOL result = 1;
+	RaycastPacket objIt;
+	objIt.origin = objects.GetLocationFull(obj);
+	LocAndOffsets tgtLoc = objects.GetLocationFull(target);
+	objIt.targetLoc = tgtLoc;
+	objIt.flags = static_cast<RaycastFlags>(RaycastFlags::StopAfterFirstBlockerFound | RaycastFlags::ExcludeItemObjects | RaycastFlags::HasTargetObj | RaycastFlags::HasSourceObj | RaycastFlags::HasRadius);
+	objIt.radius = static_cast<float>(0.1);
+	bool blockerFound = false;
+	if (objIt.Raycast())
+	{
+		auto results = objIt.results;
+		for (auto i = 0; i < objIt.resultCount; i++)
+		{
+			objHndl resultObj = results[i].obj;
+			if (!resultObj)
+			{
+				if (results[i].flags & RaycastResultFlags::BlockerSubtile)
+				{
+					blockerFound = true;
+				}
+				continue;
+			}
+
+			auto objType = objects.GetType(resultObj);
+			if (objType == obj_t_portal)
+			{
+				if (!objects.IsPortalOpen(resultObj))
+				{
+					blockerFound = 1;
+				}
+				continue;
+			}
+			if (objType == obj_t_pc || objType == obj_t_npc)
+			{
+				if (critterSys.IsDeadOrUnconscious(resultObj)
+					|| d20Sys.d20Query(resultObj, DK_QUE_Prone))
+				{
+					continue;
+				}
+				// TODO: flag for Cover 
+			}
+		}
+	}
+	objIt.RaycastPacketFree();
+	if (!blockerFound)
+	{
+		return 1;
+	}
+
+	return 0;
+}
+
+void LegacyCombatSystem::TurnProcessing_100635E0(objHndl obj)
+{
+	return addresses.TurnProcessing_100635E0(obj);
+}
+
+void LegacyCombatSystem::EndTurn()
+{
+	addresses.EndTurn();
+}
+
+void LegacyCombatSystem::CombatSubturnEnd()
+{
+	GameTime timeDelta (0,1000);
+	gameTimeSys.GameTimeAdd(&timeDelta);
+	if (party.GetConsciousPartyLeader())
+	{
+		++(*addresses.combatRoundCount);
+		*addresses.combatActor = 0i64;
+		*addresses.combatTimeEventSthg = 0;
+		*addresses.combatTimeEventIndicator = 0;
+	}
+}
+
+void LegacyCombatSystem::Subturn()
+{
+	addresses.Subturn();
+}
+
+void LegacyCombatSystem::TurnStart2(int initiativeIdx)
+{
+	auto actor = tbSys.turnBasedGetCurrentActor();
+	int curActorInitIdx = tbSys.GetInitiativeListIdx();
+	if (initiativeIdx > curActorInitIdx)
+	{
+		logger->debug("TurnStart2: \t End Subturn. Cur Actor: {} ({}), Initiative Idx: {}; New Initiative Idx: {} ", description.getDisplayName(actor), actor, curActorInitIdx, initiativeIdx);
+		CombatSubturnEnd();
+	}
+
+	// start new turn for current actor
+	actor = tbSys.turnBasedGetCurrentActor();
+	curActorInitIdx = tbSys.GetInitiativeListIdx();
+	logger->debug("TurnStart2: \t Starting new turn for {} ({}). InitiativeIdx: {}", description.getDisplayName(actor), actor, curActorInitIdx);
+	Subturn();
+
+	// set action bar values
+	uiCombat.ActionBarUnsetFlag1(*addresses.barPkt);
+	if (!objects.IsPlayerControlled(actor))
+	{
+		uiCombat.ActionBarSetMovementValues(*addresses.barPkt, 0.0, 20.0, 1.0);
+	}
+	
+	// handle simuls
+	if (actSeqSys.SimulsAdvance())
+	{
+		actor = tbSys.turnBasedGetCurrentActor();
+		logger->debug("TurnStart2: \t Actor {} ({}) starting turn...(simul)", description.getDisplayName(actor), actor);
+		CombatAdvanceTurn(actor);
+	}
+}
+
+void LegacyCombatSystem::CombatAdvanceTurn(objHndl obj)
+{
+	if (addresses.CheckFleeCombatMap() && addresses.GetFleeStatus())
+	{
+		addresses.CombatPerformFleeCombat(obj);
+	}
+	if (!isCombatActive())
+		return;
+	tbSys.InitiativeListSort();
+	if (!tbSys.turnBasedGetCurrentActor() == obj && !(actSeqSys.isSimultPerformer(obj) || actSeqSys.IsSimulsCompleted()))
+	{
+		logger->warn("Combat Advance Turn: Not {}'s turn...", description.getDisplayName(obj));
+		return;
+	}
+	if ( actSeqSys.IsLastSimulsPerformer(obj))
+	{
+		logger->warn("Combat Advance Turn: Next turn waiting on simuls actions...");
+		return;
+	}
+	static int combatInitiative = 0;
+	combatInitiative++;
+	auto curSeq = *actSeqSys.actSeqCur;
+	logger->debug("Combat Advance Turn: Actor {} ({}) ending his turn. CurSeq: {}", description.getDisplayName(obj), obj, (void*)curSeq);
+	if (combatInitiative <= GetInitiativeListLength())
+	{
+		int initListIdx = tbSys.GetInitiativeListIdx();
+		EndTurn();
+		if (isCombatActive())
+			TurnStart2(initListIdx);
+	}
+	combatInitiative--;
+
+	// return addresses.CombatTurnAdvance(obj);
 }
 
 bool LegacyCombatSystem::isCombatActive()

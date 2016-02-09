@@ -1129,11 +1129,11 @@ static PyObject* PyObjHandle_ContainerToggleOpen(PyObject* obj, PyObject* args) 
 
 static PyObject* PyObjHandle_SavingThrow(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
-	int dc;
+	int dc, d20aType;
 	SavingThrowType type;
 	auto flags = (D20SavingThrowFlag) 0;
 	objHndl attacker = 0;
-	if (!PyArg_ParseTuple(args, "iii|O&:objhndl:saving_throw", &dc, &type, &flags, &ConvertObjHndl, &attacker)) {
+	if (!PyArg_ParseTuple(args, "iii|O&i:objhndl:saving_throw", &dc, &type, &flags, &ConvertObjHndl, &attacker, &d20aType)) {
 		return 0;
 	}
 
@@ -1566,6 +1566,19 @@ static PyObject* PyObjHandle_SetInt(PyObject* obj, PyObject* args) {
 			logger->warn("Wrong field type for set_int, {}", (int)(field));
 		}
 	}
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_SetIdxInt(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	obj_f field;
+
+	int value, idx = 0;
+	if (!PyArg_ParseTuple(args, "iii:objhndl.obj_set_int", &field, &idx, &value)) {
+		return 0;
+	}
+	objSystem->GetObject(self->handle)->SetInt32(field, idx, value);
+	
 	Py_RETURN_NONE;
 }
 
@@ -2018,6 +2031,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "obj_remove_from_all_groups", PyObjHandle_RemoveFromAllGroups, METH_VARARGS, "Removes the object from all the groups (GroupList, PCs, NPCs, AI controlled followers, Currently Selected" },
 	{ "obj_set_int", PyObjHandle_SetInt, METH_VARARGS, NULL },
 	{ "obj_set_obj", PyObjHandle_SetObj, METH_VARARGS, NULL },
+	{ "obj_set_idx_int", PyObjHandle_SetIdxInt, METH_VARARGS, NULL },
 
 	{ "reaction_get", PyObjHandle_ReactionGet, METH_VARARGS, NULL },
 	{ "reaction_set", PyObjHandle_ReactionSet, METH_VARARGS, NULL },

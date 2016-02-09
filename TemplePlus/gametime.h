@@ -37,10 +37,18 @@ public:
 	} 
 	
 	static GameTime ElapsedGetDelta(GameTime * gtime);
+	static void GameTimeAdd(GameTime* timeDelta)
+	{
+		orgGameTimeAdd(timeDelta);
+	};
 
 	void apply() override
 	{
+		orgGameTimeAdd = replaceFunction(0x10060C90, GameTimeAdd);
 	};
+protected:
+	static void(__cdecl*orgGameTimeAdd)(GameTime* timeDelta);
+
 };
 
 extern GameTimeSystem gameTimeSys;

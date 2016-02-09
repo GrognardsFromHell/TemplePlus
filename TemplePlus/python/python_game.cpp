@@ -36,6 +36,7 @@
 #include "tig/tig_startup.h"
 #include <graphics/device.h>
 #include <particles/instances.h>
+#include <gamesystems/legacymapsystems.h>
 
 static PyObject *encounterQueue = nullptr;
 
@@ -698,6 +699,31 @@ PyObject* PyGame_SaveGame(PyObject*, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+PyObject* PyGame_ScrollTo(PyObject*, PyObject* args)
+{
+	PyObject *locOrObj;
+
+	if (!PyArg_ParseTuple(args, "O:game.scroll_to",  &locOrObj)) {
+		return 0;
+	}
+
+	locXY targetLoc;
+
+	if (PyObjHndl_Check(locOrObj)) {
+		auto objHandle = PyObjHndl_AsObjHndl(locOrObj);
+		targetLoc = objects.GetLocation(objHandle);
+	} else if (PyLong_Check(locOrObj)) {
+		targetLoc = locXY::fromField(PyLong_AsUnsignedLongLong(locOrObj));
+	} else {
+		PyErr_SetString(PyExc_TypeError, "scroll_to argument must be either a tile location (long) or an object handle.");
+		return nullptr;
+	}
+
+	gameSystems->GetLocation().CenterOnSmooth(targetLoc.locx, targetLoc.locy);
+
+	Py_RETURN_TRUE;
+}
+
 PyObject* PyGame_LoadGame(PyObject*, PyObject* args) {
 	char *filename;
 	if (!PyArg_ParseTuple(args, "s:game.loadgame", &filename)) {
@@ -1068,6 +1094,7 @@ static PyMethodDef PyGameMethods[]{
 	{"pfx_lightning_bolt", PyGame_PfxLightningBolt, METH_VARARGS, NULL},
 	{"gametime_add", PyGame_GametimeAdd, METH_VARARGS, NULL},
 	{"is_outdoor", PyGame_IsOutdoor, METH_VARARGS, NULL},
+	{ "scroll_to", PyGame_ScrollTo, METH_VARARGS, NULL },
 	{"shake", PyGame_Shake, METH_VARARGS, NULL},
 	{"moviequeue_add", PyGame_MoviequeueAdd, METH_VARARGS, NULL},
 	{"moviequeue_play", PyGame_MoviequeuePlay, METH_VARARGS, NULL},

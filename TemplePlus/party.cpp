@@ -3,6 +3,8 @@
 #include "party.h"
 #include "config/config.h"
 #include "util/fixes.h"
+#include "critter.h"
+#include "obj.h"
 
 struct LegacyPartySystemAddresses : temple::AddressTable
 {
@@ -13,16 +15,19 @@ struct LegacyPartySystemAddresses : temple::AddressTable
 	GroupArray * groupList; // the entire party (PCs, NPCs and AI followers)
 
 	void(__cdecl * AddToCurrentlySelected)(objHndl objHnd);
+	void(*ArraySort)(void* arr, size_t arrSize, size_t elementSize, int(*sortFunc)(void*, void*));
 
 	LegacyPartySystemAddresses()
 	{
 		rebase(AddToCurrentlySelected, 0x1002B560);
+		rebase(ArraySort, 0x10254750);
 		rebase(groupNpcFollowers, 0x11E71BE0);
 		rebase(groupCurrentlySelected, 0x11E71D00);
 		rebase(groupAiFollowers, 0x11E71E20);
 		rebase(groupPcs , 0x11E71F40);
 		rebase(groupList, 0x11E721E0);
 	}
+	
 	
 } addresses;
 
@@ -58,6 +63,14 @@ void LegacyPartySystemHacks::SetMaxPCs(char maxPCs)
 void LegacyPartySystem::SetMaxPCs(char maxPCs)
 {
 	partyHacks.SetMaxPCs(maxPCs);
+}
+
+void LegacyPartySystem::GroupArraySort(GroupArray* groupArray)
+{
+	if (groupArray->sortFunc)
+	{
+		addresses.ArraySort(groupArray, groupArray->GroupSize, sizeof(objHndl), groupArray->sortFunc);
+	}
 }
 
 uint32_t LegacyPartySystem::AddToPCGroup(objHndl objHnd)
@@ -104,6 +117,33 @@ uint32_t LegacyPartySystem::AddToNpcGroup(objHndl objHnd)
 		return v2;
 	}
 	return 0;
+}
+
+void LegacyPartySystem::AddToCurrentlySelected(objHndl obj)
+{
+	if (ObjIsInGroupArray(addresses.groupList, obj))
+		ObjAddToGroupArray(addresses.groupCurrentlySelected, obj);
+}
+
+void LegacyPartySystem::GroupArrayClearMembers(GroupArray* groupArray)
+{
+	groupArray->GroupSize = 0;
+	memset(groupArray->GroupMembers, 0, sizeof(groupArray->GroupMembers));
+}
+
+void LegacyPartySystem::CurrentlySelectedClear()
+{
+	GroupArrayClearMembers(addresses.groupCurrentlySelected);
+}
+
+objHndl LegacyPartySystem::GetLeader()
+{
+	objHndl leader = GroupListGetMemberN(0);
+	if (objects.IsNPC(leader))
+	{
+		leader = GetConsciousPartyLeader();
+	}
+	return leader;
 }
 
 uint32_t AddToPcGroup(objHndl objHnd)

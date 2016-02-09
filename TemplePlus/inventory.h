@@ -33,6 +33,17 @@ struct InventorySystem : temple::AddressTable
 	ArmorType GetArmorType(int armorFlags);
 	int ItemDrop(objHndl item);
 	objHndl GetParent(objHndl item);
+	bool IsRangedWeapon(objHndl weapon);
+	int GetInventory(objHndl obj, objHndl** inventoryArray);
+	int GetInventoryLocation(objHndl item);
+	ItemFlag GetItemFlags(objHndl item);
+	bool IsItemNonTransferable(objHndl item, objHndl receiver);
+	int ItemInsertGetLocation(objHndl item, objHndl receiver, int* itemInsertLocation, objHndl bag, char flags);
+	void InsertAtLocation(objHndl item, objHndl receiver, int itemInsertLocation);
+	int ItemUnwield(objHndl item);
+	int ItemUnwieldByIdx(objHndl obj, int i);
+	void TransferWithFlags(objHndl item, objHndl receiver, int invenInt, char flags, objHndl bag);
+	void ItemPlaceInIdx(objHndl item, int idx);
 	/*
 		0 - light weapon; 1 - can wield one handed; 2 - must wield two handed; 3 (???)
 	*/
@@ -55,7 +66,9 @@ struct InventorySystem : temple::AddressTable
 	*/
 	void (__cdecl *Clear)(objHndl parent, BOOL keepPersistent);
 
-	int ItemRemove(objHndl item);
+	void ForceRemove(objHndl item, objHndl parent);
+	void(__cdecl*_ForceRemove)(objHndl, objHndl);
+	void ItemRemove(objHndl item); // pretty much same as ForceRemove, but also send a d20 signal for inventory update, and checks for parent first
 	int ItemGetAdvanced(objHndl item, objHndl parent, int slotIdx, int flags);
 
 	// When equipped, which bone of the parent obj does this item attach to?
@@ -78,9 +91,12 @@ struct InventorySystem : temple::AddressTable
 
 		rebase(IdentifyAll, 0x10064C70);
 		rebase(WieldBestAll, 0x1006D100);
-		rebase(Clear,		0x10069E00);
-		rebase(_ItemRemove, 0x10069F60);
-		rebase(_ItemDrop, 0x1006AA60);
+		
+		rebase(_ForceRemove, 0x10069AE0);
+		rebase(Clear,		 0x10069E00);
+		rebase(_ItemRemove,  0x10069F60);
+		
+		rebase(_ItemDrop,	 0x1006AA60);
 	}
 
 private:

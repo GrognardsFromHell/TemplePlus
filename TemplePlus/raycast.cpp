@@ -27,6 +27,11 @@ int RaycastPacket::RaycastShortRange()
 	return addresses.RaycastShortRange(this);
 }
 
+void RaycastPacket::RaycastPacketFree()
+{
+	addresses.RaycastPacketClear(this);
+}
+
 RaycastPacket::~RaycastPacket()
 {
 	addresses.RaycastPacketClear(this);

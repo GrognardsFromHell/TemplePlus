@@ -125,6 +125,10 @@ struct LegacyCritterSystem : temple::AddressTable
 		Gets the current leader of the given critter. Might be 0.
 	*/
 	objHndl GetLeader(objHndl critter);
+	/*
+	Gets the current leader of the given critter (recursive in case it's an NPC charmed by an NPC). Might be 0.
+	*/
+	objHndl GetLeaderRecursive(objHndl critter);
 
 	/*
 		Checks for line of sight betwen a critter and a target obj.
@@ -287,6 +291,9 @@ struct LegacyCritterSystem : temple::AddressTable
 	bool IsSummoned(objHndl obj);
 	int GetCasterLevel(objHndl obj); // returns sum of all casting-class levels
 	bool IsCaster(objHndl obj);
+	bool IsWieldingRangedWeapon(objHndl performer);
+	void GetCritterVoiceLine(objHndl obj, objHndl fellow, char *str, int* soundId);
+	int PlayCritterVoiceLine(objHndl obj, objHndl fellow, char* text, int soundId);
 #pragma endregion
 
 private:

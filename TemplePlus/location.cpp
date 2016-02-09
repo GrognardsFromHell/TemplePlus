@@ -23,9 +23,21 @@ public: const char* name() override
 	int result = orgGetLocFromScreenLoc(screenX,screenY,loc,offx,offy);
 	return result;
 };
+	/*
+		checks if two locations are identical (up to floating point tolerance)
+	*/
+	static BOOL LocationCompare(LocAndOffsets * loc1, LocAndOffsets * loc2)
+	{
+		return loc1 == loc2
+			|| loc1->location.locx == loc2->location.locx
+			&& loc1->location.locy == loc2->location.locy
+			&& fabs(loc1->off_x - loc2->off_x) < 0.0000001192092895507812
+			&& fabs(loc1->off_y - loc2->off_y) < 0.0000001192092895507812;
+	};
 
 		void apply() override 
 	{
+		replaceFunction(0x1003FFC0, LocationCompare);
 	//	orgGetLocFromScreenLoc=replaceFunction(0x10029300, GetLocFromScreenLoc);
 	}
 }locRep;
@@ -122,7 +134,7 @@ BOOL LocationSys::ShiftLocationByOneSubtile(LocAndOffsets* loc, ScreenDirections
 			break;
 		case ScreenDirections::TopLeft:
 			locOut->off_y -= 9.4280901f;
-				break;
+			break;
 		default:
 			break;
 		}
@@ -130,6 +142,8 @@ BOOL LocationSys::ShiftLocationByOneSubtile(LocAndOffsets* loc, ScreenDirections
 	RegularizeLoc(locOut);
 	return 1;
 }
+
+
 
 float LocationSys::intToFloat(int32_t x)
 {
@@ -163,6 +177,14 @@ float LocationSys::DistanceToLoc(objHndl from, LocAndOffsets loc) {
 	return distance - radius;
 }
 
+float LocationSys::DistanceToLocFeet(objHndl obj, LocAndOffsets* loc)
+{
+	auto objLoc = objects.GetLocationFull(obj);
+	auto distance =  Distance3d(objLoc, *loc);
+	auto radius = objects.GetRadius(obj);
+	return InchesToFeet(distance - radius);
+}
+
 float LocationSys::InchesToFeet(float inches) {
 	return inches / 12.0f;
 }
@@ -172,12 +194,15 @@ LocationSys::LocationSys()
 	rebase(getLocAndOff, 0x10040080);
 	rebase(SubtileToLocAndOff, 0x100400C0);
 	rebase(subtileFromLoc,0x10040750); 
-	rebase(ShiftSubtileOnceByDirection, 0x10029DC0);
-	rebase(TOEEdistBtwnLocAndOffs,0x1002A0A0); 
+	rebase(PointNodeInit, 0x100408A0);
+
 	rebase(DistanceToObj, 0x100236E0);
+	rebase(GetLocFromScreenLocPrecise, 0x10029300);
+	rebase(ShiftSubtileOnceByDirection, 0x10029DC0);
 	rebase(Distance3d, 0x1002A0A0);
 	rebase(translationX, 0x10808D00);
 	rebase(translationY, 0x10808D48);
+	rebase(TOEEdistBtwnLocAndOffs, 0x1002A0A0);
 	
 }
 

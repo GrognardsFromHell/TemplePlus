@@ -20,9 +20,48 @@ enum class TigMsgType : uint32_t {
 	KEYDOWN = 8
 };
 
-struct TigMsg {
+struct TigMsgBase
+{
 	uint32_t createdMs;
 	TigMsgType type;
+};
+
+
+
+struct TigMsgGeneric : TigMsgBase
+{
+	uint32_t arg1; // x for mouse events
+	uint32_t arg2; // y for mouse events
+	uint32_t arg3;
+	uint32_t arg4; // button state flags for mouse events
+};
+
+struct TigMouseMsg
+{
+	int x;
+	int y;
+	int mouseStateField24;
+	int flags;
+};
+
+struct TigMsgMouse : TigMsgBase // type 0
+{
+	uint32_t x; 
+	uint32_t y;
+	uint32_t arg3;
+	uint32_t buttonStateFlags; // button state flags for mouse events
+};
+
+struct TigMsgWidget : TigMsgBase // type 1
+{
+	int widgetId; 
+	uint32_t widgetEventType; // 3 - widget entered; 4 - widget left
+	uint32_t x;
+	uint32_t y;
+};
+
+
+struct TigMsg : TigMsgBase {
 	uint32_t arg1; // x for mouse events
 	uint32_t arg2; // y for mouse events
 	uint32_t arg3;
@@ -36,8 +75,8 @@ struct TigMsgGlobalKeyCallback {
 
 struct TigMsgFuncs : temple::AddressTable {
 	// Return code of 0 means a msg has been written to msgOut.
-	int(__cdecl *Process)(TigMsg *msgOut);
-	void(__cdecl *Enqueue)(TigMsg *msg);
+	int(__cdecl *Process)(TigMsgBase *msgOut);
+	void(__cdecl *Enqueue)(TigMsgBase *msg);
 	void(__cdecl *ProcessSystemEvents)();
 
 	TigMsgFuncs() {
@@ -45,7 +84,7 @@ struct TigMsgFuncs : temple::AddressTable {
 		rebase(Enqueue, 0x101DE660);
 		rebase(ProcessSystemEvents, 0x101DF440);
 	}
-};
+} ;
 
 extern TigMsgFuncs msgFuncs;
 

@@ -2,6 +2,9 @@
 #include "diag.h"
 #include "tig/tig_font.h"
 #include <ui/ui_render.h>
+#include <config/config.h>
+#include <pathfinding.h>
+#include <description.h>
 #include <graphics/device.h>
 #include <graphics/textures.h>
 
@@ -78,6 +81,65 @@ void DiagScreen::Render() {
 	lines.push_back(fmt::format("# Clipping Objects"));
 	lines.push_back(fmt::format("{} of {} rendered", clipping.GetRenderered(),
 		clipping.GetTotal()));
+	
+	if (config.pathfindingDebugMode)
+	{
+		lines.push_back(fmt::format("#Pathfinding"));
+
+		lines.push_back(fmt::format("Active Picker Idx: {}", temple::GetRef<int>(0x102F920C)));
+		lines.push_back(fmt::format("uiIntgameAcquireByRaycastOn: {}", temple::GetRef<int>(0x10C0410C)));
+		auto uiIntgameSelectionConfirmed = temple::GetRef<int>(0x10C04110);
+		if (uiIntgameSelectionConfirmed)
+		{
+			int dummy = 1;
+		}
+		lines.push_back(fmt::format("uiIntgameSelectionConfirmed: {}", uiIntgameSelectionConfirmed));
+		lines.push_back(fmt::format("uiIntgameWaypointMode: {}", temple::GetRef<int>(0x10C04114)));
+		lines.push_back(fmt::format("uiIntgameWidgetEnteredForRender: {}", temple::GetRef<int>(0x102FC640)));
+		lines.push_back(fmt::format("uiIntgameWidgetEnteredForGameplay: {}", temple::GetRef<int>(0x102FC644)));
+		
+		objHndl asshole = temple::GetRef<objHndl>(0x10C04118);
+		if (asshole)
+		{
+			lines.push_back(fmt::format("intgameActor: {}", description.getDisplayName(asshole)));
+		}
+		asshole = temple::GetRef<objHndl>(0x10C04120);
+		if (asshole)
+		{
+			lines.push_back(fmt::format("uiIntgameTargetObjFromPortraits: {}", description.getDisplayName(asshole)));
+		}
+		asshole = temple::GetRef<objHndl>(0x10C040E8);
+		if (asshole)
+		{
+			lines.push_back(fmt::format("uiIntgameObjFromRaycast: {}", description.getDisplayName(asshole)));
+		}
+			
+		auto uiIntgamePathPreviewDestLoc = temple::GetRef<LocAndOffsets>(0x10C040F8);
+		lines.push_back(fmt::format("uiIntgameWaypointLoc: {}", uiIntgamePathPreviewDestLoc));
+
+
+		lines.push_back(fmt::format("State: {}", pathfindingSys.pdbgGotPath));
+		if (pathfindingSys.pdbgMover)
+			lines.push_back(fmt::format("Mover Obj: {}", description.getDisplayName( pathfindingSys.pdbgMover)));
+		if (pathfindingSys.pdbgTargetObj)
+			lines.push_back(fmt::format("Target Obj: {}", description.getDisplayName(pathfindingSys.pdbgTargetObj)));
+		lines.push_back(fmt::format("From: {}", pathfindingSys.pdbgFrom));
+		lines.push_back(fmt::format("To: {}", pathfindingSys.pdbgTo));
+		if (pathfindingSys.pdbgUsingNodes && !pathfindingSys.pdbgAbortedSansNodes)
+		{
+			lines.push_back(fmt::format("Using {} pathnodes", pathfindingSys.pdbgNodeNum));
+		} else
+		{
+			if (pathfindingSys.pdbgAbortedSansNodes)
+			{
+
+				lines.push_back(fmt::format("Using {} direction steps, failed because of {}, then tried {} pathnodes", pathfindingSys.pdbgDirectionsCount, pathfindingSys.pdbgShortRangeError, pathfindingSys.pdbgNodeNum));
+			} else
+			{
+				lines.push_back(fmt::format("Using {} direction steps", pathfindingSys.pdbgDirectionsCount));
+			}
+		}
+	}
 
 	TigRect rect;
 	rect.x = 25;

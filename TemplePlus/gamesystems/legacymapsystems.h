@@ -35,6 +35,14 @@ public:
 	const std::string &GetName() const override;
 
 	void CenterOn(int x, int y);
+	
+	/**
+	 * Same as CenterOn, but if the distance to scroll is below
+	 * a certain threshold, it moves the view slowly to the target
+	 * location using smoothing.
+	 */
+	void CenterOnSmooth(int x, int y);
+
 	void SetLimits(uint64_t limitX, uint64_t limitY);
 	locXY GetLimitsCenter();
 };

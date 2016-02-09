@@ -3,6 +3,7 @@
 #include "d20_obj_registry.h"
 #include "description.h"
 #include "util/fixes.h"
+#include "d20.h"
 
 
 class D20ObjRegistrySystem  d20ObjRegistrySys;
@@ -15,7 +16,10 @@ struct D20ObjRegistrySystemAddresses : temple::AddressTable{
 	{
 		rebase(d20ObjRegistry,			0x10BCAD94);
 		rebase(d20ObjRegistryNumItems,	0x10BCAD98);
+		rebase(InitiativeRefresh, 0x100DFE40);
 	}
+
+	int (*InitiativeRefresh)(int initiative, int initiativeNext);
 }addresses;
 
 
@@ -98,6 +102,20 @@ void D20ObjRegistrySystem::Remove(objHndl objHnd)
 		}
 	}
 	return;
+}
+
+void D20ObjRegistrySystem::D20ObjRegistrySendSignalAll(D20DispatcherKey dispKey, D20Actn* d20a, int32_t arg2)
+{
+	for (int i = 0; i < *addresses.d20ObjRegistryNumItems; i++)
+	{
+		d20Sys.d20SendSignal( (*addresses.d20ObjRegistry)[i], dispKey, d20a, arg2);
+	}
+}
+
+int D20ObjRegistrySystem::InitiativeRefresh(int initiative, int initiativeNext)
+{
+	return addresses.InitiativeRefresh(initiative, initiativeNext);
+		
 }
 
 void _D20ObjRegistryAppend(objHndl objHnd)

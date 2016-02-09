@@ -464,6 +464,37 @@ uint32_t LegacySpellSystem::pickerArgsFromSpellEntry(SpellEntry* spellEntry, Pic
 	return _pickerArgsFromSpellEntry(spellEntry, pickArgs, objHnd, casterLvl);
 }
 
+uint32_t LegacySpellSystem::GetSpellRangeExact(SpellRangeType spellRangeType, uint32_t casterLevel, objHndl caster)
+{
+	switch (spellRangeType)
+	{
+	case SpellRangeType::SRT_Personal:
+		return 5;
+	case SpellRangeType::SRT_Touch:
+		return critterSys.GetReach(caster, D20A_TOUCH_ATTACK);
+	case SpellRangeType::SRT_Close:
+		return (casterLevel / 2 + 5) * 5;
+	case SpellRangeType::SRT_Medium:
+		return 2 * (5*casterLevel + 50);
+	case SpellRangeType::SRT_Long:
+		return 8 * (5 * casterLevel + 50);
+	case SpellRangeType::SRT_Special_Inivibility_Purge:
+		return 5 * casterLevel;
+	default:
+		logger->warn("GetSpellRangeExact: unknown range specified for spell entry\n");
+		break;
+	}
+	return 0;
+}
+
+uint32_t LegacySpellSystem::GetSpellRange(SpellEntry* spellEntry, uint32_t casterLevel, objHndl caster)
+{
+	auto spellRangeType = spellEntry->spellRangeType;
+	if (spellRangeType == SpellRangeType::SRT_Specified)
+		return spellEntry->spellRange;
+	return GetSpellRangeExact(spellRangeType, casterLevel, caster);
+}
+
 const char* LegacySpellSystem::GetSpellEnumNameFromEnum(int spellEnum)
 {
 	MesLine mesline;

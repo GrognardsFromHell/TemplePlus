@@ -109,10 +109,10 @@ namespace temple {
 		int (*RemoveDir)(const char* file);
 
 		// Setter of function pointers for error and info output messages ( printf("[ERROR] %s", msg); )
-		void(__cdecl* TioPackFuncs)(TioMsgCb erroCb, TioMsgCb msgCb);
+		// void(__cdecl* TioPackFuncs)(TioMsgCb erroCb, TioMsgCb msgCb);
 
-		// Pack file(s)
-		void(__cdecl* TioPack)(int argc, char* argv[]);
+		//// Pack file(s)
+		//void(__cdecl* TioPack)(int argc, char* argv[]);
 
 		// Returns current pos of file handle
 		int(*Tell)(TioFile *file);
@@ -132,8 +132,8 @@ namespace temple {
 			Resolve("tio_filelist_destroy", filelist_destroy);
 			Resolve("tio_remove", RemoveFile);
 			Resolve("tio_rmdir", RemoveDir);
-			Resolve("tio_pack_funcs", TioPackFuncs);
-			Resolve("tio_pack", TioPack);
+			// Resolve("tio_pack_funcs", TioPackFuncs);
+			// Resolve("tio_pack", TioPack);
 			Resolve("tio_ftell", Tell);
 		}
 
@@ -274,7 +274,7 @@ namespace temple {
 		return (mImpl->RemoveFile(path.c_str()) == 0);
 	}
 
-	void TioVfs::Pack(const std::vector<std::string>& args)
+	/*void TioVfs::Pack(const std::vector<std::string>& args)
 	{
 		char * argsC[100];
 		for (size_t i = 0; i < args.size(); i++)
@@ -282,7 +282,7 @@ namespace temple {
 			argsC[i] = (char*)args[i].c_str();
 		}
 		mImpl->TioPack(args.size(), argsC);
-	}
+	}*/
 
 	Vfs::FileHandle TioVfs::Open(const char* name, const char* mode) {
 		return mImpl->OpenFile(name, mode);

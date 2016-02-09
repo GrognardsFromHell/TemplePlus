@@ -42,6 +42,12 @@ public:
 
 	void Remove(Handle handle);
 
+	/**
+	 * The given particle system will stop emitting new particles, but
+	 * existing particles will continue to be simulated until their lifespan ends.
+	 */
+	void End(Handle partsysId);
+
 	Map::const_iterator begin() const {
 		return mActiveSys.begin();
 	}

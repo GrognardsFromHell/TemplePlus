@@ -27,7 +27,7 @@ namespace crypto {
 					0);
 
 				if (status) {
-					throw TempleException("Unable to create a MD5 hashing object. Returned error: {:x}", hAlg);
+					throw TempleException("Unable to create a MD5 hashing object. Returned error: {}", hAlg);
 				}
 
 				// Close the provider when we shut down

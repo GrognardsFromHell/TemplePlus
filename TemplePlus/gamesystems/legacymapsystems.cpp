@@ -67,6 +67,11 @@ void LocationSystem::CenterOn(int tileX, int tileY)
 	centerOn(tileX, tileY);
 }
 
+void LocationSystem::CenterOnSmooth(int tileX, int tileY) {
+	static auto map_location_center_on_smooth = temple::GetPointer<void(int x, int y)>(0x10005bc0);
+	map_location_center_on_smooth(tileX, tileY);
+}
+
 void LocationSystem::SetLimits(uint64_t limitX, uint64_t limitY)
 {
 	static auto location_set_limits = temple::GetPointer<BOOL(uint64_t, uint64_t)>(0x1002a8f0);

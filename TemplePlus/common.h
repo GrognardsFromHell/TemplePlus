@@ -196,7 +196,7 @@ struct LocAndOffsets {
 	vector3f ToInches3D(float offsetZ = 0) {
 		return location.ToInches3D(off_x, off_y, offsetZ);
 	}
-	
+
 	static LocAndOffsets FromInches(float x, float y) {
 		float tileX = x / INCH_PER_TILE;
 		float tileY = y / INCH_PER_TILE;
@@ -345,5 +345,38 @@ enum ScreenDirections : char {
 	Left,
 	TopLeft,
 	DirectionsNum // 8
+};
+
+
+inline std::ostream& operator<<(std::ostream& os, const ScreenDirections & direc) {
+	switch(direc)
+	{
+	case ScreenDirections::Top:
+		return os << "U";
+	case ScreenDirections::TopRight:
+		return os << "UR";
+	case ScreenDirections::Right:
+		return os << "R";
+	case ScreenDirections::BottomRight:
+		return os << "DR";
+	case ScreenDirections::Bottom:
+		return os << "D";
+	case ScreenDirections::BottomLeft :
+		return os << "DL";
+	case ScreenDirections::Left:
+		return os << "L";
+	case ScreenDirections::TopLeft:
+		return os << "UL";
+	default:
+		return os << "NA";
+	}
+}
+
+
+struct PointNode
+{
+	float absX;
+	int initTo0;
+	float absY;
 };
 #pragma endregion

@@ -185,6 +185,13 @@ void ParticleSysSystem::Remove(Handle handle)
 	mActiveSys.erase(handle);
 }
 
+void ParticleSysSystem::End(Handle partsysId) {
+	auto partSys = GetByHandle(partsysId);
+	if (partSys) {
+		partSys->EndPrematurely();
+	}
+}
+
 void ParticleSysSystem::RemoveAll() {
 	mActiveSys.clear();
 }

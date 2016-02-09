@@ -22,7 +22,7 @@ namespace gfx {
 	struct AnimatedModelParams;
 	using AnimatedModelPtr = std::shared_ptr<class AnimatedModel>;
 	class EncodedAnimId;
-}
+	}
 
 struct Objects : temple::AddressTable {
 	friend struct LegacyCritterSystem;
@@ -93,7 +93,7 @@ struct Objects : temple::AddressTable {
 	}
 	float GetRotation(objHndl handle) {
 		return _GetInternalFieldFloat(handle, obj_f_rotation);
-	}	
+	}
 	float GetRotationPitch(objHndl handle) {
 		return _GetInternalFieldFloat(handle, obj_f_rotation_pitch);
 	}
@@ -240,6 +240,7 @@ struct Objects : temple::AddressTable {
 	bool IsContainerType(ObjectType type) const {
 		return type == obj_t_container || type == obj_t_bag;
 	}
+	// TODO: Consider renaming to IsItem()
 	bool IsEquipment(objHndl obj) {
 		return IsEquipmentType(GetType(obj));
 	}
@@ -264,6 +265,7 @@ struct Objects : temple::AddressTable {
 	void SetDispatcher(objHndl obj, uint32_t data32);
 
 	int GetModFromStatLevel(int statLevel); // returns modifier from stat level e.g. Dex 15 -> +2
+	bool IsPortalOpen(objHndl obj);
 	
 	int GetTempId(objHndl handle);
 	int GetAlpha(objHndl handle);	
@@ -290,7 +292,7 @@ struct Objects : temple::AddressTable {
 
 	FloatLineSystem  * floats;
 #pragma endregion
-		
+
 	void(*UpdateRenderHeight)(objHndl obj, int animId);
 	void(*UpdateRadius)(objHndl obj, int animId);
 
