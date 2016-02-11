@@ -1193,7 +1193,7 @@ void MapSystem::SaveMapMobiles() {
 
 	// This file will contain the dynamic objects that have been created on this map
 	auto dynFilename = fmt::format("{}\\mobile.mdy", mSectorSaveDir);
-	auto dynFh = vfs->Open(dynFilename.c_str(), "ab");
+	auto dynFh = vfs->Open(dynFilename.c_str(), "wb");
 	if (!dynFh) {
 		vfs->Close(destrFh);
 		vfs->Close(diffFh);
