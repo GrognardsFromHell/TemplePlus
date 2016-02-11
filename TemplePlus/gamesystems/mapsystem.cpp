@@ -1017,6 +1017,9 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 		if (!readObject(&handle, filename.c_str())) {
 			logger->warn("Unable to load mobile object {} for level {}",
 				filename, dataDir);
+		} else if (config.debugMessageEnable)
+		{
+			logger->debug("Loaded MOB obj {} ({})", description.getDisplayName(handle), objSystem->GetObject(handle)->id.ToString() );
 		}
 	}
 
@@ -1057,8 +1060,10 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 
 			auto obj = objSystem->GetObject(handle);
 			obj->LoadDiffsFromFile(handle, fh);
+			logger->debug("Loaded {} ({}) from diff file.", description.getDisplayName(handle), objSystem->GetObject(handle)->id.ToString());
 
 			if (objects.GetFlags(handle) & OF_EXTINCT) {
+				logger->debug("{} ({}) is extinct.", description.getDisplayName(handle), handle);
 				gameSystems->GetObj().Remove(handle);
 			}
 		}
@@ -1084,6 +1089,7 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 			auto objId = reader.Read<ObjectId>();
 			auto handle = gameSystems->GetObj().GetHandleById(objId);
 			if (handle) {
+				logger->debug("{} ({}) is destroyed.", description.getDisplayName(handle), objSystem->GetObject(handle)->id.ToString());
 				gameSystems->GetObj().Remove(handle);
 			}
 		}
@@ -1116,7 +1122,7 @@ void MapSystem::ReadDynamicMobiles(const std::string & saveDir)
 	while (true) {
 		try {
 			auto handle = objSystem->LoadFromFile(fh);
-			logger->debug("Loaded dynamic object {}", 
+			logger->debug("Loaded dynamic object {} ({})", description.getDisplayName(handle) ,
 				objSystem->GetObject(handle)->id.ToString());
 		} catch (TempleException &e) {
 			logger->error("Unable to load object: {}", e.what());
@@ -1172,14 +1178,14 @@ void MapSystem::SaveMapMobiles() {
 
 	// This file will contain the differences from the mobile object stored in the sector's data files
 	auto diffFilename = fmt::format("{}\\mobile.md", mSectorSaveDir);
-	auto diffFh = vfs->Open(diffFilename.c_str(), "wb");
+	auto diffFh = vfs->Open(diffFilename.c_str(), "ab");
 	if (!diffFh) {
 		throw TempleException("Unable to open {} for writing.", diffFilename);
 	}
 
 	// This file will contain the object ids of mobile sector objects that have been destroyed
 	auto destrFilename = fmt::format("{}\\mobile.des", mSectorSaveDir);
-	auto destrFh = vfs->Open(destrFilename.c_str(), "wb");
+	auto destrFh = vfs->Open(destrFilename.c_str(), "ab");
 	if (!destrFh) {
 		vfs->Close(diffFh);
 		throw TempleException("Unable to open {} for writing.", destrFilename);
@@ -1209,6 +1215,8 @@ void MapSystem::SaveMapMobiles() {
 			// If a dynamic object has been destroyed, it wont be recreated on mapload
 			// anyway (since there is no mob file for it)
 			if (obj.HasFlag(OF_DESTROYED) || obj.HasFlag(OF_EXTINCT)) {
+				logger->debug("Skipping dynamic object {} for writing destroyed objs ({})", description.getDisplayName(handle),
+					objSystem->GetObject(handle)->id.ToString());
 				return;
 			}
 			// TODO: Replace with proper VFS usage
@@ -1218,14 +1226,27 @@ void MapSystem::SaveMapMobiles() {
 		}
 
 		if (!obj.hasDifs) {
+			logger->debug("Skipping object with diffs {} for writing destroyed objs ({})", description.getDisplayName(handle),
+				objSystem->GetObject(handle)->id.ToString());
 			return; // Object is unchanged
 		}
 
 		if (obj.HasFlag(OF_DESTROYED) || obj.HasFlag(OF_EXTINCT)) {
+			if (obj.HasFlag(OF_EXTINCT))
+			{
+				logger->debug("Writing extinct object {} as destroyed obj ({})", description.getDisplayName(handle),
+					objSystem->GetObject(handle)->id.ToString());
+			} else
+			{
+				logger->debug("Writing destroyed object {} as destroyed obj  ({})", description.getDisplayName(handle),
+					objSystem->GetObject(handle)->id.ToString());
+			}
 			// Write the object id of the destroyed obj to mobile.des
 			vfs->Write(&obj.id, sizeof(obj.id), destrFh);
 			++destroyedObjs;
 		} else {
+			logger->debug("Writing object {} to diff file ({})", description.getDisplayName(handle),
+				objSystem->GetObject(handle)->id.ToString());
 			// Write the object id followed by a diff record to mobile.mdy
 			vfs->Write(&obj.id, sizeof(obj.id), diffFh);
 
