@@ -354,6 +354,21 @@ void MapObjectRenderer::RenderObjectInUi(objHndl handle, int x, int y, float rot
 
 	mAasRenderer.Render(animatedModel.get(), animParams, lights);
 
+	if (objects.IsCritter(handle)) {
+		auto weaponPrim = critterSys.GetWornItem(handle, EquipSlot::WeaponPrimary);
+		if (weaponPrim) {
+			RenderObjectInUi(weaponPrim, x, y, rotation, scale);
+		}
+		auto weaponSec = critterSys.GetWornItem(handle, EquipSlot::WeaponSecondary);
+		if (weaponSec) {
+			RenderObjectInUi(weaponSec, x, y, rotation, scale);
+		}
+		auto shield = critterSys.GetWornItem(handle, EquipSlot::Shield);
+		if (shield) {
+			RenderObjectInUi(shield, x, y, rotation, scale);
+		}
+	}
+
 }
 
 void MapObjectRenderer::RenderOccludedMapObjects(int tileX1, int tileX2, int tileY1, int tileY2) {

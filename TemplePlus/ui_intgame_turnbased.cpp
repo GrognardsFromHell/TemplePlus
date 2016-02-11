@@ -25,78 +25,75 @@
 
 UiIntgameTurnbased uiIntgameTb;
 
-struct UiIntgameTurnbasedAddresses : temple::AddressTable
-{
+struct UiIntgameTurnbasedAddresses : temple::AddressTable {
 	BOOL (__cdecl*GameRayCast)(int x, int y, objHndl* obj, int flags);
 	void (__cdecl *CursorRenderUpdate)();
-	int(__cdecl *AooIndicatorDraw)(LocAndOffsets*, int shaderId);
-	int(__cdecl *GetHourglassDepletionState)();
-	int * cursorState;
-	int(__cdecl * UiActiveRadialMenuHasActiveNode)();
-	void(__cdecl* UiActionBarGetValuesFromMovement)();
-	void(__cdecl*CreateMovePreview)(PathQueryResult* pqr, UiIntgameTurnbasedFlags flags);
-	int(__cdecl*PathpreviewGetFromToDist)(PathQueryResult* path);
-	void(__cdecl*RenderCircle)(LocAndOffsets loc, float zoffset, int color1, int color2, float radius);
-	void(__cdecl*RenderPositioningBlueCircle)(LocAndOffsets loc, objHndl obj);
+	int (__cdecl *AooIndicatorDraw)(LocAndOffsets*, int shaderId);
+	int (__cdecl *GetHourglassDepletionState)();
+	int* cursorState;
+	int (__cdecl * UiActiveRadialMenuHasActiveNode)();
+	void (__cdecl* UiActionBarGetValuesFromMovement)();
+	void (__cdecl*CreateMovePreview)(PathQueryResult* pqr, UiIntgameTurnbasedFlags flags);
+	int (__cdecl*PathpreviewGetFromToDist)(PathQueryResult* path);
+	void (__cdecl*RenderCircle)(LocAndOffsets loc, float zoffset, int color1, int color2, float radius);
+	void (__cdecl*RenderPositioningBlueCircle)(LocAndOffsets loc, objHndl obj);
 	int (__cdecl*PathRenderEndpointCircle)(LocAndOffsets* loc, objHndl obj, float scaleFactor);
-	void(__cdecl*AooInterceptArrowDraw)(LocAndOffsets* perfLoc, LocAndOffsets* targetLoc);
+	void (__cdecl*AooInterceptArrowDraw)(LocAndOffsets* perfLoc, LocAndOffsets* targetLoc);
 
-	AooShaderPacket * aooShaderLocations;
-	int * aooShaderLocationsNum;
-	int * uiIntgamePathpreviewState;
-	float * uiIntgameGreenMoveLength;
-	float * uiIntgameTotalMoveLength;
-	float * uiIntgamePathdrawCumulativeDist;
-	float * uiIntgamePathpreviewFromToDist;
+	AooShaderPacket* aooShaderLocations;
+	int* aooShaderLocationsNum;
+	int* uiIntgamePathpreviewState;
+	float* uiIntgameGreenMoveLength;
+	float* uiIntgameTotalMoveLength;
+	float* uiIntgamePathdrawCumulativeDist;
+	float* uiIntgamePathpreviewFromToDist;
 
-	int * objectHoverTooltipIdx;
-	int * uiIntgameActionErrorCode;
-	float * movementFeet;
+	int* objectHoverTooltipIdx;
+	int* uiIntgameActionErrorCode;
+	float* movementFeet;
 	int* uiWidgetMouseHandlerWidgetId;
-	int *uiIntgameAcquireByRaycastOn;
-	int *uiIntgameSelectionConfirmed;
-	int *uiIntgameWidgetEnteredForRender;
-	int *uiIntgameWidgetEnteredForGameplay;
-	WidgetType1 ** uiIntgameMainWnd;
+	int* uiIntgameAcquireByRaycastOn;
+	int* uiIntgameSelectionConfirmed;
+	int* uiIntgameWidgetEnteredForRender;
+	int* uiIntgameWidgetEnteredForGameplay;
+	WidgetType1** uiIntgameMainWnd;
 	int* uiIntgameWaypointMode;
-	objHndl * intgameActor;
-	objHndl * uiIntgameTargetObjFromPortraits;
-	LocAndOffsets * locFromScreenLoc;
-	objHndl * uiIntgameObjFromRaycast;
-	int * activePickerIdx;
+	objHndl* intgameActor;
+	objHndl* uiIntgameTargetObjFromPortraits;
+	LocAndOffsets* locFromScreenLoc;
+	objHndl* uiIntgameObjFromRaycast;
+	int* activePickerIdx;
 	ActnSeq* uiIntgameCurSeqBackup;
-	LocAndOffsets * uiIntgameWaypointLoc; // the last fixed waypoint in waypoint mode
-	int64_t * screenXfromMouseEvent;
-	int64_t * screenYfromMouseEvent;
+	LocAndOffsets* uiIntgameWaypointLoc; // the last fixed waypoint in waypoint mode
+	int64_t* screenXfromMouseEvent;
+	int64_t* screenYfromMouseEvent;
 
-	UiIntgameTurnbasedAddresses()
-	{
+	UiIntgameTurnbasedAddresses() {
 		rebase(GameRayCast, 0x10022360);
 
-		
+
 		rebase(CursorRenderUpdate, 0x10097060);
-		
-		
-		
+
+
 		rebase(UiActiveRadialMenuHasActiveNode, 0x1009AB40);
 
 		rebase(RenderCircle, 0x10106B70);
 		rebase(AooIndicatorDraw, 0x10106F30);
-		
+
 		rebase(RenderPositioningBlueCircle, 0x10107580);
 		rebase(AooInterceptArrowDraw, 0x101090E0);
 		rebase(PathRenderEndpointCircle, 0x10109BE0);
-		rebase(PathpreviewGetFromToDist,0x10109C80);
+		rebase(PathpreviewGetFromToDist, 0x10109C80);
 		rebase(GetHourglassDepletionState, 0x10109D10);
 		rebase(CreateMovePreview, 0x10109D50);
-		
+
 
 		rebase(UiActionBarGetValuesFromMovement, 0x10173440);
 
 
 		rebase(activePickerIdx, 0x102F920C);
 		rebase(uiIntgameWidgetEnteredForRender, 0x102FC640);
-		rebase(uiIntgameWidgetEnteredForGameplay,0x102FC644);
+		rebase(uiIntgameWidgetEnteredForGameplay, 0x102FC644);
 
 		rebase(uiWidgetMouseHandlerWidgetId, 0x10301324);
 
@@ -115,7 +112,6 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable
 		rebase(uiIntgameWaypointMode, 0x10C04114);
 		rebase(intgameActor, 0x10C04118);
 		rebase(uiIntgameTargetObjFromPortraits, 0x10C04120);
-		
 
 
 		rebase(uiIntgamePathpreviewState, 0x115B1E40);
@@ -130,42 +126,41 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable
 		rebase(uiIntgameCurSeqBackup, 0x118692A0);
 	}
 
-	
+
 } addresses;
 
- 
 
-class UiIntegameTurnbasedRepl : public TempleFix
-{
-public: 
-	const char* name() override { return "UI Intgame Turnbased" "Function Replacements";} 
+class UiIntegameTurnbasedRepl : public TempleFix {
+public:
+	const char* name() override {
+		return "UI Intgame Turnbased" "Function Replacements";
+	}
 
 	static void IntgameTurnbasedRender(int widId);
 	static void (__cdecl* orgIntgameTurnbasedRender)(int widId);
 	static void UiIntgameBackupCurSeq();
 	static void SeqPickerTargetingTypeReset();
-	
+
 	/*
 	this function is in charge of either executing the action sequence
 	*/
 	static int UiIntgamePathSequenceHandler(TigMsgMouse* msg);
-	static int(__cdecl* orgUiIntgamePathSequenceHandler)(TigMsgMouse*msg);
+	static int (__cdecl* orgUiIntgamePathSequenceHandler)(TigMsgMouse* msg);
 
 	static void UiIntgameGenerateSequence(int isUnnecessary);
-	static void(__cdecl*orgUiIntgameGenerateSequence)(int isUnnecessary);
+	static void (__cdecl*orgUiIntgameGenerateSequence)(int isUnnecessary);
 
 	static int UiIntgameMsgHandler(int widId, TigMsg* msg);
 	static int (__cdecl*orgUiIntgameMsgHandler)(int widId, TigMsg* msg);
 
 	static BOOL UiIntgameRaycast(objHndl* obj, int x, int y, int flags);
-	static int IntgameValidateMouseSelection(TigMsgMouse*msg);
+	static int IntgameValidateMouseSelection(TigMsgMouse* msg);
 
-	static void RenderAooIndicator(const LocAndOffsets &location, int materialId);
+	static void RenderAooIndicator(const LocAndOffsets& location, int materialId);
 
 	static void HourglassUpdate(int a3, int a4, int flags);
 
-	void apply() override 
-	{
+	void apply() override {
 		replaceFunction(0x10097320, HourglassUpdate);
 		orgIntgameTurnbasedRender = replaceFunction(0x10173F70, IntgameTurnbasedRender);
 		orgUiIntgameGenerateSequence = replaceFunction(0x10174100, UiIntgameGenerateSequence);
@@ -174,49 +169,38 @@ public:
 	}
 } uiIntgameTurnbasedReplacements;
 
-void UiIntegameTurnbasedRepl::IntgameTurnbasedRender(int widId)
-{
+void UiIntegameTurnbasedRepl::IntgameTurnbasedRender(int widId) {
 	orgIntgameTurnbasedRender(widId);
 }
 
-void UiIntegameTurnbasedRepl::UiIntgameBackupCurSeq()
-{
+void UiIntegameTurnbasedRepl::UiIntgameBackupCurSeq() {
 	*addresses.uiIntgameCurSeqBackup = *(*actSeqSys.actSeqCur);
 }
 
-void UiIntegameTurnbasedRepl::SeqPickerTargetingTypeReset()
-{
+void UiIntegameTurnbasedRepl::SeqPickerTargetingTypeReset() {
 	*actSeqSys.seqPickerTargetingType = -1;
 	*actSeqSys.seqPickerD20ActnType = D20A_UNSPECIFIED_ATTACK;
 	*actSeqSys.seqPickerD20ActnData1 = 0;
 }
 
-int UiIntegameTurnbasedRepl::UiIntgamePathSequenceHandler(TigMsgMouse* msg)
-{
-	if (uiPicker.PickerActiveCheck())
-	{
+int UiIntegameTurnbasedRepl::UiIntgamePathSequenceHandler(TigMsgMouse* msg) {
+	if (uiPicker.PickerActiveCheck()) {
 		return 0;
 	}
 
 	bool performSeq = true;
 	objHndl actor = tbSys.turnBasedGetCurrentActor();
-	if (*addresses.uiIntgameAcquireByRaycastOn)
-	{
-		
-		if (*addresses.uiIntgameSelectionConfirmed && !actSeqSys.isPerforming(actor))
-		{
-			if ( (infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) || infrastructure::gKeyboard.IsKeyPressed(VK_RMENU) || *addresses.uiIntgameWaypointMode)
-				&& !*addresses.uiIntgameObjFromRaycast)
-			{
+	if (*addresses.uiIntgameAcquireByRaycastOn) {
+
+		if (*addresses.uiIntgameSelectionConfirmed && !actSeqSys.isPerforming(actor)) {
+			if ((infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) || infrastructure::gKeyboard.IsKeyPressed(VK_RMENU) || *addresses.uiIntgameWaypointMode)
+				&& !*addresses.uiIntgameObjFromRaycast) {
 				LocAndOffsets curd20aTgtLoc;
 				actSeqSys.GetPathTargetLocFromCurD20Action(&curd20aTgtLoc);
-				if (locSys.Distance3d(curd20aTgtLoc, *addresses.locFromScreenLoc) >= 24.0)
-				{
+				if (locSys.Distance3d(curd20aTgtLoc, *addresses.locFromScreenLoc) >= 24.0) {
 					performSeq = false;
-				} 
-				else if ( *addresses.uiIntgameWaypointMode == 0
-					|| addresses.locFromScreenLoc->location != addresses.uiIntgameWaypointLoc->location)
-				{
+				} else if (*addresses.uiIntgameWaypointMode == 0
+					|| addresses.locFromScreenLoc->location != addresses.uiIntgameWaypointLoc->location) {
 					// this initiates waypoint mode
 					*addresses.uiIntgameWaypointMode = 1;
 					*addresses.uiIntgameWaypointLoc = *addresses.locFromScreenLoc;
@@ -224,14 +208,12 @@ int UiIntegameTurnbasedRepl::UiIntgamePathSequenceHandler(TigMsgMouse* msg)
 					performSeq = false;
 				}
 			}
-		} else
-		{
+		} else {
 			performSeq = false;
 		}
 	}
 
-	if (performSeq)
-	{
+	if (performSeq) {
 		addresses.UiActionBarGetValuesFromMovement();
 		logger->info("UiIntgame: \t Issuing Sequence for current actor {} ({}), cur seq: {}", description.getDisplayName(actor), actor, (void*)(*actSeqSys.actSeqCur));
 		actSeqSys.sequencePerform();
@@ -251,71 +233,59 @@ int UiIntegameTurnbasedRepl::UiIntgamePathSequenceHandler(TigMsgMouse* msg)
 	// return orgUiIntgamePathPreviewHandler(msg);
 }
 
-void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary)
-{
+void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 	auto curSeq = *actSeqSys.actSeqCur;
 	// replacing this just for debug purposes really
 	orgUiIntgameGenerateSequence(isUnnecessary);
-	if (*actSeqSys.actSeqCur != curSeq)
-	{
+	if (*actSeqSys.actSeqCur != curSeq) {
 		logger->info("Sequence switch from Generate Sequence to {}", (void*)*actSeqSys.actSeqCur);
 		int dummy = 1;
 	};
 }
 
-int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg)
-{
+int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 	auto curSeq = *actSeqSys.actSeqCur;
 	int result = 0;
-	if (msg->type == TigMsgType::MOUSE)
-	{
+	if (msg->type == TigMsgType::MOUSE) {
 		*addresses.screenXfromMouseEvent = ((TigMsgMouse*)msg)->x;
 		*addresses.screenYfromMouseEvent = ((TigMsgMouse*)msg)->y;
 	}
-	
-	if (!combatSys.isCombatActive() || radialMenus.ActiveRadialMenuHasActiveNode())
-	{
+
+	if (!combatSys.isCombatActive() || radialMenus.ActiveRadialMenuHasActiveNode()) {
 		*addresses.intgameActor = 0i64;
 		*addresses.uiIntgameAcquireByRaycastOn = 0;
 		*addresses.uiIntgameSelectionConfirmed = 0;
 	}
-	result  = orgUiIntgameMsgHandler(widId, msg);
+	result = orgUiIntgameMsgHandler(widId, msg);
 
 
-	if ( *actSeqSys.actSeqCur != curSeq)
-	{
-		logger->info("Sequence switch from Ui Intgame Msg Handler to {}" , (void*)*actSeqSys.actSeqCur);
+	if (*actSeqSys.actSeqCur != curSeq) {
+		logger->info("Sequence switch from Ui Intgame Msg Handler to {}", (void*)*actSeqSys.actSeqCur);
 		int dummy = 1;
 	};
 	return result;
 }
 
-BOOL UiIntegameTurnbasedRepl::UiIntgameRaycast(objHndl* obj, int x, int y, int flags)
-{
-	if (*addresses.uiIntgameTargetObjFromPortraits)
-	{
+BOOL UiIntegameTurnbasedRepl::UiIntgameRaycast(objHndl* obj, int x, int y, int flags) {
+	if (*addresses.uiIntgameTargetObjFromPortraits) {
 		*obj = *addresses.uiIntgameTargetObjFromPortraits;
 		return 1;
-	} else
-	{
+	} else {
 		return addresses.GameRayCast(x, y, obj, flags);
 	}
 }
 
-int UiIntegameTurnbasedRepl::IntgameValidateMouseSelection(TigMsgMouse* msg)
-{
+int UiIntegameTurnbasedRepl::IntgameValidateMouseSelection(TigMsgMouse* msg) {
 	objHndl obj = 0i64;
-	if (uiPicker.PickerActiveCheck() || radialMenus.ActiveRadialMenuHasActiveNode())
-	{
+	if (uiPicker.PickerActiveCheck() || radialMenus.ActiveRadialMenuHasActiveNode()) {
 		return 0;
 	}
 	auto actor = tbSys.turnBasedGetCurrentActor();
 	auto actorRadiusSqr = objects.GetRadius(actor);
 	actorRadiusSqr *= actorRadiusSqr;
-	
+
 	gameSystems->GetTimeEvent().RemoveAll(TimeEventType::IntgameTurnbased);
-	if (!(*addresses.uiIntgameAcquireByRaycastOn))
-	{
+	if (!(*addresses.uiIntgameAcquireByRaycastOn)) {
 		UiIntgameGenerateSequence(1);
 		return 0;
 	}
@@ -323,30 +293,25 @@ int UiIntegameTurnbasedRepl::IntgameValidateMouseSelection(TigMsgMouse* msg)
 	LocAndOffsets locFromScreen;
 	PointNode prevPntNode, pntNode;
 	float distSqr;
-	if (UiIntgameRaycast(&obj, msg->x, msg->y, 6))
-	{
+	if (UiIntgameRaycast(&obj, msg->x, msg->y, 6)) {
 		objFromRaycast = obj;
-	} else
-	{
+	} else {
 		locSys.GetLocFromScreenLocPrecise(msg->x, msg->y, &locFromScreen.location, &locFromScreen.off_x, &locFromScreen.off_y);
-		locSys.PointNodeInit(addresses.locFromScreenLoc,  &prevPntNode);
+		locSys.PointNodeInit(addresses.locFromScreenLoc, &prevPntNode);
 		locSys.PointNodeInit(&locFromScreen, &pntNode);
 		objFromRaycast = 0i64;
 		distSqr = (prevPntNode.absY - pntNode.absY) * (prevPntNode.absY - pntNode.absY)
 			+ (prevPntNode.absX - pntNode.absX) * (prevPntNode.absX - pntNode.absX);
 	}
 
-	if (*addresses.uiIntgameSelectionConfirmed)
-	{
+	if (*addresses.uiIntgameSelectionConfirmed) {
 		if (objFromRaycast != *addresses.uiIntgameObjFromRaycast
-			|| !*addresses.uiIntgameObjFromRaycast && distSqr > actorRadiusSqr)
-		{
+			|| !*addresses.uiIntgameObjFromRaycast && distSqr > actorRadiusSqr) {
 			*addresses.uiIntgameSelectionConfirmed = 0;
 			return 0;
 		}
-	} else if ( objFromRaycast == *addresses.uiIntgameObjFromRaycast
-		&& (*addresses.uiIntgameObjFromRaycast || distSqr < actorRadiusSqr))
-	{
+	} else if (objFromRaycast == *addresses.uiIntgameObjFromRaycast
+		&& (*addresses.uiIntgameObjFromRaycast || distSqr < actorRadiusSqr)) {
 		*addresses.uiIntgameSelectionConfirmed = 1;
 		return 0;
 	}
@@ -375,68 +340,57 @@ void UiIntegameTurnbasedRepl::RenderAooIndicator(const LocAndOffsets& location, 
 
 }
 
-void(__cdecl*UiIntegameTurnbasedRepl::orgIntgameTurnbasedRender)(int widId);
-int(__cdecl* UiIntegameTurnbasedRepl::orgUiIntgamePathSequenceHandler)(TigMsgMouse*msg);
-void(__cdecl*UiIntegameTurnbasedRepl::orgUiIntgameGenerateSequence)(int isUnnecessary);
-int(__cdecl*UiIntegameTurnbasedRepl::orgUiIntgameMsgHandler)(int widId, TigMsg* msg);
+void (__cdecl*UiIntegameTurnbasedRepl::orgIntgameTurnbasedRender)(int widId);
+int (__cdecl* UiIntegameTurnbasedRepl::orgUiIntgamePathSequenceHandler)(TigMsgMouse* msg);
+void (__cdecl*UiIntegameTurnbasedRepl::orgUiIntgameGenerateSequence)(int isUnnecessary);
+int (__cdecl*UiIntegameTurnbasedRepl::orgUiIntgameMsgHandler)(int widId, TigMsg* msg);
 
-void UiIntgameTurnbased::CreateMovePreview(PathQueryResult* pqr, UiIntgameTurnbasedFlags flags)
-{
+void UiIntgameTurnbased::CreateMovePreview(PathQueryResult* pqr, UiIntgameTurnbasedFlags flags) {
 	addresses.CreateMovePreview(pqr, flags);
 }
 
-int UiIntgameTurnbased::PathpreviewGetFromToDist(PathQueryResult* path)
-{
+int UiIntgameTurnbased::PathpreviewGetFromToDist(PathQueryResult* path) {
 	return addresses.PathpreviewGetFromToDist(path);
 }
 
-void UiIntgameTurnbased::RenderCircle(LocAndOffsets loc, float zoffset, int fillColor, int outlineColor, float radius)
-{
+void UiIntgameTurnbased::RenderCircle(LocAndOffsets loc, float zoffset, int fillColor, int outlineColor, float radius) {
 	addresses.RenderCircle(loc, zoffset, fillColor, outlineColor, radius);
 }
 
-void UiIntgameTurnbased::PathRenderEndpointCircle(LocAndOffsets* loc, objHndl obj, float zoffset)
-{
+void UiIntgameTurnbased::PathRenderEndpointCircle(LocAndOffsets* loc, objHndl obj, float zoffset) {
 	addresses.PathRenderEndpointCircle(loc, obj, zoffset);
 }
 
-void UiIntgameTurnbased::RenderPositioningBlueCircle(LocAndOffsets loc, objHndl obj)
-{
+void UiIntgameTurnbased::RenderPositioningBlueCircle(LocAndOffsets loc, objHndl obj) {
 	addresses.RenderPositioningBlueCircle(loc, obj);
 }
 
-void UiIntgameTurnbased::AooInterceptArrowDraw(LocAndOffsets* perfLoc, LocAndOffsets* targetLoc)
-{
+void UiIntgameTurnbased::AooInterceptArrowDraw(LocAndOffsets* perfLoc, LocAndOffsets* targetLoc) {
 	addresses.AooInterceptArrowDraw(perfLoc, targetLoc);
 }
 
-void UiIntegameTurnbasedRepl::HourglassUpdate(int a3, int a4, int flags)
-{
-	int v3 = flags; int v4 = a3;
-	int v33 = 0; int pathPreviewState = 0;
-	float greenMoveLength = 0.0; float totalMoveLength = 0.0;
-	ActnSeq * actSeq = *actSeqSys.actSeqCur;
-	TurnBasedStatus * tbStat = nullptr;
+void UiIntegameTurnbasedRepl::HourglassUpdate(int a3, int a4, int flags) {
+	int v3 = flags;
+	int v33 = 0;
+	float greenMoveLength = 0.0;
+	float totalMoveLength = 0.0;
+	ActnSeq* actSeq = *actSeqSys.actSeqCur;
+	TurnBasedStatus* tbStat = nullptr;
 	int hourglassState = -1;
 	float moveSpeed = 0.0;
 	D20ActionType d20aType = d20Sys.globD20Action->d20ActType;
-	TurnBasedStatus tbStat1 ;
+	TurnBasedStatus tbStat1;
 
 
-	if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].flags & D20ADF::D20ADF_DrawPathByDefault)
-	{
+	if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].flags & D20ADF::D20ADF_DrawPathByDefault) {
 		v3 = 1;
-		v4 = 1; 
 		a3 = 1;
 		a4 = 1;
-	} else
-	{
+	} else {
 		v3 = flags;
-		v4 = a3;
 	}
 	*addresses.cursorState = 0;
-	if (addresses.UiActiveRadialMenuHasActiveNode())
-	{
+	if (addresses.UiActiveRadialMenuHasActiveNode()) {
 		*addresses.cursorState = 0;
 		addresses.CursorRenderUpdate();
 		return;
@@ -444,10 +398,9 @@ void UiIntegameTurnbasedRepl::HourglassUpdate(int a3, int a4, int flags)
 	if (!combatSys.isCombatActive())
 		addresses.CursorRenderUpdate();
 
-	if (v3 || v4)
-	{
+	if (v3 || a3) {
 		v33 = 1;
-		if (v4 && a4)
+		if (a3 && a4)
 			v33 = 5;
 	}
 	*addresses.aooShaderLocationsNum = 0;
@@ -458,19 +411,17 @@ void UiIntegameTurnbasedRepl::HourglassUpdate(int a3, int a4, int flags)
 	if (!actSeq)
 		return;
 	objHndl actor = tbSys.turnBasedGetCurrentActor();
-	if (actSeqSys.isPerforming(actor))
-	{
+
+	int pathPreviewState;
+	if (actSeqSys.isPerforming(actor)) {
 		pathPreviewState = 3;
-	} else if (v4)
-	{
+	} else if (a3) {
 		pathPreviewState = (a4 == 0) + 1;
-	} else
-	{
+	} else {
 		pathPreviewState = 0;
 	}
 
-	if (combatSys.isCombatActive())
-	{
+	if (combatSys.isCombatActive()) {
 		if (actSeq)
 			tbStat = &actSeq->tbStatus;
 		hourglassState = tbStat->hourglassState;
@@ -492,48 +443,35 @@ void UiIntegameTurnbasedRepl::HourglassUpdate(int a3, int a4, int flags)
 			if (hourglassState == -1 || actSeqSys.turnBasedStatusTransitionMatrix[hourglassState][1] == -1) // no move action remaining
 			{
 				totalMoveLength = -1.0;
-				if (!(tbStat->tbsFlags & 3))
-				{
+				if (!(tbStat->tbsFlags & 3)) {
 					greenMoveLength = 5.0; // five foot step remaining
-				} else
-				{
+				} else {
 					greenMoveLength = -1.0;
 				}
-			} else
-			{
+			} else {
 				greenMoveLength = dispatch.Dispatch29hGetMoveSpeed(actSeq->performer, 0);
-				if (tbStat->tbsFlags & 3)
-				{
+				if (tbStat->tbsFlags & 3) {
 					greenMoveLength = -1.0;
-				}
-				else if (actSeqSys.GetHourglassTransition(tbStat->hourglassState, 4) == -1)
-				{
+				} else if (actSeqSys.GetHourglassTransition(tbStat->hourglassState, 4) == -1) {
 					totalMoveLength = greenMoveLength;
 					greenMoveLength = -1.0;
-				}
-				else
-				{
+				} else {
 					moveSpeed = greenMoveLength + greenMoveLength;
 					totalMoveLength = moveSpeed;
 				}
-					
+
 			}
 		}
 
 		d20aType = d20Sys.globD20Action->d20ActType;
-		if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].flags & D20ADF::D20ADF_DrawPathByDefault)
-		{
+		if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].flags & D20ADF::D20ADF_DrawPathByDefault) {
 			tbStat1.tbsFlags = tbStat->tbsFlags;
 			tbStat1.surplusMoveDistance = tbStat->surplusMoveDistance;
-			if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].turnBasedStatusCheck)
-			{
-				if (d20Sys.d20Defs[d20aType].turnBasedStatusCheck(d20Sys.globD20Action, &tbStat1))
-				{ // error in the check
+			if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].turnBasedStatusCheck) {
+				if (d20Sys.d20Defs[d20aType].turnBasedStatusCheck(d20Sys.globD20Action, &tbStat1)) { // error in the check
 					totalMoveLength = 0.0;
 					greenMoveLength = 0.0;
-				}
-				else
-				{
+				} else {
 					totalMoveLength = tbStat1.surplusMoveDistance;
 					greenMoveLength = tbStat1.surplusMoveDistance;
 				}
@@ -545,19 +483,16 @@ void UiIntegameTurnbasedRepl::HourglassUpdate(int a3, int a4, int flags)
 			}
 
 		}
-		if ((d20aType == D20A_RUN || d20aType == D20A_CHARGE) && actSeq->d20ActArrayNum > 0)
-		{
-			for (int i = 0; i < actSeq->d20ActArrayNum; i++)
-			{
-				PathQueryResult * pathQueryResult = actSeq->d20ActArray[i].path;
-				if (actSeq->d20ActArray[i].d20ActType == D20A_RUN && pathQueryResult && pathQueryResult->nodeCount != 1)
-				{
+		if ((d20aType == D20A_RUN || d20aType == D20A_CHARGE) && actSeq->d20ActArrayNum > 0) {
+			for (int i = 0; i < actSeq->d20ActArrayNum; i++) {
+				PathQueryResult* pathQueryResult = actSeq->d20ActArray[i].path;
+				if (actSeq->d20ActArray[i].d20ActType == D20A_RUN && pathQueryResult && pathQueryResult->nodeCount != 1) {
 					greenMoveLength = 0.0;
 					totalMoveLength = 0.0;
 				}
 			}
 		}
-		v4 = a3;
+		a3 = a3;
 
 	}
 
@@ -567,31 +502,25 @@ void UiIntegameTurnbasedRepl::HourglassUpdate(int a3, int a4, int flags)
 	*addresses.uiIntgamePathdrawCumulativeDist = 0;
 	*addresses.uiIntgamePathpreviewFromToDist = 0;
 
-	if (combatSys.isCombatActive() && (!v4 || a4))
-	{
-		if (!actSeqSys.isPerforming(actor))
-		{
+	if (combatSys.isCombatActive() && (!a3 || a4)) {
+		if (!actSeqSys.isPerforming(actor)) {
 			int lastActionWithPath = 0;
 			if (!objects.IsPlayerControlled(actor))
 				return;
-			for (int i = 0; i < actSeq->d20ActArrayNum; i++)
-			{
+			for (int i = 0; i < actSeq->d20ActArrayNum; i++) {
 				if (actSeq->d20ActArray[i].path)
 					lastActionWithPath = i;
 			}
-			for (int i = 0; i < actSeq->d20ActArrayNum; i++)
-			{
+			for (int i = 0; i < actSeq->d20ActArrayNum; i++) {
 				if (i == lastActionWithPath)
 					v33 |= 2;
-				if (actSeq->d20ActArray[i].d20ActType != D20A_NONE)
-				{
+				if (actSeq->d20ActArray[i].d20ActType != D20A_NONE) {
 					if (d20Sys.d20Defs[actSeq->d20ActArray[i].d20ActType].pickerFuncMaybe)
 						d20Sys.d20Defs[actSeq->d20ActArray[i].d20ActType].pickerFuncMaybe(&actSeq->d20ActArray[i], v33);
 				}
 			}
 		}
-	} else if (v4 && !a4 && (!actSeq || !objects.IsPlayerControlled(actor) || actSeq->targetObj))
-	{
+	} else if (a3 && !a4 && (!actSeq || !objects.IsPlayerControlled(actor) || actSeq->targetObj)) {
 		return;
 	}
 
@@ -602,8 +531,9 @@ void UiIntegameTurnbasedRepl::HourglassUpdate(int a3, int a4, int flags)
 		);
 	}
 
-	if (*addresses.cursorState == 3 
+	if (*addresses.cursorState == 3
 		&& addresses.GetHourglassDepletionState() == 1)
 		*addresses.cursorState = 4;
 	addresses.CursorRenderUpdate();
 }
+
