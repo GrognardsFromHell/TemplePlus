@@ -1187,13 +1187,14 @@ void MapSystem::SaveMapMobiles() {
 
 	// This file will contain the dynamic objects that have been created on this map
 	auto dynFilename = fmt::format("{}\\mobile.mdy", mSectorSaveDir);
-	auto dynFh = vfs->Open(dynFilename.c_str(), "wb");
+	auto dynFh = vfs->Open(dynFilename.c_str(), "ab");
 	if (!dynFh) {
 		vfs->Close(destrFh);
 		vfs->Close(diffFh);
 		throw TempleException("Unable to open {} for writing.", dynFilename);
 	}
 	
+	auto prevDestroyedObjs = vfs->Length(destrFh) / sizeof(ObjectId);
 	auto destroyedObjs = 0;
 	auto dynamicObjs = 0;
 	auto diffObjs = 0;
@@ -1240,10 +1241,10 @@ void MapSystem::SaveMapMobiles() {
 	vfs->Close(destrFh);
 	vfs->Close(dynFh);
 
-	logger->info("Saved {} dynamic, {} destroyed, and {} mobiles with differences in {}",
-		dynamicObjs, destroyedObjs, diffObjs, mSectorSaveDir);
+	logger->info("Saved {} dynamic, {} destroyed ({} previously), and {} mobiles with differences in {}",
+		dynamicObjs, destroyedObjs, prevDestroyedObjs, diffObjs, mSectorSaveDir);
 
-	if (!destroyedObjs) {
+	if (!destroyedObjs && !prevDestroyedObjs) {
 		tio_remove(destrFilename.c_str());
 	}
 	if (!dynamicObjs) {
