@@ -123,7 +123,7 @@ bool GameObjectBody::GetValidObjHndl(obj_f field, objHndl * handleOut)
 	}
 
 	// If it's not a handle id, that is probably an error
-	if ((*storageLoc)->IsHandle()) {
+	if (!(*storageLoc)->IsHandle()) {
 		*handleOut = objHndl();
 		return false;
 	}
