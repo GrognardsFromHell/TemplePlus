@@ -490,6 +490,10 @@ void LegacyD20System::D20ActnSetSpellData(D20SpellData* d20SpellData, uint32_t s
 	d20SpellData->spellSlotLevel = spellSlotLevel;
 }
 
+void LegacyD20System::ExtractSpellInfo(D20SpellData* d20spellData, uint32_t* spellEnum, uint32_t* spellEnumOrg, uint32_t* spellClassCode, uint32_t* spellSlotLevel, uint32_t* itemSpellData, MetaMagicData* metaMagicData)
+{
+	D20SpellDataExtractInfo(d20spellData, spellEnum, spellEnumOrg, spellClassCode, spellSlotLevel, itemSpellData, (uint32_t*)metaMagicData);
+}
 
 
 bool LegacyD20System::UsingSecondaryWeapon(D20Actn* d20a)
