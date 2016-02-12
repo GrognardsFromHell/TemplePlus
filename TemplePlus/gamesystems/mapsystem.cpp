@@ -1178,7 +1178,7 @@ void MapSystem::SaveMapMobiles() {
 
 	// This file will contain the differences from the mobile object stored in the sector's data files
 	auto diffFilename = fmt::format("{}\\mobile.md", mSectorSaveDir);
-	auto diffFh = vfs->Open(diffFilename.c_str(), "ab");
+	auto diffFh = vfs->Open(diffFilename.c_str(), "wb");
 	if (!diffFh) {
 		throw TempleException("Unable to open {} for writing.", diffFilename);
 	}
