@@ -2346,3 +2346,23 @@ enum class SavingThrowType : uint32_t {
 	Reflex,
 	Will
 };
+
+enum SpellFlags : uint32_t
+{
+	SF_1 = 1,
+	SF_2 = 2,
+	SF_4  = 4,
+	SF_8 = 8,
+	SF_10 = 0x10,
+	SF_20 = 0x20,
+	SF_40 = 0x40,
+	SF_80 = 0x80 ,
+	SF_100 = 0x100,
+	SF_200 = 0x200,
+	SF_400 = 0x400,
+	SF_800 = 0x800,
+	SF_1000 = 0x1000,
+	SF_2000 = 0x2000,
+	SF_4000 = 0x4000,
+	SF_8000 = 0x8000
+};
