@@ -1179,7 +1179,7 @@ void MapSystem::SaveMapMobiles() {
 
 	// This file will contain the object ids of mobile sector objects that have been destroyed
 	auto destrFilename = fmt::format("{}\\mobile.des", mSectorSaveDir);
-	auto destrFh = vfs->Open(destrFilename.c_str(), "wb");
+	auto destrFh = vfs->Open(destrFilename.c_str(), "ab");
 	if (!destrFh) {
 		vfs->Close(diffFh);
 		throw TempleException("Unable to open {} for writing.", destrFilename);
@@ -1187,7 +1187,7 @@ void MapSystem::SaveMapMobiles() {
 
 	// This file will contain the dynamic objects that have been created on this map
 	auto dynFilename = fmt::format("{}\\mobile.mdy", mSectorSaveDir);
-	auto dynFh = vfs->Open(dynFilename.c_str(), "ab");
+	auto dynFh = vfs->Open(dynFilename.c_str(), "wb");
 	if (!dynFh) {
 		vfs->Close(destrFh);
 		vfs->Close(diffFh);
