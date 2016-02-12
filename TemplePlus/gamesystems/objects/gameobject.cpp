@@ -999,6 +999,8 @@ void GameObjectBody::LoadDiffsFromFile(objHndl handle, TioFile* file) {
 
 		// Read the object field value
 		auto storageLoc = GetMutableStorageLocation<void*>(field);
+		FreeStorage(fieldDef.type, *storageLoc);
+		*storageLoc = nullptr;
 		objSystem->ReadFieldValue(field, storageLoc, file);
 		return true;
 	});
