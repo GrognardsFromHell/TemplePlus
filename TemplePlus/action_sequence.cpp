@@ -72,7 +72,7 @@ static struct ActnSeqAddresses : temple::AddressTable {
 }addresses;
 
 
-class ActnSeqReplacements : public TempleFix
+static class ActnSeqReplacements : public TempleFix
 {
 public:
 	const char* name() override {
@@ -139,6 +139,33 @@ public:
 		orgTurnStart = replaceFunction(0x10099430, TurnStart);
 		replaceFunction(0x100999E0, GreybarReset);
 		replaceFunction(0x10099CF0, PerformOnAnimComplete);
+
+		replaceFunction<ActionErrorCode(D20Actn*, ActnSeq*, TurnBasedStatus*)>(0x100958A0,[](D20Actn* d20a, ActnSeq* seq, TurnBasedStatus* tbStat)->ActionErrorCode
+		{
+			if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Prone))
+			{
+				D20Actn d20aGetup = *d20a;
+				d20aGetup.d20ActType = D20A_STAND_UP;
+				seq->d20ActArray[ seq->d20ActArrayNum++] = d20aGetup;
+			}
+
+			uint32_t spellEnum;
+			d20Sys.ExtractSpellInfo(&d20a->d20SpellData, &spellEnum, nullptr, nullptr, nullptr, nullptr ,nullptr);
+			SpellEntry spellEntry;
+			auto srcResult = spellSys.spellRegistryCopy(spellEnum, &spellEntry);
+			if (srcResult
+				&& spellEntry.spellRangeType == SpellRangeType::SRT_Touch
+				&& static_cast<UiPickerType>(spellEntry.modeTargetSemiBitmask) == UiPickerType::Single
+				&& !(seq->ignoreLos & 1)
+			)
+			{
+				int dummy = 1;
+				return (ActionErrorCode)actSeqSys.AddToSeqWithTarget(d20a, seq, tbStat);
+			}
+			seq->d20ActArray[seq->d20ActArrayNum++] = *d20a;
+			return ActionErrorCode::AEC_OK;
+			
+		});
 		
 	}
 } actSeqReplacements;
@@ -255,6 +282,7 @@ void ActionSequenceSystem::curSeqReset(objHndl obj)
 	curSeq->performer = obj;
 	curSeq->targetObj = 0;
 	location->getLocAndOff(obj, &curSeq->performerLoc);
+	curSeq->ignoreLos = 0;
 	*seqFlag_10B3D5C0 = 0;
 }
 
@@ -968,10 +996,14 @@ uint32_t ActionSequenceSystem::TurnBasedStatusInit(objHndl objHnd)
 	return 0;
 }
 
-void ActionSequenceSystem::ActSeqCurSetSpellPacket(SpellPacketBody* spellPktBody, int flag)
+void ActionSequenceSystem::ActSeqCurSetSpellPacket(SpellPacketBody* spellPktBody, int ignoreLos)
 {
 	(*actSeqCur)->spellPktBody = *spellPktBody;
-	(*actSeqCur)->aiSpellFlagSthg_maybe = flag;
+	if (ignoreLos)
+	{
+		logger->info("Set CurSeq ignoreLos to {}", ignoreLos);
+	}
+	(*actSeqCur)->ignoreLos = ignoreLos;
 }
 
 int ActionSequenceSystem::GetNewHourglassState(objHndl performer, D20ActionType d20ActionType, int d20Data1, int radMenuActualArg, D20SpellData* d20SpellData)

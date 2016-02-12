@@ -304,6 +304,18 @@ static PyObject* PyObjHandle_ReactionAdjust(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_RefreshTurn(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+
+	auto curSeq = *actSeqSys.actSeqCur;
+	curSeq->tbStatus.hourglassState = 4;
+	curSeq->tbStatus.surplusMoveDistance = 0;
+	curSeq->tbStatus.tbsFlags = 0;
+
+	Py_RETURN_NONE;
+}
+
+
 static PyObject* PyObjHandle_ItemFind(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	int nameId;
@@ -2036,6 +2048,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "reaction_get", PyObjHandle_ReactionGet, METH_VARARGS, NULL },
 	{ "reaction_set", PyObjHandle_ReactionSet, METH_VARARGS, NULL },
 	{ "reaction_adj", PyObjHandle_ReactionAdjust, METH_VARARGS, NULL },
+	{ "refresh_turn", PyObjHandle_RefreshTurn, METH_VARARGS, NULL },
 
 	{"skill_level_get", PyObjHandle_SkillLevelGet, METH_VARARGS, NULL},
 	

@@ -270,7 +270,7 @@ struct ActnSeq
 	objHndl targetObj;
 	SpellPacketBody spellPktBody;
 	D20Actn * d20Action;
-	uint32_t aiSpellFlagSthg_maybe;
+	uint32_t ignoreLos;
 };
 #pragma pack(pop)
 
