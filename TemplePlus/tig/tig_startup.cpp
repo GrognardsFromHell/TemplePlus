@@ -158,6 +158,20 @@ void TigInitializer::LoadDataFiles() {
 	tio_mkdir("tpdata");
 	tio_path_add("tpdata");
 
+	logger->info("Registering new pathfinding data tpdata\\clearances.dat");
+	int result=  tio_path_add("tpdata\\clearances.dat");
+	if (result != 0) {
+		logger->trace("Unable to add archive tpdata\\clearances.dat");
+	}
+	if (config.usingCo8)
+	{
+		logger->info("Registering Co8 file fixes tpdata\\co8fixes.dat");
+		result = tio_path_add("tpdata\\co8fixes.dat");
+		if (result != 0)
+			logger->trace("Unable to add archive tpdata\\co8fixes.dat");
+	}
+
+
 	for (auto& entry : config.additionalTioPaths) {
 		logger->info("Adding additional TIO path {}", entry);
 		tio_path_add(entry.c_str());
