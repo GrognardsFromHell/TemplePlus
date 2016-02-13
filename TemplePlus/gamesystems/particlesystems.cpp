@@ -131,7 +131,7 @@ ParticleSysSystem::Handle ParticleSysSystem::CreateAtObj(const std::string &name
 	auto& spec = it->second;
 
 	auto loc = objects.GetLocationFull(obj);
-	auto absLoc = loc.ToCenterOfTileAbs3D(objects.GetOffsetZ(obj));
+	auto absLoc = loc.ToInches3D(objects.GetOffsetZ(obj));
 
 	auto sys(std::make_shared<PartSys>(spec));
 	sys->SetWorldPos(mExternal.get(), absLoc.x, absLoc.y, absLoc.z);

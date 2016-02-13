@@ -305,7 +305,6 @@
       <Filter>Map System</Filter>
     </ClCompile>
     <ClCompile Include="gametime.cpp" />
-    <ClCompile Include="gamesystems\maps\sectors.cpp" />
     <ClCompile Include="gamesystems\froggrapplecontroller.cpp" />
     <ClCompile Include="temple_enums.cpp" />
     <ClCompile Include="diag\proto_cols.cpp" />
@@ -615,7 +614,6 @@
     </ClInclude>
     <ClInclude Include="gametime.h" />
     <ClInclude Include="gamesystems\loadingscreen.h" />
-    <ClInclude Include="gamesystems\maps\sectors.h" />
     <ClInclude Include="gamesystems\froggrapplecontroller.h" />
     <ClInclude Include="gamesystems\staticmeshes.h" />
     <ClInclude Include="gamesystems\mapsystem.h" />

@@ -4,6 +4,7 @@
 #include "obj.h"
 #include "gamesystems.h"
 #include "mapsystem.h"
+#include "map/sector.h"
 
 enum esd_load_result : uint32_t {
 	PARTIALLY_EXPLORED = 0,

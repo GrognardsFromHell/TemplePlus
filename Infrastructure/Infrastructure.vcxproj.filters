@@ -258,6 +258,9 @@
     <ClInclude Include="include\graphics\dynamictexture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\infrastructure\location.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="version.cpp">
@@ -363,6 +366,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\dynamictexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\location.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

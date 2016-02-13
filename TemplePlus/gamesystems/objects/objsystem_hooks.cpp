@@ -421,6 +421,12 @@ public:
 			GetObj(obj)->ResetField(field);
 		});
 
+		// obj_write_diffs_to_file
+		replaceFunction<BOOL(TioFile*, objHndl)>(0x1009fc10, [](TioFile *fh, objHndl handle) {
+			GetObj(handle)->WriteDiffsToFile(fh);
+			return TRUE;
+		});
+
 	}
 
 private:

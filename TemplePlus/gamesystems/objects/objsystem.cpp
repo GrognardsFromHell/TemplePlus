@@ -6,7 +6,7 @@
 #include "../mapsystem.h"
 #include "../legacymapsystems.h"
 #include "../legacysystems.h"
-#include "../maps/sectors.h"
+#include "../map/sector.h"
 #include "../../objlist.h"
 #include "../../critter.h"
 #include "objfields.h"
@@ -453,7 +453,7 @@ objHndl ObjSystem::LoadFromBuffer(void* bufferPtr) {
 
 	uint16_t propCount = buffer.Read<uint16_t>();
 
-	for (auto i = 0; i < propLen; ++i) {
+	for (size_t i = 0; i < propLen; ++i) {
 		obj->propCollBitmap[i] = buffer.Read<uint32_t>();
 	}
 

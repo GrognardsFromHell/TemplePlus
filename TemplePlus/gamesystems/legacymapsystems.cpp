@@ -5,6 +5,8 @@
 
 #include "legacymapsystems.h"
 
+#include "gamesystems/map/sector.h"
+
 //*****************************************************************************
 //* Scroll
 //*****************************************************************************
@@ -123,23 +125,29 @@ void LightSystem::SetMapId(int mapId)
 //* Tile
 //*****************************************************************************
 
-TileSystem::TileSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x100ab590);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system Tile");
-	}
+TileSystem::TileSystem() {
+	// Was previously 0x100ab590 (see class comment)
 }
 TileSystem::~TileSystem() {
-	auto shutdown = temple::GetPointer<void()>(0x100ac8a0);
-	shutdown();
-}
-void TileSystem::ResetBuffers(const RebuildBufferInfo& rebuildInfo) {
-	auto resetBuffers = temple::GetPointer<void(const RebuildBufferInfo*)>(0x100ab7c0);
-	resetBuffers(&rebuildInfo);
+	// Was previously 0x100ac8a0 (see class comment)
 }
 const std::string &TileSystem::GetName() const {
 	static std::string name("Tile");
 	return name;
+}
+
+SectorTile TileSystem::GetTile(locXY location) {
+	static auto map_tile_get_tile = temple::GetPointer<SectorTile *(int x, int y)>(0x100ab810);
+	auto tile = map_tile_get_tile(location.locx, location.locy);
+	if (tile) {
+		return *tile;
+	}
+	return { TileMaterial::Grass, (TileFlags)0 };
+}
+
+TileMaterial TileSystem::GetMaterial(locXY location) {
+	static auto map_tile_get_footstep_sound = temple::GetPointer<int(locXY loc)>(0x100ab870);
+	return (TileMaterial) map_tile_get_footstep_sound(location);
 }
 
 //*****************************************************************************
@@ -236,62 +244,6 @@ void ObjectSystem::CloseMap() {
 const std::string &ObjectSystem::GetName() const {
 	static std::string name("Object");
 	return name;
-}
-
-//*****************************************************************************
-//* MapSector
-//*****************************************************************************
-
-MapSectorSystem::MapSectorSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x10084930);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system MapSector");
-	}
-}
-MapSectorSystem::~MapSectorSystem() {
-	auto shutdown = temple::GetPointer<void()>(0x10084130);
-	shutdown();
-}
-void MapSectorSystem::ResetBuffers(const RebuildBufferInfo& rebuildInfo) {
-	auto resetBuffers = temple::GetPointer<void(const RebuildBufferInfo*)>(0x10081560);
-	resetBuffers(&rebuildInfo);
-}
-void MapSectorSystem::Reset() {
-	auto reset = temple::GetPointer<void()>(0x10084120);
-	reset();
-}
-void MapSectorSystem::CloseMap() {
-	auto mapClose = temple::GetPointer<void()>(0x100842e0);
-	mapClose();
-}
-const std::string &MapSectorSystem::GetName() const {
-	static std::string name("MapSector");
-	return name;
-}
-
-void MapSectorSystem::Clear()
-{
-	static auto clear = temple::GetPointer<void()>(0x10082B90);
-	clear();
-}
-
-void MapSectorSystem::SetDirectories(const std::string & dataDir, const std::string & saveDir)
-{
-	static auto set_sector_data_dir = temple::GetPointer<void(const char *dataDir, const char *saveDir)>(0x10082670);
-	set_sector_data_dir(dataDir.c_str(), saveDir.c_str());
-}
-
-bool MapSectorSystem::IsSectorLoaded(SectorLoc location)
-{
-	static auto sector_is_loaded = temple::GetPointer<BOOL(SectorLoc)>(0x100826b0);
-	return sector_is_loaded(location) == TRUE;
-}
-
-void MapSectorSystem::RemoveSectorLight(objHndl handle)
-{
-	// Not clear if this has *any* effect
-	static auto map_sector_reset_sectorlight = temple::GetPointer<void(objHndl)>(0x100a8590);
-	map_sector_reset_sectorlight(handle);
 }
 
 //*****************************************************************************

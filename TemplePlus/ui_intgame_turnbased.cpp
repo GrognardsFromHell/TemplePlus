@@ -245,7 +245,6 @@ void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 
 int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 	auto curSeq = *actSeqSys.actSeqCur;
-	int result = 0;
 	if (msg->type == TigMsgType::MOUSE) {
 		*addresses.screenXfromMouseEvent = ((TigMsgMouse*)msg)->x;
 		*addresses.screenYfromMouseEvent = ((TigMsgMouse*)msg)->y;
@@ -256,13 +255,12 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 		*addresses.uiIntgameAcquireByRaycastOn = 0;
 		*addresses.uiIntgameSelectionConfirmed = 0;
 	}
-	result = orgUiIntgameMsgHandler(widId, msg);
+	auto result = orgUiIntgameMsgHandler(widId, msg);
 
 
 	if (*actSeqSys.actSeqCur != curSeq) {
 		logger->info("Sequence switch from Ui Intgame Msg Handler to {}", (void*)*actSeqSys.actSeqCur);
-		int dummy = 1;
-	};
+	}
 	return result;
 }
 
@@ -332,7 +330,7 @@ void UiIntegameTurnbasedRepl::RenderAooIndicator(const LocAndOffsets& location, 
 	auto texWidth = (float) texture->GetContentRect().width;
 	auto texHeight = (float) texture->GetContentRect().height;
 
-	auto screenPos = tig->GetRenderingDevice().GetCamera().WorldToScreenUi(location.ToCenterOfTileAbs3D());
+	auto screenPos = tig->GetRenderingDevice().GetCamera().WorldToScreenUi(location.ToInches3D());
 	auto x = (float)(screenPos.x - texWidth / 2);
 	auto y = (float)(screenPos.y - texHeight / 2);
 
@@ -485,15 +483,13 @@ void UiIntegameTurnbasedRepl::HourglassUpdate(int a3, int a4, int flags) {
 		}
 		if ((d20aType == D20A_RUN || d20aType == D20A_CHARGE) && actSeq->d20ActArrayNum > 0) {
 			for (int i = 0; i < actSeq->d20ActArrayNum; i++) {
-				PathQueryResult* pathQueryResult = actSeq->d20ActArray[i].path;
+				auto pathQueryResult = actSeq->d20ActArray[i].path;
 				if (actSeq->d20ActArray[i].d20ActType == D20A_RUN && pathQueryResult && pathQueryResult->nodeCount != 1) {
 					greenMoveLength = 0.0;
 					totalMoveLength = 0.0;
 				}
 			}
 		}
-		a3 = a3;
-
 	}
 
 	*addresses.uiIntgamePathpreviewState = pathPreviewState;

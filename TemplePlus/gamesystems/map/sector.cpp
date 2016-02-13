@@ -8,7 +8,12 @@
 
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/mapsystem.h"
+#include "gamesystems/timeevents.h"
 
+static_assert(temple::validate_size<SectorTilePacket, 66052>::value, "SectorTilePacket has incorrect size");
+static_assert(temple::validate_size<TileListEntry, 112>::value, "TileListEntry has incorrect size");
+static_assert(temple::validate_size<SectorObjects, 16392>::value, "SectorObjects has incorrect size");
+static_assert(temple::validate_size<Sector, 0x14260>::value, "Sector has incorrect size");
 
 struct LegacySectorAddresses : temple::AddressTable
 {
@@ -378,7 +383,7 @@ BOOL LegacySectorSystem::IsPointInterceptedBySegment(float absVx, float absVy, f
 
 TileFlags LegacySectorSystem::GetTileFlags(LocAndOffsets loc)
 {
-	TileFlags flags = TileFlags::TILEFLAG_NONE;
+	auto flags = TileFlags::TILEFLAG_NONE;
 	SectorLoc secLoc(loc.location);
 	Sector * sect;
 	int lockStatus = SectorLock(secLoc, &sect);
@@ -394,19 +399,117 @@ TileFlags LegacySectorSystem::GetTileFlags(LocAndOffsets loc)
 	int tileIdx = deltaX + SECTOR_SIDE_SIZE * deltaY;
 
 	flags = sect->tilePkt.tiles[tileIdx].flags;
-	int flags3 = sect->tilePkt.tiles[tileIdx].flags3;
 
 	SectorUnlock(secLoc);
 	return flags;
 }
 
-bool LegacySectorSystem::GetTileFlagsArea(TileRect * tileRect, Subtile * out, int * count)
-{
-	TileListEntry tle[25];
-	assert(abs(tileRect->y2 - tileRect->y1) < 200);
-	assert(abs(tileRect->x2 - tileRect->x1) < 200);
-	BuildTileListFromRect(tileRect, tle);
-
-
-	return 1;
+static int64_t MakeSectorLoc(int x, int y) {
+	return ((int64_t)(y & 0x3FFFFFF) << 26) | (x & 0x3FFFFFF);
 }
+
+LockedMapSector::LockedMapSector(int secX, int secY) {
+
+	if (!addresses.SectorLock({ secX, secY }, &mSector)) {
+		logger->warn("Unable to lock sector {}, {}", secX, secY);
+		mSector = nullptr;
+	}
+
+}
+
+LockedMapSector::LockedMapSector(SectorLoc loc) : LockedMapSector((int) loc.x(), (int) loc.y())
+{
+}
+
+LockedMapSector::~LockedMapSector() {
+
+	if (mSector) {
+		addresses.SectorUnlock(mSector->secLoc);
+	}
+
+}
+
+SectorObjectsNode* LockedMapSector::GetObjectsAt(int x, int y) const {
+	Expects(x >= 0 && x < 64);
+	Expects(y >= 0 && y < 64);
+
+	return mSector->objects.tiles[x][y];
+}
+
+SectorLightIterator LockedMapSector::GetLights() {
+	return SectorLightIterator(mSector->lights.listHead);
+}
+
+void LockedMapSector::AddObject(objHndl handle)
+{
+	static auto map_sector_objects_add = temple::GetPointer<BOOL(SectorObjects*objects, objHndl ObjHnd)>(0x100c1ad0);
+	map_sector_objects_add(&mSector->objects, handle);
+}
+
+
+//*****************************************************************************
+//* MapSector
+//*****************************************************************************
+
+MapSectorSystem::MapSectorSystem(const GameSystemConf &config) {
+	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x10084930);
+	if (!startup(&config)) {
+		throw TempleException("Unable to initialize game system MapSector");
+	}
+}
+MapSectorSystem::~MapSectorSystem() {
+	auto shutdown = temple::GetPointer<void()>(0x10084130);
+	shutdown();
+}
+void MapSectorSystem::ResetBuffers(const RebuildBufferInfo& rebuildInfo) {
+	auto resetBuffers = temple::GetPointer<void(const RebuildBufferInfo*)>(0x10081560);
+	resetBuffers(&rebuildInfo);
+}
+void MapSectorSystem::Reset() {
+	auto reset = temple::GetPointer<void()>(0x10084120);
+	reset();
+}
+void MapSectorSystem::CloseMap() {
+	auto mapClose = temple::GetPointer<void()>(0x100842e0);
+	mapClose();
+}
+const std::string &MapSectorSystem::GetName() const {
+	static std::string name("MapSector");
+	return name;
+}
+
+void MapSectorSystem::Clear()
+{
+	static auto clear = temple::GetPointer<void()>(0x10082B90);
+	clear();
+}
+
+void MapSectorSystem::SetDirectories(const std::string & dataDir, const std::string & saveDir)
+{
+	static auto set_sector_data_dir = temple::GetPointer<void(const char *dataDir, const char *saveDir)>(0x10082670);
+	set_sector_data_dir(dataDir.c_str(), saveDir.c_str());
+}
+
+bool MapSectorSystem::IsSectorLoaded(SectorLoc location)
+{
+	static auto sector_is_loaded = temple::GetPointer<BOOL(SectorLoc)>(0x100826b0);
+	return sector_is_loaded(location) == TRUE;
+}
+
+void MapSectorSystem::RemoveSectorLight(objHndl handle)
+{
+	// Not clear if this has *any* effect
+	static auto map_sector_reset_sectorlight = temple::GetPointer<void(objHndl)>(0x100a8590);
+	map_sector_reset_sectorlight(handle);
+}
+
+
+static class MapSectorHooks : public TempleFix {
+public:
+	const char* name() override {
+		return "map sector hooks";
+	}
+	void apply() override {
+
+	}
+} hooks;

@@ -4,6 +4,12 @@
 #include <infrastructure/exception.h>
 #include <temple/dll.h>
 #include "legacysystems.h"
+#include <util/fixes.h>
+#include "gamesystems.h"
+#include "timeevents.h"
+#include <graphics/device.h>
+#include <graphics/camera.h>
+#include <config/config.h>
 
 
 //*****************************************************************************
@@ -1275,33 +1281,6 @@ const std::string &GameInitSystem::GetName() const {
 }
 
 //*****************************************************************************
-//* Ground
-//*****************************************************************************
-
-GroundSystem::GroundSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x1002c100);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system Ground");
-	}
-}
-GroundSystem::~GroundSystem() {
-	auto shutdown = temple::GetPointer<void()>(0x1002dc40);
-	shutdown();
-}
-void GroundSystem::Reset() {
-	auto reset = temple::GetPointer<void()>(0x1002dbb0);
-	reset();
-}
-void GroundSystem::AdvanceTime(uint32_t time) {
-	auto advanceTime = temple::GetPointer<void(uint32_t)>(0x1002c290);
-	advanceTime(time);
-}
-const std::string &GroundSystem::GetName() const {
-	static std::string name("Ground");
-	return name;
-}
-
-//*****************************************************************************
 //* ObjFade
 //*****************************************************************************
 
@@ -1447,24 +1426,44 @@ const std::string &SecretdoorSystem::GetName() const {
 //* MapFogging
 //*****************************************************************************
 
-MapFoggingSystem::MapFoggingSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x10032020);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system MapFogging");
+MapFoggingSystem::MapFoggingSystem(gfx::RenderingDevice &device) : mDevice(device) {
+
+	mFogCheckData = nullptr;
+	
+	mFoggingEnabled = true;
+	for (size_t i = 0; i < 8; i++) {
+		mFogBuffers[i] = malloc(16 * sFogBufferDim * sFogBufferDim);
+	}
+
+	InitScreenBuffers();
+	
+	mEsdLoaded = 0;
+	memset(&mEsdSectorLocs[0], 0, 32 * sizeof(uint64_t));
+
+	config.AddVanillaSetting("fog checks", "1", [&]() {
+		mFogChecks = config.GetVanillaInt("fog checks");
+	});
+}
+
+MapFoggingSystem::~MapFoggingSystem() {
+	if (mFoggingEnabled) {
+		free(mFogCheckData);
+		for (size_t i = 0; i < 8; ++i) {
+			free(mFogBuffers[i]);
+		}
 	}
 }
-MapFoggingSystem::~MapFoggingSystem() {
-	auto shutdown = temple::GetPointer<void()>(0x1002eb80);
-	shutdown();
-}
 void MapFoggingSystem::ResetBuffers(const RebuildBufferInfo& rebuildInfo) {
-	auto resetBuffers = temple::GetPointer<void(const RebuildBufferInfo*)>(0x10032290);
-	resetBuffers(&rebuildInfo);
+	InitScreenBuffers();
 }
+
 void MapFoggingSystem::Reset() {
-	auto reset = temple::GetPointer<void()>(0x1002ebd0);
-	reset();
+	// Previously: 1002EBD0
+	mEsdLoaded = 0;
+	memset(&mEsdSectorLocs[0], 0, 32 * sizeof(uint64_t));
+	mDoFullUpdate = false;
 }
+
 const std::string &MapFoggingSystem::GetName() const {
 	static std::string name("MapFogging");
 	return name;
@@ -1502,6 +1501,34 @@ void MapFoggingSystem::SaveExploredTileData(int mapId) {
 void MapFoggingSystem::SaveEsd() {
 	static auto map_flush_esd = temple::GetPointer<void()>(0x10030f40);
 	map_flush_esd();
+}
+
+void MapFoggingSystem::InitScreenBuffers() {
+
+	mScreenWidth = mDevice.GetRenderWidth();
+	mScreenHeight = mDevice.GetRenderHeight();
+
+	// Calculate the tile locations in each corner of the screen
+	auto topLeftLoc = mDevice.GetCamera().ScreenToTile(0, 0);
+	auto topRightLoc = mDevice.GetCamera().ScreenToTile(mScreenWidth, 0);
+	auto bottomLeftLoc = mDevice.GetCamera().ScreenToTile(0, mScreenHeight);
+	auto bottomRightLoc = mDevice.GetCamera().ScreenToTile(mScreenWidth, mScreenHeight);
+
+	mFogMinX = topRightLoc.location.locx;
+	mFogMinY = topLeftLoc.location.locy;
+
+	// Whatever the point of this may be ...
+	if (topLeftLoc.off_y < topLeftLoc.off_x || topLeftLoc.off_y < -topLeftLoc.off_x) {
+		mFogMinY--;
+	}
+
+	mSubtilesX = (bottomLeftLoc.location.locx - mFogMinX + 3) * 3;
+	mSubtilesY = (bottomRightLoc.location.locy - mFogMinY + 3) * 3;
+
+	mFogCheckData = (uint8_t*)malloc((size_t)(mSubtilesX * mSubtilesY));
+	memset(mFogCheckData, 0, (size_t)(mSubtilesX * mSubtilesY));
+	
+	mDoFullUpdate = TRUE;
 }
 
 //*****************************************************************************

@@ -4,16 +4,115 @@
 #include "common.h"
 #include <util/fixes.h>
 #include "gamesystems/timeevents.h"
+#include "../gamesystem.h"
 
+struct Sector;
 
+#pragma pack(push, 1)
 
+struct SectorLoc
+{
+	uint64_t raw;
+
+	uint64_t x()
+	{
+		return raw & 0x3ffFFFF;
+	}
+
+	uint64_t y()
+	{
+		return raw >> 26;
+	}
+
+	uint64_t ToField() {
+		return this->raw;
+	}
+
+	operator uint64_t() const {
+		return this->raw;
+	}
+
+	operator int64_t() const {
+		return (int64_t)this->raw;
+	}
+
+	void GetFromLoc(locXY loc)
+	{
+		raw = loc.locx / SECTOR_SIDE_SIZE
+			+ ((loc.locy / SECTOR_SIDE_SIZE) << 26);
+	}
+
+	SectorLoc()
+	{
+		raw = 0;
+	}
+
+	SectorLoc(locXY loc)
+	{
+		raw = loc.locx / SECTOR_SIDE_SIZE
+			+ ((loc.locy / SECTOR_SIDE_SIZE) << 26);
+	}
+
+	SectorLoc(uint64_t sectorLoc) {
+		raw = sectorLoc;
+	}
+
+	SectorLoc(int sectorX, int sectorY) {
+		raw = (sectorX & 0x3ffFFFF) | (sectorY << 26);
+	}
+
+	locXY GetBaseTile()
+	{
+		locXY loc;
+		loc.locx = (int)x() * SECTOR_SIDE_SIZE;
+		loc.locy = (int)y() * SECTOR_SIDE_SIZE;
+		return loc;
+	}
+
+	bool operator ==(SectorLoc secLoc) {
+		return raw == secLoc.raw;
+	}
+
+};
 
 #define TILES_PER_SECTOR SECTOR_SIDE_SIZE*SECTOR_SIDE_SIZE
+struct SectorObjectsNode {
+	objHndl handle;
+	SectorObjectsNode *next;
+};
 
-struct PointAlongSegment;
-struct RaycastPointSearchPacket;
+struct SectorLightPartSys {
+	int hashCode;
+	int handle;
+};
 
-#pragma pack(push,1)
+struct SectorLightNight {
+	int type;
+	uint32_t color;
+	D3DVECTOR direction;
+	float phi;
+	SectorLightPartSys partSys;
+};
+
+struct SectorLight {
+	objHndl obj;
+	int flags; // 0x40 -> light2 is present
+	int type;
+	uint32_t color;
+	int field14;
+	LocAndOffsets position;
+	float offsetZ;
+	D3DVECTOR direction;
+	float range;
+	float phi;
+	SectorLightPartSys partSys;
+	SectorLightNight light2;
+};
+
+struct SectorLightNode {
+	SectorLight *light;
+	SectorLightNode *next;
+};
 
 struct TileListEntry
 {
@@ -32,53 +131,12 @@ struct TileListEntry
 	int xExtents[4]; // the delta X's for the x-axis sector span from the BuildTileList function; is 64 when a whole sector is spanned, otherwise it denotes the internal sector X coord span
 };
 
-struct SectorLightPartSys {
-	int hashCode;
-	int id;
-};
-
-struct SectorLight2 {
-	int field0;
-	int field4;
-	int field8;
-	int fieldc;
-	int field10;
-	int field14;
-	int field18;
-	SectorLightPartSys partSys;
-};
-
-struct SectorLight {
-	objHndl obj;
-	int flags;
-	int fieldc;
-	int field10;
-	int field14;
-	int field18;
-	int field1c;
-	int field20;
-	int field24;
-	float offsetz;
-	int field2c;
-	int field30;
-	int field34;
-	int field38;
-	int field3c;
-	SectorLightPartSys partSys;
-	SectorLight2 light2;
-};
-
-struct SectorLightListEntry {
-	SectorLight* light;
-	SectorLightListEntry* next;
-};
-
 struct SectorLights {
-	SectorLightListEntry* listHead;
+	SectorLightNode* listHead;
 	BOOL enabled;
 };
 
-enum TileFlags : uint64_t
+enum TileFlags : uint32_t
 {
 	TILEFLAG_NONE = 0,
 	TF_1 = 1,
@@ -112,91 +170,71 @@ enum TileFlags : uint64_t
 	TF_10000000 = 0x10000000,
 	TF_20000000 = 0x20000000,
 	TF_40000000 = 0x40000000,
-	TF_80000000   =   0x80000000,
-
-	TF_100000000  =  0x100000000,
-	TF_200000000  =  0x200000000,
-	TF_400000000  =  0x400000000,
-	TF_800000000  =  0x800000000,
-	TF_1000000000 = 0x1000000000,
-	TF_2000000000 = 0x2000000000,
-	TF_4000000000 = 0x4000000000,
-	TF_8000000000  =  0x8000000000,
-	TF_10000000000 = 0x10000000000,
-	TF_20000000000 = 0x20000000000,
-	TF_40000000000 = 0x40000000000,
-	TF_80000000000 = 0x80000000000,
-	TF_100000000000 = 0x100000000000,
-	TF_200000000000 = 0x200000000000,
-	TF_400000000000 = 0x400000000000,
-	TF_800000000000 = 0x800000000000
+	TF_80000000   =   0x80000000
 };
 
-
-struct SectorTile{
-	int maybeFootstepSound;
-	TileFlags flags;
-	int flags3;
+enum class TileMaterial : uint8_t {
+	ReservedBlocked = 0,
+	ReservedFlyOver = 1,
+	Dirt = 2,
+	Grass = 3, // Default
+	Water = 4,
+	DeepWater = 5,
+	Ice = 6,
+	Fire = 7,
+	Wood = 8,
+	Stone = 9,
+	Metal = 10,
+	Marsh = 11
 };
 
-struct SectorTilePacket{
-	SectorTile tiles[TILES_PER_SECTOR];
-	char unk10000[TILES_PER_SECTOR / 8]; // this is probably a 64x64 bitmap, designating some tile state (changed? valid?)
-	int changedFlagMaybe; // probably a worlded thing
-	
-};
-
-const int testSizeofSectorTilePacket = sizeof(SectorTilePacket); // should be 66052 (0x10204)
-#pragma pack(pop)
-
-const int testSizeofTileListEntry = sizeof(TileListEntry); // should be 112 (0x70)
-
-
-struct TileScript
-{
-	int field0;
-	int field4;
-	int field8;
-	int fieldC;
+struct SectorTileScript {
+	int field00;
+	int field04;
+	int field08;
+	int field0c;
 	int field10;
-	TileScript* next;
+	SectorTileScript* next;
 };
 
-struct SectorTileScriptPacket
-{
+struct SectorTileScripts {
 	int field0;
-	TileScript * tilescriptlist;
+	SectorTileScript* listHead;
 };
 
-struct SectorScriptPacket
-{
+struct SectorScript {
 	int field0;
 	int data1;
 	int data2;
 	int data3;
 };
 
-struct SectorSoundListPacket
-{
-	int field0;
-	int field4;
-	int field8;
+struct SectorSoundList {
+	int field00;
+	int field04;
+	int field08;
 };
 
-struct ObjectNode
-{
-	objHndl obj;
-	ObjectNode * next;
-	int fieldc; //pad?
+struct SectorTile {
+	TileMaterial material; // for footsteps
+	uint8_t padding[3];
+	TileFlags flags;
+	uint32_t padding1;
+	uint32_t padding2;
 };
 
-struct SectorObjectsPacket
-{
-	ObjectNode * objNodes[TILES_PER_SECTOR];
-	int field4000;
+struct SectorTilePacket{
+	SectorTile tiles[TILES_PER_SECTOR];
+	uint8_t unk10000[TILES_PER_SECTOR / 8]; // this is probably a 64x64 bitmap, designating some tile state (changed? valid?)
+	int changedFlagMaybe; // probably a worlded thing
+	
+};
+
+struct SectorObjects {
+	SectorObjectsNode* tiles[SECTOR_SIDE_SIZE][SECTOR_SIDE_SIZE];
+	BOOL staticObjsDirty;
 	int objectsRead;
 };
-const int testSizeofSectorObjectsPacket = sizeof(SectorObjectsPacket); // should be 16392 (0x4008)
 
 struct Sector
 {
@@ -206,13 +244,13 @@ struct Sector
 	GameTime timeElapsed;
 	SectorLights lights;
 	SectorTilePacket tilePkt;
-	SectorTileScriptPacket tileScripts;
-	SectorScriptPacket sectorScripts;
+	SectorTileScripts tileScripts;
+	SectorScript sectorScript;
 	int townmapinfo;
 	int aptitudeAdj;
 	int lightScheme;
-	SectorSoundListPacket soundList;
-	SectorObjectsPacket objects;
+	SectorSoundList soundList;
+	SectorObjects objects;
 	int field1425C;
 	/*
 	return an offset for getting a proper index in the TilePacket
@@ -223,6 +261,68 @@ struct Sector
 
 const int testSizeofSector = sizeof(Sector); // should be 82528 (0x14260)
 
+#pragma pack(pop)
+
+class SectorLightIterator {
+public:
+	SectorLightIterator(SectorLightNode *first) : mCurrent(first) {}
+
+	bool HasNext() const {
+		return !!mCurrent;
+	}
+
+	SectorLight& Next() {
+		auto& result = *mCurrent->light;
+		mCurrent = mCurrent->next;
+		return result;
+	}
+
+private:
+	SectorLightNode *mCurrent;
+};
+
+class LockedMapSector {
+public:
+	LockedMapSector(int secX, int secY);
+	LockedMapSector(SectorLoc loc);
+	~LockedMapSector();
+
+	SectorObjectsNode* GetObjectsAt(int x, int y) const;
+
+	LockedMapSector(LockedMapSector&) = delete;
+	LockedMapSector(LockedMapSector&&) = delete;
+	LockedMapSector& operator=(LockedMapSector&) = delete;
+	LockedMapSector& operator=(LockedMapSector&&) = delete;
+
+	SectorLightIterator GetLights();
+
+	void AddObject(objHndl handle);
+private:
+	Sector* mSector = nullptr;
+};
+
+class MapSectorSystem : public GameSystem, public BufferResettingGameSystem, public ResetAwareGameSystem, public MapCloseAwareGameSystem {
+public:
+	static constexpr auto Name = "MapSector";
+	MapSectorSystem(const GameSystemConf &config);
+	~MapSectorSystem();
+	void Reset() override;
+	void ResetBuffers(const RebuildBufferInfo& rebuildInfo) override;
+	void CloseMap() override;
+	const std::string &GetName() const override;
+
+	void Clear();
+	void SetDirectories(const std::string &dataDir, const std::string &saveDir);
+
+	bool IsSectorLoaded(SectorLoc location);
+
+	void RemoveSectorLight(objHndl handle);
+
+
+};
+
+struct PointAlongSegment;
+struct RaycastPointSearchPacket;
 
 struct SectorCacheEntry
 {
@@ -288,8 +388,6 @@ public:
 	static BOOL IsPointInterceptedBySegment(float absVx, float absVy, float radiusAdjAmt, RaycastPointSearchPacket * srchPkt);
 
 	TileFlags GetTileFlags(LocAndOffsets loc);
-
-	bool GetTileFlagsArea(TileRect * tileRect, Subtile *out, int * count);
 
 
 	static BOOL(__cdecl * orgSectorCacheFind)(SectorLoc secLoc, int * secCacheIdx);

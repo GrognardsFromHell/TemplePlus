@@ -61,13 +61,27 @@ public:
 	void SetMapId(int mapId);
 };
 
-class TileSystem : public GameSystem, public BufferResettingGameSystem {
+/**
+ * This subsystem seems to be mainly responsible for maintaining the flags and 
+ * footstep material for sector tiles. In the world editor it was also responsible
+ * for rendering a debug overlay that indicates the flags. For this reason, it
+ * allocates a buffer and registers some shaders. Since neither are used in the game
+ * the init functions are just removed here.
+ */
+struct SectorTile;
+enum class TileMaterial : uint8_t;
+
+class TileSystem : public GameSystem {
 public:
 	static constexpr auto Name = "Tile";
-	TileSystem(const GameSystemConf &config);
+	TileSystem();
 	~TileSystem();
-	void ResetBuffers(const RebuildBufferInfo& rebuildInfo) override;
 	const std::string &GetName() const override;
+
+	SectorTile GetTile(locXY location);
+	TileMaterial GetMaterial(locXY location);
+	
+	// Previously had reset buffers @ 0x100ab7c0 (now unused)
 };
 
 class ONameSystem : public GameSystem, public ModuleAwareGameSystem {
@@ -106,24 +120,6 @@ public:
 	void CloseMap() override;
 	const std::string &GetName() const override;
 
-};
-
-class MapSectorSystem : public GameSystem, public BufferResettingGameSystem, public ResetAwareGameSystem, public MapCloseAwareGameSystem {
-public:
-	static constexpr auto Name = "MapSector";
-	MapSectorSystem(const GameSystemConf &config);
-	~MapSectorSystem();
-	void Reset() override;
-	void ResetBuffers(const RebuildBufferInfo& rebuildInfo) override;
-	void CloseMap() override;
-	const std::string &GetName() const override;
-
-	void Clear();
-	void SetDirectories(const std::string &dataDir, const std::string &saveDir);
-
-	bool IsSectorLoaded(SectorLoc location);
-
-	void RemoveSectorLight(objHndl handle);
 };
 
 class SectorVBSystem : public GameSystem, public ResetAwareGameSystem, public MapCloseAwareGameSystem {

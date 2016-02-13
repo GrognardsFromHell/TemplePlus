@@ -88,21 +88,6 @@ private:
 	static void TakeSaveScreenshots();
 } fix;
 
-/*
-This is a temporary hack that forces alpha testing to be enabled when textured shaders are drawn.
-Usually they rely on it being true, but never actually make sure to set it to true in the render
-states. In reality this is actually an issue with the *other* shader that sets it to false but
-doesn't reset it, but that is harder to fix.
-See GitHub issue #88
-*/
-typedef int (*FngHookedShaderTexturedRender)(int vertexCount, void* pos, void* normals, void* diffuse, void* uv, int primCount, void* indices, void* shaderData);
-FngHookedShaderTexturedRender OrgHookedShaderTexturedRender;
-
-static int HookedShaderTexturedRender(int vertexCount, void* pos, void* normals, void* diffuse, void* uv, int primCount, void* indices, void* shaderData) {
-	renderStates->SetAlphaTestEnable(true);
-	return OrgHookedShaderTexturedRender(vertexCount, pos, normals, diffuse, uv, primCount, indices, shaderData);
-}
-
 void VideoFixes::apply() {
 
 	/*
@@ -115,9 +100,6 @@ void VideoFixes::apply() {
 	videoFuncs.startupFlags = SF_WINDOW;
 
 	MH_CreateHook(videoFuncs.updateProjMatrices, UpdateProjMatrices, reinterpret_cast<LPVOID*>(&videoFuncs.updateProjMatrices));
-
-	// Fixes alpha testing inconsistencies with textured shaders
-	MH_CreateHook(temple::GetPointer(0x101E22B0), HookedShaderTexturedRender, (void**)&OrgHookedShaderTexturedRender);
 
 	// Hook into present frame to do after-frame stuff
 	MH_CreateHook(temple::GetPointer(0x101DCB80), PresentFrame, nullptr);
@@ -139,6 +121,13 @@ void VideoFixes::apply() {
 	MH_CreateHook(temple::GetPointer<0x101E0750>(), GetSystemMemory, nullptr);
 	MH_CreateHook(temple::GetPointer<0x101DBD80>(), TakeScreenshot, nullptr);
 	MH_CreateHook(temple::GetPointer<0x10002830>(), TakeSaveScreenshots, nullptr);
+
+	// tig_buffer_create
+	replaceFunction<int(void *, void **)>(0x101dce50, [](void *createargs, void **bufferout) {
+		__debugbreak();
+		throw TempleException("Unsupported Operation: Create Buffer");
+		return 0;
+	});
 
 	// This was the old render function
 	void(*noopFunction)() = []() {};
@@ -178,6 +167,8 @@ struct TempleTextureTypeTable {
 static temple::GlobalStruct<TempleTextureTypeTable, 0x102A05A8> textureFormatTable;
 
 bool VideoFixes::AllocTextureMemory(Direct3DDevice8Adapter* adapter, int w, int h, int flags, Direct3DTexture8Adapter** textureOut, int* textureTypePtr) {
+	__debugbreak();
+	throw TempleException("Unsupported Operation: Alloc Texture Memory");
 	auto device = adapter->delegate;
 
 	int levels = 1;

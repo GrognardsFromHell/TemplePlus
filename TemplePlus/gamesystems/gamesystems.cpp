@@ -50,15 +50,15 @@ public:
 
 	void CreateResources(RenderingDevice&) override {
 
-		gameSystemInitTable.CreateTownmapFogBuffer();
-		gameSystemInitTable.CreateShadowMapBuffer();
+		/*gameSystemInitTable.CreateTownmapFogBuffer();
+		gameSystemInitTable.CreateShadowMapBuffer();*/
 	}
 
 	void FreeResources(RenderingDevice&) override {
 
 		gameSystemInitTable.GameDisableDrawingForce();
-		gameSystemInitTable.ReleaseTownmapFogBuffer();
-		gameSystemInitTable.ReleaseShadowMapBuffer();
+		/*gameSystemInitTable.ReleaseTownmapFogBuffer();
+		gameSystemInitTable.ReleaseShadowMapBuffer();*/
 
 	}
 
@@ -201,7 +201,6 @@ GameSystems::~GameSystems() {
 	mUiArtManager.reset();
 	mDeity.reset();
 	mObjFade.reset();
-	mGround.reset();
 	mGameInit.reset();
 	mD20LoadSave.reset();
 	mParty.reset();
@@ -323,21 +322,6 @@ void GameSystems::PlayLegalMovies() {
 }
 
 void GameSystems::InitBufferStuff(const GameSystemConf& conf) {
-
-	// TODO: It is VERY dubious that this is actually used anywhere!!!
-	// scratchbuffer is never accessed
-	if (*gameSystemInitTable.scratchBuffer == nullptr) {
-		TigBufferCreateArgs createArgs;
-		createArgs.flagsOrSth = 5;
-		createArgs.width = conf.width;
-		createArgs.height = conf.height;
-		createArgs.field_10 = 0;
-		createArgs.zero4 = 0;
-		createArgs.texturetype = 2;
-		if (textureFuncs.CreateBuffer(&createArgs, gameSystemInitTable.scratchBuffer)) {
-			throw TempleException("Unable to create the scratchbuffer!");
-		}
-	}
 
 	/*auto rect = gameSystemInitTable.scratchBufferRect;
 	rect->y = 0;
@@ -628,7 +612,7 @@ void GameSystems::InitializeSystems(LoadingScreen& loadingScreen) {
 	loadingScreen.SetProgress(20 / 79.0f);
 	mLight = InitializeSystem<LightSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(21 / 79.0f);
-	mTile = InitializeSystem<TileSystem>(loadingScreen, mConfig);
+	mTile = InitializeSystem<TileSystem>(loadingScreen);
 	loadingScreen.SetProgress(22 / 79.0f);
 	mOName = InitializeSystem<ONameSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(23 / 79.0f);
@@ -725,7 +709,7 @@ void GameSystems::InitializeSystems(LoadingScreen& loadingScreen) {
 	loadingScreen.SetProgress(65 / 79.0f);
 	mGameInit = InitializeSystem<GameInitSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(66 / 79.0f);
-	mGround = InitializeSystem<GroundSystem>(loadingScreen, mConfig);
+	// NOTE: The "ground" system has been superseded by the terrain system
 	loadingScreen.SetProgress(67 / 79.0f);
 	mObjFade = InitializeSystem<ObjFadeSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(68 / 79.0f);
@@ -742,7 +726,7 @@ void GameSystems::InitializeSystems(LoadingScreen& loadingScreen) {
 	loadingScreen.SetProgress(73 / 79.0f);
 	mSecretdoor = InitializeSystem<SecretdoorSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(74 / 79.0f);
-	mMapFogging = InitializeSystem<MapFoggingSystem>(loadingScreen, mConfig);
+	mMapFogging = InitializeSystem<MapFoggingSystem>(loadingScreen, tig->GetRenderingDevice());
 	loadingScreen.SetProgress(75 / 79.0f);
 	mRandomEncounter = InitializeSystem<RandomEncounterSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(76 / 79.0f);

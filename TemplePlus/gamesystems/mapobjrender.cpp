@@ -2,7 +2,7 @@
 #include "mapobjrender.h"
 #include <util/fixes.h>
 #include <obj.h>
-#include "gamesystems/maps/sectors.h"
+#include "gamesystems/map/sector.h"
 #include <config/config.h>
 #include <graphics/renderer.h>
 #include <temple/meshes.h>
@@ -205,7 +205,7 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 	
 	if (config.drawObjCylinders) {
 		tig->GetShapeRenderer3d().DrawCylinder(
-			worldPosFull.ToCenterOfTileAbs3D(animParams.offsetZ),
+			worldPosFull.ToInches3D(animParams.offsetZ),
 			radius,
 			renderHeight
 			);
@@ -709,7 +709,7 @@ std::vector<Light3d> MapObjectRenderer::FindLights(LocAndOffsets atLocation, flo
 
 	SectorIterator sectorIterator(tileX1, tileX2, tileY1, tileY2);
 
-	auto atPos = atLocation.ToCenterOfTileAbs();
+	auto atPos = atLocation.ToInches2D();
 
 	while (sectorIterator.HasNext()) {
 		auto& sector = sectorIterator.Next();
@@ -722,7 +722,7 @@ std::vector<Light3d> MapObjectRenderer::FindLights(LocAndOffsets atLocation, flo
 			uint32_t color;
 			D3DVECTOR direction;
 			float range, phi;
-			auto lightPos = light.position.ToCenterOfTileAbs();
+			auto lightPos = light.position.ToInches2D();
 
 			if (light.flags & 0x40) {
 				if (*addresses.isNight) {
@@ -747,7 +747,7 @@ std::vector<Light3d> MapObjectRenderer::FindLights(LocAndOffsets atLocation, flo
 					*/
 					auto& nightPartSys = light.light2.partSys;
 					if (!nightPartSys.handle && nightPartSys.hashCode) {
-						auto centerOfTile = light.position.ToCenterOfTileAbs();
+						auto centerOfTile = light.position.ToInches2D();
 						nightPartSys.handle = addresses.Particles_CreateAtPos(
 							nightPartSys.hashCode,
 							centerOfTile.x,
@@ -838,7 +838,7 @@ std::vector<Light3d> MapObjectRenderer::FindLights(LocAndOffsets atLocation, flo
 bool MapObjectRenderer::IsObjectOnScreen(LocAndOffsets &location, float offsetZ, float radius, float renderHeight)
 {
 
-	auto centerOfTile3d = location.ToCenterOfTileAbs3D();
+	auto centerOfTile3d = location.ToInches3D();
 	auto screenPos = mDevice.GetCamera().WorldToScreenUi(centerOfTile3d);
 
 	// This checks if the object's screen bounding box is off screen
@@ -915,7 +915,7 @@ void MapObjectRenderer::RenderShadowMapShadow(objHndl obj,
 {
 	
 	LocAndOffsets loc{ { animParams.x, animParams.y }, animParams.offsetX, animParams.offsetY };
-	auto worldPos{ loc.ToCenterOfTileAbs3D(animParams.offsetZ) };
+	auto worldPos{ loc.ToInches3D(animParams.offsetZ) };
 
 	auto radius = objects.GetRadius(obj);
 	auto height = objects.GetRenderHeight(obj);
@@ -971,7 +971,7 @@ void MapObjectRenderer::RenderBlobShadow(objHndl handle, gfx::AnimatedModel &mod
 	std::array<gfx::ShapeVertex3d, 4> corners;
 
 	LocAndOffsets loc{ { animParams.x, animParams.y}, animParams.offsetX, animParams.offsetY };
-	auto center = loc.ToCenterOfTileAbs3D(animParams.offsetZ);
+	auto center = loc.ToInches3D(animParams.offsetZ);
 
 	auto radius = objects.GetRadius(handle);
 

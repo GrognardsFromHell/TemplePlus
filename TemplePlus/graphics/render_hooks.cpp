@@ -525,9 +525,7 @@ void RenderHooks::RenderDisc3d(LocAndOffsets& loc, int shaderId, float rotation,
 		return;
 	}
 		
-	auto center2d(loc.ToCenterOfTileAbs());
-	XMFLOAT3 center{ center2d.x, 0, center2d.y };
-
+	auto center(loc.ToInches3D());
 	tig->GetShapeRenderer3d().DrawDisc(center, rotation, radius, material);
 
 }
@@ -604,8 +602,7 @@ void RenderHooks::DrawCircle3d(LocAndOffsets center,
 	float radius) {
 		
 	auto y = -(sinf(-0.77539754f) * negElevation);
-	auto center2d(center.ToCenterOfTileAbs());
-	XMFLOAT3 center3d{ center2d.x, y, center2d.y };
+	auto center3d(center.ToInches3D(y));
 
 	tig->GetShapeRenderer3d().DrawFilledCircle(
 		center3d, radius, borderColor, fillColor, specialZ

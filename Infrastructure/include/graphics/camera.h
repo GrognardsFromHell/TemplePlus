@@ -4,6 +4,8 @@
 #include <DirectXMath.h>
 using namespace DirectX;
 
+#include "../infrastructure/location.h"
+
 namespace gfx {
 
 	/**
@@ -92,6 +94,8 @@ namespace gfx {
 		XMFLOAT3 ScreenToWorld(float x, float y);
 
 		XMFLOAT2 ScreenToTileLegacy(int x, int y);
+
+		LocAndOffsets ScreenToTile(int screenX, int screenY);
 
 		void CenterOn(float x, float y, float z);
 

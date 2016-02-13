@@ -58,7 +58,6 @@
     <ClCompile Include="gamesystems\mappreprocessor.cpp" />
     <ClCompile Include="gamesystems\mapsystem.cpp" />
     <ClCompile Include="gamesystems\mapsystem_hooks.cpp" />
-    <ClCompile Include="gamesystems\maps\sectors.cpp" />
     <ClCompile Include="gamesystems\map\gmesh.cpp" />
     <ClCompile Include="gamesystems\objects\arrayidxbitmaps.cpp" />
     <ClCompile Include="gamesystems\objects\arrayidxbitmaps_hooks.cpp" />
@@ -294,7 +293,6 @@
     <ClInclude Include="gamesystems\legacysystems.h" />
     <ClInclude Include="gamesystems\mapobjrender.h" />
     <ClInclude Include="gamesystems\mappreprocessor.h" />
-    <ClInclude Include="gamesystems\maps\sectors.h" />
     <ClInclude Include="gamesystems\particlesystems.h" />
     <ClInclude Include="gamesystems\partsystemsrenderer.h" />
     <ClInclude Include="graphics\imgfile.h" />

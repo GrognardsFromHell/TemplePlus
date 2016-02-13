@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../gamesystems/gamesystem.h"
+#include <temple/dll.h>
 
 struct TigRect;
 
@@ -53,10 +54,23 @@ public:
 	TerrainSystem(TerrainSystem&&) = delete;
 	TerrainSystem& operator=(TerrainSystem&) = delete;
 	TerrainSystem& operator=(TerrainSystem&&) = delete;
-
+	
+	void UpdateDayNight();
 private:
 	gfx::RenderingDevice& mDevice;
 	gfx::ShapeRenderer2d& mShapeRenderer;
+
+	int mMapArtId = 0;
+
+	// Tracking for the day/night transition
+	bool mIsNightTime = false;
+	bool mIsTransitioning = false;
+	uint32_t mTransitionStart = 0;
+
+	// Terrain colors are managed by the daylight system
+	float &mTerrainTintRed = temple::GetRef<float>(0x11E69574);
+	float &mTerrainTintGreen = temple::GetRef<float>(0x11E69570);
+	float &mTerrainTintBlue = temple::GetRef<float>(0x11E69564);
 
 	std::unordered_map<int, std::string> mTerrainDirs;
 

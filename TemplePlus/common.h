@@ -32,118 +32,19 @@
 
 #define BonusListMax 40
 
-// This is the number of pixels per tile on the x and y axis. Derived from sqrt(800)
-constexpr float INCH_PER_TILE = 28.284271247461900976033774484194f;
-constexpr float INCH_PER_HALFTILE = (INCH_PER_TILE / 2.0f);
-constexpr float INCH_PER_SUBTILE = (INCH_PER_TILE / 3.0f);
-constexpr int INCH_PER_FEET = 12;
 
 // this is the number of tiles per sector in each direction (so the total is this squared i.e. 4096 in toee)
 #define SECTOR_SIDE_SIZE 64
 
 # pragma region Standard Structs
 
+#include <infrastructure/location.h>
+
 #pragma pack(push, 1)
 
 typedef XMFLOAT2 vector2f;
 typedef XMFLOAT3 vector3f;
 
-struct locXY {
-	uint32_t locx;
-	uint32_t locy;
-
-	static locXY fromField(uint64_t location) {
-		return *(locXY*)&location;
-	}
-
-	uint64_t ToField() const {
-		return *((uint64_t*)this);
-	}
-
-	operator uint64_t() const {
-		return *(uint64_t*)this;
-	}
-
-	vector2f ToInches2D(float offsetX = 0, float offsetY = 0) const {
-		return{
-			locx * INCH_PER_TILE + offsetX,
-			locy * INCH_PER_TILE + offsetY
-		};
-	}
-
-	vector3f ToInches3D(float offsetX = 0, float offsetY = 0, float offsetZ = 0) const {
-		return {
-			locx * INCH_PER_TILE + offsetX,
-			offsetZ,
-			locy * INCH_PER_TILE + offsetY
-		};
-	}
-};
-
-struct SectorLoc
-{
-	uint64_t raw;
-
-	uint64_t x()
-	{
-		return raw & 0x3ffFFFF;
-	}
-
-	uint64_t y()
-	{
-		return raw >> 26 ;
-	}
-
-	uint64_t ToField() {
-		return this->raw;
-	}
-
-	operator uint64_t() const {
-			return this->raw;
-		}
-
-	operator int64_t() const {
-		return (int64_t)this->raw;
-	}
-
-	void GetFromLoc(locXY loc)
-	{
-		raw = loc.locx / SECTOR_SIDE_SIZE
-			 + ( (loc.locy / SECTOR_SIDE_SIZE) << 26 );
-	}
-
-	SectorLoc()
-	{
-		raw = 0;
-	}
-
-	SectorLoc(locXY loc)
-	{
-		raw = loc.locx / SECTOR_SIDE_SIZE
-			+ ((loc.locy / SECTOR_SIDE_SIZE) << 26);
-	}
-
-	SectorLoc(uint64_t sectorLoc) {
-		raw = sectorLoc;
-	}
-
-	SectorLoc(int sectorX, int sectorY) {
-		raw = (sectorX & 0x3ffFFFF) | (sectorY << 26);
-	}
-
-	locXY GetBaseTile()
-	{
-		locXY loc;
-		loc.locx = (int) x() * SECTOR_SIDE_SIZE;
-		loc.locy = (int) y() * SECTOR_SIDE_SIZE;
-		return loc;
-	}
-
-	bool operator ==(SectorLoc secLoc) {
-		return raw == secLoc.raw;
-	}
-
-};
 
 struct Subtile // every tile is subdivided into 3x3 subtiles
 {
@@ -176,69 +77,6 @@ struct TileRect
 	int64_t y2;
 };
 
-struct LocAndOffsets {
-	locXY location;
-	float off_x;
-	float off_y;
-	
-	vector2f ToInches2D() const {
-		return location.ToInches2D(off_x, off_y);
-	}
-
-	void Normalize();
-
-	// Same as ToInches2d, but translates to center of tile
-	vector2f ToCenterOfTileAbs() const;
-
-	// Same as ToInches3d, but translates to center of tile
-	XMFLOAT3 ToCenterOfTileAbs3D(float offsetZ = 0) const;
-
-	vector3f ToInches3D(float offsetZ = 0) {
-		return location.ToInches3D(off_x, off_y, offsetZ);
-	}
-
-	static LocAndOffsets FromInches(float x, float y) {
-		float tileX = x / INCH_PER_TILE;
-		float tileY = y / INCH_PER_TILE;
-
-		LocAndOffsets result;		
-		result.location.locx = (int)tileX;
-		result.location.locy = (int)tileY;
-		result.off_x = (tileX - floor(tileX) - 0.5f) * INCH_PER_TILE;
-		result.off_y = (tileY - floor(tileY) - 0.5f) * INCH_PER_TILE;
-		return result;
-	}
-
-};
-
-inline vector2f LocAndOffsets::ToCenterOfTileAbs() const {
-	auto result = ToInches2D();
-	result.x += INCH_PER_HALFTILE;
-	result.y += INCH_PER_HALFTILE;
-	return result;
-}
-
-inline XMFLOAT3 LocAndOffsets::ToCenterOfTileAbs3D(float offsetZ) const {
-	auto abs2d(ToInches2D());
-	XMFLOAT3 result{ abs2d.x, offsetZ, abs2d.y };
-	result.x += INCH_PER_HALFTILE;
-	result.z += INCH_PER_HALFTILE;
-	return result;
-}
-
-inline std::ostream& operator<<(std::ostream& os, const LocAndOffsets & loc) {
-
-	return os
-		<< std::to_string(loc.location.locx)
-		+ "," + std::to_string(loc.location.locy)
-		+ "," + std::to_string(loc.off_x)
-		+ "," + std::to_string(loc.off_y);
-}
-
-struct LocFull {
-	LocAndOffsets location;
-	float off_z;
-};
 
 struct GroupArray {
 	objHndl GroupMembers[32];

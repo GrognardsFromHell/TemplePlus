@@ -63,14 +63,14 @@ int SectorLoadLightFix::ReadLightFromDiff(TioFile* file, SectorLight** lightOut)
 	if (lightOrg) {
 		if (lightOrg->flags & 0x50) {
 			auto partSys1 = lightOrg->partSys;
-			if (partSys1.id) {
-				particles.Remove(partSys1.id);
+			if (partSys1.handle) {
+				particles.Remove(partSys1.handle);
 			}
 		}
 		if (lightOrg->flags & 0x40) {
 			auto partSys2 = lightOrg->light2.partSys;
-			if (partSys2.id) {
-				particles.Remove(partSys2.id);
+			if (partSys2.handle) {
+				particles.Remove(partSys2.handle);
 			}
 		}
 

@@ -8,6 +8,11 @@
 
 #include "legacy.h"
 #include "obj.h"
+#include "map/sector.h"
+
+namespace gfx {
+	class RenderingDevice;
+}
 
 class VagrantSystem : public GameSystem, public TimeAwareGameSystem {
 public:
@@ -475,16 +480,6 @@ public:
 	const std::string &GetName() const override;
 };
 
-class GroundSystem : public GameSystem, public ResetAwareGameSystem, public TimeAwareGameSystem {
-public:
-	static constexpr auto Name = "Ground";
-	GroundSystem(const GameSystemConf &config);
-	~GroundSystem();
-	void Reset() override;
-	void AdvanceTime(uint32_t time) override;
-	const std::string &GetName() const override;
-};
-
 class ObjFadeSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem {
 public:
 	static constexpr auto Name = "ObjFade";
@@ -543,7 +538,7 @@ public:
 class MapFoggingSystem : public GameSystem, public BufferResettingGameSystem, public ResetAwareGameSystem {
 public:
 	static constexpr auto Name = "MapFogging";
-	MapFoggingSystem(const GameSystemConf &config);
+	MapFoggingSystem(gfx::RenderingDevice &device);
 	~MapFoggingSystem();
 	void Reset() override;
 	void ResetBuffers(const RebuildBufferInfo& rebuildInfo) override;
@@ -559,6 +554,31 @@ public:
 	void SaveExploredTileData(int mapId);
 	
 	void SaveEsd();
+
+private:
+
+	gfx::RenderingDevice &mDevice;
+
+	void InitScreenBuffers();
+
+	static constexpr size_t sFogBufferDim = 102;
+
+	uint64_t& mFogMinX = temple::GetRef<uint64_t>(0x10824468);
+	uint64_t& mFogMinY = temple::GetRef<uint64_t>(0x108EC4C8);
+	uint64_t& mSubtilesX = temple::GetRef<uint64_t>(0x10820458);
+	uint64_t& mSubtilesY = temple::GetRef<uint64_t>(0x10824490);
+
+	BOOL& mFoggingEnabled = temple::GetRef<BOOL>(0x108254A0);
+	uint8_t*& mFogCheckData = temple::GetRef<uint8_t*>(0x108A5498);
+	void** mFogBuffers = temple::GetPointer<void*>(0x10824470); // 8 entries
+
+	SectorLoc* mEsdSectorLocs = temple::GetPointer<SectorLoc>(0x108EC598); // 32 entries
+	uint32_t& mEsdLoaded = temple::GetRef<uint32_t>(0x108EC6B0);
+	BOOL& mDoFullUpdate = temple::GetRef<BOOL>(0x108EC590);
+	uint32_t& mFogChecks = temple::GetRef<uint32_t>(0x102ACEFC);
+
+	int& mScreenWidth = temple::GetRef<int>(0x108EC6A0);
+	int& mScreenHeight = temple::GetRef<int>(0x108EC6A4);
 };
 
 class RandomEncounterSystem : public GameSystem, public SaveGameAwareGameSystem {

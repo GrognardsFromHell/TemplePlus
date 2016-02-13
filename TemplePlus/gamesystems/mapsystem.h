@@ -7,6 +7,7 @@
 #include "gamesystem.h"
 #include "common.h"
 
+struct SectorLoc;
 struct GameSystemConf;
 struct MapListEntry;
 class D20System;

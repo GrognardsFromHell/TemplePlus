@@ -7,29 +7,18 @@
 #include <graphics/shaperenderer2d.h>
 #include <infrastructure/mesparser.h>
 #include <config/config.h>
-
-static struct TerrainSystemAddresses : temple::AddressTable {	
-	int *mapArtId;
-	int *daytimeFlag;
-	uint32_t *timeMapEntered;
-
-	float *terrainTintRed;
-	float *terrainTintGreen;
-	float *terrainTintBlue;
-
-	TerrainSystemAddresses() {
-		rebase(mapArtId, 0x1080FA58);
-		rebase(daytimeFlag, 0x1080AED8);
-		rebase(timeMapEntered, 0x1080ABB0);
-
-		rebase(terrainTintRed, 0x11E69574);
-		rebase(terrainTintGreen, 0x11E69570);
-		rebase(terrainTintBlue, 0x11E69564);
-	}
-} addresses;
+#include <util/fixes.h>
+#include <gamesystems/gamesystems.h>
+#include <gamesystems/timeevents.h>
 
 TerrainSystem::TerrainSystem(gfx::RenderingDevice& device, gfx::ShapeRenderer2d& shapeRenderer)
 	: mDevice(device),mShapeRenderer(shapeRenderer) {
+
+	// Previously initialized in ground_init
+	mTerrainTintRed = 1.0f;
+	mTerrainTintGreen = 1.0f;
+	mTerrainTintBlue = 1.0f;
+
 }
 
 void TerrainSystem::Render() {
@@ -86,28 +75,23 @@ void TerrainSystem::Render() {
 }
 
 void TerrainSystem::RenderTile(int x, int y, const TigRect& destRect) {
-	auto mapArtId = *addresses.mapArtId;
-	auto primaryMapArtId = mapArtId;
-
-	auto isNightTime = ((*addresses.daytimeFlag) & 1) == 1;
+	auto primaryMapArtId = mMapArtId;
 
 	// Handling transition
-	auto isTransitioning = ((*addresses.daytimeFlag) & 2) == 2;	
 	uint32_t timeSinceMapEntered = 0;
-	if (isTransitioning) {
-		timeSinceMapEntered = timeGetTime() - *addresses.timeMapEntered;
+	if (mIsTransitioning) {
+		timeSinceMapEntered = timeGetTime() - mTransitionStart;
 		if (timeSinceMapEntered > TransitionTime) {
-			isTransitioning = false;
-			*addresses.daytimeFlag &= 1;
+			mIsTransitioning = false;
 		}
 
 		// This is flipped while we transition, since we have to draw 
 		// the old map first
-		if (!isNightTime) {
+		if (!mIsNightTime) {
 			primaryMapArtId += NightArtIdOffset;
 		}
 	} else {
-		if (isNightTime) {
+		if (mIsNightTime) {
 			primaryMapArtId += NightArtIdOffset;
 		}
 	}
@@ -119,10 +103,7 @@ void TerrainSystem::RenderTile(int x, int y, const TigRect& destRect) {
 		return;
 	}
 
-	XMCOLOR color(*addresses.terrainTintRed,
-		*addresses.terrainTintGreen,
-		*addresses.terrainTintBlue,
-		1);
+	XMCOLOR color(mTerrainTintRed, mTerrainTintGreen, mTerrainTintBlue, 1);
 
 	auto destX = (float)destRect.x;
 	auto destY = (float)destRect.y;
@@ -131,22 +112,22 @@ void TerrainSystem::RenderTile(int x, int y, const TigRect& destRect) {
 
 	mShapeRenderer.DrawRectangle(destX, destY, destWidth, destHeight, texture, color);
 
-	if (isTransitioning) {
+	if (mIsTransitioning) {
 
 		// Use the real map here
-		if (isNightTime) {
-			primaryMapArtId = mapArtId + NightArtIdOffset;
+		if (mIsNightTime) {
+			primaryMapArtId = mMapArtId + NightArtIdOffset;
 		} else {
-			primaryMapArtId = mapArtId;
+			primaryMapArtId = mMapArtId;
 		}
 		textureName = GetTileTexture(primaryMapArtId, x, y);
 		texture = mDevice.GetTextures().Resolve(textureName, false);
 
 		// Draw the "new" map over the old one with alpha that is based on 
 		// the time since the transition started
-		color = XMCOLOR(*addresses.terrainTintRed,
-			*addresses.terrainTintGreen,
-			*addresses.terrainTintBlue,
+		color = XMCOLOR(mTerrainTintRed, 
+			mTerrainTintGreen, 
+			mTerrainTintBlue,
 			timeSinceMapEntered / (float) TransitionTime);
 
 		mShapeRenderer.DrawRectangle(destX, destY, destWidth, destHeight, texture, color);
@@ -162,8 +143,12 @@ const std::string & TerrainSystem::GetName(void) const
 
 void TerrainSystem::Load(int groundArtId)
 {
-	static auto map_open_load_terrain = temple::GetPointer<void(int artId)>(0x1002d710);
-	map_open_load_terrain(groundArtId);
+	if (mMapArtId == groundArtId) {
+		return;
+	}
+	mMapArtId = groundArtId;
+	mIsTransitioning = false;
+	mIsNightTime = gameSystems->GetTimeEvent().IsDaytime();
 }
 
 void TerrainSystem::LoadModule()
@@ -171,6 +156,24 @@ void TerrainSystem::LoadModule()
 	auto groundMapping = MesFile::ParseFile("art/ground/ground.mes");
 	for (auto& pair : groundMapping) {
 		mTerrainDirs[pair.first] = fmt::format("art/ground/{}/", pair.second);
+	}
+}
+
+void TerrainSystem::UpdateDayNight() {
+	if (gameSystems->GetTimeEvent().IsDaytime()) {
+		// Start the night -> day transition
+		if (mIsNightTime) {
+			mIsTransitioning = true;
+			mIsNightTime = false;
+			mTransitionStart = timeGetTime();
+		}
+	} else {
+		// Start the day -> night transition
+		if (!mIsNightTime) {
+			mIsTransitioning = true;
+			mIsNightTime = true;
+			mTransitionStart = timeGetTime();
+		}
 	}
 }
 
@@ -186,3 +189,26 @@ std::string TerrainSystem::GetTileTexture(int mapArtId, int x, int y) {
 	return fmt::format("{}{:04x}{:04x}.jpg", it->second, y, x);
 
 }
+
+static class GroundSystemHooks : public TempleFix {
+public:
+	const char* name() override {
+		return "Ground System Hooks";
+	}
+	void apply() override {
+		// ground_add_dirty_rect
+		replaceFunction<void(TigRect*)>(0x1002c4d0, [](TigRect*) {
+			// Simply ignored now (no dirty tracking)
+		});
+
+		// map_ground_update_day_night
+		replaceFunction<void()>(0x1002d290, []() {
+			gameSystems->GetTerrain().UpdateDayNight();
+		});
+
+		// The timer event init function (100616A0) calls a function in the ground system
+		// creating a cyclic dependency
+		writeNoops(0x10061748);
+	}
+
+} groundHooks;

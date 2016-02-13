@@ -177,6 +177,7 @@
     <ClInclude Include="include\infrastructure\binaryreader.h" />
     <ClInclude Include="include\infrastructure\breakpad.h" />
     <ClInclude Include="include\infrastructure\crypto.h" />
+    <ClInclude Include="include\infrastructure\location.h" />
     <ClInclude Include="include\infrastructure\macros.h" />
     <ClInclude Include="include\platform\dxerr.h" />
     <ClInclude Include="include\infrastructure\elfhash.h" />
@@ -256,6 +257,7 @@
     <ClCompile Include="src\graphics\shaperenderer2d.cpp" />
     <ClCompile Include="src\graphics\shaperenderer3d.cpp" />
     <ClCompile Include="src\graphics\textures.cpp" />
+    <ClCompile Include="src\location.cpp" />
     <ClCompile Include="tokenizer.cpp" />
     <ClCompile Include="json11.cpp" />
     <ClCompile Include="stringutil.cpp" />

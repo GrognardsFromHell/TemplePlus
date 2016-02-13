@@ -104,17 +104,38 @@ namespace gfx {
 		return result;
 	}
 
+	// TODO: See if this can just be replaced by the proper version used below
 	// This is equivalent to 10029570
 	XMFLOAT2 WorldCamera::ScreenToTileLegacy(int x, int y) {
-
-		auto tmpX = (x - mXTranslation) * 20 / INCH_PER_TILE;
-		auto tmpY = (y - mYTranslation) * INCH_PER_TILE / 14 * 0.5f;
+		
+		auto tmpX = (x - mXTranslation) * 20 / INCH_PER_TILE; // * 0.70710677
+		auto tmpY = (y - mYTranslation) / 0.7f * 20 / INCH_PER_TILE ; // * 1.0101526 originally
 
 		return {
 			tmpY - tmpX - INCH_PER_HALFTILE,
 			tmpY + tmpX - INCH_PER_HALFTILE
 		};
 
+	}
+
+	LocAndOffsets WorldCamera::ScreenToTile(int screenX, int screenY) {
+
+		auto tmpX = (int)((screenX - mXTranslation) / 2);
+		auto tmpY = (int)(((screenY - mYTranslation) / 2) / 0.7f);
+		
+		auto unrotatedX = tmpY - tmpX;
+		auto unrotatedY = tmpY + tmpX;
+		
+		// Convert to tiles
+		LocAndOffsets result;
+		result.location.locx = unrotatedX / 20;
+		result.location.locy = unrotatedY / 20;
+
+		// Convert to offset within tile
+		result.off_x = ((unrotatedX % 20) / 20.0f - 0.5f) * INCH_PER_TILE;
+		result.off_y = ((unrotatedY % 20) / 20.0f - 0.5f) * INCH_PER_TILE;
+		
+		return result;
 	}
 
 	void WorldCamera::CenterOn(float x, float y, float z) {

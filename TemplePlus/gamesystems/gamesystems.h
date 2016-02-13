@@ -86,7 +86,6 @@ class MonsterGenSystem;
 class PartySystem;
 class D20LoadSaveSystem;
 class GameInitSystem;
-class GroundSystem;
 class ObjFadeSystem;
 class DeitySystem;
 class UiArtManagerSystem;
@@ -393,10 +392,6 @@ public:
 		Expects(!!mGameInit);
 		return *mGameInit;
 	}
-	GroundSystem& GetGround() const {
-		Expects(!!mGround);
-		return *mGround;
-	}
 	ObjFadeSystem& GetObjFade() const {
 		Expects(!!mObjFade);
 		return *mObjFade;
@@ -591,7 +586,6 @@ private:
 	std::unique_ptr<PartySystem> mParty;
 	std::unique_ptr<D20LoadSaveSystem> mD20LoadSave;
 	std::unique_ptr<GameInitSystem> mGameInit;
-	std::unique_ptr<GroundSystem> mGround;
 	std::unique_ptr<ObjFadeSystem> mObjFade;
 	std::unique_ptr<DeitySystem> mDeity;
 	std::unique_ptr<UiArtManagerSystem> mUiArtManager;
