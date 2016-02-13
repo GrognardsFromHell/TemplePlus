@@ -3,8 +3,6 @@
 #include <graphics/textures.h>
 #include <graphics/device.h>
 
-#include <d3d8adapter.h>
-
 #include "util/fixes.h"
 #include "tig/tig_startup.h"
 #include "../tig/tig_texture.h"
@@ -135,10 +133,6 @@ int TexturesHooks::LoadTexture(int textureId, TigTextureRegistryEntry* textureOu
 		return 0;
 	}
 
-	// Only one tig buffer can be returned at a time by this function,
-	// Since we don't want to memory manage
-	static TigBuffer buffer { 0, };
-
 	auto& textures = tig->GetRenderingDevice().GetTextures();
 	auto texture = textures.GetById(textureId);
 	if (!texture->IsValid()) {
@@ -165,13 +159,7 @@ int TexturesHooks::LoadTexture(int textureId, TigTextureRegistryEntry* textureOu
 	textureOut->rect.width = rect.width;
 	textureOut->rect.height = rect.height;
 
-	textureOut->buffer = &buffer;
-	if (buffer.d3dtexture) {
-		// DeleteTextureAdapter(buffer.d3dtexture); // TODO: Ownership semantics...
-	}
-	buffer.d3dtexture = CreateTextureAdapter(deviceTexture);
-	buffer.texturewidth = size.width;
-	buffer.textureheight = size.height;
+	textureOut->buffer = (TigBuffer*)0xCCCCCCCC; // This should not be used anymore
 
 	return 0;
 }

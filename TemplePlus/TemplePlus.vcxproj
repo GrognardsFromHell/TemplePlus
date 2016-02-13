@@ -135,7 +135,6 @@
     <ClCompile Include="quest.cpp" />
     <ClCompile Include="objlist.cpp" />
     <ClCompile Include="radialmenu.cpp" />
-    <ClCompile Include="graphics\renderstates.cpp" />
     <ClCompile Include="reputations.cpp" />
     <ClCompile Include="secret_door.cpp" />
     <ClCompile Include="skill.cpp" />
@@ -302,13 +301,11 @@
     <ClInclude Include="graphics\materials_hooks.h" />
     <ClInclude Include="graphics\rectangle.h" />
     <ClInclude Include="graphics\renderer.h" />
-    <ClInclude Include="graphics\renderstates_data.h" />
     <ClInclude Include="graphics\renderstates_hooks.h" />
     <ClInclude Include="graphics\render_hooks.h" />
     <ClInclude Include="graphics\video_hooks.h" />
     <ClInclude Include="history.h" />
     <ClInclude Include="hotkeys.h" />
-    <ClInclude Include="graphics\renderstates.h" />
     <ClInclude Include="location.h" />
     <ClInclude Include="maps.h" />
     <ClInclude Include="messages\messagequeue.h" />
@@ -428,9 +425,6 @@
     <Image Include="toee_gog_icon.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\D3D8Adapter\D3D8Adapter.vcxproj">
-      <Project>{1b31fa8f-05bb-4f59-98d5-6e0d7ce21b12}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\Infrastructure\Infrastructure.vcxproj">
       <Project>{006f5b8a-f75f-413c-ad3a-e004ca8ddf26}</Project>
     </ProjectReference>

@@ -11,6 +11,3 @@ struct LegacyLight {
 	float range;
 	float phi;
 };
-
-void ResetLegacyRenderStates();
-void CopyLightingState();

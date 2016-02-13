@@ -3,7 +3,6 @@
 
 #include <temple/dll.h>
 #include "idxtables.h"
-#include "d3d8adapter.h"
 #include "tig.h"
 
 struct TigBuffer
@@ -18,7 +17,7 @@ struct TigBuffer
 	int locked_texture_mem;
 	int createargs_field_c;
 	int field_24;
-	Direct3DTexture8Adapter *d3dtexture;
+	void *d3dtexture; // Should not be used anymore
 	int field_2C;
 	int field_30;
 	int field_34;

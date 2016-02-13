@@ -12,7 +12,6 @@
 #include "tig/tig_texture.h"
 
 #include "render_hooks.h"
-#include <d3d8adapter.h>
 
 static RenderHooks fix;
 
@@ -309,15 +308,7 @@ int RenderHooks::TextureRender2d(const Render2dArgs* args) {
 			texheight = (float) args->destRect->height;
 		}
 	} else {
-		if (!args->texBuffer) {
-			return 17;
-		}
-		deviceTexture = GetTextureDelegate(args->texBuffer->d3dtexture);
-		if (!deviceTexture) {
-			return 17;
-		}
-		texwidth = (float) args->texBuffer->texturewidth;
-		texheight = (float) args->texBuffer->textureheight;
+		throw TempleException("Unsupported operation mode for TextureRender2d");
 	}
 
 	auto contentRectLeft = srcX;

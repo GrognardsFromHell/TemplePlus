@@ -11,6 +11,7 @@
 #include <vector>
 #include <atlcomcli.h>
 #include <util/fixes.h>
+#include <graphics/mdfmaterials.h>
 
 MouseFuncs mouseFuncs;
 temple::GlobalStruct<TigMouseState, 0x10D25184> mouseState;
@@ -47,27 +48,24 @@ struct OriginalMouseFuncs : temple::AddressTable {
 } orgMouseFuncs;
 
 static bool SetCursorFromShaderId(int shaderId) {
-	TigShader shader;
-	if (shaderFuncs.GetLoaded(shaderId, &shader)) {
+
+	auto material = tig->GetMdfFactory().GetById(shaderId);
+
+	if (!material) {
 		logger->error("Unable to get or load cursor shader {}", shaderId);
 		return false;
 	}
 
-	int textureId;
-	if (shader.GetTextureId(shader.data, &textureId)) {
-		logger->info("Cannot set mouse cursor to shader {}, beacuse it has no texture.", shaderId);
+	auto primaryTexture = material->GetPrimaryTexture();
+
+	if (!primaryTexture) {
+		logger->error("Material {} has no texture and cannot be used as a cursor", material->GetName());
 		return false;
 	}
 
-	TigTextureRegistryEntry textureEntry;
-	if (textureFuncs.LoadTexture(textureId, &textureEntry)) {
-		logger->error("Unable to get mouse cursor texture {}", textureId);
-		return false;
-	}
-
-	auto texture = GetTextureDelegate(textureEntry.buffer->d3dtexture);
+	auto deviceTexture = primaryTexture->GetDeviceTexture();	
 	CComPtr<IDirect3DSurface9> surface;
-	if (D3DLOG(texture->GetSurfaceLevel(0, &surface)) != D3D_OK) {
+	if (D3DLOG(deviceTexture->GetSurfaceLevel(0, &surface)) != D3D_OK) {
 		logger->error("Unable to get surface of cursor texture.");
 		return false;
 	}
@@ -76,11 +74,11 @@ static bool SetCursorFromShaderId(int shaderId) {
 	int hotspotY = 0;
 
 	// Special handling for cursors that don't have their hotspot on 0,0
-	if (strstr(textureEntry.name, "Map_GrabHand_Closed.tga")
-		|| strstr(textureEntry.name, "Map_GrabHand_Open.tga")
-		|| strstr(textureEntry.name, "SlidePortraits.tga")) {
-		hotspotX = textureEntry.rect.width / 2;
-		hotspotY = textureEntry.rect.height / 2;
+	if (strstr(primaryTexture->GetName().c_str(), "Map_GrabHand_Closed.tga")
+		|| strstr(primaryTexture->GetName().c_str(), "Map_GrabHand_Open.tga")
+		|| strstr(primaryTexture->GetName().c_str(), "SlidePortraits.tga")) {
+		hotspotX = primaryTexture->GetContentRect().width / 2;
+		hotspotY = primaryTexture->GetContentRect().height / 2;
 	}
 
 	auto device = tig->GetRenderingDevice().GetDevice();

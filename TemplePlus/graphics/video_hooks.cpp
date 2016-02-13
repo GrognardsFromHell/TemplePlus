@@ -13,10 +13,6 @@
 #include <util/folderutils.h>
 #include <shlwapi.h>
 
-#include <d3d8to9_vertexbuffer.h>
-#include <d3d8to9_texture.h>
-#include <d3d8to9_device.h>
-
 #include "movies.h"
 #include "config/config.h"
 #include "util/fixes.h"
@@ -38,10 +34,11 @@ struct TigAdapterMode {
 	int refreshRate;
 	int flags;
 };
+
 struct TigAdapterInfo {
-	const char *name;
+	const char* name;
 	int modeCount;
-	TigAdapterMode *modes;
+	TigAdapterMode* modes;
 };
 #pragma pack(pop)
 
@@ -57,11 +54,11 @@ public:
 private:
 	static int BeginFrame();
 	static int PresentFrame();
-	static bool AllocTextureMemory(Direct3DDevice8Adapter* adapter,
+	static bool AllocTextureMemory(void* adapter,
 	                               int w,
 	                               int h,
 	                               int flags,
-	                               Direct3DTexture8Adapter** textureOut,
+	                               void** textureOut,
 	                               int* textureTypePtr);
 	static int CleanUpBuffers();
 	static int SetVideoMode(int adapter,
@@ -75,11 +72,11 @@ private:
 	static TigAdapterInfo* GetAdapterInfo(int adapter);
 
 	static int ChangeVideoSettings(int adapter,
-		int nWidth,
-		int nHeight,
-		int bpp,
-		int refresh,
-		int flags);
+	                               int nWidth,
+	                               int nHeight,
+	                               int bpp,
+	                               int refresh,
+	                               int flags);
 	static BOOL GetAntiAliasing();
 
 	static void GetSystemMemory(int* totalMem, int* availableMem);
@@ -123,14 +120,15 @@ void VideoFixes::apply() {
 	MH_CreateHook(temple::GetPointer<0x10002830>(), TakeSaveScreenshots, nullptr);
 
 	// tig_buffer_create
-	replaceFunction<int(void *, void **)>(0x101dce50, [](void *createargs, void **bufferout) {
-		__debugbreak();
-		throw TempleException("Unsupported Operation: Create Buffer");
-		return 0;
-	});
+	replaceFunction<int(void*, void**)>(0x101dce50, [](void* createargs, void** bufferout) {
+		                                    __debugbreak();
+		                                    throw TempleException("Unsupported Operation: Create Buffer");
+		                                    return 0;
+	                                    });
 
 	// This was the old render function
-	void(*noopFunction)() = []() {};
+	void (*noopFunction)() = []() {
+	};
 	replaceFunction(0x10002650, noopFunction);
 
 	hook_movies();
@@ -166,48 +164,9 @@ struct TempleTextureTypeTable {
 
 static temple::GlobalStruct<TempleTextureTypeTable, 0x102A05A8> textureFormatTable;
 
-bool VideoFixes::AllocTextureMemory(Direct3DDevice8Adapter* adapter, int w, int h, int flags, Direct3DTexture8Adapter** textureOut, int* textureTypePtr) {
+bool VideoFixes::AllocTextureMemory(void* adapter, int w, int h, int flags, void** textureOut, int* textureTypePtr) {
 	__debugbreak();
 	throw TempleException("Unsupported Operation: Alloc Texture Memory");
-	auto device = adapter->delegate;
-
-	int levels = 1;
-	D3DFORMAT format;
-	IDirect3DTexture9* texture = nullptr;
-
-	auto textureType = *textureTypePtr;
-	auto desiredType = textureFormatTable->formats[textureType];
-	format = desiredType.d3dFormat;
-
-	DWORD usage = config.useDirect3d9Ex ? D3DUSAGE_DYNAMIC : 0;
-
-	// d3d9ex does not support managed anymore, but default has better guarantees now anyway
-	D3DPOOL pool = config.useDirect3d9Ex ? D3DPOOL_DEFAULT : D3DPOOL_MANAGED;
-	if (flags & 0x40) {
-		// This previously allocated a render target texture, but this is not supported and i do not think used by ToEE
-		throw TempleException("Render Targets are not supported by this method");
-	}
-
-	if (flags & 0x20 && video->enableMipMaps) {
-		levels = 2;
-	}
-
-	if (D3DLOG(device->CreateTexture(
-		w,
-		h,
-		levels,
-		usage,
-		format,
-		pool,
-		&texture,
-		nullptr
-	)) != D3D_OK) {
-		return false;
-	}
-
-	*textureOut = new Direct3DTexture8Adapter(texture);
-
-	return true;
 }
 
 int VideoFixes::CleanUpBuffers() {
@@ -222,13 +181,11 @@ int VideoFixes::SetVideoMode(int adapter, int nWidth, int nHeight, int bpp, int 
 	return 0;
 }
 
-int VideoFixes::GetAdapterCount()
-{
+int VideoFixes::GetAdapterCount() {
 	return 1;
 }
 
-TigAdapterInfo * VideoFixes::GetAdapterInfo(int adapter)
-{
+TigAdapterInfo* VideoFixes::GetAdapterInfo(int adapter) {
 	static TigAdapterMode fallbackMode{
 		config.renderWidth,
 		config.renderHeight,
@@ -236,7 +193,7 @@ TigAdapterInfo * VideoFixes::GetAdapterInfo(int adapter)
 		60,
 		0
 	};
-	static TigAdapterInfo fallbackInfo {
+	static TigAdapterInfo fallbackInfo{
 		"Primary Adapter",
 		1,
 		&fallbackMode
@@ -246,8 +203,7 @@ TigAdapterInfo * VideoFixes::GetAdapterInfo(int adapter)
 	return &fallbackInfo;
 }
 
-int VideoFixes::ChangeVideoSettings(int adapter, int nWidth, int nHeight, int bpp, int refresh, int flags)
-{
+int VideoFixes::ChangeVideoSettings(int adapter, int nWidth, int nHeight, int bpp, int refresh, int flags) {
 	// We only use the anti aliasing part of this
 	bool antiAliasing = (flags & 1);
 	config.antialiasing = antiAliasing;
@@ -257,8 +213,7 @@ int VideoFixes::ChangeVideoSettings(int adapter, int nWidth, int nHeight, int bp
 	return TRUE;
 }
 
-BOOL VideoFixes::GetAntiAliasing()
-{
+BOOL VideoFixes::GetAntiAliasing() {
 	return config.antialiasing ? TRUE : FALSE;
 }
 
@@ -326,8 +281,9 @@ void VideoFixes::TakeSaveScreenshots() {
 class LegacyResourceManager : public ResourceListener {
 public:
 
-	explicit LegacyResourceManager(RenderingDevice& device) 
-		: mRegistration(device, this) {}
+	explicit LegacyResourceManager(RenderingDevice& device)
+		: mRegistration(device, this) {
+	}
 
 	void CreateResources(RenderingDevice&) override;
 	void FreeResources(RenderingDevice&) override;
@@ -352,7 +308,7 @@ void LegacyResourceManager::CreateResources(RenderingDevice& device) {
 	videoFuncs.backbufferHeight = device.GetRenderHeight();
 
 	auto d3dDevice = device.GetDevice();
-	
+	/*
 	if (D3DLOG(d3dDevice->CreateVertexBuffer(
 		140, // Space for 5 vertices
 		D3DUSAGE_DYNAMIC,
@@ -398,7 +354,7 @@ void LegacyResourceManager::CreateResources(RenderingDevice& device) {
 	videoFuncs.sharedVBuffer4 = new Direct3DVertexBuffer8Adapter(mSharedVBuffer4);
 
 	// This is always the same pointer although it's callback 2 of the GameStartConfig	
-	videoFuncs.PartSysCreateBuffers();
+	videoFuncs.PartSysCreateBuffers();*/
 
 
 }
@@ -408,12 +364,12 @@ void LegacyResourceManager::FreeResources(RenderingDevice&) {
 	logger->info("Freeing legacy graphics resources...");
 
 	videoFuncs.buffersFreed = true;
-	
+
 	videoFuncs.tigMatrices2 = videoFuncs.screenTransform;
 
 	videoFuncs.PartSysFreeBuffers();
 	videoFuncs.TigShaderFreeBuffers();
-	
+
 	mRenderQuadBuffer.Release();
 	mSharedVBuffer2.Release();
 	mSharedVBuffer3.Release();
@@ -432,8 +388,7 @@ LegacyVideoSystem::LegacyVideoSystem(MainWindow& mainWindow, RenderingDevice& gr
 	video->unk2 = false;
 	video->gammaSupported = false;
 
-	video->d3dDevice = new Direct3DDevice8Adapter;
-	video->d3dDevice->delegate = graphics.GetDevice();
+	video->d3dDevice = (void*)0xCCCCCCCC; // Should not be used anymore
 
 	// Make some caps available for other legacy systems
 	video->maxActiveLights = 8;
@@ -544,3 +499,4 @@ LegacyVideoSystem::LegacyVideoSystem(MainWindow& mainWindow, RenderingDevice& gr
 
 LegacyVideoSystem::~LegacyVideoSystem() {
 }
+

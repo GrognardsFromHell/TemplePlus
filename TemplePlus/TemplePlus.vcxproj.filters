@@ -263,7 +263,6 @@
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="graphics\materials_hooks.cpp" />
-    <ClCompile Include="graphics\renderstates.cpp" />
     <ClCompile Include="graphics\renderstates_hooks.cpp" />
     <ClCompile Include="graphics\render_hooks.cpp" />
     <ClCompile Include="graphics\renderer.cpp" />
@@ -577,8 +576,6 @@
     <ClInclude Include="diag\diag.h" />
     <ClInclude Include="messages\messagequeue.h" />
     <ClInclude Include="graphics\materials_hooks.h" />
-    <ClInclude Include="graphics\renderstates.h" />
-    <ClInclude Include="graphics\renderstates_data.h" />
     <ClInclude Include="graphics\renderstates_hooks.h" />
     <ClInclude Include="graphics\renderer.h" />
     <ClInclude Include="graphics\render_hooks.h" />

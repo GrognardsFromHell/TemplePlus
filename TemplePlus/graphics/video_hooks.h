@@ -1,8 +1,7 @@
-
 #pragma once
 
-#include <d3d.h>
-#include <d3dx9math.h>
+#include <platform/d3d.h>
+#include <d3dx9.h>
 
 #include <tig/tig_startup.h>
 #include <tig/tig_font.h>
@@ -16,17 +15,13 @@ struct TigMatrices {
 	float scale;
 };
 
-struct Direct3D8Adapter;
-struct Direct3DDevice8Adapter;
-struct Direct3DVertexBuffer8Adapter;
-
 /*
 Container for ToEE functions related to video
 */
 struct VideoFuncs : temple::AddressTable {
-	bool(__fastcall *TigDirect3dInit)(TigConfig* settings) = nullptr;
-	void(__cdecl *SetVideoMode)(int adapter, int nWidth, int nHeight, int bpp, int refresh, int flags);
-	void(__cdecl *CleanUpBuffers)();
+	bool (__fastcall *TigDirect3dInit)(TigConfig* settings) = nullptr;
+	void (__cdecl *SetVideoMode)(int adapter, int nWidth, int nHeight, int bpp, int refresh, int flags);
+	void (__cdecl *CleanUpBuffers)();
 
 	void (*TigShaderFreeBuffers)();
 
@@ -37,13 +32,13 @@ struct VideoFuncs : temple::AddressTable {
 	void (__cdecl *GamelibResizeScreen)(uint32_t adapter, int width, int height, int bpp, int refresh, int flags);
 
 	// current video format has to be in eax before calling this
-	bool(__cdecl *tig_d3d_init_handleformat)();
+	bool (__cdecl *tig_d3d_init_handleformat)();
 
-	
+
 	temple::GlobalBool<0x10D25144> buffersFreed;
 	temple::GlobalPrimitive<uint32_t, 0x10D25148> currentFlags;
-	TigMatrices *tigMatrices2;
-	TigMatrices *screenTransform;
+	TigMatrices* tigMatrices2;
+	TigMatrices* screenTransform;
 
 	/*
 	Used to take screenshots (copy front buffer)
@@ -59,12 +54,13 @@ struct VideoFuncs : temple::AddressTable {
 	statically.
 	*/
 	temple::GlobalPrimitive<uint32_t, 0x11E75840> startupFlags;
-		
-	temple::GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D25120> renderQuadBuffer;
-	temple::GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D25124> sharedVBuffer1;
-	temple::GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D25128> sharedVBuffer2;
-	temple::GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D2512C> sharedVBuffer3;
-	temple::GlobalPrimitive<Direct3DVertexBuffer8Adapter*, 0x10D25130> sharedVBuffer4;
+
+	// was Direct3DVertexBuffer8Adapter
+	temple::GlobalPrimitive<void*, 0x10D25120> renderQuadBuffer;
+	temple::GlobalPrimitive<void*, 0x10D25124> sharedVBuffer1;
+	temple::GlobalPrimitive<void*, 0x10D25128> sharedVBuffer2;
+	temple::GlobalPrimitive<void*, 0x10D2512C> sharedVBuffer3;
+	temple::GlobalPrimitive<void*, 0x10D25130> sharedVBuffer4;
 	temple::GlobalBool<0x103010FC> tigMovieInitialized; // Unused
 
 	temple::GlobalPrimitive<float, 0x10D24D7C> fadeScreenRect;
@@ -86,15 +82,88 @@ struct VideoFuncs : temple::AddressTable {
 };
 
 /*
+* The d3dcaps8 structure
+*/
+typedef struct _D3DCAPS8 {
+	uint32_t DeviceType;
+	UINT AdapterOrdinal;
+
+	DWORD Caps;
+	DWORD Caps2;
+	DWORD Caps3;
+	DWORD PresentationIntervals;
+
+	DWORD CursorCaps;
+
+	DWORD DevCaps;
+
+	DWORD PrimitiveMiscCaps;
+	DWORD RasterCaps;
+	DWORD ZCmpCaps;
+	DWORD SrcBlendCaps;
+	DWORD DestBlendCaps;
+	DWORD AlphaCmpCaps;
+	DWORD ShadeCaps;
+	DWORD TextureCaps;
+	DWORD TextureFilterCaps;
+	DWORD CubeTextureFilterCaps;
+	DWORD VolumeTextureFilterCaps;
+	DWORD TextureAddressCaps;
+	DWORD VolumeTextureAddressCaps;
+
+	DWORD LineCaps;
+
+	DWORD MaxTextureWidth, MaxTextureHeight;
+	DWORD MaxVolumeExtent;
+
+	DWORD MaxTextureRepeat;
+	DWORD MaxTextureAspectRatio;
+	DWORD MaxAnisotropy;
+	float MaxVertexW;
+
+	float GuardBandLeft;
+	float GuardBandTop;
+	float GuardBandRight;
+	float GuardBandBottom;
+
+	float ExtentsAdjust;
+	DWORD StencilCaps;
+
+	DWORD FVFCaps;
+	DWORD TextureOpCaps;
+	DWORD MaxTextureBlendStages;
+	DWORD MaxSimultaneousTextures;
+
+	DWORD VertexProcessingCaps;
+	DWORD MaxActiveLights;
+	DWORD MaxUserClipPlanes;
+	DWORD MaxVertexBlendMatrices;
+	DWORD MaxVertexBlendMatrixIndex;
+
+	float MaxPointSize;
+
+	DWORD MaxPrimitiveCount;
+	DWORD MaxVertexIndex;
+	DWORD MaxStreams;
+	DWORD MaxStreamStride;
+
+	DWORD VertexShaderVersion;
+	DWORD MaxVertexShaderConst;
+
+	DWORD PixelShaderVersion;
+	float MaxPixelShaderValue;
+} D3DCAPS8;
+
+/*
 * Size being cleared is 4796 byte in length
 * Start @ 0x11E74580
 */
 struct VideoData {
 	HINSTANCE hinstance;
 	HWND hwnd;
-	Direct3D8Adapter* d3d;
-	Direct3DDevice8Adapter* d3dDevice;
-	d3d8::D3DCAPS8 d3dCaps;
+	void* d3d; // Was Direct3D8Adapter*
+	void* d3dDevice; // Was Direct3DDevice8Adapter
+	D3DCAPS8 d3dCaps;
 	char padding[124];
 	DWORD unk2;
 	D3DGAMMARAMP gammaRamp1;
@@ -133,7 +202,7 @@ struct VideoData {
 	DWORD mode; // seems to be an index to the current fullscreen mode
 	D3DFORMAT adapterformat;
 	DWORD current_refresh;
-	Direct3DVertexBuffer8Adapter* blitVBuffer; // not used
+	void* blitVBuffer; // not used (was Direct3DVertexBuffer8Adapter)
 	D3DXMATRIX stru_11E75788;
 	D3DXMATRIX matrix_identity;
 	D3DVECTOR stru_11E75808;
@@ -147,3 +216,4 @@ extern temple::GlobalBool<0x10D250EC> drawFps;
 extern temple::GlobalStruct<TigTextStyle, 0x10D24DB0> drawFpsTextStyle;
 extern temple::GlobalStruct<VideoData, 0x11E74580> video;
 extern VideoFuncs videoFuncs;
+
