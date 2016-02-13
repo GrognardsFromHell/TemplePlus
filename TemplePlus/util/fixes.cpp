@@ -132,6 +132,19 @@ void TempleFix::redirectJump(uint32_t offset, void* redirectTo) {
 	writeJump(offset, redirectTo);
 }
 
+void TempleFix::writeNoops(uint32_t offset) {
+
+	// Read what's there...
+	auto realAddress = temple::Dll::GetInstance().GetAddress(offset);
+	hde32s oldInstruction;
+	hde32_disasm(realAddress, &oldInstruction);
+
+	uint8_t noopBytes[32];
+	Expects(oldInstruction.len <= sizeof(noopBytes));
+	memset(noopBytes, 0x90, oldInstruction.len);
+	write(offset, &noopBytes[0], oldInstruction.len);
+
+}
 
 void TempleFix::writeCall(uint32_t offset, void* redirectTo) {
 	CALL_REL call = {

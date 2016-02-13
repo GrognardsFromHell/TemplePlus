@@ -38,6 +38,9 @@ protected:
 	void writeHex(uint32_t offset, const std::string &hexPattern);
 	void redirectCall(uint32_t offset, void* redirectTo);
 	void redirectJump(uint32_t offset, void* redirectTo);
+
+	// Intelligently replaces the instruction at the given offset with noops
+	void writeNoops(uint32_t offset);
 	
 	template<typename T>
 	T* replaceFunction(uint32_t offset, T* replaceWith) {
