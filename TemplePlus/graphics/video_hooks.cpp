@@ -130,6 +130,11 @@ void VideoFixes::apply() {
 	void (*noopFunction)() = []() {
 	};
 	replaceFunction(0x10002650, noopFunction);
+	
+	// CreateShadowMapBuffer (replaced with nothing)
+	replaceFunction<int()>(0x1001d390, []() {
+		return 0;
+	});
 
 	hook_movies();
 
@@ -186,9 +191,11 @@ int VideoFixes::GetAdapterCount() {
 }
 
 TigAdapterInfo* VideoFixes::GetAdapterInfo(int adapter) {
+	// The resolution is fake and has to match one of the supported modes
+	// present in the client
 	static TigAdapterMode fallbackMode{
-		config.renderWidth,
-		config.renderHeight,
+		1280,
+		1024,
 		32,
 		60,
 		0

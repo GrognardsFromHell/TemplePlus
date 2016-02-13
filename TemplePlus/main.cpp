@@ -24,6 +24,16 @@ void ShowIncompatibilityWarning(const InstallationDir& dir);
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
+void SetIniPath() {
+	char ownFilename[MAX_PATH];
+	GetModuleFileNameA(nullptr, &ownFilename[0], MAX_PATH);
+
+	PathRemoveFileSpecA(&ownFilename[0]);
+	PathAppendA(&ownFilename[0], "TemplePlus.ini");
+
+	config.SetPath(ownFilename);
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int showCmd) {
 
 	// We reserve space for temple.dll as early as possible to avoid rebasing of temple.dll
@@ -31,6 +41,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	dll.ReserveMemoryRange();
 
 	Breakpad breakpad;
+
+	SetIniPath();
 
 	config.Load();
 	config.Save();

@@ -959,7 +959,7 @@ void MapObjectRenderer::RenderShadowMapShadow(objHndl obj,
 		height,
 		globalLight.dir,
 		alpha / 255.0f,
-		true
+		config.softShadows
 	);
 
 }

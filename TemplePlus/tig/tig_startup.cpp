@@ -93,7 +93,8 @@ TigInitializer::TigInitializer(HINSTANCE hInstance)
 	mMainWindow = std::make_unique<MainWindow>(hInstance);
 	mRenderingDevice = std::make_unique<gfx::RenderingDevice>(mMainWindow->GetHwnd(),
 		config.renderWidth,
-		config.renderHeight);
+		config.renderHeight,
+		config.antialiasing);
 	mMdfFactory = std::make_unique<gfx::MdfMaterialFactory>(*mRenderingDevice);
 	mMdfFactory->LoadReplacementSets("rules\\materials.mes");
 	mShapeRenderer2d = std::make_unique<gfx::ShapeRenderer2d>(*mRenderingDevice);

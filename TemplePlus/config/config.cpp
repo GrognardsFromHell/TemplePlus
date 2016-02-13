@@ -125,8 +125,9 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(skipLegal),
 	//CONF_BOOL(engineEnhancements),
 	//CONF_BOOL(editor),
-	CONF_BOOL(useDirect3d9Ex),
 	CONF_BOOL(windowed),
+	CONF_BOOL(antialiasing),
+	CONF_BOOL(softShadows),
 	CONF_BOOL(noSound),
 	CONF_BOOL(featPrereqWarnings),
 	CONF_BOOL(spellAlreadyKnownWarnings),
@@ -151,7 +152,7 @@ static ConfigSetting configSettings[] = {
 	CONF_WSTRING(toeeDir),
 	CONF_INT(sectorCacheSize),
 	CONF_INT(screenshotQuality),
-	CONF_BOOL(debugPartSys)
+	CONF_BOOL(debugPartSys),
 };
 
 void TemplePlusConfig::Load() {
@@ -192,6 +193,14 @@ void TemplePlusConfig::Save() {
 	}
 
 	ini.save();
+}
+
+std::string TemplePlusConfig::GetPath() {
+	return ini.filename;
+}
+
+void TemplePlusConfig::SetPath(const std::string& path) {
+	ini.filename = path;
 }
 
 void TemplePlusConfig::AddVanillaSetting(const std::string& name, 

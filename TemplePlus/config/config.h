@@ -34,7 +34,7 @@ struct TemplePlusConfig
 	bool skipLegal = true;
 	bool engineEnhancements = true;
 	bool pathfindingDebugMode = false;
-	bool useDirect3d9Ex = true;
+	bool softShadows = true;
 	bool windowed = true;
 	bool lockCursor = true; // When in fullscreen, lock cursor
 	int windowWidth = 1024;
@@ -81,6 +81,9 @@ struct TemplePlusConfig
 
 	void Load();
 	void Save();
+
+	std::string GetPath();
+	void SetPath(const std::string &path);
 	
 };
 
