@@ -5,6 +5,7 @@
 #include "critter.h"
 #include "gamesystems/objects/objsystem.h"
 #include "gamesystems/gamesystems.h"
+#include "util/fixes.h"
 
 InventorySystem inventory;
 
@@ -26,6 +27,64 @@ struct InventorySystemAddresses : temple::AddressTable
 		
 	}
 } addresses;
+
+static class InventoryHooks : public TempleFix {
+public: 
+	const char* name() override { 
+		return "Inventory Hooks";
+	} 
+	
+	void apply() override 	{
+		// PoopItems
+		replaceFunction<void (objHndl, int)>(0x1006DA00, [](objHndl obj, int unflagNoTransfer)	{
+			auto objType = objects.GetType(obj);
+			auto invenField = inventory.GetInventoryListField(obj);
+			obj_f invenNumField = obj_f_critter_inventory_num;
+			
+			if (objType == obj_t_container){
+				auto conFlags = objects.getInt32(obj, obj_f_container_flags);
+				if (conFlags & OCOF_INVEN_SPAWN_ONCE){
+					inventory.SpawnInvenSourceItems(obj);
+				}
+				invenNumField = obj_f_container_inventory_num;
+			} 
+			else{
+				if (objType <= obj_t_generic || objType > obj_t_npc)
+					return;
+			}
+
+			auto invenNum = objects.getInt32(obj, invenNumField);
+			auto invenNumActualSize= objSystem->GetObject(obj)->GetObjectIdArray(invenField).GetSize();
+			if (invenNum != invenNumActualSize)	{
+				logger->debug("Inventory array size for {} ({}) does not equal associated num field on PoopItems. Arraysize: {}, numfield: {}", description.getDisplayName(obj), objSystem->GetObject(obj)->id.ToString(), invenNumActualSize, invenNum);
+				
+			}
+
+			auto objLoc = objects.GetLocation(obj);
+			auto moveObj = temple::GetPointer<void(objHndl, locXY)>(0x100252D0);
+			for (int i = invenNumActualSize - 1; i >= 0 ;i-- ){
+				auto item = objects.getArrayFieldObj(obj, invenField, i);
+				if (!item)
+					continue;
+				auto spFlags = objects.getInt32(item, obj_f_spell_flags);
+				auto itemFlags = objects.getInt32(item, obj_f_item_flags);
+				inventory.ForceRemove(item, obj);
+				if ( (spFlags & SpellFlags::SF_4000) || itemFlags & (OIF_NO_DROP | OIF_NO_DISPLAY) || (itemFlags & OIF_NO_LOOT)){
+					
+					moveObj(item, objLoc);
+					objects.Destroy(item);
+				} else if ( unflagNoTransfer)
+				{
+					objects.setInt32(item, obj_f_item_flags, itemFlags & ~OIF_NO_TRANSFER);
+					moveObj(item, objLoc);
+				} else
+				{
+					moveObj(item, objLoc);
+				}
+			}
+		});
+	};
+} hooks;
 
 objHndl InventorySystem::FindItemByName(objHndl container, int nameId) {
 	return _FindItemByName(container, nameId);

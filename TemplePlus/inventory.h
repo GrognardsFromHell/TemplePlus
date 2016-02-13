@@ -44,12 +44,12 @@ struct InventorySystem : temple::AddressTable
 	int ItemUnwieldByIdx(objHndl obj, int i);
 	void TransferWithFlags(objHndl item, objHndl receiver, int invenInt, char flags, objHndl bag);
 	void ItemPlaceInIdx(objHndl item, int idx);
+	
 	/*
-		0 - light weapon; 1 - can wield one handed; 2 - must wield two handed; 3 (???)
-	*/
+			0 - light weapon; 1 - can wield one handed; 2 - must wield two handed; 3 (???)
+		*/
 	int (__cdecl *GetWieldType)(objHndl wielder, objHndl item);
 	static obj_f GetInventoryListField(objHndl objHnd);
-
 	/*
 		Identifies all items held or contained within the given parent.
 	*/
@@ -74,6 +74,9 @@ struct InventorySystem : temple::AddressTable
 	// When equipped, which bone of the parent obj does this item attach to?
 	const std::string &GetAttachBone(objHndl item);
 
+	// spawn the items for this object according to invensource.mes
+	int (__cdecl*SpawnInvenSourceItems)(objHndl obj);
+
 	InventorySystem()
 	{
 		rebase(GetSubstituteInventory, 0x1007F5B0);
@@ -97,6 +100,8 @@ struct InventorySystem : temple::AddressTable
 		rebase(_ItemRemove,  0x10069F60);
 		
 		rebase(_ItemDrop,	 0x1006AA60);
+
+		rebase(SpawnInvenSourceItems, 0x1006D3D0);
 	}
 
 private:
