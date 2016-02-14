@@ -81,7 +81,7 @@ GameSystems::GameSystems(TigInitializer& tig) : mTig(tig) {
 	mConfig.height = tig.GetConfig().height;
 	mConfig.field_10 = temple::GetPointer(0x10002530); // Callback 1
 	mConfig.renderfunc = temple::GetPointer(0x10002650); // Callback 1
-	mConfig.bufferstuffIdx = mTigBuffer.bufferIdx();
+	mConfig.viewportId = mTigBuffer.bufferIdx();
 
 	config.AddVanillaSetting("difficulty", "1", gameSystemInitTable.DifficultyChanged);
 	gameSystemInitTable.DifficultyChanged(); // Read initial setting
@@ -542,13 +542,13 @@ void GameSystems::ResizeScreen(int w, int h) {
 	scratchBufferRect->width = w;
 	scratchBufferRect->height = h;
 
-	auto windowBufferStuffId = gameSystemInitTable.gameSystemConf->bufferstuffIdx;
+	auto viewportId = gameSystemInitTable.gameSystemConf->viewportId;
 
 	// I do not think that the scratchbuffer is used in any way
 	// rebuild_scratchbuffer(&resizeargs);
 	*gameSystemInitTable.scratchBuffer = nullptr;
 
-	ui.ResizeScreen(windowBufferStuffId, w, h);
+	ui.ResizeScreen(viewportId, w, h);
 
 }
 

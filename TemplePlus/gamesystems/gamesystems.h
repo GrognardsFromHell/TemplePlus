@@ -16,7 +16,7 @@ struct GameSystemConf {
 	int editor;
 	int width;
 	int height;
-	int bufferstuffIdx;
+	int viewportId;
 	void *field_10;
 	void *renderfunc;
 };

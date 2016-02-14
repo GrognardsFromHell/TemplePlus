@@ -80,7 +80,18 @@ MapObjectRenderer::MapObjectRenderer(GameSystems& gameSystems,
 			break;
 		}
 	});
-	mShadowType = (ShadowType)config.GetVanillaInt("shadow_type");
+
+	switch (config.GetVanillaInt("shadow_type")) {
+	case 0:
+		mShadowType = ShadowType::Blob;
+		break;
+	case 1:
+		mShadowType = ShadowType::Geometry;
+		break;
+	case 2:
+		mShadowType = ShadowType::ShadowMap;
+		break;
+	}
 
 	// Load the weapon glow effect files
 	mGlowMaterials[0] = mdfFactory.LoadMaterial("art/meshes/wg_magic.mdf");
@@ -1045,7 +1056,8 @@ void RenderFix::SetShadowType(int type) {
 }
 
 int RenderFix::GetShadowType() {
-	return config.GetVanillaInt("shadow_type");
+	int shadowType = config.GetVanillaInt("shadow_type");
+	return shadowType;
 }
 
 void RenderFix::SetShowHighlight(BOOL enable)

@@ -6,6 +6,7 @@
 #include "legacymapsystems.h"
 
 #include "gamesystems/map/sector.h"
+#include "gamesystems.h"
 
 //*****************************************************************************
 //* Scroll
@@ -216,14 +217,61 @@ const std::string &ProtoSystem::GetName() const {
 //*****************************************************************************
 
 ObjectSystem::ObjectSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x10021670);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system Object");
+
+	// This is used by obj_list_vicinity
+	static auto& viewportId = temple::GetRef<int>(0x104C7F74);
+	viewportId = config.viewportId;
+
+	// Still evaluated in advancetime
+	static auto& always0 = temple::GetRef<int>(0x104C7F8C);
+	always0 = 0;
+
+	static auto& isEditor = temple::GetRef<BOOL>(0x10788098);
+	isEditor = FALSE;
+
+	static auto& screenRect = temple::GetRef<TigRect>(0x10307B90);
+	screenRect.x = 0;
+	screenRect.y = 0;
+	screenRect.width = config.width;
+	screenRect.height = config.height;
+
+	// This is still used in raycasting...
+	static auto visibleTypes = temple::GetPointer<BOOL>(0x10427EF0); // 17 entries
+	for (size_t i = 0; i < 17; ++i) {
+		visibleTypes[i] = TRUE;
 	}
+
+	static auto& objFlagsHidden = temple::GetRef<uint32_t>(0x10527F98);
+	objFlagsHidden = OF_OFF | OF_DESTROYED;
+
+	static auto& objFlagsDontDraw = temple::GetRef<uint32_t>(0x104C7F70);
+	objFlagsDontDraw = OF_DONTDRAW;
+
+	// Looks like an Arcanum leftover
+	static auto& objLighting = temple::GetRef<int>(0x10788234);
+	objLighting = 1;
+
+	static auto& showObjHighlight = temple::GetRef<BOOL>(0x10788CEC);
+	showObjHighlight = FALSE;
+
+	static auto init_astar_result_cache = temple::GetPointer<void()>(0x1003ff00);
+	init_astar_result_cache();
 }
 ObjectSystem::~ObjectSystem() {
-	auto shutdown = temple::GetPointer<void()>(0x10020da0);
-	shutdown();
+	// Was @ 0x10020da0
+	
+	/*
+		Notes:
+		The trap.mes file is never used
+		The materials.mes file is now processed elsewhere and the associated
+		index table is also unused.
+		The shadow map buffers are also handled elsewhere.
+	*/
+	Reset();
+	
+	// I do not believe this is used in any way
+	static auto map_obj_free_rendercolors_pool = temple::GetPointer<int()>(0x100201a0);
+	map_obj_free_rendercolors_pool();
 }
 void ObjectSystem::ResetBuffers(const RebuildBufferInfo& rebuildInfo) {
 	auto resetBuffers = temple::GetPointer<void(const RebuildBufferInfo*)>(0x1001d2b0);
