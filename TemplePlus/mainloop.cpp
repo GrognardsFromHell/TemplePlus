@@ -272,22 +272,6 @@ void GameLoop::DoMouseScrolling() {
 		SetScrollDirection(scrollDir);
 		return;
 	}
-		
-	auto sceneRect = mTig.GetRenderingDevice().GetSceneRect();
-	auto sceneScale = mTig.GetRenderingDevice().GetSceneScale();
-
-	mousePt.x = (int)round(mousePt.x * sceneScale);
-	mousePt.y = (int)round(mousePt.y * sceneScale);
-
-	RECT rect{
-		(int) sceneRect.x,
-		(int) sceneRect.y,
-		(int) (sceneRect.x + sceneRect.z),
-		(int) (sceneRect.y + sceneRect.w)
-	};
-
-	mousePt.x += rect.left;
-	mousePt.y += rect.top;
 	
 	int scrollMarginV = 2;
 	int scrollMarginH = 2;
@@ -297,30 +281,32 @@ void GameLoop::DoMouseScrolling() {
 		scrollMarginH = 7;
 	}
 
+	auto renderWidth = mTig.GetRenderingDevice().GetRenderWidth();
+	auto renderHeight = mTig.GetRenderingDevice().GetRenderHeight();
 
-	if (mousePt.x < rect.left + scrollMarginH) // scroll left
+	if (mousePt.x <= scrollMarginH) // scroll left
 	{
-		if (mousePt.y < rect.top + scrollMarginV) // scroll upper left
+		if (mousePt.y <= scrollMarginV) // scroll upper left
 			scrollDir = 7;
-		else if (mousePt.y > rect.bottom - scrollMarginV) // scroll bottom left
+		else if (mousePt.y >= renderHeight - scrollMarginV) // scroll bottom left
 			scrollDir = 5;
 		else
 			scrollDir = 6;
 	} 
-	else if (mousePt.x > rect.right - scrollMarginH) // scroll right
+	else if (mousePt.x >= renderWidth - scrollMarginH) // scroll right
 	{
-		if (mousePt.y < rect.top + scrollMarginV) // scroll top right
+		if (mousePt.y <= scrollMarginV) // scroll top right
 			scrollDir = 1;
-		else if (mousePt.y > rect.bottom - scrollMarginV) // scroll bottom right
+		else if (mousePt.y >= renderHeight - scrollMarginV) // scroll bottom right
 			scrollDir = 3;
 		else
 			scrollDir = 2;
 	}
 	else // scroll vertical only
 	{
-		if (mousePt.y < rect.top + scrollMarginV) // scroll up
+		if (mousePt.y <= scrollMarginV) // scroll up
 			scrollDir = 0;
-		else if (mousePt.y > rect.bottom - scrollMarginV) // scroll down
+		else if (mousePt.y >= renderHeight - scrollMarginV) // scroll down
 			scrollDir = 4;
 	}
 		

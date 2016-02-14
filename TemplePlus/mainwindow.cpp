@@ -48,13 +48,12 @@ void MainWindow::LockCursor() const {
 
 	auto &device(tig->GetRenderingDevice());
 
-
-	XMFLOAT4 sceneRect = device.GetSceneRect();
-	RECT rect = {
+	auto sceneRect = device.GetSceneRect();
+	RECT rect {
 		(int)sceneRect.x,
 		(int)sceneRect.y,
-		(int)sceneRect.z,
-		(int)sceneRect.w,
+		(int)(sceneRect.x + sceneRect.z),
+		(int)(sceneRect.y + sceneRect.w)
 	};
 	if (isForeground) {
 		ClipCursor(&rect);
@@ -286,21 +285,6 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		tigMsg.arg1 = 1;
 		msgFuncs.Enqueue(&tigMsg);
 		return 0;
-		// Does not seem to be used:
-		/*case WM_CREATE:
-		GetClientRect(hWnd, &rect);
-		ClientToScreen(hWnd, (LPPOINT)&rect);
-		ClientToScreen(hWnd, (LPPOINT)&rect.right);
-		refresh_screen_rect(&rect);
-		break;
-		case WM_MOVE:
-		GetClientRect(hWnd, &rect);
-		ClientToScreen(hWnd, (LPPOINT)&rect);
-		ClientToScreen(hWnd, (LPPOINT)&rect.right);
-		refresh_screen_rect(&rect);
-		get_window_rect(&rect);
-		nullsub_1();
-		goto LABEL_40;*/
 	case WM_ERASEBKGND:
 		return 0;
 	case WM_MOUSEWHEEL:
@@ -336,9 +320,12 @@ void MainWindow::UpdateMousePos(int xAbs, int yAbs, int wheelDelta) {
 	auto x = xAbs - sceneRect.x;
 	auto y = yAbs - sceneRect.y;
 
+	auto orgX = xAbs;
+	auto orgY = yAbs;
+	
 	// Scale it to the coordinate system that was used to render the scene
-	xAbs = (int)round(x / device.GetSceneScale());
-	yAbs = (int)round(y / device.GetSceneScale());
+	xAbs = (int)(x / device.GetSceneScale());
+	yAbs = (int)(y / device.GetSceneScale());
 
 	// Account for a resized screen
 	if (xAbs < 0 || yAbs < 0 || xAbs >= device.GetRenderWidth() || yAbs >= device.GetRenderHeight())
