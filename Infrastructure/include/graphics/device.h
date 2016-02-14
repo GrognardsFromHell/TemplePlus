@@ -73,7 +73,6 @@ namespace gfx {
 		The back buffer size of the D3D context. This is not
 		necessarily the size at which ToEE is rendered:
 		*/
-		void SetBackBufferSize(int w, int h);
 		void SetRenderSize(int w, int h);
 
 		int GetRenderWidth() const {

@@ -43,8 +43,16 @@ MovieMaterial::MovieMaterial(RenderingDevice& device)
 void MovieMaterial::Bind() {
 	mDevice.SetMaterial(mMaterial);
 
+	// Can't use the predefined UI projection used for the game scene, since we
+	// are using full-screen rendering
+	XMFLOAT4X4 movieProjection;
+	XMStoreFloat4x4(
+		&movieProjection,
+		XMMatrixOrthographicOffCenterLH(0, mDevice.GetScreenWidthF(), mDevice.GetScreenHeightF(), 0, 1, 0)
+		);
+
 	auto device(mDevice.GetDevice());
-	device->SetVertexShaderConstantF(0, &mDevice.GetCamera().GetUiProjection()._11, 4);
+	device->SetVertexShaderConstantF(0, &movieProjection._11, 4);
 }
 
 Material MovieMaterial::CreateMaterial(RenderingDevice& device) {
@@ -183,11 +191,14 @@ private:
 		UiRenderer::PushFont(mLine->fontname, 0, 0);
 
 		auto extents = UiRenderer::MeasureTextSize(mLine->text, mSubtitleStyle, 700, 150);
-
+		
 		extents.x = (mDevice.GetScreenWidth() - extents.width) / 2;
 		extents.y = mDevice.GetScreenHeight() - mDevice.GetScreenHeight() / 10;
 
+		// The text renderer uses the standard UI projection matrix, which we need to extend to full screen size here
+		mDevice.GetCamera().SetScreenWidth(mDevice.GetScreenWidthF(), mDevice.GetScreenHeightF());
 		UiRenderer::RenderText(mLine->text, extents, mSubtitleStyle);
+		mDevice.GetCamera().SetScreenWidth((float) mDevice.GetRenderWidth(), (float) mDevice.GetRenderHeight());
 
 		UiRenderer::PopFont();
 
@@ -238,6 +249,10 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 		logger->error("Unable to create texture for bink video");
 		return 0;
 	}
+
+	// Reset the render target to full screen
+	D3DLOG(d3dDevice->SetRenderTarget(0, device.GetBackBuffer()));
+	D3DLOG(d3dDevice->SetDepthStencilSurface(device.GetBackBufferDepthStencil()));
 
 	// Clear screen with black color and present immediately
 	d3dDevice->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0, 0);
@@ -314,6 +329,10 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 	*/
 	movieFuncs.MovieIsPlaying = false;
 	d3dDevice->ShowCursor(TRUE);
+
+	// Reset the render target to game scene
+	D3DLOG(d3dDevice->SetRenderTarget(0, device.GetRenderSurface()));
+	D3DLOG(d3dDevice->SetDepthStencilSurface(device.GetRenderDepthStencilSurface()));
 
 	return 0;
 }

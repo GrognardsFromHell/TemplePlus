@@ -204,7 +204,12 @@ void GameLoop::RenderFrame() {
 	D3DLOG(d3dDevice->SetDepthStencilSurface(device.GetBackBufferDepthStencil()));
 
 	// Copy from the actual render target to the back buffer and scale / position accordingly
-	RECT destRect{ 0, 0, device.GetRenderWidth(), device.GetRenderHeight() };
+	auto &sceneRect = device.GetSceneRect();
+	RECT destRect;
+	destRect.left = (int) sceneRect.x;
+	destRect.top = (int) sceneRect.y;
+	destRect.right = (int)(sceneRect.x + sceneRect.z);
+	destRect.bottom = (int)(sceneRect.y + sceneRect.w);
 	d3dDevice->StretchRect(
 		device.GetRenderSurface(),
 		nullptr,
@@ -277,8 +282,8 @@ void GameLoop::DoMouseScrolling() {
 	RECT rect{
 		(int) sceneRect.x,
 		(int) sceneRect.y,
-		(int) sceneRect.z,
-		(int) sceneRect.w
+		(int) (sceneRect.x + sceneRect.z),
+		(int) (sceneRect.y + sceneRect.w)
 	};
 
 	mousePt.x += rect.left;

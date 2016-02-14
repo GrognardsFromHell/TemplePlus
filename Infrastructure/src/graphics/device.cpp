@@ -517,10 +517,6 @@ namespace gfx {
 		return std::make_shared<IndexBuffer>(result, data.size());
 	}
 
-	void RenderingDevice::SetBackBufferSize(int w, int h) {
-		
-	}
-
 	void RenderingDevice::SetRenderSize(int w, int h) {
 
 		mRenderWidth = w;
@@ -528,8 +524,8 @@ namespace gfx {
 
 		mCamera.SetScreenWidth((float) mRenderWidth, (float) mRenderHeight);
 
-		auto widthFactor = mBackBufferDesc.Width / (float)mRenderWidth;
-		auto heightFactor = mBackBufferDesc.Height / (float)mRenderHeight;
+		auto widthFactor = GetScreenWidthF() / (float)mRenderWidth;
+		auto heightFactor = GetScreenHeightF() / (float)mRenderHeight;
 		mSceneScale = std::min<float>(widthFactor, heightFactor);
 
 		// Calculate the rectangle on the back buffer where the scene will

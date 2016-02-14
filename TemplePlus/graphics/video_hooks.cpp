@@ -133,6 +133,7 @@ void VideoFixes::apply() {
 	
 	// CreateShadowMapBuffer (replaced with nothing)
 	replaceFunction<int()>(0x1001d390, []() {
+		__debugbreak();
 		return 0;
 	});
 
