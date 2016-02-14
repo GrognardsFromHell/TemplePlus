@@ -337,11 +337,13 @@ void AasRenderer::RenderShadowMapShadow(gsl::array_view<gfx::AnimatedModel*> mod
 	}
 
 	CComPtr<IDirect3DSurface9> currentTarget;
-	mDevice.GetDevice()->GetRenderTarget(0, &currentTarget);
-	mDevice.GetDevice()->SetRenderTarget(0, mShadowTarget->GetSurface());
+	D3DLOG(mDevice.GetDevice()->GetRenderTarget(0, &currentTarget));
+	D3DLOG(mDevice.GetDevice()->SetRenderTarget(0, mShadowTarget->GetSurface()));
+	CComPtr<IDirect3DSurface9> depthStencil;
+	mDevice.GetDevice()->GetDepthStencilSurface(&depthStencil);
+	mDevice.GetDevice()->SetDepthStencilSurface(nullptr);
 
 	mDevice.SetMaterial(mShadowMapMaterial);
-
 	// Set shader params
 	XMFLOAT4 floats{ shadowMapWorldX, shadowMapWorldZ, shadowMapWorldWidth, shadowMapWorldHeight };
 	mDevice.GetDevice()->SetVertexShaderConstantF(0, &floats.x, 1);
@@ -352,23 +354,24 @@ void AasRenderer::RenderShadowMapShadow(gsl::array_view<gfx::AnimatedModel*> mod
 	XMStoreFloat4(&floats, PackedVector::XMLoadColor(&color));
 	mDevice.GetDevice()->SetVertexShaderConstantF(4, &floats.x, 1);
 
-	mDevice.GetDevice()->Clear(0, nullptr, D3DCLEAR_TARGET, 0, 0, 0);
+	D3DLOG(mDevice.GetDevice()->Clear(0, nullptr, D3DCLEAR_TARGET, 0, 0, 0));
 
 	for (size_t i = 0; i < models.size(); ++i) {
 		RenderWithoutMaterial(models[i], *modelParams[i]);
 	}
-
+		
 	if (softShadows) {
 		mDevice.SetMaterial(mGaussBlurHor);
-		mDevice.GetDevice()->SetRenderTarget(0, mShadowTargetTmp->GetSurface());
+		D3DLOG(mDevice.GetDevice()->SetRenderTarget(0, mShadowTargetTmp->GetSurface()));
 		mShapeRenderer2d.DrawFullScreenQuad();
 
 		mDevice.SetMaterial(mGaussBlurVer);
-		mDevice.GetDevice()->SetRenderTarget(0, mShadowTarget->GetSurface());
+		D3DLOG(mDevice.GetDevice()->SetRenderTarget(0, mShadowTarget->GetSurface()));
 		mShapeRenderer2d.DrawFullScreenQuad();
 	}
-
-	mDevice.GetDevice()->SetRenderTarget(0, currentTarget);
+	
+	D3DLOG(mDevice.GetDevice()->SetRenderTarget(0, currentTarget));
+	D3DLOG(mDevice.GetDevice()->SetDepthStencilSurface(depthStencil));
 
 	auto shadowMapWorldBottom = shadowMapWorldZ + shadowMapWorldHeight;
 	auto shadowMapWorldRight = shadowMapWorldX + shadowMapWorldWidth;
