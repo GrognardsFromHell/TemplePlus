@@ -649,7 +649,7 @@ void TimeEventSystem::ScheduleNow(TimeEvent & evt)
 }
 
 GameTime TimeEventSystem::GetTime() {
-	static auto GameTime_Get = temple::GetPointer<GameTime()>(0x1005fc90);
+	static auto GameTime_Get = temple::GetPointer<uint64_t()>(0x1005fc90);
 	return GameTime_Get();
 }
 

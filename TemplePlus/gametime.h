@@ -8,8 +8,8 @@ struct GameTime {
 	int timeInMs = 0;
 
 	GameTime(uint64_t t) {
-		timeInDays = (t >> 32) & 0xFFFFFFFF;
-		timeInMs = t & 0xFFFFFFFF;
+		timeInMs = (t >> 32) & 0xFFFFFFFF;
+		timeInDays = t & 0xFFFFFFFF;
 	}
 
 	GameTime() {

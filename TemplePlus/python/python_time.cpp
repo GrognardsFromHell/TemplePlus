@@ -3,6 +3,7 @@
 #include "python_time.h"
 #include <temple/dll.h>
 #include "gamesystems/timeevents.h"
+#include <gamesystems/gamesystems.h>
 
 static PyTypeObject *GetPyTimeStampType();
 
@@ -38,10 +39,7 @@ static struct PyTimeStampAddresses : temple::AddressTable {
 	
 	uint64_t (__cdecl *GameElapsed)(const GameTime *gameTime);
 
-	uint64_t (__cdecl *GameTimeNow)();
-
 	PyTimeStampAddresses() {
-		rebase(GameTimeNow, 0x1005FC90);
 		rebase(GameElapsed, 0x1005FCA0);
 		rebase(GameInSeconds, 0x100612B0);
 		rebase(GameInDays, 0x1005FDE0);
@@ -165,8 +163,8 @@ static PyTypeObject *GetPyTimeStampType() {
 }
 
 PyObject* PyTimeStamp_Create() {
-	auto obj = PyObject_New(PyTimeStampObject, &PyTimeStampType);
-	obj->time = pyTimeStampAddresses.GameTimeNow();
+	auto obj = PyObject_New(PyTimeStampObject, &PyTimeStampType);	
+	obj->time = gameSystems->GetTimeEvent().GetTime();
 	return (PyObject*)obj;
 }
 
