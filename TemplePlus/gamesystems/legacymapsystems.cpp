@@ -7,6 +7,8 @@
 
 #include "gamesystems/map/sector.h"
 #include "gamesystems.h"
+#include <tig/tig_tabparser.h>
+#include "objects/objsystem.h"
 
 //*****************************************************************************
 //* Scroll
@@ -197,16 +199,60 @@ const std::string &ObjectNodeSystem::GetName() const {
 //* Proto
 //*****************************************************************************
 
+struct ProtoIdRange {
+	uint16_t start;
+	uint16_t end;
+};
+
+static ProtoIdRange sProtoIdRanges[17] = {
+	{ 0, 999 },
+	{ 1000, 1999 },
+	{ 2000, 2999 },
+	{ 3000, 3999 },
+	{ 4000, 4999 },
+	{ 5000, 5999 },
+	{ 6000, 6999 },
+	{ 7000, 7999 },
+	{ 8000, 8999 },
+	{ 9000, 9999 },
+	{ 10000, 10999 },
+	{ 11000, 11999 },
+	{ 12000, 12999 },
+	{ 13000, 13999 },
+	{ 14000, 14999 },
+	{ 15000, 15999 },
+	{ 16000, 16999 },
+};
+
 ProtoSystem::ProtoSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x1003b7a0);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system Proto");
+	static auto protos_tab_parse_line = temple::GetPointer<TigTabLineParser>(0x1003b640);
+
+	TigTabParser tabParser;
+	tabParser.Init(protos_tab_parse_line);
+
+	if (tabParser.Open("rules\\protos.tab")) {
+		throw TempleException("Unable to open rules\\protos.tab");
 	}
+
+	tabParser.Process();
+	tabParser.Close();
 }
+
 ProtoSystem::~ProtoSystem() {
-	auto shutdown = temple::GetPointer<void()>(0x1003b9b0);
-	shutdown();
+
+	// Remove the prototype objects for each type
+	for (auto &range : sProtoIdRanges) {
+		for (auto protoId = range.start; protoId <= range.end; ++protoId) {
+			auto id = ObjectId::CreatePrototype(protoId);
+			auto handle = objSystem->GetHandleById(id);
+			if (handle) {
+				objSystem->Remove(handle);
+			}
+		}
+	}
+	
 }
+
 const std::string &ProtoSystem::GetName() const {
 	static std::string name("Proto");
 	return name;
