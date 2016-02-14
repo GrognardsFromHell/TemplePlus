@@ -128,8 +128,8 @@ void FogOfWarRenderer::Render() {
 	// Use only the relevant subportion of the texture
 	auto umin = 2.5f / (float)mBlurredFogWidth;
 	auto vmin = 2.5f / (float)mBlurredFogHeight;
-	auto umax = mNumSubtilesX / (float)mBlurredFogWidth;
-	auto vmax = mNumSubtilesY / (float)mBlurredFogHeight;
+	auto umax = (mNumSubtilesX - 0.5f) / (float)mBlurredFogWidth;
+	auto vmax = (mNumSubtilesY - 0.5f) / (float)mBlurredFogHeight;
 
 	FogOfWarVertex mVertices[4];
 	mVertices[0].pos.x = (mFogOriginX * 3) * INCH_PER_SUBTILE;
