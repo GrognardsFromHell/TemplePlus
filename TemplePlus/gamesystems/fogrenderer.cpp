@@ -21,8 +21,8 @@ FogOfWarRenderer::FogOfWarRenderer(MdfMaterialFactory& mdfFactory, RenderingDevi
 	  mNumSubtilesX(temple::GetRef<uint32_t>(0x10820458)),
 	  mNumSubtilesY(temple::GetRef<uint32_t>(0x10824490)) {
 
-	mBlurredFogWidth = (mNumSubtilesX / 32) * 32 + 32; // Has to be a multiple of 4
-	mBlurredFogHeight = (mNumSubtilesY / 32) * 32 + 32;
+	mBlurredFogWidth = (mNumSubtilesX / 4) * 4 + 8;
+	mBlurredFogHeight = (mNumSubtilesY / 4) * 4 + 8;
 
 	mBlurredFogTexture = mDevice.CreateDynamicTexture(D3DFMT_A8, mBlurredFogWidth, mBlurredFogHeight);
 	mBlurredFog.resize(mBlurredFogWidth * mBlurredFogHeight);
@@ -36,17 +36,18 @@ FogOfWarRenderer::FogOfWarRenderer(MdfMaterialFactory& mdfFactory, RenderingDevi
 	DepthStencilState depthStencilState;
 	depthStencilState.depthEnable = false;
 	RasterizerState rasterizerState;
-	// rasterizerState.cullMode = D3DCULL_NONE;
 	SamplerState samplerState;
 	samplerState.addressU = D3DTADDRESS_CLAMP;
 	samplerState.addressV = D3DTADDRESS_CLAMP;
+	samplerState.magFilter = D3DTEXF_LINEAR;
+	samplerState.minFilter = D3DTEXF_LINEAR;
 	std::vector<MaterialSamplerBinding> samplers{
 		MaterialSamplerBinding(mBlurredFogTexture, samplerState)
 	};
 
 	mMaterial = std::make_unique<Material>(blendState, depthStencilState, rasterizerState, samplers, vs, ps);
 
-	uint16_t indices[6] { 0, 2, 1, 2, 0, 3 };
+	uint16_t indices[6]{0, 2, 1, 2, 0, 3};
 	mIndexBuffer = device.CreateIndexBuffer(indices);
 	mVertexBuffer = device.CreateEmptyVertexBuffer(sizeof(FogOfWarVertex) * 4);
 
@@ -78,13 +79,13 @@ void FogOfWarRenderer::Render() {
 	static auto sOpaquePattern = FogBlurKernel::Create(0xFF);
 	static auto sHalfTransparentPattern = FogBlurKernel::Create(0xA0);
 
-	static auto& fogCheckData = temple::GetRef<uint8_t*>(0x108A5498);	
-	
-	// Get [1,1] of the subtile data
-	auto fogCheckSubtile = &fogCheckData[mNumSubtilesX + 1];
+	static auto& fogCheckData = temple::GetRef<uint8_t*>(0x108A5498);
 
-	for (size_t y = 1; y < mNumSubtilesY - 1; y++) {
-		for (size_t x = 1; x < mNumSubtilesX - 1; x++) {
+	// Get [0,0] of the subtile data
+	auto fogCheckSubtile = &fogCheckData[0];
+
+	for (size_t y = 0; y < mNumSubtilesY; y++) {
+		for (size_t x = 0; x < mNumSubtilesX; x++) {
 			auto fogState = *fogCheckSubtile;
 
 			// Bit 2 -> Currently in LoS of the party
@@ -112,7 +113,7 @@ void FogOfWarRenderer::Render() {
 		}
 
 		// Skips the last subtile of the row and the first of the next row
-		fogCheckSubtile += 2;
+		// fogCheckSubtile += 2;
 
 	}
 
@@ -124,27 +125,33 @@ void FogOfWarRenderer::Render() {
 
 	mBlurredFogTexture->Update<uint8_t>({&mBlurredFog[0], mBlurredFog.size()});
 
+	// Use only the relevant subportion of the texture
+	auto umin = 2.5f / (float)mBlurredFogWidth;
+	auto vmin = 2.5f / (float)mBlurredFogHeight;
+	auto umax = mNumSubtilesX / (float)mBlurredFogWidth;
+	auto vmax = mNumSubtilesY / (float)mBlurredFogHeight;
+
 	FogOfWarVertex mVertices[4];
 	mVertices[0].pos.x = (mFogOriginX * 3) * INCH_PER_SUBTILE;
 	mVertices[0].pos.y = 0;
 	mVertices[0].pos.z = (mFogOriginY * 3) * INCH_PER_SUBTILE;
-	mVertices[0].uv = {0, 0};
+	mVertices[0].uv = {umin, vmin};
 
-	mVertices[1].pos.x = (mFogOriginX * 3 + mBlurredFogWidth) * INCH_PER_SUBTILE;
+	mVertices[1].pos.x = (mFogOriginX * 3 + mNumSubtilesX) * INCH_PER_SUBTILE;
 	mVertices[1].pos.y = 0;
 	mVertices[1].pos.z = (mFogOriginY * 3) * INCH_PER_SUBTILE;
-	mVertices[1].uv = {1, 0};
+	mVertices[1].uv = {umax, vmin};
 
-	mVertices[2].pos.x = (mFogOriginX * 3 + mBlurredFogWidth) * INCH_PER_SUBTILE;
+	mVertices[2].pos.x = (mFogOriginX * 3 + mNumSubtilesX) * INCH_PER_SUBTILE;
 	mVertices[2].pos.y = 0;
-	mVertices[2].pos.z = (mFogOriginY * 3 + mBlurredFogHeight) * INCH_PER_SUBTILE;
-	mVertices[2].uv = {1, 1};
+	mVertices[2].pos.z = (mFogOriginY * 3 + mNumSubtilesY) * INCH_PER_SUBTILE;
+	mVertices[2].uv = {umax, vmax};
 
 	mVertices[3].pos.x = (mFogOriginX * 3) * INCH_PER_SUBTILE;
 	mVertices[3].pos.y = 0;
-	mVertices[3].pos.z = (mFogOriginY * 3 + mBlurredFogHeight) * INCH_PER_SUBTILE;
-	mVertices[3].uv = {0, 1};
-	
+	mVertices[3].pos.z = (mFogOriginY * 3 + mNumSubtilesY) * INCH_PER_SUBTILE;
+	mVertices[3].uv = {umin, vmax};
+
 	mVertexBuffer->Update<FogOfWarVertex>(mVertices);
 
 	mBufferBinding.Bind();
@@ -153,7 +160,7 @@ void FogOfWarRenderer::Render() {
 	mDevice.SetMaterial(*mMaterial);
 	mDevice.SetVertexShaderConstant(0, StandardSlotSemantic::ViewProjMatrix);
 
-	mDevice.GetDevice()->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2); 
+	mDevice.GetDevice()->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
 
 }
 
