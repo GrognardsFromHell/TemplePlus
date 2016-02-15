@@ -335,6 +335,7 @@
     <ClCompile Include="ui\ui_turn_based.cpp" />
     <ClCompile Include="ui\ui_intgame_select.cpp" />
     <ClCompile Include="ui\ui_combat.cpp" />
+    <ClCompile Include="ui\ui_slider.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />

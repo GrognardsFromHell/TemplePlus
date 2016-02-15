@@ -127,6 +127,7 @@ InstallationDir GetInstallationDir(gsl::not_null<bool*> userCancelled) {
 	if (!*userCancelled) {
 		ShowIncompatibilityWarning(toeeDir);
 		config.toeeDir = toeeDir.GetDirectory();
+		config.usingCo8 = toeeDir.IsCo8();
 		config.Save();
 	}
 

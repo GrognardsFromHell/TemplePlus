@@ -34,7 +34,7 @@ public:
 	std::wstring GetNotUsableReason() const;
 	
 	std::wstring GetDllPath() const;
-		
+	bool IsCo8();
 private:
 
 	std::wstring mDirectory;
@@ -53,5 +53,6 @@ private:
 	                      uint32_t address,
 	                      const std::vector<uint8_t>& original,
 	                      const std::vector<uint8_t>& patched);
+
 
 };

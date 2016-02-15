@@ -156,6 +156,7 @@
     <ClCompile Include="ui\ui_combat.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
     <ClCompile Include="ui\ui_intgame_select.cpp" />
+    <ClCompile Include="ui\ui_slider.cpp" />
     <ClCompile Include="ui\ui_turn_based.cpp" />
     <ClCompile Include="ui\ui_townmap.cpp" />
     <ClCompile Include="ui\ui_tutorial.cpp" />
