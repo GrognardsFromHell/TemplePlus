@@ -548,6 +548,8 @@ objHndl ObjSystem::Clone(objHndl handle, locXY location) {
 		clonedChild->SetObjHndl(obj_f_item_parent, result);
 	});
 
+	FindNodeAllocate(result);
+
 	dest->SetDispatcher(nullptr);
 	InitDynamic(dest, result, location);
 	
