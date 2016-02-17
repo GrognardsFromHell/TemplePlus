@@ -297,7 +297,7 @@ void GameObjectBody::WriteFieldToStream(ObjectFieldType type, const void* value,
 	case ObjectFieldType::Obj: 
 		if (value) {
 			stream.WriteUInt8(1);
-			Expects(!reinterpret_cast<const ObjectId*>(value)->IsPersistable());
+			Expects(reinterpret_cast<const ObjectId*>(value)->IsPersistable());
 			stream.WriteObjectId(*(const ObjectId*)value);
 		} else {
 			stream.WriteUInt8(0);
