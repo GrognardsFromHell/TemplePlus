@@ -3,6 +3,7 @@
 #include "mapsystem.h"
 
 #include "config/config.h"
+#include "util/streams.h"
 
 #include <infrastructure/mesparser.h>
 #include <infrastructure/vfs.h>
@@ -1178,26 +1179,18 @@ void MapSystem::SaveMapMobiles() {
 
 	// This file will contain the differences from the mobile object stored in the sector's data files
 	auto diffFilename = fmt::format("{}\\mobile.md", mSectorSaveDir);
-	auto diffFh = vfs->Open(diffFilename.c_str(), "wb");
-	if (!diffFh) {
-		throw TempleException("Unable to open {} for writing.", diffFilename);
-	}
+	auto diffOut = std::make_unique<VfsOutputStream>(diffFilename);
+
+	// This file will contain the dynamic objects that have been created on this map
+	auto dynFilename = fmt::format("{}\\mobile.mdy", mSectorSaveDir);
+	auto dynOut = std::make_unique<VfsOutputStream>(dynFilename);
+
 
 	// This file will contain the object ids of mobile sector objects that have been destroyed
 	auto destrFilename = fmt::format("{}\\mobile.des", mSectorSaveDir);
 	auto destrFh = vfs->Open(destrFilename.c_str(), "ab");
 	if (!destrFh) {
-		vfs->Close(diffFh);
 		throw TempleException("Unable to open {} for writing.", destrFilename);
-	}
-
-	// This file will contain the dynamic objects that have been created on this map
-	auto dynFilename = fmt::format("{}\\mobile.mdy", mSectorSaveDir);
-	auto dynFh = vfs->Open(dynFilename.c_str(), "wb");
-	if (!dynFh) {
-		vfs->Close(destrFh);
-		vfs->Close(diffFh);
-		throw TempleException("Unable to open {} for writing.", dynFilename);
 	}
 	
 	auto prevDestroyedObjs = vfs->Length(destrFh) / sizeof(ObjectId);
@@ -1221,7 +1214,7 @@ void MapSystem::SaveMapMobiles() {
 				return;
 			}
 			// TODO: Replace with proper VFS usage
-			obj.WriteToFile((TioFile*)dynFh);
+			obj.Write(*dynOut);
 			++dynamicObjs;
 			return;
 		}
@@ -1249,18 +1242,18 @@ void MapSystem::SaveMapMobiles() {
 			logger->debug("Writing object {} to diff file ({})", description.getDisplayName(handle),
 				objSystem->GetObject(handle)->id.ToString());
 			// Write the object id followed by a diff record to mobile.mdy
-			vfs->Write(&obj.id, sizeof(obj.id), diffFh);
+			diffOut->WriteObjectId(obj.id);
 
 			// TODO: Replace with proper VFS usage
-			obj.WriteDiffsToFile((TioFile*)diffFh);
+			obj.WriteDiffsToStream(*diffOut);
 			++diffObjs;
 		}
 
 	});
 		
-	vfs->Close(diffFh);
+	diffOut.reset();
 	vfs->Close(destrFh);
-	vfs->Close(dynFh);
+	dynOut.reset();
 
 	logger->info("Saved {} dynamic, {} destroyed ({} previously), and {} mobiles with differences in {}",
 		dynamicObjs, destroyedObjs, prevDestroyedObjs, diffObjs, mSectorSaveDir);

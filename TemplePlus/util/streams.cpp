@@ -3,6 +3,7 @@
 #include "streams.h"
 
 #include <infrastructure/vfs.h>
+#include <tio/tio.h>
 
 void InputStream::CopyTo(OutputStream& out, size_t bytes) {
 
@@ -44,8 +45,16 @@ size_t VfsInputStream::GetPos() const {
 	return vfs->Tell(mHandle);
 }
 
-VfsOutputStream::VfsOutputStream(const std::string& filename) : mFilename(filename) {
-	mHandle = vfs->Open(filename.c_str(), "wb");
+VfsOutputStream::VfsOutputStream(const std::string& filename, bool binary, bool append) : mFilename(filename) {
+	char mode[3] = { 'w', 'b' };
+	if (append) {
+		mode[0] = 'a';
+	}
+	if (!binary) {
+		mode[1] = 't';
+	}
+
+	mHandle = vfs->Open(filename.c_str(), mode);
 	if (!mHandle) {
 		throw TempleException("Cannot open {} for writing.", filename);
 	}
@@ -63,4 +72,28 @@ void VfsOutputStream::WriteRaw(const void* buffer, size_t count) {
 
 size_t VfsOutputStream::GetPos() const {
 	return vfs->Tell(mHandle);
+}
+
+TioOutputStream::TioOutputStream(TioFile* file) : mHandle(file) {
+}
+
+void TioOutputStream::WriteRaw(const void* buffer, size_t count) {
+	if (tio_fwrite(buffer, count, 1, mHandle) != 1) {
+		throw TempleException("Unable to write {} bytes to file.", count);
+	}
+}
+
+size_t TioOutputStream::GetPos() const {
+	return tio_ftell(mHandle);
+}
+
+void MemoryOutputStream::WriteRaw(const void* buffer, size_t count) {
+	auto begin = reinterpret_cast<const uint8_t*>(buffer);
+	auto end = begin + count;
+
+	mBuffer.insert(mBuffer.end(), begin, end);
+}
+
+size_t MemoryOutputStream::GetPos() const {
+	return mBuffer.size();
 }

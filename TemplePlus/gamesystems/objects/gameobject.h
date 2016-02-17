@@ -6,6 +6,7 @@
 #include "spell_structs.h"
 #include <stdint.h>
 
+class OutputStream;
 struct locXY;
 struct Dispatcher;
 
@@ -234,9 +235,9 @@ struct GameObjectBody {
 	 * Writes this object to a file. Only supported for non-prototype objects.
 	 * Prefixes the object's body with 0x77 (the object file version).
 	 */
-	bool WriteToFile(TioFile *file) const;
+	bool Write(OutputStream &stream) const;
 
-	void WriteDiffsToFile(TioFile *file) const;
+	void WriteDiffsToStream(OutputStream &stream) const;
 	void LoadDiffsFromFile(objHndl handle, TioFile *file);
 #pragma endregion
 	
@@ -281,7 +282,7 @@ private:
 	/**
 	 * Writes a field value to file.
 	 */
-	static bool WriteFieldToFile(ObjectFieldType type, const void *value, TioFile *file);
+	static void WriteFieldToStream(ObjectFieldType type, const void *value, OutputStream &stream);
 };
 #pragma pack(pop)
 

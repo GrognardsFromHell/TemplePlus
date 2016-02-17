@@ -5,6 +5,7 @@
 #include "objregistry.h"
 
 #include "util/fixes.h"
+#include <util/streams.h>
 
 static class ObjSystemHooks : public TempleFix {
 public:
@@ -340,7 +341,9 @@ public:
 
 		// write_obj_to_file
 		replaceFunction<BOOL(TioFile*, objHndl)>(0x1009fb00, [](TioFile *file, objHndl obj) {
-			return GetObj(obj)->WriteToFile(file) ? TRUE : FALSE;
+			TioOutputStream stream(file);
+			GetObj(obj)->Write(stream);
+			return TRUE;
 		});
 
 		// obj_array_get_int64
@@ -423,8 +426,20 @@ public:
 
 		// obj_write_diffs_to_file
 		replaceFunction<BOOL(TioFile*, objHndl)>(0x1009fc10, [](TioFile *fh, objHndl handle) {
-			GetObj(handle)->WriteDiffsToFile(fh);
+			TioOutputStream stream(fh);
+			GetObj(handle)->WriteDiffsToStream(stream);
 			return TRUE;
+		});
+
+		// obj_handle_write_to_mem
+		replaceFunction<void(void **dataOut, size_t *sizeOut, objHndl)>(0x1009fb80, [](void **dataOut, size_t *sizeOut, objHndl obj) {
+			MemoryOutputStream stream;
+			GetObj(obj)->Write(stream);
+			
+			auto buffer = stream.GetBuffer();
+			*dataOut = malloc(buffer.size());
+			memcpy(*dataOut, buffer.data(), buffer.size());
+			*sizeOut = buffer.size();
 		});
 
 	}

@@ -4,6 +4,7 @@
 #include <obj_structs.h>
 #include <common.h>
 
+struct TioFile;
 class OutputStream;
 
 class InputStream {
@@ -225,9 +226,17 @@ public:
 		WriteRaw(buffer, count);
 	}
 
+	void WriteFloat(float value) {
+		WriteRaw(&value, sizeof(float));
+	}
+
 	void WriteStringPrefixed(const std::string &str) {
 		WriteUInt32(str.size());
 		WriteRaw(str.c_str(), str.size());
+	}
+	
+	void WriteObjectId(const ObjectId &id) {
+		WriteRaw(&id, sizeof(ObjectId));
 	}
 
 protected:
@@ -237,7 +246,7 @@ protected:
 
 class VfsOutputStream : public OutputStream {
 public:
-	explicit VfsOutputStream(const std::string &filename);
+	explicit VfsOutputStream(const std::string &filename, bool binary = true, bool append = false);
 	~VfsOutputStream();
 
 protected:
@@ -248,4 +257,31 @@ private:
 	std::string mFilename;
 };
 
+class TioOutputStream : public OutputStream {
+public:
+	explicit TioOutputStream(TioFile *file);
 
+protected:
+	void WriteRaw(const void* buffer, size_t count) override;
+	size_t GetPos() const override;
+private:
+	TioFile * mHandle = nullptr;
+};
+
+class MemoryOutputStream : public OutputStream {
+public:
+	explicit MemoryOutputStream(size_t initialCapacity = 512) {
+		mBuffer.reserve(initialCapacity);		
+	}
+	
+	gsl::array_view<const uint8_t> GetBuffer() const {
+		return mBuffer;
+	}
+
+protected:
+	void WriteRaw(const void* buffer, size_t count) override;
+	size_t GetPos() const override;
+	
+private:
+	std::vector<uint8_t> mBuffer;
+};

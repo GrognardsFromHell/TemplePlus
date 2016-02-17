@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "arrayidxbitmaps.h"
+#include "util/streams.h"
 
 #include <tio/tio.h>
 
@@ -237,23 +238,13 @@ void ArrayIndexBitmaps::SerializeToMemory(ArrayIdxMapId id, uint8_t ** buffer) c
 	*buffer = reinterpret_cast<uint8_t*>(dwords);
 }
 
-bool ArrayIndexBitmaps::SerializeToFile(ArrayIdxMapId id, TioFile * file) const
+void ArrayIndexBitmaps::SerializeToStream(ArrayIdxMapId id, OutputStream &stream) const
 {
-
 	auto& arr = mArrays[id];
 
-	if (tio_fwrite(&arr.count, sizeof(uint32_t), 1, file) != 1) {
-		return false;
-	}
-
-	if (tio_fwrite(&mBitmapBlocks[arr.firstIdx],
-		sizeof(uint32_t),
-		arr.count,
-		file) != arr.count) {
-		return false;
-	}
-
-	return true;
+	stream.WriteUInt32(arr.count);
+	stream.WriteBytes((uint8_t*)&mBitmapBlocks[arr.firstIdx],
+		sizeof(uint32_t) * arr.count);
 
 }
 

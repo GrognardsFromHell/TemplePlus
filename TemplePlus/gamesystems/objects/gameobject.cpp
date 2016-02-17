@@ -6,6 +6,7 @@
 #include "objregistry.h"
 #include "arrayidxbitmaps.h"
 #include "tio/tio.h"
+#include "util/streams.h"
 
 GameObjectBody::~GameObjectBody()
 {
@@ -262,52 +263,46 @@ GameSpellArray GameObjectBody::GetMutableSpellArray(obj_f field)
 	return GameSpellArray(storageLoc);
 }
 
-bool GameObjectBody::WriteFieldToFile(ObjectFieldType type, const void* value, TioFile *file)
+void GameObjectBody::WriteFieldToStream(ObjectFieldType type, const void* value, OutputStream &stream)
 {
-	uint8_t dataPresent; // Flag to indicate for optional values whether they are present
-	uint32_t dataLen; // For strings
-
 	switch (type) {
 	case ObjectFieldType::Int32:
-		return tio_fwrite(&value, sizeof(int32_t), 1, file) == 1;
+		stream.WriteUInt32((uint32_t) value);
+		break;
 	case ObjectFieldType::Float32:
-		return tio_fwrite(&value, sizeof(float), 1, file) == 1;
+		stream.WriteFloat(*(float*)&value);
+		break;
 	case ObjectFieldType::Int64: 
 		if (value) {
-			dataPresent = 1;
-			if (tio_fwrite(&dataPresent, sizeof(dataPresent), 1, file) != 1) {
-				return false;
-			}
-			return tio_fwrite(value, sizeof(int64_t), 1, file) == 1;
+			stream.WriteUInt8(1);
+			stream.WriteInt64(*(uint64_t*)value);
+		} else {
+			stream.WriteUInt8(0);
 		}
-		dataPresent = 0;
-		return tio_fwrite(&dataPresent, sizeof(dataPresent), 1, file) == 1;
+		break;
 	case ObjectFieldType::String:
 		if (!value) {
-			dataPresent = 0;
-			return tio_fwrite(&dataPresent, sizeof(dataPresent), 1, file) == 1;
+			stream.WriteUInt8(0);
+		} else {
+			stream.WriteUInt8(1);
+
+			auto str = reinterpret_cast<const char*>(value);
+			auto len = strlen(str);
+			stream.WriteUInt32(len);
+			
+			// ToEE writes the strlen, but includes the 0 byte anyway
+			stream.WriteBytes((const uint8_t*)str, len + 1);
 		}
-		dataPresent = 1;
-		if (tio_fwrite(&dataPresent, sizeof(dataPresent), 1, file) != 1) {
-			return false;
-		}
-		dataLen = strlen(reinterpret_cast<const char*>(value));
-		if (tio_fwrite(&dataLen, sizeof(uint32_t), 1, file) != 1) {
-			return false;
-		}
-		// ToEE writes the strlen, but includes the 0 byte anyway
-		return tio_fwrite(value, dataLen + 1, 1, file) == 1;
+		break;
 	case ObjectFieldType::Obj: 
 		if (value) {
-			dataPresent = 1;
-			if (tio_fwrite(&dataPresent, sizeof(dataPresent), 1, file) != 1) {
-				return false;
-			}
-			Expects(!reinterpret_cast<const ObjectId*>(value)->IsHandle());
-			return tio_fwrite(value, sizeof(ObjectId), 1, file) == 1;
+			stream.WriteUInt8(1);
+			Expects(!reinterpret_cast<const ObjectId*>(value)->IsPersistable());
+			stream.WriteObjectId(*(const ObjectId*)value);
+		} else {
+			stream.WriteUInt8(0);
 		}
-		dataPresent = 0;
-		return tio_fwrite(&dataPresent, sizeof(dataPresent), 1, file) == 1;
+		break;
 	case ObjectFieldType::AbilityArray:
 	case ObjectFieldType::UnkArray:
 	case ObjectFieldType::Int32Array:
@@ -315,26 +310,21 @@ bool GameObjectBody::WriteFieldToFile(ObjectFieldType type, const void* value, T
 	case ObjectFieldType::ScriptArray:
 	case ObjectFieldType::Unk2Array:
 	case ObjectFieldType::ObjArray:
-	case ObjectFieldType::SpellArray: {
+	case ObjectFieldType::SpellArray:
 		if (!value) {
-			dataPresent = 0;
-			return tio_fwrite(&dataPresent, sizeof(dataPresent), 1, file) == 1;
-		}
+			stream.WriteUInt8(0);
+		} else {
+			stream.WriteUInt8(1);
 
-		dataPresent = 1;
-		if (tio_fwrite(&dataPresent, sizeof(dataPresent), 1, file) != 1) {
-			return false;
-		}
+			auto header = reinterpret_cast<const ArrayHeader*>(value);
+			stream.WriteBytes((const uint8_t*) value, sizeof(ArrayHeader) + header->elSize * header->count);
 
-		auto header = reinterpret_cast<const ArrayHeader*>(value);
-		if (tio_fwrite(value, sizeof(ArrayHeader) + header->elSize * header->count, 1, file) != 1) {
-			return false;
+			// Save the array index bitmap as well
+			arrayIdxBitmaps.SerializeToStream(header->idxBitmapId, stream);
 		}
-		// Save the array index bitmap as well
-		return arrayIdxBitmaps.SerializeToFile(header->idxBitmapId, file);
-	}
-	default: 
-		return false;
+		break;
+	default:
+		throw TempleException("Cannot write unknown field type to file.");
 	}
 }
 
@@ -857,62 +847,37 @@ void GameObjectBody::ForEachChild(std::function<void(objHndl item)> callback) co
 	}
 }
 
-bool GameObjectBody::WriteToFile(TioFile * file) const
+bool GameObjectBody::Write(OutputStream &stream) const
 {
 	Expects(!IsProto());
 
-	static uint32_t header = 0x77;
-	if (tio_fwrite(&header, sizeof(header), 1, file) != 1) {
-		return false;
-	}
-
-	if (tio_fwrite(&protoId, sizeof(protoId), 1, file) != 1) {
-		return false;
-	}
-
-	if (tio_fwrite(&id, sizeof(id), 1, file) != 1) {
-		return false;
-	}
-
-	if (tio_fwrite(&type, sizeof(type), 1, file) != 1) {
-		return false;
-	}
+	stream.WriteUInt32(0x77);
+	stream.WriteObjectId(protoId);
+	stream.WriteObjectId(id);
+	stream.WriteUInt32((uint32_t)type);
 
 	// Write the number of properties we are going to write
-	uint16_t propCount = propCollectionItems;
-	if (tio_fwrite(&propCount, sizeof(propCount), 1, file) != 1) {
-		return false;
-	}
+	stream.WriteUInt16(propCollectionItems);
 
 	// Write the is-property-set bitmap blocks
 	auto bitmapLen = objectFields.GetBitmapBlockCount(type);
-	if (tio_fwrite(&propCollBitmap[0], sizeof(uint32_t) * bitmapLen, 1, file) != 1) {
-		return false;
-	}
+	stream.WriteBytes((uint8_t*) &propCollBitmap[0], sizeof(uint32_t) * bitmapLen);
 
 	return ForEachField([&](obj_f field, const void *value) {
-		return WriteFieldToFile(objectFields.GetType(field), value, file);
+		 WriteFieldToStream(objectFields.GetType(field), value, stream);
+		 return true;
 	});
 }
 
-void GameObjectBody::WriteDiffsToFile(TioFile* file) const {
+void GameObjectBody::WriteDiffsToStream(OutputStream &stream) const {
 
 	Expects(hasDifs == 1);
 
-	uint32_t header = 0x77;
-	if (tio_fwrite(&header, sizeof(header), 1, file) != 1) {
-		throw TempleException("Couldn't write object file version");
-	}
-
-	uint32_t magicHeader = 0x12344321;
-	if (tio_fwrite(&magicHeader, sizeof(magicHeader), 1, file) != 1) {
-		throw TempleException("Couldn't write diff magic header");
-	}
+	stream.WriteUInt32(0x77); // Version
+	stream.WriteUInt32(0x12344321); // Magic header
 
 	// NOTE: this seems redundant since for obj diffs the id comes first anyway
-	if (tio_fwrite(&id, sizeof(id), 1, file) != 1) {
-		throw TempleException("Couldn't write object id.");
-	}
+	stream.WriteObjectId(id);
 	
 	auto bitmapLen = objectFields.GetBitmapBlockCount(type);
 
@@ -928,23 +893,18 @@ void GameObjectBody::WriteDiffsToFile(TioFile* file) const {
 		return true;
 	});
 	
-	if (tio_fwrite(&difBitmap[0], sizeof(uint32_t) * bitmapLen, 1, file) != 1) {
-		throw TempleException("Unable to write diff bitmaps.");
-	}
+	stream.WriteBytes((uint8_t*) &difBitmap[0], sizeof(uint32_t) * bitmapLen);
 
 	// Write each field that is different
 	ForEachField([&](obj_f field, const void *storage) {
 		auto& fieldDef = objectFields.GetFieldDef(field);
 		if (difBitmap[fieldDef.bitmapBlockIdx] & fieldDef.bitmapMask) {
-			WriteFieldToFile(fieldDef.type, storage, file);
+			WriteFieldToStream(fieldDef.type, storage, stream);
 		}
 		return true;
 	});
 
-	uint32_t magicFooter = 0x23455432;
-	if (tio_fwrite(&magicFooter, sizeof(magicFooter), 1, file) != 1) {
-		throw TempleException("Couldn't write diff magic footer");
-	}
+	stream.WriteUInt32(0x23455432); // Magic footer
 
 }
 

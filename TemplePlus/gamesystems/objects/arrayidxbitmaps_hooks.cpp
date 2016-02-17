@@ -4,6 +4,7 @@
 
 #include "arrayidxbitmaps.h"
 #include "objarrays.h"
+#include <util/streams.h>
 
 static class ArrayIndexBitmapsHooks : public TempleFix {
 public:
@@ -68,7 +69,9 @@ public:
 		});
 
 		replaceFunction<BOOL(ArrayIdxMapId, TioFile*)>(0x1010add0, [](auto id, auto file) {
-			return arrayIdxBitmaps.SerializeToFile(id, file) ? TRUE : FALSE;
+			TioOutputStream output(file);
+			arrayIdxBitmaps.SerializeToStream(id, output);
+			return TRUE;
 		});
 
 		replaceFunction<BOOL(ArrayIdxMapId*, TioFile*)>(0x1010b4a0, [](auto idOut, auto file) {

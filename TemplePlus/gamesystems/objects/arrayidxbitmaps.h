@@ -3,6 +3,7 @@
 
 #include <vector>
 
+class OutputStream;
 struct TioFile;
 
 using ArrayIdxMapId = uint32_t;
@@ -51,8 +52,8 @@ public:
 	// Serializes an array index map to the given memory buffer
 	void SerializeToMemory(ArrayIdxMapId id, uint8_t **buffer) const;
 
-	// Serializes an array index map to the given file
-	bool SerializeToFile(ArrayIdxMapId id, TioFile *file) const;
+	// Serializes an array index map to the given stream
+	void SerializeToStream(ArrayIdxMapId id, OutputStream &stream) const;
 
 	// Deserializes an array index map from the given file and returns
 	// the id of the newly allocated map or throws on failure.
