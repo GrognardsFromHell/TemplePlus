@@ -162,10 +162,10 @@
     <ClCompile Include="ui\ui_tutorial.cpp" />
     <ClCompile Include="turn_based.cpp" />
     <ClCompile Include="ui\ui_picker.cpp" />
-    <ClCompile Include="ui_char.cpp" />
-    <ClCompile Include="ui_char_editor_feats.cpp" />
-    <ClCompile Include="ui_intgame_turnbased.cpp" />
-    <ClCompile Include="ui_pc_creation.cpp" />
+    <ClCompile Include="ui\ui_char.cpp" />
+    <ClCompile Include="ui\ui_char_editor_feats.cpp" />
+    <ClCompile Include="ui\ui_intgame_turnbased.cpp" />
+    <ClCompile Include="ui\ui_pc_creation.cpp" />
     <ClCompile Include="anim.cpp" />
     <ClCompile Include="animalcompanion.cpp" />
     <ClCompile Include="attackrollcpp.cpp" />
@@ -178,7 +178,7 @@
     <ClCompile Include="dispatcher.cpp" />
     <ClCompile Include="faction.cpp" />
     <ClCompile Include="feat.cpp" />
-    <ClCompile Include="ui_worldmap.cpp" />
+    <ClCompile Include="ui\ui_worldmap.cpp" />
     <ClCompile Include="util\datadump.cpp" />
     <ClCompile Include="util\fixes.cpp" />
     <ClCompile Include="util\folderutils.cpp" />
@@ -361,8 +361,8 @@
     <ClInclude Include="ui\ui_tutorial.h" />
     <ClInclude Include="turn_based.h" />
     <ClInclude Include="ui\ui_picker.h" />
-    <ClInclude Include="ui_char_editor.h" />
-    <ClInclude Include="ui_intgame_turnbased.h" />
+    <ClInclude Include="ui\ui_char_editor.h" />
+    <ClInclude Include="ui\ui_intgame_turnbased.h" />
     <ClInclude Include="anim.h" />
     <ClInclude Include="combat.h" />
     <ClInclude Include="common.h" />

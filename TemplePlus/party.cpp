@@ -73,6 +73,11 @@ void LegacyPartySystem::GroupArraySort(GroupArray* groupArray)
 	}
 }
 
+int LegacyPartySystem::GetPartyAlignment()
+{
+	return temple::GetRef<int>(0x1080ABA4);
+}
+
 uint32_t LegacyPartySystem::AddToPCGroup(objHndl objHnd)
 {
 	auto npcFollowers = GroupNPCFollowersLen();
