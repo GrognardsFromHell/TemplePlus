@@ -29,13 +29,15 @@ struct ShapeRenderer2d::Impl {
 	Material lineMaterial;
 	Material untexturedMaterial;
 	Material texturedMaterial;
+	Material texturedWithoutBlendingMaterial;
 	Material texturedWithMaskMaterial;
 	SamplerState samplerWrapState;
 	SamplerState samplerClampState;
 	
 	static Material CreateMaterial(RenderingDevice &device,
 		const char *pixelShaderName,
-		bool forLines = false);
+		bool forLines = false,
+		bool blending = true);
 	static Material CreateOutlineMaterial(RenderingDevice &device);
 	static Material CreatePieFillMaterial(RenderingDevice &device);
 };
@@ -44,6 +46,7 @@ ShapeRenderer2d::Impl::Impl(RenderingDevice &device)
 	: device(device),
 	untexturedMaterial(CreateMaterial(device, "diffuse_only_ps")),
 	texturedMaterial(CreateMaterial(device, "textured_simple_ps")),
+	texturedWithoutBlendingMaterial(CreateMaterial(device, "textured_simple_ps", false, false)),
 	texturedWithMaskMaterial(CreateMaterial(device, "textured_two_ps")),
 	lineMaterial(CreateMaterial(device, "diffuse_only_ps", true)),
 	outlineMaterial(CreateOutlineMaterial(device)),
@@ -76,10 +79,11 @@ ShapeRenderer2d::Impl::Impl(RenderingDevice &device)
 
 Material ShapeRenderer2d::Impl::CreateMaterial(RenderingDevice &device,
 	const char *pixelShaderName,
-	bool forLine) {
+	bool forLine,
+	bool blending) {
 
 	BlendState blendState;
-	blendState.blendEnable = true;
+	blendState.blendEnable = blending;
 	blendState.srcBlend = D3DBLEND_SRCALPHA;
 	blendState.destBlend = D3DBLEND_INVSRCALPHA;
 	DepthStencilState depthStencilState;
@@ -180,20 +184,26 @@ void ShapeRenderer2d::DrawRectangle(float x, float y, float width, float height,
 void ShapeRenderer2d::DrawRectangle(gsl::array_view<Vertex2d, 4> corners,
 	IDirect3DTexture9* texture,
 	IDirect3DTexture9* mask,
-	bool wrap) {
+	bool wrap,
+	bool blending) {
 
 	auto device = mImpl->device.GetDevice();
 
 	auto& samplerState = (wrap ? mImpl->samplerWrapState : mImpl->samplerClampState);
 
 	if (texture && mask) {
+		Expects(blending);
 		mImpl->device.SetMaterial(mImpl->texturedWithMaskMaterial);
 		mImpl->device.SetSamplerState(0, samplerState);
 		mImpl->device.SetSamplerState(1, samplerState);
 		device->SetTexture(0, texture);
 		device->SetTexture(1, mask);
 	} else if (texture) {
-		mImpl->device.SetMaterial(mImpl->texturedMaterial);
+		if (blending) {
+			mImpl->device.SetMaterial(mImpl->texturedMaterial);
+		} else {
+			mImpl->device.SetMaterial(mImpl->texturedWithoutBlendingMaterial);
+		}
 		mImpl->device.SetSamplerState(0, samplerState);
 		device->SetTexture(0, texture);
 	} else {

@@ -411,8 +411,12 @@ int RenderHooks::TextureRender2d(const Render2dArgs* args) {
 		maskTexture = texture->GetDeviceTexture();
 	}
 
+	// This is used by the portrait UI to mask the equipment slot background when
+	// rendering an icon
+	auto blending = ((args->flags & Render2dArgs::FLAG_DISABLEBLENDING) == 0);
+
 	auto wrap = ((args->flags & Render2dArgs::FLAG_WRAP) != 0);
-	shapeRenderer.DrawRectangle(vertices, deviceTexture, maskTexture, wrap);
+	shapeRenderer.DrawRectangle(vertices, deviceTexture, maskTexture, wrap, blending);
 	
 	return 0;
 }

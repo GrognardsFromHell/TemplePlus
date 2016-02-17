@@ -56,7 +56,8 @@ namespace gfx {
 		void DrawRectangle(gsl::array_view<Vertex2d, 4> corners,
 			IDirect3DTexture9* texture,
 			IDirect3DTexture9* mask = nullptr,
-			bool wrap = false);
+			bool wrap = false,
+			bool blending = true);
 
 		void DrawRectangle(gsl::array_view<Vertex2d, 4> corners,
 			const gfx::MdfRenderMaterialPtr &material);
