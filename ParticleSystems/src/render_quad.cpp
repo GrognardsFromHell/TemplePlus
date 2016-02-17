@@ -211,13 +211,13 @@ namespace particles {
 			emitter.GetParticleState().GetState(PSF_POS_VAR_Z, particleIdx), 1));
 
 		// Upper left corner
-		XMStoreFloat3(&vertex[3].pos, partPos - halfPartHeightX - halfPartHeightY);
+		XMStoreFloat3(&vertex[0].pos, partPos - halfPartHeightX - halfPartHeightY);
 		// Upper right corner													   
-		XMStoreFloat3(&vertex[2].pos, partPos + halfPartHeightX - halfPartHeightY);
+		XMStoreFloat3(&vertex[1].pos, partPos + halfPartHeightX - halfPartHeightY);
 		// Lower right corner													   
-		XMStoreFloat3(&vertex[1].pos, partPos + halfPartHeightX + halfPartHeightY);
+		XMStoreFloat3(&vertex[2].pos, partPos + halfPartHeightX + halfPartHeightY);
 		// Lower left corner													   
-		XMStoreFloat3(&vertex[0].pos, partPos - halfPartHeightX + halfPartHeightY);
+		XMStoreFloat3(&vertex[3].pos, partPos - halfPartHeightX + halfPartHeightY);
 
 		// Set the diffuse color for all corners
 		auto diffuse = GetParticleColor(emitter, particleIdx);

@@ -150,10 +150,6 @@ namespace gfx {
 			throw TempleException("Unable to retrieve back buffer description");
 		}
 
-		DWORD qualLevels;
-		HRESULT msResult = mDirect3d9->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, mBackBufferDesc.Format, TRUE,
-			D3DMULTISAMPLE_16_SAMPLES, &qualLevels);
-
 		// Create surfaces for the scene
 		D3DLOG(mDevice->CreateRenderTarget(
 			mRenderWidth,

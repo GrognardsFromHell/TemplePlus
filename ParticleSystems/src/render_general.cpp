@@ -44,6 +44,7 @@ Material GeneralEmitterRenderState::CreateMaterial(RenderingDevice &device,
   depthStencilState.depthEnable = true;
   depthStencilState.depthWrite = false;
   RasterizerState rasterizerState;
+  rasterizerState.cullMode = D3DCULL_NONE;
   PixelShaderPtr pixelShader;
   std::vector<MaterialSamplerBinding> samplers;
 

@@ -152,7 +152,6 @@ namespace particles {
 				external->GetBoneWorldMatrix(emitter.GetAttachedTo(), spec->GetNodeName(), boneMatrix);
 			} else {
 				// Only use the bone translation part
-				XMFLOAT4X4 boneMatrix;
 				if (!external->GetBoneWorldMatrix(emitter.GetAttachedTo(), spec->GetNodeName(), (Matrix4x4&) boneMatrix))
 					return false;
 				XMStoreFloat4x4(
