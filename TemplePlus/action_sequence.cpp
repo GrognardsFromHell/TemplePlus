@@ -21,7 +21,7 @@
 #include "history.h"
 #include "ui/ui.h"
 #include "ai.h"
-#include "ui_intgame_turnbased.h"
+#include "ui/ui_intgame_turnbased.h"
 #include "d20_obj_registry.h"
 
 

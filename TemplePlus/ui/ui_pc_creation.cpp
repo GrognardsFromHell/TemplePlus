@@ -13,12 +13,36 @@
 #define MAX_PC_CREATION_PORTRAITS 8
 #include "party.h"
 #include "tig/tig_msg.h"
+#include <location.h>
+#include <tio/tio.h>
 
 struct TigMsg;
 int PcCreationFeatUiPrereqCheckUsercallWrapper();
 int(__cdecl * OrgFeatMultiselectSub_101822A0)();
 int HookedFeatMultiselectSub_101822A0(feat_enums feat);
 int HookedUsercallFeatMultiselectSub_101822A0();
+
+struct PartyCreationPc
+{
+	int flags;
+	int field4;
+	int* field8;
+	int fieldC;
+	ObjectId objId;
+	int field28;
+	char* nameMaybe;
+	char fileName[260];
+	int field134;
+	int field138;
+	int objTypeMaybe;
+	int field140;
+	Alignment alignment;
+	int field148;
+	int field14C;
+	objHndl handle;
+};
+
+const int testSizeOfCreationPc = sizeof(PartyCreationPc); // 344  0x158
 
 
 class PcCreationUiSystem : TempleFix
@@ -48,6 +72,11 @@ public:
 
 	static int pcPortraitWidgIds[MAX_PC_CREATION_PORTRAITS];
 
+	void WriteMaxPcPortraitValues();
+
+	static void GetPartyPool(int fromIngame); //fromIngame is 0 when launching from main menu, 1 when launching from inn guestbook
+	static int PartyPoolLoader();
+
 	const char* name() override { return "PC Creation UI Fixes"; }
 	void apply() override
 	{
@@ -64,31 +93,12 @@ public:
 		replaceFunction(0x10163440, PcPortraitsRefresh);
 		orgPcPortraitsMsgFunc = replaceFunction(0x101633A0, PcPortraitsMsgFunc);
 
-		// 1016312F
-		int writeVal = (int)&pcPortraitWidgIds[-1];
-		write(0x1016312F + 3, &writeVal, 4);
 
-		// ui_msg_pc_creation_portraits
-		writeVal = MAX_PC_CREATION_PORTRAITS;
-		write(0x101633B5 + 1, &writeVal, 1);
-		writeVal = (int)&pcPortraitWidgIds;
-		write(0x101633B7 + 1, &writeVal, 4);
-
-		// ui_render_pc_creation_portraits
-		writeVal = MAX_PC_CREATION_PORTRAITS;
-		write(0x10163279 + 1, &writeVal, 1);
-		writeVal = (int)&pcPortraitWidgIds;
-		write(0x1016327B + 1, &writeVal, 4);
-
-		writeVal = (int)&pcPortraitsMainId;
-		write(0x101632E6 + 2, &writeVal, 4);
-		write(0x1016337A + 2, &writeVal, 4);
-		writeVal = (int)&pcPortraitBoxRects;
-		write(0x101632F6 + 2, &writeVal, 4);
-		writeVal = (int)&pcPortraitRects;
-		write(0x10163329 + 2, &writeVal, 4);
-
+		WriteMaxPcPortraitValues();
 		
+		// UiPartyCreationGetPartyPool
+		static void(*orgGetPartyPool)(int) = replaceFunction<void(int)>(0x10165E60, GetPartyPool);
+		// static int(*orgPartyPoolLoader)() = replaceFunction<int()>(0x10165790, PartyPoolLoader);
 		
 	}
 } pcCreationSys;
@@ -332,6 +342,145 @@ int PcCreationUiSystem::PcPortraitsMsgFunc(int widgetId, TigMsg* tigMsg)
 		return 0;
 
 	return orgPcPortraitsMsgFunc(widgetId, tigMsg);
+}
+
+void PcCreationUiSystem::WriteMaxPcPortraitValues()
+{
+	// 1016312F
+	int writeVal = (int)&pcPortraitWidgIds[-1];
+	write(0x1016312F + 3, &writeVal, 4);
+
+	// ui_msg_pc_creation_portraits
+	writeVal = MAX_PC_CREATION_PORTRAITS;
+	write(0x101633B5 + 1, &writeVal, 1);
+	writeVal = (int)&pcPortraitWidgIds;
+	write(0x101633B7 + 1, &writeVal, 4);
+
+	// ui_render_pc_creation_portraits
+	writeVal = MAX_PC_CREATION_PORTRAITS;
+	write(0x10163279 + 1, &writeVal, 1);
+	writeVal = (int)&pcPortraitWidgIds;
+	write(0x1016327B + 1, &writeVal, 4);
+
+	writeVal = (int)&pcPortraitsMainId;
+	write(0x101632E6 + 2, &writeVal, 4);
+	write(0x1016337A + 2, &writeVal, 4);
+	writeVal = (int)&pcPortraitBoxRects;
+	write(0x101632F6 + 2, &writeVal, 4);
+	writeVal = (int)&pcPortraitRects;
+	write(0x10163329 + 2, &writeVal, 4);
+}
+
+void PcCreationUiSystem::GetPartyPool(int fromIngame)
+{
+	int& uiPartypoolWidgetId = temple::GetRef<int>(0x10BF1764);
+	int& uiPcCreationMainWndId = temple::GetRef<int>(0x10BDD690);
+	int& uiPartyCreationNotFromShopmap = temple::GetRef<int>(0x10BF24E0);
+	LocAndOffsets& locToCreatePcs = temple::GetRef<LocAndOffsets>(0x10BF17A8);
+
+
+	ui.WidgetSetHidden(uiPartypoolWidgetId, 0);
+	ui.WidgetBringToFront(uiPartypoolWidgetId);
+	ui.WidgetBringToFront(uiPcCreationMainWndId);
+	uiPartyCreationNotFromShopmap = fromIngame;
+	if (fromIngame)
+	{
+		auto dude = party.GroupListGetMemberN(0);
+		if (dude)
+		{
+			locToCreatePcs = objects.GetLocationFull(dude);
+		}
+		if (uiPartyCreationNotFromShopmap)
+		{
+			int& pcCreationPartyAlignment = temple::GetRef<int>(0x11E741A8);
+			pcCreationPartyAlignment = party.GetPartyAlignment();
+		}
+	}
+
+	auto UiPartyCreationHidePcWidgets = temple::GetRef<void()>(0x10135080);
+	UiPartyCreationHidePcWidgets();
+	int& uiPartyPoolPcsIdx = temple::GetRef<int>(0x10BF1760);
+	uiPartyPoolPcsIdx = -1;
+	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF2408), 4); // Add
+	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF2538), 4); // VIEW
+	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF2410), 4); // RENAME
+	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF239C), 4); // DELETE
+
+	auto GetPcCreationPcBuffer = temple::GetRef<void()>(0x101631B0);
+	GetPcCreationPcBuffer();
+	auto PartyPoolLoader = temple::GetRef<int()>(0x10165790);
+	PartyPoolLoader();
+	auto AddPcsFromBuffer = temple::GetRef<void()>(0x10163210);
+	AddPcsFromBuffer();
+	auto UiPartyPoolRefreshTopButtons = temple::GetRef<void()>(0x10165150);
+	UiPartyPoolRefreshTopButtons();
+	auto PcPortraitsRefresh = temple::GetRef<void()>(0x10163440);
+	PcPortraitsRefresh();
+	auto UiPartyPoolScrollbox_10164620 = temple::GetRef<void()>(0x10164620);
+	UiPartyPoolScrollbox_10164620();
+
+	if (fromIngame || !party.GroupListGetLen())
+	{
+		ui.WidgetSetHidden(temple::GetRef<int>(0x10BDB8E0), 1);
+	}
+	else
+	{
+		ui.WidgetSetHidden(temple::GetRef<int>(0x10BDB8E0), 0);
+	}
+	auto UiUtilityBarHide = temple::GetRef<void()>(0x1010EEC0);
+	UiUtilityBarHide();
+}
+
+int PcCreationUiSystem::PartyPoolLoader()
+{
+	int result = 1;
+
+	/*auto PartyCreationClearPcs = temple::GetRef<void()>(0x10163E30);
+	PartyCreationClearPcs();
+	auto IsIronman = temple::GetRef<int()>(0x10003860);
+	TioFileList filelist;
+	if (IsIronman())
+		tio_filelist_create(&filelist, "players\\ironman\\*.ToEEIMan");
+	else
+		tio_filelist_create(&filelist, "players\\*.ToEEPC");
+
+	
+	int& uiPartypoolNumPcs = temple::GetRef<int>(0x10BF237C);
+	if (filelist.count)
+	{
+		auto uiPartyCreationPcs = temple::GetRef<PartyCreationPc*>(0x10BF253C);
+		uiPartyCreationPcs = new PartyCreationPc[filelist.count];
+		for (int i = 0; i < filelist.count; i++)
+		{
+			if (!PartyPoolGetPc(&uiPartyCreationPcs[uiPartypoolNumPcs], filelist.files[i].name))
+			{
+				result = 0;
+				break;
+			}
+			logger->info("Successfully loaded PC ({}) {} ({})", 
+				uiPartypoolNumPcs,
+				uiPartyCreationPcs[uiPartypoolNumPcs].nameMaybe,
+				uiPartyCreationPcs[uiPartypoolNumPcs].objId.ToString());
+			uiPartypoolNumPcs++;
+		}
+	}
+	tio_filelist_destroy(&filelist);
+
+	if (result)
+	{
+		auto partyPoolPcIndices = temple::GetRef<int*>(0x10BF2378);
+		if (partyPoolPcIndices)
+			free(partyPoolPcIndices);
+		partyPoolPcIndices = new int[uiPartypoolNumPcs];
+		auto UiPartyPoolRefreshVisibles = temple::GetRef<void()>(0x10164B10);
+		UiPartyPoolRefreshVisibles();
+	}
+
+	// not yet finished because pug found the bug by the time I got to it :P
+	*/
+
+	
+	return result;
 };
 
 

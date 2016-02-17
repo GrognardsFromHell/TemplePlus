@@ -210,9 +210,6 @@
     <ClCompile Include="traps.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
     <ClCompile Include="ui\ui_tutorial.cpp" />
-    <ClCompile Include="ui_char.cpp">
-      <Filter>ui</Filter>
-    </ClCompile>
     <ClCompile Include="d20_levelup.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
@@ -220,15 +217,6 @@
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="hotkeys.cpp">
-      <Filter>ui</Filter>
-    </ClCompile>
-    <ClCompile Include="ui_char_editor_feats.cpp">
-      <Filter>ui</Filter>
-    </ClCompile>
-    <ClCompile Include="ui_intgame_turnbased.cpp">
-      <Filter>ui</Filter>
-    </ClCompile>
-    <ClCompile Include="ui_pc_creation.cpp">
       <Filter>ui</Filter>
     </ClCompile>
     <ClCompile Include="startup\installationdir.cpp" />
@@ -254,7 +242,6 @@
     <ClCompile Include="diag\diag.cpp" />
     <ClCompile Include="messages\messagequeue.cpp" />
     <ClCompile Include="fixes\messages.cpp" />
-    <ClCompile Include="ui_worldmap.cpp" />
     <ClCompile Include="worldmap.cpp" />
     <ClCompile Include="fixes\pointbuyconfig.cpp">
       <Filter>Mods and Fixes</Filter>
@@ -336,6 +323,19 @@
     <ClCompile Include="ui\ui_intgame_select.cpp" />
     <ClCompile Include="ui\ui_combat.cpp" />
     <ClCompile Include="ui\ui_slider.cpp" />
+    <ClCompile Include="ui\ui_char.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_pc_creation.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_worldmap.cpp" />
+    <ClCompile Include="ui\ui_intgame_turnbased.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_char_editor_feats.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -556,12 +556,6 @@
     <ClInclude Include="hotkeys.h">
       <Filter>ui</Filter>
     </ClInclude>
-    <ClInclude Include="ui_char_editor.h">
-      <Filter>ui</Filter>
-    </ClInclude>
-    <ClInclude Include="ui_intgame_turnbased.h">
-      <Filter>ui</Filter>
-    </ClInclude>
     <ClInclude Include="startup\installationdir.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="startup\installationdirpicker.h" />
@@ -635,6 +629,12 @@
     <ClInclude Include="ui\ui_turn_based.h" />
     <ClInclude Include="ui\ui_intgame_select.h" />
     <ClInclude Include="ui\ui_combat.h" />
+    <ClInclude Include="ui\ui_char_editor.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_intgame_turnbased.h">
+      <Filter>ui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

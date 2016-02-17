@@ -212,7 +212,16 @@ void InstallationDir::DetectDllVersion() {
 		mCo8Present = true;
 	}
 
-	auto md5Hash = crypto::MD5AsString(fileDataView);
+
+	auto md5Hash = std::string ("");
+	try
+	{
+		md5Hash = crypto::MD5AsString(fileDataView);
+	} catch (...)
+	{
+		
+	}
+	
 	logger->info("Hash value for {} is: {}", ucs2_to_utf8(dllPath), md5Hash);
 
 	if (md5Hash == "f915db404bd5e765374581e8b05eb691") {
