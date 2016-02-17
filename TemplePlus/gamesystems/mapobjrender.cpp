@@ -1031,8 +1031,21 @@ public:
 		replaceFunction(0x10020B00, GetShadowType);
 		replaceFunction(0x1001D7D0, SetShowHighlight);
 		// obj_render_in_ui
-		replaceFunction<int(objHndl, int, int, float, float)>(0x100243b0, [](objHndl objId, int x, int y, float rotation, float a5) {
-			gameRenderer->GetMapObjectRenderer().RenderObjectInUi(objId, x, y, rotation, a5);
+		replaceFunction<int(objHndl, int, int, float, float)>(0x100243b0, [](objHndl objId, int x, int y, float rotation, float scale) {
+
+			auto charGen = scale != 1.5f;
+
+			// Char creation makes assumption about the main menu which no longer hold, so we
+			// manually restore the 1x scale of the normal world before we render
+			auto &camera = tig->GetRenderingDevice().GetCamera();
+			auto orgScale = camera.GetScale();
+			camera.SetScale(1.0f);
+			if (charGen) {
+				x = (int)((camera.GetScreenWidth() - 788) / 2) + 120;
+				y = (int)((camera.GetScreenHeight() - 497) / 2) + 180;
+			}
+			gameRenderer->GetMapObjectRenderer().RenderObjectInUi(objId, x, y, rotation, 1.5f);
+			camera.SetScale(orgScale);
 			return 0;
 		});
 	}
