@@ -54,7 +54,6 @@ namespace particles {
 	};
 
 	bool ParticleRenderer::GetEmitterWorldMatrix(const PartSysEmitter& emitter, XMFLOAT4X4& worldMatrix) {
-		XMMATRIX pM1;
 
 		auto spec = emitter.GetSpec();
 		auto particleSpace = spec->GetParticleSpace();
@@ -62,15 +61,16 @@ namespace particles {
 		if (particleSpace == PartSysParticleSpace::SameAsEmitter) {
 
 			if (emitterSpace == PartSysEmitterSpace::ObjectPos || emitterSpace == PartSysEmitterSpace::ObjectYpr) {
+				XMMATRIX localMat;
 				if (emitterSpace == PartSysEmitterSpace::ObjectYpr) {
 					auto angle = emitter.GetObjRotation() + XM_PI;
-					pM1 = XMMatrixRotationY(angle);
+					localMat = XMMatrixRotationY(angle);
 				} else {
-					pM1 = XMMatrixIdentity();
+					localMat = XMMatrixIdentity();
 				}
 
 				// Set the translation component of the transformation matrix
-				pM1.r[3] = XMVectorSet(emitter.GetObjPos().x,
+				localMat.r[3] = XMVectorSet(emitter.GetObjPos().x,
 					emitter.GetObjPos().y,
 					emitter.GetObjPos().z,
 					1
@@ -78,7 +78,7 @@ namespace particles {
 
 				XMStoreFloat4x4(
 					&worldMatrix,
-					pM1 * XMLoadFloat4x4(&mDevice.GetCamera().GetViewProj())
+					localMat * XMLoadFloat4x4(&mDevice.GetCamera().GetViewProj())
 				);
 				ExtractScreenSpaceUnitVectors(worldMatrix);
 				return true;
@@ -101,7 +101,7 @@ namespace particles {
 
 					XMStoreFloat4x4(
 						&worldMatrix,
-						pM1 * XMLoadFloat4x4(&mDevice.GetCamera().GetViewProj())
+						XMLoadFloat4x4(&boneMatrix) * XMLoadFloat4x4(&mDevice.GetCamera().GetViewProj())
 						);
 					ExtractScreenSpaceUnitVectors(worldMatrix);
 					return true;
@@ -112,14 +112,10 @@ namespace particles {
 					auto x = boneMatrix._41;
 					auto y = boneMatrix._42;
 					auto z = boneMatrix._43;
-					XMStoreFloat4x4(
-						&boneMatrix,
-						XMMatrixTranslation(x, y, z)
-						); // TODO: This might not be needed...
 
 					XMStoreFloat4x4(
 						&worldMatrix,
-						pM1 * XMLoadFloat4x4(&mDevice.GetCamera().GetViewProj())
+						XMMatrixTranslation(x, y, z) * XMLoadFloat4x4(&mDevice.GetCamera().GetViewProj())
 						);
 
 					ExtractScreenSpaceUnitVectors(worldMatrix);
