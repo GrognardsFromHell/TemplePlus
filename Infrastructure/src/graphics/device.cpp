@@ -324,7 +324,7 @@ namespace gfx {
 			return true;
 		}
 
-		// TODO mTextureManager->FreeUnusedTextures();
+		mTextures.FreeUnusedTextures();
 
 		if (D3DLOG(mDevice->EndScene()) != D3D_OK) {
 			return false;
