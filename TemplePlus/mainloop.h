@@ -6,6 +6,7 @@ class TigInitializer;
 class GameSystems;
 
 class GameLoop {
+friend class MainLoopHooks;
 public:
 
 	GameLoop(TigInitializer& mainWindow,

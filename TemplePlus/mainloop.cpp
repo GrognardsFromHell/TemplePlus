@@ -14,6 +14,10 @@
 #include <graphics/device.h>
 #include "infrastructure/stopwatch.h"
 #include <windowsx.h>
+#include <graphics/shaperenderer2d.h>
+#include "util/fixes.h"
+
+static GameLoop *gameLoop = nullptr;
 
 static struct MainLoop : temple::AddressTable {
 
@@ -80,9 +84,16 @@ GameLoop::GameLoop(TigInitializer& tig, GameSystems& gameSystems)
 	mDiagScreen = std::make_unique<DiagScreen>(tig.GetRenderingDevice(),
 		gameSystems,
 		mGameRenderer);
+
+	if (!gameLoop) {
+		gameLoop = this;
+	}
 }
 
 GameLoop::~GameLoop() {
+	if (gameLoop == this) {
+		gameLoop = nullptr;
+	}
 }
 
 /*
@@ -217,6 +228,15 @@ void GameLoop::RenderFrame() {
 		&destRect,
 		D3DTEXF_LINEAR
 	);
+
+	// Render "GFade" overlay
+	static auto& gfadeEnabled = temple::GetRef<BOOL>(0x10D25118);
+	static auto& gfadeColor = temple::GetRef<XMCOLOR>(0x10D24A28);
+	if (gfadeEnabled) {
+		auto w = (float) device.GetRenderWidth();
+		auto h = (float) device.GetRenderHeight();
+		tig->GetShapeRenderer2d().DrawRectangle(0, 0, w, h, gfadeColor);
+	}
 
 	device.Present();
 }
@@ -354,3 +374,26 @@ void GameLoop::RenderVersion() {
 
 	UiRenderer::PopFont();
 }
+
+static class MainLoopHooks : public TempleFix {
+public:
+	const char* name() override {
+		return "Mainloop Hooks";
+	}
+	void apply() override {
+
+		/*
+			This is called in some places manually to fade out the game screen.
+		*/
+		// tig_window_render_frame
+		replaceFunction<int(uint32_t)>(0x101ded80, [](uint32_t worldRenderFunc) {
+			if (!gameLoop) {
+				return 0;
+			}
+
+			gameLoop->RenderFrame();
+			return 0;
+		});
+
+	}
+} hooks;
