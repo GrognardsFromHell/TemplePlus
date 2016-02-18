@@ -61,11 +61,12 @@ private:
 	gfx::ShapeRenderer2d& mShapeRenderer;
 
 	int mMapArtId = 0;
-
+	
 	// Tracking for the day/night transition
 	bool mIsNightTime = false;
 	bool mIsTransitioning = false;
 	uint32_t mTransitionStart = 0;
+	float mTransitionProgress = 0;
 
 	// Terrain colors are managed by the daylight system
 	float &mTerrainTintRed = temple::GetRef<float>(0x11E69574);

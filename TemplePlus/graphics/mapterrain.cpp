@@ -28,6 +28,16 @@ void TerrainSystem::Render() {
 		return;
 	}
 
+	// Check the day<->night transition and stop if necessary
+	if (mIsTransitioning) {
+		auto timeSinceMapEntered = timeGetTime() - mTransitionStart;
+		if (timeSinceMapEntered > TransitionTime) {
+			mIsTransitioning = false;
+		}
+
+		mTransitionProgress = timeSinceMapEntered / (float)TransitionTime;
+	}
+
 	auto viewportWidth = config.renderWidth;
 	auto viewportHeight = config.renderHeight;
 
@@ -78,13 +88,7 @@ void TerrainSystem::RenderTile(int x, int y, const TigRect& destRect) {
 	auto primaryMapArtId = mMapArtId;
 
 	// Handling transition
-	uint32_t timeSinceMapEntered = 0;
 	if (mIsTransitioning) {
-		timeSinceMapEntered = timeGetTime() - mTransitionStart;
-		if (timeSinceMapEntered > TransitionTime) {
-			mIsTransitioning = false;
-		}
-
 		// This is flipped while we transition, since we have to draw 
 		// the old map first
 		if (!mIsNightTime) {
@@ -124,11 +128,8 @@ void TerrainSystem::RenderTile(int x, int y, const TigRect& destRect) {
 		texture = mDevice.GetTextures().Resolve(textureName, false);
 
 		// Draw the "new" map over the old one with alpha that is based on 
-		// the time since the transition started
-		color = XMCOLOR(mTerrainTintRed, 
-			mTerrainTintGreen, 
-			mTerrainTintBlue,
-			timeSinceMapEntered / (float) TransitionTime);
+		// the time since the transition started		
+		color = XMCOLOR(mTerrainTintRed, mTerrainTintGreen, mTerrainTintBlue, mTransitionProgress);
 
 		mShapeRenderer.DrawRectangle(destX, destY, destWidth, destHeight, texture, color);
 	}
