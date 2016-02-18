@@ -155,12 +155,12 @@ namespace particles {
 		}
 		else {
 			// If the emitter lifespan limits the number of particles more, use that to calculate the max. particles
-			auto lifespan = std::min<float>(emitter->GetLifespan(), emitter->GetParticleLifespan());
+			auto lifespan = std::min<float>(emitter->GetLifespan(), emitter->GetParticleLifespan() * 30.0f);
 			maxParticles = static_cast<int>(rate * lifespan) + 1;
 		}
 		emitter->SetMaxParticles(maxParticles);
 		emitter->SetParticleRate(rate);
-		emitter->SetParticleRateSecondary(rate);
+		emitter->SetParticleRateMin(rate);
 
 		// This secondary particle rate is the minimum that is used for scaling
 		// down particle systems using the particle fidelity slider in the game 
@@ -169,7 +169,7 @@ namespace particles {
 		auto minRateCol = record[COL_PARTICLE_RATE_SECONDARY];
 		if (!minRateCol.IsEmpty()) {
 			if (minRateCol.TryGetFloat(rateSecondary)) {
-				emitter->SetParticleRateSecondary(rateSecondary);
+				emitter->SetParticleRateMin(rateSecondary);
 			} else {
 				logger->warn("Emitter on line {} has invalid secondary particle rate: '{}'",
 					record.GetLineNumber(), minRateCol);

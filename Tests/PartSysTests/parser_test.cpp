@@ -126,7 +126,7 @@ TEST_F(PartSysParserTest, TestMaxParticleCalculations) {
 		ASSERT_EQ(particlesPerStep, emitter->GetParticleRate()) << msg;
 
 		auto particlesPerStepSec = stof(parts[4]);
-		ASSERT_EQ(particlesPerStepSec, emitter->GetParticleRateSecondary()) << msg;
+		ASSERT_EQ(particlesPerStepSec, emitter->GetParticleRateMin()) << msg;
 	}
 	fclose(fh);
 }

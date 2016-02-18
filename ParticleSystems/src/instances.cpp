@@ -234,8 +234,7 @@ namespace particles {
 		// Particle spawning logic
 		if (mSpec->IsInstant()) {
 			// The secondary rate seem to be the "minimum" particles that circumvent the fidelity setting?
-			auto lowFiMinParts = (int) mSpec->GetParticleRateSecondary();
-			int scaledMaxParts = lowFiMinParts + (int)((mSpec->GetMaxParticles() - lowFiMinParts) * external->GetParticleFidelity());
+			int scaledMaxParts = (int) mSpec->GetEffectiveParticleRate(external->GetParticleFidelity());
 
 			if (scaledMaxParts > 0) {
 				// The time here is probably only the smallest greater than 0 since there's a 
@@ -270,8 +269,7 @@ namespace particles {
 		}
 
 		// Scale the particle rate according to the fidelity setting
-		auto partsPerSec = mSpec->GetParticleRate() + (mSpec->GetParticleRate() - mSpec->GetParticleRateSecondary()) *
-			external->GetParticleFidelity();
+		auto partsPerSec = mSpec->GetEffectiveParticleRate(external->GetParticleFidelity());
 
 		// If this emitter will not emit anything in 1000 seconds, 
 		// because of the fidelity setting, simply set it to end

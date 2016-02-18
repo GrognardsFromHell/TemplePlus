@@ -154,12 +154,18 @@ public:
 		mParticleRate = particleRate;
 	}
 
-	float GetParticleRateSecondary() const {
-		return mParticleRateSecondary;
+	// This is the minimal particle spawn rate when fidelity is 0
+	float GetParticleRateMin() const {
+		return mParticleRateMin;
 	}
 
-	void SetParticleRateSecondary(float particleRateSecondary) {
-		mParticleRateSecondary = particleRateSecondary;
+	// This is the minimal particle spawn rate when fidelity is 0
+	void SetParticleRateMin(float particleRateSecondary) {
+		mParticleRateMin = particleRateSecondary;
+	}
+
+	float GetEffectiveParticleRate(float fidelity) const {
+		return mParticleRateMin + (mParticleRate - mParticleRateMin) * fidelity;
 	}
 
 	bool IsInstant() const {
@@ -316,7 +322,7 @@ private:
 	float mParticleLifespan = 1.0f;
 	int mMaxParticles = 1;
 	float mParticleRate = 1.0f;
-	float mParticleRateSecondary = 0.0f;
+	float mParticleRateMin = 0.0f;
 	PartSysEmitterSpace mSpace = PartSysEmitterSpace::World;
 	std::string mNodeName;
 	PartSysCoordSys mCoordSys = PartSysCoordSys::Cartesian;
