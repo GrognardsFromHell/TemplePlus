@@ -46,19 +46,12 @@ BOOL TigTabParser::Open(const char* filenameIn)
 
 	for (auto curPos = fileContent; curPos < endPos; curPos++)
 	{
-		if (*curPos == '\n')
-		{
-			if (maxColumns < numTabs)
-				maxColumns = numTabs;
-			numTabs = 0;
-			lineCount++;
-			tabStartPos = curPos + 1;
-		}
-
 		if (*curPos == '\t' ||  *curPos == '\n' )
 		{ // end of column
+			auto prevPos = curPos - 1;
+			auto eol = *curPos == '\n';
 
-			if (*curPos == '\n' && curPos > fileContent && *(curPos-1) == '\r')
+			if (eol && curPos > fileContent && *prevPos == '\r')
 			{
 				*(curPos - 1) = ' ';
 			}
@@ -76,7 +69,7 @@ BOOL TigTabParser::Open(const char* filenameIn)
 				}	
 			}
 
-			if (*curPos != '\n')
+			if (!eol)
 			{
 				if (tabPos != curPos - 1 && curPos < endPos) // meaning whitespace conversion has taken place; we need to prevent two column stops being in place!
 				{
@@ -87,6 +80,10 @@ BOOL TigTabParser::Open(const char* filenameIn)
 			{
 				*curPos = '\x15';
 				tabPos[1] = '\n';
+				if (maxColumns < numTabs)
+					maxColumns = ++numTabs;
+				numTabs = 0;
+				lineCount++;
 			}
 			numTabs++;
 			tabStartPos = curPos + 1;
@@ -110,17 +107,13 @@ void TigTabParser::Process()
 	curLineIdx = 0;
 
 	// loop over lines
-	for (auto curPos = fileContent; curPos < endPos; curPos++, curLineIdx++)
+	for (auto curPos = fileContent; curPos < endPos; curLineIdx++)
 	{
 		// loop over columns
 		int colIdx = 0;
 		for ( ; *curPos != '\n' && colIdx < maxColumns; colIdx++)
 		{
-			//Expects(colIdx < maxColumns);
-			if (colIdx >= 5 && curLineIdx == 9)
-			{
-				int dummy = 1;
-			}
+			Expects(colIdx < maxColumns);
 			columns[colIdx] = curPos;
 			bool trimmedCharsSkipped = false;
 			while (*curPos != '\n')
@@ -158,6 +151,10 @@ void TigTabParser::Process()
 		{
 			break;
 		}
+		curPos++;
+		while (*curPos == '\x15')
+			curPos++;
+
 			
 	}
 

@@ -899,6 +899,21 @@ void AiSystem::RegisterNewAiTactics()
 	sprintf(aiTacticDefsNew[n].name, "cast best crowd control");
 }
 
+int AiSystem::GetStrategyIdx(const char* stratName) const
+{
+	int result = -1;
+	for (int i = 0; i < *aiStrategiesNum; i++)
+	{
+		if (_stricmp(stratName, (*aiStrategies)[i].name) == 0)
+		{
+			return i;
+		}
+	}
+
+	return result;
+	
+}
+
 int AiSystem::GetAiSpells(AiSpellList* aiSpell, objHndl obj, AiSpellType aiSpellType)
 {
 	aiSpell->spellEnums.clear();
@@ -1389,6 +1404,7 @@ public:
 	static int AiFlank(AiTactic* aiTac);
 
 	static int ChooseRandomSpellUsercallWrapper();
+	static void SetCritterStrategy(objHndl obj, const char *stratName);
 
 	void apply() override 
 	{
@@ -1401,6 +1417,7 @@ public:
 		replaceFunction(0x100E46D0, AiTargetThreatened);
 		replaceFunction(0x100E48D0, _AiApproach);
 		replaceFunction(0x100E4BD0, _AiCharge);
+		replaceFunction(0x100E5080, SetCritterStrategy);
 		replaceFunction(0x100E50C0, _aiStrategyParse);
 		replaceFunction(0x100E5460, _AiOnInitiativeAdd);
 		replaceFunction(0x100E5500, _StrategyTabLineParser);
@@ -1410,6 +1427,7 @@ public:
 		replaceFunction(0x100E5DB0, _AiCoupDeGrace);
 
 		replaceFunction(0x1005B810, ChooseRandomSpellUsercallWrapper);
+		
 	}
 } aiReplacements;
 
@@ -1471,6 +1489,16 @@ int __declspec(naked) AiReplacements::ChooseRandomSpellUsercallWrapper()
 	}
 	{ __asm pop edi __asm pop ebx __asm pop esi __asm pop ecx }
 	__asm retn;
+}
+
+void AiReplacements::SetCritterStrategy(objHndl obj, const char* stratName)
+{
+	auto idx = aiSys.GetStrategyIdx(stratName);
+	if (idx == -1)
+	{
+		idx = aiSys.GetStrategyIdx("default");
+	}
+	objSystem->GetObject(obj)->SetInt32(obj_f_critter_strategy, idx);
 }
 #pragma endregion 
 AiPacket::AiPacket(objHndl objIn)

@@ -147,7 +147,7 @@ struct AiSystem : temple::AddressTable
 	BOOL AiFiveFootStepAttempt(AiTactic * aiTac);
 
 	void RegisterNewAiTactics();
-
+	int GetStrategyIdx(const char* stratName) const; // get the strategy.tab index for given strategy name
 	static int GetAiSpells(AiSpellList* aiSpell, objHndl obj, AiSpellType aiSpellType);
 	static int ChooseRandomSpell(AiPacket* aiPkt);
 	static int ChooseRandomSpellFromList(AiPacket* aiPkt, AiSpellList *);
