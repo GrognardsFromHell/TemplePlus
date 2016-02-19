@@ -211,7 +211,7 @@ bool PartSysExternal::GetObjLocation(ObjHndl obj, Vec3& worldPos) {
 }
 
 bool PartSysExternal::GetObjRotation(ObjHndl obj, float& rotation) {
-	rotation = objects.GetRotation(obj);
+	rotation = objects.GetRotation(obj) + XM_PIDIV4;
 	return true;
 }
 
