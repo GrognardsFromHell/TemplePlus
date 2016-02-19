@@ -84,7 +84,16 @@ void PythonSpellIntegration::SpellTrigger(int spellId, SpellEvent evt) {
 	bool cancelled = 0;
 
 	SpellPacketBody spellPktBody;
-	spellSys.GetSpellPacketBody(spellId, &spellPktBody);
+	if (!spellSys.GetSpellPacketBody(spellId, &spellPktBody)) {
+		logger->warn("Trying to trigger {} for spell id {}, which is invalid.", GetFunctionName((EventId)evt), spellId);
+		return;
+	}
+
+	if (!spellSys.IsSpellActive(spellId)) {
+		logger->warn("Trying to trigger {} for spell id {}, which is inactive.", GetFunctionName((EventId)evt), spellId);
+		return;
+	}
+
 	if (evt == SpellEvent::SpellEffect && spellPktBody.targetListNumItems > 0) {
 		for (uint32_t i = 0; i < spellPktBody.targetListNumItems; i++) {
 			auto tgtObj = spellPktBody.targetListHandles[i];
@@ -115,6 +124,18 @@ void PythonSpellIntegration::SpellTrigger(int spellId, SpellEvent evt) {
 }
 
 void PythonSpellIntegration::SpellTriggerProjectile(int spellId, SpellEvent evt, objHndl projectile, int targetIdx) {
+
+	SpellPacketBody spellPktBody;
+	if (!spellSys.GetSpellPacketBody(spellId, &spellPktBody)) {
+		logger->warn("Trying to trigger {} for spell id {}, which is invalid.", GetFunctionName((EventId)evt), spellId);
+		return;
+	}
+
+	if (!spellSys.IsSpellActive(spellId)) {
+		logger->warn("Trying to trigger {} for spell id {}, which is inactive.", GetFunctionName((EventId)evt), spellId);
+		return;
+	}
+
 	auto pySpell = PySpell_Create(spellId);
 	auto projectileObj = PyObjHndl_Create(projectile);
 	auto args = Py_BuildValue("(OOi)", pySpell, projectileObj, targetIdx);
@@ -128,7 +149,6 @@ void PythonSpellIntegration::SpellTriggerProjectile(int spellId, SpellEvent evt,
 	if (result == -1 || result == 0) {
 		PySpell_UpdatePacket(pySpell);
 
-		SpellPacketBody spellPktBody;
 		spellSys.GetSpellPacketBody(spellId, &spellPktBody);
 		addresses.SpellProjectileSoundPlay(&spellPktBody, evt, projectile);
 	}

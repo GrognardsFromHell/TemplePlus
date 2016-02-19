@@ -20,7 +20,7 @@ bool EditorExternal::GetObjLocation(ObjHndl obj, XMFLOAT3& worldPos) {
 }
 
 bool EditorExternal::GetObjRotation(ObjHndl obj, float& rotation) {
-	rotation = mDll.animParams.rotation;
+	rotation = mDll.animParams.rotation + XM_PIDIV4;
 	return true;
 }
 

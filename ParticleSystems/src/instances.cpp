@@ -84,6 +84,8 @@ namespace particles {
 				mBoneState = std::make_unique<BonesState>(attachedTo);
 			}
 		}
+
+		UpdatePos(IPartSysExternal::GetCurrent());
 	}
 
 	void PartSysEmitter::ApplyAcceleration(PartSysParamId paramId, float timeToSimulateSecs, float& position, float& velocity) {

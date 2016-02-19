@@ -148,6 +148,7 @@ struct LegacySpellSystem : temple::AddressTable
 	BOOL SpellHasAiType(unsigned spellEnum, AiSpellType aiSpellType);
 	void (__cdecl *SpellEnd)(int, int);
 	void (__cdecl *SpellRemove)(int);
+	bool IsSpellActive(int spellid);
 
 	CondStruct *GetCondFromSpellIdx(int id);
 	uint32_t(__cdecl * spellRemoveFromStorage)(objHndl objHnd, obj_f fieldIdx, SpellStoreData * spellData, int unknown);

@@ -271,6 +271,14 @@ void LegacySpellSystem::spellPacketSetCasterLevel(SpellPacketBody* spellPktBody)
 	_spellPacketSetCasterLevel(spellPktBody);
 }
 
+bool LegacySpellSystem::IsSpellActive(int spellid) {
+	SpellPacket spellPacket; 
+	if (spellsCastRegistry.copy(spellid, &spellPacket)) {
+		return spellPacket.isActive == 1;
+	}
+	return false;
+}
+
 CondStruct* LegacySpellSystem::GetCondFromSpellIdx(int id) {
 	if (id >= 3 && id < 254) {
 		return addresses.spellConds[id - 1].condition;
