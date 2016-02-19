@@ -60,6 +60,18 @@ enum SpontCastType : unsigned char {
 	spontCastDruid = 8
 };
 
+enum AiSpellType : unsigned {
+	ai_action_summon = 0,
+	ai_action_offensive = 1,
+	ai_action_defensive = 2,
+	ai_action_flee = 3,
+	ai_action_heal_heavy = 4,
+	ai_action_heal_medium = 5,
+	ai_action_heal_light = 6,
+	ai_action_cure_poison = 7,
+	ai_action_resurrect = 8
+};
+
 struct D20SpellData
 {
 	uint16_t spellEnumOrg;

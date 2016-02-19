@@ -510,6 +510,24 @@ const char* LegacySpellSystem::GetSpellEnumNameFromEnum(int spellEnum)
 	mesFuncs.GetLine(*spellEnumMesHandle, &mesline);
 	return mesline.value;
 }
+
+bool LegacySpellSystem::GetSpellTargets(objHndl obj, objHndl tgt, SpellPacketBody* spellPkt, unsigned spellEnum)
+{
+	// returns targets using the picker function
+	auto getTgts = temple::GetRef<bool(__cdecl)(objHndl , objHndl , SpellPacketBody* , unsigned )>(0x10079030);
+	return getTgts(obj, tgt, spellPkt, spellEnum);
+}
+
+BOOL LegacySpellSystem::SpellHasAiType(unsigned spellEnum, AiSpellType aiSpellType)
+{
+	SpellEntry spellEntry;
+	if (spellSys.spellRegistryCopy(spellEnum, &spellEntry) && spellEntry.aiTypeBitmask)
+	{
+		return  (spellEntry.aiTypeBitmask & (1 << aiSpellType) == (1 << aiSpellType));
+
+	}
+	return 0;
+}
 #pragma endregion
 
 

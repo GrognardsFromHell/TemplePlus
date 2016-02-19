@@ -19,8 +19,9 @@
 #include "python/python_object.h"
 #include "util/fixes.h"
 #include "party.h"
+#include "ui/ui_picker.h"
 struct AiSystem aiSys;
-
+AiParamPacket * AiSystem::aiParams;
 
 const auto TestSizeOfAiTactic = sizeof(AiTactic); // should be 2832 (0xB10 )
 const auto TestSizeOfAiStrategy = sizeof(AiStrategy); // should be 808 (0x324)
@@ -53,6 +54,7 @@ AiSystem::AiSystem()
 	rebase(_ShitlistAdd, 0x1005CC10);
 	rebase(_StopAttacking, 0x1005E6A0);
 	rebase(_AiSetCombatStatus, 0x1005DA00);
+	rebase(aiParams, 0x10AA4BD0);
 	RegisterNewAiTactics();
 }
 
@@ -897,6 +899,91 @@ void AiSystem::RegisterNewAiTactics()
 	sprintf(aiTacticDefsNew[n].name, "cast best crowd control");
 }
 
+int AiSystem::GetAiSpells(AiSpellList* aiSpell, objHndl obj, AiSpellType aiSpellType)
+{
+	aiSpell->spellEnums.clear();
+	aiSpell->spellData.clear();
+	auto objBod = objSystem->GetObject(obj);
+	auto spellsMemo = objBod->GetSpellArray(obj_f_critter_spells_memorized_idx);
+	for (int i = 0; i < spellsMemo.GetSize(); i++)
+	{
+		auto spellData = spellsMemo[i];
+		if (spellData.spellStoreState.usedUp & 1)
+			continue;
+		SpellEntry spellEntry;
+		if (!spellSys.spellRegistryCopy(spellData.spellEnum, &spellEntry))
+			continue;
+		if (spellEntry.aiTypeBitmask == 0)
+			continue;
+		if (!((spellEntry.aiTypeBitmask & (1 << aiSpellType)) == (1 << aiSpellType)))
+			continue;
+		
+		
+		bool spellAlreadyFound = false;
+		for (int j = 0; j < aiSpell->spellEnums.size();j++)
+		{
+			if (aiSpell->spellEnums[j] == spellData.spellEnum)
+			{
+				spellAlreadyFound = true;
+				break;
+			}
+		}
+
+		if (!spellAlreadyFound)
+		{
+			aiSpell->spellEnums.push_back(spellData.spellEnum);
+			D20SpellData d20SpellData;
+			d20SpellData.spellEnumOrg = spellData.spellEnum;
+			d20SpellData.spellClassCode = spellData.classCode;
+			d20SpellData.metaMagicData = spellData.metaMagicData;
+			d20SpellData.itemSpellData = -1;
+			d20SpellData.spellSlotLevel = spellData.spellLevel; // hey, I think this was missing / wrong in the original code!
+
+			aiSpell->spellData.push_back(d20SpellData);
+		}
+	}
+
+	return 1;
+}
+
+int AiSystem::ChooseRandomSpell(AiPacket* aiPkt)
+{
+	auto aiNpcFightingStatus = temple::GetRef<int>(0x102BD4E0);
+	if (!aiNpcFightingStatus)
+		return 0;
+
+	auto obj = aiPkt->obj;
+	AiSpellList aiSpell;
+
+	if (!critterSys.GetNumFollowers(aiPkt->obj, 0))
+	{
+		GetAiSpells(&aiSpell, obj, AiSpellType::ai_action_summon);
+		if ( ChooseRandomSpellFromList(aiPkt, &aiSpell)){
+			return 1;
+		}
+	}
+
+	auto aiDataIdx = objects.getInt32(obj, obj_f_npc_ai_data);
+	Expects(aiDataIdx >= 0 && aiDataIdx <= 150);
+	AiParamPacket aiParam = aiParams[aiDataIdx];
+
+	if (aiParam.defensiveSpellChance > templeFuncs.RNG(1,100))
+	{
+		GetAiSpells(&aiSpell, obj, AiSpellType::ai_action_defensive);
+		if (ChooseRandomSpellFromList(aiPkt, &aiSpell)) {
+			return 1;
+		}
+	}
+	if (aiParam.offensiveSpellChance > templeFuncs.RNG(1,100))
+	{
+		GetAiSpells(&aiSpell, obj, AiSpellType::ai_action_offensive);
+		if (ChooseRandomSpellFromList(aiPkt, &aiSpell)) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 unsigned int AiSystem::Asplode(AiTactic* aiTac)
 {
 	auto performer = aiTac->performer;
@@ -1218,6 +1305,65 @@ int _AiOnInitiativeAdd(objHndl obj)
 	return aiSys.AiOnInitiativeAdd(obj);
 }
 
+int AiSystem::ChooseRandomSpellFromList(AiPacket* aiPkt, AiSpellList* aiSpells){
+	if (!aiSpells->spellEnums.size())
+		return 0;
+	temple::GetRef<objHndl>(0x10AA73C8) = aiPkt->obj;
+	temple::GetRef<objHndl>(0x10AA73D0) = aiPkt->target;
+	for (int i = 0; i < 5; i++)	{
+		auto spellIdx = templeFuncs.RNG(0, aiSpells->spellEnums.size() - 1);
+		spellSys.spellPacketBodyReset(&aiPkt->spellPktBod);
+		unsigned int spellClass;
+		unsigned int spellLevels[2];
+		d20Sys.ExtractSpellInfo(&aiSpells->spellData[spellIdx],
+			&aiPkt->spellPktBod.spellEnum,
+			nullptr, &spellClass, spellLevels, nullptr, nullptr);
+		auto spellEnum = aiPkt->spellPktBod.spellEnum = aiSpells->spellEnums[spellIdx];
+		aiPkt->spellPktBod.objHndCaster = aiPkt->obj;
+		aiPkt->spellPktBod.spellEnumOriginal = spellEnum;
+		aiPkt->spellPktBod.spellKnownSlotLevel = spellLevels[0];
+		aiPkt->spellPktBod.casterClassCode = spellClass;
+		spellSys.spellPacketSetCasterLevel(&aiPkt->spellPktBod);
+
+		SpellEntry spellEntry;
+		spellSys.spellRegistryCopy(spellEnum, &spellEntry);
+		auto spellRange = spellSys.GetSpellRange(&spellEntry, aiPkt->spellPktBod.baseCasterLevel, aiPkt->spellPktBod.objHndCaster);
+		aiPkt->spellPktBod.spellRange = spellRange;
+		if ( static_cast<UiPickerType>(spellEntry.modeTargetSemiBitmask & 0xFF) == UiPickerType::Area
+			&& spellEntry.spellRangeType == SpellRangeType::SRT_Personal)	{
+			spellRange = spellEntry.radiusTarget;
+		}
+		auto tgt = aiPkt->target;
+		if (objects.IsCritter(tgt)
+			&& d20Sys.d20Query(tgt, DK_QUE_Critter_Is_Grappling) == 1
+			|| d20Sys.d20Query(tgt, DK_QUE_Critter_Is_Charmed))	{
+			continue;
+		}
+
+		if (spellSys.spellCanCast(aiPkt->obj, spellEnum,spellClass, spellLevels[0])){
+		
+			if (!spellSys.GetSpellTargets(aiPkt->obj,tgt, &aiPkt->spellPktBod, spellEnum))
+				continue;
+			if (locSys.DistanceToObj(aiPkt->obj, tgt)>spellRange
+				&& spellSys.SpellHasAiType(spellEnum, ai_action_offensive)
+				|| spellSys.SpellHasAiType(spellEnum, ai_action_defensive)){
+				continue;
+			}
+
+			aiPkt->aiState2 = 1;
+			aiPkt->spellEnum = spellEnum;
+			aiPkt->spellData.spellEnumOrg = aiSpells->spellData[spellIdx].spellEnumOrg;
+			aiPkt->spellData.metaMagicData = aiSpells->spellData[spellIdx].metaMagicData;
+			return 1;
+		} 
+		else{
+			logger->debug("AiCheckSpells(): object {} ({}) cannot cast spell {}", description.getDisplayName( aiPkt->obj), objSystem->GetObject(aiPkt->obj)->id.ToString(),  spellEnum);
+		}
+
+	}
+	return 0;
+}
+
 unsigned int _AiAsplode(AiTactic * aiTac)
 {
 	return aiSys.Asplode(aiTac);
@@ -1242,6 +1388,8 @@ public:
 	static int AiCastParty(AiTactic* aiTac);
 	static int AiFlank(AiTactic* aiTac);
 
+	static int ChooseRandomSpellUsercallWrapper();
+
 	void apply() override 
 	{
 		logger->info("Replacing AI functions...");
@@ -1260,7 +1408,8 @@ public:
 		replaceFunction(0x100E58D0, AiSniper);
 		replaceFunction(0x100E5950, AiFlank);
 		replaceFunction(0x100E5DB0, _AiCoupDeGrace);
-		
+
+		replaceFunction(0x1005B810, ChooseRandomSpellUsercallWrapper);
 	}
 } aiReplacements;
 
@@ -1303,6 +1452,26 @@ int AiReplacements::AiFlank(AiTactic* aiTac)
 {
 	return aiSys.Flank(aiTac);
 	}
+
+
+static int _ChooseRandomSpellUsercallWrapper(AiPacket* aiPkt)
+{
+	return aiSys.ChooseRandomSpell(aiPkt);
+}
+
+int __declspec(naked) AiReplacements::ChooseRandomSpellUsercallWrapper()
+{
+	{ __asm push ecx __asm push esi __asm push ebx __asm push edi}
+
+	__asm
+	{
+		push ebx;
+		call _ChooseRandomSpellUsercallWrapper;
+		pop ebx;
+	}
+	{ __asm pop edi __asm pop ebx __asm pop esi __asm pop ecx }
+	__asm retn;
+}
 #pragma endregion 
 AiPacket::AiPacket(objHndl objIn)
 {
@@ -1310,7 +1479,7 @@ AiPacket::AiPacket(objHndl objIn)
 	obj = objIn;
 	aiFightStatus = 0;
 	aiState2 = 0;
-	field18 = 10000;
+	spellEnum = 10000;
 	skillEnum = (SkillEnum)-1;
 	scratchObj = 0i64;
 	leader = critterSys.GetLeader(objIn);
