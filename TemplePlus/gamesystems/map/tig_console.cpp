@@ -67,8 +67,9 @@ int TigConsoleReplacement::ConsoleMsgHandler(TigMsg* msg)
 			auto remaining = 255 - curPos;
 			auto count = std::min<size_t>(remaining, clipboardText.size());
 
-			strncpy(addresses.consoleString + curPos, clipboardText.c_str(), count);
+			strncpy(addresses.consoleString + curPos, clipboardText.c_str(), count);			
 			*addresses.consolePos += count;
+			addresses.consoleString[*addresses.consolePos] = '\0';
 			return 1;
 		}
 
