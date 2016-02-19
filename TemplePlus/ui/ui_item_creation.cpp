@@ -690,6 +690,10 @@ public:
 	const char* name() override {
 		return "Item Creation UI";
 	}
+
+
+	static int UiItemCreationInit(GameSystemConf* conf);
+
 	void apply() override {
 		// auto system = UiSystem::getUiSystem("ItemCreation-UI");		
 		// system->init = systemInit;
@@ -726,5 +730,61 @@ public:
 		write(0x102AAE28, &ptrToCraftStaff, sizeof(ptrToCraftStaff));
 		write(0x102AADF8, &ptrToForgeRing, sizeof(ptrToForgeRing));
 		write(0x102EE340, &ptrToMAA, sizeof(ptrToMAA));
+
+		//replaceFunction(0x10154BA0, UiItemCreationInit);
+		/*auto writeval = &UiItemCreationInit;
+		write(0x102F6C10 + 9 * 4 * 26 + 4, &writeval, sizeof(void*));*/
 	}
-} /*itemCreation*/;
+} itemCreationHooks;
+
+int ItemCreation::UiItemCreationInit(GameSystemConf* conf)
+{
+	if (!mesFuncs.Open("mes\\item_creation.mes", temple::GetPointer<MesHandle>(0x10BEDFD0)))
+		return 0;
+	if (!mesFuncs.Open("rules\\item_creation.mes", temple::GetPointer<MesHandle>(0x10BEDA90)))
+		return 0;
+	if (!mesFuncs.Open("mes\\item_creation_names.mes", temple::GetPointer<MesHandle>(0x10BEDB4C)))
+		return 0;
+
+	// if ( !itemcreation_ui_init2("rules\\item_creation.mes"))
+	//   return 0;
+
+	auto GetAsset = temple::GetRef<int(__cdecl)(UiAssetType assetType, uint32_t assetIndex, int* textureIdOut, int offset) >(0x1004A360);
+	//GetAsset(UiAssetType::Generic, 1, temple::GetPointer<int>(0x10BED9F0), 0);
+	GetAsset(UiAssetType::Generic, 1, temple::GetPointer<int>(0x10BED9F0), 0);
+	GetAsset(UiAssetType::Generic, 0, temple::GetPointer<int>(0x10BEDA48), 0);
+	GetAsset(UiAssetType::Generic, 2, temple::GetPointer<int>(0x10BED9EC), 0);
+	GetAsset(UiAssetType::Generic, 6, temple::GetPointer<int>(0x10BEDB48), 0);
+	GetAsset(UiAssetType::Generic, 4, temple::GetPointer<int>(0x10BEDA5C), 0);
+	GetAsset(UiAssetType::Generic, 3, temple::GetPointer<int>(0x10BEE2D4), 0);
+	GetAsset(UiAssetType::Generic, 5, temple::GetPointer<int>(0x10BED6D0), 0);
+
+	auto LoadImgFile = temple::GetRef<ImgFile*(__cdecl)(const char *)>(0x101E8320);
+	if ((temple::GetRef<ImgFile*>(0x10BEE388) = LoadImgFile("art\\interface\\item_creation_ui\\item_creation.img")) == 0)
+		return 0;
+
+	auto RegisterUiTexture = temple::GetRef<int(__cdecl)(const char*, int*)>(0x101EE7B0);
+	if (RegisterUiTexture("art\\interface\\item_creation_ui\\craftarms_0.tga", temple::GetPointer<int>(0x10BEE38C)))
+		return 0;
+	if (RegisterUiTexture("art\\interface\\item_creation_ui\\craftarms_1.tga", temple::GetPointer<int>(0x10BECEE8)))
+		return 0;
+	if (RegisterUiTexture("art\\interface\\item_creation_ui\\craftarms_2.tga", temple::GetPointer<int>(0x10BED988)))
+		return 0;
+	if (RegisterUiTexture("art\\interface\\item_creation_ui\\craftarms_3.tga", temple::GetPointer<int>(0x10BECEEC)))
+		return 0;
+	if (RegisterUiTexture("art\\interface\\item_creation_ui\\invslot_selected.tga", temple::GetPointer<int>(0x10BECDAC)))
+		return 0;
+	if (RegisterUiTexture("art\\interface\\item_creation_ui\\invslot.tga", temple::GetPointer<int>(0x10BEE038)))
+		return 0;
+	if (RegisterUiTexture("art\\interface\\item_creation_ui\\add_button.tga", temple::GetPointer<int>(0x10BEE334)))
+		return 0;
+	if (RegisterUiTexture("art\\interface\\item_creation_ui\\add_button_grey.tga", temple::GetPointer<int>(0x10BED990)))
+		return 0;
+	if (RegisterUiTexture("art\\interface\\item_creation_ui\\add_button_hover.tga", temple::GetPointer<int>(0x10BEE2D8)))
+		return 0;
+	if (RegisterUiTexture("art\\interface\\item_creation_ui\\add_button_press.tga", temple::GetPointer<int>(0x10BED79C)))
+		return 0;
+
+
+	return 1;
+}

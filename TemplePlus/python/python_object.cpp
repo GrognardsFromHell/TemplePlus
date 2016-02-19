@@ -1612,6 +1612,11 @@ static PyObject* PyObjHandle_GetInt(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 	int value = 0;
+	if (!self->handle) // python users aren't always so careful :P
+	{
+		logger->warn("Warning: Python GetInt called with null object handle! Field was {}, returning 0.", objectFields.GetFieldName(field));
+		return PyInt_FromLong(value);
+	}
 	if (objectFields.GetType(field) == ObjectFieldType::Int32)
 	{
 		value = objects.getInt32(self->handle, field);

@@ -172,6 +172,9 @@ void TigInitializer::LoadDataFiles() {
 			logger->trace("Unable to add archive tpdata\\co8fixes.dat");
 	}
 
+	// overrides for testing (mainly for co8fixes so there's no need to repack the archive)
+	tio_mkdir("tpdata\\overrides");
+	tio_path_add("tpdata\\overrides");
 
 	for (auto& entry : config.additionalTioPaths) {
 		logger->info("Adding additional TIO path {}", entry);

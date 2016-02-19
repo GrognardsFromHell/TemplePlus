@@ -36,6 +36,11 @@ void SetIniPath() {
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int showCmd) {
 
+	/*VirtualAlloc(reinterpret_cast<void*>(0x10000000),
+		1,
+		MEM_RESERVE,
+		PAGE_NOACCESS);*/
+
 	// We reserve space for temple.dll as early as possible to avoid rebasing of temple.dll
 	auto& dll = temple::Dll::GetInstance();
 	dll.ReserveMemoryRange();
