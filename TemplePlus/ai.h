@@ -16,13 +16,18 @@ struct LegacyD20System;
 struct LegacyCombatSystem;
 struct AiStrategy;
 struct AiTactic;
+struct AiSpellList
+{
+	std::vector<int> spellEnums;
+	std::vector<D20SpellData> spellData;
+};
 struct AiPacket
 {
 	objHndl obj;
 	objHndl target;
 	int aiFightStatus; // 0 - none;  1 - fighting;  2 - fleeing  ;  3 - surrendered ; 4 - finding help
-	int aiState2; // 3 - use skill,  4 - scout point
-	int field18;
+	int aiState2; // 1 - cast spell, 3 - use skill,  4 - scout point
+	int spellEnum;
 	SkillEnum skillEnum;
 	objHndl scratchObj;
 	objHndl leader;
@@ -32,6 +37,26 @@ struct AiPacket
 	SpellPacketBody spellPktBod;
 
 	AiPacket(objHndl objIn);
+};
+struct AiParamPacket
+{ // most of this stuff is arcanum leftovers
+	int hpPercentToTriggerFlee;
+	int numPeopleToTriggerFlee;
+	int lvlDiffToTriggerFlee;
+	int pcHpPercentToPreventFlee;
+	int fleeDistanceFeet;
+	int reactionLvlToRefuseFollowingPc;
+	int unused7;
+	int unused8;
+	int maxLvlDiffToAgreeToJoin;
+	int reactionLoweredOnFriendlyFire;
+	int hostilityThreshold;
+	int unused12;
+	int offensiveSpellChance;
+	int defensiveSpellChance;
+	int healSpellChange;
+	int combatMinDistanceFeet;
+	int canOpenPortals;
 };
 
 enum class AiFlag : uint64_t {
@@ -69,6 +94,7 @@ struct AiSystem : temple::AddressTable
 	AiStrategy ** aiStrategies;
 	AiTacticDef * aiTacticDefs;
 	AiTacticDef aiTacticDefsNew[AI_TACTICS_NEW_SIZE];
+	static AiParamPacket * aiParams;
 	uint32_t * aiStrategiesNum;
 	LegacyCombatSystem * combat;
 	LegacyD20System  * d20;
@@ -121,8 +147,10 @@ struct AiSystem : temple::AddressTable
 	BOOL AiFiveFootStepAttempt(AiTactic * aiTac);
 
 	void RegisterNewAiTactics();
-	
-	
+
+	static int GetAiSpells(AiSpellList* aiSpell, objHndl obj, AiSpellType aiSpellType);
+	static int ChooseRandomSpell(AiPacket* aiPkt);
+	static int ChooseRandomSpellFromList(AiPacket* aiPkt, AiSpellList *);
 	
 	void AiTurnSthg_1005EEC0(objHndl obj);
 private:
@@ -131,6 +159,7 @@ private:
 	void (__cdecl *_FleeAdd)(objHndl npc, objHndl target);
 	void (__cdecl *_AiSetCombatStatus)(objHndl npc, int status, objHndl target, int unk);
 	void (__cdecl *_StopAttacking)(objHndl npc);
+	
 };
 
 extern AiSystem aiSys;

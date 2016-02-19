@@ -19,6 +19,7 @@
 #include <temple/meshes.h>
 #include <infrastructure/mesparser.h>
 #include "gamesystems/gamesystems.h"
+#include "gamesystems/objects/objsystem.h"
 
 static struct CritterAddresses : temple::AddressTable {
 
@@ -971,6 +972,25 @@ void LegacyCritterSystem::GetCritterVoiceLine(objHndl obj, objHndl fellow, char*
 int LegacyCritterSystem::PlayCritterVoiceLine(objHndl obj, objHndl fellow, char* text, int soundId)
 {
 	return addresses.PlayCritterVoiceLine(obj, fellow, text, soundId);
+}
+
+int LegacyCritterSystem::GetNumFollowers(objHndl obj, int excludeForcedFollowers)
+{
+	auto objBod = objSystem->GetObject(obj);
+	auto followerArray = objBod->GetObjectIdArray(obj_f_critter_follower_idx);
+	auto followersNum = followerArray.GetSize();
+	if (excludeForcedFollowers)
+	{
+		auto orgNum = followersNum;
+		for (int i = 0; i < orgNum; i++)
+		{
+			auto follower = followerArray[i];
+			auto followerNpcFlags = objects.getInt32(follower, obj_f_npc_flags);
+			if (followerNpcFlags & NpcFlag::ONF_FORCED_FOLLOWER)
+				followersNum--;
+		}
+	}
+	return followersNum;
 }
 #pragma region Critter Hooks
 uint32_t _isCritterCombatModeActive(objHndl objHnd)

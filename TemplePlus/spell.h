@@ -144,6 +144,8 @@ struct LegacySpellSystem : temple::AddressTable
 	uint32_t GetSpellRangeExact(SpellRangeType spellRangeType, uint32_t casterLevel, objHndl caster);
 	uint32_t GetSpellRange(SpellEntry* spellEntry, uint32_t baseCasterLevel, objHndl caster);
 	const char* GetSpellEnumNameFromEnum(int spellEnum);
+	bool GetSpellTargets(objHndl obj, objHndl tgt, SpellPacketBody* spellPkt, unsigned spellEnum);
+	BOOL SpellHasAiType(unsigned spellEnum, AiSpellType aiSpellType);
 	void (__cdecl *SpellEnd)(int, int);
 	void (__cdecl *SpellRemove)(int);
 
