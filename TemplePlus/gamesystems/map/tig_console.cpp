@@ -48,6 +48,32 @@ int TigConsoleReplacement::ConsoleMsgHandler(TigMsg* msg)
 		return 0;
 	if (msg->type == TigMsgType::MOUSE)
 		return 1;
+
+	// Handle pasting into the console (dont know why it's 22, really)
+	if (msg->type == TigMsgType::CHAR && msg->arg1 == 22) {
+		
+		// Retrieve the clipboard content as a string
+		std::string clipboardText;
+		if (OpenClipboard(nullptr)) {
+			auto clipboardData = GetClipboardData(CF_TEXT);
+			if (clipboardData) {
+				clipboardText = (char*)clipboardData;
+			}
+			CloseClipboard();
+		}
+
+		if (!clipboardText.empty() && *addresses.consolePos < 255) {
+			auto curPos = *addresses.consolePos;
+			auto remaining = 255 - curPos;
+			auto count = std::min<size_t>(remaining, clipboardText.size());
+
+			strncpy(addresses.consoleString + curPos, clipboardText.c_str(), count);
+			*addresses.consolePos += count;
+			return 1;
+		}
+
+	}
+
 	if (msg->type != TigMsgType::KEYSTATECHANGE)
 		return orgConsoleMsgHandler(msg);
 	if (msg->arg2 != 1)
