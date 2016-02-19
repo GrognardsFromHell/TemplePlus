@@ -149,7 +149,7 @@ void TerrainSystem::Load(int groundArtId)
 	}
 	mMapArtId = groundArtId;
 	mIsTransitioning = false;
-	mIsNightTime = gameSystems->GetTimeEvent().IsDaytime();
+	mIsNightTime = !gameSystems->GetTimeEvent().IsDaytime();
 }
 
 void TerrainSystem::LoadModule()
