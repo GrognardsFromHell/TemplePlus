@@ -218,6 +218,11 @@ void AasRenderer::Render(gfx::AnimatedModel *model,
 			continue;
 		}
 
+		// if material was not found
+		if (materialId == 0x00FFFFFF) {
+			continue;
+		}
+
 		auto material = mMdfFactory.GetById(materialId);
 		
 		if (!material) {
