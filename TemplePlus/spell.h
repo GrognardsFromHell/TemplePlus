@@ -107,7 +107,7 @@ struct SpellMapTransferInfo
 {
 	int spellId;
 	int field4;
-	ObjectId objId;
+	ObjectId casterObjId;
 	ObjectId aoeObjId;
 	ObjectId spellObjs[128];
 	ObjectId targets[32];

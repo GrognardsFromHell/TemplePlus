@@ -371,21 +371,21 @@ SpellMapTransferInfo LegacySpellSystem::SaveSpellForTeleport(const SpellPacket& 
 	auto spellName = GetSpellName(spellPkt->spellEnum);
 	int id = data.key;
 	
-	auto getPartSysNameHash = [=](int handle) -> uint32_t {
+	auto getPartSysNameHash = [=](int handle) -> std::string {
 		auto sys = gameSystems->GetParticleSys().GetByHandle(handle);
 		if (!sys) {
 			logger->debug("PrepareActiveSpellForTeleport: \t Trying to get name hash for invalid particle system handle: {}. Spell is {} id {}", handle, spellName, id);
-			return 0;
+			return "";
 		} else {
 			logger->debug("PrepareActiveSpellForTeleport: \t Hashing name for partsys: {}. Spell is {} id {}", handle, spellName, id);
-			return sys->GetSpec()->GetNameHash();
+			return sys->GetSpec()->GetName();
 		}
 	};
 	
 	result.spellId = id;
-	result.objId = objects.GetId(spellPkt->caster);
+	result.casterObjId = objects.GetId(spellPkt->caster);
 
-	if (result.objId.IsNull()) {
+	if (result.casterObjId.IsNull()) {
 		logger->warn("PrepareActiveSpellForTeleport: Spell caster has invalid handle. Spell {} id {}", spellName, id);
 	}
 
@@ -486,24 +486,25 @@ bool LegacySpellSystem::GetSpellPacketFromTransferInfo(unsigned& spellId, SpellP
 
 	auto spellName = GetSpellName(spellPkt.spellPktBody.spellEnum);
 
-	auto handle = objSystem->GetHandleById(mtInfo.objId);
-	if (handle){
+	auto handle = objSystem->GetHandleById(mtInfo.casterObjId);
+	if (handle) {
 		if (!mtInfo.casterPartsys.empty()) {
 			spellPkt.spellPktBody.casterPartsysId = gameSystems->GetParticleSys().CreateAtObj(mtInfo.casterPartsys, handle);
 		} else {
 			logger->debug("GetSpellPacketFromTransferInfo: Tried to play partsys hash 0 for spell {} id", spellName, spellId);
 		}
 	}
+	spellPkt.spellPktBody.caster = handle;
 
-	if (mtInfo.aoeObjId.subtype != ObjectIdKind::Null){
-		handle = objSystem->GetHandleById(mtInfo.aoeObjId);
-		spellPkt.spellPktBody.aoeObj = handle;
+	if (mtInfo.aoeObjId.subtype != ObjectIdKind::Null) {
+		auto aoeHandle = objSystem->GetHandleById(mtInfo.aoeObjId);
+		spellPkt.spellPktBody.aoeObj = aoeHandle;
 	} else{
 		spellPkt.spellPktBody.aoeObj = 0i64;
 	}
 	
-	for (int i = 0; i < 128; i++){
-		if (mtInfo.spellObjs[i].subtype != ObjectIdKind::Null) {
+	for (int i = 0; i < 128; i++) {
+		if (!mtInfo.spellObjs[i].IsNull()) {
 			auto spellObjHandle = objSystem->GetHandleById(mtInfo.spellObjs[i]);
 			spellPkt.spellPktBody.spellObjs[i].obj = spellObjHandle;
 
@@ -516,9 +517,9 @@ bool LegacySpellSystem::GetSpellPacketFromTransferInfo(unsigned& spellId, SpellP
 		}
 	}
 
-	for (int i = 0; i < 32; i++)	{
+	for (int i = 0; i < 32; i++) {
 		
-		if (mtInfo.targets[i].subtype != ObjectIdKind::Null)
+		if (!mtInfo.targets[i].IsNull())
 			spellPkt.spellPktBody.targetListHandles[i] = objSystem->GetHandleById(mtInfo.targets[i]);
 		else
 			spellPkt.spellPktBody.targetListHandles[i] = 0i64;
