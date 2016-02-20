@@ -119,8 +119,6 @@ struct SpellMapTransferInfo
 	SpellMapTransferInfo();
 };
 
-const int testSizeofSMTI = sizeof(SpellMapTransferInfo); // 4664 0x1238
-
 #pragma endregion
 
 struct CondStruct;
@@ -174,7 +172,8 @@ struct LegacySpellSystem : temple::AddressTable
 	
 	void SpellSave(); // packs the spells cast registry to SpellMapTransferInfo data structs
 		void SpellSavePruneInactive() const;
-		int PrepareActiveSpellForTeleport(int id, SpellPacket* data, SpellMapTransferInfo* spellMtInfo);
+		
+	SpellMapTransferInfo SaveSpellForTeleport(const SpellPacket& data);
 		
 	void GetSpellsFromTransferInfo();
 		bool GetSpellPacketFromTransferInfo(unsigned& spellId, SpellPacket& spellPkt, SpellMapTransferInfo& it);

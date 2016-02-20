@@ -357,135 +357,112 @@ void LegacySpellSystem::SpellSavePruneInactive() const
 	logger->info("Pruned {} spells from active list.", numPruned);
 }
 
-int LegacySpellSystem::PrepareActiveSpellForTeleport(int id, SpellPacket* data, SpellMapTransferInfo* spellMtInfo)
+SpellMapTransferInfo LegacySpellSystem::SaveSpellForTeleport(const SpellPacket& data)
 {
+	SpellMapTransferInfo result;
 
-	// Preamble
-
-	auto spellEnum = data->spellPktBody.spellEnum;
+	auto spellEnum = data.spellPktBody.spellEnum;
 	Expects(spellEnum > 0 && spellEnum < 10000); // keeping a margin for now because co8 has messed with this a bit
 	if (spellEnum > SPELL_ENUM_MAX)	{
 		logger->warn("Spell enum beyond expected range encountered: {}", spellEnum);
 	}
 	
-	auto spellPkt = &data->spellPktBody;
+	auto spellPkt = &data.spellPktBody;
 	auto spellName = GetSpellName(spellPkt->spellEnum);
+	int id = data.key;
 	
-	auto PartsysGetNameHashByHandle = [spellMtInfo, spellName, id](int handle)
-	{
-		auto &sys = gameSystems->GetParticleSys().GetByHandle(handle);
-		if (!sys)
-		{
+	auto getPartSysNameHash = [=](int handle) -> uint32_t {
+		auto sys = gameSystems->GetParticleSys().GetByHandle(handle);
+		if (!sys) {
 			logger->debug("PrepareActiveSpellForTeleport: \t Trying to get name hash for invalid particle system handle: {}. Spell is {} id {}", handle, spellName, id);
-			return (unsigned)0;
-
-		}
-		else
-		{
+			return 0;
+		} else {
 			logger->debug("PrepareActiveSpellForTeleport: \t Hashing name for partsys: {}. Spell is {} id {}", handle, spellName, id);
 			return sys->GetSpec()->GetNameHash();
 		}
 	};
 	
+	result.spellId = id;
+	result.objId = objects.GetId(spellPkt->caster);
 
-	// Meat
-	spellMtInfo->spellId = id;
-	spellMtInfo->objId = objects.GetId(spellPkt->caster);
-
-	if (spellMtInfo->objId.subtype == ObjectIdKind::Null)
-		logger->warn("PrepareActiveSpellForTeleport: ObjId type is null! Spell {} id {}", spellName ,id);
+	if (result.objId.IsNull()) {
+		logger->warn("PrepareActiveSpellForTeleport: Spell caster has invalid handle. Spell {} id {}", spellName, id);
+	}
 
 	auto partHandle = spellPkt->casterPartsysId;
-	spellMtInfo->casterPartsys = PartsysGetNameHashByHandle(partHandle);
+	result.casterPartsys = getPartSysNameHash(partHandle);
 
-	if (spellPkt->aoeObj){
-		spellMtInfo->aoeObjId = objects.GetId(spellPkt->aoeObj);
-		if (spellMtInfo->aoeObjId.subtype == ObjectIdKind::Null){
-			logger->warn("PrepareActiveSpellForTeleport: ObjId type is null! Spell {} id {}", spellName, id);
+	if (spellPkt->aoeObj) {
+		result.aoeObjId = objects.GetId(spellPkt->aoeObj);
+		if (result.aoeObjId.IsNull()) {
+			logger->warn("PrepareActiveSpellForTeleport: AoeObj has invalid handle. Spell {} id {}", spellName, id);
 		}
-	} 
-	else{
-		spellMtInfo->aoeObjId.subtype = ObjectIdKind::Null;
+	} else {
+		result.aoeObjId.subtype = ObjectIdKind::Null;
 	}
 
-	memset(spellMtInfo->spellObjPartsys, 0, sizeof spellMtInfo->spellObjPartsys);
-	memset(spellMtInfo->spellObjs, 0, sizeof spellMtInfo->spellObjs);
-	memset(spellMtInfo->targetlistPartsys, 0, sizeof spellMtInfo->targetlistPartsys);
-	memset(spellMtInfo->targets, 0, sizeof spellMtInfo->targets);
-	memset(spellMtInfo->projectiles, 0, sizeof spellMtInfo->projectiles);
+	memset(result.spellObjPartsys, 0, sizeof result.spellObjPartsys);
+	memset(result.spellObjs, 0, sizeof result.spellObjs);
+	memset(result.targetlistPartsys, 0, sizeof result.targetlistPartsys);
+	memset(result.targets, 0, sizeof result.targets);
+	memset(result.projectiles, 0, sizeof result.projectiles);
 	
-	for (int i = 0; i < spellPkt->numSpellObjs;i++){
+	for (auto i = 0; i < spellPkt->numSpellObjs;i++){
 		if (spellPkt->spellObjs[i].obj) {
-			spellMtInfo->spellObjs[i] = objects.GetId(spellPkt->spellObjs[i].obj);
-		} else
-		{
-			logger->debug("PrepareActiveSpellForTeleport: Null spellObj handle! Spell {} id {}", spellName, id);
+			result.spellObjs[i] = objects.GetId(spellPkt->spellObjs[i].obj);
+		} else {
+			logger->debug("PrepareActiveSpellForTeleport: Spell obj #{} has invalid handle. Spell {} id {}", i, spellName, id);
 		}
 		auto handle = spellPkt->spellObjs[i].partySysId;
-		if (handle)
-			spellMtInfo->spellObjPartsys[i] = PartsysGetNameHashByHandle(handle);
+		if (handle) {
+			result.spellObjPartsys[i] = getPartSysNameHash(handle);
+		}
 	}
 	
-	for (int i = 0; i < spellPkt->targetCount; i++) {
+	for (uint32_t i = 0; i < spellPkt->targetCount; i++) {
 		if (spellPkt->targetListHandles[i]) {
-			spellMtInfo->targets[i] = objects.GetId(spellPkt->targetListHandles[i]);
+			result.targets[i] = objects.GetId(spellPkt->targetListHandles[i]);
+		} else {
+			logger->debug("PrepareActiveSpellForTeleport: Target obj #{} has invalid handle. Spell {} id {}", i, spellName, id);
 		}
-		else
-		{
-			logger->debug("PrepareActiveSpellForTeleport: Null target handle! Spell {} id {}", spellName, id);
-		}
+
 		auto handle = spellPkt->targetListPartsysIds[i];
-		if (handle)
-			spellMtInfo->targetlistPartsys[i] = PartsysGetNameHashByHandle(handle);
+		if (handle) {
+			result.targetlistPartsys[i] = getPartSysNameHash(handle);
+		}
 	}
 
-	for (int i = 0; i < spellPkt->projectileCount; i++)
-	{
+	for (uint32_t i = 0; i < spellPkt->projectileCount; i++) {
 		if (spellPkt->projectiles[i]) {
-			spellMtInfo->projectiles[i] = objects.GetId(spellPkt->projectiles[i]);
-		}
-		else
-		{
-			logger->debug("PrepareActiveSpellForTeleport: Null projectile handle! Spell {} id {}", spellName, id);
+			result.projectiles[i] = objects.GetId(spellPkt->projectiles[i]);
+		} else {
+			logger->debug("PrepareActiveSpellForTeleport: Projectile #{} has invalid handle. Spell {} id {}", i, spellName, id);
 		}
 	}
-
-	//++(temple::GetRef<int>(0x102BFB08));
-
-	return 1;
+	
+	return result;
 }
-
-
 
 void LegacySpellSystem::SpellSave()
 {
 	SpellSavePruneInactive();
-	
-	auto numSpells = spellsCastRegistry.itemCount();
-	if (!numSpells) 
-		return;
-	
-	auto &spellPrepareIdx = temple::GetRef<int>(0x102BFB08);
-	spellPrepareIdx = 0; // spellTeleportPrepareIdx;
-	spellMapTransInfo.clear();
 
+	// Clean up previous transfer info
+	spellMapTransInfo.clear();
+	spellMapTransInfo.reserve(spellsCastRegistry.itemCount());
 	for (auto it : spellsCastRegistry) {
-		spellMapTransInfo.emplace(spellMapTransInfo.end());
-		PrepareActiveSpellForTeleport(it.id, it.data, &spellMapTransInfo[spellPrepareIdx++]);
+		spellMapTransInfo.emplace_back(SaveSpellForTeleport(*it.data));
 	}
 
 }
 
 void LegacySpellSystem::GetSpellsFromTransferInfo()
 {
-	auto &spellPrepareCount = temple::GetRef<int>(0x102BFB08);
-
-	for (auto it: spellMapTransInfo)
-	{
+	for (auto it: spellMapTransInfo) {
 		unsigned spellId;
 		SpellPacket spellPkt;
 		if (GetSpellPacketFromTransferInfo(spellId, spellPkt, it))	{
-			for (int j = 0; j < spellPkt.spellPktBody.targetCount; j++)	{
+			for (size_t j = 0; j < spellPkt.spellPktBody.targetCount; j++)	{
 				if (it.targetlistPartsys[j] && it.targets[j]){
 					spellPkt.spellPktBody.targetListPartsysIds[j] = legacyParticles.CreateAtObj(it.targetlistPartsys[j], it.targets[j]);
 				}
@@ -495,7 +472,6 @@ void LegacySpellSystem::GetSpellsFromTransferInfo()
 		}
 	}
 
-	spellPrepareCount = -1;
 	spellMapTransInfo.clear();
 }
 
