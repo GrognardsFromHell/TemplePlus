@@ -121,27 +121,25 @@ SpellPacketBody::SpellPacketBody()
 
 SpellMapTransferInfo::SpellMapTransferInfo()
 {
-	memset(this, 0, sizeof(SpellMapTransferInfo));
+	//memset(this, 0, sizeof(SpellMapTransferInfo));
 	spellId  = -1;
 
 	// vanilla init:
-	/*objId.subtype = ObjectIdKind::Null;
-	casterPartsysId = 0;
+	
+	casterObjId.subtype = ObjectIdKind::Null;
 	aoeObjId.subtype = ObjectIdKind::Null;
 	for (int i = 0; i < 128; i++)
 	{
-		spellObjPartsysIds[i] = 0;
 		spellObjs[i].subtype = ObjectIdKind::Null;
 	}
 	for (int i = 0; i < 32; i++)
 	{
-		targetlistPartsysIds[i] = 0;
 		targets[i].subtype = ObjectIdKind::Null;
 	}
 	for (int i = 0; i < 5; i++)
 	{
 		projectiles[i].subtype = ObjectIdKind::Null;
-	}*/
+	}
 
 }
 
@@ -334,6 +332,18 @@ void LegacySpellSystem::spellPacketSetCasterLevel(SpellPacketBody* spellPktBody)
 void LegacySpellSystem::SpellSavePruneInactive() const
 {
 	int numPruned = 0;
+	struct SpellDebugInfo
+	{
+		uint32_t spellEnum; uint32_t targetCount;
+		SpellDebugInfo(int spellEn, int tgtCount)
+		{
+			spellEnum = spellEn;
+			targetCount = tgtCount;
+		}
+	};
+	std::vector < SpellDebugInfo > prunedSpells; // for debug
+	std::vector<SpellDebugInfo> preservedSpells;
+
 	for (auto it = spellsCastRegistry.begin(); it != spellsCastRegistry.end(); ++it)
 	{
 		auto& node = *it;
@@ -357,10 +367,22 @@ void LegacySpellSystem::SpellSavePruneInactive() const
 		
 		if (shouldPrune) {
 			numPruned++;
+			prunedSpells.push_back(SpellDebugInfo( spellPacketBody.spellEnum, spellPacketBody.targetCount ));
 			it = spellsCastRegistry.erase(it);
+		} else{
+			preservedSpells.push_back(SpellDebugInfo( spellPacketBody.spellEnum, spellPacketBody.targetCount ));
 		}
 	}
 	logger->info("Pruned {} spells from active list.", numPruned);
+	for (auto it: prunedSpells){
+		auto spellName = GetSpellName(it.spellEnum);
+		logger->debug("{}, targetCount {}", spellName, it.targetCount);
+	}
+	logger->info("Preserved {} spells from active list.", preservedSpells.size());
+	for (auto it : preservedSpells) {
+		auto spellName = GetSpellName(it.spellEnum);
+		logger->debug("{}, targetCount {}", spellName, it.targetCount);
+	}
 }
 
 SpellMapTransferInfo LegacySpellSystem::SaveSpellForTeleport(const SpellPacket& data)
@@ -410,11 +432,12 @@ SpellMapTransferInfo LegacySpellSystem::SaveSpellForTeleport(const SpellPacket& 
 		result.aoeObjId.subtype = ObjectIdKind::Null;
 	}
 
-	memset(result.spellObjPartsys, 0, sizeof result.spellObjPartsys);
+	result.spellObjPartsys->clear();
 	memset(result.spellObjs, 0, sizeof result.spellObjs);
-	memset(result.targetlistPartsys, 0, sizeof result.targetlistPartsys);
+	result.targetlistPartsys->clear();
 	memset(result.targets, 0, sizeof result.targets);
-	memset(result.projectiles, 0, sizeof result.projectiles);
+	//memset(result.projectiles, 0, sizeof result.projectiles);
+
 	
 	for (auto i = 0; i < spellPkt->numSpellObjs;i++){
 		if (spellPkt->spellObjs[i].obj) {
