@@ -73,11 +73,11 @@ static void PySpell_Del(PyObject* obj) {
 
 // This is effectively a static method...
 static PyObject *PySpell_SpellEnd(PyObject*, PyObject *args) {
-	int unk1, unk2 = 0;
-	if (!PyArg_ParseTuple(args, "i|i:pyspell.spell_end", &unk1, &unk2)) {
+	int spellId, endDespiteTargetList = 0;
+	if (!PyArg_ParseTuple(args, "i|i:pyspell.spell_end", &spellId, &endDespiteTargetList)) {
 		return 0;
 	}
-	spellSys.SpellEnd(unk1, unk2);
+	spellSys.SpellEnd(spellId, endDespiteTargetList);
 	Py_RETURN_NONE;
 }
 

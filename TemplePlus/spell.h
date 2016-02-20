@@ -103,6 +103,23 @@ struct SpellPacket
 
 const uint32_t TestSizeOfSpellPacket = sizeof(SpellPacket); // should be 0xAF0  (2800)
 
+struct SpellMapTransferInfo
+{
+	int spellId;
+	int field4;
+	ObjectId objId;
+	ObjectId aoeObjId;
+	ObjectId spellObjs[128];
+	ObjectId targets[32];
+	ObjectId projectiles[5];
+	int targetlistPartsysIds[32];
+	int spellObjPartsysIds[128];
+	int casterPartsysId;
+	int field1234;
+};
+
+const int testSizeofSMTI = sizeof(SpellMapTransferInfo); // 4664 0x1238
+
 #pragma endregion
 
 struct CondStruct;
@@ -146,8 +163,11 @@ struct LegacySpellSystem : temple::AddressTable
 	const char* GetSpellEnumNameFromEnum(int spellEnum);
 	bool GetSpellTargets(objHndl obj, objHndl tgt, SpellPacketBody* spellPkt, unsigned spellEnum);
 	BOOL SpellHasAiType(unsigned spellEnum, AiSpellType aiSpellType);
-	void (__cdecl *SpellEnd)(int, int);
+	
+	void (__cdecl *SpellEnd)(int spellId, int endDespiteTargetList); // endDespiteTargetList will end the spell even if the target list isn't empty
 	void (__cdecl *SpellRemove)(int);
+	void SpellsSave() const;
+	void SpellMapTransferPacket() const; // packs the spells cast registry to SpellMapTransferInfo data structs
 	bool IsSpellActive(int spellid);
 
 	CondStruct *GetCondFromSpellIdx(int id);
