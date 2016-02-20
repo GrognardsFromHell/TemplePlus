@@ -41,8 +41,12 @@ public:
 } hooks;
 
 uint32_t PartSysHooks::GetNameHashByHandle(PartSysHandle handle) {
+	if (!handle) {
+		return 0;
+	}
+
 	auto &particles = gameSystems->GetParticleSys();
-	auto &sys = particles.GetByHandle(handle);
+	auto sys = particles.GetByHandle(handle);
 	if (!sys) {
 		logger->error("Trying to get name hash for invalid particle system handle: {}", handle);
 		return 0;

@@ -372,6 +372,9 @@ SpellMapTransferInfo LegacySpellSystem::SaveSpellForTeleport(const SpellPacket& 
 	int id = data.key;
 	
 	auto getPartSysNameHash = [=](int handle) -> std::string {
+		if (!handle) {
+			return "";
+		}
 		auto sys = gameSystems->GetParticleSys().GetByHandle(handle);
 		if (!sys) {
 			logger->debug("PrepareActiveSpellForTeleport: \t Trying to get name hash for invalid particle system handle: {}. Spell is {} id {}", handle, spellName, id);
