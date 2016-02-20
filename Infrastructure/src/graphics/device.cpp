@@ -584,7 +584,7 @@ namespace gfx {
 			return;
 		}
 
-		if (stretch) {
+		if (stretch || desc.MultiSampleType != D3DMULTISAMPLE_NONE) {
 			/*
 				Create the secondary render target without multi sampling.
 			*/
