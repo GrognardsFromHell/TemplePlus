@@ -328,30 +328,30 @@ void LegacySpellSystem::spellPacketSetCasterLevel(SpellPacketBody* spellPktBody)
 void LegacySpellSystem::SpellSavePruneInactive() const
 {
 	int numPruned = 0;
-	for (auto it : spellsCastRegistry)
+	for (auto it = spellsCastRegistry.begin(); it != spellsCastRegistry.end(); ++it)
 	{
-		bool shouldPrune = false;
-		auto spellPacketBody = &it.data->spellPktBody;
+		auto& node = *it;
 
-		if (it.data->isActive == 0)	{
+		bool shouldPrune = false;
+		auto& spellPacketBody = node.data->spellPktBody;
+
+		if (node.data->isActive == 0)	{
 			shouldPrune = true;
 
-			if (!it.data->spellPktBody.caster) {
-				const char * spellName = GetSpellName(spellPacketBody->spellEnum);
-				logger->warn("Spell id {} ({}) has been pruned because the spell has a null caster.", spellPacketBody->spellId, spellName);
+			if (!spellPacketBody.caster) {
+				const char * spellName = GetSpellName(spellPacketBody.spellEnum);
+				logger->warn("Spell id {} ({}) has been pruned because the spell has a null caster.", spellPacketBody.spellId, spellName);
 				shouldPrune = true;
 			} // TODO: Logic bug??? I think this should be outside
-		} 
-		else if (spellPacketBody->targetCount && 
-				!spellPacketBody ->targetListHandles[0] ){
-			const char * spellName = GetSpellName(spellPacketBody->spellEnum);
-			logger->warn("Spell id {} ({}) has been pruned because the spell has num_targets > 0 but there are no targets!", spellPacketBody->spellId ,spellName);
+		}  else if (spellPacketBody.targetCount &&  !spellPacketBody.targetListHandles[0]) {
+			const char * spellName = GetSpellName(spellPacketBody.spellEnum);
+			logger->warn("Spell id {} ({}) has been pruned because the spell has num_targets > 0 but there are no targets!", spellPacketBody.spellId, spellName);
 			shouldPrune = true;
 		}
 		
-		if (shouldPrune){
+		if (shouldPrune) {
 			numPruned++;
-			spellsCastRegistry.remove(it.id);
+			it = spellsCastRegistry.erase(it);
 		}
 	}
 	logger->info("Pruned {} spells from active list.", numPruned);
@@ -463,8 +463,10 @@ void LegacySpellSystem::GetSpellsFromTransferInfo()
 		SpellPacket spellPkt;
 		if (GetSpellPacketFromTransferInfo(spellId, spellPkt, it))	{
 			for (size_t j = 0; j < spellPkt.spellPktBody.targetCount; j++)	{
-				if (it.targetlistPartsys[j] && it.targets[j]){
-					spellPkt.spellPktBody.targetListPartsysIds[j] = legacyParticles.CreateAtObj(it.targetlistPartsys[j], it.targets[j]);
+				if (!it.targetlistPartsys[j].empty() && it.targets[j]){
+					auto handle = objSystem->GetHandleById(it.targets[j]);
+					auto partSysId = gameSystems->GetParticleSys().CreateAtObj(it.targetlistPartsys[j], handle);
+					spellPkt.spellPktBody.targetListPartsysIds[j] = partSysId;
 				}
 			}
 			spellsCastRegistry.put(spellId, spellPkt);
@@ -486,10 +488,11 @@ bool LegacySpellSystem::GetSpellPacketFromTransferInfo(unsigned& spellId, SpellP
 
 	auto handle = objSystem->GetHandleById(mtInfo.objId);
 	if (handle){
-		if (mtInfo.casterPartsys)
-			spellPkt.spellPktBody.casterPartsysId = legacyParticles.CreateAtObj(mtInfo.casterPartsys,handle);
-		else
+		if (!mtInfo.casterPartsys.empty()) {
+			spellPkt.spellPktBody.casterPartsysId = gameSystems->GetParticleSys().CreateAtObj(mtInfo.casterPartsys, handle);
+		} else {
 			logger->debug("GetSpellPacketFromTransferInfo: Tried to play partsys hash 0 for spell {} id", spellName, spellId);
+		}
 	}
 
 	if (mtInfo.aoeObjId.subtype != ObjectIdKind::Null){
@@ -499,14 +502,18 @@ bool LegacySpellSystem::GetSpellPacketFromTransferInfo(unsigned& spellId, SpellP
 		spellPkt.spellPktBody.aoeObj = 0i64;
 	}
 	
-	// this looks fishy - I think these are name hashes and not partsys handles
 	for (int i = 0; i < 128; i++){
-		if (mtInfo.spellObjs[i].subtype != ObjectIdKind::Null) 
-			spellPkt.spellPktBody.spellObjs[i].obj = objSystem->GetHandleById(mtInfo.spellObjs[i]);
-		else
+		if (mtInfo.spellObjs[i].subtype != ObjectIdKind::Null) {
+			auto spellObjHandle = objSystem->GetHandleById(mtInfo.spellObjs[i]);
+			spellPkt.spellPktBody.spellObjs[i].obj = spellObjHandle;
+
+			if (!mtInfo.spellObjPartsys[i].empty()) {
+				auto partSysHandle = gameSystems->GetParticleSys().CreateAtObj(mtInfo.spellObjPartsys[i], spellObjHandle);
+				spellPkt.spellPktBody.spellObjs[i].partySysId = partSysHandle;
+			}
+		} else {
 			spellPkt.spellPktBody.spellObjs[i].obj = 0i64;
-		if (mtInfo.spellObjPartsys[i])
-			spellPkt.spellPktBody.spellObjs[i].partySysId = mtInfo.spellObjPartsys[i];
+		}
 	}
 
 	for (int i = 0; i < 32; i++)	{

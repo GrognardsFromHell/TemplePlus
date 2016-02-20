@@ -216,6 +216,37 @@ public:
 		}
 	}
 
+	IdxTableIterator<T> erase(IdxTableIterator<T> it)
+	{
+		Expects(it.mTable == this->mTable);
+		Expects(it.mNode != nullptr);
+		auto bucketId = it.mBucket;
+		IdxTableNode<T> *prevNode = nullptr;
+		IdxTableNode<T> *node = mTable->buckets[bucketId];
+
+		auto nodeToDelete = it.mNode;
+		++it;
+
+		while (node)
+		{
+			if (node == nodeToDelete)
+			{
+				delete node->data;
+				if (prevNode) {
+					prevNode->next = node->next;
+				} else {
+					mTable->buckets[bucketId] = node->next;
+				}
+				delete node;
+				return it;
+			}
+			prevNode = node;
+			node = node->next;
+		}
+
+		throw TempleException("Iterator wasn't pointing to an element in this table.");
+	}
+
 	IdxTableIterator<T> begin()
 	{
 		return IdxTableIterator<T>(mTable);

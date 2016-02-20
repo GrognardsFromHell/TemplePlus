@@ -112,9 +112,9 @@ struct SpellMapTransferInfo
 	ObjectId spellObjs[128];
 	ObjectId targets[32];
 	ObjectId projectiles[5];
-	int targetlistPartsys[32]; // particle systems are the hashes of the system name (so they can be respawned on map transfer)
-	int spellObjPartsys[128];
-	int casterPartsys;
+	std::string targetlistPartsys[32];
+	std::string spellObjPartsys[128];
+	std::string casterPartsys;
 	int field1234;
 	SpellMapTransferInfo();
 };
