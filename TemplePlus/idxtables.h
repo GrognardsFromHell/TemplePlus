@@ -190,6 +190,7 @@ public:
 
 		// In case the ID didn't exist yet, prepend a node for it
 		mTable->buckets[bucketId] = new IdxTableNode<T>(id, data, node);
+		++(mTable->itemCount);
 	}
 
 	void remove(int id)
@@ -208,7 +209,8 @@ public:
 				} else {
 					mTable->buckets[bucketId] = node->next;
 				}
-				delete node;				
+				delete node;
+				--(mTable->itemCount);
 				return;
 			}
 			prevNode = node;
@@ -238,6 +240,7 @@ public:
 					mTable->buckets[bucketId] = node->next;
 				}
 				delete node;
+				++(mTable->itemCount);
 				return it;
 			}
 			prevNode = node;
