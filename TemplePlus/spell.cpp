@@ -20,6 +20,7 @@ struct SpellCondListEntry {
 	int unknown;
 };
 
+
 static struct SpellAddresses : temple::AddressTable {
 	SpellCondListEntry *spellConds;
 
@@ -65,6 +66,11 @@ public:
 		replaceFunction(0x10075660, _GetSpellEnumFromSpellId); 
 		replaceFunction(0x100756E0, _GetSpellPacketBody); 
 		replaceFunction(0x100F1010, _SetSpontaneousCastingAltNode);
+
+		static void(__cdecl* SpellMapTransferPack)() = replaceFunction<void(__cdecl)()>(0x10079390, []()
+		{
+			SpellMapTransferPack();
+		});
 	}
 } spellFuncReplacements;
 
@@ -269,6 +275,29 @@ void LegacySpellSystem::spellPacketBodyReset(SpellPacketBody* spellPktBody)
 void LegacySpellSystem::spellPacketSetCasterLevel(SpellPacketBody* spellPktBody)
 {
 	_spellPacketSetCasterLevel(spellPktBody);
+}
+
+void LegacySpellSystem::SpellsSave() const
+{
+	spellsCastRegistry;
+	int numPruned = 0;
+	for (auto it : spellsCastRegistry)
+	{
+		if (it.data->isActive)
+		{
+			
+		} else if (it.data->spellPktBody.objHndCaster)
+		{
+			
+		}
+	}
+	logger->info("Pruned {} spells from active list.", numPruned);
+}
+
+void LegacySpellSystem::SpellMapTransferPacket() const
+{
+	//SpellsSave();
+	auto spellsSave = temple::GetRef<void(__cdecl)()>(0x10079390);
 }
 
 bool LegacySpellSystem::IsSpellActive(int spellid) {
