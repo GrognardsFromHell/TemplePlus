@@ -13,6 +13,7 @@ public:
 		Creates a particle system attached to an object.
 	*/
 	int CreateAtObj(const char *name, objHndl atObj);
+	int CreateAtObj(unsigned int nameHash, objHndl atObj);
 
 	/*
 		Creates a particle system at a fixed 3D location.

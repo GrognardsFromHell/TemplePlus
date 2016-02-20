@@ -397,7 +397,7 @@ void ActionSequenceSystem::ActSeqGetPicker()
 			spellEntry.radiusTarget *= ((MetaMagicData)metaMagicData).metaMagicWidenSpellCount + 1;
 		}
 		PickerArgs pickArgs;
-		spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, curSeq->spellPktBody.objHndCaster, curSeq->spellPktBody.baseCasterLevel);
+		spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, curSeq->spellPktBody.caster, curSeq->spellPktBody.baseCasterLevel);
 		pickArgs.spellEnum = spellEnum;
 		pickArgs.callback = reinterpret_cast<PickerCallback>(0x10096CC0);
 		*actSeqPickerActive = 1;
@@ -1845,7 +1845,7 @@ uint32_t ActionSequenceSystem::curSeqNext()
 			{
 				if (spellSys.GetSpellPacketBody(spellId, &spellPktBody ))
 				{
-					for (int i = 0; i < spellPktBody.targetListNumItemsCopy; i++)
+					for (int i = 0; i < spellPktBody.orgTargetCount; i++)
 					{
 						if (spellPktBody.targetListHandles[i])
 						{

@@ -94,11 +94,11 @@ void PythonSpellIntegration::SpellTrigger(int spellId, SpellEvent evt) {
 		return;
 	}
 
-	if (evt == SpellEvent::SpellEffect && spellPktBody.targetListNumItems > 0) {
-		for (uint32_t i = 0; i < spellPktBody.targetListNumItems; i++) {
+	if (evt == SpellEvent::SpellEffect && spellPktBody.targetCount > 0) {
+		for (uint32_t i = 0; i < spellPktBody.targetCount; i++) {
 			auto tgtObj = spellPktBody.targetListHandles[i];
 			// TODO: Verify attachee vs. target here
-			if (!pythonObjIntegration.ExecuteObjectScript(spellPktBody.objHndCaster, tgtObj, spellId, ObjScriptEvent::SpellCast)) {
+			if (!pythonObjIntegration.ExecuteObjectScript(spellPktBody.caster, tgtObj, spellId, ObjScriptEvent::SpellCast)) {
 				cancelled = 1;
 			}
 		}

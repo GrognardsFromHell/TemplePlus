@@ -10,7 +10,7 @@ struct IdxTableNode : temple::TempleAlloc
 	int id;
 
 	IdxTableNode(int _id, const T&_data, IdxTableNode<T> *_next) : data(nullptr), next(_next), id(_id) {
-		data = operator new(sizeof(T));
+		data = static_cast<T*>(operator new(sizeof(T)));
 		new (data)T(_data);
 	}
 };
@@ -189,7 +189,7 @@ public:
 		}
 
 		// In case the ID didn't exist yet, prepend a node for it
-		mTable->buckets[bucketId] = new IdxTableNode<T>(data, id, node);
+		mTable->buckets[bucketId] = new IdxTableNode<T>(id, data, node);
 	}
 
 	void remove(int id)

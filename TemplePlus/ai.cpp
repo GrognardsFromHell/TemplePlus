@@ -70,7 +70,7 @@ void AiSystem::aiTacticGetConfig(int tacIdx, AiTactic* aiTacOut, AiStrategy* aiS
 	spellPktBody->spellEnumOriginal = spellEnum;
 	if (spellEnum != -1)
 	{
-		aiTacOut->spellPktBody.objHndCaster = aiTacOut->performer;
+		aiTacOut->spellPktBody.caster = aiTacOut->performer;
 		aiTacOut->spellPktBody.casterClassCode = aiStrat->spellsKnown[tacIdx].classCode;
 		aiTacOut->spellPktBody.spellKnownSlotLevel = aiStrat->spellsKnown[tacIdx].spellLevel;
 		spell->spellPacketSetCasterLevel(spellPktBody);
@@ -421,7 +421,7 @@ int AiSystem::CastParty(AiTactic* aiTac)
 	{
 		aiTac->spellPktBody.targetListHandles[i] = party.GroupListGetMemberN(i);
 	}
-	aiTac->spellPktBody.targetListNumItems = partyLen;
+	aiTac->spellPktBody.targetCount = partyLen;
 
 	d20Sys.GlobD20ActnInit();
 	d20Sys.GlobD20ActnSetTypeAndData1(D20A_CAST_SPELL, 0);
@@ -1334,7 +1334,7 @@ int AiSystem::ChooseRandomSpellFromList(AiPacket* aiPkt, AiSpellList* aiSpells){
 			&aiPkt->spellPktBod.spellEnum,
 			nullptr, &spellClass, spellLevels, nullptr, nullptr);
 		auto spellEnum = aiPkt->spellPktBod.spellEnum = aiSpells->spellEnums[spellIdx];
-		aiPkt->spellPktBod.objHndCaster = aiPkt->obj;
+		aiPkt->spellPktBod.caster = aiPkt->obj;
 		aiPkt->spellPktBod.spellEnumOriginal = spellEnum;
 		aiPkt->spellPktBod.spellKnownSlotLevel = spellLevels[0];
 		aiPkt->spellPktBod.casterClassCode = spellClass;
@@ -1342,7 +1342,7 @@ int AiSystem::ChooseRandomSpellFromList(AiPacket* aiPkt, AiSpellList* aiSpells){
 
 		SpellEntry spellEntry;
 		spellSys.spellRegistryCopy(spellEnum, &spellEntry);
-		auto spellRange = spellSys.GetSpellRange(&spellEntry, aiPkt->spellPktBod.baseCasterLevel, aiPkt->spellPktBod.objHndCaster);
+		auto spellRange = spellSys.GetSpellRange(&spellEntry, aiPkt->spellPktBod.baseCasterLevel, aiPkt->spellPktBod.caster);
 		aiPkt->spellPktBod.spellRange = spellRange;
 		if ( static_cast<UiPickerType>(spellEntry.modeTargetSemiBitmask & 0xFF) == UiPickerType::Area
 			&& spellEntry.spellRangeType == SpellRangeType::SRT_Personal)	{

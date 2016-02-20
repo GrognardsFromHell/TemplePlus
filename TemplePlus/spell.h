@@ -57,32 +57,31 @@ struct SpellPacketBody
 	uint32_t spellEnumOriginal; // used for spontaneous casting in order to debit the "original" spell
 	uint32_t flagSthg;
 	void * pSthg;
-	objHndl objHndCaster;
+	objHndl caster;
 	uint32_t casterPartsysId;
 	uint32_t casterClassCode; // aka spellClass
 	uint32_t spellKnownSlotLevel; // aka spellLevel
 	uint32_t baseCasterLevel;
-	uint32_t spellDC;
-	int field_2C;
-	objHndl unknownObj;
+	uint32_t dc;
+	int numSpellObjs;
+	objHndl aoeObj;
 	struct SpellObj
 	{
 		objHndl obj;
 		int partySysId;
 		int field_C;
 	}	spellObjs[128];
-	uint32_t targetListNumItemsCopy;
-	uint32_t targetListNumItems;
+	uint32_t orgTargetCount;
+	uint32_t targetCount;
 	objHndl targetListHandles[32];
 	uint32_t targetListPartsysIds[32];
-	uint32_t numProjectiles;
+	uint32_t projectileCount;
 	uint32_t field_9C4;
-	objHndl projectiles; // TODO: fix (should be 5 projectiles and not 8 spellpackets!)
-	SpellPacketBody * spellPktBods[8];
+	objHndl projectiles[5];
 	LocFull aoeCenter;
 	uint32_t field_A04;
 	SpellEntry spellEntry;
-	uint32_t spellDuration;
+	uint32_t duration;
 	int durationRemaining;
 	uint32_t spellRange;
 	uint32_t savingThrowResult;
@@ -90,6 +89,7 @@ struct SpellPacketBody
 	uint32_t metaMagicData;
 	uint32_t spellId;
 	uint32_t field_AE4;
+	SpellPacketBody();
 };
 
 const uint32_t TestSizeOfSpellPacketBody = sizeof(SpellPacketBody); // should be 0xAE8  (2792)
@@ -112,10 +112,11 @@ struct SpellMapTransferInfo
 	ObjectId spellObjs[128];
 	ObjectId targets[32];
 	ObjectId projectiles[5];
-	int targetlistPartsysIds[32];
-	int spellObjPartsysIds[128];
-	int casterPartsysId;
+	int targetlistPartsys[32]; // particle systems are the hashes of the system name (so they can be respawned on map transfer)
+	int spellObjPartsys[128];
+	int casterPartsys;
 	int field1234;
+	SpellMapTransferInfo();
 };
 
 const int testSizeofSMTI = sizeof(SpellMapTransferInfo); // 4664 0x1238
@@ -131,13 +132,17 @@ struct LegacySpellSystem : temple::AddressTable
 	MesHandle * spellEnumMesHandle;
 	MesHandle * spellMes;
 	MesHandle * spellsRadialMenuOptionsMes;
+	std::vector<SpellMapTransferInfo> spellMapTransInfo;
 
 	uint32_t spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry);
 	uint32_t ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
 	uint32_t GetMaxSpellSlotLevel(objHndl objHnd, Stat classCode, int casterLvl);
 	int ParseSpellSpecString(SpellStoreData* spell, char* spellString);
-	const char* GetSpellMesline(uint32_t line);
-	const char* GetSpellEnumTAG(uint32_t spellEnum);
+
+	const char* GetSpellMesline(uint32_t line) const;
+	const char* GetSpellEnumTAG(uint32_t spellEnum) const;
+	const char* GetSpellName(uint32_t spellEnum) const;
+	
 	void SetSpontaneousCastingAltNode(objHndl obj, int nodeIdx, SpellStoreData* spellData);
 	
 
@@ -166,8 +171,13 @@ struct LegacySpellSystem : temple::AddressTable
 	
 	void (__cdecl *SpellEnd)(int spellId, int endDespiteTargetList); // endDespiteTargetList will end the spell even if the target list isn't empty
 	void (__cdecl *SpellRemove)(int);
-	void SpellsSave() const;
-	void SpellMapTransferPacket() const; // packs the spells cast registry to SpellMapTransferInfo data structs
+	
+	void SpellSave(); // packs the spells cast registry to SpellMapTransferInfo data structs
+		void SpellSavePruneInactive() const;
+		int PrepareActiveSpellForTeleport(int id, SpellPacket* data, SpellMapTransferInfo* spellMtInfo);
+		
+	void GetSpellsFromTransferInfo();
+		bool GetSpellPacketFromTransferInfo(unsigned& spellId, SpellPacket& spellPkt, SpellMapTransferInfo& it);
 	bool IsSpellActive(int spellid);
 
 	CondStruct *GetCondFromSpellIdx(int id);
@@ -194,6 +204,7 @@ struct LegacySpellSystem : temple::AddressTable
 		rebase(SpellKnownAdd, 0x10079EE0);
 		rebase(SpellMemorizedAdd, 0x10075A10);
 		rebase(_pickerArgsFromSpellEntry,0x100772A0); 
+		//rebase(spellMTI, 0x10AB59E8);
 	}
 private:
 

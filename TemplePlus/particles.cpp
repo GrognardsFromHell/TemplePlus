@@ -33,6 +33,11 @@ int LegacyParticles::CreateAtObj(const char *name, objHndl atObj) {
 	return addresses.CreateAtObj(nameHash, atObj);
 }
 
+int LegacyParticles::CreateAtObj(unsigned nameHash, objHndl atObj)
+{
+	return addresses.CreateAtObj(nameHash, atObj);
+}
+
 int LegacyParticles::CreateAt3dPos(const char *name, vector3f pos) {
 	auto nameHash = addresses.Elf32Hash(name);
 	return addresses.CreateAtPos(nameHash, pos);

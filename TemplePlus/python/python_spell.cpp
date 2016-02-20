@@ -20,8 +20,10 @@ static PyObject *PySpellTargets_Create(PySpell *spell);
 struct PySpellTarget {
 	objHndl obj;
 	int partSysId;
+	int pad;
 };
 
+#pragma push(pack,1)
 struct PySpell {
 	PyObject_HEAD;
 	uint32_t spellEnum;
@@ -39,16 +41,18 @@ struct PySpell {
 	uint32_t casterLevel;
 	uint32_t rangeExact;
 	uint32_t duration;
-	uint32_t field_58;
-	uint32_t targetCountCopy;
+	uint32_t durationRemaining;
+	uint32_t orgtargetCount;
 	int targetCount;
 	uint32_t projectileCount;
 	uint32_t field_6C;
 	PySpellTarget targets[32];
-	SpellPacketBody* spellPacketBodies[8];
+	objHndl projectiles[5];
 	MetaMagicData metaMagic;
-	objHndl projectiles;
 };
+
+#pragma pop()
+const int testSizeofPyspell = sizeof PySpell; // should be 680 (due to HEAD_EXTRA is +8 relative to toee)
 
 // Contains all active spells
 typedef unordered_map<int, PySpell*> ActiveSpellMap;
@@ -558,7 +562,7 @@ static PyTypeObject PySpellType = {
 static void PySpell_UpdateFromPacket(PySpell* self, const SpellPacketBody& spell) {
 	self->spellEnum = spell.spellEnum;
 	self->spellEnumOriginal = spell.spellEnumOriginal;
-	self->caster = spell.objHndCaster;
+	self->caster = spell.caster;
 	self->casterPartSysId = spell.casterPartsysId;
 
 	// TODO: check for correctness
@@ -571,24 +575,17 @@ static void PySpell_UpdateFromPacket(PySpell* self, const SpellPacketBody& spell
 	self->spellLevel = spell.spellKnownSlotLevel;
 	self->casterLevel = spell.baseCasterLevel;
 	self->rangeExact = spell.spellRange;
-	self->dc = spell.spellDC;
-	self->duration = spell.spellDuration;
-	self->field_58 = spell.durationRemaining;
+	self->dc = spell.dc;
+	self->duration = spell.duration;
+	self->durationRemaining = spell.durationRemaining;
 	self->rangeExact = spell.spellRange;
-	self->targetCountCopy = spell.targetListNumItemsCopy;
-	self->targetCount = spell.targetListNumItems;
-	self->projectileCount = spell.numProjectiles;
+	self->orgtargetCount = spell.orgTargetCount;
+	self->targetCount = spell.targetCount;
+	self->projectileCount = spell.projectileCount;
 	*((uint32_t*)&self->metaMagic) = spell.metaMagicData;
 	self->targetLocation = spell.aoeCenter;
-	self->projectiles = spell.projectiles; // TODO fix the rest of it (should be 5 projectiles)
-	self->spellPacketBodies[0] = spell.spellPktBods[0];
-	self->spellPacketBodies[1] = spell.spellPktBods[1];
-	self->spellPacketBodies[2] = spell.spellPktBods[2];
-	self->spellPacketBodies[3] = spell.spellPktBods[3];
-	self->spellPacketBodies[4] = spell.spellPktBods[4];
-	self->spellPacketBodies[5] = spell.spellPktBods[5];
-	self->spellPacketBodies[6] = spell.spellPktBods[6];
-	self->spellPacketBodies[7] = spell.spellPktBods[7];
+	for (int i = 0; i < 5; i++)
+		self->projectiles[i] = spell.projectiles[i];
 
 	for (int i = 0; i < 32; ++i) {
 		self->targets[i].obj = spell.targetListHandles[i];
@@ -652,22 +649,21 @@ void PySpell_UpdatePacket(PyObject* pySpell) {
 	SpellPacketBody spell;
 	spellSys.GetSpellPacketBody(self->spellId, &spell);
 
-	spell.objHndCaster = self->caster;
+	spell.caster = self->caster;
 	spell.casterPartsysId = self->casterPartSysId;
-	spell.spellDC = self->dc;
-	spell.targetListNumItemsCopy = self->targetCount;
-	spell.numProjectiles = self->projectileCount;
+	spell.dc = self->dc;
+	spell.orgTargetCount = self->targetCount;
+	spell.projectileCount = self->projectileCount;
 	spell.metaMagicData = *((uint32_t*)&self->metaMagic);
 	spell.aoeCenter = self->targetLocation;
-	spell.projectiles = self->projectiles;
 
-	for (int i = 0; i < 8; ++i) {
-		spell.spellPktBods[i] = self->spellPacketBodies[i];
+	for (int i = 0; i < 55; ++i) {
+		spell.projectiles[i] = self->projectiles[i];
 	}
 
 	spell.baseCasterLevel = self->casterLevel;
-	spell.targetListNumItems = self->targetCount;
-	spell.spellDuration = self->duration;
+	spell.targetCount = self->targetCount;
+	spell.duration = self->duration;
 	if (spell.durationRemaining <= 0)
 		spell.durationRemaining = self->duration;
 	spell.spellRange = self->rangeExact;

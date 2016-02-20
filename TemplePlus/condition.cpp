@@ -2116,7 +2116,7 @@ int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args)
 		return 0;
 	SpellPacketBody spellPktBody;
 	spellSys.GetSpellPacketBody(spellId, &spellPktBody);
-	objHndl singer = spellPktBody.objHndCaster;
+	objHndl singer = spellPktBody.caster;
 	ObjectId singerId = objects.GetId(singer);
 	memcpy(&args.subDispNode->condNode->args[2], &singerId, sizeof(ObjectId));
 

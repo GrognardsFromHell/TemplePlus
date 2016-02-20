@@ -12,6 +12,10 @@
 #include "critter.h"
 #include "gamesystems/objects/objsystem.h"
 #include <infrastructure/elfhash.h>
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/particlesystems.h"
+#include <particles/instances.h>
+#include "particles.h"
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
@@ -67,10 +71,15 @@ public:
 		replaceFunction(0x100756E0, _GetSpellPacketBody); 
 		replaceFunction(0x100F1010, _SetSpontaneousCastingAltNode);
 
-		static void(__cdecl* SpellMapTransferPack)() = replaceFunction<void(__cdecl)()>(0x10079390, []()
-		{
-			SpellMapTransferPack();
+		static void(__cdecl* orgSpellSave)() = replaceFunction<void(__cdecl)()>(0x10079390, [](){
+			// orgSpellSave();
+			spellSys.SpellSave();
 		});
+
+		static void(__cdecl* orgGetSpellsFromTransInfo)() = replaceFunction<void(__cdecl)()>(0x100793F0, []()	{
+			spellSys.GetSpellsFromTransferInfo();
+		});
+		
 	}
 } spellFuncReplacements;
 
@@ -99,6 +108,37 @@ public:
 
 LegacySpellSystem spellSys;
 
+SpellPacketBody::SpellPacketBody()
+{
+	spellSys.spellPacketBodyReset(this);
+}
+
+SpellMapTransferInfo::SpellMapTransferInfo()
+{
+	memset(this, 0, sizeof(SpellMapTransferInfo));
+	spellId  = -1;
+
+	// vanilla init:
+	/*objId.subtype = ObjectIdKind::Null;
+	casterPartsysId = 0;
+	aoeObjId.subtype = ObjectIdKind::Null;
+	for (int i = 0; i < 128; i++)
+	{
+		spellObjPartsysIds[i] = 0;
+		spellObjs[i].subtype = ObjectIdKind::Null;
+	}
+	for (int i = 0; i < 32; i++)
+	{
+		targetlistPartsysIds[i] = 0;
+		targets[i].subtype = ObjectIdKind::Null;
+	}
+	for (int i = 0; i < 5; i++)
+	{
+		projectiles[i].subtype = ObjectIdKind::Null;
+	}*/
+
+}
+
 uint32_t LegacySpellSystem::spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry)
 {
 	return spellEntryRegistry.copy(spellEnum, spellEntry);
@@ -119,7 +159,7 @@ int LegacySpellSystem::ParseSpellSpecString(SpellStoreData* spell, char* spellSt
 	return addresses.ParseSpellSpecString(spell, spellString);
 }
 
-const char* LegacySpellSystem::GetSpellMesline(uint32_t lineNumber)
+const char* LegacySpellSystem::GetSpellMesline(uint32_t lineNumber) const
 {
 	MesLine mesLine;
 	mesLine.key = lineNumber;
@@ -127,12 +167,20 @@ const char* LegacySpellSystem::GetSpellMesline(uint32_t lineNumber)
 	return mesLine.value;
 }
 
-const char* LegacySpellSystem::GetSpellEnumTAG(uint32_t spellEnum)
+const char* LegacySpellSystem::GetSpellEnumTAG(uint32_t spellEnum) const
 {
 	MesLine mesLine;
 	mesLine.key = spellEnum + 20000;
 	mesFuncs.GetLine_Safe(*spellEnumMesHandle, &mesLine);
 	return mesLine.value;
+}
+
+const char* LegacySpellSystem::GetSpellName(uint32_t spellEnum) const
+{
+	if (spellEnum > SPELL_ENUM_MAX || static_cast<int>(spellEnum) <=0){
+		logger->warn("Spell Enum outside expected range: {}", spellEnum);
+	}
+	return GetSpellMesline(spellEnum);
 }
 
 void LegacySpellSystem::SetSpontaneousCastingAltNode(objHndl obj, int nodeIdx, SpellStoreData* spellData)
@@ -277,27 +325,231 @@ void LegacySpellSystem::spellPacketSetCasterLevel(SpellPacketBody* spellPktBody)
 	_spellPacketSetCasterLevel(spellPktBody);
 }
 
-void LegacySpellSystem::SpellsSave() const
+void LegacySpellSystem::SpellSavePruneInactive() const
 {
-	spellsCastRegistry;
 	int numPruned = 0;
 	for (auto it : spellsCastRegistry)
 	{
-		if (it.data->isActive)
-		{
-			
-		} else if (it.data->spellPktBody.objHndCaster)
-		{
-			
+		bool shouldPrune = false;
+		auto spellPacketBody = &it.data->spellPktBody;
+
+		if (it.data->isActive == 0)	{
+			shouldPrune = true;
+
+			if (!it.data->spellPktBody.caster) {
+				const char * spellName = GetSpellName(spellPacketBody->spellEnum);
+				logger->warn("Spell id {} ({}) has been pruned because the spell has a null caster.", spellPacketBody->spellId, spellName);
+				shouldPrune = true;
+			} // TODO: Logic bug??? I think this should be outside
+		} 
+		else if (spellPacketBody->targetCount && 
+				!spellPacketBody ->targetListHandles[0] ){
+			const char * spellName = GetSpellName(spellPacketBody->spellEnum);
+			logger->warn("Spell id {} ({}) has been pruned because the spell has num_targets > 0 but there are no targets!", spellPacketBody->spellId ,spellName);
+			shouldPrune = true;
+		}
+		
+		if (shouldPrune){
+			numPruned++;
+			spellsCastRegistry.remove(it.id);
 		}
 	}
 	logger->info("Pruned {} spells from active list.", numPruned);
 }
 
-void LegacySpellSystem::SpellMapTransferPacket() const
+int LegacySpellSystem::PrepareActiveSpellForTeleport(int id, SpellPacket* data, SpellMapTransferInfo* spellMtInfo)
 {
-	//SpellsSave();
-	auto spellsSave = temple::GetRef<void(__cdecl)()>(0x10079390);
+
+	// Preamble
+
+	auto spellEnum = data->spellPktBody.spellEnum;
+	Expects(spellEnum > 0 && spellEnum < 10000); // keeping a margin for now because co8 has messed with this a bit
+	if (spellEnum > SPELL_ENUM_MAX)	{
+		logger->warn("Spell enum beyond expected range encountered: {}", spellEnum);
+	}
+	
+	auto spellPkt = &data->spellPktBody;
+	auto spellName = GetSpellName(spellPkt->spellEnum);
+	
+	auto PartsysGetNameHashByHandle = [spellMtInfo, spellName, id](int handle)
+	{
+		auto &sys = gameSystems->GetParticleSys().GetByHandle(handle);
+		if (!sys)
+		{
+			logger->debug("PrepareActiveSpellForTeleport: \t Trying to get name hash for invalid particle system handle: {}. Spell is {} id {}", handle, spellName, id);
+			return (unsigned)0;
+
+		}
+		else
+		{
+			logger->debug("PrepareActiveSpellForTeleport: \t Hashing name for partsys: {}. Spell is {} id {}", handle, spellName, id);
+			return sys->GetSpec()->GetNameHash();
+		}
+	};
+	
+
+	// Meat
+	spellMtInfo->spellId = id;
+	spellMtInfo->objId = objects.GetId(spellPkt->caster);
+
+	if (spellMtInfo->objId.subtype == ObjectIdKind::Null)
+		logger->warn("PrepareActiveSpellForTeleport: ObjId type is null! Spell {} id {}", spellName ,id);
+
+	auto partHandle = spellPkt->casterPartsysId;
+	spellMtInfo->casterPartsys = PartsysGetNameHashByHandle(partHandle);
+
+	if (spellPkt->aoeObj){
+		spellMtInfo->aoeObjId = objects.GetId(spellPkt->aoeObj);
+		if (spellMtInfo->aoeObjId.subtype == ObjectIdKind::Null){
+			logger->warn("PrepareActiveSpellForTeleport: ObjId type is null! Spell {} id {}", spellName, id);
+		}
+	} 
+	else{
+		spellMtInfo->aoeObjId.subtype = ObjectIdKind::Null;
+	}
+
+	memset(spellMtInfo->spellObjPartsys, 0, sizeof spellMtInfo->spellObjPartsys);
+	memset(spellMtInfo->spellObjs, 0, sizeof spellMtInfo->spellObjs);
+	memset(spellMtInfo->targetlistPartsys, 0, sizeof spellMtInfo->targetlistPartsys);
+	memset(spellMtInfo->targets, 0, sizeof spellMtInfo->targets);
+	memset(spellMtInfo->projectiles, 0, sizeof spellMtInfo->projectiles);
+	
+	for (int i = 0; i < spellPkt->numSpellObjs;i++){
+		if (spellPkt->spellObjs[i].obj) {
+			spellMtInfo->spellObjs[i] = objects.GetId(spellPkt->spellObjs[i].obj);
+		} else
+		{
+			logger->debug("PrepareActiveSpellForTeleport: Null spellObj handle! Spell {} id {}", spellName, id);
+		}
+		auto handle = spellPkt->spellObjs[i].partySysId;
+		if (handle)
+			spellMtInfo->spellObjPartsys[i] = PartsysGetNameHashByHandle(handle);
+	}
+	
+	for (int i = 0; i < spellPkt->targetCount; i++) {
+		if (spellPkt->targetListHandles[i]) {
+			spellMtInfo->targets[i] = objects.GetId(spellPkt->targetListHandles[i]);
+		}
+		else
+		{
+			logger->debug("PrepareActiveSpellForTeleport: Null target handle! Spell {} id {}", spellName, id);
+		}
+		auto handle = spellPkt->targetListPartsysIds[i];
+		if (handle)
+			spellMtInfo->targetlistPartsys[i] = PartsysGetNameHashByHandle(handle);
+	}
+
+	for (int i = 0; i < spellPkt->projectileCount; i++)
+	{
+		if (spellPkt->projectiles[i]) {
+			spellMtInfo->projectiles[i] = objects.GetId(spellPkt->projectiles[i]);
+		}
+		else
+		{
+			logger->debug("PrepareActiveSpellForTeleport: Null projectile handle! Spell {} id {}", spellName, id);
+		}
+	}
+
+	//++(temple::GetRef<int>(0x102BFB08));
+
+	return 1;
+}
+
+
+
+void LegacySpellSystem::SpellSave()
+{
+	SpellSavePruneInactive();
+	
+	auto numSpells = spellsCastRegistry.itemCount();
+	if (!numSpells) 
+		return;
+	
+	auto &spellPrepareIdx = temple::GetRef<int>(0x102BFB08);
+	spellPrepareIdx = 0; // spellTeleportPrepareIdx;
+	spellMapTransInfo.clear();
+
+	for (auto it : spellsCastRegistry) {
+		spellMapTransInfo.emplace(spellMapTransInfo.end());
+		PrepareActiveSpellForTeleport(it.id, it.data, &spellMapTransInfo[spellPrepareIdx++]);
+	}
+
+}
+
+void LegacySpellSystem::GetSpellsFromTransferInfo()
+{
+	auto &spellPrepareCount = temple::GetRef<int>(0x102BFB08);
+
+	for (auto it: spellMapTransInfo)
+	{
+		unsigned spellId;
+		SpellPacket spellPkt;
+		if (GetSpellPacketFromTransferInfo(spellId, spellPkt, it))	{
+			for (int j = 0; j < spellPkt.spellPktBody.targetCount; j++)	{
+				if (it.targetlistPartsys[j] && it.targets[j]){
+					spellPkt.spellPktBody.targetListPartsysIds[j] = legacyParticles.CreateAtObj(it.targetlistPartsys[j], it.targets[j]);
+				}
+			}
+			spellsCastRegistry.put(spellId, spellPkt);
+
+		}
+	}
+
+	spellPrepareCount = -1;
+	spellMapTransInfo.clear();
+}
+
+bool LegacySpellSystem::GetSpellPacketFromTransferInfo(unsigned& spellId, SpellPacket& spellPkt, SpellMapTransferInfo& mtInfo){
+
+	spellId = mtInfo.spellId;
+
+	if (!spellsCastRegistry.copy(spellId, &spellPkt))
+		return false;
+
+	auto spellName = GetSpellName(spellPkt.spellPktBody.spellEnum);
+
+	auto handle = objSystem->GetHandleById(mtInfo.objId);
+	if (handle){
+		if (mtInfo.casterPartsys)
+			spellPkt.spellPktBody.casterPartsysId = legacyParticles.CreateAtObj(mtInfo.casterPartsys,handle);
+		else
+			logger->debug("GetSpellPacketFromTransferInfo: Tried to play partsys hash 0 for spell {} id", spellName, spellId);
+	}
+
+	if (mtInfo.aoeObjId.subtype != ObjectIdKind::Null){
+		handle = objSystem->GetHandleById(mtInfo.aoeObjId);
+		spellPkt.spellPktBody.aoeObj = handle;
+	} else{
+		spellPkt.spellPktBody.aoeObj = 0i64;
+	}
+	
+	// this looks fishy - I think these are name hashes and not partsys handles
+	for (int i = 0; i < 128; i++){
+		if (mtInfo.spellObjs[i].subtype != ObjectIdKind::Null) 
+			spellPkt.spellPktBody.spellObjs[i].obj = objSystem->GetHandleById(mtInfo.spellObjs[i]);
+		else
+			spellPkt.spellPktBody.spellObjs[i].obj = 0i64;
+		if (mtInfo.spellObjPartsys[i])
+			spellPkt.spellPktBody.spellObjs[i].partySysId = mtInfo.spellObjPartsys[i];
+	}
+
+	for (int i = 0; i < 32; i++)	{
+		
+		if (mtInfo.targets[i].subtype != ObjectIdKind::Null)
+			spellPkt.spellPktBody.targetListHandles[i] = objSystem->GetHandleById(mtInfo.targets[i]);
+		else
+			spellPkt.spellPktBody.targetListHandles[i] = 0i64;
+	}
+
+	for (int i = 0; i < 5; i++) {
+
+		if (mtInfo.projectiles[i].subtype != ObjectIdKind::Null)
+			spellPkt.spellPktBody.projectiles[i] = objSystem->GetHandleById(mtInfo.projectiles[i]);
+		else
+			spellPkt.spellPktBody.projectiles[i] = 0i64;
+	}
+
+	return true;
 }
 
 bool LegacySpellSystem::IsSpellActive(int spellid) {
@@ -552,8 +804,9 @@ BOOL LegacySpellSystem::SpellHasAiType(unsigned spellEnum, AiSpellType aiSpellTy
 	SpellEntry spellEntry;
 	if (spellSys.spellRegistryCopy(spellEnum, &spellEntry) && spellEntry.aiTypeBitmask)
 	{
-		return  (spellEntry.aiTypeBitmask & (1 << aiSpellType) == (1 << aiSpellType));
-
+		return  ( 
+					(spellEntry.aiTypeBitmask & (1 << aiSpellType)) 
+						== (1 << aiSpellType));
 	}
 	return 0;
 }

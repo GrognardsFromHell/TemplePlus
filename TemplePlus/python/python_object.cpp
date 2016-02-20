@@ -421,7 +421,7 @@ static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 	spellSys.spellPacketBodyReset(&spellPktBody);
 	spellPktBody.spellEnum = spellEnum;
 	spellPktBody.spellEnumOriginal = spellEnum;
-	spellPktBody.objHndCaster = caster;
+	spellPktBody.caster = caster;
 	for (uint32_t i = 0; i < numSpells; i++) {
 		if (!spellSys.spellCanCast(caster, spellEnum, classCodes[i], spellLevels[i]))
 			continue;
@@ -460,7 +460,7 @@ static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 		}
 
 		spellSys.ConfigSpellTargetting(&pickArgs, &spellPktBody);
-		if (spellPktBody.targetListNumItems <= 0)
+		if (spellPktBody.targetCount <= 0)
 			continue;
 		if (!actSeqSys.TurnBasedStatusInit(caster))
 			continue;

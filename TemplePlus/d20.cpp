@@ -701,14 +701,14 @@ int LegacyD20System::TargetCheck(D20Actn* d20a)
 			return (*addresses.actSeqTargetsIdx) >= 0;
 		case D20TC_CastSpell:
 			curSeq->d20Action = d20a;
-			if (curSeq->spellPktBody.objHndCaster || curSeq->spellPktBody.spellEnum)
+			if (curSeq->spellPktBody.caster || curSeq->spellPktBody.spellEnum)
 				return 1;
 			unsigned spellEnum, spellEnumOrg, spellClassCode, spellSlotLevel, itemSpellData, spellMetaMagicData;
 			D20SpellDataExtractInfo(&d20a->d20SpellData, &spellEnum, &spellEnumOrg, &spellClassCode, &spellSlotLevel, &itemSpellData, &spellMetaMagicData);
 			spellSys.spellPacketBodyReset(&curSeq->spellPktBody);
 			curSeq->spellPktBody.spellEnum = spellEnum;
 			curSeq->spellPktBody.spellEnumOriginal= spellEnumOrg;
-			curSeq->spellPktBody.objHndCaster = d20a->d20APerformer;
+			curSeq->spellPktBody.caster = d20a->d20APerformer;
 			curSeq->spellPktBody.casterClassCode = spellClassCode;
 			curSeq->spellPktBody.spellKnownSlotLevel = spellSlotLevel;
 			curSeq->spellPktBody.metaMagicData = spellMetaMagicData;
@@ -723,18 +723,18 @@ int LegacyD20System::TargetCheck(D20Actn* d20a)
 				spellSys.spellPacketSetCasterLevel(&curSeq->spellPktBody);
 			else
 				curSeq->spellPktBody.baseCasterLevel = max(1, 2 * static_cast<int>(spellSlotLevel) - 1);
-			curSeq->spellPktBody.spellRange = spellSys.GetSpellRange(&spellEntry, curSeq->spellPktBody.baseCasterLevel, curSeq->spellPktBody.objHndCaster);
+			curSeq->spellPktBody.spellRange = spellSys.GetSpellRange(&spellEntry, curSeq->spellPktBody.baseCasterLevel, curSeq->spellPktBody.caster);
 			if ((spellEntry.modeTargetSemiBitmask & 0xFF) != static_cast<unsigned>(UiPickerType::Personal)
 				|| spellEntry.radiusTarget < 0
 				|| (spellEntry.flagsTargetBitmask & UiPickerFlagsTarget::Radius))
 				return 0;
-			curSeq->spellPktBody.targetListNumItemsCopy = 1;
-			curSeq->spellPktBody.targetListNumItems = 1;
-			curSeq->spellPktBody.targetListHandles[0] = curSeq->spellPktBody.objHndCaster;
+			curSeq->spellPktBody.orgTargetCount = 1;
+			curSeq->spellPktBody.targetCount = 1;
+			curSeq->spellPktBody.targetListHandles[0] = curSeq->spellPktBody.caster;
 			curSeq->spellPktBody.aoeCenter.location =
-				objects.GetLocationFull(curSeq->spellPktBody.objHndCaster);
+				objects.GetLocationFull(curSeq->spellPktBody.caster);
 			curSeq->spellPktBody.aoeCenter.off_z =
-				objects.GetOffsetZ(curSeq->spellPktBody.objHndCaster);
+				objects.GetOffsetZ(curSeq->spellPktBody.caster);
 			if (spellEntry.radiusTarget > 0)
 				curSeq->spellPktBody.spellRange = spellEntry.radiusTarget;
 			return 1;
