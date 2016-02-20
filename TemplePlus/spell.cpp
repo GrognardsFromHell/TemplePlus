@@ -16,6 +16,7 @@
 #include "gamesystems/particlesystems.h"
 #include <particles/instances.h>
 #include "particles.h"
+#include "python/python_integration_spells.h"
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
@@ -78,6 +79,11 @@ public:
 
 		static void(__cdecl* orgGetSpellsFromTransInfo)() = replaceFunction<void(__cdecl)()>(0x100793F0, []()	{
 			spellSys.GetSpellsFromTransferInfo();
+		});
+
+		static int(__cdecl* orgSpellEnd)(int, int) = replaceFunction<int(__cdecl)(int,int)>(0x10079980, [](int id, int endDespiteTargetList)
+		{
+			return spellSys.SpellEnd(id, endDespiteTargetList);
 		});
 		
 	}
@@ -796,6 +802,33 @@ BOOL LegacySpellSystem::SpellHasAiType(unsigned spellEnum, AiSpellType aiSpellTy
 						== (1 << aiSpellType));
 	}
 	return 0;
+}
+
+int LegacySpellSystem::SpellEnd(int spellId, int endDespiteTargetList) const
+{
+	SpellPacket pkt;
+	if (!spellsCastRegistry.copy(spellId,&pkt)){
+		logger->debug("SpellEnd: \t Couldn't find spell in registry. Spell id {}", spellId);
+		return 0;
+	}
+
+	auto spellName = GetSpellName(pkt.spellPktBody.spellEnum);
+
+	if (pkt.spellPktBody.targetCount > 0){
+		logger->debug("SpellEnd: \t target count is nonzero! Spell {} id {}", spellName, spellId);
+		if (!endDespiteTargetList)
+			return 0;
+		logger->debug("Forcing spell end anyway...");
+	}
+
+	pythonSpellIntegration.SpellTrigger(spellId, SpellEvent::EndSpellCast);
+	pythonSpellIntegration.RemoveSpell(spellId); // bah :P
+
+	// python stuff could update it so we refresh
+	spellsCastRegistry.copy(spellId, &pkt);
+	pkt.isActive = 0;
+	spellsCastRegistry.put(spellId, pkt);
+	return 1;
 }
 #pragma endregion
 

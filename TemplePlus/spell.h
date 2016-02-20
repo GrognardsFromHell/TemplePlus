@@ -167,7 +167,7 @@ struct LegacySpellSystem : temple::AddressTable
 	bool GetSpellTargets(objHndl obj, objHndl tgt, SpellPacketBody* spellPkt, unsigned spellEnum);
 	BOOL SpellHasAiType(unsigned spellEnum, AiSpellType aiSpellType);
 	
-	void (__cdecl *SpellEnd)(int spellId, int endDespiteTargetList); // endDespiteTargetList will end the spell even if the target list isn't empty
+	int SpellEnd(int spellId, int endDespiteTargetList) const; // endDespiteTargetList will end the spell even if the target list isn't empty
 	void (__cdecl *SpellRemove)(int);
 	
 	void SpellSave(); // packs the spells cast registry to SpellMapTransferInfo data structs
@@ -192,7 +192,7 @@ struct LegacySpellSystem : temple::AddressTable
 		rebase(spellMes, 0x10AAF438);
 		rebase(spellsRadialMenuOptionsMes, 0x10BD0238);
 
-		rebase(SpellEnd, 0x10079980);
+		//rebase(SpellEnd, 0x10079980);
 		rebase(SpellRemove, 0x10079A20);
 		rebase(_getSpellCountByClassLvl, 0x100F4D10);
 		rebase(_getStatModBonusSpellCount, 0x100F4C30);
