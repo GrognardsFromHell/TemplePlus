@@ -657,7 +657,7 @@ void PySpell_UpdatePacket(PyObject* pySpell) {
 	spell.metaMagicData = *((uint32_t*)&self->metaMagic);
 	spell.aoeCenter = self->targetLocation;
 
-	for (int i = 0; i < 55; ++i) {
+	for (int i = 0; i < 5; ++i) {
 		spell.projectiles[i] = self->projectiles[i];
 	}
 
