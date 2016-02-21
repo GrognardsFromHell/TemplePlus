@@ -60,31 +60,50 @@ public:
 		return "Expand the range of usable spellEnums. Currently walled off at 802.";
 	}
 
+	static void hookedPrint(const char * fmt, const char* spellName)
+	{
+		logger->debug("SpellLoad: Spell {}", spellName);
+	};
+
 	void apply() override {
 		// writeHex(0x100779DE + 2, "A0 0F"); // this prevents the crash from casting from scroll, but it fucks up normal spell casting... (can't go to radial menu to cast!)
 		replaceFunction(0x100FDEA0, _getWizSchool);
-		replaceFunction(0x100779A0, _getSpellEnum); 
-		replaceFunction(0x100762D0, _spellKnownQueryGetData); 
-		replaceFunction(0x10076190, _spellMemorizedQueryGetData); 
-		replaceFunction(0x1007A140, _spellCanCast); 
-		replaceFunction(0x100754B0, _spellRegistryCopy); 
-		replaceFunction(0x10075660, _GetSpellEnumFromSpellId); 
-		replaceFunction(0x100756E0, _GetSpellPacketBody); 
+		replaceFunction(0x100779A0, _getSpellEnum);
+		replaceFunction(0x100762D0, _spellKnownQueryGetData);
+		replaceFunction(0x10076190, _spellMemorizedQueryGetData);
+		replaceFunction(0x1007A140, _spellCanCast);
+		replaceFunction(0x100754B0, _spellRegistryCopy);
+		replaceFunction(0x10075660, _GetSpellEnumFromSpellId);
+		replaceFunction(0x100756E0, _GetSpellPacketBody);
 		replaceFunction(0x100F1010, _SetSpontaneousCastingAltNode);
 
-		static void(__cdecl* orgSpellSave)() = replaceFunction<void(__cdecl)()>(0x10079390, [](){
+		static void(__cdecl* orgSpellSave)() = replaceFunction<void(__cdecl)()>(0x10079390, []() {
 			// orgSpellSave();
 			spellSys.SpellSave();
 		});
 
-		static void(__cdecl* orgGetSpellsFromTransInfo)() = replaceFunction<void(__cdecl)()>(0x100793F0, []()	{
+		static void(__cdecl* orgGetSpellsFromTransInfo)() = replaceFunction<void(__cdecl)()>(0x100793F0, []() {
 			spellSys.GetSpellsFromTransferInfo();
 		});
 
-		static int(__cdecl* orgSpellEnd)(int, int) = replaceFunction<int(__cdecl)(int,int)>(0x10079980, [](int id, int endDespiteTargetList)
+		static int(__cdecl* orgSpellEnd)(int, int) = replaceFunction<int(__cdecl)(int, int)>(0x10079980, [](int id, int endDespiteTargetList)
 		{
 			return spellSys.SpellEnd(id, endDespiteTargetList);
 		});
+
+		static bool(__cdecl*orgSpellCastSerializeToFile)(SpellPacket*, int, TioFile*) = replaceFunction<bool(__cdecl)(SpellPacket*, int, TioFile*)>(0x100781B0, [](SpellPacket* pkt, int key, TioFile* file){
+			auto result = orgSpellCastSerializeToFile(pkt, key, file);
+			if (result)
+			{
+				logger->debug("Serialized spell {} id {} to file.", spellSys.GetSpellName(pkt->spellPktBody.spellEnum), key);
+			} else
+			{
+				logger->debug("Failed to serialize spell to file! Spell was {} id {}.", spellSys.GetSpellName(pkt->spellPktBody.spellEnum), key);
+			}
+			return result;
+		});
+
+		redirectCall(0x1007870F, hookedPrint);
 		
 	}
 } spellFuncReplacements;

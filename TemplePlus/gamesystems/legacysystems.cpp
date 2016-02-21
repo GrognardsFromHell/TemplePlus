@@ -327,13 +327,19 @@ const std::string &SpellSystem::GetName() const {
 }
 
 bool SpellSystem::Save(TioFile* file) {
-	static auto spell_save = temple::GetPointer<BOOL(TioFile *file)>(0x10079220);
-	return spell_save(file) == TRUE;
+	logger->info("Saving Spells: {} spells initially in SpellsCastRegistry." , spellSys.spellCastIdxTable->itemCount);
+	static auto spell_save = temple::GetPointer<BOOL(TioFile *)>(0x10079220);
+	auto result = spell_save(file);
+	logger->info("Saving Spells: {} spells after pruning.", spellSys.spellCastIdxTable->itemCount);
+	return result == TRUE;
 }
 
 bool SpellSystem::Load(GameSystemSaveFile* file) {
+	logger->info("Loading Spells: {} spells initially in SpellsCastRegistry.", spellSys.spellCastIdxTable->itemCount);
 	static auto spell__spell_load = temple::GetPointer<BOOL(GameSystemSaveFile*)>(0x100792a0);
-	return spell__spell_load(file) == TRUE;
+	auto result = spell__spell_load(file);
+	logger->info("Loading Spells: {} spells in SpellsCastRegistry after loading.", spellSys.spellCastIdxTable->itemCount);
+	return result == TRUE;
 }
 
 //*****************************************************************************
