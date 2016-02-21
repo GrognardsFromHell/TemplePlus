@@ -337,8 +337,35 @@ bool SpellSystem::Save(TioFile* file) {
 bool SpellSystem::Load(GameSystemSaveFile* file) {
 	logger->info("Loading Spells: {} spells initially in SpellsCastRegistry.", spellSys.spellCastIdxTable->itemCount);
 	static auto spell__spell_load = temple::GetPointer<BOOL(GameSystemSaveFile*)>(0x100792a0);
-	auto result = spell__spell_load(file);
+	
+	
+	auto spellIdSerial = temple::GetPointer<int>(0x10AAF204);
+	tio_fread(spellIdSerial, sizeof(int), 1, file->file);
+	
+	int numSpells;
+	if (tio_fread(&numSpells, 4, 1, file->file) != 1)
+		return FALSE;
+
+	Expects(numSpells >= 0);
+	Expects(*spellIdSerial >= numSpells);
+	
+	if (numSpells <= 0)
+		return TRUE;
+
+	uint32_t spellId;
+	SpellPacket pkt;
+	for (int i = 0; i < numSpells; i++)	{
+		if (spellSys.LoadActiveSpellElement(file->file, spellId, pkt) != 1 ){
+			logger->warn("Loading Spells: Failure! {} spells in SpellsCastRegistry after loading.", spellSys.spellCastIdxTable->itemCount);
+			return FALSE;
+		}
+		spellSys.SpellsCastRegistryPut(spellId, pkt);
+	}
 	logger->info("Loading Spells: {} spells in SpellsCastRegistry after loading.", spellSys.spellCastIdxTable->itemCount);
+	return TRUE;
+	
+	auto result = spell__spell_load(file);
+	
 	return result == TRUE;
 }
 

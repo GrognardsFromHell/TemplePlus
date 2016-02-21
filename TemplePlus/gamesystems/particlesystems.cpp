@@ -143,6 +143,30 @@ ParticleSysSystem::Handle ParticleSysSystem::CreateAtObj(const std::string &name
 	return assignedId;
 }
 
+ParticleSysSystem::Handle ParticleSysSystem::CreateAtObj(uint32_t nameHash, objHndl obj)
+{
+	auto it = mPartSysByHash.find(nameHash);
+
+	if (it == mPartSysByHash.end()) {
+		logger->warn("Unable to spawn unknown particle system: {}", nameHash);
+		return -1;
+	}
+
+	auto& spec = it->second;
+
+	auto loc = objects.GetLocationFull(obj);
+	auto absLoc = loc.ToInches3D(objects.GetOffsetZ(obj));
+
+	auto sys(std::make_shared<PartSys>(spec));
+	sys->SetWorldPos(mExternal.get(), absLoc.x, absLoc.y, absLoc.z);
+	sys->SetAttachedTo(obj);
+
+	auto assignedId = mNextId++;
+
+	mActiveSys[assignedId] = sys;
+	return assignedId;
+}
+
 ParticleSysSystem::Handle ParticleSysSystem::CreateAtPos(const std::string &name, XMFLOAT3 pos) {
 	auto it = mPartSysByName.find(tolower(name));
 

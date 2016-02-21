@@ -4,6 +4,7 @@
 #include "idxtables.h"
 #include "tig\tig_mes.h"
 #include "spell_structs.h"
+#include "tio/tio.h"
 
 struct PickerArgs;
 
@@ -167,6 +168,7 @@ struct LegacySpellSystem : temple::AddressTable
 	bool GetSpellTargets(objHndl obj, objHndl tgt, SpellPacketBody* spellPkt, unsigned spellEnum);
 	BOOL SpellHasAiType(unsigned spellEnum, AiSpellType aiSpellType);
 	
+	
 	int SpellEnd(int spellId, int endDespiteTargetList) const; // endDespiteTargetList will end the spell even if the target list isn't empty
 	void (__cdecl *SpellRemove)(int);
 	
@@ -177,6 +179,9 @@ struct LegacySpellSystem : temple::AddressTable
 		
 	void GetSpellsFromTransferInfo();
 		bool GetSpellPacketFromTransferInfo(unsigned& spellId, SpellPacket& spellPkt, SpellMapTransferInfo& it);
+
+	bool LoadActiveSpellElement(TioFile* file, uint32_t& spellId, SpellPacket& pkt);
+	static void SpellsCastRegistryPut(int spellId, SpellPacket&);
 	bool IsSpellActive(int spellid);
 
 	CondStruct *GetCondFromSpellIdx(int id);

@@ -587,6 +587,154 @@ bool LegacySpellSystem::GetSpellPacketFromTransferInfo(unsigned& spellId, SpellP
 	return true;
 }
 
+bool LegacySpellSystem::LoadActiveSpellElement(TioFile* file, uint32_t& spellId, SpellPacket& pkt)
+{
+	if (!tio_fread(&spellId, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.key, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.isActive, sizeof(int), 1, file))
+		return false;
+	Expects(pkt.isActive);
+
+	if (!tio_fread(&pkt.spellPktBody.spellEnum, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.spellEnumOriginal, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.flagSthg, sizeof(int), 1, file))
+		return false;
+
+	// get the caster
+	ObjectId objId;
+	if (!tio_fread(&objId, sizeof(ObjectId), 1, file))
+		return false;
+	//Expects(objId.subtype != ObjectIdKind::Null);
+	pkt.spellPktBody.caster = objSystem->GetHandleById(objId);
+
+	// get the caster partsys
+	auto partsysHash = 0;
+	if (!tio_fread(&partsysHash, sizeof(int), 1, file))
+		return false;
+	if (pkt.spellPktBody.caster)
+		pkt.spellPktBody.casterPartsysId = partsysHash ? gameSystems->GetParticleSys().CreateAtObj(partsysHash, pkt.spellPktBody.caster) : 0;
+	else
+	{
+		logger->warn("SpellLoad: null caster handle!");
+		pkt.spellPktBody.casterPartsysId = 0;
+	}
+		
+
+	if (!tio_fread(&pkt.spellPktBody.casterClassCode, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.spellKnownSlotLevel, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.baseCasterLevel, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.dc, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.numSpellObjs, sizeof(int), 1, file))
+		return false;
+
+	// aoeObj
+	if (!tio_fread(&objId, sizeof(ObjectId), 1, file))
+		return false;
+	pkt.spellPktBody.aoeObj = objSystem->GetHandleById(objId);
+
+
+	// spellObjs
+	for (int i = 0; i < 128; i++){
+		
+		auto& spellObj = pkt.spellPktBody.spellObjs[i];
+
+		if (!tio_fread(&objId, sizeof(ObjectId), 1, file))
+			return false;
+		if (objId.subtype != ObjectIdKind::Null){
+			spellObj.obj =	objSystem->GetHandleById(objId);
+		}
+		else
+			spellObj.obj = 0i64;
+		
+		if (!tio_fread(&partsysHash, sizeof(int), 1, file))
+			return false;
+		if (partsysHash && pkt.spellPktBody.spellObjs[i].obj){
+			spellObj.partySysId = gameSystems->GetParticleSys().CreateAtObj(partsysHash, spellObj.obj);
+		} else	{
+			spellObj.partySysId = 0;
+		}
+	}
+
+	// targets
+	if (!tio_fread(&pkt.spellPktBody.orgTargetCount, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.targetCount, sizeof(int), 1, file))
+		return false;
+	for (int i = 0; i < 32; i++){
+		auto& tgt = pkt.spellPktBody.targetListHandles[i];
+		if (!tio_fread(&objId, sizeof(ObjectId), 1, file))
+			return false;
+		if (objId.subtype != ObjectIdKind::Null) {
+			tgt = objSystem->GetHandleById(objId);
+		}
+		else
+			tgt = 0i64;
+	}
+
+	// target particles
+	for (int i = 0; i < 32; i++){
+		auto& tgt = pkt.spellPktBody.targetListHandles[i];
+		auto& partsysId = pkt.spellPktBody.targetListPartsysIds[i];
+		if (!tio_fread(&partsysHash, sizeof(int), 1, file))
+			return false;
+		if (partsysHash && tgt  ) {
+			partsysId = gameSystems->GetParticleSys().CreateAtObj(partsysHash, tgt);
+		}
+		else {
+			partsysId = 0;
+		}
+	}
+
+	
+	// projectiles
+	if (!tio_fread(&pkt.spellPktBody.projectileCount, sizeof(int), 1, file))
+		return false;
+	for (int i = 0; i < 5; i++) {
+		auto& projectile = pkt.spellPktBody.projectiles[i];
+		if (!tio_fread(&objId, sizeof(ObjectId), 1, file))
+			return false;
+		if (objId.subtype != ObjectIdKind::Null) {
+			projectile = objSystem->GetHandleById(objId);
+		}
+		else
+			projectile = 0i64;
+	}
+
+	if (!tio_fread(&pkt.spellPktBody.aoeCenter, sizeof(locXY), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.aoeCenter.location.off_x, sizeof(float), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.aoeCenter.location.off_y, sizeof(float), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.aoeCenter.off_z, sizeof(float), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.duration, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.durationRemaining, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.spellRange, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.savingThrowResult, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.metaMagicData, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.spellId, sizeof(int), 1, file))
+		return false;
+	Expects(pkt.spellPktBody.spellId >= 0);
+
+	auto spellName = GetSpellName(pkt.spellPktBody.spellEnum);
+	logger->info("SpellLoad: Loaded spell {} id {}", spellName, spellId);
+	return true;
+}
+
 bool LegacySpellSystem::IsSpellActive(int spellid) {
 	SpellPacket spellPacket; 
 	if (spellsCastRegistry.copy(spellid, &spellPacket)) {
@@ -844,6 +992,11 @@ BOOL LegacySpellSystem::SpellHasAiType(unsigned spellEnum, AiSpellType aiSpellTy
 						== (1 << aiSpellType));
 	}
 	return 0;
+}
+
+void LegacySpellSystem::SpellsCastRegistryPut(int spellId, SpellPacket& pkt)
+{
+	spellsCastRegistry.put(spellId, pkt);
 }
 
 int LegacySpellSystem::SpellEnd(int spellId, int endDespiteTargetList) const
