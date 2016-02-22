@@ -327,10 +327,23 @@ const std::string &SpellSystem::GetName() const {
 }
 
 bool SpellSystem::Save(TioFile* file) {
-	logger->info("Saving Spells: {} spells initially in SpellsCastRegistry." , spellSys.spellCastIdxTable->itemCount);
+	
+	logger->debug("Saving Spells: {} spells initially in SpellsCastRegistry." , spellSys.spellCastIdxTable->itemCount);
+	spellSys.SpellSavePruneInactive();
+	logger->debug("Saving Spells: {} spells after pruning.", spellSys.spellCastIdxTable->itemCount);
+	
+	auto spellIdSerial = temple::GetPointer<int>(0x10AAF204);
+	tio_fwrite(spellIdSerial, sizeof(int), 1, file);
+	int numSpells = spellSys.spellCastIdxTable->itemCount;
+	if (!tio_fwrite(&numSpells, sizeof(int), 1, file))
+		return FALSE;
+	return spellSys.SpellSave(file);
+	
+	
+	return TRUE;
+
 	static auto spell_save = temple::GetPointer<BOOL(TioFile *)>(0x10079220);
 	auto result = spell_save(file);
-	logger->info("Saving Spells: {} spells after pruning.", spellSys.spellCastIdxTable->itemCount);
 	return result == TRUE;
 }
 

@@ -240,7 +240,7 @@ public:
 					mTable->buckets[bucketId] = node->next;
 				}
 				delete node;
-				++(mTable->itemCount);
+				--(mTable->itemCount);
 				return it;
 			}
 			prevNode = node;

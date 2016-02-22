@@ -392,6 +392,7 @@ void LegacySpellSystem::SpellSavePruneInactive() const
 			preservedSpells.push_back(SpellDebugInfo( spellPacketBody.spellEnum, spellPacketBody.targetCount ));
 		}
 	}
+
 	logger->info("Pruned {} spells from active list.", numPruned);
 	for (auto it: prunedSpells){
 		auto spellName = GetSpellName(it.spellEnum);
@@ -505,6 +506,136 @@ void LegacySpellSystem::SpellSave()
 		spellMapTransInfo.emplace_back(SaveSpellForTeleport(*it.data));
 	}
 
+}
+
+bool LegacySpellSystem::SpellSave(TioFile* file)
+{
+	static auto SerializeHandleToFile = [file](objHndl obj)
+	{
+		ObjectId objId;
+		if (obj)
+			objId = objSystem->GetObject(obj)->id;
+		else
+		{
+			objId.subtype = ObjectIdKind::Null;
+		}
+		if (!tio_fwrite(&objId, sizeof(ObjectId), 1, file))
+			return false;
+		return true;
+	};
+	static auto SerializePartsysToFile = [file](int partsysId)
+	{
+		int partsysHash = 0;
+		if (partsysId){
+			partsysHash = gameSystems->GetParticleSys().GetByHandle(partsysId)->GetSpec()->GetNameHash();
+		}
+		if (!tio_fwrite(&partsysHash, sizeof(int), 1, file))
+			return false;
+	};
+
+	for (auto it: spellsCastRegistry){
+		
+		if (!it.data->isActive)
+		{
+			logger->debug("Tried to serialize an inactive spell! Spell {} Id {}", it.data->spellPktBody.spellEnum, it.id);
+			continue;
+		}
+			
+
+		auto &pkt = it.data->spellPktBody;
+		auto spellName = GetSpellName(it.data->spellPktBody.spellEnum);
+		logger->info("SpellSave: Saving spell {} id {}", spellName, it.id);
+		if (!tio_fwrite(&it.id, sizeof(int), 1, file))
+			return false;
+		if (!tio_fwrite(&it.data->key, sizeof(int), 1, file))
+			return false;
+		if (!tio_fwrite(&it.data->isActive, sizeof(int), 1, file))
+			return false;
+		if (!tio_fwrite(&pkt.spellEnum, sizeof(int), 1, file))
+			return false;
+		if (!tio_fwrite(&pkt.spellEnumOriginal, sizeof(int), 1, file))
+			return false;
+		if (!tio_fwrite(&pkt.flagSthg, sizeof(int), 1, file))
+			return false;
+
+		// caster
+		if (!SerializeHandleToFile(pkt.caster))
+			return false;
+		if (!SerializePartsysToFile(pkt.casterPartsysId))
+			return false;
+
+
+		if (!tio_fwrite(&pkt.casterClassCode, sizeof(int), 1, file))
+			return false;
+		if (!tio_fwrite(&pkt.spellKnownSlotLevel, sizeof(int), 1, file))
+			return false;
+		if (!tio_fwrite(&pkt.baseCasterLevel, sizeof(int), 1, file))
+			return false;
+		if (!tio_fwrite(&pkt.dc, sizeof(int), 1, file))
+			return false;
+
+		// spell objs
+		if (!tio_fwrite(&pkt.numSpellObjs, sizeof(int), 1, file))
+			return false;
+
+		if (!SerializeHandleToFile(pkt.aoeObj))
+			return false;
+
+		for (int i = 0; i < 128; i++){
+			if (!SerializeHandleToFile(pkt.spellObjs[i].obj))
+				return false;
+			if (!SerializePartsysToFile(pkt.spellObjs[i].partySysId))
+				return false;
+		}
+
+
+		// targets
+		if (!tio_fwrite(&pkt.orgTargetCount, sizeof(int), 1, file))
+			return false;
+		if (!tio_fwrite(&pkt.targetCount, sizeof(int), 1, file))
+			return false;
+		for (int i = 0; i < 32;i++){
+			if (!SerializeHandleToFile(pkt.targetListHandles[i]))
+				return false;
+		}
+
+		for (int i = 0; i < 32; i++) {
+			if (!SerializePartsysToFile(pkt.targetListPartsysIds[i]))
+				return false;
+		}
+
+		// projectiles
+		if (!tio_fwrite(&pkt.projectileCount, sizeof(int), 1, file))
+			return false;
+		for (int i = 0; i < 5; i++) {
+			auto&projectile = pkt.projectiles[i];
+			if (!SerializeHandleToFile(projectile))
+				return false;
+		}
+
+		if (!tio_fwrite(&pkt.aoeCenter.location.location, sizeof(locXY), 1, file))
+			return false;
+		if (!tio_fwrite(&pkt.aoeCenter.location.off_x, sizeof(float), 1, file))
+			return false;
+		if (!tio_fwrite(&pkt.aoeCenter.location.off_y, sizeof(float), 1, file))
+			return false;
+		if (!tio_fwrite(&pkt.aoeCenter.off_z, sizeof(float), 1, file))
+			return false;
+		if (!tio_fwrite(&pkt.duration, sizeof(float), 1, file))
+			return false;
+		if (!tio_fwrite(&pkt.durationRemaining, sizeof(float), 1, file))
+			return false;
+		if (!tio_fwrite(&pkt.spellRange, sizeof(float), 1, file))
+			return false;
+		if (!tio_fwrite(&pkt.savingThrowResult, sizeof(float), 1, file))
+			return false;
+		if (!tio_fwrite(&pkt.metaMagicData, sizeof(float), 1, file))
+			return false;
+		if (!tio_fwrite(&pkt.spellId, sizeof(float), 1, file))
+			return false;
+	}
+
+	return true;
 }
 
 void LegacySpellSystem::GetSpellsFromTransferInfo()
