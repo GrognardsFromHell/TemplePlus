@@ -508,9 +508,9 @@ void LegacySpellSystem::SpellSave()
 
 }
 
-bool LegacySpellSystem::SpellSave(TioFile* file)
+int LegacySpellSystem::SpellSave(TioFile* file)
 {
-	static auto SerializeHandleToFile = [file](objHndl obj)
+	static auto SerializeHandleToFile = [](objHndl obj, TioFile* filea)
 	{
 		ObjectId objId;
 		if (obj)
@@ -519,26 +519,57 @@ bool LegacySpellSystem::SpellSave(TioFile* file)
 		{
 			objId.subtype = ObjectIdKind::Null;
 		}
-		if (!tio_fwrite(&objId, sizeof(ObjectId), 1, file))
+		if (!tio_fwrite(&objId, sizeof(ObjectId), 1, filea))
 			return false;
 		return true;
 	};
-	static auto SerializePartsysToFile = [file](int partsysId)
+	static auto SerializePartsysToFile = [](int partsysId, TioFile* filea)
 	{
 		int partsysHash = 0;
 		if (partsysId){
 			partsysHash = gameSystems->GetParticleSys().GetByHandle(partsysId)->GetSpec()->GetNameHash();
 		}
-		if (!tio_fwrite(&partsysHash, sizeof(int), 1, file))
+		if (!tio_fwrite(&partsysHash, sizeof(int), 1, filea))
 			return false;
 	};
+	static auto SerializeHandlesToFile = [](objHndl objs[], uint32_t num, TioFile* filea)
+	{
+		for (int i = 0; i < num; i++)
+		{
+			if (!SerializeHandleToFile(objs[i], filea))
+				return false;
+		}
+		return true;
+	};
+	static auto SerializePartSystemsToFile = [](uint32_t partsys[], uint32_t num, TioFile* filea)
+	{
+		for (int i = 0; i < num; i++)
+		{
+			if (!SerializePartsysToFile(partsys[i], filea))
+				return false;
+		}
+		return true;
+	};
+	static auto SerializeSpellObjsToFile = [](SpellPacketBody::SpellObj spellObjs[], uint32_t num, TioFile* filea)
+	{
+		for (int i = 0; i < num; i++)
+		{
+			if (!SerializeHandleToFile(spellObjs[i].obj, filea))
+				return false;
+			if (!SerializePartsysToFile(spellObjs[i].partySysId, filea))
+				return false;
+		}
+		return true;
+	};
+
+	int numSerialized = 0;
 
 	for (auto it: spellsCastRegistry){
 		
 		if (!it.data->isActive)
 		{
-			logger->debug("Tried to serialize an inactive spell! Spell {} Id {}", it.data->spellPktBody.spellEnum, it.id);
-			continue;
+			logger->debug("Serializing an inactive spell after pruning?! Spell {} Id {}", it.data->spellPktBody.spellEnum, it.id);
+			//continue;
 		}
 			
 
@@ -559,9 +590,12 @@ bool LegacySpellSystem::SpellSave(TioFile* file)
 			return false;
 
 		// caster
-		if (!SerializeHandleToFile(pkt.caster))
+		if (!SerializeHandleToFile(pkt.caster, file))
+		{
 			return false;
-		if (!SerializePartsysToFile(pkt.casterPartsysId))
+		}
+			
+		if (!SerializePartsysToFile(pkt.casterPartsysId, file))
 			return false;
 
 
@@ -576,42 +610,39 @@ bool LegacySpellSystem::SpellSave(TioFile* file)
 
 		// spell objs
 		if (!tio_fwrite(&pkt.numSpellObjs, sizeof(int), 1, file))
+		{
 			return false;
-
-		if (!SerializeHandleToFile(pkt.aoeObj))
-			return false;
-
-		for (int i = 0; i < 128; i++){
-			if (!SerializeHandleToFile(pkt.spellObjs[i].obj))
-				return false;
-			if (!SerializePartsysToFile(pkt.spellObjs[i].partySysId))
-				return false;
 		}
+			
 
+		if (!SerializeHandleToFile(pkt.aoeObj, file))
+			return false;
+
+		if (!SerializeSpellObjsToFile(pkt.spellObjs, 128, file))
+		{
+			return false;
+		}
+			
 
 		// targets
 		if (!tio_fwrite(&pkt.orgTargetCount, sizeof(int), 1, file))
 			return false;
 		if (!tio_fwrite(&pkt.targetCount, sizeof(int), 1, file))
 			return false;
-		for (int i = 0; i < 32;i++){
-			if (!SerializeHandleToFile(pkt.targetListHandles[i]))
-				return false;
+		if (!SerializeHandlesToFile(pkt.targetListHandles, 32, file))
+		{
+			return false;
 		}
+			
 
-		for (int i = 0; i < 32; i++) {
-			if (!SerializePartsysToFile(pkt.targetListPartsysIds[i]))
-				return false;
-		}
+		if (!SerializePartSystemsToFile(pkt.targetListPartsysIds, 32, file))
+			return false;
 
 		// projectiles
 		if (!tio_fwrite(&pkt.projectileCount, sizeof(int), 1, file))
 			return false;
-		for (int i = 0; i < 5; i++) {
-			auto&projectile = pkt.projectiles[i];
-			if (!SerializeHandleToFile(projectile))
-				return false;
-		}
+		if (!SerializeHandlesToFile(pkt.projectiles, 5, file))
+			return false;
 
 		if (!tio_fwrite(&pkt.aoeCenter.location.location, sizeof(locXY), 1, file))
 			return false;
@@ -633,9 +664,10 @@ bool LegacySpellSystem::SpellSave(TioFile* file)
 			return false;
 		if (!tio_fwrite(&pkt.spellId, sizeof(float), 1, file))
 			return false;
+		numSerialized++;
 	}
 
-	return true;
+	return numSerialized;
 }
 
 void LegacySpellSystem::GetSpellsFromTransferInfo()

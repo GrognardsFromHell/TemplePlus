@@ -173,7 +173,7 @@ struct LegacySpellSystem : temple::AddressTable
 	void (__cdecl *SpellRemove)(int);
 	
 	void SpellSave(); // packs the spells cast registry to SpellMapTransferInfo data structs
-	bool SpellSave(TioFile*); // saves the spells cast registry to file
+	int SpellSave(TioFile*); // saves the spells cast registry to file
 		void SpellSavePruneInactive() const;
 		
 	SpellMapTransferInfo SaveSpellForTeleport(const SpellPacket& data);

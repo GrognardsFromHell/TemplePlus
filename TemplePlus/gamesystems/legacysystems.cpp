@@ -337,8 +337,11 @@ bool SpellSystem::Save(TioFile* file) {
 	int numSpells = spellSys.spellCastIdxTable->itemCount;
 	if (!tio_fwrite(&numSpells, sizeof(int), 1, file))
 		return FALSE;
-	return spellSys.SpellSave(file);
-	
+	auto numSerialized = spellSys.SpellSave(file);
+	if (numSerialized != numSpells)
+	{
+		logger->error("Serialized wrong number of spells! SAVE IS CORRUPT! Serialized: {}, expected: {}", numSerialized, numSpells);
+	}
 	
 	return TRUE;
 
@@ -367,10 +370,17 @@ bool SpellSystem::Load(GameSystemSaveFile* file) {
 
 	uint32_t spellId;
 	SpellPacket pkt;
+
 	for (int i = 0; i < numSpells; i++)	{
 		if (spellSys.LoadActiveSpellElement(file->file, spellId, pkt) != 1 ){
 			logger->warn("Loading Spells: Failure! {} spells in SpellsCastRegistry after loading.", spellSys.spellCastIdxTable->itemCount);
 			return FALSE;
+		}
+		if (! (spellId <= *spellIdSerial)){
+			logger->warn("Invalid spellId {} detected, greater than spellIdSerial!", spellId);
+		}
+		if (!pkt.spellPktBody.caster)	{
+			logger->warn("Null caster object!", spellId);
 		}
 		spellSys.SpellsCastRegistryPut(spellId, pkt);
 	}
