@@ -139,11 +139,12 @@ public:
 
 	T *get(int id)
 	{
-		auto node = mTable->buckets[id % mTable->bucketCount];
+		auto absId = abs(id);
+		auto node = mTable->buckets[absId % mTable->bucketCount];
 
 		while (node)
 		{
-			if (node->id == id)
+			if (node->id == absId)
 			{
 				return node->data;
 			}
@@ -155,11 +156,12 @@ public:
 
 	uint32_t copy(int id, T * dataOut)
 	{
-		auto node = mTable->buckets[id % mTable->bucketCount];
+		auto absId = abs(id);
+		auto node = mTable->buckets[absId % mTable->bucketCount];
 
 		while (node)
 		{
-			if (node->id == id)
+			if (node->id == absId)
 			{
 				memcpy(dataOut, node->data, sizeof(T));
 				return 1;
@@ -174,13 +176,14 @@ public:
 
 	void put(int id, const T &data)
 	{
-		auto bucketId = id % mTable->bucketCount;
+		auto absId = abs(id);
+		auto bucketId = absId % mTable->bucketCount;
 		IdxTableNode<T> *node = mTable->buckets[bucketId];
 
 		// Check if an entry for id is already there
 		while (node)
 		{
-			if (node->id == id)
+			if (node->id == absId)
 			{
 				*(node->data) = data;
 				return;
@@ -189,19 +192,20 @@ public:
 		}
 
 		// In case the ID didn't exist yet, prepend a node for it
-		mTable->buckets[bucketId] = new IdxTableNode<T>(id, data, node);
+		mTable->buckets[bucketId] = new IdxTableNode<T>(absId, data, node);
 		++(mTable->itemCount);
 	}
 
 	void remove(int id)
 	{
-		auto bucketId = id % mTable->bucketCount;
+		auto absId = abs(id);
+		auto bucketId = absId % mTable->bucketCount;
 		IdxTableNode<T> *prevNode = nullptr;
 		IdxTableNode<T> *node = mTable->buckets[bucketId];
 
 		while (node)
 		{
-			if (node->id == id)
+			if (node->id == absId)
 			{
 				delete node->data;
 				if (prevNode) {

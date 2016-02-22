@@ -372,13 +372,13 @@ void LegacySpellSystem::SpellSavePruneInactive() const
 
 		if (node.data->isActive == 0)	{
 			shouldPrune = true;
-
-			if (!spellPacketBody.caster) {
-				const char * spellName = GetSpellName(spellPacketBody.spellEnum);
-				logger->warn("Spell id {} ({}) has been pruned because the spell has a null caster.", spellPacketBody.spellId, spellName);
-				shouldPrune = true;
-			} // TODO: Logic bug??? I think this should be outside
-		}  else if (spellPacketBody.targetCount &&  !spellPacketBody.targetListHandles[0]) {
+		}  
+		else if (!spellPacketBody.caster) {
+			const char * spellName = GetSpellName(spellPacketBody.spellEnum);
+			logger->warn("Spell id {} ({}) has been pruned because the spell has a null caster.", spellPacketBody.spellId, spellName);
+			shouldPrune = true;
+		} 
+		else if (spellPacketBody.targetCount &&  !spellPacketBody.targetListHandles[0]) {
 			const char * spellName = GetSpellName(spellPacketBody.spellEnum);
 			logger->warn("Spell id {} ({}) has been pruned because the spell has num_targets > 0 but there are no targets!", spellPacketBody.spellId, spellName);
 			shouldPrune = true;
@@ -720,13 +720,18 @@ bool LegacySpellSystem::GetSpellPacketFromTransferInfo(unsigned& spellId, SpellP
 
 bool LegacySpellSystem::LoadActiveSpellElement(TioFile* file, uint32_t& spellId, SpellPacket& pkt)
 {
+	
 	if (!tio_fread(&spellId, sizeof(int), 1, file))
 		return false;
+	logger->debug("Loading spellId {}", spellId);
 	if (!tio_fread(&pkt.key, sizeof(int), 1, file))
 		return false;
 	if (!tio_fread(&pkt.isActive, sizeof(int), 1, file))
 		return false;
-	Expects(pkt.isActive);
+	///Expects(pkt.isActive);
+	if (!pkt.isActive){
+		logger->debug("Spell was inactive!");
+	}
 
 	if (!tio_fread(&pkt.spellPktBody.spellEnum, sizeof(int), 1, file))
 		return false;
