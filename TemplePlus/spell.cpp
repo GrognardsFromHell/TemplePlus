@@ -363,7 +363,7 @@ void LegacySpellSystem::SpellSavePruneInactive() const
 	std::vector < SpellDebugInfo > prunedSpells; // for debug
 	std::vector<SpellDebugInfo> preservedSpells;
 
-	for (auto it = spellsCastRegistry.begin(); it != spellsCastRegistry.end(); ++it)
+	for (auto it = spellsCastRegistry.begin(); it != spellsCastRegistry.end(); )
 	{
 		auto& node = *it;
 
@@ -387,8 +387,9 @@ void LegacySpellSystem::SpellSavePruneInactive() const
 		if (shouldPrune) {
 			numPruned++;
 			prunedSpells.push_back(SpellDebugInfo( spellPacketBody.spellEnum, spellPacketBody.targetCount ));
-			it = spellsCastRegistry.erase(it);
+			it = spellsCastRegistry.erase(it); // erase advances the iterator too so there shouldn't be one in the loop execution section
 		} else{
+			++it;
 			preservedSpells.push_back(SpellDebugInfo( spellPacketBody.spellEnum, spellPacketBody.targetCount ));
 		}
 	}
@@ -527,7 +528,13 @@ int LegacySpellSystem::SpellSave(TioFile* file)
 	{
 		int partsysHash = 0;
 		if (partsysId){
-			partsysHash = gameSystems->GetParticleSys().GetByHandle(partsysId)->GetSpec()->GetNameHash();
+			auto partSys = gameSystems->GetParticleSys().GetByHandle(partsysId);
+			if (partSys)
+				partsysHash = gameSystems->GetParticleSys().GetByHandle(partsysId)->GetSpec()->GetNameHash();
+			else
+			{
+				logger->debug("Tried to serialize an invalid partsysId");
+			}
 		}
 		if (!tio_fwrite(&partsysHash, sizeof(int), 1, filea))
 			return false;
