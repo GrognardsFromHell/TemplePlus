@@ -13,6 +13,7 @@
 */
 #pragma pack(push, 1)
 #include "spell_structs.h"
+#include "tig/tig_msg.h"
 
 enum class RadialMenuEntryType : uint32_t {
 	Action = 0,
@@ -147,6 +148,8 @@ public:
 	void SetCallbackCopyEntryToSelected(RadialMenuEntry* radEntry);
 	int GetActiveRadialMenuNode();
 	BOOL ActiveRadialMenuHasActiveNode();
+	int MsgHandler(TigMsg* msg);
+	int SpawnMenu(int x, int y);
 };
 
 extern RadialMenus radialMenus;

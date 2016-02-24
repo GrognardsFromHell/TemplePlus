@@ -241,6 +241,18 @@ BOOL RadialMenus::ActiveRadialMenuHasActiveNode()
 	return GetActiveRadialMenuNode() != -1;
 }
 
+int RadialMenus::MsgHandler(TigMsg* msg)
+{
+	static auto msgHandler = temple::GetRef<int(__cdecl)(TigMsg*)>(0x1013DC90);
+	return msgHandler(msg);
+}
+
+int RadialMenus::SpawnMenu(int x, int y)
+{
+	static auto spawnMenu = temple::GetRef<int(__cdecl)(int, int)>(0x1013B250);
+	return spawnMenu(x, y);
+}
+
 void RadialMenuEntry::SetDefaults() {
 	addresses.SetDefaults(this);
 }
