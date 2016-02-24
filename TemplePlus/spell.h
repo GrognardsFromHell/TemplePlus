@@ -6,6 +6,7 @@
 #include "spell_structs.h"
 #include "tio/tio.h"
 
+class TioOutputStream;
 struct PickerArgs;
 
 #define MAX_SPELLS_KNOWN 384
@@ -173,7 +174,7 @@ struct LegacySpellSystem : temple::AddressTable
 	void (__cdecl *SpellRemove)(int);
 	
 	void SpellSave(); // packs the spells cast registry to SpellMapTransferInfo data structs
-	int SpellSave(TioFile*); // saves the spells cast registry to file
+	int SpellSave(TioOutputStream&); // saves the spells cast registry to file
 		void SpellSavePruneInactive() const;
 		
 	SpellMapTransferInfo SaveSpellForTeleport(const SpellPacket& data);

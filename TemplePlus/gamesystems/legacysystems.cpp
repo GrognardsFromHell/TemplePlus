@@ -10,6 +10,7 @@
 #include <graphics/device.h>
 #include <graphics/camera.h>
 #include <config/config.h>
+#include <util/streams.h>
 
 
 //*****************************************************************************
@@ -332,12 +333,17 @@ bool SpellSystem::Save(TioFile* file) {
 	spellSys.SpellSavePruneInactive();
 	logger->debug("Saving Spells: {} spells after pruning.", spellSys.spellCastIdxTable->itemCount);
 	
+	TioOutputStream tios(file);
+
 	auto spellIdSerial = temple::GetPointer<int>(0x10AAF204);
-	tio_fwrite(spellIdSerial, sizeof(int), 1, file);
+	tios.WriteInt32(*spellIdSerial);
+	// tio_fwrite(spellIdSerial, sizeof(int), 1, file);
 	int numSpells = spellSys.spellCastIdxTable->itemCount;
-	if (!tio_fwrite(&numSpells, sizeof(int), 1, file))
-		return FALSE;
-	auto numSerialized = spellSys.SpellSave(file);
+	tios.WriteInt32(numSpells);
+	/*if (!tio_fwrite(&numSpells, sizeof(int), 1, file))
+		return FALSE;*/
+	
+	auto numSerialized = spellSys.SpellSave(tios);
 	if (numSerialized != numSpells)
 	{
 		logger->error("Serialized wrong number of spells! SAVE IS CORRUPT! Serialized: {}, expected: {}", numSerialized, numSpells);

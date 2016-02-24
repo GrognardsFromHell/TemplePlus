@@ -17,6 +17,7 @@
 #include <particles/instances.h>
 #include "particles.h"
 #include "python/python_integration_spells.h"
+#include "util/streams.h"
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
@@ -509,9 +510,9 @@ void LegacySpellSystem::SpellSave()
 
 }
 
-int LegacySpellSystem::SpellSave(TioFile* file)
+int LegacySpellSystem::SpellSave(TioOutputStream& file)
 {
-	static auto SerializeHandleToFile = [](objHndl obj, TioFile* filea)
+	static auto SerializeHandleToFile = [](objHndl obj, TioOutputStream& stream)
 	{
 		ObjectId objId;
 		if (obj)
@@ -520,11 +521,10 @@ int LegacySpellSystem::SpellSave(TioFile* file)
 		{
 			objId.subtype = ObjectIdKind::Null;
 		}
-		if (!tio_fwrite(&objId, sizeof(ObjectId), 1, filea))
-			return false;
+		stream.WriteObjectId(objId);
 		return true;
 	};
-	static auto SerializePartsysToFile = [](int partsysId, TioFile* filea)
+	static auto SerializePartsysToFile = [](int partsysId, TioOutputStream&stream)
 	{
 		int partsysHash = 0;
 		if (partsysId){
@@ -536,34 +536,34 @@ int LegacySpellSystem::SpellSave(TioFile* file)
 				logger->debug("Tried to serialize an invalid partsysId");
 			}
 		}
-		if (!tio_fwrite(&partsysHash, sizeof(int), 1, filea))
-			return false;
+		stream.WriteInt32(partsysHash);
+		return true;
 	};
-	static auto SerializeHandlesToFile = [](objHndl objs[], uint32_t num, TioFile* filea)
+	static auto SerializeHandlesToFile = [](objHndl objs[], uint32_t num, TioOutputStream&streama)
 	{
 		for (int i = 0; i < num; i++)
 		{
-			if (!SerializeHandleToFile(objs[i], filea))
+			if (!SerializeHandleToFile(objs[i], streama))
 				return false;
 		}
 		return true;
 	};
-	static auto SerializePartSystemsToFile = [](uint32_t partsys[], uint32_t num, TioFile* filea)
+	static auto SerializePartSystemsToFile = [](uint32_t partsys[], uint32_t num, TioOutputStream&stream)
 	{
 		for (int i = 0; i < num; i++)
 		{
-			if (!SerializePartsysToFile(partsys[i], filea))
+			if (!SerializePartsysToFile(partsys[i], stream))
 				return false;
 		}
 		return true;
 	};
-	static auto SerializeSpellObjsToFile = [](SpellPacketBody::SpellObj spellObjs[], uint32_t num, TioFile* filea)
+	static auto SerializeSpellObjsToFile = [](SpellPacketBody::SpellObj spellObjs[], uint32_t num, TioOutputStream&stream)
 	{
 		for (int i = 0; i < num; i++)
 		{
-			if (!SerializeHandleToFile(spellObjs[i].obj, filea))
+			if (!SerializeHandleToFile(spellObjs[i].obj, stream))
 				return false;
-			if (!SerializePartsysToFile(spellObjs[i].partySysId, filea))
+			if (!SerializePartsysToFile(spellObjs[i].partySysId, stream))
 				return false;
 		}
 		return true;
@@ -583,18 +583,12 @@ int LegacySpellSystem::SpellSave(TioFile* file)
 		auto &pkt = it.data->spellPktBody;
 		auto spellName = GetSpellName(it.data->spellPktBody.spellEnum);
 		logger->info("SpellSave: Saving spell {} id {}", spellName, it.id);
-		if (!tio_fwrite(&it.id, sizeof(int), 1, file))
-			return false;
-		if (!tio_fwrite(&it.data->key, sizeof(int), 1, file))
-			return false;
-		if (!tio_fwrite(&it.data->isActive, sizeof(int), 1, file))
-			return false;
-		if (!tio_fwrite(&pkt.spellEnum, sizeof(int), 1, file))
-			return false;
-		if (!tio_fwrite(&pkt.spellEnumOriginal, sizeof(int), 1, file))
-			return false;
-		if (!tio_fwrite(&pkt.flagSthg, sizeof(int), 1, file))
-			return false;
+		file.WriteInt32(it.id);
+		file.WriteInt32(it.data->key);
+		file.WriteInt32(it.data->isActive);
+		file.WriteInt32(pkt.spellEnum);
+		file.WriteInt32(pkt.spellEnumOriginal);
+		file.WriteInt32(pkt.flagSthg);
 
 		// caster
 		if (!SerializeHandleToFile(pkt.caster, file))
@@ -605,22 +599,14 @@ int LegacySpellSystem::SpellSave(TioFile* file)
 		if (!SerializePartsysToFile(pkt.casterPartsysId, file))
 			return false;
 
-
-		if (!tio_fwrite(&pkt.casterClassCode, sizeof(int), 1, file))
-			return false;
-		if (!tio_fwrite(&pkt.spellKnownSlotLevel, sizeof(int), 1, file))
-			return false;
-		if (!tio_fwrite(&pkt.baseCasterLevel, sizeof(int), 1, file))
-			return false;
-		if (!tio_fwrite(&pkt.dc, sizeof(int), 1, file))
-			return false;
+		file.WriteInt32(pkt.casterClassCode);
+		file.WriteInt32(pkt.spellKnownSlotLevel);
+		file.WriteInt32(pkt.baseCasterLevel);
+		file.WriteInt32(pkt.dc);
 
 		// spell objs
-		if (!tio_fwrite(&pkt.numSpellObjs, sizeof(int), 1, file))
-		{
-			return false;
-		}
-			
+		file.WriteInt32(pkt.numSpellObjs);
+		
 
 		if (!SerializeHandleToFile(pkt.aoeObj, file))
 			return false;
@@ -632,10 +618,8 @@ int LegacySpellSystem::SpellSave(TioFile* file)
 			
 
 		// targets
-		if (!tio_fwrite(&pkt.orgTargetCount, sizeof(int), 1, file))
-			return false;
-		if (!tio_fwrite(&pkt.targetCount, sizeof(int), 1, file))
-			return false;
+		file.WriteInt32(pkt.orgTargetCount);
+		file.WriteInt32(pkt.targetCount);
 		if (!SerializeHandlesToFile(pkt.targetListHandles, 32, file))
 		{
 			return false;
@@ -646,31 +630,21 @@ int LegacySpellSystem::SpellSave(TioFile* file)
 			return false;
 
 		// projectiles
-		if (!tio_fwrite(&pkt.projectileCount, sizeof(int), 1, file))
-			return false;
+		file.WriteInt32(pkt.projectileCount);
 		if (!SerializeHandlesToFile(pkt.projectiles, 5, file))
 			return false;
 
-		if (!tio_fwrite(&pkt.aoeCenter.location.location, sizeof(locXY), 1, file))
-			return false;
-		if (!tio_fwrite(&pkt.aoeCenter.location.off_x, sizeof(float), 1, file))
-			return false;
-		if (!tio_fwrite(&pkt.aoeCenter.location.off_y, sizeof(float), 1, file))
-			return false;
-		if (!tio_fwrite(&pkt.aoeCenter.off_z, sizeof(float), 1, file))
-			return false;
-		if (!tio_fwrite(&pkt.duration, sizeof(float), 1, file))
-			return false;
-		if (!tio_fwrite(&pkt.durationRemaining, sizeof(float), 1, file))
-			return false;
-		if (!tio_fwrite(&pkt.spellRange, sizeof(float), 1, file))
-			return false;
-		if (!tio_fwrite(&pkt.savingThrowResult, sizeof(float), 1, file))
-			return false;
-		if (!tio_fwrite(&pkt.metaMagicData, sizeof(float), 1, file))
-			return false;
-		if (!tio_fwrite(&pkt.spellId, sizeof(float), 1, file))
-			return false;
+		file.WriteInt64(pkt.aoeCenter.location.location);
+		file.WriteFloat(pkt.aoeCenter.location.off_x);
+		file.WriteFloat(pkt.aoeCenter.location.off_y);
+		file.WriteFloat(pkt.aoeCenter.off_z);
+		file.WriteInt32(pkt.duration);
+		file.WriteInt32(pkt.durationRemaining);
+		file.WriteInt32(pkt.spellRange);
+		file.WriteInt32(pkt.savingThrowResult);
+		file.WriteInt32(pkt.metaMagicData);
+		file.WriteInt32(pkt.spellId);
+		
 		numSerialized++;
 	}
 

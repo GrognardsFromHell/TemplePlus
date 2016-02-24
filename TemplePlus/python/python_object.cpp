@@ -2167,6 +2167,9 @@ static PyObject* PyObjHandle_GetProto(PyObject* obj, void*) {
 
 static PyObject* PyObjHandle_GetLocation(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
+	if (!self->handle){
+		logger->warn("obj.location called with null handle!");
+	}
 	return PyLong_FromLongLong(objects.GetLocation(self->handle));
 }
 
