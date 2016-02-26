@@ -8,6 +8,7 @@
 #include <vector>
 #include <sstream>
 #include <cctype>
+#include <iosfwd>
 
 // Thanks Stackoverflow...
 
@@ -122,4 +123,21 @@ inline std::string tolower(const std::string &s) {
 	} else {
 		return s;
 	}
+}
+
+// Nice to have operator for serializing vectors in the logger
+template<typename T>
+std::ostream &operator <<(std::ostream &os, const std::vector<T> &v) {
+	using namespace std;
+
+	os << "[";
+	for (size_t i = 0; i < v.size(); ++i) {
+		os << v[i];
+		if (i != v.size() - 1) {
+			os << ", ";
+		}
+	}
+	os << "]";
+
+	return os;
 }
