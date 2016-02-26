@@ -560,6 +560,10 @@ PyObject* PyGame_Particles(PyObject*, PyObject* args) {
 
 	if (PyObjHndl_Check(locOrObj)) {
 		auto objHandle = PyObjHndl_AsObjHndl(locOrObj);
+		if (!objHandle){
+			PyErr_SetString(PyExc_TypeError, "PyGame_Particles called with null object handle!");
+			return 0;
+		}
 		auto partHandle = particles.CreateAtObj(name, objHandle);
 		return PyInt_FromLong(partHandle);
 	}
