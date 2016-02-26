@@ -140,6 +140,7 @@ public:
 		replaceFunction(0x100999E0, GreybarReset);
 		replaceFunction(0x10099CF0, PerformOnAnimComplete);
 
+		// AddToSeqSpellCast
 		replaceFunction<ActionErrorCode(D20Actn*, ActnSeq*, TurnBasedStatus*)>(0x100958A0,[](D20Actn* d20a, ActnSeq* seq, TurnBasedStatus* tbStat)->ActionErrorCode
 		{
 			if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Prone))
@@ -501,14 +502,14 @@ int ActionSequenceSystem::AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, Tur
 	target = d20a->d20ATarget;
 	actNum = actSeq->d20ActArrayNum;
 	if (!target)
-		return 9;
-
+		return AEC_TARGET_INVALID;
+	
 	// check if target is within reach
 	reach = critterSys.GetReach(d20a->d20APerformer, d20a->d20ActType);
 	if (location->DistanceToObj(d20a->d20APerformer, d20a->d20ATarget) < reach)
 	{
 		memcpy(&actSeq->d20ActArray[actSeq->d20ActArrayNum++], d20a, sizeof(D20Actn));
-		return 0;
+		return AEC_OK;
 	}
 
 	// if not, add a move sequence
@@ -518,7 +519,7 @@ int ActionSequenceSystem::AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, Tur
 	result = moveSequenceParse(&d20aCopy, actSeq, tbStatus, 0.0, reach, 1 );
 	if (!result)
 	{
-		memcpy(&tbStatusCopy, tbStatus, sizeof(tbStatusCopy));
+		tbStatusCopy = *tbStatus;
 		memcpy(&actSeq->d20ActArray[actSeq->d20ActArrayNum++], d20a, sizeof(D20Actn));
 		if (actNum < actSeq->d20ActArrayNum)
 		{
@@ -539,12 +540,12 @@ int ActionSequenceSystem::AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, Tur
 				}
 			}
 			if (actNum >= actSeq->d20ActArrayNum)
-				return 0;
+				return AEC_OK;
 			tbStatusCopy.errCode = result;
 			if (result)
 				return result;
 		}
-		return 0;
+		return AEC_OK;
 	}
 	return result;
 }
@@ -2103,6 +2104,21 @@ void ActionSequenceSystem::ActionPerform()
 					description.getDisplayName(d20a->d20APerformer), 
 					d20a->d20APerformer,
 					(int)d20a->d20ActType);
+
+
+				if (config.newFeatureTestMode && d20a->path != nullptr)
+				{
+					std::vector<LocAndOffsets> directionsDebug;
+					for (int i = 0; i < d20a->path->nodeCount && i < 200; i++)
+					{
+						directionsDebug.emplace_back(d20a->path->nodes[i]);
+					}
+					if (d20a->d20ATarget)
+						logger->debug("Move Action: {} going from {} to {} ({}), nodes used: {}", description.getDisplayName(d20a->path->mover), d20a->path->from, d20a->path->to, description.getDisplayName(d20a->d20ATarget), directionsDebug);
+					else
+						logger->debug("Move Action: {} going from {} to {}, nodes used: {}", description.getDisplayName(d20a->path->mover), d20a->path->from, d20a->path->to, directionsDebug);
+				}
+
 				d20->d20Defs[d20a->d20ActType].performFunc(d20a);
 				InterruptNonCounterspell(d20a);
 			}
