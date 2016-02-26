@@ -287,6 +287,17 @@ DispIoMoveSpeed* DispatcherSystem::DispIOCheckIoType13(DispIO* dispIo)
 	return DispIOCheckIoType13((DispIoMoveSpeed*)dispIo);
 }
 
+DispIoImmunity* DispatcherSystem::DispIoCheckIoType23(DispIoImmunity* dispIo)
+{
+	if (dispIo->dispIOType != dispIOTypeImmunityHandler) return nullptr;
+	return dispIo;
+}
+
+DispIoImmunity* DispatcherSystem::DispIoCheckIoType23(DispIO* dispIo)
+{
+	return DispIoCheckIoType23((DispIoImmunity*)dispIo);
+}
+
 DispIOBonusListAndSpellEntry* DispatcherSystem::DispIOCheckIoType14(DispIOBonusListAndSpellEntry* dispIo)
 {
 	if (dispIo->dispIOType != dispIoTypeBonusListAndSpellEntry) return nullptr;

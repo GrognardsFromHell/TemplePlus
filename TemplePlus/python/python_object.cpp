@@ -1239,6 +1239,11 @@ static PyObject* PyObjHandle_KillByEffect(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_Destroy(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle)
+	{
+		logger->warn("PyObjHandle_Destroy: Attempted to destroy null object!");
+		Py_RETURN_NONE;
+	}
 	objects.Destroy(self->handle);
 	self->handle = 0; // Clear the obj handle
 	Py_RETURN_NONE;
@@ -2162,6 +2167,9 @@ static PyObject* PyObjHandle_GetProto(PyObject* obj, void*) {
 
 static PyObject* PyObjHandle_GetLocation(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
+	if (!self->handle){
+		logger->warn("obj.location called with null handle!");
+	}
 	return PyLong_FromLongLong(objects.GetLocation(self->handle));
 }
 

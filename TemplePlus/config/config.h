@@ -68,6 +68,7 @@ struct TemplePlusConfig
 	bool maxPCsFlexible = true; // makes the party PC/NPC composition fluid
 	bool usingCo8 = true;
 	int maxLevel = 20; // maximum character level
+	std::string hpOnLevelup = "Normal" ;
 
 	std::unordered_map<std::string, VanillaSetting> vanillaSettings;
 	void AddVanillaSetting(const std::string &name, 

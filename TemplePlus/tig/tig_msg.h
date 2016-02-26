@@ -20,6 +20,24 @@ enum class TigMsgType : uint32_t {
 	KEYDOWN = 8
 };
 
+enum MouseStateFlags : uint32_t
+{
+	MSF_LMB_CLICK = 0x1,
+	MSF_LMB_DOWN = 0x2,
+	MSF_LMB_RELEASED = 0x4,
+	MSF_LMB_UNK = 0x8,
+	MSF_RMB_CLICK = 0x10,
+	MSF_RMB_DOWN = 0x20,
+	MSF_RMB_RELEASED = 0x40,
+	MSF_RMB_UNK = 0x80,
+	MSF_MMB_CLICK = 0x100,
+	MSF_MMB_DOWN = 0x200,
+	MSF_MMB_RELEASED = 0x400,
+	MSF_MMB_UNK = 0x800,
+	MSF_POS_CHANGE = 0x1000,
+	MSF_POS_CHANGE2 = 0x2000
+};
+
 struct TigMsgBase
 {
 	uint32_t createdMs;
@@ -33,7 +51,7 @@ struct TigMsgGeneric : TigMsgBase
 	uint32_t arg1; // x for mouse events
 	uint32_t arg2; // y for mouse events
 	uint32_t arg3;
-	uint32_t arg4; // button state flags for mouse events
+	uint32_t arg4; // button state flags for mouse events - see MouseStateFlags
 };
 
 struct TigMouseMsg
@@ -49,7 +67,7 @@ struct TigMsgMouse : TigMsgBase // type 0
 	uint32_t x; 
 	uint32_t y;
 	uint32_t arg3;
-	uint32_t buttonStateFlags; // button state flags for mouse events
+	uint32_t buttonStateFlags; // button state flags for mouse events - see MouseStateFlags
 };
 
 struct TigMsgWidget : TigMsgBase // type 1
@@ -65,7 +83,7 @@ struct TigMsg : TigMsgBase {
 	uint32_t arg1; // x for mouse events
 	uint32_t arg2; // y for mouse events
 	uint32_t arg3;
-	uint32_t arg4; // button state flags for mouse events
+	uint32_t arg4; // button state flags for mouse events - see MouseStateFlags
 };
 
 struct TigMsgGlobalKeyCallback {

@@ -20,6 +20,7 @@
 #include <tig/tig_startup.h>
 
 #include "legacyvideosystem.h"
+#include <temple/vfs.h>
 
 using namespace gfx;
 
@@ -249,11 +250,11 @@ void VideoFixes::TakeScreenshot(int) {
 	}
 	for (auto i = 1; i <= 9999; ++i) {
 		path = fmt::format(L"{}ToEE{:04d}.jpg", folder, i);
-		if (!PathFileExistsW(path.c_str())) {
+		if (!vfs->FileExists(ucs2_to_local(path.c_str()))){
 			break;
 		}
 	}
-
+	
 	logger->info("Saving screenshot as {}", ucs2_to_local(path));
 
 	// Take screenshot

@@ -135,7 +135,6 @@ public:
 	const char* name() override {
 		return "UI Intgame Turnbased" "Function Replacements";
 	}
-
 	static void IntgameTurnbasedRender(int widId);
 	static void (__cdecl* orgIntgameTurnbasedRender)(int widId);
 	static void UiIntgameBackupCurSeq();
@@ -150,7 +149,12 @@ public:
 	static void UiIntgameGenerateSequence(int isUnnecessary);
 	static void (__cdecl*orgUiIntgameGenerateSequence)(int isUnnecessary);
 
+
+	static void RestoreSeqBackup();
+	
 	static int UiIntgameMsgHandler(int widId, TigMsg* msg);
+		static bool ToggleAcquisition(TigMsg* msg);
+		static bool ResetViaRmb(TigMsg* msg);
 	static int (__cdecl*orgUiIntgameMsgHandler)(int widId, TigMsg* msg);
 
 	static BOOL UiIntgameRaycast(objHndl* obj, int x, int y, int flags);
@@ -243,25 +247,189 @@ void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 	};
 }
 
+void UiIntegameTurnbasedRepl::RestoreSeqBackup()
+{
+	auto restoreSeqBackup = temple::GetRef<void(__cdecl)()>(0x10093110);
+	restoreSeqBackup();
+}
+
 int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
-	auto curSeq = *actSeqSys.actSeqCur;
+	
+	auto initialSeq = *actSeqSys.actSeqCur;
+	int result = 0;
+
+	auto& intgameActor = temple::GetRef<objHndl>(0x10C04118);
+
 	if (msg->type == TigMsgType::MOUSE) {
 		*addresses.screenXfromMouseEvent = ((TigMsgMouse*)msg)->x;
 		*addresses.screenYfromMouseEvent = ((TigMsgMouse*)msg)->y;
 	}
 
 	if (!combatSys.isCombatActive() || radialMenus.ActiveRadialMenuHasActiveNode()) {
-		*addresses.intgameActor = 0i64;
+		intgameActor = 0i64;
 		*addresses.uiIntgameAcquireByRaycastOn = 0;
 		*addresses.uiIntgameSelectionConfirmed = 0;
+	} 
+	else
+	{
+		auto actor = tbSys.turnBasedGetCurrentActor();
+		if (actor != intgameActor){
+			intgameActor = actor;
+			*addresses.uiIntgameWaypointMode = 0;
+			*addresses.uiIntgameAcquireByRaycastOn = 0;
+			*addresses.uiIntgameSelectionConfirmed = 0;
+			if (objects.IsPlayerControlled(actor))	{
+				UiIntgameGenerateSequence(0);
+			}
+		}
+
+		if (objects.IsPlayerControlled(intgameActor)){
+			auto tigMsgType = msg->type;
+			if (tigMsgType == TigMsgType::MOUSE){
+				if (msg->arg4 & MSF_LMB_CLICK){
+					if (ToggleAcquisition(msg))
+						result = 1;
+				}
+				if (msg->arg4 & MSF_LMB_RELEASED) {
+					if (UiIntgamePathSequenceHandler(reinterpret_cast<TigMsgMouse*>(msg)))
+						result = 1;
+				}
+				if (msg->arg4 & MSF_RMB_CLICK) {
+					auto intgameRMB = temple::GetRef<int(__cdecl)(TigMsg*)>(0x10173D70);
+					if (intgameRMB(msg))
+						result = 1;
+				}
+				if (msg->arg4 & MSF_RMB_RELEASED){
+					if (ResetViaRmb(msg))
+						result = 1;
+				}
+				if (msg->arg4 & MSF_POS_CHANGE) {
+					if (IntgameValidateMouseSelection(reinterpret_cast<TigMsgMouse*>(msg)))
+						result = 1;
+				}
+			} 
+			else { // widget or keyboard msg
+				if (tigMsgType == TigMsgType::KEYSTATECHANGE && (msg->arg2 & 0xFF)== 0)	{
+					auto leader = party.GetConsciousPartyLeader();
+					if (actSeqSys.isPerforming(leader))
+						return 1;
+
+					// bind hotkey
+					auto IsNormalNonreservedHotkey = temple::GetRef<bool(__cdecl)(int)>(0x100F3D20);
+					if (IsNormalNonreservedHotkey(msg->arg1)
+						&& (infrastructure::gKeyboard.IsKeyPressed(VK_LCONTROL) || infrastructure::gKeyboard.IsKeyPressed(VK_RCONTROL)))
+					{
+						auto leaderLoc = objects.GetLocationFull(leader);
+						
+						PointNode pnt;
+						locSys.PointNodeInit(&leaderLoc, &pnt);
+						
+						auto worldToLocalScreen = temple::GetRef<void(__cdecl)(PointNode, float*, float*)>(0x10029040);
+						float screenX, screenY;
+						worldToLocalScreen(pnt, &screenX, &screenY);
+						radialMenus.SpawnMenu(int(screenX), int(screenY));
+						return radialMenus.MsgHandler(msg);
+						
+					}
+
+					actSeqSys.TurnBasedStatusInit(leader);
+					if (*addresses.uiIntgameWaypointMode){
+						RestoreSeqBackup();
+					} else	{
+						logger->info("Intgame: Resetting sequence.");
+						actSeqSys.curSeqReset(leader);
+					}
+					d20Sys.GlobD20ActnInit();
+					auto radmenuHotkeySthg = temple::GetRef<RadialMenu*(__cdecl)(objHndl, int)>(0x100F3D60);
+					if (radmenuHotkeySthg(leader, msg->arg1))
+					{
+						actSeqSys.ActionAddToSeq();
+						actSeqSys.sequencePerform();
+						auto fellowPc = party.GetFellowPc(leader);
+
+						char voicelineText[1000];
+						voicelineText[0] = 0;
+						int soundId = 0;
+						critterSys.GetCritterVoiceLine(leader, fellowPc, voicelineText, &soundId);
+						critterSys.PlayCritterVoiceLine(leader, fellowPc, voicelineText, soundId);
+						result = 1;
+					}
+				} 
+				else if (tigMsgType == TigMsgType::WIDGET){
+					if (msg->arg2 == 4) { //exiting widget
+						*addresses.uiIntgameAcquireByRaycastOn = 0;
+						*addresses.uiIntgameSelectionConfirmed = 0;
+						*addresses.uiIntgameObjFromRaycast = 0i64;
+						*addresses.uiIntgameWidgetEnteredForGameplay = 0;
+					} 
+					else if (msg->arg2 == 3){
+						*addresses.uiIntgameWidgetEnteredForGameplay = 1;
+					}
+					
+				} 
+			}
+		}
 	}
-	auto result = orgUiIntgameMsgHandler(widId, msg);
 
 
-	if (*actSeqSys.actSeqCur != curSeq) {
+	if (msg->type == TigMsgType::WIDGET){
+		auto subtype = msg->arg2;
+		if (subtype == 4){ // widget exited
+			*addresses.uiIntgameWidgetEnteredForRender = 0;
+			return result;
+		}
+		if (subtype == 3){ // widget exited
+			*addresses.uiIntgameWidgetEnteredForRender = 1;
+		}
+	}
+
+	if (*actSeqSys.actSeqCur != initialSeq) {
 		logger->info("Sequence switch from Ui Intgame Msg Handler to {}", (void*)*actSeqSys.actSeqCur);
 	}
+
 	return result;
+
+	/*result = orgUiIntgameMsgHandler(widId, msg);
+	return result;*/
+}
+
+bool UiIntegameTurnbasedRepl::ToggleAcquisition(TigMsg* msg)
+{
+	if (uiPicker.PickerActiveCheck())
+		return false;
+
+	if (*addresses.uiIntgameAcquireByRaycastOn){
+		if (msg->arg4 == (MSF_POS_CHANGE | MSF_LMB_DOWN)) {
+			IntgameValidateMouseSelection(reinterpret_cast<TigMsgMouse*>(msg));
+		}
+		return true;
+	}
+
+	*addresses.uiIntgameAcquireByRaycastOn = 1;
+	*addresses.uiIntgameSelectionConfirmed = 1;
+
+	return true;
+}
+
+bool UiIntegameTurnbasedRepl::ResetViaRmb(TigMsg* msg)
+{
+	if (uiPicker.PickerActiveCheck())
+		return false;
+	if (*addresses.uiIntgameWaypointMode)
+	{
+		*addresses.uiIntgameWaypointMode = 0;
+		IntgameValidateMouseSelection((TigMsgMouse*)msg);
+		return true;
+	}
+
+	if (*actSeqSys.seqPickerTargetingType == -1)
+		return 0;
+	
+	*actSeqSys.seqPickerTargetingType = -1;
+	*actSeqSys.seqPickerD20ActnType = D20A_UNSPECIFIED_ATTACK;
+	*actSeqSys.seqPickerD20ActnData1 = 0;
+	return 1;
+
 }
 
 BOOL UiIntegameTurnbasedRepl::UiIntgameRaycast(objHndl* obj, int x, int y, int flags) {

@@ -23,6 +23,7 @@ struct DispIoD20ActionTurnBased; // 12
 struct DispIoMoveSpeed; //13
 struct DispIOBonusListAndSpellEntry; // 14
 struct DispIoAttackDice; // 20
+struct DispIoImmunity;
 struct D20Actn;
 
 struct SpellEntry;
@@ -76,6 +77,8 @@ struct DispatcherSystem : temple::AddressTable
 	DispIoD20ActionTurnBased* DispIOCheckIoType12(DispIoD20ActionTurnBased* dispIo);
 	DispIoMoveSpeed * DispIOCheckIoType13(DispIoMoveSpeed* dispIo);
 	DispIoMoveSpeed * DispIOCheckIoType13(DispIO* dispIo);
+	DispIoImmunity* DispIoCheckIoType23(DispIoImmunity* dispIo);
+	DispIoImmunity* DispIoCheckIoType23(DispIO* dispIo);
 	DispIOBonusListAndSpellEntry* DispIOCheckIoType14(DispIOBonusListAndSpellEntry* dispIo);
 	void PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher* dispatcher);
 	int DispatchAttackBonus(objHndl objHnd, objHndl victim, DispIoAttackBonus* dispIo, enum_disp_type dispType, int key);
@@ -95,7 +98,9 @@ struct DispatcherSystem : temple::AddressTable
 	DispatcherSystem()
 	{
 		rebase(_Dispatch29hMovementSthg,0x1004D080); 
-	};
+	}
+
+	
 private:
 	void(__cdecl *_Dispatch29hMovementSthg)(objHndl objHnd, void *);
 };
@@ -269,11 +274,14 @@ struct DispIoType21 : DispIO { // DispIoType 21
 	CondNode* condNode;
 
 	DispIoType21() {
-		dispIOType = dispIoTypeNull;
+		dispIOType = dispIOType21;
+		interrupt = 0;
+		field_8 = 0;
 		condNode = nullptr;
+		field_C = 0;
 		SDDKey1 = 0;
 		val2 = 0;
-		interrupt = 0;
+		
 	}
 };
 
@@ -324,6 +332,15 @@ struct DispIoAttackDice : DispIO // type 20
 		weapon = 0;
 		wielder = 0;
 	};
+};
+
+struct DispIoImmunity : DispIO // type 23
+{
+	int returnVal;
+	int field8;
+	int flag;
+	SpellPacketBody * spellPkt;
+	SpellEntry spellEntry;
 };
 
 struct DispIoD20ActionTurnBased : DispIO{ // dispIoType = 12; matches dispTypes 36-38 

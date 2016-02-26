@@ -153,6 +153,7 @@ static ConfigSetting configSettings[] = {
 	CONF_INT(sectorCacheSize),
 	CONF_INT(screenshotQuality),
 	CONF_BOOL(debugPartSys),
+	CONF_STRING(hpOnLevelup),
 };
 
 void TemplePlusConfig::Load() {

@@ -2,6 +2,9 @@
 #include "d20_levelup.h"
 #include "common.h"
 #include "obj.h"
+#include "util/fixes.h"
+#include "config/config.h"
+#include "temple_functions.h"
 
 
 struct D20LevelupSystemAddresses : temple::AddressTable
@@ -19,3 +22,32 @@ struct D20LevelupSystemAddresses : temple::AddressTable
 		
 	}
 } addresses;
+
+static class D20LevelupHooks : public TempleFix
+{
+public: 
+	const char* name() override { 
+		return "D20Levelup Hooks";
+	} 
+	
+	static int DiceRollHooked(int min, int max, int bonus)
+	{
+		auto cfgLower(tolower(config.hpOnLevelup));
+		
+		int result;
+		if (!stricmp(cfgLower.c_str(), "max")){
+			result = max;
+		} else if (!stricmp(cfgLower.c_str(), "average")){
+			result = (min + max) / 2  + templeFuncs.RNG(0,1); // hit die are always even numbered so randomize the roundoff
+		} else
+		{
+			result = templeFuncs.RNG(min, max);
+		}
+		
+		return result;
+	};
+
+	void apply() override {
+		redirectCall(0x100733AC, DiceRollHooked);
+	}
+} hooks;

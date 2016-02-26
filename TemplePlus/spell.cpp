@@ -16,6 +16,8 @@
 #include "gamesystems/particlesystems.h"
 #include <particles/instances.h>
 #include "particles.h"
+#include "python/python_integration_spells.h"
+#include "util/streams.h"
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
@@ -59,26 +61,50 @@ public:
 		return "Expand the range of usable spellEnums. Currently walled off at 802.";
 	}
 
+	static void hookedPrint(const char * fmt, const char* spellName)
+	{
+		logger->debug("SpellLoad: Spell {}", spellName);
+	};
+
 	void apply() override {
 		// writeHex(0x100779DE + 2, "A0 0F"); // this prevents the crash from casting from scroll, but it fucks up normal spell casting... (can't go to radial menu to cast!)
 		replaceFunction(0x100FDEA0, _getWizSchool);
-		replaceFunction(0x100779A0, _getSpellEnum); 
-		replaceFunction(0x100762D0, _spellKnownQueryGetData); 
-		replaceFunction(0x10076190, _spellMemorizedQueryGetData); 
-		replaceFunction(0x1007A140, _spellCanCast); 
-		replaceFunction(0x100754B0, _spellRegistryCopy); 
-		replaceFunction(0x10075660, _GetSpellEnumFromSpellId); 
-		replaceFunction(0x100756E0, _GetSpellPacketBody); 
+		replaceFunction(0x100779A0, _getSpellEnum);
+		replaceFunction(0x100762D0, _spellKnownQueryGetData);
+		replaceFunction(0x10076190, _spellMemorizedQueryGetData);
+		replaceFunction(0x1007A140, _spellCanCast);
+		replaceFunction(0x100754B0, _spellRegistryCopy);
+		replaceFunction(0x10075660, _GetSpellEnumFromSpellId);
+		replaceFunction(0x100756E0, _GetSpellPacketBody);
 		replaceFunction(0x100F1010, _SetSpontaneousCastingAltNode);
 
-		static void(__cdecl* orgSpellSave)() = replaceFunction<void(__cdecl)()>(0x10079390, [](){
+		static void(__cdecl* orgSpellSave)() = replaceFunction<void(__cdecl)()>(0x10079390, []() {
 			// orgSpellSave();
 			spellSys.SpellSave();
 		});
 
-		static void(__cdecl* orgGetSpellsFromTransInfo)() = replaceFunction<void(__cdecl)()>(0x100793F0, []()	{
+		static void(__cdecl* orgGetSpellsFromTransInfo)() = replaceFunction<void(__cdecl)()>(0x100793F0, []() {
 			spellSys.GetSpellsFromTransferInfo();
 		});
+
+		static int(__cdecl* orgSpellEnd)(int, int) = replaceFunction<int(__cdecl)(int, int)>(0x10079980, [](int id, int endDespiteTargetList)
+		{
+			return spellSys.SpellEnd(id, endDespiteTargetList);
+		});
+
+		static bool(__cdecl*orgSpellCastSerializeToFile)(SpellPacket*, int, TioFile*) = replaceFunction<bool(__cdecl)(SpellPacket*, int, TioFile*)>(0x100781B0, [](SpellPacket* pkt, int key, TioFile* file){
+			auto result = orgSpellCastSerializeToFile(pkt, key, file);
+			if (result)
+			{
+				logger->debug("Serialized spell {} id {} to file.", spellSys.GetSpellName(pkt->spellPktBody.spellEnum), key);
+			} else
+			{
+				logger->debug("Failed to serialize spell to file! Spell was {} id {}.", spellSys.GetSpellName(pkt->spellPktBody.spellEnum), key);
+			}
+			return result;
+		});
+
+		redirectCall(0x1007870F, hookedPrint);
 		
 	}
 } spellFuncReplacements;
@@ -115,27 +141,25 @@ SpellPacketBody::SpellPacketBody()
 
 SpellMapTransferInfo::SpellMapTransferInfo()
 {
-	memset(this, 0, sizeof(SpellMapTransferInfo));
+	//memset(this, 0, sizeof(SpellMapTransferInfo));
 	spellId  = -1;
 
 	// vanilla init:
-	/*objId.subtype = ObjectIdKind::Null;
-	casterPartsysId = 0;
+	
+	casterObjId.subtype = ObjectIdKind::Null;
 	aoeObjId.subtype = ObjectIdKind::Null;
 	for (int i = 0; i < 128; i++)
 	{
-		spellObjPartsysIds[i] = 0;
 		spellObjs[i].subtype = ObjectIdKind::Null;
 	}
 	for (int i = 0; i < 32; i++)
 	{
-		targetlistPartsysIds[i] = 0;
 		targets[i].subtype = ObjectIdKind::Null;
 	}
 	for (int i = 0; i < 5; i++)
 	{
 		projectiles[i].subtype = ObjectIdKind::Null;
-	}*/
+	}
 
 }
 
@@ -328,7 +352,19 @@ void LegacySpellSystem::spellPacketSetCasterLevel(SpellPacketBody* spellPktBody)
 void LegacySpellSystem::SpellSavePruneInactive() const
 {
 	int numPruned = 0;
-	for (auto it = spellsCastRegistry.begin(); it != spellsCastRegistry.end(); ++it)
+	struct SpellDebugInfo
+	{
+		uint32_t spellEnum; uint32_t targetCount;
+		SpellDebugInfo(int spellEn, int tgtCount)
+		{
+			spellEnum = spellEn;
+			targetCount = tgtCount;
+		}
+	};
+	std::vector < SpellDebugInfo > prunedSpells; // for debug
+	std::vector<SpellDebugInfo> preservedSpells;
+
+	for (auto it = spellsCastRegistry.begin(); it != spellsCastRegistry.end(); )
 	{
 		auto& node = *it;
 
@@ -337,13 +373,13 @@ void LegacySpellSystem::SpellSavePruneInactive() const
 
 		if (node.data->isActive == 0)	{
 			shouldPrune = true;
-
-			if (!spellPacketBody.caster) {
-				const char * spellName = GetSpellName(spellPacketBody.spellEnum);
-				logger->warn("Spell id {} ({}) has been pruned because the spell has a null caster.", spellPacketBody.spellId, spellName);
-				shouldPrune = true;
-			} // TODO: Logic bug??? I think this should be outside
-		}  else if (spellPacketBody.targetCount &&  !spellPacketBody.targetListHandles[0]) {
+		}  
+		else if (!spellPacketBody.caster) {
+			const char * spellName = GetSpellName(spellPacketBody.spellEnum);
+			logger->warn("Spell id {} ({}) has been pruned because the spell has a null caster.", spellPacketBody.spellId, spellName);
+			shouldPrune = true;
+		} 
+		else if (spellPacketBody.targetCount &&  !spellPacketBody.targetListHandles[0]) {
 			const char * spellName = GetSpellName(spellPacketBody.spellEnum);
 			logger->warn("Spell id {} ({}) has been pruned because the spell has num_targets > 0 but there are no targets!", spellPacketBody.spellId, spellName);
 			shouldPrune = true;
@@ -351,10 +387,24 @@ void LegacySpellSystem::SpellSavePruneInactive() const
 		
 		if (shouldPrune) {
 			numPruned++;
-			it = spellsCastRegistry.erase(it);
+			prunedSpells.push_back(SpellDebugInfo( spellPacketBody.spellEnum, spellPacketBody.targetCount ));
+			it = spellsCastRegistry.erase(it); // erase advances the iterator too so there shouldn't be one in the loop execution section
+		} else{
+			++it;
+			preservedSpells.push_back(SpellDebugInfo( spellPacketBody.spellEnum, spellPacketBody.targetCount ));
 		}
 	}
+
 	logger->info("Pruned {} spells from active list.", numPruned);
+	for (auto it: prunedSpells){
+		auto spellName = GetSpellName(it.spellEnum);
+		logger->debug("{}, targetCount {}", spellName, it.targetCount);
+	}
+	logger->info("Preserved {} spells from active list.", preservedSpells.size());
+	for (auto it : preservedSpells) {
+		auto spellName = GetSpellName(it.spellEnum);
+		logger->debug("{}, targetCount {}", spellName, it.targetCount);
+	}
 }
 
 SpellMapTransferInfo LegacySpellSystem::SaveSpellForTeleport(const SpellPacket& data)
@@ -404,11 +454,12 @@ SpellMapTransferInfo LegacySpellSystem::SaveSpellForTeleport(const SpellPacket& 
 		result.aoeObjId.subtype = ObjectIdKind::Null;
 	}
 
-	memset(result.spellObjPartsys, 0, sizeof result.spellObjPartsys);
+	result.spellObjPartsys->clear();
 	memset(result.spellObjs, 0, sizeof result.spellObjs);
-	memset(result.targetlistPartsys, 0, sizeof result.targetlistPartsys);
+	result.targetlistPartsys->clear();
 	memset(result.targets, 0, sizeof result.targets);
-	memset(result.projectiles, 0, sizeof result.projectiles);
+	//memset(result.projectiles, 0, sizeof result.projectiles);
+
 	
 	for (auto i = 0; i < spellPkt->numSpellObjs;i++){
 		if (spellPkt->spellObjs[i].obj) {
@@ -457,6 +508,147 @@ void LegacySpellSystem::SpellSave()
 		spellMapTransInfo.emplace_back(SaveSpellForTeleport(*it.data));
 	}
 
+}
+
+int LegacySpellSystem::SpellSave(TioOutputStream& file)
+{
+	static auto SerializeHandleToFile = [](objHndl obj, TioOutputStream& stream)
+	{
+		ObjectId objId;
+		if (obj)
+			objId = objSystem->GetObject(obj)->id;
+		else
+		{
+			objId.subtype = ObjectIdKind::Null;
+		}
+		stream.WriteObjectId(objId);
+		return true;
+	};
+	static auto SerializePartsysToFile = [](int partsysId, TioOutputStream&stream)
+	{
+		int partsysHash = 0;
+		if (partsysId){
+			auto partSys = gameSystems->GetParticleSys().GetByHandle(partsysId);
+			if (partSys)
+				partsysHash = gameSystems->GetParticleSys().GetByHandle(partsysId)->GetSpec()->GetNameHash();
+			else
+			{
+				logger->debug("Tried to serialize an invalid partsysId");
+			}
+		}
+		stream.WriteInt32(partsysHash);
+		return true;
+	};
+	static auto SerializeHandlesToFile = [](objHndl objs[], uint32_t num, TioOutputStream&streama)
+	{
+		for (int i = 0; i < num; i++)
+		{
+			if (!SerializeHandleToFile(objs[i], streama))
+				return false;
+		}
+		return true;
+	};
+	static auto SerializePartSystemsToFile = [](uint32_t partsys[], uint32_t num, TioOutputStream&stream)
+	{
+		for (int i = 0; i < num; i++)
+		{
+			if (!SerializePartsysToFile(partsys[i], stream))
+				return false;
+		}
+		return true;
+	};
+	static auto SerializeSpellObjsToFile = [](SpellPacketBody::SpellObj spellObjs[], uint32_t num, TioOutputStream&stream)
+	{
+		for (int i = 0; i < num; i++)
+		{
+			if (!SerializeHandleToFile(spellObjs[i].obj, stream))
+				return false;
+			if (!SerializePartsysToFile(spellObjs[i].partySysId, stream))
+				return false;
+		}
+		return true;
+	};
+
+	int numSerialized = 0;
+
+	for (auto it: spellsCastRegistry){
+		
+		if (!it.data->isActive)
+		{
+			logger->debug("Serializing an inactive spell after pruning?! Spell {} Id {}", it.data->spellPktBody.spellEnum, it.id);
+			//continue;
+		}
+			
+
+		auto &pkt = it.data->spellPktBody;
+		auto spellName = GetSpellName(it.data->spellPktBody.spellEnum);
+		logger->info("SpellSave: Saving spell {} id {}", spellName, it.id);
+		file.WriteInt32(it.id);
+		file.WriteInt32(it.data->key);
+		file.WriteInt32(it.data->isActive);
+		file.WriteInt32(pkt.spellEnum);
+		file.WriteInt32(pkt.spellEnumOriginal);
+		file.WriteInt32(pkt.flagSthg);
+
+		// caster
+		if (!SerializeHandleToFile(pkt.caster, file))
+		{
+			return false;
+		}
+			
+		if (!SerializePartsysToFile(pkt.casterPartsysId, file))
+			return false;
+
+		file.WriteInt32(pkt.casterClassCode);
+		file.WriteInt32(pkt.spellKnownSlotLevel);
+		file.WriteInt32(pkt.baseCasterLevel);
+		file.WriteInt32(pkt.dc);
+
+		// spell objs
+		file.WriteInt32(pkt.numSpellObjs);
+		
+
+		if (!SerializeHandleToFile(pkt.aoeObj, file))
+			return false;
+
+		if (!SerializeSpellObjsToFile(pkt.spellObjs, 128, file))
+		{
+			return false;
+		}
+			
+
+		// targets
+		file.WriteInt32(pkt.orgTargetCount);
+		file.WriteInt32(pkt.targetCount);
+		if (!SerializeHandlesToFile(pkt.targetListHandles, 32, file))
+		{
+			return false;
+		}
+			
+
+		if (!SerializePartSystemsToFile(pkt.targetListPartsysIds, 32, file))
+			return false;
+
+		// projectiles
+		file.WriteInt32(pkt.projectileCount);
+		if (!SerializeHandlesToFile(pkt.projectiles, 5, file))
+			return false;
+
+		file.WriteInt64(pkt.aoeCenter.location.location);
+		file.WriteFloat(pkt.aoeCenter.location.off_x);
+		file.WriteFloat(pkt.aoeCenter.location.off_y);
+		file.WriteFloat(pkt.aoeCenter.off_z);
+		file.WriteInt32(pkt.duration);
+		file.WriteInt32(pkt.durationRemaining);
+		file.WriteInt32(pkt.spellRange);
+		file.WriteInt32(pkt.savingThrowResult);
+		file.WriteInt32(pkt.metaMagicData);
+		file.WriteInt32(pkt.spellId);
+		
+		numSerialized++;
+	}
+
+	return numSerialized;
 }
 
 void LegacySpellSystem::GetSpellsFromTransferInfo()
@@ -536,6 +728,159 @@ bool LegacySpellSystem::GetSpellPacketFromTransferInfo(unsigned& spellId, SpellP
 			spellPkt.spellPktBody.projectiles[i] = 0i64;
 	}
 
+	return true;
+}
+
+bool LegacySpellSystem::LoadActiveSpellElement(TioFile* file, uint32_t& spellId, SpellPacket& pkt)
+{
+	
+	if (!tio_fread(&spellId, sizeof(int), 1, file))
+		return false;
+	logger->debug("Loading spellId {}", spellId);
+	if (!tio_fread(&pkt.key, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.isActive, sizeof(int), 1, file))
+		return false;
+	///Expects(pkt.isActive);
+	if (!pkt.isActive){
+		logger->debug("Spell was inactive!");
+	}
+
+	if (!tio_fread(&pkt.spellPktBody.spellEnum, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.spellEnumOriginal, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.flagSthg, sizeof(int), 1, file))
+		return false;
+
+	// get the caster
+	ObjectId objId;
+	if (!tio_fread(&objId, sizeof(ObjectId), 1, file))
+		return false;
+	//Expects(objId.subtype != ObjectIdKind::Null);
+	pkt.spellPktBody.caster = objSystem->GetHandleById(objId);
+
+	// get the caster partsys
+	auto partsysHash = 0;
+	if (!tio_fread(&partsysHash, sizeof(int), 1, file))
+		return false;
+	if (pkt.spellPktBody.caster)
+		pkt.spellPktBody.casterPartsysId = partsysHash ? gameSystems->GetParticleSys().CreateAtObj(partsysHash, pkt.spellPktBody.caster) : 0;
+	else
+	{
+		logger->warn("SpellLoad: null caster handle!");
+		pkt.spellPktBody.casterPartsysId = 0;
+	}
+		
+
+	if (!tio_fread(&pkt.spellPktBody.casterClassCode, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.spellKnownSlotLevel, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.baseCasterLevel, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.dc, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.numSpellObjs, sizeof(int), 1, file))
+		return false;
+
+	// aoeObj
+	if (!tio_fread(&objId, sizeof(ObjectId), 1, file))
+		return false;
+	pkt.spellPktBody.aoeObj = objSystem->GetHandleById(objId);
+
+
+	// spellObjs
+	for (int i = 0; i < 128; i++){
+		
+		auto& spellObj = pkt.spellPktBody.spellObjs[i];
+
+		if (!tio_fread(&objId, sizeof(ObjectId), 1, file))
+			return false;
+		if (objId.subtype != ObjectIdKind::Null){
+			spellObj.obj =	objSystem->GetHandleById(objId);
+		}
+		else
+			spellObj.obj = 0i64;
+		
+		if (!tio_fread(&partsysHash, sizeof(int), 1, file))
+			return false;
+		if (partsysHash && pkt.spellPktBody.spellObjs[i].obj){
+			spellObj.partySysId = gameSystems->GetParticleSys().CreateAtObj(partsysHash, spellObj.obj);
+		} else	{
+			spellObj.partySysId = 0;
+		}
+	}
+
+	// targets
+	if (!tio_fread(&pkt.spellPktBody.orgTargetCount, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.targetCount, sizeof(int), 1, file))
+		return false;
+	for (int i = 0; i < 32; i++){
+		auto& tgt = pkt.spellPktBody.targetListHandles[i];
+		if (!tio_fread(&objId, sizeof(ObjectId), 1, file))
+			return false;
+		if (objId.subtype != ObjectIdKind::Null) {
+			tgt = objSystem->GetHandleById(objId);
+		}
+		else
+			tgt = 0i64;
+	}
+
+	// target particles
+	for (int i = 0; i < 32; i++){
+		auto& tgt = pkt.spellPktBody.targetListHandles[i];
+		auto& partsysId = pkt.spellPktBody.targetListPartsysIds[i];
+		if (!tio_fread(&partsysHash, sizeof(int), 1, file))
+			return false;
+		if (partsysHash && tgt  ) {
+			partsysId = gameSystems->GetParticleSys().CreateAtObj(partsysHash, tgt);
+		}
+		else {
+			partsysId = 0;
+		}
+	}
+
+	
+	// projectiles
+	if (!tio_fread(&pkt.spellPktBody.projectileCount, sizeof(int), 1, file))
+		return false;
+	for (int i = 0; i < 5; i++) {
+		auto& projectile = pkt.spellPktBody.projectiles[i];
+		if (!tio_fread(&objId, sizeof(ObjectId), 1, file))
+			return false;
+		if (objId.subtype != ObjectIdKind::Null) {
+			projectile = objSystem->GetHandleById(objId);
+		}
+		else
+			projectile = 0i64;
+	}
+
+	if (!tio_fread(&pkt.spellPktBody.aoeCenter, sizeof(locXY), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.aoeCenter.location.off_x, sizeof(float), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.aoeCenter.location.off_y, sizeof(float), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.aoeCenter.off_z, sizeof(float), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.duration, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.durationRemaining, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.spellRange, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.savingThrowResult, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.metaMagicData, sizeof(int), 1, file))
+		return false;
+	if (!tio_fread(&pkt.spellPktBody.spellId, sizeof(int), 1, file))
+		return false;
+	Expects(pkt.spellPktBody.spellId >= 0);
+
+	auto spellName = GetSpellName(pkt.spellPktBody.spellEnum);
+	logger->info("SpellLoad: Loaded spell {} id {}", spellName, spellId);
 	return true;
 }
 
@@ -796,6 +1141,38 @@ BOOL LegacySpellSystem::SpellHasAiType(unsigned spellEnum, AiSpellType aiSpellTy
 						== (1 << aiSpellType));
 	}
 	return 0;
+}
+
+void LegacySpellSystem::SpellsCastRegistryPut(int spellId, SpellPacket& pkt)
+{
+	spellsCastRegistry.put(spellId, pkt);
+}
+
+int LegacySpellSystem::SpellEnd(int spellId, int endDespiteTargetList) const
+{
+	SpellPacket pkt;
+	if (!spellsCastRegistry.copy(spellId,&pkt)){
+		logger->debug("SpellEnd: \t Couldn't find spell in registry. Spell id {}", spellId);
+		return 0;
+	}
+
+	auto spellName = GetSpellName(pkt.spellPktBody.spellEnum);
+
+	if (pkt.spellPktBody.targetCount > 0){
+		logger->debug("SpellEnd: \t target count is nonzero! Spell {} id {}", spellName, spellId);
+		if (!endDespiteTargetList)
+			return 0;
+		logger->debug("Forcing spell end anyway...");
+	}
+
+	pythonSpellIntegration.SpellTrigger(spellId, SpellEvent::EndSpellCast);
+	pythonSpellIntegration.RemoveSpell(spellId); // bah :P
+
+	// python stuff could update it so we refresh
+	spellsCastRegistry.copy(spellId, &pkt);
+	pkt.isActive = 0;
+	spellsCastRegistry.put(spellId, pkt);
+	return 1;
 }
 #pragma endregion
 

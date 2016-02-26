@@ -6,6 +6,10 @@
 #include "python\python_header.h"
 #include "obj.h"
 #include "d20.h"
+#include "gamesystems/objects/objsystem.h"
+#include "condition.h"
+#include "critter.h"
+#include "combat.h"
 
 
 void PyPerformTouchAttack_PatchedCallToHitProcessing(D20Actn * pd20A, D20Actn d20A, uint32_t savedesi, uint32_t retaddr, PyObject * pyObjCaller, PyObject * pyTupleArgs);
@@ -21,10 +25,19 @@ public:
 	void VampiricTouchFix();
 	void enlargePersonModelScaleFix(); // fixes ambiguous float point calculations that resulted in cumulative roundoff errors
 	
+	static int ImmunityCheckHandler(DispatcherCallbackArgs args);
+
 	void apply() override {
 		
 		VampiricTouchFix();
 		enlargePersonModelScaleFix();
+		static int (*orgImmunityCheckHandler )(DispatcherCallbackArgs)= replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100ED650, [](DispatcherCallbackArgs args)
+		{
+			if (!ImmunityCheckHandler(args))
+				return orgImmunityCheckHandler(args);
+			return 0;
+		});
+		
 	}
 } spellConditionFixes;
 
@@ -55,6 +68,65 @@ void SpellConditionFixes::enlargePersonModelScaleFix()
 	redirectCall(0x100D84DE, enlargeSpellRestoreModelScaleHook); // sp152 enlarge 
 	redirectCall(0x100D9C22, enlargeSpellRestoreModelScaleHook); // sp404 righteous might
 
+}
+
+int SpellConditionFixes::ImmunityCheckHandler(DispatcherCallbackArgs args)
+{
+	auto dispIo23 = dispatch.DispIoCheckIoType23(args.dispIO);
+	if (dispIo23->returnVal == 1)
+		return 1;
+	
+	DispIoType21 dispIo21;
+	dispIo21.condNode = args.subDispNode->condNode;
+	auto dispatcher = objSystem->GetObject(args.objHndCaller)->GetDispatcher();
+	if (!dispatch.dispatcherValid(dispatcher))
+		return 1;
+	
+	int immType = 10;
+	for (; immType <= 16; immType++){
+		dispatch.DispatcherProcessor(dispatcher, dispTypeImmunityTrigger, immType, &dispIo21);
+		if (dispIo21.interrupt == 1)
+			break;
+	}
+	if (immType > 16)
+		return 1;
+
+	if (immType != 10)
+		return 0;
+
+	auto immSpellId = conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+	SpellPacketBody immSpellPkt;
+	if (!spellSys.GetSpellPacketBody(immSpellId, &immSpellPkt))
+		return 1;
+
+	if (dispIo23->flag == 0)
+		return 0;
+
+	if (immSpellPkt.spellEnum != 368
+		&& (immSpellPkt.spellEnum < 370 || immSpellPkt.spellEnum > 372)) // prot from alignment spells
+		return 0;
+
+	SpellEntry offendingSpellEntry;
+	spellSys.spellRegistryCopy(dispIo23->spellPkt->spellEnum, &offendingSpellEntry);
+
+	if (!(offendingSpellEntry.spellDescriptorBitmask & 0x4000)) //Mind Affecting
+		return 0;
+
+	auto caster = dispIo23->spellPkt->caster;
+	
+	if (!caster)
+		return 0;
+
+	if (!objects.IsCritter(caster))
+		return 0;
+
+	if ( offendingSpellEntry.aiTypeBitmask && ( 1<<ai_action_defensive)  )
+	{
+		if (critterSys.IsFriendly(caster, args.objHndCaller)) // because some spells are actually both ways, such as prayer
+			return 1;
+	}
+
+	return 0;
 };
 
 void PyPerformTouchAttack_PatchedCallToHitProcessing( D20Actn * pd20A, D20Actn d20A, uint32_t savedesi, uint32_t retaddr, PyObject * pyObjCaller, PyObject * pyTupleArgs)
@@ -95,3 +167,6 @@ void enlargeSpellIncreaseModelScaleHook(objHndl objHnd)
 	modelScale /= 5;
 	objects.setInt32(objHnd, obj_f_model_scale, modelScale);
 }
+
+
+

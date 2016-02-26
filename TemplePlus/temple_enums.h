@@ -1886,7 +1886,7 @@ enum enum_dispIO_type : uint32_t {
 	dispIOType20,
 	dispIOType21,
 	dispIOType22,
-	dispIOType23,
+	dispIOTypeImmunityHandler,
 	dispIOType24,
 	dispIOType25,
 	dispIOType26,

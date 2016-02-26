@@ -10,6 +10,7 @@
 #include <graphics/device.h>
 #include <graphics/camera.h>
 #include <config/config.h>
+#include <util/streams.h>
 
 
 //*****************************************************************************
@@ -327,13 +328,74 @@ const std::string &SpellSystem::GetName() const {
 }
 
 bool SpellSystem::Save(TioFile* file) {
-	static auto spell_save = temple::GetPointer<BOOL(TioFile *file)>(0x10079220);
-	return spell_save(file) == TRUE;
+	
+	logger->debug("Saving Spells: {} spells initially in SpellsCastRegistry." , spellSys.spellCastIdxTable->itemCount);
+	spellSys.SpellSavePruneInactive();
+	logger->debug("Saving Spells: {} spells after pruning.", spellSys.spellCastIdxTable->itemCount);
+	
+	TioOutputStream tios(file);
+
+	auto spellIdSerial = temple::GetPointer<int>(0x10AAF204);
+	tios.WriteInt32(*spellIdSerial);
+	// tio_fwrite(spellIdSerial, sizeof(int), 1, file);
+	int numSpells = spellSys.spellCastIdxTable->itemCount;
+	tios.WriteInt32(numSpells);
+	/*if (!tio_fwrite(&numSpells, sizeof(int), 1, file))
+		return FALSE;*/
+	
+	auto numSerialized = spellSys.SpellSave(tios);
+	if (numSerialized != numSpells)
+	{
+		logger->error("Serialized wrong number of spells! SAVE IS CORRUPT! Serialized: {}, expected: {}", numSerialized, numSpells);
+	}
+	
+	return TRUE;
+
+	static auto spell_save = temple::GetPointer<BOOL(TioFile *)>(0x10079220);
+	auto result = spell_save(file);
+	return result == TRUE;
 }
 
 bool SpellSystem::Load(GameSystemSaveFile* file) {
+	logger->info("Loading Spells: {} spells initially in SpellsCastRegistry.", spellSys.spellCastIdxTable->itemCount);
 	static auto spell__spell_load = temple::GetPointer<BOOL(GameSystemSaveFile*)>(0x100792a0);
-	return spell__spell_load(file) == TRUE;
+	
+	
+	auto spellIdSerial = temple::GetPointer<int>(0x10AAF204);
+	tio_fread(spellIdSerial, sizeof(int), 1, file->file);
+	
+	int numSpells;
+	if (tio_fread(&numSpells, 4, 1, file->file) != 1)
+		return FALSE;
+
+	Expects(numSpells >= 0);
+	Expects(*spellIdSerial >= numSpells);
+	
+	if (numSpells <= 0)
+		return TRUE;
+
+	uint32_t spellId;
+	SpellPacket pkt;
+
+	for (int i = 0; i < numSpells; i++)	{
+		if (spellSys.LoadActiveSpellElement(file->file, spellId, pkt) != 1 ){
+			logger->warn("Loading Spells: Failure! {} spells in SpellsCastRegistry after loading.", spellSys.spellCastIdxTable->itemCount);
+			return FALSE;
+		}
+		if (! (spellId <= *spellIdSerial)){
+			logger->warn("Invalid spellId {} detected, greater than spellIdSerial!", spellId);
+		}
+		if (!pkt.spellPktBody.caster)	{
+			logger->warn("Null caster object!", spellId);
+		}
+		spellSys.SpellsCastRegistryPut(spellId, pkt);
+	}
+	logger->info("Loading Spells: {} spells in SpellsCastRegistry after loading.", spellSys.spellCastIdxTable->itemCount);
+	return TRUE;
+	
+	auto result = spell__spell_load(file);
+	
+	return result == TRUE;
 }
 
 //*****************************************************************************

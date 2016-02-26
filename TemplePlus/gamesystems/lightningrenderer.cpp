@@ -81,6 +81,9 @@ void LightningRenderer::Render() {
 
 void LightningRenderer::Render(size_t vertexCount, XMFLOAT4* positions, XMFLOAT4* normals, XMCOLOR* diffuse, XMFLOAT2* uv, size_t primCount, uint16_t* indices) {
 
+	if (!primCount)
+		return;
+
 	auto vbLock = mVertexBuffer->Lock<LightningVertex>(vertexCount);
 	
 	for (size_t i = 0; i < vertexCount; ++i) {
