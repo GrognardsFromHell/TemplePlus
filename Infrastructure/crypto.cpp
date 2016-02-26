@@ -50,7 +50,7 @@ namespace crypto {
 
 	}
 
-	std::string MD5AsString(gsl::array_view<uint8_t> data) {
+	std::string MD5AsString(gsl::span<uint8_t> data) {
 
 		auto alg = GetMd5Alg();
 
@@ -68,7 +68,7 @@ namespace crypto {
 			throw TempleException("Unable to create a MD5 hasher: {:x}", status);
 		}
 
-		status = BCryptHashData(hash, data.data(), data.bytes(), 0);
+		status = BCryptHashData(hash, data.data(), data.size_bytes(), 0);
 		if (status) {
 			BCryptDestroyHash(hash);
 			throw TempleException("Unable to create MD5 hash: {:x}", status);

@@ -124,7 +124,7 @@ bool Vfs::IsDirEmpty(const std::string& path) {
 	return Search(globPattern).empty();
 }
 
-void Vfs::WriteBinaryFile(const std::string &path, gsl::array_view<uint8_t> data) {
+void Vfs::WriteBinaryFile(const std::string &path, gsl::span<uint8_t> data) {
 	
 	auto fh(Open(path.c_str(), "wb"));
 	if (Write(&data[0], data.size(), fh) != data.size()) {

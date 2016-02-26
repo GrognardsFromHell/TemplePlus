@@ -1,6 +1,6 @@
 #include <regex>
 
-#include <gsl/string_view.h>
+#include <gsl/string_span.h>
 #include <infrastructure/logging.h>
 
 #include "particles/parser_keyframes.h"
@@ -9,7 +9,7 @@
 
 namespace particles {
 
-	PartSysParam* ParserParams::Parse(PartSysParamId id, gsl::cstring_view<> value, float emitterLifespan, float particleLifespan, bool& success) {
+	PartSysParam* ParserParams::Parse(PartSysParamId id, gsl::cstring_span<> value, float emitterLifespan, float particleLifespan, bool& success) {
 
 		// Look up the default value
 		auto defaultValue = PartSysParam::GetDefaultValue(id);
@@ -21,7 +21,7 @@ namespace particles {
 
 	}
 
-	PartSysParam* ParserParams::Parse(gsl::cstring_view<> value, float defaultValue, float parentLifespan, bool& success) {
+	PartSysParam* ParserParams::Parse(gsl::cstring_span<> value, float defaultValue, float parentLifespan, bool& success) {
 		success = false;
 
 		if (parentLifespan == 0) {
@@ -49,11 +49,11 @@ namespace particles {
 		return ParseConstant(value, defaultValue, success);
 	}
 
-	PartSysParamKeyframes* ParserParams::ParseKeyframes(gsl::cstring_view<> value, float parentLifespan) {
+	PartSysParamKeyframes* ParserParams::ParseKeyframes(gsl::cstring_span<> value, float parentLifespan) {
 		return ParserKeyframes::Parse(value, parentLifespan);
 	}
 
-	PartSysParamRandom* ParserParams::ParseRandom(gsl::cstring_view<> value) {
+	PartSysParamRandom* ParserParams::ParseRandom(gsl::cstring_span<> value) {
 		float lower, upper;
 		if (_snscanf_s(value.data(), value.size(), "%f?%f", &lower, &upper) == 2) {
 			auto variance = upper - lower;
@@ -62,14 +62,14 @@ namespace particles {
 		return nullptr;
 	}
 
-	PartSysParamSpecial* ParserParams::ParseSpecial(gsl::cstring_view<> value) {
+	PartSysParamSpecial* ParserParams::ParseSpecial(gsl::cstring_span<> value) {
 		if (!_strnicmp(value.data(), "#radius", value.size())) {
 			return new PartSysParamSpecial(PSPST_RADIUS);
 		}
 		return nullptr;
 	}
 
-	PartSysParamConstant* ParserParams::ParseConstant(gsl::cstring_view<> value, float defaultValue, bool& success) {
+	PartSysParamConstant* ParserParams::ParseConstant(gsl::cstring_span<> value, float defaultValue, bool& success) {
 		// Try to parse it as a floating point constant
 		float floatValue;
 		if (_snscanf_s(value.data(), value.size(), "%f", &floatValue) != 1) {

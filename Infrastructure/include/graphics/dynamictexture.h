@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <atlcomcli.h>
-#include "gsl/array_view.h"
+#include "gsl/span.h"
 
 #include "textures.h"
 
@@ -38,16 +38,16 @@ namespace gfx {
 		}
 
 		template<typename T>
-		void Update(gsl::array_view<T> data) {
+		void Update(gsl::span<T> data) {
 			UpdateRaw(
-				{ reinterpret_cast<uint8_t*>(&data[0]), data.size() * sizeof(T) }, 
+				gsl::as_span(reinterpret_cast<uint8_t*>(&data[0]), data.size_bytes()), 
 				mSize.width * sizeof(T)
 			);
 		}
 
 	private:
 
-		void UpdateRaw(gsl::array_view<uint8_t> data, size_t pitch);
+		void UpdateRaw(gsl::span<uint8_t> data, size_t pitch);
 
 		CComPtr<IDirect3DTexture9> mTexture;
 		Size mSize;

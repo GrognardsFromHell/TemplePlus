@@ -82,6 +82,7 @@
     <ClCompile Include="gamesystems\partsystemsrenderer.cpp" />
     <ClCompile Include="gamesystems\staticmeshes.cpp" />
     <ClCompile Include="gamesystems\ui_intgame_renderer.cpp" />
+    <ClCompile Include="graphics\aas_hooks.cpp" />
     <ClCompile Include="graphics\imgfile.cpp" />
     <ClCompile Include="graphics\loadingscreen.cpp" />
     <ClCompile Include="graphics\mapterrain.cpp" />

@@ -122,7 +122,7 @@ gfx::AnimatedModelPtr Objects::GetAnimHandle(objHndl obj)
 	}
 	if (!IsRadiusSet(obj)) {
 		UpdateRadius(obj, model->GetHandle());
-}
+	}
 
 	return model;
 	

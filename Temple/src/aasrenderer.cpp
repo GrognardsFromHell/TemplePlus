@@ -194,7 +194,7 @@ void AasRenderer::RecalcNormals(int vertexCount, const XMFLOAT4* pos, XMFLOAT4* 
 
 void AasRenderer::Render(gfx::AnimatedModel *model,
 	const gfx::AnimatedModelParams& params,
-	gsl::array_view<Light3d> lights,
+	gsl::span<Light3d> lights,
 	const MdfRenderOverrides *materialOverrides) {
 
 	// Find or create render caching data for the model
@@ -311,8 +311,8 @@ void AasRenderer::RenderGeometryShadow(gfx::AnimatedModel * model,
 
 }
 
-void AasRenderer::RenderShadowMapShadow(gsl::array_view<gfx::AnimatedModel*> models, 
-										gsl::array_view<const gfx::AnimatedModelParams*> modelParams,
+void AasRenderer::RenderShadowMapShadow(gsl::span<gfx::AnimatedModel*> models,
+										gsl::span<const gfx::AnimatedModelParams*> modelParams,
 										const XMFLOAT3 &center,
 										float radius,
 										float height,

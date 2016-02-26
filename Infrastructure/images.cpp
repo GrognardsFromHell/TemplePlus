@@ -33,11 +33,11 @@ namespace gfx {
 		tjhandle mHandle;
 	};
 
-	ImageFileInfo DetectImageFormat(array_view<uint8_t> data) {
+	ImageFileInfo DetectImageFormat(span<uint8_t> data) {
 		ImageFileInfo info;
 
 		stbi__context ctx;
-		stbi__start_mem(&ctx, &data[0], data.bytes());
+		stbi__start_mem(&ctx, &data[0], data.size_bytes());
 
 		int comp;
 		if (stbi__bmp_info(&ctx, &info.width, &info.height, &comp)) {
@@ -47,7 +47,7 @@ namespace gfx {
 		}
 
 		TjDecompressHandle handle;
-		if (tjDecompressHeader(handle, &data[0], data.bytes(), &info.width, &info.height) == 0) {
+		if (tjDecompressHeader(handle, &data[0], data.size_bytes(), &info.width, &info.height) == 0) {
 			info.hasAlpha = false;
 			info.format = ImageFileFormat::JPEG;
 			return info;
@@ -69,14 +69,14 @@ namespace gfx {
 		return info;
 	}
 
-	std::unique_ptr<uint8_t[]> DecodeJpeg(const array_view<uint8_t> data) {
+	std::unique_ptr<uint8_t[]> DecodeJpeg(const span<uint8_t> data) {
 		TjDecompressHandle handle;
 
 		int w, h;
-		tjDecompressHeader(handle, &data[0], data.bytes(), &w, &h);
+		tjDecompressHeader(handle, &data[0], data.size_bytes(), &w, &h);
 
 		std::unique_ptr<uint8_t[]> result(new uint8_t[w * h * 4]);
-		auto status = tjDecompress2(handle, &data[0], data.bytes(), &result[0], w, w * 4, h, TJPF_BGRX, 0);
+		auto status = tjDecompress2(handle, &data[0], data.size_bytes(), &result[0], w, w * 4, h, TJPF_BGRX, 0);
 		if (status != 0) {
 			throw TempleException("Unable to decompress jpeg image: {}",
 			                      tjGetErrorStr());
@@ -84,7 +84,7 @@ namespace gfx {
 		return result;
 	}
 
-	DecodedImage DecodeFontArt(const array_view<uint8_t> data) {
+	DecodedImage DecodeFontArt(const span<uint8_t> data) {
 
 		// 256x256 image with 8bit alpha
 		Expects(data.size() == 256 * 256);
@@ -108,13 +108,13 @@ namespace gfx {
 
 	}
 
-	DecodedImage DecodeImage(const array_view<uint8_t> data) {
+	DecodedImage DecodeImage(const span<uint8_t> data) {
 
 		DecodedImage result;
 		result.info = DetectImageFormat(data);
 
 		stbi__context ctx;
-		stbi__start_mem(&ctx, &data[0], data.bytes());
+		stbi__start_mem(&ctx, &data[0], data.size_bytes());
 		int w, h, comp;
 
 		switch (result.info.format) {
@@ -137,7 +137,7 @@ namespace gfx {
 		return result;
 	}
 
-	CComPtr<IDirect3DSurface9> LoadImageToSurface(IDirect3DDevice9* device, const array_view<uint8_t> data, ImageFileInfo& info) {
+	CComPtr<IDirect3DSurface9> LoadImageToSurface(IDirect3DDevice9* device, const span<uint8_t> data, ImageFileInfo& info) {
 		auto img(DecodeImage(data));
 		auto w = img.info.width;
 		auto h = img.info.height;

@@ -181,7 +181,7 @@ void ShapeRenderer2d::DrawRectangle(float x, float y, float width, float height,
 	DrawRectangle(x, y, width, height, nullptr, color);
 }
 
-void ShapeRenderer2d::DrawRectangle(gsl::array_view<Vertex2d, 4> corners,
+void ShapeRenderer2d::DrawRectangle(gsl::span<Vertex2d, 4> corners,
 	IDirect3DTexture9* texture,
 	IDirect3DTexture9* mask,
 	bool wrap,
@@ -221,7 +221,7 @@ void ShapeRenderer2d::DrawRectangle(gsl::array_view<Vertex2d, 4> corners,
 
 }
 
-	void ShapeRenderer2d::DrawRectangle(gsl::array_view<Vertex2d, 4> corners, 
+	void ShapeRenderer2d::DrawRectangle(gsl::span<Vertex2d, 4> corners,
 		const gfx::MdfRenderMaterialPtr& material) {
 
 		MdfRenderOverrides overrides;
@@ -235,7 +235,7 @@ void ShapeRenderer2d::DrawRectangle(gsl::array_view<Vertex2d, 4> corners,
 		DrawRectangle(corners);
 	}
 
-	void ShapeRenderer2d::DrawRectangle(gsl::array_view<Vertex2d, 4> corners) {
+	void ShapeRenderer2d::DrawRectangle(gsl::span<Vertex2d, 4> corners) {
 	// Copy the vertices
 	auto locked(mImpl->vertexBuffer->Lock<Vertex2d>());
 	locked[0] = corners[0];
@@ -257,7 +257,7 @@ void ShapeRenderer2d::DrawRectangle(gsl::array_view<Vertex2d, 4> corners,
 
 }
 
-void ShapeRenderer2d::DrawLines(gsl::array_view<Line2d> lines) {
+void ShapeRenderer2d::DrawLines(gsl::span<Line2d> lines) {
 
 	mImpl->device.SetMaterial(mImpl->lineMaterial);
 

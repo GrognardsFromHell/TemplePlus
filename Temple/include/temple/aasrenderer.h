@@ -31,7 +31,7 @@ namespace temple {
 
 		void Render(gfx::AnimatedModel *model,
 			const gfx::AnimatedModelParams& params,
-			gsl::array_view<gfx::Light3d> lights,
+			gsl::span<gfx::Light3d> lights,
 			const gfx::MdfRenderOverrides *materialOverrides = nullptr) override;
 
 		void RenderWithoutMaterial(gfx::AnimatedModel *model,
@@ -42,8 +42,8 @@ namespace temple {
 			const gfx::Light3d &globalLight,
 			float alpha);
 
-		void RenderShadowMapShadow(gsl::array_view<gfx::AnimatedModel*> models,
-			gsl::array_view<const gfx::AnimatedModelParams*> modelParams,
+		void RenderShadowMapShadow(gsl::span<gfx::AnimatedModel*> models,
+			gsl::span<const gfx::AnimatedModelParams*> modelParams,
 			const XMFLOAT3 &center,
 			float radius,
 			float height,

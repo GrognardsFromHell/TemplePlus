@@ -192,23 +192,23 @@ namespace temple {
 			return mSubmesh->primCount;
 		}
 
-		gsl::array_view<DirectX::XMFLOAT4> GetPositions() override {
+		gsl::span<DirectX::XMFLOAT4> GetPositions() override {
 			auto data = reinterpret_cast<DirectX::XMFLOAT4*>(mSubmesh->positions);
-			return {data, (size_t) GetVertexCount()};
+			return gsl::as_span(data, GetVertexCount());
 		}
 
-		gsl::array_view<DirectX::XMFLOAT4> GetNormals() override {
+		gsl::span<DirectX::XMFLOAT4> GetNormals() override {
 			auto data = reinterpret_cast<DirectX::XMFLOAT4*>(mSubmesh->normals);
-			return {data, (size_t)GetVertexCount()};
+			return gsl::as_span(data, GetVertexCount());
 		}
 
-		gsl::array_view<DirectX::XMFLOAT2> GetUV() override {
+		gsl::span<DirectX::XMFLOAT2> GetUV() override {
 			auto data = reinterpret_cast<DirectX::XMFLOAT2*>(mSubmesh->uv);
-			return {data, (size_t)GetVertexCount()};
+			return gsl::as_span(data, GetVertexCount());
 		}
 
-		gsl::array_view<uint16_t> GetIndices() override {
-			return {mSubmesh->indices, GetPrimitiveCount() * 3u};
+		gsl::span<uint16_t> GetIndices() override {
+			return gsl::as_span(mSubmesh->indices, GetPrimitiveCount() * 3);
 		}
 
 	private:

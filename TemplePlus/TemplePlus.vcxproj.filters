@@ -336,6 +336,7 @@
     <ClCompile Include="ui\ui_char_editor_feats.cpp">
       <Filter>ui</Filter>
     </ClCompile>
+    <ClCompile Include="graphics\aas_hooks.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />

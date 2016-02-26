@@ -103,7 +103,7 @@ void LightningRenderer::Render(size_t vertexCount, XMFLOAT4* positions, XMFLOAT4
 
 	vbLock.Unlock();
 
-	mIndexBuffer->Update({ indices, primCount * 3 });
+	mIndexBuffer->Update(gsl::as_span(indices, primCount * 3));
 
 	mBufferBinding.Bind();
 	mDevice.GetDevice()->SetIndices(mIndexBuffer->GetBuffer());

@@ -92,7 +92,7 @@ MapSystem::~MapSystem() {
 void MapSystem::LoadModule() {
 	auto mapList = MesFile::ParseFile("Rules\\MapList.mes");
 
-	std::vector<gsl::cstring_view<>> parts;
+	std::vector<gsl::cstring_span<>> parts;
 	for (auto &line : mapList) {
 		MapListEntry entry;
 

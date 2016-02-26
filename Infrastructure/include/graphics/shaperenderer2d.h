@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "gsl/array_view.h"
+#include "gsl/span.h"
 #include "graphics/math.h"
 #include "infrastructure/macros.h"
 
@@ -53,18 +53,18 @@ namespace gfx {
 			uint32_t color
 			);
 
-		void DrawRectangle(gsl::array_view<Vertex2d, 4> corners,
+		void DrawRectangle(gsl::span<Vertex2d, 4> corners,
 			IDirect3DTexture9* texture,
 			IDirect3DTexture9* mask = nullptr,
 			bool wrap = false,
 			bool blending = true);
 
-		void DrawRectangle(gsl::array_view<Vertex2d, 4> corners,
+		void DrawRectangle(gsl::span<Vertex2d, 4> corners,
 			const gfx::MdfRenderMaterialPtr &material);
 
-		void DrawRectangle(gsl::array_view<Vertex2d, 4> corners);
+		void DrawRectangle(gsl::span<Vertex2d, 4> corners);
 
-		void DrawLines(gsl::array_view<Line2d> lines);
+		void DrawLines(gsl::span<Line2d> lines);
 
 		void DrawRectangleOutline(XMFLOAT2 topLeft, XMFLOAT2 bottomRight, XMCOLOR color);
 

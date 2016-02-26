@@ -66,7 +66,7 @@ namespace particles {
 
 		virtual void FillVertex(const PartSysEmitter& emitter, 
 			int particleIdx, 
-			gsl::array_view<SpriteVertex, 4> vertices) = 0;
+			gsl::span<SpriteVertex, 4> vertices) = 0;
 
 	};
 
@@ -80,7 +80,7 @@ namespace particles {
 
 		void FillVertex(const PartSysEmitter& emitter,
 			int particleIdx,
-			gsl::array_view<SpriteVertex, 4> vertices) override;
+			gsl::span<SpriteVertex, 4> vertices) override;
 	};
 
 	class DiscParticleRenderer : public QuadParticleRenderer {
@@ -93,7 +93,7 @@ namespace particles {
 
 		void FillVertex(const PartSysEmitter& emitter,
 			int particleIdx,
-			gsl::array_view<SpriteVertex, 4> vertices) override;
+			gsl::span<SpriteVertex, 4> vertices) override;
 
 	};
 

@@ -5,7 +5,7 @@
 #include <unordered_map>
 
 #include <DirectXMath.h>
-#include <gsl/array_view.h>
+#include <gsl/span.h>
 
 enum AasEventFlag;
 
@@ -69,7 +69,7 @@ namespace gfx {
 	};
 
 	enum class WeaponAnimType : int {
-		Unarmed,
+		Unarmed = 0,
 		Dagger,
 		Sword,
 		Mace,
@@ -94,6 +94,99 @@ namespace gfx {
 		Monk
 	};
 
+	enum class BardInstrumentType : int {
+		Flute = 0,
+		Drum,
+		Mandolin,
+		Trumpet,
+		Harp,
+		Lute,
+		Pipers,
+		Recorder
+	};
+
+	enum class NormalAnimType : int {
+		Falldown = 0,
+		ProneIdle,
+		ProneFidget,
+		Getup,
+		Magichands,
+		Picklock,
+		PicklockConcentrated,
+		Examine,
+		Throw,
+		Death,
+		Death2,
+		Death3,
+		DeadIdle,
+		DeadFidget,
+		DeathProneIdle,
+		DeathProneFidget,
+		AbjurationCasting,
+		AbjurationConjuring,
+		ConjurationCasting,
+		ConjurationConjuring,
+		DivinationCasting,
+		DivinationConjuring,
+		EnchantmentCasting,
+		EnchantmentConjuring,
+		EvocationCasting,
+		EvocationConjuring,
+		IllusionCasting,
+		IllusionConjuring,
+		NecromancyCasting,
+		NecromancyConjuring,
+		TransmutationCasting,
+		TransmutationConjuring,
+		Conceal,
+		ConcealIdle,
+		Unconceal,
+		ItemIdle,
+		ItemFidget,
+		Open,
+		Close,
+		SkillAnimalEmpathy,
+		SkillDisableDevice,
+		SkillHeal,
+		SkillHealConcentrated,
+		SkillHide,
+		SkillHideIdle,
+		SkillHideFidget,
+		SkillUnhide,
+		SkillPickpocket,
+		SkillSearch,
+		SkillSpot,
+		FeatTrack,
+		Trip,
+		Bullrush,
+		Flurry,
+		Kistrike,
+		Tumble,
+		Special1,
+		Special2,
+		Special3,
+		Special4,
+		Throw2,
+		WandAbjurationCasting,
+		WandAbjurationConjuring,
+		WandConjurationCasting,
+		WandConjurationConjuring,
+		WandDivinationCasting,
+		WandDivinationConjuring,
+		WandEnchantmentCasting,
+		WandEnchantmentConjuring,
+		WandEvocationCasting,
+		WandEvocationConjuring,
+		WandIllusionCasting,
+		WandIllusionConjuring,
+		WandNecromancyCasting,
+		WandNecromancyConjuring,
+		WandTransmutationCasting,
+		WandTransmutationConjuring,
+		SkillBarbarianRage,
+		OpenIdle
+	};
+
 	/*
 	Represents an encoded animation id.
 	*/
@@ -114,13 +207,62 @@ namespace gfx {
 			mId |= rightHandId << 25;
 		}
 
+		explicit EncodedAnimId(BardInstrumentType instrumentType) : mId(sBardInstrumentAnimFlag) {
+			mId |= (int)instrumentType;
+		}
+
+		explicit EncodedAnimId(NormalAnimType animType) : mId((int) animType) {
+		}
+
 		operator int() const {
 			return mId;
 		}
 
+		bool IsSpecialAnim() const {
+			return (mId & (sWeaponAnimFlag | sBardInstrumentAnimFlag)) != 0;
+		}
+
+		// Not for weapon/bard anims
+		NormalAnimType GetNormalAnimType() const {
+			return (NormalAnimType)mId;
+		}
+
+		bool IsWeaponAnim() const {
+			return (mId & sWeaponAnimFlag) != 0;
+		}
+
+		// Only valid for weapon animations
+		WeaponAnimType GetWeaponLeftHand() const {
+			return (WeaponAnimType)((mId >> 20) & 0x1F);
+		}
+
+		// Only valid for weapon animations
+		WeaponAnimType GetWeaponRightHand() const {
+			return (WeaponAnimType)((mId >> 25) & 0x1F);
+		}
+
+		// Only valid for weapon animations
+		WeaponAnim GetWeaponAnim() const {
+			return (WeaponAnim)(mId & 0xFFFFF);
+		}
+
+		bool IsBardInstrumentAnim() const {
+			return (mId & sBardInstrumentAnimFlag) != 0;
+		}
+
+		// Only valid for bard instrument anim
+		BardInstrumentType GetBardInstrumentType() const {
+			return (BardInstrumentType)(mId & 7);
+		}
+
+		std::string GetName() const;
+
+		bool ToFallback();
+
 	private:
 		// Indicates that an animation id uses the encoded format
 		static constexpr int sWeaponAnimFlag = 1 << 30;
+		static constexpr int sBardInstrumentAnimFlag = 2 << 30;
 
 		int mId;
 	};
@@ -156,10 +298,10 @@ namespace gfx {
 
 		virtual int GetVertexCount() = 0;
 		virtual int GetPrimitiveCount() = 0;
-		virtual gsl::array_view<DirectX::XMFLOAT4> GetPositions() = 0;
-		virtual gsl::array_view<DirectX::XMFLOAT4> GetNormals() = 0;
-		virtual gsl::array_view<DirectX::XMFLOAT2> GetUV() = 0;
-		virtual gsl::array_view<uint16_t> GetIndices() = 0;
+		virtual gsl::span<DirectX::XMFLOAT4> GetPositions() = 0;
+		virtual gsl::span<DirectX::XMFLOAT4> GetNormals() = 0;
+		virtual gsl::span<DirectX::XMFLOAT2> GetUV() = 0;
+		virtual gsl::span<uint16_t> GetIndices() = 0;
 	};
 
 	class AnimatedModel {
@@ -212,6 +354,7 @@ namespace gfx {
 
 		virtual void SetAnimId(int animId) = 0;
 
+		// This seems to reset cloth simulation state
 		virtual void SetClothFlag() = 0;
 
 		virtual std::vector<int> GetSubmeshes() = 0;
@@ -263,7 +406,7 @@ namespace gfx {
 
 		virtual void Render(AnimatedModel *model,
 			const AnimatedModelParams& params,
-			gsl::array_view<Light3d> lights,
+			gsl::span<Light3d> lights,
 			const MdfRenderOverrides *materialOverrides = nullptr) = 0;
 	};
 

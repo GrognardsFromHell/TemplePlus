@@ -32,7 +32,7 @@ void ClippingMesh::CreateResources(RenderingDevice &device) {
 	}
 
 	// Start reading again @ the data start offset
-	reader = BinaryReader(gsl::array_view<uint8_t>(data).sub(dataStart));
+	reader = BinaryReader(gsl::span<uint8_t>(data).subspan(dataStart));
 
 	mVertexCount = reader.Read<int>();
 	mTriCount = reader.Read<int>();
@@ -46,8 +46,8 @@ void ClippingMesh::CreateResources(RenderingDevice &device) {
 	}
 
 	auto vertexBufferSize = mVertexCount * sizeof(D3DVECTOR);
-	mVertexBuffer = device.CreateVertexBufferRaw({ &data[vertexDataStart], vertexBufferSize });
-	mIndexBuffer = device.CreateIndexBuffer({ indices, mTriCount * 3 });
+	mVertexBuffer = device.CreateVertexBufferRaw(gsl::as_span(&data[vertexDataStart], vertexBufferSize));
+	mIndexBuffer = device.CreateIndexBuffer(gsl::as_span(indices, mTriCount * 3));
 }
 
 void ClippingMesh::FreeResources(RenderingDevice &device) {

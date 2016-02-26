@@ -43,7 +43,7 @@ int FontRenderFix::FontDraw(const char* text, TigRect* extents, TigTextStyle* st
 	auto font = addresses.loadedFonts[addresses.fontStack[0]];
 
 	auto& layouter = tig->GetTextLayouter();
-	layouter.LayoutAndDraw({ text, strlen(text) }, font, *extents, *style);
+	layouter.LayoutAndDraw(as_span( text, strlen(text) ), font, *extents, *style);
 
 	return 0;
 }

@@ -148,7 +148,7 @@ FontRenderer::FontRenderer(RenderingDevice& device)
 FontRenderer::~FontRenderer() {
 }
 
-void FontRenderer::RenderRun(array_view<const char, dynamic_range> text,
+void FontRenderer::RenderRun(cstring_span<> text,
                              int x,
                              int y,
                              const TigRect& bounds,

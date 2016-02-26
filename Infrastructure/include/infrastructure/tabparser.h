@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 
-#include <gsl/string_view.h>
+#include <gsl/string_span.h>
 
 class TabFileColumn {
 	friend class TabFileRecord;
@@ -19,7 +19,7 @@ public:
 		return !IsEmpty();
 	}
 
-	operator gsl::cstring_view<>() const {
+	operator gsl::cstring_span<>() const {
 		return mValue;
 	}
 
@@ -50,9 +50,9 @@ public:
 	}
 
 private:
-	explicit TabFileColumn(gsl::cstring_view<> value) : mValue(value) {
+	explicit TabFileColumn(gsl::cstring_span<> value) : mValue(value) {
 	}
-	gsl::cstring_view<> mValue;	
+	gsl::cstring_span<> mValue;	
 };
 
 class TabFileRecord {
@@ -77,7 +77,7 @@ private:
 	static std::string mMissingColumn;
 
 	int mLineNumber = 0;
-	std::vector<gsl::cstring_view<>> mColumns;
+	std::vector<gsl::cstring_span<>> mColumns;
 };
 
 class TabFile {

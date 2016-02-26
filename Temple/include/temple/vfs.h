@@ -3,6 +3,8 @@
 #include <infrastructure/vfs.h>
 #include <vector>
 
+typedef struct _GUID GUID;
+
 namespace temple {
 	
 	/*

@@ -120,9 +120,9 @@ namespace gfx {
 		RenderTargetTexturePtr CreateRenderTargetTexture(D3DFORMAT format, int width, int height);
 
 		template<typename T>
-		VertexBufferPtr CreateVertexBuffer(gsl::array_view<T> data);
-		VertexBufferPtr CreateVertexBufferRaw(gsl::array_view<uint8_t> data);
-		IndexBufferPtr CreateIndexBuffer(gsl::array_view<uint16_t> data);
+		VertexBufferPtr CreateVertexBuffer(gsl::span<T> data);
+		VertexBufferPtr CreateVertexBufferRaw(gsl::span<const uint8_t> data);
+		IndexBufferPtr CreateIndexBuffer(gsl::span<const uint16_t> data);
 
 		void SetMaterial(const Material &material);
 		void SetVertexShaderConstant(uint32_t startRegister, StandardSlotSemantic semantic);
@@ -206,8 +206,8 @@ namespace gfx {
 	};
 	
 	template <typename T>
-	VertexBufferPtr RenderingDevice::CreateVertexBuffer(gsl::array_view<T> data) {
-		return CreateVertexBufferRaw({ reinterpret_cast<uint8_t*>(&data[0]), data.size() * sizeof(T) });
+	VertexBufferPtr RenderingDevice::CreateVertexBuffer(gsl::span<T> data) {
+		return CreateVertexBufferRaw(gsl::as_span(reinterpret_cast<const uint8_t*>(&data[0]), data.size_bytes()));
 	}
 
 	extern RenderingDevice *renderingDevice;

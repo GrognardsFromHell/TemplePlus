@@ -24,7 +24,7 @@ namespace gfx {
 		mTexture.Release();
 	}
 
-	void DynamicTexture::UpdateRaw(gsl::array_view<uint8_t> data, size_t pitch)
+	void DynamicTexture::UpdateRaw(gsl::span<uint8_t> data, size_t pitch)
 	{
 		D3DLOCKED_RECT locked;
 		mTexture->LockRect(0, &locked, nullptr, D3DLOCK_DISCARD);

@@ -5,7 +5,7 @@
 #include <gsl/gsl.h>
 #include <atlcomcli.h>
 
-using gsl::array_view;
+using gsl::span;
 
 struct IDirect3DDevice9;
 struct IDirect3DSurface9;
@@ -34,11 +34,11 @@ namespace gfx {
 		Tries to detect the image format of the given data by
 		inspecting the header only.
 	*/
-	ImageFileInfo DetectImageFormat(array_view<uint8_t> data);
+	ImageFileInfo DetectImageFormat(span<uint8_t> data);
 
-	bool DetectTga(array_view<uint8_t> data, ImageFileInfo &info);
+	bool DetectTga(span<uint8_t> data, ImageFileInfo &info);
 
-	std::unique_ptr<uint8_t[]> DecodeTga(array_view<uint8_t> data);
+	std::unique_ptr<uint8_t[]> DecodeTga(span<uint8_t> data);
 
 	/*
 		Specifies the pixel format of the uncompressed data
@@ -70,12 +70,12 @@ namespace gfx {
 		ImageFileInfo info;
 	};
 
-	DecodedImage DecodeFontArt(const array_view<uint8_t> data);
+	DecodedImage DecodeFontArt(const span<uint8_t> data);
 
-	DecodedImage DecodeImage(const array_view<uint8_t> data);
+	DecodedImage DecodeImage(const span<uint8_t> data);
 
 	CComPtr<IDirect3DSurface9> LoadImageToSurface(IDirect3DDevice9* device,
-	                                              const array_view<uint8_t> data,
+	                                              const span<uint8_t> data,
 	                                              ImageFileInfo& info);
 
 }

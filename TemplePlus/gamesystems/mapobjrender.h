@@ -89,7 +89,7 @@ private:
 	void RenderMirrorImages(objHndl handle,
 		const gfx::AnimatedModelParams &animParams,
 		gfx::AnimatedModel &model,
-		gsl::array_view<gfx::Light3d> lights);
+		gsl::span<gfx::Light3d> lights);
 
 	void RenderShadowMapShadow(objHndl handle, 
 		const gfx::AnimatedModelParams &animParams, 

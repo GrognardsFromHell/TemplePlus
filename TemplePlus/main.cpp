@@ -58,42 +58,35 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	logger->info("Version: {}", GetTemplePlusVersion());
 	logger->info("Commit: {}", GetTemplePlusCommitId());
 
-	try {
-		bool userCancelled;
-		auto toeeDir = GetInstallationDir(&userCancelled);
+	bool userCancelled;
+	auto toeeDir = GetInstallationDir(&userCancelled);
 
-		if (userCancelled) {
-			return 0; // Not an error, the user cancelled
-		}
-
-		dll.Load(toeeDir.GetDirectory());
-
-		if (dll.HasBeenRebased()) {
-			auto moduleName = dll.FindConflictingModule();
-			auto msg = format(L"Module '{}' caused temple.dll to be loaded at a different address than usual.\n"
-			                  L"This will most likely lead to crashes.", moduleName);
-			MessageBox(nullptr, msg.c_str(), L"Module Conflict", MB_OK | MB_ICONWARNING);
-		}
-
-		dll.SetDebugOutputCallback([](const std::string &msg) {
-			logger->info("{}", msg);
-		});
-
-		TempleFixes::apply();
-
-		MH_EnableHook(MH_ALL_HOOKS);
-
-		auto result = TempleMain(hInstance, lpCmdLine);
-
-		config.Save();
-
-		return result;
-	} catch (const std::exception& e) {
-		logger->error("Uncaught exception: {}", e.what());
-		auto msg = format("Uncaught exception: {}", e.what());
-		MessageBoxA(nullptr, msg.c_str(), "Fatal Error", MB_OK | MB_ICONERROR);
-		return 1;
+	if (userCancelled) {
+		return 0; // Not an error, the user cancelled
 	}
+
+	dll.Load(toeeDir.GetDirectory());
+
+	if (dll.HasBeenRebased()) {
+		auto moduleName = dll.FindConflictingModule();
+		auto msg = format(L"Module '{}' caused temple.dll to be loaded at a different address than usual.\n"
+			                L"This will most likely lead to crashes.", moduleName);
+		MessageBox(nullptr, msg.c_str(), L"Module Conflict", MB_OK | MB_ICONWARNING);
+	}
+
+	dll.SetDebugOutputCallback([](const std::string &msg) {
+		logger->info("{}", msg);
+	});
+
+	TempleFixes::apply();
+
+	MH_EnableHook(MH_ALL_HOOKS);
+
+	auto result = TempleMain(hInstance, lpCmdLine);
+
+	config.Save();
+
+	return result;
 }
 
 // Shows a warning if the given ToEE installation may be incompatible

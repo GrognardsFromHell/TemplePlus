@@ -48,8 +48,8 @@ private:
 	void DetectDllVersion();
 	void DetectCo8();
 	void DetectMissingData();
-	bool RevertTfeXChanges(gsl::array_view<uint8_t> dllData);
-	bool RevertTfeXChange(gsl::array_view<uint8_t> data,
+	bool RevertTfeXChanges(gsl::span<uint8_t> dllData);
+	bool RevertTfeXChange(gsl::span<uint8_t> data,
 	                      uint32_t address,
 	                      const std::vector<uint8_t>& original,
 	                      const std::vector<uint8_t>& patched);

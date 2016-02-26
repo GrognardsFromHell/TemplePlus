@@ -152,13 +152,13 @@
     <ClInclude Include="breakpad\crash_generation_client.h" />
     <ClInclude Include="breakpad\guid_string.h" />
     <ClInclude Include="breakpad\ipc_protocol.h" />
+    <ClInclude Include="breakpad\exception_handler.h" />
     <ClInclude Include="breakpad\minidump_cpu_amd64.h" />
     <ClInclude Include="breakpad\minidump_cpu_x86.h" />
     <ClInclude Include="breakpad\minidump_exception_win32.h" />
     <ClInclude Include="breakpad\minidump_format.h" />
     <ClInclude Include="breakpad\scoped_ptr.h" />
     <ClInclude Include="breakpad\string_utils-inl.h" />
-    <ClInclude Include="breakpad\exception_handler.h" />
     <ClInclude Include="include\graphics\bufferbinding.h" />
     <ClInclude Include="include\graphics\buffers.h" />
     <ClInclude Include="include\graphics\camera.h" />
@@ -170,10 +170,11 @@
     <ClInclude Include="include\graphics\shaders.h" />
     <ClInclude Include="include\graphics\shaperenderer2d.h" />
     <ClInclude Include="include\graphics\shaperenderer3d.h" />
-    <ClInclude Include="include\gsl\array_view.h" />
-    <ClInclude Include="include\gsl\fail_fast.h" />
     <ClInclude Include="include\gsl\gsl.h" />
-    <ClInclude Include="include\gsl\string_view.h" />
+    <ClInclude Include="include\gsl\gsl_assert.h" />
+    <ClInclude Include="include\gsl\gsl_util.h" />
+    <ClInclude Include="include\gsl\span.h" />
+    <ClInclude Include="include\gsl\string_span.h" />
     <ClInclude Include="include\infrastructure\binaryreader.h" />
     <ClInclude Include="include\infrastructure\breakpad.h" />
     <ClInclude Include="include\infrastructure\crypto.h" />
@@ -246,6 +247,8 @@
     <ClCompile Include="keyboard.cpp" />
     <ClCompile Include="images_jpeg.cpp" />
     <ClCompile Include="mdfparser.cpp" />
+    <ClCompile Include="meshes_animfallbacks.cpp" />
+    <ClCompile Include="meshes_rewrite.cpp" />
     <ClCompile Include="src\graphics\dynamictexture.cpp" />
     <ClCompile Include="src\graphics\shaders_compiler.cpp" />
     <ClCompile Include="src\graphics\bufferbinding.cpp" />
@@ -258,6 +261,7 @@
     <ClCompile Include="src\graphics\shaperenderer3d.cpp" />
     <ClCompile Include="src\graphics\textures.cpp" />
     <ClCompile Include="src\location.cpp" />
+    <ClCompile Include="src\meshes.cpp" />
     <ClCompile Include="tokenizer.cpp" />
     <ClCompile Include="json11.cpp" />
     <ClCompile Include="stringutil.cpp" />
