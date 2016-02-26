@@ -523,31 +523,38 @@ void MapObjectRenderer::RenderOccludedObject(objHndl handle) {
 	MdfRenderOverrides overrides;
 	overrides.alpha = alpha / 255.0f;
 
-	mOccludedMaterial->Bind(mDevice, lights, &overrides);
-	mAasRenderer.RenderWithoutMaterial(animatedModel.get(), animParams);
-	
-	if (objects.IsCritterType(type)) {
-		/*
-		This renders the equipment in a critter's hand separately, but
-		I am not certain *why* exactly. I thought this would have been
-		handled by addmeshes, but it might be that there's a distinct
-		difference between addmeshes that are skinned onto the mobile's
-		skeleton and equipment that is unskinned and just positioned
-		in the player's hands.
-		*/
-		auto weaponPrim = critterSys.GetWornItem(handle, EquipSlot::WeaponPrimary);
-		if (weaponPrim) {
-			RenderOccludedObject(weaponPrim);
-		}
-		auto weaponSec = critterSys.GetWornItem(handle, EquipSlot::WeaponSecondary);
-		if (weaponSec) {
-			RenderOccludedObject(weaponSec);
-		}
-		auto shield = critterSys.GetWornItem(handle, EquipSlot::Shield);
-		if (shield) {
-			RenderOccludedObject(shield);
-		}
+	if (type != obj_t_portal) {
+		mOccludedMaterial->Bind(mDevice, lights, &overrides);
+		mAasRenderer.RenderWithoutMaterial(animatedModel.get(), animParams);
 
+		if (objects.IsCritterType(type)) {
+			/*
+			This renders the equipment in a critter's hand separately, but
+			I am not certain *why* exactly. I thought this would have been
+			handled by addmeshes, but it might be that there's a distinct
+			difference between addmeshes that are skinned onto the mobile's
+			skeleton and equipment that is unskinned and just positioned
+			in the player's hands.
+			*/
+			auto weaponPrim = critterSys.GetWornItem(handle, EquipSlot::WeaponPrimary);
+			if (weaponPrim) {
+				RenderOccludedObject(weaponPrim);
+			}
+			auto weaponSec = critterSys.GetWornItem(handle, EquipSlot::WeaponSecondary);
+			if (weaponSec) {
+				RenderOccludedObject(weaponSec);
+			}
+			auto shield = critterSys.GetWornItem(handle, EquipSlot::Shield);
+			if (shield) {
+				RenderOccludedObject(shield);
+			}
+
+		}
+	} else {
+		if (mShowHighlights) {
+			overrides.ignoreLighting = true;
+		}
+		mAasRenderer.Render(animatedModel.get(), animParams, lights, &overrides);
 	}
 
 }
