@@ -1108,18 +1108,18 @@ int AiSystem::Default(AiTactic* aiTac)
 	d20Sys.GlobD20ActnInit();
 	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_ATTACK, 0);
 	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
-	ActionErrorCode addToSeqRes = (ActionErrorCode)actSeqSys.ActionAddToSeq();
-	if (addToSeqRes)
+	ActionErrorCode addToSeqError = (ActionErrorCode)actSeqSys.ActionAddToSeq();
+	if (addToSeqError)
 	{
-		logger->info("AI Default failed, error code: {}", (int)addToSeqRes);
+		logger->info("AI Default failed, error code: {}", (int)addToSeqError);
 	}
 	int performError = actSeqSys.ActionSequenceChecksWithPerformerLocation();
-	if (!performError)
+	if (!performError && !addToSeqError)
 	{
 		return 1;
 	} else
 	{
-		logger->info("AI Default SequenceCheck failed, error code: {}", static_cast<int>(performError));
+		logger->info("AI Default SequenceCheck failed, error codes: {}, {}", static_cast<int>(addToSeqError), static_cast<int>(performError));
 	}
 	if (!critterSys.IsWieldingRangedWeapon(aiTac->performer))
 	{
@@ -1128,10 +1128,10 @@ int AiSystem::Default(AiTactic* aiTac)
 		d20Sys.GlobD20ActnInit();
 		d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_MOVE, 0);
 		d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
-		actSeqSys.ActionAddToSeq();
+		addToSeqError = (ActionErrorCode)actSeqSys.ActionAddToSeq();
 		performError = actSeqSys.ActionSequenceChecksWithPerformerLocation();
 	}
-	return performError == 0;
+	return performError == AEC_OK && addToSeqError == AEC_OK;
 }
 
 int AiSystem::Flank(AiTactic* aiTac)
