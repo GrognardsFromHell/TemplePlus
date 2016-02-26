@@ -18,6 +18,7 @@
 #include "particles.h"
 #include "python/python_integration_spells.h"
 #include "util/streams.h"
+#include "combat.h"
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
@@ -105,6 +106,17 @@ public:
 		});
 
 		redirectCall(0x1007870F, hookedPrint);
+
+		
+		// CastDefensivelySpellInterrupted  
+		// ignores the cast defensively effect outside of combat (so you don't fail spells just because you forgot to tick it off)
+		static int(__cdecl* orgCastDefensivelySpellInterrupted)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100F8CC0, [](DispatcherCallbackArgs args)
+		{
+			if (!combatSys.isCombatActive() )
+				return 0;
+
+			return orgCastDefensivelySpellInterrupted(args);
+		});
 		
 	}
 } spellFuncReplacements;
