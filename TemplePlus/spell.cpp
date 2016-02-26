@@ -516,7 +516,16 @@ int LegacySpellSystem::SpellSave(TioOutputStream& file)
 	{
 		ObjectId objId;
 		if (obj)
-			objId = objSystem->GetObject(obj)->id;
+		{
+			auto objBod = objSystem->GetObject(obj);
+			if (objBod)
+				objId = objSystem->GetObject(obj)->id;
+			else
+			{
+				objId.subtype = ObjectIdKind::Null;
+				logger->warn("SpellSave: Invalid obj handle caught while saving!");
+			}
+		}
 		else
 		{
 			objId.subtype = ObjectIdKind::Null;
