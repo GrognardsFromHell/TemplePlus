@@ -6,8 +6,7 @@
 #include <sound.h>
 
 Ui ui;
-
-
+Widget** Ui::activeWidgets;
 
 
 #pragma region UI System Specification
@@ -325,6 +324,23 @@ void Ui::ShowCharUi(int page) {
 
 bool Ui::ShowWrittenUi(objHndl handle) {
 	return uiFuncs.ShowWrittenUi(handle);
+}
+
+bool Ui::CharEditorIsActive()
+{
+	auto charEditorWndId = temple::GetRef<int>(0x10BE8E50);
+	bool charEditorHidden = ui.IsWidgetHidden(charEditorWndId);
+	if (!charEditorHidden)
+	{
+		return true;
+	}
+		
+	return false;
+}
+
+bool Ui::IsWidgetHidden(int widId)
+{
+	return activeWidgets[widId]->widgetFlags & 1 != 0;
 }
 
 BOOL Ui::AddWindow(Widget* widget, unsigned size, int* widgetId, const char* codeFileName, int lineNumber)

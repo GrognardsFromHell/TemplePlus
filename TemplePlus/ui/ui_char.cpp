@@ -124,12 +124,12 @@ public:
 		else if (tigMsg->type == TigMsgType::MOUSE)
 		{
 			int dummy = 1;
-			if (tigMsg->arg4 &0x40)
+			if (tigMsg->arg4 & MSF_RMB_RELEASED)
 			{
 				auto shit = &addresses.uiCharSpellPackets[0];
 				dummy = 1;
 			}
-			else if (tigMsg->arg4 & 0x4000)
+			else if (tigMsg->arg4 & MSF_UNK_4000)
 			{
 				dummy = 1;
 			}

@@ -12,6 +12,7 @@
 #include "tab_file.h"
 #include "util/fixes.h"
 #include "gamesystems/objects/objsystem.h"
+#include "ui/ui.h"
 
 TabFileStatus featPropertiesTabFile;
 uint32_t featPropertiesTable[NUM_FEATS + 1000];
@@ -691,7 +692,7 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 	//return 1; // h4x :)
 
 #pragma region	checking feats in the character editor - SpellSlinger hack for special Rogue feats for level > 10
-	if ( *feats.charEditorClassCode != 0 && *feats.charEditorObjHnd != 0)
+	if ( ui.CharEditorIsActive() && *feats.charEditorClassCode != 0 && *feats.charEditorObjHnd != 0)
 	{
 		auto newClassLvl = objects.StatLevelGet(*feats.charEditorObjHnd, *feats.charEditorClassCode) + 1;
 

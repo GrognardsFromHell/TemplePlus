@@ -4,6 +4,7 @@
 #include <temple/dll.h>
 #include "tig/tig.h"
 #include <obj.h>
+#include <util/fixes.h>
 
 #define ACTIVE_WIDGET_CAP 3000
 
@@ -187,14 +188,11 @@ Tracks all active widgets with information about where they come frome.
 */
 extern temple::GlobalPrimitive<ActiveWidgetListEntry*, 0x10EF68DC> activeWidgetAllocList;
 
-/*
-The list of all active widgets
-*/
-extern temple::GlobalPrimitive<Widget**, 0x10EF68E0> activeWidgets; // [3000]
+
 extern temple::GlobalPrimitive<int, 0x10EF68D8> activeWidgetCount;
 
 
-class Ui {
+class Ui : public TempleFix {
 public:
 	bool GetAsset(UiAssetType assetType, UiGenericAsset assetIndex, int &textureIdOut);
 
@@ -242,6 +240,11 @@ public:
 	*/
 	bool ShowWrittenUi(objHndl handle);
 
+
+
+	bool CharEditorIsActive();
+
+	bool IsWidgetHidden(int widId);
 	BOOL AddWindow(Widget* widget, unsigned size, int* widgetId, const char * codeFileName, int lineNumber);
 	BOOL ButtonInit(WidgetType2 * widg, char* buttonName, int parentId, int x, int y, int width, int height);
 	BOOL AddButton(WidgetType2* button, unsigned size, int* widgId, const char * codeFileName, int lineNumber);
@@ -271,6 +274,20 @@ public:
 
 	void SetCursorTextDrawCallback(void(* cursorTextDrawCallback)(int, int, void*), void* data);
 	int UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg);
+
+	/*
+	The list of all active widgets
+	*/
+	static Widget** activeWidgets;
+	// = 
+	void  apply  () override
+	{
+		activeWidgets = temple::GetPointer<Widget*>(0x10EF68E0); // [3000]
+	}
+public: 
+	const char* name() override {
+		return "UI";
+	} 
 };
 extern Ui ui;
 

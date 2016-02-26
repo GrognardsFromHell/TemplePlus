@@ -35,7 +35,8 @@ enum MouseStateFlags : uint32_t
 	MSF_MMB_RELEASED = 0x400,
 	MSF_MMB_UNK = 0x800,
 	MSF_POS_CHANGE = 0x1000,
-	MSF_POS_CHANGE2 = 0x2000
+	MSF_POS_CHANGE2 = 0x2000,
+	MSF_UNK_4000 = 0x4000
 };
 
 struct TigMsgBase
