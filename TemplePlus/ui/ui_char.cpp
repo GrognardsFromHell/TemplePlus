@@ -241,10 +241,19 @@ int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 						inventory.MoneyToCoins(appraisedWorth, &plat, &gold, &silver, &copper);
 					}
 					
-					ItemErrorCode itemTransError = inventory.TransferWithFlags(item, critterLooted, -1, 12, 0i64);
-					if (itemTransError == IEC_OK){
+					ItemErrorCode itemTransferError = inventory.TransferWithFlags(item, critterLooted, -1, 1+2+4+8+16, 0i64);
+					if (itemTransferError == IEC_OK){
 						objSystem->GetObject(item)->SetItemFlag(OIF_IDENTIFIED, 1);
 						party.MoneyAdj(plat, gold, silver, copper);
+					} 
+					else if (itemTransferError == IEC_No_Room_For_Item){
+						int itemIdx = 100;
+						for (itemIdx = 100; itemIdx< 255; itemIdx++){
+							if (!inventory.GetItemAtInvIdx(critterLooted, itemIdx))
+								break;
+						}
+						if (itemIdx < 255)
+							itemTransferError = inventory.TransferWithFlags(item, critterLooted, itemIdx, 1 + 2 + 4 + 8 , 0i64);
 					}
 					return 1;
 				}
