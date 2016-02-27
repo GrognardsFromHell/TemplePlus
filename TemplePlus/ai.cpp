@@ -385,9 +385,7 @@ int AiSystem::TargetThreatened(AiTactic* aiTac)
 
 int AiSystem::Approach(AiTactic* aiTac)
 {
-	int d20aNum; 
-
-	d20aNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+	int initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
 	if (!aiTac->target)
 		return 0;
 	if (combatSys.IsWithinReach(aiTac->performer, aiTac->target))
@@ -399,7 +397,7 @@ int AiSystem::Approach(AiTactic* aiTac)
 	actSeqSys.ActionAddToSeq();
 	if (actSeqSys.ActionSequenceChecksWithPerformerLocation())
 	{
-		actSeqSys.ActionSequenceRevertPath(d20aNum);
+		actSeqSys.ActionSequenceRevertPath(initialActNum);
 		return 0;
 	}
 	return 1;
@@ -1126,11 +1124,19 @@ int AiSystem::Default(AiTactic* aiTac)
 	{
 		logger->info("AI Action Perform: Resetting sequence; Do Unspecified Move Action");
 		actSeqSys.curSeqReset(aiTac->performer);
+		auto initialActNum = curSeq->d20ActArrayNum;
 		d20Sys.GlobD20ActnInit();
 		d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_MOVE, 0);
 		d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
 		addToSeqError = (ActionErrorCode)actSeqSys.ActionAddToSeq();
 		performError = actSeqSys.ActionSequenceChecksWithPerformerLocation();
+		
+		if (addToSeqError != AEC_OK || performError != AEC_OK )
+		{
+			logger->info("AI Default: Unspecified Move failed. AddToSeqError: {}  Location Checks Error: {}", addToSeqError, performError);
+			actSeqSys.ActionSequenceRevertPath(initialActNum);
+			return 0;
+		}
 	}
 	return performError == AEC_OK && addToSeqError == AEC_OK;
 }
