@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "gsl/array_view.h"
+#include "gsl/span.h"
 
 struct VfsSearchResult {
 	std::string filename;
@@ -82,7 +82,7 @@ public:
 	/**
 	 * Writes binary data to a file.
 	 */
-	void WriteBinaryFile(const std::string &path, gsl::array_view<uint8_t> data);
+	void WriteBinaryFile(const std::string &path, gsl::span<uint8_t> data);
 
 	using FileHandle = void*;
 	virtual FileHandle Open(const char* name, const char* mode) = 0;

@@ -14,7 +14,7 @@ class IndexBuffer;
 
 class IndexBufferLock {
 public:
-	IndexBufferLock(gsl::array_view<uint16_t> data, IndexBuffer& locked)
+	IndexBufferLock(gsl::span<uint16_t> data, IndexBuffer& locked)
 		: mData(data), mLocked(locked) {
 	}
 
@@ -32,7 +32,7 @@ public:
 	void Unlock();
 
 private:
-	gsl::array_view<uint16_t> mData;
+	gsl::span<uint16_t> mData;
 	IndexBuffer& mLocked;
 	bool mMoved = false;
 };
@@ -43,7 +43,7 @@ public:
 	IndexBuffer(CComPtr<IDirect3DIndexBuffer9> indexBuffer, size_t count);
 	~IndexBuffer();
 
-	void Update(gsl::array_view<uint16_t> data);
+	void Update(gsl::span<uint16_t> data);
 
 	IndexBufferLock Lock();
 
@@ -67,7 +67,7 @@ using IndexBufferPtr = std::shared_ptr<IndexBuffer>;
 template <typename T>
 class VertexBufferLock {
 public:
-	using DataView = gsl::array_view<T>;
+	using DataView = gsl::span<T>;
 
 	VertexBufferLock(DataView data, VertexBuffer& locked)
 		: mData(data), mLocked(locked) {
@@ -106,11 +106,11 @@ public:
 	VertexBuffer(CComPtr<IDirect3DVertexBuffer9> vertexBuffer, size_t size);
 	~VertexBuffer();
 
-	void Update(gsl::array_view<const uint8_t> data);
+	void Update(gsl::span<const uint8_t> data);
 
 	template <typename T>
-	void Update(gsl::array_view<T> data) {
-		Update({ reinterpret_cast<const uint8_t*>(&data[0]), data.size() * sizeof(T) });
+	void Update(gsl::span<T> data) {
+		Update(gsl::as_span(reinterpret_cast<const uint8_t*>(&data[0]), data.size() * sizeof(T)));
 	}
 
 	template <typename T>
@@ -121,9 +121,9 @@ public:
 		}
 		auto data = LockRaw(count * sizeof(T));
 		return VertexBufferLock<T>(
-		{ reinterpret_cast<T*>(&data[0]), count },
+			gsl::as_span(reinterpret_cast<T*>(&data[0]), count),
 			*this
-			);
+		);
 	}
 
 	IDirect3DVertexBuffer9* GetBuffer() const {
@@ -132,7 +132,7 @@ public:
 
 	NO_COPY_OR_MOVE(VertexBuffer);
 private:
-	gsl::array_view<uint8_t> LockRaw(size_t size);
+	gsl::span<uint8_t> LockRaw(size_t size);
 	void Unlock();
 
 	std::shared_ptr<uint8_t[]> mData;

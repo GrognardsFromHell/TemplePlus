@@ -6,7 +6,7 @@
 
 namespace particles {
 
-	bool ParserKeyframes::ParseKeyframe(gsl::cstring_view<> value, float lifespan, PartSysParamKeyframe& frame) {
+	bool ParserKeyframes::ParseKeyframe(gsl::cstring_span<> value, float lifespan, PartSysParamKeyframe& frame) {
 
 		// percentage based on lifespan
 		if (std::find(value.begin(), value.end(), '%') != value.end()) {
@@ -63,7 +63,7 @@ namespace particles {
 
 	}
 
-	PartSysParamKeyframes* ParserKeyframes::Parse(gsl::cstring_view<> value, float parentLifespan) {
+	PartSysParamKeyframes* ParserKeyframes::Parse(gsl::cstring_span<> value, float parentLifespan) {
 
 		auto frameDefs = split(value, ',', true, true);
 
@@ -114,7 +114,7 @@ namespace particles {
 			frame.start = curTime;
 			curTime += timeStep;
 			if (!ParseKeyframe(frameDef, parentLifespan, frame)) {
-				logger->warn("Unable to parse particle system keyframes: {}", value);
+				logger->warn("Unable to parse particle system keyframes: {}", value.data());
 				return nullptr;
 			}
 			if (i++ == 0 && havePreFrame) {
@@ -143,7 +143,7 @@ namespace particles {
 
 		// Validate monotonically increasing start times
 		if (!IsStartTimeAscending(frames)) {
-			logger->warn("Animated keyframes '{}' are not in ascending time.", value);
+			logger->warn("Animated keyframes '{}' are not in ascending time.", value.data());
 			return nullptr;
 		}
 

@@ -54,7 +54,7 @@ bool FrogGrappleController::IsGiantFrog(objHndl obj) const
 void FrogGrappleController::AdvanceAndRender(objHndl giantFrog,
 	const gfx::AnimatedModelParams & animParams, 
 	gfx::AnimatedModel &model, 
-	gsl::array_view<gfx::Light3d> lights, 
+	gsl::span<gfx::Light3d> lights,
 	float alpha)
 {
 
@@ -276,7 +276,7 @@ GrappleState FrogGrappleController::GetGrappleState(objHndl giantFrog)
 
 void FrogGrappleController::RenderTongue(const GrappleState &grappleState,
 	const XMFLOAT4X4 &worldMatrixOrigin,
-	gsl::array_view<gfx::Light3d> lights,
+	gsl::span<gfx::Light3d> lights,
 	float alpha) {
 
 	std::array<TongueVertex, VertexCount> vertices;

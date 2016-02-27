@@ -25,7 +25,7 @@ TextLayouter::TextLayouter(RenderingDevice& device, ShapeRenderer2d &shapeRender
 	: mRenderer(device), mShapeRenderer(shapeRenderer) {
 }
 
-void TextLayouter::LayoutAndDraw(gsl::cstring_view<> text, const TigFont& font, TigRect& extents, TigTextStyle& style) {
+void TextLayouter::LayoutAndDraw(gsl::cstring_span<> text, const TigFont& font, TigRect& extents, TigTextStyle& style) {
 
 	if (text.length() == 0) {
 		return;
@@ -122,9 +122,9 @@ void TextLayouter::LayoutAndDraw(gsl::cstring_view<> text, const TigFont& font, 
 	const auto tabWidth = style.field4c - extents.x;
 
 	auto currentY = extents.y;
-	for (size_t startOfWord = 0; startOfWord < textLength; ++startOfWord) {
+	for (auto startOfWord = 0; startOfWord < textLength; ++startOfWord) {
 		int wordsOnLine, lineWidth;
-		std::tie(wordsOnLine, lineWidth) = MeasureCharRun(text.sub(startOfWord),
+		std::tie(wordsOnLine, lineWidth) = MeasureCharRun(text.subspan(startOfWord),
 		                                                  style,
 		                                                  extents,
 		                                                  extentsWidth,
@@ -153,7 +153,7 @@ void TextLayouter::LayoutAndDraw(gsl::cstring_view<> text, const TigFont& font, 
 				if (currentX + wordInfo.fullWidth > extentsWidth) {
 					lastIdx = wordInfo.idxBeforePadding;
 				} else {
-					if (!HasMoreText(text.sub(lastIdx), tabWidth)) {
+					if (!HasMoreText(text.subspan(lastIdx), tabWidth)) {
 						wordInfo.drawEllipsis = false;
 						wordWidth = wordInfo.fullWidth;
 					}
@@ -178,7 +178,7 @@ void TextLayouter::LayoutAndDraw(gsl::cstring_view<> text, const TigFont& font, 
 			}
 			if(lastIdx >= wordInfo.firstIdx)
 				mRenderer.RenderRun(
-					text.sub(wordInfo.firstIdx, lastIdx - wordInfo.firstIdx),
+					text.subspan(wordInfo.firstIdx, lastIdx - wordInfo.firstIdx),
 					x,
 					currentY,
 					extents,
@@ -189,7 +189,7 @@ void TextLayouter::LayoutAndDraw(gsl::cstring_view<> text, const TigFont& font, 
 
 			// We're on the last line, the word has been truncated, ellipsis needs to be drawn
 			if (lastLine && style.flags & 0x4000 && wordInfo.drawEllipsis) {
-				mRenderer.RenderRun({ sEllipsis, strlen(sEllipsis) },
+				mRenderer.RenderRun(as_span(sEllipsis, strlen(sEllipsis)),
 					extents.x + currentX,
 					currentY,
 					extents,
@@ -259,7 +259,7 @@ int TextLayouter::GetGlyphIdx(char ch, const char* text) {
 }
 
 
-std::pair<int, int> TextLayouter::MeasureCharRun(cstring_view<> text,
+std::pair<int, int> TextLayouter::MeasureCharRun(cstring_span<> text,
 	const TigTextStyle& style,
 	const TigRect& extents,
 	int extentsWidth,
@@ -352,7 +352,7 @@ std::pair<int, int> TextLayouter::MeasureCharRun(cstring_view<> text,
 	return std::make_pair(wordCountWithPadding, lineWidth);
 }
 
-bool TextLayouter::HasMoreText(cstring_view<> text, int tabWidth) {
+bool TextLayouter::HasMoreText(cstring_span<> text, int tabWidth) {
 	// We're on the last line and truncation is active
 	// This will seek to the next word
 	auto it = text.begin();

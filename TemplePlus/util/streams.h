@@ -168,7 +168,7 @@ private:
 
 class MemoryInputStream : public InputStream {
 public:
-	MemoryInputStream(gsl::array_view<const uint8_t> data) 
+	MemoryInputStream(gsl::span<const uint8_t> data)
 		: mCurrent(data.data()), mData(data) {		
 	}
 
@@ -183,7 +183,7 @@ public:
 	}
 private:
 	const uint8_t* mCurrent;
-	gsl::array_view<const uint8_t> mData;
+	gsl::span<const uint8_t> mData;
 };
 
 class OutputStream {
@@ -274,7 +274,7 @@ public:
 		mBuffer.reserve(initialCapacity);		
 	}
 	
-	gsl::array_view<const uint8_t> GetBuffer() const {
+	gsl::span<const uint8_t> GetBuffer() const {
 		return mBuffer;
 	}
 

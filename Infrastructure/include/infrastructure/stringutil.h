@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gsl/string_view.h"
+#include "gsl/string_span.h"
 
 #include <string>
 #include <algorithm>
@@ -33,13 +33,13 @@ inline std::string &trim(std::string &s) {
 	return ltrim(rtrim(s));
 }
 
-inline std::vector<gsl::cstring_view<>>& split(gsl::cstring_view<> s, 
+inline std::vector<gsl::cstring_span<>>& split(gsl::cstring_span<> s, 
 	char delim, 
-	std::vector<gsl::cstring_view<>>& elems, 
+	std::vector<gsl::cstring_span<>>& elems, 
 	bool trimItems = false, 
 	bool keepEmpty = false) {
 
-	size_t pos = 0;
+	int pos = 0;
 	while (pos < s.size()) {
 		auto ch = s[pos++];
 
@@ -76,7 +76,7 @@ inline std::vector<gsl::cstring_view<>>& split(gsl::cstring_view<> s,
 		}
 
 		if (count != 0) {
-			elems.push_back(s.sub(start, count));
+			elems.push_back(s.subspan(start, count));
 		} else if (keepEmpty) {
 			elems.push_back({});
 		}
@@ -86,8 +86,8 @@ inline std::vector<gsl::cstring_view<>>& split(gsl::cstring_view<> s,
 	return elems;
 }
 
-inline std::vector<gsl::cstring_view<>> split(gsl::cstring_view<> s, char delim, bool trim = false, bool keepEmpty = false) {
-	std::vector<gsl::cstring_view<>> elems;
+inline std::vector<gsl::cstring_span<>> split(gsl::cstring_span<> s, char delim, bool trim = false, bool keepEmpty = false) {
+	std::vector<gsl::cstring_span<>> elems;
 	split(s, delim, elems, trim, keepEmpty);
 	return elems;
 }

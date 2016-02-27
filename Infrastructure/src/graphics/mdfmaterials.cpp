@@ -52,7 +52,7 @@ namespace gfx {
 	}
 
 	void MdfRenderMaterial::Bind(RenderingDevice& device, 
-		gsl::array_view<Light3d> lights,
+		gsl::span<Light3d> lights,
 		const MdfRenderOverrides *overrides) {
 
 		device.SetMaterial(mDeviceMaterial);
@@ -62,7 +62,7 @@ namespace gfx {
 	}
 
 	void MdfRenderMaterial::BindShader(RenderingDevice &device,
-		gsl::array_view<Light3d> lights,
+		gsl::span<Light3d> lights,
 		const MdfRenderOverrides *overrides) const {
 
 		auto d3d = device.GetDevice();
@@ -121,7 +121,7 @@ namespace gfx {
 	}
 
 	void MdfRenderMaterial::BindVertexLighting(RenderingDevice &device,
-		gsl::array_view<Light3d> lights,
+		gsl::span<Light3d> lights,
 		bool ignoreLighting) const {
 
 		auto d3d = device.GetDevice();
@@ -129,7 +129,7 @@ namespace gfx {
 		constexpr auto MaxLights = 8;
 
 		if (lights.size() > MaxLights) {
-			lights = lights.sub(0, MaxLights);
+			lights = lights.subspan(0, MaxLights);
 		}
 
 		// To make indexing in the HLSL shader more efficient, we sort the
@@ -344,9 +344,9 @@ namespace gfx {
 
 		ReplacementSet set;
 
-		using gsl::cstring_view;
-		std::vector<cstring_view<>> elems;
-		std::vector<cstring_view<>> subElems;
+		using gsl::cstring_span;
+		std::vector<cstring_span<>> elems;
+		std::vector<cstring_span<>> subElems;
 		std::string slotName, mdfName;
 		split(entry, ' ', elems, true);
 

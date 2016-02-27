@@ -479,7 +479,7 @@ namespace gfx {
 		mDevice->SetSamplerState(samplerIdx, D3DSAMP_ADDRESSV, state.addressV);
 	}
 
-	VertexBufferPtr RenderingDevice::CreateVertexBufferRaw(gsl::array_view<uint8_t> data) {
+	VertexBufferPtr RenderingDevice::CreateVertexBufferRaw(gsl::span<const uint8_t> data) {
 		CComPtr<IDirect3DVertexBuffer9> result;
 
 		D3DLOG(mDevice->CreateVertexBuffer(data.size(), D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 0, D3DPOOL_DEFAULT, &result, nullptr));
@@ -494,10 +494,10 @@ namespace gfx {
 		return std::make_shared<VertexBuffer>(result, data.size());
 	}
 
-	IndexBufferPtr RenderingDevice::CreateIndexBuffer(gsl::array_view<uint16_t> data) {
+	IndexBufferPtr RenderingDevice::CreateIndexBuffer(gsl::span<const uint16_t> data) {
 		CComPtr<IDirect3DIndexBuffer9> result;
 
-		D3DLOG(mDevice->CreateIndexBuffer(data.size() * sizeof(uint16_t),
+		D3DLOG(mDevice->CreateIndexBuffer(data.size_bytes(),
 			D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY,
 			D3DFMT_INDEX16,
 			D3DPOOL_DEFAULT,

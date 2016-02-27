@@ -110,7 +110,7 @@ namespace particles {
 
 	void SpriteParticleRenderer::FillVertex(const PartSysEmitter &emitter,
 		int particleIdx,
-		gsl::array_view<SpriteVertex, 4> vertices) {
+		gsl::span<SpriteVertex, 4> vertices) {
 
 		// Calculate the particle scale (default is 1)
 		auto scale = 1.0f;
@@ -176,7 +176,7 @@ namespace particles {
 
 	void DiscParticleRenderer::FillVertex(const PartSysEmitter &emitter,
 		int particleIdx,
-		gsl::array_view<SpriteVertex, 4> vertex) {
+		gsl::span<SpriteVertex, 4> vertex) {
 
 		// Calculate the particle scale (default is 1)
 		auto scale = 1.0f;

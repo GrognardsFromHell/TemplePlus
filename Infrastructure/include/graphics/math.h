@@ -6,6 +6,9 @@ using DirectX::XMFLOAT2;
 using DirectX::XMFLOAT3;
 using DirectX::XMFLOAT4;
 using DirectX::XMFLOAT4X4;
+using DirectX::XMFLOAT4X4A;
+using DirectX::XMFLOAT4X3A;
+using DirectX::XMFLOAT4X3A;
 
 #include <DirectXPackedVector.h>
 using DirectX::PackedVector::XMCOLOR;

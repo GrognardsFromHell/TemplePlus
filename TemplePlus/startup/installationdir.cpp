@@ -45,14 +45,14 @@ void InstallationDir::Normalize() {
 	}
 }
 
-bool InstallationDir::RevertTfeXChange(gsl::array_view<uint8_t> data,
+bool InstallationDir::RevertTfeXChange(gsl::span<uint8_t> data,
                                        uint32_t address,
                                        const std::vector<uint8_t>& original,
                                        const std::vector<uint8_t>& patched) {
 
 	Expects(original.size() == patched.size());
 
-	if (address + original.size() >= data.size()) {
+	if (address + original.size() >= (size_t) data.size()) {
 		return false;
 	}
 
@@ -73,7 +73,7 @@ bool InstallationDir::IsCo8()
 	return mCo8Present;
 }
 
-bool InstallationDir::RevertTfeXChanges(gsl::array_view<uint8_t> dllData) {
+bool InstallationDir::RevertTfeXChanges(gsl::span<uint8_t> dllData) {
 
 	bool changeDetected = false;
 
@@ -204,7 +204,7 @@ void InstallationDir::DetectDllVersion() {
 
 	file.close();
 
-	gsl::array_view<uint8_t> fileDataView{fileData.get(), fileSize};
+	gsl::span<uint8_t> fileDataView(gsl::as_span(fileData.get(), fileSize));
 
 	if (RevertTfeXChanges(fileDataView)) {
 		logger->info("TFE-X changes detected");

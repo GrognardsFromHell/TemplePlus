@@ -37,7 +37,7 @@ namespace gfx {
 	};
 #pragma pack(pop)
 
-	bool DetectTga(array_view<uint8_t> data, ImageFileInfo& info) {
+	bool DetectTga(span<uint8_t> data, ImageFileInfo& info) {
 
 		if (data.size() < sizeof(TgaHeader)) {
 			return false;
@@ -65,7 +65,7 @@ namespace gfx {
 
 	}
 
-	std::unique_ptr<uint8_t[]> DecodeTga(array_view<uint8_t> data) {
+	std::unique_ptr<uint8_t[]> DecodeTga(span<uint8_t> data) {
 
 		if (data.size() < sizeof(TgaHeader)) {
 			throw TempleException("Not enough data for TGA header");

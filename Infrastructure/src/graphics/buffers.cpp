@@ -35,7 +35,7 @@ IndexBufferLock IndexBuffer::Lock() {
 		throw TempleException("Unable to lock index buffer for update.");
 	}
 	mLocked = true;
-	return IndexBufferLock({ reinterpret_cast<uint16_t*>(lockedData), mCount }, *this);
+	return IndexBufferLock(gsl::as_span(reinterpret_cast<uint16_t*>(lockedData), mCount), *this);
 }
 
 void IndexBuffer::Unlock() {
@@ -44,9 +44,9 @@ void IndexBuffer::Unlock() {
 	mLocked = false;
 }
 
-void IndexBuffer::Update(gsl::array_view<uint16_t> data) {
+void IndexBuffer::Update(gsl::span<uint16_t> data) {
 
-	Expects(data.size() <= mCount);
+	Expects(data.size() <= (int) mCount);
 
 	auto lock(Lock());
 
@@ -61,12 +61,12 @@ VertexBuffer::VertexBuffer(CComPtr<IDirect3DVertexBuffer9> vertexBuffer, size_t 
 VertexBuffer::~VertexBuffer() {
 }
 
-void VertexBuffer::Update(gsl::array_view<const uint8_t> data) {
+void VertexBuffer::Update(gsl::span<const uint8_t> data) {
 	auto lock(Lock<uint8_t>());
 	memcpy(&lock.GetData()[0], &data[0], data.size() * sizeof(uint8_t));
 }
 
-gsl::array_view<uint8_t> VertexBuffer::LockRaw(size_t size) {
+gsl::span<uint8_t> VertexBuffer::LockRaw(size_t size) {
 	Expects(!mLocked);
 	void* lockedData;
 
@@ -79,7 +79,7 @@ gsl::array_view<uint8_t> VertexBuffer::LockRaw(size_t size) {
 		throw TempleException("Unable to lock vertex buffer for update.");
 	}
 	mLocked = true;
-	return{ reinterpret_cast<uint8_t*>(lockedData), size };
+	return gsl::as_span(reinterpret_cast<uint8_t*>(lockedData), size);
 }
 
 void VertexBuffer::Unlock() {

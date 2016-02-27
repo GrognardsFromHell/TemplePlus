@@ -20,7 +20,7 @@ public:
 	explicit FontRenderer(gfx::RenderingDevice& g);
 	~FontRenderer();
 
-	void RenderRun(array_view<const char> text,
+	void RenderRun(cstring_span<> text,
 		int x,
 		int y,
 		const TigRect& bounds,
@@ -47,7 +47,7 @@ class TextLayouter {
 public:
 	TextLayouter(gfx::RenderingDevice& device, gfx::ShapeRenderer2d& shapeRenderer);
 
-	void LayoutAndDraw(gsl::cstring_view<> text, const TigFont &font, TigRect& extents, TigTextStyle& style);
+	void LayoutAndDraw(gsl::cstring_span<> text, const TigFont &font, TigRect& extents, TigTextStyle& style);
 
 private:
 	void DrawBackground(const TigRect& rect, const TigTextStyle& style);
@@ -60,14 +60,14 @@ private:
 		const TigFont& font,
 		const TigTextStyle& style,
 		int remainingSpace);
-	std::pair<int, int> TextLayouter::MeasureCharRun(cstring_view<> text,
+	std::pair<int, int> TextLayouter::MeasureCharRun(cstring_span<> text,
 		const TigTextStyle& style,
 		const TigRect& extents,
 		int extentsWidth,
 		const TigFont& font,
 		int linePadding,
 		bool lastLine);
-	bool HasMoreText(cstring_view<> text, int tabWidth);
+	bool HasMoreText(cstring_span<> text, int tabWidth);
 
 	static const char *sEllipsis;
 	FontRenderer mRenderer;
