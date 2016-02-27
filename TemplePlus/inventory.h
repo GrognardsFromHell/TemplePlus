@@ -2,6 +2,30 @@
 #include "common.h"
 #include "dispatcher.h"
 
+
+enum ItemErrorCode: uint32_t
+{
+	IEC_OK = 0,
+	IEC_Cannot_Transfer = 1,
+	IEC_Item_Too_Heavy = 2,
+	IEC_No_Room_For_Item = 3,
+	IEC_Cannot_Use_While_Polymorphed = 4,
+	IEC_Cannot_Pickup_Magical_Items = 5,
+	IEC_Cannot_Pickup_Techno_Items = 6,
+	IEC_Item_Cannot_Be_Dropped = 7,
+	IEC_NPC_Will_Not_Drop =8,
+	IEC_Wrong_Type_For_Slot =9,
+	IEC_No_Free_Hand =10,
+	IEC_Crippled_Arm_Prevents_Wielding =11,
+	IEC_Item_Too_Large =12,
+	IEC_Has_No_Art =13,
+	IEC_Opposite_Gender =14,
+	IEC_Cannot_Wield_Magical =15,
+	IEC_Cannot_Wield_Techno =16,
+	IEC_Wield_Slot_Occupied =17,
+	IEC_Prohibited_Due_To_Class =18
+};
+
 struct InventorySystem : temple::AddressTable
 {
 	
@@ -31,6 +55,7 @@ struct InventorySystem : temple::AddressTable
 	int IsNormalCrossbow(objHndl weapon);
 	int IsThrowingWeapon(objHndl weapon);
 	ArmorType GetArmorType(int armorFlags);
+	int GetQuantity(objHndl item); // note: returns 0 for items with no quantity fields!
 	int ItemDrop(objHndl item);
 	objHndl GetParent(objHndl item);
 	bool IsRangedWeapon(objHndl weapon);
@@ -42,12 +67,18 @@ struct InventorySystem : temple::AddressTable
 	void InsertAtLocation(objHndl item, objHndl receiver, int itemInsertLocation);
 	int ItemUnwield(objHndl item);
 	int ItemUnwieldByIdx(objHndl obj, int i);
-	void TransferWithFlags(objHndl item, objHndl receiver, int invenInt, char flags, objHndl bag);
+	ItemErrorCode TransferWithFlags(objHndl item, objHndl receiver, int invenInt, char flags, objHndl bag);
 	void ItemPlaceInIdx(objHndl item, int idx);
+
+	/*
+		gets the item's sell price (in Copper Pieces) when dealing with a vendor
+	*/
+	int GetAppraisedWorth(objHndl item, objHndl appraiser, objHndl vendor, SkillEnum skillEnum);
+	void MoneyToCoins(int appraisedWorth, int* plat, int* gold, int* silver, int* copper);
 	
 	/*
-			0 - light weapon; 1 - can wield one handed; 2 - must wield two handed; 3 (???)
-		*/
+				0 - light weapon; 1 - can wield one handed; 2 - must wield two handed; 3 (???)
+			*/
 	int (__cdecl *GetWieldType)(objHndl wielder, objHndl item);
 	static obj_f GetInventoryListField(objHndl objHnd);
 	/*

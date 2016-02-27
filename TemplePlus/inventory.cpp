@@ -15,7 +15,7 @@ struct InventorySystemAddresses : temple::AddressTable
 	int(__cdecl*GetParent)(objHndl, objHndl*);
 	int(__cdecl*ItemInsertGetLocation)(objHndl item, objHndl receiver, int* idxOut, objHndl bag, char flags);
 	void(__cdecl*InsertAtLocation)(objHndl item, objHndl receiver, int itemInsertLocation);
-	void(__cdecl*TransferWithFlags)(objHndl item, objHndl receiver, int invenIdx, char flags, objHndl bag);
+	ItemErrorCode(__cdecl*TransferWithFlags)(objHndl item, objHndl receiver, int invenIdx, char flags, objHndl bag);
 	InventorySystemAddresses()
 	{
 		rebase(GetParent, 0x10063E80);
@@ -135,6 +135,12 @@ ArmorType InventorySystem::GetArmorType(int armorFlags)
 	return (ArmorType) (armorFlags & (ARMOR_TYPE_LIGHT | ARMOR_TYPE_MEDIUM | ARMOR_TYPE_HEAVY) );
 }
 
+int InventorySystem::GetQuantity(objHndl item)
+{
+	auto getQty = temple::GetRef<int(__cdecl)(objHndl)>(0x100642B0);
+	return getQty(item);
+}
+
 int InventorySystem::ItemDrop(objHndl item)
 {
 	return _ItemDrop(item);
@@ -248,15 +254,45 @@ int InventorySystem::ItemUnwieldByIdx(objHndl obj, int i)
 	return ItemUnwield(item);
 }
 
-void InventorySystem::TransferWithFlags(objHndl item, objHndl receiver, int invenIdx, char flags, objHndl bag)
+ItemErrorCode InventorySystem::TransferWithFlags(objHndl item, objHndl receiver, int invenIdx, char flags, objHndl bag)
 {
-	addresses.TransferWithFlags(item, receiver, invenIdx, flags, bag);
+	return addresses.TransferWithFlags(item, receiver, invenIdx, flags, bag);
 }
 
 void InventorySystem::ItemPlaceInIdx(objHndl item, int idx)
 {
 	auto parent = GetParent(item);
 	TransferWithFlags(item, parent, idx, 4, 0i64);
+}
+
+int InventorySystem::GetAppraisedWorth(objHndl item, objHndl appraiser, objHndl vendor, SkillEnum skillEnum)
+{
+	auto getAppraisedWorth = temple::GetRef<int(__cdecl)(objHndl, objHndl, objHndl, SkillEnum)>(0x10069970);
+	return getAppraisedWorth(item, appraiser, vendor, skillEnum);
+}
+
+void InventorySystem::MoneyToCoins(int money, int* plat, int* gold, int* silver, int* copper)
+{
+	int remMoney = money;
+	if (plat)
+	{
+		*plat = remMoney / 1000;
+		remMoney = remMoney % 1000;
+	}
+	if (gold)
+	{
+		*gold = remMoney / 100;
+		remMoney = remMoney % 100;
+	}
+	if (silver)
+	{
+		*silver = remMoney / 10;
+		remMoney = remMoney % 10;
+	}
+	if (copper)
+	{
+		*copper = remMoney;
+	}
 }
 
 obj_f InventorySystem::GetInventoryListField(objHndl objHnd)

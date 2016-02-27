@@ -151,6 +151,18 @@ objHndl LegacyPartySystem::GetLeader()
 	return leader;
 }
 
+objHndl LegacyPartySystem::PartyMemberWithHighestSkill(SkillEnum skillEnum)
+{
+	auto highestSkillMemberGet = temple::GetRef<objHndl(__cdecl)(SkillEnum)>(0x1002BD50);
+	return highestSkillMemberGet(skillEnum);
+}
+
+int LegacyPartySystem::MoneyAdj(int plat, int gold, int silver, int copper)
+{
+	auto partyMoneyAdj = temple::GetRef<int(__cdecl)(int, int, int, int)>(0x1002B7D0);
+	return partyMoneyAdj(plat, gold, silver, copper);
+}
+
 uint32_t AddToPcGroup(objHndl objHnd)
 {
 	return party.AddToPCGroup(objHnd);
