@@ -1105,21 +1105,22 @@ int AiSystem::Default(AiTactic* aiTac)
 		return 0;
 	if (!aiTac->target)
 		return 0;
+	auto curSeq = *actSeqSys.actSeqCur;
 	d20Sys.GlobD20ActnInit();
 	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_ATTACK, 0);
 	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
 	ActionErrorCode addToSeqError = (ActionErrorCode)actSeqSys.ActionAddToSeq();
-	if (addToSeqError)
-	{
-		logger->info("AI Default failed, error code: {}", (int)addToSeqError);
-	}
+	//if (addToSeqError)
+	//{
+	//	logger->info("AI Default failed, error code: {}", (int)addToSeqError);
+	//}
 	int performError = actSeqSys.ActionSequenceChecksWithPerformerLocation();
-	if (!performError && !addToSeqError)
+	if (performError == AEC_OK && addToSeqError == AEC_OK)
 	{
 		return 1;
 	} else
 	{
-		logger->info("AI Default SequenceCheck failed, error codes: {}, {}", static_cast<int>(addToSeqError), static_cast<int>(performError));
+		logger->info("AI Default SequenceCheck failed, error codes are AddToSeq :{}, Location Checs: {}", static_cast<int>(addToSeqError), static_cast<int>(performError));
 	}
 	if (!critterSys.IsWieldingRangedWeapon(aiTac->performer))
 	{
@@ -1402,6 +1403,7 @@ public:
 	static int AiTargetThreatened(AiTactic* aiTac);
 	static int AiCastParty(AiTactic* aiTac);
 	static int AiFlank(AiTactic* aiTac);
+	static int AiRage(AiTactic* aiTac);
 
 	static int ChooseRandomSpellUsercallWrapper();
 	static void SetCritterStrategy(objHndl obj, const char *stratName);
@@ -1412,11 +1414,12 @@ public:
 		
 		replaceFunction(0x100E3270, AiDefault);
 		replaceFunction(0x100E3A00, _AiTargetClosest);
+		replaceFunction(0x100E3B60, AiRage);
 		replaceFunction(0x100E43F0, AiCastParty);
 		replaceFunction(0x100E46C0, AiAttack);
 		replaceFunction(0x100E46D0, AiTargetThreatened);
 		replaceFunction(0x100E48D0, _AiApproach);
-		replaceFunction(0x100E4BD0, _AiCharge);
+		replaceFunction(0x100E4BD0, _AiCharge);		
 		replaceFunction(0x100E5080, SetCritterStrategy);
 		replaceFunction(0x100E50C0, _aiStrategyParse);
 		replaceFunction(0x100E5460, _AiOnInitiativeAdd);
@@ -1425,9 +1428,10 @@ public:
 		replaceFunction(0x100E58D0, AiSniper);
 		replaceFunction(0x100E5950, AiFlank);
 		replaceFunction(0x100E5DB0, _AiCoupDeGrace);
+		
 
 		replaceFunction(0x1005B810, ChooseRandomSpellUsercallWrapper);
-		
+
 	}
 } aiReplacements;
 
@@ -1471,6 +1475,24 @@ int AiReplacements::AiFlank(AiTactic* aiTac)
 	return aiSys.Flank(aiTac);
 	}
 
+int AiReplacements::AiRage(AiTactic* aiTac)
+{
+	auto initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum; // used for resetting in case of failure
+	if (d20Sys.d20Query(aiTac->performer, DK_QUE_Barbarian_Raged))
+		return 0;
+	if (d20Sys.d20Query(aiTac->performer, DK_QUE_Barbarian_Fatigued))
+		return 0;
+
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_BARBARIAN_RAGE, 1);
+	auto addToSeqError = actSeqSys.ActionAddToSeq();
+	if (addToSeqError != AEC_OK || actSeqSys.ActionSequenceChecksWithPerformerLocation() != AEC_OK)
+	{
+		actSeqSys.ActionSequenceRevertPath(initialActNum);
+		return 0;
+	}
+	return 1;
+}
 
 static int _ChooseRandomSpellUsercallWrapper(AiPacket* aiPkt)
 {
