@@ -9,7 +9,10 @@ LegacyDescriptionSystem description;
 
 const char* LegacyDescriptionSystem::getDisplayName(objHndl obj)
 {
-	return _getDisplayName(obj, obj);
+	if (obj)
+		return _getDisplayName(obj, obj);
+	else
+		return "OBJ_HANDLE_NULL";
 }
 
 const char* LegacyDescriptionSystem::getDisplayName(objHndl obj, objHndl observer)
