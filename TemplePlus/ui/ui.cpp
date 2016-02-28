@@ -338,6 +338,12 @@ bool Ui::CharEditorIsActive()
 	return false;
 }
 
+bool Ui::CharLootingIsActive()
+{
+	auto result = temple::GetRef<int>(0x10BE6EE8);
+	return result;
+}
+
 bool Ui::IsWidgetHidden(int widId)
 {
 	return activeWidgets[widId]->widgetFlags & 1 != 0;

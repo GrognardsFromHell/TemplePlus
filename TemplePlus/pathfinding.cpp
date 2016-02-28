@@ -1512,9 +1512,9 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 		if (config.pathfindingDebugMode)
 		{
 			if (locSys.subtileFromLoc(&pqr->from) == toSubtile)
-				logger->info("Aborting because from = to.");
+				logger->info("Pathfinding: Aborting because from = to.");
 			else
-				logger->info("Aborting because target tile is occupied and cannot find alternative tile.");
+				logger->info("Pathfinding: Aborting because target tile is occupied and cannot find alternative tile.");
 		}
 		pdbgGotPath = 0;
 		return 0;
@@ -1523,7 +1523,7 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 
 	if (TargetSurrounded(pqr, pq))
 	{
-		logger->info("Aborting because target is surrounded.");
+		logger->info("Pathfinding: Aborting because target is surrounded.");
 		return 0;
 	}
 

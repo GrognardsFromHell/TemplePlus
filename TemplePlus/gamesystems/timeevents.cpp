@@ -2,6 +2,8 @@
 #include "stdafx.h"
 #include <temple/dll.h>
 #include "gamesystems/timeevents.h"
+#include <config/config.h>
+#include <description.h>
 
 /*
 Internal system specification used by the time event system
@@ -583,6 +585,86 @@ const TimeEventTypeSpec& GetTimeEventTypeSpec(TimeEventType type) {
 
 #pragma endregion
 
+
+class TimeEventHooks : public TempleFix
+{
+public: 
+	const char* name() override { 
+	return "TimeEvent Function Replacements";
+	} 
+	
+	void apply() override 
+	{
+		static int (*orgTimeEventValidate)(TimeEventListEntry* evt, int flag) = replaceFunction<int (__cdecl)(TimeEventListEntry*, int)>(0x10060430, [](TimeEventListEntry* evt, int flag)
+		{
+			/*if (evt->evt.system == TimeEventType::ObjFade)
+			{
+				int dummy = 1;
+				if (config.newFeatureTestMode)
+				{
+					if (evt->objects[1].guid.subtype == ObjectIdKind::Null)
+					{
+						int dsummy = 1;
+					}
+					logger->debug("TimeEventValidate: ObjFade evt id {} for obj {}", evt->evt.params[0].int32, description.getDisplayName(evt->evt.params[1].handle));
+				}
+			} */
+			int result = orgTimeEventValidate(evt, flag);
+			if (!result)
+			{
+				logger->debug("Failed to validate time event. Event system {}, param0 {}", (int)evt->evt.system, evt->evt.params[0].int32);
+			}
+			return result;
+		});
+
+		static void (*orgTransparencySet)(objHndl , int) = replaceFunction<void(__cdecl)(objHndl, int)>(0x10020060, [](objHndl obj, int flag)
+		{
+			if (!obj)
+			{
+				int dummy = 1;
+			} else
+				orgTransparencySet(obj, flag);
+		});
+
+		static int (*orgGetOpacity)(objHndl) = replaceFunction<int(__cdecl)(objHndl)>(0x10020180, [](objHndl obj)
+		{
+			if (!obj)
+			{
+				int dummy = 1;
+			}
+			return orgGetOpacity(obj);
+		});
+
+
+		static int (*orgObjfadeTimeeventExpires)(TimeEvent* ) = replaceFunction<int(__cdecl)(TimeEvent*)>(0x1004C490, [](TimeEvent*evt)
+		{
+			auto param1 = evt->params[1];
+			auto param0 = evt->params[0];
+			if (!param1.handle)
+			{
+				int dummy = 1;
+			}
+			return orgObjfadeTimeeventExpires(evt);
+		});
+
+		static int (*orgAdvanceTime)(int ) = replaceFunction<int (__cdecl)(int)>(0x100620C0, [](int timeMsec)
+		{
+			return orgAdvanceTime(timeMsec);
+		});
+
+		static int (*orgTimeEventSchedule)(TimeEvent*, GameTime*, GameTime*, GameTime*) = replaceFunction<int(__cdecl)(TimeEvent*, GameTime*, GameTime*, GameTime*)>(0x10060720, [](TimeEvent* evt, GameTime* timeDelta, GameTime* timeAbsolute, GameTime* timeResultOut)
+		{
+			/*if (evt->system == TimeEventType::ObjFade)
+			{
+				if (config.newFeatureTestMode)
+				{
+					logger->debug("TimeEventSchedule: ObjFade evt id {} for obj {}", evt->params[0].int32, description.getDisplayName(evt->params[1].handle));
+				}
+			}*/
+			return orgTimeEventSchedule(evt, timeDelta, timeAbsolute, timeResultOut);
+		});
+	}
+} hooks;
 
 //*****************************************************************************
 //* TimeEvent

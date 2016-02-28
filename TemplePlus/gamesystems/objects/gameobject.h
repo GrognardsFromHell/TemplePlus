@@ -49,7 +49,6 @@ enum class ObjectFieldType : uint32_t;
 
 struct GameObjectBody {
 	~GameObjectBody();
-
 	ObjectType type;
 	uint32_t field4;
 	ObjectId id;
@@ -192,6 +191,22 @@ struct GameObjectBody {
 			SetFlags((ObjectFlag)((int32_t)GetFlags() | flag));
 		} else {
 			SetFlags((ObjectFlag)((int32_t)GetFlags() & ~ (int32_t)flag));
+		}
+	}
+
+	ItemFlag GetItemFlags() const {
+		return (ItemFlag)GetInt32(obj_f_item_flags);
+	}
+	void SetItemFlags(ItemFlag flags)
+	{
+		SetInt32(obj_f_item_flags, (int32_t)flags);
+	}
+	void SetItemFlag(ItemFlag flag, bool enabled) {
+		if (enabled) {
+			SetItemFlags((ItemFlag)((int32_t)GetItemFlags() | flag));
+		}
+		else {
+			SetItemFlags((ItemFlag)((int32_t)GetItemFlags() & ~(int32_t)flag));
 		}
 	}
 	locXY GetLocation() const;

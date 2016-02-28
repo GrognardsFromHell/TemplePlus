@@ -232,6 +232,10 @@ public:
 	/*
 		This is actually used to *hide* the char ui if param is 0.
 		Other meanings of param are currently unknown.
+		1 means opening for looting; enables the Take All button
+		2 means opening for bartering
+		3 ??
+		4 means opening for spells targeting inventory items
 	*/
 	void ShowCharUi(int page);
 
@@ -243,6 +247,7 @@ public:
 
 
 	bool CharEditorIsActive();
+	bool CharLootingIsActive();
 
 	bool IsWidgetHidden(int widId);
 	BOOL AddWindow(Widget* widget, unsigned size, int* widgetId, const char * codeFileName, int lineNumber);
