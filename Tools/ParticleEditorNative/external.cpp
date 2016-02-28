@@ -12,10 +12,14 @@ float EditorExternal::GetParticleFidelity() {
 	return 1.0f;
 }
 
-bool EditorExternal::GetObjLocation(ObjHndl obj, XMFLOAT3& worldPos) {
-	worldPos.x = mDll.animParams.offsetX;
-	worldPos.y = mDll.animParams.offsetY;
-	worldPos.z = mDll.animParams.offsetZ;
+bool EditorExternal::GetObjLocation(ObjHndl obj, DirectX::XMFLOAT3& worldPos) {
+	auto params = mDll.animParams;
+	XMFLOAT3 result{
+	 params.offsetX,
+	 params.offsetY,
+	 params.offsetZ
+	};
+	worldPos = result;
 	return true;
 }
 

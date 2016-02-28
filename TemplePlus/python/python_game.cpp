@@ -205,11 +205,38 @@ static PyObject* PyGame_GetEncounterQueue(PyObject *obj, void*) {
 	return encounterQueue;
 }
 
+static PyObject* PyGame_GetPartyAlignment(PyObject *obj, void*) {
+	return PyInt_FromLong(pyGameAddresses.GetPartyAlignment());
+}
+
+static PyObject* PyGame_GetStoryState(PyObject *obj, void*) {
+	return PyInt_FromLong(pyGameAddresses.GetStoryState());
+}
+
+static int PyGame_SetStoryState(PyObject *obj, PyObject *value, void*) {
+	pyGameAddresses.SetStoryState(PyInt_AsLong(value));
+	return 0;
+}
+
+static PyObject* PyGame_GetSid(PyObject *obj, void*) {
+	return PyInt_FromLong(*pyGameAddresses.sid);
+}
+
+static PyObject* PyGame_GetNewSid(PyObject *obj, void*) {
+	return PyInt_FromLong(pythonObjIntegration.GetNewSid());
+}
+
+static int PyGame_SetNewSid(PyObject *obj, PyObject *value, void*) {
+	pythonObjIntegration.SetNewSid(PyInt_AsLong(value));
+	return 0;
+}
+
+
 static PyGetSetDef PyGameGettersSetters[] = {
-	PY_INT_PROP_RO("party_alignment", pyGameAddresses.GetPartyAlignment, NULL),
-	PY_INT_PROP("story_state", pyGameAddresses.GetStoryState, pyGameAddresses.SetStoryState, NULL),
-	PY_INT_PROP_PTR_RO("sid", pyGameAddresses.sid, NULL),
-	PY_INT_PROP("new_sid", pythonObjIntegration.GetNewSid, pythonObjIntegration.SetNewSid, NULL),
+	{"party_alignment", PyGame_GetPartyAlignment, NULL, NULL },
+	{"story_state", PyGame_GetStoryState, PyGame_SetStoryState, NULL },
+	{"sid", PyGame_GetSid, NULL, NULL },
+	{"new_sid", PyGame_GetNewSid, PyGame_SetNewSid, NULL },
 	{"selected", PyGame_GetPartySelected, NULL, NULL},
 	{"party", PyGame_GetParty, NULL, NULL},
 	{"hovered", PyGame_GetHovered, NULL, NULL},

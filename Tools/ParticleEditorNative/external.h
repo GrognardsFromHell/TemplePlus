@@ -9,7 +9,7 @@ public:
 	EditorExternal(TempleDll &dll) : mDll(dll) {}
 
 	float GetParticleFidelity() override;
-	bool GetObjLocation(ObjHndl obj, ::Vec3& worldPos) override;
+	bool GetObjLocation(ObjHndl obj, DirectX::XMFLOAT3& worldPos) override;
 	bool GetObjRotation(ObjHndl obj, float& rotation) override;
 	float GetObjRadius(ObjHndl obj) override;
 	bool GetBoneWorldMatrix(ObjHndl obj, const ::std::string& boneName, ::Matrix4x4& boneMatrix) override;

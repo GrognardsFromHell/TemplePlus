@@ -611,7 +611,7 @@ static PyObject* PyObjHandle_FollowerAtMax(PyObject* obj, PyObject* args) {
 	{
 		return PyInt_FromLong( (followers + pcs >= PARTY_SIZE_MAX) || followers >= 5 );
 	}
-	return PyInt_FromLong((followers >= PARTY_SIZE_MAX - config.maxPCs) || followers >= 5);
+	return PyInt_FromLong((followers >= PARTY_SIZE_MAX - (uint32_t) config.maxPCs) || followers >= 5);
 }
  
 static PyObject* PyObjHandle_AiFollowerAdd(PyObject* obj, PyObject* args) {
@@ -966,7 +966,7 @@ static bool ParseCondNameAndArgs(PyObject* args, CondStruct*& condStructOut, vec
 	// Following arguments all have to be integers and gel with the condition argument count
 	vector<int> condArgs(cond->numArgs, 0);
 	for (unsigned int i = 0; i < cond->numArgs; ++i) {
-		if (PyTuple_GET_SIZE(args) > i + 1) {
+		if ((uint32_t) PyTuple_GET_SIZE(args) > i + 1) {
 			auto item = PyTuple_GET_ITEM(args, i + 1);
 			if (!PyInt_Check(item)) {
 				auto itemRepr = PyObject_Repr(item);
@@ -1576,7 +1576,7 @@ static PyObject* PyObjHandle_SetInt(PyObject* obj, PyObject* args) {
 		}
 		else if (objectFields.GetType(field) == ObjectFieldType::Float32)
 		{
-			objSystem->GetObject(self->handle)->SetFloat(field, value);
+			objSystem->GetObject(self->handle)->SetFloat(field, (float) value);
 		} 
 		else
 		{
@@ -1627,7 +1627,7 @@ static PyObject* PyObjHandle_GetInt(PyObject* obj, PyObject* args) {
 		value = objects.getInt32(self->handle, field);
 	} else if (objectFields.GetType(field) == ObjectFieldType::Float32)
 	{
-		value = objSystem->GetObject(self->handle)->GetFloat(field);
+		value = (int) objSystem->GetObject(self->handle)->GetFloat(field);
 	}
 	
 	return PyInt_FromLong(value);
@@ -1929,7 +1929,7 @@ static PyObject * PyObjHandle_MakeWizard(PyObject* obj, PyObject* args) {
 
 static PyObject * PyObjHandle_MakeClass(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
-	uint32_t level;
+	int level;
 	Stat statClass = stat_level_barbarian;
 	if (!PyArg_ParseTuple(args, "ii", &statClass, &level)) {
 		return nullptr;
@@ -1940,7 +1940,7 @@ static PyObject * PyObjHandle_MakeClass(PyObject* obj, PyObject* args) {
 	}
 
 	auto gameObj = objSystem->GetObject(self->handle);
-	for (uint32_t i = 0; i < level; i++) {
+	for (int i = 0; i < level; i++) {
 		gameObj->SetInt32(obj_f_critter_level_idx, i, statClass);
 	}
 
@@ -2150,9 +2150,17 @@ static PyMethodDef PyObjHandleMethods[] = {
 
 #pragma region Getters and Setters
 
+static PyObject* PyObjHandle_GetArea(PyObject* obj, void*) {
+	return PyInt_FromLong(maps.GetCurrentAreaId());
+}
+
+static PyObject* PyObjHandle_GetMap(PyObject* obj, void*) {
+	return PyInt_FromLong(maps.GetCurrentMapId());
+}
+
 static PyObject* PyObjHandle_GetDescription(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
-	return  PyString_FromString(objects.description.getDisplayName(self->handle));
+	return PyString_FromString(objects.description.getDisplayName(self->handle));
 }
 
 static PyObject* PyObjHandle_GetNameId(PyObject* obj, void*) {
@@ -2340,8 +2348,8 @@ static PyObject* PyObjHandle_SafeForUnpickling(PyObject*, void*) {
 	Py_RETURN_TRUE;
 }
 
-static PyGetSetDef PyObjHandleGetSets[] = {
-	PY_INT_PROP_RO("area", maps.GetCurrentAreaId, NULL),
+PyGetSetDef PyObjHandleGetSets[] = {
+	{ "area", PyObjHandle_GetArea, NULL, NULL, NULL },
 	{"description", PyObjHandle_GetDescription, NULL, NULL },
 	{"name", PyObjHandle_GetNameId, NULL, NULL},
 	{"location", PyObjHandle_GetLocation, NULL, NULL},
@@ -2349,7 +2357,7 @@ static PyGetSetDef PyObjHandleGetSets[] = {
 	{"radius", PyObjHandle_GetRadius, PyObjHandle_SetRadius, NULL},
 	{"height", PyObjHandle_GetRenderHeight, PyObjHandle_SetRenderHeight, NULL},
 	{"rotation", PyObjHandle_GetRotation, PyObjHandle_SetRotation, NULL},
-	PY_INT_PROP_RO("map", maps.GetCurrentMapId, NULL),
+	{"map", PyObjHandle_GetMap, NULL, NULL, NULL},
 	{"hit_dice", PyObjHandle_GetHitDice, NULL, NULL},
 	{"hit_dice_num", PyObjHandle_GetHitDiceNum, NULL, NULL},
 	{"get_size", PyObjHandle_GetSize, NULL, NULL},
