@@ -28,9 +28,6 @@ using namespace std;
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#pragma comment(lib, "D3dx9.lib")
-#include <D3dx9tex.h>
-
 #include <infrastructure/infrastructure.h>
 using fmt::format;
 

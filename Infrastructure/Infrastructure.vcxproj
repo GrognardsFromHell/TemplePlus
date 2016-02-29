@@ -201,7 +201,6 @@
     <ClInclude Include="include\infrastructure\tokenizer.h" />
     <ClInclude Include="include\platform\d3d.h" />
     <ClInclude Include="include\platform\windows.h" />
-    <ClInclude Include="include\infrastructure\renderstates.h" />
     <ClInclude Include="include\spdlog\async_logger.h" />
     <ClInclude Include="include\spdlog\common.h" />
     <ClInclude Include="include\spdlog\details\async_logger_impl.h" />
@@ -269,7 +268,6 @@
     <ClCompile Include="json11.cpp" />
     <ClCompile Include="stringutil.cpp" />
     <ClCompile Include="windows.cpp" />
-    <ClCompile Include="renderstates.cpp" />
     <ClCompile Include="tabparser.cpp" />
     <ClCompile Include="logging.cpp" />
     <ClCompile Include="mesparser.cpp" />

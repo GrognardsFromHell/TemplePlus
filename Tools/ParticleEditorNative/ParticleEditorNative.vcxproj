@@ -99,7 +99,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(TargetDir);$(SolutionDir)\dependencies\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>turbojpeg-static_d.lib;d3d9.lib;temple.lib;swscale.lib;avcodec.lib;avformat.lib;avutil.lib;Infrastructure.lib;ParticleSystems.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3dcompiler.lib;turbojpeg-static_d.lib;d3d9.lib;temple.lib;swscale.lib;avcodec.lib;avformat.lib;avutil.lib;Infrastructure.lib;ParticleSystems.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
@@ -133,7 +133,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(TargetDir);$(SolutionDir)\dependencies\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>turbojpeg-static.lib;d3d9.lib;temple.lib;swscale.lib;avcodec.lib;avformat.lib;avutil.lib;Infrastructure.lib;ParticleSystems.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3dcompiler.lib;turbojpeg-static.lib;d3d9.lib;temple.lib;swscale.lib;avcodec.lib;avformat.lib;avutil.lib;Infrastructure.lib;ParticleSystems.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -160,14 +160,12 @@
     <ClCompile Include="dll.cpp" />
     <ClCompile Include="external.cpp" />
     <ClCompile Include="ParticleEditorNative.cpp" />
-    <ClCompile Include="renderstates.cpp" />
     <ClCompile Include="video.cpp" />
     <ClCompile Include="video_avcodec.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="api.h" />
     <ClInclude Include="external.h" />
-    <ClInclude Include="renderstates.h" />
     <ClInclude Include="video.h" />
   </ItemGroup>
   <ItemGroup>

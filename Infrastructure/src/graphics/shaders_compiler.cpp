@@ -1,23 +1,24 @@
 
-#include <D3DX9Shader.h>
 #include <infrastructure/logging.h>
 #include <infrastructure/exception.h>
 #include <infrastructure/vfs.h>
 
 #include "shaders_compiler.h"
 
+#include <D3Dcompiler.h>
+
 namespace gfx {
 	
-	class VfsShaderIncludeHandler : public ID3DXInclude {
+	class VfsShaderIncludeHandler : public ID3DInclude {
 	public:
-		HRESULT __stdcall Open(D3DXINCLUDE_TYPE IncludeType, 
+		HRESULT __stdcall Open(D3D_INCLUDE_TYPE IncludeType,
 			LPCSTR pFileName, 
 			LPCVOID pParentData, 
 			LPCVOID *ppData, 
 			UINT *pBytes) override;
 		HRESULT __stdcall Close(LPCVOID pData) override;
 	};
-
+	
 	VertexShaderPtr gfx::ShaderCompiler::CompileVertexShader(RenderingDevice &device)
 	{
 		auto code(CompileShaderCode("vs_3_0"));
@@ -37,7 +38,7 @@ namespace gfx {
 		VfsShaderIncludeHandler includeHandler;
 
 		// Convert the defines
-		std::vector<D3DXMACRO> macros;
+		std::vector<D3D_SHADER_MACRO> macros;
 		for (auto &define : mDefines) {
 			macros.push_back({
 				define.first.c_str(), 
@@ -47,26 +48,25 @@ namespace gfx {
 		macros.push_back({ nullptr, nullptr }); // Null terminated array
 
 		// Debug flags
-		DWORD flags = D3DXSHADER_SKIPOPTIMIZATION;
+		DWORD flags = 0;
 #ifndef NDEBUG
-		flags |= D3DXSHADER_DEBUG | D3DXSHADER_SKIPOPTIMIZATION;
+		flags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-		CComPtr<ID3DXBuffer> codeBuffer;
-		CComPtr<ID3DXBuffer> errorBuffer;
-		CComPtr<ID3DXConstantTable> constantTable;
-		auto result = D3DXCompileShader(
+		CComPtr<ID3DBlob> codeBuffer;
+		CComPtr<ID3DBlob> errorBuffer;		
+		auto result = D3DCompile(
 			&mSourceCode[0], 
 			mSourceCode.length(),
+			mName.c_str(),
 			&macros[0],
 			&includeHandler,
 			"main",
 			profile.c_str(),
 			flags,
+			0,
 			&codeBuffer,
-			&errorBuffer,
-			&constantTable);
-		
+			&errorBuffer);		
 
 		// Copy the errors and warnings into a readable string
 		std::string errors;
@@ -90,7 +90,7 @@ namespace gfx {
 		return shaderData;
 	}
 
-	HRESULT VfsShaderIncludeHandler::Open(D3DXINCLUDE_TYPE IncludeType, 
+	HRESULT VfsShaderIncludeHandler::Open(D3D_INCLUDE_TYPE IncludeType,
 		LPCSTR pFileName, 
 		LPCVOID pParentData, 
 		LPCVOID * ppData, 

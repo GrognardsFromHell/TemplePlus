@@ -1,7 +1,6 @@
 #pragma once
 
 #include <platform/d3d.h>
-#include <d3dx9.h>
 
 #include <tig/tig_startup.h>
 #include <tig/tig_font.h>
@@ -203,8 +202,8 @@ struct VideoData {
 	D3DFORMAT adapterformat;
 	DWORD current_refresh;
 	void* blitVBuffer; // not used (was Direct3DVertexBuffer8Adapter)
-	D3DXMATRIX stru_11E75788;
-	D3DXMATRIX matrix_identity;
+	XMFLOAT4X4 stru_11E75788; // Projection matrix, now unused
+	XMFLOAT4X4 matrix_identity; // Identity matrix, unused
 	XMFLOAT3 stru_11E75808;
 	XMFLOAT3 stru_11E75814;
 	XMFLOAT3 stru_11E75820;

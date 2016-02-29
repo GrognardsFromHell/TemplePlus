@@ -132,9 +132,6 @@
     <ClInclude Include="include\infrastructure\mesparser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\infrastructure\renderstates.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\infrastructure\stopwatch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -294,9 +291,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tabparser.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="renderstates.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="windows.cpp">

@@ -252,7 +252,6 @@
     <ClCompile Include="graphics\materials_hooks.cpp" />
     <ClCompile Include="graphics\renderstates_hooks.cpp" />
     <ClCompile Include="graphics\render_hooks.cpp" />
-    <ClCompile Include="graphics\renderer.cpp" />
     <ClCompile Include="fonts\fonts_hooks.cpp" />
     <ClCompile Include="graphics\mapterrain.cpp" />
     <ClCompile Include="gamesystems\clipping\clippingmesh.cpp" />
@@ -573,7 +572,6 @@
     <ClInclude Include="messages\messagequeue.h" />
     <ClInclude Include="graphics\materials_hooks.h" />
     <ClInclude Include="graphics\renderstates_hooks.h" />
-    <ClInclude Include="graphics\renderer.h" />
     <ClInclude Include="graphics\render_hooks.h" />
     <ClInclude Include="graphics\mapterrain.h" />
     <ClInclude Include="gamesystems\clipping\clippingmesh.h" />

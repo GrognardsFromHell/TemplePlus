@@ -4,7 +4,6 @@
 #include <obj.h>
 #include "gamesystems/map/sector.h"
 #include <config/config.h>
-#include <graphics/renderer.h>
 #include <temple/meshes.h>
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/gamerenderer.h"

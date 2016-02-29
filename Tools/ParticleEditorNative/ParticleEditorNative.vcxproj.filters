@@ -21,9 +21,6 @@
     <ClCompile Include="external.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="renderstates.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="video.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -39,9 +36,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="external.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="renderstates.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="api.h">

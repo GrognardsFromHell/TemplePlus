@@ -50,10 +50,10 @@ public:
 	void apply() override;
 
 	static int ShaderRender3d(int vertexCount,
-		D3DXVECTOR4* vertices,
-		D3DXVECTOR4* normals,
+		XMFLOAT4* vertices,
+		XMFLOAT4* normals,
 		D3DCOLOR* diffuse,
-		D3DXVECTOR2* uv,
+		XMFLOAT2* uv,
 		int primCount,
 		uint16_t* indices,
 		int shaderId);

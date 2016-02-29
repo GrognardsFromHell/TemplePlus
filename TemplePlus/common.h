@@ -1,6 +1,5 @@
 #pragma once
 
-#include <d3dx9math.h>
 #include <graphics/math.h>
 
 #include "obj_structs.h"

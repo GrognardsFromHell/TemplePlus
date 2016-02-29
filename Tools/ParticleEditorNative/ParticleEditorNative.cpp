@@ -10,7 +10,6 @@
 #include <regex>
 
 #include "external.h"
-#include "renderstates.h"
 #include "api.h"
 
 using namespace particles;

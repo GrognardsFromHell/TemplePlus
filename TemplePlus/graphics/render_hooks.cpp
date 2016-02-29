@@ -40,7 +40,7 @@ void RenderHooks::apply() {
 	
 }
 
-int RenderHooks::ShaderRender3d(int vertexCount, D3DXVECTOR4* pos, D3DXVECTOR4* normals, D3DCOLOR* diffuse, D3DXVECTOR2* uv, int primCount, uint16_t* indices, int shaderId) {
+int RenderHooks::ShaderRender3d(int vertexCount, XMFLOAT4* pos, XMFLOAT4* normals, D3DCOLOR* diffuse, XMFLOAT2* uv, int primCount, uint16_t* indices, int shaderId) {
 	/*
 	// Remove special material marker in the upper byte and only 
 	// use the actual shader registration id
@@ -147,9 +147,9 @@ int RenderHooks::ShaderRender2d(const Render2dArgs* args) {
 		0, 1, 2, 2, 3, 0
 	};
 
-	std::array<D3DXVECTOR2, 4> uv;
-	std::array<D3DXVECTOR4, 4> vertices;
-	std::array<D3DXVECTOR4, 4> normals;
+	std::array<XMFLOAT2, 4> uv;
+	std::array<XMFLOAT4, 4> vertices;
+	std::array<XMFLOAT4, 4> normals;
 
 	auto vertexZ = 0.5f;
 	if (args->flags & Render2dArgs::FLAG_VERTEXZ) {
@@ -208,8 +208,8 @@ int RenderHooks::ShaderRender2d(const Render2dArgs* args) {
 	uv[3].x = uv[0].x;
 	uv[3].y = uv[2].y;
 
-	D3DXMATRIX projMatrix;
-	D3DXMatrixIdentity(&projMatrix);
+	XMFLOAT4X4 projMatrix;
+	XMStoreFloat4x4(&projMatrix, XMMatrixIdentity());
 	renderStates->SetProjectionMatrix(projMatrix);
 
 	auto mdfMaterial = static_cast<MdfRenderMaterial*>(material.get());

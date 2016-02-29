@@ -15,14 +15,12 @@ using namespace gfx;
 	shader.
 */
 
-using vector4 = D3DXVECTOR4;
-using vector2 = D3DXVECTOR2;
 using PrivateShaderData = gfx::MdfRenderMaterial*;
 using LegacyRenderFunc = void(int vertexCount,
-                              vector4* pos,
-                              vector4* normal,
+                              XMFLOAT4* pos,
+							  XMFLOAT4* normal,
                               D3DCOLOR* diffuse,
-                              vector2* uv,
+							  XMFLOAT2* uv,
                               int primCount,
                               uint16_t* indices,
                               PrivateShaderData shaderData);
@@ -61,10 +59,10 @@ public:
 
 	static void RenderShader(
 		int vertexCount,
-		vector4* pos,
-		vector4* normal,
+		XMFLOAT4* pos,
+		XMFLOAT4* normal,
 		D3DCOLOR* diffuse,
-		vector2* uv,
+		XMFLOAT2* uv,
 		int primCount,
 		uint16_t* indices,
 		PrivateShaderData shaderData
@@ -145,10 +143,10 @@ int MaterialsHooks::RegisterReplacementMaterial(int specialMatIdx, const char* f
 }
 
 void MaterialsHooks::RenderShader(int vertexCount,
-                                  vector4* pos,
-                                  vector4* normal,
+	XMFLOAT4* pos,
+	XMFLOAT4* normal,
                                   D3DCOLOR* diffuse,
-                                  vector2* uv,
+	XMFLOAT2* uv,
                                   int primCount,
                                   uint16_t* indices,
                                   PrivateShaderData shaderData) {

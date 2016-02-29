@@ -2,13 +2,9 @@
 #include <infrastructure/meshes.h>
 #include <temple/meshes.h>
 #include <infrastructure/stringutil.h>
-#include <atlcomcli.h>
 #include <infrastructure/exception.h>
-#include <infrastructure/renderstates.h>
 #include <graphics/math.h>
 
-#include <d3dx9math.h>
-#include <temple/dll.h>
 #include <iostream>
 
 API gfx::AnimatedModelPtr* AnimatedModel_FromFiles(TempleDll* dll,

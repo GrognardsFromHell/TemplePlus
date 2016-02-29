@@ -89,7 +89,6 @@
     <ClCompile Include="graphics\materials_hooks.cpp" />
     <ClCompile Include="gamesystems\particlesystems_hooks.cpp" />
     <ClCompile Include="graphics\rectangle.cpp" />
-    <ClCompile Include="graphics\renderer.cpp" />
     <ClCompile Include="graphics\renderstates_hooks.cpp" />
     <ClCompile Include="graphics\render_hooks.cpp" />
     <ClCompile Include="gamesystems\map\d20_help.cpp" />
@@ -302,7 +301,6 @@
     <ClInclude Include="graphics\mapterrain.h" />
     <ClInclude Include="graphics\materials_hooks.h" />
     <ClInclude Include="graphics\rectangle.h" />
-    <ClInclude Include="graphics\renderer.h" />
     <ClInclude Include="graphics\renderstates_hooks.h" />
     <ClInclude Include="graphics\render_hooks.h" />
     <ClInclude Include="graphics\video_hooks.h" />
@@ -494,7 +492,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir)\Temple\include;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;C:\Program Files (x86)\Microsoft DirectX SDK\Include;$(SolutionDir)\ParticleSystems\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;C:\Program Files (x86)\Microsoft DirectX SDK\Lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -513,12 +510,12 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>turbojpeg-static_d.lib;particlesystems.lib;temple.lib;tio\tio.lib;MinHook.lib;Infrastructure.lib;winmm.lib;d3d9.lib;ws2_32.lib;Crypt32.lib;ssleay32.lib;libeay32.lib;python27_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3dcompiler.lib;turbojpeg-static_d.lib;particlesystems.lib;temple.lib;tio\tio.lib;MinHook.lib;Infrastructure.lib;winmm.lib;d3d9.lib;ws2_32.lib;Crypt32.lib;ssleay32.lib;libeay32.lib;python27_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib;$(TargetDir)</AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;shlwapi.dll;ole32.dll;d3dx9_43.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>bcrypt.dll;crypt32.dll;ws2_32.dll;oleaut32.dll;shell32.dll;advapi32.dll;gdi32.dll;user32.dll;tio.dll;winmm.dll;d3d9.dll;shlwapi.dll;ole32.dll;D3dcompiler_47.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">
@@ -539,7 +536,7 @@
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib;$(TargetDir)</AdditionalLibraryDirectories>
-      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;shlwapi.dll;ole32.dll;d3dx9_43.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>bcrypt.dll;crypt32.dll;ws2_32.dll;oleaut32.dll;shell32.dll;advapi32.dll;gdi32.dll;user32.dll;tio.dll;winmm.dll;d3d9.dll;shlwapi.dll;ole32.dll;D3dcompiler_47.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -563,13 +560,13 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>turbojpeg-static.lib;particlesystems.lib;temple.lib;tio\tio.lib;MinHook.lib;Infrastructure.lib;winmm.lib;d3d9.lib;ws2_32.lib;Crypt32.lib;ssleay32.lib;libeay32.lib;python27.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3dcompiler.lib;turbojpeg-static.lib;particlesystems.lib;temple.lib;tio\tio.lib;MinHook.lib;Infrastructure.lib;winmm.lib;d3d9.lib;d3dcompiler.lib;ws2_32.lib;Crypt32.lib;ssleay32.lib;libeay32.lib;python27.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib;$(TargetDir)</AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DelayLoadDLLs>tio.dll;winmm.dll;d3d9.dll;shlwapi.dll;ole32.dll;d3dx9_43.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>bcrypt.dll;crypt32.dll;ws2_32.dll;oleaut32.dll;shell32.dll;advapi32.dll;gdi32.dll;user32.dll;tio.dll;winmm.dll;d3d9.dll;shlwapi.dll;ole32.dll;D3dcompiler_47.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

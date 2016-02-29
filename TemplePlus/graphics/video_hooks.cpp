@@ -6,12 +6,10 @@
 
 #include <graphics/device.h>
 
-#include <infrastructure/renderstates.h>
 #include <infrastructure/exception.h>
 #include <infrastructure/stringutil.h>
 #include <infrastructure/logging.h>
 #include <util/folderutils.h>
-#include <shlwapi.h>
 
 #include "movies.h"
 #include "config/config.h"
@@ -298,11 +296,6 @@ public:
 	void FreeResources(RenderingDevice&) override;
 
 private:
-	CComPtr<IDirect3DVertexBuffer9> mRenderQuadBuffer;
-	CComPtr<IDirect3DVertexBuffer9> mSharedVBuffer2;
-	CComPtr<IDirect3DVertexBuffer9> mSharedVBuffer3;
-	CComPtr<IDirect3DVertexBuffer9> mSharedVBuffer4;
-
 	ResourceListenerRegistration mRegistration;
 };
 
@@ -315,56 +308,6 @@ void LegacyResourceManager::CreateResources(RenderingDevice& device) {
 	// Store back buffer size
 	videoFuncs.backbufferWidth = device.GetRenderWidth();
 	videoFuncs.backbufferHeight = device.GetRenderHeight();
-
-	auto d3dDevice = device.GetDevice();
-	/*
-	if (D3DLOG(d3dDevice->CreateVertexBuffer(
-		140, // Space for 5 vertices
-		D3DUSAGE_DYNAMIC,
-		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
-		D3DPOOL_SYSTEMMEM,
-		&mRenderQuadBuffer,
-		nullptr)) != D3D_OK) {
-		throw TempleException("Couldn't create shared vertex buffer");
-	}
-	videoFuncs.renderQuadBuffer = new Direct3DVertexBuffer8Adapter(mRenderQuadBuffer);
-
-	if (D3DLOG(d3dDevice->CreateVertexBuffer(
-		56, // 2 vertices
-		D3DUSAGE_DYNAMIC,
-		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
-		D3DPOOL_SYSTEMMEM,
-		&mSharedVBuffer2,
-		nullptr)) != D3D_OK) {
-		throw TempleException("Couldn't create shared vertex buffer");
-	}
-	videoFuncs.sharedVBuffer2 = new Direct3DVertexBuffer8Adapter(mSharedVBuffer2);
-
-	if (D3DLOG(d3dDevice->CreateVertexBuffer(
-		7168, // 256 vertices
-		D3DUSAGE_DYNAMIC,
-		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW, // 28 bytes per vertex
-		D3DPOOL_SYSTEMMEM,
-		&mSharedVBuffer3,
-		nullptr)) != D3D_OK) {
-		throw TempleException("Couldn't create shared vertex buffer");
-	}
-	videoFuncs.sharedVBuffer3 = new Direct3DVertexBuffer8Adapter(mSharedVBuffer3);
-
-	if (D3DLOG(d3dDevice->CreateVertexBuffer(
-		4644, // 129 device
-		D3DUSAGE_DYNAMIC,
-		D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_NORMAL | D3DFVF_XYZ, // 36 byte per vertex
-		D3DPOOL_SYSTEMMEM,
-		&mSharedVBuffer4,
-		nullptr)) != D3D_OK) {
-		throw TempleException("Couldn't create shared vertex buffer");
-	}
-	videoFuncs.sharedVBuffer4 = new Direct3DVertexBuffer8Adapter(mSharedVBuffer4);
-
-	// This is always the same pointer although it's callback 2 of the GameStartConfig	
-	videoFuncs.PartSysCreateBuffers();*/
-
 
 }
 
@@ -379,10 +322,6 @@ void LegacyResourceManager::FreeResources(RenderingDevice&) {
 	videoFuncs.PartSysFreeBuffers();
 	videoFuncs.TigShaderFreeBuffers();
 
-	mRenderQuadBuffer.Release();
-	mSharedVBuffer2.Release();
-	mSharedVBuffer3.Release();
-	mSharedVBuffer4.Release();
 }
 
 LegacyVideoSystem::LegacyVideoSystem(MainWindow& mainWindow, RenderingDevice& graphics) {
@@ -474,10 +413,7 @@ LegacyVideoSystem::LegacyVideoSystem(MainWindow& mainWindow, RenderingDevice& gr
 									 temple::GetRef<int>(v3) = 0;
 									 v3 += 8;
 									 } while (v3 < 0x10D24CAC);*/
-
-	D3DXMatrixIdentity(&video->stru_11E75788);
-	D3DXMatrixIdentity(&video->matrix_identity);
-
+	
 	// Seems to be 4 VECTOR3's for the screen corners
 	auto fadeScreenRect = videoFuncs.fadeScreenRect.ptr();
 	fadeScreenRect[0] = 0;
