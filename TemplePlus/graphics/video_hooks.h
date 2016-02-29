@@ -205,9 +205,9 @@ struct VideoData {
 	void* blitVBuffer; // not used (was Direct3DVertexBuffer8Adapter)
 	D3DXMATRIX stru_11E75788;
 	D3DXMATRIX matrix_identity;
-	D3DVECTOR stru_11E75808;
-	D3DVECTOR stru_11E75814;
-	D3DVECTOR stru_11E75820;
+	XMFLOAT3 stru_11E75808;
+	XMFLOAT3 stru_11E75814;
+	XMFLOAT3 stru_11E75820;
 	int dword_11E7582C; // this is for alignment only according to IdaPro
 	TigMatrices viewParams;
 };

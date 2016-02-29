@@ -282,7 +282,7 @@ void Renderer::DrawTrisScreenSpace(int vertexCount,
 
 #pragma pack(push, 1)
 struct LineVertex {
-	D3DVECTOR pos;
+	XMFLOAT3 pos;
 	D3DCOLOR diffuse;
 };
 #pragma pack(pop)

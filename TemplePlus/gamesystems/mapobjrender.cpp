@@ -738,7 +738,7 @@ std::vector<Light3d> MapObjectRenderer::FindLights(LocAndOffsets atLocation, flo
 
 			int type;
 			uint32_t color;
-			D3DVECTOR direction;
+			XMFLOAT3 direction;
 			float range, phi;
 			auto lightPos = light.position.ToInches2D();
 
@@ -822,11 +822,15 @@ std::vector<Light3d> MapObjectRenderer::FindLights(LocAndOffsets atLocation, flo
 			Light3d light3d;
 			if (type == 2) {
 				light3d.type = Light3dType::Directional;
-				D3DXVec3Normalize((D3DXVECTOR3*)&light3d.dir, (D3DXVECTOR3*)&direction);
+				auto normalizedDir = XMVector3Normalize(XMLoadFloat3(&direction));
+				XMStoreFloat4(&light3d.dir, normalizedDir);
+				light3d.dir.w = 0;
 			}
 			else if (type == 3) {
 				light3d.type = Light3dType::Spot;
-				D3DXVec3Normalize((D3DXVECTOR3*)&light3d.dir, (D3DXVECTOR3*)&direction);
+				auto normalizedDir = XMVector3Normalize(XMLoadFloat3(&direction));
+				XMStoreFloat4(&light3d.dir, normalizedDir);
+				light3d.dir.w = 0;
 			}
 			else if (type == 1) {
 				light3d.type = Light3dType::Point;

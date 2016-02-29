@@ -89,7 +89,7 @@ struct SectorLightPartSys {
 struct SectorLightNight {
 	int type;
 	uint32_t color;
-	D3DVECTOR direction;
+	XMFLOAT3 direction;
 	float phi;
 	SectorLightPartSys partSys;
 };
@@ -102,7 +102,7 @@ struct SectorLight {
 	int field14;
 	LocAndOffsets position;
 	float offsetZ;
-	D3DVECTOR direction;
+	XMFLOAT3 direction;
 	float range;
 	float phi;
 	SectorLightPartSys partSys;

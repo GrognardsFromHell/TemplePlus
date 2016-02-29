@@ -16,6 +16,8 @@ void ClippingMesh::AddInstance(const ClippingMeshObj& obj) {
 	mInstances.push_back(obj);
 }
 
+static_assert(sizeof(D3DVECTOR) == sizeof(XMFLOAT3), "XMFLOAT3 should be equivalent to D3DVECTOR");
+
 void ClippingMesh::CreateResources(RenderingDevice &device) {
 
 	auto data(vfs->ReadAsBinary(mFilename));
@@ -45,7 +47,7 @@ void ClippingMesh::CreateResources(RenderingDevice &device) {
 		std::swap(indices[i], indices[i + 2]);
 	}
 
-	auto vertexBufferSize = mVertexCount * sizeof(D3DVECTOR);
+	auto vertexBufferSize = mVertexCount * sizeof(XMFLOAT3);
 	mVertexBuffer = device.CreateVertexBufferRaw(gsl::as_span(&data[vertexDataStart], vertexBufferSize));
 	mIndexBuffer = device.CreateIndexBuffer(gsl::as_span(indices, mTriCount * 3));
 }

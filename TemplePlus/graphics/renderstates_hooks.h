@@ -6,8 +6,8 @@ struct LegacyLight {
 	float colorR;
 	float colorG;
 	float colorB;
-	D3DVECTOR pos;
-	D3DVECTOR dir;
+	XMFLOAT3 pos;
+	XMFLOAT3 dir;
 	float range;
 	float phi;
 };
