@@ -48,7 +48,7 @@ namespace gfx {
 		macros.push_back({ nullptr, nullptr }); // Null terminated array
 
 		// Debug flags
-		DWORD flags = 0;
+		DWORD flags = D3DCOMPILE_SKIP_OPTIMIZATION;
 #ifndef NDEBUG
 		flags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
