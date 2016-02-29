@@ -22,6 +22,7 @@ after_build:
   - copy Release\TemplePlus.exe dist
   - xcopy /E /I tpdata dist\tpdata
   - xcopy /E /I dependencies\python-lib dist\tpdata\python-lib
+  - copy dependencies\bin\d3dcompiler_47.dll dist
   - 7z a TemplePlus-%APPVEYOR_BUILD_VERSION%.zip %APPVEYOR_BUILD_FOLDER%\dist\*
 
   # Release Full with tools and all binaries
