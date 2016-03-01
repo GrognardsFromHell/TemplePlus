@@ -751,6 +751,20 @@ bool LegacyCritterSystem::IsLootableCorpse(objHndl critter)
 	return false;
 }
 
+bool LegacyCritterSystem::CanBarbarianRage(objHndl obj)
+{
+	if (objects.StatLevelGet(obj, stat_level_barbarian) <= 0)
+		return false;
+	
+	auto isRagedAlready = d20Sys.d20Query(obj, DK_QUE_Barbarian_Raged);
+	if (isRagedAlready)
+		return false;
+	auto isFatigued = d20Sys.d20Query(obj, DK_QUE_Barbarian_Fatigued);
+	if (isFatigued)
+		return false;
+	return true;
+}
+
 MonsterCategory LegacyCritterSystem::GetCategory(objHndl objHnd)
 {
 	if (objHnd != 0) {

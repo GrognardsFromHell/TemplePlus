@@ -1484,18 +1484,20 @@ int AiReplacements::AiFlank(AiTactic* aiTac)
 int AiReplacements::AiRage(AiTactic* aiTac)
 {
 	auto initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum; // used for resetting in case of failure
-	if (d20Sys.d20Query(aiTac->performer, DK_QUE_Barbarian_Raged))
-		return 0;
-	if (d20Sys.d20Query(aiTac->performer, DK_QUE_Barbarian_Fatigued))
+	if (!critterSys.CanBarbarianRage(aiTac->performer))
 		return 0;
 
 	d20Sys.GlobD20ActnInit();
 	d20Sys.GlobD20ActnSetTypeAndData1(D20A_BARBARIAN_RAGE, 1);
 	auto addToSeqError = actSeqSys.ActionAddToSeq();
-	if (addToSeqError != AEC_OK || actSeqSys.ActionSequenceChecksWithPerformerLocation() != AEC_OK)
+	if (addToSeqError != AEC_OK)
 	{
-		actSeqSys.ActionSequenceRevertPath(initialActNum);
-		return 0;
+		auto locCheckError = actSeqSys.ActionSequenceChecksWithPerformerLocation() ;
+		if (locCheckError != AEC_OK)
+		{
+			actSeqSys.ActionSequenceRevertPath(initialActNum);
+			return 0;
+		}
 	}
 	return 1;
 }

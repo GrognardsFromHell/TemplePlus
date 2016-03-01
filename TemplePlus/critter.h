@@ -273,6 +273,11 @@ struct LegacyCritterSystem : temple::AddressTable
 	*/
 	bool IsLootableCorpse(objHndl critter);
 
+	/*
+		Can the critter enter Barbarian rage? Currently assumes only Barbarians can TODO: update when adding other classes or check directly if it has the Barbarian Rage condition
+	*/
+	bool CanBarbarianRage(objHndl performer);
+
 #pragma region Category
 	MonsterCategory GetCategory(objHndl objHnd);
 	uint32_t IsCategoryType(objHndl objHnd, MonsterCategory categoryType);
@@ -294,6 +299,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	bool IsWieldingRangedWeapon(objHndl performer);
 	void GetCritterVoiceLine(objHndl obj, objHndl fellow, char *str, int* soundId);
 	int PlayCritterVoiceLine(objHndl obj, objHndl fellow, char* text, int soundId);
+	
 	static int GetNumFollowers(objHndl obj, int excludeForcedFollowers);
 #pragma endregion
 
