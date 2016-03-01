@@ -670,16 +670,15 @@ public:
 	~SectorIterator() = default;
 
 	bool HasNext() const {
-		return y < mToY || (y == mToY && x < mToX);
+		return y <= mToY || (y == mToY && x <= mToX);
 	}
 
 	LockedMapSector& Next() {
+		mLockedSector = std::make_unique<LockedMapSector>(x, y);
 		if (++x > mToX) {
 			x = mFromX;
 			++y;
-			Expects(y <= mToY);
 		}
-		mLockedSector = std::make_unique<LockedMapSector>(x, y);
 		return *mLockedSector;
 	}
 
