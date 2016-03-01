@@ -84,7 +84,7 @@ void PartSysHooks::End(PartSysHandle handle) {
 		return; // Already all destroyed
 	}
 	auto &particles = gameSystems->GetParticleSys();
-	auto &sys = particles.GetByHandle(handle);
+	auto sys = particles.GetByHandle(handle);
 	if (!sys) {
 		logger->error("Trying to set object for invalid particle system handle: {}", handle);
 		return;
@@ -94,7 +94,7 @@ void PartSysHooks::End(PartSysHandle handle) {
 
 void PartSysHooks::SetObj(PartSysHandle handle, objHndl obj) {
 	auto &particles = gameSystems->GetParticleSys();
-	auto &sys = particles.GetByHandle(handle);
+	auto sys = particles.GetByHandle(handle);
 	if (!sys) {
 		logger->error("Trying to set object for invalid particle system handle: {}", handle);
 		return;
@@ -107,4 +107,10 @@ void PartSysHooks::InvalidateObj(objHndl obj) {
 		return; // Already all destroyed
 	}
 	auto &particles = gameSystems->GetParticleSys();
+	for (auto &sys : particles) {
+		if (sys.second->GetAttachedTo() == obj) {
+			sys.second->SetAttachedTo(0);
+			sys.second->EndPrematurely();
+		}
+	}
 }
