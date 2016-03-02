@@ -14,6 +14,9 @@
 #include "python/python_integration_obj.h"
 #include "python/python_object.h"
 
+
+#define PATH_CACHE_EXPIRATION_TIME 5000 // miliseconds
+
 Pathfinding pathfindingSys;
 
 struct ProximityList
@@ -275,7 +278,14 @@ int Pathfinding::PathCacheGet(PathQuery* pq, Path* pathOut)
 
 	for (int i = 0; i < PATH_RESULT_CACHE_SIZE; i++ )
 	{
+		
+
 		auto pathCacheQ = &pathCache[i];
+
+		if (!pathCacheQ->timeCached || pathCacheQ->timeCached < timeGetTime() - PATH_CACHE_EXPIRATION_TIME){
+			continue;
+		}
+
 		if (pq->flags != pathCacheQ->flags || pq->critter != pathCacheQ->critter)
 			continue;
 		auto fromSubtileCache = locSys.subtileFromLoc(&pathCacheQ->from);
@@ -311,8 +321,9 @@ int Pathfinding::PathCacheGet(PathQuery* pq, Path* pathOut)
 
 void Pathfinding::PathCachePush(PathQuery* pq, Path* pqr)
 {
-	memcpy(&pathCache[pathCacheIdx].path, pqr, sizeof(Path));
+	pathCache[pathCacheIdx].path = *pqr;
 	memcpy(&pathCache[pathCacheIdx++], pq, sizeof(PathQuery));
+	pathCache[pathCacheIdx].timeCached = timeGetTime();
 
 	pathCacheCleared = 0;
 	if (pathCacheIdx >= PATH_RESULT_CACHE_SIZE)
@@ -705,16 +716,17 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 	}
 	PathQuery pathQueryLocal;
 	Path pathLocal;
-	pathQueryLocal = * pq;
+
+	pathQueryLocal = *pq;
 	pathQueryLocal.to = path->to;
 	pathQueryLocal.from = path->from;
 	pathQueryLocal.flags = (PathQueryFlags)(
-		(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE | PQF_STRAIGHT_LINE_ONLY_FOR_SANS_NODE);
+		(uint32_t)pathQueryLocal.flags | PQF_ALLOW_ALTERNATIVE_TARGET_TILE | PQF_STRAIGHT_LINE_ONLY_FOR_SANS_NODE);
 	PathInit(&pathLocal, &pathQueryLocal);
 	pathQueryLocal.to = path->to;
 	pathQueryLocal.from = path->from;
 	pathQueryLocal.flags = (PathQueryFlags)(
-		(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE | PQF_STRAIGHT_LINE_ONLY_FOR_SANS_NODE);
+		(uint32_t)pathQueryLocal.flags  | PQF_ALLOW_ALTERNATIVE_TARGET_TILE | PQF_STRAIGHT_LINE_ONLY_FOR_SANS_NODE);
 	pathLocal.from = path->from;
 	pathLocal.to = pathQueryLocal.to;
 
@@ -728,6 +740,7 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 		memcpy(path, &pathLocal, sizeof(Path));
 		return path->nodeCount;
 	}
+	
 
 		
 	
@@ -1528,8 +1541,8 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	}
 
 	//if (!config.pathfindingDebugModeFlushCache )
-		if (PathCacheGet(pq, pqr)) // has this query been done before? if so copies it and returns the result
-	{
+	if (PathCacheGet(pq, pqr)){
+		// has this query been done before? if so copies it and returns the result
 		if (config.pathfindingDebugMode)
 			logger->info("Query found in cache, fetching result.");
 			return pqr->nodeCount;
