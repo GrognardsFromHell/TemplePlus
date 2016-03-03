@@ -82,7 +82,9 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 {
 	AiTactic aiTac;
 	combat->enterCombat(objHnd);
-	AiStrategy* aiStrat = &(*aiStrategies)[objects.getInt32(objHnd, obj_f_critter_strategy)];
+	auto stratIdx = objects.getInt32(objHnd, obj_f_critter_strategy);
+	Expects(stratIdx >= 0);
+	AiStrategy* aiStrat = &(*aiStrategies)[stratIdx];
 	if (!actSeq->TurnBasedStatusInit(objHnd)) return 0;
 	
 	actSeq->curSeqReset(objHnd);
