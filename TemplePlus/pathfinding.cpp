@@ -322,8 +322,9 @@ int Pathfinding::PathCacheGet(PathQuery* pq, Path* pathOut)
 void Pathfinding::PathCachePush(PathQuery* pq, Path* pqr)
 {
 	pathCache[pathCacheIdx].path = *pqr;
-	memcpy(&pathCache[pathCacheIdx++], pq, sizeof(PathQuery));
 	pathCache[pathCacheIdx].timeCached = timeGetTime();
+	memcpy(&pathCache[pathCacheIdx++], pq, sizeof(PathQuery));
+	
 
 	pathCacheCleared = 0;
 	if (pathCacheIdx >= PATH_RESULT_CACHE_SIZE)
