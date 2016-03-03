@@ -102,6 +102,7 @@ struct PathQuery {
 const uint32_t TestSizeofPathQuery = sizeof(PathQuery); // should be 80 (0x50)
 
 enum PathFlags {
+	PF_NONE = 0,
 	PF_COMPLETE = 0x1, // Seems to indicate that the path is complete (or valid?)
 	PF_2 = 0x2,
 	PF_4 = 0x4,
@@ -111,7 +112,7 @@ enum PathFlags {
 };
 
 struct Path {
-	int flags;
+	int flags; // see PathFlags
 	int field4;
 	LocAndOffsets from;
 	LocAndOffsets to;

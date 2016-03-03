@@ -166,10 +166,10 @@ void GameLoop::Run() {
 			{
 				fpsCounter = 0;
 				if (timeElapsed > 0) {
-					logger->info("Time per frame: {}ms ,  FPS: {}", timeElapsed / 100, 1000 * 100 / (timeElapsed));
+				//	logger->info("Time per frame: {}ms ,  FPS: {}", timeElapsed / 100, 1000 * 100 / (timeElapsed));
 				}
 				if (timeElapsed2 > 0) {
-					logger->info("Time per frame - Render: {}ms ,  Rendering FPS: {}", timeElapsed2 / 100, 1000 * 100 / (timeElapsed2));
+				//	logger->info("Time per frame - Render: {}ms ,  Rendering FPS: {}", timeElapsed2 / 100, 1000 * 100 / (timeElapsed2));
 				}
 				timeElapsed = 0;
 				timeElapsed2 = 0;

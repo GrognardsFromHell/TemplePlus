@@ -177,9 +177,9 @@ struct AnimSlot {
 	int field_2C;
 	AnimSlotGoalStackEntry goals[8];
 	AnimSlotGoalStackEntry* pCurrentGoal;
-	uint32_t unk1;
-	uint32_t unk2;
-	uint32_t unk3;
+	uint32_t unk1; // field_1134
+	uint32_t unk2; // field_1138
+	uint32_t unk3; // field_113C
 	uint32_t padding[60];
 	PathQueryResult path;
 	AnimParam param1; // Used as parameters for goal states
@@ -356,6 +356,7 @@ public:
 	bool (__cdecl *PrepareSlotForGoalState)(AnimSlot &slot, const AnimGoalState *state);
 
 	void (__cdecl *PopGoal)(AnimSlot &slot, uint32_t &popFlags, const AnimGoal **newGoal, AnimSlotGoalStackEntry **newCurrentGoal, bool &keepProcessing);
+	void (__cdecl *GoalDestinationsRemove)(objHndl obj);
 
 	AnimAddressTable() {
 		rebase(GetAnimName, 0x102629D0);
@@ -377,6 +378,7 @@ public:
 		rebase(DrainCompletedQueue, 0x10016A30);		
 		rebase(PrepareSlotForGoalState, 0x10055700);
 		rebase(PopGoal, 0x10016FC0);
+		rebase(GoalDestinationsRemove, 0x100BAC80);
 	}
 
 } animAddresses;
@@ -694,6 +696,57 @@ public:
 		replaceFunction(0x10016A00, AnimCompleteQueueAppendNaked);
 		replaceFunction(0x10016A30, AnimationComplete);
 
+		static void (*orgPopGoal)(AnimSlot&, int*, AnimGoal**, AnimSlotGoalStackEntry**, int* ) = replaceFunction<void(__cdecl)(AnimSlot&, int*, AnimGoal**, AnimSlotGoalStackEntry**, int* )>(0x10016FC0,[](AnimSlot & slot, int* popFlags, AnimGoal** newGoal, AnimSlotGoalStackEntry** newCurrentGoal, int* keepProcessing)
+		{
+			if (!slot.currentGoal && !(*popFlags & 0x40000000)){
+				slot.flags |= AnimSlotFlag::ASF_UNK2;
+			}
+
+			if ( (*newGoal)->state_special.callback){
+				if (!(*popFlags & 0x70000000) || !(*popFlags & 0x4000000))
+				{
+					if (animAddresses.PrepareSlotForGoalState(slot, &(*newGoal)->state_special)){
+						(*newGoal)->state_special.callback(slot);
+					}
+				}
+			}
+
+			if (!(*popFlags & 0x1000000)){
+				slot.flags &= ~0x83C;
+				slot.padding[54] = 0;
+			}
+			
+			if (*popFlags & 0x2000000){
+				objHndl mover = slot.path.mover;
+				slot.unk2 = 1;
+				slot.path.flags = PF_NONE;
+				animAddresses.GoalDestinationsRemove(mover);
+			}
+
+			auto unk10055CA0 = temple::GetRef<void(__cdecl)(AnimSlot&, AnimGoal* )>(0x10055CA0);
+			unk10055CA0(slot, *newGoal);
+			slot.currentGoal--;
+			slot.currentState = 0;
+			if (slot.currentGoal < 0){
+				if (!(*popFlags & 0x40000000)){
+					slot.flags |= AnimSlotFlag::ASF_UNK2;
+				}
+			} else{
+				auto prevGoal = slot.pCurrentGoal;
+				slot.pCurrentGoal = *newCurrentGoal = &slot.goals[slot.currentGoal];
+				*newGoal = animAddresses.goals[(*newCurrentGoal)->goalType];
+				*keepProcessing = 0;
+				if (prevGoal->goalType == ag_anim_fidget) {
+					// FIX: prevents ag_anim_fidget from queueing an AnimComplete call (which creates the phantom animId = 0 bullshit)
+				} else
+				if ((*newCurrentGoal)->goalType == ag_anim_idle && !(*popFlags & 0x40000000) )	{
+					AnimCompleteQueueAppend(slot.animObj, slot.uniqueActionId);
+				}
+			}
+
+			//return orgPopGoal(slot, popFlags, newGoal, newCurrentGoal, keepProcessing);
+		});
+
 		return; // Currently not used
 
 		map<uint32_t, string> goalFuncNames;
@@ -801,6 +854,7 @@ void __cdecl AnimFix::AnimCompleteQueueAppend(objHndl obj, int animId)
 {
 	if (animId == 0 )
 	{
+		logger->debug("Added animId 0 to queue");
 		int dummy = 1;
 	}
 	int queueSize = *animAddresses.completeQueueSize;
