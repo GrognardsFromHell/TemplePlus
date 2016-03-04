@@ -97,7 +97,7 @@ struct ProximityList
 					{
 						if (objType == obj_t_pc || objType == obj_t_npc)
 						{
-							if (critterSys.IsFriendly(obj, pqr->mover) || critterSys.IsDeadOrUnconscious(obj))
+							if ( (pq->flags & PQF_IGNORE_CRITTERS) || critterSys.IsFriendly(obj, pqr->mover) || critterSys.IsDeadOrUnconscious(obj))
 								continue;
 						}
 
@@ -112,8 +112,7 @@ struct ProximityList
 							//auto result2 = pythonObjIntegration.ExecuteScript("combat", "TargetClosest", args);
 							int ignoreTarget = PyInt_AsLong(result);
 							Py_DECREF(result);
-							if (!ignoreTarget)
-							{
+							if (!ignoreTarget){
 								if (critterSys.IsWieldingRangedWeapon(obj))
 								{
 									Append(obj);
@@ -122,7 +121,7 @@ struct ProximityList
 									float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
 									float objRadius = objects.GetRadius(obj);
 									Append(obj, objReach + objRadius);
-					}
+								}
 							} else
 							{
 								Append(obj);
