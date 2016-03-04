@@ -742,8 +742,8 @@ public:
 				if ((*newCurrentGoal)->goalType == ag_anim_idle && !(*popFlags & 0x40000000) )	{
 					if (slot.uniqueActionId == 0)
 					{
-						logger->debug("Completing slot with animId 0. New goal is {}, previous was {}", (*newCurrentGoal)->goalType, prevGoal->goalType);
-					}
+						// logger->debug("Completing slot with animId 0. New goal is {}, previous was {}", (*newCurrentGoal)->goalType, prevGoal->goalType);
+					} else
 					AnimCompleteQueueAppend(slot.animObj, slot.uniqueActionId);
 				}
 			}
