@@ -2,6 +2,12 @@
 #include "stdafx.h"
 #include "python_cheats.h"
 #include <temple/dll.h>
+#include <util/fixes.h>
+#include <common.h>
+#include <party.h>
+#include <obj.h>
+#include <gamesystems/gamesystems.h>
+#include <gamesystems/objects/objsystem.h>
 
 // Returns 1 if it can handle the command
 typedef int (__cdecl *CheatFn)(const char *command);
@@ -96,4 +102,107 @@ static PyTypeObject PyCheatsType = {
 
 PyObject* PyCheats_Create() {
 	return PyObject_New(PyObject, &PyCheatsType);
+}
+
+
+class CheatHooks : TempleFix
+{ // using this to prevent players from spawning invalid protos (and more importantly, not crashing the game when I make console typos!!!)
+public: 
+	const char* name() override { return "PyCheat hooks";} 
+	
+	static char * ParseString(char * in, char* out);
+
+	void apply() override 
+	{
+
+		// give
+		replaceFunction<int(__cdecl)(char*)>(0x100492D0, [](char* consoleStr)
+		{
+			char cStrCopy[256];
+			auto v1 = ParseString(consoleStr, cStrCopy);
+			ParseString(v1, cStrCopy);
+
+			int protoNum = 5001; // DO NOT USE arrow
+			sscanf(cStrCopy, "%d", &protoNum);
+			auto protoHandle = gameSystems->GetObj().GetProtoHandle(protoNum);
+			if (!protoHandle)
+				return 0;
+
+			auto leader = party.GetConsciousPartyLeader();
+			auto loc = objects.GetLocation(leader);
+
+
+
+			auto handleNew = gameSystems->GetObj().CreateObject(protoHandle, loc);
+			if (handleNew){
+				if (!inventory.ItemGet(handleNew, leader, 0))
+				{
+					objects.Destroy(handleNew);
+					return 0;
+				}
+				auto obj = gameSystems->GetObj().GetObject(handleNew);
+				obj->SetItemFlag(OIF_IDENTIFIED, 1);
+			}
+			
+			return 1;
+		});
+
+		// create
+		replaceFunction<int(__cdecl)(char*)>(0x100496D0, [](char* consoleStr)
+		{
+			char cStrCopy[256];
+			auto v1 = ParseString(consoleStr, cStrCopy);
+			ParseString(v1, cStrCopy);
+
+			int protoNum = 5001; // DO NOT USE arrow
+			sscanf(cStrCopy, "%d", &protoNum);
+			auto protoHandle = gameSystems->GetObj().GetProtoHandle(protoNum);
+			if (!protoHandle)
+				return 0;
+
+			auto leader = party.GetConsciousPartyLeader();
+			auto loc = objects.GetLocation(leader);
+
+
+
+			auto handleNew = gameSystems->GetObj().CreateObject(protoHandle, loc);
+			if (handleNew) {
+				auto objGenerateHp = temple::GetRef<void(__cdecl)(objHndl)>(0x1007F720);
+				objGenerateHp(handleNew);	
+			}
+			auto& consoleNewlyCreatedObj = temple::GetRef<objHndl>(0x10AA31B8);
+			consoleNewlyCreatedObj = handleNew;
+			return 1;
+		});
+	}
+} hooks;
+
+char* CheatHooks::ParseString(char*in, char* out)
+{
+	int i = 0;
+	auto chr = *in;
+
+	// advance to first non-whitespace / terminator
+	while(chr && chr == ' '){
+		chr = *++in;
+	}
+
+	if (*in == '"'){
+		while (*in && *in != '"'){
+			out[i] = *in;
+			in++;
+			i++;
+		}
+	} 
+	else
+	{
+		while (*in){
+			if (*in == ' ')
+				break;
+			out[i++] = *in;
+			in++;
+		}
+	}
+	out[i] = 0;
+	return in;
 }

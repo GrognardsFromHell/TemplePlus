@@ -146,6 +146,27 @@ int InventorySystem::ItemDrop(objHndl item)
 	return _ItemDrop(item);
 }
 
+int InventorySystem::ItemGet(objHndl item, objHndl receiver, int flags)
+{
+	auto itemObj = gameSystems->GetObj().GetObject(item);
+	auto recObj = gameSystems->GetObj().GetObject(receiver);
+	
+	if (objects.IsContainer(receiver)){
+		return ItemGetAdvanced(item, receiver, -1, 0x8);
+	}
+	
+	if (!objects.IsCritter(receiver)){
+		return 0;
+	}
+	
+	if ( gameSystems->GetObj().GetProtoId(item) == 6239){ // Darley's Neckalce
+		return ItemGetAdvanced(item, receiver, 201, flags);
+	}
+
+	return ItemGetAdvanced(item, receiver, -1, flags);
+	
+}
+
 objHndl InventorySystem::GetParent(objHndl item)
 {
 	objHndl parent = 0i64;

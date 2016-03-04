@@ -56,7 +56,6 @@ struct InventorySystem : temple::AddressTable
 	int IsThrowingWeapon(objHndl weapon);
 	ArmorType GetArmorType(int armorFlags);
 	int GetQuantity(objHndl item); // note: returns 0 for items with no quantity fields!
-	int ItemDrop(objHndl item);
 	objHndl GetParent(objHndl item);
 	bool IsRangedWeapon(objHndl weapon);
 	int GetInventory(objHndl obj, objHndl** inventoryArray);
@@ -67,8 +66,15 @@ struct InventorySystem : temple::AddressTable
 	void InsertAtLocation(objHndl item, objHndl receiver, int itemInsertLocation);
 	int ItemUnwield(objHndl item);
 	int ItemUnwieldByIdx(objHndl obj, int i);
+	
 	ItemErrorCode TransferWithFlags(objHndl item, objHndl receiver, int invenInt, char flags, objHndl bag);
 	void ItemPlaceInIdx(objHndl item, int idx);
+	int ItemDrop(objHndl item);
+	int ItemGet(objHndl item, objHndl receiver, int flags);
+	void ForceRemove(objHndl item, objHndl parent);
+	void(__cdecl*_ForceRemove)(objHndl, objHndl);
+	void ItemRemove(objHndl item); // pretty much same as ForceRemove, but also send a d20 signal for inventory update, and checks for parent first
+	int ItemGetAdvanced(objHndl item, objHndl parent, int slotIdx, int flags);
 
 	/*
 		gets the item's sell price (in Copper Pieces) when dealing with a vendor
@@ -97,10 +103,6 @@ struct InventorySystem : temple::AddressTable
 	*/
 	void (__cdecl *Clear)(objHndl parent, BOOL keepPersistent);
 
-	void ForceRemove(objHndl item, objHndl parent);
-	void(__cdecl*_ForceRemove)(objHndl, objHndl);
-	void ItemRemove(objHndl item); // pretty much same as ForceRemove, but also send a d20 signal for inventory update, and checks for parent first
-	int ItemGetAdvanced(objHndl item, objHndl parent, int slotIdx, int flags);
 
 	// When equipped, which bone of the parent obj does this item attach to?
 	const std::string &GetAttachBone(objHndl item);

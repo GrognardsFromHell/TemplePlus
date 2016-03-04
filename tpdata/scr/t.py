@@ -1,13 +1,19 @@
 from toee import *
 from __main__ import game
 from utilities import *
-from Co8 import *
+from teleport_shortcuts import *
+
+
 #from itt import *
 from array import *
 from math import atan2
+
+
+from Co8 import *
 from py00439script_daemon import *
 from quickstart_module import *
-from teleport_shortcuts import *
+
+
 
 ## Last update 2010 - 09 - 30
 
