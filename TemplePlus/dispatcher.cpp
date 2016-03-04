@@ -303,6 +303,17 @@ DispIoImmunity* DispatcherSystem::DispIoCheckIoType23(DispIO* dispIo)
 	return DispIoCheckIoType23((DispIoImmunity*)dispIo);
 }
 
+DispIoEffectTooltip* DispatcherSystem::DispIoCheckIoType24(DispIoEffectTooltip* dispIo)
+{
+	if (dispIo->dispIOType != dispIOTypeEffectTooltip) return nullptr;
+	return dispIo;
+}
+
+DispIoEffectTooltip* DispatcherSystem::DispIoCheckIoType24(DispIO* dispIo)
+{
+	return DispIoCheckIoType24((DispIoEffectTooltip*)dispIo);
+}
+
 DispIOBonusListAndSpellEntry* DispatcherSystem::DispIOCheckIoType14(DispIOBonusListAndSpellEntry* dispIo)
 {
 	if (dispIo->dispIOType != dispIoTypeBonusListAndSpellEntry) return nullptr;

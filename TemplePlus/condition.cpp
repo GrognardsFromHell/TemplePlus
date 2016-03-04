@@ -931,8 +931,20 @@ int __cdecl TurnBasedStatusInitNoActions(DispatcherCallbackArgs args){
 		if (tbStat){
 			tbStat->hourglassState = 0;
 			dispIo->tbStatus->tbsFlags |= TurnBasedStatusFlags::TBSF_Movement;
+			logger->debug("Zeroed actions for {}", description.getDisplayName(args.objHndCaller));
 		}
 	}
+	return 0;
+}
+
+int __cdecl CaptivatingSongEffectTooltipDuration(DispatcherCallbackArgs args){
+	
+	auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
+	int durationRemaining = _CondNodeGetArg(args.subDispNode->condNode, 0);
+	char tooltipString[256];
+	sprintf(tooltipString, "\n%d rounds remaining.", durationRemaining);
+	auto effectTooltipBase = temple::GetRef<int(__cdecl)(void*, int someIdx, int spellEnum, char*)>(0x100F4680);
+	effectTooltipBase(dispIo->stuff, 100, 20054, tooltipString); // will fetch 20054 from spell.mes (Captivated!)
 	return 0;
 }
 
@@ -1367,6 +1379,7 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 8, dispTypeConditionRemove, 0, EndParticlesFromArg, 1, 0);
 	DispatcherHookInit(cond, 9, dispTypeBeginRound, 0, ConditionDurationTicker, 0, 0);
 	DispatcherHookInit(cond, 10, dispTypeTurnBasedStatusInit, 0, TurnBasedStatusInitNoActions, 0, 0);
+	DispatcherHookInit(cond, 11, dispTypeEffectTooltip, 0, CaptivatingSongEffectTooltipDuration, 0, 0);
 
 #pragma endregion
 	// Craft Wand

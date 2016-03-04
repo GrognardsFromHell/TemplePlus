@@ -23,8 +23,10 @@ struct DispIoD20ActionTurnBased; // 12
 struct DispIoMoveSpeed; //13
 struct DispIOBonusListAndSpellEntry; // 14
 struct DispIoAttackDice; // 20
-struct DispIoImmunity;
+struct DispIoImmunity; //23
+struct DispIoEffectTooltip; // 24
 struct D20Actn;
+
 
 struct SpellEntry;
 
@@ -80,6 +82,8 @@ struct DispatcherSystem : temple::AddressTable
 	DispIoMoveSpeed * DispIOCheckIoType13(DispIO* dispIo);
 	DispIoImmunity* DispIoCheckIoType23(DispIoImmunity* dispIo);
 	DispIoImmunity* DispIoCheckIoType23(DispIO* dispIo);
+	DispIoEffectTooltip* DispIoCheckIoType24(DispIoEffectTooltip* dispIo);
+	DispIoEffectTooltip* DispIoCheckIoType24(DispIO* dispIo);
 	DispIOBonusListAndSpellEntry* DispIOCheckIoType14(DispIOBonusListAndSpellEntry* dispIo);
 	void PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher* dispatcher);
 	int DispatchAttackBonus(objHndl objHnd, objHndl victim, DispIoAttackBonus* dispIo, enum_disp_type dispType, int key);
@@ -102,6 +106,7 @@ struct DispatcherSystem : temple::AddressTable
 	}
 
 	
+
 private:
 	void(__cdecl *_Dispatch29hMovementSthg)(objHndl objHnd, void *);
 };
@@ -342,6 +347,13 @@ struct DispIoImmunity : DispIO // type 23
 	int flag;
 	SpellPacketBody * spellPkt;
 	SpellEntry spellEntry;
+};
+
+
+
+struct DispIoEffectTooltip: DispIO // type 24
+{
+	void* stuff;
 };
 
 struct DispIoD20ActionTurnBased : DispIO{ // dispIoType = 12; matches dispTypes 36-38 
