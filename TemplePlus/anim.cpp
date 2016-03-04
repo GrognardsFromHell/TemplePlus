@@ -740,6 +740,10 @@ public:
 					// FIX: prevents ag_anim_fidget from queueing an AnimComplete call (which creates the phantom animId = 0 bullshit)
 				} else
 				if ((*newCurrentGoal)->goalType == ag_anim_idle && !(*popFlags & 0x40000000) )	{
+					if (slot.uniqueActionId == 0)
+					{
+						logger->debug("Completing slot with animId 0. New goal is {}, previous was {}", (*newCurrentGoal)->goalType, prevGoal->goalType);
+					}
 					AnimCompleteQueueAppend(slot.animObj, slot.uniqueActionId);
 				}
 			}
@@ -855,7 +859,6 @@ void __cdecl AnimFix::AnimCompleteQueueAppend(objHndl obj, int animId)
 	if (animId == 0 )
 	{
 		logger->debug("Added animId 0 to queue");
-		int dummy = 1;
 	}
 	int queueSize = *animAddresses.completeQueueSize;
 	if (queueSize < 20)
