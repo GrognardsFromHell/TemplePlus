@@ -924,6 +924,18 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 
 int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args);
 
+int __cdecl TurnBasedStatusInitNoActions(DispatcherCallbackArgs args){
+	auto dispIo = dispatch.DispIoCheckIoType8(args.dispIO);
+	if (dispIo){
+		auto tbStat = dispIo->tbStatus;
+		if (tbStat){
+			tbStat->hourglassState = 0;
+			dispIo->tbStatus->tbsFlags |= TurnBasedStatusFlags::TBSF_Movement;
+		}
+	}
+	return 0;
+}
+
 void _FeatConditionsRegister()
 {
 
@@ -1332,7 +1344,7 @@ void ConditionSystem::RegisterNewConditions()
 	cond = &mCondCaptivatingSong; 	condName = (char*)mCondCaptivatingSongName;
 
 	cond->condName = condName;
-	cond->numArgs = 8;
+	cond->numArgs = 8; // 2-7 is the caster objId
 
 	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
 	DispatcherHookInit(cond, 1, dispTypeConditionAdd, 0, CaptivatingSongOnConditionAdd, 1, 0x1028C7C8);
@@ -1354,6 +1366,7 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 7, dispTypeConditionAddFromD20StatusInit, 0, PlayParticlesSavePartsysId, 1, 0x1028C7C8); // 'Bardic-Fascinate-hit'
 	DispatcherHookInit(cond, 8, dispTypeConditionRemove, 0, EndParticlesFromArg, 1, 0);
 	DispatcherHookInit(cond, 9, dispTypeBeginRound, 0, ConditionDurationTicker, 0, 0);
+	DispatcherHookInit(cond, 10, dispTypeTurnBasedStatusInit, 0, TurnBasedStatusInitNoActions, 0, 0);
 
 #pragma endregion
 	// Craft Wand
@@ -2119,8 +2132,10 @@ int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args)
 	objHndl singer = spellPktBody.caster;
 	ObjectId singerId = objects.GetId(singer);
 	memcpy(&args.subDispNode->condNode->args[2], &singerId, sizeof(ObjectId));
-
-	conds.AddTo(args.objHndCaller, "Captivated", { duration,0, 0,0,0,0,0,0 });
+	std::vector<int> argg = { duration,0, 0,0,0,0,0,0 };
+	//conds.AddTo(args.objHndCaller, "Captivated", { duration,0, 0,0,0,0,0,0 });
+	memcpy(&argg[2], &singerId, sizeof(ObjectId));
+	conds.AddTo(args.objHndCaller, "Captivated", argg);
 	return 0;
 }
 

@@ -246,6 +246,11 @@ DispIOTurnBasedStatus* DispatcherSystem::DispIoCheckIoType8(DispIOTurnBasedStatu
 	return dispIo;
 }
 
+DispIOTurnBasedStatus* DispatcherSystem::DispIoCheckIoType8(DispIO* dispIo)
+{
+	return DispIoCheckIoType8((DispIOTurnBasedStatus*)dispIo);
+}
+
 DispIoTooltip* DispatcherSystem::DispIoCheckIoType9(DispIoTooltip* dispIo)
 {
 	if (dispIo->dispIOType != dispIoTypeTooltip) return nullptr;
