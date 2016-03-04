@@ -124,6 +124,12 @@ public:
 
 			int protoNum = 5001; // DO NOT USE arrow
 			sscanf(cStrCopy, "%d", &protoNum);
+
+			if (protoNum < 1000){
+				logger->warn("Invalid proto for give command: {}", protoNum);
+			}
+				return 0;
+
 			auto protoHandle = gameSystems->GetObj().GetProtoHandle(protoNum);
 			if (!protoHandle)
 				return 0;

@@ -559,6 +559,8 @@ BOOL PathNodeSys::FlushNodes()
 
 void PathNodeSys::GenerateClearanceFile()
 {	
+
+	logger->info("Generating clearance data.");
 	int idx = -1;
 	auto secClrData = new SectorClearanceData();
 	clearanceData.clrIdx.Reset();
@@ -573,6 +575,7 @@ void PathNodeSys::GenerateClearanceFile()
 			if (sectorSys.SectorFileExists(secLoc))
 			{
 				lockStatus = sectorSys.SectorLock(secLoc, &sect);
+				logger->info("Locking Sector:  X {} Y {}, status: {}", secX, secY, lockStatus);
 			}
 			
 			if (!lockStatus)
@@ -630,14 +633,17 @@ void PathNodeSys::GenerateClearanceFile()
 				}// nx
 			} // ny
 			sectorSys.SectorUnlock(secLoc);
+			logger->info("Sector unlocked.");
 		}
 	}
 	
+	logger->info("Processing complete; saving to file clearance.bin");
 	clearanceData.clrIdx.numSectors = idx + 1;
 	clearanceData.secClr = secClrData;
 	auto fil = tio_fopen("clearance.bin", "wb" );
 	tio_fwrite(&clearanceData.clrIdx, sizeof(clearanceData.clrIdx), 1, fil);
 	tio_fwrite(clearanceData.secClr, sizeof(SectorClearanceData), clearanceData.clrIdx.numSectors, fil);
+	logger->info("Wrote to file. Closing.");
 	tio_fclose(fil);
 }
 
