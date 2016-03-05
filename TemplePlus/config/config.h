@@ -34,13 +34,13 @@ struct TemplePlusConfig
 	bool skipLegal = true;
 	bool engineEnhancements = true;
 	bool pathfindingDebugMode = false;
-	bool softShadows = true;
-	bool windowed = true;
+	bool softShadows = false;
+	bool windowed = false;
 	bool lockCursor = true; // When in fullscreen, lock cursor
 	int windowWidth = 1024;
 	int windowHeight = 768;
-	int renderWidth = 1024;
-	int renderHeight = 768;
+	int renderWidth = -1; // will set to window size on first run
+	int renderHeight = -1;
 	std::wstring toeeDir;
 	int sectorCacheSize = 128; // Default is now 128 (ToEE was 16)
 	int screenshotQuality = 80; // 1-100, Default is 80

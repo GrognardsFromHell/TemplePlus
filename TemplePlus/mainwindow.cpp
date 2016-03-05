@@ -143,7 +143,11 @@ void MainWindow::CreateWindowRectAndStyles(RECT& windowRect, DWORD& style, DWORD
 		style = WS_POPUP;
 		mWidth = screenWidth;
 		mHeight = screenHeight;
-		} else {
+		if (config.renderWidth == -1 && config.renderHeight == -1){
+			config.renderWidth = mWidth;
+			config.renderHeight = mHeight;
+		}
+	} else {
 		// Apparently this flag controls whether x,y are preset from the outside
 		windowRect.left = (screenWidth - config.windowWidth) / 2;
 		windowRect.top = (screenHeight - config.windowHeight) / 2;

@@ -135,6 +135,7 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	*/
 	applyGlobalConfig();
 
+
 	TigInitializer tig(hInstance);
 	
 	setMiles3dProvider();
