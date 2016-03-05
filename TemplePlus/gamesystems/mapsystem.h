@@ -171,8 +171,9 @@ private:
 	bool mMapOpen = false;
 	bool mMapClosed = false;
 
+	
 	// Store the currently opened map state to disk
-	void FlushMap();
+	void FlushMap(int flags);
 
 	void OpenMap(const MapListEntry* map);
 
@@ -183,5 +184,6 @@ private:
 	void MapLoadPostprocess();
 
 	void SaveMapMobiles();
+	void SaveSectors(int flags);
 
 };

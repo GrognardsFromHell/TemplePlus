@@ -262,7 +262,7 @@ static map<int32_t,T> LoadIdxTable(TioFile* file) {
 
 bool MapSystem::SaveGame(TioFile *file) {
 	
-	FlushMap();
+	FlushMap(1);
 
 	if (tio_fputs(mSectorDataDir.c_str(), file) == -1) {
 		logger->error("Couldn't write sector data directory.");
@@ -726,7 +726,7 @@ bool MapSystem::OpenMap(int mapId, bool preloadSectors, bool dontSaveCurrentMap)
 	mPartySystem.SaveCurrent();
 
 	if (IsMapOpen() && !dontSaveCurrentMap) {
-		FlushMap();
+		FlushMap(0);
 	}
 
 	mTig.GetSoundSystem().ProcessEvents();
@@ -814,7 +814,7 @@ void MapSystem::LoadTips()
 
 }
 
-void MapSystem::FlushMap() {
+void MapSystem::FlushMap(int flags) {
 	
 	// Freeze all IDs
 	objSystem->ForEachObj([&](objHndl handle, GameObjectBody& obj) {
@@ -839,7 +839,7 @@ void MapSystem::FlushMap() {
 
 	// Previously a "map.sbf" file was saved here, which is only used
 	// by the old scripting system though
-
+	SaveSectors(flags);
 	// Previously several other subsystems saved their data here if they were
 	// in editor mode
 
@@ -1264,6 +1264,13 @@ void MapSystem::SaveMapMobiles() {
 	if (!dynamicObjs) {
 		tio_remove(dynFilename.c_str());
 	}
+
+}
+
+void MapSystem::SaveSectors(int flags)
+{
+	auto saveStatics = temple::GetRef<int(__cdecl)(char )>(0x10082C00);
+	saveStatics(flags);
 
 }
 
