@@ -49,6 +49,8 @@ namespace particles {
 		RenderingDevice& mDevice;
 		AnimatedModelFactory& mModelFactory;
 		AnimatedModelRenderer& mModelRenderer;
+
+		std::string ResolveBasename(const std::string &modelName);
 	};
 
 	class QuadParticleRenderer : public ParticleRenderer {

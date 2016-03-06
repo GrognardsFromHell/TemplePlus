@@ -2,6 +2,8 @@
 #include "particles/render_point.h"
 #include "render_general.h"
 
+#include <infrastructure/vfs.h>
+#include <infrastructure/logging.h>
 #include <graphics/mdfmaterials.h>
 
 namespace particles {
@@ -43,21 +45,30 @@ namespace particles {
 		if (!emitter.HasRenderState()) {
 
 			// Resolve the mesh filename
-			std::string skmName(fmt::format("art/meshes/particle/{}.skm", 
-				emitter.GetSpec()->GetMeshName()));
-			std::string skaName(fmt::format("art/meshes/particle/{}.ska",
-				emitter.GetSpec()->GetMeshName()));
+			auto baseName = ResolveBasename(emitter.GetSpec()->GetMeshName());
+			auto skmName = baseName + ".skm";
+			auto skaName = baseName + ".ska";
 			
-			EncodedAnimId animId(0); // This seems to be item_idle
-			auto model(mModelFactory.FromFilenames(skmName, skaName, animId, animParams));
+			try {
+				EncodedAnimId animId(0); // This seems to be item_idle
+				auto model(mModelFactory.FromFilenames(skmName, skaName, animId, animParams));
 
-			emitter.SetRenderState(
-				std::make_unique<ModelEmitterRenderState>(model)
-			);
+				emitter.SetRenderState(
+					std::make_unique<ModelEmitterRenderState>(model)
+					);
+			} catch (const TempleException &e) {
+				logger->error("Unable to load model {} for particle system {}: {}",
+					baseName, emitter.GetSpec()->GetParent().GetName(), e.what());
+
+				emitter.SetRenderState(std::make_unique<ModelEmitterRenderState>(nullptr));
+			}
 		}
 
-		auto renderState =
-			static_cast<ModelEmitterRenderState &>(emitter.GetRenderState());
+		auto renderState = static_cast<ModelEmitterRenderState &>(emitter.GetRenderState());
+
+		if (!renderState.model) {
+			return; // The loader above was unable to load the model for this emitter
+		}
 		
 		MdfRenderOverrides overrides;
 		overrides.ignoreLighting = true;
@@ -78,6 +89,32 @@ namespace particles {
 
 			mModelRenderer.Render(renderState.model.get(), animParams, {}, &overrides);
 		}
+	}
+
+	static const char *sSearchPath[] = {
+		"art\\meshes\\Particle\\",
+		"art\\meshes\\Scenery\\Containers\\",
+		"art\\meshes\\Scenery\\Misc\\Main Menu\\",
+		"art\\meshes\\Weapons\\"
+	};
+
+	std::string ModelParticleRenderer::ResolveBasename(const std::string& modelName) {
+
+		// A real, existing basename...
+		if (vfs->FileExists(modelName + ".skm") && vfs->FileExists(modelName + ".ska")) {
+			return modelName;
+		}
+
+		for (auto searchPath : sSearchPath) {
+			auto baseName = std::string(searchPath) + modelName;
+			if (vfs->FileExists(baseName + ".skm") && vfs->FileExists(baseName + ".ska")) {
+				return baseName;
+			}
+		}
+
+		// Probably invalid -> will throw
+		return modelName;
+
 	}
 
 }
