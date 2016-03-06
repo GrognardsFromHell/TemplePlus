@@ -21,28 +21,40 @@
 //#include <condition.h>
 #include "gamesystems/objects/objsystem.h"
 
-temple::GlobalPrimitive<ItemCreationType, 0x10BEDF50> itemCreationType;
-temple::GlobalPrimitive<objHndl, 0x10BECEE0> globObjHndCrafter;
-
-temple::GlobalPrimitive<int32_t, 0x10BEE3A4> craftInsufficientXP;
-temple::GlobalPrimitive<int32_t, 0x10BEE3A8> craftInsufficientFunds;
-temple::GlobalPrimitive<int32_t, 0x10BEE3AC> craftSkillReqNotMet;
-temple::GlobalPrimitive<int32_t, 0x10BEE3B0> dword_10BEE3B0;
-
-temple::GlobalPrimitive<char *, 0x10BED6D4> itemCreationUIStringSkillRequired;
-temple::GlobalPrimitive<char *, 0x10BEDB50> itemCreationUIStringItemCost;
-temple::GlobalPrimitive<char *, 0x10BED8A4> itemCreationUIStringXPCost;
-temple::GlobalPrimitive<char *, 0x10BED8A8> itemCreationUIStringValue;
-temple::GlobalPrimitive<TigTextStyle, 0x10BEE338> itemCreationTextStyle; // so far used by "Item Cost: %d" and "Experience Cost: %d"
-temple::GlobalPrimitive<TigTextStyle, 0x10BED938> itemCreationTextStyle2; // so far used by "Value: %d"
 int WandCraftCostCp=0;
 
 struct UiItemCreationAddresses : temple::AddressTable
 {
 	int (__cdecl* Sub_100F0200)(objHndl a1, RadialMenuEntry *entry);
+	ItemCreationType * itemCreationType;
+	objHndl* crafter;
+	int *craftInsufficientXP;
+	int * craftInsufficientFunds;
+	int*craftSkillReqNotMet;
+	int*dword_10BEE3B0;
+	char**itemCreationUIStringSkillRequired;
+	char**itemCreationUIStringItemCost;
+	char**itemCreationUIStringXPCost;
+	char**itemCreationUIStringValue;
+	TigTextStyle*itemCreationTextStyle;
+	TigTextStyle*itemCreationTextStyle2;
 	UiItemCreationAddresses()
 	{
 		rebase(Sub_100F0200, 0x100F0200);
+		rebase(itemCreationType, 0x10BEDF50);
+		rebase(crafter, 0x10BECEE0);
+		rebase(craftInsufficientXP,0x10BEE3A4);
+		rebase(craftInsufficientFunds, 0x10BEE3A8);
+		rebase(craftSkillReqNotMet, 0x10BEE3AC);
+		rebase(dword_10BEE3B0, 0x10BEE3B0);
+
+		rebase(itemCreationUIStringSkillRequired, 0x10BED6D4);
+		rebase(itemCreationUIStringItemCost, 0x10BEDB50);
+		rebase(itemCreationUIStringXPCost, 0x10BED8A4);
+		rebase(itemCreationUIStringValue, 0x10BED8A8);
+
+		rebase(itemCreationTextStyle, 0x10BEE338);
+		rebase(itemCreationTextStyle2, 0x10BED938);
 	}
 	
 } addresses;
@@ -70,7 +82,7 @@ int CraftedWandSpellLevel(objHndl objHndItem)
 	{
 		int dummy = 1;
 	}
-	int casterLevelSet = (int) d20Sys.d20QueryReturnData(globObjHndCrafter, DK_QUE_Craft_Wand_Spell_Level, 0, 0);
+	int casterLevelSet = (int) d20Sys.d20QueryReturnData(*addresses.crafter, DK_QUE_Craft_Wand_Spell_Level, 0, 0);
 	casterLevelSet = 2 * ((casterLevelSet + 1) / 2) - 1;
 	if (casterLevelSet < 1)
 		casterLevelSet = 1;
@@ -86,14 +98,14 @@ int CraftedWandSpellLevel(objHndl objHndItem)
 	uint32_t classCodes[SPELL_ENUM_MAX] = { 0, };
 	uint32_t spellLevels[SPELL_ENUM_MAX] = { 0, };
 	uint32_t spellFoundNum = 0;
-	int casterKnowsSpell = spellSys.spellKnownQueryGetData(globObjHndCrafter, spellData.spellEnum, classCodes, spellLevels, &spellFoundNum);
+	int casterKnowsSpell = spellSys.spellKnownQueryGetData(*addresses.crafter, spellData.spellEnum, classCodes, spellLevels, &spellFoundNum);
 	if (casterKnowsSpell){
 		uint32_t spellClassFinal = classCodes[0];
 		spellLevelFinal = 0;
 		uint32_t isClassSpell = classCodes[0] & (0x80);
 
 		if (isClassSpell){
-			spellLevelFinal = spellSys.GetMaxSpellSlotLevel(globObjHndCrafter, static_cast<Stat>(classCodes[0] & 0x7F), 0);
+			spellLevelFinal = spellSys.GetMaxSpellSlotLevel(*addresses.crafter, static_cast<Stat>(classCodes[0] & 0x7F), 0);
 		};
 		if (spellFoundNum > 1){
 			for (uint32_t i = 1; i < spellFoundNum; i++){
@@ -135,10 +147,10 @@ int CraftedWandCasterLevel(objHndl item)
 int32_t CreateItemResourceCheck(objHndl obj, objHndl objHndItem){
 	bool canCraft = 1;
 	bool xpCheck = 0;
-	int32_t * globInsuffXP = craftInsufficientXP.ptr();
-	int32_t * globInsuffFunds = craftInsufficientFunds.ptr();
-	int32_t *globSkillReqNotMet = craftSkillReqNotMet.ptr();
-	int32_t *globB0 = dword_10BEE3B0.ptr();
+	int32_t * globInsuffXP = addresses.craftInsufficientXP;
+	int32_t * globInsuffFunds = addresses.craftInsufficientFunds;
+	int32_t *globSkillReqNotMet = addresses.craftSkillReqNotMet;
+	int32_t *globB0 = addresses.dword_10BEE3B0;
 	uint32_t crafterLevel = objects.StatLevelGet(obj, stat_level);
 	uint32_t minXPForCurrentLevel = templeFuncs.XPReqForLevel(crafterLevel);
 	uint32_t crafterXP = objSystem->GetObject(obj)->GetInt32(obj_f_critter_experience);
@@ -152,7 +164,7 @@ int32_t CreateItemResourceCheck(objHndl obj, objHndl objHndItem){
 	*globB0 = 0;
 	int itemWorth = objects.getInt32(objHndItem, obj_f_item_worth);
 
-	
+	auto itemCreationType = *addresses.itemCreationType;
 	// Check GP Section
 	if (itemCreationType == ItemCreationType::CraftMagicArmsAndArmor){
 		craftingCostCP = templeFuncs.ItemWorthFromEnhancements( 41 );
@@ -209,6 +221,7 @@ void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCra
 	// the new and improved Wands/Scroll Property Setting Function
 
 	auto obj = objSystem->GetObject(objHndItem);
+	auto itemCreationType = *addresses.itemCreationType;
 
 	if (itemCreationType == CraftWand){
 		
@@ -295,6 +308,8 @@ void CreateItemDebitXPGP(objHndl objHndCrafter, objHndl objHndItem){
 	uint32_t craftingCostCP = 0;
 	uint32_t craftingCostXP = 0;
 
+	auto itemCreationType = *addresses.itemCreationType;
+
 	if (itemCreationType == CraftMagicArmsAndArmor){ // magic arms and armor
 		craftingCostCP = templeFuncs.ItemWorthFromEnhancements(41);
 		craftingCostXP = templeFuncs.CraftMagicArmsAndArmorSthg(41);
@@ -335,6 +350,7 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 
 	uint32_t casterLevelNew = -1; // h4x!
 	
+	auto itemCreationType = *addresses.itemCreationType;
 
 	if (itemCreationType == CraftWand)
 	{
@@ -347,10 +363,10 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 	rect.width = 159;
 	rect.height = 10;
 
-	globInsuffXP = craftInsufficientXP.ptr();
-	globInsuffFunds = craftInsufficientFunds.ptr();
-	globSkillReqNotMet = craftSkillReqNotMet.ptr();
-	globB0 = dword_10BEE3B0.ptr();
+	globInsuffXP = addresses.craftInsufficientXP;
+	globInsuffFunds = addresses.craftInsufficientFunds;
+	globSkillReqNotMet = addresses.craftSkillReqNotMet;
+	globB0 = addresses.dword_10BEE3B0;
 
 	//old method
 	/* 
@@ -365,14 +381,14 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 	// "Item Cost: %d"
 	if (*globInsuffXP || *globInsuffFunds || *globSkillReqNotMet || *globB0){
 		
-		text = format("{} @{}{}", *itemCreationUIStringItemCost.ptr(), *(globInsuffFunds)+1, craftingCostCP / 100);
+		text = format("{} @{}{}", *addresses.itemCreationUIStringItemCost, *(globInsuffFunds)+1, craftingCostCP / 100);
 	} else {
-		//_snprintf(text, 128, "%s @3%d", itemCreationUIStringItemCost.ptr(), craftingCostCP / 100);
-		text = format("{} @3{}", *itemCreationUIStringItemCost.ptr(), craftingCostCP / 100);
+		//_snprintf(text, 128, "%s @3%d", *addresses.itemCreationUIStringItemCost, craftingCostCP / 100);
+		text = format("{} @3{}", *addresses.itemCreationUIStringItemCost, craftingCostCP / 100);
 	};
 
 
-	UiRenderer::DrawTextInWidget(widgetId, text, rect, itemCreationTextStyle);
+	UiRenderer::DrawTextInWidget(widgetId, text, rect, *addresses.itemCreationTextStyle);
 	rect.y += 11;
 
 
@@ -382,39 +398,39 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 	if (itemCreationType == IC_Alchemy){ 
 		// placeholder - they do similar bullshit in the code :P but I guess it can be modified easily enough!
 		if (*globInsuffXP || *globInsuffFunds || *globSkillReqNotMet || *globB0){
-			text = format("{} @{}{}", *itemCreationUIStringSkillRequired.ptr(), *globSkillReqNotMet + 1, craftingCostXP);
+			text = format("{} @{}{}", *addresses.itemCreationUIStringSkillRequired, *globSkillReqNotMet + 1, craftingCostXP);
 		}
 		else {
-			text = format("{} @3{}", *itemCreationUIStringSkillRequired.ptr(), craftingCostXP);
+			text = format("{} @3{}", *addresses.itemCreationUIStringSkillRequired, craftingCostXP);
 		};
 	}
 	else
 	{
 		if (*globInsuffXP || *globInsuffFunds || *globSkillReqNotMet || *globB0){
-			text = format("{} @{}{}", *itemCreationUIStringXPCost.ptr(), *(globInsuffXP) + 1, craftingCostXP);
+			text = format("{} @{}{}", *addresses.itemCreationUIStringXPCost, *(globInsuffXP) + 1, craftingCostXP);
 		}
 		else {
-			text = format("{} @3{}", *itemCreationUIStringXPCost.ptr(), craftingCostXP);
+			text = format("{} @3{}", *addresses.itemCreationUIStringXPCost, craftingCostXP);
 		};
 	};
 
-	UiRenderer::DrawTextInWidget(widgetId, text, rect, itemCreationTextStyle);
+	UiRenderer::DrawTextInWidget(widgetId, text, rect, *addresses.itemCreationTextStyle);
 	rect.y += 11;
 
 	// "Value: %d"
 	//_snprintf(text, 128, "%s @1%d", * (itemCreationUIStringValue.ptr() ), templeFuncs.Obj_Get_Field_32bit(objHndItem, obj_f_item_worth) / 100);
-	text = format("{} @1{}", *itemCreationUIStringValue.ptr(), ItemWorthAdjustedForCasterLevel(objHndItem, casterLevelNew) / 100);
+	text = format("{} @1{}", *addresses.itemCreationUIStringValue, ItemWorthAdjustedForCasterLevel(objHndItem, casterLevelNew) / 100);
 
-	UiRenderer::DrawTextInWidget(widgetId, text, rect, itemCreationTextStyle2);
+	UiRenderer::DrawTextInWidget(widgetId, text, rect, *addresses.itemCreationTextStyle2);
 
 	// Prereq: %s
 	rect.x = 210;
 	rect.y = 200;
 	rect.width = 150;
 	rect.height = 105;
-	prereqString = templeFuncs.ItemCreationPrereqSthg_sub_101525B0(globObjHndCrafter, objHndItem);
+	prereqString = templeFuncs.ItemCreationPrereqSthg_sub_101525B0(*addresses.crafter, objHndItem);
 	if (prereqString){
-		UiRenderer::DrawTextInWidget(widgetId, prereqString, rect, itemCreationTextStyle);
+		UiRenderer::DrawTextInWidget(widgetId, prereqString, rect, *addresses.itemCreationTextStyle);
 	}
 	
 	if (itemCreationType == ItemCreationType::CraftWand)
@@ -428,7 +444,7 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 		
 		text = format("{} @3{}", asdf, casterLevelNew);
 		if (prereqString){
-			UiRenderer::DrawTextInWidget(widgetId, text, rect, itemCreationTextStyle);
+			UiRenderer::DrawTextInWidget(widgetId, text, rect, *addresses.itemCreationTextStyle);
 		}
 	}
 	
