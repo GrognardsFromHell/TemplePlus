@@ -166,7 +166,7 @@ namespace gfx {
 					++directionalCount;
 				else if (light.type == Light3dType::Point)
 					++pointCount;
-				else if (light.type == Light3dType::Directional)
+				else if (light.type == Light3dType::Spot)
 					++spotCount;
 			}
 
@@ -183,7 +183,7 @@ namespace gfx {
 					lightIdx = directionalCount++;
 				else if (light.type == Light3dType::Point)
 					lightIdx = pointFirstIdx + pointCount++;
-				else if (light.type == Light3dType::Directional)
+				else if (light.type == Light3dType::Spot)
 					lightIdx = spotFirstIdx + spotCount++;
 				else
 					continue;
