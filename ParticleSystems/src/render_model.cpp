@@ -80,10 +80,11 @@ namespace particles {
 
 			overrides.overrideColor = GetParticleColor(emitter, particleIdx);
 			
+			// Yes, this is *actually* swapped for Y / Z
 			auto& particleState = emitter.GetParticleState();
 			animParams.offsetX = particleState.GetState(PSF_POS_VAR_X, particleIdx);
-			animParams.offsetY = particleState.GetState(PSF_POS_VAR_Y, particleIdx);
-			animParams.offsetZ = particleState.GetState(PSF_POS_VAR_Z, particleIdx);
+			animParams.offsetY = particleState.GetState(PSF_POS_VAR_Z, particleIdx);
+			animParams.offsetZ = particleState.GetState(PSF_POS_VAR_Y, particleIdx);
 
 			renderState.model->SetTime(animParams, age);
 
