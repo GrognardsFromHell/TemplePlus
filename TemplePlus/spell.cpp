@@ -681,8 +681,11 @@ void LegacySpellSystem::GetSpellsFromTransferInfo()
 			for (size_t j = 0; j < spellPkt.spellPktBody.targetCount; j++)	{
 				if (!it.targetlistPartsys[j].empty() && it.targets[j]){
 					auto handle = objSystem->GetHandleById(it.targets[j]);
-					auto partSysId = gameSystems->GetParticleSys().CreateAtObj(it.targetlistPartsys[j], handle);
-					spellPkt.spellPktBody.targetListPartsysIds[j] = partSysId;
+					if (handle){
+						auto partSysId = gameSystems->GetParticleSys().CreateAtObj(it.targetlistPartsys[j], handle);
+						spellPkt.spellPktBody.targetListPartsysIds[j] = partSysId;
+					}
+						
 				}
 			}
 			spellsCastRegistry.put(spellId, spellPkt);
@@ -709,8 +712,13 @@ bool LegacySpellSystem::GetSpellPacketFromTransferInfo(unsigned& spellId, SpellP
 		} else {
 			logger->debug("GetSpellPacketFromTransferInfo: Tried to play partsys hash 0 for spell {} id", spellName, spellId);
 		}
+		spellPkt.spellPktBody.caster = handle;
+	} else
+	{
+		logger->info("Null caster detected in SpellTransferInfo, aborting. (perhaps from an NPC?)");
+		return false;
 	}
-	spellPkt.spellPktBody.caster = handle;
+	
 
 	if (mtInfo.aoeObjId.subtype != ObjectIdKind::Null) {
 		auto aoeHandle = objSystem->GetHandleById(mtInfo.aoeObjId);
