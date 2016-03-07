@@ -39,9 +39,6 @@
     <ClCompile Include="combat.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
-    <ClCompile Include="radial_menu.cpp">
-      <Filter>ui</Filter>
-    </ClCompile>
     <ClCompile Include="description.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
@@ -363,9 +360,6 @@
     </ClInclude>
     <ClInclude Include="combat.h">
       <Filter>Mods and Fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="radial_menu.h">
-      <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="obj_fieldnames.h">
       <Filter>utils</Filter>

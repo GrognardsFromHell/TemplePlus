@@ -199,7 +199,6 @@
     <ClCompile Include="python\python.cpp" />
     <ClCompile Include="python\pythonglobal.cpp" />
     <ClCompile Include="python\python_debug.cpp" />
-    <ClCompile Include="radial_menu.cpp" />
     <ClCompile Include="spell_condition.cpp" />
     <ClCompile Include="tig\tig_startup.cpp" />
     <ClCompile Include="tig\tig_loadingscreen.cpp" />
@@ -386,7 +385,6 @@
     <ClInclude Include="python\pythonglobal.h" />
     <ClInclude Include="python\python_debug.h" />
     <ClInclude Include="python\python_header.h" />
-    <ClInclude Include="radial_menu.h" />
     <ClInclude Include="spell.h" />
     <ClInclude Include="spell_structs.h" />
     <ClInclude Include="tig\tig.h" />

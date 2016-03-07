@@ -3,6 +3,10 @@
 #include "radialmenu.h"
 #include "condition.h"
 #include <infrastructure/elfhash.h>
+#include "util/fixes.h"
+#include "obj.h"
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/objects/objsystem.h"
 //#include "temple_functions.h"
 
 RadialMenus radialMenus;
@@ -70,6 +74,34 @@ static struct RadialMenuAddresses : temple::AddressTable {
 
 
 } addresses;
+
+
+class RadialMenuReplacements : public TempleFix
+{
+	const char* name() override {
+		return "Radial Menu Replacements";
+	}
+
+	void apply() override {
+		// RadialMenuUpdate
+		replaceFunction<void(__cdecl)(objHndl)>(0x1004D1F0, [](objHndl objHnd){
+			auto obj = gameSystems->GetObj().GetObject(objHnd);
+			Dispatcher * dispatcher = obj->GetDispatcher();
+			
+			if (dispatch.dispatcherValid(dispatcher)){
+				if (objects.IsPlayerControlled(objHnd))	{
+					objects.dispatch.DispatcherProcessor(dispatcher, dispTypeRadialMenuEntry, 0, nullptr);
+					auto setActiveRadial = temple::GetRef<void(__cdecl)(objHndl)>(0x100F0A70);
+					setActiveRadial(objHnd);
+				}
+			}
+		});
+
+	}
+};
+
+RadialMenuReplacements radMenuReplace;
+
 
 int return0()
 {

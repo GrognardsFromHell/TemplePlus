@@ -9,7 +9,6 @@
 #include "ui_item_creation.h"
 #include "combat.h"
 #include "obj.h"
-//#include "radial_menu.h"
 #include "radialmenu.h"
 #include "common.h"
 #include "ui_render.h"
