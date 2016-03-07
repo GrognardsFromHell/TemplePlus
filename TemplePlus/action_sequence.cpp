@@ -3084,10 +3084,10 @@ int ActnSeqReplacements::SeqRenderFuncMove(D20Actn* d20a, UiIntgameTurnbasedFlag
 		*addresses.cursorState = 19;
 	}
 
-	/*if (d20a->path)
+	if (d20a->path)
 	{
 		uiIntgameTb.PathpreviewGetFromToDist(d20a->path);
-	}*/
+	}
 	return 0;
 	//return orgSeqRenderFuncMove(d20a, flags);
 }
