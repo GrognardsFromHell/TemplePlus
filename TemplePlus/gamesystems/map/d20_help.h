@@ -37,7 +37,7 @@ class HelpSystem : TempleFix
 public: 
 	const char* name() override { return "Help System Replacements";}
 	void apply() override;
-
+	void ClickForHelpToggle() const;
 	static int HelpTabInit();
 	static D20HelpTopic* GetTopic(int topicId);
 	static int GenerateLinks(D20HelpTopic * d20ht);

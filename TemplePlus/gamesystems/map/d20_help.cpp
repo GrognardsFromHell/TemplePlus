@@ -75,6 +75,12 @@ void HelpSystem::apply()
 	replaceFunction(0x100E7E80, HelpTabInit);
 }
 
+void HelpSystem::ClickForHelpToggle() const
+{
+	auto& clickForHelpActive = temple::GetRef<int>(0x10BDE3D8);
+	clickForHelpActive = 1 - clickForHelpActive;
+}
+
 int HelpSystem::HelpTabInit()
 {
 	*addresses.hashTAG_ROOT = ElfHash::Hash("TAG_ROOT");

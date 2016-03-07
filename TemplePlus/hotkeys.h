@@ -15,6 +15,9 @@ public:
 	void HotkeyInit();
 	void HotkeyExit();
 	void HotkeyAssignCallback(int cancelFlag);
+	BOOL IsReservedHotkey(uint32_t dinputKey);
+	int HotkeyReservedPopup(uint32_t dinputKey);
+	BOOL IsNormalNonreservedHotkey(uint32_t dinputKey);
 };
 
 

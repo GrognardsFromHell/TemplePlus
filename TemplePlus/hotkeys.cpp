@@ -157,6 +157,24 @@ void HotkeySystem::HotkeyAssignCallback(int cancelFlag)
 	}
 }
 
+BOOL HotkeySystem::IsReservedHotkey(uint32_t dinputKey)
+{
+	auto isReservedKey = temple::GetRef<BOOL(__cdecl)(uint32_t)>(0x100F3ED0);
+	return isReservedKey(dinputKey);
+}
+
+int HotkeySystem::HotkeyReservedPopup(uint32_t dinputKey)
+{
+	auto hotkeyReservedPopup = temple::GetRef<BOOL(__cdecl)(uint32_t)>(0x100F3F20);
+	return hotkeyReservedPopup(dinputKey);
+}
+
+BOOL HotkeySystem::IsNormalNonreservedHotkey(uint32_t dinputKey)
+{
+	auto isNormalNonreservedHotkey = temple::GetRef<BOOL(__cdecl)(uint32_t)>(0x100F3D20);
+	return isNormalNonreservedHotkey(dinputKey);
+}
+
 void __cdecl HotkeyInit()
 {
 	hotkeys.HotkeyInit();

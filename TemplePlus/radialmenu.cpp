@@ -7,6 +7,15 @@
 #include "obj.h"
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
+#include <infrastructure/keyboard.h>
+#include <dinput.h>
+#include "ui\ui.h"
+#include "gamesystems/map/d20_help.h"
+#include "hotkeys.h"
+#include "party.h"
+#include "turn_based.h"
+#include "action_sequence.h"
+#include "critter.h"
 //#include "temple_functions.h"
 
 RadialMenus radialMenus;
@@ -41,7 +50,7 @@ static struct RadialMenuAddresses : temple::AddressTable {
 	int(__cdecl *AddSpell)(objHndl handle, SpellStoreData * spellData, int * idxOut, const RadialMenuEntry & entry); //adds a spell to the Radial Menu
 	int(__cdecl * RadialMenuCheckboxSthgSub_100F0200)(objHndl objHnd, RadialMenuEntry* radialMenuEntry);
 	void(__cdecl * CopyEntryToSelected)(objHndl obj, RadialMenuEntry* entry);
-	RadialMenu * activeRadialMenu;
+	RadialMenu ** activeRadialMenu;
 	int * activeRadialMenuNode;
 
 	RadialMenuAddresses() {
@@ -96,6 +105,32 @@ class RadialMenuReplacements : public TempleFix
 				}
 			}
 		});
+
+		static int (__cdecl*orgMsgHandler)(TigMsg* msg) = replaceFunction<int(__cdecl)(TigMsg*)>(0x1013DC90, [](TigMsg* msg)
+		{
+			auto shiftPressed = false;
+			infrastructure::gKeyboard.Update();
+			if (infrastructure::gKeyboard.IsKeyPressed(VK_LSHIFT) || infrastructure::gKeyboard.IsKeyPressed(VK_RSHIFT))	{
+				shiftPressed = true;
+			}
+			auto& uiRadmenuShiftPressed = temple::GetRef<int>(0x10BD0234) ;
+			uiRadmenuShiftPressed = shiftPressed;
+
+			if (radialMenus.GetActiveRadialMenuNode() == -1)
+				return 0;
+
+			auto evtType = msg->type;
+
+			if (evtType != TigMsgType::MOUSE){
+				if (evtType == TigMsgType::KEYSTATECHANGE){
+					return radialMenus.RadialMenuKeypressHandler(msg);
+				}
+				return 0;
+			}
+
+			return orgMsgHandler(msg);
+		});
+		
 
 	}
 };
@@ -169,8 +204,7 @@ int RadialMenus::AddParentChildNode(objHndl objHnd, RadialMenuEntry* radialMenuE
 	node->entry.type = RadialMenuEntryType::Parent;
 	node->morphsTo = -1;
 	node->entry.textHash = conds.hashmethods.StringHash(radialMenuEntry->text);
-	if (parentIdx != -1)
-	{
+	if (parentIdx != -1){
 		RadialMenuNode * parentNode = (RadialMenuNode*)&radMenu->nodes[parentIdx];
 		parentNode->children[parentNode->childCount++] = nodeCount;
 	}
@@ -178,8 +212,7 @@ int RadialMenus::AddParentChildNode(objHndl objHnd, RadialMenuEntry* radialMenuE
 	return nodeCount;
 }
 
-int RadialMenus::AddParentChildNodeClickable(objHndl objHnd, RadialMenuEntry* radialMenuEntry, int parentIdx)
-{
+int RadialMenus::AddParentChildNodeClickable(objHndl objHnd, RadialMenuEntry* radialMenuEntry, int parentIdx){
 	auto radMenu = GetForObj(objHnd);
 	auto nodeCount = radMenu->nodeCount;
 	RadialMenuNode * node = (RadialMenuNode*)&radMenu->nodes[nodeCount];
@@ -194,8 +227,7 @@ int RadialMenus::AddParentChildNodeClickable(objHndl objHnd, RadialMenuEntry* ra
 	node->entry.type = RadialMenuEntryType::Parent;
 	node->morphsTo = -1;
 	node->entry.textHash = conds.hashmethods.StringHash(radialMenuEntry->text);
-	if (parentIdx != -1)
-	{
+	if (parentIdx != -1){
 		RadialMenuNode * parentNode = (RadialMenuNode*)&radMenu->nodes[parentIdx];
 		parentNode->children[parentNode->childCount++] = nodeCount;
 	}
@@ -203,8 +235,7 @@ int RadialMenus::AddParentChildNodeClickable(objHndl objHnd, RadialMenuEntry* ra
 	return nodeCount;
 }
 
-int RadialMenus::AddRootNode(objHndl obj, const RadialMenuEntry* entry)
-{
+int RadialMenus::AddRootNode(objHndl obj, const RadialMenuEntry* entry){
 	auto radMenu = GetForObj(obj);
 	auto nodeCount = radMenu->nodeCount;
 	RadialMenuNode * node = (RadialMenuNode*)&radMenu->nodes[nodeCount];
@@ -218,8 +249,7 @@ int RadialMenus::AddRootNode(objHndl obj, const RadialMenuEntry* entry)
 	return nodeCount;
 }
 
-int RadialMenus::AddRootParentNode(objHndl obj, RadialMenuEntry* entry)
-{
+int RadialMenus::AddRootParentNode(objHndl obj, RadialMenuEntry* entry){
 	auto radMenu = GetForObj(obj);
 	auto nodeCount = radMenu->nodeCount;
 	RadialMenuNode * node = (RadialMenuNode*)&radMenu->nodes[nodeCount];
@@ -237,14 +267,11 @@ int RadialMenus::AddRootParentNode(objHndl obj, RadialMenuEntry* entry)
 
 }
 
-void RadialMenus::SetMorphsTo(objHndl obj, int nodeIdx, int spontSpellNode)
-{
+void RadialMenus::SetMorphsTo(objHndl obj, int nodeIdx, int spontSpellNode){
 	RadialMenu* radMenu = (RadialMenu*)GetForObj(obj);
 	auto nodeCount = radMenu->nodeCount;
-	if (nodeCount >= nodeIdx)
-	{
-		if (nodeCount>= spontSpellNode)
-		{
+	if (nodeCount >= nodeIdx){
+		if (nodeCount>= spontSpellNode)	{
 			radMenu->nodes[nodeIdx].morphsTo = spontSpellNode;
 		}
 	}
@@ -257,15 +284,11 @@ void RadialMenus::SetCallbackCopyEntryToSelected(RadialMenuEntry* radEntry)
 	radEntry->callback = addresses.CopyEntryToSelected;
 }
 
-int RadialMenus::GetActiveRadialMenuNode()
-{
-	if (addresses.activeRadialMenu)
-	{
+int RadialMenus::GetActiveRadialMenuNode(){
+	if (*addresses.activeRadialMenu){
 		return *addresses.activeRadialMenuNode;
-	} else
-	{
-		return -1;
 	}
+	return -1;	
 }
 
 BOOL RadialMenus::ActiveRadialMenuHasActiveNode()
@@ -283,6 +306,89 @@ int RadialMenus::SpawnMenu(int x, int y)
 {
 	static auto spawnMenu = temple::GetRef<int(__cdecl)(int, int)>(0x1013B250);
 	return spawnMenu(x, y);
+}
+
+void RadialMenus::ClearActiveRadialMenu()
+{
+	*addresses.activeRadialMenu = nullptr;
+	*addresses.activeRadialMenuNode = -1;
+}
+
+int RadialMenus::RadialMenuKeypressHandler(TigMsg* msg)
+{
+	if (msg->arg2)
+		return 0;
+
+	auto hotkey = msg->arg1;
+	auto& uiRadialAssigningHotkey = temple::GetRef<int>(0x10BE6D9C);
+	auto hotkeyAssignMouseTextCreate = temple::GetPointer<void(__cdecl)(int, int, void*)>(0x1013C130);
+	if (hotkey == DIK_ESCAPE){
+		if (uiRadialAssigningHotkey) {
+			if (ui.GetCursorTextDrawCallback() == hotkeyAssignMouseTextCreate) {
+				ui.SetCursorTextDrawCallback(nullptr, nullptr);
+			}
+			uiRadialAssigningHotkey = 0;
+			return 1;
+		}
+
+		radialMenus.ClearActiveRadialMenu();
+		return 1;
+	}
+
+	if (hotkey == DIK_H){
+		helpSys.ClickForHelpToggle();
+		return 1;
+	}
+
+	if (hotkeys.IsReservedHotkey(msg->arg1)){
+		//infrastructure::gKeyboard.Update();
+		if (infrastructure::gKeyboard.IsKeyPressed(VK_LCONTROL) || infrastructure::gKeyboard.IsKeyPressed(VK_RCONTROL)){
+			hotkeys.HotkeyReservedPopup(msg->arg1);
+			return 1;
+		}
+	} else if (hotkeys.IsNormalNonreservedHotkey(msg->arg1))
+	{
+		//infrastructure::gKeyboard.Update();
+		if (infrastructure::gKeyboard.IsKeyPressed(VK_LCONTROL) || infrastructure::gKeyboard.IsKeyPressed(VK_RCONTROL)){
+			uiRadialAssigningHotkey = 1;
+			auto& dikToBeHotkeyed = temple::GetRef<uint32_t>(0x10BE6DA0);
+			dikToBeHotkeyed = msg->arg1;
+			ui.SetCursorTextDrawCallback(hotkeyAssignMouseTextCreate, nullptr);
+			return 1;
+		}
+
+		if (uiRadialAssigningHotkey){
+			uiRadialAssigningHotkey = 0;
+			if (ui.GetCursorTextDrawCallback() == hotkeyAssignMouseTextCreate) {
+				ui.SetCursorTextDrawCallback(nullptr, nullptr);
+			}
+		}
+
+		auto leader = party.GetConsciousPartyLeader();
+		actSeqSys.TurnBasedStatusInit(leader);
+		actSeqSys.ActSeqSpellReset();
+		logger->debug("Radial Menu: Reseting sequence.");
+		actSeqSys.curSeqReset(leader);
+		d20Sys.GlobD20ActnInit();
+		auto radmenuHotkeySthg = temple::GetRef<RadialMenu*(__cdecl)(objHndl, int)>(0x100F3D60);
+		if (!radmenuHotkeySthg(leader, msg->arg1))
+			return 0;
+		
+		actSeqSys.ActionAddToSeq();
+		actSeqSys.sequencePerform();
+		auto comrade = party.GetFellowPc(leader);
+		char text[1000];
+		int soundId;
+		critterSys.GetCritterVoiceLine(leader, comrade, text, &soundId);
+		critterSys.PlayCritterVoiceLine(leader, comrade, text, soundId);
+
+		radialMenus.ClearActiveRadialMenu();
+		return 1;
+	} 
+	
+	return 0;
+	
+
 }
 
 void RadialMenuEntry::SetDefaults() {

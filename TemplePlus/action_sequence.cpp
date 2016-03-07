@@ -287,6 +287,12 @@ void ActionSequenceSystem::curSeqReset(objHndl obj)
 	*seqFlag_10B3D5C0 = 0;
 }
 
+void ActionSequenceSystem::ActSeqSpellReset() const
+{
+	auto actSeqSpellReset = temple::GetRef<void(__cdecl)()>(0x100930A0);
+	actSeqSpellReset();
+}
+
 void ActionSequenceSystem::ActSeqGetPicker()
 {
 	auto tgtClassif = d20Sys.TargetClassification(d20Sys.globD20Action);

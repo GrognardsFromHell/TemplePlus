@@ -97,6 +97,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	objHndl * simultPerformerQueue;
 	int turnBasedStatusTransitionMatrix[7][5]; // describes the new hourglass state when current state is i after doing an action that costs j
 	void curSeqReset(objHndl objHnd);
+	void ActSeqSpellReset() const;
 	void ActSeqGetPicker();
 	int ActionAddToSeq();
 		uint32_t addD20AToSeq(D20Actn * d20a, ActnSeq * actSeq);
@@ -195,7 +196,6 @@ struct ActionSequenceSystem : temple::AddressTable
 	BOOL SimulsAdvance();
 
 	uint32_t ActionCostNull(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, ActionCostPacket* actionCostPacket);
-	
 	int (__cdecl *ActionCostReload)(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp); 
 	int ActionCostFullAttack(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp);
 	void FullAttackCostCalculate(D20Actn *d20a, TurnBasedStatus *tbStatus, int *baseAttackNumCode, int *bonusAttacks, int *numAttacks, int *attackModeCode);

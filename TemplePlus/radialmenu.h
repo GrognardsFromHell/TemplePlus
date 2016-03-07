@@ -150,6 +150,9 @@ public:
 	BOOL ActiveRadialMenuHasActiveNode();
 	int MsgHandler(TigMsg* msg);
 	int SpawnMenu(int x, int y);
+
+	void ClearActiveRadialMenu();
+	int RadialMenuKeypressHandler(TigMsg* msg);
 };
 
 extern RadialMenus radialMenus;
