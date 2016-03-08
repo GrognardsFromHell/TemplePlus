@@ -316,6 +316,7 @@ void RadialMenus::ClearActiveRadialMenu()
 
 int RadialMenus::RadialMenuKeypressHandler(TigMsg* msg)
 {
+	logger->debug("RadialMenuKeypressHandler: msg arg1 {}   arg2 {}", msg->arg1, msg->arg2);
 	if (msg->arg2)
 		return 0;
 
