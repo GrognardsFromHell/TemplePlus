@@ -1077,6 +1077,9 @@ static PyObject* PyObjHandle_FloatMesFileLine(PyObject* obj, PyObject* args) {
 template <obj_f flagsField>
 static PyObject* GetFlags(PyObject* obj, PyObject*) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
 	auto flags = objects.getInt32(self->handle, flagsField);
 	return PyInt_FromLong(flags);
 }
@@ -1084,6 +1087,10 @@ static PyObject* GetFlags(PyObject* obj, PyObject*) {
 template <obj_f flagsField>
 static PyObject* SetFlag(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		logger->warn("Python SetFlag called with null handle.");
+		return PyInt_FromLong(0);
+	}
 	uint32_t flag;
 	if (!PyArg_ParseTuple(args, "i:objhndl.generic_set_flag", &flag)) {
 		return 0;
@@ -1097,10 +1104,16 @@ static PyObject* SetFlag(PyObject* obj, PyObject* args) {
 template <obj_f flagsField>
 static PyObject* ClearFlag(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle){
+		logger->warn("Python ClearFlag called on null obj handle. Field was {}", (int)flagsField);
+		return 0;
+	}
+		
 	uint32_t flag;
 	if (!PyArg_ParseTuple(args, "i:objhndl.generic_set_flag", &flag)) {
 		return 0;
 	}
+	
 	auto currentFlags = objects.getInt32(self->handle, flagsField);
 	currentFlags &= ~ flag;
 	objects.setInt32(self->handle, flagsField, currentFlags);
@@ -1109,6 +1122,9 @@ static PyObject* ClearFlag(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_ObjectFlagSet(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle){
+		return 0;
+	}
 	ObjectFlag flag;
 	if (!PyArg_ParseTuple(args, "i:objhndl.object_flag_set", &flag)) {
 		return 0;
@@ -1119,6 +1135,9 @@ static PyObject* PyObjHandle_ObjectFlagSet(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_ObjectFlagUnset(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
 	ObjectFlag flag;
 	if (!PyArg_ParseTuple(args, "i:objhndl.object_flag_unset", &flag)) {
 		return 0;
@@ -1129,18 +1148,27 @@ static PyObject* PyObjHandle_ObjectFlagUnset(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_PortalToggleOpen(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
 	objects.PortalToggleOpen(self->handle);
 	Py_RETURN_NONE;
 }
 
 static PyObject* PyObjHandle_ContainerToggleOpen(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
 	objects.ContainerToggleOpen(self->handle);
 	Py_RETURN_NONE;
 }
 
 static PyObject* PyObjHandle_SavingThrow(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
 	int dc, d20aType;
 	SavingThrowType type;
 	auto flags = (D20SavingThrowFlag) 0;
@@ -1155,6 +1183,9 @@ static PyObject* PyObjHandle_SavingThrow(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_SavingThrowSpell(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
 	int dc;
 	SavingThrowType type;
 	auto flags = (D20SavingThrowFlag)0;
@@ -1171,6 +1202,9 @@ static PyObject* PyObjHandle_SavingThrowSpell(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_ReflexSaveAndDamage(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
 	int dc;
 	auto flags = (D20SavingThrowFlag)0;
 	objHndl attacker;
@@ -1190,6 +1224,9 @@ static PyObject* PyObjHandle_ReflexSaveAndDamage(PyObject* obj, PyObject* args) 
 
 static PyObject* PyObjHandle_SoundmapCritter(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
 	int soundmapId;
 	if (!PyArg_ParseTuple(args, "i:objhndl.soundmap_critter", &soundmapId)) {
 		return 0;
@@ -1227,12 +1264,18 @@ static PyObject* PyObjHandle_HasSpellEffects(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_Kill(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
 	critterSys.Kill(self->handle, 0);
 	Py_RETURN_NONE;
 }
 
 static PyObject* PyObjHandle_KillByEffect(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
 	critterSys.KillByEffect(self->handle, 0);
 	Py_RETURN_NONE;
 }
@@ -1251,6 +1294,9 @@ static PyObject* PyObjHandle_Destroy(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_ItemGet(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
 	objHndl item;
 	if (!PyArg_ParseTuple(args, "O&:objhndl.item_get", &ConvertObjHndl, &item)) {
 		return 0;
@@ -1261,6 +1307,9 @@ static PyObject* PyObjHandle_ItemGet(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_PerformTouchAttack(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
 	D20Actn action(D20A_TOUCH_ATTACK);
 	int isMelee = 0;
 	if (!PyArg_ParseTuple(args, "O&|i:objhndl.perform_touch_attack", &ConvertObjHndl, &action.d20ATarget, &isMelee)) {
@@ -1291,23 +1340,36 @@ static PyObject* PyObjHandle_PerformTouchAttack(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_AddToInitiative(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
 	combatSys.AddToInitiative(self->handle);
 	Py_RETURN_NONE;
 }
 
 static PyObject* PyObjHandle_RemoveFromInitiative(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
 	combatSys.RemoveFromInitiative(self->handle);
 	Py_RETURN_NONE;
 }
 
 static PyObject* PyObjHandle_GetInitiative(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		logger->warn("PyObjHandle_GetInitiative called with null handle.");
+		return PyInt_FromLong(0);
+	}
 	return PyInt_FromLong(combatSys.GetInitiative(self->handle));
 }
 
 static PyObject* PyObjHandle_SetInitiative(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
 	int initiative;
 	if (!PyArg_ParseTuple(args, "i:objhndl.set_initiative", &initiative)) {
 		return 0;
@@ -1318,6 +1380,9 @@ static PyObject* PyObjHandle_SetInitiative(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_D20Query(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
 	int queryKey;
 	if (!PyArg_ParseTuple(args, "i:objhndl.d20query", &queryKey)) {
 		return 0;
@@ -1329,6 +1394,9 @@ static PyObject* PyObjHandle_D20Query(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_D20QueryHasSpellCond(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
 	int spellId;
 	if (!PyArg_ParseTuple(args, "i:objhndl.d20query_has_spell_cond", &spellId)) {
 		return 0;
