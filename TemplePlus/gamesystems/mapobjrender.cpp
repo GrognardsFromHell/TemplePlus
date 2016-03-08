@@ -3,6 +3,7 @@
 #include <util/fixes.h>
 #include <obj.h>
 #include "gamesystems/map/sector.h"
+#include "gamesystems/particlesystems.h"
 #include <config/config.h>
 #include <temple/meshes.h>
 #include "gamesystems/gamesystems.h"
@@ -27,9 +28,6 @@ static struct MapRenderAddresses : temple::AddressTable {
 	void (*WorldToLocalScreen)(vector3f pos, float* xOut, float* yOut);
 	void (*EnableLights)(LocAndOffsets forLocation, float radius);
 
-	void (*Particles_Kill)(int handle);
-	int (*Particles_CreateAtPos)(int hashcode, float x, float y, float z);
-
 	uint32_t (*GetWeaponGlowType)(objHndl wielder, objHndl item);
 
 	bool* globalLightEnabled;
@@ -42,9 +40,6 @@ static struct MapRenderAddresses : temple::AddressTable {
 		rebase(EnableLights, 0x100A5BA0);
 		rebase(isNight, 0x10B5DC80);
 		rebase(GetWeaponGlowType, 0x1004E620);
-
-		rebase(Particles_Kill, 0x10049BE0);
-		rebase(Particles_CreateAtPos, 0x10049BD0);
 
 		rebase(globalLightEnabled, 0x118691E0);
 		rebase(globalLight, 0x11869200);
@@ -753,7 +748,7 @@ std::vector<Light3d> MapObjectRenderer::FindLights(LocAndOffsets atLocation, flo
 					daytime particle system is still alive.
 					*/
 					if (light.partSys.handle) {
-						addresses.Particles_Kill(light.partSys.handle);
+						gameSystems->GetParticleSys().Remove(light.partSys.handle);
 						light.partSys.handle = 0;
 					}
 
@@ -763,12 +758,10 @@ std::vector<Light3d> MapObjectRenderer::FindLights(LocAndOffsets atLocation, flo
 					*/
 					auto& nightPartSys = light.light2.partSys;
 					if (!nightPartSys.handle && nightPartSys.hashCode) {
-						auto centerOfTile = light.position.ToInches2D();
-						nightPartSys.handle = addresses.Particles_CreateAtPos(
-							nightPartSys.hashCode,
-							centerOfTile.x,
-							light.offsetZ,
-							centerOfTile.y);
+						auto centerOfTile = light.position.ToInches3D(light.offsetZ);
+						nightPartSys.handle = gameSystems->GetParticleSys().CreateAt(
+							nightPartSys.hashCode, centerOfTile
+						);
 					}
 				}
 				else {
@@ -781,17 +774,16 @@ std::vector<Light3d> MapObjectRenderer::FindLights(LocAndOffsets atLocation, flo
 					// This is just the inverse of what we're doing at night (see above)
 					auto& nightPartSys = light.light2.partSys;
 					if (nightPartSys.handle) {
-						addresses.Particles_Kill(nightPartSys.handle);
+						gameSystems->GetParticleSys().Remove(nightPartSys.handle);
 						nightPartSys.handle = 0;
 					}
 
 					auto& dayPartSys = light.partSys;
 					if (!dayPartSys.handle && dayPartSys.hashCode) {
-						dayPartSys.handle = addresses.Particles_CreateAtPos(
-							dayPartSys.hashCode,
-							lightPos.x,
-							light.offsetZ,
-							lightPos.y);
+						auto centerOfTile = light.position.ToInches3D(light.offsetZ);
+						dayPartSys.handle = gameSystems->GetParticleSys().CreateAt(
+							dayPartSys.hashCode, centerOfTile
+						);
 					}
 				}
 			}
