@@ -343,7 +343,11 @@ int RadialMenus::RadialMenuKeypressHandler(TigMsg* msg)
 
 	if (hotkeys.IsReservedHotkey(msg->arg1)){
 		//infrastructure::gKeyboard.Update();
+		if (hotkey == DIK_LCONTROL || hotkey == DIK_RCONTROL)
+			return 1;
+		
 		if (infrastructure::gKeyboard.IsKeyPressed(VK_LCONTROL) || infrastructure::gKeyboard.IsKeyPressed(VK_RCONTROL)){
+			logger->debug("HotkeyReservedPopup for key {}", msg->arg1);
 			hotkeys.HotkeyReservedPopup(msg->arg1);
 			return 1;
 		}
