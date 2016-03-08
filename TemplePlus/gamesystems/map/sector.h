@@ -90,6 +90,7 @@ struct SectorLightNight {
 	int type;
 	uint32_t color;
 	XMFLOAT3 direction;
+	uint32_t padding;
 	float phi;
 	SectorLightPartSys partSys;
 };
