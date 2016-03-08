@@ -311,6 +311,7 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 			} 
 			else { // widget or keyboard msg
 				if (tigMsgType == TigMsgType::KEYSTATECHANGE && (msg->arg2 & 0xFF)== 0)	{
+					logger->debug("UiIntgameMsgHandler (KEYSTATECHANGE): msg arg1 {}   arg2 {}", msg->arg1, msg->arg2);
 					auto leader = party.GetConsciousPartyLeader();
 					if (actSeqSys.isPerforming(leader))
 						return 1;
