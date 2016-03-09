@@ -334,7 +334,7 @@ namespace gfx {
 
 		if (result != S_OK && result != S_PRESENT_OCCLUDED) {
 			LogD3dError("Present()", result);
-			if (result == D3DERR_DEVICELOST) {
+			if (result == D3DERR_DEVICELOST || result == S_PRESENT_MODE_CHANGED) {
 				ResetDevice();
 			}
 			return false;
