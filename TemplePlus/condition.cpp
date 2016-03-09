@@ -22,6 +22,7 @@
 #include <infrastructure/elfhash.h>
 #include "particles.h"
 #include "gamesystems/particlesystems.h"
+#include "anim.h"
 
 ConditionSystem conds;
 CondStructNew conditionDisableAoO;
@@ -69,11 +70,15 @@ public:
 		return "Condition Function Replacement";
 	}
 
+	static int LayOnHandsPerform(DispatcherCallbackArgs arg);
+
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
 		
 		conds.RegisterNewConditions();
 		
+		
+
 		replaceFunction(0x100E19C0, _CondStructAddToHashtable);
 		replaceFunction(0x100E1A80, _GetCondStructFromHashcode);
 		replaceFunction(0x100E1AB0, _CondNodeGetArg);
@@ -97,6 +102,13 @@ public:
 		replaceFunction(0x100EE280, GlobalToHitBonus);
 		replaceFunction(0x100EE760, GlobalOnDamage);
 		
+
+		replaceFunction(0x100FA060, LayOnHandsPerform);
+		static int (__cdecl* orgLayOnHandsPerformOnActionFrame)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100FA0F0, [](DispatcherCallbackArgs args){
+			return orgLayOnHandsPerformOnActionFrame(args);
+		});
+		
+
 
 		replaceFunction(0x100F7B60, _FeatConditionsRegister);
 		replaceFunction(0x100F7BE0, _GetCondStructFromFeat);
@@ -2130,7 +2142,34 @@ int RendOnDamage(DispatcherCallbackArgs args)
 		
 	return 0;
 }
+
+
+int ConditionFunctionReplacement::LayOnHandsPerform(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIOCheckIoType12(args.dispIO);
+	auto d20a = dispIo->d20a;
+	bool animResult = false;
+	if (critterSys.IsUndead(d20a->d20ATarget)){
+		d20a->d20Caf |= D20CAF_TOUCH_ATTACK;
+		if (d20a->d20Caf & D20CAF_RANGED)
+			return 0;
+		d20Sys.ToHitProc(d20a);
+		animResult = animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget);
+	} else	{
+		animResult = animationGoals.PushAnimate(d20a->d20APerformer, 86);
+	}
+
+	
+	if (animResult)
+	{
+		// fixes lack of animation ID
+		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
+		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
+	}
 		
+
+	return 0;
+}
 
 int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args)
 {

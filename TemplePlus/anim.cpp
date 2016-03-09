@@ -920,10 +920,12 @@ static struct AnimationAdresses : temple::AddressTable {
 
 	int(__cdecl* PushAttemptAttack)(objHndl, objHndl);
 
+	int(__cdecl*PushAnimate)(objHndl obj, int anim);
+
 	AnimationAdresses() {
 		
 		rebase(Interrupt, 0x1000C7E0);
-
+		rebase(PushAnimate, 0x10015290);
 		rebase(PushRotate,      0x100153E0);
 		rebase(PushFallDown,    0x100157B0);
 		rebase(PushUnconceal,   0x10015E00);
@@ -939,6 +941,7 @@ static struct AnimationAdresses : temple::AddressTable {
 		
 	}
 
+	
 } addresses;
 
 AnimationGoals animationGoals;
@@ -981,4 +984,9 @@ int AnimationGoals::GetAnimIdSthgSub_1001ABB0(objHndl objHndl)
 int AnimationGoals::PushAttemptAttack(objHndl attacker, objHndl defender)
 {
 	return addresses.PushAttemptAttack(attacker, defender);
+}
+
+int AnimationGoals::PushAnimate(objHndl obj, int anim)
+{
+	return addresses.PushAnimate(obj, anim);
 }

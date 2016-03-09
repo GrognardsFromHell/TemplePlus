@@ -49,6 +49,11 @@ public:
 		replaceFunction(0x1004E790, _dispatchTurnBasedStatusInit); 
 
 		replaceFunction(0x1004ED70, _dispatch1ESkillLevel); 
+
+		replaceFunction<int(__cdecl)(D20Actn*, TurnBasedStatus*, enum_disp_type)>(0x1004E0D0, [](D20Actn* d20a, TurnBasedStatus* tbStat, enum_disp_type dispType)
+		{
+			return dispatch.DispatchD20ActionCheck(d20a, tbStat, dispType);
+		});
 		
  
 	}
@@ -279,6 +284,11 @@ DispIoD20ActionTurnBased* DispatcherSystem::DispIOCheckIoType12(DispIoD20ActionT
 {
 	if (dispIo->dispIOType != dispIOTypeD20ActionTurnBased) return nullptr;
 	return dispIo;
+}
+
+DispIoD20ActionTurnBased* DispatcherSystem::DispIOCheckIoType12(DispIO* dispIo)
+{
+	return DispIOCheckIoType12((DispIoD20ActionTurnBased*)dispIo);
 }
 
 DispIoMoveSpeed * DispatcherSystem::DispIOCheckIoType13(DispIoMoveSpeed* dispIo)
