@@ -127,8 +127,9 @@ public:
 
 			if (protoNum < 1000){
 				logger->warn("Invalid proto for give command: {}", protoNum);
-			}
 				return 0;
+			}
+				
 
 			auto protoHandle = gameSystems->GetObj().GetProtoHandle(protoNum);
 			if (!protoHandle)
