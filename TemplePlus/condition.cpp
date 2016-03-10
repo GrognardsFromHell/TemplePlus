@@ -71,6 +71,7 @@ public:
 	}
 
 	static int LayOnHandsPerform(DispatcherCallbackArgs arg);
+	static int RemoveDiseasePerform(DispatcherCallbackArgs arg); // also used in WholenessOfBodyPerform
 
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
@@ -102,8 +103,9 @@ public:
 		replaceFunction(0x100EE280, GlobalToHitBonus);
 		replaceFunction(0x100EE760, GlobalOnDamage);
 		
-
+		// fixes for lack of uniqueAnimID registration
 		replaceFunction(0x100FA060, LayOnHandsPerform);
+		replaceFunction(0x100FB150, RemoveDiseasePerform);
 		static int (__cdecl* orgLayOnHandsPerformOnActionFrame)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100FA0F0, [](DispatcherCallbackArgs args){
 			return orgLayOnHandsPerformOnActionFrame(args);
 		});
@@ -2168,6 +2170,20 @@ int ConditionFunctionReplacement::LayOnHandsPerform(DispatcherCallbackArgs args)
 	}
 		
 
+	return 0;
+}
+
+int ConditionFunctionReplacement::RemoveDiseasePerform(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIOCheckIoType12(args.dispIO);
+	auto d20a = dispIo->d20a;
+	bool animResult = animationGoals.PushAnimate(d20a->d20APerformer, 86);
+	
+	if (animResult){
+		// fixes lack of animation ID
+		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
+		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
+	}
 	return 0;
 }
 
