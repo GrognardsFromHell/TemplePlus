@@ -715,6 +715,22 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 	// return result;
 	return 0;
 }
+
+int Ui::WidgetSet(int widId, const Widget* widg)
+{
+	memcpy(activeWidgets[widId], widg, activeWidgets[widId]->size);
+	return 0;
+}
+
+void Ui::ScrollbarSetYmax(int widId, int yMax)
+{
+	WidgetType3 widg;
+	if (!ui.WidgetCopy(widId, &widg))
+	{
+		widg.yMax = yMax;
+		WidgetSet(widId, &widg);
+	}
+}
 #pragma region Loading and Unloading
 UiLoader::UiLoader(const GameSystemConf& conf) {
 

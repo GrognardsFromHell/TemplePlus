@@ -1,10 +1,11 @@
 #pragma once
 
 const uint32_t SPELL_ENUM_MAX = 802;
-
+#define NUM_SPELL_LEVELS 10 // spells are levels 0-9
 
 enum SpellStoreType : uint8_t
 {
+	spellStoreNone = 0,
 	spellStoreKnown = 1,
 	spellStoreMemorized = 2,
 	spellStoreCast = 3

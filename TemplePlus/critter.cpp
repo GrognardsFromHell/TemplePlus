@@ -988,6 +988,36 @@ int LegacyCritterSystem::PlayCritterVoiceLine(objHndl obj, objHndl fellow, char*
 	return addresses.PlayCritterVoiceLine(obj, fellow, text, soundId);
 }
 
+int LegacyCritterSystem::SpellNumByFieldAndClass(objHndl obj, obj_f field, uint32_t spellClassCode)
+{
+	auto objBody = gameSystems->GetObj().GetObject(obj);
+	auto spellArray = objBody->GetSpellArray(field);
+	int spellArrayNum = spellArray.GetSize();
+	
+	int numSpells = 0;
+	for (int i = 0; i < spellArrayNum; i++){
+		auto spArrayClassCode = spellArray[i].classCode;
+		if (spArrayClassCode == spellClassCode)
+			numSpells++;
+	}
+	return numSpells;
+
+}
+
+int LegacyCritterSystem::DomainSpellNumByField(objHndl obj, obj_f field)
+{
+	auto objBody = gameSystems->GetObj().GetObject(obj);
+	auto spellArray = objBody->GetSpellArray(field);
+	int spellArrayNum = spellArray.GetSize();
+
+	int numSpells = 0;
+	for (int i = 0; i < spellArrayNum; i++) {
+		if (spellSys.isDomainSpell(spellArray[i].classCode ))
+			numSpells++;
+	}
+	return numSpells;
+}
+
 int LegacyCritterSystem::GetNumFollowers(objHndl obj, int excludeForcedFollowers)
 {
 	auto objBod = objSystem->GetObject(obj);

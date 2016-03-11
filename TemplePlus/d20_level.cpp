@@ -50,6 +50,21 @@ bool D20LevelSystem::CanLevelup(objHndl objHnd)
 
 }
 
+LevelPacket::LevelPacket()
+{
+	d20LevelSys.LevelPacketInit(this);
+}
+
+LevelPacket::~LevelPacket()
+{
+	d20LevelSys.LevelPacketDealloc(this);
+}
+
+int LevelPacket::GetLevelPacket(Stat classCode, objHndl obj, int lvlAdj, int classLvl)
+{
+	return d20LevelSys.GetLevelPacket(classCode, obj, lvlAdj, classLvl, this);
+}
+
 uint32_t _CanLevelup(objHndl objHnd)
 {
 	return d20LevelSys.CanLevelup(objHnd);

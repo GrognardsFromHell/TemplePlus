@@ -1106,6 +1106,10 @@ bool LegacySpellSystem::isDomainSpell(uint32_t spellClassCode)
 
 Stat LegacySpellSystem::GetCastingClass(uint32_t spellClassCode)
 {
+	if (isDomainSpell(spellClassCode))
+	{
+		logger->warn("GetCastingClass called with domain spell class code: {}", spellClassCode);
+	}
 	return (Stat)(spellClassCode & 0x7F);
 }
 

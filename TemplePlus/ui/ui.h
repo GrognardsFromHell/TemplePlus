@@ -280,6 +280,8 @@ public:
 	void SetCursorTextDrawCallback(void(* cursorTextDrawCallback)(int, int, void*), void* data);
 	int UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg);
 
+	int WidgetSet(int widId, const Widget* widg);
+	void ScrollbarSetYmax(int widId, int yMax);
 	/*
 	The list of all active widgets
 	*/

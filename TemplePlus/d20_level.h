@@ -2,6 +2,7 @@
 #include "common.h"
 #include "idxtables.h"
 #include "config/config.h"
+#include "spell_structs.h"
 
 struct LevelPacket;
 struct LevelupPacket;
@@ -42,9 +43,9 @@ struct LevelPacket
 	Stat classEnum;
 	IdxTable<feat_enums> featsIdxTable; // this gets filled from the ClassPacket
 	uint32_t hitDiceWithConBonus; // in the triplet format
-	int32_t field_28[10]; // init to -1's; spell related; idx is spellLevel
-	int32_t spellCountFromClass[10]; // init to -1's; idx is spellLevel
-	uint32_t spellCountBonusFromStatMod[10]; // init to 0; idx is spellLevel
+	int32_t field_28[NUM_SPELL_LEVELS]; // init to -1's; spell related; idx is spellLevel
+	int32_t spellCountFromClass[NUM_SPELL_LEVELS]; // init to -1's; idx is spellLevel
+	uint32_t spellCountBonusFromStatMod[NUM_SPELL_LEVELS]; // init to 0; idx is spellLevel
 	uint32_t fortitudeSaveBase;
 	uint32_t reflexSaveBase;
 	uint32_t willSaveBase;
@@ -52,5 +53,8 @@ struct LevelPacket
 	uint32_t skillPoints;
 	uint32_t baseFeatNum_Maybe;
 	uint32_t classFeatsNum;
+	LevelPacket();
+	~LevelPacket();
+	int GetLevelPacket(Stat classCode, objHndl obj, int lvlAdj, int classLvl);
 };
 #pragma pack(pop)
