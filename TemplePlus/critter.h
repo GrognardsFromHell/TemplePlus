@@ -299,7 +299,8 @@ struct LegacyCritterSystem : temple::AddressTable
 	bool IsWieldingRangedWeapon(objHndl performer);
 	void GetCritterVoiceLine(objHndl obj, objHndl fellow, char *str, int* soundId);
 	int PlayCritterVoiceLine(objHndl obj, objHndl fellow, char* text, int soundId);
-	
+	static int SpellNumByFieldAndClass(objHndl obj, obj_f field, uint32_t spellClassCode);
+	int DomainSpellNumByField(objHndl obj, obj_f field);
 	static int GetNumFollowers(objHndl obj, int excludeForcedFollowers);
 #pragma endregion
 

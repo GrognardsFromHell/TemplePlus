@@ -140,6 +140,7 @@ struct WidgetType3 : public Widget {
 	int fieldA4;
 	int fieldA8;
 	int fieldAC;
+	int GetY();
 };
 
 struct ActiveWidgetListEntry {
@@ -280,9 +281,12 @@ public:
 	void SetCursorTextDrawCallback(void(* cursorTextDrawCallback)(int, int, void*), void* data);
 	int UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg);
 
+	int WidgetSet(int widId, const Widget* widg);
+	void ScrollbarSetYmax(int widId, int yMax);
+	const char* GetTooltipString(int line) const;
 	/*
-	The list of all active widgets
-	*/
+		The list of all active widgets
+		*/
 	static Widget** activeWidgets;
 	// = 
 	void  apply  () override

@@ -9,6 +9,7 @@ struct D20ClassSystem : temple::AddressTable
 {
 public:
 	Stat classEnums[NUM_CLASSES];
+	const int ClassLevelMax = 20;
 	bool isNaturalCastingClass(Stat classEnum);
 	bool isNaturalCastingClass(uint32_t classEnum);
 	bool isVancianCastingClass(Stat classEnum);
@@ -27,7 +28,9 @@ public:
 		memcpy(classEnums, _charClassEnums, NUM_CLASSES * sizeof(uint32_t));
 	}
 
-	
+	int ClericMaxSpellLvl(uint32_t clericLvl) const;
+	int NumDomainSpellsKnownFromClass(objHndl dude, Stat classCode);
+	static int GetNumSpellsFromClass(objHndl obj, Stat classCode, int spellLvl, uint32_t classLvl);
 };
 
 extern D20ClassSystem d20ClassSys;

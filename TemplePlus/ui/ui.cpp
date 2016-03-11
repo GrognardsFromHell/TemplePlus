@@ -271,6 +271,17 @@ static UiSystem& getUiSystem(const char* name) {
 	throw TempleException(format("Couldn't find UI system {}! Replacement failed.", name));
 }
 
+int WidgetType3::GetY()
+{
+	auto getY = temple::GetRef<int(__cdecl)(int id, int& yOut)>(0x101FA150);
+	int y = 0;
+	if (getY(this->widgetId, y)){
+		logger->warn("scrollbar error!");
+		y = -1;
+	}
+	return y;
+}
+
 bool Ui::GetAsset(UiAssetType assetType, UiGenericAsset assetIndex, int& textureIdOut) {
 	return uiFuncs.GetAsset(assetType, static_cast<uint32_t>(assetIndex), textureIdOut, 0) == 0;
 }
@@ -714,6 +725,28 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 
 	// return result;
 	return 0;
+}
+
+int Ui::WidgetSet(int widId, const Widget* widg)
+{
+	memcpy(activeWidgets[widId], widg, activeWidgets[widId]->size);
+	return 0;
+}
+
+void Ui::ScrollbarSetYmax(int widId, int yMax)
+{
+	WidgetType3 widg;
+	if (!ui.WidgetCopy(widId, &widg))
+	{
+		widg.yMax = yMax;
+		WidgetSet(widId, &widg);
+	}
+}
+
+const char* Ui::GetTooltipString(int line) const
+{
+	auto getTooltipString = temple::GetRef<const char*(__cdecl)(int)>(0x10122DA0);
+	return getTooltipString(line);
 }
 #pragma region Loading and Unloading
 UiLoader::UiLoader(const GameSystemConf& conf) {

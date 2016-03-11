@@ -312,5 +312,6 @@ enum Domain
 		Domain_Trickery = 20,
 		Domain_War = 21,
 		Domain_Water = 22,
-		Domain_Special = 23
+		Domain_Special = 23,
+	Domain_Count = 24
 };

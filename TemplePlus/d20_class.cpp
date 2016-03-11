@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "d20_class.h"
+#include "d20_level.h"
+#include "obj.h"
 
 D20ClassSystem d20ClassSys;
 
@@ -63,4 +65,42 @@ void D20ClassSystem::ClassPacketDealloc(ClassPacket* classPkt)
 uint32_t D20ClassSystem::GetClassPacket(Stat classEnum, ClassPacket* classPkt)
 {
 	return addresses.GetClassPacket(classEnum, classPkt);
+}
+
+int D20ClassSystem::ClericMaxSpellLvl(uint32_t clericLvl) const
+{
+	return max(static_cast<uint32_t>(0), clericLvl % 2 + clericLvl / 2);
+}
+
+int D20ClassSystem::NumDomainSpellsKnownFromClass(objHndl dude, Stat classCode)
+{
+	if (classCode != stat_level_cleric)
+		return 0;
+	auto clericLvl = objects.StatLevelGet(dude, stat_level_cleric);
+	return ClericMaxSpellLvl(clericLvl) * 2;
+}
+
+int D20ClassSystem::GetNumSpellsFromClass(objHndl obj, Stat classCode, int spellLvl, uint32_t classLvl)
+{
+	LevelPacket lvlPkt;
+	d20LevelSys.GetLevelPacket(classCode, obj, 0, classLvl, &lvlPkt);
+	if (classCode == stat_level_bard){
+		if (spellLvl > 7)
+			spellLvl = 7;
+	}
+	else if (classCode <= stat_level_monk || classCode > stat_level_ranger){
+		if (spellLvl > 10)
+			spellLvl = 10;
+	}
+	else{
+		if (spellLvl > 5)
+			spellLvl = 5;
+	}
+	auto spellCountFromClass = lvlPkt.spellCountFromClass[spellLvl];
+	if (spellCountFromClass >=0)
+	{
+		spellCountFromClass += lvlPkt.spellCountBonusFromStatMod[spellLvl];
+	}
+
+	return spellCountFromClass;
 }
