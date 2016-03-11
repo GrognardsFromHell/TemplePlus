@@ -140,6 +140,7 @@ struct WidgetType3 : public Widget {
 	int fieldA4;
 	int fieldA8;
 	int fieldAC;
+	int GetY();
 };
 
 struct ActiveWidgetListEntry {

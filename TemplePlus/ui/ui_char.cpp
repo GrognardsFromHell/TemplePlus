@@ -157,6 +157,7 @@ public:
 	static void SpellsShow(objHndl obj);
 	static void(*orgSpellsShow)(objHndl obj);
 	static BOOL IsSpecializationSchoolSlot(int idx);
+	static int HookedCharSpellGetSpellbookScrollbarY();
 
 
 	static objHndl GetCritterLooted(); // this may be a substitute inventory object when buying from NPCs with shops
@@ -184,6 +185,10 @@ public:
 		//orgMemorizeSpellMsg= replaceFunction(   0x101B9360, MemorizeSpellMsg);
 		replaceFunction(0x101B2EE0, IsSpecializationSchoolSlot);
 		orgSpellsShow = replaceFunction(0x101B5D80, SpellsShow);
+		
+		// UiCharSpellGetScrollbarY  has bug when called from Spellbook, it receives the first tab's scrollbar always
+		writeCall(0x101BA5D9, HookedCharSpellGetSpellbookScrollbarY);
+		
 
 		static bool (__cdecl* orgUiCharLootingLootWndMsg)(int , TigMsg* ) = replaceFunction<bool(__cdecl)(int , TigMsg* ) >(0x101406D0, [](int widId, TigMsg* msg)
 		{
@@ -644,6 +649,17 @@ BOOL CharUiSystem::IsSpecializationSchoolSlot(int idx)
 		if (specSlotIndices[i] == idx)
 			return 1;
 	}
+	return 0;
+}
+
+int CharUiSystem::HookedCharSpellGetSpellbookScrollbarY()
+{
+	auto tabIdx = *addresses.uiCharSpellsNavClassTabIdx;
+	auto scrollbar = addresses.uiCharSpellPackets[tabIdx].spellbookScrollbar;
+	if (scrollbar) {
+		return (scrollbar->GetY());
+	}
+	logger->warn("Null scrollbar! Returning y=0");
 	return 0;
 }
 

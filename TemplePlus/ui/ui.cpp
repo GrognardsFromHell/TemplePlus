@@ -271,6 +271,17 @@ static UiSystem& getUiSystem(const char* name) {
 	throw TempleException(format("Couldn't find UI system {}! Replacement failed.", name));
 }
 
+int WidgetType3::GetY()
+{
+	auto getY = temple::GetRef<int(__cdecl)(int id, int& yOut)>(0x101FA150);
+	int y = 0;
+	if (getY(this->widgetId, y)){
+		logger->warn("scrollbar error!");
+		y = -1;
+	}
+	return y;
+}
+
 bool Ui::GetAsset(UiAssetType assetType, UiGenericAsset assetIndex, int& textureIdOut) {
 	return uiFuncs.GetAsset(assetType, static_cast<uint32_t>(assetIndex), textureIdOut, 0) == 0;
 }
