@@ -328,6 +328,28 @@ void InventorySystem::ForceRemove(objHndl item, objHndl parent)
 	_ForceRemove(item, parent);
 }
 
+bool InventorySystem::IsProficientWithArmor(objHndl obj, objHndl armor) const
+{
+	auto isProfWithArmor = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x1007C410);
+	return isProfWithArmor(obj, armor);
+}
+
+void InventorySystem::GetItemMesLine(MesLine* line)
+{
+	auto itemMes = temple::GetRef<MesHandle>(0x10AA8464);
+	mesFuncs.GetLine_Safe(itemMes, line);
+}
+
+const char* InventorySystem::GetItemErrorString(ItemErrorCode itemErrorCode)
+{
+	if (itemErrorCode <= 0)
+		return nullptr;
+	MesLine line;
+	line.key = 100 + itemErrorCode;
+	GetItemMesLine(&line);
+	return line.value;
+}
+
 void InventorySystem::ItemRemove(objHndl item)
 {
 	auto parent = GetParent(item);

@@ -166,6 +166,7 @@ public:
 	static int GetInventoryState(); // 1 - looting, 2 - bartering, 4 - using magic on inventory item
 	static int InventorySlotMsg(int widId, TigMsg* msg);
 	static BOOL (*orgInventorySlotMsg)(int widId, TigMsg* msg);
+	static char* HookedItemDescriptionBarter(objHndl obj, objHndl item);
 
 	void apply() override 
 	{
@@ -204,6 +205,9 @@ public:
 			}
 			return orgUiCharLootingLootWndMsg(widId, msg);
 		});
+
+		writeCall(0x10140134, HookedItemDescriptionBarter);
+		writeCall(0x1014016B, HookedItemDescriptionBarter);
 
 		orgInventorySlotMsg = replaceFunction<int(__cdecl)(int, TigMsg*) >(0x10157DC0, InventorySlotMsg);
 		
@@ -740,6 +744,39 @@ int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 		int dummy = 1;
 	}
 	return orgInventorySlotMsg(widId, msg);
+}
+
+char* CharUiSystem::HookedItemDescriptionBarter(objHndl obj, objHndl item)
+{
+	auto orgItemDescriptionBarter = temple::GetRef<char*(__cdecl)(objHndl, objHndl)>(0x10123220);
+	auto strOut = orgItemDescriptionBarter(obj, item);
+	auto itemType = gameSystems->GetObj().GetObject(item)->type;
+	if (itemType == obj_t_weapon)
+	{
+		auto wieldType = inventory.GetWieldType(obj, item);
+		if (wieldType == 3)
+		{
+			auto itemError = inventory.GetItemErrorString(IEC_Item_Too_Large);
+			sprintf(strOut, "%s\n\n%s", strOut, itemError);
+		} else
+		{
+			auto wpnType = objects.GetWeaponType(item);
+			if (!feats.WeaponFeatCheck(obj, nullptr, 0, (Stat)0, wpnType))
+			{
+				auto itemError = ui.GetTooltipString(136);
+				sprintf(strOut, "%s\n\n%s", strOut, itemError);
+			}
+		}
+	} 
+	else if (itemType == obj_t_armor)
+	{
+		auto itemWearFlags = objects.GetItemWearFlags(item);
+		if ((itemWearFlags & OIF_WEAR::OIF_WEAR_ARMOR)
+			&& !inventory.IsProficientWithArmor(obj, item))
+			sprintf(strOut, "%s\n\nNot Proficient With Armor!", strOut);
+	}
+	
+	return strOut;
 }
 
 BOOL(*CharUiSystem::orgSpellbookSpellsMsg)(int widId, TigMsg* tigMsg);

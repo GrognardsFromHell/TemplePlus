@@ -742,6 +742,12 @@ void Ui::ScrollbarSetYmax(int widId, int yMax)
 		WidgetSet(widId, &widg);
 	}
 }
+
+const char* Ui::GetTooltipString(int line) const
+{
+	auto getTooltipString = temple::GetRef<const char*(__cdecl)(int)>(0x10122DA0);
+	return getTooltipString(line);
+}
 #pragma region Loading and Unloading
 UiLoader::UiLoader(const GameSystemConf& conf) {
 
