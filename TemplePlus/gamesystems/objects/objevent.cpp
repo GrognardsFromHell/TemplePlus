@@ -44,19 +44,19 @@ public:
 	ObjEventSystem();
 
 	int ListRangeUpdate(ObjEventAoE &data, int id, ObjEventListItem* listItem) const;
-	BOOL ObjEventHandler(ObjEventAoE* const aoeEvt,int id, ObjEventListItem* evt) const;
+	BOOL ObjEventHandler(ObjEventAoE* const aoeEvt,int id, ObjEventListItem& evt) const;
 	void AdvanceTime() ;
 	void TablePruneNullAoeObjs() const;
 
 	#pragma region ObjEventList functions
-	void PrependEvtListNode(ObjEventListItem* evtListNode);
+	void PrependEvtListNode(ObjEventListItem& evtListNode);
 	void ListItemNew(objHndl obj, LocAndOffsets loc, LocAndOffsets aoeObjLoc);
 	bool ListHasItems() const;
 	void ListPrune() ; //  remove consecutive duplicates and null obj handles
 	
 	
 private:
-	ObjEventListItem * objEvtList;
+	std::vector<ObjEventListItem>  objEvtList;
 	ObjEventListItem * ListPruneNext(ObjEventListItem*) const;
 #pragma endregion
 	bool ObjEventLocIsInAoE(ObjEventAoE* const aoeEvt, LocAndOffsets aoeObjLoc, float objRadius) const;
@@ -129,13 +129,13 @@ int ObjEventHooks::EventAppend(objHndl aoeObj, int onEnterFuncIdx, int onLeaveFu
 	objEvents.objEvtTable->put(id, evt);
 
 	if (objEvents.objEvtTable->itemCount()){
-		auto evtListNode = new ObjEventListItem;
-		evtListNode->obj = aoeObj;
-		evtListNode->aoeObjLoc = objLoc;
-		evtListNode->loc.location.locx = 0;
-		evtListNode->loc.location.locy = 0;
-		evtListNode->loc.off_x = 0;
-		evtListNode->loc.off_y = 0;
+		ObjEventListItem evtListNode;
+		evtListNode.obj = aoeObj;
+		evtListNode.aoeObjLoc = objLoc;
+		evtListNode.loc.location.locx = 0;
+		evtListNode.loc.location.locy = 0;
+		evtListNode.loc.off_x = 0;
+		evtListNode.loc.off_y = 0;
 		objEvents.PrependEvtListNode(evtListNode);
 	}
 	return id;
@@ -149,7 +149,6 @@ void ObjEventHooks::ObjEventListItemNew(objHndl obj, LocAndOffsets loc, LocAndOf
 
 ObjEventSystem::ObjEventSystem()
 {
-	objEvtList = nullptr;
 	objEvtTable = &_objEvtTable;
 }
 
@@ -171,39 +170,39 @@ int ObjEventSystem::ListRangeUpdate(ObjEventAoE& evt, int id, ObjEventListItem* 
 	return 1;
 }
 
-BOOL ObjEventSystem::ObjEventHandler(ObjEventAoE* const aoeEvt, int id,ObjEventListItem* evt) const
+BOOL ObjEventSystem::ObjEventHandler(ObjEventAoE* const aoeEvt, int id,ObjEventListItem& evt) const
 {
 
 	auto objEventHandlerFuncs = temple::GetPointer<void(*__cdecl)(objHndl , objHndl , int )>(0x102AFB40);
-	if (aoeEvt->aoeObj != evt->obj)
+	if (aoeEvt->aoeObj != evt.obj)
 	{
 		// find the event obj in the aoeEvt list of previously appearing objects
 		bool foundInNodes = false;
 		auto objNode = aoeEvt->objNodesPrev;
 		
-		while(objNode && objNode->handle != evt->obj){
+		while(objNode && objNode->handle != evt.obj){
 			objNode = objNode->next;	
 		}
 		if (objNode)
 			foundInNodes = true;
 
-		if (!evt->obj){
+		if (!evt.obj){
 			throw TempleException("Null event node after pruning???");
 		}
-		auto objBody = gameSystems->GetObj().GetObject(evt->obj);
-		auto objRadius = objects.GetRadius(evt->obj);
-		auto aoeObjLoc = evt->aoeObjLoc;
+		auto objBody = gameSystems->GetObj().GetObject(evt.obj);
+		auto objRadius = objects.GetRadius(evt.obj);
+		auto aoeObjLoc = evt.aoeObjLoc;
 		bool isInAreaOfEffect = ObjEventLocIsInAoE(aoeEvt, aoeObjLoc, objRadius);
 
 		if (foundInNodes){
 			if(!isInAreaOfEffect)
 			{
-				objEventHandlerFuncs[aoeEvt->onLeaveFuncIdx](aoeEvt->aoeObj, evt->obj, id);
+				objEventHandlerFuncs[aoeEvt->onLeaveFuncIdx](aoeEvt->aoeObj, evt.obj, id);
 				return 1;
 			}
 		} else if (isInAreaOfEffect)
 		{
-			objEventHandlerFuncs[aoeEvt->onEnterFuncIdx](aoeEvt->aoeObj, evt->obj, id);
+			objEventHandlerFuncs[aoeEvt->onEnterFuncIdx](aoeEvt->aoeObj, evt.obj, id);
 		}
 		return 1;
 	}
@@ -263,15 +262,17 @@ void ObjEventSystem::AdvanceTime()
 	}
 
 	// cycle through the event list and expire the events
-	for (auto evt = objEvtList; objEvtList; evt = objEvtList){
-		for (auto it = objEvtTable->begin(); it != objEvtTable->end(); ++it){
+	for (auto evt = objEvtList.begin(); evt != objEvtList.end();)
+	{
+		for (auto it = objEvtTable->begin(); it != objEvtTable->end(); ++it) {
 			auto& node = *it;
 			node.data;
-			if (!ObjEventHandler(node.data, node.id, evt))	{
+			auto& evtt = *evt;
+			if (!ObjEventHandler(node.data, node.id, evtt)) {
 				logger->warn("ObjectEventAdvanceTime: fail! Id {}", node.id);
-			}	
+			}
 		}
-		objEvtList = objEvtList->next;
+		evt = objEvtList.erase(evt);
 	}
 
 	auto objEvtUpdater = temple::GetRef<int(__cdecl)(ObjEventAoE*, int id)>(0x100450B0);
@@ -281,51 +282,49 @@ void ObjEventSystem::AdvanceTime()
 	}
 }
 
-void ObjEventSystem::PrependEvtListNode(ObjEventListItem* evtListNode)
+void ObjEventSystem::PrependEvtListNode(ObjEventListItem& evtListNode)
 {
-	evtListNode->next = objEvtList;
-	objEvtList = evtListNode;
+	objEvtList.push_back(evtListNode);
 }
 
 void ObjEventSystem::ListItemNew(objHndl obj, LocAndOffsets loc, LocAndOffsets aoeObjLoc)
 {
 	if (objEvtTable->itemCount())
 	{
-		auto listItem = new ObjEventListItem;
-		listItem->obj = obj;
-		listItem->loc = loc;
-		listItem->aoeObjLoc = aoeObjLoc;
+		ObjEventListItem listItem;
+		listItem.obj = obj;
+		listItem.loc = loc;
+		listItem.aoeObjLoc = aoeObjLoc;
 		PrependEvtListNode(listItem);
 	}
 }
 
 bool ObjEventSystem::ListHasItems() const
 {
-	return objEvtList != nullptr;
+	return (!objEvtList.empty());
 }
 
 void ObjEventSystem::ListPrune()
 {
-	while (objEvtList && !objEvtList->obj) {
-		auto nodeToFree = objEvtList;
-		objEvtList = objEvtList->next;
-		free(nodeToFree);
+	for (auto it = objEvtList.begin(); it != objEvtList.end(); ) {
+		if (!it->obj){
+			it = objEvtList.erase(it);
+		} 
+		else{
+			++it;
+		}
 	}
 
-	if (objEvtList)
-	{
-		auto it = objEvtList;
-		for (auto next = &objEvtList->next; it->next; next = &it->next){
-			if ((*next)->obj &&(*next)->obj != it->obj){
-				it = *next;
-			} else
-			{
-				auto nodeToFree = *next;
-				*next = (*next)->next;
-				free(nodeToFree);
+	for (auto it = objEvtList.begin(); it != objEvtList.end(); ++it){
+		auto nextIt = it + 1;
+		while(nextIt != objEvtList.end()){
+
+			if (it->obj != nextIt->obj)
+				++nextIt;
+			else{
+				nextIt = objEvtList.erase(nextIt);
 			}
 		}
-		objEvtList->next = ListPruneNext(objEvtList->next);
 	}
 }
 
@@ -336,7 +335,6 @@ void ObjEventSystem::TablePruneNullAoeObjs() const
 	{
 		bool shouldPrune = false;
 		auto& node = *it;
-
 		if (!node.data->aoeObj)
 			shouldPrune = true;
 
@@ -351,27 +349,7 @@ void ObjEventSystem::TablePruneNullAoeObjs() const
 
 }
 
-ObjEventListItem* ObjEventSystem::ListPruneNext(ObjEventListItem*evt) const
-{
-	if (evt)
-	{
-		auto it = evt;
-		for (auto next = &objEvtList->next; it->next; next = &it->next) {
-			// check if the obj is actually different
-			if ( (*next)->obj && (*next)->obj != it->obj) {
-				it = *next;
-			}
-			// else, remove it from the list
-			else	{
-				auto nodeToFree = *next;
-				*next = (*next)->next;
-				free(nodeToFree);
-			}
-		}
-		evt->next = ListPruneNext(evt->next);
-	}
-	return evt;
-}
+
 
 bool ObjEventSystem::ObjEventLocIsInAoE(ObjEventAoE* const aoeEvt, LocAndOffsets loc, float objRadius) const
 {
