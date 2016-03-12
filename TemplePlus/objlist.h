@@ -104,6 +104,13 @@ public:
 	void ListRadius(LocAndOffsets loc, float radius, int flags);
 
 	/*
+	Lists objects in a radius + angles. This seems to be the radius in the X,Y 3D coordinate
+	space.
+	*/
+	void ListRange(LocAndOffsets loc, float radius, float angleMin, float angleMax, int flags);
+
+
+	/*
 		Lists objects in a cone. This seems to be the radius in the X,Y 3D coordinate
 		space.
 	*/

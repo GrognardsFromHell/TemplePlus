@@ -6,6 +6,7 @@
 #include "spell_structs.h"
 #include <stdint.h>
 
+struct LocAndOffsets;
 class OutputStream;
 struct locXY;
 struct Dispatcher;
@@ -210,6 +211,7 @@ struct GameObjectBody {
 		}
 	}
 	locXY GetLocation() const;
+	LocAndOffsets GetLocationFull() const;
 	void SetLocation(locXY location);
 
 	Dispatcher* GetDispatcher() const {

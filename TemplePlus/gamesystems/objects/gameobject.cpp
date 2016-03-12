@@ -821,6 +821,11 @@ locXY GameObjectBody::GetLocation() const
 	return locXY::fromField(GetInt64(obj_f_location));
 }
 
+LocAndOffsets GameObjectBody::GetLocationFull() const
+{
+	return  LocAndOffsets::create(locXY::fromField(GetInt64(obj_f_location)), GetFloat(obj_f_offset_x), GetFloat(obj_f_offset_y));
+}
+
 void GameObjectBody::SetLocation(locXY location)
 {
 	SetInt64(obj_f_location, location);

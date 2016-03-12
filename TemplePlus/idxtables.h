@@ -192,7 +192,7 @@ public:
 		}
 
 		// In case the ID didn't exist yet, prepend a node for it
-		mTable->buckets[bucketId] = new IdxTableNode<T>(absId, data, node);
+		mTable->buckets[bucketId] = new IdxTableNode<T>(absId, data, mTable->buckets[bucketId]);
 		++(mTable->itemCount);
 	}
 

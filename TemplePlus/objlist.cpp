@@ -46,6 +46,13 @@ void ObjList::ListRadius(LocAndOffsets loc, float radius, int flags) {
 	mHasToFree = true;
 }
 
+void ObjList::ListRange(LocAndOffsets loc, float radius, float angleMin, float angleMax, int flags)
+{
+	FreeResult();
+	addresses.ObjListRadius(loc, radius, angleMin, angleMax, flags, mResult);
+	mHasToFree = true;
+}
+
 void ObjList::ListCone(LocAndOffsets loc, float radius, float coneStartAngleRad, float coneArcRad, int flags) {
 	FreeResult();
 	addresses.ObjListRadius(loc, radius, coneStartAngleRad, coneArcRad, flags, mResult);

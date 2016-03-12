@@ -49,6 +49,7 @@ struct LocAndOffsets {
 		return location.ToInches3D(off_x, off_y, offsetZ);
 	}
 
+	
 	static LocAndOffsets FromInches(float x, float y);
 
 	static LocAndOffsets FromInches(XMFLOAT2 pos) {
@@ -59,6 +60,10 @@ struct LocAndOffsets {
 		return FromInches(pos.x, pos.z);
 	}
 
+	static LocAndOffsets create(locXY locXy, float offx, float offy);
+	/*LocAndOffsets();
+	LocAndOffsets(locXY loc);
+	LocAndOffsets(locXY loc, float offx, float offy);*/
 };
 
 struct LocFull {

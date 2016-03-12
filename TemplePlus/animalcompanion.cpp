@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "util/fixes.h"
 #include "temple_functions.h"
+#include "dispatcher.h"
 
 const uint8_t animalIndexOffset = 8; // the game has a block of familiar/wildshape/anim comp stuff defined, and AC's have an index relative to that
 /* just for testing
@@ -56,6 +57,29 @@ void AnimalCompanionMod::apply() {
 	
 	write(0x100FC0FB + 3, &ptrToAnimalCompanionProtosForRadialMenu, sizeof(ptrToAnimalCompanionProtosForRadialMenu));
 	write(0x100FC365 + 3, &ptrToAnimalCompanionLevelRestrictionsForRadialMenu, sizeof(ptrToAnimalCompanionLevelRestrictionsForRadialMenu));
+
+	replaceFunction<void(__cdecl)(const char*, int)>(0x100FD3F0,[](const char* nameIn, int sthg)
+	{
+		if (!sthg)
+		{
+			auto animCompTrimName = temple::GetRef<BOOL(__cdecl)(const char*, char*)>(0x100FC4E0);
+			char nameTrimmed[100];
+			if (animCompTrimName(nameIn, nameTrimmed))
+			{
+				auto& animCompSubDispNode = temple::GetRef<SubDispNode*>(0x115B1ECC);
+				auto& animCompIdx = temple::GetRef<int>(0x115B1EC8);
+				auto& animCompOwner = temple::GetRef<objHndl>(0x115B1EB8);
+				auto& animCompObj = temple::GetRef<objHndl>(0x115B1EB0);
+				auto animCompAdd = temple::GetRef<void(__cdecl)(SubDispNode*, objHndl, int, char*)>(0x100FC520);
+				animCompAdd(animCompSubDispNode, animCompOwner, animCompIdx, nameTrimmed);
+			}
+			
+		}else
+		{
+			int dummy = 1;
+		}
+		
+	});
 
 	//replaceFunction(0x100FC520, GiveXPAwards);
 }

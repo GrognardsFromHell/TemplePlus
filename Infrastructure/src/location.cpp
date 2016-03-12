@@ -31,6 +31,37 @@ LocAndOffsets LocAndOffsets::FromInches(float x, float y) {
 
 }
 
+LocAndOffsets LocAndOffsets::create(locXY locXy, float offx, float offy)
+{
+	LocAndOffsets loc;
+	loc.location = locXy;
+	loc.off_x = offx;
+	loc.off_y = offy;
+	return loc;
+}
+
+//LocAndOffsets::LocAndOffsets()
+//{
+//	location.locx = 0;
+//	location.locy = 0;
+//	off_x = 0.0;
+//	off_y = 0.0;
+//}
+//
+//LocAndOffsets::LocAndOffsets(locXY loc)
+//{
+//	location = loc;
+//	off_x = 0.0;
+//	off_y = 0.0;
+//}
+//
+//LocAndOffsets::LocAndOffsets(locXY loc, float offx, float offy)
+//{
+//	location = loc;
+//	off_x = offx;
+//	off_y = offy;
+//}
+
 std::ostream& operator<<(std::ostream& os, const locXY& loc) {
 	return os
 		<< std::to_string(loc.locx)
