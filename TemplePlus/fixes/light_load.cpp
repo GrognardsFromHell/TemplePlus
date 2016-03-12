@@ -39,15 +39,72 @@ public:
 
 private:
 
+	static int ReadLight(TioFile* file, SectorLight** lightOut);
 	static int ReadLightFromDiff(TioFile* file, SectorLight** lightOut);
 	static int (*OrgReadLightFromDiff)(TioFile*, SectorLight**);
+	static int (*OrgReadLight)(TioFile*, SectorLight**);
 
 } sectorCacheFix;
 
 int (*SectorLoadLightFix::OrgReadLightFromDiff)(TioFile*, SectorLight**);
+int (*SectorLoadLightFix::OrgReadLight)(TioFile*, SectorLight**);
 
 void SectorLoadLightFix::apply() {
 	OrgReadLightFromDiff = replaceFunction(0x100A8050, ReadLightFromDiff);
+	OrgReadLight = replaceFunction(0x100A6890, ReadLight);
+
+}
+
+int SectorLoadLightFix::ReadLight(TioFile* file, SectorLight** lightOut) {
+	auto &particles = gameSystems->GetParticleSys();
+	
+	SectorLight light;
+	if (tio_fread(&light, 0x40, 1u, file) != 1)
+		return 0;
+
+	auto lightPos = light.position.ToInches3D(light.offsetZ);
+
+	SectorLight *realLight;
+	if (light.flags & 0x10) {
+		realLight = (SectorLight *)malloc(0x48u);
+		memcpy(realLight, &light, 0x40);
+		if (tio_fread(&realLight->partSys, 8u, 1u, file) != 1)
+			return 0;
+
+		if (realLight->partSys.hashCode) {
+			realLight->partSys.handle = particles.CreateAt(realLight->partSys.hashCode, lightPos);
+		} else {
+			realLight->partSys.handle = 0;
+		}			
+	} else if (light.flags & 0x40) {
+		realLight = (SectorLight *)malloc(0xB0u);
+		memcpy(realLight, &light, 0x40);
+		if (tio_fread(&realLight->partSys, 8u, 1u, file) != 1)
+			return 0;
+		if (tio_fread(&realLight->light2, 0x24u, 1u, file) != 1)
+			return 0;
+
+		// reset the handles so whatever the on-disk sector may say, the particle systems are not running
+		realLight->partSys.handle = 0;
+		realLight->light2.partSys.handle = 0;
+
+		static auto& sIsNight = temple::GetRef<BOOL>(0x10B5DC80);
+		SectorLightPartSys *partSys;
+		if (sIsNight) {
+			partSys = &realLight->light2.partSys;
+		} else {
+			partSys = &realLight->partSys;
+		}
+
+		if (partSys->hashCode) {
+			partSys->handle = particles.CreateAt(partSys->hashCode, lightPos);
+		}
+	} else {
+		realLight = (SectorLight *)malloc(0x40u);
+		memcpy(realLight, &light, 0x40);
+	}
+	*lightOut = realLight;
+	return 1;
 }
 
 int SectorLoadLightFix::ReadLightFromDiff(TioFile* file, SectorLight** lightOut) {
@@ -77,5 +134,5 @@ int SectorLoadLightFix::ReadLightFromDiff(TioFile* file, SectorLight** lightOut)
 		free(lightOrg);
 	}
 
-	return OrgReadLightFromDiff(file, lightOut);
+	return ReadLight(file, lightOut);
 }
