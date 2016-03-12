@@ -333,6 +333,7 @@
       <Filter>ui</Filter>
     </ClCompile>
     <ClCompile Include="graphics\aas_hooks.cpp" />
+    <ClCompile Include="gamesystems\objects\objevent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -628,6 +629,7 @@
     <ClInclude Include="ui\ui_intgame_turnbased.h">
       <Filter>ui</Filter>
     </ClInclude>
+    <ClInclude Include="gamesystems\objects\objevent.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
