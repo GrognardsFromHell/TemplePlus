@@ -8,6 +8,9 @@
 #include "condition.h"
 #include "bonus.h"
 #include <pathfinding.h>
+#include "ui/ui.h"
+#include <combat.h>
+#include <action_sequence.h>
 
 
 class SizeColossalFix : public TempleFix {
@@ -336,3 +339,119 @@ int PartyPoolUiLagFix::UiPartyPoolLoadObj(char * objData, objHndl * handleOut, l
 }
 
 int (*PartyPoolUiLagFix::OrgUiPartyPoolLoadObj)(char *objData, objHndl *handleOut, locXY loc);
+
+
+static class RemoveSuggestionSpellFix : public TempleFix
+{
+public: 
+	const char* name() override { 
+		return "Remove Suggestion Fix";
+	} 
+
+	static int RemoveSpellSuggestionNaked(SubDispNode*, objHndl obj);
+	static int RemoveSpellSuggestion(DispIO*, enum_disp_type, D20DispatcherKey, SubDispNode*, objHndl);
+	void apply() override 
+	{
+		replaceFunction(0x100D2460, RemoveSpellSuggestionNaked);
+	}
+} removeSuggFix;
+
+int __declspec(naked) RemoveSuggestionSpellFix::RemoveSpellSuggestionNaked(SubDispNode*, objHndl obj)
+{
+	{ __asm push ecx __asm push esi __asm push ebx __asm push edi};
+
+	//push the objHndl
+	__asm mov ebx, [esp + 0x18]
+	__asm mov edi, [esp + 0x1C]
+	__asm push edi;
+	__asm push ebx;
+	// esp + 8
+
+	// push the SubDispNode*
+	__asm mov edi, [esp + 0x1C]  //0x14 + 8 from pushes
+	__asm push edi
+	// esp + C
+
+	// D20DispatcherKey
+	__asm push edx
+	// esp + 0x10
+
+	// enum_disp_key
+	__asm push eax
+	// esp + 0x14
+
+	// DispIO*
+	__asm push ecx
+	// esp + 0x18
+	
+	__asm call RemoveSuggestionSpellFix::RemoveSpellSuggestion;
+	__asm add esp, 0x18;
+
+	{ __asm pop edi __asm pop ebx __asm pop esi __asm pop ecx}
+	__asm ret
+}
+
+int RemoveSuggestionSpellFix::RemoveSpellSuggestion(DispIO* dispIo, enum_disp_type dispType, D20DispatcherKey dispKey, SubDispNode* sdn, objHndl obj)
+{
+	if (!dispIo){
+		if (dispType == dispTypeBeginRound || dispType == dispTypeConditionAddPre || dispKey == DK_SIG_Dismiss_Spells)	{
+			auto spellId = _CondNodeGetArg(sdn->condNode, 0);
+			d20Sys.d20SendSignal(obj, DK_SIG_Spell_End, spellId, 0);
+			critterSys.RemoveFollower(obj, 1);
+			ui.UpdatePartyUi();
+			return 1;
+		}
+		return 0;
+	}
+
+	auto spellId = _CondNodeGetArg(sdn->condNode, 0);
+	SpellPacketBody spellPkt;
+	if (!spellSys.GetSpellPacketBody(spellId, &spellPkt)){
+		logger->warn("RemoveSpellSuggestion: Unable to retrieve spell!");
+		return 0;
+	}
+
+	if (dispKey == DK_SIG_Killed ||dispKey == DK_SIG_Critter_Killed){
+		d20Sys.d20SendSignal(obj, DK_SIG_Spell_End, spellId, 0);
+		critterSys.RemoveFollower(obj, 1);
+		ui.UpdatePartyUi();
+		return 1;
+	}
+
+	auto dispIoSig = dispatch.DispIoCheckIoType6(dispIo);
+	if (!dispIoSig){
+		if (dispIo->dispIOType == dispIOTypeDispelCheck || dispIo->dispIOType == dispIOTypeTurnBasedStatus)	{
+			d20Sys.d20SendSignal(obj, DK_SIG_Spell_End, 0, 0);
+			critterSys.RemoveFollower(obj, 1);
+			ui.UpdatePartyUi();
+		}
+		return 0;
+	}
+
+	D20Actn* d20a = reinterpret_cast<D20Actn*>(dispIoSig->data1);
+	if (!d20a)
+		return 1;
+	
+	auto condSuggestion = temple::GetPointer<CondStruct>(0x102E0158);
+	if (d20a->d20ActType == D20A_CAST_SPELL){
+
+		if (d20Sys.d20QueryWithData(obj, DK_QUE_Critter_Has_Condition, condSuggestion, 0) == 1 && d20a->spellId != spellId)
+		{
+			d20Sys.d20SendSignal(obj, DK_SIG_Spell_End, spellPkt.spellId, 0);
+			critterSys.RemoveFollower(obj, 1);
+			ui.UpdatePartyUi();
+			return 1;
+		}	
+	} else if (d20Sys.IsActionOffensive(d20a->d20ActType, d20a->d20ATarget))	{
+		if (critterSys.IsFriendly(d20a->d20APerformer, d20a->d20ATarget))	{
+			if (d20Sys.d20QueryWithData(obj, DK_QUE_Critter_Has_Condition, condSuggestion, 0))	{
+				d20Sys.d20SendSignal(obj, DK_SIG_Spell_End, 0);
+				critterSys.RemoveFollower(obj, 1);
+				ui.UpdatePartyUi();
+				return 1;
+			}
+		}
+	}
+		
+	return 0;
+}

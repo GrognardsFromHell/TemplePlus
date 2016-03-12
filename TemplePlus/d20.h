@@ -55,6 +55,7 @@ struct LegacyD20System : temple::AddressTable
 	uint32_t d20Query(objHndl ObjHnd, D20DispatcherKey dispKey);
 	uint32_t d20QueryWithData(objHndl ObjHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
 	uint32_t d20QueryWithData(objHndl ObjHnd, D20DispatcherKey dispKey, objHndl argObj);
+	uint32_t d20QueryWithData(objHndl ObjHnd, D20DispatcherKey dispKey, CondStruct* cond, uint32_t arg2);
 	uint32_t d20QueryHasSpellCond(objHndl ObjHnd, int spellEnum);
 	uint64_t d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
 
@@ -81,6 +82,7 @@ struct LegacyD20System : temple::AddressTable
 	void (__cdecl *D20StatusInitFromInternalFields)(objHndl objHnd, Dispatcher *dispatcher);
 	void (__cdecl *D20ObjRegistryAppend)(objHndl ObjHnd);
 	void(__cdecl * _d20aTriggerCombatCheck)(int32_t idx);//1008AE90    ActnSeq * @<eax>
+	BOOL IsActionOffensive(D20ActionType actionType, objHndl obj) const;
 	uint32_t * d20EditorMode;
 	void(__cdecl *ToHitProc)(D20Actn *);
 	uint32_t (__cdecl*_tumbleCheck)(D20Actn* d20a);

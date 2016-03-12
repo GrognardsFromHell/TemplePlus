@@ -275,6 +275,11 @@ uint32_t LegacyD20System::d20QueryWithData(objHndl obj, D20DispatcherKey dispKey
 	return d20QueryWithData(obj, dispKey, (uint32_t)argObj, (argObj>>32));
 }
 
+uint32_t LegacyD20System::d20QueryWithData(objHndl obj, D20DispatcherKey dispKey, CondStruct* cond, uint32_t arg2)
+{
+	return d20QueryWithData(obj, dispKey, reinterpret_cast<uint32_t>(cond), arg2);
+}
+
 uint32_t LegacyD20System::d20QueryHasSpellCond(objHndl obj, int spellEnum)
 {
 	auto cond = spellSys.GetCondFromSpellIdx(spellEnum);
@@ -744,6 +749,17 @@ int LegacyD20System::TargetCheck(D20Actn* d20a)
 	}
 }
 
+BOOL LegacyD20System::IsActionOffensive(D20ActionType actionType, objHndl obj) const
+{
+	auto d20ADF = d20Defs[actionType].flags;
+	if (d20ADF & D20ADF::D20ADF_TriggersCombat){
+		if (actionType != D20A_LAY_ON_HANDS_USE)
+			return 1;
+		if (critterSys.IsUndead(obj))
+			return 1;
+	}
+	return 0;
+}
 
 
 uint64_t LegacyD20System::d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, ::uint32_t arg2)
