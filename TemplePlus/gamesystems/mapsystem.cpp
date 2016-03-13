@@ -31,6 +31,7 @@
 
 #include "clipping/clipping.h"
 #include "graphics/mapterrain.h"
+#include "objects/objevent.h"
 
 struct MapListEntry {
 	int id;
@@ -846,6 +847,12 @@ void MapSystem::FlushMap(int flags) {
 	// Flushes townmap data for the current map
 	static auto ui_townmap_flush = temple::GetPointer<void()>(0x100521b0);
 	ui_townmap_flush();
+
+	// flushes the ObjectEvents (which are tied to spell objects anyway and should go away)
+	if (!flags){
+		objEvents.FlushEvents();
+	}
+	
 
 }
 

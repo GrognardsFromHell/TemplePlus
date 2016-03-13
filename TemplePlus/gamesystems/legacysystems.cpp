@@ -11,6 +11,7 @@
 #include <graphics/camera.h>
 #include <config/config.h>
 #include <util/streams.h>
+#include "objects/objevent.h"
 
 
 //*****************************************************************************
@@ -1643,12 +1644,15 @@ bool ObjectEventSystem::SaveGame(TioFile *file) {
 	return save(file) == 1;
 }
 bool ObjectEventSystem::LoadGame(GameSystemSaveFile* saveFile) {
-	auto load = temple::GetPointer<int(GameSystemSaveFile*)>(0x100451b0);
-	return load(saveFile) == 1;
+	/*auto load = temple::GetPointer<int(GameSystemSaveFile*)>(0x100451b0);
+	auto result  = load(saveFile) == 1;*/
+
+	return objEvents.ObjEventLoadGame(saveFile);
 }
 void ObjectEventSystem::AdvanceTime(uint32_t time) {
-	auto advanceTime = temple::GetPointer<void(uint32_t)>(0x10045740);
-	advanceTime(time);
+	//auto advanceTime = temple::GetPointer<void(uint32_t)>(0x10045740);
+	//advanceTime(time);
+	objEvents.AdvanceTime();
 }
 const std::string &ObjectEventSystem::GetName() const {
 	static std::string name("ObjectEvent");

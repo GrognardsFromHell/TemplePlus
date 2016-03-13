@@ -264,6 +264,15 @@ public:
 		return IdxTableIterator<T>(mTable, nullptr, mTable->bucketCount);
 	}
 
+	void free(){
+		auto idxtableFree = temple::GetRef<void(__cdecl)(IdxTable<T>*)>(0x101EC690);
+		idxtableFree(mTable);
+	}
+
+	void newTable(size_t size,  const char* filename, int line){
+		auto newIdxTable = temple::GetRef<void(__cdecl)(IdxTable<T>*, size_t, const char*, int)>(0x101EC620);
+		newIdxTable(mTable, size, filename, line);
+	};
 private:
 	IdxTable<T>* mTable;
 };
