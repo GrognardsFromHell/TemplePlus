@@ -24,6 +24,8 @@
 #include "ui/ui_dialog.h"
 #include "ui/ui_picker.h"
 #include "d20_obj_registry.h"
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/objects/objsystem.h"
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
@@ -254,6 +256,17 @@ uint32_t LegacyD20System::d20Query(objHndl objHnd, D20DispatcherKey dispKey)
 	dispIO.data1 = 0;
 	dispIO.data2 = 0;
 	objects.dispatch.DispatcherProcessor(dispatcher, dispTypeD20Query, dispKey, &dispIO);
+	if (dispKey == DK_QUE_Critter_Is_Charmed || dispKey == DK_QUE_Critter_Is_Afraid || dispKey == DK_QUE_Critter_Is_Held) {
+		// in these cases the information stored is an objhandle; make sure it's a valid handle!
+		if (gameSystems->GetObj().IsValidHandle(*reinterpret_cast<uint64_t*>(&dispIO.data1))) {
+			dispIO.return_val;
+		}
+		else {
+			logger->debug("D20Query: an invalid handle was found, overriding result to 0!");
+			dispIO.return_val = 0;
+			return 0i64;
+		}
+	}
 	return dispIO.return_val;
 }
 
@@ -772,7 +785,18 @@ uint64_t LegacyD20System::d20QueryReturnData(objHndl objHnd, D20DispatcherKey di
 	dispIO.data1 = arg1;
 	dispIO.data2 = arg2;
 	objects.dispatch.DispatcherProcessor(dispatcher, dispTypeD20Query, dispKey, &dispIO);
-	return *(uint64_t*)&dispIO.data1;
+	if ( dispKey == DK_QUE_Critter_Is_Charmed || dispKey == DK_QUE_Critter_Is_Afraid || dispKey == DK_QUE_Critter_Is_Held){
+		// in these cases the information stored is an objhandle; make sure it's a valid handle!
+		if (gameSystems->GetObj().IsValidHandle(*reinterpret_cast<uint64_t*>(&dispIO.data1))){
+			auto result = *reinterpret_cast<uint64_t*>(&dispIO.data1);
+			return result;
+		} else	{
+			logger->debug("D20QueryReturnData: someone just tried to get an invalid handle!");
+			return 0i64;
+		}
+	}
+	auto result = *reinterpret_cast<uint64_t*>(&dispIO.data1);
+	return result;
 }
 #pragma endregion 
 
