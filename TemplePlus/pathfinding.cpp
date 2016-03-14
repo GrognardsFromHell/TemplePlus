@@ -712,7 +712,7 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 {
 	if (config.pathfindingDebugMode)
 	{
-		logger->info("Attempting PF using nodes");
+		logger->debug("Attempting PF using nodes");
 	}
 	PathQuery pathQueryLocal;
 	Path pathLocal;
@@ -730,9 +730,9 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 	pathLocal.from = path->from;
 	pathLocal.to = pathQueryLocal.to;
 
+
 	int result = FindPathStraightLine(&pathLocal, &pathQueryLocal);
-	if (result)
-	{
+	if (result)	{
 		pathLocal.nodeCount = 0;
 		pathLocal.nodeCount2 = 0;
 		pathLocal.nodeCount3 = 0;
@@ -740,10 +740,8 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 		memcpy(path, &pathLocal, sizeof(Path));
 		return path->nodeCount;
 	}
-	
 
-		
-	
+
 
 	auto from = path->from;
 	int nodeTotal = 0;
@@ -751,17 +749,21 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 	int chainLength;
 	int nodeIds[MAX_PATH_NODE_CHAIN_LENGTH];
 
+
 	if (!pathNodeSys.FindClosestPathNode(&path->from, &fromClosestId))
 		return 0;
 
 	if (!pathNodeSys.FindClosestPathNode(&path->to, &toClosestId))
 		return 0;
 	
+
+
 	chainLength = pathNodeSys.FindPathBetweenNodes(fromClosestId, toClosestId, nodeIds, MAX_PATH_NODE_CHAIN_LENGTH);
 	if (!chainLength)
 	{
 		return 0;
 	}
+
 		
 	if (config.pathfindingDebugMode)
 	{
@@ -1494,7 +1496,7 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	int refTime;
 
 	PathInit(pqr, pq);
-	if (config.pathfindingDebugMode)
+	if (config.pathfindingDebugMode || !combatSys.isCombatActive())
 	{
 		
 		pdbgUsingNodes = false;
@@ -1507,7 +1509,7 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 			logger->info("Starting path attempt for {}", description.getDisplayName(pdbgMover));
 		}
 		pdbgFrom = pq->from;
-		if (pq->targetObj)
+		if ((pq->flags & PQF_TARGET_OBJ) && pq->targetObj )
 		{
 			pdbgTargetObj = pq->targetObj;
 			pdbgTo = objects.GetLocationFull(pdbgTargetObj);
@@ -1522,7 +1524,7 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	auto toSubtile = locSys.subtileFromLoc(&pqr->to);
 	if (locSys.subtileFromLoc(&pqr->from) == toSubtile || !GetAlternativeTargetLocation(pqr, pq))
 	{
-		if (config.pathfindingDebugMode)
+		if (config.pathfindingDebugMode || !combatSys.isCombatActive())
 		{
 			if (locSys.subtileFromLoc(&pqr->from) == toSubtile)
 				logger->info("Pathfinding: Aborting because from = to.");
@@ -1543,7 +1545,7 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	//if (!config.pathfindingDebugModeFlushCache )
 	if (PathCacheGet(pq, pqr)){
 		// has this query been done before? if so copies it and returns the result
-		if (config.pathfindingDebugMode)
+		if (config.pathfindingDebugMode || !combatSys.isCombatActive())
 			logger->info("Query found in cache, fetching result.");
 			return pqr->nodeCount;
 	}
@@ -1560,16 +1562,19 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	refTime = timeGetTime();
 	if (ShouldUsePathnodes(pqr, pq))
 	{
+		if (config.pathfindingDebugMode || !combatSys.isCombatActive())
+		{
+			logger->info("Attempting using nodes...");
+		}
 		triedPathNodes = 1;
 		gotPath = FindPathUsingNodes(pq, pqr);
-		if (!gotPath)
-		{
-			int dummy = 1;
+		if ( config.pathfindingDebugMode || !combatSys.isCombatActive()){
+			logger->info("Nodes attempt result: {}..." , gotPath);
 		}
 	} 
 	else
 	{
-		if (config.pathfindingDebugMode)
+		if (config.pathfindingDebugMode || !combatSys.isCombatActive())
 		{
 			logger->info("Attempting sans nodes...");
 		}
@@ -1580,7 +1585,7 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	{
 		if (!(pq->flags & PQF_DONT_USE_PATHNODES)  && !triedPathNodes)
 		{
-			if (config.pathfindingDebugMode)
+			if (config.pathfindingDebugMode || !combatSys.isCombatActive())
 			{
 				pdbgAbortedSansNodes = true;
 				logger->info("Failed Sans Nodes attempt... trying nodes.");
@@ -1595,7 +1600,7 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 
 	if (gotPath)
 	{
-		if (config.pathfindingDebugMode)
+		if (config.pathfindingDebugMode || !combatSys.isCombatActive())
 		{
 			if (pq->critter)
 				logger->info("{} pathed successfully to {}", description.getDisplayName(pq->critter), pqr->to);
@@ -1604,14 +1609,14 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 		pqr->flags |= PF_COMPLETE;
 	} else
 	{
-		if (config.pathfindingDebugMode)
+		if (config.pathfindingDebugMode || !combatSys.isCombatActive())
 		{
 			logger->info("PF to {} failed!", pqr->to);
 		}
 	}
 	PathCachePush(pq, pqr);
 	PathRecordTimeElapsed(refTime);
-	if (config.pathfindingDebugMode)
+	if (config.pathfindingDebugMode || !combatSys.isCombatActive())
 	{
 		pdbgGotPath = gotPath;
 		pdbgTo = pqr->to;
@@ -1658,8 +1663,11 @@ BOOL Pathfinding::PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffset
 	objIt.targetLoc = to;
 	auto dx = abs(static_cast<int>(to.location.locx - from.location.locx));
 	auto dy = abs(static_cast<int>(to.location.locy - from.location.locy));
-	if ( max( dx, dy) >= SECTOR_SIDE_SIZE * 3) // RayCast supports up to a span of 4 sectors
+
+	if ( max( dx, dy) >= SECTOR_SIDE_SIZE * 3 - 1 || (dx + dy  >= 5 * SECTOR_SIDE_SIZE-1)) // RayCast supports up to a span of 4 sectors
 		return 0;
+
+	
 	objIt.flags = static_cast<RaycastFlags>(RaycastFlags::StopAfterFirstFlyoverFound| RaycastFlags::StopAfterFirstBlockerFound | RaycastFlags::ExcludeItemObjects);
 	if (pqr->mover)
 	{
@@ -1668,6 +1676,7 @@ BOOL Pathfinding::PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffset
 		objIt.radius = objects.GetRadius(pqr->mover) * (float)0.7;
 	}
 	
+
 	if (objIt.Raycast())
 	{
 		int i = 0;

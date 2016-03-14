@@ -394,6 +394,15 @@ public:
 			gameLoop->RenderFrame();
 			return 0;
 		});
+		/*
+			The normal (non-combat) LMB handler function
+		*/
+		static void(__cdecl*orgNormalLmbHandler)(TigMsg*) = replaceFunction<void(TigMsg*)>(0x10114AF0, [](TigMsg* msg)
+		{
+			//logger->debug("NormalLmbHandler: LMB released; args:  {} , {} , {} , {}", msg->arg1, msg->arg2, msg->arg3, msg->arg4);
+			orgNormalLmbHandler(msg);
+			//logger->debug("NormalLmbHandler: success.");
+		});
 
 	}
 } hooks;

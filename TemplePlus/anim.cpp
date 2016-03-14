@@ -751,6 +751,26 @@ public:
 			//return orgPopGoal(slot, popFlags, newGoal, newCurrentGoal, keepProcessing);
 		});
 
+
+		//static int (*orgAnimTimeEventExpires)(TimeEvent*) = replaceFunction<int(__cdecl)(TimeEvent*)>(0x1001B830, [](TimeEvent* evt)
+		//{
+		//	//logger->debug("AnimTimeEventExpires: Before");
+		//	auto result = orgAnimTimeEventExpires(evt);
+		//	//logger->debug("AnimTimeEventExpires: After");
+		//	return result;
+
+		//});
+
+		/*static int(*orgGoalCalcPathToLoc)(AnimSlot*) = replaceFunction<int(__cdecl)(AnimSlot*)>(0x1000D560, [](AnimSlot* slot)
+		{
+			logger->debug("GoalCalcPathToLoc: Before");
+			auto result = orgGoalCalcPathToLoc(slot);
+			logger->debug("GoalCalcPathToLoc: After");
+			return result;
+
+		});*/
+
+
 		return; // Currently not used
 
 		map<uint32_t, string> goalFuncNames;
