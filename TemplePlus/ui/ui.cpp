@@ -250,6 +250,24 @@ public:
 		replaceFunction(0x101F9570, GetButton);
 		replaceFunction(0x10115270, Reset);
 		 orgUiWidgetHandleMouseMsg = replaceFunction(0x101F9970, UiWidgetHandleMouseMsg);
+
+		 /*
+		 Hook for missing portraits (annoying logspam!)
+		 */
+		 static int(__cdecl*orgGetAsset)(int, int, void*, int) = replaceFunction<int(__cdecl)(int, int, void*, int)>(0x1004A360, [](int assetType, int id, void* out, int subId)
+		 {
+			 // portraits
+			 if (assetType == 0) {
+				 MesLine line;
+				 line.key = id + subId;
+				 auto uiArtMgrMesFiles = temple::GetRef<MesHandle*>(0x10AA31C8);
+
+				 if (!mesFuncs.GetLine(uiArtMgrMesFiles[assetType], &line)){
+					 return orgGetAsset(assetType, 0, out, subId);
+				 }
+			 }
+			 return orgGetAsset(assetType, id, out, subId);
+		 });
 	}
 } uiReplacement;
 
