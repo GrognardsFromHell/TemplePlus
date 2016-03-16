@@ -776,8 +776,7 @@ MonsterCategory LegacyCritterSystem::GetCategory(objHndl objHnd)
 	return mc_type_monstrous_humanoid; // default - so they have at least a weapons proficiency
 }
 
-uint32_t LegacyCritterSystem::IsCategoryType(objHndl objHnd, MonsterCategory categoryType)
-{
+uint32_t LegacyCritterSystem::IsCategoryType(objHndl objHnd, MonsterCategory categoryType){
 	if (objHnd != 0) {
 		if (objects.IsCritter(objHnd)) {
 			auto monCat = objects.getInt64(objHnd, obj_f_critter_monster_category);
@@ -787,19 +786,18 @@ uint32_t LegacyCritterSystem::IsCategoryType(objHndl objHnd, MonsterCategory cat
 	return 0;
 }
 
-uint32_t LegacyCritterSystem::IsCategorySubtype(objHndl objHnd, MonsterCategory categoryType)
-{
+uint32_t LegacyCritterSystem::IsCategorySubtype(objHndl objHnd, MonsterCategory categoryType){
 	if (objHnd != 0) {
 		if (objects.IsCritter(objHnd)) {
 			auto monCat = objects.getInt64(objHnd, obj_f_critter_monster_category);
-			return ((monCat >> 32) & 0xFFFFFFFF) == categoryType;
+			MonsterCategory moncatSubtype = static_cast<MonsterCategory>(monCat >> 32);
+			return (moncatSubtype & categoryType) == categoryType;
 		}
 	}
 	return 0;
 }
 
-uint32_t LegacyCritterSystem::IsUndead(objHndl objHnd)
-{
+uint32_t LegacyCritterSystem::IsUndead(objHndl objHnd){
 	return IsCategoryType(objHnd, mc_type_undead);
 }
 
@@ -810,7 +808,7 @@ uint32_t LegacyCritterSystem::IsOoze(objHndl objHnd)
 
 uint32_t LegacyCritterSystem::IsSubtypeFire(objHndl objHnd)
 {
-	return IsCategorySubtype(objHnd, mc_subtye_fire);
+	return IsCategorySubtype(objHnd, mc_subtype_fire);
 }
 
 float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType) 

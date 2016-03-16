@@ -2006,8 +2006,34 @@ enum MonsterCategory : uint32_t {
 	mc_type_shapechanger = 14,
 	mc_type_undead = 15,
 	mc_type_vermin = 16,
+
+	mc_subtype_air = 1,
+	mc_subtype_aquatic = 2,
+	mc_subtype_extraplanar = 4,
+	mc_subtype_cold = 8,
+	mc_subtype_chaotic = 16,
+	mc_subtype_demon = 32,
+	mc_subtype_devil = 64,
+	mc_subtype_dwarf = 128,
 	mc_subtype_earth = 256,
-	mc_subtye_fire = 4096
+	mc_subtype_electricity = 512,
+	mc_subtype_elf = 1024,
+	mc_subtype_evil = 2048,
+	mc_subtype_fire = 0x1000,
+	mc_subtype_formian = 0x2000,
+	mc_subtype_gnoll =0x4000,
+	mc_subtype_gnome =0x8000,
+	mc_subtype_goblinoid =0x10000,
+	mc_subtype_good =0x20000,
+	mc_subtype_guardinal =0x40000,
+	mc_subtype_half_orc = 0x80000,
+	mc_subtype_halfling =0x100000,
+	mc_subtype_human =   0x200000,
+	mc_subtype_lawful =  0x400000,
+	mc_subtype_incorporeal = 0x800000,
+	mc_subtype_orc = 0x1000000,
+	mc_subtype_reptilian = 0x2000000,
+	mc_subtype_slaadi = 0x4000000
 };
 
 enum CritterFlag
