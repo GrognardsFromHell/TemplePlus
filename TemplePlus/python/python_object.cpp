@@ -2233,11 +2233,18 @@ static PyObject* PyObjHandle_GetDescription(PyObject* obj, void*) {
 
 static PyObject* PyObjHandle_GetNameId(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
+	if (!self->handle){
+		return PyInt_FromLong(0);
+	}
 	return PyInt_FromLong(objects.GetNameId(self->handle));
 }
 
 static PyObject* PyObjHandle_GetProto(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
+	if (!self->handle){
+		logger->warn("obj.proto called with null handle! Returning 0");
+		return PyInt_FromLong(0);
+	}
 	return PyInt_FromLong(gameSystems->GetObj().GetProtoId(self->handle));
 }
 
@@ -2245,22 +2252,33 @@ static PyObject* PyObjHandle_GetLocation(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
 	if (!self->handle){
 		logger->warn("obj.location called with null handle!");
+		return PyLong_FromLongLong(0);
 	}
 	return PyLong_FromLongLong(objects.GetLocation(self->handle));
 }
 
 static PyObject* PyObjHandle_GetType(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
+	if (!self->handle){
+		logger->warn("obj.type called with null handle!");
+		return PyInt_FromLong(0);
+	}
 	return PyInt_FromLong(objects.GetType(self->handle));
 }
 
 static PyObject* PyObjHandle_GetRadius(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		logger->warn("obj.radius called with null handle!");
+		return PyFloat_FromDouble(0.0);
+	}
 	return PyFloat_FromDouble(objects.GetRadius(self->handle));
 }
 
 static int PyObjHandle_SetRadius(PyObject* obj, PyObject* value, void*) {
 	auto self = GetSelf(obj);
+	if (!self->handle)
+		return 0;
 	float radius;
 	if (!GetFloatLenient(value, radius)) {
 		return -1;
@@ -2319,11 +2337,19 @@ static PyObject* PyObjHandle_GetSize(PyObject* obj, void*) {
 
 static PyObject* PyObjHandle_GetOffsetX(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		logger->warn("obj.offset_x called with null handle!");
+		return PyFloat_FromDouble(0.0);
+	}
 	return PyFloat_FromDouble(objects.GetOffsetX(self->handle));
 }
 
 static PyObject* PyObjHandle_GetOffsetY(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		logger->warn("obj.offset_y called with null handle!");
+		return PyFloat_FromDouble(0.0);
+	}
 	return PyFloat_FromDouble(objects.GetOffsetY(self->handle));
 }
 
