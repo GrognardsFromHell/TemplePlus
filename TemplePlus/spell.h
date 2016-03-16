@@ -49,6 +49,8 @@ struct SpellEntry
 	float_t degreesTarget;
 	uint32_t aiTypeBitmask;
 	uint32_t pad;
+
+	//UiPickerType GetModeTarget() const;
 };
 
 const uint32_t TestSizeOfSpellEntry = sizeof(SpellEntry); // should be 0xC0  ( 192 )

@@ -27,7 +27,9 @@ int Sound::PlaySound(int soundId, int loopCount) {
 }
 
 int Sound::PlaySoundAtObj(int soundId, objHndl obj, int loopCount) {
-	return addresses.SoundAtObj(soundId, loopCount, obj);
+	if (obj)
+		return addresses.SoundAtObj(soundId, loopCount, obj);
+	return 0;
 }
 
 int Sound::PlaySoundAtLoc(int soundId, locXY loc, int loopCount) {

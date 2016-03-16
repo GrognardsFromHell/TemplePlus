@@ -4,6 +4,8 @@
 #include "python_spell.h"
 #include "python_object.h"
 #include <util/fixes.h>
+#include <sound.h>
+#include <ui/ui_picker.h>
 
 PythonSpellIntegration pythonSpellIntegration;
 
@@ -72,6 +74,11 @@ public:
 		replaceFunction(0x100C0390, SpellTriggerProjectile);
 		replaceFunction(0x100BEB80, UpdatePythonSpell);
 		replaceFunction(0x100BEAF0, RemovePythonSpell);
+
+		replaceFunction<uint32_t(__cdecl)(SpellPacketBody*, SpellEvent)>(0x100BF770, [](SpellPacketBody* spellPkt, SpellEvent spellEvt)
+		{
+			return pythonSpellIntegration.SpellSoundPlay(spellPkt, spellEvt);
+		});
 	}
 
 } fix;
@@ -165,6 +172,133 @@ void PythonSpellIntegration::RemoveSpell(int /*spellId*/) {
 		As soon as the last ref to the PySpell object goes away, the
 		spell will automatically be removed from the active spell list.
 	*/
+}
+
+uint32_t PythonSpellIntegration::SpellSoundPlay(SpellPacketBody* spellPkt, SpellEvent spellEvt)
+{
+	if (spellEvt > SpellEvent::SpellStruck)
+		return 0;
+	auto spellSoundType = 0;
+	switch (spellEvt) {
+
+	case SpellEvent::BeginSpellCast:
+		spellSoundType = 0;
+		break;
+	case SpellEvent::EndSpellCast:
+		spellSoundType = 1;
+		break;
+	case SpellEvent::SpellEffect:
+		spellSoundType = 2;
+		break;
+	case SpellEvent::BeginRound:
+		spellSoundType = 3;
+		break;
+	case SpellEvent::BeginProjectile:
+		spellSoundType = 4;
+		break;
+	case SpellEvent::EndProjectile:
+		spellSoundType = 5;
+		break;
+	case SpellEvent::AreaOfEffectHit:
+		spellSoundType = 7;
+		break;
+	case SpellEvent::SpellStruck:
+		spellSoundType = 8;
+		break;
+	default:
+		return 0;
+	}
+	auto spellSoundId = spellSoundType + 20 * spellPkt->spellEnum + 6000;
+	SpellEntry spellEntry;
+	spellSys.spellRegistryCopy(spellPkt->spellEnum, &spellEntry);
+	//UiPickerType modeTarget = spellEntry.GetModeTarget();
+	UiPickerType modeTarget = (UiPickerType)(spellEntry.modeTargetSemiBitmask & 0xFF);
+	auto tgtCount = spellPkt->targetCount;
+
+	switch (spellEvt) {
+	case SpellEvent::EndSpellCast:
+		sound.PlaySoundAtObj(spellSoundId, spellPkt->caster);
+		return 1;
+	case SpellEvent::SpellEffect:
+	case SpellEvent::AreaOfEffectHit:
+	case SpellEvent::SpellStruck:
+		if (spellPkt->spellEnum == 133) { // Dispel Magic
+			if (spellPkt->targetCount <= 1) {
+				sound.PlaySoundAtObj(8660, spellPkt->targetListHandles[0]);
+			}
+			else {
+				sound.PlaySoundAtLoc(8660, spellPkt->aoeCenter.location.location);
+			}
+			return 1;
+		}
+	case SpellEvent::BeginRound:
+		switch (modeTarget)
+		{
+		case UiPickerType::Single:
+			if (!spellPkt->targetListHandles[0]) {
+				sound.PlaySoundAtObj(spellSoundId, spellPkt->caster);
+				return 1;
+			}
+			sound.PlaySoundAtObj(spellSoundId, spellPkt->targetListHandles[0]);
+			break;
+		case UiPickerType::Multi:
+		case UiPickerType::Cone:
+
+			if (!tgtCount) {
+				sound.PlaySoundAtObj(spellSoundId, spellPkt->caster);
+				return 1;
+			}
+			for (int i = 0; i < tgtCount; i++)
+			{
+				if (spellPkt->targetListHandles[i]) {
+					sound.PlaySoundAtObj(spellSoundId, spellPkt->targetListHandles[i]);
+				}
+				else {
+					logger->debug("SpellSoundPlay: invalid target handle caught!");
+					int dummy = 1;
+				}
+			}
+			break;
+		case UiPickerType::Area:
+			if (!tgtCount) {
+				sound.PlaySoundAtLoc(spellSoundId, spellPkt->aoeCenter.location.location);
+				return 1;
+			}
+			for (int i = 0; i < tgtCount; i++) {
+				if (spellPkt->targetListHandles[i]) {
+					sound.PlaySoundAtObj(spellSoundId, spellPkt->targetListHandles[i]);
+				}
+				else {
+					logger->debug("SpellSoundPlay: invalid target handle caught!");
+					int dummy = 1;
+				}
+			}
+			break;
+		case UiPickerType::Location:
+			sound.PlaySoundAtLoc(spellSoundId, spellPkt->aoeCenter.location.location);
+			return 1;
+		case UiPickerType::Personal:
+		case UiPickerType::InventoryItem:
+		case UiPickerType::Ray:
+			sound.PlaySoundAtObj(spellSoundId, spellPkt->caster);
+			return 1;
+
+
+		default:
+			break;
+		}
+		return 1;
+
+
+	case SpellEvent::BeginSpellCast:
+		sound.PlaySoundAtObj(spellSoundId, spellPkt->caster);
+		return 1;
+	case SpellEvent::BeginProjectile:
+	case SpellEvent::EndProjectile:
+		return 1;
+	default:
+		return 0;
+	}
 }
 
 static const char* spellEventNames[] = {

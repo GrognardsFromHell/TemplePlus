@@ -29,6 +29,7 @@ public:
 
 	void UpdateSpell(int spellId);
 	void RemoveSpell(int spellId);
+	uint32_t SpellSoundPlay(SpellPacketBody* spellPkt, SpellEvent spellEvt);
 	
 protected:
 	const char* GetFunctionName(EventId eventId) override;

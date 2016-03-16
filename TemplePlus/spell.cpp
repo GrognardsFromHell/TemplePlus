@@ -19,6 +19,7 @@
 #include "python/python_integration_spells.h"
 #include "util/streams.h"
 #include "combat.h"
+#include "sound.h"
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
@@ -145,6 +146,11 @@ public:
 #pragma region Spell System Implementation
 
 LegacySpellSystem spellSys;
+
+//UiPickerType SpellEntry::GetModeTarget() const
+//{
+//	return (UiPickerType)(modeTargetSemiBitmask & 0xFF);
+//}
 
 SpellPacketBody::SpellPacketBody()
 {
@@ -846,15 +852,30 @@ bool LegacySpellSystem::LoadActiveSpellElement(TioFile* file, uint32_t& spellId,
 		return false;
 	if (!tio_fread(&pkt.spellPktBody.targetCount, sizeof(int), 1, file))
 		return false;
+	std::vector<objHndl> targets;
 	for (int i = 0; i < 32; i++){
-		auto& tgt = pkt.spellPktBody.targetListHandles[i];
+		//auto& tgt = pkt.spellPktBody.targetListHandles[i];
 		if (!tio_fread(&objId, sizeof(ObjectId), 1, file))
 			return false;
 		if (objId.subtype != ObjectIdKind::Null) {
-			tgt = objSystem->GetHandleById(objId);
+			auto tgt = objSystem->GetHandleById(objId);
+			if (gameSystems->GetObj().IsValidHandle(tgt)){
+				targets.emplace_back(tgt);
+			} 
+			
 		}
-		else
-			tgt = 0i64;
+		else{
+			//tgt = 0i64;
+		}	
+	}
+	if (targets.size()){
+		memcpy(pkt.spellPktBody.targetListHandles, &targets[0], min(targets.size() * sizeof(objHndl), 32 * sizeof(objHndl)));
+	}
+	
+	memset(&pkt.spellPktBody.targetListHandles[targets.size()], 0, (32 - targets.size()) * sizeof(objHndl));
+	if (pkt.spellPktBody.targetCount != targets.size()){
+		logger->debug("LoadActiveSpellElement: Culled targets - originally {} now {}", pkt.spellPktBody.targetCount , targets.size());
+		pkt.spellPktBody.targetCount = targets.size();
 	}
 
 	// target particles
@@ -1207,6 +1228,8 @@ int LegacySpellSystem::SpellEnd(int spellId, int endDespiteTargetList) const
 	spellsCastRegistry.put(spellId, pkt);
 	return 1;
 }
+
+
 #pragma endregion
 
 
