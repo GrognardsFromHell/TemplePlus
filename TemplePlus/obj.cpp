@@ -346,6 +346,75 @@ uint32_t Objects::abilityScoreLevelGet(objHndl objHnd, Stat stat, DispIO* dispIO
 	return objects.dispatch.DispatchGetBonus(objHnd, (DispIoBonusList*)dispIO, dispTypeAbilityScoreLevel, (D20DispatcherKey)(stat + 1));
 }
 
+float Objects::GetRadius(objHndl handle) const
+{
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	auto radiusSet = obj->GetFlags() & OF_RADIUS_SET;
+	objHndl protoHandle;
+	float protoRadius;
+	if (radiusSet){
+		auto radius = obj->GetFloat(obj_f_radius);
+
+		if ( radius < 25000.0){
+			 protoHandle = obj->GetObjHndl(obj_f_prototype_handle);
+			if (protoHandle){
+				auto protoObj = gameSystems->GetObj().GetObject(protoHandle);
+				protoRadius = protoObj->GetFloat( obj_f_radius);
+				if (protoRadius > 0.0)
+				{
+					radius = protoRadius;
+					obj->SetFloat(obj_f_radius, protoRadius);
+				}
+			}
+			
+		}
+		if (radius < 25000.0)
+		{
+			if (radius > 600)
+			{
+				logger->debug("Caught very large radius! Was {}", radius);
+				protoHandle = obj->GetObjHndl(obj_f_prototype_handle);
+				auto protoObj = gameSystems->GetObj().GetObject(protoHandle);
+				protoRadius = protoObj->GetFloat(obj_f_radius);
+				auto aasHandle = addresses.GetAasHandle(handle);
+				auto aasUpdateRadius = temple::GetRef<void(__cdecl)(objHndl, int)>(0x10021500);
+				aasUpdateRadius(handle, aasHandle);
+				int dummy = 1;
+				radius = obj->GetFloat(obj_f_radius);
+			}
+			return radius;
+		}
+			
+	}
+
+	auto aasHandle = addresses.GetAasHandle(handle);
+	if (!aasHandle)
+	{
+		protoHandle = obj->GetObjHndl(obj_f_prototype_handle);
+		auto protoObj = gameSystems->GetObj().GetObject(protoHandle);
+		protoRadius = protoObj->GetFloat(obj_f_radius);
+		if (protoRadius > 0.0)
+			return protoRadius;
+		return 1.0;
+	}
+
+	auto radius = obj->GetFloat(obj_f_radius);
+	radiusSet = obj->GetFlags() & OF_RADIUS_SET; // might be changed I guess
+	if (!radiusSet || radius > 25000){
+
+		auto aasUpdateRadius = temple::GetRef<void(__cdecl)(objHndl, int)>(0x10021500);
+		aasUpdateRadius(handle, aasHandle);
+		radius = obj->GetFloat(obj_f_radius);
+		if (radius > 25000.0)
+		{
+			radius = 25000.0;
+		}	
+	}
+	return radius;
+	//return _GetRadius(handle);
+	
+}
+
 void Objects::SetRotation(objHndl handle, float rotation) {
 	// Normalizes the rotation parameter to valid radians range
 	static auto PI_2 = (float)(2.0 * M_PI);

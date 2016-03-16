@@ -79,9 +79,7 @@ struct Objects : temple::AddressTable {
 	int GetNameId(objHndl handle) {
 		return _GetInternalFieldInt32(handle, obj_f_name);
 	}
-	float GetRadius(objHndl handle) {
-		return _GetRadius(handle);
-	}
+	float GetRadius(objHndl handle) const;
 	void SetRadius(objHndl handle, float radius) {
 		_SetInternalFieldFloat(handle, obj_f_radius, radius);
 	}
