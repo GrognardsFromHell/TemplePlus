@@ -944,7 +944,7 @@ void GameObjectBody::LoadDiffsFromFile(objHndl handle, TioFile* file) {
 		this->id = id;
 		if (!id.IsNull()) {
 			objSystem->AddToIndex(id, handle);
-			logger->info("Loaded object id {} (via diffs)", id.ToString());
+			//logger->debug("Loaded object id {} (via diffs)", id.ToString());
 		}
 	}
 

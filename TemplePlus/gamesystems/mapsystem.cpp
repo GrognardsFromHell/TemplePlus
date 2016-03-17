@@ -1027,7 +1027,7 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 				filename, dataDir);
 		} else if (config.debugMessageEnable)
 		{
-			logger->debug("Loaded MOB obj {} ({})", description.getDisplayName(handle), objSystem->GetObject(handle)->id.ToString() );
+			//logger->debug("Loaded MOB obj {} ({})", description.getDisplayName(handle), objSystem->GetObject(handle)->id.ToString() );
 		}
 	}
 
@@ -1068,10 +1068,10 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 
 			auto obj = objSystem->GetObject(handle);
 			obj->LoadDiffsFromFile(handle, fh);
-			logger->debug("Loaded {} ({}) from diff file.", description.getDisplayName(handle), objSystem->GetObject(handle)->id.ToString());
+			//logger->debug("Loaded {} ({}) from diff file.", description.getDisplayName(handle), objSystem->GetObject(handle)->id.ToString());
 
 			if (objects.GetFlags(handle) & OF_EXTINCT) {
-				logger->debug("{} ({}) is extinct.", description.getDisplayName(handle), handle);
+				//logger->debug("{} ({}) is extinct.", description.getDisplayName(handle), handle);
 				gameSystems->GetObj().Remove(handle);
 			}
 		}
@@ -1130,8 +1130,7 @@ void MapSystem::ReadDynamicMobiles(const std::string & saveDir)
 	while (true) {
 		try {
 			auto handle = objSystem->LoadFromFile(fh);
-			logger->debug("Loaded dynamic object {} ({})", description.getDisplayName(handle) ,
-				objSystem->GetObject(handle)->id.ToString());
+			//logger->debug("Loaded dynamic object {} ({})", description.getDisplayName(handle) ,	objSystem->GetObject(handle)->id.ToString());
 		} catch (TempleException &e) {
 			logger->error("Unable to load object: {}", e.what());
 			break;
@@ -1216,8 +1215,7 @@ void MapSystem::SaveMapMobiles() {
 			// If a dynamic object has been destroyed, it wont be recreated on mapload
 			// anyway (since there is no mob file for it)
 			if (obj.HasFlag(OF_DESTROYED) || obj.HasFlag(OF_EXTINCT)) {
-				logger->debug("Skipping dynamic object {} for writing destroyed objs ({})", description.getDisplayName(handle),
-					objSystem->GetObject(handle)->id.ToString());
+				//logger->debug("Skipping dynamic object {} for writing destroyed objs ({})", description.getDisplayName(handle),		objSystem->GetObject(handle)->id.ToString());
 				return;
 			}
 			// TODO: Replace with proper VFS usage
@@ -1227,27 +1225,23 @@ void MapSystem::SaveMapMobiles() {
 		}
 
 		if (!obj.hasDifs) {
-			logger->debug("Skipping object with diffs {} for writing destroyed objs ({})", description.getDisplayName(handle),
-				objSystem->GetObject(handle)->id.ToString());
+			//logger->debug("Skipping object with diffs {} for writing destroyed objs ({})", description.getDisplayName(handle),	objSystem->GetObject(handle)->id.ToString());
 			return; // Object is unchanged
 		}
 
 		if (obj.HasFlag(OF_DESTROYED) || obj.HasFlag(OF_EXTINCT)) {
 			if (obj.HasFlag(OF_EXTINCT))
 			{
-				logger->debug("Writing extinct object {} as destroyed obj ({})", description.getDisplayName(handle),
-					objSystem->GetObject(handle)->id.ToString());
+				//logger->debug("Writing extinct object {} as destroyed obj ({})", description.getDisplayName(handle),	objSystem->GetObject(handle)->id.ToString());
 			} else
 			{
-				logger->debug("Writing destroyed object {} as destroyed obj  ({})", description.getDisplayName(handle),
-					objSystem->GetObject(handle)->id.ToString());
+				//logger->debug("Writing destroyed object {} as destroyed obj  ({})", description.getDisplayName(handle),	objSystem->GetObject(handle)->id.ToString());
 			}
 			// Write the object id of the destroyed obj to mobile.des
 			vfs->Write(&obj.id, sizeof(obj.id), destrFh);
 			++destroyedObjs;
 		} else {
-			logger->debug("Writing object {} to diff file ({})", description.getDisplayName(handle),
-				objSystem->GetObject(handle)->id.ToString());
+			//logger->debug("Writing object {} to diff file ({})", description.getDisplayName(handle),	objSystem->GetObject(handle)->id.ToString());
 			// Write the object id followed by a diff record to mobile.mdy
 			diffOut->WriteObjectId(obj.id);
 
