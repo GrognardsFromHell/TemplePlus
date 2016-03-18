@@ -43,6 +43,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 	void Subturn();
 	void TurnStart2( int initiativeIdx);
 	void CombatAdvanceTurn(objHndl obj);
+	BOOL IsBrawlInProgress();
 	uint32_t* combatModeActive;
 	bool isCombatActive();
 	uint32_t IsCloseToParty(objHndl objHnd);

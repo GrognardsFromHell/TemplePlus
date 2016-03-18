@@ -112,7 +112,12 @@ public:
 		orgCheckRangedWeaponAmmo = replaceFunction(0x100654E0, CheckRangedWeaponAmmo);
 		
 		replaceFunction(0x100B4B30, _GetCombatMesLine);
-		
+
+		replaceFunction<BOOL(__cdecl)()>(0x100EBB90, []()->BOOL
+		{
+			return combatSys.IsBrawlInProgress();
+		});
+			
 	}
 } combatSysReplacements;
 
@@ -559,6 +564,14 @@ void LegacyCombatSystem::CombatAdvanceTurn(objHndl obj)
 	combatInitiative--;
 
 	// return addresses.CombatTurnAdvance(obj);
+}
+
+BOOL LegacyCombatSystem::IsBrawlInProgress()
+{
+	auto brawlOpponent = temple::GetRef<objHndl>(0x10BD01D0);
+	if (brawlOpponent)
+		return true;
+	return false;
 }
 
 bool LegacyCombatSystem::isCombatActive()

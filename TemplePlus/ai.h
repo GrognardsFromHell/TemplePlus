@@ -25,7 +25,7 @@ struct AiPacket
 {
 	objHndl obj;
 	objHndl target;
-	int aiFightStatus; // 0 - none;  1 - fighting;  2 - fleeing  ;  3 - surrendered ; 4 - finding help
+	int aiFightStatus; // see AiFightStatus
 	int aiState2; // 1 - cast spell, 3 - use skill,  4 - scout point
 	int spellEnum;
 	SkillEnum skillEnum;
@@ -59,7 +59,7 @@ struct AiParamPacket
 	int canOpenPortals;
 };
 
-enum class AiFlag : uint64_t {
+enum AiFlag : uint64_t {
 	FindingHelp = 0x1,
 	WaypointDelay = 0x2,
 	WaypointDelayed = 0x4,
@@ -89,6 +89,15 @@ enum AiCombatRole: int32_t
 	special
 };
 
+enum AiFightStatus : uint32_t {
+	AIFS_NONE = 0,
+	AIFS_FIGHTING = 1,
+	AIFS_FLEEING =2,
+	AIFS_SURRENDERED = 3,
+	AIFS_FINDING_HELP = 4,
+	AIFS_BEING_DRAWN = 5 // New TODO for Harpy Song
+};
+
 struct AiSystem : temple::AddressTable
 {
 	AiStrategy ** aiStrategies;
@@ -108,6 +117,7 @@ struct AiSystem : temple::AddressTable
 	bool HasAiFlag(objHndl npc, AiFlag flag);
 	void SetAiFlag(objHndl npc, AiFlag flag);
 	void ClearAiFlag(objHndl npc, AiFlag flag);
+	AiParamPacket GetAiParams(objHndl obj);
 
 	void ShitlistAdd(objHndl npc, objHndl target);
 	void ShitlistRemove(objHndl npc, objHndl target);
@@ -118,6 +128,24 @@ struct AiSystem : temple::AddressTable
 	objHndl GetWhoHitMeLast(objHndl npc);
 	void SetCombatFocus(objHndl npc, objHndl target);
 	void SetWhoHitMeLast(objHndl npc, objHndl target);
+	void GetAiFightStatus(objHndl obj, AiFightStatus* status, objHndl * target);
+	/*
+	 updates AI flags based on a "Should flee" check
+	 originally 10057A70
+	*/
+	void FightOrFlight(objHndl obj, objHndl tgt);
+
+	
+	/*
+		Updates AI flags and handles fleeing using the below functions
+	*/
+	void FightStatusProcess(objHndl obj, objHndl newTgt);
+
+		/*
+			Plays the "Fleeing" voice line, and sequences a move action away from the fleeingFrom object
+		*/
+		void FleeProcess(objHndl obj, objHndl fleeingFrom);
+		int UpdateAiFlags(objHndl ObjHnd, AiFightStatus aiFightStatus, objHndl target, int *soundMap);
 
 	// AI Tactic functions
 	// These generate action sequences for the AI and/or change the AI target
@@ -138,8 +166,7 @@ struct AiSystem : temple::AddressTable
 	unsigned int Asplode(AiTactic * aiTactic);
 	unsigned int WakeFriend(AiTactic* aiTac);
 
-	void UpdateAiFightStatus(objHndl objIn, int* aiState, objHndl* target);
-	int UpdateAiFlags(objHndl ObjHnd, int aiFightStatus, objHndl target, int *soundMap);
+
 	void StrategyTabLineParseTactic(AiStrategy*, char * tacName, char * middleString, char* spellString);
 	int StrategyTabLineParser(TabFileStatus* tabFile, int n, char ** strings);
 	int AiOnInitiativeAdd(objHndl obj);

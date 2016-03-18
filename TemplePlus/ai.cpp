@@ -20,6 +20,7 @@
 #include "util/fixes.h"
 #include "party.h"
 #include "ui/ui_picker.h"
+#include "gamesystems/gamesystems.h"
 struct AiSystem aiSys;
 AiParamPacket * AiSystem::aiParams;
 
@@ -199,6 +200,14 @@ void AiSystem::ClearAiFlag(objHndl npc, AiFlag flag) {
 	obj->SetInt64(obj_f_npc_ai_flags64, aiFlags);
 }
 
+AiParamPacket AiSystem::GetAiParams(objHndl obj)
+{
+	auto aiParamIdx = gameSystems->GetObj().GetObject(obj)->GetInt32(obj_f_npc_ai_data);
+	Expects(aiParamIdx >= 0 && aiParamIdx < 100000);
+	return aiParams[aiParamIdx];
+
+}
+
 void AiSystem::ShitlistAdd(objHndl npc, objHndl target) {
 	_ShitlistAdd(npc, target);
 }
@@ -244,6 +253,141 @@ void AiSystem::SetCombatFocus(objHndl npc, objHndl target) {
 void AiSystem::SetWhoHitMeLast(objHndl npc, objHndl target) {
 	auto obj = objSystem->GetObject(npc);
 	obj->SetObjHndl(obj_f_npc_who_hit_me_last, target);
+}
+
+void AiSystem::GetAiFightStatus(objHndl handle, AiFightStatus* status, objHndl* target)
+{
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	auto critFlags = (CritterFlag)obj->GetInt32(obj_f_critter_flags);
+
+	if (critFlags & OCF_FLEEING){
+		if (target){
+			*target = obj->GetObjHndl(obj_f_critter_fleeing_from);
+		}
+		*status = AIFS_FLEEING;
+		return;
+	}
+
+	if (critFlags & OCF_SURRENDERED){
+		if (target)
+			*target = obj->GetObjHndl(obj_f_critter_fleeing_from);
+		*status = AIFS_SURRENDERED;
+		return;
+	}
+
+	auto aiFlags = static_cast<AiFlag>(obj->GetInt64(obj_f_npc_ai_flags64));
+	if (aiFlags & AiFlag::Fighting)
+	{
+		if (target)
+			*target = obj->GetObjHndl(obj_f_npc_combat_focus);
+		*status = AIFS_FIGHTING;
+		return;
+	}
+	if (aiFlags & AiFlag::FindingHelp)
+	{
+		if (target)
+			*target = obj->GetObjHndl(obj_f_npc_combat_focus);
+		*status = AIFS_FINDING_HELP;
+		return;
+	}
+
+	if (target)
+		*target = 0i64;
+	*status = AIFS_NONE;
+	return;
+}
+
+void AiSystem::FightOrFlight(objHndl obj, objHndl tgt)
+{
+	auto shouldFlee = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x1005C570);
+	if (shouldFlee(obj, tgt))
+	{
+		UpdateAiFlags(obj, AIFS_FLEEING, tgt, nullptr);
+	} else
+	{
+		UpdateAiFlags(obj, AIFS_FIGHTING, tgt, nullptr);
+	}
+}
+
+void AiSystem::FightStatusProcess(objHndl obj, objHndl newTgt)
+{
+	if (critterSys.IsDeadNullDestroyed(obj))
+	{
+		return;
+	}
+
+	static auto CheckNewTgt = [](objHndl _obj, objHndl _curTgt, objHndl _newTgt)->objHndl
+	{
+		if (!_curTgt)
+			return _newTgt;
+		if (!_newTgt)
+			return _curTgt;
+		if (!objects.IsCritter(_newTgt))
+			return _curTgt;
+		if (!objects.IsCritter(_curTgt) 
+			|| !critterSys.IsDeadOrUnconscious(_newTgt)	&& critterSys.IsDeadOrUnconscious(_curTgt)
+			|| locSys.DistanceToObj(_obj, _newTgt) <= 125.0 && (locSys.DistanceToObj(_obj, _curTgt) > 125.0 || critterSys.IsFriendly(_obj, _curTgt)) 
+			)
+			return _newTgt;
+		else
+			return _curTgt;
+	};
+	static auto WithinFleeDistance = [](objHndl _obj, objHndl _tgt)->bool
+	{
+		if (gameSystems->GetObj().GetObject(_obj)->GetInt32(obj_f_spell_flags) & SpellFlags::SF_SPELL_FLEE)
+			return true;
+		AiParamPacket aiPar = aiSys.GetAiParams(_obj);
+		auto distTo = locSys.DistanceToObj(_obj, _tgt);
+		if (aiPar.fleeDistanceFeet < distTo)
+			return true;
+		else
+			return false;
+	};
+
+	AiFightStatus status; 
+	objHndl curTgt;
+	GetAiFightStatus(obj, &status, &curTgt);
+	switch (status ){
+	case AIFS_NONE:
+		FightOrFlight(obj, newTgt);
+		break;
+	case AIFS_FIGHTING:
+		if (newTgt == curTgt || CheckNewTgt(obj, curTgt, newTgt) == newTgt)	{
+			FightOrFlight(obj, newTgt);
+		}
+		break;
+	case AIFS_FLEEING:
+		if (curTgt != newTgt && (!curTgt || WithinFleeDistance(obj, curTgt)))
+			FightOrFlight(obj, newTgt);
+		break;
+	case AIFS_SURRENDERED:
+		if (newTgt == curTgt || CheckNewTgt(obj, curTgt, newTgt) == newTgt) {
+			FightOrFlight(obj, newTgt);
+		} else
+		{
+			if (!critterSys.IsDeadOrUnconscious(obj))
+			{
+				auto getFleeVoiceLine = temple::GetRef<void(__cdecl)(objHndl, objHndl, char*, int*)>(0x100374E0);
+				char fleeText[1000];
+				int soundId;
+				getFleeVoiceLine(obj, newTgt, fleeText, &soundId);
+				auto dialogPlayer = temple::GetRef<void(__cdecl*)(objHndl, objHndl, char*, int)>(0x10AA73B0);
+				dialogPlayer(obj, newTgt, fleeText, soundId);
+			}
+			FleeProcess(obj, newTgt);
+		}
+		break;
+	default:
+		break;
+	}
+	combatSys.AddToInitiative(obj);
+	return;
+}
+
+void AiSystem::FleeProcess(objHndl obj, objHndl fleeingFrom)
+{
+	auto fleeProc = temple::GetRef<void(__cdecl)(objHndl, objHndl)>(0x1005A1F0);
+	fleeProc(obj, fleeingFrom);
 }
 
 int AiSystem::TargetClosest(AiTactic* aiTac)
@@ -646,52 +790,8 @@ int AiSystem::ChargeAttack(AiTactic* aiTac)
 	return 1;
 }
 
-void AiSystem::UpdateAiFightStatus(objHndl objIn, int* aiStatus, objHndl* target)
-{
-	int critterFlags;
-	AiFlag aiFlags;
 
-	if (objects.getInt32(objIn, obj_f_critter_flags) & OCF_FLEEING)
-	{
-		if (target)
-			*target = objects.getObjHnd(objIn, obj_f_critter_fleeing_from);
-		*aiStatus = 2;
-	}
-	else
-	{
-		critterFlags = objects.getInt32(objIn, obj_f_critter_flags);
-		if (critterFlags & OCF_SURRENDERED)                     // OCF_SURRENDERED (maybe mixed up with OCF_SPELL_FLEE?)
-		{
-			if (target)
-				*target = objects.getObjHnd(objIn, obj_f_critter_fleeing_from);
-			*aiStatus = 3;
-		}
-		else
-		{
-			aiFlags = (AiFlag)objects.getInt64(objIn, obj_f_npc_ai_flags64);
-			if ((uint64_t)aiFlags & (uint64_t)AiFlag::Fighting)
-			{
-				if (target)
-					*target = objects.getObjHnd(objIn, obj_f_npc_combat_focus);
-				*aiStatus = 1;
-			}
-			else if ((uint64_t)aiFlags & (uint64_t)AiFlag::FindingHelp)
-			{
-				if (target)
-					*target = objects.getObjHnd(objIn, obj_f_npc_combat_focus);
-				*aiStatus = 4;
-			}
-			else
-			{
-				if (target)
-					*target = 0i64;
-				*aiStatus = 0;
-			}
-		}
-	}
-}
-
-int AiSystem::UpdateAiFlags(objHndl obj, int aiFightStatus, objHndl target, int* soundMap)
+int AiSystem::UpdateAiFlags(objHndl obj, AiFightStatus aiFightStatus, objHndl target, int* soundMap)
 {
 	return addresses.UpdateAiFlags(obj, aiFightStatus, target, soundMap);
 }
@@ -1543,6 +1643,6 @@ AiPacket::AiPacket(objHndl objIn)
 	skillEnum = (SkillEnum)-1;
 	scratchObj = 0i64;
 	leader = critterSys.GetLeader(objIn);
-	aiSys.UpdateAiFightStatus(objIn, &this->aiFightStatus, &this->target);
+	aiSys.GetAiFightStatus(objIn, reinterpret_cast<AiFightStatus*>(&this->aiFightStatus), &this->target);
 	field30 = -1;
 }

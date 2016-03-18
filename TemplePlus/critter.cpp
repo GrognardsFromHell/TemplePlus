@@ -20,6 +20,11 @@
 #include <infrastructure/mesparser.h>
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
+#include "ai.h"
+#include "party.h"
+#include "ui\ui.h"
+#include "temple_functions.h"
+#include "combat.h"
 
 static struct CritterAddresses : temple::AddressTable {
 
@@ -146,8 +151,8 @@ uint32_t LegacyCritterSystem::AddFollower(objHndl npc, objHndl pc, int unkFlag, 
 	return addresses.AddFollower(npc, pc, unkFlag, asAiFollower);
 }
 
-uint32_t LegacyCritterSystem::RemoveFollower(objHndl npc, int unkFlag) {
-	return addresses.RemoveFollower(npc, unkFlag);
+uint32_t LegacyCritterSystem::RemoveFollower(objHndl npc, int forceFollower) {
+	return addresses.RemoveFollower(npc, forceFollower);
 }
 
 objHndl LegacyCritterSystem::GetLeader(objHndl critter) {
@@ -167,12 +172,168 @@ objHndl LegacyCritterSystem::GetWornItem(objHndl handle, EquipSlot slot) {
 	return inventory.ItemWornAt(handle, (uint32_t) slot);
 }
 
-void LegacyCritterSystem::Attack(objHndl target, objHndl attacker, int n1, int n2) {
-	addresses.Attack(target, attacker, n1, n2);
+void LegacyCritterSystem::Attack(objHndl target, objHndl attacker, int n1, int flags) {
+	// flags:
+	// 0x1 - if 1, will adjust reaction by -10 regardless of the hostility threshold
+	// 0x2 - 
+	// 0x4
+
+	if (!target || !attacker)
+		return;
+	if (attacker == target)
+		return;
+	auto attackerObj = gameSystems->GetObj().GetObject(attacker);
+	auto tgtObj = gameSystems->GetObj().GetObject(target);
+	if (objects.IsCritter(attacker))
+	{
+		auto critFlags = attackerObj->GetInt32(obj_f_critter_flags2);
+		if (critFlags & OCF2_NIGH_INVULNERABLE)
+			return;
+		if (critterSys.IsDeadNullDestroyed(attacker)) return;
+
+	}
+	auto objFlags = attackerObj->GetFlags();
+	if (objFlags& (OF_OFF | OF_DONTDRAW | OF_INVULNERABLE))
+		return;
+	auto attackerName = attackerObj->GetInt32(obj_f_name);
+
+	if (attackerName == 6719) { // who is this hardcoded mofo???
+		return;
+	}
+
+	if (combatSys.IsBrawlInProgress())
+	{
+			return;
+	}
+		
+
+	if (attackerObj->IsPC() && tgtObj->IsPC())
+		return;
+
+
+	if (tgtObj->IsPC() && attackerObj->IsNPC() || tgtObj->IsNPC()){
+		if (flags & 4)	{
+			auto tgtLeader = critterSys.GetLeader(target);
+			if (tgtLeader)	{
+				auto ai_1005E2B0 = temple::GetRef<void(__cdecl)(objHndl, objHndl, objHndl, int, int, int)>(0x1005E2B0);
+				ai_1005E2B0(target, tgtLeader, attacker, 1, 0, 1);
+			}
+		} 
+		else
+		{
+			auto flag2 = flags & 2;
+			if (!flag2)	{
+				// do ai_1005E2B0 for the critter followers
+				auto ai_1005E830 = temple::GetRef<void(__cdecl)(objHndl, objHndl, int, int)>(0x1005E830);
+				ai_1005E830(target, attacker, 1, flags &1);
+			}
+			if (attackerObj->IsCritter()){
+
+				// UnConceal
+				auto attackerLeader = critterSys.GetLeaderRecursive(attacker);
+				auto toUnconceal = attackerLeader;
+				if (!attackerLeader){
+					toUnconceal = attacker;
+					attackerLeader = attacker;
+				}
+				if (critterSys.IsConcealed(attackerLeader))	{
+					critterSys.SetConcealedWithFollowers(toUnconceal, 0);
+				}
+
+				// unset ONF_KOS_OVERRIDE
+				if (attackerObj->IsNPC()){
+					auto npcFlags = attackerObj->GetNPCFlags();
+					npcFlags &= ~(ONF_KOS_OVERRIDE);
+					attackerObj->SetNPCFlags(npcFlags);
+				}
+
+				// Unknown
+				if (!flag2)	{
+					if (attackerObj->IsPC())	{
+						auto sub_10057790 = temple::GetRef<void(__cdecl)(objHndl, objHndl)>(0x10057790);
+						sub_10057790(attacker, target);
+					}
+					if (!(flags&1))	{
+						auto sub_1005D890 = temple::GetRef<void(__cdecl)(objHndl, objHndl, int)>(0x1005D890);
+						sub_1005D890(attacker, target, n1);
+					}
+				}
+
+				if (attackerObj->IsNPC()){
+
+					auto leader = critterSys.GetLeader(attacker);
+
+					// set "who hit me last"
+					if ( !(flags&1) && target != leader){
+						attackerObj->SetObjHndl(obj_f_npc_who_hit_me_last, target);
+					}
+
+					auto aiShitlistAddWithFollowers = temple::GetRef<void(__cdecl)(objHndl, objHndl)>(0x1005CCA0);
+					aiShitlistAddWithFollowers(attacker, target);
+					if (tgtObj->IsNPC()) {
+						aiShitlistAddWithFollowers(target, attacker);
+					}
+					else if (tgtObj->IsPC()){
+					
+						auto aiPar = aiSys.GetAiParams(attacker);
+						
+						if (leader == target)	{
+							auto npcRefuseFollowingCheck = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x10058A30);
+							if (npcRefuseFollowingCheck(attacker, target) && critterSys.RemoveFollower(attacker, 0))
+							{
+								ui.UpdatePartyUi();
+								auto npcFlags = attackerObj->GetInt32(obj_f_npc_flags);
+								attackerObj->SetNPCFlags(npcFlags | ONF_JILTED);
+							}
+							else if (templeFuncs.RNG(1,3) == 1 && !critterSys.IsDeadOrUnconscious(attacker))
+							{
+								auto uiDlgSoundPlayer = temple::GetRef<void(__cdecl*)(objHndl, objHndl, char*, int)>(0x10AA73B0);
+								if (uiDlgSoundPlayer)
+								{
+									char ffText[1000]; int soundId;
+									auto getFriendlyFireVoiceLine = temple::GetRef<void(__cdecl)(objHndl, objHndl, char*, int*)>(0x10037450);
+									getFriendlyFireVoiceLine(attacker, target, ffText, &soundId);
+									uiDlgSoundPlayer(attacker, target, ffText, soundId);
+								}
+							}
+						} 
+						else if (flags &1 )
+						{
+							objects.AdjustReaction(attacker, target, -10);
+						} else
+						{
+							auto curReaction = objects.GetReaction(attacker, target);
+							if (curReaction > aiPar.hostilityThreshold)
+								objects.AdjustReaction(attacker, target, aiPar.hostilityThreshold - curReaction);
+						}
+					}
+
+					if ( !(flags&1) || !critterSys.AllegianceShared(target, attacker) && target != leader)
+					{
+						aiSys.FightStatusProcess(attacker, target);
+					}
+				}
+			}
+		}
+		return;
+	}
+
+	if (attackerObj->IsNPC()){
+		aiSys.UpdateAiFlags(attacker, AIFS_FIGHTING, target, nullptr);
+		return;
+	}
+
+	//addresses.Attack(target, attacker, n1, flags);
 }
 
 uint32_t LegacyCritterSystem::IsFriendly(objHndl pc, objHndl npc) {
 	return addresses.IsFriendly(pc, npc);
+}
+
+BOOL LegacyCritterSystem::AllegianceShared(objHndl obj, objHndl obj2)
+{
+	auto allegShared = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x10080A70);
+	return allegShared(obj, obj2);
 }
 
 int LegacyCritterSystem::SoundmapCritter(objHndl critter, int id) {
@@ -216,6 +377,12 @@ void LegacyCritterSystem::BalorDeath(objHndl npc) {
 
 void LegacyCritterSystem::SetConcealed(objHndl critter, int concealed) {
 	addresses.SetConcealed(critter, concealed);
+}
+
+void LegacyCritterSystem::SetConcealedWithFollowers(objHndl obj, int newState)
+{
+	auto setConcWithFollowers = temple::GetRef<void(__cdecl)(objHndl, int)>(0x10080670);
+	setConcWithFollowers(obj, newState);
 }
 
 uint32_t LegacyCritterSystem::Resurrect(objHndl critter, ResurrectType type, int unk) {
