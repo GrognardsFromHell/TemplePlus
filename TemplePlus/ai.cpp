@@ -81,19 +81,20 @@ void AiSystem::aiTacticGetConfig(int tacIdx, AiTactic* aiTacOut, AiStrategy* aiS
 
 uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 {
+	#pragma region preamble
 	AiTactic aiTac;
 	combat->enterCombat(objHnd);
 	auto stratIdx = objects.getInt32(objHnd, obj_f_critter_strategy);
 	Expects(stratIdx >= 0);
 	AiStrategy* aiStrat = &(*aiStrategies)[stratIdx];
 	if (!actSeq->TurnBasedStatusInit(objHnd)) return 0;
-	
+
 	actSeq->curSeqReset(objHnd);
 	d20->GlobD20ActnInit();
 	spell->spellPacketBodyReset(&aiTac.spellPktBody);
 	aiTac.performer = objHnd;
 	aiTac.target = target;
-
+	#pragma endregion
 
 	AiCombatRole role = GetRole(objHnd);
 	if (role != AiCombatRole::caster)
@@ -166,6 +167,70 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 	}
 
 	// if that doesn't work either, try to Break Free (NPC might be held back by Web / Entangle)
+	if (d20Sys.d20Query(aiTac.performer, DK_QUE_Is_BreakFree_Possible))
+	{
+		logger->info("AiStrategy: \t {} attempting to break free...", description.getDisplayName(objHnd));
+		if (BreakFree(&aiTac))
+		{
+			actSeq->sequencePerform();
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+uint32_t AiSystem::AiStrategDefaultCast(objHndl objHnd, objHndl target, D20SpellData* spellData, SpellPacketBody* spellPkt)
+{
+	AiTactic aiTac;
+	combat->enterCombat(objHnd);
+	auto stratIdx = objects.getInt32(objHnd, obj_f_critter_strategy);
+	Expects(stratIdx >= 0);
+	AiStrategy* aiStrat = &(*aiStrategies)[stratIdx];
+	if (!actSeq->TurnBasedStatusInit(objHnd)) return 0;
+
+	actSeq->curSeqReset(objHnd);
+	d20->GlobD20ActnInit();
+	spell->spellPacketBodyReset(&aiTac.spellPktBody);
+	aiTac.performer = objHnd;
+	aiTac.target = target;
+
+	// loop through tactics defined in strategy.tab
+	for (uint32_t i = 0; i < aiStrat->numTactics; i++)
+	{
+		aiTacticGetConfig(i, &aiTac, aiStrat);
+		logger->info("AiStrategyDefaultCast: \t {} attempting {}...", description._getDisplayName(objHnd, objHnd), aiTac.aiTac->name);
+		auto aiFunc = aiTac.aiTac->aiFunc;
+		if (!aiFunc) continue;
+		if (aiFunc(&aiTac)) {
+			logger->info("AiStrategyDefaultCast: \t AI tactic succeeded; performing.");
+			actSeq->sequencePerform();
+			return 1;
+		}
+	}
+
+	logger->info("AiStrategyDefaultCast: \t AI tactics failed, trying DefaultCast.");
+	aiTac.d20SpellData.metaMagicData = spellData->metaMagicData;
+	aiTac.aiTac = &aiTacticDefs[1]; // default spellcast
+	aiTac.tacIdx = -1;
+	aiTac.d20SpellData.spellEnumOrg = spellData->spellEnumOrg;
+	aiTac.spellPktBody = *spellPkt;
+
+	auto aiFunc = aiTac.aiTac->aiFunc;
+	if (aiFunc && aiFunc(&aiTac)) {
+		logger->info("AiStrategyDefaultCast: \t DefaultCast succeeded; performing.");
+		actSeq->sequencePerform();
+		return 1;
+	}
+	logger->info("AiStrategyDefaultCast: \t DefaultCast failed, trying to perform again with initial target.");
+	aiTac.target = target;
+	if (aiFunc && aiFunc(&aiTac)) {
+		logger->info("AiStrategyDefaultCast: \t DefaultCast succeeded; performing.");
+		actSeq->sequencePerform();
+		return 1;
+	}
+
+	// if nothing else, try to breakfree
 	if (d20Sys.d20Query(aiTac.performer, DK_QUE_Is_BreakFree_Possible))
 	{
 		logger->info("AiStrategy: \t {} attempting to break free...", description.getDisplayName(objHnd));
@@ -1530,6 +1595,10 @@ public:
 		replaceFunction(0x100E4BD0, _AiCharge);		
 		replaceFunction(0x100E5080, SetCritterStrategy);
 		replaceFunction(0x100E50C0, _aiStrategyParse);
+		replaceFunction<uint32_t(__cdecl)(objHndl, objHndl, D20SpellData*, SpellPacketBody*)>(0x100E5290, [](objHndl obj, objHndl target, D20SpellData* spellData, SpellPacketBody* spellPkt)->uint32_t
+		{
+			return aiSys.AiStrategDefaultCast(obj, target, spellData, spellPkt);
+		});
 		replaceFunction(0x100E5460, _AiOnInitiativeAdd);
 		replaceFunction(0x100E5500, _StrategyTabLineParser);
 		replaceFunction(0x100E55A0, AiGoMelee);

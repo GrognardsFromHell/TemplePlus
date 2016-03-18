@@ -113,6 +113,7 @@ struct AiSystem : temple::AddressTable
 	AiSystem();
 	void aiTacticGetConfig(int i, AiTactic* aiTac, AiStrategy* aiStrat);
 	uint32_t AiStrategyParse(objHndl objHnd, objHndl target);
+	uint32_t AiStrategDefaultCast(objHndl objHnd, objHndl target, D20SpellData* spellData, SpellPacketBody* spellPkt);
 	
 	bool HasAiFlag(objHndl npc, AiFlag flag);
 	void SetAiFlag(objHndl npc, AiFlag flag);

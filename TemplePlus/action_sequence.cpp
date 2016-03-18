@@ -2125,7 +2125,7 @@ void ActionSequenceSystem::ActionPerform()
 						logger->debug("Move Action: {} going from {} to {}, nodes used: {}", description.getDisplayName(d20a->path->mover), d20a->path->from, d20a->path->to, directionsDebug);
 				}
 
-				d20->d20Defs[d20a->d20ActType].performFunc(d20a);
+				ActionErrorCode performResult = static_cast<ActionErrorCode>(d20->d20Defs[d20a->d20ActType].performFunc(d20a));
 				InterruptNonCounterspell(d20a);
 			}
 			return;
