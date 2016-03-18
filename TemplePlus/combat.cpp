@@ -568,6 +568,9 @@ void LegacyCombatSystem::CombatAdvanceTurn(objHndl obj)
 
 BOOL LegacyCombatSystem::IsBrawlInProgress()
 {
+	auto brawlInProgress= temple::GetRef<int>(0x10BD01C0);
+	if (!brawlInProgress)
+		return false;
 	auto brawlOpponent = temple::GetRef<objHndl>(0x10BD01D0);
 	if (brawlOpponent)
 		return true;
