@@ -10,6 +10,7 @@
 #include "condition.h"
 #include "critter.h"
 #include "combat.h"
+#include "gamesystems/gamesystems.h"
 
 
 void PyPerformTouchAttack_PatchedCallToHitProcessing(D20Actn * pd20A, D20Actn d20A, uint32_t savedesi, uint32_t retaddr, PyObject * pyObjCaller, PyObject * pyTupleArgs);
@@ -72,10 +73,18 @@ void SpellConditionFixes::enlargePersonModelScaleFix()
 
 int SpellConditionFixes::ImmunityCheckHandler(DispatcherCallbackArgs args)
 {
+	/*
+		the dispatch is performed from the functions:
+		0x100C3810 CheckSpellResistance
+		0x1008D830 PerformCastSpell
+	*/
 	auto dispIo23 = dispatch.DispIoCheckIoType23(args.dispIO);
 	if (dispIo23->returnVal == 1)
 		return 1;
 	
+
+
+
 	DispIoType21 dispIo21;
 	dispIo21.condNode = args.subDispNode->condNode;
 	auto dispatcher = objSystem->GetObject(args.objHndCaller)->GetDispatcher();
@@ -91,6 +100,20 @@ int SpellConditionFixes::ImmunityCheckHandler(DispatcherCallbackArgs args)
 	if (immType > 16)
 		return 1;
 
+
+	if (immType == 0x10) // immunity special
+	{
+		if (args.subDispNode->subDispDef->data1 == 0x4) //  necklace of adaptation (NEW!)
+		{
+			if (dispIo23->spellPkt->spellEnum == 65 || dispIo23->spellPkt->spellEnum == 460) // Cloudkill and Stinking Cloud
+			{
+				dispIo23->returnVal = 1;
+				return 1;
+			}
+
+		}
+	}
+
 	if (immType != 10)
 		return 0;
 
@@ -102,10 +125,12 @@ int SpellConditionFixes::ImmunityCheckHandler(DispatcherCallbackArgs args)
 	if (dispIo23->flag == 0)
 		return 0;
 
-	if (immSpellPkt.spellEnum != 368
-		&& (immSpellPkt.spellEnum < 370 || immSpellPkt.spellEnum > 372)) // prot from alignment spells
-		return 0;
 
+	if (immSpellPkt.spellEnum != 368
+		&& (immSpellPkt.spellEnum < 370 || immSpellPkt.spellEnum > 372)) {
+		// prot from alignment spells
+		return 0;
+	}
 	SpellEntry offendingSpellEntry;
 	spellSys.spellRegistryCopy(dispIo23->spellPkt->spellEnum, &offendingSpellEntry);
 

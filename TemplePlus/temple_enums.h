@@ -1593,11 +1593,11 @@ enum D20DispatcherKey : uint32_t {
 	DK_SAVE_WILL = 9,
 	DK_IMMUNITY_SPELL = 10,
 	DK_IMMUNITY_11 = 11,
-	DK_IMMUNITY_12 = 12,
-	DK_IMMUNITY_13 = 13,
-	DK_IMMUNITY_RACIAL = 14,
+	DK_IMMUNITY_12 = 12, // used in AI Controlled, Blindness, and Dominate. Might be a bug, but it doesn't seem to be handled in the immunity handler anyway
+	DK_IMMUNITY_COURAGE = 13, // used in Aura of Courage
+	DK_IMMUNITY_RACIAL = 14, // actually just Undead and Ooze use this
 	DK_IMMUNITY_15 = 15,
-	DK_IMMUNITY_16 = 16,
+	DK_IMMUNITY_SPECIAL = 16,
 	DK_OnEnterAoE = 18,
 	DK_OnLeaveAoE = 19,
 	DK_SKILL_APPRAISE = 20,
@@ -1880,7 +1880,7 @@ enum enum_dispIO_type : uint32_t {
 	dispIoTypeBonusListAndSpellEntry,
 	dispIOTypeReflexThrow,
 	dispIOType16,
-	dispIOType17,
+	dispIoTypeObjEvent,
 	dispIOType18,
 	dispIOType19,
 	dispIOType20,

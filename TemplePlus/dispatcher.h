@@ -22,6 +22,7 @@ struct DispIoDispelCheck; // 11
 struct DispIoD20ActionTurnBased; // 12
 struct DispIoMoveSpeed; //13
 struct DispIOBonusListAndSpellEntry; // 14
+struct DispIoObjEvent; // 17
 struct DispIoAttackDice; // 20
 struct DispIoImmunity; //23
 struct DispIoEffectTooltip; // 24
@@ -195,15 +196,7 @@ struct DispIoCondStruct : DispIO { // DispIoType = 1
 	}
 };
 
-struct DispIoReflexThrow : DispIO { // DispIoType = 15
-	int effectiveReduction;
-	D20SavingThrowReduction reduction;
-	int damageMesLine;	
-	D20AttackPower attackPower;
-	int attackType;
-	int throwResult;
-	D20SavingThrowFlag	flags;
-};
+
 
 struct DispIoBonusList : DispIO { // DispIoType = 2  used for fetching ability scores (dispType 10, 66), and Cur/Max HP 
 	BonusList bonlist;
@@ -264,6 +257,12 @@ struct DispIoD20Query : DispIO // DispIoType 7
 	}
 };
 
+
+struct DispIOTurnBasedStatus : DispIO // type 8
+{
+	TurnBasedStatus * tbStatus;
+};
+
 struct DispIoTooltip : DispIO // DispIoType 9 ; tooltip additional text when hovering over an object in the game
 {
 	char strings[10][256];
@@ -271,26 +270,6 @@ struct DispIoTooltip : DispIO // DispIoType 9 ; tooltip additional text when hov
 };
 const auto TestSizeOfDispIoTooltip = sizeof(DispIoTooltip); // should be 2568  (0xA08)
 
-struct DispIoType21 : DispIO { // DispIoType 21
-	uint32_t interrupt;
-	uint32_t field_8;
-	uint32_t field_C;
-	uint32_t SDDKey1;
-	uint32_t val2;
-	uint32_t okToAdd; // or spellId???
-	CondNode* condNode;
-
-	DispIoType21() {
-		dispIOType = dispIOType21;
-		interrupt = 0;
-		field_8 = 0;
-		condNode = nullptr;
-		field_C = 0;
-		SDDKey1 = 0;
-		val2 = 0;
-		
-	}
-};
 
 struct DispIoBonusAndObj : DispIO // type 10
 {
@@ -300,19 +279,7 @@ struct DispIoBonusAndObj : DispIO // type 10
 	objHndl obj; //optional
 	BonusList bonlist;
 };
-
-struct DispIOTurnBasedStatus : DispIO // type 8
-{
-	TurnBasedStatus * tbStatus;
-};
-
 const int TestSizeOfDispIO390h = sizeof(DispIoBonusAndObj); // should be 912 (0x390)
-
-struct DispIOBonusListAndSpellEntry: DispIO { // Type 14
-	BonusList * bonList;
-	SpellEntry * spellEntry;
-	uint32_t field_C; // unused?
-};
 
 struct DispIoDispelCheck : DispIO // type 11
 {
@@ -320,6 +287,54 @@ struct DispIoDispelCheck : DispIO // type 11
 	uint32_t flags;  // 0x80 - Dispel Magic   0x40 - Break Enchantment  0x20 - slippery mind 0x10 - 0x2 DispelAlignment stuff
 	uint32_t returnVal;
 };
+
+struct DispIoD20ActionTurnBased : DispIO { // dispIoType = 12; matches dispTypes 36-38 
+	int returnVal;
+	D20Actn * d20a;
+	TurnBasedStatus * tbStatus;
+};
+
+struct DispIoMoveSpeed : DispIO  // dispIoType = 13, matches dispTypes 40,41
+{
+	BonusList* bonlist;
+	float moveSpeed;
+};
+
+
+
+struct DispIOBonusListAndSpellEntry: DispIO { // Type 14
+	BonusList * bonList;
+	SpellEntry * spellEntry;
+	uint32_t field_C; // unused?
+};
+
+struct DispIoReflexThrow : DispIO { // DispIoType = 15
+	int effectiveReduction;
+	D20SavingThrowReduction reduction;
+	int damageMesLine;
+	D20AttackPower attackPower;
+	int attackType;
+	int throwResult;
+	D20SavingThrowFlag	flags;
+};
+
+struct DispIoObjEvent : DispIO // type 17
+{
+	objHndl aoeObj;
+	objHndl tgt;
+	uint32_t evtId;
+	int pad;
+	DispIoObjEvent()
+	{
+		dispIOType = dispIoTypeObjEvent;
+		aoeObj = 0i64;
+		tgt = 0i64;
+		evtId = 0;
+		pad = 0;
+	}
+};
+
+
 
 struct DispIoAttackDice : DispIO // type 20
 {
@@ -341,6 +356,27 @@ struct DispIoAttackDice : DispIO // type 20
 	};
 };
 
+struct DispIoType21 : DispIO { // DispIoType 21
+	uint32_t interrupt;
+	uint32_t field_8;
+	uint32_t field_C;
+	uint32_t SDDKey1;
+	uint32_t val2;
+	uint32_t okToAdd; // or spellId???
+	CondNode* condNode;
+
+	DispIoType21() {
+		dispIOType = dispIOType21;
+		interrupt = 0;
+		field_8 = 0;
+		condNode = nullptr;
+		field_C = 0;
+		SDDKey1 = 0;
+		val2 = 0;
+
+	}
+};
+
 struct DispIoImmunity : DispIO // type 23
 {
 	int returnVal;
@@ -357,17 +393,9 @@ struct DispIoEffectTooltip: DispIO // type 24
 	void* stuff;
 };
 
-struct DispIoD20ActionTurnBased : DispIO{ // dispIoType = 12; matches dispTypes 36-38 
-	int returnVal;
-	D20Actn * d20a;
-	TurnBasedStatus * tbStatus;
-};
 
-struct DispIoMoveSpeed :  DispIO  // dispIoType = 13, matches dispTypes 40,41
-{
-	BonusList* bonlist;
-	float moveSpeed;
-};
+
+
 
 struct Dispatcher : temple::TempleAlloc {
 	objHndl objHnd;

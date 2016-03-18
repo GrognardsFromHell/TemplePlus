@@ -731,19 +731,19 @@ void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint3
 
 		if ((subDispNode->subDispDef->dispKey == dispKey || subDispNode->subDispDef->dispKey == 0) && ((subDispNode->condNode->flags & 1) == 0)) {
 
-			DispIoType21 dispIO20h;
-			DispIOType21Init((DispIoType21*)&dispIO20h);
-			dispIO20h.condNode = (CondNode *)subDispNode->condNode;
+			DispIoType21 dispIoImmunity;
+			DispIOType21Init((DispIoType21*)&dispIoImmunity);
+			dispIoImmunity.condNode = (CondNode *)subDispNode->condNode;
 
-			if (dispKey != 10 || dispType != 62) {
-				_Dispatch62(dispatcher->objHnd, (DispIO*)&dispIO20h, 10);
+			if (dispKey != DK_IMMUNITY_SPELL || dispType != dispTypeImmunityTrigger) {
+				_Dispatch62(dispatcher->objHnd, (DispIO*)&dispIoImmunity, 10);
 			}
-
-			if (dispIO20h.interrupt == 1 && dispType != dispType63) {
-				dispIO20h.interrupt = 0;
-				dispIO20h.val2 = 10;
-				_Dispatch63(dispatcher->objHnd, (DispIO*)&dispIO20h);
-				if (dispIO20h.interrupt == 0) {
+			
+			if (dispIoImmunity.interrupt == 1 && dispType != dispType63) {
+				dispIoImmunity.interrupt = 0;
+				dispIoImmunity.val2 = 10;
+				_Dispatch63(dispatcher->objHnd, (DispIO*)&dispIoImmunity);
+				if (dispIoImmunity.interrupt == 0) {
 					subDispNode->subDispDef->dispCallback(subDispNode, dispatcher->objHnd, dispType, dispKey, (DispIO*)dispIO);
 				}
 			}

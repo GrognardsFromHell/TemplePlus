@@ -35,9 +35,14 @@ CondStructNew condKnockDown;
 CondStructNew condDeadlyPrecision;
 CondStructNew condPersistentSpell;
 
+CondStructNew condGreaterWeaponSpecialization;
 
 CondStructNew ConditionSystem::mCondDisarm;
 CondStructNew ConditionSystem::mCondDisarmed;
+
+
+//items
+CondStructNew ConditionSystem::mCondNecklaceOfAdaptation;
 
 // monsters
 CondStructNew condRend;
@@ -45,7 +50,11 @@ CondStructNew condRend;
 CondStructNew ConditionSystem::mCondCaptivatingSong;
 CondStructNew ConditionSystem::mCondCaptivated;
 
-CondStructNew condGreaterWeaponSpecialization;
+CondStructNew ConditionSystem::mCondHezrouStench;
+CondStructNew ConditionSystem::mCondHezrouStenchSickness;
+CondStructNew ConditionSystem::mCondHezrouStenchNausea;
+
+
 
 
 struct ConditionSystemAddresses : temple::AddressTable
@@ -998,6 +1007,11 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondCaptivated);
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondCraftWandLevelSet);
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondAidAnother);
+	
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondHezrouStench);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondHezrouStenchSickness);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondHezrouStenchNausea);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondNecklaceOfAdaptation);
 	/*
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDeadlyPrecision);
 	
@@ -1394,6 +1408,48 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 9, dispTypeBeginRound, 0, ConditionDurationTicker, 0, 0);
 	DispatcherHookInit(cond, 10, dispTypeTurnBasedStatusInit, 0, TurnBasedStatusInitNoActions, 0, 0);
 	DispatcherHookInit(cond, 11, dispTypeEffectTooltip, 0, CaptivatingSongEffectTooltipDuration, 0, 0);
+
+
+	// Hezrou Stench
+
+	cond = &mCondHezrouStench; 	condName = (char*)mCondHezrouStenchName;
+
+	cond->condName = condName;
+	cond->numArgs = 9; // 0 - spellId; 1 - duration; 2 - eventId; 3 - partsysId; 4-9 - caster objId
+
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
+	DispatcherHookInit(cond, 1, dispTypeConditionAdd, 0, CaptivatingSongOnConditionAdd, 1, 0x1028C7C8);
+	// Hezrou Stench Sickness
+
+	cond = &mCondHezrouStenchSickness; 	condName = (char*)mCondHezrouStenchSicknessName;
+
+	cond->condName = condName;
+	cond->numArgs = 8;
+
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
+
+	// Hezrou Stench Nausea
+
+	cond = &mCondHezrouStenchNausea; 	condName = (char*)mCondHezrouStenchNauseaName;
+
+	cond->condName = condName;
+	cond->numArgs = 8;
+
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
+
+
+	// Necklace of Adaptation
+
+	auto itemForceRemoveCallback = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x10104410);
+	auto immunityCheckHandler = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100ED650);
+	auto immunityTriggerCallback = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100ed5a0);
+	cond = &mCondNecklaceOfAdaptation; 
+
+	cond->condName = "Necklace of Adaptation";
+	cond->numArgs = 4;
+	DispatcherHookInit(cond, 0, dispTypeItemForceRemove, 0, itemForceRemoveCallback, 0, 0);
+	DispatcherHookInit(cond, 1, dispTypeSpellImmunityCheck,0, immunityCheckHandler, 4,0);
+	DispatcherHookInit(cond, 2, dispTypeImmunityTrigger, DK_IMMUNITY_SPECIAL, immunityTriggerCallback, 0x10, 0);
 
 #pragma endregion
 	// Craft Wand

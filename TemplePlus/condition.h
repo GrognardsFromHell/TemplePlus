@@ -162,6 +162,8 @@ public:
 	char mCondAidAnotherName[100];
 	CondStructNew * mCondAidAnother;
 
+	const char mCondNecklaceOfAdaptationName[100] = { "Neckalce of Adaptation" };
+	static CondStructNew mCondNecklaceOfAdaptation;
 
 	// monsters
 	char mCondRendName[100];
@@ -172,6 +174,12 @@ public:
 	const char mCondCaptivatedName[100] = { "Captivated" };
 	static CondStructNew mCondCaptivated;
 
+	const char mCondHezrouStenchName[100] = { "Hezrou Stench" };
+	static CondStructNew mCondHezrouStench;
+	const char mCondHezrouStenchSicknessName[100] = { "Hezrou Stench Sickness" };
+	static CondStructNew mCondHezrouStenchSickness;
+	const char mCondHezrouStenchNauseaName[100] = { "Hezrou Stench Nausea" };
+	static CondStructNew mCondHezrouStenchNausea;
 
 	/*
 		Returns the condition definition with the given name,
