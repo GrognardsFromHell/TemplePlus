@@ -1437,7 +1437,7 @@ void ConditionSystem::RegisterNewConditions()
 
 	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
 	DispatcherHookInit(cond, 1, dispTypeBeginRound, 0, spCallbacks.HezrouStenchCountdown, 0, 0);
-	DispatcherHookInit(cond, 2, dispTypeD20Signal, DK_NEWDAY_REST, spCallbacks.RemoveSpell, 0, 0);
+	DispatcherHookInit(cond, 2, dispTypeNewDay, DK_NEWDAY_REST, spCallbacks.RemoveSpell, 0, 0);
 	DispatcherHookInit(cond, 3, dispTypeObjectEvent, 0, spCallbacks.HezrouStenchObjEvent, 1, 0);
 	DispatcherHookInit(cond, 4, dispTypeTurnBasedStatusInit, 0, spCallbacks.HezrouStenchTurnbasedStatus, 0, 0);
 	DispatcherHookInit(cond, 5, dispTypeD20Query, DK_QUE_AOOPossible, spCallbacks.HezrouStenchAooPossible, 0, 0);
@@ -2579,7 +2579,6 @@ int SpellCallbacks::HezrouStenchCureNausea(DispatcherCallbackArgs args)
 
 int SpellCallbacks::RemoveSpell(DispatcherCallbackArgs args)
 {
-	auto dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
 	conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 	return 0;
 }
