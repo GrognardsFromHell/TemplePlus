@@ -193,6 +193,14 @@ void LegacyCombatSystem::FloatCombatLine(objHndl obj, int line)
 		floatSys.floatMesLine(obj, 1, floatColor, combatLineText);
 }
 
+void LegacyCombatSystem::FloatCombatLine(objHndl obj, int line, FloatLineColor floatColor)
+{
+
+	auto combatLineText = GetCombatMesLine(line);
+	if (combatLineText)
+		floatSys.floatMesLine(obj, 1, floatColor, combatLineText);
+}
+
 int LegacyCombatSystem::IsWithinReach(objHndl attacker, objHndl target)
 {
 	float reach = critterSys.GetReach(attacker, D20A_UNSPECIFIED_ATTACK);

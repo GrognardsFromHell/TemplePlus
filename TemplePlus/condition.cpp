@@ -165,11 +165,11 @@ public:
 	static int __cdecl HezrouStenchAooPossible(DispatcherCallbackArgs args);
 
 
-	static int __cdecl AbilityCheckMod(DispatcherCallbackArgs args);
-	static int __cdecl SavingThrowLevel(DispatcherCallbackArgs args);
-	static int __cdecl DealingDamage(DispatcherCallbackArgs args);
-	static int __cdecl ToHit2(DispatcherCallbackArgs args);
-	static int __cdecl EffectTooltip(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchAbilityCheckMod(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchSavingThrowLevel(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchDealingDamage(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchToHit2(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchEffectTooltip(DispatcherCallbackArgs args);
 	static int __cdecl HezrouStenchCureNausea(DispatcherCallbackArgs args);
 	static int __cdecl RemoveSpell(DispatcherCallbackArgs args);
 	static int __cdecl HasCondition(DispatcherCallbackArgs args);
@@ -1442,13 +1442,13 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 4, dispTypeTurnBasedStatusInit, 0, spCallbacks.HezrouStenchTurnbasedStatus, 0, 0);
 	DispatcherHookInit(cond, 5, dispTypeD20Query, DK_QUE_AOOPossible, spCallbacks.HezrouStenchAooPossible, 0, 0);
 	DispatcherHookInit(cond, 6, dispTypeSkillLevel, 0, spCallbacks.SkillBonus, -1, -2);
-	DispatcherHookInit(cond, 7, dispTypeAbilityCheckModifier, 0, spCallbacks.AbilityCheckMod, -2, 345);
-	DispatcherHookInit(cond, 8, dispTypeSaveThrowLevel, 0, spCallbacks.SavingThrowLevel, -2, 345);
-	DispatcherHookInit(cond, 9, dispTypeDealingDamage2, 0, spCallbacks.DealingDamage, -2, 345);
-	DispatcherHookInit(cond, 10, dispTypeToHitBonus2, 0, spCallbacks.ToHit2, -2, 345);
-	DispatcherHookInit(cond, 11, dispTypeEffectTooltip, 0, spCallbacks.EffectTooltip, 141, 0);
+	DispatcherHookInit(cond, 7, dispTypeAbilityCheckModifier, 0, spCallbacks.HezrouStenchAbilityCheckMod, -2, 345);
+	DispatcherHookInit(cond, 8, dispTypeSaveThrowLevel, 0, spCallbacks.HezrouStenchSavingThrowLevel, -2, 345);
+	DispatcherHookInit(cond, 9, dispTypeDealingDamage2, 0, spCallbacks.HezrouStenchDealingDamage, -2, 345);
+	DispatcherHookInit(cond, 10, dispTypeToHitBonus2, 0, spCallbacks.HezrouStenchToHit2, -2, 345);
+	DispatcherHookInit(cond, 11, dispTypeEffectTooltip, 0, spCallbacks.HezrouStenchEffectTooltip, 141, 0);
 	DispatcherHookInit(cond, 12, dispTypeD20Signal, DK_SIG_Combat_End, spCallbacks.HezrouStenchCureNausea,0,0 );
-	DispatcherHookInit(cond, 13, dispTypeD20Signal, DK_QUE_Critter_Has_Condition, spCallbacks.HasCondition, (uint32_t)cond, 0);
+	DispatcherHookInit(cond, 13, dispTypeD20Query, DK_QUE_Critter_Has_Condition, spCallbacks.HasCondition, (uint32_t)cond, 0);
 
 	// Necklace of Adaptation
 
@@ -2394,10 +2394,12 @@ int SpellCallbacks::HezrouStenchObjEvent(DispatcherCallbackArgs args){
 				// save succeeds - apply Sickened
 				if (damage.SavingThrowSpell(dispIo->tgt, spellPkt.caster, 24, SavingThrowType::Fortitude, 0, spellPkt.spellId)) {
 					conds.AddTo(dispIo->tgt, "Hezrou Stench Hit", { static_cast<int>(spellPkt.spellId), spellPkt.durationRemaining, static_cast<int>(dispIo->evtId), partsysId,1 });
+					floatSys.FloatSpellLine(dispIo->tgt, 20026, FloatLineColor::Red);
 				}
 				// save failed - apply nauseated
 				else {
 					conds.AddTo(dispIo->tgt, "Hezrou Stench Hit", { static_cast<int>(spellPkt.spellId), spellPkt.durationRemaining, static_cast<int>(dispIo->evtId), partsysId, 0 });
+					combatSys.FloatCombatLine(dispIo->tgt, 150, FloatLineColor::Red);
 				}
 			} 
 			
@@ -2496,8 +2498,11 @@ int SpellCallbacks::HezrouStenchAooPossible(DispatcherCallbackArgs args)
 	return 0;
 }
 
-int SpellCallbacks::AbilityCheckMod(DispatcherCallbackArgs args)
+int SpellCallbacks::HezrouStenchAbilityCheckMod(DispatcherCallbackArgs args)
 {
+	if (args.GetCondArg(4) > 1)
+		return 0;
+
 	auto dispIo = dispatch.DispIoCheckIoType10(args.dispIO);
 
 	dispIo->bonOut->AddBonus(args.GetData1(), 0, args.GetData2());
@@ -2506,29 +2511,42 @@ int SpellCallbacks::AbilityCheckMod(DispatcherCallbackArgs args)
 
 }
 
-int SpellCallbacks::SavingThrowLevel(DispatcherCallbackArgs args)
+int SpellCallbacks::HezrouStenchSavingThrowLevel(DispatcherCallbackArgs args)
 {
+	if (args.GetCondArg(4) > 1)
+		return 0;
+
 	auto dispIo = dispatch.DispIoCheckIoType3(args.dispIO);
 	dispIo->bonlist.AddBonus(args.GetData1(), 0, args.GetData2());
 	return 0;
 }
 
-int SpellCallbacks::DealingDamage(DispatcherCallbackArgs args)
+int SpellCallbacks::HezrouStenchDealingDamage(DispatcherCallbackArgs args)
 {
+	if (args.GetCondArg(4) > 1)
+		return 0;
+
 	auto dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
 	dispIo->damage.bonuses.AddBonus(args.GetData1(), 0, args.GetData2());
 	return 0;
 }
 
-int SpellCallbacks::ToHit2(DispatcherCallbackArgs args)
+int SpellCallbacks::HezrouStenchToHit2(DispatcherCallbackArgs args)
 {
+	if (args.GetCondArg(4) > 1)
+		return 0;
+
 	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
 	dispIo->bonlist.AddBonus(args.GetData1(), 0, args.GetData2());
 	return 0;
 }
 
-int SpellCallbacks::EffectTooltip(DispatcherCallbackArgs args)
+int SpellCallbacks::HezrouStenchEffectTooltip(DispatcherCallbackArgs args)
 {
+
+	if (args.GetCondArg(4) > 1)
+		return 0;
+
 	auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
 	auto spellId = args.GetCondArg(0);
 	SpellPacketBody spellPkt(spellId);
@@ -2536,14 +2554,13 @@ int SpellCallbacks::EffectTooltip(DispatcherCallbackArgs args)
 	/*
 		nauseated
 	*/
-	if (args.GetCondArg(4) == 0)
-	{
+	if (args.GetCondArg(4) == 0){
+
 		auto remainingDuration = args.GetCondArg(1);
 		if (remainingDuration < 5){
 			dispIo->Append(args.GetData1(), spellPkt.spellEnum, fmt::format("\n {}: {}", combatSys.GetCombatMesLine(175), remainingDuration).c_str());
 			return 0;
 		}
-		
 	}
 	dispIo->Append(args.GetData1(), spellPkt.spellEnum, nullptr);
 	
@@ -2552,6 +2569,10 @@ int SpellCallbacks::EffectTooltip(DispatcherCallbackArgs args)
 
 int SpellCallbacks::HezrouStenchCureNausea(DispatcherCallbackArgs args)
 {
+	if (args.GetCondArg(4) == 1)
+		combatSys.FloatCombatLine(args.objHndCaller, 206, FloatLineColor::White);
+	else if (args.GetCondArg(4) == 0)
+		combatSys.FloatCombatLine(args.objHndCaller, 207, FloatLineColor::White);
 	args.SetCondArg(4, 2);
 	return 0;
 }
@@ -2565,7 +2586,7 @@ int SpellCallbacks::RemoveSpell(DispatcherCallbackArgs args)
 
 int SpellCallbacks::HasCondition(DispatcherCallbackArgs args)
 {
-	auto dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
 	if (dispIo->data1 == args.GetData1())
 		dispIo->return_val = 1;
 	return 0;
