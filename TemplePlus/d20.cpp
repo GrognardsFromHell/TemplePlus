@@ -692,6 +692,7 @@ int LegacyD20System::TargetCheck(D20Actn* d20a)
 		tgtType = objects.GetType(target);
 
 	auto curSeq = (*actSeqSys.actSeqCur);
+	SpellEntry spellEntry;
 	switch( TargetClassification(d20a))
 	{
 		case D20TC_SingleExcSelf:
@@ -731,7 +732,7 @@ int LegacyD20System::TargetCheck(D20Actn* d20a)
 			curSeq->spellPktBody.spellKnownSlotLevel = spellSlotLevel;
 			curSeq->spellPktBody.metaMagicData = spellMetaMagicData;
 			curSeq->spellPktBody.invIdx = itemSpellData;
-			SpellEntry spellEntry;
+
 			if (!spellSys.spellRegistryCopy(spellEnum, &spellEntry))
 			{
 				logger->warn("Perform Cast Spell: failed to retrieve spell entry %d!\n", spellEnum);

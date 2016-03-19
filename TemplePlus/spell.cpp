@@ -155,6 +155,16 @@ LegacySpellSystem spellSys;
 //	return (UiPickerType)(modeTargetSemiBitmask & 0xFF);
 //}
 
+SpellEntry::SpellEntry()
+{
+	memset(this, 0, sizeof(SpellEntry));
+}
+
+SpellEntry::SpellEntry(uint32_t spellEnumIn)
+{
+	spellSys.spellRegistryCopy(spellEnumIn, this);
+}
+
 SpellPacketBody::SpellPacketBody()
 {
 	spellSys.spellPacketBodyReset(this);

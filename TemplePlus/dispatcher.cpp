@@ -276,6 +276,12 @@ DispIoBonusAndObj* DispatcherSystem::DispIoCheckIoType10(DispIoBonusAndObj* disp
 	return dispIo;
 }
 
+DispIoBonusAndObj* DispatcherSystem::DispIoCheckIoType10(DispIO* dispIo)
+{
+	if (dispIo->dispIOType != dispIOTypeSkillLevel) return nullptr;
+	return static_cast<DispIoBonusAndObj*>(dispIo);
+}
+
 DispIoDispelCheck* DispatcherSystem::DispIOCheckIoType11(DispIoDispelCheck* dispIo)
 {
 	if (dispIo->dispIOType != dispIOTypeDispelCheck) return nullptr;

@@ -51,6 +51,8 @@ struct SpellEntry
 	uint32_t pad;
 
 	//UiPickerType GetModeTarget() const;
+	SpellEntry();
+	explicit SpellEntry(uint32_t spellEnum);
 };
 
 const uint32_t TestSizeOfSpellEntry = sizeof(SpellEntry); // should be 0xC0  ( 192 )

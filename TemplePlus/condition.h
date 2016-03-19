@@ -174,12 +174,8 @@ public:
 	const char mCondCaptivatedName[100] = { "Captivated" };
 	static CondStructNew mCondCaptivated;
 
-	const char mCondHezrouStenchName[100] = { "Hezrou Stench" };
 	static CondStructNew mCondHezrouStench;
-	const char mCondHezrouStenchSicknessName[100] = { "Hezrou Stench Sickness" };
-	static CondStructNew mCondHezrouStenchSickness;
-	const char mCondHezrouStenchNauseaName[100] = { "Hezrou Stench Nausea" };
-	static CondStructNew mCondHezrouStenchNausea;
+	static CondStructNew mCondHezrouStenchHit;
 
 	/*
 		Returns the condition definition with the given name,
@@ -295,6 +291,8 @@ uint32_t _ConditionAdd_NumArgs3(Dispatcher* dispatcher, CondStruct* condStruct, 
 uint32_t _ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4);
 void InitCondFromCondStructAndArgs(Dispatcher *dispatcher, CondStruct *condStruct, int *condargs);
 
+
+
 int ConditionPrevent(DispatcherCallbackArgs args);
 int ConditionRemoveCallback(DispatcherCallbackArgs args);
 int RemoveSpellConditionAndMod(DispatcherCallbackArgs args);
@@ -302,7 +300,7 @@ int CondNodeSetArg0FromSubDispDef(DispatcherCallbackArgs args);
 int QueryCritterHasCondition(DispatcherCallbackArgs args);
 int QuerySetReturnVal1(DispatcherCallbackArgs args);
 int QueryRetrun1GetArgs(DispatcherCallbackArgs args);
-int SkillBonusCallback(DispatcherCallbackArgs args); 
+int ItemSkillBonusCallback(DispatcherCallbackArgs args); 
 
 int GlobalToHitBonus(DispatcherCallbackArgs args);
 int GlobalGetArmorClass(DispatcherCallbackArgs args);

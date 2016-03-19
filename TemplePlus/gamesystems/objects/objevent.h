@@ -44,6 +44,8 @@ public:
 	void TablePruneNullAoeObjs() const;
 
 #pragma region ObjEventList functions
+
+	int EventAppend(objHndl aoeObj, int onEnterFuncIdx, int onLeaveFuncIdx, ObjectListFilter olcFilter, float radiusInch, float angleBase, float angleSize) const;
 	void PrependEvtListNode(ObjEventListItem& evtListNode);
 	void ListItemNew(objHndl obj, LocAndOffsets loc, LocAndOffsets aoeObjLoc);
 	bool ListHasItems() const;
