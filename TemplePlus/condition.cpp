@@ -172,6 +172,7 @@ public:
 	static int __cdecl EffectTooltip(DispatcherCallbackArgs args);
 	static int __cdecl HezrouStenchCureNausea(DispatcherCallbackArgs args);
 	static int __cdecl RemoveSpell(DispatcherCallbackArgs args);
+	static int __cdecl HasCondition(DispatcherCallbackArgs args);
 } spCallbacks;
 
 CondNode::CondNode(CondStruct *cond) {
@@ -1447,6 +1448,7 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 10, dispTypeToHitBonus2, 0, spCallbacks.ToHit2, -2, 345);
 	DispatcherHookInit(cond, 11, dispTypeEffectTooltip, 0, spCallbacks.EffectTooltip, 141, 0);
 	DispatcherHookInit(cond, 12, dispTypeD20Signal, DK_SIG_Combat_End, spCallbacks.HezrouStenchCureNausea,0,0 );
+	DispatcherHookInit(cond, 13, dispTypeD20Signal, DK_QUE_Critter_Has_Condition, spCallbacks.HasCondition, (uint32_t)cond, 0);
 
 	// Necklace of Adaptation
 
@@ -2558,6 +2560,14 @@ int SpellCallbacks::RemoveSpell(DispatcherCallbackArgs args)
 {
 	auto dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
 	conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+	return 0;
+}
+
+int SpellCallbacks::HasCondition(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
+	if (dispIo->data1 == args.GetData1())
+		dispIo->return_val = 1;
 	return 0;
 }
 
