@@ -489,6 +489,8 @@ unsigned DispatcherSystem::Dispatch35BaseCasterLevelModify(objHndl obj, SpellPac
 		return 0;
 	DispIoD20Query dispIo;
 	dispIo.return_val = spellPkt->baseCasterLevel;
+	dispIo.data1 = reinterpret_cast<uint32_t>(spellPkt);
+	dispIo.data2 = 0;
 	DispatcherProcessor(_dispatcher, dispTypeBaseCasterLevelMod, 0, &dispIo);
 	spellPkt->baseCasterLevel = dispIo.return_val;
 	return dispIo.return_val;
