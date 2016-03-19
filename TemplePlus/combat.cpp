@@ -198,7 +198,7 @@ void LegacyCombatSystem::FloatCombatLine(objHndl obj, int line, FloatLineColor f
 
 	auto combatLineText = GetCombatMesLine(line);
 	if (combatLineText)
-		floatSys.floatMesLine(obj, 1, floatColor, combatLineText);
+		floatSys.floatMesLine(obj, 1, static_cast<FloatLineColor>(floatColor), combatLineText);
 }
 
 int LegacyCombatSystem::IsWithinReach(objHndl attacker, objHndl target)

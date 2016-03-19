@@ -12,7 +12,7 @@
 #define COMBAT_ACTIVATION_DISTANCE 42.5 
 #include "critter.h"
 
-enum class FloatLineColor;
+enum FloatLineColor : uint32_t;
 struct AiTactic;
 struct D20Actn;
 uint32_t Combat_GetMesfileIdx_CombatMes();
