@@ -20,6 +20,9 @@
 #include "util/streams.h"
 #include "combat.h"
 #include "sound.h"
+#include "bonus.h"
+#include "float_line.h"
+#include "history.h"
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
@@ -155,6 +158,89 @@ LegacySpellSystem spellSys;
 SpellPacketBody::SpellPacketBody()
 {
 	spellSys.spellPacketBodyReset(this);
+}
+
+SpellPacketBody::SpellPacketBody(uint32_t spellId)
+{
+	spellSys.GetSpellPacketBody(spellId, this);
+}
+
+bool SpellPacketBody::UpdateSpellsCastRegistry() const
+{
+	if (!spellId)
+		return true;
+
+	SpellPacket pkt;
+	if (spellsCastRegistry.copy(spellId, &pkt) && pkt.isActive){
+		pkt.spellPktBody = *this;
+		spellsCastRegistry.put(spellId, pkt);
+		return true;
+	}
+
+	return false;
+}
+
+bool SpellPacketBody::FindObj(objHndl obj, int* idx) const
+{
+	for (int i = 0; i < targetCount; i++) {
+		if (targetListHandles[i]== obj)	{
+			*idx = i;
+			return true;
+		}
+	}
+	*idx = -1;
+	return false;
+}
+
+bool SpellPacketBody::InsertToPartsysList(uint32_t idx, int partsysId)
+{
+	Expects(idx < 32 && idx >= 0);
+	if (idx >= targetCount && idx < 32){
+		targetListPartsysIds[idx] = partsysId;
+		return true;
+	}
+
+	memcpy(&targetListPartsysIds[idx + 1], &targetListPartsysIds[idx], sizeof(int)*(targetCount - idx));
+	targetListPartsysIds[idx] = partsysId;
+	return true;
+}
+
+bool SpellPacketBody::InsertToTargetList(uint32_t idx, objHndl tgt){
+	Expects(idx >= 0 && idx < 32 && idx <= targetCount);
+	for (int i = targetCount; i > idx; i--){
+		targetListHandles[i] = targetListHandles[i-1];
+	}
+	targetListHandles[idx] = tgt;
+	targetCount++;
+	return true;
+}
+
+bool SpellPacketBody::AddTarget(objHndl tgt, int partsysId, int replaceExisting)
+{
+	int idx = -1;
+	if (FindObj(tgt, &idx) || idx > -1)	{
+		if (replaceExisting == 1){
+			targetListPartsysIds[idx] = partsysId;
+			return 0;
+		} 
+		
+		logger->debug("SpellPacketAddTarget: Object {} already in list!", description.getDisplayName(tgt));
+		return 0;	
+	}
+
+	InsertToPartsysList(targetCount, partsysId);
+	if (InsertToTargetList(targetCount, tgt))
+	{
+		if (UpdateSpellsCastRegistry())	{
+			pySpellIntegration.UpdateSpell(spellId);
+			return true;
+		}
+		logger->warn("SpellPacketAddTarget: Unable to save SpellPacket!");
+		return false;
+	}
+
+	logger->debug("SpellPacketAddTarget: Unable to add obj {} to target list!", description.getDisplayName(tgt));
+	return false;
 }
 
 SpellMapTransferInfo::SpellMapTransferInfo()
@@ -1197,6 +1283,92 @@ BOOL LegacySpellSystem::SpellHasAiType(unsigned spellEnum, AiSpellType aiSpellTy
 	return 0;
 }
 
+int LegacySpellSystem::DispelRoll(objHndl obj, BonusList* bonlist, int rollMod, int dispelDC, char* historyText, int* rollHistId)
+{
+	auto dispelRoll = temple::GetRef<int(__cdecl)(objHndl, BonusList*, int, int, char*, int*)>(0x100B51E0);
+	return dispelRoll(obj, bonlist, rollMod, dispelDC, historyText, rollHistId);
+}
+
+BOOL LegacySpellSystem::PlayFizzle(objHndl handle)
+{
+	gameSystems->GetParticleSys().CreateAtObj("Fizzle", handle);
+	sound.PlaySoundAtObj(17122, handle);
+	return 1;
+}
+
+int LegacySpellSystem::CheckSpellResistance(SpellPacketBody* spellPkt, objHndl handle)
+{
+	// check spell immunity
+	DispIoImmunity dispIo;
+	dispIo.flag = 1;
+	dispIo.spellPkt = spellPkt;
+	spellSys.spellRegistryCopy(spellPkt->spellEnum, &dispIo.spellEntry);
+	
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	auto dispatcher = obj->GetDispatcher();
+	if (dispatch.Dispatch64ImmunityCheck(handle, &dispIo)){
+		return 1;
+	}
+
+	// does spell allow saving?
+	if (dispIo.spellEntry.spellResistanceCode != 1)
+	{
+		return 0;
+	}
+	
+	// obtain bonuses
+	DispIOBonusListAndSpellEntry dispIoBon;
+	BonusList bonlist;
+
+	auto casterLvlMod = dispatch.Dispatch35BaseCasterLevelModify(handle, spellPkt);
+	bonlist.AddBonus(casterLvlMod, 0, 203);
+
+
+	if (feats.HasFeatCountByClass(handle, FEAT_SPELL_PENETRATION)){
+		auto featName=  feats.GetFeatName(FEAT_SPELL_PENETRATION);
+		bonlist.AddBonusWithDesc(2,0,114, featName);
+	}
+	if (feats.HasFeatCountByClass(handle, FEAT_GREATER_SPELL_PENETRATION)){
+		auto featName = feats.GetFeatName(FEAT_GREATER_SPELL_PENETRATION);
+		bonlist.AddBonusWithDesc(2, 0, 114, featName);
+	}
+	dispIoBon.spellEntry = &dispIo.spellEntry;
+
+	int srMod = dispatch.Dispatch45SpellResistanceMod(handle, &dispIoBon);
+
+	// do the roll and log the result to the D20 window
+	int rollResult = 0;
+	if (srMod > 0){
+		auto Spell_Resistance = combatSys.GetCombatMesLine(5048);
+		int rollHistId;
+		rollResult = spellSys.DispelRoll(spellPkt->caster, &bonlist, 0, srMod, Spell_Resistance, &rollHistId);
+		char * outcomeText1, outcomeText2;
+		if (rollResult <=0)	{
+			auto spellName = GetSpellName(spellPkt->spellEnum);
+			logger->info("CheckSpellResistance: Spell {} cast by {} resisted by target {}.", spellName, description.getDisplayName(spellPkt->caster), description.getDisplayName(handle));
+			floatSys.FloatSpellLine(handle, 30008, FloatLineColor::White);
+			PlayFizzle(handle);
+			outcomeText1 = combatSys.GetCombatMesLine(119); // Spell ~fails~[ROLL_
+			outcomeText1 = combatSys.GetCombatMesLine(120); // ] to overcome Spell Resistance
+
+		} else
+		{
+			floatSys.FloatSpellLine(handle, 30009, FloatLineColor::Red);
+			outcomeText1 = combatSys.GetCombatMesLine(121); // Spell ~overcomes~[ROLL_
+			outcomeText1 = combatSys.GetCombatMesLine(122); // ] Spell Resistance
+		}
+
+		auto histText = std::string(fmt::format("{}{}{}\n\n", outcomeText1, rollHistId, outcomeText2));
+		histSys.CreateFromFreeText(histText.c_str());
+	}
+
+	
+
+
+	return rollResult;
+
+}
+
 void LegacySpellSystem::SpellsCastRegistryPut(int spellId, SpellPacket& pkt)
 {
 	spellsCastRegistry.put(spellId, pkt);
@@ -1219,8 +1391,8 @@ int LegacySpellSystem::SpellEnd(int spellId, int endDespiteTargetList) const
 		logger->debug("Forcing spell end anyway...");
 	}
 
-	pythonSpellIntegration.SpellTrigger(spellId, SpellEvent::EndSpellCast);
-	pythonSpellIntegration.RemoveSpell(spellId); // bah :P
+	pySpellIntegration.SpellTrigger(spellId, SpellEvent::EndSpellCast);
+	pySpellIntegration.RemoveSpell(spellId); // bah :P
 
 	// python stuff could update it so we refresh
 	spellsCastRegistry.copy(spellId, &pkt);

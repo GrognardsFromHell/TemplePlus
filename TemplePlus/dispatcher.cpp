@@ -10,6 +10,8 @@
 #include "damage.h"
 #include "util/fixes.h"
 #include "gamesystems/objects/objsystem.h"
+#include "gamesystems/gamesystems.h"
+#include "ui/ui_party.h"
 
 class DispatcherReplacements : public TempleFix {
 public:
@@ -302,6 +304,25 @@ DispIoMoveSpeed* DispatcherSystem::DispIOCheckIoType13(DispIO* dispIo)
 	return DispIOCheckIoType13((DispIoMoveSpeed*)dispIo);
 }
 
+bool DispatcherSystem::Dispatch64ImmunityCheck(objHndl handle, DispIoImmunity* dispIo)
+{
+	auto dispatcher = gameSystems->GetObj().GetObject(handle)->GetDispatcher();
+	if (dispatcher->IsValid())
+	{
+		DispatcherProcessor(dispatcher, dispTypeSpellImmunityCheck, 0, dispIo);
+		return dispIo->returnVal;
+	}
+	
+	return 0;
+}
+
+DispIoObjEvent* DispatcherSystem::DispIoCheckIoType17(DispIO* dispIo)
+{
+	if (dispIo->dispIOType != dispIoTypeObjEvent)
+		return nullptr;
+	return static_cast<DispIoObjEvent*>(dispIo);
+}
+
 DispIoImmunity* DispatcherSystem::DispIoCheckIoType23(DispIoImmunity* dispIo)
 {
 	if (dispIo->dispIOType != dispIOTypeImmunityHandler) return nullptr;
@@ -465,6 +486,21 @@ unsigned DispatcherSystem::Dispatch35BaseCasterLevelModify(objHndl obj, SpellPac
 	DispatcherProcessor(_dispatcher, dispTypeBaseCasterLevelMod, 0, &dispIo);
 	spellPkt->baseCasterLevel = dispIo.return_val;
 	return dispIo.return_val;
+}
+
+int DispatcherSystem::Dispatch45SpellResistanceMod(objHndl handle, DispIOBonusListAndSpellEntry* dispIo)
+{
+	auto dispatcher = gameSystems->GetObj().GetObject(handle)->GetDispatcher();
+	if (dispatcher->IsValid())
+	{
+		BonusList bonlist;
+		dispIo->bonList = &bonlist;
+		DispatcherProcessor(dispatcher, dispTypeSpellResistanceMod, 0, dispIo);
+		auto bonus = bonlist.GetEffectiveBonusSum();
+		return bonus;
+	}
+	else
+		return 0;
 }
 
 void DispatcherSystem::DispIoDamageInit(DispIoDamage* dispIoDamage)
@@ -731,8 +767,8 @@ void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint3
 
 		if ((subDispNode->subDispDef->dispKey == dispKey || subDispNode->subDispDef->dispKey == 0) && ((subDispNode->condNode->flags & 1) == 0)) {
 
-			DispIoType21 dispIoImmunity;
-			DispIOType21Init((DispIoType21*)&dispIoImmunity);
+			DispIoTypeImmunityTrigger dispIoImmunity;
+			DispIOType21Init((DispIoTypeImmunityTrigger*)&dispIoImmunity);
 			dispIoImmunity.condNode = (CondNode *)subDispNode->condNode;
 
 			if (dispKey != DK_IMMUNITY_SPELL || dispType != dispTypeImmunityTrigger) {
@@ -779,6 +815,59 @@ int32_t _dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut
 }
 
 
+void DispIoEffectTooltip::Append(int effectTypeId, uint32_t spellEnum, const char* text) const
+{
+	BuffDebuffSub * bdbSub;
+	if (effectTypeId >= 91)
+	{
+		if (effectTypeId >= 168)
+		{
+			/*
+				Status effects (icons inside the portrait)
+			*/
+			if (bdb->innerCount >= 6)
+				return;
+			bdbSub = &bdb->innerStatuses[bdb->innerCount++];
+
+		} 
+		/*
+			Debuffs (icons below the portrait)
+		*/
+		else
+		{
+			if (bdb->debuffCount >= 8)
+				return;
+			bdbSub = &bdb->debuffs[bdb->debuffCount++];
+		}
+
+	} 
+	/*
+		Buffs (icons above the portrait)
+	*/
+	else
+	{
+		if (bdb->buffCount >= 8)
+			return;
+		bdbSub = &bdb->buffs[bdb->buffCount++];
+	}
+
+	//copy the text
+	bdbSub->effectTypeId = effectTypeId;
+	bdbSub->spellEnum = spellEnum;
+	if (text){
+		bdbSub->text = new char[strlen(text) + 1];
+		strcpy( const_cast<char*>(bdbSub->text), text);
+	} else
+	{
+		bdbSub->text = nullptr;
+	}
+}
+
+bool Dispatcher::IsValid()
+{
+	return dispatch.dispatcherValid(this);
+}
+
 Dispatcher* _DispatcherInit(objHndl objHnd) {
 	Dispatcher* dispatcherNew = (Dispatcher *)malloc(sizeof(Dispatcher));
 	memset(&dispatcherNew->subDispNodes, 0, dispTypeCount * sizeof(SubDispNode*));
@@ -794,7 +883,7 @@ Dispatcher* _DispatcherInit(objHndl objHnd) {
 	return dispatcherNew;
 };
 
-void DispIOType21Init(DispIoType21* dispIO) {
+void DispIOType21Init(DispIoTypeImmunityTrigger* dispIO) {
 	dispIO->dispIOType = dispIOType21;
 	dispIO->interrupt = 0;
 	dispIO->field_8 = 0;
@@ -835,6 +924,26 @@ uint32_t _Dispatch63(objHndl objHnd, DispIO* dispIO) {
 
 
 #pragma endregion 
+uint32_t DispatcherCallbackArgs::GetCondArg(int argIdx)
+{
+	return conds.CondNodeGetArg(subDispNode->condNode, argIdx);
+}
+
+int DispatcherCallbackArgs::GetData1() const
+{
+	return subDispNode->subDispDef->data1;
+}
+
+int DispatcherCallbackArgs::GetData2() const
+{
+	return subDispNode->subDispDef->data2;
+}
+
+void DispatcherCallbackArgs::SetCondArg(int argIdx, int value)
+{
+	conds.CondNodeSetArg(subDispNode->condNode, argIdx, value);
+}
+
 DispIoAttackBonus::DispIoAttackBonus()
 {
 	dispIOType = dispIOTypeAttackBonus;

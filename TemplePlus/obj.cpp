@@ -23,7 +23,7 @@
 
 Objects objects;
 
-static_assert(temple::validate_size<CondNode, 44>::value, "Condition node structure has incorrect size.");
+static_assert(temple::validate_size<CondNode, 52>::value, "Condition node structure has incorrect size.");
 
 struct ObjectSystemAddresses : temple::AddressTable
 {

@@ -94,6 +94,16 @@ struct SpellPacketBody
 	uint32_t spellId;
 	uint32_t field_AE4;
 	SpellPacketBody();
+	SpellPacketBody(uint32_t spellId);
+	/*
+	// updates the spell in the SpellsCast registry *if it is still active*
+	*/
+	bool UpdateSpellsCastRegistry() const;
+	bool FindObj(objHndl obj, int* idx) const;
+	bool InsertToPartsysList(uint32_t idx, int partsysId);
+	bool InsertToTargetList(uint32_t idx, objHndl tgt);
+	// fetches from the SpellsCastRegistry. If it fails, the spellId will be 0 (as in the Reset function)
+	bool AddTarget(objHndl tgt, int partsysId, int replaceExisting); // will add target (or replace its partsys if it already exists)
 };
 
 const uint32_t TestSizeOfSpellPacketBody = sizeof(SpellPacketBody); // should be 0xAE8  (2792)
@@ -170,9 +180,19 @@ struct LegacySpellSystem : temple::AddressTable
 	const char* GetSpellEnumNameFromEnum(int spellEnum);
 	bool GetSpellTargets(objHndl obj, objHndl tgt, SpellPacketBody* spellPkt, unsigned spellEnum);
 	BOOL SpellHasAiType(unsigned spellEnum, AiSpellType aiSpellType);
-	
-	
+
+	/*
+		does a d20 roll for dispelling, and logs to history (outputting a history ID)
+	*/
+	int DispelRoll(objHndl obj,	BonusList* bonlist, int rollMod, int dispelDC, char* historyText, int* rollHistId);
+	/*
+		Plays the Fizzle particles and does a sound
+	*/
+	BOOL PlayFizzle(objHndl handle);
+	int CheckSpellResistance(SpellPacketBody* spellPkt, objHndl obj);
+
 	int SpellEnd(int spellId, int endDespiteTargetList) const; // endDespiteTargetList will end the spell even if the target list isn't empty
+	
 	void (__cdecl *SpellRemove)(int);
 	
 	void SpellSave(); // packs the spells cast registry to SpellMapTransferInfo data structs

@@ -81,7 +81,7 @@ public:
 
 	static int LayOnHandsPerform(DispatcherCallbackArgs arg);
 	static int RemoveDiseasePerform(DispatcherCallbackArgs arg); // also used in WholenessOfBodyPerform
-
+	void HookSpellCallbacks();
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
 		
@@ -139,34 +139,11 @@ public:
 		write(0x102D7958 + 8, &writeVal, sizeof(int*)); // entangle on
 
 
-		//replaceFunction(0x100C7180, QueryRetrun1GetArgs); // caused a crash :(
+		//replaceFunction(0x100C7180, QueryReturn1GetArgs); // caused a crash :(
 
-		// QueryCritterHasCondition for sp-Spiritual Weapon
-		writeVal = dispTypeD20Query;
-		SubDispDefNew sdd;
-		sdd.dispType = dispTypeD20Query;
-		sdd.data1 = 0x102DFC00;
-		sdd.data2 = 0;
-		sdd.dispCallback = QueryCritterHasCondition;
-		sdd.dispKey = DK_QUE_Critter_Has_Condition;
-		write(0x102DFD48, &sdd, sizeof(SubDispDefNew));
+		HookSpellCallbacks();
 
-		// QueryCritterHasCondition for sp-Sleep
-		sdd.dispType = dispTypeD20Query;
-		sdd.data1 = 0x102DEB08;
-		sdd.data2 = 0;
-		sdd.dispCallback = QueryCritterHasCondition;
-		sdd.dispKey = DK_QUE_Critter_Has_Condition;
-		write(0x102DEC00, &sdd, sizeof(SubDispDefNew));
-
-		//  DK_SIG_AID_ANOTHER_WAKE_UP for sp-Sleep
-		sdd.dispType = dispTypeD20Signal;
-		sdd.data1 = 0;
-		sdd.data2 = 0;
-		sdd.dispCallback = RemoveSpellConditionAndMod; 
-		sdd.dispKey = DK_SIG_AID_ANOTHER_WAKE_UP;
-		write(0x102DEB9C, &sdd, sizeof(SubDispDefNew)); // overwriting S_Teleport_Reconnect since it does nothing (return_0 callback)
-
+		
 
 		
 	}
@@ -966,8 +943,8 @@ int __cdecl CaptivatingSongEffectTooltipDuration(DispatcherCallbackArgs args){
 	int durationRemaining = _CondNodeGetArg(args.subDispNode->condNode, 0);
 	char tooltipString[256];
 	sprintf(tooltipString, "\n%d rounds remaining.", durationRemaining);
-	auto effectTooltipBase = temple::GetRef<int(__cdecl)(void*, int someIdx, int spellEnum, char*)>(0x100F4680);
-	effectTooltipBase(dispIo->stuff, 100, 20054, tooltipString); // will fetch 20054 from spell.mes (Captivated!)
+	auto effectTooltipBase = temple::GetRef<int(__cdecl)(BuffDebuffPacket*, int someIdx, int spellEnum, char*)>(0x100F4680);
+	effectTooltipBase(dispIo->bdb, 100, 20054, tooltipString); // will fetch 20054 from spell.mes (Captivated!)
 	return 0;
 }
 
@@ -1417,8 +1394,10 @@ void ConditionSystem::RegisterNewConditions()
 	cond->condName = condName;
 	cond->numArgs = 9; // 0 - spellId; 1 - duration; 2 - eventId; 3 - partsysId; 4-9 - caster objId
 
+
 	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
-	DispatcherHookInit(cond, 1, dispTypeConditionAdd, 0, CaptivatingSongOnConditionAdd, 1, 0x1028C7C8);
+	//DispatcherHookInit(cond, 1, dispTypeConditionAdd, 0, BeginHezrouStench, 0, 0);
+	//DispatcherHookInit(cond, 2, dispTypeBeginRound, 0, BeginHezrouStench, 0, 0);
 	// Hezrou Stench Sickness
 
 	cond = &mCondHezrouStenchSickness; 	condName = (char*)mCondHezrouStenchSicknessName;
@@ -2241,6 +2220,54 @@ int ConditionFunctionReplacement::RemoveDiseasePerform(DispatcherCallbackArgs ar
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 	return 0;
+}
+
+void ConditionFunctionReplacement::HookSpellCallbacks()
+{
+	// QueryCritterHasCondition for sp-Spiritual Weapon
+	int writeVal = dispTypeD20Query;
+	SubDispDefNew sdd;
+	sdd.dispType = dispTypeD20Query;
+	sdd.data1 = 0x102DFC00;
+	sdd.data2 = 0;
+	sdd.dispCallback = QueryCritterHasCondition;
+	sdd.dispKey = DK_QUE_Critter_Has_Condition;
+	write(0x102DFD48, &sdd, sizeof(SubDispDefNew));
+
+	// QueryCritterHasCondition for sp-Sleep
+	sdd.dispType = dispTypeD20Query;
+	sdd.data1 = 0x102DEB08;
+	sdd.data2 = 0;
+	sdd.dispCallback = QueryCritterHasCondition;
+	sdd.dispKey = DK_QUE_Critter_Has_Condition;
+	write(0x102DEC00, &sdd, sizeof(SubDispDefNew));
+
+	//  DK_SIG_AID_ANOTHER_WAKE_UP for sp-Sleep
+	sdd.dispType = dispTypeD20Signal;
+	sdd.data1 = 0;
+	sdd.data2 = 0;
+	sdd.dispCallback = RemoveSpellConditionAndMod;
+	sdd.dispKey = DK_SIG_AID_ANOTHER_WAKE_UP;
+	write(0x102DEB9C, &sdd, sizeof(SubDispDefNew)); // overwriting S_Teleport_Reconnect since it does nothing (return_0 callback)
+
+
+	sdd.dispType = dispTypeEffectTooltip;
+	sdd.dispKey = 0;
+	sdd.data1 = 141;
+	sdd.data2 = 0;
+	sdd.dispCallback = [](DispatcherCallbackArgs args)->int
+	{
+		auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
+		auto remainingDuration = args.GetCondArg(1);
+		auto spellId = args.GetCondArg(0);
+		SpellPacketBody spellPkt(spellId);
+
+		auto text = fmt::format("\n {}: {}/{}", combatSys.GetCombatMesLine(175), remainingDuration, spellPkt.duration);
+		dispIo->Append(args.GetData1(), spellPkt.spellEnum, text.c_str());
+		return 0;
+	};
+	write(0x102DFF50, &sdd, sizeof(SubDispDefNew));
+
 }
 
 int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args)

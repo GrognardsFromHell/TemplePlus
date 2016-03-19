@@ -1,6 +1,8 @@
 
 #include "stdafx.h"
 #include "common.h"
+#include "tig/tig_mes.h"
+#include "bonus.h"
 
 static void NormalizeAxis(float& offset, uint32_t &tilePos) {
 	auto tiles = (int) (offset / INCH_PER_TILE);
@@ -129,4 +131,19 @@ bool BonusList::IsBonusCapped(size_t bonusIdx, size_t* cappedByIdx) const {
 
 	return true;
 
+}
+
+int BonusList::AddBonusWithDesc(int value, int bonType, int mesline, char* descr)
+{
+	if (AddBonus(value, bonType, mesline ))
+	{
+		bonusEntries[bonCount - 1].bonusDescr = descr;
+		return 1;
+	}
+	return 0;
+}
+
+int BonusList::AddBonus(int value, int bonType, int mesline)
+{
+	return bonusSys.bonusAddToBonusList(this, value, bonType, mesline);
 }
