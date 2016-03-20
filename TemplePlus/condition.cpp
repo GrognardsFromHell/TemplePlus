@@ -2386,8 +2386,11 @@ int SpellCallbacks::HezrouStenchObjEvent(DispatcherCallbackArgs args){
 				pySpellIntegration.SpellSoundPlay(&spellPkt, SpellEvent::SpellStruck);
 				pySpellIntegration.SpellTrigger(spellId, SpellEvent::AreaOfEffectHit);
 
-				if (spellSys.CheckSpellResistance(&spellPkt, dispIo->tgt) == 1)
-					return 0;
+
+				// Hezrou Stench does not provoke Spell Resistance
+				/*if (spellSys.CheckSpellResistance(&spellPkt, dispIo->tgt) == 1)
+					return 0;*/
+
 
 				auto partsysId = gameSystems->GetParticleSys().CreateAtObj("sp-Stinking Cloud Hit", dispIo->tgt);
 				spellPkt.AddTarget(dispIo->tgt, partsysId, 1);
