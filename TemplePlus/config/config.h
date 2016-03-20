@@ -39,8 +39,9 @@ struct TemplePlusConfig
 	bool lockCursor = true; // When in fullscreen, lock cursor
 	int windowWidth = 1024;
 	int windowHeight = 768;
-	int renderWidth = -1; // will set to window size on first run
-	int renderHeight = -1;
+	bool firstRun = true;
+	int renderWidth = 800; // will set to window size on first run
+	int renderHeight = 600;
 	std::wstring toeeDir;
 	int sectorCacheSize = 128; // Default is now 128 (ToEE was 16)
 	int screenshotQuality = 80; // 1-100, Default is 80
