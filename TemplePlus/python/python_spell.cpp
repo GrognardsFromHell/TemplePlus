@@ -13,6 +13,8 @@
 #include <ui/ui.h>
 #include <condition.h>
 #include <anim.h>
+#include <gamesystems/gamesystems.h>
+#include <gamesystems/objects/objsystem.h>
 
 struct PySpell;
 static PyObject *PySpellTargets_Create(PySpell *spell);
@@ -281,6 +283,23 @@ static PyObject *PySpell_SummonMonsters(PyObject *obj, PyObject *args) {
 
 	// Make NPC summoned monsters attack the party
 	if (objects.IsNPC(self->caster) && !party.IsInParty(self->caster)) {
+
+		// add the summoner's faction
+		
+
+		auto factionArr = gameSystems->GetObj().GetObject(self->caster)->GetInt32Array(obj_f_npc_faction);
+		int numFactions = factionArr.GetSize();
+
+		for (auto i = 0; i < numFactions; i++){
+			auto newFac = factionArr[i];
+			if (!newFac)
+				continue;
+			if (!objects.factions.FactionHas(newHandle, newFac)) {
+				objects.factions.FactionAdd(newHandle, factionArr[i]);
+			}
+		}
+
+		
 
 		for (size_t i = 0; i < party.GroupListGetLen(); ++i) {
 			auto partyMember = party.GroupListGetMemberN(i);
