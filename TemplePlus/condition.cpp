@@ -2284,6 +2284,7 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 	write(0x102DEB9C, &sdd, sizeof(SubDispDefNew)); // overwriting S_Teleport_Reconnect since it does nothing (return_0 callback)
 
 
+	// EffectTooltip for Stinking Cloud
 	sdd.dispType = dispTypeEffectTooltip;
 	sdd.dispKey = 0;
 	sdd.data1 = 141;
@@ -2301,6 +2302,30 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 	};
 	write(0x102DFF50, &sdd, sizeof(SubDispDefNew));
 
+
+	// EffectTooltip for Cause Fear
+	sdd.dispType = dispTypeEffectTooltip;
+	sdd.dispKey = 0;
+	sdd.data1 = 117;
+	sdd.data2 = 0;
+	sdd.dispCallback = [](DispatcherCallbackArgs args)->int
+	{
+		auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
+		auto remainingDuration = args.GetCondArg(1);
+		auto spellId = args.GetCondArg(0);
+		SpellPacketBody spellPkt(spellId);
+		std::string text;
+		if (args.GetCondArg(2) == 0){ // frightened
+			text = fmt::format("({}) \n {}: {}/{}", combatSys.GetCombatMesLine(209), combatSys.GetCombatMesLine(175), remainingDuration, spellPkt.duration);
+		} else // shaken
+		{
+			text = fmt::format("({})", combatSys.GetCombatMesLine(208) );
+		}
+		//auto text = fmt::format("\n {}: {}/{}", combatSys.GetCombatMesLine(175), remainingDuration, spellPkt.duration);
+		dispIo->Append(args.GetData1(), spellPkt.spellEnum, text.c_str());
+		return 0;
+	};
+	write(0x102D232C, &sdd, sizeof(SubDispDefNew));
 }
 
 int SpellCallbacks::SkillBonus(DispatcherCallbackArgs args){

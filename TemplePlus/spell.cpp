@@ -83,17 +83,15 @@ public:
 		replaceFunction(0x100756E0, _GetSpellPacketBody);
 		replaceFunction(0x100F1010, _SetSpontaneousCastingAltNode);
 
-		static void(__cdecl* orgSpellSave)() = replaceFunction<void(__cdecl)()>(0x10079390, []() {
-			// orgSpellSave();
+		replaceFunction<void(__cdecl)()>(0x10079390, []() {
 			spellSys.SpellSave();
 		});
 
-		static void(__cdecl* orgGetSpellsFromTransInfo)() = replaceFunction<void(__cdecl)()>(0x100793F0, []() {
+		replaceFunction<void(__cdecl)()>(0x100793F0, []() {
 			spellSys.GetSpellsFromTransferInfo();
 		});
 
-		static int(__cdecl* orgSpellEnd)(int, int) = replaceFunction<int(__cdecl)(int, int)>(0x10079980, [](int id, int endDespiteTargetList)
-		{
+		replaceFunction<int(__cdecl)(int, int)>(0x10079980, [](int id, int endDespiteTargetList){
 			return spellSys.SpellEnd(id, endDespiteTargetList);
 		});
 
@@ -122,20 +120,11 @@ public:
 			return orgCastDefensivelySpellInterrupted(args);
 		});
 
-		replaceFunction<const char*(__cdecl)(uint32_t)>(0x10077970, [](uint32_t spellEnum)
-		{
-			MesLine mesline;
-			mesline.key = spellEnum + 20000;
-			if (spellEnum == 735)
-			{
-				int dummy = 1;
-			}
-			//if (mesFuncs.GetLine(*spellSys.spellEnumMesHandle, &mesline))
-			mesFuncs.GetLine_Safe(*spellSys.spellEnumMesHandle, &mesline);
-			return mesline.value;
-
-			// TODO: add spell_enums_ext.mes
+		replaceFunction<const char*(__cdecl)(uint32_t)>(0x10077970, [](uint32_t spellEnum){
+			return spellSys.GetSpellEnumTAG(spellEnum);
 		});
+
+		
 		
 	}
 } spellFuncReplacements;
@@ -320,12 +309,17 @@ const char* LegacySpellSystem::GetSpellMesline(uint32_t lineNumber) const
 	return mesLine.value;
 }
 
-const char* LegacySpellSystem::GetSpellEnumTAG(uint32_t spellEnum) const
-{
-	MesLine mesLine;
-	mesLine.key = spellEnum + 20000;
-	mesFuncs.GetLine_Safe(*spellEnumMesHandle, &mesLine);
-	return mesLine.value;
+const char* LegacySpellSystem::GetSpellEnumTAG(uint32_t spellEnum){
+
+	MesLine mesline;
+	mesline.key = spellEnum + 20000;
+
+	if (mesFuncs.GetLine(spellSys.spellEnumsExt, &mesline)){
+		return mesline.value;
+	} 
+	
+	mesFuncs.GetLine_Safe(*spellSys.spellEnumMesHandle, &mesline);
+	return mesline.value;
 }
 
 const char* LegacySpellSystem::GetSpellName(uint32_t spellEnum) const

@@ -144,6 +144,7 @@ struct LegacySpellSystem : temple::AddressTable
 	IdxTable<SpellPacket> * spellCastIdxTable;
 	
 	MesHandle * spellEnumMesHandle;
+	MesHandle spellEnumsExt;
 	MesHandle * spellMes;
 	MesHandle * spellsRadialMenuOptionsMes;
 	std::vector<SpellMapTransferInfo> spellMapTransInfo;
@@ -154,7 +155,7 @@ struct LegacySpellSystem : temple::AddressTable
 	int ParseSpellSpecString(SpellStoreData* spell, char* spellString);
 
 	const char* GetSpellMesline(uint32_t line) const;
-	const char* GetSpellEnumTAG(uint32_t spellEnum) const;
+	static const char* GetSpellEnumTAG(uint32_t spellEnum);
 	const char* GetSpellName(uint32_t spellEnum) const;
 	
 	void SetSpontaneousCastingAltNode(objHndl obj, int nodeIdx, SpellStoreData* spellData);
