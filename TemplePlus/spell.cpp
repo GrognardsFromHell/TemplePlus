@@ -121,6 +121,21 @@ public:
 
 			return orgCastDefensivelySpellInterrupted(args);
 		});
+
+		replaceFunction<const char*(__cdecl)(uint32_t)>(0x10077970, [](uint32_t spellEnum)
+		{
+			MesLine mesline;
+			mesline.key = spellEnum + 20000;
+			if (spellEnum == 735)
+			{
+				int dummy = 1;
+			}
+			//if (mesFuncs.GetLine(*spellSys.spellEnumMesHandle, &mesline))
+			mesFuncs.GetLine_Safe(*spellSys.spellEnumMesHandle, &mesline);
+			return mesline.value;
+
+			// TODO: add spell_enums_ext.mes
+		});
 		
 	}
 } spellFuncReplacements;
