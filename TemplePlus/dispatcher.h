@@ -178,7 +178,13 @@ struct CondStructNew
 {
 	const char* condName;
 	unsigned int numArgs;
-	SubDispDefNew subDispDefs[100];
+	SubDispDefNew subDispDefs[100]; // assumes the last one is 0!
+	int numHooks = 0; 
+
+	CondStructNew();
+	CondStructNew(std::string Name, int NumArgs);
+	void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs), uint32_t data1, uint32_t data2);
+	void Register();
 };
 
 struct DispatcherCallbackArgs {

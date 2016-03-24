@@ -88,7 +88,7 @@ public:
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
 		
-		conds.RegisterNewConditions();
+		//conds.RegisterNewConditions();
 		
 		
 
@@ -174,6 +174,12 @@ public:
 	static int __cdecl RemoveSpell(DispatcherCallbackArgs args);
 	static int __cdecl HasCondition(DispatcherCallbackArgs args);
 } spCallbacks;
+
+class ItemCallbacks
+{
+public:
+	static int __cdecl SkillBonus(DispatcherCallbackArgs args);
+} itemCallbacks;
 
 CondNode::CondNode(CondStruct *cond) {
 	memset(this, 0, sizeof(CondNode));
@@ -974,6 +980,13 @@ int __cdecl CaptivatingSongEffectTooltipDuration(DispatcherCallbackArgs args){
 	return 0;
 }
 
+
+class Conditions
+{
+public:
+	static void AddConditionsToTable();
+} conditions;
+
 void _FeatConditionsRegister()
 {
 
@@ -993,41 +1006,13 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAnimalCompanionAnimal);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAutoendTurn);
 
-	// New Conditions!
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionDisableAoO);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterTwoWeaponFighting);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterTWFRanger);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDivineMight);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDivineMightBonus);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondRecklessOffense);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterWeaponSpecialization);
-	
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondDisarm);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondDisarmed);
-	// conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondSuperiorExpertise); // will just be patched inside Combat Expertise callbacks
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondRend);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondCaptivatingSong);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondCaptivated);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondCraftWandLevelSet);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondAidAnother);
-	
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondHezrouStench);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondHezrouStenchHit);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondNecklaceOfAdaptation);
-	/*
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDeadlyPrecision);
-	
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterRage);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondImprovedDisarm);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondIndomitableWill);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondKnockDown);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondMightyRage);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondPersistentSpell);
-	
-	
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondTirelessRage);
-	*/
-	conds.FeatConditionDict[61].condStruct = (CondStruct*)conds.mCondCraftWand;
+
+	// Craft Wand
+	conds.mCondCraftWand = CondStructNew("Craft Wand", 0);
+	conds.mCondCraftWand.AddHook(dispTypeConditionAddPre, DK_NONE, ConditionPrevent, (uint32_t)&conds.mCondCraftWand, 0);
+	conds.mCondCraftWand.AddHook(dispTypeRadialMenuEntry, DK_NONE, CraftWandOnAdd, 0, 0);
+
+	conds.FeatConditionDict[61].condStruct = (CondStruct*)&conds.mCondCraftWand;
 
 	for (unsigned int i = 0; i < condCount; i++)
 	{
@@ -1214,6 +1199,7 @@ void ConditionSystem::InitCondFromCondStructAndArgs(Dispatcher* dispatcher, Cond
 
 void ConditionSystem::RegisterNewConditions()
 {
+
 	CondStructNew * cond;
 	char * condName;
 
@@ -1464,30 +1450,13 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 2, dispTypeImmunityTrigger, DK_IMMUNITY_SPECIAL, immunityTriggerCallback, 0x10, 0);
 
 #pragma endregion
-	// Craft Wand
-	mCondCraftWand = new CondStructNew();
-	memset(mCondCraftWand, 0, sizeof(CondStructNew));
-	cond = mCondCraftWand;	condName = mCondCraftWandName;
-	sprintf(condName, "Craft Wand");
 
-	cond->condName = condName;
-	cond->numArgs = 0;
 
-	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
-	//DispatcherHookInit(cond, 1, dispTypeConditionAdd, 0, CraftWandOnAdd, 0, 0);
-	DispatcherHookInit(cond, 1, dispTypeRadialMenuEntry, 0, CraftWandOnAdd, 0, 0);
-
-	mCondCraftWandLevelSet = new CondStructNew();
-	memset(mCondCraftWandLevelSet, 0, sizeof(CondStructNew));
-	cond = mCondCraftWandLevelSet;	condName = mCondCraftWandLevelSetName;
-	sprintf(condName, "Craft Wand Level Set");
-
-	cond->condName = condName;
-	cond->numArgs = 2;
-
-	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
-	DispatcherHookInit(cond, 1, dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, (uint32_t)cond, 0);
-	DispatcherHookInit(cond, 2, dispTypeRadialMenuEntry, 0, CraftWandRadialMenu, 0, 0);
+	mCondCraftWandLevelSet = CondStructNew("Craft Wand Level Set", 2);
+	mCondCraftWandLevelSet.AddHook(dispTypeConditionAddPre, DK_NONE, ConditionPrevent, (uint32_t)&mCondCraftWandLevelSet, 0);
+	mCondCraftWandLevelSet.AddHook(dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, (uint32_t)&mCondCraftWandLevelSet, 0);
+	mCondCraftWandLevelSet.AddHook(dispTypeRadialMenuEntry, DK_NONE, CraftWandRadialMenu, 0, 0);
+	mCondCraftWandLevelSet.Register();
 
 	// Aid Another
 	mCondAidAnother = new CondStructNew();
@@ -1518,6 +1487,8 @@ void ConditionSystem::RegisterNewConditions()
 	
 	
 	*/
+
+	conditions.AddConditionsToTable();
 
 }
 
@@ -2619,6 +2590,22 @@ int SpellCallbacks::HasCondition(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int ItemCallbacks::SkillBonus(DispatcherCallbackArgs args)
+{
+	auto skillEnum = args.GetCondArg(0);
+	auto bonValue = args.GetCondArg(1);
+	auto bonType = args.GetData1();
+	if (args.dispKey - 20 == skillEnum)
+	{
+		auto invIdx = args.GetCondArg( 2);
+		auto item = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+		auto dispIo =dispatch.DispIoCheckIoType10(args.dispIO);
+		auto itemName = description.getDisplayName(item, args.objHndCaller);
+		dispIo->bonOut->AddBonusWithDesc(bonValue, bonType, 112, const_cast<char*>(itemName));
+	}
+	return 0;
+}
+
 int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args)
 {
 	
@@ -2637,6 +2624,49 @@ int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args)
 	memcpy(&argg[2], &singerId, sizeof(ObjectId));
 	conds.AddTo(args.objHndCaller, "Captivated", argg);
 	return 0;
+}
+
+
+void Conditions::AddConditionsToTable(){
+
+	static CondStructNew itemSkillBonus("Special Equipment Skill Bonus", 3);
+	itemSkillBonus.AddHook(dispTypeSkillLevel, DK_SKILL_APPRAISE, itemCallbacks.SkillBonus, 1, 0);
+	itemSkillBonus.Register();
+
+	// New Conditions!
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionDisableAoO);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterTwoWeaponFighting);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterTWFRanger);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDivineMight);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDivineMightBonus);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondRecklessOffense);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterWeaponSpecialization);
+
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondDisarm);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondDisarmed);
+	// conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondSuperiorExpertise); // will just be patched inside Combat Expertise callbacks
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondRend);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondCaptivatingSong);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondCaptivated);
+	// conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondCraftWandLevelSet);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondAidAnother);
+
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondHezrouStench);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondHezrouStenchHit);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondNecklaceOfAdaptation);
+	/*
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDeadlyPrecision);
+
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterRage);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondImprovedDisarm);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondIndomitableWill);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondKnockDown);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondMightyRage);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondPersistentSpell);
+
+
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondTirelessRage);
+	*/
 }
 
 int AidAnotherRadialMenu(DispatcherCallbackArgs args)

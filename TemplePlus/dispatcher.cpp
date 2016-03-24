@@ -932,6 +932,26 @@ uint32_t _Dispatch63(objHndl objHnd, DispIO* dispIO) {
 
 
 #pragma endregion 
+CondStructNew::CondStructNew(){
+	numArgs = 0;
+	condName = nullptr;
+	memset(subDispDefs, 0, sizeof(subDispDefs));
+}
+
+CondStructNew::CondStructNew(std::string Name, int NumArgs) : CondStructNew() {
+	condName = strdup( Name.c_str());
+	numArgs = NumArgs;
+}
+
+void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs), uint32_t data1, uint32_t data2){
+	Expects(numHooks < 99);
+	subDispDefs[numHooks++] = {dispType, dispKey, callback, data1, data2};
+}
+
+void CondStructNew::Register(){
+	conds.hashmethods.CondStructAddToHashtable(reinterpret_cast<CondStruct*>(this));
+}
+
 uint32_t DispatcherCallbackArgs::GetCondArg(int argIdx)
 {
 	return conds.CondNodeGetArg(subDispNode->condNode, argIdx);

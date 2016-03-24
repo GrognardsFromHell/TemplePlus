@@ -12,6 +12,7 @@
 #include <config/config.h>
 #include <util/streams.h>
 #include "objects/objevent.h"
+#include <condition.h>
 
 
 //*****************************************************************************
@@ -490,6 +491,7 @@ D20System::D20System(const GameSystemConf &config) {
 	if (!startup(&config)) {
 		throw TempleException("Unable to initialize game system D20");
 	}
+	conds.RegisterNewConditions();
 }
 D20System::~D20System() {
 	auto shutdown = temple::GetPointer<void()>(0x1004c950);
