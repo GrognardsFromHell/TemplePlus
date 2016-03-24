@@ -164,7 +164,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	
 	int32_t InterruptNonCounterspell(D20Actn *d20a);
 	int32_t InterruptCounterspell(D20Actn *d20a);
-	int ReadyVsApproachOrWithdrawalCount();
+	int ReadyVsApproachOrWithdrawalCount() const;
 	ReadiedActionPacket * ReadiedActionGetNext(ReadiedActionPacket * prevReadiedAction, D20Actn* d20a);
 	void InterruptSwitchActionSequence(ReadiedActionPacket* readiedAction);
 
