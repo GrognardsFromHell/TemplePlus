@@ -58,7 +58,7 @@ bool BonusList::IsBonusSuppressed(size_t bonusIdx, size_t* suppressedByIdx) cons
 	Expects(bonusIdx < bonCount);
 
 	auto curHighest = bonusEntries[bonusIdx].bonValue;
-	auto type = bonusEntries[bonusIdx].bonValue;
+	auto type = bonusEntries[bonusIdx].bonType;
 	auto isMalus = (curHighest <= 0);
 	auto curIdx = bonusIdx;
 	bool suppressed = false;

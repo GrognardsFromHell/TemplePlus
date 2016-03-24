@@ -2630,7 +2630,7 @@ int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args)
 void Conditions::AddConditionsToTable(){
 
 	static CondStructNew itemSkillBonus("Special Equipment Skill Bonus", 3);
-	itemSkillBonus.AddHook(dispTypeSkillLevel, DK_SKILL_APPRAISE, itemCallbacks.SkillBonus, 1, 0);
+	itemSkillBonus.AddHook(dispTypeSkillLevel, DK_SKILL_APPRAISE, itemCallbacks.SkillBonus, 99, 0);
 	itemSkillBonus.Register();
 
 	// New Conditions!
