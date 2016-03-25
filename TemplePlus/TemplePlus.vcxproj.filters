@@ -334,6 +334,7 @@
     </ClCompile>
     <ClCompile Include="graphics\aas_hooks.cpp" />
     <ClCompile Include="gamesystems\objects\objevent.cpp" />
+    <ClCompile Include="updater\updater.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -630,6 +631,7 @@
       <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="gamesystems\objects\objevent.h" />
+    <ClInclude Include="updater\updater.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

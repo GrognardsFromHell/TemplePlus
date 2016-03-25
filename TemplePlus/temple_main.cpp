@@ -12,6 +12,7 @@
 #include "python/pythonglobal.h"
 #include "mainloop.h"
 #include "config/config.h"
+#include "updater/updater.h"
 
 class TempleMutex {
 public:
@@ -191,7 +192,9 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	startupRelevantFuncs.RunBatchFile("Startup.txt");
 	logger->info("[Beginning Game]");	
 
-	GameLoop loop(tig, gameSystems);
+	Updater updater;
+
+	GameLoop loop(tig, gameSystems, updater);
 	loop.Run();
 	// startupRelevantFuncs.RunMainLoop();
 

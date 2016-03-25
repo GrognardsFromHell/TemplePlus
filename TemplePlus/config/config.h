@@ -48,6 +48,8 @@ struct TemplePlusConfig
 	bool debugClipping = true;
 	bool drawObjCylinders = false;
 
+	bool autoUpdate = true;
+
 	std::vector<std::string> additionalTioPaths; // Add these to the Python sys.path variable
 	
 	// This is some crazy editor stuff leftover from worlded
