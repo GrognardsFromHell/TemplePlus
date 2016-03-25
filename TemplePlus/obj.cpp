@@ -23,7 +23,7 @@
 
 Objects objects;
 
-static_assert(temple::validate_size<CondNode, 44>::value, "Condition node structure has incorrect size.");
+static_assert(temple::validate_size<CondNode, 52>::value, "Condition node structure has incorrect size.");
 
 struct ObjectSystemAddresses : temple::AddressTable
 {
@@ -355,7 +355,7 @@ float Objects::GetRadius(objHndl handle) const
 	if (radiusSet){
 		auto radius = obj->GetFloat(obj_f_radius);
 
-		if ( radius < 25000.0){
+		if ( radius < 2000.0 && radius > 0){
 			 protoHandle = obj->GetObjHndl(obj_f_prototype_handle);
 			if (protoHandle){
 				auto protoObj = gameSystems->GetObj().GetObject(protoHandle);
@@ -368,7 +368,7 @@ float Objects::GetRadius(objHndl handle) const
 			}
 			
 		}
-		if (radius < 25000.0)
+		if (radius < 2000.0 && radius > 0)
 		{
 			if (radius > 600)
 			{
@@ -379,36 +379,45 @@ float Objects::GetRadius(objHndl handle) const
 				auto aasHandle = addresses.GetAasHandle(handle);
 				auto aasUpdateRadius = temple::GetRef<void(__cdecl)(objHndl, int)>(0x10021500);
 				aasUpdateRadius(handle, aasHandle);
-				int dummy = 1;
 				radius = obj->GetFloat(obj_f_radius);
 			}
 			return radius;
-		}
-			
+		}		
 	}
 
+	logger->debug("GetRadius: Radius not yet set, now calculating.");
 	auto aasHandle = addresses.GetAasHandle(handle);
 	if (!aasHandle)
 	{
+		logger->warn("GetRadius: Null AAS handle!");
 		protoHandle = obj->GetObjHndl(obj_f_prototype_handle);
 		auto protoObj = gameSystems->GetObj().GetObject(protoHandle);
 		protoRadius = protoObj->GetFloat(obj_f_radius);
-		if (protoRadius > 0.0)
+		if (protoRadius > 0.0) {
+			logger->debug("Returning radius from Proto: {}", protoRadius);
 			return protoRadius;
-		return 1.0;
+		}
+		logger->debug("Returning default (10.0)");
+		return 10.0;
 	}
 
 	auto radius = obj->GetFloat(obj_f_radius);
 	radiusSet = obj->GetFlags() & OF_RADIUS_SET; // might be changed I guess
-	if (!radiusSet || radius > 25000){
-
+	if (!radiusSet || abs(radius) > 2000){
+		logger->debug("GetRadius: Calculating from AAS model. Initially was {}", radius);
 		auto aasUpdateRadius = temple::GetRef<void(__cdecl)(objHndl, int)>(0x10021500);
 		aasUpdateRadius(handle, aasHandle);
 		radius = obj->GetFloat(obj_f_radius);
-		if (radius > 25000.0)
+		
+		if (radius > 2000.0)
 		{
-			radius = 25000.0;
-		}	
+			logger->warn("GetRadius: Huge radius calculated from AAS {}", radius);
+			radius = 2000.0;
+		} else if (radius <=0)
+		{
+			logger->warn("GetRadius: Negative radius calculated from AAS: {}. Changing to default (10.0)", radius);
+			radius = 10.0;
+		}
 	}
 	return radius;
 	//return _GetRadius(handle);

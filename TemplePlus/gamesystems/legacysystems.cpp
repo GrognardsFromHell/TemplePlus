@@ -12,6 +12,7 @@
 #include <config/config.h>
 #include <util/streams.h>
 #include "objects/objevent.h"
+#include <condition.h>
 
 
 //*****************************************************************************
@@ -311,13 +312,16 @@ const std::string &FeatSystem::GetName() const {
 
 SpellSystem::SpellSystem(const GameSystemConf &config) {
 	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x1007b740);
+	mesFuncs.Open("tprules\\spell_enums_ext.mes", &spellSys.spellEnumsExt);
 	if (!startup(&config)) {
 		throw TempleException("Unable to initialize game system Spell");
 	}
 }
 SpellSystem::~SpellSystem() {
 	auto shutdown = temple::GetPointer<void()>(0x100791d0);
+	mesFuncs.Close(spellSys.spellEnumsExt);
 	shutdown();
+
 }
 void SpellSystem::Reset() {
 	auto reset = temple::GetPointer<void()>(0x100750f0);
@@ -487,6 +491,7 @@ D20System::D20System(const GameSystemConf &config) {
 	if (!startup(&config)) {
 		throw TempleException("Unable to initialize game system D20");
 	}
+	conds.RegisterNewConditions();
 }
 D20System::~D20System() {
 	auto shutdown = temple::GetPointer<void()>(0x1004c950);

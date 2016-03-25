@@ -1,7 +1,7 @@
 #include "common.h"
 #include <temple/dll.h>
 
-enum class FloatLineColor : uint32_t {
+enum FloatLineColor : uint32_t {
 	White = 0,
 	Red = 1,
 	Green = 2,

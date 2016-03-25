@@ -4,6 +4,7 @@
 #include <temple/dll.h>
 #include "tig/tig_font.h"
 #include "tig/tig_texture.h"
+#include "ui\ui.h"
 
 #pragma pack(push, 1)
 struct DrawTexturedQuadArgs {
@@ -94,7 +95,17 @@ void UiRenderer::PopFont() {
 }
 
 bool UiRenderer::DrawTextInWidget(int widgetId, const string &text, const TigRect &rect, const TigTextStyle &style) {
-	return uiRenderFuncs.DrawTextInWidget(widgetId, text.c_str(), rect, style);
+	auto wid = ui.WidgetGet(widgetId);
+	if (!wid)
+		return 1;
+	if (text.empty())
+		return 1;
+
+	TigRect extents(rect.x + wid->x , rect.y + wid->y , rect.width,rect.height);
+
+	return tigFont.Draw(text.c_str(), extents, style);
+
+	// return uiRenderFuncs.DrawTextInWidget(widgetId, text.c_str(), rect, style);
 }
 
 bool UiRenderer::RenderText(const string &text, TigRect &rect, const TigTextStyle &style) {

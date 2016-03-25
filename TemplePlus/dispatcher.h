@@ -7,6 +7,7 @@
 #include "spell.h"
 
 
+struct BuffDebuffPacket;
 struct DispIO;
 struct DispIoCondStruct; // 1
 struct DispIoBonusList; // 2
@@ -22,6 +23,7 @@ struct DispIoDispelCheck; // 11
 struct DispIoD20ActionTurnBased; // 12
 struct DispIoMoveSpeed; //13
 struct DispIOBonusListAndSpellEntry; // 14
+struct DispIoObjEvent; // 17
 struct DispIoAttackDice; // 20
 struct DispIoImmunity; //23
 struct DispIoEffectTooltip; // 24
@@ -76,11 +78,14 @@ struct DispatcherSystem : temple::AddressTable
 	DispIoTooltip* DispIoCheckIoType9(DispIO* dispIo);
 	DispIoTooltip* DispIoCheckIoType9(DispIoTooltip* dispIo);
 	DispIoBonusAndObj* DispIoCheckIoType10(DispIoBonusAndObj* dispIo);
+	DispIoBonusAndObj* DispIoCheckIoType10(DispIO* dispIo);
 	DispIoDispelCheck* DispIOCheckIoType11(DispIoDispelCheck* dispIo);
 	DispIoD20ActionTurnBased* DispIOCheckIoType12(DispIoD20ActionTurnBased* dispIo);
 	DispIoD20ActionTurnBased* DispIOCheckIoType12(DispIO* dispIo);
 	DispIoMoveSpeed * DispIOCheckIoType13(DispIoMoveSpeed* dispIo);
 	DispIoMoveSpeed * DispIOCheckIoType13(DispIO* dispIo);
+	
+	static DispIoObjEvent* DispIoCheckIoType17(DispIO* dispIo);
 	DispIoImmunity* DispIoCheckIoType23(DispIoImmunity* dispIo);
 	DispIoImmunity* DispIoCheckIoType23(DispIO* dispIo);
 	DispIoEffectTooltip* DispIoCheckIoType24(DispIoEffectTooltip* dispIo);
@@ -92,6 +97,9 @@ struct DispatcherSystem : temple::AddressTable
 	int DispatchGetSizeCategory(objHndl objHndCaller);
 	void DispatchConditionRemove(Dispatcher* dispatcher, CondNode* cond);
 	unsigned int Dispatch35BaseCasterLevelModify(objHndl obj, SpellPacketBody* spellPkt);
+	int Dispatch45SpellResistanceMod(objHndl handle, DispIOBonusListAndSpellEntry* dispIo);
+	bool Dispatch64ImmunityCheck(objHndl handle, DispIoImmunity* dispIo);
+	
 #pragma endregion
 
 	void DispIoDamageInit(DispIoDamage *dispIoDamage);
@@ -107,6 +115,7 @@ struct DispatcherSystem : temple::AddressTable
 	}
 
 	
+
 
 private:
 	void(__cdecl *_Dispatch29hMovementSthg)(objHndl objHnd, void *);
@@ -126,7 +135,7 @@ struct CondNode : temple::TempleAlloc {
 	CondStruct* condStruct;
 	CondNode* nextCondNode;
 	uint32_t flags; // 1 - expired; 2 - got arg data from info stored in field
-	uint32_t args[8];
+	uint32_t args[10];
 
 	explicit CondNode(CondStruct *cond);
 };
@@ -169,7 +178,13 @@ struct CondStructNew
 {
 	const char* condName;
 	unsigned int numArgs;
-	SubDispDefNew subDispDefs[100];
+	SubDispDefNew subDispDefs[100]; // assumes the last one is 0!
+	int numHooks = 0; 
+
+	CondStructNew();
+	CondStructNew(std::string Name, int NumArgs);
+	void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs), uint32_t data1, uint32_t data2);
+	void Register();
 };
 
 struct DispatcherCallbackArgs {
@@ -178,6 +193,10 @@ struct DispatcherCallbackArgs {
 	enum_disp_type dispType;
 	uint32_t dispKey;
 	DispIO* dispIO;
+	uint32_t GetCondArg(int argIdx);
+	int GetData1() const; // gets the data1 value from the subDispDef
+	int GetData2() const;
+	void SetCondArg(int argIdx, int value);
 };
 
 struct DispIoCondStruct : DispIO { // DispIoType = 1
@@ -195,15 +214,7 @@ struct DispIoCondStruct : DispIO { // DispIoType = 1
 	}
 };
 
-struct DispIoReflexThrow : DispIO { // DispIoType = 15
-	int effectiveReduction;
-	D20SavingThrowReduction reduction;
-	int damageMesLine;	
-	D20AttackPower attackPower;
-	int attackType;
-	int throwResult;
-	D20SavingThrowFlag	flags;
-};
+
 
 struct DispIoBonusList : DispIO { // DispIoType = 2  used for fetching ability scores (dispType 10, 66), and Cur/Max HP 
 	BonusList bonlist;
@@ -264,6 +275,12 @@ struct DispIoD20Query : DispIO // DispIoType 7
 	}
 };
 
+
+struct DispIOTurnBasedStatus : DispIO // type 8
+{
+	TurnBasedStatus * tbStatus;
+};
+
 struct DispIoTooltip : DispIO // DispIoType 9 ; tooltip additional text when hovering over an object in the game
 {
 	char strings[10][256];
@@ -271,26 +288,6 @@ struct DispIoTooltip : DispIO // DispIoType 9 ; tooltip additional text when hov
 };
 const auto TestSizeOfDispIoTooltip = sizeof(DispIoTooltip); // should be 2568  (0xA08)
 
-struct DispIoType21 : DispIO { // DispIoType 21
-	uint32_t interrupt;
-	uint32_t field_8;
-	uint32_t field_C;
-	uint32_t SDDKey1;
-	uint32_t val2;
-	uint32_t okToAdd; // or spellId???
-	CondNode* condNode;
-
-	DispIoType21() {
-		dispIOType = dispIOType21;
-		interrupt = 0;
-		field_8 = 0;
-		condNode = nullptr;
-		field_C = 0;
-		SDDKey1 = 0;
-		val2 = 0;
-		
-	}
-};
 
 struct DispIoBonusAndObj : DispIO // type 10
 {
@@ -300,19 +297,7 @@ struct DispIoBonusAndObj : DispIO // type 10
 	objHndl obj; //optional
 	BonusList bonlist;
 };
-
-struct DispIOTurnBasedStatus : DispIO // type 8
-{
-	TurnBasedStatus * tbStatus;
-};
-
 const int TestSizeOfDispIO390h = sizeof(DispIoBonusAndObj); // should be 912 (0x390)
-
-struct DispIOBonusListAndSpellEntry: DispIO { // Type 14
-	BonusList * bonList;
-	SpellEntry * spellEntry;
-	uint32_t field_C; // unused?
-};
 
 struct DispIoDispelCheck : DispIO // type 11
 {
@@ -320,6 +305,61 @@ struct DispIoDispelCheck : DispIO // type 11
 	uint32_t flags;  // 0x80 - Dispel Magic   0x40 - Break Enchantment  0x20 - slippery mind 0x10 - 0x2 DispelAlignment stuff
 	uint32_t returnVal;
 };
+
+struct DispIoD20ActionTurnBased : DispIO { // dispIoType = 12; matches dispTypes 36-38 
+	int returnVal;
+	D20Actn * d20a;
+	TurnBasedStatus * tbStatus;
+};
+
+struct DispIoMoveSpeed : DispIO  // dispIoType = 13, matches dispTypes 40,41
+{
+	BonusList* bonlist;
+	float moveSpeed;
+};
+
+
+
+struct DispIOBonusListAndSpellEntry: DispIO { // Type 14
+	BonusList * bonList;
+	SpellEntry * spellEntry;
+	uint32_t field_C; // unused?
+	DispIOBonusListAndSpellEntry()
+	{
+		dispIOType = dispIoTypeBonusListAndSpellEntry;
+		bonList = nullptr;
+		spellEntry = nullptr;
+		field_C = 0;
+	}
+};
+
+struct DispIoReflexThrow : DispIO { // DispIoType = 15
+	int effectiveReduction;
+	D20SavingThrowReduction reduction;
+	int damageMesLine;
+	D20AttackPower attackPower;
+	int attackType;
+	int throwResult;
+	D20SavingThrowFlag	flags;
+};
+
+struct DispIoObjEvent : DispIO // type 17
+{
+	int pad;
+	objHndl aoeObj;
+	objHndl tgt;
+	uint32_t evtId;
+	DispIoObjEvent()
+	{
+		dispIOType = dispIoTypeObjEvent;
+		aoeObj = 0i64;
+		tgt = 0i64;
+		evtId = 0;
+		pad = 0;
+	}
+};
+
+
 
 struct DispIoAttackDice : DispIO // type 20
 {
@@ -341,6 +381,27 @@ struct DispIoAttackDice : DispIO // type 20
 	};
 };
 
+struct DispIoTypeImmunityTrigger : DispIO { // DispIoType 21
+	uint32_t interrupt;
+	uint32_t field_8;
+	uint32_t field_C;
+	uint32_t SDDKey1;
+	uint32_t val2;
+	uint32_t okToAdd; // or spellId???
+	CondNode* condNode;
+
+	DispIoTypeImmunityTrigger() {
+		dispIOType = dispIOType21;
+		interrupt = 0;
+		field_8 = 0;
+		condNode = nullptr;
+		field_C = 0;
+		SDDKey1 = 0;
+		val2 = 0;
+
+	}
+};
+
 struct DispIoImmunity : DispIO // type 23
 {
 	int returnVal;
@@ -348,26 +409,32 @@ struct DispIoImmunity : DispIO // type 23
 	int flag;
 	SpellPacketBody * spellPkt;
 	SpellEntry spellEntry;
+	DispIoImmunity()
+	{
+		dispIOType = dispIOTypeImmunityHandler;
+		returnVal = 0;
+		field8 = 0;
+		flag = 0;
+	}
 };
 
 
 
 struct DispIoEffectTooltip: DispIO // type 24
 {
-	void* stuff;
+	BuffDebuffPacket* bdb;
+	DispIoEffectTooltip()
+	{
+		dispIOType = dispIOTypeEffectTooltip;
+		bdb = nullptr;
+	}
+
+	void Append(int effectTypeId, uint32_t spellEnum, const char* text) const;
 };
 
-struct DispIoD20ActionTurnBased : DispIO{ // dispIoType = 12; matches dispTypes 36-38 
-	int returnVal;
-	D20Actn * d20a;
-	TurnBasedStatus * tbStatus;
-};
 
-struct DispIoMoveSpeed :  DispIO  // dispIoType = 13, matches dispTypes 40,41
-{
-	BonusList* bonlist;
-	float moveSpeed;
-};
+
+
 
 struct Dispatcher : temple::TempleAlloc {
 	objHndl objHnd;
@@ -375,6 +442,7 @@ struct Dispatcher : temple::TempleAlloc {
 	CondNode* itemConds;
 	CondNode* conditions;
 	SubDispNode* subDispNodes[dispTypeCount];
+	bool IsValid();
 };
 
 #pragma endregion
@@ -406,7 +474,7 @@ DispIoD20ActionTurnBased * _DispIoCheckIoType12(DispIoD20ActionTurnBased* dispIo
 DispIOBonusListAndSpellEntry * __cdecl _DispIoCheckIoType14(DispIOBonusListAndSpellEntry *dispIO);
 void __cdecl _PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher*dispatcher);
 
-void DispIOType21Init(DispIoType21* dispIO);
+void DispIOType21Init(DispIoTypeImmunityTrigger* dispIO);
 
 void _dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBasedStatus* dispIOtB);
 int _DispatchAttackBonus(objHndl objHnd, objHndl victim, DispIoAttackBonus* dispIo, enum_disp_type dispType, int key);

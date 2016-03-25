@@ -577,7 +577,7 @@ uint32_t ScribeScrollRadialMenu(DispatcherCallbackArgs args)
 	return ItemCreationBuildRadialMenuEntry(args, ScribeScroll, "TAG_SCRIBE_SCROLL", 5067);
 };
 
-uint32_t CraftWandRadialMenu(DispatcherCallbackArgs args)
+int CraftWandRadialMenu(DispatcherCallbackArgs args)
 {
 	
 	if (combatSys.isCombatActive()) { return 0; }
@@ -624,7 +624,7 @@ uint32_t CraftWandRadialMenu(DispatcherCallbackArgs args)
 	//return ItemCreationBuildRadialMenuEntry(args, CraftWand, "TAG_CRAFT_WAND", 5068);
 };
 
-uint32_t CraftWandOnAdd(DispatcherCallbackArgs args)
+int CraftWandOnAdd(DispatcherCallbackArgs args)
 {
 	//vector< int> condArgs(2);
 	//condArgs[0] = 1;

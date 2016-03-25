@@ -64,13 +64,15 @@ public:
 		return "ObjEvent Hooks";
 	} 
 	static void ObjectEventAdvanceTime();
-	static int EventAppend(objHndl obj, int onEnterFuncIdx, int onLeaveFuncIdx, ObjectListFilter olcFilter, float radiusInch, float angleMin, float angleMax);
+	//static int EventAppend(objHndl obj, int onEnterFuncIdx, int onLeaveFuncIdx, ObjectListFilter olcFilter, float radiusInch, float angleMin, float angleMax);
 	static void ObjEventListItemNew(objHndl obj, LocAndOffsets loc, LocAndOffsets aoeObjLoc);
 
 	void apply() override 
 	{
 		replaceFunction(0x10045290, ObjEventListItemNew);
-		replaceFunction(0x10045580, EventAppend);
+		replaceFunction<int(__cdecl)(objHndl , int , int , ObjectListFilter , float , float , float )>(0x10045580, [](objHndl aoeObj, int onEnterIdx, int onLeaveIdx, ObjectListFilter olcFilter, float radiusInch, float angleBase, float angleSize){
+			return objEvents.EventAppend( aoeObj, onEnterIdx, onLeaveIdx, olcFilter, radiusInch, angleBase, angleSize);
+		});
 		replaceFunction(0x10045740, ObjectEventAdvanceTime);
 		
 		
@@ -83,47 +85,47 @@ void ObjEventHooks::ObjectEventAdvanceTime()
 {
 	objEvents.AdvanceTime();
 }
-
-int ObjEventHooks::EventAppend(objHndl aoeObj, int onEnterFuncIdx, int onLeaveFuncIdx, ObjectListFilter olcFilter, float radiusInch, float angleMin, float angleMax)
-{
-	if (!aoeObj){
-		logger->warn("ObjectEventAppend: Null aoeObj!");
-		return 0;
-	}
-	auto aoeObjBody = gameSystems->GetObj().GetObject(aoeObj);
-	auto objLoc = aoeObjBody->GetLocationFull();
-	SectorLoc secLoc;
-	secLoc.GetFromLoc(objLoc.location);
-
-	ObjEventAoE evt;
-	evt.aoeObj = aoeObj;
-	evt.sectorLoc = secLoc;
-	evt.onEnterFuncIdx = onEnterFuncIdx;
-	evt.onLeaveFuncIdx = onLeaveFuncIdx;
-	evt.radiusInch = radiusInch;
-	evt.angleMin = angleMin;
-	evt.angleSize = angleMax;
-	evt.objNodesPrev = nullptr;
-	evt.filter = olcFilter;
-
-	auto getNewId = temple::GetRef<int(__cdecl)()>(0x10044AE0);
-	auto id = getNewId();
-	objEvents.objEvtTable->put(id, evt);
-
-	if (objEvents.objEvtTable->itemCount()){
-		ObjEventListItem evtListNode;
-		evtListNode.aoeObj = aoeObj;
-		evtListNode.aoeObjLoc = objLoc;
-		evtListNode.loc.location.locx = 0;
-		evtListNode.loc.location.locy = 0;
-		evtListNode.loc.off_x = 0;
-		evtListNode.loc.off_y = 0;
-		evtListNode.pad = evt.onLeaveFuncIdx; // for debug
-		objEvents.PrependEvtListNode(evtListNode);
-	}
-	return id;
-	
-}
+//
+//int ObjEventHooks::EventAppend(objHndl aoeObj, int onEnterFuncIdx, int onLeaveFuncIdx, ObjectListFilter olcFilter, float radiusInch, float angleMin, float angleMax)
+//{
+//	if (!aoeObj){
+//		logger->warn("ObjectEventAppend: Null aoeObj!");
+//		return 0;
+//	}
+//	auto aoeObjBody = gameSystems->GetObj().GetObject(aoeObj);
+//	auto objLoc = aoeObjBody->GetLocationFull();
+//	SectorLoc secLoc;
+//	secLoc.GetFromLoc(objLoc.location);
+//
+//	ObjEventAoE evt;
+//	evt.aoeObj = aoeObj;
+//	evt.sectorLoc = secLoc;
+//	evt.onEnterFuncIdx = onEnterFuncIdx;
+//	evt.onLeaveFuncIdx = onLeaveFuncIdx;
+//	evt.radiusInch = radiusInch;
+//	evt.angleMin = angleMin;
+//	evt.angleSize = angleMax;
+//	evt.objNodesPrev = nullptr;
+//	evt.filter = olcFilter;
+//
+//	auto getNewId = temple::GetRef<int(__cdecl)()>(0x10044AE0);
+//	auto id = getNewId();
+//	objEvents.objEvtTable->put(id, evt);
+//
+//	if (objEvents.objEvtTable->itemCount()){
+//		ObjEventListItem evtListNode;
+//		evtListNode.aoeObj = aoeObj;
+//		evtListNode.aoeObjLoc = objLoc;
+//		evtListNode.loc.location.locx = 0;
+//		evtListNode.loc.location.locy = 0;
+//		evtListNode.loc.off_x = 0;
+//		evtListNode.loc.off_y = 0;
+//		evtListNode.pad = evt.onLeaveFuncIdx; // for debug
+//		objEvents.PrependEvtListNode(evtListNode);
+//	}
+//	return id;
+//	
+//}
 
 void ObjEventHooks::ObjEventListItemNew(objHndl obj, LocAndOffsets loc, LocAndOffsets aoeObjLoc)
 {
@@ -445,6 +447,45 @@ void ObjEventSystem::TablePruneNullAoeObjs() const
 
 }
 
+int ObjEventSystem::EventAppend(objHndl aoeObj, int onEnterFuncIdx, int onLeaveFuncIdx, ObjectListFilter olcFilter, float radiusInch, float angleBase, float angleSize) const
+{
+	if (!aoeObj) {
+		logger->warn("ObjectEventAppend: Null aoeObj!");
+		return 0;
+	}
+	auto aoeObjBody = gameSystems->GetObj().GetObject(aoeObj);
+	auto objLoc = aoeObjBody->GetLocationFull();
+	SectorLoc secLoc;
+	secLoc.GetFromLoc(objLoc.location);
+
+	ObjEventAoE evt;
+	evt.aoeObj = aoeObj;
+	evt.sectorLoc = secLoc;
+	evt.onEnterFuncIdx = onEnterFuncIdx;
+	evt.onLeaveFuncIdx = onLeaveFuncIdx;
+	evt.radiusInch = radiusInch;
+	evt.angleMin = angleBase;
+	evt.angleSize = angleSize;
+	evt.objNodesPrev = nullptr;
+	evt.filter = olcFilter;
+
+	auto getNewId = temple::GetRef<int(__cdecl)()>(0x10044AE0);
+	auto id = getNewId();
+	objEvents.objEvtTable->put(id, evt);
+
+	if (objEvents.objEvtTable->itemCount()) {
+		ObjEventListItem evtListNode;
+		evtListNode.aoeObj = aoeObj;
+		evtListNode.aoeObjLoc = objLoc;
+		evtListNode.loc.location.locx = 0;
+		evtListNode.loc.location.locy = 0;
+		evtListNode.loc.off_x = 0;
+		evtListNode.loc.off_y = 0;
+		evtListNode.pad = evt.onLeaveFuncIdx; // for debug
+		objEvents.PrependEvtListNode(evtListNode);
+	}
+	return id;
+}
 
 
 bool ObjEventSystem::ObjEventLocIsInAoE(ObjEventAoE* const aoeEvt, LocAndOffsets loc, float objRadius) const

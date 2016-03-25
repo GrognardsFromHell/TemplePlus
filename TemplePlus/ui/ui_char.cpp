@@ -506,6 +506,8 @@ void CharUiSystem::SpellsShow(objHndl obj)
 				SpellStoreData spStore = spellsMemoArray[j];
 				// normal spells
 				if (!spellSys.isDomainSpell(spStore.classCode) && !spellSys.isDomainSpell(navClassPackets[i].spellClassCode)){
+					if (spStore.classCode != navClassPackets[i].spellClassCode)
+						continue;
 					auto casterLvl = spellsMemoArray[j].spellLevel * 2;
 					if (spStore.pad0 & 0x80)
 						casterLvl += 1;

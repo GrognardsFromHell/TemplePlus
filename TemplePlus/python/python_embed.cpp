@@ -96,7 +96,7 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 	pythonInitInternal.TigConsoleSetCommandInterpreter(PyConsole_Exec);
 
 	pythonObjIntegration.LoadScripts();
-	pythonSpellIntegration.LoadScripts();
+	pySpellIntegration.LoadScripts();
 
 	return true;
 }
@@ -115,7 +115,7 @@ static void __cdecl PythonReset() {
 
 static void __cdecl PythonExit() {
 	pythonObjIntegration.UnloadScripts();
-	pythonSpellIntegration.UnloadScripts();
+	pySpellIntegration.UnloadScripts();
 
 	Py_XDECREF(MainModuleDict);
 	Py_XDECREF(MainModule);

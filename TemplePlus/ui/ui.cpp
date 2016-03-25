@@ -4,6 +4,7 @@
 #include <util/fixes.h>
 #include <tig/tig_msg.h>
 #include <sound.h>
+#include <tig/tig_font.h>
 
 Ui ui;
 Widget** Ui::activeWidgets;
@@ -268,6 +269,41 @@ public:
 			 }
 			 return orgGetAsset(assetType, id, out, subId);
 		 });
+
+		 // DrawTextInWidget hook
+		 replaceFunction<bool(__cdecl)(int, char*, TigRect&, TigTextStyle&)>(0x101F87C0, [](int widgetId ,char* text, TigRect& rect, TigTextStyle& style)->bool
+		 {
+			 auto wid = ui.WidgetGet(widgetId);
+			 if (!wid)
+				 return 1;
+			 if (*text == 0)
+				 return 1;
+
+			
+
+			 TigRect extents(rect.x + wid->x, rect.y + wid->y, rect.width, rect.height);
+			 if (rect.x < 0 || rect.x > 10000 || rect.width > 10000 || rect.width < 0)
+			 {
+				 extents.x = wid->x;
+				 extents.width = wid->width;
+
+				 //auto tigRects = temple::GetPointer<TigRect>(0x10C7C638);
+				 //TigRect rects[20];
+				 //memcpy(rects, tigRects, sizeof(rects));
+				 //
+				 //auto uiCharEditorSkillsWnd = temple::GetPointer<WidgetType1>(0x10C7B628);
+				 //int dummy = 1;
+
+
+			 }
+			 
+			 
+
+			 return tigFont.Draw(text, extents, style);
+
+		 });
+
+
 	}
 } uiReplacement;
 

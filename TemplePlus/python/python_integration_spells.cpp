@@ -7,7 +7,7 @@
 #include <sound.h>
 #include <ui/ui_picker.h>
 
-PythonSpellIntegration pythonSpellIntegration;
+PythonSpellIntegration pySpellIntegration;
 
 static struct PythonIntegrationSpellsAddresses : temple::AddressTable {
 
@@ -35,14 +35,14 @@ static struct PythonIntegrationSpellsAddresses : temple::AddressTable {
 Calls the actual python spell script.
 */
 static void SpellTrigger(int spellId, SpellEvent evt) {
-	pythonSpellIntegration.SpellTrigger(spellId, evt);
+	pySpellIntegration.SpellTrigger(spellId, evt);
 }
 
 /*
 Calls the python spell with more args?
 */
 static void SpellTriggerProjectile(int spellId, SpellEvent evt, objHndl projectile, int targetIdx) {
-	pythonSpellIntegration.SpellTriggerProjectile(spellId, evt, projectile, targetIdx);
+	pySpellIntegration.SpellTriggerProjectile(spellId, evt, projectile, targetIdx);
 }
 
 /*
@@ -51,7 +51,7 @@ static void SpellTriggerProjectile(int spellId, SpellEvent evt, objHndl projecti
 	with the new data from the spell packet.
 */
 static void UpdatePythonSpell(int spellId) {
-	pythonSpellIntegration.UpdateSpell(spellId);
+	pySpellIntegration.UpdateSpell(spellId);
 }
 
 /*
@@ -60,7 +60,7 @@ static void UpdatePythonSpell(int spellId) {
 	corresponding Python spell object.
 */
 static void RemovePythonSpell(int spellId) {
-	pythonSpellIntegration.RemoveSpell(spellId);
+	pySpellIntegration.RemoveSpell(spellId);
 }
 
 static class PythonSpellIntegrationFix : public TempleFix {
@@ -77,7 +77,7 @@ public:
 
 		replaceFunction<uint32_t(__cdecl)(SpellPacketBody*, SpellEvent)>(0x100BF770, [](SpellPacketBody* spellPkt, SpellEvent spellEvt)
 		{
-			return pythonSpellIntegration.SpellSoundPlay(spellPkt, spellEvt);
+			return pySpellIntegration.SpellSoundPlay(spellPkt, spellEvt);
 		});
 	}
 

@@ -14,6 +14,7 @@ struct HistorySystem : temple::AddressTable
 	int CreateRollHistoryString(int histId);// 100DFFF0
 	HistorySystem();
 	int CreateRollHistoryLineFromMesfile(int historyMesLine, objHndl obj, objHndl obj2);
+	static void CreateFromFreeText(const char *);
 };
 
 extern HistorySystem histSys;

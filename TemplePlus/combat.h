@@ -12,6 +12,7 @@
 #define COMBAT_ACTIVATION_DISTANCE 42.5 
 #include "critter.h"
 
+enum FloatLineColor : uint32_t;
 struct AiTactic;
 struct D20Actn;
 uint32_t Combat_GetMesfileIdx_CombatMes();
@@ -23,6 +24,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 
 	char * GetCombatMesLine(int line);
 	void FloatCombatLine(objHndl obj, int line);
+	void FloatCombatLine(objHndl obj, int line, FloatLineColor floatColor);
 	int IsWithinReach(objHndl attacker, objHndl target);
 	
 	BOOL CanMeleeTargetAtLoc(objHndl obj, objHndl target, LocAndOffsets* loc); // checks if obj is able to hit target if the TARGET is at loc	
@@ -43,6 +45,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 	void Subturn();
 	void TurnStart2( int initiativeIdx);
 	void CombatAdvanceTurn(objHndl obj);
+	BOOL IsBrawlInProgress();
 	uint32_t* combatModeActive;
 	bool isCombatActive();
 	uint32_t IsCloseToParty(objHndl objHnd);

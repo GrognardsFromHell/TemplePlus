@@ -303,6 +303,10 @@ uint32_t LegacyD20System::d20QueryHasSpellCond(objHndl obj, int spellEnum)
 
 void LegacyD20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2)
 {
+	if (!objHnd){
+		logger->warn("D20SendSignal called with null handle! Key was {}, arg1 {}, arg2 {}", (int)dispKey, arg1, arg2);
+		return;
+	}
 	DispIoD20Signal dispIO;
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (!dispatch.dispatcherValid(dispatcher))
@@ -318,6 +322,10 @@ void LegacyD20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, in
 
 void LegacyD20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, D20Actn* arg1, int32_t arg2)
 {
+	if (!objHnd) {
+		logger->warn("D20SendSignal called with null handle! Key was {}", (int)dispKey);
+		return;
+	}
 	DispIoD20Signal dispIO;
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (!dispatch.dispatcherValid(dispatcher))
@@ -332,6 +340,10 @@ void LegacyD20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, D2
 }
 
 void LegacyD20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, objHndl arg) {
+	if (!objHnd) {
+		logger->warn("D20SendSignal called with null handle! Key was {}", (int)dispKey);
+		return;
+	}
 	DispIoD20Signal dispIO;
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (!dispatch.dispatcherValid(dispatcher))
@@ -692,6 +704,7 @@ int LegacyD20System::TargetCheck(D20Actn* d20a)
 		tgtType = objects.GetType(target);
 
 	auto curSeq = (*actSeqSys.actSeqCur);
+	SpellEntry spellEntry;
 	switch( TargetClassification(d20a))
 	{
 		case D20TC_SingleExcSelf:
@@ -731,7 +744,7 @@ int LegacyD20System::TargetCheck(D20Actn* d20a)
 			curSeq->spellPktBody.spellKnownSlotLevel = spellSlotLevel;
 			curSeq->spellPktBody.metaMagicData = spellMetaMagicData;
 			curSeq->spellPktBody.invIdx = itemSpellData;
-			SpellEntry spellEntry;
+
 			if (!spellSys.spellRegistryCopy(spellEnum, &spellEntry))
 			{
 				logger->warn("Perform Cast Spell: failed to retrieve spell entry %d!\n", spellEnum);

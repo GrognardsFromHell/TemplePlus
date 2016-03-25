@@ -10,11 +10,12 @@ struct D20ClassSystem : temple::AddressTable
 public:
 	Stat classEnums[NUM_CLASSES];
 	const int ClassLevelMax = 20;
-	bool isNaturalCastingClass(Stat classEnum);
-	bool isNaturalCastingClass(uint32_t classEnum);
-	bool isVancianCastingClass(Stat classEnum);
-	bool IsCastingClass(Stat classEnum);
-	bool IsLateCastingClass(Stat classEnum); // for classes like Ranger / Paladin that start casting on level 4
+	static bool isNaturalCastingClass(Stat classEnum);
+	static bool isNaturalCastingClass(uint32_t classEnum);
+	static bool isVancianCastingClass(Stat classEnum);
+	static bool IsCastingClass(Stat classEnum);
+	static bool IsLateCastingClass(Stat classEnum); // for classes like Ranger / Paladin that start casting on level 4
+	static bool HasDomainSpells(Stat classEnum);
 	void ClassPacketAlloc(ClassPacket *classPkt); // allocates the three IdxTables within ClassPacket
 	void ClassPacketDealloc(ClassPacket *classPkt);
 	uint32_t GetClassPacket(Stat classEnum, ClassPacket *classPkt); // fills the struct with content based on classEnum (e.g. Barbarian Feats in the featsIdxTable). Also STUB FOR PRESTIGE CLASSES! TODO

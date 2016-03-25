@@ -141,12 +141,22 @@ struct LegacyCritterSystem : temple::AddressTable
 	*/
 	objHndl GetWornItem(objHndl handle, EquipSlot slot);
 
+
+
 	void Attack(objHndl target, objHndl attacker, int n1, int n2);
 
 	/*
 		Checks if the given critter is friendly towards the target.
 	*/
 	uint32_t IsFriendly(objHndl, objHndl);
+	/*
+		returns 0 if both are PCs
+		returns 1 if :
+		 - both are NPCs with the same leader
+		 - one is the other's leader
+		 - both share a faction (including factions from reputations for PCs)
+	*/
+	BOOL AllegianceShared(objHndl obj, objHndl obj2);
 
 	/*
 		For id = 7, this returns footstep sound ids for the critter
@@ -193,6 +203,7 @@ struct LegacyCritterSystem : temple::AddressTable
 		Changes whether the given critter is concealed or not.	
 	*/
 	void SetConcealed(objHndl critter, int concealed);
+	void SetConcealedWithFollowers(objHndl obj, int newState); // same, and applies it to the critter followers too
 
 	/*
 		Third argument seems unused.

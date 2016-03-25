@@ -35,4 +35,4 @@ protected:
 	const char* GetFunctionName(EventId eventId) override;
 };
 
-extern PythonSpellIntegration pythonSpellIntegration;
+extern PythonSpellIntegration pySpellIntegration;

@@ -154,7 +154,12 @@ struct BonusList
 	 * index of the lowest cap in cappedByIdx, if the pointer is not null.
 	 */
 	bool IsBonusCapped(size_t bonusIdx, size_t* cappedByIdx) const;
-
+	/*
+		Adds a bonus of a particular type.
+		Will register in the D20 roll history using the specified line from bonus.mes
+	*/
+	int AddBonus(int value, int bonType, int mesline);
+	int AddBonusWithDesc(int value, int bonType, int mesline, char* descr);
 };
 
 const int TestSizeOfBonusList = sizeof(BonusList); // should be 888 (0x378)

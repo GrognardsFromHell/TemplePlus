@@ -154,16 +154,17 @@
     <ClCompile Include="python\python_game.cpp" />
     <ClCompile Include="python\python_importer.cpp" />
     <ClCompile Include="traps.cpp" />
+    <ClCompile Include="ui\ui_char.cpp" />
     <ClCompile Include="ui\ui_combat.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
     <ClCompile Include="ui\ui_intgame_select.cpp" />
+    <ClCompile Include="ui\ui_party.cpp" />
     <ClCompile Include="ui\ui_slider.cpp" />
     <ClCompile Include="ui\ui_turn_based.cpp" />
     <ClCompile Include="ui\ui_townmap.cpp" />
     <ClCompile Include="ui\ui_tutorial.cpp" />
     <ClCompile Include="turn_based.cpp" />
     <ClCompile Include="ui\ui_picker.cpp" />
-    <ClCompile Include="ui\ui_char.cpp" />
     <ClCompile Include="ui\ui_char_editor_feats.cpp" />
     <ClCompile Include="ui\ui_intgame_turnbased.cpp" />
     <ClCompile Include="ui\ui_pc_creation.cpp" />
@@ -289,6 +290,7 @@
     <ClInclude Include="gamesystems\objects\objsystem.h" />
     <ClInclude Include="gamesystems\ui_intgame_renderer.h" />
     <ClInclude Include="updater\updater.h" />
+    <ClInclude Include="ui\ui_party.h" />
     <ClInclude Include="util\datadump.h" />
     <ClInclude Include="util\streams.h" />
     <ClInclude Include="gamesystems\staticmeshes.h" />

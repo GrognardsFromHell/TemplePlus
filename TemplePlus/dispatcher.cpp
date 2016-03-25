@@ -10,6 +10,8 @@
 #include "damage.h"
 #include "util/fixes.h"
 #include "gamesystems/objects/objsystem.h"
+#include "gamesystems/gamesystems.h"
+#include "ui/ui_party.h"
 
 class DispatcherReplacements : public TempleFix {
 public:
@@ -274,6 +276,12 @@ DispIoBonusAndObj* DispatcherSystem::DispIoCheckIoType10(DispIoBonusAndObj* disp
 	return dispIo;
 }
 
+DispIoBonusAndObj* DispatcherSystem::DispIoCheckIoType10(DispIO* dispIo)
+{
+	if (dispIo->dispIOType != dispIOTypeSkillLevel) return nullptr;
+	return static_cast<DispIoBonusAndObj*>(dispIo);
+}
+
 DispIoDispelCheck* DispatcherSystem::DispIOCheckIoType11(DispIoDispelCheck* dispIo)
 {
 	if (dispIo->dispIOType != dispIOTypeDispelCheck) return nullptr;
@@ -300,6 +308,25 @@ DispIoMoveSpeed * DispatcherSystem::DispIOCheckIoType13(DispIoMoveSpeed* dispIo)
 DispIoMoveSpeed* DispatcherSystem::DispIOCheckIoType13(DispIO* dispIo)
 {
 	return DispIOCheckIoType13((DispIoMoveSpeed*)dispIo);
+}
+
+bool DispatcherSystem::Dispatch64ImmunityCheck(objHndl handle, DispIoImmunity* dispIo)
+{
+	auto dispatcher = gameSystems->GetObj().GetObject(handle)->GetDispatcher();
+	if (dispatcher->IsValid())
+	{
+		DispatcherProcessor(dispatcher, dispTypeSpellImmunityCheck, 0, dispIo);
+		return dispIo->returnVal;
+	}
+	
+	return 0;
+}
+
+DispIoObjEvent* DispatcherSystem::DispIoCheckIoType17(DispIO* dispIo)
+{
+	if (dispIo->dispIOType != dispIoTypeObjEvent)
+		return nullptr;
+	return static_cast<DispIoObjEvent*>(dispIo);
 }
 
 DispIoImmunity* DispatcherSystem::DispIoCheckIoType23(DispIoImmunity* dispIo)
@@ -462,9 +489,26 @@ unsigned DispatcherSystem::Dispatch35BaseCasterLevelModify(objHndl obj, SpellPac
 		return 0;
 	DispIoD20Query dispIo;
 	dispIo.return_val = spellPkt->baseCasterLevel;
+	dispIo.data1 = reinterpret_cast<uint32_t>(spellPkt);
+	dispIo.data2 = 0;
 	DispatcherProcessor(_dispatcher, dispTypeBaseCasterLevelMod, 0, &dispIo);
 	spellPkt->baseCasterLevel = dispIo.return_val;
 	return dispIo.return_val;
+}
+
+int DispatcherSystem::Dispatch45SpellResistanceMod(objHndl handle, DispIOBonusListAndSpellEntry* dispIo)
+{
+	auto dispatcher = gameSystems->GetObj().GetObject(handle)->GetDispatcher();
+	if (dispatcher->IsValid())
+	{
+		BonusList bonlist;
+		dispIo->bonList = &bonlist;
+		DispatcherProcessor(dispatcher, dispTypeSpellResistanceMod, 0, dispIo);
+		auto bonus = bonlist.GetEffectiveBonusSum();
+		return bonus;
+	}
+	else
+		return 0;
 }
 
 void DispatcherSystem::DispIoDamageInit(DispIoDamage* dispIoDamage)
@@ -731,19 +775,19 @@ void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint3
 
 		if ((subDispNode->subDispDef->dispKey == dispKey || subDispNode->subDispDef->dispKey == 0) && ((subDispNode->condNode->flags & 1) == 0)) {
 
-			DispIoType21 dispIO20h;
-			DispIOType21Init((DispIoType21*)&dispIO20h);
-			dispIO20h.condNode = (CondNode *)subDispNode->condNode;
+			DispIoTypeImmunityTrigger dispIoImmunity;
+			DispIOType21Init((DispIoTypeImmunityTrigger*)&dispIoImmunity);
+			dispIoImmunity.condNode = (CondNode *)subDispNode->condNode;
 
-			if (dispKey != 10 || dispType != 62) {
-				_Dispatch62(dispatcher->objHnd, (DispIO*)&dispIO20h, 10);
+			if (dispKey != DK_IMMUNITY_SPELL || dispType != dispTypeImmunityTrigger) {
+				_Dispatch62(dispatcher->objHnd, (DispIO*)&dispIoImmunity, 10);
 			}
-
-			if (dispIO20h.interrupt == 1 && dispType != dispType63) {
-				dispIO20h.interrupt = 0;
-				dispIO20h.val2 = 10;
-				_Dispatch63(dispatcher->objHnd, (DispIO*)&dispIO20h);
-				if (dispIO20h.interrupt == 0) {
+			
+			if (dispIoImmunity.interrupt == 1 && dispType != dispType63) {
+				dispIoImmunity.interrupt = 0;
+				dispIoImmunity.val2 = 10;
+				_Dispatch63(dispatcher->objHnd, (DispIO*)&dispIoImmunity);
+				if (dispIoImmunity.interrupt == 0) {
 					subDispNode->subDispDef->dispCallback(subDispNode, dispatcher->objHnd, dispType, dispKey, (DispIO*)dispIO);
 				}
 			}
@@ -779,6 +823,59 @@ int32_t _dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut
 }
 
 
+void DispIoEffectTooltip::Append(int effectTypeId, uint32_t spellEnum, const char* text) const
+{
+	BuffDebuffSub * bdbSub;
+	if (effectTypeId >= 91)
+	{
+		if (effectTypeId >= 168)
+		{
+			/*
+				Status effects (icons inside the portrait)
+			*/
+			if (bdb->innerCount >= 6)
+				return;
+			bdbSub = &bdb->innerStatuses[bdb->innerCount++];
+
+		} 
+		/*
+			Debuffs (icons below the portrait)
+		*/
+		else
+		{
+			if (bdb->debuffCount >= 8)
+				return;
+			bdbSub = &bdb->debuffs[bdb->debuffCount++];
+		}
+
+	} 
+	/*
+		Buffs (icons above the portrait)
+	*/
+	else
+	{
+		if (bdb->buffCount >= 8)
+			return;
+		bdbSub = &bdb->buffs[bdb->buffCount++];
+	}
+
+	//copy the text
+	bdbSub->effectTypeId = effectTypeId;
+	bdbSub->spellEnum = spellEnum;
+	if (text){
+		bdbSub->text = new char[strlen(text) + 1];
+		strcpy( const_cast<char*>(bdbSub->text), text);
+	} else
+	{
+		bdbSub->text = nullptr;
+	}
+}
+
+bool Dispatcher::IsValid()
+{
+	return dispatch.dispatcherValid(this);
+}
+
 Dispatcher* _DispatcherInit(objHndl objHnd) {
 	Dispatcher* dispatcherNew = (Dispatcher *)malloc(sizeof(Dispatcher));
 	memset(&dispatcherNew->subDispNodes, 0, dispTypeCount * sizeof(SubDispNode*));
@@ -794,7 +891,7 @@ Dispatcher* _DispatcherInit(objHndl objHnd) {
 	return dispatcherNew;
 };
 
-void DispIOType21Init(DispIoType21* dispIO) {
+void DispIOType21Init(DispIoTypeImmunityTrigger* dispIO) {
 	dispIO->dispIOType = dispIOType21;
 	dispIO->interrupt = 0;
 	dispIO->field_8 = 0;
@@ -835,6 +932,46 @@ uint32_t _Dispatch63(objHndl objHnd, DispIO* dispIO) {
 
 
 #pragma endregion 
+CondStructNew::CondStructNew(){
+	numArgs = 0;
+	condName = nullptr;
+	memset(subDispDefs, 0, sizeof(subDispDefs));
+}
+
+CondStructNew::CondStructNew(std::string Name, int NumArgs) : CondStructNew() {
+	condName = strdup( Name.c_str());
+	numArgs = NumArgs;
+}
+
+void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs), uint32_t data1, uint32_t data2){
+	Expects(numHooks < 99);
+	subDispDefs[numHooks++] = {dispType, dispKey, callback, data1, data2};
+}
+
+void CondStructNew::Register(){
+	conds.hashmethods.CondStructAddToHashtable(reinterpret_cast<CondStruct*>(this));
+}
+
+uint32_t DispatcherCallbackArgs::GetCondArg(int argIdx)
+{
+	return conds.CondNodeGetArg(subDispNode->condNode, argIdx);
+}
+
+int DispatcherCallbackArgs::GetData1() const
+{
+	return subDispNode->subDispDef->data1;
+}
+
+int DispatcherCallbackArgs::GetData2() const
+{
+	return subDispNode->subDispDef->data2;
+}
+
+void DispatcherCallbackArgs::SetCondArg(int argIdx, int value)
+{
+	conds.CondNodeSetArg(subDispNode->condNode, argIdx, value);
+}
+
 DispIoAttackBonus::DispIoAttackBonus()
 {
 	dispIOType = dispIOTypeAttackBonus;

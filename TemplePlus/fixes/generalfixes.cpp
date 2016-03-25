@@ -11,7 +11,10 @@
 #include "ui/ui.h"
 #include <combat.h>
 #include <action_sequence.h>
+#include <tig/tig_font.h>
 
+
+struct TigTextStyle;
 
 class SizeColossalFix : public TempleFix {
 public:
@@ -455,3 +458,39 @@ int RemoveSuggestionSpellFix::RemoveSpellSuggestion(DispIO* dispIo, enum_disp_ty
 		
 	return 0;
 }
+
+
+
+
+static class SkillMeasureFix : public TempleFix {
+	const char* name() override {
+		return "asd" "Function Replacements";
+	}
+	
+	/*
+		original function had a size 4 text buffer, which is not enough for high levels where the skills may be 10.5
+	*/
+	static int HookedMeasure(const TigTextStyle&style, TigFontMetrics& metrics){
+		auto orgMeasure = temple::GetRef<int(__cdecl)(const TigTextStyle&, TigFontMetrics&)>(0x101EA4E0);
+		
+		char text[10];
+		memcpy(text, metrics.text, 5);
+		text[5] = 0;
+		if (text[4]){
+			text[4] = '\r';
+		}
+		metrics.text = text;
+		
+		auto result = orgMeasure(style, metrics);
+		if (metrics.width > 50 || metrics.width < 0)
+		{
+			metrics.width = 44;
+		}
+		return result;
+	};
+
+
+	void apply() override 	{
+		redirectCall(0x101AB5AE, HookedMeasure);
+	};
+} skillMeasureFix;

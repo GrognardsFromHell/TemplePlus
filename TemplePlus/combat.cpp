@@ -112,7 +112,12 @@ public:
 		orgCheckRangedWeaponAmmo = replaceFunction(0x100654E0, CheckRangedWeaponAmmo);
 		
 		replaceFunction(0x100B4B30, _GetCombatMesLine);
-		
+
+		replaceFunction<BOOL(__cdecl)()>(0x100EBB90, []()->BOOL
+		{
+			return combatSys.IsBrawlInProgress();
+		});
+			
 	}
 } combatSysReplacements;
 
@@ -186,6 +191,14 @@ void LegacyCombatSystem::FloatCombatLine(objHndl obj, int line)
 	auto combatLineText = GetCombatMesLine(line);
 	if (combatLineText)
 		floatSys.floatMesLine(obj, 1, floatColor, combatLineText);
+}
+
+void LegacyCombatSystem::FloatCombatLine(objHndl obj, int line, FloatLineColor floatColor)
+{
+
+	auto combatLineText = GetCombatMesLine(line);
+	if (combatLineText)
+		floatSys.floatMesLine(obj, 1, static_cast<FloatLineColor>(floatColor), combatLineText);
 }
 
 int LegacyCombatSystem::IsWithinReach(objHndl attacker, objHndl target)
@@ -559,6 +572,17 @@ void LegacyCombatSystem::CombatAdvanceTurn(objHndl obj)
 	combatInitiative--;
 
 	// return addresses.CombatTurnAdvance(obj);
+}
+
+BOOL LegacyCombatSystem::IsBrawlInProgress()
+{
+	auto brawlInProgress= temple::GetRef<int>(0x10BD01C0);
+	if (!brawlInProgress)
+		return false;
+	auto brawlOpponent = temple::GetRef<objHndl>(0x10BD01D0);
+	if (brawlOpponent)
+		return true;
+	return false;
 }
 
 bool LegacyCombatSystem::isCombatActive()

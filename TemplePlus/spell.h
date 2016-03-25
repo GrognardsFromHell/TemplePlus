@@ -51,6 +51,8 @@ struct SpellEntry
 	uint32_t pad;
 
 	//UiPickerType GetModeTarget() const;
+	SpellEntry();
+	explicit SpellEntry(uint32_t spellEnum);
 };
 
 const uint32_t TestSizeOfSpellEntry = sizeof(SpellEntry); // should be 0xC0  ( 192 )
@@ -94,6 +96,16 @@ struct SpellPacketBody
 	uint32_t spellId;
 	uint32_t field_AE4;
 	SpellPacketBody();
+	SpellPacketBody(uint32_t spellId);
+	/*
+	// updates the spell in the SpellsCast registry *if it is still active*
+	*/
+	bool UpdateSpellsCastRegistry() const;
+	bool FindObj(objHndl obj, int* idx) const;
+	bool InsertToPartsysList(uint32_t idx, int partsysId);
+	bool InsertToTargetList(uint32_t idx, objHndl tgt);
+	// fetches from the SpellsCastRegistry. If it fails, the spellId will be 0 (as in the Reset function)
+	bool AddTarget(objHndl tgt, int partsysId, int replaceExisting); // will add target (or replace its partsys if it already exists)
 };
 
 const uint32_t TestSizeOfSpellPacketBody = sizeof(SpellPacketBody); // should be 0xAE8  (2792)
@@ -132,6 +144,7 @@ struct LegacySpellSystem : temple::AddressTable
 	IdxTable<SpellPacket> * spellCastIdxTable;
 	
 	MesHandle * spellEnumMesHandle;
+	MesHandle spellEnumsExt;
 	MesHandle * spellMes;
 	MesHandle * spellsRadialMenuOptionsMes;
 	std::vector<SpellMapTransferInfo> spellMapTransInfo;
@@ -142,7 +155,7 @@ struct LegacySpellSystem : temple::AddressTable
 	int ParseSpellSpecString(SpellStoreData* spell, char* spellString);
 
 	const char* GetSpellMesline(uint32_t line) const;
-	const char* GetSpellEnumTAG(uint32_t spellEnum) const;
+	static const char* GetSpellEnumTAG(uint32_t spellEnum);
 	const char* GetSpellName(uint32_t spellEnum) const;
 	
 	void SetSpontaneousCastingAltNode(objHndl obj, int nodeIdx, SpellStoreData* spellData);
@@ -152,7 +165,7 @@ struct LegacySpellSystem : temple::AddressTable
 	uint32_t getWizSchool(objHndl objHnd);
 	uint32_t getStatModBonusSpellCount(objHndl objHnd, uint32_t classCode, uint32_t slotLvl);
 	void spellPacketBodyReset(SpellPacketBody * spellPktBody);
-	void spellPacketSetCasterLevel(SpellPacketBody * spellPktBody);
+	void spellPacketSetCasterLevel(SpellPacketBody * spellPktBody) const;
 	uint32_t getSpellEnum(const char* spellName);
 	uint32_t GetSpellEnumFromSpellId(uint32_t spellId);
 	uint32_t GetSpellPacketBody(uint32_t spellId, SpellPacketBody* spellPktBodyOut);
@@ -170,9 +183,19 @@ struct LegacySpellSystem : temple::AddressTable
 	const char* GetSpellEnumNameFromEnum(int spellEnum);
 	bool GetSpellTargets(objHndl obj, objHndl tgt, SpellPacketBody* spellPkt, unsigned spellEnum);
 	BOOL SpellHasAiType(unsigned spellEnum, AiSpellType aiSpellType);
-	
-	
+
+	/*
+		does a d20 roll for dispelling, and logs to history (outputting a history ID)
+	*/
+	int DispelRoll(objHndl obj,	BonusList* bonlist, int rollMod, int dispelDC, char* historyText, int* rollHistId);
+	/*
+		Plays the Fizzle particles and does a sound
+	*/
+	BOOL PlayFizzle(objHndl handle);
+	int CheckSpellResistance(SpellPacketBody* spellPkt, objHndl obj);
+
 	int SpellEnd(int spellId, int endDespiteTargetList) const; // endDespiteTargetList will end the spell even if the target list isn't empty
+	
 	void (__cdecl *SpellRemove)(int);
 	
 	void SpellSave(); // packs the spells cast registry to SpellMapTransferInfo data structs

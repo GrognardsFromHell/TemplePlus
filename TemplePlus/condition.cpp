@@ -23,6 +23,10 @@
 #include "particles.h"
 #include "gamesystems/particlesystems.h"
 #include "anim.h"
+#include "python/python_integration_spells.h"
+#include "history.h"
+#include "gamesystems/objects/objevent.h"
+#include "ui/ui_party.h"
 
 ConditionSystem conds;
 CondStructNew conditionDisableAoO;
@@ -35,9 +39,14 @@ CondStructNew condKnockDown;
 CondStructNew condDeadlyPrecision;
 CondStructNew condPersistentSpell;
 
+CondStructNew condGreaterWeaponSpecialization;
 
 CondStructNew ConditionSystem::mCondDisarm;
 CondStructNew ConditionSystem::mCondDisarmed;
+
+
+//items
+CondStructNew ConditionSystem::mCondNecklaceOfAdaptation;
 
 // monsters
 CondStructNew condRend;
@@ -45,7 +54,10 @@ CondStructNew condRend;
 CondStructNew ConditionSystem::mCondCaptivatingSong;
 CondStructNew ConditionSystem::mCondCaptivated;
 
-CondStructNew condGreaterWeaponSpecialization;
+CondStructNew ConditionSystem::mCondHezrouStench;
+CondStructNew ConditionSystem::mCondHezrouStenchHit;
+
+
 
 
 struct ConditionSystemAddresses : temple::AddressTable
@@ -72,11 +84,11 @@ public:
 
 	static int LayOnHandsPerform(DispatcherCallbackArgs arg);
 	static int RemoveDiseasePerform(DispatcherCallbackArgs arg); // also used in WholenessOfBodyPerform
-
+	void HookSpellCallbacks();
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
 		
-		conds.RegisterNewConditions();
+		//conds.RegisterNewConditions();
 		
 		
 
@@ -122,7 +134,7 @@ public:
 		replaceFunction(0x100FEBA0, BarbarianDamageResistance);
 
 		
-		replaceFunction(0x10101150, SkillBonusCallback);
+		replaceFunction(0x10101150, ItemSkillBonusCallback);
 
 		// Replace hooks for S_Is_BreakFree_Possible so they also return the spell Id
 		int writeVal = (int)QueryRetrun1GetArgs;
@@ -130,39 +142,44 @@ public:
 		write(0x102D7958 + 8, &writeVal, sizeof(int*)); // entangle on
 
 
-		//replaceFunction(0x100C7180, QueryRetrun1GetArgs); // caused a crash :(
+		//replaceFunction(0x100C7180, QueryReturn1GetArgs); // caused a crash :(
 
-		// QueryCritterHasCondition for sp-Spiritual Weapon
-		writeVal = dispTypeD20Query;
-		SubDispDefNew sdd;
-		sdd.dispType = dispTypeD20Query;
-		sdd.data1 = 0x102DFC00;
-		sdd.data2 = 0;
-		sdd.dispCallback = QueryCritterHasCondition;
-		sdd.dispKey = DK_QUE_Critter_Has_Condition;
-		write(0x102DFD48, &sdd, sizeof(SubDispDefNew));
+		HookSpellCallbacks();
 
-		// QueryCritterHasCondition for sp-Sleep
-		sdd.dispType = dispTypeD20Query;
-		sdd.data1 = 0x102DEB08;
-		sdd.data2 = 0;
-		sdd.dispCallback = QueryCritterHasCondition;
-		sdd.dispKey = DK_QUE_Critter_Has_Condition;
-		write(0x102DEC00, &sdd, sizeof(SubDispDefNew));
-
-		//  DK_SIG_AID_ANOTHER_WAKE_UP for sp-Sleep
-		sdd.dispType = dispTypeD20Signal;
-		sdd.data1 = 0;
-		sdd.data2 = 0;
-		sdd.dispCallback = RemoveSpellConditionAndMod; 
-		sdd.dispKey = DK_SIG_AID_ANOTHER_WAKE_UP;
-		write(0x102DEB9C, &sdd, sizeof(SubDispDefNew)); // overwriting S_Teleport_Reconnect since it does nothing (return_0 callback)
-
+		
 
 		
 	}
 } condFuncReplacement;
 
+
+class SpellCallbacks {
+#define SPELL_CALLBACK(name) static int __cdecl name(DispatcherCallbackArgs args);
+public:
+
+	static int __cdecl SkillBonus(DispatcherCallbackArgs args);
+	static int __cdecl BeginHezrouStench(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchObjEvent(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchCountdown(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchTurnbasedStatus(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchAooPossible(DispatcherCallbackArgs args);
+
+
+	static int __cdecl HezrouStenchAbilityCheckMod(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchSavingThrowLevel(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchDealingDamage(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchToHit2(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchEffectTooltip(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchCureNausea(DispatcherCallbackArgs args);
+	static int __cdecl RemoveSpell(DispatcherCallbackArgs args);
+	static int __cdecl HasCondition(DispatcherCallbackArgs args);
+} spCallbacks;
+
+class ItemCallbacks
+{
+public:
+	static int __cdecl SkillBonus(DispatcherCallbackArgs args);
+} itemCallbacks;
 
 CondNode::CondNode(CondStruct *cond) {
 	memset(this, 0, sizeof(CondNode));
@@ -526,7 +543,7 @@ int __cdecl CondArgDecrement(DispatcherCallbackArgs args)
 	return 0;
 };
 
-int __cdecl SkillBonusCallback(DispatcherCallbackArgs args)
+int __cdecl ItemSkillBonusCallback(DispatcherCallbackArgs args)
 {
 	/*
 	used by conditions: Skill Circumstance Bonus, Skill Competence Bonus
@@ -544,6 +561,7 @@ int __cdecl SkillBonusCallback(DispatcherCallbackArgs args)
 	}
 	return 0;
 }
+
 
 int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 {
@@ -957,10 +975,17 @@ int __cdecl CaptivatingSongEffectTooltipDuration(DispatcherCallbackArgs args){
 	int durationRemaining = _CondNodeGetArg(args.subDispNode->condNode, 0);
 	char tooltipString[256];
 	sprintf(tooltipString, "\n%d rounds remaining.", durationRemaining);
-	auto effectTooltipBase = temple::GetRef<int(__cdecl)(void*, int someIdx, int spellEnum, char*)>(0x100F4680);
-	effectTooltipBase(dispIo->stuff, 100, 20054, tooltipString); // will fetch 20054 from spell.mes (Captivated!)
+	auto effectTooltipBase = temple::GetRef<int(__cdecl)(BuffDebuffPacket*, int someIdx, int spellEnum, char*)>(0x100F4680);
+	effectTooltipBase(dispIo->bdb, 100, 20054, tooltipString); // will fetch 20054 from spell.mes (Captivated!)
 	return 0;
 }
+
+
+class Conditions
+{
+public:
+	static void AddConditionsToTable();
+} conditions;
 
 void _FeatConditionsRegister()
 {
@@ -981,37 +1006,13 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAnimalCompanionAnimal);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAutoendTurn);
 
-	// New Conditions!
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionDisableAoO);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterTwoWeaponFighting);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterTWFRanger);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDivineMight);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDivineMightBonus);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondRecklessOffense);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterWeaponSpecialization);
-	
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondDisarm);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondDisarmed);
-	// conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondSuperiorExpertise); // will just be patched inside Combat Expertise callbacks
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondRend);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondCaptivatingSong);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondCaptivated);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondCraftWandLevelSet);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondAidAnother);
-	/*
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDeadlyPrecision);
-	
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterRage);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondImprovedDisarm);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondIndomitableWill);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondKnockDown);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondMightyRage);
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondPersistentSpell);
-	
-	
-	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondTirelessRage);
-	*/
-	conds.FeatConditionDict[61].condStruct = (CondStruct*)conds.mCondCraftWand;
+
+	// Craft Wand
+	conds.mCondCraftWand = CondStructNew("Craft Wand", 0);
+	conds.mCondCraftWand.AddHook(dispTypeConditionAddPre, DK_NONE, ConditionPrevent, (uint32_t)&conds.mCondCraftWand, 0);
+	conds.mCondCraftWand.AddHook(dispTypeRadialMenuEntry, DK_NONE, CraftWandOnAdd, 0, 0);
+
+	conds.FeatConditionDict[61].condStruct = (CondStruct*)&conds.mCondCraftWand;
 
 	for (unsigned int i = 0; i < condCount; i++)
 	{
@@ -1198,6 +1199,7 @@ void ConditionSystem::InitCondFromCondStructAndArgs(Dispatcher* dispatcher, Cond
 
 void ConditionSystem::RegisterNewConditions()
 {
+
 	CondStructNew * cond;
 	char * condName;
 
@@ -1395,31 +1397,66 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 10, dispTypeTurnBasedStatusInit, 0, TurnBasedStatusInitNoActions, 0, 0);
 	DispatcherHookInit(cond, 11, dispTypeEffectTooltip, 0, CaptivatingSongEffectTooltipDuration, 0, 0);
 
+
+	// Hezrou Stench
+
+	cond = &mCondHezrouStench; 
+
+	cond->condName = "Hezrou Stench";
+	cond->numArgs = 4; // 0 - spellId; 1 - duration; 2 - eventId; 3 - partsysId;
+
+	auto aoeSpellRemover = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100D3430);
+
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
+	DispatcherHookInit(cond, 1, dispTypeConditionAdd, 0, spCallbacks.BeginHezrouStench, 0, 0);
+	DispatcherHookInit(cond, 2, dispTypeD20Signal, DK_SIG_Spell_End, aoeSpellRemover, 0, 0);
+	DispatcherHookInit(cond, 3, dispTypeObjectEvent, 0, spCallbacks.HezrouStenchObjEvent, 0, 0);
+	DispatcherHookInit(cond, 4, dispTypeD20Signal, DK_SIG_Combat_End, aoeSpellRemover, 0, 0);
+	DispatcherHookInit(cond, 5, dispTypeD20Signal, DK_SIG_Critter_Killed, aoeSpellRemover, 0, 0);
+
+	// Hezrou Stench Nausea / Sickness
+
+	cond = &mCondHezrouStenchHit;
+
+	cond->condName = "Hezrou Stench Hit";
+	cond->numArgs = 5; // 0 - spellId; 1 - duration; 2 - eventId; 3 - partsysId; 4 - nausea/sickness (0 = nausea, 1 = sickness)
+
+	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
+	DispatcherHookInit(cond, 1, dispTypeBeginRound, 0, spCallbacks.HezrouStenchCountdown, 0, 0);
+	DispatcherHookInit(cond, 2, dispTypeNewDay, DK_NEWDAY_REST, spCallbacks.RemoveSpell, 0, 0);
+	DispatcherHookInit(cond, 3, dispTypeObjectEvent, 0, spCallbacks.HezrouStenchObjEvent, 1, 0);
+	DispatcherHookInit(cond, 4, dispTypeTurnBasedStatusInit, 0, spCallbacks.HezrouStenchTurnbasedStatus, 0, 0);
+	DispatcherHookInit(cond, 5, dispTypeD20Query, DK_QUE_AOOPossible, spCallbacks.HezrouStenchAooPossible, 0, 0);
+	DispatcherHookInit(cond, 6, dispTypeSkillLevel, 0, spCallbacks.SkillBonus, -1, -2);
+	DispatcherHookInit(cond, 7, dispTypeAbilityCheckModifier, 0, spCallbacks.HezrouStenchAbilityCheckMod, -2, 345);
+	DispatcherHookInit(cond, 8, dispTypeSaveThrowLevel, 0, spCallbacks.HezrouStenchSavingThrowLevel, -2, 345);
+	DispatcherHookInit(cond, 9, dispTypeDealingDamage2, 0, spCallbacks.HezrouStenchDealingDamage, -2, 345);
+	DispatcherHookInit(cond, 10, dispTypeToHitBonus2, 0, spCallbacks.HezrouStenchToHit2, -2, 345);
+	DispatcherHookInit(cond, 11, dispTypeEffectTooltip, 0, spCallbacks.HezrouStenchEffectTooltip, 141, 0);
+	DispatcherHookInit(cond, 12, dispTypeD20Signal, DK_SIG_Combat_End, spCallbacks.HezrouStenchCureNausea,0,0 );
+	DispatcherHookInit(cond, 13, dispTypeD20Query, DK_QUE_Critter_Has_Condition, spCallbacks.HasCondition, (uint32_t)cond, 0);
+
+	// Necklace of Adaptation
+
+	auto itemForceRemoveCallback = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x10104410);
+	auto immunityCheckHandler = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100ED650);
+	auto immunityTriggerCallback = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100ed5a0);
+	cond = &mCondNecklaceOfAdaptation; 
+
+	cond->condName = "Necklace of Adaptation";
+	cond->numArgs = 4;
+	DispatcherHookInit(cond, 0, dispTypeItemForceRemove, 0, itemForceRemoveCallback, 0, 0);
+	DispatcherHookInit(cond, 1, dispTypeSpellImmunityCheck,0, immunityCheckHandler, 4,0);
+	DispatcherHookInit(cond, 2, dispTypeImmunityTrigger, DK_IMMUNITY_SPECIAL, immunityTriggerCallback, 0x10, 0);
+
 #pragma endregion
-	// Craft Wand
-	mCondCraftWand = new CondStructNew();
-	memset(mCondCraftWand, 0, sizeof(CondStructNew));
-	cond = mCondCraftWand;	condName = mCondCraftWandName;
-	sprintf(condName, "Craft Wand");
 
-	cond->condName = condName;
-	cond->numArgs = 0;
 
-	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
-	//DispatcherHookInit(cond, 1, dispTypeConditionAdd, 0, CraftWandOnAdd, 0, 0);
-	DispatcherHookInit(cond, 1, dispTypeRadialMenuEntry, 0, CraftWandOnAdd, 0, 0);
-
-	mCondCraftWandLevelSet = new CondStructNew();
-	memset(mCondCraftWandLevelSet, 0, sizeof(CondStructNew));
-	cond = mCondCraftWandLevelSet;	condName = mCondCraftWandLevelSetName;
-	sprintf(condName, "Craft Wand Level Set");
-
-	cond->condName = condName;
-	cond->numArgs = 2;
-
-	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
-	DispatcherHookInit(cond, 1, dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, (uint32_t)cond, 0);
-	DispatcherHookInit(cond, 2, dispTypeRadialMenuEntry, 0, CraftWandRadialMenu, 0, 0);
+	mCondCraftWandLevelSet = CondStructNew("Craft Wand Level Set", 2);
+	mCondCraftWandLevelSet.AddHook(dispTypeConditionAddPre, DK_NONE, ConditionPrevent, (uint32_t)&mCondCraftWandLevelSet, 0);
+	mCondCraftWandLevelSet.AddHook(dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, (uint32_t)&mCondCraftWandLevelSet, 0);
+	mCondCraftWandLevelSet.AddHook(dispTypeRadialMenuEntry, DK_NONE, CraftWandRadialMenu, 0, 0);
+	mCondCraftWandLevelSet.Register();
 
 	// Aid Another
 	mCondAidAnother = new CondStructNew();
@@ -1450,6 +1487,8 @@ void ConditionSystem::RegisterNewConditions()
 	
 	
 	*/
+
+	conditions.AddConditionsToTable();
 
 }
 
@@ -2187,6 +2226,386 @@ int ConditionFunctionReplacement::RemoveDiseasePerform(DispatcherCallbackArgs ar
 	return 0;
 }
 
+void ConditionFunctionReplacement::HookSpellCallbacks()
+{
+	// QueryCritterHasCondition for sp-Spiritual Weapon
+	int writeVal = dispTypeD20Query;
+	SubDispDefNew sdd;
+	sdd.dispType = dispTypeD20Query;
+	sdd.data1 = 0x102DFC00;
+	sdd.data2 = 0;
+	sdd.dispCallback = QueryCritterHasCondition;
+	sdd.dispKey = DK_QUE_Critter_Has_Condition;
+	write(0x102DFD48, &sdd, sizeof(SubDispDefNew));
+
+	// QueryCritterHasCondition for sp-Sleep
+	sdd.dispType = dispTypeD20Query;
+	sdd.data1 = 0x102DEB08;
+	sdd.data2 = 0;
+	sdd.dispCallback = QueryCritterHasCondition;
+	sdd.dispKey = DK_QUE_Critter_Has_Condition;
+	write(0x102DEC00, &sdd, sizeof(SubDispDefNew));
+
+	//  DK_SIG_AID_ANOTHER_WAKE_UP for sp-Sleep
+	sdd.dispType = dispTypeD20Signal;
+	sdd.data1 = 0;
+	sdd.data2 = 0;
+	sdd.dispCallback = RemoveSpellConditionAndMod;
+	sdd.dispKey = DK_SIG_AID_ANOTHER_WAKE_UP;
+	write(0x102DEB9C, &sdd, sizeof(SubDispDefNew)); // overwriting S_Teleport_Reconnect since it does nothing (return_0 callback)
+
+
+	// EffectTooltip for Stinking Cloud
+	sdd.dispType = dispTypeEffectTooltip;
+	sdd.dispKey = 0;
+	sdd.data1 = 141;
+	sdd.data2 = 0;
+	sdd.dispCallback = [](DispatcherCallbackArgs args)->int
+	{
+		auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
+		auto remainingDuration = args.GetCondArg(1);
+		auto spellId = args.GetCondArg(0);
+		SpellPacketBody spellPkt(spellId);
+
+		auto text = fmt::format("\n {}: {}/{}", combatSys.GetCombatMesLine(175), remainingDuration, spellPkt.duration);
+		dispIo->Append(args.GetData1(), spellPkt.spellEnum, text.c_str());
+		return 0;
+	};
+	write(0x102DFF50, &sdd, sizeof(SubDispDefNew));
+
+
+	// EffectTooltip for Cause Fear
+	sdd.dispType = dispTypeEffectTooltip;
+	sdd.dispKey = 0;
+	sdd.data1 = 117;
+	sdd.data2 = 0;
+	sdd.dispCallback = [](DispatcherCallbackArgs args)->int
+	{
+		auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
+		auto remainingDuration = args.GetCondArg(1);
+		auto spellId = args.GetCondArg(0);
+		SpellPacketBody spellPkt(spellId);
+		std::string text;
+		if (args.GetCondArg(2) == 0){ // frightened
+			text = fmt::format("({}) \n {}: {}/{}", combatSys.GetCombatMesLine(209), combatSys.GetCombatMesLine(175), remainingDuration, spellPkt.duration);
+		} else // shaken
+		{
+			text = fmt::format("({})", combatSys.GetCombatMesLine(208) );
+		}
+		//auto text = fmt::format("\n {}: {}/{}", combatSys.GetCombatMesLine(175), remainingDuration, spellPkt.duration);
+		dispIo->Append(args.GetData1(), spellPkt.spellEnum, text.c_str());
+		return 0;
+	};
+	write(0x102D232C, &sdd, sizeof(SubDispDefNew));
+}
+
+int SpellCallbacks::SkillBonus(DispatcherCallbackArgs args){
+
+	SkillEnum skillEnum = (SkillEnum)args.GetData1();
+	int bonValue = args.GetData2();
+
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spellPkt(spellId);
+
+	int bonType = 0; // will stack if 0
+
+	if (args.dispKey == skillEnum + 20 || skillEnum == -1) {
+		auto dispIo = dispatch.DispIoCheckIoType10((DispIoBonusAndObj*)args.dispIO);
+		auto spellName = spellSys.GetSpellName(spellPkt.spellEnum);
+		dispIo->bonOut->AddBonusWithDesc(bonValue, bonType, 113, (char*)spellName); // 113 is ~Spell~[TAG_SPELLS] in bonus.mes
+	}
+	return 0;
+}
+
+int SpellCallbacks::BeginHezrouStench(DispatcherCallbackArgs args){
+
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spellPkt(spellId);
+	if (!spellId)
+		return 0;
+
+	SpellEntry spellEntry(spellPkt.spellEnum);
+
+	auto evtId = objEvents.EventAppend(args.objHndCaller, 0, 1, OLC_CRITTERS, 12.0 * spellEntry.radiusTarget, 0.0, M_PI * 2);
+
+	args.SetCondArg(2, evtId);
+	if (!spellPkt.UpdateSpellsCastRegistry()){
+		logger->warn("BeginHezrouStench: Unable to update spell cast registry!");
+		return 0;
+	}
+
+	spellPkt.spellObjs[0].obj = spellPkt.aoeObj;
+	spellPkt.spellObjs[0].partySysId = args.GetCondArg(3);
+	spellPkt.UpdateSpellsCastRegistry();
+	pySpellIntegration.UpdateSpell(spellPkt.spellId);
+
+
+	return 0;
+}
+
+int SpellCallbacks::HezrouStenchObjEvent(DispatcherCallbackArgs args){
+
+	DispIoObjEvent* dispIo = dispatch.DispIoCheckIoType17(args.dispIO);
+	auto condEvtId = args.GetCondArg(2);
+	if (dispIo->evtId == condEvtId) {
+
+		auto spellId = args.GetCondArg(0);
+		SpellPacketBody spellPkt(spellId);
+		if (!spellPkt.spellId) {
+			logger->warn("HezrouStenchObjEvent: Unable to fetch spell! ID {}", spellId);
+			return 0;
+		}
+
+		/*
+		AoE Entered;
+		- add the target to the Spell's Target List
+		- Do a saving throw
+		*/
+		if (args.dispKey == DK_OnEnterAoE)
+		{
+			/*
+				Hezrou Stench condition (the one applied to the SpellObject)
+			*/
+			if (args.GetData1() == 0)
+			{
+				// if already has the condition - skip
+				if (d20Sys.d20QueryWithData(dispIo->tgt, DK_QUE_Critter_Has_Condition, 	(CondStruct*)&conds.mCondHezrouStenchHit,0))
+					return 0;
+				if (d20Sys.d20Query(dispIo->tgt, DK_QUE_Critter_Is_Immune_Poison))
+					return 0;
+				if (critterSys.IsCategorySubtype(dispIo->tgt, MonsterCategory::mc_subtype_demon))
+					return 0;
+				if (critterSys.IsCategoryType(dispIo->tgt, MonsterCategory::mc_type_elemental))
+					return 0;
+
+
+				pySpellIntegration.SpellSoundPlay(&spellPkt, SpellEvent::SpellStruck);
+				pySpellIntegration.SpellTrigger(spellId, SpellEvent::AreaOfEffectHit);
+
+
+				// Hezrou Stench does not provoke Spell Resistance
+				/*if (spellSys.CheckSpellResistance(&spellPkt, dispIo->tgt) == 1)
+					return 0;*/
+
+
+				auto partsysId = gameSystems->GetParticleSys().CreateAtObj("sp-Stinking Cloud Hit", dispIo->tgt);
+				spellPkt.AddTarget(dispIo->tgt, partsysId, 1);
+				// save succeeds - apply Sickened
+				if (damage.SavingThrowSpell(dispIo->tgt, spellPkt.caster, 24, SavingThrowType::Fortitude, 0, spellPkt.spellId)) {
+					conds.AddTo(dispIo->tgt, "Hezrou Stench Hit", { static_cast<int>(spellPkt.spellId), spellPkt.durationRemaining, static_cast<int>(dispIo->evtId), partsysId,1 });
+					floatSys.FloatSpellLine(dispIo->tgt, 20026, FloatLineColor::Red);
+				}
+				// save failed - apply nauseated
+				else {
+					conds.AddTo(dispIo->tgt, "Hezrou Stench Hit", { static_cast<int>(spellPkt.spellId), spellPkt.durationRemaining, static_cast<int>(dispIo->evtId), partsysId, 0 });
+					combatSys.FloatCombatLine(dispIo->tgt, 150, FloatLineColor::Red);
+				}
+			} 
+			
+			/*
+				"Hezrou Stench Hit" condition (the one applied to the critter from the above)
+			*/
+			else if (args.GetData1() == 1) 
+			{
+				if (args.GetCondArg(4) == 2) // "cured"
+				{
+					args.SetCondArg(4, 1); // re-establish sickness when stepping into Hezrou AoE
+				}
+			}
+		
+		}
+
+		/*
+		AoE exited;
+		- If Nauseated (identified by arg3= 0), apply a 1d4 duration
+		- If Sickened, changed to "cured" (arg3 = 2)
+		*/
+		else if (args.dispKey == DK_OnLeaveAoE)
+		{
+			if (args.GetData1() == 1){
+
+				if (args.GetCondArg(4) == 1) // sickened
+				{
+					args.SetCondArg(4, 2);
+					// histSys.CreateFromFreeText(fmt::format("{} exited Stinking Cloud; Nauseated for {} more rounds.\n", description.getDisplayName(dispIo->tgt), rollResult).c_str());
+				}
+				else if (args.GetCondArg(4) == 0) // nauseated
+				{
+					auto rollResult = Dice::Roll(1, 4, 0); // new duration
+					args.SetCondArg(1, rollResult);
+					histSys.CreateFromFreeText(fmt::format("{} exited Hezrou Stench; Nauseated for {} more rounds.\n", description.getDisplayName(dispIo->tgt), rollResult).c_str());
+				}
+			}
+
+		}
+
+		if (!spellPkt.UpdateSpellsCastRegistry()) {
+			logger->warn("HezrouStenchObjEvent: Unable to save update SpellPacket!");
+			return 0;
+		}
+		pySpellIntegration.UpdateSpell(spellId);
+	}
+	return 0;
+}
+
+int SpellCallbacks::HezrouStenchCountdown(DispatcherCallbackArgs args)
+{
+
+	auto effectType = args.GetCondArg(4);
+	/*
+	count down for nauseated only
+	*/
+	if (effectType != 0)
+	{
+		return 0;
+	}
+
+	auto dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
+	
+	// new duration
+	int durationRem = (int)args.GetCondArg(1) - (int)dispIo->data1;
+	args.SetCondArg(1, durationRem);
+
+	// if duration drops below 0, change to "Cured" status
+	// (the assumption is that this will only happen for the 1d4 countdown, i.e. after you leave the hezrou area)
+	if (durationRem < 0){
+		args.SetCondArg(4, 2);
+	}
+	return 0;
+}
+
+int SpellCallbacks::HezrouStenchTurnbasedStatus(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType8(args.dispIO);
+	if (dispIo && args.GetCondArg(4) == 0) {
+		auto tbStat = dispIo->tbStatus;
+		if (tbStat) {
+			if (tbStat->hourglassState > 1)
+				tbStat->hourglassState = 1;
+		}
+	}
+	return 0;
+}
+
+int SpellCallbacks::HezrouStenchAooPossible(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	// if nauseated
+	if (dispIo->return_val && args.GetCondArg(4) == 0){
+		dispIo->return_val = 0;
+	}
+	return 0;
+}
+
+int SpellCallbacks::HezrouStenchAbilityCheckMod(DispatcherCallbackArgs args)
+{
+	if (args.GetCondArg(4) > 1)
+		return 0;
+
+	auto dispIo = dispatch.DispIoCheckIoType10(args.dispIO);
+
+	dispIo->bonOut->AddBonus(args.GetData1(), 0, args.GetData2());
+
+	return 0;
+
+}
+
+int SpellCallbacks::HezrouStenchSavingThrowLevel(DispatcherCallbackArgs args)
+{
+	if (args.GetCondArg(4) > 1)
+		return 0;
+
+	auto dispIo = dispatch.DispIoCheckIoType3(args.dispIO);
+	dispIo->bonlist.AddBonus(args.GetData1(), 0, args.GetData2());
+	return 0;
+}
+
+int SpellCallbacks::HezrouStenchDealingDamage(DispatcherCallbackArgs args)
+{
+	if (args.GetCondArg(4) > 1)
+		return 0;
+
+	auto dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
+	dispIo->damage.bonuses.AddBonus(args.GetData1(), 0, args.GetData2());
+	return 0;
+}
+
+int SpellCallbacks::HezrouStenchToHit2(DispatcherCallbackArgs args)
+{
+	if (args.GetCondArg(4) > 1)
+		return 0;
+
+	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	dispIo->bonlist.AddBonus(args.GetData1(), 0, args.GetData2());
+	return 0;
+}
+
+int SpellCallbacks::HezrouStenchEffectTooltip(DispatcherCallbackArgs args)
+{
+
+	if (args.GetCondArg(4) > 1)
+		return 0;
+
+	auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spellPkt(spellId);
+
+	/*
+		nauseated
+	*/
+	if (args.GetCondArg(4) == 0){
+
+		auto remainingDuration = args.GetCondArg(1);
+		if (remainingDuration < 5){
+			dispIo->Append(args.GetData1(), spellPkt.spellEnum, fmt::format("\n {}: {}", combatSys.GetCombatMesLine(175), remainingDuration).c_str());
+			return 0;
+		}
+	}
+	dispIo->Append(args.GetData1(), spellPkt.spellEnum, nullptr);
+	
+	return 0;
+}
+
+int SpellCallbacks::HezrouStenchCureNausea(DispatcherCallbackArgs args)
+{
+	if (args.GetCondArg(4) == 1)
+		combatSys.FloatCombatLine(args.objHndCaller, 206, FloatLineColor::White);
+	else if (args.GetCondArg(4) == 0)
+		combatSys.FloatCombatLine(args.objHndCaller, 207, FloatLineColor::White);
+	args.SetCondArg(4, 2);
+	return 0;
+}
+
+int SpellCallbacks::RemoveSpell(DispatcherCallbackArgs args)
+{
+	conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+	return 0;
+}
+
+int SpellCallbacks::HasCondition(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	if (dispIo->data1 == args.GetData1())
+		dispIo->return_val = 1;
+	return 0;
+}
+
+int ItemCallbacks::SkillBonus(DispatcherCallbackArgs args)
+{
+	auto skillEnum = args.GetCondArg(0);
+	auto bonValue = args.GetCondArg(1);
+	auto bonType = args.GetData1();
+	if (args.dispKey - 20 == skillEnum)
+	{
+		auto invIdx = args.GetCondArg( 2);
+		auto item = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+		auto dispIo =dispatch.DispIoCheckIoType10(args.dispIO);
+		auto itemName = description.getDisplayName(item, args.objHndCaller);
+		dispIo->bonOut->AddBonusWithDesc(bonValue, bonType, 112, const_cast<char*>(itemName));
+	}
+	return 0;
+}
+
 int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args)
 {
 	
@@ -2205,6 +2624,49 @@ int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args)
 	memcpy(&argg[2], &singerId, sizeof(ObjectId));
 	conds.AddTo(args.objHndCaller, "Captivated", argg);
 	return 0;
+}
+
+
+void Conditions::AddConditionsToTable(){
+
+	static CondStructNew itemSkillBonus("Special Equipment Skill Bonus", 3);
+	itemSkillBonus.AddHook(dispTypeSkillLevel, DK_SKILL_APPRAISE, itemCallbacks.SkillBonus, 99, 0);
+	itemSkillBonus.Register();
+
+	// New Conditions!
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionDisableAoO);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterTwoWeaponFighting);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterTWFRanger);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDivineMight);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDivineMightBonus);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondRecklessOffense);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterWeaponSpecialization);
+
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondDisarm);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondDisarmed);
+	// conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondSuperiorExpertise); // will just be patched inside Combat Expertise callbacks
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondRend);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondCaptivatingSong);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondCaptivated);
+	// conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondCraftWandLevelSet);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondAidAnother);
+
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondHezrouStench);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondHezrouStenchHit);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)&conds.mCondNecklaceOfAdaptation);
+	/*
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondDeadlyPrecision);
+
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterRage);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondImprovedDisarm);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondIndomitableWill);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondKnockDown);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondMightyRage);
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondPersistentSpell);
+
+
+	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondTirelessRage);
+	*/
 }
 
 int AidAnotherRadialMenu(DispatcherCallbackArgs args)

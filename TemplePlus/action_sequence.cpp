@@ -168,6 +168,11 @@ public:
 			
 		});
 		
+
+		replaceFunction<int(__cdecl)()>(0x10091580, []()
+		{
+			return actSeqSys.ReadyVsApproachOrWithdrawalCount();
+		});
 	}
 } actSeqReplacements;
 
@@ -1672,13 +1677,13 @@ int32_t ActionSequenceSystem::InterruptCounterspell(D20Actn* d20a)
 
 }
 
-int ActionSequenceSystem::ReadyVsApproachOrWithdrawalCount()
+int ActionSequenceSystem::ReadyVsApproachOrWithdrawalCount() const
 {
 	int result = 0;
 	auto readiedCache = addresses.readiedActionCache;
 	for (int i = 0; i < READIED_ACTION_CACHE_SIZE; i++)
 	{
-		if (readiedCache[i].flags == 1
+		if (readiedCache[i].flags == 1 && !(!readiedCache[i].interrupter)
 			&&	(readiedCache[i].readyType == ReadyVsTypeEnum::RV_Approach
 				|| readiedCache[i].readyType == ReadyVsTypeEnum::RV_Withdrawal ))
 			result++;
@@ -2125,7 +2130,7 @@ void ActionSequenceSystem::ActionPerform()
 						logger->debug("Move Action: {} going from {} to {}, nodes used: {}", description.getDisplayName(d20a->path->mover), d20a->path->from, d20a->path->to, directionsDebug);
 				}
 
-				d20->d20Defs[d20a->d20ActType].performFunc(d20a);
+				ActionErrorCode performResult = static_cast<ActionErrorCode>(d20->d20Defs[d20a->d20ActType].performFunc(d20a));
 				InterruptNonCounterspell(d20a);
 			}
 			return;

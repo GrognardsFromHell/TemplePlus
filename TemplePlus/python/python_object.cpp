@@ -2397,8 +2397,6 @@ static PyObject* PyObjHandle_GetFeats(PyObject* obj, void*) {
 static PyObject* PyObjHandle_GetFactions(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
 	objHndl objHnd = self->handle;
-
-	auto feats = objects.feats.GetFeats(self->handle);
 	
 	int factionArray[50] = {0,};
 	int numFactions = 0;

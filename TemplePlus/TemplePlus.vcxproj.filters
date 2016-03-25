@@ -319,9 +319,6 @@
     <ClCompile Include="ui\ui_intgame_select.cpp" />
     <ClCompile Include="ui\ui_combat.cpp" />
     <ClCompile Include="ui\ui_slider.cpp" />
-    <ClCompile Include="ui\ui_char.cpp">
-      <Filter>ui</Filter>
-    </ClCompile>
     <ClCompile Include="ui\ui_pc_creation.cpp">
       <Filter>ui</Filter>
     </ClCompile>
@@ -334,6 +331,12 @@
     </ClCompile>
     <ClCompile Include="graphics\aas_hooks.cpp" />
     <ClCompile Include="gamesystems\objects\objevent.cpp" />
+    <ClCompile Include="ui\ui_party.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_char.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
     <ClCompile Include="updater\updater.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -632,6 +635,9 @@
     </ClInclude>
     <ClInclude Include="gamesystems\objects\objevent.h" />
     <ClInclude Include="updater\updater.h" />
+    <ClInclude Include="ui\ui_party.h">
+      <Filter>ui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
