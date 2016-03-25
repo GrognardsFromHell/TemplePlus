@@ -26,6 +26,9 @@
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
+#define NORMAL_SPELL_RANGE 600
+#define SPELL_LIKE_ABILITY_RANGE 699
+
 struct SpellCondListEntry {
 	CondStruct *condition;
 	int unknown;
@@ -124,7 +127,10 @@ public:
 			return spellSys.GetSpellEnumTAG(spellEnum);
 		});
 
-		
+		// SpellPacketSetCasterLevel
+		replaceFunction<void(__cdecl)(SpellPacketBody*)>(0x10079B70, [](SpellPacketBody* spellPkt){
+			spellSys.spellPacketSetCasterLevel(spellPkt);
+		});
 		
 	}
 } spellFuncReplacements;
@@ -467,9 +473,78 @@ void LegacySpellSystem::spellPacketBodyReset(SpellPacketBody* spellPktBody)
 	_spellPacketBodyReset(spellPktBody);
 }
 
-void LegacySpellSystem::spellPacketSetCasterLevel(SpellPacketBody* spellPktBody)
+void LegacySpellSystem::spellPacketSetCasterLevel(SpellPacketBody* spellPkt) const
 {
-	_spellPacketSetCasterLevel(spellPktBody);
+	auto spellClassCode = spellPkt->casterClassCode;
+	auto caster = spellPkt->caster;
+	auto spellEnum = spellPkt->spellEnum;
+	auto spellName = spellSys.GetSpellName(spellEnum);
+	auto casterName = description.getDisplayName(caster);
+	auto casterClass = spellSys.GetCastingClass(spellClassCode);
+
+	auto casterObj = gameSystems->GetObj().GetObject(caster);
+
+	// normal spells
+	if (!spellSys.isDomainSpell(spellClassCode)){
+
+		// casting class
+		if (casterClass){
+			auto casterLvl = objects.StatLevelGet(caster, casterClass);
+			spellPkt->baseCasterLevel = casterLvl;
+			if (d20ClassSys.IsLateCastingClass(casterClass))
+				spellPkt->baseCasterLevel = casterLvl / 2;
+			logger->info("Critter {} is casting spell {} at base caster_level {}.", casterName, spellName , casterLvl);
+		} 
+
+		// item spell
+		else if (spellPkt->invIdx != 255 && (spellPkt->spellEnum < NORMAL_SPELL_RANGE || spellPkt->spellEnum > SPELL_LIKE_ABILITY_RANGE)){
+			spellPkt->baseCasterLevel = 0;
+			logger->info("Critter {} is casting item spell {} at base caster_level {}.", casterName, spellName, 0);
+		}
+
+		// monster
+		else if (casterObj->IsCritter())
+		{
+		    if (objects.IsNPC(caster)) {
+				spellPkt->baseCasterLevel = casterObj->GetInt32Array(obj_f_npc_hitdice_idx)[0];
+			} else
+			{
+				spellPkt->baseCasterLevel = casterObj->GetInt32Array(obj_f_critter_level_idx).GetSize();
+			}
+			logger->info("Monster {} is casting spell {} at base caster_level {}.", casterName, spellName, spellPkt->baseCasterLevel);
+		} else
+		{
+			spellPkt->baseCasterLevel = 0;
+		}
+	} 
+	
+	// domain spell
+	else if ( objects.StatLevelGet(caster, stat_level_cleric) > 0){
+		spellPkt->baseCasterLevel = objects.StatLevelGet(caster, stat_level_cleric);
+		logger->info("Critter {} is casting Domain spell {} at base caster_level {}.", casterName, spellName, spellPkt->baseCasterLevel);
+	
+	// domain special (usually used for monsters)
+	} else if (spellPkt->casterClassCode == Domain_Special)
+	{
+		if (spellPkt->invIdx != 255 && (spellPkt->spellEnum < NORMAL_SPELL_RANGE || spellPkt->spellEnum > SPELL_LIKE_ABILITY_RANGE)) {
+			spellPkt->baseCasterLevel = 0;
+			logger->info("Critter {} is casting item spell {} at base caster_level {}.", casterName, spellName, 0);
+		} 
+		
+		else {
+			spellPkt->baseCasterLevel = objects.GetHitDiceNum(caster);
+			logger->info("Monster {} is casting spell {} at base caster_level {}.", casterName, spellName, spellPkt->baseCasterLevel);
+		}
+	}
+
+	auto orgCasterLvl = spellPkt->baseCasterLevel;
+	dispatch.Dispatch35BaseCasterLevelModify(caster, spellPkt);
+	
+	// if changed
+	if (spellPkt->baseCasterLevel != orgCasterLvl){
+		logger->info("Spell level modified to {}", spellPkt->baseCasterLevel);
+	}
+	//_spellPacketSetCasterLevel(spellPkt);
 }
 
 void LegacySpellSystem::SpellSavePruneInactive() const

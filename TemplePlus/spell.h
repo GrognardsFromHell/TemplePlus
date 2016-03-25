@@ -165,7 +165,7 @@ struct LegacySpellSystem : temple::AddressTable
 	uint32_t getWizSchool(objHndl objHnd);
 	uint32_t getStatModBonusSpellCount(objHndl objHnd, uint32_t classCode, uint32_t slotLvl);
 	void spellPacketBodyReset(SpellPacketBody * spellPktBody);
-	void spellPacketSetCasterLevel(SpellPacketBody * spellPktBody);
+	void spellPacketSetCasterLevel(SpellPacketBody * spellPktBody) const;
 	uint32_t getSpellEnum(const char* spellName);
 	uint32_t GetSpellEnumFromSpellId(uint32_t spellId);
 	uint32_t GetSpellPacketBody(uint32_t spellId, SpellPacketBody* spellPktBodyOut);

@@ -52,6 +52,12 @@ bool D20ClassSystem::IsLateCastingClass(Stat classEnum)
 	return 0;
 }
 
+bool D20ClassSystem::HasDomainSpells(Stat classEnum){
+	if (classEnum == stat_level_cleric)
+		return true;
+	return false;
+}
+
 void D20ClassSystem::ClassPacketAlloc(ClassPacket* classPkt)
 {
 	addresses.ClassPacketAlloc(classPkt);
