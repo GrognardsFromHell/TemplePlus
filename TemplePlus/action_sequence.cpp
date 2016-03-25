@@ -1633,8 +1633,19 @@ int32_t ActionSequenceSystem::InterruptNonCounterspell(D20Actn* d20a)
 	if (!readiedAction)
 		return 0;
 
-	while (readiedAction->readyType == RV_Counterspell)
-	{
+	while (1){
+		
+		if (readiedAction->readyType != RV_Counterspell) {
+
+			if (d20a->d20ActType == D20A_READIED_INTERRUPT || d20a->d20ActType == D20A_CAST_SPELL) {
+				auto isFriendly = critterSys.IsFriendly(readiedAction->interrupter, d20a->d20ATarget);
+				auto sharedAlleg = critterSys.AllegianceShared(readiedAction->interrupter, d20a->d20ATarget);
+
+				if (!sharedAlleg && !isFriendly)
+					break;
+			}
+		}
+
 		readiedAction = ReadiedActionGetNext(readiedAction, d20a);
 		if (!readiedAction)
 			return 0;
