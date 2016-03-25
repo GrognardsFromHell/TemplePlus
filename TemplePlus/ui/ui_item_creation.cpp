@@ -19,8 +19,16 @@
 #include <util/fixes.h>
 //#include <condition.h>
 #include "gamesystems/objects/objsystem.h"
+#include <gamesystems/gamesystems.h>
+#include <infrastructure/keyboard.h>
 
 int WandCraftCostCp=0;
+
+struct ItemEnhancementSpec{
+	const char * name;
+	uint32_t flags; // 1 - enabled; 2 - weapons only; 4 - shields only; 8 - armors only; 0x100 - unknown (only used in Keen)
+	int effectiveBonus;
+};
 
 struct UiItemCreationAddresses : temple::AddressTable
 {
@@ -37,6 +45,7 @@ struct UiItemCreationAddresses : temple::AddressTable
 	char**itemCreationUIStringValue;
 	TigTextStyle*itemCreationTextStyle;
 	TigTextStyle*itemCreationTextStyle2;
+	ItemEnhancementSpec *itemEnhSpecs; // size 41
 	UiItemCreationAddresses()
 	{
 		rebase(Sub_100F0200, 0x100F0200);
@@ -54,6 +63,7 @@ struct UiItemCreationAddresses : temple::AddressTable
 
 		rebase(itemCreationTextStyle, 0x10BEE338);
 		rebase(itemCreationTextStyle2, 0x10BED938);
+		rebase(itemEnhSpecs, 0x102967C8);
 	}
 	
 } itemCreationAddresses;
@@ -706,6 +716,7 @@ public:
 		return "Item Creation UI";
 	}
 
+	static void CreateItemFinalize(objHndl crafter, objHndl item);
 
 	static int UiItemCreationInit(GameSystemConf* conf);
 
@@ -726,6 +737,16 @@ public:
 		replaceFunction(0x10152690, CreateItemResourceCheck);
 		replaceFunction(0x10151F60, CreateItemDebitXPGP);
 		replaceFunction(0x10152930, UiItemCreationCraftingCostTexts);
+		
+		// CreateItemFinalize
+		static void(*orgCreateItemFinalize)(objHndl, objHndl) = replaceFunction<void(__cdecl)(objHndl, objHndl)>(0x10153A50, [](objHndl crafter, objHndl item) {
+			if (*itemCreationAddresses.itemCreationType == ItemCreationType::CraftMagicArmsAndArmor){
+				orgCreateItemFinalize(crafter, item);
+				return;
+			}
+
+			CreateItemFinalize(crafter, item);
+		});
 
 
 		write(0x102EE250, &ptrToBrewPotion, sizeof(ptrToBrewPotion));
@@ -751,6 +772,77 @@ public:
 		write(0x102F6C10 + 9 * 4 * 26 + 4, &writeval, sizeof(void*));*/
 	}
 } itemCreationHooks;
+
+void ItemCreation::CreateItemFinalize(objHndl crafter, objHndl item)
+{
+	// Currently handles non- Craft MAA
+	auto altPressed = infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) || infrastructure::gKeyboard.IsKeyPressed(VK_RMENU);
+	auto effBonus = 0;
+	//auto appliedBonusIndices = temple::GetRef<int[9]>(0x10BED908);
+
+
+	auto crafterObj = gameSystems->GetObj().GetObject(crafter);
+	
+	// create the new item
+	auto newItemHandle = gameSystems->GetObj().CreateObject(item, crafterObj->GetLocation());
+	if (!newItemHandle)
+		return;
+
+	auto itemObj = gameSystems->GetObj().GetObject(newItemHandle);
+	
+	// make it Identified
+	itemObj->SetItemFlag(ItemFlag::OIF_IDENTIFIED, true);
+	
+
+	// set its spell properties
+	auto& itemCreationType = temple::GetRef<ItemCreationType>(0x10BEDF50);
+	if (itemCreationType == ItemCreationType::CraftWand 
+		|| itemCreationType == ItemCreationType::ScribeScroll
+		|| itemCreationType == ItemCreationType::BrewPotion){
+		CraftScrollWandPotionSetItemSpellData(newItemHandle, crafter);
+	}
+
+	inventory.ItemGet(newItemHandle, crafter, 8);
+
+	if (itemCreationType != ItemCreationType::Inactive) {
+		//infrastructure::gKeyboard.Update();
+		// if ALT is pressed, keep the window open for more crafting!
+
+		auto& itemCreationResourceCheckResults = temple::GetRef<char*>(0x10BEE330);
+		if (altPressed) {
+			
+			// refresh the resource checks
+			auto numItemsCrafting = temple::GetRef<int[8]>(0x11E76C7C); // array containing number of protos
+			static auto craftingHandles = temple::GetRef<objHndl*[8]>(0x11E76C3C); // proto handles
+			
+			for (int i = 0; i < numItemsCrafting[itemCreationType]; i++){
+				auto protoHandle = craftingHandles[itemCreationType][i];
+				if (protoHandle)
+					itemCreationResourceCheckResults[i] = CreateItemResourceCheck(crafter, protoHandle);
+			}
+
+			auto icItemIdx = temple::GetRef<int>(0x10BEE398);
+			if (icItemIdx >= 0 && icItemIdx < numItemsCrafting[itemCreationType]){
+				auto createBtnId = temple::GetRef<int>(0x10BED8B0);
+				if (CreateItemResourceCheck(crafter, item))
+				{
+					ui.ButtonSetButtonState(createBtnId, UiButtonState::UBS_NORMAL);
+				} else
+				{
+					ui.ButtonSetButtonState(createBtnId, UiButtonState::UBS_DISABLED);
+				}
+			}
+			return;
+		}
+
+		// else close the window and reset everything
+		free(itemCreationResourceCheckResults);
+		ui.WidgetSetHidden(temple::GetRef<int>(0x10BEDA60), 1);
+		itemCreationType = ItemCreationType::Inactive;
+		auto itemCreationCrafter = temple::GetRef<objHndl>(0x10BECEE0);
+		itemCreationCrafter = 0i64;
+	}
+}
 
 int ItemCreation::UiItemCreationInit(GameSystemConf* conf)
 {
