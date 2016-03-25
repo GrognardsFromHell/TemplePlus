@@ -337,6 +337,7 @@
     <ClCompile Include="ui\ui_char.cpp">
       <Filter>ui</Filter>
     </ClCompile>
+    <ClCompile Include="updater\updater.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -633,6 +634,7 @@
       <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="gamesystems\objects\objevent.h" />
+    <ClInclude Include="updater\updater.h" />
     <ClInclude Include="ui\ui_party.h">
       <Filter>ui</Filter>
     </ClInclude>

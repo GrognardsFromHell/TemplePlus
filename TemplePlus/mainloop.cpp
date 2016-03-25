@@ -13,9 +13,9 @@
 #include "diag/diag.h"
 #include <graphics/device.h>
 #include "infrastructure/stopwatch.h"
-#include <windowsx.h>
 #include <graphics/shaperenderer2d.h>
 #include "util/fixes.h"
+#include "updater/updater.h"
 #include <dinput.h>
 
 static GameLoop *gameLoop = nullptr;
@@ -77,9 +77,10 @@ static struct MainLoop : temple::AddressTable {
 	}
 } mainLoop;
 
-GameLoop::GameLoop(TigInitializer& tig, GameSystems& gameSystems)
+GameLoop::GameLoop(TigInitializer& tig, GameSystems& gameSystems, Updater &updater)
 	: mTig(tig),
 	  mGameSystems(gameSystems),
+	  mUpdater(updater),
 	  mGameRenderer(tig, mGameSystems) {
 
 	mDiagScreen = std::make_unique<DiagScreen>(tig.GetRenderingDevice(),
@@ -360,8 +361,7 @@ void GameLoop::RenderVersion() {
 
 	ColorRect textColor(0x7FFFFFFF);
 	TigTextStyle style;
-	style.flags = 0x0800;
-	style.field10 = 25;
+	style.tracking = 5;
 	style.textColor = &textColor;
 
 	auto& device = mTig.GetRenderingDevice();
@@ -372,6 +372,17 @@ void GameLoop::RenderVersion() {
 	rect.y = device.GetRenderHeight() - rect.height - 10;
 
 	UiRenderer::RenderText(version, rect, style);
+
+	// Also draw the status of the auto update above the version number
+	auto updateStatus = mUpdater.GetStatus();
+	if (!updateStatus.empty()) {
+		auto offset = rect.y;
+		rect = UiRenderer::MeasureTextSize(updateStatus, style);
+		rect.x = device.GetRenderWidth() - rect.width - 10;
+		rect.y = offset - rect.height - 5;
+
+		UiRenderer::RenderText(updateStatus, rect, style);
+	}
 
 	UiRenderer::PopFont();
 }

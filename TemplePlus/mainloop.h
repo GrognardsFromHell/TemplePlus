@@ -2,6 +2,7 @@
 
 #include "gamesystems/gamerenderer.h"
 
+class Updater;
 class TigInitializer;
 class GameSystems;
 
@@ -10,7 +11,8 @@ friend class MainLoopHooks;
 public:
 
 	GameLoop(TigInitializer& mainWindow,
-	         GameSystems& gameSystems);
+	         GameSystems& gameSystems,
+			 Updater &updater);
 	~GameLoop();
 
 	void Run();
@@ -21,9 +23,10 @@ private:
 	void SetScrollDirection(int direction);
 	void RenderVersion();
 	void RenderFrame();
-
+	
 	TigInitializer& mTig;
 	GameSystems& mGameSystems;
+	Updater& mUpdater;
 	GameRenderer mGameRenderer;
 	std::unique_ptr<class DiagScreen> mDiagScreen;
 };

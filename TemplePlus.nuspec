@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>TemplePlus</id>
+    <version>1.0.2</version>
+    <description>TemplePlus</description>
+    <authors>Grognards From Hell</authors>
+    <owners>Grognards From Hell</owners>
+    <projectUrl>https://github.com/GrognardsFromHell/TemplePlus</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <copyright>Copyright 2016</copyright>
+  </metadata>
+  <files>
+    <file src="Release\TemplePlus.exe" target="lib\net45" />
+    <file src="tpdata\**\*.*" target="lib\net45\tpdata" />
+    <file src="dependencies\python-lib\**\*.*" target="lib\net45\tpdata\python-lib" />
+    <file src="dependencies\bin\d3dcompiler_47.dll" target="lib\net45" />
+  </files>
+</package>
