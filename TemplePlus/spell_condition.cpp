@@ -49,6 +49,10 @@ public:
 			return 0;
 		});
 		
+
+		// Fix for Shocking Grasp doing d8 instead of d6 damage
+		char sgWriteVal = 6;
+		write(0x100DD9DF + 1, &sgWriteVal, sizeof(char));
 	}
 } spellConditionFixes;
 
