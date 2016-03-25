@@ -284,8 +284,7 @@ int LegacySectorSystem::SectorLock(SectorLoc secLoc, Sector** sectorOut)
 		return 1;
 	}
 
-	if (*addresses.sectorCacheLockedCount >= *addresses.sectorCacheSize)
-	{
+	if (*addresses.sectorCacheLockedCount >= *addresses.sectorCacheSize){
 		for (int i = 0; i < *addresses.sectorCacheSize; i++)
 		{
 			int _secIdx = secIndices[i];

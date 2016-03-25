@@ -21,6 +21,7 @@
 #include "party.h"
 #include "ui/ui_picker.h"
 #include "gamesystems/gamesystems.h"
+#include "gamesystems/timeevents.h"
 struct AiSystem aiSys;
 AiParamPacket * AiSystem::aiParams;
 
@@ -1454,6 +1455,11 @@ void AiSystem::AiTurnSthg_1005EEC0(objHndl obj)
 {
 	return addresses.AiTurnSthg_1005EEC0(obj);
 }
+
+int AiSystem::AiTimeEventExpires(TimeEvent* evt)
+{
+	return 1;
+}
 #pragma endregion
 
 #pragma region AI replacement functions
@@ -1608,6 +1614,34 @@ public:
 		
 
 		replaceFunction(0x1005B810, ChooseRandomSpellUsercallWrapper);
+
+
+		static int (*orgAiTimeEventExpires)(TimeEvent*) = replaceFunction<int(__cdecl)(TimeEvent*)>(0x1005F090, [](TimeEvent*evt)
+		{
+			auto result =  orgAiTimeEventExpires(evt);
+			return result;
+		});
+
+		// AiTimeEventGenerate_MapSectorLoad
+		replaceFunction<void(__cdecl)(objHndl, int)>(0x1005BE60, [](objHndl obj, int doFirstHeartbeat){
+			auto& cmpAiTimerRefObj = temple::GetRef<objHndl>(0x10AA73C0);
+			cmpAiTimerRefObj = obj;
+
+			auto removeTimer = temple::GetRef<void(__cdecl)(TimeEventType, int(*validationCallback)(TimeEvent*))>(0x10060B20);
+			removeTimer(TimeEventType::AI, temple::GetRef<int(__cdecl)(TimeEvent*)>(0x100588A0));
+			TimeEvent evtNew;
+			evtNew.system = TimeEventType::AI;
+			evtNew.params[0].handle = obj;
+			evtNew.params[1].int32 = doFirstHeartbeat;
+			logger->debug("Generating AI TimeEvent for {}, first heartbeat: {}", description.getDisplayName(obj), doFirstHeartbeat);
+			if (doFirstHeartbeat)
+			{
+				int dummy = 1;
+			}
+			static auto timeeventAddSpecial = temple::GetPointer<BOOL(TimeEvent *createArgs)>(0x10062340);
+			timeeventAddSpecial(&evtNew);
+
+		});
 
 	}
 } aiReplacements;

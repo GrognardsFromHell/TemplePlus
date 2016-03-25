@@ -106,8 +106,15 @@ class RadialMenuReplacements : public TempleFix
 			}
 		});
 
+		// RadialMenuMsg
 		static int (__cdecl*orgMsgHandler)(TigMsg* msg) = replaceFunction<int(__cdecl)(TigMsg*)>(0x1013DC90, [](TigMsg* msg)
 		{
+			auto evtType = msg->type;
+			if (evtType == TigMsgType::KEYSTATECHANGE || evtType == TigMsgType::KEYDOWN || evtType == TigMsgType::CHAR) {
+				int dumy = 1;
+				DIK_HOME;
+			}
+			
 			auto shiftPressed = false;
 			infrastructure::gKeyboard.Update();
 			if (infrastructure::gKeyboard.IsKeyPressed(VK_LSHIFT) || infrastructure::gKeyboard.IsKeyPressed(VK_RSHIFT))	{
@@ -119,8 +126,9 @@ class RadialMenuReplacements : public TempleFix
 			if (radialMenus.GetActiveRadialMenuNode() == -1)
 				return 0;
 
-			auto evtType = msg->type;
+			
 
+			
 			if (evtType != TigMsgType::MOUSE){
 				if (evtType == TigMsgType::KEYSTATECHANGE){
 					return radialMenus.RadialMenuKeypressHandler(msg);
@@ -128,7 +136,8 @@ class RadialMenuReplacements : public TempleFix
 				return 0;
 			}
 
-			return orgMsgHandler(msg);
+			auto result = orgMsgHandler(msg);
+			return result;
 		});
 		
 
