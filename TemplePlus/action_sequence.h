@@ -99,7 +99,9 @@ struct ActionSequenceSystem : temple::AddressTable
 	void curSeqReset(objHndl objHnd);
 	void ActSeqSpellReset() const;
 	void ActSeqGetPicker();
+	void TurnStart(objHndl obj);
 	int ActionAddToSeq();
+	
 		uint32_t addD20AToSeq(D20Actn * d20a, ActnSeq * actSeq);
 		uint32_t AddToSeqSimple(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
 		int AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
@@ -164,8 +166,9 @@ struct ActionSequenceSystem : temple::AddressTable
 	
 	int32_t InterruptNonCounterspell(D20Actn *d20a);
 	int32_t InterruptCounterspell(D20Actn *d20a);
-	int ReadyVsApproachOrWithdrawalCount() const;
-	ReadiedActionPacket * ReadiedActionGetNext(ReadiedActionPacket * prevReadiedAction, D20Actn* d20a);
+	static int ReadyVsApproachOrWithdrawalCount();
+	static void ReadyVsRemoveForObj(objHndl obj);
+	static ReadiedActionPacket * ReadiedActionGetNext(ReadiedActionPacket * prevReadiedAction, D20Actn* d20a);
 	void InterruptSwitchActionSequence(ReadiedActionPacket* readiedAction);
 
 	uint32_t combatTriggerSthg(ActnSeq* actSeq);
@@ -176,7 +179,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	
 	uint32_t curSeqNext();
 		int SequencePop(); // 10098010
-		bool ShouldAutoendTurn(TurnBasedStatus* tbStat);
+	static bool ShouldAutoendTurn(TurnBasedStatus* tbStat);
 	void ActionPerform();
 	void sequencePerform();
 	void ActionBroadcastAndSignalMoved();

@@ -20,6 +20,8 @@
 #include "ui/ui_combat.h"
 #include "raycast.h"
 #include "gamesystems/objects/objsystem.h"
+#include "python/python_integration_obj.h"
+#include "gamesystems/gamesystems.h"
 
 
 struct CombatSystemAddresses : temple::AddressTable
@@ -486,7 +488,56 @@ void LegacyCombatSystem::TurnProcessing_100635E0(objHndl obj)
 
 void LegacyCombatSystem::EndTurn()
 {
-	addresses.EndTurn();
+	auto actor = tbSys.turnBasedGetCurrentActor();
+	
+	if (party.IsInParty(actor)){
+		static auto uiCombatInitiativePortraitsReset = temple::GetRef<int(__cdecl*)(int)>(0x10AA83FC);
+		uiCombatInitiativePortraitsReset(0);
+	} 
+	else
+	{
+		pythonObjIntegration.ExecuteObjectScript(actor, actor, ObjScriptEvent::EndCombat);
+	}
+
+	tbSys.InitiativeListNextActor();
+
+	if (party.IsInParty(actor) && !actSeqSys.isPerforming(actor)){
+		static auto addToInitiativeWithinRect = temple::GetRef<void(__cdecl)(objHndl)>(0x10062AC0);
+		addToInitiativeWithinRect(actor);
+	}
+
+	// remove dead and OF_OFF from initiative
+	for (int i = 0; i < tbSys.GetInitiativeListLength(); ) {
+		auto combatant = tbSys.groupInitiativeList->GroupMembers[i];
+		auto combatantObj = gameSystems->GetObj().GetObject(combatant);
+		
+		if (critterSys.IsDeadNullDestroyed(combatant) 
+			|| (combatantObj->GetFlags() & OF_OFF)) {
+			static auto removeFromInitiative = temple::GetRef<int(__cdecl)(objHndl)>(0x100DF530);
+			removeFromInitiative(combatant);
+		}
+		else
+			i++;
+	}
+	
+	if (tbSys.turnBasedGetCurrentActor()){
+		actSeqSys.TurnStart(tbSys.turnBasedGetCurrentActor());
+	}
+
+	static auto combatantsFarFromParty = temple::GetRef<int(__cdecl)()>(0x10062CB0);
+	static auto combatEnd = temple::GetRef<int(__cdecl)(objHndl)>(0x100630F0);
+	static auto allPcsUnconscious = temple::GetRef<int(__cdecl)()>(0x10062D60);
+	
+	if (combatantsFarFromParty()){
+		logger->info("Ending combat (enemies far from party)");
+		auto leader = party.GetConsciousPartyLeader();
+		combatEnd(leader);
+	} else if (allPcsUnconscious())
+	{
+		auto leader = party.GetConsciousPartyLeader();
+		combatEnd(leader);
+	}
+	//addresses.EndTurn();
 }
 
 void LegacyCombatSystem::CombatSubturnEnd()

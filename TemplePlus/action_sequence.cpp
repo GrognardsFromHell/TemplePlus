@@ -23,6 +23,9 @@
 #include "ai.h"
 #include "ui/ui_intgame_turnbased.h"
 #include "d20_obj_registry.h"
+#include "anim.h"
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/objects/objsystem.h"
 
 
 static struct ActnSeqAddresses : temple::AddressTable {
@@ -110,16 +113,8 @@ public:
 		return actSeqSys.PerformOnAnimComplete(obj, animId);
 	}
 
-	static void TurnStart(objHndl obj)
-	{
-		logger->debug("*** NEXT TURN *** starting for {} ({}). CurSeq: {}", description.getDisplayName(obj),obj, (void*)(*actSeqSys.actSeqCur));
-		auto interruptSeq  = *addresses.actSeqInterrupt;
-		if (interruptSeq)
-		{
-			int dummy = 1;
-		}
-		orgTurnStart(obj);
-	};
+	static void TurnStart(objHndl obj);
+	
 	static void(__cdecl*orgTurnStart)(objHndl obj);
 
 	static int ActionAddToSeq();
@@ -419,6 +414,126 @@ void ActionSequenceSystem::ActSeqGetPicker()
 		return;
 	}
 
+}
+
+void ActionSequenceSystem::TurnStart(objHndl obj)
+{
+	logger->debug("*** NEXT TURN *** starting for {} ({}). CurSeq: {}", description.getDisplayName(obj), obj, (void*)(*actSeqSys.actSeqCur));
+	auto objBody = gameSystems->GetObj().GetObject(obj);
+	//orgTurnStart(obj);
+
+	auto& dword_1189FB60 = temple::GetRef<int>(0x1189FB60);
+	dword_1189FB60 = 0;
+	auto& seqSthg_10B3D59C = temple::GetRef<int>(0x10B3D59C);
+	seqSthg_10B3D59C = 0;
+	auto& seqSthg_10B3D5C4 = temple::GetRef<int>(0x10B3D5C4);
+	seqSthg_10B3D5C4 = 0;
+
+	if (d20Sys.globD20Action->d20APerformer && d20Sys.globD20Action->d20APerformer != obj) {
+		d20Sys.d20SendSignal(d20Sys.globD20Action->d20APerformer, DK_SIG_EndTurn, 0, 0);
+	}
+
+	if (!combatSys.isCombatActive())
+		return;
+
+	// check for interrupter sequence
+	if (*addresses.actSeqInterrupt) {
+
+		// switch sequences
+		auto actSeq = *addresses.actSeqInterrupt;
+		*actSeqCur = actSeq;
+		*addresses.actSeqInterrupt = actSeq->interruptSeq;
+		auto curIdx = actSeq->d20aCurIdx;
+		logger->info("Switching to Interrupt sequence, actor {}", description.getDisplayName(actSeq->performer));
+		if (curIdx <  actSeq->d20ActArrayNum) {
+
+			auto d20a = &actSeq->d20ActArray[curIdx];
+
+			if (InterruptNonCounterspell(d20a))
+				return;
+
+			if (d20a->d20ActType == D20A_CAST_SPELL) {
+				auto d20SpellData = &d20a->d20SpellData;
+				if (d20Sys.d20QueryWithData(actSeq->performer, DK_QUE_SpellInterrupted, d20SpellData, 0)) {
+					d20a->d20Caf &= ~D20CAF_NEED_ANIM_COMPLETED;
+					animationGoals.Interrupt(actSeq->performer, AnimGoalPriority::AGP_5, 0);
+				}
+			}
+		}
+
+
+		sequencePerform();
+		return;
+	}
+
+	// clean readied actions for obj
+	ReadyVsRemoveForObj(obj);
+
+	// clean previously occupied sequences
+	d20Sys.globD20ActnSetPerformer(obj);
+	for (int i = 0; i < ACT_SEQ_ARRAY_SIZE; i++) {
+
+		if ((actSeqArray[i].seqOccupied & 1)
+			&& actSeqArray[i].performer == obj) {
+			actSeqArray[i].seqOccupied &= ~1;
+			logger->info("Clearing outstanding sequence [{}]", i);
+		}
+	}
+
+	// allocate new sequence
+	if (!AllocSeq(obj)) {
+		*actSeqCur = &actSeqArray[0];
+		curSeqReset(obj);
+	}
+
+	// apply newround condition and do BeginRound stuff
+	if (!d20Sys.d20Query(obj, DK_QUE_NewRound_This_Turn)) {
+		dispatch.Dispatch48BeginRound(obj, 1);
+		conds.AddTo(obj, "NewRound_This_Turn", {});
+	}
+
+	// dispatch TurnBasedStatusInit
+	TurnBasedStatus * tbStat = &(*actSeqSys.actSeqCur)->tbStatus;
+	tbStat->hourglassState = 4;
+	tbStat->tbsFlags = 0;
+	tbStat->idxSthg = -1;
+	tbStat->surplusMoveDistance = 0;
+	tbStat->attackModeCode = 0;
+	tbStat->baseAttackNumCode = 0;
+	tbStat->numBonusAttacks = 0;
+	tbStat->numAttacks = 0;
+	tbStat->errCode = AEC_OK;
+
+	DispIOTurnBasedStatus dispIo;
+	dispIo.tbStatus = tbStat;
+	dispatch.dispatchTurnBasedStatusInit(obj, &dispIo);
+
+	// Enqueue simuls
+	static void(*simulsEnqueue)() = temple::GetRef<void(__cdecl)()>(0x100922B0);
+	simulsEnqueue();
+
+	if (objects.IsPlayerControlled(obj) && critterSys.IsDeadOrUnconscious(obj)) {
+		logger->info("Action for {} ending turn (unconscious)...", description.getDisplayName(d20Sys.globD20Action->d20APerformer));
+		combatSys.CombatAdvanceTurn(obj);
+		return;
+	}
+
+	if (objBody->GetFlags() & OF_OFF) {
+		logger->info("Action for {} ending turn (OF_OFF)", description.getDisplayName(d20Sys.globD20Action->d20APerformer));
+		combatSys.CombatAdvanceTurn(obj);
+		return;
+	}
+
+	if (d20Sys.d20Query(obj, DK_QUE_Prone)) {
+		if ((*actSeqSys.actSeqCur)->tbStatus.hourglassState >= 1)
+		{
+			d20Sys.D20ActnInit(d20Sys.globD20Action->d20APerformer, d20Sys.globD20Action);
+			d20Sys.globD20Action->d20ActType = D20A_STAND_UP;
+			d20Sys.globD20Action->data1 = 0;
+			ActionAddToSeq();
+			sequencePerform();
+		}
+	}
 }
 
 int ActionSequenceSystem::ActionAddToSeq()
@@ -1688,7 +1803,7 @@ int32_t ActionSequenceSystem::InterruptCounterspell(D20Actn* d20a)
 
 }
 
-int ActionSequenceSystem::ReadyVsApproachOrWithdrawalCount() const
+int ActionSequenceSystem::ReadyVsApproachOrWithdrawalCount()
 {
 	int result = 0;
 	auto readiedCache = addresses.readiedActionCache;
@@ -1700,6 +1815,17 @@ int ActionSequenceSystem::ReadyVsApproachOrWithdrawalCount() const
 			result++;
 	}
 	return result;
+}
+
+void ActionSequenceSystem::ReadyVsRemoveForObj(objHndl obj)
+{
+	auto readiedCache = addresses.readiedActionCache;
+	for (int i = 0; i < READIED_ACTION_CACHE_SIZE; i++){
+		if (readiedCache[i].flags == 1 && readiedCache[i].interrupter == obj) {
+			readiedCache[i].flags = 0;
+			readiedCache[i].interrupter = 0i64;
+		}
+	}
 }
 
 ReadiedActionPacket* ActionSequenceSystem::ReadiedActionGetNext(ReadiedActionPacket* prevReadiedAction, D20Actn* d20a)
@@ -3138,6 +3264,10 @@ int ActnSeqReplacements::SeqRenderAooMovement(D20Actn* d20a, UiIntgameTurnbasedF
 		}
 	}
 	return 0;
+}
+
+void ActnSeqReplacements::TurnStart(objHndl obj){
+	actSeqSys.TurnStart(obj);
 }
 
 int ActnSeqReplacements::ActionAddToSeq()
