@@ -22,12 +22,14 @@
 #include "gamesystems/objects/objsystem.h"
 #include "python/python_integration_obj.h"
 #include "gamesystems/gamesystems.h"
+#include "maps.h"
+#include "tutorial.h"
 
 
 struct CombatSystemAddresses : temple::AddressTable
 {
 	int(__cdecl* GetEnemiesCanMelee)(objHndl obj, objHndl* canMeleeList);
-	void(__cdecl*TurnProcessing_100635E0)(objHndl obj);
+	void(__cdecl*CombatTurnProcessAi)(objHndl obj);
 	void(__cdecl*CombatTurnAdvance)(objHndl obj);
 	BOOL (__cdecl*CheckFleeCombatMap)();
 	int(__cdecl*GetFleecombatMap)(void*); // MapPacket
@@ -44,7 +46,7 @@ struct CombatSystemAddresses : temple::AddressTable
 		rebase(EndTurn, 0x100632B0);
 		rebase(CombatPerformFleeCombat, 0x100633C0);
 		rebase(CombatTurnAdvance, 0x100634E0);
-		rebase(TurnProcessing_100635E0, 0x100635E0);
+		rebase(CombatTurnProcessAi, 0x100635E0);
 		rebase(Subturn, 0x10063760);
 		rebase(GetFleecombatMap, 0x1006F970);
 		rebase(CheckFleeCombatMap, 0x1006F990);
@@ -106,6 +108,13 @@ public:
 	void apply() override{
 		
 		replaceFunction(0x100628D0, _isCombatActive);
+
+		// TurnProcessAi
+		replaceFunction<void(__cdecl)(objHndl)>(0x100635E0, [](objHndl obj){
+			combatSys.TurnProcessAi(obj);
+		});
+
+
 		replaceFunction(0x100629B0, _IsCloseToParty);
 		orgActionBarResetCallback = replaceFunction(0x10062E60, ActionBarResetCallback);
 		orgTurnStart2 = replaceFunction(0x100638F0, TurnStart2);
@@ -481,9 +490,68 @@ bool LegacyCombatSystem::HasLineOfAttack(objHndl obj, objHndl target)
 	return 0;
 }
 
-void LegacyCombatSystem::TurnProcessing_100635E0(objHndl obj)
+void LegacyCombatSystem::TurnProcessAi(objHndl obj)
 {
-	return addresses.TurnProcessing_100635E0(obj);
+	//return addresses.TurnProcessing_100635E0(obj);
+	auto actor = tbSys.turnBasedGetCurrentActor();
+	static auto getNextSimulsActor = temple::GetRef<objHndl(__cdecl)()>(0x100920E0);
+	if (obj != actor && obj != getNextSimulsActor())
+	{
+		logger->warn("Not AI processing {} (wrong turn...)", description.getDisplayName(obj));
+		return;
+	}
+
+	if (objects.IsPlayerControlled(obj)){
+		if (critterSys.IsDeadOrUnconscious(obj)){
+			logger->info("Combat for {} ending turn (unconscious)", description.getDisplayName(obj));
+			CombatAdvanceTurn(obj);
+		}
+		// TODO: bug? they probably meant to do an OR
+
+		return;
+	}
+
+	auto isLoadingGame = temple::GetRef<int>(0x103072D4);
+	if (isLoadingGame)
+		return;
+
+	auto isPcUnderAiControl = temple::GetRef<int(__cdecl)(objHndl)>(0x1005AD20);
+	auto getGlobalFlag = temple::GetRef<int(__cdecl)(int)>(0x10006790);
+	auto setGlobalFlag = temple::GetRef<void(__cdecl)(int, int)>(0x100067C0);
+	auto aiProcessPc = temple::GetRef<int(__cdecl)(objHndl)>(0x1005AE10);
+	if (isPcUnderAiControl(obj)){
+
+		// tutorial shite
+		if (maps.GetCurrentMapId() == 5118 && getGlobalFlag(7))	{
+			if (!tutorial.IsTutorialActive()){
+				tutorial.Toggle();
+			}
+			tutorial.ShowTopic(31);
+			setGlobalFlag(7, 0);
+		}
+		if (!aiProcessPc(obj)){
+			logger->info("Combat for {} ending turn (ai fail).", description.getDisplayName(obj));
+		}
+		// TODO: possibly bugged if there's no "Advance Turn"?
+		return;
+	}
+
+	if (!pythonObjIntegration.ExecuteObjectScript(obj, obj, ObjScriptEvent::Heartbeat))	{
+		logger->info("Combat for {} ending turn (script).", description.getDisplayName(obj));
+		CombatAdvanceTurn(obj);
+		return;
+	}
+
+	if (gameSystems->GetObj().GetObject(obj)->GetFlags() & OF_OFF) {
+		logger->info("Combat for {} ending turn (OF_OFF).", description.getDisplayName(obj));
+		CombatAdvanceTurn(obj);
+		return;
+	}
+	aiSys.AiProcess(obj);
+	if (gameSystems->GetObj().GetObject(obj)->GetFlags() & OF_OFF) {
+		CombatAdvanceTurn(obj);
+	}
+
 }
 
 void LegacyCombatSystem::EndTurn()
@@ -556,6 +624,22 @@ void LegacyCombatSystem::CombatSubturnEnd()
 void LegacyCombatSystem::Subturn()
 {
 	addresses.Subturn();
+
+	//auto actor = tbSys.turnBasedGetCurrentActor();
+
+
+	//if (party.IsInParty(actor) && !actSeqSys.isPerforming(actor)) {
+	//	static auto addToInitiativeWithinRect = temple::GetRef<void(__cdecl)(objHndl)>(0x10062AC0);
+	//	addToInitiativeWithinRect(actor);
+	//}
+
+	//if (!actor){
+	//	logger->error("Combat Subturn: Coudn't start TB combat Turn due to no Active Critters!");
+	//	static auto combatEnd = temple::GetRef<int(__cdecl)()>(0x10062A30);
+	//	combatEnd();
+	//}
+
+	//auto 
 }
 
 void LegacyCombatSystem::TurnStart2(int initiativeIdx)

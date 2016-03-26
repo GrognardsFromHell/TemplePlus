@@ -185,6 +185,7 @@ float LocationSys::DistanceToLocFeet(objHndl obj, LocAndOffsets* loc)
 	return InchesToFeet(distance - radius);
 }
 
+
 float LocationSys::InchesToFeet(float inches) {
 	return inches / 12.0f;
 }
@@ -202,6 +203,7 @@ LocationSys::LocationSys()
 	rebase(Distance3d, 0x1002A0A0);
 	rebase(translationX, 0x10808D00);
 	rebase(translationY, 0x10808D48);
+	rebase(GetTileDeltaMax ,0x1001F830);
 	rebase(TOEEdistBtwnLocAndOffs, 0x1002A0A0);
 	
 }

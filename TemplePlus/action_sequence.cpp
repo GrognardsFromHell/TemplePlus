@@ -1911,7 +1911,7 @@ void ActionSequenceSystem::InterruptSwitchActionSequence(ReadiedActionPacket* re
 		party.AddToCurrentlySelected(readiedAction->interrupter);
 	} else
 	{
-		combatSys.TurnProcessing_100635E0(readiedAction->interrupter);
+		combatSys.TurnProcessAi(readiedAction->interrupter);
 	}
 
 	if (d20Sys.d20Query(readiedAction->interrupter, DK_QUE_Prone))
@@ -2069,7 +2069,7 @@ uint32_t ActionSequenceSystem::curSeqNext()
 			{
 				(*actSeqCur)->seqOccupied &= 0xFFFFfffe;
 				(*addresses.seqSthg_10B3D59C )++;
-				aiSys.AiTurnSthg_1005EEC0((*actSeqCur)->performer);
+				aiSys.AiProcess((*actSeqCur)->performer);
 			}
 		}
 		if (combatSys.isCombatActive()

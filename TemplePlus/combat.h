@@ -39,10 +39,11 @@ struct LegacyCombatSystem : temple::AddressTable {
 	objHndl * GetHostileCombatantList(objHndl obj, int* count);
 	bool HasLineOfAttack(objHndl obj, objHndl target); // can shoot or attack target (i.e. target isn't behind a wall or sthg)
 
-	void TurnProcessing_100635E0(objHndl obj);
+	
 	void EndTurn();
 	void CombatSubturnEnd();
 	void Subturn();
+	void TurnProcessAi(objHndl obj);
 	void TurnStart2( int initiativeIdx);
 	void CombatAdvanceTurn(objHndl obj);
 	BOOL IsBrawlInProgress();
