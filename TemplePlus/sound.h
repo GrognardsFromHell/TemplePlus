@@ -7,6 +7,8 @@
 	High level sound and music wrappers around tig_sound.
 */
 class Sound {
+	friend class SoundHooks;
+	friend class SoundGameSystem;
 public:
 
 	/*
@@ -31,6 +33,9 @@ public:
 	low level sound player?
 	*/
 	int MssPlaySound(int soundId);
+
+private:
+	MesHandle tpSounds = -1;
 };
 
 extern Sound sound;
