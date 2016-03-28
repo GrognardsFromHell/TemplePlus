@@ -7,23 +7,18 @@ install:
   - 7z x dependencies.7z
 
 build_script:
+  - ps: UpdateVersion.ps1
   - set PATH=C:\Program Files (x86)\MSBuild\14.0\Bin;%PATH%
   - nuget restore TemplePlus.sln
   - msbuild TemplePlus.sln /p:Configuration=Release /p:MSBuildDefines="_TP_VERSION=%APPVEYOR_BUILD_VERSION%;_TP_COMMIT=%APPVEYOR_REPO_COMMIT%" /verbosity:minimal
 
 after_build:
+  - ps: PackRelease.ps1
+  - ps: BuildRelease.ps1
+
   # Package the symbol files
   - dump_syms.exe Release\TemplePlus.pdb > TemplePlus.sym
   - 7z a TemplePlusSymbols-%APPVEYOR_BUILD_VERSION%.zip TemplePlus.sym
-
-  # Release TemplePlus for players
-  - rd /s /q dist || cd .
-  - mkdir dist
-  - copy Release\TemplePlus.exe dist
-  - xcopy /E /I tpdata dist\tpdata
-  - xcopy /E /I dependencies\python-lib dist\tpdata\python-lib
-  - copy dependencies\bin\d3dcompiler_47.dll dist
-  - 7z a TemplePlus-%APPVEYOR_BUILD_VERSION%.zip %APPVEYOR_BUILD_FOLDER%\dist\*
 
   # Release Full with tools and all binaries
   - rd /s /q dist || cd .
@@ -43,5 +38,16 @@ artifacts:
     name: TemplePlusSymbols
   - path: 'TemplePlusTools-*.zip'
     name: TemplePlusTools
+  - path: 'release-packages\*'
+
+# Deploy to GitHub Releases
+deploy:
+  - provider: GitHub
+    artifact: /(release-packages\\.*|TemplePlusSymbols-.*\.zip)$/
+    draft: true
+    prerelease: false
+    on:
+      branch: master
+      appveyor_repo_tag: true
 
 test: off

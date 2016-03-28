@@ -86,7 +86,7 @@ void Updater::Impl::StartUpdate() {
 
 void Updater::Impl::RunUpdate() {
 
-	std::wstring feedUrl = L"http://localhost/";
+	std::wstring feedUrl = utf8_to_ucs2(config.autoUpdateFeed);
 
 	UpdateStatus("Downloading updates...");
 
