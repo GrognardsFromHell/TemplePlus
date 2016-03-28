@@ -156,25 +156,40 @@ void TigInitializer::LoadDataFiles() {
 	tio_mkdir("data");
 	tio_path_add("data");
 
-	tio_mkdir("tpdata");
-	tio_path_add("tpdata");
+	std::string tpDataPath;
 
+	char ownFilename[MAX_PATH];
+	GetModuleFileNameA(nullptr, ownFilename, MAX_PATH);
+	PathRemoveFileSpecA(ownFilename);
+	PathAppendA(ownFilename, "tpdata");
+	if (PathIsDirectoryA(ownFilename)) {
+		tpDataPath = ownFilename;
+	} else {
+		tpDataPath = "tpdata";
+	}
+
+	if (tio_path_add(tpDataPath.c_str())) {
+		throw TempleException("Unable to add TemplePlus data to ToEE from {}", tpDataPath);
+	}
+	
 	logger->info("Registering new pathfinding data tpdata\\clearances.dat");
-	int result=  tio_path_add("tpdata\\clearances.dat");
+	auto result=  tio_path_add(fmt::format("{}\\clearances.dat", tpDataPath).c_str());
 	if (result != 0) {
 		logger->trace("Unable to add archive tpdata\\clearances.dat");
 	}
+
 	if (config.usingCo8)
 	{
 		logger->info("Registering Co8 file fixes tpdata\\co8fixes.dat");
-		result = tio_path_add("tpdata\\co8fixes.dat");
-		if (result != 0)
+		result = tio_path_add(fmt::format("{}\\co8fixes.dat", tpDataPath).c_str());
+		if (result != 0) {
 			logger->trace("Unable to add archive tpdata\\co8fixes.dat");
+		}
 	}
 
 	// overrides for testing (mainly for co8fixes so there's no need to repack the archive)
-	tio_mkdir("tpdata\\overrides");
-	tio_path_add("tpdata\\overrides");
+	tio_mkdir(fmt::format("{}\\overrides", tpDataPath).c_str());
+	tio_path_add(fmt::format("{}\\overrides", tpDataPath).c_str());
 
 	for (auto& entry : config.additionalTioPaths) {
 		logger->info("Adding additional TIO path {}", entry);

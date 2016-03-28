@@ -10,4 +10,4 @@
 // Global TemplePlus logger
 extern std::shared_ptr<spdlog::logger> logger;
 
-void InitLogging();
+void InitLogging(const std::wstring &logFile);
