@@ -69,7 +69,7 @@ bool BonusList::IsBonusSuppressed(size_t bonusIdx, size_t* suppressedByIdx) cons
 	}
 
 	for (size_t i = 0; i < bonCount; ++i) {
-		auto& other = bonusEntries[bonusIdx];
+		auto& other = bonusEntries[i];
 		// Cannot be suppressed by itself or a bonus of another type
 		if (i == bonusIdx || other.bonType != type) {
 			continue;

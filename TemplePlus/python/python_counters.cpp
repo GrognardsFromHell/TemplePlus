@@ -32,7 +32,7 @@ static int PyCounters_SetItem(PyObject *obj, Py_ssize_t index, PyObject *item) {
 		int mask = 0xFF << (index * 8);
 		attachment.counters &= ~mask;
 		attachment.counters |= (value & 0xFF) << (index * 8);
-		objects.SetScriptAttachment(self->handle, index, attachment);
+		objects.SetScriptAttachment(self->handle, (int)self->evt, attachment);
 	}
 	return 0;
 }

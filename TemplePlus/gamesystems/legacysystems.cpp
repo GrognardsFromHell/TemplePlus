@@ -13,6 +13,7 @@
 #include <util/streams.h>
 #include "objects/objevent.h"
 #include <condition.h>
+#include <sound.h>
 
 
 //*****************************************************************************
@@ -703,10 +704,14 @@ void SoundGameSystem::LoadModule() {
 	if (!loadModule()) {
 		throw TempleException("Unable to load module data for game system SoundGame");
 	}
+
+	mesFuncs.Open("tpmes\\sounds.mes", &sound.tpSounds);
 }
 void SoundGameSystem::UnloadModule() {
 	auto unloadModule = temple::GetPointer<void()>(0x1003bbc0);
 	unloadModule();
+
+	mesFuncs.Close(sound.tpSounds);
 }
 void SoundGameSystem::Reset() {
 	auto reset = temple::GetPointer<void()>(0x1003cb30);

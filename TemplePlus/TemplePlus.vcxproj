@@ -154,6 +154,7 @@
     <ClCompile Include="python\python_game.cpp" />
     <ClCompile Include="python\python_importer.cpp" />
     <ClCompile Include="traps.cpp" />
+    <ClCompile Include="tutorial.cpp" />
     <ClCompile Include="ui\ui_char.cpp" />
     <ClCompile Include="ui\ui_combat.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
@@ -289,6 +290,7 @@
     <ClInclude Include="gamesystems\objects\objregistry.h" />
     <ClInclude Include="gamesystems\objects\objsystem.h" />
     <ClInclude Include="gamesystems\ui_intgame_renderer.h" />
+    <ClInclude Include="tutorial.h" />
     <ClInclude Include="updater\updater.h" />
     <ClInclude Include="ui\ui_party.h" />
     <ClInclude Include="util\datadump.h" />

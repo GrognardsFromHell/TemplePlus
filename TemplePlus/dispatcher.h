@@ -84,7 +84,6 @@ struct DispatcherSystem : temple::AddressTable
 	DispIoD20ActionTurnBased* DispIOCheckIoType12(DispIO* dispIo);
 	DispIoMoveSpeed * DispIOCheckIoType13(DispIoMoveSpeed* dispIo);
 	DispIoMoveSpeed * DispIOCheckIoType13(DispIO* dispIo);
-	
 	static DispIoObjEvent* DispIoCheckIoType17(DispIO* dispIo);
 	DispIoImmunity* DispIoCheckIoType23(DispIoImmunity* dispIo);
 	DispIoImmunity* DispIoCheckIoType23(DispIO* dispIo);
@@ -98,6 +97,7 @@ struct DispatcherSystem : temple::AddressTable
 	void DispatchConditionRemove(Dispatcher* dispatcher, CondNode* cond);
 	unsigned int Dispatch35BaseCasterLevelModify(objHndl obj, SpellPacketBody* spellPkt);
 	int Dispatch45SpellResistanceMod(objHndl handle, DispIOBonusListAndSpellEntry* dispIo);
+	void Dispatch48BeginRound(objHndl obj, int numRounds) const;
 	bool Dispatch64ImmunityCheck(objHndl handle, DispIoImmunity* dispIo);
 	
 #pragma endregion
@@ -279,6 +279,10 @@ struct DispIoD20Query : DispIO // DispIoType 7
 struct DispIOTurnBasedStatus : DispIO // type 8
 {
 	TurnBasedStatus * tbStatus;
+	DispIOTurnBasedStatus(){
+		dispIOType = dispIOTypeTurnBasedStatus;
+		tbStatus = nullptr;
+	};
 };
 
 struct DispIoTooltip : DispIO // DispIoType 9 ; tooltip additional text when hovering over an object in the game

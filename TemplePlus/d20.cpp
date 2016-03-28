@@ -293,6 +293,11 @@ uint32_t LegacyD20System::d20QueryWithData(objHndl obj, D20DispatcherKey dispKey
 	return d20QueryWithData(obj, dispKey, reinterpret_cast<uint32_t>(cond), arg2);
 }
 
+uint32_t LegacyD20System::d20QueryWithData(objHndl obj, D20DispatcherKey dispKey, D20SpellData* spellData, uint32_t arg2)
+{
+	return d20QueryWithData(obj, dispKey, reinterpret_cast<uint32_t>(spellData), arg2);
+}
+
 uint32_t LegacyD20System::d20QueryHasSpellCond(objHndl obj, int spellEnum)
 {
 	auto cond = spellSys.GetCondFromSpellIdx(spellEnum);

@@ -893,7 +893,7 @@ void MapSystem::OpenMap(const MapListEntry *mapEntry)
 
 	auto prpFilename = fmt::format("{}\\map.prp", dataDir);
 	auto prpContent = vfs->ReadAsBinary(prpFilename);
-	Expects(prpContent.size() == 24);
+	Expects(prpContent.size() >= 24);
 
 	BinaryReader reader(prpContent);
 	auto mapProperties = reader.Read<MapProperties>();

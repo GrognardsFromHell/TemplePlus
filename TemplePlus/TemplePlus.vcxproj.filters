@@ -338,6 +338,7 @@
       <Filter>ui</Filter>
     </ClCompile>
     <ClCompile Include="updater\updater.cpp" />
+    <ClCompile Include="tutorial.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -638,6 +639,7 @@
     <ClInclude Include="ui\ui_party.h">
       <Filter>ui</Filter>
     </ClInclude>
+    <ClInclude Include="tutorial.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

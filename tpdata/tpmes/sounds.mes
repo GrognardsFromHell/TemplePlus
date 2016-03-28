@@ -1,0 +1,68 @@
+
+// sounds for use by the game's interface
+// sounds ranging from 3000 - 3999
+
+-- Worldmap Interface Sounds --
+{3000} {worldmap_location.wav} 
+// 3001// //worldmap_writing.wav// Co8 replaced this with an mp3 file
+{3002} {worldmap_walking_sound.wav}
+
+-- Generic Interface Sounds --
+{3010}{Interface - Hover.wav}	// default button hover on
+{3011}{Interface - Hover Off.wav}	// default button hover off
+{3012}{Interface - Button Down.wav}	// default button pressed
+{3013}{Generic-Click.wav}	// default button released
+
+--- Utility bar Sounds ---
+{3100}{utility_bar_Bling-Sound.wav}
+ 
+// sounds for character inventory manipulation
+--- UI inventory ---
+{3200}{} // generic pickup item
+
+{3250}{} // pickup stone item
+{3251}{} // pickup brick item
+{3252}{} // pickup wood item
+{3253}{} // pickup plant item
+{3254}{} // pickup flesh item
+{3255}{} // pickup metal item
+{3256}{} // pickup glass item
+{3257}{} // pickup cloth item
+{3258}{} // pickup liquid item
+{3259}{} // pickup paper item
+{3260}{} // pickup gas item
+{3261}{} // pickup force item
+{3262}{} // pickup fire item
+{3263}{} // pickup power item
+
+{3300}{} // putdown stone item
+{3301}{} // putdown brick item
+{3302}{} // putdown wood item
+{3303}{} // putdown plant item
+{3304}{} // putdown flesh item
+{3305}{} // putdown metal item
+{3306}{} // putdown glass item
+{3307}{} // putdown cloth item
+{3308}{} // putdown liquid item
+{3309}{} // putdown paper item
+{3310}{} // putdown gas item
+{3311}{} // putdown force item
+{3312}{} // putdown fire item
+{3313}{} // putdown power item
+
+
+{3350}{} // equip stone item
+{3351}{} // equip brick item
+{3352}{} // equip wood item
+{3353}{} // equip plant item
+{3354}{} // equip flesh item
+{3355}{} // equip metal item
+{3356}{} // equip glass item
+{3357}{} // equip cloth item
+{3358}{} // equip liquid item
+{3359}{} // equip paper item
+{3360}{} // equip gas item
+{3361}{} // equip force item
+{3362}{} // equip fire item
+{3363}{} // equip power item
+ 

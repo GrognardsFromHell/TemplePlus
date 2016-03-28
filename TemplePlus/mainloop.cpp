@@ -16,6 +16,7 @@
 #include <graphics/shaperenderer2d.h>
 #include "util/fixes.h"
 #include "updater/updater.h"
+#include <dinput.h>
 
 static GameLoop *gameLoop = nullptr;
 
@@ -414,6 +415,21 @@ public:
 			orgNormalLmbHandler(msg);
 			//logger->debug("NormalLmbHandler: success.");
 		});
+
+		static void(__cdecl*orgIngameMsgHandler)(TigMsg*) = replaceFunction<void(TigMsg*)>(0x10114EF0, [](TigMsg* msg)
+		{
+			if (msg->type == TigMsgType::KEYSTATECHANGE || msg->type == TigMsgType::CHAR || msg->type == TigMsgType::KEYDOWN){
+				int dummy = 1;
+				if (msg->arg1 == DIK_HOME)	{
+					int asd = 1;
+					VK_HOME;
+				}
+			}
+			//logger->debug("NormalLmbHandler: LMB released; args:  {} , {} , {} , {}", msg->arg1, msg->arg2, msg->arg3, msg->arg4);
+			orgIngameMsgHandler(msg);
+			//logger->debug("NormalLmbHandler: success.");
+		});
+
 
 	}
 } hooks;

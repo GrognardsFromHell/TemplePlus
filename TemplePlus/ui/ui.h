@@ -102,6 +102,15 @@ struct WidgetType1 : public Widget {
 	Size: 188
 	Examples: charmap_ui->c:203, options_ui->c:1342
 */
+enum UiButtonState : uint32_t
+{
+	UBS_NORMAL = 0,
+	UBS_HOVERED,
+	UBS_DOWN,
+	UBS_RELEASED,
+	UBS_DISABLED
+};
+
 struct WidgetType2 : public Widget {
 	int field7c;
 	int field80;
@@ -109,7 +118,7 @@ struct WidgetType2 : public Widget {
 	int field88;
 	int field8C;
 	int field90;
-	int buttonState; // 1 - hovered 2 - down  3 - released
+	int buttonState; // 1 - hovered 2 - down  3 - released 4 - disabled
 	int field98;
 	int field9C;
 	int fieldA0;

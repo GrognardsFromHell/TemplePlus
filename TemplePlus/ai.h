@@ -8,6 +8,7 @@
 
 #define AI_TACTICS_NEW_SIZE 100
 
+struct TimeEvent;
 struct Pathfinding;
 struct AiTacticDef;
 struct LegacySpellSystem;
@@ -110,7 +111,9 @@ struct AiSystem : temple::AddressTable
 	ActionSequenceSystem * actSeq;
 	LegacySpellSystem * spell;
 	Pathfinding * pathfinding;
+	
 	AiSystem();
+
 	void aiTacticGetConfig(int i, AiTactic* aiTac, AiStrategy* aiStrat);
 	uint32_t AiStrategyParse(objHndl objHnd, objHndl target);
 	uint32_t AiStrategDefaultCast(objHndl objHnd, objHndl target, D20SpellData* spellData, SpellPacketBody* spellPkt);
@@ -127,6 +130,7 @@ struct AiSystem : temple::AddressTable
 	
 	objHndl GetCombatFocus(objHndl npc);
 	objHndl GetWhoHitMeLast(objHndl npc);
+	BOOL ConsiderTarget(objHndl obj, objHndl tgt); // checks if it's a good target
 	void SetCombatFocus(objHndl npc, objHndl target);
 	void SetWhoHitMeLast(objHndl npc, objHndl target);
 	void GetAiFightStatus(objHndl obj, AiFightStatus* status, objHndl * target);
@@ -180,7 +184,10 @@ struct AiSystem : temple::AddressTable
 	static int ChooseRandomSpell(AiPacket* aiPkt);
 	static int ChooseRandomSpellFromList(AiPacket* aiPkt, AiSpellList *);
 	
-	void AiTurnSthg_1005EEC0(objHndl obj);
+	void AiProcess(objHndl obj);
+
+	int AiTimeEventExpires(TimeEvent* evt);
+
 private:
 	void (__cdecl *_ShitlistAdd)(objHndl npc, objHndl target);
 	void (__cdecl *_AiRemoveFromList)(objHndl npc, objHndl target, int listType);	

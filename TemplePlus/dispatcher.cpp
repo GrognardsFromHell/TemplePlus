@@ -310,6 +310,18 @@ DispIoMoveSpeed* DispatcherSystem::DispIOCheckIoType13(DispIO* dispIo)
 	return DispIOCheckIoType13((DispIoMoveSpeed*)dispIo);
 }
 
+void DispatcherSystem::Dispatch48BeginRound(objHndl obj, int numRounds) const
+{
+	auto dispatcher = gameSystems->GetObj().GetObject(obj)->GetDispatcher();
+	if (dispatcher->IsValid()) {
+		DispIoD20Signal dispIo;
+		dispIo.data1 = 1; // num rounds
+		dispatch.DispatcherProcessor(dispatcher, dispTypeBeginRound, DK_NONE, &dispIo);
+		static void(*onBeginRoundSpell)(objHndl) = temple::GetRef<void(__cdecl)(objHndl)>(0x100766E0);
+		onBeginRoundSpell(obj);
+	}
+}
+
 bool DispatcherSystem::Dispatch64ImmunityCheck(objHndl handle, DispIoImmunity* dispIo)
 {
 	auto dispatcher = gameSystems->GetObj().GetObject(handle)->GetDispatcher();

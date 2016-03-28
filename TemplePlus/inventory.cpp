@@ -378,16 +378,22 @@ const std::string & InventorySystem::GetAttachBone(objHndl handle)
 	auto slot = objects.GetItemInventoryLocation(handle);
 	static std::string sNoBone;
 	static std::string sBoneLeftForearm = "Bip01 L Forearm";
-	static std::array<std::string, 9> sBoneNames = {
-		"HEAD_REF",
-		"CHEST_REF",
-		"",
-		"HANDR_REF",
-		"HANDL_REF",
-		"CHEST_REF",
-		"HANDR_REF",
-		"HANDL_REF",
-		""
+	static std::array<std::string, 16> sBoneNames = {
+		"HEAD_REF", // helm
+		"CHEST_REF", // necklace
+		"",			 // gloves
+		"HANDR_REF", //main hand
+		"HANDL_REF", // offhand
+		"CHEST_REF", // armor
+		"HANDR_REF", // left ring
+		"HANDL_REF", // right ring
+		"", // arrows
+		"", // cloak
+		"", // shield
+		"", // robe
+		"", // bracers
+		"", // bardic instrument
+		"" // misc (thieves' tools, belt etc)
 	};
 
 	if (slot < 200) {

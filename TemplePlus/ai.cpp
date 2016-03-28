@@ -21,6 +21,7 @@
 #include "party.h"
 #include "ui/ui_picker.h"
 #include "gamesystems/gamesystems.h"
+#include "gamesystems/timeevents.h"
 struct AiSystem aiSys;
 AiParamPacket * AiSystem::aiParams;
 
@@ -30,11 +31,11 @@ const auto TestSizeOfAiStrategy = sizeof(AiStrategy); // should be 808 (0x324)
 struct AiSystemAddresses : temple::AddressTable
 {
 	int (__cdecl*UpdateAiFlags)(objHndl obj, int aiFightStatus, objHndl target, int * soundMap);
-	void(__cdecl*AiTurnSthg_1005EEC0)(objHndl obj);
+	void(__cdecl*AiProcess)(objHndl obj);
 	AiSystemAddresses()
 	{
 		rebase(UpdateAiFlags, 0x1005DA00);
-		rebase(AiTurnSthg_1005EEC0, 0x1005EEC0);
+		rebase(AiProcess, 0x1005EEC0);
 	}
 
 	
@@ -308,6 +309,66 @@ objHndl AiSystem::GetCombatFocus(objHndl npc) {
 objHndl AiSystem::GetWhoHitMeLast(objHndl npc) {
 	auto obj = objSystem->GetObject(npc);
 	return obj->GetObjHndl(obj_f_npc_who_hit_me_last);
+}
+
+BOOL AiSystem::ConsiderTarget(objHndl obj, objHndl tgt)
+{
+	if (!tgt || tgt == obj)
+		return 0;
+
+	auto tgtObj = gameSystems->GetObj().GetObject(tgt);
+	if ( tgtObj->GetFlags() & (OF_INVULNERABLE | OF_DONTDRAW | OF_OFF | OF_DESTROYED) ){
+		return 0;
+	}
+
+	auto objBody = gameSystems->GetObj().GetObject(obj);
+
+	auto leader = critterSys.GetLeader(obj);
+	if (!tgtObj->IsCritter()){
+		auto isBusted = temple::GetRef<BOOL(__cdecl)(objHndl)>(0x1001E730);
+		if (isBusted(tgt))
+			return 0;
+	} 
+	
+	else	{
+		auto npcAiListFindAlly = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x1005C200);
+		if (npcAiListFindAlly(obj, tgt))
+			return 0;
+		if (critterSys.IsDeadNullDestroyed(tgt))
+			return 0;
+		if (critterSys.IsDeadOrUnconscious(tgt)){
+			if (objBody->GetInt32(obj_f_critter_flags) & OCF_NON_LETHAL_COMBAT)
+				return 0;
+			auto aiFindSuitableCritter = temple::GetRef<objHndl(__cdecl)(objHndl)>(0x1005CED0);
+			auto suitableCrit = aiFindSuitableCritter(obj);
+			if (suitableCrit && suitableCrit != tgt)
+				return 0;
+		}
+		if (tgt == leader)
+			return 0;
+
+		auto tgtLeader = critterSys.GetLeader(tgt);
+		if (tgtLeader && tgtLeader == leader)
+			return 0;
+
+		auto isCharmedBy = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x10057C50);
+		if (isCharmedBy(tgt, obj)){
+			auto targetIsPcPartyNotDead = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x1005B7D0);
+			return targetIsPcPartyNotDead(obj, tgt);
+		}
+
+		if (critterSys.IsFriendly(obj, tgt))
+			return 0;
+	}
+
+	if (locSys.DistanceToObj(obj, tgt) > 125.0)
+		return 0;
+	if (leader){
+		int64_t tileDelta = locSys.GetTileDeltaMax(leader, tgt);
+		if (tileDelta > 20)
+			return 0;
+	}
+	return 1;
 }
 
 void AiSystem::SetCombatFocus(objHndl npc, objHndl target) {
@@ -1450,9 +1511,14 @@ int AiSystem::AttackThreatened(AiTactic* aiTac)
 	return Default(aiTac);
 }
 
-void AiSystem::AiTurnSthg_1005EEC0(objHndl obj)
+void AiSystem::AiProcess(objHndl obj)
 {
-	return addresses.AiTurnSthg_1005EEC0(obj);
+	return addresses.AiProcess(obj);
+}
+
+int AiSystem::AiTimeEventExpires(TimeEvent* evt)
+{
+	return 1;
 }
 #pragma endregion
 
@@ -1608,6 +1674,40 @@ public:
 		
 
 		replaceFunction(0x1005B810, ChooseRandomSpellUsercallWrapper);
+
+
+		static int (*orgAiTimeEventExpires)(TimeEvent*) = replaceFunction<int(__cdecl)(TimeEvent*)>(0x1005F090, [](TimeEvent*evt)
+		{
+			auto result =  orgAiTimeEventExpires(evt);
+			return result;
+		});
+
+		// AiTimeEventGenerate_MapSectorLoad
+		replaceFunction<void(__cdecl)(objHndl, int)>(0x1005BE60, [](objHndl obj, int doFirstHeartbeat){
+			auto& cmpAiTimerRefObj = temple::GetRef<objHndl>(0x10AA73C0);
+			cmpAiTimerRefObj = obj;
+
+			auto removeTimer = temple::GetRef<void(__cdecl)(TimeEventType, int(*validationCallback)(TimeEvent*))>(0x10060B20);
+			removeTimer(TimeEventType::AI, temple::GetRef<int(__cdecl)(TimeEvent*)>(0x100588A0));
+			TimeEvent evtNew;
+			evtNew.system = TimeEventType::AI;
+			evtNew.params[0].handle = obj;
+			evtNew.params[1].int32 = doFirstHeartbeat;
+			logger->debug("Generating AI TimeEvent for {}, first heartbeat: {}", description.getDisplayName(obj), doFirstHeartbeat);
+			if (doFirstHeartbeat)
+			{
+				int dummy = 1;
+			}
+			static auto timeeventAddSpecial = temple::GetPointer<BOOL(TimeEvent *createArgs)>(0x10062340);
+			timeeventAddSpecial(&evtNew);
+
+		});
+
+
+		// AI ConsiderTarget
+		replaceFunction<BOOL(__cdecl)(objHndl, objHndl)>(0x1005D3F0, [](objHndl obj, objHndl tgt){
+			return aiSys.ConsiderTarget(obj, tgt);
+		});
 
 	}
 } aiReplacements;

@@ -167,6 +167,7 @@ public:
 	static int InventorySlotMsg(int widId, TigMsg* msg);
 	static BOOL (*orgInventorySlotMsg)(int widId, TigMsg* msg);
 	static char* HookedItemDescriptionBarter(objHndl obj, objHndl item);
+	static void ItemGetDescrAddon(objHndl obj, objHndl item, std::string&); // makes an addon string for the item description boxes
 
 	void apply() override 
 	{
@@ -211,7 +212,16 @@ public:
 
 		orgInventorySlotMsg = replaceFunction<int(__cdecl)(int, TigMsg*) >(0x10157DC0, InventorySlotMsg);
 		
-
+		// Addendums to the item description box
+		static char* (*orgGetItemDescr)(objHndl, objHndl) = replaceFunction<char*(__cdecl)(objHndl, objHndl)>(0x10122DD0, [](objHndl obj, objHndl item)
+		{
+			auto result = orgGetItemDescr(obj, item);
+			std::string addonStr;
+			ItemGetDescrAddon(obj, item, addonStr);
+			sprintf(result, "%s\n%s",result, addonStr.c_str());
+			
+			return result;
+		});
 
 	}
 } charUiSys;
@@ -687,6 +697,7 @@ int CharUiSystem::GetInventoryState()
 
 int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 {
+	// Alt-click to Quicksell
 	if (ui.CharLootingIsActive())
 	{
 		if (msg->type == TigMsgType::MOUSE)
@@ -750,6 +761,7 @@ int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 
 char* CharUiSystem::HookedItemDescriptionBarter(objHndl obj, objHndl item)
 {
+	// append item non-profiency etc. warnings to barter tooltip
 	auto orgItemDescriptionBarter = temple::GetRef<char*(__cdecl)(objHndl, objHndl)>(0x10123220);
 	auto strOut = orgItemDescriptionBarter(obj, item);
 	auto itemType = gameSystems->GetObj().GetObject(item)->type;
@@ -779,6 +791,26 @@ char* CharUiSystem::HookedItemDescriptionBarter(objHndl obj, objHndl item)
 	}
 	
 	return strOut;
+}
+
+void CharUiSystem::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& addStr){
+	auto itemObj = gameSystems->GetObj().GetObject(item);
+	static auto getStatName = temple::GetRef<const char*(__cdecl)(Stat)>(0x10074950);
+	if (itemObj->type == obj_t_food || itemObj->type == obj_t_scroll){
+		if (!(itemObj->GetItemFlags() & OIF_IDENTIFIED))
+			return;
+		auto spellData = itemObj->GetSpell(obj_f_item_spell_idx, 0);
+		int spellLevel = spellData.spellLevel;
+		int casterLevel = max(1, spellLevel * 2 - 1);
+		SpellEntry spellEntry(spellData.spellEnum);
+		if (spellEntry.spellSchoolEnum > 8 || spellEntry.spellSchoolEnum < 0)
+			spellEntry.spellSchoolEnum = 0;
+
+		if (spellEntry.spellSchoolEnum)
+			addStr = fmt::format("{}: {}  [{}]", getStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
+		else
+			addStr = fmt::format("{}: {}", getStatName(stat_caster_level), casterLevel);
+	}
 }
 
 BOOL(*CharUiSystem::orgSpellbookSpellsMsg)(int widId, TigMsg* tigMsg);

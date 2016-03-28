@@ -14,6 +14,7 @@ struct LocationSys : temple::AddressTable
 	void RegularizeLoc(LocAndOffsets* toLocTweaked); //  alters the location and offsets so that the offsets are within the tile
 	void GetOverallOffset(LocAndOffsets loc, float* absX, float* absY);
 	BOOL ShiftLocationByOneSubtile(LocAndOffsets* loc, ScreenDirections direction, LocAndOffsets* locOut);
+	
 	void (__cdecl*PointNodeInit)(LocAndOffsets* loc, PointNode* pntNode);
 	int (__cdecl*GetLocFromScreenLocPrecise)(int64_t x, int64_t y, locXY* location, float* offX, float* offY);
 	void(__cdecl * getLocAndOff)(objHndl objHnd, LocAndOffsets * locAndOff);
@@ -34,6 +35,12 @@ struct LocationSys : temple::AddressTable
 	// Distance between from and loc in inches (without the obj radius)
 	float DistanceToLoc(objHndl from, LocAndOffsets loc);
 	float DistanceToLocFeet(objHndl obj, LocAndOffsets *loc);
+
+	/*
+		gets the higher tile delta value (absolute value)
+		e.g. if deltaX = 15 and deltaY = -17 it will return 17
+	*/
+	int64_t (__cdecl*GetTileDeltaMax)(objHndl obj, objHndl obj2);
 
 	float InchesToFeet(float inches);
 
