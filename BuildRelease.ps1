@@ -75,3 +75,5 @@ ren "$releasesDir\Setup.exe" "TemplePlusSetup.exe"
 if ($prevRelease) {
     Remove-Item $prevRelease.InputPackageFile
 }
+
+echo "Finished building release"

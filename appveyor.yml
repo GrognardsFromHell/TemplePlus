@@ -15,7 +15,7 @@ build_script:
 after_build:
   - ps: .\PackRelease.ps1
   - ps: .\BuildRelease.ps1
-
+  
   # Package the symbol files
   - dump_syms.exe Release\TemplePlus.pdb > TemplePlus.sym
   - 7z a TemplePlusSymbols-%APPVEYOR_BUILD_VERSION%.zip TemplePlus.sym
@@ -38,13 +38,13 @@ artifacts:
     name: TemplePlusSymbols
   - path: 'TemplePlusTools-*.zip'
     name: TemplePlusTools
-  - path: 'release-packages\*'
+  - path: releases-packages\*
 
 # Deploy to GitHub Releases
 # See: https://www.appveyor.com/docs/deployment/github
 deploy:
   - provider: GitHub
-    artifact: /(release-packages\\.*|TemplePlusSymbols-.*\.zip)$/
+    artifact: /(releases-packages\\.*|TemplePlusSymbols-.*\.zip)$/
     description: 'TODO: Release Description'
     draft: true
     prerelease: false
