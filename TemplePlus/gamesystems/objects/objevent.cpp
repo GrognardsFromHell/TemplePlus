@@ -319,15 +319,19 @@ void ObjEventSystem::AdvanceTime()
 	// cycle through the event list and expire the events
 	for (auto evt = objEvtList.begin(); evt != objEvtList.end();)
 	{
+	
 		for (auto it = objEvtTable->begin(); it != objEvtTable->end(); ++it) {
 			auto& node = *it;
-			node.data;
-			auto& evtt = *evt;
+			ObjEventListItem evtt = *evt;
 			if (!ObjEventHandler(node.data, node.id, evtt)) {
 				logger->warn("ObjectEventAdvanceTime: fail! Id {}", node.id);
 			}
+
+			int dummy = 1;
 		}
+		
 		evt = objEvtList.erase(evt);
+		
 	}
 
 	auto objEvtUpdater = temple::GetRef<int(__cdecl)(ObjEventAoE*, int id)>(0x100450B0);
