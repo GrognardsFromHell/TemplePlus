@@ -8,10 +8,11 @@
 #include "startup/installationdir.h"
 #include "startup/installationdirs.h"
 #include "startup/installationdirpicker.h"
+#include "util/folderutils.h"
 
 #include "util/datadump.h"
 
-void InitLogging();
+void InitLogging(const std::wstring &logFile);
 
 // Defined in temple_main.cpp for now
 int TempleMain(HINSTANCE hInstance, const string& commandLine);
@@ -25,13 +26,12 @@ name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 void SetIniPath() {
-	char ownFilename[MAX_PATH];
-	GetModuleFileNameA(nullptr, &ownFilename[0], MAX_PATH);
 
-	PathRemoveFileSpecA(&ownFilename[0]);
-	PathAppendA(&ownFilename[0], "TemplePlus.ini");
+	auto userDataFolder = GetUserDataFolder();
 
-	config.SetPath(ownFilename);
+	auto iniPath = userDataFolder + L"TemplePlus.ini";
+
+	config.SetPath(ucs2_to_local(iniPath));
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int showCmd) {
@@ -47,12 +47,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	Breakpad breakpad;
 
+	ComInitializer comInitializer;
+
 	SetIniPath();
 
 	config.Load();
 	config.Save();
 
-	InitLogging();
+	auto logFile = GetUserDataFolder() + L"TemplePlus.log";
+	InitLogging(logFile);
 
 	logger->info("Starting Temple Plus");
 	logger->info("Version: {}", GetTemplePlusVersion());

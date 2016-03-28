@@ -44,7 +44,6 @@ artifacts:
 # See: https://www.appveyor.com/docs/deployment/github
 deploy:
   - provider: GitHub
-    artifact: /(TemplePlusSetup\.exe|.*\.nupkg|RELEASES|TemplePlusSymbols-.*\.zip)/
     description: 'TODO: Release Description'
     draft: true
     prerelease: false

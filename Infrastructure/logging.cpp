@@ -2,6 +2,7 @@
 #include "infrastructure/format.h"
 #include "spdlog/spdlog.h"
 #include "include/spdlog/sinks/null_sink.h"
+#include "infrastructure/stringutil.h"
 
 std::shared_ptr<spdlog::logger> logger;
 
@@ -29,15 +30,14 @@ public:
 } loggingPreInitializer;
 
 
-void InitLogging()
+void InitLogging(const std::wstring &logFile)
 {
 	spdlog::set_level(spdlog::level::debug);
 
-	try
-	{
+	try {
 		// Always log to a file
-		DeleteFile(L"TemplePlus.log");
-		auto fileSink = std::make_shared<spdlog::sinks::simple_file_sink_mt>("TemplePlus.log", true);
+		DeleteFile(logFile.c_str());
+		auto fileSink = std::make_shared<spdlog::sinks::simple_file_sink_mt>(ucs2_to_local(logFile), true);
 		auto debugSink = std::make_shared<OutputDebugStringSink>();
 		spdlog::drop_all(); // Reset all previous loggers
 		logger = spdlog::create("core", {fileSink, debugSink});

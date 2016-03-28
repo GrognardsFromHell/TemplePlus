@@ -40,3 +40,5 @@ if (Test-Path env:\APPVEYOR_BUILD_VERSION) {
 } else {
     .\.nuget\nuget.exe pack TemplePlus.nuspec
 }
+
+"Finished packing the release."
