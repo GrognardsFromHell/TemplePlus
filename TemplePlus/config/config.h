@@ -50,6 +50,7 @@ struct TemplePlusConfig
 	bool drawObjCylinders = false;
 
 	bool autoUpdate = true;
+	std::string autoUpdateFeed = "https://templeplus.org/update-feeds/stable/";
 
 	std::vector<std::string> additionalTioPaths; // Add these to the Python sys.path variable
 	
