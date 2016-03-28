@@ -33,7 +33,7 @@ if (Test-Path env:\APPVEYOR_BUILD_VERSION) {
     $releasePackage = Get-ChildItem .\TemplePlus.*.nupkg | Sort-Object CreationTime -Descending | Select-Object -First 1
 }
 
-if (!$releasePackage) {
+if (!$releasePackage -Or -Not(Test-Path $releasePackage)) {
     Write-Error "NuGet package for release doesnt seem to be built. Make sure to run PackRelease.ps1 first"
     Exit
 }
@@ -47,7 +47,7 @@ Add-Type -Path .\squirrel\Mono.Cecil.*\lib\net45\*.dll
 Add-Type -LiteralPath $squirrelDll
 
 # Using squirrel code here to parse the RELEASES file and get the previous release
-$releasesContent = Get-Content $releasesDir\RELEASES -Encoding UTF8
+$releasesContent = Get-Content $releasesDir\RELEASES -Encoding UTF8 | Out-String
 $releases = [Squirrel.ReleaseEntry]::ParseReleaseFile($releasesContent)
 
 $rp = New-Object "Squirrel.ReleasePackage" $releasePackage
@@ -75,5 +75,3 @@ ren "$releasesDir\Setup.exe" "TemplePlusSetup.exe"
 if ($prevRelease) {
     Remove-Item $prevRelease.InputPackageFile
 }
-
-echo "Finished building release"
