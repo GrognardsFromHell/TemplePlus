@@ -4,8 +4,10 @@ if ($env:APPVEYOR_REPO_TAG -ne "true") {
     Exit
 }
 
+"Tag Name: $env:APPVEYOR_REPO_TAG_NAME"
+
 $version = $env:APPVEYOR_REPO_TAG_NAME
-if ($version -notmatch "^v\d+\.\d+(|-.*)$") {
+if ($version -notmatch "^v\d+\.\d+(\.\d+)*(|-.*)$") {
     "Tag name doesnt match release pattern. Not updating version."
     Exit
 }
