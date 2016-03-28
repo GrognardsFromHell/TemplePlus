@@ -54,6 +54,7 @@ public:
 	void FlushEvents();
 private:
 	std::vector<ObjEventListItem>  objEvtList;
+	bool mLockEvtList = false; // so that the EvtList isn't altered when processing it; can happen on damage events and subsequently cause crashes
 #pragma endregion
 	bool ObjEventLocIsInAoE(ObjEventAoE* const aoeEvt, LocAndOffsets aoeObjLoc, float objRadius) const;
 } ;
