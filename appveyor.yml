@@ -41,11 +41,15 @@ artifacts:
   - path: 'release-packages\*'
 
 # Deploy to GitHub Releases
+# See: https://www.appveyor.com/docs/deployment/github
 deploy:
   - provider: GitHub
     artifact: /(release-packages\\.*|TemplePlusSymbols-.*\.zip)$/
+    description: 'TODO: Release Description'
     draft: true
     prerelease: false
+    auth_token:
+      secure: 54f08434a332de0fd62bfbd818840fc525d60e41
     on:
       branch: master
       appveyor_repo_tag: true
