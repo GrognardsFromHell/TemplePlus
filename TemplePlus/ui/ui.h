@@ -191,6 +191,16 @@ enum class UiGenericAsset : uint32_t {
 
 typedef int(*UiMsgFunc)(int, TigMsg*);
 
+
+struct TooltipStyle{
+	const char* styleName;
+	const char* fontName;
+	int fontSize;
+	int fontColorAlpha;
+	int fontColorRed;
+	int fontColorGreen;
+	int fontColorBlue;
+};
 #pragma endregion
 
 /*
@@ -272,8 +282,11 @@ public:
 	BOOL WidgetAndWindowRemove(int widId);
 	BOOL WidgetSetHidden(int widId, int hiddenState);
 	BOOL WidgetCopy(int widId, Widget* widgetOut);
-	WidgetType1* WidgetGetType1(int widId);
+
 	Widget* WidgetGet(int widId);
+	WidgetType1* WidgetGetType1(int widId);
+	WidgetType2* GetButton(int widId);
+
 	int GetWindowContainingPoint(int x, int y);
 	BOOL GetButtonState(int widId, int* state);
 	void WidgetBringToFront(int widId);
@@ -293,9 +306,10 @@ public:
 	int WidgetSet(int widId, const Widget* widg);
 	void ScrollbarSetYmax(int widId, int yMax);
 	const char* GetTooltipString(int line) const;
+
 	/*
-		The list of all active widgets
-		*/
+			The list of all active widgets
+			*/
 	static Widget** activeWidgets;
 	// = 
 	void  apply  () override
