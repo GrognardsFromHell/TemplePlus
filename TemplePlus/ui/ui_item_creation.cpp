@@ -720,6 +720,8 @@ public:
 
 	static int UiItemCreationInit(GameSystemConf* conf);
 
+	static void HookedGetLineForMaaAppend(MesHandle, MesLine*); // ensures the crafted item name doesn't overflow
+
 	void apply() override {
 		// auto system = UiSystem::getUiSystem("ItemCreation-UI");		
 		// system->init = systemInit;
@@ -770,6 +772,8 @@ public:
 		//replaceFunction(0x10154BA0, UiItemCreationInit);
 		/*auto writeval = &UiItemCreationInit;
 		write(0x102F6C10 + 9 * 4 * 26 + 4, &writeval, sizeof(void*));*/
+
+		redirectCall(0x1015221B, HookedGetLineForMaaAppend);
 	}
 } itemCreationHooks;
 
@@ -894,4 +898,20 @@ int ItemCreation::UiItemCreationInit(GameSystemConf* conf)
 
 
 	return 1;
+}
+
+void ItemCreation::HookedGetLineForMaaAppend(MesHandle handle, MesLine* line)
+{
+
+	auto result = mesFuncs.GetLine_Safe(handle, line);
+	const char emptyString [1] = "";
+	auto craftedName = temple::GetPointer<char>(0x10BED758);
+	auto craftedNameLen = strlen(craftedName);
+	auto enhancementNameLen = strlen(line->value);
+	if (enhancementNameLen + craftedNameLen > 60){
+		line->value = emptyString;
+	}
+
+
+
 }
