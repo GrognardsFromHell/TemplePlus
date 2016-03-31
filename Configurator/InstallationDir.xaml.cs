@@ -4,7 +4,7 @@ using System.Windows.Controls;
 using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 
-namespace Configurator
+namespace TemplePlusConfig
 {
     /// <summary>
     ///     Interaction logic for InstallationDir.xaml

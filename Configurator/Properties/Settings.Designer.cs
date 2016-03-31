@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Configurator.Properties {
+namespace TemplePlusConfig.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]

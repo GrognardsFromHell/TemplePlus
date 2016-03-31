@@ -11,8 +11,8 @@
     <copyright>Copyright 2016</copyright>
   </metadata>
   <files>
-    <file src="Configurator\bin\Release\Configurator.exe" target="lib\net45" />
-    <file src="Configurator\bin\Release\Configurator.exe.config" target="lib\net45" />
+    <file src="Configurator\bin\Release\TemplePlusConfig.exe" target="lib\net45" />
+    <file src="Configurator\bin\Release\TemplePlusConfig.exe.config" target="lib\net45" />
     <file src="Configurator\bin\Release\*.dll" target="lib\net45" />
     <file src="Release\TemplePlus.exe" target="lib\net45" />
     <file src="tpdata\**\*" target="lib\net45\tpdata" />

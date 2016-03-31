@@ -4,7 +4,7 @@ using System.Linq;
 using System.Windows;
 using IniParser.Model;
 
-namespace Configurator
+namespace TemplePlusConfig
 {
     public class IniViewModel : DependencyObject
     {
@@ -35,6 +35,13 @@ namespace Configurator
 
         public IEnumerable<HpOnLevelUpType> HpOnLevelUpTypes => Enum.GetValues(typeof (HpOnLevelUpType))
             .Cast<HpOnLevelUpType>();
+
+        public IniViewModel()
+        {
+            RenderWidth = (int)SystemParameters.PrimaryScreenWidth;
+            RenderHeight = (int)SystemParameters.PrimaryScreenHeight;
+            PointBuyPoints = 25;
+        }
 
         public string InstallationPath
         {
@@ -135,6 +142,12 @@ namespace Configurator
         public void SaveToIni(IniData iniData)
         {
             var tpData = iniData["TemplePlus"];
+            if (tpData == null)
+            {
+                iniData.Sections.Add(new SectionData("TemplePlus"));
+                tpData = iniData["TemplePlus"];
+            }
+            
             tpData["toeeDir"] = InstallationPath;
             tpData["autoUpdate"] = DisableAutomaticUpdates ? "false" : "true";
             switch (HpOnLevelUp)

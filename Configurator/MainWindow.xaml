@@ -1,12 +1,12 @@
-﻿<Window x:Class="Configurator.MainWindow"
+﻿<Window x:Class="TemplePlusConfig.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Configurator"
+        xmlns:local="clr-namespace:TemplePlusConfig"
         xmlns:fa="http://schemas.fontawesome.io/icons/"
         mc:Ignorable="d"
-        Title="TemplePlus Configuration" Height="387" Width="489" Icon="toee_gog_icon.ico"
+        Title="Temple+ Configuration" Height="387" Width="489" Icon="toee_gog_icon.ico"
         d:DataContext="{d:DesignInstance local:IniViewModel}">
     <Window.Resources>
     </Window.Resources>

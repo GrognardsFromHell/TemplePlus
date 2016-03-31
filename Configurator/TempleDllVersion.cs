@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace Configurator
+namespace TemplePlusConfig
 {
     public enum VanillaDllVersion
     {

@@ -8,7 +8,7 @@ using IniParser;
 using IniParser.Model;
 using Microsoft.WindowsAPICodePack.Shell;
 
-namespace Configurator
+namespace TemplePlusConfig
 {
     /// <summary>
     ///     Interaction logic for MainWindow.xaml
@@ -45,6 +45,7 @@ namespace Configurator
         {
             IniData iniData;
             var iniParser = new FileIniDataParser();
+            iniParser.Parser.Configuration.AssigmentSpacer = "";
 
             if (File.Exists(_iniPath))
             {
@@ -61,8 +62,12 @@ namespace Configurator
                 Directory.CreateDirectory(iniDir);
             }
 
+            // TODO: Check why two-way binding in this particular case is not working
+            _iniViewModel.InstallationPath = InstallationDir.InstallationPath;
             _iniViewModel.SaveToIni(iniData);
-            iniParser.WriteFile(_iniPath, iniData, Encoding.UTF8);
+
+            // Disable BOM otherwise TP barfs when loading the ini
+            iniParser.WriteFile(_iniPath, iniData, new UTF8Encoding(false));
 
             Close();
         }

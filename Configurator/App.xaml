@@ -1,6 +1,6 @@
-﻿<Application x:Class="Configurator.App"
+﻿<Application x:Class="TemplePlusConfig.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:Configurator"
+             xmlns:local="clr-namespace:TemplePlusConfig"
              StartupUri="MainWindow.xaml">
 </Application>

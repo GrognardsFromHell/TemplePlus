@@ -31,6 +31,31 @@ void SetIniPath() {
 
 	auto iniPath = userDataFolder + L"TemplePlus.ini";
 
+	if (!PathFileExists(iniPath.c_str())) {
+		// No configuration file exists yet.
+		// Do we have a companion configuration utility that we can launch?
+		wchar_t configUtilPath[MAX_PATH];
+		GetModuleFileNameW(nullptr, configUtilPath, MAX_PATH);
+		PathRemoveFileSpec(configUtilPath);
+		PathAppend(configUtilPath, L"TemplePlusConfig.exe");
+
+		if (PathFileExists(configUtilPath)) {
+			STARTUPINFO sInfo;
+			ZeroMemory(&sInfo, sizeof(sInfo));
+			PROCESS_INFORMATION pInfo;
+			ZeroMemory(&pInfo, sizeof(pInfo));
+			if (CreateProcess(configUtilPath, nullptr, nullptr, nullptr, FALSE,
+				0, nullptr, nullptr, &sInfo, &pInfo)) {
+				MsgWaitForMultipleObjects(1, &pInfo.hProcess, FALSE, INFINITE, 0);
+				CloseHandle(pInfo.hThread);
+				CloseHandle(pInfo.hProcess);
+			}
+		}
+
+		// If the above call to the config utility created a config file, we will just pass through
+		// but if not, we will pass through (and may fail)
+	}
+	
 	config.SetPath(ucs2_to_local(iniPath));
 }
 

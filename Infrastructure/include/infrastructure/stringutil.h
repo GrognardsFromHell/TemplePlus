@@ -119,7 +119,7 @@ inline std::string tolower(const std::string &s) {
 	});
 	if (needsConversion) {
 		std::string result = s;
-		std::transform(result.begin(), result.end(), result.begin(), std::tolower);
+		std::transform(result.begin(), result.end(), result.begin(), [](char ch) { return std::tolower((int)ch); });
 		return result;
 	} else {
 		return s;
