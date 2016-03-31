@@ -738,8 +738,10 @@ void CharUiSystem::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& add
 	auto itemObj = gameSystems->GetObj().GetObject(item);
 	static auto getStatName = temple::GetRef<const char*(__cdecl)(Stat)>(0x10074950);
 	if (itemObj->type == obj_t_food || itemObj->type == obj_t_scroll){
+		
 		if (!(itemObj->GetItemFlags() & OIF_IDENTIFIED))
 			return;
+
 		auto spellData = itemObj->GetSpell(obj_f_item_spell_idx, 0);
 		int spellLevel = spellData.spellLevel;
 		int casterLevel = max(1, spellLevel * 2 - 1);
@@ -748,7 +750,26 @@ void CharUiSystem::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& add
 			spellEntry.spellSchoolEnum = 0;
 
 		if (spellEntry.spellSchoolEnum)
-			addStr = fmt::format("{}: {}  [{}]", getStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
+
+			if (itemObj->type == obj_t_scroll)	{
+
+				if (spellSys.IsArcaneSpellClass(spellData.classCode)){	
+					addStr = fmt::format("{}: {}  [Arcane, {}]", getStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
+				}
+				else if (spellData.classCode == Domain_Special)
+				{
+					addStr = fmt::format("{}: {}  [{}]", getStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
+				}  
+				else 
+				{ // divine spell
+					addStr = fmt::format("{}: {}  [Divine, {}]", getStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
+				}
+			} 
+			
+			else{
+				
+				addStr = fmt::format("{}: {}  [{}]", getStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
+			}
 		else
 			addStr = fmt::format("{}: {}", getStatName(stat_caster_level), casterLevel);
 	}

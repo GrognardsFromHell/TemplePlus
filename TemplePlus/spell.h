@@ -175,8 +175,12 @@ struct LegacySpellSystem : temple::AddressTable
 	uint32_t spellMemorizedQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count);
 	bool numSpellsKnownTooHigh(objHndl objHnd);
 	bool numSpellsMemorizedTooHigh(objHndl objHnd);
+
+	// SpellClass 
 	bool isDomainSpell(uint32_t spellClassCode);
 	Stat GetCastingClass(uint32_t spellClassCode);
+	bool IsArcaneSpellClass(uint32_t spellClass);
+
 	uint32_t pickerArgsFromSpellEntry(SpellEntry * spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLevel);
 	uint32_t GetSpellRangeExact(SpellRangeType spellRangeType, uint32_t casterLevel, objHndl caster);
 	uint32_t GetSpellRange(SpellEntry* spellEntry, uint32_t baseCasterLevel, objHndl caster);
