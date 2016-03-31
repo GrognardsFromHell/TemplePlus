@@ -292,6 +292,7 @@ void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCra
 
 			if (isClassSpell){
 				spellLevelFinal = spellSys.GetMaxSpellSlotLevel(objHndCrafter, static_cast<Stat>(classCodes[0] & 0x7F), 0);
+				spellData.classCode = spellClassFinal;
 			};
 			if (spellFoundNum > 1){
 				for (uint32_t i = 1; i < spellFoundNum; i++){
