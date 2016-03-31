@@ -14,6 +14,9 @@ if (Test-Path dist) {
 }
 
 mkdir dist
+copy Configurator\bin\Release\Configurator.exe dist
+copy Configurator\bin\Release\Configurator.exe.config dist
+copy Configurator\bin\Release\*.dll dist
 copy Release\TemplePlus.exe dist
 copy -Recurse tpdata dist\tpdata
 copy -Recurse dependencies\python-lib dist\tpdata\python-lib
