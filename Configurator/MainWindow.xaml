@@ -1,0 +1,43 @@
+﻿<Window x:Class="Configurator.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Configurator"
+        xmlns:fa="http://schemas.fontawesome.io/icons/"
+        mc:Ignorable="d"
+        Title="TemplePlus Configuration" Height="387" Width="489" Icon="toee_gog_icon.ico"
+        d:DataContext="{d:DesignInstance local:IniViewModel}">
+    <Window.Resources>
+    </Window.Resources>
+    <DockPanel>
+        <Grid DockPanel.Dock="Bottom" Margin="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button Width="75" Height="23" Click="Button_Click" VerticalAlignment="Top">Ok</Button>
+        </Grid>
+        <StackPanel Margin="10,10,10,10">
+            <local:InstallationDir x:Name="InstallationDir" InstallationPath="{Binding InstallationPath}" />
+            <TextBlock TextWrapping="Wrap">Please select the resolution at which the game should render. It will automatically be upscaled to your screen resolution. The aspect ratio of your monitor will be respected.</TextBlock>
+            <StackPanel Orientation="Horizontal"  Margin="0,5,0,5">
+                <Label VerticalAlignment="Center">Width</Label>
+                <TextBox Width="50" VerticalAlignment="Center" Text="{Binding RenderWidth}" />
+                <Label VerticalAlignment="Center">Height</Label>
+                <TextBox Width="50" VerticalAlignment="Center" Text="{Binding RenderHeight}"/>
+            </StackPanel>
+            <CheckBox VerticalAlignment="Center" Content="Run in Windowed Mode" IsChecked="{Binding WindowedMode}" />
+            <CheckBox VerticalAlignment="Center" Content="Disable Automatic Updates" IsChecked="{Binding DisableAutomaticUpdates}" />
+            <CheckBox VerticalAlignment="Center" Content="Enable Soft Shadows (GPU intensive)" IsChecked="{Binding SoftShadows}" />
+            <StackPanel Orientation="Horizontal">
+                <Label VerticalAlignment="Center">HP on Level Up</Label>
+                <ComboBox VerticalAlignment="Center" SelectedValue="{Binding HpOnLevelUp}"  ItemsSource="{Binding HpOnLevelUpTypes}">
+                </ComboBox>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"  Margin="0,5,0,5">
+                <Label VerticalAlignment="Center">Point Buy Points:</Label>
+                <TextBox Width="50" VerticalAlignment="Center" Text="{Binding PointBuyPoints}" />
+            </StackPanel>
+        </StackPanel>
+    </DockPanel>
+</Window>

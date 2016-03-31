@@ -1,0 +1,36 @@
+﻿<UserControl x:Class="Configurator.InstallationDir"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:local="clr-namespace:Configurator"
+      xmlns:fa="http://schemas.fontawesome.io/icons/"
+      mc:Ignorable="d"
+      d:DesignHeight="180" d:DesignWidth="300">
+
+    <StackPanel>
+        <TextBlock TextWrapping="Wrap" Margin="0,0,0,10">
+            Please select the Temple of Elemental Evil installation that TemplePlus should use.
+        </TextBlock>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="InstallDirText" TextWrapping="Wrap"
+                     Text="{Binding InstallationPath, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:InstallationDir}}}"
+                     Grid.Column="0" />
+            <Button x:Name="BrowseButton" Content="Browse" Click="BrowseButton_Click" 
+                    Grid.Column="2"/>
+        </Grid>
+        <DockPanel Margin="0,10,0,0">
+            <fa:ImageAwesome Icon="Check" Foreground="Green" Width="16" Height="16" x:Name="OkIcon"
+                             Visibility="Collapsed" />
+            <fa:ImageAwesome Icon="Exclamation" Foreground="Red" Width="16" Height="16" x:Name="NotOkIcon"
+                             Visibility="Collapsed" />
+            <Label x:Name="InstallationDirStatus" Margin="5,0,0,0"
+                   Content="{Binding InstallationPathStatus.Status, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:InstallationDir}}}" />
+        </DockPanel>
+    </StackPanel>
+</UserControl>
