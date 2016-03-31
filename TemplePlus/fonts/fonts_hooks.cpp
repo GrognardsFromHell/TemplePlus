@@ -44,6 +44,11 @@ int FontRenderFix::FontDraw(const char* text, TigRect* extents, TigTextStyle* st
 
 	auto& layouter = tig->GetTextLayouter();
 
+	if (extents->x < 0 || extents->width < 0){
+		logger->warn("Negative Text extents! Aborting draw.");
+		return 0;
+	}
+
 	layouter.LayoutAndDraw(as_span( text, strlen(text) ), font, *extents, *style);
 
 	return 0;

@@ -13,6 +13,10 @@
 #include <critter.h>
 #include <d20_level.h>
 #include <gamesystems/gamesystems.h>
+#include "tig/tig_font.h"
+#include "tig/tig_startup.h"
+#include "fonts/fonts.h"
+#include "ui_tooltip.h"
 
 #define NUM_SPELLBOOK_SLOTS 18 // 18 in vanilla
 
@@ -72,94 +76,32 @@ struct UiCharAddresses : temple::AddressTable
 class CharUiSystem : TempleFix
 {
 public: 
-	const char* name() override { return "CharUi - disabling stat text draw calls";} 
+	const char* name() override {
+		return "CharUi Hooks";
+	} 
 
-	static BOOL MemorizeSpellMsg(int widId, TigMsg* tigMsg)
-	{
-		if (tigMsg->type == TigMsgType::WIDGET)
-		{
-			int dumy = 1;
 
-			if (tigMsg->arg2 == 0)
-			{
-				dumy = 1;
-			}
-
-			if (tigMsg->arg2 == 1)
-			{
-				dumy = 1;
-			}
-
-			if (tigMsg->arg2 == 2)
-			{
-				dumy = 1;
-			}
-			if (tigMsg->arg2 == 3)
-			{
-				dumy = 1;
-			}
-			if (tigMsg->arg2 == 4)
-			{
-				dumy = 1;
-			}
-		}
+	#pragma region Spellbook functions
+	static BOOL MemorizeSpellMsg(int widId, TigMsg* tigMsg){
 		return orgMemorizeSpellMsg(widId, tigMsg);
 	};
 	static BOOL (*orgMemorizeSpellMsg)(int widId, TigMsg* tigMsg);
 
-	static BOOL SpellbookSpellsMsg(int widId, TigMsg* tigMsg)
-	{
-		if (tigMsg->type == TigMsgType::WIDGET)
-		{
-			int dumy = 1;
-			if (tigMsg->arg2 == 0)
-			{
-				dumy = 1;
-			}
-
-			if (tigMsg->arg2 == 1)
-			{
-				dumy = 1;
-			}
-
-			if (tigMsg->arg2 == 2)
-			{
-				dumy = 1;
-			}
-			if (tigMsg->arg2 == 3)
-			{
-				dumy = 1;
-			}
-			if (tigMsg->arg2 == 4)
-			{
-				dumy = 1;
-			}
-		}
-		else if (tigMsg->type == TigMsgType::MOUSE)
-		{
-			int dummy = 1;
-			if (tigMsg->arg4 & MSF_RMB_RELEASED)
-			{
-				auto shit = &addresses.uiCharSpellPackets[0];
-				dummy = 1;
-			}
-			else if (tigMsg->arg4 & MSF_UNK_4000)
-			{
-				dummy = 1;
-			}
-		}
+	static BOOL SpellbookSpellsMsg(int widId, TigMsg* tigMsg){
 		return orgSpellbookSpellsMsg(widId, tigMsg);
 	};
 	static BOOL(*orgSpellbookSpellsMsg)(int widId, TigMsg* tigMsg);
-
 
 	static int specSlotIndices[NUM_SPELL_LEVELS]; // indices of the Specialization School spell slots in the GUI 
 	static void SpellsShow(objHndl obj);
 	static void(*orgSpellsShow)(objHndl obj);
 	static BOOL IsSpecializationSchoolSlot(int idx);
 	static int HookedCharSpellGetSpellbookScrollbarY();
+	#pragma endregion 
 
 
+	#pragma region Inventory (Looting / Bartering / Applying Spell (e.g. Read Magic))
+	static objHndl GetCurrentCritter(); // gets a handle on the critter with inventory open
 	static objHndl GetCritterLooted(); // this may be a substitute inventory object when buying from NPCs with shops
 	static objHndl GetVendor();
 
@@ -169,12 +111,15 @@ public:
 	static char* HookedItemDescriptionBarter(objHndl obj, objHndl item);
 	static void ItemGetDescrAddon(objHndl obj, objHndl item, std::string&); // makes an addon string for the item description boxes
 
+	static void TotalWeightOutputBtnTooltip(int x, int y, int *widId);
+#pragma endregion 
+	
 	void apply() override 
 	{
-		if (config.usingCo8) // disabling stat text draw calls
-		{
-			writeHex(0x1011DD4D, "90 90 90 90 90");
+		if (config.usingCo8) {
+			writeHex(0x1011DD4D, "90 90 90 90 90"); // disabling stat text draw calls
 		}
+
 		int charSheetAttackCodeForAttackBonusDisplay = 1 + ATTACK_CODE_OFFHAND;
 		write(0x101C45F3 + 7, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
 		write(0x101C8C7B + 4, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
@@ -193,17 +138,7 @@ public:
 		
 		writeNoops(0x101B957E); // so it doesn't decrement the spells memorized num (this causes weirdness in right clicking from the spellbook afterwards)
 
-		static bool (__cdecl* orgUiCharLootingLootWndMsg)(int , TigMsg* ) = replaceFunction<bool(__cdecl)(int , TigMsg* ) >(0x101406D0, [](int widId, TigMsg* msg)
-		{
-			if (msg->type == TigMsgType::MOUSE)
-			{
-				int dummy = 1;
-			}
-
-			if (msg->type == TigMsgType::WIDGET)
-			{
-				int dummy = 1;
-			}
+		static bool (__cdecl* orgUiCharLootingLootWndMsg)(int , TigMsg* ) = replaceFunction<bool(__cdecl)(int , TigMsg* ) >(0x101406D0, [](int widId, TigMsg* msg){
 			return orgUiCharLootingLootWndMsg(widId, msg);
 		});
 
@@ -213,8 +148,7 @@ public:
 		orgInventorySlotMsg = replaceFunction<int(__cdecl)(int, TigMsg*) >(0x10157DC0, InventorySlotMsg);
 		
 		// Addendums to the item description box
-		static char* (*orgGetItemDescr)(objHndl, objHndl) = replaceFunction<char*(__cdecl)(objHndl, objHndl)>(0x10122DD0, [](objHndl obj, objHndl item)
-		{
+		static char* (*orgGetItemDescr)(objHndl, objHndl) = replaceFunction<char*(__cdecl)(objHndl, objHndl)>(0x10122DD0, [](objHndl obj, objHndl item){
 			auto result = orgGetItemDescr(obj, item);
 			std::string addonStr;
 			ItemGetDescrAddon(obj, item, addonStr);
@@ -222,6 +156,8 @@ public:
 			
 			return result;
 		});
+
+		replaceFunction(0x10155D20, TotalWeightOutputBtnTooltip);
 
 	}
 } charUiSys;
@@ -680,6 +616,11 @@ int CharUiSystem::HookedCharSpellGetSpellbookScrollbarY()
 	return 0;
 }
 
+objHndl CharUiSystem::GetCurrentCritter()
+{
+	return temple::GetRef<objHndl>(0x10BE9940);
+}
+
 objHndl CharUiSystem::GetCritterLooted()
 {
 	return temple::GetRef<objHndl>(0x10BE6EC0);
@@ -797,8 +738,10 @@ void CharUiSystem::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& add
 	auto itemObj = gameSystems->GetObj().GetObject(item);
 	static auto getStatName = temple::GetRef<const char*(__cdecl)(Stat)>(0x10074950);
 	if (itemObj->type == obj_t_food || itemObj->type == obj_t_scroll){
+		
 		if (!(itemObj->GetItemFlags() & OIF_IDENTIFIED))
 			return;
+
 		auto spellData = itemObj->GetSpell(obj_f_item_spell_idx, 0);
 		int spellLevel = spellData.spellLevel;
 		int casterLevel = max(1, spellLevel * 2 - 1);
@@ -807,10 +750,132 @@ void CharUiSystem::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& add
 			spellEntry.spellSchoolEnum = 0;
 
 		if (spellEntry.spellSchoolEnum)
-			addStr = fmt::format("{}: {}  [{}]", getStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
+
+			if (itemObj->type == obj_t_scroll)	{
+
+				if (spellSys.IsArcaneSpellClass(spellData.classCode)){	
+					addStr = fmt::format("{}: {}  [Arcane, {}]", getStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
+				}
+				else if (spellData.classCode == Domain_Special)
+				{
+					addStr = fmt::format("{}: {}  [{}]", getStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
+				}  
+				else 
+				{ // divine spell
+					addStr = fmt::format("{}: {}  [Divine, {}]", getStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
+				}
+			} 
+			
+			else{
+				
+				addStr = fmt::format("{}: {}  [{}]", getStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
+			}
 		else
 			addStr = fmt::format("{}: {}", getStatName(stat_caster_level), casterLevel);
 	}
+}
+
+void CharUiSystem::TotalWeightOutputBtnTooltip(int x, int y, int* widId)
+{
+
+	WidgetType2 * btn = ui.GetButton(*widId);
+	if (btn->buttonState == 2)
+		return;
+
+	TigTextStyle style;
+	const ColorRect cRect1(XMCOLOR(0xCC111111));
+	style.bgColor = const_cast<ColorRect*>(&cRect1);
+	const ColorRect cRectShadow(XMCOLOR(0xFF000000));
+	style.shadowColor = const_cast<ColorRect*>(&cRectShadow);
+	const ColorRect cRectText(XMCOLOR(0xFFFFFFFF));
+	style.textColor = const_cast<ColorRect*>(&cRectText);
+
+	style.flags = 0xC08;
+	style.kerning = 2;
+	style.tracking = 2;
+
+	style.field2c = -1;
+
+	auto obj = charUiSys.GetCurrentCritter();
+
+	auto charInvTtStyleIdx = temple::GetRef<int>(0x10BEECB0);
+	auto tt = tooltips.GetStyle(charInvTtStyleIdx);
+
+	UiRenderer::PushFont(tt.fontName, tt.fontSize);
+
+	std::string encumText;
+
+	auto isEncLight = d20Sys.d20Query(obj, DK_QUE_Critter_Is_Encumbered_Light);
+	auto youAreEncumbered = tooltips.GetTooltipString(125);
+
+	auto strScore = objects.StatLevelGet(obj, stat_strength);
+
+	auto encumNextWeight = temple::GetRef<int(__cdecl)(int, int)>(0x100EBB20); // gets the max weight for current encumbrance
+
+	if (isEncLight) {
+		auto youAreNotEnc = tooltips.GetTooltipString(124);
+		auto encLoad = tooltips.GetTooltipString(126);
+		auto encMin = tooltips.GetTooltipString(134);
+		auto encMax = tooltips.GetTooltipString(129);
+
+		encumText = fmt::format("@0({})@0\n\n{} ({}/{}): ({}/{})",
+			youAreNotEnc, encLoad, encMin, encMax, 0, isEncLight);
+	}
+	else{
+		auto isEncMed = d20Sys.d20Query(obj, DK_QUE_Critter_Is_Encumbered_Medium);
+		if (isEncMed){
+			auto youAreEnc = tooltips.GetTooltipString(125);
+			auto encLoad = tooltips.GetTooltipString(127);
+			auto encMin = tooltips.GetTooltipString(134);
+			auto encMax = tooltips.GetTooltipString(129);
+
+			encumText = fmt::format("{} @1({})@0\n\n{} ({}/{}): ({}/{})",
+				youAreEnc, encLoad, encLoad, encMin, encMax, encumNextWeight(strScore, 1), isEncMed);
+		}
+		else {
+			auto isEncHeavy = d20Sys.d20Query(obj, DK_QUE_Critter_Is_Encumbered_Heavy);
+			if (isEncHeavy) {
+				auto youAreEnc = tooltips.GetTooltipString(125);
+				auto encLoad = tooltips.GetTooltipString(128);
+				auto encMin = tooltips.GetTooltipString(134);
+				auto encMax = tooltips.GetTooltipString(129);
+
+				encumText = fmt::format("{} @2({})@0\n\n{} ({}/{}): ({}/{})",
+					youAreEnc, encLoad, encLoad, encMin, encMax, encumNextWeight(strScore, 2), isEncHeavy);
+
+			}
+			else {
+				auto isEncOver = d20Sys.d20Query(obj, DK_QUE_Critter_Is_Encumbered_Overburdened);
+				if (isEncOver) {
+					auto youAreEnc = tooltips.GetTooltipString(125);
+					auto encLoad = tooltips.GetTooltipString(135);
+					auto encMin = tooltips.GetTooltipString(134);
+					auto encMax = tooltips.GetTooltipString(129);
+
+					encumText = fmt::format("{} @2({})@0\n\n{} ({}/{}): ({}/{})",
+						youAreEnc, encLoad, encLoad, encMin, encMax, encumNextWeight(strScore, 2), isEncHeavy);
+
+				}
+				else {
+					return;
+				}
+			}
+		}
+	}
+
+
+	auto measuredSize = UiRenderer::MeasureTextSize(encumText, style);
+	TigRect extents(x, y - measuredSize.height, measuredSize.width, measuredSize.height);
+	if (extents.y  < 0){
+		extents.y = y;
+	}
+	auto wftWidth = temple::GetRef<int>(0x103012C8);
+	if ( extents.x + measuredSize.width > wftWidth)	{
+		extents.x = wftWidth - measuredSize.width;
+	}
+	UiRenderer::RenderText(encumText, extents, style);
+
+	UiRenderer::PopFont();
 }
 
 BOOL(*CharUiSystem::orgSpellbookSpellsMsg)(int widId, TigMsg* tigMsg);

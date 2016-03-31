@@ -15,7 +15,7 @@
 
 struct ObjEventListItem
 {
-	objHndl aoeObj;
+	objHndl obj;
 	LocAndOffsets loc;
 	LocAndOffsets aoeObjLoc;
 	ObjEventListItem * next;
@@ -65,7 +65,7 @@ public:
 	} 
 	static void ObjectEventAdvanceTime();
 	//static int EventAppend(objHndl obj, int onEnterFuncIdx, int onLeaveFuncIdx, ObjectListFilter olcFilter, float radiusInch, float angleMin, float angleMax);
-	static void ObjEventListItemNew(objHndl obj, LocAndOffsets loc, LocAndOffsets aoeObjLoc);
+	static void ObjEventListItemNew(objHndl obj, LocAndOffsets loc, LocAndOffsets newLoc); // called from location updater functions like ObjMove
 
 	void apply() override 
 	{
@@ -127,9 +127,9 @@ void ObjEventHooks::ObjectEventAdvanceTime()
 //	
 //}
 
-void ObjEventHooks::ObjEventListItemNew(objHndl obj, LocAndOffsets loc, LocAndOffsets aoeObjLoc)
+void ObjEventHooks::ObjEventListItemNew(objHndl obj, LocAndOffsets loc, LocAndOffsets newLoc)
 {
-	objEvents.ListItemNew(obj, loc, aoeObjLoc);
+	objEvents.ListItemNew(obj, loc, newLoc);
 }
 
 BOOL ObjEventSystem::FreeObjectNodes(ObjEventAoE* aoeEvt, int id) const
@@ -229,35 +229,35 @@ BOOL ObjEventSystem::ObjEventHandler(ObjEventAoE* const aoeEvt, int id,ObjEventL
 {
 
 	auto objEventHandlerFuncs = temple::GetPointer<void(*__cdecl)(objHndl , objHndl , int )>(0x102AFB40);
-	if (aoeEvt->aoeObj != evt.aoeObj)
+	if (aoeEvt->aoeObj != evt.obj)
 	{
 		// find the event obj in the aoeEvt list of previously appearing objects
 		bool foundInNodes = false;
 		auto objNode = aoeEvt->objNodesPrev;
 		
-		while(objNode && objNode->handle != evt.aoeObj){
+		while(objNode && objNode->handle != evt.obj){
 			objNode = objNode->next;	
 		}
 		if (objNode)
 			foundInNodes = true;
 
-		if (!evt.aoeObj){
+		if (!evt.obj){
 			throw TempleException("Null event node after pruning???");
 		}
-		auto objBody = gameSystems->GetObj().GetObject(evt.aoeObj);
-		auto objRadius = objects.GetRadius(evt.aoeObj);
+		auto objBody = gameSystems->GetObj().GetObject(evt.obj);
+		auto objRadius = objects.GetRadius(evt.obj);
 		auto aoeObjLoc = evt.aoeObjLoc;
 		bool isInAreaOfEffect = ObjEventLocIsInAoE(aoeEvt, aoeObjLoc, objRadius);
 
 		if (foundInNodes){
 			if(!isInAreaOfEffect)
 			{
-				objEventHandlerFuncs[aoeEvt->onLeaveFuncIdx](aoeEvt->aoeObj, evt.aoeObj, id);
+				objEventHandlerFuncs[aoeEvt->onLeaveFuncIdx](aoeEvt->aoeObj, evt.obj, id);
 				return 1;
 			}
 		} else if (isInAreaOfEffect)
 		{
-			objEventHandlerFuncs[aoeEvt->onEnterFuncIdx](aoeEvt->aoeObj, evt.aoeObj, id);
+			objEventHandlerFuncs[aoeEvt->onEnterFuncIdx](aoeEvt->aoeObj, evt.obj, id);
 		}
 		return 1;
 	}
@@ -316,6 +316,8 @@ void ObjEventSystem::AdvanceTime()
 		ListRangeUpdate(*data, it.id, nullptr);
 	}
 
+	mLockEvtList = true;
+
 	// cycle through the event list and expire the events
 	for (auto evt = objEvtList.begin(); evt != objEvtList.end();)
 	{
@@ -327,12 +329,13 @@ void ObjEventSystem::AdvanceTime()
 				logger->warn("ObjectEventAdvanceTime: fail! Id {}", node.id);
 			}
 
-			int dummy = 1;
 		}
 		
 		evt = objEvtList.erase(evt);
 		
 	}
+
+	mLockEvtList = false;
 
 	auto objEvtUpdater = temple::GetRef<int(__cdecl)(ObjEventAoE*, int id)>(0x100450B0);
 	for (auto it : *objEvents.objEvtTable){
@@ -343,7 +346,8 @@ void ObjEventSystem::AdvanceTime()
 
 void ObjEventSystem::PrependEvtListNode(ObjEventListItem& evtListNode)
 {
-	objEvtList.push_back(evtListNode);
+	if (!mLockEvtList)
+		objEvtList.push_back(evtListNode);
 }
 
 void ObjEventSystem::ListItemNew(objHndl obj, LocAndOffsets loc, LocAndOffsets aoeObjLoc)
@@ -351,7 +355,7 @@ void ObjEventSystem::ListItemNew(objHndl obj, LocAndOffsets loc, LocAndOffsets a
 	if (objEvtTable->itemCount())
 	{
 		ObjEventListItem listItem;
-		listItem.aoeObj = obj;
+		listItem.obj = obj;
 		listItem.loc = loc;
 		listItem.aoeObjLoc = aoeObjLoc;
 		PrependEvtListNode(listItem);
@@ -366,7 +370,7 @@ bool ObjEventSystem::ListHasItems() const
 void ObjEventSystem::ListPrune()
 {
 	for (auto it = objEvtList.begin(); it != objEvtList.end(); ) {
-		if (!it->aoeObj){
+		if (!it->obj){
 			it = objEvtList.erase(it);
 		} 
 		else{
@@ -378,7 +382,7 @@ void ObjEventSystem::ListPrune()
 		auto nextIt = it + 1;
 		while(nextIt != objEvtList.end()){
 
-			if (it->aoeObj != nextIt->aoeObj)
+			if (it->obj != nextIt->obj)
 				++nextIt;
 			else{
 				nextIt = objEvtList.erase(nextIt);
@@ -479,7 +483,7 @@ int ObjEventSystem::EventAppend(objHndl aoeObj, int onEnterFuncIdx, int onLeaveF
 
 	if (objEvents.objEvtTable->itemCount()) {
 		ObjEventListItem evtListNode;
-		evtListNode.aoeObj = aoeObj;
+		evtListNode.obj = aoeObj;
 		evtListNode.aoeObjLoc = objLoc;
 		evtListNode.loc.location.locx = 0;
 		evtListNode.loc.location.locy = 0;

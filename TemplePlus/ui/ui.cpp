@@ -486,14 +486,22 @@ BOOL Ui::WidgetCopy(int widId, Widget* widgetOut)
 	return 0;
 }
 
-WidgetType1* Ui::WidgetGetType1(int widId)
-{
+WidgetType1* Ui::WidgetGetType1(int widId){
 	Widget* result = WidgetGet(widId);
-	if (result->type == 1)
-	{
+	if (!result)
+		return nullptr;
+	if (result->type == 1)	{
 		return static_cast<WidgetType1*>(result);
 	}
 	return nullptr;
+}
+
+WidgetType2* Ui::GetButton(int widId){
+	auto result = WidgetGet(widId);
+	if (!result || result->type != 2){
+		return nullptr;
+	}
+	return static_cast<WidgetType2*>(result);
 }
 
 Widget* Ui::WidgetGet(int widId)

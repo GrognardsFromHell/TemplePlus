@@ -168,6 +168,11 @@ void TigInitializer::LoadDataFiles() {
 		tpDataPath = "tpdata";
 	}
 
+	logger->info("Registering tpdata\\tpgamefiles.dat");
+	if (tio_path_add(fmt::format("{}\\tpgamefiles.dat", tpDataPath).c_str())) {
+		logger->trace("Unable to add archive tpdata\\tpgamefiles.dat");
+	}
+
 	if (tio_path_add(tpDataPath.c_str())) {
 		throw TempleException("Unable to add TemplePlus data to ToEE from {}", tpDataPath);
 	}

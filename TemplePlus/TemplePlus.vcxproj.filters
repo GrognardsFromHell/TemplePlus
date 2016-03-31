@@ -339,6 +339,9 @@
     </ClCompile>
     <ClCompile Include="updater\updater.cpp" />
     <ClCompile Include="tutorial.cpp" />
+    <ClCompile Include="ui\ui_tooltip.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -640,6 +643,9 @@
       <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="tutorial.h" />
+    <ClInclude Include="ui\ui_tooltip.h">
+      <Filter>ui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

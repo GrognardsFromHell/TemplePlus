@@ -1314,6 +1314,20 @@ Stat LegacySpellSystem::GetCastingClass(uint32_t spellClassCode)
 	return (Stat)(spellClassCode & 0x7F);
 }
 
+bool LegacySpellSystem::IsArcaneSpellClass(uint32_t spellClass)
+{
+	// take care of domain spells first
+	if (isDomainSpell(spellClass)) {
+		return false;
+	}
+
+	auto casterClass = GetCastingClass(spellClass);
+	if (casterClass == stat_level_bard || casterClass == stat_level_sorcerer || casterClass == stat_level_wizard)
+		return true;
+
+	return false;
+}
+
 uint32_t LegacySpellSystem::pickerArgsFromSpellEntry(SpellEntry* spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLvl)
 {
 	return _pickerArgsFromSpellEntry(spellEntry, pickArgs, objHnd, casterLvl);
