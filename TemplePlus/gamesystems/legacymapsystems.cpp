@@ -230,6 +230,17 @@ ProtoSystem::ProtoSystem(const GameSystemConf &config) {
 	TigTabParser tabParser;
 	tabParser.Init(protos_tab_parse_line);
 
+	if (tabParser.Open("rules\\protos_override.tab")) {
+		throw TempleException("Unable to open rules\\protos_override.tab");
+	}
+
+	tabParser.Process();
+	tabParser.Close();
+
+
+	//TigTabParser tabParser;
+	tabParser.Init(protos_tab_parse_line);
+
 	if (tabParser.Open("rules\\protos.tab")) {
 		throw TempleException("Unable to open rules\\protos.tab");
 	}

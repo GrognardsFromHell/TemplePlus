@@ -102,11 +102,13 @@ public:
 };
 
 class ProtoSystem : public GameSystem {
+	friend class ProtosHooks;
 public:
 	static constexpr auto Name = "Proto";
 	ProtoSystem(const GameSystemConf &config);
 	~ProtoSystem();
 	const std::string &GetName() const override;
+
 };
 
 class ObjectSystem : public GameSystem, public BufferResettingGameSystem, public ResetAwareGameSystem, public TimeAwareGameSystem, public MapCloseAwareGameSystem {
