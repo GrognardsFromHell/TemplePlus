@@ -67,7 +67,7 @@ if (Test-Path env:\APPVEYOR_REPO_TAG_NAME) {
     "Using BaseURL: $baseUrl"
 }
 
-&$squirrel --releasify=$releasePackage --icon=TemplePlus\toee_gog_icon.ico --setupIcon=TemplePlus\toee_gog_icon.ico --releaseDir=$releasesDir $baseUrl --no-msi
+&$squirrel --releasify=$releasePackage --loadingGif=Configurator\Installing.gif --icon=TemplePlus\toee_gog_icon.ico --setupIcon=TemplePlus\toee_gog_icon.ico --releaseDir=$releasesDir $baseUrl --no-msi
 
 ren "$releasesDir\Setup.exe" "TemplePlusSetup.exe"
 
