@@ -18,7 +18,6 @@ void InitLogging(const std::wstring &logFile);
 int TempleMain(HINSTANCE hInstance, const string& commandLine);
 
 InstallationDir GetInstallationDir(gsl::not_null<bool*> userCancelled);
-void ShowIncompatibilityWarning(const InstallationDir& dir);
 
 // This is required to get "new style" common dialogs like message boxes
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
@@ -117,18 +116,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	return result;
 }
 
-// Shows a warning if the given ToEE installation may be incompatible
-static void ShowIncompatibilityWarning(const InstallationDir& dir) {
-
-	if (!dir.IsSupportedDllVersion()) {
-		auto msg = L"An unknown game version was encountered. Please use the GOG.com version or "
-			L"apply the Circle of Eight Modpack (www.co8.org).";
-		auto title = L"Temple of Elemental Evil - Installation Directory";
-		MessageBox(nullptr, msg, title, MB_OK | MB_ICONWARNING);
-	}
-
-}
-
 InstallationDir GetInstallationDir(gsl::not_null<bool*> userCancelled) {
 	*userCancelled = false;
 
@@ -151,7 +138,6 @@ InstallationDir GetInstallationDir(gsl::not_null<bool*> userCancelled) {
 
 	// Save the new directory only if the user didn't cancel selection
 	if (!*userCancelled) {
-		ShowIncompatibilityWarning(toeeDir);
 		config.toeeDir = toeeDir.GetDirectory();
 		config.usingCo8 = toeeDir.IsCo8();
 		config.Save();
