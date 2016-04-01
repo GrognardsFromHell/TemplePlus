@@ -114,7 +114,7 @@ namespace TemplePlusConfig
                         HpOnLevelUp = HpOnLevelUpType.Max;
                         break;
                     case "average":
-                        HpOnLevelUp = HpOnLevelUpType.Max;
+                        HpOnLevelUp = HpOnLevelUpType.Average;
                         break;
                     default:
                         HpOnLevelUp = HpOnLevelUpType.Normal;
