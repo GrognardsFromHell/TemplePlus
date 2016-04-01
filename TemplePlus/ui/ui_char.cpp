@@ -773,6 +773,13 @@ void CharUiSystem::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& add
 		else
 			addStr = fmt::format("{}: {}", getStatName(stat_caster_level), casterLevel);
 	}
+
+	if (itemObj->type == obj_t_generic){
+		auto remCharges = gameSystems->GetObj().GetObject(item)->GetInt32(obj_f_item_spell_charges_idx);
+		if (remCharges > 0){
+			addStr = fmt::format("Remaining Charges: {}", remCharges);
+		}
+	}
 }
 
 void CharUiSystem::TotalWeightOutputBtnTooltip(int x, int y, int* widId)

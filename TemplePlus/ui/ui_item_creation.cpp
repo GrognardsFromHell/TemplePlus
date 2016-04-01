@@ -775,8 +775,7 @@ public:
 		write(0x102F6C10 + 9 * 4 * 26 + 4, &writeval, sizeof(void*));*/
 
 		redirectCall(0x1015221B, HookedGetLineForMaaAppend);
-		replaceFunction<void (_cdecl)(char)>(0x10150C10, [](char newChar)
-		{
+		replaceFunction<void (_cdecl)(char)>(0x10150C10, [](char newChar){
 			auto craftedName = temple::GetPointer<char>(0x10BED758);
 			auto& craftedNameCurPos = temple::GetRef<int>(0x10BECE7C);
 			craftedName[63] = 0; // ensure string termination
