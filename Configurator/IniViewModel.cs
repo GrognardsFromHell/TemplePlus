@@ -97,8 +97,8 @@ namespace TemplePlusConfig
 
         public int MaxLevel
         {
-            get { return (int)GetValue(PointBuyPointsProperty); }
-            set { SetValue(PointBuyPointsProperty, value); }
+            get { return (int)GetValue(MaxLevelProperty); }
+            set { SetValue(MaxLevelProperty, value); }
         }
 
         public void LoadFromIni(IniData iniData)
@@ -147,6 +147,12 @@ namespace TemplePlusConfig
 
             SoftShadows = tpData["softShadows"] == "true";
             WindowedMode = tpData["windowed"] == "true";
+
+            int maxLevel;
+            if (int.TryParse(tpData["maxLevel"], out maxLevel))
+            {
+                MaxLevel = maxLevel;
+            }
         }
 
         public void SaveToIni(IniData iniData)
@@ -179,6 +185,7 @@ namespace TemplePlusConfig
             tpData["windowWidth"] = RenderWidth.ToString();
             tpData["windowHeight"] = RenderHeight.ToString();
             tpData["softShadows"] = SoftShadows ? "true" : "false";
+            tpData["maxLevel"] = MaxLevel.ToString();
         }
     }
 

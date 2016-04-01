@@ -14,5 +14,7 @@ namespace TemplePlusConfig
     public partial class App : Application
     {
 
+        public static bool LaunchAfterSave { get; set; }
+
     }
 }

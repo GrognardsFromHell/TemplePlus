@@ -1,6 +1,7 @@
 ﻿using Squirrel;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -17,14 +18,17 @@ namespace TemplePlusConfig
         [STAThread]
         public static void Main(string[] args)
         {
+            bool firstStart = false;
+
             // Note, in most of these scenarios, the app exits after this method
             // completes!
             SquirrelAwareApp.HandleEvents(
                 onInitialInstall: v => CreateShortcuts(),
                 onAppUpdate: v => CreateShortcuts(),
-                onAppUninstall: v => RemoveShortcuts());
-         
-            // Your initialization code
+                onAppUninstall: v => RemoveShortcuts(),
+                onFirstRun: () => firstStart = true);
+
+            App.LaunchAfterSave = firstStart;
             App.Main();
         }
 
@@ -46,6 +50,7 @@ namespace TemplePlusConfig
                         update,
                         null,
                         null);
+
             }
         }
 

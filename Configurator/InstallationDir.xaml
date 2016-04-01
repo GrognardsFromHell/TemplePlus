@@ -24,7 +24,7 @@
             <Button x:Name="BrowseButton" Content="Browse" Click="BrowseButton_Click" 
                     Grid.Column="2"/>
         </Grid>
-        <DockPanel Margin="0,10,0,0">
+        <DockPanel Margin="0,5,0,0">
             <fa:ImageAwesome Icon="Check" Foreground="Green" Width="16" Height="16" x:Name="OkIcon"
                              Visibility="Collapsed" />
             <fa:ImageAwesome Icon="Exclamation" Foreground="Red" Width="16" Height="16" x:Name="NotOkIcon"

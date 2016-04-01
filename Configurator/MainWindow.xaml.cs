@@ -7,6 +7,8 @@ using System.Windows;
 using IniParser;
 using IniParser.Model;
 using Microsoft.WindowsAPICodePack.Shell;
+using System.Reflection;
+using System.Diagnostics;
 
 namespace TemplePlusConfig
 {
@@ -22,6 +24,11 @@ namespace TemplePlusConfig
         public MainWindow()
         {
             InitializeComponent();
+            
+            if (App.LaunchAfterSave)
+            {
+                OkButton.Content = "Launch";
+            }
 
             DataContext = _iniViewModel;
 
@@ -71,6 +78,13 @@ namespace TemplePlusConfig
             iniParser.WriteFile(_iniPath, iniData, new UTF8Encoding(false));
 
             Close();
+
+            if (App.LaunchAfterSave)
+            {
+                var path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                var tpExe = Path.Combine(path, "TemplePlus.exe");
+                Process.Start(tpExe);
+            }
         }
 
     }
