@@ -33,6 +33,7 @@ namespace TemplePlusConfig
                 var iniParser = new FileIniDataParser();
                 var iniData = iniParser.ReadFile(_iniPath, Encoding.UTF8);
                 _iniViewModel.LoadFromIni(iniData);
+                InstallationDir.InstallationPath = _iniViewModel.InstallationPath;
             }
 
             if (string.IsNullOrEmpty(InstallationDir.InstallationPath))
