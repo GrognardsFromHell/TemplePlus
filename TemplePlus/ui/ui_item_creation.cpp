@@ -775,6 +775,25 @@ public:
 		write(0x102F6C10 + 9 * 4 * 26 + 4, &writeval, sizeof(void*));*/
 
 		redirectCall(0x1015221B, HookedGetLineForMaaAppend);
+		replaceFunction<void (_cdecl)(char)>(0x10150C10, [](char newChar)
+		{
+			auto craftedName = temple::GetPointer<char>(0x10BED758);
+			auto& craftedNameCurPos = temple::GetRef<int>(0x10BECE7C);
+			craftedName[63] = 0; // ensure string termination
+
+
+			auto currStrLen = strlen(craftedName)+1;
+			if (currStrLen < 62){
+				for (int i = craftedNameCurPos; i < currStrLen; currStrLen--)
+				{
+					craftedName[currStrLen] = craftedName[currStrLen - 1];
+				}
+				craftedName[craftedNameCurPos] = newChar;
+				craftedNameCurPos++;
+			}
+
+
+		});
 	}
 } itemCreationHooks;
 
@@ -903,15 +922,19 @@ int ItemCreation::UiItemCreationInit(GameSystemConf* conf)
 
 void ItemCreation::HookedGetLineForMaaAppend(MesHandle handle, MesLine* line)
 {
-
+	
 	auto result = mesFuncs.GetLine_Safe(handle, line);
 	const char emptyString [1] = "";
+	
 	auto craftedName = temple::GetPointer<char>(0x10BED758);
+	craftedName[62] = craftedName[63] =0; // ensure string termination (some users are naughty...)
+
 	auto craftedNameLen = strlen(craftedName);
 	auto enhancementNameLen = strlen(line->value);
 	if (enhancementNameLen + craftedNameLen > 60){
 		line->value = emptyString;
 	}
+	
 
 
 
