@@ -69,9 +69,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto& dll = temple::Dll::GetInstance();
 	dll.ReserveMemoryRange();
 
-	Breakpad breakpad;
-
+	// Cannot get known folders without initializing COM sadly
 	ComInitializer comInitializer;
+
+	Breakpad breakpad(GetUserDataFolder());
 
 	SetIniPath();
 

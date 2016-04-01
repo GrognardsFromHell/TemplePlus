@@ -23,12 +23,14 @@ static bool HandleCrashCallbackDelegate(const wchar_t* dump_path,
 	return false;
 }
 
-Breakpad::Breakpad()
+Breakpad::Breakpad(const std::wstring &crashDumpFolder)
 {
 	using google_breakpad::ExceptionHandler;
 
+	CreateDirectory(crashDumpFolder.c_str(), nullptr);
+
 	mHandler.reset(new ExceptionHandler(
-		L".",
+		crashDumpFolder.c_str(),
 		nullptr,
 		HandleCrashCallbackDelegate,
 		this,
