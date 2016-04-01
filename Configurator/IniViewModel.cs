@@ -33,6 +33,9 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty PointBuyPointsProperty = DependencyProperty.Register(
             "PointBuyPoints", typeof (int), typeof (IniViewModel), new PropertyMetadata(default(int)));
 
+        public static readonly DependencyProperty MaxLevelProperty = DependencyProperty.Register(
+            "MaxLevel", typeof(int), typeof(IniViewModel), new PropertyMetadata(default(int)));
+
         public IEnumerable<HpOnLevelUpType> HpOnLevelUpTypes => Enum.GetValues(typeof (HpOnLevelUpType))
             .Cast<HpOnLevelUpType>();
 
@@ -41,6 +44,7 @@ namespace TemplePlusConfig
             RenderWidth = (int)SystemParameters.PrimaryScreenWidth;
             RenderHeight = (int)SystemParameters.PrimaryScreenHeight;
             PointBuyPoints = 25;
+            MaxLevel = 20;
         }
 
         public string InstallationPath
@@ -88,6 +92,12 @@ namespace TemplePlusConfig
         public int PointBuyPoints
         {
             get { return (int) GetValue(PointBuyPointsProperty); }
+            set { SetValue(PointBuyPointsProperty, value); }
+        }
+
+        public int MaxLevel
+        {
+            get { return (int)GetValue(PointBuyPointsProperty); }
             set { SetValue(PointBuyPointsProperty, value); }
         }
 

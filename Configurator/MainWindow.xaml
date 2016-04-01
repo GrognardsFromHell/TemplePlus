@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:TemplePlusConfig"
         xmlns:fa="http://schemas.fontawesome.io/icons/"
         mc:Ignorable="d"
-        Title="Temple+ Configuration" Height="387" Width="489" Icon="toee_gog_icon.ico"
+        Title="Temple+ Configuration" Height="380.4" Width="579" Icon="toee_gog_icon.ico"
         d:DataContext="{d:DesignInstance local:IniViewModel}">
     <Window.Resources>
     </Window.Resources>
@@ -19,8 +19,8 @@
         </Grid>
         <StackPanel Margin="10,10,10,10">
             <local:InstallationDir x:Name="InstallationDir" InstallationPath="{Binding InstallationPath}" />
-            <TextBlock TextWrapping="Wrap">Please select the resolution at which the game should render. It will automatically be upscaled to your screen resolution. The aspect ratio of your monitor will be respected.</TextBlock>
-            <StackPanel Orientation="Horizontal"  Margin="0,5,0,5">
+            <TextBlock TextWrapping="Wrap" Text="Select resolution:"/>
+            <StackPanel Orientation="Horizontal"  Margin="0,5,0,5" ToolTip="Please select the resolution at which the game should render. It will automatically be upscaled to your screen resolution. The aspect ratio of your monitor will be respected.">
                 <Label VerticalAlignment="Center">Width</Label>
                 <TextBox Width="50" VerticalAlignment="Center" Text="{Binding RenderWidth}" />
                 <Label VerticalAlignment="Center">Height</Label>
@@ -30,13 +30,16 @@
             <CheckBox VerticalAlignment="Center" Content="Disable Automatic Updates" IsChecked="{Binding DisableAutomaticUpdates}" />
             <CheckBox VerticalAlignment="Center" Content="Enable Soft Shadows (GPU intensive)" IsChecked="{Binding SoftShadows}" />
             <StackPanel Orientation="Horizontal">
-                <Label VerticalAlignment="Center">HP on Level Up</Label>
-                <ComboBox VerticalAlignment="Center" SelectedValue="{Binding HpOnLevelUp}"  ItemsSource="{Binding HpOnLevelUpTypes}">
-                </ComboBox>
+                <Label VerticalAlignment="Center" Content="HP on Level Up"/>
+                <ComboBox VerticalAlignment="Center" SelectedValue="{Binding HpOnLevelUp}"  ItemsSource="{Binding HpOnLevelUpTypes}"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal"  Margin="0,5,0,5">
-                <Label VerticalAlignment="Center">Point Buy Points:</Label>
+                <Label VerticalAlignment="Center" Content="Point Buy Points:"/>
                 <TextBox Width="50" VerticalAlignment="Center" Text="{Binding PointBuyPoints}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"  Margin="0,5,0,5">
+                <Label VerticalAlignment="Center" Content="Max Level:"/>
+                <TextBox Width="50" VerticalAlignment="Center" Text="{Binding MaxLevel}" />
             </StackPanel>
         </StackPanel>
     </DockPanel>
