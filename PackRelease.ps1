@@ -14,9 +14,17 @@ if (Test-Path dist) {
 }
 
 mkdir dist
-copy Configurator\bin\Release\TemplePlusConfig.exe dist
-copy Configurator\bin\Release\TemplePlusConfig.exe.config dist
-copy Configurator\bin\Release\*.dll dist
+copy Release\TemplePlusConfig.exe dist
+copy Release\TemplePlusConfig.exe.config dist
+copy Release\Squirrel.dll dist
+copy Release\Splat.dll dist
+copy Release\NuGet.Squirrel.dll dist
+copy Release\Mono.Cecil*.dll dist
+copy Release\Microsoft.WindowsAPICodePack*.dll dist
+copy Release\INIFileParser.dll dist
+copy Release\ICSharpCode.SharpZipLib.dll dist
+copy Release\FontAwesome.WPF.dll dist
+copy Release\DeltaCompressionDotNet*.dll dist
 copy Release\TemplePlus.exe dist
 copy -Recurse tpdata dist\tpdata
 copy -Recurse dependencies\python-lib dist\tpdata\python-lib
