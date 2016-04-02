@@ -145,7 +145,7 @@ static std::string FindTpData() {
 		return ownFilename;
 	}
 
-#ifndef NDEBUG
+#ifndef TP_RELEASE_BUILD
 	GetModuleFileNameA(nullptr, ownFilename, MAX_PATH);
 	PathRemoveFileSpecA(ownFilename);
 	PathAppendA(ownFilename, "..\\tpdata");
@@ -158,9 +158,8 @@ static std::string FindTpData() {
 
 }
 
+#ifndef TP_RELEASE_BUILD
 static std::string FindPythonLibDir() {
-
-#ifndef NDEBUG
 	char ownFilename[MAX_PATH];
 	GetModuleFileNameA(nullptr, ownFilename, MAX_PATH);
 	PathRemoveFileSpecA(ownFilename);
@@ -171,11 +170,9 @@ static std::string FindPythonLibDir() {
 		PathAppendA(ownFilename, "..\\dependencies");
 		return ownFilename;
 	}
-#endif
-
 	return "";
-
 }
+#endif
 
 void TigInitializer::LoadDataFiles() {
 
@@ -209,7 +206,7 @@ void TigInitializer::LoadDataFiles() {
 	}
 
 	// Check if python library is now accessible
-#ifndef NDEBUG
+#ifndef TP_RELEASE_BUILD
 	if (!tio_fileexists("python-lib\\site.py")) {
 		auto pythonLibDir = FindPythonLibDir();
 		if (!pythonLibDir.empty()) {
