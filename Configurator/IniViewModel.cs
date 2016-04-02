@@ -47,7 +47,7 @@ namespace TemplePlusConfig
             RenderWidth = (int)SystemParameters.PrimaryScreenWidth;
             RenderHeight = (int)SystemParameters.PrimaryScreenHeight;
             PointBuyPoints = 25;
-            MaxLevel = 20;
+            MaxLevel = 10;
         }
 
         public string InstallationPath
@@ -150,10 +150,6 @@ namespace TemplePlusConfig
             {
                 PointBuyPoints = points;
             }
-            else
-            {
-                PointBuyPoints = 25;
-            }
 
             int renderWidth, renderHeight;
             if (int.TryParse(tpData["renderWidth"], out renderWidth)
@@ -161,11 +157,6 @@ namespace TemplePlusConfig
             {
                 RenderWidth = renderWidth;
                 RenderHeight = renderHeight;
-            }
-            else
-            {
-                renderWidth = (int) SystemParameters.PrimaryScreenWidth;
-                renderHeight = (int) SystemParameters.PrimaryScreenHeight;
             }
 
             SoftShadows = tpData["softShadows"] == "true";
@@ -176,7 +167,6 @@ namespace TemplePlusConfig
             {
                 MaxLevel = maxLevel;
             }
-
             
         }
 
