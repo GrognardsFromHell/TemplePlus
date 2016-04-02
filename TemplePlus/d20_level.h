@@ -11,8 +11,20 @@ struct LevelupPacket;
 
 class D20LevelSystem
 {
+	friend class D20System;
 public:
 	uint32_t xpReqTable[XP_REQ_TABLE_MAX_LEVEL]; //  xp required to reach a certain level, starting from level 0 (will be 0,0,1000,3000,6000,...)
+	
+	/*
+	
+	memorization slots per character level (i.e. the deltas gained each level, not the entire number)
+	matrix,   XP_REQ_TABLE_MAX_LEVEL rows  x  NUM_SPELL_LEVELS cols
+	first row is for Character Level 1, and so on
+	first column is for Spell Level 0, and so on
+
+	*/
+	int32_t mWizardSpellsPerLevel[XP_REQ_TABLE_MAX_LEVEL * NUM_SPELL_LEVELS]; 
+
 	// uint32_t maxLevel; // now read from config
 	uint32_t LevelPacketInit(LevelPacket* lvlPkt);
 	uint32_t LevelPacketDealloc(LevelPacket *lvlPkt);
@@ -29,6 +41,9 @@ public:
 			xpReqTable[i] = 1000 * (i - 1)*i / 2;
 		}
 	}
+
+private:
+	void GenerateSpellsPerLevelTables();
 };
 
 extern D20LevelSystem d20LevelSys;
@@ -43,7 +58,7 @@ struct LevelPacket
 	Stat classEnum;
 	IdxTable<feat_enums> featsIdxTable; // this gets filled from the ClassPacket
 	uint32_t hitDiceWithConBonus; // in the triplet format
-	int32_t field_28[NUM_SPELL_LEVELS]; // init to -1's; spell related; idx is spellLevel
+	int32_t sorcBardSpellCount[NUM_SPELL_LEVELS]; // init to -1's; wizards and ranger get -10 , -40 or -30;  idx is spellLevel
 	int32_t spellCountFromClass[NUM_SPELL_LEVELS]; // init to -1's; idx is spellLevel
 	uint32_t spellCountBonusFromStatMod[NUM_SPELL_LEVELS]; // init to 0; idx is spellLevel
 	uint32_t fortitudeSaveBase;

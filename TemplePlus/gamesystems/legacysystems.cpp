@@ -14,6 +14,7 @@
 #include "objects/objevent.h"
 #include <condition.h>
 #include <sound.h>
+#include <d20_level.h>
 
 
 //*****************************************************************************
@@ -493,6 +494,7 @@ D20System::D20System(const GameSystemConf &config) {
 		throw TempleException("Unable to initialize game system D20");
 	}
 	conds.RegisterNewConditions();
+	d20LevelSys.GenerateSpellsPerLevelTables();
 }
 D20System::~D20System() {
 	auto shutdown = temple::GetPointer<void()>(0x1004c950);

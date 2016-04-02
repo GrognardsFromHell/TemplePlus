@@ -2,6 +2,7 @@
 #include "d20_level.h"
 #include "common.h"
 #include "obj.h"
+#include "util/fixes.h"
 
 
 D20LevelSystem d20LevelSys;
@@ -22,6 +23,23 @@ struct D20LevelSystemAddresses : temple::AddressTable
 	};
 } addresses;
 
+
+
+class D20LevelHooks : public TempleFix
+{
+public: 
+	const char* name() override { 
+		return "D20Level Hooks";
+	} 
+	
+	void apply() override 
+	{
+		// hooked the address of the wizardSpellsPerLvl
+		auto writeVal = reinterpret_cast<int>(d20LevelSys.mWizardSpellsPerLevel);
+
+		write(0x100F4E4C + 3, &writeVal, sizeof(int));
+	}
+} d20LevelHooks;
 
 uint32_t D20LevelSystem::LevelPacketInit(LevelPacket* lvlPkt)
 {
@@ -47,6 +65,15 @@ bool D20LevelSystem::CanLevelup(objHndl objHnd)
 	}
 	return objects.getInt32(objHnd, obj_f_critter_experience) >= xpReqTable[lvl + 1];
 		//addresses.xpReqTable[lvl + 1];
+
+}
+
+void D20LevelSystem::GenerateSpellsPerLevelTables()
+{
+
+	memset(mWizardSpellsPerLevel, 0,  sizeof(mWizardSpellsPerLevel));
+
+	memcpy(mWizardSpellsPerLevel, temple::GetPointer<int>(0x102EA460), 20 * NUM_SPELL_LEVELS*sizeof(int));
 
 }
 
