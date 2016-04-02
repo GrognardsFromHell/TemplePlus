@@ -3,6 +3,7 @@
 #include <util/fixes.h>
 #include "common.h"
 #include <config/config.h>
+#include <temple/dll.h>
 
 static class SliderHooks : public TempleFix
 {
@@ -14,7 +15,7 @@ public:
 
 	void apply() override 
 	{
-		if (config.usingCo8)
+		if (temple::Dll::GetInstance().HasCo8Hooks())
 		{
 
 			// ui_slider
