@@ -136,6 +136,47 @@ TigInitializer::TigInitializer(HINSTANCE hInstance)
 	*tigInternal.consoleDisabled = false; // tig init disables console by default
 }
 
+static std::string FindTpData() {
+	char ownFilename[MAX_PATH];
+	GetModuleFileNameA(nullptr, ownFilename, MAX_PATH);
+	PathRemoveFileSpecA(ownFilename);
+	PathAppendA(ownFilename, "tpdata");
+	if (PathIsDirectoryA(ownFilename)) {
+		return ownFilename;
+	}
+
+#ifndef NDEBUG
+	GetModuleFileNameA(nullptr, ownFilename, MAX_PATH);
+	PathRemoveFileSpecA(ownFilename);
+	PathAppendA(ownFilename, "..\\tpdata");
+	if (PathIsDirectoryA(ownFilename)) {
+		return ownFilename;
+	}
+#endif
+
+	return "tpdata"; // Just fall back to this then...
+
+}
+
+static std::string FindPythonLibDir() {
+
+#ifndef NDEBUG
+	char ownFilename[MAX_PATH];
+	GetModuleFileNameA(nullptr, ownFilename, MAX_PATH);
+	PathRemoveFileSpecA(ownFilename);
+	PathAppendA(ownFilename, "..\\dependencies\\python-lib");
+	if (PathIsDirectoryA(ownFilename)) {
+		GetModuleFileNameA(nullptr, ownFilename, MAX_PATH);
+		PathRemoveFileSpecA(ownFilename);
+		PathAppendA(ownFilename, "..\\dependencies");
+		return ownFilename;
+	}
+#endif
+
+	return "";
+
+}
+
 void TigInitializer::LoadDataFiles() {
 
 	// TODO: Migrate to use of vfs
@@ -156,17 +197,7 @@ void TigInitializer::LoadDataFiles() {
 	tio_mkdir("data");
 	tio_path_add("data");
 
-	std::string tpDataPath;
-
-	char ownFilename[MAX_PATH];
-	GetModuleFileNameA(nullptr, ownFilename, MAX_PATH);
-	PathRemoveFileSpecA(ownFilename);
-	PathAppendA(ownFilename, "tpdata");
-	if (PathIsDirectoryA(ownFilename)) {
-		tpDataPath = ownFilename;
-	} else {
-		tpDataPath = "tpdata";
-	}
+	std::string tpDataPath = FindTpData();
 
 	logger->info("Registering tpdata\\tpgamefiles.dat");
 	if (tio_path_add(fmt::format("{}\\tpgamefiles.dat", tpDataPath).c_str())) {
@@ -176,7 +207,19 @@ void TigInitializer::LoadDataFiles() {
 	if (tio_path_add(tpDataPath.c_str())) {
 		throw TempleException("Unable to add TemplePlus data to ToEE from {}", tpDataPath);
 	}
-	
+
+	// Check if python library is now accessible
+#ifndef NDEBUG
+	if (!tio_fileexists("python-lib\\site.py")) {
+		auto pythonLibDir = FindPythonLibDir();
+		if (!pythonLibDir.empty()) {
+			if (tio_path_add(pythonLibDir.c_str())) {
+				throw TempleException("Unable to add TemplePlus data (python-lib) to ToEE from {}", pythonLibDir);
+			}
+		}
+	}
+#endif
+
 	logger->info("Registering new pathfinding data tpdata\\clearances.dat");
 	auto result=  tio_path_add(fmt::format("{}\\clearances.dat", tpDataPath).c_str());
 	if (result != 0) {
