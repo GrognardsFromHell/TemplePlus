@@ -208,11 +208,11 @@ int32_t CreateItemResourceCheck(objHndl obj, objHndl objHndItem){
 
 		// TODO make XP cost calculation take applied caster level into account
 		uint32_t itemXPCost = itemWorth / 2500;
-		xpCheck = surplusXP > itemXPCost;
+		xpCheck = surplusXP >= itemXPCost;
 	} else 
 	{
 		uint32_t magicArmsAndArmorXPCost = templeFuncs.CraftMagicArmsAndArmorSthg(41);
-		xpCheck = surplusXP > magicArmsAndArmorXPCost;
+		xpCheck = surplusXP >= magicArmsAndArmorXPCost;
 	}
 		
 	if (xpCheck){
