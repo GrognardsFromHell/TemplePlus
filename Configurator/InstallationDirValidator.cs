@@ -47,7 +47,7 @@ namespace TemplePlusConfig
                                      + dllVersion.Description);
             }
 
-            return new InstallationDirStatus {Valid = true, Status = dllVersion.Description};
+            return new InstallationDirStatus {Valid = true, Status = dllVersion.Description, IsCo8 = dllVersion.Co8};
         }
 
         private static InstallationDirStatus CreateInvalid(string reason)
@@ -55,7 +55,8 @@ namespace TemplePlusConfig
             return new InstallationDirStatus
             {
                 Valid = false,
-                Status = reason
+                Status = reason,
+                IsCo8 = false
             };
         }
     }
@@ -65,5 +66,7 @@ namespace TemplePlusConfig
         public bool Valid { get; set; }
 
         public string Status { get; set; }
+
+        public bool IsCo8 { get; set; }
     }
 }

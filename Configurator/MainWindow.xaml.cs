@@ -72,6 +72,7 @@ namespace TemplePlusConfig
 
             // TODO: Check why two-way binding in this particular case is not working
             _iniViewModel.InstallationPath = InstallationDir.InstallationPath;
+            _iniViewModel.UsingCo8 = InstallationDir.UsingCo8;
             _iniViewModel.SaveToIni(iniData);
 
             // Disable BOM otherwise TP barfs when loading the ini

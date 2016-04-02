@@ -18,7 +18,7 @@
             <Button x:Name="OkButton" Width="75" Height="23" Click="Button_Click" VerticalAlignment="Top">Ok</Button>
         </Grid>
         <StackPanel Margin="10,10,10,10">
-            <local:InstallationDir x:Name="InstallationDir" InstallationPath="{Binding InstallationPath}" />
+            <local:InstallationDir x:Name="InstallationDir" InstallationPath="{Binding InstallationPath}" UsingCo8="{Binding UsingCo8}" />
             <TextBlock TextWrapping="Wrap" Text="Select resolution:"/>
             <StackPanel Orientation="Horizontal"  Margin="0,5,0,5" ToolTip="Please select the resolution at which the game should render. It will automatically be upscaled to your screen resolution. The aspect ratio of your monitor will be respected.">
                 <Label VerticalAlignment="Center">Width</Label>

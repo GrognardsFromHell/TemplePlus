@@ -11,12 +11,18 @@ namespace TemplePlusConfig
     /// </summary>
     public partial class InstallationDir : UserControl
     {
+        public static readonly DependencyProperty UsingCo8Property = DependencyProperty.Register(
+            "UsingCo8", typeof(bool), typeof(InstallationDir), new PropertyMetadata(default(bool))); 
+
         public static readonly DependencyProperty InstallationPathProperty = DependencyProperty.Register(
             "InstallationPath", typeof (string), typeof (InstallationDir), new PropertyMetadata(default(string)));
 
         public static readonly DependencyProperty InstallationPathStatusProperty = DependencyProperty.Register(
             "InstallationPathStatus", typeof (InstallationDirStatus), typeof (InstallationDir),
             new PropertyMetadata(default(InstallationDirStatus)));
+
+
+
 
         public InstallationDir()
         {
@@ -36,6 +42,15 @@ namespace TemplePlusConfig
         {
             get { return (InstallationDirStatus) GetValue(InstallationPathStatusProperty); }
             set { SetValue(InstallationPathStatusProperty, value); }
+        }
+
+        public bool UsingCo8
+        {
+            get
+            {
+                return (bool)(InstallationPathStatus.IsCo8);
+            }
+            set { InstallationPathStatus.IsCo8= value; }
         }
 
         private void RevalidateInstallationDir()
