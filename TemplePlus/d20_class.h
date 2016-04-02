@@ -39,8 +39,8 @@ extern D20ClassSystem d20ClassSys;
 #pragma pack(push, 1)
 struct ClassPacket
 {
-	IdxTable<uint32_t> idxTab1; // unknown
-	IdxTable<uint32_t> idxTab2; // unknown
+	IdxTable<uint32_t> keyStats; // stats considered key to this class (e.g. int, dex and con for wizards)
+	IdxTable<uint32_t> alignments; // allowed alignments for this class
 	IdxTable<feat_enums> featsIdxTable;
 	uint32_t fortitudeSaveIsFavored;
 	uint32_t reflexSaveIsFavored;
