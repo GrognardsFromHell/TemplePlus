@@ -47,7 +47,6 @@ namespace TemplePlusConfig
             {
                 var iniData = _iniParser.ReadFile(_iniPath, IniEncoding);
                 _iniViewModel.LoadFromIni(iniData);
-                InstallationDir.InstallationPath = _iniViewModel.InstallationPath;
             }
 
             // Auto detect an installation if the INI didnt exist, or if 
@@ -78,9 +77,6 @@ namespace TemplePlusConfig
                 Directory.CreateDirectory(iniDir);
             }
 
-            // TODO: Check why two-way binding in this particular case is not working
-            _iniViewModel.InstallationPath = InstallationDir.InstallationPath;
-            _iniViewModel.UsingCo8 = InstallationDir.UsingCo8;
             _iniViewModel.SaveToIni(iniData);
             
             _iniParser.WriteFile(_iniPath, iniData, IniEncoding);
