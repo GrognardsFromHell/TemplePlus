@@ -77,7 +77,18 @@ namespace TemplePlusConfig
             // Disable BOM otherwise TP barfs when loading the ini
             iniParser.WriteFile(_iniPath, iniData, new UTF8Encoding(false));
 
+            // TODO: do a proper fix instead of this dirty hack for fixing the problem with the spaces 
+            iniData = iniParser.ReadFile(_iniPath, Encoding.UTF8);
+
+            _iniViewModel.LoadFromIni(iniData);
+
+            iniParser.WriteFile(_iniPath, iniData, new UTF8Encoding(false));
+
+
+
             Close();
+
+            
 
             if (App.LaunchAfterSave)
             {
