@@ -6,41 +6,47 @@
         xmlns:local="clr-namespace:TemplePlusConfig"
         xmlns:fa="http://schemas.fontawesome.io/icons/"
         mc:Ignorable="d"
-        Title="Temple+ Configuration" Height="396" Width="579" Icon="toee_gog_icon.ico"
-        d:DataContext="{d:DesignInstance local:IniViewModel}" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen">
+        Title="Temple+ Configuration" Height="478.52" Width="726.2" Icon="toee_gog_icon.ico"
+        d:DataContext="{d:DesignInstance local:IniViewModel}" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen"
+        >
     <Window.Resources>
+        <ImageBrush x:Key="Shitbrush" ImageSource="Installing.gif" Stretch="Uniform" AlignmentX="Right" />
     </Window.Resources>
-    <DockPanel>
-        <Grid DockPanel.Dock="Bottom" Margin="5">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <Button x:Name="OkButton" Width="75" Height="23" Click="Button_Click" VerticalAlignment="Top">Ok</Button>
-        </Grid>
-        <StackPanel Margin="10,10,10,10">
-            <local:InstallationDir x:Name="InstallationDir" InstallationPath="{Binding Path=InstallationPath, Mode=TwoWay}" UsingCo8="{Binding UsingCo8}" />
-            <TextBlock TextWrapping="Wrap" Text="Select resolution:"/>
-            <StackPanel Orientation="Horizontal"  Margin="0,5,0,5" ToolTip="Please select the resolution at which the game should render. It will automatically be upscaled to your screen resolution. The aspect ratio of your monitor will be respected.">
-                <Label VerticalAlignment="Center">Width</Label>
-                <TextBox Width="50" VerticalAlignment="Center" Text="{Binding RenderWidth}" />
-                <Label VerticalAlignment="Center">Height</Label>
-                <TextBox Width="50" VerticalAlignment="Center" Text="{Binding RenderHeight}"/>
+    <Canvas Height="451" VerticalAlignment="Top" Margin="0,0,0,0">
+        <DockPanel Canvas.Left="00" Width="710" Height="441">
+            <Grid DockPanel.Dock="Bottom" Margin="5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="OkButton" Width="75" Height="23" Click="Button_Click" VerticalAlignment="Top" Content="Ok"/>
+            </Grid>
+            <StackPanel Margin="0,0,0,0" Width="694" >
+                <local:InstallationDir x:Name="InstallationDir" InstallationPath="{Binding InstallationPath, Mode=TwoWay}" UsingCo8="{Binding UsingCo8}" Margin="0,0,10,0" />
+                <TextBlock TextWrapping="Wrap" Text="Select resolution:"/>
+                <StackPanel Orientation="Horizontal"  Margin="0,5,0,5" ToolTip="Please select the resolution at which the game should render. It will automatically be upscaled to your screen resolution. The aspect ratio of your monitor will be respected.">
+                    <Label VerticalAlignment="Center" Content="Width"/>
+                    <TextBox Width="50" VerticalAlignment="Center" Text="{Binding RenderWidth}" />
+                    <Label VerticalAlignment="Center" Content="Height"/>
+                    <TextBox Width="50" VerticalAlignment="Center" Text="{Binding RenderHeight}"/>
+                </StackPanel>
+                <CheckBox VerticalAlignment="Center" Content="Run in Windowed Mode" IsChecked="{Binding WindowedMode}" Margin="0,5,0,5" />
+                <CheckBox VerticalAlignment="Center" Content="Disable Automatic Updates" IsChecked="{Binding DisableAutomaticUpdates}" Margin="0,5,0,5" />
+                <CheckBox VerticalAlignment="Center" Content="Enable Soft Shadows (GPU intensive)" IsChecked="{Binding SoftShadows}" Margin="0,5,0,5" />
+                <StackPanel Orientation="Horizontal">
+                    <Label VerticalAlignment="Center" Content="HP on Level Up" />
+                    <ComboBox VerticalAlignment="Center" SelectedValue="{Binding HpOnLevelUp}"  ItemsSource="{Binding HpOnLevelUpTypes}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal"  Margin="0,5,0,5">
+                    <Label VerticalAlignment="Center" Content="Point Buy Points:"/>
+                    <TextBox Width="50" VerticalAlignment="Center" Text="{Binding PointBuyPoints}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal"  Margin="0,5,0,5">
+                    <Label VerticalAlignment="Center" Content="Max Level:"/>
+                    <TextBox Width="50" VerticalAlignment="Center" Text="{Binding MaxLevel}" />
+                </StackPanel>
             </StackPanel>
-            <CheckBox VerticalAlignment="Center" Content="Run in Windowed Mode" IsChecked="{Binding WindowedMode}" Margin="0,5,0,5" />
-            <CheckBox VerticalAlignment="Center" Content="Disable Automatic Updates" IsChecked="{Binding DisableAutomaticUpdates}" Margin="0,5,0,5" />
-            <CheckBox VerticalAlignment="Center" Content="Enable Soft Shadows (GPU intensive)" IsChecked="{Binding SoftShadows}" Margin="0,5,0,5" />
-            <StackPanel Orientation="Horizontal">
-                <Label VerticalAlignment="Center" Content="HP on Level Up" />
-                <ComboBox VerticalAlignment="Center" SelectedValue="{Binding HpOnLevelUp}"  ItemsSource="{Binding HpOnLevelUpTypes}"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal"  Margin="0,5,0,5">
-                <Label VerticalAlignment="Center" Content="Point Buy Points:"/>
-                <TextBox Width="50" VerticalAlignment="Center" Text="{Binding PointBuyPoints}" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal"  Margin="0,5,0,5">
-                <Label VerticalAlignment="Center" Content="Max Level:"/>
-                <TextBox Width="50" VerticalAlignment="Center" Text="{Binding MaxLevel}" />
-            </StackPanel>
-        </StackPanel>
-    </DockPanel>
+
+        </DockPanel>
+        <Image x:Name="image" Height="347" Canvas.Left="240" Canvas.Top="52" Width="450" Source="configuratorBg.png"/>
+    </Canvas>
 </Window>

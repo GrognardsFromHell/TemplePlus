@@ -186,6 +186,7 @@
     <Resource Include="toee_gog_icon.ico" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="configuratorBg.png" />
     <Resource Include="Installing.gif" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
