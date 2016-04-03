@@ -41,8 +41,9 @@ namespace TemplePlusConfig
 
         public IniViewModel()
         {
-            RenderWidth = (int)SystemParameters.PrimaryScreenWidth;
-            RenderHeight = (int)SystemParameters.PrimaryScreenHeight;
+            var screenSize = ScreenResolution.ScreenSize;
+            RenderWidth = (int)screenSize.Width;
+            RenderHeight = (int)screenSize.Height;
             PointBuyPoints = 25;
             MaxLevel = 10;
         }
