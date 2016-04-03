@@ -1812,7 +1812,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeProjectileDestroyed, // Used to stop the particle effects for arrows
 	dispType57, // Unused
 	dispType58, // Unused
-	dispType59,
+	dispTypeGetAbilityLoss,
 
 	dispTypeGetAttackDice,
 	dispTypeGetLevel, // Class or Character Level (using stat enum)
