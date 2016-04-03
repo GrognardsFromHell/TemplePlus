@@ -51,9 +51,9 @@ namespace TemplePlusConfig
 
             // Auto detect an installation if the INI didnt exist, or if 
             // the path is not set in the ini
-            if (string.IsNullOrEmpty(InstallationDir.InstallationPath))
+            if (string.IsNullOrEmpty(_iniViewModel.InstallationPath))
             {
-                InstallationDir.AutoDetectInstallation();
+                _iniViewModel.AutoDetectInstallation();
             }
         }
 

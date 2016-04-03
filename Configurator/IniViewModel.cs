@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using IniParser.Model;
+using Microsoft.Win32;
 
 namespace TemplePlusConfig
 {
@@ -106,6 +107,25 @@ namespace TemplePlusConfig
         {
             get { return (int)GetValue(MaxLevelProperty); }
             set { SetValue(MaxLevelProperty, value); }
+        }
+
+        /// <summary>
+        /// Tries to find an installation directory based on common locations and the Windows registry.
+        /// </summary>
+        public void AutoDetectInstallation()
+        {
+            var gogKey = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\\GOG.com\\Games\\1207658889");
+            var gogPath = gogKey?.GetValue("PATH", null) as string;
+
+            if (gogPath != null)
+            {
+                var gogStatus = InstallationDirValidator.Validate(gogPath);
+                if (gogStatus.Valid)
+                {
+                    InstallationPath = gogPath;
+                }
+            }
+
         }
 
         public void LoadFromIni(IniData iniData)
