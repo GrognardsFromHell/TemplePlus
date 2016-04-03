@@ -116,7 +116,7 @@ public:
 	
 	void apply() override 
 	{
-		if (config.usingCo8) {
+		if (temple::Dll::GetInstance().HasCo8Hooks()) {
 			writeHex(0x1011DD4D, "90 90 90 90 90"); // disabling stat text draw calls
 		}
 

@@ -216,9 +216,6 @@
     <ClCompile Include="hotkeys.cpp">
       <Filter>ui</Filter>
     </ClCompile>
-    <ClCompile Include="startup\installationdir.cpp" />
-    <ClCompile Include="startup\installationdirpicker.cpp" />
-    <ClCompile Include="startup\installationdirs.cpp" />
     <ClCompile Include="fixes\sector_cache_size.cpp" />
     <ClCompile Include="fixes\light_load.cpp" />
     <ClCompile Include="tig\tig_startup.cpp">
@@ -560,10 +557,7 @@
     <ClInclude Include="hotkeys.h">
       <Filter>ui</Filter>
     </ClInclude>
-    <ClInclude Include="startup\installationdir.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="startup\installationdirpicker.h" />
-    <ClInclude Include="startup\installationdirs.h" />
     <ClInclude Include="tig\tig_startup.h">
       <Filter>tig</Filter>
     </ClInclude>

@@ -36,6 +36,12 @@ namespace temple {
 		void Unload();
 
 		bool HasBeenRebased();
+		
+		/**
+		 * Checks if the DLL has the Co8 save / load hooks.
+		 */
+		bool HasCo8Hooks();
+
 		std::wstring FindConflictingModule();
 		void ReserveMemoryRange();
 

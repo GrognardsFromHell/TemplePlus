@@ -69,25 +69,6 @@ namespace TemplePlusConfig
             }
         }
 
-        /// <summary>
-        /// Tries to find an installation directory based on common locations and the Windows registry.
-        /// </summary>
-        public void AutoDetectInstallation()
-        {
-            var gogKey = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\\GOG.com\\Games\\1207658889");
-            var gogPath = gogKey?.GetValue("PATH", null) as string;
-
-            if (gogPath != null)
-            {
-                var gogStatus = InstallationDirValidator.Validate(gogPath);
-                if (gogStatus.Valid)
-                {
-                    InstallationPath = gogPath;
-                }
-            }
-
-        }
-
         private void BrowseButton_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new CommonOpenFileDialog

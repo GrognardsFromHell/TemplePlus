@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using IniParser.Model;
+using Microsoft.Win32;
 
 namespace TemplePlusConfig
 {
@@ -36,16 +37,14 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty MaxLevelProperty = DependencyProperty.Register(
             "MaxLevel", typeof(int), typeof(IniViewModel), new PropertyMetadata(default(int)));
 
-        public static readonly DependencyProperty UsingCo8Property = DependencyProperty.Register(
-           "UsingCo8", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
-
         public IEnumerable<HpOnLevelUpType> HpOnLevelUpTypes => Enum.GetValues(typeof (HpOnLevelUpType))
             .Cast<HpOnLevelUpType>();
 
         public IniViewModel()
         {
-            RenderWidth = (int)SystemParameters.PrimaryScreenWidth;
-            RenderHeight = (int)SystemParameters.PrimaryScreenHeight;
+            var screenSize = ScreenResolution.ScreenSize;
+            RenderWidth = (int)screenSize.Width;
+            RenderHeight = (int)screenSize.Height;
             PointBuyPoints = 25;
             MaxLevel = 10;
         }
@@ -110,23 +109,29 @@ namespace TemplePlusConfig
             set { SetValue(MaxLevelProperty, value); }
         }
 
-        public bool UsingCo8
+        /// <summary>
+        /// Tries to find an installation directory based on common locations and the Windows registry.
+        /// </summary>
+        public void AutoDetectInstallation()
         {
-            get
+            var gogKey = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\\GOG.com\\Games\\1207658889");
+            var gogPath = gogKey?.GetValue("PATH", null) as string;
+
+            if (gogPath != null)
             {
-                return (bool)GetValue(UsingCo8Property);
+                var gogStatus = InstallationDirValidator.Validate(gogPath);
+                if (gogStatus.Valid)
+                {
+                    InstallationPath = gogPath;
+                }
             }
-            set
-            {
-                SetValue(UsingCo8Property, value);
-            }
+
         }
 
         public void LoadFromIni(IniData iniData)
         {
             var tpData = iniData["TemplePlus"];
             InstallationPath = tpData["toeeDir"];
-            UsingCo8 = tpData["usingCo8"] == "true";
 
             DisableAutomaticUpdates = tpData["autoUpdate"] != "true";
             if (tpData["hpOnLevelup"] != null)
@@ -201,7 +206,6 @@ namespace TemplePlusConfig
             tpData["windowHeight"] = RenderHeight.ToString();
             tpData["softShadows"] = SoftShadows ? "true" : "false";
             tpData["maxLevel"] = MaxLevel.ToString();
-            tpData["usingCo8"] = UsingCo8 ? "true": "false";
         }
     }
 

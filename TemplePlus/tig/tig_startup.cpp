@@ -10,6 +10,8 @@
 #include <temple/soundsystem.h>
 #include <temple/moviesystem.h>
 
+#include <temple/dll.h>
+
 #include "mainwindow.h"
 #include "graphics/legacyvideosystem.h"
 #include "fonts/fonts.h"
@@ -223,7 +225,7 @@ void TigInitializer::LoadDataFiles() {
 		logger->trace("Unable to add archive tpdata\\clearances.dat");
 	}
 
-	if (config.usingCo8)
+	if (temple::Dll::GetInstance().HasCo8Hooks())
 	{
 		logger->info("Registering Co8 file fixes tpdata\\co8fixes.dat");
 		result = tio_path_add(fmt::format("{}\\co8fixes.dat", tpDataPath).c_str());
@@ -281,17 +283,8 @@ static TigConfig createTigConfig(HINSTANCE hInstance) {
 	// tigConfig.wndproc = (int)windowproc;
 	tigConfig.framelimit = 100;
 	// NOTE: These are the actual render sizes, we use a different size for the window / presentation
-	if (config.firstRun)
-	{
-		tigConfig.width = GetSystemMetrics(SM_CXSCREEN);;
-		tigConfig.height = GetSystemMetrics(SM_CYSCREEN);
-	} else
-	{
-		tigConfig.width = config.renderWidth;
-		tigConfig.height = config.renderHeight;
-
-	}
-	
+	tigConfig.width = config.renderWidth;
+	tigConfig.height = config.renderHeight;
 	tigConfig.bpp = 32;
 	tigConfig.hinstance = hInstance;
 	tigConfig.findSound = tigInternal.FindSound;

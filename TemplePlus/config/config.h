@@ -39,7 +39,6 @@ struct TemplePlusConfig
 	bool lockCursor = true; // When in fullscreen, lock cursor
 	int windowWidth = 1024;
 	int windowHeight = 768;
-	bool firstRun = true;
 	int renderWidth = 800; // will set to window size on first run
 	int renderHeight = 600;
 	std::wstring toeeDir;
@@ -70,7 +69,6 @@ struct TemplePlusConfig
 	int pointBuyPoints = 25; // number of Point Buy points at chargen
 	int maxPCs = 5; // max number of PCs in the party
 	bool maxPCsFlexible = true; // makes the party PC/NPC composition fluid
-	bool usingCo8 = true;
 	int maxLevel = 20; // maximum character level
 	std::string hpOnLevelup = "Normal" ;
 

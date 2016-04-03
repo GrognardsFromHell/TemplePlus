@@ -5,9 +5,6 @@
 #include "temple_functions.h"
 #include "util/fixes.h"
 #include "config/config.h"
-#include "startup/installationdir.h"
-#include "startup/installationdirs.h"
-#include "startup/installationdirpicker.h"
 #include "util/folderutils.h"
 
 #include "util/datadump.h"
@@ -17,46 +14,12 @@ void InitLogging(const std::wstring &logFile);
 // Defined in temple_main.cpp for now
 int TempleMain(HINSTANCE hInstance, const string& commandLine);
 
-InstallationDir GetInstallationDir(gsl::not_null<bool*> userCancelled);
-
 // This is required to get "new style" common dialogs like message boxes
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
-void SetIniPath() {
-
-	auto userDataFolder = GetUserDataFolder();
-
-	auto iniPath = userDataFolder + L"TemplePlus.ini";
-
-	if (!PathFileExists(iniPath.c_str())) {
-		// No configuration file exists yet.
-		// Do we have a companion configuration utility that we can launch?
-		wchar_t configUtilPath[MAX_PATH];
-		GetModuleFileNameW(nullptr, configUtilPath, MAX_PATH);
-		PathRemoveFileSpec(configUtilPath);
-		PathAppend(configUtilPath, L"TemplePlusConfig.exe");
-
-		if (PathFileExists(configUtilPath)) {
-			STARTUPINFO sInfo;
-			ZeroMemory(&sInfo, sizeof(sInfo));
-			PROCESS_INFORMATION pInfo;
-			ZeroMemory(&pInfo, sizeof(pInfo));
-			if (CreateProcess(configUtilPath, nullptr, nullptr, nullptr, FALSE,
-				0, nullptr, nullptr, &sInfo, &pInfo)) {
-				MsgWaitForMultipleObjects(1, &pInfo.hProcess, FALSE, INFINITE, 0);
-				CloseHandle(pInfo.hThread);
-				CloseHandle(pInfo.hProcess);
-			}
-		}
-
-		// If the above call to the config utility created a config file, we will just pass through
-		// but if not, we will pass through (and may fail)
-	}
-	
-	config.SetPath(ucs2_to_local(iniPath));
-}
+static void SetIniPath();
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int showCmd) {
 
@@ -86,14 +49,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	logger->info("Version: {}", GetTemplePlusVersion());
 	logger->info("Commit: {}", GetTemplePlusCommitId());
 
-	bool userCancelled;
-	auto toeeDir = GetInstallationDir(&userCancelled);
-
-	if (userCancelled) {
-		return 0; // Not an error, the user cancelled
-	}
-
-	dll.Load(toeeDir.GetDirectory());
+	dll.Load(config.toeeDir);
 
 	if (dll.HasBeenRebased()) {
 		auto moduleName = dll.FindConflictingModule();
@@ -117,33 +73,57 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	return result;
 }
 
-InstallationDir GetInstallationDir(gsl::not_null<bool*> userCancelled) {
-	*userCancelled = false;
+static void SetIniPath() {
 
-	if (!config.toeeDir.empty()) {
-		InstallationDir configuredDir(config.toeeDir);
-		if (configuredDir.IsUsable()) {
-			return configuredDir;
+	auto userDataFolder = GetUserDataFolder();
+
+	auto iniPath = userDataFolder + L"TemplePlus.ini";
+
+	if (!PathFileExists(iniPath.c_str())) {
+		// No configuration file exists yet.
+		// Do we have a companion configuration utility that we can launch?
+		wchar_t configUtilPath[MAX_PATH];
+		GetModuleFileNameW(nullptr, configUtilPath, MAX_PATH);
+		PathRemoveFileSpec(configUtilPath);
+		PathAppend(configUtilPath, L"TemplePlusConfig.exe");
+
+		// Launch the configuration utility if it's missing
+		if (PathFileExists(configUtilPath)) {
+			STARTUPINFO sInfo;
+			ZeroMemory(&sInfo, sizeof(sInfo));
+			PROCESS_INFORMATION pInfo;
+			ZeroMemory(&pInfo, sizeof(pInfo));
+			if (CreateProcess(configUtilPath, nullptr, nullptr, nullptr, FALSE,
+				0, nullptr, nullptr, &sInfo, &pInfo)) {
+				MsgWaitForMultipleObjects(1, &pInfo.hProcess, FALSE, INFINITE, 0);
+				CloseHandle(pInfo.hThread);
+				CloseHandle(pInfo.hProcess);
+			}
+			else {
+				MessageBox(
+					nullptr,
+					L"The configuration file TemplePlus.ini is missing and the configuration utility TemplePlusConfig.exe could not be launched.",
+					L"Configuration Error",
+					MB_OK | MB_ICONERROR
+					);
+				exit(-1);
+			}
+
+			// If no configuration file exist now, the user probably cancelled
+			if (!PathFileExists(iniPath.c_str())) {
+				exit(0);
+			}
+		}
+		else {
+			MessageBox(
+				nullptr,
+				L"The configuration file TemplePlus.ini is missing and the configuration utility TemplePlusConfig.exe could not be found.",
+				L"Configuration Error",
+				MB_OK | MB_ICONERROR
+				);
+			exit(-1);
 		}
 	}
 
-	auto toeeDirs = InstallationDirs::FindInstallations();
-
-	InstallationDir toeeDir;
-	if (toeeDirs.empty()) {
-		// None could be found automatically, let the user pick
-		toeeDir = InstallationDirPicker::Pick(userCancelled);
-	} else {
-		toeeDir = toeeDirs[0];
-	}
-
-	// Save the new directory only if the user didn't cancel selection
-	if (!*userCancelled) {
-		config.toeeDir = toeeDir.GetDirectory();
-		config.usingCo8 = toeeDir.IsCo8();
-		config.Save();
-	}
-
-	return toeeDir;
-
+	config.SetPath(ucs2_to_local(iniPath));
 }

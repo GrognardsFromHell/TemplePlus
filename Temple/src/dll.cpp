@@ -7,6 +7,8 @@
 #include <infrastructure/logging.h>
 #include <infrastructure/stringutil.h>
 
+#include "../src/hde/hde32.h"
+
 #include "temple/dll.h"
 
 namespace temple {
@@ -70,9 +72,11 @@ namespace temple {
 		void SetDebugOutputCallback(std::function<void(const std::string&)> function);
 		int mDeltaFromVanilla = 0;
 		HINSTANCE mDllHandle = nullptr;
-
+		bool mCo8HooksPresent = false;
 
 		std::function<void(const std::string& text)> mDebugOutputCallback;
+
+		bool DetectCo8Hooks();
 
 	private:
 		// This is injected into ToEE
@@ -82,10 +86,12 @@ namespace temple {
 
 	DllImpl::DllImpl(const std::wstring& installationDir) {
 
-		auto dllPath(installationDir + L"temple.dll");
+		wchar_t dllPath[MAX_PATH];
+		wcscpy_s(dllPath, installationDir.c_str());
+		PathAppend(dllPath, L"temple.dll");
 
 		// Does it even exist?
-		if (!PathFileExists(dllPath.c_str())) {
+		if (!PathFileExists(dllPath)) {
 			auto msg(fmt::format("Temple.dll does not exist: {}", ucs2_to_utf8(dllPath)));
 			throw TempleException(msg);
 		}
@@ -93,7 +99,7 @@ namespace temple {
 		SetCurrentDirectory(installationDir.c_str());
 
 		// Try to load it
-		mDllHandle = LoadLibrary(dllPath.c_str());
+		mDllHandle = LoadLibrary(dllPath);
 		if (!mDllHandle) {
 			throw TempleException("Unable to load temple.dll from {}: {}",
 			                      ucs2_to_utf8(dllPath), GetLastWin32Error());
@@ -110,6 +116,7 @@ namespace temple {
 			auto msg(fmt::format("Unable to initialize MinHook: {}", MH_StatusToString(status)));
 			throw TempleException(msg);
 		}
+
 	}
 
 	DllImpl::~DllImpl() {
@@ -164,6 +171,8 @@ namespace temple {
 
 		mImpl = std::make_shared<DllImpl>(installationPath);
 
+		mImpl->mCo8HooksPresent = mImpl->DetectCo8Hooks();
+
 		// Perform post-load actions
 		mImpl->ReplaceAllocFunctions();
 		mImpl->ReplaceDebugFunctions();
@@ -177,6 +186,10 @@ namespace temple {
 
 	bool Dll::HasBeenRebased() {
 		return mImpl->mDeltaFromVanilla != 0;
+	}
+
+	bool Dll::HasCo8Hooks() {
+		return mImpl->mCo8HooksPresent;
 	}
 
 	std::wstring Dll::FindConflictingModule() {
@@ -296,6 +309,36 @@ namespace temple {
 		if (callback) {
 			callback(message);
 		}
+	}
+
+	bool DllImpl::DetectCo8Hooks()
+	{
+		// Check if there's a redirect call at the known positions inside the DLL		
+		// Call @ 10002D29 should redirect to 11EB6966 (Load hook)		
+		hde32s instr;
+		auto code = GetPointer<void>(0x10002D29);
+		hde32_disasm(code, &instr);
+		if (instr.opcode != 0xE8
+			|| instr.imm.imm32 != (uint32_t)temple::GetPointer<void>(0x11EB6966) - ((uint32_t)code + instr.len)) {
+			return false;
+		}
+
+		// Call @ 10004865 should redirect to 11EB6940 (Save hook)
+		code = GetPointer<void*>(0x10004865);
+		hde32_disasm(code, &instr);
+		if (instr.opcode != 0xE8
+			|| instr.imm.imm32 != (uint32_t)temple::GetPointer<void>(0x11EB6940) - ((uint32_t)code + instr.len)) {
+			return false;
+		}
+
+		// Check some static strings @ 11EB6920
+		static const char *sCo8HookStrs = "_co8init\0load\0save";
+		if (memcmp(GetPointer<void*>(0x11EB6920), sCo8HookStrs, sizeof(sCo8HookStrs))) {
+			return false;
+		}
+
+		logger->info("Detected Co8 save/load hook in loaded DLL");
+		return true;
 	}
 
 }
