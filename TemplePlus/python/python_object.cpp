@@ -745,9 +745,19 @@ static PyObject * PyObjHandle_InventoryItem(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_Attack(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		logger->warn("Python attack called with null object");
+		Py_RETURN_NONE;
+	}
+
 	objHndl target;
 	if (!PyArg_ParseTuple(args, "O&:objhndl.attack", &ConvertObjHndl, &target)) {
 		return 0;
+	}
+
+	if (!target){
+		logger->warn("Python attack called with null target");
+		Py_RETURN_NONE;
 	}
 
 	// This is pretty odd since it causes the opposite oO
@@ -768,11 +778,19 @@ static PyObject* PyObjHandle_Attack(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_TurnTowards(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle) {
+		logger->warn("Python turn_towards called with OBJ_HANDLE_NULL object");
+		Py_RETURN_NONE;
+	}
+	
 	objHndl target;
 	if (!PyArg_ParseTuple(args, "O&:objhndl.turn_towards", &ConvertObjHndl, &target)) {
 		return 0;
 	}
-
+	if (!target){
+		logger->warn("Python turn_towards called with OBJ_HANDLE_NULL target");
+		Py_RETURN_NONE;
+	}
 	auto targetRot = objects.GetRotationTowards(self->handle, target);
 	animationGoals.PushRotate(self->handle, targetRot);
 	Py_RETURN_NONE;
