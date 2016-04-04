@@ -1752,12 +1752,22 @@ int32_t ActionSequenceSystem::InterruptNonCounterspell(D20Actn* d20a)
 		
 		if (readiedAction->readyType != RV_Counterspell) {
 
-			if (d20a->d20ActType == D20A_READIED_INTERRUPT || d20a->d20ActType == D20A_CAST_SPELL) {
-				auto isFriendly = critterSys.IsFriendly(readiedAction->interrupter, d20a->d20ATarget);
-				auto sharedAlleg = critterSys.AllegianceShared(readiedAction->interrupter, d20a->d20ATarget);
+			if (d20a->d20ActType == D20A_CAST_SPELL){
+				if (d20a->d20APerformer && readiedAction->interrupter){
+					auto isFriendly = critterSys.IsFriendly(readiedAction->interrupter, d20a->d20APerformer);
+					auto sharedAlleg = critterSys.AllegianceShared(readiedAction->interrupter, d20a->d20APerformer);
+					if (!sharedAlleg && !isFriendly)
+						break;
+				}	
+			}
 
-				if (!sharedAlleg && !isFriendly)
-					break;
+			if (d20a->d20ActType == D20A_READIED_INTERRUPT ) {
+				if (d20a->d20ATarget && readiedAction->interrupter) {
+					auto isFriendly = critterSys.IsFriendly(readiedAction->interrupter, d20a->d20ATarget);
+					auto sharedAlleg = critterSys.AllegianceShared(readiedAction->interrupter, d20a->d20ATarget);
+					if (!sharedAlleg && !isFriendly)
+						break;
+				}
 			}
 		}
 
@@ -1856,7 +1866,7 @@ ReadiedActionPacket* ActionSequenceSystem::ReadiedActionGetNext(ReadiedActionPac
 		{
 			case RV_Spell:
 			case RV_Counterspell:
-				if (!critterSys.IsFriendly(d20a->d20APerformer, readiedActionCache[i].interrupter))
+				if (critterSys.IsFriendly(d20a->d20APerformer, readiedActionCache[i].interrupter))
 					continue;
 				if (d20a->d20ActType == D20A_CAST_SPELL)
 					return &readiedActionCache[i];
