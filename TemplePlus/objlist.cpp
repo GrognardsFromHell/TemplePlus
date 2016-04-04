@@ -6,18 +6,22 @@
 
 static struct ObjListAddresses : temple::AddressTable {
 	void(__cdecl *ObjListTile)(locXY loc, int flags, ObjListResult &result);
+	void(__cdecl *ObjListRect)(TileRect &trect, ObjectListFilter olcCritters, ObjListResult& result);
 	void(__cdecl *ObjListVicinity)(locXY loc, int flags, ObjListResult &result);
 	void(__cdecl *ObjListRadius)(LocAndOffsets loc, float radius, float unk1, float unk2, int flags, ObjListResult &result);
 	void(__cdecl *ObjListFollowers)(objHndl critter, ObjListResult &result);
 	void(__cdecl *ObjListFree)(ObjListResult &result);
-
+	
 	ObjListAddresses() {
 		rebase(ObjListTile, 0x1001E970);
+		rebase(ObjListRect, 0x1001ECF0);
 		rebase(ObjListVicinity, 0x1001F1C0);
 		rebase(ObjListRadius, 0x10022E50);
 		rebase(ObjListFollowers, 0x1001F450);
 		rebase(ObjListFree, 0x1001F2C0);
 	}
+
+	
 } addresses;
 
 ObjList::ObjList() {
@@ -31,6 +35,13 @@ ObjList::~ObjList() {
 void ObjList::ListTile(locXY loc, int flags) {
 	FreeResult();
 	addresses.ObjListTile(loc, flags, mResult);
+	mHasToFree = true;
+}
+
+void ObjList::ListRect(TileRect& trect, ObjectListFilter olcCritters)
+{
+	FreeResult();
+	addresses.ObjListRect(trect, olcCritters, mResult);
 	mHasToFree = true;
 }
 

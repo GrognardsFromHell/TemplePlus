@@ -18,7 +18,9 @@ struct TurnBasedSys : temple::AddressTable
 	unsigned GetInitiativeListLength();
 	int InitiativeRefresh(int initiative, int initiativeNext);
 	void InitiativeListNextActor(); // move initiative to next actor
-	int GetInitiativeListIdx();
+	int GetInitiativeListIdx() const;
+	void AddToInitiative(objHndl handle) const;
+	bool IsInInitiativeList(objHndl handle) const;
 };
 
 extern TurnBasedSys tbSys;

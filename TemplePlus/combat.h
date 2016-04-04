@@ -39,7 +39,8 @@ struct LegacyCombatSystem : temple::AddressTable {
 	objHndl * GetHostileCombatantList(objHndl obj, int* count);
 	bool HasLineOfAttack(objHndl obj, objHndl target); // can shoot or attack target (i.e. target isn't behind a wall or sthg)
 
-	
+
+	void AddToInitiativeWithinRect(objHndl objHndl) const; // adds critters to combat initiative around obj
 	void EndTurn();
 	void CombatSubturnEnd();
 	void Subturn();
