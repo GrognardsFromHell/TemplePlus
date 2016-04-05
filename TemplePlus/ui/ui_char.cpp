@@ -794,8 +794,8 @@ void CharUiSystem::TotalWeightOutputBtnTooltip(int x, int y, int* widId)
 	style.bgColor = const_cast<ColorRect*>(&cRect1);
 	const ColorRect cRectShadow(XMCOLOR(0xFF000000));
 	style.shadowColor = const_cast<ColorRect*>(&cRectShadow);
-	const ColorRect cRectText(XMCOLOR(0xFFFFFFFF));
-	style.textColor = const_cast<ColorRect*>(&cRectText);
+	const ColorRect cRectText[3] = { ColorRect( 0xFFFFFFFF ), ColorRect(0xFFFFFF66), ColorRect(0xFFF33333) };
+	style.textColor = const_cast<ColorRect*>(cRectText);
 
 	style.flags = 0xC08;
 	style.kerning = 2;

@@ -22,6 +22,8 @@
 #include <infrastructure/keyboard.h>
 #include <graphics/mdfmaterials.h>
 #include <graphics/shaperenderer2d.h>
+#include "ui_tooltip.h"
+#include "ui_render.h"
 
 UiIntgameTurnbased uiIntgameTb;
 
@@ -59,6 +61,7 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable {
 	WidgetType1** uiIntgameMainWnd;
 	int* uiIntgameWaypointMode;
 	objHndl* intgameActor;
+	objHndl* intgameFocusObj; // hovered char, more or less
 	objHndl* uiIntgameTargetObjFromPortraits;
 	LocAndOffsets* locFromScreenLoc;
 	objHndl* uiIntgameObjFromRaycast;
@@ -100,6 +103,7 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable {
 		rebase(aooShaderLocations, 0x10B3B948);
 		rebase(aooShaderLocationsNum, 0x10B3D598);
 		rebase(cursorState, 0x10B3D5AC);
+		rebase(intgameFocusObj, 0x10BE60D8);
 
 		rebase(locFromScreenLoc, 0x10C040D0);
 		rebase(screenYfromMouseEvent, 0x10C040E0);
@@ -175,7 +179,101 @@ public:
 } uiIntgameTurnbasedReplacements;
 
 void UiIntegameTurnbasedRepl::IntgameTurnbasedRender(int widId) {
-	orgIntgameTurnbasedRender(widId);
+
+	auto widEntered = *intgameAddresses.uiIntgameWidgetEnteredForRender;
+	if (!widEntered){
+		*intgameAddresses.intgameFocusObj = 0i64;
+	}
+
+
+	if (uiPicker.PickerActiveCheck()){
+
+		auto showPreview = 0;
+		if (infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) || infrastructure::gKeyboard.IsKeyPressed(VK_RMENU))
+			showPreview = UITB_ShowPathPreview;
+		int flags = (*intgameAddresses.uiIntgameWaypointMode) || showPreview;
+		HourglassUpdate(*intgameAddresses.uiIntgameAcquireByRaycastOn, *intgameAddresses.uiIntgameSelectionConfirmed, flags);
+		return;
+	}
+
+
+	if (widEntered){
+		auto showPreview = 0;
+		if (infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) || infrastructure::gKeyboard.IsKeyPressed(VK_RMENU))
+			showPreview = UITB_ShowPathPreview;
+		int flags = (*intgameAddresses.uiIntgameWaypointMode) || showPreview;
+		HourglassUpdate(*intgameAddresses.uiIntgameAcquireByRaycastOn, *intgameAddresses.uiIntgameSelectionConfirmed, flags);
+
+		if (combatSys.isCombatActive()){
+
+			// display hovered character tooltip
+			std::string tooltipText;
+			tooltipText.resize(3000);
+			auto getTooltipTextFromIntgameUpdateOutput = temple::GetRef<bool(__cdecl)(char*)>(0x1008B6B0);
+
+			if (getTooltipTextFromIntgameUpdateOutput(&tooltipText[0])){
+
+				auto ttLen = tooltipText.size();
+
+				// trim last \n
+				if (ttLen > 0 && tooltipText[ttLen - 1] == '\n')
+					tooltipText[ttLen - 1] = 0;
+
+				auto y = *intgameAddresses.screenYfromMouseEvent;
+				auto x = *intgameAddresses.screenXfromMouseEvent;
+
+				auto ttStyle = tooltips.GetStyle(0);
+				UiRenderer::PushFont(ttStyle.fontName, ttStyle.fontSize);
+				TigTextStyle ttTextStyle;
+
+
+				ColorRect textColor(XMCOLOR(-1));
+				ColorRect shadowColor(XMCOLOR(0xFF000000));
+				ColorRect bgColor(XMCOLOR(0x99111111));
+				ttTextStyle.kerning = 2;
+				ttTextStyle.tracking = 2;
+				ttTextStyle.flags = 0xC08;
+				ttTextStyle.field2c = -1;
+				ttTextStyle.colors4 = nullptr;
+				ttTextStyle.colors2 = nullptr;
+				ttTextStyle.field0 = 0;
+				ttTextStyle.leading = 0;
+				ttTextStyle.textColor = &textColor;
+				ttTextStyle.shadowColor = &shadowColor;
+				ttTextStyle.bgColor = &bgColor;
+
+				TigRect extents = UiRenderer::MeasureTextSize(tooltipText, ttTextStyle);
+				extents.x = x;
+				if (y > extents.height)
+					extents.y = y - extents.height;
+				else
+					extents.y = y;
+				UiRenderer::RenderText(tooltipText, extents, ttTextStyle);
+				UiRenderer::PopFont();
+			}
+
+
+			auto drawThreatRanges = temple::GetRef<void(__cdecl)()>(0x10173C00);
+			drawThreatRanges();
+
+			// draw circle at waypoint / destination location
+			if (*intgameAddresses.uiIntgameWaypointMode){
+				auto actor = tbSys.turnBasedGetCurrentActor();
+				auto actorRadius = objects.GetRadius(actor);
+				LocAndOffsets loc;
+				loc = *intgameAddresses.uiIntgameWaypointLoc;
+				intgameAddresses.RenderCircle(loc, 1.0, 0x80008000, 0xFF00FF00, actorRadius);
+			}
+
+		}
+		return;
+	}
+
+	// else
+	*intgameAddresses.cursorState = 0;
+	intgameAddresses.CursorRenderUpdate();
+
+	// orgIntgameTurnbasedRender(widId);
 }
 
 void UiIntegameTurnbasedRepl::UiIntgameBackupCurSeq() {
