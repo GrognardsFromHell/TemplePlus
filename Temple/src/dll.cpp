@@ -1,6 +1,9 @@
 #include <platform/windows.h>
 #include <Shlwapi.h>
 #include <MinHook.h>
+
+// This is for vista compatibility
+#define PSAPI_VERSION 1
 #include <psapi.h>
 
 #include <infrastructure/exception.h>
