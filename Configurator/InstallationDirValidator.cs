@@ -18,7 +18,7 @@ namespace TemplePlusConfig
             "pytoee22.dll",
             "tig.dat",
             "zlib-1.2.1.dll",
-            "msvcr71.dll",
+            "msvcr70.dll",
             "binkw32.dll"
         };
 
