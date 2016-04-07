@@ -53,6 +53,10 @@ public:
 		// Fix for Shocking Grasp doing d8 instead of d6 damage
 		char sgWriteVal = 6;
 		write(0x100DD9DF + 1, &sgWriteVal, sizeof(char));
+
+		// Fix for Restoration spell not curing Charisma damage (it iterated from 0 to 4 instead of 0 to 5)
+		char restoWriteVal = 6;
+		write(0x100CF637 + 2, &restoWriteVal, sizeof(char));
 	}
 } spellConditionFixes;
 

@@ -759,12 +759,6 @@ public:
 		write(0x102EE2E0, &ptrToCraftRod, sizeof(ptrToCraftRod));
 
 		write(0x102EE310, &ptrToCraftWondrous, sizeof(ptrToCraftWondrous));
-		if (config.newFeatureTestMode)
-		{
-			char * testbuf[100];
-			read(0x102EE310, testbuf, 4);
-			logger->info("New Feature Test Mode: Testing Item Creation Function Replacement");
-		}
 
 		write(0x102AAE28, &ptrToCraftStaff, sizeof(ptrToCraftStaff));
 		write(0x102AADF8, &ptrToForgeRing, sizeof(ptrToForgeRing));

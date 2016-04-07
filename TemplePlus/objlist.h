@@ -91,6 +91,12 @@ public:
 	*/
 	void ListTile(locXY loc, int flags);
 
+
+	/*
+		search within worldspace rect
+	*/
+	void ListRect(TileRect &trect, ObjectListFilter olcCritters);
+
 	/*
 		I believe this searches for all objects that would be visible if the screen was
 		centered on the given tile.
@@ -124,7 +130,7 @@ public:
 	int size();
 	objHndl get(int idx) {
 		auto item = mResult.objects;
-		for (int i = 1; i <= idx ; i++) { // tsk, tsk, tsk Pugmeister :D
+		for (int i = 1; i <= idx ; i++) {
 			item = item->next;
 		}
 		return item->handle;
@@ -132,6 +138,7 @@ public:
 	objHndl operator[](int idx) {
 		return get(idx);
 	}
+
 
 private:
 	ObjListResult mResult;

@@ -90,12 +90,7 @@ public:
 		writeHex(0x102C9F60, "0F 00 00 00 13 00 00 00");
 		writeHex(0x102C9FA0, "0F 00 00 00 13 00 00 00");
 		writeHex(0x102C9FE0, "0F 00 00 00 13 00 00 00");
-		if (config.newFeatureTestMode)
-		{
-			char * testbuf[8];
-			read(0x102C9E20, testbuf, 8);
-			logger->info("New Feature Test: Re-implementing SpellSlinger's Rogue Feat Fix");
-		}
+		
 		int writeNumFeats = NUM_FEATS;
 
 		// overwrite the iteration limits for a bunch of ui loops

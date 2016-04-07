@@ -24,6 +24,7 @@ struct DispIoD20ActionTurnBased; // 12
 struct DispIoMoveSpeed; //13
 struct DispIOBonusListAndSpellEntry; // 14
 struct DispIoObjEvent; // 17
+struct DispIoAbilityLoss; // 19
 struct DispIoAttackDice; // 20
 struct DispIoImmunity; //23
 struct DispIoEffectTooltip; // 24
@@ -364,6 +365,24 @@ struct DispIoObjEvent : DispIO // type 17
 };
 
 
+struct DispIoAbilityLoss: DispIO//  type 19
+{
+	int result;
+	Stat statDamaged;
+	int fieldC;
+	int spellId;
+	int flags; // 8 - marked at the beginning of dispatch; 0x10 - checks against this in the Temp/Perm ability damage
+
+	DispIoAbilityLoss(){
+		dispIOType = dispIOType19;
+		result = 0;
+		statDamaged = Stat::stat_strength;
+		fieldC = 0;
+		spellId = 0;
+		flags = 0;
+	}
+
+};
 
 struct DispIoAttackDice : DispIO // type 20
 {

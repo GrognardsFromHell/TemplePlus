@@ -340,6 +340,9 @@
       <Filter>ui</Filter>
     </ClCompile>
     <ClCompile Include="protos.cpp" />
+    <ClCompile Include="mod_support.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -640,6 +643,9 @@
     <ClInclude Include="tutorial.h" />
     <ClInclude Include="ui\ui_tooltip.h">
       <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="mod_support.h">
+      <Filter>Mods and Fixes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

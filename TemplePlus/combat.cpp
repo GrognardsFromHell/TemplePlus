@@ -24,6 +24,7 @@
 #include "gamesystems/gamesystems.h"
 #include "maps.h"
 #include "tutorial.h"
+#include "objlist.h"
 
 
 struct CombatSystemAddresses : temple::AddressTable
@@ -127,6 +128,11 @@ public:
 		replaceFunction<BOOL(__cdecl)()>(0x100EBB90, []()->BOOL
 		{
 			return combatSys.IsBrawlInProgress();
+		});
+
+		// AddToInitiativeWithinRect
+		replaceFunction<void(__cdecl)(objHndl)>(0x10062AC0, [](objHndl handle){
+			combatSys.AddToInitiativeWithinRect(handle);
 		});
 			
 	}
@@ -490,6 +496,54 @@ bool LegacyCombatSystem::HasLineOfAttack(objHndl obj, objHndl target)
 	return 0;
 }
 
+void LegacyCombatSystem::AddToInitiativeWithinRect(objHndl handle) const
+{
+
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	auto loc = obj->GetLocation();
+	ObjList objlist;
+	TileRect trect;
+	trect.x1 = loc.locx - 18;
+	trect.x2 = loc.locx + 18;
+	trect.y1 = loc.locy - 18;
+	trect.y2 = loc.locy + 18;
+
+	auto& unk = temple::GetRef<int>(0x102BE130);
+	unk = 18; // no idea what this is, looks like part of a 3x6 matrix
+
+	objlist.ListRect(trect, OLC_CRITTERS );
+
+	for (int i = 0; i < objlist.size() ; i++){
+		auto resHandle = objlist[i];
+		if (!resHandle)
+			break;
+
+		// check if the object is ok to act (not dead, OF_OFF, OF_DONTDRAW (to prevent the naughty Co8 critters from getting into combat), destroyed , unconscious)
+		auto resObj = gameSystems->GetObj().GetObject(resHandle);
+		if (resObj->GetFlags() & ( OF_OFF | OF_DESTROYED | OF_DONTDRAW ))
+			continue;
+
+		if (critterSys.IsDeadOrUnconscious(resHandle))
+		{
+			continue;
+		}
+			
+
+		if (!tbSys.IsInInitiativeList(resHandle)){
+			auto critFlags = critterSys.GetCritterFlags(resHandle);
+			if (!(critFlags & OCF_COMBAT_MODE_ACTIVE) && !party.IsInParty(resHandle)) {
+				aiSys.AiProcess(resHandle); // todo: originally there was a dangling IsPerforming check in the function, should it be added to the conditions??
+			}
+		}
+
+		auto critFlags = critterSys.GetCritterFlags(resHandle);
+		if (critFlags & OCF_COMBAT_MODE_ACTIVE){
+			tbSys.AddToInitiative(resHandle);
+		}
+	}
+
+}
+
 void LegacyCombatSystem::TurnProcessAi(objHndl obj)
 {
 	//return addresses.TurnProcessing_100635E0(obj);
@@ -570,8 +624,8 @@ void LegacyCombatSystem::EndTurn()
 	tbSys.InitiativeListNextActor();
 
 	if (party.IsInParty(actor) && !actSeqSys.isPerforming(actor)){
-		static auto addToInitiativeWithinRect = temple::GetRef<void(__cdecl)(objHndl)>(0x10062AC0);
-		addToInitiativeWithinRect(actor);
+		//static auto addToInitiativeWithinRect = temple::GetRef<void(__cdecl)(objHndl)>(0x10062AC0);
+		AddToInitiativeWithinRect(actor);
 	}
 
 	// remove dead and OF_OFF from initiative

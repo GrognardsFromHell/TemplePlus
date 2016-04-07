@@ -100,6 +100,8 @@ namespace temple {
 		}
 
 		SetCurrentDirectory(installationDir.c_str());
+		SetDllDirectory(installationDir.c_str());
+
 
 		// Try to load it
 		mDllHandle = LoadLibrary(dllPath);

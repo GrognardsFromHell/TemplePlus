@@ -10,6 +10,7 @@
 #include "gamesystems/legacy.h"
 #include "util/savegame.h"
 #include <infrastructure/vfs.h>
+#include <mod_support.h>
 
 static struct GameLibLoadAddresses : temple::AddressTable {
 	/*
@@ -198,10 +199,19 @@ bool GameSystems::LoadGame(const string& filename) {
 	
 	ui.UpdatePartyUi();
 	
-	// Co8 load hook
-	auto loadHookArgs = Py_BuildValue("(s)", filename.c_str());
-	pythonObjIntegration.ExecuteScript("templeplus.savehook", "load", loadHookArgs);
-	Py_DECREF(loadHookArgs);
+	if (temple::Dll::GetInstance().HasCo8Hooks()){
+		// Co8 load hook
+		auto loadHookArgs = Py_BuildValue("(s)", filename.c_str());
+		pythonObjIntegration.ExecuteScript("templeplus.savehook", "load", loadHookArgs);
+		Py_DECREF(loadHookArgs);
+
+		if (modSupport.IsCo8NCEdition()){
+			modSupport.SetNCGameFlag(true);
+		} else
+		{
+			modSupport.SetNCGameFlag(false);
+		}
+	}
 
 	return true;
 }

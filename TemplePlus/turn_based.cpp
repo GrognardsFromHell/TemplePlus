@@ -91,20 +91,20 @@ int TurnBasedSys::InitiativeRefresh(int initiative, int initiativeNext)
 
 void TurnBasedSys::InitiativeListNextActor()
 {
+	logger->debug("InitiativeListNextActor: Actor {} ({}) finishing.", description.getDisplayName(*turnBasedCurrentActor), *turnBasedCurrentActor);
 	auto actorInitiative = objects.getInt32(*turnBasedCurrentActor, obj_f_initiative);
 	auto actorInitiativeIdx = party.ObjFindInGroupArray(groupInitiativeList, *turnBasedCurrentActor);
 	auto nextInitiativeIdx = actorInitiativeIdx + 1;
 	int initiativeListLen = GetInitiativeListLength();
 
-	if (nextInitiativeIdx >= initiativeListLen)
+	if (nextInitiativeIdx >= initiativeListLen) // time for next round
 	{
 		temple::GetRef<int>(0x10BCAD90) = 0; // surprise round
-		for (int i = 0; i < initiativeListLen; i++)
+		for (int i = 0; i < GetInitiativeListLength(); i++) // refreshing the init list length in case it changes
 		{
 			auto combatant = groupInitiativeList->GroupMembers[i];
 			auto dispatcher = objects.GetDispatcher(combatant);
-			if (dispatch.dispatcherValid(dispatcher))
-			{
+			if (dispatch.dispatcherValid(dispatcher)){
 				dispatch.DispatcherProcessor(dispatcher, dispTypeInitiative, 0, 0);
 			}	
 		}
@@ -118,7 +118,7 @@ void TurnBasedSys::InitiativeListNextActor()
 	*turnBasedCurrentActor = actorNext;
 	if (actorNext)
 	{
-		logger->debug("Turn Based actor changed to {} ({})", description.getDisplayName(actorNext), actorNext);
+		logger->debug("InitiativeListNextActor: Turn Based actor changed to {} ({})", description.getDisplayName(actorNext), actorNext);
 		auto nextActorInitiative = objects.getInt32(actorNext, obj_f_initiative);
 		if (actorInitiative != nextActorInitiative)
 		{
@@ -131,9 +131,20 @@ void TurnBasedSys::InitiativeListNextActor()
 
 }
 
-int TurnBasedSys::GetInitiativeListIdx()
+int TurnBasedSys::GetInitiativeListIdx() const
 {
 	return party.ObjFindInGroupArray(groupInitiativeList, *turnBasedCurrentActor );
+}
+
+void TurnBasedSys::AddToInitiative(objHndl handle) const
+{
+	auto addToInit = temple::GetRef<void(__cdecl)(objHndl)>(0x100DF1E0);
+	addToInit(handle);
+}
+
+bool TurnBasedSys::IsInInitiativeList(objHndl handle) const   // 0x100DEDD0
+{
+	return party.ObjIsInGroupArray(groupInitiativeList, handle);
 }
 
 void _turnBasedSetCurrentActor(objHndl objHnd)

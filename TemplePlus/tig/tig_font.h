@@ -41,7 +41,7 @@ struct TigTextStyle
 	int flags = 0;
 	int field2c = 0;
 	int colorSlot = 0;
-	ColorRect *textColor = nullptr;
+	ColorRect *textColor = nullptr; // array of text colors for use with the @n text color modifiers
 	ColorRect *colors2 = nullptr;
 	ColorRect *shadowColor = nullptr; // Use with flags |= 0x8
 	ColorRect *colors4 = nullptr;
