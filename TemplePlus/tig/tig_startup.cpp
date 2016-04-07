@@ -21,6 +21,8 @@
 #include "../tio/tio.h"
 
 #include "../config/config.h"
+#include <fstream>
+#include <mod_support.h>
 
 TigInitializer* tig = nullptr;
 
@@ -232,6 +234,7 @@ void TigInitializer::LoadDataFiles() {
 		if (result != 0) {
 			logger->trace("Unable to add archive tpdata\\co8fixes.dat");
 		}
+		modSupport.DetectCo8NewContentEdition();
 	}
 
 	// overrides for testing (mainly for co8fixes so there's no need to repack the archive)

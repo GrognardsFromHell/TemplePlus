@@ -107,6 +107,7 @@
     <ClCompile Include="location.cpp" />
     <ClCompile Include="maps.cpp" />
     <ClCompile Include="messages\messagequeue.cpp" />
+    <ClCompile Include="mod_support.cpp" />
     <ClCompile Include="protos.cpp" />
     <ClCompile Include="raycast.cpp" />
     <ClCompile Include="obj_hooks.cpp" />
@@ -289,6 +290,7 @@
     <ClInclude Include="gamesystems\objects\objregistry.h" />
     <ClInclude Include="gamesystems\objects\objsystem.h" />
     <ClInclude Include="gamesystems\ui_intgame_renderer.h" />
+    <ClInclude Include="mod_support.h" />
     <ClInclude Include="tutorial.h" />
     <ClInclude Include="ui\ui_tooltip.h" />
     <ClInclude Include="updater\updater.h" />
