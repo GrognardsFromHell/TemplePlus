@@ -203,7 +203,7 @@ PyObject *PyDebug_DumpD20Actions() {
 			d20Defs[i].addToSeqFunc, d20Defs[i].turnBasedStatusCheck, d20Defs[i].actionCheckFunc,
 			d20Defs[i].tgtCheckFunc, d20Defs[i].locCheckFunc, d20Defs[i].performFunc,
 			d20Defs[i].actionFrameFunc, d20Defs[i].projectilePerformFunc, d20Defs[i].pad_apparently,
-			d20Defs[i].actionCost, d20Defs[i].pickerFuncMaybe, d20Defs[i].flags);
+			d20Defs[i].actionCost, d20Defs[i].seqRenderFunc, d20Defs[i].flags);
 		
 		PyList_SET_ITEM(result, i, c);
 	}

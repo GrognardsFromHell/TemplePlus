@@ -186,6 +186,7 @@ class ClassAbilityCallbacks
 public:
 	// note: conditions obtained from feats always arg0 set to the feat enum (automatically)
 	static int __cdecl FeatDamageReduction(DispatcherCallbackArgs args);
+	static int __cdecl FeatEmptyBody(DispatcherCallbackArgs args);
 } classAbilityCallbacks;
 
 CondNode::CondNode(CondStruct *cond) {
@@ -1708,7 +1709,6 @@ int* ConditionSystem::CondNodeGetArgPtr(CondNode* condNode, int argIdx)
  int __cdecl AoODisableRadialMenuInit(DispatcherCallbackArgs args)
 {
 	RadialMenuEntry radEntry;
-	radEntry.SetDefaults();
 	radEntry.maxArg = 1;
 	radEntry.minArg = 0;
 	radEntry.type = RadialMenuEntryType::Toggle;
@@ -1829,7 +1829,6 @@ int __cdecl DivineMightRadial(DispatcherCallbackArgs args)
 		return 0;
 
 	RadialMenuEntry radEntry;
-	radEntry.SetDefaults();
 	radEntry.type = RadialMenuEntryType::Action;
 	radEntry.d20ActionType = D20A_DIVINE_MIGHT;
 	radEntry.d20ActionData1 = 0;
@@ -1882,7 +1881,6 @@ int GreaterWeaponSpecializationDamage(DispatcherCallbackArgs args)
 int __cdecl RecklessOffenseRadialMenuInit(DispatcherCallbackArgs args)
 {
 	RadialMenuEntry radEntry;
-	radEntry.SetDefaults();
 	radEntry.maxArg = 1;
 	radEntry.minArg = 0;
 	radEntry.type = RadialMenuEntryType::Toggle;
@@ -1943,7 +1941,6 @@ int __cdecl CombatExpertiseRadialMenu(DispatcherCallbackArgs args)
 	if (bab > 0)
 	{
 		RadialMenuEntry radEntry;
-		radEntry.SetDefaults();
 		radEntry.maxArg = bab;
 		if (bab > 5 && !feats.HasFeatCount(args.objHndCaller, FEAT_SUPERIOR_EXPERTISE))
 			radEntry.maxArg = 5;
@@ -2053,7 +2050,6 @@ public:
 int __cdecl DisarmRadialMenu(DispatcherCallbackArgs args)
 {
 	RadialMenuEntry radEntry;
-	radEntry.SetDefaults();
 	radEntry.type = RadialMenuEntryType::Action;
 	radEntry.d20ActionType = D20A_DISARM;
 	radEntry.d20ActionData1 = 0;
@@ -2169,7 +2165,6 @@ int DisarmedWeaponRetrieve(DispatcherCallbackArgs args)
 int DisarmedRetrieveWeaponRadialMenu(DispatcherCallbackArgs args)
 {
 	RadialMenuEntry radEntry;
-	radEntry.SetDefaults();
 	radEntry.type = RadialMenuEntryType::Action;
 	radEntry.d20ActionType = D20A_DISARMED_WEAPON_RETRIEVE;
 	radEntry.d20ActionData1 = 0;
@@ -2183,7 +2178,6 @@ int DisarmedRetrieveWeaponRadialMenu(DispatcherCallbackArgs args)
 int __cdecl SunderRadialMenu(DispatcherCallbackArgs args)
 {
 	RadialMenuEntry radEntry;
-	radEntry.SetDefaults();
 	radEntry.type = RadialMenuEntryType::Action;
 	radEntry.d20ActionType = D20A_SUNDER;
 	radEntry.d20ActionData1 = 0;
@@ -2337,6 +2331,8 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 	};
 	write(0x102D232C, &sdd, sizeof(SubDispDefNew));
 }
+
+#pragma region Spell Callbacks
 
 int SpellCallbacks::SkillBonus(DispatcherCallbackArgs args){
 
@@ -2629,6 +2625,10 @@ int SpellCallbacks::HasCondition(DispatcherCallbackArgs args)
 	return 0;
 }
 
+
+#pragma endregion
+
+#pragma region Item Callbacks
 int ItemCallbacks::SkillBonus(DispatcherCallbackArgs args)
 {
 	auto skillEnum = args.GetCondArg(0);
@@ -2645,6 +2645,10 @@ int ItemCallbacks::SkillBonus(DispatcherCallbackArgs args)
 	return 0;
 }
 
+#pragma endregion 
+
+
+#pragma region Class Ability Callbacks
 int ClassAbilityCallbacks::FeatDamageReduction(DispatcherCallbackArgs args){
 	auto drAmt = args.GetCondArg(1);
 	auto bypasserBitmask = args.GetData1();
@@ -2652,6 +2656,36 @@ int ClassAbilityCallbacks::FeatDamageReduction(DispatcherCallbackArgs args){
 	damage.AddPhysicalDR(&dispIo->damage, drAmt, bypasserBitmask, 126); // 126 is ~Damage Reduction~[TAG_SPECIAL_ABILITIES_DAMAGE_REDUCTION]
 	return 0;
 }
+
+int ClassAbilityCallbacks::FeatEmptyBody(DispatcherCallbackArgs args){
+	
+	RadialMenuEntry mainRadEntry;
+
+	mainRadEntry.text = combatSys.GetCombatMesLine(6020); // Empty Body
+	mainRadEntry.helpId = conds.hashmethods.StringHash("TAG_CLASS_FEATURES_MONK_EMPTY_BODY");
+	int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Class);
+	int newParent = radialMenus.AddChildNode(args.objHndCaller, &mainRadEntry, parentNode);
+
+
+	auto remainingRounds = args.GetCondArg(1);
+	auto actualArg = args.GetCondArgPtr(1);
+	RadialMenuEntrySlider setterChild( 6014, 0, remainingRounds, actualArg, 6021, ElfHash::Hash("TAG_CLASS_FEATURES_MONK_EMPTY_BODY"));
+	radialMenus.AddChildNode(args.objHndCaller, &setterChild, newParent);
+
+
+	RadialMenuEntry activaterChild;
+	activaterChild.type = RadialMenuEntryType::Action;
+	activaterChild.text = combatSys.GetCombatMesLine(6013); // Use
+	activaterChild.helpId = templeFuncs.StringHash("TAG_CLASS_FEATURES_MONK_EMPTY_BODY");
+	activaterChild.d20ActionType = D20A_EMPTY_BODY;
+	activaterChild.d20ActionData1 = 0;
+	radialMenus.AddChildNode(args.objHndCaller, &activaterChild, newParent);
+
+
+	return 0;
+}
+
+#pragma endregion
 
 int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args)
 {
@@ -2684,6 +2718,15 @@ void Conditions::AddConditionsToTable(){
 	perfectSelf.AddHook(dispTypeTakingDamage2, DK_NONE, classAbilityCallbacks.FeatDamageReduction, 0x4, 0); // 0x4 denotes Magical attacks
 	perfectSelf.Register();
 	perfectSelf.AddToFeatDictionary(FEAT_MONK_PERFECT_SELF, FEAT_INVALID, 10);
+
+
+	static CondStructNew emptyBody("Empty Body", 3);
+	perfectSelf.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatEmptyBody);
+	perfectSelf.Register();
+	perfectSelf.AddToFeatDictionary(FEAT_MONK_EMPTY_BODY, FEAT_INVALID, -1);
+
+
+
 
 	// New Conditions!
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionDisableAoO);
@@ -2725,7 +2768,6 @@ int AidAnotherRadialMenu(DispatcherCallbackArgs args)
 {
 	//MesLine mesLine;
 	RadialMenuEntry radMenuAidAnotherMain;
-	radMenuAidAnotherMain.SetDefaults();
 	
 	radMenuAidAnotherMain.text = combatSys.GetCombatMesLine(5112);
 	radMenuAidAnotherMain.d20ActionType = D20A_NONE;
@@ -2738,7 +2780,6 @@ int AidAnotherRadialMenu(DispatcherCallbackArgs args)
 	RadialMenuEntry wakeUp;
 
 
-	wakeUp.SetDefaults();
 	wakeUp.type = RadialMenuEntryType::Action;
 	wakeUp.d20ActionType = D20A_AID_ANOTHER_WAKE_UP;
 	wakeUp.d20ActionData1 = 0;

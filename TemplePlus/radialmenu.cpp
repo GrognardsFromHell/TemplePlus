@@ -16,6 +16,7 @@
 #include "turn_based.h"
 #include "action_sequence.h"
 #include "critter.h"
+#include "combat.h"
 //#include "temple_functions.h"
 
 RadialMenus radialMenus;
@@ -405,6 +406,22 @@ int RadialMenus::RadialMenuKeypressHandler(TigMsg* msg)
 
 }
 
+RadialMenuEntry::RadialMenuEntry(){
+	SetDefaults();
+}
+
 void RadialMenuEntry::SetDefaults() {
 	addresses.SetDefaults(this);
+}
+
+RadialMenuEntrySlider::RadialMenuEntrySlider(int combatMesLine, int _minArg, int _maxArg, void* _actualArg, int combatMesHeaderText, uint32_t _helpId): RadialMenuEntry()
+{
+	type = RadialMenuEntryType::Slider;
+	text = combatSys.GetCombatMesLine(combatMesLine);
+	maxArg = max(0, _maxArg);
+	minArg = 0;
+	actualArg = reinterpret_cast<int>(_actualArg);
+	field4 = reinterpret_cast<int>(combatSys.GetCombatMesLine(combatMesHeaderText)); // "Select number of rounds to activate."
+	helpId = _helpId;
+	callback = (void(__cdecl*)(objHndl, RadialMenuEntry*))temple::GetPointer(0x100F0200);
 }

@@ -117,6 +117,10 @@ public:
 	
 	static void(__cdecl*orgTurnStart)(objHndl obj);
 
+
+	static ActionErrorCode AddToSeqSimple(D20Actn*, ActnSeq*, TurnBasedStatus*);
+	static ActionErrorCode AddToSeqWithTarget(D20Actn*, ActnSeq*, TurnBasedStatus*);
+
 	static int ActionAddToSeq();
 	static void ActSeqGetPicker();
 	static int SeqRenderFuncMove(D20Actn* d20a, UiIntgameTurnbasedFlags flags);
@@ -609,10 +613,10 @@ uint32_t ActionSequenceSystem::isPerforming(objHndl obj)
 	return 0;
 }
 
-uint32_t ActionSequenceSystem::AddToSeqSimple(D20Actn* d20a, ActnSeq * actSeq, TurnBasedStatus* tbStat)
+ActionErrorCode ActionSequenceSystem::AddToSeqSimple(D20Actn* d20a, ActnSeq * actSeq, TurnBasedStatus* tbStat)
 {
 	memcpy(actSeq + sizeof(D20Actn) * actSeq->d20ActArrayNum++, d20a, sizeof(D20Actn));
-	return 0;
+	return AEC_OK;
 }
 
 int ActionSequenceSystem::AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStatus)
@@ -3000,7 +3004,7 @@ void ActionSequenceSystem::AttackAppend(ActnSeq* actSeq, D20Actn* d20a, TurnBase
 	actSeq->d20ActArrayNum++;
 }
 
-int ActionSequenceSystem::StdAttackAiCheck(D20Actn* d20a, TurnBasedStatus* tbStat)
+int ActionSequenceSystem::StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBasedStatus* tbStat)
 {
 	int hgState = tbStat->hourglassState;
 
@@ -3032,19 +3036,9 @@ uint32_t _addD20AToSeq(D20Actn* d20a, ActnSeq* actSeq)
 }
 
 
-uint32_t _AddToSeqSimple(D20Actn* d20a, ActnSeq * actSeq, TurnBasedStatus* tbStat)
+uint32_t _StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBasedStatus* tbStat)
 {
-	return actSeqSys.AddToSeqSimple(d20a, actSeq, tbStat);
-}
-
-uint32_t _AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStatus)
-{
-	return actSeqSys.AddToSeqWithTarget(d20a, actSeq, tbStatus);
-}
-
-uint32_t _StdAttackAiCheck(D20Actn* d20a, TurnBasedStatus* tbStat)
-{
-	return actSeqSys.StdAttackAiCheck(d20a, tbStat);
+	return actSeqSys.StdAttackTurnBasedStatusCheck(d20a, tbStat);
 }
 
 uint32_t _seqCheckAction(D20Actn* d20a, TurnBasedStatus* iO)
@@ -3280,6 +3274,14 @@ void ActnSeqReplacements::TurnStart(objHndl obj){
 	actSeqSys.TurnStart(obj);
 }
 
+ActionErrorCode ActnSeqReplacements::AddToSeqSimple(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat){
+	return actSeqSys.AddToSeqSimple(d20a, actSeq, tbStat);
+}
+
+ActionErrorCode ActnSeqReplacements::AddToSeqWithTarget(D20Actn*d20a, ActnSeq*actSeq, TurnBasedStatus* tbStat){
+	return static_cast<ActionErrorCode>(actSeqSys.AddToSeqWithTarget(d20a, actSeq, tbStat));
+}
+
 int ActnSeqReplacements::ActionAddToSeq()
 {
 	return actSeqSys.ActionAddToSeq();
@@ -3294,9 +3296,9 @@ void ActnSeqReplacements::ActSeqApply()
 	replaceFunction(0x1008A100, _addD20AToSeq);
 	replaceFunction(0x1008A1B0, _ActionErrorString);
 	replaceFunction(0x1008A980, _actSeqOkToPerform);
-	replaceFunction(0x1008BFA0, _AddToSeqSimple);
+	replaceFunction(0x1008BFA0, AddToSeqSimple);
 
-	replaceFunction(0x1008C4F0, _StdAttackAiCheck);
+	replaceFunction(0x1008C4F0, _StdAttackTurnBasedStatusCheck);
 	replaceFunction(0x1008C6A0, _ActionCostFullAttack);
 
 
@@ -3315,7 +3317,7 @@ void ActnSeqReplacements::ActSeqApply()
 
 	replaceFunction(0x10094F70, _moveSequenceParseUsercallWrapper);
 
-	replaceFunction(0x10095450, _AddToSeqWithTarget);
+	replaceFunction(0x10095450, AddToSeqWithTarget);
 	replaceFunction(0x10095860, _unspecifiedMoveAddToSeq);
 
 	replaceFunction(0x10095FD0, _turnBasedStatusInit);
@@ -3342,22 +3344,21 @@ void ActnSeqReplacements::NaturalAttackOverwrites()
 
 	// new D20Defs
 
-	// addD20AToSeq
+	// addD20AToSeq    replaced
+	//writeVal = (int)&d20Sys.d20Defs[0].addToSeqFunc;
+	//write(0x1008A125 + 2, &writeVal, sizeof(int));
 
-	writeVal = (int)&d20Sys.d20Defs[0].addToSeqFunc;
-	write(0x1008A125 + 2, &writeVal, sizeof(int));
-
-	//sub_1008A180
+	//sub_1008A180  D20ActionBreaksConcentration
 	writeVal = (int)&d20Sys.d20Defs[0].flags;
 	write(0x1008A18A + 2, &writeVal, sizeof(int));
 
 
-	//1008A4B0
+	//1008A4B0   D20ActnTargetClassification
 	writeVal = (int)&d20Sys.d20Defs[0].flags;
 	write(0x1008A4B8 + 2, &writeVal, sizeof(int));
 
 
-	// D20ActionTriggersAoO
+	// D20ActionTriggersAoO     partially replaced
 	writeVal = (int)&d20Sys.d20Defs[0].flags;
 	write(0x1008A9DA + 2, &writeVal, sizeof(int));
 	write(0x1008AA10 + 2, &writeVal, sizeof(int));
@@ -3367,7 +3368,7 @@ void ActnSeqReplacements::NaturalAttackOverwrites()
 	writeVal = (int)&d20Sys.d20Defs[0].projectilePerformFunc;
 	write(0x1008AC99 + 2, &writeVal, sizeof(int));
 
-	// sub_1008ACC0
+	// sub_1008ACC0 IsActionOffensive
 	writeVal = (int)&d20Sys.d20Defs[0].flags;
 	write(0x1008ACCA + 2, &writeVal, sizeof(int));
 
@@ -3451,52 +3452,52 @@ void ActnSeqReplacements::NaturalAttackOverwrites()
 	writeVal = ((int)&d20Sys.d20Defs[0].flags) + 2;
 	write(0x100964F9 + 2, &writeVal, sizeof(int));
 
-	// sub_10097060
+	// sub_10097060  CursorRenderUpdate
 	// 100970BB pickerMaybe
 	// 100970EB pickerMaybe
 	// 10097111 pickerMaybe
-	writeVal = (int)&d20Sys.d20Defs[0].pickerFuncMaybe;
+	writeVal = (int)&d20Sys.d20Defs[0].seqRenderFunc;
 	write(0x100970BB + 2, &writeVal, sizeof(int));
-	writeVal = (int)&d20Sys.d20Defs[0].pickerFuncMaybe;
+	writeVal = (int)&d20Sys.d20Defs[0].seqRenderFunc;
 	write(0x100970EB + 2, &writeVal, sizeof(int));
-	writeVal = (int)&d20Sys.d20Defs[0].pickerFuncMaybe;
+	writeVal = (int)&d20Sys.d20Defs[0].seqRenderFunc;
 	write(0x10097111 + 2, &writeVal, sizeof(int));
 
-	// sub_10097320
-	writeVal = (int)&d20Sys.d20Defs[0].flags;
-	write(0x10097330 + 2, &writeVal, sizeof(int));
-	writeVal = (int)&d20Sys.d20Defs[0].flags;
-	write(0x1009753B + 2, &writeVal, sizeof(int));
-	writeVal = (int)&d20Sys.d20Defs[0].turnBasedStatusCheck;
-	write(0x1009754D + 2, &writeVal, sizeof(int));
-	writeVal = (int)&d20Sys.d20Defs[0].pickerFuncMaybe;
-	write(0x100976C9 + 2, &writeVal, sizeof(int));
+	// sub_10097320 HourglassUpdate     replaced
+	//writeVal = (int)&d20Sys.d20Defs[0].flags;
+	//write(0x10097330 + 2, &writeVal, sizeof(int));
+	//writeVal = (int)&d20Sys.d20Defs[0].flags;
+	//write(0x1009753B + 2, &writeVal, sizeof(int));
+	//writeVal = (int)&d20Sys.d20Defs[0].turnBasedStatusCheck;
+	//write(0x1009754D + 2, &writeVal, sizeof(int));
+	//writeVal = (int)&d20Sys.d20Defs[0].seqRenderFunc;
+	//write(0x100976C9 + 2, &writeVal, sizeof(int));
 
-	// sub_100977A0
+	// sub_100977A0  ActSeqGetPicker    replaced
 	// 100977C2 flags
 	// 10097825 flags
 	// 100978EF flags
-	writeVal = (int)&d20Sys.d20Defs[0].flags;
-	write(0x100977C2 + 2, &writeVal, sizeof(int));
-	writeVal = (int)&d20Sys.d20Defs[0].flags;
-	write(0x10097825 + 2, &writeVal, sizeof(int));
-	writeVal = (int)&d20Sys.d20Defs[0].flags;
-	write(0x100978EF + 2, &writeVal, sizeof(int));
+	//writeVal = (int)&d20Sys.d20Defs[0].flags;
+	//write(0x100977C2 + 2, &writeVal, sizeof(int));
+	//writeVal = (int)&d20Sys.d20Defs[0].flags;
+	//write(0x10097825 + 2, &writeVal, sizeof(int));
+	//writeVal = (int)&d20Sys.d20Defs[0].flags;
+	//write(0x100978EF + 2, &writeVal, sizeof(int));
 
 	// ActionAddToSeq
 	writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;
 	write(0x10097C7E + 2, &writeVal, sizeof(int));
 
-	// curSeqNext
+	// curSeqNext   replaced
 	// 10099026 flags+1 (BYTE1)
-	writeVal = ((int)&d20Sys.d20Defs[0].flags) + 1;
-	write(0x10099026 + 2, &writeVal, sizeof(int));
+	//writeVal = ((int)&d20Sys.d20Defs[0].flags) + 1;
+	//write(0x10099026 + 2, &writeVal, sizeof(int));
 
 
-	//actionPerform
+	//actionPerform      replaced
 	// 100998D4 performFunc
-	writeVal = (int)&d20Sys.d20Defs[0].performFunc;
-	write(0x100998D4 + 2, &writeVal, sizeof(int));
+	//writeVal = (int)&d20Sys.d20Defs[0].performFunc;
+	//write(0x100998D4 + 2, &writeVal, sizeof(int));
 
 
 	// sub_10099B10

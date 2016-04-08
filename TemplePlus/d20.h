@@ -12,6 +12,7 @@
 #define ATTACK_CODE_NATURAL_ATTACK 999 //originally 9
 #include "tab_file.h"
 
+enum ActionErrorCode;
 struct GameSystemConf;
 struct ActionSequenceSystem;
 // Forward decls
@@ -191,13 +192,13 @@ enum D20ADF : int{
 	D20ADF_SimulsCompatible = 0x20000,
 	D20ADF_DrawPathByDefault = 0x40000, // will draw path even without holding ALT
 	D20ADF_PathSthg =   0x80000,
-	D20ADF_Unk100000 = 0x100000
+	D20ADF_Breaks_Concentration = 0x100000
 };
 
 struct D20ActionDef
 {
-	uint32_t (__cdecl *addToSeqFunc)(D20Actn *, ActnSeq *, TurnBasedStatus*iO);
-	uint32_t (__cdecl* turnBasedStatusCheck)(D20Actn* d20a, TurnBasedStatus* iO);
+	ActionErrorCode (__cdecl *addToSeqFunc)(D20Actn *, ActnSeq *, TurnBasedStatus*iO);
+	ActionErrorCode (__cdecl* turnBasedStatusCheck)(D20Actn* d20a, TurnBasedStatus* iO);
 	uint32_t (__cdecl * actionCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO);
 	uint32_t (__cdecl * tgtCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO);
 	uint32_t (__cdecl * locCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO, LocAndOffsets * locAndOff); // also seems to double as a generic check function (e.g. for move silently it checks if combat is active and nothing to do with location)
@@ -206,7 +207,7 @@ struct D20ActionDef
 	void * projectilePerformFunc;
 	uint32_t pad_apparently;
 	uint32_t(__cdecl * actionCost)(D20Actn* d20a, TurnBasedStatus* iO, ActionCostPacket * actionCostPacket);
-	uint32_t (__cdecl * pickerFuncMaybe)(D20Actn* d20a, int flags);
+	uint32_t (__cdecl * seqRenderFunc)(D20Actn* d20a, int flags);
 	D20ADF flags; // not D20CAF I think; maybe the STD flags? path query flags?
 };
 

@@ -345,7 +345,6 @@ void LegacySpellSystem::SetSpontaneousCastingAltNode(objHndl obj, int nodeIdx, S
 	if (castingClassCode == stat_level_cleric)
 	{
 		RadialMenuEntry radEntry;
-		radEntry.SetDefaults();
 		d20Sys.D20ActnSetSpellData(&radEntry.d20SpellData, spellData->spellEnum, spellData->classCode, spellData->spellLevel, 0xFF, spellData->metaMagicData);
 
 		radEntry.type = RadialMenuEntryType::Action;
@@ -374,7 +373,6 @@ void LegacySpellSystem::SetSpontaneousCastingAltNode(objHndl obj, int nodeIdx, S
 	else if (castingClassCode == stat_level_druid && spellData->spellLevel > 0)
 	{
 		RadialMenuEntry radEntry;
-		radEntry.SetDefaults();
 		auto spellLevel = spellData->spellLevel;
 		if (spellLevel > 9)
 			spellLevel = 9;

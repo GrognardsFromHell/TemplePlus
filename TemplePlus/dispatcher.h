@@ -210,9 +210,11 @@ struct DispatcherCallbackArgs {
 	uint32_t dispKey;
 	DispIO* dispIO;
 	uint32_t GetCondArg(int argIdx);
+	void* GetCondArgPtr(int argIdxI);
 	int GetData1() const; // gets the data1 value from the subDispDef
 	int GetData2() const;
 	void SetCondArg(int argIdx, int value);
+	
 };
 
 struct DispIoCondStruct : DispIO { // DispIoType = 1

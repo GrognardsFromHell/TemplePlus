@@ -45,8 +45,15 @@ struct RadialMenuEntry {
 	int helpId; // String hash for the help topic associated with this entry
 	int field44;
 
+	RadialMenuEntry();
 	void SetDefaults();
 };
+
+
+struct RadialMenuEntrySlider : RadialMenuEntry{
+	RadialMenuEntrySlider( int combatMesLine, int _minArg, int _maxArg, void* actualArg, int combatMesHeaderTextLine, uint32_t helpId);
+};
+
 const auto TestSizeOfRadialMenuEntry = sizeof(RadialMenuEntry); // should be 72 (0x48)
 struct RadialMenuNode {
 	RadialMenuEntry entry;

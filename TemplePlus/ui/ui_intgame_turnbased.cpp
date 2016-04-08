@@ -793,8 +793,8 @@ void UiIntegameTurnbasedRepl::HourglassUpdate(int intgameAcquireOn, int intgameS
 				if (i == lastActionWithPath)
 					v33 |= 2;
 				if (actSeq->d20ActArray[i].d20ActType != D20A_NONE) {
-					if (d20Sys.d20Defs[actSeq->d20ActArray[i].d20ActType].pickerFuncMaybe)
-						d20Sys.d20Defs[actSeq->d20ActArray[i].d20ActType].pickerFuncMaybe(&actSeq->d20ActArray[i], v33);
+					if (d20Sys.d20Defs[actSeq->d20ActArray[i].d20ActType].seqRenderFunc)
+						d20Sys.d20Defs[actSeq->d20ActArray[i].d20ActType].seqRenderFunc(&actSeq->d20ActArray[i], v33);
 				}
 			}
 		}

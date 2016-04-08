@@ -105,12 +105,23 @@ int D20Replacements::PerformActivateReadiedAction(D20Actn* d20a)
 	
 }
 
+
+class D20ActionCallbacks {
+public:
+
+	static ActionErrorCode AddToSeqSimple(D20Actn*, ActnSeq*, TurnBasedStatus*);
+	static ActionErrorCode AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+	static ActionErrorCode StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBasedStatus* tbStat);
+} d20Callbacks;
+
+
+
 static struct LegacyD20SystemAddresses : temple::AddressTable {
 
 	int (__cdecl*  GlobD20ActnSetTarget)(objHndl objHnd, LocAndOffsets * loc);
 	uint32_t(__cdecl* LocationCheckStdAttack)(D20Actn*, TurnBasedStatus*, LocAndOffsets*);
 	uint32_t (__cdecl*ActionCostStandardAttack)(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp);
-	uint32_t(__cdecl*sub_1008EDF0)(D20Actn * d20a, int flags);
+	uint32_t(__cdecl*_PickerFuncTooltipToHitChance)(D20Actn * d20a, int flags);
 	uint32_t(__cdecl*AddToSeqStdAttack)(D20Actn*, ActnSeq*, TurnBasedStatus*);
 	uint32_t(__cdecl*AiCheckStdAttack)(D20Actn*, TurnBasedStatus*);
 	uint32_t(__cdecl*ActionCheckStdAttack)(D20Actn*, TurnBasedStatus*);
@@ -123,7 +134,7 @@ static struct LegacyD20SystemAddresses : temple::AddressTable {
 		rebase(GlobD20ActnSetTarget,0x10092E50); 
 		rebase(LocationCheckStdAttack, 0x1008C910);
 		rebase(ActionCostStandardAttack, 0x100910F0);
-		rebase(sub_1008EDF0, 0x1008EDF0);
+		rebase(_PickerFuncTooltipToHitChance, 0x1008EDF0);
 		rebase(AddToSeqStdAttack, 0x100955E0);
 		rebase(AiCheckStdAttack, 0x1008C4F0);
 		rebase(ActionCheckStdAttack, 0x1008C910);
@@ -152,7 +163,7 @@ void LegacyD20System::NewD20ActionsInit()
 	}
 	mesFuncs.Open("tpmes//combat.mes", &combatSys.combatMesNew);
 
-	d20Defs[D20A_DIVINE_MIGHT].addToSeqFunc = _AddToSeqSimple;
+	d20Defs[D20A_DIVINE_MIGHT].addToSeqFunc = d20Callbacks.AddToSeqSimple;
 	d20Defs[D20A_DIVINE_MIGHT].actionCheckFunc = _DivineMightCheck;
 	d20Defs[D20A_DIVINE_MIGHT].performFunc = _DivineMightPerform;
 	// d20Defs[D20A_DIVINE_MIGHT].actionFrameFunc = _DivineMightPerform;
@@ -162,53 +173,65 @@ void LegacyD20System::NewD20ActionsInit()
 	D20ActionType d20Type;
 
 	d20Type = D20A_DISARM;
-	d20Defs[d20Type].addToSeqFunc = _AddToSeqWithTarget;
-	d20Defs[d20Type].turnBasedStatusCheck = _StdAttackAiCheck;
+	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqWithTarget;
+	d20Defs[d20Type].turnBasedStatusCheck = d20Callbacks.StdAttackTurnBasedStatusCheck;
 	d20Defs[d20Type].actionCheckFunc = _ActionCheckDisarm;
 	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
 	d20Defs[d20Type].performFunc = _PerformDisarm;
 	d20Defs[d20Type].actionFrameFunc = _ActionFrameDisarm;
 	d20Defs[d20Type].actionCost = addresses.ActionCostStandardAttack;
-	d20Defs[d20Type].pickerFuncMaybe = addresses.sub_1008EDF0;
+	d20Defs[d20Type].seqRenderFunc = addresses._PickerFuncTooltipToHitChance;
 	d20Defs[d20Type].flags = (D20ADF)(D20ADF_TargetSingleExcSelf | D20ADF_TriggersAoO | D20ADF_QueryForAoO | D20ADF_TriggersCombat
 		| D20ADF_Unk8000 | D20ADF_SimulsCompatible ); // 0x28908; // same as Trip // note : queryForAoO is used for resetting a flag
 
 
 	d20Type = D20A_DISARMED_WEAPON_RETRIEVE;
-	d20Defs[d20Type].addToSeqFunc = _AddToSeqSimple;
+	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSimple;
 	d20Defs[d20Type].turnBasedStatusCheck = 0;
 	d20Defs[d20Type].actionCheckFunc = _ActionCheckDisarmedWeaponRetrieve;
 	d20Defs[d20Type].locCheckFunc = LocationCheckDisarmedWeaponRetrieve;
 	d20Defs[d20Type].performFunc = _PerformDisarmedWeaponRetrieve;
 	d20Defs[d20Type].actionFrameFunc = 0;
 	d20Defs[d20Type].actionCost = _ActionCostMoveAction;
-	d20Defs[d20Type].pickerFuncMaybe = 0;
+	d20Defs[d20Type].seqRenderFunc = 0;
 	d20Defs[d20Type].flags = (D20ADF)( D20ADF_TriggersAoO 	| 0*D20ADF_Unk8000
-		| D20ADF_SimulsCompatible | D20ADF_Unk100000); // 0x28908; // largely same as Pick Up Object
+		| D20ADF_SimulsCompatible | D20ADF_Breaks_Concentration); // 0x28908; // largely same as Pick Up Object
 	*(int*)&d20Defs[D20A_PICKUP_OBJECT].flags |= (int) (D20ADF_TriggersAoO);
 
 	d20Type = D20A_SUNDER;
-	d20Defs[d20Type].addToSeqFunc = _AddToSeqWithTarget;
-	d20Defs[d20Type].turnBasedStatusCheck = _StdAttackAiCheck;
+	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqWithTarget;
+	d20Defs[d20Type].turnBasedStatusCheck = d20Callbacks.StdAttackTurnBasedStatusCheck;
 	d20Defs[d20Type].actionCheckFunc = _ActionCheckSunder;
 	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
 	d20Defs[d20Type].performFunc = _PerformDisarm;
 	d20Defs[d20Type].actionFrameFunc = _ActionFrameSunder;
 	d20Defs[d20Type].actionCost = addresses.ActionCostStandardAttack;
-	d20Defs[d20Type].pickerFuncMaybe = addresses.sub_1008EDF0;
+	d20Defs[d20Type].seqRenderFunc = addresses._PickerFuncTooltipToHitChance;
 	d20Defs[d20Type].flags = (D20ADF)(D20ADF_TargetSingleExcSelf | D20ADF_TriggersAoO | D20ADF_TriggersCombat
 		| D20ADF_Unk8000 | D20ADF_SimulsCompatible); // 0x28908; // same as Trip
 
 	d20Type = D20A_AID_ANOTHER_WAKE_UP;
-	d20Defs[d20Type].addToSeqFunc = _AddToSeqWithTarget;
-	d20Defs[d20Type].turnBasedStatusCheck = _StdAttackAiCheck;
+	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqWithTarget;
+	d20Defs[d20Type].turnBasedStatusCheck = d20Callbacks.StdAttackTurnBasedStatusCheck;
 	d20Defs[d20Type].actionCheckFunc = _ActionCheckAidAnotherWakeUp;
 	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
 	d20Defs[d20Type].performFunc = _PerformAidAnotherWakeUp;
 	d20Defs[d20Type].actionFrameFunc = _ActionFrameAidAnotherWakeUp;
 	d20Defs[d20Type].actionCost = addresses.ActionCostStandardAttack;
-	d20Defs[d20Type].pickerFuncMaybe = addresses.sub_1008EDF0;
+	d20Defs[d20Type].seqRenderFunc = addresses._PickerFuncTooltipToHitChance;
 	d20Defs[d20Type].flags = (D20ADF)(D20ADF_TargetSingleExcSelf | D20ADF_Unk8000 | D20ADF_SimulsCompatible); // 0x28908; // same as Trip // note : queryForAoO is used for resetting a flag
+
+
+	d20Type = D20A_EMPTY_BODY;
+	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSimple;
+	d20Defs[d20Type].turnBasedStatusCheck = nullptr;
+	d20Defs[d20Type].actionCheckFunc = _ActionCheckAidAnotherWakeUp;
+	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
+	d20Defs[d20Type].performFunc = _PerformAidAnotherWakeUp;
+	d20Defs[d20Type].actionFrameFunc = nullptr;
+	d20Defs[d20Type].actionCost = addresses.ActionCostStandardAttack;
+	d20Defs[d20Type].seqRenderFunc = nullptr;
+	d20Defs[d20Type].flags = (D20ADF)( D20ADF_None);
 
 
 
@@ -1345,3 +1368,17 @@ uint32_t _ActionCheckAidAnotherWakeUp(D20Actn* d20a, TurnBasedStatus* tbStat)
 	}
 	return 0;
 };
+
+
+ActionErrorCode D20ActionCallbacks::AddToSeqSimple(D20Actn*d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat){
+	return actSeqSys.AddToSeqSimple(d20a, actSeq, tbStat);
+}
+
+ActionErrorCode D20ActionCallbacks::AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat){
+	return static_cast<ActionErrorCode>(actSeqSys.AddToSeqWithTarget(d20a, actSeq, tbStat));
+}
+
+ActionErrorCode D20ActionCallbacks::StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBasedStatus* tbStat)
+{
+	return static_cast<ActionErrorCode>(actSeqSys.StdAttackTurnBasedStatusCheck(d20a, tbStat));
+}

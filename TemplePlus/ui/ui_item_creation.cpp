@@ -554,7 +554,6 @@ uint32_t ItemCreationBuildRadialMenuEntry(DispatcherCallbackArgs args, ItemCreat
 	if (combatSys.isCombatActive()) { return 0; }
 	MesLine mesLine;
 	RadialMenuEntry radmenu;
-	radmenu.SetDefaults();
 	mesLine.key = combatMesLine;
 	mesFuncs.GetLine_Safe(*combatSys.combatMesfileIdx, &mesLine);
 	//RadialMenuStructInit(&radmenu);
@@ -594,7 +593,6 @@ int CraftWandRadialMenu(DispatcherCallbackArgs args)
 	if (combatSys.isCombatActive()) { return 0; }
 	MesLine mesLine;
 	RadialMenuEntry radMenuCraftWand;
-	radMenuCraftWand.SetDefaults();
 	mesLine.key = 5068;
 	mesFuncs.GetLine_Safe(*combatSys.combatMesfileIdx, &mesLine);
 	radMenuCraftWand.text = (char*)mesLine.value;
@@ -607,8 +605,6 @@ int CraftWandRadialMenu(DispatcherCallbackArgs args)
 	RadialMenuEntry useCraftWand;
 	RadialMenuEntry setWandLevel;
 	
-	
-	setWandLevel.SetDefaults();
 	setWandLevel.minArg = 1;
 	setWandLevel.maxArg = min(20, critterSys.GetCasterLevel(args.objHndCaller));
 	
@@ -620,7 +616,6 @@ int CraftWandRadialMenu(DispatcherCallbackArgs args)
 	setWandLevel.helpId = templeFuncs.StringHash("TAG_CRAFT_WAND");
 	radialMenus.AddChildNode(args.objHndCaller, &setWandLevel, newParent);
 
-	useCraftWand.SetDefaults();
 	useCraftWand.type = RadialMenuEntryType::Action;
 	useCraftWand.text = combatSys.GetCombatMesLine(6018);
 	useCraftWand.helpId = templeFuncs.StringHash("TAG_CRAFT_WAND");

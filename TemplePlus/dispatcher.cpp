@@ -1013,6 +1013,10 @@ uint32_t DispatcherCallbackArgs::GetCondArg(int argIdx)
 	return conds.CondNodeGetArg(subDispNode->condNode, argIdx);
 }
 
+void* DispatcherCallbackArgs::GetCondArgPtr(int argIdx){
+	return conds.CondNodeGetArgPtr(subDispNode->condNode, argIdx);
+}
+
 int DispatcherCallbackArgs::GetData1() const
 {
 	return subDispNode->subDispDef->data1;
