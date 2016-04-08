@@ -11,7 +11,7 @@ namespace gfx {
 	using AnimatedModelPtr = std::shared_ptr<class AnimatedModel>;
 }
 
-enum class EquipSlot : uint32_t {
+enum EquipSlot : uint32_t {
 	Helmet = 0,
 	Necklace = 1,
 	Gloves = 2,

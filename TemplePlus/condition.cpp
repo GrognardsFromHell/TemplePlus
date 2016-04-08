@@ -181,6 +181,13 @@ public:
 	static int __cdecl SkillBonus(DispatcherCallbackArgs args);
 } itemCallbacks;
 
+class ClassAbilityCallbacks
+{
+public:
+	// note: conditions obtained from feats always arg0 set to the feat enum (automatically)
+	static int __cdecl FeatDamageReduction(DispatcherCallbackArgs args);
+} classAbilityCallbacks;
+
 CondNode::CondNode(CondStruct *cond) {
 	memset(this, 0, sizeof(CondNode));
 	condStruct = cond;
@@ -188,6 +195,20 @@ CondNode::CondNode(CondStruct *cond) {
 
 
 #pragma region Condition Add Functions
+
+CondFeatDictionary::CondFeatDictionary(){
+	featEnum = FEAT_NONE;
+	featEnumMax = FEAT_NONE;
+	condStruct.cs = nullptr;
+	condArg = 0;
+}
+
+CondFeatDictionary::CondFeatDictionary(CondStructNew* cs, feat_enums Feat, feat_enums FeatMax, uint32_t arg){
+	featEnum = Feat;
+	featEnumMax = FeatMax;
+	condStruct.cs = cs;
+	condArg = arg;
+}
 
 int32_t _CondNodeGetArg(CondNode* condNode, uint32_t argIdx)
 {
@@ -803,8 +824,15 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 			int monkLvl = objects.StatLevelGet(args.objHndCaller, stat_level_monk);
 			attackDamageType = DamageType::Bludgeoning;
 			damageMesLine = 113; // Unarmed
-			objHndl monkBelt = inventory.ItemWornAt(args.objHndCaller, 15);
-			// TODO: Monk's Belt
+
+			auto beltItem = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Lockpicks);
+			if (beltItem){
+				auto beltObj = gameSystems->GetObj().GetObject(beltItem);
+				if (beltObj->protoId == 12420){
+					monkLvl += 5;
+				}
+			}
+
 			int attackDiceType = 3;
 			int attackDiceCount = 1;
 			int dudeSize = objects.StatLevelGet(args.objHndCaller, stat_size);
@@ -834,7 +862,7 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 				{
 					attackDiceCount = 2;
 					attackDiceType = 6;
-				} else
+				} else // 20 and above
 				{
 					attackDiceCount = 2;
 					attackDiceType = 8;
@@ -985,6 +1013,7 @@ class Conditions
 {
 public:
 	static void AddConditionsToTable();
+	std::map<feat_enums,CondFeatDictionary> condDict;
 } conditions;
 
 void _FeatConditionsRegister()
@@ -1009,50 +1038,48 @@ void _FeatConditionsRegister()
 
 	// Craft Wand
 	conds.mCondCraftWand = CondStructNew("Craft Wand", 0);
-	conds.mCondCraftWand.AddHook(dispTypeConditionAddPre, DK_NONE, ConditionPrevent, (uint32_t)&conds.mCondCraftWand, 0);
-	conds.mCondCraftWand.AddHook(dispTypeRadialMenuEntry, DK_NONE, CraftWandOnAdd, 0, 0);
+	conds.mCondCraftWand.AddHook(dispTypeRadialMenuEntry, DK_NONE, CraftWandOnAdd);
 
-	conds.FeatConditionDict[61].condStruct = (CondStruct*)&conds.mCondCraftWand;
+	conds.FeatConditionDict[61].condStruct.cs = &conds.mCondCraftWand;
 
-	for (unsigned int i = 0; i < condCount; i++)
-	{
-		conds.hashmethods.CondStructAddToHashtable(conds.FeatConditionDict[i].condStruct);
+	for (unsigned int i = 0; i < condCount; i++){
+		conds.hashmethods.CondStructAddToHashtable(conds.FeatConditionDict[i].condStruct.old);
 	}
 }
 
-uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** condStructOut, uint32_t * arg2Out)
+uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** condStructOut, uint32_t * argout)
 {
 	switch (featEnum)
 	{
 	case FEAT_GREATER_TWO_WEAPON_FIGHTING:
 		*condStructOut = (CondStruct*)conds.mCondGreaterTwoWeaponFighting;
-		*arg2Out = 0;
+		*argout = 0;
 		return 1;
 	case FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER:
 		*condStructOut = (CondStruct*)conds.mCondGreaterTWFRanger;
-		*arg2Out = 0;
+		*argout = 0;
 		return 1;
 	case FEAT_DIVINE_MIGHT:
 		*condStructOut = (CondStruct*)conds.mCondDivineMight;
-		*arg2Out = 0;
+		*argout = 0;
 		return 1;
 	case FEAT_RECKLESS_OFFENSE:
 		*condStructOut = (CondStruct*)conds.mCondRecklessOffense;
-		*arg2Out = 0;
+		*argout = 0;
 		return 1;
 	case FEAT_KNOCK_DOWN:
 		*condStructOut = (CondStruct*)conds.mCondKnockDown;
-		*arg2Out = 0;
+		*argout = 0;
 		return 1;
 	case FEAT_SUPERIOR_EXPERTISE:
 		return 0; // willl just be patched inside Combat Expertise
 	case FEAT_DEADLY_PRECISION:
 		*condStructOut = (CondStruct*)conds.mCondDeadlyPrecision;
-		*arg2Out = 0;
+		*argout = 0;
 		return 1;
 	case FEAT_PERSISTENT_SPELL:
 		*condStructOut = (CondStruct*)conds.mCondPersistentSpell;
-		*arg2Out = 0;
+		*argout = 0;
 		return 1;
 	default:
 		break;
@@ -1061,9 +1088,19 @@ uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** condStructOu
 	if (featEnum >= FEAT_GREATER_WEAPON_SPECIALIZATION_GAUNTLET && featEnum <= FEAT_GREATER_WEAPON_SPECIALIZATION_GRAPPLE)
 	{
 		*condStructOut = (CondStruct*)conds.mCondGreaterWeaponSpecialization;
-		*arg2Out = featEnum - FEAT_GREATER_WEAPON_SPECIALIZATION_GAUNTLET;
+		*argout = featEnum - FEAT_GREATER_WEAPON_SPECIALIZATION_GAUNTLET;
 		return 1;
 	}
+	
+	// Search the new Feat-CondStruct dictionary
+	auto it = conditions.condDict.find(featEnum);
+	if (it != conditions.condDict.end()){
+		if (it->second.featEnum == featEnum && it->second.condStruct.cs != nullptr){
+			*condStructOut = static_cast<CondStruct*>(it->second.condStruct.old);
+			*argout = it->second.condArg;
+			return 1;
+		}
+	};
 
 	feat_enums * featFromDict = & ( conds.FeatConditionDict->featEnum );
 	uint32_t iter = 0;
@@ -1079,7 +1116,7 @@ uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** condStructOu
 	}
 
 	*condStructOut = (CondStruct *)*(featFromDict - 1);
-	*arg2Out = featEnum + featFromDict[2] - featFromDict[0];
+	*argout = featEnum + featFromDict[2] - featFromDict[0];
 	return 1;
 }
 
@@ -1453,9 +1490,8 @@ void ConditionSystem::RegisterNewConditions()
 
 
 	mCondCraftWandLevelSet = CondStructNew("Craft Wand Level Set", 2);
-	mCondCraftWandLevelSet.AddHook(dispTypeConditionAddPre, DK_NONE, ConditionPrevent, (uint32_t)&mCondCraftWandLevelSet, 0);
 	mCondCraftWandLevelSet.AddHook(dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, (uint32_t)&mCondCraftWandLevelSet, 0);
-	mCondCraftWandLevelSet.AddHook(dispTypeRadialMenuEntry, DK_NONE, CraftWandRadialMenu, 0, 0);
+	mCondCraftWandLevelSet.AddHook(dispTypeRadialMenuEntry, DK_NONE, CraftWandRadialMenu);
 	mCondCraftWandLevelSet.Register();
 
 	// Aid Another
@@ -1492,13 +1528,16 @@ void ConditionSystem::RegisterNewConditions()
 
 }
 
-void ConditionSystem::DispatcherHookInit(SubDispDefNew* sdd, enum_disp_type dispType, int key, void* callback, int data1, int data2)
-{
+void ConditionSystem::AddToFeatDictionary(CondStructNew* condStruct, feat_enums feat, feat_enums featEnumMax, uint32_t condArg2Offset){
+	conditions.condDict[feat] = { condStruct, feat, featEnumMax, condArg2Offset };
+}
+
+void ConditionSystem::DispatcherHookInit(SubDispDefNew* sdd, enum_disp_type dispType, int key, void* callback, int data1, int data2){
 	sdd->dispType = dispType;
 	sdd->dispKey = key;
 	sdd->dispCallback = ( int(__cdecl*)(DispatcherCallbackArgs))callback;
-	sdd->data1 = data1;
-	sdd->data2 = data2;
+	sdd->data1.sVal = data1;
+	sdd->data2.sVal = data2;
 }
 
 void ConditionSystem::DispatcherHookInit(CondStructNew* cond, int hookIdx, enum_disp_type dispType, int key, void* callback, int data1, int data2)
@@ -2232,24 +2271,24 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 	int writeVal = dispTypeD20Query;
 	SubDispDefNew sdd;
 	sdd.dispType = dispTypeD20Query;
-	sdd.data1 = 0x102DFC00;
-	sdd.data2 = 0;
+	sdd.data1.sVal = 0x102DFC00;
+	sdd.data2.usVal = 0;
 	sdd.dispCallback = QueryCritterHasCondition;
 	sdd.dispKey = DK_QUE_Critter_Has_Condition;
 	write(0x102DFD48, &sdd, sizeof(SubDispDefNew));
 
 	// QueryCritterHasCondition for sp-Sleep
 	sdd.dispType = dispTypeD20Query;
-	sdd.data1 = 0x102DEB08;
-	sdd.data2 = 0;
+	sdd.data1.sVal = 0x102DEB08;
+	sdd.data2.usVal = 0;
 	sdd.dispCallback = QueryCritterHasCondition;
 	sdd.dispKey = DK_QUE_Critter_Has_Condition;
 	write(0x102DEC00, &sdd, sizeof(SubDispDefNew));
 
 	//  DK_SIG_AID_ANOTHER_WAKE_UP for sp-Sleep
 	sdd.dispType = dispTypeD20Signal;
-	sdd.data1 = 0;
-	sdd.data2 = 0;
+	sdd.data1.usVal = 0;
+	sdd.data2.usVal = 0;
 	sdd.dispCallback = RemoveSpellConditionAndMod;
 	sdd.dispKey = DK_SIG_AID_ANOTHER_WAKE_UP;
 	write(0x102DEB9C, &sdd, sizeof(SubDispDefNew)); // overwriting S_Teleport_Reconnect since it does nothing (return_0 callback)
@@ -2258,8 +2297,8 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 	// EffectTooltip for Stinking Cloud
 	sdd.dispType = dispTypeEffectTooltip;
 	sdd.dispKey = 0;
-	sdd.data1 = 141;
-	sdd.data2 = 0;
+	sdd.data1.usVal = 141;
+	sdd.data2.usVal = 0;
 	sdd.dispCallback = [](DispatcherCallbackArgs args)->int
 	{
 		auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
@@ -2277,8 +2316,8 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 	// EffectTooltip for Cause Fear
 	sdd.dispType = dispTypeEffectTooltip;
 	sdd.dispKey = 0;
-	sdd.data1 = 117;
-	sdd.data2 = 0;
+	sdd.data1.usVal = 117;
+	sdd.data2.usVal = 0;
 	sdd.dispCallback = [](DispatcherCallbackArgs args)->int
 	{
 		auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
@@ -2606,6 +2645,14 @@ int ItemCallbacks::SkillBonus(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int ClassAbilityCallbacks::FeatDamageReduction(DispatcherCallbackArgs args){
+	auto drAmt = args.GetCondArg(1);
+	auto bypasserBitmask = args.GetData1();
+	auto dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
+	damage.AddPhysicalDR(&dispIo->damage, drAmt, bypasserBitmask, 126); // 126 is ~Damage Reduction~[TAG_SPECIAL_ABILITIES_DAMAGE_REDUCTION]
+	return 0;
+}
+
 int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args)
 {
 	
@@ -2629,9 +2676,14 @@ int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args)
 
 void Conditions::AddConditionsToTable(){
 
-	static CondStructNew itemSkillBonus("Special Equipment Skill Bonus", 3);
+	static CondStructNew itemSkillBonus("Special Equipment Skill Bonus", 3, false);
 	itemSkillBonus.AddHook(dispTypeSkillLevel, DK_SKILL_APPRAISE, itemCallbacks.SkillBonus, 99, 0);
 	itemSkillBonus.Register();
+
+	static CondStructNew perfectSelf("Perfect Self", 3);
+	perfectSelf.AddHook(dispTypeTakingDamage2, DK_NONE, classAbilityCallbacks.FeatDamageReduction, 0x4, 0); // 0x4 denotes Magical attacks
+	perfectSelf.Register();
+	perfectSelf.AddToFeatDictionary(FEAT_MONK_PERFECT_SELF, FEAT_INVALID, 10);
 
 	// New Conditions!
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionDisableAoO);

@@ -86,6 +86,20 @@ public:
 	};
 } hooks;
 
+objHndl InventorySystem::ItemWornAt(objHndl handle, EquipSlot nItemSlot) const
+{
+	if (!handle)
+		return 0i64;
+	return _ItemWornAt(handle, nItemSlot);
+}
+
+objHndl InventorySystem::ItemWornAt(objHndl handle, int slot) const
+{
+	if (!handle)
+		return 0i64;
+	return _ItemWornAt(handle, static_cast<EquipSlot>(slot));
+}
+
 objHndl InventorySystem::FindItemByName(objHndl container, int nameId) {
 	return _FindItemByName(container, nameId);
 }

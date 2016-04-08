@@ -215,6 +215,7 @@ public:
 
 #pragma endregion
 	void RegisterNewConditions();
+	static void AddToFeatDictionary(CondStructNew* condStruct,feat_enums feat, feat_enums featEnumMax, uint32_t condArg2Offset);
 	/*
 		used for initializing new SubDispDef's with the specified values
 	*/
@@ -261,6 +262,7 @@ public:
 	int ConditionsExtractInfo(Dispatcher* dispatcher, int condIdx, int* hashkeyOut, int *condsArgsOut);
 	int PermanentAndItemModsExtractInfo(Dispatcher* dispatcher, int permModIdx, int* hashkeyOut, int * condsArgs);
 	void ConditionRemove(objHndl objHnd, CondNode* cond);
+	
 };
 
 extern ConditionSystem conds;
@@ -270,10 +272,16 @@ extern ConditionSystem conds;
 
 struct CondFeatDictionary  // maps feat enums to CondStructs
 {
-	CondStruct * condStruct;
+	union
+	{
+		CondStruct * old;
+		CondStructNew* cs;
+	} condStruct;
 	feat_enums featEnum;
 	feat_enums featEnumMax;
-	uint32_t condArg2Offset; // the GetCondStruct
+	uint32_t condArg; 
+	CondFeatDictionary();
+	CondFeatDictionary(CondStructNew*, feat_enums Feat, feat_enums FeatMax, uint32_t arg2Off);
 };
 
 

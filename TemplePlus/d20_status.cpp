@@ -224,10 +224,10 @@ void D20StatusSystem::initFeats(objHndl objHnd)
 	for (uint32_t i = 0; i < numFeats; i++)
 	{
 		CondStruct * cond;
-		uint32_t arg2 = 0;
-		if (_GetCondStructFromFeat(featList[i], &cond, &arg2))
+		uint32_t arg = 0;
+		if (_GetCondStructFromFeat(featList[i], &cond, &arg))
 		{
-			_ConditionAddToAttribs_NumArgs2(dispatcher, cond, featList[i], arg2);
+			_ConditionAddToAttribs_NumArgs2(dispatcher, cond, featList[i], arg);
 		}
 	}
 	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionAttackOfOpportunity);

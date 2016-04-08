@@ -944,15 +944,49 @@ uint32_t _Dispatch63(objHndl objHnd, DispIO* dispIO) {
 
 
 #pragma endregion 
+SubDispDefNew::SubDispDefNew(){
+	dispType = dispType0;
+	dispKey = DK_NONE;
+	dispCallback = nullptr;
+	data1.sVal = 0;
+	data2.sVal = 0;
+}
+
+SubDispDefNew::SubDispDefNew(enum_disp_type type, uint32_t key, int(* callback)(DispatcherCallbackArgs), CondStructNew* data1In, uint32_t data2In){
+	dispType = type;
+	dispKey = key;
+	dispCallback = callback;
+	data1.condStruct = data1In;
+	data2.usVal = data2In;
+}
+
+SubDispDefNew::SubDispDefNew(enum_disp_type type, uint32_t key, int(* callback)(DispatcherCallbackArgs), uint32_t data1In, uint32_t data2In){
+	dispType = type;
+	dispKey = key;
+	dispCallback = callback;
+	data1.usVal = data1In;
+	data2.usVal = data2In;
+}
+
 CondStructNew::CondStructNew(){
 	numArgs = 0;
 	condName = nullptr;
 	memset(subDispDefs, 0, sizeof(subDispDefs));
 }
 
-CondStructNew::CondStructNew(std::string Name, int NumArgs) : CondStructNew() {
+CondStructNew::CondStructNew(std::string Name, int NumArgs, bool preventDuplicate) : CondStructNew() {
 	condName = strdup( Name.c_str());
 	numArgs = NumArgs;
+	if (preventDuplicate)
+	{
+		AddHook(dispTypeConditionAddPre, DK_NONE, ConditionPrevent, this, 0);
+	}
+	
+}
+
+void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs)){
+	Expects(numHooks < 99);
+	subDispDefs[numHooks++] = { dispType, dispKey, callback, static_cast<uint32_t>(0), static_cast<uint32_t>(0) };
 }
 
 void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs), uint32_t data1, uint32_t data2){
@@ -960,8 +994,18 @@ void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, i
 	subDispDefs[numHooks++] = {dispType, dispKey, callback, data1, data2};
 }
 
+void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs), CondStructNew* data1, uint32_t data2)
+{
+	Expects(numHooks < 99);
+	subDispDefs[numHooks++] = { dispType, dispKey, callback, data1, data2 };
+}
+
 void CondStructNew::Register(){
 	conds.hashmethods.CondStructAddToHashtable(reinterpret_cast<CondStruct*>(this));
+}
+
+void CondStructNew::AddToFeatDictionary(feat_enums feat, feat_enums featEnumMax, uint32_t condArg2Offset){
+	conds.AddToFeatDictionary(this, feat, featEnumMax, condArg2Offset);
 }
 
 uint32_t DispatcherCallbackArgs::GetCondArg(int argIdx)

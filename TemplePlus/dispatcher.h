@@ -7,6 +7,7 @@
 #include "spell.h"
 
 
+struct CondStructNew;
 struct BuffDebuffPacket;
 struct DispIO;
 struct DispIoCondStruct; // 1
@@ -159,9 +160,20 @@ struct SubDispDefNew {
 	enum_disp_type dispType;
 	uint32_t dispKey;
 	int(__cdecl *dispCallback)(DispatcherCallbackArgs args);
-	uint32_t data1;
-	uint32_t data2;
+	typedef union {
+		uint32_t usVal;
+		int sVal;
+		CondStructNew* condStruct;
+	} Data;
+	Data data1;
+	Data data2;
+
+	SubDispDefNew();
+	SubDispDefNew(enum_disp_type type, uint32_t key, int(__cdecl *callback)(DispatcherCallbackArgs), CondStructNew* data1, uint32_t data2);
+	SubDispDefNew(enum_disp_type type, uint32_t key, int(__cdecl *callback)(DispatcherCallbackArgs), uint32_t data1, uint32_t data2);
 };
+
+const int testSizeofSubDispDef = sizeof(SubDispDefNew);
 
 /*
 	This defines a condition and what it does, while CondNode represents an instance of this or another condition.
@@ -183,9 +195,12 @@ struct CondStructNew
 	int numHooks = 0; 
 
 	CondStructNew();
-	CondStructNew(std::string Name, int NumArgs);
-	void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs), uint32_t data1, uint32_t data2);
+	CondStructNew(std::string Name, int NumArgs, bool preventDuplicate = true); // use preventDuplicate = true for "unique" conditions or conditions that should never stack / apply twice
+	void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs) );
+	void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs), uint32_t data1, uint32_t data2);
+	void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs), CondStructNew* data1, uint32_t data2);
 	void Register();
+	void AddToFeatDictionary(feat_enums feat, feat_enums featEnumMax = FEAT_INVALID, uint32_t condArg2Offset = 0);
 };
 
 struct DispatcherCallbackArgs {

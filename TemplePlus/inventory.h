@@ -3,6 +3,8 @@
 #include "dispatcher.h"
 
 
+enum EquipSlot : uint32_t;
+
 enum ItemErrorCode: uint32_t
 {
 	IEC_OK = 0,
@@ -31,13 +33,16 @@ struct InventorySystem : temple::AddressTable
 	
 	objHndl(__cdecl *GetSubstituteInventory)  (objHndl);
 	objHndl(__cdecl *GetItemAtInvIdx)(objHndl, uint32_t nIdx); // returns the item at obj_f_critter_inventory subIdx nIdx  (or obj_f_container_inventory for containers); Note the difference to ItemWornAt! (this is a more low level function)
-	objHndl(__cdecl *ItemWornAt)(objHndl, uint32_t nItemSlot);
 	objHndl(__cdecl *FindMatchingStackableItem)(objHndl objHndReceiver, objHndl objHndItem); // TODO: rewrite so it doesn't stack items with different descriptions and/or caster levels, so potions/scrolls of different caster levels don't stack
 	
 	
 	void (__cdecl *sub_100FF500)(Dispatcher *dispatcher, objHndl objHndItem, uint32_t itemInvLocation);
 	uint32_t(__cdecl *IsItemEffectingConditions)(objHndl objHndItem, uint32_t itemInvLocation);
 	
+
+
+	objHndl ItemWornAt(objHndl, EquipSlot nItemSlot) const;
+	objHndl ItemWornAt(objHndl, int nItemSlot) const;
 	/*
 	Container can both be a critter or an item.
 	nameId must be the MES line number for the item name.
@@ -117,7 +122,7 @@ struct InventorySystem : temple::AddressTable
 	{
 		rebase(GetSubstituteInventory, 0x1007F5B0);
 		rebase(GetItemAtInvIdx, 0x100651B0);
-		rebase(ItemWornAt,      0x10065010);
+		rebase(_ItemWornAt,      0x10065010);
 		rebase(GetWieldType,    0x10066580);
 		rebase(FindMatchingStackableItem, 0x10067DF0);
 
@@ -146,6 +151,7 @@ private:
 	objHndl(__cdecl *_FindItemByProto)(objHndl container, objHndl proto, bool skipWorn);
 	int(__cdecl*_ItemRemove)(objHndl item);
 	int(__cdecl*_ItemDrop)(objHndl item);
+	objHndl(__cdecl *_ItemWornAt)(objHndl, EquipSlot nItemSlot);
 };
 
 extern InventorySystem inventory;
