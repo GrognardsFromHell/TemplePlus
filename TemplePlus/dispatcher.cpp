@@ -288,15 +288,15 @@ DispIoDispelCheck* DispatcherSystem::DispIOCheckIoType11(DispIoDispelCheck* disp
 	return dispIo;
 }
 
-DispIoD20ActionTurnBased* DispatcherSystem::DispIOCheckIoType12(DispIoD20ActionTurnBased* dispIo)
+DispIoD20ActionTurnBased* DispatcherSystem::DispIoCheckIoType12(DispIoD20ActionTurnBased* dispIo)
 {
 	if (dispIo->dispIOType != dispIOTypeD20ActionTurnBased) return nullptr;
 	return dispIo;
 }
 
-DispIoD20ActionTurnBased* DispatcherSystem::DispIOCheckIoType12(DispIO* dispIo)
+DispIoD20ActionTurnBased* DispatcherSystem::DispIoCheckIoType12(DispIO* dispIo)
 {
-	return DispIOCheckIoType12((DispIoD20ActionTurnBased*)dispIo);
+	return DispIoCheckIoType12((DispIoD20ActionTurnBased*)dispIo);
 }
 
 DispIoMoveSpeed * DispatcherSystem::DispIOCheckIoType13(DispIoMoveSpeed* dispIo)
@@ -755,7 +755,7 @@ DispIoDispelCheck* _DispIoCheckIoType11(DispIoDispelCheck* dispIo)
 
 DispIoD20ActionTurnBased* _DispIoCheckIoType12(DispIoD20ActionTurnBased* dispIo)
 {
-	return dispatch.DispIOCheckIoType12(dispIo);
+	return dispatch.DispIoCheckIoType12(dispIo);
 };
 
 DispIOBonusListAndSpellEntry* _DispIoCheckIoType14(DispIOBonusListAndSpellEntry* dispIO)
@@ -981,6 +981,7 @@ CondStructNew::CondStructNew(std::string Name, int NumArgs, bool preventDuplicat
 	{
 		AddHook(dispTypeConditionAddPre, DK_NONE, ConditionPrevent, this, 0);
 	}
+	Register();
 	
 }
 

@@ -1530,6 +1530,7 @@ enum D20DispatcherKey : uint32_t {
 	DK_D20A_FLEE_COMBAT,
 	DK_D20A_USE_POTION,
 	DK_D20A_DIVINE_MIGHT = 144,
+	DK_D20A_EMPTY_BODY = 145,
 
 	DK_NEWDAY_REST = 145, // for successfully resting (is also triggered for an 8 hour uninterrupted rest period)
 	DK_NEWDAY_CALENDARICAL = 146, // for starting a new calendarical day (or artificially adding a days period); I think it's only used for disease timers
@@ -1713,7 +1714,9 @@ enum D20DispatcherKey : uint32_t {
 	DK_QUE_Disarmed = 0x141,
 	DK_SIG_Destruction_Domain_Smite = 0x142,
 	DK_QUE_Can_Perform_Disarm = 0x143,
-	DK_QUE_Craft_Wand_Spell_Level = 0x144
+	DK_QUE_Craft_Wand_Spell_Level = 0x144,
+	DK_QUE_Is_Ethereal = 0x145,
+	DK_QUE_Empty_Body_Num_Rounds = 0x146 // returns number of rounds set for Monk's Empty Body
 };
 
 enum enum_dispIO_type : uint32_t {
@@ -2424,6 +2427,25 @@ enum class DamageType : int {
 	BloodLoss = 17,
 	Magic = 18
 };
+
+enum class AttackPowerType : int 
+{
+	Normal = 0,
+	Unspecified = 1,
+	Silver,
+	Magic,
+	Holy,
+	Unholy,
+	Chaos,
+	Law,
+	Adamantium,
+	Bludgeoning,
+	Piercing,
+	Slashing,
+	Mithril,
+	Cold
+};
+
 
 enum class SavingThrowType : uint32_t {
 	Fortitude = 0,

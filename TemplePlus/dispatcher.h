@@ -82,8 +82,8 @@ struct DispatcherSystem : temple::AddressTable
 	DispIoBonusAndObj* DispIoCheckIoType10(DispIoBonusAndObj* dispIo);
 	DispIoBonusAndObj* DispIoCheckIoType10(DispIO* dispIo);
 	DispIoDispelCheck* DispIOCheckIoType11(DispIoDispelCheck* dispIo);
-	DispIoD20ActionTurnBased* DispIOCheckIoType12(DispIoD20ActionTurnBased* dispIo);
-	DispIoD20ActionTurnBased* DispIOCheckIoType12(DispIO* dispIo);
+	static DispIoD20ActionTurnBased* DispIoCheckIoType12(DispIoD20ActionTurnBased* dispIo);
+	DispIoD20ActionTurnBased* DispIoCheckIoType12(DispIO* dispIo);
 	DispIoMoveSpeed * DispIOCheckIoType13(DispIoMoveSpeed* dispIo);
 	DispIoMoveSpeed * DispIOCheckIoType13(DispIO* dispIo);
 	static DispIoObjEvent* DispIoCheckIoType17(DispIO* dispIo);

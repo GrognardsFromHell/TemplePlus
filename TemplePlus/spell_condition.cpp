@@ -57,6 +57,65 @@ public:
 		// Fix for Restoration spell not curing Charisma damage (it iterated from 0 to 4 instead of 0 to 5)
 		char restoWriteVal = 6;
 		write(0x100CF637 + 2, &restoWriteVal, sizeof(char));
+
+		// EffectTooltip for Cause Fear
+		{
+			SubDispDefNew sdd(dispTypeEffectTooltip, DK_NONE, [](DispatcherCallbackArgs args)->int {
+				auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
+				auto remainingDuration = args.GetCondArg(1);
+				auto spellId = args.GetCondArg(0);
+				SpellPacketBody spellPkt(spellId);
+				std::string text;
+				if (args.GetCondArg(2) == 0) { // frightened
+					text = fmt::format("({}) \n {}: {}/{}", combatSys.GetCombatMesLine(209), combatSys.GetCombatMesLine(175), remainingDuration, spellPkt.duration);
+				}
+				else // shaken
+				{
+					text = fmt::format("({})", combatSys.GetCombatMesLine(208));
+				}
+				//auto text = fmt::format("\n {}: {}/{}", combatSys.GetCombatMesLine(175), remainingDuration, spellPkt.duration);
+				dispIo->Append(args.GetData1(), spellPkt.spellEnum, text.c_str());
+				return 0;
+			}, 117, 0);
+			write(0x102D232C, &sdd, sizeof(SubDispDefNew));
+		}
+
+		// Tooltip for Cause Fear
+		{
+			SubDispDefNew sdd(dispTypeTooltip, DK_NONE, [](DispatcherCallbackArgs args)->int {
+				DispIoTooltip *dispIo = dispatch.DispIoCheckIoType9(args.dispIO);
+				auto mesLine = combatSys.GetCombatMesLine(args.subDispNode->subDispDef->data1);
+				int numstrings = dispIo->numStrings;
+				if (numstrings >= 10)
+					return 0;
+
+				auto spellId = args.GetCondArg(0);
+				SpellPacketBody spellPkt(spellId);
+				std::string text;
+				if (args.GetCondArg(2) == 0) { // frightened
+					text = fmt::format("{} ({})", mesLine, combatSys.GetCombatMesLine(209));
+				}
+				else // shaken
+				{
+					text = fmt::format("{} ({})", mesLine, combatSys.GetCombatMesLine(208));
+				}
+
+
+				int idx = 0;
+				for (idx = 0; idx < numstrings && idx < 10; idx++)
+				{
+					if (!strcmp(dispIo->strings[idx], &text[0]))
+						break;
+				}
+				if (idx == numstrings) // reached the end and not found
+				{
+					strncpy(dispIo->strings[numstrings], &text[0], 0x100);
+					dispIo->numStrings++;
+				}
+				return 0;
+			}, 52, 0);
+			write(0x102D2318, &sdd, sizeof(SubDispDefNew));
+		}
 	}
 } spellConditionFixes;
 

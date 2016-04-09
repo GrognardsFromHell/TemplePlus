@@ -306,7 +306,6 @@ int ConditionRemoveCallback(DispatcherCallbackArgs args);
 int RemoveSpellConditionAndMod(DispatcherCallbackArgs args);
 int CondNodeSetArg0FromSubDispDef(DispatcherCallbackArgs args);
 int QueryCritterHasCondition(DispatcherCallbackArgs args);
-int QuerySetReturnVal1(DispatcherCallbackArgs args);
 int QueryRetrun1GetArgs(DispatcherCallbackArgs args);
 int ItemSkillBonusCallback(DispatcherCallbackArgs args); 
 

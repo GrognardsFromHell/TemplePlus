@@ -180,9 +180,14 @@ struct Objects : temple::AddressTable {
 	float GetRotationTowards(objHndl from, objHndl to);
 
 	/*
-		Fades an object to a certain opacity.
+		Fades an object to a certain opacity, in time step tickTimeMs and opacity quantum tickQuantum
+		callbackMode:
+		0 - nothing special
+		1 - unsets AiFlag::RunningOff and destroys at the end
+		2 - unsets AiFlag::RunningOff and marks OF_OFF at the end and 
+		3 - (should be as 1, but isn't??), will also poop items
 	*/
-	void FadeTo(objHndl obj, int targetOpacity, int fadeTimeInMs, int unk1, int unk2);
+	void FadeTo(objHndl obj, int targetOpacity, int tickTimeMs, int tickQuantum, int callbackMode = 0) const;
 	
 	void SetFlag(objHndl obj, ObjectFlag flag) {
 		_SetFlag(obj, flag);

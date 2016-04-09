@@ -520,8 +520,9 @@ float Objects::GetRotationTowards(objHndl from, objHndl to) {
 	return AngleBetweenPoints(locFrom, locTo);
 }
 
-void Objects::FadeTo(objHndl obj, int targetOpacity, int fadeTimeInMs, int unk1, int unk2) {
-	_FadeTo(obj, targetOpacity, fadeTimeInMs, unk1, unk2);
+void Objects::FadeTo(objHndl obj, int targetOpacity, int tickTimeMs, int tickOpacityQuantum, int callbackMode) const
+{
+	_FadeTo(obj, targetOpacity, tickTimeMs, tickOpacityQuantum, callbackMode);
 }
 
 void Objects::Move(objHndl handle, LocAndOffsets toLocation) {

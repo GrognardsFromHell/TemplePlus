@@ -82,6 +82,23 @@ static struct DamageAddresses : temple::AddressTable {
 
 Damage damage;
 
+int DamagePacket::AddEtherealImmunity(){
+	if (damModCount >= 5)
+		return 0;
+
+
+	MesLine line;
+	line.key = 134;
+	mesFuncs.GetLine_Safe(damage.damageMes, &line);
+	damageFactorModifiers[damModCount].dmgFactor = 0;
+	damageFactorModifiers[damModCount].type = DamageType::Unspecified;
+	damageFactorModifiers[damModCount].attackPowerType = 0;
+	damageFactorModifiers[damModCount].typeDescription= line.value;
+	damageFactorModifiers[damModCount++].causedBy = nullptr;
+
+	return 1;
+}
+
 void Damage::DealDamage(objHndl victim, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType) {
 
 	addresses.DoDamage(victim, attacker, dice.ToPacked(), type, attackPower, reduction, damageDescId, actionType);
@@ -148,7 +165,7 @@ int Damage::AddPhysicalDR(DamagePacket* damPkt, int DRAmount, int bypasserBitmas
 		damPkt->damageResistances[damPkt->damResCount].damageReductionAmount = DRAmount;
 		damPkt->damageResistances[damPkt->damResCount].dmgFactor = 0;
 		damPkt->damageResistances[damPkt->damResCount].type = DamageType::SlashingAndBludgeoningAndPiercing;
-		damPkt->damageResistances[damPkt->damResCount].bypasserBitmask = bypasserBitmask;
+		damPkt->damageResistances[damPkt->damResCount].attackPowerType = bypasserBitmask;
 		damPkt->damageResistances[damPkt->damResCount].typeDescription = mesLine.value;
 		damPkt->damageResistances[damPkt->damResCount++].causedBy = 0;
 		return 1;
@@ -172,7 +189,16 @@ int Damage::AddDamageDiceWithDescr(DamagePacket* dmgPkt, int dicePacked, DamageT
 	return 0;
 }
 
-Damage::Damage()
+Damage::Damage(){
+	damageMes = 0;
+	// damageMes = addresses.damageMes;
+}
+
+void Damage::Init(){
+	mesFuncs.Open("tpmes\\damage.mes", &damageMes);
+}
+
+void Damage::Exit() const
 {
-	damageMes = addresses.damageMes;
+	mesFuncs.Close(damageMes);
 }

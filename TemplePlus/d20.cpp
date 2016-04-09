@@ -109,9 +109,38 @@ int D20Replacements::PerformActivateReadiedAction(D20Actn* d20a)
 class D20ActionCallbacks {
 public:
 
+	// Add to sequence funcs
 	static ActionErrorCode AddToSeqSimple(D20Actn*, ActnSeq*, TurnBasedStatus*);
 	static ActionErrorCode AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+	
+	// Turn Based Status checks
 	static ActionErrorCode StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBasedStatus* tbStat);
+
+	// Action Checks
+	static ActionErrorCode ActionCheckAidAnotherWakeUp(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckDivineMight(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckPerformEmptyBody(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat);
+
+	// Action Cost
+	static ActionErrorCode ActionCostStandardAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostMoveAction(D20Actn* d20, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostNull(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostStandardAction(D20Actn*, TurnBasedStatus*, ActionCostPacket*);
+
+	static ActionErrorCode LocationCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc);
+	
+	// Perform funcs
+	static ActionErrorCode PerformAidAnotherWakeUp(D20Actn* d20a);
+	static ActionErrorCode PerformDisarm(D20Actn* d20a);
+	static ActionErrorCode PerformDisarmedWeaponRetrieve(D20Actn* d20a);
+	static ActionErrorCode PerformDivineMight(D20Actn* d20a);
+	static ActionErrorCode PerformEmptyBody(D20Actn* d20a);
+
+
+	
 } d20Callbacks;
 
 
@@ -119,8 +148,8 @@ public:
 static struct LegacyD20SystemAddresses : temple::AddressTable {
 
 	int (__cdecl*  GlobD20ActnSetTarget)(objHndl objHnd, LocAndOffsets * loc);
-	uint32_t(__cdecl* LocationCheckStdAttack)(D20Actn*, TurnBasedStatus*, LocAndOffsets*);
-	uint32_t (__cdecl*ActionCostStandardAttack)(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp);
+	ActionErrorCode (__cdecl* LocationCheckStdAttack)(D20Actn*, TurnBasedStatus*, LocAndOffsets*);
+	ActionErrorCode (__cdecl*ActionCostStandardAttack)(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp);
 	uint32_t(__cdecl*_PickerFuncTooltipToHitChance)(D20Actn * d20a, int flags);
 	uint32_t(__cdecl*AddToSeqStdAttack)(D20Actn*, ActnSeq*, TurnBasedStatus*);
 	uint32_t(__cdecl*AiCheckStdAttack)(D20Actn*, TurnBasedStatus*);
@@ -164,10 +193,10 @@ void LegacyD20System::NewD20ActionsInit()
 	mesFuncs.Open("tpmes//combat.mes", &combatSys.combatMesNew);
 
 	d20Defs[D20A_DIVINE_MIGHT].addToSeqFunc = d20Callbacks.AddToSeqSimple;
-	d20Defs[D20A_DIVINE_MIGHT].actionCheckFunc = _DivineMightCheck;
-	d20Defs[D20A_DIVINE_MIGHT].performFunc = _DivineMightPerform;
+	d20Defs[D20A_DIVINE_MIGHT].actionCheckFunc = d20Callbacks.ActionCheckDivineMight;
+	d20Defs[D20A_DIVINE_MIGHT].performFunc = d20Callbacks.PerformDivineMight;
 	// d20Defs[D20A_DIVINE_MIGHT].actionFrameFunc = _DivineMightPerform;
-	d20Defs[D20A_DIVINE_MIGHT].actionCost = _ActionCostNull;
+	d20Defs[D20A_DIVINE_MIGHT].actionCost = d20Callbacks.ActionCostNull;
 	d20Defs[D20A_DIVINE_MIGHT].flags = D20ADF::D20ADF_None;
 	
 	D20ActionType d20Type;
@@ -175,11 +204,11 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Type = D20A_DISARM;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqWithTarget;
 	d20Defs[d20Type].turnBasedStatusCheck = d20Callbacks.StdAttackTurnBasedStatusCheck;
-	d20Defs[d20Type].actionCheckFunc = _ActionCheckDisarm;
+	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckDisarm;
 	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
-	d20Defs[d20Type].performFunc = _PerformDisarm;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformDisarm;
 	d20Defs[d20Type].actionFrameFunc = _ActionFrameDisarm;
-	d20Defs[d20Type].actionCost = addresses.ActionCostStandardAttack;
+	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostStandardAttack;
 	d20Defs[d20Type].seqRenderFunc = addresses._PickerFuncTooltipToHitChance;
 	d20Defs[d20Type].flags = (D20ADF)(D20ADF_TargetSingleExcSelf | D20ADF_TriggersAoO | D20ADF_QueryForAoO | D20ADF_TriggersCombat
 		| D20ADF_Unk8000 | D20ADF_SimulsCompatible ); // 0x28908; // same as Trip // note : queryForAoO is used for resetting a flag
@@ -187,13 +216,13 @@ void LegacyD20System::NewD20ActionsInit()
 
 	d20Type = D20A_DISARMED_WEAPON_RETRIEVE;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSimple;
-	d20Defs[d20Type].turnBasedStatusCheck = 0;
-	d20Defs[d20Type].actionCheckFunc = _ActionCheckDisarmedWeaponRetrieve;
-	d20Defs[d20Type].locCheckFunc = LocationCheckDisarmedWeaponRetrieve;
-	d20Defs[d20Type].performFunc = _PerformDisarmedWeaponRetrieve;
-	d20Defs[d20Type].actionFrameFunc = 0;
-	d20Defs[d20Type].actionCost = _ActionCostMoveAction;
-	d20Defs[d20Type].seqRenderFunc = 0;
+	d20Defs[d20Type].turnBasedStatusCheck = nullptr;
+	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckDisarmedWeaponRetrieve;
+	d20Defs[d20Type].locCheckFunc = d20Callbacks.LocationCheckDisarmedWeaponRetrieve;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformDisarmedWeaponRetrieve;
+	d20Defs[d20Type].actionFrameFunc = nullptr;
+	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostMoveAction;
+	d20Defs[d20Type].seqRenderFunc = nullptr;
 	d20Defs[d20Type].flags = (D20ADF)( D20ADF_TriggersAoO 	| 0*D20ADF_Unk8000
 		| D20ADF_SimulsCompatible | D20ADF_Breaks_Concentration); // 0x28908; // largely same as Pick Up Object
 	*(int*)&d20Defs[D20A_PICKUP_OBJECT].flags |= (int) (D20ADF_TriggersAoO);
@@ -201,11 +230,11 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Type = D20A_SUNDER;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqWithTarget;
 	d20Defs[d20Type].turnBasedStatusCheck = d20Callbacks.StdAttackTurnBasedStatusCheck;
-	d20Defs[d20Type].actionCheckFunc = _ActionCheckSunder;
+	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckSunder;
 	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
-	d20Defs[d20Type].performFunc = _PerformDisarm;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformDisarm;
 	d20Defs[d20Type].actionFrameFunc = _ActionFrameSunder;
-	d20Defs[d20Type].actionCost = addresses.ActionCostStandardAttack;
+	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostStandardAttack;
 	d20Defs[d20Type].seqRenderFunc = addresses._PickerFuncTooltipToHitChance;
 	d20Defs[d20Type].flags = (D20ADF)(D20ADF_TargetSingleExcSelf | D20ADF_TriggersAoO | D20ADF_TriggersCombat
 		| D20ADF_Unk8000 | D20ADF_SimulsCompatible); // 0x28908; // same as Trip
@@ -213,11 +242,11 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Type = D20A_AID_ANOTHER_WAKE_UP;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqWithTarget;
 	d20Defs[d20Type].turnBasedStatusCheck = d20Callbacks.StdAttackTurnBasedStatusCheck;
-	d20Defs[d20Type].actionCheckFunc = _ActionCheckAidAnotherWakeUp;
+	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckAidAnotherWakeUp;
 	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
-	d20Defs[d20Type].performFunc = _PerformAidAnotherWakeUp;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformAidAnotherWakeUp;
 	d20Defs[d20Type].actionFrameFunc = _ActionFrameAidAnotherWakeUp;
-	d20Defs[d20Type].actionCost = addresses.ActionCostStandardAttack;
+	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostStandardAttack;
 	d20Defs[d20Type].seqRenderFunc = addresses._PickerFuncTooltipToHitChance;
 	d20Defs[d20Type].flags = (D20ADF)(D20ADF_TargetSingleExcSelf | D20ADF_Unk8000 | D20ADF_SimulsCompatible); // 0x28908; // same as Trip // note : queryForAoO is used for resetting a flag
 
@@ -225,11 +254,11 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Type = D20A_EMPTY_BODY;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSimple;
 	d20Defs[d20Type].turnBasedStatusCheck = nullptr;
-	d20Defs[d20Type].actionCheckFunc = _ActionCheckAidAnotherWakeUp;
-	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
-	d20Defs[d20Type].performFunc = _PerformAidAnotherWakeUp;
+	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckPerformEmptyBody;
+	d20Defs[d20Type].locCheckFunc = nullptr;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformEmptyBody;
 	d20Defs[d20Type].actionFrameFunc = nullptr;
-	d20Defs[d20Type].actionCost = addresses.ActionCostStandardAttack;
+	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostStandardAction;
 	d20Defs[d20Type].seqRenderFunc = nullptr;
 	d20Defs[d20Type].flags = (D20ADF)( D20ADF_None);
 
@@ -1062,7 +1091,7 @@ int _D20Init(GameSystemConf* conf)
 	return OrgD20Init(conf);
 }
 
-uint32_t _DivineMightCheck(D20Actn* d20a, TurnBasedStatus* tbStat)
+ActionErrorCode D20ActionCallbacks::ActionCheckDivineMight(D20Actn* d20a, TurnBasedStatus* tbStat)
 {
 	DispIoD20ActionTurnBased dispIo;
 	dispIo.dispIOType = dispIOTypeD20ActionTurnBased;
@@ -1079,10 +1108,10 @@ uint32_t _DivineMightCheck(D20Actn* d20a, TurnBasedStatus* tbStat)
 		dispatch.DispatcherProcessor(dispatcher, dispTypeD20ActionCheck, DK_D20A_TURN_UNDEAD , &dispIo);
 	}
 
-	return dispIo.returnVal;
+	return static_cast<ActionErrorCode>(dispIo.returnVal);
 }
 
-uint32_t _DivineMightPerform(D20Actn* d20a)
+ActionErrorCode D20ActionCallbacks::PerformDivineMight(D20Actn* d20a)
 {
 	DispIoD20ActionTurnBased dispIo;
 	dispIo.dispIOType = dispIOTypeD20ActionTurnBased;
@@ -1099,23 +1128,45 @@ uint32_t _DivineMightPerform(D20Actn* d20a)
 	auto chaMod = objects.GetModFromStatLevel(chaScore);
 	conds.AddTo(d20a->d20APerformer, "Divine Might Bonus", { chaMod, 0 });
 	
-	return dispIo.returnVal;
+	return static_cast<ActionErrorCode>(dispIo.returnVal);
+}
+
+ActionErrorCode D20ActionCallbacks::PerformEmptyBody(D20Actn* d20a)
+{
+	DispIoD20ActionTurnBased dispIo;
+	dispIo.dispIOType = dispIOTypeD20ActionTurnBased;
+	dispIo.returnVal = 0;
+	dispIo.d20a = d20a;
+	dispIo.tbStatus = nullptr;
+	
+	auto dispatcher = objects.GetDispatcher(d20a->d20APerformer);
+
+	int numRounds =( d20Sys.d20QueryReturnData(d20a->d20APerformer, DK_QUE_Empty_Body_Num_Rounds, 1, 0) & 0xffFFffFF00000000) >> 32;
+	dispIo.d20a->data1 = numRounds; // number of rounds to deduct from max possible
+
+	if (dispatch.dispatcherValid(dispatcher)){
+		dispatch.DispatcherProcessor(dispatcher, dispTypeD20ActionPerform, DK_D20A_EMPTY_BODY, &dispIo); // reduces the number of remaining rounds by 1
+	}
+
+	conds.AddTo(d20a->d20APerformer, "Ethereal", { 0, 0 , numRounds});
+
+	return static_cast<ActionErrorCode>(dispIo.returnVal);
 }
 
 
-
-uint32_t _ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat)
+ActionErrorCode D20ActionCallbacks::ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat)
 {
 	objHndl performer = d20a->d20APerformer;
 	if (d20Sys.d20Query(performer, DK_QUE_Prone) || d20Sys.d20Query(performer, DK_QUE_Unconscious))
-		return 13;
+		return AEC_CANT_WHILE_PRONE;
+	
 
 	objHndl weapon = inventory.ItemWornAt(d20a->d20APerformer, 3);
 	int weapFlags; 
 		
 	if (weapon && (weapFlags = objects.getInt32(weapon, obj_f_weapon_flags), weapFlags & OWF_RANGED_WEAPON)) // ranged weapon - Need Melee Weapon error
 	{
-		return 12;
+		return AEC_NEED_MELEE_WEAPON;
 	}
 
 	if (d20a->d20ATarget)
@@ -1125,26 +1176,38 @@ uint32_t _ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat)
 		{
 			targetWeapon = inventory.ItemWornAt(d20a->d20ATarget, 4);
 			if (!targetWeapon)
-				return 9;
+				return AEC_TARGET_INVALID;
 			if (objects.GetType(targetWeapon) != obj_t_weapon)
-				return 9;
+				return AEC_TARGET_INVALID;
 		}
 	}
 	else
-		return 9;
+		return AEC_TARGET_INVALID;
 
-	return 0;
+	return AEC_OK;
 }
 
-uint32_t _PerformDisarm(D20Actn* d20a)
+ActionErrorCode D20ActionCallbacks::ActionCheckPerformEmptyBody(D20Actn* d20a, TurnBasedStatus* tbStat){
+	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Is_Ethereal))
+		return AEC_INVALID_ACTION;
+	auto numRounds = ( 0xffFFffFF00000000 & d20Sys.d20QueryReturnData(d20a->d20APerformer, DK_QUE_Empty_Body_Num_Rounds, 2, 0) ) >> 32;
+	if (numRounds <= 0)
+		return AEC_OUT_OF_CHARGES;
+
+	if (d20a->data1 > numRounds)
+		d20a->data1 = numRounds;
+
+	return AEC_OK;
+}
+
+ActionErrorCode D20ActionCallbacks::PerformDisarm(D20Actn* d20a)
 {
-	
 	if (animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget))
 	{
 		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
-	return 0;
+	return AEC_OK;
 };
 
 
@@ -1249,47 +1312,47 @@ uint32_t _ActionFrameDisarm(D20Actn* d20a)
 };
 
 #pragma region Retrieve Disarmed Weapon
-uint32_t LocationCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc)
+ActionErrorCode D20ActionCallbacks::LocationCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc)
 {
 	if (!combatSys.isCombatActive())
-		return 0;
+		return AEC_OK;
 	if (d20a->d20ATarget)
-		return d20Sys.TargetWithinReachOfLoc(d20a->d20APerformer, d20a->d20ATarget, loc) != 0 ? 0 : 8;
+		return d20Sys.TargetWithinReachOfLoc(d20a->d20APerformer, d20a->d20ATarget, loc) != 0 ? AEC_OK : AEC_TARGET_TOO_FAR;
 	objHndl weapon = d20Sys.d20QueryReturnData(d20a->d20APerformer, DK_QUE_Disarmed, 0, 0);
 	if (weapon)
-		return d20Sys.TargetWithinReachOfLoc(d20a->d20APerformer, weapon, loc) != 0 ? 0 : 8;
-	return 9;
+		return d20Sys.TargetWithinReachOfLoc(d20a->d20APerformer, weapon, loc) != 0 ? AEC_OK : AEC_TARGET_TOO_FAR;
+	return AEC_TARGET_INVALID;
 };
 
-uint32_t _ActionCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat)
+ActionErrorCode D20ActionCallbacks::ActionCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat)
 {
 	int dummy = 1;
-	return 0;
+	return AEC_OK;
 };
 
-uint32_t _PerformDisarmedWeaponRetrieve(D20Actn* d20a)
+ActionErrorCode D20ActionCallbacks::PerformDisarmedWeaponRetrieve(D20Actn* d20a)
 {
 	d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Disarmed_Weapon_Retrieve, (int)d20a, 0);
-	return 0;
+	return AEC_OK;
 };
 
 #pragma endregion
 
-uint32_t _ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat)
+ActionErrorCode D20ActionCallbacks::ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat)
 {
 	objHndl weapon = inventory.ItemWornAt(d20a->d20APerformer, 3);
 	int weapFlags;
 
 	if (!weapon)
-		return 12;
+		return AEC_NEED_MELEE_WEAPON;
 	weapFlags = objects.getInt32(weapon, obj_f_weapon_flags);
 	if ( weapFlags & OWF_RANGED_WEAPON) // ranged weapon - Need Melee Weapon error
 	{
-		return 12;
+		return AEC_NEED_MELEE_WEAPON;
 	}
 	
 	if (!weapons.IsSlashingOrBludgeoning(weapon))
-		return 17;
+		return AEC_WRONG_WEAPON_TYPE;
 
 	if (d20a->d20ATarget)
 	{
@@ -1298,16 +1361,16 @@ uint32_t _ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat)
 		{
 			targetWeapon = inventory.ItemWornAt(d20a->d20ATarget, 4);
 			if (targetWeapon)
-				return 0;
+				return AEC_OK;
 			targetWeapon = inventory.ItemWornAt(d20a->d20ATarget, 11); // shield
 			if (!targetWeapon)
-				return 9;
+				return AEC_TARGET_INVALID;
 		}
 	}
 	else
-		return 9;
+		return AEC_TARGET_INVALID;
 
-	return 0;
+	return AEC_OK;
 }
 
 
@@ -1330,7 +1393,7 @@ uint32_t _ActionFrameSunder(D20Actn* d20a)
 }
 
 
-uint32_t _PerformAidAnotherWakeUp(D20Actn* d20a)
+ActionErrorCode D20ActionCallbacks::PerformAidAnotherWakeUp(D20Actn* d20a)
 {
 
 	if (animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget))
@@ -1347,7 +1410,7 @@ uint32_t _PerformAidAnotherWakeUp(D20Actn* d20a)
 			
 		}
 	}
-	return 0;
+	return AEC_OK;
 }
 
 uint32_t _ActionFrameAidAnotherWakeUp(D20Actn* d20a)
@@ -1360,13 +1423,12 @@ uint32_t _ActionFrameAidAnotherWakeUp(D20Actn* d20a)
 	return 0;
 }
 
-uint32_t _ActionCheckAidAnotherWakeUp(D20Actn* d20a, TurnBasedStatus* tbStat)
+ActionErrorCode D20ActionCallbacks::ActionCheckAidAnotherWakeUp(D20Actn* d20a, TurnBasedStatus* tbStat)
 {
-	if (!d20a->d20ATarget)
-	{
-		return 9;
+	if (!d20a->d20ATarget)	{
+		return AEC_TARGET_INVALID;
 	}
-	return 0;
+	return AEC_OK;
 };
 
 
@@ -1382,3 +1444,61 @@ ActionErrorCode D20ActionCallbacks::StdAttackTurnBasedStatusCheck(D20Actn* d20a,
 {
 	return static_cast<ActionErrorCode>(actSeqSys.StdAttackTurnBasedStatusCheck(d20a, tbStat));
 }
+
+ActionErrorCode D20ActionCallbacks::ActionCostStandardAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp){
+
+	if ( d20Sys.d20Query(d20a->d20APerformer, DK_QUE_HoldingCharge)
+		 && (tbStat->tbsFlags & TBSF_8)	&& !(d20a->d20Caf & D20CAF_FREE_ACTION)){
+		acp->hourglassCost = 0;
+		return AEC_OK;
+	}
+
+	acp->hourglassCost = 0;
+	acp->chargeAfterPicker = 0;
+	acp->moveDistCost = 0;
+
+	if (!(d20a->d20Caf & D20CAF_FREE_ACTION) && combatSys.isCombatActive())
+	{
+		acp->chargeAfterPicker = 1;
+		if ( (!feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_SHOT_ON_THE_RUN)
+			   || d20a->d20ActType != D20A_STANDARD_RANGED_ATTACK)
+		&&   (!feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_SPRING_ATTACK)
+				|| d20a->d20ActType != D20A_STANDARD_ATTACK ))
+		{
+			tbStat->surplusMoveDistance = 0;
+		}
+	}
+	return AEC_OK;
+}
+
+
+ActionErrorCode D20ActionCallbacks::ActionCostMoveAction(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp)
+{
+	acp->hourglassCost = 0;
+	acp->chargeAfterPicker = 0;
+	acp->moveDistCost = 0;
+	if (!(d20->d20Caf & D20CAF_FREE_ACTION) && combatSys.isCombatActive())
+	{
+		acp->hourglassCost = 1;
+		tbStat->surplusMoveDistance = 0;
+		tbStat->numAttacks = 0;
+		tbStat->baseAttackNumCode = 0;
+		tbStat->attackModeCode = 0;
+		tbStat->numBonusAttacks = 0;
+	}
+	return AEC_OK;
+}
+
+ActionErrorCode D20ActionCallbacks::ActionCostNull(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp){
+	acp->hourglassCost = 0;
+	acp->chargeAfterPicker = 0;
+	acp->moveDistCost = 0;
+	return AEC_OK;
+}
+
+ActionErrorCode D20ActionCallbacks::ActionCostStandardAction(D20Actn*, TurnBasedStatus*, ActionCostPacket*acp){
+	acp->hourglassCost = 2;
+	acp->chargeAfterPicker = 0;
+	acp->moveDistCost = 0;
+	return AEC_OK;
+};

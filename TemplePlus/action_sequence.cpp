@@ -622,7 +622,6 @@ ActionErrorCode ActionSequenceSystem::AddToSeqSimple(D20Actn* d20a, ActnSeq * ac
 int ActionSequenceSystem::AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStatus)
 {
 	int result; 
-	uint32_t(__cdecl *actionCheckFunc)(D20Actn *, TurnBasedStatus *); 
 	int actNum; 
 	float reach; 
 	objHndl target; 
@@ -661,7 +660,7 @@ int ActionSequenceSystem::AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, Tur
 					tbStatusCopy.errCode = result;
 					return result;
 				}
-				actionCheckFunc = d20Sys.d20Defs[actSeq->d20ActArray[actNum].d20ActType].actionCheckFunc;
+				auto actionCheckFunc = d20Sys.d20Defs[actSeq->d20ActArray[actNum].d20ActType].actionCheckFunc;
 				if (actionCheckFunc)
 				{
 					result = actionCheckFunc(&actSeq->d20ActArray[actNum], &tbStatusCopy);
@@ -2678,7 +2677,7 @@ int ActionSequenceSystem::ActionCostFullAttack(D20Actn* d20, TurnBasedStatus* tb
 		FullAttackCostCalculate(d20, tbStat, (int*)&tbStat->baseAttackNumCode, (int*) &tbStat->numBonusAttacks,
 			(int*)&tbStat->numAttacks,(int*) &tbStat->attackModeCode);
 		tbStat->surplusMoveDistance = 0;
-		tbStat->tbsFlags = tbStat->tbsFlags | 0x40;
+		tbStat->tbsFlags = tbStat->tbsFlags | TBSF_FullAttack;
 	}
 
 	return 0;
@@ -2754,22 +2753,22 @@ int ActionSequenceSystem::ActionCostProcess(TurnBasedStatus* tbStat, D20Actn* d2
 
 	if (tbStat->hourglassState == -1) // this is an error state I think
 	{
-		result = 3;
+		result = AEC_NOT_ENOUGH_TIME3;
 		if (hourglassCost <= 4)
 		{
 			switch (hourglassCost)
 			{
 			case 1:
-				tbStat->errCode = 2;
-				return 2;
+				tbStat->errCode = AEC_NOT_ENOUGH_TIME2;
+				return AEC_NOT_ENOUGH_TIME2;
 			case 2:
-				tbStat->errCode = 1;
-				return 1;
+				tbStat->errCode = AEC_NOT_ENOUGH_TIME1;
+				return AEC_NOT_ENOUGH_TIME1;
 			case 4:
-				tbStat->errCode = 3;
-				return 3;
+				tbStat->errCode = AEC_NOT_ENOUGH_TIME3;
+				return AEC_NOT_ENOUGH_TIME3;
 			case 3:
-				tbStat->errCode = 3;
+				tbStat->errCode = AEC_NOT_ENOUGH_TIME3;
 				break;
 			default:
 				break;
@@ -2789,18 +2788,18 @@ int ActionSequenceSystem::ActionCostProcess(TurnBasedStatus* tbStat, D20Actn* d2
 			else
 				tbStat->numBonusAttacks -= actCost.chargeAfterPicker;
 			if (tbStat->attackModeCode == tbStat->baseAttackNumCode && !tbStat->numBonusAttacks)
-				tbStat->tbsFlags &= 0xFFFFFFBF; // remove flag 0x4
-			result = 0;
+				tbStat->tbsFlags &= ~TBSF_Movement2;  
+			result = AEC_OK;
 		}
 		else
 		{
-			result = 1;
+			result = AEC_NOT_ENOUGH_TIME1;
 		}
 			
 	}
 	else
 	{
-		result = (tbStat->tbsFlags & 4) != 0 ? 4 : 8;
+		result = (tbStat->tbsFlags & TBSF_Movement2) != 0 ? AEC_ALREADY_MOVED : AEC_TARGET_OUT_OF_RANGE;
 	}
 
 	return result;
@@ -3159,29 +3158,6 @@ void _ActSeqCurSetSpellPacket(SpellPacketBody* spellPktBody, int flag)
 }
 
 
-uint32_t _ActionCostNull(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp)
-{
-	return actSeqSys.ActionCostNull(d20a, tbStat, acp);
-}
-
-
-uint32_t  _ActionCostMoveAction(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp)
-{
-	acp->hourglassCost = 0;
-	acp->chargeAfterPicker = 0;
-	acp->moveDistCost = 0;
-	if (!(d20->d20Caf & D20CAF_FREE_ACTION) && combatSys.isCombatActive())
-	{
-		acp->hourglassCost = 1;
-		tbStat->surplusMoveDistance = 0;
-		tbStat->numAttacks = 0;
-		tbStat->baseAttackNumCode = 0;
-		tbStat->attackModeCode = 0;
-		tbStat->numBonusAttacks = 0;
-	}
-	return 0;
-};
-
 int _GetNewHourglassState(objHndl performer, D20ActionType d20aType, int d20Data1, int radMenuActualArg, D20SpellData* d20SpellData)
 {
 	return actSeqSys.GetNewHourglassState(performer, d20aType, d20Data1, radMenuActualArg, d20SpellData);
@@ -3422,10 +3398,10 @@ void ActnSeqReplacements::NaturalAttackOverwrites()
 	// 10094D57 actionCheckFunc
 	// 10094D81 locCheckFunc
 
-	// moveSequenceParse
+	// moveSequenceParse    replaced
 	// 1009538C actionCost
-	writeVal = (int)&d20Sys.d20Defs[0].actionCost;
-	write(0x1009538C + 2, &writeVal, sizeof(int));
+	/*writeVal = (int)&d20Sys.d20Defs[0].actionCost;
+	write(0x1009538C + 2, &writeVal, sizeof(int));*/
 
 	// seqAddWithTarget
 	writeVal = (int)&d20Sys.d20Defs[0].actionCheckFunc;

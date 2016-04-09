@@ -186,8 +186,34 @@ class ClassAbilityCallbacks
 public:
 	// note: conditions obtained from feats always arg0 set to the feat enum (automatically)
 	static int __cdecl FeatDamageReduction(DispatcherCallbackArgs args);
-	static int __cdecl FeatEmptyBody(DispatcherCallbackArgs args);
+	static int __cdecl FeatEmptyBody(DispatcherCallbackArgs args); // radial menu builder
+	static int __cdecl FeatEmptyBodiInit(DispatcherCallbackArgs args);
+	static int __cdecl FeatEmptyBodyReduceRounds(DispatcherCallbackArgs);
+
+	// Timed effect callbacks; assumption: num of rounds remaining is at arg[2]
+	static int __cdecl GetNumRoundsRemaining(DispatcherCallbackArgs args);
+	static int __cdecl TimedEffectCountdown(DispatcherCallbackArgs args);
+
+
+	
 } classAbilityCallbacks;
+
+class GenericCallbacks
+{
+public:
+	static int QuerySetReturnVal1(DispatcherCallbackArgs args);
+	static int QuerySetReturnVal0(DispatcherCallbackArgs);
+	
+	static int EffectTooltip(DispatcherCallbackArgs args); // SubDispDef data1 denotes the effect type idx, data2 denotes combat.mes line
+	static int TooltipUnrepeated(DispatcherCallbackArgs); // SubDispDef data1 denotes combat.mes line
+
+	static int AddEtherealDamageImmunity(DispatcherCallbackArgs args);
+	static int EtherealOnAdd(DispatcherCallbackArgs args);
+	static int EtherealDamageDealingNull(DispatcherCallbackArgs);
+	static int EtherealOnRemove(DispatcherCallbackArgs);
+	
+	
+} genericCallbacks;
 
 CondNode::CondNode(CondStruct *cond) {
 	memset(this, 0, sizeof(CondNode));
@@ -471,7 +497,7 @@ int DivineMightEffectTooltipCallback(DispatcherCallbackArgs args)
 /*
 gets a tooltip string from combat.mes
 */
-int TooltipNoRepetitionCallback(DispatcherCallbackArgs args)
+int GenericCallbacks::TooltipUnrepeated(DispatcherCallbackArgs args)
 {
 	DispIoTooltip *dispIo = dispatch.DispIoCheckIoType9(args.dispIO);
 	auto mesLine = combatSys.GetCombatMesLine(args.subDispNode->subDispDef->data1);
@@ -512,12 +538,55 @@ int QueryCritterHasCondition(DispatcherCallbackArgs args)
 	return 0;
 }
 
-int QuerySetReturnVal1(DispatcherCallbackArgs args)
+
+int GenericCallbacks::QuerySetReturnVal1(DispatcherCallbackArgs args)
 {
 	DispIoD20Query * dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
 	dispIo->return_val = 1;
 	return 0;
-};
+}
+
+int GenericCallbacks::QuerySetReturnVal0(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	dispIo->return_val = 0;
+	return 0;
+}
+
+int GenericCallbacks::AddEtherealDamageImmunity(DispatcherCallbackArgs args){
+	auto dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
+	dispIo->damage.AddEtherealImmunity();
+	return 0;
+}
+
+int GenericCallbacks::EtherealOnAdd(DispatcherCallbackArgs args)
+{
+	floatSys.FloatCombatLine(args.objHndCaller, 210); // Ethereal
+	objects.FadeTo(args.objHndCaller, 60, 10, 30, 0);
+	return 0;
+}
+
+int GenericCallbacks::EtherealDamageDealingNull(DispatcherCallbackArgs args){
+	auto dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
+	dispIo->damage.AddEtherealImmunity();
+	return 0;
+}
+
+int GenericCallbacks::EtherealOnRemove(DispatcherCallbackArgs args)
+{
+	objects.FadeTo(args.objHndCaller, 255, 0, 5, 0);
+	return 0;
+}
+
+
+int GenericCallbacks::EffectTooltip(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
+	auto numRounds = args.GetCondArg(2);
+
+	dispIo->Append( args.GetData1(), -1, fmt::format("{}\n{}: {}",combatSys.GetCombatMesLine(args.GetData2()), combatSys.GetCombatMesLine(175), numRounds).c_str() );
+	return 0;
+}
 
 int QuerySetReturnVal0(DispatcherCallbackArgs args)
 {
@@ -1423,11 +1492,11 @@ void ConditionSystem::RegisterNewConditions()
 	cond->numArgs = 8;
 
 	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
-	DispatcherHookInit(cond, 1, dispTypeD20Query, DK_QUE_SneakAttack, QuerySetReturnVal1, 0, 0);
-	DispatcherHookInit(cond, 2, dispTypeD20Query, DK_QUE_CannotCast, QuerySetReturnVal1, 0, 0);
+	DispatcherHookInit(cond, 1, dispTypeD20Query, DK_QUE_SneakAttack, genericCallbacks.QuerySetReturnVal1, 0, 0);
+	DispatcherHookInit(cond, 2, dispTypeD20Query, DK_QUE_CannotCast, genericCallbacks.QuerySetReturnVal1, 0, 0);
 	DispatcherHookInit(cond, 3, dispTypeD20Query, DK_QUE_AOOPossible, QuerySetReturnVal0, 0, 0);
 	DispatcherHookInit(cond, 4, dispTypeD20Signal, DK_SIG_Killed, ConditionRemoveCallback, 0, 0);
-	DispatcherHookInit(cond, 5, dispTypeTooltip, 0, TooltipNoRepetitionCallback, 205, 0); // Captivated
+	DispatcherHookInit(cond, 5, dispTypeTooltip, 0, genericCallbacks.TooltipUnrepeated, 205, 0); // Captivated
 	DispatcherHookInit(cond, 6, dispTypeConditionAdd, 0, PlayParticlesSavePartsysId, 1, 0x1028C7C8); // 'Bardic-Fascinate-hit'
 	DispatcherHookInit(cond, 7, dispTypeConditionAddFromD20StatusInit, 0, PlayParticlesSavePartsysId, 1, 0x1028C7C8); // 'Bardic-Fascinate-hit'
 	DispatcherHookInit(cond, 8, dispTypeConditionRemove, 0, EndParticlesFromArg, 1, 0);
@@ -1493,7 +1562,6 @@ void ConditionSystem::RegisterNewConditions()
 	mCondCraftWandLevelSet = CondStructNew("Craft Wand Level Set", 2);
 	mCondCraftWandLevelSet.AddHook(dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, (uint32_t)&mCondCraftWandLevelSet, 0);
 	mCondCraftWandLevelSet.AddHook(dispTypeRadialMenuEntry, DK_NONE, CraftWandRadialMenu);
-	mCondCraftWandLevelSet.Register();
 
 	// Aid Another
 	mCondAidAnother = new CondStructNew();
@@ -1741,7 +1809,7 @@ int __cdecl AoODisableQueryAoOPossible(DispatcherCallbackArgs args)
 
 int __cdecl GreaterTwoWeaponFighting(DispatcherCallbackArgs args)
 {
-	DispIoD20ActionTurnBased *dispIo = dispatch.DispIOCheckIoType12((DispIoD20ActionTurnBased*)args.dispIO);
+	DispIoD20ActionTurnBased *dispIo = dispatch.DispIoCheckIoType12((DispIoD20ActionTurnBased*)args.dispIO);
 	objHndl mainWeapon = inventory.ItemWornAt(args.objHndCaller, 3);
 	objHndl offhand = inventory.ItemWornAt(args.objHndCaller, 4);
 	
@@ -2220,7 +2288,7 @@ int RendOnDamage(DispatcherCallbackArgs args)
 
 int ConditionFunctionReplacement::LayOnHandsPerform(DispatcherCallbackArgs args)
 {
-	auto dispIo = dispatch.DispIOCheckIoType12(args.dispIO);
+	auto dispIo = dispatch.DispIoCheckIoType12(args.dispIO);
 	auto d20a = dispIo->d20a;
 	bool animResult = false;
 	if (critterSys.IsUndead(d20a->d20ATarget)){
@@ -2247,7 +2315,7 @@ int ConditionFunctionReplacement::LayOnHandsPerform(DispatcherCallbackArgs args)
 
 int ConditionFunctionReplacement::RemoveDiseasePerform(DispatcherCallbackArgs args)
 {
-	auto dispIo = dispatch.DispIOCheckIoType12(args.dispIO);
+	auto dispIo = dispatch.DispIoCheckIoType12(args.dispIO);
 	auto d20a = dispIo->d20a;
 	bool animResult = animationGoals.PushAnimate(d20a->d20APerformer, 86);
 	
@@ -2306,30 +2374,6 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 	};
 	write(0x102DFF50, &sdd, sizeof(SubDispDefNew));
 
-
-	// EffectTooltip for Cause Fear
-	sdd.dispType = dispTypeEffectTooltip;
-	sdd.dispKey = 0;
-	sdd.data1.usVal = 117;
-	sdd.data2.usVal = 0;
-	sdd.dispCallback = [](DispatcherCallbackArgs args)->int
-	{
-		auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
-		auto remainingDuration = args.GetCondArg(1);
-		auto spellId = args.GetCondArg(0);
-		SpellPacketBody spellPkt(spellId);
-		std::string text;
-		if (args.GetCondArg(2) == 0){ // frightened
-			text = fmt::format("({}) \n {}: {}/{}", combatSys.GetCombatMesLine(209), combatSys.GetCombatMesLine(175), remainingDuration, spellPkt.duration);
-		} else // shaken
-		{
-			text = fmt::format("({})", combatSys.GetCombatMesLine(208) );
-		}
-		//auto text = fmt::format("\n {}: {}/{}", combatSys.GetCombatMesLine(175), remainingDuration, spellPkt.duration);
-		dispIo->Append(args.GetData1(), spellPkt.spellEnum, text.c_str());
-		return 0;
-	};
-	write(0x102D232C, &sdd, sizeof(SubDispDefNew));
 }
 
 #pragma region Spell Callbacks
@@ -2664,12 +2708,12 @@ int ClassAbilityCallbacks::FeatEmptyBody(DispatcherCallbackArgs args){
 	mainRadEntry.text = combatSys.GetCombatMesLine(6020); // Empty Body
 	mainRadEntry.helpId = conds.hashmethods.StringHash("TAG_CLASS_FEATURES_MONK_EMPTY_BODY");
 	int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Class);
-	int newParent = radialMenus.AddChildNode(args.objHndCaller, &mainRadEntry, parentNode);
+	int newParent = radialMenus.AddParentChildNode(args.objHndCaller, &mainRadEntry, parentNode);
+	mainRadEntry.d20ActionType = D20A_EMPTY_BODY;
 
-
-	auto remainingRounds = args.GetCondArg(1);
+	auto duration = args.GetCondArg(2);
 	auto actualArg = args.GetCondArgPtr(1);
-	RadialMenuEntrySlider setterChild( 6014, 0, remainingRounds, actualArg, 6021, ElfHash::Hash("TAG_CLASS_FEATURES_MONK_EMPTY_BODY"));
+	RadialMenuEntrySlider setterChild( 6014, 0, duration, actualArg, 6021, ElfHash::Hash("TAG_CLASS_FEATURES_MONK_EMPTY_BODY"));
 	radialMenus.AddChildNode(args.objHndCaller, &setterChild, newParent);
 
 
@@ -2685,6 +2729,68 @@ int ClassAbilityCallbacks::FeatEmptyBody(DispatcherCallbackArgs args){
 	return 0;
 }
 
+int ClassAbilityCallbacks::FeatEmptyBodiInit(DispatcherCallbackArgs args){
+	// init the remaining number of rounds to the Monk's level
+	args.SetCondArg(2, objects.StatLevelGet(args.objHndCaller, stat_level_monk));
+	return 0;
+}
+
+int ClassAbilityCallbacks::FeatEmptyBodyReduceRounds(DispatcherCallbackArgs args)
+{
+	int numRoundsRem = args.GetCondArg(2);
+	auto dispIo = dispatch.DispIoCheckIoType12(args.dispIO);
+	if (!dispIo)
+	{
+		throw TempleException("FeatEmptyBodyReduceRounds: wrong dispatcher type!");
+	}
+
+	D20Actn*d20a = dispIo->d20a;
+	args.SetCondArg(2, max(0,numRoundsRem - (int)d20a->data1));
+
+	return 0;
+}
+
+int ClassAbilityCallbacks::GetNumRoundsRemaining(DispatcherCallbackArgs args){
+
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	if (!dispIo){
+		throw TempleException("GetNumRoundsRemaining: Wrong dispatcher type!");
+	}
+
+	if (dispIo->data1 == 1) // getting the number of rounds set by slider
+	{
+		int numRounds = args.GetCondArg(1);
+		if (numRounds < 0) {
+			numRounds = 1;
+		}
+		if (numRounds > args.GetCondArg(2))
+			numRounds = max(0, (int)args.GetCondArg(2));
+		
+		dispIo->data2 = numRounds;
+	} 
+	
+	else if (dispIo->data1 == 2) // getting the max possible number of rounds
+	{
+		auto numRounds = args.GetCondArg(2);
+		dispIo->data2 = numRounds;
+	}
+	return 0;
+}
+
+int ClassAbilityCallbacks::TimedEffectCountdown(DispatcherCallbackArgs args){
+
+	if (!args.GetData1()) // if data1 is set to 0, make it a permanent effect
+		return 0;
+
+	int numRoundsRem = args.GetCondArg(2);
+
+	if ( numRoundsRem <= 1 ){
+		ConditionRemoveCallback(args);
+		return 0;
+	}
+	args.SetCondArg(2, numRoundsRem - 1);
+	return 0;
+}
 #pragma endregion
 
 int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args)
@@ -2712,20 +2818,33 @@ void Conditions::AddConditionsToTable(){
 
 	static CondStructNew itemSkillBonus("Special Equipment Skill Bonus", 3, false);
 	itemSkillBonus.AddHook(dispTypeSkillLevel, DK_SKILL_APPRAISE, itemCallbacks.SkillBonus, 99, 0);
-	itemSkillBonus.Register();
 
 	static CondStructNew perfectSelf("Perfect Self", 3);
 	perfectSelf.AddHook(dispTypeTakingDamage2, DK_NONE, classAbilityCallbacks.FeatDamageReduction, 0x4, 0); // 0x4 denotes Magical attacks
-	perfectSelf.Register();
 	perfectSelf.AddToFeatDictionary(FEAT_MONK_PERFECT_SELF, FEAT_INVALID, 10);
 
 
 	static CondStructNew emptyBody("Empty Body", 3);
-	perfectSelf.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatEmptyBody);
-	perfectSelf.Register();
-	perfectSelf.AddToFeatDictionary(FEAT_MONK_EMPTY_BODY, FEAT_INVALID, -1);
+	emptyBody.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatEmptyBody);
+	emptyBody.AddHook(dispTypeD20Query, DK_QUE_Empty_Body_Num_Rounds, classAbilityCallbacks.GetNumRoundsRemaining);
+	emptyBody.AddHook(dispTypeConditionAdd, DK_NONE, classAbilityCallbacks.FeatEmptyBodiInit);
+	emptyBody.AddHook(dispTypeNewDay, DK_NEWDAY_REST, classAbilityCallbacks.FeatEmptyBodiInit);
+	emptyBody.AddHook(dispTypeD20ActionPerform, DK_D20A_EMPTY_BODY, classAbilityCallbacks.FeatEmptyBodyReduceRounds);
+	emptyBody.AddToFeatDictionary(FEAT_MONK_EMPTY_BODY, FEAT_INVALID, -1);
 
-
+	static CondStructNew ethereal("Ethereal", 3);
+	ethereal.AddHook(dispTypeD20Query, DK_QUE_Is_Ethereal, genericCallbacks.QuerySetReturnVal1);
+	ethereal.AddHook(dispTypeBeginRound, DK_NONE, classAbilityCallbacks.TimedEffectCountdown, 1, 0);
+	ethereal.AddHook(dispTypeTakingDamage2, DK_NONE, genericCallbacks.AddEtherealDamageImmunity);
+	ethereal.AddHook(dispTypeDealingDamage2, DK_NONE, genericCallbacks.EtherealDamageDealingNull);
+	ethereal.AddHook(dispTypeD20Query, DK_QUE_AOOPossible, genericCallbacks.QuerySetReturnVal0);
+	ethereal.AddHook(dispTypeD20Query, DK_QUE_AOOWillTake, genericCallbacks.QuerySetReturnVal0);
+	ethereal.AddHook(dispTypeEffectTooltip, DK_NONE, genericCallbacks.EffectTooltip, 82, 210);
+	ethereal.AddHook(dispTypeD20Query, DK_QUE_Critter_Is_Invisible, genericCallbacks.QuerySetReturnVal1);
+	ethereal.AddHook(dispTypeConditionAdd, DK_NONE, genericCallbacks.EtherealOnAdd);
+	ethereal.AddHook(dispTypeConditionAddFromD20StatusInit, DK_NONE, genericCallbacks.EtherealOnAdd);
+	ethereal.AddHook(dispTypeConditionRemove, DK_NONE, genericCallbacks.EtherealOnRemove);
+	ethereal.AddHook(dispTypeTooltip, DK_NONE, genericCallbacks.TooltipUnrepeated);
 
 
 	// New Conditions!

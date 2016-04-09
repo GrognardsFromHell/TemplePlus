@@ -391,8 +391,8 @@ uint32_t LegacyCritterSystem::Resurrect(objHndl critter, ResurrectType type, int
 
 uint32_t LegacyCritterSystem::Dominate(objHndl critter, objHndl caster) {
 
-	// Float a "charmed!" line above the critter
-	floatSys.FloatSpellLine(critter, 20018, FloatLineColor::Red);
+	
+	floatSys.FloatSpellLine(critter, 20018, FloatLineColor::Red);  // Float a "charmed!" line above the critter
 
 	vector<int> args(3);
 

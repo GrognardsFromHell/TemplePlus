@@ -87,10 +87,7 @@ int CraftedWandSpellLevel(objHndl objHndItem)
 	uint32_t spellLevelBasic = spellData.spellLevel;
 	uint32_t spellLevelFinal = spellData.spellLevel;
 
-	if (spellData.spellEnum == 25)
-	{
-		int dummy = 1;
-	}
+
 	int casterLevelSet = (int) d20Sys.d20QueryReturnData(*itemCreationAddresses.crafter, DK_QUE_Craft_Wand_Spell_Level, 0, 0);
 	casterLevelSet = 2 * ((casterLevelSet + 1) / 2) - 1;
 	if (casterLevelSet < 1)

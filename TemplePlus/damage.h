@@ -19,7 +19,7 @@ struct DamageReduction {
 	int damageReductionAmount;
 	float dmgFactor;
 	DamageType type;
-	int bypasserBitmask;
+	int attackPowerType; // see D20AttackPower; if an attack has an overlapping attackPowerType (result of an & operation), the damage reduction will NOT apply; DamageReductions with attackPowerType = 1 will ALWAYS apply 
 	const char *typeDescription;
 	const char * causedBy; // e.g. an item name
 	int damageReduced; // e.g. from CalcDamageModFromFactor 0x100E0E00 
@@ -35,10 +35,12 @@ struct DamagePacket {
 	DamageReduction damageFactorModifiers[5]; // may also be used for vulnerabilities (e.g. Condition Monster Subtype Fire does this for Cold Damage)
 	int damModCount;
 	BonusList bonuses;
-	int attackPowerType;
+	int attackPowerType; // see D20DAP
 	int finalDamage;
 	int flags; // 1 - Maximized (takes max value of damage dice) ; 2 - Empowered (1.5x on rolls)
 	int field51c;
+
+	int AddEtherealImmunity();
 };
 
 #pragma pack(push, 1)
@@ -54,9 +56,10 @@ struct DispIoDamage : DispIO { // Io type 4
 #pragma pack(pop)
 
 class Damage {
+	friend class D20System;
 public:
 	
-	MesHandle * damageMes; // don't use this; TODO system initializer
+	MesHandle damageMes;
 
 	void DealDamageFullUnk(objHndl victim, objHndl attacker, 
 		const Dice &dice, 
@@ -99,6 +102,9 @@ public:
 	int AddDamageDice(DamagePacket *dmgPkt, int dicePacked, DamageType damType, unsigned int damageMesLine);
 	int AddDamageDiceWithDescr(DamagePacket *dmgPkt, int dicePacked, DamageType damType, unsigned int damageMesLine, char* descr);
 	Damage();
+private:
+	void Init();
+	void Exit() const;
 };
 
 extern Damage damage;

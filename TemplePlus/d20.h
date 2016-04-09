@@ -199,14 +199,14 @@ struct D20ActionDef
 {
 	ActionErrorCode (__cdecl *addToSeqFunc)(D20Actn *, ActnSeq *, TurnBasedStatus*iO);
 	ActionErrorCode (__cdecl* turnBasedStatusCheck)(D20Actn* d20a, TurnBasedStatus* iO);
-	uint32_t (__cdecl * actionCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO);
+	ActionErrorCode (__cdecl * actionCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO);
 	uint32_t (__cdecl * tgtCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO);
-	uint32_t (__cdecl * locCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO, LocAndOffsets * locAndOff); // also seems to double as a generic check function (e.g. for move silently it checks if combat is active and nothing to do with location)
-	uint32_t (__cdecl * performFunc)(D20Actn* d20a);
+	ActionErrorCode (__cdecl * locCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO, LocAndOffsets * locAndOff); // also seems to double as a generic check function (e.g. for move silently it checks if combat is active and nothing to do with location)
+	ActionErrorCode (__cdecl * performFunc)(D20Actn* d20a);
 	uint32_t (__cdecl * actionFrameFunc)(D20Actn* d20a);
 	void * projectilePerformFunc;
 	uint32_t pad_apparently;
-	uint32_t(__cdecl * actionCost)(D20Actn* d20a, TurnBasedStatus* iO, ActionCostPacket * actionCostPacket);
+	ActionErrorCode (__cdecl * actionCost)(D20Actn* d20a, TurnBasedStatus* iO, ActionCostPacket * actionCostPacket);
 	uint32_t (__cdecl * seqRenderFunc)(D20Actn* d20a, int flags);
 	D20ADF flags; // not D20CAF I think; maybe the STD flags? path query flags?
 };
@@ -279,20 +279,10 @@ inline int GetAttributeMod(int stat) {
 
 uint32_t _d20actionTabLineParser(TabFileStatus*, uint32_t n, const char** strings);
 
-uint32_t _DivineMightCheck(D20Actn* d20a, TurnBasedStatus* tbStat);
-uint32_t _DivineMightPerform(D20Actn* d20a);
 
-uint32_t _ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat);
-uint32_t _PerformDisarm(D20Actn* d20a);
 uint32_t _ActionFrameDisarm(D20Actn* d20a);
 
-uint32_t _ActionCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat);
-uint32_t LocationCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc);
-uint32_t _PerformDisarmedWeaponRetrieve(D20Actn* d20a);
 
-uint32_t _ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat);
 uint32_t _ActionFrameSunder(D20Actn* d20a);
 
-uint32_t _PerformAidAnotherWakeUp(D20Actn* d20a);
 uint32_t _ActionFrameAidAnotherWakeUp(D20Actn* d20a);
-uint32_t _ActionCheckAidAnotherWakeUp(D20Actn* d20a, TurnBasedStatus* tbStat);

@@ -15,6 +15,7 @@
 #include <condition.h>
 #include <sound.h>
 #include <d20_level.h>
+#include <damage.h>
 
 
 //*****************************************************************************
@@ -495,10 +496,12 @@ D20System::D20System(const GameSystemConf &config) {
 	}
 	conds.RegisterNewConditions();
 	d20LevelSys.GenerateSpellsPerLevelTables();
+	damage.Init();
 }
 D20System::~D20System() {
 	auto shutdown = temple::GetPointer<void()>(0x1004c950);
 	shutdown();
+	damage.Exit();
 }
 void D20System::Reset() {
 	auto reset = temple::GetPointer<void()>(0x1004c9b0);
