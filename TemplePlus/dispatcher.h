@@ -318,6 +318,7 @@ struct DispIoBonusAndObj : DispIO // type 10
 	uint32_t pad;
 	objHndl obj; //optional
 	BonusList bonlist;
+	DispIoBonusAndObj();
 };
 const int TestSizeOfDispIO390h = sizeof(DispIoBonusAndObj); // should be 912 (0x390)
 
@@ -483,6 +484,7 @@ struct Dispatcher : temple::TempleAlloc {
 	CondNode* conditions;
 	SubDispNode* subDispNodes[dispTypeCount];
 	bool IsValid();
+	void Process(enum_disp_type dispTypeInitiativeMod, D20DispatcherKey key, DispIO* dispIo);
 };
 
 #pragma endregion

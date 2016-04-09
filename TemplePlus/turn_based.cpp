@@ -9,6 +9,10 @@
 #include "obj.h"
 #include "temple_functions.h"
 #include "d20_obj_registry.h"
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/objects/objsystem.h"
+#include "ai.h"
+#include "condition.h"
 
 class TurnBasedReplacements : public TempleFix
 {
@@ -32,7 +36,9 @@ public:
 		replaceFunction(0x100DEE40, _turnBasedGetCurrentActor); 
 		replaceFunction(0x100DF310, InitiativeNextActor);
 		orgPortraitDragChangeInitiative = replaceFunction(0x100DF5A0, PortraitDragChangeInitiative);
-		
+		replaceFunction<void(__cdecl)(objHndl)>(0x100DF1E0, [](objHndl handle){
+			tbSys.AddToInitiative(handle);
+		});
 	}
 } tbReplacements;
 
@@ -136,10 +142,57 @@ int TurnBasedSys::GetInitiativeListIdx() const
 	return party.ObjFindInGroupArray(groupInitiativeList, *turnBasedCurrentActor );
 }
 
+void TurnBasedSys::AddToInitiativeGroup(objHndl handle) const
+{
+	party.ObjAddToGroupArray(groupInitiativeList, handle);
+}
+
+void TurnBasedSys::ArbitrateInitiativeConflicts() const
+{
+	auto arbConf = temple::GetRef<void(__cdecl)()>(0x100DEFA0);
+	arbConf();
+}
+
 void TurnBasedSys::AddToInitiative(objHndl handle) const
 {
-	auto addToInit = temple::GetRef<void(__cdecl)(objHndl)>(0x100DF1E0);
-	addToInit(handle);
+	if (IsInInitiativeList(handle))
+		return;
+	
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	if (critterSys.IsDeadNullDestroyed(handle))
+		return;
+	if (critterSys.IsDeadOrUnconscious(handle))
+		return;
+
+	if (!d20Sys.d20Query(handle, DK_QUE_EnterCombat))
+		return;
+
+
+	aiSys.AiOnInitiativeAdd(handle);
+
+	auto initiativeRoll = templeFuncs.RNG(1, 20);
+	int initiativeMod = 0;
+	auto dispatcher = obj->GetDispatcher();
+	if (dispatcher->IsValid()){
+		DispIoBonusAndObj dispIo;
+		dispIo.bonOut = &dispIo.bonlist;
+		dispatcher->Process(dispTypeInitiativeMod, DK_NONE, &dispIo);
+		initiativeMod = dispIo.bonlist.GetEffectiveBonusSum();
+	}
+
+	obj->SetInt32(obj_f_initiative, initiativeMod + initiativeRoll);
+	AddToInitiativeGroup(handle);
+	auto dexScore = objects.StatLevelGet(handle, stat_dexterity);
+	obj->SetInt32(obj_f_subinitiative, 100 * dexScore);
+	ArbitrateInitiativeConflicts();
+	conds.AddTo(handle, "Flatfooted", {});
+	auto isSurpriseRound = temple::GetRef<BOOL>(0x10BCAD90);
+	if (isSurpriseRound){
+		conds.AddTo(handle, "Surprised", {});
+	}
+
+	/*auto addToInit = temple::GetRef<void(__cdecl)(objHndl)>(0x100DF1E0);
+	addToInit(handle);*/
 }
 
 bool TurnBasedSys::IsInInitiativeList(objHndl handle) const   // 0x100DEDD0

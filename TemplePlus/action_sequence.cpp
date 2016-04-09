@@ -2333,6 +2333,11 @@ void ActionSequenceSystem::sequencePerform()
 	ActnSeq * curSeq = *actSeqCur;
 	if (combat->isCombatActive() || !actSeqSpellHarmful(curSeq) || !combatTriggerSthg(curSeq) ) // POSSIBLE BUG: I think this can cause spells to be overridden (e.g. when the temple priests prebuff simulataneously with you, and you get the spell effect instead) TODO
 	{
+		if (curSeq != *actSeqCur)
+		{
+			logger->debug("SequencePerform: Switched sequence slot from combat trigger!");
+			curSeq = *actSeqCur;
+		}
 		logger->debug("SequencePerform: \t {} performing sequence ({})...", description.getDisplayName(curSeq->performer), (void*)curSeq);
 		if (isSimultPerformer(curSeq->performer))
 		{ 

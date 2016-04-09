@@ -1002,6 +1002,10 @@ int AiSystem::StrategyTabLineParser(TabFileStatus* tabFile, int n, char** string
 
 int AiSystem::AiOnInitiativeAdd(objHndl obj)
 {
+	if (party.IsInParty(obj) && objects.IsPlayerControlled(obj)){
+		return 0;
+	}
+
 	int critterStratIdx = objects.getInt32(obj, obj_f_critter_strategy);
 	
 	assert(critterStratIdx >= 0 && critterStratIdx < *aiStrategiesNum);

@@ -888,6 +888,10 @@ bool Dispatcher::IsValid()
 	return dispatch.dispatcherValid(this);
 }
 
+void Dispatcher::Process(enum_disp_type dispType, D20DispatcherKey key, DispIO* dispIo){
+	dispatch.DispatcherProcessor(this, dispType, key, dispIo);
+}
+
 Dispatcher* _DispatcherInit(objHndl objHnd) {
 	Dispatcher* dispatcherNew = (Dispatcher *)malloc(sizeof(Dispatcher));
 	memset(&dispatcherNew->subDispNodes, 0, dispTypeCount * sizeof(SubDispNode*));
@@ -1044,4 +1048,13 @@ DispIoAttackBonus::DispIoAttackBonus()
 	this->attackPacket.d20ActnType = D20A_STANDARD_ATTACK;
 	this->attackPacket.dispKey = 1;
 	this->attackPacket.flags = (D20CAF) 0;
+}
+
+DispIoBonusAndObj::DispIoBonusAndObj()
+{
+	dispIOType = dispIOTypeSkillLevel;
+	obj = 0i64;
+	pad = 0;
+	returnVal = 0;
+	bonOut = &bonlist;
 }
