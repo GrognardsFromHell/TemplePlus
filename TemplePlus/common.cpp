@@ -143,6 +143,18 @@ int BonusList::AddBonusWithDesc(int value, int bonType, int mesline, char* descr
 	return 0;
 }
 
+PointNode::PointNode(){
+	absX = 0;
+	absY = 0;
+	absZ = 0;
+}
+
+PointNode::PointNode(float x, float y, float z){
+	absX = x;
+	absZ = z;
+	absY = y;
+}
+
 int BonusList::AddBonus(int value, int bonType, int mesline)
 {
 	return bonusSys.bonusAddToBonusList(this, value, bonType, mesline);

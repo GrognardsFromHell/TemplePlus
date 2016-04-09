@@ -160,6 +160,10 @@ public:
 
 	void ClearActiveRadialMenu();
 	int RadialMenuKeypressHandler(TigMsg* msg);
+	/*
+		gets the radial menu coordinates in absolute worldspace coords
+	*/
+	void GetRadialMenuXY(float& radX, float& radY) const; 
 };
 
 extern RadialMenus radialMenus;

@@ -92,6 +92,8 @@ class RadialMenuReplacements : public TempleFix
 		return "Radial Menu Replacements";
 	}
 
+	static int RmbReleasedHandler(TigMsg* msg);
+
 	void apply() override {
 		// RadialMenuUpdate
 		replaceFunction<void(__cdecl)(objHndl)>(0x1004D1F0, [](objHndl objHnd){
@@ -126,15 +128,21 @@ class RadialMenuReplacements : public TempleFix
 
 			if (radialMenus.GetActiveRadialMenuNode() == -1)
 				return 0;
-
 			
-
-			
+			// keypress
 			if (evtType != TigMsgType::MOUSE){
 				if (evtType == TigMsgType::KEYSTATECHANGE){
 					return radialMenus.RadialMenuKeypressHandler(msg);
 				}
 				return 0;
+			}
+
+			auto mouseFlags = static_cast<MouseStateFlags>(msg->arg4);
+			if (! (mouseFlags&MSF_LMB_RELEASED )){
+				if (mouseFlags & MSF_RMB_RELEASED){
+					//return RmbReleasedHandler(msg);
+					RmbReleasedHandler(msg);
+				}
 			}
 
 			auto result = orgMsgHandler(msg);
@@ -144,6 +152,23 @@ class RadialMenuReplacements : public TempleFix
 
 	}
 };
+
+int RadialMenuReplacements::RmbReleasedHandler(TigMsg* msg)
+{
+	float radX, radY;
+	radialMenus.GetRadialMenuXY(radX, radY);
+
+	float screenX, screenY;
+	auto worldToLocalScreen = temple::GetRef<void(__cdecl)(PointNode, float&, float&)>(0x10029040);
+	worldToLocalScreen(PointNode(radX, 0, radY), screenX, screenY);
+
+	auto& intgameRadialmenuIgnoreClose = temple::GetRef<BOOL>(0x10BE6D80);
+	auto& intgameRadialmenuIgnoreCloseTillMove = temple::GetRef<BOOL>(0x10BE6D70);
+	
+	// todo: finish rest of this
+
+	return 1;
+}
 
 RadialMenuReplacements radMenuReplace;
 
@@ -404,6 +429,12 @@ int RadialMenus::RadialMenuKeypressHandler(TigMsg* msg)
 	return 0;
 	
 
+}
+
+void RadialMenus::GetRadialMenuXY(float& radX, float& radY) const
+{
+	radX = temple::GetRef<float>(0x10BD022C);
+	radY = temple::GetRef<float>(0x10BD0228);
 }
 
 RadialMenuEntry::RadialMenuEntry(){

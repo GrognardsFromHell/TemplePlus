@@ -217,8 +217,10 @@ inline std::ostream& operator<<(std::ostream& os, const ScreenDirections & direc
 
 struct PointNode
 {
-	float absX;
-	int initTo0;
-	float absY;
+	float absX; // world X goes here
+	float absZ; // always 0 in toee
+	float absY; // world Y goes here
+	PointNode();
+	PointNode(float x, float y, float z);
 };
 #pragma endregion

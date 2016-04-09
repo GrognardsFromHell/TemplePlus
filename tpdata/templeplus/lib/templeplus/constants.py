@@ -283,6 +283,7 @@ D20DAP_PIERCING = 0x400
 D20DAP_SLASHING = 0x800
 D20DAP_MITHRIL = 0x1000
 D20DAP_COLD = 0x2000
+D20DAP_FORCE = 0x4000
 
 D20DT_UNSPECIFIED = -1
 D20DT_BLUDGEONING = 0
@@ -695,6 +696,12 @@ Q_Item_Has_Enhancement_Bonus = 110
 Q_Item_Has_Keen_Bonus = 111
 Q_AI_Has_Spell_Override = 112
 Q_Weapon_Get_Keen_Bonus = 113
+Q_Disarmed = 114
+# 115 belongs to a S_ constant, oops - SA
+Q_Can_Perform_Disarm = 116
+Q_Craft_Wand_Spell_Level = 117
+Q_Is_Ethereal = 118
+Q_Empty_Body_Num_Rounds = 119
 
 RADIAL_MENU_PARAM_MIN_SETTING = 1
 RADIAL_MENU_PARAM_MAX_SETTING = 2
@@ -788,6 +795,9 @@ S_Verify_Obj_Conditions = 55
 S_Web_Burning = 56
 S_Anim_CastConjureEnd = 57
 S_Item_Remove_Enhancement = 58
+S_Disarmed_Weapon_Retrieve = 59
+S_Disarm = 60 # reset the "took damage-> abort" flag
+S_AID_ANOTHER_WAKE_UP = 61
 
 TAG_TUT_REST_CAMP = 1
 TAG_TUT_PORTRAITS = 2

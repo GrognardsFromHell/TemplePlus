@@ -307,6 +307,7 @@ uint32_t LegacyD20System::d20Query(objHndl objHnd, D20DispatcherKey dispKey)
 	dispIO.return_val = 0;
 	dispIO.data1 = 0;
 	dispIO.data2 = 0;
+
 	objects.dispatch.DispatcherProcessor(dispatcher, dispTypeD20Query, dispKey, &dispIO);
 	if (dispKey == DK_QUE_Critter_Is_Charmed || dispKey == DK_QUE_Critter_Is_Afraid || dispKey == DK_QUE_Critter_Is_Held) {
 		// in these cases the information stored is an objhandle; make sure it's a valid handle!

@@ -203,15 +203,18 @@ class GenericCallbacks
 public:
 	static int QuerySetReturnVal1(DispatcherCallbackArgs args);
 	static int QuerySetReturnVal0(DispatcherCallbackArgs);
-	
+	static int ActionInvalidQueryTrue(DispatcherCallbackArgs);
+
 	static int EffectTooltip(DispatcherCallbackArgs args); // SubDispDef data1 denotes the effect type idx, data2 denotes combat.mes line
 	static int TooltipUnrepeated(DispatcherCallbackArgs); // SubDispDef data1 denotes combat.mes line
 
 	static int AddEtherealDamageImmunity(DispatcherCallbackArgs args);
 	static int EtherealOnAdd(DispatcherCallbackArgs args);
+	static int EtherealOnD20StatusInit(DispatcherCallbackArgs args);
 	static int EtherealDamageDealingNull(DispatcherCallbackArgs);
 	static int EtherealOnRemove(DispatcherCallbackArgs);
-	
+
+
 	
 } genericCallbacks;
 
@@ -553,6 +556,12 @@ int GenericCallbacks::QuerySetReturnVal0(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int GenericCallbacks::ActionInvalidQueryTrue(DispatcherCallbackArgs args){
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	dispIo->return_val = 1;
+	return 0;
+}
+
 int GenericCallbacks::AddEtherealDamageImmunity(DispatcherCallbackArgs args){
 	auto dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
 	dispIo->damage.AddEtherealImmunity();
@@ -562,6 +571,11 @@ int GenericCallbacks::AddEtherealDamageImmunity(DispatcherCallbackArgs args){
 int GenericCallbacks::EtherealOnAdd(DispatcherCallbackArgs args)
 {
 	floatSys.FloatCombatLine(args.objHndCaller, 210); // Ethereal
+	objects.FadeTo(args.objHndCaller, 60, 10, 30, 0);
+	return 0;
+}
+
+int GenericCallbacks::EtherealOnD20StatusInit(DispatcherCallbackArgs args){
 	objects.FadeTo(args.objHndCaller, 60, 10, 30, 0);
 	return 0;
 }
@@ -2842,10 +2856,17 @@ void Conditions::AddConditionsToTable(){
 	ethereal.AddHook(dispTypeEffectTooltip, DK_NONE, genericCallbacks.EffectTooltip, 82, 210);
 	ethereal.AddHook(dispTypeD20Query, DK_QUE_Critter_Is_Invisible, genericCallbacks.QuerySetReturnVal1);
 	ethereal.AddHook(dispTypeConditionAdd, DK_NONE, genericCallbacks.EtherealOnAdd);
-	ethereal.AddHook(dispTypeConditionAddFromD20StatusInit, DK_NONE, genericCallbacks.EtherealOnAdd);
+	ethereal.AddHook(dispTypeConditionAddFromD20StatusInit, DK_NONE, genericCallbacks.EtherealOnD20StatusInit);
 	ethereal.AddHook(dispTypeConditionRemove, DK_NONE, genericCallbacks.EtherealOnRemove);
-	ethereal.AddHook(dispTypeTooltip, DK_NONE, genericCallbacks.TooltipUnrepeated);
-
+	ethereal.AddHook(dispTypeTooltip, DK_NONE, genericCallbacks.TooltipUnrepeated, 210, 0);
+	ethereal.AddHook(dispTypeD20Query, DK_QUE_IsActionInvalid_CheckAction, genericCallbacks.ActionInvalidQueryTrue);
+	ethereal.AddHook(dispTypeD20Query, DK_QUE_Critter_Is_Immune_Poison, genericCallbacks.QuerySetReturnVal1);
+	ethereal.AddHook(dispTypeD20Query, DK_QUE_AOOWillTake, genericCallbacks.QuerySetReturnVal0);
+	ethereal.AddHook(dispTypeD20Query, DK_QUE_AOOIncurs, genericCallbacks.QuerySetReturnVal0);
+	ethereal.AddHook(dispTypeD20Query, DK_QUE_ActionTriggersAOO,genericCallbacks.QuerySetReturnVal0);
+	ethereal.AddHook(dispTypeD20Query, DK_QUE_Critter_Has_Freedom_of_Movement, genericCallbacks.QuerySetReturnVal1);
+	ethereal.AddHook(dispTypeD20Query, DK_QUE_CanBeAffected_PerformAction, genericCallbacks.QuerySetReturnVal0);
+	ethereal.AddHook(dispTypeD20Query, DK_QUE_CanBeAffected_ActionFrame, genericCallbacks.QuerySetReturnVal0);
 
 	// New Conditions!
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionDisableAoO);
