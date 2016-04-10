@@ -222,11 +222,23 @@ namespace gfx {
 
 		CreatePresentParams();
 
+		// Read preliminary caps needed to create the device
+		D3DCAPS9 caps;
+		if (mDirect3d9->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &caps) != D3D_OK) {
+			throw TempleException("Unable to retrieve the caps for the default device.");
+		}
+
+		auto vertexProcessing = D3DCREATE_HARDWARE_VERTEXPROCESSING;
+		if (!(caps.DevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT)) {
+			logger->info("Device does not support hardware T&L. Falling back to software T&L");
+			vertexProcessing = D3DCREATE_SOFTWARE_VERTEXPROCESSING;
+		}
+
 		status = D3DLOG(mDirect3d9->CreateDeviceEx(
 			D3DADAPTER_DEFAULT,
 			D3DDEVTYPE_HAL,
 			mWindowHandle,
-			D3DCREATE_HARDWARE_VERTEXPROCESSING,
+			vertexProcessing,
 			&mPresentParams,
 			nullptr,
 			&mDevice));
