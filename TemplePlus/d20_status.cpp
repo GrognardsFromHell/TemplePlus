@@ -271,7 +271,7 @@ void D20StatusSystem::initItemConditions(objHndl objHnd)
 void D20StatusSystem::D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher* dispatcher)
 {
 	CondStruct *condStruct;
-	int condArgs[64];
+	int condArgs[100];
 
 	auto obj = objSystem->GetObject(objHnd);
 
@@ -291,21 +291,101 @@ void D20StatusSystem::D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher
 				conds.InitCondFromCondStructAndArgs(dispatcher, condStruct, condArgs);
 		}
 	}
-	for ( int i=0,j = 0 ; i < numPermMods; ++i)
+
+	
+	int troubledIdx = -1; int actualArgCount = 0;
+	for ( int i=0, j = 0 ; i < numPermMods; ++i)
 	{
 		condStruct  = conds.hashmethods.GetCondStruct(obj->GetInt32(obj_f_permanent_mods, i));
-		if (!condStruct)
+		if (!condStruct || reinterpret_cast<uint32_t>(condStruct->condName) == 0xccCCccCC)
 		{
-			logger->debug("Missing condStruct for {}", description.getDisplayName(objHnd));
+			troubledIdx = i;
+			logger->debug("Missing condStruct for {}, permanent mod idx: {}/{}, arg idx {}; attempting to recover", description.getDisplayName(objHnd), i, numPermMods, j);
 			break;
 		}
 
+		if (condStruct->numArgs > 10)
+		{
+			troubledIdx = true;
+			logger->warn("Found condition with unusual number of args!");
+			break;
+		}
+		actualArgCount += condStruct->numArgs;
 		for (unsigned int k = 0; k < condStruct->numArgs; k++)
 		{
 			condArgs[k] = obj->GetInt32(obj_f_permanent_mod_data, j++);
 		}
 		conds.SetPermanentModArgsFromDataFields(dispatcher, condStruct, condArgs);
 	}
+
+	// atempt recovery if necessary
+	if (troubledIdx != -1){
+		actualArgCount = 0;
+		auto numOfArgs = obj->GetInt32Array(obj_f_permanent_mod_data).GetSize();
+		std::vector<CondStruct*> condRecover;
+		for (int i = 0; i < numPermMods; i++) {
+
+			condStruct = conds.hashmethods.GetCondStruct(obj->GetInt32(obj_f_permanent_mods, i));
+			condRecover.push_back(reinterpret_cast<CondStruct*>(condStruct));
+
+			if (i == troubledIdx)
+				continue;
+
+
+			if (!condStruct || reinterpret_cast<uint32_t>(condStruct->condName) == 0xccCCccCC)
+			{
+				logger->debug("Missing ANOTHER condStruct for {}, permanent mod idx: {}/{}; shit", description.getDisplayName(objHnd), i, numPermMods);
+				break;
+			}
+
+			if (condStruct->numArgs > 10)
+			{
+				logger->warn("Found condition with unusual number of args!");
+				break;
+			}
+			
+			actualArgCount += condStruct->numArgs;
+		}
+
+		int diff = obj->GetInt32Array(obj_f_permanent_mod_data).GetSize() - actualArgCount;
+
+		for (int i = 0, j = 0; i < numPermMods; i++) {
+			if (i == troubledIdx)
+			{
+				j += diff;
+				continue;
+			}
+			condStruct = conds.hashmethods.GetCondStruct(obj->GetInt32(obj_f_permanent_mods, i));
+			if (!condStruct || reinterpret_cast<uint32_t>(condStruct->condName) == 0xccCCccCC)
+			{
+				troubledIdx = i;
+				logger->debug("Missing ANOTHER condStruct for {}, permanent mod idx: {}/{}, arg idx {}; Too bad", description.getDisplayName(objHnd), i, numPermMods, j);
+				break;
+			}
+
+			if (condStruct->numArgs > 10)
+			{
+				troubledIdx = true;
+				logger->warn("Found condition with unusual number of args!");
+				break;
+			}
+
+
+			if (i < troubledIdx)
+			{
+				j += condStruct->numArgs;
+				continue;
+			}
+			for (unsigned int k = 0; k < condStruct->numArgs; k++)
+			{
+				condArgs[k] = obj->GetInt32(obj_f_permanent_mod_data, j++);
+			}
+			conds.SetPermanentModArgsFromDataFields(dispatcher, condStruct, condArgs);
+
+		}
+	}
+	
+
 	conds.DispatcherCondsResetFlag2(dispatcher);
 
 

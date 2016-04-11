@@ -57,8 +57,8 @@ enum TurnBasedStatusFlags : uint32_t
 	TBSF_Movement = 2,
 	TBSF_Movement2 = 4,
 	TBSF_8 = 8,
-	TBSF_CritterSpell = 0x10,
-	TBSF_20 = 0x20,
+	TBSF_CritterSpell = 0x10, // denotes that the spell being cast is actually a critter's natural ability, so don't provoke AoO
+	TBSF_AoO = 0x20, // denotes that the critter was interrupted by an AoO
 	TBSF_FullAttack = 0x40,
 	TBSF_80 = 0x80,
 	TBSF_100 = 0x100
@@ -234,7 +234,7 @@ extern ActionSequenceSystem actSeqSys;
 struct TurnBasedStatus
 {
 	uint32_t hourglassState; // 4 - full action remaining; 3 - partial?? used in interrupts, checked by partial charge; 2 - single action remaining; 1 - move action remaining
-	int tbsFlags; // 0x40 full attack, 0x1 0x2 sthg to do with turn ending?, 0x2 0x4 sthg to do with movement, 0x10 spell?
+	int tbsFlags; // see TurnBasedStatusFlags 
 	uint32_t idxSthg;
 	float surplusMoveDistance; // is nonzero when you have started a move action already and haven't used it all up
 	uint32_t baseAttackNumCode; // is composed of the base number of attacks (dispatch 51 or 53) + a code number: 99 for dual wielding (+1 for extra offhand attack), 999 for natural attacks

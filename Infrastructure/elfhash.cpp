@@ -21,3 +21,5 @@ uint32_t ElfHash::Hash(const char * text)
 	}
 	return hash;
 }
+
+

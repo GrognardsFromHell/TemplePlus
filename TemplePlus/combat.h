@@ -22,7 +22,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 	MesHandle combatMesNew;
 	GroupArray * groupInitiativeList;
 
-	char * GetCombatMesLine(int line);
+	char * GetCombatMesLine(int line) const;
 	void FloatCombatLine(objHndl obj, int line);
 	void FloatCombatLine(objHndl obj, int line, FloatLineColor floatColor);
 	int IsWithinReach(objHndl attacker, objHndl target);
@@ -48,6 +48,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 	void TurnStart2( int initiativeIdx);
 	void CombatAdvanceTurn(objHndl obj);
 	BOOL IsBrawlInProgress();
+	
 	uint32_t* combatModeActive;
 	bool isCombatActive();
 	uint32_t IsCloseToParty(objHndl objHnd);
@@ -61,6 +62,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 	*/
 	int GetEnemiesCanMelee(objHndl obj, objHndl* canMeleeList);
 	objHndl GetWeapon(AttackPacket* attackPacket);
+	static bool IsUnarmed(objHndl handle);
 	bool DisarmCheck(objHndl attacker, objHndl defender, D20Actn* d20a);
 	bool SunderCheck(objHndl attacker, objHndl defender, D20Actn* d20a);
 	int GetClosestEnemy(objHndl obj, LocAndOffsets* locOut, objHndl * objOut, float* distOut, int flags);

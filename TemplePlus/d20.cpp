@@ -108,7 +108,10 @@ int D20Replacements::PerformActivateReadiedAction(D20Actn* d20a)
 
 class D20ActionCallbacks {
 public:
-
+#define ActionCheck(fname) static ActionErrorCode  ActionCheck ## fname ## (D20Actn* d20a, TurnBasedStatus* tbStat)
+#define PerformFunc(fname) static ActionErrorCode  Perform ## fname ## (D20Actn* d20a)
+#define ActionCost(fname) static ActionErrorCode ActionCost ## fname ## (D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+#define ActionFrame(fname) static ActionErrorCode ActionFrame ## fname ## (D20Actn* d20a)
 	// Add to sequence funcs
 	static ActionErrorCode AddToSeqSimple(D20Actn*, ActnSeq*, TurnBasedStatus*);
 	static ActionErrorCode AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
@@ -117,32 +120,40 @@ public:
 	static ActionErrorCode StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBasedStatus* tbStat);
 
 	// Action Checks
-	static ActionErrorCode ActionCheckAidAnotherWakeUp(D20Actn* d20a, TurnBasedStatus* tbStat);
-	static ActionErrorCode ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat);
-	static ActionErrorCode ActionCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat);
-	static ActionErrorCode ActionCheckDivineMight(D20Actn* d20a, TurnBasedStatus* tbStat);
-	static ActionErrorCode ActionCheckPerformEmptyBody(D20Actn* d20a, TurnBasedStatus* tbStat);
-	static ActionErrorCode ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat);
+	ActionCheck(AidAnotherWakeUp);
+	ActionCheck(Disarm);
+	ActionCheck(DisarmedWeaponRetrieve);
+	ActionCheck(DivineMight);
+	ActionCheck(EmptyBody);
+	ActionCheck(QuiveringPalm);
+	ActionCheck(Sunder);
+	
 
 	// Action Cost
-	static ActionErrorCode ActionCostStandardAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
-	static ActionErrorCode ActionCostMoveAction(D20Actn* d20, TurnBasedStatus* tbStat, ActionCostPacket* acp);
-	static ActionErrorCode ActionCostNull(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
-	static ActionErrorCode ActionCostStandardAction(D20Actn*, TurnBasedStatus*, ActionCostPacket*);
+	ActionCost(StandardAttack);
+	ActionCost(MoveAction);
+	ActionCost(Null);
+	ActionCost(StandardAction);
 
 	static ActionErrorCode LocationCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc);
 	
-	// Perform funcs
-	static ActionErrorCode PerformAidAnotherWakeUp(D20Actn* d20a);
-	static ActionErrorCode PerformDisarm(D20Actn* d20a);
-	static ActionErrorCode PerformDisarmedWeaponRetrieve(D20Actn* d20a);
-	static ActionErrorCode PerformDivineMight(D20Actn* d20a);
-	static ActionErrorCode PerformEmptyBody(D20Actn* d20a);
+	// Perform 
+	PerformFunc(AidAnotherWakeUp);
+	PerformFunc(Disarm);
+	PerformFunc(DisarmedWeaponRetrieve);
+	PerformFunc(DivineMight);
+	PerformFunc(EmptyBody);
+	PerformFunc(QuiveringPalm);
 
-
+	// Action Frame 
+	ActionFrame(AidAnotherWakeUp);
+	ActionFrame(Disarm);
+	ActionFrame(QuiveringPalm);
+	ActionFrame(Sunder);
 	
-} d20Callbacks;
 
+
+} d20Callbacks;
 
 
 static struct LegacyD20SystemAddresses : temple::AddressTable {
@@ -207,11 +218,10 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckDisarm;
 	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformDisarm;
-	d20Defs[d20Type].actionFrameFunc = _ActionFrameDisarm;
+	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameDisarm;
 	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostStandardAttack;
 	d20Defs[d20Type].seqRenderFunc = addresses._PickerFuncTooltipToHitChance;
-	d20Defs[d20Type].flags = (D20ADF)(D20ADF_TargetSingleExcSelf | D20ADF_TriggersAoO | D20ADF_QueryForAoO | D20ADF_TriggersCombat
-		| D20ADF_Unk8000 | D20ADF_SimulsCompatible ); // 0x28908; // same as Trip // note : queryForAoO is used for resetting a flag
+	d20Defs[d20Type].flags = (D20ADF)(D20ADF_TargetSingleExcSelf | D20ADF_TriggersAoO | D20ADF_QueryForAoO | D20ADF_TriggersCombat	| D20ADF_UseCursorForPicking | D20ADF_SimulsCompatible ); // 0x28908; // same as Trip // note : queryForAoO is used for resetting a flag
 
 
 	d20Type = D20A_DISARMED_WEAPON_RETRIEVE;
@@ -223,7 +233,7 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].actionFrameFunc = nullptr;
 	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostMoveAction;
 	d20Defs[d20Type].seqRenderFunc = nullptr;
-	d20Defs[d20Type].flags = (D20ADF)( D20ADF_TriggersAoO 	| 0*D20ADF_Unk8000
+	d20Defs[d20Type].flags = (D20ADF)( D20ADF_TriggersAoO 	| 0*D20ADF_UseCursorForPicking
 		| D20ADF_SimulsCompatible | D20ADF_Breaks_Concentration); // 0x28908; // largely same as Pick Up Object
 	*(int*)&d20Defs[D20A_PICKUP_OBJECT].flags |= (int) (D20ADF_TriggersAoO);
 
@@ -233,11 +243,10 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckSunder;
 	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformDisarm;
-	d20Defs[d20Type].actionFrameFunc = _ActionFrameSunder;
+	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameSunder;
 	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostStandardAttack;
 	d20Defs[d20Type].seqRenderFunc = addresses._PickerFuncTooltipToHitChance;
-	d20Defs[d20Type].flags = (D20ADF)(D20ADF_TargetSingleExcSelf | D20ADF_TriggersAoO | D20ADF_TriggersCombat
-		| D20ADF_Unk8000 | D20ADF_SimulsCompatible); // 0x28908; // same as Trip
+	d20Defs[d20Type].flags = (D20ADF)(D20ADF_TargetSingleExcSelf | D20ADF_TriggersAoO | D20ADF_TriggersCombat| D20ADF_UseCursorForPicking | D20ADF_SimulsCompatible); // 0x28908; // same as Trip
 
 	d20Type = D20A_AID_ANOTHER_WAKE_UP;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqWithTarget;
@@ -245,22 +254,35 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckAidAnotherWakeUp;
 	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformAidAnotherWakeUp;
-	d20Defs[d20Type].actionFrameFunc = _ActionFrameAidAnotherWakeUp;
+	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameAidAnotherWakeUp;
 	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostStandardAttack;
 	d20Defs[d20Type].seqRenderFunc = addresses._PickerFuncTooltipToHitChance;
-	d20Defs[d20Type].flags = (D20ADF)(D20ADF_TargetSingleExcSelf | D20ADF_Unk8000 | D20ADF_SimulsCompatible); // 0x28908; // same as Trip // note : queryForAoO is used for resetting a flag
+	d20Defs[d20Type].flags = (D20ADF)(D20ADF_TargetSingleExcSelf | D20ADF_UseCursorForPicking | D20ADF_SimulsCompatible); // 0x28908; // same as Trip // note : queryForAoO is used for resetting a flag
 
 
 	d20Type = D20A_EMPTY_BODY;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSimple;
 	d20Defs[d20Type].turnBasedStatusCheck = nullptr;
-	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckPerformEmptyBody;
+	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckEmptyBody;
 	d20Defs[d20Type].locCheckFunc = nullptr;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformEmptyBody;
 	d20Defs[d20Type].actionFrameFunc = nullptr;
 	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostStandardAction;
 	d20Defs[d20Type].seqRenderFunc = nullptr;
 	d20Defs[d20Type].flags = (D20ADF)( D20ADF_None);
+
+
+	d20Type = D20A_QUIVERING_PALM;
+	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqWithTarget;
+	d20Defs[d20Type].turnBasedStatusCheck = d20Callbacks.StdAttackTurnBasedStatusCheck;
+	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckQuiveringPalm;
+	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
+
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformQuiveringPalm;
+	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameQuiveringPalm;
+	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostStandardAttack;
+	d20Defs[d20Type].seqRenderFunc = nullptr;
+	d20Defs[d20Type].flags = (D20ADF)(D20ADF_TargetSingleExcSelf | D20ADF_TriggersCombat | D20ADF_UseCursorForPicking);
 
 
 
@@ -1154,6 +1176,50 @@ ActionErrorCode D20ActionCallbacks::PerformEmptyBody(D20Actn* d20a)
 	return static_cast<ActionErrorCode>(dispIo.returnVal);
 }
 
+ActionErrorCode D20ActionCallbacks::PerformQuiveringPalm(D20Actn* d20a){
+	DispIoD20ActionTurnBased dispIo(d20a);
+	dispIo.DispatchPerform(DK_D20A_QUIVERING_PALM);
+
+	if (dispIo.returnVal != AEC_OK)
+		return static_cast<ActionErrorCode>(dispIo.returnVal);
+
+	auto d20data = d20a->data1;
+	auto playCritFlag = 0;
+	d20Sys.ToHitProc(d20a);
+	auto caflags = d20a->d20Caf;
+	if (caflags & D20CAF_CRITICAL
+		|| d20Sys.d20QueryWithData(d20a->d20APerformer, DK_QUE_Play_Critical_Hit_Anim, caflags, caflags >> 32))
+	{
+		playCritFlag = 1;
+	}
+	auto attackAnimSubid = templeFuncs.RNG(0, 2);
+	
+	
+	if (animationGoals.PushAttackAnim(d20a->d20APerformer, d20a->d20ATarget, 0xFFFFFFFF, attackAnimSubid, playCritFlag, 0))
+	{
+		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
+		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
+	}
+
+	return AEC_OK;
+	
+}
+
+ActionErrorCode D20ActionCallbacks::ActionFrameQuiveringPalm(D20Actn* d20a){
+
+	objHndl performer = d20a->d20APerformer;
+	
+	d20Sys.d20Defs[D20A_STANDARD_ATTACK].actionFrameFunc(d20a);
+
+
+	/*if (combatSys.DisarmCheck(performer, d20a->d20ATarget, d20a)){
+		objects.floats->FloatCombatLine(d20a->d20ATarget, 211);	
+	}*/
+	
+	// TODO
+		
+	return AEC_OK;
+}
 
 ActionErrorCode D20ActionCallbacks::ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat)
 {
@@ -1188,7 +1254,7 @@ ActionErrorCode D20ActionCallbacks::ActionCheckDisarm(D20Actn* d20a, TurnBasedSt
 	return AEC_OK;
 }
 
-ActionErrorCode D20ActionCallbacks::ActionCheckPerformEmptyBody(D20Actn* d20a, TurnBasedStatus* tbStat){
+ActionErrorCode D20ActionCallbacks::ActionCheckEmptyBody(D20Actn* d20a, TurnBasedStatus* tbStat){
 	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Is_Ethereal))
 		return AEC_INVALID_ACTION;
 	auto numRounds = ( 0xffFFffFF00000000 & d20Sys.d20QueryReturnData(d20a->d20APerformer, DK_QUE_Empty_Body_Num_Rounds, 2, 0) ) >> 32;
@@ -1197,6 +1263,27 @@ ActionErrorCode D20ActionCallbacks::ActionCheckPerformEmptyBody(D20Actn* d20a, T
 
 	if (d20a->data1 > numRounds)
 		d20a->data1 = numRounds;
+
+	return AEC_OK;
+}
+
+ActionErrorCode D20ActionCallbacks::ActionCheckQuiveringPalm(D20Actn* d20a, TurnBasedStatus* tbStat)
+{
+
+	if (!d20a->d20ATarget){
+		return AEC_TARGET_INVALID;
+	}
+	
+	if ( ! combatSys.IsUnarmed(d20a->d20APerformer)){
+		return AEC_INVALID_ACTION;
+	}
+
+	if (!d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Quivering_Palm_Can_Perform))
+		return AEC_OUT_OF_CHARGES;
+
+	if (d20Sys.d20Query(d20a->d20ATarget, DK_QUE_Critter_Is_Immune_Critical_Hits)){
+		return AEC_TARGET_INVALID;
+	}
 
 	return AEC_OK;
 }
@@ -1212,7 +1299,7 @@ ActionErrorCode D20ActionCallbacks::PerformDisarm(D20Actn* d20a)
 };
 
 
-uint32_t _ActionFrameDisarm(D20Actn* d20a)
+ActionErrorCode D20ActionCallbacks::ActionFrameDisarm(D20Actn* d20a)
 {
 	objHndl performer = d20a->d20APerformer;
 	int failedOnce = 0;
@@ -1256,7 +1343,7 @@ uint32_t _ActionFrameDisarm(D20Actn* d20a)
 		disarmedArgs.weapon = weapon;
 
 		conds.AddTo(d20a->d20ATarget, "Disarmed", { ((int*)&disarmedArgs)[0], ((int*)&disarmedArgs)[1],0,0,0,0,0,0 });
-		return 0;
+		return AEC_OK;
 	} 
 
 	
@@ -1289,7 +1376,7 @@ uint32_t _ActionFrameDisarm(D20Actn* d20a)
 				disarmedArgs.weapon = weapon;
 				objects.floats->FloatCombatLine(d20a->d20APerformer, 200); // Counter Disarmed!
 				conds.AddTo(d20a->d20APerformer, "Disarmed", { ((int*)&disarmedArgs)[0], ((int*)&disarmedArgs)[1], 0,0,0,0 });
-				return 0;
+				return AEC_OK;
 			}
 			else if (!failedOnce)
 			{
@@ -1309,7 +1396,7 @@ uint32_t _ActionFrameDisarm(D20Actn* d20a)
 	
 	
 
-	return 0;
+	return AEC_OK;
 };
 
 #pragma region Retrieve Disarmed Weapon
@@ -1375,7 +1462,7 @@ ActionErrorCode D20ActionCallbacks::ActionCheckSunder(D20Actn* d20a, TurnBasedSt
 }
 
 
-uint32_t _ActionFrameSunder(D20Actn* d20a)
+ActionErrorCode D20ActionCallbacks::ActionFrameSunder(D20Actn* d20a)
 {
 
 	if (combatSys.SunderCheck(d20a->d20APerformer, d20a->d20ATarget, d20a))
@@ -1390,7 +1477,7 @@ uint32_t _ActionFrameSunder(D20Actn* d20a)
 	}
 
 
-	return 0;
+	return AEC_OK;
 }
 
 
@@ -1414,14 +1501,14 @@ ActionErrorCode D20ActionCallbacks::PerformAidAnotherWakeUp(D20Actn* d20a)
 	return AEC_OK;
 }
 
-uint32_t _ActionFrameAidAnotherWakeUp(D20Actn* d20a)
+ActionErrorCode D20ActionCallbacks::ActionFrameAidAnotherWakeUp(D20Actn* d20a)
 {
 	
 	// objects.floats->FloatCombatLine(d20a->d20ATarget, 204); // woken up // not necessary - already gets applied with the removal of the sleep condition I think
 	d20Sys.d20SendSignal(d20a->d20ATarget, DK_SIG_AID_ANOTHER_WAKE_UP, d20a, 0);
 	
 	
-	return 0;
+	return AEC_OK;
 }
 
 ActionErrorCode D20ActionCallbacks::ActionCheckAidAnotherWakeUp(D20Actn* d20a, TurnBasedStatus* tbStat)

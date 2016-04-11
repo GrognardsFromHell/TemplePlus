@@ -11,6 +11,12 @@
 {208}{Shaken}
 {209}{Frightened}
 {210}{Ethereal}
+{211}{You are already dead.}
+{212}{You have 3 seconds to live.}
+{212}{3.}
+{213}{2.}
+{214}{1.}
+{215}{Your death is at hand!}
 
 
 {5105}{Disable Attacks of Opportunity}
@@ -24,6 +30,7 @@
 {5113}{Wake Up}
 {5114}{Offensive Assist}
 {5115}{Defensive Assist}
+{5116}{Quivering Palm}
 
 {6017}{Set Caster Level}
 {6018}{Craft}

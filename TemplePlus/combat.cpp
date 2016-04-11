@@ -173,14 +173,15 @@ void CombatSystemReplacements::CombatTurnAdvance(objHndl obj)
 #pragma region Combat System Implementation
 LegacyCombatSystem combatSys;
 
-char * LegacyCombatSystem::GetCombatMesLine(int line)
+char * LegacyCombatSystem::GetCombatMesLine(int line) const
 {
 	MesLine mesLine;
 	MesHandle combatMes = *combatSys.combatMesfileIdx;
 	if (line > 197 && line < 300
 		|| line > 5104 && line < 6000
+		|| line > 6016 && line < 7000
 		|| line > 10104)
-		combatMes = combatSys.combatMesNew;
+		combatMes = combatMesNew;
 
 	mesLine.key = line;
 	if (!mesFuncs.GetLine(combatMes, &mesLine))
@@ -804,6 +805,14 @@ objHndl LegacyCombatSystem::GetWeapon(AttackPacket* attackPacket)
 	if (!(flags & D20CAF_TOUCH_ATTACK) || flags & D20CAF_THROWN_GRENADE )
 		result = attackPacket->weaponUsed;
 	return result;
+}
+
+bool LegacyCombatSystem::IsUnarmed(objHndl handle){
+	if (inventory.ItemWornAt(handle, EquipSlot::WeaponPrimary))
+		return false;
+	if (inventory.ItemWornAt(handle, EquipSlot::WeaponSecondary))
+		return false;
+	return true;
 }
 
 bool LegacyCombatSystem::DisarmCheck(objHndl attacker, objHndl defender, D20Actn* d20a)

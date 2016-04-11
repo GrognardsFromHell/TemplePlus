@@ -687,7 +687,7 @@ enum feat_enums : uint32_t {
 	FEAT_MIGHTY_RAGE = 748,
 	FEAT_INDOMITABLE_WILL = 749,
 
-	FEAT_INVALID = -1
+	FEAT_INVALID = 4294967295 // -1
 };
 
 enum feat_requirement_codes : int32_t {
@@ -1531,6 +1531,7 @@ enum D20DispatcherKey : uint32_t {
 	DK_D20A_USE_POTION,
 	DK_D20A_DIVINE_MIGHT = 144,
 	DK_D20A_EMPTY_BODY = 145,
+	DK_D20A_QUIVERING_PALM = 146,
 
 	DK_NEWDAY_REST = 145, // for successfully resting (is also triggered for an 8 hour uninterrupted rest period)
 	DK_NEWDAY_CALENDARICAL = 146, // for starting a new calendarical day (or artificially adding a days period); I think it's only used for disease timers
@@ -1716,7 +1717,8 @@ enum D20DispatcherKey : uint32_t {
 	DK_QUE_Can_Perform_Disarm = 0x143,
 	DK_QUE_Craft_Wand_Spell_Level = 0x144,
 	DK_QUE_Is_Ethereal = 0x145,
-	DK_QUE_Empty_Body_Num_Rounds = 0x146 // returns number of rounds set for Monk's Empty Body
+	DK_QUE_Empty_Body_Num_Rounds = 0x146, // returns number of rounds set for Monk's Empty Body
+	DK_QUE_Quivering_Palm_Can_Perform = 0x147
 };
 
 enum enum_dispIO_type : uint32_t {
