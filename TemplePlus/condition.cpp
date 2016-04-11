@@ -72,8 +72,6 @@ struct ConditionSystemAddresses : temple::AddressTable
 		rebase(RemoveSpellMod, 0x100CBAB0);
 	}
 
-	
-	
 } addresses;
 
 class ConditionFunctionReplacement : public TempleFix {
@@ -1606,7 +1604,7 @@ void ConditionSystem::RegisterNewConditions()
 
 	//mCondCraftWandLevelSet = 
 	static CondStructNew craftWandSetLev("Craft Wand Level Set", 2);
-	craftWandSetLev.AddHook(dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, (uint32_t)&mCondCraftWandLevelSet, 0);
+	craftWandSetLev.AddHook(dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, &craftWandSetLev, 0);
 	craftWandSetLev.AddHook(dispTypeRadialMenuEntry, DK_NONE, CraftWandRadialMenu);
 
 	// Aid Another
