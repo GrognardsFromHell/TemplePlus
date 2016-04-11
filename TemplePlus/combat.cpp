@@ -25,6 +25,7 @@
 #include "maps.h"
 #include "tutorial.h"
 #include "objlist.h"
+#include "ui/ui_dialog.h"
 
 
 struct CombatSystemAddresses : temple::AddressTable
@@ -217,6 +218,12 @@ void LegacyCombatSystem::FloatCombatLine(objHndl obj, int line, FloatLineColor f
 	auto combatLineText = GetCombatMesLine(line);
 	if (combatLineText)
 		floatSys.floatMesLine(obj, 1, static_cast<FloatLineColor>(floatColor), combatLineText);
+}
+
+void LegacyCombatSystem::FloatTextBubble(objHndl handle, int combatMesLine)
+{
+	auto combatLineText = GetCombatMesLine(combatMesLine);
+	uiDialog.ShowTextBubble(handle, handle, combatLineText);
 }
 
 int LegacyCombatSystem::IsWithinReach(objHndl attacker, objHndl target)

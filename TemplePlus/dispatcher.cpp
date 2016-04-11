@@ -1050,6 +1050,14 @@ DispIoAttackBonus::DispIoAttackBonus()
 	this->attackPacket.flags = (D20CAF) 0;
 }
 
+void DispIoTooltip::Append(string& cs)
+{
+	if (numStrings < 10)
+	{
+		strncpy(strings[numStrings++], &cs[0], 0x100);
+	}
+}
+
 DispIoBonusAndObj::DispIoBonusAndObj()
 {
 	dispIOType = dispIOTypeSkillLevel;

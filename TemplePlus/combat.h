@@ -25,6 +25,8 @@ struct LegacyCombatSystem : temple::AddressTable {
 	char * GetCombatMesLine(int line) const;
 	void FloatCombatLine(objHndl obj, int line);
 	void FloatCombatLine(objHndl obj, int line, FloatLineColor floatColor);
+	void FloatTextBubble(objHndl handle, int combatMesLine);
+
 	int IsWithinReach(objHndl attacker, objHndl target);
 	
 	BOOL CanMeleeTargetAtLoc(objHndl obj, objHndl target, LocAndOffsets* loc); // checks if obj is able to hit target if the TARGET is at loc	
@@ -48,7 +50,6 @@ struct LegacyCombatSystem : temple::AddressTable {
 	void TurnStart2( int initiativeIdx);
 	void CombatAdvanceTurn(objHndl obj);
 	BOOL IsBrawlInProgress();
-	
 	uint32_t* combatModeActive;
 	bool isCombatActive();
 	uint32_t IsCloseToParty(objHndl objHnd);

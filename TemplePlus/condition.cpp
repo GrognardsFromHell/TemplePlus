@@ -183,6 +183,7 @@ public:
 
 class ClassAbilityCallbacks
 {
+#define FeatFunc(fname) static int __cdecl Feat ## fname ## (DispatcherCallbackArgs args)
 public:
 	// note: conditions obtained from feats always arg0 set to the feat enum (automatically)
 	static int __cdecl FeatDamageReduction(DispatcherCallbackArgs args);
@@ -196,16 +197,20 @@ public:
 	static int __cdecl FeatQuiveringPalmAvailable(DispatcherCallbackArgs args);
 
 
+
 	// Timed effect callbacks; assumption: num of rounds remaining is at arg[2]
 	static int __cdecl GetNumRoundsRemaining(DispatcherCallbackArgs args);
 	static int __cdecl TimedEffectCountdown(DispatcherCallbackArgs args);
 
-
+	// Diamond Soul
+	static int __cdecl FeatDiamondSoulInit(DispatcherCallbackArgs args);
+	static int __cdecl FeatDiamondSoulSpellResistanceMod(DispatcherCallbackArgs args);
 	
 } classAbilityCallbacks;
 
 class GenericCallbacks
 {
+#define CBFunc(fname) static int __cdecl fname ## (DispatcherCallbackArgs args)
 public:
 	static int QuerySetReturnVal1(DispatcherCallbackArgs args);
 	static int QuerySetReturnVal0(DispatcherCallbackArgs);
@@ -220,7 +225,8 @@ public:
 	static int EtherealDamageDealingNull(DispatcherCallbackArgs);
 	static int EtherealOnRemove(DispatcherCallbackArgs);
 
-
+	static int __cdecl SpellResistanceQuery(DispatcherCallbackArgs args);
+	static int __cdecl SpellResistanceTooltip(DispatcherCallbackArgs args);
 	
 } genericCallbacks;
 
@@ -598,6 +604,25 @@ int GenericCallbacks::EtherealOnRemove(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int GenericCallbacks::SpellResistanceQuery(DispatcherCallbackArgs args){
+	auto srMod = args.GetCondArg(1);
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	dispIo->data1 = srMod;
+	dispIo->return_val = 1;
+	dispIo->data2 = 0;
+	return 0;
+}
+
+int GenericCallbacks::SpellResistanceTooltip(DispatcherCallbackArgs args){
+
+	auto dispIo = dispatch.DispIoCheckIoType9(args.dispIO);
+	auto srMod = args.GetCondArg(1);
+	string text( fmt::format("{} [{}]" ,combatSys.GetCombatMesLine(args.GetData1()), srMod) );
+
+	dispIo->Append(text);
+
+	return 0;
+}
 
 int GenericCallbacks::EffectTooltip(DispatcherCallbackArgs args)
 {
@@ -1579,9 +1604,10 @@ void ConditionSystem::RegisterNewConditions()
 #pragma endregion
 
 
-	mCondCraftWandLevelSet = CondStructNew("Craft Wand Level Set", 2);
-	mCondCraftWandLevelSet.AddHook(dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, (uint32_t)&mCondCraftWandLevelSet, 0);
-	mCondCraftWandLevelSet.AddHook(dispTypeRadialMenuEntry, DK_NONE, CraftWandRadialMenu);
+	//mCondCraftWandLevelSet = 
+	static CondStructNew craftWandSetLev("Craft Wand Level Set", 2);
+	craftWandSetLev.AddHook(dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, (uint32_t)&mCondCraftWandLevelSet, 0);
+	craftWandSetLev.AddHook(dispTypeRadialMenuEntry, DK_NONE, CraftWandRadialMenu);
 
 	// Aid Another
 	mCondAidAnother = new CondStructNew();
@@ -2791,6 +2817,22 @@ int ClassAbilityCallbacks::TimedEffectCountdown(DispatcherCallbackArgs args){
 	args.SetCondArg(2, numRoundsRem - 1);
 	return 0;
 }
+
+int ClassAbilityCallbacks::FeatDiamondSoulInit(DispatcherCallbackArgs args){
+
+	auto monkLvl = objects.StatLevelGet(args.objHndCaller, stat_level_monk);
+	args.SetCondArg(1, monkLvl + 10);
+
+	return 0;
+}
+
+int ClassAbilityCallbacks::FeatDiamondSoulSpellResistanceMod(DispatcherCallbackArgs args)
+{
+	auto srMod = args.GetCondArg(1);
+	auto dispIo = dispatch.DispIOCheckIoType14(static_cast<DispIOBonusListAndSpellEntry*>(args.dispIO));
+	dispIo->bonList->AddBonus(srMod, 36, 203);
+	return 0;
+}
 #pragma endregion
 
 int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args)
@@ -2818,6 +2860,13 @@ void Conditions::AddConditionsToTable(){
 
 	static CondStructNew itemSkillBonus("Special Equipment Skill Bonus", 3, false);
 	itemSkillBonus.AddHook(dispTypeSkillLevel, DK_SKILL_APPRAISE, itemCallbacks.SkillBonus, 99, 0);
+
+	static CondStructNew diamondSoul("Diamond Soul", 3);
+	diamondSoul.AddHook(dispTypeConditionAdd, DK_NONE, classAbilityCallbacks.FeatDiamondSoulInit);
+	diamondSoul.AddHook(dispTypeSpellResistanceMod, DK_NONE, classAbilityCallbacks.FeatDiamondSoulSpellResistanceMod);
+	diamondSoul.AddHook(dispTypeD20Query, DK_QUE_Critter_Has_Spell_Resistance, genericCallbacks.SpellResistanceQuery);
+	diamondSoul.AddHook(dispTypeTooltip, DK_NONE, genericCallbacks.SpellResistanceTooltip, 5048, 0);
+	diamondSoul.AddToFeatDictionary(FEAT_MONK_DIAMOND_SOUL);
 
 	static CondStructNew perfectSelf("Perfect Self", 3);
 	perfectSelf.AddHook(dispTypeTakingDamage2, DK_NONE, classAbilityCallbacks.FeatDamageReduction, 0x4, 0); // 0x4 denotes Magical attacks

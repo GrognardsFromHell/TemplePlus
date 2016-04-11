@@ -26,6 +26,8 @@
 #include "d20_obj_registry.h"
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
+#include "damage.h"
+#include "history.h"
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
@@ -277,11 +279,10 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].turnBasedStatusCheck = d20Callbacks.StdAttackTurnBasedStatusCheck;
 	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckQuiveringPalm;
 	d20Defs[d20Type].locCheckFunc = addresses.LocationCheckStdAttack;
-
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformQuiveringPalm;
 	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameQuiveringPalm;
 	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostStandardAttack;
-	d20Defs[d20Type].seqRenderFunc = nullptr;
+	d20Defs[d20Type].seqRenderFunc = addresses._PickerFuncTooltipToHitChance;
 	d20Defs[d20Type].flags = (D20ADF)(D20ADF_TargetSingleExcSelf | D20ADF_TriggersCombat | D20ADF_UseCursorForPicking);
 
 
@@ -1210,13 +1211,18 @@ ActionErrorCode D20ActionCallbacks::ActionFrameQuiveringPalm(D20Actn* d20a){
 	objHndl performer = d20a->d20APerformer;
 	
 	d20Sys.d20Defs[D20A_STANDARD_ATTACK].actionFrameFunc(d20a);
+	if (!(d20a->d20Caf & D20CAF_HIT))
+		return AEC_OK;
 
 
-	/*if (combatSys.DisarmCheck(performer, d20a->d20ATarget, d20a)){
-		objects.floats->FloatCombatLine(d20a->d20ATarget, 211);	
-	}*/
-	
-	// TODO
+	auto monkLvl = objects.StatLevelGet(performer, stat_level_monk);
+	auto wisScore = objects.StatLevelGet(performer, stat_wisdom);
+	auto dc = 10 + monkLvl / 2 + (wisScore-10)/2;
+	if (!damage.SavingThrow(performer, d20a->d20ATarget, dc, SavingThrowType::Fortitude, D20STD_F_NONE)){
+		critterSys.KillByEffect(d20a->d20ATarget, performer);
+		histSys.CreateFromFreeText(fmt::format("{} killed by Quivering Palm!",  description.getDisplayName(d20a->d20ATarget)).c_str() );
+		combatSys.FloatTextBubble(performer, 215);
+	} 
 		
 	return AEC_OK;
 }
