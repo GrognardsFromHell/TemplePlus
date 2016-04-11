@@ -1218,7 +1218,7 @@ ActionErrorCode D20ActionCallbacks::ActionFrameQuiveringPalm(D20Actn* d20a){
 	auto monkLvl = objects.StatLevelGet(performer, stat_level_monk);
 	auto wisScore = objects.StatLevelGet(performer, stat_wisdom);
 	auto dc = 10 + monkLvl / 2 + (wisScore-10)/2;
-	if (!damage.SavingThrow(performer, d20a->d20ATarget, dc, SavingThrowType::Fortitude, D20STD_F_NONE)){
+	if (!damage.SavingThrow( d20a->d20ATarget, performer, dc, SavingThrowType::Fortitude, D20STD_F_NONE)){
 		critterSys.KillByEffect(d20a->d20ATarget, performer);
 		histSys.CreateFromFreeText(fmt::format("{} killed by Quivering Palm!",  description.getDisplayName(d20a->d20ATarget)).c_str() );
 		combatSys.FloatTextBubble(performer, 215);
