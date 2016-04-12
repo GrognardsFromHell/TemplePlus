@@ -8,6 +8,9 @@ typedef uint32_t MesHandle;
 struct MesLine {
 	uint32_t key;
 	const char *value;
+	MesLine();
+	MesLine(uint32_t key);
+	MesLine(uint32_t key, const char* line);
 };
 
 struct MesFuncs : temple::AddressTable {

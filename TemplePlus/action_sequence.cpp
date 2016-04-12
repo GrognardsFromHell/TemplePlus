@@ -302,7 +302,7 @@ void ActionSequenceSystem::ActSeqGetPicker()
 	auto tgtClassif = d20Sys.TargetClassification(d20Sys.globD20Action);
 	if (tgtClassif == D20TargetClassification::D20TC_ItemInteraction)
 	{
-		if (d20Sys.d20Defs[d20Sys.globD20Action->d20ActType].flags & D20ADF_Unk8000)
+		if (d20Sys.d20Defs[d20Sys.globD20Action->d20ActType].flags & D20ADF_UseCursorForPicking)
 		{
 			temple::GetRef<int>(0x118A0980) = d20Sys.globD20Action->d20ActType;
 			temple::GetRef<int>(0x118CD570) = d20Sys.globD20Action->data1;
@@ -324,7 +324,7 @@ void ActionSequenceSystem::ActSeqGetPicker()
 
 	if (tgtClassif == D20TargetClassification::D20TC_SingleIncSelf)
 	{
-		if (d20Sys.d20Defs[d20Sys.globD20Action->d20ActType].flags & D20ADF_Unk8000)
+		if (d20Sys.d20Defs[d20Sys.globD20Action->d20ActType].flags & D20ADF_UseCursorForPicking)
 		{
 			temple::GetRef<int>(0x118A0980) = d20Sys.globD20Action->d20ActType;
 			temple::GetRef<int>(0x118CD570) = d20Sys.globD20Action->data1;
@@ -347,7 +347,7 @@ void ActionSequenceSystem::ActSeqGetPicker()
 
 	if (tgtClassif == D20TargetClassification::D20TC_SingleExcSelf)
 	{
-		if (d20Sys.d20Defs[d20Sys.globD20Action->d20ActType].flags & D20ADF_Unk8000)
+		if (d20Sys.d20Defs[d20Sys.globD20Action->d20ActType].flags & D20ADF_UseCursorForPicking)
 		{
 			temple::GetRef<int>(0x118A0980) = d20Sys.globD20Action->d20ActType;
 			temple::GetRef<int>(0x118CD570) = d20Sys.globD20Action->data1;
@@ -2259,7 +2259,7 @@ void ActionSequenceSystem::ActionPerform()
 			} else
 			{
 				memcpy(&curSeq->tbStatus, &tbStatus, sizeof(tbStatus));
-				*(uint32_t*)(&curSeq->tbStatus.tbsFlags) |= (uint32_t)D20CAF_NEED_ANIM_COMPLETED;
+				*(uint32_t*)(&curSeq->tbStatus.tbsFlags) |= TBSF_AoO;
 				InterruptCounterspell(d20a);
 				logger->debug("PerformActions: \t Performing action for {} ({}): {}",
 					description.getDisplayName(d20a->d20APerformer), 

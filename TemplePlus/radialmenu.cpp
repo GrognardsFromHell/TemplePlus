@@ -445,6 +445,14 @@ void RadialMenuEntry::SetDefaults() {
 	addresses.SetDefaults(this);
 }
 
+int RadialMenuEntry::AddChildToStandard(objHndl handle, RadialMenuStandardNode stdNode){
+	int parentNode = radialMenus.GetStandardNode(static_cast<RadialMenuStandardNode>(stdNode));
+	return radialMenus.AddChildNode(handle, this, parentNode);
+}
+
+
+
+
 RadialMenuEntrySlider::RadialMenuEntrySlider(int combatMesLine, int _minArg, int _maxArg, void* _actualArg, int combatMesHeaderText, uint32_t _helpId): RadialMenuEntry()
 {
 	type = RadialMenuEntryType::Slider;
@@ -452,7 +460,28 @@ RadialMenuEntrySlider::RadialMenuEntrySlider(int combatMesLine, int _minArg, int
 	maxArg = max(0, _maxArg);
 	minArg = 0;
 	actualArg = reinterpret_cast<int>(_actualArg);
-	field4 = reinterpret_cast<int>(combatSys.GetCombatMesLine(combatMesHeaderText)); // "Select number of rounds to activate."
+	if (combatMesHeaderText != -1)
+		field4 = reinterpret_cast<int>(combatSys.GetCombatMesLine(combatMesHeaderText)); // the popup title
 	helpId = _helpId;
 	callback = (void(__cdecl*)(objHndl, RadialMenuEntry*))temple::GetPointer(0x100F0200);
 }
+
+RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, D20ActionType d20aType, int data1, uint32_t HelpId) : RadialMenuEntry() {
+	type = RadialMenuEntryType::Action;
+	text = combatSys.GetCombatMesLine(combatMesLine);
+	helpId = HelpId;
+	d20ActionType = d20aType;
+	d20ActionData1 = data1;
+}
+
+RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, D20ActionType d20aType, int data1, const char helpId[]): RadialMenuEntryAction(combatMesLine, d20aType, data1, ElfHash::Hash(helpId))
+{
+
+};
+
+//
+//int RadialMenuEntry::AddChildToStandard(objHndl handle, RadialMenuStandardNode stdNode)
+//{
+//	int parentNode = radialMenus.GetStandardNode(stdNode);
+//	return radialMenus.AddChildNode(handle, this, parentNode);
+//}

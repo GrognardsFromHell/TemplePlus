@@ -153,11 +153,7 @@ public:
 	char mCondImprovedDisarmName[100];
 	CondStructNew *mCondImprovedDisarm;
 
-	char mCondCraftWandName[100];
-	CondStructNew mCondCraftWand;
 
-	char mCondCraftWandLevelSetName[100];
-	CondStructNew  mCondCraftWandLevelSet;
 
 	char mCondAidAnotherName[100];
 	CondStructNew * mCondAidAnother;

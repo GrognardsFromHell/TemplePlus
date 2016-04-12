@@ -1050,6 +1050,14 @@ DispIoAttackBonus::DispIoAttackBonus()
 	this->attackPacket.flags = (D20CAF) 0;
 }
 
+void DispIoTooltip::Append(string& cs)
+{
+	if (numStrings < 10)
+	{
+		strncpy(strings[numStrings++], &cs[0], 0x100);
+	}
+}
+
 DispIoBonusAndObj::DispIoBonusAndObj()
 {
 	dispIOType = dispIOTypeSkillLevel;
@@ -1057,4 +1065,28 @@ DispIoBonusAndObj::DispIoBonusAndObj()
 	pad = 0;
 	returnVal = 0;
 	bonOut = &bonlist;
+}
+
+DispIoD20ActionTurnBased::DispIoD20ActionTurnBased(){
+	dispIOType = dispIOTypeD20ActionTurnBased;
+	returnVal = 0;
+	d20a = nullptr;
+	tbStatus = nullptr;
+}
+
+DispIoD20ActionTurnBased::DispIoD20ActionTurnBased(D20Actn* D20a):DispIoD20ActionTurnBased(){
+	d20a = D20a;
+}
+
+void DispIoD20ActionTurnBased::DispatchPerform(D20DispatcherKey key){
+	if (!d20a || !d20a->d20APerformer){
+		returnVal = AEC_INVALID_ACTION;
+		return;
+	}
+		
+	auto dispatcher = objects.GetDispatcher(d20a->d20APerformer);
+
+	if (dispatcher->IsValid() ){
+		dispatch.DispatcherProcessor(dispatcher, dispTypeD20ActionPerform, key, this);
+	}
 }

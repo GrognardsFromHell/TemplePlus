@@ -72,8 +72,6 @@ struct ConditionSystemAddresses : temple::AddressTable
 		rebase(RemoveSpellMod, 0x100CBAB0);
 	}
 
-	
-	
 } addresses;
 
 class ConditionFunctionReplacement : public TempleFix {
@@ -183,23 +181,34 @@ public:
 
 class ClassAbilityCallbacks
 {
+#define FeatFunc(fname) static int __cdecl Feat ## fname ## (DispatcherCallbackArgs args)
 public:
 	// note: conditions obtained from feats always arg0 set to the feat enum (automatically)
 	static int __cdecl FeatDamageReduction(DispatcherCallbackArgs args);
 	static int __cdecl FeatEmptyBody(DispatcherCallbackArgs args); // radial menu builder
-	static int __cdecl FeatEmptyBodiInit(DispatcherCallbackArgs args);
+	static int __cdecl FeatEmptyBodyInit(DispatcherCallbackArgs args);
 	static int __cdecl FeatEmptyBodyReduceRounds(DispatcherCallbackArgs);
+
+	static int __cdecl FeatQuiveringPalmRadial(DispatcherCallbackArgs args); // radial menu builder
+	static int __cdecl FeatQuiveringPalmInit(DispatcherCallbackArgs);
+	static int __cdecl FeatQuiveringPalmPerform(DispatcherCallbackArgs args);
+	static int __cdecl FeatQuiveringPalmAvailable(DispatcherCallbackArgs args);
+
+
 
 	// Timed effect callbacks; assumption: num of rounds remaining is at arg[2]
 	static int __cdecl GetNumRoundsRemaining(DispatcherCallbackArgs args);
 	static int __cdecl TimedEffectCountdown(DispatcherCallbackArgs args);
 
-
+	// Diamond Soul
+	static int __cdecl FeatDiamondSoulInit(DispatcherCallbackArgs args);
+	static int __cdecl FeatDiamondSoulSpellResistanceMod(DispatcherCallbackArgs args);
 	
 } classAbilityCallbacks;
 
 class GenericCallbacks
 {
+#define CBFunc(fname) static int __cdecl fname ## (DispatcherCallbackArgs args)
 public:
 	static int QuerySetReturnVal1(DispatcherCallbackArgs args);
 	static int QuerySetReturnVal0(DispatcherCallbackArgs);
@@ -214,7 +223,8 @@ public:
 	static int EtherealDamageDealingNull(DispatcherCallbackArgs);
 	static int EtherealOnRemove(DispatcherCallbackArgs);
 
-
+	static int __cdecl SpellResistanceQuery(DispatcherCallbackArgs args);
+	static int __cdecl SpellResistanceTooltip(DispatcherCallbackArgs args);
 	
 } genericCallbacks;
 
@@ -571,12 +581,12 @@ int GenericCallbacks::AddEtherealDamageImmunity(DispatcherCallbackArgs args){
 int GenericCallbacks::EtherealOnAdd(DispatcherCallbackArgs args)
 {
 	floatSys.FloatCombatLine(args.objHndCaller, 210); // Ethereal
-	objects.FadeTo(args.objHndCaller, 60, 10, 30, 0);
+	objects.FadeTo(args.objHndCaller, 70, 10, 30, 0);
 	return 0;
 }
 
 int GenericCallbacks::EtherealOnD20StatusInit(DispatcherCallbackArgs args){
-	objects.FadeTo(args.objHndCaller, 60, 10, 30, 0);
+	objects.FadeTo(args.objHndCaller, 70, 10, 30, 0);
 	return 0;
 }
 
@@ -592,6 +602,25 @@ int GenericCallbacks::EtherealOnRemove(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int GenericCallbacks::SpellResistanceQuery(DispatcherCallbackArgs args){
+	auto srMod = args.GetCondArg(1);
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	dispIo->data1 = srMod;
+	dispIo->return_val = 1;
+	dispIo->data2 = 0;
+	return 0;
+}
+
+int GenericCallbacks::SpellResistanceTooltip(DispatcherCallbackArgs args){
+
+	auto dispIo = dispatch.DispIoCheckIoType9(args.dispIO);
+	auto srMod = args.GetCondArg(1);
+	string text( fmt::format("{} [{}]" ,combatSys.GetCombatMesLine(args.GetData1()), srMod) );
+
+	dispIo->Append(text);
+
+	return 0;
+}
 
 int GenericCallbacks::EffectTooltip(DispatcherCallbackArgs args)
 {
@@ -1121,10 +1150,10 @@ void _FeatConditionsRegister()
 
 
 	// Craft Wand
-	conds.mCondCraftWand = CondStructNew("Craft Wand", 0);
-	conds.mCondCraftWand.AddHook(dispTypeRadialMenuEntry, DK_NONE, CraftWandOnAdd);
+	static CondStructNew craftWand("Craft Wand", 0);
+	craftWand.AddHook(dispTypeRadialMenuEntry, DK_NONE, CraftWandOnAdd);
 
-	conds.FeatConditionDict[61].condStruct.cs = &conds.mCondCraftWand;
+	conds.FeatConditionDict[61].condStruct.cs = &craftWand;
 
 	for (unsigned int i = 0; i < condCount; i++){
 		conds.hashmethods.CondStructAddToHashtable(conds.FeatConditionDict[i].condStruct.old);
@@ -1573,9 +1602,10 @@ void ConditionSystem::RegisterNewConditions()
 #pragma endregion
 
 
-	mCondCraftWandLevelSet = CondStructNew("Craft Wand Level Set", 2);
-	mCondCraftWandLevelSet.AddHook(dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, (uint32_t)&mCondCraftWandLevelSet, 0);
-	mCondCraftWandLevelSet.AddHook(dispTypeRadialMenuEntry, DK_NONE, CraftWandRadialMenu);
+	//mCondCraftWandLevelSet = 
+	static CondStructNew craftWandSetLev("Craft Wand Level Set", 2);
+	craftWandSetLev.AddHook(dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, &craftWandSetLev, 0);
+	craftWandSetLev.AddHook(dispTypeRadialMenuEntry, DK_NONE, CraftWandRadialMenu);
 
 	// Aid Another
 	mCondAidAnother = new CondStructNew();
@@ -1910,21 +1940,8 @@ int __cdecl DivineMightRadial(DispatcherCallbackArgs args)
 	if (d20Sys.d20Query(args.objHndCaller, DK_QUE_IsFallenPaladin))
 		return 0;
 
-	RadialMenuEntry radEntry;
-	radEntry.type = RadialMenuEntryType::Action;
-	radEntry.d20ActionType = D20A_DIVINE_MIGHT;
-	radEntry.d20ActionData1 = 0;
-	MesLine mesLine;
-	mesLine.key = 5106; // Divine Might
-	if (!mesFuncs.GetLine(*combatSys.combatMesfileIdx, &mesLine))
-	{
-		//sprintf((char*)temple::GetPointer(0x10EEE228), "Divine Might");
-		mesLine.value = conds.mCondDivineMightName;
-	};
-	radEntry.text = (char*)mesLine.value;
-	radEntry.helpId = conds.hashmethods.StringHash("TAG_DIVINE_MIGHT");
-	int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Feats);
-	radialMenus.AddChildNode(args.objHndCaller, &radEntry, parentNode);
+	RadialMenuEntryAction radEntry(5106, D20A_DIVINE_MIGHT, 0, ElfHash::Hash("TAG_DIVINE_MIGHT"));
+	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Feats);
 	return 0;
 }
 
@@ -2022,23 +2039,8 @@ int __cdecl CombatExpertiseRadialMenu(DispatcherCallbackArgs args)
 	int bab = dispatch.DispatchToHitBonusBase(args.objHndCaller, 0);
 	if (bab > 0)
 	{
-		RadialMenuEntry radEntry;
-		radEntry.maxArg = bab;
-		if (bab > 5 && !feats.HasFeatCount(args.objHndCaller, FEAT_SUPERIOR_EXPERTISE))
-			radEntry.maxArg = 5;
-		radEntry.minArg = 0;
-		radEntry.type = RadialMenuEntryType::Slider;
-		radEntry.actualArg = (int)conds.CondNodeGetArgPtr(args.subDispNode->condNode, 0);
-		radEntry.callback = (void(__cdecl*)(objHndl, RadialMenuEntry*))temple::GetPointer(0x100F0200);
-		MesLine mesLine;
-		mesLine.key = 5007; // Combat Expertise
-		if (!mesFuncs.GetLine(*combatSys.combatMesfileIdx, &mesLine))
-		{
-			sprintf((char*)temple::GetPointer(0x10EEE228), "Combat Expertise");
-			mesLine.value = (char*)temple::GetPointer(0x10EEE228);
-		}
-		radEntry.text = (char*)mesLine.value;
-		radEntry.helpId = conds.hashmethods.StringHash("TAG_COMBAT_EXPERTISE");
+		auto maxArg = feats.HasFeatCount(args.objHndCaller, FEAT_SUPERIOR_EXPERTISE)? bab:min(5, bab);
+		RadialMenuEntrySlider radEntry(5007,0, maxArg, args.GetCondArgPtr(0), -1, ElfHash::Hash("TAG_COMBAT_EXPERTISE") );
 		int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Feats);
 		radialMenus.AddChildNode(args.objHndCaller, &radEntry, parentNode);
 	}
@@ -2129,16 +2131,10 @@ public:
 
 #pragma endregion
 
-int __cdecl DisarmRadialMenu(DispatcherCallbackArgs args)
-{
-	RadialMenuEntry radEntry;
-	radEntry.type = RadialMenuEntryType::Action;
-	radEntry.d20ActionType = D20A_DISARM;
-	radEntry.d20ActionData1 = 0;
-	radEntry.text = combatSys.GetCombatMesLine(5109); // Disarm
-	radEntry.helpId = conds.hashmethods.StringHash("TAG_DISARM");
-	int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Offense);
-	radialMenus.AddChildNode(args.objHndCaller, &radEntry, parentNode);
+int __cdecl DisarmRadialMenu(DispatcherCallbackArgs args){
+
+	RadialMenuEntryAction radEntry(5109, D20A_DISARM, 0, ElfHash::Hash("TAG_DISARM"));
+	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Offense);
 	return 0;
 }
 
@@ -2244,29 +2240,17 @@ int DisarmedWeaponRetrieve(DispatcherCallbackArgs args)
 	return 0;
 };
 
-int DisarmedRetrieveWeaponRadialMenu(DispatcherCallbackArgs args)
-{
-	RadialMenuEntry radEntry;
-	radEntry.type = RadialMenuEntryType::Action;
-	radEntry.d20ActionType = D20A_DISARMED_WEAPON_RETRIEVE;
-	radEntry.d20ActionData1 = 0;
-	radEntry.text = combatSys.GetCombatMesLine(5111); // Retrieve Disarmed Weapon
-	radEntry.helpId = conds.hashmethods.StringHash("TAG_DISARM");
-	int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Items);
-	radialMenus.AddChildNode(args.objHndCaller, &radEntry, parentNode);
+int DisarmedRetrieveWeaponRadialMenu(DispatcherCallbackArgs args){
+
+	RadialMenuEntryAction radEntry(5111, D20A_DISARMED_WEAPON_RETRIEVE, 0, "TAG_DISARM");
+	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Items);
 	return 0;
 }
 
-int __cdecl SunderRadialMenu(DispatcherCallbackArgs args)
-{
-	RadialMenuEntry radEntry;
-	radEntry.type = RadialMenuEntryType::Action;
-	radEntry.d20ActionType = D20A_SUNDER;
-	radEntry.d20ActionData1 = 0;
-	radEntry.text = combatSys.GetCombatMesLine(5110); // Sunder
-	radEntry.helpId = conds.hashmethods.StringHash("TAG_SUNDER");
-	int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Offense);
-	radialMenus.AddChildNode(args.objHndCaller, &radEntry, parentNode);
+int __cdecl SunderRadialMenu(DispatcherCallbackArgs args){
+
+	RadialMenuEntryAction radEntry(5110, D20A_SUNDER, 0, "TAG_SUNDER");
+	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Offense);
 	return 0;
 }
 
@@ -2720,7 +2704,7 @@ int ClassAbilityCallbacks::FeatEmptyBody(DispatcherCallbackArgs args){
 	RadialMenuEntry mainRadEntry;
 
 	mainRadEntry.text = combatSys.GetCombatMesLine(6020); // Empty Body
-	mainRadEntry.helpId = conds.hashmethods.StringHash("TAG_CLASS_FEATURES_MONK_EMPTY_BODY");
+	mainRadEntry.helpId = ElfHash::Hash("TAG_CLASS_FEATURES_MONK_EMPTY_BODY");
 	int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Class);
 	int newParent = radialMenus.AddParentChildNode(args.objHndCaller, &mainRadEntry, parentNode);
 	mainRadEntry.d20ActionType = D20A_EMPTY_BODY;
@@ -2731,19 +2715,14 @@ int ClassAbilityCallbacks::FeatEmptyBody(DispatcherCallbackArgs args){
 	radialMenus.AddChildNode(args.objHndCaller, &setterChild, newParent);
 
 
-	RadialMenuEntry activaterChild;
-	activaterChild.type = RadialMenuEntryType::Action;
-	activaterChild.text = combatSys.GetCombatMesLine(6013); // Use
-	activaterChild.helpId = templeFuncs.StringHash("TAG_CLASS_FEATURES_MONK_EMPTY_BODY");
-	activaterChild.d20ActionType = D20A_EMPTY_BODY;
-	activaterChild.d20ActionData1 = 0;
+	RadialMenuEntryAction activaterChild(6013, D20A_EMPTY_BODY, 0, ElfHash::Hash("TAG_CLASS_FEATURES_MONK_EMPTY_BODY")); // use
 	radialMenus.AddChildNode(args.objHndCaller, &activaterChild, newParent);
 
 
 	return 0;
 }
 
-int ClassAbilityCallbacks::FeatEmptyBodiInit(DispatcherCallbackArgs args){
+int ClassAbilityCallbacks::FeatEmptyBodyInit(DispatcherCallbackArgs args){
 	// init the remaining number of rounds to the Monk's level
 	args.SetCondArg(2, objects.StatLevelGet(args.objHndCaller, stat_level_monk));
 	return 0;
@@ -2760,6 +2739,37 @@ int ClassAbilityCallbacks::FeatEmptyBodyReduceRounds(DispatcherCallbackArgs args
 
 	D20Actn*d20a = dispIo->d20a;
 	args.SetCondArg(2, max(0,numRoundsRem - (int)d20a->data1));
+
+	return 0;
+}
+
+int ClassAbilityCallbacks::FeatQuiveringPalmRadial(DispatcherCallbackArgs args){
+
+	RadialMenuEntryAction radEntry(5116, D20A_QUIVERING_PALM, 0,ElfHash::Hash("TAG_CLASS_FEATURES_MONK_QUIVERING_PALM"));
+	radEntry.AddChildToStandard(args.objHndCaller ,RadialMenuStandardNode::Class);
+
+	return 0;
+}
+
+int ClassAbilityCallbacks::FeatQuiveringPalmInit(DispatcherCallbackArgs args){
+	args.SetCondArg(2, 1);
+	return 0;
+}
+
+int ClassAbilityCallbacks::FeatQuiveringPalmPerform(DispatcherCallbackArgs args){
+	args.SetCondArg(2, 0);
+	return 0;
+}
+
+int ClassAbilityCallbacks::FeatQuiveringPalmAvailable(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	if (!dispIo) {
+		throw TempleException("GetNumRoundsRemaining: Wrong dispatcher type!");
+	}
+
+	if (args.GetCondArg(2))
+		dispIo->return_val = 1;
 
 	return 0;
 }
@@ -2805,6 +2815,22 @@ int ClassAbilityCallbacks::TimedEffectCountdown(DispatcherCallbackArgs args){
 	args.SetCondArg(2, numRoundsRem - 1);
 	return 0;
 }
+
+int ClassAbilityCallbacks::FeatDiamondSoulInit(DispatcherCallbackArgs args){
+
+	auto monkLvl = objects.StatLevelGet(args.objHndCaller, stat_level_monk);
+	args.SetCondArg(1, monkLvl + 10);
+
+	return 0;
+}
+
+int ClassAbilityCallbacks::FeatDiamondSoulSpellResistanceMod(DispatcherCallbackArgs args)
+{
+	auto srMod = args.GetCondArg(1);
+	auto dispIo = dispatch.DispIOCheckIoType14(static_cast<DispIOBonusListAndSpellEntry*>(args.dispIO));
+	dispIo->bonList->AddBonus(srMod, 36, 203);
+	return 0;
+}
 #pragma endregion
 
 int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args)
@@ -2833,6 +2859,13 @@ void Conditions::AddConditionsToTable(){
 	static CondStructNew itemSkillBonus("Special Equipment Skill Bonus", 3, false);
 	itemSkillBonus.AddHook(dispTypeSkillLevel, DK_SKILL_APPRAISE, itemCallbacks.SkillBonus, 99, 0);
 
+	static CondStructNew diamondSoul("Diamond Soul", 3);
+	diamondSoul.AddHook(dispTypeConditionAdd, DK_NONE, classAbilityCallbacks.FeatDiamondSoulInit);
+	diamondSoul.AddHook(dispTypeSpellResistanceMod, DK_NONE, classAbilityCallbacks.FeatDiamondSoulSpellResistanceMod);
+	diamondSoul.AddHook(dispTypeD20Query, DK_QUE_Critter_Has_Spell_Resistance, genericCallbacks.SpellResistanceQuery);
+	diamondSoul.AddHook(dispTypeTooltip, DK_NONE, genericCallbacks.SpellResistanceTooltip, 5048, 0);
+	diamondSoul.AddToFeatDictionary(FEAT_MONK_DIAMOND_SOUL);
+
 	static CondStructNew perfectSelf("Perfect Self", 3);
 	perfectSelf.AddHook(dispTypeTakingDamage2, DK_NONE, classAbilityCallbacks.FeatDamageReduction, 0x4, 0); // 0x4 denotes Magical attacks
 	perfectSelf.AddToFeatDictionary(FEAT_MONK_PERFECT_SELF, FEAT_INVALID, 10);
@@ -2841,8 +2874,8 @@ void Conditions::AddConditionsToTable(){
 	static CondStructNew emptyBody("Empty Body", 3);
 	emptyBody.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatEmptyBody);
 	emptyBody.AddHook(dispTypeD20Query, DK_QUE_Empty_Body_Num_Rounds, classAbilityCallbacks.GetNumRoundsRemaining);
-	emptyBody.AddHook(dispTypeConditionAdd, DK_NONE, classAbilityCallbacks.FeatEmptyBodiInit);
-	emptyBody.AddHook(dispTypeNewDay, DK_NEWDAY_REST, classAbilityCallbacks.FeatEmptyBodiInit);
+	emptyBody.AddHook(dispTypeConditionAdd, DK_NONE, classAbilityCallbacks.FeatEmptyBodyInit);
+	emptyBody.AddHook(dispTypeNewDay, DK_NEWDAY_REST, classAbilityCallbacks.FeatEmptyBodyInit);
 	emptyBody.AddHook(dispTypeD20ActionPerform, DK_D20A_EMPTY_BODY, classAbilityCallbacks.FeatEmptyBodyReduceRounds);
 	emptyBody.AddToFeatDictionary(FEAT_MONK_EMPTY_BODY, FEAT_INVALID, -1);
 
@@ -2867,6 +2900,16 @@ void Conditions::AddConditionsToTable(){
 	ethereal.AddHook(dispTypeD20Query, DK_QUE_Critter_Has_Freedom_of_Movement, genericCallbacks.QuerySetReturnVal1);
 	ethereal.AddHook(dispTypeD20Query, DK_QUE_CanBeAffected_PerformAction, genericCallbacks.QuerySetReturnVal0);
 	ethereal.AddHook(dispTypeD20Query, DK_QUE_CanBeAffected_ActionFrame, genericCallbacks.QuerySetReturnVal0);
+
+
+	static CondStructNew quivPalm("Quivering Palm", 3 );
+	quivPalm.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatQuiveringPalmRadial);
+	quivPalm.AddHook(dispTypeD20Query, DK_QUE_Quivering_Palm_Can_Perform, classAbilityCallbacks.FeatQuiveringPalmAvailable);
+	quivPalm.AddHook(dispTypeConditionAdd, DK_NONE, classAbilityCallbacks.FeatQuiveringPalmInit);
+	quivPalm.AddHook(dispTypeNewDay, DK_NEWDAY_REST, classAbilityCallbacks.FeatQuiveringPalmInit);
+	quivPalm.AddHook(dispTypeD20ActionPerform, DK_D20A_QUIVERING_PALM, classAbilityCallbacks.FeatQuiveringPalmPerform);
+	quivPalm.AddToFeatDictionary(FEAT_MONK_QUIVERING_PALM);
+
 
 	// New Conditions!
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionDisableAoO);
@@ -2916,29 +2959,11 @@ int AidAnotherRadialMenu(DispatcherCallbackArgs args)
 
 	int newParent = radialMenus.AddParentChildNode(args.objHndCaller, &radMenuAidAnotherMain, radialMenus.GetStandardNode(RadialMenuStandardNode::Tactical));
 
-	RadialMenuEntry defensiveAssist;
-	RadialMenuEntry wakeUp;
+	//RadialMenuEntryAction defensiveAssist(6018, D20A_ITEM_CREATION, 0, "TAG_AID_ANOTHER");
+	// radialMenus.AddChildNode(args.objHndCaller, &defensiveAssist, newParent);
 
-
-	wakeUp.type = RadialMenuEntryType::Action;
-	wakeUp.d20ActionType = D20A_AID_ANOTHER_WAKE_UP;
-	wakeUp.d20ActionData1 = 0;
-	wakeUp.text = combatSys.GetCombatMesLine(5113); // Wake Up
-	wakeUp.helpId = conds.hashmethods.StringHash("TAG_AID_ANOTHER");
-
+	RadialMenuEntryAction wakeUp(5113, D20A_AID_ANOTHER_WAKE_UP, 0, "TAG_AID_ANOTHER");
 	radialMenus.AddChildNode(args.objHndCaller, &wakeUp, newParent);
-
-
-	
-	/*
-	defensiveAssist.SetDefaults();
-	defensiveAssist.type = RadialMenuEntryType::Action;
-	defensiveAssist.text = combatSys.GetCombatMesLine(6018);
-	defensiveAssist.helpId = templeFuncs.StringHash("TAG_AID_ANOTHER");
-	defensiveAssist.d20ActionType = D20A_ITEM_CREATION;
-	defensiveAssist.d20ActionData1 = CraftWand;
-	radialMenus.AddChildNode(args.objHndCaller, &defensiveAssist, newParent);
-	*/
 	
 
 

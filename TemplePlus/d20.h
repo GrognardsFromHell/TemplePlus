@@ -187,7 +187,7 @@ enum D20ADF : int{
 	D20ADF_CallLightningTargeting = 0x1000,
 	D20ADF_Unk2000 = 0x2000,
 	D20ADF_Unk4000 = 0x4000,
-	D20ADF_Unk8000 = 0x8000, // perhaps indicates a followup action, or to record what the last action was
+	D20ADF_UseCursorForPicking = 0x8000, // indicates that the target should be selected with a "normal" cursor (as opposed to a picker)
 	D20ADF_TargetContainer = 0x10000,
 	D20ADF_SimulsCompatible = 0x20000,
 	D20ADF_DrawPathByDefault = 0x40000, // will draw path even without holding ALT
@@ -203,7 +203,7 @@ struct D20ActionDef
 	uint32_t (__cdecl * tgtCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO);
 	ActionErrorCode (__cdecl * locCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO, LocAndOffsets * locAndOff); // also seems to double as a generic check function (e.g. for move silently it checks if combat is active and nothing to do with location)
 	ActionErrorCode (__cdecl * performFunc)(D20Actn* d20a);
-	uint32_t (__cdecl * actionFrameFunc)(D20Actn* d20a);
+	ActionErrorCode(__cdecl * actionFrameFunc)(D20Actn* d20a);
 	void * projectilePerformFunc;
 	uint32_t pad_apparently;
 	ActionErrorCode (__cdecl * actionCost)(D20Actn* d20a, TurnBasedStatus* iO, ActionCostPacket * actionCostPacket);
@@ -278,11 +278,3 @@ inline int GetAttributeMod(int stat) {
 }
 
 uint32_t _d20actionTabLineParser(TabFileStatus*, uint32_t n, const char** strings);
-
-
-uint32_t _ActionFrameDisarm(D20Actn* d20a);
-
-
-uint32_t _ActionFrameSunder(D20Actn* d20a);
-
-uint32_t _ActionFrameAidAnotherWakeUp(D20Actn* d20a);
