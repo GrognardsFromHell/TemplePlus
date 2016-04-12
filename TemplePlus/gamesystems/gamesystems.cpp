@@ -25,6 +25,7 @@
 #include "gamesystems/timeevents.h"
 #include "gamesystems/objects/objsystem.h"
 #include "gamesystems/map/gmesh.h"
+#include "anim.h"
 
 #include "mapsystem.h"
 #include <infrastructure/vfs.h>

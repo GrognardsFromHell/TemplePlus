@@ -2,7 +2,7 @@
 
 
 #pragma region feats
-enum feat_enums : uint32_t {
+enum feat_enums : int {
 	FEAT_ACROBATIC = 0x0,
 	FEAT_AGILE = 0x1,
 	FEAT_ALERTNESS = 0x2,
@@ -2471,7 +2471,7 @@ enum SpellFlags : uint32_t
 	SF_2000 = 0x2000,
 	SF_4000 = 0x4000,
 	SF_8000 = 0x8000,
-	SF_10000 = 0x10000,
+	SF_10000 = 0x10000, // Used in goalstatefunc_124
 	SF_20000 = 0x20000,
 	SF_40000 = 0x40000,
 	SF_80000 = 0x80000,

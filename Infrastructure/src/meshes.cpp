@@ -1,3 +1,4 @@
+#include "..\include\infrastructure\meshes.h"
 #include "infrastructure/meshes.h"
 #include <infrastructure/format.h>
 
@@ -189,6 +190,37 @@ static const char* GetWeaponAnimName(WeaponAnim weaponAnime) {
 
 static const char* GetWeaponTypeName(WeaponAnimType weaponAnimType) {
 	return sWeaponTypeNames[(int)weaponAnimType];
+}
+
+bool EncodedAnimId::IsConjuireAnimation() const
+{
+	if (IsSpecialAnim()) {
+		return false;
+	}
+
+	auto normalAnim = GetNormalAnimType();
+
+	switch (normalAnim) {
+	case NormalAnimType::AbjurationConjuring:
+	case NormalAnimType::ConjurationConjuring:
+	case NormalAnimType::DivinationConjuring:
+	case NormalAnimType::EnchantmentConjuring:
+	case NormalAnimType::EvocationConjuring:
+	case NormalAnimType::IllusionConjuring:
+	case NormalAnimType::NecromancyConjuring:
+	case NormalAnimType::TransmutationConjuring:
+	case NormalAnimType::WandAbjurationConjuring:
+	case NormalAnimType::WandConjurationConjuring:
+	case NormalAnimType::WandDivinationConjuring:
+	case NormalAnimType::WandEnchantmentConjuring:
+	case NormalAnimType::WandEvocationConjuring:
+	case NormalAnimType::WandIllusionConjuring:
+	case NormalAnimType::WandNecromancyConjuring:
+	case NormalAnimType::WandTransmutationConjuring:
+		return true;
+	default:
+		return false;
+	}
 }
 
 inline std::string EncodedAnimId::GetName() const {

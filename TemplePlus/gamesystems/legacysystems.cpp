@@ -369,10 +369,10 @@ bool SpellSystem::Load(GameSystemSaveFile* file) {
 	static auto spell__spell_load = temple::GetPointer<BOOL(GameSystemSaveFile*)>(0x100792a0);
 	
 	
-	auto spellIdSerial = temple::GetPointer<int>(0x10AAF204);
+	auto spellIdSerial = temple::GetPointer<uint32_t>(0x10AAF204);
 	tio_fread(spellIdSerial, sizeof(int), 1, file->file);
 	
-	int numSpells;
+	uint32_t numSpells;
 	if (tio_fread(&numSpells, 4, 1, file->file) != 1)
 		return FALSE;
 
@@ -385,7 +385,7 @@ bool SpellSystem::Load(GameSystemSaveFile* file) {
 	uint32_t spellId;
 	SpellPacket pkt;
 
-	for (int i = 0; i < numSpells; i++)	{
+	for (uint32_t i = 0; i < numSpells; i++)	{
 		if (spellSys.LoadActiveSpellElement(file->file, spellId, pkt) != 1 ){
 			logger->warn("Loading Spells: Failure! {} spells in SpellsCastRegistry after loading.", spellSys.spellCastIdxTable->itemCount);
 			return FALSE;
@@ -898,49 +898,6 @@ void AISystem::AddAiTimer(objHndl handle)
 {
 	static auto ai_schedule_npc_timer = temple::GetPointer<void(objHndl)>(0x1005d5e0);
 	ai_schedule_npc_timer(handle);
-}
-
-//*****************************************************************************
-//* Anim
-//*****************************************************************************
-
-AnimSystem::AnimSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x10016bb0);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system Anim");
-	}
-}
-AnimSystem::~AnimSystem() {
-	auto shutdown = temple::GetPointer<void()>(0x1000c110);
-	shutdown();
-}
-void AnimSystem::Reset() {
-	auto reset = temple::GetPointer<void()>(0x1000c120);
-	reset();
-}
-bool AnimSystem::SaveGame(TioFile *file) {
-	auto save = temple::GetPointer<int(TioFile*)>(0x1001cab0);
-	return save(file) == 1;
-}
-bool AnimSystem::LoadGame(GameSystemSaveFile* saveFile) {
-	auto load = temple::GetPointer<int(GameSystemSaveFile*)>(0x1001d250);
-	return load(saveFile) == 1;
-}
-const std::string &AnimSystem::GetName() const {
-	static std::string name("Anim");
-	return name;
-}
-
-void AnimSystem::ClearGoalDestinations()
-{
-	static auto clear = temple::GetPointer<void()>(0x100BACC0);
-	clear();
-}
-
-void AnimSystem::InterruptAll()
-{
-	static auto anim_interrupt_all = temple::GetPointer<BOOL()>(0x1000c890);
-	anim_interrupt_all();
 }
 
 //*****************************************************************************
@@ -1662,7 +1619,7 @@ bool ObjectEventSystem::LoadGame(GameSystemSaveFile* saveFile) {
 	/*auto load = temple::GetPointer<int(GameSystemSaveFile*)>(0x100451b0);
 	auto result  = load(saveFile) == 1;*/
 
-	return objEvents.ObjEventLoadGame(saveFile);
+	return objEvents.ObjEventLoadGame(saveFile) == TRUE;
 }
 void ObjectEventSystem::AdvanceTime(uint32_t time) {
 	//auto advanceTime = temple::GetPointer<void(uint32_t)>(0x10045740);

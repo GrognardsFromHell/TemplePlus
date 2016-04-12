@@ -2,7 +2,7 @@
 #pragma once
 #include "obj.h"
 #include "skill.h"
-
+#include "gamesystems/gamesystem.h"
 
 #pragma pack(push, 1)
 struct AnimSlotId {
@@ -10,17 +10,12 @@ struct AnimSlotId {
 	int uniqueId;
 	int field_8;
 
-	string toString() const {
-		return format("[{}:{}r{}]", slotIndex, uniqueId, field_8);
-	}
+	std::string ToString() const;
 };
 #pragma pack(pop)
 
 // Allows for direct use of AnimSlotId in format() strings
-inline ostream &operator<<(ostream &str, const AnimSlotId &id) {
-	str << id.toString();
-	return str;
-}
+ostream &operator<<(ostream &str, const AnimSlotId &id);
 
 enum AnimGoalType : uint32_t {
 	ag_animate = 0x0,
@@ -55,56 +50,56 @@ enum AnimGoalType : uint32_t {
 	ag_shoot_spell = 0x1D,
 	ag_hit_by_spell = 0x1E,
 	ag_hit_by_weapon = 0x1F,
-	ag_dying = 0x20,
-	ag_destroy_obj = 0x21,
-	ag_use_skill_on = 0x22,
-	ag_attempt_use_skill_on = 0x23,
-	ag_skill_conceal = 0x24,
-	ag_projectile = 0x25,
-	ag_throw_item = 0x26,
-	ag_use_object = 0x27,
-	ag_use_item_on_object = 0x28,
-	ag_use_item_on_object_with_skill = 0x29,
-	ag_use_item_on_tile = 0x2A,
-	ag_use_item_on_tile_with_skill = 0x2B,
-	ag_knockback = 0x2C,
-	ag_floating = 0x2D,
-	ag_close_door = 0x2E,
-	ag_attempt_close_door = 0x2F,
-	ag_animate_reverse = 0x30,
-	ag_move_away_from_obj = 0x31,
-	ag_rotate = 0x32,
-	ag_unconceal = 0x33,
-	ag_run_near_tile = 0x34,
-	ag_run_near_obj = 0x35,
-	ag_animate_stunned = 0x36,
-	ag_animate_kneel_magic_hands = 0x37,
-	ag_attempt_move_near = 0x38,
-	ag_knock_down = 0x39,
-	ag_anim_get_up = 0x3A,
-	ag_attempt_move_straight_knockback = 0x3B,
-	ag_wander = 0x3C,
-	ag_wander_seek_darkness = 0x3D,
-	ag_use_picklock_skill_on = 0x3E,
-	ag_please_move = 0x3F,
-	ag_attempt_spread_out = 0x40,
-	ag_animate_door_open = 0x41,
-	ag_animate_door_closed = 0x42,
-	ag_pend_closing_door = 0x43,
-	ag_throw_spell_friendly = 0x44,
-	ag_attempt_spell_friendly = 0x45,
-	ag_animate_loop_fire_dmg = 0x46,
-	ag_attempt_move_straight_spell = 0x47,
-	ag_move_near_obj_combat = 0x48,
-	ag_attempt_move_near_combat = 0x49,
-	ag_use_container = 0x4A,
-	ag_throw_spell_w_cast_anim = 0x4B,
-	ag_attempt_spell_w_cast_anim = 0x4C,
-	ag_throw_spell_w_cast_anim_2ndary = 0x4D,
-	ag_back_off_from = 0x4E,
-	ag_attempt_use_pickpocket_skill_on = 0x4F,
-	ag_use_disable_device_skill_on_data = 0x50,
-	ag_unknown,
+	ag_dodge = 0x20,
+	ag_dying,
+	ag_destroy_obj,
+	ag_use_skill_on,
+	ag_attempt_use_skill_on,
+	ag_skill_conceal,
+	ag_projectile,
+	ag_throw_item,
+	ag_use_object,
+	ag_use_item_on_object,
+	ag_use_item_on_object_with_skill,
+	ag_use_item_on_tile,
+	ag_use_item_on_tile_with_skill,
+	ag_knockback,
+	ag_floating,
+	ag_close_door,
+	ag_attempt_close_door,
+	ag_animate_reverse,
+	ag_move_away_from_obj,
+	ag_rotate,
+	ag_unconceal,
+	ag_run_near_tile,
+	ag_run_near_obj,
+	ag_animate_stunned,
+	ag_animate_kneel_magic_hands,
+	ag_attempt_move_near,
+	ag_knock_down,
+	ag_anim_get_up,
+	ag_attempt_move_straight_knockback,
+	ag_wander,
+	ag_wander_seek_darkness,
+	ag_use_picklock_skill_on,
+	ag_please_move,
+	ag_attempt_spread_out,
+	ag_animate_door_open,
+	ag_animate_door_closed,
+	ag_pend_closing_door,
+	ag_throw_spell_friendly,
+	ag_attempt_spell_friendly,
+	ag_animate_loop_fire_dmg,
+	ag_attempt_move_straight_spell,
+	ag_move_near_obj_combat,
+	ag_attempt_move_near_combat,
+	ag_use_container,
+	ag_throw_spell_w_cast_anim,
+	ag_attempt_spell_w_cast_anim,
+	ag_throw_spell_w_cast_anim_2ndary,
+	ag_back_off_from,
+	ag_attempt_use_pickpocket_skill_on,
+	ag_use_disable_device_skill_on_data,
 	ag_count = 82
 };
 
@@ -162,3 +157,73 @@ public:
 };
 
 extern AnimationGoals animationGoals;
+
+struct AnimActionCallback {
+	objHndl obj;
+	uint32_t uniqueId;
+};
+
+struct AnimSlot;
+struct AnimGoal;
+struct AnimSlotGoalStackEntry;
+struct AnimGoalState;
+
+using AnimSlotArray = AnimSlot[512];
+using AnimGoalArray = const AnimGoal*[82];
+
+struct TimeEvent;
+class AnimSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem {
+friend class AnimSystemHooks;
+public:
+	static constexpr auto Name = "Anim";
+	AnimSystem(const GameSystemConf &config);
+	~AnimSystem();
+	void Reset() override;
+	bool SaveGame(TioFile *file) override;
+	bool LoadGame(GameSystemSaveFile* saveFile) override;
+	const std::string &GetName() const override;
+
+	void ClearGoalDestinations();
+	void InterruptAll();
+
+	void ProcessAnimEvent(const TimeEvent *evt);
+
+private:
+	/*
+		Set to true when ToEE cannot allocate an animation slot. This causes
+		the anim system to try and interrupt as many animations as possible.
+	*/
+	BOOL& mAllSlotsUsed = temple::GetRef<BOOL>(0x10AA4BB0);
+
+	// Fixed size array of 512 slots
+	AnimSlotArray& mSlots = temple::GetRef<AnimSlotArray>(0x118CE520);
+
+	AnimGoalArray& mGoals = temple::GetRef<AnimGoalArray>(0x102BD1B0);
+
+	void ProcessActionCallbacks();
+	void PushActionCallback(AnimSlot &slot);
+
+	void PopGoal(AnimSlot & slot, uint32_t popFlags, const AnimGoal** newGoal, AnimSlotGoalStackEntry** newCurrentGoal, bool* stopProcessing);
+
+	void RescheduleEvent(int delayMs, AnimSlot &slot, const TimeEvent *oldEvt);
+
+	void GoalDestinationsRemove(objHndl obj);
+
+	bool InterruptGoals(AnimSlot &slot, AnimGoalPriority priority);
+	
+	/*
+		Will validate object references in the anim slot and set param1 and param2
+		to whatever the given state requests. The state is optional. If it is null,
+		only the object references will be validated.
+	*/
+	bool PrepareSlotForGoalState(AnimSlot &slot, const AnimGoalState *state);
+	
+	/*
+		While processing the timer event for a slot, this will contain the slots index.
+		Otherwise -1.
+	*/
+	int &mCurrentlyProcessingSlotIdx = temple::GetRef<int>(0x102B2654);
+
+	std::vector<AnimActionCallback> mActionCallbacks;
+
+};

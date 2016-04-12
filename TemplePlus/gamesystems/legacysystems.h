@@ -307,21 +307,6 @@ public:
 	void AddAiTimer(objHndl handle);
 };
 
-class AnimSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem {
-public:
-	static constexpr auto Name = "Anim";
-	AnimSystem(const GameSystemConf &config);
-	~AnimSystem();
-	void Reset() override;
-	bool SaveGame(TioFile *file) override;
-	bool LoadGame(GameSystemSaveFile* saveFile) override;
-	const std::string &GetName() const override;
-
-	void ClearGoalDestinations();
-	void InterruptAll();
-
-};
-
 class AnimPrivateSystem : public GameSystem, public ResetAwareGameSystem {
 public:
 	static constexpr auto Name = "AnimPrivate";
