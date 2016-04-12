@@ -3,7 +3,7 @@ version: 0.1.0-pre+{build}
 os: Visual Studio 2015
 
 install:
-  - appveyor DownloadFile https://github.com/GrognardsFromHell/TemplePlusDependencies/releases/download/v1.4/dependencies.7z
+  - appveyor DownloadFile https://github.com/GrognardsFromHell/TemplePlusDependencies/releases/download/v1.5/dependencies.7z
   - 7z x dependencies.7z
 
 build_script:
