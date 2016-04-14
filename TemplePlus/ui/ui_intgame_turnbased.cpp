@@ -281,7 +281,7 @@ void UiIntegameTurnbasedRepl::UiIntgameBackupCurSeq() {
 }
 
 void UiIntegameTurnbasedRepl::SeqPickerTargetingTypeReset() {
-	*actSeqSys.seqPickerTargetingType = -1;
+	*actSeqSys.seqPickerTargetingType = D20TC_Invalid;
 	*actSeqSys.seqPickerD20ActnType = D20A_UNSPECIFIED_ATTACK;
 	*actSeqSys.seqPickerD20ActnData1 = 0;
 }
@@ -522,10 +522,10 @@ bool UiIntegameTurnbasedRepl::ResetViaRmb(TigMsg* msg)
 		return true;
 	}
 
-	if (*actSeqSys.seqPickerTargetingType == -1)
+	if (*actSeqSys.seqPickerTargetingType == D20TC_Invalid)
 		return 0;
 	
-	*actSeqSys.seqPickerTargetingType = -1;
+	*actSeqSys.seqPickerTargetingType = D20TC_Invalid;
 	*actSeqSys.seqPickerD20ActnType = D20A_UNSPECIFIED_ATTACK;
 	*actSeqSys.seqPickerD20ActnData1 = 0;
 	return 1;

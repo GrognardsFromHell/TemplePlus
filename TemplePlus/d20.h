@@ -35,7 +35,9 @@ enum D20TargetClassification : int {
 	D20TC_CastSpell,
 	D20TC_SingleIncSelf,
 	D20TC_CallLightning,
-	D20TC_ItemInteraction // includes: portals, container, dead critters
+	D20TC_ItemInteraction, // includes: portals, container, dead critters
+
+	D20TC_Invalid = -1
 };
 
 
@@ -76,7 +78,7 @@ struct LegacyD20System : temple::AddressTable
 	bool UsingSecondaryWeapon(objHndl obj, int attackCode);
 	void ExtractAttackNumber(objHndl obj, int attackCode, int * attackNumber, int* dualWielding); // e.g. is it a 2nd attack? (-5 penalty)
 	objHndl GetAttackWeapon(objHndl obj, int attackCode, D20CAF flags);
-	int PerformStandardAttack(D20Actn* d20a);
+
 	int TargetWithinReachOfLoc(objHndl obj, objHndl target, LocAndOffsets* loc);
 	void D20ActnSetSetSpontCast(D20SpellData* d20SpellData, SpontCastType spontCastType);
 	D20TargetClassification TargetClassification(D20Actn* d20A);

@@ -226,6 +226,10 @@ public:
 	static int __cdecl SpellResistanceQuery(DispatcherCallbackArgs args);
 	static int __cdecl SpellResistanceTooltip(DispatcherCallbackArgs args);
 	
+	static int __cdecl TripAooRadial(DispatcherCallbackArgs args);
+	CBFunc(TripAooQuery);
+	CBFunc(ImprovedTripBonus);
+
 } genericCallbacks;
 
 CondNode::CondNode(CondStruct *cond) {
@@ -619,6 +623,35 @@ int GenericCallbacks::SpellResistanceTooltip(DispatcherCallbackArgs args){
 
 	dispIo->Append(text);
 
+	return 0;
+}
+
+int GenericCallbacks::TripAooRadial(DispatcherCallbackArgs args){
+
+	// limit this option to characters with Improved Trip, to prevent AoOs during AoOs
+	if (!feats.HasFeatCountByClass(args.objHndCaller, FEAT_IMPROVED_TRIP))
+		return 0;
+	RadialMenuEntryToggle radEntry(5117, args.GetCondArgPtr(0), "TAG_TRIP_ATTACK_OF_OPPORTUNITY" );
+	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
+	return 0;
+}
+
+int GenericCallbacks::TripAooQuery(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	if (args.GetCondArg(0)){
+		dispIo->return_val = 1;
+	}
+
+	return 0;
+}
+
+int GenericCallbacks::ImprovedTripBonus(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType10(args.dispIO);
+	if (dispIo->returnVal & 1){
+		dispIo->bonOut->AddBonusWithDesc(4, 0, 114, feats.GetFeatName(FEAT_IMPROVED_TRIP));
+	}
 	return 0;
 }
 
@@ -1993,7 +2026,7 @@ int __cdecl RecklessOffenseRadialMenuInit(DispatcherCallbackArgs args)
 		mesLine.value = conds.mCondRecklessOffenseName;
 	};
 	radEntry.text = (char*)mesLine.value;
-	radEntry.helpId = conds.hashmethods.StringHash("TAG_FEAT_RECKLESS_OFFENSE");
+	radEntry.helpId = ElfHash::Hash("TAG_FEAT_RECKLESS_OFFENSE");
 	int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Feats);
 	radialMenus.AddChildNode(args.objHndCaller, &radEntry, parentNode);
 	return 0;
@@ -2909,6 +2942,12 @@ void Conditions::AddConditionsToTable(){
 	quivPalm.AddHook(dispTypeNewDay, DK_NEWDAY_REST, classAbilityCallbacks.FeatQuiveringPalmInit);
 	quivPalm.AddHook(dispTypeD20ActionPerform, DK_D20A_QUIVERING_PALM, classAbilityCallbacks.FeatQuiveringPalmPerform);
 	quivPalm.AddToFeatDictionary(FEAT_MONK_QUIVERING_PALM);
+
+	static CondStructNew improvedTrip("Improved Trip", 2);
+	improvedTrip.AddHook(dispTypeRadialMenuEntry, DK_NONE, genericCallbacks.TripAooRadial);
+	improvedTrip.AddHook(dispTypeD20Query, DK_QUE_Trip_AOO, genericCallbacks.TripAooQuery);
+	improvedTrip.AddHook(dispTypeAbilityCheckModifier, DK_NONE, genericCallbacks.ImprovedTripBonus);
+	improvedTrip.AddToFeatDictionary(FEAT_IMPROVED_TRIP);
 
 
 	// New Conditions!

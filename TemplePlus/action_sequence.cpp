@@ -123,6 +123,7 @@ public:
 
 	static int ActionAddToSeq();
 	static void ActSeqGetPicker();
+
 	static int SeqRenderFuncMove(D20Actn* d20a, UiIntgameTurnbasedFlags flags);
 	void ActSeqApply();
 	void NaturalAttackOverwrites();
@@ -167,7 +168,10 @@ public:
 			
 		});
 		
-
+		replaceFunction<void(__cdecl)(objHndl)>(0x100934E0, [](objHndl handle)
+		{
+			actSeqSys.ActionTypeAutomatedSelection(handle);
+		});
 		replaceFunction<int(__cdecl)()>(0x10091580, []()
 		{
 			return actSeqSys.ReadyVsApproachOrWithdrawalCount();
@@ -277,7 +281,7 @@ void ActionSequenceSystem::curSeqReset(objHndl obj)
 	curSeq->seqOccupied = SEQF_NONE;
 	if (obj != d20->globD20Action->d20APerformer)
 	{
-		*seqPickerTargetingType = -1;
+		*seqPickerTargetingType = D20TC_Invalid;
 		*seqPickerD20ActnType = D20A_UNSPECIFIED_ATTACK;
 		*seqPickerD20ActnData1 = 0;
 	}
@@ -304,9 +308,9 @@ void ActionSequenceSystem::ActSeqGetPicker()
 	{
 		if (d20Sys.d20Defs[d20Sys.globD20Action->d20ActType].flags & D20ADF_UseCursorForPicking)
 		{
-			temple::GetRef<int>(0x118A0980) = d20Sys.globD20Action->d20ActType;
-			temple::GetRef<int>(0x118CD570) = d20Sys.globD20Action->data1;
-			temple::GetRef<int>(0x118CD3B8) = D20TC_ItemInteraction;
+			*seqPickerD20ActnType = d20Sys.globD20Action->d20ActType;  // seqPickerD20ActnType
+			*seqPickerD20ActnData1 = d20Sys.globD20Action->data1;
+			*seqPickerTargetingType = D20TC_ItemInteraction;
 			return;
 		}
 		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::None;
@@ -326,9 +330,9 @@ void ActionSequenceSystem::ActSeqGetPicker()
 	{
 		if (d20Sys.d20Defs[d20Sys.globD20Action->d20ActType].flags & D20ADF_UseCursorForPicking)
 		{
-			temple::GetRef<int>(0x118A0980) = d20Sys.globD20Action->d20ActType;
-			temple::GetRef<int>(0x118CD570) = d20Sys.globD20Action->data1;
-			temple::GetRef<int>(0x118CD3B8) = D20TC_SingleIncSelf;
+			*seqPickerD20ActnType = d20Sys.globD20Action->d20ActType; //seqPickerD20ActnType
+			*seqPickerD20ActnData1 = d20Sys.globD20Action->data1;
+			*seqPickerTargetingType = D20TC_SingleIncSelf;
 			return;
 		}
 		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::None;
@@ -349,9 +353,9 @@ void ActionSequenceSystem::ActSeqGetPicker()
 	{
 		if (d20Sys.d20Defs[d20Sys.globD20Action->d20ActType].flags & D20ADF_UseCursorForPicking)
 		{
-			temple::GetRef<int>(0x118A0980) = d20Sys.globD20Action->d20ActType;
-			temple::GetRef<int>(0x118CD570) = d20Sys.globD20Action->data1;
-			temple::GetRef<int>(0x118CD3B8) = D20TC_SingleExcSelf;
+			*seqPickerD20ActnType = d20Sys.globD20Action->d20ActType;
+			*seqPickerD20ActnData1 = d20Sys.globD20Action->data1;
+			*seqPickerTargetingType = D20TC_SingleExcSelf;
 			return;
 		}
 		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::None;
@@ -417,6 +421,114 @@ void ActionSequenceSystem::ActSeqGetPicker()
 		*addresses.actSeqPickerAction = *d20Sys.globD20Action;
 		return;
 	}
+
+}
+
+void ActionSequenceSystem::ActionTypeAutomatedSelection(objHndl handle)
+{
+	
+	auto setGlobD20Action = [](D20ActionType actType, int data1){
+		d20Sys.globD20Action->d20ActType = actType;
+		d20Sys.globD20Action->data1 = data1;
+	};
+
+
+	D20TargetClassification targetingType = D20TC_Movement; // default
+	if(handle) {
+		auto obj = gameSystems->GetObj().GetObject(handle);
+		switch (obj->type)
+		{
+		case obj_t_portal:
+		case obj_t_scenery:
+			targetingType = D20TC_Movement;
+			break;
+
+		case obj_t_container:
+		case obj_t_projectile:
+		case obj_t_weapon:
+		case obj_t_ammo:
+		case obj_t_armor:
+		case obj_t_money:
+		case obj_t_food:
+		case obj_t_scroll:
+		case obj_t_key:
+		case obj_t_written:
+		case obj_t_generic:
+		case obj_t_trap:
+		case obj_t_bag:
+			targetingType = D20TC_ItemInteraction;
+			break;
+		case obj_t_pc:
+		case obj_t_npc:
+			targetingType = D20TC_SingleExcSelf;
+		default:
+			targetingType = D20TC_Movement;
+			break;
+		}
+	}
+
+	if (*seqPickerTargetingType == targetingType
+		|| *seqPickerTargetingType ==D20TC_SingleIncSelf && targetingType == D20TC_SingleExcSelf
+		|| *seqPickerTargetingType != D20TC_Invalid)
+	{
+		setGlobD20Action(*seqPickerD20ActnType, *seqPickerD20ActnData1);
+		return;
+	}
+
+
+	// if no targeting type defined for picker:
+	if (!handle){
+		setGlobD20Action(D20A_UNSPECIFIED_MOVE, 0);
+		return;
+	} 
+
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	switch (obj->type){
+	case obj_t_portal:
+	case obj_t_scenery:
+		setGlobD20Action(D20A_UNSPECIFIED_MOVE, 0);
+		return;
+	case obj_t_projectile:
+	case obj_t_weapon:
+	case obj_t_ammo:
+	case obj_t_armor:
+	case obj_t_money:
+	case obj_t_food:
+	case obj_t_scroll:
+	case obj_t_key:
+	case obj_t_written:
+	case obj_t_generic:
+	case obj_t_trap:
+	case obj_t_bag:
+		setGlobD20Action(D20A_PICKUP_OBJECT, 0);
+		return;
+	case obj_t_container:
+		setGlobD20Action(D20A_OPEN_CONTAINER, 0);
+		return;
+	case obj_t_pc:
+	case obj_t_npc:
+		break;
+	default: 
+		return;
+	}
+	
+	// Critters
+
+	auto d20a = d20Sys.globD20Action;
+	auto performer = d20a->d20APerformer;
+	if (critterSys.IsFriendly(handle,performer) || critterSys.AllegianceShared(handle, performer))
+	{
+		if (!d20Sys.d20Query(performer, DK_QUE_HoldingCharge)) {
+			setGlobD20Action(D20A_UNSPECIFIED_MOVE, 0);
+			return;
+		}
+	} else if (critterSys.IsDeadNullDestroyed(handle) && temple::GetRef<BOOL(__cdecl)(objHndl)>(0x101391C0)(handle))
+	{
+		setGlobD20Action(D20A_OPEN_CONTAINER, 0);
+		return;
+	}
+
+	setGlobD20Action(D20A_UNSPECIFIED_ATTACK, 0);
 
 }
 
@@ -559,7 +671,7 @@ int ActionSequenceSystem::ActionAddToSeq()
 	{
 		if (actnCheckResult)
 		{
-			if (actnCheckResult == 9)
+			if (actnCheckResult == AEC_TARGET_INVALID)
 			{
 				actSeqSys.ActSeqGetPicker();
 				return AEC_TARGET_INVALID;
@@ -579,7 +691,8 @@ int ActionSequenceSystem::ActionAddToSeq()
 	{
 		d20Sys.TargetCheck(d20Sys.globD20Action);
 	}
-	return actSeqSys.addD20AToSeq(d20Sys.globD20Action, curSeq);
+	auto result =  actSeqSys.addD20AToSeq(d20Sys.globD20Action, curSeq);
+	return result;
 	// return addresses.ActionAddToSeq();
 }
 
@@ -1662,7 +1775,7 @@ void ActionSequenceSystem::DoAoo(objHndl obj, objHndl target)
 
 	if (obj != d20Sys.globD20Action->d20APerformer)
 	{
-		*seqPickerTargetingType = -1;
+		*seqPickerTargetingType = D20TC_Invalid;
 		*seqPickerD20ActnType = D20A_UNSPECIFIED_ATTACK;
 		*seqPickerD20ActnData1 = 0;
 	}
@@ -2094,9 +2207,13 @@ uint32_t ActionSequenceSystem::curSeqNext()
 					> (*actSeqCur)->tbStatus.attackModeCode
 			)
 		{ // I think this is for doing full attack?
-			*seqPickerD20ActnType = D20A_STANDARD_ATTACK;
+			//if (d20Sys.d20Query((*actSeqCur)->performer, DK_QUE_Trip_AOO))
+			//*seqPickerD20ActnType = D20A_TRIP;
+			//else
+			if (*seqPickerD20ActnType != D20A_TRIP)
+				*seqPickerD20ActnType = D20A_STANDARD_ATTACK;
 			*seqPickerD20ActnData1 = 0;
-			*seqPickerTargetingType = 2;
+			*seqPickerTargetingType = D20TC_SingleExcSelf;
 		}
 	}
 	return 1;

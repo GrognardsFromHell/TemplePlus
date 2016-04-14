@@ -89,8 +89,8 @@ struct ActionSequenceSystem : temple::AddressTable
 	uint32_t * actSeqPickerActive;
 	TurnBasedStatus * tbStatus118CD3C0;
 
-	int32_t * seqPickerTargetingType; // init to -1
-	int32_t * seqPickerD20ActnType; // init to 1
+	D20TargetClassification * seqPickerTargetingType; // init to -1
+	D20ActionType * seqPickerD20ActnType; // init to 1
 	int32_t * seqPickerD20ActnData1; // init to 0
 	uint32_t * numSimultPerformers;
 	uint32_t * simulsIdx;  //10B3D5BC
@@ -99,6 +99,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	void curSeqReset(objHndl objHnd);
 	void ActSeqSpellReset() const;
 	void ActSeqGetPicker();
+	void ActionTypeAutomatedSelection(objHndl handle);
 	void TurnStart(objHndl obj);
 	int ActionAddToSeq();
 	
@@ -166,6 +167,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	
 	int32_t InterruptNonCounterspell(D20Actn *d20a);
 	int32_t InterruptCounterspell(D20Actn *d20a);
+	
 	static int ReadyVsApproachOrWithdrawalCount();
 	static void ReadyVsRemoveForObj(objHndl obj);
 	static ReadiedActionPacket * ReadiedActionGetNext(ReadiedActionPacket * prevReadiedAction, D20Actn* d20a);

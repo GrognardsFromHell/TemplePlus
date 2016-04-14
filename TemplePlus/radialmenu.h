@@ -96,6 +96,11 @@ struct RadialMenuEntryAction : RadialMenuEntry
 	RadialMenuEntryAction(int combatMesLine, D20ActionType d20aType, int data1, const char helpId[]);
 };
 
+struct RadialMenuEntryToggle : RadialMenuEntry
+{
+	RadialMenuEntryToggle(int combatMesLine, void* actualArg, const char helpId[]);
+};
+
 const auto TestSizeOfRadialMenuEntry = sizeof(RadialMenuEntry); // should be 72 (0x48)
 struct RadialMenuNode {
 	RadialMenuEntry entry;

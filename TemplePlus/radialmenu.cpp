@@ -477,6 +477,17 @@ RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, D20ActionType d2
 RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, D20ActionType d20aType, int data1, const char helpId[]): RadialMenuEntryAction(combatMesLine, d20aType, data1, ElfHash::Hash(helpId))
 {
 
+}
+
+RadialMenuEntryToggle::RadialMenuEntryToggle(int combatMesLine, void* ActualArg, const char HelpId[]): RadialMenuEntry()
+{
+	type = RadialMenuEntryType::Toggle;
+	text = combatSys.GetCombatMesLine(combatMesLine);
+	helpId = ElfHash::Hash(HelpId);
+	callback = temple::GetRef<void(__cdecl)(objHndl, RadialMenuEntry*)>(0x100F0200);
+	minArg = 0;
+	maxArg = 1;
+	actualArg = reinterpret_cast<int>(ActualArg);
 };
 
 //

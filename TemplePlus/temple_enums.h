@@ -1718,7 +1718,8 @@ enum D20DispatcherKey : uint32_t {
 	DK_QUE_Craft_Wand_Spell_Level = 0x144,
 	DK_QUE_Is_Ethereal = 0x145,
 	DK_QUE_Empty_Body_Num_Rounds = 0x146, // returns number of rounds set for Monk's Empty Body
-	DK_QUE_Quivering_Palm_Can_Perform = 0x147
+	DK_QUE_Quivering_Palm_Can_Perform = 0x147,
+	DK_QUE_Trip_AOO = 0x148
 };
 
 enum enum_dispIO_type : uint32_t {

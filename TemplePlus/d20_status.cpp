@@ -218,6 +218,15 @@ void D20StatusSystem::initDomains(objHndl objHnd)
 void D20StatusSystem::initFeats(objHndl objHnd)
 {
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+	auto addToDispatcher = [dispatcher](const std::string& condName)
+	{
+		auto cond = conds.GetByName(condName);
+		if (cond){
+			_ConditionAddToAttribs_NumArgs0(dispatcher, cond);
+		}
+	};
+
+	
 	feat_enums featList[1000] = {};
 	uint32_t numFeats = feats.FeatListElective(objHnd, featList);
 
@@ -238,6 +247,7 @@ void D20StatusSystem::initFeats(objHndl objHnd)
 	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)conds.mConditionDisableAoO);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)&conds.mCondDisarm);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)conds.mCondAidAnother);
+	//addToDispatcher("Trip Attack Of Opportunity"); // decided to incorporate this in Improved Will to prevent AoOs on AoOs
 }
 
 void D20StatusSystem::initItemConditions(objHndl objHnd)
