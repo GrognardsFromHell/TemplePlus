@@ -218,6 +218,8 @@ namespace gfx {
 			return mId;
 		}
 
+		bool IsConjuireAnimation() const;
+
 		bool IsSpecialAnim() const {
 			return (mId & (sWeaponAnimFlag | sBardInstrumentAnimFlag)) != 0;
 		}

@@ -152,9 +152,9 @@ public:
 	void LoadForCurrentMap();
 	void ClearForMapClose();
 
-	void Schedule(TimeEvent &evt, uint32_t delayInMs);
+	void Schedule(TimeEvent &evt, uint32_t delayInMs, GameTime *triggerTimeOut = nullptr);
 
-	void ScheduleAbsolute(TimeEvent &evt, const GameTime &baseTime, uint32_t delayInMs);
+	void ScheduleAbsolute(TimeEvent &evt, const GameTime &baseTime, uint32_t delayInMs, GameTime *triggerTimeOut = nullptr);
 
 	/**
 	 * Schedule an event for immediate execution the next time the simulation is run.
@@ -178,6 +178,12 @@ public:
 	 */
 	void RemoveAll(TimeEventType type);
 
+	/**
+	 * Removes all time events to which the given predicate applies.
+	 */
+	using Predicate = std::function<bool(const TimeEvent&)>;
+	void Remove(TimeEventType type, Predicate predicate);
+
 private:
 	/*
 	Adds a timed event to be executed later.
@@ -187,5 +193,5 @@ private:
 	- triggerTime is an optional pointer that will be filled with the absolute, calculated trigger time.
 	- sourceFile and sourceLine are not used.
 	*/
-	bool Schedule(TimeEvent *evt, const GameTime *delay, const GameTime *baseTime, GameTime *triggerTime, const char *sourceFile, int sourceLine);
+	bool Schedule(TimeEvent *evt, const GameTime *delay, const GameTime *baseTime, GameTime *triggerTimeOut, const char *sourceFile, int sourceLine);
 };

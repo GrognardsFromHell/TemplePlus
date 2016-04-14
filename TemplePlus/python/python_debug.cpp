@@ -350,6 +350,97 @@ static PyMethodDef PyDebug_Methods[] = {
 	{ NULL, }
 };
 
+struct PyDebugFunction {
+	std::string name;
+	PyMethodDef methodDef;
+	bool withArgs = false;
+	DebugFunction debugFunc;
+	DebugFunctionWithArgs debugFuncWithArgs;
+};
+
+static bool sInitialized = false;
+static std::vector<std::unique_ptr<PyDebugFunction>> sDebugFunctions;
+static void RegisterDebugFunction(PyDebugFunction &debugFunc);
+
 void PyDebug_Init() {
 	Py_InitModule("debug", PyDebug_Methods);
+	sInitialized = true;
+
+	// Register all the debug functions that have been added before this module was initialized
+	for (auto& debugFunc : sDebugFunctions) {
+		RegisterDebugFunction(*debugFunc);
+	}
+}
+
+static PyObject* PyDebug_CallDebugFunction(PyObject *self, PyObject *args) {
+	auto name = PyString_AsString(self);
+	if (!name) {
+		return nullptr;
+	}
+	
+	for (auto& debugFunc : sDebugFunctions) {
+		if (!strcmp(debugFunc->name.c_str(), name)) {
+			
+			if (debugFunc->withArgs) {
+				debugFunc->debugFuncWithArgs({});
+			} else {
+				debugFunc->debugFunc();
+			}
+
+			break;
+		}
+	}
+		
+	Py_RETURN_NONE;
+}
+
+static void RegisterDebugFunction(PyDebugFunction &debugFunc) {
+	if (!sInitialized) {
+		return; // Will be handled by module init
+	}
+
+	// Initialize the method-def structure
+	debugFunc.methodDef.ml_name = debugFunc.name.c_str();
+	debugFunc.methodDef.ml_meth = PyDebug_CallDebugFunction;
+	debugFunc.methodDef.ml_flags = METH_VARARGS;
+
+	auto module = PyImport_ImportModule("debug");
+
+	// Create a python callable for this debug function
+	auto nameStr = PyString_FromString(debugFunc.name.c_str());
+	auto callable = PyCFunction_New(
+		&debugFunc.methodDef,
+		nameStr
+	);
+	Py_DECREF(nameStr);
+
+	if (PyModule_AddObject(module, debugFunc.name.c_str(), callable) != 0) {
+		throw TempleException("Unable to add debug function {} to debug module.", debugFunc.name);
+	}
+
+	Py_DECREF(module);
+}
+
+void RegisterDebugFunctionWithArgs(const char *name, std::function<void(const std::vector<std::string>&)> function)
+{
+
+	auto pyDebugFunc = std::make_unique<PyDebugFunction>();
+	pyDebugFunc->name = name;
+	pyDebugFunc->withArgs = true;
+	pyDebugFunc->debugFuncWithArgs = function;
+	RegisterDebugFunction(*pyDebugFunc);
+
+	sDebugFunctions.emplace_back(std::move(pyDebugFunc));
+
+}
+
+void RegisterDebugFunction(const char *name, std::function<void()> function)
+{
+	auto pyDebugFunc = std::make_unique<PyDebugFunction>();
+	pyDebugFunc->name = name;
+	pyDebugFunc->withArgs = false;
+	pyDebugFunc->debugFunc = function;
+	RegisterDebugFunction(*pyDebugFunc);
+
+	sDebugFunctions.emplace_back(std::move(pyDebugFunc));
 }

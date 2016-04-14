@@ -2,8 +2,11 @@
 #include "stdafx.h"
 #include <temple/dll.h>
 #include "gamesystems/timeevents.h"
+#include "gamesystems/gamesystems.h"
 #include <config/config.h>
 #include <description.h>
+
+#include "anim.h"
 
 /*
 Internal system specification used by the time event system
@@ -29,11 +32,6 @@ using LegacyExpireFunc = BOOL(const TimeEvent*);
 
 static BOOL ExpireDebug(const TimeEvent* event) {
 	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x10061250);
-	return callback(event);
-}
-
-static BOOL ExpireAnim(const TimeEvent* event) {
-	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x1001b830);
 	return callback(event);
 }
 
@@ -232,7 +230,10 @@ static const TimeEventTypeSpec sTimeEventTypeSpecs[] = {
 	// Anim
 	TimeEventTypeSpec(
 		GameClockType::GameTimeAnims,
-		ExpireAnim,
+		[](const TimeEvent *evt) { 
+			gameSystems->GetAnim().ProcessAnimEvent(evt); 
+			return TRUE; 
+		},
 		nullptr,
 		true,
 		TimeEventArgType::Int
@@ -713,15 +714,15 @@ void TimeEventSystem::ClearForMapClose()
 	clearForMapClose();
 }
 
-void TimeEventSystem::Schedule(TimeEvent & evt, uint32_t delayInMs)
+void TimeEventSystem::Schedule(TimeEvent & evt, uint32_t delayInMs, GameTime *triggerTimeOut)
 {
 	GameTime delay(0, delayInMs);
-	Schedule(&evt, &delay, nullptr, nullptr, nullptr, 0);
+	Schedule(&evt, &delay, nullptr, triggerTimeOut, nullptr, 0);
 }
 
-void TimeEventSystem::ScheduleAbsolute(TimeEvent & evt, const GameTime & baseTime, uint32_t delayInMs) {
+void TimeEventSystem::ScheduleAbsolute(TimeEvent & evt, const GameTime & baseTime, uint32_t delayInMs, GameTime *triggerTimeOut) {
 	GameTime delay(0, delayInMs);
-	Schedule(&evt, &delay, &baseTime, nullptr, nullptr, 0);
+	Schedule(&evt, &delay, &baseTime, triggerTimeOut, nullptr, 0);
 }
 
 void TimeEventSystem::ScheduleNow(TimeEvent & evt)
@@ -767,10 +768,25 @@ void TimeEventSystem::RemoveAll(TimeEventType type) {
 	timeevent_remove_all((int)type);
 }
 
-bool TimeEventSystem::Schedule(TimeEvent * evt, const GameTime * delay, const GameTime * baseTime, GameTime * triggerTime, const char * sourceFile, int sourceLine)
+void TimeEventSystem::Remove(TimeEventType type, Predicate predicate)
+{
+	static std::function<bool(const TimeEvent&)> sPredicate;
+	sPredicate = predicate;
+
+	using LegacyPredicate = BOOL(*)(const TimeEvent&);
+	static auto TimeEventsRemove = temple::GetPointer<BOOL(TimeEventType, LegacyPredicate)>(0x10060a40);
+
+	TimeEventsRemove(type, [](const TimeEvent &evt) {
+		return sPredicate(evt) ? TRUE : FALSE;
+	});
+
+	sPredicate = nullptr;
+}
+
+bool TimeEventSystem::Schedule(TimeEvent * evt, const GameTime * delay, const GameTime * baseTime, GameTime * triggerTimeOut, const char * sourceFile, int sourceLine)
 {
 	using ScheduleFn = BOOL(TimeEvent* createArgs, const GameTime *time, const GameTime *curTime, GameTime *pTriggerTimeOut, const char *sourceFile, int sourceLine);
 	static auto timeevent_add_ex = temple::GetPointer<ScheduleFn>(0x10060720);
 
-	return timeevent_add_ex(evt, delay, baseTime, triggerTime, sourceFile, sourceLine) == TRUE;
+	return timeevent_add_ex(evt, delay, baseTime, triggerTimeOut, sourceFile, sourceLine) == TRUE;
 }
