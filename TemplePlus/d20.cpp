@@ -1537,8 +1537,8 @@ ActionErrorCode D20ActionCallbacks::ActionCheckTripAttack(D20Actn* d20a, TurnBas
 	}
 
 	// doing trip on a full attack
-	if (tbStat->tbsFlags & TBSF_FullAttack && !d20a->d20ATarget)
-		return AEC_OK;
+	//if (tbStat->tbsFlags & TBSF_FullAttack && !d20a->d20ATarget)
+	//	return AEC_OK;
 
 
 	if (!d20a->d20ATarget )

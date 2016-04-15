@@ -602,7 +602,7 @@ void Objects::Destroy(objHndl ObjHnd) {
 	if (combatSys.isCombatActive())
 {
 		if (tbSys.turnBasedGetCurrentActor() == ObjHnd) {
-			templeFuncs.TurnProcessing(ObjHnd);
+			combatSys.CombatAdvanceTurn(ObjHnd);
 		}
 	}
 	combatSys.RemoveFromInitiative(ObjHnd);
@@ -715,6 +715,16 @@ int Objects::GetAlpha(objHndl handle) {
 	return _GetInternalFieldInt32(handle, obj_f_transparency);
 }
 
+int Objects::IsCritterProne(objHndl handle){
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	if (obj->GetFlags() & (OF_OFF | OF_DESTROYED))
+		return FALSE;
+	if (!obj->IsCritter())
+		return FALSE;
+	if (d20Sys.d20Query(handle, DK_QUE_Prone))
+		return TRUE;
+	return FALSE;
+}
 #pragma endregion
 
 

@@ -271,7 +271,8 @@ struct Objects : temple::AddressTable {
 	bool IsPortalOpen(objHndl obj);
 	
 	int GetTempId(objHndl handle);
-	int GetAlpha(objHndl handle);	
+	int GetAlpha(objHndl handle);
+	static int IsCritterProne(objHndl handle);
 #pragma endregion
 
 #pragma region Subsystems

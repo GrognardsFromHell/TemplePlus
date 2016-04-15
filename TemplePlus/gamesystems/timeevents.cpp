@@ -35,6 +35,12 @@ static BOOL ExpireDebug(const TimeEvent* event) {
 	return callback(event);
 }
 
+static BOOL ExpireAnimEvent(const TimeEvent* event)
+{
+	return gameSystems->GetAnim().ProcessAnimEvent(event);
+	//return TRUE;
+}
+
 static BOOL ExpireBkgAnim(const TimeEvent* event) {
 	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x101f5850);
 	return callback(event);
@@ -230,10 +236,7 @@ static const TimeEventTypeSpec sTimeEventTypeSpecs[] = {
 	// Anim
 	TimeEventTypeSpec(
 		GameClockType::GameTimeAnims,
-		[](const TimeEvent *evt) { 
-			gameSystems->GetAnim().ProcessAnimEvent(evt); 
-			return TRUE; 
-		},
+		ExpireAnimEvent,
 		nullptr,
 		true,
 		TimeEventArgType::Int
@@ -714,21 +717,21 @@ void TimeEventSystem::ClearForMapClose()
 	clearForMapClose();
 }
 
-void TimeEventSystem::Schedule(TimeEvent & evt, uint32_t delayInMs, GameTime *triggerTimeOut)
+BOOL TimeEventSystem::Schedule(TimeEvent & evt, uint32_t delayInMs, GameTime *triggerTimeOut)
 {
 	GameTime delay(0, delayInMs);
-	Schedule(&evt, &delay, nullptr, triggerTimeOut, nullptr, 0);
+	return Schedule(&evt, &delay, nullptr, triggerTimeOut, nullptr, 0);
 }
 
-void TimeEventSystem::ScheduleAbsolute(TimeEvent & evt, const GameTime & baseTime, uint32_t delayInMs, GameTime *triggerTimeOut) {
+BOOL TimeEventSystem::ScheduleAbsolute(TimeEvent & evt, const GameTime & baseTime, uint32_t delayInMs, GameTime *triggerTimeOut) {
 	GameTime delay(0, delayInMs);
-	Schedule(&evt, &delay, &baseTime, triggerTimeOut, nullptr, 0);
+	return Schedule(&evt, &delay, &baseTime, triggerTimeOut, nullptr, 0);
 }
 
-void TimeEventSystem::ScheduleNow(TimeEvent & evt)
+BOOL TimeEventSystem::ScheduleNow(TimeEvent & evt)
 {
 	static auto timeevent_add_special = temple::GetPointer<BOOL(TimeEvent *createArgs)>(0x10062340);
-	timeevent_add_special(&evt);
+	return timeevent_add_special(&evt);
 }
 
 GameTime TimeEventSystem::GetTime() {

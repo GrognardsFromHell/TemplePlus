@@ -24,6 +24,7 @@
 #include <graphics/shaperenderer2d.h>
 #include "ui_tooltip.h"
 #include "ui_render.h"
+#include <anim.h>
 
 UiIntgameTurnbased uiIntgameTb;
 
@@ -411,8 +412,24 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 				if (tigMsgType == TigMsgType::KEYSTATECHANGE && (msg->arg2 & 0xFF)== 0)	{
 					logger->debug("UiIntgameMsgHandler (KEYSTATECHANGE): msg arg1 {}   arg2 {}", msg->arg1, msg->arg2);
 					auto leader = party.GetConsciousPartyLeader();
+					static std::vector<int> panic;
 					if (actSeqSys.isPerforming(leader))
+					{
+						if (msg->arg1 == 0x14)
+							panic.push_back(1);
+						if (panic.size() >= 4)
+						{
+							animationGoals.Interrupt(leader, AnimGoalPriority::AGP_HIGHEST, true);
+							animationGoals.Interrupt(leader, AnimGoalPriority::AGP_1, true);
+							(*actSeqSys.actSeqCur)->seqOccupied = 0;
+						}
 						return 1;
+					} else
+					{
+						if (panic.size())
+							panic.clear();
+					}
+						
 
 					// bind hotkey
 					auto IsNormalNonreservedHotkey = temple::GetRef<bool(__cdecl)(int)>(0x100F3D20);

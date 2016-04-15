@@ -60,7 +60,7 @@ TempleFuncs::TempleFuncs()
 	rebase(_ItemWorthFromEnhancements, 0x101509C0);
 	rebase(ItemCreationPrereqSthg_sub_101525B0, 0x101525B0);
 
-	rebase(TurnProcessing, 0x100634E0);
+	rebase(CombatAdvanceTurn, 0x100634E0);
 	
 	rebase(sub_100664B0, 0x100664B0);
 

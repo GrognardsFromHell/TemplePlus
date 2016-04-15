@@ -152,14 +152,14 @@ public:
 	void LoadForCurrentMap();
 	void ClearForMapClose();
 
-	void Schedule(TimeEvent &evt, uint32_t delayInMs, GameTime *triggerTimeOut = nullptr);
+	BOOL Schedule(TimeEvent &evt, uint32_t delayInMs, GameTime *triggerTimeOut = nullptr);
 
-	void ScheduleAbsolute(TimeEvent &evt, const GameTime &baseTime, uint32_t delayInMs, GameTime *triggerTimeOut = nullptr);
+	BOOL ScheduleAbsolute(TimeEvent &evt, const GameTime &baseTime, uint32_t delayInMs, GameTime *triggerTimeOut = nullptr);
 
 	/**
 	 * Schedule an event for immediate execution the next time the simulation is run.
 	 */
-	void ScheduleNow(TimeEvent &evt);
+	BOOL ScheduleNow(TimeEvent &evt);
 
 	GameTime GetTime();
 

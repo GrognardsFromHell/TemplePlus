@@ -186,7 +186,7 @@ public:
 	void ClearGoalDestinations();
 	void InterruptAll();
 
-	void ProcessAnimEvent(const TimeEvent *evt);
+	BOOL ProcessAnimEvent(const TimeEvent *evt);
 
 private:
 	/*
@@ -205,7 +205,7 @@ private:
 
 	void PopGoal(AnimSlot & slot, uint32_t popFlags, const AnimGoal** newGoal, AnimSlotGoalStackEntry** newCurrentGoal, bool* stopProcessing);
 
-	void RescheduleEvent(int delayMs, AnimSlot &slot, const TimeEvent *oldEvt);
+	BOOL RescheduleEvent(int delayMs, AnimSlot &slot, const TimeEvent *oldEvt);
 
 	void GoalDestinationsRemove(objHndl obj);
 

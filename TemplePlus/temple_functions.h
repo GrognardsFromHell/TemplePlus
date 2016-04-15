@@ -52,7 +52,7 @@ struct TempleFuncs : temple::AddressTable {
 
 	uint32_t(__cdecl *sub_10152280)(objHndl, objHndl);	
 
-	void (__cdecl *TurnProcessing)(objHndl obj);
+	void (__cdecl *CombatAdvanceTurn)(objHndl obj);
 
 
 	uint32_t ItemWorthFromEnhancements(uint32_t n) {
