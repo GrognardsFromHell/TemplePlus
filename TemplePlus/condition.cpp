@@ -2604,6 +2604,78 @@ int SpellCallbacks::EnlargePersonWeaponDice(DispatcherCallbackArgs args)
 	auto diceSide = dice.GetSides();
 	auto diceMod = dice.GetModifier();
 
+
+	// get wield type
+	auto weaponUsed = dispIo->weapon;
+	auto wieldType = inventory.GetWieldType(args.objHndCaller, weaponUsed, true);
+	auto wieldTypeWeaponModified = inventory.GetWieldType(args.objHndCaller, weaponUsed, false); // the wield type if the weapon is not enlarged along with the critter
+
+	// check offhand
+	auto offhandWeapon = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponSecondary);
+	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
+	auto regardOffhand = offhandWeapon || shield && !inventory.IsBuckler(shield) ? true : false;
+
+
+	bool enlargeWeapon = true; // by default enlarge the weapon
+	// case 1
+	switch (wieldType)
+	{
+	case 0: // light weapon
+		switch (wieldTypeWeaponModified)
+		{
+		case 2: // shouldn't really be possible, but just in case...
+			if (regardOffhand)
+				enlargeWeapon = false;
+			break;		
+		default:
+			break;
+		}
+		break;
+	case 1: // single handed wield if weapon is unaffected
+		switch (wieldTypeWeaponModified)
+		{
+		case 0: // only in reduce person; going to assume the "beneficial" case that the reduction was made voluntarily and hence you let the weapon stay larger
+		case 1: // weapon can be enlarged
+			break;
+		case 2: // this is the main case - weapon gets enlarged along with the character so it's now a THW
+			if (regardOffhand) // if holding something in offhand, hold off on increasing the damage
+				enlargeWeapon = false;
+			break;
+		default:
+			break;
+		}
+		break;
+	case 2: // two handed wield if weapon is unaffected
+		switch (wieldTypeWeaponModified)
+		{
+		case 0: // these cases shouldn't exist for Enlarge ...
+		case 1: // only in reduce person; going to assume the "beneficial" case that the reduction was made voluntarily and hence you let the weapon stay larger
+			if (regardOffhand) // has offhand item, so assume the weapon stayed the old size
+				enlargeWeapon = false;
+			break;
+		case 2:
+			if (regardOffhand) // shouldn't really be possible... maybe if player is cheating
+			{
+				enlargeWeapon = false; 
+				logger->warn("Illegally wielding weapon along withoffhand!");
+			}
+			break;
+		default:
+			break;
+		}
+	case 3:
+	case 4:
+	default:
+		break;
+	}
+
+
+	if (!enlargeWeapon)
+	{
+		return 0;
+	}
+		
+
 	switch (dice.GetSides())
 	{
 	case 2:
@@ -2632,12 +2704,14 @@ int SpellCallbacks::EnlargePersonWeaponDice(DispatcherCallbackArgs args)
 		{
 			diceCount++;
 		} 
-		else	{
+		else if (diceCount<=6 )	{
 			diceCount += 2;
 		}
+		else
+			diceCount += 4;
 		break;
 	case 10:
-		diceCount = 2;
+		diceCount *= 2;
 		diceSide = 8;
 		break;
 	case 12:
