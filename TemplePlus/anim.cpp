@@ -96,6 +96,17 @@ struct AnimSlot {
   uint32_t uniqueActionId; // ID assigned when triggered by a D20 action
 };
 
+enum AnimStateTransitionFlags : uint32_t
+{
+	ASTF_GOAL_DESTINATION_REMOVE = 0x2000000,
+	ASTF_REWIND = 0x10000000, // will transition back to state 0
+	ASTF_POP_GOAL = 0x30000000,
+	ASTF_POP_GOAL_TWICE = 0x38000000,
+	ASTF_PUSH_GOAL = 0x40000000,
+	ASTF_POP_ALL = 0x90000000,
+	ASTF_MASK = 0xFF000000 // the general mask for the special state transition flags
+};
+
 struct AnimStateTransition {
   uint32_t newState;
   // Delay in milliseconds or one of the constants below
@@ -662,17 +673,17 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
       delay = transition.delay;
 
       // Special transitions
-      if (nextState & 0xFF000000) {
+      if (nextState & ASTF_MASK) {
 		/*  if (currentGoal->goalType != ag_anim_idle)
 			logger->debug("ProcessAnimEvent: Special transition; currentState: {:x}", slot.currentState);*/
-        if (nextState & 0x10000000) {
+        if (nextState & ASTF_REWIND) {
 			/*if (currentGoal->goalType != ag_anim_idle)
 				logger->debug("Setting currentState to 0");*/
           slot.currentState = 0;
           stopProcessing = true;
         }
 
-		if ((nextState & 0x38000000) == 0x38000000) {
+		if ((nextState & ASTF_POP_GOAL_TWICE) == ASTF_POP_GOAL_TWICE) {
 		//	logger->debug("Popping 2 goals due to 0x38000000");
 			auto newGoal = &goal;
 			auto popFlags = nextState;
@@ -680,7 +691,7 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
 			PopGoal(slot, popFlags, newGoal, &currentGoal, &stopProcessing);
 			//oldGoal = goal;
 		} 
-		else if ( (nextState & 0x30000000) == 0x30000000) {
+		else if ( (nextState & ASTF_POP_GOAL) == ASTF_POP_GOAL) {
 		//  logger->debug("Popping 1 goals due to 0x30000000");
           auto newGoal = &goal;
           auto popFlags = nextState;
@@ -688,7 +699,7 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
 		  //oldGoal = goal;
         }
 
-        if (nextState & 0x40000000) {
+        if (nextState & ASTF_PUSH_GOAL) {
 			if (slot.currentGoal >= 7) {
 				logger->error("Unable to push goal, because anim slot %s has overrun!", slot.id.ToString());
 				logger->error("Current sub goal stack is:");
@@ -710,21 +721,20 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
 				slot.pCurrentGoal = currentGoal;
 
 				// Apparently if 0x30 00 00 00 is also set, it copies the previous goal????
-				if (slot.currentGoal > 0 && (nextState & 0x30000000) != 0x30000000) {
+				if (slot.currentGoal > 0 && (nextState & ASTF_POP_GOAL) != ASTF_POP_GOAL) {
 				//	logger->debug("Copying previous goal");
 					slot.goals[slot.currentGoal] = slot.goals[slot.currentGoal - 1];
 				}
 
-				auto newGoalType = (AnimGoalType)(nextState & 0xFFF);
+				auto newGoalType = static_cast<AnimGoalType>(nextState & 0xFFF);
 				goal = mGoals[newGoalType];
 				slot.goals[slot.currentGoal].goalType = newGoalType;
 
-				//oldGoal = goal;
 				static auto animNumActiveGoals_inc = temple::GetPointer<void(AnimSlot &_slot, const AnimGoal *pGoalNode)>(0x10055bf0);
 				animNumActiveGoals_inc(slot, goal);
 			}
         }
-        if ((nextState & 0x90000000) == 0x90000000) {
+        if ((nextState & ASTF_POP_ALL) == ASTF_POP_ALL) {
 		//  logger->debug("ProcessAnimEvent: 0x90 00 00 00");
 		  currentGoal = &slot.goals[0];
           auto prio = mGoals[slot.goals[0].goalType]->priority;
@@ -762,7 +772,7 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
 				goal = mGoals[currentGoal->goalType];
 				// oldGoal = goal;
 				while (goal->priority < AnimGoalPriority::AGP_7) {
-				  PopGoal(slot, 0x30000000, &goal, &currentGoal, &stopProcessing);
+				  PopGoal(slot, ASTF_POP_GOAL, &goal, &currentGoal, &stopProcessing);
 				//  logger->debug("ProcessAnimEvent: Popped goal for {}.", description.getDisplayName(slot.animObj));
 				  currentGoal = &slot.goals[slot.currentGoal];
 				  goal = mGoals[currentGoal->goalType];
@@ -887,7 +897,7 @@ void AnimSystem::PopGoal(AnimSlot &slot, uint32_t popFlags,
                          AnimSlotGoalStackEntry **newCurrentGoal,
                          bool *stopProcessing) {
 	//logger->debug("Pop goal for {} with popFlags {:x}  (slot flags: {:x}, state {:x})", description.getDisplayName(slot.animObj), popFlags, static_cast<uint32_t>(slot.flags), slot.currentState);
-  if (!slot.currentGoal && !(popFlags & 0x40000000)) {
+  if (!slot.currentGoal && !(popFlags & ASTF_PUSH_GOAL)) {
     slot.flags |= AnimSlotFlag::ASF_STOP_PROCESSING;
   }
 
@@ -905,7 +915,7 @@ void AnimSystem::PopGoal(AnimSlot &slot, uint32_t popFlags,
     slot.padding[54] = 0; // slot->anim_path.maxPathLength = 0;
   }
 
-  if (popFlags & 0x2000000) {
+  if (popFlags & ASTF_GOAL_DESTINATION_REMOVE) {
     objHndl mover = slot.path.mover;
     slot.unk2 = 1; // slot->anim_path.field_0 = 1;
     slot.path.flags = PF_NONE;
@@ -918,7 +928,7 @@ void AnimSystem::PopGoal(AnimSlot &slot, uint32_t popFlags,
   slot.currentGoal--;
   slot.currentState = 0;
   if (slot.currentGoal < 0) {
-    if (!(popFlags & 0x40000000)) {
+    if (!(popFlags & ASTF_PUSH_GOAL)) {
       slot.flags |= AnimSlotFlag::ASF_STOP_PROCESSING;
 	//  logger->debug("Pop goal for {}: stopping processing (last goal was {}).", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType]);
     }
@@ -933,7 +943,7 @@ void AnimSystem::PopGoal(AnimSlot &slot, uint32_t popFlags,
       // FIX: prevents ag_anim_fidget from queueing an AnimComplete call (which
       // creates the phantom animId = 0 bullshit)
     } else if ((*newCurrentGoal)->goalType == ag_anim_idle &&
-               !(popFlags & 0x40000000)) {
+               !(popFlags & ASTF_PUSH_GOAL)) {
       PushActionCallback(slot);
     }
   }
@@ -1121,14 +1131,16 @@ int GoalStateFuncs::GoalStateFunc106(AnimSlot &slot) {
 	bool looping = false;
 	/*if (animId.IsWeaponAnim() && ( animId.GetWeaponAnim() == gfx::WeaponAnim::Idle || animId.GetWeaponAnim() == gfx::WeaponAnim::CombatIdle)) {*/
 
-	//if (animId.IsWeaponAnim() && (animId.GetWeaponAnim() == gfx::WeaponAnim::Idle )) {
+	
+
+	if (animId.IsWeaponAnim() && (animId.GetWeaponAnim() == gfx::WeaponAnim::Idle )) {
 	//	// We will continue anyway down below, because the character is idling, so log a message
-	//	if (!(eventOut & 2)) {
-	//		logger->info("Ending wait for animation action/end in goal {}, because the idle animation would never end.",
-	//			animGoalTypeNames[slot.pCurrentGoal->goalType]);
-	//	}
-	//	looping = true;
-	//}
+		if (!(eventOut & 2)) {
+			logger->info("Ending wait for animation action/end in goal {}, because the idle animation would never end.",
+				animGoalTypeNames[slot.pCurrentGoal->goalType]);
+		}
+		looping = true;
+	}
 
     // This is the END trigger
     if (!looping && !(eventOut & 2))
