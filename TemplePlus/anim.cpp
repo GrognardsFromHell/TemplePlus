@@ -663,13 +663,17 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
 
       // Special transitions
       if (nextState & 0xFF000000) {
+		/*  if (currentGoal->goalType != ag_anim_idle)
+			logger->debug("ProcessAnimEvent: Special transition; currentState: {:x}", slot.currentState);*/
         if (nextState & 0x10000000) {
+			/*if (currentGoal->goalType != ag_anim_idle)
+				logger->debug("Setting currentState to 0");*/
           slot.currentState = 0;
           stopProcessing = true;
         }
 
 		if ((nextState & 0x38000000) == 0x38000000) {
-			logger->debug("Popping 2 goals due to 0x38000000");
+		//	logger->debug("Popping 2 goals due to 0x38000000");
 			auto newGoal = &goal;
 			auto popFlags = nextState;
 			PopGoal(slot, popFlags, newGoal, &currentGoal, &stopProcessing);
@@ -677,7 +681,7 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
 			//oldGoal = goal;
 		} 
 		else if ( (nextState & 0x30000000) == 0x30000000) {
-		  logger->debug("Popping 1 goals due to 0x30000000");
+		//  logger->debug("Popping 1 goals due to 0x30000000");
           auto newGoal = &goal;
           auto popFlags = nextState;
           PopGoal(slot, popFlags, newGoal, &currentGoal, &stopProcessing);
@@ -707,7 +711,7 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
 
 				// Apparently if 0x30 00 00 00 is also set, it copies the previous goal????
 				if (slot.currentGoal > 0 && (nextState & 0x30000000) != 0x30000000) {
-					logger->debug("Copying previous goal");
+				//	logger->debug("Copying previous goal");
 					slot.goals[slot.currentGoal] = slot.goals[slot.currentGoal - 1];
 				}
 
@@ -721,11 +725,12 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
 			}
         }
         if ((nextState & 0x90000000) == 0x90000000) {
+		//  logger->debug("ProcessAnimEvent: 0x90 00 00 00");
 		  currentGoal = &slot.goals[0];
           auto prio = mGoals[slot.goals[0].goalType]->priority;
 		  goal = mGoals[slot.goals[0].goalType];
 		  if (prio < AnimGoalPriority::AGP_7) {
-
+			//    logger->debug("ProcessAnimEvent: root goal priority less than 7");
 				slot.flags |= AnimSlotFlag::ASF_STOP_PROCESSING;
 			
 				for (auto i = 1; i < slot.currentGoal; i++) {
@@ -752,12 +757,13 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
 				stopProcessing = true;
 			} 
 			else {
+			//	logger->debug("ProcessAnimEvent: root goal priority equal to 7");
 				currentGoal = &slot.goals[slot.currentGoal];
 				goal = mGoals[currentGoal->goalType];
 				// oldGoal = goal;
 				while (goal->priority < AnimGoalPriority::AGP_7) {
 				  PopGoal(slot, 0x30000000, &goal, &currentGoal, &stopProcessing);
-				  logger->debug("ProcessAnimEvent: Popped goal for {}.", description.getDisplayName(slot.animObj));
+				//  logger->debug("ProcessAnimEvent: Popped goal for {}.", description.getDisplayName(slot.animObj));
 				  currentGoal = &slot.goals[slot.currentGoal];
 				  goal = mGoals[currentGoal->goalType];
 				  // oldGoal = goal;
@@ -810,7 +816,7 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
       auto result = RescheduleEvent(delay, slot, evt);
 	  ProcessActionCallbacks();
 	  if (slot.pCurrentGoal->goalType != ag_anim_idle)  {
-		  logger->debug("ProcessAnimEvent: rescheduled for {}, goal {}", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType]);
+		//  logger->debug("ProcessAnimEvent: rescheduled for {}, goal {}", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType]);
 	  } else
 	  {
 		  int da = 1;
@@ -827,7 +833,7 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
 	// preserve the values i case the slot gets deallocated below
 	auto animObj = slot.animObj;
 	auto actionAnimId = slot.uniqueActionId;
-	logger->debug("ProcessAnimEvent: Interrupting goals.");
+	//logger->debug("ProcessAnimEvent: Interrupting goals.");
     // Interrupt everything for the slot
     result = animAddresses.Interrupt(slot.id, AGP_HIGHEST);
 
@@ -851,9 +857,17 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
 }
 
 void AnimSystem::ProcessActionCallbacks() {
-  for (auto &callback : mActionCallbacks) {
+	// changed to manual iteration because PerformOnAnimComplete can alter the vector
+	auto initSize = mActionCallbacks.size();
+	for (auto i = 0; i < mActionCallbacks.size(); i++) {
+	auto& callback = mActionCallbacks[i];
     actSeqSys.PerformOnAnimComplete(callback.obj, callback.uniqueId);
-	callback.obj = 0i64;
+	if (initSize != mActionCallbacks.size())
+	{
+		int dummy = 1;
+	}
+	//callback.obj = 0i64;
+	mActionCallbacks[i].obj = 0;
   }
 
   mActionCallbacks.clear();
@@ -872,7 +886,7 @@ void AnimSystem::PopGoal(AnimSlot &slot, uint32_t popFlags,
                          const AnimGoal **newGoal,
                          AnimSlotGoalStackEntry **newCurrentGoal,
                          bool *stopProcessing) {
-  
+	//logger->debug("Pop goal for {} with popFlags {:x}  (slot flags: {:x}, state {:x})", description.getDisplayName(slot.animObj), popFlags, static_cast<uint32_t>(slot.flags), slot.currentState);
   if (!slot.currentGoal && !(popFlags & 0x40000000)) {
     slot.flags |= AnimSlotFlag::ASF_STOP_PROCESSING;
   }
@@ -880,7 +894,7 @@ void AnimSystem::PopGoal(AnimSlot &slot, uint32_t popFlags,
   if ((*newGoal)->state_special.callback) {
     if (!(popFlags & 0x70000000) || !(popFlags & 0x4000000)) {
       if (PrepareSlotForGoalState(slot, &(*newGoal)->state_special)) {
-		  logger->debug("Pop goal for {}: doing state special callback.", description.getDisplayName(slot.animObj));
+		//  logger->debug("Pop goal for {}: doing state special callback.", description.getDisplayName(slot.animObj));
         (*newGoal)->state_special.callback(slot);
       }
     }
@@ -906,11 +920,11 @@ void AnimSystem::PopGoal(AnimSlot &slot, uint32_t popFlags,
   if (slot.currentGoal < 0) {
     if (!(popFlags & 0x40000000)) {
       slot.flags |= AnimSlotFlag::ASF_STOP_PROCESSING;
-	  logger->debug("Pop goal for {}: stopping processing (last goal was {}).", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType]);
+	//  logger->debug("Pop goal for {}: stopping processing (last goal was {}).", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType]);
     }
   } else {
     auto prevGoal = &slot.goals[slot.currentGoal];
-	logger->debug("Popped goal {}, new goal is {}", animGoalTypeNames[slot.pCurrentGoal->goalType], animGoalTypeNames[prevGoal->goalType]);
+	//logger->debug("Popped goal {}, new goal is {}", animGoalTypeNames[slot.pCurrentGoal->goalType], animGoalTypeNames[prevGoal->goalType]);
 	slot.pCurrentGoal = *newCurrentGoal = &slot.goals[slot.currentGoal];
     *newGoal = mGoals[(*newCurrentGoal)->goalType];
     *stopProcessing = false;
@@ -923,6 +937,7 @@ void AnimSystem::PopGoal(AnimSlot &slot, uint32_t popFlags,
       PushActionCallback(slot);
     }
   }
+ // logger->debug("PopGoal: Ending with slot flags {:x}, state {:x}", static_cast<uint32_t>(slot.flags), slot.currentState);
 }
 
 /*
@@ -978,12 +993,15 @@ bool AnimSystem::InterruptGoals(AnimSlot &slot, AnimGoalPriority priority) {
     auto goal = mGoals[stackTop.goalType];
     assert(goal);
 
-    if (priority < AnimGoalPriority::AGP_HIGHEST && goal->field_8) {
-      return true;
+    if (priority < AnimGoalPriority::AGP_HIGHEST){
+		if (goal->field_8) {
+			return true;
+		}
+		if (goal->priority == AnimGoalPriority::AGP_5) {
+			return false;
+		}
     }
-    if (priority == AnimGoalPriority::AGP_5 && !goal->field_8) {
-      return false;
-    }
+    
 
     if (goal->priority == AnimGoalPriority::AGP_3) {
       if (priority < AnimGoalPriority::AGP_3) {
@@ -1062,7 +1080,7 @@ std::string AnimSlotId::ToString() const {
 }
 
 int GoalStateFuncs::GoalStateFunc106(AnimSlot &slot) {
-	logger->debug("GSF 106 for {}, goal {}", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType]);
+	//logger->debug("GSF 106 for {}, goal {}, flags {:x}, currentState {:x}", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType], (uint32_t)slot.flags, (uint32_t)slot.currentState);
   auto obj = slot.param1.obj;
   assert(slot.param1.obj);
 
@@ -1070,7 +1088,7 @@ int GoalStateFuncs::GoalStateFunc106(AnimSlot &slot) {
   assert(aasHandle);
 
   if (objects.getInt32(obj, obj_f_spell_flags) & 0x10000) {
-	  logger->debug("GSF 106: return FALSE due to obj_f_spell_flags 0x10000");
+	  //logger->debug("GSF 106: return FALSE due to obj_f_spell_flags 0x10000");
     return FALSE;
   }
 
@@ -1093,7 +1111,7 @@ int GoalStateFuncs::GoalStateFunc106(AnimSlot &slot) {
     // This is the ACTION trigger
     if (eventOut & 1) {
       slot.flags |= AnimSlotFlag::ASF_UNK3;
-	  logger->debug("GSF 106: Set flag 4, returned TRUE");
+	  //logger->debug("GSF 106: Set flag 4, returned TRUE");
       return TRUE;
     }
 
@@ -1115,7 +1133,7 @@ int GoalStateFuncs::GoalStateFunc106(AnimSlot &slot) {
     // This is the END trigger
     if (!looping && !(eventOut & 2))
     {
-		logger->debug("GSF 106: eventOut & 2, returned TRUE");
+		//logger->debug("GSF 106: eventOut & 2, returned TRUE");
 		return TRUE;
     }
       
@@ -1130,13 +1148,13 @@ int GoalStateFuncs::GoalStateFunc106(AnimSlot &slot) {
     // Clear 0x10 slot flag
 	slot.flags &= ~AnimSlotFlag::ASF_UNK5;
   }
-  logger->debug("GSF 106: returned FALSE");
+  //logger->debug("GSF 106: returned FALSE");
   return FALSE;
 }
 
 int GoalStateFuncs::GoalStateFunc130(AnimSlot& slot)
 {
-	logger->debug("GSF 130");
+	//logger->debug("GSF 130");
 	uint32_t eventOut = 0;
 	auto handle = slot.param1.obj;
 	if (!handle)
@@ -1174,11 +1192,11 @@ int GoalStateFuncs::GoalStateFunc130(AnimSlot& slot)
 }
 
 int GoalStateFuncs::GoalStateFunc83(AnimSlot &slot) {
-  logger->debug("GSF83 for {}, current goal {} ({})", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType], slot.currentGoal);
+  //logger->debug("GSF83 for {}, current goal {} ({})", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType], slot.currentGoal);
   auto flags = slot.flags;
   if (flags & AnimSlotFlag::ASF_UNK3 && !(flags & AnimSlotFlag::ASF_UNK4)) {
     slot.flags = flags | AnimSlotFlag::ASF_UNK4;
-	logger->debug("GSF83 return TRUE");
+	//logger->debug("GSF83 return TRUE");
     return TRUE;
   } else {
     return FALSE;
@@ -1186,7 +1204,7 @@ int GoalStateFuncs::GoalStateFunc83(AnimSlot &slot) {
 }
 
 static BOOL goalstatefunc_45(AnimSlot &slot) {
-	logger->debug("GSF45");
+	//logger->debug("GSF45");
   auto obj = slot.param1.obj;
   assert(obj);
   auto aasHandle = objects.GetAnimHandle(obj);
@@ -1197,13 +1215,13 @@ static BOOL goalstatefunc_45(AnimSlot &slot) {
 }
 
 static BOOL goalstatefunc_41(AnimSlot &slot) {
-	logger->debug("GSF41");
+	//logger->debug("GSF41");
   auto spell = spellsCastRegistry.get(slot.param1.number);
   return FALSE;
 }
 
 static BOOL goalstatefunc_42(AnimSlot &slot) {
-	logger->debug("GSF42");
+	//logger->debug("GSF42");
   auto obj = slot.param1.obj;
   assert(obj);
 
@@ -1246,19 +1264,69 @@ public:
 
   void apply() override {
 
-    replaceFunction<int(const TimeEvent *)>(
-        0x1001B830, [](const TimeEvent *evt) -> int {
-          auto result =  gameSystems->GetAnim().ProcessAnimEvent(evt);
-		  temple::GetRef<int>(0x102B2654) = gameSystems->GetAnim().mCurrentlyProcessingSlotIdx;
-		  return result;
-          //return TRUE;
-        });
+
+	  //static bool useNew = false;
+
+	 
+	static int (*orgProcessAnimEvt)(const TimeEvent*)	=  replaceFunction<int(const TimeEvent *)>(
+			  0x1001B830, [](const TimeEvent *evt) -> int {
+		auto result = 0;
+
+		/*AnimSlotId triggerId = { evt->params[0].int32, evt->params[1].int32,
+			evt->params[2].int32 };*/
+		/*auto &slot = gameSystems->GetAnim().mSlots[triggerId.slotIndex];
+		auto currentGoal = &slot.goals[slot.currentGoal];
+		bool showNext = false;
+		if (currentGoal->goalType != ag_anim_idle)
+		{
+			logger->debug("ProcessAnimEvent: {} Current goal: {}, current state: {:x}, current flags: {:x}", description.getDisplayName(slot.animObj), animGoalTypeNames[currentGoal->goalType], slot.currentState, slot.flags);
+			showNext = true;
+		}*/
+
+		//if (useNew)	{
+			result = gameSystems->GetAnim().ProcessAnimEvent(evt);
+			temple::GetRef<int>(0x102B2654) = gameSystems->GetAnim().mCurrentlyProcessingSlotIdx;
+		/*} 
+		else{
+			result = orgProcessAnimEvt(evt);
+			if (!result){
+				int dummy = 1;
+			}
+		}*/
+
+		//currentGoal = &slot.goals[slot.currentGoal];
+		/*if (showNext || (slot.pCurrentGoal && slot.pCurrentGoal->goalType != ag_anim_idle )){
+			logger->debug("ProcessAnimEvent: {} After processing - Current goal: {}, current state: {:x}, current flags {:x}", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType], slot.currentState, slot.flags);
+		}*/
+
+		return result;
+			 
+			  //return TRUE;
+		  });
+	  
+
 
 	// AnimSlotInterruptGoals
-	replaceFunction<BOOL(AnimSlotId &, AnimGoalPriority)>(0x10056090, [](AnimSlotId &animId, AnimGoalPriority priority) {
+	static BOOL(* orgInterruptGoals)(AnimSlotId &, AnimGoalPriority) = replaceFunction<BOOL(AnimSlotId &, AnimGoalPriority)>(0x10056090, [](AnimSlotId &animId, AnimGoalPriority priority) {
 		auto &slot = gameSystems->GetAnim().mSlots[animId.slotIndex];
-		auto result = gameSystems->GetAnim().InterruptGoals(slot, priority);
-		return result?TRUE:FALSE;
+		auto result = 0;
+
+		/*if (priority == 5)
+		{
+			int asd = 0;
+		}
+
+		logger->debug("InterruptGoals: Interrupting slot {} (cur. goal {}, flags {:x}) with priority {}", slot.id.slotIndex, animGoalTypeNames[slot.pCurrentGoal->goalType] ,slot.flags, static_cast<uint32_t>(priority));
+		if (useNew)	{*/
+			result = gameSystems->GetAnim().InterruptGoals(slot, priority);
+			//return result ? TRUE : FALSE;
+		/*} 
+		else {
+			result=  orgInterruptGoals(animId, priority);
+		}
+		logger->info("InterruptGoals: slot {} new cur. goal is {}, flags {:x}", slot.id.slotIndex, slot.pCurrentGoal?animGoalTypeNames[slot.pCurrentGoal->goalType]:"none", slot.flags);
+		*/
+		return result;
 	});
 
 	// anim_pop_goal
@@ -1267,14 +1335,14 @@ public:
 	    [](AnimSlot &slot, const uint32_t *popFlags, const AnimGoal **newGoal,
 	       AnimSlotGoalStackEntry **newCurrentGoal, BOOL *stopProcessing) {
 	    
-		 bool useNew = true;
+		 //bool useNew = true;
 
-		 if (useNew) {
+		// if (useNew) {
 			 bool stopProcessingBool = *stopProcessing == TRUE;
 			 gameSystems->GetAnim().PopGoal(slot, *popFlags, newGoal,
 				 newCurrentGoal, &stopProcessingBool);
 			 *stopProcessing = stopProcessingBool ? TRUE : FALSE;
-		 } 
+		/* } 
 		 else	 {
 			 orgPopGoal(slot, popFlags, newGoal, newCurrentGoal, stopProcessing);
 
@@ -1284,7 +1352,7 @@ public:
 			 {
 				 logger->debug("Pop goal for {}: new goal is {}.", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType]);
 			 }
-		 }
+		 }*/
 		   
 	    });
 
@@ -1444,7 +1512,7 @@ static json11::Json::object StateToJson(const AnimGoalState &state,
 
 int GoalStateFuncs::GoalStateFunc35(AnimSlot& slot)
 {
-	logger->debug("GoalStateFunc35");
+	//logger->debug("GoalStateFunc35");
 	if (slot.param1.obj)
 	{
 		if (!gameSystems->GetObj().GetObject(slot.param1.obj)->IsCritter()
@@ -1456,7 +1524,7 @@ int GoalStateFuncs::GoalStateFunc35(AnimSlot& slot)
 }
 
 int GoalStateFuncs::GoalStateFunc54(AnimSlot& slot){
-	logger->debug("GSF54 ag_attempt_attack action frame");
+	//logger->debug("GSF54 ag_attempt_attack action frame");
 	assert(slot.param1.obj);
 	assert(slot.param2.obj);
 
@@ -1470,7 +1538,7 @@ int GoalStateFuncs::GoalStateFunc54(AnimSlot& slot){
 int GoalStateFuncs::GoalStateFunc133(AnimSlot& slot)
 {
 	// 1001C100
-	logger->debug("GoalStateFunc133");
+	//logger->debug("GoalStateFunc133");
 	auto sub_10017BF0 = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x10017BF0);
 	auto result = sub_10017BF0(slot.param1.obj, slot.param2.obj);
 	if (!result)
@@ -1488,7 +1556,7 @@ int GoalStateFuncs::GoalStateFunc133(AnimSlot& slot)
 int GoalStateFuncs::GoalStateFuncIsCritterProne(AnimSlot& slot)
 {
 	// 1000E270
-	logger->debug("GoalStateFunc IsCritterProne");
+	//logger->debug("GoalStateFunc IsCritterProne");
 	if (slot.param1.obj){
 		return objects.IsCritterProne(slot.param1.obj);
 	}
@@ -1499,19 +1567,19 @@ int GoalStateFuncs::GoalStateFuncIsCritterProne(AnimSlot& slot)
 
 int GoalStateFuncs::GoalStateFuncIsParam1Concealed(AnimSlot& slot)
 {
-	logger->debug("GoalState IsConcealed");
+	//logger->debug("GoalState IsConcealed");
 	return (critterSys.IsConcealed(slot.param1.obj));
 }
 
 int GoalStateFuncs::GoalStateFunc82(AnimSlot& slot)
 { //10012C70
-	if (slot.pCurrentGoal && slot.pCurrentGoal->goalType != ag_anim_idle) {
-		logger->debug("GSF82 for {}, current goal {} ({}). Flags: {}", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType], slot.currentGoal, slot.flags);
+	/*if (slot.pCurrentGoal && slot.pCurrentGoal->goalType != ag_anim_idle) {
+		logger->debug("GSF82 for {}, current goal {} ({}). Flags: {:x}, currentState: {:x}", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType], slot.currentGoal, slot.flags, slot.currentState);
 		if(slot.pCurrentGoal->goalType == ag_hit_by_weapon)
 		{
 			int u = 1;
 		}
-	}
+	}*/
 	//return (slot.flags & AnimSlotFlag::ASF_UNK5) == 0? TRUE: FALSE;
 	return (~(slot.flags >> 4)) & 1;
 	//return ~(slot.flags >> 4) & 1;
@@ -1519,7 +1587,7 @@ int GoalStateFuncs::GoalStateFunc82(AnimSlot& slot)
 
 int GoalStateFuncs::GoalStateFunc65(AnimSlot& slot)
 {
-	logger->debug("GSF65");
+	//logger->debug("GSF65");
 	if (!slot.param1.obj)
 	{
 		logger->warn("Error in GSF65");
