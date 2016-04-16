@@ -306,7 +306,7 @@ std::pair<int, int> TextLayouter::MeasureCharRun(cstring_span<> text,
 			}
 			break;
 		}
-		else if (isspace(ch)) {
+		else if ( ch <255 && ch > -1 && isspace(ch)) {
 			if (lineWidth + wordWidth <= extentsWidth) {
 				wordCount++;
 				if (lineWidth + wordWidth <= extentsWidth + linePadding) {
@@ -319,6 +319,12 @@ std::pair<int, int> TextLayouter::MeasureCharRun(cstring_span<> text,
 				// Stop if we have run out of space on this line
 				break;
 			}
+		}
+		else if ( ch  == '’') // special casing this motherfucker
+		{
+			ch ='\'';
+			auto glyphIdx = GetGlyphIdx(ch, &text[0]);
+			wordWidth += style.kerning + font.glyphs[glyphIdx].width_line;
 		}
 		else {
 			auto glyphIdx = GetGlyphIdx(ch, &text[0]);
@@ -403,6 +409,9 @@ ScanWordResult TextLayouter::ScanWord(const char* text,
 		if (i + 1 < textLength) {
 			nextCh = text[i + 1];
 		}
+
+		if (curCh == '’')
+			curCh = const_cast<char*>(text)[i] = '\'';
 
 		// Simply skip @t without increasing the width
 		if (curCh == '@' && isdigit(nextCh)) {

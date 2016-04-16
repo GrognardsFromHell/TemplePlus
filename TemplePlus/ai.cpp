@@ -22,6 +22,8 @@
 #include "ui/ui_picker.h"
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/timeevents.h"
+#include "python/python_header.h"
+
 struct AiSystem aiSys;
 AiParamPacket * AiSystem::aiParams;
 
@@ -1711,6 +1713,56 @@ public:
 		// AI ConsiderTarget
 		replaceFunction<BOOL(__cdecl)(objHndl, objHndl)>(0x1005D3F0, [](objHndl obj, objHndl tgt){
 			return aiSys.ConsiderTarget(obj, tgt);
+		});
+
+		static int(*orgAiFlagsUpdate)(objHndl, AiFightStatus, objHndl, int*) = 
+			replaceFunction<int(objHndl, AiFightStatus, objHndl, int*)>(0x1005DA00, [](objHndl obj, AiFightStatus aiFightStatus, objHndl target, int* soundmap )->int
+		{
+
+			if (target && aiFightStatus == AIFS_FIGHTING) {
+				auto tgtObj = gameSystems->GetObj().GetObject(target);
+				if (tgtObj->type == obj_t_pc ) {
+					logger->debug("AiFlagsUpdate: For {}, triggerer {}", description.getDisplayName(obj), description.getDisplayName(target));
+					auto scri = gameSystems->GetObj().GetObject(obj)->GetScriptArray(obj_f_scripts_idx)[san_enter_combat];
+					AiFlag aiFlags = static_cast<AiFlag >(gameSystems->GetObj().GetObject(obj)->GetInt64(obj_f_npc_ai_flags64));
+					if (!(aiFlags & AiFlag::Fighting ) && scri.scriptId)
+					{
+						int dummy = 1;
+					}
+				}
+				else if (tgtObj->type == obj_t_npc)
+				{
+					int asd = 0;
+				}
+			}
+
+
+			auto result = orgAiFlagsUpdate(obj, aiFightStatus, target, soundmap);
+			
+			
+			return result;
+
+		});
+
+		static int(*orgScriptExecute)(objHndl, objHndl, int, int, SAN, void*) = 
+			replaceFunction<int(objHndl, objHndl, int, int, SAN, void*)>(0x10025D60, [](objHndl triggerer, objHndl attachee, int a3, int a4, SAN san, void* a6)->int
+		{
+
+			if (triggerer && san == san_enter_combat) {
+				auto tgtObj = gameSystems->GetObj().GetObject(triggerer);
+				if (tgtObj->type == obj_t_pc) {
+					logger->debug("ScriptExecute: For {}, triggerer {}", description.getDisplayName(attachee), description.getDisplayName(triggerer));
+					auto scri = gameSystems->GetObj().GetObject(attachee)->GetScriptArray(obj_f_scripts_idx)[san_enter_combat];
+					if (scri.scriptId)
+					{
+						int dummy = 1;
+					}
+				}
+			}
+
+			auto restul = orgScriptExecute(triggerer, attachee, a3, a4, san, a6);
+
+			return restul;
 		});
 
 	}
