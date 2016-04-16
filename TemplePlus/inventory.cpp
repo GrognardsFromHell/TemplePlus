@@ -330,6 +330,86 @@ void InventorySystem::MoneyToCoins(int money, int* plat, int* gold, int* silver,
 	}
 }
 
+int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnlargement) const
+{
+	if (!regardEnlargement)
+		return _GetWieldType(wielder, item);
+
+	if (!item)
+		return 4;
+
+	auto itemObj = gameSystems->GetObj().GetObject(item);
+	auto itemType = itemObj->type;
+
+	if (itemType == obj_t_armor){
+		auto armorFlags = itemObj->GetInt32(obj_f_armor_flags);
+		auto armorType = inventory.GetArmorType(armorFlags);
+		if (armorType == ArmorType::ARMOR_TYPE_SHIELD || armorType == ArmorType::ARMOR_TYPE_NONE)
+			return  ( itemObj->GetInt32(obj_f_item_wear_flags) & OIF_WEAR::OIF_WEAR_BUCKLER ) != OIF_WEAR::OIF_WEAR_BUCKLER;
+	}
+
+	
+	auto wielderSize = dispatch.DispatchGetSizeCategory(wielder);
+	auto wielderSizeBase = regardEnlargement ? gameSystems->GetObj().GetObject(wielder)->GetInt32(obj_f_size) : wielderSize;
+	auto itemSize = itemObj->GetInt32(obj_f_size);
+
+	auto wieldType = 3;
+
+	if (itemSize < wielderSizeBase){
+		wieldType = 0;
+	} 
+	else if (itemSize == wielderSizeBase)
+	{
+		wieldType = 1;
+	} 
+	else if (itemSize == wielderSizeBase + 1)
+	{
+		wieldType = 2;
+	} 
+	else if (itemSize == wielderSize + 1 )
+	{
+		wieldType = 2;
+	}
+
+	// check if it requires 2 handed by the item wear flags
+	if (wieldType != 3)
+	{
+		if (itemObj->GetInt32(obj_f_item_wear_flags) & OIF_WEAR::OIF_WEAR_2HAND_REQUIRED)
+			wieldType = 2;
+	}
+
+	if (itemType != obj_t_weapon)
+		return wieldType;
+
+	auto weaponType = static_cast<WeaponTypes>(itemObj->GetInt32(obj_f_weapon_type));
+
+
+	// special casing for Bastard Swords and Dwarven Waraxes
+	if (weaponType == wt_bastard_sword)
+	{
+		if (feats.HasFeatCountByClass(wielder, FEAT_EXOTIC_WEAPON_PROFICIENCY_BASTARD_SWORD))
+			wieldType = (wielderSizeBase <= 4) + 2;
+		return wieldType;
+	} 
+	
+	if (weaponType != wt_dwarven_waraxe)
+	{
+		return wieldType;
+	}
+
+	if (feats.HasFeatCountByClass(wielder, FEAT_EXOTIC_WEAPON_PROFICIENCY_DWARVEN_WARAXE) || objects.StatLevelGet(wielder, stat_race) == race_dwarf)
+	{
+		return wieldType;
+	} 
+	
+	if (wielderSize == 5)
+	{
+		return 2;
+	} 
+
+	return 2 * (wielderSize <= 5) + 1;	
+}
+
 obj_f InventorySystem::GetInventoryListField(objHndl objHnd)
 {
 	if (objects.IsCritter(objHnd)) 	return obj_f_critter_inventory_list_idx;
@@ -362,6 +442,14 @@ const char* InventorySystem::GetItemErrorString(ItemErrorCode itemErrorCode)
 	line.key = 100 + itemErrorCode;
 	GetItemMesLine(&line);
 	return line.value;
+}
+
+bool InventorySystem::IsBuckler(objHndl shield)
+{
+	if (!shield)
+		return false;
+
+	return (gameSystems->GetObj().GetObject(shield)->GetInt32(obj_f_item_wear_flags) & OIF_WEAR::OIF_WEAR_BUCKLER) ? true: false;
 }
 
 void InventorySystem::ItemRemove(objHndl item)

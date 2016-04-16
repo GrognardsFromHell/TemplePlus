@@ -101,6 +101,35 @@ public:
 	static int __cdecl HasCondition(DispatcherCallbackArgs args);
 } spCallbacks;
 
+
+class GenericCallbacks
+{
+#define CBFunc(fname) static int __cdecl fname ## (DispatcherCallbackArgs args)
+public:
+	static int QuerySetReturnVal1(DispatcherCallbackArgs args);
+	static int QuerySetReturnVal0(DispatcherCallbackArgs);
+	static int ActionInvalidQueryTrue(DispatcherCallbackArgs);
+
+	static int EffectTooltip(DispatcherCallbackArgs args); // SubDispDef data1 denotes the effect type idx, data2 denotes combat.mes line
+	static int TooltipUnrepeated(DispatcherCallbackArgs); // SubDispDef data1 denotes combat.mes line
+
+	static int AddEtherealDamageImmunity(DispatcherCallbackArgs args);
+	static int EtherealOnAdd(DispatcherCallbackArgs args);
+	static int EtherealOnD20StatusInit(DispatcherCallbackArgs args);
+	static int EtherealDamageDealingNull(DispatcherCallbackArgs);
+	static int EtherealOnRemove(DispatcherCallbackArgs);
+
+	static int __cdecl SpellResistanceQuery(DispatcherCallbackArgs args);
+	static int __cdecl SpellResistanceTooltip(DispatcherCallbackArgs args);
+
+	static int __cdecl TripAooRadial(DispatcherCallbackArgs args);
+	static int __cdecl TripAooQuery(DispatcherCallbackArgs args);
+	static int __cdecl ImprovedTripBonus(DispatcherCallbackArgs args);
+
+	static int __cdecl PowerAttackDamageBonus(DispatcherCallbackArgs args);
+
+} genericCallbacks;
+
 class ConditionFunctionReplacement : public TempleFix {
 public:
 	const char* name() override {
@@ -171,8 +200,11 @@ public:
 
 		HookSpellCallbacks();
 
-		
+		// Enlarge Person weapon damage dice modification
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100CA2B0, spCallbacks.EnlargePersonWeaponDice);
+
+		// power attack damage bonus
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100F8540, genericCallbacks.PowerAttackDamageBonus);
 		
 	}
 } condFuncReplacement;
@@ -212,31 +244,6 @@ public:
 	
 } classAbilityCallbacks;
 
-class GenericCallbacks
-{
-#define CBFunc(fname) static int __cdecl fname ## (DispatcherCallbackArgs args)
-public:
-	static int QuerySetReturnVal1(DispatcherCallbackArgs args);
-	static int QuerySetReturnVal0(DispatcherCallbackArgs);
-	static int ActionInvalidQueryTrue(DispatcherCallbackArgs);
-
-	static int EffectTooltip(DispatcherCallbackArgs args); // SubDispDef data1 denotes the effect type idx, data2 denotes combat.mes line
-	static int TooltipUnrepeated(DispatcherCallbackArgs); // SubDispDef data1 denotes combat.mes line
-
-	static int AddEtherealDamageImmunity(DispatcherCallbackArgs args);
-	static int EtherealOnAdd(DispatcherCallbackArgs args);
-	static int EtherealOnD20StatusInit(DispatcherCallbackArgs args);
-	static int EtherealDamageDealingNull(DispatcherCallbackArgs);
-	static int EtherealOnRemove(DispatcherCallbackArgs);
-
-	static int __cdecl SpellResistanceQuery(DispatcherCallbackArgs args);
-	static int __cdecl SpellResistanceTooltip(DispatcherCallbackArgs args);
-	
-	static int __cdecl TripAooRadial(DispatcherCallbackArgs args);
-	CBFunc(TripAooQuery);
-	CBFunc(ImprovedTripBonus);
-
-} genericCallbacks;
 
 CondNode::CondNode(CondStruct *cond) {
 	memset(this, 0, sizeof(CondNode));
@@ -659,6 +666,130 @@ int GenericCallbacks::ImprovedTripBonus(DispatcherCallbackArgs args)
 		dispIo->bonOut->AddBonusWithDesc(4, 0, 114, feats.GetFeatName(FEAT_IMPROVED_TRIP));
 	}
 	return 0;
+}
+
+int GenericCallbacks::PowerAttackDamageBonus(DispatcherCallbackArgs args)
+{
+
+	auto powerAttackAmt = args.GetCondArg(0);
+
+	if (!powerAttackAmt)
+		return 0;
+
+	args.dispIO->AssertType(dispIOTypeDamage);
+	auto dispIo = static_cast<DispIoDamage*>(args.dispIO);
+
+	// ignore ranged weapons
+	if (dispIo->attackPacket.flags & D20CAF_RANGED)
+		return 0;
+
+	// get wield type
+	auto weaponUsed = dispIo->attackPacket.GetWeaponUsed();
+	auto wieldType = inventory.GetWieldType(args.objHndCaller, weaponUsed, true);
+	auto wieldTypeWeaponModified = inventory.GetWieldType(args.objHndCaller, weaponUsed, false); // the wield type if the weapon is not enlarged along with the critter
+	auto modifiedByEnlarge = wieldType != wieldTypeWeaponModified;
+
+	// check offhand
+	auto offhandWeapon = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponSecondary);
+	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
+	auto regardOffhand = offhandWeapon || shield && !inventory.IsBuckler(shield)?true:false;
+
+	// case 1
+	switch (wieldType)
+	{
+	case 0: // light weapon
+		switch (wieldTypeWeaponModified)
+		{
+		case 0:
+			dispIo->damage.bonuses.ZeroBonusSetMeslineNum(305);
+			return 0;
+		case 1: // benefitting from enlargement of weapon
+			dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+			return 0;
+		case 2:
+			if (regardOffhand)
+				dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+			else
+				dispIo->damage.bonuses.AddBonusFromFeat(2 * powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+			return 0;
+		default:
+			dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+			return 0;
+		}
+	case 1: // single handed wield if weapon is unaffected
+		switch (wieldTypeWeaponModified)
+		{
+		case 0: // only in reduce person; going to assume the "beneficial" case that the reduction was made voluntarily and hence you let the weapon stay larger
+		case 1: // benefitting from enlargement of weapon
+			dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+			return 0;
+		case 2:
+			if (regardOffhand)
+				dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+			else
+				dispIo->damage.bonuses.AddBonusFromFeat(2 * powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+			return 0;
+		default:
+			dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+			return 0;
+		}
+	case 2: // two handed wield if weapon is unaffected
+		switch (wieldTypeWeaponModified)
+		{
+		case 0: 
+		case 1: // only in reduce person; going to assume the "beneficial" case that the reduction was made voluntarily and hence you let the weapon stay larger
+			if (regardOffhand) // has offhand item, so assume the weapon stayed the old size
+				dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+			else
+				dispIo->damage.bonuses.AddBonusFromFeat(2 * powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+			return 0;
+		case 2:
+			if (regardOffhand) // shouldn't really be possible... maybe if player is cheating
+			{
+				dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+				logger->warn("Illegally wielding weapon along withoffhand!");
+			}
+			else
+				dispIo->damage.bonuses.AddBonusFromFeat(2 * powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+			return 0;
+		default:
+			dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+			return 0;
+		}
+	case 3:
+		dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+		return 0;
+	case 4:
+	default:
+		dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+		return 0;
+	}
+
+
+	//if (modifiedByEnlarge){
+	//	// if using an offhand and also wielding two handed
+	//	if (regardOffhand && wieldTypeWeaponModified == 2)
+	//		wieldType = wieldTypeWeaponModified;
+	//	else if (!wieldType && wieldTypeWeaponModified)
+	//		wieldType = wieldTypeWeaponModified;
+	//}
+
+	//if(!wieldType && !wieldTypeWeaponModified){
+	//	dispIo->damage.bonuses.ZeroBonusSetMeslineNum(305);
+	//	return 0;
+	//}
+
+	//auto bonAmt = 2*powerAttackAmt;
+	//if (wieldType == 4)
+	//	bonAmt = powerAttackAmt;
+	//else if (wieldType != 2){
+	//	if (  regardOffhand) 
+	//		bonAmt = powerAttackAmt;
+	//}
+	//
+	//dispIo->damage.bonuses.AddBonusFromFeat(bonAmt, 0, 114, FEAT_POWER_ATTACK);
+	//
+	//return 0;
 }
 
 int GenericCallbacks::EffectTooltip(DispatcherCallbackArgs args)

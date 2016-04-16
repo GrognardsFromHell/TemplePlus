@@ -28,6 +28,7 @@ enum ItemErrorCode: uint32_t
 	IEC_Prohibited_Due_To_Class =18
 };
 
+
 struct InventorySystem : temple::AddressTable
 {
 	
@@ -80,6 +81,7 @@ struct InventorySystem : temple::AddressTable
 	bool IsProficientWithArmor(objHndl obj, objHndl armor) const;
 	void GetItemMesLine(MesLine* line);
 	const char* GetItemErrorString(ItemErrorCode itemErrorCode);
+	static bool IsBuckler(objHndl shield);
 	void(__cdecl*_ForceRemove)(objHndl, objHndl);
 	void ItemRemove(objHndl item); // pretty much same as ForceRemove, but also send a d20 signal for inventory update, and checks for parent first
 	int ItemGetAdvanced(objHndl item, objHndl parent, int slotIdx, int flags);
@@ -91,9 +93,12 @@ struct InventorySystem : temple::AddressTable
 	void MoneyToCoins(int appraisedWorth, int* plat, int* gold, int* silver, int* copper);
 	
 	/*
-				0 - light weapon; 1 - can wield one handed; 2 - must wield two handed; 3 (???)
-			*/
-	int (__cdecl *GetWieldType)(objHndl wielder, objHndl item);
+		0 - light weapon; 1 - can wield one handed; 2 - must wield two handed; 3 (???)
+		if regardEnlargement is true:
+		   assumes that the weapon is enlarged along with the character 
+		   (so it will actually use the base critter size to determine wield type)
+	*/
+	int GetWieldType(objHndl wielder, objHndl item, bool regardEnlargement = false) const;
 	static obj_f GetInventoryListField(objHndl objHnd);
 	/*
 		Identifies all items held or contained within the given parent.
@@ -123,7 +128,7 @@ struct InventorySystem : temple::AddressTable
 		rebase(GetSubstituteInventory, 0x1007F5B0);
 		rebase(GetItemAtInvIdx, 0x100651B0);
 		rebase(_ItemWornAt,      0x10065010);
-		rebase(GetWieldType,    0x10066580);
+		rebase(_GetWieldType,    0x10066580);
 		rebase(FindMatchingStackableItem, 0x10067DF0);
 
 		rebase(sub_100FF500, 0x100FF500);
@@ -152,6 +157,7 @@ private:
 	int(__cdecl*_ItemRemove)(objHndl item);
 	int(__cdecl*_ItemDrop)(objHndl item);
 	objHndl(__cdecl *_ItemWornAt)(objHndl, EquipSlot nItemSlot);
+	int(__cdecl *_GetWieldType)(objHndl wielder, objHndl item);
 };
 
 extern InventorySystem inventory;

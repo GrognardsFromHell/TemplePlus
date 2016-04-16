@@ -160,6 +160,8 @@ struct BonusList
 	*/
 	int AddBonus(int value, int bonType, int mesline);
 	int AddBonusWithDesc(int value, int bonType, int mesline, char* descr);
+	int AddBonusFromFeat(int value, int bonType, int mesline, feat_enums feat); // same as the above, but it also gets the feat name automatically
+	BOOL ZeroBonusSetMeslineNum(int mesline);
 };
 
 const int TestSizeOfBonusList = sizeof(BonusList); // should be 888 (0x378)
@@ -175,6 +177,8 @@ struct AttackPacket
 	int field_1C;
 	objHndl weaponUsed;
 	objHndl ammoItem;
+	
+	objHndl GetWeaponUsed() const;
 };
 
 enum ScreenDirections : char {

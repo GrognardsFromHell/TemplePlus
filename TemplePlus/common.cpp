@@ -3,6 +3,7 @@
 #include "common.h"
 #include "tig/tig_mes.h"
 #include "bonus.h"
+#include "feat.h"
 
 static void NormalizeAxis(float& offset, uint32_t &tilePos) {
 	auto tiles = (int) (offset / INCH_PER_TILE);
@@ -141,6 +142,29 @@ int BonusList::AddBonusWithDesc(int value, int bonType, int mesline, char* descr
 		return 1;
 	}
 	return 0;
+}
+
+int BonusList::AddBonusFromFeat(int value, int bonType, int mesline, feat_enums feat){
+	auto featName = feats.GetFeatName(feat);
+	return AddBonusWithDesc(value, bonType, mesline, featName);
+}
+
+BOOL BonusList::ZeroBonusSetMeslineNum(int mesline)
+{
+	if (zeroBonusCount >= 10)
+		return FALSE;
+	
+	zeroBonusReasonMesLine[zeroBonusCount++] = mesline;
+	return TRUE;
+}
+
+objHndl AttackPacket::GetWeaponUsed() const
+{
+	if ( !(flags& D20CAF_TOUCH_ATTACK) ||  (flags & D20CAF_THROWN_GRENADE) )
+	{
+		return weaponUsed;
+	}
+	return 0i64;
 }
 
 PointNode::PointNode(){
