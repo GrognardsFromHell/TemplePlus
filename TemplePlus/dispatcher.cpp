@@ -622,6 +622,11 @@ int DispatcherSystem::DispatchGetBonus(objHndl critter, DispIoBonusList* eventOb
 	return eventObj->bonlist.GetEffectiveBonusSum();
 
 }
+
+void DispIO::AssertType(enum_dispIO_type eventObjType) const
+{
+	assert(dispIOType == eventObjType);
+}
 #pragma endregion
 
 

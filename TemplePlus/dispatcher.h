@@ -131,6 +131,8 @@ extern DispatcherSystem dispatch;
 
 struct DispIO {
 	enum_dispIO_type dispIOType;
+
+	void AssertType(enum_dispIO_type eventObjType) const;
 };
 
 struct CondNode : temple::TempleAlloc {

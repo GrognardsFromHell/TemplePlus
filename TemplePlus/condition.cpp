@@ -74,6 +74,33 @@ struct ConditionSystemAddresses : temple::AddressTable
 
 } addresses;
 
+
+
+class SpellCallbacks {
+#define SPELL_CALLBACK(name) static int __cdecl name(DispatcherCallbackArgs args);
+public:
+
+	static int __cdecl SkillBonus(DispatcherCallbackArgs args);
+	static int __cdecl BeginHezrouStench(DispatcherCallbackArgs args);
+
+	static int __cdecl EnlargePersonWeaponDice(DispatcherCallbackArgs args);
+
+	static int __cdecl HezrouStenchObjEvent(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchCountdown(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchTurnbasedStatus(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchAooPossible(DispatcherCallbackArgs args);
+
+
+	static int __cdecl HezrouStenchAbilityCheckMod(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchSavingThrowLevel(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchDealingDamage(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchToHit2(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchEffectTooltip(DispatcherCallbackArgs args);
+	static int __cdecl HezrouStenchCureNausea(DispatcherCallbackArgs args);
+	static int __cdecl RemoveSpell(DispatcherCallbackArgs args);
+	static int __cdecl HasCondition(DispatcherCallbackArgs args);
+} spCallbacks;
+
 class ConditionFunctionReplacement : public TempleFix {
 public:
 	const char* name() override {
@@ -145,33 +172,12 @@ public:
 		HookSpellCallbacks();
 
 		
-
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100CA2B0, spCallbacks.EnlargePersonWeaponDice);
 		
 	}
 } condFuncReplacement;
 
 
-class SpellCallbacks {
-#define SPELL_CALLBACK(name) static int __cdecl name(DispatcherCallbackArgs args);
-public:
-
-	static int __cdecl SkillBonus(DispatcherCallbackArgs args);
-	static int __cdecl BeginHezrouStench(DispatcherCallbackArgs args);
-	static int __cdecl HezrouStenchObjEvent(DispatcherCallbackArgs args);
-	static int __cdecl HezrouStenchCountdown(DispatcherCallbackArgs args);
-	static int __cdecl HezrouStenchTurnbasedStatus(DispatcherCallbackArgs args);
-	static int __cdecl HezrouStenchAooPossible(DispatcherCallbackArgs args);
-
-
-	static int __cdecl HezrouStenchAbilityCheckMod(DispatcherCallbackArgs args);
-	static int __cdecl HezrouStenchSavingThrowLevel(DispatcherCallbackArgs args);
-	static int __cdecl HezrouStenchDealingDamage(DispatcherCallbackArgs args);
-	static int __cdecl HezrouStenchToHit2(DispatcherCallbackArgs args);
-	static int __cdecl HezrouStenchEffectTooltip(DispatcherCallbackArgs args);
-	static int __cdecl HezrouStenchCureNausea(DispatcherCallbackArgs args);
-	static int __cdecl RemoveSpell(DispatcherCallbackArgs args);
-	static int __cdecl HasCondition(DispatcherCallbackArgs args);
-} spCallbacks;
 
 class ItemCallbacks
 {
@@ -2449,6 +2455,69 @@ int SpellCallbacks::BeginHezrouStench(DispatcherCallbackArgs args){
 	spellPkt.UpdateSpellsCastRegistry();
 	pySpellIntegration.UpdateSpell(spellPkt.spellId);
 
+
+	return 0;
+}
+
+int SpellCallbacks::EnlargePersonWeaponDice(DispatcherCallbackArgs args)
+{
+	args.dispIO->AssertType(dispIOType20);
+	auto dispIo = static_cast<DispIoAttackDice*>(args.dispIO);
+
+
+	if (!dispIo->weapon)
+		return 0;
+
+	auto dice = Dice::FromPacked(dispIo->dicePacked);
+	auto diceCount = dice.GetCount();
+	auto diceSide = dice.GetSides();
+	auto diceMod = dice.GetModifier();
+
+	switch (dice.GetSides())
+	{
+	case 2:
+		diceSide = 3;
+		break;
+	case 3:
+		diceSide = 4;
+		break;
+	case 4:
+		diceSide = 6;
+		break;
+	case 6:
+		if (diceCount == 1)
+			diceSide = 8;
+		else if (diceCount <= 3)
+			diceCount++;
+		else
+			diceCount += 2;
+		break;
+	case 8:
+		if (diceCount == 1){
+			diceCount = 2;
+			diceSide = 6;
+		}
+		else if (diceCount <= 3)
+		{
+			diceCount++;
+		} 
+		else	{
+			diceCount += 2;
+		}
+		break;
+	case 10:
+		diceCount = 2;
+		diceSide = 8;
+		break;
+	case 12:
+		diceCount = 3;
+		diceSide = 6;
+		break;
+	default:
+		break;
+	}
+
+	dispIo->dicePacked = Dice(diceCount, diceSide, diceMod).ToPacked();
 
 	return 0;
 }

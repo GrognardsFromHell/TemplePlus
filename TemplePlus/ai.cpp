@@ -1722,7 +1722,7 @@ public:
 			if (target && aiFightStatus == AIFS_FIGHTING) {
 				auto tgtObj = gameSystems->GetObj().GetObject(target);
 				if (tgtObj->type == obj_t_pc ) {
-					logger->debug("AiFlagsUpdate: For {}, triggerer {}", description.getDisplayName(obj), description.getDisplayName(target));
+					//logger->debug("AiFlagsUpdate: For {}, triggerer {}", description.getDisplayName(obj), description.getDisplayName(target));
 					auto scri = gameSystems->GetObj().GetObject(obj)->GetScriptArray(obj_f_scripts_idx)[san_enter_combat];
 					AiFlag aiFlags = static_cast<AiFlag >(gameSystems->GetObj().GetObject(obj)->GetInt64(obj_f_npc_ai_flags64));
 					if (!(aiFlags & AiFlag::Fighting ) && scri.scriptId)
@@ -1760,9 +1760,9 @@ public:
 				}
 			}
 
-			auto restul = orgScriptExecute(triggerer, attachee, a3, a4, san, a6);
+			auto result = orgScriptExecute(triggerer, attachee, a3, a4, san, a6);
 
-			return restul;
+			return result;
 		});
 
 	}
