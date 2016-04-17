@@ -50,7 +50,7 @@ static struct RadialMenuAddresses : temple::AddressTable {
 	int(__cdecl *SetSpontaneousCastingAltNode)(objHndl handle, int parentIdx, SpellStoreData * spellData);
 	int(__cdecl *AddSpell)(objHndl handle, SpellStoreData * spellData, int * idxOut, const RadialMenuEntry & entry); //adds a spell to the Radial Menu
 	int(__cdecl * RadialMenuCheckboxSthgSub_100F0200)(objHndl objHnd, RadialMenuEntry* radialMenuEntry);
-	void(__cdecl * CopyEntryToSelected)(objHndl obj, RadialMenuEntry* entry);
+	BOOL(__cdecl * CopyEntryToSelected)(objHndl obj, RadialMenuEntry* entry);
 	RadialMenu ** activeRadialMenu;
 	int * activeRadialMenuNode;
 
@@ -235,7 +235,7 @@ int RadialMenus::AddParentChildNode(objHndl objHnd, RadialMenuEntry* radialMenuE
 	node->entry.d20ActionType = D20A_NONE;
 	node->parent = parentIdx;
 	node->childCount = 0;
-	node->entry.callback = (void ( __cdecl*)(objHndl, RadialMenuEntry*) )return0;
+	node->entry.callback = (int ( __cdecl*)(objHndl, RadialMenuEntry*) )return0;
 	node->entry.type = RadialMenuEntryType::Parent;
 	node->morphsTo = -1;
 	node->entry.textHash = conds.hashmethods.StringHash(radialMenuEntry->text);
@@ -294,7 +294,7 @@ int RadialMenus::AddRootParentNode(objHndl obj, RadialMenuEntry* entry){
 
 	node->entry.d20ActionType = D20A_NONE;
 	node->childCount = 0;
-	node->entry.callback = (void(__cdecl*)(objHndl, RadialMenuEntry*))return0;
+	node->entry.callback = (int(__cdecl*)(objHndl, RadialMenuEntry*))return0;
 	node->entry.type = RadialMenuEntryType::Parent;
 	node->morphsTo = -1;
 	node->entry.textHash = ElfHash::Hash(entry->text);
@@ -463,7 +463,7 @@ RadialMenuEntrySlider::RadialMenuEntrySlider(int combatMesLine, int _minArg, int
 	if (combatMesHeaderText != -1)
 		field4 = reinterpret_cast<int>(combatSys.GetCombatMesLine(combatMesHeaderText)); // the popup title
 	helpId = _helpId;
-	callback = (void(__cdecl*)(objHndl, RadialMenuEntry*))temple::GetPointer(0x100F0200);
+	callback = (BOOL(__cdecl*)(objHndl, RadialMenuEntry*))temple::GetPointer(0x100F0200);
 }
 
 RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, D20ActionType d20aType, int data1, uint32_t HelpId) : RadialMenuEntry() {
@@ -484,7 +484,7 @@ RadialMenuEntryToggle::RadialMenuEntryToggle(int combatMesLine, void* ActualArg,
 	type = RadialMenuEntryType::Toggle;
 	text = combatSys.GetCombatMesLine(combatMesLine);
 	helpId = ElfHash::Hash(HelpId);
-	callback = temple::GetRef<void(__cdecl)(objHndl, RadialMenuEntry*)>(0x100F0200);
+	callback = temple::GetRef<BOOL(__cdecl)(objHndl, RadialMenuEntry*)>(0x100F0200);
 	minArg = 0;
 	maxArg = 1;
 	actualArg = reinterpret_cast<int>(ActualArg);

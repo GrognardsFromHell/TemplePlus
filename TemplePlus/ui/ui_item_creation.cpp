@@ -608,7 +608,7 @@ int CraftWandRadialMenu(DispatcherCallbackArgs args)
 	setWandLevel.field4 = (int)combatSys.GetCombatMesLine(6019);
 	setWandLevel.type = RadialMenuEntryType::Slider;
 	setWandLevel.actualArg = (int)conds.CondNodeGetArgPtr(args.subDispNode->condNode, 0);
-	setWandLevel.callback = (void (__cdecl*)(objHndl, RadialMenuEntry*))itemCreationAddresses.Sub_100F0200;
+	setWandLevel.callback = (BOOL (__cdecl*)(objHndl, RadialMenuEntry*))itemCreationAddresses.Sub_100F0200;
 	setWandLevel.text = combatSys.GetCombatMesLine(6017);
 	setWandLevel.helpId = templeFuncs.StringHash("TAG_CRAFT_WAND");
 	radialMenus.AddChildNode(args.objHndCaller, &setWandLevel, newParent);

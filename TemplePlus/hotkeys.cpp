@@ -5,6 +5,9 @@
 #include "tio\tio.h"
 #include "gamesystems/legacy.h"
 #include "util/fixes.h"
+#include "obj.h"
+#include "critter.h"
+#include "action_sequence.h"
 
 HotkeySystem hotkeys;
 
@@ -50,6 +53,9 @@ class HotkeyReplacements : TempleFix
 {
 public: 
 	const char* name() override { return "Hotkey Function Replacements";} 
+
+	static BOOL HotkeyCompare(RadialMenuEntry& first, RadialMenuEntry & second);
+	static BOOL HotkeyActivate(objHndl obj);
 	void apply() override 
 	{
 		replaceFunction(0x100F3B80, HotkeyInit);
@@ -57,9 +63,92 @@ public:
 		replaceFunction(0x100F3BD0, SaveHotkeys);
 		replaceFunction(0x100F3C80, LoadHotkeys);
 		replaceFunction(0x100F4030, HotkeyAssignCallback);
+		replaceFunction(0x100F0380, HotkeyCompare);
+		replaceFunction(0x100F0B80, HotkeyActivate);
 	}
 } hotkeyReplacements;
 
+BOOL HotkeyReplacements::HotkeyCompare(RadialMenuEntry& first, RadialMenuEntry& second)
+{
+	auto actionType = first.d20ActionType;
+
+	if (actionType != second.d20ActionType) {
+		return FALSE;
+	}
+
+	if (actionType == D20A_ACTIVATE_DEVICE_FREE
+		|| actionType == D20A_ACTIVATE_DEVICE_STANDARD
+		|| actionType == D20A_ACTIVATE_DEVICE_SPELL)
+		return first.textHash == second.textHash;
+
+	if (first.d20ActionData1 != second.d20ActionData1)
+		return FALSE;
+
+	if (first.d20SpellData.spellEnumOrg != second.d20SpellData.spellEnumOrg)
+		return FALSE;
+
+	if (first.d20SpellData.metaMagicData != second.d20SpellData.metaMagicData)
+		return FALSE;
+
+	if (first.d20ActionType == D20A_NONE &&first.textHash != second.textHash)
+		return FALSE;
+
+	return TRUE;
+}
+
+BOOL HotkeyReplacements::HotkeyActivate(objHndl obj)
+{
+	auto radMenuForHK = temple::GetRef<RadialMenu*>(0x115B2050);
+
+	if (!radMenuForHK)
+		return FALSE;
+
+	auto radMenuNodeCount = temple::GetRef<int>(0x118676C0);
+	if (radMenuNodeCount > radMenuForHK->nodeCount)
+		return FALSE;
+
+	auto& activeRadialMenu = temple::GetRef<const RadialMenu*>(0x115B2048);
+	activeRadialMenu = radialMenus.GetForObj(obj);
+
+	auto& radEntry = radMenuForHK->nodes[radMenuNodeCount -1].entry;
+
+	auto& activeRadialMenuNode = temple::GetRef<int>(0x115B204C);
+	activeRadialMenuNode = radMenuNodeCount - 1;
+
+	if (radEntry.d20ActionType == D20A_CAST_SPELL)
+		actSeqSys.ActSeqSpellReset();
+	else if (radEntry.d20ActionType == D20A_USE_ITEM && radEntry.d20SpellData.spellEnumOrg != 0){
+		actSeqSys.ActSeqSpellReset();
+	}
+
+	auto nodeType = radEntry.type;
+	auto result = FALSE;
+	if (nodeType == RadialMenuEntryType::Action)
+	{
+		if (radEntry.callback){
+			result = radEntry.callback(obj, &radEntry);
+		}
+	}
+	else if (nodeType == RadialMenuEntryType::Slider)// will toggle between min/max values
+	{
+		temple::GetRef<void(__cdecl)(objHndl, RadialMenuEntry&)>(0x100F05C0)(obj, radEntry); // toggle value to min/max
+		temple::GetRef<void(__cdecl)(objHndl, RadialMenuEntry&)>(0x100F05F0)(obj, radEntry); // activate / deactivate float line
+		result = FALSE;
+	}
+	else if (nodeType == RadialMenuEntryType::Toggle)
+	{
+		if (radEntry.callback) {
+			result = radEntry.callback(obj, &radEntry);
+		}
+		temple::GetRef<void(__cdecl)(objHndl, RadialMenuEntry&)>(0x100F05F0)(obj, radEntry); // activate / deactivate float line
+	}
+
+
+	activeRadialMenu = nullptr;
+	activeRadialMenuNode = -1;
+	return result;
+
+}
 
 int HotkeySystem::SaveHotkeys(TioFile* file)
 {
@@ -143,12 +232,16 @@ void HotkeySystem::HotkeyAssignCallback(int cancelFlag)
 {
 	if (!cancelFlag)
 	{
+		auto hotkeyTable = addresses.hotkeyTable;
+		auto hkIdx = *addresses.keyIdxToBind;
+
 		int radMenuIdx = addresses.HotkeyTableSearch(*addresses.radMenuEntryToBind);
 		if (radMenuIdx != -1)
-			addresses.hotkeyTable[radMenuIdx].d20ActionType = D20A_UNASSIGNED;
-		memcpy(&addresses.hotkeyTable[*addresses.keyIdxToBind], *addresses.radMenuEntryToBind, sizeof(RadialMenuEntry));
-		strncpy(&addresses.hotkeyTexts[128 * (*addresses.keyIdxToBind)], (*addresses.radMenuEntryToBind)->text, 127);
-		addresses.hotkeyTable[*addresses.keyIdxToBind].text = &addresses.hotkeyTexts[128 * (*addresses.keyIdxToBind)];
+			hotkeyTable[radMenuIdx].d20ActionType = D20A_UNASSIGNED;
+
+		hotkeyTable[hkIdx] = **addresses.radMenuEntryToBind;
+		strncpy(&addresses.hotkeyTexts[128 * hkIdx], (*addresses.radMenuEntryToBind)->text, 127);
+		hotkeyTable[hkIdx].text = &addresses.hotkeyTexts[128 * hkIdx];
 
 		auto file = fopen("hotkeys.sco", "wb");
 		SaveHotkeys(file);

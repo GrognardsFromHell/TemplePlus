@@ -130,6 +130,16 @@ public:
 
 } genericCallbacks;
 
+
+class ItemCallbacks
+{
+public:
+	static int __cdecl SkillBonus(DispatcherCallbackArgs args);
+
+	static int __cdecl UseableItemRadialEntry(DispatcherCallbackArgs args);
+} itemCallbacks;
+
+
 class ConditionFunctionReplacement : public TempleFix {
 public:
 	const char* name() override {
@@ -205,17 +215,13 @@ public:
 
 		// power attack damage bonus
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F8540, genericCallbacks.PowerAttackDamageBonus);
+
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10100840, itemCallbacks.UseableItemRadialEntry);
 		
 	}
 } condFuncReplacement;
 
 
-
-class ItemCallbacks
-{
-public:
-	static int __cdecl SkillBonus(DispatcherCallbackArgs args);
-} itemCallbacks;
 
 class ClassAbilityCallbacks
 {
@@ -1995,7 +2001,7 @@ int* ConditionSystem::CondNodeGetArgPtr(CondNode* condNode, int argIdx)
 	radEntry.minArg = 0;
 	radEntry.type = RadialMenuEntryType::Toggle;
 	radEntry.actualArg = (int)conds.CondNodeGetArgPtr(args.subDispNode->condNode, 0);
-	radEntry.callback = (void (__cdecl*)(objHndl, RadialMenuEntry*))temple::GetPointer(0x100F0200);
+	radEntry.callback = (BOOL (__cdecl*)(objHndl, RadialMenuEntry*))temple::GetPointer(0x100F0200);
 	MesLine mesLine;
 	mesLine.key = 5105; //disable AoOs
 	if (!mesFuncs.GetLine(*combatSys.combatMesfileIdx, &mesLine) )
@@ -2154,7 +2160,7 @@ int __cdecl RecklessOffenseRadialMenuInit(DispatcherCallbackArgs args)
 	radEntry.minArg = 0;
 	radEntry.type = RadialMenuEntryType::Toggle;
 	radEntry.actualArg = (int)conds.CondNodeGetArgPtr(args.subDispNode->condNode, 0);
-	radEntry.callback = (void(__cdecl*)(objHndl, RadialMenuEntry*))temple::GetPointer(0x100F0200);
+	radEntry.callback = (BOOL(__cdecl*)(objHndl, RadialMenuEntry*))temple::GetPointer(0x100F0200);
 	MesLine mesLine;
 	mesLine.key = 5107; // reckless offense
 	if (!mesFuncs.GetLine(*combatSys.combatMesfileIdx, &mesLine))
@@ -2994,6 +3000,80 @@ int ItemCallbacks::SkillBonus(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args)
+{
+	auto invIdx = args.GetCondArg(2);
+	auto itemHandle = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+	auto itemObj = gameSystems->GetObj().GetObject(itemHandle);
+	auto objType = itemObj->type;
+	int useMagicDeviceSkillBase = critterSys.SkillBaseGet(args.objHndCaller, skill_use_magic_device);
+
+	if (objType != obj_t_food && !inventory.IsIdentified(itemHandle))
+		return 0;
+	
+	auto charges = itemObj->GetInt32(obj_f_item_spell_charges_idx);
+	if (charges == 0)
+		return 0;
+
+	auto itemFlags = itemObj->GetItemFlags();
+
+	auto spIdx = args.GetCondArg(0);
+
+	auto spData = itemObj->GetSpell(obj_f_item_spell_idx, spIdx);
+
+	if ( (objType == obj_t_scroll || (itemFlags & OIF_NEEDS_SPELL) && (itemObj->type == obj_t_generic || itemObj->type == obj_t_weapon) )
+		&& !useMagicDeviceSkillBase && !critterSys.HashMatchingClassForSpell(args.objHndCaller, spData.spellEnum))
+		return 0;
+
+	if (objType == obj_t_scroll && !spellSys.CheckAbilityScoreReqForSpell(args.objHndCaller, spData.spellEnum, -1) && !useMagicDeviceSkillBase)
+		return 0;
+
+	RadialMenuEntry radEntry;
+	if (objType == obj_t_food){
+		if (inventory.IsMagicItem(itemHandle))
+			radEntry.d20ActionType = D20A_USE_POTION;
+		else
+			radEntry.d20ActionType = D20A_USE_ITEM;
+	} 
+	else{
+		radEntry.d20ActionType = D20A_USE_ITEM;
+	}
+
+	radEntry.d20ActionData1 = invIdx;
+	radEntry.d20SpellData.Set(spData.spellEnum, spData.classCode, spData.spellLevel, invIdx, (MetaMagicData)0);
+	radEntry.text = const_cast<char*>(description.getDisplayName(itemHandle, args.objHndCaller));
+
+	RadialMenuStandardNode parentType;
+	switch(objType)
+	{
+	case obj_t_scroll:
+		parentType = RadialMenuStandardNode ::Scrolls;
+		break;
+	case obj_t_food:
+		parentType = RadialMenuStandardNode::Potions;
+		break;
+	default:
+		parentType = args.GetCondArg(1) != 3 ? RadialMenuStandardNode::Items : RadialMenuStandardNode::Wands;
+		break;
+	}
+	
+	radEntry.helpId = ElfHash::Hash(spellSys.GetSpellEnumTAG(spData.spellEnum));
+
+	radEntry.AddChildToStandard(args.objHndCaller, parentType);
+
+	// add to Copy Scroll
+	if (objType == obj_t_scroll && objects.StatLevelGet(args.objHndCaller, stat_level_wizard) >= 1
+		&& critterSys.HashMatchingClassForSpell(args.objHndCaller, spData.spellEnum)
+		&& spellSys.IsArcaneSpellClass(spData.classCode)
+		&& !spellSys.spellKnownQueryGetData(args.objHndCaller, spData.spellEnum, nullptr, nullptr, nullptr))
+	{
+		radEntry.d20ActionType = D20A_COPY_SCROLL;
+		radEntry.d20ActionData1 = inventory.GetInventoryLocation(itemHandle);
+		radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::CopyScroll);
+	}
+
+	return 0;
+}
 #pragma endregion 
 
 

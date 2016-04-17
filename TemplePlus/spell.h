@@ -155,6 +155,7 @@ struct LegacySpellSystem : temple::AddressTable
 	int ParseSpellSpecString(SpellStoreData* spell, char* spellString);
 
 	const char* GetSpellMesline(uint32_t line) const;
+	bool CheckAbilityScoreReqForSpell(objHndl handle, uint32_t spellEnum, int statBeingRaised) const;
 	static const char* GetSpellEnumTAG(uint32_t spellEnum);
 	const char* GetSpellName(uint32_t spellEnum) const;
 	

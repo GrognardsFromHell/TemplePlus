@@ -1153,6 +1153,18 @@ int LegacyCritterSystem::PlayCritterVoiceLine(objHndl obj, objHndl fellow, char*
 	return addresses.PlayCritterVoiceLine(obj, fellow, text, soundId);
 }
 
+bool LegacyCritterSystem::HashMatchingClassForSpell(objHndl handle, uint32_t spellEnum) const
+{
+	return temple::GetRef<BOOL(__cdecl)(objHndl, uint32_t)>(0x10075DA0)(handle, spellEnum);
+}
+
+int LegacyCritterSystem::SkillBaseGet(objHndl handle, SkillEnum skill)
+{
+	if (!handle)
+		return 0;
+	return gameSystems->GetObj().GetObject(handle)->GetInt32Array(obj_f_critter_skill_idx)[ skill] / 2;
+}
+
 int LegacyCritterSystem::SpellNumByFieldAndClass(objHndl obj, obj_f field, uint32_t spellClassCode)
 {
 	auto objBody = gameSystems->GetObj().GetObject(obj);

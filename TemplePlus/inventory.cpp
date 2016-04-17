@@ -444,6 +444,26 @@ const char* InventorySystem::GetItemErrorString(ItemErrorCode itemErrorCode)
 	return line.value;
 }
 
+bool InventorySystem::IsMagicItem(objHndl itemHandle)
+{
+	return gameSystems->GetObj().GetObject(itemHandle)->GetItemFlags() & OIF_IS_MAGICAL;
+}
+
+bool InventorySystem::IsIdentified(objHndl itemHandle)
+{
+	if (!itemHandle)
+		return false;
+	auto obj = gameSystems->GetObj().GetObject(itemHandle);
+
+	if (!obj->IsItem())
+		return false;
+
+	if (obj->GetItemFlags() & ItemFlag::OIF_IS_MAGICAL)
+		return (obj->GetItemFlags() & ItemFlag::OIF_IDENTIFIED);
+
+	return true;
+}
+
 bool InventorySystem::IsBuckler(objHndl shield)
 {
 	if (!shield)

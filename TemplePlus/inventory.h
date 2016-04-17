@@ -81,6 +81,8 @@ struct InventorySystem : temple::AddressTable
 	bool IsProficientWithArmor(objHndl obj, objHndl armor) const;
 	void GetItemMesLine(MesLine* line);
 	const char* GetItemErrorString(ItemErrorCode itemErrorCode);
+	static bool IsMagicItem(objHndl itemHandle);
+	static bool IsIdentified(objHndl itemHandle);
 	static bool IsBuckler(objHndl shield);
 	void(__cdecl*_ForceRemove)(objHndl, objHndl);
 	void ItemRemove(objHndl item); // pretty much same as ForceRemove, but also send a d20 signal for inventory update, and checks for parent first

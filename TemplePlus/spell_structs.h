@@ -56,6 +56,7 @@ struct SpellStoreState
 };
 
 enum SpontCastType : unsigned char {
+	spontCastNone = 0,
 	spontCastGoodCleric = 2,
 	spontCastEvilCleric = 4,
 	spontCastDruid = 8
@@ -81,7 +82,18 @@ struct D20SpellData
 	uint8_t itemSpellData;
 	SpontCastType spontCastType : 4;
 	unsigned char spellSlotLevel : 4;
+	void Set(uint32_t spellEnum, uint32_t spellClassCode, uint32_t spellLevel, uint32_t invIdx, MetaMagicData metaMagicData);
 };
+
+inline void D20SpellData::Set(uint32_t spellEnum, uint32_t SpellClassCode, uint32_t SpellLevel, uint32_t invIdx, MetaMagicData mmData)
+{
+	spellEnumOrg = spellEnum;
+	metaMagicData = mmData;
+	spellClassCode = SpellClassCode;
+	itemSpellData = invIdx;
+	spellSlotLevel = SpellLevel;
+	spontCastType = SpontCastType::spontCastNone;
+}
 
 const uint32_t TestSizeOfD20SpellData = sizeof(D20SpellData);
 

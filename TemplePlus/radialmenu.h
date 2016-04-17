@@ -74,7 +74,7 @@ struct RadialMenuEntry {
 	//int spellEnumOrg;
 	//uint32_t spellMetaMagic;
 	int dispKey;
-	void (__cdecl *callback)(objHndl a1, RadialMenuEntry *entry);
+	BOOL (__cdecl *callback)(objHndl a1, RadialMenuEntry *entry);
 	int flags;
 	int helpId; // String hash for the help topic associated with this entry
 	int field44;

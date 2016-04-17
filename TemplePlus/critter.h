@@ -5,6 +5,8 @@
 #include <memory>
 #include <temple/dll.h>
 
+enum SkillEnum:uint32_t;
+
 namespace gfx {
 	enum class WeaponAnim;
 	class EncodedAnimId;
@@ -310,6 +312,8 @@ struct LegacyCritterSystem : temple::AddressTable
 	bool IsWieldingRangedWeapon(objHndl performer);
 	void GetCritterVoiceLine(objHndl obj, objHndl fellow, char *str, int* soundId);
 	int PlayCritterVoiceLine(objHndl obj, objHndl fellow, char* text, int soundId);
+	bool HashMatchingClassForSpell(objHndl handle, uint32_t spellEnum) const; // checks if obj has a matching spell in their list
+	static int SkillBaseGet(objHndl handle, SkillEnum skill);
 	static int SpellNumByFieldAndClass(objHndl obj, obj_f field, uint32_t spellClassCode);
 	int DomainSpellNumByField(objHndl obj, obj_f field);
 	static int GetNumFollowers(objHndl obj, int excludeForcedFollowers);

@@ -315,6 +315,11 @@ const char* LegacySpellSystem::GetSpellMesline(uint32_t lineNumber) const
 	return mesLine.value;
 }
 
+bool LegacySpellSystem::CheckAbilityScoreReqForSpell(objHndl handle, uint32_t spellEnum, int statBeingRaised) const
+{
+	return temple::GetRef<BOOL(__cdecl)(objHndl, uint32_t, int)>(0x10075C60)(handle, spellEnum, statBeingRaised);
+}
+
 const char* LegacySpellSystem::GetSpellEnumTAG(uint32_t spellEnum){
 
 	MesLine mesline;
