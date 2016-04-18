@@ -650,7 +650,7 @@ int GenericCallbacks::TripAooRadial(DispatcherCallbackArgs args){
 	// limit this option to characters with Improved Trip, to prevent AoOs during AoOs
 	if (!feats.HasFeatCountByClass(args.objHndCaller, FEAT_IMPROVED_TRIP))
 		return 0;
-	RadialMenuEntryToggle radEntry(5117, args.GetCondArgPtr(0), "TAG_TRIP_ATTACK_OF_OPPORTUNITY" );
+	RadialMenuEntryToggle radEntry(5117, args.GetCondArgPtr(1), "TAG_TRIP_ATTACK_OF_OPPORTUNITY" );
 	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
 	return 0;
 }
@@ -658,7 +658,7 @@ int GenericCallbacks::TripAooRadial(DispatcherCallbackArgs args){
 int GenericCallbacks::TripAooQuery(DispatcherCallbackArgs args)
 {
 	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
-	if (args.GetCondArg(0)){
+	if (args.GetCondArg(1)){
 		dispIo->return_val = 1;
 	}
 
