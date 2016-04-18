@@ -136,6 +136,8 @@ struct D20RadialMenuDef
 class RadialMenus {
 public:
 
+	static int standardNodeIndices[120];
+
 	/*
 		Returns the radial menu for the given object or null
 		if no radial menu exists.

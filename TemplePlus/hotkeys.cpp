@@ -104,8 +104,9 @@ BOOL HotkeyReplacements::HotkeyActivate(objHndl obj)
 		return FALSE;
 
 	auto radMenuNodeCount = temple::GetRef<int>(0x118676C0);
-	if (radMenuNodeCount > radMenuForHK->nodeCount)
+	if (radMenuNodeCount > radMenuForHK->nodeCount) {
 		return FALSE;
+	}
 
 	auto& activeRadialMenu = temple::GetRef<const RadialMenu*>(0x115B2048);
 	activeRadialMenu = radialMenus.GetForObj(obj);

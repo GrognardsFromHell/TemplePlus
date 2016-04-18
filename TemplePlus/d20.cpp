@@ -1437,7 +1437,7 @@ ActionErrorCode D20ActionCallbacks::ActionFrameDisarm(D20Actn* d20a)
 				} disarmedArgs;
 				disarmedArgs.weapon = weapon;
 				objects.floats->FloatCombatLine(d20a->d20APerformer, 200); // Counter Disarmed!
-				conds.AddTo(d20a->d20APerformer, "Disarmed", { ((int*)&disarmedArgs)[0], ((int*)&disarmedArgs)[1], 0,0,0,0 });
+				conds.AddTo(d20a->d20APerformer, "Disarmed", { ((int*)&disarmedArgs)[0], ((int*)&disarmedArgs)[1], 0,0,0,0,0,0 });
 				return AEC_OK;
 			}
 			else if (!failedOnce)

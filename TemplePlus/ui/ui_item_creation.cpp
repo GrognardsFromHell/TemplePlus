@@ -550,25 +550,9 @@ uint32_t ItemCreationBuildRadialMenuEntry(DispatcherCallbackArgs args, ItemCreat
 {
 	if (combatSys.isCombatActive()) { return 0; }
 	MesLine mesLine;
-	RadialMenuEntry radmenu;
-	mesLine.key = combatMesLine;
-	mesFuncs.GetLine_Safe(*combatSys.combatMesfileIdx, &mesLine);
-	//RadialMenuStructInit(&radmenu);
-	radmenu.text = (char*)mesLine.value;
-	//radmenu.field0 = (void*)mesLine.value;
+	RadialMenuEntryAction radEntry(combatMesLine, D20A_ITEM_CREATION, itemCreationType, helpSystemString);
+	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Feats);
 	
-	radmenu.d20ActionType = D20A_ITEM_CREATION;
-	//radmenu.field20 = 37;
-
-	radmenu.d20ActionData1 = itemCreationType;
-	//radmenu.field24 = itemCreationType;
-
-	radmenu.helpId = templeFuncs.StringHash(helpSystemString);
-	//radmenu.field40 = templeFuncs.StringHash(helpSystemString);
-
-	radialMenus.AddChildNode(args.objHndCaller, &radmenu, radialMenus.GetStandardNode(RadialMenuStandardNode::Feats));
-	//radialFuncs.RadialMenuCreateEntry(args.objHndCaller,  &radmenu , radialFuncs.RadialMenuArgMap_sub_100F12B0(3) ) ;
-
 	return 0;
 };
 

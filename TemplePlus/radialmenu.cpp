@@ -20,6 +20,7 @@
 //#include "temple_functions.h"
 
 RadialMenus radialMenus;
+int RadialMenus::standardNodeIndices[120];
 
 static_assert(temple::validate_size<RadialMenuEntry, 0x48>::value, "Structure has an incorrect size.");
 static_assert(temple::validate_size<RadialMenuNode, 0x11C>::value, "Structure has an incorrect size.");
@@ -93,8 +94,20 @@ class RadialMenuReplacements : public TempleFix
 	}
 
 	static int RmbReleasedHandler(TigMsg* msg);
+	void ReplaceStandardRadialNodes();
+
 
 	void apply() override {
+
+
+		// GetStandardNode
+		replaceFunction<int(int)>(0x100F12B0, [](int stdNode){
+			return radialMenus.GetStandardNode(static_cast<RadialMenuStandardNode>(stdNode));
+		});
+
+		ReplaceStandardRadialNodes();
+
+
 		// RadialMenuUpdate
 		replaceFunction<void(__cdecl)(objHndl)>(0x1004D1F0, [](objHndl objHnd){
 			auto obj = gameSystems->GetObj().GetObject(objHnd);
@@ -170,6 +183,44 @@ int RadialMenuReplacements::RmbReleasedHandler(TigMsg* msg)
 	return 1;
 }
 
+void RadialMenuReplacements::ReplaceStandardRadialNodes()
+{
+	auto writeval = reinterpret_cast<int>(RadialMenus::standardNodeIndices);
+
+	// SetStandardNode
+	write(0x100F145F + 3, &writeval, sizeof(int*));
+	write(0x100F1441 + 3, &writeval, sizeof(int*));
+
+
+	write(0x100F15B9 + 3, &writeval, sizeof(int*));
+	write(0x100F16E7 + 3, &writeval, sizeof(int*));
+	write(0x100F1818 + 3, &writeval, sizeof(int*));
+	write(0x100F1945 + 3, &writeval, sizeof(int*));
+	write(0x100F1A77 + 3, &writeval, sizeof(int*));
+	write(0x100F1BA8 + 3, &writeval, sizeof(int*));
+	write(0x100F1D30 + 3, &writeval, sizeof(int*));
+	write(0x100F1D70 + 3, &writeval, sizeof(int*));
+	write(0x100F1E97 + 3, &writeval, sizeof(int*));
+	write(0x100F1FD0 + 3, &writeval, sizeof(int*));
+	write(0x100F2100 + 3, &writeval, sizeof(int*));
+	write(0x100F2384 + 3, &writeval, sizeof(int*));
+
+	// BuildRadialMenuNormal
+	write(0x100F2674 + 2, &writeval, sizeof(int*));
+	write(0x100F27EC + 3, &writeval, sizeof(int*));
+	
+	writeval = reinterpret_cast<int>(RadialMenus::standardNodeIndices) + 8;
+	write(0x100F2876 + 2, &writeval, sizeof(int*));
+	write(0x100F28F4 + 1, &writeval, sizeof(int*));
+	write(0x100F2969 + 2, &writeval, sizeof(int*));
+	write(0x100F29E3 + 2, &writeval, sizeof(int*));
+	write(0x100F2A62 + 1, &writeval, sizeof(int*));
+	write(0x100F2AD0 + 2, &writeval, sizeof(int*));
+
+	writeval = reinterpret_cast<int>(RadialMenus::standardNodeIndices) + 0x28;
+	write(0x100F2B71 + 2, &writeval, sizeof(int*));
+}
+
 RadialMenuReplacements radMenuReplace;
 
 
@@ -197,7 +248,7 @@ const RadialMenuEntry& RadialMenus::GetLastSelected() {
 }
 
 int RadialMenus::GetStandardNode(RadialMenuStandardNode node) {
-	return addresses.standardNodeIndices[(int)node];
+	return standardNodeIndices[(int)node];
 }
 
 int RadialMenus::Sub_100F0200(objHndl objHnd, RadialMenuEntry* radEntry)
