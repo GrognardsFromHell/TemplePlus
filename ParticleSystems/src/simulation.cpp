@@ -440,8 +440,9 @@ void SimulateParticleMovement(PartSysEmitter* emitter, float timeToSimulateSecs)
 
 		if (spec->GetParticlePosCoordSys() == PartSysCoordSys::Polar) {
 			// Get current particle spherical coordinates
-			auto azimuth = state.GetState(PSF_POS_AZIMUTH, particleIdx);
-			auto inclination = state.GetState(PSF_POS_INCLINATION, particleIdx);
+			// Azimuth / Incliation are stored in radians alraedy, while the pos_var is in degrees
+			auto azimuth = XMConvertToDegrees(state.GetState(PSF_POS_AZIMUTH, particleIdx));
+			auto inclination = XMConvertToDegrees(state.GetState(PSF_POS_INCLINATION, particleIdx));
 			auto radius = state.GetState(PSF_POS_RADIUS, particleIdx);
 
 			// Modify them according to position variation parameters
