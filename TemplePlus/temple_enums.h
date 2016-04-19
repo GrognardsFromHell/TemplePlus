@@ -687,7 +687,7 @@ enum feat_enums : int {
 	FEAT_MIGHTY_RAGE = 748,
 	FEAT_INDOMITABLE_WILL = 749,
 
-	FEAT_INVALID = 4294967295 // -1
+	FEAT_INVALID = -1
 };
 
 enum feat_requirement_codes : int32_t {
