@@ -138,9 +138,6 @@ void __cdecl MouseFuncs::ResetCursor() {
 
 static class MouseFixes : TempleFix {
 public:
-	const char* name() override {
-		return "Cursor fixes";
-	}
 	void apply() override;
 } fix;
 

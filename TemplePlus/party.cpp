@@ -36,9 +36,6 @@ LegacyPartySystem party;
 class LegacyPartySystemHacks : TempleFix
 {
 public: 
-	const char* name() override { 
-		return "LegacyPartySystem Function Replacements";
-	};
 	void SetMaxPCs(char maxPCs);
 
 	void apply() override 

@@ -10,10 +10,6 @@ using GameConfigChangedCallback = void(*)();
 
 static class ConfigHooks : public TempleFix {
 
-	const char *name() override {
-		return "Config Hooks";
-	}
-
 	void apply() override;
 
 	static void Init(GameConfig *config, const char *filename);

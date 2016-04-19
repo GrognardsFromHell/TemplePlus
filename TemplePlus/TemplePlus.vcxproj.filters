@@ -302,7 +302,6 @@
     <ClCompile Include="gamesystems\objects\gameobject.cpp" />
     <ClCompile Include="gamesystems\objects\objfind.cpp" />
     <ClCompile Include="gamesystems\d20\d20stats.cpp" />
-    <ClCompile Include="gamesystems\d20\d20stats_hooks.cpp" />
     <ClCompile Include="common.cpp" />
     <ClCompile Include="util\savegame.cpp" />
     <ClCompile Include="util\streams.cpp" />

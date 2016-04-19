@@ -7,12 +7,6 @@
 
 class ProtosHooks : public TempleFix{
 public: 
-	const char* name() override { 
-		return "Protos Hooks";
-	} 
-	
-	
-
 	void apply() override 
 	{
 		

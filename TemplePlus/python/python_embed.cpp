@@ -129,12 +129,9 @@ static void breakIt() {
 	_CrtDbgBreak();
 }
 
+// Python Script Extensions
 static class PythonEngineReplacement : public TempleFix {
 public:
-	const char* name() override {
-		return "Python Script Extensions";
-	}
-
 	void apply() override {
 		// Overwrite all imports from pytoee22.dll with our break function to catch all errors
 		uint32_t firstImportAt = 0x1026C294;

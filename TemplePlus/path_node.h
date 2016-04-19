@@ -121,10 +121,6 @@ struct FindPathNodeData
 class PathNodeSys: public TempleFix
 {
 public:
-	const char* name() override {
-		return "Path Node System";
-	}
-
 	static constexpr int MaxPathNodes = 30000; // hommlet has about 1000, so that should be enough! that would be 0.6MB
 
 	void RecipDebug(); // debugging for non-reciprocating neighbour nodes (i.e. finds situations where A->B but not B->A)

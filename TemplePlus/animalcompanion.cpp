@@ -32,12 +32,9 @@ void AnimalCompanionGetRadialMenuOptions(objHndl objHnd, int animIdx, int unknow
 	return ;
 };
 
-
+// Animal Companion For High Levels
 class AnimalCompanionMod : public TempleFix {
 public:
-	const char* name() override {
-		return "Animal Companion For High Levels";
-	}
 	void apply() override;
 } animalCompanionMod;
 

@@ -35,7 +35,6 @@ struct D20HelpLink
 class HelpSystem : TempleFix
 {
 public: 
-	const char* name() override { return "Help System Replacements";}
 	void apply() override;
 	void ClickForHelpToggle() const;
 	static int HelpTabInit();

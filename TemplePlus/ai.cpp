@@ -1638,8 +1638,6 @@ unsigned int _AiWakeFriend(AiTactic * aiTac)
 class AiReplacements : public TempleFix
 {
 public: 
-	const char* name() override { return "AI Function Replacements";} 
-
 	static int AiDefault(AiTactic* aiTac);
 	static int AiAttack(AiTactic* aiTac);
 	static int AiGoMelee(AiTactic* aiTac);

@@ -124,10 +124,6 @@ void __cdecl hookedSpellsPendingToMemorized(objHndl objHnd)
 
 class BonusSpellFix : public TempleFix {
 public:
-	const char* name() override {
-		return "bonus spell fix";
-	}
-
 	static uint32_t _abilityScoreLevelGet(objHndl obj, Stat abScore, DispIO * dispIO)
 	{
 		return objects.abilityScoreLevelGet(obj, abScore, dispIO);

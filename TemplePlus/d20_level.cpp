@@ -28,9 +28,6 @@ struct D20LevelSystemAddresses : temple::AddressTable
 class D20LevelHooks : public TempleFix
 {
 public: 
-	const char* name() override { 
-		return "D20Level Hooks";
-	} 
 	
 	void apply() override 
 	{

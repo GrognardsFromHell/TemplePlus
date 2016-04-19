@@ -29,11 +29,6 @@ static struct TigConsoleAddresses : temple::AddressTable {
 class TigConsoleReplacement : TempleFix
 {
 public: 
-	const char* name() override 
-	{
-		return "TigConsole" "Function Replacements";
-	} 
-
 	static int(__cdecl *orgConsoleMsgHandler)(TigMsg* msg);
 	static int ConsoleMsgHandler(TigMsg * msg);
 	void apply() override 

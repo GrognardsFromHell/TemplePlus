@@ -4,10 +4,6 @@
 
 static class KeyboardFix : TempleFix {
 public:
-	const char* name() override {
-		return "Keyboard Fix";
-	}
-
 	void apply() override;
 
 	static int IsKeyPressed(int dinputKey);

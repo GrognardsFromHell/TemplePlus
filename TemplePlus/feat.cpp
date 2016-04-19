@@ -21,15 +21,10 @@ FeatPrereqRow featPreReqTable[NUM_FEATS + 1000];
 
 LegacyFeatSystem feats;
 
-
-
-
+// Re-implementation of SpellSlinger's fix for Rogues feats above level 10 in
+// a way that doesn't involve undeclared memory segments
 class FeatFixes : public TempleFix {
 public:
-	const char* name() override {
-		return "Re-implementation of SpellSlinger's fix for Rogues feats above level 10 in a way that doesn't involve undeclared memory segments";
-	}
-
 	void apply() override {
 		//writeHex(0x10278078, "73 69 7A 65 5F 63 6F 6C 6F 73 73 61 6C");
 

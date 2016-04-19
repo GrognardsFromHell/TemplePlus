@@ -144,10 +144,6 @@ static int DeserializeEvent(PyObject **pOut, TioFile *file) {
 
 static class PythonTimeEventFix : TempleFix {
 public:
-	const char* name() override {
-		return "Python Timeevent Replacement";
-	}
-	
 	void apply() override {
 		replaceFunction(0x100AD560, ProcessEvent);
 		replaceFunction(0x100AD600, SerializeEvent);

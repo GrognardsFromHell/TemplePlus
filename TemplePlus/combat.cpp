@@ -69,10 +69,6 @@ struct CombatSystemAddresses : temple::AddressTable
 class CombatSystemReplacements : public TempleFix
 {
 public:
-	const char* name() override {
-		return "Combat System Replacements";
-	}
-
 	static objHndl CheckRangedWeaponAmmo(objHndl obj);
 	static objHndl(__cdecl *orgCheckRangedWeaponAmmo)(objHndl obj);
 

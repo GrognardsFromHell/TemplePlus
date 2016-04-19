@@ -12,10 +12,6 @@
 */
 static class SectorCacheSizeFix : TempleFix {
 public:
-	const char* name() override {
-		return "Sector Cache Size Fix";
-	}
-
 	void apply() override {
 		OrgInitSectorCache = replaceFunction(0x10084300, InitSectorCache);
 	}

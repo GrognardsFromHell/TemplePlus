@@ -13,11 +13,9 @@
 #include "gamesystems/gamesystems.h"
 #include "ui/ui_party.h"
 
+// Dispatcher System Function Replacements
 class DispatcherReplacements : public TempleFix {
 public:
-	const char* name() override {
-		return "Dispatcher System Function Replacements";
-	}
 
 	void apply() override {
 		logger->info("Replacing basic Dispatcher functions");

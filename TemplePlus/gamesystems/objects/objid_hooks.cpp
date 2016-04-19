@@ -18,10 +18,6 @@ public:
 	static BOOL ObjectIdEquals(ObjectId a, ObjectId b);
 	static void ObjectIdToString(char*, ObjectId id);
 
-	const char* name() override {
-		return "Object Id Hooks";
-	}
-
 	void apply() override {
 		replaceFunction(0x100c21b0, GeneratePermanentId);
 		replaceFunction(0x100c21e0, GeneratePositionalId);

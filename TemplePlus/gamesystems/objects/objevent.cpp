@@ -60,9 +60,6 @@ IdxTableWrapper<ObjEventAoE> _objEvtTable(0x109DD320);
 class ObjEventHooks : public TempleFix
 {
 public: 
-	const char* name() override {
-		return "ObjEvent Hooks";
-	} 
 	static void ObjectEventAdvanceTime();
 	//static int EventAppend(objHndl obj, int onEnterFuncIdx, int onLeaveFuncIdx, ObjectListFilter olcFilter, float radiusInch, float angleMin, float angleMax);
 	static void ObjEventListItemNew(objHndl obj, LocAndOffsets loc, LocAndOffsets newLoc); // called from location updater functions like ObjMove

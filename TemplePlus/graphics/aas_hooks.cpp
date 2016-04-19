@@ -207,10 +207,6 @@ public:
 		return handle < sMaxAnims && !mAnims[handle].freed;
 	}
 
-	const char* name() override {
-		return "AAS";
-	}
-
 	void apply() override {
 		static auto instance = this;
 

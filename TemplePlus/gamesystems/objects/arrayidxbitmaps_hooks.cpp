@@ -9,11 +9,6 @@
 static class ArrayIndexBitmapsHooks : public TempleFix {
 public:
 
-	virtual const char * name() override
-	{
-		return "Array Idx Bitmap Hooks";
-	}
-
 	virtual void apply() override
 	{
 		replaceFunction<ArrayIdxMapId()>(0x1010b290, []() -> ArrayIdxMapId {

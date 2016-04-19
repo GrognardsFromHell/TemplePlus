@@ -730,11 +730,9 @@ int Objects::IsCritterProne(objHndl handle){
 
 #pragma region Hooks
 
+// Replacements for Object functions (mainly for debugging purposes now)
 class ObjectReplacements : public TempleFix {
 public:
-	const char* name() override {
-		return "Replacements for Object functions (mainly for debugging purposes now)";
-}
 
 	static uint32_t _abilityScoreLevelGet(objHndl obj, Stat abScore, DispIO * dispIO)
 {

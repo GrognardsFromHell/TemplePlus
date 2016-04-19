@@ -27,14 +27,9 @@
 
 struct TioFile;
 
-
-
+// Fix for duplicate particle systems
 static class SectorLoadLightFix : TempleFix {
 public:
-	const char* name() override {
-		return "Fix for duplicate particle systems";
-	}
-
 	void apply() override;
 
 private:

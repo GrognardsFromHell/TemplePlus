@@ -63,12 +63,9 @@ static void RemovePythonSpell(int spellId) {
 	pySpellIntegration.RemoveSpell(spellId);
 }
 
+// Python Script Integration Extensions (Spells)
 static class PythonSpellIntegrationFix : public TempleFix {
 public:
-	const char* name() override {
-		return "Python Script Integration Extensions (Spells)";
-	}
-
 	void apply() override {
 		replaceFunction(0x100C0180, SpellTrigger);
 		replaceFunction(0x100C0390, SpellTriggerProjectile);

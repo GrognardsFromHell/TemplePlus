@@ -14,7 +14,7 @@ TempleFuncs templeFuncs;
 
 class TempleFuncReplacements : public TempleFix
 {
-	public: const char* name() override { return "Temple General Function" "Function Replacements";} void apply() override 
+	void apply() override 
 	{
 		replaceFunction(0x10038B60, _diceRoll); 
 	}

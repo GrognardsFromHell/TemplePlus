@@ -593,10 +593,6 @@ const TimeEventTypeSpec& GetTimeEventTypeSpec(TimeEventType type) {
 class TimeEventHooks : public TempleFix
 {
 public: 
-	const char* name() override { 
-	return "TimeEvent Function Replacements";
-	} 
-	
 	void apply() override 
 	{
 		static int (*orgTimeEventValidate)(TimeEventListEntry* evt, int flag) = replaceFunction<int (__cdecl)(TimeEventListEntry*, int)>(0x10060430, [](TimeEventListEntry* evt, int flag)

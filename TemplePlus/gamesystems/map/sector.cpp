@@ -502,13 +502,3 @@ void MapSectorSystem::RemoveSectorLight(objHndl handle)
 	map_sector_reset_sectorlight(handle);
 }
 
-
-static class MapSectorHooks : public TempleFix {
-public:
-	const char* name() override {
-		return "map sector hooks";
-	}
-	void apply() override {
-
-	}
-} hooks;

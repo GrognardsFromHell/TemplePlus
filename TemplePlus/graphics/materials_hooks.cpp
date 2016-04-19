@@ -43,12 +43,9 @@ struct LegacyShader {
 };
 #pragma pack(pop)
 
+// Replaces the old material system
 static class MaterialsHooks : TempleFix {
 public:
-	const char* name() override {
-		return "Replaces the old material system";
-	}
-
 	void apply() override;
 
 	static MdfRenderMaterialPtr sLastMaterial;

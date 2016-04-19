@@ -266,10 +266,6 @@ bool GameSystems::SaveGame(const string& filename, const string& displayName) {
 
 static class GameLibSaveReplacement : TempleFix {
 public:
-	const char* name() override {
-		return "GameLib Save replacement.";
-	}
-
 	static bool SaveGame(const char *filename, const char *displayName) {
 		return gameSystems->SaveGame(filename, displayName);
 	}

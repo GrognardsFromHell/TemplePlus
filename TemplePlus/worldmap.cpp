@@ -3,14 +3,10 @@
 #include "util/fixes.h"
 #include "maps.h"
 
-
+// Worldmap extension by Spellslinger
 class WorldmapFix: TempleFix
 {
 public:
-	const char* name() override {
-		return "Worldmap extension by Spellslinger";
-	}
-
 	static int GetAreaFromMap(int mapId);
 	static int CanAccessWorldmap();
 	

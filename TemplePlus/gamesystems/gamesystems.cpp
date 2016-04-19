@@ -791,9 +791,6 @@ GameSystems* gameSystems = nullptr;
 
 static class GameSystemsHooks : public TempleFix {
 public:
-	const char* name() override {
-		return "Game System Fixes";
-	}
 	void apply() override {
 		replaceFunction(0x10001DB0, Reset);
 		replaceFunction(0x10002510, IsResetting);

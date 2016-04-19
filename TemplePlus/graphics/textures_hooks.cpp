@@ -9,10 +9,6 @@
 
 static class TexturesHooks : TempleFix {
 public:
-	const char* name() override {
-		return "Texture Registry Enhancements";
-	}
-
 	void apply() override;
 
 private:

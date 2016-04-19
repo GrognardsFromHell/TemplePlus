@@ -4,10 +4,6 @@
 
 class DebugMessageToggles : public TempleFix {
 public:
-	const char* name() override {
-		return "Debug Message Toggles";
-	}
-
 	void apply() override;
 } debugMessageToggles;
 

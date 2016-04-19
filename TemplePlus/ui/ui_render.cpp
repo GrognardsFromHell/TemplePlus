@@ -103,7 +103,7 @@ bool UiRenderer::DrawTextInWidget(int widgetId, const string &text, const TigRec
 
 	TigRect extents(rect.x + wid->x , rect.y + wid->y , rect.width,rect.height);
 
-	return tigFont.Draw(text.c_str(), extents, style);
+	return tigFont.Draw(text.c_str(), extents, style) == TRUE;
 
 	// return uiRenderFuncs.DrawTextInWidget(widgetId, text.c_str(), rect, style);
 }

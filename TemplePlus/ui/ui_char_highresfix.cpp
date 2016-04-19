@@ -29,13 +29,10 @@ static int HookedUiCharInit(const GameSystemConf &conf) {
 	return result;
 }
 
+// Fixes higher resolution issues with the char and inventory screen
 class UiCharHighresFix : public TempleFix {
 public:
 	
-	const char* name() override {
-		return "Fixes higher resolution issues with the char and inventory screen";
-	}
-
 	void apply() override {
 		if (!config.engineEnhancements) {
 			return;

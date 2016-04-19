@@ -24,11 +24,6 @@
 	__asm mov ecx, this\
 	__asm mov esi, [ecx]._##funName }
 
-#define macTempleFix(sysName) public:\
-	const char* name() override {\
-			return #sysName "Function Replacements";}\
-			void apply() override \
-
 #define BonusListMax 40
 
 

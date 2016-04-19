@@ -45,8 +45,6 @@ struct Render2dArgs {
 
 class RenderHooks : TempleFix {
 public:
-	const char* name() override;
-
 	void apply() override;
 
 	static int ShaderRender3d(int vertexCount,

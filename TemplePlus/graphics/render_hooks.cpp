@@ -17,10 +17,6 @@ static RenderHooks fix;
 
 bool RenderHooks::specialZ = false;
 
-const char* RenderHooks::name() {
-	return "Rendering Replacements";
-}
-
 void RenderHooks::apply() {
 	replaceFunction(0x101DA2D0, ShaderRender3d);
 	replaceFunction(0x101D8CE0, ShaderRender2d);

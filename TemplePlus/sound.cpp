@@ -50,11 +50,6 @@ int Sound::MssPlaySound(int soundId)
 class SoundHooks: TempleFix
 {
 public: 
-	const char* name() override { 
-		return "Sound hooks";
-	} 
-	
-
 	static int FindSound(int soundId, char* filename);
 
 	void apply() override {

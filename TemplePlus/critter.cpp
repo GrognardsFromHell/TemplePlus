@@ -93,9 +93,6 @@ static struct CritterAddresses : temple::AddressTable {
 
 class CritterReplacements : public TempleFix
 {
-	public: const char* name() override { 
-		return "Critter System" "Function Replacements";
-	} 
 	void ShowExactHpForNPCs();
 
 	void apply() override 

@@ -89,10 +89,6 @@ static class MapSystemHooks : public TempleFix {
 	static int _map_open(char *dataDir, char *saveDir, int);
 	static BOOL map_open_in_game(int mapId, BOOL preloadSectors, BOOL dontSaveCurrentMap);
 
-	const char *name() override {
-		return "Map System Replacements";
-	}
-
 	void apply() override {
 		replaceFunction(0x1006f8f0, fleecombat_reset);
 		replaceFunction(0x1006f920, fleecombat_set_prev_map);

@@ -45,7 +45,6 @@
     <ClCompile Include="gamesystems\clipping\clipping_hooks.cpp" />
     <ClCompile Include="gamesystems\clipping\clipping.cpp" />
     <ClCompile Include="gamesystems\d20\d20stats.cpp" />
-    <ClCompile Include="gamesystems\d20\d20stats_hooks.cpp" />
     <ClCompile Include="gamesystems\fogrenderer.cpp" />
     <ClCompile Include="gamesystems\froggrapplecontroller.cpp" />
     <ClCompile Include="gamesystems\gamerenderer.cpp" />

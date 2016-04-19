@@ -9,10 +9,6 @@ TigMsgFuncs msgFuncs;
 class TigMsgReplacements: TempleFix
 {
 public: 
-	const char* name() override { 
-		return "Tig Message Function Replacements";
-	} 
-	
 	static void Enqueue(TigMsg * msg);
 	static void(__cdecl* orgEnqueue)(TigMsg*msg);
 

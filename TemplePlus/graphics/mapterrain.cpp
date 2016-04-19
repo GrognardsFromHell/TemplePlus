@@ -193,9 +193,6 @@ std::string TerrainSystem::GetTileTexture(int mapArtId, int x, int y) {
 
 static class GroundSystemHooks : public TempleFix {
 public:
-	const char* name() override {
-		return "Ground System Hooks";
-	}
 	void apply() override {
 		// ground_add_dirty_rect
 		replaceFunction<void(TigRect*)>(0x1002c4d0, [](TigRect*) {

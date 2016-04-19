@@ -176,7 +176,6 @@ void TempleFixes::apply() {
 	logger->info("Applying {} DLL fixes", fixes().size());
 
 	for (auto fix : fixes()) {
-		logger->info("Applying fix {}", fix->name());
 		fix->apply();
 	}
 

@@ -8,9 +8,6 @@ using namespace gfx;
 
 static class LightningRenderHooks : public TempleFix {
 public:
-	const char* name() override {
-		return "Lightning Render Hooks";
-	}
 	void RedirectChainLightningTargets();
 	void apply() override {
 		redirectCall(0x10088147, Render);

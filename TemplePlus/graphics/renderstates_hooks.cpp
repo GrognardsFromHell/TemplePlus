@@ -4,10 +4,6 @@
 
 static class RenderStatesHooks : public TempleFix {
 public:
-	const char* name() override {
-		return "Render States Hooks";
-	}
-
 	void apply() override;
 
 	// Commits the given states

@@ -282,12 +282,9 @@ static BOOL RunDialogGuard(const char* expression, DialogState* dialog, int pick
 	return guardResult == 1;
 }
 
+// Python Script Integration Extensions (Objects)
 static class PythonObjIntegrationFix : public TempleFix {
 public:
-	const char* name() override {
-		return "Python Script Integration Extensions (Objects)";
-	}
-
 	void apply() override {
 		replaceFunction(0x1005FA00, RumorGivenOut);
 		replaceFunction(0x1005FB70, RumorFind);

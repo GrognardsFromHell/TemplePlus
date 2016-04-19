@@ -9,8 +9,7 @@ typedef int(__cdecl*locfunc)(int64_t x, int64_t y, locXY *loc, float*offx, float
 
 class LocReplacement : public TempleFix
 {
-public: const char* name() override 
-{ return "Location" "Function Replacements";}
+public:
 
 		static locfunc orgGetLocFromScreenLoc;
 		/*

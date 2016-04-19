@@ -26,7 +26,6 @@ struct D20ObjRegistrySystemAddresses : temple::AddressTable{
 class D20ObjRegistryReplacements : TempleFix
 {
 public: 
-	const char* name() override { return "D20ObjRegistry" "Function Replacements";} 
 	void apply() override 
 	{
 		replaceFunction(0x100DFAD0, _D20ObjRegistryAppend);

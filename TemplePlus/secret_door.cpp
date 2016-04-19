@@ -7,9 +7,6 @@
 class SecretDoorReplacements : public TempleFix
 {
 public:
-	const char* name() override {
-		return "SecretDoor Replacements";
-	}
 	void apply() override{
 		replaceFunction(0x10046470, _isSecretDoor); 
 		replaceFunction(0x10046510, _getSecretDoorDC); 

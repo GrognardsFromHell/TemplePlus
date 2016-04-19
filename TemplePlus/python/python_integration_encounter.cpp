@@ -284,16 +284,12 @@ static BOOL __cdecl RandomEncounterExists(const RandomEncounterSetup* setup, Ran
 	return encounterExists;
 }
 
+// Python Script Integration Extensions (Random Encounters)
 static class PythonRandomEncounterFix : public TempleFix {
 public:
-	const char* name() override {
-		return "Python Script Integration Extensions (Random Encounters)";
-	}
-
 	void apply() override {
 		replaceFunction(0x10045850, UpdateSleepStatus);
 		replaceFunction(0x10046030, RandomEncounterCreate);
 		replaceFunction(0x100461E0, RandomEncounterExists);
 	}
-
 } fix;

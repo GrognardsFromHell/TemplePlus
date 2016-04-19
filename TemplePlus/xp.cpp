@@ -166,12 +166,9 @@ void GiveXPAwards(){
 	return;
 }
 
-
+// XP Table Fix for higher levels
 class XPTableForHighLevels : public TempleFix {
 public:
-	const char* name() override {
-		return "XP Table Fix for higher levels";
-	}
 	void apply() override;
 } xpTableFix;
 

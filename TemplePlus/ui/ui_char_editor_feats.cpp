@@ -146,11 +146,6 @@ const char * HookedGetMultiselectShortName(feat_enums feat)
 class UiCharEditorFeatsReplacements : public TempleFix
 {
 public: 
-	const char* name() override 
-	{ 
-		return "UiCharEditor Function Replacements";
-	} 
-
 	static void ExistingFeatRender(int widgetId)
 	{
 		orgExistingFeatRender(widgetId);

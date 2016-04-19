@@ -109,12 +109,9 @@ static void BrawlResult(int state) {
 	}
 }
 
+// Python Script Integration Extensions (Brawl)
 static class PythonBrawlIntegrationFix : public TempleFix {
 public:
-	const char* name() override {
-		return "Python Script Integration Extensions (Brawl)";
-	}
-
 	void apply() override {
 		replaceFunction(0x100EBE20, BrawlResult);
 	}

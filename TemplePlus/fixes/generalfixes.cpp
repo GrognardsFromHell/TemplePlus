@@ -16,23 +16,18 @@
 
 struct TigTextStyle;
 
+// fixes size_colossal (was misspelled as size_clossal)
 class SizeColossalFix : public TempleFix {
 public:
-	const char* name() override {
-		return "fixes size_colossal (was misspelled as size_clossal)";
-	}
 
 	void apply() override {
 		writeHex(0x10278078, "73 69 7A 65 5F 63 6F 6C 6F 73 73 61 6C");
 	}
 } sizeColossalFix;
 
+// Makes Kukri Proficiency Martial
 class KukriFix : public TempleFix {
 public:
-	const char* name() override {
-		return "Makes Kukri Proficiency Martial";
-	}
-
 	void apply() override {
 		writeHex(0x102BFD78 + 30*4, "00 09"); // marks Kukri as Martial in the sense that picking "Martial Weapons Proficiency" will now list Kukri
 		// see rest of fix in weapon.cpp IsMartialWeapon
@@ -52,14 +47,10 @@ objHndl __cdecl ItemWornAtModifiedForTumlbeCheck(objHndl objHnd, uint32_t itemWo
 	}
 }
 
-
+// Allows Dwarves to tumble in heavy armor
 class DwarfTumbleFix : public TempleFix
 {
 public:
-	const char* name() override {
-		return "Allows Dwarves to tumble in heavy armor";
-	}
-
 	void apply() override {
 		redirectCall(0x1008AB49, ItemWornAtModifiedForTumlbeCheck);
 	}
@@ -68,13 +59,10 @@ public:
 } dwarfTumbleFix;
 
 
-
+// Prevents medium / heavy encumbrance from affecting dwarves
 class DwarfEncumbranceFix: public TempleFix
 {
 public:
-	const char* name() override {
-		return "Prevents medium / heavy encumbrance from affecting dwarves";
-	}
 	static int EncumberedMoveSpeedCallback(DispatcherCallbackArgs args);
 	void apply() override {
 		replaceFunction(0x100EBAA0, EncumberedMoveSpeedCallback);
@@ -107,12 +95,10 @@ int DwarfEncumbranceFix::EncumberedMoveSpeedCallback(DispatcherCallbackArgs args
 	return 0;
 }
 
+// Putting SpellSlinger's small fixes concentrated here :)
 class SpellSlingerGeneralFixes : public TempleFix
 {
 public:
-	const char* name() override{
-		return "Putting SpellSlinger's small fixes concentrated here :)";
-	}
 
 	void apply() override{
 		// breakfree_on_entanglement_fix.txt
@@ -200,13 +186,11 @@ uint32_t __cdecl HookedFragarachAnswering(DispatcherCallbackArgs args) {
 	
 }
 
+// Fixes the Fragarach hang that is caused by attacking a fire creature (which deals damage to the caster 
+// -> triggers the answering ability - > attempts an AoO -> but there is no one to AoO!)
 class FragarachAoOFix : public TempleFix
 {
 public:
-	const char* name() override {
-		return "Fixes the Fragarach hang that is caused by attacking a fire creature (which deals damage to the caster -> triggers the answering ability - > attempts an AoO -> but there is no one to AoO!)";
-	}
-
 	void apply() override {
 		OrgFragarachAnswering = (uint32_t(__cdecl*)(DispatcherCallbackArgs)) replaceFunction(0x10104330, HookedFragarachAnswering);
 
@@ -242,44 +226,38 @@ uint32_t __cdecl BardicInspiredCourageInitArgs(DispatcherCallbackArgs args)
 	return 0;
 };
 
+// Bardic Inspire Courage Function Replacements
 class BardicInspireCourageFix : public TempleFix
 {
-	public: const char* name() override {
-		return "Bardic Inspire Courage Function Replacements";
-	};
+public:
 	void apply() override
 	{
 		replaceFunction(0x100EA5C0, BardicInspiredCourageInitArgs);
 	}
 } bardicInspireCourageFix;
 
-
+// Sorcerer Spell Failure Double Debit Fix
 class SorcererFailureDoubleChargeFix : public TempleFix
 {
-public: const char* name() override {
-	return "Sorcerer Spell Failure Double Debit Fix";
-};
-		void apply() override
-		{
-			writeHex(0x1008D80E, "90 90 90 90 90");
-		}
+public:
+	void apply() override
+	{
+		writeHex(0x1008D80E, "90 90 90 90 90");
+	}
 } sorcererSpellFailureFix;
 
-
+// Crippling Strike Fix
 class CripplingStrikeFix : public TempleFix
 {
+public:
 	// fixes Str damage on crippling strike (should be 2 instead of 1)
-public: const char* name() override {
-	return "Crippling Strike Fix";
-};
-		void apply() override
-		{
-			writeHex(0x100F9B70, "6A 02");
-		}
+	void apply() override
+	{
+		writeHex(0x100F9B70, "6A 02");
+	}
 } cripplingStrikeFix;
 
-
-
+// Walk on short distances mod
 class WalkOnShortDistanceMod : public TempleFix
 {
 public: 
@@ -300,9 +278,7 @@ public:
 {
 		return orgAnimPushRunToTileWithPath(obj, loc, path);
 };
-	const char* name() override {
-		return "Walk on short distances mod";
-	};
+
 		void apply() override
 		{
 		//	replaceFunction(0x100FD1C0, sub_100FD1C0);
@@ -320,11 +296,9 @@ int(__cdecl*WalkOnShortDistanceMod::orgSub_100437F0)(LocAndOffsets loc, int runF
 int(__cdecl*WalkOnShortDistanceMod::orgShouldRun)(objHndl obj);
 int(__cdecl*WalkOnShortDistanceMod::orgAnimPushRunToTileWithPath)(objHndl obj, LocAndOffsets loc, Path* path);
 
+// PartyPool UI Fix
 static class PartyPoolUiLagFix : public TempleFix {
 public:
-	const char *name() override {
-		return "PartyPool UI Fix";
-	}
 
 	void apply() override {
 		OrgUiPartyPoolLoadObj = replaceFunction(0x10025F10, UiPartyPoolLoadObj);
@@ -343,14 +317,10 @@ int PartyPoolUiLagFix::UiPartyPoolLoadObj(char * objData, objHndl * handleOut, l
 
 int (*PartyPoolUiLagFix::OrgUiPartyPoolLoadObj)(char *objData, objHndl *handleOut, locXY loc);
 
-
+// Remove Suggestion Fix
 static class RemoveSuggestionSpellFix : public TempleFix
 {
 public: 
-	const char* name() override { 
-		return "Remove Suggestion Fix";
-	} 
-
 	static int RemoveSpellSuggestionNaked(SubDispNode*, objHndl obj);
 	static int RemoveSpellSuggestion(DispIO*, enum_disp_type, D20DispatcherKey, SubDispNode*, objHndl);
 	void apply() override 
@@ -463,9 +433,6 @@ int RemoveSuggestionSpellFix::RemoveSpellSuggestion(DispIO* dispIo, enum_disp_ty
 
 
 static class SkillMeasureFix : public TempleFix {
-	const char* name() override {
-		return "asd" "Function Replacements";
-	}
 	
 	/*
 		original function had a size 4 text buffer, which is not enough for high levels where the skills may be 10.5

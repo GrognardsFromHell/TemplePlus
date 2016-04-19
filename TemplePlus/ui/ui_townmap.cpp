@@ -362,9 +362,6 @@ void TownmapRenderer::Render(TigRect srcRect, TigRect destRect) {
 
 static class TownmapRenderHook : public TempleFix {
 public:
-	const char* name() override {
-		return "Townmap Render Hook";
-	}
 
 	void apply() override {
 		// ui_render_townmap_ui_0

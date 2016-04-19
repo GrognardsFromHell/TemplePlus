@@ -76,10 +76,6 @@ struct UiCharAddresses : temple::AddressTable
 class CharUiSystem : TempleFix
 {
 public: 
-	const char* name() override {
-		return "CharUi Hooks";
-	} 
-
 
 	#pragma region Spellbook functions
 	static BOOL MemorizeSpellMsg(int widId, TigMsg* tigMsg){

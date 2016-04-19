@@ -10,11 +10,6 @@
 static class ObjSystemHooks : public TempleFix {
 public:
 	
-	const char * name() override
-	{
-		return "Object System Hooks";
-	}
-
 	void apply() override
 	{
 

@@ -1,8 +1,10 @@
-#include "stdafx.h";
-#include "ui_turn_based.h";
+
+#include "stdafx.h"
+
+#include "ui_turn_based.h"
 #include <temple/dll.h>
 #include <util/fixes.h>
-#include "common.h";
+#include "common.h"
 
 UiTurnBased uiTurnBased;
 
@@ -28,9 +30,6 @@ public:
 	static int(_cdecl*orgSub_101430B0)();
 	static int sub_101430B0();
 
-	const char* name() override { 
-		return "UI Turn Based Function Replacements";
-	} 
 	void apply() override 
 	{
 		//orgSub_101430B0 = replaceFunction(0x101430B0, sub_101430B0);

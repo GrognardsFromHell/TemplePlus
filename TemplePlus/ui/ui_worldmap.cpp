@@ -3,11 +3,10 @@
 #include "common.h"
 #include <temple/dll.h>
 
+// UI crash at exit fix
 class UiExitCrashFix : TempleFix
 {
 public: 
-	const char* name() override { return "UI crash at exit fix";} 
-	
 	void apply() override 
 	{
 		int asdf;

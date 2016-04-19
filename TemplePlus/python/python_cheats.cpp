@@ -108,8 +108,6 @@ PyObject* PyCheats_Create() {
 class CheatHooks : TempleFix
 { // using this to prevent players from spawning invalid protos (and more importantly, not crashing the game when I make console typos!!!)
 public: 
-	const char* name() override { return "PyCheat hooks";} 
-	
 	static char * ParseString(char * in, char* out);
 
 	void apply() override 

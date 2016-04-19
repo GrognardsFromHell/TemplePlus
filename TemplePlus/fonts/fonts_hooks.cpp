@@ -19,12 +19,9 @@ static struct FontRenderAddresses : temple::AddressTable {
 	}
 } addresses;
 
+// Font Rendering Replacement
 static class FontRenderFix : public TempleFix {
 public:
-	const char* name() override {
-		return "Font Rendering Replacement";
-	}
-
 	void apply() override;
 
 	static int FontDraw(const char* text, TigRect* extents, TigTextStyle* style);

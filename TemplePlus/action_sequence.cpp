@@ -78,10 +78,6 @@ static struct ActnSeqAddresses : temple::AddressTable {
 static class ActnSeqReplacements : public TempleFix
 {
 public:
-	const char* name() override {
-		return "ActionSequence Replacements";
-	}
-
 	static int(__cdecl* orgChooseTargetCallback)(void *);
 	static int(__cdecl*orgSeqRenderFuncMove) (D20Actn* d20a, UiIntgameTurnbasedFlags flags);
 	static void AooShaderPacketAppend(LocAndOffsets* loc, int aooShaderId);

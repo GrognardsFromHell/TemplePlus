@@ -389,9 +389,7 @@ void GameLoop::RenderVersion() {
 
 static class MainLoopHooks : public TempleFix {
 public:
-	const char* name() override {
-		return "Mainloop Hooks";
-	}
+
 	void apply() override {
 
 		/*

@@ -11,9 +11,6 @@ using namespace gfx;
 
 static class IntgameRenderHooks : public TempleFix {
 public:
-	const char* name() override {
-		return "Intgame Render Hooks";
-	}
 	void apply() override {
 		redirectCall(0x10108E7A, Render);
 		redirectCall(0x101DCDAD, Render);

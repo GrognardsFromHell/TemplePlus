@@ -14,10 +14,6 @@ using PartSysHandle = int;
 
 static class PartSysHooks : public TempleFix {
 public:
-	const char* name() override {
-		return "Particle System Hooks";
-	}
-
 	void apply() override {
 		replaceFunction(0x101E6E30, GetNameHashByHandle);
 		replaceFunction(0x101E77F0, DoesHashExist);

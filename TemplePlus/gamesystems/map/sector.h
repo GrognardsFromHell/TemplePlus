@@ -340,15 +340,10 @@ struct SectorTime // used as a timestap for sector locking
 	GameTime gameTime;
 };
 
-
+// Sector Function Replacements
 class LegacySectorSystem : TempleFix
 {
 public:
-	const char* name() override
-	{
-		return "Sector Function Replacements";
-	}
-
 	/*
 	builds a list of TileListEntry's for every sector contained in the  TileRect (including partially contained sectors)
 	*/

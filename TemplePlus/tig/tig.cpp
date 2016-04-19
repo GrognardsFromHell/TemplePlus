@@ -185,10 +185,6 @@ TigTabParserFuncs::TigTabParserFuncs() {
 
 class TigTabReplacements: TempleFix{
 public:
-	const char* name() override {
-		return "Tig Tag Parser";
-	}
-
 	static void FormatRawString(TigTabParser* tab);
 
 	static void(__cdecl*orgFormatRawString)(TigTabParser* tab);

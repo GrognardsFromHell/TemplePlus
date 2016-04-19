@@ -29,7 +29,6 @@ public:
 	TempleFix();
 	virtual ~TempleFix();
 
-	virtual const char *name() = 0;
 	virtual void apply() = 0;
 
 protected:

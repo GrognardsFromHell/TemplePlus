@@ -218,10 +218,6 @@ bool GameSystems::LoadGame(const string& filename) {
 
 static class GameLibLoadReplacement : TempleFix {
 public:
-	const char* name() override {
-		return "GameLib Load replacement.";
-	}
-
 	static bool __cdecl LoadGame(const char *filename) {
 		return gameSystems->LoadGame(filename);
 	}

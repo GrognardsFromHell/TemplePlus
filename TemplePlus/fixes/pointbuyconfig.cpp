@@ -15,10 +15,6 @@ struct CharCreationAddresses : temple::AddressTable {
 
 static class CharCreationSystem : TempleFix {
 public:
-	const char* name() override {
-		return "CharCreation" "Function Replacements";
-	}
-
 	void apply() override;
 } fix;
 

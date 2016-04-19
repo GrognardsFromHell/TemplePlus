@@ -135,11 +135,9 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable {
 } intgameAddresses;
 
 
+// UI Intgame Turnbased Function Replacements
 class UiIntegameTurnbasedRepl : public TempleFix {
 public:
-	const char* name() override {
-		return "UI Intgame Turnbased" "Function Replacements";
-	}
 	static void IntgameTurnbasedRender(int widId);
 	static void (__cdecl* orgIntgameTurnbasedRender)(int widId);
 	static void UiIntgameBackupCurSeq();

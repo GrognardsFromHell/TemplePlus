@@ -77,9 +77,9 @@ public:
 	static void GetPartyPool(int fromIngame); //fromIngame is 0 when launching from main menu, 1 when launching from inn guestbook
 	static int PartyPoolLoader();
 
-	const char* name() override { return "PC Creation UI Fixes"; }
 	void apply() override
 	{
+		// PC Creation UI Fixes
 		replaceFunction(0x10182E80, PcCreationFeatUiPrereqCheckUsercallWrapper);
 		OrgFeatMultiselectSub_101822A0 = (int(__cdecl*)()) replaceFunction(0x101822A0, HookedUsercallFeatMultiselectSub_101822A0);
 		//replaceFunction(0x101634D0, PcPortraitWidgetsInit);

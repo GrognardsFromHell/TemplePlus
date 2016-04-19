@@ -26,10 +26,6 @@ struct D20LevelupSystemAddresses : temple::AddressTable
 static class D20LevelupHooks : public TempleFix
 {
 public: 
-	const char* name() override { 
-		return "D20Levelup Hooks";
-	} 
-	
 	static int DiceRollHooked(int min, int max, int bonus)
 	{
 		auto cfgLower(tolower(config.hpOnLevelup));

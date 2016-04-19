@@ -52,8 +52,6 @@ struct HotkeyAddresses : temple::AddressTable
 class HotkeyReplacements : TempleFix
 {
 public: 
-	const char* name() override { return "Hotkey Function Replacements";} 
-
 	static BOOL HotkeyCompare(RadialMenuEntry& first, RadialMenuEntry & second);
 	static BOOL HotkeyActivate(objHndl obj);
 	void apply() override 

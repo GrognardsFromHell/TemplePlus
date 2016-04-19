@@ -63,12 +63,9 @@ static struct SpellAddresses : temple::AddressTable {
 IdxTableWrapper<SpellEntry> spellEntryRegistry(0x10AAF428);
 IdxTableWrapper<SpellPacket> spellsCastRegistry(0x10AAF218);
 
+// Expand the range of usable spellEnums. Currently walled off at 802.
 class SpellFuncReplacements : public TempleFix {
 public:
-	const char* name() override {
-		return "Expand the range of usable spellEnums. Currently walled off at 802.";
-	}
-
 	static void hookedPrint(const char * fmt, const char* spellName)
 	{
 		logger->debug("SpellLoad: Spell {}", spellName);
@@ -141,13 +138,9 @@ SpontCastSpellLists spontCastSpellLists;
 //temple::GlobalPrimitive<uint16_t>
 //1028D09C
 
-
+// Spell Hostility bug: fix mass cure spells triggering hostile reaction. Can be expanded to other spells.
 class SpellHostilityFlagFix : public TempleFix {
 public:
-	const char* name() override {
-		return "Spell Hostility bug: fix mass cure spells triggering hostile reaction. Can be expanded to other spells.";
-	}
-
 	void apply() override {
 		writeHex(0x10076EF4, "02"); // Cure Light Wounds, Mass
 		writeHex(0x10076F42, "02"); // Mass Heal

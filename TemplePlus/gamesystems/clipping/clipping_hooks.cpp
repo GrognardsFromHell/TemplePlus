@@ -5,13 +5,9 @@
 #include "clipping.h"
 #include "../gamesystems.h"
 
+// Clipping Geometry Hooks
 static class ClippingHooks : public TempleFix {
 public:
-	
-	const char* name() override {
-		return "Clipping Geometry Hooks";
-	}
-
 	void apply() override;
 
 	static int ClippingLoad(const char *mapDir, const char *mapSaveDir);

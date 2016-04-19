@@ -3,12 +3,9 @@
 #include "tig/tig_msg.h"
 #include <messages/messagequeue.h>
 
+// Message Queue Replacement
 static class MessageQueueFix : public TempleFix {
 public:
-	const char* name() override {
-		return "Message Queue Replacement";
-	}
-
 	void apply() override;
 
 	static void EnqueueMsg(const TigMsg* msg);

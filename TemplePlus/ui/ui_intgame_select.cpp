@@ -26,16 +26,10 @@ struct UiIntgameSelectAddresses : temple::AddressTable
 class UiIntgameSelectHooks : public TempleFix
 {
 public: 
-	const char* name() override { 
-		return "IntgameSelect hooks";
-	} 
-	
 	static void TooltipRender(objHndl handle);
 
 	void apply() override 
 	{
-		
-
 		replaceFunction(0x10138E20, TooltipRender);
 	}
 } intgameSelHooks;

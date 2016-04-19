@@ -239,10 +239,6 @@ public:
 	static int UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg);
 	static int(__cdecl*orgUiWidgetHandleMouseMsg)(TigMouseMsg*);
 
-	const char* name() override
-	{
-		return "UiSys" "Function Replacements";
-	}
 	void apply() override
 	{
 		replaceFunction(0x1011DFE0, WidgetlistIndexof);

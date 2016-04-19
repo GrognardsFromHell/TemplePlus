@@ -8,14 +8,11 @@
 
 static void(__cdecl *ObjRenderInUi)(objHndl objId, int x, int y, float rotation, float scale);
 
+// fixes displaying 3d character models in the partypool while in the main menu
 class MainMenuPartyPoolFix : public TempleFix, temple::AddressTable {
 public:
 	MainMenuPartyPoolFix() {
 		rebase(ObjRenderInUi, 0x100243B0);
-	}
-
-	const char* name() override {
-		return "fixes displaying 3d character models in the partypool while in the main menu";
 	}
 	
 	void apply() override {		

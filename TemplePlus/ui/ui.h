@@ -316,10 +316,6 @@ public:
 	{
 		activeWidgets = temple::GetPointer<Widget*>(0x10EF68E0); // [3000]
 	}
-public: 
-	const char* name() override {
-		return "UI";
-	} 
 };
 extern Ui ui;
 

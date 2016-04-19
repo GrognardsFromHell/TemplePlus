@@ -23,9 +23,7 @@ ToEEHashtableSystem<D20HelpTopic> hashtableSystem;
 
 class HelpSystemReplacements : TempleFix
 {
-	public: const char* name() override { 
-		return "D20Help Replacements";
-	} 
+public:
 	static int TabLineParserPriliminary(TigTabParser const* tabParser, int lineIdxx, char** columns);
 	void apply() override 
 	{

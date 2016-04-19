@@ -15,10 +15,6 @@
 
 static class ObjRegistryHooks : public TempleFix {
 public:
-	const char* name() override {
-		return "Object Registry Hooks";
-	}
-
 	static void Object_Tables_Init(int nToEEObject_BodySize, BOOL editor);
 	static ObjectId* Object_Tables_GetIdByHandle(ObjectId* idOut, objHndl handle);
 	static void Object_Tables_CompactIdx();

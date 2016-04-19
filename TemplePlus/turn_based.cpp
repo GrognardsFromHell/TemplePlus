@@ -17,8 +17,6 @@
 class TurnBasedReplacements : public TempleFix
 {
 public: 
-	const char* name() override { return "Turn Based Function Replacements";} 
-
 	static void PortraitDragChangeInitiative(objHndl obj, int newInitiativeListIdx)
 	{
 		logger->debug("Changing {}'s combat initiative slot to {}", description.getDisplayName(obj), newInitiativeListIdx);

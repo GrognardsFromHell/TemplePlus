@@ -30,10 +30,6 @@ struct InventorySystemAddresses : temple::AddressTable
 
 static class InventoryHooks : public TempleFix {
 public: 
-	const char* name() override { 
-		return "Inventory Hooks";
-	} 
-	
 	void apply() override 	{
 		// PoopItems
 		replaceFunction<void (objHndl, int)>(0x1006DA00, [](objHndl obj, int unflagNoTransfer)	{

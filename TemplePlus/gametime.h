@@ -28,14 +28,10 @@ struct GameTime {
 	}
 };
 
-
+// GameTime Function Replacements
 class GameTimeSystem : TempleFix
 {
 public: 
-	const char* name() override {
-		return "GameTime Function Replacements"; 
-	} 
-	
 	static GameTime ElapsedGetDelta(GameTime * gtime);
 	static void GameTimeAdd(GameTime* timeDelta)
 	{

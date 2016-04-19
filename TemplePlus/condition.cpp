@@ -176,10 +176,6 @@ public:
 
 class ConditionFunctionReplacement : public TempleFix {
 public:
-	const char* name() override {
-		return "Condition Function Replacement";
-	}
-
 	static int LayOnHandsPerform(DispatcherCallbackArgs arg);
 	static int RemoveDiseasePerform(DispatcherCallbackArgs arg); // also used in WholenessOfBodyPerform
 	void HookSpellCallbacks();
@@ -2387,13 +2383,10 @@ void __cdecl BarbarianTirelessRageCheck(objHndl obj)
 		conds.AddTo(obj, "Barbarian_Fatigued", {0,0});
 };
 
+// Barbarian Tireless Rage patch
 class BarbarianTirelessRagePatch : public TempleFix
 {
 public:
-	const char* name() override {
-		return "Barbarian Tireless Rage patch";
-	}
-
 	void apply() override {
 		redirectCall(0x100EADBF, BarbarianTirelessRageCheck);
 	}

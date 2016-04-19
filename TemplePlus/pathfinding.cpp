@@ -209,9 +209,6 @@ struct PathFindAddresses : temple::AddressTable
 class PathfindingReplacements : TempleFix
 {
 public: 
-	const char* name() override {
-		return "Bathfinding Functions" "Function Replacements";
-	} 
 	void apply() override 
 	{
 	//	 replaceFunction(0x10040520, _ShouldUsePathnodesUsercallWrapper); 

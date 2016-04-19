@@ -39,10 +39,6 @@ int (__cdecl *OrgD20Init)(GameSystemConf* conf);
 
 class D20Replacements : public TempleFix {
 public:
-	const char* name() override {
-		return "D20 Function Replacements";
-	}
-
 	static int PerformActivateReadiedAction(D20Actn* d20a);
 
 	void apply() override {

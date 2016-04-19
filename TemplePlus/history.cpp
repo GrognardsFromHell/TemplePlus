@@ -8,7 +8,6 @@
 class HistSysReplacements : public TempleFix
 {
 public: 
-	const char* name() override { return "History System" "Function Replacements";} 
 	void apply() override 
 	{
 		

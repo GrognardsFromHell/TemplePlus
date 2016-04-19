@@ -1021,10 +1021,6 @@ public:
 	static int GetShadowType();
 	static void SetShowHighlight(BOOL enable);
 
-	const char* name() override {
-		return "B";
-	}
-
 	void apply() override {
 		replaceFunction(0x10026560, obj_render);
 		replaceFunction(0x10023EC0, obj_render_highlight);

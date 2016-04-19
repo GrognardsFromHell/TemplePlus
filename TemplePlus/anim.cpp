@@ -1270,8 +1270,6 @@ static BOOL goalstatefunc_42(AnimSlot &slot) {
 
 static class AnimSystemHooks : public TempleFix {
 public:
-  const char *name() override { return "Anim Fix"; }
-
   static void Dump();
 
   void apply() override {

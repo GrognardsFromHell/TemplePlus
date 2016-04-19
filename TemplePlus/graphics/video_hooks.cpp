@@ -41,13 +41,9 @@ struct TigAdapterInfo {
 };
 #pragma pack(pop)
 
+// Graphics Engine Fixes
 static class VideoFixes : TempleFix {
 public:
-
-	const char* name() override {
-		return "Graphics Engine Fixes";
-	}
-
 	void apply() override;
 
 private:

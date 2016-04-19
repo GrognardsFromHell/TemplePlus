@@ -687,12 +687,9 @@ static void __cdecl systemReset() {
 static void __cdecl systemExit() {
 }
 
+// Item Creation UI
 class ItemCreation : public TempleFix {
 public:
-	const char* name() override {
-		return "Item Creation UI";
-	}
-
 	static void CreateItemFinalize(objHndl crafter, objHndl item);
 
 	static int UiItemCreationInit(GameSystemConf* conf);

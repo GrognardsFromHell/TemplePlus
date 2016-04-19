@@ -11,7 +11,8 @@
 /**/
 class MapObjReplacements : public TempleFix
 {
-	macTempleFix(Map Object System)
+public:
+	void apply() override
 	{
 		logger->info("Replacing Map Object Functions");
 

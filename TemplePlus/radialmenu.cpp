@@ -8,6 +8,7 @@
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
 #include <infrastructure/keyboard.h>
+#define DIRECTINPUT_VERSION 0x800
 #include <dinput.h>
 #include "ui\ui.h"
 #include "gamesystems/map/d20_help.h"
@@ -89,10 +90,6 @@ static struct RadialMenuAddresses : temple::AddressTable {
 
 class RadialMenuReplacements : public TempleFix
 {
-	const char* name() override {
-		return "Radial Menu Replacements";
-	}
-
 	static int RmbReleasedHandler(TigMsg* msg);
 	void ReplaceStandardRadialNodes();
 

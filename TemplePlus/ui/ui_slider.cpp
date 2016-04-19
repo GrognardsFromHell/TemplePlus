@@ -8,10 +8,6 @@
 static class SliderHooks : public TempleFix
 {
 public: 
-	
-	const char* name() override { 
-		return "Slider UI hooks";
-	} 
 
 	void apply() override 
 	{

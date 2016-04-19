@@ -22,12 +22,9 @@ void PyPerformTouchAttack_PatchedCallToHitProcessing(D20Actn * pd20A, D20Actn d2
 void enlargeSpellRestoreModelScaleHook(objHndl objHnd);
 void enlargeSpellIncreaseModelScaleHook(objHndl objHnd);
 
+// Spell Condition Fixes (for buggy spell effects)
 class SpellConditionFixes : public TempleFix {
 public:
-	const char* name() override {
-		return "Spell Condition Fixes (for buggy spell effects)";
-	}
-
 	void VampiricTouchFix();
 	void enlargePersonModelScaleFix(); // fixes ambiguous float point calculations that resulted in cumulative roundoff errors
 	

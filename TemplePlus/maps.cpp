@@ -68,9 +68,6 @@ MapAddresses mapAddresses;
 class GameSystemReplacements : TempleFix
 {
 public:
-	const char* name() override { return "GameSystems" "Function Replacements"; }
-
-	
 	static int(__cdecl*orgField1C)(GameSystemConf* conf);
 	static int field1c(GameSystemConf * conf) {
 		return orgField1C(conf);
