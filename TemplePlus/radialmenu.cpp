@@ -207,9 +207,18 @@ void RadialMenuReplacements::ReplaceStandardRadialNodes()
 
 	// BuildRadialMenuNormal
 	write(0x100F2674 + 2, &writeval, sizeof(int*));
+
+
+	writeval = reinterpret_cast<int>(&RadialMenus::standardNodeIndices[4]) ;
+	write(0x100F26EB + 1, &writeval, sizeof(int*));
+
+	writeval = reinterpret_cast<int>(&RadialMenus::standardNodeIndices[15]);
+	write(0x100F2723 + 1, &writeval, sizeof(int*));
+	
+	writeval = reinterpret_cast<int>(&RadialMenus::standardNodeIndices[0]);
 	write(0x100F27EC + 3, &writeval, sizeof(int*));
 	
-	writeval = reinterpret_cast<int>(RadialMenus::standardNodeIndices) + 8;
+	writeval = reinterpret_cast<int>(&RadialMenus::standardNodeIndices[2]);
 	write(0x100F2876 + 2, &writeval, sizeof(int*));
 	write(0x100F28F4 + 1, &writeval, sizeof(int*));
 	write(0x100F2969 + 2, &writeval, sizeof(int*));
@@ -217,7 +226,7 @@ void RadialMenuReplacements::ReplaceStandardRadialNodes()
 	write(0x100F2A62 + 1, &writeval, sizeof(int*));
 	write(0x100F2AD0 + 2, &writeval, sizeof(int*));
 
-	writeval = reinterpret_cast<int>(RadialMenus::standardNodeIndices) + 0x28;
+	writeval = reinterpret_cast<int>(&RadialMenus::standardNodeIndices[10]) ;
 	write(0x100F2B71 + 2, &writeval, sizeof(int*));
 }
 
