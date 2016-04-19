@@ -515,6 +515,11 @@ namespace gfx {
 		// Retrieve new backbuffer surface
 		AfterDeviceResetOrCreated();
 
+		// Set the cursor again, if there was one set before
+		if (mCursor) {
+			SetCursor(mCursorHotspot.x, mCursorHotspot.y, mCursor);
+		}
+
 	}
 
 	void RenderingDevice::SetMaterial(const Material &material) {
@@ -640,6 +645,24 @@ namespace gfx {
 
 		mDevice->SetSamplerState(samplerIdx, D3DSAMP_ADDRESSU, state.addressU);
 		mDevice->SetSamplerState(samplerIdx, D3DSAMP_ADDRESSV, state.addressV);
+	}
+
+	void RenderingDevice::SetCursor(int hotspotX, int hotspotY, const gfx::TextureRef & texture)
+	{
+		// Save for device reset
+		mCursor = texture;
+		mCursorHotspot = { hotspotX, hotspotY };
+
+		auto deviceTexture = texture->GetDeviceTexture();
+		CComPtr<IDirect3DSurface9> surface;
+		if (D3DLOG(deviceTexture->GetSurfaceLevel(0, &surface)) != D3D_OK) {
+			logger->error("Unable to get surface of cursor texture.");
+			return;
+		}
+
+		if (D3DLOG(mDevice->SetCursorProperties(hotspotX, hotspotY, surface)) != D3D_OK) {
+			logger->error("Unable to set cursor properties.");
+		}
 	}
 
 	VertexBufferPtr RenderingDevice::CreateVertexBufferRaw(gsl::span<const uint8_t> data) {

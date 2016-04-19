@@ -134,6 +134,11 @@ namespace gfx {
 		void SetSamplerState(int samplerIdx, const SamplerState &state);
 
 		/*
+		  Changes the currently used cursor to the given surface.
+		 */
+		void SetCursor(int hotspotX, int hotspotY, const gfx::TextureRef &texture);
+
+		/*
 			Take a screenshot with the given size. The image will be stretched 
 			to the given size.
 		*/
@@ -193,6 +198,9 @@ namespace gfx {
 		CComPtr<IDirect3DSurface9> mSceneSurface;
 		CComPtr<IDirect3DSurface9> mSceneDepthSurface;
 		
+		gfx::TextureRef mCursor;
+		XMINT2 mCursorHotspot;
+
 		std::list<ResourceListener*> mResourcesListeners;
 		bool mResourcesCreated = false;
 		

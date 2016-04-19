@@ -63,13 +63,6 @@ static bool SetCursorFromShaderId(int shaderId) {
 		return false;
 	}
 
-	auto deviceTexture = primaryTexture->GetDeviceTexture();	
-	CComPtr<IDirect3DSurface9> surface;
-	if (D3DLOG(deviceTexture->GetSurfaceLevel(0, &surface)) != D3D_OK) {
-		logger->error("Unable to get surface of cursor texture.");
-		return false;
-	}
-
 	int hotspotX = 0;
 	int hotspotY = 0;
 
@@ -81,10 +74,7 @@ static bool SetCursorFromShaderId(int shaderId) {
 		hotspotY = primaryTexture->GetContentRect().height / 2;
 	}
 
-	auto device = tig->GetRenderingDevice().GetDevice();
-	if (D3DLOG(device->SetCursorProperties(hotspotX, hotspotY, surface)) != D3D_OK) {
-		logger->error("Unable to set cursor properties.");
-	}
+	tig->GetRenderingDevice().SetCursor(hotspotX, hotspotY, primaryTexture);
 	return true;
 }
 
