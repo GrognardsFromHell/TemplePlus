@@ -179,6 +179,7 @@ struct AttackPacket
 	objHndl ammoItem;
 	
 	objHndl GetWeaponUsed() const;
+	bool IsOffhandAttack();
 };
 
 enum ScreenDirections : char {

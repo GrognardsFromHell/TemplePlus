@@ -139,6 +139,7 @@ public:
 	static int __cdecl SkillBonus(DispatcherCallbackArgs args);
 
 	static int __cdecl UseableItemRadialEntry(DispatcherCallbackArgs args);
+	static int __cdecl BucklerToHitPenalty(DispatcherCallbackArgs args);
 } itemCallbacks;
 
 
@@ -255,7 +256,11 @@ public:
 		// couraged aura
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100EB100, classAbilityCallbacks.CouragedAuraSavingThrow);
 
+		// two-handed wielded query
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100EF4B0, genericCallbacks.GlobalWieldedTwoHandedQuery);
+
+		// buckler to-hit penalty
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10104DA0, itemCallbacks.BucklerToHitPenalty);
 	}
 } condFuncReplacement;
 
@@ -3166,6 +3171,31 @@ int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args)
 		radEntry.d20ActionData1 = inventory.GetInventoryLocation(itemHandle);
 		radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::CopyScroll);
 	}
+
+	return 0;
+}
+
+int ItemCallbacks::BucklerToHitPenalty(DispatcherCallbackArgs args)
+{
+	auto invIdx = args.GetCondArg(2);
+
+	auto dispIo = static_cast<DispIoAttackBonus*>(args.dispIO);
+	dispIo->AssertType(dispIOTypeAttackBonus);
+
+	auto weaponUsed = dispIo->attackPacket.GetWeaponUsed();
+
+	if ((dispIo->attackPacket.flags & D20CAF_RANGED))
+		return 0;
+
+	if (!weaponUsed)
+		return 0;
+
+	if (d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_WieldedTwoHanded, reinterpret_cast<uint32_t>(dispIo), 0)
+		|| dispIo->attackPacket.IsOffhandAttack())
+	{
+		dispIo->bonlist.AddBonus(-1, 0, 327);
+	}
+
 
 	return 0;
 }
