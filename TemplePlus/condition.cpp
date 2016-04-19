@@ -140,6 +140,38 @@ public:
 } itemCallbacks;
 
 
+class ClassAbilityCallbacks
+{
+#define FeatFunc(fname) static int __cdecl Feat ## fname ## (DispatcherCallbackArgs args)
+public:
+	// note: conditions obtained from feats always arg0 set to the feat enum (automatically)
+	static int __cdecl FeatDamageReduction(DispatcherCallbackArgs args);
+	static int __cdecl FeatEmptyBody(DispatcherCallbackArgs args); // radial menu builder
+	static int __cdecl FeatEmptyBodyInit(DispatcherCallbackArgs args);
+	static int __cdecl FeatEmptyBodyReduceRounds(DispatcherCallbackArgs);
+
+	static int __cdecl FeatQuiveringPalmRadial(DispatcherCallbackArgs args); // radial menu builder
+	static int __cdecl FeatQuiveringPalmInit(DispatcherCallbackArgs);
+	static int __cdecl FeatQuiveringPalmPerform(DispatcherCallbackArgs args);
+	static int __cdecl FeatQuiveringPalmAvailable(DispatcherCallbackArgs args);
+
+
+
+	// Timed effect callbacks; assumption: num of rounds remaining is at arg[2]
+	static int __cdecl GetNumRoundsRemaining(DispatcherCallbackArgs args);
+	static int __cdecl TimedEffectCountdown(DispatcherCallbackArgs args);
+
+	// Diamond Soul
+	static int __cdecl FeatDiamondSoulInit(DispatcherCallbackArgs args);
+	static int __cdecl FeatDiamondSoulSpellResistanceMod(DispatcherCallbackArgs args);
+
+	// Aura Of Courage
+	static int __cdecl CouragedAuraSavingThrow(DispatcherCallbackArgs args);
+
+} classAbilityCallbacks;
+
+
+
 class ConditionFunctionReplacement : public TempleFix {
 public:
 	const char* name() override {
@@ -218,37 +250,11 @@ public:
 
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10100840, itemCallbacks.UseableItemRadialEntry);
 		
+		// couraged aura
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100EB100, classAbilityCallbacks.CouragedAuraSavingThrow);
 	}
 } condFuncReplacement;
 
-
-
-class ClassAbilityCallbacks
-{
-#define FeatFunc(fname) static int __cdecl Feat ## fname ## (DispatcherCallbackArgs args)
-public:
-	// note: conditions obtained from feats always arg0 set to the feat enum (automatically)
-	static int __cdecl FeatDamageReduction(DispatcherCallbackArgs args);
-	static int __cdecl FeatEmptyBody(DispatcherCallbackArgs args); // radial menu builder
-	static int __cdecl FeatEmptyBodyInit(DispatcherCallbackArgs args);
-	static int __cdecl FeatEmptyBodyReduceRounds(DispatcherCallbackArgs);
-
-	static int __cdecl FeatQuiveringPalmRadial(DispatcherCallbackArgs args); // radial menu builder
-	static int __cdecl FeatQuiveringPalmInit(DispatcherCallbackArgs);
-	static int __cdecl FeatQuiveringPalmPerform(DispatcherCallbackArgs args);
-	static int __cdecl FeatQuiveringPalmAvailable(DispatcherCallbackArgs args);
-
-
-
-	// Timed effect callbacks; assumption: num of rounds remaining is at arg[2]
-	static int __cdecl GetNumRoundsRemaining(DispatcherCallbackArgs args);
-	static int __cdecl TimedEffectCountdown(DispatcherCallbackArgs args);
-
-	// Diamond Soul
-	static int __cdecl FeatDiamondSoulInit(DispatcherCallbackArgs args);
-	static int __cdecl FeatDiamondSoulSpellResistanceMod(DispatcherCallbackArgs args);
-	
-} classAbilityCallbacks;
 
 
 CondNode::CondNode(CondStruct *cond) {
@@ -3216,6 +3222,41 @@ int ClassAbilityCallbacks::FeatDiamondSoulSpellResistanceMod(DispatcherCallbackA
 	auto srMod = args.GetCondArg(1);
 	auto dispIo = dispatch.DispIOCheckIoType14(static_cast<DispIOBonusListAndSpellEntry*>(args.dispIO));
 	dispIo->bonList->AddBonus(srMod, 36, 203);
+	return 0;
+}
+
+int ClassAbilityCallbacks::CouragedAuraSavingThrow(DispatcherCallbackArgs args)
+{
+
+	auto dispIo = static_cast<DispIoSavingThrow*>(args.dispIO);
+	dispIo->AssertType(dispIOTypeSavingThrow);
+	if (!(dispIo->flags & 0x100000))
+		return 0;
+
+
+
+	int64_t a1 = args.GetCondArg(0);
+	int64_t a2 = args.GetCondArg(1);
+	objHndl auraSource = ( (a1<<32) | a2 );
+
+	if (!auraSource) {
+		return 0;
+	}
+
+	if (auraSource)
+	{
+		if (d20Sys.d20Query(auraSource, DK_QUE_Unconscious)) {
+			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+		}
+
+		// if distance < 10 ft
+		if (locSys.DistanceToObj(auraSource, args.objHndCaller) <  10.0)
+		{
+			dispIo->bonlist.AddBonus(4, 13, 204);
+		}
+	}
+	
+
 	return 0;
 }
 #pragma endregion

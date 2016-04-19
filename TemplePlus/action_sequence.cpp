@@ -1055,7 +1055,7 @@ uint32_t ActionSequenceSystem::moveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 					} else if (!tbStatCopy.hourglassState)
 					{
 						d20aCopy.d20ActType = D20A_5FOOTSTEP;
-						if (!(tbStatCopy.tbsFlags & 6)){	goto LABEL_53; }
+						if (!(tbStatCopy.tbsFlags & (TBSF_Movement | TBSF_Movement2))){	goto LABEL_53; }
 					}
 				}
 
