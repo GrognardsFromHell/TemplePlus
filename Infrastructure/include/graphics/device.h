@@ -162,6 +162,7 @@ namespace gfx {
 		void AddResourceListener(ResourceListener* resourceListener);
 		void RemoveResourceListener(ResourceListener* resourceListener);
 
+		void AfterDeviceResetOrCreated();
 		void CreatePresentParams();
 		void ReadCaps();
 		void ResetDevice();

@@ -249,21 +249,7 @@ namespace gfx {
 
 		// TODO: color bullshit is not yet done (tig_d3d_init_handleformat et al)
 
-		// Get the device caps for real this time.
-		ReadCaps();
-		
-		// Get the currently attached backbuffer
-		if (D3DLOG(mDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &mBackBuffer)) != D3D_OK) {
-			throw TempleException("Unable to retrieve the back buffer");
-		}
-		if (D3DLOG(mDevice->GetDepthStencilSurface(&mBackBufferDepth)) != D3D_OK) {
-			throw TempleException("Unable to retrieve depth/stencil surface from device");
-		}
-
-		memset(&mBackBufferDesc, 0, sizeof(mBackBufferDesc));
-		if (D3DLOG(mBackBuffer->GetDesc(&mBackBufferDesc)) != D3D_OK) {
-			throw TempleException("Unable to retrieve back buffer description");
-		}
+		AfterDeviceResetOrCreated();
 
 		SetRenderSize(renderWidth, renderHeight);
 		
@@ -333,6 +319,28 @@ namespace gfx {
 		renderingDevice = nullptr;
 	}
 
+	void RenderingDevice::AfterDeviceResetOrCreated()
+	{
+		// Get the device caps for real this time.
+		ReadCaps();
+
+		mBackBuffer.Release();
+		mBackBufferDepth.Release();
+
+		// Get the currently attached backbuffer
+		if (D3DLOG(mDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &mBackBuffer)) != D3D_OK) {
+			throw TempleException("Unable to retrieve the back buffer");
+		}
+		if (D3DLOG(mDevice->GetDepthStencilSurface(&mBackBufferDepth)) != D3D_OK) {
+			throw TempleException("Unable to retrieve depth/stencil surface from device");
+		}
+
+		memset(&mBackBufferDesc, 0, sizeof(mBackBufferDesc));
+		if (D3DLOG(mBackBuffer->GetDesc(&mBackBufferDesc)) != D3D_OK) {
+			throw TempleException("Unable to retrieve back buffer description");
+		}
+	}
+
 	void RenderingDevice::CreatePresentParams()
 	{
 		memset(&mPresentParams, 0, sizeof(mPresentParams));
@@ -344,7 +352,6 @@ namespace gfx {
 		mPresentParams.Windowed = true;
 		mPresentParams.EnableAutoDepthStencil = true;
 		mPresentParams.AutoDepthStencilFormat = D3DFMT_D16;
-		mPresentParams.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
 		mPresentParams.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
 	}
 
@@ -502,7 +509,11 @@ namespace gfx {
 		auto result = mDevice->Reset(&mPresentParams);
 		if (result != D3D_OK) {
 			logger->warn("Device reset failed.");
+			return;
 		}
+
+		// Retrieve new backbuffer surface
+		AfterDeviceResetOrCreated();
 
 	}
 
