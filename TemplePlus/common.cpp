@@ -4,6 +4,7 @@
 #include "tig/tig_mes.h"
 #include "bonus.h"
 #include "feat.h"
+#include "d20.h"
 
 static void NormalizeAxis(float& offset, uint32_t &tilePos) {
 	auto tiles = (int) (offset / INCH_PER_TILE);
@@ -165,6 +166,18 @@ objHndl AttackPacket::GetWeaponUsed() const
 		return weaponUsed;
 	}
 	return 0i64;
+}
+
+bool AttackPacket::IsOffhandAttack()
+{
+	if (flags & D20CAF_SECONDARY_WEAPON) {
+		return true;
+	}
+
+	if (dispKey == ATTACK_CODE_OFFHAND + 2 )
+		return true;
+
+	return false;
 }
 
 PointNode::PointNode(){
