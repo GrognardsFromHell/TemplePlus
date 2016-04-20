@@ -160,6 +160,11 @@ class RadialMenuReplacements : public TempleFix
 		});
 		
 
+		replaceFunction<int(int)>(0x100F0850, [](int activeNodeIdx)->int
+		{
+			return radialMenus.GetActiveMenuChildrenCount(activeNodeIdx);
+		});
+
 	}
 };
 
@@ -492,6 +497,23 @@ void RadialMenus::GetRadialMenuXY(float& radX, float& radY) const
 {
 	radX = temple::GetRef<float>(0x10BD022C);
 	radY = temple::GetRef<float>(0x10BD0228);
+}
+
+RadialMenu* RadialMenus::GetActiveRadialMenu() const
+{
+	return (*addresses.activeRadialMenu);
+}
+
+int RadialMenus::GetActiveMenuChildrenCount(int nodeidx) const
+{
+	auto activeMenu = GetActiveRadialMenu();
+	if (!activeMenu)
+		return 0;
+	if (temple::GetRef<BOOL>(0x10BD0234) && activeMenu && activeMenu->nodes[nodeidx].morphsTo != -1)
+	{
+		nodeidx = activeMenu->nodes[nodeidx].morphsTo;
+	}
+	return activeMenu->nodes[nodeidx].childCount;
 }
 
 RadialMenuEntry::RadialMenuEntry(){

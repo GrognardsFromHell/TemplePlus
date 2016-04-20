@@ -180,7 +180,9 @@ public:
 	/*
 		gets the radial menu coordinates in absolute worldspace coords
 	*/
-	void GetRadialMenuXY(float& radX, float& radY) const; 
+	void GetRadialMenuXY(float& radX, float& radY) const;
+	RadialMenu* GetActiveRadialMenu() const;
+	int GetActiveMenuChildrenCount(int activeNodeIdx) const;
 };
 
 extern RadialMenus radialMenus;
