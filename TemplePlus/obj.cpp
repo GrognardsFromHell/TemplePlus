@@ -118,10 +118,10 @@ gfx::AnimatedModelPtr Objects::GetAnimHandle(objHndl obj)
 	}
 
 	if (!IsRenderHeightSet(obj)) {
-		UpdateRenderHeight(obj, model->GetHandle());
+		UpdateRenderHeight(obj, *model);
 	}
 	if (!IsRadiusSet(obj)) {
-		UpdateRadius(obj, model->GetHandle());
+		UpdateRadius(obj, *model);
 	}
 
 	return model;
@@ -336,9 +336,6 @@ Objects::Objects()
 	rebase(_ContainerToggleOpen, 0x1010EA00);
 
 	rebase(_DLLFieldNames,		0x102CD840);
-
-	rebase(UpdateRenderHeight, 0x10021360);
-	rebase(UpdateRadius, 0x10021500);
 }
 
 uint32_t Objects::abilityScoreLevelGet(objHndl objHnd, Stat stat, DispIO* dispIO)
@@ -346,7 +343,7 @@ uint32_t Objects::abilityScoreLevelGet(objHndl objHnd, Stat stat, DispIO* dispIO
 	return objects.dispatch.DispatchGetBonus(objHnd, (DispIoBonusList*)dispIO, dispTypeAbilityScoreLevel, (D20DispatcherKey)(stat + 1));
 }
 
-float Objects::GetRadius(objHndl handle) const
+float Objects::GetRadius(objHndl handle)
 {
 	auto obj = gameSystems->GetObj().GetObject(handle);
 	auto radiusSet = obj->GetFlags() & OF_RADIUS_SET;
@@ -376,9 +373,11 @@ float Objects::GetRadius(objHndl handle) const
 				protoHandle = obj->GetObjHndl(obj_f_prototype_handle);
 				auto protoObj = gameSystems->GetObj().GetObject(protoHandle);
 				protoRadius = protoObj->GetFloat(obj_f_radius);
-				auto aasHandle = addresses.GetAasHandle(handle);
-				auto aasUpdateRadius = temple::GetRef<void(__cdecl)(objHndl, int)>(0x10021500);
-				aasUpdateRadius(handle, aasHandle);
+				
+				auto model = GetAnimHandle(handle);
+				if (model) {
+					UpdateRadius(handle, *model);
+				}
 				radius = obj->GetFloat(obj_f_radius);
 			}
 			return radius;
@@ -386,8 +385,9 @@ float Objects::GetRadius(objHndl handle) const
 	}
 
 	logger->debug("GetRadius: Radius not yet set, now calculating.");
-	auto aasHandle = addresses.GetAasHandle(handle);
-	if (!aasHandle)
+	
+	auto model = GetAnimHandle(handle);
+	if (!model)
 	{
 		logger->warn("GetRadius: Null AAS handle!");
 		protoHandle = obj->GetObjHndl(obj_f_prototype_handle);
@@ -405,8 +405,9 @@ float Objects::GetRadius(objHndl handle) const
 	radiusSet = obj->GetFlags() & OF_RADIUS_SET; // might be changed I guess
 	if (!radiusSet || abs(radius) > 2000){
 		logger->debug("GetRadius: Calculating from AAS model. Initially was {}", radius);
-		auto aasUpdateRadius = temple::GetRef<void(__cdecl)(objHndl, int)>(0x10021500);
-		aasUpdateRadius(handle, aasHandle);
+
+		UpdateRadius(handle, *model);
+
 		radius = obj->GetFloat(obj_f_radius);
 		
 		if (radius > 2000.0)
@@ -727,6 +728,23 @@ int Objects::IsCritterProne(objHndl handle){
 }
 #pragma endregion
 
+void Objects::UpdateRenderHeight(objHndl handle, gfx::AnimatedModel &model) {
+	auto scale = GetScalePercent(handle);
+	auto height = model.GetHeight(scale);
+
+	SetRenderHeight(handle, height);
+	SetFlag(handle, OF_HEIGHT_SET);
+}
+
+void Objects::UpdateRadius(objHndl handle, gfx::AnimatedModel &model) {
+	auto scale = GetScalePercent(handle);
+	auto radius = model.GetRadius(scale);
+
+	if (radius > 0) {
+		SetRadius(handle, radius);
+		SetFlag(handle, OF_RADIUS_SET);
+	}
+}
 
 #pragma region Hooks
 
@@ -751,6 +769,23 @@ public:
 
 
 	void apply() override {
+
+		// obj_update_render_height
+		replaceFunction<void(objHndl, temple::AasHandle)>(0x10021360, [](objHndl objId, temple::AasHandle animId) {
+			auto anim = gameSystems->GetAAS().BorrowByHandle(animId);
+			if (anim) {
+				objects.UpdateRenderHeight(objId, *anim);
+			}
+		});
+
+		// obj_update_radius
+		replaceFunction<void(objHndl, temple::AasHandle)>(0x10021500, [](objHndl objId, temple::AasHandle animId) {
+			auto anim = gameSystems->GetAAS().BorrowByHandle(animId);
+			if (anim) {
+				objects.UpdateRadius(objId, *anim);
+			}
+		});
+
 		replaceFunction(0x1004E7F0, _abilityScoreLevelGet);
 		replaceFunction(0x100257A0, _destroy);
 		//orgMove = replaceFunction(0x10025950, Move);

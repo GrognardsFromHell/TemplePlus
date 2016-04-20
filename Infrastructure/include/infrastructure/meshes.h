@@ -365,6 +365,20 @@ namespace gfx {
 
 		virtual std::unique_ptr<Submesh> GetSubmeshForParticles(const AnimatedModelParams& params, int submeshIdx) = 0;
 
+		/**
+			This calculates the effective height in world coordinate units of the model in its current
+			state. Scale is the model scale in percent.
+		*/
+		virtual float GetHeight(int scale = 100) = 0;
+
+		/**
+			This calculates the visible radius of the model in its current state.
+			The radius is the maximum distance of any vertex on the x,z plane from the models origin. 
+			If the model has no vertices, 0 is returned.
+			Scale is model scale in percent.
+		*/
+		virtual float GetRadius(int scale = 100) = 0;
+
 	};
 
 	struct AnimatedModelParams {
