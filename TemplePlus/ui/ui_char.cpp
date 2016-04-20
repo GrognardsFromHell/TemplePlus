@@ -346,7 +346,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 			lvlPkt.GetLevelPacket(classCode, dude, 0, classLvl);
 			auto numSpellsForLvl = navClassPackets[i].numSpellsForLvl;
 			for (int j = 0; j < NUM_SPELL_LEVELS; j++){
-				if (lvlPkt.spellCountFromClass[j] > 0){
+				if (lvlPkt.spellCountFromClass[j] >= 0){
 					numSpellsForLvl[j] = lvlPkt.spellCountBonusFromStatMod[j] + lvlPkt.spellCountFromClass[j];
 					if (numSpellsForLvl[j] > 0 && classCode == stat_level_wizard) {
 						if (spellSys.getWizSchool(dude))
