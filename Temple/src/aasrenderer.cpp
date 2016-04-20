@@ -361,7 +361,7 @@ void AasRenderer::RenderShadowMapShadow(gsl::span<gfx::AnimatedModel*> models,
 
 	D3DLOG(mDevice.GetDevice()->Clear(0, nullptr, D3DCLEAR_TARGET, 0, 0, 0));
 
-	for (size_t i = 0; i < models.size(); ++i) {
+	for (int i = 0; i < models.size(); ++i) {
 		RenderWithoutMaterial(models[i], *modelParams[i]);
 	}
 		

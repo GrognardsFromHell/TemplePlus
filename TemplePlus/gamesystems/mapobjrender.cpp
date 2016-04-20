@@ -200,7 +200,7 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 
 	// Take render height from the animation if necessary
 	if (renderHeight < 0) {
-		objects.UpdateRenderHeight(handle, animatedModel->GetAnimId());
+		objects.UpdateRenderHeight(handle, *animatedModel);
 		renderHeight = objects.GetRenderHeight(handle);
 	}
 
@@ -494,7 +494,7 @@ void MapObjectRenderer::RenderOccludedObject(objHndl handle) {
 
 	// Take render height from the animation if necessary
 	if (renderHeight < 0) {
-		objects.UpdateRenderHeight(handle, animatedModel->GetAnimId());
+		objects.UpdateRenderHeight(handle, *animatedModel);
 		renderHeight = objects.GetRenderHeight(handle);
 	}
 
@@ -626,7 +626,7 @@ void MapObjectRenderer::RenderObjectHighlight(objHndl handle, const gfx::MdfRend
 
 	// Take render height from the animation if necessary
 	if (renderHeight < 0) {
-		objects.UpdateRenderHeight(handle, animatedModel->GetAnimId());
+		objects.UpdateRenderHeight(handle, *animatedModel);
 		renderHeight = objects.GetRenderHeight(handle);
 	}
 

@@ -79,7 +79,7 @@ struct Objects : temple::AddressTable {
 	int GetNameId(objHndl handle) {
 		return _GetInternalFieldInt32(handle, obj_f_name);
 	}
-	float GetRadius(objHndl handle) const;
+	float GetRadius(objHndl handle);
 	void SetRadius(objHndl handle, float radius) {
 		_SetInternalFieldFloat(handle, obj_f_radius, radius);
 	}
@@ -297,8 +297,8 @@ struct Objects : temple::AddressTable {
 	FloatLineSystem  * floats;
 #pragma endregion
 
-	void(*UpdateRenderHeight)(objHndl obj, int animId);
-	void(*UpdateRadius)(objHndl obj, int animId);
+	void UpdateRenderHeight(objHndl obj, gfx::AnimatedModel &anim);
+	void UpdateRadius(objHndl obj, gfx::AnimatedModel &anim);
 
 	Objects();
 #pragma region Privates
