@@ -1,4 +1,3 @@
-#include "..\include\temple\meshes.h"
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <infrastructure/meshes.h>
@@ -265,9 +264,11 @@ namespace temple {
 		std::vector<int> GetSubmeshes() override;
 		std::unique_ptr<gfx::Submesh> GetSubmesh(const ::gfx::AnimatedModelParams& params, int submeshIdx) override;
 		std::unique_ptr<gfx::Submesh> GetSubmeshForParticles(const ::gfx::AnimatedModelParams& params, int submeshIdx) override;
+		float GetHeight(int scale) override;
+		float GetRadius(int scale) override;
 
 		static AasAnimParams Convert(const gfx::AnimatedModelParams& params);
-
+		
 	private:
 		AasHandle mHandle;
 		bool mBorrowed = false;
@@ -426,6 +427,89 @@ namespace temple {
 	::std::unique_ptr<::gfx::Submesh> AasAnimatedModel::GetSubmeshForParticles(const ::gfx::AnimatedModelParams& params, int submeshIdx) {
 		auto aasParams(Convert(params));
 		return std::make_unique<AasSubmeshAdapter>(mHandle, aasParams, submeshIdx, true);
+	}
+
+	float AasAnimatedModel::GetHeight(int scale)
+	{
+		SetClothFlag();
+
+		gfx::AnimatedModelParams animParams;
+		memset(&animParams, 0, sizeof(animParams));		
+		animParams.scale = scale / 100.0f;
+	
+		Advance(0.0f, 0.0f, 0.0f, animParams);
+
+		auto materialIds = GetSubmeshes();
+
+		auto maxHeight = -10000.0f;
+		auto minHeight = 10000.0f;
+
+		for (uint32_t i = 0; i < materialIds.size(); i++) {
+			auto submesh = GetSubmesh(animParams, i);
+			auto positions = submesh->GetPositions();
+
+			for (auto j = 0; j < submesh->GetVertexCount(); j++) {
+				auto y = positions[j].y;
+				if (y < minHeight) {
+					minHeight = y;
+				}
+				if (y > maxHeight) {
+					maxHeight = y;
+				}
+			}
+		}
+
+		// No idea how they arrived at this value
+		const auto defaultHeight = 28.8f;
+
+		if (maxHeight == -10000.0f) {
+			maxHeight = defaultHeight;
+		} else if (maxHeight <= 0) {
+			maxHeight = maxHeight - minHeight;
+			if (maxHeight <= 0.01f) {
+				maxHeight = defaultHeight;
+			}
+		}
+		
+		return maxHeight;
+	}
+
+	float AasAnimatedModel::GetRadius(int scale)
+	{
+		SetClothFlag();
+
+		gfx::AnimatedModelParams animParams;
+		memset(&animParams, 0, sizeof(animParams));
+		animParams.scale = scale / 100.0f;
+
+		Advance(0.0f, 0.0f, 0.0f, animParams);
+
+		auto materialIds = GetSubmeshes();
+
+		auto maxRadiusSquared = -10000.0f;
+
+		for (uint32_t i = 0; i < materialIds.size(); i++) {
+			auto submesh = GetSubmesh(animParams, i);
+			auto positions = submesh->GetPositions();
+
+			for (auto j = 0; j < submesh->GetVertexCount(); j++) {
+				auto &pos = positions[j];
+
+				// Distance from model origin (squared)
+				auto distSq = pos.x * pos.x + pos.z * pos.z;
+
+				if (distSq > maxRadiusSquared) {
+					maxRadiusSquared = distSq;
+				}
+			}
+		}
+
+		// No idea how they arrived at this value
+		if (maxRadiusSquared <= 0) {
+			return 0;
+		} else {
+			return sqrtf(maxRadiusSquared);
+		}
 	}
 
 	AasAnimatedModelFactory* AasAnimatedModelFactory::sInstance = nullptr;
