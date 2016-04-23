@@ -178,7 +178,7 @@ public:
 		null if none exists.
 	*/
 	CondStruct *GetByName(const string &name);
-
+	CondStruct* GetById(const int condId);
 	/*
 		Adds a condition to an item's obj_f_item_pad_wielder_condition_array and 
 		obj_f_item_pad_wielder_argument_array.
@@ -211,6 +211,7 @@ public:
 
 #pragma endregion
 	void RegisterNewConditions();
+	
 	static void AddToFeatDictionary(CondStructNew* condStruct,feat_enums feat, feat_enums featEnumMax, uint32_t condArg2Offset);
 	/*
 		used for initializing new SubDispDef's with the specified values

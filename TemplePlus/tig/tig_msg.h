@@ -71,6 +71,15 @@ struct TigMsgMouse : TigMsgBase // type 0
 	uint32_t buttonStateFlags; // button state flags for mouse events - see MouseStateFlags
 };
 
+
+enum class TigMsgWidgetEvent : int
+{
+	UNK1 = 1,
+	UNK2 = 2,
+	Entered  = 3,
+	Exited = 4
+};
+
 struct TigMsgWidget : TigMsgBase // type 1
 {
 	int widgetId; 

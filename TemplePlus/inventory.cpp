@@ -6,6 +6,7 @@
 #include "gamesystems/objects/objsystem.h"
 #include "gamesystems/gamesystems.h"
 #include "util/fixes.h"
+#include "condition.h"
 
 InventorySystem inventory;
 
@@ -81,6 +82,67 @@ public:
 		});
 	};
 } hooks;
+
+int InventorySystem::GetItemWieldCondArg(objHndl item, uint32_t condId, int argOffset)
+{
+	// loops through the item wielder conditions to find condId
+	
+	auto argCount = 0;
+		// for every non-matching item, increment the argCount
+		// this finds the correct start position for the arguments 
+		// of the sought-after condition
+		// then return the value at offset of subIdx
+
+	auto itemObj = gameSystems->GetObj().GetObject(item);
+	auto condArray = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
+	if (condArray.GetSize() <= 0)
+		return 0;
+	for (int i = 0; i < condArray.GetSize();i++)
+	{
+		auto wielderCondId = condArray[i];
+		auto wielderCond = conds.GetById(wielderCondId);
+		
+		if (wielderCond && condId == wielderCondId)	{
+			return itemObj->GetInt32Array(obj_f_item_pad_wielder_argument_array)[argOffset + argCount];
+		} 
+		
+		if (wielderCond)
+		{
+			argCount += wielderCond->numArgs;
+		}
+	}
+
+	// no matches found, return 0
+	return 0;
+
+}
+
+void InventorySystem::RemoveWielderCond(objHndl item, uint32_t condId){
+	if (!condId || !item)
+		return;
+	auto itemObj = gameSystems->GetObj().GetObject(item);
+	auto wielderConds = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
+	auto wielderArgs = itemObj->GetInt32Array(obj_f_item_pad_wielder_argument_array);
+	auto argIdx = 0;
+	for (int i = 0; i < wielderConds.GetSize();i++)
+	{
+		auto wCondId = wielderConds[i];
+		auto wCond = conds.GetById(wCondId);
+		if (!wCond) {
+			logger->error("InventorySystem::RemoveWielderCond: Invalid condition! Item {}" , description.getDisplayName(item));
+			return;
+		}
+		if (wCondId == condId)
+		{
+			wielderConds.Remove(i);
+			for (int j = 0; j < wCond->numArgs;j++)
+				wielderArgs.Remove(argIdx);
+			return;
+		}
+		argIdx += wCond->numArgs;
+	}
+
+}
 
 objHndl InventorySystem::ItemWornAt(objHndl handle, EquipSlot nItemSlot) const
 {

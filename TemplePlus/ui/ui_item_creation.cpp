@@ -21,14 +21,30 @@
 #include "gamesystems/objects/objsystem.h"
 #include <gamesystems/gamesystems.h>
 #include <infrastructure/keyboard.h>
+#include <infrastructure/elfhash.h>
+#include <tig/tig_tabparser.h>
+
+#define NUM_ITEM_ENHANCEMENT_SPECS 41
+#define MAX_CRAFTED_BONUSES 9 // number of bonuses that can be applied on item creation
+#define CRAFT_EFFECT_INVALID -1
+#define MAA_EFFECT_BUTTONS_COUNT 10
+
+const std::unordered_map<const char*, uint32_t> ItemEnhSpecFlagDict = { 
+	{"IESF_ENABLED", IESF_ENABLED},
+	{"IESF_WEAPON",IESF_WEAPON } ,
+	{ "IESF_ARMOR",IESF_ARMOR },
+	{ "IESF_SHIELD",IESF_SHIELD },
+	{ "IESF_RANGED",IESF_RANGED },
+
+	{ "IESF_MELEE",IESF_MELEE },
+	{ "IESF_THROWN",IESF_THROWN },
+	{ "IESF_UNK100",IESF_UNK100 },
+	{ "IESF_PLUS_BONUS",IESF_PLUS_BONUS }
+};
 
 int WandCraftCostCp=0;
 
-struct ItemEnhancementSpec{
-	const char * name;
-	uint32_t flags; // 1 - enabled; 2 - weapons only; 4 - shields only; 8 - armors only; 0x100 - unknown (only used in Keen)
-	int effectiveBonus;
-};
+ItemCreation itemCreation;
 
 struct UiItemCreationAddresses : temple::AddressTable
 {
@@ -78,6 +94,90 @@ static ImgFile *background = nullptr;
 //static ButtonStateTextures acceptBtnTextures;
 //static ButtonStateTextures declineBtnTextures;
 static int disabledBtnTexture;
+
+class ItemCreationHooks : public TempleFix {
+public:
+	
+
+	// static int UiItemCreationInit(GameSystemConf* conf);
+
+	static void HookedGetLineForMaaAppend(MesHandle, MesLine*); // ensures the crafted item name doesn't overflow
+
+	void apply() override {
+		// auto system = UiSystem::getUiSystem("ItemCreation-UI");		
+		// system->init = systemInit;
+
+		/*
+		void* ptrToBrewPotion = &BrewPotionRadialMenu;
+		void* ptrToScribeScroll = &ScribeScrollRadialMenu;
+		void* ptrToCraftRod = &CraftRodRadialMenu;
+
+		void* ptrToCraftWondrous = &CraftWondrousRadialMenu;
+		void* ptrToCraftStaff = &CraftStaffRadialMenu;
+		void* ptrToForgeRing = &ForgeRingRadialMenu;
+		void* ptrToMAA = &CraftMagicArmsAndArmorRadialMenu;
+		*/
+
+		replaceFunction(0x10150DA0, CraftScrollWandPotionSetItemSpellData);
+		
+		replaceFunction<int(__cdecl)(objHndl, objHndl)>(0x10152690, [](objHndl crafter, objHndl item) {
+			return itemCreation.CreateItemResourceCheck(crafter, item);
+		});
+
+		replaceFunction(0x10152930, UiItemCreationCraftingCostTexts);
+
+
+
+		// MAA Effect "buttons"
+		replaceFunction<bool(__cdecl)(int, TigMsg*)>(0x10153250, [](int widId, TigMsg* msg) {
+			return itemCreation.MaaEffectMsg(widId, msg); }
+		);
+
+		// CreateBtnMsg
+		replaceFunction<bool(int, TigMsg * )>(0x10153F60, [](int widId, TigMsg* msg){
+			return itemCreation.CreateBtnMsg(widId, msg);
+		});
+
+		/*	
+		write(0x102EE250, &ptrToBrewPotion, sizeof(ptrToBrewPotion));
+
+		write(0x102EE280, &ptrToScribeScroll, sizeof(ptrToScribeScroll));
+		//write(0x102EE2B0, &ptrToCraftWand, sizeof(ptrToCraftWand));
+		write(0x102EE2E0, &ptrToCraftRod, sizeof(ptrToCraftRod));
+
+		write(0x102EE310, &ptrToCraftWondrous, sizeof(ptrToCraftWondrous));
+
+		write(0x102AAE28, &ptrToCraftStaff, sizeof(ptrToCraftStaff));
+		write(0x102AADF8, &ptrToForgeRing, sizeof(ptrToForgeRing));
+		write(0x102EE340, &ptrToMAA, sizeof(ptrToMAA));
+		*/
+
+		//replaceFunction(0x10154BA0, UiItemCreationInit);
+		/*auto writeval = &UiItemCreationInit;
+		write(0x102F6C10 + 9 * 4 * 26 + 4, &writeval, sizeof(void*));*/
+
+		redirectCall(0x1015221B, HookedGetLineForMaaAppend);
+		replaceFunction<void(_cdecl)(char)>(0x10150C10, [](char newChar) {
+			auto craftedName = temple::GetPointer<char>(0x10BED758);
+			auto& craftedNameCurPos = temple::GetRef<int>(0x10BECE7C);
+			craftedName[63] = 0; // ensure string termination
+
+
+			auto currStrLen = strlen(craftedName) + 1;
+			if (currStrLen < 62) {
+				for (int i = craftedNameCurPos; i < currStrLen; currStrLen--)
+				{
+					craftedName[currStrLen] = craftedName[currStrLen - 1];
+				}
+				craftedName[craftedNameCurPos] = newChar;
+				craftedNameCurPos++;
+			}
+
+
+		});
+	}
+
+} itemCreationHooks;
 
 
 
@@ -150,7 +250,7 @@ int CraftedWandCasterLevel(objHndl item)
 	return (result * 2) - 1;
 }
 
-int32_t CreateItemResourceCheck(objHndl obj, objHndl objHndItem){
+int32_t ItemCreation::CreateItemResourceCheck(objHndl obj, objHndl objHndItem){
 	bool canCraft = 1;
 	bool xpCheck = 0;
 	int32_t * globInsuffXP = itemCreationAddresses.craftInsufficientXP;
@@ -173,7 +273,7 @@ int32_t CreateItemResourceCheck(objHndl obj, objHndl objHndItem){
 	auto itemCreationType = *itemCreationAddresses.itemCreationType;
 	// Check GP Section
 	if (itemCreationType == ItemCreationType::CraftMagicArmsAndArmor){
-		craftingCostCP = templeFuncs.ItemWorthFromEnhancements( 41 );
+		craftingCostCP = ItemCraftCostFromEnhancements( -1 );
 	}
 	else
 	{
@@ -208,7 +308,7 @@ int32_t CreateItemResourceCheck(objHndl obj, objHndl objHndItem){
 		xpCheck = surplusXP >= itemXPCost;
 	} else 
 	{
-		uint32_t magicArmsAndArmorXPCost = templeFuncs.CraftMagicArmsAndArmorSthg(41);
+		uint32_t magicArmsAndArmorXPCost = templeFuncs.CraftMagicArmsAndArmorSthg(CRAFT_EFFECT_INVALID);
 		xpCheck = surplusXP >= magicArmsAndArmorXPCost;
 	}
 		
@@ -220,6 +320,154 @@ int32_t CreateItemResourceCheck(objHndl obj, objHndl objHndItem){
 		return 0;
 	};
 
+}
+
+bool ItemCreation::IsWeaponBonus(int effIdx)
+{
+	if (effIdx < 0)
+		return false;
+
+	if ( (itemEnhSpecs[effIdx].flags & IESF_PLUS_BONUS) 
+		&& (itemEnhSpecs[effIdx].flags & IESF_WEAPON)){
+		return true;
+	}
+	return false;
+}
+
+bool ItemCreation::ItemEnhancementIsApplicable(int effIdx)
+{
+	auto itEnh = itemEnhSpecs[effIdx];
+	if (!(itEnh.flags & IESF_ENABLED))
+		return false;
+
+	if (craftingItemIdx >= 0 && craftingItemIdx < numItemsCrafting[itemCreationType])
+	{
+		auto itemHandle = craftedItemHandles[itemCreationType][craftingItemIdx];
+		if (itemHandle){
+			auto itemObj = gameSystems->GetObj().GetObject(itemHandle);
+			if (itemObj->type == obj_t_weapon && !(itEnh.flags & IESF_WEAPON))
+				return false;
+			if (itemObj->type == obj_t_armor)
+			{
+				auto armorFlags = itemObj->GetInt32(obj_f_armor_flags);
+				auto armorType = inventory.GetArmorType(armorFlags);
+				if (armorType == ArmorType::ARMOR_TYPE_SHIELD)	{
+
+					if (!(itEnh.flags & IESF_SHIELD))
+						return false;
+				} 
+				else{
+
+					if (!(itEnh.flags & IESF_ARMOR))
+						return false;
+				}
+			}
+		}
+	}
+
+
+	return true;
+}
+
+int ItemCreation::GetEffIdxFromWidgetIdx(int widIdx){
+
+	auto scrollbar2Y = temple::GetRef<int>(0x10BECDA8);
+	auto adjIdx = scrollbar2Y + widIdx; // this is the overall index for the effect
+	auto validCount = 0;
+	for (auto it: itemEnhSpecs){
+		if (ItemEnhancementIsApplicable(it.first))
+		{
+			if (validCount == adjIdx)
+			{
+				return it.first;
+			}
+			validCount++;
+		}
+			
+	}
+	return CRAFT_EFFECT_INVALID;
+}
+
+int ItemCreation::HasPlusBonus(int effIdx)
+{
+	auto itEnh = itemEnhSpecs[effIdx];
+	if (itEnh.data.enhBonus == 1 && (itEnh.flags & IESF_PLUS_BONUS) ) {
+		return TRUE;	
+	}
+	for (auto it : appliedBonusIndices)
+	{
+		itEnh = itemEnhSpecs[it];
+		if ((itEnh.flags & IESF_PLUS_BONUS)
+			&& itEnh.data.enhBonus >= 1 )
+			return TRUE;
+	}
+
+	return 0;
+}
+
+bool ItemCreation::ItemWielderCondsContainEffect(int effIdx, objHndl item)
+{
+	if (effIdx == CRAFT_EFFECT_INVALID)
+		return false;
+
+	auto itemObj = gameSystems->GetObj().GetObject(item);
+
+	auto condId = ElfHash::Hash(itemEnhSpecs[effIdx].condName);
+	auto condArray = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
+
+	if (condArray.GetSize() <= 0)
+		return false;
+
+
+	if (!IsWeaponBonus(effIdx)){  // a +x weapon bonus
+
+		for (int i = 0; i < condArray.GetSize(); i++)
+		{
+			if (condArray[i] == condId)
+			{
+				if (itemEnhSpecs[i].flags & IESF_PLUS_BONUS){
+					return itemEnhSpecs[i].data.enhBonus <= inventory.GetItemWieldCondArg(item, condId, 0);
+				}
+				else
+					return true;
+			}	
+		}
+
+		return false;
+	}
+
+	// else, do the weapon +x bonus
+
+	auto toHitBonusId = ElfHash::Hash("To Hit Bonus");
+	auto damageBonusId = ElfHash::Hash("Damage Bonus");
+	auto damBonus = 0;
+	auto toHitBonus = 0;
+
+	for (int i = 0; i < condArray.GetSize();i++)
+	{
+		auto wielderCondId = condArray[i];
+		if (wielderCondId == condId){
+			return itemEnhSpecs[effIdx].data.enhBonus <= inventory.GetItemWieldCondArg(item, condId, 0);
+		}
+
+		if (wielderCondId == toHitBonusId)
+		{
+			toHitBonus = inventory.GetItemWieldCondArg(item, toHitBonusId, 0);
+			if (toHitBonus == damBonus)
+				return itemEnhSpecs[effIdx].data.enhBonus <= toHitBonus;
+		}
+
+		if (wielderCondId == damageBonusId)
+		{
+			damBonus = inventory.GetItemWieldCondArg(item, toHitBonusId, 0);
+			if (toHitBonus == damBonus)
+			{
+				return itemEnhSpecs[effIdx].data.enhBonus <= toHitBonus;
+			}
+		}
+	}
+
+	return false;
 };
 
 void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCrafter){
@@ -310,7 +558,7 @@ void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCra
 };
 
 
-void CreateItemDebitXPGP(objHndl objHndCrafter, objHndl objHndItem){
+void ItemCreation::CreateItemDebitXPGP(objHndl objHndCrafter, objHndl objHndItem){
 	uint32_t crafterXP = objects.getInt32(objHndCrafter, obj_f_critter_experience);
 	uint32_t craftingCostCP = 0;
 	uint32_t craftingCostXP = 0;
@@ -318,8 +566,8 @@ void CreateItemDebitXPGP(objHndl objHndCrafter, objHndl objHndItem){
 	auto itemCreationType = *itemCreationAddresses.itemCreationType;
 
 	if (itemCreationType == CraftMagicArmsAndArmor){ // magic arms and armor
-		craftingCostCP = templeFuncs.ItemWorthFromEnhancements(41);
-		craftingCostXP = templeFuncs.CraftMagicArmsAndArmorSthg(41);
+		craftingCostCP = ItemCraftCostFromEnhancements(CRAFT_EFFECT_INVALID);
+		craftingCostXP = templeFuncs.CraftMagicArmsAndArmorSthg(CRAFT_EFFECT_INVALID);
 	}
 	else
 	{
@@ -459,6 +707,125 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 };
 
 
+void ItemCreation::GetMaaSpecs()
+{
+
+	itemCreationType = temple::GetRef<int>(0x10BEDF50);
+	itemCreationCrafter = temple::GetRef<objHndl>(0x10BECEE0);
+	craftingItemIdx = temple::GetRef<int>(0x10BEE398);
+
+	struct MaaSpecTabEntry
+	{
+		char * id;
+		char * condName;
+		char * flags;
+		char * effBonus;
+		char * enhBonus;
+		char * classReq; // class req
+		char * charReqs; // Character Level, Alignment
+		char * spellReqs;
+		char * featReqs; // TODO
+
+	};
+	auto maaSpecLineParser = [](const TigTabParser*, int lineIdx, char ** cols)
+	{
+		auto& tabEntry = reinterpret_cast<MaaSpecTabEntry&>(cols);
+		
+
+		auto effIdx = atol(tabEntry.id);
+		auto condName = tabEntry.condName;
+		
+		
+		// get flags
+		uint32_t flags = 0;
+		{
+			StringTokenizer flagTok(tabEntry.flags);
+			while (flagTok.next()) {
+				auto& tok = flagTok.token();
+				if (tok.type != StringTokenType::Identifier)
+					continue;
+				flags |= ItemEnhSpecFlagDict.at(tok.text);
+			}
+		}
+		
+		
+		auto effBonus = atol(tabEntry.effBonus);
+		auto enhBonus = atol(tabEntry.enhBonus);
+
+		itemCreation.itemEnhSpecs[effIdx] = ItemEnhancementSpec(condName, flags, effBonus, enhBonus);
+
+		// get class req
+		if (tabEntry.classReq)
+		{
+			// TODO (right now only Weapon Ki Focus uses it and it's not enabled anyway)
+		}
+
+		// get charReqs
+		if (tabEntry.charReqs)
+		{
+			StringTokenizer charReqTok(tabEntry.charReqs);
+			while (charReqTok.next())
+			{
+				auto& tok = charReqTok.token();
+				if (tok.type != StringTokenType::Identifier)
+					continue;
+				if (tok.text[0] == 'A')
+				{
+					if (_stricmp(&tok.text[1], "good"))
+						itemCreation.itemEnhSpecs[effIdx].reqs.alignment = Alignment::ALIGNMENT_GOOD;
+					else if (_stricmp(&tok.text[1], "lawful"))
+						itemCreation.itemEnhSpecs[effIdx].reqs.alignment = Alignment::ALIGNMENT_LAWFUL;
+					else if (_stricmp(&tok.text[1], "evil"))
+						itemCreation.itemEnhSpecs[effIdx].reqs.alignment = Alignment::ALIGNMENT_EVIL;
+					else if (_stricmp(&tok.text[1], "chaotic"))
+						itemCreation.itemEnhSpecs[effIdx].reqs.alignment = Alignment::ALIGNMENT_CHAOTIC;
+				} 
+				else if (tok.text[0] == 'C')
+				{
+					itemCreation.itemEnhSpecs[effIdx].reqs.minLevel = atol(&tok.text[1]);
+				}
+				
+			}
+		}
+
+		// get spellReqs
+		if (tabEntry.spellReqs)
+		{
+			StringTokenizer spellReqTok(tabEntry.spellReqs);
+			while (spellReqTok.next())
+			{
+				auto& tok = spellReqTok.token();
+				if (tok.type != StringTokenType::QuotedString)
+					continue;
+				if (tok.text[0] == 'A')
+				{
+					if (_stricmp(&tok.text[1], "good"))
+						itemCreation.itemEnhSpecs[effIdx].reqs.alignment = Alignment::ALIGNMENT_GOOD;
+					else if (_stricmp(&tok.text[1], "lawful"))
+						itemCreation.itemEnhSpecs[effIdx].reqs.alignment = Alignment::ALIGNMENT_LAWFUL;
+					else if (_stricmp(&tok.text[1], "evil"))
+						itemCreation.itemEnhSpecs[effIdx].reqs.alignment = Alignment::ALIGNMENT_EVIL;
+					else if (_stricmp(&tok.text[1], "chaotic"))
+						itemCreation.itemEnhSpecs[effIdx].reqs.alignment = Alignment::ALIGNMENT_CHAOTIC;
+				}
+				else if (tok.text[0] == 'C')
+				{
+					itemCreation.itemEnhSpecs[effIdx].reqs.minLevel = atol(&tok.text[1]);
+				}
+
+			}
+		}
+		
+		return 0;
+	};
+
+	TigTabParser maaSpecsTab;
+	maaSpecsTab.Init(maaSpecLineParser);
+	maaSpecsTab.Open("tprules\\craft_maa_specs.tab");
+	maaSpecsTab.Process();
+	maaSpecsTab.Close();
+}
+
 uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t casterLevelNew){
 	auto obj = objSystem->GetObject(objHndItem);
 	auto numItemSpells = obj->GetSpellArray(obj_f_item_spell_idx).GetSize();
@@ -579,7 +946,7 @@ int CraftWandRadialMenu(DispatcherCallbackArgs args)
 	radMenuCraftWand.text = (char*)mesLine.value;
 	radMenuCraftWand.d20ActionType = D20A_ITEM_CREATION;
 	radMenuCraftWand.d20ActionData1 = CraftWand;
-	radMenuCraftWand.helpId = templeFuncs.StringHash("TAG_CRAFT_WAND");
+	radMenuCraftWand.helpId = ElfHash::Hash("TAG_CRAFT_WAND");
 	
 	int newParent = radialMenus.AddParentChildNode(args.objHndCaller, &radMenuCraftWand, radialMenus.GetStandardNode(RadialMenuStandardNode::Feats));
 
@@ -594,12 +961,12 @@ int CraftWandRadialMenu(DispatcherCallbackArgs args)
 	setWandLevel.actualArg = (int)conds.CondNodeGetArgPtr(args.subDispNode->condNode, 0);
 	setWandLevel.callback = (BOOL (__cdecl*)(objHndl, RadialMenuEntry*))itemCreationAddresses.Sub_100F0200;
 	setWandLevel.text = combatSys.GetCombatMesLine(6017);
-	setWandLevel.helpId = templeFuncs.StringHash("TAG_CRAFT_WAND");
+	setWandLevel.helpId = ElfHash::Hash("TAG_CRAFT_WAND");
 	radialMenus.AddChildNode(args.objHndCaller, &setWandLevel, newParent);
 
 	useCraftWand.type = RadialMenuEntryType::Action;
 	useCraftWand.text = combatSys.GetCombatMesLine(6018);
-	useCraftWand.helpId = templeFuncs.StringHash("TAG_CRAFT_WAND");
+	useCraftWand.helpId = ElfHash::Hash("TAG_CRAFT_WAND");
 	useCraftWand.d20ActionType = D20A_ITEM_CREATION;
 	useCraftWand.d20ActionData1 = CraftWand;
 	radialMenus.AddChildNode(args.objHndCaller, &useCraftWand, newParent);
@@ -687,91 +1054,218 @@ static void __cdecl systemReset() {
 static void __cdecl systemExit() {
 }
 
-// Item Creation UI
-class ItemCreation : public TempleFix {
-public:
-	static void CreateItemFinalize(objHndl crafter, objHndl item);
 
-	static int UiItemCreationInit(GameSystemConf* conf);
+ItemCreation::ItemCreation(){
 
-	static void HookedGetLineForMaaAppend(MesHandle, MesLine*); // ensures the crafted item name doesn't overflow
-
-	void apply() override {
-		// auto system = UiSystem::getUiSystem("ItemCreation-UI");		
-		// system->init = systemInit;
-		void* ptrToBrewPotion = &BrewPotionRadialMenu;
-		void* ptrToScribeScroll = &ScribeScrollRadialMenu;
-		void* ptrToCraftWand = &CraftWandRadialMenu;
-		void* ptrToCraftRod = &CraftRodRadialMenu;
-
-		void* ptrToCraftWondrous = &CraftWondrousRadialMenu;
-		void* ptrToCraftStaff = &CraftStaffRadialMenu;
-		void* ptrToForgeRing = &ForgeRingRadialMenu;
-		void* ptrToMAA = &CraftMagicArmsAndArmorRadialMenu;
-
-		replaceFunction(0x10150DA0, CraftScrollWandPotionSetItemSpellData);
-		replaceFunction(0x10152690, CreateItemResourceCheck);
-		replaceFunction(0x10151F60, CreateItemDebitXPGP);
-		replaceFunction(0x10152930, UiItemCreationCraftingCostTexts);
-		
-		// CreateItemFinalize
-		static void(*orgCreateItemFinalize)(objHndl, objHndl) = replaceFunction<void(__cdecl)(objHndl, objHndl)>(0x10153A50, [](objHndl crafter, objHndl item) {
-			if (*itemCreationAddresses.itemCreationType == ItemCreationType::CraftMagicArmsAndArmor){
-				orgCreateItemFinalize(crafter, item);
-				return;
-			}
-
-			CreateItemFinalize(crafter, item);
-		});
-
-
-		write(0x102EE250, &ptrToBrewPotion, sizeof(ptrToBrewPotion));
-		
-		write(0x102EE280, &ptrToScribeScroll, sizeof(ptrToScribeScroll));
-		//write(0x102EE2B0, &ptrToCraftWand, sizeof(ptrToCraftWand));
-		write(0x102EE2E0, &ptrToCraftRod, sizeof(ptrToCraftRod));
-
-		write(0x102EE310, &ptrToCraftWondrous, sizeof(ptrToCraftWondrous));
-
-		write(0x102AAE28, &ptrToCraftStaff, sizeof(ptrToCraftStaff));
-		write(0x102AADF8, &ptrToForgeRing, sizeof(ptrToForgeRing));
-		write(0x102EE340, &ptrToMAA, sizeof(ptrToMAA));
-
-		//replaceFunction(0x10154BA0, UiItemCreationInit);
-		/*auto writeval = &UiItemCreationInit;
-		write(0x102F6C10 + 9 * 4 * 26 + 4, &writeval, sizeof(void*));*/
-
-		redirectCall(0x1015221B, HookedGetLineForMaaAppend);
-		replaceFunction<void (_cdecl)(char)>(0x10150C10, [](char newChar){
-			auto craftedName = temple::GetPointer<char>(0x10BED758);
-			auto& craftedNameCurPos = temple::GetRef<int>(0x10BECE7C);
-			craftedName[63] = 0; // ensure string termination
-
-
-			auto currStrLen = strlen(craftedName)+1;
-			if (currStrLen < 62){
-				for (int i = craftedNameCurPos; i < currStrLen; currStrLen--)
-				{
-					craftedName[currStrLen] = craftedName[currStrLen - 1];
-				}
-				craftedName[craftedNameCurPos] = newChar;
-				craftedNameCurPos++;
-			}
-
-
-		});
+	for (int i = 0; i < 30; i++) {
+		GoldCraftCostVsEffectiveBonus[i] = 1000 * i*i;
+		GoldBaseWorthVsEffectiveBonus[i] = GoldCraftCostVsEffectiveBonus[i] * 2;
 	}
-} itemCreationHooks;
 
-void ItemCreation::CreateItemFinalize(objHndl crafter, objHndl item)
+	craftedItemExistingEffectiveBonus = -1; // stores the crafted item existing (pre-crafting) effective bonus
+	//craftingItemIdx = -1;
+
+	memset(numItemsCrafting, 0, sizeof(numItemsCrafting));
+	memset(craftedItemHandles, 0, sizeof(craftedItemHandles));
+	memset(craftedItemName, 0, sizeof craftedItemName);
+	craftedItemNameLength = 0;
+	craftingWidgetId = -1;
+
+	InitItemEnhSpecs();
+}
+
+void ItemCreation::InitItemEnhSpecs()
 {
-	// Currently handles non- Craft MAA
-	auto altPressed = infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) || infrastructure::gKeyboard.IsKeyPressed(VK_RMENU);
+	//auto idx = 0;
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Enhancement Bonus", IESF_ENABLED | IESF_WEAPON | IESF_PLUS_BONUS, 1, 1);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Enhancement Bonus", IESF_ENABLED | IESF_WEAPON | IESF_PLUS_BONUS, 1, 2);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Enhancement Bonus", IESF_ENABLED | IESF_WEAPON | IESF_PLUS_BONUS, 1, 3);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Defending Bonus", IESF_ENABLED | IESF_WEAPON, 1);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Flaming", IESF_ENABLED | IESF_WEAPON, 1);
+	//
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Frost", IESF_ENABLED | IESF_WEAPON, 1);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Shock", IESF_ENABLED | IESF_WEAPON, 1);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Ghost Touch", IESF_WEAPON, 1);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Keen", IESF_ENABLED | IESF_WEAPON | IESF_UNK100, 1);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Mighty Cleaving", IESF_ENABLED | IESF_WEAPON, 1);
+
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Spell Storing", IESF_WEAPON, 1);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Throwing", IESF_WEAPON, 1);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Bane", IESF_WEAPON, 2);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Disruption", IESF_WEAPON, 2);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Flaming Burst", IESF_ENABLED | IESF_WEAPON, 2);
+
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Icy Burst", IESF_ENABLED | IESF_WEAPON, 2);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Shocking Burst", IESF_ENABLED | IESF_WEAPON, 2);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Thundering",  IESF_WEAPON, 2);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Wounding", IESF_WEAPON, 2);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Holy", IESF_ENABLED | IESF_WEAPON, 2);
+
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Unholy", IESF_ENABLED | IESF_WEAPON, 2);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Lawful", IESF_ENABLED | IESF_WEAPON, 2);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Chaotic", IESF_ENABLED | IESF_WEAPON, 2);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Enhancement Bonus", IESF_ENABLED | IESF_WEAPON | IESF_PLUS_BONUS, 1, 4);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Enhancement Bonus", IESF_ENABLED | IESF_WEAPON | IESF_PLUS_BONUS, 1, 5);
+
+	//// armor bonuses
+	//idx = 200;
+
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Enhancement Bonus", IESF_ENABLED | IESF_ARMOR | IESF_PLUS_BONUS, 1, 1);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Enhancement Bonus", IESF_ENABLED | IESF_ARMOR | IESF_PLUS_BONUS, 1, 2);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Enhancement Bonus", IESF_ENABLED | IESF_ARMOR | IESF_PLUS_BONUS, 1, 3);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Light Fortification", IESF_ARMOR , 1);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Glamered", IESF_ARMOR, 1);
+
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Slick", IESF_ARMOR, 1);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Shadow", IESF_ARMOR, 1);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Silent Moves", IESF_ENABLED | IESF_ARMOR, 1);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Spell Resistance", IESF_ENABLED | IESF_ARMOR, 2, 13);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Enhancement Bonus", IESF_ENABLED | IESF_ARMOR, 1, 4);
+
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Enhancement Bonus", IESF_ENABLED | IESF_ARMOR, 1, 5);
+
+
+	//// shield bonuses
+	//idx = 400;
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Enhancement Bonus", IESF_ENABLED | IESF_SHIELD | IESF_PLUS_BONUS, 1, 1);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Enhancement Bonus", IESF_ENABLED | IESF_SHIELD | IESF_PLUS_BONUS, 1, 2);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Enhancement Bonus", IESF_ENABLED | IESF_SHIELD | IESF_PLUS_BONUS, 1, 3);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Bashing", IESF_SHIELD, 1);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Blinding", IESF_SHIELD, 1);
+
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Light Fortification", IESF_SHIELD , 1);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Arrow Deflection", IESF_SHIELD, 1);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Animated", IESF_SHIELD, 1);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Spell Resistance", IESF_ENABLED | IESF_SHIELD, 2, 13);
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Enhancement Bonus", IESF_ENABLED | IESF_SHIELD | IESF_PLUS_BONUS, 1, 4);
+
+	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Enhancement Bonus", IESF_ENABLED | IESF_SHIELD | IESF_PLUS_BONUS, 1, 5);
+}
+
+ItemEnhancementSpec::ItemEnhancementSpec(const char* CondName, uint32_t Flags, int EffcBonus, int enhBonus)
+	:condName(CondName),flags(Flags),effectiveBonus(EffcBonus){
+	data.enhBonus = enhBonus;
+}
+
+bool ItemCreation::CreateBtnMsg(int widId, TigMsg* msg)
+{
+	if (msg->type == TigMsgType::WIDGET && msg->arg2 == 1)
+	{
+		craftedItemNameLength = strlen(craftedItemName);
+		craftingWidgetId = widId;
+		if (craftingItemIdx >= 0 )
+		{
+			auto itemHandle = craftedItemHandles[itemCreationType][craftingItemIdx];
+			if ( CreateItemResourceCheck(itemCreationCrafter, itemHandle) )
+			{
+				CreateItemDebitXPGP(itemCreationCrafter, itemHandle);
+				CreateItemFinalize(itemCreationCrafter, itemHandle);
+			}
+		}
+	}
+	return false;
+}
+
+// Item Creation UI
+void ItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
+
+	auto icType = *itemCreationAddresses.itemCreationType;
 	auto effBonus = 0;
+	auto crafterObj = gameSystems->GetObj().GetObject(crafter);
+	auto altPressed = infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) || infrastructure::gKeyboard.IsKeyPressed(VK_RMENU);
+
 	//auto appliedBonusIndices = temple::GetRef<int[9]>(0x10BED908);
 
+	if (icType == ItemCreationType::CraftMagicArmsAndArmor){
 
-	auto crafterObj = gameSystems->GetObj().GetObject(crafter);
+		auto itemObj = gameSystems->GetObj().GetObject(item);
+		for (auto it : appliedBonusIndices){
+			auto effIdx = it;
+			if (effIdx == CRAFT_EFFECT_INVALID)
+				continue;
+
+			auto& itEnh = itemEnhSpecs[effIdx];
+
+			effBonus += itEnh.effectiveBonus;
+			int arg0 = 0, arg1 = 0;
+
+
+			auto condId = ElfHash::Hash(itEnh.condName);
+			auto wielderConds = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
+			auto wielderArgs = itemObj->GetInt32Array(obj_f_item_pad_wielder_argument_array);
+
+			// if it's a plus bonus greater than +1, then it means the condition should already be there
+			if ( (itEnh.flags & IESF_PLUS_BONUS) && itemEnhSpecs[effIdx].data.enhBonus >= 2)
+			{
+				arg0 = itEnh.data.enhBonus;
+				arg1 = 0;
+
+				auto condArgIdx = 0;
+				for (auto i = 0; i < wielderConds.GetSize(); i++)
+				{
+					auto wieldCond = conds.GetById(wielderConds[i]);
+					if (wielderConds[i] == condId)
+					{
+						wielderArgs.Set(condArgIdx, arg0);
+						wielderArgs.Set(condArgIdx + 1, arg1);
+					}
+					condArgIdx += wieldCond->numArgs;
+				}
+
+			}
+			else if (!ItemWielderCondsContainEffect(effIdx, item)){
+			
+				arg0 = itEnh.data.enhBonus;
+				arg1 = 0;
+
+				auto appliedCond = conds.GetByName(itEnh.condName);
+				wielderConds.Set(wielderConds.GetSize(), ElfHash::Hash(appliedCond->condName));
+
+				if (appliedCond->numArgs > 0)
+					wielderArgs.Append(arg0);
+				if (appliedCond->numArgs > 1)
+					wielderArgs.Append(arg1);
+				for (int i = 2; i < appliedCond->numArgs; i++)
+					wielderArgs.Append(0);
+
+				// applying +1 shield/armor bonus, so remove the masterwork condition
+				if ((itEnh.flags & (IESF_ARMOR | IESF_SHIELD) ) && itEnh.data.enhBonus == 1){
+					auto armorMWCondId = ElfHash::Hash("Armor Masterwork");
+					inventory.RemoveWielderCond(item,armorMWCondId);
+				}
+			}
+		}
+		auto itemWorthDelta = 100;
+		if (itemObj->type == obj_t_weapon)
+		{
+			itemWorthDelta *= GoldBaseWorthVsEffectiveBonus[effBonus] - GoldBaseWorthVsEffectiveBonus[craftedItemExistingEffectiveBonus];
+		} else
+		{
+			itemWorthDelta *= GoldCraftCostVsEffectiveBonus[effBonus] - GoldCraftCostVsEffectiveBonus[craftedItemExistingEffectiveBonus];
+		}
+
+		auto itemWorthRegardIdentified = temple::GetRef<int(__cdecl)(objHndl)>(0x10067C90)(item);
+
+		itemObj->SetInt32(obj_f_item_worth, itemWorthRegardIdentified + itemWorthDelta);
+
+		auto itemDesc = itemObj->GetInt32(obj_f_description);
+		if (description.DescriptionIsCustom(itemDesc))
+		{
+			description.CustomNameChange(craftedItemName, itemDesc);
+		} else
+		{
+			auto itemDescNew = description.CustomNameNew(craftedItemName);
+			itemObj->SetInt32(obj_f_description, itemDescNew);
+		}
+
+		ui.WidgetSetHidden(temple::GetRef<int>(0x10BEDA64), 1);
+		itemCreationType = ItemCreationType::Inactive;
+		itemCreationCrafter = 0i64;
+
+		return;
+	}
+	
+	// else, a non-MAA crafting type with the simpler window
 	
 	// create the new item
 	auto newItemHandle = gameSystems->GetObj().CreateObject(item, crafterObj->GetLocation());
@@ -785,7 +1279,6 @@ void ItemCreation::CreateItemFinalize(objHndl crafter, objHndl item)
 	
 
 	// set its spell properties
-	auto& itemCreationType = temple::GetRef<ItemCreationType>(0x10BEDF50);
 	if (itemCreationType == ItemCreationType::CraftWand 
 		|| itemCreationType == ItemCreationType::ScribeScroll
 		|| itemCreationType == ItemCreationType::BrewPotion){
@@ -829,9 +1322,30 @@ void ItemCreation::CreateItemFinalize(objHndl crafter, objHndl item)
 		free(itemCreationResourceCheckResults);
 		ui.WidgetSetHidden(temple::GetRef<int>(0x10BEDA60), 1);
 		itemCreationType = ItemCreationType::Inactive;
-		auto itemCreationCrafter = temple::GetRef<objHndl>(0x10BECEE0);
 		itemCreationCrafter = 0i64;
 	}
+}
+
+bool ItemCreation::MaaEffectMsg(int widId, TigMsg* msg)
+{
+	if (msg->type != TigMsgType::WIDGET || msg->arg2 != 1)
+		return false;
+
+	craftedItemNameLength = strlen(craftedItemName);
+	craftingWidgetId = widId;
+
+	auto widIdx = 0;
+	for (widIdx = 0 ; widIdx < MAA_EFFECT_BUTTONS_COUNT; widIdx++){
+		if (maaBtnIds[widIdx] == widId)
+			break;
+	}
+	if (widIdx >= 10)
+		return false;
+
+	auto effIdx = GetEffIdxFromWidgetIdx(widIdx);
+
+
+	return true;
 }
 
 int ItemCreation::UiItemCreationInit(GameSystemConf* conf)
@@ -886,7 +1400,7 @@ int ItemCreation::UiItemCreationInit(GameSystemConf* conf)
 	return 1;
 }
 
-void ItemCreation::HookedGetLineForMaaAppend(MesHandle handle, MesLine* line)
+void ItemCreationHooks::HookedGetLineForMaaAppend(MesHandle handle, MesLine* line)
 {
 	
 	auto result = mesFuncs.GetLine_Safe(handle, line);
@@ -904,4 +1418,35 @@ void ItemCreation::HookedGetLineForMaaAppend(MesHandle handle, MesLine* line)
 
 
 
+}
+
+int ItemCreation::ItemCraftCostFromEnhancements(int appliedEffectIdx)
+{
+	auto effBonus = 0;
+	auto icType = *itemCreationAddresses.itemCreationType;
+
+	if (craftingItemIdx < 0 || craftingItemIdx >= numItemsCrafting[icType])
+		return 0;
+
+	auto itemHandle = *craftedItemHandles[icType];
+	if (!itemHandle)
+		return 0;
+
+	// get the overall effective bonus level
+	// first from pre-existing effects
+	for (int i = 0; i < MAX_CRAFTED_BONUSES; i++){
+		if (appliedBonusIndices[i] != CRAFT_EFFECT_INVALID)
+			effBonus += itemEnhSpecs[appliedBonusIndices[i]].effectiveBonus;
+	}
+	// then from the new applied effect
+	if (appliedEffectIdx >= 0)
+		effBonus += itemEnhSpecs[appliedEffectIdx].effectiveBonus;
+
+	if (effBonus > 29)
+		effBonus = 29;
+
+	if (gameSystems->GetObj().GetObject(itemHandle)->type == obj_t_weapon){
+		return 50 * (GoldBaseWorthVsEffectiveBonus[effBonus] - GoldBaseWorthVsEffectiveBonus[craftedItemExistingEffectiveBonus]);
+	}
+	return 50 * (GoldCraftCostVsEffectiveBonus[effBonus] - GoldCraftCostVsEffectiveBonus[craftedItemExistingEffectiveBonus]);
 }

@@ -171,6 +171,24 @@ public:
 	// Aura Of Courage
 	static int __cdecl CouragedAuraSavingThrow(DispatcherCallbackArgs args);
 
+
+	static int FeatBrewPotionRadialMenu(DispatcherCallbackArgs args);
+	static int FeatScribeScrollRadialMenu(DispatcherCallbackArgs args);
+	static int FeatCraftWandRadial(DispatcherCallbackArgs args);
+	static int FeatCraftRodRadial(DispatcherCallbackArgs args);
+	static int FeatCraftWondrousRadial(DispatcherCallbackArgs args);
+	static int FeatCraftStaffRadial(DispatcherCallbackArgs args);
+	static int FeatForgeRingRadial(DispatcherCallbackArgs args);
+	static int FeatCraftMagicArmsAndArmorRadial(DispatcherCallbackArgs args);
+
+	static int CraftWandOnAdd(DispatcherCallbackArgs args);
+
+	static int ItemCreationBuildRadialMenuEntry(DispatcherCallbackArgs args, ItemCreationType itemCreationType, char* helpSystemString, MesHandle combatMesLine);
+	
+	
+	
+
+
 } classAbilityCallbacks;
 
 
@@ -1423,9 +1441,38 @@ void _FeatConditionsRegister()
 
 	// Craft Wand
 	static CondStructNew craftWand("Craft Wand", 0);
-	craftWand.AddHook(dispTypeRadialMenuEntry, DK_NONE, CraftWandOnAdd);
+	craftWand.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.CraftWandOnAdd);
+	craftWand.AddToFeatDictionary(FEAT_CRAFT_WAND);
 
-	conds.FeatConditionDict[61].condStruct.cs = &craftWand;
+	// Brew Potion
+	static CondStructNew brewPotion("Brew Potion", 0);
+	brewPotion.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatBrewPotionRadialMenu);
+	brewPotion.AddToFeatDictionary(FEAT_BREW_POTION);
+
+	// Scribe Scroll
+	static CondStructNew scribeScroll("Scribe Scroll", 0);
+	scribeScroll.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatScribeScrollRadialMenu);
+	scribeScroll.AddToFeatDictionary(FEAT_CRAFT_WAND);
+	
+	// Forge Ring
+	static CondStructNew forgeRing("Forge Ring", 0);
+	forgeRing.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatForgeRingRadial);
+	forgeRing.AddToFeatDictionary(FEAT_FORGE_RING);
+
+	// Craft Staff
+	static CondStructNew craftStaff("Craft Staff", 0);
+	craftStaff.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatCraftStaffRadial);
+	craftStaff.AddToFeatDictionary(FEAT_CRAFT_STAFF);
+
+	// Craft Rod
+	static CondStructNew craftRod("Craft Rod", 0);
+	craftRod.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatCraftRodRadial);
+	craftRod.AddToFeatDictionary(FEAT_CRAFT_ROD);
+
+	// Craft Magic Arms and Armor
+	static CondStructNew craftMaa("Craft Magic Arms and Armor", 0);
+	craftMaa.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatCraftMagicArmsAndArmorRadial);
+	craftMaa.AddToFeatDictionary(FEAT_CRAFT_MAGIC_ARMS_AND_ARMOR);
 
 	for (unsigned int i = 0; i < condCount; i++){
 		conds.hashmethods.CondStructAddToHashtable(conds.FeatConditionDict[i].condStruct.old);
@@ -1516,8 +1563,13 @@ CondStruct * _GetCondStructFromHashcode(uint32_t key)
 }
 
 CondStruct* ConditionSystem::GetByName(const string& name) {
-	auto key = templeFuncs.StringHash(name.c_str());
+	auto key = ElfHash::Hash(name.c_str());
 	return hashmethods.GetCondStruct(key);
+}
+
+CondStruct* ConditionSystem::GetById(const int condId)
+{
+	return hashmethods.GetCondStruct(condId);
 }
 
 void ConditionSystem::AddToItem(objHndl item, const CondStruct* cond, const vector<int>& args) {
@@ -1528,7 +1580,7 @@ void ConditionSystem::AddToItem(objHndl item, const CondStruct* cond, const vect
 	auto curCondArgCount = obj->GetInt32Array(obj_f_item_pad_wielder_argument_array).GetSize();
 
 	// Add the condition name hash to the list
-	auto key = templeFuncs.StringHash(cond->condName);
+	auto key = ElfHash::Hash(cond->condName);
 	obj->SetInt32(obj_f_item_pad_wielder_condition_array, curCondCount, key);
 
 	auto idx = curCondArgCount;
@@ -1877,7 +1929,7 @@ void ConditionSystem::RegisterNewConditions()
 	//mCondCraftWandLevelSet = 
 	static CondStructNew craftWandSetLev("Craft Wand Level Set", 2);
 	craftWandSetLev.AddHook(dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, &craftWandSetLev, 0);
-	craftWandSetLev.AddHook(dispTypeRadialMenuEntry, DK_NONE, CraftWandRadialMenu);
+	craftWandSetLev.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatCraftWandRadial);
 
 	// Aid Another
 	mCondAidAnother = new CondStructNew();
@@ -2552,6 +2604,22 @@ int RendOnDamage(DispatcherCallbackArgs args)
 	return 0;
 }
 
+
+int ClassAbilityCallbacks::FeatCraftWondrousRadial(DispatcherCallbackArgs args){
+	return ItemCreationBuildRadialMenuEntry(args, CraftWondrous, "TAG_CRAFT_WONDROUS", 5070);
+};
+
+int ClassAbilityCallbacks::FeatCraftStaffRadial(DispatcherCallbackArgs args){
+	return ItemCreationBuildRadialMenuEntry(args, CraftStaff, "TAG_CRAFT_STAFF", 5103);
+};
+
+int ClassAbilityCallbacks::FeatForgeRingRadial(DispatcherCallbackArgs args){
+	return ItemCreationBuildRadialMenuEntry(args, ForgeRing, "TAG_FORGE_RING", 5104);
+};
+
+int ClassAbilityCallbacks::FeatCraftMagicArmsAndArmorRadial(DispatcherCallbackArgs args){
+	return ItemCreationBuildRadialMenuEntry(args, CraftMagicArmsAndArmor, "TAG_CRAFT_MAA", 5071);
+}
 
 int ConditionFunctionReplacement::LayOnHandsPerform(DispatcherCallbackArgs args)
 {
@@ -3371,6 +3439,59 @@ int ClassAbilityCallbacks::CouragedAuraSavingThrow(DispatcherCallbackArgs args)
 
 	return 0;
 }
+
+int ClassAbilityCallbacks::FeatBrewPotionRadialMenu(DispatcherCallbackArgs args){
+	return ItemCreationBuildRadialMenuEntry(args, BrewPotion, "TAG_BREW_POTION", 5066);
+}
+
+int ClassAbilityCallbacks::FeatScribeScrollRadialMenu(DispatcherCallbackArgs args)
+{
+	return ItemCreationBuildRadialMenuEntry(args, ScribeScroll, "TAG_SCRIBE_SCROLL", 5067);
+};
+
+int ClassAbilityCallbacks::FeatCraftWandRadial(DispatcherCallbackArgs args){
+
+	if (combatSys.isCombatActive()) { return 0; }
+	MesLine mesLine;
+	RadialMenuEntry radMenuCraftWand;
+	mesLine.key = 5068;
+	mesFuncs.GetLine_Safe(*combatSys.combatMesfileIdx, &mesLine);
+	radMenuCraftWand.text = (char*)mesLine.value;
+	radMenuCraftWand.d20ActionType = D20A_ITEM_CREATION;
+	radMenuCraftWand.d20ActionData1 = CraftWand;
+	radMenuCraftWand.helpId = ElfHash::Hash("TAG_CRAFT_WAND");
+
+	int newParent = radialMenus.AddParentChildNode(args.objHndCaller, &radMenuCraftWand, radialMenus.GetStandardNode(RadialMenuStandardNode::Feats));
+
+
+	auto setWandLevelMaxArg = min(20, critterSys.GetCasterLevel(args.objHndCaller));
+	RadialMenuEntrySlider setWandLevel(6017,1, setWandLevelMaxArg, args.GetCondArgPtr(0), 6019, ElfHash::Hash("TAG_CRAFT_WAND"));
+	radialMenus.AddChildNode(args.objHndCaller, &setWandLevel, newParent);
+
+	RadialMenuEntryAction useCraftWand(6018, D20A_ITEM_CREATION, ItemCreationType::CraftWand, "TAG_CRAFT_WAND");
+	radialMenus.AddChildNode(args.objHndCaller, &useCraftWand, newParent);
+
+	return 0;
+}
+
+int ClassAbilityCallbacks::CraftWandOnAdd(DispatcherCallbackArgs args){
+	conds.AddTo(args.objHndCaller, "Craft Wand Level Set", { 1, 0 });
+	return 0;
+}
+
+int ClassAbilityCallbacks::ItemCreationBuildRadialMenuEntry(DispatcherCallbackArgs args, ItemCreationType itemCreationType, char* helpSystemString, MesHandle combatMesLine)
+{
+	if (combatSys.isCombatActive()) { return 0; }
+	MesLine mesLine;
+	RadialMenuEntryAction radEntry(combatMesLine, D20A_ITEM_CREATION, itemCreationType, helpSystemString);
+	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Feats);
+
+	return 0;
+}
+
+int ClassAbilityCallbacks::FeatCraftRodRadial(DispatcherCallbackArgs args){
+	return ItemCreationBuildRadialMenuEntry(args, CraftRod, "TAG_CRAFT_ROD", 5069);
+};
 #pragma endregion
 
 int CaptivatingSongOnConditionAdd(DispatcherCallbackArgs args)
@@ -3501,7 +3622,7 @@ int AidAnotherRadialMenu(DispatcherCallbackArgs args)
 	radMenuAidAnotherMain.text = combatSys.GetCombatMesLine(5112);
 	radMenuAidAnotherMain.d20ActionType = D20A_NONE;
 	radMenuAidAnotherMain.d20ActionData1 = 0;
-	radMenuAidAnotherMain.helpId = templeFuncs.StringHash("TAG_AID_ANOTHER");
+	radMenuAidAnotherMain.helpId = ElfHash::Hash("TAG_AID_ANOTHER");
 
 	int newParent = radialMenus.AddParentChildNode(args.objHndCaller, &radMenuAidAnotherMain, radialMenus.GetStandardNode(RadialMenuStandardNode::Tactical));
 

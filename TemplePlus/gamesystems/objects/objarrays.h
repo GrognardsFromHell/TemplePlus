@@ -156,6 +156,9 @@ public:
 		});
 	}
 
+	void Append(const T& value)	{
+		Set(GetSize(), value);
+	};
 private:
 	ArrayHeader** mStorageLocation;
 

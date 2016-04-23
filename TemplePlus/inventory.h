@@ -1,6 +1,7 @@
 #pragma once
 #include "common.h"
 #include "dispatcher.h"
+#include <map>
 
 
 enum EquipSlot : uint32_t;
@@ -40,7 +41,14 @@ struct InventorySystem : temple::AddressTable
 	void (__cdecl *sub_100FF500)(Dispatcher *dispatcher, objHndl objHndItem, uint32_t itemInvLocation);
 	uint32_t(__cdecl *IsItemEffectingConditions)(objHndl objHndItem, uint32_t itemInvLocation);
 	
-
+	/*
+	 finds the argument argOffset for the specified condition in obj_f_item_pad_wielder_condition_array
+	*/
+	static int GetItemWieldCondArg(objHndl item, uint32_t condId, int argOffset); 
+	/*
+		removes a condition along with its accompanying args in obj_f_item_pad_wielder_condition_array and obj_f_item_pad_wielder_argument_array
+	*/
+	static void RemoveWielderCond(objHndl item, uint32_t condId);
 
 	objHndl ItemWornAt(objHndl, EquipSlot nItemSlot) const;
 	objHndl ItemWornAt(objHndl, int nItemSlot) const;
