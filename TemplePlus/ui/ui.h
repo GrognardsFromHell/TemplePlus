@@ -34,9 +34,9 @@ struct Widget {
 	uint32_t width;
 	uint32_t height;
 	uint32_t field_6c;
-	uint32_t renderTooltip;
-	uint32_t render; // Function pointer
-	uint32_t handleMessage; // Function pointer
+	int(__cdecl*renderTooltip)(int x, int y, int* widId) ;
+	void(__cdecl*render)(int widId); // Function pointer
+	bool(__cdecl*handleMessage)(int widId, TigMsg* msg); // Function pointer
 };
 
 /*
@@ -128,6 +128,8 @@ struct WidgetType2 : public Widget {
 	int sndClick;
 	int hoverOn;
 	int hoverOff;
+	WidgetType2();
+	WidgetType2(char* ButtonName, int ParentId, int X, int Y, int Width, int Height);
 };
 
 /*
@@ -138,7 +140,7 @@ struct WidgetType2 : public Widget {
 struct WidgetType3 : public Widget {
 	int yMin;
 	int yMax;
-	int field84;
+	int scrollbarY;
 	int field88;
 	int field8C;
 	int field90;
@@ -150,6 +152,8 @@ struct WidgetType3 : public Widget {
 	int fieldA8;
 	int fieldAC;
 	int GetY();
+	bool Init(int x, int y, int height);
+	bool Add(int * widIdOut);
 };
 
 struct ActiveWidgetListEntry {
@@ -277,11 +281,13 @@ public:
 		sets the button's parent, and also does a bunch of mouse handling (haven't delved too deep there yet)
 	*/
 	BOOL BindButton(int parentId, int buttonId);
+	BOOL SetDefaultSounds(int widId);
 	BOOL ButtonSetButtonState(int widgetId, int newState);
 	BOOL WidgetRemoveRegardParent(int widIdx);
 	BOOL WidgetAndWindowRemove(int widId);
 	BOOL WidgetSetHidden(int widId, int hiddenState);
 	BOOL WidgetCopy(int widId, Widget* widgetOut);
+	int WidgetSet(int widId, const Widget* widg);
 
 	Widget* WidgetGet(int widId);
 	WidgetType1* WidgetGetType1(int widId);
@@ -303,10 +309,11 @@ public:
 	void SetCursorTextDrawCallback(void(* cursorTextDrawCallback)(int, int, void*), void* data);
 	int UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg);
 
-	int WidgetSet(int widId, const Widget* widg);
+	bool ScrollbarGetY(int widId, int * y);
 	void ScrollbarSetYmax(int widId, int yMax);
+	BOOL ScrollbarSetY(int widId, int value); // I think? sets field84
 	const char* GetTooltipString(int line) const;
-
+	
 	/*
 			The list of all active widgets
 			*/

@@ -869,7 +869,7 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
 void AnimSystem::ProcessActionCallbacks() {
 	// changed to manual iteration because PerformOnAnimComplete can alter the vector
 	auto initSize = mActionCallbacks.size();
-	for (auto i = 0; i < mActionCallbacks.size(); i++) {
+	for (size_t i = 0; i < mActionCallbacks.size(); i++) {
 	auto& callback = mActionCallbacks[i];
     actSeqSys.PerformOnAnimComplete(callback.obj, callback.uniqueId);
 	if (initSize != mActionCallbacks.size())

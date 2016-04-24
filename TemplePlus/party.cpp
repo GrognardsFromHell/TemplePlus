@@ -75,6 +75,11 @@ int LegacyPartySystem::GetPartyAlignment()
 	return temple::GetRef<int>(0x1080ABA4);
 }
 
+int LegacyPartySystem::GetMoney() const
+{
+	return temple::GetRef<int(__cdecl)()>(0x1002B750)();
+}
+
 uint32_t LegacyPartySystem::AddToPCGroup(objHndl objHnd)
 {
 	auto npcFollowers = GroupNPCFollowersLen();

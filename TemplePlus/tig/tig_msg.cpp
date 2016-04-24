@@ -36,3 +36,7 @@ int TigMsgReplacements::Process(TigMsg* msg)
 	return orgProcess(msg);
 }
 
+void TigMsg::Enqueue()
+{
+	tigReplacements.Process(this);
+}

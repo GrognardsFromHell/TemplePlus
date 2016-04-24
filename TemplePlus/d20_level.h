@@ -42,6 +42,8 @@ public:
 		}
 	}
 
+	uint32_t GetXpRequireForLevel(uint32_t level);
+	int GetSurplusXp(objHndl handle);
 private:
 	void GenerateSpellsPerLevelTables();
 };

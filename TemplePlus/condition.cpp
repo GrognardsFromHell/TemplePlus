@@ -1231,7 +1231,7 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 			auto beltItem = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Lockpicks);
 			if (beltItem){
 				auto beltObj = gameSystems->GetObj().GetObject(beltItem);
-				if (beltObj->protoId == 12420){
+				if (beltObj->protoId.GetPrototypeId() == 12420){
 					monkLvl += 5;
 				}
 			}

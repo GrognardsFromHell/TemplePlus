@@ -18,6 +18,8 @@ namespace infrastructure {
 		bool IsModifierActive(int virtualKey) const;
 
 		void Update();
+
+		int ToVirtualKey(int dinputkey) const;
 		
 	private:
 		std::vector<uint8_t> mKeyState;

@@ -1,0 +1,57 @@
+0	Weapon Enhancement Bonus	IESF_ENABLED IESF_WEAPON IESF_PLUS_BONUS	1	1		C3		
+1	Weapon Enhancement Bonus	IESF_ENABLED IESF_WEAPON IESF_PLUS_BONUS	1	2		C6		
+2	Weapon Enhancement Bonus	IESF_ENABLED IESF_WEAPON IESF_PLUS_BONUS	1	3		C9		
+3	Weapon Defending Bonus	IESF_ENABLED IESF_WEAPON	1	0		C8	'shield' 'shield of faith'	
+4	Weapon Flaming	IESF_ENABLED IESF_WEAPON	1	0		C10	'flame blade' 'flame strike' 'fireball'	
+5	Weapon Frost	IESF_ENABLED IESF_WEAPON	1	0		C8	'chill metal' 'ice storm'	
+6	Weapon Shock	IESF_ENABLED IESF_WEAPON	1	0		C8	'call lightning' 'lightning bolt'	
+7	Weapon Ghost Touch	IESF_WEAPON	1	0		C9		
+8	Weapon Keen	IESF_ENABLED IESF_WEAPON IESF_UNK100	1	0		C10		
+9	Weapon Mighty Cleaving	IESF_ENABLED IESF_WEAPON	1	0		C8	'divine power'	
+10	Weapon Spell Storing	IESF_WEAPON	1	0		C12		
+11	Weapon Throwing	IESF_WEAPON	1	0		C5	'magic stone'	
+12	Weapon Bane	IESF_WEAPON	1	0		C8	'summon monster I'	
+13	Weapon Disruption	IESF_ENABLED IESF_WEAPON	2	0		C14	'heal'	
+14	Weapon Flaming Burst	IESF_ENABLED IESF_WEAPON	2	0		C12	'flame blade' 'flame strike' 'fireball'	
+15	Weapon Icy Burst	IESF_ENABLED IESF_WEAPON	2	0		C10	'chill metal' 'ice storm'	
+16	Weapon Shocking Burst	IESF_ENABLED IESF_WEAPON	2	0		C10	'call lightning' 'lightning bolt'	
+17	Weapon Thundering	IESF_WEAPON	1	0		C5	'blindness/deafness'	
+18	Weapon Wounding	IESF_WEAPON	2	0		C10	'mages sword'	
+19	Weapon Holy	IESF_ENABLED IESF_WEAPON	2	0		C7 Agood	'holy smite'	
+20	Weapon Unholy	IESF_ENABLED IESF_WEAPON	2	0		C7 Aevil	'unholy blight'	
+21	Weapon Lawful	IESF_ENABLED IESF_WEAPON	2	0		C7 Alawful	'orders wrath'	
+22	Weapon Chaotic	IESF_ENABLED IESF_WEAPON	2	0		C7 Achaotic	'chaos hammer'	
+23	Weapon Enhancement Bonus	IESF_ENABLED IESF_WEAPON IESF_PLUS_BONUS	1	4		C12		
+24	Weapon Enhancement Bonus	IESF_ENABLED IESF_WEAPON IESF_PLUS_BONUS	1	5		C15		
+25	Weapon Brilliant Energy	IESF_WEAPON	4	0		C16	'gaseous form'+'continual flame'	
+26	Weapon Dancing	IESF_WEAPON	4	0		C15	'animate objects'	
+27	Weapon Distance	IESF_WEAPON IESF_RANGED	1	0		C6	'clairaudience/clairvoyance'	
+28	Weapon Ki Focus	IESF_WEAPON IESF_MELEE	1	0	TODOMONK	C8		
+29	Weapon Merciful	IESF_WEAPON	1	0		C5		
+30	Weapon Returning	IESF_WEAPON IESF_THROWN	1	0		C7	'telekinesis'	
+31	Weapon Seeking	IESF_WEAPON IESF_RANGED	1	0		C12	'true seeing'	
+32	Weapon Speed	IESF_WEAPON	3	0		C7	'haste'	
+33	Weapon Vicious	IESF_WEAPON	1	0		C9	'enervation'	
+34	Weapon Vorpal	IESF_WEAPON	5	0		C18	'circle of death'+'keen edge'	
+200	Armor Enhancement Bonus	IESF_ENABLED IESF_ARMOR IESF_PLUS_BONUS	1	1		C3		
+201	Armor Enhancement Bonus	IESF_ENABLED IESF_ARMOR IESF_PLUS_BONUS	1	2		C6		
+202	Armor Enhancement Bonus	IESF_ENABLED IESF_ARMOR IESF_PLUS_BONUS	1	3		C9		
+203	Armor Light Fortification	IESF_ARMOR	1	0		C3		
+204	Armor Glamered	IESF_ARMOR	1	0		C3		
+205	Armor Slick	IESF_ARMOR	1	0		C3		
+206	Armor Shadow	IESF_ARMOR	1	0		C3		
+207	Armor Silent Moves	IESF_ENABLED IESF_ARMOR	1	0		C3		
+208	Armor Spell Resistance	IESF_ENABLED IESF_ARMOR	2	13		C3	'spell resistance'	
+209	Armor Enhancement Bonus	IESF_ENABLED IESF_ARMOR IESF_PLUS_BONUS	1	4		C12		
+210	Armor Enhancement Bonus	IESF_ENABLED IESF_ARMOR IESF_PLUS_BONUS	1	5		C15		
+400	Shield Enhancement Bonus	IESF_ENABLED IESF_ARMOR IESF_PLUS_BONUS	1	1		C3		
+401	Shield Enhancement Bonus	IESF_ENABLED IESF_ARMOR IESF_PLUS_BONUS	1	2		C6		
+402	Shield Enhancement Bonus	IESF_ENABLED IESF_ARMOR IESF_PLUS_BONUS	1	3		C9		
+403	Shield Bashing	IESF_ARMOR	1	0		C3		
+404	Shield Blinding	IESF_ARMOR	1	0		C3		
+405	Shield Light Fortification	IESF_ARMOR	1	0		C3		
+406	Shield Arrow Deflection	IESF_ARMOR	1	0		C3		
+407	Shield Animated	IESF_ARMOR	1	0		C3		
+408	Shield Spell Resistance	IESF_ENABLED IESF_ARMOR	2	13		C3	'spell resistance'	
+409	Shield Enhancement Bonus	IESF_ENABLED IESF_ARMOR IESF_PLUS_BONUS	1	4		C12		
+410	Shield Enhancement Bonus	IESF_ENABLED IESF_ARMOR IESF_PLUS_BONUS	1	5		C15		

@@ -53,7 +53,10 @@ public:
 		mTokenizerId = 0;
 	}
 
-	bool next() {
+	/*
+	 note: logic is inverted relative to vanilla ToEE
+	*/
+	bool next() { 
 		return !stringTokenizerFuncs.NextToken(&mTokenizerId, &mToken);
 	}
 

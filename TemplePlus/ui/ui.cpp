@@ -321,6 +321,44 @@ static UiSystem& getUiSystem(const char* name) {
 	throw TempleException(format("Couldn't find UI system {}! Replacement failed.", name));
 }
 
+WidgetType2::WidgetType2(){
+	memset(this, 0, sizeof(WidgetType2));
+	type = 2;
+}
+
+WidgetType2::WidgetType2(char* ButtonName, int ParentId, int X, int Y, int Width, int Height){
+	if (ButtonName){
+		auto pos = name;
+		while( *ButtonName && (pos - name < 63) ){
+			*pos = *ButtonName;
+			pos++; ButtonName++;
+		}
+		*pos = 0;
+	}
+
+	x = X;
+	y = Y;
+	width = Width;
+	height = Height;
+	parentId = ParentId;
+	yrelated = Y;
+	xrelated = X;
+	widgetFlags = 0;
+	renderTooltip = nullptr;
+	buttonState = 0;
+	field98 = 0;
+	type = 2;
+	widgetId = -1;
+	field8C = -1;
+	field90 = -1;
+	field84 = -1;
+	field88 = -1;
+	sndDown = -1;
+	sndClick = -1;
+	hoverOn = -1;
+	hoverOff = -1;
+}
+
 int WidgetType3::GetY()
 {
 	auto getY = temple::GetRef<int(__cdecl)(int id, int& yOut)>(0x101FA150);
@@ -330,6 +368,40 @@ int WidgetType3::GetY()
 		y = -1;
 	}
 	return y;
+}
+
+bool WidgetType3::Init(int X, int Y, int Height){
+
+	x = X;
+	y = Y;
+	type = 3;
+	parentId = -1;
+	widgetId = -1;
+	widgetFlags = 0;
+	size = 176;
+	width = 13;
+	height = Height;
+	field90 = 0;
+	render = temple::GetRef<void(__cdecl)(int)>(0x101FA1B0);
+	handleMessage = temple::GetRef<bool(__cdecl)(int, TigMsg*)>(0x101FA410);
+	renderTooltip = nullptr;
+	yMin = 0;
+	yMax = 100;
+	field88 = 1;
+	field8C = 5;
+	scrollbarY = 0;
+	field98= 0;
+	field9C = 0;
+	fieldAC = 0;
+	fieldA8 = 0;
+	fieldA4 = 0;
+	fieldA0 = 0;
+	field94 = 0;
+	return false;
+}
+
+bool WidgetType3::Add(int* widIdOut){
+	return temple::GetRef<bool(__cdecl)(Widget*, size_t, int*, const char*, int)>(0x101F93D0)(this, sizeof(WidgetType3), widIdOut, "ui.cpp", 366);
 }
 
 bool Ui::GetAsset(UiAssetType assetType, UiGenericAsset assetIndex, int& textureIdOut) {
@@ -456,6 +528,17 @@ BOOL Ui::BindButton(int parentId, int buttonId)
 	return uiFuncs.BindButton(parentId, buttonId);
 }
 
+BOOL Ui::SetDefaultSounds(int widId){
+	WidgetType2 widg;
+	if (WidgetCopy(widId, &widg))
+		return true;
+	widg.sndDown = 3012;
+	widg.sndClick = 3013;
+	widg.hoverOn = 3010;
+	widg.hoverOff = 3011;
+	return WidgetSet(widId, &widg) != 0;
+}
+
 BOOL Ui::ButtonSetButtonState(int widgetId, int newState)
 {
 	return uiFuncs.ButtonSetButtonState(widgetId, newState);
@@ -476,11 +559,6 @@ BOOL Ui::WidgetSetHidden(int widId, int hiddenState)
 	return uiFuncs.WidgetSetHidden(widId, hiddenState);
 }
 
-BOOL Ui::WidgetCopy(int widId, Widget* widgetOut)
-{
-	memcpy(widgetOut, uiFuncs.activeWidgets[widId], uiFuncs.activeWidgets[widId]->size);
-	return 0;
-}
 
 WidgetType1* Ui::WidgetGetType1(int widId){
 	Widget* result = WidgetGet(widId);
@@ -791,6 +869,49 @@ int Ui::WidgetSet(int widId, const Widget* widg)
 	return 0;
 }
 
+int Ui::WidgetCopy(int widId, Widget* widg)
+{
+	memcpy(widg, activeWidgets[widId], activeWidgets[widId]->size);
+	return 0;
+}
+
+
+bool Ui::ScrollbarGetY(int widId, int * scrollbarY) {
+	auto widget = (WidgetType3*) WidgetGet(widId);
+	if (!widget || widget->type != 3)
+		return true;
+
+	if (!scrollbarY)
+		return false;
+	auto y = 0;
+	auto ymax = widget->yMax;
+	auto ymin = widget->yMin;
+
+	if (ymax > ymin) {
+		auto field90 = widget->field90;
+		if (!field90) {
+			y = widget->scrollbarY;
+		}
+		else {
+			y = (ymax + widget->field8C - ymin)
+				* ( ((widget->height - 44) * widget->scrollbarY) / (ymax + widget->field8C - ymin) - field90)
+				/ (widget->height - 44);
+		}
+	}
+	
+
+	if (y > ymax) {
+		*scrollbarY = ymax;
+		return false;
+	}
+	
+	if (y < ymin) {
+		*scrollbarY = ymin;
+	}
+
+	return false;
+}
+
 void Ui::ScrollbarSetYmax(int widId, int yMax)
 {
 	WidgetType3 widg;
@@ -799,6 +920,23 @@ void Ui::ScrollbarSetYmax(int widId, int yMax)
 		widg.yMax = yMax;
 		WidgetSet(widId, &widg);
 	}
+}
+
+BOOL Ui::ScrollbarSetY(int widId, int value){
+	WidgetType3 scrollbarWid;
+	auto result = WidgetCopy(widId, &scrollbarWid);
+	if (!result)
+	{
+		scrollbarWid.scrollbarY = value;
+		TigMsg msg;
+		msg.createdMs = temple::GetRef<int>(0x11E74578);
+		msg.type = TigMsgType::WIDGET;
+		msg.arg2 = 5;
+		msg.arg1 = scrollbarWid.parentId;
+		msg.Enqueue();
+		result = ui.WidgetSet(widId, &scrollbarWid);
+	}
+	return result;
 }
 
 const char* Ui::GetTooltipString(int line) const

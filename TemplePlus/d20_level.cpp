@@ -3,6 +3,8 @@
 #include "common.h"
 #include "obj.h"
 #include "util/fixes.h"
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/objects/objsystem.h"
 
 
 D20LevelSystem d20LevelSys;
@@ -63,6 +65,19 @@ bool D20LevelSystem::CanLevelup(objHndl objHnd)
 	return objects.getInt32(objHnd, obj_f_critter_experience) >= xpReqTable[lvl + 1];
 		//addresses.xpReqTable[lvl + 1];
 
+}
+
+uint32_t D20LevelSystem::GetXpRequireForLevel(uint32_t level)
+{
+	if (level < 0 || level >= XP_REQ_TABLE_MAX_LEVEL)
+		return 0;
+	return xpReqTable[level];
+
+}
+
+int D20LevelSystem::GetSurplusXp(objHndl handle){
+	int xpReq = (int)GetXpRequireForLevel(objects.StatLevelGet(handle, stat_level));
+	return gameSystems->GetObj().GetObject(handle)->GetInt32(obj_f_critter_experience) - xpReq;
 }
 
 void D20LevelSystem::GenerateSpellsPerLevelTables()
