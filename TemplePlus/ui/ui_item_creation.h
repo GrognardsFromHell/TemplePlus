@@ -1,6 +1,8 @@
 #pragma once
 
 struct WidgetType1;
+struct TigTextStyle;
+struct UiResizeArgs;
 
 enum ItemCreationType : uint32_t {
 	IC_Alchemy = 0,
@@ -69,10 +71,16 @@ public:
 	
 	BOOL ItemCreationShow(objHndl crafter, ItemCreationType icType); // shows the item creation UI for the chosen IC type
 
+	void ItemCreationWndRender(int widId);
+	void MaaWndRender(int widId);
+	void MaaItemRender(int widId);
+	void MaaAppliedBtnRender(int widId);
 
 	bool CreateBtnMsg(int widId, TigMsg* msg);
+	void MaaCreateBtnRender(int widId) const;
 		void CreateItemFinalize(objHndl crafter, objHndl item);
 	bool CancelBtnMsg(int widId, TigMsg* msg);
+	void MaaCancelBtnRender(int widId) const;
 
 	bool MaaWndMsg(int widId, TigMsg* msg); // message handler for the item creation window
 
@@ -97,6 +105,11 @@ public:
 	int UiItemCreationInit(GameSystemConf& conf);
 		bool InitItemCreationRules();
 		bool ItemCreationWidgetsInit(int width, int height);
+		bool MaaWidgetsInit(int width, int height);
+	void MaaWidgetsExit(int widId);
+	void ItemCreationWidgetsExit(int widId);
+	void UiItemCreationResize(UiResizeArgs& resizeArgs);
+		
 	// general item creation utilities
 	bool MaaCrafterMeetsReqs(int effIdx, objHndl crafter); // checks if the crafter meets the requirements specified in maa_craft_specs.tab
 	bool MaaEffectIsInAppliedList(int effIdx);
@@ -118,6 +131,8 @@ public:
 	*/
 	bool ItemWielderCondsContainEffect(int effIdx, objHndl item);
 	
+	void CraftScrollWandPotionSetItemSpellData(objHndl item, objHndl crafter);
+
 	ItemCreation();
 
 protected:
@@ -130,7 +145,7 @@ protected:
 	void GetMaaSpecs();
 	static int GetSurplusXp(objHndl crafter);
 
-	int mItemCreationType = 9; // for future use
+	int mItemCreationType = 9;
 	objHndl mItemCreationCrafter;
 	int mCraftingItemIdx = -1;
 
@@ -143,16 +158,24 @@ protected:
 		int mItemCreationWndId;
 		int mItemCreationScrollbarId;
 		int mItemCreationScrollbarY = 0;
-		int& itemCreationScrollbarY = mItemCreationScrollbarY;
 	WidgetType1* mMaaWnd = nullptr;
 		int mMaaWndId;
-		int mMaaCraftableItemsScrollbarId;
+		int mMaaItemsScrollbarId;
 		int mMaaApplicableEffectsScrollbarId;
 		int mMaaApplicableEffectsScrollbarY = 0;
 		int mMaaSelectedEffIdx = -1;
+		int mMaaItemBtnIds[5];
 		int maaBtnIds[10]; // widget IDs for the craftable effects
 		int mMaaAppliedBtnIds[9];
 		int mMaaActiveAppliedWidIdx = -1;
+		int mMaaTextboxId=-1;
+		int mMaaEffectAddBtnId = -1;
+		int mMaaEffectRemoveBtnId = -1;
+		int mMaaCancelBtnId = -1;
+		int mMaaCreateBtnId = -1;
+		TigRect mCreateBtnRect ;
+		TigRect mMaaCancelBtnRect;
+		TigRect mMaaCraftedItemIconDestRect;
 
 	MesHandle mItemCreationMes; // mes\\item_creation.mes
 
@@ -172,7 +195,7 @@ protected:
 
 	uint32_t numItemsCrafting[8]; // for each Item Creation type
 	objHndl* craftedItemHandles[8]; // proto handles for new items, and item to modifyt for MAA
-	int& itemCreationType = mItemCreationType; //temple::GetRef<int>(0x10BEDF50);
+	int& itemCreationType = mItemCreationType;
 	objHndl& itemCreationCrafter = mItemCreationCrafter;//temple::GetRef<objHndl>(0x10BECEE0);
 	char craftedItemName[1024];
 	int craftedItemNamePos; // position of the text indicator ("|" character)
@@ -205,8 +228,6 @@ extern ItemCreation itemCreation;
 
 
 uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t slotLevelNew);
-int32_t CreateItemResourceCheck(objHndl ObjHnd, objHndl ObjHndItem);
-void CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCrafter);
 void UiItemCreationCraftingCostTexts(objHndl objHndItem);
 /*
 struct ButtonStateTextures {

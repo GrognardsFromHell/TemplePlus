@@ -95,6 +95,7 @@ struct WidgetType1 : public Widget {
 		windowId = 0;
 		widgetFlags = 0;
 	}
+	bool Add(int * widIdOut);
 };
 
 /*
@@ -130,6 +131,8 @@ struct WidgetType2 : public Widget {
 	int hoverOff;
 	WidgetType2();
 	WidgetType2(char* ButtonName, int ParentId, int X, int Y, int Width, int Height);
+	WidgetType2(char* ButtonName, int ParentId, TigRect& rect);
+	bool Add(int* widIdOut);
 };
 
 /*
@@ -280,7 +283,7 @@ public:
 	/*
 		sets the button's parent, and also does a bunch of mouse handling (haven't delved too deep there yet)
 	*/
-	BOOL BindButton(int parentId, int buttonId);
+	BOOL BindToParent(int parentId, int buttonId);
 	BOOL SetDefaultSounds(int widId);
 	BOOL ButtonSetButtonState(int widgetId, int newState);
 	BOOL WidgetRemoveRegardParent(int widIdx);
@@ -295,6 +298,7 @@ public:
 
 	int GetWindowContainingPoint(int x, int y);
 	BOOL GetButtonState(int widId, int* state);
+	bool GetButtonState(int widId, UiButtonState& state);
 	void WidgetBringToFront(int widId);
 	int WidgetlistIndexof(int widgetId, int * widgetlist, int size);
 	BOOL WidgetContainsPoint(int widgetId, int x, int y);
@@ -313,7 +317,7 @@ public:
 	void ScrollbarSetYmax(int widId, int yMax);
 	BOOL ScrollbarSetY(int widId, int value); // I think? sets field84
 	const char* GetTooltipString(int line) const;
-	
+	const char* GetStatShortName(Stat stat) const;
 	/*
 			The list of all active widgets
 			*/

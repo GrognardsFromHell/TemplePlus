@@ -72,18 +72,20 @@ struct TigMsgMouse : TigMsgBase // type 0
 };
 
 
-enum class TigMsgWidgetEvent : int
+enum class TigMsgWidgetEvent : uint32_t
 {
-	UNK1 = 1,
-	UNK2 = 2,
+	Clicked = 0,
+	MouseReleased = 1,
+	MouseReleasedAtDifferentButton = 2,
 	Entered  = 3,
-	Exited = 4
+	Exited = 4,
+	Scrolled = 5
 };
 
 struct TigMsgWidget : TigMsgBase // type 1
 {
 	int widgetId; 
-	uint32_t widgetEventType; // 3 - widget entered; 4 - widget left
+	TigMsgWidgetEvent widgetEventType; // 3 - widget entered; 4 - widget left
 	uint32_t x;
 	uint32_t y;
 };

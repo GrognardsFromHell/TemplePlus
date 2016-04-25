@@ -321,6 +321,10 @@ static UiSystem& getUiSystem(const char* name) {
 	throw TempleException(format("Couldn't find UI system {}! Replacement failed.", name));
 }
 
+bool WidgetType1::Add(int* widIdOut){
+	return ui.AddWindow(this, sizeof(WidgetType1), widIdOut, "ui.cpp", 325);
+}
+
 WidgetType2::WidgetType2(){
 	memset(this, 0, sizeof(WidgetType2));
 	type = 2;
@@ -345,6 +349,8 @@ WidgetType2::WidgetType2(char* ButtonName, int ParentId, int X, int Y, int Width
 	xrelated = X;
 	widgetFlags = 0;
 	renderTooltip = nullptr;
+	render = nullptr;
+	handleMessage = nullptr;
 	buttonState = 0;
 	field98 = 0;
 	type = 2;
@@ -357,6 +363,46 @@ WidgetType2::WidgetType2(char* ButtonName, int ParentId, int X, int Y, int Width
 	sndClick = -1;
 	hoverOn = -1;
 	hoverOff = -1;
+}
+
+WidgetType2::WidgetType2(char* ButtonName, int ParentId, TigRect& rect){
+	if (ButtonName) {
+		auto pos = name;
+		while (*ButtonName && (pos - name < 63)) {
+			*pos = *ButtonName;
+			pos++; ButtonName++;
+		}
+		*pos = 0;
+	}
+
+	x = rect.x;
+	y = rect.y;
+	width = rect.width;
+	height = rect.height;
+	parentId = ParentId;
+	yrelated = rect.y;
+	xrelated = rect.x;
+	widgetFlags = 0;
+	renderTooltip = nullptr;
+	render = nullptr;
+	handleMessage = nullptr;
+	buttonState = 0;
+	field98 = 0;
+	type = 2;
+	widgetId = -1;
+	field8C = -1;
+	field90 = -1;
+	field84 = -1;
+	field88 = -1;
+	sndDown = -1;
+	sndClick = -1;
+	hoverOn = -1;
+	hoverOff = -1;
+	return;
+}
+
+bool WidgetType2::Add(int* widIdOut){
+	return ui.AddButton(this, sizeof(WidgetType2), widIdOut, "ui.cpp", 367);
 }
 
 int WidgetType3::GetY()
@@ -523,8 +569,7 @@ BOOL Ui::AddButton(WidgetType2* button, unsigned size, int* widgId, const char* 
 	return uiFuncs.AddButton(button, size, widgId, codeFileName, lineNumber);
 }
 
-BOOL Ui::BindButton(int parentId, int buttonId)
-{
+BOOL Ui::BindToParent(int parentId, int buttonId){
 	return uiFuncs.BindButton(parentId, buttonId);
 }
 
@@ -604,10 +649,16 @@ int Ui::GetWindowContainingPoint(int x, int y)
 	return -1;
 }
 
-BOOL Ui::GetButtonState(int widId, int* state)
-{
-	
+BOOL Ui::GetButtonState(int widId, int* state){
 	return uiFuncs.GetButtonState(widId, state);
+}
+
+bool Ui::GetButtonState(int widId, UiButtonState& state){
+	auto widg = ui.GetButton(widId);
+	if (!widg)
+		return true;
+	state = (UiButtonState)widg->buttonState;
+	return false;
 }
 
 void Ui::WidgetBringToFront(int widId)
@@ -753,7 +804,7 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 			if (enqueue4)
 			{
 				newTigMsg.widgetId = globalWidId;
-				newTigMsg.widgetEventType = 4;
+				newTigMsg.widgetEventType = TigMsgWidgetEvent::Exited;
 				msgFuncs.Enqueue(&newTigMsg);
 			}
 		}
@@ -791,18 +842,18 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 				}
 			}
 			newTigMsg.widgetId = widIdAtCursor;
-			newTigMsg.widgetEventType = 3;
+			newTigMsg.widgetEventType = TigMsgWidgetEvent::Entered;
 			msgFuncs.Enqueue(&newTigMsg);
 		}
 		globalWidId = *uiFuncs.uiWidgetMouseHandlerWidgetId = widIdAtCursor;
 	}
 	
-	if (mouseMsg->flags &0x2000 && globalWidId != -1 && !GetCursorTextDrawCallback())
+	if (mouseMsg->flags & MouseStateFlags::MSF_POS_CHANGE2 && globalWidId != -1 && !GetCursorTextDrawCallback())
 	{
 		SetCursorTextDrawCallback(*uiFuncs.UiMouseMsgHandlerRenderTooltipCallback, uiFuncs.uiWidgetMouseHandlerWidgetId);
 	}
 
-	if (mouseMsg->flags & 1)
+	if (mouseMsg->flags & MouseStateFlags::MSF_LMB_CLICK)
 	{
 		auto widIdAtCursor2 = GetAtInclChildren(mouseMsg->x, mouseMsg->y); // probably redundant to do again, but just to be safe...
 		if (widIdAtCursor2 != -1)
@@ -824,14 +875,14 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 					}
 				}
 			}
-			newTigMsg.widgetEventType = 0;
+			newTigMsg.widgetEventType = TigMsgWidgetEvent::Clicked;
 			newTigMsg.widgetId = widIdAtCursor2;
 			*uiFuncs.uiMouseButtonId = widIdAtCursor2;
 			msgFuncs.Enqueue(&newTigMsg);
 		}
 	}
 
-	if ( (mouseMsg->flags & 4) && *uiFuncs.uiMouseButtonId != -1)
+	if ( (mouseMsg->flags & MouseStateFlags::MSF_LMB_RELEASED) && *uiFuncs.uiMouseButtonId != -1)
 	{
 		auto button = uiReplacement.GetButton(*uiFuncs.uiMouseButtonId);
 		if (button)
@@ -852,7 +903,7 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 		}
 		auto widIdAtCursor2 = GetAtInclChildren(mouseMsg->x, mouseMsg->y); // probably redundant to do again, but just to be safe...
 		newTigMsg.widgetId = *uiFuncs.uiMouseButtonId;
-		newTigMsg.widgetEventType = 1 + (widIdAtCursor2 != *uiFuncs.uiMouseButtonId);
+		newTigMsg.widgetEventType = (widIdAtCursor2 != *uiFuncs.uiMouseButtonId)?TigMsgWidgetEvent::MouseReleasedAtDifferentButton : TigMsgWidgetEvent::MouseReleased;
 		msgFuncs.Enqueue(&newTigMsg);
 		*uiFuncs.uiMouseButtonId = -1;
 	}
@@ -943,6 +994,11 @@ const char* Ui::GetTooltipString(int line) const
 {
 	auto getTooltipString = temple::GetRef<const char*(__cdecl)(int)>(0x10122DA0);
 	return getTooltipString(line);
+}
+
+const char* Ui::GetStatShortName(Stat stat) const
+{
+	return temple::GetRef<const char*(__cdecl)(Stat)>(0x10074980)(stat);
 }
 #pragma region Loading and Unloading
 UiLoader::UiLoader(const GameSystemConf& conf) {

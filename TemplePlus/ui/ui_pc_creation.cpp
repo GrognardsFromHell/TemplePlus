@@ -146,8 +146,8 @@ struct PcCreationUiAddresses : temple::AddressTable
 
 	CharEditorSelectionPacket * charEdSelPkt;
 	MesHandle* pcCreationMes;
-	int (__cdecl*ui_render_pc_creation_portraits)(int widId);
-	int(__cdecl*ui_msg_pc_creation_portraits)(int widId);
+	void (__cdecl*ui_render_pc_creation_portraits)(int widId);
+	bool(__cdecl*ui_msg_pc_creation_portraits)(int widId, TigMsg*);
 
 	PcCreationUiAddresses()
 	{
@@ -224,8 +224,8 @@ BOOL PcCreationUiSystem::PcPortraitWidgetsInit(int height)
 {
 	pcPortraitsMain.WidgetType1Init(10, height - 80, 650, 63);
 	pcPortraitsMain.widgetFlags = 1;
-	pcPortraitsMain.render = (int)return0;
-	pcPortraitsMain.handleMessage = (int)return0;
+	pcPortraitsMain.render = [](int widId) {return0(); };
+	pcPortraitsMain.handleMessage = [](int widId, TigMsg* msg)->bool {return return0(); };
 
 	if (ui.AddWindow(&pcPortraitsMain, sizeof(WidgetType1), &pcPortraitsMainId, "pc_creation_portraits.c", 275) )
 		return 0;
@@ -248,11 +248,11 @@ BOOL PcCreationUiSystem::PcPortraitWidgetsInit(int height)
 		pcPortraitRects[i].width = 51;
 		pcPortraitRects[i].height = 45;
 
-		button.render = (uint32_t) addresses.ui_render_pc_creation_portraits;
-		button.handleMessage = (uint32_t) addresses.ui_msg_pc_creation_portraits;
+		button.render = addresses.ui_render_pc_creation_portraits;
+		button.handleMessage = addresses.ui_msg_pc_creation_portraits;
 
 		if (ui.AddButton(&button, sizeof(WidgetType2), &pcPortraitWidgIds[i], "pc_creation_portraits.c", 299)
-			|| ui.BindButton(pcPortraitsMainId, pcPortraitWidgIds[i])
+			|| ui.BindToParent(pcPortraitsMainId, pcPortraitWidgIds[i])
 			|| ui.ButtonSetButtonState(pcPortraitWidgIds[i], 4))
 			return 0;
 
