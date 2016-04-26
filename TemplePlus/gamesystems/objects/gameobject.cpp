@@ -181,45 +181,45 @@ void GameObjectBody::SetString(obj_f field, const char * text)
 	*storageLoc = _strdup(text);
 }
 
-const GameInt32Array GameObjectBody::GetInt32Array(obj_f field) const
+GameInt32ReadOnlyArray GameObjectBody::GetInt32Array(obj_f field) const
 {
 	Expects(objectFields.GetType(field) == ObjectFieldType::Int32Array
 		|| objectFields.GetType(field) == ObjectFieldType::AbilityArray);
 
 	auto storageLoc = GetStorageLocation<ArrayHeader*>(field);
-	return GameInt32Array(const_cast<ArrayHeader**>(storageLoc));
+	return GameInt32ReadOnlyArray(const_cast<ArrayHeader**>(storageLoc));
 }
 
-const GameInt64Array GameObjectBody::GetInt64Array(obj_f field) const
+GameInt64ReadOnlyArray GameObjectBody::GetInt64Array(obj_f field) const
 {
 	Expects(objectFields.GetType(field) == ObjectFieldType::Int64Array);
 
 	auto storageLoc = GetStorageLocation<ArrayHeader*>(field);
-	return GameInt64Array(const_cast<ArrayHeader**>(storageLoc));
+	return GameInt64ReadOnlyArray(const_cast<ArrayHeader**>(storageLoc));
 }
 
-const GameObjectIdArray GameObjectBody::GetObjectIdArray(obj_f field) const
+GameObjectIdReadOnlyArray GameObjectBody::GetObjectIdArray(obj_f field) const
 {
 	Expects(objectFields.GetType(field) == ObjectFieldType::ObjArray);
 
 	auto storageLoc = GetStorageLocation<ArrayHeader*>(field);
-	return GameObjectIdArray(const_cast<ArrayHeader**>(storageLoc));
+	return GameObjectIdReadOnlyArray(const_cast<ArrayHeader**>(storageLoc));
 }
 
-const GameScriptArray GameObjectBody::GetScriptArray(obj_f field) const
+GameScriptReadOnlyArray GameObjectBody::GetScriptArray(obj_f field) const
 {
 	Expects(objectFields.GetType(field) == ObjectFieldType::ScriptArray);
 
 	auto storageLoc = GetStorageLocation<ArrayHeader*>(field);
-	return GameScriptArray(const_cast<ArrayHeader**>(storageLoc));
+	return GameScriptReadOnlyArray(const_cast<ArrayHeader**>(storageLoc));
 }
 
-const GameSpellArray GameObjectBody::GetSpellArray(obj_f field) const
+GameSpellReadOnlyArray GameObjectBody::GetSpellArray(obj_f field) const
 {
 	Expects(objectFields.GetType(field) == ObjectFieldType::SpellArray);
 
 	auto storageLoc = GetStorageLocation<ArrayHeader*>(field);
-	return GameSpellArray(const_cast<ArrayHeader**>(storageLoc));
+	return GameSpellReadOnlyArray(const_cast<ArrayHeader**>(storageLoc));
 }
 
 GameInt32Array GameObjectBody::GetMutableInt32Array(obj_f field)

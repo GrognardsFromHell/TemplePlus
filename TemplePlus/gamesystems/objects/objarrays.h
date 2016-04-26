@@ -22,9 +22,9 @@ struct ArrayHeader {
 #pragma pack(pop)
 
 template<typename T>
-class GameObjectArrayHelper {
+class GameObjectReadOnlyArrayHelper {
 public:
-	GameObjectArrayHelper(ArrayHeader** storageLocation) 
+	GameObjectReadOnlyArrayHelper(ArrayHeader** storageLocation)
 		: mStorageLocation(storageLocation) {
 		Expects(!mStorageLocation || !(*mStorageLocation) || (*mStorageLocation)->elSize == sizeof(T));
 	}
@@ -49,6 +49,22 @@ public:
 	}
 
 	const T& operator[](size_t index) const;
+
+protected:
+	ArrayHeader** mStorageLocation;
+
+	size_t GetPackedIndex(size_t index) const {
+		return arrayIdxBitmaps.GetPackedIndex((*mStorageLocation)->idxBitmapId, index);
+	}
+};
+
+
+template<typename T>
+class GameObjectArrayHelper : public GameObjectReadOnlyArrayHelper<T> {
+public:
+	GameObjectArrayHelper(ArrayHeader** storageLocation)
+		: GameObjectReadOnlyArrayHelper(storageLocation) {		
+	}
 
 	void Set(size_t index, const T& value) {
 		if (!mStorageLocation) {
@@ -159,12 +175,7 @@ public:
 	void Append(const T& value)	{
 		Set(GetSize(), value);
 	};
-private:
-	ArrayHeader** mStorageLocation;
 
-	size_t GetPackedIndex(size_t index) const {
-		return arrayIdxBitmaps.GetPackedIndex((*mStorageLocation)->idxBitmapId, index);
-	}
 };
 
 struct ObjectScript;
@@ -176,8 +187,14 @@ using GameObjectIdArray = GameObjectArrayHelper<ObjectId>;
 using GameScriptArray = GameObjectArrayHelper<ObjectScript>;
 using GameSpellArray = GameObjectArrayHelper<SpellStoreData>;
 
+using GameInt32ReadOnlyArray = GameObjectReadOnlyArrayHelper<int32_t>;
+using GameInt64ReadOnlyArray = GameObjectReadOnlyArrayHelper<int64_t>;
+using GameObjectIdReadOnlyArray = GameObjectReadOnlyArrayHelper<ObjectId>;
+using GameScriptReadOnlyArray = GameObjectReadOnlyArrayHelper<ObjectScript>;
+using GameSpellReadOnlyArray = GameObjectReadOnlyArrayHelper<SpellStoreData>;
+
 template<typename T>
-inline const T & GameObjectArrayHelper<T>::operator[](size_t index) const
+inline const T & GameObjectReadOnlyArrayHelper<T>::operator[](size_t index) const
 {
 	if (!mStorageLocation) {
 		static T empty;

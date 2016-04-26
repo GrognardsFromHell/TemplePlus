@@ -97,14 +97,11 @@ struct GameObjectBody {
 	const char *GetString(obj_f field) const;
 	void SetString(obj_f field, const char *text);
 
-	/*
-	  BEWARE! This may return the Proto Object's storage!
-	*/
-	const GameInt32Array GetInt32Array(obj_f field) const; 
-	const GameInt64Array GetInt64Array(obj_f field) const; // BEWARE! This may return the Proto Object's storage!
-	const GameObjectIdArray GetObjectIdArray(obj_f field) const; // BEWARE! This may return the Proto Object's storage!
-	const GameScriptArray GetScriptArray(obj_f field) const; // BEWARE! This may return the Proto Object's storage!
-	const GameSpellArray GetSpellArray(obj_f field) const; // BEWARE! This may return the Proto Object's storage!
+	GameInt32ReadOnlyArray GetInt32Array(obj_f field) const;
+	GameInt64ReadOnlyArray GetInt64Array(obj_f field) const;
+	GameObjectIdReadOnlyArray GetObjectIdArray(obj_f field) const;
+	GameScriptReadOnlyArray GetScriptArray(obj_f field) const;
+	GameSpellReadOnlyArray GetSpellArray(obj_f field) const;
 
 	// Convenience array accessors
 	int32_t GetInt32(obj_f field, size_t index) const;
