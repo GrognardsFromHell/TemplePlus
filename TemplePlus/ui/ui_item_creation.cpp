@@ -29,6 +29,7 @@
 #include <graphics/render_hooks.h>
 #include <tig/tig_texture.h>
 #include <regex>
+#include "graphics/imgfile.h"
 
 #define NUM_ITEM_ENHANCEMENT_SPECS 41
 #define NUM_APPLIED_BONUSES_MAX 9 // number of bonuses that can be applied on item creation
@@ -133,8 +134,6 @@ public:
 			return itemCreation.CreateItemResourceCheck(crafter, item);
 		});
 
-		replaceFunction(0x10152930, UiItemCreationCraftingCostTexts);
-
 
 		// MAA Window Message Handler
 		replaceFunction<bool(__cdecl)(int, TigMsg*)>(0x10153110, [](int widId, TigMsg* msg)	{
@@ -211,14 +210,14 @@ public:
 
 
 
-int CraftedWandSpellLevel(objHndl objHndItem)
+int ItemCreation::CraftedWandSpellLevel(objHndl objHndItem)
 {
 	auto spellData = objSystem->GetObject(objHndItem)->GetSpell(obj_f_item_spell_idx, 0);
 	uint32_t spellLevelBasic = spellData.spellLevel;
 	uint32_t spellLevelFinal = spellData.spellLevel;
 
 
-	int casterLevelSet = (int) d20Sys.d20QueryReturnData(*itemCreationAddresses.crafter, DK_QUE_Craft_Wand_Spell_Level, 0, 0);
+	auto casterLevelSet = (int) d20Sys.d20QueryReturnData(itemCreationCrafter, DK_QUE_Craft_Wand_Spell_Level, 0, 0);
 	casterLevelSet = 2 * ((casterLevelSet + 1) / 2) - 1;
 	if (casterLevelSet < 1)
 		casterLevelSet = 1;
@@ -234,14 +233,14 @@ int CraftedWandSpellLevel(objHndl objHndItem)
 	uint32_t classCodes[SPELL_ENUM_MAX] = { 0, };
 	uint32_t spellLevels[SPELL_ENUM_MAX] = { 0, };
 	uint32_t spellFoundNum = 0;
-	int casterKnowsSpell = spellSys.spellKnownQueryGetData(*itemCreationAddresses.crafter, spellData.spellEnum, classCodes, spellLevels, &spellFoundNum);
+	int casterKnowsSpell = spellSys.spellKnownQueryGetData(itemCreationCrafter, spellData.spellEnum, classCodes, spellLevels, &spellFoundNum);
 	if (casterKnowsSpell){
 		uint32_t spellClassFinal = classCodes[0];
 		spellLevelFinal = 0;
 		uint32_t isClassSpell = classCodes[0] & (0x80);
 
 		if (isClassSpell){
-			spellLevelFinal = spellSys.GetMaxSpellSlotLevel(*itemCreationAddresses.crafter, static_cast<Stat>(classCodes[0] & 0x7F), 0);
+			spellLevelFinal = spellSys.GetMaxSpellSlotLevel(itemCreationCrafter, static_cast<Stat>(classCodes[0] & 0x7F), 0);
 		};
 		if (spellFoundNum > 1){
 			for (uint32_t i = 1; i < spellFoundNum; i++){
@@ -272,7 +271,7 @@ int CraftedWandSpellLevel(objHndl objHndItem)
 	return spellLevelFinal;
 }
 
-int CraftedWandCasterLevel(objHndl item)
+int ItemCreation::CraftedWandCasterLevel(objHndl item)
 {
 	int result = CraftedWandSpellLevel(item);
 	if (result <= 1)
@@ -650,47 +649,30 @@ void ItemCreation::CreateItemDebitXPGP(objHndl crafter, objHndl objHndItem){
 	objects.setInt32(crafter, obj_f_critter_experience, crafterXP - craftingCostXP);
 };
 
-void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
+void ItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndItem){
 	// prolog
-	int32_t widgetId;
 	int32_t * insuffXp;
 	int32_t * insuffCp;
 	int32_t *insuffSkill;
 	int32_t *insuffPrereq;
 	uint32_t craftingCostCP;
 	uint32_t craftingCostXP;
-	TigRect rect;
+	TigRect rect(212, 157, 159, 10);
 	char * prereqString;
-	__asm{
-		mov widgetId, ebx; // widgetId is passed in ebx
-	};
-
 
 	uint32_t casterLevelNew = -1; // h4x!
 	
-	auto itemCreationType = *itemCreationAddresses.itemCreationType;
-
 	if (itemCreationType == CraftWand)
 	{
 		casterLevelNew = CraftedWandCasterLevel(objHndItem);
 	}
 	
 
-	rect.x = 212;
-	rect.y = 157;
-	rect.width = 159;
-	rect.height = 10;
-
 	insuffXp = itemCreationAddresses.craftInsufficientXP;
 	insuffCp = itemCreationAddresses.craftInsufficientFunds;
 	insuffSkill = itemCreationAddresses.craftSkillReqNotMet;
 	insuffPrereq = itemCreationAddresses.insuffPrereqs;
 
-	//old method
-	/* 
-	craftingCostCP = templeFuncs.Obj_Get_Field_32bit(objHndItem, obj_f_item_worth) / 2;
-	craftingCostXP = templeFuncs.Obj_Get_Field_32bit(objHndItem, obj_f_item_worth) / 2500;
-	*/
 
 	craftingCostCP = ItemWorthAdjustedForCasterLevel(objHndItem, casterLevelNew) / 2;
 	craftingCostXP = ItemWorthAdjustedForCasterLevel(objHndItem, casterLevelNew) / 2500;
@@ -746,7 +728,7 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 	rect.y = 200;
 	rect.width = 150;
 	rect.height = 105;
-	prereqString = templeFuncs.ItemCreationPrereqSthg_sub_101525B0(*itemCreationAddresses.crafter, objHndItem);
+	prereqString = templeFuncs.ItemCreationPrereqSthg_sub_101525B0(itemCreationCrafter, objHndItem);
 	if (prereqString){
 		UiRenderer::DrawTextInWidget(widgetId, prereqString, rect, *itemCreationAddresses.itemCreationTextStyle);
 	}
@@ -767,13 +749,46 @@ void __cdecl UiItemCreationCraftingCostTexts(objHndl objHndItem){
 	}
 	
 	
+}
+
+bool ItemCreation::ItemCreationEntryMsg(int widId, TigMsg* msg){
+	auto _msg = (TigMsgWidget*)msg;
+	if (msg->type != TigMsgType::WIDGET || _msg->widgetEventType != TigMsgWidgetEvent::MouseReleased)
+		return false;
+
+	craftingWidgetId = widId;
+
+	auto widIdx = 0;
+	for (; widIdx< NUM_ITEM_CREATION_ENTRY_WIDGETS; widIdx++) {
+		if (mItemCreationEntryBtnIds[widIdx] == widId)
+			break;
+	}
+
+	if (widIdx >= NUM_ITEM_CREATION_ENTRY_WIDGETS)
+		widIdx = -1;
+
+	auto itemIdx = mItemCreationScrollbarY + widIdx;
+	if (itemIdx < 0 || itemIdx >= numItemsCrafting[itemCreationType])
+		return true;
+
+
+	craftingItemIdx = itemIdx;
+	auto itemHandle = craftedItemHandles[itemCreationType][itemIdx];
+	if (CreateItemResourceCheck(itemCreationCrafter, itemHandle)) {
+		ui.ButtonSetButtonState(mItemCreationCreateBtnId, UiButtonState::UBS_NORMAL);
+	}
+	else {
+		ui.ButtonSetButtonState(mItemCreationCreateBtnId, UiButtonState::UBS_DISABLED);
+	}
+
+	return true;
 };
 
 
-void ItemCreation::GetMaaSpecs()
+void ItemCreation::GetMaaSpecs() const
 {
-	struct MaaSpecTabEntry
-	{
+
+	struct MaaSpecTabEntry	{
 		char * id;
 		char * condName;
 		char * flags;
@@ -783,17 +798,14 @@ void ItemCreation::GetMaaSpecs()
 		char * charReqs; // Character Level, Alignment
 		char * spellReqs;
 		char * featReqs; // TODO
-
 	};
+
 	auto maaSpecLineParser = [](const TigTabParser*, int lineIdx, char ** cols)
 	{
 		auto& tabEntry = *reinterpret_cast<MaaSpecTabEntry*>(cols);
-//		auto& tabEntry = *_tabEntry;
 		
-
 		auto effIdx = atol(tabEntry.id);
 		auto condName = tabEntry.condName;
-		
 		
 		// get flags
 		uint32_t flags = 0;
@@ -933,7 +945,7 @@ const char *getProtoName(uint64_t protoHandle) {
   return result;
   */
 
-	return objects.description._getDisplayName(protoHandle, protoHandle);
+	return objects.description.getDisplayName(protoHandle);
 }
 
 static void loadProtoIds(MesHandle mesHandle) {
@@ -977,131 +989,7 @@ uint32_t ItemCreationBuildRadialMenuEntry(DispatcherCallbackArgs args, ItemCreat
 	return 0;
 };
 
-#pragma region ItemCreation Radial Menu Dispatcher Callbacks
 
-uint32_t BrewPotionRadialMenu(DispatcherCallbackArgs args)
-{
-	return ItemCreationBuildRadialMenuEntry(args, BrewPotion, "TAG_BREW_POTION", 5066);
-};
-
-uint32_t ScribeScrollRadialMenu(DispatcherCallbackArgs args)
-{
-	return ItemCreationBuildRadialMenuEntry(args, ScribeScroll, "TAG_SCRIBE_SCROLL", 5067);
-};
-
-int CraftWandRadialMenu(DispatcherCallbackArgs args)
-{
-	
-	if (combatSys.isCombatActive()) { return 0; }
-	MesLine mesLine;
-	RadialMenuEntry radMenuCraftWand;
-	mesLine.key = 5068;
-	mesFuncs.GetLine_Safe(*combatSys.combatMesfileIdx, &mesLine);
-	radMenuCraftWand.text = (char*)mesLine.value;
-	radMenuCraftWand.d20ActionType = D20A_ITEM_CREATION;
-	radMenuCraftWand.d20ActionData1 = CraftWand;
-	radMenuCraftWand.helpId = ElfHash::Hash("TAG_CRAFT_WAND");
-	
-	int newParent = radialMenus.AddParentChildNode(args.objHndCaller, &radMenuCraftWand, radialMenus.GetStandardNode(RadialMenuStandardNode::Feats));
-
-	RadialMenuEntry useCraftWand;
-	RadialMenuEntry setWandLevel;
-	
-	setWandLevel.minArg = 1;
-	setWandLevel.maxArg = min(20, critterSys.GetCasterLevel(args.objHndCaller));
-	
-	setWandLevel.field4 = (int)combatSys.GetCombatMesLine(6019);
-	setWandLevel.type = RadialMenuEntryType::Slider;
-	setWandLevel.actualArg = (int)conds.CondNodeGetArgPtr(args.subDispNode->condNode, 0);
-	setWandLevel.callback = (BOOL (__cdecl*)(objHndl, RadialMenuEntry*))itemCreationAddresses.Sub_100F0200;
-	setWandLevel.text = combatSys.GetCombatMesLine(6017);
-	setWandLevel.helpId = ElfHash::Hash("TAG_CRAFT_WAND");
-	radialMenus.AddChildNode(args.objHndCaller, &setWandLevel, newParent);
-
-	useCraftWand.type = RadialMenuEntryType::Action;
-	useCraftWand.text = combatSys.GetCombatMesLine(6018);
-	useCraftWand.helpId = ElfHash::Hash("TAG_CRAFT_WAND");
-	useCraftWand.d20ActionType = D20A_ITEM_CREATION;
-	useCraftWand.d20ActionData1 = CraftWand;
-	radialMenus.AddChildNode(args.objHndCaller, &useCraftWand, newParent);
-
-
-
-	return 0;
-	
-	//return ItemCreationBuildRadialMenuEntry(args, CraftWand, "TAG_CRAFT_WAND", 5068);
-};
-
-int CraftWandOnAdd(DispatcherCallbackArgs args)
-{
-	//vector< int> condArgs(2);
-	//condArgs[0] = 1;
-	//condArgs[1] = 0;
-	conds.AddTo(args.objHndCaller, "Craft Wand Level Set", { 1, 0 });
-	//Dispatcher * dispatcher = objects.GetDispatcher(args.objHndCaller);
-	//CondStruct * condStruct = conds.hashmethods.GetCondStruct(conds.hashmethods.StringHash("Craft Wand Level Set") );
-	//conds.ConditionAddDispatchArgs(dispatcher, &dispatcher->conditions, condStruct, condArgs);
-	return 0;
-}
-
-uint32_t CraftRodRadialMenu(DispatcherCallbackArgs args)
-{
-	return ItemCreationBuildRadialMenuEntry(args, CraftRod, "TAG_CRAFT_ROD", 5069);
-};
-
-uint32_t CraftWondrousRadialMenu(DispatcherCallbackArgs args)
-{
-	return ItemCreationBuildRadialMenuEntry(args, CraftWondrous, "TAG_CRAFT_WONDROUS", 5070);
-};
-
-uint32_t CraftStaffRadialMenu(DispatcherCallbackArgs args)
-{
-	return ItemCreationBuildRadialMenuEntry(args, CraftStaff, "TAG_CRAFT_STAFF", 5103);
-};
-
-uint32_t ForgeRingRadialMenu(DispatcherCallbackArgs args)
-{
-	return ItemCreationBuildRadialMenuEntry(args, ForgeRing, "TAG_FORGE_RING", 5104);
-};
-
-uint32_t CraftMagicArmsAndArmorRadialMenu(DispatcherCallbackArgs args)
-{
-	return ItemCreationBuildRadialMenuEntry(args, CraftMagicArmsAndArmor, "TAG_CRAFT_MAA", 5071);
-};
-
-#pragma endregion
-/*
-static int __cdecl systemInit(const GameSystemConf *conf) {
-
-	mesFuncs.Open("mes\\item_creation.mes", &mesItemCreationText);
-	mesFuncs.Open("mes\\item_creation_names.mes", &mesItemCreationNamesText);
-	mesFuncs.Open("rules\\item_creation.mes", &mesItemCreationRules);
-	loadProtoIds(mesItemCreationRules);
-
-	acceptBtnTextures.loadAccept();
-	declineBtnTextures.loadDecline();
-	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DisabledNormal, disabledBtnTexture);
-
-	background = ui.LoadImg("art\\interface\\item_creation_ui\\item_creation.img");
-
-	// TODO !sub_10150F00("rules\\item_creation.mes")
-
-	/*
-	tig_texture_register("art\\interface\\item_creation_ui\\craftarms_0.tga", &dword_10BEE38C)
-    || tig_texture_register("art\\interface\\item_creation_ui\\craftarms_1.tga", &dword_10BECEE8)
-    || tig_texture_register("art\\interface\\item_creation_ui\\craftarms_2.tga", &dword_10BED988)
-    || tig_texture_register("art\\interface\\item_creation_ui\\craftarms_3.tga", &dword_10BECEEC)
-    || tig_texture_register("art\\interface\\item_creation_ui\\invslot_selected.tga", &dword_10BECDAC)
-    || tig_texture_register("art\\interface\\item_creation_ui\\invslot.tga", &dword_10BEE038)
-    || tig_texture_register("art\\interface\\item_creation_ui\\add_button.tga", &dword_10BEE334)
-    || tig_texture_register("art\\interface\\item_creation_ui\\add_button_grey.tga", &dword_10BED990)
-    || tig_texture_register("art\\interface\\item_creation_ui\\add_button_hover.tga", &dword_10BEE2D8)
-    || tig_texture_register("art\\interface\\item_creation_ui\\add_button_press.tga", &dword_10BED79C) )
-	
-
-	return 0;
-}
-*/
 static void __cdecl systemReset() {
 }
 
@@ -1124,7 +1012,6 @@ ItemCreation::ItemCreation(){
 	craftedItemNamePos = 0;
 	craftingWidgetId = -1;
 
-	InitItemEnhSpecs();
 }
 
 int ItemCreation::GetSurplusXp(objHndl crafter){
@@ -1133,73 +1020,7 @@ int ItemCreation::GetSurplusXp(objHndl crafter){
 	return gameSystems->GetObj().GetObject(crafter)->GetInt32(obj_f_critter_experience) - xpReq;
 }
 
-void ItemCreation::InitItemEnhSpecs()
-{
-	//auto idx = 0;
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Enhancement Bonus", IESF_ENABLED | IESF_WEAPON | IESF_PLUS_BONUS, 1, 1);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Enhancement Bonus", IESF_ENABLED | IESF_WEAPON | IESF_PLUS_BONUS, 1, 2);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Enhancement Bonus", IESF_ENABLED | IESF_WEAPON | IESF_PLUS_BONUS, 1, 3);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Defending Bonus", IESF_ENABLED | IESF_WEAPON, 1);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Flaming", IESF_ENABLED | IESF_WEAPON, 1);
-	//
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Frost", IESF_ENABLED | IESF_WEAPON, 1);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Shock", IESF_ENABLED | IESF_WEAPON, 1);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Ghost Touch", IESF_WEAPON, 1);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Keen", IESF_ENABLED | IESF_WEAPON | IESF_UNK100, 1);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Mighty Cleaving", IESF_ENABLED | IESF_WEAPON, 1);
 
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Spell Storing", IESF_WEAPON, 1);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Throwing", IESF_WEAPON, 1);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Bane", IESF_WEAPON, 2);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Disruption", IESF_WEAPON, 2);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Flaming Burst", IESF_ENABLED | IESF_WEAPON, 2);
-
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Icy Burst", IESF_ENABLED | IESF_WEAPON, 2);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Shocking Burst", IESF_ENABLED | IESF_WEAPON, 2);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Thundering",  IESF_WEAPON, 2);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Wounding", IESF_WEAPON, 2);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Holy", IESF_ENABLED | IESF_WEAPON, 2);
-
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Unholy", IESF_ENABLED | IESF_WEAPON, 2);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Lawful", IESF_ENABLED | IESF_WEAPON, 2);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Chaotic", IESF_ENABLED | IESF_WEAPON, 2);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Enhancement Bonus", IESF_ENABLED | IESF_WEAPON | IESF_PLUS_BONUS, 1, 4);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Weapon Enhancement Bonus", IESF_ENABLED | IESF_WEAPON | IESF_PLUS_BONUS, 1, 5);
-
-	//// armor bonuses
-	//idx = 200;
-
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Enhancement Bonus", IESF_ENABLED | IESF_ARMOR | IESF_PLUS_BONUS, 1, 1);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Enhancement Bonus", IESF_ENABLED | IESF_ARMOR | IESF_PLUS_BONUS, 1, 2);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Enhancement Bonus", IESF_ENABLED | IESF_ARMOR | IESF_PLUS_BONUS, 1, 3);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Light Fortification", IESF_ARMOR , 1);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Glamered", IESF_ARMOR, 1);
-
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Slick", IESF_ARMOR, 1);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Shadow", IESF_ARMOR, 1);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Silent Moves", IESF_ENABLED | IESF_ARMOR, 1);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Spell Resistance", IESF_ENABLED | IESF_ARMOR, 2, 13);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Enhancement Bonus", IESF_ENABLED | IESF_ARMOR, 1, 4);
-
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Armor Enhancement Bonus", IESF_ENABLED | IESF_ARMOR, 1, 5);
-
-
-	//// shield bonuses
-	//idx = 400;
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Enhancement Bonus", IESF_ENABLED | IESF_SHIELD | IESF_PLUS_BONUS, 1, 1);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Enhancement Bonus", IESF_ENABLED | IESF_SHIELD | IESF_PLUS_BONUS, 1, 2);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Enhancement Bonus", IESF_ENABLED | IESF_SHIELD | IESF_PLUS_BONUS, 1, 3);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Bashing", IESF_SHIELD, 1);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Blinding", IESF_SHIELD, 1);
-
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Light Fortification", IESF_SHIELD , 1);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Arrow Deflection", IESF_SHIELD, 1);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Animated", IESF_SHIELD, 1);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Spell Resistance", IESF_ENABLED | IESF_SHIELD, 2, 13);
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Enhancement Bonus", IESF_ENABLED | IESF_SHIELD | IESF_PLUS_BONUS, 1, 4);
-
-	//itemEnhSpecs[idx++] = ItemEnhancementSpec("Shield Enhancement Bonus", IESF_ENABLED | IESF_SHIELD | IESF_PLUS_BONUS, 1, 5);
-}
 
 ItemEnhancementSpec::ItemEnhancementSpec(const char* CondName, uint32_t Flags, int EffcBonus, int enhBonus)
 	:condName(CondName),flags(Flags),effectiveBonus(EffcBonus){
@@ -1238,20 +1059,176 @@ BOOL ItemCreation::ItemCreationShow(objHndl crafter, ItemCreationType icType)
 	return TRUE;
 }
 
+bool ItemCreation::ItemCreationWndMsg(int widId, TigMsg * msg){
+
+	if (msg->type == TigMsgType::MOUSE) {
+		auto _msg = (TigMsgMouse*)msg;
+		if (_msg->buttonStateFlags & MSF_SCROLLWHEEL_CHANGE) {
+			auto newMsg = *(TigMsgMouse*)msg;
+			newMsg.buttonStateFlags = MSF_SCROLLWHEEL_CHANGE;
+			ui.WidgetCopy(mItemCreationScrollbarId, mItemCreationScrollbar);
+			mItemCreationScrollbar->handleMessage(mItemCreationScrollbarId, (TigMsg*)&newMsg);
+		}
+		return true;
+	}
+		
+
+	if (msg->type == TigMsgType::KEYSTATECHANGE && (msg->arg2 & 0xFF) == 1
+		|| msg->type == TigMsgType::KEYDOWN) {
+		auto vk = msg->arg1 & 0xFF;
+		if (msg->type == TigMsgType::KEYSTATECHANGE)
+			vk = infrastructure::gKeyboard.ToVirtualKey(msg->arg1);
+
+		switch (vk) {
+		case VK_RETURN:
+			// TODO: Add "enter to craft"
+			return true;
+		default:
+			return true;
+		}
+		return true;
+	}
+
+
+	if (msg->type == TigMsgType::CHAR) {
+		auto key = (char)msg->arg1;
+		// TODO: add jump to letter
+		return true;
+	}
+
+	if (msg->type == TigMsgType::WIDGET) { // scrolling
+		auto _msg = (TigMsgWidget*)msg;
+		if (_msg->widgetEventType == TigMsgWidgetEvent::Scrolled) {
+			ui.ScrollbarGetY(mItemCreationScrollbarId, &mItemCreationScrollbarY);
+		}
+		return true;
+	}
+
+	return false;
+}
+
 void ItemCreation::ItemCreationWndRender(int widId){
-// TODO
+	// Background Image
+	bkgImage->SetX(mItemCreationWnd->x);
+	bkgImage->SetY(mItemCreationWnd->y);
+	bkgImage->Render();
+
+
+
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	// title
+	std::string text(GetItemCreationMesLine(itemCreationType));
+	auto measText = UiRenderer::MeasureTextSize(text, temple::GetRef<TigTextStyle>(0x10BED938));
+	TigRect rect((342 - measText.width)/2 + 29, (15 - measText.height) / 2 + 10,342, 15);
+	UiRenderer::DrawTextInWidget(mItemCreationWndId, text, rect, temple::GetRef<TigTextStyle>(0x10BED9F8));
+
+	// draw crafter name
+	auto crafterName = description.getDisplayName(itemCreationCrafter);
+	measText = UiRenderer::MeasureTextSize(crafterName, temple::GetRef<TigTextStyle>(0x10BED938));
+	TigRect crafterRect((351 - measText.width) / 2 + 24, (21 - measText.height) / 2 + 322, 351, 21);
+	UiRenderer::DrawTextInWidget(widId, crafterName, crafterRect, temple::GetRef<TigTextStyle>(0x10BED9F8));
+
+	// draw XP & GP
+	auto surplusXp = d20LevelSys.GetSurplusXp(itemCreationCrafter);
+	text = fmt::format("{}", surplusXp);
+	measText = UiRenderer::MeasureTextSize(text, temple::GetRef<TigTextStyle>(0x10BED938));
+	TigRect resourceRect((66 - measText.width) / 2 + 130, (12 - measText.height) / 2 + 343, 66, 12);
+	UiRenderer::DrawTextInWidget(widId, text, resourceRect, temple::GetRef<TigTextStyle>(0x10BED938));
+	auto partyMoney = party.GetMoney();
+	text = fmt::format("{}", partyMoney / 100);
+	measText = UiRenderer::MeasureTextSize(text, temple::GetRef<TigTextStyle>(0x10BED938));
+	resourceRect = TigRect((66 - measText.width) / 2 + 245, (12 - measText.height) / 2 + 343, 66, 12);
+	UiRenderer::DrawTextInWidget(widId, text, resourceRect, temple::GetRef<TigTextStyle>(0x10BED938));
+
+
+	auto shortname = ui.GetStatShortName(stat_experience);
+	measText = UiRenderer::MeasureTextSize(shortname, temple::GetRef<TigTextStyle>(0x10BED938));
+	resourceRect = TigRect((37 - measText.width) / 2 + 87, (15 - measText.height) / 2 + 342, 37, 15);
+	UiRenderer::DrawTextInWidget(widId, shortname, resourceRect, temple::GetRef<TigTextStyle>(0x10BED850));
+
+
+	text = GetItemCreationMesLine(10 + itemCreationType); // Item Creation Names (printed above the items to be created)
+	measText = UiRenderer::MeasureTextSize(text, temple::GetRef<TigTextStyle>(0x10BED938));
+	resourceRect = TigRect(29, 39, 167, 11);
+	UiRenderer::DrawTextInWidget(widId, text, resourceRect, temple::GetRef<TigTextStyle>(0x10BED6D8));
+
+	text = GetItemCreationMesLine(10000); // Item Information:
+	measText = UiRenderer::MeasureTextSize(text, temple::GetRef<TigTextStyle>(0x10BED938));
+	resourceRect = TigRect(206, 39, 167, 11);
+	UiRenderer::DrawTextInWidget(widId, text, resourceRect, temple::GetRef<TigTextStyle>(0x10BED6D8));
+
+
+
+
+	// draw info pertaining to selected item
+	if (craftingItemIdx >= 0 && craftingItemIdx < numItemsCrafting[itemCreationType])
+	{
+		auto itemHandle = craftedItemHandles[itemCreationType][craftingItemIdx];
+
+		// draw icon
+		auto invAid = (UiGenericAsset)gameSystems->GetObj().GetObject(itemHandle)->GetInt32(obj_f_item_inv_aid);
+		int textureId;
+		ui.GetAsset(UiAssetType::Inventory, invAid, textureId);
+		UiRenderer::DrawTexture(textureId, temple::GetRef<TigRect>(0x102FAEC4));
+
+
+		auto itemName = ItemCreationGetItemName(itemHandle);
+		measText = UiRenderer::MeasureTextSize(itemName, temple::GetRef<TigTextStyle>(0x10BED938));
+		if (measText.width > 161) {
+			measText.width = 161;
+		}
+		rect = TigRect((161 - measText.width )/2 + 208, 132, 161, 24);
+		UiRenderer::DrawTextInWidget(widId, itemName, rect, temple::GetRef<TigTextStyle>(0x10BEDFE8));
+		
+		ItemCreationCraftingCostTexts(widId, itemHandle);
+	}
+	
+
+	UiRenderer::PopFont();
+}
+
+void ItemCreation::ItemCreationEntryRender(int widId){
+	auto widIdx = 0;
+	for (; widIdx< NUM_ITEM_CREATION_ENTRY_WIDGETS; widIdx++){
+		if (mItemCreationEntryBtnIds[ widIdx ] == widId)
+			break;
+	}
+
+	if (widIdx >= NUM_ITEM_CREATION_ENTRY_WIDGETS)
+		widIdx = -1;
+
+	auto itemIdx = mItemCreationScrollbarY + widIdx;
+	if (itemIdx < 0 || itemIdx >= numItemsCrafting[itemCreationType])
+		return;
+
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+
+
+	auto itemHandle = craftedItemHandles[itemCreationType][itemIdx];
+	auto itemName = ItemCreationGetItemName(itemHandle);
+	TigRect rect(32, 12 * widIdx + 55, 155, 12);
+	auto checkRes = itemCreationResourceCheckResults[itemIdx];
+	if (itemIdx == craftingItemIdx)	{
+		if (checkRes)
+			UiRenderer::DrawTextInWidget(mItemCreationWndId, itemName, rect, temple::GetRef<TigTextStyle>(0x10BEDFE8));
+		else
+			UiRenderer::DrawTextInWidget(mItemCreationWndId, itemName, rect, temple::GetRef<TigTextStyle>(0x10BECE90));
+	} 
+	else {
+		if (checkRes)
+			UiRenderer::DrawTextInWidget(mItemCreationWndId, itemName, rect, temple::GetRef<TigTextStyle>(0x10BED938));
+		else
+			UiRenderer::DrawTextInWidget(mItemCreationWndId, itemName, rect, temple::GetRef<TigTextStyle>(0x10BED6D8));
+	}
+
+	UiRenderer::PopFont();
 }
 
 void ItemCreation::MaaWndRender(int widId){
 
-	// draw corner decorations
-	//Render2dArgs args;
-	//args.vertexColors = nullptr;
-	//args.textureId = ;
+	// draw background (composed of pieces)
 	TigRect srcRect(1, 1, 254, 254);
 	TigRect destRect(mMaaWnd->x, mMaaWnd->y, 254, 254);
-	//args.destRect = &destRect;
-	//args.srcRect = &srcRect;
 	UiRenderer::DrawTexture(temple::GetRef<int>(0x10BEE38C), destRect);
 	destRect.x += 253;
 	UiRenderer::DrawTexture(temple::GetRef<int>(0x10BECEE8), destRect);
@@ -1418,14 +1395,14 @@ void ItemCreation::ButtonStateInit(int wndId){
 
 	if (craftingItemIdx >= 0 && craftingItemIdx < (int)numItemsCrafting[itemCreationType]){
 		if (CreateItemResourceCheck(itemCreationCrafter, craftedItemHandles[itemCreationType][craftingItemIdx]))
-			ui.ButtonSetButtonState(mCreateBtnId, 0);
+			ui.ButtonSetButtonState(mItemCreationCreateBtnId, UiButtonState::UBS_NORMAL);
 		else
-			ui.ButtonSetButtonState(mCreateBtnId, 4);
+			ui.ButtonSetButtonState(mItemCreationCreateBtnId, UiButtonState::UBS_DISABLED);
 	}
 
 	ui.ScrollbarSetYmax(mItemCreationScrollbarId, numItemsCrafting[itemCreationType] - NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX  < 0 ? 0 : numItemsCrafting[itemCreationType] - NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX);
 	ui.ScrollbarSetY(mItemCreationScrollbarId, 0);
-	temple::GetRef<int>(0x10BEDB54) = 0; // scrollbarCurY
+	mItemCreationScrollbarY = 0;
 	ui.WidgetBringToFront(wndId);
 }
 
@@ -2261,6 +2238,7 @@ int ItemCreation::UiItemCreationInit(GameSystemConf& conf)
 	mCreateBtnRect = TigRect(133, 339, 112, 22);
 	mMaaCancelBtnRect = TigRect(256, 339, 112, 22);
 	mMaaCraftedItemIconDestRect = TigRect(215, 62, 64, 64);
+	mItemCreationScrollbar = new WidgetType3;
 
 	if (!mesFuncs.Open("mes\\item_creation.mes", &mItemCreationMes))
 		return 0;
@@ -2273,27 +2251,16 @@ int ItemCreation::UiItemCreationInit(GameSystemConf& conf)
 	if (!InitItemCreationRules())
 		return 0;
 
-	// auto GetAsset = temple::GetRef<int(__cdecl)(UiAssetType assetType, uint32_t assetIndex, int* textureIdOut, int offset) >(0x1004A360);
-	// GetAsset(UiAssetType::Generic, 1, temple::GetPointer<int>(0x10BED9F0), 0);
 	ui.GetAsset(UiAssetType::Generic,  UiGenericAsset::AcceptNormal,temple::GetRef<int>(0x10BED9F0));
-	// GetAsset(UiAssetType::Generic, 0, temple::GetPointer<int>(0x10BEDA48), 0);
 	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptHover, temple::GetRef<int>(0x10BEDA48));
-	// GetAsset(UiAssetType::Generic, 2, temple::GetPointer<int>(0x10BED9EC), 0);
 	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptPressed, temple::GetRef<int>(0x10BED9EC));
-	// GetAsset(UiAssetType::Generic, 6, temple::GetPointer<int>(0x10BEDB48), 0);
 	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DisabledNormal, temple::GetRef<int>(0x10BEDB48));
-	// GetAsset(UiAssetType::Generic, 4, temple::GetPointer<int>(0x10BEDA5C), 0);
 	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineNormal, temple::GetRef<int>(0x10BEDA5C));
-	// GetAsset(UiAssetType::Generic, 3, temple::GetPointer<int>(0x10BEE2D4), 0);
 	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineHover, temple::GetRef<int>(0x10BEE2D4));
-	// GetAsset(UiAssetType::Generic, 5, temple::GetPointer<int>(0x10BED6D0), 0);
 	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclinePressed, temple::GetRef<int>(0x10BED6D0));
 
-	auto LoadImgFile = temple::GetRef<ImgFile*(__cdecl)(const char *)>(0x101E8320);
-	if ((temple::GetRef<ImgFile*>(0x10BEE388) = LoadImgFile("art\\interface\\item_creation_ui\\item_creation.img")) == 0)
-		return 0;
+	bkgImage = new CombinedImgFile("art\\interface\\item_creation_ui\\item_creation.img");
 
-	// auto RegisterUiTexture = temple::GetRef<int(__cdecl)(const char*, int*)>(0x101EE7B0);
 	if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\craftarms_0.tga", temple::GetPointer<int>(0x10BEE38C)))
 		return 0;
 	if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\craftarms_1.tga", temple::GetPointer<int>(0x10BECEE8)))
@@ -2315,6 +2282,9 @@ int ItemCreation::UiItemCreationInit(GameSystemConf& conf)
 	if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\add_button_press.tga", temple::GetPointer<int>(0x10BED79C)))
 		return 0;
 
+	/*
+	  Init Widgets
+	*/
 	if (!ItemCreationWidgetsInit(conf.width, conf.height))
 		return 0;
 
@@ -2347,19 +2317,17 @@ int ItemCreation::UiItemCreationInit(GameSystemConf& conf)
 
 
 	itemCreationCrafter = temple::GetRef<objHndl>(0x10BECEE0);
-	craftingItemIdx = temple::GetRef<int>(0x10BEE398);
-
-	mCreateBtnId = temple::GetRef<int>(0x10BED8B0);
+	// craftingItemIdx = temple::GetRef<int>(0x10BEE398);
 
 	//MAA
-	maaSelectedEffIdx = temple::GetRef<int>(0x10BECD74);
+	// maaSelectedEffIdx = temple::GetRef<int>(0x10BECD74);
 	mMaaWnd = temple::GetPointer<WidgetType1>(0x10BEDB58);
 	// mMaaItemsScrollbarId = temple::GetRef<int>(0x10BED8A0);
 	// mMaaApplicableEffectsScrollbarId = temple::GetRef<int>(0x10BECD78);
 
 	mItemCreationWnd = temple::GetPointer<WidgetType1>(0x10BEE040);
-	mItemCreationScrollbarId = temple::GetRef<int>(0x10BED9F4);
-	mMaaItemsScrollbarY = temple::GetRef<int>(0x10BECDA4);
+	// mItemCreationScrollbarId = temple::GetRef<int>(0x10BED9F4);
+	// mMaaItemsScrollbarY = temple::GetRef<int>(0x10BECDA4);
 
 	return 1;
 }
@@ -2424,40 +2392,38 @@ bool ItemCreation::InitItemCreationRules(){
 bool ItemCreation::ItemCreationWidgetsInit(int width, int height){
 	auto wndId = &mItemCreationWndId;
 	auto& wnd = temple::GetRef<WidgetType1>(0x10BEE040);
-	wnd.WidgetType1Init((width - 404 / 2), (height - 404) / 2, 404, 421);
+	wnd.WidgetType1Init((width - 404 )/2, (height - 421) / 2, 404, 421);
 	wnd.widgetFlags = 1;
 	wnd.windowId = 0x7FFFFFFF;
 	wnd.render = [](int widId) { itemCreation.ItemCreationWndRender(widId); };
-	wnd.handleMessage = temple::GetRef<bool(__cdecl)(int, TigMsg*)>(0x1014FC20);
+	wnd.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.ItemCreationWndMsg(widId, msg); };//temple::GetRef<bool(__cdecl)(int, TigMsg*)>(0x1014FC20);
 
 	if (ui.AddWindow(temple::GetPointer<WidgetType1>(0x10BEE040), sizeof(WidgetType1),
 		wndId, "ui_item_creation.cpp", 2094))
 		return false;
-	auto icScrollbar = temple::GetPointer<WidgetType3>(0x10BED7A0);
-	if (icScrollbar->Init(185, 51, 259))
-		return false;
-	icScrollbar->x += wnd.x;
-	icScrollbar->y += wnd.y;
 
-	auto scrollbarId = temple::GetPointer<int>(0x10BED9F4);
-	if (icScrollbar->Add(scrollbarId) || ui.BindToParent(*wndId, *scrollbarId))
+	if (mItemCreationScrollbar->Init(185, 51, 259))
+		return false;
+	mItemCreationScrollbar->x += wnd.x;
+	mItemCreationScrollbar->y += wnd.y;
+
+	if (mItemCreationScrollbar->Add(&mItemCreationScrollbarId) || ui.BindToParent(*wndId, mItemCreationScrollbarId))
 		return false;
 
 	auto btnY = 55;
-	auto& icEntryBtnIds = temple::GetRef<int[NUM_ITEM_CREATION_ENTRY_WIDGETS]>(0x10BECE28);
+
 	for (int i = 0; i < NUM_ITEM_CREATION_ENTRY_WIDGETS; i++){
 		WidgetType2 btn(nullptr, *wndId, 32, btnY, 155, 12);
 		btn.x += wnd.x;
 		btn.y += wnd.y;
-		btn.render = temple::GetRef<void(__cdecl)(int)>(0x10151590);
-		btn.handleMessage = temple::GetRef<bool(__cdecl)(int, TigMsg*)>(0x10152D70);
-		ui.AddButton(&btn, sizeof(WidgetType2), &icEntryBtnIds[i], "ui_item_creation.cpp", 2115);
-		if (ui.BindToParent(*wndId, icEntryBtnIds[i]))
+		btn.render = [](int widId) {itemCreation.ItemCreationEntryRender(widId); };
+		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.ItemCreationEntryMsg(widId, msg); };
+		ui.AddButton(&btn, sizeof(WidgetType2), &mItemCreationEntryBtnIds[i], "ui_item_creation.cpp", 2115);
+		if (ui.BindToParent(*wndId, mItemCreationEntryBtnIds[i]))
 			return false;
 		btnY += 12;
 	}
 	// create button
-	auto createBtnId = temple::GetPointer<int>(0x10BED8B0);
 	{
 		WidgetType2 btn(nullptr, *wndId, 81, 373, 112, 22);
 		btn.x += wnd.x;
@@ -2465,9 +2431,9 @@ bool ItemCreation::ItemCreationWidgetsInit(int width, int height){
 		btn.render = temple::GetRef<void(__cdecl)(int)>(0x1014FD50);
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.CreateBtnMsg(widId, msg); };
 
-		ui.AddButton(&btn, sizeof(WidgetType2), createBtnId, "ui_item_creation.cpp", 2127);
-		ui.SetDefaultSounds(*createBtnId);
-		ui.BindToParent(*wndId, *createBtnId);
+		ui.AddButton(&btn, sizeof(WidgetType2), &mItemCreationCreateBtnId, "ui_item_creation.cpp", 2127);
+		ui.SetDefaultSounds(mItemCreationCreateBtnId);
+		ui.BindToParent(*wndId, mItemCreationCreateBtnId);
 	}
 	// cancel button
 	auto cancelBtnId = temple::GetPointer<int>(0x10BEDA68);

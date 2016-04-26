@@ -1,6 +1,8 @@
 #pragma once
 
+class CombinedImgFile;
 struct WidgetType1;
+struct WidgetType3;
 struct TigTextStyle;
 struct UiResizeArgs;
 
@@ -71,7 +73,14 @@ public:
 	
 	BOOL ItemCreationShow(objHndl crafter, ItemCreationType icType); // shows the item creation UI for the chosen IC type
 
+	bool ItemCreationWndMsg(int widId, TigMsg* msg);
 	void ItemCreationWndRender(int widId);
+		void ItemCreationEntryRender(int widId);
+		void ItemCreationCraftingCostTexts(int widId, objHndl objHndItem);
+		bool ItemCreationEntryMsg(int widId, TigMsg* msg);
+
+	//MAA
+	bool MaaWndMsg(int widId, TigMsg* msg); // message handler for the item creation window
 	void MaaWndRender(int widId);
 	void MaaItemRender(int widId);
 	void MaaAppliedBtnRender(int widId);
@@ -82,7 +91,7 @@ public:
 	bool CancelBtnMsg(int widId, TigMsg* msg);
 	void MaaCancelBtnRender(int widId) const;
 
-	bool MaaWndMsg(int widId, TigMsg* msg); // message handler for the item creation window
+	
 
 	bool MaaTextboxMsg(int widId, TigMsg* msg);
 	bool MaaRenderText(int widId, objHndl item);
@@ -104,8 +113,10 @@ public:
 	
 	int UiItemCreationInit(GameSystemConf& conf);
 		bool InitItemCreationRules();
-		bool ItemCreationWidgetsInit(int width, int height);
-		bool MaaWidgetsInit(int width, int height);
+
+	
+	bool ItemCreationWidgetsInit(int width, int height);
+	bool MaaWidgetsInit(int width, int height);
 	void MaaWidgetsExit(int widId);
 	void ItemCreationWidgetsExit(int widId);
 	void UiItemCreationResize(UiResizeArgs& resizeArgs);
@@ -122,7 +133,9 @@ public:
 	objHndl MaaGetItemHandle();
 
 	void CreateItemDebitXPGP(objHndl crafter, objHndl item);
-	
+	int CraftedWandSpellLevel(objHndl item);
+	int CraftedWandCasterLevel(objHndl item);
+
 	bool IsWeaponBonus(int effIdx);
 	bool ItemEnhancementIsApplicable(int effIdx);
 	int HasPlusBonus(int effIdx);
@@ -142,7 +155,7 @@ protected:
 	void MaaInitCrafter(objHndl crafter);
 	void MaaInitWnd(int wndId);
 
-	void GetMaaSpecs();
+	void GetMaaSpecs() const;
 	static int GetSurplusXp(objHndl crafter);
 
 	int mItemCreationType = 9;
@@ -151,13 +164,18 @@ protected:
 
 
 	int craftingWidgetId; // denotes which item creation widget is currently active
-	int mCreateBtnId;
 
 	WidgetType1* mItemCreationWnd = nullptr;
 		
 		int mItemCreationWndId;
 		int mItemCreationScrollbarId;
+		WidgetType3* mItemCreationScrollbar;
 		int mMaaItemsScrollbarY = 0;
+		CombinedImgFile* bkgImage;
+		int mItemCreationEntryBtnIds[21];
+		int mItemCreationScrollbarY;
+		int mItemCreationCreateBtnId;
+
 	WidgetType1* mMaaWnd = nullptr;
 		int mMaaWndId;
 		int mMaaItemsScrollbarId;
@@ -177,6 +195,7 @@ protected:
 		TigRect mMaaCancelBtnRect;
 		TigRect mMaaCraftedItemIconDestRect;
 
+
 	MesHandle mItemCreationMes; // mes\\item_creation.mes
 
 	std::map<int, ItemEnhancementSpec> itemEnhSpecs; // the idx has a reserved value of -1 for "none"
@@ -185,7 +204,6 @@ protected:
 	int& maaSelectedEffIdx = mMaaSelectedEffIdx; // currently selected craftable effect
 	bool* itemCreationResourceCheckResults = nullptr;
 	
-	void	InitItemEnhSpecs();
 	std::vector<objHndl> mMaaCraftableItemList; // handles to enchantable inventory items
 	std::vector<int> appliedBonusIndices;
 	int GoldBaseWorthVsEffectiveBonus[30]; // lookup table for base worth (in GP) vs. effective enhancement level
@@ -200,7 +218,6 @@ protected:
 	std::string craftedItemName;
 	int craftedItemNamePos; // position of the text indicator ("|" character)
 	
-
 
 
 	/*

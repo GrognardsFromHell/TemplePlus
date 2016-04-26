@@ -958,8 +958,10 @@ bool Ui::ScrollbarGetY(int widId, int * scrollbarY) {
 	
 	if (y < ymin) {
 		*scrollbarY = ymin;
+		return false;
 	}
 
+	*scrollbarY = y;
 	return false;
 }
 
