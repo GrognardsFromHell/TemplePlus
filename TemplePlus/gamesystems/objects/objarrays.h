@@ -22,9 +22,9 @@ struct ArrayHeader {
 #pragma pack(pop)
 
 template<typename T>
-class GameObjectArrayHelper {
+class GameObjectReadOnlyArrayHelper {
 public:
-	GameObjectArrayHelper(ArrayHeader** storageLocation) 
+	GameObjectReadOnlyArrayHelper(ArrayHeader** storageLocation)
 		: mStorageLocation(storageLocation) {
 		Expects(!mStorageLocation || !(*mStorageLocation) || (*mStorageLocation)->elSize == sizeof(T));
 	}
@@ -50,6 +50,22 @@ public:
 
 	const T& operator[](size_t index) const;
 
+protected:
+	ArrayHeader** mStorageLocation;
+
+	size_t GetPackedIndex(size_t index) const {
+		return arrayIdxBitmaps.GetPackedIndex((*mStorageLocation)->idxBitmapId, index);
+	}
+};
+
+
+template<typename T>
+class GameObjectArrayHelper : public GameObjectReadOnlyArrayHelper<T> {
+public:
+	GameObjectArrayHelper(ArrayHeader** storageLocation)
+		: GameObjectReadOnlyArrayHelper(storageLocation) {		
+	}
+
 	void Set(size_t index, const T& value) {
 		if (!mStorageLocation) {
 			// The type of the object didn't support this field
@@ -71,20 +87,20 @@ public:
 			arrayIdxBitmaps.AddIndex((*mStorageLocation)->idxBitmapId, index);
 
 			// Resize the array storage
-			*mStorageLocation = (ArrayHeader*)realloc(*mStorageLocation, 
-				sizeof(ArrayHeader) 
+			*mStorageLocation = (ArrayHeader*)realloc(*mStorageLocation,
+				sizeof(ArrayHeader)
 				+ (*mStorageLocation)->count * sizeof(T)
 				+ sizeof(T));
 
 			// Move back everything behind the packed Idx
 			for (size_t i = (*mStorageLocation)->count; i > packedIdx; --i) {
-				*reinterpret_cast<T*>((*mStorageLocation)->GetData(i)) 
+				*reinterpret_cast<T*>((*mStorageLocation)->GetData(i))
 					= *reinterpret_cast<T*>((*mStorageLocation)->GetData(i - 1));
 			}
 
 			(*mStorageLocation)->count++;
 		}
-		
+
 		*reinterpret_cast<T*>((*mStorageLocation)->GetData(packedIdx)) = value;
 	}
 
@@ -115,11 +131,11 @@ public:
 		// Copy all the data from the back one place forward
 		for (size_t i = storageIndex; i < (*mStorageLocation)->count - 1; ++i) {
 			arr[i] = arr[i + 1];
-		}		
+		}
 		(*mStorageLocation)->count--;
 		*mStorageLocation = reinterpret_cast<ArrayHeader*>(
 			realloc(*mStorageLocation, sizeof(ArrayHeader) + sizeof(T) * (*mStorageLocation)->count)
-		);
+			);
 	}
 
 	void Clear() {
@@ -137,9 +153,9 @@ public:
 	}
 
 	/**
-	 * Calls the given callback for every stored index in the array.
-	 * Also passes a mutable data pointer.
-	 */
+	* Calls the given callback for every stored index in the array.
+	* Also passes a mutable data pointer.
+	*/
 	void ForEachIndex(std::function<void(size_t)> callback) {
 		if (!mStorageLocation) {
 			// The type of the object didn't support this field
@@ -156,12 +172,6 @@ public:
 		});
 	}
 
-private:
-	ArrayHeader** mStorageLocation;
-
-	size_t GetPackedIndex(size_t index) const {
-		return arrayIdxBitmaps.GetPackedIndex((*mStorageLocation)->idxBitmapId, index);
-	}
 };
 
 struct ObjectScript;
@@ -173,8 +183,14 @@ using GameObjectIdArray = GameObjectArrayHelper<ObjectId>;
 using GameScriptArray = GameObjectArrayHelper<ObjectScript>;
 using GameSpellArray = GameObjectArrayHelper<SpellStoreData>;
 
+using GameInt32ReadOnlyArray = GameObjectReadOnlyArrayHelper<int32_t>;
+using GameInt64ReadOnlyArray = GameObjectReadOnlyArrayHelper<int64_t>;
+using GameObjectIdReadOnlyArray = GameObjectReadOnlyArrayHelper<ObjectId>;
+using GameScriptReadOnlyArray = GameObjectReadOnlyArrayHelper<ObjectScript>;
+using GameSpellReadOnlyArray = GameObjectReadOnlyArrayHelper<SpellStoreData>;
+
 template<typename T>
-inline const T & GameObjectArrayHelper<T>::operator[](size_t index) const
+inline const T & GameObjectReadOnlyArrayHelper<T>::operator[](size_t index) const
 {
 	if (!mStorageLocation) {
 		static T empty;
