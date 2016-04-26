@@ -60,6 +60,9 @@ public:
 	// are considered valid
 	bool IsValidHandle(objHndl handle);
 	
+	/*
+		gets the proto ID number for the object
+	*/
 	int GetProtoId(objHndl obj);
 
 	GameObjectBody* GetObject(objHndl handle);

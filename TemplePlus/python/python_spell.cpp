@@ -295,7 +295,7 @@ static PyObject *PySpell_SummonMonsters(PyObject *obj, PyObject *args) {
 			if (!newFac)
 				continue;
 			if (!objects.factions.FactionHas(newHandle, newFac)) {
-				objects.factions.FactionAdd(newHandle, factionArr[i]);
+				objects.factions.FactionAdd(newHandle, newFac);
 			}
 		}
 

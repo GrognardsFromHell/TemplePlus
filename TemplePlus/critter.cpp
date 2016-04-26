@@ -1159,7 +1159,7 @@ int LegacyCritterSystem::SkillBaseGet(objHndl handle, SkillEnum skill)
 {
 	if (!handle)
 		return 0;
-	return gameSystems->GetObj().GetObject(handle)->GetInt32Array(obj_f_critter_skill_idx)[ skill] / 2;
+	return gameSystems->GetObj().GetObject(handle)->GetInt32(obj_f_critter_skill_idx, skill) / 2;
 }
 
 int LegacyCritterSystem::SpellNumByFieldAndClass(objHndl obj, obj_f field, uint32_t spellClassCode)

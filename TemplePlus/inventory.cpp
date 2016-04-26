@@ -122,7 +122,6 @@ void InventorySystem::RemoveWielderCond(objHndl item, uint32_t condId){
 		return;
 	auto itemObj = gameSystems->GetObj().GetObject(item);
 	auto wielderConds = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
-	auto wielderArgs = itemObj->GetInt32Array(obj_f_item_pad_wielder_argument_array);
 	auto argIdx = 0;
 	for (int i = 0; i < wielderConds.GetSize();i++)
 	{
@@ -132,11 +131,10 @@ void InventorySystem::RemoveWielderCond(objHndl item, uint32_t condId){
 			logger->error("InventorySystem::RemoveWielderCond: Invalid condition! Item {}" , description.getDisplayName(item));
 			return;
 		}
-		if (wCondId == condId)
-		{
-			wielderConds.Remove(i);
+		if (wCondId == condId){
+			itemObj->RemoveInt32(obj_f_item_pad_wielder_condition_array, i);
 			for (int j = 0; j < wCond->numArgs;j++)
-				wielderArgs.Remove(argIdx);
+				itemObj->RemoveInt32(obj_f_item_pad_wielder_argument_array, argIdx);
 			return;
 		}
 		argIdx += wCond->numArgs;

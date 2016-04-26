@@ -338,6 +338,10 @@ void GameObjectBody::SetInt32(obj_f field, size_t index, int32_t value)
 	GetMutableInt32Array(field).Set(index, value);
 }
 
+void GameObjectBody::AppendInt32(obj_f field, int32_t value){
+	GetMutableInt32Array(field).Append(value);
+}
+
 void GameObjectBody::RemoveInt32(obj_f field, size_t index)
 {
 	GetMutableInt32Array(field).Remove(index);

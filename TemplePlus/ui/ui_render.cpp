@@ -61,6 +61,18 @@ void UiRenderer::DrawTexture(int texId, const TigRect &destRect) {
 
 }
 
+void UiRenderer::DrawTexture(int texId, const TigRect& destRect, const TigRect& srcRect){
+	DrawTexturedQuadArgs args;
+	args.destRect = &destRect;
+	args.srcRect = &srcRect;
+
+	args.textureId = texId;
+
+	if (uiRenderFuncs.DrawTexturedQuad(args)) {
+		logger->warn("DrawTexturedQuad failed!");
+	}
+}
+
 void UiRenderer::PushFont(PredefinedFont font) {
 	switch (font) {
 	case PredefinedFont::ARIAL_10:

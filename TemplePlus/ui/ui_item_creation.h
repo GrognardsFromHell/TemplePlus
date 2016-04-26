@@ -86,7 +86,7 @@ public:
 
 	bool MaaTextboxMsg(int widId, TigMsg* msg);
 	bool MaaRenderText(int widId, objHndl item);
-	bool MaaSelectedItemMsg(int widId, TigMsg* msg);
+	bool MaaItemMsg(int widId, TigMsg* msg);
 	bool MaaEffectMsg(int widId, TigMsg* msg);
 	void MaaEffectRender(int widId); 
 		void MaaEffectGetTextStyle(int effIdx, objHndl crafter, TigTextStyle* & style);
@@ -157,7 +157,7 @@ protected:
 		
 		int mItemCreationWndId;
 		int mItemCreationScrollbarId;
-		int mItemCreationScrollbarY = 0;
+		int mMaaItemsScrollbarY = 0;
 	WidgetType1* mMaaWnd = nullptr;
 		int mMaaWndId;
 		int mMaaItemsScrollbarId;
@@ -197,7 +197,7 @@ protected:
 	objHndl* craftedItemHandles[8]; // proto handles for new items, and item to modifyt for MAA
 	int& itemCreationType = mItemCreationType;
 	objHndl& itemCreationCrafter = mItemCreationCrafter;//temple::GetRef<objHndl>(0x10BECEE0);
-	char craftedItemName[1024];
+	std::string craftedItemName;
 	int craftedItemNamePos; // position of the text indicator ("|" character)
 	
 
