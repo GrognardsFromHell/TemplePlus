@@ -557,13 +557,19 @@ int DispatcherSystem::DispatchD20ActionCheck(D20Actn* d20a, TurnBasedStatus* tur
 	auto dispatcher = objects.GetDispatcher(d20a->d20APerformer);
 	if (dispatch.dispatcherValid(dispatcher))
 	{
-		DispIoD20ActionTurnBased dispIo;
+		DispIoD20ActionTurnBased dispIo(d20a);
 		dispIo.tbStatus = turnBasedStatus;
-		dispIo.dispIOType = dispIOTypeD20ActionTurnBased;
-		dispIo.returnVal = 0;
-		dispIo.d20a = d20a;
-		dispatch.DispatcherProcessor(dispatcher, dispType, d20a->d20ActType + 75, &dispIo);
-		return dispIo.returnVal;
+		if (dispType == dispTypeGetBonusAttacks) {
+			BonusList bonlist;
+			dispIo.bonlist = &bonlist;
+			dispatch.DispatcherProcessor(dispatcher, dispType, d20a->d20ActType + 75, &dispIo);
+			auto bonval = bonlist.GetEffectiveBonusSum();
+			return bonval + dispIo.returnVal;
+		}
+		else {
+			dispatch.DispatcherProcessor(dispatcher, dispType, d20a->d20ActType + 75, &dispIo);
+			return dispIo.returnVal;
+		}
 	}
 	return 0;
 }
@@ -1075,6 +1081,7 @@ DispIoD20ActionTurnBased::DispIoD20ActionTurnBased(){
 	returnVal = 0;
 	d20a = nullptr;
 	tbStatus = nullptr;
+	bonlist = nullptr;
 }
 
 DispIoD20ActionTurnBased::DispIoD20ActionTurnBased(D20Actn* D20a):DispIoD20ActionTurnBased(){

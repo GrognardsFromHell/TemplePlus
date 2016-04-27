@@ -16,7 +16,7 @@
 15	Weapon Icy Burst	IESF_ENABLED IESF_WEAPON	2	0		C10	'chill metal' 'ice storm'	
 16	Weapon Shocking Burst	IESF_ENABLED IESF_WEAPON	2	0		C10	'call lightning' 'lightning bolt'	
 17	Weapon Thundering	IESF_WEAPON	1	0		C5	'blindness/deafness'	
-18	Weapon Wounding	IESF_WEAPON	2	0		C10	'mages sword'	
+18	Weapon Wounding	IESF_WEAPON	2	0		C10	'mordenkainens sword'	
 19	Weapon Holy	IESF_ENABLED IESF_WEAPON	2	0		C7 Agood	'holy smite'	
 20	Weapon Unholy	IESF_ENABLED IESF_WEAPON	2	0		C7 Aevil	'unholy blight'	
 21	Weapon Lawful	IESF_ENABLED IESF_WEAPON	2	0		C7 Alawful	'orders wrath'	
@@ -30,7 +30,7 @@
 29	Weapon Merciful	IESF_WEAPON	1	0		C5		
 30	Weapon Returning	IESF_WEAPON IESF_THROWN	1	0		C7	'telekinesis'	
 31	Weapon Seeking	IESF_WEAPON IESF_RANGED	1	0		C12	'true seeing'	
-32	Weapon Speed	IESF_WEAPON	3	0		C7	'haste'	
+32	Weapon Speed	IESF_ENABLED IESF_WEAPON	3	0		C7	'haste'	
 33	Weapon Vicious	IESF_WEAPON	1	0		C9	'enervation'	
 34	Weapon Vorpal	IESF_WEAPON	5	0		C18	'circle of death'+'keen edge'	
 200	Armor Enhancement Bonus	IESF_ENABLED IESF_ARMOR IESF_PLUS_BONUS	1	1		C3		

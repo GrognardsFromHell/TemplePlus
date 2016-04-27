@@ -36,11 +36,18 @@ public:
 	static int StinkingCloudObjEvent(DispatcherCallbackArgs args);
 	static int GreaseSlippage(DispatcherCallbackArgs args);
 	static int ColorSprayUnconsciousOnAdd(DispatcherCallbackArgs args);
+	static int HasteBonusAttack(DispatcherCallbackArgs args);
+	static int BootsOfSpeedBonusAttack(DispatcherCallbackArgs args);
 
 	void apply() override {
 		
 		VampiricTouchFix();
 		enlargePersonModelScaleFix();
+
+
+		// Fix for Haste stacking
+		replaceFunction(0x100C87C0, HasteBonusAttack);
+		replaceFunction(0x10102190, BootsOfSpeedBonusAttack);
 
 		// Fix for Color Spray not knocking critters down
 		replaceFunction(0x100CCA00, ColorSprayUnconsciousOnAdd);
@@ -388,6 +395,28 @@ int SpellConditionFixes::ColorSprayUnconsciousOnAdd(DispatcherCallbackArgs args)
 	args.SetCondArg(1, dur);
 	conds.AddTo(args.objHndCaller, "Prone", {});
 	animationGoals.PushAnimate(args.objHndCaller, 64);
+
+	return 0;
+}
+
+int SpellConditionFixes::HasteBonusAttack(DispatcherCallbackArgs args){
+	args.dispIO->AssertType(dispIOTypeD20ActionTurnBased);
+	auto dispIo = static_cast<DispIoD20ActionTurnBased*>(args.dispIO);
+	if (dispIo->bonlist) {
+		dispIo->bonlist->AddBonus(1, 34, 174); // Haste
+	}
+
+	return 0;
+}
+
+int SpellConditionFixes::BootsOfSpeedBonusAttack(DispatcherCallbackArgs args){
+	if (args.GetCondArg(3)) {
+		args.dispIO->AssertType(dispIOTypeD20ActionTurnBased);
+		auto dispIo = static_cast<DispIoD20ActionTurnBased*>(args.dispIO);
+		if (dispIo->bonlist) {
+			dispIo->bonlist->AddBonus(1, 34, 174); // Haste
+		}
+	}
 
 	return 0;
 }

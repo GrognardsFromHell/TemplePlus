@@ -140,6 +140,8 @@ public:
 
 	static int __cdecl UseableItemRadialEntry(DispatcherCallbackArgs args);
 	static int __cdecl BucklerToHitPenalty(DispatcherCallbackArgs args);
+	static int __cdecl WeaponSpeed(DispatcherCallbackArgs args);
+
 } itemCallbacks;
 
 
@@ -3260,6 +3262,17 @@ int ItemCallbacks::BucklerToHitPenalty(DispatcherCallbackArgs args)
 
 	return 0;
 }
+int ItemCallbacks::WeaponSpeed(DispatcherCallbackArgs args){
+
+	args.dispIO->AssertType(dispIOTypeD20ActionTurnBased);
+	auto dispIo = static_cast<DispIoD20ActionTurnBased*>(args.dispIO);
+	if (dispIo->bonlist) {
+		dispIo->bonlist->AddBonus(1, 34, 346); // Weapon of Speed
+	}
+
+	return 0;
+}
+
 #pragma endregion 
 
 
@@ -3576,6 +3589,9 @@ void Conditions::AddConditionsToTable(){
 	improvedTrip.AddHook(dispTypeD20Query, DK_QUE_Trip_AOO, genericCallbacks.TripAooQuery);
 	improvedTrip.AddHook(dispTypeAbilityCheckModifier, DK_NONE, genericCallbacks.ImprovedTripBonus);
 	improvedTrip.AddToFeatDictionary(FEAT_IMPROVED_TRIP);
+
+	static CondStructNew weaponSpeed("Weapon Speed", 2, false);
+	weaponSpeed.AddHook(dispTypeGetBonusAttacks, DK_NONE, itemCallbacks.WeaponSpeed);
 
 
 	// New Conditions!

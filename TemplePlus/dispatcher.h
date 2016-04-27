@@ -332,10 +332,11 @@ struct DispIoDispelCheck : DispIO // type 11
 	uint32_t returnVal;
 };
 
-struct DispIoD20ActionTurnBased : DispIO { // dispIoType = 12; matches dispTypes 36-38 
+struct DispIoD20ActionTurnBased : DispIO { // dispIoType = 12; matches dispTypes 36-38 , 52
 	int returnVal;
 	D20Actn * d20a;
 	TurnBasedStatus * tbStatus;
+	BonusList* bonlist; // NEW (extended vanilla) 
 
 	DispIoD20ActionTurnBased();
 	explicit DispIoD20ActionTurnBased(D20Actn* d20a);
