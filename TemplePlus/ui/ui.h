@@ -319,6 +319,7 @@ public:
 	BOOL ScrollbarSetY(int widId, int value); // I think? sets field84
 	const char* GetTooltipString(int line) const;
 	const char* GetStatShortName(Stat stat) const;
+	const char* GetStatMesLine(int line) const;
 	/*
 			The list of all active widgets
 			*/

@@ -30,6 +30,7 @@
 #include <tig/tig_texture.h>
 #include <regex>
 #include "graphics/imgfile.h"
+#include "ui_tooltip.h"
 
 #define NUM_ITEM_ENHANCEMENT_SPECS 41
 #define NUM_APPLIED_BONUSES_MAX 9 // number of bonuses that can be applied on item creation
@@ -396,9 +397,9 @@ bool ItemCreation::IsWeaponBonus(int effIdx)
 	return false;
 }
 
-bool ItemCreation::ItemEnhancementIsApplicable(int effIdx)
-{
-	auto itEnh = itemEnhSpecs[effIdx];
+bool ItemCreation::ItemEnhancementIsApplicable(int effIdx){
+
+	auto& itEnh = itemEnhSpecs[effIdx];
 	if (!(itEnh.flags & IESF_ENABLED))
 		return false;
 
@@ -448,6 +449,19 @@ int ItemCreation::GetEffIdxFromWidgetIdx(int widIdx){
 			
 	}
 	return CRAFT_EFFECT_INVALID;
+}
+
+int ItemCreation::GetEffIdxFromWidgetId(int widId){
+	auto idx = 0;
+	for (idx = 0; idx < MAA_EFFECT_BUTTONS_COUNT; idx++) {
+		if (maaBtnIds[idx] == widId)
+			break;
+	}
+	if (idx >= MAA_EFFECT_BUTTONS_COUNT)
+		return CRAFT_EFFECT_INVALID;
+
+	
+	return GetEffIdxFromWidgetIdx(idx);
 }
 
 int ItemCreation::HasPlusBonus(int effIdx)
@@ -2072,6 +2086,106 @@ void ItemCreation::MaaEffectRender(int widId){
 	UiRenderer::DrawTextInWidget(mMaaWndId, effName, rect, *textstyle);
 }
 
+int ItemCreation::MaaEffectTooltip(int x, int y, int * widId){
+
+	if (craftingItemIdx == -1)
+		return 0;
+
+	WidgetType2 * btn = ui.GetButton(*widId);
+	if (btn->buttonState == UBS_DOWN || btn->buttonState == UBS_DISABLED)
+		return 0;
+
+	auto effIdx = GetEffIdxFromWidgetId(*widId);
+	if (effIdx == CRAFT_EFFECT_INVALID)
+		return 0;
+
+	if (!ItemEnhancementIsApplicable(effIdx))
+		return 0;
+	
+	for (auto it : appliedBonusIndices){
+		if (it == effIdx) {
+			return 0;
+		}
+	}
+
+
+	auto& itEnh = itemEnhSpecs[effIdx];
+	std::string text(fmt::format("{}", tooltips.GetTooltipString(6049))); // Requirements:
+	
+	if (itEnh.reqs.minLevel) {
+		text.append(fmt::format("\n{} {}", ui.GetStatMesLine(273), itEnh.reqs.minLevel )); // Caster Level
+	}
+	if (itEnh.reqs.alignment) {
+		if (itEnh.reqs.alignment & ALIGNMENT_GOOD)
+			text.append(fmt::format("\n{} {}", ui.GetStatMesLine(238), ui.GetStatMesLine(8017)));
+		else if (itEnh.reqs.alignment & ALIGNMENT_EVIL)
+			text.append(fmt::format("\n{} {}", ui.GetStatMesLine(238), ui.GetStatMesLine(8011)));
+
+		if (itEnh.reqs.alignment & ALIGNMENT_LAWFUL)
+			text.append(fmt::format("\n{} {}", ui.GetStatMesLine(238), ui.GetStatMesLine(8022)));
+		else if (itEnh.reqs.alignment & ALIGNMENT_CHAOTIC)
+			text.append(fmt::format("\n{} {}", ui.GetStatMesLine(238), ui.GetStatMesLine(8004)));
+	}
+	
+	if (itEnh.reqs.spells.size()) {
+		text.append("\nSpells: ");
+		bool isFirst = true;
+		for (auto it : itEnh.reqs.spells){
+			for (auto it2 : it.second) {
+				if (isFirst) {
+					text.append(fmt::format("{}", spellSys.GetSpellName(it2)));
+					isFirst = false;
+				}
+				else
+					text.append(fmt::format(",  or {}", spellSys.GetSpellName(it2)));
+				
+			}
+		}
+	}
+	
+
+	
+	
+
+	TigTextStyle style;
+	const ColorRect cRect1(XMCOLOR(0xCC111111));
+	style.bgColor = const_cast<ColorRect*>(&cRect1);
+	const ColorRect cRectShadow(XMCOLOR(0xFF000000));
+	style.shadowColor = const_cast<ColorRect*>(&cRectShadow);
+	const ColorRect cRectText[3] = { ColorRect(0xFFFFFFFF), ColorRect(0xFFFFFF66), ColorRect(0xFFF33333) };
+	style.textColor = const_cast<ColorRect*>(cRectText);
+
+	style.flags = 0xC08;
+	style.kerning = 2;
+	style.tracking = 3;
+
+	style.field2c = -1;
+
+	auto charInvTtStyleIdx = temple::GetRef<int>(0x10BEECB0);
+	auto tt = tooltips.GetStyle(charInvTtStyleIdx);
+
+	UiRenderer::PushFont(tt.fontName, tt.fontSize);
+
+
+
+	
+
+	auto measuredSize = UiRenderer::MeasureTextSize(text, style);
+	TigRect extents(x, y - measuredSize.height, measuredSize.width, measuredSize.height);
+	if (extents.y  < 0) {
+		extents.y = y;
+	}
+	auto wftWidth = temple::GetRef<int>(0x103012C8);
+	if (extents.x + measuredSize.width > wftWidth) {
+		extents.x = wftWidth - measuredSize.width;
+	}
+	UiRenderer::RenderText(text, extents, style);
+
+	UiRenderer::PopFont();
+
+	return 0;
+}
+
 void ItemCreation::MaaEffectGetTextStyle(int effIdx, objHndl crafter, TigTextStyle* &style){
 	if (!MaaCrafterMeetsReqs(effIdx, crafter)){
 		style = temple::GetPointer<TigTextStyle>(0x10BEDE40);
@@ -2499,7 +2613,7 @@ bool ItemCreation::MaaWidgetsInit(int width, int height){
 	if (wnd.Add(wndId))
 		return false;
 
-	// 
+	// Scrollbar for the Items
 	auto maaScrollbar = temple::GetPointer<WidgetType3>(0x10BEDA98);
 	maaScrollbar->Init(184, 51, 225);
 	maaScrollbar->x += wnd.x;
@@ -2509,7 +2623,7 @@ bool ItemCreation::MaaWidgetsInit(int width, int height){
 		return false;
 
 
-
+	// Scrollbar for the effects
 	auto appEffectsScrollbar = temple::GetPointer<WidgetType3>(0x10BEDE90);
 	appEffectsScrollbar->Init(313, 148, 128); 
 	appEffectsScrollbar->x += wnd.x;
@@ -2537,6 +2651,7 @@ bool ItemCreation::MaaWidgetsInit(int width, int height){
 		btn.x += wnd.x;	btn.y += wnd.y;
 		btn.render = [](int widId) { itemCreation.MaaEffectRender(widId); };
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaEffectMsg(widId, msg); };
+		btn.renderTooltip = [](int x, int y, int* widId) { return itemCreation.MaaEffectTooltip(x, y, widId); };
 		btn.Add(&maaBtnIds[i]);
 		ui.BindToParent(*wndId, maaBtnIds[i]);
 		btnY += 12;

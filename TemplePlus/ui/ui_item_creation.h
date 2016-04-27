@@ -98,6 +98,7 @@ public:
 	bool MaaItemMsg(int widId, TigMsg* msg);
 	bool MaaEffectMsg(int widId, TigMsg* msg);
 	void MaaEffectRender(int widId); 
+	int MaaEffectTooltip(int x, int y, int* widId);
 		void MaaEffectGetTextStyle(int effIdx, objHndl crafter, TigTextStyle* & style);
 	bool MaaEffectAddMsg(int widId, TigMsg* msg);
 		void MaaAppendEnhancement(int effIdx);
@@ -107,7 +108,8 @@ public:
 
 
 	// Widget utilities
-	int GetEffIdxFromWidgetIdx(int widIdx);
+	int GetEffIdxFromWidgetIdx(int widIdx); // gets the effect index (ID) from widget INDEX
+	int GetEffIdxFromWidgetId(int widId);  // gets the effect index (ID) from widget ID
 
 
 	

@@ -1009,6 +1009,13 @@ const char* Ui::GetStatShortName(Stat stat) const
 {
 	return temple::GetRef<const char*(__cdecl)(Stat)>(0x10074980)(stat);
 }
+const char * Ui::GetStatMesLine(int lineNumber) const
+{
+	auto mesHandle = temple::GetRef<MesHandle>(0x10AAF1F4);
+	MesLine line(lineNumber);
+	mesFuncs.GetLine_Safe(mesHandle, &line);
+	return line.value;
+}
 #pragma region Loading and Unloading
 UiLoader::UiLoader(const GameSystemConf& conf) {
 
