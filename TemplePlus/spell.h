@@ -57,8 +57,7 @@ struct SpellEntry
 
 const uint32_t TestSizeOfSpellEntry = sizeof(SpellEntry); // should be 0xC0  ( 192 )
 
-struct SpellPacketBody
-{
+struct SpellPacketBody{
 	uint32_t spellEnum;
 	uint32_t spellEnumOriginal; // used for spontaneous casting in order to debit the "original" spell
 	uint32_t flagSthg;
@@ -106,6 +105,7 @@ struct SpellPacketBody
 	bool InsertToTargetList(uint32_t idx, objHndl tgt);
 	// fetches from the SpellsCastRegistry. If it fails, the spellId will be 0 (as in the Reset function)
 	bool AddTarget(objHndl tgt, int partsysId, int replaceExisting); // will add target (or replace its partsys if it already exists)
+	bool SavingThrow(objHndl target, D20SavingThrowFlag flags);
 };
 
 const uint32_t TestSizeOfSpellPacketBody = sizeof(SpellPacketBody); // should be 0xAE8  (2792)

@@ -16,6 +16,7 @@
 #include "gamesystems/objects/objevent.h"
 #include "gamesystems/particlesystems.h"
 #include "damage.h"
+#include "anim.h"
 
 
 void PyPerformTouchAttack_PatchedCallToHitProcessing(D20Actn * pd20A, D20Actn d20A, uint32_t savedesi, uint32_t retaddr, PyObject * pyObjCaller, PyObject * pyTupleArgs);
@@ -31,13 +32,18 @@ public:
 	static int ImmunityCheckHandler(DispatcherCallbackArgs args);
 
 	static int StinkingCloudObjEvent(DispatcherCallbackArgs args);
+	static int GreaseSlippage(DispatcherCallbackArgs args);
 
 	void apply() override {
 		
 		VampiricTouchFix();
 		enlargePersonModelScaleFix();
 
+		// Stinking Cloud Fix
 		replaceFunction(0x100CAF30, StinkingCloudObjEvent);
+
+		// Grease fix for Freedom of Movement
+		replaceFunction(0x100C8270, GreaseSlippage);
 
 		static int (*orgImmunityCheckHandler )(DispatcherCallbackArgs)= replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100ED650, [](DispatcherCallbackArgs args)
 		{
@@ -346,4 +352,20 @@ int SpellConditionFixes::StinkingCloudObjEvent(DispatcherCallbackArgs args)
 	}
 	return 0;
 	
-};
+}
+int SpellConditionFixes::GreaseSlippage(DispatcherCallbackArgs args){
+
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spellPkt(spellId);
+	
+	if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Has_Freedom_of_Movement))
+		return 0;
+
+	if (!spellPkt.SavingThrow(args.objHndCaller, D20STD_F_NONE)) {
+		histSys.CreateRollHistoryLineFromMesfile(48, args.objHndCaller, 0);
+		combatSys.FloatCombatLine(args.objHndCaller, 104);
+		conds.AddTo(args.objHndCaller, "Prone", {});
+		animationGoals.PushAnimate(args.objHndCaller, 64);
+	}
+
+}

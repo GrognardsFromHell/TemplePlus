@@ -23,6 +23,7 @@
 #include "bonus.h"
 #include "float_line.h"
 #include "history.h"
+#include "damage.h"
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
@@ -173,8 +174,7 @@ SpellPacketBody::SpellPacketBody()
 	spellSys.spellPacketBodyReset(this);
 }
 
-SpellPacketBody::SpellPacketBody(uint32_t spellId)
-{
+SpellPacketBody::SpellPacketBody(uint32_t spellId){
 	spellSys.GetSpellPacketBody(spellId, this);
 }
 
@@ -254,6 +254,11 @@ bool SpellPacketBody::AddTarget(objHndl tgt, int partsysId, int replaceExisting)
 
 	logger->debug("SpellPacketAddTarget: Unable to add obj {} to target list!", description.getDisplayName(tgt));
 	return false;
+}
+
+bool SpellPacketBody::SavingThrow(objHndl target, D20SavingThrowFlag flags) {
+	SpellEntry spEntry(spellEnum);
+	return damage.SavingThrowSpell(target, caster, dc, (SavingThrowType)spEntry.savingThrowType, flags, spellId );
 }
 
 SpellMapTransferInfo::SpellMapTransferInfo()
