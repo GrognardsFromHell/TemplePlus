@@ -452,20 +452,44 @@ int ItemCreation::GetEffIdxFromWidgetIdx(int widIdx){
 
 int ItemCreation::HasPlusBonus(int effIdx)
 {
+	if (effIdx == CRAFT_EFFECT_INVALID)
+		return FALSE;
+
+	
 	auto itEnh = itemEnhSpecs[effIdx];
-	if (itEnh.data.enhBonus == 1 && (itEnh.flags & IESF_PLUS_BONUS) ) {
-		return TRUE;	
-	}
-	for (auto it : appliedBonusIndices)
-	{
-		itEnh = itemEnhSpecs[it];
-		if ((itEnh.flags & IESF_PLUS_BONUS)
-			&& itEnh.data.enhBonus >= 1 )
+
+
+	if (itEnh.flags & IESF_PLUS_BONUS) {
+		// if the effect itself is a +1 plus then ok
+		if (itEnh.data.enhBonus == 1)
 			return TRUE;
+
+		// otherwise, ensure the previous +X bonus is already applied
+		for (auto it : appliedBonusIndices)
+		{
+			auto itEnh2 = itemEnhSpecs[it];
+			if ((itEnh2.flags & IESF_PLUS_BONUS)
+				&& itEnh2.data.enhBonus == itEnh.data.enhBonus - 1)
+				return TRUE;
+		}
+		return FALSE;
+	}
+	else {
+		// for the other effects, ensure there is at least a +1 bonus
+		for (auto it : appliedBonusIndices)
+		{
+			itEnh = itemEnhSpecs[it];
+			if ((itEnh.flags & IESF_PLUS_BONUS)
+				&& itEnh.data.enhBonus >= 1)
+				return TRUE;
+		}
+		return FALSE;
 	}
 
-	return 0;
 }
+	
+
+	
 
 bool ItemCreation::ItemWielderCondsContainEffect(int effIdx, objHndl item)
 {
@@ -1797,8 +1821,18 @@ bool ItemCreation::MaaEffectIsInAppliedList(int effIdx){
 
 bool ItemCreation::MaaWndMsg(int widId, TigMsg * msg)
 {
-	if (msg->type == TigMsgType::MOUSE)
+	if (msg->type == TigMsgType::MOUSE) {
+
+		auto _msg = (TigMsgMouse*)msg;
+		if (_msg->buttonStateFlags & MSF_SCROLLWHEEL_CHANGE) {
+			auto widg = ui.ScrollbarGet(mMaaApplicableEffectsScrollbarId);
+			auto newMsg = *(TigMsgMouse*)msg;
+			newMsg.buttonStateFlags = MSF_SCROLLWHEEL_CHANGE;
+			widg->handleMessage(mMaaApplicableEffectsScrollbarId, (TigMsg*)&newMsg);
+		}
+
 		return true;
+	}
 
 	if (msg->type == TigMsgType::KEYSTATECHANGE && (msg->arg2 & 0xFF) == 1
 		|| msg->type == TigMsgType::KEYDOWN) {
@@ -2012,8 +2046,11 @@ bool ItemCreation::MaaEffectMsg(int widId, TigMsg* msg){
 	return true;
 }
 
-void ItemCreation::MaaEffectRender(int widId)
-{
+void ItemCreation::MaaEffectRender(int widId){
+
+	if (craftingItemIdx == -1)
+		return;
+
 	auto idx = 0;
 	for (idx = 0; idx < MAA_EFFECT_BUTTONS_COUNT; idx++){
 		if (maaBtnIds[idx] == widId)
@@ -2240,7 +2277,7 @@ int ItemCreation::UiItemCreationInit(GameSystemConf& conf)
 	mMaaCraftedItemIconDestRect = TigRect(215, 62, 64, 64);
 	mItemCreationScrollbar = new WidgetType3;
 
-	if (!mesFuncs.Open("mes\\item_creation.mes", &mItemCreationMes))
+	if (!mesFuncs.Open("tpmes\\item_creation.mes", &mItemCreationMes))
 		return 0;
 	temple::GetRef<MesHandle>(0x10BEDFD0) = mItemCreationMes;
 	if (!mesFuncs.Open("rules\\item_creation.mes", temple::GetPointer<MesHandle>(0x10BEDA90)))
@@ -2404,6 +2441,7 @@ bool ItemCreation::ItemCreationWidgetsInit(int width, int height){
 
 	if (mItemCreationScrollbar->Init(185, 51, 259))
 		return false;
+	mItemCreationScrollbar->scrollQuantum = 3;
 	mItemCreationScrollbar->x += wnd.x;
 	mItemCreationScrollbar->y += wnd.y;
 

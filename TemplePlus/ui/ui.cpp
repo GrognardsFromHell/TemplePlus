@@ -433,7 +433,7 @@ bool WidgetType3::Init(int X, int Y, int Height){
 	renderTooltip = nullptr;
 	yMin = 0;
 	yMax = 100;
-	field88 = 1;
+	scrollQuantum = 1;
 	field8C = 5;
 	scrollbarY = 0;
 	field98= 0;
@@ -621,6 +621,13 @@ WidgetType2* Ui::GetButton(int widId){
 		return nullptr;
 	}
 	return static_cast<WidgetType2*>(result);
+}
+
+WidgetType3 * Ui::ScrollbarGet(int widId){
+	auto result = WidgetGet(widId);
+	if (!result || result->type != 3)
+		return nullptr;
+	return static_cast<WidgetType3*>(result);
 }
 
 Widget* Ui::WidgetGet(int widId)

@@ -144,7 +144,7 @@ struct WidgetType3 : public Widget {
 	int yMin;
 	int yMax;
 	int scrollbarY;
-	int field88;
+	int scrollQuantum; //the amount of change per each scrollwheel roll
 	int field8C;
 	int field90;
 	int field94;
@@ -295,6 +295,7 @@ public:
 	Widget* WidgetGet(int widId);
 	WidgetType1* WidgetGetType1(int widId);
 	WidgetType2* GetButton(int widId);
+	WidgetType3* ScrollbarGet(int widId);
 
 	int GetWindowContainingPoint(int x, int y);
 	BOOL GetButtonState(int widId, int* state);

@@ -196,7 +196,7 @@ protected:
 		TigRect mMaaCraftedItemIconDestRect;
 
 
-	MesHandle mItemCreationMes; // mes\\item_creation.mes
+	MesHandle mItemCreationMes; // tpmes\\item_creation.mes
 
 	std::map<int, ItemEnhancementSpec> itemEnhSpecs; // the idx has a reserved value of -1 for "none"
 	
