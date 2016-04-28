@@ -6,6 +6,8 @@ struct WidgetType3;
 struct TigTextStyle;
 struct UiResizeArgs;
 
+#define CRAFT_EFFECT_INVALID -1
+
 enum ItemCreationType : uint32_t {
 	IC_Alchemy = 0,
 	BrewPotion,
@@ -19,8 +21,7 @@ enum ItemCreationType : uint32_t {
 	Inactive // indicates that no crafting is going on
 };
 
-enum ItemEnhancementSpecFlags
-{
+enum ItemEnhancementSpecFlags{
 	IESF_ENABLED = 0x1,
 	IESF_WEAPON = 0x2,
 	IESF_ARMOR = 0x4,
@@ -29,36 +30,38 @@ enum ItemEnhancementSpecFlags
 	IESF_MELEE = 0x20, // applies to melee weapons only
 	IESF_THROWN = 0x40, // applies to thrown weapons only
 	IESF_UNK100 = 0x100, // only used in Keen
-	IESF_PLUS_BONUS = 0x200 // e.g. a +1 weapon/armor bonus
+	IESF_ENH_BONUS = 0x200, // special casing for the enhancement bonus (the +X for weapons/armors)
+	IESF_INCREMENTAL = 0x400 // indicates that there are multiple progressive versions of this that supercede each other
 };
 
 struct ItemEnhancementSpec {
 	std::string condName;
+	int condId;
 	uint32_t flags; // see ItemEnhancementSpecFlags
 	int effectiveBonus;
 	union {
 		int enhBonus; // for the +X item bonuses, or spell resistance
 	} data;
 
-	struct EnhReqs
-	{
+	struct EnhReqs{
 		int minLevel;
 		Alignment alignment;
 		Stat classReq;
 		std::map<int, std::vector<uint32_t>> spells; // each entry in the map is considered a sufficient condition
-		EnhReqs()
-		{
+		EnhReqs(){
 			minLevel = 0;
 			alignment = Alignment::ALIGNMENT_NEUTRAL;
 			classReq = static_cast<Stat>(-1);
 		}
 	} reqs;
-
+	int upgradesTo;
+	int downgradesTo;
 	ItemEnhancementSpec() {
-		//condName = nullptr;
 		flags = 0;
 		effectiveBonus = 1;
 		data.enhBonus = 0;
+		condId = 0;
+		downgradesTo = upgradesTo = CRAFT_EFFECT_INVALID;
 	}
 	ItemEnhancementSpec(const char* CondName, uint32_t Flags, int EffcBonus, int enhBonus = 0);
 };
@@ -84,26 +87,32 @@ public:
 	void MaaWndRender(int widId);
 	void MaaItemRender(int widId);
 	void MaaAppliedBtnRender(int widId);
+	void MaaEnhBonusDnRender(int widId);
+	void MaaEnhBonusUpRender(int widId);
 
 	bool CreateBtnMsg(int widId, TigMsg* msg);
+	bool MaaShouldJustModifyArg(int effIdx, objHndl item);
+	void CreateItemFinalize(objHndl crafter, objHndl item);
 	void MaaCreateBtnRender(int widId) const;
-		void CreateItemFinalize(objHndl crafter, objHndl item);
 	bool CancelBtnMsg(int widId, TigMsg* msg);
 	void MaaCancelBtnRender(int widId) const;
 
 	
 
 	bool MaaTextboxMsg(int widId, TigMsg* msg);
-	bool MaaRenderText(int widId, objHndl item);
+	bool MaaWndRenderText(int widId, objHndl item);
 	bool MaaItemMsg(int widId, TigMsg* msg);
 	bool MaaEffectMsg(int widId, TigMsg* msg);
 	void MaaEffectRender(int widId); 
 	int MaaEffectTooltip(int x, int y, int* widId);
 		void MaaEffectGetTextStyle(int effIdx, objHndl crafter, TigTextStyle* & style);
 	bool MaaEffectAddMsg(int widId, TigMsg* msg);
-		void MaaAppendEnhancement(int effIdx);
+	int MaaGetTotalEffectiveBonus(int effIdx);
+	void MaaAppendEnhancement(int effIdx);
 	bool MaaEffectRemoveMsg(int widId, TigMsg* msg);
 	bool MaaAppliedBtnMsg(int widId, TigMsg* msg);
+	bool MaaEnhBonusUpMsg(int widId, TigMsg* msg);
+	bool MaaEnhBonusDnMsg(int widId, TigMsg* msg);
 		
 
 
@@ -139,10 +148,15 @@ public:
 	int CraftedWandCasterLevel(objHndl item);
 
 	bool IsWeaponBonus(int effIdx);
+	bool IsOutmoded(int effIdx);
 	bool ItemEnhancementIsApplicable(int effIdx);
-	int HasPlusBonus(int effIdx);
+	int HasNecessaryEffects(int effIdx);
+	int MaaGetCurEnhBonus();
+	int MaaGetEffIdxForEnhBonus(int enhBon, objHndl item);
+
 	/*
 	checks the obj_f_item_pad_wielder_condition_array for existence of the effect (or better/equal in the case of +x effects)
+	This only returns TRUE for conditions that were already previously crafted!
 	*/
 	bool ItemWielderCondsContainEffect(int effIdx, objHndl item);
 	
@@ -159,6 +173,7 @@ protected:
 
 	void GetMaaSpecs() const;
 	static int GetSurplusXp(objHndl crafter);
+	bool ItemWielderCondsHasAntecedent(int effIdx, objHndl item);
 
 	int mItemCreationType = 9;
 	objHndl mItemCreationCrafter;
@@ -196,6 +211,12 @@ protected:
 		TigRect mCreateBtnRect ;
 		TigRect mMaaCancelBtnRect;
 		TigRect mMaaCraftedItemIconDestRect;
+		int mEnhBonusArrowUpId, mEnhBonusArrowDnId;
+		int mDownArrowTga;
+		int mDownArrowClickTga;
+		int mDownArrowDisabledTga;
+		int mDownArrowHoveredTga;
+		TigRect mEnhBonusDnRect;
 
 
 	MesHandle mItemCreationMes; // tpmes\\item_creation.mes

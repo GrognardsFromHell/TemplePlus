@@ -44,9 +44,10 @@ static struct UiRenderFuncs : temple::AddressTable {
 	}
 } uiRenderFuncs;
 
-void UiRenderer::DrawTexture(int texId, const TigRect &destRect) {
+void UiRenderer::DrawTexture(int texId, const TigRect &destRect, int flags) {
 
 	DrawTexturedQuadArgs args;
+	args.flags = flags;
 	args.destRect = &destRect;
 
 	// This function assumes dest rect encompasses the entire src rect at 0,0
@@ -66,6 +67,24 @@ void UiRenderer::DrawTexture(int texId, const TigRect& destRect, const TigRect& 
 	args.destRect = &destRect;
 	args.srcRect = &srcRect;
 
+	args.textureId = texId;
+
+	if (uiRenderFuncs.DrawTexturedQuad(args)) {
+		logger->warn("DrawTexturedQuad failed!");
+	}
+}
+
+void UiRenderer::DrawTextureInWidget(int widId, int texId, const TigRect & destRect, const TigRect & srcRect, int flags){
+	auto wid = ui.WidgetGet(widId);
+	if (!wid)
+		return;
+	
+	TigRect destRectAdj (destRect.x + wid->x, destRect.y + wid->y, destRect.width, destRect.height);
+
+	DrawTexturedQuadArgs args;
+	args.destRect = &destRectAdj;
+	args.srcRect = &srcRect;
+	args.flags = flags;
 	args.textureId = texId;
 
 	if (uiRenderFuncs.DrawTexturedQuad(args)) {

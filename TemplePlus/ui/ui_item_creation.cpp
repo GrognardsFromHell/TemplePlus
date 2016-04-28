@@ -34,12 +34,14 @@
 
 #define NUM_ITEM_ENHANCEMENT_SPECS 41
 #define NUM_APPLIED_BONUSES_MAX 9 // number of bonuses that can be applied on item creation
-#define CRAFT_EFFECT_INVALID -1
+
 #define MAA_EFFECT_BUTTONS_COUNT 10
 #define MAA_TEXTBOX_MAX_LENGTH 60
 #define NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX 21
 #define MAA_NUM_ENCHANTABLE_ITEM_WIDGETS 5
 #define NUM_ITEM_CREATION_ENTRY_WIDGETS 21 // number of "buttons" (clickable text items) in the normal crafting menu
+#define MAA_MAX_ENHANCEMENT_BONUS 5
+#define MAA_MAX_EFFECTIVE_BONUS 10 // maximum craftable effective bonus
 
 const std::unordered_map<std::string, uint32_t> ItemEnhSpecFlagDict = { 
 	{"iesf_enabled", IESF_ENABLED},
@@ -51,7 +53,8 @@ const std::unordered_map<std::string, uint32_t> ItemEnhSpecFlagDict = {
 	{"iesf_melee",IESF_MELEE },
 	{"iesf_thrown",IESF_THROWN },
 	{"iesf_unk100",IESF_UNK100 },
-	{"iesf_plus_bonus",IESF_PLUS_BONUS }
+	{"iesf_plus_bonus",IESF_ENH_BONUS },
+	{"iesf_incremental", IESF_INCREMENTAL }
 };
 
 int WandCraftCostCp=0;
@@ -147,7 +150,7 @@ public:
 		});
 		replaceFunction<bool(__cdecl)(int , objHndl)>(0x10151C10, [](int widId, objHndl item)
 		{
-			return itemCreation.MaaRenderText(widId, item);
+			return itemCreation.MaaWndRenderText(widId, item);
 		});
 
 		// MAA selected item for crafting
@@ -390,9 +393,22 @@ bool ItemCreation::IsWeaponBonus(int effIdx)
 	if (effIdx < 0)
 		return false;
 
-	if ( (itemEnhSpecs[effIdx].flags & IESF_PLUS_BONUS) 
+	if ( (itemEnhSpecs[effIdx].flags & IESF_ENH_BONUS) 
 		&& (itemEnhSpecs[effIdx].flags & IESF_WEAPON)){
 		return true;
+	}
+	return false;
+}
+
+bool ItemCreation::IsOutmoded(int effIdx){
+
+	auto itEnh = &itemEnhSpecs[effIdx];
+	while ( itEnh->upgradesTo != CRAFT_EFFECT_INVALID){
+		for (auto it: appliedBonusIndices){
+			if (it == itEnh->upgradesTo)
+				return true;
+		}
+		itEnh = &itemEnhSpecs[itEnh->upgradesTo];
 	}
 	return false;
 }
@@ -403,13 +419,23 @@ bool ItemCreation::ItemEnhancementIsApplicable(int effIdx){
 	if (!(itEnh.flags & IESF_ENABLED))
 		return false;
 
+	if (itEnh.flags & IESF_INCREMENTAL){
+		// not the root and hasn't got the prerequisite effect level
+		if (itEnh.downgradesTo != CRAFT_EFFECT_INVALID && !HasNecessaryEffects(effIdx)  )
+			return false;
+		if (IsOutmoded(effIdx))
+			return false;
+	}
+
 	if (craftingItemIdx >= 0 && craftingItemIdx < mMaaCraftableItemList.size())
 	{
 		auto itemHandle = mMaaCraftableItemList[craftingItemIdx];
 		if (itemHandle){
 			auto itemObj = gameSystems->GetObj().GetObject(itemHandle);
-			if (itemObj->type == obj_t_weapon && !(itEnh.flags & IESF_WEAPON))
+			if (itemObj->type == obj_t_weapon) {
+				if ( !(itEnh.flags & IESF_WEAPON) )
 				return false;
+			}
 			if (itemObj->type == obj_t_armor)
 			{
 				auto armorFlags = itemObj->GetInt32(obj_f_armor_flags);
@@ -438,10 +464,8 @@ int ItemCreation::GetEffIdxFromWidgetIdx(int widIdx){
 	auto adjIdx = mMaaApplicableEffectsScrollbarY + widIdx; // this is the overall index for the effect
 	auto validCount = 0;
 	for (auto it: itemEnhSpecs){
-		if (ItemEnhancementIsApplicable(it.first))
-		{
-			if (validCount == adjIdx)
-			{
+		if (ItemEnhancementIsApplicable(it.first) && !(it.second.flags & IESF_ENH_BONUS)){
+			if (validCount == adjIdx){
 				return it.first;
 			}
 			validCount++;
@@ -464,25 +488,26 @@ int ItemCreation::GetEffIdxFromWidgetId(int widId){
 	return GetEffIdxFromWidgetIdx(idx);
 }
 
-int ItemCreation::HasPlusBonus(int effIdx)
-{
+int ItemCreation::HasNecessaryEffects(int effIdx){
+
 	if (effIdx == CRAFT_EFFECT_INVALID)
 		return FALSE;
 
 	
-	auto itEnh = itemEnhSpecs[effIdx];
+	auto &itEnh = itemEnhSpecs[effIdx];
 
 
-	if (itEnh.flags & IESF_PLUS_BONUS) {
+	if (itEnh.flags & IESF_ENH_BONUS) {
 		// if the effect itself is a +1 plus then ok
-		if (itEnh.data.enhBonus == 1)
+		if (itEnh.downgradesTo == CRAFT_EFFECT_INVALID)
 			return TRUE;
 
 		// otherwise, ensure the previous +X bonus is already applied
+		//return HasNecessaryEffects(itEnh.downgradesTo);
 		for (auto it : appliedBonusIndices)
 		{
-			auto itEnh2 = itemEnhSpecs[it];
-			if ((itEnh2.flags & IESF_PLUS_BONUS)
+			auto &itEnh2 = itemEnhSpecs[it];
+			if ((itEnh2.flags & IESF_ENH_BONUS)
 				&& itEnh2.data.enhBonus == itEnh.data.enhBonus - 1)
 				return TRUE;
 		}
@@ -490,16 +515,59 @@ int ItemCreation::HasPlusBonus(int effIdx)
 	}
 	else {
 		// for the other effects, ensure there is at least a +1 bonus
-		for (auto it : appliedBonusIndices)
-		{
-			itEnh = itemEnhSpecs[it];
-			if ((itEnh.flags & IESF_PLUS_BONUS)
-				&& itEnh.data.enhBonus >= 1)
-				return TRUE;
+		bool hasBonus = false, 
+			hasAntecedent = !(itEnh.flags & IESF_INCREMENTAL 
+				&& itEnh.downgradesTo != CRAFT_EFFECT_INVALID);
+
+		for (auto it : appliedBonusIndices)	{
+
+			auto &itEnh2 = itemEnhSpecs[it];
+			if (!hasBonus && (itEnh2.flags & IESF_ENH_BONUS) && itEnh2.data.enhBonus >= 1) {
+				hasBonus = true;
+				if (hasAntecedent)
+					return TRUE;
+			}
+			if (itEnh2.upgradesTo == effIdx){
+				hasAntecedent = true;
+				if (hasBonus)
+					return TRUE;
+			}
 		}
-		return FALSE;
+		return (hasAntecedent && hasBonus) ? TRUE : FALSE;
 	}
 
+}
+
+int ItemCreation::MaaGetCurEnhBonus(){
+
+	auto curEnhBon = 0;
+	for (auto it : appliedBonusIndices) {
+		auto& itEnhSpec = itemEnhSpecs[it];
+		if ( (itEnhSpec.flags & IESF_ENH_BONUS) && itEnhSpec.data.enhBonus > curEnhBon)
+			curEnhBon = itEnhSpec.data.enhBonus;
+	}
+
+	return curEnhBon;
+}
+
+int ItemCreation::MaaGetEffIdxForEnhBonus(int enhBon, objHndl itemHandle){
+
+	auto flag = IESF_WEAPON;
+	auto itemObj = gameSystems->GetObj().GetObject(itemHandle);
+	if (itemObj->type == obj_t_armor){
+		auto armorFlags = itemObj->GetInt32(obj_f_armor_flags);
+		auto armorType = inventory.GetArmorType(armorFlags);
+		if (armorType == ArmorType::ARMOR_TYPE_SHIELD) 
+			flag = IESF_SHIELD;
+		else 
+			flag = IESF_ARMOR;
+	}
+
+	for (auto& it : itemEnhSpecs) {
+		if ((it.second.flags & flag) && it.second.data.enhBonus == enhBon)
+			return it.first;
+	}
+	return CRAFT_EFFECT_INVALID;
 }
 	
 
@@ -512,21 +580,22 @@ bool ItemCreation::ItemWielderCondsContainEffect(int effIdx, objHndl item)
 
 	auto itemObj = gameSystems->GetObj().GetObject(item);
 
-	auto condId = ElfHash::Hash(itemEnhSpecs[effIdx].condName);
+
+	auto &itEnh = itemEnhSpecs[effIdx];
+	auto condId = itEnh.condId;
 	auto condArray = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
 
 	if (condArray.GetSize() <= 0)
 		return false;
 
 
-	if (!IsWeaponBonus(effIdx)){  // a +x weapon bonus
+	if (!IsWeaponBonus(effIdx)){  // a +x WEAPON bonus
 
-		for (int i = 0; i < condArray.GetSize(); i++)
-		{
-			if (condArray[i] == condId)
-			{
-				if (itemEnhSpecs[i].flags & IESF_PLUS_BONUS){
-					return itemEnhSpecs[i].data.enhBonus <= inventory.GetItemWieldCondArg(item, condId, 0);
+		for (int i = 0; i < condArray.GetSize(); i++){
+			auto condArrayIt = condArray[i];
+			if (condArrayIt  == condId)	{
+				if ( itEnh.flags & (IESF_ENH_BONUS | IESF_INCREMENTAL ) ){
+					return itEnh.data.enhBonus <= inventory.GetItemWieldCondArg(item, condId, 0);
 				}
 				else
 					return true;
@@ -543,8 +612,8 @@ bool ItemCreation::ItemWielderCondsContainEffect(int effIdx, objHndl item)
 	auto damBonus = 0;
 	auto toHitBonus = 0;
 
-	for (int i = 0; i < condArray.GetSize();i++)
-	{
+	for (int i = 0; i < condArray.GetSize();i++){
+
 		auto wielderCondId = condArray[i];
 		if (wielderCondId == condId){
 			return itemEnhSpecs[effIdx].data.enhBonus <= inventory.GetItemWieldCondArg(item, condId, 0);
@@ -836,6 +905,7 @@ void ItemCreation::GetMaaSpecs() const
 		char * charReqs; // Character Level, Alignment
 		char * spellReqs;
 		char * featReqs; // TODO
+		char * antecedent;
 	};
 
 	auto maaSpecLineParser = [](const TigTabParser*, int lineIdx, char ** cols)
@@ -844,7 +914,7 @@ void ItemCreation::GetMaaSpecs() const
 		
 		auto effIdx = atol(tabEntry.id);
 		auto condName = tabEntry.condName;
-		
+
 		// get flags
 		uint32_t flags = 0;
 		{
@@ -869,6 +939,7 @@ void ItemCreation::GetMaaSpecs() const
 
 		itemCreation.itemEnhSpecs[effIdx] = ItemEnhancementSpec(condName, flags, effBonus, enhBonus);
 
+		auto &itEnh = itemCreation.itemEnhSpecs[effIdx];
 		// get class req
 		if (tabEntry.classReq)
 		{
@@ -887,17 +958,17 @@ void ItemCreation::GetMaaSpecs() const
 				if (toupper(tok.text[0]) == 'A')
 				{
 					if (!_stricmp(&tok.text[1], "good"))
-						itemCreation.itemEnhSpecs[effIdx].reqs.alignment = Alignment::ALIGNMENT_GOOD;
+						itEnh.reqs.alignment = Alignment::ALIGNMENT_GOOD;
 					else if (!_stricmp(&tok.text[1], "lawful"))
-						itemCreation.itemEnhSpecs[effIdx].reqs.alignment = Alignment::ALIGNMENT_LAWFUL;
+						itEnh.reqs.alignment = Alignment::ALIGNMENT_LAWFUL;
 					else if (!_stricmp(&tok.text[1], "evil"))
-						itemCreation.itemEnhSpecs[effIdx].reqs.alignment = Alignment::ALIGNMENT_EVIL;
+						itEnh.reqs.alignment = Alignment::ALIGNMENT_EVIL;
 					else if (!_stricmp(&tok.text[1], "chaotic"))
-						itemCreation.itemEnhSpecs[effIdx].reqs.alignment = Alignment::ALIGNMENT_CHAOTIC;
+						itEnh.reqs.alignment = Alignment::ALIGNMENT_CHAOTIC;
 				} 
 				else if (toupper(tok.text[0]) == 'C')
 				{
-					itemCreation.itemEnhSpecs[effIdx].reqs.minLevel = atol(&tok.text[1]);
+					itEnh.reqs.minLevel = atol(&tok.text[1]);
 				}
 				
 			}
@@ -914,12 +985,19 @@ void ItemCreation::GetMaaSpecs() const
 					continue;
 				auto spellEnum = spellSys.getSpellEnum(tok.text);
 				if (spellEnum){
-					itemCreation.itemEnhSpecs[effIdx].reqs.spells[0].push_back(spellEnum);
+					itEnh.reqs.spells[0].push_back(spellEnum);
 				}
 				// TODO: implement AND/OR support (currently just Brilliant Radiance has this, not yet implemented anyway)
 			}
 		}
 		
+		if (tabEntry.antecedent && *tabEntry.antecedent){
+			itEnh.downgradesTo = atol(tabEntry.antecedent);
+		} 
+		else{
+			itEnh.downgradesTo = CRAFT_EFFECT_INVALID;
+		}
+
 		return 0;
 	};
 
@@ -928,6 +1006,13 @@ void ItemCreation::GetMaaSpecs() const
 	maaSpecsTab.Open("tprules\\craft_maa_specs.tab");
 	maaSpecsTab.Process();
 	maaSpecsTab.Close();
+
+	for (auto i = itemEnhSpecs.begin(); i != itemEnhSpecs.end(); ++i) {
+		auto downgradesTo = i->second.downgradesTo;
+		if (downgradesTo != CRAFT_EFFECT_INVALID){
+			itemCreation.itemEnhSpecs[downgradesTo].upgradesTo = i->first;
+		}
+	}
 }
 
 uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t casterLevelNew){
@@ -1058,11 +1143,23 @@ int ItemCreation::GetSurplusXp(objHndl crafter){
 	return gameSystems->GetObj().GetObject(crafter)->GetInt32(obj_f_critter_experience) - xpReq;
 }
 
+bool ItemCreation::ItemWielderCondsHasAntecedent(int effIdx, objHndl item){
+	auto &itEnh = itemEnhSpecs[effIdx];
+	if (itEnh.downgradesTo != CRAFT_EFFECT_INVALID){
+		if (ItemWielderCondsContainEffect(itEnh.downgradesTo, item))
+			return true;
+		else 
+			return ItemWielderCondsHasAntecedent(itEnh.downgradesTo, item);
+	}
+	return false;
+}
 
 
 ItemEnhancementSpec::ItemEnhancementSpec(const char* CondName, uint32_t Flags, int EffcBonus, int enhBonus)
 	:condName(CondName),flags(Flags),effectiveBonus(EffcBonus){
 	data.enhBonus = enhBonus;
+	condId = ElfHash::Hash(condName);
+	downgradesTo = upgradesTo = CRAFT_EFFECT_INVALID;
 }
 
 BOOL ItemCreation::ItemCreationShow(objHndl crafter, ItemCreationType icType)
@@ -1312,13 +1409,17 @@ void ItemCreation::MaaWndRender(int widId){
 	
 
 	if (craftingItemIdx >= 0 && craftingItemIdx < mMaaCraftableItemList.size())	{
+
+		// draw item icon
 		auto itemHandle = mMaaCraftableItemList[craftingItemIdx];
 		auto invAid = gameSystems->GetObj().GetObject(itemHandle)->GetInt32(obj_f_item_inv_aid);
 		auto GetAsset = temple::GetRef<int(__cdecl)(UiAssetType assetType, uint32_t assetIndex, int* textureIdOut, int offset) >(0x1004A360);
 		int textureId;
 		GetAsset(UiAssetType::Inventory, invAid, &textureId, 0);
 		UiRenderer::DrawTexture(textureId, mMaaCraftedItemIconDestRect);
-		MaaRenderText(widId, itemHandle);
+
+		// render texts
+		MaaWndRenderText(widId, itemHandle);
 	}
 
 	UiRenderer::PopFont();
@@ -1388,17 +1489,27 @@ void ItemCreation::MaaAppliedBtnRender(int widId){
 	if (idx >= NUM_APPLIED_BONUSES_MAX || idx >= appliedBonusIndices.size())
 		return;
 
-	auto effIdx = appliedBonusIndices[idx];
+	auto displayCount = 0;
+	auto effIdx = CRAFT_EFFECT_INVALID;
+	for (auto it : appliedBonusIndices) {
+		if (itemEnhSpecs[it].flags & IESF_ENH_BONUS)
+			continue;
+		if (displayCount == idx) {
+			effIdx = it;
+			break;
+		}
+		displayCount++;
+	}
+
 	if (effIdx == CRAFT_EFFECT_INVALID)
 		return;
 
-	if (!MaaCrafterMeetsReqs(effIdx, itemCreationCrafter))
-	{
-		return; // TODO is this a bug? what if someone else enchanted it first?
-	}
+	//if (!MaaCrafterMeetsReqs(effIdx, itemCreationCrafter)){
+	//	return; // TODO is this a bug? what if someone else enchanted it first?
+	//}
 
 	auto enhName = GetItemCreationMesLine(1000 + effIdx);
-	TigRect rect(355, 12 * idx + 152, 106, 12);
+	TigRect rect(355, 12 * idx + 152 + 12, 106, 12);
 
 	auto itemHandle = mMaaCraftableItemList[craftingItemIdx];
 	if (idx == mMaaActiveAppliedWidIdx)	{
@@ -1417,6 +1528,63 @@ void ItemCreation::MaaAppliedBtnRender(int widId){
 		UiRenderer::DrawTextInWidget(mMaaWndId, enhName, rect, temple::GetRef<TigTextStyle>(0x10BED938));
 	}
 
+}
+
+void ItemCreation::MaaEnhBonusDnRender(int widId){
+
+	objHndl itemHandle = MaaGetItemHandle();
+	if (!itemHandle)
+		return;
+
+	int texId;
+	UiButtonState bs;
+	ui.GetButtonState(widId, bs);
+	switch (bs) {
+	case UBS_DISABLED:
+		texId = mDownArrowDisabledTga;
+		break;
+	case UBS_DOWN:
+		texId = mDownArrowClickTga;
+		break;
+	case UBS_HOVERED:
+		texId = mDownArrowHoveredTga;
+		break;
+	case UBS_NORMAL:
+	default:
+		texId = mDownArrowTga;
+	}
+	static TigRect srcRect(0,0,19,11);
+
+	UiRenderer::DrawTextureInWidget(mMaaWndId, texId, mEnhBonusDnRect, srcRect);
+}
+
+void ItemCreation::MaaEnhBonusUpRender(int widId){
+
+	objHndl itemHandle = MaaGetItemHandle();
+	if (!itemHandle)
+		return;
+
+	int texId;
+	UiButtonState bs;
+	ui.GetButtonState(widId, bs);
+	switch (bs) {
+	case UBS_DISABLED:
+		texId = mDownArrowDisabledTga;
+		break;
+	case UBS_DOWN:
+		texId = mDownArrowClickTga;
+		break;
+	case UBS_HOVERED:
+		texId = mDownArrowHoveredTga;
+		break;
+	case UBS_NORMAL:
+	default:
+		texId = mDownArrowTga;
+	}
+	static TigRect srcRect(0, 0, 19, 11);
+	TigRect rect = mEnhBonusDnRect;
+	rect.x -= 15;
+	UiRenderer::DrawTextureInWidget(mMaaWndId,texId, rect, srcRect, 0x20);
 }
 
 void ItemCreation::ButtonStateInit(int wndId){
@@ -1456,13 +1624,16 @@ void ItemCreation::MaaInitCraftedItem(objHndl itemHandle){
 	craftedItemName.append(ItemCreationGetItemName(itemHandle));
 	craftedItemNamePos = craftedItemName.size();
 
-	for (auto it: itemEnhSpecs)
-	{
+	for (auto it: itemEnhSpecs)	{
 		if (ItemWielderCondsContainEffect(it.first,itemHandle))	{
-			craftedItemExistingEffectiveBonus += it.second.effectiveBonus;
-			appliedBonusIndices.push_back(it.first);
+			if (!ItemWielderCondsContainEffect(it.second.upgradesTo, itemHandle)){
+				craftedItemExistingEffectiveBonus += it.second.effectiveBonus;
+				appliedBonusIndices.push_back(it.first);
+			}
 		}
 	}
+	
+
 }
 
 void ItemCreation::MaaInitCrafter(objHndl crafter){
@@ -1470,7 +1641,47 @@ void ItemCreation::MaaInitCrafter(objHndl crafter){
 	auto crafterObj = gameSystems->GetObj().GetObject(crafter);
 	auto crafterInvenNum = crafterObj->GetInt32(obj_f_critter_inventory_num);
 	auto inventoryArr = crafterObj->GetObjectIdArray(obj_f_critter_inventory_list_idx);
-	auto itemCanBeEnchantedWithMaa = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x1014F190);
+	
+	static auto itemCanBeEnchantedWithMaa = [](objHndl crafter, objHndl item){
+		static auto weaponMwId = ElfHash::Hash("Weapon Masterwork");
+		static auto weaponEnhId = ElfHash::Hash("Weapon Enhancement Bonus");
+		static auto armorMwId = ElfHash::Hash("Armor Masterwork");
+		static auto armorEnhId = ElfHash::Hash("Armor Enhancement Bonus");
+		static auto toHitId = ElfHash::Hash("To Hit Bonus");
+		static auto damBonId = ElfHash::Hash("Damage Bonus");
+		static auto shieldEnhId = ElfHash::Hash("Shield Enhancement Bonus");
+
+		auto itemObj = gameSystems->GetObj().GetObject(item);
+		
+		if (itemObj->type == obj_t_weapon){
+			auto condArr = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
+			bool oneFound = false;
+			for (auto i = 0; i < condArr.GetSize(); i++)
+			{
+				auto condId = condArr[i];
+				if (condId == weaponMwId || condId == weaponEnhId)
+					return true;
+				if (condId == damBonId || condId == toHitId){
+					if (oneFound)
+						return true;
+					oneFound = true;
+				}
+			}
+		} 
+		else if (itemObj->type == obj_t_armor){
+			auto condArr = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
+			for (auto i = 0; i < condArr.GetSize(); i++)
+			{
+				auto condId = condArr[i];
+				auto condW = conds.GetById(condId);
+				if (condId == armorMwId || condId == armorEnhId || condId == shieldEnhId)
+					return true;
+			}
+		}
+		return false;
+	};  // temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x1014F190);
+	
+	
 	for (int i = 0; i < crafterInvenNum;i++){
 		auto itemHandle = inventoryArr[i].GetHandle();		
 		if (itemCanBeEnchantedWithMaa(crafter, itemHandle))	{
@@ -1546,6 +1757,15 @@ bool ItemCreation::CreateBtnMsg(int widId, TigMsg* msg)
 	return false;
 }
 
+bool ItemCreation::MaaShouldJustModifyArg(int effIdx, objHndl item){
+
+	auto &itEnh = itemEnhSpecs[effIdx];
+	if (!(itEnh.flags & (IESF_ENH_BONUS | IESF_INCREMENTAL)))
+		return false;
+		
+	return ItemWielderCondsHasAntecedent(effIdx, item);
+}
+
 void ItemCreation::MaaCreateBtnRender(int widId) const
 {
 	UiButtonState buttonState;
@@ -1590,7 +1810,11 @@ void ItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 		auto itemObj = gameSystems->GetObj().GetObject(item);
 		for (auto it : appliedBonusIndices){
 			auto effIdx = it;
+
 			if (effIdx == CRAFT_EFFECT_INVALID)
+				continue;
+
+			if (ItemWielderCondsContainEffect(effIdx, item))
 				continue;
 
 			auto& itEnh = itemEnhSpecs[effIdx];
@@ -1601,25 +1825,24 @@ void ItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 
 			auto condId = ElfHash::Hash(itEnh.condName);
 			auto wielderConds = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
-			//auto wielderArgs = itemObj->GetInt32Array(obj_f_item_pad_wielder_argument_array);
 
-			// if it's a plus bonus greater than +1, then it means the condition should already be there
-			if ( (itEnh.flags & IESF_PLUS_BONUS) && itemEnhSpecs[effIdx].data.enhBonus >= 2){
+			if ( MaaShouldJustModifyArg(effIdx, item) ) {
 				arg0 = itEnh.data.enhBonus;
 				arg1 = 0;
 
 				auto condArgIdx = 0;
-				for (size_t i = 0; i < wielderConds.GetSize(); i++){
+				for (size_t i = 0; i < wielderConds.GetSize(); i++) {
 					auto wieldCondId = itemObj->GetInt32(obj_f_item_pad_wielder_condition_array, i);
 					auto wieldCond = conds.GetById(wieldCondId);
-					if (wieldCondId  == condId)	{
+					if (wieldCondId == condId) {
 						itemObj->SetInt32(obj_f_item_pad_wielder_argument_array, condArgIdx, arg0);
-						itemObj->SetInt32(obj_f_item_pad_wielder_argument_array, condArgIdx+1, arg1);
+						itemObj->SetInt32(obj_f_item_pad_wielder_argument_array, condArgIdx + 1, arg1);
 					}
-					condArgIdx += wieldCond->numArgs;
+					if (wieldCond)
+						condArgIdx += wieldCond->numArgs;
 				}
 			}
-			else if (!ItemWielderCondsContainEffect(effIdx, item)){
+			else {
 			
 				arg0 = itEnh.data.enhBonus;
 				arg1 = 0;
@@ -1639,7 +1862,7 @@ void ItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 					auto armorMWCondId = ElfHash::Hash("Armor Masterwork");
 					inventory.RemoveWielderCond(item,armorMWCondId);
 				}
-			}
+			} 
 		}
 		auto itemWorthDelta = 100;
 		if (itemObj->type == obj_t_weapon)
@@ -1932,7 +2155,7 @@ bool ItemCreation::MaaTextboxMsg(int widId, TigMsg* msg){
 	return false;
 }
 
-bool ItemCreation::MaaRenderText(int widId, objHndl item){
+bool ItemCreation::MaaWndRenderText(int widId, objHndl item){
 	std::string text;
 
 	// draw the textbox text
@@ -1985,6 +2208,7 @@ bool ItemCreation::MaaRenderText(int widId, objHndl item){
 	}
 	UiRenderer::DrawTextInWidget(widId, text, rect, textStyle);
 
+	// draw GP cost
 	rect.y += 11;
 	auto itemWorth = gameSystems->GetObj().GetObject(item)->GetInt32(obj_f_item_worth);
 	text.clear();
@@ -1992,6 +2216,15 @@ bool ItemCreation::MaaRenderText(int widId, objHndl item){
 	text.append(fmt::format("{} @3{}", valueLabel, itemWorth / 100));
 
 	
+	UiRenderer::DrawTextInWidget(widId, text, rect, textStyle);
+
+	rect = TigRect(355, 152, 0,0);
+	rect.x = 355;
+	auto enhBon = MaaGetCurEnhBonus();
+	text = fmt::format("{} {}", GetItemCreationMesLine(10009),enhBon);
+	measWidth = UiRenderer::MeasureTextSize(text, textStyle);
+	rect.width = measWidth.width;
+	rect.height = measWidth.height;
 	return UiRenderer::DrawTextInWidget(widId, text, rect, textStyle);
 }
 
@@ -2054,7 +2287,7 @@ bool ItemCreation::MaaEffectMsg(int widId, TigMsg* msg){
 	if (cpCost > party.GetMoney())
 		return true;
 
-	if (HasPlusBonus(effIdx))
+	if (HasNecessaryEffects(effIdx))
 		maaSelectedEffIdx = effIdx;
 
 	return true;
@@ -2213,11 +2446,12 @@ void ItemCreation::MaaEffectGetTextStyle(int effIdx, objHndl crafter, TigTextSty
 		return;
 	}
 
-	if (!HasPlusBonus(effIdx))
-	{
+	if (!HasNecessaryEffects(effIdx)){
 		style = temple::GetPointer<TigTextStyle>(0x10BEE2E0);
 		return;
 	}
+
+
 
 	if (effIdx == maaSelectedEffIdx){
 		style = temple::GetPointer<TigTextStyle>(0x10BEDF70);
@@ -2259,7 +2493,7 @@ bool ItemCreation::MaaEffectAddMsg(int widId, TigMsg* msg)
 	if (cpCost > party.GetMoney())
 		return true;
 
-	if (HasPlusBonus(effIdx))
+	if (HasNecessaryEffects(effIdx))
 	{
 		MaaAppendEnhancement(effIdx);
 		CreateItemResourceCheck(itemCreationCrafter, itemHandle);
@@ -2268,10 +2502,63 @@ bool ItemCreation::MaaEffectAddMsg(int widId, TigMsg* msg)
 	return true;
 }
 
+int ItemCreation::MaaGetTotalEffectiveBonus(int effIdx){
+
+
+	// calculate the effective bonus from pre-existing effects
+	auto effBonus = 0;
+	for (auto it : appliedBonusIndices) {
+		if (it != CRAFT_EFFECT_INVALID)
+			effBonus += itemEnhSpecs[it].effectiveBonus;
+	}
+
+	if (effIdx == CRAFT_EFFECT_INVALID)
+		return effBonus;
+
+
+	// add the bonus level of the new effect
+	auto &itEnh = itemEnhSpecs[effIdx];
+	
+	// if it's incremenetal, subtract the bonus from the antecedent since it's going to be removed
+	if (itEnh.flags & IESF_INCREMENTAL) {
+		if (itEnh.downgradesTo != CRAFT_EFFECT_INVALID) {
+			effBonus -= itemEnhSpecs[itEnh.downgradesTo].effectiveBonus;
+		}
+	}
+
+	// add the new effect's bonus to the total
+	effBonus += itemEnhSpecs[effIdx].effectiveBonus;
+
+	return effBonus;
+}
+
 void ItemCreation::MaaAppendEnhancement(int effIdx){
 
-	if (!HasPlusBonus(effIdx))
+	if (effIdx == CRAFT_EFFECT_INVALID)
 		return;
+
+	if (!HasNecessaryEffects(effIdx))
+		return;
+
+	auto &itEnh = itemEnhSpecs[effIdx];
+
+	int effBonus = MaaGetTotalEffectiveBonus(effIdx);
+
+	// check that it doesn't exceed the maximum allowed Total Effective Bonus (10)
+	if (effBonus > MAA_MAX_EFFECTIVE_BONUS) {
+		return;
+	}
+
+	// remove the direct antecedent
+	if ( (itEnh.flags & IESF_INCREMENTAL) && itEnh.downgradesTo != CRAFT_EFFECT_INVALID){
+		for (auto it = appliedBonusIndices.begin(); it != appliedBonusIndices.end(); ++it){
+			if (*it == itEnh.downgradesTo){
+				appliedBonusIndices.erase(it);
+				break;
+			}
+		}
+	}
+	
 
 	appliedBonusIndices.push_back(effIdx);
 	const char* icMesLine = GetItemCreationMesLine(1000 + effIdx);
@@ -2279,10 +2566,9 @@ void ItemCreation::MaaAppendEnhancement(int effIdx){
 	
 	auto icLineLen = strlen(icMesLine);
 	if (icLineLen + craftedItemNamePos + 1 <= MAA_TEXTBOX_MAX_LENGTH){
-		auto itEnh = itemEnhSpecs[effIdx];
 
-		// +X bonus; if +1, try to strip the "Masterwork" qualifier; otherwise try to replace the previous bonus
-		if (itEnh.flags & IESF_PLUS_BONUS){
+		// +X bonus; if +1, try to strip the "Masterwork" string; otherwise try to replace the previous bonus
+		if (itEnh.flags & IESF_ENH_BONUS){
 			// adding a +1 bonus - remove the "Masterwork" descriptor if it is there
 			if (itEnh.data.enhBonus == 1){
 				auto mwPos = craftedItemName.find("Masterwork ");
@@ -2310,6 +2596,21 @@ void ItemCreation::MaaAppendEnhancement(int effIdx){
 			
 		} 
 		// else, prepend the effect name
+		else if (itEnh.flags & IESF_INCREMENTAL && itEnh.downgradesTo != CRAFT_EFFECT_INVALID){
+			auto oldIcLine = GetItemCreationMesLine(1000 + itEnh.downgradesTo);
+			std::regex rreg(fmt::format("\({}\)",oldIcLine));
+
+			std::smatch subMatches;
+			std::regex_search(craftedItemName, subMatches, rreg);
+			if (subMatches.size() > 1) {
+				auto pos = craftedItemName.find(subMatches[1]);
+				craftedItemName.erase(pos, pos + strlen(oldIcLine));
+				craftedItemName.insert(pos, icMesLine);
+			}
+			else {
+				craftedItemName.insert(0,fmt::format("{} ",icMesLine));
+			}
+		}
 		else{
 			craftedItemName.insert(0, fmt::format("{} ",icMesLine));
 		}
@@ -2338,31 +2639,37 @@ bool ItemCreation::MaaEffectRemoveMsg(int widId, TigMsg* msg){
 	if (idx >= appliedBonusIndices.size())
 		return false;
 
-	auto effIdx = appliedBonusIndices[idx];
+	//auto effIdx = appliedBonusIndices[idx];
+	auto displayCount = 0;
+	auto appBonIdx = 0;
+	auto effIdx = CRAFT_EFFECT_INVALID;
+	for (auto it : appliedBonusIndices) {
+		if (itemEnhSpecs[it].flags & IESF_ENH_BONUS){
+			appBonIdx++;
+			continue;
+		}
+		if (displayCount == idx) {
+			effIdx = it;
+			break;
+		}
+		appBonIdx++;
+		displayCount++;
+	}
 
 	if (effIdx == CRAFT_EFFECT_INVALID || ItemWielderCondsContainEffect(effIdx, itemHandle)){
 		CreateItemResourceCheck(itemCreationCrafter, itemHandle);
 		return false;
 	}
 
-	auto& itEnh = itemEnhSpecs[effIdx];
-	if ( (itEnh.flags & IESF_PLUS_BONUS ) && itEnh.data.enhBonus == 2){
-		for (auto& it : appliedBonusIndices)	{
-			if (itemEnhSpecs[it].flags & IESF_PLUS_BONUS && itemEnhSpecs[it].data.enhBonus == 3){
-				it = CRAFT_EFFECT_INVALID;
-			}
+	if (appBonIdx < appliedBonusIndices.size()){
+		auto &itEnh = itemEnhSpecs[appliedBonusIndices[appBonIdx]];
+		if ((itEnh.flags & IESF_INCREMENTAL) && itEnh.downgradesTo != CRAFT_EFFECT_INVALID){
+			appliedBonusIndices[appBonIdx] = itEnh.downgradesTo;
 		}
-	}
-	else if ( (itEnh.flags & IESF_PLUS_BONUS ) && itEnh.data.enhBonus == 1)	{
-		appliedBonusIndices.clear();
+		else
+			appliedBonusIndices.erase(appliedBonusIndices.begin() + appBonIdx);
 		CreateItemResourceCheck(itemCreationCrafter, itemHandle);
-		return false;
-	}
-
-	if (mMaaActiveAppliedWidIdx < appliedBonusIndices.size()){
-		appliedBonusIndices.erase(appliedBonusIndices.begin() + mMaaActiveAppliedWidIdx);
-		CreateItemResourceCheck(itemCreationCrafter, itemHandle);
-		return false;
+		return true;
 	}
 
 	return false;
@@ -2380,8 +2687,93 @@ bool ItemCreation::MaaAppliedBtnMsg(int widId, TigMsg* msg){
 		if (widIdx >= NUM_APPLIED_BONUSES_MAX)
 			return false;
 	}
+
 	mMaaActiveAppliedWidIdx = widIdx;
 	return true;
+}
+
+bool ItemCreation::MaaEnhBonusUpMsg(int widId, TigMsg * msg){
+	if (msg->type != TigMsgType::WIDGET || ((TigMsgWidget*)msg)->widgetEventType != TigMsgWidgetEvent::MouseReleased)
+		return false;
+
+	// get the current enh bonus
+	auto curEnhBon = MaaGetCurEnhBonus();
+	if (curEnhBon >= MAA_MAX_ENHANCEMENT_BONUS)
+		return true;
+
+	craftedItemNamePos = craftedItemName.size();
+
+	objHndl itemHandle = MaaGetItemHandle();
+	if (!itemHandle)
+		return true;
+
+	auto effIdx = MaaGetEffIdxForEnhBonus(curEnhBon + 1, itemHandle);
+	craftingWidgetId = widId;
+
+	if (effIdx == CRAFT_EFFECT_INVALID)
+		return true;
+
+	
+
+	if (!MaaCrafterMeetsReqs(effIdx, itemCreationCrafter))
+		return true;
+
+	if (MaaEffectIsInAppliedList(effIdx))
+		return true;
+
+	int surplusXp = GetSurplusXp(itemCreationCrafter);
+	if (MaaXpCost(effIdx) > surplusXp)
+		return true;
+
+	auto cpCost = MaaCpCost(effIdx);
+	if (cpCost > party.GetMoney())
+		return true;
+
+	if (HasNecessaryEffects(effIdx)){
+		MaaAppendEnhancement(effIdx);
+		CreateItemResourceCheck(itemCreationCrafter, itemHandle);
+	}
+
+	return true;
+}
+
+bool ItemCreation::MaaEnhBonusDnMsg(int widId, TigMsg * msg){
+
+	if (msg->type != TigMsgType::WIDGET || ((TigMsgWidget*)msg)->widgetEventType != TigMsgWidgetEvent::MouseReleased)
+		return false;
+
+	// get the current enh bonus
+	auto curEnhBon = MaaGetCurEnhBonus();
+	if (curEnhBon <= 0)
+		return true;
+
+	objHndl itemHandle = MaaGetItemHandle();
+	if (!itemHandle)
+		return true;
+
+	auto effIdx = MaaGetEffIdxForEnhBonus(curEnhBon , itemHandle);
+
+	if (ItemWielderCondsContainEffect(effIdx, itemHandle))
+		return true;
+
+	craftingWidgetId = widId;
+
+	auto& itEnh = itemEnhSpecs[effIdx];
+	
+	for (auto it = appliedBonusIndices.begin(); it != appliedBonusIndices.end(); ++it) {
+		if ( (itemEnhSpecs[*it].flags & IESF_ENH_BONUS ) && itemEnhSpecs[*it].data.enhBonus >= curEnhBon) {
+			appliedBonusIndices.erase(it);
+			break;
+		}
+	}
+	
+	if (curEnhBon == 1) {
+		appliedBonusIndices.clear();
+		CreateItemResourceCheck(itemCreationCrafter, itemHandle);
+		return false;
+	}
+
+	return false;
 }
 
 int ItemCreation::UiItemCreationInit(GameSystemConf& conf)
@@ -2390,6 +2782,7 @@ int ItemCreation::UiItemCreationInit(GameSystemConf& conf)
 	mMaaCancelBtnRect = TigRect(256, 339, 112, 22);
 	mMaaCraftedItemIconDestRect = TigRect(215, 62, 64, 64);
 	mItemCreationScrollbar = new WidgetType3;
+	mEnhBonusDnRect = TigRect(450, 156, 15, 9);
 
 	if (!mesFuncs.Open("tpmes\\item_creation.mes", &mItemCreationMes))
 		return 0;
@@ -2432,6 +2825,13 @@ int ItemCreation::UiItemCreationInit(GameSystemConf& conf)
 		return 0;
 	if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\add_button_press.tga", temple::GetPointer<int>(0x10BED79C)))
 		return 0;
+	if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\down_arrow.tga", &mDownArrowTga)
+		|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\down_arrow_click.tga", &mDownArrowClickTga)
+		|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\down_arrow_disabled.tga", &mDownArrowDisabledTga)
+		|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\down_arrow_hovered.tga", &mDownArrowHoveredTga)
+		)
+		throw TempleException("Missing textures for Item Creation UI!");
+
 
 	/*
 	  Init Widgets
@@ -2602,10 +3002,10 @@ bool ItemCreation::ItemCreationWidgetsInit(int width, int height){
 	
 }
 
-bool ItemCreation::MaaWidgetsInit(int width, int height){
+bool ItemCreation::MaaWidgetsInit(int width, int height) {
 	auto& wnd = temple::GetRef<WidgetType1>(0x10BEDB58);
 	auto wndId = &mMaaWndId;
-	wnd.WidgetType1Init(( width - 504) / 2, (height - 387) / 2, 504, 387 );
+	wnd.WidgetType1Init((width - 504) / 2, (height - 387) / 2, 504, 387);
 	wnd.widgetFlags = 1;
 	wnd.render = [](int widId) {itemCreation.MaaWndRender(widId); };
 	wnd.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaWndMsg(widId, msg); };
@@ -2625,7 +3025,7 @@ bool ItemCreation::MaaWidgetsInit(int width, int height){
 
 	// Scrollbar for the effects
 	auto appEffectsScrollbar = temple::GetPointer<WidgetType3>(0x10BEDE90);
-	appEffectsScrollbar->Init(313, 148, 128); 
+	appEffectsScrollbar->Init(313, 148, 128);
 	appEffectsScrollbar->x += wnd.x;
 	appEffectsScrollbar->y += wnd.y;
 	appEffectsScrollbar->Add(&mMaaApplicableEffectsScrollbarId);
@@ -2634,12 +3034,12 @@ bool ItemCreation::MaaWidgetsInit(int width, int height){
 
 	// Item buttons
 	auto btnY = 53;
-	for (int i = 0; i < MAA_NUM_ENCHANTABLE_ITEM_WIDGETS; i++){
+	for (int i = 0; i < MAA_NUM_ENCHANTABLE_ITEM_WIDGETS; i++) {
 		WidgetType2 btn(nullptr, *wndId, 28, btnY, 152, 42);
 		btn.x += wnd.x;	btn.y += wnd.y;
 		btn.render = [](int widId) { itemCreation.MaaItemRender(widId); };
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaItemMsg(widId, msg); };
-		btn.Add( & mMaaItemBtnIds[i]);
+		btn.Add(&mMaaItemBtnIds[i]);
 		ui.BindToParent(*wndId, mMaaItemBtnIds[i]);
 		btnY += 42;
 	}
@@ -2657,7 +3057,25 @@ bool ItemCreation::MaaWidgetsInit(int width, int height){
 		btnY += 12;
 	}
 
-	btnY = 152;
+	// Enhancement bonus buttons
+	WidgetType2 enhBonusDown(nullptr, *wndId, mEnhBonusDnRect);
+	enhBonusDown.x += wnd.x; enhBonusDown.y += wnd.y;
+	enhBonusDown.render = [](int widId) {itemCreation.MaaEnhBonusDnRender(widId); };
+	enhBonusDown.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaEnhBonusDnMsg(widId, msg); };
+	enhBonusDown.Add(&mEnhBonusArrowDnId);
+	ui.BindToParent(*wndId, mEnhBonusArrowDnId);
+	ui.SetDefaultSounds(mEnhBonusArrowDnId);
+
+	WidgetType2 enhBonusUp(nullptr, *wndId, mEnhBonusDnRect);
+	enhBonusUp.x += wnd.x - 15; enhBonusUp.y += wnd.y;
+	enhBonusUp.render = [](int widId) {itemCreation.MaaEnhBonusUpRender(widId); };
+	enhBonusUp.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaEnhBonusUpMsg(widId, msg); };
+	enhBonusUp.Add(&mEnhBonusArrowUpId);
+	ui.BindToParent(*wndId, mEnhBonusArrowUpId);
+	ui.SetDefaultSounds(mEnhBonusArrowUpId);
+
+	// applied effects
+	btnY = 152 + 12;
 	for (int i = 0; i < NUM_APPLIED_BONUSES_MAX; i++) {
 		WidgetType2 btn(nullptr, *wndId, 355, btnY, 106, 12);
 		btn.x += wnd.x;	btn.y += wnd.y;
@@ -2796,6 +3214,7 @@ void ItemCreation::UiItemCreationResize(UiResizeArgs& resizeArgs){
 	
 	mCreateBtnRect.x -= maaWnd.x;	mCreateBtnRect.y -= maaWnd.y;
 	mMaaCancelBtnRect.x -= maaWnd.x;	mMaaCancelBtnRect.y -= maaWnd.y;
+	//mEnhBonusDnRect.x -= maaWnd.x; mEnhBonusDnRect.y -= maaWnd.y;
 	
 	MaaWidgetsExit(mMaaWndId);
 	ItemCreationWidgetsExit(mItemCreationWndId);
@@ -2818,7 +3237,7 @@ void ItemCreation::UiItemCreationResize(UiResizeArgs& resizeArgs){
 	
 	mCreateBtnRect.x += maaWnd.x;	mCreateBtnRect.y += maaWnd.y;
 	mMaaCancelBtnRect.x += maaWnd.x;	mMaaCancelBtnRect.y += maaWnd.y;
-
+	// mEnhBonusDnRect.x += maaWnd.x; mEnhBonusDnRect.y += maaWnd.y;
 	
 
 	return;
@@ -2844,9 +3263,8 @@ void ItemCreationHooks::HookedGetLineForMaaAppend(MesHandle handle, MesLine* lin
 
 }
 
-int ItemCreation::MaaCpCost(int effIdx)
-{
-	auto effBonus = 0;
+int ItemCreation::MaaCpCost(int effIdx){
+
 	auto icType = itemCreationType;
 
 	if (craftingItemIdx < 0 || craftingItemIdx >= numItemsCrafting[icType])
@@ -2867,14 +3285,7 @@ int ItemCreation::MaaCpCost(int effIdx)
 		return 0;
 
 	// get the overall effective bonus level
-	// first from pre-existing effects
-	for (auto it: appliedBonusIndices){
-		if (it != CRAFT_EFFECT_INVALID)
-			effBonus += itemEnhSpecs[it].effectiveBonus;
-	}
-	// then from the new applied effect
-	if (effIdx >= 0)
-		effBonus += itemEnhSpecs[effIdx].effectiveBonus;
+	auto effBonus = MaaGetTotalEffectiveBonus(effIdx);
 
 	if (effBonus > 29)
 		effBonus = 29;
@@ -2887,7 +3298,6 @@ int ItemCreation::MaaCpCost(int effIdx)
 
 int ItemCreation::MaaXpCost(int effIdx){
 
-	auto effBonus = 0;
 	auto icType = itemCreationType;
 
 	if (craftingItemIdx < 0 || craftingItemIdx >= numItemsCrafting[icType])
@@ -2909,14 +3319,7 @@ int ItemCreation::MaaXpCost(int effIdx){
 		return 0;
 
 	// get the overall effective bonus level
-	// first from pre-existing effects
-	for (auto it : appliedBonusIndices) {
-		if (it != CRAFT_EFFECT_INVALID)
-			effBonus += itemEnhSpecs[it].effectiveBonus;
-	}
-	// then from the new applied effect
-	if (effIdx >= 0 && effIdx != CRAFT_EFFECT_INVALID)
-		effBonus += itemEnhSpecs[effIdx].effectiveBonus;
+	auto effBonus = MaaGetTotalEffectiveBonus(effIdx);
 
 	if (effBonus > 29)
 		effBonus = 29;

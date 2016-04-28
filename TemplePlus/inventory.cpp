@@ -122,6 +122,7 @@ void InventorySystem::RemoveWielderCond(objHndl item, uint32_t condId){
 		return;
 	auto itemObj = gameSystems->GetObj().GetObject(item);
 	auto wielderConds = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
+	auto wielderArgs = itemObj->GetInt32Array(obj_f_item_pad_wielder_argument_array);
 	auto argIdx = 0;
 	for (int i = 0; i < wielderConds.GetSize();i++)
 	{
@@ -132,9 +133,19 @@ void InventorySystem::RemoveWielderCond(objHndl item, uint32_t condId){
 			return;
 		}
 		if (wCondId == condId){
-			itemObj->RemoveInt32(obj_f_item_pad_wielder_condition_array, i);
-			for (int j = 0; j < wCond->numArgs;j++)
-				itemObj->RemoveInt32(obj_f_item_pad_wielder_argument_array, argIdx);
+			for (int j = i + 1; j < wielderConds.GetSize(); j++ )
+				itemObj->SetInt32(obj_f_item_pad_wielder_condition_array, j - 1,
+					itemObj->GetInt32(obj_f_item_pad_wielder_condition_array, j));
+			itemObj->RemoveInt32(obj_f_item_pad_wielder_condition_array, wielderConds.GetSize()-1);
+			
+			// remove corresponding args
+			for (int j = argIdx + wCond->numArgs; j < wielderArgs.GetSize(); j++){
+				itemObj->SetInt32(obj_f_item_pad_wielder_argument_array, j - wCond->numArgs,
+					itemObj->GetInt32(obj_f_item_pad_wielder_argument_array, j));
+			}
+			auto orgLen = wielderArgs.GetSize();
+			for (int j = orgLen - wCond->numArgs; j < orgLen; j++ )
+				itemObj->RemoveInt32(obj_f_item_pad_wielder_argument_array, j);
 			return;
 		}
 		argIdx += wCond->numArgs;

@@ -29,64 +29,71 @@
 {1000}{+1}
 {1001}{+2}
 {1002}{+3}
-{1003}{Defending}
-{1004}{Flaming}
-{1005}{Frost}
-{1006}{Shock}
-{1007}{Ghost Touch}
-{1008}{Keen}
-{1009}{Mighty Cleaving}
-{1010}{Spell Storing}
-{1011}{Throwing}
-{1012}{Bane}
-{1013}{Disruption}
+{1003}{+4}
+{1004}{+5}
+{1005}{Anarchic}
+{1006}{Axiomatic}
+{1007}{Bane}
+{1008}{Brilliant Energy}
+{1009}{Dancing}
+{1010}{Defending}
+{1011}{Distance}
+{1012}{Disruption}
+{1013}{Flaming}
 {1014}{Flaming Burst}
-{1015}{Icy Burst}
-{1016}{Shocking Burst}
-{1017}{Thundering}
-{1018}{Wounding}
-{1019}{Holy}
-{1020}{Unholy}
-{1021}{Axiomatic}
-{1022}{Anarchic}
-{1023}{+4}
-{1024}{+5}
-{1025}{Brilliant Energy}
-{1026}{Dancing}
-{1027}{Distance}
-{1028}{Ki Focus}
-{1029}{Merciful}
-{1030}{Returning}
-{1031}{Seeking}
-{1032}{Speed}
-{1033}{Vicious}
-{1034}{Vorpal}
+{1015}{Frost}
+{1016}{Ghost Touch}
+{1017}{Holy}
+{1018}{Icy Burst}
+{1019}{Keen}
+{1020}{Ki Focus}
+{1021}{Merciful}
+{1022}{Mighty Cleaving}
+{1023}{Returning}
+{1024}{Seeking}
+{1025}{Shock}
+{1026}{Shocking Burst}
+{1027}{Speed}
+{1028}{Spell Storing}
+{1029}{Throwing}
+{1030}{Thundering}
+{1031}{Unholy}
+{1032}{Vicious}
+{1033}{Vorpal}
+{1034}{Wounding}
+
 
 // armor bonuses
 {1200}{+1}
 {1201}{+2}
 {1202}{+3}
-{1203}{Fortification, Light}
-{1204}{Glamered}
-{1205}{Slick}
-{1206}{Shadow}
-{1207}{Silent Moves}
-{1208}{Spell Resistance (13)}
-{1209}{+4}
-{1210}{+5}
+{1203}{+4}
+{1204}{+5}
+{1205}{Fortification, Light}
+{1206}{Glamered}
+{1207}{Slick}
+{1208}{Shadow}
+{1209}{Silent Moves}
+{1210}{Spell Resistance 13}
+{1211}{Spell Resistance 15}
+{1212}{Spell Resistance 17}
+{1213}{Spell Resistance 19}
 
 // shield bonuses
 {1400}{+1}
 {1401}{+2}
 {1402}{+3}
-{1403}{Bashing}
-{1404}{Blinding}
-{1405}{Fortification, Light}
+{1403}{+4}
+{1404}{+5}
+{1405}{Animated}
 {1406}{Arrow Deflection}
-{1407}{Animated}
-{1408}{Spell Resistance (13)}
-{1409}{+4}
-{1410}{+5}
+{1407}{Bashing}
+{1408}{Blinding}
+{1409}{Fortification, Light}
+{1410}{Spell Resistance 13}
+{1411}{Spell Resistance 15}
+{1412}{Spell Resistance 17}
+{1413}{Spell Resistance 19}
 
 // 10000-19999 Misc. Strings Used
 
@@ -99,6 +106,7 @@
 {10006}{Skill Required:} // Label text for the minimum skill required to make (for Alchemy)
 {10007}{Prereq:} // Label text used prior to listing prerequisites for making items
 {10008}{Enhancement Cost:} // Label for text of the cost of adding the enhancements to an item
+{10009}{Enh. Bonus:} // Label for the enhancement bonus
 
 {20000}{Level: 0}
 {20001}{Level: 1}

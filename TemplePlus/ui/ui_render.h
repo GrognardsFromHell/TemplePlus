@@ -26,11 +26,13 @@ public:
 	/*
 		Draws the full texture in the given screen rectangle.
 	*/
-	static void DrawTexture(int texId, const TigRect &destRect);
+	static void DrawTexture(int texId, const TigRect &destRect, int flags = 0);
 	/*
 	 As above but allow for scaling
 	*/
 	static void DrawTexture(int texId, const TigRect &destRect, const TigRect &srcRect);
+
+	static void DrawTextureInWidget(int widId, int texId, const TigRect &destRect, const TigRect &srcRect, int flags = 0);
 
 	/*
 		Pushes a font for further text rendering.
