@@ -56,12 +56,15 @@ enum TurnBasedStatusFlags : uint32_t
 	TBSF_1 = 1,
 	TBSF_Movement = 2,
 	TBSF_Movement2 = 4,
-	TBSF_8 = 8,
+	TBSF_TouchAttack = 8, // denotes that you're doing a touch attack
 	TBSF_CritterSpell = 0x10, // denotes that the spell being cast is actually a critter's natural ability, so don't provoke AoO
 	TBSF_AoO = 0x20, // denotes that the critter was interrupted by an AoO
 	TBSF_FullAttack = 0x40,
 	TBSF_80 = 0x80,
-	TBSF_100 = 0x100
+	TBSF_100 = 0x100,
+	TBSF_FreeActionSpellPerformed = 0x200, // already performed free-action spell this round (e.g. from Quickened metamagic feat), cannot do another
+	TBSF_400 = 0x400,
+	TBSF_ChangedWornItem = 0x800 // denotes that you've changed items in the inventory during combat (to prevent double-charging you); unflags this when hiding the inventory
 };
 
 enum SequenceFlags : int {

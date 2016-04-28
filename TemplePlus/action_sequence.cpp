@@ -2906,7 +2906,7 @@ int ActionSequenceSystem::ActionCostProcess(TurnBasedStatus* tbStat, D20Actn* d2
 			else
 				tbStat->numBonusAttacks -= actCost.chargeAfterPicker;
 			if (tbStat->attackModeCode == tbStat->baseAttackNumCode && !tbStat->numBonusAttacks)
-				tbStat->tbsFlags &= ~TBSF_Movement2;  
+				tbStat->tbsFlags &= ~TBSF_FullAttack;  
 			result = AEC_OK;
 		}
 		else

@@ -1769,7 +1769,7 @@ ActionErrorCode D20ActionCallbacks::StdAttackTurnBasedStatusCheck(D20Actn* d20a,
 ActionErrorCode D20ActionCallbacks::ActionCostStandardAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp){
 
 	if ( d20Sys.d20Query(d20a->d20APerformer, DK_QUE_HoldingCharge)
-		 && (tbStat->tbsFlags & TBSF_8)	&& !(d20a->d20Caf & D20CAF_FREE_ACTION)){
+		 && (tbStat->tbsFlags & TBSF_TouchAttack)	&& !(d20a->d20Caf & D20CAF_FREE_ACTION)){
 		acp->hourglassCost = 0;
 		return AEC_OK;
 	}
