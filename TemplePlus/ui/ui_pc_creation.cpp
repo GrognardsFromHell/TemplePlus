@@ -100,6 +100,10 @@ public:
 		static void(*orgGetPartyPool)(int) = replaceFunction<void(int)>(0x10165E60, GetPartyPool);
 		// static int(*orgPartyPoolLoader)() = replaceFunction<int()>(0x10165790, PartyPoolLoader);
 		
+
+		if (temple::Dll::GetInstance().HasCo8Hooks()) {
+			writeNoops(0x1011D521); // disabling EXP draw call
+		}
 	}
 } pcCreationSys;
 WidgetType1 PcCreationUiSystem::pcPortraitsMain;
