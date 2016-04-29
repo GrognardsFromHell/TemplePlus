@@ -77,10 +77,13 @@ public:
 	BOOL ItemCreationShow(objHndl crafter, ItemCreationType icType); // shows the item creation UI for the chosen IC type
 
 	bool ItemCreationWndMsg(int widId, TigMsg* msg);
+	
 	void ItemCreationWndRender(int widId);
 		void ItemCreationEntryRender(int widId);
 		void ItemCreationCraftingCostTexts(int widId, objHndl objHndItem);
 		bool ItemCreationEntryMsg(int widId, TigMsg* msg);
+		void ItemCreationCreateBtnRender(int widId) const;
+		void ItemCreationCancelBtnRender(int widId) const;
 
 	//MAA
 	bool MaaWndMsg(int widId, TigMsg* msg); // message handler for the item creation window
@@ -125,8 +128,9 @@ public:
 	int UiItemCreationInit(GameSystemConf& conf);
 		bool InitItemCreationRules();
 
+
 	
-	bool ItemCreationWidgetsInit(int width, int height);
+	bool UiItemCreationWidgetsInit(int width, int height);
 	bool MaaWidgetsInit(int width, int height);
 	void MaaWidgetsExit(int widId);
 	void ItemCreationWidgetsExit(int widId);
@@ -181,6 +185,7 @@ protected:
 
 
 	int craftingWidgetId; // denotes which item creation widget is currently active
+	bool mUseCo8Ui = false;
 
 	WidgetType1* mItemCreationWnd = nullptr;
 		
@@ -192,6 +197,12 @@ protected:
 		int mItemCreationEntryBtnIds[21];
 		int mItemCreationScrollbarY;
 		int mItemCreationCreateBtnId;
+
+		// widened UI textures for use with Co8
+		int mItemCreationWidenedTexture00;
+		int mItemCreationWidenedTexture10;
+		int mItemCreationWidenedTexture01;
+		int mItemCreationWidenedTexture11;
 
 	WidgetType1* mMaaWnd = nullptr;
 		int mMaaWndId;
@@ -240,8 +251,8 @@ protected:
 	objHndl& itemCreationCrafter = mItemCreationCrafter;//temple::GetRef<objHndl>(0x10BECEE0);
 	std::string craftedItemName;
 	int craftedItemNamePos; // position of the text indicator ("|" character)
-	
 
+	
 
 	/*
 	

@@ -764,7 +764,7 @@ void ItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndIte
 	int32_t *insuffPrereq;
 	uint32_t craftingCostCP;
 	uint32_t craftingCostXP;
-	TigRect rect(212, 157, 159, 10);
+	TigRect rect(212 + 108 * mUseCo8Ui, 157, 159, 10);
 	char * prereqString;
 
 	uint32_t casterLevelNew = -1; // h4x!
@@ -831,7 +831,7 @@ void ItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndIte
 	UiRenderer::DrawTextInWidget(widgetId, text, rect, *itemCreationAddresses.itemCreationTextStyle2);
 
 	// Prereq: %s
-	rect.x = 210;
+	rect.x = 210 + 108 * mUseCo8Ui;
 	rect.y = 200;
 	rect.width = 150;
 	rect.height = 105;
@@ -842,7 +842,7 @@ void ItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndIte
 	
 	if (itemCreationType == ItemCreationType::CraftWand)
 	{
-		rect.x = 210;
+		rect.x = 210 + 108 * mUseCo8Ui;
 		rect.y = 250;
 		rect.width = 150;
 		rect.height = 105;
@@ -889,6 +889,83 @@ bool ItemCreation::ItemCreationEntryMsg(int widId, TigMsg* msg){
 	}
 
 	return true;
+}
+
+void ItemCreation::ItemCreationCreateBtnRender(int widId) const
+{
+	UiButtonState buttonState;
+	if (ui.GetButtonState(widId, buttonState))
+		return;
+
+	Render2dArgs arg;
+	if (buttonState == UiButtonState::UBS_DOWN)
+	{
+		arg.textureId = temple::GetRef<int>(0x10BED9EC);
+	}
+	else if (buttonState == UiButtonState::UBS_HOVERED)
+	{
+		arg.textureId = temple::GetRef<int>(0x10BEDA48);
+	}
+	else
+	{
+		arg.textureId = temple::GetRef<int>(0x10BED9F0);
+	}
+
+	arg.flags = 0;
+	//arg.srcRect = &temple::GetRef<TigRect>(0x102FAEE4);
+	TigRect destRect( 83 + 14*mUseCo8Ui, 165 + 209, 112, 22);
+	/*arg.destRect = &destRect;
+	arg.vertexColors = nullptr;*/
+	UiRenderer::DrawTextureInWidget(mItemCreationWndId, arg.textureId, destRect, temple::GetRef<TigRect>(0x102FAEE4));
+
+	auto &textStyle = temple::GetRef<TigTextStyle>(0x10BED9F8);
+	auto &text = temple::GetRef<const char*>(0x10BED930);
+	auto measText = UiRenderer::MeasureTextSize(text, textStyle);
+
+	destRect.x += (112 - measText.width)/ 2;
+	destRect.y += (22 - measText.height) / 2;
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	UiRenderer::DrawTextInWidget(mItemCreationWndId, text, destRect, textStyle);
+	UiRenderer::PopFont();
+}
+
+void ItemCreation::ItemCreationCancelBtnRender(int widId) const
+{
+	UiButtonState buttonState;
+	if (ui.GetButtonState(widId, buttonState))
+		return;
+
+	Render2dArgs arg;
+	if (buttonState == UiButtonState::UBS_DOWN)
+	{
+		arg.textureId = temple::GetRef<int>(0x10BED6D0);
+	}
+	else if (buttonState == UiButtonState::UBS_HOVERED)
+	{
+		arg.textureId = temple::GetRef<int>(0x10BEE2D4);
+	}
+	else
+	{
+		arg.textureId = temple::GetRef<int>(0x10BEDA5C);
+	}
+
+	arg.flags = 0;
+	arg.srcRect = nullptr;;
+	TigRect destRect(207 + 108*mUseCo8Ui,  165 + 209, 112, 22);
+	arg.destRect = &destRect;
+	arg.vertexColors = nullptr;
+	// RenderHooks::TextureRender2d(&arg);
+	UiRenderer::DrawTextureInWidget(mItemCreationWndId, arg.textureId, destRect, temple::GetRef<TigRect>(0x102FAEE4));
+
+	auto &textStyle = temple::GetRef<TigTextStyle>(0x10BED9F8);
+	auto &text = temple::GetRef<const char*>(0x10BED8AC);
+	auto measText = UiRenderer::MeasureTextSize(text, textStyle);
+
+	destRect.x += (112 - measText.width) / 2;
+	destRect.y += (22 - measText.height) / 2;
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	UiRenderer::DrawTextInWidget(mItemCreationWndId, text, destRect, textStyle);
+	UiRenderer::PopFont();
 };
 
 
@@ -1244,41 +1321,58 @@ bool ItemCreation::ItemCreationWndMsg(int widId, TigMsg * msg){
 
 void ItemCreation::ItemCreationWndRender(int widId){
 	// Background Image
-	bkgImage->SetX(mItemCreationWnd->x);
-	bkgImage->SetY(mItemCreationWnd->y);
-	bkgImage->Render();
-
-
+	if (mUseCo8Ui){
+		// draw background (composed of pieces)
+		TigRect srcRect(0, 0, 256, 165);
+		TigRect destRect(mItemCreationWnd->x, mItemCreationWnd->y, 256, 165);
+		UiRenderer::DrawTexture(mItemCreationWidenedTexture01, destRect, srcRect);
+		destRect.x += 256;
+		UiRenderer::DrawTexture(mItemCreationWidenedTexture11, destRect, srcRect);
+		
+		destRect.y += 165;
+		srcRect = TigRect(0, 0, 256, 256);
+		destRect.height = 256;
+		UiRenderer::DrawTexture(mItemCreationWidenedTexture10, destRect, srcRect);
+		destRect.x -= 256;
+		UiRenderer::DrawTexture(mItemCreationWidenedTexture00, destRect, srcRect);
+	} 
+	else	{
+		bkgImage->SetX(mItemCreationWnd->x);
+		bkgImage->SetY(mItemCreationWnd->y);
+		bkgImage->Render();
+	}
+	
+	
 
 	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
 	// title
 	std::string text(GetItemCreationMesLine(itemCreationType));
 	auto measText = UiRenderer::MeasureTextSize(text, temple::GetRef<TigTextStyle>(0x10BED938));
-	TigRect rect((342 - measText.width)/2 + 29, (15 - measText.height) / 2 + 10,342, 15);
+	TigRect rect((342 + 108*mUseCo8Ui - measText.width)/2 + 29, (15 - measText.height) / 2 + 10,342, 15);
 	UiRenderer::DrawTextInWidget(mItemCreationWndId, text, rect, temple::GetRef<TigTextStyle>(0x10BED9F8));
 
 	// draw crafter name
 	auto crafterName = description.getDisplayName(itemCreationCrafter);
 	measText = UiRenderer::MeasureTextSize(crafterName, temple::GetRef<TigTextStyle>(0x10BED938));
-	TigRect crafterRect((351 - measText.width) / 2 + 24, (21 - measText.height) / 2 + 322, 351, 21);
+	TigRect crafterRect((351 + 108 * mUseCo8Ui - measText.width) / 2 + 24 , (21 - measText.height) / 2 + 322, 351, 21);
 	UiRenderer::DrawTextInWidget(widId, crafterName, crafterRect, temple::GetRef<TigTextStyle>(0x10BED9F8));
 
 	// draw XP & GP
 	auto surplusXp = d20LevelSys.GetSurplusXp(itemCreationCrafter);
 	text = fmt::format("{}", surplusXp);
 	measText = UiRenderer::MeasureTextSize(text, temple::GetRef<TigTextStyle>(0x10BED938));
-	TigRect resourceRect((66 - measText.width) / 2 + 130, (12 - measText.height) / 2 + 343, 66, 12);
+	TigRect resourceRect((66 - measText.width) / 2 + 130 + 14*mUseCo8Ui, (12 - measText.height) / 2 + 343, 66, 12);
 	UiRenderer::DrawTextInWidget(widId, text, resourceRect, temple::GetRef<TigTextStyle>(0x10BED938));
 	auto partyMoney = party.GetMoney();
 	text = fmt::format("{}", partyMoney / 100);
 	measText = UiRenderer::MeasureTextSize(text, temple::GetRef<TigTextStyle>(0x10BED938));
-	resourceRect = TigRect((66 - measText.width) / 2 + 245, (12 - measText.height) / 2 + 343, 66, 12);
+	resourceRect = TigRect((66 - measText.width) / 2 + 245 + 108 * mUseCo8Ui, (12 - measText.height) / 2 + 343, 66, 12);
 	UiRenderer::DrawTextInWidget(widId, text, resourceRect, temple::GetRef<TigTextStyle>(0x10BED938));
 
 
 	auto shortname = ui.GetStatShortName(stat_experience);
 	measText = UiRenderer::MeasureTextSize(shortname, temple::GetRef<TigTextStyle>(0x10BED938));
-	resourceRect = TigRect((37 - measText.width) / 2 + 87, (15 - measText.height) / 2 + 342, 37, 15);
+	resourceRect = TigRect((37 - measText.width) / 2 + 87 + 14 * mUseCo8Ui, (15 - measText.height) / 2 + 342, 37, 15);
 	UiRenderer::DrawTextInWidget(widId, shortname, resourceRect, temple::GetRef<TigTextStyle>(0x10BED850));
 
 
@@ -1289,7 +1383,7 @@ void ItemCreation::ItemCreationWndRender(int widId){
 
 	text = GetItemCreationMesLine(10000); // Item Information:
 	measText = UiRenderer::MeasureTextSize(text, temple::GetRef<TigTextStyle>(0x10BED938));
-	resourceRect = TigRect(206, 39, 167, 11);
+	resourceRect = TigRect(206 + 108 * mUseCo8Ui, 39, 167, 11);
 	UiRenderer::DrawTextInWidget(widId, text, resourceRect, temple::GetRef<TigTextStyle>(0x10BED6D8));
 
 
@@ -1304,7 +1398,9 @@ void ItemCreation::ItemCreationWndRender(int widId){
 		auto invAid = (UiGenericAsset)gameSystems->GetObj().GetObject(itemHandle)->GetInt32(obj_f_item_inv_aid);
 		int textureId;
 		ui.GetAsset(UiAssetType::Inventory, invAid, textureId);
-		UiRenderer::DrawTexture(textureId, temple::GetRef<TigRect>(0x102FAEC4));
+		rect = TigRect(temple::GetRef<TigRect>(0x102FAEC4));
+		rect.x += 108 * mUseCo8Ui;
+		UiRenderer::DrawTexture(textureId, rect);
 
 
 		auto itemName = ItemCreationGetItemName(itemHandle);
@@ -1312,7 +1408,7 @@ void ItemCreation::ItemCreationWndRender(int widId){
 		if (measText.width > 161) {
 			measText.width = 161;
 		}
-		rect = TigRect((161 - measText.width )/2 + 208, 132, 161, 24);
+		rect = TigRect((161 - measText.width )/2 + 208 + 108 * mUseCo8Ui, 132, 161, 24);
 		UiRenderer::DrawTextInWidget(widId, itemName, rect, temple::GetRef<TigTextStyle>(0x10BEDFE8));
 		
 		ItemCreationCraftingCostTexts(widId, itemHandle);
@@ -1321,6 +1417,7 @@ void ItemCreation::ItemCreationWndRender(int widId){
 
 	UiRenderer::PopFont();
 }
+
 
 void ItemCreation::ItemCreationEntryRender(int widId){
 	auto widIdx = 0;
@@ -1336,12 +1433,15 @@ void ItemCreation::ItemCreationEntryRender(int widId){
 	if (itemIdx < 0 || itemIdx >= numItemsCrafting[itemCreationType])
 		return;
 
-	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	if (mUseCo8Ui)
+		UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	else
+		UiRenderer::PushFont(PredefinedFont::ARIAL_10);
 
 
 	auto itemHandle = craftedItemHandles[itemCreationType][itemIdx];
 	auto itemName = ItemCreationGetItemName(itemHandle);
-	TigRect rect(32, 12 * widIdx + 55, 155, 12);
+	TigRect rect(32, 12 * widIdx + 55, 155 + mUseCo8Ui * 108, 12);
 	auto checkRes = itemCreationResourceCheckResults[itemIdx];
 	if (itemIdx == craftingItemIdx)	{
 		if (checkRes)
@@ -2805,6 +2905,18 @@ int ItemCreation::UiItemCreationInit(GameSystemConf& conf)
 
 	bkgImage = new CombinedImgFile("art\\interface\\item_creation_ui\\item_creation.img");
 
+	if (temple::Dll::GetInstance().HasCo8Hooks()){	
+		mUseCo8Ui = true;
+		if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\ITEM_CREATION_WIDENED_0_0.tga", &mItemCreationWidenedTexture00))
+			return 0;
+		if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\ITEM_CREATION_WIDENED_1_0.tga", &mItemCreationWidenedTexture10))
+			return 0;
+		if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\ITEM_CREATION_WIDENED_0_1.tga", &mItemCreationWidenedTexture01))
+			return 0;
+		if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\ITEM_CREATION_WIDENED_1_1.tga", &mItemCreationWidenedTexture11))
+			return 0;
+	}
+
 	if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\craftarms_0.tga", temple::GetPointer<int>(0x10BEE38C)))
 		return 0;
 	if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\craftarms_1.tga", temple::GetPointer<int>(0x10BECEE8)))
@@ -2836,7 +2948,7 @@ int ItemCreation::UiItemCreationInit(GameSystemConf& conf)
 	/*
 	  Init Widgets
 	*/
-	if (!ItemCreationWidgetsInit(conf.width, conf.height))
+	if (!UiItemCreationWidgetsInit(conf.width, conf.height))
 		return 0;
 
 	if (!MaaWidgetsInit(conf.width, conf.height))
@@ -2940,10 +3052,10 @@ bool ItemCreation::InitItemCreationRules(){
 	return true;
 }
 
-bool ItemCreation::ItemCreationWidgetsInit(int width, int height){
+bool ItemCreation::UiItemCreationWidgetsInit(int width, int height){
 	auto wndId = &mItemCreationWndId;
 	auto& wnd = temple::GetRef<WidgetType1>(0x10BEE040);
-	wnd.WidgetType1Init((width - 404 )/2, (height - 421) / 2, 404, 421);
+	wnd.WidgetType1Init((width - 404 - 108*mUseCo8Ui) / 2, (height - 421) / 2, 404+ 108*mUseCo8Ui, 421);
 	wnd.widgetFlags = 1;
 	wnd.windowId = 0x7FFFFFFF;
 	wnd.render = [](int widId) { itemCreation.ItemCreationWndRender(widId); };
@@ -2953,7 +3065,7 @@ bool ItemCreation::ItemCreationWidgetsInit(int width, int height){
 		wndId, "ui_item_creation.cpp", 2094))
 		return false;
 
-	if (mItemCreationScrollbar->Init(185, 51, 259))
+	if (mItemCreationScrollbar->Init(185 + mUseCo8Ui * 108, 51, 259))
 		return false;
 	mItemCreationScrollbar->scrollQuantum = 3;
 	mItemCreationScrollbar->x += wnd.x;
@@ -2965,7 +3077,7 @@ bool ItemCreation::ItemCreationWidgetsInit(int width, int height){
 	auto btnY = 55;
 
 	for (int i = 0; i < NUM_ITEM_CREATION_ENTRY_WIDGETS; i++){
-		WidgetType2 btn(nullptr, *wndId, 32, btnY, 155, 12);
+		WidgetType2 btn(nullptr, *wndId, 32, btnY, 155 + 108 * mUseCo8Ui, 12);
 		btn.x += wnd.x;
 		btn.y += wnd.y;
 		btn.render = [](int widId) {itemCreation.ItemCreationEntryRender(widId); };
@@ -2980,7 +3092,7 @@ bool ItemCreation::ItemCreationWidgetsInit(int width, int height){
 		WidgetType2 btn(nullptr, *wndId, 81, 373, 112, 22);
 		btn.x += wnd.x;
 		btn.y += wnd.y;
-		btn.render = temple::GetRef<void(__cdecl)(int)>(0x1014FD50);
+		btn.render = [](int widId) { itemCreation.ItemCreationCreateBtnRender(widId); };
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.CreateBtnMsg(widId, msg); };
 
 		ui.AddButton(&btn, sizeof(WidgetType2), &mItemCreationCreateBtnId, "ui_item_creation.cpp", 2127);
@@ -2990,10 +3102,10 @@ bool ItemCreation::ItemCreationWidgetsInit(int width, int height){
 	// cancel button
 	auto cancelBtnId = temple::GetPointer<int>(0x10BEDA68);
 	
-	WidgetType2 btn(nullptr, *wndId, 205, 373, 112, 22);
+	WidgetType2 btn(nullptr, *wndId, 205 + 108*mUseCo8Ui, 373, 112, 22);
 	btn.x += wnd.x;
 	btn.y += wnd.y;
-	btn.render = temple::GetRef<void(__cdecl)(int)>(0x1014FEC0);
+	btn.render = [](int widId) {itemCreation.ItemCreationCancelBtnRender(widId); };
 	btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.CancelBtnMsg(widId, msg); };
 
 	ui.AddButton(&btn, sizeof(WidgetType2), cancelBtnId, "ui_item_creation.cpp", 2142);
@@ -3220,7 +3332,7 @@ void ItemCreation::UiItemCreationResize(UiResizeArgs& resizeArgs){
 	ItemCreationWidgetsExit(mItemCreationWndId);
 	
 
-	ItemCreationWidgetsInit(resizeArgs.rect1.width, resizeArgs.rect1.height);
+	UiItemCreationWidgetsInit(resizeArgs.rect1.width, resizeArgs.rect1.height);
 	MaaWidgetsInit(resizeArgs.rect1.width, resizeArgs.rect1.height);
 
 

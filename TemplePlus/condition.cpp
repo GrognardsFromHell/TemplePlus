@@ -1454,7 +1454,7 @@ void _FeatConditionsRegister()
 	// Scribe Scroll
 	static CondStructNew scribeScroll("Scribe Scroll", 0);
 	scribeScroll.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatScribeScrollRadialMenu);
-	scribeScroll.AddToFeatDictionary(FEAT_CRAFT_WAND);
+	scribeScroll.AddToFeatDictionary(FEAT_SCRIBE_SCROLL);
 	
 	// Forge Ring
 	static CondStructNew forgeRing("Forge Ring", 0);
