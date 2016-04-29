@@ -913,7 +913,7 @@ void ItemCreation::ItemCreationCreateBtnRender(int widId) const
 
 	arg.flags = 0;
 	//arg.srcRect = &temple::GetRef<TigRect>(0x102FAEE4);
-	TigRect destRect( 83 + 14*mUseCo8Ui, 165 + 209, 112, 22);
+	TigRect destRect( 82 + 14*mUseCo8Ui, 165 + 209, 113, 22);
 	/*arg.destRect = &destRect;
 	arg.vertexColors = nullptr;*/
 	UiRenderer::DrawTextureInWidget(mItemCreationWndId, arg.textureId, destRect, temple::GetRef<TigRect>(0x102FAEE4));
@@ -1372,18 +1372,18 @@ void ItemCreation::ItemCreationWndRender(int widId){
 
 	auto shortname = ui.GetStatShortName(stat_experience);
 	measText = UiRenderer::MeasureTextSize(shortname, temple::GetRef<TigTextStyle>(0x10BED938));
-	resourceRect = TigRect((37 - measText.width) / 2 + 87 + 14 * mUseCo8Ui, (15 - measText.height) / 2 + 342, 37, 15);
+	resourceRect = TigRect((37 - measText.width) / 2 + 89 + 14 * mUseCo8Ui, (15 - measText.height) / 2 + 341, 37, 15);
 	UiRenderer::DrawTextInWidget(widId, shortname, resourceRect, temple::GetRef<TigTextStyle>(0x10BED850));
 
 
 	text = GetItemCreationMesLine(10 + itemCreationType); // Item Creation Names (printed above the items to be created)
 	measText = UiRenderer::MeasureTextSize(text, temple::GetRef<TigTextStyle>(0x10BED938));
-	resourceRect = TigRect(29, 39, 167, 11);
+	resourceRect = TigRect(29, 38, 167, 11);
 	UiRenderer::DrawTextInWidget(widId, text, resourceRect, temple::GetRef<TigTextStyle>(0x10BED6D8));
 
 	text = GetItemCreationMesLine(10000); // Item Information:
 	measText = UiRenderer::MeasureTextSize(text, temple::GetRef<TigTextStyle>(0x10BED938));
-	resourceRect = TigRect(206 + 108 * mUseCo8Ui, 39, 167, 11);
+	resourceRect = TigRect(206 + 108 * mUseCo8Ui, 38, 167, 11);
 	UiRenderer::DrawTextInWidget(widId, text, resourceRect, temple::GetRef<TigTextStyle>(0x10BED6D8));
 
 
@@ -1464,13 +1464,13 @@ void ItemCreation::MaaWndRender(int widId){
 	// draw background (composed of pieces)
 	TigRect srcRect(1, 1, 254, 254);
 	TigRect destRect(mMaaWnd->x, mMaaWnd->y, 254, 254);
-	UiRenderer::DrawTexture(temple::GetRef<int>(0x10BEE38C), destRect);
+	UiRenderer::DrawTexture(temple::GetRef<int>(0x10BEE38C), destRect, srcRect);
 	destRect.x += 253;
-	UiRenderer::DrawTexture(temple::GetRef<int>(0x10BECEE8), destRect);
+	UiRenderer::DrawTexture(temple::GetRef<int>(0x10BECEE8), destRect, srcRect);
 	destRect.y += 253;
-	UiRenderer::DrawTexture(temple::GetRef<int>(0x10BECEEC), destRect);
+	UiRenderer::DrawTexture(temple::GetRef<int>(0x10BECEEC), destRect, srcRect);
 	destRect.x -= 253;
-	UiRenderer::DrawTexture(temple::GetRef<int>(0x10BED988), destRect);
+	UiRenderer::DrawTexture(temple::GetRef<int>(0x10BED988), destRect, srcRect);
 
 
 
@@ -1503,7 +1503,7 @@ void ItemCreation::MaaWndRender(int widId){
 
 	auto shortname = ui.GetStatShortName(stat_experience);
 	measText = UiRenderer::MeasureTextSize(shortname, temple::GetRef<TigTextStyle>(0x10BED938));
-	resourceRect = TigRect((37 - measText.width) / 2 + 138, (15- measText.height) / 2 + 309, 37, 15);
+	resourceRect = TigRect((37 - measText.width) / 2 + 140, (15- measText.height) / 2 + 308, 37, 15);
 	UiRenderer::DrawTextInWidget(widId, shortname, resourceRect, temple::GetRef<TigTextStyle>(0x10BED850));
 
 	
