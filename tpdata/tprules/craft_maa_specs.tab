@@ -30,7 +30,7 @@
 29	Weapon Throwing	IESF_WEAPON	1	0		C5	'magic stone'	
 30	Weapon Thundering	IESF_WEAPON	1	0		C5	'blindness/deafness'	
 31	Weapon Unholy	IESF_ENABLED IESF_WEAPON	2	0		C7 Aevil	'unholy blight'	
-32	Weapon Vicious	IESF_WEAPON	1	0		C9	'enervation'	
+32	Weapon Vicious	IESF_WEAPON IESF_MELEE	1	0		C9	'enervation'	
 33	Weapon Vorpal	IESF_WEAPON	5	0		C18	'circle of death'+'keen edge'	
 34	Weapon Wounding	IESF_WEAPON	2	0		C10	'mordenkainens sword'	
 200	Armor Enhancement Bonus	IESF_ENABLED IESF_ARMOR IESF_PLUS_BONUS	1	1		C3		

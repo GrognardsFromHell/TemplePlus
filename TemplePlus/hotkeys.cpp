@@ -79,6 +79,15 @@ BOOL HotkeyReplacements::HotkeyCompare(RadialMenuEntry& first, RadialMenuEntry& 
 		|| actionType == D20A_ACTIVATE_DEVICE_SPELL)
 		return first.textHash == second.textHash;
 
+	if (actionType == D20A_USE_ITEM){
+		if (first.d20SpellData.spellEnumOrg != second.d20SpellData.spellEnumOrg)
+			return FALSE;
+
+		if (first.d20SpellData.metaMagicData != second.d20SpellData.metaMagicData)
+			return FALSE;
+		return first.textHash == second.textHash;
+	}
+
 	if (first.d20ActionData1 != second.d20ActionData1)
 		return FALSE;
 
