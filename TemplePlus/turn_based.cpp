@@ -172,7 +172,7 @@ void TurnBasedSys::AddToInitiative(objHndl handle) const
 	int initiativeMod = 0;
 	auto dispatcher = obj->GetDispatcher();
 	if (dispatcher->IsValid()){
-		DispIoBonusAndObj dispIo;
+		DispIoObjBonus dispIo;
 		dispIo.bonOut = &dispIo.bonlist;
 		dispatcher->Process(dispTypeInitiativeMod, DK_NONE, &dispIo);
 		initiativeMod = dispIo.bonlist.GetEffectiveBonusSum();

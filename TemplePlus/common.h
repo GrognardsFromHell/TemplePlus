@@ -157,6 +157,9 @@ struct BonusList
 	int AddBonusWithDesc(int value, int bonType, int mesline, char* descr);
 	int AddBonusFromFeat(int value, int bonType, int mesline, feat_enums feat); // same as the above, but it also gets the feat name automatically
 	BOOL ZeroBonusSetMeslineNum(int mesline);
+
+	int AddCap(int capType, int capValue, uint32_t bonMesLineNum);
+	int AddCapWithDescr(int capType, int capValue, uint32_t bonMesLineNum, char* capDescr);
 };
 
 const int TestSizeOfBonusList = sizeof(BonusList); // should be 888 (0x378)

@@ -1733,7 +1733,7 @@ enum enum_dispIO_type : uint32_t {
 	dispIOTypeQuery,
 	dispIOTypeTurnBasedStatus,
 	dispIoTypeTooltip,
-	dispIOTypeSkillLevel, // also used for initiative level
+	dispIoTypeObjBonus, // used for skill level, initiative level, and attacker concealment chance
 	dispIOTypeDispelCheck, // goes with dispTypeDispelCheck
 	dispIOTypeD20ActionTurnBased,
 	dispIOTypeMoveSpeed,

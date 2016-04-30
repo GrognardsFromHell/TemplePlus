@@ -19,7 +19,7 @@ struct DispIoD20Signal; // 6
 struct DispIoD20Query; // 7
 struct DispIOTurnBasedStatus; // 8
 struct DispIoTooltip; // 9
-struct DispIoBonusAndObj; // 10
+struct DispIoObjBonus; // 10
 struct DispIoDispelCheck; // 11
 struct DispIoD20ActionTurnBased; // 12
 struct DispIoMoveSpeed; //13
@@ -79,8 +79,8 @@ struct DispatcherSystem : temple::AddressTable
 	DispIOTurnBasedStatus* DispIoCheckIoType8(DispIO* dispIo);
 	DispIoTooltip* DispIoCheckIoType9(DispIO* dispIo);
 	DispIoTooltip* DispIoCheckIoType9(DispIoTooltip* dispIo);
-	DispIoBonusAndObj* DispIoCheckIoType10(DispIoBonusAndObj* dispIo);
-	DispIoBonusAndObj* DispIoCheckIoType10(DispIO* dispIo);
+	DispIoObjBonus* DispIoCheckIoType10(DispIoObjBonus* dispIo);
+	DispIoObjBonus* DispIoCheckIoType10(DispIO* dispIo);
 	DispIoDispelCheck* DispIOCheckIoType11(DispIoDispelCheck* dispIo);
 	static DispIoD20ActionTurnBased* DispIoCheckIoType12(DispIoD20ActionTurnBased* dispIo);
 	DispIoD20ActionTurnBased* DispIoCheckIoType12(DispIO* dispIo);
@@ -315,16 +315,16 @@ struct DispIoTooltip : DispIO // DispIoType 9 ; tooltip additional text when hov
 const auto TestSizeOfDispIoTooltip = sizeof(DispIoTooltip); // should be 2568  (0xA08)
 
 
-struct DispIoBonusAndObj : DispIO // type 10
+struct DispIoObjBonus : DispIO // type 10
 {
 	uint32_t returnVal;
 	BonusList * bonOut;
 	uint32_t pad;
 	objHndl obj; //optional
 	BonusList bonlist;
-	DispIoBonusAndObj();
+	DispIoObjBonus();
 };
-const int TestSizeOfDispIO390h = sizeof(DispIoBonusAndObj); // should be 912 (0x390)
+const int TestSizeOfDispIO390h = sizeof(DispIoObjBonus); // should be 912 (0x390)
 
 struct DispIoDispelCheck : DispIO // type 11
 {
@@ -519,7 +519,7 @@ DispIoD20Signal* _DispIoCheckIoType6(DispIoD20Signal* dispIo);
 DispIoD20Query* _DispIoCheckIoType7(DispIoD20Query* dispIo);
 DispIOTurnBasedStatus * _DispIoCheckIoType8(DispIOTurnBasedStatus* dispIo);
 DispIoTooltip* _DispIoCheckIoType9(DispIoTooltip* dispIo);
-DispIoBonusAndObj * _DispIoCheckIoType10(DispIoBonusAndObj *dispIo);
+DispIoObjBonus * _DispIoCheckIoType10(DispIoObjBonus *dispIo);
 DispIoDispelCheck * _DispIoCheckIoType11(DispIoDispelCheck* dispIo);
 DispIoD20ActionTurnBased * _DispIoCheckIoType12(DispIoD20ActionTurnBased* dispIo);
 DispIOBonusListAndSpellEntry * __cdecl _DispIoCheckIoType14(DispIOBonusListAndSpellEntry *dispIO);

@@ -22,7 +22,7 @@
 21	Weapon Merciful	IESF_WEAPON	1	0		C5		
 22	Weapon Mighty Cleaving	IESF_ENABLED IESF_WEAPON	1	0		C8	'divine power'	
 23	Weapon Returning	IESF_WEAPON IESF_THROWN	1	0		C7	'telekinesis'	
-24	Weapon Seeking	IESF_WEAPON IESF_RANGED	1	0		C12	'true seeing'	
+24	Weapon Seeking	IESF_ENABLED IESF_WEAPON IESF_RANGED	1	0		C12	'true seeing'	
 25	Weapon Shock	IESF_ENABLED IESF_WEAPON	1	0		C8	'call lightning' 'lightning bolt'	
 26	Weapon Shocking Burst	IESF_ENABLED IESF_WEAPON	2	0		C10	'call lightning' 'lightning bolt'	
 27	Weapon Speed	IESF_ENABLED IESF_WEAPON	3	0		C7	'haste'	

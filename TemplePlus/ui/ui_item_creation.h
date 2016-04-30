@@ -153,7 +153,7 @@ public:
 
 	bool IsWeaponBonus(int effIdx);
 	bool IsOutmoded(int effIdx);
-	bool ItemEnhancementIsApplicable(int effIdx);
+	bool MaaEffectIsApplicable(int effIdx);
 	int HasNecessaryEffects(int effIdx);
 	int MaaGetCurEnhBonus();
 	int MaaGetEffIdxForEnhBonus(int enhBon, objHndl item);

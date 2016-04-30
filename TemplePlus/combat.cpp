@@ -1081,6 +1081,9 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 		auto cond = conds.GetByName("sp-True Strike");
 		if (d20Sys.d20QueryWithData(attacker, DK_QUE_Critter_Has_Condition, cond, 0))
 			return 0;
+		cond = conds.GetByName("Weapon Seeking");
+		if (d20Sys.d20QueryWithData(attacker, DK_QUE_Critter_Has_Condition, cond, 0))
+			return 0;
 
 		DispIoAttackBonus dispIo;
 		dispIo.attackPacket.flags = (D20CAF)d20a.d20Caf;
@@ -1093,7 +1096,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 	static auto getAttackerConcealmentMissChance = [](objHndl attacker) {
 
 		auto dispatcher = gameSystems->GetObj().GetObject(attacker)->GetDispatcher();
-		DispIoBonusAndObj dispIo;
+		DispIoObjBonus dispIo;
 		dispatcher->Process(dispTypeGetAttackerConcealmentMissChance, DK_NONE, &dispIo);
 		return temple::GetRef<int(__cdecl)(BonusList&)>(0x100E6680)(dispIo.bonlist); // special bonus handler for blindness miss chance
 	};

@@ -130,6 +130,7 @@ public:
 	static int __cdecl GlobalWieldedTwoHandedQuery(DispatcherCallbackArgs args);
 
 
+	static int __cdecl HasCondition(DispatcherCallbackArgs args);
 } genericCallbacks;
 
 
@@ -141,6 +142,8 @@ public:
 	static int __cdecl UseableItemRadialEntry(DispatcherCallbackArgs args);
 	static int __cdecl BucklerToHitPenalty(DispatcherCallbackArgs args);
 	static int __cdecl WeaponSpeed(DispatcherCallbackArgs args);
+	static int __cdecl WeaponSeekingAttackerConcealmentMissChance(DispatcherCallbackArgs args);
+	
 
 } itemCallbacks;
 
@@ -914,6 +917,17 @@ int GenericCallbacks::GlobalWieldedTwoHandedQuery(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int GenericCallbacks::HasCondition(DispatcherCallbackArgs args){
+	args.dispIO->AssertType(dispIOTypeQuery);
+	auto dispIo = static_cast<DispIoD20Query*>(args.dispIO);
+	if (dispIo->data1 == args.GetData1() && !dispIo->data2){
+		dispIo->return_val = 1;
+		dispIo->data1 = args.GetCondArg(0);
+		dispIo->data2 = 0;
+	}
+	return 0;
+}
+
 int GenericCallbacks::EffectTooltip(DispatcherCallbackArgs args)
 {
 	auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
@@ -981,7 +995,7 @@ int __cdecl ItemSkillBonusCallback(DispatcherCallbackArgs args)
 	{
 		int invIdx = conds.CondNodeGetArg(args.subDispNode->condNode, 2);
 		objHndl itemHnd = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
-		DispIoBonusAndObj * dispIo = dispatch.DispIoCheckIoType10((DispIoBonusAndObj*)args.dispIO);
+		DispIoObjBonus * dispIo = dispatch.DispIoCheckIoType10((DispIoObjBonus*)args.dispIO);
 		const char * name = description.getDisplayName(itemHnd, args.objHndCaller);
 		bonusSys.bonusAddToBonusListWithDescr(dispIo->bonOut, bonValue, bonType, 112, (char*)name);
 	}
@@ -2726,7 +2740,7 @@ int SpellCallbacks::SkillBonus(DispatcherCallbackArgs args){
 	int bonType = 0; // will stack if 0
 
 	if (args.dispKey == skillEnum + 20 || skillEnum == -1) {
-		auto dispIo = dispatch.DispIoCheckIoType10((DispIoBonusAndObj*)args.dispIO);
+		auto dispIo = dispatch.DispIoCheckIoType10((DispIoObjBonus*)args.dispIO);
 		auto spellName = spellSys.GetSpellName(spellPkt.spellEnum);
 		dispIo->bonOut->AddBonusWithDesc(bonValue, bonType, 113, (char*)spellName); // 113 is ~Spell~[TAG_SPELLS] in bonus.mes
 	}
@@ -3273,6 +3287,13 @@ int ItemCallbacks::WeaponSpeed(DispatcherCallbackArgs args){
 	return 0;
 }
 
+int ItemCallbacks::WeaponSeekingAttackerConcealmentMissChance(DispatcherCallbackArgs args){
+	args.dispIO->AssertType(dispIoTypeObjBonus);
+	auto dispIo = static_cast<DispIoObjBonus*>(args.dispIO);
+	dispIo->bonOut->AddCap(0, 0, 347);
+	return 0;
+}
+
 #pragma endregion 
 
 
@@ -3589,6 +3610,10 @@ void Conditions::AddConditionsToTable(){
 	improvedTrip.AddHook(dispTypeD20Query, DK_QUE_Trip_AOO, genericCallbacks.TripAooQuery);
 	improvedTrip.AddHook(dispTypeAbilityCheckModifier, DK_NONE, genericCallbacks.ImprovedTripBonus);
 	improvedTrip.AddToFeatDictionary(FEAT_IMPROVED_TRIP);
+
+	static CondStructNew weaponSeeking("Weapon Seeking", 2, false);
+	weaponSeeking.AddHook(dispTypeGetAttackerConcealmentMissChance, DK_NONE, itemCallbacks.WeaponSeekingAttackerConcealmentMissChance);
+	weaponSeeking.AddHook(dispTypeD20Query, DK_QUE_Critter_Has_Condition, genericCallbacks.HasCondition, &weaponSeeking, 0);
 
 	static CondStructNew weaponSpeed("Weapon Speed", 2, false);
 	weaponSpeed.AddHook(dispTypeGetBonusAttacks, DK_NONE, itemCallbacks.WeaponSpeed);

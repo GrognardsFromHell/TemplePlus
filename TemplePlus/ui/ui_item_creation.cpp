@@ -413,7 +413,7 @@ bool ItemCreation::IsOutmoded(int effIdx){
 	return false;
 }
 
-bool ItemCreation::ItemEnhancementIsApplicable(int effIdx){
+bool ItemCreation::MaaEffectIsApplicable(int effIdx){
 
 	auto& itEnh = itemEnhSpecs[effIdx];
 	if (!(itEnh.flags & IESF_ENABLED))
@@ -435,6 +435,18 @@ bool ItemCreation::ItemEnhancementIsApplicable(int effIdx){
 			if (itemObj->type == obj_t_weapon) {
 				if ( !(itEnh.flags & IESF_WEAPON) )
 				return false;
+
+				if (itEnh.flags & IESF_RANGED)	{
+					auto weapFlags = static_cast<WeaponFlags>(gameSystems->GetObj().GetObject(itemHandle)->GetInt32(obj_f_weapon_flags));
+					if (!(weapFlags & WeaponFlags::OWF_RANGED_WEAPON))
+						return false;
+				}
+				if (itEnh.flags & IESF_THROWN) {
+					auto weapFlags = static_cast<WeaponFlags>(gameSystems->GetObj().GetObject(itemHandle)->GetInt32(obj_f_weapon_flags));
+					if (!(weapFlags & WeaponFlags::OWF_THROWABLE))
+						return false;
+				}
+
 			}
 			if (itemObj->type == obj_t_armor)
 			{
@@ -464,7 +476,7 @@ int ItemCreation::GetEffIdxFromWidgetIdx(int widIdx){
 	auto adjIdx = mMaaApplicableEffectsScrollbarY + widIdx; // this is the overall index for the effect
 	auto validCount = 0;
 	for (auto it: itemEnhSpecs){
-		if (ItemEnhancementIsApplicable(it.first) && !(it.second.flags & IESF_ENH_BONUS)){
+		if (MaaEffectIsApplicable(it.first) && !(it.second.flags & IESF_ENH_BONUS)){
 			if (validCount == adjIdx){
 				return it.first;
 			}
@@ -1810,7 +1822,7 @@ void ItemCreation::MaaInitWnd(int wndId){
 
 	auto numApplicableEffects = 0;
 	for (auto it : itemEnhSpecs) {
-		if (ItemEnhancementIsApplicable(it.first)) {
+		if (MaaEffectIsApplicable(it.first)) {
 			numApplicableEffects++;
 		}
 	}
@@ -2432,7 +2444,7 @@ int ItemCreation::MaaEffectTooltip(int x, int y, int * widId){
 	if (effIdx == CRAFT_EFFECT_INVALID)
 		return 0;
 
-	if (!ItemEnhancementIsApplicable(effIdx))
+	if (!MaaEffectIsApplicable(effIdx))
 		return 0;
 	
 	for (auto it : appliedBonusIndices){

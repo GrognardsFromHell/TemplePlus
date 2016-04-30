@@ -159,6 +159,36 @@ BOOL BonusList::ZeroBonusSetMeslineNum(int mesline)
 	return TRUE;
 }
 
+int BonusList::AddCap(int capType, int capValue, uint32_t bonMesLineNum){
+	
+	MesLine mesLine;
+	if (bonCapperCount >= 10) {
+		auto breakPointDummy = 1;
+		if (bonCapperCount >= BonusListMax) return 0;// bug? there's only 10 slots (this is the original code!)
+	}
+
+	mesLine.key = bonMesLineNum;
+	if (bonMesLineNum >= 335)
+		mesFuncs.GetLine_Safe(bonusSys.bonusMesNew, &mesLine);
+	else
+		mesFuncs.GetLine_Safe(*bonusSys.bonusMesHandle, &mesLine);
+	bonCaps[bonCapperCount].capValue = capValue;
+	bonCaps[bonCapperCount].bonType = capType;
+	bonCaps[bonCapperCount].bonCapperString = (char*)mesLine.value;
+	bonCaps[bonCapperCount++].bonCapDescr = nullptr;
+	return 1;
+	
+}
+
+int BonusList::AddCapWithDescr(int capType, int capValue, uint32_t bonMesLineNum, char* capDescr){
+
+	if (AddCap(capType, capValue, bonMesLineNum) == 1){
+		bonCaps[bonCapperCount - 1].bonCapDescr = capDescr;
+		return 1;
+	}
+	return 0;
+}
+
 objHndl AttackPacket::GetWeaponUsed() const
 {
 	if ( !(flags& D20CAF_TOUCH_ATTACK) ||  (flags & D20CAF_THROWN_GRENADE) )

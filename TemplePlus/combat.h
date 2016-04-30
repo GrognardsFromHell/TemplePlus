@@ -85,6 +85,9 @@ struct LegacyCombatSystem : temple::AddressTable {
 	int (__cdecl*_GetClosestEnemy)(objHndl obj, LocAndOffsets* locOut, objHndl * objOut, float* distOut, int flags);
 
 	int DispelRoll(objHndl obj, BonusList* bonlist, int modifier, int dc, const char* text, int *rollHistId);
+	/*
+		The To-Hit calculation. Sets the flags in the D20Action D20CAF_HIT and D20CAF_CRITICAL among other things.
+	*/
 	void ToHitProcessing(D20Actn &d20a);
 
 	LegacyCombatSystem() {

@@ -108,11 +108,11 @@ void  DispatcherSystem::DispatcherClearConds(Dispatcher *dispatcher)
 
 int32_t DispatcherSystem::dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut, objHndl objHnd2, int32_t flag)
 {
-	DispIoBonusAndObj dispIO;
+	DispIoObjBonus dispIO;
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (!dispatcherValid(dispatcher)) return 0;
 
-	dispIO.dispIOType = dispIOTypeSkillLevel;
+	dispIO.dispIOType = dispIoTypeObjBonus;
 	dispIO.returnVal = flag;
 	dispIO.bonOut = bonOut;
 	dispIO.obj = objHnd2;
@@ -268,16 +268,16 @@ DispIoTooltip* DispatcherSystem::DispIoCheckIoType9(DispIO* dispIo)
 	return static_cast<DispIoTooltip*>(dispIo);
 }
 
-DispIoBonusAndObj* DispatcherSystem::DispIoCheckIoType10(DispIoBonusAndObj* dispIo)
+DispIoObjBonus* DispatcherSystem::DispIoCheckIoType10(DispIoObjBonus* dispIo)
 {
-	if (dispIo->dispIOType != dispIOTypeSkillLevel) return nullptr;
+	if (dispIo->dispIOType != dispIoTypeObjBonus) return nullptr;
 	return dispIo;
 }
 
-DispIoBonusAndObj* DispatcherSystem::DispIoCheckIoType10(DispIO* dispIo)
+DispIoObjBonus* DispatcherSystem::DispIoCheckIoType10(DispIO* dispIo)
 {
-	if (dispIo->dispIOType != dispIOTypeSkillLevel) return nullptr;
-	return static_cast<DispIoBonusAndObj*>(dispIo);
+	if (dispIo->dispIOType != dispIoTypeObjBonus) return nullptr;
+	return static_cast<DispIoObjBonus*>(dispIo);
 }
 
 DispIoDispelCheck* DispatcherSystem::DispIOCheckIoType11(DispIoDispelCheck* dispIo)
@@ -752,7 +752,7 @@ DispIoTooltip* _DispIoCheckIoType9(DispIoTooltip* dispIo)
 	return dispatch.DispIoCheckIoType9(dispIo);
 }
 
-DispIoBonusAndObj* _DispIoCheckIoType10(DispIoBonusAndObj* dispIo)
+DispIoObjBonus* _DispIoCheckIoType10(DispIoObjBonus* dispIo)
 {
 	return dispatch.DispIoCheckIoType10(dispIo);
 }
@@ -1063,9 +1063,9 @@ void DispIoTooltip::Append(string& cs)
 	}
 }
 
-DispIoBonusAndObj::DispIoBonusAndObj()
+DispIoObjBonus::DispIoObjBonus()
 {
-	dispIOType = dispIOTypeSkillLevel;
+	dispIOType = dispIoTypeObjBonus;
 	obj = 0i64;
 	pad = 0;
 	returnVal = 0;
