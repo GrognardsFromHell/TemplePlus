@@ -41,6 +41,7 @@ struct DamagePacket {
 	int field51c;
 
 	int AddEtherealImmunity();
+	int AddDamageDice(uint32_t dicePacked, DamageType damType, int damageMesLine, const char* description = nullptr);
 };
 
 #pragma pack(push, 1)
@@ -75,7 +76,7 @@ public:
 		DealSpellDamage(victim, attacker, dice, type, attackPower, 100, 103, actionType, spellId, flags);
 	}
 
-	void DealDamage(objHndl victim, objHndl attacker, const Dice &dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType);
+	void DealDamage(objHndl victim, objHndl attacker, const Dice &dice, DamageType type, int attackPower, int damFactor, int damageDescId, D20ActionType actionType);
 	void DealSpellDamage(objHndl victim, objHndl attacker, const Dice &dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType,
 		int spellId, int flags);
 

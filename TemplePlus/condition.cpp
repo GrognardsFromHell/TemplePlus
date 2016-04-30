@@ -27,6 +27,9 @@
 #include "history.h"
 #include "gamesystems/objects/objevent.h"
 #include "ui/ui_party.h"
+#include "sound.h"
+
+#define GET_DISPIO(ioType, eventObjType ) args.dispIO->AssertType( ioType ); auto dispIo = static_cast< eventObjType *>(args.dispIO);
 
 ConditionSystem conds;
 CondStructNew conditionDisableAoO;
@@ -141,10 +144,15 @@ public:
 
 	static int __cdecl UseableItemRadialEntry(DispatcherCallbackArgs args);
 	static int __cdecl BucklerToHitPenalty(DispatcherCallbackArgs args);
-	static int __cdecl WeaponSpeed(DispatcherCallbackArgs args);
+	static int __cdecl WeaponMerciful(DispatcherCallbackArgs);
 	static int __cdecl WeaponSeekingAttackerConcealmentMissChance(DispatcherCallbackArgs args);
-	
+	static int __cdecl WeaponSpeed(DispatcherCallbackArgs args);
+	static int __cdecl WeaponVicious(DispatcherCallbackArgs args);
+	static int __cdecl WeaponViciousBlowback(DispatcherCallbackArgs args); // TODO (need to replace the damage calculation function to do this right...)
+	static int __cdecl WeaponWounding(DispatcherCallbackArgs args);
+	static int __cdecl WeaponThundering(DispatcherCallbackArgs args);
 
+	
 } itemCallbacks;
 
 
@@ -3276,6 +3284,28 @@ int ItemCallbacks::BucklerToHitPenalty(DispatcherCallbackArgs args)
 
 	return 0;
 }
+
+int ItemCallbacks::WeaponMerciful(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
+
+	auto attacker = dispIo->attackPacket.attacker;
+	if (!attacker)
+		return 0;
+
+	auto invIdx = args.GetCondArg(2);
+	auto item = inventory.GetItemAtInvIdx(attacker, invIdx);
+	auto dice = Dice(1, 6);
+
+	auto weapUsed = dispIo->attackPacket.GetWeaponUsed();
+	if (!weapUsed)
+		return 0;
+
+	if (weapUsed == item) {
+		dispIo->damage.AddDamageDice(dice.ToPacked(), DamageType::Subdual, 121);
+	}
+	return 0;
+}
+
 int ItemCallbacks::WeaponSpeed(DispatcherCallbackArgs args){
 
 	args.dispIO->AssertType(dispIOTypeD20ActionTurnBased);
@@ -3294,6 +3324,113 @@ int ItemCallbacks::WeaponSeekingAttackerConcealmentMissChance(DispatcherCallback
 	return 0;
 }
 
+int ItemCallbacks::WeaponVicious(DispatcherCallbackArgs args){
+
+	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
+
+	auto attacker = dispIo->attackPacket.attacker;
+	if (!attacker)
+		return 0;
+
+	auto invIdx = args.GetCondArg(2);
+	auto item = inventory.GetItemAtInvIdx(attacker, invIdx);
+	auto dice = Dice(2, 6);
+
+	auto weapUsed = dispIo->attackPacket.GetWeaponUsed();
+	if (!weapUsed)
+		return 0;
+
+	if (weapUsed == item){
+		auto itemName = description.getDisplayName(item);
+		dispIo->damage.AddDamageDice(dice.ToPacked(), DamageType::Magic, 121, itemName);
+
+		//auto counterDam = Dice(1, 6);
+		// damage.DealDamage(attacker, 0i64, counterDam, DamageType::Magic, (int)AttackPowerType::Unspecified, 0, 100, D20A_NONE);
+	}
+	return 0;
+}
+
+int ItemCallbacks::WeaponViciousBlowback(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
+
+	auto attacker = dispIo->attackPacket.attacker;
+	if (!attacker)
+		return 0;
+
+	auto invIdx = args.GetCondArg(2);
+	auto item = inventory.GetItemAtInvIdx(attacker, invIdx);
+	auto dice = Dice(2, 6);
+
+	auto weapUsed = dispIo->attackPacket.GetWeaponUsed();
+	if (!weapUsed)
+		return 0;
+
+	if (weapUsed == item) {
+	//	auto counterDam = Dice(1, 6);
+	//	damage.DealDamage(attacker, 0i64, counterDam, DamageType::Magic, (int)AttackPowerType::Unspecified, 0, 100, D20A_NONE);
+		//not that simply unfortunately !
+	}
+	return 0;
+}
+
+int ItemCallbacks::WeaponWounding(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
+
+	auto attacker = dispIo->attackPacket.attacker;
+	if (!attacker)
+		return 0;
+	auto victim = dispIo->attackPacket.victim;
+
+	auto invIdx = args.GetCondArg(2);
+	auto item = inventory.GetItemAtInvIdx(attacker, invIdx);
+
+	auto weapUsed = dispIo->attackPacket.GetWeaponUsed();
+	if (!weapUsed)
+		return 0;
+
+	if (weapUsed == item) {
+		if (d20Sys.d20Query(victim, DK_QUE_Critter_Is_Immune_Critical_Hits))
+			return 0;
+
+		histSys.CreateFromFreeText(fmt::format("{} takes 1 Con damage.\n", description.getDisplayName(victim)).c_str());
+		conds.AddTo(victim, "Damage_Ability_Loss", { 2,1 });
+	}
+	return 0;
+
+
+	
+}
+
+int ItemCallbacks::WeaponThundering(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
+
+	auto attacker = dispIo->attackPacket.attacker;
+	if (!attacker)
+		return 0;
+	auto victim = dispIo->attackPacket.victim;
+
+	auto invIdx = args.GetCondArg(2);
+	auto item = inventory.GetItemAtInvIdx(attacker, invIdx);
+
+	auto weapUsed = dispIo->attackPacket.GetWeaponUsed();
+	if (!weapUsed)
+		return 0;
+
+	if (weapUsed == item) {
+		
+		if (dispIo->attackPacket.flags & D20CAF_CRITICAL){
+			auto critMultiplier = gameSystems->GetObj().GetObject(item)->GetInt32(obj_f_weapon_crit_hit_chart);
+			dispIo->damage.AddDamageDice(Dice(critMultiplier - 1, 8).ToPacked(), DamageType::Sonic, 121);
+			sound.PlaySoundAtObj(100000, victim); // thunderclap.mp3
+			if (!damage.SavingThrow(victim, attacker, 14, SavingThrowType::Fortitude, 0)){
+				conds.AddTo(victim, "sp-Deafness", {0,0,0});
+			}
+		}
+
+	}
+	return 0;
+}
 #pragma endregion 
 
 
@@ -3611,12 +3748,29 @@ void Conditions::AddConditionsToTable(){
 	improvedTrip.AddHook(dispTypeAbilityCheckModifier, DK_NONE, genericCallbacks.ImprovedTripBonus);
 	improvedTrip.AddToFeatDictionary(FEAT_IMPROVED_TRIP);
 
-	static CondStructNew weaponSeeking("Weapon Seeking", 2, false);
+	
+	
+
+	static CondStructNew weaponSeeking("Weapon Seeking", 3, false);
 	weaponSeeking.AddHook(dispTypeGetAttackerConcealmentMissChance, DK_NONE, itemCallbacks.WeaponSeekingAttackerConcealmentMissChance);
 	weaponSeeking.AddHook(dispTypeD20Query, DK_QUE_Critter_Has_Condition, genericCallbacks.HasCondition, &weaponSeeking, 0);
 
-	static CondStructNew weaponSpeed("Weapon Speed", 2, false);
+	static CondStructNew weaponSpeed("Weapon Speed", 3, false);
 	weaponSpeed.AddHook(dispTypeGetBonusAttacks, DK_NONE, itemCallbacks.WeaponSpeed);
+
+	static CondStructNew weaponThundering("Weapon Thundering", 4, false);
+	weaponThundering.AddHook(dispTypeDealingDamage, DK_NONE, itemCallbacks.WeaponThundering);
+
+	static CondStructNew weaponVicious("Weapon Vicious", 3, false);
+	weaponVicious.AddHook(dispTypeDealingDamage, DK_NONE, itemCallbacks.WeaponVicious);
+	weaponVicious.AddHook(dispTypeDealingDamage2, DK_NONE, itemCallbacks.WeaponViciousBlowback);
+
+	static CondStructNew weaponWounding("Weapon Wounding", 3, false);
+	weaponWounding.AddHook(dispTypeDealingDamage2, DK_NONE, itemCallbacks.WeaponWounding);
+
+	static CondStructNew weaponMerciful("Weapon Merciful", 4, false);
+	weaponMerciful.AddHook(dispTypeDealingDamage, DK_NONE, itemCallbacks.WeaponMerciful);
+
 
 
 	// New Conditions!

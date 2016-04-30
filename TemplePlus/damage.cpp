@@ -99,6 +99,17 @@ int DamagePacket::AddEtherealImmunity(){
 	return 1;
 }
 
+int DamagePacket::AddDamageDice(uint32_t dicePacked, DamageType damType, int damageMesLine, const char* text){
+	if (!damage.AddDamageDice(this, dicePacked, damType, damageMesLine))
+		return 0;
+
+	if (text){
+		dice[diceCount-1].causedBy = text;
+	}
+
+	return 1;
+}
+
 void Damage::DealDamage(objHndl victim, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType) {
 
 	addresses.DoDamage(victim, attacker, dice.ToPacked(), type, attackPower, reduction, damageDescId, actionType);
