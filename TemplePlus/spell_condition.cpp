@@ -38,12 +38,15 @@ public:
 	static int ColorSprayUnconsciousOnAdd(DispatcherCallbackArgs args);
 	static int HasteBonusAttack(DispatcherCallbackArgs args);
 	static int BootsOfSpeedBonusAttack(DispatcherCallbackArgs args);
+	static int BlinkDefenderMissChance(DispatcherCallbackArgs args);
 
 	void apply() override {
 		
 		VampiricTouchFix();
 		enlargePersonModelScaleFix();
 
+		// Fix for Blink defender miss chance (the conditions for true seeing reducing the chance to 20% was flipped)
+		replaceFunction(0x100C62D0, BlinkDefenderMissChance);
 
 		// Fix for Haste stacking
 		replaceFunction(0x100C87C0, HasteBonusAttack);
@@ -418,5 +421,27 @@ int SpellConditionFixes::BootsOfSpeedBonusAttack(DispatcherCallbackArgs args){
 		}
 	}
 
+	return 0;
+}
+
+int SpellConditionFixes::BlinkDefenderMissChance(DispatcherCallbackArgs args){
+	args.dispIO->AssertType(dispIOTypeAttackBonus);
+	auto dispIo = static_cast<DispIoAttackBonus*>(args.dispIO);
+
+	auto missChance = 50;
+	auto attacker = dispIo->attackPacket.attacker;
+	if (!attacker)
+		return 0;
+	if (d20Sys.d20Query(attacker, DK_QUE_Critter_Has_True_Seeing) 
+		|| d20Sys.d20Query(attacker, DK_QUE_Critter_Can_See_Invisible)){ // reduce to 20% miss chance
+		missChance = 20;
+	}
+
+	if (d20Sys.d20Query(attacker, DK_QUE_Critter_Can_See_Ethereal)){
+		missChance = (missChance == 50) ? 20 : 0;
+	}
+	if (missChance){
+		dispIo->bonlist.AddBonus(missChance, 19, args.GetData2());
+	}
 	return 0;
 }
