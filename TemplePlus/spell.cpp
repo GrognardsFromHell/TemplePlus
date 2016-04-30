@@ -261,6 +261,10 @@ bool SpellPacketBody::SavingThrow(objHndl target, D20SavingThrowFlag flags) {
 	return damage.SavingThrowSpell(target, caster, dc, (SavingThrowType)spEntry.savingThrowType, flags, spellId );
 }
 
+const char* SpellPacketBody::GetName(){
+	return spellSys.GetSpellName(spellEnum);
+}
+
 SpellMapTransferInfo::SpellMapTransferInfo()
 {
 	//memset(this, 0, sizeof(SpellMapTransferInfo));

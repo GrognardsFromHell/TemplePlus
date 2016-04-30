@@ -221,7 +221,7 @@ int ItemCreation::CraftedWandSpellLevel(objHndl objHndItem)
 	uint32_t spellLevelFinal = spellData.spellLevel;
 
 
-	auto casterLevelSet = (int) d20Sys.d20QueryReturnData(itemCreationCrafter, DK_QUE_Craft_Wand_Spell_Level, 0, 0);
+	auto casterLevelSet = (int) d20Sys.d20QueryReturnData(itemCreationCrafter, DK_QUE_Craft_Wand_Spell_Level);
 	casterLevelSet = 2 * ((casterLevelSet + 1) / 2) - 1;
 	if (casterLevelSet < 1)
 		casterLevelSet = 1;

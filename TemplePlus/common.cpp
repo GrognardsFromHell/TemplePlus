@@ -180,6 +180,16 @@ bool AttackPacket::IsOffhandAttack()
 	return false;
 }
 
+AttackPacket::AttackPacket(): field_1C(0) {
+	flags = D20CAF_NONE;
+	victim = 0i64;
+	attacker = 0i64;
+	weaponUsed = 0i64;
+	ammoItem = 0i64;
+	d20ActnType = D20A_STANDARD_ATTACK;
+	dispKey = DK_NONE;
+}
+
 PointNode::PointNode(){
 	absX = 0;
 	absY = 0;

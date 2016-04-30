@@ -5,6 +5,125 @@
 #include "tig/tig_mes.h"
 #include "util/fixes.h"
 
+#define HISTORY_ARRAY_SIZE 150
+
+struct HistoryEntry{
+	uint32_t histId;
+	uint32_t histType;
+	objHndl obj;
+	ObjectId objId;
+	char objDescr[2000];
+	objHndl obj2;
+	ObjectId obj2Id;
+	char obj2Descr[2000];
+	uint32_t prevId;
+	uint32_t nextId;
+};
+
+struct HistoryEntryType0 : HistoryEntry{
+	int rollResult;
+	int unk;
+	BonusList bonlist;
+	int rollIdType7;
+	int overallBonus;
+	D20CAF d20Caf;
+	int pad[99];
+};
+
+struct HistoryEntryType1 : HistoryEntry
+{
+	DamagePacket dmgPkt;
+};
+
+
+struct HistoryEntryType2 : HistoryEntry
+{
+	uint32_t dicePacked;
+	int32_t rollResult;
+	uint32_t skillIdx;
+	uint32_t dc;
+	BonusList bonlist;
+	uint32_t pad[100];
+};
+
+struct HistoryEntryType3 : HistoryEntry
+{
+	uint32_t dicePacked;
+	int32_t rollResult;
+	uint32_t dc;
+	uint32_t saveType;
+	uint32_t saveFlags;
+	BonusList bonlist;
+	uint32_t pad[99];
+};
+
+struct HistoryEntryType4 : HistoryEntry {
+	uint32_t dicePacked;
+	int rollResult;
+	int dc;
+	int saveType;
+	const char* text;
+	BonusList bonlist;
+	int pad[99];
+
+	HistoryEntryType4(objHndl obj, int dicePacked, int rollResult, int dc, const char* text, BonusList* Bonlist);
+};
+
+struct HistoryEntryType5 : HistoryEntry { // used for rolls vs a percentage, like concealment, or stuff like blink spell
+	int failureChance;
+	int rollResult;
+	int combatMesFailureReason; // description for the cause of the roll (e.g. 
+	int combatMesResult; // descrition for the result
+	int combatMesTitle;
+	
+	int pad[322];
+
+	HistoryEntryType5(objHndl Obj, objHndl Target, int FailureChance, int combatMesFailureReason, int RollResult, int combatMesResult, int combatMesTitle);
+};
+
+HistoryEntryType4::HistoryEntryType4(objHndl Obj, int DicePacked, int RollResult, int Dc, const char* Text, BonusList *Bonlist) {
+	histType = 4;
+	obj = Obj;
+	obj2 = 0i64;
+	dicePacked = DicePacked;
+	dc = Dc;
+	rollResult = RollResult;
+	text = Text;
+	bonlist = *Bonlist;
+}
+
+HistoryEntryType5::HistoryEntryType5(objHndl Obj, objHndl Target, int FailureChance, int CombatMesFailureReason, int RollResult, int CombatMesResult, int CombatMesTitle){
+	histType = 5;
+	obj = Obj;
+	obj2 = Target;
+	failureChance = FailureChance;
+	rollResult = RollResult;
+	combatMesFailureReason = CombatMesFailureReason;
+	combatMesTitle = CombatMesTitle;
+	combatMesResult = CombatMesResult;
+}
+
+struct HistoryEntryType7: HistoryEntry{
+	int line;
+	int unk; // always 0??
+	BonusList bonlist;
+};
+
+
+struct HistoryArrayEntry{
+	uint32_t field0;
+	uint32_t time; // time when entry is added to array
+	union
+	{
+		HistoryEntryType1 base;
+		HistoryEntryType1 t1;
+		HistoryEntryType2 t2;
+		HistoryEntryType3 t3;
+		HistoryEntryType4 t4;
+		HistoryEntryType5 t5;
+	}entry;
+};
+
 class HistSysReplacements : public TempleFix
 {
 public: 
@@ -73,9 +192,86 @@ int HistorySystem::CreateRollHistoryLineFromMesfile(int historyMesLine, objHndl 
 	return addresses.CreateRollHistoryLineFromMesfile(historyMesLine, obj, obj2);
 }
 
+int HistorySystem::RollHistoryType4Add(objHndl obj, int dc, const char* text, uint32_t dicePacked, int d20RollRes, BonusList* bonlist){
+	HistoryEntryType4 hist(obj, dicePacked,d20RollRes, dc, text, bonlist);
+	auto id = RollHistoryAdd(&hist);
+	AppendHistoryId(id);
+	return id;
+}
+
+int HistorySystem::RollHistoryType7Add(objHndl obj, BonusList* bonlist, int line, int unk){
+	HistoryEntryType7 hist;
+	hist.histType = 7;
+	hist.obj = obj;
+	hist.obj2 = 0i64;
+	hist.bonlist = *bonlist;
+	hist.line = line;
+	hist.unk = unk;
+	return RollHistoryAdd(&hist);
+}
+
+int HistorySystem::RollHistoryType0Add(int RollResult, int CritHitRoll, objHndl Obj, objHndl Obj2, BonusList* Bonlist, BonusList* Bonlist2, D20CAF flags){
+	HistoryEntryType0 hist;
+	hist.rollResult = RollResult;
+	hist.obj = Obj;
+	hist.obj2 = Obj2;
+	hist.histType = 0;
+	hist.unk = CritHitRoll;
+	hist.bonlist = *Bonlist;
+	hist.d20Caf = flags;
+	hist.rollIdType7 = RollHistoryType7Add(Obj2, Bonlist2, 33, 0);
+	hist.overallBonus = Bonlist2->GetEffectiveBonusSum();
+	auto id = RollHistoryAdd(&hist);
+	AppendHistoryId(id);
+	return id;
+}
+
+int HistorySystem::RollHistoryType5Add(objHndl obj, objHndl tgt, int failChance, int combatMesFailureReason, int rollResult, int combatMesResult, int combatMesTitle){
+	HistoryEntryType5 hist(obj, tgt, failChance, combatMesFailureReason, rollResult, combatMesResult, combatMesTitle);
+	auto id = RollHistoryAdd(&hist);
+	AppendHistoryId(id);
+	return id;
+}
+
 void HistorySystem::CreateFromFreeText(const char*text)
 {
 	addresses.CreateFromFreeText(text);
+}
+
+HistoryEntry* HistorySystem::HistoryFind(int histId){
+	auto histArray = addresses.histArray;
+	for (auto i = 0; i < HISTORY_ARRAY_SIZE; i++){
+		if (histArray[i].entry.base.histId == histId)
+			return &histArray[i].entry.base;
+	}
+	return nullptr;
+}
+
+void HistorySystem::AppendHistoryId(int histId){
+	auto histArray = addresses.histArray;
+	auto &lastHistId = temple::GetRef<int>(0x109DDA18);
+	auto idx = 0;
+	for ( ; idx < HISTORY_ARRAY_SIZE; idx++){
+		if (histArray[idx].entry.base.histId == histId)
+			break;
+	}
+	if (idx >= HISTORY_ARRAY_SIZE){
+		// originally did some naughty stuff here, I think I'll leave it out...
+	} 
+	else{
+		auto &hist = histArray[idx].entry;
+		hist.base.prevId = lastHistId;
+		hist.base.nextId = 0;
+
+		if (lastHistId)	{
+
+			HistoryEntry *lastHist = HistoryFind(lastHistId);
+			
+			if (lastHist)
+				lastHist->nextId = histId;
+		}
+		lastHistId = histId;
+	}
 }
 #pragma endregion
 
@@ -85,65 +281,11 @@ void HistorySystem::CreateFromFreeText(const char*text)
 #pragma endregion
 
 
-struct HistoryEntry
-{
-	uint32_t histId;
-	uint32_t histType;
-	objHndl obj;
-	ObjectId objId;
-	char objDescr[2000];
-	objHndl obj2;
-	ObjectId obj2Id;
-	char obj2Descr[2000];
-	uint32_t prevId;
-	uint32_t nextId;
-};
 
-struct HistoryArrayEntry
-{
-	uint32_t field0;
-	uint32_t field4;
-	uint32_t histId;
-	uint32_t histType;
-	objHndl obj;
-	ObjectId objId;
-	char objDescr[2000];
-	objHndl obj2;
-	ObjectId obj2Id;
-	char obj2Descr[2000];
-	uint32_t prevId;
-	uint32_t nextId;
-	uint32_t pad[326];
-};
-
-struct HistoryEntryType1 : HistoryEntry
-{
-	DamagePacket dmgPkt;
-};
-
-
-struct HistoryEntryType2 : HistoryEntry
-{
-	uint32_t dicePacked;
-	int32_t rollResult;
-	uint32_t skillIdx;
-	uint32_t dc;
-	BonusList bonlist;
-	uint32_t pad[100];
-};
-
-struct HistoryEntryType3 : HistoryEntry
-{
-	uint32_t dicePacked;
-	int32_t rollResult;
-	uint32_t dc;
-	uint32_t saveType;
-	uint32_t saveFlags;
-	BonusList bonlist;
-	uint32_t pad[99];
-};
-
+const auto TestSizeOfHistoryEntryType0 = sizeof(HistoryEntryType0); // should be 5384 (0x1508)
 const auto TestSizeOfHistoryEntryType1 = sizeof(HistoryEntryType1); // should be 5384 (0x1508)
 const auto TestSizeOfHistoryEntryType2 = sizeof(HistoryEntryType2); // should be 5384 (0x1508)
 const auto TestSizeOfHistoryEntryType3 = sizeof(HistoryEntryType3); // should be 5384 (0x1508)
+const auto TestSizeOfHistoryEntryType4 = sizeof(HistoryEntryType4); // should be 5384 (0x1508)
+const auto TestSizeOfHistoryEntryType5 = sizeof(HistoryEntryType5); // should be 5384 (0x1508)
 const auto TestSizeOfHistoryArrayEntry = sizeof(HistoryArrayEntry); // should be 5392 (0x1510)

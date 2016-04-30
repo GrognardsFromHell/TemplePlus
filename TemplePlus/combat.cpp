@@ -26,6 +26,7 @@
 #include "tutorial.h"
 #include "objlist.h"
 #include "ui/ui_dialog.h"
+#include "condition.h"
 
 
 struct CombatSystemAddresses : temple::AddressTable
@@ -121,6 +122,11 @@ public:
 		orgCheckRangedWeaponAmmo = replaceFunction(0x100654E0, CheckRangedWeaponAmmo);
 		
 		replaceFunction(0x100B4B30, _GetCombatMesLine);
+
+		// replace the ToHitProcessing function
+		replaceFunction<void(__cdecl)(D20Actn&)>(0x100B7160, [](D20Actn & d20a){
+			combatSys.ToHitProcessing(d20a);
+		});
 
 		replaceFunction<BOOL(__cdecl)()>(0x100EBB90, []()->BOOL
 		{
@@ -1022,6 +1028,212 @@ int LegacyCombatSystem::GetClosestEnemy(AiTactic* aiTac, int selectionType)
 void LegacyCombatSystem::enterCombat(objHndl objHnd)
 {
 	_enterCombat(objHnd);
+}
+
+int LegacyCombatSystem::DispelRoll(objHndl obj, BonusList* bonlist, int modifier, int dc, const char* text, int *rollHistId){
+	Dice dice(1, 20, modifier);
+	auto d20RollRes = dice.Roll();
+	int rollResId = histSys.RollHistoryType4Add(obj, dc, text, dice.ToPacked(), d20RollRes, bonlist);
+	if (rollHistId)
+		*rollHistId = rollResId;
+	else
+		histSys.CreateRollHistoryString(rollResId);
+	return d20RollRes - dc + bonlist->GetEffectiveBonusSum();
+}
+
+void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
+	auto performer = d20a.d20APerformer;
+	auto d20Data = d20a.data1;
+	auto caflags = d20a.d20Caf;
+	auto tgt = d20a.d20ATarget;
+
+	// mirror image processing
+	auto mirrorImageCond = conds.GetByName("sp-Mirror Image");
+	if (d20Sys.d20QueryWithData(tgt, DK_QUE_Critter_Has_Condition, mirrorImageCond, 0)){
+		auto spellId = d20Sys.d20QueryReturnData(tgt, DK_QUE_Critter_Has_Condition, mirrorImageCond, 0);
+		SpellPacketBody spellPkt(spellId);
+		Dice dice(1,spellPkt.targetCount);
+		if (dice.Roll() != 1 ){ // mirror image nominally struck
+			DispIoAttackBonus mirrorImAc;
+			mirrorImAc.attackPacket.flags = (D20CAF)(d20a.d20Caf | D20CAF_TOUCH_ATTACK);
+			mirrorImAc.attackPacket.d20ActnType = d20a.d20ActType;
+			mirrorImAc.attackPacket.attacker = performer;
+			mirrorImAc.attackPacket.victim = tgt;
+			auto tgtAc = critterSys.GetArmorClass(tgt, &mirrorImAc);
+			DispIoAttackBonus mirrorImToHit;
+			mirrorImToHit.Dispatch(performer, 0i64, dispTypeToHitBonus2, DK_NONE);
+			auto spName = spellPkt.GetName();
+			auto dispelRes = DispelRoll(performer, &mirrorImToHit.bonlist, 0, tgtAc, spName, &d20a.rollHist3  );
+			if (dispelRes >= 0)	{
+				d20Sys.d20SendSignal(tgt, DK_SIG_Spell_Mirror_Image_Struck, spellPkt.spellId, 0);
+				floatSys.FloatCombatLine(tgt, 109);
+				histSys.CreateRollHistoryLineFromMesfile(10, performer, tgt);
+				return;
+			}
+		}
+	}
+
+
+
+	// miss chances handling
+	static auto getDefenderConcealmentMissChance = [](objHndl attacker, objHndl victim, D20Actn & d20a) {
+
+		auto cond = conds.GetByName("sp-True Strike");
+		if (d20Sys.d20QueryWithData(attacker, DK_QUE_Critter_Has_Condition, cond, 0))
+			return 0;
+
+		DispIoAttackBonus dispIo;
+		dispIo.attackPacket.flags = (D20CAF)d20a.d20Caf;
+		dispIo.attackPacket.victim = victim;
+		dispIo.attackPacket.attacker = attacker;
+		dispIo.attackPacket.dispKey = 0;
+		return dispIo.Dispatch(victim, attacker, dispTypeGetDefenderConcealmentMissChance, DK_NONE);
+	};
+
+	static auto getAttackerConcealmentMissChance = [](objHndl attacker) {
+
+		auto dispatcher = gameSystems->GetObj().GetObject(attacker)->GetDispatcher();
+		DispIoBonusAndObj dispIo;
+		dispatcher->Process(dispTypeGetAttackerConcealmentMissChance, DK_NONE, &dispIo);
+		return temple::GetRef<int(__cdecl)(BonusList&)>(0x100E6680)(dispIo.bonlist); // special bonus handler for blindness miss chance
+	};
+
+	auto defenderMissChance = getDefenderConcealmentMissChance(performer, tgt, d20a);
+	auto attackerMissChance = getAttackerConcealmentMissChance(performer);
+	if (defenderMissChance > 0 || attackerMissChance > 0){
+
+		if (attackerMissChance > defenderMissChance)
+			defenderMissChance = attackerMissChance;
+		
+		// roll 1d100
+		auto missChanceRoll = Dice::Roll(1, 100, 0);
+		if (missChanceRoll > defenderMissChance){ // success
+			d20a.rollHist1 = histSys.RollHistoryType5Add(performer, tgt, defenderMissChance, 60, missChanceRoll, 194, 193);
+		} 
+		else { // failure
+			d20a.rollHist1 = histSys.RollHistoryType5Add(performer, tgt, defenderMissChance, 60, missChanceRoll, 195, 193);
+
+
+			// Blind Fight handling (second chance)
+			if (!feats.HasFeatCountByClass(performer, FEAT_BLIND_FIGHT))
+				return;
+			missChanceRoll = Dice::Roll(1, 100, 0);
+			if (missChanceRoll <= defenderMissChance) {
+				histSys.RollHistoryType5Add(performer, tgt, defenderMissChance, 61, missChanceRoll, 195, 193);
+				return;
+			}
+			d20a.rollHist2 = histSys.RollHistoryType5Add(performer, tgt, defenderMissChance, 61, missChanceRoll, 194, 193);
+		}
+	}
+
+	// get the To Hit bonus
+	DispIoAttackBonus dispIoToHitBon, dispIoAtkBon, dispIoTgtAc;
+	dispIoToHitBon.attackPacket.flags = (D20CAF)d20a.d20Caf;
+	dispIoToHitBon.attackPacket.victim = tgt;
+	dispIoToHitBon.attackPacket.d20ActnType = d20a.d20ActType;
+	dispIoToHitBon.attackPacket.attacker = performer;
+	dispIoToHitBon.attackPacket.dispKey = d20Data;
+	if (d20a.d20Caf & D20CAF_TOUCH_ATTACK){
+		dispIoToHitBon.attackPacket.weaponUsed = 0i64;
+	} 
+	else{
+		if (d20a.d20Caf & D20CAF_SECONDARY_WEAPON)
+			dispIoToHitBon.attackPacket.weaponUsed = inventory.ItemWornAt(performer, EquipSlot::WeaponSecondary);
+		else
+			dispIoToHitBon.attackPacket.weaponUsed = inventory.ItemWornAt(performer, EquipSlot::WeaponPrimary);
+	}
+	dispIoToHitBon.Dispatch(performer, 0i64, dispTypeBucklerAcPenalty, DK_NONE); // adds buckler penalty to the bonus list
+	
+	
+	if (dispIoToHitBon.attackPacket.weaponUsed
+		&& gameSystems->GetObj().GetObject(dispIoToHitBon.attackPacket.weaponUsed)->type != obj_t_weapon){
+		dispIoToHitBon.attackPacket.weaponUsed = 0i64;
+	}
+	dispIoToHitBon.attackPacket.ammoItem = CheckRangedWeaponAmmo(performer);
+	dispIoToHitBon.attackPacket.flags = (D20CAF) (dispIoToHitBon.attackPacket.flags | D20CAF_FINAL_ATTACK_ROLL);
+	dispIoToHitBon.Dispatch(performer, 0i64, dispTypeToHitBonus2, DK_NONE); // note: the "Global" condition has ToHitBonus2 hook that dispatches the ToHitBonusBase
+	auto toHitBonFinal = dispIoToHitBon.Dispatch(tgt, 0i64, dispTypeToHitBonusFromDefenderCondition, DK_NONE);
+
+	dispIoTgtAc.attackPacket = dispIoToHitBon.attackPacket;
+	dispIoTgtAc.field_4 = dispIoToHitBon.field_4;
+	critterSys.GetArmorClass(tgt, &dispIoTgtAc);
+	auto tgtAcFinal = dispIoTgtAc.Dispatch(tgt, 0i64, dispTypeGetACBonus2, DK_NONE);
+
+	auto toHitRoll = Dice::Roll(1, 20);
+	auto critAlwaysCheat = temple::GetRef<int>(0x10BCA8B0);
+
+	auto isMiss = [critAlwaysCheat](int roll, int toHitBon, int tgtAc) {
+		if (critAlwaysCheat)
+			return false;
+		return roll == 1 || roll != 20 && roll + toHitBon < tgtAc;
+	};
+	#define IS_MISS isMiss(toHitRoll, toHitBonFinal, tgtAcFinal)
+
+	if (!(dispIoToHitBon.attackPacket.flags & D20CAF_ALWAYS_HIT) && !critAlwaysCheat){
+		// check miss
+		if (IS_MISS){
+			if (d20Sys.d20Query(performer, DK_QUE_RerollAttack)){
+				histSys.RollHistoryType0Add(toHitRoll, -1, performer, tgt, &dispIoToHitBon.bonlist, &dispIoTgtAc.bonlist, dispIoToHitBon.attackPacket.flags);
+				toHitRoll = Dice::Roll(1, 20);
+				dispIoToHitBon.attackPacket.flags = (D20CAF)(dispIoToHitBon.attackPacket.flags | D20CAF_REROLL);
+			}
+		}
+		// still a miss
+		if (IS_MISS){
+			temple::GetRef<void(__cdecl)(objHndl)>(0x1009A9D0)(performer); // handling for consecutive misses in the logbook
+		}
+	}
+
+	auto critHitRoll = -1;
+	if (!IS_MISS || (dispIoToHitBon.attackPacket.flags & D20CAF_ALWAYS_HIT) ){
+		// register a hit
+		dispIoToHitBon.attackPacket.flags = (D20CAF)(dispIoToHitBon.attackPacket.flags | D20CAF_HIT); 
+		temple::GetRef<void(__cdecl)(objHndl)>(0x1009A9B0)(performer); // logbook consecutive hits handling
+
+		// do Critical Hit roll
+		dispIoAtkBon.attackPacket = dispIoToHitBon.attackPacket;
+		dispIoAtkBon.field_4 = dispIoToHitBon.field_4;
+		auto critThreatRange = 21 - dispIoAtkBon.Dispatch(performer, 0i64, dispTypeGetCriticalHitRange, DK_NONE);
+		if (!d20Sys.d20Query(tgt, DK_QUE_Critter_Is_Immune_Critical_Hits)){
+			if (toHitRoll >= critThreatRange || critAlwaysCheat) {
+				critHitRoll = Dice::Roll(1, 20);
+				
+				// RerollCritical handling (e.g. from Luck domain)
+				if (isMiss(critHitRoll, toHitBonFinal, tgtAcFinal) && d20Sys.d20Query(performer, DK_QUE_RerollCritical)){
+					histSys.RollHistoryType0Add(toHitRoll, critHitRoll, performer, tgt, &dispIoToHitBon.bonlist, &dispIoTgtAc.bonlist, dispIoToHitBon.attackPacket.flags);
+					critHitRoll = Dice::Roll(1, 20);
+				}
+
+				if (!isMiss(critHitRoll, toHitBonFinal, tgtAcFinal))
+					dispIoToHitBon.attackPacket.flags = (D20CAF)(dispIoToHitBon.attackPacket.flags | D20CAF_CRITICAL);
+			}
+		}
+
+		// do Deflect Arrow dispatch
+		dispIoToHitBon.Dispatch(dispIoToHitBon.attackPacket.victim, 0i64, dispTypeDeflectArrows, DK_NONE);		
+	}
+
+
+	
+
+	// sphagetti handling for Sanctuary spell
+	if (d20a.d20ATarget && gameSystems->GetObj().GetObject(d20a.d20ATarget)->IsCritter()
+		&& !d20Sys.D20QueryWithDataDefaultTrue(d20a.d20ATarget, DK_QUE_CanBeAffected_PerformAction, &d20a,0)){
+		
+		if (dispIoToHitBon.attackPacket.flags & D20CAF_CRITICAL){
+			dispIoToHitBon.attackPacket.flags = (D20CAF)(dispIoToHitBon.attackPacket.flags ^ D20CAF_CRITICAL);
+		}
+		if (dispIoToHitBon.attackPacket.flags & D20CAF_HIT) {
+			dispIoToHitBon.attackPacket.flags = (D20CAF)(dispIoToHitBon.attackPacket.flags ^ D20CAF_HIT);
+			dispIoToHitBon.bonlist.ZeroBonusSetMeslineNum(262);
+		}
+	}
+
+	// all this hard work just to set a couple of flags :D
+	d20a.d20Caf = dispIoToHitBon.attackPacket.flags;
+	d20a.rollHist3 = histSys.RollHistoryType0Add(toHitRoll, critHitRoll, performer, tgt, &dispIoToHitBon.bonlist, &dispIoTgtAc.bonlist, dispIoToHitBon.attackPacket.flags);
+	
+	// there were some additional debug stubs here (nullsubs)
 }
 #pragma endregion
 

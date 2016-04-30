@@ -371,7 +371,7 @@ void ActionSequenceSystem::ActSeqGetPicker()
 	{
 		if (d20Sys.globD20Action->d20ActType == D20A_SPELL_CALL_LIGHTNING)
 		{
-			int callLightningId = d20Sys.d20QueryReturnData(d20Sys.globD20Action->d20APerformer, DK_QUE_Critter_Can_Call_Lightning, 0, 0);
+			int callLightningId = d20Sys.d20QueryReturnData(d20Sys.globD20Action->d20APerformer, DK_QUE_Critter_Can_Call_Lightning);
 			SpellPacketBody spellPkt;
 			spellSys.GetSpellPacketBody(callLightningId, &spellPkt);
 			auto baseCasterLevelMod = dispatch.Dispatch35BaseCasterLevelModify(d20Sys.globD20Action->d20APerformer, &spellPkt);

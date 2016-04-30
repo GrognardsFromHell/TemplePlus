@@ -261,6 +261,7 @@ struct DispIoAttackBonus : DispIO { // DispIoType 5
 	AttackPacket attackPacket;
 	BonusList bonlist;
 	DispIoAttackBonus();
+	int Dispatch(objHndl obj, objHndl obj2, enum_disp_type dispType, D20DispatcherKey key);
 };
 
 

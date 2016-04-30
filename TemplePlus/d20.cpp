@@ -928,6 +928,21 @@ uint64_t LegacyD20System::d20QueryReturnData(objHndl objHnd, D20DispatcherKey di
 	auto result = *reinterpret_cast<uint64_t*>(&dispIO.data1);
 	return result;
 }
+
+uint64_t LegacyD20System::d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, CondStruct* arg1, uint32_t arg2){
+	return d20QueryReturnData(objHnd, dispKey, (uint32_t)arg1, arg2);
+}
+
+bool LegacyD20System::D20QueryWithDataDefaultTrue(objHndl obj, D20DispatcherKey dispKey, const D20Actn* d20a, int arg2){
+	auto dispatcher = gameSystems->GetObj().GetObject(obj)->GetDispatcher();
+	if (!dispatcher->IsValid())
+		return true;
+	DispIoD20Query dispIo;
+	dispIo.return_val = 1;
+	dispIo.data1 = reinterpret_cast<uint32_t>(d20a);
+	dispatcher->Process(dispTypeD20Query, dispKey, &dispIo);
+	return dispIo.return_val;
+}
 #pragma endregion 
 
 
@@ -1464,7 +1479,7 @@ ActionErrorCode D20ActionCallbacks::LocationCheckDisarmedWeaponRetrieve(D20Actn*
 		return AEC_OK;
 	if (d20a->d20ATarget)
 		return d20Sys.TargetWithinReachOfLoc(d20a->d20APerformer, d20a->d20ATarget, loc) != 0 ? AEC_OK : AEC_TARGET_TOO_FAR;
-	objHndl weapon = d20Sys.d20QueryReturnData(d20a->d20APerformer, DK_QUE_Disarmed, 0, 0);
+	objHndl weapon = d20Sys.d20QueryReturnData(d20a->d20APerformer, DK_QUE_Disarmed);
 	if (weapon)
 		return d20Sys.TargetWithinReachOfLoc(d20a->d20APerformer, weapon, loc) != 0 ? AEC_OK : AEC_TARGET_TOO_FAR;
 	return AEC_TARGET_INVALID;

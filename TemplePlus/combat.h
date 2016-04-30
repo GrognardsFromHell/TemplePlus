@@ -84,6 +84,9 @@ struct LegacyCombatSystem : temple::AddressTable {
 	void (__cdecl *SetInitiative)(objHndl critter, int initiative);
 	int (__cdecl*_GetClosestEnemy)(objHndl obj, LocAndOffsets* locOut, objHndl * objOut, float* distOut, int flags);
 
+	int DispelRoll(objHndl obj, BonusList* bonlist, int modifier, int dc, const char* text, int *rollHistId);
+	void ToHitProcessing(D20Actn &d20a);
+
 	LegacyCombatSystem() {
 		rebase(combatModeActive, 0x10AA8418);
 		rebase(combatMesfileIdx, 0x10AA8408);

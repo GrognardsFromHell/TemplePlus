@@ -11,6 +11,7 @@
 #define ATTACK_CODE_OFFHAND 99 // originally 4
 #define ATTACK_CODE_NATURAL_ATTACK 999 //originally 9
 #include "tab_file.h"
+#include "gamesystems/objects/gameobject.h"
 
 enum ActionErrorCode;
 struct GameSystemConf;
@@ -61,7 +62,9 @@ struct LegacyD20System : temple::AddressTable
 	uint32_t d20QueryWithData(objHndl ObjHnd, D20DispatcherKey dispKey, CondStruct* cond, uint32_t arg2);
 	uint32_t d20QueryWithData(objHndl ObjHnd, D20DispatcherKey dispKey, D20SpellData* spellData, uint32_t arg2);
 	uint32_t d20QueryHasSpellCond(objHndl ObjHnd, int spellEnum);
-	uint64_t d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1, uint32_t arg2);
+	uint64_t d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1 =0 , uint32_t arg2 =0);
+	uint64_t d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, CondStruct *arg1, uint32_t arg2);
+	static bool D20QueryWithDataDefaultTrue(objHndl obj, D20DispatcherKey dispKey, const D20Actn * d20a, int arg2);
 
 	void D20ActnInit(objHndl objHnd, D20Actn * d20a);
 	void GlobD20ActnSetTypeAndData1(D20ActionType d20type, uint32_t data1);
@@ -83,6 +86,7 @@ struct LegacyD20System : temple::AddressTable
 	void D20ActnSetSetSpontCast(D20SpellData* d20SpellData, SpontCastType spontCastType);
 	D20TargetClassification TargetClassification(D20Actn* d20A);
 	int TargetCheck(D20Actn* d20a);
+	
 	void (__cdecl *D20StatusInitFromInternalFields)(objHndl objHnd, Dispatcher *dispatcher);
 	void (__cdecl *D20ObjRegistryAppend)(objHndl ObjHnd);
 	void(__cdecl * _d20aTriggerCombatCheck)(int32_t idx);//1008AE90    ActnSeq * @<eax>

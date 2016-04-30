@@ -1046,17 +1046,13 @@ void DispatcherCallbackArgs::SetCondArg(int argIdx, int value)
 	conds.CondNodeSetArg(subDispNode->condNode, argIdx, value);
 }
 
-DispIoAttackBonus::DispIoAttackBonus()
-{
+DispIoAttackBonus::DispIoAttackBonus(){
 	dispIOType = dispIOTypeAttackBonus;
-	bonusSys.initBonusList(&this->bonlist);
-	this->attackPacket.victim = 0i64;
-	this->attackPacket.attacker = 0i64;
-	this->attackPacket.weaponUsed = 0i64;
-	this->attackPacket.ammoItem = 0i64;
-	this->attackPacket.d20ActnType = D20A_STANDARD_ATTACK;
 	this->attackPacket.dispKey = 1;
-	this->attackPacket.flags = (D20CAF) 0;
+}
+
+int DispIoAttackBonus::Dispatch(objHndl obj, objHndl obj2, enum_disp_type dispType, D20DispatcherKey key){
+	return dispatch.DispatchAttackBonus(obj, obj2, this, dispType, key);
 }
 
 void DispIoTooltip::Append(string& cs)

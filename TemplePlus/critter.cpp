@@ -1155,6 +1155,10 @@ bool LegacyCritterSystem::HashMatchingClassForSpell(objHndl handle, uint32_t spe
 	return temple::GetRef<BOOL(__cdecl)(objHndl, uint32_t)>(0x10075DA0)(handle, spellEnum);
 }
 
+int LegacyCritterSystem::GetArmorClass(objHndl obj, DispIoAttackBonus* dispIo){
+	return dispatch.DispatchAttackBonus(obj, 0i64, dispIo, dispTypeGetAC, DK_NONE);
+}
+
 int LegacyCritterSystem::SkillBaseGet(objHndl handle, SkillEnum skill)
 {
 	if (!handle)

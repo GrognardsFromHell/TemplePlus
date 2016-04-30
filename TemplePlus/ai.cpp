@@ -721,7 +721,7 @@ int AiSystem::PickUpWeapon(AiTactic* aiTac)
 	}
 	if (!d20Sys.d20Query(aiTac->performer, DK_QUE_Disarmed))
 		return 0;
-	objHndl weapon = d20Sys.d20QueryReturnData(aiTac->performer, DK_QUE_Disarmed, 0, 0);
+	objHndl weapon = d20Sys.d20QueryReturnData(aiTac->performer, DK_QUE_Disarmed);
 
 	if (weapon && !inventory.GetParent(weapon))
 	{
@@ -778,7 +778,7 @@ int AiSystem::BreakFree(AiTactic* aiTac)
 	d20aNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
 	if (!d20Sys.d20Query(performer, DK_QUE_Is_BreakFree_Possible))
 		return 0;
-	int spellId = (int) d20Sys.d20QueryReturnData(performer, DK_QUE_Is_BreakFree_Possible, 0, 0);
+	int spellId = (int) d20Sys.d20QueryReturnData(performer, DK_QUE_Is_BreakFree_Possible);
 
 	locSys.getLocAndOff(aiTac->performer, &performerLoc);
 	if (combatSys.GetClosestEnemy(aiTac->performer, &performerLoc, &target, &dist, 0x21))

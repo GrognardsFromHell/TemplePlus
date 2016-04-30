@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <temple/dll.h>
+#include "dispatcher.h"
 
 enum SkillEnum:uint32_t;
 
@@ -313,6 +314,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	void GetCritterVoiceLine(objHndl obj, objHndl fellow, char *str, int* soundId);
 	int PlayCritterVoiceLine(objHndl obj, objHndl fellow, char* text, int soundId);
 	bool HashMatchingClassForSpell(objHndl handle, uint32_t spellEnum) const; // checks if obj has a matching spell in their list
+	int GetArmorClass(objHndl obj, DispIoAttackBonus *dispIo);
 	static int SkillBaseGet(objHndl handle, SkillEnum skill);
 	static int SpellNumByFieldAndClass(objHndl obj, obj_f field, uint32_t spellClassCode);
 	int DomainSpellNumByField(objHndl obj, obj_f field);

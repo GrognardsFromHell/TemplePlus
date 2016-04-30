@@ -1449,7 +1449,7 @@ static PyObject* PyObjHandle_D20QueryTestData(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 	auto dispatcherKey = (D20DispatcherKey)(DK_QUE_Helpless + queryKey);
-	if (d20Sys.d20QueryReturnData(self->handle, dispatcherKey, 0, 0) == testData) {
+	if (d20Sys.d20QueryReturnData(self->handle, dispatcherKey) == testData) {
 		return PyInt_FromLong(1);
 	} else {
 		return PyInt_FromLong(1);
@@ -1463,7 +1463,7 @@ static PyObject* PyObjHandle_D20QueryGetData(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 	auto dispatcherKey = (D20DispatcherKey)(DK_QUE_Helpless + queryKey);
-	auto result = d20Sys.d20QueryReturnData(self->handle, dispatcherKey, 0, 0);
+	auto result = d20Sys.d20QueryReturnData(self->handle, dispatcherKey);
 	return PyLong_FromLongLong(result);
 }
 

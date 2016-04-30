@@ -162,8 +162,8 @@ struct BonusList
 const int TestSizeOfBonusList = sizeof(BonusList); // should be 888 (0x378)
 
 
-struct AttackPacket
-{
+struct AttackPacket{
+
 	objHndl attacker;
 	objHndl victim;
 	D20ActionType d20ActnType;
@@ -175,6 +175,7 @@ struct AttackPacket
 	
 	objHndl GetWeaponUsed() const;
 	bool IsOffhandAttack();
+	AttackPacket();
 };
 
 enum ScreenDirections : char {
