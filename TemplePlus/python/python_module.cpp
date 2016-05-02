@@ -4,6 +4,7 @@
 #include "python_game.h"
 #include "python_object.h"
 #include "python_dice.h"
+#include "python_bonus.h"
 
 static PyObject *Anyone(PyObject *obj, PyObject *args) {
 	PyObject *targetObjs;
@@ -61,10 +62,14 @@ void PyToeeInitModule() {
 	if (PyType_Ready(&PyObjHandleType)) {
 		PyErr_Print();
 	}
+	if (PyType_Ready(&PyBonusListType)) {
+		PyErr_Print();
+	}
 
 	// This is critical for unpickling object handles stored in timed events
 	PyDict_SetItemString(dict, "PyObjHandle", (PyObject*) &PyObjHandleType);
 	PyDict_SetItemString(dict, "dice_new", (PyObject*) &PyDiceType);
+	PyDict_SetItemString(dict, "PyBonusList", (PyObject*)&PyBonusListType);
 
 	// Copy all constants into toee for legacy support
 	auto constantsMod = PyImport_ImportModule("templeplus.constants"); // New ref

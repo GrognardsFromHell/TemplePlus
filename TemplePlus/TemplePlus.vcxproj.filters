@@ -342,6 +342,9 @@
     <ClCompile Include="mod_support.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="python\python_bonus.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -645,6 +648,9 @@
     </ClInclude>
     <ClInclude Include="mod_support.h">
       <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_bonus.h">
+      <Filter>python</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
