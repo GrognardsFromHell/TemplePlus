@@ -5,6 +5,8 @@
 #include "python_object.h"
 #include "python_dice.h"
 #include "python_bonus.h"
+#include "python_damage.h"
+#include "python_dispatcher.h"
 
 static PyObject *Anyone(PyObject *obj, PyObject *args) {
 	PyObject *targetObjs;
@@ -65,11 +67,19 @@ void PyToeeInitModule() {
 	if (PyType_Ready(&PyBonusListType)) {
 		PyErr_Print();
 	}
+	if (PyType_Ready(&PyDamagePacketType)) {
+		PyErr_Print();
+	}
+	if (PyType_Ready(&PyModifierSpecType)) {
+		PyErr_Print();
+	}
 
 	// This is critical for unpickling object handles stored in timed events
 	PyDict_SetItemString(dict, "PyObjHandle", (PyObject*) &PyObjHandleType);
 	PyDict_SetItemString(dict, "dice_new", (PyObject*) &PyDiceType);
 	PyDict_SetItemString(dict, "PyBonusList", (PyObject*)&PyBonusListType);
+	PyDict_SetItemString(dict, "PyDamagePacket", (PyObject*)&PyDamagePacketType);
+	PyDict_SetItemString(dict, "PyModifierSpec", (PyObject*)&PyModifierSpecType);
 
 	// Copy all constants into toee for legacy support
 	auto constantsMod = PyImport_ImportModule("templeplus.constants"); // New ref

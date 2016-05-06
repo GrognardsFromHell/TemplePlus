@@ -174,36 +174,11 @@
     <ClCompile Include="dice.cpp" />
     <ClCompile Include="fade.cpp" />
     <ClCompile Include="particles.cpp" />
-    <ClCompile Include="python\python_areas.cpp" />
-    <ClCompile Include="python\python_cheats.cpp" />
-    <ClCompile Include="python\python_console.cpp" />
-    <ClCompile Include="python\python_counters.cpp" />
-    <ClCompile Include="python\python_dice.cpp" />
-    <ClCompile Include="python\python_globalflags.cpp" />
-    <ClCompile Include="python\python_globalvars.cpp" />
-    <ClCompile Include="python\python_integration.cpp" />
-    <ClCompile Include="python\python_integration_brawl.cpp" />
-    <ClCompile Include="python\python_integration_obj.cpp" />
-    <ClCompile Include="python\python_integration_spells.cpp" />
-    <ClCompile Include="python\python_module.cpp" />
-    <ClCompile Include="python\python_object.cpp" />
-    <ClCompile Include="python\python_objectscripts.cpp" />
-    <ClCompile Include="python\python_quests.cpp" />
-    <ClCompile Include="python\python_integration_encounter.cpp" />
-    <ClCompile Include="python\python_scripts.cpp" />
-    <ClCompile Include="python\python_time.cpp" />
-    <ClCompile Include="python\python_timeevents.cpp" />
-    <ClCompile Include="python\python_tio.cpp" />
-    <ClCompile Include="python\python_trap.cpp" />
     <ClCompile Include="quest.cpp" />
     <ClCompile Include="radialmenu.cpp" />
     <ClCompile Include="reputations.cpp" />
     <ClCompile Include="sound.cpp" />
     <ClCompile Include="textbubbles.cpp" />
-    <ClCompile Include="python\python_consoleout.cpp" />
-    <ClCompile Include="python\python_embed.cpp" />
-    <ClCompile Include="python\python_game.cpp" />
-    <ClCompile Include="python\python_importer.cpp" />
     <ClCompile Include="traps.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
     <ClCompile Include="ui\ui_tutorial.cpp" />
@@ -343,6 +318,87 @@
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="python\python_bonus.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_damage.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_dispatcher.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_areas.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_cheats.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_console.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_consoleout.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_counters.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_dice.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_embed.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_game.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_globalflags.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_globalvars.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_importer.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_integration.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_integration_brawl.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_integration_encounter.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_integration_obj.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_integration_spells.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_module.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_object.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_objectscripts.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_quests.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_scripts.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_time.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_timeevents.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_tio.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_trap.cpp">
       <Filter>python</Filter>
     </ClCompile>
   </ItemGroup>
@@ -520,35 +576,11 @@
     <ClInclude Include="dice.h" />
     <ClInclude Include="fade.h" />
     <ClInclude Include="particles.h" />
-    <ClInclude Include="python\python_areas.h" />
-    <ClInclude Include="python\python_cheats.h" />
-    <ClInclude Include="python\python_console.h" />
-    <ClInclude Include="python\python_counters.h" />
-    <ClInclude Include="python\python_dice.h" />
-    <ClInclude Include="python\python_embed.h" />
-    <ClInclude Include="python\python_error.h" />
-    <ClInclude Include="python\python_globalflags.h" />
-    <ClInclude Include="python\python_globalvars.h" />
-    <ClInclude Include="python\python_integration.h" />
-    <ClInclude Include="python\python_integration_obj.h" />
-    <ClInclude Include="python\python_integration_spells.h" />
-    <ClInclude Include="python\python_module.h" />
-    <ClInclude Include="python\python_object.h" />
-    <ClInclude Include="python\python_objectscripts.h" />
-    <ClInclude Include="python\python_quests.h" />
-    <ClInclude Include="python\python_support.h" />
-    <ClInclude Include="python\python_time.h" />
-    <ClInclude Include="python\python_timeevents.h" />
-    <ClInclude Include="python\python_tio.h" />
-    <ClInclude Include="python\python_trap.h" />
     <ClInclude Include="quest.h" />
     <ClInclude Include="radialmenu.h" />
     <ClInclude Include="reputations.h" />
     <ClInclude Include="textbubbles.h" />
     <ClInclude Include="tig\tig_tabparser.h" />
-    <ClInclude Include="python\python_game.h" />
-    <ClInclude Include="python\python_importer.h" />
-    <ClInclude Include="python\python_consoleout.h" />
     <ClInclude Include="traps.h" />
     <ClInclude Include="ui\ui_dialog.h" />
     <ClInclude Include="ui\ui_tutorial.h" />
@@ -650,6 +682,84 @@
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
     <ClInclude Include="python\python_bonus.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_damage.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_dispatcher.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_areas.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_cheats.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_console.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_consoleout.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_counters.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_dice.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_embed.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_error.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_game.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_globalflags.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_globalvars.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_importer.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_integration.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_integration_obj.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_integration_spells.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_module.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_object.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_objectscripts.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_quests.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_support.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_time.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_timeevents.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_tio.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="python\python_trap.h">
       <Filter>python</Filter>
     </ClInclude>
   </ItemGroup>

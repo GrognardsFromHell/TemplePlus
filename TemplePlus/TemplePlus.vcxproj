@@ -109,6 +109,8 @@
     <ClCompile Include="mod_support.cpp" />
     <ClCompile Include="protos.cpp" />
     <ClCompile Include="python\python_bonus.cpp" />
+    <ClCompile Include="python\python_damage.cpp" />
+    <ClCompile Include="python\python_dispatcher.cpp" />
     <ClCompile Include="raycast.cpp" />
     <ClCompile Include="obj_hooks.cpp" />
     <ClCompile Include="particles.cpp" />
@@ -292,6 +294,8 @@
     <ClInclude Include="gamesystems\ui_intgame_renderer.h" />
     <ClInclude Include="mod_support.h" />
     <ClInclude Include="python\python_bonus.h" />
+    <ClInclude Include="python\python_damage.h" />
+    <ClInclude Include="python\python_dispatcher.h" />
     <ClInclude Include="tutorial.h" />
     <ClInclude Include="ui\ui_tooltip.h" />
     <ClInclude Include="updater\updater.h" />

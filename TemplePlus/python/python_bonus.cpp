@@ -9,14 +9,14 @@
 
 struct PyBonusList {
 	PyObject_HEAD;
-	BonusList bonlist;
+	BonusList *bonlist;
 };
 
 PyObject *PyBonusList_Repr(PyObject *obj) {
 	auto self = (PyBonusList*)obj;
 	string text;
 	
-	text = format("BonustList[{}]", self->bonlist.bonCount);
+	text = format("BonustList[{}]", self->bonlist->bonCount);
 		
 	return PyString_FromString(text.c_str());
 }
@@ -30,7 +30,7 @@ PyObject *PyBonusList_Clone(PyObject *obj, PyObject *args) {
 
 PyObject *PyBonusList_GetSum(PyObject *obj, PyObject *args) {
 	auto self = (PyBonusList*)obj;
-	auto result = self->bonlist.GetEffectiveBonusSum();
+	auto result = self->bonlist->GetEffectiveBonusSum();
 	return PyInt_FromLong(result);
 }
 
@@ -43,7 +43,7 @@ PyObject *PyBonusList_AddBonus(PyObject *obj, PyObject *args) {
 		return PyInt_FromLong(0);
 	}
 
-	auto result = self->bonlist.AddBonus(value, bonType, bonMesLine);
+	auto result = self->bonlist->AddBonus(value, bonType, bonMesLine);
 	return PyInt_FromLong(result);
 }
 
@@ -56,7 +56,7 @@ PyObject *PyBonusList_AddCap(PyObject *obj, PyObject *args) {
 		return PyInt_FromLong(0);
 	}
 
-	auto result = self->bonlist.AddCap(capType, value, bonMesLine);
+	auto result = self->bonlist->AddCap(capType, value, bonMesLine);
 	return PyInt_FromLong(result);
 }
 
@@ -65,7 +65,7 @@ PyObject *PyBonusList_AddFromFeat(PyObject *obj, PyObject *args) {
 
 
 	int value, bonType = 0, bonMesLine = 101, featEnum =0; // bonus type 0 is generic and stacking; 101 is "Misc."
-	if (!PyArg_ParseTuple(args, "i|iii:PyBonusList_AddBonus", &value, &bonType, &bonMesLine, &featEnum)) {
+	if (!PyArg_ParseTuple(args, "i|iii:PyBonusList.add_from_feat", &value, &bonType, &bonMesLine, &featEnum)) {
 		return PyInt_FromLong(0);
 	}
 
@@ -75,28 +75,14 @@ PyObject *PyBonusList_AddFromFeat(PyObject *obj, PyObject *args) {
 	if (featEnum >= NUM_FEATS)
 		return PyInt_FromLong(0);
 
-	auto result = self->bonlist.AddBonusFromFeat(value, bonType, bonMesLine, (feat_enums)featEnum);
+	auto result = self->bonlist->AddBonusFromFeat(value, bonType, bonMesLine, (feat_enums)featEnum);
 	return PyInt_FromLong(result);
 }
 
 int PyBonusList_Init(PyObject *obj, PyObject *args, PyObject *kwds) {
 	auto self = (PyBonusList*)obj;
-	BonusList newBonlist;
-	self->bonlist = newBonlist;
-	if (PyTuple_Size(args) == 1) {
-		// Form: PyBonusList("1d2+3") etc.
-		const char *bonSpec;
-		if (!PyArg_ParseTuple(args, "s:PyBonusList", &bonSpec)) {
-			return -1;
-		}
-		
-	}
-	else {
-		self->bonlist.bonCount = 0; 
-		/*if (!PyArg_ParseTuple(args, "ii|:PyBonusList", &self->number, &self->size, &self->bonus)) {
-			return -1;
-		}*/
-	}
+	self->bonlist = nullptr;
+	
 	return 0;
 }
 
@@ -106,7 +92,6 @@ PyObject *PyBonusList_New(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 }
 
 static PyMemberDef PyBonusList_Members[] = {
-	{ "num", T_INT, offsetof(PyBonusList, bonlist.bonCount), 0, NULL },
 	{ NULL, NULL, NULL, NULL, NULL }
 };
 
@@ -123,7 +108,7 @@ PyTypeObject PyBonusListType = {
 	PyObject_HEAD_INIT(NULL)
 	0,                         /*ob_size*/
 	"PyBonusList",                  /*tp_name*/
-	sizeof(PyBonusList),     	   /*tp_basicsize*/
+	sizeof(PyBonusList*),     	   /*tp_basicsize*/
 	0,                         /*tp_itemsize*/
 	(destructor)PyObject_Del,  /*tp_dealloc*/
 	0,                         /*tp_print*/
@@ -163,11 +148,11 @@ PyTypeObject PyBonusListType = {
 
 PyObject* PyBonusList_FromBonusList(const BonusList& bonlist ){
 	auto self = PyObject_New(PyBonusList, &PyBonusListType);
-	self->bonlist = bonlist;
+	self->bonlist = (BonusList*)&bonlist;
 	return (PyObject*)self;
 }
 
-bool ConvertBonusList(PyObject* obj, BonusList* pDiceOut) {
+bool ConvertBonusList(PyObject* obj, BonusList **pDiceOut) {
 	if (obj->ob_type != &PyBonusListType) {
 		PyErr_SetString(PyExc_TypeError, "Expected a PyBonusList object.");
 		return false;
