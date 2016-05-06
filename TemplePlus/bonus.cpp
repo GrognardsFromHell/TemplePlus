@@ -125,8 +125,7 @@ uint32_t BonusSystem::bonusCapAddWithDescr(BonusList* bonList, int capType, int 
 	return 0;
 }
 
-uint32_t BonusSystem::isBonusCapped(BonusList* bonList, int bonIdx, int* capperIdx)
-{
+uint32_t BonusSystem::isBonusCapped(BonusList* bonList, int bonIdx, int* capperIdx){
 	bool bonTypeMatch = 0;
 	int32_t capValueLowest = 255;
 	int32_t bonValue = bonList->bonusEntries[bonIdx].bonValue;
@@ -150,13 +149,12 @@ uint32_t BonusSystem::isBonusCapped(BonusList* bonList, int bonIdx, int* capperI
 	return bonTypeMatch;
 }
 
-void BonusSystem::initBonusList(BonusList* bonusList)
-{
+void BonusSystem::initBonusList(BonusList* bonusList){
 	bonusList ->bonCount=0	;
 	bonusList ->bonCapperCount=0;
 	bonusList ->zeroBonusCount=0;
-	bonusList ->overallCapLow = 0x80000001;
-	bonusList ->overallCapHigh = 0x7fffFFFF;
+	bonusList ->overallCapLow.bonValue = 0x80000001;
+	bonusList ->overallCapHigh.bonValue = 0x7fffFFFF;
 	bonusList ->bonFlags = 0;
 }
 
@@ -184,34 +182,8 @@ uint32_t BonusSystem::zeroBonusSetMeslineNum(BonusList* bonList, uint32_t zeroBo
 	return 1;
 }
 
-uint32_t BonusSystem::bonusSetOverallCap(uint32_t bonFlags, BonusList* bonList, int32_t newCap, int a4, uint32_t bonMesLineNum, char* capDescr)
-{
-	MesLine mesLine;
-	if (!bonFlags) return 0;
-	mesLine.key = bonMesLineNum;
-
-	if (bonMesLineNum >= 335)
-		mesFuncs.GetLine_Safe(bonusMesNew, &mesLine);
-	else
-		mesFuncs.GetLine_Safe(*bonusMesHandle, &mesLine);
-
-	char * bonMesString = (char*)mesLine.value;
-	if (bonFlags & 1 && (bonList->overallCapHigh > newCap || bonFlags & 4))
-	{
-		bonList->overallCapHigh = newCap;
-		bonList->field358 = a4;
-		bonList->overallCapHighBonusMesString = bonMesString;
-		bonList->overallCapHighDescr = capDescr;
-	}
-	if (bonFlags & 2 && (bonList->overallCapHigh < newCap || bonFlags & 4))
-	{
-		bonList->overallCapLow = newCap;
-		bonList->field368 = a4;
-		bonList->overallCapLowBonusMesString = bonMesString;
-		bonList->overallCapLowDescr = capDescr;
-	}
-	bonList->bonFlags |= bonFlags;
-	return 1;
+uint32_t BonusSystem::bonusSetOverallCap(uint32_t bonFlags, BonusList* bonList, int32_t newCap, int newCapType, uint32_t bonMesLineNum, char* capDescr){
+	return bonList->SetOverallCap(bonFlags, newCap, newCapType, bonMesLineNum, capDescr);
 }
 
 BonusSystem::BonusSystem()

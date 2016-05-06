@@ -126,10 +126,37 @@ int32_t DispatcherSystem::dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, 
 	
 }
 
-float DispatcherSystem::Dispatch29hGetMoveSpeed(objHndl objHnd, void* iO) // including modifiers like armor restirction
+float DispatcherSystem::Dispatch29hGetMoveSpeed(objHndl objHnd, DispIoMoveSpeed *dispIoIn) // including modifiers like armor restirction
 {
 	float result = 30.0;
-	uint32_t objHndLo = (uint32_t)(objHnd & 0xffffFFFF);
+
+	auto dispatcher = gameSystems->GetObj().GetObject(objHnd)->GetDispatcher();
+	if (!dispatcher->IsValid())
+		return result;
+
+
+	DispIoMoveSpeed dispIo;
+	BonusList bonlist;
+	if (dispIoIn) {
+		dispIo.bonlist = dispIoIn->bonlist;
+	}
+	else {
+		dispIo.bonlist = &bonlist;
+	}
+
+	dispatch.Dispatch40GetBaseMoveSpeed(objHnd, &dispIo);
+	dispatch.DispatcherProcessor(dispatcher, dispTypeGetMoveSpeed, DK_NONE, &dispIo);
+	auto moveTot = dispIo.bonlist->GetEffectiveBonusSum();
+
+	if (dispIo.factor < 0)
+		dispIo.factor = 0;
+	if (moveTot < 0)
+		moveTot = 0;
+
+	result = moveTot * dispIo.factor;
+
+
+	/*uint32_t objHndLo = (uint32_t)(objHnd & 0xffffFFFF);
 	uint32_t objHndHi = (uint32_t)((objHnd >>32) & 0xffffFFFF);
 	macAsmProl;
 	__asm{
@@ -145,9 +172,41 @@ float DispatcherSystem::Dispatch29hGetMoveSpeed(objHndl objHnd, void* iO) // inc
 		add esp, 12;
 		fstp result;
 	}
-	macAsmEpil
+	macAsmEpil*/
 	return result;
 }
+
+float DispatcherSystem::Dispatch40GetBaseMoveSpeed(objHndl objHnd, DispIoMoveSpeed *dispIoIn)
+{
+	float result = 30.0;
+
+	auto dispatcher = gameSystems->GetObj().GetObject(objHnd)->GetDispatcher();
+	if (!dispatcher->IsValid())
+		return result;
+
+
+	DispIoMoveSpeed dispIo;
+	BonusList bonlist;
+	if (dispIoIn) {
+		dispIo.bonlist = dispIoIn->bonlist;
+	}
+	else {
+		dispIo.bonlist = &bonlist;
+	}
+
+	dispatch.DispatcherProcessor(dispatcher, dispTypeGetMoveSpeedBase, DK_NONE, &dispIo);
+	auto bonResult = dispIo.bonlist->GetEffectiveBonusSum();
+
+	if (dispIoIn) {
+		dispIoIn->factor = dispIo.factor;
+	}
+	
+	result = bonResult * dispIo.factor;
+
+	return result;
+}
+
+
 
 void DispatcherSystem::dispIOTurnBasedStatusInit(DispIOTurnBasedStatus* dispIOtbStat)
 {

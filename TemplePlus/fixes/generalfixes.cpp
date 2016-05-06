@@ -64,34 +64,49 @@ class DwarfEncumbranceFix: public TempleFix
 {
 public:
 	static int EncumberedMoveSpeedCallback(DispatcherCallbackArgs args);
+	static int DwarfGetMoveSpeed(DispatcherCallbackArgs args);
 	void apply() override {
+		replaceFunction(0x100EFEC0, DwarfGetMoveSpeed); // recreates Spellslinger fix
 		replaceFunction(0x100EBAA0, EncumberedMoveSpeedCallback);
 	}
 } dwarfEncumbranceFix;
 
-int DwarfEncumbranceFix::EncumberedMoveSpeedCallback(DispatcherCallbackArgs args)
-{
+int DwarfEncumbranceFix::EncumberedMoveSpeedCallback(DispatcherCallbackArgs args){
 	auto dispIo = dispatch.DispIOCheckIoType13(args.dispIO);
 	if ( dispIo->bonlist->bonFlags  == 3) //  in case the cap has already been set (e.g. by web/entangle) - recreating the spellslinger fix
 		return 0;
 	if (args.subDispNode->subDispDef->data2 == 324) // overburdened
 	{
-		bonusSys.bonusSetOverallCap(5, dispIo->bonlist, 5, 0, 324, 0);
-		bonusSys.bonusSetOverallCap(6, dispIo->bonlist, 5, 0, 324, 0);
+		dispIo->bonlist->SetOverallCap(5, 5, 0, 324);
+		dispIo->bonlist->SetOverallCap(6, 5, 0, 324);
 		return 0;
 	} 
 	
-	if (critterSys.GetRace(args.objHndCaller) == Race::race_dwarf) // dwarves do not suffer movement penalty for meidum/heavy encumbrance
+	if (critterSys.GetRace(args.objHndCaller) == Race::race_dwarf) // dwarves do not suffer movement penalty for medium/heavy encumbrance
 		return 0;
 
 	if (dispIo->bonlist->bonusEntries[0].bonValue <= 20) // this is probably the explicit form for base speed...
 	{
 		bonusSys.bonusAddToBonusList(dispIo->bonlist, -5, 0, args.subDispNode->subDispDef->data2);
-	} else
+	} 
+	else
 	{
 		bonusSys.bonusAddToBonusList(dispIo->bonlist, -10, 0, args.subDispNode->subDispDef->data2);
 	}
 	
+	return 0;
+}
+
+int DwarfEncumbranceFix::DwarfGetMoveSpeed(DispatcherCallbackArgs args){
+
+	args.dispIO->AssertType(dispIOTypeMoveSpeed);
+	auto dispIo = static_cast<DispIoMoveSpeed*>(args.dispIO);
+
+	if (dispIo->bonlist->bonFlags & 2) //  in case the cap has already been set (e.g. by web/entangle) - recreating the spellslinger fix
+		return 0;
+
+	dispIo->bonlist->SetOverallCap(2, args.GetData1(), 0, args.GetData2());
+
 	return 0;
 }
 

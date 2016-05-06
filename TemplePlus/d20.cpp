@@ -702,15 +702,15 @@ objHndl LegacyD20System::GetAttackWeapon(objHndl obj, int attackCode, D20CAF fla
 	}
 
 	if (flags & D20CAF_SECONDARY_WEAPON)
-		return inventory.ItemWornAt(obj, 4);
+		return inventory.ItemWornAt(obj, EquipSlot::WeaponSecondary);
 
 	if (UsingSecondaryWeapon(obj, attackCode))
-		return inventory.ItemWornAt(obj, 4);
+		return inventory.ItemWornAt(obj, EquipSlot::WeaponSecondary);
 
 	if (attackCode > ATTACK_CODE_NATURAL_ATTACK)
 		return 0i64;
 
-	return inventory.ItemWornAt(obj, 3);
+	return inventory.ItemWornAt(obj, EquipSlot::WeaponPrimary);
 }
 
 ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
@@ -753,11 +753,15 @@ ActionErrorCode D20ActionCallbacks::PerformTripAttack(D20Actn* d20a)
 	if (!d20a->d20ATarget)
 		return AEC_TARGET_INVALID;
 
+	auto performer = d20a->d20APerformer;
+
+	objHndl weaponUsed = d20Sys.GetAttackWeapon(performer, d20a->data1, (D20CAF)d20a->d20Caf);
+
+	
 	d20a->d20Caf |= D20CAF_TOUCH_ATTACK;
 	combatSys.ToHitProcessing(*d20a);
 	//d20Sys.ToHitProc(d20a);
-	if (animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget))
-	{
+	if (animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget)){
 		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}

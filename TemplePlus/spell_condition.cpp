@@ -40,10 +40,15 @@ public:
 	static int BootsOfSpeedBonusAttack(DispatcherCallbackArgs args);
 	static int BlinkDefenderMissChance(DispatcherCallbackArgs args);
 
+	static int WebOnMoveSpeed(DispatcherCallbackArgs args);
+
 	void apply() override {
 		
 		VampiricTouchFix();
 		enlargePersonModelScaleFix();
+
+		// Replaces sp-WebOn movement speed hook
+		replaceFunction(0x100CB700, WebOnMoveSpeed);
 
 		// Fix for Blink defender miss chance (the conditions for true seeing reducing the chance to 20% was flipped)
 		replaceFunction(0x100C62D0, BlinkDefenderMissChance);
@@ -443,5 +448,16 @@ int SpellConditionFixes::BlinkDefenderMissChance(DispatcherCallbackArgs args){
 	if (missChance){
 		dispIo->bonlist.AddBonus(missChance, 19, args.GetData2());
 	}
+	return 0;
+}
+
+int SpellConditionFixes::WebOnMoveSpeed(DispatcherCallbackArgs args){
+	args.dispIO->AssertType(dispIOTypeMoveSpeed);
+	auto dispIo = static_cast<DispIoMoveSpeed*>(args.dispIO);
+	if (!d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Has_Freedom_of_Movement)) {
+		dispIo->bonlist->SetOverallCap(1, 0, 0, args.GetData2());
+		dispIo->bonlist->SetOverallCap(2, 0, 0, args.GetData2());
+	}
+	
 	return 0;
 }

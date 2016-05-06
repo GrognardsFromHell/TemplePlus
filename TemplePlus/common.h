@@ -95,7 +95,7 @@ struct BonusEntry
 {
 	int32_t bonValue;
 	uint32_t bonType; // gets comapred with 0, 8 and 21 in 100E6490; I think these types allow bonuses to stack
-	char * bonusMesString; // parsable string for the help system e.g. "~Item~[TAG_ITEM]"
+	const char * bonusMesString; // parsable string for the help system e.g. "~Item~[TAG_ITEM]"
 	char * bonusDescr; // e.g. "Magic Full Plate +1"
 };
 
@@ -115,24 +115,17 @@ struct BonusList
 	uint32_t bonCapperCount;
 	uint32_t zeroBonusReasonMesLine[10]; // a line from the bonus.mes that is auto assigned a 0 value (I think it will print ---). Probably for overrides like racial immunity and stuff.
 	uint32_t zeroBonusCount;
-	int32_t overallCapHigh; // init to largest  positive int; controlls what the sum of all the modifiers of various types cannot exceed
-	uint32_t field358; // looks unused
-	char * overallCapHighBonusMesString;
-	char * overallCapHighDescr;
-	int32_t overallCapLow; //init to most negative int
-	uint32_t field368; // looks unused
-	char * overallCapLowBonusMesString;
-	char * overallCapLowDescr;
+	BonusEntry overallCapHigh; // init to largest  positive int; controlls what the sum of all the modifiers of various types cannot exceed
+	BonusEntry overallCapLow; //init to most negative int
 	uint32_t bonFlags; // init 0; 0x1 - overallCapHigh set; 0x2 - overallCapLow set; 0x4 - force cap override (otherwise it can only impose restrictions i.e. it will only change the cap if it's lower than the current one)
 
-	BonusList()
-	{
+	BonusList()	{
 		this->bonCount = 0;
 		this->bonCapperCount = 0;
 		this->zeroBonusCount = 0;
 		this->bonFlags = 0;
-		this->overallCapHigh = 0x7fffFFFF;
-		this->overallCapLow = 0x80000001;
+		this->overallCapHigh.bonValue = 0x7fffFFFF;
+		this->overallCapLow.bonValue = 0x80000001;
 	}
 
 	int GetEffectiveBonusSum() const;
@@ -160,6 +153,9 @@ struct BonusList
 
 	int AddCap(int capType, int capValue, uint32_t bonMesLineNum);
 	int AddCapWithDescr(int capType, int capValue, uint32_t bonMesLineNum, char* capDescr);
+
+	BOOL SetOverallCap(int BonFlags, int newCap, int newCapType, int newCapMesLineNum, char *capDescr = nullptr);
+	static const char* GetBonusMesLine(int lineNum);
 };
 
 const int TestSizeOfBonusList = sizeof(BonusList); // should be 888 (0x378)

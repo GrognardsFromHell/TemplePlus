@@ -56,7 +56,8 @@ struct DispatcherSystem : temple::AddressTable
 	void  DispatcherClearConds(Dispatcher *dispatcher);
 	
 	int32_t dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList * bonOut, objHndl objHnd2, int32_t flag);
-	float Dispatch29hGetMoveSpeed(objHndl objHnd, void *);
+	float Dispatch29hGetMoveSpeed(objHndl objHnd, DispIoMoveSpeed * dispIo = nullptr);
+	float Dispatch40GetBaseMoveSpeed(objHndl objHnd, DispIoMoveSpeed * dispIo = nullptr);
 	void dispIOTurnBasedStatusInit(DispIOTurnBasedStatus* dispIOtbStat);
 	void dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBasedStatus* dispIOtB);
 
@@ -347,7 +348,13 @@ struct DispIoD20ActionTurnBased : DispIO { // dispIoType = 12; matches dispTypes
 struct DispIoMoveSpeed : DispIO  // dispIoType = 13, matches dispTypes 40,41
 {
 	BonusList* bonlist;
-	float moveSpeed;
+	float factor;
+	DispIoMoveSpeed() {
+		dispIOType = dispIOTypeMoveSpeed;
+		factor = 1.0;
+		bonlist = nullptr;
+	}
+
 };
 
 

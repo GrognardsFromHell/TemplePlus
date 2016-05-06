@@ -46,11 +46,11 @@ int BonusList::GetEffectiveBonusSum() const {
 		}
 	}
 
-	if (bonFlags & 1 && result > overallCapHigh) {
-		result = overallCapHigh;
+	if (bonFlags & 1 && result > overallCapHigh.bonValue) {
+		result = overallCapHigh.bonValue;
 	}
-	if (bonFlags & 2 && result < overallCapLow) {
-		result = overallCapLow;
+	if (bonFlags & 2 && result < overallCapLow.bonValue) {
+		result = overallCapLow.bonValue;
 	}
 
 	return result;
@@ -189,6 +189,29 @@ int BonusList::AddCapWithDescr(int capType, int capValue, uint32_t bonMesLineNum
 	return 0;
 }
 
+BOOL BonusList::SetOverallCap(int newBonFlags, int newCap, int newCapType, int newCapMesLineNum, char *capDescr) {
+	if (!newBonFlags)
+		return FALSE;
+
+	auto bonMesString = GetBonusMesLine(newCapMesLineNum);
+
+	if (newBonFlags & 1 && (overallCapHigh.bonValue > newCap || newBonFlags & 4)) {
+		overallCapHigh.bonValue = newCap;
+		overallCapHigh.bonType = newCapType;
+		overallCapHigh.bonusMesString = bonMesString;
+		overallCapHigh.bonusDescr = capDescr;
+	}
+	if (newBonFlags & 2 && (overallCapLow.bonValue < newCap || newBonFlags & 4)) {
+		overallCapLow.bonValue = newCap;
+		overallCapLow.bonType = newCapType;
+		overallCapLow.bonusMesString = bonMesString;
+		overallCapLow.bonusDescr = capDescr;
+	}
+
+	bonFlags |= newBonFlags;
+	return TRUE;
+}
+
 objHndl AttackPacket::GetWeaponUsed() const
 {
 	if ( !(flags& D20CAF_TOUCH_ATTACK) ||  (flags & D20CAF_THROWN_GRENADE) )
@@ -232,7 +255,18 @@ PointNode::PointNode(float x, float y, float z){
 	absY = y;
 }
 
-int BonusList::AddBonus(int value, int bonType, int mesline)
-{
+int BonusList::AddBonus(int value, int bonType, int mesline){
 	return bonusSys.bonusAddToBonusList(this, value, bonType, mesline);
+}
+
+
+const char* BonusList::GetBonusMesLine(int lineNum) {
+	MesLine mesLine(lineNum);
+
+	if (lineNum >= 335)
+		mesFuncs.GetLine_Safe(bonusSys.bonusMesNew, &mesLine);
+	else
+		mesFuncs.GetLine_Safe(*bonusSys.bonusMesHandle, &mesLine);
+
+	return mesLine.value;
 }
