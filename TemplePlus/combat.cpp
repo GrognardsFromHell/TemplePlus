@@ -1163,6 +1163,39 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 	auto tgtAcFinal = dispIoTgtAc.Dispatch(tgt, 0i64, dispTypeGetACBonus2, DK_NONE);
 
 	auto toHitRoll = Dice::Roll(1, 20);
+
+	if (critterSys.IsPC(performer)) {
+		auto ff = tio_fopen("pc_rolls.txt", "a");
+		auto text = fmt::format("{}\n", toHitRoll);
+		tio_fwrite(&text[0], text.size(), 1, ff);
+		tio_fclose(ff);
+	}
+	else {
+		auto ff = tio_fopen("npc_rolls.txt", "a");
+		auto text = fmt::format("{}\n", toHitRoll);
+		tio_fwrite(&text[0], text.size(), 1, ff);
+		tio_fclose(ff);
+	}
+
+	if (party.IsInParty(performer)){
+		auto ff = tio_fopen("party_rolls.txt", "a");
+		auto text = fmt::format("{}\n", toHitRoll);
+		tio_fwrite(&text[0], text.size(), 1, ff);
+		tio_fclose(ff);
+	}
+	else {
+		auto ff = tio_fopen("enemy_rolls.txt", "a");
+		auto text = fmt::format("{}\n", toHitRoll);
+		tio_fwrite(&text[0], text.size(), 1, ff);
+		tio_fclose(ff);
+	}
+
+	auto ff = tio_fopen("overall_rolls.txt", "a");
+	auto text = fmt::format("{}\n", toHitRoll);
+	tio_fwrite(&text[0], text.size(), 1, ff);
+	tio_fclose(ff);
+	
+
 	auto critAlwaysCheat = temple::GetRef<int>(0x10BCA8B0);
 
 	auto isMiss = [critAlwaysCheat](int roll, int toHitBon, int tgtAc) {
