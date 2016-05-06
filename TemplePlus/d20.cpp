@@ -754,7 +754,8 @@ ActionErrorCode D20ActionCallbacks::PerformTripAttack(D20Actn* d20a)
 		return AEC_TARGET_INVALID;
 
 	d20a->d20Caf |= D20CAF_TOUCH_ATTACK;
-	d20Sys.ToHitProc(d20a);
+	combatSys.ToHitProcessing(*d20a);
+	//d20Sys.ToHitProc(d20a);
 	if (animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget))
 	{
 		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
@@ -1669,8 +1670,7 @@ ActionErrorCode D20ActionCallbacks::PerformAoo(D20Actn* d20a)
 	combatSys.FloatCombatLine(performer, 43); // attack of opportunity
 	histSys.CreateRollHistoryLineFromMesfile(1, performer, tgt);
 
-	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Trip_AOO))
-	{
+	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Trip_AOO) && !d20Sys.d20Query(d20a->d20ATarget, DK_QUE_Prone) )	{
 		return PerformTripAttack(d20a);
 	} 
 	// else do standard attack
