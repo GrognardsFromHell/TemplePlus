@@ -1837,6 +1837,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeGetSizeCategory,
 	dispTypeBucklerAcPenalty,
 
+	dispTypeGetModelScale, // NEW! used for modifying the model scale with messing with internal fields
 
 	dispTypeCount // used just for size definition purposes
 
@@ -2372,15 +2373,15 @@ enum WeaponFlags : uint32_t
 	OWF_SILENT= 2 ,
 	OWF_UNUSED_1 = 4,
 	OWF_UNUSED_2 = 8,
-	OWF_THROWABLE = 16,
-	OWF_TRANS_PROJECTILE = 32,
-	OWF_BOOMERANGS = 64,
-	OWF_IGNORE_RESISTANCE = 128,
-	OWF_DAMAGE_ARMOR = 256,
-	OWF_DEFAULT_THROWS = 512,
-	OWF_RANGED_WEAPON = 1024,
-	OWF_WEAPON_LOADED = 2048,
-	OWF_MAGIC_STAFF = 4096
+	OWF_THROWABLE = 0x10,
+	OWF_TRANS_PROJECTILE = 0x20,
+	OWF_BOOMERANGS = 0x40,
+	OWF_IGNORE_RESISTANCE = 0x80,
+	OWF_DAMAGE_ARMOR = 0x100,
+	OWF_DEFAULT_THROWS = 0x200,
+	OWF_RANGED_WEAPON = 0x400,
+	OWF_WEAPON_LOADED = 0x800,
+	OWF_MAGIC_STAFF = 0x1000
 };
 
 enum WeaponAmmoType

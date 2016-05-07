@@ -1,7 +1,28 @@
 #pragma once
 #include "common.h"
 #include "idxtables.h"
+#include <map>
 
+
+enum WildShapeProtoIdx : int {
+	WS_Deactivate = 999 + (1 << 24),
+	WS_Wolf = 0,
+	WS_Dire_Lizard,
+	WS_Brown_Bear,
+	WS_Polar_Bear,
+	WS_Legendary_Rat,
+	WS_Dire_Bear,
+	WS_Giant_Snake,
+	WS_Hill_Giant,
+	WS_Elem_Large_Air,
+	WS_Elem_Large_Earth,
+	WS_Elem_Large_Fire,
+	WS_Elem_Large_Water,
+	WS_Elem_Huge_Air,
+	WS_Elem_Huge_Earth,
+	WS_Elem_Huge_Fire,
+	WS_Elem_Huge_Water
+};
 
 struct ClassPacket;
 
@@ -20,6 +41,35 @@ public:
 	void ClassPacketDealloc(ClassPacket *classPkt);
 	uint32_t GetClassPacket(Stat classEnum, ClassPacket *classPkt); // fills the struct with content based on classEnum (e.g. Barbarian Feats in the featsIdxTable). Also STUB FOR PRESTIGE CLASSES! TODO
 	
+
+	struct WildShapeSpec {
+		int protoId;
+		int minLvl;
+		int monCat;
+		WildShapeSpec() { protoId = 0; minLvl = 1; monCat = mc_type_animal; }
+		WildShapeSpec(int ProtoId, int MinLvl) :protoId(ProtoId), minLvl(MinLvl), monCat(mc_type_animal) {	};
+		WildShapeSpec(int ProtoId, int MinLvl, int MonCat) :protoId(ProtoId), minLvl(MinLvl), monCat(MonCat) {	};
+
+	};
+
+	std::map<WildShapeProtoIdx, WildShapeSpec> wildShapeProtos =
+	{ { WS_Wolf,{ 14050, 2 } }, // 2HD
+	{ WS_Dire_Lizard ,{ 14450, 5 } }, // 5HD
+	{ WS_Brown_Bear,{ 14053, 7 } }, // large, 6HD
+	{ WS_Polar_Bear ,{ 14054, 8 } }, // large, 8HD
+	{ WS_Legendary_Rat ,{ 14451, 6 } },
+	{ WS_Dire_Bear ,{ 14506, 12 } },
+	{ WS_Giant_Snake ,{ 14449, 10 } },
+	{ WS_Hill_Giant ,{ 14217, 10000 } }, // this is added via a special option
+	{ WS_Elem_Large_Air,{ 14292 , 16, mc_type_elemental } },
+	{ WS_Elem_Large_Earth,{ 14296 , 16, mc_type_elemental } },
+	{ WS_Elem_Large_Fire,{ 14298 , 16, mc_type_elemental } },
+	{ WS_Elem_Large_Water,{ 14302 , 16, mc_type_elemental } },
+	{ WS_Elem_Huge_Air,{ 14508 , 20, mc_type_elemental } },
+	{ WS_Elem_Huge_Earth,{ 14509 , 20 , mc_type_elemental } },
+	{ WS_Elem_Huge_Fire,{ 14510 , 20, mc_type_elemental } },
+	{ WS_Elem_Huge_Water,{ 14511 , 20, mc_type_elemental } }
+	};
 
 	D20ClassSystem()
 	{

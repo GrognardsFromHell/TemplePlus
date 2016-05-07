@@ -95,9 +95,7 @@ struct Objects : temple::AddressTable {
 	float GetRotationPitch(objHndl handle) {
 		return _GetInternalFieldFloat(handle, obj_f_rotation_pitch);
 	}
-	int GetScalePercent(objHndl handle) {
-		return _GetInternalFieldInt32(handle, obj_f_model_scale);
-	}
+	int GetScalePercent(objHndl handle);
 	void SetRotation(objHndl handle, float rotation);
 
 	ItemFlag GetItemFlags(objHndl handle) {

@@ -529,7 +529,9 @@ int RadialMenuEntry::AddChildToStandard(objHndl handle, RadialMenuStandardNode s
 	return radialMenus.AddChildNode(handle, this, parentNode);
 }
 
-
+int RadialMenuEntry::AddAsChild(objHndl handle, int parentId) {
+	return radialMenus.AddChildNode(handle, this, parentId);
+}
 
 
 RadialMenuEntrySlider::RadialMenuEntrySlider(int combatMesLine, int _minArg, int _maxArg, void* _actualArg, int combatMesHeaderText, uint32_t _helpId): RadialMenuEntry()
@@ -575,3 +577,18 @@ RadialMenuEntryToggle::RadialMenuEntryToggle(int combatMesLine, void* ActualArg,
 //	int parentNode = radialMenus.GetStandardNode(stdNode);
 //	return radialMenus.AddChildNode(handle, this, parentNode);
 //}
+
+RadialMenuEntryParent::RadialMenuEntryParent(int combatMesLine):RadialMenuEntry() {
+	type = RadialMenuEntryType::Parent;
+	text = combatSys.GetCombatMesLine(combatMesLine);
+}
+
+
+int RadialMenuEntryParent::AddChildToStandard(objHndl handle, RadialMenuStandardNode stdNode) {
+	int parentNode = radialMenus.GetStandardNode(static_cast<RadialMenuStandardNode>(stdNode));
+	return radialMenus.AddParentChildNode(handle, this, parentNode);
+}
+
+int RadialMenuEntryParent::AddAsChild(objHndl handle, int parentId) {
+	return radialMenus.AddParentChildNode(handle, this, parentId);
+}

@@ -28,8 +28,11 @@
 #include "gamesystems/objects/objevent.h"
 #include "ui/ui_party.h"
 #include "sound.h"
+#include "d20_class.h"
 
 #define GET_DISPIO(ioType, eventObjType ) args.dispIO->AssertType( ioType ); auto dispIo = static_cast< eventObjType *>(args.dispIO);
+#define CB int(__cdecl)(DispatcherCallbackArgs)
+using DispCB = int(__cdecl )(DispatcherCallbackArgs);
 
 ConditionSystem conds;
 CondStructNew conditionDisableAoO;
@@ -199,7 +202,15 @@ public:
 	static int ItemCreationBuildRadialMenuEntry(DispatcherCallbackArgs args, ItemCreationType itemCreationType, char* helpSystemString, MesHandle combatMesLine);
 	
 	
-	
+	static int DruidWildShapeInit(DispatcherCallbackArgs args);
+	static int DruidWildShapedInit(DispatcherCallbackArgs args);
+	static int DruidWildShapeReset(DispatcherCallbackArgs args);
+	static int DruidWildShapeD20StatusInit(DispatcherCallbackArgs args);
+	static int DruidWildShapeGetNumAttacks(DispatcherCallbackArgs args);
+	static int DruidWildShapeRadialMenu(DispatcherCallbackArgs args);
+	static int DruidWildShapeCheck(DispatcherCallbackArgs args);
+	static int DruidWildShapePerform(DispatcherCallbackArgs args);
+	static int DruidWildShapeScale(DispatcherCallbackArgs args);
 
 
 } classAbilityCallbacks;
@@ -288,6 +299,13 @@ public:
 
 		// buckler to-hit penalty
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10104DA0, itemCallbacks.BucklerToHitPenalty);
+
+
+		// Druid wild shape
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBDB0, classAbilityCallbacks.DruidWildShapeReset);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBB20, classAbilityCallbacks.DruidWildShapeRadialMenu);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBC60, classAbilityCallbacks.DruidWildShapeCheck);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBCE0, classAbilityCallbacks.DruidWildShapePerform);
 	}
 } condFuncReplacement;
 
@@ -3185,8 +3203,7 @@ int ItemCallbacks::SkillBonus(DispatcherCallbackArgs args)
 	return 0;
 }
 
-int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args)
-{
+int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args){
 	auto invIdx = args.GetCondArg(2);
 	auto itemHandle = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
 	auto itemObj = gameSystems->GetObj().GetObject(itemHandle);
@@ -3660,6 +3677,321 @@ int ClassAbilityCallbacks::ItemCreationBuildRadialMenuEntry(DispatcherCallbackAr
 	return 0;
 }
 
+int ClassAbilityCallbacks::DruidWildShapeInit(DispatcherCallbackArgs args){
+	auto druidLvl = objects.StatLevelGet(args.objHndCaller, stat_level_druid);
+	auto numTimes = 1; // number of times can wild shape per day
+	if (druidLvl >= 6) {
+		switch (druidLvl) {
+		case 6:
+			numTimes = 2;
+			break;
+		case 7:
+		case 8:
+		case 9:
+			numTimes = 3;
+			break;
+		case 10:
+		case 11:
+		case 12:
+		case 13:
+			numTimes = 4;
+			break;
+		case 14:
+		case 15:
+		case 16:
+		case 17:
+			numTimes = 5;
+			break;
+		default: // 18 and above
+			numTimes = 6;
+			break;
+		}
+
+		// elemental num times (new)
+		if (druidLvl >= 16) {
+			numTimes += (1 << 8);
+		}
+		if (druidLvl >= 18)
+			numTimes += (1 << 8);
+		if (druidLvl >= 20)
+			numTimes += (1 << 8);
+	}
+
+
+
+	args.SetCondArg(0, numTimes);
+
+	if (conds.AddTo(args.objHndCaller, conds.GetByName("Wild Shaped"), { numTimes, 0,0 }))
+	{
+		int dummy = 1;
+	} else
+	{
+		int dummy = 1;
+	}
+
+
+	return 0;
+}
+
+int ClassAbilityCallbacks::DruidWildShapedInit(DispatcherCallbackArgs args)
+{
+	return 0;
+}
+
+int ClassAbilityCallbacks::DruidWildShapeReset(DispatcherCallbackArgs args){
+	auto druidLvl = objects.StatLevelGet(args.objHndCaller, stat_level_druid);
+	auto numTimes = 1; // number of times can wild shape per day
+	if (druidLvl >= 6) {
+		switch (druidLvl) {
+		case 6:
+			numTimes = 2;
+			break;
+		case 7:
+		case 8:
+		case 9:
+			numTimes = 3;
+			break;
+		case 10:
+		case 11:
+		case 12:
+		case 13:
+			numTimes = 4;
+			break;
+		case 14:
+		case 15:
+		case 16:
+		case 17:
+			numTimes = 5;
+			break;
+		default: // 18 and above
+			numTimes = 6;
+			break;
+		}
+
+		// elemental num times (new)
+		if (druidLvl >=16) {
+			numTimes += (1 << 8);
+		}
+		if (druidLvl >= 18)
+			numTimes += (1 << 8);
+		if (druidLvl >= 20)
+			numTimes += (1 << 8);
+	}
+
+	
+	
+	args.SetCondArg(0, numTimes);
+	if (args.GetCondArg(2)) {
+		args.SetCondArg(2, 0);
+		auto obj = gameSystems->GetObj().GetObject(args.objHndCaller);
+		auto animHandle = obj->GetInt32(obj_f_animation_handle);
+		if (animHandle) {
+			auto freeAasModel = temple::GetPointer<void(int)>(0x10264510);
+			freeAasModel(animHandle);
+			obj->SetInt32(obj_f_animation_handle, 0);
+		}
+
+		gameSystems->GetParticleSys().CreateAtObj("sp-animal shape", args.objHndCaller);
+		d20StatusSys.initItemConditions(args.objHndCaller);
+	}
+	return 0;
+}
+
+int ClassAbilityCallbacks::DruidWildShapeD20StatusInit(DispatcherCallbackArgs args){
+	if (args.GetCondArg(2))
+		d20StatusSys.initItemConditions(args.objHndCaller);
+	return 0;
+}
+
+int ClassAbilityCallbacks::DruidWildShapeGetNumAttacks(DispatcherCallbackArgs args){
+	auto dispIo = static_cast<DispIoD20ActionTurnBased*>(args.dispIO);
+	dispIo->AssertType(dispIOTypeD20ActionTurnBased);
+
+	int protoId = d20Sys.d20Query(args.objHndCaller, DK_QUE_Polymorphed);
+	if (!protoId){
+		return 0;
+	}
+
+	auto protoHandle = gameSystems->GetObj().GetProtoHandle(protoId);
+	if (!protoHandle){
+		return 0;
+	}
+	
+	dispIo->returnVal = critterSys.GetCritterNumNaturalAttacks(protoHandle);
+	return 0;
+}
+
+int ClassAbilityCallbacks::DruidWildShapeRadialMenu(DispatcherCallbackArgs args){
+	RadialMenuEntryParent wildshapeMain(5076);
+	auto wsId = wildshapeMain.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Class);
+
+	// if wild shape active - add "Deactivate" node
+	if (args.GetCondArg(2)) { 
+		RadialMenuEntryAction wsDeactivate(5077, D20A_CLASS_ABILITY_SA, WS_Deactivate, "TAG_CLASS_FEATURES_DRUID_WILD_SHAPE");
+		wsDeactivate.AddAsChild(args.objHndCaller, wsId);
+		return 0;
+	}
+	
+	// else add the WS options
+	auto addOption = [args, wsId](WildShapeProtoIdx optionIdx) {
+
+		auto &wsProto = d20ClassSys.wildShapeProtos[optionIdx].protoId;
+		auto protoCode = optionIdx + (1 << 24);
+		RadialMenuEntryAction wsOption(0, D20A_CLASS_ABILITY_SA, protoCode, "TAG_CLASS_FEATURES_DRUID_WILD_SHAPE");
+		
+		auto protoHandle = gameSystems->GetObj().GetProtoHandle(wsProto);
+		wsOption.text = (char*)description.getDisplayName(protoHandle);
+		return wsOption.AddAsChild(args.objHndCaller ,wsId);
+	};
+
+
+	auto druidLvl = objects.StatLevelGet(args.objHndCaller, stat_level_druid);
+
+	for (auto it : d20ClassSys.wildShapeProtos) {
+		if (druidLvl >= it.second.minLvl && it.second.monCat == mc_type_animal)
+			addOption(it.first);
+	}
+
+	if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Wearing_Ring_of_Change)) {
+		addOption(WS_Hill_Giant);
+	}
+
+	// elementals
+	if (druidLvl >= 16) {
+		RadialMenuEntryParent wsElem(5118);
+		auto elemId = wsElem.AddAsChild(args.objHndCaller, wsId);
+
+
+		auto addElem = [args, elemId](WildShapeProtoIdx optionIdx) {
+
+			auto &wsProto = d20ClassSys.wildShapeProtos[optionIdx].protoId;
+			auto protoCode = optionIdx + (1 << 24);
+			RadialMenuEntryAction wsOption(0, D20A_CLASS_ABILITY_SA, protoCode, "TAG_CLASS_FEATURES_DRUID_WILD_SHAPE");
+
+			auto protoHandle = gameSystems->GetObj().GetProtoHandle(wsProto);
+			wsOption.text = (char*)description.getDisplayName(protoHandle);
+			return wsOption.AddAsChild(args.objHndCaller, elemId);
+		};
+
+		for (auto it : d20ClassSys.wildShapeProtos) {
+			if (druidLvl >= it.second.minLvl && it.second.monCat == mc_type_elemental)
+				addElem(it.first);
+		}
+	}
+
+	return 0;
+}
+
+int ClassAbilityCallbacks::DruidWildShapeCheck(DispatcherCallbackArgs args){
+	auto druidLvl = objects.StatLevelGet(args.objHndCaller, stat_level_druid);
+
+	auto dispIo = static_cast<DispIoD20ActionTurnBased*>(args.dispIO);
+	dispIo->AssertType(dispIOTypeD20ActionTurnBased);
+
+	auto d20a = dispIo->d20a;
+	if (d20a->data1 & (1 << 24)) {
+		if (args.GetCondArg(2)) // already polymorphed
+			return 0;
+
+		auto idx = d20a->data1 - (1 << 24);
+		auto &spec = d20ClassSys.wildShapeProtos[(WildShapeProtoIdx)idx];
+		if (druidLvl < spec.minLvl)
+			dispIo->returnVal = AEC_INVALID_ACTION;
+
+		auto numTimes = args.GetCondArg(0);
+		if (spec.monCat == mc_type_elemental) {
+			numTimes = numTimes >> 8;
+			if (numTimes <= 0)
+				dispIo->returnVal = AEC_INVALID_ACTION;
+		}
+		else { // normal animal (or plant)
+			numTimes = numTimes & 0xFF;
+			if (numTimes <= 0)
+				dispIo->returnVal = AEC_INVALID_ACTION;
+		}
+	}
+
+	return 0;
+}
+
+int ClassAbilityCallbacks::DruidWildShapePerform(DispatcherCallbackArgs args){
+	auto druidLvl = objects.StatLevelGet(args.objHndCaller, stat_level_druid);
+
+	auto dispIo = static_cast<DispIoD20ActionTurnBased*>(args.dispIO);
+	dispIo->AssertType(dispIOTypeD20ActionTurnBased);
+
+	auto d20a = dispIo->d20a;
+
+	if (!(d20a->data1 & (1 << 24)))
+		return 0;
+
+
+	auto initObj = [args](int protoId) {
+		auto obj = gameSystems->GetObj().GetObject(args.objHndCaller);
+		auto animHandle = obj->GetInt32(obj_f_animation_handle);
+		if (animHandle) {
+			auto freeAasModel = temple::GetPointer<void(int)>(0x10264510);
+			freeAasModel(animHandle);
+			obj->SetInt32(obj_f_animation_handle, 0);
+		}
+		if (protoId) {
+			auto lvl = objects.StatLevelGet(args.objHndCaller, stat_level);
+			damage.Heal(args.objHndCaller, args.objHndCaller, Dice(0, 0, lvl), D20A_CLASS_ABILITY_SA);
+		}
+
+		gameSystems->GetParticleSys().CreateAtObj("sp-animal shape", args.objHndCaller);
+		d20StatusSys.initItemConditions(args.objHndCaller);
+		
+	};
+
+	auto curWsProto = args.GetCondArg(2);
+	if (curWsProto) { // deactivating
+		args.SetCondArg(2, 0);
+		initObj(0);
+		return 0;
+	}
+
+	auto numTimes = args.GetCondArg(0);
+	auto idx = d20a->data1 - (1 << 24);
+	auto &protoSpec = d20ClassSys.wildShapeProtos[(WildShapeProtoIdx)idx];
+	if (protoSpec.monCat == mc_type_elemental) {
+		if ( (numTimes >> 8) <= 0)
+			return 0;
+		args.SetCondArg(0, numTimes - (1 << 8));
+	}
+	else { // normal animal or plant
+		if ((numTimes & 0xFF) <= 0)
+			return 0;
+		args.SetCondArg(0, numTimes - 1);
+	}
+
+	args.SetCondArg(1, 600 * druidLvl);
+	args.SetCondArg(2, protoSpec.protoId);
+	initObj(protoSpec.protoId);
+
+	return 0;
+}
+
+int ClassAbilityCallbacks::DruidWildShapeScale(DispatcherCallbackArgs args){
+	auto dispIo = static_cast<DispIoMoveSpeed*>(args.dispIO);
+	dispIo->AssertType(dispIOTypeMoveSpeed);
+
+	auto protoId = d20Sys.d20Query(args.objHndCaller, DK_QUE_Polymorphed);
+	if (!protoId)
+		return 0;
+	auto protoHandle = gameSystems->GetObj().GetProtoHandle(protoId);
+	if (!protoHandle)
+		return 0;
+
+	auto protoScale = gameSystems->GetObj().GetObject(protoHandle)->GetInt32(obj_f_model_scale);
+	//auto normalScale = gameSystems->GetObj().GetObject(args.objHndCaller)->GetInt32(obj_f_model_scale);
+
+	dispIo->bonlist->bonusEntries[0].bonValue = protoScale; // modifies the initial value
+
+
+	return 0;
+}
+
 int ClassAbilityCallbacks::FeatCraftRodRadial(DispatcherCallbackArgs args){
 	return ItemCreationBuildRadialMenuEntry(args, CraftRod, "TAG_CRAFT_ROD", 5069);
 };
@@ -3771,6 +4103,25 @@ void Conditions::AddConditionsToTable(){
 	static CondStructNew weaponMerciful("Weapon Merciful", 4, false);
 	weaponMerciful.AddHook(dispTypeDealingDamage, DK_NONE, itemCallbacks.WeaponMerciful);
 
+	static CondStructNew wildShape("Wild Shape", 3); // mainly to replace the lack of D20StatusInit callback
+	wildShape.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.DruidWildShapeInit); // otherwise you go into init hell
+	wildShape.AddToFeatDictionary(FEAT_WILD_SHAPE);
+
+	static CondStructNew wildShaped("Wild Shaped", 3); // because the wild shape args get overwritten on each init
+	wildShaped.AddHook(dispTypeConditionAdd, DK_NONE, classAbilityCallbacks.DruidWildShapedInit);
+	wildShaped.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.DruidWildShapeRadialMenu);
+	wildShaped.AddHook(dispTypeConditionAddFromD20StatusInit, DK_NONE, classAbilityCallbacks.DruidWildShapeD20StatusInit); // takes care of resetting the item conditions
+	wildShaped.AddHook(dispTypeD20ActionCheck, DK_D20A_CLASS_ABILITY_SA, classAbilityCallbacks.DruidWildShapeCheck);
+	wildShaped.AddHook(dispTypeD20ActionPerform, DK_D20A_CLASS_ABILITY_SA, classAbilityCallbacks.DruidWildShapePerform);
+	wildShaped.AddHook(dispTypeNewDay, DK_NEWDAY_REST, classAbilityCallbacks.DruidWildShapeReset);
+	wildShaped.AddHook(dispTypeBeginRound, DK_NONE, temple::GetRef<DispCB>(0x100FBE70));
+	wildShaped.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, temple::GetRef<DispCB>(0x100FBF30));
+	wildShaped.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, temple::GetRef<DispCB>(0x100FBF30));
+	wildShaped.AddHook(dispTypeAbilityScoreLevel, DK_STAT_CONSTITUTION, temple::GetRef<DispCB>(0x100FBF30));
+	wildShaped.AddHook(dispTypeD20Query, DK_QUE_Polymorphed, temple::GetRef<DispCB>(0x100FBF90));
+	wildShaped.AddHook(dispTypeGetCritterNaturalAttacksNum, DK_NONE, classAbilityCallbacks.DruidWildShapeGetNumAttacks);
+	wildShaped.AddHook(dispTypeD20Query, DK_QUE_CannotCast, temple::GetRef<DispCB>(0x100FBFC0));
+	wildShaped.AddHook(dispTypeGetModelScale, DK_NONE, classAbilityCallbacks.DruidWildShapeScale); // NEW! scales the model too
 
 
 	// New Conditions!

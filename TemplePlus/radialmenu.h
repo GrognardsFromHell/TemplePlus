@@ -82,9 +82,17 @@ struct RadialMenuEntry {
 	RadialMenuEntry();
 	void SetDefaults();
 	int AddChildToStandard(objHndl handle, RadialMenuStandardNode stdNode); // adds node as child to standard node and returns its ID   // wtf gave me some odd errors
-	//int AddChildToStandard(objHndl, uint32_t node);
+	int AddAsChild(objHndl handle, int parentId); // adds node as child to specified parent
 };
 
+const int testSizeOfRadMenEn = sizeof(RadialMenuEntry);
+
+
+struct RadialMenuEntryParent : RadialMenuEntry {
+	RadialMenuEntryParent(int combatMesLine);
+	int AddChildToStandard(objHndl handle, RadialMenuStandardNode stdNode);
+	int AddAsChild(objHndl handle, int parentId);
+};
 
 struct RadialMenuEntrySlider : RadialMenuEntry{
 	RadialMenuEntrySlider( int combatMesLine, int _minArg, int _maxArg, void* actualArg, int combatMesHeaderTextLine, uint32_t helpId);

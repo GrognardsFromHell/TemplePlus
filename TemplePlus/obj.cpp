@@ -425,6 +425,29 @@ float Objects::GetRadius(objHndl handle)
 	
 }
 
+int Objects::GetScalePercent(objHndl handle){
+
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	auto modelScale = obj->GetInt32(obj_f_model_scale);
+	
+
+	if (IsCritter(handle)) {
+		DispIoMoveSpeed dispIo;
+		BonusList bonlist;
+		dispIo.bonlist = &bonlist;
+		bonlist.AddBonus(modelScale, 1, 102); // initial value
+
+		auto dispatcher = gameSystems->GetObj().GetObject(handle)->GetDispatcher();
+		if (dispatcher->IsValid()){
+			dispatcher->Process(dispTypeGetModelScale, DK_NONE, &dispIo);
+		}
+		modelScale = bonlist.GetEffectiveBonusSum();
+	}
+
+	return modelScale;
+
+}
+
 void Objects::SetRotation(objHndl handle, float rotation) {
 	// Normalizes the rotation parameter to valid radians range
 	static auto PI_2 = (float)(2.0 * M_PI);
@@ -768,6 +791,10 @@ public:
 	};
 
 
+	static int HookedGetModelScale(objHndl handle, obj_f field){
+		return objects.GetScalePercent(handle);
+	}
+
 	void apply() override {
 
 		// obj_update_render_height
@@ -790,6 +817,14 @@ public:
 		replaceFunction(0x100257A0, _destroy);
 		//orgMove = replaceFunction(0x10025950, Move);
 		//orgMoveUpdateLoc = replaceFunction(0x100C1990, MoveUpdateLoc);
+
+
+		writeCall(0x10022AEF, HookedGetModelScale); 
+		writeCall(0x100228A5, HookedGetModelScale); // RayCast
+		writeCall(0x10023F1F, HookedGetModelScale); // Render related
+		writeCall(0x10021E9F, HookedGetModelScale);
+		
+			
 }
 } objReplacements;
 

@@ -112,10 +112,13 @@ public:
 #define ActionCost(fname) static ActionErrorCode ActionCost ## fname ## (D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 #define ActionFrame(fname) static ActionErrorCode ActionFrame ## fname ## (D20Actn* d20a)
 	// Add to sequence funcs
+	AddToSeq(Charge);
 	AddToSeq(Simple);
 	AddToSeq(WithTarget);
 	static ActionErrorCode AddToSeqTripAttack(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);;
 	
+	
+
 	// Turn Based Status checks
 	static ActionErrorCode StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBasedStatus* tbStat);
 
@@ -141,6 +144,7 @@ public:
 	// Perform 
 	PerformFunc(AidAnotherWakeUp);
 	PerformFunc(Aoo);
+	PerformFunc(Charge);
 	PerformFunc(Disarm);
 	PerformFunc(DisarmedWeaponRetrieve);
 	PerformFunc(DivineMight);
@@ -152,6 +156,7 @@ public:
 	// Action Frame 
 	ActionFrame(AidAnotherWakeUp);
 	ActionFrame(Aoo);
+	ActionFrame(Charge);
 	ActionFrame(Disarm);
 	ActionFrame(QuiveringPalm);
 	ActionFrame(StandardAttack);
@@ -234,6 +239,12 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Type = D20A_ATTACK_OF_OPPORTUNITY;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformAoo;
 	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameAoo;
+
+
+	d20Type = D20A_CHARGE;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformCharge;
+	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameCharge;
+
 
 	d20Type = D20A_DISARM;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqWithTarget;
@@ -715,7 +726,7 @@ objHndl LegacyD20System::GetAttackWeapon(objHndl obj, int attackCode, D20CAF fla
 
 ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
 {
-	int v5 = templeFuncs.RNG(0, 2);
+	int hitAnimIdx = templeFuncs.RNG(0, 2);
 
 	int d20data = d20a->data1;
 	int playCritFlag = 0;
@@ -728,7 +739,7 @@ ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
 	else if (d20a->data1 >= ATTACK_CODE_NATURAL_ATTACK + 1)
 	{
 		useSecondaryAnim = templeFuncs.RNG(0, 1);
-		v5 = (d20a->data1 - (ATTACK_CODE_NATURAL_ATTACK + 1)) % 3;
+		hitAnimIdx = (d20a->data1 - (ATTACK_CODE_NATURAL_ATTACK + 1)) % 3;
 	}
 
 	d20Sys.ToHitProc(d20a);
@@ -740,7 +751,7 @@ ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
 
 
 	
-	if (animationGoals.PushAttackAnim(d20a->d20APerformer, d20a->d20ATarget, 0xFFFFFFFF, v5, playCritFlag, useSecondaryAnim))
+	if (animationGoals.PushAttackAnim(d20a->d20APerformer, d20a->d20ATarget, 0xFFFFFFFF, hitAnimIdx, playCritFlag, useSecondaryAnim))
 	{
 		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
@@ -1146,8 +1157,7 @@ int _PerformStandardAttack(D20Actn* d20a)
 	return d20Callbacks.PerformStandardAttack(d20a);
 }
 
-objHndl _GetAttackWeapon(objHndl obj, int attackCode, D20CAF flags)
-{
+objHndl _GetAttackWeapon(objHndl obj, int attackCode, D20CAF flags){
 	return d20Sys.GetAttackWeapon(obj, attackCode, flags);
 }
 
@@ -1165,8 +1175,7 @@ uint32_t _d20actionTabLineParser(TabFileStatus*, uint32_t n, const char** string
 
 }
 
-int _D20Init(GameSystemConf* conf)
-{
+int _D20Init(GameSystemConf* conf){
 	d20Sys.NewD20ActionsInit();
 	return OrgD20Init(conf);
 }
@@ -1283,11 +1292,9 @@ ActionErrorCode D20ActionCallbacks::ActionFrameQuiveringPalm(D20Actn* d20a){
 	return AEC_OK;
 }
 
-ActionErrorCode D20ActionCallbacks::ActionFrameStandardAttack(D20Actn* d20a)
-{
+ActionErrorCode D20ActionCallbacks::ActionFrameStandardAttack(D20Actn* d20a){
 
-	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Prone))
-	{
+	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Prone))	{
 		//histSys.CreateFromFreeText(fmt::format("{} aborted attack (prone).", description.getDisplayName(d20a->d20APerformer)).c_str());
 		return AEC_CANT_WHILE_PRONE;
 	}
@@ -1366,8 +1373,36 @@ ActionErrorCode D20ActionCallbacks::ActionCheckQuiveringPalm(D20Actn* d20a, Turn
 	return AEC_OK;
 }
 
-ActionErrorCode D20ActionCallbacks::PerformDisarm(D20Actn* d20a)
-{
+ActionErrorCode D20ActionCallbacks::PerformCharge(D20Actn* d20a){
+
+	int crit = 0, isSecondary = 0;
+	auto performer = d20a->d20APerformer;
+	conds.AddTo(performer, "Charging", {0});
+	d20a->d20Caf |= D20CAF_CHARGE;
+
+	D20Actn d20aCopy = *d20a;
+
+	auto weapon = inventory.ItemWornAt(performer, EquipSlot::WeaponPrimary);
+	if (!weapon) {
+		weapon = inventory.ItemWornAt(performer, EquipSlot::WeaponSecondary);
+		if (weapon) {
+			d20a->d20Caf |= D20CAF_SECONDARY_WEAPON;
+			d20a->data1 = ATTACK_CODE_OFFHAND + 1;
+		}
+		else if (dispatch.DispatchD20ActionCheck(&d20aCopy, nullptr, dispTypeGetCritterNaturalAttacksNum))
+		{
+			d20a->data1 = ATTACK_CODE_NATURAL_ATTACK + 1;
+		}
+		else {
+			d20a->data1 = ATTACK_CODE_PRIMARY + 1;
+		}
+	}
+
+	return PerformStandardAttack(d20a);
+}
+
+ActionErrorCode D20ActionCallbacks::PerformDisarm(D20Actn* d20a){
+
 	if (animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget))
 	{
 		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
@@ -1377,8 +1412,12 @@ ActionErrorCode D20ActionCallbacks::PerformDisarm(D20Actn* d20a)
 };
 
 
-ActionErrorCode D20ActionCallbacks::ActionFrameDisarm(D20Actn* d20a)
-{
+ActionErrorCode D20ActionCallbacks::ActionFrameCharge(D20Actn* d20a){
+	ActionFrameStandardAttack(d20a);
+	return AEC_OK;
+}
+
+ActionErrorCode D20ActionCallbacks::ActionFrameDisarm(D20Actn* d20a){
 	objHndl performer = d20a->d20APerformer;
 	int failedOnce = 0;
 	if (!d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Can_Perform_Disarm))
@@ -1490,22 +1529,19 @@ ActionErrorCode D20ActionCallbacks::LocationCheckDisarmedWeaponRetrieve(D20Actn*
 	return AEC_TARGET_INVALID;
 };
 
-ActionErrorCode D20ActionCallbacks::ActionCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat)
-{
+ActionErrorCode D20ActionCallbacks::ActionCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat){
 	int dummy = 1;
 	return AEC_OK;
 };
 
-ActionErrorCode D20ActionCallbacks::PerformDisarmedWeaponRetrieve(D20Actn* d20a)
-{
+ActionErrorCode D20ActionCallbacks::PerformDisarmedWeaponRetrieve(D20Actn* d20a){
 	d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Disarmed_Weapon_Retrieve, (int)d20a, 0);
 	return AEC_OK;
 };
 
 #pragma endregion
 
-ActionErrorCode D20ActionCallbacks::ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat)
-{
+ActionErrorCode D20ActionCallbacks::ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat){
 	objHndl weapon = inventory.ItemWornAt(d20a->d20APerformer, 3);
 	int weapFlags;
 
@@ -1539,8 +1575,7 @@ ActionErrorCode D20ActionCallbacks::ActionCheckSunder(D20Actn* d20a, TurnBasedSt
 	return AEC_OK;
 }
 
-ActionErrorCode D20ActionCallbacks::ActionCheckTripAttack(D20Actn* d20a, TurnBasedStatus* tbStat)
-{
+ActionErrorCode D20ActionCallbacks::ActionCheckTripAttack(D20Actn* d20a, TurnBasedStatus* tbStat){
 
 	auto weapon = inventory.ItemWornAt(d20a->d20APerformer, EquipSlot::WeaponPrimary);
 	if (weapon)
@@ -1566,8 +1601,7 @@ ActionErrorCode D20ActionCallbacks::ActionCheckTripAttack(D20Actn* d20a, TurnBas
 	return AEC_OK;
 }
 
-ActionErrorCode D20ActionCallbacks::ActionFrameSunder(D20Actn* d20a)
-{
+ActionErrorCode D20ActionCallbacks::ActionFrameSunder(D20Actn* d20a){
 
 	if (combatSys.SunderCheck(d20a->d20APerformer, d20a->d20ATarget, d20a))
 	{
@@ -1584,8 +1618,7 @@ ActionErrorCode D20ActionCallbacks::ActionFrameSunder(D20Actn* d20a)
 	return AEC_OK;
 }
 
-ActionErrorCode D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a)
-{
+ActionErrorCode D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a){
 
 	if (!d20a->d20ATarget)
 		return AEC_TARGET_INVALID;
@@ -1639,8 +1672,7 @@ ActionErrorCode D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a)
 	return AEC_OK;
 }
 
-ActionErrorCode D20ActionCallbacks::PerformAidAnotherWakeUp(D20Actn* d20a)
-{
+ActionErrorCode D20ActionCallbacks::PerformAidAnotherWakeUp(D20Actn* d20a){
 
 	if (animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget))
 	{
@@ -1701,14 +1733,48 @@ ActionErrorCode D20ActionCallbacks::ActionFrameAoo(D20Actn* d20a)
 	return ActionFrameStandardAttack(d20a);
 }
 
-ActionErrorCode D20ActionCallbacks::ActionCheckAidAnotherWakeUp(D20Actn* d20a, TurnBasedStatus* tbStat)
-{
+ActionErrorCode D20ActionCallbacks::ActionCheckAidAnotherWakeUp(D20Actn* d20a, TurnBasedStatus* tbStat){
 	if (!d20a->d20ATarget)	{
 		return AEC_TARGET_INVALID;
 	}
 	return AEC_OK;
 };
 
+
+ActionErrorCode D20ActionCallbacks::AddToSeqCharge(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat){
+	auto tgt = d20a->d20ATarget;
+	if (!tgt)
+		return AEC_TARGET_INVALID;
+
+	auto performer = d20a->d20APerformer;
+	if (tbStat->tbsFlags & (TBSF_Movement | TBSF_1))
+		return AEC_ALREADY_MOVED;
+
+	D20Actn d20aCopy = *d20a;
+	TurnBasedStatus tbStatCopy = *tbStat;
+
+	auto weapon = inventory.ItemWornAt(performer, EquipSlot::WeaponPrimary);
+	if (!weapon){
+		weapon = inventory.ItemWornAt(performer, EquipSlot::WeaponSecondary);
+		if (weapon){
+			d20aCopy.d20Caf |= D20CAF_SECONDARY_WEAPON;
+			tbStatCopy.attackModeCode = ATTACK_CODE_OFFHAND ;
+			d20aCopy.data1 = ATTACK_CODE_OFFHAND + 1;
+		} 
+		else if (dispatch.DispatchD20ActionCheck(&d20aCopy, &tbStatCopy, dispTypeGetCritterNaturalAttacksNum) )
+		{
+			tbStatCopy.attackModeCode = ATTACK_CODE_NATURAL_ATTACK;
+			d20aCopy.data1 = ATTACK_CODE_NATURAL_ATTACK + 1;
+		}
+		else{
+			tbStatCopy.attackModeCode = ATTACK_CODE_PRIMARY;
+			d20aCopy.data1 = ATTACK_CODE_PRIMARY + 1;
+		}
+	}
+		
+	return AEC_OK; //TODO complete the rest
+
+}
 
 ActionErrorCode D20ActionCallbacks::AddToSeqSimple(D20Actn*d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat){
 	return actSeqSys.AddToSeqSimple(d20a, actSeq, tbStat);
@@ -1718,8 +1784,7 @@ ActionErrorCode D20ActionCallbacks::AddToSeqWithTarget(D20Actn* d20a, ActnSeq* a
 	return static_cast<ActionErrorCode>(actSeqSys.AddToSeqWithTarget(d20a, actSeq, tbStat));
 }
 
-ActionErrorCode D20ActionCallbacks::AddToSeqTripAttack(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat)
-{
+ActionErrorCode D20ActionCallbacks::AddToSeqTripAttack(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat){
 
 	auto tgt = d20a->d20ATarget;
 	if (!tgt)
@@ -1780,8 +1845,7 @@ ActionErrorCode D20ActionCallbacks::AddToSeqTripAttack(D20Actn* d20a, ActnSeq* a
 	//return AddToSeqWithTarget(d20a, actSeq, tbStat);
 }
 
-ActionErrorCode D20ActionCallbacks::StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBasedStatus* tbStat)
-{
+ActionErrorCode D20ActionCallbacks::StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBasedStatus* tbStat){
 	return static_cast<ActionErrorCode>(actSeqSys.StdAttackTurnBasedStatusCheck(d20a, tbStat));
 }
 

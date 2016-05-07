@@ -159,6 +159,13 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 
 	auto animParams(objects.GetAnimParams(handle));
 
+	if (objects.IsCritter(handle)){
+		if (d20Sys.d20Query(handle, DK_QUE_Polymorphed))		{
+			int dummy = 1;
+		}
+	}
+
+
 	locXY worldLoc;
 
 	objHndl parent = 0;

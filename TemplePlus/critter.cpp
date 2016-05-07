@@ -99,6 +99,33 @@ class CritterReplacements : public TempleFix
 	{
 		logger->info("Replacing Critter System functions");
 		replaceFunction(0x10062720, _isCritterCombatModeActive); 
+		replaceFunction<float(objHndl, D20ActionType)>(0x100B52D0, [](objHndl handle, D20ActionType d20aType){
+			return critterSys.GetReach(handle, d20aType);
+		});
+
+		// something used in the anim goals
+		replaceFunction<int(objHndl, objHndl)>(0x10065C30, [](objHndl item, objHndl parent)->int{
+
+			if (!item && !parent) {
+				logger->warn("Null item & parent! func 0x10065C30");
+				return 0;
+			}
+
+			if (!item){
+				return critterSys.GetReach(parent, D20A_NONE);
+			}
+
+			auto itemObj = gameSystems->GetObj().GetObject(item);
+			if (itemObj->type != obj_t_weapon){
+				return critterSys.GetReach(parent, D20A_NONE);
+			}
+
+			auto weapFlags = (WeaponFlags)itemObj->GetInt32(obj_f_weapon_flags);
+			if (weapFlags & WeaponFlags::OWF_RANGED_WEAPON)	{
+				return itemObj->GetInt32(obj_f_weapon_range);
+			}
+			return itemObj->GetInt32(obj_f_weapon_range) + critterSys.GetReach(parent, D20A_NONE);
+		});
 		ShowExactHpForNPCs();
 	}
 } critterReplacements;
@@ -975,9 +1002,19 @@ uint32_t LegacyCritterSystem::IsSubtypeFire(objHndl objHnd)
 	return IsCategorySubtype(objHnd, mc_subtype_fire);
 }
 
-float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType) 
-{
-	float naturalReach = (float) objects.getInt32(obj, obj_f_critter_reach);
+float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType) {
+
+	float naturalReach = (float)objects.getInt32(obj, obj_f_critter_reach);
+	auto protoId = d20Sys.d20Query(obj, DK_QUE_Polymorphed);
+	if (protoId){
+		auto protoHandle = gameSystems->GetObj().GetProtoHandle(protoId);
+		if (protoHandle){
+			naturalReach = gameSystems->GetObj().GetObject(protoHandle)->GetInt32(obj_f_critter_reach);
+		}
+	}
+
+	
+
 	/*
 	__asm{
 		fild naturalReach;
@@ -1088,6 +1125,19 @@ int LegacyCritterSystem::GetCritterAttackType(objHndl obj, int attackIdx)
 {
 	int damageIdx = GetDamageIdx(obj, attackIdx);
 	return objects.getArrayFieldInt32(obj, obj_f_attack_types_idx, damageIdx);
+}
+
+int LegacyCritterSystem::GetCritterNumNaturalAttacks(objHndl obj){
+	auto n = 0;
+
+	auto critterAttacks = gameSystems->GetObj().GetObject(obj)->GetInt32Array(obj_f_critter_attacks_idx);
+	for (auto i = 0; i < critterAttacks.GetSize() && i < 3; i++)	{
+		auto a = critterAttacks[i];
+		if (a > 0)
+			n += a;
+	}
+
+	return n;
 }
 
 bool LegacyCritterSystem::IsWarded(objHndl obj)

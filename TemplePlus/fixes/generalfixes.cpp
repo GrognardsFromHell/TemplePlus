@@ -115,6 +115,8 @@ class SpellSlingerGeneralFixes : public TempleFix
 {
 public:
 
+	
+
 	void apply() override{
 		// breakfree_on_entanglement_fix.txt
 		writeHex(0x100D4259, "90 90 90 90  90 90");
@@ -154,8 +156,17 @@ public:
 
 		// sp125_discern_lies_fix.txt // looks like this was actually forgotten to be implemented in the Co8 DLL
 		writeHex(0x102D5454, "1E 00 00 00  22 00 00 00  00 2B 0D 10   00 00 00 00");
+
+
+		// fixes encumbrance for polymorphed
+		static int(__cdecl* orgEncumbranceQuery)(DispatcherCallbackArgs ) =
+			replaceFunction<int(DispatcherCallbackArgs)>(0x100ECA30, [](DispatcherCallbackArgs args) {
+			if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Polymorphed))
+				return 0;
+			return orgEncumbranceQuery(args);
+		});
 	}
-};
+} spellSlingerGeneralFixes;
 
 
 
