@@ -213,6 +213,10 @@ public:
 	static int DruidWildShapeScale(DispatcherCallbackArgs args);
 
 
+	static int BardMusicRadial(DispatcherCallbackArgs args);
+	static int BardMusicCheck(DispatcherCallbackArgs args);
+	static int BardMusicActionFrame(DispatcherCallbackArgs args);
+
 } classAbilityCallbacks;
 
 
@@ -3989,6 +3993,164 @@ int ClassAbilityCallbacks::DruidWildShapeScale(DispatcherCallbackArgs args){
 	dispIo->bonlist->bonusEntries[0].bonValue = protoScale; // modifies the initial value
 
 
+	return 0;
+}
+
+int ClassAbilityCallbacks::BardMusicRadial(DispatcherCallbackArgs args){
+	auto perfSkill = critterSys.SkillBaseGet(args.objHndCaller, SkillEnum::skill_perform);
+	auto bardLvl = objects.StatLevelGet(args.objHndCaller, stat_level_bard);
+	if (!bardLvl || perfSkill < 3)
+		return 0;
+
+	RadialMenuEntryParent bmusic(5039);
+	auto bmusicId = bmusic.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Class);
+
+	RadialMenuEntryAction insCourage(5040, D20A_BARDIC_MUSIC, 1, "TAG_CLASS_FEATURES_BARD_INSPIRE_COURAGE");
+	insCourage.AddAsChild(args.objHndCaller, bmusicId);
+
+	RadialMenuEntryAction counterSong(5043, D20A_BARDIC_MUSIC, 2, "TAG_CLASS_FEATURES_BARD_COUNTERSONG");
+	counterSong.AddAsChild(args.objHndCaller, bmusicId);
+
+	RadialMenuEntryAction fasci(5042, D20A_BARDIC_MUSIC, 3, "TAG_CLASS_FEATURES_BARD_FASCINATE");
+	fasci.AddAsChild(args.objHndCaller, bmusicId);
+
+	if (bardLvl >= 3 && perfSkill >= 6){	
+		RadialMenuEntryAction insCompetence(5041, D20A_BARDIC_MUSIC, 4, "TAG_CLASS_FEATURES_BARD_INSPIRE_COMPETENCE");
+		insCompetence.AddAsChild(args.objHndCaller, bmusicId);
+	}
+
+	if (bardLvl >= 6 && perfSkill >= 9) {
+		RadialMenuEntryAction insHeroics(5120, D20A_BARDIC_MUSIC, 5, "TAG_CLASS_FEATURES_BARD_SUGGESTION");
+		insHeroics.AddAsChild(args.objHndCaller, bmusicId);
+	}
+
+	if (bardLvl >= 9 && perfSkill >= 12){
+		RadialMenuEntryAction insGreatness(5044, D20A_BARDIC_MUSIC, 6, "TAG_CLASS_FEATURES_BARD_INSPIRE_GREATNESS");
+		insGreatness.AddAsChild(args.objHndCaller, bmusicId);
+	}
+	
+
+	if (bardLvl >= 12 && perfSkill >= 15) {
+		RadialMenuEntryAction songOfFreedom(5119, D20A_BARDIC_MUSIC, 7, "TAG_CLASS_FEATURES_BARD_SONG_OF_FREEDOM");
+		songOfFreedom.AddAsChild(args.objHndCaller, bmusicId);
+	}
+
+	if (bardLvl >= 15 && perfSkill >= 18) {
+		RadialMenuEntryAction insHeroics(5120, D20A_BARDIC_MUSIC, 8, "TAG_CLASS_FEATURES_BARD_INSPIRE_HEROICS");
+		insHeroics.AddAsChild(args.objHndCaller, bmusicId);
+	}
+
+
+
+
+	return 0;
+}
+
+int ClassAbilityCallbacks::BardMusicCheck(DispatcherCallbackArgs args){
+	auto dispIo = static_cast<DispIoD20ActionTurnBased*>(args.dispIO);
+	dispIo->AssertType(dispIOTypeD20ActionTurnBased);
+
+	auto d20a = dispIo->d20a;
+	auto perfSkill = critterSys.SkillBaseGet(args.objHndCaller, SkillEnum::skill_perform);
+	auto bmType = (BardicMusicSongType)(d20a->data1);
+	auto perfSkillSufficient = [bmType, perfSkill]()->bool{
+		switch (bmType)	{
+		case BM_INSPIRE_COURAGE:
+		case BM_COUNTER_SONG:
+		case BM_FASCINATE:
+			return perfSkill >= 3;
+		case BM_INSPIRE_COMPETENCE: 
+			return perfSkill >= 6;
+		case BM_SUGGESTION: 
+			return perfSkill >= 9;
+		case BM_INSPIRE_GREATNESS: 
+			return perfSkill >= 12;
+		case BM_SONG_OF_FREEDOM: 
+			return perfSkill >= 15;
+		case BM_INSPIRE_HEROICS: 
+			return perfSkill >= 18;
+		default: 
+			return false;
+		}
+	};
+	
+	if (!perfSkillSufficient() || args.GetCondArg(1) == bmType){
+		dispIo->returnVal = AEC_INVALID_ACTION;
+		return 0;
+	}
+
+	if (args.GetCondArg(0) <= 0){
+		dispIo->returnVal = AEC_OUT_OF_CHARGES;
+	}
+
+	return 0;
+}
+
+int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
+	auto dispIo = static_cast<DispIoD20ActionTurnBased*>(args.dispIO);
+	dispIo->AssertType(dispIOTypeD20ActionTurnBased);
+
+	
+
+	auto d20a = dispIo->d20a;
+	auto performer = d20a->d20APerformer;
+	auto perfSkill = critterSys.SkillBaseGet(args.objHndCaller, SkillEnum::skill_perform);
+	auto bmType = (BardicMusicSongType)(d20a->data1);
+
+	args.SetCondArg(0, args.GetCondArg(0) - 1); // decrease usages left
+
+	if (args.GetCondArg(1)){ // already singing something
+		args.SetCondArg(1, 0);
+		auto partsysId = args.GetCondArg(5);
+		gameSystems->GetParticleSys().End(partsysId);
+		objHndl objHnd = ( ( ((uint64_t)args.GetCondArg(3)) << 32) | args.GetCondArg(4));
+		if (gameSystems->GetObj().IsValidHandle(objHnd)){
+			d20Sys.d20SendSignal(objHnd, DK_SIG_Bardic_Music_Completed, 0,0);
+		}
+	}
+
+	auto partsysId = 0, fascinateRoll =0, chaScore = 0;
+	switch (bmType){
+	case BM_INSPIRE_COURAGE: 
+		// party.ApplyConditionAround(args.objHndCaller, 30.0, "Inspired_Courage", 0i64);
+		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Inspire Courage", args.objHndCaller);
+		break;
+	case BM_COUNTER_SONG: 
+		// party.ApplyConditionAround(args.objHndCaller, 30.0, "Countersong", 0i64);
+		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Countersong", args.objHndCaller);
+		break;
+	case BM_FASCINATE: 
+		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Fascinate", args.objHndCaller);
+		skillSys.SkillRoll(performer, SkillEnum::skill_perform, 20, &fascinateRoll, 1);
+		if (!damage.SavingThrow(d20a->d20ATarget, performer, fascinateRoll, SavingThrowType::Will, 0x10000000))	{
+			conds.AddTo(d20a->d20ATarget, "Fascinate", { 0,0 });
+		}		
+		break;
+	case BM_INSPIRE_COMPETENCE: 
+		conds.AddTo(d20a->d20ATarget, "Competence", {});
+		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Inspire Competence", args.objHndCaller);
+		break;
+	case BM_SUGGESTION: 
+		chaScore = objects.StatLevelGet(args.objHndCaller, stat_charisma);
+		fascinateRoll = 13 + objects.GetModFromStatLevel(chaScore);
+		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Suggestion", args.objHndCaller);
+		if (!damage.SavingThrow(d20a->d20ATarget, performer, fascinateRoll, SavingThrowType::Will, 0x10000000)) {
+			conds.AddTo(d20a->d20ATarget, "Suggestion", {});
+		}
+		break;
+	case BM_INSPIRE_GREATNESS: 
+		conds.AddTo(d20a->d20ATarget, "Greatness", {});
+		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Inspire Greatness", args.objHndCaller); 
+		break;
+	case BM_SONG_OF_FREEDOM:
+		return 0;
+		break;
+	case BM_INSPIRE_HEROICS: 
+		return 0;
+		break;
+	default: break;
+	}
+	// TODO
 	return 0;
 }
 

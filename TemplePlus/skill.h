@@ -8,11 +8,23 @@ struct BonusSystem;
 struct SkillProps;
 enum SkillEnum : uint32_t;
 
+enum SkillRollFlags : int {
+	SRF_Hide_Failed_Search = 0x4, // for use with Search skill
+	SRF_Force_Hide_Failed_Search = 0x8,
+	SRF_Take_20 = 0x2000
+};
+
 struct LegacySkillSystem : temple::AddressTable
 {
 	SkillProps * skillPropsTable;
 
 	BonusSystem * bonus;
+
+	/*
+		does a skill roll and logs to history
+		special casing for Search skill
+	*/
+	BOOL SkillRoll(objHndl performer, SkillEnum skillEnum, int dc, int* resultDeltaFromDc, int flags) const;
 
 	LegacySkillSystem();
 };
@@ -46,10 +58,10 @@ enum SkillEnum : uint32_t
 	skill_sense_motive = 14,
 	skill_spellcraft = 15,
 	skill_spot = 16,
-	skill_use_magic_device = 17,
+	skill_use_magic_device = 17, // this is probably a mistake (3.0 -> 3.5 change?)
 	skill_tumble = 18,
 	skill_wilderness_lore = 19,
-	skill_perform = 20,
+	skill_perform = 20, // this is ok however
 	skill_alchemy = 21,
 	skill_balance = 22,
 	skill_climb = 23,
