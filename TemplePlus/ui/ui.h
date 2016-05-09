@@ -36,7 +36,7 @@ struct Widget {
 	uint32_t field_6c;
 	int(__cdecl*renderTooltip)(int x, int y, int* widId) ;
 	void(__cdecl*render)(int widId); // Function pointer
-	bool(__cdecl*handleMessage)(int widId, TigMsg* msg); // Function pointer
+	BOOL(__cdecl*handleMessage)(int widId, TigMsg* msg); // Function pointer
 };
 
 /*

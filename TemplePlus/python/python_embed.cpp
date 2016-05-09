@@ -14,9 +14,11 @@
 #include "tio/tio.h"
 #include <set>
 #include "python_module.h"
+#include "python_dispatcher.h"
 
 #include "../gamesystems/gamesystems.h"
 
+extern "C" PyObject *inittp_dispatcher();
 static struct PythonInitInternal : temple::AddressTable {
 
 	// Writes to the console window
@@ -97,6 +99,8 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 
 	pythonObjIntegration.LoadScripts();
 	pySpellIntegration.LoadScripts();
+
+	inittp_dispatcher();
 
 	return true;
 }

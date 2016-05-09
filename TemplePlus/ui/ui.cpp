@@ -429,7 +429,7 @@ bool WidgetType3::Init(int X, int Y, int Height){
 	height = Height;
 	field90 = 0;
 	render = temple::GetRef<void(__cdecl)(int)>(0x101FA1B0);
-	handleMessage = temple::GetRef<bool(__cdecl)(int, TigMsg*)>(0x101FA410);
+	handleMessage = temple::GetRef<BOOL(__cdecl)(int, TigMsg*)>(0x101FA410);
 	renderTooltip = nullptr;
 	yMin = 0;
 	yMax = 100;

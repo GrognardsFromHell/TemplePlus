@@ -156,7 +156,13 @@ void GameLoop::Run() {
 			// so i removed the out of place re-rendering of the game frame
 
 			if (!mainLoop.IsMainMenuVisible()) {
-				mainLoop.InGameHandleMessage(msg);
+				/*if (msg.type == TigMsgType::KEYSTATECHANGE || 
+					msg.type == TigMsgType::CHAR)
+				{
+					int dummy = 1;
+				}
+				else*/
+					mainLoop.InGameHandleMessage(msg);
 			}
 
 			auto unk = mainLoop.sub_10113CD0();

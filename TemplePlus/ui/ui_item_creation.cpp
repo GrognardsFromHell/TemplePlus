@@ -140,12 +140,12 @@ public:
 
 
 		// MAA Window Message Handler
-		replaceFunction<bool(__cdecl)(int, TigMsg*)>(0x10153110, [](int widId, TigMsg* msg)	{
+		replaceFunction<BOOL(__cdecl)(int, TigMsg*)>(0x10153110, [](int widId, TigMsg* msg)	{
 			return itemCreation.MaaWndMsg(widId, msg);
 		});
 
 		// MAA Textbox
-		replaceFunction<bool(__cdecl)(int, TigMsg*)>(0x10151890, [](int widId, TigMsg* msg) {
+		replaceFunction<BOOL(__cdecl)(int, TigMsg*)>(0x10151890, [](int widId, TigMsg* msg) {
 			return itemCreation.MaaTextboxMsg(widId, msg);
 		});
 		replaceFunction<bool(__cdecl)(int , objHndl)>(0x10151C10, [](int widId, objHndl item)
@@ -154,34 +154,34 @@ public:
 		});
 
 		// MAA selected item for crafting
-		replaceFunction<bool(__cdecl)(int, TigMsg*)>(0x10152E40, [](int widId, TigMsg* msg) {
+		replaceFunction<BOOL(__cdecl)(int, TigMsg*)>(0x10152E40, [](int widId, TigMsg* msg) {
 			return itemCreation.MaaItemMsg(widId, msg); }
 		);
 
 		// MAA Effect "buttons"
-		replaceFunction<bool(__cdecl)(int, TigMsg*)>(0x10153250, [](int widId, TigMsg* msg) {
+		replaceFunction<BOOL(__cdecl)(int, TigMsg*)>(0x10153250, [](int widId, TigMsg* msg) {
 			return itemCreation.MaaEffectMsg(widId, msg); }
 		);
 		replaceFunction<void(__cdecl)(int)>(0x10153990, [](int widId) {
 			return itemCreation.MaaEffectRender(widId); }
 		);
-		replaceFunction<bool(__cdecl)(int, TigMsg*)>(0x10152ED0, [](int widId, TigMsg* msg) {
+		replaceFunction<BOOL(__cdecl)(int, TigMsg*)>(0x10152ED0, [](int widId, TigMsg* msg) {
 			return itemCreation.MaaEffectAddMsg(widId, msg);
 		});
-		replaceFunction<bool(__cdecl)(int, TigMsg*)>(0x10152FE0, [](int widId, TigMsg* msg) {
+		replaceFunction<BOOL(__cdecl)(int, TigMsg*)>(0x10152FE0, [](int widId, TigMsg* msg) {
 			return itemCreation.MaaEffectRemoveMsg(widId, msg);
 		});
-		replaceFunction<bool(__cdecl)(int, TigMsg*)>(0x10151EF0, [](int widId, TigMsg* msg) {
+		replaceFunction<BOOL(__cdecl)(int, TigMsg*)>(0x10151EF0, [](int widId, TigMsg* msg) {
 			return itemCreation.MaaAppliedBtnMsg(widId, msg);
 		});
 
 		// CreateBtnMsg
-		replaceFunction<bool(int, TigMsg * )>(0x10153F60, [](int widId, TigMsg* msg){
+		replaceFunction<BOOL(int, TigMsg * )>(0x10153F60, [](int widId, TigMsg* msg){
 			return itemCreation.CreateBtnMsg(widId, msg);
 		});
 
 		// CancelBtnMsg
-		replaceFunction<bool(int, TigMsg *)>(0x10153820, [](int widId, TigMsg* msg) {
+		replaceFunction<BOOL(int, TigMsg *)>(0x10153820, [](int widId, TigMsg* msg) {
 			return itemCreation.CancelBtnMsg(widId, msg);
 		});
 
@@ -870,7 +870,7 @@ void ItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndIte
 	
 }
 
-bool ItemCreation::ItemCreationEntryMsg(int widId, TigMsg* msg){
+BOOL ItemCreation::ItemCreationEntryMsg(int widId, TigMsg* msg){
 	auto _msg = (TigMsgWidget*)msg;
 	if (msg->type != TigMsgType::WIDGET || _msg->widgetEventType != TigMsgWidgetEvent::MouseReleased)
 		return false;
@@ -1283,7 +1283,7 @@ BOOL ItemCreation::ItemCreationShow(objHndl crafter, ItemCreationType icType)
 	return TRUE;
 }
 
-bool ItemCreation::ItemCreationWndMsg(int widId, TigMsg * msg){
+BOOL ItemCreation::ItemCreationWndMsg(int widId, TigMsg * msg){
 
 	if (msg->type == TigMsgType::MOUSE) {
 		auto _msg = (TigMsgMouse*)msg;
@@ -1842,7 +1842,7 @@ void ItemCreation::MaaInitWnd(int wndId){
 	craftedItemNamePos = craftedItemName.size();
 }
 
-bool ItemCreation::CreateBtnMsg(int widId, TigMsg* msg)
+BOOL ItemCreation::CreateBtnMsg(int widId, TigMsg* msg)
 {
 	auto _msg = (TigMsgWidget*)msg;
 	if (msg->type == TigMsgType::WIDGET && _msg->widgetEventType == TigMsgWidgetEvent::MouseReleased)
@@ -2070,8 +2070,8 @@ void ItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 	}
 }
 
-bool ItemCreation::CancelBtnMsg(int widId, TigMsg* msg) {
-	if (msg->type == TigMsgType::WIDGET && msg->arg2 == 1)
+BOOL ItemCreation::CancelBtnMsg(int widId, TigMsg* msg) {
+	if (msg->type == TigMsgType::WIDGET && (TigMsgWidgetEvent)msg->arg2 == TigMsgWidgetEvent::MouseReleased)
 	{
 		craftedItemNamePos = craftedItemName.size();
 		craftingWidgetId = widId;
@@ -2168,7 +2168,7 @@ bool ItemCreation::MaaEffectIsInAppliedList(int effIdx){
 	return false;
 }
 
-bool ItemCreation::MaaWndMsg(int widId, TigMsg * msg)
+BOOL ItemCreation::MaaWndMsg(int widId, TigMsg * msg)
 {
 	if (msg->type == TigMsgType::MOUSE) {
 
@@ -2183,6 +2183,14 @@ bool ItemCreation::MaaWndMsg(int widId, TigMsg * msg)
 		return true;
 	}
 
+	auto annulMsg = [](TigMsg* _msg){
+		_msg->type = TigMsgType::MOUSE;
+		memset(_msg, 0, sizeof TigMsg);
+		_msg->arg1 = 0xdeadbeef;
+		_msg->arg2 = 0xbeefb00f;
+	};
+
+
 	if (msg->type == TigMsgType::KEYSTATECHANGE && (msg->arg2 & 0xFF) == 1
 		|| msg->type == TigMsgType::KEYDOWN) {
 		auto vk = msg->arg1 & 0xFF;
@@ -2194,12 +2202,14 @@ bool ItemCreation::MaaWndMsg(int widId, TigMsg * msg)
 		case VK_LEFT:
 			if (--craftedItemNamePos < 0)
 				craftedItemNamePos = 0;
+			annulMsg(msg);
 			return true;
 		case VK_RIGHT:
 			craftedItemNamePos++;
 			crnl = craftedItemName.size();
 			if (craftedItemNamePos > crnl)
 				craftedItemNamePos = crnl;
+			annulMsg(msg);
 			return true;
 		case VK_HOME:
 			craftedItemNamePos = 0;
@@ -2209,12 +2219,18 @@ bool ItemCreation::MaaWndMsg(int widId, TigMsg * msg)
 			if (craftedItemNamePos < crnl) {
 				craftedItemName.erase(craftedItemName.begin() + craftedItemNamePos);
 			}
+			annulMsg(msg);
 			return true;
 		default:
-			return true;
+			annulMsg(msg);
+			return FALSE;
 			
 		}
 		return true;
+	} 
+	else if (msg->type == TigMsgType::KEYSTATECHANGE && (msg->arg2 == 0)){
+		annulMsg(msg);
+		return FALSE;
 	}
 	
 	
@@ -2227,6 +2243,13 @@ bool ItemCreation::MaaWndMsg(int widId, TigMsg * msg)
 				}
 			}
 
+		}
+		else if (key == '\33'){  // escape
+			TigMsg exitMsg;
+			exitMsg.type = TigMsgType::WIDGET;
+			exitMsg.arg2 = (int)TigMsgWidgetEvent::MouseReleased;
+			annulMsg(msg);
+			return CancelBtnMsg(widId, &exitMsg);
 		}
 		else if (key != '\r' && key >= ' ' && key <= '~'){
 			auto curStrLen = craftedItemName.size() + 1;
@@ -2241,7 +2264,9 @@ bool ItemCreation::MaaWndMsg(int widId, TigMsg * msg)
 			}
 			
 		}
-		return true;
+		
+		annulMsg(msg);
+		return TRUE;
 	}
 
 	if (msg->type == TigMsgType::WIDGET) { // scrolling
@@ -2256,7 +2281,7 @@ bool ItemCreation::MaaWndMsg(int widId, TigMsg * msg)
 	return false;
 }
 
-bool ItemCreation::MaaTextboxMsg(int widId, TigMsg* msg){
+BOOL ItemCreation::MaaTextboxMsg(int widId, TigMsg* msg){
 	auto _msg = (TigMsgWidget*)msg;
 	if (msg->type != TigMsgType::WIDGET || _msg->widgetEventType != TigMsgWidgetEvent::MouseReleased)
 		return false;
@@ -2340,7 +2365,7 @@ bool ItemCreation::MaaWndRenderText(int widId, objHndl item){
 	return UiRenderer::DrawTextInWidget(widId, text, rect, textStyle);
 }
 
-bool ItemCreation::MaaItemMsg(int widId, TigMsg* msg){
+BOOL ItemCreation::MaaItemMsg(int widId, TigMsg* msg){
 
 	auto _msg =(TigMsgWidget*)(msg);
 	if (msg->type != TigMsgType::WIDGET || _msg->widgetEventType != TigMsgWidgetEvent::MouseReleased)
@@ -2368,7 +2393,7 @@ bool ItemCreation::MaaItemMsg(int widId, TigMsg* msg){
 	return true;
 }
 
-bool ItemCreation::MaaEffectMsg(int widId, TigMsg* msg){
+BOOL ItemCreation::MaaEffectMsg(int widId, TigMsg* msg){
 
 	if (msg->type != TigMsgType::WIDGET || msg->arg2 != 1)
 		return false;
@@ -2575,7 +2600,7 @@ void ItemCreation::MaaEffectGetTextStyle(int effIdx, objHndl crafter, TigTextSty
 }
 
 
-bool ItemCreation::MaaEffectAddMsg(int widId, TigMsg* msg)
+BOOL ItemCreation::MaaEffectAddMsg(int widId, TigMsg* msg)
 {
 	if (msg->type != TigMsgType::WIDGET || msg->arg2 != 1)
 		return false;
@@ -2731,7 +2756,7 @@ void ItemCreation::MaaAppendEnhancement(int effIdx){
 	craftedItemNamePos = craftedItemName.size();
 }
 
-bool ItemCreation::MaaEffectRemoveMsg(int widId, TigMsg* msg){
+BOOL ItemCreation::MaaEffectRemoveMsg(int widId, TigMsg* msg){
 	if (msg->type != TigMsgType::WIDGET || msg->arg2 != 1)
 		return false;
 
@@ -2787,7 +2812,7 @@ bool ItemCreation::MaaEffectRemoveMsg(int widId, TigMsg* msg){
 	return false;
 }
 
-bool ItemCreation::MaaAppliedBtnMsg(int widId, TigMsg* msg){
+BOOL ItemCreation::MaaAppliedBtnMsg(int widId, TigMsg* msg){
 	if (msg->type != TigMsgType::WIDGET || msg->arg2 != 1)
 		return false;
 	craftedItemNamePos = craftedItemName.size();
@@ -2804,7 +2829,7 @@ bool ItemCreation::MaaAppliedBtnMsg(int widId, TigMsg* msg){
 	return true;
 }
 
-bool ItemCreation::MaaEnhBonusUpMsg(int widId, TigMsg * msg){
+BOOL ItemCreation::MaaEnhBonusUpMsg(int widId, TigMsg * msg){
 	if (msg->type != TigMsgType::WIDGET || ((TigMsgWidget*)msg)->widgetEventType != TigMsgWidgetEvent::MouseReleased)
 		return false;
 
@@ -2849,7 +2874,7 @@ bool ItemCreation::MaaEnhBonusUpMsg(int widId, TigMsg * msg){
 	return true;
 }
 
-bool ItemCreation::MaaEnhBonusDnMsg(int widId, TigMsg * msg){
+BOOL ItemCreation::MaaEnhBonusDnMsg(int widId, TigMsg * msg){
 
 	if (msg->type != TigMsgType::WIDGET || ((TigMsgWidget*)msg)->widgetEventType != TigMsgWidgetEvent::MouseReleased)
 		return false;

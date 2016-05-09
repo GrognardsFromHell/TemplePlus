@@ -76,46 +76,46 @@ public:
 	
 	BOOL ItemCreationShow(objHndl crafter, ItemCreationType icType); // shows the item creation UI for the chosen IC type
 
-	bool ItemCreationWndMsg(int widId, TigMsg* msg);
+	BOOL ItemCreationWndMsg(int widId, TigMsg* msg);
 	
 	void ItemCreationWndRender(int widId);
 		void ItemCreationEntryRender(int widId);
 		void ItemCreationCraftingCostTexts(int widId, objHndl objHndItem);
-		bool ItemCreationEntryMsg(int widId, TigMsg* msg);
+		BOOL ItemCreationEntryMsg(int widId, TigMsg* msg);
 		void ItemCreationCreateBtnRender(int widId) const;
 		void ItemCreationCancelBtnRender(int widId) const;
 
 	//MAA
-	bool MaaWndMsg(int widId, TigMsg* msg); // message handler for the item creation window
+	BOOL MaaWndMsg(int widId, TigMsg* msg); // message handler for the item creation window
 	void MaaWndRender(int widId);
 	void MaaItemRender(int widId);
 	void MaaAppliedBtnRender(int widId);
 	void MaaEnhBonusDnRender(int widId);
 	void MaaEnhBonusUpRender(int widId);
 
-	bool CreateBtnMsg(int widId, TigMsg* msg);
+	BOOL CreateBtnMsg(int widId, TigMsg* msg);
 	bool MaaShouldJustModifyArg(int effIdx, objHndl item);
 	void CreateItemFinalize(objHndl crafter, objHndl item);
 	void MaaCreateBtnRender(int widId) const;
-	bool CancelBtnMsg(int widId, TigMsg* msg);
+	BOOL CancelBtnMsg(int widId, TigMsg* msg);
 	void MaaCancelBtnRender(int widId) const;
 
 	
 
-	bool MaaTextboxMsg(int widId, TigMsg* msg);
+	BOOL MaaTextboxMsg(int widId, TigMsg* msg);
 	bool MaaWndRenderText(int widId, objHndl item);
-	bool MaaItemMsg(int widId, TigMsg* msg);
-	bool MaaEffectMsg(int widId, TigMsg* msg);
+	BOOL MaaItemMsg(int widId, TigMsg* msg);
+	BOOL MaaEffectMsg(int widId, TigMsg* msg);
 	void MaaEffectRender(int widId); 
 	int MaaEffectTooltip(int x, int y, int* widId);
 		void MaaEffectGetTextStyle(int effIdx, objHndl crafter, TigTextStyle* & style);
-	bool MaaEffectAddMsg(int widId, TigMsg* msg);
+	BOOL MaaEffectAddMsg(int widId, TigMsg* msg);
 	int MaaGetTotalEffectiveBonus(int effIdx);
 	void MaaAppendEnhancement(int effIdx);
-	bool MaaEffectRemoveMsg(int widId, TigMsg* msg);
-	bool MaaAppliedBtnMsg(int widId, TigMsg* msg);
-	bool MaaEnhBonusUpMsg(int widId, TigMsg* msg);
-	bool MaaEnhBonusDnMsg(int widId, TigMsg* msg);
+	BOOL MaaEffectRemoveMsg(int widId, TigMsg* msg);
+	BOOL MaaAppliedBtnMsg(int widId, TigMsg* msg);
+	BOOL MaaEnhBonusUpMsg(int widId, TigMsg* msg);
+	BOOL MaaEnhBonusDnMsg(int widId, TigMsg* msg);
 		
 
 

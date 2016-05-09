@@ -151,7 +151,7 @@ struct PcCreationUiAddresses : temple::AddressTable
 	CharEditorSelectionPacket * charEdSelPkt;
 	MesHandle* pcCreationMes;
 	void (__cdecl*ui_render_pc_creation_portraits)(int widId);
-	bool(__cdecl*ui_msg_pc_creation_portraits)(int widId, TigMsg*);
+	BOOL(__cdecl*ui_msg_pc_creation_portraits)(int widId, TigMsg*);
 
 	PcCreationUiAddresses()
 	{
@@ -229,7 +229,7 @@ BOOL PcCreationUiSystem::PcPortraitWidgetsInit(int height)
 	pcPortraitsMain.WidgetType1Init(10, height - 80, 650, 63);
 	pcPortraitsMain.widgetFlags = 1;
 	pcPortraitsMain.render = [](int widId) {return0(); };
-	pcPortraitsMain.handleMessage = [](int widId, TigMsg* msg)->bool {return return0(); };
+	pcPortraitsMain.handleMessage = [](int widId, TigMsg* msg)->BOOL {return return0(); };
 
 	if (ui.AddWindow(&pcPortraitsMain, sizeof(WidgetType1), &pcPortraitsMainId, "pc_creation_portraits.c", 275) )
 		return 0;

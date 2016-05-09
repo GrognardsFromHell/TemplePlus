@@ -13,6 +13,24 @@
 #include "python_object.h"
 #include "python_dispatcher.h"
 
+#undef HAVE_ROUND
+#include <pybind11/pybind11.h>
+
+namespace py = pybind11;
+
+int add(int i, int j){
+	return i + j;
+}
+
+PYBIND11_PLUGIN(tp_dispatcher){
+	py::module m("tp_dispatcher", "Temple+ Dispatcher module, used for creating modifier extensions.");
+
+	m.def("add", &add);
+	
+	return m.ptr();
+}
+
+
 
 struct PyModifier {
 	PyObject_HEAD;
