@@ -318,11 +318,16 @@ static PyObject* PyObjHandle_RefreshTurn(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_ItemFind(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle){
+		return PyObjHndl_Create(0);
+	}
 	int nameId;
 	if (!PyArg_ParseTuple(args, "i:objhndl.itemfind", &nameId)) {
 		return 0;
 	}
-
+	if (nameId == 5815){
+		int dumm = 1;
+	}
 	return PyObjHndl_Create(inventory.FindItemByName(self->handle, nameId));
 }
 

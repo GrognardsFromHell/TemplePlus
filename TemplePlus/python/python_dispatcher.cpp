@@ -42,28 +42,6 @@ protected:
 };
 
 
-//template <> class type_caster<DispIO*> {
-//public:
-//	bool load(handle src, bool) {
-//		value = ()src.ptr();
-//		success = true;
-//		return true;
-//	}
-//
-//	static handle cast(const DispIO &src, return_value_policy /* policy */, handle /* parent */) {
-//		return PyObjHndl_Create(src);
-//	}
-//
-//	PYBIND11_TYPE_CASTER(DispIO*, _("DispIO"));
-//protected:
-//	bool success = false;
-//};
-
-
-//void AddPyHook(CondStructNew& condStr, enum_disp_type dispType, D20DispatcherKey dispKey, PyObject* pycallback, PyObject* pydataTuple) {
-//	Expects(condStr.numHooks < 99);
-//	condStr.subDispDefs[condStr.numHooks++] = { dispType, dispKey, PyModHookWrapper, (uint32_t)pycallback, (uint32_t)pydataTuple };
-//}
 
 void AddPyHook(CondStructNew& condStr, uint32_t dispType, uint32_t dispKey, PyObject* pycallback, PyObject* pydataTuple) {
 	Expects(condStr.numHooks < 99);
@@ -210,9 +188,9 @@ PYBIND11_PLUGIN(tp_dispatcher){
 
 	py::class_<DispIoD20Signal>(m, "EventObjD20Signal", py::base<DispIO>())
 		.def(py::init())
-		.def_readwrite("return_val", &DispIoD20Query::return_val)
-		.def_readwrite("data1", &DispIoD20Query::data1)
-		.def_readwrite("data2", &DispIoD20Query::data2);
+		.def_readwrite("return_val", &DispIoD20Signal::return_val)
+		.def_readwrite("data1", &DispIoD20Signal::data1)
+		.def_readwrite("data2", &DispIoD20Signal::data2);
 
 	py::class_<DispIoD20Query>(m, "EventObjD20Query", py::base<DispIO>())
 		.def(py::init())
@@ -391,12 +369,14 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 	auto callback = (PyObject*)args.GetData1();
 
 	
-	auto dispPyArgs = PyTuple_New(3);
+	static auto dispPyArgs = PyTuple_New(3);
 
 	py::object pbArgs = py::cast(args);
 	py::object pbEvtObj;
 
-	PyTuple_SET_ITEM(dispPyArgs, 0, PyObjHndl_Create(args.objHndCaller));
+	auto attachee = PyObjHndl_Create(args.objHndCaller);
+
+	PyTuple_SET_ITEM(dispPyArgs, 0, attachee);
 	PyTuple_SET_ITEM(dispPyArgs, 1, pbArgs.ptr());
 	//
 
@@ -549,8 +529,14 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 	PyTuple_SET_ITEM(dispPyArgs, 2, pbEvtObj.ptr());
 
 	//PyTuple_SET_ITEM(args, 1, PyObjHndl_Create(combatant));
-	PyObject_CallObject(callback, dispPyArgs);
+	if ( !PyObject_CallObject(callback, dispPyArgs))	{
+		int dummy = 1;
+	}
 	//pbArgs.dec_ref();
+	Py_DECREF(attachee);
+	//pbArgs.dec_ref();
+	//pbEvtObj.dec_ref();
+	// Py_DECREF(dispPyArgs);
 
 	return 0;
 }

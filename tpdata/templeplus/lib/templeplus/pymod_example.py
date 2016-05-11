@@ -14,13 +14,15 @@ def RadialMenuEntry(attachee, args):
 
 def BeginRound(attachee, args, evtObj):
 	#print "Callback for Character's start of round! Note: this gets called in realtime too, every 6 seconds. Useful for Spell tickdowns."
-	print "Num ticked: " + str(evtObj.data1) # evtObj.data1 will contain the number of rounds "ticked"
+	#print "Num ticked: " + str(evtObj.data1) # evtObj.data1 will contain the number of rounds "ticked"
+	return 0
 
 
 def EffectTooltip(attachee, args, evtObj):
-	evtObj.append(54, -1, "\nExtra Effect Text")
+	evtObj.append(54, 1, "\nExtra Effect Text")
 	# first arg: up to 90 are buffs (above portrait), then up to 167 are debuffs (below portrait), above are effects "inside" the portrait
 	# second arg: spell enum
+	return 0
 
 pmEx = PythonModifier("PyMod Example", 0)
 pmEx.AddHook(ET_OnConditionAdd, EK_NONE, OnInit, (1,))
