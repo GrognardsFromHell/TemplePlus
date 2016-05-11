@@ -1,15 +1,19 @@
 from templeplus.pymod import PythonModifier
 from toee import *
+import tpdp
 
-def OnInit(attachee, args):
+def OnInit(attachee, args, evtObj):
 	print "I've been inited! My attachee: " + str(attachee) 
 	#print str(args)
+	return 0
 
-
-def RadialMenuEntry(attachee, args):
+def RadialMenuEntry(attachee, args, evtObj):
 	#print "My radial menu is being built! Attachee: " + str(attachee)
-	#print str(args)
-	pass
+	radialParent = tpdp.RadialMenuEntryParent(143) # combat.mes line
+	radialParentId = radialParent.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
+	radialAction = tpdp.RadialMenuEntryAction(5055, D20A_CAST_SPELL, 0, "TAG_INTERFACE_HELP")
+	radialAction.add_as_child(attachee, radialParentId)
+	return 0
 
 
 def BeginRound(attachee, args, evtObj):

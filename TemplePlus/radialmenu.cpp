@@ -560,6 +560,10 @@ RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, D20ActionType d2
 
 }
 
+RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, int d20aType, int data1, const char helpId[]):RadialMenuEntryAction(combatMesLine, static_cast<D20ActionType>(d20aType), data1, ElfHash::Hash(helpId))
+{
+}
+
 RadialMenuEntryToggle::RadialMenuEntryToggle(int combatMesLine, void* ActualArg, const char HelpId[]): RadialMenuEntry()
 {
 	type = RadialMenuEntryType::Toggle;

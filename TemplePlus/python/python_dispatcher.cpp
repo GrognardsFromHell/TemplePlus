@@ -126,10 +126,6 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		;
 
 
-	py::class_<RadialMenuEntry>(m, "RadialMenuEntry")
-		.def(py::init())
-		.def("add_as_child", &RadialMenuEntry::AddAsChild, "Adds this node as a child to a specified node ID, and returns the newly created node ID (so you may give it other children, etc.)")
-		.def("add_child_to_standard", &RadialMenuEntry::AddChildToStandard, "Adds this node as a child to a Standard Node (one of several hardcoded root nodes such as class, inventory etc.), and returns the newly created node ID (so you may give it other children, etc.)");
 
 	py::enum_<RadialMenuStandardNode>(m, "RadialMenuStandardNode")
 		.value("Root", Root)
@@ -150,14 +146,22 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.export_values()
 		;
 
+
+	py::class_<RadialMenuEntry>(m, "RadialMenuEntry")
+		.def(py::init())
+		.def("add_as_child", &RadialMenuEntry::AddAsChild, "Adds this node as a child to a specified node ID, and returns the newly created node ID (so you may give it other children, etc.)")
+		.def("add_child_to_standard", &RadialMenuEntry::AddChildToStandard, "Adds this node as a child to a Standard Node (one of several hardcoded root nodes such as class, inventory etc.), and returns the newly created node ID (so you may give it other children, etc.)");
+
+	
+
 	py::class_<RadialMenuEntryAction>(m, "RadialMenuEntryAction", py::base<RadialMenuEntry>())
-		.def(py::init<int, D20ActionType, int, const char[]>(), py::arg("combesMesLine"), py::arg("action_type"), py::arg("data1"), py::arg("helpTopic"))
+		.def(py::init<int, int, int, const char[]>(), py::arg("combesMesLine"), py::arg("action_type"), py::arg("data1"), py::arg("helpTopic"))
 	;
 
 	py::class_<RadialMenuEntryParent>(m, "RadialMenuEntryParent")
 		.def(py::init<int>(), py::arg("combesMesLine"))
-		.def("add_as_child", &RadialMenuEntry::AddAsChild, "Adds this node as a child to a specified node ID, and returns the newly created node ID (so you may give it other children, etc.)")
-		.def("add_child_to_standard", &RadialMenuEntry::AddChildToStandard, "Adds this node as a child to a Standard Node (one of several hardcoded root nodes such as class, inventory etc.), and returns the newly created node ID (so you may give it other children, etc.)")
+		.def("add_as_child", &RadialMenuEntryParent::AddAsChild, "Adds this node as a child to a specified node ID, and returns the newly created node ID (so you may give it other children, etc.)")
+		.def("add_child_to_standard", &RadialMenuEntryParent::AddChildToStandard, "Adds this node as a child to a Standard Node (one of several hardcoded root nodes such as class, inventory etc.), and returns the newly created node ID (so you may give it other children, etc.)")
 		;
 
 	#pragma endregion 
@@ -377,10 +381,6 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 
 	auto attachee = PyObjHndl_Create(args.objHndCaller);
 
-	/*PyTuple_SET_ITEM(dispPyArgs, 0, attachee);
-	PyTuple_SET_ITEM(dispPyArgs, 1, pbArgs.ptr());*/
-	//
-
 	switch (args.dispType) {
 	
 	case dispTypeConditionAddPre:
@@ -529,18 +529,13 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 	}
 	
 	auto dispPyArgs = Py_BuildValue("OOO", attachee, pbArgs.ptr(), pbEvtObj.ptr());
-	//PyTuple_SET_ITEM(dispPyArgs, 2, pbEvtObj.ptr());
 
-	//PyTuple_SET_ITEM(args, 1, PyObjHndl_Create(combatant));
 	if ( !PyObject_CallObject(callback, dispPyArgs))	{
 		int dummy = 1;
 	}
-	//pbArgs.dec_ref();
+
 	Py_DECREF(attachee);
 	Py_DECREF(dispPyArgs);
-	//pbArgs.dec_ref();
-	//pbEvtObj.dec_ref();
-	// Py_DECREF(dispPyArgs);
 
 	return 0;
 }
