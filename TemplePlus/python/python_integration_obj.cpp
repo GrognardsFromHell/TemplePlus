@@ -159,9 +159,6 @@ static int RunPythonObjScript(ObjScriptInvocation* invoc) {
 		if (invoc->evt == ObjScriptEvent::FirstHeartbeat){
 			int dumy = 1;
 		}
-		if (invoc->evt == ObjScriptEvent::Heartbeat && invoc->script->scriptId == 90) {
-			int dumy = 1;
-		}
 		auto attachee = PyObjHndl_Create(invoc->attachee);
 		args = Py_BuildValue("OO", attachee, triggerer);
 		Py_DECREF(attachee);
@@ -170,9 +167,7 @@ static int RunPythonObjScript(ObjScriptInvocation* invoc) {
 	auto result = pythonObjIntegration.RunScript(invoc->script->scriptId,
 	                                             (PythonIntegration::EventId) invoc->evt,
 	                                             args);
-	if (!result && invoc->evt == ObjScriptEvent::Heartbeat && invoc->script->scriptId == 90){
-		int dummy = 1;
-	}
+	
 	Py_DECREF(args);
 
 	auto newSid = pythonObjIntegration.GetNewSid();

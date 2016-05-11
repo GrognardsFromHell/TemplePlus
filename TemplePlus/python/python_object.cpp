@@ -325,9 +325,6 @@ static PyObject* PyObjHandle_ItemFind(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "i:objhndl.itemfind", &nameId)) {
 		return 0;
 	}
-	if (nameId == 5815){
-		int dumm = 1;
-	}
 	return PyObjHndl_Create(inventory.FindItemByName(self->handle, nameId));
 }
 

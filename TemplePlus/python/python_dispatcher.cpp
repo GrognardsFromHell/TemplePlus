@@ -147,6 +147,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.value("Potions", Potions)
 		.value("Wands", Wands)
 		.value("Scrolls", Scrolls)
+		.export_values()
 		;
 
 	py::class_<RadialMenuEntryAction>(m, "RadialMenuEntryAction", py::base<RadialMenuEntry>())
@@ -369,15 +370,15 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 	auto callback = (PyObject*)args.GetData1();
 
 	
-	static auto dispPyArgs = PyTuple_New(3);
-
+	//auto dispPyArgs = PyTuple_New(3);
+	
 	py::object pbArgs = py::cast(args);
 	py::object pbEvtObj;
 
 	auto attachee = PyObjHndl_Create(args.objHndCaller);
 
-	PyTuple_SET_ITEM(dispPyArgs, 0, attachee);
-	PyTuple_SET_ITEM(dispPyArgs, 1, pbArgs.ptr());
+	/*PyTuple_SET_ITEM(dispPyArgs, 0, attachee);
+	PyTuple_SET_ITEM(dispPyArgs, 1, pbArgs.ptr());*/
 	//
 
 	switch (args.dispType) {
@@ -526,7 +527,9 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 	default:
 		pbEvtObj = py::cast(args.dispIO);
 	}
-	PyTuple_SET_ITEM(dispPyArgs, 2, pbEvtObj.ptr());
+	
+	auto dispPyArgs = Py_BuildValue("OOO", attachee, pbArgs.ptr(), pbEvtObj.ptr());
+	//PyTuple_SET_ITEM(dispPyArgs, 2, pbEvtObj.ptr());
 
 	//PyTuple_SET_ITEM(args, 1, PyObjHndl_Create(combatant));
 	if ( !PyObject_CallObject(callback, dispPyArgs))	{
@@ -534,6 +537,7 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 	}
 	//pbArgs.dec_ref();
 	Py_DECREF(attachee);
+	Py_DECREF(dispPyArgs);
 	//pbArgs.dec_ref();
 	//pbEvtObj.dec_ref();
 	// Py_DECREF(dispPyArgs);
