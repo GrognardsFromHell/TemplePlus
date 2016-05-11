@@ -3589,8 +3589,7 @@ int ClassAbilityCallbacks::FeatDiamondSoulInit(DispatcherCallbackArgs args){
 	return 0;
 }
 
-int ClassAbilityCallbacks::FeatDiamondSoulSpellResistanceMod(DispatcherCallbackArgs args)
-{
+int ClassAbilityCallbacks::FeatDiamondSoulSpellResistanceMod(DispatcherCallbackArgs args){
 	auto srMod = args.GetCondArg(1);
 	auto dispIo = dispatch.DispIOCheckIoType14(static_cast<DispIOBonusListAndSpellEntry*>(args.dispIO));
 	dispIo->bonList->AddBonus(srMod, 36, 203);

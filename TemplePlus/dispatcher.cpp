@@ -12,6 +12,7 @@
 #include "gamesystems/objects/objsystem.h"
 #include "gamesystems/gamesystems.h"
 #include "ui/ui_party.h"
+#include "python/python_dispatcher.h"
 
 // Dispatcher System Function Replacements
 class DispatcherReplacements : public TempleFix {
@@ -491,8 +492,7 @@ int DispatcherSystem::DispatchAttackBonus(objHndl objHnd, objHndl victim, DispIo
 	// return addresses.DispatchAttackBonus(objHnd, victim, dispIo, dispType, key);
 }
 
-int DispatcherSystem::DispatchToHitBonusBase(objHndl objHndCaller, DispIoAttackBonus* dispIo)
-{
+int DispatcherSystem::DispatchToHitBonusBase(objHndl objHndCaller, DispIoAttackBonus* dispIo){
 	int key = 0;
 	if (dispIo)
 	{
@@ -903,7 +903,7 @@ int32_t _dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut
 }
 
 
-void DispIoEffectTooltip::Append(int effectTypeId, uint32_t spellEnum, const char* text) const
+void DispIoEffectTooltip::Append(int effectTypeId, int spellEnum, const char* text) const
 {
 	BuffDebuffSub * bdbSub;
 	if (effectTypeId >= 91)
@@ -1049,8 +1049,7 @@ CondStructNew::CondStructNew(){
 CondStructNew::CondStructNew(std::string Name, int NumArgs, bool preventDuplicate) : CondStructNew() {
 	condName = strdup( Name.c_str());
 	numArgs = NumArgs;
-	if (preventDuplicate)
-	{
+	if (preventDuplicate){
 		AddHook(dispTypeConditionAddPre, DK_NONE, ConditionPrevent, this, 0);
 	}
 	Register();
@@ -1067,11 +1066,19 @@ void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, i
 	subDispDefs[numHooks++] = {dispType, dispKey, callback, data1, data2};
 }
 
-void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs), CondStructNew* data1, uint32_t data2)
-{
+void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs), CondStructNew* data1, uint32_t data2){
 	Expects(numHooks < 99);
 	subDispDefs[numHooks++] = { dispType, dispKey, callback, data1, data2 };
 }
+
+//void CondStructNew::AddPyHook(enum_disp_type dispType, D20DispatcherKey dispKey, PyObject* pycallback, PyObject* pydataTuple){
+//	Expects(numHooks < 99);
+//	subDispDefs[numHooks++] = { dispType, dispKey, PyModHookWrapper, (uint32_t) pycallback, (uint32_t) pydataTuple};
+//}
+//void CondStructNew::AddPyHook(enum_disp_type dispType, D20DispatcherKey dispKey, pybind11::function pycallback,pybind11::tuple pydataTuple) {
+//		Expects(numHooks < 99);
+//		subDispDefs[numHooks++] = { dispType, dispKey, PyModHookWrapper, (uint32_t) pycallback.ptr(), (uint32_t) pydataTuple.ptr()};
+//	}
 
 void CondStructNew::Register(){
 	conds.hashmethods.CondStructAddToHashtable(reinterpret_cast<CondStruct*>(this));

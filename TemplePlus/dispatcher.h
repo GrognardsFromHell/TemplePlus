@@ -5,7 +5,8 @@
 
 #define DISPATCHER_MAX  250 // max num of simultaneous Dispatches going on (static int counter inside _DispatcherProcessor)
 #include "spell.h"
-
+//#include <pybind11/pybind11.h>
+//using namespace pybind11;
 
 struct CondStructNew;
 struct BuffDebuffPacket;
@@ -43,6 +44,8 @@ struct SubDispDef;
 struct CondStruct;
 struct DispatcherCallbackArgs;
 struct Dispatcher;
+
+
 
 
 struct DispatcherSystem : temple::AddressTable
@@ -190,8 +193,7 @@ struct CondStruct {
 	SubDispDef subDispDefs[1];
 };
 
-struct CondStructNew
-{
+struct CondStructNew{
 	const char* condName;
 	unsigned int numArgs;
 	SubDispDefNew subDispDefs[100]; // assumes the last one is 0!
@@ -202,6 +204,8 @@ struct CondStructNew
 	void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs) );
 	void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs), uint32_t data1, uint32_t data2);
 	void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs), CondStructNew* data1, uint32_t data2);
+	//void AddPyHook(enum_disp_type dispType, D20DispatcherKey dispKey, PyObject* pycallback, PyObject* pydataTuple);
+	//void AddPyHook(enum_disp_type dispType, D20DispatcherKey dispKey, pybind11::function pycallback, pybind11::tuple pydataTuple);
 	void Register();
 	void AddToFeatDictionary(feat_enums feat, feat_enums featEnumMax = FEAT_INVALID, uint32_t condArg2Offset = 0);
 };
@@ -240,8 +244,7 @@ struct DispIoCondStruct : DispIO { // DispIoType = 1
 struct DispIoBonusList : DispIO { // DispIoType = 2  used for fetching ability scores (dispType 10, 66), and Cur/Max HP 
 	BonusList bonlist;
 	uint32_t flags; 
-	DispIoBonusList()
-	{
+	DispIoBonusList(){
 		dispIOType = dispIOTypeBonusList;
 		flags = 0;
 	}
@@ -272,8 +275,7 @@ struct DispIoD20Signal : DispIO // DispIoType 6
 	uint32_t data1;
 	uint32_t data2;
 
-	DispIoD20Signal()
-	{
+	DispIoD20Signal(){
 		dispIOType = dispIoTypeSendSignal;
 		return_val = 0;
 		data1 = 0;
@@ -288,8 +290,7 @@ struct DispIoD20Query : DispIO // DispIoType 7
 	uint32_t data1;
 	uint32_t data2;
 
-	DispIoD20Query()
-	{
+	DispIoD20Query(){
 		dispIOType = dispIOTypeQuery;
 		return_val = 0;
 		data1 = 0;
@@ -363,8 +364,7 @@ struct DispIOBonusListAndSpellEntry: DispIO { // Type 14
 	BonusList * bonList;
 	SpellEntry * spellEntry;
 	uint32_t field_C; // unused?
-	DispIOBonusListAndSpellEntry()
-	{
+	DispIOBonusListAndSpellEntry(){
 		dispIOType = dispIoTypeBonusListAndSpellEntry;
 		bonList = nullptr;
 		spellEntry = nullptr;
@@ -427,8 +427,7 @@ struct DispIoAttackDice : DispIO // type 20
 	objHndl wielder;
 	int dicePacked;
 	DamageType attackDamageType;
-	DispIoAttackDice()
-	{
+	DispIoAttackDice()	{
 		dispIOType = dispIOType20;
 		bonlist = nullptr;
 		flags = D20CAF_HIT;
@@ -486,7 +485,10 @@ struct DispIoEffectTooltip: DispIO // type 24
 		bdb = nullptr;
 	}
 
-	void Append(int effectTypeId, uint32_t spellEnum, const char* text) const;
+	/*
+	 spellEnum = -1 for no spell
+	*/
+	void Append(int effectTypeId, int spellEnum, const char* text) const;
 };
 
 

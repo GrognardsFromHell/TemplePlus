@@ -25,7 +25,7 @@ struct PySpellTarget {
 	int pad;
 };
 
-#pragma push(pack,1)
+//#pragma pack(push,1)
 struct PySpell {
 	PyObject_HEAD;
 	uint32_t spellEnum;
@@ -53,7 +53,7 @@ struct PySpell {
 	MetaMagicData metaMagic;
 };
 
-#pragma pop()
+//#pragma pack(pop)
 const int testSizeofPyspell = sizeof PySpell; // should be 680 (due to HEAD_EXTRA is +8 relative to toee)
 
 // Contains all active spells

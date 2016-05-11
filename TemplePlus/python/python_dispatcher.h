@@ -10,4 +10,5 @@ extern PyTypeObject PyDispatchEventObjectType;
 extern PyTypeObject PyEventArgsType;
 
 PyObject *PyModifierSpec_FromCondStruct(const CondStructNew & cond);
+int PyModHookWrapper(DispatcherCallbackArgs args);
 

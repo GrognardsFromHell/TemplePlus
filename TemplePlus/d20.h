@@ -114,8 +114,7 @@ int _D20Init(GameSystemConf* conf);
 
 #pragma region D20 Action and Action Sequence Structs
 
-struct D20Actn
-{
+struct D20Actn{
 	D20ActionType d20ActType;
 	uint32_t data1;
 	int d20Caf; // Based on D20_CAF
@@ -133,8 +132,7 @@ struct D20Actn
 	uint32_t animID;
 	PathQueryResult * path;
 
-	D20Actn()
-	{
+	D20Actn(){
 		rollHist1 = -1;
 		rollHist2 = -1;
 		rollHist3 = -1;
