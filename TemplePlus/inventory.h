@@ -68,6 +68,7 @@ struct InventorySystem : temple::AddressTable
 	int SetItemParent(objHndl item, objHndl parent, int flags);
 	int IsNormalCrossbow(objHndl weapon);
 	int IsThrowingWeapon(objHndl weapon);
+	static bool IsTripWeapon(objHndl weapon);
 	ArmorType GetArmorType(int armorFlags);
 	int GetQuantity(objHndl item); // note: returns 0 for items with no quantity fields!
 	objHndl GetParent(objHndl item);
@@ -89,6 +90,7 @@ struct InventorySystem : temple::AddressTable
 	bool IsProficientWithArmor(objHndl obj, objHndl armor) const;
 	void GetItemMesLine(MesLine* line);
 	const char* GetItemErrorString(ItemErrorCode itemErrorCode);
+	
 	static bool IsMagicItem(objHndl itemHandle);
 	static bool IsIdentified(objHndl itemHandle);
 	static bool IsBuckler(objHndl shield);

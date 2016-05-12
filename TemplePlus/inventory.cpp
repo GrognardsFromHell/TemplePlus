@@ -209,6 +209,34 @@ int InventorySystem::IsThrowingWeapon(objHndl weapon)
 	return 0;
 }
 
+bool InventorySystem::IsTripWeapon(objHndl weapon){
+	if (!weapon)
+		return false;
+
+	auto weaponObj = gameSystems->GetObj().GetObject(weapon);
+	if (weaponObj->type != obj_t_weapon)
+		return false;
+
+	auto weapType = (WeaponTypes)weaponObj->GetInt32(obj_f_weapon_type);
+	switch (weapType){
+	case wt_dire_flail:
+	case wt_heavy_flail:
+	case wt_light_flail:
+	case wt_gnome_hooked_hammer:
+	case wt_guisarme:
+	case wt_halberd:
+	case wt_kama:
+	case wt_scythe:
+	case wt_sickle:
+	case wt_whip:
+	case wt_spike_chain:
+		return true;
+	default: 
+		return false;
+	}
+
+}
+
 ArmorType InventorySystem::GetArmorType(int armorFlags)
 {
 	if (armorFlags & ARMOR_TYPE_NONE)

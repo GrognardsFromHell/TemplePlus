@@ -576,8 +576,13 @@ int32_t LegacyD20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tb
 	if (!(d20Defs[d20a->d20ActType].flags & D20ADF::D20ADF_TriggersAoO))
 		return 0;
 
-	if (d20a->d20ActType == D20A_TRIP)
+	if (d20a->d20ActType == D20A_TRIP){
+		auto weaponUsed = d20Sys.GetAttackWeapon(d20a->d20APerformer, d20a->data1, (D20CAF)d20a->d20Caf);
+		if (inventory.IsTripWeapon(weaponUsed))
+			return FALSE;
 		return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_TRIP) == 0;
+	}
+		
 
 
 	if (d20a->d20ActType == D20A_SUNDER)
