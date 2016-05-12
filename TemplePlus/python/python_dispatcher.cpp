@@ -91,7 +91,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 			.def("get_sum", &BonusList::GetEffectiveBonusSum)
 			.def("get_total", &BonusList::GetEffectiveBonusSum)
 			.def("add_zeroed", &BonusList::ZeroBonusSetMeslineNum, "Adds a zero-value bonus (usually to represent nullified bonuses)")
-			.def_readwrite("attacker", &AttackPacket::attacker);
+			.def("add_cap", &BonusList::AddCap, "Adds cap for a particular bonus type");
 
 	py::class_<AttackPacket>(m, "AttackPacket")
 		.def(py::init())
