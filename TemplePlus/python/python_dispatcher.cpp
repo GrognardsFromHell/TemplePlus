@@ -116,7 +116,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def_readwrite("attack_mode_code", &TurnBasedStatus::attackModeCode, "0 - normal main hand, 99 - dual wielding, 999 - natural attack")
 		;
 
-	py::class_<TurnBasedStatus>(m, "AttackPacket")
+	py::class_<TurnBasedStatus>(m, "TurnBasedStatus")
 		.def(py::init())
 		.def_readwrite("hourglass_state", &TurnBasedStatus::hourglassState)
 		.def_readwrite("num_bonus_attacks", &TurnBasedStatus::numBonusAttacks)
@@ -205,7 +205,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 
 	py::class_<DispIOTurnBasedStatus>(m, "EventObjTurnBasedStatus", py::base<DispIO>())
 		.def(py::init())
-		.def_readwrite("return_val", &DispIOTurnBasedStatus::tbStatus);
+		.def_readwrite("tb_status", &DispIOTurnBasedStatus::tbStatus);
 
 
 	py::class_<DispIoTooltip>(m, "EventObjTooltip", "Tooltip event for mouse-overed objects.", py::base<DispIO>())

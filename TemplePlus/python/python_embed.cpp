@@ -102,6 +102,8 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 
 	inittp_dispatcher();
 
+	// tpModifiers is imported in conditions.cpp since it needs the condition hashtable
+
 	return true;
 }
 
