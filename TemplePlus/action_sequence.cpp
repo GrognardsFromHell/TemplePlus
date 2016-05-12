@@ -2996,8 +2996,7 @@ int ActionSequenceSystem::UnspecifiedAttackAddToSeqMeleeMulti(ActnSeq* actSeq, T
 	return 0;
 }
 
-int ActionSequenceSystem::UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat)
-{
+int ActionSequenceSystem::UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat){
 	objHndl objHnd = d20a->d20ATarget;
 	objHndl performer = d20a->d20APerformer;
 	D20Actn d20aCopy;

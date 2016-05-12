@@ -161,6 +161,7 @@ public:
 	ActionFrame(QuiveringPalm);
 	ActionFrame(StandardAttack);
 	ActionFrame(Sunder);
+	ActionFrame(TouchAttack);
 	ActionFrame(TripAttack);
 	
 
@@ -245,6 +246,9 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformCharge;
 	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameCharge;
 
+
+	d20Type = D20A_TOUCH_ATTACK;
+	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameTouchAttack;
 
 	d20Type = D20A_DISARM;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqWithTarget;
@@ -1618,6 +1622,35 @@ ActionErrorCode D20ActionCallbacks::ActionFrameSunder(D20Actn* d20a){
 	return AEC_OK;
 }
 
+ActionErrorCode D20ActionCallbacks::ActionFrameTouchAttack(D20Actn* d20a){
+
+	histSys.CreateRollHistoryString(d20a->rollHist1);
+	histSys.CreateRollHistoryString(d20a->rollHist2);
+	histSys.CreateRollHistoryString(d20a->rollHist3);
+
+	if (d20a->d20Caf & D20CAF_RANGED)
+		return AEC_OK;
+
+
+	auto curSeq = *actSeqSys.actSeqCur;
+	if (!(d20a->d20Caf & D20CAF_HIT))// touch attack charges should remain until discharged
+	{
+		curSeq->tbStatus.tbsFlags &= ~TBSF_TouchAttack;
+		d20a->d20Caf &= ~D20CAF_FREE_ACTION;
+		return AEC_OK;
+	}
+		
+
+	d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_TouchAttack, d20a, 0);
+	
+	if (curSeq){
+		curSeq->tbStatus.tbsFlags &= ~TBSF_TouchAttack;
+		d20a->d20Caf &= ~D20CAF_FREE_ACTION;
+	}
+
+	return AEC_OK;
+}
+
 ActionErrorCode D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a){
 
 	if (!d20a->d20ATarget)
@@ -1626,8 +1659,7 @@ ActionErrorCode D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a){
 	auto tgt = d20a->d20ATarget;
 	auto performer = d20a->d20APerformer;
 
-	if (!(d20a->d20Caf & D20CAF_HIT))
-	{
+	if (!(d20a->d20Caf & D20CAF_HIT))	{
 		combatSys.FloatCombatLine(d20a->d20APerformer, 29); //miss
 		return AEC_OK;
 	}
@@ -1637,19 +1669,17 @@ ActionErrorCode D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a){
 	histSys.CreateRollHistoryString(d20a->rollHist3);
 
 	auto tripCheck = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x100B6230);
-	if (tripCheck(d20a->d20APerformer, tgt))
-	{
+	if (tripCheck(d20a->d20APerformer, tgt))	{
 		conds.AddTo(d20a->d20ATarget, "Prone", {});
 		animationGoals.PushAnimate(tgt, 64);
 		histSys.CreateRollHistoryLineFromMesfile(44, performer, tgt);
 		combatSys.FloatCombatLine(tgt, 104);
 
-		if (feats.HasFeatCountByClass(performer, FEAT_IMPROVED_TRIP))
-		{
-			if(d20a->d20Caf & D20CAF_ATTACK_OF_OPPORTUNITY || d20a->d20ActType == D20A_ATTACK_OF_OPPORTUNITY)
+		if (feats.HasFeatCountByClass(performer, FEAT_IMPROVED_TRIP))	{
+			/*if(d20a->d20Caf & D20CAF_ATTACK_OF_OPPORTUNITY || d20a->d20ActType == D20A_ATTACK_OF_OPPORTUNITY)
 			{
 				return AEC_OK;
-			}
+			}*/
 			auto insertD20Action = temple::GetRef<void(__cdecl)(objHndl, D20ActionType, int, objHndl, LocAndOffsets, int)>(0x10094B40);
 			insertD20Action(performer, D20A_STANDARD_ATTACK, d20a->data1, d20a->d20ATarget, d20a->destLoc, 0);
 			auto curSeq = *actSeqSys.actSeqCur;
