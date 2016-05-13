@@ -126,10 +126,17 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="HouseRulesWindow.xaml.cs">
+      <DependentUpon>HouseRulesWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="IniViewModel.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ScreenResolution.cs" />
     <Compile Include="TempleDllVersion.cs" />
+    <Page Include="HouseRulesWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="InstallationDir.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

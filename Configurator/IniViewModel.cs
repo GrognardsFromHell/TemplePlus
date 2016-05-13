@@ -37,6 +37,12 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty MaxLevelProperty = DependencyProperty.Register(
             "MaxLevel", typeof(int), typeof(IniViewModel), new PropertyMetadata(default(int)));
 
+        public static readonly DependencyProperty AllowXpOverflowProperty = DependencyProperty.Register(
+           "AllowXpOverflow", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
+        public static readonly DependencyProperty SlowerLevellingProperty = DependencyProperty.Register(
+           "SlowerLevelling", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
         public IEnumerable<HpOnLevelUpType> HpOnLevelUpTypes => Enum.GetValues(typeof (HpOnLevelUpType))
             .Cast<HpOnLevelUpType>();
 
@@ -47,6 +53,8 @@ namespace TemplePlusConfig
             RenderHeight = (int)screenSize.Height;
             PointBuyPoints = 25;
             MaxLevel = 10;
+            SlowerLevelling = false;
+            AllowXpOverflow = false;
         }
 
         public string InstallationPath
@@ -108,6 +116,19 @@ namespace TemplePlusConfig
             get { return (int)GetValue(MaxLevelProperty); }
             set { SetValue(MaxLevelProperty, value); }
         }
+
+        public bool AllowXpOverflow
+        {
+            get { return (bool)GetValue(AllowXpOverflowProperty); }
+            set { SetValue(AllowXpOverflowProperty, value); }
+        }
+
+        public bool SlowerLevelling
+        {
+            get { return (bool)GetValue(SlowerLevellingProperty); }
+            set { SetValue(SlowerLevellingProperty, value); }
+        }
+        
 
         /// <summary>
         /// Tries to find an installation directory based on common locations and the Windows registry.
@@ -172,7 +193,19 @@ namespace TemplePlusConfig
             {
                 MaxLevel = maxLevel;
             }
-            
+
+            bool allowXpOverflow;
+            if (bool.TryParse(tpData["allowXpOverflow"], out allowXpOverflow))
+            {
+                AllowXpOverflow = allowXpOverflow;
+            }
+
+            bool slowerLevelling;
+            if (bool.TryParse(tpData["slowerLevelling"], out slowerLevelling))
+            {
+                SlowerLevelling = slowerLevelling;
+            }
+
         }
 
         public void SaveToIni(IniData iniData)
@@ -206,6 +239,8 @@ namespace TemplePlusConfig
             tpData["windowHeight"] = RenderHeight.ToString();
             tpData["softShadows"] = SoftShadows ? "true" : "false";
             tpData["maxLevel"] = MaxLevel.ToString();
+            tpData["allowXpOverflow"] = AllowXpOverflow ? "true" : "false";
+            tpData["slowerLevelling"] = SlowerLevelling ? "true" : "false";
         }
     }
 

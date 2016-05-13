@@ -69,8 +69,10 @@ struct TemplePlusConfig
 	int pointBuyPoints = 25; // number of Point Buy points at chargen
 	int maxPCs = 5; // max number of PCs in the party
 	bool maxPCsFlexible = true; // makes the party PC/NPC composition fluid
-	int maxLevel = 20; // maximum character level
+	int maxLevel = 10; // maximum character level
 	std::string hpOnLevelup = "Normal" ;
+	bool allowXpOverflow = false;
+	bool slowerLevelling = false;
 
 	std::unordered_map<std::string, VanillaSetting> vanillaSettings;
 	void AddVanillaSetting(const std::string &name, 

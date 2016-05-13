@@ -1,0 +1,26 @@
+﻿<Window x:Class="TemplePlusConfig.HouseRulesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TemplePlusConfig"
+        mc:Ignorable="d"
+        Title="HouseRulesWindow" Height="336.86" Width="645.051"
+        WindowStartupLocation="CenterScreen"
+        d:DataContext="{d:DesignInstance local:IniViewModel}">
+    <Grid>
+        <StackPanel HorizontalAlignment="Left" Height="247" VerticalAlignment="Top" Width="304" Margin="5,5,0,0">
+            <StackPanel Orientation="Horizontal">
+                <Label VerticalAlignment="Center" Content="HP on Level Up" />
+                <ComboBox VerticalAlignment="Center" SelectedValue="{Binding HpOnLevelUp}"  ItemsSource="{Binding HpOnLevelUpTypes}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"  Margin="0,5,0,5">
+                <Label VerticalAlignment="Center" Content="Point Buy Points:"/>
+                <TextBox Width="50" VerticalAlignment="Center" Text="{Binding PointBuyPoints}" />
+            </StackPanel>
+            <CheckBox VerticalAlignment="Center" Content="Allow XP overflow" IsChecked="{Binding AllowXpOverflow}" Margin="0,5,0,5" ToolTip="Allows experience points to accumulate beyond the limit of the next level."/>
+            <CheckBox VerticalAlignment="Center" Content="Slower levelling" IsChecked="{Binding SlowerLevelling}" Margin="0,5,0,5" ToolTip="Adjuts the experience point curve such that you rapidly get to level 3, but level more slowly afterwards. You will be about 1-2 levels behind a normal game."/>
+        </StackPanel>
+        <Button x:Name="button" Content="Ok" HorizontalAlignment="Left" Margin="10,0,0,10" VerticalAlignment="Bottom" Width="75" Click="button_Click"/>
+    </Grid>
+</Window>

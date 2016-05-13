@@ -26,15 +26,18 @@ static_assert(XPTABLE_MAXLEVEL >= 20, "XPTABLE_MAXLEVEL for XP award definition 
 XPAward::XPAward(){
 	int table[XPTABLE_MAXLEVEL][CRMAX - CRMIN + 1];
 	memset(table, 0, sizeof(table));
-
+	
 	// First set the table's "spine" - when CR = Level  then   XP = 300*level 
 	for (int level = 1; level <= XPTABLE_MAXLEVEL; level++) {
 		assert(level >= 1);
 		assert(level - CRMIN < CRCOUNT);
-		table[level - 1][level - CRMIN] = level * 300;
+		if (!config.slowerLevelling || level < 3)
+			table[level - 1][level - CRMIN] = level * 300;
+		else 
+			table[level - 1][level - CRMIN] = level * 300 * ( 1 - min(0.66, 0.66 * pow(level-2, 0.1)/pow(16.0, 0.1) ));
 	}
 
-	// Fill out the bottom left portion
+	// Fill out the bottom left portion - CRs less than level - from highest to lowest
 	for (int level = 1; level <= XPTABLE_MAXLEVEL; level++){
 		for (int j = level - CRMIN - 1; j >= 2; j--){
 			int i = level - 1;
@@ -43,22 +46,29 @@ XPAward::XPAward(){
 			assert(i >= 0 && i < XPTABLE_MAXLEVEL);
 			assert(j >= 0 && j < CRCOUNT);
 
+			// 8 CRs below level grant nothing
 			if (cr <= level - 8){
 				table[i][j] = 0;
 			}
 			else if (cr == 0){
-				table[i][2] = table[i][3] / 2;
-				table[i][1] = table[i][3] / 3;
-				table[i][0] = table[i][3] / 4;
+				table[i][2] = table[i][3] / 2; // CR 1/2
+				table[i][1] = table[i][3] / 3; // CR 1/3
+				table[i][0] = table[i][3] / 4; // CR 1/4
 			}
 			else if (cr == level - 1) {
 				assert(i >= 1);
-				table[i][j] = min(table[i - 1][j], level * 200);
+				if (config.slowerLevelling)
+					table[i][j] = min(table[i - 1][j], (table[i][j + 1] * 6) / 11);
+				else
+					table[i][j] = min(table[i - 1][j], (table[i][j+1] * 2) /3);
 			}
 			else {
 				assert(i >= 1);
 				assert(j + 2 < CRCOUNT);
-				table[i][j] = min(table[i - 1][j], table[i][j + 2] / 2);
+				if (config.slowerLevelling)
+					table[i][j] = min(table[i - 1][j], ( table[i][j + 2] * 3) / 10);
+				else
+					table[i][j] = min(table[i - 1][j], table[i][j + 2] / 2);
 			}
 		}
 	}
@@ -93,9 +103,16 @@ XPAward::XPAward(){
 };
 
 
-XPAward xpawarddd;
+// XP Table Fix for higher levels
+class XPTableForHighLevels : public TempleFix {
+public:
 
-void GiveXPAwards(){
+	XPAward *xpawarddd;
+	void GiveXPAwards();
+	void apply() override;
+} xpTableFix;
+
+void XPTableForHighLevels::GiveXPAwards(){
 	float fNumLivingPartyMembers = 0.0;
 
 	//int XPAwardTable[XPTABLE_MAXLEVEL][CRMAX - CRMIN + 1] = {};
@@ -135,7 +152,7 @@ void GiveXPAwards(){
 
 		for (int n = 0; n < CR_KILLED_TABLE_SIZE; n++){
 			float nkill = (float)killCountByCR[n];
-			float xp = (float)xpawarddd.XPAwardTable[level - 1][n];
+			float xp = (float)xpawarddd->XPAwardTable[level - 1][n];
 			if (nkill){
 				xpGainRaw += (int)(
 					experienceMultiplier *
@@ -166,13 +183,17 @@ void GiveXPAwards(){
 	return;
 }
 
-// XP Table Fix for higher levels
-class XPTableForHighLevels : public TempleFix {
-public:
-	void apply() override;
-} xpTableFix;
+
 
 void XPTableForHighLevels::apply() {
 	logger->info("Applying XP Table Extension upto Level 20");
-	replaceFunction(0x100B5700, GiveXPAwards);
+	replaceFunction<void(__cdecl)()>(0x100B5700, []() {
+		xpTableFix.GiveXPAwards(); }
+	);
+
+	xpawarddd = new XPAward();
+
+	if (config.allowXpOverflow)	{
+		writeNoops(0x100B5608);
+	}
 }

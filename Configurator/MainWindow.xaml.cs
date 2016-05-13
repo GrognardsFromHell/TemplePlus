@@ -18,18 +18,12 @@ namespace TemplePlusConfig
     public partial class MainWindow : Window
     {
         // INI file is encoded in UTF-8 without a byte order mark
-        private static readonly Encoding IniEncoding = new UTF8Encoding(false);
-
-        private readonly string _iniPath;
-
-        private readonly IniViewModel _iniViewModel = new IniViewModel();
-
-        private readonly FileIniDataParser _iniParser;
+        
 
         public MainWindow()
         {
-            _iniParser = new FileIniDataParser();
-            _iniParser.Parser.Configuration.AssigmentSpacer = "";
+            App._iniParser = new FileIniDataParser();
+            App._iniParser.Parser.Configuration.AssigmentSpacer = "";
 
             InitializeComponent();
             
@@ -38,22 +32,22 @@ namespace TemplePlusConfig
                 OkButton.Content = "Launch";
             }
 
-            DataContext = _iniViewModel;
+            DataContext = App._iniViewModel;
 
             var saveGameFolder = KnownFolders.SavedGames.Path;
-            _iniPath = Path.Combine(saveGameFolder, "TemplePlus", "TemplePlus.ini");
+            App._iniPath = Path.Combine(saveGameFolder, "TemplePlus", "TemplePlus.ini");
 
-            if (File.Exists(_iniPath))
+            if (File.Exists(App._iniPath))
             {
-                var iniData = _iniParser.ReadFile(_iniPath, IniEncoding);
-                _iniViewModel.LoadFromIni(iniData);
+                var iniData = App._iniParser.ReadFile(App._iniPath, App.IniEncoding);
+                App._iniViewModel.LoadFromIni(iniData);
             }
 
             // Auto detect an installation if the INI didnt exist, or if 
             // the path is not set in the ini
-            if (string.IsNullOrEmpty(_iniViewModel.InstallationPath))
+            if (string.IsNullOrEmpty(App._iniViewModel.InstallationPath))
             {
-                _iniViewModel.AutoDetectInstallation();
+                App._iniViewModel.AutoDetectInstallation();
             }
         }
 
@@ -61,25 +55,25 @@ namespace TemplePlusConfig
         {
             IniData iniData;
 
-            if (File.Exists(_iniPath))
+            if (File.Exists(App._iniPath))
             {
-                iniData = _iniParser.ReadFile(_iniPath, Encoding.UTF8);
+                iniData = App._iniParser.ReadFile(App._iniPath, Encoding.UTF8);
             }
             else
             {
                 // Copy the INI configuration from our parser
-                iniData = new IniData {Configuration = _iniParser.Parser.Configuration};
+                iniData = new IniData {Configuration = App._iniParser.Parser.Configuration};
             }
 
-            var iniDir = Path.GetDirectoryName(_iniPath);
+            var iniDir = Path.GetDirectoryName(App._iniPath);
             if (iniDir != null)
             {
                 Directory.CreateDirectory(iniDir);
             }
 
-            _iniViewModel.SaveToIni(iniData);
-            
-            _iniParser.WriteFile(_iniPath, iniData, IniEncoding);
+            App._iniViewModel.SaveToIni(iniData);
+
+            App._iniParser.WriteFile(App._iniPath, iniData, App.IniEncoding);
 
             Close();
 
@@ -91,5 +85,11 @@ namespace TemplePlusConfig
             }
         }
 
+        private void HousRulesBtnClick(object sender, RoutedEventArgs e)
+        {
+            var newWindow = new HouseRulesWindow();
+            newWindow.ShowDialog();
+
+        }
     }
 }
