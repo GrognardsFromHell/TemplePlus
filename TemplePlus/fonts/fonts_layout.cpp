@@ -176,7 +176,11 @@ void TextLayouter::LayoutAndDraw(gsl::cstring_span<> text, const TigFont& font, 
 			if (style.flags & 0x10) {
 				x += (extentsWidth - lineWidth) / 2;
 			}
-			if(lastIdx >= wordInfo.firstIdx)
+			if ((int)wordInfo.firstIdx < 0 || (int)lastIdx < 0){
+				int dummy = 1;
+				logger->error("Bad firstIdx at LayoutAndDraw! {}, {}", (int)wordInfo.firstIdx, (int)lastIdx);
+			} 
+			else if(lastIdx >= wordInfo.firstIdx)
 				mRenderer.RenderRun(
 					text.subspan(wordInfo.firstIdx, lastIdx - wordInfo.firstIdx),
 					x,
