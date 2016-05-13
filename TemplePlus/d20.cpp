@@ -1673,8 +1673,8 @@ ActionErrorCode D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a){
 	histSys.CreateRollHistoryString(d20a->rollHist2);
 	histSys.CreateRollHistoryString(d20a->rollHist3);
 
-	auto tripCheck = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x100B6230);
-	if (tripCheck(d20a->d20APerformer, tgt))	{
+	// auto tripCheck = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x100B6230);
+	if (combatSys.TripCheck(d20a->d20APerformer, tgt))	{
 		conds.AddTo(d20a->d20ATarget, "Prone", {});
 		animationGoals.PushAnimate(tgt, 64);
 		histSys.CreateRollHistoryLineFromMesfile(44, performer, tgt);
@@ -1693,7 +1693,7 @@ ActionErrorCode D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a){
 		}
 	} else // counter attempt
 	{
-		if (tripCheck(tgt, performer))
+		if (combatSys.TripCheck(tgt, performer))
 		{
 			conds.AddTo(performer, "Prone", {});
 			animationGoals.PushAnimate(performer, 64);

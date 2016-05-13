@@ -2637,7 +2637,8 @@ int RendOnDamage(DispatcherCallbackArgs args)
 	if (conds.CondNodeGetArg(args.subDispNode->condNode, 0) && attackDescr == (char*)conds.CondNodeGetArg(args.subDispNode->condNode, 1))
 	{
 		Dice dice(2, 6, 9);
-		damage.AddDamageDice(&dispIo->damage, dice.ToPacked(), DamageType::PiercingAndSlashing, 133);
+		dispIo->damage.AddDamageDice(dice.ToPacked(), DamageType::PiercingAndSlashing, 133);
+		//damage.AddDamageDice(&dispIo->damage, dice.ToPacked(), DamageType::PiercingAndSlashing, 133);
 		floatSys.FloatCombatLine(args.objHndCaller, 203);
 		conds.CondNodeSetArg(args.subDispNode->condNode, 0, 0);
 	}

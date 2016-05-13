@@ -185,9 +185,28 @@ int Damage::AddPhysicalDR(DamagePacket* damPkt, int DRAmount, int bypasserBitmas
 	
 }
 
-int Damage::AddDamageDice(DamagePacket* dmgPkt, int dicePacked, DamageType damType, unsigned damageMesLine)
-{
-	return addresses.AddDamageDice(dmgPkt, dicePacked, damType, damageMesLine);
+const char* Damage::GetMesline(unsigned damageMesLine){
+	MesLine mesline(damageMesLine);
+	mesFuncs.GetLine_Safe(damageMes, &mesline);
+	return mesline.value;
+}
+
+int Damage::AddDamageDice(DamagePacket* dmgPkt, int dicePacked, DamageType damType, unsigned damageMesLine){
+	if (dmgPkt->diceCount >= 5)
+		return FALSE;
+
+	const char* line = damage.GetMesline(damageMesLine);
+
+	auto _damType = damType;
+	if (damType == DamageType::Unspecified)	{
+		if (dmgPkt->diceCount > 0)
+			_damType = dmgPkt->dice[0].type;
+	}
+	auto diceCount = dmgPkt->diceCount;
+	dmgPkt->dice[dmgPkt->diceCount++] = DamageDice(dicePacked, damType, line);
+
+	return TRUE;
+	//return addresses.AddDamageDice(dmgPkt, dicePacked, damType, damageMesLine);
 }
 
 int Damage::AddDamageDiceWithDescr(DamagePacket* dmgPkt, int dicePacked, DamageType damType, unsigned damageMesLine, char* descr)

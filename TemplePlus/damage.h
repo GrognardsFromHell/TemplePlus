@@ -13,6 +13,12 @@ struct DamageDice { // see 100E03F0 AddDamageDice
 	int rolledDamage;
 	const char *typeDescription;
 	const char * causedBy; // e.g. item name
+	DamageDice():dicePacked(0), type(DamageType::Unspecified), rolledDamage(-1), typeDescription(nullptr),causedBy(nullptr)	{}
+	DamageDice(int DicePacked, DamageType DamType, const char* TypeDescr):DamageDice()	{
+		dicePacked = DicePacked;
+		type = DamType;
+		typeDescription = TypeDescr;
+	};
 };
 
 struct DamageReduction {
@@ -100,6 +106,7 @@ public:
 	void DamagePacketInit(DamagePacket * dmgPkt);
 	int AddDamageBonusWithDescr(DamagePacket* damage, int damBonus, int bonType, int bonusMesLine, char* desc);
 	int AddPhysicalDR(DamagePacket *damPkt, int DRAmount, int bypasserBitmask, unsigned int damageMesLine);
+	const char* GetMesline(unsigned damageMesLine);
 	int AddDamageDice(DamagePacket *dmgPkt, int dicePacked, DamageType damType, unsigned int damageMesLine);
 	int AddDamageDiceWithDescr(DamagePacket *dmgPkt, int dicePacked, DamageType damType, unsigned int damageMesLine, char* descr);
 	Damage();

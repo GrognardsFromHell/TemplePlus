@@ -1271,6 +1271,68 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 	
 	// there were some additional debug stubs here (nullsubs)
 }
+
+bool LegacyCombatSystem::TripCheck(objHndl handle, objHndl target){
+	if (d20Sys.d20Query(target, DK_QUE_Untripable))	{
+		histSys.CreateFromFreeText( combatSys.GetCombatMesLine(171)); 
+		return false;
+	}
+
+	static auto abilityScoreCheckModDispatch = [](objHndl obj, objHndl opponent, Stat statUsed, BonusList * bonlist, int flags) {
+		auto dispatcher = gameSystems->GetObj().GetObject(obj)->GetDispatcher();
+		DispIoObjBonus dispIo;
+		if (!dispatcher->IsValid())
+			return 0;
+		dispIo.bonOut = bonlist;
+		dispIo.returnVal = flags;
+		dispIo.obj = opponent;
+		dispatch.DispatcherProcessor(dispatcher, dispTypeAbilityCheckModifier, DK_STAT_STRENGTH + statUsed, &dispIo);
+		return dispIo.bonOut->GetEffectiveBonusSum();
+	};
+
+
+	auto attackerRoll = Dice(1, 20).Roll();
+	BonusList attackerBon;
+	auto attackerStr = objects.StatLevelGet(handle, Stat::stat_strength);
+	auto attackerStrMod = objects.GetModFromStatLevel(attackerStr);
+	attackerBon.AddBonus(attackerStrMod, 0, 103);
+	abilityScoreCheckModDispatch(handle, target, stat_strength, &attackerBon, 1);
+	auto attackerSize = dispatch.DispatchGetSizeCategory(handle);
+	if (attackerSize != 5){
+		attackerBon.AddBonus(4 * (attackerSize - 5), 0, 316);
+	}
+
+	auto attackerResult = attackerRoll + attackerBon.GetEffectiveBonusSum();
+
+	auto defenderRoll = Dice(1, 20).Roll();
+	BonusList defenderBon;
+	auto defenderStr = objects.StatLevelGet(target, Stat::stat_strength);
+	auto defenderDex = objects.StatLevelGet(target, Stat::stat_dexterity);
+	Stat defenderStat = stat_strength;
+	if (defenderDex > defenderStr){
+		defenderStat = stat_dexterity;
+		auto defenderMod = objects.GetModFromStatLevel(defenderDex);
+		defenderBon.AddBonus(defenderMod, 0, 104);
+	} else
+	{
+		auto defenderMod = objects.GetModFromStatLevel(defenderStr);
+		defenderBon.AddBonus(defenderMod, 0, 103);
+	}
+	abilityScoreCheckModDispatch(target, handle, defenderStat, &defenderBon, 3);
+	auto defenderSize = dispatch.DispatchGetSizeCategory(target);
+	if (defenderSize != 5) {
+		defenderBon.AddBonus(4 * (defenderSize - 5), 0, 316);
+	}
+	auto defenderResult = defenderRoll + defenderBon.GetEffectiveBonusSum();
+
+
+
+	auto succeeded = attackerResult > defenderResult;
+	auto rollId = histSys.RollHistoryAddType6OpposedCheck(handle, target, attackerRoll, defenderRoll, &attackerBon, &defenderBon, 5062, 144 - (succeeded != false), 1 );
+	histSys.CreateRollHistoryString(rollId);
+
+	return succeeded;
+}
 #pragma endregion
 
 

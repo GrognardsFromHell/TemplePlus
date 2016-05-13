@@ -97,7 +97,17 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def(py::init())
 		.def("get_weapon_used", &AttackPacket::GetWeaponUsed)
 		.def("is_offhand_attack", &AttackPacket::IsOffhandAttack)
-		.def_readwrite("attacker", &AttackPacket::attacker);
+		.def_readwrite("attacker", &AttackPacket::attacker)
+		.def_readwrite("target", &AttackPacket::victim);
+
+	py::class_<DamagePacket>(m, "DamagePacket")
+		.def(py::init())
+		.def("add_dice", &DamagePacket::AddDamageDice)
+		.def_readwrite("flags", &DamagePacket::flags, "1 - maximized, 2 - empowered")
+		.def_readwrite("bonus_list", &DamagePacket::bonuses)
+		.def_readwrite("critical_multiplier", &DamagePacket::critHitMultiplier, "1 by default, gets increased by various things")
+		.def_readwrite("attack_power", &DamagePacket::attackPowerType, "See D20DAP_");
+
 
 
 	py::class_<D20Actn>(m, "D20Action")
@@ -185,6 +195,12 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def_readwrite("bonus_list", &DispIoSavingThrow::bonlist)
 		.def_readwrite("return_val", &DispIoSavingThrow::returVal)
 		.def_readwrite("obj", &DispIoSavingThrow::obj);
+
+	py::class_<DispIoDamage>(m, "EventObjDamage", "Used for damage dice and such", py::base<DispIO>())
+		.def_readwrite("attack_packet", &DispIoDamage::attackPacket)
+		.def_readwrite("damage_packet", &DispIoDamage::damage)
+		;
+
 
 	py::class_<DispIoAttackBonus>(m, "EventObjAttack", "Used for fetching attack or AC bonuses", py::base<DispIO>())
 		.def(py::init())

@@ -2039,6 +2039,18 @@ race_forest_gnome = 10
 race_tallfellow = 11
 race_deep_halfling = 12
 
+san_dialog = 9
+san_first_heartbeat = 10
+san_dying = 12
+san_enter_combat = 13
+san_exit_combat = 14
+san_start_combat = 15
+san_end_combat = 16
+san_buy_object = 17
+san_heartbeat = 19
+san_insert_item = 21
+san_will_kos = 22
+
 scs_critically_hit = 0
 scs_dying = 1
 scs_dying_gruesome = 2

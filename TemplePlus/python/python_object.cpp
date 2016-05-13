@@ -831,6 +831,27 @@ static PyObject* PyObjHandle_TurnTowards(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_TripCheck(PyObject* obj, PyObject* args){
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	objHndl target = 0i64;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.trip_check", &ConvertObjHndl, &target)) {
+		return 0;
+	}
+
+	if (!target)
+		return PyInt_FromLong(0);
+
+	if (combatSys.TripCheck(self->handle, target)) {
+		return PyInt_FromLong(1);
+	}
+	else {
+		return PyInt_FromLong(0);
+	}
+}
+
 static PyObject* PyObjHandle_FloatLine(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	int lineId;
@@ -2216,6 +2237,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"__getstate__", PyObjHandle_getstate, METH_VARARGS, NULL},
 	{"__reduce__", PyObjHandle_reduce, METH_VARARGS, NULL},
 	{"__setstate__", PyObjHandle_setstate, METH_VARARGS, NULL},
+	{ "add_to_initiative", PyObjHandle_AddToInitiative, METH_VARARGS, NULL },
+	{ "ai_flee_add", PyObjHandle_AiFleeAdd, METH_VARARGS, NULL },
 	{ "ai_follower_add", PyObjHandle_AiFollowerAdd, METH_VARARGS, NULL },
 	{ "ai_follower_remove", ReturnZero, METH_VARARGS, NULL },
 	{ "ai_follower_atmax", ReturnZero, METH_VARARGS, NULL },
@@ -2223,6 +2246,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "ai_shitlist_remove", PyObjHandle_AiShitlistRemove, METH_VARARGS, NULL },
 	{ "ai_stop_attacking", PyObjHandle_AiStopAttacking, METH_VARARGS, NULL },
 	{ "anim_callback", PyObjHandle_AnimCallback, METH_VARARGS, NULL },
+	{ "anim_goal_interrupt", PyObjHandle_AnimGoalInterrupt, METH_VARARGS, NULL },
 	{ "attack", PyObjHandle_Attack, METH_VARARGS, NULL },
 	{ "award_experience", PyObjHandle_AwardExperience, METH_VARARGS, NULL },
 
@@ -2239,9 +2263,13 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "container_flags_get", GetFlags<obj_f_container_flags>, METH_VARARGS, NULL },
 	{ "container_flag_set", SetFlag<obj_f_container_flags>, METH_VARARGS, NULL },
 	{ "container_flag_unset", ClearFlag<obj_f_container_flags>, METH_VARARGS, NULL },
+	{ "container_toggle_open", PyObjHandle_ContainerToggleOpen, METH_VARARGS, NULL },
 	{ "critter_flags_get", GetFlags<obj_f_critter_flags>, METH_VARARGS, NULL },
 	{ "critter_flag_set", SetFlag<obj_f_critter_flags>, METH_VARARGS, NULL },
 	{ "critter_flag_unset", ClearFlag<obj_f_critter_flags>, METH_VARARGS, NULL },
+	{ "critter_get_alignment", PyObjHandle_CritterGetAlignment, METH_VARARGS, NULL },
+	{ "critter_kill", PyObjHandle_Kill, METH_VARARGS, NULL },
+	{ "critter_kill_by_effect", PyObjHandle_KillByEffect, METH_VARARGS, NULL },
 
 	{ "d20_query", PyObjHandle_D20Query, METH_VARARGS, NULL },
 	{ "d20_query_has_spell_condition", PyObjHandle_D20QueryHasSpellCond, METH_VARARGS, NULL },
@@ -2250,19 +2278,28 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "d20_query_get_data", PyObjHandle_D20QueryGetData, METH_VARARGS, NULL },
 	{ "d20_send_signal", PyObjHandle_D20SendSignal, METH_VARARGS, NULL },
 	{ "d20_send_signal_ex", PyObjHandle_D20SendSignalEx, METH_VARARGS, NULL },
+	{ "d20_status_init", PyObjHandle_D20StatusInit, METH_VARARGS, NULL },
 	{ "damage", PyObjHandle_Damage, METH_VARARGS, NULL },
 	{ "damage_with_reduction", PyObjHandle_DamageWithReduction, METH_VARARGS, NULL },
-	
+	{ "destroy", PyObjHandle_Destroy, METH_VARARGS, NULL },
+	{ "distance_to", PyObjHandle_DistanceTo, METH_VARARGS, NULL },
+	{ "dominate", PyObjHandle_Dominate, METH_VARARGS, NULL },
+
 	{ "faction_has", PyObjHandle_FactionHas, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!" },
 	{ "faction_add", PyObjHandle_FactionAdd, METH_VARARGS, "Adds faction to NPC. Doesn't work on PCs!" },
+	{ "fade_to", PyObjHandle_FadeTo, METH_VARARGS, NULL },
 	{ "feat_add", PyObjHandle_ObjFeatAdd, METH_VARARGS, "Gives you a feat" },
 	{ "fall_down", PyObjHandle_FallDown, METH_VARARGS, "Makes a Critter fall down" },
 	{ "follower_add", PyObjHandle_FollowerAdd, METH_VARARGS, NULL },
 	{ "follower_remove", PyObjHandle_FollowerRemove, METH_VARARGS, NULL },
 	{ "follower_atmax", PyObjHandle_FollowerAtMax, METH_VARARGS, NULL },
+	{ "footstep", PyObjHandle_Footstep, METH_VARARGS, NULL },
 	{ "float_line", PyObjHandle_FloatLine, METH_VARARGS, NULL },
-	
+	{ "float_mesfile_line", PyObjHandle_FloatMesFileLine, METH_VARARGS, NULL },
 
+	{ "get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL },
+	{ "get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL },
+	{ "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
 	{ "group_list", PyObjHandle_GroupList, METH_VARARGS, NULL },
 	
 	{ "has_atoned", PyObjHandle_HasAtoned, METH_VARARGS, NULL },
@@ -2271,24 +2308,22 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "has_item", PyObjHandle_HasItem, METH_VARARGS, NULL },
 	{ "has_los", PyObjHandle_HasLos, METH_VARARGS, NULL },
 	{ "has_met", PyObjHandle_HasMet, METH_VARARGS, NULL },
+	{ "has_spell_effects", PyObjHandle_HasSpellEffects, METH_VARARGS, NULL },
 	{ "has_wielded", PyObjHandle_HasWielded, METH_VARARGS, NULL },
 	{ "hasMet", PyObjHandle_HasMet, METH_VARARGS, NULL },
 	{ "heal", PyObjHandle_Heal, METH_VARARGS, NULL },
 	{ "healsubdual", PyObjHandle_HealSubdual, METH_VARARGS, NULL },
 	
-	
-	{ "identify_all", PyObjHandle_IdentifyAll, METH_VARARGS, NULL },
-	
-	{ "inventory_item", PyObjHandle_InventoryItem, METH_VARARGS, NULL },
 
+	{ "identify_all", PyObjHandle_IdentifyAll, METH_VARARGS, NULL },
+	{ "inventory_item", PyObjHandle_InventoryItem, METH_VARARGS, NULL },
 	{ "is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL },
 	{ "is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL },
 	{ "is_friendly", PyObjHandle_IsFriendly, METH_VARARGS, NULL },
 	{ "is_unconscious", PyObjHandle_IsUnconscious, METH_VARARGS, NULL },
-
-
 	{ "item_condition_add_with_args", PyObjHandle_ItemConditionAdd, METH_VARARGS, NULL },
 	{ "item_find", PyObjHandle_ItemFind, METH_VARARGS, NULL },
+	{ "item_get", PyObjHandle_ItemGet, METH_VARARGS, NULL },
 	{ "item_transfer_to", PyObjHandle_ItemTransferTo, METH_VARARGS, NULL },
 	{ "item_find_by_proto", PyObjHandle_ItemFindByProto, METH_VARARGS, NULL },
 	{ "item_transfer_to_by_proto", PyObjHandle_ItemTransferToByProto, METH_VARARGS, NULL },
@@ -2296,10 +2331,9 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "item_flags_get", GetFlags<obj_f_item_flags>, METH_VARARGS, NULL },
 	{ "item_flag_set", SetFlag<obj_f_item_flags>, METH_VARARGS, NULL },
 	{ "item_flag_unset", ClearFlag<obj_f_item_flags>, METH_VARARGS, NULL },
+	{ "item_wield_best_all", PyObjHandle_WieldBestAll, METH_VARARGS, NULL },
 
-	
-
-	
+	{ "leader_get", PyObjHandle_LeaderGet, METH_VARARGS, NULL },
 
 	{ "make_wiz", PyObjHandle_MakeWizard, METH_VARARGS, "Makes you a wizard of level N" },
 	{ "make_class", PyObjHandle_MakeClass, METH_VARARGS, "Makes you a CLASS N of level M" },
@@ -2307,6 +2341,9 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "money_adj", PyObjHandle_MoneyAdj, METH_VARARGS, NULL},
 	{ "move", PyObjHandle_Move, METH_VARARGS, NULL },
 
+	{ "npc_flags_get", GetFlags<obj_f_npc_flags>, METH_VARARGS, NULL },
+	{ "npc_flag_set", SetFlag<obj_f_npc_flags>, METH_VARARGS, NULL },
+	{ "npc_flag_unset", ClearFlag<obj_f_npc_flags>, METH_VARARGS, NULL },
 	
 	{ "obj_get_int", PyObjHandle_GetInt, METH_VARARGS, NULL },
 	{ "obj_get_idx_int", PyObjHandle_GetIdxInt, METH_VARARGS, NULL },
@@ -2316,94 +2353,57 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "obj_set_int", PyObjHandle_SetInt, METH_VARARGS, NULL },
 	{ "obj_set_obj", PyObjHandle_SetObj, METH_VARARGS, NULL },
 	{ "obj_set_idx_int", PyObjHandle_SetIdxInt, METH_VARARGS, NULL },
+	{ "object_flags_get", GetFlags<obj_f_flags>, METH_VARARGS, NULL },
+	{ "object_flag_set", PyObjHandle_ObjectFlagSet, METH_VARARGS, NULL },
+	{ "object_flag_unset", PyObjHandle_ObjectFlagUnset, METH_VARARGS, NULL },
+	{ "object_script_execute", PyObjHandle_ObjectScriptExecute, METH_VARARGS, NULL },
+
+	{ "pc_add", PyObjHandle_PCAdd, METH_VARARGS, "Adds object as a PC party member." },
+	{ "perform_touch_attack", PyObjHandle_PerformTouchAttack, METH_VARARGS, NULL },
+	{ "portal_flags_get", GetFlags<obj_f_portal_flags>, METH_VARARGS, NULL },
+	{ "portal_flag_set", SetFlag<obj_f_portal_flags>, METH_VARARGS, NULL },
+	{ "portal_flag_unset", ClearFlag<obj_f_portal_flags>, METH_VARARGS, NULL },
+	{ "portal_toggle_open", PyObjHandle_PortalToggleOpen, METH_VARARGS, NULL },
+
 
 	{ "reaction_get", PyObjHandle_ReactionGet, METH_VARARGS, NULL },
 	{ "reaction_set", PyObjHandle_ReactionSet, METH_VARARGS, NULL },
 	{ "reaction_adj", PyObjHandle_ReactionAdjust, METH_VARARGS, NULL },
+	{ "reflex_save_and_damage", PyObjHandle_ReflexSaveAndDamage, METH_VARARGS, NULL },
 	{ "refresh_turn", PyObjHandle_RefreshTurn, METH_VARARGS, NULL },
+	{ "reputation_has", PyObjHandle_ReputationHas, METH_VARARGS, NULL },
+	{ "reputation_add", PyObjHandle_ReputationAdd, METH_VARARGS, NULL },
+	{ "remove_from_initiative", PyObjHandle_RemoveFromInitiative, METH_VARARGS, NULL },
+	{ "reputation_remove", PyObjHandle_ReputationRemove, METH_VARARGS, NULL },
+	{ "resurrect", PyObjHandle_Resurrect, METH_VARARGS, NULL },
+	{ "rumor_log_add", PyObjHandle_RumorLogAdd, METH_VARARGS, NULL },
+	{ "runoff", PyObjHandle_RunOff, METH_VARARGS, NULL },
+	{ "run_to", PyObjHandle_RunTo, METH_VARARGS, NULL },
 
-	{"skill_level_get", PyObjHandle_SkillLevelGet, METH_VARARGS, NULL},
-	
-	
+	{ "saving_throw", PyObjHandle_SavingThrow, METH_VARARGS, NULL },
+	{ "saving_throw_with_args", PyObjHandle_SavingThrow, METH_VARARGS, NULL },
+	{ "saving_throw_spell", PyObjHandle_SavingThrowSpell, METH_VARARGS, NULL },
+	{ "secretdoor_detect", PyObjHandle_SecretdoorDetect, METH_VARARGS, NULL },
+	{ "set_initiative", PyObjHandle_SetInitiative, METH_VARARGS, NULL },
+	{ "skill_level_get", PyObjHandle_SkillLevelGet, METH_VARARGS, NULL},
+	{ "soundmap_critter", PyObjHandle_SoundmapCritter, METH_VARARGS, NULL },
+	{ "spell_known_add", PyObjHandle_SpellKnownAdd, METH_VARARGS, NULL },
+	{ "spell_memorized_add", PyObjHandle_SpellMemorizedAdd, METH_VARARGS, NULL },
+	{ "spell_damage", PyObjHandle_SpellDamage, METH_VARARGS, NULL },
+	{ "spell_damage_with_reduction", PyObjHandle_SpellDamageWithReduction, METH_VARARGS, NULL },
+	{ "spell_heal", PyObjHandle_SpellHeal, METH_VARARGS, NULL },
+	{ "spells_pending_to_memorized", PyObjHandle_PendingToMemorized, METH_VARARGS, NULL },
+	{ "spells_memorized_forget", PyObjHandle_MemorizedForget, METH_VARARGS, NULL },
+	{ "standpoint_set", PyObjHandle_StandpointSet, METH_VARARGS, NULL },
 	{"stat_level_get", PyObjHandle_StatLevelGet, METH_VARARGS, NULL},
 	{"stat_base_get", PyObjHandle_StatLevelGetBase, METH_VARARGS, NULL},
 	{"stat_base_set", PyObjHandle_StatLevelSetBase, METH_VARARGS, NULL},
-	
+	{"steal_from", PyObjHandle_StealFrom, METH_VARARGS, NULL },
 
-	{"pc_add", PyObjHandle_PCAdd, METH_VARARGS, "Adds object as a PC party member." },
-	{"leader_get", PyObjHandle_LeaderGet, METH_VARARGS, NULL},
-	
-	
-	
 	{"turn_towards", PyObjHandle_TurnTowards, METH_VARARGS, NULL},
-	
-	{"steal_from", PyObjHandle_StealFrom, METH_VARARGS, NULL},
-	{"reputation_has", PyObjHandle_ReputationHas, METH_VARARGS, NULL},
-	{"reputation_add", PyObjHandle_ReputationAdd, METH_VARARGS, NULL},
-	{"reputation_remove", PyObjHandle_ReputationRemove, METH_VARARGS, NULL},
+	{"trip_check", PyObjHandle_TripCheck, METH_VARARGS, NULL },
 
-	{"fade_to", PyObjHandle_FadeTo, METH_VARARGS, NULL},
-
-	{"float_mesfile_line", PyObjHandle_FloatMesFileLine, METH_VARARGS, NULL},
-	{"object_flags_get", GetFlags<obj_f_flags>, METH_VARARGS, NULL},
-	{"object_flag_set", PyObjHandle_ObjectFlagSet, METH_VARARGS, NULL},
-	{"object_flag_unset", PyObjHandle_ObjectFlagUnset, METH_VARARGS, NULL},
-	{"portal_flags_get", GetFlags<obj_f_portal_flags>, METH_VARARGS, NULL},
-	{"portal_flag_set", SetFlag<obj_f_portal_flags>, METH_VARARGS, NULL},
-	{"portal_flag_unset", ClearFlag<obj_f_portal_flags>, METH_VARARGS, NULL},
-
-	{"portal_toggle_open", PyObjHandle_PortalToggleOpen, METH_VARARGS, NULL},
-	{"container_toggle_open", PyObjHandle_ContainerToggleOpen, METH_VARARGS, NULL},
-	
-	{"npc_flags_get", GetFlags<obj_f_npc_flags>, METH_VARARGS, NULL},
-	{"npc_flag_set", SetFlag<obj_f_npc_flags>, METH_VARARGS, NULL},
-	{"npc_flag_unset", ClearFlag<obj_f_npc_flags>, METH_VARARGS, NULL},
-	{"saving_throw", PyObjHandle_SavingThrow, METH_VARARGS, NULL},
-	{"saving_throw_with_args", PyObjHandle_SavingThrow, METH_VARARGS, NULL},
-	{"saving_throw_spell", PyObjHandle_SavingThrowSpell, METH_VARARGS, NULL},
-	{"reflex_save_and_damage", PyObjHandle_ReflexSaveAndDamage, METH_VARARGS, NULL},
-	{"soundmap_critter", PyObjHandle_SoundmapCritter, METH_VARARGS, NULL},
-	{"footstep", PyObjHandle_Footstep, METH_VARARGS, NULL},
-	{"secretdoor_detect", PyObjHandle_SecretdoorDetect, METH_VARARGS, NULL},
-	{"has_spell_effects", PyObjHandle_HasSpellEffects, METH_VARARGS, NULL},
-	{"critter_kill", PyObjHandle_Kill, METH_VARARGS, NULL},
-	{"critter_kill_by_effect", PyObjHandle_KillByEffect, METH_VARARGS, NULL},
-	{"destroy", PyObjHandle_Destroy, METH_VARARGS, NULL},
-	{"item_get", PyObjHandle_ItemGet, METH_VARARGS, NULL},
-	{"perform_touch_attack", PyObjHandle_PerformTouchAttack, METH_VARARGS, NULL},
-	{"add_to_initiative", PyObjHandle_AddToInitiative, METH_VARARGS, NULL},
-	{"remove_from_initiative", PyObjHandle_RemoveFromInitiative, METH_VARARGS, NULL},
-	{"get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL},
-	{"set_initiative", PyObjHandle_SetInitiative, METH_VARARGS, NULL},
-	
-	{"critter_get_alignment", PyObjHandle_CritterGetAlignment, METH_VARARGS, NULL},
-	{"distance_to", PyObjHandle_DistanceTo, METH_VARARGS, NULL},
-	
-	{"anim_goal_interrupt", PyObjHandle_AnimGoalInterrupt, METH_VARARGS, NULL},
-	{"d20_status_init", PyObjHandle_D20StatusInit, METH_VARARGS, NULL},
-	{"object_script_execute", PyObjHandle_ObjectScriptExecute, METH_VARARGS, NULL},
-	{"standpoint_set", PyObjHandle_StandpointSet, METH_VARARGS, NULL},
-	{"runoff", PyObjHandle_RunOff, METH_VARARGS, NULL},
-	{"run_to", PyObjHandle_RunTo, METH_VARARGS, NULL },
-	{"get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL},
-	
-	{"rumor_log_add", PyObjHandle_RumorLogAdd, METH_VARARGS, NULL},
-
-	{"spell_known_add", PyObjHandle_SpellKnownAdd, METH_VARARGS, NULL},
-	{"spell_memorized_add", PyObjHandle_SpellMemorizedAdd, METH_VARARGS, NULL},
-	{"spell_damage", PyObjHandle_SpellDamage, METH_VARARGS, NULL},
-	{"spell_damage_with_reduction", PyObjHandle_SpellDamageWithReduction, METH_VARARGS, NULL},
-	{"spell_heal", PyObjHandle_SpellHeal, METH_VARARGS, NULL},
-	
-	{"ai_flee_add", PyObjHandle_AiFleeAdd, METH_VARARGS, NULL},
-	{"get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL},
-	{"item_wield_best_all", PyObjHandle_WieldBestAll, METH_VARARGS, NULL},
-	
-	{"unconceal", PyObjHandle_Unconceal, METH_VARARGS, NULL},
-	{"spells_pending_to_memorized", PyObjHandle_PendingToMemorized, METH_VARARGS, NULL},
-	{"spells_memorized_forget", PyObjHandle_MemorizedForget, METH_VARARGS, NULL},
-	{"resurrect", PyObjHandle_Resurrect, METH_VARARGS, NULL},
-	{"dominate", PyObjHandle_Dominate, METH_VARARGS, NULL},
+	{ "unconceal", PyObjHandle_Unconceal, METH_VARARGS, NULL },
 
 	{NULL, NULL, NULL, NULL}
 };

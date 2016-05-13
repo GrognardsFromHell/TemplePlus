@@ -1757,7 +1757,10 @@ public:
 					}
 				}
 			}*/
-
+			if (san == san_start_combat)
+			{
+				int dummy = 1;
+			}
 			auto result = orgScriptExecute(triggerer, attachee, a3, a4, san, a6);
 
 			return result;

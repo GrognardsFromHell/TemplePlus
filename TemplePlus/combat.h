@@ -50,6 +50,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 	void TurnStart2( int initiativeIdx);
 	void CombatAdvanceTurn(objHndl obj);
 	BOOL IsBrawlInProgress();
+	
 	uint32_t* combatModeActive;
 	bool isCombatActive();
 	uint32_t IsCloseToParty(objHndl objHnd);
@@ -89,6 +90,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 		The To-Hit calculation. Sets the flags in the D20Action D20CAF_HIT and D20CAF_CRITICAL among other things.
 	*/
 	void ToHitProcessing(D20Actn &d20a);
+	bool TripCheck(objHndl handle, objHndl target);
 
 	LegacyCombatSystem() {
 		rebase(combatModeActive, 0x10AA8418);
