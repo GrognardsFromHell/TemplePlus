@@ -53,6 +53,6 @@ private:
 	std::unordered_map<ObjectId, objHndl> mObjectIndex;
 	uint32_t mNextId = 1;
 
-	objHndl lastObj = 0;
+	objHndl lastObj = objHndl::null;
 	GameObjectBody* lastObjBody = nullptr;
 };

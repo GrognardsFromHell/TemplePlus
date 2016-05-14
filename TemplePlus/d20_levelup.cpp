@@ -31,9 +31,9 @@ public:
 		auto cfgLower(tolower(config.hpOnLevelup));
 		
 		int result;
-		if (!stricmp(cfgLower.c_str(), "max")){
+		if (!_stricmp(cfgLower.c_str(), "max")){
 			result = max;
-		} else if (!stricmp(cfgLower.c_str(), "average")){
+		} else if (!_stricmp(cfgLower.c_str(), "average")){
 			result = (min + max) / 2  + templeFuncs.RNG(0,1); // hit die are always even numbered so randomize the roundoff
 		} else
 		{

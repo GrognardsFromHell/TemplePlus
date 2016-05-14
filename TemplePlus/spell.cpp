@@ -444,8 +444,8 @@ uint32_t LegacySpellSystem::getWizSchool(objHndl objHnd)
 
 uint32_t LegacySpellSystem::getStatModBonusSpellCount(objHndl objHnd, uint32_t classCode, uint32_t slotLvl)
 {
-	uint32_t objHndLSB = (uint32_t)objHnd;
-	uint32_t objHndMSB = (uint32_t)(objHnd >> 32);
+	uint32_t objHndLSB = objHnd.GetHandleLower();
+	uint32_t objHndMSB = objHnd.GetHandleUpper();
 	uint32_t result = 0;
 	__asm{
 		// esi - slotLvl

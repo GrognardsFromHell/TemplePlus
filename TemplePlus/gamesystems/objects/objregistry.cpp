@@ -27,7 +27,7 @@ hash<ObjectId>::result_type hash<ObjectId>::operator()(argument_type const& id) 
 		result ^= sHandleHasher(*(uint64_t*)&id.body.pos.tempId);
 		return result;
 	case ObjectIdKind::Handle:
-		return sHandleHasher(id.GetHandle());
+		return std::hash<objHndl>()(id.GetHandle());
 	case ObjectIdKind::Blocked:
 		return 0;
 	}
@@ -56,7 +56,7 @@ objHndl ObjRegistry::GetHandleById(ObjectId id) {
 	auto it = mObjectIndex.find(id);
 
 	if (it == mObjectIndex.end()) {
-		return 0;
+		return objHndl::null;
 	}
 
 	return it->second;
@@ -121,10 +121,12 @@ bool ObjRegistry::Contains(objHndl handle) {
 
 objHndl ObjRegistry::Add(std::unique_ptr<GameObjectBody>&& ptr) {
 
-	objHndl id = mNextId++;
 	auto obj = ptr.get();
+	
+	objHndl id{ mNextId++ | ((uint64_t)obj) << 32 };
 
-	id |= ((uint64_t)obj) << 32;
+	auto it = mObjects.find(id);
+	assert(mObjects.find(id) == mObjects.end());
 
 	mObjects.emplace(std::make_pair(id, std::move(ptr)));
 
@@ -142,7 +144,7 @@ GameObjectBody* ObjRegistry::Get(objHndl handle) {
 		return nullptr;
 	}
 
-	return (GameObjectBody*)(handle >> 32);
+	return (GameObjectBody*)(handle.handle >> 32);
 
 	// This would be the traditional way and it does detect when handles
 	// are no longer valid

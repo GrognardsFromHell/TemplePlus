@@ -25,7 +25,6 @@ struct PySpellTarget {
 	int pad;
 };
 
-//#pragma pack(push,1)
 struct PySpell {
 	PyObject_HEAD;
 	uint32_t spellEnum;
@@ -53,7 +52,7 @@ struct PySpell {
 	MetaMagicData metaMagic;
 };
 
-//#pragma pack(pop)
+
 const int testSizeofPyspell = sizeof PySpell; // should be 680 (due to HEAD_EXTRA is +8 relative to toee)
 
 // Contains all active spells
@@ -123,9 +122,9 @@ static PyObject *PySpell_SpellTargetListSort(PyObject *obj, PyObject *args) {
 	case OBJ_HANDLE:
 		sort(targets.begin(), targets.end(), [=] (const PySpellTarget &a, const PySpellTarget &b) {
 			if (!descending) {
-				return a.obj < b.obj;
+				return a.obj.handle < b.obj.handle;
 			} else {
-				return a.obj >= b.obj;
+				return a.obj.handle >= b.obj.handle;
 			}
 		});
 		break;
@@ -846,7 +845,7 @@ static PyObject* PySpellTargets_Repr(PyObject* obj) {
 	for (auto i = 0; i < spell->targetCount; ++i) {
 		auto targetObj = spell->targets[i].obj;
 		if (obj) {
-			auto displayName = objects.GetDisplayName(targetObj, 0);
+			auto displayName = objects.GetDisplayName(targetObj, objHndl::null);
 			text.append(format("{}[{}({})]", i, displayName, targetObj));
 		} else {
 			text.append(format("{}[OBJ_HANDLE_NULL], ", i));

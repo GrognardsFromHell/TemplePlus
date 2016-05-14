@@ -498,7 +498,7 @@ int DispatcherSystem::DispatchToHitBonusBase(objHndl objHndCaller, DispIoAttackB
 	{
 		key = dispIo->attackPacket.dispKey;
 	}
-	return DispatchAttackBonus(objHndCaller, 0i64, dispIo, dispTypeToHitBonusBase, key);
+	return DispatchAttackBonus(objHndCaller, objHndl::null, dispIo, dispTypeToHitBonusBase, key);
 }
 
 int DispatcherSystem::DispatchGetSizeCategory(objHndl obj)
@@ -1047,9 +1047,9 @@ CondStructNew::CondStructNew(){
 }
 
 CondStructNew::CondStructNew(std::string Name, int NumArgs, bool preventDuplicate) : CondStructNew() {
-	condName = strdup( Name.c_str());
+	condName = _strdup(Name.c_str());
 	numArgs = NumArgs;
-	if (preventDuplicate){
+	if (preventDuplicate) {
 		AddHook(dispTypeConditionAddPre, DK_NONE, ConditionPrevent, this, 0);
 	}
 	Register();
@@ -1091,6 +1091,12 @@ void CondStructNew::AddToFeatDictionary(feat_enums feat, feat_enums featEnumMax,
 uint32_t DispatcherCallbackArgs::GetCondArg(int argIdx)
 {
 	return conds.CondNodeGetArg(subDispNode->condNode, argIdx);
+}
+
+objHndl DispatcherCallbackArgs::GetCondArgObjHndl(int argIdx)
+{
+	objHndl handle { ((((uint64_t)GetCondArg(argIdx)) << 32) | GetCondArg(argIdx + 1)) };
+	return handle;
 }
 
 void* DispatcherCallbackArgs::GetCondArgPtr(int argIdx){

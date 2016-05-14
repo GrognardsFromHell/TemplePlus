@@ -218,7 +218,7 @@ objHndl AttackPacket::GetWeaponUsed() const
 	{
 		return weaponUsed;
 	}
-	return 0i64;
+	return objHndl::null;
 }
 
 bool AttackPacket::IsOffhandAttack()

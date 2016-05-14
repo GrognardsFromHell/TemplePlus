@@ -1,11 +1,70 @@
 #pragma once
 
 #include <gsl/gsl.h>
+#include <iosfwd>
 
 #include "temple_enums.h"
 
+// Define objHndl as a struct that contains just the handle value
+#pragma pack(push, 1)
+struct objHndl {
+	uint64_t handle;
 
-typedef uint64_t objHndl;
+	explicit operator bool() const {
+		return !!handle;
+	}
+
+	objHndl& operator=(uint64_t handle) {
+		this->handle = handle;
+		return *this;
+	}
+
+	uint32_t GetHandleLower() const {
+		return (uint32_t)(handle & 0xffffffff);
+	}
+
+	uint32_t GetHandleUpper() const {
+		return (uint32_t)((handle >> 32) & 0xffffffff);
+	}
+
+	static objHndl FromUpperAndLower(uint32_t upper, uint32_t lower) {
+		return{
+			(((uint64_t) upper) << 32)
+			| (((uint64_t)lower) & 0xFFFFFFFF)
+		};
+	}
+
+	static const objHndl null;
+
+};
+#pragma pack(pop)
+
+/**
+ * Compares two object handles for equality. They are equal if their
+ * handle value is equal.
+ */
+inline bool operator ==(const objHndl &a, const objHndl &b) {
+	return a.handle == b.handle;
+}
+inline bool operator !=(const objHndl &a, const objHndl &b) {
+	return a.handle != b.handle;
+}
+inline bool operator <(const objHndl &a, const objHndl &b) {
+	return a.handle < b.handle;
+}
+inline bool operator >(const objHndl &a, const objHndl &b) {
+	return a.handle > b.handle;
+}
+std::ostream &operator <<(std::ostream &out, const objHndl &handle);
+
+namespace std {
+	template <> struct hash<objHndl> {
+		size_t operator()(const objHndl &x) const {
+			return std::hash<uint64_t>()(x.handle);
+		}
+	};
+}
+
 typedef uint32_t _fieldIdx;
 typedef uint32_t _fieldSubIdx;
 typedef uint32_t _mapNum;

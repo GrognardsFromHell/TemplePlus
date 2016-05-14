@@ -170,12 +170,12 @@ struct LegacyCritterSystem : temple::AddressTable
 	/*
 		Kills the critter.
 	*/
-	void Kill(objHndl critter, objHndl killer = 0);
+	void Kill(objHndl critter, objHndl killer = objHndl::null);
 
 	/*
 		Same as Kill, but applies condition "Killed By Death Effect" before killing.
 	*/
-	void KillByEffect(objHndl critter, objHndl killer = 0);
+	void KillByEffect(objHndl critter, objHndl killer = objHndl::null);
 		
 	/*
 		Changes one of the standpoints for a critter.

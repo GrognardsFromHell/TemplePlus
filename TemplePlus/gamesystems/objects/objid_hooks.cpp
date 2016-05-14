@@ -241,7 +241,7 @@ std::string ObjectId::ToString() const {
 		);
 	case ObjectIdKind::Handle:
 		return fmt::format("Handle_{:X}",
-		                   body.handle
+		                   body.handle.handle
 		);
 	case ObjectIdKind::Blocked:
 		return "Blocked";
