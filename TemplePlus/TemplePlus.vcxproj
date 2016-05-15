@@ -143,6 +143,7 @@
     <ClCompile Include="reputations.cpp" />
     <ClCompile Include="secret_door.cpp" />
     <ClCompile Include="skill.cpp" />
+    <ClCompile Include="spell_structs.cpp" />
     <ClCompile Include="tab_file.cpp" />
     <ClCompile Include="sound.cpp" />
     <ClCompile Include="temple_enums.cpp" />

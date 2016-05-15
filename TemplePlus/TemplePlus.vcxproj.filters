@@ -401,6 +401,9 @@
     <ClCompile Include="python\python_trap.cpp">
       <Filter>python</Filter>
     </ClCompile>
+    <ClCompile Include="spell_structs.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />

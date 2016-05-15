@@ -75,10 +75,10 @@ void AiSystem::aiTacticGetConfig(int tacIdx, AiTactic* aiTacOut, AiStrategy* aiS
 	if (spellEnum != -1)
 	{
 		aiTacOut->spellPktBody.caster = aiTacOut->performer;
-		aiTacOut->spellPktBody.casterClassCode = aiStrat->spellsKnown[tacIdx].classCode;
+		aiTacOut->spellPktBody.spellClass = aiStrat->spellsKnown[tacIdx].classCode;
 		aiTacOut->spellPktBody.spellKnownSlotLevel = aiStrat->spellsKnown[tacIdx].spellLevel;
 		spell->spellPacketSetCasterLevel(spellPktBody);
-		d20->D20ActnSetSpellData(&aiTacOut->d20SpellData, spellEnum, spellPktBody->casterClassCode, spellPktBody->spellKnownSlotLevel, 0xFF, spellPktBody->metaMagicData);
+		d20->D20ActnSetSpellData(&aiTacOut->d20SpellData, spellEnum, spellPktBody->spellClass, spellPktBody->spellKnownSlotLevel, 0xFF, spellPktBody->metaMagicData);
 	}
 }
 
@@ -1583,7 +1583,7 @@ int AiSystem::ChooseRandomSpellFromList(AiPacket* aiPkt, AiSpellList* aiSpells){
 		aiPkt->spellPktBod.caster = aiPkt->obj;
 		aiPkt->spellPktBod.spellEnumOriginal = spellEnum;
 		aiPkt->spellPktBod.spellKnownSlotLevel = spellLevels[0];
-		aiPkt->spellPktBod.casterClassCode = spellClass;
+		aiPkt->spellPktBod.spellClass = spellClass;
 		spellSys.spellPacketSetCasterLevel(&aiPkt->spellPktBod);
 
 		SpellEntry spellEntry;

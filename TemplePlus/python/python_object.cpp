@@ -428,7 +428,7 @@ static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 		if (!spellSys.spellCanCast(caster, spellEnum, classCodes[i], spellLevels[i]))
 			continue;
 		spellPktBody.spellKnownSlotLevel = spellLevels[i];
-		spellPktBody.casterClassCode = classCodes[i];
+		spellPktBody.spellClass = classCodes[i];
 		spellSys.spellPacketSetCasterLevel(&spellPktBody);
 		if (!spellSys.spellRegistryCopy(spellEnum, &spellEntry))
 			continue;

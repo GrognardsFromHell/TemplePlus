@@ -2735,7 +2735,7 @@ void ItemCreation::MaaAppendEnhancement(int effIdx){
 		// else, prepend the effect name
 		else if (itEnh.flags & IESF_INCREMENTAL && itEnh.downgradesTo != CRAFT_EFFECT_INVALID){
 			auto oldIcLine = GetItemCreationMesLine(1000 + itEnh.downgradesTo);
-			std::regex rreg(fmt::format("\({}\)",oldIcLine));
+			std::regex rreg(fmt::format("\\({}\\)",oldIcLine));
 
 			std::smatch subMatches;
 			std::regex_search(craftedItemName, subMatches, rreg);

@@ -22,8 +22,7 @@ struct SpellEntryLevelSpec
 enum SpellRangeType : uint32_t;
 enum Domain;
 
-struct SpellEntry
-{
+struct SpellEntry{
 	uint32_t spellEnum;
 	uint32_t spellSchoolEnum;
 	uint32_t spellSubSchoolEnum;
@@ -64,7 +63,7 @@ struct SpellPacketBody{
 	void * pSthg;
 	objHndl caster;
 	uint32_t casterPartsysId;
-	uint32_t casterClassCode; // aka spellClass
+	uint32_t spellClass; // aka spellClass
 	uint32_t spellKnownSlotLevel; // aka spellLevel
 	uint32_t baseCasterLevel;
 	uint32_t dc;
@@ -107,6 +106,8 @@ struct SpellPacketBody{
 	bool AddTarget(objHndl tgt, int partsysId, int replaceExisting); // will add target (or replace its partsys if it already exists)
 	bool SavingThrow(objHndl target, D20SavingThrowFlag flags);
 	const char* GetName(); // get the spell name
+	bool IsVancian();
+	void Debit(); // debit from the caster's memorized / daily casted spells
 };
 
 const uint32_t TestSizeOfSpellPacketBody = sizeof(SpellPacketBody); // should be 0xAE8  (2792)
@@ -157,6 +158,7 @@ struct LegacySpellSystem : temple::AddressTable
 
 	const char* GetSpellMesline(uint32_t line) const;
 	bool CheckAbilityScoreReqForSpell(objHndl handle, uint32_t spellEnum, int statBeingRaised) const;
+	
 	static const char* GetSpellEnumTAG(uint32_t spellEnum);
 	const char* GetSpellName(uint32_t spellEnum) const;
 	
@@ -182,6 +184,8 @@ struct LegacySpellSystem : temple::AddressTable
 	bool isDomainSpell(uint32_t spellClassCode);
 	Stat GetCastingClass(uint32_t spellClassCode);
 	bool IsArcaneSpellClass(uint32_t spellClass);
+
+	static bool IsSpellLike(int spellEnum); // checks if the spell is in the Spell Like Ability range
 
 	uint32_t pickerArgsFromSpellEntry(SpellEntry * spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLevel);
 	uint32_t GetSpellRangeExact(SpellRangeType spellRangeType, uint32_t casterLevel, objHndl caster);

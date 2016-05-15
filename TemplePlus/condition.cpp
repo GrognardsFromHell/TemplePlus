@@ -199,6 +199,8 @@ public:
 
 	static int CraftWandOnAdd(DispatcherCallbackArgs args);
 
+	static int __cdecl FeatIronWillSave(DispatcherCallbackArgs args);
+
 	static int ItemCreationBuildRadialMenuEntry(DispatcherCallbackArgs args, ItemCreationType itemCreationType, char* helpSystemString, MesHandle combatMesLine);
 	
 	
@@ -3671,6 +3673,16 @@ int ClassAbilityCallbacks::CraftWandOnAdd(DispatcherCallbackArgs args){
 	return 0;
 }
 
+int ClassAbilityCallbacks::FeatIronWillSave(DispatcherCallbackArgs args){
+	auto dispIo = static_cast<DispIoSavingThrow*>(args.dispIO);
+	dispIo->AssertType(dispIOTypeSavingThrow);
+
+	auto featEnum = (feat_enums)args.GetCondArg(0);
+	dispIo->bonlist.AddBonusFromFeat(args.GetData1(), 0, 114, featEnum);
+
+	return 0;
+}
+
 int ClassAbilityCallbacks::ItemCreationBuildRadialMenuEntry(DispatcherCallbackArgs args, ItemCreationType itemCreationType, char* helpSystemString, MesHandle combatMesLine)
 {
 	if (combatSys.isCombatActive()) { return 0; }
@@ -4109,7 +4121,7 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		}
 	}
 
-	auto partsysId = 0, fascinateRoll =0, chaScore = 0;
+	auto partsysId = 0, rollResult =0, chaScore = 0;
 	switch (bmType){
 	case BM_INSPIRE_COURAGE: 
 		// party.ApplyConditionAround(args.objHndCaller, 30.0, "Inspired_Courage", 0i64);
@@ -4121,8 +4133,8 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		break;
 	case BM_FASCINATE: 
 		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Fascinate", args.objHndCaller);
-		skillSys.SkillRoll(performer, SkillEnum::skill_perform, 20, &fascinateRoll, 1);
-		if (!damage.SavingThrow(d20a->d20ATarget, performer, fascinateRoll, SavingThrowType::Will, 0x10000000))	{
+		skillSys.SkillRoll(performer, SkillEnum::skill_perform, 20, &rollResult, 1);
+		if (!damage.SavingThrow(d20a->d20ATarget, performer, rollResult, SavingThrowType::Will, 0x10000000))	{
 			conds.AddTo(d20a->d20ATarget, "Fascinate", { 0,0 });
 		}		
 		break;
@@ -4132,9 +4144,9 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		break;
 	case BM_SUGGESTION: 
 		chaScore = objects.StatLevelGet(args.objHndCaller, stat_charisma);
-		fascinateRoll = 13 + objects.GetModFromStatLevel(chaScore);
+		rollResult = 13 + objects.GetModFromStatLevel(chaScore);
 		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Suggestion", args.objHndCaller);
-		if (!damage.SavingThrow(d20a->d20ATarget, performer, fascinateRoll, SavingThrowType::Will, 0x10000000)) {
+		if (!damage.SavingThrow(d20a->d20ATarget, performer, rollResult, SavingThrowType::Will, 0x10000000)) {
 			conds.AddTo(d20a->d20ATarget, "Suggestion", {});
 		}
 		break;
@@ -4284,6 +4296,12 @@ void Conditions::AddConditionsToTable(){
 	wildShaped.AddHook(dispTypeGetCritterNaturalAttacksNum, DK_NONE, classAbilityCallbacks.DruidWildShapeGetNumAttacks);
 	wildShaped.AddHook(dispTypeD20Query, DK_QUE_CannotCast, temple::GetRef<DispCB>(0x100FBFC0));
 	wildShaped.AddHook(dispTypeGetModelScale, DK_NONE, classAbilityCallbacks.DruidWildShapeScale); // NEW! scales the model too
+
+
+	static CondStructNew ironWill("Iron Will", 1);
+	ironWill.AddHook(dispTypeSaveThrowLevel, DK_SAVE_WILL, classAbilityCallbacks.FeatIronWillSave, 2, 0);
+	ironWill.AddToFeatDictionary(FEAT_IRON_WILL);
+
 
 
 	// New Conditions!

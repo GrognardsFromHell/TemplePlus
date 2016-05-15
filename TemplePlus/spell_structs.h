@@ -2,6 +2,8 @@
 
 const uint32_t SPELL_ENUM_MAX = 802;
 #define NUM_SPELL_LEVELS 10 // spells are levels 0-9
+#define MAX_SPELL_TARGETS 32
+#define INV_IDX_INVALID 255  // indicates that a spell is not an item spell
 
 enum SpellStoreType : uint8_t
 {
@@ -19,13 +21,11 @@ struct MetaMagicData
 	unsigned char metaMagicExtendSpellCount : 4;
 	unsigned char metaMagicHeightenSpellCount : 4;
 	unsigned char metaMagicWidenSpellCount : 4;
-	operator  uint32_t()
-	{
+	operator  uint32_t()	{
 		return (*(uint32_t*)this) & 0xFFFFFF;
 	}
 
-	MetaMagicData()
-	{
+	MetaMagicData()	{
 		metaMagicFlags = 0;
 		metaMagicEmpowerSpellCount = 0;
 		metaMagicEnlargeSpellCount = 0;
@@ -53,6 +53,14 @@ struct SpellStoreState
 {
 	SpellStoreType spellStoreType;
 	uint8_t usedUp; // relevant only for spellStoreMemorized
+	SpellStoreState(){
+		spellStoreType = SpellStoreType::spellStoreNone;
+		usedUp = 0;
+	}
+	SpellStoreState(int storeStateRaw){
+		spellStoreType = (SpellStoreType)(uint8_t)(storeStateRaw & 0xFF);
+		usedUp = (uint8_t)(storeStateRaw >> 8);
+	}
 };
 
 enum SpontCastType : unsigned char {
@@ -83,6 +91,7 @@ struct D20SpellData
 	SpontCastType spontCastType : 4;
 	unsigned char spellSlotLevel : 4;
 	void Set(uint32_t spellEnum, uint32_t spellClassCode, uint32_t spellLevel, uint32_t invIdx, MetaMagicData metaMagicData);
+	void Extract(int* spellEnum, int *spellEnumOrg, int* spellClass, int* spellLevel, int* invIdx, MetaMagicData* mmData);
 };
 
 inline void D20SpellData::Set(uint32_t spellEnum, uint32_t SpellClassCode, uint32_t SpellLevel, uint32_t invIdx, MetaMagicData mmData)
@@ -95,6 +104,8 @@ inline void D20SpellData::Set(uint32_t spellEnum, uint32_t SpellClassCode, uint3
 	spontCastType = SpontCastType::spontCastNone;
 }
 
+
+
 const uint32_t TestSizeOfD20SpellData = sizeof(D20SpellData);
 
 #pragma pack(push,4)
@@ -106,9 +117,34 @@ struct SpellStoreData
 	SpellStoreState spellStoreState;
 	MetaMagicData metaMagicData; // should be stored as 32bit value!
 	char pad0;
-	uint32_t pad1;
+	uint32_t pad1; // these are actually related to MM indicator icons
 	uint32_t pad2;
 	uint32_t pad3;
+	SpellStoreData():spellEnum(0), classCode(0), spellLevel(0), pad0(0), pad1(0),pad2(0),pad3(0){
+	};
+	SpellStoreData(int SpellEnum, int SpellLevel, int ClassCode, int mmData, int SpellStoreData):SpellStoreData(){
+		spellEnum = SpellEnum;
+		classCode = ClassCode;
+		spellLevel = SpellLevel;
+		metaMagicData = MetaMagicData(mmData);
+		spellStoreState = SpellStoreState(SpellStoreData);
+	}
+
+	SpellStoreData(int SpellEnum, int SpellLevel, int ClassCode, MetaMagicData mmData, SpellStoreState SpellStoreData) :SpellStoreData() {
+		spellEnum = SpellEnum;
+		classCode = ClassCode;
+		spellLevel = SpellLevel;
+		metaMagicData = mmData;
+		spellStoreState = SpellStoreData;
+	}
+
+	SpellStoreData(int SpellEnum, int SpellLevel, int ClassCode, MetaMagicData mmData) :SpellStoreData() {
+		spellEnum = SpellEnum;
+		classCode = ClassCode;
+		spellLevel = SpellLevel;
+		metaMagicData = mmData;
+		spellStoreState = SpellStoreState(0);
+	}
 };
 const auto TestSizeOfSpellStoreData = sizeof(SpellStoreData);
 #pragma pack(pop)

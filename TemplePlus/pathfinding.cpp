@@ -577,7 +577,7 @@ bool Pathfinding::GetAlternativeTargetLocation(Path* pqr, PathQuery* pq)
 			if (!(pqFlags & PQF_ALLOW_ALTERNATIVE_TARGET_TILE))
 				return 0;
 			
-			for (int i = 1; i++; i<=18)
+			for (int i = 1; i <= 18; i++ )
 			{
 				auto iOff = i * 9.4280901;
 				for (int j = -i; j < i; j++)

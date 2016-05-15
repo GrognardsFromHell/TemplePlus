@@ -265,6 +265,79 @@ const char* SpellPacketBody::GetName(){
 	return spellSys.GetSpellName(spellEnum);
 }
 
+bool SpellPacketBody::IsVancian(){
+	if (spellSys.isDomainSpell(spellClass))
+		return true;
+	
+	if (d20ClassSys.isVancianCastingClass(spellSys.GetCastingClass(spellClass)))
+		return true;
+
+	return false;
+}
+
+void SpellPacketBody::Debit(){
+	// preamble
+	if (!caster){
+		logger->warn("SpellPacketBody::Debit() Null caster!");
+		return;
+	}
+
+	if (invIdx != INV_IDX_INVALID) // this is handled separately
+		return;
+
+	auto casterObj = gameSystems->GetObj().GetObject(caster);
+	
+	auto spellEnumDebited = spellEnumOriginal;
+
+	// Spontaneous vs. Normal logging
+	bool isSpont = (spellEnum != spellEnumOriginal) && spellEnumOriginal != 0;
+	auto spellName = spellSys.GetSpellName(spellEnumOriginal);
+	if (isSpont){
+		logger->debug("Debiting Spontaneous casted spell. Original spell: {}", spellName);
+	} else	{
+		logger->debug("Debiting casted spell {}", spellName);
+	}
+	
+	// Vancian spell handling - debit from the spells_memorized list
+	if (IsVancian()){
+		
+		auto numMem = casterObj->GetSpellArray(obj_f_critter_spells_memorized_idx).GetSize();
+		auto spellFound = false;
+		for (auto i = 0; i < numMem; i++){
+			auto spellMem = casterObj->GetSpell(obj_f_critter_spells_memorized_idx, i);
+			spellMem.pad0 &= 0x7F; // clear out metamagic indictor
+			
+			if (!spellSys.isDomainSpell(spellMem.classCode)){
+				if (spellMem.spellEnum != spellEnumDebited)
+					continue;
+			} 
+			else if (spellMem.spellEnum != spellEnum){
+				continue;
+			}
+
+			if (spellMem.spellLevel == spellKnownSlotLevel // todo: check if the spell level should be adjusted for MetaMagic
+				&& spellMem.classCode == spellClass
+				&& spellMem.spellStoreState.spellStoreType == SpellStoreType::spellStoreMemorized
+				&& spellMem.spellStoreState.usedUp == 0
+				&& spellMem.metaMagicData == metaMagicData)	{
+				casterObj->SetSpell(obj_f_critter_spells_memorized_idx, i, spellMem);
+				break;
+			}
+		}
+
+		if (!spellFound){
+			logger->warn("Spell debit: Spell not found!");
+		}
+		
+	} 
+
+	// add to casted list (so it shows up as used / gets counted up for spells per day)
+	SpellStoreData sd(spellEnum, spellKnownSlotLevel, spellClass, metaMagicData);
+	sd.spellStoreState.spellStoreType = SpellStoreType::spellStoreCast;
+	casterObj->SetSpell(obj_f_critter_spells_cast_idx, casterObj->GetSpellArray(obj_f_critter_spells_cast_idx).GetSize(), sd);
+
+}
+
 SpellMapTransferInfo::SpellMapTransferInfo()
 {
 	//memset(this, 0, sizeof(SpellMapTransferInfo));
@@ -480,7 +553,7 @@ void LegacySpellSystem::spellPacketBodyReset(SpellPacketBody* spellPktBody)
 
 void LegacySpellSystem::spellPacketSetCasterLevel(SpellPacketBody* spellPkt) const
 {
-	auto spellClassCode = spellPkt->casterClassCode;
+	auto spellClassCode = spellPkt->spellClass;
 	auto caster = spellPkt->caster;
 	auto spellEnum = spellPkt->spellEnum;
 	auto spellName = spellSys.GetSpellName(spellEnum);
@@ -529,7 +602,7 @@ void LegacySpellSystem::spellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 		logger->info("Critter {} is casting Domain spell {} at base caster_level {}.", casterName, spellName, spellPkt->baseCasterLevel);
 	
 	// domain special (usually used for monsters)
-	} else if (spellPkt->casterClassCode == Domain_Special)
+	} else if (spellPkt->spellClass == Domain_Special)
 	{
 		if (spellPkt->invIdx != 255 && (spellPkt->spellEnum < NORMAL_SPELL_RANGE || spellPkt->spellEnum > SPELL_LIKE_ABILITY_RANGE)) {
 			spellPkt->baseCasterLevel = 0;
@@ -811,7 +884,7 @@ int LegacySpellSystem::SpellSave(TioOutputStream& file)
 		if (!SerializePartsysToFile(pkt.casterPartsysId, file))
 			return false;
 
-		file.WriteInt32(pkt.casterClassCode);
+		file.WriteInt32(pkt.spellClass);
 		file.WriteInt32(pkt.spellKnownSlotLevel);
 		file.WriteInt32(pkt.baseCasterLevel);
 		file.WriteInt32(pkt.dc);
@@ -993,7 +1066,7 @@ bool LegacySpellSystem::LoadActiveSpellElement(TioFile* file, uint32_t& spellId,
 	}
 		
 
-	if (!tio_fread(&pkt.spellPktBody.casterClassCode, sizeof(int), 1, file))
+	if (!tio_fread(&pkt.spellPktBody.spellClass, sizeof(int), 1, file))
 		return false;
 	if (!tio_fread(&pkt.spellPktBody.spellKnownSlotLevel, sizeof(int), 1, file))
 		return false;
@@ -1310,10 +1383,8 @@ bool LegacySpellSystem::isDomainSpell(uint32_t spellClassCode)
 	return 1;
 }
 
-Stat LegacySpellSystem::GetCastingClass(uint32_t spellClassCode)
-{
-	if (isDomainSpell(spellClassCode))
-	{
+Stat LegacySpellSystem::GetCastingClass(uint32_t spellClassCode){
+	if (isDomainSpell(spellClassCode))	{
 		logger->warn("GetCastingClass called with domain spell class code: {}", spellClassCode);
 	}
 	return (Stat)(spellClassCode & 0x7F);
@@ -1331,6 +1402,11 @@ bool LegacySpellSystem::IsArcaneSpellClass(uint32_t spellClass)
 		return true;
 
 	return false;
+}
+
+bool LegacySpellSystem::IsSpellLike(int spellEnum){
+	return (spellEnum >= NORMAL_SPELL_RANGE
+		&& spellEnum <= SPELL_LIKE_ABILITY_RANGE);
 }
 
 uint32_t LegacySpellSystem::pickerArgsFromSpellEntry(SpellEntry* spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLvl)

@@ -585,10 +585,10 @@ static void PySpell_UpdateFromPacket(PySpell* self, const SpellPacketBody& spell
 	self->casterPartSysId = spell.casterPartsysId;
 
 	// TODO: check for correctness
-	if (spell.casterClassCode & 0x80) {
-		self->casterClass = spell.casterClassCode & 0x7F;
+	if (spell.spellClass & 0x80) {
+		self->casterClass = spell.spellClass & 0x7F;
 	} else {
-		self->casterClassAlt = spell.casterClassCode & 0x7F;
+		self->casterClassAlt = spell.spellClass & 0x7F;
 	}
 
 	self->spellLevel = spell.spellKnownSlotLevel;

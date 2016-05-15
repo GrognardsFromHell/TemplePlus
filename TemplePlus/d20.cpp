@@ -92,8 +92,8 @@ int D20Replacements::PerformActivateReadiedAction(D20Actn* d20a)
 	logger->info("Performing Readied Interrupt - cutting sequence short.");
 	auto curSeq = *actSeqSys.actSeqCur;
 	int curIdx = curSeq->d20aCurIdx;
-	if (curIdx < curSeq->d20ActArrayNum && curSeq->d20ActArray[curIdx+1].d20ATarget != D20A_READIED_INTERRUPT)
-	{
+	if (curIdx < curSeq->d20ActArrayNum 
+		&& curSeq->d20ActArray[curIdx+1].d20ActType != D20A_READIED_INTERRUPT){
 		curSeq->d20ActArrayNum = curIdx;
 	}
 
@@ -144,6 +144,7 @@ public:
 	// Perform 
 	PerformFunc(AidAnotherWakeUp);
 	PerformFunc(Aoo);
+	PerformFunc(CastSpell);
 	PerformFunc(Charge);
 	PerformFunc(Disarm);
 	PerformFunc(DisarmedWeaponRetrieve);
@@ -202,6 +203,20 @@ static struct LegacyD20SystemAddresses : temple::AddressTable {
 LegacyD20System d20Sys;
 D20ActionDef d20ActionDefsNew[1000];
 TabFileStatus _d20actionTabFile;
+
+bool LegacyD20System::SpellIsInterruptedCheck(D20Actn* d20a, int invIdx, SpellStoreData* spellData){
+
+	if (spellSys.IsSpellLike(spellData->spellEnum)
+		|| invIdx != INV_IDX_INVALID
+		|| d20QueryWithData(d20a->d20APerformer,
+			DK_QUE_Critter_Is_Spell_An_Ability, spellData->spellEnum, 0))
+		return false;
+	
+	if (d20a->d20Caf & D20CAF_COUNTERSPELLED)
+		return true;
+	return d20Sys.d20QueryWithData(d20a->d20APerformer, 
+		DK_QUE_SpellInterrupted, (uint32_t)&d20a->d20SpellData, 0);
+}
 
 void LegacyD20System::NewD20ActionsInit()
 {
@@ -882,7 +897,7 @@ int LegacyD20System::TargetCheck(D20Actn* d20a)
 			curSeq->spellPktBody.spellEnum = spellEnum;
 			curSeq->spellPktBody.spellEnumOriginal= spellEnumOrg;
 			curSeq->spellPktBody.caster = d20a->d20APerformer;
-			curSeq->spellPktBody.casterClassCode = spellClassCode;
+			curSeq->spellPktBody.spellClass = spellClassCode;
 			curSeq->spellPktBody.spellKnownSlotLevel = spellSlotLevel;
 			curSeq->spellPktBody.metaMagicData = spellMetaMagicData;
 			curSeq->spellPktBody.invIdx = itemSpellData;
@@ -1748,6 +1763,37 @@ ActionErrorCode D20ActionCallbacks::PerformAoo(D20Actn* d20a)
 	return PerformStandardAttack(d20a);
 }
 
+ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
+
+	int spellEnum = 0, spellClass, spellLvl, invIdx;
+	MetaMagicData mmData;
+	d20a->d20SpellData.Extract(&spellEnum, nullptr, &spellClass, &spellLvl, &invIdx, &mmData);
+	SpellStoreData spellData(spellEnum, spellLvl, spellClass, mmData );
+
+	objHndl item = 0;
+	
+
+	auto curSeq = *actSeqSys.actSeqCur;
+	auto &spellPkt = curSeq->spellPktBody;
+
+	if (invIdx != INV_IDX_INVALID){
+		spellPkt.invIdx = invIdx;
+		spellPkt.spellEnumOriginal = spellEnum;
+		item = inventory.GetItemAtInvIdx(spellPkt.caster, invIdx);
+	}
+
+	SpellEntry spellEntry(spellPkt.spellEnum);
+
+	// spell interruption
+	if (d20Sys.SpellIsInterruptedCheck(d20a, invIdx, &spellData)){
+		spellPkt.Debit();
+		return AEC_OK;
+	}
+
+
+	return AEC_OK;
+}
+
 ActionErrorCode D20ActionCallbacks::ActionFrameAidAnotherWakeUp(D20Actn* d20a)
 {
 	
@@ -1941,3 +1987,6 @@ ActionErrorCode D20ActionCallbacks::ActionCostStandardAction(D20Actn*, TurnBased
 	acp->moveDistCost = 0;
 	return AEC_OK;
 };
+
+
+

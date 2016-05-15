@@ -747,13 +747,11 @@ void LegacyCombatSystem::CombatAdvanceTurn(objHndl obj)
 	if (!isCombatActive())
 		return;
 	tbSys.InitiativeListSort();
-	if (!tbSys.turnBasedGetCurrentActor() == obj && !(actSeqSys.isSimultPerformer(obj) || actSeqSys.IsSimulsCompleted()))
-	{
+	if ( tbSys.turnBasedGetCurrentActor() != obj && !(actSeqSys.isSimultPerformer(obj) || actSeqSys.IsSimulsCompleted()))	{
 		logger->warn("Combat Advance Turn: Not {}'s turn...", description.getDisplayName(obj));
 		return;
 	}
-	if ( actSeqSys.IsLastSimulsPerformer(obj))
-	{
+	if ( actSeqSys.IsLastSimulsPerformer(obj)){
 		logger->warn("Combat Advance Turn: Next turn waiting on simuls actions...");
 		return;
 	}

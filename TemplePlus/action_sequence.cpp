@@ -1854,6 +1854,51 @@ int32_t ActionSequenceSystem::DoAoosByAdjcentEnemies(objHndl obj)
 	// return _AOOSthg2_100981C0(obj);
 }
 
+bool ActionSequenceSystem::SpellTargetsFilterInvalid(D20Actn& d20a){
+	
+	auto valid = true;
+	
+	auto curSeq = *actSeqCur;
+	auto orgTgtCount = curSeq->spellPktBody.targetCount;
+	std::vector<objHndl> validTargets;
+
+	for (int i = 0; i < orgTgtCount; i++){
+		auto tgt = curSeq->spellPktBody.targetListHandles[i];
+		
+		if (!tgt){
+			logger->warn("Null target handle in spell target list! Filtering out...");
+			continue;
+		}
+			
+		auto tgtObj = gameSystems->GetObj().GetObject(tgt);
+
+		// Check if Critter
+		if (tgtObj->IsCritter()){
+			d20a.d20ATarget = tgt;
+			// Check Q_CanBeAffected_PerformAction
+			auto canBeAffected = d20Sys.D20QueryWithDataDefaultTrue(tgt, DK_QUE_CanBeAffected_PerformAction, &d20a, 0);
+			if (!canBeAffected) {
+				if (!curSeq->spellPktBody.targetCount) // shouldn't be possible but it was there in the code...
+					valid = false;
+				continue;
+			}
+		}
+
+		validTargets.push_back(tgt);
+	}
+	
+	for (int i = 0; i < validTargets.size(); i++){
+		curSeq->spellPktBody.targetListHandles[i] = validTargets[i];
+	}
+	for (int i = validTargets.size(); i < MAX_SPELL_TARGETS; i++){
+		curSeq->spellPktBody.targetListHandles[i] = 0;
+	}
+
+	curSeq->spellPktBody.targetCount = validTargets.size();
+
+	return valid && curSeq->spellPktBody.targetCount > 0;
+}
+
 int32_t ActionSequenceSystem::InterruptNonCounterspell(D20Actn* d20a)
 {
 	auto readiedAction = ReadiedActionGetNext(nullptr, d20a);
