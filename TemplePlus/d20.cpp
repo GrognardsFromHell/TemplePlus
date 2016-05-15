@@ -1776,7 +1776,7 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 	d20a->d20SpellData.Extract(&spellEnum, nullptr, &spellClass, &spellLvl, &invIdx, &mmData);
 	SpellStoreData spellData(spellEnum, spellLvl, spellClass, mmData );
 
-	objHndl item = 0;
+	objHndl item = objHndl::null;
 	
 
 	auto curSeq = *actSeqSys.actSeqCur;
