@@ -131,7 +131,7 @@ public:
 	/*
 		Pushes a goal for the actor to use a certain skill on the given target.
 	*/
-	bool PushUseSkillOn(objHndl actor, objHndl target, SkillEnum skill, objHndl scratchObj = 0, int goalFlags = 0);
+	bool PushUseSkillOn(objHndl actor, objHndl target, SkillEnum skill, objHndl scratchObj = objHndl::null, int goalFlags = 0);
 
 	/*
 		Pushes a goal for the actor to run near a certain tile.

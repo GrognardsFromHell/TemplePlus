@@ -511,7 +511,7 @@ objHndl Objects::Create(objHndl proto, locXY tile) {
 	if (_Create(proto, tile, &handle)) {
 		return handle;
 	} else {
-		return 0;
+		return objHndl::null;
 	}
 }
 
@@ -520,7 +520,7 @@ bool Objects::FindFreeSpot(LocAndOffsets location, float radius, LocAndOffsets& 
 }
 
 objHndl Objects::GetProtoHandle(int protoNumber) {
-	return templeFuncs.GetProtoHandle(protoNumber);
+	return objSystem->GetProtoHandle(protoNumber);
 }
 
 bool Objects::AiForceSpreadOut(objHndl handle) {

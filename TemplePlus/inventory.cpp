@@ -155,15 +155,17 @@ void InventorySystem::RemoveWielderCond(objHndl item, uint32_t condId){
 
 objHndl InventorySystem::ItemWornAt(objHndl handle, EquipSlot nItemSlot) const
 {
-	if (!handle)
-		return 0i64;
+	if (!handle) {
+		return objHndl::null;
+	}
 	return _ItemWornAt(handle, nItemSlot);
 }
 
 objHndl InventorySystem::ItemWornAt(objHndl handle, int slot) const
 {
-	if (!handle)
-		return 0i64;
+	if (!handle) {
+		return objHndl::null;
+	}
 	return _ItemWornAt(handle, static_cast<EquipSlot>(slot));
 }
 
@@ -278,9 +280,10 @@ int InventorySystem::ItemGet(objHndl item, objHndl receiver, int flags)
 
 objHndl InventorySystem::GetParent(objHndl item)
 {
-	objHndl parent = 0i64;
-	if (!addresses.GetParent(item, &parent))
-		return 0;
+	objHndl parent = objHndl::null;
+	if (!addresses.GetParent(item, &parent)) {
+		return objHndl::null;
+	}
 	return parent;
 }
 
@@ -369,7 +372,7 @@ int InventorySystem::ItemUnwield(objHndl item)
 	objHndl parent = GetParent(item);
 	int itemInsertLocation = 0;
 	if (IsItemNonTransferable(item, parent)
-		|| inventory.ItemInsertGetLocation(item, parent, &itemInsertLocation, 0, 0))
+		|| inventory.ItemInsertGetLocation(item, parent, &itemInsertLocation, objHndl::null, 0))
 		return 0;
 	ItemRemove(item);
 	inventory.InsertAtLocation(item, parent, itemInsertLocation);
@@ -392,7 +395,7 @@ ItemErrorCode InventorySystem::TransferWithFlags(objHndl item, objHndl receiver,
 void InventorySystem::ItemPlaceInIdx(objHndl item, int idx)
 {
 	auto parent = GetParent(item);
-	TransferWithFlags(item, parent, idx, 4, 0i64);
+	TransferWithFlags(item, parent, idx, 4, objHndl::null);
 }
 
 int InventorySystem::GetAppraisedWorth(objHndl item, objHndl appraiser, objHndl vendor, SkillEnum skillEnum)

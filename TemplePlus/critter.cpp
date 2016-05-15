@@ -421,8 +421,8 @@ uint32_t LegacyCritterSystem::Dominate(objHndl critter, objHndl caster) {
 	vector<int> args(3);
 
 	args[0] = gameSystems->GetParticleSys().CreateAtObj("sp-Dominate Person", critter);
-	args[1] = (caster >> 32) & 0xFFFFFFFF;
-	args[2] = caster & 0xFFFFFFFF;
+	args[1] = (caster.handle >> 32) & 0xFFFFFFFF;
+	args[2] = caster.handle & 0xFFFFFFFF;
 
 	auto cond = conds.GetByName("Dominate");
 	return conds.AddTo(critter, cond, args);
@@ -958,32 +958,26 @@ bool LegacyCritterSystem::CanBarbarianRage(objHndl obj)
 
 MonsterCategory LegacyCritterSystem::GetCategory(objHndl objHnd)
 {
-	if (objHnd != 0) {
-		if (objects.IsCritter(objHnd)) {
-			auto monCat = objects.getInt64(objHnd, obj_f_critter_monster_category);
-			return (MonsterCategory)(monCat & 0xFFFFFFFF);
-		}
+	if (objHnd && objects.IsCritter(objHnd)) {
+		auto monCat = objects.getInt64(objHnd, obj_f_critter_monster_category);
+		return (MonsterCategory)(monCat & 0xFFFFFFFF);
 	}
 	return mc_type_monstrous_humanoid; // default - so they have at least a weapons proficiency
 }
 
 uint32_t LegacyCritterSystem::IsCategoryType(objHndl objHnd, MonsterCategory categoryType){
-	if (objHnd != 0) {
-		if (objects.IsCritter(objHnd)) {
-			auto monCat = objects.getInt64(objHnd, obj_f_critter_monster_category);
-			return (monCat & 0xFFFFFFFF) == categoryType;
-		}
+	if (objHnd && objects.IsCritter(objHnd)) {
+		auto monCat = objects.getInt64(objHnd, obj_f_critter_monster_category);
+		return (monCat & 0xFFFFFFFF) == categoryType;
 	}
 	return 0;
 }
 
 uint32_t LegacyCritterSystem::IsCategorySubtype(objHndl objHnd, MonsterCategory categoryType){
-	if (objHnd != 0) {
-		if (objects.IsCritter(objHnd)) {
-			auto monCat = objects.getInt64(objHnd, obj_f_critter_monster_category);
-			MonsterCategory moncatSubtype = static_cast<MonsterCategory>(monCat >> 32);
-			return (moncatSubtype & categoryType) == categoryType;
-		}
+	if (objHnd && objects.IsCritter(objHnd)) {
+		auto monCat = objects.getInt64(objHnd, obj_f_critter_monster_category);
+		MonsterCategory moncatSubtype = static_cast<MonsterCategory>(monCat >> 32);
+		return (moncatSubtype & categoryType) == categoryType;
 	}
 	return 0;
 }
@@ -1202,11 +1196,11 @@ int LegacyCritterSystem::PlayCritterVoiceLine(objHndl obj, objHndl fellow, char*
 
 bool LegacyCritterSystem::HashMatchingClassForSpell(objHndl handle, uint32_t spellEnum) const
 {
-	return temple::GetRef<BOOL(__cdecl)(objHndl, uint32_t)>(0x10075DA0)(handle, spellEnum);
+	return temple::GetRef<BOOL(__cdecl)(objHndl, uint32_t)>(0x10075DA0)(handle, spellEnum) == TRUE;
 }
 
 int LegacyCritterSystem::GetArmorClass(objHndl obj, DispIoAttackBonus* dispIo){
-	return dispatch.DispatchAttackBonus(obj, 0i64, dispIo, dispTypeGetAC, DK_NONE);
+	return dispatch.DispatchAttackBonus(obj, objHndl::null, dispIo, dispTypeGetAC, DK_NONE);
 }
 
 int LegacyCritterSystem::SkillBaseGet(objHndl handle, SkillEnum skill)
@@ -1254,10 +1248,10 @@ int LegacyCritterSystem::GetNumFollowers(objHndl obj, int excludeForcedFollowers
 	if (excludeForcedFollowers)
 	{
 		auto orgNum = followersNum;
-		for (int i = 0; i < orgNum; i++)
+		for (size_t i = 0; i < orgNum; i++)
 		{
 			auto follower = followerArray[i];
-			auto followerNpcFlags = objects.getInt32(follower, obj_f_npc_flags);
+			auto followerNpcFlags = objects.getInt32(follower.GetHandle(), obj_f_npc_flags);
 			if (followerNpcFlags & NpcFlag::ONF_FORCED_FOLLOWER)
 				followersNum--;
 		}

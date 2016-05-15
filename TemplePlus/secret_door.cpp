@@ -24,12 +24,8 @@ bool SecretDoorSys::isSecretDoor(objHndl obj)
 
 int SecretDoorSys::getSecretDoorDC(objHndl obj)
 {
-	if (obj != 0i64)
-	{
-		if (isSecretDoor(obj))
-		{
-			return (objects.getInt32(obj, obj_f_secretdoor_dc) & 0x7F);
-		}
+	if (obj && isSecretDoor(obj)) {
+		return objects.getInt32(obj, obj_f_secretdoor_dc) & 0x7F;
 	}
 	return 0;
 }

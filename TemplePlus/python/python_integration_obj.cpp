@@ -112,7 +112,7 @@ static void PcStart(objHndl pc) {
 		logger->warn("Unable to load starting equipment: {}", e.what());
 	}
 
-	inventory.WieldBestAll(pc, 0);
+	inventory.WieldBestAll(pc, objHndl::null);
 }
 
 /*

@@ -243,12 +243,12 @@ objHndl FrogGrappleController::GetGrappledOpponent(objHndl giantFrog)
 		spellIdx = (int)d20Sys.d20QueryReturnData(giantFrog, DK_QUE_Critter_Has_Condition, condNameSwalloingData, 0);
 	}
 	else {
-		return 0; // Nothing attached
+		return objHndl::null; // Nothing attached
 	}
 
 	auto spell = spellsCastRegistry.get(spellIdx);
 	if (!spell) {
-		return 0;
+		return objHndl::null;
 	}
 
 	return spell->spellPktBody.targetListHandles[0];

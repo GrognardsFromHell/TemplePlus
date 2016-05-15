@@ -285,14 +285,14 @@ void AiSystem::ShitlistRemove(objHndl npc, objHndl target) {
 
 	auto focus = GetCombatFocus(npc);
 	if (focus == target) {
-		SetCombatFocus(npc, 0);
+		SetCombatFocus(npc, objHndl::null);
 	}
 	auto hitMeLast = GetWhoHitMeLast(npc);
 	if (hitMeLast == target) {
-		SetWhoHitMeLast(npc, 0);
+		SetWhoHitMeLast(npc, objHndl::null);
 	}
 
-	_AiSetCombatStatus(npc, 0, 0, 0); // I think this means stop attacking?
+	_AiSetCombatStatus(npc, 0, objHndl::null, 0); // I think this means stop attacking?
 }
 
 void AiSystem::FleeAdd(objHndl npc, objHndl target) {
@@ -721,7 +721,7 @@ int AiSystem::PickUpWeapon(AiTactic* aiTac)
 	}
 	if (!d20Sys.d20Query(aiTac->performer, DK_QUE_Disarmed))
 		return 0;
-	objHndl weapon = d20Sys.d20QueryReturnData(aiTac->performer, DK_QUE_Disarmed);
+	objHndl weapon{ d20Sys.d20QueryReturnData(aiTac->performer, DK_QUE_Disarmed) };
 
 	if (weapon && !inventory.GetParent(weapon))
 	{
@@ -1058,7 +1058,7 @@ BOOL AiSystem::AiFiveFootStepAttempt(AiTactic* aiTac)
 		if (!combatSys.GetThreateningCrittersAtLoc(aiTac->performer, &fiveFootLoc, threateners))
 		{
 			d20Sys.GlobD20ActnSetTypeAndData1(D20A_5FOOTSTEP, 0);
-			d20Sys.GlobD20ActnSetTarget(0, &fiveFootLoc);
+			d20Sys.GlobD20ActnSetTarget(objHndl::null, &fiveFootLoc);
 			if (!actSeqSys.ActionAddToSeq()
 				&& actSeqSys.GetPathTargetLocFromCurD20Action(&fiveFootLoc)
 				&& !combatSys.GetThreateningCrittersAtLoc(aiTac->performer, &fiveFootLoc, threateners)
@@ -1241,7 +1241,7 @@ unsigned int AiSystem::Asplode(AiTactic* aiTac)
 unsigned AiSystem::WakeFriend(AiTactic* aiTac)
 {
 	objHndl performer = aiTac->performer;
-	objHndl sleeper = 0;
+	objHndl sleeper = objHndl::null;
 	int performerIsIntelligent = (objects.StatLevelGet(performer, stat_intelligence) >= 3);
 	if (!performerIsIntelligent)
 		return 0;
@@ -1281,7 +1281,7 @@ unsigned AiSystem::WakeFriend(AiTactic* aiTac)
 		return 0;
 
 	// if a sleeper is within reach, do it
-	bool shouldWake = combatSys.IsWithinReach(performer, sleeper);
+	bool shouldWake = combatSys.IsWithinReach(performer, sleeper) != 0;
 
 	// if not:
 	// first of all check if anyone threatens the ai actor
@@ -1434,7 +1434,7 @@ int AiSystem::Flank(AiTactic* aiTac)
 	LocAndOffsets tgtLoc = objects.GetLocationFull(target);
 	float tgtAbsX, tgtAbsY, 
 		tgtRadius = objects.GetRadius(target), 
-		flankDist = objects.GetRadius(performer)+ tgtRadius + 8.0;
+		flankDist = objects.GetRadius(performer)+ tgtRadius + 8.0f;
 
 	locSys.GetOverallOffset(tgtLoc, &tgtAbsX, &tgtAbsY);
 	for (int i = 0; i < numAllies; i++)
@@ -1448,7 +1448,7 @@ int AiSystem::Flank(AiTactic* aiTac)
 		locSys.GetOverallOffset(allyLoc, &allyAbsX, &allyAbsY);
 		deltaX = allyAbsX - tgtAbsX;
 		deltaY = allyAbsY - tgtAbsY;
-		normalization = 1.0 / sqrt(deltaY*deltaY + deltaX*deltaX);
+		normalization = 1.0f / sqrtf(deltaY*deltaY + deltaX*deltaX);
 		float xHat = deltaX * normalization, // components of unit vector from target to ally
 				yHat = deltaY * normalization;
 
@@ -1462,7 +1462,7 @@ int AiSystem::Flank(AiTactic* aiTac)
 			float tweakAngles[4] = { -15.0, 15.0, -45.0, 45.0 };
 			for (int i = 0; i < 4; i++)
 			{
-				float tweakAngle = tweakAngles[i] * M_PI / 180;
+				float tweakAngle = tweakAngles[i] * (float)M_PI / 180.f;
 				float xHat2 = xHat * cosf(tweakAngle) + yHat * sinf(tweakAngle),
 					yHat2 =  -xHat * sinf(tweakAngle) + yHat * cosf(tweakAngle) ;
 				flankAbsX = tgtAbsX - xHat2 * flankDist;
@@ -1484,7 +1484,7 @@ int AiSystem::Flank(AiTactic* aiTac)
 		logger->info("Found flanking position: {} ; attempting move to position.", flankLoc);
 		// create a d20 action using that location
 		d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_MOVE, 0);
-		d20Sys.GlobD20ActnSetTarget(0i64, &flankLoc);
+		d20Sys.GlobD20ActnSetTarget(objHndl::null, &flankLoc);
 		LocAndOffsets pathTgt;
 		auto actionCheckResult = actSeqSys.ActionAddToSeq();
 		if (actionCheckResult != AEC_OK)

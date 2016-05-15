@@ -168,7 +168,7 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 
 	locXY worldLoc;
 
-	objHndl parent = 0;
+	objHndl parent = objHndl::null;
 	if (objects.IsEquipmentType(type)) {
 		parent = inventory.GetParent(handle);
 	}
@@ -239,7 +239,7 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 		if ((flags & OF_INVENTORY) && parent) {
 			glowType = addresses.GetWeaponGlowType(parent, handle);
 		} else {
-			glowType = addresses.GetWeaponGlowType(0, handle);
+			glowType = addresses.GetWeaponGlowType(objHndl::null, handle);
 		}
 
 		if (glowType && glowType <= mGlowMaterials.size()) {
@@ -451,7 +451,7 @@ void MapObjectRenderer::RenderOccludedObject(objHndl handle) {
 
 	locXY worldLoc;
 
-	objHndl parent = 0;
+	objHndl parent = objHndl::null;
 	if (objects.IsEquipmentType(type)) {
 		parent = inventory.GetParent(handle);
 	}
@@ -593,7 +593,7 @@ void MapObjectRenderer::RenderObjectHighlight(objHndl handle, const gfx::MdfRend
 
 	locXY worldLoc;
 
-	objHndl parent = 0;
+	objHndl parent = objHndl::null;
 	if (objects.IsEquipmentType(type)) {
 		parent = inventory.GetParent(handle);
 	}

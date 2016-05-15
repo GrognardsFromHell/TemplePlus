@@ -257,7 +257,7 @@ PyObject *PyDebug_GenerateClearanceFile()
 */
 PyObject *PyDebug_DestClear(PyObject*, PyObject* args)
 {
-	objHndl dude = 0;
+	objHndl dude = objHndl::null;
 	LocAndOffsets loc ;
 	loc.location.locx = 0;
 	loc.location.locy = 0;
@@ -306,7 +306,7 @@ PyObject *PyDebug_GetLocClearance(PyObject*, PyObject* args)
 
 PyObject *PyDebug_PathTo(PyObject*, PyObject* args)
 {
-	objHndl dude = 0;
+	objHndl dude = objHndl::null;
 	LocAndOffsets loc;
 	loc.location.locx = 0;
 	loc.location.locy = 0;

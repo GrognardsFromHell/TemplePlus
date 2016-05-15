@@ -579,10 +579,10 @@ bool Pathfinding::GetAlternativeTargetLocation(Path* pqr, PathQuery* pq)
 			
 			for (int i = 1; i <= 18; i++ )
 			{
-				auto iOff = i * 9.4280901;
+				auto iOff = i * 9.4280901f;
 				for (int j = -i; j < i; j++)
 				{
-					auto jOff = j * 9.4280901;
+					auto jOff = j * 9.4280901f;
 					auto toLocTweaked = toLoc;
 					toLocTweaked.off_x += jOff;
 					toLocTweaked.off_y -= iOff;
@@ -1155,7 +1155,7 @@ int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 	float diagonalClearance = requisiteClearance * 0.7; // diagonals need to be more restrictive to avoid jaggy paths
 	float requisiteClearanceCritters = requisiteClearance * 0.7;
 	if (requisiteClearance > 12)
-		requisiteClearance *= 0.85;
+		requisiteClearance *= 0.85f;
 
 	if (curIdx == -1)
 	{
@@ -1625,7 +1625,7 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 objHndl Pathfinding::CanPathToParty(objHndl obj)
 {
 	if (party.IsInParty(obj))
-		return 0i64;
+		return objHndl::null;
 	auto from = objects.GetLocationFull(obj);
 	int partySize = party.GroupListGetLen();
 	for (int i = 0; i < partySize; i++)
@@ -1637,7 +1637,7 @@ objHndl Pathfinding::CanPathToParty(objHndl obj)
 		pathQ.from = from;
 		pathQ.flags = static_cast<PathQueryFlags>(PQF_HAS_CRITTER | PQF_TO_EXACT | PQF_800 | PQF_ADJ_RADIUS_REQUIRE_LOS | PQF_ADJUST_RADIUS | PQF_TARGET_OBJ);
 		auto reach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
-		pathQ.tolRadius = reach*12.0 - 8.0;
+		pathQ.tolRadius = reach * 12.0f - 8.0f;
 		pathQ.targetObj = partyMember;
 		if (config.pathfindingDebugMode)
 			logger->info("PF attempt to party member: {}", description.getDisplayName(partyMember));
@@ -1648,7 +1648,7 @@ objHndl Pathfinding::CanPathToParty(objHndl obj)
 			return partyMember;
 		}
 	}
-	return 0i64;
+	return objHndl::null;
 	//return addresses.canPathToParty(objHnd);
 }
 
@@ -2121,7 +2121,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 	float diagonalClearance = requisiteClearance * 0.7;
 	float requisiteClearanceCritters = requisiteClearance * 0.7;
 	if (requisiteClearance > 12)
-		requisiteClearance *= 0.85;
+		requisiteClearance *= 0.85f;
 
 
 

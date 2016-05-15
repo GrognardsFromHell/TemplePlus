@@ -16,7 +16,7 @@ static temple::GlobalStruct<PyMethodDef, 0x102CE9A8> pyObjHandleMethods;
 
 struct TemplePyObjHandle : public PyObject {
 	ObjectId objId;
-	uint64_t objHandle;
+	objHndl objHandle;
 };
 
 

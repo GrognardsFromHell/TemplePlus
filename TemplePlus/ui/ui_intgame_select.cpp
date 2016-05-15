@@ -1,5 +1,5 @@
-#include "stdafx.h";
-#include "ui_intgame_select.h";
+#include "stdafx.h"
+#include "ui_intgame_select.h"
 #include <temple/dll.h>
 #include <util/fixes.h>
 #include <common.h>

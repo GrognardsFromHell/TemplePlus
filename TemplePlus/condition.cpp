@@ -993,7 +993,7 @@ int DisarmedRetrieveQuery(DispatcherCallbackArgs args)
 	ObjectId objId;
 	memcpy(&objId, args.subDispNode->condNode->args, sizeof(ObjectId));
 	weapon = gameSystems->GetObj().GetHandleById(objId);
-	*(uint64_t*)&dispIo->data1 = weapon;
+	*(objHndl*)&dispIo->data1 = weapon;
 	return 0;
 };
 
@@ -2575,7 +2575,7 @@ int DisarmedOnAdd(DispatcherCallbackArgs args)
 
 int DisarmedWeaponRetrieve(DispatcherCallbackArgs args)
 {
-	objHndl weapon = 0i64;
+	objHndl weapon = objHndl::null;
 	DispIoD20Signal * dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
 	D20Actn* d20a = (D20Actn*)dispIo->data1;
 	if (d20a->d20ATarget && objects.GetType(d20a->d20ATarget) == obj_t_weapon)
@@ -3611,7 +3611,7 @@ int ClassAbilityCallbacks::CouragedAuraSavingThrow(DispatcherCallbackArgs args)
 
 	int64_t a1 = args.GetCondArg(0);
 	int64_t a2 = args.GetCondArg(1);
-	objHndl auraSource = ( (a1<<32) | a2 );
+	objHndl auraSource = objHndl::FromUpperAndLower(a1, a2);
 
 	if (!auraSource) {
 		return 0;
@@ -4115,7 +4115,7 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		args.SetCondArg(1, 0);
 		auto partsysId = args.GetCondArg(5);
 		gameSystems->GetParticleSys().End(partsysId);
-		objHndl objHnd = ( ( ((uint64_t)args.GetCondArg(3)) << 32) | args.GetCondArg(4));
+		auto objHnd = args.GetCondArgObjHndl(3);
 		if (gameSystems->GetObj().IsValidHandle(objHnd)){
 			d20Sys.d20SendSignal(objHnd, DK_SIG_Bardic_Music_Completed, 0,0);
 		}

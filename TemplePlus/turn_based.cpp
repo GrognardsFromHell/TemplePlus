@@ -116,7 +116,7 @@ void TurnBasedSys::InitiativeListNextActor()
 		InitiativeRefresh(actorInitiative, 0);
 	}
 	
-	objHndl actorNext = 0i64;
+	objHndl actorNext = objHndl::null;
 	if (nextInitiativeIdx < groupInitiativeList->GroupSize)
 		actorNext = groupInitiativeList->GroupMembers[nextInitiativeIdx];
 	*turnBasedCurrentActor = actorNext;
@@ -195,7 +195,7 @@ void TurnBasedSys::AddToInitiative(objHndl handle) const
 
 bool TurnBasedSys::IsInInitiativeList(objHndl handle) const   // 0x100DEDD0
 {
-	return party.ObjIsInGroupArray(groupInitiativeList, handle);
+	return party.ObjIsInGroupArray(groupInitiativeList, handle) != 0;
 }
 
 void _turnBasedSetCurrentActor(objHndl objHnd)

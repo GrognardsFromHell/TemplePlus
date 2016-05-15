@@ -135,7 +135,7 @@ ParticleSysSystem::Handle ParticleSysSystem::CreateAtObj(const std::string &name
 
 	auto sys(std::make_shared<PartSys>(spec));
 	sys->SetWorldPos(mExternal.get(), absLoc.x, absLoc.y, absLoc.z);
-	sys->SetAttachedTo(obj);
+	sys->SetAttachedTo(obj.handle);
 
 	auto assignedId = mNextId++;
 
@@ -159,7 +159,7 @@ ParticleSysSystem::Handle ParticleSysSystem::CreateAtObj(uint32_t nameHash, objH
 
 	auto sys(std::make_shared<PartSys>(spec));
 	sys->SetWorldPos(mExternal.get(), absLoc.x, absLoc.y, absLoc.z);
-	sys->SetAttachedTo(obj);
+	sys->SetAttachedTo(obj.handle);
 
 	auto assignedId = mNextId++;
 
@@ -225,8 +225,8 @@ float PartSysExternal::GetParticleFidelity() {
 }
 
 bool PartSysExternal::GetObjLocation(ObjHndl obj, Vec3& worldPos) {
-	auto locWithOffsets = objects.GetLocationFull(obj);
-	auto offsetZ = objects.GetOffsetZ(obj);
+	auto locWithOffsets = objects.GetLocationFull({ obj });
+	auto offsetZ = objects.GetOffsetZ({ obj });
 	auto center3d(locWithOffsets.ToInches3D(offsetZ));
 	worldPos.x = center3d.x;
 	worldPos.y = center3d.y;
@@ -235,25 +235,25 @@ bool PartSysExternal::GetObjLocation(ObjHndl obj, Vec3& worldPos) {
 }
 
 bool PartSysExternal::GetObjRotation(ObjHndl obj, float& rotation) {
-	rotation = objects.GetRotation(obj) + XM_PIDIV4;
+	rotation = objects.GetRotation({ obj }) + XM_PIDIV4;
 	return true;
 }
 
 float PartSysExternal::GetObjRadius(ObjHndl obj) {
-	return objects.GetRadius(obj);
+	return objects.GetRadius({ obj });
 }
 
 bool PartSysExternal::GetBoneWorldMatrix(ObjHndl obj, const std::string& boneName, Matrix4x4& boneMatrix) {
-	auto model = objects.GetAnimHandle(obj);
+	auto model = objects.GetAnimHandle({ obj });
 	if (!model) {
 		return false;
 	}
 
-	auto animParams = objects.GetAnimParams(obj);
+	auto animParams = objects.GetAnimParams({ obj });
 
-	auto objType = objects.GetType(obj);
+	auto objType = objects.GetType({ obj });
 	if (objType >= obj_t_weapon && objType <= obj_t_generic || objType == obj_t_bag) {
-		auto parent = inventory.GetParent(obj);
+		auto parent = inventory.GetParent({ obj });
 		if (parent) {
 			auto parentModel = objects.GetAnimHandle(parent);
 			return parentModel->GetBoneWorldMatrixByNameForChild(
@@ -266,7 +266,7 @@ bool PartSysExternal::GetBoneWorldMatrix(ObjHndl obj, const std::string& boneNam
 }
 
 int PartSysExternal::GetBoneCount(ObjHndl obj) {
-	auto model = objects.GetAnimHandle(obj);
+	auto model = objects.GetAnimHandle({ obj });
 	if (model) {
 		return model->GetBoneCount();
 	} else {
@@ -309,8 +309,8 @@ static bool IsIgnoredBone(const std::string &name) {
 
 int PartSysExternal::GetParentChildBonePos(ObjHndl obj, int boneIdx, Vec3& parentPos, Vec3& childPos) {
 
-	auto model = objects.GetAnimHandle(obj);
-	auto aasParams = objects.GetAnimParams(obj);
+	auto model = objects.GetAnimHandle({ obj });
+	auto aasParams = objects.GetAnimParams({ obj });
 
 	auto parentId(model->GetBoneParentId(boneIdx));
 	if (parentId < 0) {
@@ -351,8 +351,8 @@ int PartSysExternal::GetParentChildBonePos(ObjHndl obj, int boneIdx, Vec3& paren
 }
 
 bool PartSysExternal::GetBonePos(ObjHndl obj, int boneIdx, Vec3& pos) {
-	auto model = objects.GetAnimHandle(obj);
-	auto aasParams = objects.GetAnimParams(obj);
+	auto model = objects.GetAnimHandle({ obj });
+	auto aasParams = objects.GetAnimParams({ obj });
 
 	auto boneName(model->GetBoneName(boneIdx));
 	if (boneName.empty()) {

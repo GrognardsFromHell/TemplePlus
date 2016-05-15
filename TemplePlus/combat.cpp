@@ -269,8 +269,8 @@ BOOL LegacyCombatSystem::CanMeleeTargetAtLoc(objHndl obj, objHndl target, LocAnd
 			if (!objects.getArrayFieldInt32(obj, obj_f_critter_attacks_idx, 0))
 				return 0;
 			float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
-			float tgtRadius = objects.GetRadius(target) / 12.0;
-			if (max(static_cast<float>(0.0),
+			float tgtRadius = objects.GetRadius(target) / 12.0f;
+			if (max<float>(0.0f,
 				locSys.DistanceToLocFeet(obj, loc)) - tgtRadius > objReach)
 				return 0;
 		}
@@ -289,7 +289,7 @@ BOOL LegacyCombatSystem::CanMeleeTargetFromLoc(objHndl obj, objHndl target, LocA
 			if (!objects.getArrayFieldInt32(obj, obj_f_critter_attacks_idx, 0))
 				return 0;
 			float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
-			float tgtRadius = objects.GetRadius(target) / 12.0;
+			float tgtRadius = objects.GetRadius(target) / 12.0f;
 			if (max(static_cast<float>(0.0),
 				locSys.DistanceToLocFeet(target, objLoc)) - tgtRadius > objReach)
 				return 0;
@@ -373,7 +373,7 @@ BOOL LegacyCombatSystem::CanMeleeTargetRegardWeapon(objHndl obj, objHndl weapon,
 
 BOOL LegacyCombatSystem::AffiliationSame(objHndl obj, objHndl obj2)
 {
-	int objInParty = party.IsInParty(obj);
+	auto objInParty = party.IsInParty(obj);
 	return party.IsInParty(obj2) == objInParty;
 }
 
@@ -400,7 +400,7 @@ int LegacyCombatSystem::GetThreateningCrittersAtLoc(objHndl obj, LocAndOffsets* 
 objHndl LegacyCombatSystem::CheckRangedWeaponAmmo(objHndl obj)
 {
 	if (d20Sys.d20Query(obj, DK_QUE_Polymorphed))
-		return 0;
+		return objHndl::null;
 	auto objType = objects.GetType(obj);
 	auto invenNumField = obj_f_critter_inventory_num;
 	auto invenField = obj_f_critter_inventory_list_idx;
@@ -412,14 +412,14 @@ objHndl LegacyCombatSystem::CheckRangedWeaponAmmo(objHndl obj)
 	}
 	int numItems = objects.getInt32(obj, invenNumField);
 	if (numItems <= 0)
-		return 0i64;
+		return objHndl::null;
 	auto ammoItem = critterSys.GetWornItem(obj, EquipSlot::Ammo);
 	auto weapon = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
 	if (!weapon || !weapons.AmmoMatchesWeapon(weapon, ammoItem))
 		weapon = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);
 	
 	if (!weapon || !weapons.AmmoMatchesWeapon(weapon, ammoItem))
-		return 0;
+		return objHndl::null;
 	return ammoItem;
 	
 }
@@ -639,7 +639,7 @@ void LegacyCombatSystem::EndTurn()
 	}
 
 	// remove dead and OF_OFF from initiative
-	for (int i = 0; i < tbSys.GetInitiativeListLength(); ) {
+	for (uint32_t i = 0; i < tbSys.GetInitiativeListLength(); ) {
 		auto combatant = tbSys.groupInitiativeList->GroupMembers[i];
 		auto combatantObj = gameSystems->GetObj().GetObject(combatant);
 		
@@ -807,7 +807,7 @@ int LegacyCombatSystem::GetEnemiesCanMelee(objHndl obj, objHndl* canMeleeList)
 objHndl LegacyCombatSystem::GetWeapon(AttackPacket* attackPacket)
 {
 	D20CAF flags = attackPacket->flags;
-	objHndl result = 0i64;
+	objHndl result = objHndl::null;
 
 	if (!(flags & D20CAF_TOUCH_ATTACK) || flags & D20CAF_THROWN_GRENADE )
 		result = attackPacket->weaponUsed;
@@ -862,8 +862,8 @@ bool LegacyCombatSystem::DisarmCheck(objHndl attacker, objHndl defender, D20Actn
 
 	dispIoAtkBonus.attackPacket.weaponUsed = attackerWeapon;
 	dispatch.DispatchAttackBonus(attacker, defender, &dispIoAtkBonus, dispTypeBucklerAcPenalty, 0); // buckler penalty
-	dispatch.DispatchAttackBonus(attacker, 0, &dispIoAtkBonus, dispTypeToHitBonus2, 0); // to hit bonus2
-	int atkToHitBonus = dispatch.DispatchAttackBonus(defender, 0, &dispIoAtkBonus, dispTypeToHitBonusFromDefenderCondition, 0); 
+	dispatch.DispatchAttackBonus(attacker, objHndl::null, &dispIoAtkBonus, dispTypeToHitBonus2, 0); // to hit bonus2
+	int atkToHitBonus = dispatch.DispatchAttackBonus(defender, objHndl::null, &dispIoAtkBonus, dispTypeToHitBonusFromDefenderCondition, 0);
 	int attackerResult = attackerRoll + bonusSys.getOverallBonus(&dispIoAtkBonus.bonlist);
 
 	int defenderRoll = templeFuncs.diceRoll(1, 20, 0);
@@ -884,9 +884,9 @@ bool LegacyCombatSystem::DisarmCheck(objHndl attacker, objHndl defender, D20Actn
 	}
 	
 	dispIoDefBonus.attackPacket.weaponUsed = attackerWeapon;
-	dispatch.DispatchAttackBonus(defender, 0, &dispIoDefBonus, dispTypeBucklerAcPenalty, 0); // buckler penalty
-	dispatch.DispatchAttackBonus(defender, 0, &dispIoDefBonus, dispTypeToHitBonus2, 0); // to hit bonus2
-	int defToHitBonus = dispatch.DispatchAttackBonus(attacker, 0, &dispIoDefBonus, dispTypeToHitBonusFromDefenderCondition, 0);
+	dispatch.DispatchAttackBonus(defender, objHndl::null, &dispIoDefBonus, dispTypeBucklerAcPenalty, 0); // buckler penalty
+	dispatch.DispatchAttackBonus(defender, objHndl::null, &dispIoDefBonus, dispTypeToHitBonus2, 0); // to hit bonus2
+	int defToHitBonus = dispatch.DispatchAttackBonus(attacker, objHndl::null, &dispIoDefBonus, dispTypeToHitBonusFromDefenderCondition, 0);
 	int defenderResult = defenderRoll + bonusSys.getOverallBonus(&dispIoDefBonus.bonlist);
 
 	bool attackerSucceeded = attackerResult > defenderResult;
@@ -931,8 +931,8 @@ bool LegacyCombatSystem::SunderCheck(objHndl attacker, objHndl defender, D20Actn
 
 	dispIoAtkBonus.attackPacket.weaponUsed = attackerWeapon;
 	dispatch.DispatchAttackBonus(attacker, defender, &dispIoAtkBonus, dispTypeBucklerAcPenalty, 0); // buckler penalty
-	dispatch.DispatchAttackBonus(attacker, 0, &dispIoAtkBonus, dispTypeToHitBonus2, 0); // to hit bonus2
-	int atkToHitBonus = dispatch.DispatchAttackBonus(defender, 0, &dispIoAtkBonus, dispTypeToHitBonusFromDefenderCondition, 0);
+	dispatch.DispatchAttackBonus(attacker, objHndl::null, &dispIoAtkBonus, dispTypeToHitBonus2, 0); // to hit bonus2
+	int atkToHitBonus = dispatch.DispatchAttackBonus(defender, objHndl::null, &dispIoAtkBonus, dispTypeToHitBonusFromDefenderCondition, 0);
 	int attackerResult = attackerRoll + bonusSys.getOverallBonus(&dispIoAtkBonus.bonlist);
 
 	int defenderRoll = templeFuncs.diceRoll(1, 20, 0);
@@ -950,9 +950,9 @@ bool LegacyCombatSystem::SunderCheck(objHndl attacker, objHndl defender, D20Actn
 	}
 
 	dispIoDefBonus.attackPacket.weaponUsed = attackerWeapon;
-	dispatch.DispatchAttackBonus(defender, 0, &dispIoDefBonus, dispTypeBucklerAcPenalty, 0); // buckler penalty
-	dispatch.DispatchAttackBonus(defender, 0, &dispIoDefBonus, dispTypeToHitBonus2, 0); // to hit bonus2
-	int defToHitBonus = dispatch.DispatchAttackBonus(attacker, 0, &dispIoDefBonus, dispTypeToHitBonusFromDefenderCondition, 0);
+	dispatch.DispatchAttackBonus(defender, objHndl::null, &dispIoDefBonus, dispTypeBucklerAcPenalty, 0); // buckler penalty
+	dispatch.DispatchAttackBonus(defender, objHndl::null, &dispIoDefBonus, dispTypeToHitBonus2, 0); // to hit bonus2
+	int defToHitBonus = dispatch.DispatchAttackBonus(attacker, objHndl::null, &dispIoDefBonus, dispTypeToHitBonusFromDefenderCondition, 0);
 	int defenderResult = defenderRoll + bonusSys.getOverallBonus(&dispIoDefBonus.bonlist);
 
 	bool attackerSucceeded = attackerResult > defenderResult;
@@ -1048,7 +1048,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 	// mirror image processing
 	auto mirrorImageCond = conds.GetByName("sp-Mirror Image");
 	if (d20Sys.d20QueryWithData(tgt, DK_QUE_Critter_Has_Condition, mirrorImageCond, 0)){
-		auto spellId = d20Sys.d20QueryReturnData(tgt, DK_QUE_Critter_Has_Condition, mirrorImageCond, 0);
+		auto spellId = (uint32_t) d20Sys.d20QueryReturnData(tgt, DK_QUE_Critter_Has_Condition, mirrorImageCond, 0);
 		SpellPacketBody spellPkt(spellId);
 		Dice dice(1,spellPkt.targetCount);
 		if (dice.Roll() != 1 ){ // mirror image nominally struck
@@ -1059,7 +1059,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 			mirrorImAc.attackPacket.victim = tgt;
 			auto tgtAc = critterSys.GetArmorClass(tgt, &mirrorImAc);
 			DispIoAttackBonus mirrorImToHit;
-			mirrorImToHit.Dispatch(performer, 0i64, dispTypeToHitBonus2, DK_NONE);
+			mirrorImToHit.Dispatch(performer, objHndl::null, dispTypeToHitBonus2, DK_NONE);
 			auto spName = spellPkt.GetName();
 			auto dispelRes = DispelRoll(performer, &mirrorImToHit.bonlist, 0, tgtAc, spName, &d20a.rollHist3  );
 			if (dispelRes >= 0)	{
@@ -1143,7 +1143,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 		else
 			dispIoToHitBon.attackPacket.weaponUsed = inventory.ItemWornAt(performer, EquipSlot::WeaponPrimary);
 	}
-	dispIoToHitBon.Dispatch(performer, 0i64, dispTypeBucklerAcPenalty, DK_NONE); // adds buckler penalty to the bonus list
+	dispIoToHitBon.Dispatch(performer, objHndl::null, dispTypeBucklerAcPenalty, DK_NONE); // adds buckler penalty to the bonus list
 	
 	
 	if (dispIoToHitBon.attackPacket.weaponUsed
@@ -1152,13 +1152,13 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 	}
 	dispIoToHitBon.attackPacket.ammoItem = CheckRangedWeaponAmmo(performer);
 	dispIoToHitBon.attackPacket.flags = (D20CAF) (dispIoToHitBon.attackPacket.flags | D20CAF_FINAL_ATTACK_ROLL);
-	dispIoToHitBon.Dispatch(performer, 0i64, dispTypeToHitBonus2, DK_NONE); // note: the "Global" condition has ToHitBonus2 hook that dispatches the ToHitBonusBase
-	auto toHitBonFinal = dispIoToHitBon.Dispatch(tgt, 0i64, dispTypeToHitBonusFromDefenderCondition, DK_NONE);
+	dispIoToHitBon.Dispatch(performer, objHndl::null, dispTypeToHitBonus2, DK_NONE); // note: the "Global" condition has ToHitBonus2 hook that dispatches the ToHitBonusBase
+	auto toHitBonFinal = dispIoToHitBon.Dispatch(tgt, objHndl::null, dispTypeToHitBonusFromDefenderCondition, DK_NONE);
 
 	dispIoTgtAc.attackPacket = dispIoToHitBon.attackPacket;
 	dispIoTgtAc.field_4 = dispIoToHitBon.field_4;
 	critterSys.GetArmorClass(tgt, &dispIoTgtAc);
-	auto tgtAcFinal = dispIoTgtAc.Dispatch(tgt, 0i64, dispTypeGetACBonus2, DK_NONE);
+	auto tgtAcFinal = dispIoTgtAc.Dispatch(tgt, objHndl::null, dispTypeGetACBonus2, DK_NONE);
 
 	auto toHitRoll = Dice::Roll(1, 20);
 
@@ -1227,7 +1227,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 		// do Critical Hit roll
 		dispIoAtkBon.attackPacket = dispIoToHitBon.attackPacket;
 		dispIoAtkBon.field_4 = dispIoToHitBon.field_4;
-		auto critThreatRange = 21 - dispIoAtkBon.Dispatch(performer, 0i64, dispTypeGetCriticalHitRange, DK_NONE);
+		auto critThreatRange = 21 - dispIoAtkBon.Dispatch(performer, objHndl::null, dispTypeGetCriticalHitRange, DK_NONE);
 		if (!d20Sys.d20Query(tgt, DK_QUE_Critter_Is_Immune_Critical_Hits)){
 			if (toHitRoll >= critThreatRange || critAlwaysCheat) {
 				critHitRoll = Dice::Roll(1, 20);
@@ -1244,7 +1244,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 		}
 
 		// do Deflect Arrow dispatch
-		dispIoToHitBon.Dispatch(dispIoToHitBon.attackPacket.victim, 0i64, dispTypeDeflectArrows, DK_NONE);		
+		dispIoToHitBon.Dispatch(dispIoToHitBon.attackPacket.victim, objHndl::null, dispTypeDeflectArrows, DK_NONE);
 	}
 
 
