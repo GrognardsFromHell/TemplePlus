@@ -582,7 +582,7 @@
 	#if defined(_MSC_VER) && (EA_PLATFORM_PTR_SIZE == 8)
 		typedef __int64 ssize_t;
 	#else
-		typedef long ssize_t;
+		typedef int ssize_t;
 	#endif
 #else
 	#include <sys/types.h>

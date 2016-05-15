@@ -6,23 +6,25 @@
 
 #include "../../obj_structs.h"
 
+#include <EASTL/hash_map.h>
+
 #include "gameobject.h"
 
-namespace std {
+namespace eastl {
 	template <>
 	struct hash<ObjectId> {
-		typedef ObjectId argument_type;
-		typedef std::size_t result_type;
-
-		result_type operator()(argument_type const& id) const;
+		size_t operator()(ObjectId const& id) const;
 	};
+	
+	template<>
+	struct hash<objHndl> : std::hash<objHndl> {};
 }
 
 class ObjRegistry {
 public:
 	ObjRegistry();
 
-	using Container = std::unordered_map<objHndl, std::unique_ptr<GameObjectBody>>;
+	using Container = eastl::hash_map<objHndl, std::unique_ptr<GameObjectBody>>;
 	using It = Container::iterator;
 
 	ObjectId GetIdByHandle(objHndl handle);
@@ -50,7 +52,7 @@ public:
 
 private:
 	Container mObjects;
-	std::unordered_map<ObjectId, objHndl> mObjectIndex;
+	eastl::hash_map<ObjectId, objHndl> mObjectIndex;
 	uint32_t mNextId = 1;
 
 	objHndl lastObj = objHndl::null;

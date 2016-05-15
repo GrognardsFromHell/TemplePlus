@@ -16,6 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="action_sequence.cpp" />
+    <ClCompile Include="allocator.cpp" />
     <ClCompile Include="common.cpp" />
     <ClCompile Include="config\config_hooks.cpp" />
     <ClCompile Include="diag\proto_cols.cpp" />
@@ -491,17 +492,17 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)\Temple\include;$(SolutionDir)\ParticleSystems\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\EASTL\include;$(SolutionDir)\Temple\include;$(SolutionDir)\ParticleSystems\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)dependencies\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)\Temple\include;$(SolutionDir)\ParticleSystems\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\EASTL\include;$(SolutionDir)\Temple\include;$(SolutionDir)\ParticleSystems\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)dependencies\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)\Temple\include;$(SolutionDir)\ParticleSystems\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\EASTL\include;$(SolutionDir)\Temple\include;$(SolutionDir)\ParticleSystems\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)dependencies\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -521,7 +522,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>psapi.lib;d3dcompiler.lib;turbojpeg-static_d.lib;particlesystems.lib;temple.lib;tio\tio.lib;MinHook.lib;Infrastructure.lib;winmm.lib;d3d9.lib;ws2_32.lib;Crypt32.lib;ssleay32.lib;libeay32.lib;python27_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>EASTL.lib;psapi.lib;d3dcompiler.lib;turbojpeg-static_d.lib;particlesystems.lib;temple.lib;tio\tio.lib;MinHook.lib;Infrastructure.lib;winmm.lib;d3d9.lib;ws2_32.lib;Crypt32.lib;ssleay32.lib;libeay32.lib;python27_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib;$(TargetDir)</AdditionalLibraryDirectories>
@@ -571,7 +572,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>psapi.lib;d3dcompiler.lib;turbojpeg-static.lib;particlesystems.lib;temple.lib;tio\tio.lib;MinHook.lib;Infrastructure.lib;winmm.lib;d3d9.lib;d3dcompiler.lib;ws2_32.lib;Crypt32.lib;ssleay32.lib;libeay32.lib;python27.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>EASTL.lib;psapi.lib;d3dcompiler.lib;turbojpeg-static.lib;particlesystems.lib;temple.lib;tio\tio.lib;MinHook.lib;Infrastructure.lib;winmm.lib;d3d9.lib;d3dcompiler.lib;ws2_32.lib;Crypt32.lib;ssleay32.lib;libeay32.lib;python27.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
