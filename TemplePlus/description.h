@@ -15,7 +15,7 @@ struct LegacyDescriptionSystem : temple::AddressTable
 	uint32_t(__cdecl *DescriptionIsCustom)(int32_t descrIdx);
 	uint32_t(__cdecl *CustomNameNew)(const char *pString);
 	void(__cdecl *CustomNameChange)(const char * pNewNameSource, uint32_t descrIdx);
-	const char *(__cdecl *_getDisplayName)(uint64_t obj, uint64_t observer);
+	const char *(__cdecl *_getDisplayName)(objHndl obj, objHndl observer);
 
 	LegacyDescriptionSystem()
 	{

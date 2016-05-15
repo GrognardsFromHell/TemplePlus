@@ -39,7 +39,7 @@ objHndl __cdecl ItemWornAtModifiedForTumlbeCheck(objHndl objHnd, uint32_t itemWo
 {
 	if (critterSys.GetRace(objHnd) == race_dwarf)
 	{
-		return 0;
+		return objHndl::null;
 	}
 	else
 	{
@@ -444,7 +444,7 @@ int RemoveSuggestionSpellFix::RemoveSpellSuggestion(DispIO* dispIo, enum_disp_ty
 	} else if (d20Sys.IsActionOffensive(d20a->d20ActType, d20a->d20ATarget))	{
 		if (critterSys.IsFriendly(d20a->d20APerformer, d20a->d20ATarget))	{
 			if (d20Sys.d20QueryWithData(obj, DK_QUE_Critter_Has_Condition, condSuggestion, 0))	{
-				d20Sys.d20SendSignal(obj, DK_SIG_Spell_End, 0);
+				d20Sys.d20SendSignal(obj, DK_SIG_Spell_End, objHndl::null);
 				critterSys.RemoveFollower(obj, 1);
 				ui.UpdatePartyUi();
 				return 1;

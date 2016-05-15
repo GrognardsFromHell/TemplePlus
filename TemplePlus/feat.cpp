@@ -682,7 +682,7 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 	//return 1; // h4x :)
 
 #pragma region	checking feats in the character editor - SpellSlinger hack for special Rogue feats for level > 10
-	if ( ui.CharEditorIsActive() && *feats.charEditorClassCode != 0 && *feats.charEditorObjHnd != 0)
+	if ( ui.CharEditorIsActive() && *feats.charEditorClassCode != 0 && *feats.charEditorObjHnd)
 	{
 		auto newClassLvl = objects.StatLevelGet(*feats.charEditorObjHnd, *feats.charEditorClassCode) + 1;
 

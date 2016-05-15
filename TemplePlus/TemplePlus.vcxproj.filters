@@ -97,9 +97,6 @@
     <ClCompile Include="spell_condition.cpp">
       <Filter>Mods and Fixes\Spell Fixes</Filter>
     </ClCompile>
-    <ClCompile Include="python\python.cpp">
-      <Filter>python</Filter>
-    </ClCompile>
     <ClCompile Include="python\python_debug.cpp">
       <Filter>python</Filter>
     </ClCompile>
@@ -401,6 +398,7 @@
     <ClCompile Include="python\python_trap.cpp">
       <Filter>python</Filter>
     </ClCompile>
+    <ClCompile Include="obj_structs.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />

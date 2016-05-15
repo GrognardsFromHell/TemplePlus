@@ -371,7 +371,7 @@ void ActionSequenceSystem::ActSeqGetPicker()
 	{
 		if (d20Sys.globD20Action->d20ActType == D20A_SPELL_CALL_LIGHTNING)
 		{
-			int callLightningId = d20Sys.d20QueryReturnData(d20Sys.globD20Action->d20APerformer, DK_QUE_Critter_Can_Call_Lightning);
+			uint32_t callLightningId = (uint32_t) d20Sys.d20QueryReturnData(d20Sys.globD20Action->d20APerformer, DK_QUE_Critter_Can_Call_Lightning);
 			SpellPacketBody spellPkt;
 			spellSys.GetSpellPacketBody(callLightningId, &spellPkt);
 			auto baseCasterLevelMod = dispatch.Dispatch35BaseCasterLevelModify(d20Sys.globD20Action->d20APerformer, &spellPkt);
@@ -871,10 +871,10 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 		}
 
 		// advanced the truncatedLoc by 4 feet along the path
-		truncateLengthFeet = truncateLengthFeet + 4.0;
+		truncateLengthFeet = truncateLengthFeet + 4.0f;
 		aooDistFeet = truncateLengthFeet;
 
-		if (truncateLengthFeet < pathLength - 2.0)
+		if (truncateLengthFeet < pathLength - 2.0f)
 			pathfindingSys.TruncatePathToDistance(aooPacket->path, &truncatedLoc, truncateLengthFeet);
 
 
@@ -1465,10 +1465,10 @@ int ActionSequenceSystem::TrimPathToRemainingMoveLength(D20Actn* d20a, float rem
 { //1008B9A0
 
 	auto pqrTrimmed = pathfindingSys.FetchAvailablePQRCacheSlot();
-	auto pathLengthTrimmed = remainingMoveLength - 0.1;
+	auto pathLengthTrimmed = remainingMoveLength - 0.1f;
 	
 	
-	pathfindingSys.GetPartialPath(d20a->path, pqrTrimmed, 0.0, pathLengthTrimmed);
+	pathfindingSys.GetPartialPath(d20a->path, pqrTrimmed, 0.0f, pathLengthTrimmed);
 	
 	
 	if (pathfindingSys.pathQueryResultIsValid(d20a->path))
@@ -2587,7 +2587,7 @@ void ActionSequenceSystem::PerformOnAnimComplete(objHndl obj, int animId)
 
 	// is the animId ok?
 	auto d20a = &curSeq->d20ActArray[curSeq->d20aCurIdx];
-	if ( (animId != -1 && animId != 0xccccCCCC & (animId != 0 )) 
+	if ( (animId != -1 && animId != 0xccccCCCC && (animId != 0 )) 
 		&& d20a->animID != animId)
 	{
 		logger->debug("PerformOnAnimComplete: \t Wrong anim ID!");

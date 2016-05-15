@@ -95,7 +95,7 @@ void PartSysHooks::SetObj(PartSysHandle handle, objHndl obj) {
 		logger->error("Trying to set object for invalid particle system handle: {}", handle);
 		return;
 	}
-	sys->SetAttachedTo(obj);
+	sys->SetAttachedTo(obj.handle);
 }
 
 void PartSysHooks::InvalidateObj(objHndl obj) {
@@ -104,7 +104,7 @@ void PartSysHooks::InvalidateObj(objHndl obj) {
 	}
 	auto &particles = gameSystems->GetParticleSys();
 	for (auto &sys : particles) {
-		if (sys.second->GetAttachedTo() == obj) {
+		if (sys.second->GetAttachedTo() == obj.handle) {
 			sys.second->SetAttachedTo(0);
 			sys.second->EndPrematurely();
 		}

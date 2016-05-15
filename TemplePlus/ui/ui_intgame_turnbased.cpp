@@ -557,7 +557,7 @@ BOOL UiIntegameTurnbasedRepl::UiIntgameRaycast(objHndl* obj, int x, int y, int f
 }
 
 int UiIntegameTurnbasedRepl::IntgameValidateMouseSelection(TigMsgMouse* msg) {
-	objHndl obj = 0i64;
+	auto obj = objHndl::null;
 	if (uiPicker.PickerActiveCheck() || radialMenus.ActiveRadialMenuHasActiveNode()) {
 		return 0;
 	}

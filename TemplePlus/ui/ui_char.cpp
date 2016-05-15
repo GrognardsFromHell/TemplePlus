@@ -663,7 +663,7 @@ int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 						inventory.MoneyToCoins(appraisedWorth, &plat, &gold, &silver, &copper);
 					}
 					
-					ItemErrorCode itemTransferError = inventory.TransferWithFlags(item, critterLooted, -1, 1+2+4+8+16, 0i64);
+					ItemErrorCode itemTransferError = inventory.TransferWithFlags(item, critterLooted, -1, 1+2+4+8+16, objHndl::null);
 					if (itemTransferError == IEC_OK && GetInventoryState() == 2){
 						objSystem->GetObject(item)->SetItemFlag(OIF_IDENTIFIED, 1);
 						party.MoneyAdj(plat, gold, silver, copper);
@@ -675,7 +675,7 @@ int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 								break;
 						}
 						if (itemIdx < 200)
-							itemTransferError = inventory.TransferWithFlags(item, critterLooted, itemIdx, 1 + 2 + 4 + 8 , 0i64);
+							itemTransferError = inventory.TransferWithFlags(item, critterLooted, itemIdx, 1 + 2 + 4 + 8 , objHndl::null);
 						if (itemTransferError == IEC_OK && GetInventoryState() == 2) {
 							objSystem->GetObject(item)->SetItemFlag(OIF_IDENTIFIED, 1);
 							party.MoneyAdj(plat, gold, silver, copper);

@@ -383,8 +383,9 @@ char const* ItemCreation::ItemCreationGetItemName(objHndl itemHandle) const
 }
 
 objHndl ItemCreation::MaaGetItemHandle(){
-	if (craftingItemIdx < 0 || craftingItemIdx >= mMaaCraftableItemList.size())
-		return 0i64;
+	if (craftingItemIdx < 0 || craftingItemIdx >= mMaaCraftableItemList.size()) {
+		return objHndl::null;
+	}
 	return mMaaCraftableItemList[craftingItemIdx];
 }
 
@@ -1139,9 +1140,9 @@ uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t casterLeve
 	
 }
 
-static vector<uint64_t> craftingProtoHandles[8];
+static vector<objHndl> craftingProtoHandles[8];
 
-const char *getProtoName(uint64_t protoHandle) {
+const char *getProtoName(objHndl protoHandle) {
 	/*
 	 // gets item creation proto id
   if ( sub_1009C950((objHndl)protoHandle) )
@@ -1172,12 +1173,12 @@ static void loadProtoIds(MesHandle mesHandle) {
 
 		StringTokenizer tokenizer(protoLine);
 		while (tokenizer.next()) {
-			auto handle = templeFuncs.GetProtoHandle(tokenizer.token().numberInt);
+			auto handle = objSystem->GetProtoHandle(tokenizer.token().numberInt);
 			protoHandles.push_back(handle);
 		}
 
 		// Sort by prototype name
-		sort(protoHandles.begin(), protoHandles.end(), [](uint64_t a, uint64_t b)
+		sort(protoHandles.begin(), protoHandles.end(), [](objHndl a, objHndl b)
 		{
 			auto nameA = getProtoName(a);
 			auto nameB = getProtoName(b);
@@ -1800,13 +1801,13 @@ void ItemCreation::MaaInitCrafter(objHndl crafter){
 			mMaaCraftableItemList.push_back(itemHandle);
 		}
 	}
-	MaaInitCraftedItem(0);
+	MaaInitCraftedItem(objHndl::null);
 }
 
 void ItemCreation::MaaInitWnd(int wndId){
 	maaSelectedEffIdx = -1;
 	mMaaActiveAppliedWidIdx = -1;
-	objHndl itemHandle = 0;
+	objHndl itemHandle = objHndl::null;
 	if (craftingItemIdx >= 0 && mCraftingItemIdx < (int)mMaaCraftableItemList.size()) {
 		itemHandle = mMaaCraftableItemList[craftingItemIdx];
 	}
@@ -1837,7 +1838,7 @@ void ItemCreation::MaaInitWnd(int wndId){
 		auto title = combatSys.GetCombatMesLine(6009);
 		auto helpId = ElfHash::Hash("TAG_CRAFT_MAGIC_ARMS_ARMOR_POPUP");
 		auto popupType0 = temple::GetRef<int(__cdecl)(int, int(__cdecl*)(), const char*)>(0x100E6F10);
-		popupType0(helpId, []() { return itemCreation.ItemCreationShow(0, ItemCreationType::Inactive); }, title);
+		popupType0(helpId, []() { return itemCreation.ItemCreationShow(objHndl::null, ItemCreationType::Inactive); }, title);
 	}
 	craftedItemNamePos = craftedItemName.size();
 }
@@ -3419,7 +3420,7 @@ int ItemCreation::MaaCpCost(int effIdx){
 	if (craftingItemIdx < 0 || craftingItemIdx >= numItemsCrafting[icType])
 		return 0;
 
-	objHndl itemHandle = 0;
+	objHndl itemHandle = objHndl::null;
 	if (icType == ItemCreationType::CraftMagicArmsAndArmor)
 	{
 		if (craftingItemIdx >= mMaaCraftableItemList.size())
@@ -3452,7 +3453,7 @@ int ItemCreation::MaaXpCost(int effIdx){
 	if (craftingItemIdx < 0 || craftingItemIdx >= numItemsCrafting[icType])
 		return 0;
 
-	objHndl itemHandle = 0;
+	objHndl itemHandle = objHndl::null;
 	if (icType == ItemCreationType::CraftMagicArmsAndArmor)
 	{
 		if (craftingItemIdx >= mMaaCraftableItemList.size())

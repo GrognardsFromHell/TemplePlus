@@ -383,7 +383,7 @@ objHndl GameObjectBody::GetObjHndl(obj_f field, size_t index) const
 	if (objId.IsHandle()) {
 		return objId.GetHandle();
 	}
-	return 0;
+	return objHndl::null;
 }
 
 bool GameObjectBody::GetValidObjHndl(obj_f field, size_t index, objHndl* handleOut) {

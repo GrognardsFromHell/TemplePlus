@@ -169,11 +169,12 @@ private:
 class MemoryInputStream : public InputStream {
 public:
 	MemoryInputStream(gsl::span<const uint8_t> data)
-		: mCurrent(data.data()), mData(data) {		
+		: mCurrent(data.data()), mData(data) {
+		Expects(mData.size() >= 0);
 	}
 
 	void ReadRaw(void* buffer, size_t count) override {
-		Expects(GetPos() + count <= mData.size());
+		Expects(GetPos() + count <= static_cast<size_t>(mData.size()));
 		memcpy(buffer, mCurrent, count);
 		mCurrent += count;
 	}

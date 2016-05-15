@@ -92,7 +92,7 @@ int D20Replacements::PerformActivateReadiedAction(D20Actn* d20a)
 	logger->info("Performing Readied Interrupt - cutting sequence short.");
 	auto curSeq = *actSeqSys.actSeqCur;
 	int curIdx = curSeq->d20aCurIdx;
-	if (curIdx < curSeq->d20ActArrayNum && curSeq->d20ActArray[curIdx+1].d20ATarget != D20A_READIED_INTERRUPT)
+	if (curIdx < curSeq->d20ActArrayNum && curSeq->d20ActArray[curIdx+1].d20ActType != D20A_READIED_INTERRUPT)
 	{
 		curSeq->d20ActArrayNum = curIdx;
 	}
@@ -370,7 +370,7 @@ uint32_t LegacyD20System::d20Query(objHndl objHnd, D20DispatcherKey dispKey)
 	objects.dispatch.DispatcherProcessor(dispatcher, dispTypeD20Query, dispKey, &dispIO);
 	if (dispKey == DK_QUE_Critter_Is_Charmed || dispKey == DK_QUE_Critter_Is_Afraid || dispKey == DK_QUE_Critter_Is_Held) {
 		// in these cases the information stored is an objhandle; make sure it's a valid handle!
-		if (gameSystems->GetObj().IsValidHandle(*reinterpret_cast<uint64_t*>(&dispIO.data1))) {
+		if (gameSystems->GetObj().IsValidHandle(*reinterpret_cast<objHndl*>(&dispIO.data1))) {
 			dispIO.return_val;
 		}
 		else {
@@ -397,7 +397,7 @@ uint32_t LegacyD20System::d20QueryWithData(objHndl objHnd, D20DispatcherKey disp
 
 uint32_t LegacyD20System::d20QueryWithData(objHndl obj, D20DispatcherKey dispKey, objHndl argObj)
 {
-	return d20QueryWithData(obj, dispKey, (uint32_t)argObj, (argObj>>32));
+	return d20QueryWithData(obj, dispKey, argObj.GetHandleLower(), argObj.GetHandleUpper());
 }
 
 uint32_t LegacyD20System::d20QueryWithData(objHndl obj, D20DispatcherKey dispKey, CondStruct* cond, uint32_t arg2)
@@ -625,9 +625,15 @@ uint32_t LegacyD20System::tumbleCheck(D20Actn* d20a)
 		logger->info("movement aoo while performing...\n");
 		return 0;
 	}
-	if (!d20QueryWithData(d20a->d20ATarget, DK_QUE_AOOIncurs, (uint32_t)(d20a->d20APerformer & 0xFFFFffff), (uint32_t)(d20a->d20APerformer >> 32))){ return 0; }
-	if (!d20QueryWithData(d20a->d20APerformer, DK_QUE_AOOPossible, (uint32_t)(d20a->d20ATarget & 0xFFFFffff), (uint32_t)(d20a->d20ATarget >> 32))){ return 0; }
-	if (!d20QueryWithData(d20a->d20APerformer, DK_QUE_AOOWillTake, (uint32_t)(d20a->d20ATarget & 0xFFFFffff), (uint32_t)(d20a->d20ATarget >> 32))){ return 0; }
+	if (!d20QueryWithData(d20a->d20ATarget, DK_QUE_AOOIncurs, d20a->d20APerformer.GetHandleLower(), d20a->d20APerformer.GetHandleUpper())) {
+		return 0; 
+	}
+	if (!d20QueryWithData(d20a->d20APerformer, DK_QUE_AOOPossible, d20a->d20ATarget.GetHandleLower(), d20a->d20ATarget.GetHandleUpper())) {
+		return 0;
+	}
+	if (!d20QueryWithData(d20a->d20APerformer, DK_QUE_AOOWillTake, d20a->d20ATarget.GetHandleLower(), d20a->d20ATarget.GetHandleUpper())) {
+		return 0;
+	}
 	// not fully implemented yet, but that should cover 90% of the cases anyway ;) TODO: complete this function
 	return _tumbleCheck(d20a);
 }
@@ -718,7 +724,7 @@ objHndl LegacyD20System::GetAttackWeapon(objHndl obj, int attackCode, D20CAF fla
 {
 	if (flags & D20CAF_TOUCH_ATTACK && !(flags & D20CAF_THROWN_GRENADE))
 	{
-		return 0i64;
+		return objHndl::null;
 	}
 
 	if (flags & D20CAF_SECONDARY_WEAPON)
@@ -728,7 +734,7 @@ objHndl LegacyD20System::GetAttackWeapon(objHndl obj, int attackCode, D20CAF fla
 		return inventory.ItemWornAt(obj, EquipSlot::WeaponSecondary);
 
 	if (attackCode > ATTACK_CODE_NATURAL_ATTACK)
-		return 0i64;
+		return objHndl::null;
 
 	return inventory.ItemWornAt(obj, EquipSlot::WeaponPrimary);
 }
@@ -942,7 +948,7 @@ uint64_t LegacyD20System::d20QueryReturnData(objHndl objHnd, D20DispatcherKey di
 	objects.dispatch.DispatcherProcessor(dispatcher, dispTypeD20Query, dispKey, &dispIO);
 	if ( dispKey == DK_QUE_Critter_Is_Charmed || dispKey == DK_QUE_Critter_Is_Afraid || dispKey == DK_QUE_Critter_Is_Held){
 		// in these cases the information stored is an objhandle; make sure it's a valid handle!
-		if (gameSystems->GetObj().IsValidHandle(*reinterpret_cast<uint64_t*>(&dispIO.data1))){
+		if (gameSystems->GetObj().IsValidHandle(*reinterpret_cast<objHndl*>(&dispIO.data1))){
 			auto result = *reinterpret_cast<uint64_t*>(&dispIO.data1);
 			return result;
 		} else	{
@@ -1532,7 +1538,7 @@ ActionErrorCode D20ActionCallbacks::LocationCheckDisarmedWeaponRetrieve(D20Actn*
 		return AEC_OK;
 	if (d20a->d20ATarget)
 		return d20Sys.TargetWithinReachOfLoc(d20a->d20APerformer, d20a->d20ATarget, loc) != 0 ? AEC_OK : AEC_TARGET_TOO_FAR;
-	objHndl weapon = d20Sys.d20QueryReturnData(d20a->d20APerformer, DK_QUE_Disarmed);
+	objHndl weapon{ d20Sys.d20QueryReturnData(d20a->d20APerformer, DK_QUE_Disarmed) };
 	if (weapon)
 		return d20Sys.TargetWithinReachOfLoc(d20a->d20APerformer, weapon, loc) != 0 ? AEC_OK : AEC_TARGET_TOO_FAR;
 	return AEC_TARGET_INVALID;

@@ -68,12 +68,12 @@ objHndl ObjSystem::GetHandleById(ObjectId id)
 
 	// Check for positional IDs in the map
 	if (!id.IsPositional())
-		return 0;
+		return objHndl::null;
 
 	auto pos = id.body.pos;
 
 	if (gameSystems->GetMap().GetCurrentMapId() != pos.mapId) {
-		return 0;
+		return objHndl::null;
 	}
 
 	ObjList list;
@@ -91,7 +91,7 @@ objHndl ObjSystem::GetHandleById(ObjectId id)
 		}
 	}
 
-	return 0;
+	return objHndl::null;
 
 }
 

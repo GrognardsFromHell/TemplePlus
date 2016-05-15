@@ -525,7 +525,7 @@ bool Ui::CharLootingIsActive()
 
 bool Ui::IsWidgetHidden(int widId)
 {
-	return activeWidgets[widId]->widgetFlags & 1 != 0;
+	return (activeWidgets[widId]->widgetFlags & 1) != 0;
 }
 
 BOOL Ui::AddWindow(Widget* widget, unsigned size, int* widgetId, const char* codeFileName, int lineNumber)

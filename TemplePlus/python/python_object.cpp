@@ -70,8 +70,8 @@ static PyObject* PyObjHandle_Repr(PyObject* obj) {
 }
 
 static int PyObjHandle_Cmp(PyObject* objA, PyObject* objB) {
-	objHndl handleA = 0;
-	objHndl handleB = 0;
+	objHndl handleA = objHndl::null;
+	objHndl handleB = objHndl::null;
 	if (objA->ob_type == &PyObjHandleType) {
 		handleA = ((PyObjHandle*)objA)->handle;
 	}
@@ -79,9 +79,9 @@ static int PyObjHandle_Cmp(PyObject* objA, PyObject* objB) {
 		handleB = ((PyObjHandle*)objB)->handle;
 	}
 
-	if (handleA < handleB) {
+	if (handleA.handle < handleB.handle) {
 		return -1;
-	} else if (handleA > handleB) {
+	} else if (handleA.handle > handleB.handle) {
 		return 1;
 	} else {
 		return 0;
@@ -319,7 +319,7 @@ static PyObject* PyObjHandle_RefreshTurn(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_ItemFind(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle){
-		return PyObjHndl_Create(0);
+		return PyObjHndl_CreateNull();
 	}
 	int nameId;
 	if (!PyArg_ParseTuple(args, "i:objhndl.itemfind", &nameId)) {
@@ -396,7 +396,7 @@ static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 	PickerArgs pickArgs;
 	SpellPacketBody spellPktBody;
 	SpellEntry spellEntry;
-	objHndl targetObj = 0;
+	objHndl targetObj = objHndl::null;
 	if (!PyArg_ParseTuple(args, "i|O&:objhndl.cast_spell", &spellEnum, &ConvertObjHndl, &targetObj)) {
 		return 0;
 	}
@@ -487,7 +487,7 @@ static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_SkillLevelGet(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 
-	objHndl handle = 0;
+	objHndl handle = objHndl::null;
 	SkillEnum skillId;
 	if (PyTuple_Size(args) == 2) {
 		if (!PyArg_ParseTuple(args, "O&i:objhndl.skill_level_get", &ConvertObjHndl, &handle, &skillId)) {
@@ -553,7 +553,7 @@ static PyObject* PyObjHandle_GroupList(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_StatLevelGet(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
-		PyInt_FromLong(0);
+		return PyInt_FromLong(0);
 	}
 	Stat stat;
 	if (!PyArg_ParseTuple(args, "i:objhndl:stat_level_get", &stat)) {
@@ -566,7 +566,7 @@ static PyObject* PyObjHandle_StatLevelGet(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_StatLevelGetBase(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
-		PyInt_FromLong(0);
+		return PyInt_FromLong(0);
 	}
 	Stat stat;
 	if (!PyArg_ParseTuple(args, "i:objhndl:stat_level_get_base", &stat)) {
@@ -579,7 +579,7 @@ static PyObject* PyObjHandle_StatLevelGetBase(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_StatLevelSetBase(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
-		PyInt_FromLong(0);
+		return PyInt_FromLong(0);
 	}
 	Stat stat;
 	int value;
@@ -594,7 +594,7 @@ static PyObject* PyObjHandle_StatLevelSetBase(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_FollowerAdd(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
-		PyInt_FromLong(0);
+		return PyInt_FromLong(0);
 	}
 	objHndl follower;
 	if (!PyArg_ParseTuple(args, "O&:objhndl.follower_add", &ConvertObjHndl, &follower)) {
@@ -631,7 +631,7 @@ static PyObject* PyObjHandle_FollowerAtMax(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_AiFollowerAdd(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
-		PyInt_FromLong(0);
+		return PyInt_FromLong(0);
 	}
 	objHndl follower;
 	if (!PyArg_ParseTuple(args, "O&:objhndl.ai_follower_add", &ConvertObjHndl, &follower)) {
@@ -658,7 +658,7 @@ static PyObject * PyObjHandle_RemoveFromAllGroups(PyObject* obj, PyObject* args)
 static PyObject * PyObjHandle_PCAdd(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
-		PyInt_FromLong(0);
+		return PyInt_FromLong(0);
 	}
 	objHndl dude;
 	if (!PyArg_ParseTuple(args, "O&:objhndl.obj_remove_from_all_groups", &ConvertObjHndl, &dude)) {
@@ -686,7 +686,7 @@ static PyObject* PyObjHandle_LeaderGet(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_HasLos(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
-		PyInt_FromLong(0);
+		return PyInt_FromLong(0);
 	}
 	objHndl target;
 	if (!PyArg_ParseTuple(args, "O&:objHndl.has_los", &ConvertObjHndl, &target)) {
@@ -703,7 +703,7 @@ static PyObject* PyObjHandle_HasLos(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_HasWielded(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
-		PyInt_FromLong(0);
+		return PyInt_FromLong(0);
 	}
 	int nameId;
 	if (!PyArg_ParseTuple(args, "i:objhndl.has_wielded", &nameId)) {
@@ -723,21 +723,21 @@ static PyObject* PyObjHandle_HasWielded(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_HasItem(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
-		PyInt_FromLong(0);
+		return PyInt_FromLong(0);
 	}
 	int nameId;
 	if (!PyArg_ParseTuple(args, "i:objhndl.has_item", &nameId)) {
 		return 0;
 	}
 
-	auto hasItem = (inventory.FindItemByName(self->handle, nameId) != 0);
+	bool hasItem = !!inventory.FindItemByName(self->handle, nameId);
 	return PyInt_FromLong(hasItem);
 }
 
 static PyObject* PyObjHandle_ItemWornAt(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
-		PyInt_FromLong(0);
+		return PyInt_FromLong(0);
 	}
 	EquipSlot slot;
 	if (!PyArg_ParseTuple(args, "i:objhndl.item_worn_at", &slot)) {
@@ -754,7 +754,7 @@ static PyObject* PyObjHandle_ItemWornAt(PyObject* obj, PyObject* args) {
 static PyObject * PyObjHandle_InventoryItem(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
-		PyObjHndl_Create(0);
+		return PyObjHndl_CreateNull();
 	}
 
 	objHndl objHnd = self->handle;
@@ -771,7 +771,7 @@ static PyObject * PyObjHandle_InventoryItem(PyObject* obj, PyObject* args) {
 		}
 
 	}
-	return PyObjHndl_Create(0);
+	return PyObjHndl_Create(objHndl::null);
 
 };
 
@@ -836,7 +836,7 @@ static PyObject* PyObjHandle_TripCheck(PyObject* obj, PyObject* args){
 	if (!self->handle) {
 		return PyInt_FromLong(0);
 	}
-	objHndl target = 0i64;
+	objHndl target = objHndl::null;
 	if (!PyArg_ParseTuple(args, "O&:objhndl.trip_check", &ConvertObjHndl, &target)) {
 		return 0;
 	}
@@ -1246,7 +1246,7 @@ static PyObject* PyObjHandle_SavingThrow(PyObject* obj, PyObject* args) {
 	int dc, d20aType;
 	SavingThrowType type;
 	auto flags = (D20SavingThrowFlag) 0;
-	objHndl attacker = 0;
+	objHndl attacker = objHndl::null;
 	if (!PyArg_ParseTuple(args, "iii|O&i:objhndl:saving_throw", &dc, &type, &flags, &ConvertObjHndl, &attacker, &d20aType)) {
 		return 0;
 	}
@@ -1341,7 +1341,7 @@ static PyObject* PyObjHandle_Kill(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		return 0;
 	}
-	critterSys.Kill(self->handle, 0);
+	critterSys.Kill(self->handle, objHndl::null);
 	Py_RETURN_NONE;
 }
 
@@ -1350,7 +1350,7 @@ static PyObject* PyObjHandle_KillByEffect(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		return 0;
 	}
-	critterSys.KillByEffect(self->handle, 0);
+	critterSys.KillByEffect(self->handle, objHndl::null);
 	Py_RETURN_NONE;
 }
 
@@ -1873,7 +1873,7 @@ static PyObject* PyObjHandle_GetObj(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 	auto value = objects.getObjHnd(self->handle, field);
-	return PyLong_FromLongLong(value);
+	return PyObjHndl_Create(value);
 }
 
 static PyObject* PyObjHandle_HasFeat(PyObject* obj, PyObject* args) {
@@ -2026,7 +2026,7 @@ static PyObject* PyObjHandle_WieldBestAll(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		Py_RETURN_NONE;
 	}
-	objHndl targetHndl = 0;
+	objHndl targetHndl = objHndl::null;
 	if (!PyArg_ParseTuple(args, "|O&:objhndl.wield_best_all", &ConvertObjHndl, &targetHndl)) {
 		return 0;
 	}
@@ -2088,7 +2088,7 @@ static PyObject* PyObjHandle_D20SendSignalEx(PyObject* obj, PyObject* args) {
 		Py_RETURN_NONE;
 	}
 	int signalId;
-	objHndl arg = 0;
+	objHndl arg = objHndl::null;
 	if (!PyArg_ParseTuple(args, "i|O&:objhndl.d20_send_signal_ex", &signalId, &ConvertObjHndl, &arg)) {
 		return 0;
 	}
@@ -2666,7 +2666,11 @@ PyGetSetDef PyObjHandleGetSets[] = {
 
 static int PyObjHandle_NonZero(PyObject* obj) {
 	auto self = GetSelf(obj);
-	return self->handle != 0;
+	if (self->handle) {
+		return TRUE;
+	} else {
+		return FALSE;
+	}
 }
 
 static PyNumberMethods PyObjHandleNumberMethods = {
@@ -2794,7 +2798,7 @@ PyObject* PyObjHndl_Create(objHndl handle) {
 }
 
 PyObject* PyObjHndl_CreateNull() {
-	return PyObjHndl_Create(0);
+	return PyObjHndl_Create(objHndl::null);
 }
 
 objHndl PyObjHndl_AsObjHndl(PyObject* obj) {

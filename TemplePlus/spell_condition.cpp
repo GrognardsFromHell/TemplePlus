@@ -386,7 +386,7 @@ int SpellConditionFixes::GreaseSlippage(DispatcherCallbackArgs args){
 		return 0;
 
 	if (!spellPkt.SavingThrow(args.objHndCaller, D20STD_F_NONE)) {
-		histSys.CreateRollHistoryLineFromMesfile(48, args.objHndCaller, 0);
+		histSys.CreateRollHistoryLineFromMesfile(48, args.objHndCaller, objHndl::null);
 		combatSys.FloatCombatLine(args.objHndCaller, 104);
 		conds.AddTo(args.objHndCaller, "Prone", {});
 		animationGoals.PushAnimate(args.objHndCaller, 64);
