@@ -16,7 +16,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="action_sequence.cpp" />
-    <ClCompile Include="allocator.cpp" />
     <ClCompile Include="common.cpp" />
     <ClCompile Include="config\config_hooks.cpp" />
     <ClCompile Include="diag\proto_cols.cpp" />

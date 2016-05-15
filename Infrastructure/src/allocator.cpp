@@ -1,6 +1,4 @@
 
-#include "stdafx.h"
-
 // EASTL needs these
 
 void* operator new[](size_t size, const char* /*name*/, int /*flags*/,

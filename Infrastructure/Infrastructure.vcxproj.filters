@@ -377,6 +377,9 @@
     <ClCompile Include="breakpad\guid_string.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\allocator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="include\spdlog\LICENSE" />

@@ -402,7 +402,6 @@
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="obj_structs.cpp" />
-    <ClCompile Include="allocator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
