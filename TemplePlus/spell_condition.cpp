@@ -392,6 +392,8 @@ int SpellConditionFixes::GreaseSlippage(DispatcherCallbackArgs args){
 		animationGoals.PushAnimate(args.objHndCaller, 64);
 	}
 
+	return 0;
+
 }
 
 int SpellConditionFixes::ColorSprayUnconsciousOnAdd(DispatcherCallbackArgs args){

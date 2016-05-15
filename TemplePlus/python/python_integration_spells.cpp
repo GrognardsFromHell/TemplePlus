@@ -245,7 +245,7 @@ uint32_t PythonSpellIntegration::SpellSoundPlay(SpellPacketBody* spellPkt, Spell
 				sound.PlaySoundAtObj(spellSoundId, spellPkt->caster);
 				return 1;
 			}
-			for (int i = 0; i < tgtCount; i++)
+			for (auto i = 0u; i < tgtCount; i++)
 			{
 				if (spellPkt->targetListHandles[i]) {
 					sound.PlaySoundAtObj(spellSoundId, spellPkt->targetListHandles[i]);
@@ -261,7 +261,7 @@ uint32_t PythonSpellIntegration::SpellSoundPlay(SpellPacketBody* spellPkt, Spell
 				sound.PlaySoundAtLoc(spellSoundId, spellPkt->aoeCenter.location.location);
 				return 1;
 			}
-			for (int i = 0; i < tgtCount; i++) {
+			for (auto i = 0u; i < tgtCount; i++) {
 				if (spellPkt->targetListHandles[i]) {
 					sound.PlaySoundAtObj(spellSoundId, spellPkt->targetListHandles[i]);
 				}

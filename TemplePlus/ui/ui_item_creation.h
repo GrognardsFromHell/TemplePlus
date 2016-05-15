@@ -44,7 +44,7 @@ struct ItemEnhancementSpec {
 	} data;
 
 	struct EnhReqs{
-		int minLevel;
+		uint32_t minLevel;
 		Alignment alignment;
 		Stat classReq;
 		std::map<int, std::vector<uint32_t>> spells; // each entry in the map is considered a sufficient condition
@@ -142,7 +142,7 @@ public:
 
 	int MaaCpCost(int appliedEffectIdx);
 	int MaaXpCost(int effIdx); // calculates XP cost for crafting effects in MAA
-	int CreateItemResourceCheck(objHndl crafter, objHndl item);
+	bool CreateItemResourceCheck(objHndl crafter, objHndl item);
 	const char* GetItemCreationMesLine(int lineId);
 	char const* ItemCreationGetItemName(objHndl itemHandle) const;
 	objHndl MaaGetItemHandle();

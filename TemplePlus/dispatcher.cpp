@@ -386,7 +386,7 @@ bool DispatcherSystem::Dispatch64ImmunityCheck(objHndl handle, DispIoImmunity* d
 	if (dispatcher->IsValid())
 	{
 		DispatcherProcessor(dispatcher, dispTypeSpellImmunityCheck, 0, dispIo);
-		return dispIo->returnVal;
+		return dispIo->returnVal != 0;
 	}
 	
 	return 0;
@@ -1088,18 +1088,18 @@ void CondStructNew::AddToFeatDictionary(feat_enums feat, feat_enums featEnumMax,
 	conds.AddToFeatDictionary(this, feat, featEnumMax, condArg2Offset);
 }
 
-uint32_t DispatcherCallbackArgs::GetCondArg(int argIdx)
+int32_t DispatcherCallbackArgs::GetCondArg(uint32_t argIdx)
 {
 	return conds.CondNodeGetArg(subDispNode->condNode, argIdx);
 }
 
-objHndl DispatcherCallbackArgs::GetCondArgObjHndl(int argIdx)
+objHndl DispatcherCallbackArgs::GetCondArgObjHndl(uint32_t argIdx)
 {
 	objHndl handle { ((((uint64_t)GetCondArg(argIdx)) << 32) | GetCondArg(argIdx + 1)) };
 	return handle;
 }
 
-void* DispatcherCallbackArgs::GetCondArgPtr(int argIdx){
+void* DispatcherCallbackArgs::GetCondArgPtr(uint32_t argIdx){
 	return conds.CondNodeGetArgPtr(subDispNode->condNode, argIdx);
 }
 
@@ -1113,7 +1113,7 @@ int DispatcherCallbackArgs::GetData2() const
 	return subDispNode->subDispDef->data2;
 }
 
-void DispatcherCallbackArgs::SetCondArg(int argIdx, int value)
+void DispatcherCallbackArgs::SetCondArg(uint32_t argIdx, int value)
 {
 	conds.CondNodeSetArg(subDispNode->condNode, argIdx, value);
 }

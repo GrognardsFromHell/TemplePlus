@@ -218,8 +218,8 @@ void UiIntegameTurnbasedRepl::IntgameTurnbasedRender(int widId) {
 				if (ttLen > 0 && tooltipText[ttLen - 1] == '\n')
 					tooltipText[ttLen - 1] = 0;
 
-				auto y = *intgameAddresses.screenYfromMouseEvent;
-				auto x = *intgameAddresses.screenXfromMouseEvent;
+				int x = (int)(*intgameAddresses.screenXfromMouseEvent);
+				int y = (int)(*intgameAddresses.screenYfromMouseEvent);
 
 				auto ttStyle = tooltips.GetStyle(0);
 				UiRenderer::PushFont(ttStyle.fontName, ttStyle.fontSize);

@@ -1,8 +1,8 @@
 #pragma once
 
-class Dispatcher;
-class CondStructNew;
-class CondNode;
+struct Dispatcher;
+struct CondStructNew;
+struct CondNode;
 
 extern PyTypeObject PyModifierSpecType;
 extern PyTypeObject PyModifierType;

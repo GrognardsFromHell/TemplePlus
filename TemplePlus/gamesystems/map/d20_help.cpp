@@ -174,7 +174,7 @@ int HelpSystemReplacements::TabLineParserPriliminary(TigTabParser const* tabPars
 	if (d20ht->vParentsSize)
 	{
 		d20ht->virtualParents = new uint32_t[vParents.size()];
-		for (int i = 0; i < vParents.size(); i++)
+		for (auto i = 0u; i < vParents.size(); i++)
 		{
 			d20ht->virtualParents[i] = vParents[i];
 		}

@@ -135,7 +135,7 @@ public:
 		});
 
 		replaceFunction<int(__cdecl)(objHndl, objHndl)>(0x10152690, [](objHndl crafter, objHndl item) {
-			return itemCreation.CreateItemResourceCheck(crafter, item);
+			return itemCreation.CreateItemResourceCheck(crafter, item) ? 1 : 0;
 		});
 
 
@@ -196,7 +196,7 @@ public:
 			craftedName[63] = 0; // ensure string termination
 
 
-			auto currStrLen = strlen(craftedName) + 1;
+			int currStrLen = strlen(craftedName) + 1;
 			if (currStrLen < 62) {
 				for (int i = craftedNameCurPos; i < currStrLen; currStrLen--)
 				{
@@ -221,12 +221,12 @@ int ItemCreation::CraftedWandSpellLevel(objHndl objHndItem)
 	uint32_t spellLevelFinal = spellData.spellLevel;
 
 
-	auto casterLevelSet = (int) d20Sys.d20QueryReturnData(itemCreationCrafter, DK_QUE_Craft_Wand_Spell_Level);
+	auto casterLevelSet = (uint32_t) d20Sys.d20QueryReturnData(itemCreationCrafter, DK_QUE_Craft_Wand_Spell_Level);
 	casterLevelSet = 2 * ((casterLevelSet + 1) / 2) - 1;
 	if (casterLevelSet < 1)
 		casterLevelSet = 1;
 
-	int slotLevelSet = 1 + (casterLevelSet -1)/ 2;
+	auto slotLevelSet = 1 + (casterLevelSet - 1)/ 2;
 	if (spellLevelBasic == 0 && casterLevelSet <= 1)
 		slotLevelSet = 0;
 		
@@ -283,7 +283,7 @@ int ItemCreation::CraftedWandCasterLevel(objHndl item)
 	return (result * 2) - 1;
 }
 
-int32_t ItemCreation::CreateItemResourceCheck(objHndl obj, objHndl objHndItem){
+bool ItemCreation::CreateItemResourceCheck(objHndl obj, objHndl objHndItem){
 	bool canCraft = 1;
 	bool xpCheck = 0;
 	auto insuffXp = itemCreationAddresses.craftInsufficientXP;
@@ -334,11 +334,11 @@ int32_t ItemCreation::CreateItemResourceCheck(objHndl obj, objHndl objHndItem){
 		};
 		// check XP
 		// TODO make XP cost calculation take applied caster level into account
-		uint32_t itemXPCost = itemWorth / 2500;
+		int itemXPCost = itemWorth / 2500;
 		xpCheck = surplusXP >= itemXPCost;
 	} else 
 	{
-		uint32_t magicArmsAndArmorXPCost = MaaXpCost(CRAFT_EFFECT_INVALID);
+		int magicArmsAndArmorXPCost = MaaXpCost(CRAFT_EFFECT_INVALID);
 		xpCheck = surplusXP >= magicArmsAndArmorXPCost;
 	}
 		
@@ -383,7 +383,7 @@ char const* ItemCreation::ItemCreationGetItemName(objHndl itemHandle) const
 }
 
 objHndl ItemCreation::MaaGetItemHandle(){
-	if (craftingItemIdx < 0 || craftingItemIdx >= mMaaCraftableItemList.size()) {
+	if (craftingItemIdx < 0 || (uint32_t) craftingItemIdx >= mMaaCraftableItemList.size()) {
 		return objHndl::null;
 	}
 	return mMaaCraftableItemList[craftingItemIdx];
@@ -428,7 +428,7 @@ bool ItemCreation::MaaEffectIsApplicable(int effIdx){
 			return false;
 	}
 
-	if (craftingItemIdx >= 0 && craftingItemIdx < mMaaCraftableItemList.size())
+	if (craftingItemIdx >= 0 && (uint32_t) craftingItemIdx < mMaaCraftableItemList.size())
 	{
 		auto itemHandle = mMaaCraftableItemList[craftingItemIdx];
 		if (itemHandle){
@@ -604,7 +604,7 @@ bool ItemCreation::ItemWielderCondsContainEffect(int effIdx, objHndl item)
 
 	if (!IsWeaponBonus(effIdx)){  // a +x WEAPON bonus
 
-		for (int i = 0; i < condArray.GetSize(); i++){
+		for (auto i = 0u; i < condArray.GetSize(); i++){
 			auto condArrayIt = condArray[i];
 			if (condArrayIt  == condId)	{
 				if ( itEnh.flags & (IESF_ENH_BONUS | IESF_INCREMENTAL ) ){
@@ -625,7 +625,7 @@ bool ItemCreation::ItemWielderCondsContainEffect(int effIdx, objHndl item)
 	auto damBonus = 0;
 	auto toHitBonus = 0;
 
-	for (int i = 0; i < condArray.GetSize();i++){
+	for (auto i = 0u; i < condArray.GetSize();i++){
 
 		auto wielderCondId = condArray[i];
 		if (wielderCondId == condId){
@@ -703,7 +703,7 @@ void ItemCreation::CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, obj
 	// loop thru the item's spells (can be more than one in principle, like Keoghthem's Ointment)
 
 	// Current code - change this at will...
-	for (int n = 0; n < numItemSpells; n++){
+	for (auto n = 0u; n < numItemSpells; n++){
 		auto spellData = obj->GetSpell(obj_f_item_spell_idx, n);
 
 		// get data from caster - make this optional!
@@ -888,7 +888,7 @@ BOOL ItemCreation::ItemCreationEntryMsg(int widId, TigMsg* msg){
 		widIdx = -1;
 
 	auto itemIdx = mItemCreationScrollbarY + widIdx;
-	if (itemIdx < 0 || itemIdx >= numItemsCrafting[itemCreationType])
+	if (itemIdx < 0 || (uint32_t) itemIdx >= numItemsCrafting[itemCreationType])
 		return true;
 
 
@@ -1124,9 +1124,7 @@ uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t casterLeve
 		}
 	};
 
-	int casterLevelOld = itemSlotLevelBase * 2 - 1;
-	if (casterLevelOld < 1)
-		casterLevelOld = 1;
+	auto casterLevelOld = (uint32_t) std::max<int>(1, itemSlotLevelBase * 2 - 1);
 
 	if (itemSlotLevelBase == 0 && casterLevelNew > casterLevelOld){
 		return itemWorthBase * casterLevelNew;
@@ -1403,7 +1401,7 @@ void ItemCreation::ItemCreationWndRender(int widId){
 
 
 	// draw info pertaining to selected item
-	if (craftingItemIdx >= 0 && craftingItemIdx < numItemsCrafting[itemCreationType])
+	if (craftingItemIdx >= 0 && (uint32_t) craftingItemIdx < numItemsCrafting[itemCreationType])
 	{
 		auto itemHandle = craftedItemHandles[itemCreationType][craftingItemIdx];
 
@@ -1443,7 +1441,7 @@ void ItemCreation::ItemCreationEntryRender(int widId){
 		widIdx = -1;
 
 	auto itemIdx = mItemCreationScrollbarY + widIdx;
-	if (itemIdx < 0 || itemIdx >= numItemsCrafting[itemCreationType])
+	if (itemIdx < 0 || (uint32_t) itemIdx >= numItemsCrafting[itemCreationType])
 		return;
 
 	if (mUseCo8Ui)
@@ -1521,7 +1519,7 @@ void ItemCreation::MaaWndRender(int widId){
 
 	
 
-	if (craftingItemIdx >= 0 && craftingItemIdx < mMaaCraftableItemList.size())	{
+	if (craftingItemIdx >= 0 && (uint32_t) craftingItemIdx < mMaaCraftableItemList.size())	{
 
 		// draw item icon
 		auto itemHandle = mMaaCraftableItemList[craftingItemIdx];
@@ -1549,7 +1547,7 @@ void ItemCreation::MaaItemRender(int widId){
 
 	auto itemIdx = widIdx + mMaaItemsScrollbarY;
 
-	if (itemIdx < 0 || itemIdx >= mMaaCraftableItemList.size())
+	if (itemIdx < 0 || (size_t) itemIdx >= mMaaCraftableItemList.size())
 		return;
 
 	// bounding box I think
@@ -1594,7 +1592,7 @@ void ItemCreation::MaaAppliedBtnRender(int widId){
 	if (appliedBonusIndices.size() == 0)
 		return;
 
-	auto idx = 0;
+	auto idx = 0u;
 	for (idx = 0; idx < NUM_APPLIED_BONUSES_MAX; idx++) {
 		if (mMaaAppliedBtnIds[idx] == widId)
 			break;
@@ -1769,7 +1767,7 @@ void ItemCreation::MaaInitCrafter(objHndl crafter){
 		if (itemObj->type == obj_t_weapon){
 			auto condArr = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
 			bool oneFound = false;
-			for (auto i = 0; i < condArr.GetSize(); i++)
+			for (auto i = 0u; i < condArr.GetSize(); i++)
 			{
 				auto condId = condArr[i];
 				if (condId == weaponMwId || condId == weaponEnhId)
@@ -1783,7 +1781,7 @@ void ItemCreation::MaaInitCrafter(objHndl crafter){
 		} 
 		else if (itemObj->type == obj_t_armor){
 			auto condArr = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
-			for (auto i = 0; i < condArr.GetSize(); i++)
+			for (auto i = 0u; i < condArr.GetSize(); i++)
 			{
 				auto condId = condArr[i];
 				auto condW = conds.GetById(condId);
@@ -1967,7 +1965,7 @@ void ItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 					itemObj->AppendInt32(obj_f_item_pad_wielder_argument_array, arg0);
 				if (appliedCond->numArgs > 1)
 					itemObj->AppendInt32(obj_f_item_pad_wielder_argument_array, arg1);
-				for (int i = 2; i < appliedCond->numArgs; i++)
+				for (auto i = 2u; i < appliedCond->numArgs; i++)
 					itemObj->AppendInt32(obj_f_item_pad_wielder_argument_array, 0);
 
 				// applying +1 shield/armor bonus, so remove the masterwork condition
@@ -2198,7 +2196,7 @@ BOOL ItemCreation::MaaWndMsg(int widId, TigMsg * msg)
 		if (msg->type == TigMsgType::KEYSTATECHANGE)
 			vk = infrastructure::gKeyboard.ToVirtualKey(msg->arg1);
 
-		size_t crnl = 0;
+		int crnl = 0;
 		switch (vk) {
 		case VK_LEFT:
 			if (--craftedItemNamePos < 0)
@@ -2239,7 +2237,7 @@ BOOL ItemCreation::MaaWndMsg(int widId, TigMsg * msg)
 		auto key = (char)msg->arg1;
 		if (key == '\b') {
 			if (craftedItemNamePos > 0){
-				if (craftedItemNamePos <= craftedItemName.size()) {
+				if (craftedItemNamePos <= (int) craftedItemName.size()) {
 					craftedItemName.erase(craftedItemName.begin() + --craftedItemNamePos);
 				}
 			}
@@ -2255,7 +2253,7 @@ BOOL ItemCreation::MaaWndMsg(int widId, TigMsg * msg)
 		else if (key != '\r' && key >= ' ' && key <= '~'){
 			auto curStrLen = craftedItemName.size() + 1;
 			if (curStrLen < MAA_TEXTBOX_MAX_LENGTH){
-				if (craftedItemNamePos >= craftedItemName.size()) {
+				if (craftedItemNamePos >= (int) craftedItemName.size()) {
 					craftedItemName.push_back(key);
 				}
 				else {
@@ -2298,7 +2296,7 @@ bool ItemCreation::MaaWndRenderText(int widId, objHndl item){
 
 	// draw the textbox text
 	TigRect rect(296, 72,170, 10);
-	if (craftedItemNamePos > craftedItemName.size())
+	if (craftedItemNamePos > (int) craftedItemName.size())
 		craftedItemNamePos = craftedItemName.size();
 	if (craftedItemNamePos > 0)	{
 		text.append(craftedItemName,0, craftedItemNamePos);
@@ -2385,7 +2383,7 @@ BOOL ItemCreation::MaaItemMsg(int widId, TigMsg* msg){
 	auto itemIdx = mMaaItemsScrollbarY + widIdx;
 
 
-	if (itemIdx >= 0 && itemIdx < mMaaCraftableItemList.size()){
+	if (itemIdx >= 0 && itemIdx < (int) mMaaCraftableItemList.size()){
 		auto itemHandle = mMaaCraftableItemList[itemIdx];
 		craftingItemIdx = itemIdx;
 		MaaInitCraftedItem(itemHandle);
@@ -2774,12 +2772,12 @@ BOOL ItemCreation::MaaEffectRemoveMsg(int widId, TigMsg* msg){
 	if (!itemHandle)
 		return false;
 
-	if (idx >= appliedBonusIndices.size())
+	if (idx >= (int) appliedBonusIndices.size())
 		return false;
 
 	//auto effIdx = appliedBonusIndices[idx];
 	auto displayCount = 0;
-	auto appBonIdx = 0;
+	auto appBonIdx = 0u;
 	auto effIdx = CRAFT_EFFECT_INVALID;
 	for (auto it : appliedBonusIndices) {
 		if (itemEnhSpecs[it].flags & IESF_ENH_BONUS){
@@ -3417,13 +3415,13 @@ int ItemCreation::MaaCpCost(int effIdx){
 
 	auto icType = itemCreationType;
 
-	if (craftingItemIdx < 0 || craftingItemIdx >= numItemsCrafting[icType])
+	if (craftingItemIdx < 0 || (uint32_t) craftingItemIdx >= numItemsCrafting[icType])
 		return 0;
 
 	objHndl itemHandle = objHndl::null;
 	if (icType == ItemCreationType::CraftMagicArmsAndArmor)
 	{
-		if (craftingItemIdx >= mMaaCraftableItemList.size())
+		if ((size_t) craftingItemIdx >= mMaaCraftableItemList.size())
 			return 0;
 		itemHandle = mMaaCraftableItemList[craftingItemIdx];
 	} else
@@ -3450,13 +3448,13 @@ int ItemCreation::MaaXpCost(int effIdx){
 
 	auto icType = itemCreationType;
 
-	if (craftingItemIdx < 0 || craftingItemIdx >= numItemsCrafting[icType])
+	if (craftingItemIdx < 0 || (uint32_t) craftingItemIdx >= numItemsCrafting[icType])
 		return 0;
 
 	objHndl itemHandle = objHndl::null;
 	if (icType == ItemCreationType::CraftMagicArmsAndArmor)
 	{
-		if (craftingItemIdx >= mMaaCraftableItemList.size())
+		if ((size_t) craftingItemIdx >= mMaaCraftableItemList.size())
 			return 0;
 		itemHandle = mMaaCraftableItemList[craftingItemIdx];
 	}

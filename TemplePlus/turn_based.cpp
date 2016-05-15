@@ -99,12 +99,12 @@ void TurnBasedSys::InitiativeListNextActor()
 	auto actorInitiative = objects.getInt32(*turnBasedCurrentActor, obj_f_initiative);
 	auto actorInitiativeIdx = party.ObjFindInGroupArray(groupInitiativeList, *turnBasedCurrentActor);
 	auto nextInitiativeIdx = actorInitiativeIdx + 1;
-	int initiativeListLen = GetInitiativeListLength();
+	auto initiativeListLen = GetInitiativeListLength();
 
 	if (nextInitiativeIdx >= initiativeListLen) // time for next round
 	{
 		temple::GetRef<int>(0x10BCAD90) = 0; // surprise round
-		for (int i = 0; i < GetInitiativeListLength(); i++) // refreshing the init list length in case it changes
+		for (auto i = 0u; i < GetInitiativeListLength(); i++) // refreshing the init list length in case it changes
 		{
 			auto combatant = groupInitiativeList->GroupMembers[i];
 			auto dispatcher = objects.GetDispatcher(combatant);

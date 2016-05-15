@@ -195,7 +195,7 @@ bool SpellPacketBody::UpdateSpellsCastRegistry() const
 
 bool SpellPacketBody::FindObj(objHndl obj, int* idx) const
 {
-	for (int i = 0; i < targetCount; i++) {
+	for (auto i = 0u; i < targetCount; i++) {
 		if (targetListHandles[i]== obj)	{
 			*idx = i;
 			return true;
@@ -220,7 +220,7 @@ bool SpellPacketBody::InsertToPartsysList(uint32_t idx, int partsysId)
 
 bool SpellPacketBody::InsertToTargetList(uint32_t idx, objHndl tgt){
 	Expects(idx >= 0 && idx < 32 && idx <= targetCount);
-	for (int i = targetCount; i > idx; i--){
+	for (int i = targetCount; i > (int) idx; i--){
 		targetListHandles[i] = targetListHandles[i-1];
 	}
 	targetListHandles[idx] = tgt;
@@ -303,7 +303,7 @@ void SpellPacketBody::Debit(){
 		
 		auto numMem = casterObj->GetSpellArray(obj_f_critter_spells_memorized_idx).GetSize();
 		auto spellFound = false;
-		for (auto i = 0; i < numMem; i++){
+		for (auto i = 0u; i < numMem; i++){
 			auto spellMem = casterObj->GetSpell(obj_f_critter_spells_memorized_idx, i);
 			spellMem.pad0 &= 0x7F; // clear out metamagic indictor
 			
@@ -392,7 +392,7 @@ const char* LegacySpellSystem::GetSpellMesline(uint32_t lineNumber) const
 
 bool LegacySpellSystem::CheckAbilityScoreReqForSpell(objHndl handle, uint32_t spellEnum, int statBeingRaised) const
 {
-	return temple::GetRef<BOOL(__cdecl)(objHndl, uint32_t, int)>(0x10075C60)(handle, spellEnum, statBeingRaised);
+	return temple::GetRef<BOOL(__cdecl)(objHndl, uint32_t, int)>(0x10075C60)(handle, spellEnum, statBeingRaised) != 0;
 }
 
 const char* LegacySpellSystem::GetSpellEnumTAG(uint32_t spellEnum){
@@ -826,7 +826,7 @@ int LegacySpellSystem::SpellSave(TioOutputStream& file)
 	};
 	static auto SerializeHandlesToFile = [](objHndl objs[], uint32_t num, TioOutputStream&streama)
 	{
-		for (int i = 0; i < num; i++)
+		for (auto i = 0u; i < num; i++)
 		{
 			if (!SerializeHandleToFile(objs[i], streama))
 				return false;
@@ -835,7 +835,7 @@ int LegacySpellSystem::SpellSave(TioOutputStream& file)
 	};
 	static auto SerializePartSystemsToFile = [](uint32_t partsys[], uint32_t num, TioOutputStream&stream)
 	{
-		for (int i = 0; i < num; i++)
+		for (auto i = 0u; i < num; i++)
 		{
 			if (!SerializePartsysToFile(partsys[i], stream))
 				return false;
@@ -844,7 +844,7 @@ int LegacySpellSystem::SpellSave(TioOutputStream& file)
 	};
 	static auto SerializeSpellObjsToFile = [](SpellPacketBody::SpellObj spellObjs[], uint32_t num, TioOutputStream&stream)
 	{
-		for (int i = 0; i < num; i++)
+		for (auto i = 0u; i < num; i++)
 		{
 			if (!SerializeHandleToFile(spellObjs[i].obj, stream))
 				return false;
@@ -1421,7 +1421,7 @@ uint32_t LegacySpellSystem::GetSpellRangeExact(SpellRangeType spellRangeType, ui
 	case SpellRangeType::SRT_Personal:
 		return 5;
 	case SpellRangeType::SRT_Touch:
-		return critterSys.GetReach(caster, D20A_TOUCH_ATTACK);
+		return (int) critterSys.GetReach(caster, D20A_TOUCH_ATTACK);
 	case SpellRangeType::SRT_Close:
 		return (casterLevel / 2 + 5) * 5;
 	case SpellRangeType::SRT_Medium:

@@ -203,7 +203,7 @@ public:
 		Get/Set a Condition Node's arg. Often used in the init callbacks of various conditions.
 	*/
 	int32_t CondNodeGetArg(CondNode* condNode, uint32_t argIdx);
-	int * CondNodeGetArgPtr(CondNode* condNode, int argIdx);
+	int * CondNodeGetArgPtr(CondNode* condNode, uint32_t argIdx);
 	void CondNodeSetArg(CondNode* condNode, uint32_t argIdx, uint32_t argVal);
 
 	void CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNodeNew);

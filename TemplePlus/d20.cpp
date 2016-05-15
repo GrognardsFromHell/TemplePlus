@@ -215,7 +215,7 @@ bool LegacyD20System::SpellIsInterruptedCheck(D20Actn* d20a, int invIdx, SpellSt
 	if (d20a->d20Caf & D20CAF_COUNTERSPELLED)
 		return true;
 	return d20Sys.d20QueryWithData(d20a->d20APerformer, 
-		DK_QUE_SpellInterrupted, (uint32_t)&d20a->d20SpellData, 0);
+		DK_QUE_SpellInterrupted, (uint32_t)&d20a->d20SpellData, 0) != 0;
 }
 
 void LegacyD20System::NewD20ActionsInit()
@@ -776,10 +776,9 @@ ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
 
 	int caflags = d20a->d20Caf;
 	if (caflags & D20CAF_CRITICAL
-		|| d20Sys.d20QueryWithData(d20a->d20APerformer, DK_QUE_Play_Critical_Hit_Anim, caflags, caflags >> 32))
+		|| d20Sys.d20QueryWithData(d20a->d20APerformer, DK_QUE_Play_Critical_Hit_Anim, caflags, 0)) {
 		playCritFlag = 1;
-
-
+	}
 	
 	if (animationGoals.PushAttackAnim(d20a->d20APerformer, d20a->d20ATarget, 0xFFFFFFFF, hitAnimIdx, playCritFlag, useSecondaryAnim))
 	{
@@ -987,7 +986,7 @@ bool LegacyD20System::D20QueryWithDataDefaultTrue(objHndl obj, D20DispatcherKey 
 	dispIo.return_val = 1;
 	dispIo.data1 = reinterpret_cast<uint32_t>(d20a);
 	dispatcher->Process(dispTypeD20Query, dispKey, &dispIo);
-	return dispIo.return_val;
+	return dispIo.return_val != 0;
 }
 #pragma endregion 
 
@@ -1284,7 +1283,7 @@ ActionErrorCode D20ActionCallbacks::PerformQuiveringPalm(D20Actn* d20a){
 	d20Sys.ToHitProc(d20a);
 	auto caflags = d20a->d20Caf;
 	if (caflags & D20CAF_CRITICAL
-		|| d20Sys.d20QueryWithData(d20a->d20APerformer, DK_QUE_Play_Critical_Hit_Anim, caflags, caflags >> 32))
+		|| d20Sys.d20QueryWithData(d20a->d20APerformer, DK_QUE_Play_Critical_Hit_Anim, caflags, 0))
 	{
 		playCritFlag = 1;
 	}
@@ -1372,12 +1371,13 @@ ActionErrorCode D20ActionCallbacks::ActionCheckDisarm(D20Actn* d20a, TurnBasedSt
 ActionErrorCode D20ActionCallbacks::ActionCheckEmptyBody(D20Actn* d20a, TurnBasedStatus* tbStat){
 	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Is_Ethereal))
 		return AEC_INVALID_ACTION;
-	auto numRounds = ( 0xffFFffFF00000000 & d20Sys.d20QueryReturnData(d20a->d20APerformer, DK_QUE_Empty_Body_Num_Rounds, 2, 0) ) >> 32;
+	int numRounds = d20Sys.d20QueryReturnData(d20a->d20APerformer, DK_QUE_Empty_Body_Num_Rounds, 2, 0) >> 32;
 	if (numRounds <= 0)
 		return AEC_OUT_OF_CHARGES;
 
-	if (d20a->data1 > numRounds)
+	if (d20a->data1 > (uint32_t) numRounds) {
 		d20a->data1 = numRounds;
+	}
 
 	return AEC_OK;
 }

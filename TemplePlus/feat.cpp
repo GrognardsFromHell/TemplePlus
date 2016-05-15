@@ -137,7 +137,7 @@ LegacyFeatSystem::LegacyFeatSystem()
 	rebase(ToEE_WeaponFeatCheck, 0x1007C4F0);
 	rebase(FeatAdd, 0x1007CF30);
 
-	uint32_t _racialFeatsTable[NUM_RACES * 10] = { -1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	int _racialFeatsTable[NUM_RACES * 10] = { -1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		FEAT_SIMPLE_WEAPON_PROFICIENCY_ELF, -1, 0, 0, 0, 0, 0, 0, 0, 0,
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -145,8 +145,8 @@ LegacyFeatSystem::LegacyFeatSystem()
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // table presupposes 10 items on each row, terminator character -1
-	uint32_t _rangerArcheryFeats[4 * 2] = { FEAT_RANGER_RAPID_SHOT, 2, FEAT_RANGER_MANYSHOT, 6, FEAT_IMPROVED_PRECISE_SHOT_RANGER, 11, -1, -1 };
-	uint32_t _rangerTwoWeaponFeats[4 * 2] = { FEAT_TWO_WEAPON_FIGHTING_RANGER, 2, FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER, 6, FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER, 11, - 1, -1 };
+	int _rangerArcheryFeats[4 * 2] = { FEAT_RANGER_RAPID_SHOT, 2, FEAT_RANGER_MANYSHOT, 6, FEAT_IMPROVED_PRECISE_SHOT_RANGER, 11, -1, -1 };
+	int _rangerTwoWeaponFeats[4 * 2] = { FEAT_TWO_WEAPON_FIGHTING_RANGER, 2, FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER, 6, FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER, 11, - 1, -1 };
 
 	memcpy(racialFeats, _racialFeatsTable, sizeof(racialFeats));
 	memcpy(rangerArcheryFeats, _rangerArcheryFeats, sizeof(rangerArcheryFeats));
@@ -811,8 +811,8 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 # pragma region Min Arcane Caster Level
 			uint32_t sorcererLevel = objects.StatLevelGet(objHnd, stat_level_sorcerer);
 			uint32_t wizardLevel = objects.StatLevelGet(objHnd, stat_level_wizard);
-			if (sorcererLevel + (classCodeBeingLevelledUp == stat_level_sorcerer) < featReqCodeArg
-				&& wizardLevel + (classCodeBeingLevelledUp == stat_level_wizard) < featReqCodeArg
+			if (sorcererLevel + (classCodeBeingLevelledUp == stat_level_sorcerer) < (uint32_t) featReqCodeArg
+				&& wizardLevel + (classCodeBeingLevelledUp == stat_level_wizard) < (uint32_t) featReqCodeArg
 				){
 				return 0;
 			}
@@ -887,7 +887,7 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 			feat_enums featIdxFromReqCode = (feat_enums)(featReqCode - 1000);
 			if (!_FeatExistsInArray(featIdxFromReqCode, featArray, featArrayLen))
 			{
-				if ((uint32_t)templeFuncs.ObjStatBaseGet(objHnd, featReqCode) < featReqCodeArg)
+				if (templeFuncs.ObjStatBaseGet(objHnd, featReqCode) < featReqCodeArg)
 				{
 					uint32_t stat = 0;
 					if (featIdxFromReqCode == FEAT_TWO_WEAPON_FIGHTING)
@@ -907,7 +907,7 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 						stat = 1641;
 					}
 					if (stat == 0){ return 0; }
-					if ((uint32_t)templeFuncs.ObjStatBaseGet(objHnd, stat) < featReqCodeArg){ return 0; }
+					if (templeFuncs.ObjStatBaseGet(objHnd, stat) < featReqCodeArg){ return 0; }
 				}
 			}
 #pragma endregion 
@@ -916,20 +916,20 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 		{
 # pragma region Class Level Requirement
 			if (classCodeBeingLevelledUp == featReqCode){	featReqCodeArg--;	}
-			if ((uint32_t)objects.StatLevelGet(objHnd, (Stat)featReqCode) < featReqCodeArg){ return 0; }
+			if ((int) objects.StatLevelGet(objHnd, (Stat)featReqCode) < featReqCodeArg){ return 0; }
 #pragma endregion 
 		} 
 		else if (featReqCode == 266)
 		{
 #pragma region BAB Requirement
-			if (templeFuncs.ObjGetBABAfterLevelling(objHnd, classCodeBeingLevelledUp) < featReqCodeArg){ return 0; }
+			if ((int) templeFuncs.ObjGetBABAfterLevelling(objHnd, classCodeBeingLevelledUp) < featReqCodeArg){ return 0; }
 #pragma endregion 
 		} 
 		else if (featReqCode >= stat_strength && featReqCode <= stat_charisma)
 		{
 #pragma region Ability Score Requirement
 			if (abilityScoreBeingIncreased == featReqCode){ featReqCodeArg--; }
-			if ((uint32_t)templeFuncs.ObjStatBaseDispatch(objHnd, featReqCode, nullptr) < featReqCodeArg)
+			if ((int) templeFuncs.ObjStatBaseDispatch(objHnd, featReqCode, nullptr) < featReqCodeArg)
 			{
 				return 0;
 			}
@@ -939,7 +939,7 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 		else if (featReqCode != 266)
 		{
 # pragma region Default: Stat requirement
-			if ((uint32_t)templeFuncs.ObjStatBaseGet(objHnd, featReqCode) < featReqCodeArg){ return 0; }
+			if ((int)templeFuncs.ObjStatBaseGet(objHnd, featReqCode) < featReqCodeArg){ return 0; }
 #pragma endregion 
 		}
 		
@@ -1038,7 +1038,7 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 		{
 			classFeat += 2;
 		}
-		if (classFeat[0] != -1 && classLevel >= classFeat[1])
+		if (classFeat[0] != -1 && (int) classLevel >= classFeat[1])
 		{
 			return 1;
 		}

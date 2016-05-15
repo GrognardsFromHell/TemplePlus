@@ -111,20 +111,20 @@ class CritterReplacements : public TempleFix
 				return 0;
 			}
 
-			if (!item){
-				return critterSys.GetReach(parent, D20A_NONE);
+			if (!item) {
+				return (int) critterSys.GetReach(parent, D20A_NONE);
 			}
 
 			auto itemObj = gameSystems->GetObj().GetObject(item);
 			if (itemObj->type != obj_t_weapon){
-				return critterSys.GetReach(parent, D20A_NONE);
+				return (int) critterSys.GetReach(parent, D20A_NONE);
 			}
 
 			auto weapFlags = (WeaponFlags)itemObj->GetInt32(obj_f_weapon_flags);
 			if (weapFlags & WeaponFlags::OWF_RANGED_WEAPON)	{
 				return itemObj->GetInt32(obj_f_weapon_range);
 			}
-			return itemObj->GetInt32(obj_f_weapon_range) + critterSys.GetReach(parent, D20A_NONE);
+			return itemObj->GetInt32(obj_f_weapon_range) + (int) critterSys.GetReach(parent, D20A_NONE);
 		});
 		ShowExactHpForNPCs();
 	}
@@ -1000,23 +1000,17 @@ float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType) {
 
 	float naturalReach = (float)objects.getInt32(obj, obj_f_critter_reach);
 	auto protoId = d20Sys.d20Query(obj, DK_QUE_Polymorphed);
-	if (protoId){
+	if (protoId) {
 		auto protoHandle = gameSystems->GetObj().GetProtoHandle(protoId);
-		if (protoHandle){
-			naturalReach = gameSystems->GetObj().GetObject(protoHandle)->GetInt32(obj_f_critter_reach);
+		if (protoHandle) {
+			naturalReach = (float)gameSystems->GetObj().GetObject(protoHandle)->GetInt32(obj_f_critter_reach);
 		}
 	}
 
-	
-
-	/*
-	__asm{
-		fild naturalReach;
-		fstp naturalReach;
-	}
-	*/
-	if (naturalReach < 0.01)
+	if (naturalReach < 0.01) {
 		naturalReach = 5.0;
+	}
+
 	if (actType != D20A_TOUCH_ATTACK)
 	{
 		objHndl weapon = inventory.GetItemAtInvIdx(obj, 203);
@@ -1125,7 +1119,7 @@ int LegacyCritterSystem::GetCritterNumNaturalAttacks(objHndl obj){
 	auto n = 0;
 
 	auto critterAttacks = gameSystems->GetObj().GetObject(obj)->GetInt32Array(obj_f_critter_attacks_idx);
-	for (auto i = 0; i < critterAttacks.GetSize() && i < 3; i++)	{
+	for (auto i = 0u; i < critterAttacks.GetSize() && i < 3; i++)	{
 		auto a = critterAttacks[i];
 		if (a > 0)
 			n += a;

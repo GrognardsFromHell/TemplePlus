@@ -55,7 +55,7 @@ public:
 
 	struct WildShapeSpec {
 		int protoId;
-		int minLvl;
+		uint32_t minLvl;
 		int monCat;
 		WildShapeSpec() { protoId = 0; minLvl = 1; monCat = mc_type_animal; }
 		WildShapeSpec(int ProtoId, int MinLvl) :protoId(ProtoId), minLvl(MinLvl), monCat(mc_type_animal) {	};

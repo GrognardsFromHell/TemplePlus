@@ -843,7 +843,7 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 		for (int enemyIdx = 0; enemyIdx < enemyCount; enemyIdx++)
 		{
 			auto enemy = enemies[enemyIdx];
-			int interrupterIdx = 0;
+			auto interrupterIdx = 0u;
 			bool hasInterrupted = false;
 			for (interrupterIdx = 0; interrupterIdx < aooPacket->numAoOs; interrupterIdx++)
 			{
@@ -1522,7 +1522,7 @@ void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a
 	pathfindingSys.TruncatePathToDistance(pqr, &truncLoc, 0.0);
 	float startDistFeet = 0.0, endDistFeet = pathfindingSys.pathLength(d20a->path), aooDistFeet;
 	PathQueryResult * pqrTrunc;
-	for (int i = 0; i < aooPacket.numAoOs;i++)
+	for (auto i = 0u; i < aooPacket.numAoOs;i++)
 	{
 		if (aooPacket.aooDistFeet[i] != startDistFeet)
 		{
@@ -1862,7 +1862,7 @@ bool ActionSequenceSystem::SpellTargetsFilterInvalid(D20Actn& d20a){
 	auto orgTgtCount = curSeq->spellPktBody.targetCount;
 	std::vector<objHndl> validTargets;
 
-	for (int i = 0; i < orgTgtCount; i++){
+	for (auto i = 0u; i < orgTgtCount; i++){
 		auto tgt = curSeq->spellPktBody.targetListHandles[i];
 		
 		if (!tgt){
@@ -1887,10 +1887,10 @@ bool ActionSequenceSystem::SpellTargetsFilterInvalid(D20Actn& d20a){
 		validTargets.push_back(tgt);
 	}
 	
-	for (int i = 0; i < validTargets.size(); i++){
+	for (auto i = 0u; i < validTargets.size(); i++){
 		curSeq->spellPktBody.targetListHandles[i] = validTargets[i];
 	}
-	for (int i = validTargets.size(); i < MAX_SPELL_TARGETS; i++){
+	for (auto i = validTargets.size(); i < MAX_SPELL_TARGETS; i++){
 		curSeq->spellPktBody.targetListHandles[i] = 0;
 	}
 
@@ -2161,7 +2161,7 @@ uint32_t ActionSequenceSystem::curSeqNext()
 			{
 				if (spellSys.GetSpellPacketBody(spellId, &spellPktBody ))
 				{
-					for (int i = 0; i < spellPktBody.orgTargetCount; i++)
+					for (auto i = 0u; i < spellPktBody.orgTargetCount; i++)
 					{
 						if (spellPktBody.targetListHandles[i])
 						{
@@ -2813,7 +2813,7 @@ BOOL ActionSequenceSystem::SimulsAdvance()
 {
 	*simulsIdx = *numSimultPerformers - 1;
 	auto actor = tbSys.turnBasedGetCurrentActor();
-	for (int i = 0; i < *numSimultPerformers;i++)
+	for (auto i = 0u; i < *numSimultPerformers;i++)
 	{
 		if (actor == simultPerformerQueue[i])
 		{

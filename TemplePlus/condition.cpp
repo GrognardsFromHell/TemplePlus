@@ -1,4 +1,8 @@
+
 #include "stdafx.h"
+
+#include <graphics/math.h>
+
 #include "common.h"
 #include "dispatcher.h"
 #include "condition.h"
@@ -1471,10 +1475,10 @@ void _FeatConditionsRegister()
 {
 
 	// In moebiues DLL the condition table was moved and extended
-	auto condCount = 84;
+	auto condCount = 84u;
 	if (temple::Dll::GetInstance().IsVanillaDll()) {
 		conds.FeatConditionDict = temple::GetPointer<CondFeatDictionary>(0x102EEC40);
-		condCount = 79;
+		condCount = 79u;
 	}
 
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAttackOfOpportunity);
@@ -1522,7 +1526,7 @@ void _FeatConditionsRegister()
 	craftMaa.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatCraftMagicArmsAndArmorRadial);
 	craftMaa.AddToFeatDictionary(FEAT_CRAFT_MAGIC_ARMS_AND_ARMOR);
 
-	for (unsigned int i = 0; i < condCount; i++){
+	for (auto i = 0u; i < condCount; i++){
 		conds.hashmethods.CondStructAddToHashtable(conds.FeatConditionDict[i].condStruct.old);
 	}
 }
@@ -1663,7 +1667,7 @@ bool ConditionSystem::AddTo(objHndl handle, const string& name, const vector<int
 
 bool ConditionSystem::ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** nodes, CondStruct* condStruct, const vector<int>& args)
 {
-	return _ConditionAddDispatchArgs(dispatcher, nodes, condStruct, args);
+	return _ConditionAddDispatchArgs(dispatcher, nodes, condStruct, args) != 0;
 
 }
 
@@ -1703,8 +1707,7 @@ void ConditionSystem::InitCondFromCondStructAndArgs(Dispatcher* dispatcher, Cond
 	}
 	*v4 = condNodeNew;
 
-	for (auto i = 0; i < condStruct->numArgs; i++)
-	{
+	for (auto i = 0u; i < condStruct->numArgs; i++) {
 		condNodeNew->args[i] = condargs[i];
 	}
 	conds.CondNodeAddToSubDispNodeArray(dispatcher, condNodeNew);
@@ -2169,7 +2172,8 @@ int ConditionSystem::PermanentAndItemModsExtractInfo(Dispatcher* dispatcher, int
 		}
 		cond = cond->nextCondNode;
 	}
-	if (!cond) return 0;
+
+	return 0;
 }
 
 void ConditionSystem::ConditionRemove(objHndl objHnd, CondNode* cond)
@@ -2181,7 +2185,7 @@ void ConditionSystem::ConditionRemove(objHndl objHnd, CondNode* cond)
 	}
 }
 
-int* ConditionSystem::CondNodeGetArgPtr(CondNode* condNode, int argIdx)
+int* ConditionSystem::CondNodeGetArgPtr(CondNode* condNode, uint32_t argIdx)
 {
 	if (argIdx < condNode->condStruct->numArgs)
 		return (int*)&condNode->args[argIdx];
@@ -2680,9 +2684,9 @@ int ConditionFunctionReplacement::LayOnHandsPerform(DispatcherCallbackArgs args)
 		if (d20a->d20Caf & D20CAF_RANGED)
 			return 0;
 		d20Sys.ToHitProc(d20a);
-		animResult = animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget);
+		animResult = animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget) != 0;
 	} else	{
-		animResult = animationGoals.PushAnimate(d20a->d20APerformer, 86);
+		animResult = animationGoals.PushAnimate(d20a->d20APerformer, 86) != 0;
 	}
 
 	
@@ -2701,7 +2705,7 @@ int ConditionFunctionReplacement::RemoveDiseasePerform(DispatcherCallbackArgs ar
 {
 	auto dispIo = dispatch.DispIoCheckIoType12(args.dispIO);
 	auto d20a = dispIo->d20a;
-	bool animResult = animationGoals.PushAnimate(d20a->d20APerformer, 86);
+	auto animResult = animationGoals.PushAnimate(d20a->d20APerformer, 86);
 	
 	if (animResult){
 		// fixes lack of animation ID
@@ -2789,7 +2793,7 @@ int SpellCallbacks::BeginHezrouStench(DispatcherCallbackArgs args){
 
 	SpellEntry spellEntry(spellPkt.spellEnum);
 
-	auto evtId = objEvents.EventAppend(args.objHndCaller, 0, 1, OLC_CRITTERS, 12.0 * spellEntry.radiusTarget, 0.0, M_PI * 2);
+	auto evtId = objEvents.EventAppend(args.objHndCaller, 0, 1, OLC_CRITTERS, 12.0f * spellEntry.radiusTarget, 0.0, XM_PI * 2);
 
 	args.SetCondArg(2, evtId);
 	if (!spellPkt.UpdateSpellsCastRegistry()){
@@ -3606,12 +3610,8 @@ int ClassAbilityCallbacks::CouragedAuraSavingThrow(DispatcherCallbackArgs args)
 	dispIo->AssertType(dispIOTypeSavingThrow);
 	if (!(dispIo->flags & 0x100000))
 		return 0;
-
-
-
-	int64_t a1 = args.GetCondArg(0);
-	int64_t a2 = args.GetCondArg(1);
-	objHndl auraSource = objHndl::FromUpperAndLower(a1, a2);
+	
+	objHndl auraSource = args.GetCondArgObjHndl(0);
 
 	if (!auraSource) {
 		return 0;
