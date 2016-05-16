@@ -16,8 +16,6 @@ struct Pathfinding;
 struct LegacySkillSystem;
 struct FloatLineSystem;
 
-struct FieldDataMax { uint32_t data[8]; }; // for wrapping "objSetField" calls that get input by value; this is the largest data size that I know of
-
 namespace gfx {
 	struct AnimatedModelParams;
 	using AnimatedModelPtr = std::shared_ptr<class AnimatedModel>;
