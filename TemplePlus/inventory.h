@@ -70,7 +70,11 @@ struct InventorySystem : temple::AddressTable
 	int IsThrowingWeapon(objHndl weapon);
 	static bool IsTripWeapon(objHndl weapon);
 	ArmorType GetArmorType(int armorFlags);
+	
+	BOOL GetQuantityField(const objHndl item, obj_f * qtyField); // gets the relevant quantity field for the item ; returns 0 if irrelevant
 	int GetQuantity(objHndl item); // note: returns 0 for items with no quantity fields!
+	void QuantitySet(const objHndl& item, int qtyNew);
+
 	objHndl GetParent(objHndl item);
 	bool IsRangedWeapon(objHndl weapon);
 	int GetInventory(objHndl obj, objHndl** inventoryArray);
@@ -93,6 +97,7 @@ struct InventorySystem : temple::AddressTable
 	
 	static bool IsMagicItem(objHndl itemHandle);
 	static bool IsIdentified(objHndl itemHandle);
+	void ItemSpellChargeConsume(const objHndl& item, int chargesUsedUp = 1);
 	static bool IsBuckler(objHndl shield);
 	void(__cdecl*_ForceRemove)(objHndl, objHndl);
 	void ItemRemove(objHndl item); // pretty much same as ForceRemove, but also send a d20 signal for inventory update, and checks for parent first

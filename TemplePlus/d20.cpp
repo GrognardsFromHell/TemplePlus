@@ -144,6 +144,7 @@ public:
 	// Perform 
 	PerformFunc(AidAnotherWakeUp);
 	PerformFunc(Aoo);
+	PerformFunc(CastItemSpell);
 	PerformFunc(CastSpell);
 	PerformFunc(Charge);
 	PerformFunc(Disarm);
@@ -1769,14 +1770,104 @@ ActionErrorCode D20ActionCallbacks::PerformAoo(D20Actn* d20a)
 	return PerformStandardAttack(d20a);
 }
 
-ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
+ActionErrorCode D20ActionCallbacks::PerformCastItemSpell(D20Actn* d20a){
 
+	int spellEnum = 0, spellClass, spellLvl, invIdx;
+	MetaMagicData mmData;
+	d20a->d20SpellData.Extract(&spellEnum, nullptr, &spellClass, &spellLvl, &invIdx, &mmData);
+	if (invIdx == INV_IDX_INVALID)
+		return AEC_OK;
+
+	auto item = inventory.GetItemAtInvIdx(d20a->d20APerformer, invIdx);
+	auto itemObj = gameSystems->GetObj().GetObject(item);
+	auto itemFlags = (ItemFlag)itemObj->GetInt32(obj_f_item_flags);
+
+	if (d20a->d20ActType == D20A_ACTIVATE_DEVICE_SPELL || !(item))
+		return AEC_OK;
+
+	auto useMagicDeviceBase = critterSys.SkillBaseGet(d20a->d20APerformer, SkillEnum::skill_use_magic_device);
+	int resultDeltaFromDc;
+	if (!inventory.IsIdentified(item) && itemObj->type != obj_t_food){ // blind use of magic item
+		if (itemObj->type == obj_t_scroll || !useMagicDeviceBase)
+			return AEC_CANNOT_CAST_SPELLS;
+		auto umdRoll = skillSys.SkillRoll(d20a->d20APerformer, SkillEnum::skill_use_magic_device, 25, &resultDeltaFromDc, 1);
+		if (!umdRoll){
+			skillSys.FloatError(d20a->d20APerformer, 5); /// casting mishap
+			if (resultDeltaFromDc >= 0)	{
+				skillSys.FloatError(d20a->d20APerformer, 6);
+				inventory.ItemSpellChargeConsume(item);
+				return AEC_CANNOT_CAST_SPELLS;
+			}
+		}
+	}
+
+
+	
+	if ( (itemObj->type == obj_t_scroll || (itemFlags & OIF_NEEDS_SPELL ) && (itemObj->type == obj_t_generic || itemObj->type == obj_t_weapon))
+		  && !critterSys.HashMatchingClassForSpell(d20a->d20APerformer, spellEnum) ){
+		if (!useMagicDeviceBase)
+			return AEC_CANNOT_CAST_SPELLS;
+		
+		if (itemObj->type == obj_t_scroll){
+			
+			auto umdRoll = skillSys.SkillRoll(d20a->d20APerformer, SkillEnum::skill_use_magic_device, 20, &resultDeltaFromDc, 1);
+			if (!umdRoll){
+				skillSys.FloatError(d20a->d20APerformer, 7); // Use Scroll Failed
+				if (*actSeqSys.actSeqCur){
+					(*actSeqSys.actSeqCur)->spellPktBody.Reset();
+				}
+				return AEC_CANNOT_CAST_SPELLS;
+			}
+		} 
+		else{
+			auto umdRoll = skillSys.SkillRoll(d20a->d20APerformer, SkillEnum::skill_use_magic_device, 20, &resultDeltaFromDc, 1);
+			if (!umdRoll) {
+				skillSys.FloatError(d20a->d20APerformer, 8); // Use Wand Failed
+				return AEC_CANNOT_CAST_SPELLS;
+			}
+		}
+	}
+
+	if (itemObj->type == obj_t_scroll){
+		if (!spellSys.CheckAbilityScoreReqForSpell(d20a->d20APerformer, spellEnum, -1))	{
+			if (!useMagicDeviceBase){
+				if (*actSeqSys.actSeqCur) {
+					(*actSeqSys.actSeqCur)->spellPktBody.Reset();
+				}
+				return AEC_CANNOT_CAST_SPELLS;
+			}
+
+			auto umdRoll = skillSys.SkillRoll(d20a->d20APerformer, SkillEnum::skill_use_magic_device, 20, &resultDeltaFromDc, 1);
+			if (!umdRoll) {
+				skillSys.FloatError(d20a->d20APerformer, 9); // Emulate Ability Score Failed
+				return AEC_CANNOT_CAST_SPELLS;
+			}
+		}
+	}
+
+	auto weapFlags = (WeaponFlags)0;
+	if (itemObj->type == obj_t_weapon){
+		weapFlags = (WeaponFlags)itemObj->GetInt32(obj_f_weapon_flags);
+	}
+
+	auto chargesUsedUp = 1;
+	if ( (weapFlags & OWF_MAGIC_STAFF) && spellEnum == 379){ // raise dead
+		chargesUsedUp = 5;
+	}
+
+	inventory.ItemSpellChargeConsume(item, chargesUsedUp);
+
+	return AEC_OK;
+}
+
+ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
+	// todo: this looks seriously fucked up :D
 	int spellEnum = 0, spellClass, spellLvl, invIdx;
 	MetaMagicData mmData;
 	d20a->d20SpellData.Extract(&spellEnum, nullptr, &spellClass, &spellLvl, &invIdx, &mmData);
 	SpellStoreData spellData(spellEnum, spellLvl, spellClass, mmData );
 
-	objHndl item = 0;
+	objHndl item = objHndl::null;
 	
 
 	auto curSeq = *actSeqSys.actSeqCur;
@@ -1792,11 +1883,22 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 
 	// spell interruption
 	if (d20Sys.SpellIsInterruptedCheck(d20a, invIdx, &spellData)){
+		spellPkt.MemorizedUseUp(spellData);
 		spellPkt.Debit();
+		if (curSeq)
+			curSeq->spellPktBody.Reset();
 		return AEC_OK;
 	}
 
+	auto result = PerformCastItemSpell(d20a);
 
+	if (result){
+		if (curSeq)
+			curSeq->spellPktBody.Reset();
+		return result;
+	}
+
+	// todo: the rest
 	return AEC_OK;
 }
 

@@ -246,6 +246,10 @@ ArmorType InventorySystem::GetArmorType(int armorFlags)
 	return (ArmorType) (armorFlags & (ARMOR_TYPE_LIGHT | ARMOR_TYPE_MEDIUM | ARMOR_TYPE_HEAVY) );
 }
 
+BOOL InventorySystem::GetQuantityField(const objHndl item, obj_f* qtyField){
+	return temple::GetRef<BOOL(objHndl, obj_f*)>(0x100641B0)(item, qtyField);
+}
+
 int InventorySystem::GetQuantity(objHndl item)
 {
 	auto getQty = temple::GetRef<int(__cdecl)(objHndl)>(0x100642B0);
@@ -560,6 +564,43 @@ bool InventorySystem::IsIdentified(objHndl itemHandle)
 		return (obj->GetItemFlags() & ItemFlag::OIF_IDENTIFIED);
 
 	return true;
+}
+
+void InventorySystem::QuantitySet(const objHndl& item, int qtyNew){
+	obj_f qtyField;
+	if (GetQuantityField(item, &qtyField)){
+		gameSystems->GetObj().GetObject(item)->SetInt32(qtyField, qtyNew);
+	}
+}
+
+void InventorySystem::ItemSpellChargeConsume(const objHndl& item, int chargesUsedUp){
+	auto itemObj = gameSystems->GetObj().GetObject(item);
+	auto spellCharges = itemObj->GetInt32(obj_f_item_spell_charges_idx);
+	if (spellCharges == -1)
+		return;
+
+	// stacked items (scrolls, potions)
+	
+	auto itemQty = inventory.GetQuantity(item);
+	if (itemQty  > 1){
+		inventory.QuantitySet(item, itemQty - 1);
+	}
+	else if (itemQty == 1) {
+		objects.Destroy(item);
+		return;
+	}
+
+	// items with charges
+	itemObj->SetInt32(obj_f_item_spell_charges_idx, spellCharges - chargesUsedUp);
+
+	auto itemFlags = inventory.GetItemFlags(item);
+	if (!(itemFlags & OIF_EXPIRES_AFTER_USE))
+		return;
+
+	if (spellCharges - chargesUsedUp <= 0)
+		objects.Destroy(item);
+
+	return;
 }
 
 bool InventorySystem::IsBuckler(objHndl shield)

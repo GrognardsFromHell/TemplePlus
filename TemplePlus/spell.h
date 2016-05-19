@@ -108,6 +108,8 @@ struct SpellPacketBody{
 	const char* GetName(); // get the spell name
 	bool IsVancian();
 	void Debit(); // debit from the caster's memorized / daily casted spells
+	void MemorizedUseUp(SpellStoreData &spellData); // mark memorized spell as used up
+	void Reset();
 };
 
 const uint32_t TestSizeOfSpellPacketBody = sizeof(SpellPacketBody); // should be 0xAE8  (2792)

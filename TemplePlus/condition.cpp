@@ -2123,19 +2123,15 @@ int ConditionSystem::ConditionsExtractInfo(Dispatcher* dispatcher, int activeCon
 	return cond->condStruct->numArgs;
 }
 
-int ConditionSystem::PermanentAndItemModsExtractInfo(Dispatcher* dispatcher, int permModIdx, int* hashkeyOut, int* condArgsOut)
-{
+int ConditionSystem::PermanentAndItemModsExtractInfo(Dispatcher* dispatcher, int permModIdx, int* hashkeyOut, int* condArgsOut){
 	
 	int i=0; 
 	CondNode *cond;
 
 	cond = dispatcher->permanentMods;
-	while (cond )
-	{
-		if (!(cond->flags & 1))
-		{
-			if (i == permModIdx)
-			{
+	while (cond ){
+		if (!(cond->flags & 1))	{
+			if (i == permModIdx)	{
 				*hashkeyOut = conds.hashmethods.GetCondStructHashkey(cond->condStruct);
 				int numArgs = cond->condStruct->numArgs;
 				for (int i = 0; i < numArgs; i++)
@@ -2151,16 +2147,12 @@ int ConditionSystem::PermanentAndItemModsExtractInfo(Dispatcher* dispatcher, int
 
 
 	cond = dispatcher->itemConds;
-	while (cond)
-	{
-		if (! (cond->flags & 1))
-		{
-			if (i == permModIdx)
-			{
+	while (cond){
+		if (! (cond->flags & 1))	{
+			if (i == permModIdx)	{
 				*hashkeyOut = conds.hashmethods.GetCondStructHashkey(cond->condStruct);
 				int numArgs = cond->condStruct->numArgs;
-				for (i = 0; i < numArgs; i++)
-				{
+				for (i = 0; i < numArgs; i++)	{
 					condArgsOut[i] = cond->args[i];
 				}
 				return cond->condStruct->numArgs;

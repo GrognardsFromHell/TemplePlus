@@ -338,6 +338,46 @@ void SpellPacketBody::Debit(){
 
 }
 
+void SpellPacketBody::MemorizedUseUp(SpellStoreData &spellData){
+	if (!caster) {
+		logger->warn("SpellPacketBody::Debit() Null caster!");
+		return;
+	}
+
+	if (invIdx != INV_IDX_INVALID) // this is handled separately
+		return;
+
+	auto casterObj = gameSystems->GetObj().GetObject(caster);
+
+	auto numMem = casterObj->GetSpellArray(obj_f_critter_spells_memorized_idx).GetSize();
+	if (!numMem)
+		return;
+
+	static auto spellComparer = [](SpellStoreData &sd1, SpellStoreData& sd2){
+		return sd1.spellEnum == sd2.spellEnum
+			&& sd1.spellLevel == sd2.spellLevel
+			&& sd1.classCode == sd2.classCode
+			&& sd1.spellStoreState.spellStoreType == sd2.spellStoreState.spellStoreType
+			&& sd1.spellStoreState.usedUp == sd2.spellStoreState.usedUp
+			&& sd1.metaMagicData == sd2.metaMagicData	;
+	};
+
+	for (auto i = 0; i < numMem; i++){
+		auto sd = casterObj->GetSpell(obj_f_critter_spells_memorized_idx, i);
+		
+		if (spellComparer(sd, spellData)) {
+			sd.spellStoreState.usedUp = 1;	
+			casterObj->SetSpell(obj_f_critter_spells_memorized_idx, i, sd);
+			break;
+		}
+	}
+
+}
+
+void SpellPacketBody::Reset(){
+	spellSys.spellPacketBodyReset(this);
+}
+
 SpellMapTransferInfo::SpellMapTransferInfo()
 {
 	//memset(this, 0, sizeof(SpellMapTransferInfo));
