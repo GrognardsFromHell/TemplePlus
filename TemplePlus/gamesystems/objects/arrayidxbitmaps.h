@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <vector>
+#include <EASTL/vector.h>
 
 class OutputStream;
 struct TioFile;
@@ -72,13 +72,13 @@ public:
 
 private:
 	// The bitmap blocks that contain the actual index bitmaps
-	std::vector<uint32_t> mBitmapBlocks;
+	eastl::vector<uint32_t> mBitmapBlocks;
 
 	// State stored for each array
-	std::vector<ArrayIndices> mArrays;
+	eastl::vector<ArrayIndices> mArrays;
 
 	// IDs of free entries in mArrays
-	std::vector<ArrayIdxMapId> mFreeIds;
+	eastl::vector<ArrayIdxMapId> mFreeIds;
 
 	// Bitmask lookup table that contains bitmasks that have the lower 0 - 31
 	// bits set. This is used in counting the bits up and until position i in

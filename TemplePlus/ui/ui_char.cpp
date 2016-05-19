@@ -186,7 +186,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 	auto insertToSpellList = [](int idx, SpellStoreData& source, SpellList& spArray) {
 		auto spCount = spArray.count;
 
-		if (idx<0 || idx > spCount) {
+		if (idx < 0 || (uint32_t) idx > spCount) {
 			if (idx == spCount + 1)
 			{
 				spArray.spells[idx] = source;
@@ -372,7 +372,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 		auto spellsKnownArray = gameSystems->GetObj().GetObject(dude)->GetSpellArray(obj_f_critter_spells_known_idx);
 		auto spellsKnownArraySize = spellsKnownArray.GetSize();
 		std::vector<SpellStoreData> spellsKnownVector;
-		for (int j = 0; j < spellsKnownArraySize; j++){
+		for (auto j = 0u; j < spellsKnownArraySize; j++){
 			SpellStoreData spStore = spellsKnownArray[j];
 			if (spellSys.isDomainSpell(spStore.classCode)) {
 				// domain spell
@@ -407,7 +407,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 		}
 
 		// insert "Spell Level #" labels
-		for (int spellLvl = 0; spellLvl < NUM_SPELL_LEVELS; spellLvl++){
+		for (auto spellLvl = 0u; spellLvl < NUM_SPELL_LEVELS; spellLvl++){
 			auto spellKnNum = charSpellPackets[i].spellsKnown.count;
 			
 			SpellStoreData spStore;
@@ -415,7 +415,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 			spStore.spellLevel = spellLvl;
 
 			int spFound = -1;
-			for (int j = 0; j < spellKnNum; j++) {
+			for (auto j = 0u; j < spellKnNum; j++) {
 				if (charSpellPackets[i].spellsKnown.spells[j].spellLevel == spellLvl) {
 					spFound = j;
 					break;
@@ -444,7 +444,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 		auto numSpMemo = spellsMemoArray.GetSize();
 
 		for (int classLvl = 0; classLvl < d20ClassSys.ClassLevelMax; classLvl++) {
-			for (int j = 0; j < numSpMemo; j++)	{
+			for (auto j = 0u; j < numSpMemo; j++)	{
 				SpellStoreData spStore = spellsMemoArray[j];
 				// normal spells
 				if (!spellSys.isDomainSpell(spStore.classCode) && !spellSys.isDomainSpell(navClassPackets[i].spellClassCode)){
@@ -472,15 +472,13 @@ void CharUiSystem::SpellsShow(objHndl obj)
 		}
 
 		// create the blank slots for the rest
-		for (int spellLvl = 0; spellLvl < NUM_SPELL_LEVELS; spellLvl++) {
+		for (auto spellLvl = 0u; spellLvl < NUM_SPELL_LEVELS; spellLvl++) {
 			SpellStoreData spStore;
 			auto numSpellsForLvl = navClassPackets[i].numSpellsForLvl[spellLvl];
 			auto spMemNum = charSpellPackets[i].spellsMemorized.count;
 			
-			
-
-			int spFound = 0;
-			for (int j = 0; j < spMemNum; j++) {
+			auto spFound = 0u;
+			for (auto j = 0u; j < spMemNum; j++) {
 				if (charSpellPackets[i].spellsMemorized.spells[j].spellLevel >= spellLvl) {
 					break;
 				}
@@ -516,7 +514,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 			spStore.spellLevel = spellLvl;
 			spStore.spellEnum = 0;
 			int spFound = -1;
-			for (int j = 0; j < charSpellPackets[i].spellsMemorized.count; j++)	{
+			for (auto j = 0u; j < charSpellPackets[i].spellsMemorized.count; j++)	{
 				if (charSpellPackets[i].spellsMemorized.spells[j].spellLevel == spellLvl)
 				{
 					insertToSpellList(j, spStore, charSpellPackets[i].spellsMemorized);
@@ -540,7 +538,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 
 	// hide the Spellbook slots without spells
 	auto& curCharSpellPkt = charSpellPackets[uiCharSpellsNavClassTabIdx];
-	for (int i = 0; i < NUM_SPELLBOOK_SLOTS; i++){
+	for (auto i = 0u; i < NUM_SPELLBOOK_SLOTS; i++){
 		if (i < curCharSpellPkt.spellsKnown.count){
 			ui.WidgetSetHidden(curCharSpellPkt.spellbookSpellWnds[i]->widgetId, 0);
 			ui.WidgetBringToFront(curCharSpellPkt.spellbookSpellWnds[i]->widgetId);
@@ -560,7 +558,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 			showMemSpells = false;
 	}
 	
-	for (int i = 0; i < NUM_SPELLBOOK_SLOTS; i++) {
+	for (auto i = 0u; i < NUM_SPELLBOOK_SLOTS; i++) {
 		if (showMemSpells && i < curCharSpellPkt.spellsMemorized.count) {
 			ui.WidgetSetHidden(curCharSpellPkt.memorizeSpellWnds[i]->widgetId, 0);
 			ui.WidgetBringToFront(curCharSpellPkt.memorizeSpellWnds[i]->widgetId);

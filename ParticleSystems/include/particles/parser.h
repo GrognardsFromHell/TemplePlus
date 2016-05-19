@@ -1,7 +1,8 @@
 #pragma once
 
+#include <EASTL/hash_map.h>
+
 #include <string>
-#include <unordered_map>
 #include <infrastructure/stringutil.h>
 
 #include "spec.h"
@@ -12,12 +13,21 @@ namespace gfx {
 	class MdfMaterialFactory;
 }
 
+namespace eastl {
+	template<>
+	struct hash<std::string> {
+		size_t operator()(const std::string& str) const {
+			return std::hash<std::string>()(str);
+		}
+	};
+}
+
 namespace particles {
 
 	class PartSysParser {
 	public:
 
-		typedef std::unordered_map<std::string, PartSysSpecPtr> SpecMap;
+		typedef eastl::hash_map<std::string, PartSysSpecPtr> SpecMap;
 
 		void ParseFile(const std::string& filename);
 		void ParseString(const std::string& spec);

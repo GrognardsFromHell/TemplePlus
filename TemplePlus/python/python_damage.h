@@ -1,6 +1,6 @@
 #pragma once
 
-class DamagePacket;
+struct DamagePacket;
 
 extern PyTypeObject PyDamagePacketType;
 PyObject *PyDamagePacket_FromDamagePacket(const DamagePacket & dam);

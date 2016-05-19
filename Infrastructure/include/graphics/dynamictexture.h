@@ -2,8 +2,8 @@
 #pragma once
 
 #include <memory>
-#include <atlcomcli.h>
 #include "gsl/span.h"
+#include <atlcomcli.h>
 
 #include "textures.h"
 

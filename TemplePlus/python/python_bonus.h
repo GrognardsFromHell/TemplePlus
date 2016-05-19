@@ -1,6 +1,6 @@
 #pragma once
 
-class BonusList;
+struct BonusList;
 
 extern PyTypeObject PyBonusListType;
 PyObject *PyBonusList_FromBonusList(const BonusList & bonlist);

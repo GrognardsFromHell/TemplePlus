@@ -149,7 +149,7 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 					{
 						_ConditionAdd_NumArgs0(dispatcher, conds.ConditionDisabled);
 					}
-					else if (subdualDam > hpCur)
+					else if ((int) subdualDam > hpCur)
 					{
 						_ConditionAdd_NumArgs0(dispatcher, conds.ConditionUnconscious);
 					}

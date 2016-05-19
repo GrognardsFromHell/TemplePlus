@@ -9,6 +9,12 @@ using DirectX::XMFLOAT4X4;
 using DirectX::XMFLOAT4X4A;
 using DirectX::XMFLOAT4X3A;
 using DirectX::XMFLOAT4X3A;
+using DirectX::XM_PI;
+using DirectX::XM_2PI;
+using DirectX::XM_1DIVPI;
+using DirectX::XM_1DIV2PI;
+using DirectX::XM_PIDIV2;
+using DirectX::XM_PIDIV4;
 
 #include <DirectXPackedVector.h>
 using DirectX::PackedVector::XMCOLOR;

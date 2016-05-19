@@ -357,8 +357,8 @@ void AasClass2::LoadMesh(MaterialResolver matResolver) {
 
 void AasClass2::ResetSubmeshes() {
 
-	signed int v2; // ebp@2
-	int v3; // edi@3
+	// signed int v2; // ebp@2
+	// int v3; // edi@3
 
 	if (field_C) {
 

@@ -10,8 +10,8 @@ static_assert(temple::validate_size<GameObjectBody, objBodySize>::value, "Object
 static std::hash<int> sIntHasher;
 static std::hash<uint64_t> sHandleHasher;
 
-hash<ObjectId>::result_type hash<ObjectId>::operator()(argument_type const& id) const {
-	result_type result;
+size_t eastl::hash<ObjectId>::operator()(ObjectId const& id) const {
+	size_t result;
 	switch (id.subtype) {
 	default:
 	case ObjectIdKind::Null:
@@ -33,8 +33,7 @@ hash<ObjectId>::result_type hash<ObjectId>::operator()(argument_type const& id) 
 	}
 }
 
-ObjRegistry::ObjRegistry() {
-	mObjects.reserve(8192);
+ObjRegistry::ObjRegistry() : mObjects(8192) {
 }
 
 ObjectId ObjRegistry::GetIdByHandle(objHndl handle) {
@@ -128,7 +127,7 @@ objHndl ObjRegistry::Add(std::unique_ptr<GameObjectBody>&& ptr) {
 	auto it = mObjects.find(id);
 	assert(mObjects.find(id) == mObjects.end());
 
-	mObjects.emplace(std::make_pair(id, std::move(ptr)));
+	mObjects.emplace(eastl::make_pair(id, std::move(ptr)));
 
 	// Cache for later use
 	lastObj = id;

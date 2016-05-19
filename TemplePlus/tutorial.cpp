@@ -8,7 +8,7 @@ Tutorial tutorial;
 bool Tutorial::IsTutorialActive() const
 {
 	auto isTutorialActive = temple::GetRef<int(__cdecl)()>(0x1009AB80);
-	return isTutorialActive();
+	return isTutorialActive() != 0;
 }
 
 void Tutorial::Toggle() const

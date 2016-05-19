@@ -139,7 +139,7 @@ struct PathQueryResult : Path {
 struct PathResultCache : PathQuery
 {
 	Path path;
-	int timeCached =0;
+	uint32_t timeCached =0;
 };
 
 

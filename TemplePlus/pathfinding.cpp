@@ -977,16 +977,16 @@ int Pathfinding::FindPathStraightLine(Path* pqr, PathQuery* pq)
 	locSys.GetOverallOffset(pqr->from, &fromAbsX, &fromAbsY);
 	locSys.GetOverallOffset(pqr->to, &toAbsX, &toAbsY);
 		
-	long double deltaX = toAbsX - fromAbsX;
-	long double deltaY = toAbsY - fromAbsY;
-	long double distFromTo = sqrt(deltaX*deltaX + deltaY*deltaY);
-	if (distFromTo <= pq->tolRadius - 2.0)
+	auto deltaX = toAbsX - fromAbsX;
+	auto deltaY = toAbsY - fromAbsY;
+	auto distFromTo = sqrtf(deltaX * deltaX + deltaY * deltaY);
+	if (distFromTo <= pq->tolRadius - 2.0f)
 		return 0;
 		
-	long double adjustFactor = (distFromTo - (pq->tolRadius - 2.0)) / distFromTo;
+	auto adjustFactor = (distFromTo - (pq->tolRadius - 2.0f)) / distFromTo;
 	auto adjToLoc = pqr->from;
-		adjToLoc.off_x += deltaX * adjustFactor;
-		adjToLoc.off_y += deltaY * adjustFactor;
+	adjToLoc.off_x += deltaX * adjustFactor;
+	adjToLoc.off_y += deltaY * adjustFactor;
 	locSys.RegularizeLoc(&adjToLoc);
 		
 	if (!PathDestIsClear(pq, pqr->mover, adjToLoc))
@@ -1152,8 +1152,8 @@ int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 	int minHeuristic = 0x7FFFffff;
 
 	float requisiteClearance = objects.GetRadius(pq->critter);
-	float diagonalClearance = requisiteClearance * 0.7; // diagonals need to be more restrictive to avoid jaggy paths
-	float requisiteClearanceCritters = requisiteClearance * 0.7;
+	float diagonalClearance = requisiteClearance * 0.7f; // diagonals need to be more restrictive to avoid jaggy paths
+	float requisiteClearanceCritters = requisiteClearance * 0.7f;
 	if (requisiteClearance > 12)
 		requisiteClearance *= 0.85f;
 
@@ -1273,7 +1273,7 @@ int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 			{
 				SectorLoc secLoc(subPathTo.location);
 				//secLoc.GetFromLoc(subPathTo.location);
-				int secX = secLoc.x(), secY = secLoc.y();
+				int secX = (int) secLoc.x(), secY = (int) secLoc.y();
 				int secClrIdx = PathNodeSys::clearanceData.clrIdx.clrAddr[secLoc.y()][secLoc.x()];
 				auto secBaseTile = secLoc.GetBaseTile();
 				int ssty = shiftedSubtile.y % 192;
@@ -2118,8 +2118,8 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 	int shiftedXidx, shiftedYidx, newIdx;
 
 	float requisiteClearance = objects.GetRadius(pq->critter);
-	float diagonalClearance = requisiteClearance * 0.7;
-	float requisiteClearanceCritters = requisiteClearance * 0.7;
+	float diagonalClearance = requisiteClearance * 0.7f;
+	float requisiteClearanceCritters = requisiteClearance * 0.7f;
 	if (requisiteClearance > 12)
 		requisiteClearance *= 0.85f;
 
@@ -2233,7 +2233,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 			{
 				SectorLoc secLoc(subPathTo.location);
 				//secLoc.GetFromLoc(subPathTo.location);
-				int secX = secLoc.x(), secY = secLoc.y();
+				int secX = (int) secLoc.x(), secY = (int) secLoc.y();
 				int secClrIdx = PathNodeSys::clearanceData.clrIdx.clrAddr[secLoc.y()][secLoc.x()];
 				auto secBaseTile = secLoc.GetBaseTile();
 				int ssty = shiftedSubtile.y % 192;

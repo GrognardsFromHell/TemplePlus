@@ -97,7 +97,7 @@ int InventorySystem::GetItemWieldCondArg(objHndl item, uint32_t condId, int argO
 	auto condArray = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
 	if (condArray.GetSize() <= 0)
 		return 0;
-	for (int i = 0; i < condArray.GetSize();i++)
+	for (auto i = 0u; i < condArray.GetSize();i++)
 	{
 		auto wielderCondId = condArray[i];
 		auto wielderCond = conds.GetById(wielderCondId);
@@ -124,7 +124,7 @@ void InventorySystem::RemoveWielderCond(objHndl item, uint32_t condId){
 	auto wielderConds = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
 	auto wielderArgs = itemObj->GetInt32Array(obj_f_item_pad_wielder_argument_array);
 	auto argIdx = 0;
-	for (int i = 0; i < wielderConds.GetSize();i++)
+	for (auto i = 0u; i < wielderConds.GetSize();i++)
 	{
 		auto wCondId = wielderConds[i];
 		auto wCond = conds.GetById(wCondId);
@@ -133,18 +133,18 @@ void InventorySystem::RemoveWielderCond(objHndl item, uint32_t condId){
 			return;
 		}
 		if (wCondId == condId){
-			for (int j = i + 1; j < wielderConds.GetSize(); j++ )
+			for (auto j = i + 1; j < wielderConds.GetSize(); j++ )
 				itemObj->SetInt32(obj_f_item_pad_wielder_condition_array, j - 1,
 					itemObj->GetInt32(obj_f_item_pad_wielder_condition_array, j));
 			itemObj->RemoveInt32(obj_f_item_pad_wielder_condition_array, wielderConds.GetSize()-1);
 			
 			// remove corresponding args
-			for (int j = argIdx + wCond->numArgs; j < wielderArgs.GetSize(); j++){
+			for (auto j = argIdx + wCond->numArgs; j < wielderArgs.GetSize(); j++){
 				itemObj->SetInt32(obj_f_item_pad_wielder_argument_array, j - wCond->numArgs,
 					itemObj->GetInt32(obj_f_item_pad_wielder_argument_array, j));
 			}
 			auto orgLen = wielderArgs.GetSize();
-			for (int j = orgLen - wCond->numArgs; j < orgLen; j++ )
+			for (auto j = orgLen - wCond->numArgs; j < orgLen; j++ )
 				itemObj->RemoveInt32(obj_f_item_pad_wielder_argument_array, j);
 			return;
 		}
@@ -325,7 +325,6 @@ int InventorySystem::GetInventory(objHndl objHandle, objHndl ** inventoryArray)
 int InventorySystem::GetInventoryLocation(objHndl item)
 
 {
-	ObjectType objType;
 	if(item && objects.IsEquipment(item))
 		return objects.getInt32(item, obj_f_item_inv_location);
 	
@@ -527,7 +526,7 @@ void InventorySystem::ForceRemove(objHndl item, objHndl parent)
 bool InventorySystem::IsProficientWithArmor(objHndl obj, objHndl armor) const
 {
 	auto isProfWithArmor = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x1007C410);
-	return isProfWithArmor(obj, armor);
+	return isProfWithArmor(obj, armor) != 0;
 }
 
 void InventorySystem::GetItemMesLine(MesLine* line)
@@ -548,7 +547,7 @@ const char* InventorySystem::GetItemErrorString(ItemErrorCode itemErrorCode)
 
 bool InventorySystem::IsMagicItem(objHndl itemHandle)
 {
-	return gameSystems->GetObj().GetObject(itemHandle)->GetItemFlags() & OIF_IS_MAGICAL;
+	return (gameSystems->GetObj().GetObject(itemHandle)->GetItemFlags() & OIF_IS_MAGICAL) != 0;
 }
 
 bool InventorySystem::IsIdentified(objHndl itemHandle)

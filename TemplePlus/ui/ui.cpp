@@ -295,7 +295,7 @@ public:
 			 
 			 
 
-			 return tigFont.Draw(text, extents, style);
+			 return tigFont.Draw(text, extents, style) != 0;
 
 		 });
 
@@ -322,7 +322,7 @@ static UiSystem& getUiSystem(const char* name) {
 }
 
 bool WidgetType1::Add(int* widIdOut){
-	return ui.AddWindow(this, sizeof(WidgetType1), widIdOut, "ui.cpp", 325);
+	return ui.AddWindow(this, sizeof(WidgetType1), widIdOut, "ui.cpp", 325) != 0;
 }
 
 WidgetType2::WidgetType2(){
@@ -402,7 +402,7 @@ WidgetType2::WidgetType2(char* ButtonName, int ParentId, TigRect& rect){
 }
 
 bool WidgetType2::Add(int* widIdOut){
-	return ui.AddButton(this, sizeof(WidgetType2), widIdOut, "ui.cpp", 367);
+	return ui.AddButton(this, sizeof(WidgetType2), widIdOut, "ui.cpp", 367) != 0;
 }
 
 int WidgetType3::GetY()
@@ -520,7 +520,7 @@ bool Ui::CharEditorIsActive()
 bool Ui::CharLootingIsActive()
 {
 	auto result = temple::GetRef<int>(0x10BE6EE8);
-	return result;
+	return result != 0;
 }
 
 bool Ui::IsWidgetHidden(int widId)
@@ -685,9 +685,9 @@ BOOL Ui::WidgetContainsPoint(int widgetId, int x, int y)
 	auto widg = uiFuncs.activeWidgets[widgetId];
 	if (widg == nullptr)
 		return false;
-	if (x < widg->x || x > (widg->x + widg->width) )
+	if (x < widg->x || x > (widg->x + (int)widg->width) )
 		return false;
-	if (y < widg->y || y >(widg->y + widg->height))
+	if (y < widg->y || y >(widg->y + (int)widg->height))
 		return false;
 	return true;
 }

@@ -225,7 +225,7 @@ BOOL ObjEventSystem::ObjEventLoadGame(GameSystemSaveFile* saveFile) const
 BOOL ObjEventSystem::ObjEventHandler(ObjEventAoE* const aoeEvt, int id,ObjEventListItem& evt) const
 {
 
-	auto objEventHandlerFuncs = temple::GetPointer<void(*__cdecl)(objHndl , objHndl , int )>(0x102AFB40);
+	auto objEventHandlerFuncs = temple::GetPointer<void(*)(objHndl, objHndl, int)>(0x102AFB40);
 	if (aoeEvt->aoeObj != evt.obj)
 	{
 		// find the event obj in the aoeEvt list of previously appearing objects
@@ -413,7 +413,7 @@ bool ObjEventSystem::ObjEvtLoader(int* id, ObjEventAoE* evt, TioFile* file) cons
 
 	evt->objNodesPrev = nullptr;
 	auto loadObjNodes = temple::GetRef<int(__cdecl)(ObjEventAoE*, TioFile*)>(0x10044E20);
-	return loadObjNodes(evt, file);
+	return loadObjNodes(evt, file) != 0;
 
 }
 

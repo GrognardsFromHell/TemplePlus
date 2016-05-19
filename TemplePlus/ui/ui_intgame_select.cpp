@@ -72,7 +72,7 @@ void UiIntgameSelectHooks::TooltipRender(objHndl handle)
 
 		if (obj->IsPC()){
 			auto curHp = objects.GetHPCur(handle);
-			if (curHp < objects.StatLevelGet(handle, stat_hp_max)){
+			if (curHp < (int) objects.StatLevelGet(handle, stat_hp_max)){
 				ttTextStyle.textColor[1] = ColorRect(0xFFFF0000);
 			}
 		} 

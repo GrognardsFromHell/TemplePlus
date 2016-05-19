@@ -216,12 +216,12 @@ struct DispatcherCallbackArgs {
 	enum_disp_type dispType;
 	uint32_t dispKey;
 	DispIO* dispIO;
-	uint32_t GetCondArg(int argIdx);
-	objHndl GetCondArgObjHndl(int argIdx);
-	void* GetCondArgPtr(int argIdxI);
+	int32_t GetCondArg(uint32_t argIdx);
+	objHndl GetCondArgObjHndl(uint32_t argIdx);
+	void* GetCondArgPtr(uint32_t argIdxI);
 	int GetData1() const; // gets the data1 value from the subDispDef
 	int GetData2() const;
-	void SetCondArg(int argIdx, int value);
+	void SetCondArg(uint32_t argIdx, int value);
 	
 };
 

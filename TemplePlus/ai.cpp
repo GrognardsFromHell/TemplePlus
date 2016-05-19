@@ -689,7 +689,7 @@ int AiSystem::CastParty(AiTactic* aiTac)
 	d20Sys.d20SendSignal(aiTac->performer, DK_SIG_SetCastDefensively, castDefensively, 0);
 	LocAndOffsets targetLoc =	objects.GetLocationFull(aiTac->target);
 	auto partyLen = party.GroupListGetLen();
-	for (int i = 0; i < partyLen; i++)
+	for (auto i = 0u; i < partyLen; i++)
 	{
 		aiTac->spellPktBody.targetListHandles[i] = party.GroupListGetMemberN(i);
 	}
@@ -1010,13 +1010,13 @@ int AiSystem::AiOnInitiativeAdd(objHndl obj)
 
 	int critterStratIdx = objects.getInt32(obj, obj_f_critter_strategy);
 	
-	assert(critterStratIdx >= 0 && critterStratIdx < *aiStrategiesNum);
+	assert(critterStratIdx >= 0 && (uint32_t) critterStratIdx < *aiStrategiesNum);
 	AiStrategy *aiStrats = *aiStrategies;
 	AiStrategy * aiStrat = &aiStrats[critterStratIdx];
 	AiTactic aiTac;
 	aiTac.performer = obj;
 
-	for (int i = 0; i < aiStrat->numTactics; i++)
+	for (auto i = 0u; i < aiStrat->numTactics; i++)
 	{
 		aiTacticGetConfig(i, &aiTac, aiStrat);
 		auto func = aiTac.aiTac->onInitiativeAdd;
@@ -1134,7 +1134,7 @@ void AiSystem::RegisterNewAiTactics()
 int AiSystem::GetStrategyIdx(const char* stratName) const
 {
 	int result = -1;
-	for (int i = 0; i < *aiStrategiesNum; i++)
+	for (auto i = 0u; i < *aiStrategiesNum; i++)
 	{
 		if (_stricmp(stratName, (*aiStrategies)[i].name) == 0)
 		{
@@ -1152,7 +1152,7 @@ int AiSystem::GetAiSpells(AiSpellList* aiSpell, objHndl obj, AiSpellType aiSpell
 	aiSpell->spellData.clear();
 	auto objBod = objSystem->GetObject(obj);
 	auto spellsMemo = objBod->GetSpellArray(obj_f_critter_spells_memorized_idx);
-	for (int i = 0; i < spellsMemo.GetSize(); i++)
+	for (auto i = 0u; i < spellsMemo.GetSize(); i++)
 	{
 		auto spellData = spellsMemo[i];
 		if (spellData.spellStoreState.usedUp & 1)
@@ -1167,7 +1167,7 @@ int AiSystem::GetAiSpells(AiSpellList* aiSpell, objHndl obj, AiSpellType aiSpell
 		
 		
 		bool spellAlreadyFound = false;
-		for (int j = 0; j < aiSpell->spellEnums.size();j++)
+		for (auto j = 0u; j < aiSpell->spellEnums.size();j++)
 		{
 			if (aiSpell->spellEnums[j] == spellData.spellEnum)
 			{
