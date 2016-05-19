@@ -110,6 +110,11 @@ int DamagePacket::AddDamageDice(uint32_t dicePacked, DamageType damType, int dam
 	return 1;
 }
 
+BOOL DamagePacket::AddDamageBonus(int32_t damBonus, int bonType, int bonMesline, const char* causeDesc){
+	bonuses.AddBonusWithDesc(damBonus, bonType, bonMesline, (char*)causeDesc);
+	return 1;
+}
+
 void Damage::DealDamage(objHndl victim, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType) {
 
 	addresses.DoDamage(victim, attacker, dice.ToPacked(), type, attackPower, reduction, damageDescId, actionType);

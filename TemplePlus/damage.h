@@ -48,6 +48,7 @@ struct DamagePacket {
 
 	int AddEtherealImmunity();
 	int AddDamageDice(uint32_t dicePacked, DamageType damType, int damageMesLine, const char* description = nullptr);
+	BOOL AddDamageBonus(int32_t damBonus, int bonType, int bonMesline, const char* causeDesc = nullptr);
 };
 
 #pragma pack(push, 1)

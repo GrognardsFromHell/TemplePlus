@@ -159,7 +159,7 @@ public:
 	static int __cdecl WeaponWounding(DispatcherCallbackArgs args);
 	static int __cdecl WeaponThundering(DispatcherCallbackArgs args);
 
-	
+	static int __cdecl WeaponDamageBonus(DispatcherCallbackArgs args);
 } itemCallbacks;
 
 
@@ -316,6 +316,9 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBB20, classAbilityCallbacks.DruidWildShapeRadialMenu);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBC60, classAbilityCallbacks.DruidWildShapeCheck);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBCE0, classAbilityCallbacks.DruidWildShapePerform);
+
+		// Fixes Weapon Damage Bonus for ammo items
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100FFE90, itemCallbacks.WeaponDamageBonus);
 	}
 } condFuncReplacement;
 
@@ -3448,6 +3451,34 @@ int ItemCallbacks::WeaponThundering(DispatcherCallbackArgs args){
 			}
 		}
 
+	}
+	return 0;
+}
+
+int ItemCallbacks::WeaponDamageBonus(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
+
+	auto attacker = dispIo->attackPacket.attacker;
+	if (!attacker)
+		return 0;
+	auto victim = dispIo->attackPacket.victim;
+
+	auto invIdx = args.GetCondArg(2);
+	auto item = inventory.GetItemAtInvIdx(attacker, invIdx);
+
+	auto weapUsed = dispIo->attackPacket.GetWeaponUsed();
+	if (!weapUsed)
+		return 0;
+
+	if (!item)
+		return 0;
+
+	if (item == weapUsed 
+		|| item == dispIo->attackPacket.ammoItem && weapons.AmmoMatchesWeapon(weapUsed, item)){
+
+		auto damBonus = args.GetCondArg(0);
+		auto weapName = description.getDisplayName(item);
+		dispIo->damage.AddDamageBonus(damBonus, 12, 147, weapName);
 	}
 	return 0;
 }
