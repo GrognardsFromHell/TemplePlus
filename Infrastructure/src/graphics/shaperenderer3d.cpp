@@ -21,6 +21,7 @@ namespace gfx {
 		BufferBinding lineBinding;
 
 		VertexBufferPtr circleVertexBuffer;
+		IndexBufferPtr circleIndexBuffer;
 		BufferBinding circleBinding;
 
 		RenderingDevice &device;
@@ -39,22 +40,26 @@ namespace gfx {
 
 	void ShapeRenderer3d::Impl::CreateResources(RenderingDevice&) {
 
-		discVerticesTpl[0].pos = { -1.0f, 0.0f, -1.0f };
-		discVerticesTpl[1].pos = { 0.0f, 0.0f, -1.0f };
-		discVerticesTpl[2].pos = { 0.0f, 0.0f, 0.0f };
-		discVerticesTpl[3].pos = { -1.0f, 0.0f, 0.0f };
-		discVerticesTpl[4].pos = { 0.0f, 0.0f, -1.0f };
-		discVerticesTpl[5].pos = { 1.0f, 0.0f, -1.0f };
-		discVerticesTpl[6].pos = { 1.0f, 0.0f, 0.0f };
-		discVerticesTpl[7].pos = { 0.0f, 0.0f, 0.0f };
-		discVerticesTpl[8].pos = { 0.0f, 0.0f, 0.0f };
-		discVerticesTpl[9].pos = { 1.0f, 0.0f, 0.0f };
-		discVerticesTpl[10].pos = { 1.0f, 0.0f, 1.0f };
-		discVerticesTpl[11].pos = { 0.0f, 0.0f, 1.0f };
-		discVerticesTpl[12].pos = { -1.0f, 0.0f, 0.0f };
-		discVerticesTpl[13].pos = { 0.0f, 0.0f, 0.0f };
-		discVerticesTpl[14].pos = { 0.0f, 0.0f, 1.0f };
-		discVerticesTpl[15].pos = { -1.0f, 0.0f, 1.0f };
+		discVerticesTpl[0].pos = { -1.0f, 0.0f, -1.0f, 1 };
+		discVerticesTpl[1].pos = { 0.0f, 0.0f, -1.0f, 1 };
+		discVerticesTpl[2].pos = { 0.0f, 0.0f, 0.0f, 1 };
+		discVerticesTpl[3].pos = { -1.0f, 0.0f, 0.0f, 1 };
+		discVerticesTpl[4].pos = { 0.0f, 0.0f, -1.0f, 1 };
+		discVerticesTpl[5].pos = { 1.0f, 0.0f, -1.0f, 1 };
+		discVerticesTpl[6].pos = { 1.0f, 0.0f, 0.0f, 1 };
+		discVerticesTpl[7].pos = { 0.0f, 0.0f, 0.0f, 1 };
+		discVerticesTpl[8].pos = { 0.0f, 0.0f, 0.0f, 1 };
+		discVerticesTpl[9].pos = { 1.0f, 0.0f, 0.0f, 1 };
+		discVerticesTpl[10].pos = { 1.0f, 0.0f, 1.0f, 1 };
+		discVerticesTpl[11].pos = { 0.0f, 0.0f, 1.0f, 1 };
+		discVerticesTpl[12].pos = { -1.0f, 0.0f, 0.0f, 1 };
+		discVerticesTpl[13].pos = { 0.0f, 0.0f, 0.0f, 1 };
+		discVerticesTpl[14].pos = { 0.0f, 0.0f, 1.0f, 1 };
+		discVerticesTpl[15].pos = { -1.0f, 0.0f, 1.0f, 1 };
+
+		for (auto &discVertex : discVerticesTpl) {
+			discVertex.normal = { 0, 1, 0, 0 };
+		}
 
 		discVerticesTpl[0].uv = { 0, 0 };
 		discVerticesTpl[1].uv = { 1, 0 };
@@ -88,13 +93,24 @@ namespace gfx {
 		discVertexBuffer = device.CreateEmptyVertexBuffer(sizeof(ShapeVertex3d) * 16);
 
 		discBufferBinding.AddBuffer(discVertexBuffer, 0, sizeof(ShapeVertex3d))
-			.AddElement(VertexElementType::Float3, VertexElementSemantic::Position)
+			.AddElement(VertexElementType::Float4, VertexElementSemantic::Position)
+			.AddElement(VertexElementType::Float4, VertexElementSemantic::Normal)
 			.AddElement(VertexElementType::Float2, VertexElementSemantic::TexCoord);
 
 		// +3 because for n lines, you need n+1 points and in this case, we have to repeat
 		// the first point again to close the loop (so +2) and also include the center point
 		// to draw a circle at the end (+3)
 		circleVertexBuffer = device.CreateEmptyVertexBuffer(sizeof(XMFLOAT3) * (sCircleSegments + 3));
+
+		// Pre-generate the circle indexbuffer. 
+		// One triangle per circle segment
+		eastl::fixed_vector<uint16_t, sCircleSegments * 3> circleIndices;
+		for (uint16_t i = 0; i < sCircleSegments; i++) {
+			circleIndices.push_back(i + 2);
+			circleIndices.push_back(0); // The center point has to be in the triangle
+			circleIndices.push_back(i + 1);			
+		}
+		circleIndexBuffer = device.CreateIndexBuffer(circleIndices, true);
 
 		circleBinding.AddBuffer(circleVertexBuffer, 0, sizeof(XMFLOAT3))
 			.AddElement(VertexElementType::Float3, VertexElementSemantic::Position);
@@ -112,46 +128,60 @@ namespace gfx {
 	}
 
 	Material ShapeRenderer3d::Impl::CreateLineMaterial(RenderingDevice& device, bool occludedOnly) {
-		BlendState blendState;
+		BlendSpec blendState;
 		blendState.blendEnable = true;
-		blendState.srcBlend = D3DBLEND_SRCALPHA;
-		blendState.destBlend = D3DBLEND_INVSRCALPHA;
-		DepthStencilState depthState;
+		blendState.srcBlend = BlendOperand::SrcAlpha;
+		blendState.destBlend = BlendOperand::InvSrcAlpha;
+		DepthStencilSpec depthState;
 		depthState.depthEnable = true;
 		depthState.depthWrite = false;
 		if (occludedOnly) {
-			depthState.depthFunc = D3DCMP_GREATEREQUAL;
+			depthState.depthFunc = ComparisonFunc::GreaterEqual;
 		}
-		RasterizerState rasterizerState;
+
 		auto vs = device.GetShaders().LoadVertexShader("line_vs");
 		auto ps = device.GetShaders().LoadPixelShader("diffuse_only_ps");
-		return Material(blendState, depthState, rasterizerState, {}, vs, ps);
+
+		return device.CreateMaterial(
+			blendState,
+			depthState,
+			{},
+			{},
+			vs,
+			ps
+		);
 	}
 
 	Material ShapeRenderer3d::Impl::CreateQuadMaterial(RenderingDevice & device)
 	{
-		BlendState blendState;
+		BlendSpec blendState;
 		blendState.blendEnable = true;
-		blendState.srcBlend = D3DBLEND_SRCALPHA;
-		blendState.destBlend = D3DBLEND_INVSRCALPHA;
-		DepthStencilState depthState;
+		blendState.srcBlend = BlendOperand::SrcAlpha;
+		blendState.destBlend = BlendOperand::InvSrcAlpha;
+		DepthStencilSpec depthState;
 		depthState.depthEnable = true;
 		depthState.depthWrite = false;
-		RasterizerState rasterizerState;
-		rasterizerState.cullMode = D3DCULL_NONE;
+		RasterizerSpec rasterizerState;
+		rasterizerState.cullMode = CullMode::None;
 		Shaders::ShaderDefines vsDefines;
 		vsDefines["TEXTURE_STAGES"] = "1";
 		auto vs = device.GetShaders().LoadVertexShader("mdf_vs", vsDefines);
 		auto ps = device.GetShaders().LoadPixelShader("textured_simple_ps");
-		SamplerState samplerState;
-		samplerState.addressU = D3DTADDRESS_CLAMP;
-		samplerState.addressV = D3DTADDRESS_CLAMP;
-		samplerState.minFilter = D3DTEXF_LINEAR;
-		samplerState.magFilter = D3DTEXF_LINEAR;
-		samplerState.mipFilter = D3DTEXF_LINEAR;
-		std::vector<MaterialSamplerBinding> samplers{ { nullptr, samplerState } };
-		return Material(blendState, depthState, rasterizerState, samplers, vs, ps);
+		SamplerSpec samplerState;
+		samplerState.addressU = TextureAddress::Clamp;
+		samplerState.addressV = TextureAddress::Clamp;
+		samplerState.minFilter = TextureFilterType::Linear;
+		samplerState.magFilter = TextureFilterType::Linear;
+		samplerState.mipFilter = TextureFilterType::Linear;
+		std::vector<MaterialSamplerSpec> samplers{ { nullptr, samplerState } };
+		
+		return device.CreateMaterial(blendState, depthState, rasterizerState, samplers, vs, ps);
 	}
+
+	struct Shape3dGlobals {
+		XMFLOAT4X4 viewProj;
+		XMFLOAT4 colors;
+	};
 
 	void ShapeRenderer3d::Impl::BindLineMaterial(XMCOLOR color, bool occludedOnly) {
 		if (occludedOnly) {
@@ -160,22 +190,24 @@ namespace gfx {
 			device.SetMaterial(lineMaterial);
 		}
 
-		device.GetDevice()->SetVertexShaderConstantF(0, &device.GetCamera().GetViewProj()._11, 4);
-		XMFLOAT4 colors;
-		XMStoreFloat4(&colors, PackedVector::XMLoadColor(&color));
-		device.GetDevice()->SetVertexShaderConstantF(4, &colors.x, 4);
+		Shape3dGlobals globals;
+		globals.viewProj = device.GetCamera().GetViewProj();
+		XMStoreFloat4(&globals.colors, PackedVector::XMLoadColor(&color));
+		
+		device.SetVertexShaderConstants(0, globals);
 	}
 
 	void ShapeRenderer3d::Impl::BindQuadMaterial(XMCOLOR color, const gfx::TextureRef & texture)
 	{
 		device.SetMaterial(quadMaterial);
-		device.GetDevice()->SetVertexShaderConstantF(0, &device.GetCamera().GetViewProj()._11, 4);
-		XMFLOAT4 colors;
-		XMStoreFloat4(&colors, PackedVector::XMLoadColor(&color));
-		colors = XMFLOAT4(1, 1, 1, 1);
-		device.GetDevice()->SetVertexShaderConstantF(4, &colors.x, 4);
 
-		device.GetDevice()->SetTexture(0, texture->GetDeviceTexture());
+		Shape3dGlobals globals;
+		globals.viewProj = device.GetCamera().GetViewProj();
+		XMStoreFloat4(&globals.colors, PackedVector::XMLoadColor(&color));
+
+		device.SetVertexShaderConstants(0, globals);
+
+		device.SetTexture(0, *texture);
 	}
 
 	ShapeRenderer3d::Impl::Impl(RenderingDevice& device)
@@ -183,7 +215,10 @@ namespace gfx {
 		  mRegistration(device, this), 
 		  lineMaterial(CreateLineMaterial(device, false)),
 		  quadMaterial(CreateQuadMaterial(device)),
-		  lineOccludedMaterial(CreateLineMaterial(device, true)) {
+		  lineOccludedMaterial(CreateLineMaterial(device, true)),
+		  discBufferBinding(device.CreateMdfBufferBinding()),
+		  lineBinding(lineMaterial.GetVertexShader()),
+		  circleBinding(lineMaterial.GetVertexShader()) {
 	}
 
 	ShapeRenderer3d::ShapeRenderer3d(RenderingDevice& device)
@@ -198,7 +233,7 @@ namespace gfx {
 		float rotation, 
 		float radius,
 		gfx::MdfRenderMaterialPtr& material) {
-
+		
 		std::array<ShapeVertex3d, 16> vertices = mImpl->discVerticesTpl;
 
 		// There is some sort of rotation going on here that is related to 
@@ -228,8 +263,8 @@ namespace gfx {
 		mImpl->discBufferBinding.Bind();
 		material->Bind(mImpl->device, {});
 
-		mImpl->device.GetDevice()->SetIndices(mImpl->discIndexBuffer->GetBuffer());
-		mImpl->device.GetDevice()->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 16, 0, 8);
+		mImpl->device.SetIndexBuffer(*mImpl->discIndexBuffer);
+		mImpl->device.DrawIndexed(gfx::PrimitiveType::TriangleList, 16, 8 * 3);
 
 	}
 
@@ -242,8 +277,8 @@ namespace gfx {
 
 		mImpl->BindQuadMaterial(color, texture);
 
-		mImpl->device.GetDevice()->SetIndices(mImpl->discIndexBuffer->GetBuffer());
-		mImpl->device.GetDevice()->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
+		mImpl->device.SetIndexBuffer(*mImpl->discIndexBuffer);
+		mImpl->device.DrawIndexed(gfx::PrimitiveType::TriangleList, 4, 2 * 3);
 
 	}
 
@@ -258,10 +293,9 @@ namespace gfx {
 		overrides.overrideDiffuse = true;
 		overrides.overrideColor = color;
 		material.Bind(mImpl->device, {}, &overrides);
-
-		mImpl->device.GetDevice()->SetIndices(mImpl->discIndexBuffer->GetBuffer());
-		mImpl->device.GetDevice()->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
-
+				
+		mImpl->device.SetIndexBuffer(*mImpl->discIndexBuffer);
+		mImpl->device.DrawIndexed(gfx::PrimitiveType::TriangleList, 4, 2 * 3);
 	}
 
 	void ShapeRenderer3d::DrawLine(const XMFLOAT3& from, const XMFLOAT3& to, XMCOLOR color) {
@@ -275,7 +309,7 @@ namespace gfx {
 		mImpl->lineBinding.Bind();
 		mImpl->BindLineMaterial(color);
 		
-		mImpl->device.GetDevice()->DrawPrimitive(D3DPT_LINELIST, 0, 1);
+		mImpl->device.Draw(gfx::PrimitiveType::LineList, 2);
 
 	}
 
@@ -302,15 +336,16 @@ namespace gfx {
 		mImpl->circleVertexBuffer->Update<XMFLOAT3>(positions);
 		mImpl->circleBinding.Bind();
 		
-		mImpl->BindLineMaterial(borderColor, occludedOnly);			
+		mImpl->BindLineMaterial(borderColor, occludedOnly);
 
 		// The first vertex is the center vertex, so we skip it for line drawing
-		mImpl->device.GetDevice()->DrawPrimitive(D3DPT_LINESTRIP, 1, sCircleSegments);
+		mImpl->device.Draw(gfx::PrimitiveType::LineStrip, sCircleSegments + 1, 1);
 
 		mImpl->BindLineMaterial(fillColor, occludedOnly);
 
-		mImpl->device.GetDevice()->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, sCircleSegments);
+		mImpl->device.SetIndexBuffer(*mImpl->circleIndexBuffer);
 
+		mImpl->device.DrawIndexed(gfx::PrimitiveType::TriangleList, 0, sCircleSegments * 3);
 	}
 
 	static constexpr float cos45 = 0.70709997f;

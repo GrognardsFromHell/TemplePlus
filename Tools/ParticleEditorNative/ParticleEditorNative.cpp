@@ -23,7 +23,6 @@ extern "C" {
 
 	// This is an example of an exported function.
 	API bool ParticleSystem_FromSpec(TempleDll* dll, const char* specTabFile) {
-		dll->renderingDevice.GetCamera().CenterOn(0, 0, 0);
 
 		try {
 			PartSysParser parser;
@@ -57,16 +56,6 @@ extern "C" {
 
 	API void ParticleSystem_SetObjPos(TempleDll* dll, float screenX, float screenY) {
 		auto worldPos = dll->renderingDevice.GetCamera().ScreenToWorld(screenX, screenY);
-	}
-
-	API void ParticleSystem_SetScale(TempleDll* dll, float scale) {
-		dll->renderingDevice.GetCamera().SetScale(scale);
-		dll->renderingDevice.GetCamera().CenterOn(0, 0, 0);
-	}
-
-	API void ParticleSystem_Resize(TempleDll* dll, float w, float h) {
-		dll->renderingDevice.GetCamera().SetScreenWidth(w, h);
-		dll->renderingDevice.GetCamera().CenterOn(0, 0, 0);
 	}
 
 	API void ParticleSystem_Render(TempleDll* dll) {

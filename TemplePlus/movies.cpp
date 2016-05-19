@@ -6,6 +6,8 @@
 #include <graphics/materials.h>
 #include <graphics/shaders.h>
 #include <graphics/bufferbinding.h>
+#include <graphics/dynamictexture.h>
+#include <graphics/shaperenderer2d.h>
 #include <infrastructure/images.h>
 
 #include <temple/moviesystem.h>
@@ -25,76 +27,37 @@ using namespace temple;
 
 MovieFuncs movieFuncs;
 
-class MovieMaterial {
-public:
-	explicit MovieMaterial(RenderingDevice &device);
-	void Bind();
-private:
-	RenderingDevice& mDevice;
-	Material mMaterial;
-
-	static Material CreateMaterial(RenderingDevice &device);
-};
-
-MovieMaterial::MovieMaterial(RenderingDevice& device)
-	: mDevice(device), mMaterial(CreateMaterial(device)) {
-}
-
-void MovieMaterial::Bind() {
-	mDevice.SetMaterial(mMaterial);
-
-	// Can't use the predefined UI projection used for the game scene, since we
-	// are using full-screen rendering
-	XMFLOAT4X4 movieProjection;
-	XMStoreFloat4x4(
-		&movieProjection,
-		XMMatrixOrthographicOffCenterLH(0, mDevice.GetScreenWidthF(), mDevice.GetScreenHeightF(), 0, 1, 0)
-		);
-
-	auto device(mDevice.GetDevice());
-	device->SetVertexShaderConstantF(0, &movieProjection._11, 4);
-}
-
-Material MovieMaterial::CreateMaterial(RenderingDevice& device) {
-	BlendState blendState;
-	DepthStencilState depthStencilState;
+static Material CreateMaterial(RenderingDevice& device) {
+	DepthStencilSpec depthStencilState;
 	depthStencilState.depthEnable = false;
-	RasterizerState rasterizerState;
-	SamplerState samplerState;
-	samplerState.magFilter = D3DTEXF_LINEAR;
-	samplerState.minFilter = D3DTEXF_LINEAR;
-	samplerState.mipFilter = D3DTEXF_LINEAR;
-	std::vector<MaterialSamplerBinding> samplers{
+	SamplerSpec samplerState;
+	samplerState.magFilter = TextureFilterType::Linear;
+	samplerState.minFilter = TextureFilterType::Linear;
+	samplerState.mipFilter = TextureFilterType::Linear;
+	std::vector<MaterialSamplerSpec> samplers{
 		{ nullptr, samplerState }
 	};
 	auto vs(device.GetShaders().LoadVertexShader("gui_vs"));
 	auto ps(device.GetShaders().LoadPixelShader("textured_simple_ps"));
 	
-	return Material(blendState, depthStencilState, rasterizerState, samplers,
-		vs, ps);
+	return device.CreateMaterial({}, depthStencilState, {}, samplers, vs, ps);
 }
 
-static bool binkRenderFrame(MovieFile &movie, IDirect3DTexture9* texture) {
+static bool BinkRenderFrame(RenderingDevice &device, MovieFile &movie, gfx::DynamicTexture& texture) {
 	if (movie.WaitForNextFrame()) {
 		return true;
 	}
 
 	movie.DecodeFrame();
 
-	D3DLOCKED_RECT locked;
-	HRESULT result;
-	result = D3DLOG(texture->LockRect(0, &locked, nullptr, D3DLOCK_DISCARD));
-	if (result != D3D_OK) {
-		logger->error("Unable to lock texture for movie frame!");
-		return false;
+	{
+		auto locked{ device.Map(texture) };
+
+		movie.CopyFramePixels(
+			locked.GetData(),
+			locked.GetRowPitch(),
+			movie.GetHeight());
 	}
-
-	movie.CopyFramePixels(
-		locked.pBits,
-		locked.Pitch,
-		movie.GetHeight());
-
-	D3DLOG(texture->UnlockRect(0));
 
 	if (movie.AtEnd()) {
 		return false;
@@ -105,12 +68,12 @@ static bool binkRenderFrame(MovieFile &movie, IDirect3DTexture9* texture) {
 }
 
 struct MovieVertex {
-	XMFLOAT3 pos;
+	XMFLOAT4 pos;
 	XMCOLOR color = 0xFFFFFFFF;
 	XMFLOAT2 uv;
 
 	MovieVertex(float x, float y, float u, float v)
-		: pos{ x, y, 0 }, uv{ u,v } {}
+		: pos{ x, y, 0, 1 }, uv{ u,v } {}
 };
 
 struct MovieRect {
@@ -123,8 +86,8 @@ struct MovieRect {
 static MovieRect GetMovieRect(int movieWidth, int movieHeight) {
 	auto &device = tig->GetRenderingDevice();
 
-	auto screenWidth = device.GetScreenWidthF();
-	auto screenHeight = device.GetScreenHeightF();
+	auto screenWidth = device.GetCamera().GetScreenWidth();
+	auto screenHeight = device.GetCamera().GetScreenHeight();
 
 	// Fit movie into rect
 	float wFactor = screenWidth / movieWidth;
@@ -192,13 +155,13 @@ private:
 
 		auto extents = UiRenderer::MeasureTextSize(mLine->text, mSubtitleStyle, 700, 150);
 		
-		extents.x = (mDevice.GetScreenWidth() - extents.width) / 2;
-		extents.y = mDevice.GetScreenHeight() - mDevice.GetScreenHeight() / 10;
+		auto& camera = mDevice.GetCamera();
+
+		extents.x = (int)((camera.GetScreenWidth() - extents.width) / 2);
+		extents.y = (int)(camera.GetScreenHeight() - camera.GetScreenHeight() / 10);
 
 		// The text renderer uses the standard UI projection matrix, which we need to extend to full screen size here
-		mDevice.GetCamera().SetScreenWidth(mDevice.GetScreenWidthF(), mDevice.GetScreenHeightF());
 		UiRenderer::RenderText(mLine->text, extents, mSubtitleStyle);
-		mDevice.GetCamera().SetScreenWidth((float) mDevice.GetRenderWidth(), (float) mDevice.GetRenderHeight());
 
 		UiRenderer::PopFont();
 
@@ -215,9 +178,9 @@ private:
 	}
 
 	RenderingDevice& mDevice;
-	ColorRect mSubtitleBgColor = ColorRect(D3DCOLOR_ARGB(153, 17, 17, 17));
-	ColorRect mSubtitleTextColor = ColorRect(D3DCOLOR_ARGB(255, 255, 255, 255));
-	ColorRect mSubtitleShadowColor = ColorRect(D3DCOLOR_ARGB(255, 0, 0, 0));
+	ColorRect mSubtitleBgColor = ColorRect(XMCOLOR_ARGB(153, 17, 17, 17));
+	ColorRect mSubtitleTextColor = ColorRect(XMCOLOR(1, 1, 1, 1));
+	ColorRect mSubtitleShadowColor = ColorRect(XMCOLOR(0, 0, 0, 1));
 	TigTextStyle mSubtitleStyle;
 	const SubtitleLine* mLine;
 	uint32_t mMovieStarted;
@@ -233,31 +196,23 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 		return 13;
 	}
 
+	XMCOLOR clearColor(0, 0, 0, 0);
+
 	// The disasm apparently goes crazy for the conversion here
 	auto binkVolume = (*tigSoundAddresses.movieVolume) / 127.0f;
 	movie->SetVolume(binkVolume);
 
 	auto& device(tig->GetRenderingDevice());
-	auto d3dDevice = device.GetDevice();
 
-	d3dDevice->ShowCursor(FALSE);
-	
+	// Do a one-time empty present to clear the screen quickly
+	device.ClearCurrentColorTarget(clearColor);
+	device.PresentForce();
+
+	device.HideCursor();
+
 	// Create the movie texture we write to
-	CComPtr<IDirect3DTexture9> texture;
-	if (D3DLOG(d3dDevice->CreateTexture(movie->GetWidth(), movie->GetHeight(), 
-		1, D3DUSAGE_DYNAMIC, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &texture, nullptr)) != D3D_OK) {
-		logger->error("Unable to create texture for bink video");
-		return 0;
-	}
-
-	// Reset the render target to full screen
-	D3DLOG(d3dDevice->SetRenderTarget(0, device.GetBackBuffer()));
-	D3DLOG(d3dDevice->SetDepthStencilSurface(device.GetBackBufferDepthStencil()));
-
-	// Clear screen with black color and present immediately
-	d3dDevice->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0, 0);
-	d3dDevice->Present(nullptr, nullptr, nullptr, nullptr);
-
+	auto texture = device.CreateDynamicTexture(BufferFormat::X8R8G8B8, movie->GetWidth(), movie->GetHeight());
+	
 	processTigMessages();
 
 	auto movieRect(GetMovieRect(movie->GetWidth(), movie->GetHeight()));
@@ -265,7 +220,7 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 	// TODO UV should be manipulated for certain vignettes since they have been letterboxed in the bink file!!!
 
 	// Set vertex shader
-	std::vector<MovieVertex> vertices {
+	eastl::fixed_vector<MovieVertex, 4> vertices {
 		{movieRect.left, movieRect.top, 0, 0},
 		{movieRect.right, movieRect.top, 1, 0},
 		{movieRect.right, movieRect.bottom, 1, 1},
@@ -280,30 +235,30 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 	auto indexBuffer(device.CreateIndexBuffer(indices));
 
 	SubtitleRenderer subtitleRenderer(device, subtitles);
+
+	Material material = CreateMaterial(device);
+	BufferBinding binding(material.GetVertexShader());
+	binding.AddBuffer(vertexBuffer, 0, sizeof(MovieVertex))
+		.AddElement(VertexElementType::Float4, VertexElementSemantic::Position)
+		.AddElement(VertexElementType::Color, VertexElementSemantic::Color)
+		.AddElement(VertexElementType::Float2, VertexElementSemantic::TexCoord);
 	
 	auto keyPressed = false;
-	while (!keyPressed && binkRenderFrame(*movie, texture)) {
-		D3DLOG(d3dDevice->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0, 0));
-		D3DLOG(d3dDevice->BeginScene());
+	while (!keyPressed && BinkRenderFrame(device, *movie, *texture)) {
+		device.ClearCurrentColorTarget(clearColor);
 
-		BufferBinding binding;
-		binding.AddBuffer(vertexBuffer, 0, sizeof(MovieVertex))
-			.AddElement(VertexElementType::Float3, VertexElementSemantic::Position)
-			.AddElement(VertexElementType::Color, VertexElementSemantic::Color)
-			.AddElement(VertexElementType::Float2, VertexElementSemantic::TexCoord);
+		device.SetMaterial(material);
+		device.SetVertexShaderConstant(0, gfx::StandardSlotSemantic::UiProjMatrix);
 		binding.Bind();
 
-		MovieMaterial material(device);
-		material.Bind();
+		device.SetIndexBuffer(*indexBuffer);
 
-		d3dDevice->SetIndices(indexBuffer->GetBuffer());
-
-		d3dDevice->SetTexture(0, texture);
-		D3DLOG(d3dDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2));
+		device.SetTexture(0, *texture);
+		device.DrawIndexed(gfx::PrimitiveType::TriangleList, 4, 6);
 
 		subtitleRenderer.Render();
-		D3DLOG(d3dDevice->EndScene());
-		D3DLOG(d3dDevice->Present(NULL, NULL, NULL, NULL));
+		
+		device.PresentForce();
 
 		templeFuncs.ProcessSystemEvents();
 
@@ -328,11 +283,7 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 		}
 	*/
 	movieFuncs.MovieIsPlaying = false;
-	d3dDevice->ShowCursor(TRUE);
-
-	// Reset the render target to game scene
-	D3DLOG(d3dDevice->SetRenderTarget(0, device.GetRenderSurface()));
-	D3DLOG(d3dDevice->SetDepthStencilSurface(device.GetRenderDepthStencilSurface()));
+	device.ShowCursor();
 
 	return 0;
 }
@@ -340,30 +291,30 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, const SubtitleLine* subtitles, int flags, int soundtrackId) {
 	logger->info("Play Movie Slide {} {} {} {}", imageFile, soundFile, flags, soundtrackId);
 
-	// Load img into memory using TIO
-	unique_ptr<vector<uint8_t>> imgData(TioReadBinaryFile(imageFile));
+	auto &device = tig->GetRenderingDevice();
 
-	if (!imgData) {
-		logger->error("Unable to load the image file {}", imageFile);
-		return 1; // Can't play because we cant load the file
-	}
-
-	auto device = tig->GetRenderingDevice().GetDevice();
-	gfx::ImageFileInfo info;
-	auto surface(gfx::LoadImageToSurface(device, *imgData.get(), info));
+	auto texture(device.GetTextures().ResolveUncached(imageFile, false));
 	
 	movieFuncs.MovieIsPlaying = true;
 
-	device->ShowCursor(FALSE);
+	device.HideCursor();
+
+	// We have to render directly to the screen
+	device.PushBackBufferRenderTarget();
+
+	XMCOLOR clearColor(0, 0, 0, 0);
 
 	// Clear screen with black color and present immediately
-	device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0, 0);
-	device->Present(nullptr, nullptr, nullptr, nullptr);
+	device.ClearCurrentColorTarget(clearColor);
+	device.PresentForce();
 
-	SubtitleRenderer subtitleRenderer(tig->GetRenderingDevice(), subtitles);
+	SubtitleRenderer subtitleRenderer(device, subtitles);
 
-	TigRect bbRect(0, 0, tig->GetRenderingDevice().GetScreenWidth(), tig->GetRenderingDevice().GetScreenHeight());
-	TigRect destRect(0, 0, info.width, info.height);
+	auto &textureSize = texture->GetSize();
+
+	auto &camera = device.GetCamera();
+	TigRect bbRect(0, 0, (int)camera.GetScreenWidth(), (int)camera.GetScreenHeight());
+	TigRect destRect(0, 0, textureSize.width, textureSize.height);
 	destRect.FitInto(bbRect);
 	RECT fitDestRect = destRect.ToRect();
 
@@ -378,19 +329,26 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 			stream.SetVolume(*tigSoundAddresses.movieVolume);
 		}
 	}
-	
-	CComPtr<IDirect3DSurface9> backBuffer;
-	device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &backBuffer);
 
+	auto &shapeRenderer2d = tig->GetShapeRenderer2d();
+	
+	
 	bool keyPressed = false;
 	while (!keyPressed && (!stream.IsValid() || stream.IsPlaying() || sw.GetElapsedMs() < 3000)) {
-		D3DLOG(device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0, 0));
 		
-		D3DLOG(device->BeginScene());
-		D3DLOG(device->StretchRect(surface, NULL, backBuffer, &fitDestRect, D3DTEXF_LINEAR));
+		device.ClearCurrentColorTarget(clearColor);
+		
+		shapeRenderer2d.DrawRectangle(
+			(float) destRect.x,
+			(float) destRect.y,
+			(float) destRect.width,
+			(float) destRect.height,
+			*texture
+		);
+		
 		subtitleRenderer.Render();
-		D3DLOG(device->EndScene());
-		D3DLOG(device->Present(NULL, NULL, NULL, NULL));
+
+		device.PresentForce();
 
 		templeFuncs.ProcessSystemEvents();
 
@@ -406,7 +364,9 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 	}
 
 	movieFuncs.MovieIsPlaying = false;
-	device->ShowCursor(TRUE);
+	device.ShowCursor();
+
+	device.PopRenderTarget();
 
 	return 0;
 }

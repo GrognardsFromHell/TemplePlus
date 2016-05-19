@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:ParticleEditor"
-             xmlns:interop="clr-namespace:System.Windows.Interop;assembly=PresentationCore"
+             xmlns:directX="clr-namespace:Microsoft.Wpf.Interop.DirectX;assembly=Microsoft.Wpf.Interop.DirectX"
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="300"
              d:DataContext="{d:DesignInstance d:Type=local:PreviewControlModel}">
@@ -18,10 +18,10 @@
             <ToggleButton Content="Pause" HorizontalAlignment="Left" Margin="5" IsChecked="{Binding Path=Paused}" />
             <Label ContentStringFormat="Scale: {0:P}" Content="{Binding Scale}"></Label>
         </StackPanel>
-        <Grid Grid.Row="1" x:Name="RenderOutput" MouseLeftButtonDown="RenderOutput_MouseLeftButtonDown" MouseMove="RenderOutput_MouseMove" MouseLeftButtonUp="RenderOutput_MouseLeftButtonUp" MouseWheel="RenderOutput_MouseWheel">
+        <Grid Grid.Row="1" x:Name="RenderOutput" Background="Black">
             <Image>
                 <Image.Source>
-                    <interop:D3DImage x:Name="D3Dimg" />
+                    <directX:D3D11Image x:Name="InteropImage" />
                 </Image.Source>
             </Image>
         </Grid>

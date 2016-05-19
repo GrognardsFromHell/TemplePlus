@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <graphics/math.h>
 #include <temple/dll.h>
 #include "idxtables.h"
 
@@ -19,8 +20,8 @@ struct TigShader {
 	int (__cdecl *vb_func)(); // Arguments not yet known
 	int field_4;
 	int(__cdecl *GetTextureId)(TigShaderData *shaderData, int *textureIdOut);
-	void (__cdecl *GetColor)(TigShaderData *shaderData, const char *name, D3DCOLOR *colorOut);
-	void(__cdecl *SetColor)(TigShaderData *shaderData, const char *name, D3DCOLOR *colorOut);
+	void (__cdecl *GetColor)(TigShaderData *shaderData, const char *name, XMCOLOR *colorOut);
+	void(__cdecl *SetColor)(TigShaderData *shaderData, const char *name, XMCOLOR *colorOut);
 	TigShaderData *data; // Shader type dependent data
 };
 
@@ -38,7 +39,7 @@ enum class TigShaderTexturedFlag : uint32_t {
 struct TigShaderTexturedData : public TigShaderData {
 	TigShaderTexturedFlag flags;
 	int textureId;
-	D3DCOLOR diffuse;
+	XMCOLOR diffuse;
 };
 
 struct UvSpeed {
@@ -84,8 +85,8 @@ struct TigShaderGenericData : public TigShaderData {
 	TigShaderGenericBlendType blendTypes[4];
 	TigShaderUvType uvTypes[4];
 	int glossmapTexId;
-	D3DCOLOR diffuse;
-	D3DCOLOR specular;
+	XMCOLOR diffuse;
+	XMCOLOR specular;
 	float specularPower;
 	TigShaderGenericMaterialBlendType materialBlendType;
 	TigShaderGenericFlag flags;

@@ -137,40 +137,54 @@ namespace gfx {
 		return result;
 	}
 
-	CComPtr<IDirect3DSurface9> LoadImageToSurface(IDirect3DDevice9* device, const span<uint8_t> data, ImageFileInfo& info) {
+	HCURSOR LoadImageToCursor(const span<uint8_t> data, uint32_t hotspotX, uint32_t hotspotY) {
+
 		auto img(DecodeImage(data));
 		auto w = img.info.width;
 		auto h = img.info.height;
-		info = img.info;
 
-		auto format = img.info.hasAlpha ? D3DFMT_A8R8G8B8 : D3DFMT_X8R8G8B8;
-
-		CComPtr<IDirect3DSurface9> imgSurface;
-		if (!SUCCEEDED(device->CreateOffscreenPlainSurface(w, h, format, D3DPOOL_DEFAULT, &imgSurface, nullptr))) {
-			throw TempleException("Unable to create offscreen surface for image");
+		if (!img.info.hasAlpha) {
+			throw TempleException("Cursor has no alpha channel");
 		}
 
-		D3DLOCKED_RECT locked;
-		auto result = imgSurface->LockRect(&locked, nullptr, D3DLOCK_DISCARD);
-		if (!SUCCEEDED(result)) {
-			throw TempleException("Unable to lock result surface");
-		}
+		BITMAPV5HEADER bi;
+		ZeroMemory(&bi, sizeof(BITMAPV5HEADER));
+		bi.bV5Size = sizeof(BITMAPV5HEADER);
+		bi.bV5Width = w;
+		bi.bV5Height = - h;
+		bi.bV5Planes = 1;
+		bi.bV5BitCount = 32;
+		bi.bV5Compression = BI_BITFIELDS;
+		bi.bV5RedMask = 0x00FF0000;
+		bi.bV5GreenMask = 0x0000FF00;
+		bi.bV5BlueMask = 0x000000FF;
+		bi.bV5AlphaMask = 0xFF000000;
+		HDC hdc;
+		hdc = GetDC(NULL);
+		
+		void *lpBits = nullptr;
+		auto hBitmap = CreateDIBSection(hdc, (BITMAPINFO *)&bi, DIB_RGB_COLORS,
+			(void **)&lpBits, NULL, (DWORD)0);
 
-		auto dest = reinterpret_cast<uint8_t*>(locked.pBits);
-		auto src = img.data.get();
-		if (locked.Pitch != w * 4) {
-			for (auto y = 0; y < h; ++y) {
-				memcpy(dest, src, w * 4);
-				dest += locked.Pitch;
-				src += w * 4;
-			}
-		} else {
-			memcpy(dest, src, w * h * 4);
-		}
+		memcpy(lpBits, img.data.get(), w * h * 4);
 
-		imgSurface->UnlockRect();
+		ReleaseDC(NULL, hdc);
 
-		return imgSurface;
+		auto hMonoBitmap = CreateBitmap(w, h, 1, 1, NULL);
+
+		ICONINFO ii;
+		ii.fIcon = FALSE;
+		ii.xHotspot = hotspotX;
+		ii.yHotspot = hotspotY;
+		ii.hbmMask = hMonoBitmap;
+		ii.hbmColor = hBitmap;
+
+		auto hAlphaCursor = CreateIconIndirect(&ii);
+
+		DeleteObject(hBitmap);
+		DeleteObject(hMonoBitmap);
+
+		return hAlphaCursor;
 	}
 
 }

@@ -6,7 +6,11 @@
 
 enum TigTextStyleFlag {
 	TTSF_DROP_SHADOW = 0x8,
-	TTSF_CENTER = 0x10
+	TTSF_CENTER = 0x10,
+	TTSF_CONTINUATION_INDENT = 0x200,
+	TTSF_BACKGROUND = 0x400,
+	TTSF_BORDER = 0x800,
+	TTSF_TRUNCATE = 0x4000
 };
 
 /**
@@ -28,6 +32,7 @@ struct TigTextStyle
 	/*
 		8 seems to be drop shadow
 		0x10 centers the text
+		0x200 continuation indent
 		0x400 Draws a filled rect behind the text (see bgColor)
 		0x800 Draws a border box around the text, always black
 		0xC00 is used for tooltips

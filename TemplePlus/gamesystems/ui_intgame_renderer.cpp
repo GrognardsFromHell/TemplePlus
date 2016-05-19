@@ -41,15 +41,15 @@ IntgameRenderer* IntgameRenderHooks::renderer = nullptr;
 
 #pragma pack(push, 1)
 struct IntgameVertex {
-	XMFLOAT3 pos;
-	XMFLOAT3 normal;
+	XMFLOAT4 pos;
+	XMFLOAT4 normal;
 	XMCOLOR diffuse;
 	XMFLOAT2 texCoord;
 };
 #pragma pack(pop)
 
 IntgameRenderer::IntgameRenderer(MdfMaterialFactory& mdfFactory,
-	RenderingDevice& device) : mMdfFactory(mdfFactory), mDevice(device) {
+	RenderingDevice& device) : mMdfFactory(mdfFactory), mDevice(device), mBufferBinding(device.CreateMdfBufferBinding()) {
 
 	mMaterial = mdfFactory.LoadMaterial("art\\interface\\intgame_select\\spell_none-target_hostile.mdf");
 
@@ -57,8 +57,8 @@ IntgameRenderer::IntgameRenderer(MdfMaterialFactory& mdfFactory,
 	mVertexBuffer = device.CreateEmptyVertexBuffer(sizeof(IntgameVertex) * 1200);
 
 	mBufferBinding.AddBuffer(mVertexBuffer, 0, sizeof(IntgameVertex))
-		.AddElement(VertexElementType::Float3, VertexElementSemantic::Position)
-		.AddElement(VertexElementType::Float3, VertexElementSemantic::Normal)
+		.AddElement(VertexElementType::Float4, VertexElementSemantic::Position)
+		.AddElement(VertexElementType::Float4, VertexElementSemantic::Normal)
 		.AddElement(VertexElementType::Color, VertexElementSemantic::Color)
 		.AddElement(VertexElementType::Float2, VertexElementSemantic::TexCoord);
 
@@ -101,41 +101,40 @@ int IntgameRenderer::LoadIntgameShader(int spellEnum, int tgtResultClassif, int*
 
 void IntgameRenderer::Render(size_t vertexCount, XMFLOAT4* positions, XMFLOAT4* normals, XMCOLOR* diffuse, XMFLOAT2* uv, size_t primCount, uint16_t* indices, int shaderId) {
 
-	auto vbLock = mVertexBuffer->Lock<IntgameVertex>(vertexCount);
+	auto vbLock(mDevice.Map<IntgameVertex>(*mVertexBuffer));
 
 	for (size_t i = 0; i < vertexCount; ++i) {
 		auto &vertex = vbLock[i];
 		vertex.pos.x = positions[i].x;
 		vertex.pos.y = positions[i].y;
 		vertex.pos.z = positions[i].z;
+		vertex.pos.w = 1;
 
 		vertex.normal.x = normals[i].x;
 		vertex.normal.y = normals[i].y;
 		vertex.normal.z = normals[i].z;
+		vertex.normal.w = 0;
 
 		vertex.diffuse = 0xFFFFFFFF;
 
 		vertex.texCoord = uv[i];
 	}
 
-	vbLock.Unlock();
+	vbLock.Unmap();
 
 	mIndexBuffer->Update(gsl::as_span(indices, primCount * 3));
 
 	mBufferBinding.Bind();
-	mDevice.GetDevice()->SetIndices(mIndexBuffer->GetBuffer());
+	mDevice.SetIndexBuffer(*mIndexBuffer);
 
 	mMaterial = mMdfFactory.GetById(shaderId);
 
 	mMaterial->Bind(mDevice, {});
 
-	mDevice.GetDevice()->DrawIndexedPrimitive(
-		D3DPT_TRIANGLELIST,
-		0,
-		0,
+	mDevice.DrawIndexed(
+		gfx::PrimitiveType::TriangleList,
 		vertexCount,
-		0,
-		primCount);
+		primCount * 3);
 
 }
 

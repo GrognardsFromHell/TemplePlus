@@ -15,48 +15,48 @@ GeneralEmitterRenderState::GeneralEmitterRenderState(RenderingDevice &device,
 Material GeneralEmitterRenderState::CreateMaterial(RenderingDevice &device,
                                                    PartSysEmitter &emitter,
                                                    bool pointSprites) {
-  BlendState blendState;
+  BlendSpec blendState;
   blendState.blendEnable = true;
 
   switch (emitter.GetSpec()->GetBlendMode()) {
   case PartSysBlendMode::Add:
-    blendState.srcBlend = D3DBLEND_SRCALPHA;
-    blendState.destBlend = D3DBLEND_ONE;
+    blendState.srcBlend = BlendOperand::SrcAlpha;
+    blendState.destBlend = BlendOperand::One;
     break;
   case PartSysBlendMode::Subtract:
-    blendState.srcBlend = D3DBLEND_ZERO;
-    blendState.destBlend = D3DBLEND_INVSRCALPHA;
+    blendState.srcBlend = BlendOperand::Zero;
+    blendState.destBlend = BlendOperand::InvSrcAlpha;
     break;
   case PartSysBlendMode::Blend:
-    blendState.srcBlend = D3DBLEND_SRCALPHA;
-    blendState.destBlend = D3DBLEND_INVSRCALPHA;
+    blendState.srcBlend = BlendOperand::SrcAlpha;
+    blendState.destBlend = BlendOperand::InvSrcAlpha;
     break;
   case PartSysBlendMode::Multiply:
-    blendState.srcBlend = D3DBLEND_ZERO;
-    blendState.destBlend = D3DBLEND_SRCCOLOR;
+    blendState.srcBlend = BlendOperand::Zero;
+    blendState.destBlend = BlendOperand::SrcColor;
     break;
   default:
     break;
   }
 
   // Particles respect the depth buffer, but do not modify it
-  DepthStencilState depthStencilState;
+  DepthStencilSpec depthStencilState;
   depthStencilState.depthEnable = true;
   depthStencilState.depthWrite = false;
-  RasterizerState rasterizerState;
-  rasterizerState.cullMode = D3DCULL_NONE;
+  RasterizerSpec rasterizerState;
+  rasterizerState.cullMode = CullMode::None;
   PixelShaderPtr pixelShader;
-  std::vector<MaterialSamplerBinding> samplers;
+  std::vector<MaterialSamplerSpec> samplers;
 
   auto shaderName("diffuse_only_ps");
   auto& textureName(emitter.GetSpec()->GetTextureName());  
   if (!textureName.empty()) {
-	SamplerState samplerState;
-	samplerState.addressU = D3DTADDRESS_CLAMP;
-	samplerState.addressV = D3DTADDRESS_CLAMP;
-	samplerState.minFilter = D3DTEXF_LINEAR;
-	samplerState.magFilter = D3DTEXF_LINEAR;
-	samplerState.mipFilter = D3DTEXF_LINEAR;
+	SamplerSpec samplerState;
+	samplerState.addressU = TextureAddress::Clamp;
+	samplerState.addressV = TextureAddress::Clamp;
+	samplerState.minFilter = TextureFilterType::Linear;
+	samplerState.magFilter = TextureFilterType::Linear;
+	samplerState.mipFilter = TextureFilterType::Linear;
 
 	auto texture(device.GetTextures().Resolve(textureName, true));
 	samplers.push_back({ texture, samplerState });
@@ -68,7 +68,7 @@ Material GeneralEmitterRenderState::CreateMaterial(RenderingDevice &device,
 
   auto vertexShader(device.GetShaders().LoadVertexShader(vsName));
 
-  return Material(blendState, depthStencilState, rasterizerState, samplers,
+  return device.CreateMaterial(blendState, depthStencilState, rasterizerState, samplers,
                   vertexShader, pixelShader);
 }
 
@@ -96,7 +96,7 @@ static uint8_t GetParticleColorComponent(ParticleStateField stateField,
   return value;
 }
 
-D3DCOLOR GetParticleColor(const PartSysEmitter &emitter, int particleIdx) {
+XMCOLOR GetParticleColor(const PartSysEmitter &emitter, int particleIdx) {
   auto red = GetParticleColorComponent(PSF_RED, part_red, emitter, particleIdx);
   auto green =
       GetParticleColorComponent(PSF_GREEN, part_green, emitter, particleIdx);
@@ -105,6 +105,6 @@ D3DCOLOR GetParticleColor(const PartSysEmitter &emitter, int particleIdx) {
   auto alpha =
       GetParticleColorComponent(PSF_ALPHA, part_alpha, emitter, particleIdx);
 
-  return D3DCOLOR_ARGB(alpha, red, green, blue);
+  return XMCOLOR_ARGB(alpha, red, green, blue);
 }
 }

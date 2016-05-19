@@ -155,7 +155,11 @@ static ConfigSetting configSettings[] = {
 	CONF_STRING(hpOnLevelup),
 	CONF_BOOL(autoUpdate),
 	CONF_BOOL(allowXpOverflow),
-	CONF_BOOL(slowerLevelling)
+	CONF_BOOL(slowerLevelling),
+	CONF_BOOL(d3dDebug),
+	CONF_INT(displayAdapter),
+	CONF_INT(msaaSamples),
+	CONF_INT(msaaQuality)
 };
 
 void TemplePlusConfig::Load() {

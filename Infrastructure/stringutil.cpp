@@ -13,7 +13,7 @@ std::string ucs2_to_local(const std::wstring&s) {
 	
 	std::string result(len, '\0');
 	WideCharToMultiByte(CP_ACP, 0, s.c_str(), slength, &result[0], len, 0, 0);
-	result.resize(result.length());
+	result.resize(strlen(result.c_str()));
 	return result;
 
 }

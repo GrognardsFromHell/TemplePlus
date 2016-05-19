@@ -19,33 +19,34 @@ FogOfWarRenderer::FogOfWarRenderer(MdfMaterialFactory& mdfFactory, RenderingDevi
 	: mMdfFactory(mdfFactory),
 	  mDevice(device),
 	  mNumSubtilesX(temple::GetRef<uint32_t>(0x10820458)),
-	  mNumSubtilesY(temple::GetRef<uint32_t>(0x10824490)) {
+	  mNumSubtilesY(temple::GetRef<uint32_t>(0x10824490)),
+	  mBufferBinding(device.GetShaders().LoadVertexShader("fogofwar_vs")) {
 
 	mBlurredFogWidth = (mNumSubtilesX / 4) * 4 + 8;
 	mBlurredFogHeight = (mNumSubtilesY / 4) * 4 + 8;
 
-	mBlurredFogTexture = mDevice.CreateDynamicTexture(D3DFMT_A8, mBlurredFogWidth, mBlurredFogHeight);
+	mBlurredFogTexture = mDevice.CreateDynamicTexture(BufferFormat::A8, mBlurredFogWidth, mBlurredFogHeight);
 	mBlurredFog.resize(mBlurredFogWidth * mBlurredFogHeight);
 
 	auto vs = device.GetShaders().LoadVertexShader("fogofwar_vs");
 	auto ps = device.GetShaders().LoadPixelShader("fogofwar_ps");
-	BlendState blendState;
+	BlendSpec blendState;
 	blendState.blendEnable = true;
-	blendState.srcBlend = D3DBLEND_SRCALPHA;
-	blendState.destBlend = D3DBLEND_INVSRCALPHA;
-	DepthStencilState depthStencilState;
+	blendState.srcBlend = BlendOperand::SrcAlpha;
+	blendState.destBlend = BlendOperand::InvSrcAlpha;
+	DepthStencilSpec depthStencilState;
 	depthStencilState.depthEnable = false;
-	RasterizerState rasterizerState;
-	SamplerState samplerState;
-	samplerState.addressU = D3DTADDRESS_CLAMP;
-	samplerState.addressV = D3DTADDRESS_CLAMP;
-	samplerState.magFilter = D3DTEXF_LINEAR;
-	samplerState.minFilter = D3DTEXF_LINEAR;
-	std::vector<MaterialSamplerBinding> samplers{
-		MaterialSamplerBinding(mBlurredFogTexture, samplerState)
+	RasterizerSpec rasterizerState;
+	SamplerSpec samplerState;
+	samplerState.addressU = TextureAddress::Clamp;
+	samplerState.addressV = TextureAddress::Clamp;
+	samplerState.magFilter = TextureFilterType::Linear;
+	samplerState.minFilter = TextureFilterType::Linear;
+	std::vector<MaterialSamplerSpec> samplers{
+		{ mBlurredFogTexture, samplerState }
 	};
 
-	mMaterial = std::make_unique<Material>(blendState, depthStencilState, rasterizerState, samplers, vs, ps);
+	mMaterial = std::make_unique<Material>(device.CreateMaterial(blendState, depthStencilState, rasterizerState, samplers, vs, ps));
 
 	uint16_t indices[6]{0, 2, 1, 2, 0, 3};
 	mIndexBuffer = device.CreateIndexBuffer(indices);
@@ -68,10 +69,13 @@ struct FogBlurKernel {
 };
 
 void FogOfWarRenderer::Render() {
+
 	static auto& sFoggingEnabled = temple::GetRef<uint32_t>(0x108254A0);
 	if (!(sFoggingEnabled & 1)) {
 		return;
 	}
+
+	gfx::PerfGroup perfGroup(mDevice, "Fog Of War");
 
 	// Reset the blurred buffer
 	std::fill(mBlurredFog.begin(), mBlurredFog.end(), 0);
@@ -155,12 +159,12 @@ void FogOfWarRenderer::Render() {
 	mVertexBuffer->Update<FogOfWarVertex>(mVertices);
 
 	mBufferBinding.Bind();
-	mDevice.GetDevice()->SetIndices(mIndexBuffer->GetBuffer());
+	mDevice.SetIndexBuffer(*mIndexBuffer);
 
 	mDevice.SetMaterial(*mMaterial);
 	mDevice.SetVertexShaderConstant(0, StandardSlotSemantic::ViewProjMatrix);
 
-	mDevice.GetDevice()->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
+	mDevice.DrawIndexed(gfx::PrimitiveType::TriangleList, 4, 6);
 
 }
 

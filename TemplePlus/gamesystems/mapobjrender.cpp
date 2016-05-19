@@ -105,6 +105,9 @@ MapObjectRenderer::~MapObjectRenderer() {
 }
 
 void MapObjectRenderer::RenderMapObjects(int tileX1, int tileX2, int tileY1, int tileY2) {
+
+	gfx::PerfGroup perfGroup(mDevice, "Map Objects");
+
 	mTotalLastFrame = 0;
 	mRenderedLastFrame = 0;
 
@@ -281,7 +284,6 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 		if (alpha > 16) {
 			if (mShadowType == ShadowType::ShadowMap)
 			{
-				// TODO: pos
 				RenderShadowMapShadow(handle, animParams, *animatedModel, globalLight, alpha);
 			} else if (mShadowType == ShadowType::Geometry) {
 				mAasRenderer.RenderGeometryShadow(animatedModel.get(),
@@ -385,6 +387,7 @@ void MapObjectRenderer::RenderObjectInUi(objHndl handle, int x, int y, float rot
 
 void MapObjectRenderer::RenderOccludedMapObjects(int tileX1, int tileX2, int tileY1, int tileY2) {
 
+	gfx::PerfGroup perfGroup(mDevice, "Occluded Map Objects");
 
 	for (auto secY = tileY1 / 64; secY <= tileY2 / 64; ++secY) {
 		for (auto secX = tileX1 / 64; secX <= tileX2 / 64; ++secX) {

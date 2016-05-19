@@ -14,9 +14,9 @@ namespace particles {
 		// inverse, so screen->world?
 		XMFLOAT4X4 invProj;
 		XMStoreFloat4x4(&invProj, XMMatrixTranspose(XMLoadFloat4x4(&projWorldMatrix)));
-		XMStoreFloat3(&screenSpaceUnitX, XMVector3Normalize(XMLoadFloat3((XMFLOAT3*)&invProj._11)));
-		XMStoreFloat3(&screenSpaceUnitY, XMVector3Normalize(XMLoadFloat3((XMFLOAT3*)&invProj._21)));
-		XMStoreFloat3(&screenSpaceUnitZ, XMVector3Normalize(XMLoadFloat3((XMFLOAT3*)&invProj._31)));
+		XMStoreFloat4(&screenSpaceUnitX, XMVector4Normalize(XMLoadFloat3((XMFLOAT3*)&invProj._11)));
+		XMStoreFloat4(&screenSpaceUnitY, XMVector4Normalize(XMLoadFloat3((XMFLOAT3*)&invProj._21)));
+		XMStoreFloat4(&screenSpaceUnitZ, XMVector4Normalize(XMLoadFloat3((XMFLOAT3*)&invProj._31)));
 	}
 
 	// No idea why this is a separate function
@@ -24,16 +24,19 @@ namespace particles {
 		screenSpaceUnitX.x = projWorldMatrix._11;
 		screenSpaceUnitX.y = projWorldMatrix._12;
 		screenSpaceUnitX.z = projWorldMatrix._13;
+		screenSpaceUnitX.w = 0;
 		screenSpaceUnitY.x = projWorldMatrix._31;
 		screenSpaceUnitY.y = projWorldMatrix._32;
 		screenSpaceUnitY.z = projWorldMatrix._33;
+		screenSpaceUnitY.w = 0;
 		screenSpaceUnitZ.x = projWorldMatrix._21;
 		screenSpaceUnitZ.y = projWorldMatrix._22;
 		screenSpaceUnitZ.z = projWorldMatrix._23;
+		screenSpaceUnitZ.w = 0;
 		
-		XMStoreFloat3(&screenSpaceUnitX, XMVector3Normalize(XMLoadFloat3(&screenSpaceUnitX)));
-		XMStoreFloat3(&screenSpaceUnitY, XMVector3Normalize(XMLoadFloat3(&screenSpaceUnitY)));
-		XMStoreFloat3(&screenSpaceUnitZ, XMVector3Normalize(XMLoadFloat3(&screenSpaceUnitZ)));
+		XMStoreFloat4(&screenSpaceUnitX, XMVector4Normalize(XMLoadFloat4(&screenSpaceUnitX)));
+		XMStoreFloat4(&screenSpaceUnitY, XMVector4Normalize(XMLoadFloat4(&screenSpaceUnitY)));
+		XMStoreFloat4(&screenSpaceUnitZ, XMVector4Normalize(XMLoadFloat4(&screenSpaceUnitZ)));
 	}
 
 	class ParticleRendererManager::Impl {
@@ -41,13 +44,11 @@ namespace particles {
 		explicit Impl(RenderingDevice& device, 
 			AnimatedModelFactory &modelFactory, 
 			AnimatedModelRenderer &modelRenderer)
-			: mPointRenderer(device), 
-			  mSpriteRenderer(device), 
+			: mSpriteRenderer(device), 
 			  mDiscRenderer(device),
 			  mModelRenderer(device, modelFactory, modelRenderer) {
 		}
 
-		PointParticleRenderer mPointRenderer;
 		SpriteParticleRenderer mSpriteRenderer;
 		DiscParticleRenderer mDiscRenderer;
 		ModelParticleRenderer mModelRenderer;
@@ -183,7 +184,6 @@ namespace particles {
 	ParticleRenderer& ParticleRendererManager::GetRenderer(PartSysParticleType type) {
 		switch (type) {
 		case PartSysParticleType::Point:
-			return mImpl->mPointRenderer;
 		case PartSysParticleType::Sprite:
 			return mImpl->mSpriteRenderer;
 		case PartSysParticleType::Disc:

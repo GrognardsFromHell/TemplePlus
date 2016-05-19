@@ -11,7 +11,6 @@
 #include "gsl/gsl.h"
 
 namespace gfx {
-
 struct ShapeRenderer2d::Impl {
 	Impl(RenderingDevice &device);
 
@@ -19,10 +18,8 @@ struct ShapeRenderer2d::Impl {
 
 	VertexBufferPtr vertexBuffer;
 	IndexBufferPtr indexBuffer;
-	BufferBinding bufferBinding;
 
 	VertexBufferPtr lineVertexBuffer;
-	BufferBinding lineBufferBinding;
 
 	Material outlineMaterial;
 	Material pieFillMaterial;
@@ -31,9 +28,14 @@ struct ShapeRenderer2d::Impl {
 	Material texturedMaterial;
 	Material texturedWithoutBlendingMaterial;
 	Material texturedWithMaskMaterial;
-	SamplerState samplerWrapState;
-	SamplerState samplerClampState;
-	
+	SamplerStatePtr samplerWrapState;
+	SamplerStatePtr samplerClampState;
+	DepthStencilStatePtr noDepthState;
+
+	BufferBinding bufferBinding;
+	BufferBinding mdfBufferBinding;
+	BufferBinding lineBufferBinding;
+
 	static Material CreateMaterial(RenderingDevice &device,
 		const char *pixelShaderName,
 		bool forLines = false,
@@ -50,17 +52,28 @@ ShapeRenderer2d::Impl::Impl(RenderingDevice &device)
 	texturedWithMaskMaterial(CreateMaterial(device, "textured_two_ps")),
 	lineMaterial(CreateMaterial(device, "diffuse_only_ps", true)),
 	outlineMaterial(CreateOutlineMaterial(device)),
-	pieFillMaterial(CreatePieFillMaterial(device)) {
+	pieFillMaterial(CreatePieFillMaterial(device)),
+	bufferBinding(texturedMaterial.GetVertexShader()),
+	mdfBufferBinding(device.CreateMdfBufferBinding()),
+	lineBufferBinding(lineMaterial.GetVertexShader()) {
 
-	samplerWrapState.minFilter = D3DTEXF_LINEAR;
-	samplerWrapState.magFilter = D3DTEXF_LINEAR;
-	samplerWrapState.mipFilter = D3DTEXF_LINEAR;
+	SamplerSpec samplerWrapSpec;
+	samplerWrapSpec.minFilter = TextureFilterType::Linear;
+	samplerWrapSpec.magFilter = TextureFilterType::Linear;
+	samplerWrapSpec.mipFilter = TextureFilterType::Linear;
+	samplerWrapState = device.createSamplerState(samplerWrapSpec);
 
-	samplerClampState.addressU = D3DTADDRESS_CLAMP;
-	samplerClampState.addressV = D3DTADDRESS_CLAMP;
-	samplerClampState.minFilter = D3DTEXF_LINEAR;
-	samplerClampState.magFilter = D3DTEXF_LINEAR;
-	samplerClampState.mipFilter = D3DTEXF_LINEAR;
+	SamplerSpec samplerClampSpec;
+	samplerClampSpec.addressU = TextureAddress::Clamp;
+	samplerClampSpec.addressV = TextureAddress::Clamp;
+	samplerClampSpec.minFilter = TextureFilterType::Linear;
+	samplerClampSpec.magFilter = TextureFilterType::Linear;
+	samplerClampSpec.mipFilter = TextureFilterType::Linear;
+	samplerClampState = device.createSamplerState(samplerClampSpec);
+
+	DepthStencilSpec noDepthSpec;
+	noDepthSpec.depthEnable = false;
+	noDepthState = device.CreateDepthStencilState(noDepthSpec);
 
 	vertexBuffer = device.CreateEmptyVertexBuffer(sizeof(Vertex2d) * 8);
 
@@ -71,10 +84,16 @@ ShapeRenderer2d::Impl::Impl(RenderingDevice &device)
 	indexBuffer = device.CreateIndexBuffer(indexData);
 
 	bufferBinding.AddBuffer(vertexBuffer, 0, sizeof(Vertex2d))
-		.AddElement(VertexElementType::Float3, VertexElementSemantic::Position)
+		.AddElement(VertexElementType::Float4, VertexElementSemantic::Position)
+		.AddElement(VertexElementType::Float4, VertexElementSemantic::Normal)
 		.AddElement(VertexElementType::Color, VertexElementSemantic::Color)
 		.AddElement(VertexElementType::Float2, VertexElementSemantic::TexCoord);
-
+	
+	mdfBufferBinding.AddBuffer(vertexBuffer, 0, sizeof(Vertex2d))
+		.AddElement(VertexElementType::Float4, VertexElementSemantic::Position)
+		.AddElement(VertexElementType::Float4, VertexElementSemantic::Normal)
+		.AddElement(VertexElementType::Color, VertexElementSemantic::Color)
+		.AddElement(VertexElementType::Float2, VertexElementSemantic::TexCoord);
 }
 
 Material ShapeRenderer2d::Impl::CreateMaterial(RenderingDevice &device,
@@ -82,13 +101,12 @@ Material ShapeRenderer2d::Impl::CreateMaterial(RenderingDevice &device,
 	bool forLine,
 	bool blending) {
 
-	BlendState blendState;
-	blendState.blendEnable = blending;
-	blendState.srcBlend = D3DBLEND_SRCALPHA;
-	blendState.destBlend = D3DBLEND_INVSRCALPHA;
-	DepthStencilState depthStencilState;
-	depthStencilState.depthEnable = false;
-	RasterizerState rasterizerState;
+	BlendSpec blendSpec;
+	blendSpec.blendEnable = blending;
+	blendSpec.srcBlend = BlendOperand::SrcAlpha;
+	blendSpec.destBlend = BlendOperand::InvSrcAlpha;
+	DepthStencilSpec depthStencilSpec;
+	depthStencilSpec.depthEnable = false;
 	Shaders::ShaderDefines vsDefines;
 	if (forLine) {
 		vsDefines["DRAW_LINES"] = "1";
@@ -96,40 +114,39 @@ Material ShapeRenderer2d::Impl::CreateMaterial(RenderingDevice &device,
 	auto vertexShader(device.GetShaders().LoadVertexShader("gui_vs", vsDefines));
 	auto pixelShader(device.GetShaders().LoadPixelShader(pixelShaderName));
 
-	return Material(blendState, depthStencilState, rasterizerState,
-	{}, vertexShader, pixelShader);
+	return device.CreateMaterial(blendSpec, depthStencilSpec, {},
+		{}, vertexShader, pixelShader);
 
 }
 
 Material ShapeRenderer2d::Impl::CreateOutlineMaterial(RenderingDevice& device) {
-	BlendState blendState;
-	blendState.blendEnable = true;
-	blendState.srcBlend = D3DBLEND_SRCALPHA;
-	blendState.destBlend = D3DBLEND_INVSRCALPHA;
-	DepthStencilState depthStencilState;
-	depthStencilState.depthEnable = false;
+	BlendSpec blendSpec;
+	blendSpec.blendEnable = true;
+	blendSpec.srcBlend = BlendOperand::SrcAlpha;
+	blendSpec.destBlend = BlendOperand::InvSrcAlpha;
+	DepthStencilSpec depthStencilSpec;
+	depthStencilSpec.depthEnable = false;
 	auto vertexShader(device.GetShaders().LoadVertexShader("line_vs"));
 	auto pixelShader(device.GetShaders().LoadPixelShader("diffuse_only_ps"));
 
-	return Material(blendState, depthStencilState, {},
-	{}, vertexShader, pixelShader);
+	return device.CreateMaterial(blendSpec, depthStencilSpec, {}, {}, vertexShader, pixelShader);
 }
 
 Material ShapeRenderer2d::Impl::CreatePieFillMaterial(RenderingDevice& device) {
-	BlendState blendState;
-	blendState.blendEnable = true;
-	blendState.srcBlend = D3DBLEND_SRCALPHA;
-	blendState.destBlend = D3DBLEND_INVSRCALPHA;
-	DepthStencilState depthStencilState;
-	depthStencilState.depthEnable = false;
-	RasterizerState rasterizerState;
-	rasterizerState.cullMode = D3DCULL_NONE;
+	BlendSpec blendSpec;
+	blendSpec.blendEnable = true;
+	blendSpec.srcBlend = BlendOperand::SrcAlpha;
+	blendSpec.destBlend = BlendOperand::InvSrcAlpha;
+	DepthStencilSpec depthStencilSpec;
+	depthStencilSpec.depthEnable = false;
+	RasterizerSpec rasterizerSpec;
+	rasterizerSpec.cullMode = CullMode::None;
 
 	auto vertexShader(device.GetShaders().LoadVertexShader("gui_vs"));
 	auto pixelShader(device.GetShaders().LoadPixelShader("diffuse_only_ps"));
 
-	return Material(blendState, depthStencilState, rasterizerState,
-	{}, vertexShader, pixelShader);
+	return device.CreateMaterial(blendSpec, depthStencilSpec, rasterizerSpec,
+		{}, vertexShader, pixelShader);
 }
 
 ShapeRenderer2d::ShapeRenderer2d(RenderingDevice& device) : mImpl(std::make_unique<Impl>(device)) {
@@ -138,7 +155,7 @@ ShapeRenderer2d::ShapeRenderer2d(RenderingDevice& device) : mImpl(std::make_uniq
 ShapeRenderer2d::~ShapeRenderer2d() {
 }
 
-void ShapeRenderer2d::DrawRectangle(float x, float y, float width, float height, const gfx::TextureRef& texture, uint32_t color) {
+void ShapeRenderer2d::DrawRectangle(float x, float y, float width, float height, gfx::Texture* texture, uint32_t color) {
 
 	if (texture) {
 		mImpl->device.SetMaterial(mImpl->texturedMaterial);
@@ -150,54 +167,44 @@ void ShapeRenderer2d::DrawRectangle(float x, float y, float width, float height,
 	std::array<Vertex2d, 4> vertices;
 
 	// Upper Left
-	vertices[0].pos = XMFLOAT3(x, y, 0.5f);
+	vertices[0].pos = XMFLOAT4(x, y, 0.5f, 1);
 	vertices[0].uv = XMFLOAT2(0, 0);
 	vertices[0].diffuse = color;
 
 	// Upper Right
-	vertices[1].pos = XMFLOAT3(x + width, y, 0.5f);
+	vertices[1].pos = XMFLOAT4(x + width, y, 0.5f, 1);
 	vertices[1].uv = XMFLOAT2(1, 0);
 	vertices[1].diffuse = color;
 
 	// Lower Right
-	vertices[2].pos = XMFLOAT3(x + width, y + height, 0.5f);
+	vertices[2].pos = XMFLOAT4(x + width, y + height, 0.5f, 1);
 	vertices[2].uv = XMFLOAT2(1, 1);
 	vertices[2].diffuse = color;
 
 	// Lower Left
-	vertices[3].pos = XMFLOAT3(x, y + height, 0.5f);
+	vertices[3].pos = XMFLOAT4(x, y + height, 0.5f, 1);
 	vertices[3].uv = XMFLOAT2(0, 1);
 	vertices[3].diffuse = color;
 
-	if (texture) {
-		DrawRectangle(vertices, texture->GetDeviceTexture());
-	} else {
-		DrawRectangle(vertices, nullptr);
-	}
+	DrawRectangle(vertices, texture);
 
-}
-
-void ShapeRenderer2d::DrawRectangle(float x, float y, float width, float height, uint32_t color) {
-	DrawRectangle(x, y, width, height, nullptr, color);
 }
 
 void ShapeRenderer2d::DrawRectangle(gsl::span<Vertex2d, 4> corners,
-	IDirect3DTexture9* texture,
-	IDirect3DTexture9* mask,
+	gfx::Texture* texture,
+	gfx::Texture* mask,
 	bool wrap,
 	bool blending) {
 
-	auto device = mImpl->device.GetDevice();
-
-	auto& samplerState = (wrap ? mImpl->samplerWrapState : mImpl->samplerClampState);
+	auto& samplerState = *(wrap ? mImpl->samplerWrapState : mImpl->samplerClampState);
 
 	if (texture && mask) {
 		Expects(blending);
 		mImpl->device.SetMaterial(mImpl->texturedWithMaskMaterial);
 		mImpl->device.SetSamplerState(0, samplerState);
 		mImpl->device.SetSamplerState(1, samplerState);
-		device->SetTexture(0, texture);
-		device->SetTexture(1, mask);
+		mImpl->device.SetTexture(0, *texture);
+		mImpl->device.SetTexture(1, *mask);
 	} else if (texture) {
 		if (blending) {
 			mImpl->device.SetMaterial(mImpl->texturedMaterial);
@@ -205,7 +212,7 @@ void ShapeRenderer2d::DrawRectangle(gsl::span<Vertex2d, 4> corners,
 			mImpl->device.SetMaterial(mImpl->texturedWithoutBlendingMaterial);
 		}
 		mImpl->device.SetSamplerState(0, samplerState);
-		device->SetTexture(0, texture);
+		mImpl->device.SetTexture(0, *texture);
 	} else {
 		mImpl->device.SetMaterial(mImpl->untexturedMaterial);
 	}
@@ -213,10 +220,10 @@ void ShapeRenderer2d::DrawRectangle(gsl::span<Vertex2d, 4> corners,
 	DrawRectangle(corners);
 
 	if (texture) {
-		device->SetTexture(0, nullptr);
+		mImpl->device.SetTexture(0, *Texture::GetInvalidTexture());
 	}
 	if (mask) {
-		device->SetTexture(1, nullptr);
+		mImpl->device.SetTexture(1, *Texture::GetInvalidTexture());
 	}
 
 }
@@ -226,67 +233,72 @@ void ShapeRenderer2d::DrawRectangle(gsl::span<Vertex2d, 4> corners,
 
 		MdfRenderOverrides overrides;
 		overrides.ignoreLighting = true;
+		overrides.uiProjection = true;
 		material->Bind(mImpl->device, {}, &overrides);
 
-		DepthStencilState depthState;
-		depthState.depthEnable = false;
-		mImpl->device.SetDepthStencilState(depthState);
+		mImpl->device.SetDepthStencilState(*mImpl->noDepthState);
 
-		DrawRectangle(corners);
+		for (auto &vertex : corners) {
+			vertex.normal = XMFLOAT4(0, 0, -1, 0);
+		}
+
+		// Copy the vertices
+		mImpl->device.UpdateBuffer<Vertex2d>(*mImpl->vertexBuffer, corners);
+
+		mImpl->mdfBufferBinding.Bind();
+
+		mImpl->device.SetIndexBuffer(*mImpl->indexBuffer);
+
+		mImpl->device.DrawIndexed(PrimitiveType::TriangleList, 4, 6);
 	}
 
 	void ShapeRenderer2d::DrawRectangle(gsl::span<Vertex2d, 4> corners) {
+
+		for (auto &vertex : corners) {
+			vertex.normal = XMFLOAT4(0, 0, -1, 0);
+		}
+
 	// Copy the vertices
-	auto locked(mImpl->vertexBuffer->Lock<Vertex2d>());
-	locked[0] = corners[0];
-	locked[1] = corners[1];
-	locked[2] = corners[2];
-	locked[3] = corners[3];
-	locked.Unlock();
-
-	auto device = mImpl->device.GetDevice();
-
-	// Set vertex shader properties (GUI specific)
-	device->SetVertexShaderConstantF(0, &mImpl->device.GetCamera().GetUiProjection()._11, 4);
+	mImpl->device.UpdateBuffer<Vertex2d>(*mImpl->vertexBuffer, corners);
+	
+	mImpl->device.SetVertexShaderConstant(0, gfx::StandardSlotSemantic::UiProjMatrix);
 
 	mImpl->bufferBinding.Bind();
 
-	device->SetIndices(mImpl->indexBuffer->GetBuffer());
+	mImpl->device.SetIndexBuffer(*mImpl->indexBuffer);
 
-	device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
-
+	mImpl->device.DrawIndexed(PrimitiveType::TriangleList, 4, 6);
 }
 
 void ShapeRenderer2d::DrawLines(gsl::span<Line2d> lines) {
 
 	mImpl->device.SetMaterial(mImpl->lineMaterial);
 
-	auto device = mImpl->device.GetDevice();
-
-	// Set vertex shader properties (GUI specific)
-	device->SetVertexShaderConstantF(0, &mImpl->device.GetCamera().GetUiProjection()._11, 4);
-
+	mImpl->device.SetVertexShaderConstant(0, gfx::StandardSlotSemantic::UiProjMatrix);
+	
 	mImpl->bufferBinding.Bind();
 
 	// Render in batches of 4
 	for (auto &line : lines) {
 
 		// Generate the vertex data
-		auto locked(mImpl->vertexBuffer->Lock<Vertex2d>());
+		auto locked(mImpl->device.Map<Vertex2d>(*mImpl->vertexBuffer));
 
 		locked[0].pos.x = line.from.x;
 		locked[0].pos.y = line.from.y;
 		locked[0].pos.z = 0.5f;
+		locked[0].pos.w = 1;
 		locked[0].diffuse = line.diffuse;
 
 		locked[1].pos.x = line.to.x;
 		locked[1].pos.y = line.to.y;
 		locked[1].pos.z = 0.5f;
+		locked[1].pos.w = 1;
 		locked[1].diffuse = line.diffuse;
 
-		locked.Unlock();
+		locked.Unmap();
 
-		device->DrawPrimitive(D3DPT_LINELIST, 0, 1);
+		mImpl->device.Draw(gfx::PrimitiveType::LineList, 2);
 	}
 
 }
@@ -312,19 +324,24 @@ void ShapeRenderer2d::DrawLines(gsl::span<Line2d> lines) {
 	void ShapeRenderer2d::DrawFullScreenQuad() {
 
 		std::array<Vertex2d, 4> fullScreenCorners;
-		fullScreenCorners[0].pos = { -1, -1, 0 };
+		fullScreenCorners[0].pos = { -1, -1, 0, 1 };
 		fullScreenCorners[0].uv = { 0, 0 };
-		fullScreenCorners[1].pos = { 1, -1, 0 };
+		fullScreenCorners[1].pos = { 1, -1, 0, 1 };
 		fullScreenCorners[1].uv = { 1, 0 };
-		fullScreenCorners[2].pos = { 1, 1, 0 };
+		fullScreenCorners[2].pos = { 1, 1, 0, 1 };
 		fullScreenCorners[2].uv = { 1, 1 };
-		fullScreenCorners[3].pos = { -1, 1, 0 };
+		fullScreenCorners[3].pos = { -1, 1, 0, 1 };
 		fullScreenCorners[3].uv = { 0, 1 };
 		DrawRectangle(fullScreenCorners);
 
 	}
 
 	static constexpr size_t MaxSegments = 50;
+
+	struct PieSegmentGlobals {
+		XMFLOAT4X4 projMat;
+		XMFLOAT4 colors;
+	};
 
 	void ShapeRenderer2d::DrawPieSegment(int segments, 
 		int x, int y, 
@@ -333,7 +350,7 @@ void ShapeRenderer2d::DrawLines(gsl::span<Line2d> lines) {
 		int outerRadius, int outerOffset, 
 		XMCOLOR color1, 
 		XMCOLOR color2) {
-				
+
 		Expects(segments <= MaxSegments);
 
 		auto posCount = segments * 2 + 2;
@@ -356,37 +373,39 @@ void ShapeRenderer2d::DrawLines(gsl::span<Line2d> lines) {
 			if (i % 2 == 0) {
 				pos.x = x + cosf(angle) * innerRadius - sinf(angle) * innerOffset;
 				pos.y = y + sinf(angle) * innerRadius + cosf(angle) * innerOffset;
-				pos.z = 0;
 			} else {
 				pos.x = x + cosf(angle) * outerRadius - sinf(angle) * outerOffset;
 				pos.y = y + sinf(angle) * outerRadius + cosf(angle) * outerOffset;
-				pos.z = 0;
 			}
+			pos.z = 0;
+			pos.w = 1;
 		}
 
 		auto& device = mImpl->device;
 
 		device.SetMaterial(mImpl->pieFillMaterial);
 
-		gfx::BufferBinding bufferBinding;
-		auto buffer(device.CreateVertexBuffer<Vertex2d>(vertices));
+		gfx::BufferBinding bufferBinding(mImpl->pieFillMaterial.GetVertexShader());
+		auto buffer(device.CreateVertexBuffer<Vertex2d>(vertices, false));
 		bufferBinding.AddBuffer(buffer, 0, sizeof(Vertex2d))
-			.AddElement(gfx::VertexElementType::Float3, gfx::VertexElementSemantic::Position)
-			.AddElement(gfx::VertexElementType::Color, gfx::VertexElementSemantic::Color);
+			.AddElement(gfx::VertexElementType::Float4, gfx::VertexElementSemantic::Position)
+			.AddElement(gfx::VertexElementType::Float4, gfx::VertexElementSemantic::Normal)
+			.AddElement(gfx::VertexElementType::Color, gfx::VertexElementSemantic::Color)
+			.AddElement(gfx::VertexElementType::Float2, gfx::VertexElementSemantic::TexCoord);
 		bufferBinding.Bind();
 
-		device.GetDevice()->SetVertexShaderConstantF(0, &device.GetCamera().GetUiProjection()._11, 4);
-		XMFLOAT4 colors;
-		XMStoreFloat4(&colors, PackedVector::XMLoadColor(&color1));
-		device.GetDevice()->SetVertexShaderConstantF(4, &colors.x, 1);
+		PieSegmentGlobals globals;
+		globals.projMat = device.GetCamera().GetUiProjection();
+		XMStoreFloat4(&globals.colors, PackedVector::XMLoadColor(&color1));
+		device.SetVertexShaderConstants(0, globals);
 
-		device.GetDevice()->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, segments * 2);
+		device.Draw(gfx::PrimitiveType::TriangleStrip, posCount);
 
 		device.SetMaterial(mImpl->pieFillMaterial);
 
 		// Change to the outline color
-		XMStoreFloat4(&colors, PackedVector::XMLoadColor(&color2));
-		device.GetDevice()->SetVertexShaderConstantF(4, &colors.x, 1);
+		XMStoreFloat4(&globals.colors, PackedVector::XMLoadColor(&color2));
+		device.SetVertexShaderConstants(0, globals);
 
 		// We generate one more position because of the starting points
 		for (auto i = 0; i < segments + 1; ++i) {
@@ -416,9 +435,9 @@ void ShapeRenderer2d::DrawLines(gsl::span<Line2d> lines) {
 		// And finally it goes back to the starting point
 		outlineIndices[posCount] = 0;
 		auto ib(device.CreateIndexBuffer(outlineIndices));
-		device.GetDevice()->SetIndices(ib->GetBuffer());
+		device.SetIndexBuffer(*ib);
 
-		device.GetDevice()->DrawIndexedPrimitive(D3DPT_LINESTRIP, 0, 0, posCount, 0, posCount);
+		device.DrawIndexed(gfx::PrimitiveType::LineStrip, posCount, posCount);
 		
 	}
 

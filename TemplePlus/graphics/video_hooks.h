@@ -153,6 +153,13 @@ typedef struct _D3DCAPS8 {
 	float MaxPixelShaderValue;
 } D3DCAPS8;
 
+// Equivalent to D3DGAMMARAMP
+struct GammaRamp {
+	uint16_t red[256];
+	uint16_t green[256];
+	uint16_t blue[256];
+};
+
 /*
 * Size being cleared is 4796 byte in length
 * Start @ 0x11E74580
@@ -165,8 +172,8 @@ struct VideoData {
 	D3DCAPS8 d3dCaps;
 	char padding[124];
 	DWORD unk2;
-	D3DGAMMARAMP gammaRamp1;
-	D3DGAMMARAMP gammaRamp2;
+	GammaRamp gammaRamp1;
+	GammaRamp gammaRamp2;
 	float gammaRelated1; // Default = 1.0
 	int gammaSupported; // Seems to be a flag 1/0
 	float gammaRelated2;
@@ -199,7 +206,7 @@ struct VideoData {
 	DWORD current_height;
 	DWORD adapter;
 	DWORD mode; // seems to be an index to the current fullscreen mode
-	D3DFORMAT adapterformat;
+	uint32_t adapterformat; // Was: D3D_FMT
 	DWORD current_refresh;
 	void* blitVBuffer; // not used (was Direct3DVertexBuffer8Adapter)
 	XMFLOAT4X4 stru_11E75788; // Projection matrix, now unused

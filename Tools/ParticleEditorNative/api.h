@@ -23,7 +23,7 @@ namespace particles {
 #include <temple/meshes.h>
 
 struct TempleDll {
-	TempleDll(const std::wstring &installationDir, IDirect3DDevice9Ex* device);
+	TempleDll(const std::wstring &installationDir);
 	~TempleDll();
 
 	static temple::AasConfig CreateAasConfig();
@@ -40,19 +40,26 @@ struct TempleDll {
 	gfx::AnimatedModelPtr currentModel;
 	gfx::AnimatedModelParams animParams;
 	std::unique_ptr<class EditorExternal> external;
+
+	gfx::RenderTargetTexturePtr renderTarget;
+	gfx::RenderTargetDepthStencilPtr renderTargetDepth;
+
+	void SetRenderTarget(IUnknown *surface);
 	
 };
 
 extern "C" {
 
-	API TempleDll* TempleDll_Load(const wchar_t* dllPath,
-		const wchar_t *tpDataPath,
-		IDirect3DDevice9Ex* device);
+	API TempleDll* TempleDll_Load(const wchar_t* dllPath, const wchar_t *tpDataPath);
 	API void TempleDll_Unload(TempleDll*);
 	API const char *TempleDll_GetLastError();
+	API void TempleDll_Flush(TempleDll*);
+	API void TempleDll_SetScale(TempleDll*, float);
+	API void TempleDll_SetRenderTarget(TempleDll*, IUnknown*);
+	API void TempleDll_CenterOn(TempleDll*, float x, float y, float z);
 
 	API bool ParticleSystem_RenderVideo(TempleDll* dll,
-	                                    D3DCOLOR background,
+	                                    XMCOLOR background,
 	                                    const wchar_t* outputFile,
 	                                    int fps);
 
@@ -61,7 +68,7 @@ extern "C" {
 	                                                   const wchar_t* skmFilename,
 	                                                   const wchar_t* skaFilename);
 
-	API void AnimatedModel_Render(TempleDll* dll, gfx::AnimatedModelPtr* handle, float w, float h, float scale);
+	API void AnimatedModel_Render(TempleDll* dll, gfx::AnimatedModelPtr* handle);
 
 	API void AnimatedModel_AdvanceTime(gfx::AnimatedModelPtr* handle, float time);
 

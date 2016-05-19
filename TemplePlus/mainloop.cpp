@@ -1,22 +1,29 @@
+
 #include "stdafx.h"
+
+#include <graphics/device.h>
+#include <graphics/textengine.h>
+#include <graphics/dynamictexture.h>
+#include <graphics/shaperenderer2d.h>
+
 #include "mainloop.h"
 #include <temple/dll.h>
 #include "mainwindow.h"
 #include "tig/tig_msg.h"
 #include "tig/tig_mouse.h"
 #include "tig/tig_startup.h"
+#include "gameview.h"
 #include "gamesystems/gamesystems.h"
 #include "ui/ui_render.h"
 #include "config/config.h"
 #include "tig/tig_font.h"
+#include "tig/tig_mouse.h"
 #include "obj.h"
 #include "diag/diag.h"
-#include <graphics/device.h>
 #include "infrastructure/stopwatch.h"
-#include <graphics/shaperenderer2d.h>
 #include "util/fixes.h"
 #include "updater/updater.h"
-#include <dinput.h>
+#include "tig/tig_keyboard.h"
 
 static GameLoop *gameLoop = nullptr;
 
@@ -42,7 +49,6 @@ static struct MainLoop : temple::AddressTable {
 	void (__cdecl *SetScrollDirection)(int direction);
 
 	void (__cdecl *RenderUi)();
-	void (__cdecl *RenderMouseCursor)();
 
 	/*
 		Since the game buffers are re-created synchronously, this should
@@ -73,7 +79,6 @@ static struct MainLoop : temple::AddressTable {
 		rebase(InGameHandleMessage, 0x10114EF0);
 
 		rebase(RenderUi, 0x101F8D10);
-		rebase(RenderMouseCursor, 0x101DD330);
 	}
 } mainLoop;
 
@@ -86,6 +91,11 @@ GameLoop::GameLoop(TigInitializer& tig, GameSystems& gameSystems, Updater &updat
 	mDiagScreen = std::make_unique<DiagScreen>(tig.GetRenderingDevice(),
 		gameSystems,
 		mGameRenderer);
+
+	// Create the buffers for the scaled game view
+	auto &device = tig.GetRenderingDevice();
+	mSceneColor = device.CreateRenderTargetTexture(gfx::BufferFormat::A8R8G8B8, config.renderWidth, config.renderHeight, config.antialiasing);
+	mSceneDepth = device.CreateRenderTargetDepthStencil(config.renderWidth, config.renderHeight, config.antialiasing);
 
 	if (!gameLoop) {
 		gameLoop = this;
@@ -111,32 +121,32 @@ void GameLoop::Run() {
 
 	mainLoop.QueueFidgetAnimEvent();
 
+	GameView gameView(mTig.GetMainWindow(), mTig.GetRenderingDevice(), config.renderWidth, config.renderHeight);
+
 	TigMsg msg;
 	auto quit = false;
-	static int fpsCounter = 0;
-	static int timeElapsed = 0, timeElapsed2=0;
 	while (!quit) {
 
 		Stopwatch sw1;
 
 		// Read user input and external system events (such as time)
 		msgFuncs.ProcessSystemEvents();
-		while (!*mainLoop.gameBuffersCreated) {
-			Sleep(250);
-			msgFuncs.ProcessSystemEvents();
-		}
 
 		mGameSystems.AdvanceTime();
 
 		// This locks the cursor to our window if we are in the foreground and it's enabled
 		if (!config.windowed && config.lockCursor) {
-			tig->GetMainWindow().LockCursor();
+			auto sceneRect = gameView.GetSceneRect();
+			tig->GetMainWindow().LockCursor(
+				(int) sceneRect.x,
+				(int) sceneRect.y,
+				(int) sceneRect.z,
+				(int) sceneRect.w
+			);
 		}
 		Stopwatch sw2;
 
 		RenderFrame();
-
-		timeElapsed2 += sw2.GetElapsedMs();
 
 		// Why does it process msgs AFTER rendering???		
 		while (!msgFuncs.Process(&msg)) {
@@ -163,19 +173,6 @@ void GameLoop::Run() {
 			if (mainLoop.sub_10113D40(unk)) {
 				DoMouseScrolling();
 			}
-			timeElapsed+= sw1.GetElapsedMs();
-			if (fpsCounter++ >= 100)
-			{
-				fpsCounter = 0;
-				if (timeElapsed > 0) {
-				//	logger->info("Time per frame: {}ms ,  FPS: {}", timeElapsed / 100, 1000 * 100 / (timeElapsed));
-				}
-				if (timeElapsed2 > 0) {
-				//	logger->info("Time per frame - Render: {}ms ,  Rendering FPS: {}", timeElapsed2 / 100, 1000 * 100 / (timeElapsed2));
-				}
-				timeElapsed = 0;
-				timeElapsed2 = 0;
-		}
 	}
 
 		
@@ -187,20 +184,26 @@ void GameLoop::RenderFrame() {
 
 	auto& device = tig->GetRenderingDevice();
 
+	// Recreate the render targets if AA changed
+	if (config.antialiasing != mSceneColor->IsMultiSampled()) {
+		mSceneColor = device.CreateRenderTargetTexture(gfx::BufferFormat::X8R8G8B8, config.renderWidth, config.renderHeight, config.antialiasing);
+		mSceneDepth = device.CreateRenderTargetDepthStencil(config.renderWidth, config.renderHeight, config.antialiasing);
+	}
+	
+	gfx::PerfGroup perfGroup(device, "Game Loop Rendering");
+
 	device.BeginFrame();
 
-	auto d3dDevice = device.GetDevice();
+	device.PushRenderTarget(mSceneColor, mSceneDepth);
 
-	// Set it as the render target
-	D3DLOG(d3dDevice->SetRenderTarget(0, device.GetRenderSurface()));
-	D3DLOG(d3dDevice->SetDepthStencilSurface(device.GetRenderDepthStencilSurface()));
-
-	// Clear the new render target as well
-	auto clearColor = D3DCOLOR_ARGB(0, 0, 0, 0);
-	D3DLOG(d3dDevice->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, clearColor, 1.0f, 0));
-
+	device.ClearCurrentColorTarget(XMCOLOR(0, 0, 0, 1));
+	device.ClearCurrentDepthTarget();
+	
 	mGameRenderer.Render();
+
+	device.BeginPerfGroup("UI");
 	mainLoop.RenderUi();
+	device.EndPerfGroup();
 
 	mDiagScreen->Render();
 
@@ -209,38 +212,42 @@ void GameLoop::RenderFrame() {
 		RenderVersion();
 	}
 
-	mainLoop.RenderMouseCursor(); // This calls the strange render-callback
-	mouseFuncs.DrawCursor(); // This draws dragged items
+	mouseFuncs.InvokeCursorDrawCallback();
+	mouseFuncs.DrawItemUnderCursor(); // This draws dragged items
 
 	// Reset the render target
-	D3DLOG(d3dDevice->SetRenderTarget(0, device.GetBackBuffer()));
-	D3DLOG(d3dDevice->SetDepthStencilSurface(device.GetBackBufferDepthStencil()));
-
+	device.PopRenderTarget();
+	
 	// Copy from the actual render target to the back buffer and scale / position accordingly
-	auto &sceneRect = device.GetSceneRect();
-	RECT destRect;
-	destRect.left = (int) sceneRect.x;
-	destRect.top = (int) sceneRect.y;
-	destRect.right = (int)(sceneRect.x + sceneRect.z);
-	destRect.bottom = (int)(sceneRect.y + sceneRect.w);
-	d3dDevice->StretchRect(
-		device.GetRenderSurface(),
-		nullptr,
-		device.GetBackBuffer(),
-		&destRect,
-		D3DTEXF_LINEAR
+	TigRect destRect{ 
+		0, 
+		0,
+		(int) device.GetCamera().GetScreenWidth(),
+		(int) device.GetCamera().GetScreenHeight()
+	};
+	TigRect srcRect{0, 0, config.renderWidth, config.renderHeight};
+	srcRect.FitInto(destRect);
+
+	tig->GetShapeRenderer2d().DrawRectangle(
+		(float) srcRect.x, 
+		(float)srcRect.y, 
+		(float)srcRect.width, 
+		(float)srcRect.height, 
+		*mSceneColor
 	);
 
 	// Render "GFade" overlay
 	static auto& gfadeEnabled = temple::GetRef<BOOL>(0x10D25118);
 	static auto& gfadeColor = temple::GetRef<XMCOLOR>(0x10D24A28);
 	if (gfadeEnabled) {
-		auto w = (float) device.GetRenderWidth();
-		auto h = (float) device.GetRenderHeight();
+		auto w = (float) device.GetCamera().GetScreenWidth();
+		auto h = (float)device.GetCamera().GetScreenHeight();
 		tig->GetShapeRenderer2d().DrawRectangle(0, 0, w, h, gfadeColor);
 	}
-
+	
 	device.Present();
+
+	device.EndPerfGroup();
 }
 
 void GameLoop::DoMouseScrolling() {
@@ -303,8 +310,8 @@ void GameLoop::DoMouseScrolling() {
 		scrollMarginH = 7;
 	}
 
-	auto renderWidth = mTig.GetRenderingDevice().GetRenderWidth();
-	auto renderHeight = mTig.GetRenderingDevice().GetRenderHeight();
+	auto renderWidth = config.renderWidth;
+	auto renderHeight = config.renderHeight;
 
 	if (mousePt.x <= scrollMarginH) // scroll left
 	{
@@ -357,6 +364,9 @@ void GameLoop::SetScrollDirection(int direction)
 }
 
 void GameLoop::RenderVersion() {
+
+	auto &textEngine = tig->GetRenderingDevice().GetTextEngine();
+
 	UiRenderer::PushFont(PredefinedFont::ARIAL_10);
 
 	ColorRect textColor(0x7FFFFFFF);
@@ -368,8 +378,8 @@ void GameLoop::RenderVersion() {
 
 	auto version = GetTemplePlusVersion();
 	auto rect = UiRenderer::MeasureTextSize(version, style);
-	rect.x = device.GetRenderWidth() - rect.width - 10;
-	rect.y = device.GetRenderHeight() - rect.height - 10;
+	rect.x = config.renderWidth - rect.width - 10;
+	rect.y = config.renderHeight - rect.height - 10;
 
 	UiRenderer::RenderText(version, rect, style);
 
@@ -378,7 +388,7 @@ void GameLoop::RenderVersion() {
 	if (!updateStatus.empty()) {
 		auto offset = rect.y;
 		rect = UiRenderer::MeasureTextSize(updateStatus, style);
-		rect.x = device.GetRenderWidth() - rect.width - 10;
+		rect.x = config.renderWidth - rect.width - 10;
 		rect.y = offset - rect.height - 5;
 
 		UiRenderer::RenderText(updateStatus, rect, style);

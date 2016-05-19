@@ -13,7 +13,8 @@ class RenderingDevice;
 
 #pragma pack(push, 1)
 struct ShapeVertex3d {
-	XMFLOAT3 pos;
+	XMFLOAT4 pos;
+	XMFLOAT4 normal;
 	XMFLOAT2 uv;
 };
 #pragma pack(pop)

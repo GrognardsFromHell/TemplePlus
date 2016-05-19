@@ -42,6 +42,8 @@ ParticleSystemsRenderer::ParticleSystemsRenderer(
 void ParticleSystemsRenderer::Render()
 {
 
+	gfx::PerfGroup perfGroup(mRenderingDevice, "Particles");
+
 	auto& camera = mRenderingDevice.GetCamera();
 
 	mTotalLastFrame = 0;
@@ -64,16 +66,20 @@ void ParticleSystemsRenderer::Render()
 
 		mRenderedLastFrame++;
 
+		PerfGroup partSysGroup(mRenderingDevice, "PartSys '{}'", partSys.GetSpec()->GetName());
+
 		// each emitter is rendered individually
 		for (auto &emitter : partSys) {
 			if (emitter->GetActiveCount() == 0) {
 				continue; // Skip emitters with no particles
 			}
+
+			PerfGroup partSysGroup(mRenderingDevice, "Emitter '{}'", emitter->GetSpec()->GetName());
+
 			auto type = emitter->GetSpec()->GetParticleType();
 			auto& renderer = mRendererManager->GetRenderer(type);
 			renderer.Render(*emitter);
 		}
-		
 
 		if (config.debugPartSys) {
 			RenderDebugInfo(partSys);

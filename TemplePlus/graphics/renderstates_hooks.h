@@ -1,8 +1,14 @@
 
 #pragma once
 
+enum LegacyLightType : uint32_t {
+	LLT_POINT = 1,
+	LLT_SPOT = 2,
+	LLT_DIRECTIONAL = 3
+};
+
 struct LegacyLight {
-	D3DLIGHTTYPE type;
+	LegacyLightType type;
 	float colorR;
 	float colorG;
 	float colorB;

@@ -4,6 +4,8 @@
 #include <temple/dll.h>
 
 #include <graphics/mdfmaterials.h>
+#include <graphics/device.h>
+#include <graphics/textengine.h>
 
 #include "gamesystems.h"
 #include "config/config.h"
@@ -161,6 +163,16 @@ GameSystems::GameSystems(TigInitializer& tig) : mTig(tig) {
 
 	InitAnimationSystem();
 
+	for (auto &file : vfs->Search("fonts\\*.ttf")) {
+		auto path = fmt::format("fonts\\{}", file.filename);
+		logger->info("Adding TTF font '{}'", path);
+		tig.GetRenderingDevice().GetTextEngine().AddFont(path);
+	}
+	for (auto &file : vfs->Search("fonts\\*.otf")) {
+		auto path = fmt::format("fonts\\{}", file.filename);
+		logger->info("Adding OTF font '{}'", path);
+		tig.GetRenderingDevice().GetTextEngine().AddFont(path);
+	}
 	tigFont.LoadAll("art\\interface\\fonts\\*.*");
 	tigFont.PushFont("priory-12", 12, true);
 

@@ -75,8 +75,6 @@ struct MouseFuncs : temple::AddressTable {
 		mouseState->flags |= MF_HIDE_CURSOR;
 	}
 
-	void DrawCursor();
-
 	MouseFuncs() {
 		rebase(SetButtonState, 0x101DD1B0);
 		rebase(SetPos,    0x101DD070);
@@ -87,9 +85,26 @@ struct MouseFuncs : temple::AddressTable {
 		mmbReference.y = -1;
 	}
 
+	using CursorDrawCallback = std::function<void(int, int)>;
+
+	void SetCursorDrawCallback(CursorDrawCallback callback, uint32_t id);
+	uint32_t GetCursorDrawCallbackId() const {
+		return mCursorDrawCallbackId;
+	}
+
+	void InvokeCursorDrawCallback() const;
+	
+	void DrawItemUnderCursor() const;
+
 private:
 	bool mMouseOutsideWnd;
 	POINT mmbReference;
+
+	// Callback called right before the cursor is drawn
+	std::function<void(int x, int y)> mCursorDrawCallback;
+	// This is sometimes queried by ToEE to check which callback is active
+	// It contains the callback function's address
+	uint32_t mCursorDrawCallbackId = 0;
 };
 
 extern MouseFuncs mouseFuncs;

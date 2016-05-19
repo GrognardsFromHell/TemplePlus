@@ -9,8 +9,8 @@
 #include "gamesystems/objects/objsystem.h"
 #include <infrastructure/keyboard.h>
 #define DIRECTINPUT_VERSION 0x800
-#include <dinput.h>
-#include "ui\ui.h"
+#include "tig/tig_keyboard.h"
+#include "ui/ui.h"
 #include "gamesystems/map/d20_help.h"
 #include "hotkeys.h"
 #include "party.h"
@@ -18,7 +18,6 @@
 #include "action_sequence.h"
 #include "critter.h"
 #include "combat.h"
-//#include "temple_functions.h"
 
 RadialMenus radialMenus;
 int RadialMenus::standardNodeIndices[120];

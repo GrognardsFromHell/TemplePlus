@@ -47,8 +47,7 @@ namespace ParticleEditor
             var result = ofd.ShowDialog(this);
             if (result.Value)
             {
-                VideoRenderer.RenderVideo(PreviewControl.Device, 
-                    Settings.Default.TemplePath,
+                VideoRenderer.RenderVideo(Settings.Default.TemplePath,
                     Model.SelectedSystem,
                     ofd.FileName);
             }

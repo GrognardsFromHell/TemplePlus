@@ -96,9 +96,11 @@ TigInitializer::TigInitializer(HINSTANCE hInstance)
 	// No longer used: mStartedSystems.emplace_back(StartSystem("debug.c", 0x101E4DE0, TigShutdownNoop));
 	mMainWindow = std::make_unique<MainWindow>(hInstance);
 	mRenderingDevice = std::make_unique<gfx::RenderingDevice>(mMainWindow->GetHwnd(),
-		config.renderWidth,
-		config.renderHeight,
-		config.antialiasing);
+		config.displayAdapter,
+		config.d3dDebug);
+	mRenderingDevice->SetAntiAliasing(config.antialiasing,
+		config.msaaSamples,
+		config.msaaQuality);
 	mMdfFactory = std::make_unique<gfx::MdfMaterialFactory>(*mRenderingDevice);
 	mMdfFactory->LoadReplacementSets("rules\\materials.mes");
 	mShapeRenderer2d = std::make_unique<gfx::ShapeRenderer2d>(*mRenderingDevice);

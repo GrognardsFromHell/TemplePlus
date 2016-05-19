@@ -3,7 +3,7 @@
 
 #include <unordered_map>
 
-struct IDirect3DTexture9;
+struct ID3D11ShaderResourceView;
 
 namespace gfx {
 
@@ -19,6 +19,18 @@ namespace gfx {
 	struct Size {
 		int width;
 		int height;
+
+		bool operator==(const Size &o) const {
+			return width == o.width && height == o.height;
+		}
+	};
+
+	// One of the predefined texture types
+	enum class TextureType {
+		Invalid,
+		Dynamic,
+		File,
+		RenderTarget
 	};
 
 	/*
@@ -46,10 +58,12 @@ namespace gfx {
 		// Unloads the device texture (does't prevent it from being loaded again later)
 		virtual void FreeDeviceTexture() = 0;
 
-		virtual IDirect3DTexture9* GetDeviceTexture() = 0;
+		virtual ID3D11ShaderResourceView* GetResourceView() = 0;
+
+		virtual TextureType GetType() const = 0;
 
 		static std::shared_ptr<class Texture> GetInvalidTexture();
-
+		
 	};
 
 	using TextureRef = std::shared_ptr<Texture>;
@@ -70,6 +84,8 @@ namespace gfx {
 		void FreeAllTextures();
 
 		gfx::TextureRef Resolve(const std::string& filename, bool withMipMaps);
+		
+		gfx::TextureRef ResolveUncached(const std::string& filename, bool withMipMaps);
 
 		gfx::TextureRef GetById(int textureId);
 

@@ -266,7 +266,7 @@ PyObject* PyGame_FadeAndTeleport(PyObject*, PyObject* args) {
 	fadeArgs.field50 = 48;
 	fadeArgs.field2c = 0;
 	fadeArgs.field3c = 0;
-	fadeArgs.color = D3DCOLOR_RGBA(0xff, 0, 0, 0);
+	fadeArgs.color = XMCOLOR(0, 0, 0, 1);
 	fadeArgs.somefloat = 2.0f;
 	fadeArgs.somefloat2 = 2.0f;
 	fadeArgs.flags = 0;
@@ -304,7 +304,7 @@ PyObject* PyGame_Fade(PyObject*, PyObject* args) {
 	FadeArgs fadeArgs;
 	fadeArgs.field0 = 0;
 	fadeArgs.field10 = 0;
-	fadeArgs.color = D3DCOLOR_ARGB(255, 0, 0, 0);
+	fadeArgs.color = XMCOLOR(0, 0, 0, 1);
 	fadeArgs.transitionTime = 2.0f;
 	fadeArgs.field8 = 48;
 	fade.PerformFade(fadeArgs);

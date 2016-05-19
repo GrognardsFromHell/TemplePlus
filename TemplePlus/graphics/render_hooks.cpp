@@ -36,7 +36,7 @@ void RenderHooks::apply() {
 	
 }
 
-int RenderHooks::ShaderRender3d(int vertexCount, XMFLOAT4* pos, XMFLOAT4* normals, D3DCOLOR* diffuse, XMFLOAT2* uv, int primCount, uint16_t* indices, int shaderId) {
+int RenderHooks::ShaderRender3d(int vertexCount, XMFLOAT4* pos, XMFLOAT4* normals, XMCOLOR* diffuse, XMFLOAT2* uv, int primCount, uint16_t* indices, int shaderId) {
 	/*
 	// Remove special material marker in the upper byte and only 
 	// use the actual shader registration id
@@ -105,14 +105,14 @@ int RenderHooks::ShaderRender2d(const Render2dArgs* args) {
 		corners[3].diffuse = args->vertexColors[3];
 	}
 
-	corners[0].pos = { left, top, 0 };
+	corners[0].pos = { left, top, 0, 1 };
 	
 	corners[0].uv = { 0, 0 };
-	corners[1].pos = { right, top, 0 };
+	corners[1].pos = { right, top, 0, 1 };
 	corners[1].uv = { 1, 0 };
-	corners[2].pos = { right, bottom, 0 };
+	corners[2].pos = { right, bottom, 0, 1 };
 	corners[2].uv = { 1, 1 };
-	corners[3].pos = { left, bottom, 0 };
+	corners[3].pos = { left, bottom, 0, 1 };
 	corners[3].uv = { 0, 1 };
 
 	tig->GetShapeRenderer2d().DrawRectangle(corners, material);
@@ -152,7 +152,7 @@ int RenderHooks::ShaderRender2d(const Render2dArgs* args) {
 		vertexZ = args->vertexZ;
 	}
 
-	D3DCOLOR* diffuse = nullptr;
+	XMCOLOR* diffuse = nullptr;
 	if (args->flags & Render2dArgs::FLAG_VERTEXCOLORS) {
 		diffuse = args->vertexColors;
 	}
@@ -275,11 +275,11 @@ int RenderHooks::TextureRender2d(const Render2dArgs* args) {
 	}
 
 	// Load the associated texture
-	IDirect3DTexture9* deviceTexture = nullptr;
+	gfx::Texture* deviceTexture = nullptr;
 	if (args->flags & Render2dArgs::FLAG_BUFFERTEXTURE) {
 		// This is a custom flag we introduced for TP
 		auto texture = (gfx::Texture*) args->texBuffer;
-		deviceTexture = texture->GetDeviceTexture();
+		deviceTexture = texture;
 		
 		auto size = texture->GetSize();
 		texwidth = (float)size.width;
@@ -291,10 +291,10 @@ int RenderHooks::TextureRender2d(const Render2dArgs* args) {
 				return 17;
 			}
 
-			deviceTexture = texture->GetDeviceTexture();
-			if (deviceTexture == nullptr) {
+			if (texture->GetResourceView() == nullptr) {
 				return 17;
 			}
+			deviceTexture = texture.get();
 
 			auto size = texture->GetSize();
 			texwidth = (float) size.width;
@@ -396,15 +396,19 @@ int RenderHooks::TextureRender2d(const Render2dArgs* args) {
 		vertices[3].pos.y = destY + destRect->height;
 		vertices[3].pos.z = vertexZ;
 	}
+	vertices[0].pos.w = 1;
+	vertices[1].pos.w = 1;
+	vertices[2].pos.w = 1;
+	vertices[3].pos.w = 1;
 	
-	IDirect3DTexture9 *maskTexture = nullptr;
+	gfx::Texture *maskTexture = nullptr;
 	// We have a secondary texture
 	if (args->flags & Render2dArgs::FLAG_MASK) {
 		auto texture = textures.GetById(args->textureId2);
-		if (!texture || !texture->IsValid() || !texture->GetDeviceTexture()) {
+		if (!texture || !texture->IsValid() || !texture->GetResourceView()) {
 			return 17;
 		}
-		maskTexture = texture->GetDeviceTexture();
+		maskTexture = texture.get();
 	}
 
 	// This is used by the portrait UI to mask the equipment slot background when
@@ -424,19 +428,17 @@ int RenderHooks::RenderTexturedQuad(XMFLOAT3* vertices, float* u, float* v, int 
 	if (!texture->IsValid()) {
 		return 17;
 	}
-
-	auto deviceTexture = texture->GetDeviceTexture();
-
-	if (!deviceTexture) {
-		return 17;
-	}
-
+	
 	std::array<gfx::Vertex2d, 4> corners;
 
-	corners[0].pos = vertices[0];
-	corners[1].pos = vertices[1];
-	corners[2].pos = vertices[2];
-	corners[3].pos = vertices[3];
+	*(XMFLOAT3*)&corners[0].pos = vertices[0];
+	*(XMFLOAT3*)&corners[1].pos = vertices[1];
+	*(XMFLOAT3*)&corners[2].pos = vertices[2];
+	*(XMFLOAT3*)&corners[3].pos = vertices[3];
+	corners[0].pos.w = 1;
+	corners[1].pos.w = 1;
+	corners[2].pos.w = 1;
+	corners[3].pos.w = 1;
 
 	corners[0].diffuse = color;
 	corners[1].diffuse = color;
@@ -448,7 +450,7 @@ int RenderHooks::RenderTexturedQuad(XMFLOAT3* vertices, float* u, float* v, int 
 	corners[2].uv = {u[2],v[2]};
 	corners[3].uv = {u[3],v[3]};
 
-	tig->GetShapeRenderer2d().DrawRectangle(corners, deviceTexture);
+	tig->GetShapeRenderer2d().DrawRectangle(corners, texture.get());
 	return 0;
 
 }
@@ -478,13 +480,13 @@ void RenderHooks::RenderImgFile(ImgFile* img, int x, int y) {
 			auto rowHeight = std::min(256, curY);
 			curY -= rowHeight;
 
-			auto texture = textures.GetById(*texId++);
+			auto &texture = textures.GetById(*texId++);
 			
 			auto destX = static_cast<float>(x + curX);
 			auto destY = static_cast<float>(y + curY);
 			auto destWidth = static_cast<float>(colWidth);
 			auto destHeight = static_cast<float>(rowHeight);
-			shapeRenderer.DrawRectangle(destX, destY, destWidth, destHeight, texture);
+			shapeRenderer.DrawRectangle(destX, destY, destWidth, destHeight, *texture);
 		}
 
 		curX += colWidth;
@@ -493,15 +495,15 @@ void RenderHooks::RenderImgFile(ImgFile* img, int x, int y) {
 
 }
 
-void RenderHooks::RenderRect(float left, float top, float right, float bottom, D3DCOLOR color) {
+void RenderHooks::RenderRect(float left, float top, float right, float bottom, XMCOLOR color) {
 
 	auto &shapeRenderer = tig->GetShapeRenderer2d();
 
-	shapeRenderer.DrawRectangle(left, top, right - left, bottom - top, nullptr, color);
+	shapeRenderer.DrawRectangle(left, top, right - left, bottom - top, color);
 
 }
 
-void RenderHooks::RenderRectInt(int left, int top, int width, int height, D3DCOLOR color) {
+void RenderHooks::RenderRectInt(int left, int top, int width, int height, XMCOLOR color) {
 
 	XMFLOAT2 topLeft{ (float) left, (float) top };
 	XMFLOAT2 bottomRight{ topLeft.x + width, topLeft.y + height };

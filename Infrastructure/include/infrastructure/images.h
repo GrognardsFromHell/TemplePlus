@@ -7,9 +7,6 @@
 
 using gsl::span;
 
-struct IDirect3DDevice9;
-struct IDirect3DSurface9;
-
 namespace gfx {
 
 	/*
@@ -74,8 +71,6 @@ namespace gfx {
 
 	DecodedImage DecodeImage(const span<uint8_t> data);
 
-	CComPtr<IDirect3DSurface9> LoadImageToSurface(IDirect3DDevice9* device,
-	                                              const span<uint8_t> data,
-	                                              ImageFileInfo& info);
+	HCURSOR LoadImageToCursor(const span<uint8_t> data, uint32_t hotspotX, uint32_t hotspotY);
 
 }

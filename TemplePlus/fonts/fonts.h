@@ -8,11 +8,13 @@ struct GlyphVertex2d;
 struct TigFont;
 struct TigTextStyle;
 struct TigRect;
+struct TigFontMetrics;
 using namespace gsl;
 
 namespace gfx {
 	class RenderingDevice;
 	class ShapeRenderer2d;
+	class TextEngine;
 }
 
 class FontRenderer {
@@ -46,12 +48,15 @@ on lines and renders them.
 class TextLayouter {
 public:
 	TextLayouter(gfx::RenderingDevice& device, gfx::ShapeRenderer2d& shapeRenderer);
+	~TextLayouter();
 
 	void LayoutAndDraw(gsl::cstring_span<> text, const TigFont &font, TigRect& extents, TigTextStyle& style);
 
+	void Measure(const TigFont &font, const TigTextStyle &style, TigFontMetrics &metrics);
+
 private:
-	void DrawBackground(const TigRect& rect, const TigTextStyle& style);
-	int GetGlyphIdx(char ch, const char *text);
+	void DrawBackgroundOrOutline(const TigRect& rect, const TigTextStyle& style);
+	int GetGlyphIdx(char ch, const char *text) const;
 	ScanWordResult ScanWord(const char* text,
 		int firstIdx,
 		int textLength,
@@ -69,7 +74,22 @@ private:
 		bool lastLine);
 	bool HasMoreText(cstring_span<> text, int tabWidth);
 
+	void LayoutAndDrawVanilla(gsl::cstring_span<> text, 
+		const TigFont &font, 
+		TigRect& extents, 
+		TigTextStyle& style);
+
+	void MeasureVanilla(const TigFont &font, 
+		const TigTextStyle &style, 
+		TigFontMetrics &metrics) const;
+
+	uint32_t MeasureVanillaLine(const TigFont &font, const TigTextStyle &style, const char *text) const;
+	uint32_t MeasureVanillaParagraph(const TigFont &font, const TigTextStyle &style, const char *text) const;
+	uint32_t CountLinesVanilla(uint32_t maxWidth, uint32_t maxLines, const char *text, const TigFont &font, const TigTextStyle &style) const;
+
 	static const char *sEllipsis;
+	gfx::TextEngine &mTextEngine;
 	FontRenderer mRenderer;
+	std::unique_ptr<class FontsMapping> mMapping;
 	gfx::ShapeRenderer2d& mShapeRenderer;
 };

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using SharpDX.Direct3D9;
 
 namespace ParticleEditor
 {
@@ -22,17 +21,16 @@ namespace ParticleEditor
             _handle = IntPtr.Zero;
         }
 
-        public void Render(TempleDll templeDll, float w, float h, float scale)
+        public void Render(TempleDll templeDll)
         {
             if (_handle != IntPtr.Zero)
             {
-                AnimatedModel_Render(templeDll.Handle, _handle, w, h, scale);
+                AnimatedModel_Render(templeDll.Handle, _handle);
             }
         }
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern void AnimatedModel_Render(IntPtr templeDll, IntPtr handle, float w, float h,
-            float scale);
+        private static extern void AnimatedModel_Render(IntPtr templeDll, IntPtr handle);
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         private static extern IntPtr AnimatedModel_FromFiles(IntPtr templeDll, string skmFilename, string skaFilename);

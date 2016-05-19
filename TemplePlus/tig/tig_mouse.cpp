@@ -20,9 +20,6 @@ vector<int> stashedCursorShaderIds;
 
 struct OriginalMouseFuncs : temple::AddressTable {
 
-	int (__cdecl *SetCursor)(int shaderId);
-	void (__cdecl *ResetCursor)();
-
 	/*
 		If something is to be dragged around, this contains the texture id of the dragged item/object.
 		0 if nothing is to be drawn under the cursor.
@@ -84,7 +81,7 @@ void MouseFuncs::RefreshCursor() {
 	}
 }
 
-void MouseFuncs::DrawCursor() {
+void MouseFuncs::DrawItemUnderCursor() const {
 
 	auto texId = *orgMouseFuncs.draggedTexId;
 
@@ -100,11 +97,23 @@ void MouseFuncs::DrawCursor() {
 
 }
 
+void MouseFuncs::SetCursorDrawCallback(CursorDrawCallback callback, uint32_t id)
+{
+	mCursorDrawCallback = callback;
+	mCursorDrawCallbackId = id;
+}
+
+void MouseFuncs::InvokeCursorDrawCallback() const
+{
+	if (mCursorDrawCallback) {
+		mCursorDrawCallback(mouseState->x, mouseState->y);
+	}
+}
+
 /**
- * Sadly ToEE calls this not with a cursor ID but rather with a shader id. So what we do here is we extract the texture from the shader,
- * then the surface from the texture and use the D3D9 API to set the cursor.
+ * Sadly ToEE calls this not with a cursor ID but rather with a shader id. So what we do here is we extract the texture from the material.
  */
-int __cdecl MouseFuncs::SetCursor(int shaderId) {
+int MouseFuncs::SetCursor(int shaderId) {
 	if (!SetCursorFromShaderId(shaderId)) {
 		return 10; // some non 0 number
 	}
@@ -113,7 +122,7 @@ int __cdecl MouseFuncs::SetCursor(int shaderId) {
 	return 0;
 }
 
-void __cdecl MouseFuncs::ResetCursor() {
+void MouseFuncs::ResetCursor() {
 	// The back is the one on screen
 	if (!stashedCursorShaderIds.empty()) {
 		stashedCursorShaderIds.pop_back();
@@ -128,10 +137,25 @@ void __cdecl MouseFuncs::ResetCursor() {
 
 static class MouseFixes : TempleFix {
 public:
-	void apply() override;
-} fix;
+	void apply() override {
+		replaceFunction(0x101DDDD0, MouseFuncs::SetCursor);
+		replaceFunction(0x101DD780, MouseFuncs::ResetCursor);
 
-void MouseFixes::apply() {
-	orgMouseFuncs.SetCursor = replaceFunction(0x101DDDD0, MouseFuncs::SetCursor);
-	orgMouseFuncs.ResetCursor = replaceFunction(0x101DD780, MouseFuncs::ResetCursor);
-}
+		using CursorDrawCallback = void(*)(int, int, void*);
+
+		// set_mouse_capture_callback
+		replaceFunction<int(CursorDrawCallback, void*)>(0x101dd5c0, [](CursorDrawCallback callback, void* arg) {
+			// Bind the callback arg directly into the callback as a function object
+			auto wrappedCallback = [=](int x, int y) { return callback(x, y, arg); };
+			auto callbackId = (uint32_t) callback;
+			mouseFuncs.SetCursorDrawCallback(wrappedCallback, callbackId);
+			return 0;
+		});
+
+		// get_mouse_capture_callback
+		replaceFunction<CursorDrawCallback()>(0x101dd5e0, []() {
+			return (CursorDrawCallback)mouseFuncs.GetCursorDrawCallbackId();
+		});
+
+	}
+} fix;
