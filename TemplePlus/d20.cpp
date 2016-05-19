@@ -145,7 +145,7 @@ public:
 	PerformFunc(AidAnotherWakeUp);
 	PerformFunc(Aoo);
 	PerformFunc(CastItemSpell);
-	PerformFunc(CastSpell);
+	PerformFunc(CastSpell); // also used in PerformUseItem
 	PerformFunc(Charge);
 	PerformFunc(Disarm);
 	PerformFunc(DisarmedWeaponRetrieve);
@@ -1873,6 +1873,7 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 	auto curSeq = *actSeqSys.actSeqCur;
 	auto &spellPkt = curSeq->spellPktBody;
 
+	// if it's an item spell
 	if (invIdx != INV_IDX_INVALID){
 		spellPkt.invIdx = invIdx;
 		spellPkt.spellEnumOriginal = spellEnum;

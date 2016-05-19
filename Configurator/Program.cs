@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace TemplePlusConfig
 {
@@ -28,7 +29,11 @@ namespace TemplePlusConfig
                 onInitialInstall: () => CreateShortcuts(),
                 onAppUpdate: () => CreateShortcuts(),
                 onAppUninstall: () => RemoveShortcuts(),
-                onFirstRun: () => firstStart = true);
+                onFirstRun: () =>{
+                    firstStart = true;
+                    var notifWnd = new InstalledNotifWnd();
+                    notifWnd.ShowDialog();
+                });
 
             App.LaunchAfterSave = firstStart;
             App.Main();

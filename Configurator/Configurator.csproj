@@ -130,6 +130,9 @@
       <DependentUpon>HouseRulesWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="IniViewModel.cs" />
+    <Compile Include="InstalledNotifWnd.xaml.cs">
+      <DependentUpon>InstalledNotifWnd.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="ScreenResolution.cs" />
     <Compile Include="TempleDllVersion.cs" />
@@ -138,6 +141,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="InstallationDir.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="InstalledNotifWnd.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -195,6 +202,9 @@
   <ItemGroup>
     <Resource Include="configuratorBg.png" />
     <Resource Include="Installing.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Installed.jpg" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -16,7 +16,7 @@ struct MapAddresses : temple::AddressTable {
 
 	/*
 		Gets the id of the current area, which is based on the current map.
-		There is a hardcoded table in this function that should be replaced.
+		TODO There is a hardcoded table in this function that should be replaced.
 	*/
 	int (__cdecl *GetCurrentArea)();
 
