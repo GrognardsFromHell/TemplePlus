@@ -140,6 +140,9 @@ public:
 
 
 	static int __cdecl HasCondition(DispatcherCallbackArgs args);
+
+	static int __cdecl CastDefensivelyAooTrigger(DispatcherCallbackArgs args);
+	static int __cdecl CastDefensivelySpellInterrupted(DispatcherCallbackArgs args);
 } genericCallbacks;
 
 
@@ -318,6 +321,10 @@ public:
 
 		// Fixes Weapon Damage Bonus for ammo items
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FFE90, itemCallbacks.WeaponDamageBonus);
+
+		// Cast Defensively Aoo Trigger Query, SpellInterrupted Query
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100F8BE0, genericCallbacks.CastDefensivelyAooTrigger);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100F8CC0, genericCallbacks.CastDefensivelySpellInterrupted);
 	}
 } condFuncReplacement;
 
@@ -962,6 +969,76 @@ int GenericCallbacks::HasCondition(DispatcherCallbackArgs args){
 		dispIo->return_val = 1;
 		dispIo->data1 = args.GetCondArg(0);
 		dispIo->data2 = 0;
+	}
+	return 0;
+}
+
+int GenericCallbacks::CastDefensivelyAooTrigger(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
+
+
+
+	auto isSet = args.GetCondArg(0);
+	auto d20a = (D20Actn*)dispIo->data1;
+
+	if (d20a->d20ActType== D20A_CAST_SPELL && isSet){
+		dispIo->return_val = 0;
+		return 0;
+	}
+	
+	
+	if (d20a->d20ActType == D20A_USE_ITEM){
+		auto invIdx = d20a->d20SpellData.itemSpellData;
+		auto item = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+		if (!item) {
+			dispIo->return_val = 0;
+			return 0;
+		}
+		auto itemObj = gameSystems->GetObj().GetObject(item);
+		if (itemObj->type == obj_t_generic || itemObj->type == obj_t_weapon) {
+			dispIo->return_val = 0;
+			return 0;
+		} 
+		if (itemObj->type != obj_t_scroll){
+
+			logger->warn("CastDefensivelyAooTrigger: Unexpected item type {}", (int)(itemObj->type));
+			int dummy = 1;
+		}
+		// for the rest of the item types (should only be obj_t_scroll?)
+		if (isSet){
+			dispIo->return_val = 0;
+			return 0;
+		}
+		// otherwise it will be as default (1)
+
+	}
+	
+	return 0;
+}
+
+int GenericCallbacks::CastDefensivelySpellInterrupted(DispatcherCallbackArgs args){
+	auto isSet = args.GetCondArg(0);
+	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
+
+	if (dispIo->return_val == 1)
+		return 0; // already interrupted by sthg else
+
+	if (!isSet)
+		return 0; // not casting defensively
+
+	auto spellData = (D20SpellData*)(dispIo->data1);
+	if (!spellData)
+		return 0;
+
+	if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_COMBAT_CASTING)){
+		conds.AddTo(args.objHndCaller, conds.GetByName("Combat_Casting"), { 0 });
+	}
+
+	auto rollRes = skillSys.SkillRoll(args.objHndCaller, SkillEnum::skill_concentration, 15 + spellData->spellSlotLevel, nullptr, 1);
+	if (!rollRes){
+		histSys.CreateRollHistoryLineFromMesfile(25, args.objHndCaller, objHndl::null);
+		floatSys.FloatCombatLine(args.objHndCaller, 58);
+		dispIo->return_val = 1;
 	}
 	return 0;
 }

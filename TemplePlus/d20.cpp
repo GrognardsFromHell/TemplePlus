@@ -213,11 +213,22 @@ TabFileStatus _d20actionTabFile;
 bool LegacyD20System::SpellIsInterruptedCheck(D20Actn* d20a, int invIdx, SpellStoreData* spellData){
 
 	if (spellSys.IsSpellLike(spellData->spellEnum)
-		|| invIdx != INV_IDX_INVALID
+		//|| (invIdx != INV_IDX_INVALID) // removed to support miscasting when Casting Defensively with Scrolls
 		|| d20QueryWithData(d20a->d20APerformer,
 			DK_QUE_Critter_Is_Spell_An_Ability, spellData->spellEnum, 0))
 		return false;
 	
+	if (invIdx != INV_IDX_INVALID) {
+		if (d20a->d20ActType != D20A_USE_ITEM)
+			return false;
+		auto item = inventory.GetItemAtInvIdx(d20a->d20APerformer, invIdx);
+		if (!item)
+			return false;
+		auto itemObj = gameSystems->GetObj().GetObject(item);
+		if (itemObj->type != obj_t_scroll)
+			return false;
+	}
+
 	if (d20a->d20Caf & D20CAF_COUNTERSPELLED)
 		return true;
 	return d20Sys.d20QueryWithData(d20a->d20APerformer, 
@@ -341,6 +352,7 @@ void LegacyD20System::NewD20ActionsInit()
 
 	d20Type = D20A_USE_ITEM;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformUseItem;
+	d20Defs[d20Type].flags = D20ADF(D20ADF_QueryForAoO | D20ADF_MagicEffectTargeting);
 
 	d20Type = D20A_USE_POTION;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformUseItem;
@@ -676,7 +688,7 @@ int32_t LegacyD20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tb
 {
 	//uint32_t result = 0;
 	ActnSeq * actSeq = *actSeqSys.actSeqCur;
-	if (actSeq->tbStatus.tbsFlags & 0x10)
+	if (actSeq->tbStatus.tbsFlags & TBSF_CritterSpell)
 		return 0;
 
 
@@ -2001,8 +2013,10 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 	};
 
 	if (d20Sys.SpellIsInterruptedCheck(d20a, invIdx, &spellData)){
-		spellPkt.MemorizedUseUp(spellData);
-		spellPkt.Debit();
+		if (invIdx == INV_IDX_INVALID){
+			spellPkt.MemorizedUseUp(spellData);
+			spellPkt.Debit();
+		}
 		spellInterruptApply(spellEntry.spellSchoolEnum, spellPkt.caster, invIdx);
 		if (curSeq)
 			curSeq->spellPktBody.Reset();
@@ -2063,51 +2077,53 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 		blinkSpellHandler(d20a, spellEntry); // originally this cheked the result, but the result was always 0 anyway
 		auto filterResult = actSeqSys.SpellTargetsFilterInvalid(*d20a);
 		auto modeTgt = (UiPickerType)spellEntry.modeTargetSemiBitmask;
-		if ( (!filterResult || !targetsAftedProcessing) 
+		if ((!filterResult || !targetsAftedProcessing)
 			&& !spellEntry.IsBaseModeTarget(UiPickerType::Area)
 			&& !spellEntry.IsBaseModeTarget(UiPickerType::Cone)
 			&& spellEntry.IsBaseModeTarget(UiPickerType::Location)) {
 			spellPkt.Debit();
 			spellInterruptApply(spellEntry.spellSchoolEnum, spellPkt.caster, invIdx); // note: perhaps the current sequence changes due to the applied interrupt
-			if (!party.IsInParty(curSeq->spellPktBody.caster)){
+			if (!party.IsInParty(curSeq->spellPktBody.caster)) {
 				auto leader = party.GetConsciousPartyLeader();
 				auto targetRot = objects.GetRotationTowards(curSeq->spellPktBody.caster, leader);
-				animationGoals.PushRotate(curSeq->spellPktBody.caster, targetRot);	
+				animationGoals.PushRotate(curSeq->spellPktBody.caster, targetRot);
 			}
-			if (curSeq){
+			if (curSeq) {
 				curSeq->spellPktBody.Reset();
 			}
 			return AEC_OK;
 		}
+	}
 
-		if (temple::GetRef<BOOL(__cdecl)(SpellPacketBody &, objHndl)>(0x10079790)(spellPkt, item) ){ // PushSpellcastAnim
-			d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
-			d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
-		}
 
-		// provoke hostility
-		for (int i = 0; i < curSeq->spellPktBody.targetCount; i++){
-			auto &tgt = curSeq->spellPktBody.targetListHandles[i];
-			if (!tgt)
-				continue;
-			auto tgtObj = gameSystems->GetObj().GetObject(tgt);
-			if (!tgtObj->IsCritter())
-				continue;
-			if (spellSys.IsSpellHarmful(curSeq->spellPktBody.spellEnum, curSeq->spellPktBody.caster, tgt)){
-				critterSys.Attack(curSeq->spellPktBody.caster, tgt, 1, 0);
-			}
-		}
+	if (temple::GetRef<BOOL(__cdecl)(SpellPacketBody &, objHndl)>(0x10079790)(spellPkt, item) ){ // PushSpellcastAnim
+		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
+		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
+	}
 
-		auto spellId = d20a->spellId  = curSeq->d20Action->spellId = curSeq->spellPktBody.spellId;
-		d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Spell_Cast, spellId, 0);
-
-		for (int i = 0; i < curSeq->spellPktBody.targetCount; i++) {
-			auto &tgt = curSeq->spellPktBody.targetListHandles[i];
-			if (!tgt)
-				continue;
-			d20Sys.d20SendSignal(tgt, DK_SIG_Spell_Cast, spellId, 0);
+	// provoke hostility
+	for (int i = 0; i < curSeq->spellPktBody.targetCount; i++){
+		auto &tgt = curSeq->spellPktBody.targetListHandles[i];
+		if (!tgt)
+			continue;
+		auto tgtObj = gameSystems->GetObj().GetObject(tgt);
+		if (!tgtObj->IsCritter())
+			continue;
+		if (spellSys.IsSpellHarmful(curSeq->spellPktBody.spellEnum, curSeq->spellPktBody.caster, tgt)){
+			critterSys.Attack(curSeq->spellPktBody.caster, tgt, 1, 0);
 		}
 	}
+
+	auto spellId = d20a->spellId  = curSeq->d20Action->spellId = curSeq->spellPktBody.spellId;
+	d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Spell_Cast, spellId, 0);
+
+	for (int i = 0; i < curSeq->spellPktBody.targetCount; i++) {
+		auto &tgt = curSeq->spellPktBody.targetListHandles[i];
+		if (!tgt)
+			continue;
+		d20Sys.d20SendSignal(tgt, DK_SIG_Spell_Cast, spellId, 0);
+	}
+	
 
 	if (curSeq)
 		curSeq->spellPktBody.Reset();

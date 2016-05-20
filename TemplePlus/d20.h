@@ -185,7 +185,7 @@ enum D20ADF : int{
 	D20ADF_MagicEffectTargeting = 0x10,
 	D20ADF_Unk20 = 0x20,
 	D20ADF_Unk40 = 0x40,
-	D20ADF_QueryForAoO = 0x80, // will trigger an AoO depending on a D20 Query for Action_Triggers_AOO
+	D20ADF_QueryForAoO = 0x80, // will trigger an AoO depending on a D20 Query for Action_Triggers_AOO (returns 1 by default from the Global condition, Cast Defensively sets this to 0 for D20A_CAST_SPELL)
 	D20ADF_TriggersAoO = 0x100,
 	D20ADF_TargetSingleIncSelf = 0x200,
 	D20ADF_TargetingBasedOnD20Data = 0x400,
@@ -201,8 +201,7 @@ enum D20ADF : int{
 	D20ADF_Breaks_Concentration = 0x100000
 };
 
-struct D20ActionDef
-{
+struct D20ActionDef{
 	ActionErrorCode (__cdecl *addToSeqFunc)(D20Actn *, ActnSeq *, TurnBasedStatus*iO);
 	ActionErrorCode (__cdecl* turnBasedStatusCheck)(D20Actn* d20a, TurnBasedStatus* iO);
 	ActionErrorCode (__cdecl * actionCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO);
@@ -211,10 +210,10 @@ struct D20ActionDef
 	ActionErrorCode (__cdecl * performFunc)(D20Actn* d20a);
 	ActionErrorCode(__cdecl * actionFrameFunc)(D20Actn* d20a);
 	void * projectilePerformFunc;
-	uint32_t pad_apparently;
+	uint32_t pad_apparently; // only spell related actions have this as non-zero, and the callback is just return0()...
 	ActionErrorCode (__cdecl * actionCost)(D20Actn* d20a, TurnBasedStatus* iO, ActionCostPacket * actionCostPacket);
 	uint32_t (__cdecl * seqRenderFunc)(D20Actn* d20a, int flags);
-	D20ADF flags; // not D20CAF I think; maybe the STD flags? path query flags?
+	D20ADF flags;
 };
 
 
