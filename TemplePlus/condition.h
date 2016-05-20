@@ -4,6 +4,8 @@
 #include "dispatcher.h"
 #include "hashtable.h"
 
+#define GET_DISPIO(ioType, eventObjType ) args.dispIO->AssertType( ioType ); auto dispIo = static_cast< eventObjType *>(args.dispIO);
+
 const uint32_t CondStructHastableAddr = 0x11868F60;
 int __cdecl AoODisableRadialMenuInit(DispatcherCallbackArgs args);
 int __cdecl AoODisableQueryAoOPossible(DispatcherCallbackArgs args);

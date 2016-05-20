@@ -34,7 +34,6 @@
 #include "sound.h"
 #include "d20_class.h"
 
-#define GET_DISPIO(ioType, eventObjType ) args.dispIO->AssertType( ioType ); auto dispIo = static_cast< eventObjType *>(args.dispIO);
 #define CB int(__cdecl)(DispatcherCallbackArgs)
 using DispCB = int(__cdecl )(DispatcherCallbackArgs);
 

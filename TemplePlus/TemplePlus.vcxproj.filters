@@ -95,7 +95,7 @@
       <Filter>Mods and Fixes\Spell Fixes</Filter>
     </ClCompile>
     <ClCompile Include="spell_condition.cpp">
-      <Filter>Mods and Fixes\Spell Fixes</Filter>
+      <Filter>Mods and Fixes\Condition Fixes</Filter>
     </ClCompile>
     <ClCompile Include="python\python_debug.cpp">
       <Filter>python</Filter>
@@ -402,6 +402,9 @@
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
     <ClCompile Include="obj_structs.cpp" />
+    <ClCompile Include="ability_fixes.cpp">
+      <Filter>Mods and Fixes\Condition Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -763,6 +766,7 @@
     <ClInclude Include="python\python_trap.h">
       <Filter>python</Filter>
     </ClInclude>
+    <ClInclude Include="poison.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -786,11 +790,11 @@
     <Filter Include="generic data structures">
       <UniqueIdentifier>{9fef2488-221b-44e8-90ae-f5cf72e4b8b1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Mods and Fixes\Spell Fixes">
-      <UniqueIdentifier>{0e53287e-d500-4b3d-a274-09c4e0cf6dbf}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Map System">
       <UniqueIdentifier>{fb2e2871-e639-4102-bf7f-dfc52c18449f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mods and Fixes\Condition Fixes">
+      <UniqueIdentifier>{0e53287e-d500-4b3d-a274-09c4e0cf6dbf}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -15,6 +15,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ability_fixes.cpp" />
     <ClCompile Include="action_sequence.cpp" />
     <ClCompile Include="common.cpp" />
     <ClCompile Include="config\config_hooks.cpp" />
@@ -294,6 +295,7 @@
     <ClInclude Include="gamesystems\objects\objsystem.h" />
     <ClInclude Include="gamesystems\ui_intgame_renderer.h" />
     <ClInclude Include="mod_support.h" />
+    <ClInclude Include="poison.h" />
     <ClInclude Include="python\python_bonus.h" />
     <ClInclude Include="python\python_damage.h" />
     <ClInclude Include="python\python_dispatcher.h" />
