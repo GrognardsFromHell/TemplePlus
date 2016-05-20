@@ -165,6 +165,10 @@ int LegacyPartySystem::MoneyAdj(int plat, int gold, int silver, int copper)
 	return partyMoneyAdj(plat, gold, silver, copper);
 }
 
+void LegacyPartySystem::DebitMoney(int plat, int gold, int silver, int copper){
+	temple::GetRef<void(int, int, int, int)>(0x1002C020)(plat, gold, silver, copper);
+}
+
 uint32_t AddToPcGroup(objHndl objHnd)
 {
 	return party.AddToPCGroup(objHnd);

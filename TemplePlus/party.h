@@ -40,7 +40,8 @@ struct LegacyPartySystem : temple::AddressTable
 	objHndl GetLeader();
 	objHndl(__cdecl*GetConsciousPartyLeader)();
 	objHndl PartyMemberWithHighestSkill(SkillEnum skillEnum);
-	int MoneyAdj(int plat, int gold, int silver, int copper);
+	int MoneyAdj(int plat, int gold, int silver, int copper); // this is a direct manipulator which doesn't convert currencies
+	void DebitMoney(int plat, int gold, int silver, int copper);
 
 	LegacyPartySystem()
 	{

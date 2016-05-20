@@ -28,6 +28,10 @@
 #include "gamesystems/objects/objsystem.h"
 #include "damage.h"
 #include "history.h"
+#include "anim.h"
+#include "python/python_spell.h"
+#include "python/python_integration_spells.h"
+#include "gamesystems/particlesystems.h"
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
@@ -154,6 +158,7 @@ public:
 	PerformFunc(QuiveringPalm);
 	PerformFunc(StandardAttack);
 	PerformFunc(TripAttack);
+	PerformFunc(UseItem);
 
 	// Action Frame 
 	ActionFrame(AidAnotherWakeUp);
@@ -219,6 +224,91 @@ bool LegacyD20System::SpellIsInterruptedCheck(D20Actn* d20a, int invIdx, SpellSt
 		DK_QUE_SpellInterrupted, (uint32_t)&d20a->d20SpellData, 0) != 0;
 }
 
+int LegacyD20System::CastSpellProcessTargets(D20Actn* d20a, SpellPacketBody& spellPkt){
+
+	std::vector<objHndl> targets;
+
+	for (int i = 0; i < spellPkt.targetCount; i++) {
+		auto &tgt = spellPkt.targetListHandles[i];
+		if (!tgt){
+			logger->warn("CastSpellProcessTargets: Null target! Idx {}",i);
+			continue;
+		}		
+		auto tgtObj = gameSystems->GetObj().GetObject(tgt);
+		
+		
+		if (!tgtObj->IsCritter()){
+			targets.push_back(tgt);
+			continue;
+		}
+
+		// check target spell immunity
+		DispIoImmunity dispIoImmunity;
+		dispIoImmunity.flag = 1;
+		dispIoImmunity.spellPkt = &spellPkt;
+		if (dispatch.Dispatch64ImmunityCheck(tgt, &dispIoImmunity))
+			continue;
+		
+		// check spell resistance for hostiles
+		if (critterSys.IsFriendly(d20a->d20APerformer, tgt)){
+			targets.push_back(tgt);
+			continue;
+		}
+
+		SpellEntry spEntry(spellPkt.spellEnum);
+		if (spEntry.spellResistanceCode != 1){
+			targets.push_back(tgt);
+			continue;
+		}
+
+		DispIOBonusListAndSpellEntry dispIoSr;
+		BonusList casterLvlBonlist;
+		auto casterLvl = dispatch.Dispatch35BaseCasterLevelModify(d20a->d20APerformer, &spellPkt);
+		casterLvlBonlist.AddBonus(casterLvl, 0, 203);
+		if (feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_SPELL_PENETRATION))	{
+			casterLvlBonlist.AddBonusFromFeat(2, 0, 114, FEAT_SPELL_PENETRATION);
+		}
+		if (feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_GREATER_SPELL_PENETRATION)) {
+			casterLvlBonlist.AddBonusFromFeat(2, 0, 114, FEAT_GREATER_SPELL_PENETRATION);
+		}
+		dispIoSr.spellEntry = &spEntry;
+		auto dispelDc = dispatch.Dispatch45SpellResistanceMod(tgt, &dispIoSr);
+		if (dispelDc <=0){
+			targets.push_back(tgt);
+			continue;
+		}
+		auto rollHistId = 0;
+		if (spellSys.DispelRoll(d20a->d20APerformer, &casterLvlBonlist, 0, dispelDc, combatSys.GetCombatMesLine(5048), &rollHistId) <= 0){
+			logger->info("CastSpellProcessTargets: spell {} cast by {} resisted by target {}", spellPkt.GetName(), d20a->d20APerformer, tgt );
+			floatSys.FloatSpellLine(tgt, 30008, FloatLineColor::White);
+			gameSystems->GetParticleSys().CreateAtObj("Fizzle", tgt);
+
+			auto text = fmt::format("{}{}{}\n\n", combatSys.GetCombatMesLine(119), rollHistId, combatSys.GetCombatMesLine(120)); // Spell ~fails~ to overcome Spell Resistance
+			histSys.CreateFromFreeText(text.c_str());
+
+			spellSys.UpdateSpellPacket(spellPkt);
+			pySpellIntegration.UpdateSpell(spellPkt.spellId);
+			continue;
+		}
+		auto text = fmt::format("{}{}{}\n\n", combatSys.GetCombatMesLine(121), rollHistId, combatSys.GetCombatMesLine(122)); // Spell ~overcomes~ Spell Resistance
+		histSys.CreateFromFreeText(text.c_str());
+
+		floatSys.FloatSpellLine(tgt, 30009, FloatLineColor::Red);
+		targets.push_back(tgt);
+
+	}
+
+	memcpy(spellPkt.targetListHandles, &targets[0], min(sizeof spellPkt.targetListHandles, targets.size()*sizeof(objHndl)) );
+	for (int i = targets.size(); i < 32; i++){
+		spellPkt.targetListHandles[i] = 0;
+	}
+	spellPkt.targetCount = min(32u, targets.size());
+
+	spellSys.UpdateSpellPacket(spellPkt);
+	pySpellIntegration.UpdateSpell(spellPkt.spellId);
+	return spellPkt.targetCount;
+}
+
 void LegacyD20System::NewD20ActionsInit()
 {
 	tabSys.tabFileStatusInit(d20ActionsTabFile, d20actionTabLineParser);
@@ -245,6 +335,17 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Type = D20A_STANDARD_ATTACK;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformStandardAttack;
 	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameStandardAttack;
+
+	d20Type = D20A_CAST_SPELL;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformCastSpell;
+
+	d20Type = D20A_USE_ITEM;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformUseItem;
+
+	d20Type = D20A_USE_POTION;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformUseItem;
+
+
 
 	d20Type = D20A_TRIP;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqTripAttack;
@@ -783,7 +884,7 @@ ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
 	
 	if (animationGoals.PushAttackAnim(d20a->d20APerformer, d20a->d20ATarget, 0xFFFFFFFF, hitAnimIdx, playCritFlag, useSecondaryAnim))
 	{
-		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
+		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 	return AEC_OK;
@@ -803,10 +904,15 @@ ActionErrorCode D20ActionCallbacks::PerformTripAttack(D20Actn* d20a)
 	combatSys.ToHitProcessing(*d20a);
 	//d20Sys.ToHitProc(d20a);
 	if (animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget)){
-		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
+		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 	return AEC_OK;
+}
+
+ActionErrorCode D20ActionCallbacks::PerformUseItem(D20Actn* d20a){
+	dispatch.DispatchD20ActionCheck(d20a, nullptr, dispTypeD20ActionPerform);
+	return PerformCastSpell(d20a);
 }
 
 int LegacyD20System::TargetWithinReachOfLoc(objHndl obj, objHndl target, LocAndOffsets* loc)
@@ -1293,7 +1399,7 @@ ActionErrorCode D20ActionCallbacks::PerformQuiveringPalm(D20Actn* d20a){
 	
 	if (animationGoals.PushAttackAnim(d20a->d20APerformer, d20a->d20ATarget, 0xFFFFFFFF, attackAnimSubid, playCritFlag, 0))
 	{
-		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
+		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 
@@ -1436,7 +1542,7 @@ ActionErrorCode D20ActionCallbacks::PerformDisarm(D20Actn* d20a){
 
 	if (animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget))
 	{
-		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
+		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 	return AEC_OK;
@@ -1506,7 +1612,7 @@ ActionErrorCode D20ActionCallbacks::ActionFrameDisarm(D20Actn* d20a){
 		if (!d20Sys.d20Defs[D20A_DISARM].actionCheckFunc(&d20aCopy, nullptr))
 		{
 			if( animationGoals.PushAttemptAttack(d20aCopy.d20APerformer, d20aCopy.d20ATarget))
-				d20aCopy.animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20aCopy.d20APerformer);
+				d20aCopy.animID = animationGoals.GetActionAnimId(d20aCopy.d20APerformer);
 			if (combatSys.DisarmCheck(d20a->d20ATarget, d20a->d20APerformer, d20a))
 			{
 
@@ -1734,7 +1840,7 @@ ActionErrorCode D20ActionCallbacks::PerformAidAnotherWakeUp(D20Actn* d20a){
 	if (animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget))
 	{
 		animationGoals.PushUseSkillOn(d20a->d20APerformer, d20a->d20ATarget, SkillEnum::skill_heal);
-		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
+		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 
 		//if (!party.IsInParty(d20a->d20APerformer) )
@@ -1779,6 +1885,8 @@ ActionErrorCode D20ActionCallbacks::PerformCastItemSpell(D20Actn* d20a){
 		return AEC_OK;
 
 	auto item = inventory.GetItemAtInvIdx(d20a->d20APerformer, invIdx);
+	if (!item)
+		return AEC_OK;
 	auto itemObj = gameSystems->GetObj().GetObject(item);
 	auto itemFlags = (ItemFlag)itemObj->GetInt32(obj_f_item_flags);
 
@@ -1870,7 +1978,7 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 	objHndl item = objHndl::null;
 	
 
-	auto curSeq = *actSeqSys.actSeqCur;
+	auto &curSeq = *actSeqSys.actSeqCur;
 	auto &spellPkt = curSeq->spellPktBody;
 
 	// if it's an item spell
@@ -1883,9 +1991,19 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 	SpellEntry spellEntry(spellPkt.spellEnum);
 
 	// spell interruption
+	auto spellInterruptApply = [](int spellSchool, objHndl &caster, int invIdx)->BOOL{
+		conds.AddTo(caster, "Spell Interrupted", { 0,0,0 });
+		auto item = objHndl::null;
+		if (invIdx != INV_IDX_INVALID){
+			item = inventory.GetItemAtInvIdx(caster, invIdx);
+		}
+		return animationGoals.PushSpellInterrupt(caster, item, ag_attempt_spell_w_cast_anim, spellSchool);
+	};
+
 	if (d20Sys.SpellIsInterruptedCheck(d20a, invIdx, &spellData)){
 		spellPkt.MemorizedUseUp(spellData);
 		spellPkt.Debit();
+		spellInterruptApply(spellEntry.spellSchoolEnum, spellPkt.caster, invIdx);
 		if (curSeq)
 			curSeq->spellPktBody.Reset();
 		return AEC_OK;
@@ -1899,7 +2017,101 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 		return result;
 	}
 
-	// todo: the rest
+	
+	// acquire D20Action target from the spell packet if none is present
+	if (!d20a->d20ATarget && !spellEntry.projectileFlag){
+		if (spellPkt.targetCount > 0){
+			d20a->d20ATarget = spellPkt.targetListHandles[0];
+		}
+	}
+
+	// charge GP spell component
+	if (spellPkt.invIdx == INV_IDX_INVALID && spellEntry.costGP > 0){
+		if (party.IsInParty(spellPkt.caster)){
+			party.DebitMoney(0, spellEntry.costGP, 0, 0);
+		}
+	}
+
+
+	static auto blinkSpellHandler = [](D20Actn *d20a, SpellEntry &spellEntry)->bool{
+		if (!d20Sys.d20QueryWithData(d20a->d20APerformer, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Blink"), 0))
+			return false;
+
+		auto modeTgt = (UiPickerType) spellEntry.modeTargetSemiBitmask;
+		if (!spellEntry.IsBaseModeTarget(UiPickerType::Single))
+			return false;
+		// "Spell failure due to Blink" roll
+		auto rollRes = Dice(1, 100, 0).Roll();
+		if (rollRes >= 50){ 
+			histSys.RollHistoryType5Add(d20a->d20APerformer, d20a->d20ATarget, 50, 111, rollRes, 62, 192);
+			return false;
+		} 
+		else{
+			floatSys.FloatSpellLine(d20a->d20APerformer, 30015, FloatLineColor::White);
+			gameSystems->GetParticleSys().CreateAtObj("Fizzle", d20a->d20ATarget);
+			histSys.RollHistoryType5Add(d20a->d20APerformer, d20a->d20ATarget, 50, 111, rollRes, 112, 192); // Miscast (Blink)!
+			if (*actSeqSys.actSeqCur){
+				(*actSeqSys.actSeqCur)->spellPktBody.Reset();
+				return false; // this was the original code, not sure if ok
+			}
+		}
+		return false;
+	};
+
+	if (spellPkt.targetCount > 0) {
+		int targetsAftedProcessing = d20Sys.CastSpellProcessTargets(d20a, spellPkt);
+		blinkSpellHandler(d20a, spellEntry); // originally this cheked the result, but the result was always 0 anyway
+		auto filterResult = actSeqSys.SpellTargetsFilterInvalid(*d20a);
+		auto modeTgt = (UiPickerType)spellEntry.modeTargetSemiBitmask;
+		if ( (!filterResult || !targetsAftedProcessing) 
+			&& !spellEntry.IsBaseModeTarget(UiPickerType::Area)
+			&& !spellEntry.IsBaseModeTarget(UiPickerType::Cone)
+			&& spellEntry.IsBaseModeTarget(UiPickerType::Location)) {
+			spellPkt.Debit();
+			spellInterruptApply(spellEntry.spellSchoolEnum, spellPkt.caster, invIdx); // note: perhaps the current sequence changes due to the applied interrupt
+			if (!party.IsInParty(curSeq->spellPktBody.caster)){
+				auto leader = party.GetConsciousPartyLeader();
+				auto targetRot = objects.GetRotationTowards(curSeq->spellPktBody.caster, leader);
+				animationGoals.PushRotate(curSeq->spellPktBody.caster, targetRot);	
+			}
+			if (curSeq){
+				curSeq->spellPktBody.Reset();
+			}
+			return AEC_OK;
+		}
+
+		if (temple::GetRef<BOOL(__cdecl)(SpellPacketBody &, objHndl)>(0x10079790)(spellPkt, item) ){ // PushSpellcastAnim
+			d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
+			d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
+		}
+
+		// provoke hostility
+		for (int i = 0; i < curSeq->spellPktBody.targetCount; i++){
+			auto &tgt = curSeq->spellPktBody.targetListHandles[i];
+			if (!tgt)
+				continue;
+			auto tgtObj = gameSystems->GetObj().GetObject(tgt);
+			if (!tgtObj->IsCritter())
+				continue;
+			if (spellSys.IsSpellHarmful(curSeq->spellPktBody.spellEnum, curSeq->spellPktBody.caster, tgt)){
+				critterSys.Attack(curSeq->spellPktBody.caster, tgt, 1, 0);
+			}
+		}
+
+		auto spellId = d20a->spellId  = curSeq->d20Action->spellId = curSeq->spellPktBody.spellId;
+		d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Spell_Cast, spellId, 0);
+
+		for (int i = 0; i < curSeq->spellPktBody.targetCount; i++) {
+			auto &tgt = curSeq->spellPktBody.targetListHandles[i];
+			if (!tgt)
+				continue;
+			d20Sys.d20SendSignal(tgt, DK_SIG_Spell_Cast, spellId, 0);
+		}
+	}
+
+	if (curSeq)
+		curSeq->spellPktBody.Reset();
+
 	return AEC_OK;
 }
 

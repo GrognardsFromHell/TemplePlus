@@ -213,10 +213,9 @@ uint32_t AiSystem::AiStrategDefaultCast(objHndl objHnd, objHndl target, D20Spell
 	}
 
 	logger->info("AiStrategyDefaultCast: \t AI tactics failed, trying DefaultCast.");
-	aiTac.d20SpellData.metaMagicData = spellData->metaMagicData;
+	aiTac.d20SpellData = *spellData;
 	aiTac.aiTac = &aiTacticDefs[1]; // default spellcast
 	aiTac.tacIdx = -1;
-	aiTac.d20SpellData.spellEnumOrg = spellData->spellEnumOrg;
 	aiTac.spellPktBody = *spellPkt;
 
 	auto aiFunc = aiTac.aiTac->aiFunc;
@@ -1613,8 +1612,7 @@ int AiSystem::ChooseRandomSpellFromList(AiPacket* aiPkt, AiSpellList* aiSpells){
 
 			aiPkt->aiState2 = 1;
 			aiPkt->spellEnum = spellEnum;
-			aiPkt->spellData.spellEnumOrg = aiSpells->spellData[spellIdx].spellEnumOrg;
-			aiPkt->spellData.metaMagicData = aiSpells->spellData[spellIdx].metaMagicData;
+			aiPkt->spellData = aiSpells->spellData[spellIdx];
 			return 1;
 		} 
 		else{

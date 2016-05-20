@@ -92,6 +92,14 @@ struct D20SpellData
 	unsigned char spellSlotLevel : 4;
 	void Set(uint32_t spellEnum, uint32_t spellClassCode, uint32_t spellLevel, uint32_t invIdx, MetaMagicData metaMagicData);
 	void Extract(int* spellEnum, int *spellEnumOrg, int* spellClass, int* spellLevel, int* invIdx, MetaMagicData* mmData);
+	D20SpellData(){
+		spellEnumOrg = 0;
+		metaMagicData = 0;
+		spellClassCode = 0;
+		itemSpellData = INV_IDX_INVALID;
+		spontCastType = SpontCastType::spontCastNone;
+		spellSlotLevel = 0;
+	}
 };
 
 inline void D20SpellData::Set(uint32_t spellEnum, uint32_t SpellClassCode, uint32_t SpellLevel, uint32_t invIdx, MetaMagicData mmData)

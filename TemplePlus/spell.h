@@ -5,6 +5,7 @@
 #include "tig\tig_mes.h"
 #include "spell_structs.h"
 #include "tio/tio.h"
+//#include "ui/ui_picker.h"
 
 class TioOutputStream;
 struct PickerArgs;
@@ -28,8 +29,8 @@ struct SpellEntry{
 	uint32_t spellSubSchoolEnum;
 	uint32_t spellDescriptorBitmask;
 	uint32_t spellComponentBitmask;
-	uint32_t costGP;
 	uint32_t costXP;
+	uint32_t costGP;
 	uint32_t castingTimeType;
 	SpellRangeType spellRangeType;
 	uint32_t spellRange;
@@ -52,6 +53,7 @@ struct SpellEntry{
 	//UiPickerType GetModeTarget() const;
 	SpellEntry();
 	explicit SpellEntry(uint32_t spellEnum);
+	bool IsBaseModeTarget(UiPickerType type);
 };
 
 const uint32_t TestSizeOfSpellEntry = sizeof(SpellEntry); // should be 0xC0  ( 192 )
@@ -160,7 +162,6 @@ struct LegacySpellSystem : temple::AddressTable
 
 	const char* GetSpellMesline(uint32_t line) const;
 	bool CheckAbilityScoreReqForSpell(objHndl handle, uint32_t spellEnum, int statBeingRaised) const;
-	
 	static const char* GetSpellEnumTAG(uint32_t spellEnum);
 	const char* GetSpellName(uint32_t spellEnum) const;
 	
@@ -195,6 +196,7 @@ struct LegacySpellSystem : temple::AddressTable
 	const char* GetSpellEnumNameFromEnum(int spellEnum);
 	bool GetSpellTargets(objHndl obj, objHndl tgt, SpellPacketBody* spellPkt, unsigned spellEnum);
 	BOOL SpellHasAiType(unsigned spellEnum, AiSpellType aiSpellType);
+	bool IsSpellHarmful(int spellEnum, const objHndl& caster, const objHndl& tgt);
 
 	/*
 		does a d20 roll for dispelling, and logs to history (outputting a history ID)

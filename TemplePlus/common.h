@@ -223,4 +223,27 @@ struct PointNode
 	PointNode();
 	PointNode(float x, float y, float z);
 };
+
+
+/*
+note that the first byte denotes the "basic" targeting type
+*/
+enum class UiPickerType : uint64_t {
+	None = 0,
+	Single,
+	Multi,
+	Cone,
+	Area,
+	Location,
+	Personal,
+	InventoryItem,
+	Ray = 8,
+	BecomeTouch = 0x100,
+	AreaOrObj = 0x200,
+	OnceMulti = 0x400,
+	Any30Feet = 0x800,
+	Primary30Feet = 0x1000,
+	EndEarlyMulti = 0x2000,
+	LocIsClear = 0x4000
+};
 #pragma endregion

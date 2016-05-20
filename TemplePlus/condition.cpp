@@ -2687,7 +2687,7 @@ int ConditionFunctionReplacement::LayOnHandsPerform(DispatcherCallbackArgs args)
 	if (animResult)
 	{
 		// fixes lack of animation ID
-		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
+		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 		
@@ -2703,7 +2703,7 @@ int ConditionFunctionReplacement::RemoveDiseasePerform(DispatcherCallbackArgs ar
 	
 	if (animResult){
 		// fixes lack of animation ID
-		d20a->animID = animationGoals.GetAnimIdSthgSub_1001ABB0(d20a->d20APerformer);
+		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 	return 0;

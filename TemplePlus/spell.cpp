@@ -169,6 +169,11 @@ SpellEntry::SpellEntry(uint32_t spellEnumIn)
 	spellSys.spellRegistryCopy(spellEnumIn, this);
 }
 
+bool SpellEntry::IsBaseModeTarget(UiPickerType type){
+	auto _type = (uint64_t)type;
+	return (modeTargetSemiBitmask & 0xFF) == _type;
+}
+
 SpellPacketBody::SpellPacketBody()
 {
 	spellSys.spellPacketBodyReset(this);
@@ -1510,6 +1515,10 @@ BOOL LegacySpellSystem::SpellHasAiType(unsigned spellEnum, AiSpellType aiSpellTy
 						== (1 << aiSpellType));
 	}
 	return 0;
+}
+
+bool LegacySpellSystem::IsSpellHarmful(int spellEnum, const objHndl& caster, const objHndl& tgt){
+	return temple::GetRef<BOOL(__cdecl)(int, objHndl, objHndl)>(0x100769F0)(spellEnum, caster, tgt);
 }
 
 int LegacySpellSystem::DispelRoll(objHndl obj, BonusList* bonlist, int rollMod, int dispelDC, char* historyText, int* rollHistId)

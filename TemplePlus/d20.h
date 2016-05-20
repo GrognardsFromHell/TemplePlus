@@ -96,6 +96,7 @@ struct LegacyD20System : temple::AddressTable
 	uint32_t (__cdecl*_tumbleCheck)(D20Actn* d20a);
 	int32_t (__cdecl *_d20aTriggersAOO)(void * iO); // d20a @<esi> // 1008A9C0
 	bool SpellIsInterruptedCheck(D20Actn *d20a, int invIdx, SpellStoreData *spellData);
+	int CastSpellProcessTargets(D20Actn *d20a, SpellPacketBody &spellPkt);
 
 	void (__cdecl *CreateRollHistory)(int idx);
 

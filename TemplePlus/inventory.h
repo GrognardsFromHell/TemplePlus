@@ -68,6 +68,7 @@ struct InventorySystem : temple::AddressTable
 	int SetItemParent(objHndl item, objHndl parent, int flags);
 	int IsNormalCrossbow(objHndl weapon);
 	int IsThrowingWeapon(objHndl weapon);
+	bool UsesWandAnim(const objHndl item);
 	static bool IsTripWeapon(objHndl weapon);
 	ArmorType GetArmorType(int armorFlags);
 	

@@ -67,6 +67,9 @@ struct AnimSlotGoalStackEntry {
   TimeEventObjInfo blockTracking;
   TimeEventObjInfo scratchTracking;
   TimeEventObjInfo parentTracking;
+
+  BOOL InitWithInterrupt(objHndl obj, AnimGoalType goalType);
+  BOOL Push(AnimSlotId* idNew);
 };
 
 const auto TestSizeOfAnimSlotGoalStackEntry = sizeof(AnimSlotGoalStackEntry);
@@ -227,6 +230,7 @@ const char *animGoalTypeNames[ag_count] = {
     "ag_attempt_use_pickpocket_skill_on",
     "ag_use_disable_device_skill_on_data"
 };
+
 
 ostream &operator<<(ostream &str, const AnimSlotId &id) {
   str << id.ToString();
@@ -469,7 +473,7 @@ int AnimationGoals::PushAttackAnim(objHndl actor, objHndl target, int unk1,
                                   useSecondaryAnim);
 }
 
-int AnimationGoals::GetAnimIdSthgSub_1001ABB0(objHndl objHndl) {
+int AnimationGoals::GetActionAnimId(objHndl objHndl) {
   return addresses.GetAnimIdSthgSub_1001ABB0(objHndl);
 }
 
@@ -479,6 +483,20 @@ int AnimationGoals::PushAttemptAttack(objHndl attacker, objHndl defender) {
 
 int AnimationGoals::PushAnimate(objHndl obj, int anim) {
   return addresses.PushAnimate(obj, anim);
+}
+
+BOOL AnimationGoals::PushSpellInterrupt(const objHndl& caster, objHndl item, AnimGoalType animGoalType, int spellSchool){
+	AnimSlotGoalStackEntry goalData;
+	goalData.InitWithInterrupt(caster, animGoalType);
+	goalData.target.obj = (*actSeqSys.actSeqCur)->spellPktBody.caster;
+	goalData.skillData.number = 0;
+	if (inventory.UsesWandAnim(item))
+		goalData.animIdPrevious.number = temple::GetRef<int(__cdecl)(int)>(0x100757C0)(spellSchool); // GetAnimIdWand	
+	else
+		goalData.animIdPrevious.number = temple::GetRef<int(__cdecl)(int)>(0x100757B0)(spellSchool); // GetSpellSchoolAnimId
+	
+	AnimSlotId idNew;
+	return goalData.Push(&idNew);
 }
 
 //*****************************************************************************
@@ -1518,6 +1536,14 @@ static json11::Json::object StateToJson(const AnimGoalState &state,
   }
 
   return result;
+}
+
+BOOL AnimSlotGoalStackEntry::InitWithInterrupt(objHndl obj, AnimGoalType goalType){
+	return temple::GetRef<BOOL(AnimSlotGoalStackEntry *, objHndl, AnimGoalType )>(0x100556C0)(this, obj, goalType);
+}
+
+BOOL AnimSlotGoalStackEntry::Push(AnimSlotId* idNew){
+	return temple::GetRef<BOOL(__cdecl)(AnimSlotGoalStackEntry *, AnimSlotId*)>(0x10056D20)(this, idNew);
 }
 
 int GoalStateFuncs::GoalStateFunc35(AnimSlot& slot)

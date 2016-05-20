@@ -211,6 +211,18 @@ int InventorySystem::IsThrowingWeapon(objHndl weapon)
 	return 0;
 }
 
+bool InventorySystem::UsesWandAnim(const objHndl item){
+	if (!item)
+		return false;
+
+	auto itemObj = gameSystems->GetObj().GetObject(item);
+	if (!itemObj->IsItem())
+		return false;
+
+	auto itemFlags = (ItemFlag)itemObj->GetInt32(obj_f_item_flags);
+	return (itemFlags & ItemFlag::OIF_USES_WAND_ANIM) != 0;
+}
+
 bool InventorySystem::IsTripWeapon(objHndl weapon){
 	if (!weapon)
 		return false;
