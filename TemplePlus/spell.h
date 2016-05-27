@@ -196,7 +196,7 @@ struct LegacySpellSystem : temple::AddressTable
 	const char* GetSpellEnumNameFromEnum(int spellEnum);
 	bool GetSpellTargets(objHndl obj, objHndl tgt, SpellPacketBody* spellPkt, unsigned spellEnum);
 	BOOL SpellHasAiType(unsigned spellEnum, AiSpellType aiSpellType);
-	bool IsSpellHarmful(int spellEnum, const objHndl& caster, const objHndl& tgt);
+	BOOL IsSpellHarmful(int spellEnum, const objHndl& caster, const objHndl& tgt);
 
 	/*
 		does a d20 roll for dispelling, and logs to history (outputting a history ID)

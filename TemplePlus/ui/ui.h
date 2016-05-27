@@ -74,6 +74,9 @@ struct WidgetType1 : public Widget {
 		windowId = 0;
 		widgetFlags = 0;
 	}
+	WidgetType1(int xin, int yin, int widthin, int heightin){
+		WidgetType1Init(xin, yin, widthin, heightin);
+	}
 
 	void WidgetType1Init(int xin, int yin, int widthin, int heightin)
 	{

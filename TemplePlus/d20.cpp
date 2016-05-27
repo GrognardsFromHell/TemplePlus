@@ -239,7 +239,7 @@ int LegacyD20System::CastSpellProcessTargets(D20Actn* d20a, SpellPacketBody& spe
 
 	std::vector<objHndl> targets;
 
-	for (int i = 0; i < spellPkt.targetCount; i++) {
+	for (auto i = 0u; i < spellPkt.targetCount; i++) {
 		auto &tgt = spellPkt.targetListHandles[i];
 		if (!tgt){
 			logger->warn("CastSpellProcessTargets: Null target! Idx {}",i);
@@ -357,6 +357,8 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Type = D20A_USE_POTION;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformUseItem;
 
+	d20Type = D20A_ACTIVATE_DEVICE_SPELL;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformUseItem;
 
 
 	d20Type = D20A_TRIP;
@@ -2102,7 +2104,7 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 	}
 
 	// provoke hostility
-	for (int i = 0; i < curSeq->spellPktBody.targetCount; i++){
+	for (auto i = 0u; i < curSeq->spellPktBody.targetCount; i++){
 		auto &tgt = curSeq->spellPktBody.targetListHandles[i];
 		if (!tgt)
 			continue;
@@ -2117,7 +2119,7 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 	auto spellId = d20a->spellId  = curSeq->d20Action->spellId = curSeq->spellPktBody.spellId;
 	d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Spell_Cast, spellId, 0);
 
-	for (int i = 0; i < curSeq->spellPktBody.targetCount; i++) {
+	for (auto i = 0u; i < curSeq->spellPktBody.targetCount; i++) {
 		auto &tgt = curSeq->spellPktBody.targetListHandles[i];
 		if (!tgt)
 			continue;

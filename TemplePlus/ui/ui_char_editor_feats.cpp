@@ -15,7 +15,7 @@ struct UiCharEditorFeatsAddresses : temple::AddressTable
 	int * featsMultiselectNum_10C75F34;
 	feat_enums * featMultiselect_10C75F38;
 	int *dword_10C76AF0;
-	Widget* widg_10C77CD0;
+	WidgetType3* featsScrollbar;
 	int * dword_10C77D50;
 	int * dword_10C77D54;
 	int *widIdx_10C77D80;
@@ -38,7 +38,7 @@ struct UiCharEditorFeatsAddresses : temple::AddressTable
 		rebase(featsMultiselectNum_10C75F34, 0x10C75F34);
 		rebase(featMultiselect_10C75F38, 0x10C75F38);
 		rebase(dword_10C76AF0, 0x10C76AF0);
-		rebase(widg_10C77CD0, 0x10C77CD0);
+		rebase(featsScrollbar, 0x10C77CD0);
 		rebase(dword_10C77D50, 0x10C77D50);
 		rebase(dword_10C77D54, 0x10C77D54);
 		rebase(widIdx_10C77D80, 0x10C77D80);
@@ -99,11 +99,11 @@ int HookedFeatMultiselectSub_101A8080(feat_enums feat)
 	}
 
 
-	addresses.j_CopyWidget_101F87A0(*addresses.widIdx_10C77D80, addresses.widg_10C77CD0);
+	addresses.j_CopyWidget_101F87A0(*addresses.widIdx_10C77D80, addresses.featsScrollbar);
 	*addresses.dword_10C77D54 = 0;
 	*addresses.dword_10C75F30 = 0;
 	*addresses.dword_10C77D50 = ( (*addresses.featsMultiselectNum_10C75F34) - 15) & ((*addresses.featsMultiselectNum_10C75F34 - 15 < 0) - 1);
-	addresses.sub_101F87B0(*addresses.widIdx_10C77D80, addresses.widg_10C77CD0);
+	addresses.sub_101F87B0(*addresses.widIdx_10C77D80, addresses.featsScrollbar);
 	addresses.sub_101F9510(*addresses.dword_10C76AF0, 4);
 	addresses.sub_101F9100(*addresses.widgId_10C7AE14, 0);
 	return addresses.sub_101F8E40(*addresses.widgId_10C7AE14);

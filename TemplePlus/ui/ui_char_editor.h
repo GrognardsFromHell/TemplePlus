@@ -1,34 +1,35 @@
 #pragma once
 #include "common.h"
+#include <spell_structs.h>
 
+struct GameSystemConf;
 
-struct CharEditorSelectionPacket
-{
+struct CharEditorSelectionPacket{
 	Stat abilityStats[6];
-	int numRerolls;
-	int pointBuySthg;
+	int numRerolls; // number of rerolls
+	int isPointbuy;
 	char rerollString[128];
 	Stat statBeingRaised;
-	int raceSthg;
-	int genderSthg;
-	int field_AC;
-	int field_B0;
-	int field_B4;
-	int field_B8;
-	int field_BC;
+	int raceId; // 7 is considered invalid
+	int genderId; // 2 is considered invalid
+	int height0;
+	int height1;
+	int modelScale;
+	int hair0;
+	int hair1;
 	Stat classCode;
-	int field_C4;
+	int deityId;
 	int domain1;
 	int domain2;
-	int field_D0;
+	Alignment alignment; 
 	int alignmentChoice;
 	feat_enums feat0;
 	feat_enums feat1;
 	feat_enums feat2;
-	int skillPointsAdded[42]; // idx corresponds to skill
+	int skillPointsAdded[42]; // idx corresponds to skill enum
 	int skillPointsSpent;
 	int availableSkillPoints;
-	int spellEnums[802];
+	int spellEnums[SPELL_ENUM_MAX];
 	int spellEnumsAddedCount;
 	int spellEnumToRemove; // for sorcerers who swap out spells
 	int wizSchool;
@@ -36,6 +37,24 @@ struct CharEditorSelectionPacket
 	int forbiddenSchool2;
 	feat_enums feat3;
 	feat_enums feat4;
+	int portraitId;
+	char voiceFile[256];
+	int voiceId; // -1 is considered invalid
+};
+
+
+struct CharEditorSystem{
+	const char* name;
+	BOOL(__cdecl *systemInit)(GameSystemConf *);
+	BOOL(__cdecl *systemReset)(void *);
+	int pad; // possibly some unused callback?
+	void(__cdecl *free)();
+	void(__cdecl *hide)();
+	void(__cdecl *show)();
+	int(__cdecl *checkComplete)(); // checks if the char editing stage is complete (thus allowing you to move on to the next stage). This is checked at every render call.
+	int(__cdecl*debugMaybe)();
+	void(__cdecl *reset)(CharEditorSelectionPacket & editSpec);
+	BOOL(__cdecl *activate)(); // inits values and sets appropriate states for buttons based on gameplay logic (e.g. stuff exclusive to certain classes etc.)
 };
 
 const auto testSizeOfCharEditorSelectionPacket = sizeof(CharEditorSelectionPacket); // should be 3640 (0xE38)

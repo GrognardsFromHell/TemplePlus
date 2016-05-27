@@ -82,6 +82,7 @@ void DiagScreen::Render() {
 	lines.push_back(fmt::format("{} of {} rendered", clipping.GetRenderered(),
 		clipping.GetTotal()));
 	
+
 	if (config.pathfindingDebugMode)
 	{
 		lines.push_back(fmt::format("#Pathfinding"));

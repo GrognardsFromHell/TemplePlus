@@ -52,8 +52,7 @@ extern D20LevelSystem d20LevelSys;
 
 
 #pragma pack(push,1)
-struct LevelPacket
-{
+struct LevelPacket{
 	objHndl objHnd;
 	uint32_t levelAdjustmentSthg;
 	uint32_t classLevel;

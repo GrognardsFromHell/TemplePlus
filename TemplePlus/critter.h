@@ -57,7 +57,8 @@ enum class ResurrectType : uint32_t {
 
 enum class Gender : uint32_t {
 	Female = 0,
-	Male = 1
+	Male = 1,
+	Invalid 
 };
 
 enum class HairStyleRace {
@@ -67,7 +68,8 @@ enum class HairStyleRace {
 	Gnome,
 	HalfElf,
 	HalfOrc,
-	Halfling
+	Halfling,
+	Invalid 
 };
 
 enum class HairStyleSize {
@@ -306,6 +308,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	int GetCritterDamageDice(objHndl obj, int attackIdx);
 	DamageType GetCritterAttackDamageType(objHndl obj, int attackIdx);
 	int GetCritterAttackType(objHndl obj, int attackIdx);
+	int GetBaseAttackBonus(const objHndl& handle, Stat classBeingLeveld = Stat::stat_strength);
 	static int GetCritterNumNaturalAttacks(objHndl obj);
 	bool IsWarded(objHndl obj); // checks if creature is warded from melee attacks (by stuff like Meld Into Stone, Tree Shape, Otiluke's Resislient Sphere)
 	bool IsSummoned(objHndl obj);

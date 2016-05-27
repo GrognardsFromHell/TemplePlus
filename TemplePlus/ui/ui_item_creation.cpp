@@ -376,10 +376,19 @@ char const* ItemCreation::ItemCreationGetItemName(objHndl itemHandle) const
 	auto itemCreationNames = temple::GetRef<MesHandle>(0x10BEDB4C);
 	MesLine line;
 	line.key = protoNum;
-	if (mesFuncs.GetLine(itemCreationNames, &line))
-		return line.value;
-	else
-		return description.getDisplayName(itemHandle, itemHandle);
+	const char * result = nullptr;
+	if (mesFuncs.GetLine(itemCreationNames, &line)){
+		result= line.value;
+	}
+	else {
+		result = description.getDisplayName(itemHandle, itemHandle);
+	}
+
+	if (!result){
+		int dummy = 1;
+	}
+	return result;
+		
 }
 
 objHndl ItemCreation::MaaGetItemHandle(){

@@ -709,6 +709,133 @@ int Objects::StatLevelSetBase(objHndl obj, Stat stat, int value)
 	return _StatLevelSetBase(obj, stat, value);
 }
 
+int Objects::GetStatType(Stat stat){
+	switch (stat) {
+	case stat_strength:
+	case stat_dexterity:
+	case stat_constitution:
+	case stat_intelligence:
+	case stat_wisdom:
+	case stat_charisma:
+		return 0; // does a dispatch for ability score
+
+	case stat_level:
+	case stat_level_barbarian:
+	case stat_level_bard:
+	case stat_level_cleric:
+	case stat_level_druid:
+	case stat_level_fighter:
+	case stat_level_monk:
+	case stat_level_paladin:
+	case stat_level_ranger:
+	case stat_level_rogue:
+	case stat_level_sorcerer:
+	case stat_level_wizard:
+		return 1;
+
+	case stat_hp_max:
+	case stat_hp_current:
+	case stat_subdual_damage:
+		return 2;
+
+	case stat_race:
+	case stat_gender:
+	case stat_height:
+	case stat_weight:
+	case stat_size:
+	case stat_experience:
+	case stat_alignment:
+	case stat_deity:
+	case stat_domain_1:
+	case stat_domain_2:
+	case stat_ac:
+	case stat_attack_bonus:
+	case stat_damage_bonus:
+	case stat_subrace:
+	case stat_melee_attack_bonus:
+	case stat_ranged_attack_bonus:
+		return 3;
+
+	case stat_money:
+	case stat_money_pp:
+	case stat_money_gp:
+	case stat_money_ep:
+	case stat_money_sp:
+	case stat_money_cp:
+		return 4;
+
+	case stat_str_mod:
+	case stat_dex_mod:
+	case stat_con_mod:
+	case stat_int_mod:
+	case stat_wis_mod:
+	case stat_cha_mod:
+		return 5; // largely does StatLevelGet/2 - 5 with special casing for dex mod
+
+	case stat_movement_speed:
+	case stat_run_speed:
+		return 6; // regards load
+
+	case stat_load:
+		return 9; // regards size & str score, comapres to carried item weight
+
+	case stat_save_reflexes:
+	case stat_save_fortitude:
+	case stat_save_willpower:
+		return 10; // does a dispatch for saving throw
+
+	default:
+		break;
+	}
+	
+	if ((int)stat >= 1000 && (int)stat <= 1999){
+		return 7; // feats
+	}
+
+	if ((int)stat >= 2000 && (int)stat <= 2999) {
+		return 8; // seems to be unhandled?
+	}
+
+	return 12; // these are unimplemented
+	//case stat_caster_level: 
+	//case stat_caster_level_barbarian: 
+	//case stat_caster_level_bard: 
+	//case stat_caster_level_cleric: 
+	//case stat_caster_level_druid: 
+	//case stat_caster_level_fighter: 
+	//case stat_caster_level_monk: 
+	//case stat_caster_level_paladin: 
+	//case stat_caster_level_ranger: 
+	//case stat_caster_level_rogue: 
+	//case stat_caster_level_sorcerer: 
+	//case stat_caster_level_wizard: 
+	//case stat_age: 
+	//case stat_category: 
+	//case stat_alignment_choice: 
+	//
+	//
+	//case stat_initiative_bonus: 
+	//
+	//case stat_carried_weight: 
+
+	//case stat_favored_enemies: 
+	//case stat_known_spells: 
+	//case stat_memorized_spells: 
+	//case stat_spells_per_day: 
+	//case stat_school_specialization: 
+	//case stat_school_prohibited: 
+
+	
+}
+
+const char* Objects::GetStatName(Stat stat){
+	if (GetStatType(stat) == 7){
+		return feats.GetFeatName((feat_enums)((int)stat - 1000));
+	}
+
+	return temple::GetRef<const char*[288]>(0x10AAE8C8)[stat]; // statMesStrings
+}
+
 Dispatcher * Objects::GetDispatcher(objHndl obj)
 {
 	return objSystem->GetObject(obj)->GetDispatcher();

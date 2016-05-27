@@ -81,7 +81,7 @@ public:
 } fix;
 
 PythonSpellIntegration::PythonSpellIntegration()
-	: PythonIntegration("scr\\spell*.py", "(spell(\\d{3}).*)\\.py") {
+	: PythonIntegration("scr\\spell*.py", "(spell(\\d{3,}).*)\\.py") {
 }
 
 void PythonSpellIntegration::SpellTrigger(int spellId, SpellEvent evt) {

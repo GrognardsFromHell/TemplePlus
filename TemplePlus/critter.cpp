@@ -1115,6 +1115,53 @@ int LegacyCritterSystem::GetCritterAttackType(objHndl obj, int attackIdx)
 	return objects.getArrayFieldInt32(obj, obj_f_attack_types_idx, damageIdx);
 }
 
+int LegacyCritterSystem::GetBaseAttackBonus(const objHndl& handle, Stat classBeingLeveled){
+
+	
+	auto bab = 0;
+	for (auto it: d20ClassSys.classEnums){
+		auto classLvl = objects.StatLevelGet(handle, it);
+		if (classBeingLeveled == it)
+			classLvl++;
+		bab += d20ClassSys.GetBaseAttackBonus(it, classLvl);
+	}
+
+	// get BAB from NPC HD
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	if (obj->type == obj_t_npc){
+		auto npcHd = obj->GetInt32(obj_f_npc_hitdice_idx, 0);
+		switch (static_cast<MonsterCategory>(obj->GetInt64(obj_f_critter_monster_category)))
+		{
+		case mc_type_aberration: 
+		case mc_type_animal: 
+		case mc_type_beast: 
+		case mc_type_construct: 
+		case mc_type_elemental:
+		case mc_type_giant:
+		case mc_type_humanoid:
+		case mc_type_ooze:
+		case mc_type_plant:
+		case mc_type_shapechanger:
+		case mc_type_vermin:
+			return bab + (3 * npcHd / 4);
+
+
+		case mc_type_dragon: 
+		case mc_type_magical_beast:
+		case mc_type_monstrous_humanoid:
+		case mc_type_outsider:
+			return bab + npcHd;
+
+		case mc_type_fey: 
+		case mc_type_undead:
+			return bab + npcHd / 2;
+
+		default: break;
+		}
+	}
+	return bab;
+}
+
 int LegacyCritterSystem::GetCritterNumNaturalAttacks(objHndl obj){
 	auto n = 0;
 
@@ -1197,8 +1244,7 @@ int LegacyCritterSystem::GetArmorClass(objHndl obj, DispIoAttackBonus* dispIo){
 	return dispatch.DispatchAttackBonus(obj, objHndl::null, dispIo, dispTypeGetAC, DK_NONE);
 }
 
-int LegacyCritterSystem::SkillBaseGet(objHndl handle, SkillEnum skill)
-{
+int LegacyCritterSystem::SkillBaseGet(objHndl handle, SkillEnum skill){
 	if (!handle)
 		return 0;
 	return gameSystems->GetObj().GetObject(handle)->GetInt32(obj_f_critter_skill_idx, skill) / 2;

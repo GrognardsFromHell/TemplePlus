@@ -17,6 +17,7 @@
 #include "python_dispatcher.h"
 
 #include "../gamesystems/gamesystems.h"
+#include "python_integration_class_spec.h"
 
 extern "C" PyObject *inittp_dispatcher();
 static struct PythonInitInternal : temple::AddressTable {
@@ -99,6 +100,7 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 
 	pythonObjIntegration.LoadScripts();
 	pySpellIntegration.LoadScripts();
+	pythonClassIntegration.LoadScripts();
 
 	inittp_dispatcher();
 

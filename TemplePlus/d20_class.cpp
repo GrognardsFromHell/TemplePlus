@@ -2,6 +2,7 @@
 #include "d20_class.h"
 #include "d20_level.h"
 #include "obj.h"
+#include "python/python_integration_class_spec.h"
 
 D20ClassSystem d20ClassSys;
 
@@ -10,8 +11,7 @@ struct D20ClassSystemAddresses : temple::AddressTable
 	void(__cdecl *ClassPacketAlloc)(ClassPacket *classPkt); // allocates the three IdxTables within
 	void(__cdecl *ClassPacketDealloc)(ClassPacket *classPkt);
 	uint32_t(__cdecl * GetClassPacket)(Stat classEnum, ClassPacket* classPkt); // fills the struct with content based on classEnum (e.g. Barbarian Feats in the featsIdxTable). Also STUB FOR PRESTIGE CLASSES! TODO
-	D20ClassSystemAddresses()
-	{
+	D20ClassSystemAddresses(){
 		rebase(ClassPacketAlloc,   0x100F5730); 
 		rebase(ClassPacketDealloc, 0x100F5780);
 		rebase(GetClassPacket,     0x100F65E0);  
@@ -68,14 +68,51 @@ void D20ClassSystem::ClassPacketDealloc(ClassPacket* classPkt)
 	addresses.ClassPacketDealloc(classPkt);
 }
 
-uint32_t D20ClassSystem::GetClassPacket(Stat classEnum, ClassPacket* classPkt)
-{
+uint32_t D20ClassSystem::GetClassPacket(Stat classEnum, ClassPacket* classPkt){
 	return addresses.GetClassPacket(classEnum, classPkt);
+}
+
+int D20ClassSystem::GetBaseAttackBonus(Stat classCode, uint32_t classLvl){
+	auto classSpec = classSpecs.find(classCode);
+	if (classSpec == classSpecs.end())
+		return 0;
+	
+	auto babProg = classSpec->second.babProgression;
+
+	switch (babProg){
+	case BABProgressionType::Martial: 
+		return classLvl ;
+	case BABProgressionType::SemiMartial: 
+		return (3 * classLvl ) / 4;
+	case BABProgressionType::NonMartial: 
+		return classLvl/ 2;
+	default: 
+		break;
+	}
+	logger->warn("D20ClassSys: GetBaseAttackBonus unhandled BAB progression");
+	return 0;
+}
+
+void D20ClassSystem::GetClassSpecs(){
+	std::vector<int> _classEnums;
+	pythonClassIntegration.GetClassEnums( _classEnums);
+
+
+	for (auto it : _classEnums){
+		classSpecs[it].classEnum = static_cast<Stat>(it);
+		classSpecs[it].babProgression = static_cast<BABProgressionType>(pythonClassIntegration.GetBabProgression(it));
+
+	}
+
+	// pythonClassIntegration.
 }
 
 int D20ClassSystem::ClericMaxSpellLvl(uint32_t clericLvl) const
 {
-	return max(static_cast<uint32_t>(0), clericLvl % 2 + clericLvl / 2);
+	int result = clericLvl % 2 + clericLvl / 2;
+	if (result < 0)
+		result = 0;
+	return result;
 }
 
 int D20ClassSystem::NumDomainSpellsKnownFromClass(objHndl dude, Stat classCode)

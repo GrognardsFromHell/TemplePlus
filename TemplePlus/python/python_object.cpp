@@ -487,6 +487,9 @@ static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_SkillLevelGet(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 
+	if (!self->handle)
+		return 0;
+
 	objHndl handle = objHndl::null;
 	SkillEnum skillId;
 	if (PyTuple_Size(args) == 2) {
@@ -503,6 +506,25 @@ static PyObject* PyObjHandle_SkillLevelGet(PyObject* obj, PyObject* args) {
 
 	return PyInt_FromLong(skillLevel);
 }
+
+static PyObject* PyObjHandle_SkillRanksGet(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+
+	if (!self->handle)
+		return 0;
+
+	objHndl handle = objHndl::null;
+	SkillEnum skillId;
+	
+	if (!PyArg_ParseTuple(args, "i:objhndl.skill_ranks_get", &skillId)) {
+		return 0;
+	}
+	
+	auto skillLevel = critterSys.SkillBaseGet(self->handle, skillId);
+
+	return PyInt_FromLong(skillLevel);
+}
+
 
 static PyObject* PyObjHandle_HasMet(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -548,6 +570,15 @@ static PyObject* PyObjHandle_GroupList(PyObject* obj, PyObject* args) {
 	}
 
 	return result;
+}
+
+static PyObject* PyObjHandle_GetBaseAttackBonus(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	return PyInt_FromLong(critterSys.GetBaseAttackBonus(self->handle) );
 }
 
 static PyObject* PyObjHandle_StatLevelGet(PyObject* obj, PyObject* args) {
@@ -2297,6 +2328,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "float_line", PyObjHandle_FloatLine, METH_VARARGS, NULL },
 	{ "float_mesfile_line", PyObjHandle_FloatMesFileLine, METH_VARARGS, NULL },
 
+	{ "get_base_attack_bonus", PyObjHandle_GetBaseAttackBonus, METH_VARARGS, NULL },
 	{ "get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL },
 	{ "get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL },
 	{ "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
@@ -2386,6 +2418,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "secretdoor_detect", PyObjHandle_SecretdoorDetect, METH_VARARGS, NULL },
 	{ "set_initiative", PyObjHandle_SetInitiative, METH_VARARGS, NULL },
 	{ "skill_level_get", PyObjHandle_SkillLevelGet, METH_VARARGS, NULL},
+	{ "skill_ranks_get", PyObjHandle_SkillRanksGet, METH_VARARGS, NULL },
 	{ "soundmap_critter", PyObjHandle_SoundmapCritter, METH_VARARGS, NULL },
 	{ "spell_known_add", PyObjHandle_SpellKnownAdd, METH_VARARGS, NULL },
 	{ "spell_memorized_add", PyObjHandle_SpellMemorizedAdd, METH_VARARGS, NULL },

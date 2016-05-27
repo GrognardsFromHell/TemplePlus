@@ -111,8 +111,10 @@
     <ClCompile Include="obj_structs.cpp" />
     <ClCompile Include="protos.cpp" />
     <ClCompile Include="python\python_bonus.cpp" />
+    <ClCompile Include="python\python_integration_class_spec.cpp" />
     <ClCompile Include="python\python_damage.cpp" />
     <ClCompile Include="python\python_dispatcher.cpp" />
+    <ClCompile Include="python\python_ui.cpp" />
     <ClCompile Include="raycast.cpp" />
     <ClCompile Include="obj_hooks.cpp" />
     <ClCompile Include="particles.cpp" />
@@ -160,6 +162,7 @@
     <ClCompile Include="traps.cpp" />
     <ClCompile Include="tutorial.cpp" />
     <ClCompile Include="ui\ui_char.cpp" />
+    <ClCompile Include="ui\ui_char_editor.cpp" />
     <ClCompile Include="ui\ui_combat.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
     <ClCompile Include="ui\ui_intgame_select.cpp" />
@@ -299,6 +302,7 @@
     <ClInclude Include="python\python_bonus.h" />
     <ClInclude Include="python\python_damage.h" />
     <ClInclude Include="python\python_dispatcher.h" />
+    <ClInclude Include="python\python_integration_class_spec.h" />
     <ClInclude Include="tutorial.h" />
     <ClInclude Include="ui\ui_tooltip.h" />
     <ClInclude Include="updater\updater.h" />

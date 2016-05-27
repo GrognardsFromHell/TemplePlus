@@ -1,0 +1,223 @@
+Barbarian	7	CS_ENABLED CS_CORE	
+Bard	8	CS_ENABLED CS_CORE	
+Cleric	9	CS_ENABLED CS_CORE	
+Druid	10	CS_ENABLED CS_CORE	
+Fighter	11	CS_ENABLED CS_CORE	
+Monk	12	CS_ENABLED CS_CORE	
+Paladin	13	CS_ENABLED CS_CORE	
+Ranger	14	CS_ENABLED CS_CORE	
+Rogue	15	CS_ENABLED CS_CORE	
+Sorcerer	16	CS_ENABLED CS_CORE	
+Wizard	17	CS_ENABLED CS_CORE	
+			
+//Core Prestige classes			
+Arcane Archer	18	CS_CORE CS_PRESTIGE	
+Arcane Trickster	19	CS_CORE CS_PRESTIGE	
+Archmage	20		
+Assassin	21		
+Blackguard	22		
+Dragon Disciple	23		
+Duelist	24		
+Dwarven Defender	25		
+Eldritch Knight	26		
+Hierophant	27		
+Horizon Walker	28		
+Loremaster	29		
+Mystic Theurge	30		
+Shadowdancer	31		
+Thaumaturgist	32		
+// other 3rd ed stuff			
+Warlock	33		
+Favored Soul	34		
+PLACEHOLDER	35		
+PLACEHOLDER	36		
+PLACEHOLDER	37		
+PLACEHOLDER	38		
+PLACEHOLDER	39		
+PLACEHOLDER	40		
+PLACEHOLDER	41		
+PLACEHOLDER	42		
+PLACEHOLDER	43		
+PLACEHOLDER	44		
+PLACEHOLDER	45		
+PLACEHOLDER	46		
+PLACEHOLDER	47		
+PLACEHOLDER	48		
+PLACEHOLDER	49		
+PLACEHOLDER	50		
+PLACEHOLDER	51		
+PLACEHOLDER	52		
+PLACEHOLDER	53		
+PLACEHOLDER	54		
+PLACEHOLDER	55		
+PLACEHOLDER	56		
+PLACEHOLDER	57		
+PLACEHOLDER	58		
+PLACEHOLDER	59		
+PLACEHOLDER	60		
+PLACEHOLDER	61		
+PLACEHOLDER	62		
+PLACEHOLDER	63		
+PLACEHOLDER	64		
+PLACEHOLDER	65		
+PLACEHOLDER	66		
+PLACEHOLDER	67		
+PLACEHOLDER	68		
+PLACEHOLDER	69		
+PLACEHOLDER	70		
+			
+			
+// Tome of Battle			
+Crusader	71		
+Swordsage	72		
+Warblade	73		
+Bloodclaw Master	74		
+Bloodstorm Blade	75		
+Deepstone Sentinel	76		
+Eternal Blade	77		
+Jade Phoenix Mage	78		
+Master of Nine	79		
+Ruby Knight Vindicator	80		
+Shadow Sun Ninja	81		
+			
+// PF Base Classes			
+Alchemist	82		
+Cavalier	83		
+Gunslinger	84		
+Inquisitor	85		
+Magus	86		
+Oracle	87		
+Summoner	88		
+Vigilante	89		
+Witch	90		
+			
+// PF Alternate Classes			
+Antipaladin	91		
+Ninja	92		
+Samurai	93		
+			
+// PF Hybrid Classes			
+Arcanist	94		
+Bloodrager	95		
+Brawler	96		
+Hunter	97		
+Investigator	98		
+Shaman	99		
+Skald	100		
+Slayer	101		
+Swashbuckler	102		
+Warpriest	103		
+			
+// PF Prestige Classes			
+Battle Herald	104		
+Holy Vindicator	105		
+Horizon Walker	106		
+Master Chymist	107		
+Master Spy	108		
+Nature Warden	109		
+Rage Prophet	110		
+Stalwart Defender	111		
+			
+// Custom classes			
+			
+CUSTOM	112		
+CUSTOM	113		
+CUSTOM	114		
+CUSTOM	115		
+CUSTOM	116		
+CUSTOM	117		
+CUSTOM	118		
+CUSTOM	119		
+CUSTOM	120		
+CUSTOM	121		
+CUSTOM	122		
+CUSTOM	123		
+CUSTOM	124		
+CUSTOM	125		
+CUSTOM	126		
+CUSTOM	127		
+CUSTOM	128		
+CUSTOM	129		
+CUSTOM	130		
+CUSTOM	131		
+CUSTOM	132		
+CUSTOM	133		
+CUSTOM	134		
+CUSTOM	135		
+CUSTOM	136		
+CUSTOM	137		
+CUSTOM	138		
+CUSTOM	139		
+CUSTOM	140		
+CUSTOM	141		
+CUSTOM	142		
+CUSTOM	143		
+CUSTOM	144		
+CUSTOM	145		
+CUSTOM	146		
+CUSTOM	147		
+CUSTOM	148		
+CUSTOM	149		
+CUSTOM	150		
+CUSTOM	151		
+CUSTOM	152		
+CUSTOM	153		
+CUSTOM	154		
+CUSTOM	155		
+CUSTOM	156		
+CUSTOM	157		
+CUSTOM	158		
+CUSTOM	159		
+CUSTOM	160		
+CUSTOM	161		
+CUSTOM	162		
+CUSTOM	163		
+CUSTOM	164		
+CUSTOM	165		
+CUSTOM	166		
+CUSTOM	167		
+CUSTOM	168		
+CUSTOM	169		
+CUSTOM	170		
+CUSTOM	171		
+CUSTOM	172		
+CUSTOM	173		
+CUSTOM	174		
+CUSTOM	175		
+CUSTOM	176		
+CUSTOM	177		
+CUSTOM	178		
+CUSTOM	179		
+CUSTOM	180		
+CUSTOM	181		
+CUSTOM	182		
+CUSTOM	183		
+CUSTOM	184		
+CUSTOM	185		
+CUSTOM	186		
+CUSTOM	187		
+CUSTOM	188		
+CUSTOM	189		
+CUSTOM	190		
+CUSTOM	191		
+CUSTOM	192		
+CUSTOM	193		
+CUSTOM	194		
+CUSTOM	195		
+CUSTOM	196		
+CUSTOM	197		
+CUSTOM	198		
+CUSTOM	199		
+CUSTOM	200		
+CUSTOM	201		
+CUSTOM	202		
+CUSTOM	203		
+CUSTOM	204		
+CUSTOM	205		
+CUSTOM	206		
+CUSTOM	207		
+CUSTOM	208		
+CUSTOM	209		
+CUSTOM	210		
+CUSTOM	211		
+CUSTOM	212		

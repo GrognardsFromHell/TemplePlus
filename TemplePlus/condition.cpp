@@ -1026,10 +1026,14 @@ int GenericCallbacks::CastDefensivelySpellInterrupted(DispatcherCallbackArgs arg
 	if (!isSet)
 		return 0; // not casting defensively
 
+	if (!combatSys.isCombatActive())
+		return 0; // forego this outside of combat
+
 	auto spellData = (D20SpellData*)(dispIo->data1);
 	if (!spellData)
 		return 0;
 
+	// odd, but that's where it was in the original code...
 	if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_COMBAT_CASTING)){
 		conds.AddTo(args.objHndCaller, conds.GetByName("Combat_Casting"), { 0 });
 	}

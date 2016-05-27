@@ -180,7 +180,7 @@ enum D20SavingThrowFlag : uint32_t {
 	D20STD_F_SPELL_SCHOOL_TRANSMUTATION = 13,
 
 	/*
-		The spell descriptor bitmask is copied over allmost verbatim,
+		The spell descriptor bitmask is copied over almost verbatim,
 		although shifted left by 13. 
 		v8 = 0;
 		do

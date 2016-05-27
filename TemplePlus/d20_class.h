@@ -2,6 +2,7 @@
 #include "common.h"
 #include "idxtables.h"
 #include <map>
+//#include <EASTL/hash_map.h>
 
 
 enum BardicMusicSongType : int {
@@ -35,7 +36,26 @@ enum WildShapeProtoIdx : int {
 	WS_Elem_Huge_Water
 };
 
+enum class BABProgressionType{
+	Martial = 0, // +1 every level
+	SemiMartial = 1, // + 3/4
+	NonMartial = 2 // + 1/2
+};
+
 struct ClassPacket;
+
+struct D20ClassSpec {
+	Stat classEnum;
+	BABProgressionType babProgression;
+
+
+	bool fortitudeSaveIsFavored;
+	bool reflexSaveIsFavored;
+	bool willSaveIsFavored;
+	int hitDice; // HD side (4,6,8 etc)
+	int skillPts; // skill point per level
+
+};
 
 struct D20ClassSystem : temple::AddressTable
 {
@@ -51,7 +71,7 @@ public:
 	void ClassPacketAlloc(ClassPacket *classPkt); // allocates the three IdxTables within ClassPacket
 	void ClassPacketDealloc(ClassPacket *classPkt);
 	uint32_t GetClassPacket(Stat classEnum, ClassPacket *classPkt); // fills the struct with content based on classEnum (e.g. Barbarian Feats in the featsIdxTable). Also STUB FOR PRESTIGE CLASSES! TODO
-	
+	int GetBaseAttackBonus(Stat classCode, uint32_t classLvl); // gets the class's BAB
 
 	struct WildShapeSpec {
 		int protoId;
@@ -82,24 +102,26 @@ public:
 	{ WS_Elem_Huge_Water,{ 14511 , 20, mc_type_elemental } }
 	};
 
-	D20ClassSystem()
-	{
+	D20ClassSystem(){
 		Stat _charClassEnums[NUM_CLASSES] = 
 			{ stat_level_barbarian, stat_level_bard, 
 			stat_level_cleric, stat_level_druid, stat_level_fighter, stat_level_monk, stat_level_paladin, stat_level_ranger, stat_level_rogue, stat_level_sorcerer, stat_level_wizard };
 		memcpy(classEnums, _charClassEnums, NUM_CLASSES * sizeof(uint32_t));
 	}
+	void GetClassSpecs(); // gets class specs from python files
 
 	int ClericMaxSpellLvl(uint32_t clericLvl) const;
 	int NumDomainSpellsKnownFromClass(objHndl dude, Stat classCode);
 	static int GetNumSpellsFromClass(objHndl obj, Stat classCode, int spellLvl, uint32_t classLvl);
+
+protected:
+	std::map<int, D20ClassSpec> classSpecs;
 };
 
 extern D20ClassSystem d20ClassSys;
 
 #pragma pack(push, 1)
-struct ClassPacket
-{
+struct ClassPacket{
 	IdxTable<uint32_t> keyStats; // stats considered key to this class (e.g. int, dex and con for wizards)
 	IdxTable<uint32_t> alignments; // allowed alignments for this class
 	IdxTable<feat_enums> featsIdxTable;
@@ -114,3 +136,4 @@ struct ClassPacket
 
 const auto TestSizeOfClassPacket = sizeof(ClassPacket); // should be 76 ( 0x4C )
 #pragma pack(pop)
+

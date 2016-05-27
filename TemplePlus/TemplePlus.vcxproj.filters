@@ -405,6 +405,15 @@
     <ClCompile Include="ability_fixes.cpp">
       <Filter>Mods and Fixes\Condition Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="ui\ui_char_editor.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_ui.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_integration_class_spec.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -767,6 +776,9 @@
       <Filter>python</Filter>
     </ClInclude>
     <ClInclude Include="poison.h" />
+    <ClInclude Include="python\python_integration_class_spec.h">
+      <Filter>python</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

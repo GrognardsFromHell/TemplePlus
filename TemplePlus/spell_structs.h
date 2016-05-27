@@ -1,6 +1,7 @@
 #pragma once
 
 const uint32_t SPELL_ENUM_MAX = 802;
+const uint32_t SPELL_ENUM_MAX_EXPANDED = 3999;
 #define NUM_SPELL_LEVELS 10 // spells are levels 0-9
 #define MAX_SPELL_TARGETS 32
 #define INV_IDX_INVALID 255  // indicates that a spell is not an item spell

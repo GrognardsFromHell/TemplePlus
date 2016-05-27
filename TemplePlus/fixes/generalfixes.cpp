@@ -165,6 +165,7 @@ public:
 				return 0;
 			return orgEncumbranceQuery(args);
 		});
+
 	}
 } spellSlingerGeneralFixes;
 
@@ -434,8 +435,7 @@ int RemoveSuggestionSpellFix::RemoveSpellSuggestion(DispIO* dispIo, enum_disp_ty
 	auto condSuggestion = temple::GetPointer<CondStruct>(0x102E0158);
 	if (d20a->d20ActType == D20A_CAST_SPELL){
 
-		if (d20Sys.d20QueryWithData(obj, DK_QUE_Critter_Has_Condition, condSuggestion, 0) == 1 && d20a->spellId != spellId)
-		{
+		if (d20Sys.d20QueryWithData(obj, DK_QUE_Critter_Has_Condition, condSuggestion, 0) == 1 && d20a->spellId != spellId)	{
 			d20Sys.d20SendSignal(obj, DK_SIG_Spell_End, spellPkt.spellId, 0);
 			critterSys.RemoveFollower(obj, 1);
 			ui.UpdatePartyUi();

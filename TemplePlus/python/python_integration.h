@@ -41,10 +41,11 @@ public:
 protected:
 	virtual const char *GetFunctionName(EventId eventId) = 0;
 	void AddGlobalsOnDemand(PyObject* dict);
-
-private:
 	typedef unordered_map<int, ScriptRecord> ScriptCache;
 	ScriptCache mScripts;
+private:
+	
+	
 	string mSearchPattern;
 	string mFilenameRegexp;
 };

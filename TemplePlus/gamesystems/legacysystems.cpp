@@ -496,6 +496,7 @@ D20System::D20System(const GameSystemConf &config) {
 		throw TempleException("Unable to initialize game system D20");
 	}
 	conds.RegisterNewConditions();
+	d20ClassSys.GetClassSpecs();
 	d20LevelSys.GenerateSpellsPerLevelTables();
 	damage.Init();
 	itemCreation.GetMaaSpecs();

@@ -111,15 +111,6 @@ public:
 		redirectCall(0x1007870F, hookedPrint);
 
 		
-		// CastDefensivelySpellInterrupted  
-		// ignores the cast defensively effect outside of combat (so you don't fail spells just because you forgot to tick it off)
-		static int(__cdecl* orgCastDefensivelySpellInterrupted)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100F8CC0, [](DispatcherCallbackArgs args)
-		{
-			if (!combatSys.isCombatActive() )
-				return 0;
-
-			return orgCastDefensivelySpellInterrupted(args);
-		});
 
 		replaceFunction<const char*(__cdecl)(uint32_t)>(0x10077970, [](uint32_t spellEnum){
 			return spellSys.GetSpellEnumTAG(spellEnum);
@@ -367,7 +358,7 @@ void SpellPacketBody::MemorizedUseUp(SpellStoreData &spellData){
 			&& sd1.metaMagicData == sd2.metaMagicData	;
 	};
 
-	for (auto i = 0; i < numMem; i++){
+	for (auto i = 0u; i < numMem; i++){
 		auto sd = casterObj->GetSpell(obj_f_critter_spells_memorized_idx, i);
 		
 		if (spellComparer(sd, spellData)) {
@@ -1259,12 +1250,14 @@ void LegacySpellSystem::ForgetMemorized(objHndl handle) {
 uint32_t LegacySpellSystem::getSpellEnum(const char* spellName)
 {
 	MesLine mesLine;
-	for (auto i = 0; i < SPELL_ENUM_MAX; i++)
+	for (auto i = 0; i < SPELL_ENUM_MAX_EXPANDED; i++)
 	{
 		mesLine.key = 5000 + i;
 		mesFuncs.GetLine_Safe(*spellEnumMesHandle, &mesLine);
-		if (!_stricmp(spellName, mesLine.value))
+		if (!_stricmp(spellName, mesLine.value)){
 			return i;
+		}
+			
 	}
 	return 0;
 }
@@ -1517,7 +1510,7 @@ BOOL LegacySpellSystem::SpellHasAiType(unsigned spellEnum, AiSpellType aiSpellTy
 	return 0;
 }
 
-bool LegacySpellSystem::IsSpellHarmful(int spellEnum, const objHndl& caster, const objHndl& tgt){
+BOOL LegacySpellSystem::IsSpellHarmful(int spellEnum, const objHndl& caster, const objHndl& tgt){
 	return temple::GetRef<BOOL(__cdecl)(int, objHndl, objHndl)>(0x100769F0)(spellEnum, caster, tgt);
 }
 

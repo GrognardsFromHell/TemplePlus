@@ -44,6 +44,20 @@ struct PartyCreationPc
 
 const int testSizeOfCreationPc = sizeof(PartyCreationPc); // 344  0x158
 
+struct ChargenSystem{ // incomplete
+	const char* name;
+	void(__cdecl *reset)(CharEditorSelectionPacket & charSpec);
+	void(__cdecl *field_8)();
+	BOOL(__cdecl *systemInit)(GameSystemConf *);
+	int field10;
+	int field14;
+	void(__cdecl *reset2)();
+	void(__cdecl *field_1C)();
+	int(__cdecl *checkComplete)(); // checks if the char editing stage is complete (thus allowing you to move on to the next stage). This is checked at every render call.
+	int field24;
+	void(__cdecl *buttonExited)();
+};
+
 
 class PcCreationUiSystem : TempleFix
 {

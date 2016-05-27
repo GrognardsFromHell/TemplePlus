@@ -89,8 +89,7 @@ void D20LevelSystem::GenerateSpellsPerLevelTables()
 
 }
 
-LevelPacket::LevelPacket()
-{
+LevelPacket::LevelPacket(){
 	d20LevelSys.LevelPacketInit(this);
 }
 
