@@ -1838,7 +1838,11 @@ enum enum_disp_type : uint32_t {
 	dispTypeBucklerAcPenalty,
 
 	dispTypeGetModelScale, // NEW! used for modifying the model scale with messing with internal fields
-
+	dispTypePythonQuery, // NEW! for handling python dispatcher queries
+	dispTypePythonSignal,
+	dispTypePythonActionCheck,
+	dispTypePythonActionPerform,
+	dispTypePythonActionFrame,
 	dispTypeCount // used just for size definition purposes
 
 
@@ -2035,6 +2039,25 @@ enum Stat : uint32_t {
 	stat_level_sorcerer = 0x10,
 	stat_level_wizard = 0x11,
 
+	stat_level_arcane_archer = 18,
+	stat_level_arcane_trickster = 19,
+	stat_level_archmage = 20,
+	stat_level_assassin =21,
+	stat_level_blackguard =22,
+	stat_level_dragon_disciple =23,
+	stat_level_duelist =24,
+	stat_level_dwarven_defender =25,
+	stat_level_eldritch_knight =26,
+	stat_level_hierophant =27,
+	stat_level_horizon_walker =28,
+	stat_level_loremaster =29,
+	stat_level_mystic_theurge =30,
+	stat_level_shadowdancer =31,
+	stat_level_thaumaturgist =32,
+
+
+
+
 	stat_hp_max = 0xE4,
 	stat_hp_current = 0xE5,
 	stat_race = 0xE6,
@@ -2104,6 +2127,8 @@ enum Stat : uint32_t {
 	
 	stat_melee_attack_bonus = 0x11E,
 	stat_ranged_attack_bonus = 0x11F,
+
+		_stat_count // for internal use
 };
 
 enum NpcFlag : uint32_t

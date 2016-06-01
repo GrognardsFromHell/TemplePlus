@@ -1,6 +1,113 @@
-
 #include "stdafx.h"
 #include "d20stats.h"
+#include <gamesystems/gamesystems.h>
+#include <feat.h>
+#include <util/fixes.h>
+#include <d20.h>
+
+#define VANILLA_STAT_COUNT 288
+
+D20StatsSystem d20Stats;
+
+class D20StatsHooks : public TempleFix{
+	
+	void apply() override {
+		
+		replaceFunction<const char*(Stat)>(0x10073A20, [](Stat stat)->const char* {
+			return d20Stats.GetStatRulesString(stat);
+		});
+		replaceFunction<const char*(Stat)>(0x10074950, [](Stat stat)->const char*{
+			return d20Stats.GetStatName(stat);
+		});
+		replaceFunction<const char*(Stat)>(0x10073AE0, [](Stat stat)->const char* {
+			return d20Stats.GetClassShortDesc(stat);
+		});
+		replaceFunction<const char*(Stat)>(0x10073B10, [](Stat stat)->const char* {
+			return d20Stats.GetCannotPickClassHelp(stat);
+		});
+
+	}
+} d20StatsHooks;
+
+
+const char* D20StatsSystem::GetStatName(Stat stat) const{
+	if (GetType(stat) == StatType::Feat){
+		return feats.GetFeatName(static_cast<feat_enums>(static_cast<int>(stat) - 1000));
+	} 
+	return statMesStrings[stat];
+}
+
+const char* D20StatsSystem::GetStatEnumString(Stat stat) const{
+	return statEnumStrings[stat];
+}
+
+const char* D20StatsSystem::GetStatRulesString(Stat stat) const{
+	return statRulesStrings[stat];
+}
+
+const char* D20StatsSystem::GetClassShortDesc(Stat stat) const{
+	MesLine line(13000 + stat - stat_level_barbarian);
+	if (stat <= stat_level_wizard)
+		mesFuncs.GetLine_Safe(statMes, &line);
+	else
+		mesFuncs.GetLine_Safe(statMesExt, &line);
+	return line.value;
+}
+
+const char* D20StatsSystem::GetCannotPickClassHelp(Stat stat) const{
+	
+	if (stat <= stat_level_wizard){
+		MesLine line(13100 + stat - stat_level_barbarian);
+		mesFuncs.GetLine_Safe(statMes, &line);
+		return line.value;
+	}
+
+	MesLine line(20000 + stat );
+	mesFuncs.GetLine_Safe(statMesExt, &line);
+	return line.value;
+}
+
+void D20StatsSystem::Init(const GameSystemConf& conf){
+	isEditor = conf.editor;
+	mesFuncs.Open("mes\\stat.mes", &statMes);
+	mesFuncs.Open("mes\\stat_ext.mes", &statMesExt);
+
+	mesFuncs.Open("rules\\stat.mes", &statRules);
+	mesFuncs.Open("rules\\stat_ext.mes", &statRulesExt);
+	mesFuncs.Open("rules\\stat_enum.mes", &statEnum);
+	
+
+	for (auto i = 0u; i < _stat_count; i++){
+		MesLine line(i);
+		if (mesFuncs.GetLine(statMes, &line)){
+			statMesStrings[i] = line.value;
+		}
+		if (mesFuncs.GetLine(statMesExt, &line)) {
+			statMesStrings[i] = line.value;
+		}
+
+		if (mesFuncs.GetLine(statEnum, &line)){
+			statEnumStrings[i] = line.value;
+		}
+
+		if (mesFuncs.GetLine(statRules, &line)) {
+			statRulesStrings[i] = line.value;
+			if (i<VANILLA_STAT_COUNT)
+				temple::GetRef<const char*[288]>(0x118CE080)[i] = line.value;
+		}
+		if (mesFuncs.GetLine(statRulesExt, &line)) {
+			statRulesStrings[i] = line.value;
+			if (i<VANILLA_STAT_COUNT)
+				temple::GetRef<const char*[288]>(0x118CE080)[i] = line.value;
+		}
+	}
+
+	for (auto it: d20ClassSys.vanillaClassEnums){
+		MesLine line(13100 + it - stat_level_barbarian);
+		mesFuncs.GetLine_Safe(statMes, &line);
+		cannotPickClassStr[it] = line.value;
+	}
+}
 
 StatType D20StatsSystem::GetType(Stat stat) {
 
@@ -25,7 +132,7 @@ StatType D20StatsSystem::GetType(Stat stat) {
 	case stat_int_mod:
 	case stat_wis_mod:
 	case stat_cha_mod:
-		return StatType::AbilityMods;
+		return StatType::AbilityMods; // largely does (StatLevelGet-10)/ 2 with special casing for dex regarding load
 
 	case stat_level:
 	case stat_level_barbarian:
@@ -39,11 +146,27 @@ StatType D20StatsSystem::GetType(Stat stat) {
 	case stat_level_rogue:
 	case stat_level_sorcerer:
 	case stat_level_wizard:
+	case stat_level_arcane_archer :
+	case stat_level_arcane_trickster:
+	case stat_level_archmage:
+	case stat_level_assassin:
+	case stat_level_blackguard:
+	case stat_level_dragon_disciple:
+	case stat_level_duelist:
+	case stat_level_dwarven_defender:
+	case stat_level_eldritch_knight:
+	case stat_level_hierophant:
+	case stat_level_horizon_walker:
+	case stat_level_loremaster:
+	case stat_level_mystic_theurge:
+	case stat_level_shadowdancer:
+	case stat_level_thaumaturgist:
 		return StatType::Level;
 
 	case stat_money:
 	case stat_money_pp:
 	case stat_money_gp:
+	case stat_money_ep:
 	case stat_money_sp:
 	case stat_money_cp:
 		return StatType::Money;
@@ -51,7 +174,7 @@ StatType D20StatsSystem::GetType(Stat stat) {
 	case stat_save_reflexes:
 	case stat_save_fortitude:
 	case stat_save_willpower:
-		return StatType::SavingThrows;
+		return StatType::SavingThrows; // does a dispatch for saving throw
 
 	case stat_subdual_damage:
 	case stat_hp_max:
@@ -78,7 +201,7 @@ StatType D20StatsSystem::GetType(Stat stat) {
 
 	case stat_movement_speed:
 	case stat_run_speed:
-		return StatType::Speed;
+		return StatType::Speed; // regards load
 		
 	case stat_load:
 		return StatType::Load;
@@ -86,5 +209,34 @@ StatType D20StatsSystem::GetType(Stat stat) {
 	default:
 		return StatType::Other;
 	}
+
+	// the following are unimplemented
+	//case stat_caster_level: 
+	//case stat_caster_level_barbarian: 
+	//case stat_caster_level_bard: 
+	//case stat_caster_level_cleric: 
+	//case stat_caster_level_druid: 
+	//case stat_caster_level_fighter: 
+	//case stat_caster_level_monk: 
+	//case stat_caster_level_paladin: 
+	//case stat_caster_level_ranger: 
+	//case stat_caster_level_rogue: 
+	//case stat_caster_level_sorcerer: 
+	//case stat_caster_level_wizard: 
+	//case stat_age: 
+	//case stat_category: 
+	//case stat_alignment_choice: 
+	//
+	//
+	//case stat_initiative_bonus: 
+	//
+	//case stat_carried_weight: 
+
+	//case stat_favored_enemies: 
+	//case stat_known_spells: 
+	//case stat_memorized_spells: 
+	//case stat_spells_per_day: 
+	//case stat_school_specialization: 
+	//case stat_school_prohibited: 
 
 }

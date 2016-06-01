@@ -18,7 +18,7 @@ struct ClassFeatTableRow
 }; // all the rows
 struct ClassFeatTable
 {
-	ClassFeatTableRow classEntries[NUM_CLASSES];
+	ClassFeatTableRow classEntries[VANILLA_NUM_CLASSES];
 };
 
 struct TabFileStatus;

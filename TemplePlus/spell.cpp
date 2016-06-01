@@ -501,17 +501,17 @@ void LegacySpellSystem::SetSpontaneousCastingAltNode(objHndl obj, int nodeIdx, S
 		mesLine.key = radOptionsMesLine;
 		mesFuncs.GetLine_Safe(*spellsRadialMenuOptionsMes, &mesLine);
 		auto numSummons = atol(mesLine.value);
-		for (int i = 1; i <= numSummons; i++ )
-		{
+		for (int i = 1; i <= numSummons; i++ ){
+
 			mesLine.key = i + radOptionsMesLine;
 			mesFuncs.GetLine_Safe(*spellsRadialMenuOptionsMes, &mesLine);
 			auto protoNum = atol(mesLine.value);
 			auto protoHandle = objects.GetProtoHandle(protoNum);
-			mesLine.key = objects.getInt32(protoHandle, obj_f_description);
+			/*mesLine.key = 
 			mesFuncs.GetLine_Safe(*description.descriptionMes, &mesLine);
-			
+			*/
 			radEntry.SetDefaults();
-			radEntry.text = (char*)mesLine.value;
+			radEntry.text = (char*)description.GetDescriptionString(objects.getInt32(protoHandle, obj_f_description));
 			radEntry.d20ActionType = D20A_CAST_SPELL;
 			radEntry.d20ActionData1 = 0;
 			radialMenus.SetCallbackCopyEntryToSelected(&radEntry);

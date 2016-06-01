@@ -17,6 +17,7 @@
 #include "tig/tig_startup.h"
 #include "fonts/fonts.h"
 #include "ui_tooltip.h"
+#include <gamesystems/d20/d20stats.h>
 
 #define NUM_SPELLBOOK_SLOTS 18 // 18 in vanilla
 
@@ -228,11 +229,9 @@ void CharUiSystem::SpellsShow(objHndl obj)
 
 	auto uiCharSpellTabPadding = temple::GetRef<int>(0x10C81B40);
 
-	auto getStatName = temple::GetRef<const char*(__cdecl)(Stat)>(0x10074950);
-
 	// find which caster class tabs should appear
-	for (int i = 0; i < NUM_CLASSES ; i++){
-		auto classCode = d20ClassSys.classEnums[i];
+	for (int i = 0; i < VANILLA_NUM_CLASSES ; i++){
+		auto classCode = d20ClassSys.vanillaClassEnums[i];
 		auto spellClassCode = (classCode & 0x7F) | 0x80;
 
 		if (!d20ClassSys.IsCastingClass(classCode))
@@ -242,7 +241,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 		if (classLvl <= 0)
 			continue;
 
-		line = getStatName(classCode);
+		line = d20Stats.GetStatName(classCode);
 		auto textSize = UiRenderer::MeasureTextSize(line, style);
 
 		auto navTabBtn = navClassPackets[uiCharSpellTabsCount].button;
@@ -321,7 +320,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 	}
 
 	// hide inactive nav tabs
-	for (int i = uiCharSpellTabsCount; i < NUM_CLASSES + 1; i++){
+	for (int i = uiCharSpellTabsCount; i < VANILLA_NUM_CLASSES + 1; i++){
 		ui.WidgetSetHidden(navClassPackets[i].button->widgetId, 1);
 	}
 
@@ -730,7 +729,6 @@ char* CharUiSystem::HookedItemDescriptionBarter(objHndl obj, objHndl item)
 
 void CharUiSystem::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& addStr){
 	auto itemObj = gameSystems->GetObj().GetObject(item);
-	static auto getStatName = temple::GetRef<const char*(__cdecl)(Stat)>(0x10074950);
 	if (itemObj->type == obj_t_food || itemObj->type == obj_t_scroll){
 		
 		if (!(itemObj->GetItemFlags() & OIF_IDENTIFIED))
@@ -748,24 +746,24 @@ void CharUiSystem::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& add
 			if (itemObj->type == obj_t_scroll)	{
 
 				if (spellSys.IsArcaneSpellClass(spellData.classCode)){	
-					addStr = fmt::format("{}: {}  [Arcane, {}]", getStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
+					addStr = fmt::format("{}: {}  [Arcane, {}]", d20Stats.GetStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
 				}
 				else if (spellData.classCode == Domain_Special)
 				{
-					addStr = fmt::format("{}: {}  [{}]", getStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
+					addStr = fmt::format("{}: {}  [{}]", d20Stats.GetStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
 				}  
 				else 
 				{ // divine spell
-					addStr = fmt::format("{}: {}  [Divine, {}]", getStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
+					addStr = fmt::format("{}: {}  [Divine, {}]", d20Stats.GetStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
 				}
 			} 
 			
 			else{
 				
-				addStr = fmt::format("{}: {}  [{}]", getStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
+				addStr = fmt::format("{}: {}  [{}]", d20Stats.GetStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
 			}
 		else
-			addStr = fmt::format("{}: {}", getStatName(stat_caster_level), casterLevel);
+			addStr = fmt::format("{}: {}", d20Stats.GetStatName(stat_caster_level), casterLevel);
 	}
 
 	if (itemObj->type == obj_t_generic){

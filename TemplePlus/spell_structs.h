@@ -6,16 +6,14 @@ const uint32_t SPELL_ENUM_MAX_EXPANDED = 3999;
 #define MAX_SPELL_TARGETS 32
 #define INV_IDX_INVALID 255  // indicates that a spell is not an item spell
 
-enum SpellStoreType : uint8_t
-{
+enum SpellStoreType : uint8_t{
 	spellStoreNone = 0,
 	spellStoreKnown = 1,
 	spellStoreMemorized = 2,
 	spellStoreCast = 3
 };
 
-struct MetaMagicData
-{
+struct MetaMagicData{
 	unsigned char metaMagicFlags : 4; // 1 - Maximize Spell ; 2 - Quicken Spell ; 4 - Silent Spell;  8 - Still Spell
 	unsigned char metaMagicEmpowerSpellCount : 4;
 	unsigned char metaMagicEnlargeSpellCount : 4;
@@ -50,8 +48,7 @@ struct MetaMagicData
 };
 const uint32_t TestSizeOfMetaMagicData = sizeof(MetaMagicData);
 
-struct SpellStoreState
-{
+struct SpellStoreState{
 	SpellStoreType spellStoreType;
 	uint8_t usedUp; // relevant only for spellStoreMemorized
 	SpellStoreState(){
@@ -81,6 +78,35 @@ enum AiSpellType : unsigned {
 	ai_action_heal_light = 6,
 	ai_action_cure_poison = 7,
 	ai_action_resurrect = 8
+};
+
+enum class SpellSourceType : int {
+	Arcane = 0,
+	Divine,
+	Ability,
+	Psionic,
+	Any
+};
+
+enum class SpellReadyingType : int {
+	Vancian = 0, // memorization slots
+	Innate, // bards / sorcerers etc.
+	Any
+};
+
+enum class SpellListType : int {
+	None = 0,
+	Any, // for prestige classes that stack spell progression with anything
+	Arcane,
+	Bardic, // subset of Arcane
+	Clerical, // subset of Divine 
+	Divine,
+	Druidic, // subset of divine
+	Paladin, // subset of divine
+	Psionic, 
+	Ranger, // subset of divine
+	Special, // "independent" list
+	Theurge // adds to both divine and arcane classes!
 };
 
 struct D20SpellData

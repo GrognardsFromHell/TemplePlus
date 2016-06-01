@@ -853,16 +853,26 @@ int AiSystem::Sniper(AiTactic* aiTac)
 	return Default(aiTac);
 }
 
-int AiSystem::CoupDeGrace(AiTactic* aiTac)
-{
+int AiSystem::CoupDeGrace(AiTactic* aiTac){
 	int actNum; 
 	objHndl origTarget = aiTac->target;
 
 	actNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
 	aiTac->target = 0i64;
 	combatSys.GetClosestEnemy(aiTac, 1);
-	if (aiTac->target)
-	{
+	auto performer = gameSystems->GetObj().GetObject(aiTac->performer);
+	auto perfLoc = performer->GetLocationFull();
+	
+	objHndl threateners[40];
+	auto numThreateners = combatSys.GetThreateningCrittersAtLoc(aiTac->performer, &perfLoc, threateners);
+
+	if (aiTac->target){
+		if (critterSys.IsDeadOrUnconscious(aiTac->target)) { // if the CDG is due to unconscious target...
+			if(!combatSys.CanMeleeTarget(aiTac->performer, aiTac->target)) // if it's not in melee range, forget it
+				return 0;
+			if (numThreateners > 0) // if the AI is threatened, forget it too (since it incurs an AOO)
+				return 0;
+		}
 		if (Approach(aiTac)
 			|| (d20Sys.GlobD20ActnInit(),
 			d20Sys.GlobD20ActnSetTypeAndData1(D20A_COUP_DE_GRACE, 0),

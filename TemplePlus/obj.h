@@ -256,8 +256,6 @@ struct Objects : temple::AddressTable {
 	uint32_t StatLevelGet(objHndl obj, Stat stat);
 	int StatLevelGetBase(objHndl obj, Stat stat);
 	int StatLevelSetBase(objHndl obj, Stat stat, int value);
-	int GetStatType(Stat stat);
-	const char* GetStatName(Stat stat);
 #pragma endregion
 
 #pragma region Dispatcher Stuff

@@ -70,7 +70,7 @@ int PythonIntegration::RunScript(ScriptId scriptId, EventId evt, PyObject* args)
 	if (!LoadScript(scriptId, script)) {
 		return 1;
 	}
-
+	
 	auto dict = PyModule_GetDict(script.module);
 	auto eventName = GetFunctionName(evt);
 	auto callback = PyDict_GetItemString(dict, eventName);

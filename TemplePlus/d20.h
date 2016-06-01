@@ -64,6 +64,7 @@ struct LegacyD20System : temple::AddressTable
 	uint32_t d20QueryHasSpellCond(objHndl ObjHnd, int spellEnum);
 	uint64_t d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1 =0 , uint32_t arg2 =0);
 	uint64_t d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, CondStruct *arg1, uint32_t arg2);
+	int D20QueryPython(const objHndl& handle, const std::string& queryKey, int arg1 = 0, int arg2 = 0);
 	static bool D20QueryWithDataDefaultTrue(objHndl obj, D20DispatcherKey dispKey, const D20Actn * d20a, int arg2);
 
 	void D20ActnInit(objHndl objHnd, D20Actn * d20a);

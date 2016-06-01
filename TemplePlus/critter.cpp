@@ -1119,7 +1119,7 @@ int LegacyCritterSystem::GetBaseAttackBonus(const objHndl& handle, Stat classBei
 
 	
 	auto bab = 0;
-	for (auto it: d20ClassSys.classEnums){
+	for (auto it: d20ClassSys.vanillaClassEnums){
 		auto classLvl = objects.StatLevelGet(handle, it);
 		if (classBeingLeveled == it)
 			classLvl++;
@@ -1162,6 +1162,11 @@ int LegacyCritterSystem::GetBaseAttackBonus(const objHndl& handle, Stat classBei
 	return bab;
 }
 
+int LegacyCritterSystem::GetSpellLvlCanCast(const objHndl& handle, SpellSourceType spellSourceType, SpellReadyingType spellReadyingType){
+	
+	return 0;
+}
+
 int LegacyCritterSystem::GetCritterNumNaturalAttacks(objHndl obj){
 	auto n = 0;
 
@@ -1198,11 +1203,11 @@ bool LegacyCritterSystem::IsSummoned(objHndl obj)
 int LegacyCritterSystem::GetCasterLevel(objHndl obj)
 {
 	int result = 0;
-	for (int i = 0; i < NUM_CLASSES; i++)
+	for (int i = 0; i < VANILLA_NUM_CLASSES; i++)
 	{
-		if (d20ClassSys.IsCastingClass(d20ClassSys.classEnums[i])  )
+		if (d20ClassSys.IsCastingClass(d20ClassSys.vanillaClassEnums[i])  )
 		{
-			result += objects.StatLevelGet(obj, d20ClassSys.classEnums[i]);
+			result += objects.StatLevelGet(obj, d20ClassSys.vanillaClassEnums[i]);
 		}
 	}
 	return result;

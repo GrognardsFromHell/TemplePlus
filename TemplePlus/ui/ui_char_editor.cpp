@@ -11,6 +11,7 @@
 #include <EASTL/hash_map.h>
 #include "ui_render.h"
 #include <EASTL/fixed_string.h>
+#include <gamesystems/d20/d20stats.h>
 
 class UiCharEditor{
 	BOOL WidgetsInit();
@@ -44,7 +45,7 @@ BOOL UiCharEditor::WidgetsInit(){
 	if (classWnd.Add(&classWndId))
 		return 0;
 	int coloff = 0, rowoff = 0;
-	for (auto it: d20ClassSys.classEnums){
+	for (auto it: d20ClassSys.vanillaClassEnums){
 		
 		int newId = 0;
 		WidgetType2 classBtn("Class btn", classWndId, 81 + coloff, 47 + rowoff, 110, 20);
@@ -77,8 +78,8 @@ BOOL UiCharEditor::SystemInit(GameSystemConf& conf){
 	classBtnTextStyle.leading = 0;
 	classBtnTextStyle.tracking = 3;
 
-	for (auto it: d20ClassSys.classEnums){
-		auto className = strdup(objects.GetStatName(it));
+	for (auto it: d20ClassSys.vanillaClassEnums){
+		auto className = strdup(d20Stats.GetStatName(it));
 		classNamesUppercase[it] = className;
 		for (auto &letter: classNamesUppercase[it]){
 			letter = toupper(letter);

@@ -17,6 +17,7 @@
 #include <d20_level.h>
 #include <damage.h>
 #include <ui/ui_item_creation.h>
+#include "d20/d20stats.h"
 
 
 //*****************************************************************************
@@ -416,6 +417,7 @@ StatSystem::StatSystem(const GameSystemConf &config) {
 	if (!startup(&config)) {
 		throw TempleException("Unable to initialize game system Stat");
 	}
+	d20Stats.Init(config); // registers the T+ overrides
 }
 StatSystem::~StatSystem() {
 	auto shutdown = temple::GetPointer<void()>(0x100739b0);

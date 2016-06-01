@@ -72,13 +72,13 @@ static void PcStart(objHndl pc) {
 	inventory.Clear(pc, FALSE);
 	
 	// This checks that the PC has at least one level in any of the classes
-	auto stat = d20ClassSys.classEnums[0];
+	auto stat = d20ClassSys.vanillaClassEnums[0];
 	auto classIndex = 0;
-	while (classIndex <= NUM_CLASSES) {
-		stat = d20ClassSys.classEnums[classIndex];
+	while (classIndex <= VANILLA_NUM_CLASSES) {
+		stat = d20ClassSys.vanillaClassEnums[classIndex];
 		if (objects.StatLevelGet(pc, stat) > 0) break;
 		classIndex++;
-		if (classIndex >= NUM_CLASSES)
+		if (classIndex >= VANILLA_NUM_CLASSES)
 			return;
 	}
 

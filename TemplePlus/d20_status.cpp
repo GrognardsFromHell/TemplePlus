@@ -45,7 +45,7 @@ void D20StatusSystem::initClass(objHndl objHnd)
 		CondStruct ** condStructClass = conds.ConditionArrayClasses;
 
 		uint32_t stat = stat_level_barbarian;
-		for (uint32_t i = 0; i < NUM_CLASSES; i++)
+		for (uint32_t i = 0; i < VANILLA_NUM_CLASSES; i++)
 		{
 			if (objects.StatLevelGet(objHnd, (Stat)stat) > 0
 				&& *condStructClass != nullptr)

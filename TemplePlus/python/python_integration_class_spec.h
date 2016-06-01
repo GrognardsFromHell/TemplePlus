@@ -10,8 +10,11 @@ enum class ClassSpecFunc : int {
 	IsFortSaveFavored,
 	IsRefSaveFavored,
 	IsWillSaveFavored,
-	IsAlignmentCompatible,
+	GetSpellListType,
+	IsEnabled,
 
+
+	IsAlignmentCompatible,
 	ObjMeetsPreqreqs,
 	GetFeat,
 };
@@ -23,7 +26,11 @@ public:
 
 	void GetClassEnums(std::vector<int>& classEnums);
 	int GetBabProgression(int classEnum);
-
+	int GetHitDieType(int classEnum);
+	int GetInt(int classEnum, ClassSpecFunc specType, int defaultVal = 0);
+	bool IsSaveFavored(int classEnum, SavingThrowType saveType);
+	SpellListType GetSpellListType(int it);
+	bool IsEnabled(int classEnum);
 protected:
 	const char* GetFunctionName(EventId evt) override;
 };

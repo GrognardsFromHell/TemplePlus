@@ -322,8 +322,7 @@ bool LegacyCombatSystem::CanMeleeTargetFromLocRegardItem(objHndl obj, objHndl we
 	return 1;
 }
 
-BOOL LegacyCombatSystem::CanMeleeTarget(objHndl obj, objHndl target)
-{
+BOOL LegacyCombatSystem::CanMeleeTarget(objHndl obj, objHndl target){
 	if (objects.GetFlags(obj) & (OF_OFF | OF_DESTROYED))
 		return 0;
 	auto targetObjFlags = objects.GetFlags(target);

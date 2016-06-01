@@ -3,7 +3,7 @@
 
 #include <temple/dll.h>
 
-typedef uint32_t MesHandle;
+typedef int MesHandle;
 
 struct MesLine {
 	uint32_t key;
@@ -34,5 +34,11 @@ struct MesFuncs : temple::AddressTable {
 		rebase(GetLine_Safe, 0x101E65E0);
 	}
 
+	int GetNumLines(MesHandle mesHandle);
+	/*
+	// reads a line based on its ordinal rather than its entry index
+	e.g. if the second line is index {1000}, you would use lineCount = 2 to retrieve it this way
+	*/
+	BOOL ReadLineDirect(MesHandle mesHandle, int lineCount, MesLine* mesLine); 
 };
 extern MesFuncs mesFuncs;

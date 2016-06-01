@@ -1018,10 +1018,10 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 	}
 	
 	
-	for (uint32_t i = 0; i < NUM_CLASSES; i++)
+	for (uint32_t i = 0; i < VANILLA_NUM_CLASSES; i++)
 	{
-		uint32_t classLevel = objects.StatLevelGet(objHnd, d20ClassSys.classEnums[i]);
-		if (classLevelBeingRaised == d20ClassSys.classEnums[i])
+		uint32_t classLevel = objects.StatLevelGet(objHnd, d20ClassSys.vanillaClassEnums[i]);
+		if (classLevelBeingRaised == d20ClassSys.vanillaClassEnums[i])
 		{
 			classLevel++;
 		}

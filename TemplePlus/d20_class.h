@@ -2,6 +2,8 @@
 #include "common.h"
 #include "idxtables.h"
 #include <map>
+#include "spell_structs.h"
+
 //#include <EASTL/hash_map.h>
 
 
@@ -54,13 +56,15 @@ struct D20ClassSpec {
 	bool willSaveIsFavored;
 	int hitDice; // HD side (4,6,8 etc)
 	int skillPts; // skill point per level
+	SpellListType spellListType;
 
 };
 
 struct D20ClassSystem : temple::AddressTable
 {
 public:
-	Stat classEnums[NUM_CLASSES];
+	Stat vanillaClassEnums[VANILLA_NUM_CLASSES];
+	std::map<int, int> classEnums;
 	const int ClassLevelMax = 20;
 	static bool isNaturalCastingClass(Stat classEnum);
 	static bool isNaturalCastingClass(uint32_t classEnum);
@@ -103,10 +107,10 @@ public:
 	};
 
 	D20ClassSystem(){
-		Stat _charClassEnums[NUM_CLASSES] = 
+		Stat _charClassEnums[VANILLA_NUM_CLASSES] = 
 			{ stat_level_barbarian, stat_level_bard, 
 			stat_level_cleric, stat_level_druid, stat_level_fighter, stat_level_monk, stat_level_paladin, stat_level_ranger, stat_level_rogue, stat_level_sorcerer, stat_level_wizard };
-		memcpy(classEnums, _charClassEnums, NUM_CLASSES * sizeof(uint32_t));
+		memcpy(vanillaClassEnums, _charClassEnums, VANILLA_NUM_CLASSES * sizeof(uint32_t));
 	}
 	void GetClassSpecs(); // gets class specs from python files
 

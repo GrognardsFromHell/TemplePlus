@@ -3126,6 +3126,19 @@ base_attack_bonus_type_martial = 0
 base_attack_bonus_type_semi_martial = 1
 base_attack_bonus_type_non_martial = 2
 
+spell_list_type_none = 0
+spell_list_type_any = 1
+spell_list_type_arcane = 2
+spell_list_type_bardic = 3 # note: bard spells are a subset of arcane spells
+spell_list_type_clerical = 4 #
+spell_list_type_divine = 5
+spell_list_type_druidic = 6
+spell_list_type_paladin = 7
+spell_list_type_psionic = 8
+spell_list_type_ranger = 9
+spell_list_type_special = 10
+spell_list_type_theurge = 11
+
 # Textfloater colors
 tf_white = 0
 tf_red = 1
@@ -3212,6 +3225,8 @@ ET_OnGetArmorToHitPenalty = 69 # none exist apparently
 ET_OnGetMaxDexAcBonus = 70
 ET_OnGetSizeCategory = 71
 ET_OnGetBucklerAcPenalty = 72
+ET_OnGetModelScale = 73 # used for altering model scale without directly changing the internal fields
+ET_OnD20PythonQuery = 74 # used for adding new python-based D20 query types. The key is simply the hash of the string e.g. d20_query('Has some condition or other')
 
 # Event Keys
 

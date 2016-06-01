@@ -33,6 +33,7 @@
 #include <infrastructure/mesparser.h>
 #include "temple_functions.h"
 #include <gamesystems/objects/objfields.h>
+#include <d20_level.h>
 
 struct PyObjHandle {
 	PyObject_HEAD;
@@ -807,7 +808,32 @@ static PyObject * PyObjHandle_InventoryItem(PyObject* obj, PyObject* args) {
 };
 
 
+static PyObject* PyObjHandle_ArcaneSpellLevelCanCast(PyObject* obj, PyObject* args){
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
 
+	auto arcaneSpellLvlMax = 0;
+
+	auto wizLvl = objects.StatLevelGet(self->handle, stat_level_wizard);
+	if (wizLvl > 0){
+		arcaneSpellLvlMax =  (1 + wizLvl) / 2;
+	}
+
+	auto sorcLvl = objects.StatLevelGet(self->handle, stat_level_sorcerer);
+	if (sorcLvl > 0){
+		auto sorcSpellLvlMax = max(1u, sorcLvl / 2);
+		if (sorcSpellLvlMax > arcaneSpellLvlMax)
+			arcaneSpellLvlMax = sorcSpellLvlMax;
+	}
+
+	auto bardLvl = objects.StatLevelGet(self->handle, stat_level_bard);
+	critterSys.GetSpellLvlCanCast(self->handle, SpellSourceType::Arcane, SpellReadyingType::Any);
+	// todo: generalize
+
+	return PyInt_FromLong(arcaneSpellLvlMax);
+}
 
 static PyObject* PyObjHandle_Attack(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -1488,6 +1514,18 @@ static PyObject* PyObjHandle_D20Query(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		return PyInt_FromLong(0);
 	}
+
+	if (PyTuple_GET_SIZE(args) < 1) {
+		PyErr_SetString(PyExc_RuntimeError, "d20_query called with no arguments!");
+		return PyInt_FromLong(0);
+	}
+
+	PyObject* arg = PyTuple_GET_ITEM(args, 0);
+	if (PyString_Check(arg)) {
+		auto argString = fmt::format("{}",PyString_AsString(arg));
+		return PyInt_FromLong( d20Sys.D20QueryPython(self->handle, argString) );
+	}
+
 	int queryKey;
 	if (!PyArg_ParseTuple(args, "i:objhndl.d20query", &queryKey)) {
 		return 0;
@@ -2278,6 +2316,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "ai_stop_attacking", PyObjHandle_AiStopAttacking, METH_VARARGS, NULL },
 	{ "anim_callback", PyObjHandle_AnimCallback, METH_VARARGS, NULL },
 	{ "anim_goal_interrupt", PyObjHandle_AnimGoalInterrupt, METH_VARARGS, NULL },
+	{ "arcane_spell_level_can_cast", PyObjHandle_ArcaneSpellLevelCanCast, METH_VARARGS, NULL },
 	{ "attack", PyObjHandle_Attack, METH_VARARGS, NULL },
 	{ "award_experience", PyObjHandle_AwardExperience, METH_VARARGS, NULL },
 
@@ -2314,6 +2353,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "damage_with_reduction", PyObjHandle_DamageWithReduction, METH_VARARGS, NULL },
 	{ "destroy", PyObjHandle_Destroy, METH_VARARGS, NULL },
 	{ "distance_to", PyObjHandle_DistanceTo, METH_VARARGS, NULL },
+	{ "divine_spell_level_can_cast", PyObjHandle_Attack, METH_VARARGS, NULL },
 	{ "dominate", PyObjHandle_Dominate, METH_VARARGS, NULL },
 
 	{ "faction_has", PyObjHandle_FactionHas, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!" },

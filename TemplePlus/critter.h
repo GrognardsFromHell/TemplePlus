@@ -309,6 +309,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	DamageType GetCritterAttackDamageType(objHndl obj, int attackIdx);
 	int GetCritterAttackType(objHndl obj, int attackIdx);
 	int GetBaseAttackBonus(const objHndl& handle, Stat classBeingLeveld = Stat::stat_strength);
+	int GetSpellLvlCanCast(const objHndl& handle, SpellSourceType spellSourceType, SpellReadyingType spellReadyingType);
 	static int GetCritterNumNaturalAttacks(objHndl obj);
 	bool IsWarded(objHndl obj); // checks if creature is warded from melee attacks (by stuff like Meld Into Stone, Tree Shape, Otiluke's Resislient Sphere)
 	bool IsSummoned(objHndl obj);

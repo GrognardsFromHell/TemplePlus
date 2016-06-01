@@ -32,6 +32,7 @@
 #include "python/python_spell.h"
 #include "python/python_integration_spells.h"
 #include "gamesystems/particlesystems.h"
+#include <infrastructure/elfhash.h>
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
@@ -1097,6 +1098,19 @@ uint64_t LegacyD20System::d20QueryReturnData(objHndl objHnd, D20DispatcherKey di
 
 uint64_t LegacyD20System::d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, CondStruct* arg1, uint32_t arg2){
 	return d20QueryReturnData(objHnd, dispKey, (uint32_t)arg1, arg2);
+}
+
+int LegacyD20System::D20QueryPython(const objHndl& handle, const string& queryKey, int arg1, int arg2){
+	
+	Dispatcher * dispatcher = objects.GetDispatcher(handle);
+	if (!dispatch.dispatcherValid(dispatcher)) { return 0; }
+	DispIoD20Query dispIo;
+	dispIo.dispIOType = dispIOTypeQuery;
+	dispIo.return_val = 0;
+	dispIo.data1 = arg1;
+	dispIo.data2 = arg2;
+	dispatcher->Process(enum_disp_type::dispTypePythonQuery, static_cast<D20DispatcherKey>(ElfHash::Hash(queryKey)), &dispIo);
+	return dispIo.return_val;
 }
 
 bool LegacyD20System::D20QueryWithDataDefaultTrue(objHndl obj, D20DispatcherKey dispKey, const D20Actn* d20a, int arg2){

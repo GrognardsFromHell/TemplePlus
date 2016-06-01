@@ -99,12 +99,23 @@ void D20ClassSystem::GetClassSpecs(){
 
 
 	for (auto it : _classEnums){
-		classSpecs[it].classEnum = static_cast<Stat>(it);
-		classSpecs[it].babProgression = static_cast<BABProgressionType>(pythonClassIntegration.GetBabProgression(it));
+
+		if (!pythonClassIntegration.IsEnabled(it))
+			continue;
+
+		auto &classSpec = classSpecs[it];
+
+		classSpec.classEnum = static_cast<Stat>(it);
+		classSpec.babProgression = static_cast<BABProgressionType>(pythonClassIntegration.GetBabProgression(it));
+		classSpec.hitDice = pythonClassIntegration.GetHitDieType(it);
+		classSpec.fortitudeSaveIsFavored = pythonClassIntegration.IsSaveFavored(it, SavingThrowType::Fortitude);
+		classSpec.reflexSaveIsFavored = pythonClassIntegration.IsSaveFavored(it, SavingThrowType::Reflex);
+		classSpec.willSaveIsFavored = pythonClassIntegration.IsSaveFavored(it, SavingThrowType::Will);
+		classSpec.skillPts = pythonClassIntegration.GetInt(it, ClassSpecFunc::GetSkillPtsPerLevel, 2);
+		classSpec.spellListType = pythonClassIntegration.GetSpellListType(it);
 
 	}
 
-	// pythonClassIntegration.
 }
 
 int D20ClassSystem::ClericMaxSpellLvl(uint32_t clericLvl) const
