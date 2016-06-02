@@ -36,7 +36,7 @@ static struct GlobalFlagAddresses : temple::AddressTable {
 } modSupportAddresses;
 
 
-void ModSupport::DetectCo8NewContentEdition(){
+void ModSupport::DetectCo8ActiveModule(){
 
 	wchar_t tfexIniPath[MAX_PATH];
 	wcscpy_s(tfexIniPath, config.toeeDir.c_str());
@@ -55,12 +55,22 @@ void ModSupport::DetectCo8NewContentEdition(){
 		if (shit.find(L"New Content") != shit.npos) {
 			mIsCo8NC = true;
 		}
+		if (shit.find(L"Keep on the Borderlands"))
+		{
+			mIsKotB = true;
+			mIsCo8NC = false;
+		}
 	}
 } 
 
 bool ModSupport::IsCo8NCEdition() const
 {
 	return mIsCo8NC;
+}
+
+bool ModSupport::IsKotB() const
+{
+	return mIsKotB;
 }
 
 void ModSupport::SetNCGameFlag(bool value){

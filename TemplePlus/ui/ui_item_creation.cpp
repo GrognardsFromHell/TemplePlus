@@ -31,6 +31,7 @@
 #include <regex>
 #include "graphics/imgfile.h"
 #include "ui_tooltip.h"
+#include <mod_support.h>
 
 #define NUM_ITEM_ENHANCEMENT_SPECS 41
 #define NUM_APPLIED_BONUSES_MAX 9 // number of bonuses that can be applied on item creation
@@ -753,8 +754,6 @@ void ItemCreation::CreateItemDebitXPGP(objHndl crafter, objHndl objHndItem){
 	uint32_t crafterXP = objects.getInt32(crafter, obj_f_critter_experience);
 	uint32_t craftingCostCP = 0;
 	uint32_t craftingCostXP = 0;
-
-	auto itemCreationType = *itemCreationAddresses.itemCreationType;
 
 	if (itemCreationType == CraftMagicArmsAndArmor){ // magic arms and armor
 		craftingCostCP = MaaCpCost(CRAFT_EFFECT_INVALID);
@@ -1746,7 +1745,15 @@ void ItemCreation::MaaInitCraftedItem(objHndl itemHandle){
 
 	for (auto it: itemEnhSpecs)	{
 		if (ItemWielderCondsContainEffect(it.first,itemHandle))	{
-			if (!ItemWielderCondsContainEffect(it.second.upgradesTo, itemHandle)){
+			
+			if (it.second.flags & ItemEnhancementSpecFlags::IESF_ENH_BONUS){
+				craftedItemExistingEffectiveBonus += it.second.effectiveBonus;
+				appliedBonusIndices.push_back(it.first);
+				/*if (!ItemWielderCondsContainEffect(it.second.upgradesTo, itemHandle)) {
+					
+				}*/
+			}
+			else if (!ItemWielderCondsContainEffect(it.second.upgradesTo, itemHandle)){
 				craftedItemExistingEffectiveBonus += it.second.effectiveBonus;
 				appliedBonusIndices.push_back(it.first);
 			}
@@ -1934,12 +1941,20 @@ void ItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 			if (effIdx == CRAFT_EFFECT_INVALID)
 				continue;
 
-			if (ItemWielderCondsContainEffect(effIdx, item))
-				continue;
-
 			auto& itEnh = itemEnhSpecs[effIdx];
 
+			if (ItemWielderCondsContainEffect(effIdx, item)){
+				
+				if (itEnh.flags & IESF_ENH_BONUS) {
+					effBonus += itEnh.effectiveBonus;
+				}
+				continue;
+			}
+			
 			effBonus += itEnh.effectiveBonus;
+			
+
+
 			int arg0 = 0, arg1 = 0;
 
 
@@ -1984,6 +1999,9 @@ void ItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 				}
 			} 
 		}
+
+
+
 		auto itemWorthDelta = 100;
 		if (itemObj->type == obj_t_weapon)
 		{
@@ -2330,6 +2348,8 @@ bool ItemCreation::MaaWndRenderText(int widId, objHndl item){
 	auto insuffSkill = temple::GetRef<int>(0x10BEE3AC);
 	auto insuffPrereqs = temple::GetRef<int>(0x10BEE3B0);
 	auto enhCostLabel = temple::GetRef<const char*>(0x10BED798);
+
+	// draw GP cost
 	auto cpCost = MaaCpCost(CRAFT_EFFECT_INVALID);
 	if (insuffXp || insuffGp || insuffSkill || insuffPrereqs){
 		text.append(fmt::format("{} @{}{}", enhCostLabel, insuffGp+1, cpCost/100));
@@ -2340,7 +2360,7 @@ bool ItemCreation::MaaWndRenderText(int widId, objHndl item){
 	auto& textStyle = temple::GetRef<TigTextStyle>(0x10BEE338);
 	UiRenderer::DrawTextInWidget(widId, text, rect, textStyle);
 
-	// draw xp cost
+	// draw XP cost
 	rect.y += 11;
 	text.clear();
 	auto xpCostLabel = temple::GetRef<const char*>(0x10BED8A4);
@@ -2353,7 +2373,7 @@ bool ItemCreation::MaaWndRenderText(int widId, objHndl item){
 	}
 	UiRenderer::DrawTextInWidget(widId, text, rect, textStyle);
 
-	// draw GP cost
+	// draw Item Worth
 	rect.y += 11;
 	auto itemWorth = gameSystems->GetObj().GetObject(item)->GetInt32(obj_f_item_worth);
 	text.clear();
@@ -2950,7 +2970,7 @@ int ItemCreation::UiItemCreationInit(GameSystemConf& conf)
 
 	bkgImage = new CombinedImgFile("art\\interface\\item_creation_ui\\item_creation.img");
 
-	if (temple::Dll::GetInstance().HasCo8Hooks()){	
+	if (temple::Dll::GetInstance().HasCo8Hooks() && !modSupport.IsKotB()){	
 		mUseCo8Ui = true;
 		if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\ITEM_CREATION_WIDENED_0_0.tga", &mItemCreationWidenedTexture00))
 			return 0;

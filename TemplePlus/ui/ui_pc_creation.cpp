@@ -15,6 +15,7 @@
 #include "tig/tig_msg.h"
 #include <location.h>
 #include <tio/tio.h>
+#include <mod_support.h>
 
 struct TigMsg;
 int PcCreationFeatUiPrereqCheckUsercallWrapper();
@@ -115,7 +116,7 @@ public:
 		// static int(*orgPartyPoolLoader)() = replaceFunction<int()>(0x10165790, PartyPoolLoader);
 		
 
-		if (temple::Dll::GetInstance().HasCo8Hooks()) {
+		if (temple::Dll::GetInstance().HasCo8Hooks() && !modSupport.IsKotB()) {
 			writeNoops(0x1011D521); // disabling EXP draw call
 		}
 	}

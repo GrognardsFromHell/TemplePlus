@@ -227,14 +227,23 @@ void TigInitializer::LoadDataFiles() {
 		logger->trace("Unable to add archive tpdata\\clearances.dat");
 	}
 
-	if (temple::Dll::GetInstance().HasCo8Hooks())
-	{
-		logger->info("Registering Co8 file fixes tpdata\\co8fixes.dat");
-		result = tio_path_add(fmt::format("{}\\co8fixes.dat", tpDataPath).c_str());
-		if (result != 0) {
-			logger->trace("Unable to add archive tpdata\\co8fixes.dat");
+	if (temple::Dll::GetInstance().HasCo8Hooks()){
+		modSupport.DetectCo8ActiveModule();
+		if (modSupport.IsKotB()){
+			logger->info("KotB module detected; registering  kotbfixes.dat.");
+			result = tio_path_add(fmt::format("{}\\kotbfixes.dat", tpDataPath).c_str());
+			if (result != 0) {
+				logger->trace("Unable to add archive tpdata\\kotbfixes.dat");
+			}
+		} 
+		else{
+			logger->info("Registering Co8 file fixes tpdata\\co8fixes.dat");
+			result = tio_path_add(fmt::format("{}\\co8fixes.dat", tpDataPath).c_str());
+			if (result != 0) {
+				logger->trace("Unable to add archive tpdata\\co8fixes.dat");
+			}
 		}
-		modSupport.DetectCo8NewContentEdition();
+		
 	}
 
 	// overrides for testing (mainly for co8fixes so there's no need to repack the archive)
