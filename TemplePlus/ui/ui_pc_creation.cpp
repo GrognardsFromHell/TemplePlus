@@ -116,9 +116,27 @@ public:
 		// static int(*orgPartyPoolLoader)() = replaceFunction<int()>(0x10165790, PartyPoolLoader);
 		
 
-		if (temple::Dll::GetInstance().HasCo8Hooks() && !modSupport.IsKotB()) {
+		if (temple::Dll::GetInstance().HasCo8Hooks() ) {
 			writeNoops(0x1011D521); // disabling EXP draw call
 		}
+
+		static BOOL (__cdecl*orgPartyAlignmentChoiceShow)() = replaceFunction<BOOL()>(0x1011E200, []()->BOOL
+		{
+
+			auto result = orgPartyAlignmentChoiceShow();
+			if (modSupport.IsKotB()){
+				auto alignmentBtnIds = temple::GetRef<int[9]>(0x10BDA73C);
+				ui.ButtonSetButtonState(alignmentBtnIds[0], UBS_DISABLED); // LG
+				ui.ButtonSetButtonState(alignmentBtnIds[2], UBS_DISABLED); // CG
+
+				ui.ButtonSetButtonState(alignmentBtnIds[4], UBS_DISABLED); // TN
+				ui.ButtonSetButtonState(alignmentBtnIds[5], UBS_DISABLED); // CN
+
+				ui.ButtonSetButtonState(alignmentBtnIds[6], UBS_DISABLED); // LE
+				ui.ButtonSetButtonState(alignmentBtnIds[8], UBS_DISABLED); // CE
+			}
+			return result;
+		});
 	}
 } pcCreationSys;
 WidgetType1 PcCreationUiSystem::pcPortraitsMain;
