@@ -75,6 +75,7 @@ static GsiData GatherGsiData(const string &filename, const string &displayName) 
 	result.leaderLevel = critterSys.GetLevel(leader);
 	result.leaderLoc = objects.GetLocation(leader);
 	result.storyState = party.GetStoryState();
+	result.time = gameSystems->GetTimeEvent().GetTime();
 
 	return result;
 }
