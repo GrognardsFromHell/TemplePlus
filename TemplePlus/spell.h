@@ -5,8 +5,10 @@
 #include "tig\tig_mes.h"
 #include "spell_structs.h"
 #include "tio/tio.h"
+
 //#include "ui/ui_picker.h"
 
+struct GameSystemConf;
 class TioOutputStream;
 struct PickerArgs;
 
@@ -152,8 +154,10 @@ struct LegacySpellSystem : temple::AddressTable
 	MesHandle * spellEnumMesHandle;
 	MesHandle spellEnumsExt;
 	MesHandle * spellMes;
+	MesHandle spellMesExt;
 	MesHandle * spellsRadialMenuOptionsMes;
 	std::vector<SpellMapTransferInfo> spellMapTransInfo;
+	void Init(const GameSystemConf& conf);
 
 	uint32_t spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry);
 	uint32_t ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
@@ -162,6 +166,7 @@ struct LegacySpellSystem : temple::AddressTable
 
 	const char* GetSpellMesline(uint32_t line) const;
 	bool CheckAbilityScoreReqForSpell(objHndl handle, uint32_t spellEnum, int statBeingRaised) const;
+	
 	static const char* GetSpellEnumTAG(uint32_t spellEnum);
 	const char* GetSpellName(uint32_t spellEnum) const;
 	

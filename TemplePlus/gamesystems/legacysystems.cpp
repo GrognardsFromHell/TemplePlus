@@ -317,14 +317,15 @@ const std::string &FeatSystem::GetName() const {
 
 SpellSystem::SpellSystem(const GameSystemConf &config) {
 	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x1007b740);
-	mesFuncs.Open("tprules\\spell_enums_ext.mes", &spellSys.spellEnumsExt);
 	if (!startup(&config)) {
 		throw TempleException("Unable to initialize game system Spell");
 	}
+	spellSys.Init(config);
 }
 SpellSystem::~SpellSystem() {
 	auto shutdown = temple::GetPointer<void()>(0x100791d0);
 	mesFuncs.Close(spellSys.spellEnumsExt);
+	mesFuncs.Close(spellSys.spellMesExt);
 	shutdown();
 
 }

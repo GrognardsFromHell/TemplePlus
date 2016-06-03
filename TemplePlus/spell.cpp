@@ -115,6 +115,12 @@ public:
 		replaceFunction<const char*(__cdecl)(uint32_t)>(0x10077970, [](uint32_t spellEnum){
 			return spellSys.GetSpellEnumTAG(spellEnum);
 		});
+		// GetSpellMesline
+		replaceFunction<const char*(__cdecl)(uint32_t)>(0x1007AD80, [](uint32_t spellEnum) {
+			return spellSys.GetSpellMesline(spellEnum);
+		});
+			
+			
 
 		// SpellPacketSetCasterLevel
 		replaceFunction<void(__cdecl)(SpellPacketBody*)>(0x10079B70, [](SpellPacketBody* spellPkt){
@@ -398,6 +404,11 @@ SpellMapTransferInfo::SpellMapTransferInfo()
 
 }
 
+void LegacySpellSystem::Init(const GameSystemConf& conf){
+	mesFuncs.Open("tprules\\spell_enums_ext.mes", &spellSys.spellEnumsExt);
+	mesFuncs.Open("mes\\spell_ext.mes", &spellMesExt);
+}
+
 uint32_t LegacySpellSystem::spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry)
 {
 	return spellEntryRegistry.copy(spellEnum, spellEntry);
@@ -418,10 +429,11 @@ int LegacySpellSystem::ParseSpellSpecString(SpellStoreData* spell, char* spellSt
 	return addresses.ParseSpellSpecString(spell, spellString);
 }
 
-const char* LegacySpellSystem::GetSpellMesline(uint32_t lineNumber) const
-{
-	MesLine mesLine;
-	mesLine.key = lineNumber;
+const char* LegacySpellSystem::GetSpellMesline(uint32_t lineNumber) const{
+
+	MesLine mesLine(lineNumber);
+	if (mesFuncs.GetLine(spellMesExt, &mesLine))
+		return mesLine.value;
 	mesFuncs.GetLine_Safe(*spellMes, &mesLine);
 	return mesLine.value;
 }
@@ -725,7 +737,7 @@ SpellMapTransferInfo LegacySpellSystem::SaveSpellForTeleport(const SpellPacket& 
 
 	auto spellEnum = data.spellPktBody.spellEnum;
 	Expects(spellEnum > 0 && spellEnum < 10000); // keeping a margin for now because co8 has messed with this a bit
-	if (spellEnum > SPELL_ENUM_MAX)	{
+	if (spellEnum > SPELL_ENUM_MAX_EXPANDED)	{
 		logger->warn("Spell enum beyond expected range encountered: {}", spellEnum);
 	}
 	
