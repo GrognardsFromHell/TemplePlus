@@ -325,6 +325,11 @@ public:
 		// Cast Defensively Aoo Trigger Query, SpellInterrupted Query
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F8BE0, genericCallbacks.CastDefensivelyAooTrigger);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F8CC0, genericCallbacks.CastDefensivelySpellInterrupted);
+
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100FE220, classAbilityCallbacks.BardMusicRadial);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100FE470, classAbilityCallbacks.BardMusicCheck);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100FE570, classAbilityCallbacks.BardMusicActionFrame);
+		
 	}
 } condFuncReplacement;
 
@@ -4212,9 +4217,15 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 	auto perfSkill = critterSys.SkillBaseGet(args.objHndCaller, SkillEnum::skill_perform);
 	auto bmType = (BardicMusicSongType)(d20a->data1);
 
-	args.SetCondArg(0, args.GetCondArg(0) - 1); // decrease usages left
+	/*
+	 decrease usages left
+	*/
+	args.SetCondArg(0, args.GetCondArg(0) - 1); 
 
-	if (args.GetCondArg(1)){ // already singing something
+	/*
+	handle already performing music
+	*/
+	if (args.GetCondArg(1)){
 		args.SetCondArg(1, 0);
 		auto partsysId = args.GetCondArg(5);
 		gameSystems->GetParticleSys().End(partsysId);
@@ -4227,11 +4238,11 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 	auto partsysId = 0, rollResult =0, chaScore = 0;
 	switch (bmType){
 	case BM_INSPIRE_COURAGE: 
-		// party.ApplyConditionAround(args.objHndCaller, 30.0, "Inspired_Courage", 0i64);
+		party.ApplyConditionAround(args.objHndCaller, 30.0, "Inspired_Courage", objHndl::null);
 		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Inspire Courage", args.objHndCaller);
 		break;
 	case BM_COUNTER_SONG: 
-		// party.ApplyConditionAround(args.objHndCaller, 30.0, "Countersong", 0i64);
+		party.ApplyConditionAround(args.objHndCaller, 30.0, "Countersong", objHndl::null);
 		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Countersong", args.objHndCaller);
 		break;
 	case BM_FASCINATE: 
@@ -4265,7 +4276,16 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		break;
 	default: break;
 	}
-	// TODO
+
+	static int bardicMusicSounds []= {0, 20040, 20000, 20020, 20060, 20080, 20060, 20060 , 20040 };
+	auto instrType = d20Sys.d20Query(performer, DK_QUE_BardicInstrument);
+	sound.PlaySoundAtObj(bardicMusicSounds[bmType] + instrType, performer);
+	args.SetCondArg(1, bmType);
+	args.SetCondArg(2, 0);
+	args.SetCondArg(3, d20a->d20ATarget.GetHandleUpper());
+	args.SetCondArg(4, d20a->d20ATarget.GetHandleLower());
+	args.SetCondArg(5, partsysId);
+	dispIo->returnVal = 0;
 	return 0;
 }
 
@@ -4404,7 +4424,6 @@ void Conditions::AddConditionsToTable(){
 	static CondStructNew ironWill("Iron Will", 1);
 	ironWill.AddHook(dispTypeSaveThrowLevel, DK_SAVE_WILL, classAbilityCallbacks.FeatIronWillSave, 2, 0);
 	ironWill.AddToFeatDictionary(FEAT_IRON_WILL);
-
 
 
 	// New Conditions!

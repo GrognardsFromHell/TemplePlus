@@ -5,6 +5,10 @@
 #include "util/fixes.h"
 #include "critter.h"
 #include "obj.h"
+#include "location.h"
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/objects/objsystem.h"
+#include "condition.h"
 
 struct LegacyPartySystemAddresses : temple::AddressTable
 {
@@ -78,6 +82,18 @@ int LegacyPartySystem::GetPartyAlignment()
 int LegacyPartySystem::GetMoney() const
 {
 	return temple::GetRef<int(__cdecl)()>(0x1002B750)();
+}
+
+void LegacyPartySystem::ApplyConditionAround(const objHndl& obj, double range, const char* condName, const objHndl& obj2){
+	auto groupLen = GroupListGetLen();
+	for (auto i = 0u; i < groupLen; i++){
+		auto partyMem = GroupListGetMemberN(i);
+		if (!partyMem)
+			continue;
+		if (locSys.DistanceToObj(obj, partyMem) > range)
+			continue;
+		conds.AddTo(partyMem, condName, { (int)obj2.GetHandleLower(), (int)obj2.GetHandleUpper() });	
+	}
 }
 
 uint32_t LegacyPartySystem::AddToPCGroup(objHndl objHnd)

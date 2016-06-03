@@ -3,6 +3,7 @@
 #include "idxtables.h"
 #include <map>
 #include "spell_structs.h"
+#include "skill.h"
 
 //#include <EASTL/hash_map.h>
 
@@ -57,6 +58,8 @@ struct D20ClassSpec {
 	int hitDice; // HD side (4,6,8 etc)
 	int skillPts; // skill point per level
 	SpellListType spellListType;
+	std::map<SkillEnum, bool> classSkills; // dictionary denoting if a skill is a class skill
+	std::map<int, std::vector<feat_enums>> classFeats; // dictionary 
 
 };
 

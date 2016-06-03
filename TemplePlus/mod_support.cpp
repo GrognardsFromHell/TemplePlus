@@ -55,7 +55,7 @@ void ModSupport::DetectCo8ActiveModule(){
 		if (shit.find(L"New Content") != shit.npos) {
 			mIsCo8NC = true;
 		}
-		if (shit.find(L"Keep on the Borderlands"))
+		if (shit.find(L"Keep on the Borderlands") != shit.npos)
 		{
 			mIsKotB = true;
 			mIsCo8NC = false;
