@@ -965,13 +965,14 @@ D20TargetClassification LegacyD20System::TargetClassification(D20Actn* d20a)
 		return D20TargetClassification::D20TC_ItemInteraction;
 	if (d20DefFlags * D20ADF_TargetingBasedOnD20Data)
 	{
-		switch (d20a->data1)
-		{
-		case 3:
-		case 4:
-		case 5:
-		case 6:
+		switch (d20a->data1){
+		case BM_FASCINATE:
+		case BM_INSPIRE_COMPETENCE:
+		case BM_SUGGESTION:
+		case BM_INSPIRE_GREATNESS:
 			return D20TargetClassification::D20TC_SingleExcSelf;
+		case BM_INSPIRE_HEROICS:
+			return D20TargetClassification::D20TC_SingleIncSelf;
 		default:
 			return D20TargetClassification::Target0;
 		}

@@ -4499,7 +4499,7 @@ int ClassAbilityCallbacks::BardicMusicHeroicsSaveBonus(DispatcherCallbackArgs ar
 int ClassAbilityCallbacks::BardicMusicHeroicsAC(DispatcherCallbackArgs args){
 	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
 	if (args.GetCondArg(1)){ // have heard music for full round
-		dispIo->bonlist.AddBonus(4, 13, 5120);
+		dispIo->bonlist.AddBonus(4, 13, 348);
 	}
 	return 0;
 }
