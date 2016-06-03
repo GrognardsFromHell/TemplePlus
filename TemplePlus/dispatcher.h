@@ -170,6 +170,7 @@ struct SubDispDefNew {
 		uint32_t usVal;
 		int sVal;
 		CondStructNew* condStruct;
+		const char* cs;
 	} Data;
 	Data data1;
 	Data data2;
@@ -177,6 +178,7 @@ struct SubDispDefNew {
 	SubDispDefNew();
 	SubDispDefNew(enum_disp_type type, uint32_t key, int(__cdecl *callback)(DispatcherCallbackArgs), CondStructNew* data1, uint32_t data2);
 	SubDispDefNew(enum_disp_type type, uint32_t key, int(__cdecl *callback)(DispatcherCallbackArgs), uint32_t data1, uint32_t data2);
+	//SubDispDefNew(enum_disp_type type, uint32_t key, int(__cdecl *callback)(DispatcherCallbackArgs), uint32_t data1, const char* cs);
 };
 
 const int testSizeofSubDispDef = sizeof(SubDispDefNew);
@@ -204,6 +206,7 @@ struct CondStructNew{
 	void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs) );
 	void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs), uint32_t data1, uint32_t data2);
 	void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs), CondStructNew* data1, uint32_t data2);
+	// void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs), uint32_t data1, const char *data2); // this fucks things up :(
 	//void AddPyHook(enum_disp_type dispType, D20DispatcherKey dispKey, PyObject* pycallback, PyObject* pydataTuple);
 	//void AddPyHook(enum_disp_type dispType, D20DispatcherKey dispKey, pybind11::function pycallback, pybind11::tuple pydataTuple);
 	void Register();

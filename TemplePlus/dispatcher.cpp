@@ -1040,6 +1040,15 @@ SubDispDefNew::SubDispDefNew(enum_disp_type type, uint32_t key, int(* callback)(
 	data2.usVal = data2In;
 }
 
+//SubDispDefNew::SubDispDefNew(enum_disp_type type, uint32_t key, int(* callback)(DispatcherCallbackArgs), uint32_t data1In, const char* cs)
+//{
+//	dispType = type;
+//	dispKey = key;
+//	dispCallback = callback;
+//	data1.usVal = data1In;
+//	data2.cs = cs;
+//}
+
 CondStructNew::CondStructNew(){
 	numArgs = 0;
 	condName = nullptr;
@@ -1071,6 +1080,12 @@ void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, i
 	subDispDefs[numHooks++] = { dispType, dispKey, callback, data1, data2 };
 }
 
+//void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs), uint32_t data1, const char* data2) 
+//{
+//	Expects(numHooks < 99);
+//	subDispDefs[numHooks++] = { dispType, dispKey, callback, data1, data2 };
+//}
+
 //void CondStructNew::AddPyHook(enum_disp_type dispType, D20DispatcherKey dispKey, PyObject* pycallback, PyObject* pydataTuple){
 //	Expects(numHooks < 99);
 //	subDispDefs[numHooks++] = { dispType, dispKey, PyModHookWrapper, (uint32_t) pycallback, (uint32_t) pydataTuple};
@@ -1081,7 +1096,7 @@ void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, i
 //	}
 
 void CondStructNew::Register(){
-	conds.hashmethods.CondStructAddToHashtable(reinterpret_cast<CondStruct*>(this));
+	conds.hashmethods.CondStructAddToHashtable(reinterpret_cast<CondStruct*>(this), true);
 }
 
 void CondStructNew::AddToFeatDictionary(feat_enums feat, feat_enums featEnumMax, uint32_t condArg2Offset){

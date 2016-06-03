@@ -27,6 +27,26 @@ void FloatLineSystem::FloatCombatLine(objHndl obj, int line)
 	floatMesLine(obj, 1, floatColor, combatSys.GetCombatMesLine(line));
 }
 
+void FloatLineSystem::FloatCombatLineWithExtraString(const objHndl& obj, int combatMesLine, const string& cs, const string& cs2){
+	int objType;
+	FloatLineColor floatColor;
+	objHndl npcLeader;
+
+	objType = objects.GetType(obj);
+	if (objType == obj_t_pc)
+	{
+		floatColor = FloatLineColor::White;
+	}
+	else if (objType != obj_t_npc
+		|| (npcLeader = critterSys.GetLeader(obj), floatColor = FloatLineColor::Yellow, !party.IsInParty(npcLeader)))
+	{
+		floatColor = FloatLineColor::Red;
+	}
+
+	auto text = fmt::format("{}{}{}", combatSys.GetCombatMesLine(combatMesLine), cs, cs2);
+	floatMesLine(obj, 1, floatColor, text.c_str());
+}
+
 FloatLineSystem::FloatLineSystem()
 {
 	

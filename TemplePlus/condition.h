@@ -27,14 +27,14 @@ struct CondHashSystem : ToEEHashtableSystem < CondStruct >
 		return HashtableInit(hashtable, 1000);
 	}
 
-	uint32_t CondStructAddToHashtable(CondStruct * condStruct)
+	uint32_t CondStructAddToHashtable(CondStruct * condStruct, bool overriding = false)
 	{
 		uint32_t key = StringHash(condStruct->condName);
 		CondStruct * condFound;
 		uint32_t result = HashtableSearch(condHashTable, key, &condFound);
-		if (result)
+		if (result || overriding)
 		{
-			result = HashtableAddItem(condHashTable, key, condStruct);
+			result = HashtableOverwriteItem(condHashTable, key, condStruct);
 		}
 		return result;
 	}
