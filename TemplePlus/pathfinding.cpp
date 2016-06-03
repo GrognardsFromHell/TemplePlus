@@ -2117,7 +2117,9 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 
 	int shiftedXidx, shiftedYidx, newIdx;
 
-	float requisiteClearance = objects.GetRadius(pq->critter);
+	float requisiteClearance = 0.0;
+	if (pq->critter)
+		requisiteClearance = objects.GetRadius(pq->critter);
 	float diagonalClearance = requisiteClearance * 0.7f;
 	float requisiteClearanceCritters = requisiteClearance * 0.7f;
 	if (requisiteClearance > 12)
