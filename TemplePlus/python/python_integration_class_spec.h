@@ -12,6 +12,8 @@ enum class ClassSpecFunc : int {
 	IsWillSaveFavored,
 	GetSpellListType,
 	IsEnabled,
+	IsClassSkill,
+	IsClassFeat,
 
 
 	IsAlignmentCompatible,
@@ -29,8 +31,10 @@ public:
 	int GetHitDieType(int classEnum);
 	int GetInt(int classEnum, ClassSpecFunc specType, int defaultVal = 0);
 	bool IsSaveFavored(int classEnum, SavingThrowType saveType);
-	SpellListType GetSpellListType(int it);
+	SpellListType GetSpellListType(int classCode);
 	bool IsEnabled(int classEnum);
+	bool IsClassSkill(int classCode, int skillEnum);
+	int IsClassFeat(int classCode, int featEnum);
 protected:
 	const char* GetFunctionName(EventId evt) override;
 };

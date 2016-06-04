@@ -881,7 +881,7 @@ void MapObjectRenderer::RenderMirrorImages(objHndl obj,
 										   gfx::AnimatedModel &model,
 										   gsl::span<Light3d> lights)
 {
-	auto mirrorImages = objects.d20.d20Query(obj, DK_QUE_Critter_Has_Mirror_Image);
+	auto mirrorImages = d20Sys.d20Query(obj, DK_QUE_Critter_Has_Mirror_Image);
 
 	if (!mirrorImages) {
 		return;

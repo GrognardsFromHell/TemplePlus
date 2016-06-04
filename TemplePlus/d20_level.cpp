@@ -15,6 +15,7 @@ struct D20LevelSystemAddresses : temple::AddressTable
 	uint32_t (__cdecl *LevelPacketInit)(LevelPacket *lvlPkt);
 	uint32_t(__cdecl *LevelPacketDealloc)(LevelPacket* lvlPkt);
 	uint32_t(__cdecl *GetLevelPacket)(Stat classEnum, objHndl objHnd, uint32_t levelAdjustSthg, uint32_t classLevel, LevelPacket* lvlPkt);
+
 	D20LevelSystemAddresses()
 	{
 		rebase(xpReqTable, 0x102AAF00); // xp needed to reach level N, starting from N=0 (0 , 0 , 1000, 3000, ...)
@@ -37,6 +38,11 @@ public:
 		auto writeVal = reinterpret_cast<int>(d20LevelSys.mWizardSpellsPerLevel);
 
 		write(0x100F4E4C + 3, &writeVal, sizeof(int));
+
+		// AddSkillPoints
+		replaceFunction<int(objHndl, int, int)>(0x1007DAA0, [](objHndl obj, int skillEnum, int numAdd)->int{
+			return d20LevelSys.AddSkillPoints(obj, skillEnum, numAdd);
+		});
 	}
 } d20LevelHooks;
 
@@ -65,6 +71,36 @@ bool D20LevelSystem::CanLevelup(objHndl objHnd)
 	return objects.getInt32(objHnd, obj_f_critter_experience) >= xpReqTable[lvl + 1];
 		//addresses.xpReqTable[lvl + 1];
 
+}
+
+int D20LevelSystem::AddSkillPoints(objHndl handle, int skillEnum, int numAdd){
+
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	auto crLvls = obj->GetInt32Array(obj_f_critter_level_idx);
+	
+	if (!crLvls.GetSize() ){ // by default use fighter specs
+		if (d20ClassSys.IsClassSkill((SkillEnum)skillEnum, stat_level_fighter))
+			numAdd *= 2;
+	}
+	else{
+		auto lastClass = (Stat)crLvls[crLvls.GetSize() - 1];
+		if (lastClass == stat_level_cleric && temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x1004C0D0)(handle, skillEnum)
+			|| d20ClassSys.IsClassSkill((SkillEnum)skillEnum, lastClass)){
+			numAdd *= 2;
+		} 
+	}
+
+	auto result = numAdd + obj->GetInt32(obj_f_critter_skill_idx, skillEnum);
+	if (obj->IsPC()){
+		auto expectedSkillpts = 2 * objects.StatLevelGet(handle, stat_level) + 6;
+		if (result > expectedSkillpts)
+		{
+			logger->debug("Warning: the PC {} has more skill points ({}) than they should ({})", handle, result, expectedSkillpts);
+		}	
+	}
+	obj->SetInt32(obj_f_critter_skill_idx, skillEnum, result);
+
+	return result;
 }
 
 uint32_t D20LevelSystem::GetXpRequireForLevel(uint32_t level)

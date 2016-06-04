@@ -79,7 +79,7 @@ BOOL UiCharEditor::SystemInit(GameSystemConf& conf){
 	classBtnTextStyle.tracking = 3;
 
 	for (auto it: d20ClassSys.vanillaClassEnums){
-		auto className = strdup(d20Stats.GetStatName(it));
+		auto className = _strdup(d20Stats.GetStatName(it));
 		classNamesUppercase[it] = className;
 		for (auto &letter: classNamesUppercase[it]){
 			letter = toupper(letter);

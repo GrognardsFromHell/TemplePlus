@@ -48,7 +48,7 @@ struct LegacyD20System : temple::AddressTable
 	D20ActionDef * d20Defs;
 	Pathfinding * pathfinding;
 	ActionSequenceSystem * actSeq;
-	D20ClassSystem * d20Class;
+	//D20ClassSystem * d20Class;
 	D20StatusSystem * d20Status;
 	TabFileStatus* d20ActionsTabFile;
 	uint32_t(* d20actionTabLineParser)(TabFileStatus*, uint32_t, const char**);
@@ -199,7 +199,9 @@ enum D20ADF : int{
 	D20ADF_SimulsCompatible = 0x20000,
 	D20ADF_DrawPathByDefault = 0x40000, // will draw path even without holding ALT
 	D20ADF_PathSthg =   0x80000,
-	D20ADF_Breaks_Concentration = 0x100000
+	D20ADF_Breaks_Concentration = 0x100000,
+
+	D20ADF_Python = 0x1000000
 };
 
 struct D20ActionDef{

@@ -30,6 +30,9 @@ public:
 	uint32_t LevelPacketDealloc(LevelPacket *lvlPkt);
 	uint32_t GetLevelPacket(Stat classEnum, objHndl ObjHnd, uint32_t levelAdjustSthg, uint32_t classLevel, LevelPacket *lvlPkt);
 	bool CanLevelup(objHndl objHnd);
+
+	int AddSkillPoints(objHndl obj, int skillEnum, int numAdd);
+
 	D20LevelSystem()
 	{
 		//maxLevel = 20;

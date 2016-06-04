@@ -274,7 +274,7 @@ struct Objects : temple::AddressTable {
 #pragma region Subsystems
 	DispatcherSystem dispatch;
 
-	LegacyD20System d20;
+	//LegacyD20System d20;
 
 	LegacySkillSystem * skill;
 

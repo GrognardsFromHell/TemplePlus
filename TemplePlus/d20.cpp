@@ -466,7 +466,7 @@ LegacyD20System::LegacyD20System()
 {
 	pathfinding = &pathfindingSys;
 	actSeq = &actSeqSys;
-	d20Class = &d20ClassSys;
+	//d20Class = &d20ClassSys;
 	d20Status = &d20StatusSys;
 	rebase(D20StatusInitFromInternalFields, 0x1004F910);
 	rebase(D20ObjRegistryAppend, 0x100DFAD0);

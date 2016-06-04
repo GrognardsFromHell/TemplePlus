@@ -297,7 +297,7 @@ bool MapSystem::SaveGame(TioFile *file) {
 	// and map load postprocess will not restore them, so we
 	// have to do that here
 	mPartySystem.ForEachInParty([&](objHndl handle) {
-		objects.d20.d20Status->D20StatusInit(handle);
+		d20Sys.d20Status->D20StatusInit(handle);
 	});
 
 	// Save Flee data
@@ -1175,7 +1175,7 @@ void MapSystem::MapLoadPostprocess()
 
 		// This logic is a bit odd really. Apparently obj_f_dispatcher will not be -1 for non-critters anyway?
 		if (obj.IsNPC() || obj.GetInt32(obj_f_dispatcher) == -1) {
-			objects.d20.d20Status->D20StatusInit(handle);
+			d20Sys.d20Status->D20StatusInit(handle);
 		}
 
 	});

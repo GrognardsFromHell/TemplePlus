@@ -90,6 +90,7 @@ enum D20ActionType : int32_t
 	D20A_AID_ANOTHER_WAKE_UP,
 	D20A_EMPTY_BODY, // monk ability
 	D20A_QUIVERING_PALM, // monk ability
+	D20A_PYTHON_ACTION,
 	D20A_NUMACTIONS, // always keep this last. Not counting D20A_NONE since it is unused (all the d20 action functions start cycling from D20A_UNSPECIFIED_MOVE)
 	D20A_UNASSIGNED = -2 // used for hotkey binds
 };

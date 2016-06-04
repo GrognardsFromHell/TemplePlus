@@ -1974,7 +1974,7 @@ static PyObject * PyObjHandle_ObjFeatAdd(PyObject* obj, PyObject * args){
 	}
 
 	objects.feats.FeatAdd(self->handle, featCode);
-	objects.d20.d20Status->D20StatusRefresh(self->handle);
+	d20Sys.d20Status->D20StatusRefresh(self->handle);
 
 	return PyInt_FromLong(1);
 };
@@ -2273,7 +2273,7 @@ static PyObject * PyObjHandle_MakeWizard(PyObject* obj, PyObject* args) {
 		gameObj->SetInt32(obj_f_critter_level_idx, i, stat_level_wizard);
 	}
 
-	objects.d20.d20Status->D20StatusRefresh(self->handle);
+	d20Sys.d20Status->D20StatusRefresh(self->handle);
 
 
 	return PyInt_FromLong(1);
@@ -2296,7 +2296,7 @@ static PyObject * PyObjHandle_MakeClass(PyObject* obj, PyObject* args) {
 		gameObj->SetInt32(obj_f_critter_level_idx, i, statClass);
 	}
 
-	objects.d20.d20Status->D20StatusRefresh(self->handle);
+	d20Sys.d20Status->D20StatusRefresh(self->handle);
 
 
 	return PyInt_FromLong(1);

@@ -446,12 +446,12 @@ bool LegacyCritterSystem::IsDeadOrUnconscious(objHndl critter) {
 	if (IsDeadNullDestroyed(critter)) {
 		return true;
 	}
-	return objects.d20.d20Query(critter, DK_QUE_Unconscious) != 0;
+	return d20Sys.d20Query(critter, DK_QUE_Unconscious) != 0;
 }
 
 bool LegacyCritterSystem::IsProne(objHndl critter)
 {
-	return objects.d20.d20Query(critter, DK_QUE_Prone) != 0;
+	return d20Sys.d20Query(critter, DK_QUE_Prone) != 0;
 }
 
 CritterFlag LegacyCritterSystem::GetCritterFlags(objHndl critter)
@@ -583,7 +583,7 @@ void LegacyCritterSystem::UpdateAddMeshes(objHndl obj)
 	model->ClearAddMeshes();
 
 	// Do not process add meshes if the user is polymorphed
-	if (objects.d20.d20Query(obj, DK_QUE_Polymorphed)) {
+	if (d20Sys.d20Query(obj, DK_QUE_Polymorphed)) {
 		return;
 	}
 

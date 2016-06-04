@@ -3,6 +3,7 @@
 #include "d20_level.h"
 #include "obj.h"
 #include "python/python_integration_class_spec.h"
+#include "util/fixes.h"
 
 D20ClassSystem d20ClassSys;
 
@@ -19,6 +20,51 @@ struct D20ClassSystemAddresses : temple::AddressTable
 
 } addresses;
 
+
+class D20ClassHooks : public TempleFix
+{
+	void apply() override {
+		// IsNonClassSkill
+		replaceFunction<BOOL(SkillEnum, Stat classCode)>(0x1007D130, [](SkillEnum skillEnum, Stat classEnum)->BOOL
+		{
+			return !d20ClassSys.IsClassSkill(skillEnum, classEnum);
+		});
+
+		// UnableToLearnSkill
+		replaceFunction<BOOL(SkillEnum, Stat classCode)>(0x1007D160, [](SkillEnum skillEnum, Stat classEnum)->BOOL
+		{
+			return !skillSys.IsEnabled(skillEnum);
+			
+			/* vanilla code allows learning a disabled skill if the class is proficient with it
+			if (skillSys.IsEnabled(skillEnum))
+				return 0;
+			return !d20ClassSys.IsClassSkill(skillEnum, classEnum);*/
+		});
+
+		// IsNonClassSkillRegardDomain
+		replaceFunction<BOOL(objHndl, SkillEnum, Stat)>(0x1007D4E0, [](objHndl obj, SkillEnum skillEnum, Stat classEnum)->BOOL
+		{
+			if (classEnum == stat_level_cleric)	{
+				auto isDomainSkill = temple::GetRef<BOOL(__cdecl)(objHndl, SkillEnum)>(0x1004C0D0);
+				if (isDomainSkill(obj, skillEnum))
+					return FALSE;
+			}
+			return !d20ClassSys.IsClassSkill(skillEnum, classEnum);
+		});
+
+		// GetNumSkillPointsPerLevel
+		replaceFunction<BOOL(int, Race, Stat)>(0x1007D3D0, [](int intScore, Race raceEnum, Stat classEnum)->BOOL
+		{
+			auto result = objects.GetModFromStatLevel(intScore);
+			if (raceEnum == race_human) // todo: generalize with a dispatch
+				result++;
+			result += d20ClassSys.GetSkillPts(classEnum);
+			return result;
+		});
+
+
+	}
+} d20ClassHooks;
 
 bool D20ClassSystem::isNaturalCastingClass(Stat classEnum)
 {
@@ -93,6 +139,14 @@ int D20ClassSystem::GetBaseAttackBonus(Stat classCode, uint32_t classLvl){
 	return 0;
 }
 
+int D20ClassSystem::GetSkillPts(Stat classEnum){
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return 2;
+
+	return classSpec->second.skillPts;
+}
+
 void D20ClassSystem::GetClassSpecs(){
 	std::vector<int> _classEnums;
 	pythonClassIntegration.GetClassEnums( _classEnums);
@@ -113,7 +167,10 @@ void D20ClassSystem::GetClassSpecs(){
 		classSpec.willSaveIsFavored = pythonClassIntegration.IsSaveFavored(it, SavingThrowType::Will);
 		classSpec.skillPts = pythonClassIntegration.GetInt(it, ClassSpecFunc::GetSkillPtsPerLevel, 2);
 		classSpec.spellListType = pythonClassIntegration.GetSpellListType(it);
-
+		
+		for (auto skillEnum = static_cast<int>(skill_appraise); skillEnum < skill_count; skillEnum++) {
+			classSpec.classSkills[(SkillEnum)skillEnum] = pythonClassIntegration.IsClassSkill(it, (SkillEnum)skillEnum);
+		}
 	}
 
 }
@@ -157,4 +214,15 @@ int D20ClassSystem::GetNumSpellsFromClass(objHndl obj, Stat classCode, int spell
 	}
 
 	return spellCountFromClass;
+}
+
+BOOL D20ClassSystem::IsClassSkill(SkillEnum skillEnum, Stat classCode){
+	auto classSpec = classSpecs.find(classCode);
+	if (classSpec == classSpecs.end())
+		return FALSE;
+
+	if (classSpec->second.classSkills[skillEnum])
+		return TRUE;
+
+	return FALSE;
 }

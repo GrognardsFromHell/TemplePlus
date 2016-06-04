@@ -352,21 +352,21 @@ ItemFlag InventorySystem::GetItemFlags(objHndl item)
 	return static_cast<ItemFlag>(objects.getInt32(item, obj_f_item_flags));
 }
 
-bool InventorySystem::IsItemNonTransferable(objHndl item, objHndl receiver)
+int InventorySystem::IsItemNonTransferable(objHndl item, objHndl receiver)
 {
 	objHndl parent = GetParent(item);
 	ItemFlag itemFlags = inventory.GetItemFlags(item);
 	if ((itemFlags & OIF_NO_DROP)
 		&& (!receiver || !parent || objSystem->GetProtoId(item) == 6239 || receiver != parent))
-		return 7;
+		return IEC_Item_Cannot_Be_Dropped;
 	if ( (itemFlags & OIF_NO_TRANSFER )
 		&& receiver != parent && parent && !critterSys.IsDeadNullDestroyed(parent))
-		return 8;
+		return IEC_NPC_Will_Not_Drop;
 	if (!(itemFlags & OIF_NO_TRANSFER_SPECIAL) || receiver == parent)
 	{
 		return 0;
 	}
-	return 7;
+	return IEC_Item_Cannot_Be_Dropped;
 }
 
 int InventorySystem::ItemInsertGetLocation(objHndl item, objHndl receiver, int* itemInsertLocation, objHndl bag, char flags)

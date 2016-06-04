@@ -4,6 +4,7 @@
 #include <map>
 #include "spell_structs.h"
 #include "skill.h"
+#include "obj.h"
 
 //#include <EASTL/hash_map.h>
 
@@ -75,10 +76,12 @@ public:
 	static bool IsCastingClass(Stat classEnum);
 	static bool IsLateCastingClass(Stat classEnum); // for classes like Ranger / Paladin that start casting on level 4
 	static bool HasDomainSpells(Stat classEnum);
+
 	void ClassPacketAlloc(ClassPacket *classPkt); // allocates the three IdxTables within ClassPacket
 	void ClassPacketDealloc(ClassPacket *classPkt);
 	uint32_t GetClassPacket(Stat classEnum, ClassPacket *classPkt); // fills the struct with content based on classEnum (e.g. Barbarian Feats in the featsIdxTable). Also STUB FOR PRESTIGE CLASSES! TODO
 	int GetBaseAttackBonus(Stat classCode, uint32_t classLvl); // gets the class's BAB
+	int GetSkillPts(Stat classEnum);
 
 	struct WildShapeSpec {
 		int protoId;
@@ -121,6 +124,8 @@ public:
 	int NumDomainSpellsKnownFromClass(objHndl dude, Stat classCode);
 	static int GetNumSpellsFromClass(objHndl obj, Stat classCode, int spellLvl, uint32_t classLvl);
 
+	// skills
+	BOOL IsClassSkill(SkillEnum skillEnum, Stat classCode);
 protected:
 	std::map<int, D20ClassSpec> classSpecs;
 };

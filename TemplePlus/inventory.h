@@ -81,7 +81,7 @@ struct InventorySystem : temple::AddressTable
 	int GetInventory(objHndl obj, objHndl** inventoryArray);
 	int GetInventoryLocation(objHndl item);
 	ItemFlag GetItemFlags(objHndl item);
-	bool IsItemNonTransferable(objHndl item, objHndl receiver);
+	int IsItemNonTransferable(objHndl item, objHndl receiver);
 	int ItemInsertGetLocation(objHndl item, objHndl receiver, int* itemInsertLocation, objHndl bag, char flags);
 	void InsertAtLocation(objHndl item, objHndl receiver, int itemInsertLocation);
 	int ItemUnwield(objHndl item);

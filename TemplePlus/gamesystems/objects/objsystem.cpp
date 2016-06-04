@@ -654,7 +654,7 @@ void ObjSystem::InitDynamic(GameObjectBody * obj, objHndl handle, locXY location
 		gameSystems->GetAI().AddAiTimer(handle);
 	}
  	if (obj->IsCritter()) {
-		objects.d20.d20Status->D20StatusInit(handle);
+		d20Sys.d20Status->D20StatusInit(handle);
 	}
 
 	// Apply random sizing of the 3d model if requested

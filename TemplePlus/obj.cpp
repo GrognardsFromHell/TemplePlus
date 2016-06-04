@@ -89,7 +89,7 @@ gfx::AnimatedModelPtr Objects::GetAnimHandle(objHndl obj)
 	auto modelSrcObj = obj;
 
 	// If the obj is polymorphed, use the polymorph proto instead
-	int polyProto = d20.d20Query(obj, DK_QUE_Polymorphed);
+	int polyProto = d20Sys.d20Query(obj, DK_QUE_Polymorphed);
 	if (polyProto) {
 		modelSrcObj = GetProtoHandle(polyProto);
 	}
@@ -225,7 +225,7 @@ gfx::EncodedAnimId Objects::GetIdleAnim(objHndl obj)
 	auto idleAnimObj = obj;
 
 	// If polymorphed, compute for the polymorph target
-	auto polyProtoNum = d20.d20Query(obj, DK_QUE_Polymorphed);
+	auto polyProtoNum = d20Sys.d20Query(obj, DK_QUE_Polymorphed);
 	if (polyProtoNum) {
 		idleAnimObj = GetProtoHandle(polyProtoNum);
 	}

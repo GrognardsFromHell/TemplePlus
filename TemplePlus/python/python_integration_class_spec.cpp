@@ -44,11 +44,11 @@ bool PythonClassSpecIntegration::IsSaveFavored(int classEnum, SavingThrowType sa
 		return 1; // default to 3/4 type
 	switch (saveType){
 	case SavingThrowType::Fortitude:
-		return RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::IsFortSaveFavored, nullptr);
+		return RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::IsFortSaveFavored, nullptr) != 0;
 		case SavingThrowType::Reflex:
-			return RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::IsRefSaveFavored, nullptr);
+			return RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::IsRefSaveFavored, nullptr) != 0;
 		case SavingThrowType::Will:
-			return RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::IsWillSaveFavored, nullptr);
+			return RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::IsWillSaveFavored, nullptr) != 0;
 		default:
 			return false;
 	}
@@ -61,7 +61,30 @@ SpellListType PythonClassSpecIntegration::GetSpellListType(int classEnum){
 bool PythonClassSpecIntegration::IsEnabled(int classEnum){
 	if (classEnum <= stat_level_wizard && classEnum >= stat_level_barbarian)
 		return true; // vanilla classes
-	return GetInt(classEnum, ClassSpecFunc::IsEnabled);
+	return GetInt(classEnum, ClassSpecFunc::IsEnabled) != 0;
+}
+
+bool PythonClassSpecIntegration::IsClassSkill(int classEnum, int skillEnum){
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return false;
+
+	auto args = Py_BuildValue("(i)", skillEnum);
+	auto result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::IsClassSkill, args) != 0; //classSpec->second
+	Py_DECREF(args);
+	return result;
+}
+
+int PythonClassSpecIntegration::IsClassFeat(int classCode, int featEnum)
+{
+	auto classSpecEntry = mScripts.find(classCode);
+	if (classSpecEntry == mScripts.end())
+		return false;
+
+	auto args = Py_BuildValue("(i)", featEnum);
+	auto result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::IsClassFeat, args) != 0; //classSpec->second
+	Py_DECREF(args);
+	return result;
 }
 
 static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
@@ -73,6 +96,8 @@ static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 	{ ClassSpecFunc::IsRefSaveFavored,"IsRefSaveFavored" },
 	{ ClassSpecFunc::IsWillSaveFavored,"IsWillSaveFavored" },
 	{ ClassSpecFunc::GetSpellListType,"GetSpellListType" },
+	{ ClassSpecFunc::IsClassSkill,"IsClassSkill" },
+	{ ClassSpecFunc::IsClassFeat,"IsClassFeat" },
 	{ ClassSpecFunc::IsEnabled,"IsEnabled" },
 
 	{ ClassSpecFunc::IsAlignmentCompatible,"IsAlignmentCompatible" },

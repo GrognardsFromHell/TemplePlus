@@ -1348,7 +1348,7 @@ uint32_t LegacySpellSystem::spellCanCast(objHndl objHnd, uint32_t spellEnum, uin
 		return 0;
 	}
 
-	if (d20Sys.d20Class->isNaturalCastingClass(spellClassCode & 0x7F))
+	if (d20ClassSys.isNaturalCastingClass(spellClassCode & 0x7F))
 	{
 		if (numSpellsKnownTooHigh(objHnd)) return 0;
 

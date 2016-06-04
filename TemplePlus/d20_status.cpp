@@ -120,7 +120,7 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 
 	d20ObjRegistrySys.Append(objHnd);
 
-	if (*objects.d20.d20EditorMode != 0){ return; }
+	if (*d20Sys.d20EditorMode != 0){ return; }
 
 	if (objects.IsCritter(objHnd))
 	{
@@ -261,7 +261,7 @@ void D20StatusSystem::initItemConditions(objHndl objHnd)
 
 	if (obj->IsCritter()) {
 		objects.dispatch.DispatcherClearItemConds(dispatcher);
-		if (!objects.d20.d20Query(objHnd, DK_QUE_Polymorphed))
+		if (!d20Sys.d20Query(objHnd, DK_QUE_Polymorphed))
 		{
 			uint32_t invenCount = obj->GetInt32(obj_f_critter_inventory_num);
 			for (uint32_t i = 0; i < invenCount; i++)

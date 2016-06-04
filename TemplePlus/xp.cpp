@@ -126,7 +126,7 @@ void XPTableForHighLevels::GiveXPAwards(){
 	for (uint32_t i = 0; i < party.GroupNPCFollowersLen(); i++){
 		objHndl objHndNPCFollower = party.GroupNPCFollowersGetMemberN(i);
 		if (!critterSys.IsDeadNullDestroyed(objHndNPCFollower) 
-			&& !objects.d20.d20Query(objHndNPCFollower, DK_QUE_ExperienceExempt)){
+			&& !d20Sys.d20Query(objHndNPCFollower, DK_QUE_ExperienceExempt)){
 			fNumLivingPartyMembers += 1.0;
 		}
 	};
@@ -142,7 +142,7 @@ void XPTableForHighLevels::GiveXPAwards(){
 		objHndl objHnd = party.GroupListGetMemberN(i);
 
 		if (critterSys.IsDeadNullDestroyed(objHnd)){ continue; };
-		if (objects.d20.d20Query(objHnd, DK_QUE_ExperienceExempt)) { continue; };
+		if (d20Sys.d20Query(objHnd, DK_QUE_ExperienceExempt)) { continue; };
 		if (party.ObjIsAIFollower(objHnd)) { continue; };
 
 		int level = objects.StatLevelGet(objHnd, stat_level);

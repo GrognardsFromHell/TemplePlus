@@ -18,6 +18,10 @@ struct LegacySkillSystem : temple::AddressTable {
 	SkillProps * skillPropsTable;
 
 	BonusSystem * bonus;
+
+
+	bool IsEnabled(SkillEnum skillEnum) const; // is the skill enabled in the game?
+
 	/*
 		does a skill roll and logs to history
 		special casing for Search skill
@@ -86,5 +90,7 @@ enum SkillEnum : uint32_t
 	skill_read_lips = 38,
 	skill_ride = 39,
 	skill_swim = 40,
-	skill_use_rope = 41
+	skill_use_rope = 41,
+
+	skill_count // number of skills (for internal use only!)
 };
