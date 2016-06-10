@@ -116,6 +116,38 @@ int D20LevelSystem::GetSurplusXp(objHndl handle){
 	return gameSystems->GetObj().GetObject(handle)->GetInt32(obj_f_critter_experience) - xpReq;
 }
 
+int D20LevelSystem::GetSpellsPerLevel(const objHndl handle, Stat classCode, int spellLvl, int casterLvl){
+	// todo: extend to non-core
+	LevelPacket lvlPkt;
+	auto spellLvlCapped = spellLvl;
+	if (classCode == stat_level_bard){
+		if (spellLvlCapped > 7)
+			spellLvlCapped = 7;
+	}
+	else if (classCode == stat_level_paladin){
+		if (spellLvlCapped > 5)
+			spellLvlCapped = 5;
+	}
+	else if (spellLvlCapped > 10){
+		spellLvlCapped = 10;
+	}
+
+	lvlPkt.GetLevelPacket(classCode, handle, 0, casterLvl);
+	auto spPerLvl = lvlPkt.sorcBardSpellCount[spellLvlCapped];
+
+	switch (spPerLvl + 40){
+	case 0:
+	case 10: 
+	case 20:
+	case 30:
+		spPerLvl = 0;
+		break;
+	default:
+		break;
+	}
+	return spPerLvl;
+}
+
 void D20LevelSystem::GenerateSpellsPerLevelTables()
 {
 

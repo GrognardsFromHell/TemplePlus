@@ -47,6 +47,7 @@ public:
 
 	uint32_t GetXpRequireForLevel(uint32_t level);
 	int GetSurplusXp(objHndl handle);
+	int GetSpellsPerLevel(const objHndl handle, Stat classCode, int spellLvl, int casterLvl);
 private:
 	void GenerateSpellsPerLevelTables();
 };
