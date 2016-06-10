@@ -304,7 +304,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 	// show the first class's spellbook / spells memorized
 	if (uiCharSpellTabsCount > 0 && !spellSys.isDomainSpell(navClassPackets[0].spellClassCode))	{
 		auto classCode = spellSys.GetCastingClass(navClassPackets[0].spellClassCode );
-		if (d20ClassSys.isVancianCastingClass(classCode)){
+		if (d20ClassSys.IsVancianCastingClass(classCode)){
 			ui.WidgetSetHidden(charSpellPackets[0].classMemorizeWnd->widgetId, 0);
 		}
 		ui.WidgetSetHidden(charSpellPackets[0].classSpellbookWnd->widgetId, 0);
@@ -553,7 +553,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 	auto spellClassCode = navClassPackets[uiCharSpellsNavClassTabIdx].spellClassCode;
 	if (!spellSys.isDomainSpell(spellClassCode)){
 		auto casterClassCode = spellSys.GetCastingClass(spellClassCode);
-		if (d20ClassSys.isNaturalCastingClass(casterClassCode))
+		if (d20ClassSys.IsNaturalCastingClass(casterClassCode))
 			showMemSpells = false;
 	}
 	

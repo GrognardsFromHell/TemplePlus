@@ -2,6 +2,7 @@
 #include "common.h"
 #include <spell_structs.h>
 
+struct UiResizeArgs;
 struct GameSystemConf;
 
 struct CharEditorSelectionPacket{
@@ -43,10 +44,27 @@ struct CharEditorSelectionPacket{
 };
 
 
-struct CharEditorSystem{
+struct LegacyCharEditorSystem{
 	const char* name;
 	BOOL(__cdecl *systemInit)(GameSystemConf *);
-	BOOL(__cdecl *systemReset)(void *);
+	BOOL(__cdecl *systemResize)(void *);
+	int systemReset; // unused
+	void(__cdecl *free)();
+	void(__cdecl *hide)();
+	void(__cdecl *show)();
+	int(__cdecl *checkComplete)(); // checks if the char editing stage is complete (thus allowing you to move on to the next stage). This is checked at every render call.
+	int(__cdecl*debugMaybe)();
+	void(__cdecl *reset)(CharEditorSelectionPacket & editSpec);
+	BOOL(__cdecl *activate)(); // inits values and sets appropriate states for buttons based on gameplay logic (e.g. stuff exclusive to certain classes etc.)
+};
+
+
+class CharEditorSystem {
+public:
+	virtual const std::string &GetName() const = 0;
+	virtual ~CharEditorSystem() = default;
+	//CharEditorSystem(const GameSystemConf &) = delete;
+	virtual BOOL Resize(const UiResizeArgs &) =0;
 	int pad; // possibly some unused callback?
 	void(__cdecl *free)();
 	void(__cdecl *hide)();
@@ -55,6 +73,15 @@ struct CharEditorSystem{
 	int(__cdecl*debugMaybe)();
 	void(__cdecl *reset)(CharEditorSelectionPacket & editSpec);
 	BOOL(__cdecl *activate)(); // inits values and sets appropriate states for buttons based on gameplay logic (e.g. stuff exclusive to certain classes etc.)
+};
+
+
+class CharEditorClassSystem : public CharEditorSystem {
+public:
+	static constexpr auto Name = "char_editor_class";
+	CharEditorClassSystem(const GameSystemConf &config);
+	~CharEditorClassSystem();
+	const std::string &GetName() const override;
 };
 
 const auto testSizeOfCharEditorSelectionPacket = sizeof(CharEditorSelectionPacket); // should be 3640 (0xE38)

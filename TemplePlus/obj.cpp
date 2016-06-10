@@ -565,7 +565,7 @@ void Objects::Destroy(objHndl ObjHnd) {
 	std::string name = this->GetDisplayName(ObjHnd, ObjHnd);
 	logger->info("Destroying {}", name);
 	if (destroyed.find(ObjHnd) != destroyed.end()) {
-		logger->error("Double destroying object {:x}", ObjHnd);
+		logger->error("Double destroying object {}", ObjHnd);
 	}
 	destroyed.insert(ObjHnd);
 

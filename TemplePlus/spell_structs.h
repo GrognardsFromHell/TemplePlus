@@ -5,6 +5,9 @@ const uint32_t SPELL_ENUM_MAX_EXPANDED = 3999;
 #define NUM_SPELL_LEVELS 10 // spells are levels 0-9
 #define MAX_SPELL_TARGETS 32
 #define INV_IDX_INVALID 255  // indicates that a spell is not an item spell
+#define SPELL_ENUM_LABEL_START 803 // the range of 803-812 is reserved for "spell labels" in the chargen / levelup spell UI
+#define SPELL_ENUM_VACANT 802 // used for vacant spellbook slots
+#define SPELL_ENUM_NEW_SLOT_START 1605 // for bard/sorc new spells; range is in 1605-1614
 
 enum SpellStoreType : uint8_t{
 	spellStoreNone = 0,

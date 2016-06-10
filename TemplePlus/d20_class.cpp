@@ -66,22 +66,21 @@ class D20ClassHooks : public TempleFix
 	}
 } d20ClassHooks;
 
-bool D20ClassSystem::isNaturalCastingClass(Stat classEnum)
+bool D20ClassSystem::IsNaturalCastingClass(Stat classEnum, objHndl handle)
 {
-	if (classEnum == stat_level_bard || classEnum == stat_level_sorcerer) return 1;
+	if (classEnum == stat_level_bard || classEnum == stat_level_sorcerer) 
+		return 1;
 	return 0;
 }
 
-bool D20ClassSystem::isNaturalCastingClass(uint32_t classEnum)
-{
-	Stat castedClassEnum = static_cast<Stat>(classEnum);
-	if (classEnum == stat_level_bard || classEnum == stat_level_sorcerer) return 1;
-	return 0;
+bool D20ClassSystem::IsNaturalCastingClass(uint32_t classEnum){
+	return IsNaturalCastingClass((Stat)classEnum);
 }
 
-bool D20ClassSystem::isVancianCastingClass(Stat classEnum)
+bool D20ClassSystem::IsVancianCastingClass(Stat classEnum, objHndl handle )
 {
-	if (classEnum == stat_level_cleric || classEnum == stat_level_druid || classEnum == stat_level_paladin || classEnum == stat_level_ranger || classEnum == stat_level_wizard) return 1;
+	if (classEnum == stat_level_cleric || classEnum == stat_level_druid || classEnum == stat_level_paladin || classEnum == stat_level_ranger || classEnum == stat_level_wizard)
+		return 1;
 	return 0;
 }
 
@@ -93,9 +92,32 @@ bool D20ClassSystem::IsCastingClass(Stat classEnum)
 
 bool D20ClassSystem::IsLateCastingClass(Stat classEnum)
 {
-	if (classEnum == stat_level_paladin || classEnum == stat_level_ranger)
-		return 1;
-	return 0;
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return false;
+
+	if (classSpec->second.spellListType == SpellListType::Paladin
+		|| classSpec->second.spellListType == SpellListType::Ranger)
+		return true;
+
+	/*if (classEnum == stat_level_paladin || classEnum == stat_level_ranger)
+		return 1;*/
+	// todo: generalize for PrC's
+	return false;
+}
+
+bool D20ClassSystem::IsArcaneCastingClass(Stat classCode, objHndl handle){
+	auto classSpec = classSpecs.find(classCode);
+	if (classSpec == classSpecs.end())
+		return false;
+
+	if (classSpec->second.spellListType == SpellListType::Arcane
+		|| classSpec->second.spellListType == SpellListType::Bardic)
+		return true;
+
+	// todo handle PrC that can be either
+
+	return false;
 }
 
 bool D20ClassSystem::HasDomainSpells(Stat classEnum){

@@ -271,7 +271,7 @@ bool SpellPacketBody::IsVancian(){
 	if (spellSys.isDomainSpell(spellClass))
 		return true;
 	
-	if (d20ClassSys.isVancianCastingClass(spellSys.GetCastingClass(spellClass)))
+	if (d20ClassSys.IsVancianCastingClass(spellSys.GetCastingClass(spellClass)))
 		return true;
 
 	return false;
@@ -441,6 +441,14 @@ const char* LegacySpellSystem::GetSpellMesline(uint32_t lineNumber) const{
 bool LegacySpellSystem::CheckAbilityScoreReqForSpell(objHndl handle, uint32_t spellEnum, int statBeingRaised) const
 {
 	return temple::GetRef<BOOL(__cdecl)(objHndl, uint32_t, int)>(0x10075C60)(handle, spellEnum, statBeingRaised) != 0;
+}
+
+int LegacySpellSystem::GetSpellClass(int classEnum, bool isDomain){
+	if (isDomain){
+		return classEnum;
+	}
+
+	return 0x80 | classEnum;
 }
 
 const char* LegacySpellSystem::GetSpellEnumTAG(uint32_t spellEnum){
@@ -1348,7 +1356,7 @@ uint32_t LegacySpellSystem::spellCanCast(objHndl objHnd, uint32_t spellEnum, uin
 		return 0;
 	}
 
-	if (d20ClassSys.isNaturalCastingClass(spellClassCode & 0x7F))
+	if (d20ClassSys.IsNaturalCastingClass(spellClassCode & 0x7F))
 	{
 		if (numSpellsKnownTooHigh(objHnd)) return 0;
 
@@ -1457,6 +1465,17 @@ bool LegacySpellSystem::IsArcaneSpellClass(uint32_t spellClass)
 bool LegacySpellSystem::IsSpellLike(int spellEnum){
 	return (spellEnum >= NORMAL_SPELL_RANGE
 		&& spellEnum <= SPELL_LIKE_ABILITY_RANGE);
+}
+
+int LegacySpellSystem::GetSpellLevelBySpellClass(int spellEnum, int spellClass, objHndl handle){
+	SpellEntry spEntry(spellEnum);
+	for (auto i = 0u; i < spEntry.spellLvlsNum; i++){
+		if (spEntry.spellLvls[i].classCode == spellClass)
+			return spEntry.spellLvls[i].slotLevel;
+	}
+
+	//todo add PrC support
+	return -1;
 }
 
 uint32_t LegacySpellSystem::pickerArgsFromSpellEntry(SpellEntry* spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLvl)

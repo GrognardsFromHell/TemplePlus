@@ -166,7 +166,7 @@ struct LegacySpellSystem : temple::AddressTable
 
 	const char* GetSpellMesline(uint32_t line) const;
 	bool CheckAbilityScoreReqForSpell(objHndl handle, uint32_t spellEnum, int statBeingRaised) const;
-	
+	int GetSpellClass(int classEnum, bool isDomain = false);
 	static const char* GetSpellEnumTAG(uint32_t spellEnum);
 	const char* GetSpellName(uint32_t spellEnum) const;
 	
@@ -194,6 +194,8 @@ struct LegacySpellSystem : temple::AddressTable
 	bool IsArcaneSpellClass(uint32_t spellClass);
 
 	static bool IsSpellLike(int spellEnum); // checks if the spell is in the Spell Like Ability range
+	int GetSpellLevelBySpellClass(int spellEnum, int spellClass, objHndl handle = objHndl::null);
+
 
 	uint32_t pickerArgsFromSpellEntry(SpellEntry * spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLevel);
 	uint32_t GetSpellRangeExact(SpellRangeType spellRangeType, uint32_t casterLevel, objHndl caster);

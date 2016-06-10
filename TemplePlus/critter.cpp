@@ -1167,6 +1167,25 @@ int LegacyCritterSystem::GetSpellLvlCanCast(const objHndl& handle, SpellSourceTy
 	return 0;
 }
 
+int LegacyCritterSystem::GetSpellEnumsKnownByClass(const objHndl& handle, int spellClass, int* spellEnums, int capacity){
+	// todo: PrC extension
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	auto spKnown = obj->GetSpellArray(obj_f_critter_spells_known_idx);
+	auto n = 0;
+	for (auto i = 0u; i < spKnown.GetSize(); i++){
+		auto &spData = spKnown[i];
+		if (spData.classCode == spellClass){
+			spellEnums[n++] = spData.spellEnum;
+			if (n >= capacity){
+				logger->warn("GetSpellEnumsKnown: Too many spells known! It's over 802!");
+				return n;
+			}
+				
+		}
+	}
+	return n;
+}
+
 int LegacyCritterSystem::GetCritterNumNaturalAttacks(objHndl obj){
 	auto n = 0;
 
