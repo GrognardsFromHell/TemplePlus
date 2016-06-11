@@ -779,11 +779,12 @@ BlendStatePtr RenderingDevice::CreateBlendState(const BlendSpec &spec) {
   targetDesc.BlendEnable = spec.blendEnable ? TRUE : FALSE;
   targetDesc.SrcBlend = ConvertBlendOperand(spec.srcBlend); // I checked, the enum literals are exchangeable
   targetDesc.DestBlend = ConvertBlendOperand(spec.destBlend);
+  targetDesc.SrcBlendAlpha = targetDesc.SrcBlend;
+  targetDesc.DestBlendAlpha = targetDesc.DestBlend;
 
   uint8_t writeMask = 0;
   if (spec.writeAlpha) {
-	// NOTE: This is important because our render targets are created as A8R8G8B8, but we want to keep its alpha at 1
-    // writeMask |= D3D11_COLOR_WRITE_ENABLE_ALPHA;
+    writeMask |= D3D11_COLOR_WRITE_ENABLE_ALPHA;
   }
   if (spec.writeRed) {
     writeMask |= D3D11_COLOR_WRITE_ENABLE_RED;
