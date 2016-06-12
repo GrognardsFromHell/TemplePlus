@@ -173,7 +173,19 @@ void TextLayouter::LayoutAndDraw(gsl::cstring_span<> text, const TigFont& font, 
 		DrawBackgroundOrOutline(extents, style);
 	}
 
-	mTextEngine.RenderText(extents, formatted);
+	// Dispatch based on applied rotation
+	if (style.flags & TTSF_ROTATE) {
+		float angle = XMConvertToDegrees(style.rotation);
+		XMFLOAT2 center{ 0,0 };
+		if (style.flags & TTSF_ROTATE_OFF_CENTER) {
+			center.x = style.rotationCenterX;
+			center.y = style.rotationCenterY;
+		}
+
+		mTextEngine.RenderTextRotated(extents, angle, center, formatted);
+	} else {
+		mTextEngine.RenderText(extents, formatted);
+	}
 
 }
 

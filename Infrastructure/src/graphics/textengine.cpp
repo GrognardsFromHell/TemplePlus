@@ -212,8 +212,10 @@ namespace gfx {
 		D2D1_FACTORY_OPTIONS options;
 		if (debugDevice) {
 			options.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
+			logger->info("Creating Direct2D Factory (debug=true).");
 		} else {
 			options.debugLevel = D2D1_DEBUG_LEVEL_NONE;
+			logger->info("Creating Direct2D Factory (debug=false).");
 		}
 		D3DVERIFY(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, options, &mImpl->factory));
 
@@ -299,6 +301,21 @@ namespace gfx {
 		mImpl->context->DrawRectangle(rectOutline, brush);*/
 
 		D3DVERIFY(mImpl->context->EndDraw());
+	}
+
+	void TextEngine::RenderTextRotated(const TigRect &rect, 
+		float angle,
+		XMFLOAT2 center,
+		const FormattedText &formattedStr)
+	{
+
+		auto transform2d = D2D1::Matrix3x2F::Rotation(angle, { center.x, center.y });
+		mImpl->context->SetTransform(transform2d);
+
+		RenderText(rect, formattedStr);
+
+		mImpl->context->SetTransform(D2D1::IdentityMatrix());
+
 	}
 		
 	void TextEngine::RenderText(const TigRect &rect, const TextStyle & style, const std::wstring & text)

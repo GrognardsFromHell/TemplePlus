@@ -68,8 +68,13 @@ namespace gfx {
 	public:
 		TextEngine(ID3D11Device* device3d, bool debugDevice);
 		~TextEngine();
-
+		
 		void RenderText(const TigRect &rect, const FormattedText &formattedStr);
+
+		void RenderTextRotated(const TigRect &rect,
+			float angle,
+			XMFLOAT2 center,
+			const FormattedText &formattedStr);
 
 		void RenderText(const TigRect &rect, const TextStyle &style, const std::wstring &text);
 			

@@ -256,9 +256,9 @@ void FontRenderer::RenderRun(cstring_span<> text,
 		vertexBL.diffuse = colorRect.bottomLeft;
 
 		// Support rotations (i.e. for the radial menu)
-		if (style.flags & 0x8000) {
+		if (style.flags & TTSF_ROTATE) {
 			float rotCenterX, rotCenterY;
-			if (style.flags & 0x10000) {
+			if (style.flags & TTSF_ROTATE_OFF_CENTER) {
 				rotCenterX = style.rotationCenterX;
 				rotCenterY = style.rotationCenterY;
 			} else {
