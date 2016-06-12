@@ -746,14 +746,11 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 			// if window
 			if (globalWid->type == 1)
 			{
-				auto globalWndWid = WidgetGetType1(globalWidId);
-				if (globalWndWid->field_288 && globalWndWid->field_288 != 6)
-				{
-					if (globalWndWid->field_288 == 7)
-						globalWndWid->field_288 = 8;
-				} else
-				{
-					globalWndWid->field_288 = 0;
+				auto prevHoveredWindow = (WidgetType1*)globalWid;
+				if (prevHoveredWindow->mouseState == WindowMouseState::Pressed) {
+					prevHoveredWindow->mouseState = WindowMouseState::PressedOutside;
+				} else if (prevHoveredWindow->mouseState != WindowMouseState::PressedOutside) {
+					prevHoveredWindow->mouseState = WindowMouseState::Outside;
 				}
 				enqueue4 = true;
 			} 
@@ -761,17 +758,16 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 			else if (globalWid->type == 2 && !(globalWid->widgetFlags & 1))
 			{
 				auto buttonWid = uiReplacement.GetButton(globalWidId);
-				if (buttonWid->buttonState >=0)
-				{
-					if (buttonWid->buttonState == 1)
-					{
-						buttonWid->buttonState = 0;
-						sound.MssPlaySound(buttonWid->hoverOff);
-
-					} else if (buttonWid->buttonState == 2)
-					{
-						buttonWid->buttonState = 3;
-					}
+				switch (buttonWid->buttonState) {
+				case 1:
+					// Unhover
+					buttonWid->buttonState = 0;
+					sound.MssPlaySound(buttonWid->hoverOff);
+					break;
+				case 2:
+					// Down -> Released without click event
+					buttonWid->buttonState = 3;
+					break;
 				}
 				if (!(WidgetGet(globalWid->parentId)->widgetFlags & 1))
 				{
@@ -805,18 +801,12 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 			if (widAtCursor->type == 1)
 			{
 				auto widAtCursorWindow = WidgetGetType1(widIdAtCursor);
-				if (widAtCursorWindow->field_288)
-				{
-					if (widAtCursorWindow->field_288 == 8)
-					{
-						widAtCursorWindow->field_288 = 7;
-					}
-				} else
-				{
-					widAtCursorWindow->field_288 = 6;
+				if (widAtCursorWindow->mouseState == WindowMouseState::PressedOutside) {
+					widAtCursorWindow->mouseState = WindowMouseState::Pressed;
+				} else if (widAtCursorWindow->mouseState != WindowMouseState::Pressed) {
+					widAtCursorWindow->mouseState = WindowMouseState::Hovered;
 				}
-			} else if (widAtCursor->type == 2)
-			{
+			} else if (widAtCursor->type == 2) {
 				auto buttonWid = uiReplacement.GetButton(widIdAtCursor);
 				if (buttonWid->buttonState)
 				{
@@ -900,9 +890,6 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 		*uiFuncs.uiMouseButtonId = -1;
 	}
 
-	// int result = uiReplacement.orgUiWidgetHandleMouseMsg(mouseMsg);
-
-	// return result;
 	return 0;
 }
 
