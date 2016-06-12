@@ -145,10 +145,14 @@ public:
 
 		// set_mouse_capture_callback
 		replaceFunction<int(CursorDrawCallback, void*)>(0x101dd5c0, [](CursorDrawCallback callback, void* arg) {
-			// Bind the callback arg directly into the callback as a function object
-			auto wrappedCallback = [=](int x, int y) { return callback(x, y, arg); };
-			auto callbackId = (uint32_t) callback;
-			mouseFuncs.SetCursorDrawCallback(wrappedCallback, callbackId);
+			if (!callback) {
+				mouseFuncs.SetCursorDrawCallback(nullptr, 0);
+			} else {
+				// Bind the callback arg directly into the callback as a function object
+				auto wrappedCallback = [=](int x, int y) { return callback(x, y, arg); };
+				auto callbackId = (uint32_t)callback;
+				mouseFuncs.SetCursorDrawCallback(wrappedCallback, callbackId);
+			}
 			return 0;
 		});
 

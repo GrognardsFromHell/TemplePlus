@@ -312,9 +312,6 @@ public:
 			*/
 	int GetAtInclChildren(int x, int y);
 
-	void(__cdecl *__cdecl GetCursorTextDrawCallback())(int x, int y, void *data);
-
-	void SetCursorTextDrawCallback(void(* cursorTextDrawCallback)(int, int, void*), void* data);
 	int UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg);
 
 	bool ScrollbarGetY(int widId, int * y);

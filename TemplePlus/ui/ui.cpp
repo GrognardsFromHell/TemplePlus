@@ -5,6 +5,7 @@
 #include <tig/tig_msg.h>
 #include <sound.h>
 #include <tig/tig_font.h>
+#include <tig/tig_mouse.h>
 
 Ui ui;
 Widget** Ui::activeWidgets;
@@ -87,8 +88,6 @@ static struct UiFuncs : temple::AddressTable {
 	// Called to load UI related functions from the savegame in data2.sav
 	SaveCallback* loadGameCallback;
 	int *visibleWidgetWindows;
-	void(__cdecl ** cursorTextDrawCallback)(int x, int y, void*data);
-	void** cursorTextDrawCallbackData;
 	int* uiWidgetMouseHandlerWidgetId;
 	int* uiMouseButtonId;
 
@@ -129,9 +128,6 @@ static struct UiFuncs : temple::AddressTable {
 		rebase(GetButtonState,  0x101F9740);
 		rebase(UiMouseMsgHandlerRenderTooltipCallback, 0x101F9870);
 		
-		rebase(cursorTextDrawCallback, 0x10D255C8);
-		rebase(cursorTextDrawCallbackData, 0x10D255CC);
-
 		rebase(visibleWidgetWindows, 0x10EF39F0);
 		rebase(visibleWindowCnt, 0x10EF68D0);
 		rebase(activeWidgetCount, 0x10EF68D8);
@@ -721,18 +717,6 @@ int Ui::GetAtInclChildren(int x, int y)
 	return windowId;
 }
 
-void(* Ui::GetCursorTextDrawCallback())(int x, int y, void* data)
-{
-	return *uiFuncs.cursorTextDrawCallback;
-}
-
-void Ui::SetCursorTextDrawCallback(void(* cursorTextDrawCallback)(int, int, void*), void* data)
-{
-	*uiFuncs.cursorTextDrawCallback = cursorTextDrawCallback;
-	*uiFuncs.cursorTextDrawCallbackData = data;
-
-}
-
 int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 {
 	int flags = mouseMsg->flags;
@@ -750,10 +734,9 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 	// moused widget changed
 	if ((flags & 0x1000) && widIdAtCursor != globalWidId)
 	{
-		if (widIdAtCursor != -1 
-			&& ui.GetCursorTextDrawCallback() == uiFuncs.UiMouseMsgHandlerRenderTooltipCallback)
+		if (widIdAtCursor != -1 && mouseFuncs.GetCursorDrawCallbackId() == (uint32_t) uiFuncs.UiMouseMsgHandlerRenderTooltipCallback)
 		{
-			SetCursorTextDrawCallback(nullptr, nullptr);
+			mouseFuncs.SetCursorDrawCallback(nullptr, 0);
 		}
 
 		if (globalWidId != -1)
@@ -855,9 +838,11 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 		globalWidId = *uiFuncs.uiWidgetMouseHandlerWidgetId = widIdAtCursor;
 	}
 	
-	if (mouseMsg->flags & MouseStateFlags::MSF_POS_CHANGE2 && globalWidId != -1 && !GetCursorTextDrawCallback())
+	if (mouseMsg->flags & MouseStateFlags::MSF_POS_CHANGE2 && globalWidId != -1 && !mouseFuncs.GetCursorDrawCallbackId())
 	{
-		SetCursorTextDrawCallback(*uiFuncs.UiMouseMsgHandlerRenderTooltipCallback, uiFuncs.uiWidgetMouseHandlerWidgetId);
+		mouseFuncs.SetCursorDrawCallback([](int x, int y) {
+			(*uiFuncs.UiMouseMsgHandlerRenderTooltipCallback)(x, y, uiFuncs.uiWidgetMouseHandlerWidgetId);
+		}, (uint32_t)*uiFuncs.UiMouseMsgHandlerRenderTooltipCallback);
 	}
 
 	if (mouseMsg->flags & MouseStateFlags::MSF_LMB_CLICK)
