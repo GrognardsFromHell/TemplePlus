@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "d20stats.h"
 #include <gamesystems/gamesystems.h>
+#include <gamesystems/objects/objsystem.h>
 #include <feat.h>
 #include <util/fixes.h>
 #include <d20.h>
@@ -24,6 +25,10 @@ class D20StatsHooks : public TempleFix{
 		});
 		replaceFunction<const char*(Stat)>(0x10073B10, [](Stat stat)->const char* {
 			return d20Stats.GetCannotPickClassHelp(stat);
+		});
+
+		replaceFunction<int(objHndl, Stat)>(0x10073E90, [](objHndl handle, Stat stat)->int	{
+			return d20Stats.GetLevelStat(handle, stat);
 		});
 
 	}
@@ -65,6 +70,30 @@ const char* D20StatsSystem::GetCannotPickClassHelp(Stat stat) const{
 	MesLine line(20000 + stat );
 	mesFuncs.GetLine_Safe(statMesExt, &line);
 	return line.value;
+}
+
+int D20StatsSystem::GetLevelStat(const objHndl &handle, Stat stat) const
+{
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	auto lvlArr = obj->GetInt32Array(obj_f_critter_level_idx);
+	auto numItems = lvlArr.GetSize();
+	auto result = 0;
+	// get the overall level (not accounting for negative levels yet!)
+	if (stat == stat_level){
+		for (auto i = 0u; i < numItems; i++){
+			auto lvl = lvlArr[i];
+			if (GetType((Stat)lvl) == StatType::Level)
+				result++;
+		}
+	} 
+	else
+	{
+		for (auto i = 0u; i < numItems; i++) {
+			if (lvlArr[i] == stat)
+				result++;
+		}
+	}
+	return result;
 }
 
 void D20StatsSystem::Init(const GameSystemConf& conf){

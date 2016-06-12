@@ -1843,6 +1843,16 @@ enum enum_disp_type : uint32_t {
 	dispTypePythonActionCheck,
 	dispTypePythonActionPerform,
 	dispTypePythonActionFrame,
+	dispTypePythonUnused1, // for expansion
+	dispTypePythonUnused2, // for expansion
+	dispTypePythonUnused3, // for expansion
+	dispTypePythonUnused4, // for expansion
+	dispTypePythonUnused5, // for expansion
+	dispTypePythonUnused6, // for expansion
+	dispTypePythonUnused7, // for expansion
+	dispTypePythonUnused8, // for expansion
+	dispTypePythonUnused9, // for expansion
+	dispTypeSpellListExtension, // NEW! used for extending spell-casting classes by other classes (as with Prestige Classes)
 	dispTypeCount // used just for size definition purposes
 
 

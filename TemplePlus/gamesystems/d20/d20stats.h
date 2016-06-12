@@ -6,6 +6,7 @@
 #include <map>
 
 struct GameSystemConf;
+struct objHndl;
 
 enum class StatType {
 	Abilities = 0,
@@ -32,6 +33,8 @@ public:
 	const char* GetStatRulesString(Stat stat) const;
 	const char* GetClassShortDesc(Stat stat) const;
 	const char* GetCannotPickClassHelp(Stat stat) const;
+
+	int GetLevelStat(const objHndl &handle, Stat stat) const;
 
 private:
 

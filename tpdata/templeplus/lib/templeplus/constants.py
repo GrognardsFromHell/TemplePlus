@@ -3242,7 +3242,20 @@ ET_OnGetSizeCategory = 71
 ET_OnGetBucklerAcPenalty = 72
 ET_OnGetModelScale = 73 # used for altering model scale without directly changing the internal fields
 ET_OnD20PythonQuery = 74 # used for adding new python-based D20 query types. The key is simply the hash of the string e.g. d20_query('Has some condition or other')
-
+ET_OnD20PythonSignal = 75
+ET_OnD20PythonActionCheck = 76
+ET_OnD20PythonActionPerform = 77
+ET_OnD20PythonActionFrame = 78
+ET_OnPythonReserved1 = 79
+ET_OnPythonReserved2 = 80
+ET_OnPythonReserved3 = 81
+ET_OnPythonReserved4 = 82
+ET_OnPythonReserved5 = 83
+ET_OnPythonReserved6 = 84
+ET_OnPythonReserved7 = 85
+ET_OnPythonReserved8 = 86
+ET_OnPythonReserved9 = 87
+ET_OnSpellListExtensionGet = 88
 # Event Keys
 
 EK_NONE = 0x0

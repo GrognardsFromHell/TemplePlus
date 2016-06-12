@@ -64,6 +64,7 @@ static struct UiFuncs : temple::AddressTable {
 	BOOL(__cdecl*AddButton)(WidgetType2* button, unsigned size, int* widgId, const char* codeFileName, int lineNumber);
 	BOOL(__cdecl*ButtonSetButtonState)(int widgetId, int newState);
 	BOOL(__cdecl*WidgetAndWindowRemove)(int widId);
+	BOOL(__cdecl*WidgetRemove)(int widId);
 	BOOL(__cdecl*WidgetSetHidden)(int widId, int hiddenState);
 	BOOL(__cdecl*GetButtonState)(int widId, int* state);
 	void(__cdecl*WidgetBringToFront)(int widId);
@@ -124,6 +125,7 @@ static struct UiFuncs : temple::AddressTable {
 		rebase(AddWindow,  0x101F8FD0);
 		rebase(AddButton,  0x101F9460);
 		rebase(WidgetAndWindowRemove, 0x101F9010);
+		rebase(WidgetRemove,          0x101F9420);
 		rebase(WidgetSetHidden, 0x101F9100);
 		rebase(ButtonSetButtonState, 0x101F9510);
 		rebase(GetButtonState,  0x101F9740);
@@ -597,6 +599,10 @@ BOOL Ui::WidgetRemoveRegardParent(int widIdx)
 BOOL Ui::WidgetAndWindowRemove(int widId)
 {
 	return uiFuncs.WidgetAndWindowRemove(widId);
+}
+
+BOOL Ui::WidgetRemove(int widId){
+	return uiFuncs.WidgetRemove(widId);
 }
 
 BOOL Ui::WidgetSetHidden(int widId, int hiddenState)

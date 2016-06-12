@@ -1,5 +1,8 @@
 #include "stdafx.h"
 #include "python_integration_class_spec.h"
+#include <gamesystems/gamesystems.h>
+#include <gamesystems/objects/objsystem.h>
+#include "python_object.h"
 
 PythonClassSpecIntegration pythonClassIntegration;
 
@@ -85,6 +88,29 @@ int PythonClassSpecIntegration::IsClassFeat(int classCode, int featEnum)
 	auto result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::IsClassFeat, args) != 0; //classSpec->second
 	Py_DECREF(args);
 	return result;
+}
+
+bool PythonClassSpecIntegration::ReqsMet(const objHndl & handle, int classEnum){
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return false;
+	
+	// check alignment
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	auto objAlignment = obj->GetInt32(obj_f_critter_alignment);
+	auto args = Py_BuildValue("(i)", objAlignment);
+	auto result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::IsAlignmentCompatible, args) != 0;
+	Py_DECREF(args);
+	if (!result)
+		return false;
+
+	auto attachee = PyObjHndl_Create(handle);
+	args = Py_BuildValue("(O)", attachee);
+	Py_DECREF(attachee);
+	result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::ObjMeetsPreqreqs, args) != 0;
+	Py_DECREF(args);
+	return result;
+
 }
 
 static std::map<ClassSpecFunc, std::string> classSpecFunctions = {

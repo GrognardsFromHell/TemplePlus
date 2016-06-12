@@ -52,8 +52,8 @@ struct LegacyCharEditorSystem{
 	void(__cdecl *free)();
 	void(__cdecl *hide)();
 	void(__cdecl *show)();
-	int(__cdecl *checkComplete)(); // checks if the char editing stage is complete (thus allowing you to move on to the next stage). This is checked at every render call.
-	int(__cdecl*debugMaybe)();
+	BOOL(__cdecl *checkComplete)(); // checks if the char editing stage is complete (thus allowing you to move on to the next stage). This is checked at every render call.
+	void(__cdecl *finalize)(CharEditorSelectionPacket &selPkt, objHndl &handle); //applies the configuration when clicking the "finish" button
 	void(__cdecl *reset)(CharEditorSelectionPacket & editSpec);
 	BOOL(__cdecl *activate)(); // inits values and sets appropriate states for buttons based on gameplay logic (e.g. stuff exclusive to certain classes etc.)
 };

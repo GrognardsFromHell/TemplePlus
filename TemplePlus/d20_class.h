@@ -68,8 +68,11 @@ struct D20ClassSystem : temple::AddressTable
 {
 public:
 	Stat vanillaClassEnums[VANILLA_NUM_CLASSES];
-	std::map<int, int> classEnums;
+	std::vector<int> classEnums;
 	const int ClassLevelMax = 20;
+
+	bool ReqsMet(const objHndl &handle, const Stat classCode); // class requirements met
+
 	bool IsNaturalCastingClass(Stat classEnum, objHndl handle = objHndl::null);
 	bool IsNaturalCastingClass(uint32_t classEnum);
 	bool IsVancianCastingClass(Stat classEnum, objHndl handle = objHndl::null);
@@ -84,6 +87,8 @@ public:
 	int GetBaseAttackBonus(Stat classCode, uint32_t classLvl); // gets the class's BAB
 	int GetSkillPts(Stat classEnum);
 	
+
+	const char* GetClassShortHelp(Stat classCode);
 
 	struct WildShapeSpec {
 		int protoId;

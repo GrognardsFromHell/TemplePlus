@@ -835,6 +835,32 @@ static PyObject* PyObjHandle_ArcaneSpellLevelCanCast(PyObject* obj, PyObject* ar
 	return PyInt_FromLong(arcaneSpellLvlMax);
 }
 
+static PyObject* PyObjHandle_DivineSpellLevelCanCast(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	auto divineSpellLvlMax = 0;
+
+	auto clrLvl = objects.StatLevelGet(self->handle, stat_level_cleric);
+	if (clrLvl > 0) {
+		divineSpellLvlMax = (1 + clrLvl) / 2;
+	}
+
+	auto drdLvl = objects.StatLevelGet(self->handle, stat_level_druid);
+	if (drdLvl > 0) {
+		if (drdLvl > clrLvl)
+			divineSpellLvlMax = (1 + drdLvl) / 2;
+	}
+
+	auto palLvl = objects.StatLevelGet(self->handle, stat_level_paladin);
+	critterSys.GetSpellLvlCanCast(self->handle, SpellSourceType::Arcane, SpellReadyingType::Any);
+	// todo: generalize
+
+	return PyInt_FromLong(divineSpellLvlMax);
+}
+
 static PyObject* PyObjHandle_Attack(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -2321,12 +2347,13 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "award_experience", PyObjHandle_AwardExperience, METH_VARARGS, NULL },
 
 
-	{ "balor_death", PyObjHandle_BalorDeath, METH_VARARGS, NULL },
+	{"balor_death", PyObjHandle_BalorDeath, METH_VARARGS, NULL },
 	{"begin_dialog", PyObjHandle_BeginDialog, METH_VARARGS, NULL},
 	{"begian_dialog", PyObjHandle_BeginDialog, METH_VARARGS, "I make this typo so much that I want it supported :P" },
 	{"barter", PyObjHandle_Barter, METH_VARARGS, NULL },
-	{ "cast_spell", PyObjHandle_CastSpell, METH_VARARGS, NULL },
-	{ "can_see", PyObjHandle_HasLos, METH_VARARGS, NULL },
+
+	{"cast_spell", PyObjHandle_CastSpell, METH_VARARGS, NULL },
+	{"can_see", PyObjHandle_HasLos, METH_VARARGS, NULL },
 	{ "concealed_set", PyObjHandle_ConcealedSet, METH_VARARGS, NULL },
 	{ "condition_add_with_args", PyObjHandle_ConditionAddWithArgs, METH_VARARGS, NULL },
 	{ "condition_add", PyObjHandle_ConditionAddWithArgs, METH_VARARGS, NULL },
@@ -2353,7 +2380,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "damage_with_reduction", PyObjHandle_DamageWithReduction, METH_VARARGS, NULL },
 	{ "destroy", PyObjHandle_Destroy, METH_VARARGS, NULL },
 	{ "distance_to", PyObjHandle_DistanceTo, METH_VARARGS, NULL },
-	{ "divine_spell_level_can_cast", PyObjHandle_Attack, METH_VARARGS, NULL },
+	{ "divine_spell_level_can_cast", PyObjHandle_DivineSpellLevelCanCast, METH_VARARGS, NULL },
 	{ "dominate", PyObjHandle_Dominate, METH_VARARGS, NULL },
 
 	{ "faction_has", PyObjHandle_FactionHas, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!" },
@@ -2684,6 +2711,23 @@ static PyObject* PyObjHandle_GetFactions(PyObject* obj, void*) {
 	return  outTup;
 }
 
+static PyObject* PyObjHandle_GetCharacterClasses(PyObject* obj, void*) {
+	auto self = GetSelf(obj);
+	objHndl objHnd = self->handle;
+	if (!objHnd)
+		Py_RETURN_NONE;
+
+	auto toEEobj = gameSystems->GetObj().GetObject(objHnd);
+	auto charClasses = toEEobj->GetInt32Array(obj_f_critter_level_idx);
+	int count = charClasses.GetSize();
+
+	auto outTup = PyTuple_New(count);
+	for (int i = 0; i < count; i++) {
+		PyTuple_SET_ITEM(outTup, i, PyInt_FromLong(charClasses[i]));
+	};
+	return  outTup;
+}
+
 
 
 
@@ -2709,6 +2753,7 @@ static PyObject* PyObjHandle_SafeForUnpickling(PyObject*, void*) {
 
 PyGetSetDef PyObjHandleGetSets[] = {
 	{ "area", PyObjHandle_GetArea, NULL, NULL, NULL },
+	{"char_classes", PyObjHandle_GetCharacterClasses, NULL, "a tuple containing the character classes array", NULL },
 	{"description", PyObjHandle_GetDescription, NULL, NULL },
 	{"name", PyObjHandle_GetNameId, NULL, NULL},
 	{"location", PyObjHandle_GetLocation, NULL, NULL},

@@ -4,6 +4,7 @@
 #include "obj.h"
 #include "python/python_integration_class_spec.h"
 #include "util/fixes.h"
+#include "gamesystems/d20/d20stats.h"
 
 D20ClassSystem d20ClassSys;
 
@@ -65,6 +66,14 @@ class D20ClassHooks : public TempleFix
 
 	}
 } d20ClassHooks;
+
+bool D20ClassSystem::ReqsMet(const objHndl& handle, const Stat classCode){
+	auto classSpec = classSpecs.find(classCode);
+	if (classSpec == classSpecs.end())
+		return false;
+
+	return pythonClassIntegration.ReqsMet(handle, classCode);
+}
 
 bool D20ClassSystem::IsNaturalCastingClass(Stat classEnum, objHndl handle)
 {
@@ -169,15 +178,21 @@ int D20ClassSystem::GetSkillPts(Stat classEnum){
 	return classSpec->second.skillPts;
 }
 
+const char* D20ClassSystem::GetClassShortHelp(Stat classCode){
+	return d20Stats.GetClassShortDesc(classCode);
+}
+
 void D20ClassSystem::GetClassSpecs(){
 	std::vector<int> _classEnums;
 	pythonClassIntegration.GetClassEnums( _classEnums);
-
+	std::sort(_classEnums.begin(), _classEnums.end());
 
 	for (auto it : _classEnums){
 
 		if (!pythonClassIntegration.IsEnabled(it))
 			continue;
+
+		classEnums.push_back(it);
 
 		auto &classSpec = classSpecs[it];
 

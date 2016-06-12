@@ -1,6 +1,6 @@
 #pragma once
 #include "python_integration.h"
-
+#include "common.h"
 
 enum class ClassSpecFunc : int {
 
@@ -35,6 +35,8 @@ public:
 	bool IsEnabled(int classEnum);
 	bool IsClassSkill(int classCode, int skillEnum);
 	int IsClassFeat(int classCode, int featEnum);
+
+	bool ReqsMet(const objHndl &handle, int classEnum);
 protected:
 	const char* GetFunctionName(EventId evt) override;
 };

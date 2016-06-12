@@ -291,6 +291,7 @@ public:
 	BOOL ButtonSetButtonState(int widgetId, int newState);
 	BOOL WidgetRemoveRegardParent(int widIdx);
 	BOOL WidgetAndWindowRemove(int widId);
+	BOOL WidgetRemove(int widId);
 	BOOL WidgetSetHidden(int widId, int hiddenState);
 	BOOL WidgetCopy(int widId, Widget* widgetOut);
 	int WidgetSet(int widId, const Widget* widg);
