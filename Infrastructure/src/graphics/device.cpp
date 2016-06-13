@@ -783,7 +783,8 @@ BlendStatePtr RenderingDevice::CreateBlendState(const BlendSpec &spec) {
   targetDesc.DestBlendAlpha = D3D11_BLEND_ONE;
 
   uint8_t writeMask = 0;
-  if (spec.writeAlpha) {
+  // Never overwrite the alpha channel with random stuff when blending is disabled
+  if (spec.writeAlpha && targetDesc.BlendEnable) {
     writeMask |= D3D11_COLOR_WRITE_ENABLE_ALPHA;
   }
   if (spec.writeRed) {
