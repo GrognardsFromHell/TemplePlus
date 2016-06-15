@@ -460,6 +460,7 @@
     <ClCompile Include="python\python_integration_feat.cpp">
       <Filter>python</Filter>
     </ClCompile>
+    <ClCompile Include="ui\ui_options.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -867,6 +868,7 @@
     <ClInclude Include="python\python_integration_feat.h">
       <Filter>python</Filter>
     </ClInclude>
+    <ClInclude Include="ui\ui_options.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

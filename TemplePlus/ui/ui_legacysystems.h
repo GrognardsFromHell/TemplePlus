@@ -363,15 +363,6 @@ public:
     const std::string &GetName() const override;
 };
 
-class UiOptions : public UiSystem {
-public:
-    static constexpr auto Name = "Options-UI";
-    UiOptions(const UiSystemConf &config);
-    ~UiOptions();
-    void ResizeViewport(const UiResizeArgs &resizeArgs) override;
-    const std::string &GetName() const override;
-};
-
 class UiManager : public UiSystem {
 public:
     static constexpr auto Name = "UI-Manager";
