@@ -14,6 +14,13 @@ public:
 	void ResizeViewport(const UiResizeArgs &resizeArgs) override;
 	const std::string &GetName() const override;
 
+	bool IsVisible() const {
+		return mVisible;
+	}
+	void Show(bool fromMainMenu);
+	void Hide();
+
 private:
 	MesFile::Content mText;
+	bool mVisible = false;
 };

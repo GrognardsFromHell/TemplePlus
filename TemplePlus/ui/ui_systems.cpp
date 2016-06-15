@@ -3,6 +3,7 @@
 
 #include "ui_systems.h"
 #include "ui_legacysystems.h"
+#include "ui_options.h"
 
 UiSystems* uiSystems = nullptr;
 
@@ -49,7 +50,7 @@ UiSystems::UiSystems(int width, int height)
 	mCamping = InitializeSystem<UiCamping>(config);
 	mHelpInventory = InitializeSystem<UiHelpInventory>(config);
 	mPartyQuickview = InitializeSystem<UiPartyQuickview>();
-	mOptions = InitializeSystem<UiOptions>(config);
+	mOptions = InitializeSystem<UiOptions>(width, height);
 	mManager = InitializeSystem<UiManager>(config);
 	mHelpManager = InitializeSystem<UiHelpManager>(config);
 	mSlider = InitializeSystem<UiSlider>(config);
@@ -161,3 +162,4 @@ std::unique_ptr<Type> UiSystems::InitializeSystem(Args&&... args) {
 
 	return std::move(result);
 }
+
