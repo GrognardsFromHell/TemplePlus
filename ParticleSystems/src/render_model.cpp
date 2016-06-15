@@ -29,13 +29,6 @@ namespace particles {
 
 	void ModelParticleRenderer::Render(PartSysEmitter &emitter) {
 
-		XMFLOAT4X4 worldMatrix;
-		if (!GetEmitterWorldMatrix(emitter, worldMatrix)) {
-			return;
-		}
-
-		mDevice.GetDevice()->SetVertexShaderConstantF(0, &worldMatrix._11, 4);
-
 		auto it = emitter.NewIterator();
 		auto totalCount = emitter.GetActiveCount();
 

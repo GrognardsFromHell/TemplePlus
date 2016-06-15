@@ -99,7 +99,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(TargetDir);$(SolutionDir)\dependencies\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>eastl.lib;psapi.lib;d3dcompiler.lib;turbojpeg-static_d.lib;d3d9.lib;temple.lib;swscale.lib;avcodec.lib;avformat.lib;avutil.lib;Infrastructure.lib;ParticleSystems.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d2d1.lib;dwrite.lib;dxguid.lib;d3d11.lib;dxgi.lib;d3dcompiler.lib;eastl.lib;psapi.lib;turbojpeg-static_d.lib;temple.lib;swscale.lib;avcodec.lib;avformat.lib;avutil.lib;Infrastructure.lib;ParticleSystems.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
@@ -133,7 +133,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(TargetDir);$(SolutionDir)\dependencies\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>eastl.lib;psapi.lib;d3dcompiler.lib;turbojpeg-static.lib;d3d9.lib;temple.lib;swscale.lib;avcodec.lib;avformat.lib;avutil.lib;Infrastructure.lib;ParticleSystems.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d2d1.lib;dwrite.lib;dxguid.lib;d3d11.lib;dxgi.lib;d3dcompiler.lib;eastl.lib;psapi.lib;turbojpeg-static.lib;temple.lib;swscale.lib;avcodec.lib;avformat.lib;avutil.lib;Infrastructure.lib;ParticleSystems.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>

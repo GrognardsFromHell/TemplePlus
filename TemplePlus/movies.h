@@ -6,7 +6,7 @@
 struct SubtitleLine {
 	uint32_t startMs;
 	uint32_t durationMs;
-	D3DCOLOR color;
+	XMCOLOR color;
 	char *fontname;
 	char *text;
 	SubtitleLine *nextLine;

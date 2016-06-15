@@ -43,15 +43,15 @@ LightningRenderer* LightningRenderHooks::renderer = nullptr;
 
 #pragma pack(push, 1)
 struct LightningVertex {
-	XMFLOAT3 pos;
-	XMFLOAT3 normal;
+	XMFLOAT4 pos;
+	XMFLOAT4 normal;
 	XMCOLOR diffuse;
 	XMFLOAT2 texCoord;
 };
 #pragma pack(pop)
 
 LightningRenderer::LightningRenderer(MdfMaterialFactory& mdfFactory,
-	RenderingDevice& device) : mMdfFactory(mdfFactory), mDevice(device) {
+	RenderingDevice& device) : mMdfFactory(mdfFactory), mDevice(device), mBufferBinding(device.CreateMdfBufferBinding()) {
 
 	mMaterial = mdfFactory.LoadMaterial("art/meshes/lightning.mdf");
 
@@ -59,8 +59,8 @@ LightningRenderer::LightningRenderer(MdfMaterialFactory& mdfFactory,
 	mVertexBuffer = device.CreateEmptyVertexBuffer(sizeof(LightningVertex) * 1200);
 
 	mBufferBinding.AddBuffer(mVertexBuffer, 0, sizeof(LightningVertex))
-		.AddElement(VertexElementType::Float3, VertexElementSemantic::Position)
-		.AddElement(VertexElementType::Float3, VertexElementSemantic::Normal)
+		.AddElement(VertexElementType::Float4, VertexElementSemantic::Position)
+		.AddElement(VertexElementType::Float4, VertexElementSemantic::Normal)
 		.AddElement(VertexElementType::Color, VertexElementSemantic::Color)
 		.AddElement(VertexElementType::Float2, VertexElementSemantic::TexCoord);
 
@@ -72,6 +72,8 @@ LightningRenderer::~LightningRenderer() {
 }
 
 void LightningRenderer::Render() {
+	gfx::PerfGroup perfGroup(mDevice, "Lightning PFX");
+
 	static auto render_pfx_lightning_related = temple::GetPointer<int()>(0x10087e60);
 	render_pfx_lightning_related();
 }
@@ -81,39 +83,38 @@ void LightningRenderer::Render(size_t vertexCount, XMFLOAT4* positions, XMFLOAT4
 	if (!primCount)
 		return;
 
-	auto vbLock = mVertexBuffer->Lock<LightningVertex>(vertexCount);
+	auto vbLock(mDevice.Map<LightningVertex>(*mVertexBuffer));
 	
 	for (size_t i = 0; i < vertexCount; ++i) {
 		auto &vertex = vbLock[i];
 		vertex.pos.x = positions[i].x;
 		vertex.pos.y = positions[i].y;
 		vertex.pos.z = positions[i].z;
+		vertex.pos.w = 1;
 
 		vertex.normal.x = normals[i].x;
 		vertex.normal.y = normals[i].y;
 		vertex.normal.z = normals[i].z;
+		vertex.normal.w = 0;
 
 		vertex.diffuse = diffuse[i];
 
 		vertex.texCoord = uv[i];
 	}
 
-	vbLock.Unlock();
+	vbLock.Unmap();
 
 	mIndexBuffer->Update(gsl::as_span(indices, primCount * 3));
 
 	mBufferBinding.Bind();
-	mDevice.GetDevice()->SetIndices(mIndexBuffer->GetBuffer());
+	mDevice.SetIndexBuffer(*mIndexBuffer);
 
 	mMaterial->Bind(mDevice, {});
 
-	mDevice.GetDevice()->DrawIndexedPrimitive(
-		D3DPT_TRIANGLELIST,
-		0,
-		0,
+	mDevice.DrawIndexed(
+		gfx::PrimitiveType::TriangleList,
 		vertexCount,
-		0,
-		primCount);
+		primCount * 3);
 
 }
 

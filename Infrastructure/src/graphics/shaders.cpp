@@ -9,51 +9,65 @@
 #include "shaders_compiler.h"
 
 namespace gfx {
-	
-	template <>
-	void Shader<IDirect3DPixelShader9>::CreateShader() {
-		mDeviceShader.Release();
 
-		auto device = mDevice.GetDevice();
+	template<typename T>
+	void Shader<T>::PrintConstantBuffers()
+	{
+		CComPtr<ID3D11ShaderReflection> reflector;
+		D3DVERIFY(D3D11Reflect(code.data(), code.size(), &reflector));
 
-		if (D3DLOG(device->CreatePixelShader((DWORD*)&mCompiledShader[0], &mDeviceShader)) != D3D_OK) {
-			throw TempleException("Unable to create pixel shader.");
+		D3D11_SHADER_DESC shaderDesc;
+		D3DVERIFY(reflector->GetDesc(&shaderDesc));
+
+		logger->info("Vertex Shader '{}' has {} constant buffers:", mName, shaderDesc.ConstantBuffers);
+
+		for (auto i = 0u; i < shaderDesc.ConstantBuffers; i++) {
+			auto cbufferDesc = reflector->GetConstantBufferByIndex(i);
+			D3D11_SHADER_BUFFER_DESC bufferDesc;
+			D3DVERIFY(cbufferDesc->GetDesc(&bufferDesc));
+
+			logger->info("  Constant Buffer #{} '{}'", i, bufferDesc.Name);
+
+			for (auto j = 0u; j < bufferDesc.Variables; j++) {
+				auto variable = cbufferDesc->GetVariableByIndex(j);
+				D3D11_SHADER_VARIABLE_DESC variableDesc;
+				D3DVERIFY(variable->GetDesc(&variableDesc));
+
+				logger->info("    {} @ {}", variableDesc.Name, variableDesc.StartOffset);
+			}
 		}
 	}
 
 	template <>
-	void Shader<IDirect3DPixelShader9>::Bind() {
-		auto device = mDevice.GetDevice();
-		D3DLOG(device->SetPixelShader(mDeviceShader));
-	}
-
-	template <>
-	void Shader<IDirect3DPixelShader9>::Unbind() {
-		auto device = mDevice.GetDevice();
-		D3DLOG(device->SetPixelShader(nullptr));
-	}
-
-	template <>
-	void Shader<IDirect3DVertexShader9>::CreateShader() {
+	void Shader<ID3D11PixelShader>::CreateShader() {
 		mDeviceShader.Release();
 
-		auto device = mDevice.GetDevice();
-
-		if (D3DLOG(device->CreateVertexShader((DWORD*)&mCompiledShader[0], &mDeviceShader)) != D3D_OK) {
-			throw TempleException("Unable to create vertex shader.");
-		}
+		D3DVERIFY(mDevice.mD3d11Device->CreatePixelShader(&mCompiledShader[0], mCompiledShader.size(), nullptr, &mDeviceShader));
 	}
 
 	template <>
-	void Shader<IDirect3DVertexShader9>::Bind() {
-		auto device = mDevice.GetDevice();
-		D3DLOG(device->SetVertexShader(mDeviceShader));
+	void Shader<ID3D11PixelShader>::Bind() {
+		mDevice.mContext->PSSetShader(mDeviceShader, nullptr, 0);
 	}
 
 	template <>
-	void Shader<IDirect3DVertexShader9>::Unbind() {
-		auto device = mDevice.GetDevice();
-		D3DLOG(device->SetVertexShader(nullptr));
+	void Shader<ID3D11PixelShader>::Unbind() {
+		mDevice.mContext->PSSetShader(nullptr, nullptr, 0);
+	}
+
+	template <>
+	void Shader<ID3D11VertexShader>::CreateShader() {
+		D3DVERIFY(mDevice.mD3d11Device->CreateVertexShader(&mCompiledShader[0], mCompiledShader.size(), nullptr, &mDeviceShader));
+	}
+
+	template <>
+	void Shader<ID3D11VertexShader>::Bind() {
+		mDevice.mContext->VSSetShader(mDeviceShader, nullptr, 0);
+	}
+
+	template <>
+	void Shader<ID3D11VertexShader>::Unbind() {
+		mDevice.mContext->PSSetShader(nullptr, nullptr, 0);
 	}
 
 	template<typename T>

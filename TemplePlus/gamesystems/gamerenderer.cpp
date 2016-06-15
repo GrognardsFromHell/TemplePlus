@@ -198,6 +198,8 @@ struct PreciseSectorRows {
 
 void GameRenderer::Render() {
 
+	gfx::PerfGroup perfGroup(mRenderingDevice, "Game Renderer");
+
   /*
   Without this call, the ground JPGs will not be rendered.
   */
@@ -252,8 +254,6 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
 
     renderFuncs.PerformFogChecks();
 
-	mRenderingDevice.GetDevice()->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
-
     mGameSystems.GetClipping().Render();
     // renderFuncs.RenderClipping();
 
@@ -268,8 +268,6 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
 	mLightningRenderer->Render();
 	// renderFuncs.RenderPfxLighting();
 
-	mRenderingDevice.GetDevice()->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, FALSE);
-
 	mParticleSysRenderer->Render();
     // renderFuncs.RenderPartSys();
 
@@ -281,7 +279,8 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
     /*graphics->EnableLighting();
     renderFuncs.RenderOcclusion(info);
     graphics->DisableLighting();*/
-
+	
+	gfx::PerfGroup perfGroup(mRenderingDevice, "World UI");
     renderFuncs.RenderUiRelated(info);
     renderFuncs.RenderTextBubbles(info);
     renderFuncs.RenderTextFloaters(info);

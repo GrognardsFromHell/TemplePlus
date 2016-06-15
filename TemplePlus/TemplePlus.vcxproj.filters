@@ -414,6 +414,8 @@
     <ClCompile Include="python\python_integration_class_spec.cpp">
       <Filter>python</Filter>
     </ClCompile>
+    <ClCompile Include="gameview.cpp" />
+    <ClCompile Include="fonts\fonts_mapping.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -779,6 +781,9 @@
     <ClInclude Include="python\python_integration_class_spec.h">
       <Filter>python</Filter>
     </ClInclude>
+    <ClInclude Include="tig\tig_keyboard.h" />
+    <ClInclude Include="gameview.h" />
+    <ClInclude Include="fonts\fonts_mapping.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -818,5 +823,8 @@
     <ResourceCompile Include="resource.rc">
       <Filter>resources</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="manifest.xml" />
   </ItemGroup>
 </Project>

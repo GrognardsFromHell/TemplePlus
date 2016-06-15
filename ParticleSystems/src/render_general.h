@@ -23,6 +23,6 @@ namespace particles {
 
 	inline static DWORD CoerceToInteger(float value) { return *(DWORD *)&value; }
 	
-	D3DCOLOR GetParticleColor(const PartSysEmitter &emitter, int particleIdx);
+	XMCOLOR GetParticleColor(const PartSysEmitter &emitter, int particleIdx);
 
 }

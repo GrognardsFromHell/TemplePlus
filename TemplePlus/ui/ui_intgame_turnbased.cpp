@@ -617,7 +617,7 @@ void UiIntegameTurnbasedRepl::RenderAooIndicator(const LocAndOffsets& location, 
 	auto x = (float)(screenPos.x - texWidth / 2);
 	auto y = (float)(screenPos.y - texHeight / 2);
 
-	tig->GetShapeRenderer2d().DrawRectangle(x, y, texWidth, texHeight, texture);
+	tig->GetShapeRenderer2d().DrawRectangle(x, y, texWidth, texHeight, *texture);
 
 }
 

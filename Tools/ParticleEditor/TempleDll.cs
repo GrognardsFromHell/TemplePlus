@@ -1,15 +1,13 @@
-﻿using SharpDX.Direct3D9;
-using System;
+﻿using System;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Windows;
 
 namespace ParticleEditor
 {
     public class TempleDll : IDisposable
     {
-        public TempleDll(string path, Device device)
+        public TempleDll(string path)
         {
             if (Instance != null)
             {
@@ -29,7 +27,7 @@ namespace ParticleEditor
                 );
             }
 
-            Handle = TempleDll_Load(path, tpData, device.NativePointer);
+            Handle = TempleDll_Load(path, tpData);
             if (Handle == IntPtr.Zero)
             {
                 throw new InvalidOperationException(
@@ -44,6 +42,19 @@ namespace ParticleEditor
         public static TempleDll Instance { get; private set; }
         public static string LastError { get; internal set; }
 
+        public float Scale
+        {
+            set
+            {
+                TempleDll_SetScale(Handle, value);
+            }
+        }
+
+        public void CenterOn(float x, float y, float z)
+        {
+            TempleDll_CenterOn(Handle, x, y, z);
+        }
+
         public void Dispose()
         {
             if (Instance == this)
@@ -57,13 +68,35 @@ namespace ParticleEditor
             }
         }
 
+        public void SetRenderTarget(IntPtr surface)
+        {
+            TempleDll_SetRenderTarget(Handle, surface);
+        }
+
+        public void Flush()
+        {
+            TempleDll_Flush(Handle);
+        }
+
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        private static extern IntPtr TempleDll_Load(string filename, string tpDataPath, IntPtr device);
+        private static extern IntPtr TempleDll_Load(string filename, string tpDataPath);
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr TempleDll_GetLastError();
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         private static extern void TempleDll_Unload(IntPtr handle);
+
+        [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        private static extern void TempleDll_SetRenderTarget(IntPtr handle, IntPtr surface);
+
+        [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        private static extern void TempleDll_Flush(IntPtr handle);
+
+        [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        private static extern void TempleDll_SetScale(IntPtr handle, float scale);
+
+        [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        private static extern void TempleDll_CenterOn(IntPtr handle, float x, float y, float z);
     }
 }

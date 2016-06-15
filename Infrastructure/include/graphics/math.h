@@ -18,6 +18,17 @@ using DirectX::XM_PIDIV4;
 
 #include <DirectXPackedVector.h>
 using DirectX::PackedVector::XMCOLOR;
+using DirectX::PackedVector::XMLoadColor;
+using DirectX::PackedVector::XMStoreColor;
+
+inline XMCOLOR XMCOLOR_ARGB(uint8_t a, uint8_t r, uint8_t g, uint8_t b) {
+	XMCOLOR result;
+	result.a = a;
+	result.r = r;
+	result.g = g;
+	result.b = b;
+	return result;
+}
 
 struct ColorRect {
 	XMCOLOR topLeft;

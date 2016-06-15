@@ -19,7 +19,7 @@ struct FadeAndTeleportArgs {
 	int field24;
 	int field28;
 	int field2c;
-	D3DCOLOR color = D3DCOLOR_ARGB(0xff, 0, 0, 0);
+	XMCOLOR color = XMCOLOR(0, 0, 0, 1);
 	int field34;
 	float somefloat;
 	int field3c;
@@ -41,7 +41,7 @@ struct FadeAndTeleportArgs {
 
 struct FadeArgs {
 	int field0;
-	D3DCOLOR color;
+	XMCOLOR color;
 	int field8;
 	float transitionTime;
 	int field10;

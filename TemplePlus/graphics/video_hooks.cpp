@@ -155,7 +155,7 @@ int VideoFixes::PresentFrame() {
 }
 
 struct TempleTextureType {
-	D3DFORMAT d3dFormat;
+	uint32_t d3dFormat;
 	int fallbackIndex;
 };
 
@@ -211,7 +211,7 @@ int VideoFixes::ChangeVideoSettings(int adapter, int nWidth, int nHeight, int bp
 	bool antiAliasing = (flags & 1);
 	config.antialiasing = antiAliasing;
 	config.Save();
-	renderingDevice->SetAntiAliasing(antiAliasing);
+	renderingDevice->SetAntiAliasing(antiAliasing, config.msaaSamples, config.msaaQuality);
 
 	return TRUE;
 }
@@ -302,8 +302,9 @@ void LegacyResourceManager::CreateResources(RenderingDevice& device) {
 	videoFuncs.buffersFreed = false;
 
 	// Store back buffer size
-	videoFuncs.backbufferWidth = device.GetRenderWidth();
-	videoFuncs.backbufferHeight = device.GetRenderHeight();
+	auto size = device.GetBackBufferSize();
+	videoFuncs.backbufferWidth = size.width;
+	videoFuncs.backbufferHeight = size.height;
 
 }
 
@@ -370,7 +371,7 @@ LegacyVideoSystem::LegacyVideoSystem(MainWindow& mainWindow, RenderingDevice& gr
 	video->enableMipMaps = config.mipmapping;
 
 	// This is only really used by alloc_texture_mem and the init func
-	video->adapterformat = D3DFMT_X8R8G8B8;
+	video->adapterformat = 0; // Unused
 	video->current_bpp = 32;
 
 	// memcpy(&video->screenSizeRect, &windowRect, sizeof(RECT));
@@ -427,7 +428,7 @@ LegacyVideoSystem::LegacyVideoSystem(MainWindow& mainWindow, RenderingDevice& gr
 
 	video->unusedCap = 1; // Seems to be ref'd from light_init
 
-	__asm mov eax, D3DFMT_X8R8G8B8
+	__asm mov eax, 22 // Was: D3DFMT_X8R8G8B8
 	if (!videoFuncs.tig_d3d_init_handleformat()) {
 		logger->error("Format init failed.");
 	}

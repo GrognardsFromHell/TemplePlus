@@ -29,13 +29,14 @@ struct AasRenderSubmeshData {
 	IndexBufferPtr idxBuffer;
 	BufferBinding binding;
 
-	AasRenderSubmeshData() = default;
+	AasRenderSubmeshData(RenderingDevice &device) : binding(device.CreateMdfBufferBinding()) {
+	}
 
 	NO_COPY_OR_MOVE(AasRenderSubmeshData);
 };
 
 struct AasRenderData {
-	std::array<AasRenderSubmeshData, 16> submeshes;
+	std::array<std::unique_ptr<AasRenderSubmeshData>, 16> submeshes;
 
 	AasRenderData() = default;
 	NO_COPY_OR_MOVE(AasRenderData);
@@ -52,8 +53,8 @@ AasRenderer::AasRenderer(AasAnimatedModelFactory &aasFactory,
 	  mShapeRenderer3d(shapeRenderer3d),
 	  mAasFactory(aasFactory),
 	  mGeometryShadowMaterial(CreateGeometryShadowMaterial(device)),
-	  mShadowTarget(device.CreateRenderTargetTexture(D3DFMT_A8R8G8B8, ShadowMapWidth, ShadowMapHeight)),
-	  mShadowTargetTmp(device.CreateRenderTargetTexture(D3DFMT_A8R8G8B8, ShadowMapWidth, ShadowMapHeight)),
+	  mShadowTarget(device.CreateRenderTargetTexture(BufferFormat::A8R8G8B8, ShadowMapWidth, ShadowMapHeight)),
+	  mShadowTargetTmp(device.CreateRenderTargetTexture(BufferFormat::A8R8G8B8, ShadowMapWidth, ShadowMapHeight)),
 	  mShadowMapMaterial(CreateShadowMapMaterial(device)),
 	  mGaussBlurHor(CreateGaussBlurMaterial(device, mShadowTarget, true)),
 	  mGaussBlurVer(CreateGaussBlurMaterial(device, mShadowTargetTmp, false)) {
@@ -79,10 +80,14 @@ AasRenderer::~AasRenderer() {
 
 AasRenderSubmeshData& AasRenderer::GetSubmeshData(AasRenderData& renderData, int submeshId, Submesh & submesh)
 {
-	auto& submeshData = renderData.submeshes[submeshId];
+	if (!renderData.submeshes[submeshId]) {
+		renderData.submeshes[submeshId] = std::make_unique<AasRenderSubmeshData>(mDevice);
+	}
+
+	auto& submeshData = *renderData.submeshes[submeshId];
 	if (!submeshData.created) {
-		submeshData.posBuffer = mDevice.CreateVertexBuffer(submesh.GetPositions());
-		submeshData.normalsBuffer = mDevice.CreateVertexBuffer(submesh.GetNormals());
+		submeshData.posBuffer = mDevice.CreateVertexBuffer(submesh.GetPositions(), false);
+		submeshData.normalsBuffer = mDevice.CreateVertexBuffer(submesh.GetNormals(), false);
 		submeshData.uvBuffer = mDevice.CreateVertexBuffer(submesh.GetUV());
 		submeshData.idxBuffer = mDevice.CreateIndexBuffer(submesh.GetIndices());
 
@@ -104,43 +109,41 @@ AasRenderSubmeshData& AasRenderer::GetSubmeshData(AasRenderData& renderData, int
 
 Material AasRenderer::CreateGeometryShadowMaterial(gfx::RenderingDevice &device)
 {
-	BlendState blendState;
+	BlendSpec blendState;
 	blendState.blendEnable = true;
-	blendState.srcBlend = D3DBLEND_SRCALPHA;
-	blendState.destBlend = D3DBLEND_INVSRCALPHA;
-	RasterizerState rasterizerState;
-	rasterizerState.cullMode = D3DCULL_NONE;
-	DepthStencilState depthStencilState;
+	blendState.srcBlend = BlendOperand::SrcAlpha;
+	blendState.destBlend = BlendOperand::InvSrcAlpha;
+	RasterizerSpec rasterizerState;
+	rasterizerState.cullMode = CullMode::None;
+	DepthStencilSpec depthStencilState;
 	depthStencilState.depthWrite = false;
 
 	auto vs{ device.GetShaders().LoadVertexShader("shadow_geom_vs") };
 	auto ps{ device.GetShaders().LoadPixelShader("diffuse_only_ps") };
 
-	return Material(blendState, depthStencilState, rasterizerState, {}, vs, ps);
+	return device.CreateMaterial(blendState, depthStencilState, rasterizerState, {}, vs, ps);
 }
 
 Material AasRenderer::CreateShadowMapMaterial(gfx::RenderingDevice &device) {
-	BlendState blendState;
-	RasterizerState rasterizerState;
-	DepthStencilState depthStencilState;
+	DepthStencilSpec depthStencilState;
 	depthStencilState.depthEnable = false;
 	auto vs{ device.GetShaders().LoadVertexShader("shadowmap_geom_vs") };
 	auto ps{ device.GetShaders().LoadPixelShader("diffuse_only_ps") };
 
-	return { blendState, depthStencilState, rasterizerState,{}, vs, ps };
+	return device.CreateMaterial({}, depthStencilState, {}, {}, vs, ps);
 }
 
 Material AasRenderer::CreateGaussBlurMaterial(gfx::RenderingDevice &device, const gfx::RenderTargetTexturePtr &texturePtr, bool horizontal) {
-	BlendState blendState;
-	SamplerState samplerState;
-	samplerState.addressU = D3DTADDRESS_CLAMP;
-	samplerState.addressV = D3DTADDRESS_CLAMP;
-	samplerState.magFilter = D3DTEXF_LINEAR;
-	samplerState.minFilter = D3DTEXF_LINEAR;
-	samplerState.mipFilter = D3DTEXF_LINEAR;
-	RasterizerState rasterizerState;
-	rasterizerState.cullMode = D3DCULL_NONE;
-	DepthStencilState depthStencilState;
+	BlendSpec blendState;
+	SamplerSpec samplerState;
+	samplerState.addressU = TextureAddress::Clamp;
+	samplerState.addressV = TextureAddress::Clamp;
+	samplerState.magFilter = TextureFilterType::Linear;
+	samplerState.minFilter = TextureFilterType::Linear;
+	samplerState.mipFilter = TextureFilterType::Linear;
+	RasterizerSpec rasterizerState;
+	rasterizerState.cullMode = CullMode::None;
+	DepthStencilSpec depthStencilState;
 	depthStencilState.depthEnable = false;
 
 	auto vs(device.GetShaders().LoadVertexShader("gaussian_blur_vs"));
@@ -150,10 +153,10 @@ Material AasRenderer::CreateGaussBlurMaterial(gfx::RenderingDevice &device, cons
 	}
 	auto ps(device.GetShaders().LoadPixelShader("gaussian_blur_ps", horDefines));
 
-	std::vector<MaterialSamplerBinding> samplers {
+	std::vector<MaterialSamplerSpec> samplers {
 		{ texturePtr, samplerState }
 	};
-	return { blendState, depthStencilState, rasterizerState, samplers, vs, ps };
+	return device.CreateMaterial(blendState, depthStencilState, rasterizerState, samplers, vs, ps);
 }
 
 void AasRenderer::RecalcNormals(int vertexCount, const XMFLOAT4* pos, XMFLOAT4* normals, int primCount, const uint16_t* indices) {
@@ -246,10 +249,10 @@ void AasRenderer::Render(gfx::AnimatedModel *model,
 		auto &submeshData = GetSubmeshData(*renderData, i, *submesh);
 		submeshData.binding.Bind();
 
-		auto d3d = mDevice.GetDevice();
-		d3d->SetIndices(submeshData.idxBuffer->GetBuffer());
-		D3DLOG(d3d->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, submesh->GetVertexCount(), 0, submesh->GetPrimitiveCount()));
-
+		mDevice.SetIndexBuffer(*submeshData.idxBuffer);
+		mDevice.DrawIndexed(gfx::PrimitiveType::TriangleList, 
+			submesh->GetVertexCount(), 
+			submesh->GetPrimitiveCount() * 3);
 	}
 
 }
@@ -270,11 +273,21 @@ void AasRenderer::RenderWithoutMaterial(gfx::AnimatedModel *model,
 		auto &submeshData = GetSubmeshData(*renderData, i, *submesh);
 		submeshData.binding.Bind();
 
-		auto d3d = mDevice.GetDevice();
-		d3d->SetIndices(submeshData.idxBuffer->GetBuffer());
-		D3DLOG(d3d->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, submesh->GetVertexCount(), 0, submesh->GetPrimitiveCount()));
+		mDevice.SetIndexBuffer(*submeshData.idxBuffer);
+		mDevice.DrawIndexed(
+			gfx::PrimitiveType::TriangleList,
+			submesh->GetVertexCount(), 
+			submesh->GetPrimitiveCount() * 3
+		);
 	}
 }
+
+struct ShadowGlobals {
+	XMFLOAT4X4 projMatrix;
+	XMFLOAT4 globalLightDir;
+	XMFLOAT4 offsetZ;
+	XMFLOAT4 alpha;
+};
 
 void AasRenderer::RenderGeometryShadow(gfx::AnimatedModel * model, 
 	const gfx::AnimatedModelParams & params, 
@@ -290,13 +303,12 @@ void AasRenderer::RenderGeometryShadow(gfx::AnimatedModel * model,
 
 	mDevice.SetMaterial(mGeometryShadowMaterial);
 
-	auto d3d = mDevice.GetDevice();
-	d3d->SetVertexShaderConstantF(0, &mDevice.GetCamera().GetViewProj()._11, 4);
-	d3d->SetVertexShaderConstantF(4, &globalLight.dir.x, 1);
-	XMFLOAT4 floats{ params.offsetZ, 0, 0, 0 };
-	d3d->SetVertexShaderConstantF(5, &floats.x, 1);
-	floats.x = alpha;
-	d3d->SetVertexShaderConstantF(6, &floats.x, 1);
+	ShadowGlobals globals;
+	globals.projMatrix = mDevice.GetCamera().GetViewProj();
+	globals.globalLightDir = globalLight.dir;
+	globals.offsetZ = { params.offsetZ, 0, 0, 0 };
+	globals.alpha = { alpha, 0, 0, 0 };
+	mDevice.SetVertexShaderConstants(0, globals);
 
 	auto materialIds(model->GetSubmeshes());
 	for (size_t i = 0; i < materialIds.size(); ++i) {
@@ -304,12 +316,22 @@ void AasRenderer::RenderGeometryShadow(gfx::AnimatedModel * model,
 		
 		auto &submeshData = GetSubmeshData(*renderData, i, *submesh);
 		submeshData.binding.Bind();
-				
-		d3d->SetIndices(submeshData.idxBuffer->GetBuffer());
-		D3DLOG(d3d->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, submesh->GetVertexCount(), 0, submesh->GetPrimitiveCount()));
+			
+		mDevice.SetIndexBuffer(*submeshData.idxBuffer);
+		mDevice.DrawIndexed(gfx::PrimitiveType::TriangleList, 
+			submesh->GetVertexCount(), 
+			submesh->GetPrimitiveCount() * 3
+		);
 	}
 
 }
+
+struct ShadowShaderGlobals {
+	XMFLOAT4 shadowMapWorldPos;
+	XMFLOAT4 lightDir;
+	XMFLOAT4 height;
+	XMFLOAT4 color;
+};
 
 void AasRenderer::RenderShadowMapShadow(gsl::span<gfx::AnimatedModel*> models,
 										gsl::span<const gfx::AnimatedModelParams*> modelParams,
@@ -341,25 +363,24 @@ void AasRenderer::RenderShadowMapShadow(gsl::span<gfx::AnimatedModel*> models,
 		shadowMapWorldHeight = lightDir.z + height + 4 * radius;
 	}
 
-	CComPtr<IDirect3DSurface9> currentTarget;
-	D3DLOG(mDevice.GetDevice()->GetRenderTarget(0, &currentTarget));
-	D3DLOG(mDevice.GetDevice()->SetRenderTarget(0, mShadowTarget->GetSurface()));
-	CComPtr<IDirect3DSurface9> depthStencil;
-	mDevice.GetDevice()->GetDepthStencilSurface(&depthStencil);
-	mDevice.GetDevice()->SetDepthStencilSurface(nullptr);
+	mDevice.PushRenderTarget(mShadowTarget, nullptr);
 
 	mDevice.SetMaterial(mShadowMapMaterial);
-	// Set shader params
-	XMFLOAT4 floats{ shadowMapWorldX, shadowMapWorldZ, shadowMapWorldWidth, shadowMapWorldHeight };
-	mDevice.GetDevice()->SetVertexShaderConstantF(0, &floats.x, 1);
-	mDevice.GetDevice()->SetVertexShaderConstantF(1, &lightDir.x, 1);
-	floats.x = center.y;
-	mDevice.GetDevice()->SetVertexShaderConstantF(2, &floats.x, 1);
-	XMCOLOR color(0, 0, 0, 0.5f);
-	XMStoreFloat4(&floats, PackedVector::XMLoadColor(&color));
-	mDevice.GetDevice()->SetVertexShaderConstantF(4, &floats.x, 1);
 
-	D3DLOG(mDevice.GetDevice()->Clear(0, nullptr, D3DCLEAR_TARGET, 0, 0, 0));
+	// Set shader params
+	ShadowShaderGlobals globals;
+	globals.shadowMapWorldPos = XMFLOAT4(
+		shadowMapWorldX,
+		shadowMapWorldZ,
+		shadowMapWorldWidth,
+		shadowMapWorldHeight
+	);
+	globals.lightDir = lightDir;
+	globals.height.x = center.y;
+	globals.color = XMFLOAT4(0, 0, 0, 0.5f);
+	mDevice.SetVertexShaderConstants(0, globals);
+
+	mDevice.ClearCurrentColorTarget(XMCOLOR(0, 0, 0, 0));
 
 	for (int i = 0; i < models.size(); ++i) {
 		RenderWithoutMaterial(models[i], *modelParams[i]);
@@ -367,25 +388,26 @@ void AasRenderer::RenderShadowMapShadow(gsl::span<gfx::AnimatedModel*> models,
 		
 	if (softShadows) {
 		mDevice.SetMaterial(mGaussBlurHor);
-		D3DLOG(mDevice.GetDevice()->SetRenderTarget(0, mShadowTargetTmp->GetSurface()));
+		mDevice.PushRenderTarget(mShadowTargetTmp, nullptr);
 		mShapeRenderer2d.DrawFullScreenQuad();
+		mDevice.PopRenderTarget();
 
+		mDevice.PushRenderTarget(mShadowTarget, nullptr);
 		mDevice.SetMaterial(mGaussBlurVer);
-		D3DLOG(mDevice.GetDevice()->SetRenderTarget(0, mShadowTarget->GetSurface()));
 		mShapeRenderer2d.DrawFullScreenQuad();
+		mDevice.PopRenderTarget();
 	}
 	
-	D3DLOG(mDevice.GetDevice()->SetRenderTarget(0, currentTarget));
-	D3DLOG(mDevice.GetDevice()->SetDepthStencilSurface(depthStencil));
+	mDevice.PopRenderTarget();
 
 	auto shadowMapWorldBottom = shadowMapWorldZ + shadowMapWorldHeight;
 	auto shadowMapWorldRight = shadowMapWorldX + shadowMapWorldWidth;
 
 	std::array<gfx::ShapeVertex3d, 4> corners;
-	corners[0].pos = { shadowMapWorldX, center.y, shadowMapWorldZ };
-	corners[1].pos = { shadowMapWorldX, center.y, shadowMapWorldBottom };
-	corners[2].pos = { shadowMapWorldRight, center.y, shadowMapWorldBottom };
-	corners[3].pos = { shadowMapWorldRight, center.y, shadowMapWorldZ };
+	corners[0].pos = { shadowMapWorldX, center.y, shadowMapWorldZ, 1 };
+	corners[1].pos = { shadowMapWorldX, center.y, shadowMapWorldBottom, 1 };
+	corners[2].pos = { shadowMapWorldRight, center.y, shadowMapWorldBottom, 1 };
+	corners[3].pos = { shadowMapWorldRight, center.y, shadowMapWorldZ, 1 };
 	corners[0].uv = { 0, 0 };
 	corners[1].uv = { 0, 1 };
 	corners[2].uv = { 1, 1 };

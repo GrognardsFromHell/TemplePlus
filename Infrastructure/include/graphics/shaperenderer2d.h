@@ -7,13 +7,12 @@
 #include "graphics/math.h"
 #include "infrastructure/macros.h"
 
-struct IDirect3DTexture9;
-
 namespace gfx {
 	using MdfRenderMaterialPtr = std::shared_ptr<class MdfRenderMaterial>;
 	
 	class RenderingDevice;
-	using TextureRef = std::shared_ptr<class Texture>;
+	class Texture;
+	using TextureRef = std::shared_ptr<Texture>;
 	
 	struct Line2d {
 		XMFLOAT2 from;
@@ -28,7 +27,8 @@ namespace gfx {
 
 #pragma pack(push, 1)
 	struct Vertex2d {
-		XMFLOAT3 pos;
+		XMFLOAT4 pos;
+		XMFLOAT4 normal;
 		XMCOLOR diffuse;
 		XMFLOAT2 uv;
 	};
@@ -42,20 +42,17 @@ namespace gfx {
 		explicit ShapeRenderer2d(RenderingDevice& g);
 		~ShapeRenderer2d();
 
-		void DrawRectangle(
-			float x, float y, float width, float height,
-			const TextureRef& texture,
-			uint32_t color = 0xFFFFFFFF
-			);
-
-		void DrawRectangle(
-			float x, float y, float width, float height,
-			uint32_t color
-			);
+		void DrawRectangle(float x, float y, float width, float height, gfx::Texture& texture, uint32_t color = 0xFFFFFFFF) {
+			DrawRectangle(x, y, width, height, &texture, color);
+		}
+		
+		void DrawRectangle(float x, float y, float width, float height, uint32_t color) {
+			DrawRectangle(x, y, width, height, nullptr, color);
+		}
 
 		void DrawRectangle(gsl::span<Vertex2d, 4> corners,
-			IDirect3DTexture9* texture,
-			IDirect3DTexture9* mask = nullptr,
+			gfx::Texture* texture,
+			gfx::Texture* mask = nullptr,
 			bool wrap = false,
 			bool blending = true);
 
@@ -83,6 +80,13 @@ namespace gfx {
 		NO_COPY_OR_MOVE(ShapeRenderer2d);
 
 	private:
+
+		void DrawRectangle(
+			float x, float y, float width, float height,
+			gfx::Texture* texture,
+			uint32_t color = 0xFFFFFFFF
+		);
+
 		struct Impl;
 		std::unique_ptr<Impl> mImpl;
 	};

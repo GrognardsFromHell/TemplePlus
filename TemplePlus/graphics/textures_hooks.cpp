@@ -135,8 +135,7 @@ int TexturesHooks::LoadTexture(int textureId, TigTextureRegistryEntry* textureOu
 		return 17;
 	}
 
-	auto deviceTexture = texture->GetDeviceTexture();
-	if (!deviceTexture) {
+	if (!texture->GetResourceView()) {
 		// Loading failed...
 		return 17;
 	}

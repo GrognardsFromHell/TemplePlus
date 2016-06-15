@@ -14,13 +14,18 @@ namespace gfx {
 
 	template<typename T>
 	class Shader {
+		friend class BufferBinding;
 	public:
-		Shader(RenderingDevice &device, const std::string &name, const std::vector<uint8_t> &compiledShader)
+		Shader(RenderingDevice &device, 
+			const std::string &name, 
+			const std::vector<uint8_t> &compiledShader)
 			: mDevice(device), mName(name), mCompiledShader(compiledShader) {
 		}
 
 		~Shader() {
 		}
+
+		void PrintConstantBuffers();
 
 		void CreateShader();
 		void FreeShader() {
@@ -37,9 +42,9 @@ namespace gfx {
 		std::vector<uint8_t> mCompiledShader;
 	};
 
-	using VertexShader = Shader<IDirect3DVertexShader9>;
+	using VertexShader = Shader<ID3D11VertexShader>;
 	using VertexShaderPtr = std::shared_ptr<VertexShader>;
-	using PixelShader = Shader<IDirect3DPixelShader9>;
+	using PixelShader = Shader<ID3D11PixelShader>;
 	using PixelShaderPtr = std::shared_ptr<PixelShader>;
 
 	/**

@@ -3,7 +3,7 @@
 // Since we use orthogonal projection, the directional vector
 // from the proverbial "eye" to the pixel in question is
 // perpendicular to the screen for every pixel.
-static const float3 V = float3(0, 0, 1);
+static const float3 V = { 0.0f, 0.0f, 1.0f };
 
 struct COLOR_PAIR
 {
@@ -12,19 +12,19 @@ struct COLOR_PAIR
 };
 
 #define MAX_LIGHTS 8
-float3 lightPos[MAX_LIGHTS] : register(c100);
-float3 lightDir[MAX_LIGHTS] : register(c108);
-float4 lightAmbient[MAX_LIGHTS] : register(c116);
-float4 lightDiffuse[MAX_LIGHTS] : register(c124);
-float4 lightSpecular[MAX_LIGHTS] : register(c132);
-float lightRange[MAX_LIGHTS] : register(c140);
-float3 lightAttenuation[MAX_LIGHTS] : register(c148); //1, D, D^2;
-float3 lightSpot[MAX_LIGHTS] : register(c156); //cos(theta/2), cos(phi/2), falloff
+float3 lightPos[MAX_LIGHTS] : register(c10);
+float3 lightDir[MAX_LIGHTS] : register(c18);
+float4 lightAmbient[MAX_LIGHTS] : register(c26);
+float4 lightDiffuse[MAX_LIGHTS] : register(c34);
+float4 lightSpecular[MAX_LIGHTS] : register(c42);
+float lightRange[MAX_LIGHTS] : register(c50);
+float3 lightAttenuation[MAX_LIGHTS] : register(c58); //1, D, D^2;
+float3 lightSpot[MAX_LIGHTS] : register(c66); //cos(theta/2), cos(phi/2), falloff
 
-bool bSpecular : register(c164);
-float fMaterialPower : register(c165);
-float4 matSpecular : register(c166);
-int4 lightCount: register(c167);
+bool bSpecular : register(c74);
+float fMaterialPower : register(c75);
+float4 matSpecular : register(c76);
+int4 lightCount: register(c77);
 
 //---------------------------------------------------------------------
 // Name: DoDirLight()

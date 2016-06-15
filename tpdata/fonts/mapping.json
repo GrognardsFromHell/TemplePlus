@@ -1,0 +1,68 @@
+[
+	{
+		"id": "arial-10",
+		"fontFace": "Arial",
+		"size": 11,
+		"bold": false,
+		"italic": false,
+		"uniformLineHeight": {
+			"lineHeight": 11.0,
+			"baseline": 9.0
+		}
+	},
+	{
+		"id": "arial-12",
+		"fontFace": "Junicode",
+		"size": 13,
+		"bold": false,
+		"italic": false,
+		"uniformLineHeight": {
+			"lineHeight": 13.0,
+			"baseline": 12.0
+		}
+	},
+	{
+		"id": "arial-bold-10",
+		"fontFace": "Arial",
+		"size": 11,
+		"bold": true,
+		"italic": false,
+		"uniformLineHeight": {
+			"lineHeight": 11.0,
+			"baseline": 9.0
+		}
+	},
+	{
+		"id": "arial-bold-24",
+		"fontFace": "Arial",
+		"size": 25,
+		"bold": true,
+		"italic": false,
+		"uniformLineHeight": {
+			"lineHeight": 24.0,
+			"baseline": 23.0
+		}
+	},
+	{
+		"id": "priory-12",
+		"fontFace": "Junicode",
+		"size": 13,
+		"bold": true,
+		"italic": false,
+		"uniformLineHeight": {
+			"lineHeight": 13.0,
+			"baseline": 12.0
+		}
+	},	
+	{
+		"id": "scurlock-48",
+		"fontFace": "Scurlock",
+		"size": 49,
+		"bold": false,
+		"italic": false,
+		"uniformLineHeight": {
+			"lineHeight": 47.0,
+			"baseline": 44.0
+		}
+	}
+]

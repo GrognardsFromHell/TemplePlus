@@ -14,6 +14,7 @@
 #include "python_dispatcher.h"
 
 #undef HAVE_ROUND
+#define PYBIND11_EXPORT
 #include <pybind11/pybind11.h>
 #include <pybind11/common.h>
 #include <pybind11/cast.h>

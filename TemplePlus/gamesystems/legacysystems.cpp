@@ -1546,8 +1546,8 @@ void MapFoggingSystem::SaveEsd() {
 
 void MapFoggingSystem::InitScreenBuffers() {
 
-	mScreenWidth = mDevice.GetRenderWidth();
-	mScreenHeight = mDevice.GetRenderHeight();
+	mScreenWidth = config.renderWidth;
+	mScreenHeight = config.renderHeight;
 
 	// Calculate the tile locations in each corner of the screen
 	auto topLeftLoc = mDevice.GetCamera().ScreenToTile(0, 0);

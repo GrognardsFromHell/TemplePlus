@@ -19,7 +19,7 @@ public:
 		: mDevice(device), mMemoryBudget(memoryBudget) {
 	}
 
-	CComPtr<IDirect3DTexture9> Load(const std::string& filename,
+	CComPtr<ID3D11ShaderResourceView> Load(const std::string& filename,
 	                                gfx::ContentRect& contentRectOut,
 	                                gfx::Size& sizeOut);
 
@@ -52,20 +52,9 @@ private:
 	size_t mMemoryBudget;
 };
 
-/*static void RoundUpToPow2(int& dimension) {
+CComPtr<ID3D11ShaderResourceView> TextureLoader::Load(const std::string& filename, gfx::ContentRect& contentRectOut, gfx::Size& sizeOut) {
 
-	static int sPow2Dimensions[] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048};
-
-	for (auto powDimension : sPow2Dimensions) {
-		if (powDimension >= dimension) {
-			dimension = powDimension;
-			return;
-		}
-	}
-
-}*/
-
-CComPtr<IDirect3DTexture9> TextureLoader::Load(const std::string& filename, gfx::ContentRect& contentRectOut, gfx::Size& sizeOut) {
+	CComPtr<ID3D11ShaderResourceView> result;
 
 	auto textureData(vfs->ReadAsBinary(filename));
 
@@ -73,9 +62,7 @@ CComPtr<IDirect3DTexture9> TextureLoader::Load(const std::string& filename, gfx:
 		auto image(gfx::DecodeImage(textureData));
 
 		auto texWidth = image.info.width;
-		// RoundUpToPow2(texWidth);
 		auto texHeight = image.info.height;
-		// RoundUpToPow2(texHeight);
 
 		contentRectOut.x = 0;
 		contentRectOut.y = 0;
@@ -85,41 +72,35 @@ CComPtr<IDirect3DTexture9> TextureLoader::Load(const std::string& filename, gfx:
 		sizeOut.width = texWidth;
 		sizeOut.height = texHeight;
 
-		CComPtr<IDirect3DTexture9> texture;
-		auto format = D3DFMT_A8R8G8B8;
-		auto pool = D3DPOOL_DEFAULT;
-		auto usage = D3DUSAGE_DYNAMIC;
+		// Load the D3D11 one
+		CD3D11_TEXTURE2D_DESC textureDesc(DXGI_FORMAT_B8G8R8A8_UNORM, texWidth, texHeight, 1, 1,
+			D3D11_BIND_SHADER_RESOURCE, D3D11_USAGE_IMMUTABLE);
 
-		auto device = mDevice.GetDevice();
-		auto result = D3DLOG(device->CreateTexture(texWidth, texHeight, 1, usage, format, pool, &texture, nullptr));
-		if (result != D3D_OK) {
-			return nullptr;
+		D3D11_SUBRESOURCE_DATA initialData;
+		memset(&initialData, 0, sizeof(initialData));
+		initialData.pSysMem = image.data.get();
+		initialData.SysMemPitch = image.info.width * 4;
+
+		CComPtr<ID3D11Texture2D> texture;
+		D3DVERIFY(mDevice.mD3d11Device->CreateTexture2D(&textureDesc, &initialData, &texture));
+		
+		if (mDevice.IsDebugDevice()) {
+			texture->SetPrivateData(WKPDID_D3DDebugObjectName, filename.size(), filename.c_str());
 		}
 
-		D3DLOCKED_RECT locked;
-		result = D3DLOG(texture->LockRect(0, &locked, nullptr, D3DLOCK_DISCARD));
-		if (result != D3D_OK) {
-			return nullptr;
-		}
-
-		auto dest = reinterpret_cast<uint8_t*>(locked.pBits);
-		auto src = reinterpret_cast<uint8_t*>(image.data.get());
-		for (int y = 0; y < image.info.height; y++) {
-			memcpy(dest, src, image.info.width * 4);
-			dest += locked.Pitch;
-			src += image.info.width * 4;
-		}
-
-		D3DLOG(texture->UnlockRect(0));
+		// Make a shader resource view for the texture since that's the only thing we're interested in here		
+		CD3D11_SHADER_RESOURCE_VIEW_DESC resourceViewDesc(texture, D3D_SRV_DIMENSION_TEXTURE2D);
+		D3DVERIFY(mDevice.mD3d11Device->CreateShaderResourceView(texture, &resourceViewDesc, &result));
 
 		mLoaded++;
 		mEstimatedUsage += texWidth * texHeight * 4;
 
-		return texture;
 	} catch (std::exception& e) {
 		logger->error("Unable to load texture {}: {}", filename, e.what());
-		return nullptr;
+	
 	}
+
+	return result;
 
 }
 
@@ -156,20 +137,24 @@ public:
 		return mSize;
 	}
 
+	TextureType GetType() const override {
+		return TextureType::File;
+	}
+
 	void FreeDeviceTexture() override {
-		if (mDeviceTexture) {
-			mDeviceTexture.Release();
+		if (mResourceView) {
+			mResourceView.Release();
 			mLoader->Unload(mSize);
 			DisconnectMru();
 		}
 	}
 
-	IDirect3DTexture9* GetDeviceTexture() override {
-		if (!mDeviceTexture) {
+	ID3D11ShaderResourceView* GetResourceView() override {
+		if (!mResourceView && !mResourceView) {
 			Load();
 		}
 		MarkUsed();
-		return mDeviceTexture;
+		return mResourceView;
 	}
 
 private:
@@ -177,9 +162,10 @@ private:
 	void MarkUsed();
 
 	void Load() {
-		Expects(!mDeviceTexture);
-		mDeviceTexture = mLoader->Load(mFilename, mContentRect, mSize);
-		if (mDeviceTexture) {
+		Expects(!mResourceView);
+		mResourceView = mLoader->Load(mFilename, mContentRect, mSize);
+		
+		if (mResourceView) {
 			mMetadataValid = true;
 						
 			// The texture should not be in the MRU cache at this point
@@ -199,7 +185,7 @@ private:
 	mutable bool mMetadataValid = false;
 	mutable gfx::ContentRect mContentRect;
 	mutable gfx::Size mSize;
-	mutable CComPtr<IDirect3DTexture9> mDeviceTexture;
+	mutable CComPtr<ID3D11ShaderResourceView> mResourceView;
 
 	FileTexture* mNextMoreRecentlyUsed = nullptr;
 	FileTexture* mNextLessRecentlyUsed = nullptr;
@@ -336,6 +322,17 @@ gfx::TextureRef Textures::Resolve(const std::string& filename, bool withMipMaps)
 
 }
 
+gfx::TextureRef Textures::ResolveUncached(const std::string & filename, bool withMipMaps)
+{
+	// Texture is not registered yet, so let's do that
+	if (!vfs->FileExists(filename)) {
+		logger->error("Cannot laod texture '{}', because it does not exist.", filename);
+		return Texture::GetInvalidTexture();
+	}
+
+	return std::make_shared<FileTexture>(mLoader, -1, filename);
+}
+
 gfx::TextureRef Textures::GetById(int textureId) {
 
 	if (textureId == -1) {
@@ -393,7 +390,11 @@ public:
 	void FreeDeviceTexture() override {
 	}
 
-	IDirect3DTexture9* GetDeviceTexture() override {
+	TextureType GetType() const override {
+		return TextureType::Invalid;
+	}
+
+	ID3D11ShaderResourceView* GetResourceView() override {
 		return nullptr;
 	}
 

@@ -6,13 +6,13 @@
 #include "ui/ui.h"
 
 struct RectColor {
-	D3DCOLOR colors[4];
+	XMCOLOR colors[4];
 
 	RectColor() {
 
 	}
 
-	RectColor(D3DCOLOR color) {
+	RectColor(XMCOLOR color) {
 		colors[0] = color;
 		colors[1] = color;
 		colors[2] = color;

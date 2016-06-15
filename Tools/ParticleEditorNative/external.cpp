@@ -33,10 +33,17 @@ float EditorExternal::GetObjRadius(ObjHndl obj) {
 }
 
 bool EditorExternal::GetBoneWorldMatrix(ObjHndl obj, const ::std::string& boneName, ::Matrix4x4& boneMatrix) {
+	if (!mDll.currentModel) {
+		XMStoreFloat4x4(&boneMatrix, XMMatrixIdentity());
+		return false;
+	}
 	return mDll.currentModel->GetBoneWorldMatrixByName(mDll.animParams, boneName, &boneMatrix);
 }
 
 int EditorExternal::GetBoneCount(ObjHndl obj) {
+	if (!mDll.currentModel) {
+		return 0;
+	}
 	return mDll.currentModel->GetBoneCount();
 }
 
@@ -74,6 +81,10 @@ static bool IsIgnoredBone(const std::string &name) {
 }
 
 int EditorExternal::GetParentChildBonePos(ObjHndl obj, int boneIdx, ::Vec3& parentPos, ::Vec3& childPos) {
+
+	if (!mDll.currentModel) {
+		return -1;
+	}
 
 	auto model = mDll.currentModel;
 	auto aasParams = mDll.animParams;
@@ -117,6 +128,9 @@ int EditorExternal::GetParentChildBonePos(ObjHndl obj, int boneIdx, ::Vec3& pare
 }
 
 bool EditorExternal::GetBonePos(ObjHndl obj, int boneIdx, ::Vec3& pos) {
+	if (!mDll.currentModel) {
+		return false;
+	}
 	auto model = mDll.currentModel;
 	auto aasParams = mDll.animParams;
 

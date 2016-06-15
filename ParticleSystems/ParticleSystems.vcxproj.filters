@@ -45,9 +45,6 @@
     <ClInclude Include="include\particles\simulation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\particles\render_point.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\particles\alignedarray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -78,9 +75,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\render.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\render_point.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\simulation.cpp">

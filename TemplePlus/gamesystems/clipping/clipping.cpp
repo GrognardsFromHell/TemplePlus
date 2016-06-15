@@ -34,7 +34,8 @@ public:
 ClippingSystem::Impl::Impl(RenderingDevice& g) 
 	: mDevice(g), 
 	  material(CreateMaterial(g)),
-	  debugMaterial(CreateDebugMaterial(g))
+	  debugMaterial(CreateDebugMaterial(g)),
+	  mBufferBinding(material.GetVertexShader())
 {
 
 	mBufferBinding.AddBuffer(nullptr, 0, sizeof(XMFLOAT3))
@@ -43,11 +44,10 @@ ClippingSystem::Impl::Impl(RenderingDevice& g)
 }
 
 Material ClippingSystem::Impl::CreateMaterial(RenderingDevice& device) {
+	RasterizerSpec rasterizerState;
+	rasterizerState.cullMode = CullMode::None;
 
-	BlendState blendState;
-	DepthStencilState depthStencilState;
-	RasterizerState rasterizerState;
-	rasterizerState.cullMode = D3DCULL_NONE;
+	BlendSpec blendState;
 	// Clipping geometry does not write color
 	blendState.writeAlpha = false;
 	blendState.writeRed = false;
@@ -57,21 +57,19 @@ Material ClippingSystem::Impl::CreateMaterial(RenderingDevice& device) {
 	auto vs(device.GetShaders().LoadVertexShader("clipping_vs"));
 	auto ps(device.GetShaders().LoadPixelShader("clipping_ps"));
 
-	return Material(blendState, depthStencilState, rasterizerState, {}, vs, ps);
+	return device.CreateMaterial(blendState, {}, rasterizerState, {}, vs, ps);
 
 }
 
 Material ClippingSystem::Impl::CreateDebugMaterial(RenderingDevice& device) {
 
-	BlendState blendState;
-	DepthStencilState depthStencilState;
-	RasterizerState rasterizerState;
-	rasterizerState.fillMode = D3DFILL_WIREFRAME;
+	RasterizerSpec rasterizerState;
+	rasterizerState.wireframe = true;
 
 	auto vs(device.GetShaders().LoadVertexShader("clipping_vs"));
 	auto ps(device.GetShaders().LoadPixelShader("clipping_ps"));
 
-	return Material(blendState, depthStencilState, rasterizerState, {}, vs, ps);
+	return device.CreateMaterial({}, {}, rasterizerState, {}, vs, ps);
 
 }
 
@@ -191,16 +189,24 @@ void ClippingSystem::LoadObject(BinaryReader& reader) {
 	mesh->AddInstance(obj);
 }
 
+struct ClippingGlobals {
+	XMFLOAT4X4 viewProj;
+	XMFLOAT4 rotCos;
+	XMFLOAT4 rotSin;
+	XMFLOAT4 pos;
+	XMFLOAT4 scale;
+};
+
 void ClippingSystem::Render() {
+
+	gfx::PerfGroup perfGroup(mImpl->mDevice, "Clipping");
 
 	mImpl->rendered = 0;
 
 	if (mImpl->mClippingMeshes.empty()) {
 		return;
 	}
-
-	auto device = mImpl->mDevice.GetDevice();
-
+	
 	if (mImpl->debug) {
 		mImpl->mDevice.SetMaterial(mImpl->debugMaterial);
 	} else {
@@ -208,8 +214,9 @@ void ClippingSystem::Render() {
 	}
 
 	auto& camera = mImpl->mDevice.GetCamera();
-	auto viewProjMatrix = camera.GetViewProj();
-	D3DLOG(device->SetVertexShaderConstantF(0, &viewProjMatrix._11, 4));
+
+	ClippingGlobals globals;
+	globals.viewProj = camera.GetViewProj();
 
 	// For clipping purposes
 	auto screenCenterWorld = camera.ScreenToWorld(
@@ -225,7 +232,7 @@ void ClippingSystem::Render() {
 	
 		mImpl->mBufferBinding.SetBuffer(0, mesh->GetVertexBuffer());
 		mImpl->mBufferBinding.Bind();
-		mImpl->mDevice.GetDevice()->SetIndices(mesh->GetIndexBuffer()->GetBuffer());
+		mImpl->mDevice.SetIndexBuffer(*mesh->GetIndexBuffer());
 		
 		for (auto& obj : mesh->GetInstances()) {
 			XMFLOAT3 sphereCenter = mesh->GetBoundingSphereOrigin();
@@ -249,30 +256,24 @@ void ClippingSystem::Render() {
 				
 			mImpl->rendered++;
 
-			XMFLOAT4 constants = { 0, 0, 0, 0 };
-			constants.x = cosf(obj.rotation);
-			D3DLOG(device->SetVertexShaderConstantF(4, &constants.x, 1));
+			globals.rotCos.x = cosf(obj.rotation);
+			globals.rotSin.x = sinf(obj.rotation);
 
-			constants.x = sinf(obj.rotation);
-			D3DLOG(device->SetVertexShaderConstantF(5, &constants.x, 1));
+			globals.pos.x = obj.posX;
+			globals.pos.y = obj.posY;
+			globals.pos.z = obj.posZ;
 
-			constants.x = obj.posX;
-			constants.y = obj.posY;
-			constants.z = obj.posZ;
-			D3DLOG(device->SetVertexShaderConstantF(6, &constants.x, 1));
-
-			constants.x = obj.scaleX;
-			constants.y = obj.scaleY;
-			constants.z = obj.scaleZ;
-			D3DLOG(device->SetVertexShaderConstantF(7, &constants.x, 1));
+			globals.scale.x = obj.scaleX;
+			globals.scale.y = obj.scaleY;
+			globals.scale.z = obj.scaleZ;
 			
-			D3DLOG(device->DrawIndexedPrimitive(
-				D3DPT_TRIANGLELIST, 
-				0, 
-				0, 
+			mImpl->mDevice.SetVertexShaderConstants(0, globals);
+
+			mImpl->mDevice.DrawIndexed(
+				gfx::PrimitiveType::TriangleList,
 				mesh->GetVertexCount(),
-				0, 
-				mesh->GetTriCount()));
+				mesh->GetTriCount() * 3
+			);
 		}
 
 	}

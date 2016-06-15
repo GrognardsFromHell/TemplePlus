@@ -2,8 +2,7 @@
 #pragma once
 
 #include <memory>
-#include <DirectXMath.h>
-
+#include "graphics/math.h"
 #include "infrastructure/macros.h"
 
 namespace gfx {
@@ -12,7 +11,6 @@ namespace gfx {
 	class AnimatedModelRenderer;
 }
 
-struct IDirect3DDevice9;
 namespace particles {
 
 	class PartSysEmitter;
@@ -33,9 +31,9 @@ namespace particles {
 		These vectors can be multiplied with screen space
 		coordinates to get world coordinates.
 		*/
-		DirectX::XMFLOAT3 screenSpaceUnitX;
-		DirectX::XMFLOAT3 screenSpaceUnitY;
-		DirectX::XMFLOAT3 screenSpaceUnitZ;
+		XMFLOAT4 screenSpaceUnitX;
+		XMFLOAT4 screenSpaceUnitY;
+		XMFLOAT4 screenSpaceUnitZ;
 
 		NO_COPY_OR_MOVE(ParticleRenderer);
 	private:

@@ -5,6 +5,8 @@
 #include "util/fixes.h"
 #include "fonts.h"
 #include "tig/tig_startup.h"
+#include "graphics/device.h"
+#include "graphics/textengine.h"
 
 static struct FontRenderAddresses : temple::AddressTable {
 
@@ -25,11 +27,13 @@ public:
 	void apply() override;
 
 	static int FontDraw(const char* text, TigRect* extents, TigTextStyle* style);
-
+	
+	static int FontMeasure(const TigTextStyle &style, TigFontMetrics &metrics);
 } fix;
 
 void FontRenderFix::apply() {
 	replaceFunction(0x101EAF30, FontDraw);
+	replaceFunction(0x101EA4E0, FontMeasure);
 }
 
 int FontRenderFix::FontDraw(const char* text, TigRect* extents, TigTextStyle* style) {
@@ -48,5 +52,21 @@ int FontRenderFix::FontDraw(const char* text, TigRect* extents, TigTextStyle* st
 
 	layouter.LayoutAndDraw(as_span( text, strlen(text) ), font, *extents, *style);
 
+	return 0;
+}
+
+int FontRenderFix::FontMeasure(const TigTextStyle & style, TigFontMetrics & metrics)
+{
+	if (*addresses.stackSize < 1)
+		return 3;
+
+	auto font = addresses.loadedFonts[addresses.fontStack[0]];
+
+	// Some places in ToEE will not correctly set the text color before calling into this ...
+	TigTextStyle textStyleFixed = style;
+	textStyleFixed.textColor = nullptr;
+
+	auto& layouter = tig->GetTextLayouter();
+	layouter.Measure(font, textStyleFixed, metrics);
 	return 0;
 }
