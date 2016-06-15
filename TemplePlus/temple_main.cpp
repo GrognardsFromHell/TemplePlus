@@ -13,6 +13,7 @@
 #include "mainloop.h"
 #include "config/config.h"
 #include "updater/updater.h"
+#include "ui/ui_systems.h"
 
 class TempleMutex {
 public:
@@ -161,8 +162,8 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 		logger->error("Unable to set the default cursor");
 		return 1;
 	}
-
-	UiLoader uiLoader(gameSystems.GetConfig());
+		
+	UiSystems uiSystems(config.renderWidth, config.renderHeight);
 
 	gameSystems.LoadModule(config.defaultModule); // TODO: RAII
 
@@ -170,13 +171,13 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	PythonGlobalExtension::installExtensions();
 
 	// Notify the UI system that the module has been loaded
-	UiModuleLoader uiModuleLoader(uiLoader);
+	UiModuleLoader uiModuleLoader(uiSystems);
 	
 	if (!config.skipIntro) {
 		movieFuncs.PlayMovie("movies\\introcinematic.bik", 0, 0, 0);
 	}
 
-	ui.ResizeScreen(0, config.renderWidth, config.renderHeight);
+	uiSystems.ResizeViewport(config.renderWidth, config.renderHeight);
 
 	// Show the main menu
 	mouseFuncs.ShowCursor();

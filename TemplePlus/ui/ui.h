@@ -240,11 +240,6 @@ public:
 	ImgFile* LoadImg(const char *filename);
 	
 	/*
-		Notifies UI of a resized screen.
-	*/
-	void ResizeScreen(int bufferStuffId, int width, int height);
-
-	/*
 	
 	*/
 	void UpdateCombatUi();
@@ -340,21 +335,3 @@ public:
 	}
 };
 extern Ui ui;
-
-/*
-	Utility class to load and initialize the UI system using RAII.
-*/
-class UiLoader {
-public:
-	explicit UiLoader(const GameSystemConf &conf);
-	~UiLoader();
-};
-
-/*
-	Utility class to load and unload the module in the UI system using RAII.
-*/
-class UiModuleLoader {
-public:
-	explicit UiModuleLoader(const UiLoader &ui);
-	~UiModuleLoader();
-};

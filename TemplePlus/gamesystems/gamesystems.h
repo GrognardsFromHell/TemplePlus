@@ -509,7 +509,6 @@ private:
 
 	bool mResetting = false;
 	
-	std::vector<class GameSystem*> mLoadedSystems;
 	std::vector<class TimeAwareGameSystem*> mTimeAwareSystems;
 	std::vector<class ModuleAwareGameSystem*> mModuleAwareSystems;
 	std::vector<class ResetAwareGameSystem*> mResetAwareSystems;
