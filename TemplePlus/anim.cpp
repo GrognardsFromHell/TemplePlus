@@ -1643,7 +1643,7 @@ int GoalStateFuncs::GoalStateFunc78_IsHeadingOk(AnimSlot & slot){
 		locSys.GetOverallOffset(nodeLoc, &nodeAbsX, &nodeAbsY);
 	}
 
-	auto &rot = slot.pCurrentGoal->scratchVal2.floatNumber;
+	auto &rot = slot.pCurrentGoal->scratchVal2.floatNum;
 	rot = M_PI_2 + M_PI * 0.75 - atan2(nodeAbsY - objAbsY, nodeAbsX - objAbsX);
 	if (rot < 0.0) {
 		rot += 6.2831855;//M_PI * 2;
