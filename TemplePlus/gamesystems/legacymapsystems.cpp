@@ -1,6 +1,6 @@
 
 #include "stdafx.h"
-
+#include "config/config.h"
 #include <infrastructure/exception.h>
 
 #include "legacymapsystems.h"
@@ -45,6 +45,37 @@ void ScrollSystem::SetMapId(int mapId)
 {
 	static auto map_scroll_set_map_id = temple::GetPointer<void(int mapId)>(0x10005720);
 	map_scroll_set_map_id(mapId);
+
+	/*struct MapLimits{
+		int left = 9000;
+		int top = 0;
+		int right = -9000;
+		int bottom = -18000;
+	};*/
+
+	if (mapId == 5000)
+		return;
+
+	auto maplimitsMes = temple::GetRef<MesHandle>(0x102AC234);
+	if (maplimitsMes == -1)
+		return;
+
+	auto &leftLim = temple::GetRef<int64_t>(0x10307340);
+	auto &rightLim = temple::GetRef<int64_t>(0x103072F0);
+	auto &topLim = temple::GetRef<int64_t>(0x10307368);
+	auto &botLim = temple::GetRef<int64_t>(0x10307358);
+
+	auto deltaW = leftLim - rightLim;
+	auto deltaH = topLim - botLim;
+	if (deltaW < config.renderWidth + 100){
+		leftLim += (config.renderWidth - deltaW )/ 2 + 50;
+		rightLim -= (config.renderWidth - deltaW ) / 2 + 50;
+	}
+
+	if (deltaH < config.renderHeight + 100) {
+		topLim +=(config.renderHeight - deltaH )/ 2 + 50;
+		botLim -= (config.renderHeight - deltaH )/ 2 + 50;
+	}
 }
 
 //*****************************************************************************
