@@ -17,8 +17,8 @@ struct GrappleState {
 
 #pragma pack(push, 1)
 struct TongueVertex {
-	XMFLOAT3 pos;
-	XMFLOAT3 normal;
+	XMFLOAT4 pos;
+	XMFLOAT4 normal;
 	XMFLOAT2 uv;
 };
 #pragma pack(pop)
@@ -26,7 +26,7 @@ struct TongueVertex {
 using namespace gfx;
 
 FrogGrappleController::FrogGrappleController(gfx::RenderingDevice & device, gfx::MdfMaterialFactory & mdfFactory)
-	: mDevice(device)
+	: mDevice(device), mBufferBinding(device.CreateMdfBufferBinding())
 {
 	mTongueMaterial = mdfFactory.LoadMaterial("art/meshes/Monsters/GiantFrog/tongue.mdf");
 
@@ -35,9 +35,9 @@ FrogGrappleController::FrogGrappleController(gfx::RenderingDevice & device, gfx:
 	CreateIndexBuffer();
 
 	mBufferBinding.AddBuffer(mVertexBuffer, 0, sizeof(TongueVertex))
-		.AddElement(VertexElementType::Float3, VertexElementSemantic::Position)
-		.AddElement(VertexElementType::Float3, VertexElementSemantic::Normal)
-		.AddElement(VertexElementType::Float3, VertexElementSemantic::TexCoord);
+		.AddElement(VertexElementType::Float4, VertexElementSemantic::Position)
+		.AddElement(VertexElementType::Float4, VertexElementSemantic::Normal)
+		.AddElement(VertexElementType::Float2, VertexElementSemantic::TexCoord);
 
 }
 
@@ -316,10 +316,12 @@ void FrogGrappleController::RenderTongue(const GrappleState &grappleState,
 			auto &vertex = vertices[i * 6 + j];
 
 			auto pos = tonguePos + tongueRight * scaledSin + tongueUp * scaledCos + posFromOrig;
-			XMStoreFloat3(&vertex.pos, pos);
+			XMStoreFloat4(&vertex.pos, pos);
+			vertex.pos.w = 1;
 
 			auto normal = tongueRight * angleSin + tongueUp * angleCos;
-			XMStoreFloat3(&vertex.normal, normal);
+			XMStoreFloat4(&vertex.normal, normal);
+			vertex.normal.w = 0;
 
 			// The U texture coord just goes around the disc from 0 to 1
 			vertex.uv.x = j / 5.0f;
@@ -335,13 +337,10 @@ void FrogGrappleController::RenderTongue(const GrappleState &grappleState,
 	MdfRenderOverrides overrides;
 	overrides.alpha = alpha;
 	mTongueMaterial->Bind(mDevice, lights, &overrides);
-	mDevice.GetDevice()->SetIndices(mIndexBuffer->GetBuffer());
+	mDevice.SetIndexBuffer(*mIndexBuffer);
 
-	mDevice.GetDevice()->DrawIndexedPrimitive(
-		D3DPT_TRIANGLELIST,
-		0,
-		0,
+	mDevice.DrawIndexed(
+		gfx::PrimitiveType::TriangleList,
 		VertexCount,
-		0,
-		TriCount);
+		TriCount * 3);
 }

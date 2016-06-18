@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using SharpDX;
-using SharpDX.Direct3D9;
+using System.Windows;
 using Color = System.Drawing.Color;
 
 namespace ParticleEditor
@@ -10,11 +9,11 @@ namespace ParticleEditor
     public class ParticleSystem : IDisposable
     {
 
-        public Vector2 ScreenPosition { get; set; }
+        public Point ScreenPosition { get; set; }
 
         public ParticleSystem()
         {
-            ScreenPosition = Vector2.Zero;
+            ScreenPosition = new Point(0, 0);
         }
 
         public List<ParticleSystemEmitter> Emitters
@@ -57,18 +56,18 @@ namespace ParticleEditor
             ParticleSystem_Simulate(TempleDll.Instance.Handle, elapsedSecs);
         }
 
-        public void Render(float w, float h, float xTrans, float yTrans, float scale)
+        public void Render()
         {
-            ParticleSystem_SetObjPos(TempleDll.Instance.Handle, ScreenPosition.X, ScreenPosition.Y);
-            ParticleSystem_SetPos(TempleDll.Instance.Handle, ScreenPosition.X, ScreenPosition.Y);
+            ParticleSystem_SetObjPos(TempleDll.Instance.Handle, (float) ScreenPosition.X, (float) ScreenPosition.Y);
+            ParticleSystem_SetPos(TempleDll.Instance.Handle, (float) ScreenPosition.X, (float) ScreenPosition.Y);
 
-            ParticleSystem_Render(TempleDll.Instance.Handle, w, h, xTrans, yTrans, scale);
+            ParticleSystem_Render(TempleDll.Instance.Handle);
         }
 
         public bool RenderVideo(Color background, string fileName)
         {
-            ParticleSystem_SetObjPos(TempleDll.Instance.Handle, ScreenPosition.X, ScreenPosition.Y);
-            ParticleSystem_SetPos(TempleDll.Instance.Handle, ScreenPosition.X, ScreenPosition.Y);
+            ParticleSystem_SetObjPos(TempleDll.Instance.Handle, (float)ScreenPosition.X, (float)ScreenPosition.Y);
+            ParticleSystem_SetPos(TempleDll.Instance.Handle, (float)ScreenPosition.X, (float)ScreenPosition.Y);
             
             return ParticleSystem_RenderVideo(TempleDll.Instance.Handle, background.ToArgb(), fileName, 60);
         }
@@ -95,16 +94,10 @@ namespace ParticleEditor
         private static extern void ParticleSystem_SetObjPos(IntPtr dllHandle, float x, float y);
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern void ParticleSystem_Resize(IntPtr dllHandle, float x, float y);
-
-        [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern void ParticleSystem_SetScale(IntPtr dllHandle, float scale);
-
-        [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl)]
         private static extern bool ParticleSystem_IsDead(IntPtr dllHandle);
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern void ParticleSystem_Render(IntPtr dllHandle, float w, float h, float xTrans, float yTrans, float scale);
+        private static extern void ParticleSystem_Render(IntPtr dllHandle);
 
         [DllImport("ParticleEditorNative.dll", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private static extern void ParticleSystem_Free(IntPtr dllHandle);

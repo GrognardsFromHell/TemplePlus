@@ -84,7 +84,7 @@ struct MdfPreviewNative {
 	std::unique_ptr<RenderingDevice> device;
 	VertexBufferPtr vertexBuffer;
 	IndexBufferPtr indexBuffer;
-	BufferBinding bufferBinding;	
+	std::unique_ptr<BufferBinding> bufferBinding;	
 	std::unique_ptr<MdfMaterialFactory> materialFactory;
 	MdfRenderMaterialPtr material;
 	std::unique_ptr<AasAnimatedModelFactory> aasFactory;
@@ -115,10 +115,10 @@ struct MdfPreviewNative {
 };
 
 struct MdfVertex {
-	XMFLOAT3 pos;
+	XMFLOAT4 pos;
 	XMFLOAT2 uv;
-	XMFLOAT3 normal;
-	D3DCOLOR color;
+	XMFLOAT4 normal;
+	XMCOLOR color;
 };
 
 API MdfPreviewNative* MdfPreviewNative_Load(const wchar_t* installPath,
@@ -162,23 +162,23 @@ API void MdfPreviewNative_Unload(MdfPreviewNative *native) {
 API void MdfPreviewNative_InitDevice(MdfPreviewNative *native,
 	HWND handle,
 	int renderWidth, int renderHeight) {
-	native->device = std::make_unique<RenderingDevice>(handle, renderWidth, renderHeight);
+	native->device = std::make_unique<RenderingDevice>(handle);
 
 	std::array<MdfVertex, 4> corners;
-	corners[0].pos = XMFLOAT3(-1, 1, 0.5f);
-	corners[0].normal = XMFLOAT3(0, 0, 1);
+	corners[0].pos = XMFLOAT4(-1, 1, 0.5f, 1);
+	corners[0].normal = XMFLOAT4(0, 0, 1, 0);
 	corners[0].uv = XMFLOAT2(0, 0);
 	corners[0].color = 0xFFFFFFFF;
-	corners[1].pos = XMFLOAT3(1, 1, 0.5f);
-	corners[1].normal = XMFLOAT3(0, 0, 1);
+	corners[1].pos = XMFLOAT4(1, 1, 0.5f, 1);
+	corners[1].normal = XMFLOAT4(0, 0, 1, 0);
 	corners[1].uv = XMFLOAT2(1, 0);
 	corners[1].color = 0xFFFFFFFF;
-	corners[2].pos = XMFLOAT3(1, -1, 0.5f);
-	corners[2].normal = XMFLOAT3(0, 0, 1);
+	corners[2].pos = XMFLOAT4(1, -1, 0.5f, 1);
+	corners[2].normal = XMFLOAT4(0, 0, 1, 0);
 	corners[2].uv = XMFLOAT2(1, 1);
 	corners[2].color = 0xFFFFFFFF;
-	corners[3].pos = XMFLOAT3(-1, -1, 0.5f);
-	corners[3].normal = XMFLOAT3(0, 0, 1);
+	corners[3].pos = XMFLOAT4(-1, -1, 0.5f, 1);
+	corners[3].normal = XMFLOAT4(0, 0, 1, 0);
 	corners[3].uv = XMFLOAT2(0, 1);
 	corners[3].color = 0xFFFFFFFF;
 	native->vertexBuffer = native->device->CreateVertexBuffer<MdfVertex>(corners);
@@ -189,10 +189,11 @@ API void MdfPreviewNative_InitDevice(MdfPreviewNative *native,
 	};
 	native->indexBuffer = native->device->CreateIndexBuffer(indices);
 
-	native->bufferBinding.AddBuffer(native->vertexBuffer, 0, sizeof(MdfVertex))
-		.AddElement(VertexElementType::Float3, VertexElementSemantic::Position)
+	native->bufferBinding = std::make_unique<BufferBinding>(native->device->CreateMdfBufferBinding());
+	native->bufferBinding->AddBuffer(native->vertexBuffer, 0, sizeof(MdfVertex))
+		.AddElement(VertexElementType::Float4, VertexElementSemantic::Position)
 		.AddElement(VertexElementType::Float2, VertexElementSemantic::TexCoord)
-		.AddElement(VertexElementType::Float3, VertexElementSemantic::Normal)
+		.AddElement(VertexElementType::Float4, VertexElementSemantic::Normal)
 		.AddElement(VertexElementType::Color, VertexElementSemantic::Color);
 
 	native->materialFactory = std::make_unique<MdfMaterialFactory>(*native->device);
@@ -256,7 +257,7 @@ API void MdfPreviewNative_FreeDevice(MdfPreviewNative *native) {
 	native->aasFactory.reset();
 	native->material.reset();
 	native->materialFactory.reset();
-	native->bufferBinding = BufferBinding();
+	native->bufferBinding.reset();
 	native->indexBuffer.reset();
 	native->vertexBuffer.reset();
 	native->device.reset();
@@ -277,7 +278,6 @@ API void MdfPreviewNative_Render(MdfPreviewNative *native) {
 	
 	native->device->BeginFrame();
 
-	auto device = native->device->GetDevice();
 	// device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 0, 0, 0), 1.0f, 0);
 
 	Light3d globalLight;
@@ -292,13 +292,9 @@ API void MdfPreviewNative_Render(MdfPreviewNative *native) {
 
 		std::vector<Light3d> lights{ globalLight };
 		native->material->Bind(*native->device, lights);
-		native->bufferBinding.Bind();
-		D3DLOG(device->SetIndices(native->indexBuffer->GetBuffer()));
-		D3DLOG(device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2));
-		
-		/*D3DLOG(device->SetStreamSource(0, native->sphereVertices->GetBuffer(), 0, sizeof(MdfVertex)));
-		D3DLOG(device->SetIndices(native->sphereIndices->GetBuffer()));
-		device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, native->sphereVertCount, 0, native->spherePrimCount);*/
+		native->bufferBinding->Bind();
+		native->device->SetIndexBuffer(*native->indexBuffer);
+		native->device->DrawIndexed(gfx::PrimitiveType::TriangleList, 4, 6);
 	}
 
 	if (native->model) {
@@ -402,8 +398,8 @@ void MdfPreviewNative::MakeSphere()
 			vertex.pos.y = y0;
 			vertex.pos.z = z0;
 
-			XMFLOAT3 normal;
-			XMStoreFloat3(&normal, XMVector3Normalize(XMVectorSet(x0, y0, z0, 0)));
+			XMFLOAT4 normal;
+			XMStoreFloat4(&normal, XMVector3Normalize(XMVectorSet(x0, y0, z0, 0)));
 			vertex.normal = normal;
 
 			vertex.uv.x = (float)seg / (float)nSegments;
@@ -612,7 +608,7 @@ void PartSysExternal::WorldToScreen(const Vec3& worldPos, Vec2& screenPos) {
 }
 
 API void MdfPreviewNative_SetRenderSize(MdfPreviewNative *native, int w, int h) {
-	native->device->SetRenderSize(w, h);
+	native->device->ResizeBuffers(w, h);
 }
 
 API void MdfPreviewNative_ScreenToWorld(MdfPreviewNative *native, float x, float y, float* xOut, float *yOut, float *zOut) {

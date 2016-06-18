@@ -9,6 +9,8 @@
 
 namespace gfx {
 
+	struct MdfGlobalConstants;
+
 	struct MdfRenderOverrides {
 		bool ignoreLighting = false;
 		bool overrideDiffuse = false;
@@ -16,6 +18,7 @@ namespace gfx {
 		float alpha = 1;
 		bool useWorldMatrix = false;
 		XMFLOAT4X4 worldMatrix;
+		bool uiProjection = false;
 	};
 
 	/*
@@ -80,7 +83,7 @@ namespace gfx {
 		void BindShader(RenderingDevice &device,
 			gsl::span<Light3d> lights,
 			const MdfRenderOverrides *overrides) const;
-		void BindVertexLighting(RenderingDevice &device,
+		void BindVertexLighting(MdfGlobalConstants &globals,
 			gsl::span<Light3d> lights,
 			bool ignoreLighting) const;
 	};

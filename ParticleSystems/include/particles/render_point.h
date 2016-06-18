@@ -21,22 +21,6 @@ namespace particles {
 
 	using namespace gfx;
 
-	class PointParticleRenderer : public ParticleRenderer {
-	public:
-		explicit PointParticleRenderer(RenderingDevice& device);
-
-		void Render(PartSysEmitter& emitter) override;
-
-	private:
-		void FillPointVertex(const PartSysEmitter& emitter, int particleIdx, PointVertex& vertex);
-		void RenderParticles(PartSysEmitter& emitter);
-
-		void EnablePointStates();
-		void DisablePointStates();
-
-		RenderingDevice& mDevice;
-	};
-
 	class ModelParticleRenderer : public ParticleRenderer {
 	public:
 		explicit ModelParticleRenderer(RenderingDevice& device,

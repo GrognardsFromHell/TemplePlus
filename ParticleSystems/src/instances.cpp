@@ -236,8 +236,10 @@ namespace particles {
 		// Particle spawning logic
 		if (mSpec->IsInstant()) {
 			// The secondary rate seem to be the "minimum" particles that circumvent the fidelity setting?
-			int scaledMaxParts = (int) mSpec->GetEffectiveParticleRate(external->GetParticleFidelity());
-
+			// Also note how the "max particles" count is used here instead of the rate as it is below
+			int scaledMaxParts = (int)(mSpec->GetParticleRateMin() +
+				(mSpec->GetMaxParticles() - mSpec->GetParticleRateMin()) * external->GetParticleFidelity());
+		
 			if (scaledMaxParts > 0) {
 				// The time here is probably only the smallest greater than 0 since there's a 
 				// check in there that skips simulation if the time is zero

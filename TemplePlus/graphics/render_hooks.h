@@ -35,7 +35,7 @@ struct Render2dArgs {
 	int shaderId;
 	TigRect* srcRect;
 	const TigRect* destRect;
-	D3DCOLOR* vertexColors;
+	XMCOLOR* vertexColors;
 	float vertexZ;
 	float rotation;
 	float rotationX;
@@ -50,7 +50,7 @@ public:
 	static int ShaderRender3d(int vertexCount,
 		XMFLOAT4* vertices,
 		XMFLOAT4* normals,
-		D3DCOLOR* diffuse,
+		XMCOLOR* diffuse,
 		XMFLOAT2* uv,
 		int primCount,
 		uint16_t* indices,
@@ -68,9 +68,9 @@ public:
 	// Renders a tiled img on screen
 	static void RenderImgFile(ImgFile *img, int x, int y);
 
-	static void RenderRect(float left, float top, float right, float bottom, D3DCOLOR color);
+	static void RenderRect(float left, float top, float right, float bottom, XMCOLOR color);
 
-	static void RenderRectInt(int left, int top, int width, int height, D3DCOLOR color);
+	static void RenderRectInt(int left, int top, int width, int height, XMCOLOR color);
 
 	static void RenderDisc3d(LocAndOffsets &loc, int shaderId, float rotation, float radius);
 

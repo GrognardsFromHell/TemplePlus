@@ -4,6 +4,8 @@
 #include <temple/dll.h>
 
 #include <graphics/mdfmaterials.h>
+#include <graphics/device.h>
+#include <graphics/textengine.h>
 
 #include "gamesystems.h"
 #include "config/config.h"
@@ -35,6 +37,7 @@
 #include <util/fixes.h>
 #include <graphics/device.h>
 #include "graphics/mapterrain.h"
+#include "ui/ui_systems.h"
 
 using namespace gfx;
 
@@ -161,6 +164,16 @@ GameSystems::GameSystems(TigInitializer& tig) : mTig(tig) {
 
 	InitAnimationSystem();
 
+	for (auto &file : vfs->Search("fonts\\*.ttf")) {
+		auto path = fmt::format("fonts\\{}", file.filename);
+		logger->info("Adding TTF font '{}'", path);
+		tig.GetRenderingDevice().GetTextEngine().AddFont(path);
+	}
+	for (auto &file : vfs->Search("fonts\\*.otf")) {
+		auto path = fmt::format("fonts\\{}", file.filename);
+		logger->info("Adding OTF font '{}'", path);
+		tig.GetRenderingDevice().GetTextEngine().AddFont(path);
+	}
 	tigFont.LoadAll("art\\interface\\fonts\\*.*");
 	tigFont.PushFont("priory-12", 12, true);
 
@@ -543,13 +556,11 @@ void GameSystems::ResizeScreen(int w, int h) {
 	scratchBufferRect->width = w;
 	scratchBufferRect->height = h;
 
-	auto viewportId = gameSystemInitTable.gameSystemConf->viewportId;
-
 	// I do not think that the scratchbuffer is used in any way
 	// rebuild_scratchbuffer(&resizeargs);
 	*gameSystemInitTable.scratchBuffer = nullptr;
 
-	ui.ResizeScreen(viewportId, w, h);
+	uiSystems->ResizeViewport(w, h);
 
 }
 
@@ -757,7 +768,6 @@ std::unique_ptr<Type> GameSystems::InitializeSystem(LoadingScreen& loadingScreen
 	loadingScreen.Render();
 
 	auto result(std::make_unique<Type>(std::forward<Args>(args)...));
-	mLoadedSystems.push_back(result.get());
 
 	if (std::is_convertible<Type*, TimeAwareGameSystem*>()) {
 		mTimeAwareSystems.push_back((TimeAwareGameSystem*)(result.get()));

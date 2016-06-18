@@ -173,6 +173,7 @@
     <ClInclude Include="include\graphics\shaders.h" />
     <ClInclude Include="include\graphics\shaperenderer2d.h" />
     <ClInclude Include="include\graphics\shaperenderer3d.h" />
+    <ClInclude Include="include\graphics\textengine.h" />
     <ClInclude Include="include\gsl\gsl.h" />
     <ClInclude Include="include\gsl\gsl_assert.h" />
     <ClInclude Include="include\gsl\gsl_util.h" />
@@ -183,7 +184,6 @@
     <ClInclude Include="include\infrastructure\crypto.h" />
     <ClInclude Include="include\infrastructure\location.h" />
     <ClInclude Include="include\infrastructure\macros.h" />
-    <ClInclude Include="include\platform\dxerr.h" />
     <ClInclude Include="include\infrastructure\elfhash.h" />
     <ClInclude Include="include\infrastructure\exception.h" />
     <ClInclude Include="include\infrastructure\format.h" />
@@ -235,6 +235,7 @@
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="include\graphics\materials.cpp" />
     <ClCompile Include="src\allocator.cpp" />
     <ClCompile Include="breakpad.cpp" />
     <ClCompile Include="breakpad\crash_generation_client.cc" />
@@ -242,7 +243,6 @@
     <ClCompile Include="breakpad\guid_string.cc" />
     <ClCompile Include="crypto.cpp" />
     <ClCompile Include="d3d.cpp" />
-    <ClCompile Include="dxerr.cpp" />
     <ClCompile Include="format.cc" />
     <ClCompile Include="elfhash.cpp" />
     <ClCompile Include="images.cpp" />
@@ -262,6 +262,7 @@
     <ClCompile Include="src\graphics\shaders.cpp" />
     <ClCompile Include="src\graphics\shaperenderer2d.cpp" />
     <ClCompile Include="src\graphics\shaperenderer3d.cpp" />
+    <ClCompile Include="src\graphics\textengine.cpp" />
     <ClCompile Include="src\graphics\textures.cpp" />
     <ClCompile Include="src\location.cpp" />
     <ClCompile Include="src\meshes.cpp" />

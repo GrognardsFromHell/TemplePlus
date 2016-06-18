@@ -1,12 +1,13 @@
 
-float objRotCos;
-float objRotSin;
-float3 objPos;
-float3 objScale;
-float4x4 projMat;
+float4x4 projMat : register(c0);
+float objRotCos : register(c4);
+float objRotSin : register(c5);
+float3 objPos : register(c6);
+float3 objScale : register(c7);
 
-float4 main( float4 pos : POSITION ) : SV_POSITION
+float4 main( float3 posIn : POSITION ) : SV_POSITION
 {
+	float4 pos = float4(posIn, 1);
 	/*
 		This performs two rotations. First it rotates
 		using the obj specific rotation, then it applies

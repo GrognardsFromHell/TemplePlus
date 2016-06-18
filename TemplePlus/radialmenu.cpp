@@ -9,8 +9,8 @@
 #include "gamesystems/objects/objsystem.h"
 #include <infrastructure/keyboard.h>
 #define DIRECTINPUT_VERSION 0x800
-#include <dinput.h>
-#include "ui\ui.h"
+#include "tig/tig_keyboard.h"
+#include "ui/ui.h"
 #include "gamesystems/map/d20_help.h"
 #include "hotkeys.h"
 #include "party.h"
@@ -18,7 +18,7 @@
 #include "action_sequence.h"
 #include "critter.h"
 #include "combat.h"
-//#include "temple_functions.h"
+#include <tig/tig_mouse.h>
 
 RadialMenus radialMenus;
 int RadialMenus::standardNodeIndices[120];
@@ -419,11 +419,11 @@ int RadialMenus::RadialMenuKeypressHandler(TigMsg* msg)
 
 	auto hotkey = msg->arg1;
 	auto& uiRadialAssigningHotkey = temple::GetRef<int>(0x10BE6D9C);
-	auto hotkeyAssignMouseTextCreate = temple::GetPointer<void(__cdecl)(int, int, void*)>(0x1013C130);
+	static auto hotkeyAssignMouseTextCreate = temple::GetPointer<void(__cdecl)(int, int, void*)>(0x1013C130);
 	if (hotkey == DIK_ESCAPE){
 		if (uiRadialAssigningHotkey) {
-			if (ui.GetCursorTextDrawCallback() == hotkeyAssignMouseTextCreate) {
-				ui.SetCursorTextDrawCallback(nullptr, nullptr);
+			if (mouseFuncs.GetCursorDrawCallbackId() == (uint32_t)hotkeyAssignMouseTextCreate) {
+				mouseFuncs.SetCursorDrawCallback(nullptr, 0);
 			}
 			uiRadialAssigningHotkey = 0;
 			return 1;
@@ -455,14 +455,16 @@ int RadialMenus::RadialMenuKeypressHandler(TigMsg* msg)
 			uiRadialAssigningHotkey = 1;
 			auto& dikToBeHotkeyed = temple::GetRef<uint32_t>(0x10BE6DA0);
 			dikToBeHotkeyed = msg->arg1;
-			ui.SetCursorTextDrawCallback(hotkeyAssignMouseTextCreate, nullptr);
+			mouseFuncs.SetCursorDrawCallback([](int x, int y) {
+				hotkeyAssignMouseTextCreate(x, y, nullptr);
+			}, (uint32_t)hotkeyAssignMouseTextCreate);
 			return 1;
 		}
 
 		if (uiRadialAssigningHotkey){
 			uiRadialAssigningHotkey = 0;
-			if (ui.GetCursorTextDrawCallback() == hotkeyAssignMouseTextCreate) {
-				ui.SetCursorTextDrawCallback(nullptr, nullptr);
+			if (mouseFuncs.GetCursorDrawCallbackId() == (uint32_t) hotkeyAssignMouseTextCreate) {
+				mouseFuncs.SetCursorDrawCallback(nullptr, 0);
 			}
 		}
 

@@ -12,7 +12,7 @@ UiRectangle::UiRectangle() : mArgs(std::make_unique<Render2dArgs>()) {
 
 	mArgs->srcRect = &mRect;
 	mArgs->destRect = &mRect;
-	mArgs->vertexColors = (D3DCOLOR*)&mColors[0];
+	mArgs->vertexColors = (XMCOLOR*)&mColors[0];
 	mArgs->flags = Render2dArgs::FLAG_VERTEXCOLORS;
 }
 

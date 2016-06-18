@@ -39,6 +39,14 @@ struct Widget {
 	BOOL(__cdecl*handleMessage)(int widId, TigMsg* msg); // Function pointer
 };
 
+enum class WindowMouseState : uint32_t {
+	Outside = 0,
+	Hovered = 6,
+	// I have not actually found any place where this is ever set
+	Pressed = 7,
+	PressedOutside = 8
+};
+
 /*
 	Type: 1
 	Size: 660
@@ -49,7 +57,7 @@ struct WidgetType1 : public Widget {
 	uint32_t field_27c;
 	uint32_t childrenCount;
 	int windowId;
-	uint32_t field_288;
+	WindowMouseState mouseState;
 	uint32_t field_28c;
 	uint32_t field_290;
 
@@ -69,7 +77,7 @@ struct WidgetType1 : public Widget {
 		handleMessage = 0;
 		renderTooltip = 0;
 		childrenCount = 0;
-		field_288 = 0;
+		mouseState = WindowMouseState::Outside;
 		field_28c = 0;
 		windowId = 0;
 		widgetFlags = 0;
@@ -93,7 +101,7 @@ struct WidgetType1 : public Widget {
 		handleMessage = 0;
 		renderTooltip = 0;
 		childrenCount = 0;
-		field_288 = 0;
+		mouseState = WindowMouseState::Outside;
 		field_28c = 0;
 		windowId = 0;
 		widgetFlags = 0;
@@ -232,11 +240,6 @@ public:
 	ImgFile* LoadImg(const char *filename);
 	
 	/*
-		Notifies UI of a resized screen.
-	*/
-	void ResizeScreen(int bufferStuffId, int width, int height);
-
-	/*
 	
 	*/
 	void UpdateCombatUi();
@@ -313,9 +316,6 @@ public:
 			*/
 	int GetAtInclChildren(int x, int y);
 
-	void(__cdecl *__cdecl GetCursorTextDrawCallback())(int x, int y, void *data);
-
-	void SetCursorTextDrawCallback(void(* cursorTextDrawCallback)(int, int, void*), void* data);
 	int UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg);
 
 	bool ScrollbarGetY(int widId, int * y);
@@ -335,21 +335,3 @@ public:
 	}
 };
 extern Ui ui;
-
-/*
-	Utility class to load and initialize the UI system using RAII.
-*/
-class UiLoader {
-public:
-	explicit UiLoader(const GameSystemConf &conf);
-	~UiLoader();
-};
-
-/*
-	Utility class to load and unload the module in the UI system using RAII.
-*/
-class UiModuleLoader {
-public:
-	explicit UiModuleLoader(const UiLoader &ui);
-	~UiModuleLoader();
-};

@@ -43,8 +43,8 @@ struct LoadingScreen::Impl {
 
 void LoadingScreen::Impl::Layout() {
 	
-	auto centerX = device.GetScreenWidthF() / 2.0f;
-	auto centerY = device.GetScreenHeightF() / 2.0f;
+	auto centerX = device.GetCamera().GetScreenWidth() / 2.0f;
+	auto centerY = device.GetCamera().GetScreenHeight() / 2.0f;
 
 	auto imgX = (int)(centerX - imageFile->GetWidth() / 2.0f);
 	auto imgY = (int)(centerY - imageFile->GetHeight() / 2.0f);
@@ -128,12 +128,7 @@ void LoadingScreen::Render() {
 	if (!mImpl->imageFile) {
 		return;
 	}
-
-	mImpl->device.GetCamera().SetScreenWidth(
-		mImpl->device.GetScreenWidthF(),
-		mImpl->device.GetScreenHeightF()
-	);
-
+	
 	mImpl->device.BeginFrame();
 	mImpl->imageFile->Render();
 	mImpl->barBorder.Render();
@@ -159,10 +154,5 @@ void LoadingScreen::Render() {
 		UiRenderer::PopFont();
 	}
 	mImpl->device.Present();
-
-	mImpl->device.GetCamera().SetScreenWidth(
-		(float) mImpl->device.GetRenderWidth(),
-		(float) mImpl->device.GetRenderHeight()
-		);
 
 }

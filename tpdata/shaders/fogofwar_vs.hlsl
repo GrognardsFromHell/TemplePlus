@@ -2,12 +2,12 @@
 float4x4 projMat : register(c0);
 
 struct VS_IN {
-	float4 pos : POSITION;
+	float3 pos : POSITION;
 	float2 uv : TEXCOORD0;
 };
 
 struct VS_OUT {
-	float4 pos : POSITION;
+	float4 pos : SV_POSITION;
 	float2 uv : TEXCOORD0;
 };
 

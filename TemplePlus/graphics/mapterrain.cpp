@@ -23,6 +23,8 @@ TerrainSystem::TerrainSystem(gfx::RenderingDevice& device, gfx::ShapeRenderer2d&
 
 void TerrainSystem::Render() {
 
+	gfx::PerfGroup perfGroup(mDevice, "Terrain");
+
 	// Special dirty case for the 5000 map which has no terrain
 	if (maps.GetCurrentMapId() == 5000) {
 		return;
@@ -114,7 +116,7 @@ void TerrainSystem::RenderTile(int x, int y, const TigRect& destRect) {
 	auto destWidth = (float)destRect.width;
 	auto destHeight = (float)destRect.height;
 
-	mShapeRenderer.DrawRectangle(destX, destY, destWidth, destHeight, texture, color);
+	mShapeRenderer.DrawRectangle(destX, destY, destWidth, destHeight, *texture, color);
 
 	if (mIsTransitioning) {
 
@@ -131,7 +133,7 @@ void TerrainSystem::RenderTile(int x, int y, const TigRect& destRect) {
 		// the time since the transition started		
 		color = XMCOLOR(mTerrainTintRed, mTerrainTintGreen, mTerrainTintBlue, mTransitionProgress);
 
-		mShapeRenderer.DrawRectangle(destX, destY, destWidth, destHeight, texture, color);
+		mShapeRenderer.DrawRectangle(destX, destY, destWidth, destHeight, *texture, color);
 	}
 
 }

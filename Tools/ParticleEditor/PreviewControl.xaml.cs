@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -9,8 +10,6 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
 using ParticleModel;
-using SharpDX;
-using SharpDX.Direct3D9;
 
 namespace ParticleEditor
 {
@@ -41,19 +40,19 @@ namespace ParticleEditor
         private int _outputWidth;
 
         private AnimatedModel _previewModel;
-        private Surface _renderTargetDepth;
-        private int _renderTargetHeight;
-
-        private Surface _renderTargetSurface;
-        private int _renderTargetWidth;
 
         private TimeSpan? _timeSinceLastSimul;
 
         private TempleDll _templeDll;
 
+        private bool _lastVisible;
+
         public PreviewControl()
         {
             InitializeComponent();
+
+            RenderOutput.Loaded += RenderOutput_Loaded;
+            RenderOutput.SizeChanged += RenderOutput_SizeChanged;
 
             // Tricky... DataContext is actually inherited from our parent for bindings done there
             // So we just set the DataContext for this control's content instead.
@@ -63,8 +62,128 @@ namespace ParticleEditor
             sizeTimer.Tick += SizeTimer_Tick;
             sizeTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000/30);
             sizeTimer.Start();
+        }
 
-            CompositionTarget.Rendering += RenderFrame;
+        private void RenderOutput_Loaded(object sender, RoutedEventArgs e)
+        {
+            InitializeRendering();
+
+            RenderOutput.MouseLeftButtonDown += RenderOutput_MouseLeftButtonDown;
+            RenderOutput.MouseMove += RenderOutput_MouseMove;
+            RenderOutput.MouseLeftButtonUp += RenderOutput_MouseLeftButtonUp;
+            RenderOutput.MouseWheel += RenderOutput_MouseWheel;
+        }
+
+        private void RenderOutput_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            var dpiScale = 1.0; // default value for 96 dpi
+
+            // determine DPI
+            // (as of .NET 4.6.1, this returns the DPI of the primary monitor, if you have several different DPIs)
+            var hwndTarget = PresentationSource.FromVisual(this).CompositionTarget as HwndTarget;
+            if (hwndTarget != null)
+            {
+                dpiScale = hwndTarget.TransformToDevice.M11;
+            }
+
+            int surfWidth = (int)(RenderOutput.ActualWidth < 0 ? 0 : Math.Ceiling(RenderOutput.ActualWidth * dpiScale));
+            int surfHeight = (int)(RenderOutput.ActualHeight < 0 ? 0 : Math.Ceiling(RenderOutput.ActualHeight * dpiScale));
+
+            // Notify the D3D11Image of the pixel size desired for the DirectX rendering.
+            // The D3DRendering component will determine the size of the new surface it is given, at that point.
+            InteropImage.SetPixelSize(surfWidth, surfHeight);
+
+            // Stop rendering if the D3DImage isn't visible - currently just if width or height is 0
+            // TODO: more optimizations possible (scrolled off screen, etc...)
+            bool isVisible = (surfWidth != 0 && surfHeight != 0);
+            if (_lastVisible != isVisible)
+            {
+                _lastVisible = isVisible;
+                if (_lastVisible)
+                {
+                    CompositionTarget.Rendering += CompositionTarget_Rendering;
+                }
+                else
+                {
+                    CompositionTarget.Rendering -= CompositionTarget_Rendering;
+                }
+            }
+        }
+
+        private void CompositionTarget_Rendering(object sender, EventArgs e)
+        {
+            var args = (RenderingEventArgs)e;
+
+            // It's possible for Rendering to call back twice in the same frame 
+            // so only render when we haven't already rendered in this frame.
+            if (_lastRender != args.RenderingTime) {
+                InteropImage.RequestRender();
+                _lastRender = args.RenderingTime;
+            }
+        }
+
+        private void InitializeRendering()
+        {
+            // Get the topmost window
+            var parentWindow = Window.GetWindow(this);
+
+            InteropImage.WindowOwner = new WindowInteropHelper(parentWindow).Handle;
+            InteropImage.OnRender = DoRender;
+            InteropImage.RequestRender();
+
+            _templeDll = new TempleDll(_dataPath);
+        }
+
+        private void DoRender(IntPtr surface, bool isNewSurface)
+        {
+            if (DisableRendering)
+                return;
+
+            var w = _outputWidth;
+            var h = _outputHeight;
+            if (w <= 0 || h <= 0)
+            {
+                return;
+            }
+
+            if (_activeSystem == null && ActiveSystem != null)
+            {
+                _activeSystem = ParticleSystem.FromSpec(ActiveSystem.ToSpec());
+            }
+
+            
+            if (_timeSinceLastSimul.HasValue)
+            {
+                var simulTime = (float)(_lastRender.TotalSeconds - _timeSinceLastSimul.Value.TotalSeconds);
+                if (simulTime > 1 / 60.0f)
+                {
+                    _previewModel?.AdvanceTime(simulTime);
+
+                    if (!_model.Paused)
+                    {
+                        if (_activeSystem != null)
+                        {
+                            _activeSystem.Simulate(simulTime);
+                            UpdateParticleStatistics();
+                        }
+                    }
+                    _timeSinceLastSimul = _lastRender;
+                }
+            }
+            else
+            {
+                _timeSinceLastSimul = _lastRender;
+            }
+
+            _templeDll.SetRenderTarget(surface);
+
+            _templeDll.Scale = _model.Scale;
+            _templeDll.CenterOn(0, 0, 0);
+
+            _previewModel?.Render(TempleDll.Instance);
+            _activeSystem?.Render();
+
+            _templeDll.Flush();
         }
 
         public bool DisableRendering
@@ -72,8 +191,6 @@ namespace ParticleEditor
             get { return (bool) GetValue(DisableRenderingProperty); }
             set { SetValue(DisableRenderingProperty, value); }
         }
-
-        public Device Device { get; private set; }
 
         public string DataPath
         {
@@ -150,128 +267,7 @@ namespace ParticleEditor
             _outputWidth = (int) RenderOutput.ActualWidth;
             _outputHeight = (int) RenderOutput.ActualHeight;
         }
-
-        private void RenderFrame(object sender, EventArgs e)
-        {
-            if (DisableRendering)
-                return;
-
-            var args = (RenderingEventArgs) e;
-
-            var w = _outputWidth;
-            var h = _outputHeight;
-            if (w <= 0 || h <= 0)
-            {
-                return;
-            }
-
-            if (Device == null)
-            {
-                var presentParams = new PresentParameters(w, h)
-                {
-                    Windowed = true,
-                    SwapEffect = SwapEffect.Discard,
-                    DeviceWindowHandle = GetDesktopWindow(),
-                    PresentationInterval = PresentInterval.Default
-                };
-                Device = new DeviceEx(new Direct3DEx(),
-                    0,
-                    DeviceType.Hardware,
-                    IntPtr.Zero,
-                    CreateFlags.HardwareVertexProcessing | CreateFlags.Multithreaded | CreateFlags.FpuPreserve,
-                    presentParams);
-                try {
-                    _templeDll = new TempleDll(DataPath, Device);
-                } catch (Exception ex) {
-                    MessageBox.Show("Unable to initialize temple.dll: " + ex.Message);
-                    DisableRendering = true;
-                    return;
-                }
-            }
-
-            if (_activeSystem == null && ActiveSystem != null)
-            {
-                _activeSystem = ParticleSystem.FromSpec(ActiveSystem.ToSpec());
-            }
-
-            if (D3Dimg.IsFrontBufferAvailable && _lastRender != args.RenderingTime)
-            {
-                if (_renderTargetSurface == null || _renderTargetWidth != w || _renderTargetHeight != h)
-                {
-                    _renderTargetWidth = w;
-                    _renderTargetHeight = h;
-
-                    _renderTargetSurface?.Dispose();
-                    _renderTargetDepth?.Dispose();
-
-                    _renderTargetSurface = Surface.CreateRenderTarget(Device,
-                        _renderTargetWidth,
-                        _renderTargetHeight,
-                        Format.X8R8G8B8,
-                        MultisampleType.None,
-                        0,
-                        false);
-                    _renderTargetDepth = Surface.CreateDepthStencil(Device,
-                        _renderTargetWidth,
-                        _renderTargetHeight,
-                        Format.D16,
-                        MultisampleType.None,
-                        0,
-                        true);
-                }
-
-                D3Dimg.Lock();
-
-                Device.SetRenderTarget(0, _renderTargetSurface);
-                Device.DepthStencilSurface = _renderTargetDepth;
-
-                RenderParticleSystem(w, h, args.RenderingTime);
-
-                D3Dimg.SetBackBuffer(D3DResourceType.IDirect3DSurface9, _renderTargetSurface.NativePointer);
-                D3Dimg.AddDirtyRect(new Int32Rect(0, 0, _renderTargetWidth, _renderTargetHeight));
-                D3Dimg.Unlock();
-
-                _lastRender = args.RenderingTime;
-            }
-        }
-
-        private void RenderParticleSystem(int w, int h, TimeSpan renderTime)
-        {
-            Device.BeginScene();
-            Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, new ColorBGRA(0, 0, 0, 255), 1, 0);
-
-            if (_timeSinceLastSimul.HasValue)
-            {
-                var simulTime = (float)(renderTime.TotalSeconds - _timeSinceLastSimul.Value.TotalSeconds);
-                if (simulTime > 1 / 60.0f)
-                {
-                    if (_previewModel != null)
-                    {
-                        _previewModel.AdvanceTime(simulTime);
-                    }
-
-                    if (!_model.Paused)
-                    {
-                        if (_activeSystem != null)
-                        {
-                            _activeSystem.Simulate(simulTime);
-                            UpdateParticleStatistics();
-                        }
-                    }
-                    _timeSinceLastSimul = renderTime;
-                }
-            }
-            else
-            {
-                _timeSinceLastSimul = renderTime;
-            }
-
-            _previewModel?.Render(TempleDll.Instance, w, h, _model.Scale);
-            _activeSystem?.Render(w, h, 0, 0, _model.Scale);
-
-            Device.EndScene();
-        }
-
+        
         private void UpdateParticleStatistics()
         {
             _model.ActiveParticles = _activeSystem.Emitters.Sum(e => e.ActiveParticles);
@@ -307,7 +303,7 @@ namespace ParticleEditor
 
                 if (ActiveSystem != null)
                 {
-                    _activeSystem.ScreenPosition = new Vector2((float) pos.X, (float) pos.Y);
+                    _activeSystem.ScreenPosition = pos;
                 }
             }
             else

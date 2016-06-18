@@ -34,7 +34,7 @@ TownmapRenderer::TownmapRenderer() {
 		sRenderer = this;
 	}
 
-	mFogTexture = gfx::renderingDevice->CreateDynamicTexture(D3DFMT_A8R8G8B8, 256, 256);
+	mFogTexture = gfx::renderingDevice->CreateDynamicTexture(gfx::BufferFormat::A8R8G8B8, 256, 256);
 }
 
 TownmapRenderer::~TownmapRenderer() {

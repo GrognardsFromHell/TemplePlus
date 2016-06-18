@@ -6,3 +6,5 @@
 	TYPE& operator=(const TYPE&) = delete;\
 	TYPE& operator=(const TYPE&&) = delete;
 
+#define NO_COPY(TYPE) TYPE(const TYPE&&) = delete;\
+	TYPE& operator=(const TYPE&&) = delete;

@@ -2,14 +2,14 @@
 float4 shadowMapWorldPos : register(c0);
 float3 lightDir : register(c1);
 float offsetZ : register(c2);
-float4 matDiffuse : register(c4);
+float4 matDiffuse : register(c3);
 
 struct VS_IN {
 	float4 pos : POSITION;
 };
 
 struct VS_OUT {
-	float4 pos : POSITION;
+	float4 pos : SV_POSITION;
 	float4 diffuse : COLOR0;
 };
 

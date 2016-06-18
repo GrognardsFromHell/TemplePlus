@@ -22,6 +22,9 @@ struct TemplePlusConfig
 	bool noRandomEncounters = false; // Previously -norandom
 	bool noMsMouseZ = false; // Previously -nomsmousez
 	bool antialiasing = true; // Previously -noantialiasing
+	uint32_t displayAdapter = 0; // Which adapter to use. 0 = default
+	uint8_t msaaSamples = 4; // If antialiasing is true
+	uint8_t msaaQuality = 0; // For vendor specific AA
 	bool mipmapping = false; // Previously -mipmapping
 	uint32_t pathLimit = 0; // Default is 10, previously -pathlimit
 	uint32_t pathTimeLimit = 0; // Default is 250, previously -pathtimelimit
@@ -36,6 +39,7 @@ struct TemplePlusConfig
 	bool pathfindingDebugMode = false;
 	bool softShadows = false;
 	bool windowed = false;
+	bool d3dDebug = false; // Enables D3D11 debugging
 	bool lockCursor = true; // When in fullscreen, lock cursor
 	int windowWidth = 1024;
 	int windowHeight = 768;

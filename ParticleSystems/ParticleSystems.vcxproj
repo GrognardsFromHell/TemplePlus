@@ -28,7 +28,6 @@
     <ClInclude Include="include\particles\params.h" />
     <ClInclude Include="include\particles\parser_keyframes.h" />
     <ClInclude Include="include\particles\render.h" />
-    <ClInclude Include="include\particles\render_point.h" />
     <ClInclude Include="include\particles\simulation.h" />
     <ClInclude Include="include\particles\spec.h" />
     <ClInclude Include="include\particles\types.h" />
@@ -44,7 +43,6 @@
     <ClCompile Include="src\render.cpp" />
     <ClCompile Include="src\render_general.cpp" />
     <ClCompile Include="src\render_model.cpp" />
-    <ClCompile Include="src\render_point.cpp" />
     <ClCompile Include="src\render_quad.cpp" />
     <ClCompile Include="src\simulation.cpp" />
     <ClCompile Include="src\spec.cpp" />

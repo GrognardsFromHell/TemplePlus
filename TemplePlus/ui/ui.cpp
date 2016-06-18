@@ -5,38 +5,10 @@
 #include <tig/tig_msg.h>
 #include <sound.h>
 #include <tig/tig_font.h>
+#include <tig/tig_mouse.h>
 
 Ui ui;
 Widget** Ui::activeWidgets;
-
-
-#pragma region UI System Specification
-/*
-	System spec used to define an UI subsystem (i.e. dialogs and such).
-*/
-typedef int (__cdecl *UiSystemInit)(const GameSystemConf& conf);
-typedef void (__cdecl *UiSystemReset)();
-typedef bool (__cdecl *UiSystemLoadModule)();
-typedef void (__cdecl *UiSystemUnloadModule)();
-typedef void (__cdecl *UiSystemShutdown)();
-typedef bool (__cdecl *UiSystemSaveGame)(void* tioFile);
-typedef bool (__cdecl *UiSystemLoadGame)(void* sth);
-typedef bool (__cdecl *UiSystemResizeScreen)(const UiResizeArgs& resizeArgs);
-
-struct UiSystem {
-	const char* name;
-	UiSystemInit init;
-	UiSystemReset reset;
-	UiSystemLoadModule loadModule;
-	UiSystemUnloadModule unloadModule;
-	UiSystemShutdown shutdown;
-	UiSystemSaveGame savegame;
-	UiSystemLoadGame loadgame;
-	UiSystemResizeScreen resizeScreen;
-};
-
-const int UiSystemsCount = 43;
-#pragma endregion
 
 /*
 	Native ToEE functions we use.
@@ -44,10 +16,6 @@ const int UiSystemsCount = 43;
 typedef void (__cdecl *SaveCallback)();
 
 static struct UiFuncs : temple::AddressTable {
-	bool (__cdecl *Init)(const GameSystemConf* conf);
-	bool (__cdecl *LoadModule)();
-	void (__cdecl *UnloadModule)();
-	void (__cdecl *Shutdown)();
 
 	ImgFile*(__cdecl *LoadImg)(const char* filename);
 	int (__cdecl *GetAsset)(UiAssetType assetType, uint32_t assetIndex, int& textureIdOut, int offset);
@@ -76,29 +44,12 @@ static struct UiFuncs : temple::AddressTable {
 	int* activeWidgetCount;
 	int* visibleWindowCnt;
 
-	// List of all UI subsystems (top level dialogs, basically)
-	UiSystem* systems;
-
-	// These are the original callbacks for game save/load
-	SaveCallback GameLoad;
-	SaveCallback GameSave;
-
-	// Called to save UI related functions to the savegame in data2.sav
-	SaveCallback* saveGameCallback;
-	// Called to load UI related functions from the savegame in data2.sav
-	SaveCallback* loadGameCallback;
 	int *visibleWidgetWindows;
-	void(__cdecl ** cursorTextDrawCallback)(int x, int y, void*data);
-	void** cursorTextDrawCallbackData;
 	int* uiWidgetMouseHandlerWidgetId;
 	int* uiMouseButtonId;
 
 	UiFuncs() {
-		rebase(Init, 0x101156F0);
-		rebase(LoadModule, 0x10115790);
 		rebase(LoadImg, 0x101E8320);
-		rebase(UnloadModule, 0x101152C0);
-		rebase(Shutdown, 0x10115230);
 		rebase(GetAsset, 0x1004A360);
 		rebase(UpdateCombatUi, 0x1009A730);
 		rebase(UpdatePartyUi, 0x1009A740);
@@ -108,17 +59,8 @@ static struct UiFuncs : temple::AddressTable {
 		rebase(ShowCharUi, 0x10148E20);
 		rebase(ShowWrittenUi, 0x10160F50);
 
-		rebase(GameLoad, 0x101154B0);
-		rebase(GameSave, 0x101152F0);
-
-
-		
-		rebase(systems, 0x102F6C10);
 		rebase(uiWidgetMouseHandlerWidgetId, 0x10301324);
 		rebase(uiMouseButtonId, 0x10301328);
-		rebase(saveGameCallback, 0x103072C4);
-		rebase(loadGameCallback, 0x103072C8);
-
 
 		rebase(WidgetBringToFront, 0x101F8E40);
 		rebase(BindButton, 0x101F8950);
@@ -131,9 +73,6 @@ static struct UiFuncs : temple::AddressTable {
 		rebase(GetButtonState,  0x101F9740);
 		rebase(UiMouseMsgHandlerRenderTooltipCallback, 0x101F9870);
 		
-		rebase(cursorTextDrawCallback, 0x10D255C8);
-		rebase(cursorTextDrawCallbackData, 0x10D255CC);
-
 		rebase(visibleWidgetWindows, 0x10EF39F0);
 		rebase(visibleWindowCnt, 0x10EF68D0);
 		rebase(activeWidgetCount, 0x10EF68D8);
@@ -216,16 +155,6 @@ public:
 		return 1;
 	}
 
-	static void Reset() {
-
-		for (auto i = 0; i < UiSystemsCount; ++i) {
-			auto resetFunc = uiFuncs.systems[i].reset;
-			if (resetFunc) {
-				resetFunc();
-			}
-		}
-	}
-
 	static int WidgetlistIndexof(int widId, int* widlist, int size)
 	{
 
@@ -247,7 +176,6 @@ public:
 		replaceFunction(0x101F94D0, WidgetRemoveRegardParent);
 		replaceFunction(0x101F90E0, WidgetGet);
 		replaceFunction(0x101F9570, GetButton);
-		replaceFunction(0x10115270, Reset);
 		 orgUiWidgetHandleMouseMsg = replaceFunction(0x101F9970, UiWidgetHandleMouseMsg);
 
 		 /*
@@ -310,17 +238,6 @@ int(__cdecl*UiReplacement::orgUiWidgetHandleMouseMsg)(TigMouseMsg*);
 int UiReplacement::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 {
 	return ui.UiWidgetHandleMouseMsg(mouseMsg);
-}
-
-static UiSystem& getUiSystem(const char* name) {
-	// Search for the ui system to replace
-	for (auto i = 0; i < UiSystemsCount; ++i) {
-		if (!strcmp(name, uiFuncs.systems[i].name)) {
-			return uiFuncs.systems[i];
-		}
-	}
-
-	throw TempleException(format("Couldn't find UI system {}! Replacement failed.", name));
 }
 
 bool WidgetType1::Add(int* widIdOut){
@@ -458,25 +375,6 @@ bool Ui::GetAsset(UiAssetType assetType, UiGenericAsset assetIndex, int& texture
 
 ImgFile* Ui::LoadImg(const char* filename) {
 	return uiFuncs.LoadImg(filename);
-}
-
-void Ui::ResizeScreen(int bufferStuffId, int width, int height) {
-	
-	UiResizeArgs args;
-	memset(&args, 0, sizeof(args));
-	args.windowBufferStuffId = bufferStuffId;
-	args.rect1.width = width;
-	args.rect1.height = height;
-	args.rect2.width = width;
-	args.rect2.height = height;
-
-	for (auto i = 0; i < UiSystemsCount; ++i) {
-		auto resizeFunc = uiFuncs.systems[i].resizeScreen;
-		if (resizeFunc) {
-			resizeFunc(args);
-		}
-	}
-
 }
 
 void Ui::UpdateCombatUi() {
@@ -727,18 +625,6 @@ int Ui::GetAtInclChildren(int x, int y)
 	return windowId;
 }
 
-void(* Ui::GetCursorTextDrawCallback())(int x, int y, void* data)
-{
-	return *uiFuncs.cursorTextDrawCallback;
-}
-
-void Ui::SetCursorTextDrawCallback(void(* cursorTextDrawCallback)(int, int, void*), void* data)
-{
-	*uiFuncs.cursorTextDrawCallback = cursorTextDrawCallback;
-	*uiFuncs.cursorTextDrawCallbackData = data;
-
-}
-
 int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 {
 	int flags = mouseMsg->flags;
@@ -756,10 +642,9 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 	// moused widget changed
 	if ((flags & 0x1000) && widIdAtCursor != globalWidId)
 	{
-		if (widIdAtCursor != -1 
-			&& ui.GetCursorTextDrawCallback() == uiFuncs.UiMouseMsgHandlerRenderTooltipCallback)
+		if (widIdAtCursor != -1 && mouseFuncs.GetCursorDrawCallbackId() == (uint32_t) uiFuncs.UiMouseMsgHandlerRenderTooltipCallback)
 		{
-			SetCursorTextDrawCallback(nullptr, nullptr);
+			mouseFuncs.SetCursorDrawCallback(nullptr, 0);
 		}
 
 		if (globalWidId != -1)
@@ -769,14 +654,11 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 			// if window
 			if (globalWid->type == 1)
 			{
-				auto globalWndWid = WidgetGetType1(globalWidId);
-				if (globalWndWid->field_288 && globalWndWid->field_288 != 6)
-				{
-					if (globalWndWid->field_288 == 7)
-						globalWndWid->field_288 = 8;
-				} else
-				{
-					globalWndWid->field_288 = 0;
+				auto prevHoveredWindow = (WidgetType1*)globalWid;
+				if (prevHoveredWindow->mouseState == WindowMouseState::Pressed) {
+					prevHoveredWindow->mouseState = WindowMouseState::PressedOutside;
+				} else if (prevHoveredWindow->mouseState != WindowMouseState::PressedOutside) {
+					prevHoveredWindow->mouseState = WindowMouseState::Outside;
 				}
 				enqueue4 = true;
 			} 
@@ -784,17 +666,16 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 			else if (globalWid->type == 2 && !(globalWid->widgetFlags & 1))
 			{
 				auto buttonWid = uiReplacement.GetButton(globalWidId);
-				if (buttonWid->buttonState >=0)
-				{
-					if (buttonWid->buttonState == 1)
-					{
-						buttonWid->buttonState = 0;
-						sound.MssPlaySound(buttonWid->hoverOff);
-
-					} else if (buttonWid->buttonState == 2)
-					{
-						buttonWid->buttonState = 3;
-					}
+				switch (buttonWid->buttonState) {
+				case 1:
+					// Unhover
+					buttonWid->buttonState = 0;
+					sound.MssPlaySound(buttonWid->hoverOff);
+					break;
+				case 2:
+					// Down -> Released without click event
+					buttonWid->buttonState = 3;
+					break;
 				}
 				if (!(WidgetGet(globalWid->parentId)->widgetFlags & 1))
 				{
@@ -828,18 +709,12 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 			if (widAtCursor->type == 1)
 			{
 				auto widAtCursorWindow = WidgetGetType1(widIdAtCursor);
-				if (widAtCursorWindow->field_288)
-				{
-					if (widAtCursorWindow->field_288 == 8)
-					{
-						widAtCursorWindow->field_288 = 7;
-					}
-				} else
-				{
-					widAtCursorWindow->field_288 = 6;
+				if (widAtCursorWindow->mouseState == WindowMouseState::PressedOutside) {
+					widAtCursorWindow->mouseState = WindowMouseState::Pressed;
+				} else if (widAtCursorWindow->mouseState != WindowMouseState::Pressed) {
+					widAtCursorWindow->mouseState = WindowMouseState::Hovered;
 				}
-			} else if (widAtCursor->type == 2)
-			{
+			} else if (widAtCursor->type == 2) {
 				auto buttonWid = uiReplacement.GetButton(widIdAtCursor);
 				if (buttonWid->buttonState)
 				{
@@ -861,9 +736,11 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 		globalWidId = *uiFuncs.uiWidgetMouseHandlerWidgetId = widIdAtCursor;
 	}
 	
-	if (mouseMsg->flags & MouseStateFlags::MSF_POS_CHANGE2 && globalWidId != -1 && !GetCursorTextDrawCallback())
+	if (mouseMsg->flags & MouseStateFlags::MSF_POS_CHANGE2 && globalWidId != -1 && !mouseFuncs.GetCursorDrawCallbackId())
 	{
-		SetCursorTextDrawCallback(*uiFuncs.UiMouseMsgHandlerRenderTooltipCallback, uiFuncs.uiWidgetMouseHandlerWidgetId);
+		mouseFuncs.SetCursorDrawCallback([](int x, int y) {
+			(*uiFuncs.UiMouseMsgHandlerRenderTooltipCallback)(x, y, uiFuncs.uiWidgetMouseHandlerWidgetId);
+		}, (uint32_t)*uiFuncs.UiMouseMsgHandlerRenderTooltipCallback);
 	}
 
 	if (mouseMsg->flags & MouseStateFlags::MSF_LMB_CLICK)
@@ -921,9 +798,6 @@ int Ui::UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg)
 		*uiFuncs.uiMouseButtonId = -1;
 	}
 
-	// int result = uiReplacement.orgUiWidgetHandleMouseMsg(mouseMsg);
-
-	// return result;
 	return 0;
 }
 
@@ -1022,83 +896,3 @@ const char * Ui::GetStatMesLine(int lineNumber) const
 	mesFuncs.GetLine_Safe(mesHandle, &line);
 	return line.value;
 }
-#pragma region Loading and Unloading
-UiLoader::UiLoader(const GameSystemConf& conf) {
-
-	StopwatchReporter reporter("Loaded UI Systems in {}.");
-	logger->info("Loading UI systems...");
-
-	for (auto i = 0; i < UiSystemsCount; ++i) {
-		auto& system = uiFuncs.systems[i];
-		if (system.init) {
-			logger->debug("   Initializing '{}'...", system.name);
-			if (!system.init(conf)) {
-				logger->error("Unable to initialize UI subsystem {}.", system.name);
-				// Roll back initialization for all preceding systems
-				while (--i > 0) {
-					if (uiFuncs.systems[i].shutdown) {
-						uiFuncs.systems[i].shutdown();
-					}
-				}
-				throw TempleException(format("Unable to initialize UI subsystem {}.", system.name));
-			}
-		}
-	}
-
-}
-
-UiLoader::~UiLoader() {
-
-	logger->info("Shutting down UI systems...");
-
-	for (auto i = UiSystemsCount - 1; i >= 0; --i) {
-		auto& system = uiFuncs.systems[i];
-		if (system.shutdown) {
-			logger->debug("   Shutting down '{}'..", system.name);
-			system.shutdown();
-		}
-	}
-
-}
-
-// NOTE: we take this argument to ensure that the UI has been loaded
-UiModuleLoader::UiModuleLoader(const UiLoader&) {
-
-	StopwatchReporter reporter("Loaded module for UI Systems in {}.");
-	logger->info("Loading module for UI systems...");
-
-	for (auto i = 0; i < UiSystemsCount; ++i) {
-		auto& system = uiFuncs.systems[i];
-		if (system.loadModule) {
-			logger->debug("   Loading module for '{}'...", system.name);
-			if (!system.loadModule()) {
-				logger->error("Unable to load module for UI subsystem {}.", system.name);
-				// Roll back initialization for all preceding systems
-				while (--i > 0) {
-					if (uiFuncs.systems[i].shutdown) {
-						uiFuncs.systems[i].shutdown();
-					}
-				}
-				throw TempleException(format("Unable to load module for UI subsystem {}.", system.name));
-			}
-		}
-	}
-
-	*uiFuncs.saveGameCallback = uiFuncs.GameSave;
-	*uiFuncs.loadGameCallback = uiFuncs.GameLoad;
-}
-
-UiModuleLoader::~UiModuleLoader() {
-
-	logger->info("Unloading modules for UI systems...");
-
-	for (auto i = UiSystemsCount - 1; i >= 0; --i) {
-		auto& system = uiFuncs.systems[i];
-		if (system.unloadModule) {
-			logger->debug("   Unloading module for '{}'..", system.name);
-			system.unloadModule();
-		}
-	}
-
-}
-#pragma endregion

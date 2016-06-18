@@ -3,6 +3,7 @@
 #include "gmesh.h"
 #include "util/streams.h"
 #include "../mapobjrender.h"
+#include "tig/tig_startup.h"
 
 
 //*****************************************************************************
@@ -89,6 +90,8 @@ GMeshRenderer::GMeshRenderer(temple::AasRenderer& aasRenderer, MapObjectRenderer
 }
 
 void GMeshRenderer::Render() {
+
+	gfx::PerfGroup perfGroup(tig->GetRenderingDevice(), "GMesh");
 
 	auto& instances = mGmeshSystem.GetInstances();
 

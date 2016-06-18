@@ -19,7 +19,7 @@ using PrivateShaderData = gfx::MdfRenderMaterial*;
 using LegacyRenderFunc = void(int vertexCount,
                               XMFLOAT4* pos,
 							  XMFLOAT4* normal,
-                              D3DCOLOR* diffuse,
+                              XMCOLOR* diffuse,
 							  XMFLOAT2* uv,
                               int primCount,
                               uint16_t* indices,
@@ -30,7 +30,7 @@ using LegacyGetPrimaryTextureIdFunc = int(PrivateShaderData shaderData,
 
 using LegacyColorFunc = int(PrivateShaderData shaderData,
                             const char* type,
-                            D3DCOLOR* colorOut);
+                            XMCOLOR* colorOut);
 
 #pragma pack(push, 1)
 struct LegacyShader {
@@ -58,7 +58,7 @@ public:
 		int vertexCount,
 		XMFLOAT4* pos,
 		XMFLOAT4* normal,
-		D3DCOLOR* diffuse,
+		XMCOLOR* diffuse,
 		XMFLOAT2* uv,
 		int primCount,
 		uint16_t* indices,
@@ -71,12 +71,12 @@ public:
 	static int GetColor(
 		PrivateShaderData shaderData,
 		const char* type,
-		D3DCOLOR* colorOut
+		XMCOLOR* colorOut
 	);
 	static int SetColor(
 		PrivateShaderData shaderData,
 		const char* type,
-		D3DCOLOR* colorOut
+		XMCOLOR* colorOut
 	);
 } fix;
 
@@ -142,7 +142,7 @@ int MaterialsHooks::RegisterReplacementMaterial(int specialMatIdx, const char* f
 void MaterialsHooks::RenderShader(int vertexCount,
 	XMFLOAT4* pos,
 	XMFLOAT4* normal,
-                                  D3DCOLOR* diffuse,
+	XMCOLOR* diffuse,
 	XMFLOAT2* uv,
                                   int primCount,
                                   uint16_t* indices,
@@ -179,13 +179,13 @@ int MaterialsHooks::GetPrimaryTexture(PrivateShaderData shaderData,
 
 int MaterialsHooks::GetColor(PrivateShaderData shaderData,
                              const char* type,
-                             D3DCOLOR* colorOut) {
+                             XMCOLOR* colorOut) {
 	return 0; // TODO
 }
 
 int MaterialsHooks::SetColor(PrivateShaderData shaderData,
                              const char* type,
-                             D3DCOLOR* colorOut) {
+                             XMCOLOR* colorOut) {
 	return 0; // TODO
 }
 

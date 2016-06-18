@@ -43,18 +43,12 @@ MainWindow::~MainWindow() {
 
 }
 
-void MainWindow::LockCursor() const {
+void MainWindow::LockCursor(int x, int y, int w, int h) const {
 	bool isForeground = GetForegroundWindow() == mHwnd;
 
 	auto &device(tig->GetRenderingDevice());
 
-	auto sceneRect = device.GetSceneRect();
-	RECT rect {
-		(int)sceneRect.x,
-		(int)sceneRect.y,
-		(int)(sceneRect.x + sceneRect.z),
-		(int)(sceneRect.y + sceneRect.w)
-	};
+	RECT rect{ x, y, x + w, y + h };
 	if (isForeground) {
 		ClipCursor(&rect);
 	}
@@ -144,13 +138,13 @@ void MainWindow::CreateWindowRectAndStyles(RECT& windowRect, DWORD& style, DWORD
 		mWidth = screenWidth;
 		mHeight = screenHeight;
 	} else {
-		// Apparently this flag controls whether x,y are preset from the outside
 		windowRect.left = (screenWidth - config.windowWidth) / 2;
 		windowRect.top = (screenHeight - config.windowHeight) / 2;
 		windowRect.right = windowRect.left + config.windowWidth;
 		windowRect.bottom = windowRect.top + config.windowHeight;
 
-		style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+		// style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+		style = WS_OVERLAPPEDWINDOW;
 
 		AdjustWindowRect(&windowRect, style, FALSE);
 		int extraWidth = (windowRect.right - windowRect.left) - config.windowWidth;
@@ -204,12 +198,7 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		}
 		break;
 	case WM_SETCURSOR:
-		SetCursor(nullptr); // Disables default cursor
-		if (!movieFuncs.MovieIsPlaying) {
-			// TODO: Rip this out, circular dependency
-			tig->GetRenderingDevice().GetDevice()->ShowCursor(TRUE);
-		}
-		return TRUE; // This prevents windows from setting the default cursor for us
+		break;
 	case WM_LBUTTONDOWN:
 		mouseFuncs.SetButtonState(MouseButton::LEFT, true);
 		break;
@@ -287,6 +276,15 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		return 0;
 	case WM_ERASEBKGND:
 		return 0;
+	case WM_SIZE:
+		// TODO: Remove this coupling and use an event handler instead
+		if (gfx::renderingDevice) {
+			gfx::renderingDevice->ResizeBuffers(
+				GET_X_LPARAM(lparam),
+				GET_Y_LPARAM(lparam)
+			);
+		}
+		break;
 	case WM_MOUSEWHEEL:
 		GetWindowRect(hWnd, &rect);
 		UpdateMousePos(
@@ -313,48 +311,9 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 }
 
 void MainWindow::UpdateMousePos(int xAbs, int yAbs, int wheelDelta) {
-	auto &device(tig->GetRenderingDevice());
-
-	// Move it into the scene rectangle coordinate space
-	auto& sceneRect(device.GetSceneRect());
-	auto x = xAbs - sceneRect.x;
-	auto y = yAbs - sceneRect.y;
-
-	auto orgX = xAbs;
-	auto orgY = yAbs;
-	
-	// Scale it to the coordinate system that was used to render the scene
-	xAbs = (int)(x / device.GetSceneScale());
-	yAbs = (int)(y / device.GetSceneScale());
-
-	// Account for a resized screen
-	if (xAbs < 0 || yAbs < 0 || xAbs >= device.GetRenderWidth() || yAbs >= device.GetRenderHeight())
-	{
-		if (config.windowed) 
-		{
-			if ( (xAbs > -7 && xAbs < device.GetRenderWidth() + 7 && yAbs > -7 && yAbs < device.GetRenderHeight() + 7))
-			{
-				if (xAbs < 0) 
-					xAbs = 0;
-				else if (xAbs > device.GetRenderWidth()) 
-					xAbs = device.GetRenderWidth();
-				if (yAbs < 0) 
-					yAbs = 0;
-				else if (yAbs > device.GetRenderHeight()) 
-					yAbs = device.GetRenderHeight();
-				mouseFuncs.MouseOutsideWndSet(false);
-				mouseFuncs.SetPos(xAbs, yAbs, wheelDelta);
-				return;
-			} else
-			{
-				mouseFuncs.MouseOutsideWndSet(true);
-			}
-		}	
-		return;
+	if (mMouseMoveHandler) {
+		mMouseMoveHandler(xAbs, yAbs, wheelDelta);
 	}
-	mouseFuncs.MouseOutsideWndSet(false);
-
-	mouseFuncs.SetPos(xAbs, yAbs, wheelDelta);
 }
 
 int MainWindow::ToDirectInputKey(int vk) {

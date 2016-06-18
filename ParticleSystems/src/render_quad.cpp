@@ -13,8 +13,8 @@ namespace particles {
 	using namespace gfx;
 
 	struct SpriteVertex {
-		XMFLOAT3 pos;
-		D3DCOLOR diffuse;
+		XMFLOAT4 pos;
+		XMCOLOR diffuse;
 		float u;
 		float v;
 	};
@@ -31,7 +31,8 @@ namespace particles {
 
 	QuadEmitterRenderState::QuadEmitterRenderState(RenderingDevice &device,
 		PartSysEmitter &emitter)
-		: GeneralEmitterRenderState(device, emitter, false) {
+		: GeneralEmitterRenderState(device, emitter, false),
+		  bufferBinding(material.GetVertexShader()) {
 
 		auto maxCount = emitter.GetSpec()->GetMaxParticles();
 
@@ -39,7 +40,7 @@ namespace particles {
 			device.CreateEmptyVertexBuffer(sizeof(SpriteVertex) * 4 * maxCount);
 
 		bufferBinding.AddBuffer(vertexBuffer, 0, sizeof(SpriteVertex))
-			.AddElement(VertexElementType::Float3, VertexElementSemantic::Position)
+			.AddElement(VertexElementType::Float4, VertexElementSemantic::Position)
 			.AddElement(VertexElementType::Color, VertexElementSemantic::Color)
 			.AddElement(VertexElementType::Float2, VertexElementSemantic::TexCoord);
 	}
@@ -67,9 +68,9 @@ namespace particles {
 		if (!GetEmitterWorldMatrix(emitter, worldMatrix)) {
 			return;
 		}
-
-		mDevice.GetDevice()->SetVertexShaderConstantF(0, &worldMatrix._11, 4);
-		mDevice.GetDevice()->SetIndices(mIndexBuffer->GetBuffer());
+		
+		mDevice.SetVertexShaderConstants(0, worldMatrix);
+		mDevice.SetIndexBuffer(*mIndexBuffer);
 
 		RenderParticles(emitter);
 	}
@@ -77,6 +78,10 @@ namespace particles {
 	void QuadParticleRenderer::RenderParticles(PartSysEmitter &emitter) {
 		auto it = emitter.NewIterator();
 		auto totalCount = emitter.GetActiveCount();
+
+		if (totalCount == 0) {
+			return;
+		}
 
 		// Lazily initialize render state
 		if (!emitter.HasRenderState()) {
@@ -87,25 +92,23 @@ namespace particles {
 		auto renderState =
 			static_cast<QuadEmitterRenderState &>(emitter.GetRenderState());
 
-		auto lock(renderState.vertexBuffer->Lock<SpriteVertex>(4 * totalCount));
+		static eastl::vector<SpriteVertex> sUpdateBuffer;
+		sUpdateBuffer.resize(4 * totalCount);
+
 		int i = 0;
 		while (it.HasNext()) {
 			auto particleIdx = it.Next();
-			FillVertex(emitter, particleIdx, { &lock[i], 4 });
+			FillVertex(emitter, particleIdx, { &sUpdateBuffer[i], 4 });
 			i += 4;
 		}
-		lock.Unlock();
+
+		renderState.vertexBuffer->Update<SpriteVertex>({ sUpdateBuffer.data(), 4 * totalCount });
 
 		mDevice.SetMaterial(renderState.material);
 		renderState.bufferBinding.Bind();
 
 		// Draw the batch
-		auto device = mDevice.GetDevice();
-		auto result = device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0,
-			4 * totalCount, 0, 2 * totalCount);
-		if (!SUCCEEDED(result)) {
-			logger->error("Unable to draw particles: {}", result);
-		}
+		mDevice.DrawIndexed(gfx::PrimitiveType::TriangleList, 4 * totalCount, 6 * totalCount);
 	}
 
 	void SpriteParticleRenderer::FillVertex(const PartSysEmitter &emitter,
@@ -131,12 +134,12 @@ namespace particles {
 
 			auto cosRot = cosf(rotation) * scale;
 			auto sinRot = sinf(rotation) * scale;
-			halfPartHeightX = XMLoadFloat3(&screenSpaceUnitX) * cosRot - XMLoadFloat3(&screenSpaceUnitY) * sinRot;
-			halfPartHeightY = XMLoadFloat3(&screenSpaceUnitY) * cosRot + XMLoadFloat3(&screenSpaceUnitX) * sinRot;
+			halfPartHeightX = XMLoadFloat4(&screenSpaceUnitX) * cosRot - XMLoadFloat4(&screenSpaceUnitY) * sinRot;
+			halfPartHeightY = XMLoadFloat4(&screenSpaceUnitY) * cosRot + XMLoadFloat4(&screenSpaceUnitX) * sinRot;
 		}
 		else {
-			halfPartHeightX = XMLoadFloat3(&screenSpaceUnitX) * scale;
-			halfPartHeightY = XMLoadFloat3(&screenSpaceUnitY) * scale;
+			halfPartHeightX = XMLoadFloat4(&screenSpaceUnitX) * scale;
+			halfPartHeightY = XMLoadFloat4(&screenSpaceUnitY) * scale;
 		}
 
 		auto partPos(XMVectorSet(
@@ -147,13 +150,13 @@ namespace particles {
 			));
 
 		// Upper left corner
-		XMStoreFloat3(&vertices[0].pos, partPos - halfPartHeightX + halfPartHeightY);
+		XMStoreFloat4(&vertices[0].pos, partPos - halfPartHeightX + halfPartHeightY);
 		// Upper right corner
-		XMStoreFloat3(&vertices[1].pos, partPos + halfPartHeightX + halfPartHeightY);
+		XMStoreFloat4(&vertices[1].pos, partPos + halfPartHeightX + halfPartHeightY);
 		// Lower right corner
-		XMStoreFloat3(&vertices[2].pos, partPos + halfPartHeightX - halfPartHeightY);
+		XMStoreFloat4(&vertices[2].pos, partPos + halfPartHeightX - halfPartHeightY);
 		// Lower left corner
-		XMStoreFloat3(&vertices[3].pos, partPos - halfPartHeightX - halfPartHeightY);
+		XMStoreFloat4(&vertices[3].pos, partPos - halfPartHeightX - halfPartHeightY);
 
 		// Set the diffuse color for all corners
 		auto diffuse = GetParticleColor(emitter, particleIdx);
@@ -211,13 +214,13 @@ namespace particles {
 			emitter.GetParticleState().GetState(PSF_POS_VAR_Z, particleIdx), 1));
 
 		// Upper left corner
-		XMStoreFloat3(&vertex[0].pos, partPos - halfPartHeightX - halfPartHeightY);
+		XMStoreFloat4(&vertex[0].pos, partPos - halfPartHeightX - halfPartHeightY);
 		// Upper right corner													   
-		XMStoreFloat3(&vertex[1].pos, partPos + halfPartHeightX - halfPartHeightY);
+		XMStoreFloat4(&vertex[1].pos, partPos + halfPartHeightX - halfPartHeightY);
 		// Lower right corner													   
-		XMStoreFloat3(&vertex[2].pos, partPos + halfPartHeightX + halfPartHeightY);
+		XMStoreFloat4(&vertex[2].pos, partPos + halfPartHeightX + halfPartHeightY);
 		// Lower left corner													   
-		XMStoreFloat3(&vertex[3].pos, partPos - halfPartHeightX + halfPartHeightY);
+		XMStoreFloat4(&vertex[3].pos, partPos - halfPartHeightX + halfPartHeightY);
 
 		// Set the diffuse color for all corners
 		auto diffuse = GetParticleColor(emitter, particleIdx);

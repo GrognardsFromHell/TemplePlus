@@ -16,8 +16,6 @@ void ClippingMesh::AddInstance(const ClippingMeshObj& obj) {
 	mInstances.push_back(obj);
 }
 
-static_assert(sizeof(D3DVECTOR) == sizeof(XMFLOAT3), "XMFLOAT3 should be equivalent to D3DVECTOR");
-
 void ClippingMesh::CreateResources(RenderingDevice &device) {
 
 	auto data(vfs->ReadAsBinary(mFilename));

@@ -43,47 +43,6 @@ static void ConvertVertex(const GlyphVertex2d& vertex2d, GlyphVertex3d& vertex3d
 	vertex3d.uv.y = vertex2d.v / textureSize.height;
 }
 
-#if 0
-int FontDrawDoWork(TigTextStyle* style, const char*& text, const TigFontDrawArgs& args, const TigFont& font) {
-
-// signed int __usercall tig_font_draw_dowork@<eax>(tig_text_style *style@<ecx>, const char **text, TigFontDrawArgs *args, tig_font *font)
-	auto func = temple::GetPointer<void*>(0x101E93E0);
-
-	__asm {
-		push ecx;
-		mov ecx, style;
-		push font;
-		push args;
-		push text;
-		call func;
-		add esp, 0xC;
-		pop ecx;
-	}
-
-// TODO
-	return 0;
-}
-
-int FontDrawDoWork0(const GlyphVertex2d* vertices, int textureId, signed int glyphCount) {
-
-// signed int __usercall tig_font_draw_dowork@<eax>(tig_text_style *style@<ecx>, const char **text, TigFontDrawArgs *args, tig_font *font)
-	auto func = temple::GetPointer<void*>(0x101E8790);
-	__asm {
-		push ebx;
-		push ecx;
-		mov ecx, textureId;
-		mov eax, vertices;
-		mov ebx, glyphCount;
-		call func;
-		pop ecx;
-		pop ebx;
-	}
-
-// TODO
-	return 0;
-}
-#endif
-
 static constexpr auto sMaxGlyphFiles = 4;
 
 struct GlyphFileState {
@@ -95,7 +54,7 @@ struct GlyphFileState {
 struct FontRenderer::Impl : public ResourceListener {
 	
 	Impl(RenderingDevice &device) 
-		: mDevice(device), mRegistration(device, this), mMaterial(CreateMaterial(device)) {
+		: mDevice(device), mRegistration(device, this), mMaterial(CreateMaterial(device)), mBufferBinding(mMaterial.GetVertexShader()) {
 	}
 	
 	void CreateResources(RenderingDevice&) override;
@@ -103,10 +62,11 @@ struct FontRenderer::Impl : public ResourceListener {
 
 	RenderingDevice& mDevice;
 	IndexBufferPtr mIndexBuffer;
-	BufferBinding mBufferBinding;
 	GlyphFileState mFileState[sMaxGlyphFiles];
 
 	Material mMaterial;
+
+	BufferBinding mBufferBinding;
 
 	ResourceListenerRegistration mRegistration;
 
@@ -116,25 +76,25 @@ struct FontRenderer::Impl : public ResourceListener {
 
 Material FontRenderer::Impl::CreateMaterial(RenderingDevice &device) {
 
-	BlendState blendState;
+	BlendSpec blendState;
 	blendState.blendEnable = true;
-	blendState.srcBlend = D3DBLEND_SRCALPHA;
-	blendState.destBlend = D3DBLEND_INVSRCALPHA;
+	blendState.srcBlend = BlendOperand::SrcAlpha;
+	blendState.destBlend = BlendOperand::InvSrcAlpha;
 
-	DepthStencilState depthStencilState;
+	DepthStencilSpec depthStencilState;
 	depthStencilState.depthEnable = false;
-		
-	std::vector<MaterialSamplerBinding> samplers {
-		{ nullptr, SamplerState() }
+			
+	std::vector<MaterialSamplerSpec> samplers {
+		{ nullptr, {} }
 	};
 
 	auto vertexShader(device.GetShaders().LoadVertexShader("font_vs"));
 	auto pixelShader(device.GetShaders().LoadPixelShader("textured_simple_ps"));
 
-	return Material(
+	return device.CreateMaterial(
 		blendState,
 		depthStencilState,
-		RasterizerState(),
+		{},
 		samplers,
 		vertexShader,
 		pixelShader
@@ -197,18 +157,18 @@ void FontRenderer::RenderRun(cstring_span<> text,
 
 		auto glyph = font.glyphs[glyphIdx];
 
-		auto u1 = glyph.rect.x - 0.5f;
-		auto v1 = glyph.rect.y - 0.5f;
-		auto u2 = glyph.rect.x + glyph.rect.width + 0.5f;
-		auto v2 = glyph.rect.y + glyph.rect.height + 0.5f;
+		float u1 = (float) glyph.rect.x;
+		float v1 = (float) glyph.rect.y;
+		float u2 = (float) glyph.rect.x + glyph.rect.width;
+		float v2 = (float) glyph.rect.y + glyph.rect.height;
 
 		auto& state = mImpl->mFileState[glyph.fileIdx];
 
 		TigRect destRect;
 		destRect.x = x;
 		destRect.y = y + font.baseline - glyph.base_line_y_offset;
-		destRect.width = glyph.rect.width + 1;
-		destRect.height = glyph.rect.height + 1;
+		destRect.width = glyph.rect.width;
+		destRect.height = glyph.rect.height;
 
 		x += style.kerning + glyph.width_line;
 
@@ -296,9 +256,9 @@ void FontRenderer::RenderRun(cstring_span<> text,
 		vertexBL.diffuse = colorRect.bottomLeft;
 
 		// Support rotations (i.e. for the radial menu)
-		if (style.flags & 0x8000) {
+		if (style.flags & TTSF_ROTATE) {
 			float rotCenterX, rotCenterY;
-			if (style.flags & 0x10000) {
+			if (style.flags & TTSF_ROTATE_OFF_CENTER) {
 				rotCenterX = style.rotationCenterX;
 				rotCenterY = style.rotationCenterY;
 			} else {
@@ -333,40 +293,35 @@ void FontRenderer::RenderRun(cstring_span<> text,
 }
 
 void FontRenderer::RenderGlyphs(const GlyphVertex2d* vertices2d, int textureId, int glyphCount) {
-	auto device = mImpl->mDevice.GetDevice();
 	auto texture = mImpl->mDevice.GetTextures().GetById(textureId);
 
-	auto deviceTexture = texture->GetDeviceTexture();
-	if (!deviceTexture) {
-		logger->error("Trying to render glyph from invalid device texture");
-		return;
-	}
+	mImpl->mDevice.SetVertexShaderConstant(0, gfx::StandardSlotSemantic::UiProjMatrix);
 	mImpl->mDevice.SetMaterial(mImpl->mMaterial);
-	device->SetTexture(0, deviceTexture);
+	mImpl->mDevice.SetTexture(0, *texture);
 	
-	const auto vertexCount = glyphCount * 4;
-	const auto bufferSize = sizeof(GlyphVertex3d) * vertexCount;
-	
-	auto buffer = mImpl->mDevice.CreateEmptyVertexBuffer(bufferSize);
-	auto lock(buffer->Lock<GlyphVertex3d>());
-
 	auto textureSize = texture->GetSize();
-	for (auto i = 0; i < vertexCount; ++i) {
-		ConvertVertex(vertices2d[i], lock.GetData()[i], textureSize);
-	}
 
-	lock.Unlock();
+	const auto vertexCount = glyphCount * 4;
+
+	eastl::fixed_vector<GlyphVertex3d, 32> vertices3d;
+	vertices3d.reserve(vertexCount);
+
+	for (int i = 0; i < vertexCount; i++) {
+		auto &vertex3d = vertices3d.push_back();
+		ConvertVertex(vertices2d[i], vertex3d, textureSize);
+	}
+		
+	const auto bufferSize = sizeof(GlyphVertex3d) * vertexCount;
+
+	auto buffer = mImpl->mDevice.CreateVertexBuffer<GlyphVertex3d>(vertices3d);
 
 	mImpl->mBufferBinding
 		.SetBuffer(0, buffer)
 		.Bind();
-	device->SetIndices(mImpl->mIndexBuffer->GetBuffer());
+	mImpl->mDevice.SetIndexBuffer(*mImpl->mIndexBuffer);
 
-	// Set vertex shader properties (GUI specific)
-	device->SetVertexShaderConstantF(0, &mImpl->mDevice.GetCamera().GetUiProjection()._11, 4);
+	mImpl->mDevice.DrawIndexed(gfx::PrimitiveType::TriangleList, vertexCount, glyphCount * 2 * 3);
 	
-	D3DLOG(device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, vertexCount, 0, glyphCount * 2));
-
 }
 
 void FontRenderer::Rotate2d(float& x, float& y, float rotCos, float rotSin, float centerX, float centerY) {

@@ -38,12 +38,7 @@ API void AnimatedModel_Free(gfx::AnimatedModelPtr* handle) {
 	delete handle;
 }
 
-API void AnimatedModel_Render(TempleDll* dll, gfx::AnimatedModelPtr* handle, float w, float h, float scale) {
-
-	auto &camera = dll->renderingDevice.GetCamera();
-	camera.SetScale(scale);
-	camera.SetScreenWidth(w, h);
-	camera.CenterOn(0, 0, 0);
+API void AnimatedModel_Render(TempleDll* dll, gfx::AnimatedModelPtr* handle) {
 
 	auto model = (*handle).get();
 

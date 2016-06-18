@@ -2,6 +2,7 @@
 #pragma once
 
 #include "buffers.h"
+#include "shaders.h"
 
 namespace gfx {
 
@@ -71,6 +72,15 @@ class BufferBinding {
 friend class BufferBindingBuilder;
 public:
 
+	/**
+	 * The shader has to be set so the input declaration can be validated
+	 * against the declared inputs of the shader.
+	 */
+	BufferBinding(const VertexShaderPtr &shader) : mShader(shader) {
+		memset(&mOffsets, 0, sizeof(mOffsets));
+		memset(&mStrides, 0, sizeof(mStrides));
+	}
+
 	BufferBinding& SetBuffer(int streamIdx, VertexBufferPtr buffer) {
 		mStreams[streamIdx] = buffer;
 		return *this;
@@ -85,8 +95,6 @@ public:
 		return BufferBindingBuilder(*this, streamIdx);
 	}
 
-	static BYTE ConvertType(VertexElementType type);
-	static BYTE ConvertUsage(VertexElementSemantic semantic);
 	void Bind();
 	void Unbind() const;
 
@@ -97,7 +105,8 @@ private:
 	std::array<int, 16> mOffsets;
 	std::array<int, 16> mStrides;
 	size_t mStreamCount = 0; // Actual number of used streams
-	CComPtr<struct IDirect3DVertexDeclaration9> mDecl;
+	CComPtr<struct ID3D11InputLayout> mInputLayout;
+	VertexShaderPtr mShader;
 
 	static size_t GetElementSize(VertexElementType type);
 };

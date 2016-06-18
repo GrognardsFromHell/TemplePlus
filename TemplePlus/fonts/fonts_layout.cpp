@@ -5,8 +5,11 @@
 #include <tig/tig_font.h>
 
 #include <graphics/shaperenderer2d.h>
+#include <graphics/device.h>
+#include <graphics/textengine.h>
 
 #include "fonts.h"
+#include "fonts_mapping.h"
 
 using namespace gfx;
 
@@ -21,8 +24,105 @@ struct ScanWordResult {
 	bool drawEllipsis = false;
 };
 
-TextLayouter::TextLayouter(RenderingDevice& device, ShapeRenderer2d &shapeRenderer) 
-	: mRenderer(device), mShapeRenderer(shapeRenderer) {
+TextLayouter::TextLayouter(RenderingDevice& device, ShapeRenderer2d &shapeRenderer)
+	: mTextEngine(device.GetTextEngine()), mRenderer(device), mShapeRenderer(shapeRenderer) {
+	mMapping = std::make_unique<FontsMapping>();
+}
+
+TextLayouter::~TextLayouter() = default;
+
+void ApplyStyle(const TigTextStyle &style, int tabPos, gfx::TextStyle &textStyle) {
+	if (tabPos > 0) {
+		textStyle.tabStopWidth = (float)tabPos;
+	}
+
+	// Convert the color (optional for measurements)
+	if (style.textColor) {
+		textStyle.foreground.primaryColor = style.textColor->topLeft;
+		if (style.textColor->topLeft != style.textColor->bottomRight) {
+			textStyle.foreground.gradient = true;
+			textStyle.foreground.secondaryColor = style.textColor->bottomRight;
+		}
+	}
+
+	if (style.flags & 0x4000) {
+		textStyle.trim = true;
+	}
+
+	// Layouting options
+	if (style.flags & TTSF_CENTER) {
+		textStyle.align = TextAlign::Center;
+	}
+	if (style.flags & TTSF_DROP_SHADOW) {
+		textStyle.dropShadow = true;
+		if (style.shadowColor) {
+			textStyle.dropShadowBrush.primaryColor = style.shadowColor->topLeft;
+			textStyle.dropShadowBrush.primaryColor.a = 255;
+		}
+	}
+}
+
+static FormattedText ProcessString(const TextStyle& defaultStyle, const TigTextStyle &tigStyle, gsl::cstring_span<> text)
+{
+	FormattedText result;
+	result.defaultStyle = defaultStyle;
+	result.text.reserve(text.size());
+
+	bool inColorRange = false;
+	bool inEscape = false;
+	for (int i = 0; i < text.size(); i++) {
+		auto ch = text[i];
+		if (ch == '@') {
+			inEscape = true;
+		}
+		else if (inEscape) {
+			inEscape = false;
+
+			if (ch == 't') {
+				result.text.back() = '\t';
+				continue;
+			}
+			else if (iswdigit(ch)) {
+				auto colorIdx = ch - '0';
+
+				// Remove the @ that we're about to remove from the previous color range
+				if (inColorRange) {
+					result.formats.back().length--;
+				}
+
+				// Remove last char (@)
+				result.text.erase(result.text.size() - 1);
+
+				if (colorIdx == 0 || !tigStyle.textColor) {
+					// Return to the normal formatting
+					inColorRange = false;
+				}
+				else {
+					inColorRange = true;
+
+					// Add a constrainted text style
+					ConstrainedTextStyle newStyle(defaultStyle);
+					newStyle.startChar = result.text.size();
+
+					// Set the desired color
+					newStyle.style.foreground.gradient = false;
+					newStyle.style.foreground.primaryColor = tigStyle.textColor[colorIdx].topLeft;
+
+					result.formats.emplace_back(std::move(newStyle));
+				}
+				continue;
+			}
+
+		}
+
+		if (inColorRange) {
+			// Extend the colored range by one char
+			result.formats.back().length++;
+		}
+		result.text.push_back(ch);
+	}
+
+	return result;
 }
 
 void TextLayouter::LayoutAndDraw(gsl::cstring_span<> text, const TigFont& font, TigRect& extents, TigTextStyle& style) {
@@ -31,59 +131,131 @@ void TextLayouter::LayoutAndDraw(gsl::cstring_span<> text, const TigFont& font, 
 		return;
 	}
 
-	auto lastLine = false;
-	auto extentsWidth = extents.width;
-	auto extentsHeight = extents.height;
-	auto textLength = text.length();
-	if (!extentsWidth) {
-		TigFontMetrics metrics;
-		metrics.text = &text[0];
-		metrics.width = extents.width;
-		metrics.height = extents.height;
-		tigFont.Measure(style, metrics);
-
-		extents.width = metrics.width;
-		extents.height = metrics.height;
-		extentsWidth = metrics.width;
-		extentsHeight = metrics.height;
+	// Get the base text format and check if we should render using the new or old algorithms
+	auto it = mMapping->find(font.name);
+	if (it == mMapping->end()) {
+		// use the old font drawing algorithm
+		LayoutAndDrawVanilla(text, font, extents, style);
+		return;
 	}
 
-	if (style.flags & 0x400) {
-		TigRect rect;
-		rect.x = extents.x - 3;
-		rect.y = extents.y - 3;
+	// Use the new text engine style of drawing
+	auto tabPos = style.field4c - extents.x;
+	auto textStyle = it->second;
+	ApplyStyle(style, tabPos, textStyle);
 
-		if (extents.width <= 0)
-			rect.width = extentsWidth + 6;
-		else
-			rect.width = extents.width + 6;
-		if (extents.height <= 0)
-			rect.height = extents.height + 6;
-		else
-			rect.height = extents.height + 6;
-		DrawBackground(rect, style);
+	// If the string contains an @ symbol, we need to assume it's a legacy formatted string that
+	// we need to parse into the new format.
+	bool isLegacyFormattedStr = std::find(text.begin(), text.end(), '@') != text.end();
+
+	gfx::FormattedText formatted;
+	if (isLegacyFormattedStr) {
+		formatted = ProcessString(textStyle, style, text);
+	} else {
+		formatted.text = local_to_ucs2(to_string(text));
+		formatted.defaultStyle = textStyle;
 	}
 
-	if (style.flags & 0x800) {
-		XMFLOAT2 topLeft;
-		topLeft.x = extents.x - 1.0f - 3.0f;
-		topLeft.y = extents.y - 1.0f - 3.0f;
+	// Determine the real text width/height if necessary
+	if (extents.width <= 0 || extents.height <= 0) {
+		gfx::TextMetrics metrics;
+		mTextEngine.MeasureText(formatted, metrics);
+		if (extents.width <= 0) {
+			extents.width = metrics.width;
+		}
+		if (extents.height <= 0) {
+			extents.height = metrics.height;
+		}
+	}
 
-		float width;
-		if (extents.width <= 0)
-			width = (float)extentsWidth;
-		else
-			width = (float)extents.width;
+	// Handle drawing of border/background
+	if (style.flags & (TTSF_BACKGROUND | TTSF_BORDER)) {
+		DrawBackgroundOrOutline(extents, style);
+	}
 
-		float height;
-		if (extents.height <= 0)
-			height = (float)extentsHeight;
-		else
-			height = (float)extents.height;
+	// Dispatch based on applied rotation
+	if (style.flags & TTSF_ROTATE) {
+		float angle = XMConvertToDegrees(style.rotation);
+		XMFLOAT2 center{ 0,0 };
+		if (style.flags & TTSF_ROTATE_OFF_CENTER) {
+			center.x = style.rotationCenterX;
+			center.y = style.rotationCenterY;
+		}
 
-		XMFLOAT2 bottomRight;
-		bottomRight.x = width + extents.x - 1.0f + 3.0f;
-		bottomRight.y = height + extents.y - 1.0f + 3.0f;
+		mTextEngine.RenderTextRotated(extents, angle, center, formatted);
+	} else {
+		mTextEngine.RenderText(extents, formatted);
+	}
+
+}
+
+void TextLayouter::Measure(const TigFont &font, const TigTextStyle & style, TigFontMetrics & metrics)
+{
+	// Get the base text format and check if we should render using the new or old algorithms
+	auto it = mMapping->find(font.name);
+	if (it == mMapping->end()) {
+		// use the old font drawing algorithm
+		MeasureVanilla(font, style, metrics);
+		return;
+	}
+
+	auto tabPos = style.field4c;
+	auto textStyle = it->second;
+	ApplyStyle(style, tabPos, textStyle);
+	
+	gfx::TextMetrics textMetrics;
+	textMetrics.width = metrics.width;
+	textMetrics.height = metrics.height;
+
+	if (strchr(metrics.text, '@')) {
+		auto formatted = ProcessString(textStyle, style, { metrics.text, (int)strlen(metrics.text) });
+		mTextEngine.MeasureText(formatted, textMetrics);
+	} else {
+		mTextEngine.MeasureText(textStyle, metrics.text, textMetrics);
+	}
+
+	metrics.width = textMetrics.width;
+	metrics.height = textMetrics.height;
+	metrics.lineheight = textMetrics.lineHeight;
+	metrics.lines = textMetrics.lines;
+}
+
+void TextLayouter::DrawBackgroundOrOutline(const TigRect& rect, const TigTextStyle& style) {
+	
+	float left = (float)rect.x;
+	float top = (float)rect.y;
+	float right = left + rect.width;
+	float bottom = top + rect.height;
+
+	left -= 3;
+	top -= 3;
+	right += 3;
+	bottom += 3;
+
+	if (style.flags & TTSF_BACKGROUND) {
+		std::array<Vertex2d, 4> corners;
+		corners[0].pos = XMFLOAT4(left, top, 0.5f, 1);
+		corners[1].pos = XMFLOAT4(right, top, 0.5f, 1);
+		corners[2].pos = XMFLOAT4(right, bottom, 0.5f, 1);
+		corners[3].pos = XMFLOAT4(left, bottom, 0.5f, 1);
+
+		corners[0].diffuse = style.bgColor->topLeft;
+		corners[1].diffuse = style.bgColor->topRight;
+		corners[2].diffuse = style.bgColor->bottomRight;
+		corners[3].diffuse = style.bgColor->bottomLeft;
+
+		corners[0].uv = XMFLOAT2(0, 0);
+		corners[1].uv = XMFLOAT2(0, 0);
+		corners[2].uv = XMFLOAT2(0, 0);
+		corners[3].uv = XMFLOAT2(0, 0);
+
+		// Draw an untexture rectangle
+		mShapeRenderer.DrawRectangle(corners, nullptr);
+	}
+
+	if (style.flags & TTSF_BORDER) {
+		XMFLOAT2 topLeft(left - 1, top - 1);
+		XMFLOAT2 bottomRight(right + 1, bottom + 1);
 
 		mShapeRenderer.DrawRectangleOutline(
 			topLeft,
@@ -92,158 +264,9 @@ void TextLayouter::LayoutAndDraw(gsl::cstring_span<> text, const TigFont& font, 
 		);
 	}
 
-	// TODO: Check if this can even happen since we measure the text
-	// if the width hasn't been constrained
-	if (!extentsWidth) {
-		mRenderer.RenderRun(
-			text,
-			extents.x,
-			extents.y,
-			extents,
-			style,
-			font
-		);
-		return;
-	}
-
-	// Is there only space for one line?
-	const int ellipsisWidth = 3 * (style.kerning + font.glyphs[GetGlyphIdx('.', sEllipsis)].width_line);
-	auto linePadding = 0;
-	if (extents.y + 2 * font.largestHeight > extents.y + extents.height) {
-		lastLine = true;
-		if (style.flags & 0x4000) {
-			linePadding = -ellipsisWidth;
-		}
-	}
-
-	if (textLength <= 0)
-		return;
-
-	const auto tabWidth = style.field4c - extents.x;
-
-	auto currentY = extents.y;
-	for (auto startOfWord = 0; startOfWord < textLength; ++startOfWord) {
-		int wordsOnLine, lineWidth;
-		std::tie(wordsOnLine, lineWidth) = MeasureCharRun(text.subspan(startOfWord),
-		                                                  style,
-		                                                  extents,
-		                                                  extentsWidth,
-		                                                  font,
-		                                                  linePadding,
-		                                                  lastLine);
-
-		auto currentX = 0;
-		for (auto wordIdx = 0; wordIdx < wordsOnLine; ++wordIdx) {
-
-			auto remainingSpace = extentsWidth + linePadding - currentX;
-
-			auto wordInfo(ScanWord(&text[0],
-			                       startOfWord,
-			                       textLength,
-			                       tabWidth,
-			                       lastLine,
-			                       font,
-			                       style,
-			                       remainingSpace));
-
-			auto lastIdx = wordInfo.lastIdx;
-			auto wordWidth = wordInfo.width;
-
-			if (lastLine && style.flags & 0x4000) {
-				if (currentX + wordInfo.fullWidth > extentsWidth) {
-					lastIdx = wordInfo.idxBeforePadding;
-				} else {
-					if (!HasMoreText(text.subspan(lastIdx), tabWidth)) {
-						wordInfo.drawEllipsis = false;
-						wordWidth = wordInfo.fullWidth;
-					}
-				}
-			}
-
-			startOfWord = lastIdx;
-			if (startOfWord < textLength && isspace(text[startOfWord])) {
-				wordWidth += style.tracking;
-			}
-
-			// This means this is not the last word in this line
-			if (wordIdx + 1 < wordsOnLine) {
-				startOfWord++;
-			}
-
-			// Draw the word
-			auto x = extents.x + currentX;
-			// This centers the line
-			if (style.flags & 0x10) {
-				x += (extentsWidth - lineWidth) / 2;
-			}
-			if ((int)wordInfo.firstIdx < 0 || (int)lastIdx < 0){
-				int dummy = 1;
-				logger->error("Bad firstIdx at LayoutAndDraw! {}, {}", (int)wordInfo.firstIdx, (int)lastIdx);
-			} 
-			else if(lastIdx >= wordInfo.firstIdx)
-				mRenderer.RenderRun(
-					text.subspan(wordInfo.firstIdx, lastIdx - wordInfo.firstIdx),
-					x,
-					currentY,
-					extents,
-					style,
-					font);
-
-			currentX += wordWidth;
-
-			// We're on the last line, the word has been truncated, ellipsis needs to be drawn
-			if (lastLine && style.flags & 0x4000 && wordInfo.drawEllipsis) {
-				mRenderer.RenderRun(as_span(sEllipsis, strlen(sEllipsis)),
-					extents.x + currentX,
-					currentY,
-					extents,
-					style,
-					font);
-				return;
-			}
-		}
-
-		// Advance to next line
-		currentY += font.largestHeight;
-		if (currentY + 2 * font.largestHeight > extents.y + extents.height) {
-			lastLine = true;
-			if (style.flags & 0x4000) {
-				linePadding = ellipsisWidth;
-			}
-		}
-	}
-
 }
 
-void TextLayouter::DrawBackground(const TigRect& rect, const TigTextStyle& style) {
-	
-	float left = (float)rect.x;
-	float top = (float)rect.y;
-	float right = left + rect.width;
-	float bottom = top + rect.height;
-
-	std::array<Vertex2d, 4> corners;
-	corners[0].pos = XMFLOAT3(left, top, 0.5f);
-	corners[1].pos = XMFLOAT3(right, top, 0.5f);
-	corners[2].pos = XMFLOAT3(right, bottom, 0.5f);
-	corners[3].pos = XMFLOAT3(left, bottom, 0.5f);
-
-	corners[0].diffuse = style.bgColor->topLeft;
-	corners[1].diffuse = style.bgColor->topRight;
-	corners[2].diffuse = style.bgColor->bottomRight;
-	corners[3].diffuse = style.bgColor->bottomLeft;
-
-	corners[0].uv = XMFLOAT2(0, 0);
-	corners[1].uv = XMFLOAT2(0, 0);
-	corners[2].uv = XMFLOAT2(0, 0);
-	corners[3].uv = XMFLOAT2(0, 0);
-	
-	// Draw an untexture rectangle
-	mShapeRenderer.DrawRectangle(corners, nullptr);
-
-}
-
-int TextLayouter::GetGlyphIdx(char ch, const char* text) {
+int TextLayouter::GetGlyphIdx(char ch, const char* text) const {
 
 	// First character found in the FNT files
 	constexpr auto FirstFontChar = '!';
@@ -394,6 +417,323 @@ bool TextLayouter::HasMoreText(cstring_span<> text, int tabWidth) {
 	return false;
 }
 
+void TextLayouter::LayoutAndDrawVanilla(gsl::cstring_span<> text, const TigFont & font, TigRect & extents, TigTextStyle & style)
+{
+	auto lastLine = false;
+	auto extentsWidth = extents.width;
+	auto extentsHeight = extents.height;
+	auto textLength = text.length();
+	if (!extentsWidth) {
+		TigFontMetrics metrics;
+		metrics.text = &text[0];
+		metrics.width = extents.width;
+		metrics.height = extents.height;
+		tigFont.Measure(style, metrics);
+
+		extents.width = metrics.width;
+		extents.height = metrics.height;
+		extentsWidth = metrics.width;
+		extentsHeight = metrics.height;
+	}
+
+	if (style.flags & (TTSF_BACKGROUND | TTSF_BORDER)) {
+		TigRect rect;
+		rect.x = extents.x;
+		rect.y = extents.y;
+		rect.width = std::max<int>(extentsWidth, extents.width);
+		rect.height = std::max<int>(extentsHeight, extents.height);
+		DrawBackgroundOrOutline(rect, style);
+	}
+
+	// TODO: Check if this can even happen since we measure the text
+	// if the width hasn't been constrained
+	if (!extentsWidth) {
+		mRenderer.RenderRun(
+			text,
+			extents.x,
+			extents.y,
+			extents,
+			style,
+			font
+		);
+		return;
+	}
+
+	// Is there only space for one line?
+	const int ellipsisWidth = 3 * (style.kerning + font.glyphs[GetGlyphIdx('.', sEllipsis)].width_line);
+	auto linePadding = 0;
+	if (extents.y + 2 * font.largestHeight > extents.y + extents.height) {
+		lastLine = true;
+		if (style.flags & 0x4000) {
+			linePadding = -ellipsisWidth;
+		}
+	}
+
+	if (textLength <= 0)
+		return;
+
+	const auto tabWidth = style.field4c - extents.x;
+
+	auto currentY = extents.y;
+	for (auto startOfWord = 0; startOfWord < textLength; ++startOfWord) {
+		int wordsOnLine, lineWidth;
+		std::tie(wordsOnLine, lineWidth) = MeasureCharRun(text.subspan(startOfWord),
+			style,
+			extents,
+			extentsWidth,
+			font,
+			linePadding,
+			lastLine);
+
+		auto currentX = 0;
+		for (auto wordIdx = 0; wordIdx < wordsOnLine; ++wordIdx) {
+
+			auto remainingSpace = extentsWidth + linePadding - currentX;
+
+			auto wordInfo(ScanWord(&text[0],
+				startOfWord,
+				textLength,
+				tabWidth,
+				lastLine,
+				font,
+				style,
+				remainingSpace));
+
+			auto lastIdx = wordInfo.lastIdx;
+			auto wordWidth = wordInfo.width;
+
+			if (lastLine && style.flags & 0x4000) {
+				if (currentX + wordInfo.fullWidth > extentsWidth) {
+					lastIdx = wordInfo.idxBeforePadding;
+				}
+				else {
+					if (!HasMoreText(text.subspan(lastIdx), tabWidth)) {
+						wordInfo.drawEllipsis = false;
+						wordWidth = wordInfo.fullWidth;
+					}
+				}
+			}
+
+			startOfWord = lastIdx;
+			if (startOfWord < textLength && isspace(text[startOfWord])) {
+				wordWidth += style.tracking;
+			}
+
+			// This means this is not the last word in this line
+			if (wordIdx + 1 < wordsOnLine) {
+				startOfWord++;
+			}
+
+			// Draw the word
+			auto x = extents.x + currentX;
+			// This centers the line
+			if (style.flags & 0x10) {
+				x += (extentsWidth - lineWidth) / 2;
+			}
+			if ((int)wordInfo.firstIdx < 0 || (int)lastIdx < 0) {
+				int dummy = 1;
+				logger->error("Bad firstIdx at LayoutAndDraw! {}, {}", (int)wordInfo.firstIdx, (int)lastIdx);
+			}
+			else if (lastIdx >= wordInfo.firstIdx)
+				mRenderer.RenderRun(
+					text.subspan(wordInfo.firstIdx, lastIdx - wordInfo.firstIdx),
+					x,
+					currentY,
+					extents,
+					style,
+					font);
+
+			currentX += wordWidth;
+
+			// We're on the last line, the word has been truncated, ellipsis needs to be drawn
+			if (lastLine && style.flags & 0x4000 && wordInfo.drawEllipsis) {
+				mRenderer.RenderRun(as_span(sEllipsis, strlen(sEllipsis)),
+					extents.x + currentX,
+					currentY,
+					extents,
+					style,
+					font);
+				return;
+			}
+		}
+
+		// Advance to next line
+		currentY += font.largestHeight;
+		if (currentY + 2 * font.largestHeight > extents.y + extents.height) {
+			lastLine = true;
+			if (style.flags & 0x4000) {
+				linePadding = ellipsisWidth;
+			}
+		}
+	}
+
+}
+
+uint32_t TextLayouter::MeasureVanillaLine(const TigFont &font, const TigTextStyle &style, const char *text) const
+{
+	if (!text) {
+		return 0;
+	}
+
+	auto result = 0;
+	auto length = strlen(text);
+
+	for (auto i = 0u; i < length; i++) {
+		auto ch = text[i];
+
+		// Skip @ characters if they are followed by a number between 0 and 9
+		if (ch == '@' && i + 1 < length && text[i + 1] >= '0' && text[i + 1] <= '9') {
+			i++;
+			continue;
+		}
+
+		if (isspace(ch)) {
+			if (ch != '\n') {
+				result += style.tracking;
+			}
+		} else {
+			auto glyphIdx = GetGlyphIdx(ch, text);
+			result += font.glyphs[glyphIdx].width_line + style.kerning;
+		}
+	}
+	return result;
+}
+
+uint32_t TextLayouter::MeasureVanillaParagraph(const TigFont &font, const TigTextStyle &style, const char *text) const {
+
+	// This is kinda bad... Text larger than 2000 chars will just crash
+	assert(strlen(text) + 1 < 2000);
+	char tempText[2000];
+	strcpy(tempText, text);
+	strcat(tempText, "\n");
+	
+	auto token = strtok(tempText, "\n");
+	auto maxLineLen = 0u;
+	
+	while (token) {
+		auto lineLen = MeasureVanillaLine(font, style, token);
+		if (lineLen > maxLineLen) {
+			maxLineLen = lineLen;
+		}
+		token = strtok(0, "\n");
+	}
+
+	return maxLineLen;
+}
+
+uint32_t TextLayouter::CountLinesVanilla(uint32_t maxWidth, uint32_t maxLines, const char * text, const TigFont & font, const TigTextStyle & style) const
+{
+	size_t length = strlen(text);
+
+	if (length <= 0)
+		return 1;
+
+	auto lineWidth = 0u;
+	auto lines = 1u;
+
+	char ch;
+	for (size_t i = 0; i < length; i++) {
+		auto wordWidth = 0;
+		
+		// Measure the length of the current word
+		for (; i < length; i++) {
+			ch = text[i];
+
+			// Skip @[0-9]
+			if (ch == '@' && i + 1 < length && text[i + 1] >= '0' && text[i + 1] <= '9') {
+				i++;
+				continue;
+			}
+
+			if (isspace(ch)) {
+				break;
+			}
+
+			auto glyphIdx = GetGlyphIdx(ch, text);
+			wordWidth += font.glyphs[glyphIdx].width_line + style.kerning;
+		}
+
+		lineWidth += wordWidth;
+
+		// If there's enough space in the maxWidth left and we're not at a newline
+		// increase the linewidth and continue on.
+		if (lineWidth <= maxWidth && ch != '\n') {
+			if (isspace(ch)) {
+				lineWidth += style.tracking;
+			}
+			continue;
+		}
+
+		// We're either at a newline, or break the line here due to reaching the maxwidth
+		lines++;
+
+		// Reached the max number of lines -> quit
+		if (maxLines && lines >= maxLines) {
+			break;
+		}
+
+		if (lineWidth <= maxWidth) {
+			// We reached a normal line break
+			lineWidth = 0;
+		} else {
+			// We're breaking the line, so we'll keep the current word
+			// width as the initial length of the new line
+			lineWidth = wordWidth;
+		}
+
+		// Continuation indent
+		if (style.flags & TTSF_CONTINUATION_INDENT) {
+			lineWidth += 8 * style.tracking;
+		}
+
+		if (isspace(ch)) {
+			if (ch != '\n') {
+				lineWidth += style.tracking;
+			}
+		}
+	}
+
+	return lines;
+}
+
+void TextLayouter::MeasureVanilla(const TigFont & font, const TigTextStyle & style, TigFontMetrics & metrics) const
+{
+	if (!metrics.width && strstr(metrics.text, "\n") && metrics.text) {
+		metrics.width = MeasureVanillaParagraph(font, style, metrics.text);
+	}
+
+	if (!metrics.width)
+	{
+		metrics.width = MeasureVanillaLine(font, style, metrics.text);
+		metrics.height = font.largestHeight;
+		metrics.lines = 1;
+		metrics.lineheight = font.largestHeight;
+		return;
+	}
+		
+	metrics.lines = 1; // Default
+	if (metrics.height) {
+		auto maxLines = metrics.height / font.largestHeight;
+		if (!(style.flags & TTSF_TRUNCATE)) {
+			maxLines++;
+		}
+		
+		if (maxLines != 1) {
+			metrics.lines = CountLinesVanilla(metrics.width, maxLines, metrics.text, font, style);
+		}
+	} else {
+		if (!(style.flags & TTSF_TRUNCATE)) {
+			metrics.lines = CountLinesVanilla(metrics.width, 0, metrics.text, font, style);
+		}
+	}
+
+	if (!metrics.height) {
+		metrics.height = metrics.lines * font.largestHeight;
+		metrics.height -= - (font.baseline - font.largestHeight);
+	}
+	metrics.lineheight = font.largestHeight;
+}
+
 ScanWordResult TextLayouter::ScanWord(const char* text,
 	int firstIdx,
 	int textLength,
@@ -427,7 +767,7 @@ ScanWordResult TextLayouter::ScanWord(const char* text,
 		if (curCh == '@' && nextCh == 't') {
 			i++; // Skip the t
 			if (tabWidth > 0) {
-				if (style.flags & 0x4000) {
+				if (style.flags & TTSF_TRUNCATE) {
 					result.fullWidth += tabWidth;
 					if (result.fullWidth > remainingSpace) {
 						result.drawEllipsis = true;
@@ -444,7 +784,7 @@ ScanWordResult TextLayouter::ScanWord(const char* text,
 		auto glyphIdx = GetGlyphIdx(curCh, &text[0]);
 
 		if (curCh == '\n') {
-			if (lastLine && style.flags & 0x4000) {
+			if (lastLine && style.flags & TTSF_TRUNCATE) {
 				result.drawEllipsis = true;
 			}
 			break;
@@ -454,7 +794,7 @@ ScanWordResult TextLayouter::ScanWord(const char* text,
 			break;
 		}
 
-		if (style.flags & 0x4000) {
+		if (style.flags & TTSF_TRUNCATE) {
 			result.fullWidth += font.glyphs[glyphIdx].width_line + style.kerning;
 			if (result.fullWidth > remainingSpace) {
 				result.drawEllipsis = true;

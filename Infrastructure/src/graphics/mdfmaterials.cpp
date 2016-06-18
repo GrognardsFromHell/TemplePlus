@@ -15,6 +15,35 @@ using namespace DirectX;
 
 namespace gfx {
 
+	/*
+		Please note that the restrictive rules on constant buffer packing make it much easier to just
+		keep using XMFLOAT4's although they are oversized. We might want to optimize the packing here by
+		hand later.
+	*/
+	struct MdfGlobalConstants {
+		XMFLOAT4X4 viewProj;
+		XMFLOAT4 matDiffuse;
+		XMFLOAT4 uvAnimTime;
+		XMFLOAT4 uvRotation[4]; // One per texture stage
+
+		static const uint32_t MaxLights = 8;
+
+		// Lighting related
+		XMFLOAT4 lightPos[MaxLights];
+		XMFLOAT4 lightDir[MaxLights];
+		XMFLOAT4 lightAmbient[MaxLights];
+		XMFLOAT4 lightDiffuse[MaxLights];
+		XMFLOAT4 lightSpecular[MaxLights];
+		XMFLOAT4 lightRange[MaxLights];
+		XMFLOAT4 lightAttenuation[MaxLights]; //1, D, D^2;
+		XMFLOAT4 lightSpot[MaxLights]; //cos(theta/2), cos(phi/2), falloff
+		
+		XMINT4 bSpecular;
+		XMFLOAT4 fMaterialPower;
+		XMFLOAT4 matSpecular;
+		uint32_t lightCount[4]; // Directional, point, spot
+	};
+
 	enum MdfShaderRegisters {
 		// Projection Matrix (in ToEE's case this is viewProj)
 		MDF_REG_VIEWPROJ = 0,
@@ -23,18 +52,18 @@ namespace gfx {
 		MDF_REG_UVROTATION = 6,
 
 		// Lighting related registers
-		MDF_REG_LIGHT_POS = 100,
-		MDF_REG_LIGHT_DIR = 108,
-		MDF_REG_LIGHT_AMBIENT = 116,
-		MDF_REG_LIGHT_DIFFUSE = 124,
-		MDF_REG_LIGHT_SPECULAR = 132,
-		MDF_REG_LIGHT_RANGE = 140,
-		MDF_REG_LIGHT_ATTENUATION = 148,
-		MDF_REG_LIGHT_SPOT = 156,
-		MDF_REG_LIGHT_SPECULARENABLE = 164,
-		MDF_REG_LIGHT_SPECULARPOWER = 165,
-		MDF_REG_LIGHT_MAT_SPECULAR = 166,
-		MDF_REG_LIGHT_COUNT = 167
+		MDF_REG_LIGHT_POS = 10,
+		MDF_REG_LIGHT_DIR = 18,
+		MDF_REG_LIGHT_AMBIENT = 26,
+		MDF_REG_LIGHT_DIFFUSE = 34,
+		MDF_REG_LIGHT_SPECULAR = 42,
+		MDF_REG_LIGHT_RANGE = 50,
+		MDF_REG_LIGHT_ATTENUATION = 58,
+		MDF_REG_LIGHT_SPOT = 66,
+		MDF_REG_LIGHT_SPECULARENABLE = 74,
+		MDF_REG_LIGHT_SPECULARPOWER = 75,
+		MDF_REG_LIGHT_MAT_SPECULAR = 76,
+		MDF_REG_LIGHT_COUNT = 77
 	};
 
 	MdfRenderMaterial::MdfRenderMaterial(gfx::LegacyShaderId id,
@@ -65,41 +94,45 @@ namespace gfx {
 		gsl::span<Light3d> lights,
 		const MdfRenderOverrides *overrides) const {
 
-		auto d3d = device.GetDevice();
+		// Fill out the globals for the shader
+		MdfGlobalConstants globals;
+
+		XMMATRIX viewProj;
+		if (overrides && overrides->uiProjection) {
+			viewProj = XMLoadFloat4x4(&device.GetCamera().GetUiProjection());
+		} else {
+			viewProj = XMLoadFloat4x4(&device.GetCamera().GetViewProj());
+		}
 
 		// Should we use a separate world matrix?
 		if (overrides && overrides->useWorldMatrix) {
 			// Build a world * view * proj matrix
-			auto worldViewProj{ XMLoadFloat4x4(&overrides->worldMatrix) * XMLoadFloat4x4(&device.GetCamera().GetViewProj()) };
-			XMFLOAT4X4A worldViewProjMat;
-			XMStoreFloat4x4A(&worldViewProjMat, worldViewProj);
-
-			d3d->SetVertexShaderConstantF(MDF_REG_VIEWPROJ, &worldViewProjMat._11, 4);
+			auto worldViewProj{ XMLoadFloat4x4(&overrides->worldMatrix) * viewProj };
+			XMStoreFloat4x4(&globals.viewProj, worldViewProj);
 		} else {
-			d3d->SetVertexShaderConstantF(MDF_REG_VIEWPROJ, &device.GetCamera().GetViewProj()._11, 4);
+			XMStoreFloat4x4(&globals.viewProj, viewProj);
 		}
 		
 		// Set material diffuse color for shader
-		DirectX::XMFLOAT4 floats;
+		XMVECTOR color;
 		if (overrides && overrides->overrideColor) {
-			floats = D3DColorToFloat4(overrides->overrideColor);
+			 color = XMLoadColor(&overrides->overrideColor);
 		} else {
-			floats = D3DColorToFloat4(mSpec->diffuse);
+			color = XMLoadColor(&XMCOLOR(mSpec->diffuse));
 		}
+		XMStoreFloat4(&globals.matDiffuse, color);
 		if (overrides && overrides->alpha != 1.0f) {
-			floats.w *= overrides->alpha;
+			globals.matDiffuse.w *= overrides->alpha;
 		}
-		d3d->SetVertexShaderConstantF(MDF_REG_MATDIFFUSE, &floats.x, 1);
-
+		
 		// Set time for UV animation in minutes as a floating point number
 		auto animTime = device.GetLastFrameStart() - device.GetDeviceCreated();
 		auto timeInMs = std::chrono::duration_cast<std::chrono::milliseconds>(animTime).count();
-		floats.x = timeInMs / 60000.0f;
+		globals.uvAnimTime.x = timeInMs / 60000.0f;
 		// Clamp to [0, 1]
-		if (floats.x > 1) {
-			floats.x -= floor(floats.x);
+		if (globals.uvAnimTime.x > 1) {
+			globals.uvAnimTime.x -= floor(globals.uvAnimTime.x);
 		}
-		d3d->SetVertexShaderConstantF(MDF_REG_UVANIMTIME, &floats.x, 1);
 
 		// Swirl is more complicated due to cos/sin involvement
 		// This means speedU is in "full rotations every 60 seconds" -> RPM
@@ -108,25 +141,24 @@ namespace gfx {
 			if (sampler.uvType != MdfUvType::Swirl) {
 				continue;
 			}
-			DirectX::XMFLOAT4 uvRot;
-			uvRot.x = cosf(sampler.speedU * floats.x * XM_2PI) * 0.1f;
-			uvRot.y = sinf(sampler.speedV * floats.x * XM_2PI) * 0.1f;
-			d3d->SetVertexShaderConstantF(MDF_REG_UVROTATION + i, &uvRot.x, 1);
+			auto &uvRot = globals.uvRotation[i];
+			uvRot.x = cosf(sampler.speedU * globals.uvAnimTime.x * XM_2PI) * 0.1f;
+			uvRot.y = sinf(sampler.speedV * globals.uvAnimTime.x * XM_2PI) * 0.1f;
 		}
 
 		if (!mSpec->notLit) {
 			auto ignoreLighting = overrides && overrides->ignoreLighting;
-			BindVertexLighting(device, lights, ignoreLighting);
+			BindVertexLighting(globals, lights, ignoreLighting);
 		}
+
+		device.SetVertexShaderConstants(0, globals);
 	}
 
-	void MdfRenderMaterial::BindVertexLighting(RenderingDevice &device,
+	void MdfRenderMaterial::BindVertexLighting(MdfGlobalConstants &globals,
 		gsl::span<Light3d> lights,
 		bool ignoreLighting) const {
 
-		auto d3d = device.GetDevice();
-
-		constexpr auto MaxLights = 8;
+		constexpr auto MaxLights = MdfGlobalConstants::MaxLights;
 
 		if (lights.size() > MaxLights) {
 			lights = lights.subspan(0, MaxLights);
@@ -134,14 +166,6 @@ namespace gfx {
 
 		// To make indexing in the HLSL shader more efficient, we sort the
 		// lights here in the following order: directional, point lights, spot lights
-		std::array<DirectX::XMFLOAT4A, MaxLights> lightPos;
-		std::array<DirectX::XMFLOAT4A, MaxLights> lightDir;
-		std::array<DirectX::XMFLOAT4A, MaxLights> lightAmbient;
-		std::array<DirectX::XMFLOAT4A, MaxLights> lightDiffuse;
-		std::array<DirectX::XMFLOAT4A, MaxLights> lightSpecular;
-		std::array<DirectX::XMFLOAT4A, MaxLights> lightRange;
-		std::array<DirectX::XMFLOAT4A, MaxLights> lightAttenuation;
-		std::array<DirectX::XMFLOAT4A, MaxLights> lightSpot;
 
 		auto directionalCount = 0;
 		auto pointCount = 0;
@@ -151,14 +175,11 @@ namespace gfx {
 		// opt for using a diffuse light with ambient 1,1,1,1
 		if (ignoreLighting) {
 			directionalCount = 1;
-			lightDir[0] = XMFLOAT4A(0, 0, 0, 0);
-			lightDiffuse[0] = XMFLOAT4A(0, 0, 0, 0);
-			lightSpecular[0] = XMFLOAT4A(0, 0, 0, 0);
+			globals.lightDir[0] = XMFLOAT4A(0, 0, 0, 0);
+			globals.lightDiffuse[0] = XMFLOAT4A(0, 0, 0, 0);
+			globals.lightSpecular[0] = XMFLOAT4A(0, 0, 0, 0);
 
-			lightAmbient[0].x = 1;
-			lightAmbient[0].y = 1;
-			lightAmbient[0].z = 1;
-			lightAmbient[0].w = 0;
+			globals.lightAmbient[0] = XMFLOAT4A(1, 1, 1, 0);
 		} else {
 			// Count the number of lights of each type
 			for (auto& light : lights) {
@@ -188,68 +209,49 @@ namespace gfx {
 				else
 					continue;
 
-				lightPos[lightIdx].x = light.pos.x;
-				lightPos[lightIdx].y = light.pos.y;
-				lightPos[lightIdx].z = light.pos.z;
+				globals.lightPos[lightIdx].x = light.pos.x;
+				globals.lightPos[lightIdx].y = light.pos.y;
+				globals.lightPos[lightIdx].z = light.pos.z;
 
-				lightDir[lightIdx].x = light.dir.x;
-				lightDir[lightIdx].y = light.dir.y;
-				lightDir[lightIdx].z = light.dir.z;
+				globals.lightDir[lightIdx].x = light.dir.x;
+				globals.lightDir[lightIdx].y = light.dir.y;
+				globals.lightDir[lightIdx].z = light.dir.z;
 
-				lightAmbient[lightIdx].x = light.ambient.x;
-				lightAmbient[lightIdx].y = light.ambient.y;
-				lightAmbient[lightIdx].z = light.ambient.z;
-				lightAmbient[lightIdx].w = 0;
+				globals.lightAmbient[lightIdx].x = light.ambient.x;
+				globals.lightAmbient[lightIdx].y = light.ambient.y;
+				globals.lightAmbient[lightIdx].z = light.ambient.z;
+				globals.lightAmbient[lightIdx].w = 0;
 
-				lightDiffuse[lightIdx].x = light.color.x;
-				lightDiffuse[lightIdx].y = light.color.y;
-				lightDiffuse[lightIdx].z = light.color.z;
-				lightDiffuse[lightIdx].w = 0;
+				globals.lightDiffuse[lightIdx].x = light.color.x;
+				globals.lightDiffuse[lightIdx].y = light.color.y;
+				globals.lightDiffuse[lightIdx].z = light.color.z;
+				globals.lightDiffuse[lightIdx].w = 0;
 
-				lightSpecular[lightIdx].x = light.color.x;
-				lightSpecular[lightIdx].y = light.color.y;
-				lightSpecular[lightIdx].z = light.color.z;
-				lightSpecular[lightIdx].w = 0;
+				globals.lightSpecular[lightIdx].x = light.color.x;
+				globals.lightSpecular[lightIdx].y = light.color.y;
+				globals.lightSpecular[lightIdx].z = light.color.z;
+				globals.lightSpecular[lightIdx].w = 0;
 
-				lightRange[lightIdx].x = light.range;
+				globals.lightRange[lightIdx].x = light.range;
 
-				lightAttenuation[lightIdx].x = 0;
-				lightAttenuation[lightIdx].y = 0;
-				lightAttenuation[lightIdx].z = 4.0f / (light.range * light.range);
-				lightSpot[lightIdx].x = cosf(XMConvertToRadians(light.phi) * 0.60000002f * 0.5f);
-				lightSpot[lightIdx].y = cosf(XMConvertToRadians(light.phi) * 0.5f);
-				lightSpot[lightIdx].z = 0;
+				globals.lightAttenuation[lightIdx].x = 0;
+				globals.lightAttenuation[lightIdx].y = 0;
+				globals.lightAttenuation[lightIdx].z = 4.0f / (light.range * light.range);
+				globals.lightSpot[lightIdx].x = cosf(XMConvertToRadians(light.phi) * 0.60000002f * 0.5f);
+				globals.lightSpot[lightIdx].y = cosf(XMConvertToRadians(light.phi) * 0.5f);
+				globals.lightSpot[lightIdx].z = 0;
 			}
 		}
-
-		// Copy the lighting state to the VS
-		d3d->SetVertexShaderConstantF(MDF_REG_LIGHT_POS, &lightPos[0].x, 8);
-		d3d->SetVertexShaderConstantF(MDF_REG_LIGHT_DIR, &lightDir[0].x, 8);
-		d3d->SetVertexShaderConstantF(MDF_REG_LIGHT_AMBIENT, &lightAmbient[0].x, 8);
-		d3d->SetVertexShaderConstantF(MDF_REG_LIGHT_DIFFUSE, &lightDiffuse[0].x, 8);
-		d3d->SetVertexShaderConstantF(MDF_REG_LIGHT_SPECULAR, &lightSpecular[0].x, 8);
-		d3d->SetVertexShaderConstantF(MDF_REG_LIGHT_RANGE, &lightRange[0].x, 8);
-		d3d->SetVertexShaderConstantF(MDF_REG_LIGHT_ATTENUATION, &lightAttenuation[0].x, 8);
-		d3d->SetVertexShaderConstantF(MDF_REG_LIGHT_SPOT, &lightSpot[0].x, 8);
-
-		DirectX::XMFLOAT4A specularEnable = { mSpec->specular ? 1.0f : 0, 0, 0, 0 };
-		d3d->SetVertexShaderConstantF(MDF_REG_LIGHT_SPECULARENABLE, &specularEnable.x, 1);
-		DirectX::XMFLOAT4A matPower = { mSpec->specularPower, 0, 0, 0 };
-		d3d->SetVertexShaderConstantF(MDF_REG_LIGHT_SPECULARPOWER, &matPower.x, 1);
+				
+		globals.bSpecular = { mSpec->specular ? 1 : 0, 0, 0, 0 };
+		globals.fMaterialPower = { mSpec->specularPower, 0, 0, 0 };
 
 		// Set the specular color
-		DirectX::XMFLOAT4A matSpecular;
-		matSpecular.x = GetD3DColorRed(mSpec->specular) / 255.f;
-		matSpecular.y = GetD3DColorGreen(mSpec->specular) / 255.f;
-		matSpecular.z = GetD3DColorBlue(mSpec->specular) / 255.f;
-		matSpecular.w = GetD3DColorAlpha(mSpec->specular) / 255.f;
-		d3d->SetVertexShaderConstantF(MDF_REG_LIGHT_MAT_SPECULAR, &matSpecular.x, 1);
+		XMStoreFloat4(&globals.matSpecular, XMLoadColor(&XMCOLOR(mSpec->specular)));
 
-		DirectX::XMFLOAT4A lightCountsVec;
-		lightCountsVec.x = (float)directionalCount;
-		lightCountsVec.y = lightCountsVec.x + pointCount;
-		lightCountsVec.z = lightCountsVec.y + spotCount;
-		d3d->SetVertexShaderConstantF(MDF_REG_LIGHT_COUNT, &lightCountsVec.x, 1);
+		globals.lightCount[0] = directionalCount;
+		globals.lightCount[1] = globals.lightCount[0] + pointCount;
+		globals.lightCount[2] = globals.lightCount[1] + spotCount;
 
 	}
 
@@ -397,35 +399,33 @@ namespace gfx {
 
 	Material MdfMaterialFactory::CreateDeviceMaterial(const std::string &name, MdfMaterial & spec)
 	{
-		RasterizerState rasterizerState;
+		RasterizerSpec rasterizerState;
 
 		// Wireframe mode
-		if (spec.wireframe) {
-			rasterizerState.fillMode = D3DFILL_WIREFRAME;
-		}
+		rasterizerState.wireframe = spec.wireframe;
 
 		// Cull mode
 		if (!spec.faceCulling) {
-			rasterizerState.cullMode = D3DCULL_NONE;
+			rasterizerState.cullMode = CullMode::None;
 		}
 
-		BlendState blendState;
+		BlendSpec blendState;
 
 		switch (spec.blendType) {
 		case MdfBlendType::Alpha:
 			blendState.blendEnable = true;
-			blendState.srcBlend = D3DBLEND_SRCALPHA;
-			blendState.destBlend = D3DBLEND_INVSRCALPHA;
+			blendState.srcBlend = BlendOperand::SrcAlpha;
+			blendState.destBlend = BlendOperand::InvSrcAlpha;
 			break;
 		case MdfBlendType::Add:
 			blendState.blendEnable = true;
-			blendState.srcBlend = D3DBLEND_ONE;
-			blendState.destBlend = D3DBLEND_ONE;
+			blendState.srcBlend = BlendOperand::One;
+			blendState.destBlend = BlendOperand::One;
 			break;
 		case MdfBlendType::AlphaAdd:
 			blendState.blendEnable = true;
-			blendState.srcBlend = D3DBLEND_SRCALPHA;
-			blendState.destBlend = D3DBLEND_ONE;
+			blendState.srcBlend = BlendOperand::SrcAlpha;
+			blendState.destBlend = BlendOperand::One;
 			break;
 		default:
 		case MdfBlendType::None:
@@ -439,10 +439,10 @@ namespace gfx {
 			blendState.writeBlue = false;
 		}
 
-		DepthStencilState depthStencilState;
+		DepthStencilSpec depthStencilState;
 		depthStencilState.depthEnable = !spec.disableZ;
 		depthStencilState.depthWrite = spec.enableZWrite;
-		depthStencilState.depthFunc = D3DCMP_LESSEQUAL;
+		depthStencilState.depthFunc = ComparisonFunc::LessEqual;
 
 		// Resolve texture references based on type
 		Expects(spec.samplers.size() <= 4);
@@ -450,7 +450,7 @@ namespace gfx {
 		Shaders::ShaderDefines psDefines;
 		Shaders::ShaderDefines vsDefines;
 
-		std::vector<MaterialSamplerBinding> samplers;
+		std::vector<MaterialSamplerSpec> samplers;
 		samplers.reserve(spec.samplers.size());
 		// A general MDF can reference up to 4 textures
 		for (size_t i = 0; i < spec.samplers.size(); ++i) {
@@ -464,25 +464,25 @@ namespace gfx {
 					name, sampler.filename, i);
 			}
 
-			SamplerState samplerState;
+			SamplerSpec samplerState;
 			// Set up the addressing
 			if (spec.clamp) {
-				samplerState.addressU = D3DTADDRESS_CLAMP;
-				samplerState.addressV = D3DTADDRESS_CLAMP;
+				samplerState.addressU = TextureAddress::Clamp;
+				samplerState.addressV = TextureAddress::Clamp;
 			}
 
 			// Set up filtering
 			if (spec.linearFiltering) {
-				samplerState.magFilter = D3DTEXF_LINEAR;
-				samplerState.minFilter = D3DTEXF_LINEAR;
-				samplerState.mipFilter = D3DTEXF_LINEAR;
+				samplerState.magFilter = TextureFilterType::Linear;
+				samplerState.minFilter = TextureFilterType::Linear;
+				samplerState.mipFilter = TextureFilterType::Linear;
 			} else {
-				samplerState.magFilter = D3DTEXF_POINT;
-				samplerState.minFilter = D3DTEXF_POINT;
-				samplerState.mipFilter = D3DTEXF_POINT;
+				samplerState.magFilter = TextureFilterType::NearestNeighbor;
+				samplerState.minFilter = TextureFilterType::NearestNeighbor;
+				samplerState.mipFilter = TextureFilterType::NearestNeighbor;
 			}
 			
-			samplers.emplace_back(MaterialSamplerBinding(texture, samplerState));
+			samplers.push_back({ texture, samplerState });
 
 			/*
 				Set the stage's blending type in the pixel shader defines.
@@ -554,7 +554,7 @@ namespace gfx {
 		if (name == "art/meshes/mouseover.mdf"
 			 || name == "art/meshes/hilight.mdf"
 			 || name.find("art/meshes/wg_") == 0) {
-			rasterizerState.cullMode = D3DCULL_CW;
+			rasterizerState.cullMode = CullMode::Front;
 			vsDefines["HIGHLIGHT"] = "1";
 		}
 
@@ -568,7 +568,7 @@ namespace gfx {
 				name);
 		}
 
-		return Material(blendState, depthStencilState, rasterizerState, samplers, vertexShader, pixelShader);
+		return mDevice.CreateMaterial(blendState, depthStencilState, rasterizerState, samplers, vertexShader, pixelShader);
 
 	}
 

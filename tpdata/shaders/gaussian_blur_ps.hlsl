@@ -1,5 +1,10 @@
 
+#ifdef D3D11
+sampler texSampler;
+Texture2D texture1 : register(t0);
+#else
 sampler texSampler : register(s0);
+#endif
 
 static const float Pixels[13] =
 {
@@ -35,8 +40,11 @@ static const float BlurWeights[13] =
    0.002216,
 };
 
-
+#ifdef D3D11
+float4 main(float2 uv : TEXCOORD0) : SV_TARGET
+#else
 float4 main(float2 uv : TEXCOORD0) : COLOR
+#endif
 {
     // Pixel width
     float pixelWidth = 1/256.0f;
@@ -57,7 +65,11 @@ float4 main(float2 uv : TEXCOORD0) : COLOR
 #else
 		blur.y = uv.y + Pixels[i] * pixelWidth;
 #endif
+#ifdef D3D11
+		color.a += texture1.Sample(texSampler, blur.xy).a * BlurWeights[i];
+#else
         color.a += tex2D(texSampler, blur.xy).a * BlurWeights[i];
+#endif
     }  
 
     return color;

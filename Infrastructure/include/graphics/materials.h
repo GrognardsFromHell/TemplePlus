@@ -4,66 +4,84 @@
 #include "graphics/device.h"
 #include "graphics/textures.h"
 
+struct ID3D11RasterizerState;
+
 namespace gfx {
 
-	inline uint8_t GetD3DColorAlpha(D3DCOLOR color) {
-		return (color >> 24) & 0xFF;
-	}
+	enum class CullMode {
+		None,
+		Back,
+		Front
+	};
 
-	inline uint8_t GetD3DColorRed(D3DCOLOR color) {
-		return (color >> 16) & 0xFF;
-	}
-
-	inline uint8_t GetD3DColorGreen(D3DCOLOR color) {
-		return (color >> 8) & 0xFF;
-	}
-
-	inline uint8_t GetD3DColorBlue(D3DCOLOR color) {
-		return color& 0xFF;
-	}
-
-	inline DirectX::XMFLOAT4 D3DColorToFloat4(D3DCOLOR color) {
-		return{
-			GetD3DColorRed(color) / 255.f,
-			GetD3DColorGreen(color) / 255.f,
-			GetD3DColorBlue(color) / 255.f,
-			GetD3DColorAlpha(color) / 255.f
-		};
-	}
-
-	struct RasterizerState {
-		// How are tesellated vertices filled?
-		D3DFILLMODE fillMode = D3DFILL_SOLID;
+	struct RasterizerSpec {
+		// How are tesellated vertices filled? Default is solid.
+		bool wireframe = false;
 
 		// Indicates whether front-facing or back-facing triangles 
 		// should be culled or neither. In D3D, by default, the
 		// indices need to be clock wise for the front
-		D3DCULL cullMode = D3DCULL_CCW;
+		CullMode cullMode = CullMode::Back;
+
+		bool operator <(const RasterizerSpec &o) const {
+			return std::tie(wireframe, cullMode) < std::tie(o.wireframe, o.cullMode);
+		}
+
+	};
+		
+	enum class BlendOperand {
+		Zero,
+		One,
+		SrcColor,
+		InvSrcColor,
+		SrcAlpha,
+		InvSrcAlpha,
+		DestAlpha,
+		InvDestAlpha,
+		DestColor,
+		InvDestColor
 	};
 
 	/**
 	* Desribes the state of the render target blending stage.
 	*/
-	struct BlendState {
+	struct BlendSpec {
 		// Enables alpha blending on the output target
 		bool blendEnable = false;
 
 		// Defines how the incoming fragment color and the one in the 
 		// render target should be blended together
-		D3DBLEND srcBlend = D3DBLEND_ONE;
-		D3DBLEND destBlend = D3DBLEND_ZERO;
+		BlendOperand srcBlend = BlendOperand::One;
+		BlendOperand destBlend = BlendOperand::Zero;
 
 		// Write mask for writing to the render target
 		bool writeRed = true;
 		bool writeGreen = true;
 		bool writeBlue = true;
 		bool writeAlpha = true;
+
+		bool operator <(const BlendSpec &o) const {
+			return std::tie(blendEnable, srcBlend, destBlend, writeRed, writeGreen, writeBlue, writeAlpha)
+				< std::tie(o.blendEnable, o.srcBlend, o.destBlend, o.writeRed, o.writeGreen, o.writeBlue, o.writeAlpha);
+		}
+
 	};
 
+	enum class ComparisonFunc {
+		Never,
+		Less,
+		Equal,
+		LessEqual,
+		Greater,
+		NotEqual,
+		GreaterEqual,
+		Always
+	};
+	
 	/**
 	* Describes the state of the depth stencil stage.
 	*/
-	struct DepthStencilState {
+	struct DepthStencilSpec {
 
 		// Enables depth testing
 		bool depthEnable = true;
@@ -72,22 +90,107 @@ namespace gfx {
 		bool depthWrite = true;
 
 		// Comparison function used for depth test
-		D3DCMPFUNC depthFunc = D3DCMP_LESS;
+		ComparisonFunc depthFunc = ComparisonFunc::Less;
 
+		bool operator <(const DepthStencilSpec &o) const {
+			return std::tie(depthEnable, depthWrite, depthFunc)
+				< std::tie(o.depthEnable, o.depthWrite, o.depthFunc);
+		}
+
+	};
+
+	enum class TextureFilterType {
+		NearestNeighbor,
+		Linear
+	};
+
+	enum class TextureAddress {
+		Wrap,
+		Clamp
 	};
 
 	/**
 	* Describes the state of one of the texture samplers.
 	*/
-	struct SamplerState {
+	struct SamplerSpec {
 
-		D3DTEXTUREFILTERTYPE minFilter = D3DTEXF_LINEAR;
-		D3DTEXTUREFILTERTYPE magFilter = D3DTEXF_LINEAR;
-		D3DTEXTUREFILTERTYPE mipFilter = D3DTEXF_LINEAR;
+		TextureFilterType minFilter = TextureFilterType::Linear;
+		TextureFilterType magFilter = TextureFilterType::Linear;
+		TextureFilterType mipFilter = TextureFilterType::Linear;
 
-		D3DTEXTUREADDRESS addressU = D3DTADDRESS_WRAP;
-		D3DTEXTUREADDRESS addressV = D3DTADDRESS_WRAP;
+		TextureAddress addressU = TextureAddress::Wrap;
+		TextureAddress addressV = TextureAddress::Wrap;
 
+		bool operator <(const SamplerSpec &o) const {
+			return std::tie(minFilter, magFilter, mipFilter, addressU, addressV)
+				< std::tie(o.minFilter, o.magFilter, o.mipFilter, o.addressU, o.addressV);
+		}
+
+	};
+
+	// The GPU resource for the state associated with the rasterizer
+	class RasterizerState {
+		friend class RenderingDevice;
+	public:
+		RasterizerState(const RasterizerSpec &spec, ID3D11RasterizerState *gpuState)
+			: mSpec(spec), mGpuState(gpuState) {}
+
+		const RasterizerSpec &GetSpec() const {
+			return mSpec;
+		}
+
+		NO_COPY_OR_MOVE(RasterizerState);
+	private:
+		const RasterizerSpec mSpec;
+		CComPtr<ID3D11RasterizerState> mGpuState;
+	};
+
+	class BlendState {
+		friend class RenderingDevice;
+	public:
+		BlendState(const BlendSpec &spec, ID3D11BlendState *gpuState)
+			: mSpec(spec), mGpuState(gpuState) {}
+
+		const BlendSpec &GetSpec() const {
+			return mSpec;
+		}
+
+		NO_COPY_OR_MOVE(BlendState);
+	private:
+		const BlendSpec mSpec;
+		CComPtr<ID3D11BlendState> mGpuState;
+	};
+
+	class DepthStencilState {
+		friend class RenderingDevice;
+	public:
+		DepthStencilState(const DepthStencilSpec &spec, ID3D11DepthStencilState *gpuState)
+			: mSpec(spec), mGpuState(gpuState) {}
+
+		const DepthStencilSpec &GetSpec() const {
+			return mSpec;
+		}
+
+		NO_COPY_OR_MOVE(DepthStencilState);
+	private:
+		const DepthStencilSpec mSpec;
+		CComPtr<ID3D11DepthStencilState> mGpuState;
+	};
+
+	class SamplerState {
+		friend class RenderingDevice;
+	public:
+		SamplerState(const SamplerSpec &spec, ID3D11SamplerState *gpuState)
+			: mSpec(spec), mGpuState(gpuState) {}
+
+		const SamplerSpec &GetSpec() const {
+			return mSpec;
+		}
+
+		NO_COPY_OR_MOVE(SamplerState);
+	private:
+		const SamplerSpec mSpec;
+		CComPtr<ID3D11SamplerState> mGpuState;
 	};
 
 	enum class Light3dType : uint32_t {
@@ -109,10 +212,15 @@ namespace gfx {
 		float phi;
 	};
 
+	struct MaterialSamplerSpec {
+		gfx::TextureRef texture;
+		SamplerSpec samplerSpec;
+	};
+
 	class MaterialSamplerBinding {
 	public:
 		MaterialSamplerBinding(const gfx::TextureRef& texture,
-			const SamplerState &samplerState)
+			const SamplerStatePtr &samplerState)
 			: mTexture(texture), mSamplerState(samplerState) {
 		}
 
@@ -121,19 +229,19 @@ namespace gfx {
 		}
 
 		const SamplerState& GetState() const {
-			return mSamplerState;
+			return *mSamplerState;
 		}
 	private:
 		const gfx::TextureRef mTexture;
-		const SamplerState mSamplerState;
+		const SamplerStatePtr mSamplerState;
 	};
 
 	class Material {
 	public:
 
-		Material(const BlendState &blendState, 
-			const DepthStencilState &depthStencilState,
-			const RasterizerState &rasterizerState,
+		Material(const BlendStatePtr &blendState, 
+			const DepthStencilStatePtr &depthStencilState,
+			const RasterizerStatePtr &rasterizerState,
 			const std::vector<MaterialSamplerBinding> &samplers,
 			const VertexShaderPtr &vertexShader,
 			const PixelShaderPtr &pixelShader) 
@@ -147,15 +255,15 @@ namespace gfx {
 		}
 
 		const BlendState& GetBlendState() const {
-			return mBlendState;
+			return *mBlendState;
 		}
 
 		const DepthStencilState& GetDepthStencilState() const {
-			return mDepthStencilState;
+			return *mDepthStencilState;
 		}
 
 		const RasterizerState& GetRasterizerState() const {
-			return mRasterizerState;
+			return *mRasterizerState;
 		}
 
 		const std::vector<MaterialSamplerBinding>& GetSamplers() const {
@@ -171,9 +279,9 @@ namespace gfx {
 		}
 		
 	private:
-		const BlendState mBlendState;
-		const DepthStencilState mDepthStencilState;
-		const RasterizerState mRasterizerState;
+		const BlendStatePtr mBlendState;
+		const DepthStencilStatePtr mDepthStencilState;
+		const RasterizerStatePtr mRasterizerState;
 		const std::vector<MaterialSamplerBinding> mSamplers;
 		const VertexShaderPtr mVertexShader;
 		const PixelShaderPtr mPixelShader;

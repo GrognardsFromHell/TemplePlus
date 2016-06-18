@@ -3,6 +3,7 @@
 #include <infrastructure/stringutil.h>
 #include <temple/dll.h>
 #include <temple/vfs.h>
+#include <graphics/dynamictexture.h>
 #include <particles/instances.h>
 
 #include "external.h"
@@ -11,8 +12,8 @@ using namespace temple;
 
 std::string lastError;
 
-TempleDll::TempleDll(const std::wstring &installationDir, IDirect3DDevice9Ex* device)
-	: renderingDevice(device, 1024, 1024),
+TempleDll::TempleDll(const std::wstring &installationDir)
+	: renderingDevice(nullptr, 0, true),
 	mdfFactory(renderingDevice),
 	aasConfig(CreateAasConfig()),
 	aasFactory(aasConfig),
@@ -36,13 +37,35 @@ temple::AasConfig TempleDll::CreateAasConfig() {
 	return config;
 }
 
+void TempleDll::SetRenderTarget(IUnknown * surface)
+{
+	renderTarget = renderingDevice.CreateRenderTargetForSharedSurface(surface);
+
+	auto &size = renderTarget->GetSize();
+
+	// Check render target -> free it
+	if (renderTargetDepth) {
+		auto &depthSize = renderTargetDepth->GetSize();
+		if (depthSize.width != size.width || depthSize.height != size.height) {
+			renderTargetDepth.reset();
+		}
+	}
+
+	if (!renderTargetDepth) {
+		renderTargetDepth = renderingDevice.CreateRenderTargetDepthStencil(size.width, size.height);
+	}
+
+	renderingDevice.PushRenderTarget(renderTarget, renderTargetDepth);
+	renderingDevice.ClearCurrentColorTarget(XMCOLOR(0, 0, 0, 0));
+	renderingDevice.ClearCurrentDepthTarget();
+}
+
 const char *TempleDll_GetLastError() {
 	return lastError.c_str();
 }
 
 TempleDll* TempleDll_Load(const wchar_t* installationDir, 
-	const wchar_t* tpDataPath,
-	IDirect3DDevice9Ex* device) {
+	const wchar_t* tpDataPath) {
 
 	// Make sure it has a trailing path separator
 	std::wstring installDirStr(installationDir);
@@ -69,7 +92,7 @@ TempleDll* TempleDll_Load(const wchar_t* installationDir,
 
 	// Init the subsystems we need
 	try {
-		return new TempleDll(installDirStr, device);
+		return new TempleDll(installDirStr);
 	} catch (std::exception &e) {
 		lastError = e.what();
 		return nullptr;
@@ -81,4 +104,24 @@ void TempleDll_Unload(TempleDll* templeDll) {
 
 	auto& dll = temple::Dll::GetInstance();
 	dll.Unload();
+}
+
+void TempleDll_Flush(TempleDll *templeDll) {
+	templeDll->renderingDevice.Flush();
+}
+
+void TempleDll_SetRenderTarget(TempleDll *templeDll, IUnknown *surface) {
+	if (templeDll->renderTarget) {
+		templeDll->renderingDevice.PopRenderTarget();
+	}
+	templeDll->SetRenderTarget(surface);
+}
+
+void TempleDll_CenterOn(TempleDll *dll, float x, float y, float z)
+{
+	dll->renderingDevice.GetCamera().CenterOn(x, y, z);
+}
+
+void TempleDll_SetScale(TempleDll *templeDll, float scale) {
+	templeDll->renderingDevice.GetCamera().SetScale(scale);
 }

@@ -32,18 +32,23 @@
 */
 #define TEXBLEND_CURRENT_ALPHA_ADD 5
 
+
 #if TEXTURE_STAGES >= 1
-sampler texSampler1 : register(s0);
+Texture2D texture1 : register(t0);
+sampler sampler1 : register(s0);
 #endif
 #if TEXTURE_STAGES >= 2
-sampler texSampler2 : register(s1);
+Texture2D texture2 : register(t1);
+sampler sampler2 : register(s1);
 #endif
 #if TEXTURE_STAGES >= 3
-sampler texSampler3 : register(s2);
+Texture2D texture3 : register(t2);
+sampler sampler3 : register(s2);
 #endif
 
 struct PS_INPUT
 {
+	float4 pos : SV_POSITION;
 	float4 diffuse : COLOR0;
 #if TEXTURE_STAGES >= 1
 	float2 uv1 : TEXCOORD0;
@@ -56,40 +61,43 @@ struct PS_INPUT
 #endif
 };
 
-float4 DoTexStage(float4 current, float4 diffuse, sampler sampl, float2 uv, int mode) {
+float4 DoTexStage(float4 current, float4 diffuse, Texture2D txture, sampler smpler, float2 uv, int mode) {
+	float4 texel = txture.Sample(smpler, uv);
+	
 	if (mode == TEXBLEND_MODULATE) {
-		return current * tex2D(sampl, uv);
-	} else if (mode == TEXBLEND_ADD) {
-		return float4(current.rgb + tex2D(sampl, uv).rgb, current.a);
-	} else if (mode == TEXBLEND_TEXTURE_ALPHA) {
-		float4 texel = tex2D(sampl, uv);
+		return current * texel;
+	}
+	else if (mode == TEXBLEND_ADD) {
+		return float4(current.rgb + texel.rgb, current.a);
+	}
+	else if (mode == TEXBLEND_TEXTURE_ALPHA) {
 		current.rgb = current.rgb * (1 - texel.a) + texel.rgb * texel.a;
 		return current;
-	} else if (mode == TEXBLEND_CURRENT_ALPHA) {
-		float4 texel = tex2D(sampl, uv);
+	}
+	else if (mode == TEXBLEND_CURRENT_ALPHA) {
 		current.rgb = current.rgb * (1 - current.a) + texel.rgb * current.a;
 		current.a = diffuse.a;
 		return current;
-	} else if (mode == TEXBLEND_CURRENT_ALPHA_ADD) {
-		float4 texel = tex2D(sampl, uv);
+	}
+	else if (mode == TEXBLEND_CURRENT_ALPHA_ADD) {
 		current.rgb += (texel.rgb * current.a);
 		current.a = diffuse.a;
 		return current;
 	}
 }
 
-float4 main(PS_INPUT input) : COLOR0
+float4 main(PS_INPUT input) : SV_TARGET
 {
 	float4 result = input.diffuse;
 
 #if TEXTURE_STAGES >= 1
-	result = DoTexStage(result, input.diffuse, texSampler1, input.uv1, TEXTURE_STAGE1_MODE);
+	result = DoTexStage(result, input.diffuse, texture1, sampler1, input.uv1, TEXTURE_STAGE1_MODE);
 #endif
 #if TEXTURE_STAGES >= 2
-	result = DoTexStage(result, input.diffuse, texSampler2, input.uv2, TEXTURE_STAGE2_MODE);
+	result = DoTexStage(result, input.diffuse, texture2, sampler2, input.uv2, TEXTURE_STAGE2_MODE);
 #endif
 #if TEXTURE_STAGES >= 3
-	result = DoTexStage(result, input.diffuse, texSampler3, input.uv3, TEXTURE_STAGE3_MODE);
+	result = DoTexStage(result, input.diffuse, texture3, sampler3, input.uv3, TEXTURE_STAGE3_MODE);
 #endif
 
 	if (result.a == 0) {

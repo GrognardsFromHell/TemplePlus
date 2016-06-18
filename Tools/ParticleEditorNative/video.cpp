@@ -37,10 +37,9 @@ static float GetTotalLifetime(const PartSysPtr& sys, bool& permanent) {
 	return result;
 }
 
-bool ParticleSystem_RenderVideo(TempleDll *dll, D3DCOLOR background, const wchar_t* outputFile, int fps) {
+bool ParticleSystem_RenderVideo(TempleDll *dll, XMCOLOR background, const wchar_t* outputFile, int fps) {
 
 	auto orgSys = dll->partSys.get();
-	auto d3dDevice = dll->renderingDevice.GetDevice();
 
 	// The assumption is that the screen BB of the part sys encompasses the entire system
 	// so we use that to render it to a video file
@@ -63,31 +62,12 @@ bool ParticleSystem_RenderVideo(TempleDll *dll, D3DCOLOR background, const wchar
 
 	// Create a clone here to not influence the original system
 	auto sys = std::make_shared<PartSys>(orgSys->GetSpec());
-
-	// Save the old render target
-	CComPtr<IDirect3DSurface9> orgRenderTarget;
-	CComPtr<IDirect3DSurface9> orgDepthSurface;
-	d3dDevice->GetRenderTarget(0, &orgRenderTarget);
-	d3dDevice->GetDepthStencilSurface(&orgDepthSurface);
-
+	
 	// Create a render target
-	CComPtr<IDirect3DSurface9> depthSurface;
-	CComPtr<IDirect3DSurface9> renderTarget;
-	auto result = d3dDevice->CreateRenderTarget(w, h, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &renderTarget, nullptr);
-	if (!SUCCEEDED(result)) {
-		return false;
-	}
+	auto renderTarget = dll->renderingDevice.CreateRenderTargetTexture(gfx::BufferFormat::A8R8G8B8, w, h);
+	auto depthTarget = dll->renderingDevice.CreateRenderTargetDepthStencil(w, h);
 
-	result = d3dDevice->CreateDepthStencilSurface(w, h, D3DFMT_D16, D3DMULTISAMPLE_NONE, 0, TRUE, &depthSurface, nullptr);
-	if (!SUCCEEDED(result)) {
-		return false;
-	}
-
-	CComPtr<IDirect3DSurface9> sysMemSurface;
-	result = d3dDevice->CreateOffscreenPlainSurface(w, h, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &sysMemSurface, nullptr);
-	if (!SUCCEEDED(result)) {
-		return false;
-	}
+	auto stagingTexture = dll->renderingDevice.CreateDynamicStagingTexture(gfx::BufferFormat::A8R8G8B8, w, h);
 
 	auto timeStepSec = 1.0f / fps;
 	auto elapsed = 0.0f;
@@ -98,10 +78,8 @@ bool ParticleSystem_RenderVideo(TempleDll *dll, D3DCOLOR background, const wchar
 		sys->Simulate(5.0f);
 	}
 	
-	d3dDevice->SetRenderTarget(0, renderTarget);
-	d3dDevice->SetDepthStencilSurface(depthSurface);
+	dll->renderingDevice.PushRenderTarget(renderTarget, depthTarget);
 
-	dll->renderingDevice.GetCamera().SetScreenWidth((float)w, (float)h);
 	dll->renderingDevice.GetCamera().CenterOn(0, 0, 0);
 
 	int frameId = 0;
@@ -110,26 +88,18 @@ bool ParticleSystem_RenderVideo(TempleDll *dll, D3DCOLOR background, const wchar
 		sys->Simulate(timeStepSec);
 		elapsed += timeStepSec;
 
-		d3dDevice->BeginScene();
-		result = d3dDevice->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 0, 0, 0), 1.0f, 0);
-		if (!SUCCEEDED(result)) {
-			return false;
-		}
+		dll->renderingDevice.ClearCurrentColorTarget(XMCOLOR(0, 0, 0, 1));
+		dll->renderingDevice.ClearCurrentDepthTarget();
 
 		for (auto& emitter : *sys) {
 			auto& renderer = dll->renderManager.GetRenderer(emitter->GetSpec()->GetParticleType());
 			renderer.Render(*emitter);
 		}
+		
+		dll->renderingDevice.Flush();
 
-		d3dDevice->EndScene();
-		d3dDevice->Present(nullptr, nullptr, nullptr, nullptr);
-
-		// Copy from video mem to system mem
-		result = d3dDevice->GetRenderTargetData(renderTarget, sysMemSurface);
-		if (!SUCCEEDED(result)) {
-			return false;
-		}
-
+		dll->renderingDevice.CopyRenderTarget(*renderTarget, *stagingTexture);
+		
 #ifdef WRITE_FRAME_BMPS
 		wchar_t frameFile[MAX_PATH];
 		wcsncpy(frameFile, outputFile, wcslen(outputFile));
@@ -138,23 +108,14 @@ bool ParticleSystem_RenderVideo(TempleDll *dll, D3DCOLOR background, const wchar
 
 		result = D3DXSaveSurfaceToFile(frameFile, D3DXIFF_BMP, sysMemSurface, nullptr, nullptr);
 #endif
-
-		D3DLOCKED_RECT locked;
-		result = sysMemSurface->LockRect(&locked, nullptr, 0);
-		if (!SUCCEEDED(result)) {
-			return false;
-		}
-		encoder->WriteFrame((uint8_t*) locked.pBits, locked.Pitch);
-		sysMemSurface->UnlockRect();
-
-
+		
+		auto locked = dll->renderingDevice.Map(*stagingTexture, gfx::MapMode::Read);
+		encoder->WriteFrame((uint8_t*) locked.GetData(), locked.GetRowPitch());
 	}
 
 	encoder->Finish();
 
-	// Restore the org render target
-	d3dDevice->SetRenderTarget(0, orgRenderTarget);
-	d3dDevice->SetDepthStencilSurface(orgDepthSurface);
+	dll->renderingDevice.PopRenderTarget();
 
 	return true;
 

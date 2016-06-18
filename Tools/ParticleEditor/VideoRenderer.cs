@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Drawing;
-using System.Runtime.InteropServices;
 using ParticleModel;
-using SharpDX.Direct3D9;
 
 namespace ParticleEditor
 {
     internal static class VideoRenderer
     {
-        public static bool RenderVideo(Device device, string dataPath, PartSysSpec spec, string filename)
+        public static bool RenderVideo(string dataPath, PartSysSpec spec, string filename)
         {
             var specStr = spec.ToSpec();
 

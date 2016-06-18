@@ -14,14 +14,14 @@ float4 matDiffuse : register(c4);
 
 struct VS_IN {
 	float4 pos : POSITION;
-	float4 normal : NORMAL;
+	float4 normal : NORMAL0;
 #if TEXTURE_STAGES > 0
 	float2 uv : TEXCOORD0;
 #endif
 };
 
 struct VS_OUT {
-	float4 pos : POSITION;
+	float4 pos : SV_POSITION;
 	float4 diffuse : COLOR0;
 #if TEXTURE_STAGES >= 1
 	float2 uv1 : TEXCOORD0;

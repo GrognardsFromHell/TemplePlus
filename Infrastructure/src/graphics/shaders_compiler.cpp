@@ -6,6 +6,9 @@
 #include "shaders_compiler.h"
 
 #include <D3Dcompiler.h>
+#include <D3DCompiler.inl>
+
+#include <EASTL/fixed_vector.h>
 
 namespace gfx {
 	
@@ -21,15 +24,13 @@ namespace gfx {
 	
 	VertexShaderPtr gfx::ShaderCompiler::CompileVertexShader(RenderingDevice &device)
 	{
-		auto code(CompileShaderCode("vs_3_0"));
-
+		auto code(CompileShaderCode("vs_4_0"));
 		return std::make_shared<VertexShader>(device, mName, code);
 	}
 
 	PixelShaderPtr ShaderCompiler::CompilePixelShader(RenderingDevice &device)
 	{
-		auto code(CompileShaderCode("ps_3_0"));
-
+		auto code(CompileShaderCode("ps_4_0"));
 		return std::make_shared<PixelShader>(device, mName, code);
 	}
 
@@ -38,19 +39,27 @@ namespace gfx {
 		VfsShaderIncludeHandler includeHandler;
 
 		// Convert the defines
-		std::vector<D3D_SHADER_MACRO> macros;
+		eastl::fixed_vector<D3D_SHADER_MACRO, 16> macros;
 		for (auto &define : mDefines) {
 			macros.push_back({
 				define.first.c_str(), 
 				define.second.c_str()
 			});
 		}
+
+		// Add a D3D11 define if we compile for newer targets
+		if (profile == "vs_4_0" || profile == "ps_4_0") {
+			macros.push_back({
+				"D3D11", "1"
+			});
+		}
+
 		macros.push_back({ nullptr, nullptr }); // Null terminated array
 
 		// Debug flags
 		DWORD flags = D3DCOMPILE_SKIP_OPTIMIZATION;
 #ifndef NDEBUG
-		flags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+		flags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_PREFER_FLOW_CONTROL;
 #endif
 
 		CComPtr<ID3DBlob> codeBuffer;
@@ -58,7 +67,7 @@ namespace gfx {
 		auto result = D3DCompile(
 			&mSourceCode[0], 
 			mSourceCode.length(),
-			mName.c_str(),
+			("C:\\TemplePlus\\TemplePlus\\tpdata\\shaders\\" + mName + ".hlsl").c_str(),
 			&macros[0],
 			&includeHandler,
 			"main",
@@ -75,7 +84,7 @@ namespace gfx {
 				errorBuffer->GetBufferSize());
 		}
 
-		if (result != D3D_OK) {
+		if (!SUCCEEDED(result)) {
 			// Unable to compile the actual shader
 			throw TempleException("Unable to compile shader {}: {}", mName, errors);
 		}
