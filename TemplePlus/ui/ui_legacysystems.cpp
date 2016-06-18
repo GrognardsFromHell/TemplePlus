@@ -717,6 +717,18 @@ const std::string &UiUtilityBar::GetName() const {
     return name;
 }
 
+void UiUtilityBar::HideOpenedWindows(bool hideOptions)
+{
+	static auto hideWindows = temple::GetPointer<BOOL(BOOL)>(0x101156B0);
+	hideWindows(hideOptions ? TRUE : FALSE);
+}
+
+void UiUtilityBar::Hide()
+{
+	static auto hide = temple::GetPointer<BOOL()>(0x1010EEC0);
+	hide();
+}
+
 //*****************************************************************************
 //* Track-UI
 //*****************************************************************************

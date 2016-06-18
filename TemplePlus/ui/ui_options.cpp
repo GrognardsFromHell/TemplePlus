@@ -6,6 +6,9 @@
 
 #include "ui_options.h"
 #include "ui_legacysystems.h"
+#include "gamesystems/gamesystems.h"
+#include "anim.h"
+#include "ui_systems.h"
 
 enum UiOptionsTextKeys {
 	// Titles of tabs in the options dialog
@@ -36,6 +39,23 @@ UiOptions::~UiOptions() {
 }
 
 void UiOptions::ResizeViewport(const UiResizeArgs& resizeArg) {
+}
+
+void UiOptions::Show(bool fromMainMenu) {
+	mFromMainMenu = fromMainMenu;
+	if (!mVisible) {
+		gameSystems->GetAnim().PushDisableFidget();
+	}
+	uiSystems->GetUtilityBar().HideOpenedWindows(true);
+	mVisible = true;
+	if (mFromMainMenu) {
+		uiSystems->GetUtilityBar().Hide();
+	}
+}
+
+void UiOptions::Hide() {
+	mVisible = false;
+	
 }
 
 const std::string &UiOptions::GetName() const {

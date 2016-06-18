@@ -23,4 +23,5 @@ public:
 private:
 	MesFile::Content mText;
 	bool mVisible = false;
+	bool mFromMainMenu = false;
 };

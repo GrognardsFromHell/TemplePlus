@@ -461,6 +461,8 @@
       <Filter>python</Filter>
     </ClCompile>
     <ClCompile Include="ui\ui_options.cpp" />
+    <ClCompile Include="ui\ui_legacy.cpp" />
+    <ClCompile Include="ui\ui_legacy_wrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -869,6 +871,7 @@
       <Filter>python</Filter>
     </ClInclude>
     <ClInclude Include="ui\ui_options.h" />
+    <ClInclude Include="ui\ui_legacy.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

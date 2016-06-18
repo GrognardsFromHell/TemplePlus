@@ -285,6 +285,11 @@ public:
     void Reset() override;
     void ResizeViewport(const UiResizeArgs &resizeArgs) override;
     const std::string &GetName() const override;
+
+	// Hides windows that can be opened from the utility bar
+	void HideOpenedWindows(bool hideOptions);
+
+	void Hide();
 };
 
 class UiTrack : public UiSystem {
