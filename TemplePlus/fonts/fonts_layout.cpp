@@ -202,6 +202,11 @@ void TextLayouter::Measure(const TigFont &font, const TigTextStyle & style, TigF
 	auto tabPos = style.field4c;
 	auto textStyle = it->second;
 	ApplyStyle(style, tabPos, textStyle);
+
+	// Centering doesn't make sense for measuring if no width is given
+	if (metrics.width == 0 && textStyle.align != TextAlign::Left) {
+		textStyle.align = TextAlign::Left;
+	}
 	
 	gfx::TextMetrics textMetrics;
 	textMetrics.width = metrics.width;
