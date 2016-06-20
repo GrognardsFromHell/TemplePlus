@@ -34,26 +34,27 @@ union AnimParam {
   LocAndOffsets location;
   int number;
   int spellId;
+  float floatNum;
 };
 
 struct AnimSlotGoalStackEntry {
   AnimGoalType goalType;
   int unk1;
-  AnimParam self;
-  AnimParam target;
-  AnimParam block;
-  AnimParam scratch;
-  AnimParam parent;
-  AnimParam targetTile;
-  AnimParam range;
-  AnimParam animId;
-  AnimParam animIdPrevious;
-  AnimParam animData;
-  AnimParam spellData;
-  AnimParam skillData;
-  AnimParam flagsData;
-  AnimParam scratchVal1;
-  AnimParam scratchVal2;
+  AnimParam self; // 0x8
+  AnimParam target; // 0x18
+  AnimParam block; // 0x28
+  AnimParam scratch; //0x38
+  AnimParam parent; // 0x48
+  AnimParam targetTile; //0x58
+  AnimParam range; //0x68
+  AnimParam animId; //0x78
+  AnimParam animIdPrevious; // 0x88
+  AnimParam animData; // 0x98
+  AnimParam spellData; // 0xA8
+  AnimParam skillData; // 0xB8
+  AnimParam flagsData; // 0xC8
+  AnimParam scratchVal1; // 0xD8
+  AnimParam scratchVal2; //0xE8
   AnimParam scratchVal3;
   AnimParam scratchVal4;
   AnimParam scratchVal5;
@@ -430,6 +431,7 @@ public:
 	static int __cdecl GoalStateFunc133(AnimSlot& slot);
 	static int __cdecl GoalStateFuncIsCritterProne(AnimSlot& slot);
 	static int __cdecl GoalStateFuncIsParam1Concealed(AnimSlot& slot);
+	static int __cdecl GoalStateFunc78_IsHeadingOk(AnimSlot &slot);
 	static int __cdecl GoalStateFunc82(AnimSlot& slot);
 	static int __cdecl GoalStateFunc83(AnimSlot& slot);
 	static int __cdecl GoalStateFunc65(AnimSlot& slot); // belongs in ag_hit_by_weapon
@@ -1397,6 +1399,9 @@ public:
     replaceFunction<BOOL(AnimSlot &)>(0x10012c80, gsFuncs.GoalStateFunc83);
 	// goalstatefunc_82
 	replaceFunction<BOOL(AnimSlot &)>(0x10012C70, gsFuncs.GoalStateFunc82);
+	//goalstatefunc_78_isheadingok
+	replaceFunction<BOOL(AnimSlot &)>(0x100125F0, gsFuncs.GoalStateFunc78_IsHeadingOk);
+
 	// goalstatefunc_65
 	replaceFunction<BOOL(AnimSlot &)>(0x10011880, gsFuncs.GoalStateFunc65);
 	// gsf54
@@ -1605,6 +1610,54 @@ int GoalStateFuncs::GoalStateFuncIsParam1Concealed(AnimSlot& slot)
 {
 	//logger->debug("GoalState IsConcealed");
 	return (critterSys.IsConcealed(slot.param1.obj));
+}
+
+int GoalStateFuncs::GoalStateFunc78_IsHeadingOk(AnimSlot & slot){
+	if (!slot.pCurrentGoal) {
+		slot.pCurrentGoal = &slot.goals[slot.currentGoal];
+	}
+
+	if (slot.path.nodeCount <= 0)
+		return 1;
+
+	// get the mover's location
+	auto obj = gameSystems->GetObj().GetObject(slot.param1.obj);
+	auto objLoc = obj->GetLocationFull();
+	float objAbsX, objAbsY;
+	locSys.GetOverallOffset(objLoc, &objAbsX, &objAbsY);
+
+	// get node loc
+	if (slot.path.currentNode > 200 || slot.path.currentNode < 0) {
+		logger->info("Anim: Illegal current node detected!");
+		return 1;
+	}
+
+	auto nodeLoc = slot.path.nodes[slot.path.currentNode];
+	float nodeAbsX, nodeAbsY;
+	locSys.GetOverallOffset(nodeLoc, &nodeAbsX, &nodeAbsY);
+
+	if (objAbsX == nodeAbsX && objAbsY == nodeAbsY) {
+		if (slot.path.currentNode + 1 >= slot.path.nodeCount)
+			return 1;
+		nodeLoc = slot.path.nodes[slot.path.currentNode + 1];
+		locSys.GetOverallOffset(nodeLoc, &nodeAbsX, &nodeAbsY);
+	}
+
+	auto &rot = slot.pCurrentGoal->scratchVal2.floatNum;
+	rot = M_PI_2 + M_PI * 0.75 - atan2(nodeAbsY - objAbsY, nodeAbsX - objAbsX);
+	if (rot < 0.0) {
+		rot += 6.2831855;//M_PI * 2;
+	}
+	if (rot > 6.2831855) {
+		rot -= 6.2831855;//M_PI * 2;
+	}
+
+
+	auto objRot = obj->GetFloat(obj_f_rotation);
+	if (fabs(objRot - rot) > 0.017453292) {   // 1 degree
+		return 0;
+	}
+	return 1;
 }
 
 int GoalStateFuncs::GoalStateFunc82(AnimSlot& slot)
