@@ -263,7 +263,6 @@
     </ClCompile>
     <ClCompile Include="tig\tig_mes.cpp" />
     <ClCompile Include="tig\tig_mouse.cpp" />
-    <ClCompile Include="tig\tig_msg.cpp" />
     <ClCompile Include="tig\tig_shader.cpp" />
     <ClCompile Include="tig\tig_texture.cpp" />
     <ClCompile Include="mainwindow.cpp" />

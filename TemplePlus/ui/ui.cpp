@@ -6,6 +6,7 @@
 #include <sound.h>
 #include <tig/tig_font.h>
 #include <tig/tig_mouse.h>
+#include "messages/messagequeue.h"
 
 Ui ui;
 
@@ -594,7 +595,7 @@ int Ui::TranslateMouseMessage(TigMouseMsg* mouseMsg)
 			{
 				newTigMsg.widgetId = globalWidId;
 				newTigMsg.widgetEventType = TigMsgWidgetEvent::Exited;
-				msgFuncs.Enqueue(&newTigMsg);
+				messageQueue->Enqueue(newTigMsg);
 			}
 		}
 
@@ -626,7 +627,7 @@ int Ui::TranslateMouseMessage(TigMouseMsg* mouseMsg)
 			}
 			newTigMsg.widgetId = widIdAtCursor;
 			newTigMsg.widgetEventType = TigMsgWidgetEvent::Entered;
-			msgFuncs.Enqueue(&newTigMsg);
+			messageQueue->Enqueue(newTigMsg);
 		}
 		globalWidId = *uiFuncs.uiWidgetMouseHandlerWidgetId = widIdAtCursor;
 	}
@@ -659,7 +660,7 @@ int Ui::TranslateMouseMessage(TigMouseMsg* mouseMsg)
 			newTigMsg.widgetEventType = TigMsgWidgetEvent::Clicked;
 			newTigMsg.widgetId = widIdAtCursor2;
 			*uiFuncs.uiMouseButtonId = widIdAtCursor2;
-			msgFuncs.Enqueue(&newTigMsg);
+			messageQueue->Enqueue(newTigMsg);
 		}
 	}
 
@@ -685,7 +686,7 @@ int Ui::TranslateMouseMessage(TigMouseMsg* mouseMsg)
 		auto widIdAtCursor2 = GetAtInclChildren(mouseMsg->x, mouseMsg->y); // probably redundant to do again, but just to be safe...
 		newTigMsg.widgetId = *uiFuncs.uiMouseButtonId;
 		newTigMsg.widgetEventType = (widIdAtCursor2 != *uiFuncs.uiMouseButtonId)?TigMsgWidgetEvent::MouseReleasedAtDifferentButton : TigMsgWidgetEvent::MouseReleased;
-		msgFuncs.Enqueue(&newTigMsg);
+		messageQueue->Enqueue(newTigMsg);
 		*uiFuncs.uiMouseButtonId = -1;
 	}
 
@@ -903,7 +904,7 @@ BOOL Ui::ScrollbarSetY(int widId, int value){
 		msg.type = TigMsgType::WIDGET;
 		msg.arg2 = 5;
 		msg.arg1 = scrollbarWid.parentId;
-		msg.Enqueue();
+		messageQueue->Enqueue(msg);
 		result = ui.WidgetSet(widId, &scrollbarWid);
 	}
 	return result;

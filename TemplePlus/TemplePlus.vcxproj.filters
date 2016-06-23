@@ -70,9 +70,6 @@
     <ClCompile Include="tig\tig_mouse.cpp">
       <Filter>tig</Filter>
     </ClCompile>
-    <ClCompile Include="tig\tig_msg.cpp">
-      <Filter>tig</Filter>
-    </ClCompile>
     <ClCompile Include="tig\tig_shader.cpp">
       <Filter>tig</Filter>
     </ClCompile>

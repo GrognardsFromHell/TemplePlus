@@ -34,7 +34,6 @@ int32_t TempleFuncs::diceRoll(uint32_t dieNum, uint32_t dieType, int32_t dieBonu
 
 TempleFuncs::TempleFuncs()
 {
-	rebase(ProcessSystemEvents, 0x101DF440);
 	rebase(StringHash, 0x101EBB00);
 	rebase(RNG, 0x10038DF0);
 	rebase(UpdatePartyUI, 0x10134CB0);
