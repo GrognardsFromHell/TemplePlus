@@ -3,14 +3,20 @@
 #include "ui_legacy.h"
 #include "infrastructure/exception.h"
 
-UiLegacyManager uiLegacyManager;
+UiLegacyManager *uiLegacyManager;
 
 UiLegacyManager::UiLegacyManager()
 {
+	if (uiLegacyManager == nullptr) {
+		uiLegacyManager = this;
+	}
 }
 
 UiLegacyManager::~UiLegacyManager()
 {
+	if (uiLegacyManager == this) {
+		uiLegacyManager = nullptr;
+	}
 }
 
 LgcyWidgetId UiLegacyManager::AddWidget(const LgcyWidget *widget, const char *sourceFile, uint32_t sourceLine)
@@ -59,9 +65,11 @@ void UiLegacyManager::AddWindow(LgcyWidgetId id)
 
 void UiLegacyManager::RemoveWindow(LgcyWidgetId id)
 {
-	for (auto it = mActiveWindows.begin(); it != mActiveWindows.end(); ++it) {
+	for (auto it = mActiveWindows.begin(); it != mActiveWindows.end(); ) {
 		if (*it == id) {
 			it = mActiveWindows.erase(it);
+		} else {
+			it++;
 		}
 	}
 	SortWindows();
@@ -134,7 +142,7 @@ void UiLegacyManager::RemoveChildWidget(LgcyWidgetId id)
 {
 	auto widget = GetWidget(id);
 
-	if (widget->parentId == -1) {
+	if (!widget || widget->parentId == -1) {
 		return;
 	}
 
@@ -181,6 +189,19 @@ void UiLegacyManager::Render()
 			}
 		}
 	}
+}
+
+LgcyWindow * UiLegacyManager::GetWindowAt(int x, int y)
+{
+	// Backwards because of render order (rendered last is really on top)
+	for (int i = mActiveWindows.size() - 1; i >= 0; --i) {
+		auto windowId = mActiveWindows[i];
+		auto window = GetWindow(windowId);
+		if (!window->IsHidden() && DoesWidgetContain(windowId, x, y)) {
+			return window;
+		}
+	}
+	return nullptr;
 }
 
 LgcyWidgetId UiLegacyManager::GetWidgetAt(int x, int y)
@@ -287,6 +308,7 @@ LgcyWindow::LgcyWindow(int x, int y, int w, int h) : LgcyWindow()
 	this->height = height;
 }
 
-LgcyButton::LgcyButton()
-{
+LgcyButton::LgcyButton() {
+	memset(this, 0, sizeof(LgcyButton));
+	type = LgcyWidgetType::Button;
 }

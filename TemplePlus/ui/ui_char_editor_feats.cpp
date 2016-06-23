@@ -16,7 +16,7 @@ struct UiCharEditorFeatsAddresses : temple::AddressTable
 	int * featsMultiselectNum_10C75F34;
 	feat_enums * featMultiselect_10C75F38;
 	int *dword_10C76AF0;
-	WidgetType3* featsScrollbar;
+	LgcyScrollBar* featsScrollbar;
 	int * dword_10C77D50;
 	int * dword_10C77D54;
 	int *widIdx_10C77D80;
@@ -24,8 +24,8 @@ struct UiCharEditorFeatsAddresses : temple::AddressTable
 	feat_enums * feat_10C79344;
 	int * widgId_10C7AE14;
 	char* (__cdecl*sub_10182760)(feat_enums featEnums);
-	int(__cdecl* j_CopyWidget_101F87A0)(int widIdx, Widget* widg);
-	int(__cdecl*sub_101F87B0)(int widIdx, Widget* widg);
+	int(__cdecl* j_CopyWidget_101F87A0)(int widIdx, LgcyWidget* widg);
+	int(__cdecl*sub_101F87B0)(int widIdx, LgcyWidget* widg);
 	int(__cdecl*sub_101F8E40)(int);
 	int(__cdecl*sub_101F9100)(int widId, int);
 	int(__cdecl*sub_101F9510)(int, int);

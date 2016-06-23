@@ -139,8 +139,8 @@ public:
 	*/
 	BOOL BindToParent(int parentId, int buttonId);
 	BOOL SetDefaultSounds(int widId);
-	BOOL ButtonSetButtonState(int widgetId, int newState);
-	BOOL WidgetRemoveRegardParent(int widIdx);
+	BOOL ButtonSetButtonState(int widgetId, LgcyButtonState newState);
+	void WidgetRemoveRegardParent(int widIdx);
 	BOOL WidgetAndWindowRemove(int widId);
 	BOOL WidgetRemove(int widId);
 	BOOL WidgetSetHidden(int widId, int hiddenState);
@@ -164,7 +164,11 @@ public:
 			*/
 	int GetAtInclChildren(int x, int y);
 
-	int UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg);
+	/**
+	 * Handles a mouse message and produces higher level mouse messages based on it.
+	 */
+	int TranslateMouseMessage(TigMouseMsg* mouseMsg);
+	int ProcessMessage(TigMsg* mouseMsg);
 
 	bool ScrollbarGetY(int widId, int * y);
 	void ScrollbarSetYmax(int widId, int yMax);

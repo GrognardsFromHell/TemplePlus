@@ -1,6 +1,9 @@
 
 #pragma once
 
+#include <EASTL/hash_map.h>
+#include <EASTL/vector.h>
+
 enum class LgcyWidgetType : uint32_t {
 	Window = 1,
 	Button = 2,
@@ -8,6 +11,9 @@ enum class LgcyWidgetType : uint32_t {
 };
 
 typedef int LgcyWidgetId;
+
+struct TigMsg;
+struct TigRect;
 
 /*
 	The base structure of all legacy widgets
@@ -98,7 +104,7 @@ struct LgcyButton : public LgcyWidget {
 	int field88;
 	int field8C;
 	int field90;
-	int buttonState; // 1 - hovered 2 - down  3 - released 4 - disabled
+	LgcyButtonState buttonState; // 1 - hovered 2 - down  3 - released 4 - disabled
 	int field98;
 	int field9C;
 	int fieldA0;
@@ -186,16 +192,22 @@ public:
 
 	void Render();
 
+	LgcyWindow* GetWindowAt(int x, int y);
+
 	LgcyWidgetId GetWidgetAt(int x, int y);
 	bool DoesWidgetContain(LgcyWidgetId id, int x, int y);
+
+	const eastl::vector<LgcyWidgetId> GetActiveWindows() const {
+		return mActiveWindows;
+	}
 
 private:
 	UiLegacyManager(UiLegacyManager&) = delete;
 	UiLegacyManager& operator=(UiLegacyManager&) = delete;
 
 	LgcyWidgetId mNextWidgetId = 0;
-	unordered_map<LgcyWidgetId, ActiveLegacyWidget> mActiveWidgets;
-	vector<LgcyWidgetId> mActiveWindows;
+	eastl::hash_map<LgcyWidgetId, ActiveLegacyWidget> mActiveWidgets;
+	eastl::vector<LgcyWidgetId> mActiveWindows;
 	int maxZIndex = 0;
 
 	/*
@@ -206,4 +218,4 @@ private:
 
 };
 
-extern UiLegacyManager uiLegacyManager;
+extern UiLegacyManager *uiLegacyManager;

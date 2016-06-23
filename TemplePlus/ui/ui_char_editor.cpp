@@ -526,18 +526,18 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 	auto lvlNew = objects.StatLevelGet(handle, stat_level) + 1;
 	auto &stateBtnIds = temple::GetRef<int[6]>(0x11E72E40);
 
-	ui.ButtonSetButtonState(stateBtnIds[2], UBS_DISABLED); // features
+	ui.ButtonSetButtonState(stateBtnIds[2], LgcyButtonState::Disabled); // features
 
 	// gain stat every 4 levels
 	if (lvlNew % 4)
-		ui.ButtonSetButtonState(stateBtnIds[1], UBS_DISABLED); // stats
+		ui.ButtonSetButtonState(stateBtnIds[1], LgcyButtonState::Disabled); // stats
 	else
-		ui.ButtonSetButtonState(stateBtnIds[1], UBS_NORMAL); 
+		ui.ButtonSetButtonState(stateBtnIds[1], LgcyButtonState::Normal); 
 
 	if (lvlNew % 3)
-		ui.ButtonSetButtonState(stateBtnIds[4], UBS_DISABLED); // feats
+		ui.ButtonSetButtonState(stateBtnIds[4], LgcyButtonState::Disabled); // feats
 	else
-		ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL);
+		ui.ButtonSetButtonState(stateBtnIds[4], LgcyButtonState::Normal);
 
 
 	mIsSelectingBonusFeat = false;
@@ -554,11 +554,11 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 		
 		if (classCode == stat_level_cleric) {
 			if (classLvlNew == 1)
-				ui.ButtonSetButtonState(stateBtnIds[2], UBS_NORMAL); // features
+				ui.ButtonSetButtonState(stateBtnIds[2], LgcyButtonState::Normal); // features
 		}
 		if (classCode == stat_level_ranger) {
 			if (classLvlNew == 1 || classLvlNew == 2 || !(classLvlNew % 5))
-				ui.ButtonSetButtonState(stateBtnIds[2], UBS_NORMAL); // features
+				ui.ButtonSetButtonState(stateBtnIds[2], LgcyButtonState::Normal); // features
 		}
 		if (classCode == stat_level_wizard) {
 			if (classLvlNew == 1)
@@ -568,13 +568,13 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 	
 	// Spells
 	if (d20ClassSys.IsSelectingSpellsOnLevelup(handle, classCode)){
-		ui.ButtonSetButtonState(stateBtnIds[5], UBS_NORMAL);
+		ui.ButtonSetButtonState(stateBtnIds[5], LgcyButtonState::Normal);
 	} 
 	else
 	{
-		ui.ButtonSetButtonState(stateBtnIds[5], UBS_DISABLED);
+		ui.ButtonSetButtonState(stateBtnIds[5], LgcyButtonState::Disabled);
 	};
-	
+
 	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
 	auto &stateTitles = temple::GetRef<const char*[6]>(0x10BE8D1C);
 	auto text = stateTitles[systemId];
@@ -590,8 +590,8 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 }
 
 BOOL UiCharEditor::ClassWidgetsInit(){
-	static WidgetType1 classWnd(259,117, 405, 271);
-	classWnd.widgetFlags = 1;
+	static LgcyWindow classWnd(259,117, 405, 271);
+	classWnd.flags = 1;
 	classWnd.render = [](int widId) { uiCharEditor.StateTitleRender(widId); };
 	if (classWnd.Add(&classWndId))
 		return 0;
@@ -601,7 +601,7 @@ BOOL UiCharEditor::ClassWidgetsInit(){
 	for (auto it: d20ClassSys.vanillaClassEnums){
 		// class buttons
 		int newId = 0;
-		WidgetType2 classBtn("Class btn", classWndId, 71 + coloff, 47 + rowoff, 130, 20);
+		LgcyButton classBtn("Class btn", classWndId, 71 + coloff, 47 + rowoff, 130, 20);
 		coloff = 139 - coloff;
 		if (!coloff)
 			rowoff += 29;
@@ -637,7 +637,7 @@ BOOL UiCharEditor::ClassWidgetsInit(){
 	classNextBtnTextRect.x -= classWnd.x; classNextBtnTextRect.y -= classWnd.y;
 	classPrevBtnTextRect.x -= classWnd.x; classPrevBtnTextRect.y -= classWnd.y;
 
-	WidgetType2 nextBtn("Class Next Button", classWndId, classWnd.x + 293, classWnd.y + 230, 55, 20),
+	LgcyButton nextBtn("Class Next Button", classWndId, classWnd.x + 293, classWnd.y + 230, 55, 20),
 		prevBtn("Class Prev. Button", classWndId, classWnd.x + 58, classWnd.y + 230, 55, 20);
 
 	nextBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {
@@ -1418,13 +1418,13 @@ void UiCharEditor::ClassBtnRender(int widId){
 
 	UiButtonState btnState; 
 	ui.GetButtonState(widId, btnState);
-	if (btnState != UiButtonState::UBS_DISABLED && btnState != UiButtonState::UBS_DOWN)
+	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down)
 	{
 		auto &selPkt = GetCharEditorSelPacket();
 		if (selPkt.classCode == classCode)
-			btnState = UiButtonState::UBS_RELEASED;
-		else
-			btnState = btnState == UiButtonState::UBS_HOVERED ? UiButtonState::UBS_HOVERED : UiButtonState::UBS_NORMAL;
+			btnState = LgcyButtonState::Released;
+		else if (btnState != LgcyButtonState::Hovered)
+			btnState = LgcyButtonState::Normal;
 	}
 		
 	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
@@ -1571,10 +1571,10 @@ void UiCharEditor::ClassNextBtnRender(int widId){
 	static TigRect srcRect(1, 1, 120, 30);
 	UiRenderer::DrawTexture(buttonBox, classNextBtnFrameRect, srcRect);
 
-	UiButtonState btnState;
+	LgcyButtonState btnState;
 	ui.GetButtonState(widId, btnState);
-	if (btnState != UiButtonState::UBS_DISABLED && btnState != UiButtonState::UBS_DOWN){
-		btnState = btnState == UiButtonState::UBS_HOVERED ? UiButtonState::UBS_HOVERED : UiButtonState::UBS_NORMAL;
+	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down){
+		btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
 	}
 
 	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
@@ -1599,10 +1599,10 @@ void UiCharEditor::ClassPrevBtnRender(int widId){
 	static TigRect srcRect(1, 1, 120, 30);
 	UiRenderer::DrawTexture(buttonBox, classPrevBtnFrameRect, srcRect);
 
-	UiButtonState btnState;
+	LgcyButtonState btnState;
 	ui.GetButtonState(widId, btnState);
-	if (btnState != UiButtonState::UBS_DISABLED && btnState != UiButtonState::UBS_DOWN) {
-		btnState = btnState == UiButtonState::UBS_HOVERED ? UiButtonState::UBS_HOVERED : UiButtonState::UBS_NORMAL;
+	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down) {
+		btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
 	}
 
 	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];

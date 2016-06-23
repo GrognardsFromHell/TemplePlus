@@ -4,13 +4,11 @@
 #include "ui_legacy.h"
 #include "util/fixes.h"
 
-static UiLegacyManager &manager = uiLegacyManager;
-
 static int ui_add_window(LgcyWindow *widget, size_t widgetSize, LgcyWidgetId *assignedIdOut, const char *sourceFile, uint32_t lineNumber) {
-	widget->type = LWT_WINDOW;
+	widget->type = LgcyWidgetType::Window;
 	assert(widget->GetSize() == widgetSize);
 	
-	auto assignedId = manager.AddWidget(widget, sourceFile, lineNumber);
+	auto assignedId = uiLegacyManager->AddWidget(widget, sourceFile, lineNumber);
 	if (assignedIdOut) {
 		*assignedIdOut = assignedId;
 	}
@@ -18,10 +16,10 @@ static int ui_add_window(LgcyWindow *widget, size_t widgetSize, LgcyWidgetId *as
 }
 
 static int ui_scrollbar_add(LgcyScrollBar *widget, size_t widgetSize, LgcyWidgetId *assignedIdOut) {
-	widget->type = LWT_SCROLLBAR;
+	widget->type = LgcyWidgetType::Scrollbar;
 	assert(widget->GetSize() == widgetSize);
 
-	auto assignedId = manager.AddWidget(widget, __FILE__, __LINE__);
+	auto assignedId = uiLegacyManager->AddWidget(widget, __FILE__, __LINE__);
 	if (assignedIdOut) {
 		*assignedIdOut = assignedId;
 	}
@@ -29,10 +27,10 @@ static int ui_scrollbar_add(LgcyScrollBar *widget, size_t widgetSize, LgcyWidget
 }
 
 static int ui_add_button(LgcyButton *widget, size_t widgetSize, LgcyWidgetId *assignedIdOut, const char *sourceFile, uint32_t lineNumber) {
-	widget->type = LWT_BUTTON;
+	widget->type = LgcyWidgetType::Button;
 	assert(widget->GetSize() == widgetSize);
 
-	auto assignedId = manager.AddWidget(widget, sourceFile, lineNumber);
+	auto assignedId = uiLegacyManager->AddWidget(widget, sourceFile, lineNumber);
 	if (assignedIdOut) {
 		*assignedIdOut = assignedId;
 	}
@@ -40,7 +38,7 @@ static int ui_add_button(LgcyButton *widget, size_t widgetSize, LgcyWidgetId *as
 }
 
 static int ui_copy_widget(LgcyWidgetId id, LgcyWidget *widgetOut) {
-	auto widget = manager.GetWidget(id);
+	auto widget = uiLegacyManager->GetWidget(id);
 	if (!widget) {
 		throw new TempleException(format("Trying to access widget id {} which does not exist.", id));
 	}
@@ -49,7 +47,7 @@ static int ui_copy_widget(LgcyWidgetId id, LgcyWidget *widgetOut) {
 }
 
 static int ui_widget_set(LgcyWidgetId id, const LgcyWidget *widgetData) {
-	auto widget = manager.GetWidget(id);
+	auto widget = uiLegacyManager->GetWidget(id);
 	if (!widget) {
 		throw new TempleException(format("Trying to access widget id {} which does not exist.", id));
 	}
@@ -59,57 +57,74 @@ static int ui_widget_set(LgcyWidgetId id, const LgcyWidget *widgetData) {
 }
 
 static LgcyWidget *ui_widget_get(LgcyWidgetId id) {
-	return manager.GetWidget(id);
+	return uiLegacyManager->GetWidget(id);
 }
 
 static int ui_widget_set_hidden(LgcyWidgetId id, BOOL hidden) {
-	manager.SetHidden(id, hidden == TRUE);
+	uiLegacyManager->SetHidden(id, hidden == TRUE);
 	return 0;
 }
 
 static BOOL is_widget_hidden(LgcyWidgetId id) {
-	auto widget = manager.GetWidget(id);
+	auto widget = uiLegacyManager->GetWidget(id);
 	return widget->IsHidden() ? TRUE : FALSE;
 }
 
-static bool ui_widget_contains_point(LgcyWidgetId widgetId, int x, int y) {
-	return 0;
+static BOOL ui_widget_contains_point(LgcyWidgetId widgetId, int x, int y) {
+	return uiLegacyManager->DoesWidgetContain(widgetId, x, y) ? TRUE : FALSE;
 }
 
 static LgcyWidgetId ui_widget_get_at_incl_children(int x, int y) {
 	// -1 means no widget
-	return -1;
+	return uiLegacyManager->GetWidgetAt(x, y);	
 }
 
 static int ui_widget_remove(LgcyWidgetId id) {
-	manager.RemoveWidget(id);
+	uiLegacyManager->RemoveWidget(id);
 	return 0;
 }
 
 static int ui_widget_remove_regard_parent(LgcyWidgetId id) {
-	manager.RemoveChildWidget(id);
+	uiLegacyManager->RemoveChildWidget(id);
 	return 0;
 }
 
 static int ui_widgets_render() {
-	manager.Render();
+	uiLegacyManager->Render();
 	return 0;
 }
 
 static int ui_widget_and_window_remove(LgcyWidgetId id) {
-	manager.RemoveWindow(id);
-	manager.RemoveWidget(id);
+	uiLegacyManager->RemoveWindow(id);
+	uiLegacyManager->RemoveWidget(id);
 	return 0;
 }
 
 static int ui_widget_bring_to_front(LgcyWidgetId id) {
-	manager.BringToFront(id);
+	uiLegacyManager->BringToFront(id);
 	return 0;
 }
 
 static int ui_widget_send_to_back(LgcyWidgetId id) {
-	manager.SendToBack(id);
+	uiLegacyManager->SendToBack(id);
 	return 0;
+}
+
+static int ui_widgetlist_indexof(LgcyWidgetId widId, LgcyWidgetId* widlist, int size) {
+	for (int i = 0; i < size; i++) {
+		if (widlist[i] == widId)
+			return i;
+	}
+
+	return -1;
+}
+
+static LgcyButton *ui_get_button(LgcyWidgetId widId) {
+	LgcyButton * result = (LgcyButton *)ui_widget_get(widId);
+	if (!result || result->type != LgcyWidgetType::Button)
+		return nullptr;
+	return result;
+
 }
 
 /*
@@ -125,6 +140,7 @@ public:
 		replaceFunction(0x101F9080, ui_copy_widget);
 		replaceFunction(0x101F90B0, ui_widget_set);
 		replaceFunction(0x101F90E0, ui_widget_get);
+		replaceFunction(0x101F9570, ui_get_button);
 		replaceFunction(0x101F9100, ui_widget_set_hidden);
 		replaceFunction(0x101F9180, is_widget_hidden);
 		replaceFunction(0x101F9240, ui_widget_contains_point);
@@ -133,6 +149,7 @@ public:
 		replaceFunction(0x101F9460, ui_add_button);
 		replaceFunction(0x101F94D0, ui_widget_remove_regard_parent);
 		replaceFunction(0x101F9010, ui_widget_and_window_remove);
+		replaceFunction(0x1011DFE0, ui_widgetlist_indexof);
 
 		replaceFunction(0x101F8D10, ui_widgets_render);
 				

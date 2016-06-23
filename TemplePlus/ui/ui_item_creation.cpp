@@ -1052,10 +1052,10 @@ BOOL ItemCreation::ItemCreationEntryMsg(int widId, TigMsg* msg){
 	craftingItemIdx = itemIdx;
 	auto itemHandle = craftedItemHandles[itemCreationType][itemIdx];
 	if (CreateItemResourceCheck(itemCreationCrafter, itemHandle)) {
-		ui.ButtonSetButtonState(mItemCreationCreateBtnId, UiButtonState::UBS_NORMAL);
+		ui.ButtonSetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Normal);
 	}
 	else {
-		ui.ButtonSetButtonState(mItemCreationCreateBtnId, UiButtonState::UBS_DISABLED);
+		ui.ButtonSetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Disabled);
 	}
 
 	return true;
@@ -1063,16 +1063,16 @@ BOOL ItemCreation::ItemCreationEntryMsg(int widId, TigMsg* msg){
 
 void ItemCreation::ItemCreationCreateBtnRender(int widId) const
 {
-	UiButtonState buttonState;
+	LgcyButtonState buttonState;
 	if (ui.GetButtonState(widId, buttonState))
 		return;
 
 	Render2dArgs arg;
-	if (buttonState == UiButtonState::UBS_DOWN)
+	if (buttonState == LgcyButtonState::Down)
 	{
 		arg.textureId = temple::GetRef<int>(0x10BED9EC);
 	}
-	else if (buttonState == UiButtonState::UBS_HOVERED)
+	else if (buttonState == LgcyButtonState::Hovered)
 	{
 		arg.textureId = temple::GetRef<int>(0x10BEDA48);
 	}
@@ -1101,16 +1101,16 @@ void ItemCreation::ItemCreationCreateBtnRender(int widId) const
 
 void ItemCreation::ItemCreationCancelBtnRender(int widId) const
 {
-	UiButtonState buttonState;
+	LgcyButtonState buttonState;
 	if (ui.GetButtonState(widId, buttonState))
 		return;
 
 	Render2dArgs arg;
-	if (buttonState == UiButtonState::UBS_DOWN)
+	if (buttonState == LgcyButtonState::Down)
 	{
 		arg.textureId = temple::GetRef<int>(0x10BED6D0);
 	}
-	else if (buttonState == UiButtonState::UBS_HOVERED)
+	else if (buttonState == LgcyButtonState::Hovered)
 	{
 		arg.textureId = temple::GetRef<int>(0x10BEE2D4);
 	}
@@ -2030,19 +2030,19 @@ void ItemCreation::MaaEnhBonusDnRender(int widId){
 		return;
 
 	int texId;
-	UiButtonState bs;
+	LgcyButtonState bs;
 	ui.GetButtonState(widId, bs);
 	switch (bs) {
-	case UBS_DISABLED:
+	case Disabled:
 		texId = mDownArrowDisabledTga;
 		break;
-	case UBS_DOWN:
+	case LgcyButtonState::Down:
 		texId = mDownArrowClickTga;
 		break;
-	case UBS_HOVERED:
+	case LgcyButtonState::Hovered:
 		texId = mDownArrowHoveredTga;
 		break;
-	case UBS_NORMAL:
+	case LgcyButtonState::Normal:
 	default:
 		texId = mDownArrowTga;
 	}
@@ -2058,19 +2058,19 @@ void ItemCreation::MaaEnhBonusUpRender(int widId){
 		return;
 
 	int texId;
-	UiButtonState bs;
+	LgcyButtonState bs;
 	ui.GetButtonState(widId, bs);
 	switch (bs) {
-	case UBS_DISABLED:
+	case Disabled:
 		texId = mDownArrowDisabledTga;
 		break;
-	case UBS_DOWN:
+	case Down:
 		texId = mDownArrowClickTga;
 		break;
-	case UBS_HOVERED:
+	case Hovered:
 		texId = mDownArrowHoveredTga;
 		break;
-	case UBS_NORMAL:
+	case Normal:
 	default:
 		texId = mDownArrowTga;
 	}
@@ -2094,9 +2094,9 @@ void ItemCreation::ButtonStateInit(int wndId){
 
 	if (craftingItemIdx >= 0 && craftingItemIdx < (int)numItemsCrafting[itemCreationType]){
 		if (CreateItemResourceCheck(itemCreationCrafter, craftedItemHandles[itemCreationType][craftingItemIdx]))
-			ui.ButtonSetButtonState(mItemCreationCreateBtnId, UiButtonState::UBS_NORMAL);
+			ui.ButtonSetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Normal);
 		else
-			ui.ButtonSetButtonState(mItemCreationCreateBtnId, UiButtonState::UBS_DISABLED);
+			ui.ButtonSetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Disabled);
 	}
 
 	ui.ScrollbarSetYmax(mItemCreationScrollbarId, numItemsCrafting[itemCreationType] - NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX  < 0 ? 0 : numItemsCrafting[itemCreationType] - NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX);
@@ -2269,15 +2269,15 @@ bool ItemCreation::MaaShouldJustModifyArg(int effIdx, objHndl item){
 
 void ItemCreation::MaaCreateBtnRender(int widId) const
 {
-	UiButtonState buttonState;
+	LgcyButtonState buttonState;
 	if (ui.GetButtonState(widId,buttonState))
 		return;
 	
 	Render2dArgs arg;
-	if (buttonState == UiButtonState::UBS_DOWN)
+	if (buttonState == LgcyButtonState::Down)
 	{
 		arg.textureId = temple::GetRef<int>(0x10BED9EC);
-	} else if (buttonState == UiButtonState::UBS_HOVERED)
+	} else if (buttonState == LgcyButtonState::Hovered)
 	{
 		arg.textureId = temple::GetRef<int>(0x10BEDA48);
 	} else
@@ -2455,11 +2455,11 @@ void ItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 				auto createBtnId = mItemCreationCreateBtnId; //temple::GetRef<int>(0x10BED8B0);
 				if (CreateItemResourceCheck(crafter, item))
 				{
-					ui.ButtonSetButtonState(createBtnId, UiButtonState::UBS_NORMAL);
+					ui.ButtonSetButtonState(createBtnId, LgcyButtonState::Normal);
 				}
 				else
 				{
-					ui.ButtonSetButtonState(createBtnId, UiButtonState::UBS_DISABLED);
+					ui.ButtonSetButtonState(createBtnId, LgcyButtonState::Disabled);
 				}
 			}
 			return;
@@ -2500,16 +2500,16 @@ BOOL ItemCreation::CancelBtnMsg(int widId, TigMsg* msg) {
 
 void ItemCreation::MaaCancelBtnRender(int widId) const
 {
-	UiButtonState buttonState;
+	LgcyButtonState buttonState;
 	if (ui.GetButtonState(widId, buttonState))
 		return;
 
 	Render2dArgs arg;
-	if (buttonState == UiButtonState::UBS_DOWN)
+	if (buttonState == LgcyButtonState::Down)
 	{
 		arg.textureId = temple::GetRef<int>(0x10BED6D0);
 	}
-	else if (buttonState == UiButtonState::UBS_HOVERED)
+	else if (buttonState == LgcyButtonState::Hovered)
 	{
 		arg.textureId = temple::GetRef<int>(0x10BEE2D4);
 	}
@@ -2866,8 +2866,8 @@ int ItemCreation::MaaEffectTooltip(int x, int y, int * widId){
 	if (craftingItemIdx == -1)
 		return 0;
 
-	WidgetType2 * btn = ui.GetButton(*widId);
-	if (btn->buttonState == UBS_DOWN || btn->buttonState == UBS_DISABLED)
+	LgcyButton * btn = ui.GetButton(*widId);
+	if (btn->buttonState == Down || btn->buttonState == Disabled)
 		return 0;
 
 	auto effIdx = GetEffIdxFromWidgetId(*widId);
@@ -3323,7 +3323,7 @@ int ItemCreation::UiItemCreationInit(GameSystemConf& conf)
 	mCreateBtnRect = TigRect(133, 339, 112, 22);
 	mMaaCancelBtnRect = TigRect(256, 339, 112, 22);
 	mMaaCraftedItemIconDestRect = TigRect(215, 62, 64, 64);
-	mItemCreationScrollbar = new WidgetType3;
+	mItemCreationScrollbar = new LgcyScrollBar;
 	mEnhBonusDnRect = TigRect(450, 156, 15, 9);
 
 	if (!mesFuncs.Open("tpmes\\item_creation.mes", &mItemCreationMes))
@@ -3400,8 +3400,8 @@ int ItemCreation::UiItemCreationInit(GameSystemConf& conf)
 		return 0;
 
 
-	auto& icWnd = temple::GetRef<WidgetType1>(0x10BEE040);
-	auto& maaWnd = temple::GetRef<WidgetType1>(0x10BEDB58);
+	auto& icWnd = temple::GetRef<LgcyWindow>(0x10BEE040);
+	auto& maaWnd = temple::GetRef<LgcyWindow>(0x10BEDB58);
 
 	auto& rect = temple::GetRef<TigRect>(0x102FAEC4);
 	rect.x += icWnd.x;	rect.y += icWnd.y;
@@ -3426,11 +3426,11 @@ int ItemCreation::UiItemCreationInit(GameSystemConf& conf)
 
 	//MAA
 	// maaSelectedEffIdx = temple::GetRef<int>(0x10BECD74);
-	mMaaWnd = temple::GetPointer<WidgetType1>(0x10BEDB58);
+	mMaaWnd = temple::GetPointer<LgcyWindow>(0x10BEDB58);
 	// mMaaItemsScrollbarId = temple::GetRef<int>(0x10BED8A0);
 	// mMaaApplicableEffectsScrollbarId = temple::GetRef<int>(0x10BECD78);
 
-	mItemCreationWnd = temple::GetPointer<WidgetType1>(0x10BEE040);
+	mItemCreationWnd = temple::GetPointer<LgcyWindow>(0x10BEE040);
 	// mItemCreationScrollbarId = temple::GetRef<int>(0x10BED9F4);
 	// mMaaItemsScrollbarY = temple::GetRef<int>(0x10BECDA4);
 
@@ -3496,14 +3496,14 @@ bool ItemCreation::InitItemCreationRules(){
 
 bool ItemCreation::UiItemCreationWidgetsInit(int width, int height){
 	auto wndId = &mItemCreationWndId;
-	auto& wnd = temple::GetRef<WidgetType1>(0x10BEE040);
-	wnd.WidgetType1Init((width - 404 - 108*mUseCo8Ui) / 2, (height - 421) / 2, 404+ 108*mUseCo8Ui, 421);
-	wnd.widgetFlags = 1;
-	wnd.windowId = 0x7FFFFFFF;
+	auto& wnd = temple::GetRef<LgcyWindow>(0x10BEE040);
+	wnd = LgcyWindow((width - 404 - 108*mUseCo8Ui) / 2, (height - 421) / 2, 404+ 108*mUseCo8Ui, 421);
+	wnd.flags = 1;
+	wnd.zIndex = -1;
 	wnd.render = [](int widId) { itemCreation.ItemCreationWndRender(widId); };
 	wnd.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.ItemCreationWndMsg(widId, msg); };//temple::GetRef<bool(__cdecl)(int, TigMsg*)>(0x1014FC20);
 
-	if (ui.AddWindow(temple::GetPointer<WidgetType1>(0x10BEE040), sizeof(WidgetType1),
+	if (ui.AddWindow(temple::GetPointer<LgcyWindow>(0x10BEE040), sizeof(LgcyWindow),
 		wndId, "ui_item_creation.cpp", 2094))
 		return false;
 
@@ -3519,56 +3519,56 @@ bool ItemCreation::UiItemCreationWidgetsInit(int width, int height){
 	auto btnY = 55;
 
 	for (int i = 0; i < NUM_ITEM_CREATION_ENTRY_WIDGETS; i++){
-		WidgetType2 btn(nullptr, *wndId, 32, btnY, 155 + 108 * mUseCo8Ui, 12);
+		LgcyButton btn(nullptr, *wndId, 32, btnY, 155 + 108 * mUseCo8Ui, 12);
 		btn.x += wnd.x;
 		btn.y += wnd.y;
 		btn.render = [](int widId) {itemCreation.ItemCreationEntryRender(widId); };
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.ItemCreationEntryMsg(widId, msg); };
-		ui.AddButton(&btn, sizeof(WidgetType2), &mItemCreationEntryBtnIds[i], "ui_item_creation.cpp", 2115);
+		ui.AddButton(&btn, sizeof(LgcyButton), &mItemCreationEntryBtnIds[i], "ui_item_creation.cpp", 2115);
 		if (ui.BindToParent(*wndId, mItemCreationEntryBtnIds[i]))
 			return false;
 		btnY += 12;
 	}
 	// create button
 	{
-		WidgetType2 btn(nullptr, *wndId, 81, 373, 112, 22);
+		LgcyButton btn(nullptr, *wndId, 81, 373, 112, 22);
 		btn.x += wnd.x;
 		btn.y += wnd.y;
 		btn.render = [](int widId) { itemCreation.ItemCreationCreateBtnRender(widId); };
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.CreateBtnMsg(widId, msg); };
 
-		ui.AddButton(&btn, sizeof(WidgetType2), &mItemCreationCreateBtnId, "ui_item_creation.cpp", 2127);
+		ui.AddButton(&btn, sizeof(LgcyButton), &mItemCreationCreateBtnId, "ui_item_creation.cpp", 2127);
 		ui.SetDefaultSounds(mItemCreationCreateBtnId);
 		ui.BindToParent(*wndId, mItemCreationCreateBtnId);
 	}
 	// cancel button
 	auto cancelBtnId = temple::GetPointer<int>(0x10BEDA68);
 	
-	WidgetType2 btn(nullptr, *wndId, 205 + 108*mUseCo8Ui, 373, 112, 22);
+	LgcyButton btn(nullptr, *wndId, 205 + 108*mUseCo8Ui, 373, 112, 22);
 	btn.x += wnd.x;
 	btn.y += wnd.y;
 	btn.render = [](int widId) {itemCreation.ItemCreationCancelBtnRender(widId); };
 	btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.CancelBtnMsg(widId, msg); };
 
-	ui.AddButton(&btn, sizeof(WidgetType2), cancelBtnId, "ui_item_creation.cpp", 2142);
+	ui.AddButton(&btn, sizeof(LgcyButton), cancelBtnId, "ui_item_creation.cpp", 2142);
 	ui.SetDefaultSounds(*cancelBtnId);
 	return ui.BindToParent(*wndId, *cancelBtnId) == 0;
 	
 }
 
 bool ItemCreation::MaaWidgetsInit(int width, int height) {
-	auto& wnd = temple::GetRef<WidgetType1>(0x10BEDB58);
+	auto& wnd = temple::GetRef<LgcyWindow>(0x10BEDB58);
 	auto wndId = &mMaaWndId;
-	wnd.WidgetType1Init((width - 504) / 2, (height - 387) / 2, 504, 387);
-	wnd.widgetFlags = 1;
+	wnd = LgcyWindow((width - 504) / 2, (height - 387) / 2, 504, 387);
+	wnd.flags = 1;
 	wnd.render = [](int widId) {itemCreation.MaaWndRender(widId); };
 	wnd.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaWndMsg(widId, msg); };
-	wnd.windowId = 0x7FFFFFFF;
+	wnd.zIndex = -1;
 	if (wnd.Add(wndId))
 		return false;
 
 	// Scrollbar for the Items
-	auto maaScrollbar = temple::GetPointer<WidgetType3>(0x10BEDA98);
+	auto maaScrollbar = temple::GetPointer<LgcyScrollBar>(0x10BEDA98);
 	maaScrollbar->Init(184, 51, 225);
 	maaScrollbar->x += wnd.x;
 	maaScrollbar->y += wnd.y;
@@ -3578,7 +3578,7 @@ bool ItemCreation::MaaWidgetsInit(int width, int height) {
 
 
 	// Scrollbar for the effects
-	auto appEffectsScrollbar = temple::GetPointer<WidgetType3>(0x10BEDE90);
+	auto appEffectsScrollbar = temple::GetPointer<LgcyScrollBar>(0x10BEDE90);
 	appEffectsScrollbar->Init(313, 148, 128);
 	appEffectsScrollbar->x += wnd.x;
 	appEffectsScrollbar->y += wnd.y;
@@ -3589,7 +3589,7 @@ bool ItemCreation::MaaWidgetsInit(int width, int height) {
 	// Item buttons
 	auto btnY = 53;
 	for (int i = 0; i < MAA_NUM_ENCHANTABLE_ITEM_WIDGETS; i++) {
-		WidgetType2 btn(nullptr, *wndId, 28, btnY, 152, 42);
+		LgcyButton btn(nullptr, *wndId, 28, btnY, 152, 42);
 		btn.x += wnd.x;	btn.y += wnd.y;
 		btn.render = [](int widId) { itemCreation.MaaItemRender(widId); };
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaItemMsg(widId, msg); };
@@ -3601,18 +3601,18 @@ bool ItemCreation::MaaWidgetsInit(int width, int height) {
 	// applicable effect butons
 	btnY = 152;
 	for (int i = 0; i < MAA_EFFECT_BUTTONS_COUNT; i++) {
-		WidgetType2 btn(nullptr, *wndId, 207, btnY, 106, 12);
+		LgcyButton btn(nullptr, *wndId, 207, btnY, 106, 12);
 		btn.x += wnd.x;	btn.y += wnd.y;
 		btn.render = [](int widId) { itemCreation.MaaEffectRender(widId); };
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaEffectMsg(widId, msg); };
-		btn.renderTooltip = [](int x, int y, int* widId) { return itemCreation.MaaEffectTooltip(x, y, widId); };
+		btn.renderTooltip = [](int x, int y, LgcyWidgetId* widId) { itemCreation.MaaEffectTooltip(x, y, widId); };
 		btn.Add(&maaBtnIds[i]);
 		ui.BindToParent(*wndId, maaBtnIds[i]);
 		btnY += 12;
 	}
 
 	// Enhancement bonus buttons
-	WidgetType2 enhBonusDown(nullptr, *wndId, mEnhBonusDnRect);
+	LgcyButton enhBonusDown(nullptr, *wndId, mEnhBonusDnRect);
 	enhBonusDown.x += wnd.x; enhBonusDown.y += wnd.y;
 	enhBonusDown.render = [](int widId) {itemCreation.MaaEnhBonusDnRender(widId); };
 	enhBonusDown.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaEnhBonusDnMsg(widId, msg); };
@@ -3620,7 +3620,7 @@ bool ItemCreation::MaaWidgetsInit(int width, int height) {
 	ui.BindToParent(*wndId, mEnhBonusArrowDnId);
 	ui.SetDefaultSounds(mEnhBonusArrowDnId);
 
-	WidgetType2 enhBonusUp(nullptr, *wndId, mEnhBonusDnRect);
+	LgcyButton enhBonusUp(nullptr, *wndId, mEnhBonusDnRect);
 	enhBonusUp.x += wnd.x - 15; enhBonusUp.y += wnd.y;
 	enhBonusUp.render = [](int widId) {itemCreation.MaaEnhBonusUpRender(widId); };
 	enhBonusUp.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaEnhBonusUpMsg(widId, msg); };
@@ -3631,7 +3631,7 @@ bool ItemCreation::MaaWidgetsInit(int width, int height) {
 	// applied effects
 	btnY = 152 + 12;
 	for (int i = 0; i < NUM_APPLIED_BONUSES_MAX; i++) {
-		WidgetType2 btn(nullptr, *wndId, 355, btnY, 106, 12);
+		LgcyButton btn(nullptr, *wndId, 355, btnY, 106, 12);
 		btn.x += wnd.x;	btn.y += wnd.y;
 		btn.render = [](int widId) { itemCreation.MaaAppliedBtnRender(widId); };
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaAppliedBtnMsg(widId, msg); };
@@ -3643,26 +3643,26 @@ bool ItemCreation::MaaWidgetsInit(int width, int height) {
 	// create button
 	//auto createBtnId = temple::GetPointer<int>(0x10BED8B0);
 	{
-		WidgetType2 btn(nullptr, *wndId, 132, 340, 112, 22);
+		LgcyButton btn(nullptr, *wndId, 132, 340, 112, 22);
 		btn.x += wnd.x;
 		btn.y += wnd.y;
 		btn.render = [](int widId) { itemCreation.MaaCreateBtnRender(widId); };
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.CreateBtnMsg(widId, msg); };
 
-		ui.AddButton(&btn, sizeof(WidgetType2), &mMaaCreateBtnId, "ui_item_creation.cpp", 2224);
+		ui.AddButton(&btn, sizeof(LgcyButton), &mMaaCreateBtnId, "ui_item_creation.cpp", 2224);
 		ui.SetDefaultSounds(mMaaCreateBtnId);
 		ui.BindToParent(*wndId, mMaaCreateBtnId);
 	}
 	// cancel button
 	//auto cancelBtnId = temple::GetPointer<int>(0x10BECD70);
 	{
-		WidgetType2 btn(nullptr, *wndId, 256, 340, 112, 22);
+		LgcyButton btn(nullptr, *wndId, 256, 340, 112, 22);
 		btn.x += wnd.x;
 		btn.y += wnd.y;
 		btn.render = [](int widId) { itemCreation.MaaCancelBtnRender(widId); };
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.CancelBtnMsg(widId, msg); };
 
-		ui.AddButton(&btn, sizeof(WidgetType2), &mMaaCancelBtnId, "ui_item_creation.cpp", 2237);
+		ui.AddButton(&btn, sizeof(LgcyButton), &mMaaCancelBtnId, "ui_item_creation.cpp", 2237);
 		ui.SetDefaultSounds(mMaaCancelBtnId);
 		ui.BindToParent(*wndId, mMaaCancelBtnId);
 	}
@@ -3671,7 +3671,7 @@ bool ItemCreation::MaaWidgetsInit(int width, int height) {
 	// Add Effect button
 	//auto effectAddBtnId = temple::GetPointer<int>(0x10BEE394);
 	{
-		WidgetType2 btn(nullptr, *wndId, 333, 189, temple::GetRef<int>(0x102FAF5C), temple::GetRef<int>(0x102FAF60));
+		LgcyButton btn(nullptr, *wndId, 333, 189, temple::GetRef<int>(0x102FAF5C), temple::GetRef<int>(0x102FAF60));
 		btn.x += wnd.x;
 		btn.y += wnd.y;
 		temple::GetRef<int>(0x102FAF54) = 333 + wnd.x;
@@ -3679,7 +3679,7 @@ bool ItemCreation::MaaWidgetsInit(int width, int height) {
 		btn.render = temple::GetRef<void(__cdecl)(int)>(0x10150020);
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaEffectAddMsg(widId, msg); };
 
-		ui.AddButton(&btn, sizeof(WidgetType2), &mMaaEffectAddBtnId, "ui_item_creation.cpp", 2237);
+		ui.AddButton(&btn, sizeof(LgcyButton), &mMaaEffectAddBtnId, "ui_item_creation.cpp", 2237);
 		ui.SetDefaultSounds(mMaaEffectAddBtnId);
 		ui.BindToParent(*wndId, mMaaEffectAddBtnId);
 	}
@@ -3687,7 +3687,7 @@ bool ItemCreation::MaaWidgetsInit(int width, int height) {
 	// Remove Effect button
 	//auto effectRemoveBtnId = temple::GetPointer<int>(0x10BEE394);
 	{
-		WidgetType2 btn(nullptr, *wndId, 335, 220, temple::GetRef<int>(0x102FAF6C), temple::GetRef<int>(0x102FAF70));
+		LgcyButton btn(nullptr, *wndId, 335, 220, temple::GetRef<int>(0x102FAF6C), temple::GetRef<int>(0x102FAF70));
 		btn.x += wnd.x;
 		btn.y += wnd.y;
 		temple::GetRef<int>(0x102FAF64) = 335 + wnd.x;
@@ -3695,7 +3695,7 @@ bool ItemCreation::MaaWidgetsInit(int width, int height) {
 		btn.render = temple::GetRef<void(__cdecl)(int)>(0x101500B0);
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaEffectRemoveMsg(widId, msg); };
 
-		ui.AddButton(&btn, sizeof(WidgetType2), &mMaaEffectRemoveBtnId, "ui_item_creation.cpp", 2237);
+		ui.AddButton(&btn, sizeof(LgcyButton), &mMaaEffectRemoveBtnId, "ui_item_creation.cpp", 2237);
 		ui.SetDefaultSounds(mMaaEffectRemoveBtnId);
 		ui.BindToParent(*wndId, mMaaEffectRemoveBtnId);
 	}
@@ -3705,7 +3705,7 @@ bool ItemCreation::MaaWidgetsInit(int width, int height) {
 	auto& maaTextboxRect = temple::GetRef<TigRect>(0x102FAF74);
 	maaTextboxRect.x = 296; maaTextboxRect.y = 72;
 	{
-		WidgetType2 btn(nullptr, *wndId, maaTextboxRect);
+		LgcyButton btn(nullptr, *wndId, maaTextboxRect);
 		btn.x += wnd.x;
 		btn.y += wnd.y;
 		maaTextboxRect.x += wnd.x;
@@ -3713,7 +3713,7 @@ bool ItemCreation::MaaWidgetsInit(int width, int height) {
 		// render is handled in the main window
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaTextboxMsg(widId, msg); };
 
-		ui.AddButton(&btn, sizeof(WidgetType2), &mMaaTextboxId, "ui_item_creation.cpp", 2286);
+		ui.AddButton(&btn, sizeof(LgcyButton), &mMaaTextboxId, "ui_item_creation.cpp", 2286);
 		ui.SetDefaultSounds(mMaaTextboxId);
 		return ui.BindToParent(*wndId, mMaaTextboxId) == 0;
 	}
@@ -3764,8 +3764,8 @@ void ItemCreation::ItemCreationWidgetsExit(int widId){
 
 void ItemCreation::UiItemCreationResize(UiResizeArgs& resizeArgs){
 
-	auto& icWnd = temple::GetRef<WidgetType1>(0x10BEE040);
-	auto& maaWnd = temple::GetRef<WidgetType1>(0x10BEDB58);
+	auto& icWnd = temple::GetRef<LgcyWindow>(0x10BEE040);
+	auto& maaWnd = temple::GetRef<LgcyWindow>(0x10BEDB58);
 
 	auto& rect = temple::GetRef<TigRect>(0x102FAEC4);
 	rect.x -= icWnd.x;	rect.y -= icWnd.y;

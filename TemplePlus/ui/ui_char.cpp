@@ -32,13 +32,13 @@ struct SpellList
 
 struct UiCharSpellPacket
 {
-	WidgetType1 * classSpellbookWnd;
-	WidgetType1 * classMemorizeWnd;
-	WidgetType1 * spellbookSpellWnds[NUM_SPELLBOOK_SLOTS];
-	WidgetType1 * memorizeSpellWnds[NUM_SPELLBOOK_SLOTS];
-	WidgetType2 * metamagicButtons[NUM_SPELLBOOK_SLOTS];
-	WidgetType3 * spellbookScrollbar;
-	WidgetType3 * memorizeScrollbar;
+	LgcyWindow * classSpellbookWnd;
+	LgcyWindow * classMemorizeWnd;
+	LgcyWindow * spellbookSpellWnds[NUM_SPELLBOOK_SLOTS];
+	LgcyWindow * memorizeSpellWnds[NUM_SPELLBOOK_SLOTS];
+	LgcyButton * metamagicButtons[NUM_SPELLBOOK_SLOTS];
+	LgcyScrollBar * spellbookScrollbar;
+	LgcyScrollBar * memorizeScrollbar;
 	SpellList spellsKnown;
 	SpellList spellsMemorized;
 };
@@ -47,7 +47,7 @@ static_assert(sizeof(UiCharSpellPacket) == 0xC970, "UiCharSpellPacket should hav
 struct UiCharSpellsNavPacket
 {
 	uint32_t spellClassCode;
-	WidgetType2* button;
+	LgcyButton* button;
 	int numSpellsForLvl[NUM_SPELL_LEVELS]; // starting from level 0 (cantrips), and including bonus from ability modifier and school specialization
 };
 
@@ -58,12 +58,13 @@ struct UiCharAddresses : temple::AddressTable
 	UiCharSpellsNavPacket *uiCharSpellsNavPackets; // size 12 array
 	UiCharSpellPacket * uiCharSpellPackets; // size 12 array
 	int * uiCharSpellsNavClassTabIdx;
-	WidgetType1** uiCharSpellsMainWnd;
-	WidgetType1** uiCharSpellsNavClassTabWnd;
-	WidgetType1** uiCharSpellsSpellsPerDayWnd;
-	WidgetType2** uiCharSpellsPerDayLevelBtns; // array of 6 buttons for levels 0-5
+	LgcyWindow** uiCharSpellsMainWnd;
+	LgcyWindow** uiCharSpellsNavClassTabWnd;
+	LgcyWindow** uiCharSpellsSpellsPerDayWnd;
+	LgcyWindow** uiCharSpellsPerDayLevelBtns; // array of 6 buttons for levels 0-5
 
 	int * wndDisplayed; // 0 thru 4 - inventories (1-4 were meant for the various "bags"); 5 - Skills; 6 - Feats ; 7 - Spells
+
 	UiCharAddresses()
 	{
 		rebase(uiCharSpellsMainWnd, 0x10C81BC0);
@@ -324,7 +325,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 	auto navClassPackets = addresses.uiCharSpellsNavPackets;
 	auto charSpellPackets = addresses.uiCharSpellPackets;
 
-	auto spellsMainWnd = temple::GetRef<WidgetType1*>(0x10C81BC0);
+	auto spellsMainWnd = temple::GetRef<LgcyWindow*>(0x10C81BC0);
 	auto spellsMainWndId = spellsMainWnd->widgetId;
 
 	auto& uiCharSpellFeat = temple::GetRef<int>(0x10300258);
@@ -961,7 +962,7 @@ void CharUiSystem::LongDescriptionPopupCreate(objHndl item){
 void CharUiSystem::TotalWeightOutputBtnTooltip(int x, int y, int* widId)
 {
 
-	WidgetType2 * btn = ui.GetButton(*widId);
+	LgcyButton * btn = ui.GetButton(*widId);
 	if (btn->buttonState == 2)
 		return;
 

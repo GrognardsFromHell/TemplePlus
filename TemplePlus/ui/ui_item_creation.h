@@ -1,8 +1,8 @@
 #pragma once
 
 class CombinedImgFile;
-struct WidgetType1;
-struct WidgetType3;
+struct LgcyWindow;
+struct LgcyScrollBar;
 struct TigTextStyle;
 struct UiResizeArgs;
 
@@ -192,11 +192,11 @@ protected:
 	int craftingWidgetId; // denotes which item creation widget is currently active
 	bool mUseCo8Ui = false;
 
-	WidgetType1* mItemCreationWnd = nullptr;
+	LgcyWindow* mItemCreationWnd = nullptr;
 		
 		int mItemCreationWndId;
 		int mItemCreationScrollbarId;
-		WidgetType3* mItemCreationScrollbar;
+		LgcyScrollBar* mItemCreationScrollbar;
 		int mMaaItemsScrollbarY = 0;
 		CombinedImgFile* bkgImage;
 		int mItemCreationEntryBtnIds[21];
@@ -209,7 +209,7 @@ protected:
 		int mItemCreationWidenedTexture01;
 		int mItemCreationWidenedTexture11;
 
-	WidgetType1* mMaaWnd = nullptr;
+		LgcyWindow* mMaaWnd = nullptr;
 		int mMaaWndId;
 		int mMaaItemsScrollbarId;
 		int mMaaApplicableEffectsScrollbarId;

@@ -321,12 +321,11 @@ private:
 
 } uiPcCreation;
 
-
 struct PcCreationUiAddresses : temple::AddressTable
 {
 	int * pcCreationIdx;
 
-	WidgetType1 * pcCreationPortraitsMainWidget;
+	LgcyWindow * pcCreationPortraitsMainWidget;
 	int * mainWindowWidgetId; // 10BF0ED4
 	int * pcPortraitsWidgetIds; // 10BF0EBC  array of 5 entries
 
@@ -343,7 +342,7 @@ struct PcCreationUiAddresses : temple::AddressTable
 	int * featsMultiselectNum_10C75F34;
 	feat_enums * featMultiselect_10C75F38;
 	int *dword_10C76AF0;
-	Widget* widg_10C77CD0;
+	LgcyWidget* widg_10C77CD0;
 	int * dword_10C77D50;
 	int * dword_10C77D54;
 	int *widIdx_10C77D80;
@@ -351,8 +350,8 @@ struct PcCreationUiAddresses : temple::AddressTable
 	feat_enums * feat_10C79344;
 	int * widgId_10C7AE14;
 	char* (__cdecl*sub_10182760)(feat_enums featEnums);
-	int(__cdecl* j_CopyWidget_101F87A0)(int widIdx, Widget* widg);
-	int(__cdecl*sub_101F87B0)(int widIdx, Widget* widg);
+	int(__cdecl* j_CopyWidget_101F87A0)(int widIdx, LgcyWidget* widg);
+	int(__cdecl*sub_101F87B0)(int widIdx, LgcyWidget* widg);
 	int(__cdecl*sub_101F8E40)(int);
 	int(__cdecl*sub_101F9100)(int widId, int);
 	int(__cdecl*sub_101F9510)(int, int);
@@ -573,17 +572,17 @@ BOOL PcCreationHooks::PcPortraitsInit(GameSystemConf* conf)
 
 BOOL PcCreationHooks::PcPortraitWidgetsInit(int height)
 {
-	pcPortraitsMain.WidgetType1Init(10, height - 80, 650, 63);
-	pcPortraitsMain.widgetFlags = 1;
+	pcPortraitsMain = LgcyWindow(10, height - 80, 650, 63);
+	pcPortraitsMain.flags = 1;
 	pcPortraitsMain.render = [](int widId) {return0(); };
 	pcPortraitsMain.handleMessage = [](int widId, TigMsg* msg)->BOOL {return return0(); };
 
-	if (ui.AddWindow(&pcPortraitsMain, sizeof(WidgetType1), &pcPortraitsMainId, "pc_creation_portraits.c", 275) )
+	if (ui.AddWindow(&pcPortraitsMain, sizeof(LgcyWindow), &pcPortraitsMainId, "pc_creation_portraits.c", 275) )
 		return 0;
 
 	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
 	{
-		WidgetType2 button;
+		LgcyButton button;
 		ui.ButtonInit(&button, 0, pcPortraitsMainId, pcPortraitsMain.x + 81 * i, pcPortraitsMain.y, 76, 63);
 
 		pcPortraitBoxRects[i].x = button.x;
@@ -602,9 +601,9 @@ BOOL PcCreationHooks::PcPortraitWidgetsInit(int height)
 		button.render = addresses.ui_render_pc_creation_portraits;
 		button.handleMessage = addresses.ui_msg_pc_creation_portraits;
 
-		if (ui.AddButton(&button, sizeof(WidgetType2), &pcPortraitWidgIds[i], "pc_creation_portraits.c", 299)
+		if (ui.AddButton(&button, sizeof(LgcyButton), &pcPortraitWidgIds[i], "pc_creation_portraits.c", 299)
 			|| ui.BindToParent(pcPortraitsMainId, pcPortraitWidgIds[i])
-			|| ui.ButtonSetButtonState(pcPortraitWidgIds[i], 4))
+			|| ui.ButtonSetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Disabled))
 			return 0;
 
 	}
@@ -645,7 +644,7 @@ void PcCreationHooks::PcPortraitsButtonActivateNext()
 		ui.GetButtonState(pcPortraitWidgIds[i], &state);
 		if (state == 4)
 		{
-			ui.ButtonSetButtonState(pcPortraitWidgIds[i],0);
+			ui.ButtonSetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Normal);
 			if (i == MAX_PC_CREATION_PORTRAITS -1)
 				*addresses.uiPcPortraitsFullMaybe = 1;
 			return ;
@@ -661,7 +660,7 @@ void PcCreationHooks::PcPortraitsRefresh()
 	ui.WidgetBringToFront(pcPortraitsMainId);
 	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS;i++)
 	{
-		ui.ButtonSetButtonState(pcPortraitWidgIds[i], 4);
+		ui.ButtonSetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Disabled);
 	}
 	*addresses.uiPcPortraitsFullMaybe = 0;
 
@@ -669,7 +668,7 @@ void PcCreationHooks::PcPortraitsRefresh()
 	{
 		for (int i = 0; i < MAX_PC_CREATION_PORTRAITS;i++)
 		{
-			ui.ButtonSetButtonState(pcPortraitWidgIds[i], 0);
+			ui.ButtonSetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Normal);
 		}
 	}
 	*addresses.pcCreationIdx = -1;
@@ -679,7 +678,7 @@ void PcCreationHooks::PcPortraitsDisable()
 {
 	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS;i++)
 	{
-		ui.ButtonSetButtonState(pcPortraitWidgIds[i], 4);
+		ui.ButtonSetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Disabled);
 	}
 	*addresses.uiPcPortraitsFullMaybe = 0;
 }
@@ -752,10 +751,10 @@ void PcCreationHooks::GetPartyPool(int fromIngame)
 	UiPartyCreationHidePcWidgets();
 	int& uiPartyPoolPcsIdx = temple::GetRef<int>(0x10BF1760);
 	uiPartyPoolPcsIdx = -1;
-	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF2408), 4); // Add
-	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF2538), 4); // VIEW
-	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF2410), 4); // RENAME
-	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF239C), 4); // DELETE
+	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF2408), LgcyButtonState::Disabled); // Add
+	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF2538), LgcyButtonState::Disabled); // VIEW
+	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF2410), LgcyButtonState::Disabled); // RENAME
+	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF239C), LgcyButtonState::Disabled); // DELETE
 
 	auto GetPcCreationPcBuffer = temple::GetRef<void()>(0x101631B0);
 	GetPcCreationPcBuffer();
