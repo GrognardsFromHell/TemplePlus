@@ -460,6 +460,7 @@
     <ClCompile Include="ui\ui_options.cpp" />
     <ClCompile Include="ui\ui_legacy.cpp" />
     <ClCompile Include="ui\ui_legacy_wrapper.cpp" />
+    <ClCompile Include="ui\ui_qtquick.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -869,6 +870,8 @@
     </ClInclude>
     <ClInclude Include="ui\ui_options.h" />
     <ClInclude Include="ui\ui_legacy.h" />
+    <ClInclude Include="ui\ui_qtquick.h" />
+    <ClInclude Include="ui\ui_qtquick_moc.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

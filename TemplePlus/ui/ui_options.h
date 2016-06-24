@@ -5,6 +5,7 @@
 #include <infrastructure/mesparser.h>
 
 #include "ui_system.h"
+#include "ui.h"
 
 class UiOptions : public UiSystem {
 public:
@@ -24,4 +25,6 @@ private:
 	MesFile::Content mText;
 	bool mVisible = false;
 	bool mFromMainMenu = false;
+
+	LgcyWidgetId mWidgetId = -1;
 };

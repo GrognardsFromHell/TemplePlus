@@ -9,6 +9,8 @@
 
 #include "util/datadump.h"
 
+#include <QtGui/QGuiApplication>
+
 void InitLogging(const std::wstring &logFile);
 
 // Defined in temple_main.cpp for now
@@ -23,6 +25,7 @@ static void SetIniPath();
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int showCmd) {
 
+	// The following code will cause temple.dll to be rebased
 	/*VirtualAlloc(reinterpret_cast<void*>(0x10000000),
 		1,
 		MEM_RESERVE,
@@ -31,6 +34,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// We reserve space for temple.dll as early as possible to avoid rebasing of temple.dll
 	auto& dll = temple::Dll::GetInstance();
 	dll.ReserveMemoryRange();
+
+	int qtArgc = 1;
+	char qtArg1[MAX_PATH];
+	char *qtArgv[1] = { &qtArg1[0] };
+	GetModuleFileNameA(nullptr, qtArg1, MAX_PATH);
+	QGuiApplication qtApp(qtArgc, qtArgv);
+	// Enables use of ANGLE instead of Desktop GL
+	qtApp.setAttribute(Qt::AA_UseOpenGLES);
 
 	// Cannot get known folders without initializing COM sadly
 	ComInitializer comInitializer;

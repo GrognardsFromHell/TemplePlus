@@ -9,6 +9,9 @@
 #include "gamesystems/gamesystems.h"
 #include "anim.h"
 #include "ui_systems.h"
+#include "ui_qtquick.h"
+
+UiQtQuick *uiQtQuick = nullptr;
 
 enum UiOptionsTextKeys {
 	// Titles of tabs in the options dialog
@@ -33,9 +36,14 @@ UiOptions::UiOptions(int width, int height) {
 	ui_options_init_adapters();
 
 	mText = MesFile::ParseFile("mes/options_text.mes");
+
+	uiQtQuick = new UiQtQuick;
+
+	mWidgetId = uiQtQuick->LoadWindow(5, 5, width - 5, height - 5, "options.qml");
 }
 
 UiOptions::~UiOptions() {
+	delete uiQtQuick;
 }
 
 void UiOptions::ResizeViewport(const UiResizeArgs& resizeArg) {
@@ -51,6 +59,8 @@ void UiOptions::Show(bool fromMainMenu) {
 	if (mFromMainMenu) {
 		uiSystems->GetUtilityBar().Hide();
 	}
+
+	ui.WidgetSetHidden(mWidgetId, FALSE);
 }
 
 void UiOptions::Hide() {

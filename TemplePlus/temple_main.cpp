@@ -94,24 +94,6 @@ struct ObjPropDef {
 	uint32_t FieldTypeCode;
 };
 #pragma pack(pop)
-const char *PropTypes[] = {
-	"None",
-	"BeginSection",
-	"EndSection",
-	"Int32",
-	"Int64",
-	"AbilityArray",
-	"UnkArray",
-	"Int32Array",
-	"Int64Array",
-	"ScriptArray",
-	"Unk2Array",
-	"String",
-	"Obj",
-	"ObjArray",
-	"SpellArray",
-	"Float32"
-};
 
 int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 
@@ -136,7 +118,6 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 		Write ToEE global config vars from our config
 	*/
 	applyGlobalConfig();
-
 
 	TigInitializer tig(hInstance);
 	
