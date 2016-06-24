@@ -243,7 +243,7 @@ namespace gfx {
 		DynamicTexturePtr CreateDynamicTexture(gfx::BufferFormat format, int width, int height);
 		DynamicTexturePtr CreateDynamicStagingTexture(gfx::BufferFormat format, int width, int height);
 		void CopyRenderTarget(gfx::RenderTargetTexture &renderTarget, gfx::DynamicTexture &stagingTexture);
-		RenderTargetTexturePtr CreateRenderTargetTexture(gfx::BufferFormat format, int width, int height, bool multiSampled = false);
+		RenderTargetTexturePtr CreateRenderTargetTexture(gfx::BufferFormat format, int width, int height, bool multiSampled = false, bool sharedSurface = false);
 		RenderTargetTexturePtr CreateRenderTargetForNativeSurface(ID3D11Texture2D *surface);
 		RenderTargetTexturePtr CreateRenderTargetForSharedSurface(IUnknown *surface);
 		RenderTargetDepthStencilPtr CreateRenderTargetDepthStencil(int width, int height, bool multiSampled = false);

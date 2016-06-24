@@ -11,10 +11,16 @@
 #include <QtGui/QOpenGLFunctions>
 #include <QtGui/QOpenGLFramebufferObject>
 #include <QtGui/QOffscreenSurface>
+#define EGL_EGLEXT_PROTOTYPES
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include "ui_qtquick.h"
 #include "ui.h"
+
+#include <graphics/device.h>
+#include <graphics/dynamictexture.h>
+#include <graphics/shaperenderer2d.h>
+#include <tig/tig_startup.h>
 
 /**
 * Additional state associated with a legacy window.
@@ -31,6 +37,7 @@ public:
 	QQuickWindow window;
 	QQmlComponent component;
 	QQuickItem *rootItem;
+	gfx::RenderTargetTexturePtr rt;
 
 public slots:
 	void createFbo();
@@ -108,8 +115,9 @@ LgcyWidgetId UiQtQuick::LoadWindow(int x, int y, int width, int height, const st
 		width,
 		height
 	);
+	
 	mImpl->state[window.widgetId] = std::move(state);
-
+	
 	QCoreApplication::processEvents();
 		
 	return window.widgetId;
@@ -134,6 +142,18 @@ void UiQtQuick::Impl::Render(LgcyWidgetId widgetId)
 	state.renderControl.sync();
 	state.renderControl.render();
 	self->glContext.functions()->glFlush();
+
+	if (state.rt) {
+		auto widget = ui.WidgetGet(widgetId);
+		auto rtSize = state.rt->GetSize();
+		tig->GetShapeRenderer2d().DrawRectangle(
+			widget->x,
+			widget->y,
+			rtSize.width,
+			rtSize.height,
+			*state.rt
+		);
+	}
 
 }
 
@@ -186,6 +206,53 @@ void LgcyWidgetState::createFbo()
 	// it with the QQuickWindow.
 	fbo.reset(new QOpenGLFramebufferObject(window.size(), QOpenGLFramebufferObject::CombinedDepthStencil));
 	window.setRenderTarget(fbo.get());
+
+	auto texId = fbo->texture();
+	glBindTexture(GL_TEXTURE_2D, texId);
+
+	auto width = window.size().width();
+	auto height = window.size().height();
+	
+	using namespace gfx;
+	rt = renderingDevice->CreateRenderTargetTexture(BufferFormat::A8R8G8B8, width, height, false, true);
+
+	Qt::HANDLE sharedHandle = rt->GetShareHandle();
+	
+	// Create a EGL native surface from the share handle
+	EGLint bufferAttributes[] = {
+		EGL_WIDTH, width,
+		EGL_HEIGHT, height,
+		EGL_TEXTURE_TARGET, EGL_TEXTURE_2D,
+		EGL_TEXTURE_FORMAT, EGL_TEXTURE_RGBA, // TODO: check correctness of this
+		EGL_NONE
+	};
+
+	EGLint config_attribs[] = { 
+		EGL_BUFFER_SIZE,  32,
+		EGL_RED_SIZE,     8,
+		EGL_GREEN_SIZE,   8,
+		EGL_BLUE_SIZE,    8,
+		EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
+		EGL_ALPHA_SIZE,   8,
+		EGL_NONE
+	};
+
+	auto display = eglGetCurrentDisplay();
+
+	EGLConfig eglConfig;
+	EGLint numConfigs;
+	if (!eglChooseConfig(display, config_attribs, &eglConfig, 1, &numConfigs)) {
+		throw TempleException("Unable to create EGL config.");
+	}
+		
+	auto surface = eglCreatePbufferFromClientBuffer(display, EGL_D3D_TEXTURE_2D_SHARE_HANDLE_ANGLE, sharedHandle, eglConfig, bufferAttributes);
+	if (surface == EGL_NO_SURFACE) {
+		throw new TempleException("Unable to open shared handle.");
+	}
+
+	glBindTexture(GL_TEXTURE_2D, fbo->texture());
+	eglBindTexImage(display, surface, EGL_BACK_BUFFER);
+
 }
 
 void LgcyWidgetState::destroyFbo()

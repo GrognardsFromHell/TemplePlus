@@ -1429,7 +1429,7 @@ void RenderingDevice::CopyRenderTarget(gfx::RenderTargetTexture & renderTarget, 
 }
 
 RenderTargetTexturePtr
-RenderingDevice::CreateRenderTargetTexture(gfx::BufferFormat format, int width, int height, bool multiSample) {
+RenderingDevice::CreateRenderTargetTexture(gfx::BufferFormat format, int width, int height, bool multiSample, bool sharedSurface) {
 
   Size size{width, height};
 
@@ -1451,6 +1451,10 @@ RenderingDevice::CreateRenderTargetTexture(gfx::BufferFormat format, int width, 
 
   logger->info("width {} height {}", width, height);
   CD3D11_TEXTURE2D_DESC textureDesc(formatDx, width, height, 1, 1, bindFlags, D3D11_USAGE_DEFAULT, 0, sampleCount, sampleQuality);
+
+  if (sharedSurface) {
+	  textureDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
+  }
 
   CComPtr<ID3D11Texture2D> texture;
   D3DVERIFY(mD3d11Device->CreateTexture2D(&textureDesc, nullptr, &texture));
@@ -1483,7 +1487,7 @@ RenderingDevice::CreateRenderTargetTexture(gfx::BufferFormat format, int width, 
   CComPtr<ID3D11ShaderResourceView> resourceView;
   D3DVERIFY(mD3d11Device->CreateShaderResourceView(srvTexture, &resourceViewDesc, &resourceView));
 
-  return std::make_shared<RenderTargetTexture>(texture, rtView, resolvedTexture, resourceView, size, multiSample);
+  return std::make_shared<RenderTargetTexture>(texture, rtView, resolvedTexture, resourceView, size, multiSample, sharedSurface);
 }
 
 RenderTargetTexturePtr RenderingDevice::CreateRenderTargetForNativeSurface(ID3D11Texture2D * surface)
@@ -1502,6 +1506,7 @@ RenderTargetTexturePtr RenderingDevice::CreateRenderTargetForNativeSurface(ID3D1
 		nullptr,
 		nullptr,
 		size,
+		false,
 		false);
 }
 

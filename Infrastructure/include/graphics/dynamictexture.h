@@ -85,7 +85,8 @@ namespace gfx {
 			ID3D11Texture2D *resolvedTexture,
 			ID3D11ShaderResourceView *resourceView,
 			const Size &size,
-			bool multiSampled);
+			bool multiSampled,
+			bool shareable);
 
 		int GetId() const override;
 
@@ -126,6 +127,12 @@ namespace gfx {
 			return mMultiSampled;
 		}
 
+		bool IsShareable() const {
+			return mShareable;
+		}
+
+		void* GetShareHandle();
+
 		gfx::BufferFormat GetFormat() const;
 
 	private:
@@ -136,6 +143,7 @@ namespace gfx {
 		Size mSize;
 		ContentRect mContentRect;
 		bool mMultiSampled;
+		bool mShareable;
 
 	};
 

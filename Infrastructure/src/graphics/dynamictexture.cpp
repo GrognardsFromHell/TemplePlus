@@ -53,8 +53,9 @@ namespace gfx {
 		ID3D11Texture2D *resolvedTexture,
 		ID3D11ShaderResourceView *resourceView,
 		const Size &size,
-		bool multiSampled) : mTexture(texture), mRtView(rtView), mResolvedTexture(resolvedTexture), 
-			mResourceView(resourceView), mSize(size), mMultiSampled(multiSampled) {
+		bool multiSampled,
+		bool shareable) : mTexture(texture), mRtView(rtView), mResolvedTexture(resolvedTexture), 
+			mResourceView(resourceView), mSize(size), mMultiSampled(multiSampled), mShareable(shareable) {
 		mContentRect = { 0, 0, size.width, size.height };
 	}
 
@@ -73,6 +74,21 @@ namespace gfx {
 		mTexture.Release();
 		mRtView.Release();
 		mResourceView.Release();
+	}
+
+	void * RenderTargetTexture::GetShareHandle()
+	{
+		CComPtr<IDXGIResource> dxgiResource;
+		if (!SUCCEEDED(mTexture.QueryInterface(&dxgiResource))) {
+			throw TempleException("Unable to retrieve DXGI resource underlying texture.");
+		}
+
+		HANDLE sharedHandle;
+		if (!SUCCEEDED(dxgiResource->GetSharedHandle(&sharedHandle))) {
+			throw TempleException("Unable to retrieve shared handle from underlying resource.");
+		}
+
+		return sharedHandle;
 	}
 
 	gfx::BufferFormat RenderTargetTexture::GetFormat() const
