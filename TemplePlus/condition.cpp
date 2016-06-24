@@ -151,6 +151,8 @@ public:
 	static int __cdecl CastDefensivelyAooTrigger(DispatcherCallbackArgs args);
 	static int __cdecl CastDefensivelySpellInterrupted(DispatcherCallbackArgs args);
 	
+	static int __cdecl D20ModCountdownHandler(DispatcherCallbackArgs args);
+
 } genericCallbacks;
 
 
@@ -350,6 +352,8 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FE820, classAbilityCallbacks.BardicMusicBeginRound);
 		writeHex(0x102E6608 + 3*sizeof(int), "03" ); // fixes the Competence effect tooltip (was pointing to Inspire Courage)
 		
+		// D20Mods countdown handler
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100EC9B0, genericCallbacks.D20ModCountdownHandler);
 	}
 } condFuncReplacement;
 
@@ -1085,6 +1089,21 @@ int GenericCallbacks::CastDefensivelySpellInterrupted(DispatcherCallbackArgs arg
 		histSys.CreateRollHistoryLineFromMesfile(25, args.objHndCaller, objHndl::null);
 		floatSys.FloatCombatLine(args.objHndCaller, 58);
 		dispIo->return_val = 1;
+	}
+	return 0;
+}
+
+int GenericCallbacks::D20ModCountdownHandler(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+	auto durArgIdx = args.GetData2();
+	auto durRem = args.GetCondArg(durArgIdx);
+	int durNew = durRem - dispIo->data1;
+	if (durNew >= 0){
+		args.SetCondArg(durArgIdx, durNew);
+	}
+	else if (args.GetData1() != 6 || args.dispType != dispTypeBeginRound){
+		auto d20modCountdownEndHandler = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100E98B0);
+		d20modCountdownEndHandler(args);
 	}
 	return 0;
 }
