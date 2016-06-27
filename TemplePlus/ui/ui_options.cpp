@@ -39,7 +39,7 @@ UiOptions::UiOptions(int width, int height) {
 
 	uiQtQuick = new UiQtQuick;
 
-	mWidgetId = uiQtQuick->LoadWindow(5, 5, width - 5, height - 5, "options.qml");
+	mWidgetId = uiQtQuick->LoadWindow(5, 5, width - 10, height - 10, "options.qml");
 }
 
 UiOptions::~UiOptions() {

@@ -461,6 +461,8 @@
     <ClCompile Include="ui\ui_legacy.cpp" />
     <ClCompile Include="ui\ui_legacy_wrapper.cpp" />
     <ClCompile Include="ui\ui_qtquick.cpp" />
+    <ClCompile Include="ui\ui_qtquick_nam.cpp" />
+    <ClCompile Include="ui\ui_qtquick_images.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -652,7 +654,6 @@
     <ClInclude Include="hotkeys.h">
       <Filter>ui</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h" />
     <ClInclude Include="tig\tig_startup.h">
       <Filter>tig</Filter>
     </ClInclude>
@@ -872,6 +873,9 @@
     <ClInclude Include="ui\ui_legacy.h" />
     <ClInclude Include="ui\ui_qtquick.h" />
     <ClInclude Include="ui\ui_qtquick_moc.h" />
+    <ClInclude Include="ui\ui_qtquick_nam.h" />
+    <ClInclude Include="ui\ui_qtquick_images.h" />
+    <ClInclude Include="ui\ui_qtquick_images_moc.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -903,16 +907,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="toee_gog_icon.ico">
-      <Filter>resources</Filter>
-    </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="resource.rc">
-      <Filter>resources</Filter>
-    </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
     <Xml Include="manifest.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="D:\Qt\5.7\Src\qtimageformats\src\plugins\imageformats\tga\tga.json" />
   </ItemGroup>
 </Project>

@@ -16,24 +16,13 @@ void InitLogging(const std::wstring &logFile);
 // Defined in temple_main.cpp for now
 int TempleMain(HINSTANCE hInstance, const string& commandLine);
 
-// This is required to get "new style" common dialogs like message boxes
-#pragma comment(linker,"\"/manifestdependency:type='win32' \
-name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
-processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
-
 static void SetIniPath();
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int showCmd) {
-
-	// The following code will cause temple.dll to be rebased
-	/*VirtualAlloc(reinterpret_cast<void*>(0x10000000),
-		1,
-		MEM_RESERVE,
-		PAGE_NOACCESS);*/
+int __declspec(dllexport) temple_main(HINSTANCE hInstance, LPSTR lpCmdLine, void *reservedDllMem) {
 
 	// We reserve space for temple.dll as early as possible to avoid rebasing of temple.dll
 	auto& dll = temple::Dll::GetInstance();
-	dll.ReserveMemoryRange();
+	dll.SetReservedMemory(reservedDllMem);
 
 	int qtArgc = 1;
 	char qtArg1[MAX_PATH];

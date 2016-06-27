@@ -11,16 +11,19 @@
 #include <QtGui/QOpenGLFunctions>
 #include <QtGui/QOpenGLFramebufferObject>
 #include <QtGui/QOffscreenSurface>
+#include <QtGui/QMouseEvent>
 #define EGL_EGLEXT_PROTOTYPES
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include "ui_qtquick.h"
+#include "ui_qtquick_nam.h"
 #include "ui.h"
 
 #include <graphics/device.h>
 #include <graphics/dynamictexture.h>
 #include <graphics/shaperenderer2d.h>
 #include <tig/tig_startup.h>
+#include <tig/tig_msg.h>
 
 /**
 * Additional state associated with a legacy window.
@@ -54,6 +57,7 @@ using LgcyWidgetStatePtr = std::unique_ptr<LgcyWidgetState>;
 struct UiQtQuick::Impl {
 	QOpenGLContext glContext;
 	QOffscreenSurface offscreenSurface;
+	CustomNAMFactory namFactory;
 	QQmlEngine qmlEngine;
 
 	eastl::hash_map<LgcyWidgetId, LgcyWidgetStatePtr> state;
@@ -67,6 +71,9 @@ UiQtQuick::UiQtQuick() : mImpl(std::make_unique<Impl>())
 	if (uiQtQuick == nullptr) {
 		uiQtQuick = this;
 	}
+		
+	mImpl->qmlEngine.setNetworkAccessManagerFactory(&mImpl->namFactory);
+	mImpl->qmlEngine.setBaseUrl(QUrl("tio:///"));
 
 	mImpl->qmlEngine.setOutputWarningsToStandardError(true);
 
@@ -146,19 +153,103 @@ void UiQtQuick::Impl::Render(LgcyWidgetId widgetId)
 	if (state.rt) {
 		auto widget = ui.WidgetGet(widgetId);
 		auto rtSize = state.rt->GetSize();
-		tig->GetShapeRenderer2d().DrawRectangle(
-			widget->x,
-			widget->y,
-			rtSize.width,
-			rtSize.height,
-			*state.rt
-		);
+
+		// We have to use custom vertices because the texture is flipped on the Y-axis
+		gfx::Vertex2d corners[4];
+		corners[0].diffuse = XMCOLOR(1, 1, 1, 1);
+		corners[0].normal = XMFLOAT4(0, 0, 1, 0);
+		corners[0].pos = XMFLOAT4(widget->x, widget->y, 0, 1);
+		corners[0].uv = { 0, 1 };
+		corners[1].diffuse = XMCOLOR(1, 1, 1, 1);		
+		corners[1].normal = XMFLOAT4(0, 0, 1, 0);
+		corners[1].pos = XMFLOAT4(widget->x + rtSize.width, widget->y, 0, 1);
+		corners[1].uv = { 1, 1 };
+		corners[2].diffuse = XMCOLOR(1, 1, 1, 1);
+		corners[2].normal = XMFLOAT4(0, 0, 1, 0);
+		corners[2].pos = XMFLOAT4(widget->x + rtSize.width, widget->y + rtSize.height, 0, 1);
+		corners[2].uv = { 1, 0 };
+		corners[3].diffuse = XMCOLOR(1, 1, 1, 1);
+		corners[3].normal = XMFLOAT4(0, 0, 1, 0);
+		corners[3].pos = XMFLOAT4(widget->x, widget->y + rtSize.height, 0, 1);
+		corners[3].uv = { 0, 0 };
+
+		tig->GetShapeRenderer2d().DrawRectangle(corners, state.rt.get());
 	}
 
 }
 
 BOOL UiQtQuick::Impl::HandleMessage(LgcyWidgetId id, TigMsg * msg)
 {
+
+	auto it = uiQtQuick->mImpl->state.find(id);
+	if (it == uiQtQuick->mImpl->state.end()) {
+		return FALSE; // Not for a widget managed by us
+	}
+
+	auto &state = *it->second;
+
+	auto widget = ui.WidgetGet(id);
+
+	if (msg->type == TigMsgType::MOUSE) {
+		TigMouseMsg* mouseMsg = (TigMouseMsg*)&msg->arg1;
+
+		// Make msg relative to the widget itself
+		int x = mouseMsg->x - widget->x;
+		int y = mouseMsg->y - widget->y;
+
+		if (mouseMsg->flags & MouseStateFlags::MSF_LMB_DOWN) {
+			QMouseEvent qtEvent(QEvent::MouseButtonPress, QPointF(x, y), Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+			QCoreApplication::sendEvent(&state.window, &qtEvent);
+		} else if (mouseMsg->flags & MouseStateFlags::MSF_LMB_RELEASED) {
+			QMouseEvent qtEvent(QEvent::MouseButtonRelease, QPointF(x, y), Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+			QCoreApplication::sendEvent(&state.window, &qtEvent);
+		} else if (mouseMsg->flags & MouseStateFlags::MSF_RMB_DOWN) {
+			QMouseEvent qtEvent(QEvent::MouseButtonPress, QPointF(x, y), Qt::RightButton, Qt::NoButton, Qt::NoModifier);
+			QCoreApplication::sendEvent(&state.window, &qtEvent);
+		} else if (mouseMsg->flags & MouseStateFlags::MSF_RMB_RELEASED) {
+			QMouseEvent qtEvent(QEvent::MouseButtonRelease, QPointF(x, y), Qt::RightButton, Qt::NoButton, Qt::NoModifier);
+			QCoreApplication::sendEvent(&state.window, &qtEvent);
+		} else if (mouseMsg->flags & MouseStateFlags::MSF_MMB_DOWN) {
+			QMouseEvent qtEvent(QEvent::MouseButtonPress, QPointF(x, y), Qt::MiddleButton, Qt::NoButton, Qt::NoModifier);
+			QCoreApplication::sendEvent(&state.window, &qtEvent);
+		} else if (mouseMsg->flags & MouseStateFlags::MSF_MMB_RELEASED) {
+			QMouseEvent qtEvent(QEvent::MouseButtonRelease, QPointF(x, y), Qt::MiddleButton, Qt::NoButton, Qt::NoModifier);
+			QCoreApplication::sendEvent(&state.window, &qtEvent);
+		} else if (mouseMsg->flags & MouseStateFlags::MSF_POS_CHANGE) {
+			QMouseEvent qtEvent(QEvent::MouseMove, QPointF(x, y), Qt::NoButton, Qt::NoButton, Qt::NoModifier);
+			QCoreApplication::sendEvent(&state.window, &qtEvent);
+		}
+
+		// if the root item is under the mouse cursor, the event is accepted
+		auto hoveredItem = state.window.contentItem()->childAt(x, y);
+
+		// if the root item is under the mouse cursor, the event is accepted
+		return (hoveredItem != nullptr) ? TRUE : FALSE;
+
+	} else if (msg->type == TigMsgType::WIDGET) {
+		TigMsgWidget *widgetMsg = (TigMsgWidget*)msg;
+		if (widgetMsg->widgetId != id) {
+			return FALSE;
+		}
+
+		// Make msg relative to the widget itself
+		int x = widgetMsg->x - widget->x;
+		int y = widgetMsg->y - widget->y;
+
+		if (widgetMsg->widgetEventType == TigMsgWidgetEvent::Entered) {
+			QMouseEvent qtEvent(QEvent::Enter, QPointF(x, y), Qt::NoButton, Qt::NoButton, Qt::NoModifier);
+			QCoreApplication::sendEvent(&state.window, &qtEvent);
+		} else if (widgetMsg->widgetEventType == TigMsgWidgetEvent::Exited) {
+			QMouseEvent qtEvent(QEvent::Leave, QPointF(x, y), Qt::NoButton, Qt::NoButton, Qt::NoModifier);
+			QCoreApplication::sendEvent(&state.window, &qtEvent);
+		}
+
+		auto hoveredItem = state.window.contentItem()->childAt(x, y);
+
+		// if the root item is under the mouse cursor, the event is accepted
+		return (hoveredItem != nullptr) ? TRUE : FALSE;
+	}
+
 	return FALSE;
 }
 
@@ -167,8 +258,12 @@ LgcyWidgetState::LgcyWidgetState(QOpenGLContext *glContext,
 	const std::string &path,
 	int width,
 	int height) 
-	: path(path), window(&renderControl), component(engine, QString::fromStdString(path), QQmlComponent::PreferSynchronous)
+	: path(path), window(&renderControl), component(engine, QUrl(QString::fromStdString(path)), QQmlComponent::PreferSynchronous)
 {
+
+	// Disable clearing with white
+	window.setColor(QColor(0, 0, 0, 0));
+
 	// Connect to the renderer signals
 	// Now hook up the signals. For simplicy we don't differentiate between
 	// renderRequested (only render is needed, no sync) and sceneChanged (polish and sync
@@ -180,6 +275,7 @@ LgcyWidgetState::LgcyWidgetState(QOpenGLContext *glContext,
 		
 	auto rootObject = component.create();
 	if (!rootObject) {
+		logger->error("Creation of QML object has failed: {}", component.errorString().toStdString());
 		throw TempleException("Creation of QML object has failed: {}", component.errorString().toStdString());
 	}
 
@@ -192,10 +288,10 @@ LgcyWidgetState::LgcyWidgetState(QOpenGLContext *glContext,
 	// Put the root item into the window
 	rootItem->setParentItem(window.contentItem());
 
-	// Size the item / window to the requested size
-	rootItem->setWidth(width);
-	rootItem->setHeight(height);
+	// Size the window to the requested size
 	window.setGeometry(0, 0, width, height);
+	window.contentItem()->setWidth(width);
+	window.contentItem()->setHeight(height);
 	
 	renderControl.initialize(glContext);
 }

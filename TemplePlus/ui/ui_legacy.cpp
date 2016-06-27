@@ -304,8 +304,8 @@ LgcyWindow::LgcyWindow(int x, int y, int w, int h) : LgcyWindow()
 	this->y = y;
 	this->xrelated = x;
 	this->yrelated = y;
-	this->width = width;
-	this->height = height;
+	this->width = w;
+	this->height = h;
 }
 
 LgcyButton::LgcyButton() {
