@@ -31,6 +31,7 @@ public:
 	bool IsValidScriptId(ScriptId scriptId);
 
 	int RunScript(ScriptId scriptId, EventId eventId, PyObject *args);
+	std::string RunScriptStringResult(ScriptId scriptId, EventId eventId, PyObject *args);
 
 	/*
 		Gets a loaded instance of a script module or null if loading failed.

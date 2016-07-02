@@ -1065,7 +1065,7 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 			 auto rangerArcheryFeat = feats.rangerArcheryFeats;
 			 while (*rangerArcheryFeat != -1)
 			 {
-				 if (rangerArcheryFeat[0] == featEnum && rangerLvl >= rangerArcheryFeat[1]){ return 1; }
+				 if (rangerArcheryFeat[0] == featEnum && rangerLvl >= (int)rangerArcheryFeat[1]){ return 1; }
 				 rangerArcheryFeat += 2;
 			 }
 		 }
@@ -1074,7 +1074,7 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 			 auto rangerTWFeat = feats.rangerTwoWeaponFeats;
 			 while (rangerTWFeat[0] != -1)
 			 {
-				 if (rangerTWFeat[0] == featEnum && rangerLvl >= rangerTWFeat[1]){ return 1; }
+				 if (rangerTWFeat[0] == featEnum && rangerLvl >= (int)rangerTWFeat[1]){ return 1; }
 				 rangerTWFeat += 2;
 			 }
 		 }

@@ -64,7 +64,7 @@ uint32_t D20LevelSystem::GetLevelPacket(Stat classEnum, objHndl objHnd, uint32_t
 bool D20LevelSystem::CanLevelup(objHndl objHnd)
 {
 	auto lvl = objects.StatLevelGet(objHnd, stat_level);
-	if (d20Sys.d20Query(objHnd, DK_QUE_ExperienceExempt) || lvl >= config.maxLevel)
+	if (d20Sys.d20Query(objHnd, DK_QUE_ExperienceExempt) || lvl >= (int)config.maxLevel)
 	{
 		return 0;
 	}

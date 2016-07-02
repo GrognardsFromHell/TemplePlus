@@ -156,7 +156,7 @@ int D20StatsSystem::GetBaseAttackBonus(const objHndl & handle, Stat classLeveled
 }
 
 void D20StatsSystem::Init(const GameSystemConf& conf){
-	isEditor = conf.editor;
+	isEditor = conf.editor != 0;
 	mesFuncs.Open("mes\\stat.mes", &statMes);
 	mesFuncs.Open("mes\\stat_ext.mes", &statMesExt);
 

@@ -253,7 +253,7 @@ struct Objects : temple::AddressTable {
 	std::string GetDisplayName(objHndl obj, objHndl observer);
 	bool IsStatic(objHndl handle);
 
-	uint32_t StatLevelGet(objHndl obj, Stat stat);
+	int StatLevelGet(objHndl obj, Stat stat);
 	int StatLevelGetBase(objHndl obj, Stat stat);
 	int StatLevelSetBase(objHndl obj, Stat stat, int value);
 #pragma endregion

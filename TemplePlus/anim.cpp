@@ -1644,12 +1644,12 @@ int GoalStateFuncs::GoalStateFunc78_IsHeadingOk(AnimSlot & slot){
 	}
 
 	auto &rot = slot.pCurrentGoal->scratchVal2.floatNum;
-	rot = M_PI_2 + M_PI * 0.75 - atan2(nodeAbsY - objAbsY, nodeAbsX - objAbsX);
+	rot = (float)(M_PI_2 + M_PI * 0.75 - atan2(nodeAbsY - objAbsY, nodeAbsX - objAbsX) );
 	if (rot < 0.0) {
-		rot += 6.2831855;//M_PI * 2;
+		rot += (float)6.2831855;//M_PI * 2;
 	}
 	if (rot > 6.2831855) {
-		rot -= 6.2831855;//M_PI * 2;
+		rot -= (float) 6.2831855;//M_PI * 2;
 	}
 
 

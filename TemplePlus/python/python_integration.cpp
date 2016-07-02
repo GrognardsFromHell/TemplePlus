@@ -98,6 +98,40 @@ int PythonIntegration::RunScript(ScriptId scriptId, EventId evt, PyObject* args)
 	return result;
 }
 
+std::string PythonIntegration::RunScriptStringResult(ScriptId scriptId, EventId evt, PyObject * args){
+
+	ScriptRecord script;
+	if (!LoadScript(scriptId, script)) {
+		return fmt::format("");
+	}
+
+	auto dict = PyModule_GetDict(script.module);
+	auto eventName = GetFunctionName(evt);
+	auto callback = PyDict_GetItemString(dict, eventName);
+
+	if (!callback || !PyCallable_Check(callback)) {
+		logger->error("Script {} attached as {} is missing the corresponding function.",
+			script.filename, eventName);
+		return fmt::format("");
+	}
+
+	auto resultObj = PyObject_CallObject(callback, args);
+
+	if (!resultObj) {
+		logger->error("An error occurred while calling event {} for script {}.", eventName, script.filename);
+		PyErr_Print();
+		return fmt::format("");
+	}
+
+	auto result = fmt::format("");
+	if (PyString_Check(resultObj)) {
+		result.append(PyString_AsString(resultObj));
+	}
+	Py_DECREF(resultObj);
+
+	return result;
+}
+
 bool PythonIntegration::LoadScript(int scriptId, ScriptRecord &scriptOut) {
 	auto it = mScripts.find(scriptId);
 	if (it == mScripts.end()) {

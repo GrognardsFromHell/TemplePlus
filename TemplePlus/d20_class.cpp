@@ -197,6 +197,13 @@ void D20ClassSystem::GetClassSpecs(){
 		auto &classSpec = classSpecs[it];
 
 		classSpec.classEnum = static_cast<Stat>(it);
+		classSpec.conditionName = fmt::format("{}", pythonClassIntegration.GetConditionName(it));
+		if (classSpec.conditionName.size() == 0){
+			classSpec.conditionName = d20StatusSys.classCondMap[classSpec.classEnum];
+		}
+		else if (d20StatusSys.classCondMap.find(classSpec.classEnum) == d20StatusSys.classCondMap.end() ){
+			d20StatusSys.classCondMap[classSpec.classEnum] = classSpec.conditionName;
+		}
 		classSpec.babProgression = static_cast<BABProgressionType>(pythonClassIntegration.GetBabProgression(it));
 		classSpec.hitDice = pythonClassIntegration.GetHitDieType(it);
 		classSpec.fortitudeSaveIsFavored = pythonClassIntegration.IsSaveFavored(it, SavingThrowType::Fortitude);

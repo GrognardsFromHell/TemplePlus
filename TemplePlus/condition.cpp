@@ -4034,7 +4034,7 @@ int ClassAbilityCallbacks::DruidWildShapeRadialMenu(DispatcherCallbackArgs args)
 	auto druidLvl = objects.StatLevelGet(args.objHndCaller, stat_level_druid);
 
 	for (auto it : d20ClassSys.wildShapeProtos) {
-		if (druidLvl >= it.second.minLvl && it.second.monCat == mc_type_animal)
+		if (druidLvl >= (int) it.second.minLvl && it.second.monCat == mc_type_animal)
 			addOption(it.first);
 	}
 
@@ -4060,7 +4060,7 @@ int ClassAbilityCallbacks::DruidWildShapeRadialMenu(DispatcherCallbackArgs args)
 		};
 
 		for (auto it : d20ClassSys.wildShapeProtos) {
-			if (druidLvl >= it.second.minLvl && it.second.monCat == mc_type_elemental)
+			if (druidLvl >= (int)it.second.minLvl && it.second.monCat == mc_type_elemental)
 				addElem(it.first);
 		}
 	}
@@ -4081,7 +4081,7 @@ int ClassAbilityCallbacks::DruidWildShapeCheck(DispatcherCallbackArgs args){
 
 		auto idx = d20a->data1 - (1 << 24);
 		auto &spec = d20ClassSys.wildShapeProtos[(WildShapeProtoIdx)idx];
-		if (druidLvl < spec.minLvl)
+		if (druidLvl < (int)spec.minLvl)
 			dispIo->returnVal = AEC_INVALID_ACTION;
 
 		auto numTimes = args.GetCondArg(0);

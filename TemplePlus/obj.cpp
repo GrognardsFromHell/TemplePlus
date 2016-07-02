@@ -694,7 +694,7 @@ bool Objects::IsStatic(objHndl handle) {
 
 }
 
-uint32_t Objects::StatLevelGet(objHndl obj, Stat stat)
+int Objects::StatLevelGet(objHndl obj, Stat stat)
 {
 	return _StatLevelGet(obj, stat);
 		}

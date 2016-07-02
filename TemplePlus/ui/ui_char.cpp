@@ -247,8 +247,12 @@ void CharUiSystem::ClassLevelBtnRender(int widId){
 		style.flags |= 0x4000; // truncate
 		textMeas = UiRenderer::MeasureTextSize(text, style, maxWidth);
 	}
+	auto x = btn->x + abs((int)btn->width - textMeas.width) / 2;
+	if (textMeas.width > 290){
+		x -= 20;
+	}
 
-	TigRect rect(btn->x + abs((int)btn->width - textMeas.width)/2, btn->y, textMeas.width, textMeas.height);
+	TigRect rect(x, btn->y, textMeas.width, textMeas.height);
 	UiRenderer::RenderText(text, rect, style);
 	UiRenderer::PopFont();
 }

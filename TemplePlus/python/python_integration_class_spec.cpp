@@ -17,6 +17,14 @@ void PythonClassSpecIntegration::GetClassEnums(std::vector<int>& classEnums){
 	}
 }
 
+std::string PythonClassSpecIntegration::GetConditionName(int classEnum){
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return fmt::format(""); 
+
+	return RunScriptStringResult(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetConditionName, nullptr);
+}
+
 int PythonClassSpecIntegration::GetBabProgression(int classEnum){
 	auto classSpecEntry = mScripts.find(classEnum);
 	if (classSpecEntry == mScripts.end())
@@ -125,6 +133,7 @@ static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 	{ ClassSpecFunc::IsClassSkill,"IsClassSkill" },
 	{ ClassSpecFunc::IsClassFeat,"IsClassFeat" },
 	{ ClassSpecFunc::IsEnabled,"IsEnabled" },
+	{ ClassSpecFunc::GetConditionName,"GetConditionName" },
 
 	{ ClassSpecFunc::IsAlignmentCompatible,"IsAlignmentCompatible" },
 

@@ -8,6 +8,8 @@
 #include "gamesystems/objects/objsystem.h"
 
 
+
+
 D20StatusSystem d20StatusSys;
 
 void D20StatusSystem::initRace(objHndl objHnd)
@@ -36,15 +38,14 @@ void D20StatusSystem::initRace(objHndl objHnd)
 	}
 }
 
-void D20StatusSystem::initClass(objHndl objHnd)
-{
+void D20StatusSystem::initClass(objHndl objHnd){
 	if (objects.IsCritter(objHnd))
 	{
 		Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 
 		CondStruct ** condStructClass = conds.ConditionArrayClasses;
 
-		uint32_t stat = stat_level_barbarian;
+		/*uint32_t stat = stat_level_barbarian;
 		for (uint32_t i = 0; i < VANILLA_NUM_CLASSES; i++)
 		{
 			if (objects.StatLevelGet(objHnd, (Stat)stat) > 0
@@ -55,7 +56,18 @@ void D20StatusSystem::initClass(objHndl objHnd)
 
 			condStructClass += 1;
 			stat += 1;
+		}*/
+		for (auto classCode: d20ClassSys.classEnums){
+			if (objects.StatLevelGet(objHnd, (Stat)classCode) <= 0)
+				continue;
+			auto condStructClass = conds.GetByName(d20StatusSys.classCondMap[(Stat)classCode]);
+			if (!condStructClass)
+				continue;
+			_ConditionAddToAttribs_NumArgs0(dispatcher, condStructClass);
 		}
+		
+			
+		
 
 		if (objects.StatLevelGet(objHnd, stat_level_cleric) >= 1)
 		{

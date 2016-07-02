@@ -823,7 +823,7 @@ static PyObject* PyObjHandle_ArcaneSpellLevelCanCast(PyObject* obj, PyObject* ar
 
 	auto sorcLvl = objects.StatLevelGet(self->handle, stat_level_sorcerer);
 	if (sorcLvl > 0){
-		auto sorcSpellLvlMax = max(1u, sorcLvl / 2);
+		auto sorcSpellLvlMax = max(1, sorcLvl / 2);
 		if (sorcSpellLvlMax > arcaneSpellLvlMax)
 			arcaneSpellLvlMax = sorcSpellLvlMax;
 	}

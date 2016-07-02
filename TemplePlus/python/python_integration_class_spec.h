@@ -14,6 +14,7 @@ enum class ClassSpecFunc : int {
 	IsEnabled,
 	IsClassSkill,
 	IsClassFeat,
+	GetConditionName, // gets the CondStruct's name (? id)
 
 
 	IsAlignmentCompatible,
@@ -27,6 +28,7 @@ public:
 	PythonClassSpecIntegration();
 
 	void GetClassEnums(std::vector<int>& classEnums);
+	std::string GetConditionName(int classEnum);
 	int GetBabProgression(int classEnum);
 	int GetHitDieType(int classEnum);
 	int GetInt(int classEnum, ClassSpecFunc specType, int defaultVal = 0);
@@ -37,6 +39,7 @@ public:
 	int IsClassFeat(int classCode, int featEnum);
 
 	bool ReqsMet(const objHndl &handle, int classEnum);
+
 protected:
 	const char* GetFunctionName(EventId evt) override;
 };

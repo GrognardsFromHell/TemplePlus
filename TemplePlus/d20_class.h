@@ -61,7 +61,7 @@ struct D20ClassSpec {
 	SpellListType spellListType;
 	std::map<SkillEnum, bool> classSkills; // dictionary denoting if a skill is a class skill
 	std::map<int, std::vector<feat_enums>> classFeats; // dictionary 
-
+	std::string conditionName; // name of the accompanying condition (e.g. "Bard", "Sorcerer", "Mystic Theurge")
 };
 
 struct D20ClassSystem : temple::AddressTable

@@ -9,6 +9,8 @@
 #include <combat.h>
 #include <action_sequence.h>
 #include <util/fixes.h>
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/objects/objsystem.h"
 
 static struct BrawlAddresses : temple::AddressTable {
 
@@ -36,7 +38,7 @@ static struct BrawlAddresses : temple::AddressTable {
 
 static void EnsureConscious(objHndl critter) {
 	auto hpCur = objects.StatLevelGet(critter, stat_hp_current);
-	auto subdualDamage = objects.getInt32(critter, obj_f_critter_subdual_damage);
+	auto subdualDamage = gameSystems->GetObj().GetObject(critter)->GetInt32(obj_f_critter_subdual_damage);//objects.getInt32(critter, obj_f_critter_subdual_damage);
 	if (subdualDamage > hpCur)
 		subdualDamage = hpCur - 1;
 	critterSys.SetSubdualDamage(critter, subdualDamage);

@@ -840,7 +840,7 @@ Stat UiCharEditor::GetClassCodeFromWidgetAndPage(int idx, int page){
 	if (page == 0)
 		return (Stat)(stat_level_barbarian + idx);
 
-	auto idx2 = idx + page * 11;
+	auto idx2 = idx + page * 11u;
 	if (idx2 >= classBtnMapping.size())
 		return (Stat)-1;
 	return (Stat)classBtnMapping[idx2];

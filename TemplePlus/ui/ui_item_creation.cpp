@@ -2160,7 +2160,7 @@ bool ItemCreation::MaaCrafterMeetsReqs(int effIdx, objHndl crafter)
 		return false;
 
 	auto& itEnh = itemEnhSpecs[effIdx];
-	if (objects.StatLevelGet(crafter, stat_level) < itEnh.reqs.minLevel)
+	if (objects.StatLevelGet(crafter, stat_level) < (int)itEnh.reqs.minLevel)
 		return false;
 
 	if (itEnh.reqs.alignment){

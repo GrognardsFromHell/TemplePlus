@@ -472,6 +472,17 @@ PyObject* PyGame_Vlist(PyObject*, PyObject* args) {
 	return ObjListToTuple(objList);
 }
 
+
+PyObject* PyGame_GetBabForClass(PyObject*, PyObject* args){
+	Stat classCode;
+	int classLvl;
+	if (!PyArg_ParseTuple(args, "ii:game.get_bab_for_class", &classCode, &classLvl)) {
+		return nullptr;
+	}
+
+	return PyInt_FromLong(d20ClassSys.GetBaseAttackBonus(classCode, classLvl));
+}
+
 PyObject* PyGame_GetProto(PyObject*, PyObject* args) {
 	int32_t protoId;
 	if (!PyArg_ParseTuple(args, "i:game.getproto", &protoId)) {
@@ -1143,6 +1154,7 @@ static PyMethodDef PyGameMethods[]{
 	{"is_daytime", PyGame_IsDaytime, METH_VARARGS, NULL},
 	{"vlist", PyGame_Vlist, METH_VARARGS, NULL },
 	{"getproto", PyGame_GetProto, METH_VARARGS, NULL },
+	{"get_bab_for_class", PyGame_GetBabForClass,METH_VARARGS, NULL },
 	// This is some unfinished UI for which the graphics are missing
 	// {"charmap", PyGame_Charmap, METH_VARARGS, NULL},
 	{NULL, NULL, NULL, NULL}
