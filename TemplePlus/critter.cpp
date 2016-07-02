@@ -1119,11 +1119,11 @@ int LegacyCritterSystem::GetBaseAttackBonus(const objHndl& handle, Stat classBei
 
 	
 	auto bab = 0;
-	for (auto it: d20ClassSys.vanillaClassEnums){
-		auto classLvl = objects.StatLevelGet(handle, it);
+	for (auto it: d20ClassSys.classEnums){
+		auto classLvl = objects.StatLevelGet(handle, (Stat)it);
 		if (classBeingLeveled == it)
 			classLvl++;
-		bab += d20ClassSys.GetBaseAttackBonus(it, classLvl);
+		bab += d20ClassSys.GetBaseAttackBonus((Stat)it, classLvl);
 	}
 
 	// get BAB from NPC HD

@@ -77,6 +77,9 @@ struct UiCharAddresses : temple::AddressTable
 class CharUiSystem : TempleFix
 {
 public: 
+	#pragma region Main Wnd
+	static void ClassLevelBtnRender(int widId);
+	#pragma endregion 
 
 	#pragma region Spellbook functions
 	static BOOL MemorizeSpellMsg(int widId, TigMsg* tigMsg){
@@ -113,6 +116,9 @@ public:
 	
 	void apply() override 
 	{
+
+		replaceFunction(0x10144B40, ClassLevelBtnRender);
+
 		if (temple::Dll::GetInstance().HasCo8Hooks()) {
 			writeHex(0x1011DD4D, "90 90 90 90 90"); // disabling stat text draw calls
 		}
@@ -158,6 +164,94 @@ public:
 
 	}
 } charUiSys;
+
+void CharUiSystem::ClassLevelBtnRender(int widId){
+	auto btn = ui.GetButton(widId);
+	const int maxWidth = 340;
+	UiRenderer::PushFont(temple::GetRef<char*>(0x10BE93A4), temple::GetRef<int>(0x10BE93A0) );
+
+	TigTextStyle style;
+	auto txtR = temple::GetRef<int>(0x10BE9360);
+	auto txtG = temple::GetRef<int>(0x10BE9364);
+	auto txtB = temple::GetRef<int>(0x10BE9368);
+	auto txtA = temple::GetRef<int>(0x10BE936C);
+
+	ColorRect textColor( XMCOLOR(txtR, txtG, txtB, txtA)  );
+	ColorRect shadowColor(XMCOLOR(0, 0, 0, 255));
+	style.textColor = &textColor;
+	style.shadowColor = &shadowColor;
+	style.flags = 8;
+	style.kerning = 0;
+	style.tracking = 2;
+
+	auto dude = charUiSys.GetCurrentCritter();
+	if (!dude)
+		return;
+	
+	auto obj = gameSystems->GetObj().GetObject(dude);
+	auto objType = obj->type;
+
+	std::string text;
+	static auto charUiTextMes = temple::GetRef<MesHandle>(0x10BE963C);
+	if (objType == obj_t_pc || config.showNpcStats){
+		// cycle through classes
+		bool isFirst = true;
+		for (auto classCode:d20ClassSys.classEnums){
+			auto classLvl = objects.StatLevelGet(dude, (Stat)classCode);
+			if (!classLvl)
+				continue;
+			
+			if (!isFirst){ // add a "/" separator
+				MesLine line; 
+				mesFuncs.ReadLineDirect(charUiTextMes, 10, &line);
+				text.append(fmt::format(" {} ", line.value));
+			}
+			else
+				isFirst = false;
+
+			MesLine line;
+			mesFuncs.ReadLineDirect(charUiTextMes, 9, &line);
+			text.append(fmt::format("{} {} {}", d20Stats.GetStatName((Stat)classCode), line.value, classLvl));
+			
+		}
+	}
+	else {
+		MesLine line;
+		mesFuncs.ReadLineDirect(charUiTextMes, 11, &line); // NPC
+		text.append("({})", line.value);
+	}
+
+	auto textMeas = UiRenderer::MeasureTextSize(text, style);
+	if (textMeas.width > maxWidth){ // get class shortnames
+		text.clear();
+		bool isFirst = true;
+		for (auto classCode : d20ClassSys.classEnums) {
+			auto classLvl = objects.StatLevelGet(dude, (Stat)classCode);
+			if (!classLvl)
+				continue;
+
+			if (!isFirst) { // add a "/" separator
+				MesLine line;
+				mesFuncs.ReadLineDirect(charUiTextMes, 10, &line);
+				text.append(fmt::format(" {} ", line.value));
+			}
+			else
+				isFirst = false;
+
+			text.append(fmt::format("{} {}", d20Stats.GetStatShortName((Stat)classCode), classLvl));
+
+		}
+	}
+	textMeas = UiRenderer::MeasureTextSize(text, style);
+	if (textMeas.width > maxWidth){ // if still too long, truncate
+		style.flags |= 0x4000; // truncate
+		textMeas = UiRenderer::MeasureTextSize(text, style, maxWidth);
+	}
+
+	TigRect rect(btn->x + abs((int)btn->width - textMeas.width)/2, btn->y, textMeas.width, textMeas.height);
+	UiRenderer::RenderText(text, rect, style);
+	UiRenderer::PopFont();
+}
 
 void CharUiSystem::SpellsShow(objHndl obj)
 {

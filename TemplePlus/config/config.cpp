@@ -159,7 +159,8 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(d3dDebug),
 	CONF_INT(displayAdapter),
 	CONF_INT(msaaSamples),
-	CONF_INT(msaaQuality)
+	CONF_INT(msaaQuality),
+	CONF_BOOL(showNpcStats)
 };
 
 void TemplePlusConfig::Load() {

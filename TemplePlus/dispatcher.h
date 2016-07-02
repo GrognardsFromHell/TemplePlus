@@ -58,6 +58,8 @@ struct DispatcherSystem : temple::AddressTable
 	void  DispatcherClearItemConds(Dispatcher * dispatcher);
 	void  DispatcherClearConds(Dispatcher *dispatcher);
 	
+	int DispatchForCritter(objHndl handle, DispIoBonusList*, enum_disp_type dispType, D20DispatcherKey dispKey);
+	int Dispatch10AbilityScoreLevelGet(objHndl handle, Stat stat, DispIoBonusList * dispIo);
 	int32_t dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList * bonOut, objHndl objHnd2, int32_t flag);
 	float Dispatch29hGetMoveSpeed(objHndl objHnd, DispIoMoveSpeed * dispIo = nullptr);
 	float Dispatch40GetBaseMoveSpeed(objHndl objHnd, DispIoMoveSpeed * dispIo = nullptr);

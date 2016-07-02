@@ -5,6 +5,7 @@
 #include <feat.h>
 #include <util/fixes.h>
 #include <d20.h>
+#include <critter.h>
 
 #define VANILLA_STAT_COUNT 288
 
@@ -31,6 +32,21 @@ class D20StatsHooks : public TempleFix{
 			return d20Stats.GetLevelStat(handle, stat);
 		});
 
+		static int(__cdecl*orgGetLevel)(objHndl, Stat)  = replaceFunction<int(objHndl, Stat)>(0x10074800, [](objHndl handle, Stat stat)->int {
+			if (d20Stats.GetType(stat) == StatType::Level)
+				return d20Stats.GetValue(handle, stat);
+			else
+				return orgGetLevel(handle, stat);
+		});
+
+		replaceFunction<const char*(Stat)>(0x10074980, [](Stat stat)->const char*{
+			return d20Stats.GetStatShortName(stat);
+		});
+
+		replaceFunction<int(objHndl, Stat)>(0x100749B0, [](objHndl handle, Stat classLeveled)->int {
+			return d20Stats.GetBaseAttackBonus(handle, classLeveled);
+		});
+
 	}
 } d20StatsHooks;
 
@@ -40,6 +56,14 @@ const char* D20StatsSystem::GetStatName(Stat stat) const{
 		return feats.GetFeatName(static_cast<feat_enums>(static_cast<int>(stat) - 1000));
 	} 
 	return statMesStrings[stat];
+}
+
+const char * D20StatsSystem::GetStatShortName(Stat stat) const
+{
+	if (GetType(stat) == StatType::Feat) {
+		return feats.GetFeatName(static_cast<feat_enums>(static_cast<int>(stat) - 1000));
+	}
+	return statShortNameStrings[stat];
 }
 
 const char* D20StatsSystem::GetStatEnumString(Stat stat) const{
@@ -72,6 +96,36 @@ const char* D20StatsSystem::GetCannotPickClassHelp(Stat stat) const{
 	return line.value;
 }
 
+int D20StatsSystem::GetValue(const objHndl & handle, Stat stat) const
+{
+	switch (GetType(stat)){
+	case StatType::Abilities:
+		return dispatch.Dispatch10AbilityScoreLevelGet(handle, stat, nullptr);
+	case StatType::Level:
+		return GetLevelStat(handle, stat);
+	case StatType::Money:
+		return objects.StatLevelGetBase(handle, stat);
+	case StatType::HitPoints:
+		// todo!
+	case StatType::Combat:
+		// todo!
+	case StatType::AbilityMods:
+		// todo
+	case StatType::Speed:
+		//todo
+	case StatType::Race:
+		//todo
+	case StatType::Load:
+		// todo
+	case StatType::SavingThrows:
+		// todo
+	default:
+		return objects.StatLevelGetBase(handle, stat);
+			//temple::GetRef<int(__cdecl)(objHndl, Stat)>(0x10074800)(handle, stat);
+	}
+	return 0;
+}
+
 int D20StatsSystem::GetLevelStat(const objHndl &handle, Stat stat) const
 {
 	auto obj = gameSystems->GetObj().GetObject(handle);
@@ -94,6 +148,11 @@ int D20StatsSystem::GetLevelStat(const objHndl &handle, Stat stat) const
 		}
 	}
 	return result;
+}
+
+int D20StatsSystem::GetBaseAttackBonus(const objHndl & handle, Stat classLeveled) const
+{
+	return critterSys.GetBaseAttackBonus(handle, classLeveled);
 }
 
 void D20StatsSystem::Init(const GameSystemConf& conf){
@@ -128,6 +187,13 @@ void D20StatsSystem::Init(const GameSystemConf& conf){
 			statRulesStrings[i] = line.value;
 			if (i<VANILLA_STAT_COUNT)
 				temple::GetRef<const char*[288]>(0x118CE080)[i] = line.value;
+		}
+		MesLine shortNameLine(i + 1000);
+		if (mesFuncs.GetLine(statMes, &shortNameLine)){
+			statShortNameStrings[i] = shortNameLine.value;
+		}
+		if (mesFuncs.GetLine(statMesExt, &shortNameLine)) {
+			statShortNameStrings[i] = shortNameLine.value;
 		}
 	}
 

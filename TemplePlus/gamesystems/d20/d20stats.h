@@ -26,15 +26,19 @@ enum class StatType {
 
 class D20StatsSystem {
 	friend class StatSystem;
+	friend class D20StatsHooks;
 public:
 	
 	const char* GetStatName(Stat stat) const;
+	const char* GetStatShortName(Stat stat) const;
 	const char* GetStatEnumString(Stat stat) const; // not really needed - just used for the python layer (replaced in constants.py)
 	const char* GetStatRulesString(Stat stat) const;
 	const char* GetClassShortDesc(Stat stat) const;
 	const char* GetCannotPickClassHelp(Stat stat) const;
 
+	int GetValue(const objHndl &handle, Stat stat) const;
 	int GetLevelStat(const objHndl &handle, Stat stat) const;
+	int GetBaseAttackBonus(const objHndl &handle, Stat classLeveled) const;
 
 private:
 

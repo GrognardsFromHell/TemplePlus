@@ -69,6 +69,7 @@ struct TemplePlusConfig
 	// double randomEncounterExperienceFactor = 0.7; // an additional factor; e.g. if the normal Experience Multiplier is 0.7 and this is 0.7, overall is 0.49 NOT YET IMPLEMENTED
 	bool newFeatureTestMode = true;
 	bool NPCsLevelLikePCs = true;
+	bool showNpcStats = false;
 	bool showExactHPforNPCs = false; // draw exact HP for NPCs
 	int pointBuyPoints = 25; // number of Point Buy points at chargen
 	uint32_t maxPCs = 5; // max number of PCs in the party

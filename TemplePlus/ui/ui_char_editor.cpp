@@ -18,6 +18,37 @@
 #include <tig/tig_msg.h>
 #include <python/python_integration_class_spec.h>
 
+#undef HAVE_ROUND
+#define PYBIND11_EXPORT
+#include <pybind11/pybind11.h>
+#include <pybind11/common.h>
+#include <pybind11/cast.h>
+#include <radialmenu.h>
+#include <action_sequence.h>
+
+namespace py = pybind11;
+using namespace pybind11;
+using namespace pybind11::detail;
+
+PYBIND11_PLUGIN(tp_char_editor){
+	py::module m("char_editor", "Temple+ Char Editor, used for extending the ToEE character editor.");
+
+	py::class_<CharEditorSelectionPacket>(m, "CharEdSpecs", "Holds the character editing specs.")
+		.def_readwrite("class", &CharEditorSelectionPacket::classCode, "Chosen class")
+		.def_readwrite("skill_pts", &CharEditorSelectionPacket::availableSkillPoints, "Available Skill points")
+		.def_readwrite("stat_raised", &CharEditorSelectionPacket::statBeingRaised, "Stat being raised")
+		.def_readwrite("feat_0", &CharEditorSelectionPacket::feat0, "First feat slot; 649 for none")
+		.def_readwrite("feat_1", &CharEditorSelectionPacket::feat1, "Second feat slot; 649 for none")
+		.def_readwrite("feat_2", &CharEditorSelectionPacket::feat2, "Third feat slot; 649 for none")
+		.def_readwrite("feat_3", &CharEditorSelectionPacket::feat3, "Fourth feat slot; 649 for none")
+		.def_readwrite("feat_4", &CharEditorSelectionPacket::feat4, "Fifth feat slot; 649 for none")
+		.def_readwrite("spells", (int CharEditorSelectionPacket::*) &CharEditorSelectionPacket::spellEnums, "Spell enums available for learning")
+		.def_readwrite("spells_count", &CharEditorSelectionPacket::spellEnumsAddedCount, "Number of Spell enums available for learning")
+		;
+	return m.ptr();
+}
+
+
 class UiCharEditor{
 friend class UiCharEditorHooks;
 	objHndl GetEditedChar();
@@ -350,7 +381,7 @@ BOOL UiCharEditor::ClassSystemInit(GameSystemConf &conf){
 		classBtnMapping.push_back(it);
 	}
 	mPageCount = classBtnMapping.size() / 11;
-	if (mPageCount * 11 < classBtnMapping.size())
+	if (mPageCount * 11u < classBtnMapping.size())
 		mPageCount++;
 
 	return ClassWidgetsInit();

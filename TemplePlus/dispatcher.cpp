@@ -107,6 +107,31 @@ void  DispatcherSystem::DispatcherClearConds(Dispatcher *dispatcher)
 	_DispatcherClearConds(dispatcher);
 }
 
+int DispatcherSystem::DispatchForCritter(objHndl handle, DispIoBonusList * eventObj, enum_disp_type dispType, D20DispatcherKey dispKey)
+{
+	if (!handle)
+		return 0;
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	if (!obj->IsCritter())
+		return 0;
+	auto dispatcher = obj->GetDispatcher();
+	if (!dispatcher->IsValid())
+		return 0;
+	
+	DispIoBonusList * eventObjUsed = eventObj;
+	DispIoBonusList eventObjLocal;
+	if (!eventObj){
+		eventObjUsed = &eventObjLocal;
+	}
+	
+	DispatcherProcessor(dispatcher, dispType, dispKey, eventObjUsed);
+	return eventObjUsed->bonlist.GetEffectiveBonusSum();
+}
+
+int DispatcherSystem::Dispatch10AbilityScoreLevelGet(objHndl handle, Stat stat, DispIoBonusList * dispIo){
+	return dispatch.DispatchForCritter(handle, dispIo, dispTypeAbilityScoreLevel, (D20DispatcherKey)(stat+1));
+}
+
 int32_t DispatcherSystem::dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut, objHndl objHnd2, int32_t flag)
 {
 	DispIoObjBonus dispIO;
