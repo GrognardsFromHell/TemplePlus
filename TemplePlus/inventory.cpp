@@ -595,6 +595,7 @@ void InventorySystem::ItemSpellChargeConsume(const objHndl& item, int chargesUse
 	auto itemQty = inventory.GetQuantity(item);
 	if (itemQty  > 1){
 		inventory.QuantitySet(item, itemQty - 1);
+		return;
 	}
 	else if (itemQty == 1) {
 		objects.Destroy(item);

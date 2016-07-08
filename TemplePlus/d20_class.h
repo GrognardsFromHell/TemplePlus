@@ -85,6 +85,7 @@ public:
 	void ClassPacketDealloc(ClassPacket *classPkt);
 	uint32_t GetClassPacket(Stat classEnum, ClassPacket *classPkt); // fills the struct with content based on classEnum (e.g. Barbarian Feats in the featsIdxTable). Also STUB FOR PRESTIGE CLASSES! TODO
 	int GetBaseAttackBonus(Stat classCode, uint32_t classLvl); // gets the class's BAB
+	bool IsSaveFavoredForClass(Stat classCode, int saveType);
 	int GetSkillPts(Stat classEnum);
 	
 

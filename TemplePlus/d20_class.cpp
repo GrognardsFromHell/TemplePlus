@@ -170,6 +170,25 @@ int D20ClassSystem::GetBaseAttackBonus(Stat classCode, uint32_t classLvl){
 	return 0;
 }
 
+bool D20ClassSystem::IsSaveFavoredForClass(Stat classCode, int saveType){
+	auto classSpec = classSpecs.find(classCode);
+	if (classSpec == classSpecs.end())
+		return 0;
+	switch (saveType)
+	{
+	case D20_Save_Fortitude:
+		return classSpec->second.fortitudeSaveIsFavored;
+	case D20_Save_Reflex:
+		return classSpec->second.reflexSaveIsFavored;
+	case D20_Save_Will:
+		return classSpec->second.willSaveIsFavored;
+	default:
+		logger->warn("D20ClassSys: IsSaveFavoredForClass unhandled save type {}", saveType);
+		break;
+	}
+	return false;
+}
+
 int D20ClassSystem::GetSkillPts(Stat classEnum){
 	auto classSpec = classSpecs.find(classEnum);
 	if (classSpec == classSpecs.end())
