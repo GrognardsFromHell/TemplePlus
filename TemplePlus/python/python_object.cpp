@@ -2243,7 +2243,31 @@ static PyObject* PyObjHandle_PendingToMemorized(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		Py_RETURN_NONE;
 	}
-	spellSys.spellsPendingToMemorized(self->handle);
+	Stat classEnum = (Stat)-1;
+	if (!PyArg_ParseTuple(args, "|i:objhndl.spells_pending_to_memorized", &classEnum)) {
+		return 0;
+	}
+
+	if (classEnum == (Stat)-1)
+		spellSys.spellsPendingToMemorized(self->handle);
+	else
+		spellSys.SpellsPendingToMemorizedByClass(self->handle, classEnum);
+	
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_SpellsCastReset(PyObject* obj, PyObject* args){
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+	Stat classEnum = (Stat)-1;
+	if (!PyArg_ParseTuple(args, "|i:objhndl.spells_cast_reset", &classEnum)) {
+		return 0;
+	}
+
+	spellSys.SpellsCastReset(self->handle, classEnum);
+
 	Py_RETURN_NONE;
 }
 
@@ -2503,6 +2527,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "spell_damage_with_reduction", PyObjHandle_SpellDamageWithReduction, METH_VARARGS, NULL },
 	{ "spell_heal", PyObjHandle_SpellHeal, METH_VARARGS, NULL },
 	{ "spells_pending_to_memorized", PyObjHandle_PendingToMemorized, METH_VARARGS, NULL },
+	{ "spells_cast_reset", PyObjHandle_SpellsCastReset, METH_VARARGS, NULL },
 	{ "spells_memorized_forget", PyObjHandle_MemorizedForget, METH_VARARGS, NULL },
 	{ "standpoint_set", PyObjHandle_StandpointSet, METH_VARARGS, NULL },
 	{"stat_level_get", PyObjHandle_StatLevelGet, METH_VARARGS, NULL},

@@ -235,6 +235,8 @@ struct LegacySpellSystem : temple::AddressTable
 	CondStruct *GetCondFromSpellIdx(int id);
 	uint32_t(__cdecl * spellRemoveFromStorage)(objHndl objHnd, obj_f fieldIdx, SpellStoreData * spellData, int unknown);
 	uint32_t (__cdecl * spellsPendingToMemorized)(objHndl objHnd);
+	void SpellsPendingToMemorizedByClass(objHndl handle, Stat classEnum);
+	void SpellsCastReset(objHndl handle, Stat classEnum = (Stat)-1);
 	int (__cdecl *SpellKnownAdd)(objHndl ObjHnd, int nSpellIdx, int nSpellClassCode, int nSpellCasterLevel, int nSpellStoreData, int nMetamagicData);
 	int (__cdecl *SpellMemorizedAdd)(objHndl ObjHnd, int nSpellIdx, int nSpellClassCode, int nSpellCasterLevel, int nSpellStoreData, int nMetamagicData);
 	void ForgetMemorized(objHndl handle);

@@ -1263,6 +1263,48 @@ CondStruct* LegacySpellSystem::GetCondFromSpellIdx(int id) {
 	return nullptr;
 }
 
+void LegacySpellSystem::SpellsPendingToMemorizedByClass(objHndl handle, Stat classEnum){
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	auto spellsMemo = obj->GetSpellArray(obj_f_critter_spells_memorized_idx);
+	if (classEnum == (Stat)-1){ // do for all classes
+		for (auto i = 0u; i < spellsMemo.GetSize(); i++) {
+			auto spData = spellsMemo[i];
+			spData.spellStoreState.usedUp &= 0xFE;
+			obj->SetSpell(obj_f_critter_spells_memorized_idx, i, spData);
+		}
+	} 
+	else	{
+		auto spellClassCode = spellSys.GetSpellClass(classEnum);
+		for (auto i = 0u; i < spellsMemo.GetSize(); i++) {
+			auto spData = spellsMemo[i];
+			if (spData.classCode == spellClassCode){
+				spData.spellStoreState.usedUp &= 0xFE;
+				obj->SetSpell(obj_f_critter_spells_memorized_idx, i, spData);
+			}
+		}
+	}
+	
+}
+
+void LegacySpellSystem::SpellsCastReset(objHndl handle, Stat classEnum){
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	auto allClasses = (classEnum == -1);
+	if (allClasses){
+		obj->ClearArray(obj_f_critter_spells_cast_idx);
+		return;
+	}
+
+	auto spellsCast = obj->GetSpellArray(obj_f_critter_spells_cast_idx);
+	int initialSize = (int)spellsCast.GetSize();
+	auto spellClassCode = spellSys.GetSpellClass(classEnum);
+	for (int i = initialSize - 1; i >= 0; i--){ // must be int!!!
+		auto spData = obj->GetSpell(obj_f_critter_spells_cast_idx, i);
+		if (spData.classCode == spellClassCode){
+			obj->RemoveSpell(obj_f_critter_spells_cast_idx, i);
+		}
+	}
+}
+
 void LegacySpellSystem::ForgetMemorized(objHndl handle) {
 	objSystem->GetObject(handle)->ClearArray(obj_f_critter_spells_memorized_idx);
 }
