@@ -1219,14 +1219,11 @@ bool LegacyCritterSystem::IsSummoned(objHndl obj)
 	return 0;
 }
 
-int LegacyCritterSystem::GetCasterLevel(objHndl obj)
-{
+int LegacyCritterSystem::GetCasterLevel(objHndl obj){
 	int result = 0;
-	for (int i = 0; i < VANILLA_NUM_CLASSES; i++)
-	{
-		if (d20ClassSys.IsCastingClass(d20ClassSys.vanillaClassEnums[i])  )
-		{
-			result += objects.StatLevelGet(obj, d20ClassSys.vanillaClassEnums[i]);
+	for (auto it: d20ClassSys.classEnums){
+		if (d20ClassSys.IsCastingClass((Stat)it))	{
+			result += objects.StatLevelGet(obj, (Stat)it);
 		}
 	}
 	return result;

@@ -140,6 +140,10 @@ public:
 			}, 52, 0);
 			write(0x102D2318, &sdd, sizeof(SubDispDefNew));
 		}
+	
+		// Divine Power BAB bouns type change from 12 to 40 so it stacks with Weapon Enh Bonus but doesn't stack with itself
+		char divPowWriteVal = 40;
+		write(0x100C7426 + 1, &divPowWriteVal, 1);
 	}
 } spellConditionFixes;
 

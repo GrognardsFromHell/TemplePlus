@@ -2872,8 +2872,7 @@ void ActionSequenceSystem::FullAttackCostCalculate(D20Actn* d20a, TurnBasedStatu
 			d20a->d20Caf |= D20CAF_RANGED;
 
 	}
-	if (!mainWeapon && !offhand)
-	{
+	if (!mainWeapon && !offhand){
 		numAttacksBase = dispatch.DispatchD20ActionCheck(d20a, tbStatus, dispTypeGetCritterNaturalAttacksNum);
 		if (numAttacksBase > 0)
 		{
@@ -2882,8 +2881,7 @@ void ActionSequenceSystem::FullAttackCostCalculate(D20Actn* d20a, TurnBasedStatu
 		}
 	}
 
-	if (numAttacksBase <= 0)
-	{
+	if (numAttacksBase <= 0){
 		numAttacksBase = dispatch.DispatchD20ActionCheck(d20a, tbStatus, dispTypeGetNumAttacksBase);
 	}
 
