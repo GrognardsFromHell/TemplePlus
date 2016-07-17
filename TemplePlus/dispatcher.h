@@ -103,7 +103,8 @@ struct DispatcherSystem : temple::AddressTable
 	int DispatchToHitBonusBase(objHndl objHndCaller, DispIoAttackBonus* dispIo);
 	int DispatchGetSizeCategory(objHndl objHndCaller);
 	void DispatchConditionRemove(Dispatcher* dispatcher, CondNode* cond);
-	unsigned int Dispatch35BaseCasterLevelModify(objHndl obj, SpellPacketBody* spellPkt);
+	unsigned int Dispatch35CasterLevelModify(objHndl obj, SpellPacketBody* spellPkt);
+	int DispatchGetBaseCasterLevel(objHndl obj);
 	int Dispatch45SpellResistanceMod(objHndl handle, DispIOBonusListAndSpellEntry* dispIo);
 	void Dispatch48BeginRound(objHndl obj, int numRounds) const;
 	bool Dispatch64ImmunityCheck(objHndl handle, DispIoImmunity* dispIo);

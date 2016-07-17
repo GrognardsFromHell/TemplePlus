@@ -1565,7 +1565,9 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 				strMod /= 2;
 			}
 				
-		} else if (d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_WieldedTwoHanded, (int)dispIo, 0) && strMod > 0 && inventory.GetWieldType(args.objHndCaller, weapon))
+		} else if (d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_WieldedTwoHanded, (int)dispIo, 0) 
+			&& strMod > 0 
+			&&  inventory.GetWieldType(args.objHndCaller, weapon, true) )
 		{
 			strMod += strMod / 2;
 		}

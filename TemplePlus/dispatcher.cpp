@@ -576,18 +576,26 @@ void DispatcherSystem::DispatchConditionRemove(Dispatcher* dispatcher, CondNode*
 	cond->flags |= 1;
 }
 
-unsigned DispatcherSystem::Dispatch35BaseCasterLevelModify(objHndl obj, SpellPacketBody* spellPkt)
+unsigned DispatcherSystem::Dispatch35CasterLevelModify(objHndl obj, SpellPacketBody* spellPkt)
 {
 	auto _dispatcher = objects.GetDispatcher(obj);
 	if (!dispatch.dispatcherValid(_dispatcher))
 		return 0;
 	DispIoD20Query dispIo;
-	dispIo.return_val = spellPkt->baseCasterLevel;
+	dispIo.return_val = spellPkt->casterLevel;
 	dispIo.data1 = reinterpret_cast<uint32_t>(spellPkt);
 	dispIo.data2 = 0;
 	DispatcherProcessor(_dispatcher, dispTypeBaseCasterLevelMod, 0, &dispIo);
-	spellPkt->baseCasterLevel = dispIo.return_val;
+	spellPkt->casterLevel = dispIo.return_val;
 	return dispIo.return_val;
+}
+
+int DispatcherSystem::DispatchGetBaseCasterLevel(objHndl handle){
+	auto objDispatcher = gameSystems->GetObj().GetObject(handle)->GetDispatcher();
+	if (!objDispatcher->IsValid())
+		return 0;
+
+	return 0;
 }
 
 int DispatcherSystem::Dispatch45SpellResistanceMod(objHndl handle, DispIOBonusListAndSpellEntry* dispIo)

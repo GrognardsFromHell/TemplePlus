@@ -77,7 +77,7 @@ void AiSystem::aiTacticGetConfig(int tacIdx, AiTactic* aiTacOut, AiStrategy* aiS
 		aiTacOut->spellPktBody.caster = aiTacOut->performer;
 		aiTacOut->spellPktBody.spellClass = aiStrat->spellsKnown[tacIdx].classCode;
 		aiTacOut->spellPktBody.spellKnownSlotLevel = aiStrat->spellsKnown[tacIdx].spellLevel;
-		spell->spellPacketSetCasterLevel(spellPktBody);
+		spell->SpellPacketSetCasterLevel(spellPktBody);
 		d20->D20ActnSetSpellData(&aiTacOut->d20SpellData, spellEnum, spellPktBody->spellClass, spellPktBody->spellKnownSlotLevel, 0xFF, spellPktBody->metaMagicData);
 	}
 }
@@ -1593,11 +1593,11 @@ int AiSystem::ChooseRandomSpellFromList(AiPacket* aiPkt, AiSpellList* aiSpells){
 		aiPkt->spellPktBod.spellEnumOriginal = spellEnum;
 		aiPkt->spellPktBod.spellKnownSlotLevel = spellLevels[0];
 		aiPkt->spellPktBod.spellClass = spellClass;
-		spellSys.spellPacketSetCasterLevel(&aiPkt->spellPktBod);
+		spellSys.SpellPacketSetCasterLevel(&aiPkt->spellPktBod);
 
 		SpellEntry spellEntry;
 		spellSys.spellRegistryCopy(spellEnum, &spellEntry);
-		auto spellRange = spellSys.GetSpellRange(&spellEntry, aiPkt->spellPktBod.baseCasterLevel, aiPkt->spellPktBod.caster);
+		auto spellRange = spellSys.GetSpellRange(&spellEntry, aiPkt->spellPktBod.casterLevel, aiPkt->spellPktBod.caster);
 		aiPkt->spellPktBod.spellRange = spellRange;
 		if ( static_cast<UiPickerType>(spellEntry.modeTargetSemiBitmask & 0xFF) == UiPickerType::Area
 			&& spellEntry.spellRangeType == SpellRangeType::SRT_Personal)	{

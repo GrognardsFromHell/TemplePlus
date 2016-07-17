@@ -275,7 +275,7 @@ int LegacyD20System::CastSpellProcessTargets(D20Actn* d20a, SpellPacketBody& spe
 
 		DispIOBonusListAndSpellEntry dispIoSr;
 		BonusList casterLvlBonlist;
-		auto casterLvl = dispatch.Dispatch35BaseCasterLevelModify(d20a->d20APerformer, &spellPkt);
+		auto casterLvl = dispatch.Dispatch35CasterLevelModify(d20a->d20APerformer, &spellPkt);
 		casterLvlBonlist.AddBonus(casterLvl, 0, 203);
 		if (feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_SPELL_PENETRATION))	{
 			casterLvlBonlist.AddBonusFromFeat(2, 0, 114, FEAT_SPELL_PENETRATION);
@@ -1036,10 +1036,10 @@ int LegacyD20System::TargetCheck(D20Actn* d20a)
 				return 1;
 			}
 			if (itemSpellData == 255)
-				spellSys.spellPacketSetCasterLevel(&curSeq->spellPktBody);
+				spellSys.SpellPacketSetCasterLevel(&curSeq->spellPktBody);
 			else
-				curSeq->spellPktBody.baseCasterLevel = max(1, 2 * static_cast<int>(spellSlotLevel) - 1);
-			curSeq->spellPktBody.spellRange = spellSys.GetSpellRange(&spellEntry, curSeq->spellPktBody.baseCasterLevel, curSeq->spellPktBody.caster);
+				curSeq->spellPktBody.casterLevel = max(1, 2 * static_cast<int>(spellSlotLevel) - 1);
+			curSeq->spellPktBody.spellRange = spellSys.GetSpellRange(&spellEntry, curSeq->spellPktBody.casterLevel, curSeq->spellPktBody.caster);
 			if ((spellEntry.modeTargetSemiBitmask & 0xFF) != static_cast<unsigned>(UiPickerType::Personal)
 				|| spellEntry.radiusTarget < 0
 				|| (spellEntry.flagsTargetBitmask & UiPickerFlagsTarget::Radius))

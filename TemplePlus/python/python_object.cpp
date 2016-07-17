@@ -430,10 +430,10 @@ static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 			continue;
 		spellPktBody.spellKnownSlotLevel = spellLevels[i];
 		spellPktBody.spellClass = classCodes[i];
-		spellSys.spellPacketSetCasterLevel(&spellPktBody);
+		spellSys.SpellPacketSetCasterLevel(&spellPktBody);
 		if (!spellSys.spellRegistryCopy(spellEnum, &spellEntry))
 			continue;
-		if (!spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, caster, spellPktBody.baseCasterLevel))
+		if (!spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, caster, spellPktBody.casterLevel))
 			continue;
 		pickArgs.result = {0,};
 		pickArgs.flagsTarget = (UiPickerFlagsTarget)(

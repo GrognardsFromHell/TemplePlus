@@ -591,7 +591,7 @@ static void PySpell_UpdateFromPacket(PySpell* self, const SpellPacketBody& spell
 	}
 
 	self->spellLevel = spell.spellKnownSlotLevel;
-	self->casterLevel = spell.baseCasterLevel;
+	self->casterLevel = spell.casterLevel;
 	self->rangeExact = spell.spellRange;
 	self->dc = spell.dc;
 	self->duration = spell.duration;
@@ -679,7 +679,7 @@ void PySpell_UpdatePacket(PyObject* pySpell) {
 		spell.projectiles[i] = self->projectiles[i];
 	}
 
-	spell.baseCasterLevel = self->casterLevel;
+	spell.casterLevel = self->casterLevel;
 	spell.targetCount = self->targetCount;
 	spell.duration = self->duration;
 	if (spell.durationRemaining <= 0)

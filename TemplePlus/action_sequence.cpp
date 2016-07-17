@@ -374,7 +374,7 @@ void ActionSequenceSystem::ActSeqGetPicker()
 			uint32_t callLightningId = (uint32_t) d20Sys.d20QueryReturnData(d20Sys.globD20Action->d20APerformer, DK_QUE_Critter_Can_Call_Lightning);
 			SpellPacketBody spellPkt;
 			spellSys.GetSpellPacketBody(callLightningId, &spellPkt);
-			auto baseCasterLevelMod = dispatch.Dispatch35BaseCasterLevelModify(d20Sys.globD20Action->d20APerformer, &spellPkt);
+			auto baseCasterLevelMod = dispatch.Dispatch35CasterLevelModify(d20Sys.globD20Action->d20APerformer, &spellPkt);
 			addresses.actSeqPicker->range = spellSys.GetSpellRangeExact(SpellRangeType::SRT_Medium, baseCasterLevelMod, d20Sys.globD20Action->d20APerformer);
 			addresses.actSeqPicker->radiusTarget = 5;
 		} else
@@ -408,7 +408,7 @@ void ActionSequenceSystem::ActSeqGetPicker()
 			spellEntry.radiusTarget *= ((MetaMagicData)metaMagicData).metaMagicWidenSpellCount + 1;
 		}
 		PickerArgs pickArgs;
-		spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, curSeq->spellPktBody.caster, curSeq->spellPktBody.baseCasterLevel);
+		spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, curSeq->spellPktBody.caster, curSeq->spellPktBody.casterLevel);
 		pickArgs.spellEnum = spellEnum;
 		pickArgs.callback = reinterpret_cast<PickerCallback>(0x10096CC0);
 		*actSeqPickerActive = 1;
