@@ -777,10 +777,10 @@ BlendStatePtr RenderingDevice::CreateBlendState(const BlendSpec &spec) {
 
   auto &targetDesc = blendDesc.RenderTarget[0];
   targetDesc.BlendEnable = spec.blendEnable ? TRUE : FALSE;
-  targetDesc.SrcBlend = ConvertBlendOperand(spec.srcBlend); // I checked, the enum literals are exchangeable
+  targetDesc.SrcBlend = ConvertBlendOperand(spec.srcBlend);
   targetDesc.DestBlend = ConvertBlendOperand(spec.destBlend);
-  targetDesc.SrcBlendAlpha = D3D11_BLEND_ZERO;
-  targetDesc.DestBlendAlpha = D3D11_BLEND_ONE;
+  targetDesc.SrcBlendAlpha = ConvertBlendOperand(spec.srcAlphaBlend);
+  targetDesc.DestBlendAlpha = ConvertBlendOperand(spec.destAlphaBlend);
 
   uint8_t writeMask = 0;
   // Never overwrite the alpha channel with random stuff when blending is disabled

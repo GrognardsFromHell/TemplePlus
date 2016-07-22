@@ -54,6 +54,10 @@ namespace gfx {
 		BlendOperand srcBlend = BlendOperand::One;
 		BlendOperand destBlend = BlendOperand::Zero;
 
+		// By default use the destination alpha and keep it
+		BlendOperand srcAlphaBlend = BlendOperand::Zero;
+		BlendOperand destAlphaBlend = BlendOperand::One;
+
 		// Write mask for writing to the render target
 		bool writeRed = true;
 		bool writeGreen = true;

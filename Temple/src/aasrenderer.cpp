@@ -130,7 +130,14 @@ Material AasRenderer::CreateShadowMapMaterial(gfx::RenderingDevice &device) {
 	auto vs{ device.GetShaders().LoadVertexShader("shadowmap_geom_vs") };
 	auto ps{ device.GetShaders().LoadPixelShader("diffuse_only_ps") };
 
-	return device.CreateMaterial({}, depthStencilState, {}, {}, vs, ps);
+	BlendSpec blendSpec;
+	blendSpec.blendEnable = true;
+	blendSpec.destBlend = BlendOperand::Zero;
+	blendSpec.srcBlend = BlendOperand::SrcAlpha;
+	blendSpec.destAlphaBlend = BlendOperand::Zero;
+	blendSpec.srcAlphaBlend = BlendOperand::One;
+
+	return device.CreateMaterial(blendSpec, depthStencilState, {}, {}, vs, ps);
 }
 
 Material AasRenderer::CreateGaussBlurMaterial(gfx::RenderingDevice &device, const gfx::RenderTargetTexturePtr &texturePtr, bool horizontal) {
