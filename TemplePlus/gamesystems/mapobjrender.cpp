@@ -773,8 +773,7 @@ std::vector<Light3d> MapObjectRenderer::FindLights(LocAndOffsets atLocation, flo
 							nightPartSys.hashCode, centerOfTile
 						);
 					}
-				}
-				else {
+				} else {
 					type = light.type;
 					color = light.color;
 					direction = light.direction;
@@ -837,6 +836,13 @@ std::vector<Light3d> MapObjectRenderer::FindLights(LocAndOffsets atLocation, flo
 				light3d.dir.x = direction.x;
 				light3d.dir.y = direction.y;
 				light3d.dir.z = direction.z;
+			}
+
+			// Some vanilla lights are broken
+			if (light3d.dir.x == 0.0f && light3d.dir.y == 0.0f && light3d.dir.z == 0.0f) {
+				light3d.dir.x = 0.0f;
+				light3d.dir.y = 0.0f;
+				light3d.dir.z = 1.0f;
 			}
 
 			light3d.pos.x = lightPos.x;

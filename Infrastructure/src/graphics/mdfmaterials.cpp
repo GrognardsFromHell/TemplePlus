@@ -237,9 +237,10 @@ namespace gfx {
 				globals.lightAttenuation[lightIdx].x = 0;
 				globals.lightAttenuation[lightIdx].y = 0;
 				globals.lightAttenuation[lightIdx].z = 4.0f / (light.range * light.range);
-				globals.lightSpot[lightIdx].x = cosf(XMConvertToRadians(light.phi) * 0.60000002f * 0.5f);
-				globals.lightSpot[lightIdx].y = cosf(XMConvertToRadians(light.phi) * 0.5f);
-				globals.lightSpot[lightIdx].z = 0;
+				auto phiRad = XMConvertToRadians(light.phi);
+				globals.lightSpot[lightIdx].x = cosf(phiRad * 0.6f * 0.5f);
+				globals.lightSpot[lightIdx].y = cosf(phiRad * 0.5f);
+				globals.lightSpot[lightIdx].z = 1;
 			}
 		}
 				
