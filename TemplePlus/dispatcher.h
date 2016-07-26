@@ -30,6 +30,7 @@ struct DispIoAbilityLoss; // 19
 struct DispIoAttackDice; // 20
 struct DispIoImmunity; //23
 struct DispIoEffectTooltip; // 24
+struct EvtObjSpellCaster; // 34;
 struct D20Actn;
 
 
@@ -104,7 +105,7 @@ struct DispatcherSystem : temple::AddressTable
 	int DispatchGetSizeCategory(objHndl objHndCaller);
 	void DispatchConditionRemove(Dispatcher* dispatcher, CondNode* cond);
 	unsigned int Dispatch35CasterLevelModify(objHndl obj, SpellPacketBody* spellPkt);
-	int DispatchGetBaseCasterLevel(objHndl obj);
+	int DispatchGetBaseCasterLevel(objHndl obj, Stat casterClass);
 	int Dispatch45SpellResistanceMod(objHndl handle, DispIOBonusListAndSpellEntry* dispIo);
 	void Dispatch48BeginRound(objHndl obj, int numRounds) const;
 	bool Dispatch64ImmunityCheck(objHndl handle, DispIoImmunity* dispIo);
@@ -333,7 +334,7 @@ struct DispIoObjBonus : DispIO // type 10
 	BonusList bonlist;
 	DispIoObjBonus();
 };
-const int TestSizeOfDispIO390h = sizeof(DispIoObjBonus); // should be 912 (0x390)
+const int TestSizeOfDispIoObjBonus = sizeof(DispIoObjBonus); // should be 912 (0x390)
 
 struct DispIoDispelCheck : DispIO // type 11
 {
@@ -499,6 +500,15 @@ struct DispIoEffectTooltip: DispIO // type 24
 };
 
 
+struct EvtObjSpellCaster: DispIO // type 34 (NEW!)
+{
+	BonusList bonlist;
+	objHndl handle;
+	int arg0;
+	int arg1;
+	SpellPacketBody* spellPkt;
+	EvtObjSpellCaster() { dispIOType = evtObjTypeSpellCaster; handle = objHndl::null; arg0 = 0; arg1 = 0; spellPkt = nullptr; };
+};
 
 
 

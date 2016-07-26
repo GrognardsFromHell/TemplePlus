@@ -3256,6 +3256,7 @@ ET_OnPythonReserved7 = 85
 ET_OnPythonReserved8 = 86
 ET_OnPythonReserved9 = 87
 ET_OnSpellListExtensionGet = 88
+ET_OnGetBaseCasterLevel = 89
 # Event Keys
 
 EK_NONE = 0x0

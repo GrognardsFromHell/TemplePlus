@@ -708,7 +708,7 @@ enum featPropertyEnums : uint32_t {
 
 #pragma endregion
 
-#pragma region Object stuff
+#pragma region General Object stuff
 enum ObjectType : uint32_t {
 	obj_t_portal = 0,
 	obj_t_container = 1,
@@ -1719,7 +1719,9 @@ enum D20DispatcherKey : uint32_t {
 	DK_QUE_Is_Ethereal = 0x145,
 	DK_QUE_Empty_Body_Num_Rounds = 0x146, // returns number of rounds set for Monk's Empty Body
 	DK_QUE_Quivering_Palm_Can_Perform = 0x147,
-	DK_QUE_Trip_AOO = 0x148
+	DK_QUE_Trip_AOO = 0x148,
+
+	DK_SPELL_Base_Caster_Level = 0x1000
 };
 
 enum enum_dispIO_type : uint32_t {
@@ -1756,7 +1758,8 @@ enum enum_dispIO_type : uint32_t {
 	dispIOType30,
 	dispIOType31,
 	dispIOType32,
-	dispIOType33
+	dispIOType33,
+	evtObjTypeSpellCaster // new! used for querying spell caster specs (caster level, learnable spells, etc.)
 
 };
 

@@ -11,6 +11,7 @@
 #include "critter.h"
 #include "tab_file.h"
 #include "util/fixes.h"
+#include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
 #include "ui/ui.h"
 
@@ -588,7 +589,7 @@ uint32_t _WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featA
 
 	if (weapons.IsMonkWeapon(wpnType))
 	{
-		if (feats.HasFeatCountByClass(objHnd, FEAT_SIMPLE_WEAPON_PROFICIENCY_DRUID, classBeingLeveled, 0))
+		if (feats.HasFeatCountByClass(objHnd, FEAT_SIMPLE_WEAPON_PROFICIENCY_MONK, classBeingLeveled, 0))
 		{
 			return 1;
 		}
@@ -1010,32 +1011,28 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 	uint32_t * racialFeat = & (feats.racialFeats[objRace * 10]);
 	while (*racialFeat != -1)
 	{
-		if (*racialFeat == featEnum)
-		{
+		if (*racialFeat == featEnum){
 			return 1;
 		}
 		racialFeat++;
 	}
 	
 	
-	for (uint32_t i = 0; i < VANILLA_NUM_CLASSES; i++)
-	{
+	for (uint32_t i = 0; i < VANILLA_NUM_CLASSES; i++){
 		uint32_t classLevel = objects.StatLevelGet(objHnd, d20ClassSys.vanillaClassEnums[i]);
-		if (classLevelBeingRaised == d20ClassSys.vanillaClassEnums[i])
-		{
+		if (classLevelBeingRaised == d20ClassSys.vanillaClassEnums[i]){
 			classLevel++;
 		}
 
 		feat_enums * classFeat = &feats.classFeatTable->classEntries[i].entries[0].feat;
 		feat_enums * classFeatStart = classFeat;
 
-		if (classLevel == 0)
-		{
+		if (classLevel == 0){
 			continue;
 		}
 
-		while (featEnum != classFeat[0] && classFeat[0] != -1)
-		{
+		while (featEnum != classFeat[0]
+			&& classFeat[0] != -1){
 			classFeat += 2;
 		}
 		if (classFeat[0] != -1 && (int) classLevel >= classFeat[1])
@@ -1046,8 +1043,7 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 	}
 	
 	
-	 if (featEnum == FEAT_IMPROVED_UNCANNY_DODGE)
-	 {
+	 if (featEnum == FEAT_IMPROVED_UNCANNY_DODGE) {
 		 if (objects.StatLevelGet(objHnd, stat_level_barbarian) >= 2 
 			 || objects.StatLevelGet(objHnd, stat_level_rogue) >= 4)
 		 {
@@ -1106,14 +1102,16 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 	 }
 
 	 // simple weapon prof
-	 if (featEnum == FEAT_SIMPLE_WEAPON_PROFICIENCY)
-	 {
-		 auto monCat = critterSys.GetCategory(objHnd);
-		 if (monCat == mc_type_outsider || monCat == mc_type_monstrous_humanoid
-			 || monCat == mc_type_humanoid || monCat == mc_type_giant || monCat == mc_type_fey)
-		 {
-			 return 1;
+	 if (featEnum == FEAT_SIMPLE_WEAPON_PROFICIENCY){
+		 auto obj = gameSystems->GetObj().GetObject(objHnd);
+		 if (obj->type == obj_t_npc){
+			 auto monCat = critterSys.GetCategory(objHnd);
+			 if (monCat == mc_type_outsider || monCat == mc_type_monstrous_humanoid
+				 || monCat == mc_type_humanoid || monCat == mc_type_giant || monCat == mc_type_fey) {
+				 return 1;
+			 }
 		 }
+		 
 	 } 
 	 else if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_ALL)
 	 {

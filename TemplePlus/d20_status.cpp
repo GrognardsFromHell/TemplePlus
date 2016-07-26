@@ -259,7 +259,7 @@ void D20StatusSystem::initFeats(objHndl objHnd)
 	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)conds.mConditionDisableAoO);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)&conds.mCondDisarm);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)conds.mCondAidAnother);
-	//addToDispatcher("Trip Attack Of Opportunity"); // decided to incorporate this in Improved Will to prevent AoOs on AoOs
+	//addToDispatcher("Trip Attack Of Opportunity"); // decided to incorporate this in Improved Trip to prevent AoOs on AoOs
 }
 
 void D20StatusSystem::initItemConditions(objHndl objHnd)

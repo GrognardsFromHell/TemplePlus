@@ -291,7 +291,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 
 	py::class_<DispIoTypeImmunityTrigger>(m, "EventObjImmunityTrigger", "Used for triggering the immunity handling query", py::base<DispIO>())
 		.def_readwrite("should_perform_immunity_check", &DispIoTypeImmunityTrigger::interrupt)
-		;
+		; // TODO
 
 	py::class_<DispIoImmunity>(m, "EventObjImmunityQuery", "Used for performing the immunity handling", py::base<DispIO>())
 		.def_readwrite("spell_entry", &DispIoImmunity::spellEntry)
@@ -302,6 +302,12 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def("append", &DispIoEffectTooltip::Append)
 		;
 
+	py::class_<EvtObjSpellCaster>(m, "EventObjSpellCaster", "Used for retrieving spell caster specs. New for Temple+!")
+		.def_readwrite("bonus_list", &EvtObjSpellCaster::bonlist)
+		.def_readwrite("arg0", &EvtObjSpellCaster::arg0)
+		.def_readwrite("arg1", &EvtObjSpellCaster::arg1)
+		.def_readwrite("spell_packet", &EvtObjSpellCaster::spellPkt)
+		;
 	//py::class_<DispatcherCallbackArgs>(m, "EventArgsD20Signal")
 	//	.def(py::init())
 	//	.def("__repr__", [](DispatcherCallbackArgs &args)->std::string {
@@ -535,6 +541,10 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 
 	case dispTypeEffectTooltip:
 		pbEvtObj = py::cast(static_cast<DispIoEffectTooltip*>(args.dispIO));
+		break;
+
+	case dispTypeGetBaseCasterLevel:
+		pbEvtObj = py::cast(static_cast<EvtObjSpellCaster*>(args.dispIO));
 		break;
 
 	case dispTypeConditionAdd: // these are actually null
