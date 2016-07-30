@@ -590,6 +590,19 @@ unsigned DispatcherSystem::Dispatch35CasterLevelModify(objHndl obj, SpellPacketB
 	return dispIo.return_val;
 }
 
+int DispatcherSystem::DispatchSpellListLevelExtension(objHndl handle, Stat casterClass)
+{
+	auto objDispatcher = gameSystems->GetObj().GetObject(handle)->GetDispatcher();
+	if (!objDispatcher->IsValid())
+		return 0;
+
+	EvtObjSpellCaster evtObj;
+	evtObj.handle = handle;
+	evtObj.arg0 = casterClass;
+	DispatcherProcessor(objDispatcher, dispTypeSpellListExtension, DK_NONE, &evtObj);
+	return evtObj.bonlist.GetEffectiveBonusSum();
+}
+
 int DispatcherSystem::DispatchGetBaseCasterLevel(objHndl handle, Stat casterClass){
 	auto objDispatcher = gameSystems->GetObj().GetObject(handle)->GetDispatcher();
 	if (!objDispatcher->IsValid())

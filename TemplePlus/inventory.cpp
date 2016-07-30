@@ -80,8 +80,80 @@ public:
 				}
 			}
 		});
+
+
+		// FindMatchingStackableItem
+		replaceFunction<objHndl(objHndl, objHndl)>(0x10067DF0, [](objHndl receiver, objHndl item) {
+			return inventory.FindMatchingStackableItem(receiver, item);
+		});
 	};
+
+	
 } hooks;
+
+objHndl InventorySystem::FindMatchingStackableItem(objHndl receiver, objHndl item){
+	if (!item)
+		return objHndl::null;
+	if (!receiver)
+		return objHndl::null;
+
+	auto itemObj = gameSystems->GetObj().GetObject(item);
+	if (!inventory.IsIdentified(item))
+		return objHndl::null;
+
+	// if not identified - does not stack
+	auto itemProto = gameSystems->GetObj().GetProtoId(item);
+	if (itemProto == 12000) // generic item proto
+		return objHndl::null;
+
+	// cycle thru inventory
+	auto recObj = gameSystems->GetObj().GetObject(receiver);
+	auto invenField = inventory.GetInventoryListField(receiver);
+
+	auto invenNum = recObj->GetInt32(inventory.GetInventoryNumField(receiver));
+	for (auto i = 0; i < invenNum; i++){
+		auto invenItem = recObj->GetObjHndl(invenField, i);
+		if (!invenItem) // bad item???
+			continue;
+
+		// ensure not same item handle
+		if (item == invenItem)
+			continue;
+
+		// ensure same proto ID
+		auto invenItemProto = gameSystems->GetObj().GetProtoId(invenItem);
+		if (invenItemProto != itemProto)
+			continue;
+
+		// ensure is identified
+		if (!inventory.IsIdentified(invenItem))
+			continue;
+
+		auto invenItemObj = gameSystems->GetObj().GetObject(invenItem);
+
+		// if item worn - ensure is ammo
+		auto invenItemLoc = invenItemObj->GetInt32(obj_f_item_inv_location);
+		if (invenItemLoc >= 200 && invenItemLoc <= 216){
+			if (invenItemObj->type != obj_t_ammo)
+				continue;
+		}
+
+		if (itemObj->type == obj_t_scroll || itemObj->type == obj_t_food){ 
+			// ensure potions/scrolls of different levels / schools do not stack
+			auto itemSpell = itemObj->GetSpell(obj_f_item_spell_idx, 0);
+			auto invenItemSpell = invenItemObj->GetSpell(obj_f_item_spell_idx, 0);
+			if (itemSpell.spellLevel != invenItemSpell.spellLevel
+				|| (itemObj->type == obj_t_scroll 
+					&& spellSys.IsArcaneSpellClass(itemSpell.classCode) 
+					!= spellSys.IsArcaneSpellClass(invenItemSpell.classCode) ))
+				continue;
+		}
+
+		return invenItem;
+	}
+	
+	return objHndl::null;
+}
 
 int InventorySystem::GetItemWieldCondArg(objHndl item, uint32_t condId, int argOffset)
 {
@@ -500,7 +572,7 @@ int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnla
 	// special casing for Bastard Swords and Dwarven Waraxes
 	if (weaponType == wt_bastard_sword)
 	{
-		if (feats.HasFeatCountByClass(wielder, FEAT_EXOTIC_WEAPON_PROFICIENCY_BASTARD_SWORD))
+		if (!feats.HasFeatCountByClass(wielder, FEAT_EXOTIC_WEAPON_PROFICIENCY_BASTARD_SWORD)) // if has no EWF Bastard sword - must dual wield
 			wieldType = (wielderSizeBase <= 4) + 2;
 		return wieldType;
 	} 
@@ -525,9 +597,19 @@ int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnla
 
 obj_f InventorySystem::GetInventoryListField(objHndl objHnd)
 {
-	if (objects.IsCritter(objHnd)) 	return obj_f_critter_inventory_list_idx;
 	if (objects.IsContainer(objHnd)) return obj_f_container_inventory_list_idx;
-	return (obj_f)0;
+
+	//if (objects.IsCritter(objHnd)) 	
+	return obj_f_critter_inventory_list_idx;
+	
+	//return (obj_f)0;
+}
+
+obj_f InventorySystem::GetInventoryNumField(objHndl objHnd)
+{
+	if (objects.IsContainer(objHnd))
+		return obj_f_container_inventory_num;
+	return obj_f_critter_inventory_num;
 }
 
 void InventorySystem::ForceRemove(objHndl item, objHndl parent)

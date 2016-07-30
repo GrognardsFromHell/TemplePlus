@@ -301,32 +301,41 @@ struct LegacyCritterSystem : temple::AddressTable
 	uint32_t IsUndead(objHndl objHnd);
 	uint32_t IsOoze(objHndl objHnd);
 	uint32_t IsSubtypeFire(objHndl objHnd);
+#pragma endregion
+
+#pragma region Combat
 	float GetReach(objHndl objHndl, D20ActionType actType); // reach in feet
 	int GetBonusFromSizeCategory(int sizeCategory);
 	int GetDamageIdx(objHndl obj, int attackIdx);
 	// bonus to hit from size
 	int GetCritterDamageDice(objHndl obj, int attackIdx);
 	DamageType GetCritterAttackDamageType(objHndl obj, int attackIdx);
+	static int GetCritterNumNaturalAttacks(objHndl obj);
 	int GetCritterAttackType(objHndl obj, int attackIdx);
 	int GetBaseAttackBonus(const objHndl& handle, Stat classBeingLeveld = Stat::stat_strength);
+	int GetArmorClass(objHndl obj, DispIoAttackBonus *dispIo);
+#pragma endregion
+
+#pragma region Spellcasting
 	int GetSpellLvlCanCast(const objHndl& handle, SpellSourceType spellSourceType, SpellReadyingType spellReadyingType);
 	int GetSpellEnumsKnownByClass(const objHndl& handle, int spellClass, int* spellEnums, int capacity);
+	int GetCasterLevel(objHndl obj); // returns sum of all casting-class levels
+	int GetCasterLevelForClass(objHndl handle, Stat classCode);
+	int GetSpellListLevelExtension(objHndl handle, Stat classCode); // modifies the effective character level for the purpose of fetching spell lists
+	bool IsCaster(objHndl obj);
+	static int SpellNumByFieldAndClass(objHndl obj, obj_f field, uint32_t spellClassCode);
+	bool HashMatchingClassForSpell(objHndl handle, uint32_t spellEnum) const; // checks if obj has a matching spell in their list
+	int DomainSpellNumByField(objHndl obj, obj_f field);
+#pragma endregion 
 
-	static int GetCritterNumNaturalAttacks(objHndl obj);
 	bool IsWarded(objHndl obj); // checks if creature is warded from melee attacks (by stuff like Meld Into Stone, Tree Shape, Otiluke's Resislient Sphere)
 	bool IsSummoned(objHndl obj);
-	int GetCasterLevel(objHndl obj); // returns sum of all casting-class levels
-	bool IsCaster(objHndl obj);
 	bool IsWieldingRangedWeapon(objHndl performer);
 	void GetCritterVoiceLine(objHndl obj, objHndl fellow, char *str, int* soundId);
 	int PlayCritterVoiceLine(objHndl obj, objHndl fellow, char* text, int soundId);
-	bool HashMatchingClassForSpell(objHndl handle, uint32_t spellEnum) const; // checks if obj has a matching spell in their list
-	int GetArmorClass(objHndl obj, DispIoAttackBonus *dispIo);
 	static int SkillBaseGet(objHndl handle, SkillEnum skill);
-	static int SpellNumByFieldAndClass(objHndl obj, obj_f field, uint32_t spellClassCode);
-	int DomainSpellNumByField(objHndl obj, obj_f field);
 	static int GetNumFollowers(objHndl obj, int excludeForcedFollowers);
-#pragma endregion
+
 
 private:
 	int GetModelRaceOffset(objHndl obj);

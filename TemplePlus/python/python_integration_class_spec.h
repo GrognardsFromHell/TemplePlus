@@ -10,7 +10,12 @@ enum class ClassSpecFunc : int {
 	IsFortSaveFavored,
 	IsRefSaveFavored,
 	IsWillSaveFavored,
+
 	GetSpellListType,
+	GetSpellsPerDay,
+	GetSpellConditionName,
+	GetSpellDeterminingStat,
+	
 	IsEnabled,
 	IsClassSkill,
 	IsClassFeat,
@@ -19,7 +24,7 @@ enum class ClassSpecFunc : int {
 
 	IsAlignmentCompatible,
 	ObjMeetsPreqreqs,
-	GetFeat,
+	GetFeats,
 };
 
 
@@ -29,11 +34,18 @@ public:
 
 	void GetClassEnums(std::vector<int>& classEnums);
 	std::string GetConditionName(int classEnum);
+	std::map<feat_enums, int> GetFeats(int classEnum);
+	
 	int GetBabProgression(int classEnum);
 	int GetHitDieType(int classEnum);
 	int GetInt(int classEnum, ClassSpecFunc specType, int defaultVal = 0);
 	bool IsSaveFavored(int classEnum, SavingThrowType saveType);
+	
 	SpellListType GetSpellListType(int classCode);
+	std::map<int, std::vector<int>> GetSpellsPerDay(int classEnum);
+	std::string GetSpellCastingConditionName(int classEnum);
+	Stat GetSpellDeterminingStat(int classEnum);
+
 	bool IsEnabled(int classEnum);
 	bool IsClassSkill(int classCode, int skillEnum);
 	int IsClassFeat(int classCode, int featEnum);

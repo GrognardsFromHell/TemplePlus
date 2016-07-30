@@ -105,6 +105,7 @@ struct DispatcherSystem : temple::AddressTable
 	int DispatchGetSizeCategory(objHndl objHndCaller);
 	void DispatchConditionRemove(Dispatcher* dispatcher, CondNode* cond);
 	unsigned int Dispatch35CasterLevelModify(objHndl obj, SpellPacketBody* spellPkt);
+	int DispatchSpellListLevelExtension(objHndl obj, Stat casterClass);
 	int DispatchGetBaseCasterLevel(objHndl obj, Stat casterClass);
 	int Dispatch45SpellResistanceMod(objHndl handle, DispIOBonusListAndSpellEntry* dispIo);
 	void Dispatch48BeginRound(objHndl obj, int numRounds) const;

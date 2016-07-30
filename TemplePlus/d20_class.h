@@ -58,13 +58,19 @@ struct D20ClassSpec {
 	bool willSaveIsFavored;
 	int hitDice; // HD side (4,6,8 etc)
 	int skillPts; // skill point per level
+	
+	std::map<SkillEnum, bool> classSkills; // dictionary denoting if a skill is a class skill
+	std::map<feat_enums, int> classFeats; // dictionary denoting which level the feat is granted 
+	std::string conditionName; // name of the accompanying condition (e.g. "Bard", "Sorcerer", "Mystic Theurge")
+
+	// spell casting
+
+	std::string spellCastingConditionName; // name of the accompanying Spell Casting condition (e.g. "Bard Spellcasting")
 	SpellListType spellListType;
 	SpellReadyingType spellMemorizationType;
 	SpellSourceType spellSourceType;
-	std::map<SkillEnum, bool> classSkills; // dictionary denoting if a skill is a class skill
-	std::map<int, std::vector<feat_enums>> classFeats; // dictionary 
-	std::string conditionName; // name of the accompanying condition (e.g. "Bard", "Sorcerer", "Mystic Theurge")
-	std::string spellCastingConditionName; // name of the accompanying Spell Casting condition (e.g. "Bard Spellcasting")
+	std::map<int, std::vector<int>> spellsPerDay; // index is class level, vector enumerates spells per day for each spell level
+	Stat spellStat; // stat that determines maximum spell level
 };
 
 struct D20ClassSystem : temple::AddressTable
@@ -83,6 +89,8 @@ public:
 	bool IsLateCastingClass(Stat classEnum); // for classes like Ranger / Paladin that start casting on level 4
 	bool IsArcaneCastingClass(Stat stat, objHndl handle = objHndl::null);
 	static bool HasDomainSpells(Stat classEnum);
+	Stat GetSpellStat(Stat classEnum); // default - wisdom
+	int GetMaxSpellLevel(Stat classEnum, int characterLvl);
 
 	void ClassPacketAlloc(ClassPacket *classPkt); // allocates the three IdxTables within ClassPacket
 	void ClassPacketDealloc(ClassPacket *classPkt);
@@ -133,7 +141,7 @@ public:
 
 	int ClericMaxSpellLvl(uint32_t clericLvl) const;
 	int NumDomainSpellsKnownFromClass(objHndl dude, Stat classCode);
-	static int GetNumSpellsFromClass(objHndl obj, Stat classCode, int spellLvl, uint32_t classLvl);
+	int GetNumSpellsFromClass(objHndl obj, Stat classCode, int spellLvl, uint32_t classLvl, bool getFromStatMod = true);
 
 	// skills
 	BOOL IsClassSkill(SkillEnum skillEnum, Stat classCode);

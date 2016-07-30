@@ -161,7 +161,7 @@ struct LegacySpellSystem : temple::AddressTable
 
 	uint32_t spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry);
 	uint32_t ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
-	uint32_t GetMaxSpellSlotLevel(objHndl objHnd, Stat classCode, int casterLvl);
+	int GetMaxSpellLevel(objHndl objHnd, Stat classCode, int characterLvl);
 	int ParseSpellSpecString(SpellStoreData* spell, char* spellString);
 
 	const char* GetSpellMesline(uint32_t line) const;

@@ -25,12 +25,58 @@ std::string PythonClassSpecIntegration::GetConditionName(int classEnum){
 	return RunScriptStringResult(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetConditionName, nullptr);
 }
 
+std::map<feat_enums, int> PythonClassSpecIntegration::GetFeats(int classEnum)
+{
+	auto result =  std::map<feat_enums, int>();
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return result;
+
+	auto dict = RunScriptMapResult(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetFeats, nullptr);
+
+	for (auto item: dict){
+		for (auto vecItem: item.second)
+		result[(feat_enums)vecItem] = item.first;
+	}
+
+	return result;
+}
+
+std::map<int, std::vector<int>> PythonClassSpecIntegration::GetSpellsPerDay(int classEnum)
+{
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return std::map<int, std::vector<int>>();;
+
+	auto result = RunScriptMapResult(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetSpellsPerDay, nullptr);
+
+
+	return result;
+}
+
+std::string PythonClassSpecIntegration::GetSpellCastingConditionName(int classEnum)
+{
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return fmt::format("");
+
+	return RunScriptStringResult(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetSpellConditionName, nullptr);
+}
+
+Stat PythonClassSpecIntegration::GetSpellDeterminingStat(int classEnum)
+{
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return stat_wisdom;
+	return  (Stat)RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetSpellDeterminingStat, nullptr);
+}
+
 int PythonClassSpecIntegration::GetBabProgression(int classEnum){
 	auto classSpecEntry = mScripts.find(classEnum);
 	if (classSpecEntry == mScripts.end())
 		return 1; // default to 3/4 type
 
-	return RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetBabProgression, nullptr); //classSpec->second
+	return RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetBabProgression, nullptr); 
 }
 
 int PythonClassSpecIntegration::GetHitDieType(int classEnum){
@@ -130,6 +176,10 @@ static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 	{ ClassSpecFunc::IsRefSaveFavored,"IsRefSaveFavored" },
 	{ ClassSpecFunc::IsWillSaveFavored,"IsWillSaveFavored" },
 	{ ClassSpecFunc::GetSpellListType,"GetSpellListType" },
+	{ ClassSpecFunc::GetSpellsPerDay,"GetSpellsPerDay" },
+	{ ClassSpecFunc::GetSpellConditionName,"GetSpellCasterConditionName" },
+	{ ClassSpecFunc::GetSpellDeterminingStat,"GetSpellDeterminingStat" },
+
 	{ ClassSpecFunc::IsClassSkill,"IsClassSkill" },
 	{ ClassSpecFunc::IsClassFeat,"IsClassFeat" },
 	{ ClassSpecFunc::IsEnabled,"IsEnabled" },
@@ -138,7 +188,7 @@ static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 	{ ClassSpecFunc::IsAlignmentCompatible,"IsAlignmentCompatible" },
 
 	{ ClassSpecFunc::ObjMeetsPreqreqs,"ObjMeetsPreqreqs" },
-	{ ClassSpecFunc::GetFeat,"GetFeat" }
+	{ ClassSpecFunc::GetFeats,"GetClassFeats" }
 };
 
 const char* PythonClassSpecIntegration::GetFunctionName(EventId evt) {

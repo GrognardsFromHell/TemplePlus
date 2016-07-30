@@ -132,6 +132,65 @@ std::string PythonIntegration::RunScriptStringResult(ScriptId scriptId, EventId 
 	return result;
 }
 
+std::map<int, std::vector<int>> PythonIntegration::RunScriptMapResult(ScriptId scriptId, EventId evt, PyObject * args)
+{
+	ScriptRecord script;
+	if (!LoadScript(scriptId, script)) {
+		return std::map<int, std::vector<int>>();
+	}
+
+	auto dict = PyModule_GetDict(script.module);
+	auto eventName = GetFunctionName(evt);
+	auto callback = PyDict_GetItemString(dict, eventName);
+
+	if (!callback || !PyCallable_Check(callback)) {
+		logger->error("Script {} attached as {} is missing the corresponding function.",
+			script.filename, eventName);
+		return std::map<int, std::vector<int>>();
+	}
+
+	auto resultObj = PyObject_CallObject(callback, args);
+
+	if (!resultObj) {
+		logger->error("An error occurred while calling event {} for script {}.", eventName, script.filename);
+		PyErr_Print();
+		return std::map<int, std::vector<int>>();
+	}
+
+	auto result = std::map<int, std::vector<int>>();
+	if (!PyDict_Check(resultObj)) {
+		return std::map<int, std::vector<int>>();
+	}
+
+	PyObject *pykey, *pyvalue;
+	Py_ssize_t pos = 0;
+
+	while (PyDict_Next(resultObj, &pos, &pykey, &pyvalue)) {
+		if (!PyInt_Check(pykey)){
+			logger->warn("RunScriptMapResult: Invalid python value or key");
+			continue;
+		}
+		auto key = PyInt_AsLong(pykey);
+
+		if (PyInt_Check(pyvalue)){
+			auto value = PyInt_AsLong(pyvalue);
+			result[key] = std::vector<int>({ value });
+		}
+		else if (PyTuple_Check(pyvalue)){
+			result[key] = std::vector<int>();
+			for (auto i = 0; i < PyTuple_Size(pyvalue); i++){
+				auto value = PyTuple_GetItem(pyvalue, i);
+				if (PyInt_Check(value))
+					result[key].push_back(PyInt_AsLong(value));
+			}
+		}
+		
+	}
+
+	Py_DECREF(resultObj);
+	return result;
+}
+
 bool PythonIntegration::LoadScript(int scriptId, ScriptRecord &scriptOut) {
 	auto it = mScripts.find(scriptId);
 	if (it == mScripts.end()) {

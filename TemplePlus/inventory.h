@@ -35,7 +35,7 @@ struct InventorySystem : temple::AddressTable
 	
 	objHndl(__cdecl *GetSubstituteInventory)  (objHndl);
 	objHndl(__cdecl *GetItemAtInvIdx)(objHndl, uint32_t nIdx); // returns the item at obj_f_critter_inventory subIdx nIdx  (or obj_f_container_inventory for containers); Note the difference to ItemWornAt! (this is a more low level function)
-	objHndl(__cdecl *FindMatchingStackableItem)(objHndl objHndReceiver, objHndl objHndItem); // TODO: rewrite so it doesn't stack items with different descriptions and/or caster levels, so potions/scrolls of different caster levels don't stack
+	objHndl FindMatchingStackableItem(objHndl objHndReceiver, objHndl objHndItem); // TODO: rewrite so it doesn't stack items with different descriptions and/or caster levels, so potions/scrolls of different caster levels don't stack
 	
 	
 	void (__cdecl *sub_100FF500)(Dispatcher *dispatcher, objHndl objHndItem, uint32_t itemInvLocation);
@@ -118,6 +118,7 @@ struct InventorySystem : temple::AddressTable
 	*/
 	int GetWieldType(objHndl wielder, objHndl item, bool regardEnlargement = false) const;
 	static obj_f GetInventoryListField(objHndl objHnd);
+	static obj_f GetInventoryNumField(objHndl objHnd);
 	/*
 		Identifies all items held or contained within the given parent.
 	*/
@@ -147,7 +148,7 @@ struct InventorySystem : temple::AddressTable
 		rebase(GetItemAtInvIdx, 0x100651B0);
 		rebase(_ItemWornAt,      0x10065010);
 		rebase(_GetWieldType,    0x10066580);
-		rebase(FindMatchingStackableItem, 0x10067DF0);
+		//rebase(FindMatchingStackableItem, 0x10067DF0);
 
 		rebase(sub_100FF500, 0x100FF500);
 		rebase(IsItemEffectingConditions, 0x100FEFA0);

@@ -419,9 +419,27 @@ uint32_t LegacySpellSystem::ConfigSpellTargetting(PickerArgs* pickerArgs, SpellP
 	return addresses.ConfigSpellTargetting(pickerArgs, spellPktBody);
 }
 
-uint32_t LegacySpellSystem::GetMaxSpellSlotLevel(objHndl objHnd, Stat classCode, int casterLvl)
+int LegacySpellSystem::GetMaxSpellLevel(objHndl objHnd, Stat classCode, int characterLvl)
 {
-	return addresses.GetMaxSpellSlotLevel(objHnd, classCode, casterLvl);
+	if (characterLvl <= 0)
+		characterLvl = objects.StatLevelGet(objHnd, classCode);//critterSys.GetCasterLevelForClass(objHnd, classCode);
+
+	auto effectiveCharLvl = characterLvl + critterSys.GetSpellListLevelExtension(objHnd, classCode);
+	auto result = d20ClassSys.GetMaxSpellLevel(classCode, effectiveCharLvl);
+
+
+	auto spellStat = d20ClassSys.GetSpellStat(classCode);
+	auto spellStatLevel = objects.StatLevelGet(objHnd, spellStat);
+
+	if (spellStatLevel - 10 < result)
+		result = spellStatLevel;
+
+	if (result < 0)
+		result = -1;
+
+	return result;
+
+	//return addresses.GetMaxSpellSlotLevel(objHnd, classCode, characterLvl);
 }
 
 int LegacySpellSystem::ParseSpellSpecString(SpellStoreData* spell, char* spellString)
@@ -623,10 +641,10 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 
 		// casting class
 		if (casterClass){
-			auto casterLvl = objects.StatLevelGet(caster, casterClass);
+			auto casterLvl = critterSys.GetCasterLevelForClass(caster, casterClass);; //objects.StatLevelGet(caster, casterClass); // todo: remove this
 			spellPkt->casterLevel = casterLvl;
-			if (d20ClassSys.IsLateCastingClass(casterClass))
-				spellPkt->casterLevel = casterLvl / 2;
+			//if (d20ClassSys.IsLateCastingClass(casterClass)) // todo: remove this (supplant with above GetCasterLevelForClass)
+			//	spellPkt->casterLevel = casterLvl / 2;
 			logger->info("Critter {} is casting spell {} at base caster_level {}.", casterName, spellName , casterLvl);
 		} 
 
@@ -1501,6 +1519,7 @@ bool LegacySpellSystem::IsArcaneSpellClass(uint32_t spellClass)
 	if (casterClass == stat_level_bard || casterClass == stat_level_sorcerer || casterClass == stat_level_wizard)
 		return true;
 
+	// todo take care of other classes?
 	return false;
 }
 

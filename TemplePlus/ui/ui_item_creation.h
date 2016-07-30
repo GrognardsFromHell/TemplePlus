@@ -148,8 +148,13 @@ public:
 	objHndl MaaGetItemHandle();
 
 	void CreateItemDebitXPGP(objHndl crafter, objHndl item);
+	bool CraftedWandSpellGet(objHndl item, SpellStoreData& spellData, int * spellLevelBase = nullptr);
 	int CraftedWandSpellLevel(objHndl item);
 	int CraftedWandCasterLevel(objHndl item);
+	uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t casterLevelNew);
+	uint32_t CraftedWandWorth(objHndl item, int casterLevelNew);
+	bool ScribedScrollSpellGet(objHndl item, SpellStoreData& spellData, int * spellLevelBase = nullptr);
+	int GetMaxSpellLevelFromCasterLevel(int cl);
 
 	bool IsWeaponBonus(int effIdx);
 	bool IsOutmoded(int effIdx);
@@ -278,7 +283,7 @@ extern ItemCreation itemCreation;
 
 
 
-uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t slotLevelNew);
+//uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t slotLevelNew);
 void UiItemCreationCraftingCostTexts(objHndl objHndItem);
 /*
 struct ButtonStateTextures {

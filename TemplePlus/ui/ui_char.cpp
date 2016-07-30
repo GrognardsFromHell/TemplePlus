@@ -176,7 +176,7 @@ void CharUiSystem::ClassLevelBtnRender(int widId){
 	auto txtB = temple::GetRef<int>(0x10BE9368);
 	auto txtA = temple::GetRef<int>(0x10BE936C);
 
-	ColorRect textColor( XMCOLOR(txtR, txtG, txtB, txtA)  );
+	ColorRect textColor( XMCOLOR((float)txtR, (float)txtG, (float)txtB, (float)txtA)  );
 	ColorRect shadowColor(XMCOLOR(0, 0, 0, 255));
 	style.textColor = &textColor;
 	style.shadowColor = &shadowColor;
@@ -434,17 +434,19 @@ void CharUiSystem::SpellsShow(objHndl obj)
 		auto spellClassCode = navClassPackets[i].spellClassCode;
 		
 
-		// fill out the number of spells per level for each NavPacket
+		// fill out the number of spells per day (per level) for each NavPacket
 
 		if (!spellSys.isDomainSpell(spellClassCode)){ //normal casting class
-			LevelPacket lvlPkt;
+			//LevelPacket lvlPkt;
 			auto classCode = spellSys.GetCastingClass(spellClassCode);
 			auto classLvl = objects.StatLevelGet(dude, classCode);
-			lvlPkt.GetLevelPacket(classCode, dude, 0, classLvl);
+			classLvl += critterSys.GetSpellListLevelExtension(dude, classCode);
+			//lvlPkt.GetLevelPacket(classCode, dude, 0, classLvl);
 			auto numSpellsForLvl = navClassPackets[i].numSpellsForLvl;
 			for (int j = 0; j < NUM_SPELL_LEVELS; j++){
-				if (lvlPkt.spellCountFromClass[j] >= 0){
-					numSpellsForLvl[j] = lvlPkt.spellCountBonusFromStatMod[j] + lvlPkt.spellCountFromClass[j];
+				auto numSp = d20ClassSys.GetNumSpellsFromClass(dude, classCode, j, classLvl);
+				if  (numSp >= 0){ //(lvlPkt.spellCountFromClass[j] >= 0){
+					numSpellsForLvl[j] = numSp; //lvlPkt.spellCountBonusFromStatMod[j] + lvlPkt.spellCountFromClass[j];
 					if (numSpellsForLvl[j] > 0 && classCode == stat_level_wizard) {
 						if (spellSys.getWizSchool(dude))
 							++numSpellsForLvl[j];

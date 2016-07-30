@@ -855,7 +855,7 @@ static PyObject* PyObjHandle_DivineSpellLevelCanCast(PyObject* obj, PyObject* ar
 	}
 
 	auto palLvl = objects.StatLevelGet(self->handle, stat_level_paladin);
-	critterSys.GetSpellLvlCanCast(self->handle, SpellSourceType::Arcane, SpellReadyingType::Any);
+	critterSys.GetSpellLvlCanCast(self->handle, SpellSourceType::Divine, SpellReadyingType::Any);
 	// todo: generalize
 
 	return PyInt_FromLong(divineSpellLvlMax);

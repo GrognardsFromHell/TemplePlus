@@ -20,6 +20,7 @@
 #include <pybind11/cast.h>
 #include <radialmenu.h>
 #include <action_sequence.h>
+#include <condition.h>
 
 namespace py = pybind11;
 using namespace pybind11;
@@ -65,9 +66,24 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		}, "Add callback hook")
 		.def("add_to_feat_dict", &CondStructNew::AddToFeatDictionary)
 		// .def_readwrite("num_args", &CondStructNew::numArgs) // this is probably something we don't want to expose due to how ToEE saves/loads args
-		.def_readwrite("name", &CondStructNew::condName);
+		.def_readwrite("name", &CondStructNew::condName)
+		.def("extend_existing", [](CondStructNew &condStr, std::string condName){
+				auto cond = (CondStructNew*)conds.GetByName(condName);
+				if (cond){
+					for (auto i = 0; i < 100 && cond->subDispDefs[i].dispType != 0; i++){
+						condStr.subDispDefs[condStr.numHooks++] = cond->subDispDefs[i];
+					}
+					condStr.numArgs = cond->numArgs;
+					condStr.condName = cond->condName;
+					condStr.Register();
+				}
+			})
+			;
 		
 		
+		
+			
+
 	py::class_<DispIO>(m, "EventObj", "The base Event Object")
 		.def_readwrite("evt_obj_type", &DispIO::dispIOType)
 		.def("__repr__", [](const DispIO& dispIo)->std::string {
@@ -543,6 +559,7 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 		pbEvtObj = py::cast(static_cast<DispIoEffectTooltip*>(args.dispIO));
 		break;
 
+	case dispTypeSpellListExtension:
 	case dispTypeGetBaseCasterLevel:
 		pbEvtObj = py::cast(static_cast<EvtObjSpellCaster*>(args.dispIO));
 		break;

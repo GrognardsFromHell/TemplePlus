@@ -5,6 +5,7 @@
 #include "python/python_integration_class_spec.h"
 #include "util/fixes.h"
 #include "gamesystems/d20/d20stats.h"
+#include "gamesystems/legacysystems.h"
 
 D20ClassSystem d20ClassSys;
 
@@ -63,6 +64,11 @@ class D20ClassHooks : public TempleFix
 			return result;
 		});
 
+		// GetNumSpellsPerDayFromClass
+		replaceFunction<int(objHndl, Stat, int , int )>(0x100F5660, [](objHndl handle, Stat classCode, int spellLvl, int classLvl)
+		{
+			return d20ClassSys.GetNumSpellsFromClass(handle, classCode, spellLvl, classLvl, true);
+		});
 
 	}
 } d20ClassHooks;
@@ -102,13 +108,13 @@ bool D20ClassSystem::IsVancianCastingClass(Stat classEnum, objHndl handle )
 }
 
 bool D20ClassSystem::IsCastingClass(Stat classEnum){
-	if (classEnum == stat_level_cleric 
+	/*if (classEnum == stat_level_cleric 
 		|| classEnum == stat_level_druid 
 		|| classEnum == stat_level_paladin 
 		|| classEnum == stat_level_ranger 
 		|| classEnum == stat_level_wizard
 		|| classEnum == stat_level_bard
-		|| classEnum == stat_level_sorcerer) return 1;
+		|| classEnum == stat_level_sorcerer) return 1;*/
 	
 	auto classSpec = classSpecs.find(classEnum);
 	if (classSpec == classSpecs.end())
@@ -130,10 +136,17 @@ bool D20ClassSystem::IsLateCastingClass(Stat classEnum)
 		|| classSpec->second.spellListType == SpellListType::Ranger)
 		return true;
 
-	/*if (classEnum == stat_level_paladin || classEnum == stat_level_ranger)
-		return 1;*/
-	// todo: generalize for PrC's
-	return false;
+	auto &spellsPerDay = classSpec->second.spellsPerDay;
+	auto spellsAtLvl1Spec = spellsPerDay.find(1);
+	if (spellsAtLvl1Spec == spellsPerDay.end())
+		return false; // no spells specified for class level 1
+
+	for (auto it: spellsAtLvl1Spec->second){
+		if (it != -1)
+			return false;
+	}
+	
+	return true;
 }
 
 bool D20ClassSystem::IsArcaneCastingClass(Stat classCode, objHndl handle){
@@ -154,6 +167,50 @@ bool D20ClassSystem::HasDomainSpells(Stat classEnum){
 	if (classEnum == stat_level_cleric)
 		return true;
 	return false;
+}
+
+Stat D20ClassSystem::GetSpellStat(Stat classEnum){
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return stat_wisdom; 
+	
+	return classSpec->second.spellStat;
+}
+
+int D20ClassSystem::GetMaxSpellLevel(Stat classEnum, int characterLvl)
+{
+	auto result = -1;
+
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return -1;
+
+
+	auto &spellsPerDay = classSpec->second.spellsPerDay;
+
+	auto spellsPerDayForLvl = spellsPerDay.find(characterLvl);
+	
+	// if not found, get highest specified
+	if (spellsPerDayForLvl == spellsPerDay.end()){
+		auto highestSpec = -1;
+		for (auto it: spellsPerDay){
+			if (it.first > highestSpec && it.first <= characterLvl)
+				highestSpec = it.first;
+		}
+		if (highestSpec == -1)
+			return -1;
+		spellsPerDayForLvl = spellsPerDay.find(highestSpec);
+	}
+	
+	
+	
+	auto &spellsVector = spellsPerDayForLvl->second;
+	if (!spellsVector.size())
+		return -1;
+	if (spellsVector[spellsVector.size() - 1] == -1)
+		return -1;
+
+	return spellsVector.size() - 1; // first slot corresponds to level 0 spells
 }
 
 void D20ClassSystem::ClassPacketAlloc(ClassPacket* classPkt)
@@ -222,6 +279,7 @@ const char* D20ClassSystem::GetClassShortHelp(Stat classCode){
 	return d20Stats.GetClassShortDesc(classCode);
 }
 
+// D20ClassSpec
 void D20ClassSystem::GetClassSpecs(){
 	std::vector<int> _classEnums;
 	pythonClassIntegration.GetClassEnums( _classEnums);
@@ -237,24 +295,42 @@ void D20ClassSystem::GetClassSpecs(){
 		auto &classSpec = classSpecs[it];
 
 		classSpec.classEnum = static_cast<Stat>(it);
+
+		// get class condition from py file
 		classSpec.conditionName = fmt::format("{}", pythonClassIntegration.GetConditionName(it));
-		if (classSpec.conditionName.size() == 0){
+		if (classSpec.conditionName.size() == 0){ // if none specified, get it from the pre-defined table (applicable for vanilla classes only...)
 			classSpec.conditionName = d20StatusSys.classCondMap[classSpec.classEnum];
 		}
-		else if (d20StatusSys.classCondMap.find(classSpec.classEnum) == d20StatusSys.classCondMap.end() ){
+		else if (d20StatusSys.classCondMap.find(classSpec.classEnum) == d20StatusSys.classCondMap.end() ){ // if specified, update the d20Status mapping
 			d20StatusSys.classCondMap[classSpec.classEnum] = classSpec.conditionName;
 		}
+
+
 		classSpec.babProgression = static_cast<BABProgressionType>(pythonClassIntegration.GetBabProgression(it));
 		classSpec.hitDice = pythonClassIntegration.GetHitDieType(it);
 		classSpec.fortitudeSaveIsFavored = pythonClassIntegration.IsSaveFavored(it, SavingThrowType::Fortitude);
 		classSpec.reflexSaveIsFavored = pythonClassIntegration.IsSaveFavored(it, SavingThrowType::Reflex);
 		classSpec.willSaveIsFavored = pythonClassIntegration.IsSaveFavored(it, SavingThrowType::Will);
 		classSpec.skillPts = pythonClassIntegration.GetInt(it, ClassSpecFunc::GetSkillPtsPerLevel, 2);
+
+		// spell casting
 		classSpec.spellListType = pythonClassIntegration.GetSpellListType(it);
+		if (classSpec.spellListType != SpellListType::None){
+			classSpec.spellCastingConditionName = fmt::format("{}", pythonClassIntegration.GetSpellCastingConditionName(it));
+			classSpec.spellsPerDay = pythonClassIntegration.GetSpellsPerDay(it);
+			if (classSpec.spellsPerDay.size()){
+				classSpec.spellStat = pythonClassIntegration.GetSpellDeterminingStat(it);
+			}
+		}
 		
+		// skills
 		for (auto skillEnum = static_cast<int>(skill_appraise); skillEnum < skill_count; skillEnum++) {
 			classSpec.classSkills[(SkillEnum)skillEnum] = pythonClassIntegration.IsClassSkill(it, (SkillEnum)skillEnum);
 		}
+
+		// feats
+		classSpec.classFeats = pythonClassIntegration.GetFeats(it);
+		auto test = 1;
 	}
 
 }
@@ -275,29 +351,73 @@ int D20ClassSystem::NumDomainSpellsKnownFromClass(objHndl dude, Stat classCode)
 	return ClericMaxSpellLvl(clericLvl) * 2;
 }
 
-int D20ClassSystem::GetNumSpellsFromClass(objHndl obj, Stat classCode, int spellLvl, uint32_t classLvl)
+int D20ClassSystem::GetNumSpellsFromClass(objHndl obj, Stat classEnum, int spellLvl, uint32_t classLvl, bool getFromStatMod)
 {
-	LevelPacket lvlPkt;
-	d20LevelSys.GetLevelPacket(classCode, obj, 0, classLvl, &lvlPkt);
-	if (classCode == stat_level_bard){
-		if (spellLvl > 7)
-			spellLvl = 7;
-	}
-	else if (classCode <= stat_level_monk || classCode > stat_level_ranger){
-		if (spellLvl > 10)
-			spellLvl = 10;
-	}
-	else{
-		if (spellLvl > 5)
-			spellLvl = 5;
-	}
-	auto spellCountFromClass = lvlPkt.spellCountFromClass[spellLvl];
-	if (spellCountFromClass >=0)
-	{
-		spellCountFromClass += lvlPkt.spellCountBonusFromStatMod[spellLvl];
+	//LevelPacket lvlPkt;
+	//d20LevelSys.GetLevelPacket(classCode, obj, 0, classLvl, &lvlPkt);
+
+	auto result = -1;
+
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return -1;
+
+
+	auto &spellsPerDay = classSpec->second.spellsPerDay;
+
+	auto spellsPerDayForLvl = spellsPerDay.find(classLvl);
+
+	// if not found, get highest specified
+	if (spellsPerDayForLvl == spellsPerDay.end()) {
+		auto highestSpec = -1;
+		for (auto it : spellsPerDay) {
+			if (it.first > highestSpec && it.first <= (int)classLvl)
+				highestSpec = it.first;
+		}
+		if (highestSpec == -1)
+			return -1;
+		spellsPerDayForLvl = spellsPerDay.find(highestSpec);
 	}
 
-	return spellCountFromClass;
+
+
+	auto &spellsVector = spellsPerDayForLvl->second;
+	if ((int)spellsVector.size() < spellLvl+1)
+		return -1;
+	if (spellsVector[spellLvl] < 0)
+		return -1;
+	
+	result = spellsVector[spellLvl];
+
+	if (!getFromStatMod || spellLvl == 0)
+		return result;
+
+	auto spellStat = GetSpellStat(classEnum);
+	auto spellStatMod = objects.GetModFromStatLevel(objects.StatLevelGet(obj,spellStat));
+	if (spellStatMod >= spellLvl)
+		result += ( (spellStatMod - spellLvl) / 4) + 1;
+
+	return result;
+
+	//if (classCode == stat_level_bard){
+	//	if (spellLvl > 7)
+	//		spellLvl = 7;
+	//}
+	//else if (classCode <= stat_level_monk || classCode > stat_level_ranger){
+	//	if (spellLvl > 10)
+	//		spellLvl = 10;
+	//}
+	//else{
+	//	if (spellLvl > 5)
+	//		spellLvl = 5;
+	//}
+	//auto spellCountFromClass = lvlPkt.spellCountFromClass[spellLvl];
+	//if (spellCountFromClass >=0)
+	//{
+	//	spellCountFromClass += lvlPkt.spellCountBonusFromStatMod[spellLvl];
+	//}
+
+	//return spellCountFromClass;
 }
 
 BOOL D20ClassSystem::IsClassSkill(SkillEnum skillEnum, Stat classCode){

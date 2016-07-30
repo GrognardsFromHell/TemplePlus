@@ -1223,10 +1223,20 @@ int LegacyCritterSystem::GetCasterLevel(objHndl obj){
 	int result = 0;
 	for (auto it: d20ClassSys.classEnums){
 		if (d20ClassSys.IsCastingClass((Stat)it))	{
-			result += objects.StatLevelGet(obj, (Stat)it);
+			//result += objects.StatLevelGet(obj, (Stat)it);
+			result += dispatch.DispatchGetBaseCasterLevel(obj, (Stat)it);
 		}
 	}
 	return result;
+}
+
+int LegacyCritterSystem::GetCasterLevelForClass(objHndl handle, Stat classCode){
+	return dispatch.DispatchGetBaseCasterLevel(handle, classCode);
+}
+
+int LegacyCritterSystem::GetSpellListLevelExtension(objHndl handle, Stat classCode)
+{
+	return dispatch.DispatchSpellListLevelExtension(handle, classCode);
 }
 
 bool LegacyCritterSystem::IsCaster(objHndl obj)
