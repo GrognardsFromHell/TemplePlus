@@ -70,6 +70,7 @@ friend class UiCharEditorHooks;
 
 
 	void SpellsActivate();
+	BOOL SpellsCheckComplete();
 
 	int &GetState();
 
@@ -224,7 +225,15 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 		}
 	}
 	
-	switch (classCode){
+	// Spells
+	if (d20ClassSys.IsSelectingSpellsOnLevelup(handle, classCode)){
+		ui.ButtonSetButtonState(stateBtnIds[5], UBS_NORMAL);
+	} 
+	else
+	{
+		ui.ButtonSetButtonState(stateBtnIds[5], UBS_DISABLED);
+	};
+	/*switch (classCode){
 	case stat_level_bard:
 	case stat_level_sorcerer:
 	case stat_level_wizard:
@@ -233,7 +242,7 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 	default:
 		ui.ButtonSetButtonState(stateBtnIds[5], UBS_DISABLED);
 		break;
-	}
+	}*/
 
 	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
 	auto &stateTitles = temple::GetRef<const char*[6]>(0x10BE8D1C);
@@ -504,11 +513,13 @@ void UiCharEditor::SpellsActivate(){
 			selPkt.spellEnumsAddedCount = numKnown;
 
 			
+			
+			auto maxSpellLvl = d20ClassSys.GetMaxSpellLevel(classLeveled , casterLvlNew);
 			// get max spell level   todo: extend!
-			auto maxSpellLvl = casterLvlNew / 2;
+			/*auto maxSpellLvl = casterLvlNew / 2;
 			if (classLeveled == stat_level_bard) {
 				maxSpellLvl = (casterLvlNew - 1) / 3 + 1;
-			}
+			}*/
 
 			// add labels
 			for (int spellLvl = 0u; spellLvl <= maxSpellLvl; spellLvl++) {
@@ -639,6 +650,24 @@ void UiCharEditor::SpellsActivate(){
 
 	setScrollbars();
 	needPopulateEntries = 0; // needPopulateEntries
+}
+
+BOOL UiCharEditor::SpellsCheckComplete(){
+
+	
+
+	auto selPkt = GetCharEditorSelPacket();
+	auto handle = GetEditedChar();
+	if (!d20ClassSys.IsSelectingSpellsOnLevelup(handle, selPkt.classCode))
+		return true;
+
+	auto &needPopulateEntries = temple::GetRef<int>(0x10C4D4C4);
+
+	if (needPopulateEntries == 1)
+		return false;
+
+	return d20ClassSys.LevelupSpellsCheckComplete(GetEditedChar(), selPkt.classCode, selPkt.spellEnums, selPkt.spellEnumsAddedCount);
+
 }
 
 int &UiCharEditor::GetState(){
@@ -921,7 +950,10 @@ class UiCharEditorHooks : public TempleFix {
 			uiCharEditor.SpellsActivate();
 		});
 
-
+		replaceFunction<BOOL()>(0x101A5C00, []()
+		{
+			return uiCharEditor.SpellsCheckComplete();
+		});
 
 	}
 } uiCharEditorHooks;

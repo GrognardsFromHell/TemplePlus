@@ -167,6 +167,41 @@ bool PythonClassSpecIntegration::ReqsMet(const objHndl & handle, int classEnum){
 
 }
 
+bool PythonClassSpecIntegration::LevelupSpellsCheckComplete(objHndl handle, Stat classEnum, int * spellEnums, int spellsAddedCount)
+{
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return false;
+
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	auto attachee = PyObjHndl_Create(handle);
+	auto spellEnumsPyList = PyList_New(spellsAddedCount);
+	for (auto i = 0; i < spellsAddedCount; i++){
+		PyList_SetItem(spellEnumsPyList, i, PyInt_FromLong(spellEnums[i]));
+	}
+	auto args = Py_BuildValue("(OO)", attachee , spellEnumsPyList);
+	Py_DECREF(attachee);
+	Py_DECREF(spellEnumsPyList);
+
+	auto result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::LevelupCheckSpells, args) != 0;
+	Py_DECREF(args);
+	return result != 0;
+}
+
+bool PythonClassSpecIntegration::IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum){
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return false;
+
+	auto attachee = PyObjHndl_Create(handle);
+	auto args = Py_BuildValue("(O)", attachee);
+	Py_DECREF(attachee);
+
+	auto result = RunScriptDefault0(classSpecEntry->second.id, (EventId)ClassSpecFunc::IsSelectingSpellsOnLevelup, args) != 0;
+	Py_DECREF(args);
+	return result;
+};
+
 static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 	// class spec fetchers
 	{ClassSpecFunc::GetHitDieType,"GetHitDieType"},
@@ -188,7 +223,10 @@ static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 	{ ClassSpecFunc::IsAlignmentCompatible,"IsAlignmentCompatible" },
 
 	{ ClassSpecFunc::ObjMeetsPreqreqs,"ObjMeetsPreqreqs" },
-	{ ClassSpecFunc::GetFeats,"GetClassFeats" }
+	{ ClassSpecFunc::GetFeats,"GetClassFeats" },
+
+	{ ClassSpecFunc::LevelupCheckSpells, "LevelupCheckSpells" },
+	{ ClassSpecFunc::IsSelectingSpellsOnLevelup, "IsSelectingSpellsOnLevelup" },
 };
 
 const char* PythonClassSpecIntegration::GetFunctionName(EventId evt) {

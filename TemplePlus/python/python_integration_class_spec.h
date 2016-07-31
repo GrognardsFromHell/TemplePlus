@@ -25,6 +25,10 @@ enum class ClassSpecFunc : int {
 	IsAlignmentCompatible,
 	ObjMeetsPreqreqs,
 	GetFeats,
+
+	// levelup callbacks
+	LevelupCheckSpells,
+	IsSelectingSpellsOnLevelup
 };
 
 
@@ -51,6 +55,10 @@ public:
 	int IsClassFeat(int classCode, int featEnum);
 
 	bool ReqsMet(const objHndl &handle, int classEnum);
+
+	// levelup
+	bool IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum);
+	bool LevelupSpellsCheckComplete(objHndl handle, Stat classEnum, int * spellEnums, int spellsAddedCount);
 
 protected:
 	const char* GetFunctionName(EventId evt) override;

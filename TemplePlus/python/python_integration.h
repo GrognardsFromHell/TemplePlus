@@ -31,6 +31,7 @@ public:
 	bool IsValidScriptId(ScriptId scriptId);
 
 	int RunScript(ScriptId scriptId, EventId eventId, PyObject *args);
+	int RunScriptDefault0(ScriptId scriptId, EventId eventId, PyObject *args);
 	std::string RunScriptStringResult(ScriptId scriptId, EventId eventId, PyObject *args);
 	std::map<int, std::vector<int>> RunScriptMapResult(ScriptId scriptId, EventId eventId, PyObject* args);
 	/*
