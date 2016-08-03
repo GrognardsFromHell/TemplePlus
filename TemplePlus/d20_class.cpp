@@ -213,6 +213,17 @@ int D20ClassSystem::GetMaxSpellLevel(Stat classEnum, int characterLvl)
 	return spellsVector.size() - 1; // first slot corresponds to level 0 spells
 }
 
+std::string D20ClassSystem::GetSpellCastingCondition(Stat classEnum){
+	auto result = std::string();
+
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return result;
+
+	result.append(fmt::format("{}", classSpec->second.spellCastingConditionName));
+	return result;
+}
+
 void D20ClassSystem::ClassPacketAlloc(ClassPacket* classPkt)
 {
 	addresses.ClassPacketAlloc(classPkt);

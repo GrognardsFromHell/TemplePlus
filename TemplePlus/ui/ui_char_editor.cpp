@@ -25,6 +25,7 @@
 #include <pybind11/cast.h>
 #include <radialmenu.h>
 #include <action_sequence.h>
+#include <condition.h>
 
 namespace py = pybind11;
 using namespace pybind11;
@@ -57,6 +58,7 @@ friend class UiCharEditorHooks;
 
 	void PrepareNextStages();
 	void BtnStatesUpdate(int systemId);
+	
 
 	// 
 	BOOL ClassSystemInit(GameSystemConf & conf);
@@ -80,6 +82,7 @@ friend class UiCharEditorHooks;
 	BOOL ClassBtnMsg(int widId, TigMsg* msg);
 	BOOL ClassNextBtnMsg(int widId, TigMsg* msg);
 	BOOL ClassPrevBtnMsg(int widId, TigMsg* msg);
+	BOOL FinishBtnMsg(int widId, TigMsg* msg);
 	void ClassNextBtnRender(int widId);
 	void ClassPrevBtnRender(int widId);
 
@@ -88,6 +91,7 @@ friend class UiCharEditorHooks;
 	eastl::vector<int> classBtnMapping; // used as an index of choosable character classes
 	int GetClassWndPage();
 	Stat GetClassCodeFromWidgetAndPage(int idx, int page);
+	int GetStatesComplete();
 
 	// logic
 	void ClassSetPermissibles();
@@ -812,6 +816,35 @@ BOOL UiCharEditor::ClassPrevBtnMsg(int widId, TigMsg * msg){
 	return 0;
 }
 
+BOOL UiCharEditor::FinishBtnMsg(int widId, TigMsg * msg){
+	if (msg->type == TigMsgType::MOUSE)
+		return 1;
+
+	if (msg->type != TigMsgType::WIDGET)
+		return 0;
+
+	auto _msg = (TigMsgWidget*)msg;
+
+	if (_msg->widgetEventType != TigMsgWidgetEvent::MouseReleased)
+		return 1;
+
+	auto stComplete = GetStatesComplete();
+	if (stComplete != 6)
+		return 1;
+
+	auto &selPkt = GetCharEditorSelPacket();
+	auto charEdited = GetEditedChar();
+
+	// add spell casting condition
+	if (d20ClassSys.IsCastingClass(selPkt.classCode)){
+		auto spellcastCond = (std::string)d20ClassSys.GetSpellCastingCondition(selPkt.classCode);
+		if ( spellcastCond.size() ){
+			conds.AddTo(charEdited, spellcastCond, {0,0,0,0, 0,0,0,0});
+		}
+	}
+	return 1;
+}
+
 void UiCharEditor::ClassNextBtnRender(int widId){
 
 	static TigRect srcRect(1, 1, 120, 30);
@@ -875,6 +908,10 @@ Stat UiCharEditor::GetClassCodeFromWidgetAndPage(int idx, int page){
 	return (Stat)classBtnMapping[idx2];
 }
 
+int UiCharEditor::GetStatesComplete(){
+	return temple::GetRef<int>(0x10BE8D38);
+}
+
 void UiCharEditor::ClassSetPermissibles(){
 	auto page = GetClassWndPage();
 	auto idx = 0;
@@ -913,6 +950,13 @@ class UiCharEditorHooks : public TempleFix {
 		});
 		replaceFunction<void(int)>(0x10148B70, [](int systemId) {
 			uiCharEditor.BtnStatesUpdate(systemId);
+		});
+		// Finish Btn Msg
+		static BOOL(__cdecl *orgFinishBtnMsg)(int, TigMsg*) = replaceFunction<BOOL(int, TigMsg*)>(0x10148FE0, [](int widId, TigMsg* msg)
+		{
+			auto result = orgFinishBtnMsg(widId, msg);
+			uiCharEditor.FinishBtnMsg(widId, msg);
+			return result;
 		});
 
 		//classes

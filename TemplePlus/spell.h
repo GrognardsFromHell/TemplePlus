@@ -20,6 +20,7 @@ struct SpellEntryLevelSpec
 {
 	uint32_t classCode;
 	uint32_t slotLevel;
+	SpellEntryLevelSpec() { classCode = 0; slotLevel = 0; }
 };
 
 enum SpellRangeType : uint32_t;

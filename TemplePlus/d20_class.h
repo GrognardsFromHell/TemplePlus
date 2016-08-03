@@ -91,6 +91,7 @@ public:
 	static bool HasDomainSpells(Stat classEnum);
 	Stat GetSpellStat(Stat classEnum); // default - wisdom
 	int GetMaxSpellLevel(Stat classEnum, int characterLvl);
+	std::string GetSpellCastingCondition(Stat classEnum);
 
 	void ClassPacketAlloc(ClassPacket *classPkt); // allocates the three IdxTables within ClassPacket
 	void ClassPacketDealloc(ClassPacket *classPkt);

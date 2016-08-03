@@ -177,6 +177,24 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.export_values()
 		;
 
+	py::enum_<UiPickerType>(m, "ModeTarget")
+		.value("Single", UiPickerType::Single)
+		.value("Multi", UiPickerType::Multi)
+		.value("Cone", UiPickerType::Cone)
+		.value("Area", UiPickerType::Area)
+		.value("Location", UiPickerType::Location)
+		.value("Personal", UiPickerType::Personal)
+		.value("InventoryItem", UiPickerType::InventoryItem)
+		.value("Ray", UiPickerType::Ray)
+		// flags
+		.value("BecomeTouch", UiPickerType::BecomeTouch)
+		.value("AreaOrObj", UiPickerType::AreaOrObj)
+		.value("OnceMulti", UiPickerType::OnceMulti)
+		.value("Any30Feet", UiPickerType::Any30Feet)
+		.value("Primary30Feet", UiPickerType::Primary30Feet)
+		.value("EndEarlyMulti", UiPickerType::EndEarlyMulti)
+		.value("LocIsClear", UiPickerType::LocIsClear)
+		;
 
 	py::class_<RadialMenuEntry>(m, "RadialMenuEntry")
 		.def(py::init())
@@ -195,6 +213,42 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def("add_child_to_standard", &RadialMenuEntryParent::AddChildToStandard, "Adds this node as a child to a Standard Node (one of several hardcoded root nodes such as class, inventory etc.), and returns the newly created node ID (so you may give it other children, etc.)")
 		;
 
+	py::class_<SpellEntryLevelSpec>(m, "SpellEntryLevelSpec")
+		.def(py::init())
+		.def_readwrite("spell_class_code", &SpellEntryLevelSpec::classCode)
+		.def_readwrite("spell_level", &SpellEntryLevelSpec::slotLevel)
+		.def("casting_class", [](SpellEntryLevelSpec &spec)->int {
+			if (spellSys.isDomainSpell(spec.classCode))
+				return -( (int)spec.classCode );
+			else
+				return (int)spellSys.GetCastingClass(spec.classCode);
+			}, "Returns casting class. Domain spell specs will return negative numbers.")
+		;
+
+	py::class_<SpellEntry>(m, "SpellEntry")
+		.def(py::init())
+		.def(py::init<int>(), py::arg("spell_enum"))
+		.def_readwrite("spell_enum", &SpellEntry::spellEnum)
+		.def_readwrite("casting_time", &SpellEntry::castingTimeType)
+		.def_readwrite("saving_throw_type", &SpellEntry::savingThrowType)
+		.def_readwrite("min_target", &SpellEntry::minTarget)
+		.def_readwrite("max_target", &SpellEntry::maxTarget)
+		.def_readwrite("mode_target", &SpellEntry::modeTargetSemiBitmask)
+		.def("is_base_mode_target", &SpellEntry::IsBaseModeTarget)
+		.def("get_level_specs", [](SpellEntry &spEntry)->std::vector<SpellEntryLevelSpec> {
+			auto result = std::vector<SpellEntryLevelSpec>();
+			if (!spEntry.spellEnum)
+				return result;
+			for (auto i = 0; i < spEntry.spellLvlsNum; i++){
+				result.push_back(spEntry.spellLvls[i]);
+			}
+			return result;
+		})
+		.def("level_for_spell_class", [](SpellEntry &spEntry, int spellClass)->int
+		{
+			return spellSys.GetSpellLevelBySpellClass(spEntry.spellEnum, spellClass);
+		})
+		;
 	#pragma endregion 
 
 	
