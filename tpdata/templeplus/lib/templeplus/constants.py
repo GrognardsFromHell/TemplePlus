@@ -3280,7 +3280,7 @@ ET_OnPythonReserved8 = 86
 ET_OnPythonReserved9 = 87
 ET_OnSpellListExtensionGet = 88
 ET_OnGetBaseCasterLevel = 89
-ET_OnInitLevelupSpellSelection = 90
+ET_OnLevelupSystemEvent = 90
 # Event Keys
 
 EK_NONE = 0x0
@@ -3576,3 +3576,23 @@ EK_Q_Is_Ethereal = 0x145
 EK_Q_Empty_Body_Num_Rounds = 0x146  # returns number of rounds set for Monk's Empty Body
 EK_Q_Quivering_Palm_Can_Perform = 0x147
 EK_Q_Trip_AOO = 0x148
+
+EK_LVL_Stats_Activate = 100
+EK_LVL_Stats_Check_Complete = 101
+EK_LVL_Stats_Finalize = 102
+
+EK_LVL_Features_Activate = 200
+EK_LVL_Features_Check_Complete = 201
+EK_LVL_Features_Finalize = 202
+
+EK_LVL_Skills_Activate = 300
+EK_LVL_Skills_Check_Complete = 301
+EK_LVL_Skills_Finalize = 302
+
+EK_LVL_Feats_Activate = 400
+EK_LVL_Feats_Check_Complete = 401
+EK_LVL_Feats_Finalize = 402
+
+EK_LVL_Spells_Activate = 500
+EK_LVL_Spells_Check_Complete = 501
+EK_LVL_Spells_Finalize = 502

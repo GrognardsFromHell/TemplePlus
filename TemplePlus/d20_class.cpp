@@ -447,6 +447,14 @@ bool D20ClassSystem::LevelupSpellsCheckComplete(objHndl handle, Stat classEnum, 
 	return pythonClassIntegration.LevelupSpellsCheckComplete(handle, classEnum, spellEnums, spellsAddedCount);
 }
 
+void D20ClassSystem::LevelupSpellsFinalize(objHndl handle, Stat classEnum){
+	if (objects.StatLevelGet(handle, classEnum))
+		dispatch.DispatchLevelupSystemEvent(handle, classEnum, DK_LVL_Spells_Finalize);
+	else
+		pythonClassIntegration.LevelupSpellsFinalize(handle, classEnum);
+	
+}
+
 bool D20ClassSystem::IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum){
 
 	return pythonClassIntegration.IsSelectingSpellsOnLevelup(handle, classEnum);
@@ -454,7 +462,7 @@ bool D20ClassSystem::IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum){
 
 void D20ClassSystem::LevelupInitSpellSelection(objHndl handle, Stat classEnum){
 	if (objects.StatLevelGet(handle, classEnum))
-		dispatch.DispatchLevelupInitSpellSelection(handle, classEnum);
+		dispatch.DispatchLevelupSystemEvent(handle, classEnum, DK_LVL_Spells_Activate);
 	else
 		pythonClassIntegration.LevelupInitSpellSelection(handle, classEnum);
 }

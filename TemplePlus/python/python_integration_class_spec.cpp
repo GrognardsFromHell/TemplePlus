@@ -167,8 +167,7 @@ bool PythonClassSpecIntegration::ReqsMet(const objHndl & handle, int classEnum){
 
 }
 
-bool PythonClassSpecIntegration::LevelupSpellsCheckComplete(objHndl handle, Stat classEnum, int * spellEnums, int spellsAddedCount)
-{
+bool PythonClassSpecIntegration::LevelupSpellsCheckComplete(objHndl handle, Stat classEnum, int * spellEnums, int spellsAddedCount){
 	auto classSpecEntry = mScripts.find(classEnum);
 	if (classSpecEntry == mScripts.end())
 		return false;
@@ -187,6 +186,8 @@ bool PythonClassSpecIntegration::LevelupSpellsCheckComplete(objHndl handle, Stat
 	Py_DECREF(args);
 	return result != 0;
 }
+
+
 
 bool PythonClassSpecIntegration::IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum){
 	auto classSpecEntry = mScripts.find(classEnum);
@@ -215,7 +216,19 @@ void PythonClassSpecIntegration::LevelupInitSpellSelection(objHndl handle, Stat 
 	Py_DECREF(args);
 
 }
-;
+
+void PythonClassSpecIntegration::LevelupSpellsFinalize(objHndl handle, Stat classEnum) {
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return;
+
+	auto attachee = PyObjHndl_Create(handle);
+	auto args = Py_BuildValue("(O)", attachee);
+	Py_DECREF(attachee);
+
+	RunScriptDefault0(classSpecEntry->second.id, (EventId)ClassSpecFunc::LevelupSpellsFinalize, args);
+	Py_DECREF(args);
+}
 
 static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 	// class spec fetchers
@@ -243,6 +256,7 @@ static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 	{ ClassSpecFunc::LevelupCheckSpells, "LevelupCheckSpells" },
 	{ ClassSpecFunc::IsSelectingSpellsOnLevelup, "IsSelectingSpellsOnLevelup" },
 	{ ClassSpecFunc::LevelupInitSpellSelection, "InitSpellSelection"},
+	{ ClassSpecFunc::LevelupSpellsFinalize, "LevelupSpellsFinalize" },
 };
 
 const char* PythonClassSpecIntegration::GetFunctionName(EventId evt) {

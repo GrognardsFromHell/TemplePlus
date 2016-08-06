@@ -45,6 +45,7 @@ struct KnownSpellInfo {
 
 class UiCharEditor {
 	friend class UiCharEditorHooks;
+public:
 	objHndl GetEditedChar();
 	CharEditorSelectionPacket & GetCharEditorSelPacket();
 
@@ -66,6 +67,7 @@ class UiCharEditor {
 
 	void SpellsActivate();
 	BOOL SpellsCheckComplete();
+	void SpellsFinalize();
 
 	int &GetState();
 
@@ -88,6 +90,9 @@ class UiCharEditor {
 
 	// logic
 	void ClassSetPermissibles();
+
+	// utilities
+	void SpellsPopulateAvailableEntries(Stat classEnum, int maxSpellLvl, bool skipCantrips = false);
 
 	// widget IDs
 	int classWndId = 0;
@@ -157,35 +162,18 @@ PYBIND11_PLUGIN(tp_char_editor){
 		.def("__repr__", [](const KnownSpellInfo& spInfo)->std::string {
 			return fmt::format("KnownSpellInfo: Enum {}, status {}", spInfo.spEnum, spInfo.spFlag);
 		})
-		.def("__cmp__", [](const KnownSpellInfo& self, const KnownSpellInfo &other)->int
+		.def("__cmp__", [](const KnownSpellInfo& self, const KnownSpellInfo &other)->int // sort comparer
 		{
 			auto first = self.spEnum, second = other.spEnum;
 
-			auto firstIsLabel = (first >= SPELL_ENUM_LABEL_START) && (first < SPELL_ENUM_LABEL_START + 10);
-			auto secondIsLabel = (second >= SPELL_ENUM_LABEL_START) && (second < SPELL_ENUM_LABEL_START + 10);
+			auto firstIsLabel = spellSys.IsLabel(first);
+			auto secondIsLabel = spellSys.IsLabel(second);
 
-			auto firstIsNewSlot = (first >= SPELL_ENUM_NEW_SLOT_START) && (first < SPELL_ENUM_NEW_SLOT_START + 10);
-			auto secondIsNewSlot = (second >= SPELL_ENUM_NEW_SLOT_START) && (second < SPELL_ENUM_NEW_SLOT_START + 10);
+			auto firstIsNewSlot = spellSys.IsNewSlotDesignator(first);
+			auto secondIsNewSlot = spellSys.IsNewSlotDesignator(second);
 
-			auto firstSpellLvl = 0;
-			if (firstIsLabel)
-				firstSpellLvl = first - SPELL_ENUM_LABEL_START;
-			else if (firstIsNewSlot)
-			{
-				firstSpellLvl = first - SPELL_ENUM_NEW_SLOT_START;
-			}
-			else
-				firstSpellLvl = spellSys.GetSpellLevelBySpellClass(first, spellSys.GetSpellClass(self.spellClass) );
-
-			auto secondSpellLvl = 0;
-			if (secondIsLabel)
-				secondSpellLvl = second - SPELL_ENUM_LABEL_START;
-			else if (secondIsNewSlot)
-			{
-				secondSpellLvl = second - SPELL_ENUM_NEW_SLOT_START;
-			}
-			else
-				secondSpellLvl = spellSys.GetSpellLevelBySpellClass(second, spellSys.GetSpellClass(other.spellClass));
+			auto firstSpellLvl = spellSys.GetSpellLevelBySpellClass(first, spellSys.GetSpellClass(self.spellClass) );
+			auto secondSpellLvl = spellSys.GetSpellLevelBySpellClass(second, spellSys.GetSpellClass(other.spellClass));
 
 			if (firstSpellLvl != secondSpellLvl)
 				return firstSpellLvl - secondSpellLvl;
@@ -259,6 +247,10 @@ PYBIND11_PLUGIN(tp_char_editor){
 	{
 		d20ClassSys.LevelupInitSpellSelection(handle, (Stat)classEnum);
 	})
+	.def("spells_finalize", [](objHndl handle, int classEnum)
+	{
+		d20ClassSys.LevelupSpellsFinalize(handle, (Stat)classEnum);
+	})
 	.def("get_max_spell_level", [](const objHndl & handle, int classEnum, int characterLvl)
 	{
 		return spellSys.GetMaxSpellLevel(handle, (Stat)classEnum, characterLvl);
@@ -267,7 +259,7 @@ PYBIND11_PLUGIN(tp_char_editor){
 	{ // get all spells belonging to the classEnum
 		auto knownSpells = std::vector<KnownSpellInfo>();
 		knownSpells.reserve(SPELL_ENUM_MAX_EXPANDED);
-		int _knownSpells[3999] = { 0, };
+		int _knownSpells[SPELL_ENUM_MAX_EXPANDED] = { 0, };
 		int numKnown = critterSys.GetSpellEnumsKnownByClass(handle, spellSys.GetSpellClass(classEnum), &_knownSpells[0], SPELL_ENUM_MAX_EXPANDED);
 		for (int i = 0; i < numKnown; i++) {
 			knownSpells.push_back(KnownSpellInfo(_knownSpells[i], 0, classEnum));
@@ -278,7 +270,11 @@ PYBIND11_PLUGIN(tp_char_editor){
 		auto spellClass = spellSys.GetSpellClass(classEnum);
 		return spellSys.GetSpellLevelBySpellClass(spEnum, spellClass);
 	})
-	;
+	.def("populate_available_spells", [](int classEnum, int maxSpellLvl, bool skipCantrips)
+	{
+		uiCharEditor.SpellsPopulateAvailableEntries((Stat)classEnum, maxSpellLvl, skipCantrips);
+	}, py::arg("class_enum"), py::arg("max_spell_level"), py::arg("skip_cantrips") = false);
+
 
 	py::class_<CharEditorSelectionPacket>(mm, "CharEdSpecs", "Holds the character editing specs.")
 		.def_readwrite("class_code", &CharEditorSelectionPacket::classCode, "Chosen class")
@@ -562,18 +558,18 @@ BOOL UiCharEditor::ClassSystemInit(GameSystemConf &conf){
 	return ClassWidgetsInit();
 }
 
-void UiCharEditor::SpellsActivate(){
+void UiCharEditor::SpellsActivate() {
 	auto handle = GetEditedChar();
 	auto obj = gameSystems->GetObj().GetObject(handle);
 	auto &selPkt = GetCharEditorSelPacket();
 
-	
+
 
 	// get the new caster level for the levelled class (1 indicates a newly taken class)
 	auto casterLvlNew = 1;
 	auto classLeveled = selPkt.classCode;
 	auto lvls = obj->GetInt32Array(obj_f_critter_level_idx);
-	for (auto i = 0u; i < lvls.GetSize(); i++){
+	for (auto i = 0u; i < lvls.GetSize(); i++) {
 		auto classCode = static_cast<Stat>(lvls[i]);
 		if (classLeveled == classCode) // is the same the one being levelled
 			casterLvlNew++;
@@ -608,13 +604,22 @@ void UiCharEditor::SpellsActivate(){
 
 	d20ClassSys.LevelupInitSpellSelection(handle, selPkt.classCode);
 
-	auto isNewClass = casterLvlNew == 1; // todo: generalize for PrC's
+	// convert the "New Spell Slot" enums to vacant enums (they were just used for sorting)
+	for (auto i = 0u; i < selPkt.spellEnumsAddedCount; i++) {
+		if (selPkt.spellEnums[i] >= SPELL_ENUM_NEW_SLOT_START && selPkt.spellEnums[i] < SPELL_ENUM_NEW_SLOT_START + 10) {
+			selPkt.spellEnums[i] = 802;
+			spellFlags[i] = 3;
+		}
+	}
 
+	// legacy code
+	//auto isNewClass = casterLvlNew == 1; // todo: generalize for PrC's
+	//
 	// newly taken class
-	if (isNewClass){
-		
+	//if (isNewClass){
+		//
 		// let natural casters choose 4 cantrips (Now done via Python API)
-		auto count = 0;
+		//auto count = 0;
 		//if (classLeveled == stat_level_bard || classLeveled == stat_level_sorcerer ){
 		//	selPkt.spellEnums[count++] = 803; // Spell Level 0 label
 		//	for (int i = 1; i < 5; i++)	{
@@ -624,7 +629,7 @@ void UiCharEditor::SpellsActivate(){
 		//		
 		//	selPkt.spellEnumsAddedCount = count;
 		//}
-		
+		//
 		//// add 2 level 1 spells for wiz/sorc (Now done via Python API)
 		//if (classLeveled == stat_level_wizard || classLeveled == stat_level_sorcerer){
 		//	selPkt.spellEnums[count++] = 804; // Spell Level 1 label
@@ -634,7 +639,7 @@ void UiCharEditor::SpellsActivate(){
 		//	}
 		//	selPkt.spellEnumsAddedCount = count;
 		//}
-
+		//
 		//// bonus spells for wizards (now done via Python API)
 		//if (classLeveled == stat_level_wizard){
 		//	auto intScore = objects.StatLevelGet(handle, stat_intelligence);
@@ -647,10 +652,10 @@ void UiCharEditor::SpellsActivate(){
 		//	}
 		//	selPkt.spellEnumsAddedCount = count;
 		//}
-	} 
-	
+	//} 
+	//
 	// progressing with a class    todo: generalize for PrC's
-	else{
+	//else{
 		//// 2 new spells for Vancians (Now done via Python API)
 		//if (d20ClassSys.IsVancianCastingClass(classLeveled, handle) ){
 		//	for (int i = 0; i < 2; i++) {
@@ -658,13 +663,13 @@ void UiCharEditor::SpellsActivate(){
 		//		spellFlags[selPkt.spellEnumsAddedCount++] = 3;
 		//	}
 		//}
-
+		//
 		// innate casters - show all known spells and add slots as necessary
-		if (d20ClassSys.IsNaturalCastingClass(classLeveled, handle)){
-
-			
-			std::vector<KnownSpellInfo> knownSpells;
-			knownSpells.reserve(SPELL_ENUM_MAX_EXPANDED);
+		//if (d20ClassSys.IsNaturalCastingClass(classLeveled, handle)){
+			//
+			//	
+			//std::vector<KnownSpellInfo> knownSpells;
+			//knownSpells.reserve(SPELL_ENUM_MAX_EXPANDED);
 			//// get all known spells for innate casters
 			//int _knownSpells[3999] = {0,};
 			//int numKnown = critterSys.GetSpellEnumsKnownByClass(handle, spellSys.GetSpellClass(classLeveled), &_knownSpells[0], SPELL_ENUM_MAX_EXPANDED);
@@ -672,22 +677,22 @@ void UiCharEditor::SpellsActivate(){
 			//	knownSpells.push_back(KnownSpellInfo( _knownSpells[i],0 ));
 			//}
 			//selPkt.spellEnumsAddedCount = numKnown;
-
-			
-			
-			auto maxSpellLvl = spellSys.GetMaxSpellLevel(handle, classLeveled , casterLvlNew);
+			//
+			//
+			//
+			//auto maxSpellLvl = spellSys.GetMaxSpellLevel(handle, classLeveled , casterLvlNew);
 			// get max spell level
-			/*auto maxSpellLvl = casterLvlNew / 2;
-			if (classLeveled == stat_level_bard) {
-				maxSpellLvl = (casterLvlNew - 1) / 3 + 1;
-			}*/
-
+			//auto maxSpellLvl = casterLvlNew / 2;
+			//if (classLeveled == stat_level_bard) {
+			//	maxSpellLvl = (casterLvlNew - 1) / 3 + 1;
+			//}
+			//
 			// add labels
 			//for (int spellLvl = 0u; spellLvl <= maxSpellLvl; spellLvl++) {
 			//	//selPkt.spellEnums[selPkt.spellEnumsAddedCount++] = SPELL_ENUM_LABEL_START + spellLvl;
 			//	knownSpells.push_back(KnownSpellInfo(SPELL_ENUM_LABEL_START + spellLvl, 0));
 			//}
-			
+			//
 			//for (auto spellLvl = 0; spellLvl <= maxSpellLvl; spellLvl++)	{
 			//	
 			//	int numNewSpellsForLevel = 
@@ -699,89 +704,73 @@ void UiCharEditor::SpellsActivate(){
 			//	}
 			//}
 			//auto spellClass = spellSys.GetSpellClass(classLeveled);
-			for (auto i = 0; i < selPkt.spellEnumsAddedCount; i++){
-				knownSpells.push_back(KnownSpellInfo(selPkt.spellEnums[i], spellFlags[i]));
-			}
-
-			//std::sort(knownSpells.begin(), knownSpells.end(), [spellClass,handle](KnownSpellInfo &ksiFirst, KnownSpellInfo &ksiSecond){
-			//	auto first = ksiFirst.spEnum, second = ksiSecond.spEnum;
-
-			//	auto firstIsLabel = (first >= SPELL_ENUM_LABEL_START) && (first < SPELL_ENUM_LABEL_START + 10);
-			//	auto secondIsLabel = (second >= SPELL_ENUM_LABEL_START) && (second < SPELL_ENUM_LABEL_START + 10);
-
-			//	auto firstIsNewSlot = (first >= SPELL_ENUM_NEW_SLOT_START) && (first < SPELL_ENUM_NEW_SLOT_START + 10);
-			//	auto secondIsNewSlot = (second >= SPELL_ENUM_NEW_SLOT_START) && (second < SPELL_ENUM_NEW_SLOT_START + 10);
-
-			//	auto firstSpellLvl = 0;
-			//	if (firstIsLabel)
-			//		firstSpellLvl = first - SPELL_ENUM_LABEL_START;
-			//	else if (firstIsNewSlot)
-			//	{
-			//		firstSpellLvl = first - SPELL_ENUM_NEW_SLOT_START;
-			//	}
-			//	else
-			//		firstSpellLvl = spellSys.GetSpellLevelBySpellClass(first, spellClass ,handle);
-
-			//	auto secondSpellLvl = 0;
-			//	if (secondIsLabel)
-			//		secondSpellLvl = second - SPELL_ENUM_LABEL_START;
-			//	else if (secondIsNewSlot)
-			//	{
-			//		secondSpellLvl = second - SPELL_ENUM_NEW_SLOT_START;
-			//	}
-			//	else
-			//		secondSpellLvl = spellSys.GetSpellLevelBySpellClass(second, spellClass ,handle);
-
+			//for (auto i = 0; i < selPkt.spellEnumsAddedCount; i++){
+			//	knownSpells.push_back(KnownSpellInfo(selPkt.spellEnums[i], spellFlags[i]));
+			//}
+			//
+			//std::sort(knownSpells.begin(), knownSpells.end(), [spellClass](KnownSpellInfo &firstEntry, KnownSpellInfo &secondEntry){
+			//	auto first = firstEntry.spEnum, second = secondEntry.spEnum;
+			//
+			//auto firstIsLabel = spellSys.IsLabel(first);
+			//auto secondIsLabel = spellSys.IsLabel(second);
+			//
+			//auto firstIsNewSlot = spellSys.IsNewSlotDesignator(first);
+			//auto secondIsNewSlot = spellSys.IsNewSlotDesignator(second);
+			//
+			//auto firstSpellLvl = spellSys.GetSpellLevelBySpellClass(first, spellClass);
+			//auto secondSpellLvl = spellSys.GetSpellLevelBySpellClass(second, spellClass);
+			//
+			//
 			//	if (firstSpellLvl != secondSpellLvl)
 			//		return firstSpellLvl < secondSpellLvl;
-
+			//
 			//	// if they are the same level
-
+			//
 			//	if (firstIsLabel){
 			//		return !secondIsLabel;
 			//	}
 			//	if (secondIsLabel)
 			//		return false;
-
+			//
 			//	if (firstIsNewSlot){
 			//		return false;
 			//	}
-
+			//
 			//	if (secondIsNewSlot){
 			//		return true;
 			//	}
 			//		
-
+			//
 			//	auto name1 = spellSys.GetSpellName(first);
 			//	auto name2 = spellSys.GetSpellName(second);
 			//	auto nameCmp = _strcmpi(name1, name2);
 			//	return nameCmp < 0;
-
+			//
 			//	//return _stricmp(spellSys.GetSpellMesline(second), spellSys.GetSpellMesline(first) );
-
+			//
 			//});
-
+			//
 			// convert the "New Spell Slot" enums to vacant enums (they were just used for sorting)
-			for (auto i = 0u; i < knownSpells.size(); i++) {
-				if (knownSpells[i].spEnum >= SPELL_ENUM_NEW_SLOT_START && knownSpells[i].spEnum  < SPELL_ENUM_NEW_SLOT_START + 10){
-					knownSpells[i].spEnum = 802;
-					knownSpells[i].spFlag = 3;
-				}
-			}
-
+			//for (auto i = 0u; i < knownSpells.size(); i++) {
+			//	if (knownSpells[i].spEnum >= SPELL_ENUM_NEW_SLOT_START && knownSpells[i].spEnum  < SPELL_ENUM_NEW_SLOT_START + 10){
+			//		knownSpells[i].spEnum = 802;
+			//		knownSpells[i].spFlag = 3;
+			//	}
+			//}
+			//
 			// mark old replaceable spells for sorc lvls 4,6,8,... and bards 5,8,11,... 
-			
+			//
 			//bool isReplacingSpells = false;
-			/*if (classLeveled == stat_level_bard){
-				if (casterLvlNew >= 5 
-					&& !((casterLvlNew -5) % 3) )
-					isReplacingSpells = true;
-			}
-			if (classLeveled == stat_level_sorcerer){
-				if (casterLvlNew >= 4 && !(casterLvlNew % 2)){
-					isReplacingSpells = true;
-				}
-			}*/
+			//if (classLeveled == stat_level_bard){
+			//	if (casterLvlNew >= 5 
+			//		&& !((casterLvlNew -5) % 3) )
+			//		isReplacingSpells = true;
+			//}
+			//if (classLeveled == stat_level_sorcerer){
+			//	if (casterLvlNew >= 4 && !(casterLvlNew % 2)){
+			//		isReplacingSpells = true;
+			//	}
+			//}
 			//if (isReplacingSpells){
 			//	auto spLvlReplaceable = maxSpellLvl - 2;
 			//	for (auto i = 0u; i < knownSpells.size(); i++){
@@ -798,20 +787,20 @@ void UiCharEditor::SpellsActivate(){
 			//		}
 			//	}
 			//}
-
-			selPkt.spellEnumsAddedCount = min(802u, knownSpells.size());
-			for (auto i = 0u; i < knownSpells.size(); i++) {
-				selPkt.spellEnums[i] = knownSpells[i].spEnum;
-				spellFlags[i] = knownSpells[i].spFlag;
-			}
-
-		}
-
-
-	}
+			//
+			//selPkt.spellEnumsAddedCount = min(802u, knownSpells.size());
+			//for (auto i = 0u; i < knownSpells.size(); i++) {
+			//	selPkt.spellEnums[i] = knownSpells[i].spEnum;
+			//	spellFlags[i] = knownSpells[i].spFlag;
+			//}
+		//
+		//}
+	//
+	//
+	//}
 
 	// populate entries
-	temple::GetRef<void(__cdecl)()>(0x101A7390)(); // CharEditorLearnableSpellEntriesListPopulate
+	//temple::GetRef<void(__cdecl)()>(0x101A7390)(); // CharEditorLearnableSpellEntriesListPopulate (now done via Python API)
 	temple::GetRef<void(__cdecl)()>(0x101A5F30)(); // CharEditorSpellCountBoxesUpdate
 
 	setScrollbars();
@@ -819,9 +808,6 @@ void UiCharEditor::SpellsActivate(){
 }
 
 BOOL UiCharEditor::SpellsCheckComplete(){
-
-	
-
 	auto selPkt = GetCharEditorSelPacket();
 	auto handle = GetEditedChar();
 	if (!d20ClassSys.IsSelectingSpellsOnLevelup(handle, selPkt.classCode))
@@ -834,6 +820,13 @@ BOOL UiCharEditor::SpellsCheckComplete(){
 
 	return d20ClassSys.LevelupSpellsCheckComplete(GetEditedChar(), selPkt.classCode, selPkt.spellEnums, selPkt.spellEnumsAddedCount);
 
+}
+
+void UiCharEditor::SpellsFinalize(){
+	auto charEdited = GetEditedChar();
+	auto &selPkt = GetCharEditorSelPacket();
+
+	d20ClassSys.LevelupSpellsFinalize(charEdited, selPkt.classCode);
 }
 
 int &UiCharEditor::GetState(){
@@ -1099,6 +1092,87 @@ void UiCharEditor::ClassSetPermissibles(){
 		ui.ButtonSetButtonState(classNextBtn, UBS_NORMAL);
 	else
 		ui.ButtonSetButtonState(classNextBtn, UBS_DISABLED);
+}
+
+void UiCharEditor::SpellsPopulateAvailableEntries(Stat classEnum, int maxSpellLvl, bool skipCantrips){
+	auto charEdited = GetEditedChar();
+	auto spellClass = spellSys.GetSpellClass(classEnum);
+
+	// get available spell entries
+	std::vector<SpellEntry> spEntries;
+	spEntries.reserve(SPELL_ENUM_MAX_EXPANDED);
+	SpellEntry _spEntries[SPELL_ENUM_MAX]; memset(_spEntries, 0, sizeof _spEntries);
+	//auto spellRegistryCopyAllLearnablesByClass = temple::GetRef<int(__cdecl)(objHndl, Stat, SpellEntry*, int)>(0x1007B210);
+	//auto numSpells = spellRegistryCopyAllLearnablesByClass(charEdited, (Stat)classEnum, _spEntries, SPELL_ENUM_MAX_EXPANDED);
+	/*for (auto i = 0u; i < numSpells; i++) {
+		spEntries.push_back(_spEntries[i]);
+	}*/
+	auto numSpells = spellSys.CopyLearnableSpells(charEdited, spellClass, spEntries );
+	
+	
+	
+	// add labels
+	for (auto i = 0; i <= maxSpellLvl; i++ ){
+		SpellEntry spEntryTemp;
+		spEntryTemp.spellEnum = SPELL_ENUM_LABEL_START + i;
+		spEntries.push_back(spEntryTemp);
+	}
+
+	// cull too high level spells, domain spells and (optionally) cantrips
+	for (auto i = 0; i < spEntries.size(); /* do not increment here! */ ){
+		auto shouldCull = false;
+
+		auto &spEnt = spEntries[i];
+		
+		auto spLvl = spellSys.GetSpellLevelBySpellClass(spEnt.spellEnum, spellClass);
+		if (spLvl < 0 || spLvl > maxSpellLvl 
+			|| (spLvl == 0 && skipCantrips))
+			shouldCull = true;
+		
+		if (shouldCull)
+			spEntries.erase(spEntries.begin()+i);
+		else
+			i++;
+	}
+
+	std::sort(spEntries.begin(), spEntries.end(), [spellClass](SpellEntry &firstEntry, SpellEntry &secondEntry){
+		auto first = firstEntry.spellEnum, second = secondEntry.spellEnum;
+	
+	auto firstIsLabel = spellSys.IsLabel(first);	auto secondIsLabel = spellSys.IsLabel(second);
+	
+	auto firstIsNewSlot = spellSys.IsNewSlotDesignator(first);	auto secondIsNewSlot = spellSys.IsNewSlotDesignator(second);
+	
+	auto firstSpellLvl = spellSys.GetSpellLevelBySpellClass(first, spellClass);
+	auto secondSpellLvl = spellSys.GetSpellLevelBySpellClass(second, spellClass);
+	
+	
+		if (firstSpellLvl != secondSpellLvl)
+			return firstSpellLvl < secondSpellLvl;
+	
+		// if they are the same level
+	
+		if (firstIsLabel){
+			return !secondIsLabel;
+		}
+		if (secondIsLabel)
+			return false;
+	
+		if (firstIsNewSlot)
+			return false;
+		
+		if (secondIsNewSlot)
+			return true;
+					
+		auto name1 = spellSys.GetSpellName(first);	auto name2 = spellSys.GetSpellName(second);
+		return _strcmpi(name1, name2) < 0;
+	});
+
+	numSpells = min(SPELL_ENUM_MAX, spEntries.size());
+	// copy to CharEditorSpellsAvailableEntries
+	memcpy(temple::GetRef<SpellEntry[]>(0x10C4D550), &spEntries[0], sizeof(SpellEntry)*numSpells );
+
+	// set charEditorSpellsNumEntries
+	temple::GetRef<int>(0x10C75A60) = numSpells;
 }
 
 class UiCharEditorHooks : public TempleFix {

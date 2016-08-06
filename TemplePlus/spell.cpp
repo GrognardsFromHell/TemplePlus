@@ -414,6 +414,23 @@ uint32_t LegacySpellSystem::spellRegistryCopy(uint32_t spellEnum, SpellEntry* sp
 	return spellEntryRegistry.copy(spellEnum, spellEntry);
 }
 
+int LegacySpellSystem::CopyLearnableSpells(objHndl& handle, int spellClass, std::vector<SpellEntry> &entries)
+{
+	auto &getterNum = temple::GetRef<int>(0x10AAF20C);
+	getterNum = 0;
+	auto &itHandle = temple::GetRef<objHndl>(0x10AAF2B0);
+	itHandle = handle;
+
+	for (auto it : spellEntryRegistry) {
+		auto spEntry = it.data;
+		if (GetSpellLevelBySpellClass(spEntry->spellEnum, spellClass) >= 0)	{
+			entries.push_back(*spEntry);
+		}
+	}
+
+	return entries.size();
+}
+
 uint32_t LegacySpellSystem::ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPktBody)
 {
 	return addresses.ConfigSpellTargetting(pickerArgs, spellPktBody);
@@ -1528,7 +1545,28 @@ bool LegacySpellSystem::IsSpellLike(int spellEnum){
 		&& spellEnum <= SPELL_LIKE_ABILITY_RANGE);
 }
 
+bool LegacySpellSystem::IsLabel(int spellEnum){
+	if (spellEnum >= SPELL_ENUM_LABEL_START
+		&& spellEnum < SPELL_ENUM_LABEL_START + NUM_SPELL_LEVELS)
+		return true;
+	return false;
+}
+
+bool LegacySpellSystem::IsNewSlotDesignator(int spellEnum)
+{
+	if (spellEnum >= SPELL_ENUM_NEW_SLOT_START
+		&& spellEnum < SPELL_ENUM_NEW_SLOT_START + NUM_SPELL_LEVELS)
+		return true;
+	return false;
+}
+
 int LegacySpellSystem::GetSpellLevelBySpellClass(int spellEnum, int spellClass, objHndl handle){
+
+	if (IsLabel(spellEnum))
+		return spellEnum - SPELL_ENUM_LABEL_START;
+	if (IsNewSlotDesignator(spellEnum))
+		return spellEnum - SPELL_ENUM_NEW_SLOT_START;
+
 	SpellEntry spEntry(spellEnum);
 	for (auto i = 0u; i < spEntry.spellLvlsNum; i++){
 		if (spEntry.spellLvls[i].classCode == spellClass)
@@ -1536,6 +1574,7 @@ int LegacySpellSystem::GetSpellLevelBySpellClass(int spellEnum, int spellClass, 
 	}
 
 	//todo add PrC support
+	// (for Assassin/Blackguard etc who should have their own unique tables)
 	return -1;
 }
 

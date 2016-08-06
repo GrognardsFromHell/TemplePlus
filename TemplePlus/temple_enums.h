@@ -1721,6 +1721,27 @@ enum D20DispatcherKey : uint32_t {
 	DK_QUE_Quivering_Palm_Can_Perform = 0x147,
 	DK_QUE_Trip_AOO = 0x148,
 
+
+	DK_LVL_Stats_Activate = 100,
+	DK_LVL_Stats_Check_Complete = 101,
+	DK_LVL_Stats_Finalize = 102,
+
+	DK_LVL_Features_Activate = 200,
+	DK_LVL_Features_Check_Complete = 201,
+	DK_LVL_Features_Finalize = 202,
+
+	DK_LVL_Skills_Activate = 300,
+	DK_LVL_Skills_Check_Complete = 301,
+	DK_LVL_Skills_Finalize = 302,
+
+	DK_LVL_Feats_Activate = 400,
+	DK_LVL_Feats_Check_Complete = 401,
+	DK_LVL_Feats_Finalize = 402,
+
+	DK_LVL_Spells_Activate = 500,
+	DK_LVL_Spells_Check_Complete = 501,
+	DK_LVL_Spells_Finalize = 502,
+
 	DK_SPELL_Base_Caster_Level = 0x1000
 };
 
@@ -1857,7 +1878,7 @@ enum enum_disp_type : uint32_t {
 	dispTypePythonUnused9, // for expansion
 	dispTypeSpellListExtension, // NEW! used for extending spell-casting classes by other classes (as with Prestige Classes)
 	dispTypeGetBaseCasterLevel,
-	dispTypeInitLevelupSpellSelection,
+	dispTypeLevelupSystemEvent,
 	dispTypeCount // used just for size definition purposes
 
 

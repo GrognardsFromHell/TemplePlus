@@ -161,6 +161,7 @@ struct LegacySpellSystem : temple::AddressTable
 	void Init(const GameSystemConf& conf);
 
 	uint32_t spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry);
+	int CopyLearnableSpells(objHndl & handle, int spellClass, std::vector<SpellEntry> & entries);
 	uint32_t ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
 	int GetMaxSpellLevel(objHndl objHnd, Stat classCode, int characterLvl);
 	int ParseSpellSpecString(SpellStoreData* spell, char* spellString);
@@ -195,7 +196,9 @@ struct LegacySpellSystem : temple::AddressTable
 	bool IsArcaneSpellClass(uint32_t spellClass);
 
 	static bool IsSpellLike(int spellEnum); // checks if the spell is in the Spell Like Ability range
-	int GetSpellLevelBySpellClass(int spellEnum, int spellClass, objHndl handle = objHndl::null);
+	static bool IsLabel(int spellEnum); // check if it is a hardcoded "label" enum (used in the GUI etc)
+	static bool IsNewSlotDesignator(int spellEnum); // check if it is a  hardcoded "new slot" designator (used for sorting)  enums 1605-1614
+	int GetSpellLevelBySpellClass(int spellEnum, int spellClass, objHndl handle = objHndl::null); // returns -1 if not available for spell class
 
 
 	uint32_t pickerArgsFromSpellEntry(SpellEntry * spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLevel);

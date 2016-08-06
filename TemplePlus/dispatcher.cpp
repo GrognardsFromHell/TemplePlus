@@ -615,7 +615,7 @@ int DispatcherSystem::DispatchGetBaseCasterLevel(objHndl handle, Stat casterClas
 	return evtObj.bonlist.GetEffectiveBonusSum();
 }
 
-int DispatcherSystem::DispatchLevelupInitSpellSelection(objHndl handle, Stat casterClass)
+int DispatcherSystem::DispatchLevelupSystemEvent(objHndl handle, Stat casterClass, D20DispatcherKey evtType)
 {
 	auto objDispatcher = gameSystems->GetObj().GetObject(handle)->GetDispatcher();
 	if (!objDispatcher->IsValid())
@@ -624,8 +624,19 @@ int DispatcherSystem::DispatchLevelupInitSpellSelection(objHndl handle, Stat cas
 	EvtObjSpellCaster evtObj;
 	evtObj.handle = handle;
 	evtObj.arg0 = casterClass;
-	DispatcherProcessor(objDispatcher, dispTypeInitLevelupSpellSelection, DK_NONE, &evtObj);
-	return 0;
+	DispatcherProcessor(objDispatcher, dispTypeLevelupSystemEvent, evtType, &evtObj);
+	return evtObj.bonlist.GetEffectiveBonusSum();
+}
+
+void DispatcherSystem::DispatchLevelupSpellsFinalize(objHndl handle, Stat casterClass){
+	auto objDispatcher = gameSystems->GetObj().GetObject(handle)->GetDispatcher();
+	if (!objDispatcher->IsValid())
+		return;
+
+	EvtObjSpellCaster evtObj;
+	evtObj.handle = handle;
+	evtObj.arg0 = casterClass;
+	DispatcherProcessor(objDispatcher, dispTypeLevelupSystemEvent, DK_NONE, &evtObj);
 }
 
 int DispatcherSystem::Dispatch45SpellResistanceMod(objHndl handle, DispIOBonusListAndSpellEntry* dispIo)
