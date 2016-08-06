@@ -226,6 +226,7 @@ struct GameObjectBody {
 	void SetDispatcher(Dispatcher *dispatcher) {
 		SetInt32(obj_f_dispatcher, reinterpret_cast<uint32_t>(dispatcher));
 	}
+
 #pragma endregion
 
 #pragma region NPC Field Getters and Setters

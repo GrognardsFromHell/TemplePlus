@@ -20,7 +20,7 @@ enum class StatType {
 	Race = 8,
 	Load = 9,
 	SavingThrows = 10,
-	// Unknown = 11
+	SpellCasting = 11, // (originally missing, this was probably related to the stat_caster_level etc stats)
 	Other = 12
 };
 
@@ -36,8 +36,9 @@ public:
 	const char* GetClassShortDesc(Stat stat) const;
 	const char* GetCannotPickClassHelp(Stat stat) const;
 
-	int GetValue(const objHndl &handle, Stat stat) const;
+	int GetValue(const objHndl &handle, Stat stat, int statArg = -1) const;
 	int GetLevelStat(const objHndl &handle, Stat stat) const;
+	int GetSpellCastingStat(const objHndl &handle, Stat stat, int statArg) const;
 	int GetBaseAttackBonus(const objHndl &handle, Stat classLeveled) const;
 
 private:

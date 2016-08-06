@@ -254,6 +254,7 @@ struct Objects : temple::AddressTable {
 	bool IsStatic(objHndl handle);
 
 	int StatLevelGet(objHndl obj, Stat stat);
+	int StatLevelGet(objHndl obj, Stat stat, int statArg);  // WIP currently just handles stat_caster_level expansion
 	int StatLevelGetBase(objHndl obj, Stat stat);
 	int StatLevelSetBase(objHndl obj, Stat stat, int value);
 #pragma endregion

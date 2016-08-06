@@ -1857,6 +1857,7 @@ enum enum_disp_type : uint32_t {
 	dispTypePythonUnused9, // for expansion
 	dispTypeSpellListExtension, // NEW! used for extending spell-casting classes by other classes (as with Prestige Classes)
 	dispTypeGetBaseCasterLevel,
+	dispTypeInitLevelupSpellSelection,
 	dispTypeCount // used just for size definition purposes
 
 
@@ -2133,16 +2134,18 @@ enum Stat : uint32_t {
 	stat_caster_level_paladin = 0x118,
 	stat_caster_level_ranger = 0x119,
 	stat_caster_level_rogue = 0x11A,
-	stat_caster_level_sorcerer = 0x11B,
-	stat_caster_level_wizard = 0x11C,
+	stat_caster_level_sorcerer = 283,
+	stat_caster_level_wizard = 284,
 	
-	stat_subrace = 0x11D,
+	stat_subrace = 285,
 
 	
-	stat_melee_attack_bonus = 0x11E,
-	stat_ranged_attack_bonus = 0x11F,
+	stat_melee_attack_bonus = 286,
+	stat_ranged_attack_bonus = 287,
 
-		_stat_count // for internal use
+	stat_spell_list_level = 288, // NEW! used for getting the extended spell lists (modified by PrC's and such)
+
+	_stat_count // for internal use
 };
 
 enum NpcFlag : uint32_t

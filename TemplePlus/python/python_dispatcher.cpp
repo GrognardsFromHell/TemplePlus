@@ -615,6 +615,7 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 
 	case dispTypeSpellListExtension:
 	case dispTypeGetBaseCasterLevel:
+	case dispTypeInitLevelupSpellSelection:
 		pbEvtObj = py::cast(static_cast<EvtObjSpellCaster*>(args.dispIO));
 		break;
 

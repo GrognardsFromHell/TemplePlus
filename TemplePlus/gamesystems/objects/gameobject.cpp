@@ -835,6 +835,7 @@ void GameObjectBody::SetLocation(locXY location)
 	SetInt64(obj_f_location, location);
 }
 
+
 void GameObjectBody::ForEachChild(std::function<void(objHndl item)> callback) const
 {
 	obj_f countField, indexField;

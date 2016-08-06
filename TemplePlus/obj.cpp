@@ -17,7 +17,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include "util/fixes.h"
-
+#include <gamesystems/d20/d20stats.h>
 #include "python/python_integration_obj.h"
 #include <set>
 
@@ -698,6 +698,11 @@ int Objects::StatLevelGet(objHndl obj, Stat stat)
 {
 	return _StatLevelGet(obj, stat);
 		}
+
+int Objects::StatLevelGet(objHndl obj, Stat stat, int statArg) 
+{  // WIP currently just handles stat_caster_level expansion
+	return d20Stats.GetValue(obj, stat, statArg);
+}
 
 int Objects::StatLevelGetBase(objHndl obj, Stat stat)
 {

@@ -3041,6 +3041,28 @@ spell_mass_hold_monster = 585
 spell_polar_ray = 586
 spell_undeath_to_death = 587
 spell_mass_hold_person = 588
+spell_vacant = 802
+spell_label_level_0 = 803
+spell_label_level_1 = 804
+spell_label_level_2 = 805
+spell_label_level_3 = 806
+spell_label_level_4 = 807
+spell_label_level_5 = 808
+spell_label_level_6 = 809
+spell_label_level_7 = 810
+spell_label_level_8 = 811
+spell_label_level_9 = 812
+spell_new_slot_lvl_0 = 1605
+spell_new_slot_lvl_1 = 1606
+spell_new_slot_lvl_2 = 1607
+spell_new_slot_lvl_3 = 1608
+spell_new_slot_lvl_4 = 1609
+spell_new_slot_lvl_5 = 1610
+spell_new_slot_lvl_6 = 1611
+spell_new_slot_lvl_7 = 1612
+spell_new_slot_lvl_8 = 1613
+spell_new_slot_lvl_9 = 1614
+
 
 stat_strength = 0
 stat_dexterity = 1
@@ -3136,6 +3158,7 @@ stat_caster_level_wizard = 284
 stat_subrace = 285
 stat_melee_attack_bonus = 286
 stat_ranged_attack_bonus = 287
+stat_spell_list_level = 288 # new - used for getting the effective level for taking the relevant spells per day / spell known entry
 
 base_attack_bonus_type_martial = 0
 base_attack_bonus_type_semi_martial = 1
@@ -3257,6 +3280,7 @@ ET_OnPythonReserved8 = 86
 ET_OnPythonReserved9 = 87
 ET_OnSpellListExtensionGet = 88
 ET_OnGetBaseCasterLevel = 89
+ET_OnInitLevelupSpellSelection = 90
 # Event Keys
 
 EK_NONE = 0x0

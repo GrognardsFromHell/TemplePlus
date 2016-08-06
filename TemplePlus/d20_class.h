@@ -148,8 +148,11 @@ public:
 	BOOL IsClassSkill(SkillEnum skillEnum, Stat classCode);
 
 	// Levelup
-	bool LevelupSpellsCheckComplete(objHndl handle, Stat classEnum, int * spellEnums, int spellsAddedCount);
 	bool IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum);
+	void LevelupInitSpellSelection(objHndl handle, Stat classEnum);
+	bool LevelupSpellsCheckComplete(objHndl handle, Stat classEnum, int * spellEnums, int spellsAddedCount);
+	
+	
 protected:
 	std::map<int, D20ClassSpec> classSpecs;
 };

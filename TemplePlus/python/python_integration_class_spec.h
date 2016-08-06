@@ -28,7 +28,8 @@ enum class ClassSpecFunc : int {
 
 	// levelup callbacks
 	LevelupCheckSpells,
-	IsSelectingSpellsOnLevelup
+	IsSelectingSpellsOnLevelup,
+	LevelupInitSpellSelection,
 };
 
 
@@ -58,6 +59,7 @@ public:
 
 	// levelup
 	bool IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum);
+	void LevelupInitSpellSelection(objHndl handle, Stat classEnum);
 	bool LevelupSpellsCheckComplete(objHndl handle, Stat classEnum, int * spellEnums, int spellsAddedCount);
 
 protected:

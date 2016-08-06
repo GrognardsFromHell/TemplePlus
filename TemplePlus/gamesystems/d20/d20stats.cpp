@@ -32,8 +32,12 @@ class D20StatsHooks : public TempleFix{
 			return d20Stats.GetLevelStat(handle, stat);
 		});
 
+		// StatLevelGet
 		static int(__cdecl*orgGetLevel)(objHndl, Stat)  = replaceFunction<int(objHndl, Stat)>(0x10074800, [](objHndl handle, Stat stat)->int {
-			if (d20Stats.GetType(stat) == StatType::Level)
+			auto statType = d20Stats.GetType(stat);
+			if (statType== StatType::Level )
+				return d20Stats.GetValue(handle, stat);
+			if (statType == StatType::SpellCasting)
 				return d20Stats.GetValue(handle, stat);
 			else
 				return orgGetLevel(handle, stat);
@@ -96,7 +100,7 @@ const char* D20StatsSystem::GetCannotPickClassHelp(Stat stat) const{
 	return line.value;
 }
 
-int D20StatsSystem::GetValue(const objHndl & handle, Stat stat) const
+int D20StatsSystem::GetValue(const objHndl & handle, Stat stat, int statArg) const
 {
 	switch (GetType(stat)){
 	case StatType::Abilities:
@@ -105,6 +109,8 @@ int D20StatsSystem::GetValue(const objHndl & handle, Stat stat) const
 		return GetLevelStat(handle, stat);
 	case StatType::Money:
 		return objects.StatLevelGetBase(handle, stat);
+	case StatType::SpellCasting:
+		return GetSpellCastingStat(handle, stat, statArg);
 	case StatType::HitPoints:
 		// todo!
 	case StatType::Combat:
@@ -148,6 +154,22 @@ int D20StatsSystem::GetLevelStat(const objHndl &handle, Stat stat) const
 		}
 	}
 	return result;
+}
+
+int D20StatsSystem::GetSpellCastingStat(const objHndl & handle, Stat stat, int statArg) const
+{
+	if (stat == stat_caster_level && statArg != -1){
+		return critterSys.GetCasterLevelForClass(handle, (Stat)statArg);
+	}
+	else if (stat>= stat_caster_level_barbarian 
+		&& stat <= stat_caster_level_wizard)
+	{
+		return critterSys.GetCasterLevelForClass(handle, stat);
+	}
+	else if (stat == stat_spell_list_level && statArg != -1){
+		return objects.StatLevelGet(handle, (Stat)statArg) + critterSys.GetSpellListLevelExtension(handle, (Stat)statArg);
+	}
+	return 0;
 }
 
 int D20StatsSystem::GetBaseAttackBonus(const objHndl & handle, Stat classLeveled) const
@@ -301,23 +323,27 @@ StatType D20StatsSystem::GetType(Stat stat) {
 	case stat_load:
 		return StatType::Load;
 
+	case stat_caster_level: 
+	case stat_caster_level_barbarian: 
+	case stat_caster_level_bard: 
+	case stat_caster_level_cleric: 
+	case stat_caster_level_druid: 
+	case stat_caster_level_fighter: 
+	case stat_caster_level_monk: 
+	case stat_caster_level_paladin: 
+	case stat_caster_level_ranger: 
+	case stat_caster_level_rogue: 
+	case stat_caster_level_sorcerer: 
+	case stat_caster_level_wizard:
+	case stat_spell_list_level:
+		return StatType::SpellCasting;
+
 	default:
 		return StatType::Other;
 	}
 
 	// the following are unimplemented
-	//case stat_caster_level: 
-	//case stat_caster_level_barbarian: 
-	//case stat_caster_level_bard: 
-	//case stat_caster_level_cleric: 
-	//case stat_caster_level_druid: 
-	//case stat_caster_level_fighter: 
-	//case stat_caster_level_monk: 
-	//case stat_caster_level_paladin: 
-	//case stat_caster_level_ranger: 
-	//case stat_caster_level_rogue: 
-	//case stat_caster_level_sorcerer: 
-	//case stat_caster_level_wizard: 
+	
 	//case stat_age: 
 	//case stat_category: 
 	//case stat_alignment_choice: 

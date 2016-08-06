@@ -451,3 +451,10 @@ bool D20ClassSystem::IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum){
 
 	return pythonClassIntegration.IsSelectingSpellsOnLevelup(handle, classEnum);
 }
+
+void D20ClassSystem::LevelupInitSpellSelection(objHndl handle, Stat classEnum){
+	if (objects.StatLevelGet(handle, classEnum))
+		dispatch.DispatchLevelupInitSpellSelection(handle, classEnum);
+	else
+		pythonClassIntegration.LevelupInitSpellSelection(handle, classEnum);
+}

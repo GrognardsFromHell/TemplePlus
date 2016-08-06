@@ -588,9 +588,13 @@ static PyObject* PyObjHandle_StatLevelGet(PyObject* obj, PyObject* args) {
 		return PyInt_FromLong(0);
 	}
 	Stat stat;
-	if (!PyArg_ParseTuple(args, "i:objhndl:stat_level_get", &stat)) {
+	int statArg = 0;
+	if (!PyArg_ParseTuple(args, "i|i:objhndl:stat_level_get", &stat, &statArg)) {
 		return 0;
 	}
+	
+	if (PyTuple_Size(args) >=2)
+		return PyInt_FromLong(objects.StatLevelGet(self->handle, stat, statArg)); // WIP currently just handles stat_caster_level expansion
 
 	return PyInt_FromLong(objects.StatLevelGet(self->handle, stat));
 }
@@ -601,7 +605,8 @@ static PyObject* PyObjHandle_StatLevelGetBase(PyObject* obj, PyObject* args) {
 		return PyInt_FromLong(0);
 	}
 	Stat stat;
-	if (!PyArg_ParseTuple(args, "i:objhndl:stat_level_get_base", &stat)) {
+	int statArg;
+	if (!PyArg_ParseTuple(args, "i|i:objhndl:stat_level_get_base", &stat, &statArg)) {
 		return 0;
 	}
 

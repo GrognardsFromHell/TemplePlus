@@ -20,6 +20,7 @@
 #include "python_integration_class_spec.h"
 
 extern "C" PyObject *inittp_dispatcher();
+extern "C" PyObject *inittp_char_editor();
 static struct PythonInitInternal : temple::AddressTable {
 
 	// Writes to the console window
@@ -103,6 +104,7 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 	pythonClassIntegration.LoadScripts();
 
 	inittp_dispatcher();
+	inittp_char_editor();
 
 	// tpModifiers is imported in conditions.cpp since it needs the condition hashtable
 
