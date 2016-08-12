@@ -47,6 +47,13 @@ public:
 		SetMaxPCs((char)config.maxPCs);
 		replaceFunction(0x1002BBE0, AddToPcGroup);
 		replaceFunction(0x1002BC40, AddToNpcGroup);
+
+		// TriggersFearfulResponse
+		static BOOL(__cdecl *orgFearfulResponse)(objHndl) = replaceFunction<BOOL(__cdecl)(objHndl)>(0x10080720, [](objHndl handle){
+			if (config.tolerantNpcs)
+				return FALSE;
+			return orgFearfulResponse(handle);
+		});
 	}
 } partyHacks;
 

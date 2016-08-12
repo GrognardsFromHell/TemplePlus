@@ -43,6 +43,12 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty SlowerLevellingProperty = DependencyProperty.Register(
            "SlowerLevelling", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
+        public static readonly DependencyProperty TolerantTownsfolkProperty = DependencyProperty.Register(
+          "TolerantTownsfolk", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
+        public static readonly DependencyProperty NewClassesProperty = DependencyProperty.Register(
+          "NewClasses", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
         public IEnumerable<HpOnLevelUpType> HpOnLevelUpTypes => Enum.GetValues(typeof (HpOnLevelUpType))
             .Cast<HpOnLevelUpType>();
 
@@ -128,7 +134,17 @@ namespace TemplePlusConfig
             get { return (bool)GetValue(SlowerLevellingProperty); }
             set { SetValue(SlowerLevellingProperty, value); }
         }
-        
+
+        public bool TolerantTownsfolk
+        {
+            get { return (bool)GetValue(TolerantTownsfolkProperty); }
+            set { SetValue(TolerantTownsfolkProperty, value); }
+        }
+        public bool NewClasses
+        {
+            get { return (bool)GetValue(NewClassesProperty); }
+            set { SetValue(NewClassesProperty, value); }
+        }
 
         /// <summary>
         /// Tries to find an installation directory based on common locations and the Windows registry.
@@ -206,6 +222,18 @@ namespace TemplePlusConfig
                 SlowerLevelling = slowerLevelling;
             }
 
+            bool tolerantTownsfolk;
+            if (bool.TryParse(tpData["tolerantNpcs"], out tolerantTownsfolk))
+            {
+                TolerantTownsfolk = tolerantTownsfolk;
+            }
+
+            bool newClasses;
+            if (bool.TryParse(tpData["newClasses"], out newClasses))
+            {
+                NewClasses = newClasses;
+            }
+
         }
 
         public void SaveToIni(IniData iniData)
@@ -241,6 +269,8 @@ namespace TemplePlusConfig
             tpData["maxLevel"] = MaxLevel.ToString();
             tpData["allowXpOverflow"] = AllowXpOverflow ? "true" : "false";
             tpData["slowerLevelling"] = SlowerLevelling ? "true" : "false";
+            tpData["newClasses"] = NewClasses? "true" : "false";
+            tpData["tolerantNpcs"] = TolerantTownsfolk? "true" : "false";
         }
     }
 

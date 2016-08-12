@@ -79,6 +79,7 @@ struct TemplePlusConfig
 	bool allowXpOverflow = false;
 	bool slowerLevelling = false;
 	bool newClasses = false; // Prestige classes and such
+	bool tolerantNpcs = false; // NPCs tolerate monster party members
 
 	std::unordered_map<std::string, VanillaSetting> vanillaSettings;
 	void AddVanillaSetting(const std::string &name, 
