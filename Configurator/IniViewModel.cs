@@ -31,6 +31,10 @@ namespace TemplePlusConfig
             "HpOnLevelUp", typeof (HpOnLevelUpType), typeof (IniViewModel),
             new PropertyMetadata(default(HpOnLevelUpType)));
 
+        public static readonly DependencyProperty FogOfWarProperty = DependencyProperty.Register(
+            "FogOfWar", typeof(FogOfWarType), typeof(IniViewModel),
+            new PropertyMetadata(default(FogOfWarType)));
+
         public static readonly DependencyProperty PointBuyPointsProperty = DependencyProperty.Register(
             "PointBuyPoints", typeof (int), typeof (IniViewModel), new PropertyMetadata(default(int)));
 
@@ -51,6 +55,8 @@ namespace TemplePlusConfig
 
         public IEnumerable<HpOnLevelUpType> HpOnLevelUpTypes => Enum.GetValues(typeof (HpOnLevelUpType))
             .Cast<HpOnLevelUpType>();
+        public IEnumerable<FogOfWarType> FogOfWarTypes => Enum.GetValues(typeof(FogOfWarType))
+           .Cast<FogOfWarType>();
 
         public IniViewModel()
         {
@@ -109,6 +115,12 @@ namespace TemplePlusConfig
         {
             get { return (HpOnLevelUpType) GetValue(HpOnLevelUpProperty); }
             set { SetValue(HpOnLevelUpProperty, value); }
+        }
+
+        public FogOfWarType FogOfWar
+        {
+            get { return (FogOfWarType)GetValue(FogOfWarProperty); }
+            set { SetValue(FogOfWarProperty, value); }
         }
 
         public int PointBuyPoints
@@ -171,6 +183,7 @@ namespace TemplePlusConfig
             InstallationPath = tpData["toeeDir"];
 
             DisableAutomaticUpdates = tpData["autoUpdate"] != "true";
+
             if (tpData["hpOnLevelup"] != null)
             {
                 switch (tpData["hpOnLevelup"].ToLowerInvariant())
@@ -183,6 +196,25 @@ namespace TemplePlusConfig
                         break;
                     default:
                         HpOnLevelUp = HpOnLevelUpType.Normal;
+                        break;
+                }
+            }
+
+            if (tpData["fogOfWar"] != null)
+            {
+                switch (tpData["fogOfWar"].ToLowerInvariant())
+                {
+                    case "always":
+                        FogOfWar = FogOfWarType.Always;
+                        break;
+                    case "normal":
+                        FogOfWar = FogOfWarType.Normal;
+                        break;
+                    case "unfogged":
+                        FogOfWar = FogOfWarType.Unfogged;
+                        break;
+                    default:
+                        FogOfWar = FogOfWarType.Normal;
                         break;
                 }
             }
@@ -259,6 +291,18 @@ namespace TemplePlusConfig
                     tpData["hpOnLevelup"] = "normal";
                     break;
             }
+            switch (FogOfWar)
+            {
+                case FogOfWarType.Unfogged:
+                    tpData["fogOfWar"] = "unfogged";
+                    break;
+                case FogOfWarType.Always:
+                    tpData["fogOfWar"] = "always";
+                    break;
+                default:
+                    tpData["fogOfWar"] = "normal";
+                    break;
+            }
             tpData["pointBuyPoints"] = PointBuyPoints.ToString();
             tpData["renderWidth"] = RenderWidth.ToString();
             tpData["renderHeight"] = RenderHeight.ToString();
@@ -279,5 +323,12 @@ namespace TemplePlusConfig
         Normal,
         Max,
         Average
+    }
+
+    public enum FogOfWarType
+    {
+        Normal,
+        Unfogged,
+        Always // ensures maps are fogged even despite UNFOGGED flag in the module defs
     }
 }

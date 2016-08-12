@@ -5,6 +5,7 @@
 #include "gamesystems.h"
 #include "mapsystem.h"
 #include "map/sector.h"
+#include <config/config.h>
 
 enum esd_load_result : uint32_t {
 	PARTIALLY_EXPLORED = 0,
@@ -146,6 +147,7 @@ static class MapSystemHooks : public TempleFix {
 		// replaceFunction(0x10072050, map_save);
 		// replaceFunction(0x10072370, _map_open);
 		replaceFunction(0x10072a90, map_open_in_game);
+
 	}
 	
 } hooks;
@@ -365,8 +367,7 @@ void MapSystemHooks::map_mark_visited_map(objHndl obj)
 	gameSystems->GetMap().MarkVisitedMap(obj);
 }
 
-BOOL MapSystemHooks::map_has_fog_of_war(int mapId)
-{
+BOOL MapSystemHooks::map_has_fog_of_war(int mapId){
 	return gameSystems->GetMap().IsUnfogged(mapId) ? FALSE : TRUE;
 }
 

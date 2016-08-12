@@ -162,7 +162,8 @@ static ConfigSetting configSettings[] = {
 	CONF_INT(msaaQuality),
 	CONF_BOOL(showNpcStats),
 	CONF_BOOL(newClasses),
-	CONF_BOOL(tolerantNpcs)
+	CONF_BOOL(tolerantNpcs),
+	CONF_STRING(fogOfWar)
 };
 
 void TemplePlusConfig::Load() {

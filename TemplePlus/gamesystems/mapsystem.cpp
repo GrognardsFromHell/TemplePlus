@@ -95,6 +95,17 @@ void MapSystem::LoadModule() {
 	auto mapList = MesFile::ParseFile("Rules\\MapList.mes");
 
 	std::vector<gsl::cstring_span<>> parts;
+
+	bool alwaysFog = false;
+	bool alwaysUnfog = false;
+	if (!_stricmp(tolower(config.fogOfWar).c_str(), "always")) {
+		alwaysFog = true;
+	}
+	else if (!_stricmp(tolower(config.fogOfWar).c_str(), "unfogged")) {
+		alwaysUnfog = true;;
+	}
+	
+
 	for (auto &line : mapList) {
 		MapListEntry entry;
 
@@ -106,6 +117,10 @@ void MapSystem::LoadModule() {
 		entry.startPosX = atoi(parts[1].data());
 		entry.startPosY = atoi(parts[2].data());
 		entry.flags = 0;
+		if (alwaysUnfog)
+			entry.flags |= 4;
+
+		
 
 		// The rest are key value pairs
 		for (size_t i = 3; i < parts.size(); ++i) {			
@@ -135,7 +150,8 @@ void MapSystem::LoadModule() {
 				} else if (!strncmp(value.data(), "OUTDOOR", value.size())) {
 					entry.flags |= 2;
 				} else if (!strncmp(value.data(), "UNFOGGED", value.size())) {
-					entry.flags |= 4;
+					if (!alwaysFog)
+						entry.flags |= 4;
 				} else if (!strncmp(value.data(), "BEDREST", value.size())) {
 					entry.flags |= 8;
 				}

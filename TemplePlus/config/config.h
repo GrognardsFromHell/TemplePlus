@@ -32,7 +32,6 @@ struct TemplePlusConfig
 	bool showDialogLineNos = false; // Previously: -dialognumber
 	uint32_t scrollDistance = 10; // Not really sure what this is used for. Previously: -scrolldist
 	std::string defaultModule = "ToEE"; // Previousl: -mod: 
-	bool disableFogOfWar = false; // Previously: -nofog
 	bool skipIntro = true;
 	bool skipLegal = true;
 	bool engineEnhancements = true;
@@ -80,6 +79,8 @@ struct TemplePlusConfig
 	bool slowerLevelling = false;
 	bool newClasses = false; // Prestige classes and such
 	bool tolerantNpcs = false; // NPCs tolerate monster party members
+	std::string fogOfWar = "Normal";
+	bool disableFogOfWar = false; // Previously: -nofog
 
 	std::unordered_map<std::string, VanillaSetting> vanillaSettings;
 	void AddVanillaSetting(const std::string &name, 

@@ -250,7 +250,8 @@ void applyGameConfig() {
 	scrollDistance = config.scrollDistance;
 
 	// Removes the initialized flag from the fog subsystem
-	if (config.disableFogOfWar) {
+	//if (config.disableFogOfWar) {
+	if (!_stricmp( tolower(config.fogOfWar).c_str(), "unfogged")){
 		mapFoggingInited = mapFoggingInited & ~1;
 	}
 
