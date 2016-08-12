@@ -78,6 +78,7 @@ struct TemplePlusConfig
 	std::string hpOnLevelup = "Normal" ;
 	bool allowXpOverflow = false;
 	bool slowerLevelling = false;
+	bool newClasses = false; // Prestige classes and such
 
 	std::unordered_map<std::string, VanillaSetting> vanillaSettings;
 	void AddVanillaSetting(const std::string &name, 

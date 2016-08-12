@@ -6,6 +6,8 @@
 #include <common.h>
 #include <party.h>
 #include <obj.h>
+#include <critter.h>
+#include <d20_level.h>
 #include <gamesystems/gamesystems.h>
 #include <gamesystems/objects/objsystem.h>
 
@@ -177,6 +179,25 @@ public:
 			}
 			auto& consoleNewlyCreatedObj = temple::GetRef<objHndl>(0x10AA31B8);
 			consoleNewlyCreatedObj = handleNew;
+			return 1;
+		});
+
+		// levelup
+		replaceFunction<int(__cdecl)(char*)>(0x100495B0, [](char* consoleStr)
+		{
+			for (auto i = 0; i < party.GroupListGetLen(); i++){
+				auto handle =  party.GroupListGetMemberN(i);
+				if (!party.ObjIsAIFollower(handle) && !d20LevelSys.CanLevelup(handle)){
+					auto obj = gameSystems->GetObj().GetObject(handle);
+
+					auto curLvl = objects.StatLevelGet(handle, stat_level);
+					auto xpReq = d20LevelSys.GetXpRequireForLevel(curLvl + 1);
+
+					auto curXp = obj->GetInt32(obj_f_critter_experience);
+					if (xpReq > curXp)
+						critterSys.AwardXp(handle, xpReq - curXp);
+				}
+			}
 			return 1;
 		});
 	}

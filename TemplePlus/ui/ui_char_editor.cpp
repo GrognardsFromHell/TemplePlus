@@ -283,10 +283,9 @@ PYBIND11_PLUGIN(tp_char_editor){
 		auto spellClass = spellSys.GetSpellClass(classEnum);
 		return spellSys.GetSpellLevelBySpellClass(spEnum, spellClass);
 	})
-	.def("populate_available_spells", [](int classEnum, int maxSpellLvl, bool skipCantrips)
-	{
-		uiCharEditor.SpellsPopulateAvailableEntries((Stat)classEnum, maxSpellLvl, skipCantrips);
-	}, py::arg("class_enum"), py::arg("max_spell_level"), py::arg("skip_cantrips") = false);
+	.def("populate_available_spells", [](int classEnum, int maxSpellLvl, int skipCantrips){
+		uiCharEditor.SpellsPopulateAvailableEntries((Stat)classEnum, maxSpellLvl, skipCantrips != 0);
+	}, py::arg("class_enum"), py::arg("max_spell_level"), py::arg("skip_cantrips") = 0);
 
 
 	py::class_<CharEditorSelectionPacket>(mm, "CharEdSpecs", "Holds the character editing specs.")
@@ -1019,6 +1018,9 @@ BOOL UiCharEditor::FinishBtnMsg(int widId, TigMsg * msg){
 
 void UiCharEditor::ClassNextBtnRender(int widId){
 
+	if (!config.newClasses)
+		return;
+
 	static TigRect srcRect(1, 1, 120, 30);
 	UiRenderer::DrawTexture(buttonBox, classNextBtnFrameRect, srcRect);
 
@@ -1043,6 +1045,10 @@ void UiCharEditor::ClassNextBtnRender(int widId){
 }
 
 void UiCharEditor::ClassPrevBtnRender(int widId){
+
+	if (!config.newClasses)
+		return;
+
 	static TigRect srcRect(1, 1, 120, 30);
 	UiRenderer::DrawTexture(buttonBox, classPrevBtnFrameRect, srcRect);
 
@@ -1100,6 +1106,13 @@ void UiCharEditor::ClassSetPermissibles(){
 		}
 		
 	}
+
+	if (!config.newClasses){
+		ui.ButtonSetButtonState(classNextBtn, UBS_DISABLED);
+		ui.ButtonSetButtonState(classPrevBtn, UBS_DISABLED);
+		return;
+	}
+
 	if (page > 0)
 		ui.ButtonSetButtonState(classPrevBtn, UBS_NORMAL);
 	else 

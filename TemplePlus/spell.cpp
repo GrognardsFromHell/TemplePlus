@@ -449,7 +449,7 @@ int LegacySpellSystem::GetMaxSpellLevel(objHndl objHnd, Stat classCode, int char
 	auto spellStatLevel = objects.StatLevelGet(objHnd, spellStat);
 
 	if (spellStatLevel - 10 < result)
-		result = spellStatLevel;
+		result = spellStatLevel - 10;
 
 	if (result < 0)
 		result = -1;

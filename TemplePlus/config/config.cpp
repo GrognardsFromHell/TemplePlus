@@ -160,7 +160,8 @@ static ConfigSetting configSettings[] = {
 	CONF_INT(displayAdapter),
 	CONF_INT(msaaSamples),
 	CONF_INT(msaaQuality),
-	CONF_BOOL(showNpcStats)
+	CONF_BOOL(showNpcStats),
+	CONF_BOOL(newClasses)
 };
 
 void TemplePlusConfig::Load() {
