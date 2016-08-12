@@ -819,9 +819,14 @@ char* CharUiSystem::HookedItemDescriptionBarter(objHndl obj, objHndl item)
 	else if (itemType == obj_t_armor)
 	{
 		auto itemWearFlags = objects.GetItemWearFlags(item);
-		if ((itemWearFlags & OIF_WEAR::OIF_WEAR_ARMOR)
-			&& !inventory.IsProficientWithArmor(obj, item))
-			sprintf(strOut, "%s\n\nNot Proficient With Armor!", strOut);
+		if ((itemWearFlags & OIF_WEAR::OIF_WEAR_ARMOR))
+		{
+			auto armorType = inventory.GetArmorType(objects.getInt32(item, obj_f_armor_flags));
+			if (armorType != ARMOR_TYPE_NONE
+				&& !inventory.IsProficientWithArmor(obj, item))
+				sprintf(strOut, "%s\n\nNot Proficient With Armor!", strOut);
+		}
+			
 	}
 	
 	return strOut;
