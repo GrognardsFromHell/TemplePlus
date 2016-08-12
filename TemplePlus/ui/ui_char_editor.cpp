@@ -37,9 +37,11 @@ struct KnownSpellInfo {
 	int spEnum = 0;
 	uint8_t spFlag = 0;
 	int spellClass = 0;
+	int spellLevel = 0;
 	KnownSpellInfo() { spEnum = 0; spFlag = 0; spellClass = 0; };
 	KnownSpellInfo(int SpellEnum, int SpellFlag) :spEnum(SpellEnum), spFlag(SpellFlag) { spellClass = 0; };
 	KnownSpellInfo(int SpellEnum, int SpellFlag, int SpellClass) :spEnum(SpellEnum), spFlag(SpellFlag), spellClass(SpellClass) {};
+
 };
 
 
@@ -48,6 +50,8 @@ class UiCharEditor {
 public:
 	objHndl GetEditedChar();
 	CharEditorSelectionPacket & GetCharEditorSelPacket();
+	std::vector<KnownSpellInfo>& GetKnownSpellInfo();
+	std::vector<SpellEntry> &GetAvailableSpells();
 
 
 	void PrepareNextStages();
@@ -125,6 +129,8 @@ private:
 	int mPageCount = 0;
 
 	std::unique_ptr<CharEditorClassSystem> mClass;
+	std::vector<KnownSpellInfo> mSpellInfo;
+	std::vector<SpellEntry> mAvailableSpells; // spells available for learning
 	//std::unique_ptr<CharEditorStatsSystem> mStats;
 	//std::unique_ptr<CharEditorFeaturesSystem> mFeatures;
 	//std::unique_ptr<CharEditorSkillsSystem> mSkills;
@@ -208,7 +214,7 @@ PYBIND11_PLUGIN(tp_char_editor){
 
 	// methods
 	mm
-	.def("get_spell_enums", []()->std::vector<KnownSpellInfo> {
+	.def("get_spell_enums", []()->std::vector<KnownSpellInfo>& {
 		auto &spFlags = temple::GetRef<uint8_t[802]>(0x10C72F20);
 		auto &selPkt = temple::GetRef<CharEditorSelectionPacket>(0x11E72F00);
 		auto result = std::vector<KnownSpellInfo>();
@@ -216,6 +222,7 @@ PYBIND11_PLUGIN(tp_char_editor){
 			result.push_back({ selPkt.spellEnums[i], spFlags[i] });
 		}
 		return result;
+		//return uiCharEditor.GetKnownSpellInfo();
 	})
 	.def("set_spell_enums", [](std::vector<KnownSpellInfo> &ksi){
 		auto &spFlags = temple::GetRef<uint8_t[802]>(0x10C72F20);
@@ -225,6 +232,8 @@ PYBIND11_PLUGIN(tp_char_editor){
 			selPkt.spellEnums[i] = ksi[i].spEnum;
 		}
 		selPkt.spellEnumsAddedCount = ksi.size();
+		//auto &spInfo = uiCharEditor.GetKnownSpellInfo();
+		//spInfo = ksi;
 	})
 	.def("append_spell_enums", [](std::vector<KnownSpellInfo> &ksi) {
 		auto &spFlags = temple::GetRef<uint8_t[802]>(0x10C72F20);
@@ -234,6 +243,10 @@ PYBIND11_PLUGIN(tp_char_editor){
 			selPkt.spellEnums[selPkt.spellEnumsAddedCount+i] = ksi[i].spEnum;
 		}
 		selPkt.spellEnumsAddedCount += ksi.size();
+		/*auto &spInfo = uiCharEditor.GetKnownSpellInfo();
+		for (auto i = 0u; i < ksi.size(); i++){
+			spInfo.push_back(ksi[i]);
+		}*/
 	})
 	.def("get_class_code", []()->int
 	{
@@ -298,6 +311,10 @@ objHndl UiCharEditor::GetEditedChar(){
 
 CharEditorSelectionPacket& UiCharEditor::GetCharEditorSelPacket(){
 	return temple::GetRef<CharEditorSelectionPacket>(0x11E72F00);
+}
+
+std::vector<KnownSpellInfo>& UiCharEditor::GetKnownSpellInfo(){
+	return mSpellInfo;
 }
 
 void UiCharEditor::PrepareNextStages(){

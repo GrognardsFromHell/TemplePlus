@@ -218,7 +218,7 @@ void CharUiSystem::ClassLevelBtnRender(int widId){
 	else {
 		MesLine line;
 		mesFuncs.ReadLineDirect(charUiTextMes, 11, &line); // NPC
-		text.append("({})", line.value);
+		text.append(fmt::format("({})", line.value));
 	}
 
 	auto textMeas = UiRenderer::MeasureTextSize(text, style);
