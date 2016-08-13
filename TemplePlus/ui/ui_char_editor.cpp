@@ -16,6 +16,7 @@
 #include <gamesystems/objects/objsystem.h>
 #include <d20_level.h>
 #include <tig/tig_msg.h>
+#include "graphics/imgfile.h"
 #include <python/python_integration_class_spec.h>
 
 #undef HAVE_ROUND
@@ -40,7 +41,8 @@ struct KnownSpellInfo {
 	int spellLevel = 0;
 	KnownSpellInfo() { spEnum = 0; spFlag = 0; spellClass = 0; };
 	KnownSpellInfo(int SpellEnum, int SpellFlag) :spEnum(SpellEnum), spFlag(SpellFlag) { spellClass = 0; };
-	KnownSpellInfo(int SpellEnum, int SpellFlag, int SpellClass) :spEnum(SpellEnum), spFlag(SpellFlag), spellClass(SpellClass) {};
+	KnownSpellInfo(int SpellEnum, int SpellFlag, int SpellClass) :spEnum(SpellEnum), spFlag(SpellFlag), spellClass( spellSys.GetSpellClass(SpellClass) ) {};
+	KnownSpellInfo(int SpellEnum, int SpellFlag, int SpellClass, int isDomain) :spEnum(SpellEnum), spFlag(SpellFlag), spellClass(spellSys.GetSpellClass(SpellClass,isDomain)) {};
 
 };
 
@@ -51,7 +53,7 @@ public:
 	objHndl GetEditedChar();
 	CharEditorSelectionPacket & GetCharEditorSelPacket();
 	std::vector<KnownSpellInfo>& GetKnownSpellInfo();
-	std::vector<SpellEntry> &GetAvailableSpells();
+	std::vector<KnownSpellInfo> &GetAvailableSpells();
 
 
 	void PrepareNextStages();
@@ -68,10 +70,17 @@ public:
 	BOOL ClassCheckComplete();
 
 
-
+	BOOL SpellsSystemInit(GameSystemConf & conf);
+	void SpellsFree();
+	BOOL SpellsWidgetsInit();
+	void SpellsWidgetsFree();
+	BOOL SpellsShow();
+	BOOL SpellsHide();
+	BOOL SpellsWidgetsResize(UiResizeArgs &args);
 	void SpellsActivate();
 	BOOL SpellsCheckComplete();
 	void SpellsFinalize();
+	void SpellsReset(CharEditorSelectionPacket& selPkt);
 
 	int &GetState();
 
@@ -81,9 +90,17 @@ public:
 	BOOL ClassBtnMsg(int widId, TigMsg* msg);
 	BOOL ClassNextBtnMsg(int widId, TigMsg* msg);
 	BOOL ClassPrevBtnMsg(int widId, TigMsg* msg);
-	BOOL FinishBtnMsg(int widId, TigMsg* msg);
+	BOOL FinishBtnMsg(int widId, TigMsg* msg); // gets after the original FinishBtnMsg
 	void ClassNextBtnRender(int widId);
 	void ClassPrevBtnRender(int widId);
+
+	void SpellsWndRender(int widId);
+	BOOL SpellsWndMsg(int widId, TigMsg* msg);
+	BOOL SpellsEntryBtnMsg(int widId, TigMsg* msg);
+	void SpellsEntryBtnRender(int widId);
+
+	BOOL SpellsAvailableEntryBtnMsg(int widId, TigMsg* msg);
+	void SpellsAvailableEntryBtnRender(int widId);
 
 	// state
 	int classWndPage = 0;
@@ -101,23 +118,49 @@ public:
 	// widget IDs
 	int classWndId = 0;
 	int classNextBtn = 0, classPrevBtn = 0;
-	eastl::vector<int> classBtnIds; \
+	eastl::vector<int> classBtnIds;
 
 		// geometry
 		TigRect classNextBtnRect, classNextBtnFrameRect, classNextBtnTextRect,
 		classPrevBtnRect, classPrevBtnFrameRect, classPrevBtnTextRect;
+		TigRect spellsChosenTitleRect, spellsAvailTitleRect;
+		TigRect spellsPerDayTitleRect;
+
+	int spellsWndId = 0;
+	WidgetType1 spellsWnd;
+	WidgetType3 spellsScrollbar, spellsScrollbar2;
+	int spellsScrollbarId = 0, spellsScrollbar2Id = 0;
+	eastl::vector<int> spellsAvailBtnIds, spellsChosenBtnIds;
+	const int SPELLS_BTN_COUNT = 17; // vanilla had 20, decreasing this to increase the font
+	const int SPELLS_BTN_HEIGHT = 13; // vanilla was 11 (so 13*17 = 221 ~= 220 vanilla)
+	std::string spellsAvailLabel;
+	std::string spellsChosenLabel;
+	std::string spellsPerDayLabel;
+
 
 	// caches
 	eastl::hash_map<int, eastl::string> classNamesUppercase;
 	eastl::vector<TigRect> classBtnFrameRects;
 	eastl::vector<TigRect> classBtnRects;
 	eastl::vector<TigRect> classTextRects;
+	eastl::vector<string> levelLabels;
+	eastl::vector<string> spellLevelLabels;
+	eastl::vector<TigRect> spellsNewSpellsBoxRects;
 
 	// art assets
 	int buttonBox = 0;
+	ColorRect genericShadowColor = ColorRect(0xFF000000);
+	ColorRect whiteColorRect = ColorRect(0xFFFFffff);
 	ColorRect classBtnShadowColor = ColorRect(0xFF000000);
 	ColorRect classBtnColorRect = ColorRect(0xFFFFffff);
 	TigTextStyle classBtnTextStyle;
+	TigTextStyle spellsTextStyle;
+	TigTextStyle spellsTitleStyle;
+	TigTextStyle spellLevelLabelStyle;
+	TigTextStyle spellsAvailBtnStyle;
+	TigTextStyle spellsPerDayStyle;
+	TigTextStyle spellsPerDayTitleStyle;
+	CombinedImgFile* levelupSpellbar;
 
 
 	CharEditorClassSystem& GetClass() const {
@@ -130,7 +173,7 @@ private:
 
 	std::unique_ptr<CharEditorClassSystem> mClass;
 	std::vector<KnownSpellInfo> mSpellInfo;
-	std::vector<SpellEntry> mAvailableSpells; // spells available for learning
+	std::vector<KnownSpellInfo> mAvailableSpells; // spells available for learning
 	//std::unique_ptr<CharEditorStatsSystem> mStats;
 	//std::unique_ptr<CharEditorFeaturesSystem> mFeatures;
 	//std::unique_ptr<CharEditorSkillsSystem> mSkills;
@@ -164,7 +207,7 @@ PYBIND11_PLUGIN(tp_char_editor){
 	py::class_<KnownSpellInfo>(mm, "KnownSpellInfo")
 		.def(py::init())
 		.def(py::init<int, int>(), py::arg("spell_enum"), py::arg("spell_status"))
-		.def(py::init<int, int, int>(), py::arg("spell_enum"), py::arg("spell_status"), py::arg("spell_class"))
+		.def(py::init<int, int, int, int>(), py::arg("spell_enum"), py::arg("spell_status"), py::arg("spell_class"), py::arg("is_domain_spell") = 0)
 		.def("__repr__", [](const KnownSpellInfo& spInfo)->std::string {
 			return fmt::format("KnownSpellInfo: Enum {}, status {}", spInfo.spEnum, spInfo.spFlag);
 		})
@@ -180,6 +223,15 @@ PYBIND11_PLUGIN(tp_char_editor){
 
 			auto firstSpellLvl = spellSys.GetSpellLevelBySpellClass(first, spellSys.GetSpellClass(self.spellClass) );
 			auto secondSpellLvl = spellSys.GetSpellLevelBySpellClass(second, spellSys.GetSpellClass(other.spellClass));
+
+			auto firstClass = self.spellClass;
+			auto secondClass = other.spellClass;
+
+			if (firstClass != secondClass){
+				return firstClass - secondClass;
+			}
+
+			// if they are of the same class
 
 			if (firstSpellLvl != secondSpellLvl)
 				return firstSpellLvl - secondSpellLvl;
@@ -210,43 +262,51 @@ PYBIND11_PLUGIN(tp_char_editor){
 		})
 		.def_readwrite("spell_enum", &KnownSpellInfo::spEnum)
 		.def_readwrite("spell_status", &KnownSpellInfo::spFlag, "1 - denotes as replaceable spell (e.g. sorcerers), 2 - ??, 3 - new spell slot; use 0 for the spell level labels")
+		.def_readwrite("spell_class", &KnownSpellInfo::spellClass, "Note: this is not the same as the casting class enum (use set_casting_class instead)")
+		.def("get_casting_class", [](KnownSpellInfo& ksi)->int{
+			return spellSys.GetCastingClass(ksi.spellClass);
+		})
+		.def("set_casting_class", [](KnownSpellInfo& ksi, int classEnum) {
+			ksi.spellClass = spellSys.GetCastingClass(classEnum);
+		}, py::arg("class_enum"))
 		;
 
 	// methods
 	mm
 	.def("get_spell_enums", []()->std::vector<KnownSpellInfo>& {
-		auto &spFlags = temple::GetRef<uint8_t[802]>(0x10C72F20);
+		/*auto &spFlags = temple::GetRef<uint8_t[802]>(0x10C72F20);
 		auto &selPkt = temple::GetRef<CharEditorSelectionPacket>(0x11E72F00);
 		auto result = std::vector<KnownSpellInfo>();
 		for (auto i = 0; i < selPkt.spellEnumsAddedCount; i++) {
 			result.push_back({ selPkt.spellEnums[i], spFlags[i] });
 		}
-		return result;
-		//return uiCharEditor.GetKnownSpellInfo();
+		return result;*/
+		return uiCharEditor.GetKnownSpellInfo();
 	})
 	.def("set_spell_enums", [](std::vector<KnownSpellInfo> &ksi){
-		auto &spFlags = temple::GetRef<uint8_t[802]>(0x10C72F20);
+		/*auto &spFlags = temple::GetRef<uint8_t[802]>(0x10C72F20);
 		auto &selPkt = temple::GetRef<CharEditorSelectionPacket>(0x11E72F00);
 		for (auto i = 0; i < ksi.size(); i++) {
 			spFlags[i] = ksi[i].spFlag;
 			selPkt.spellEnums[i] = ksi[i].spEnum;
 		}
-		selPkt.spellEnumsAddedCount = ksi.size();
-		//auto &spInfo = uiCharEditor.GetKnownSpellInfo();
-		//spInfo = ksi;
+		selPkt.spellEnumsAddedCount = ksi.size();*/
+		auto &spInfo = uiCharEditor.GetKnownSpellInfo();
+		spInfo = ksi;
 	})
 	.def("append_spell_enums", [](std::vector<KnownSpellInfo> &ksi) {
-		auto &spFlags = temple::GetRef<uint8_t[802]>(0x10C72F20);
+		/*auto &spFlags = temple::GetRef<uint8_t[802]>(0x10C72F20);
 		auto &selPkt = temple::GetRef<CharEditorSelectionPacket>(0x11E72F00);
 		for (auto i = 0; i <  ksi.size(); i++) {
 			spFlags[selPkt.spellEnumsAddedCount+i] = ksi[i].spFlag;
 			selPkt.spellEnums[selPkt.spellEnumsAddedCount+i] = ksi[i].spEnum;
 		}
-		selPkt.spellEnumsAddedCount += ksi.size();
-		/*auto &spInfo = uiCharEditor.GetKnownSpellInfo();
+		selPkt.spellEnumsAddedCount += ksi.size();*/
+
+		auto &spInfo = uiCharEditor.GetKnownSpellInfo();
 		for (auto i = 0u; i < ksi.size(); i++){
 			spInfo.push_back(ksi[i]);
-		}*/
+		}
 	})
 	.def("get_class_code", []()->int
 	{
@@ -275,17 +335,45 @@ PYBIND11_PLUGIN(tp_char_editor){
 		int _knownSpells[SPELL_ENUM_MAX_EXPANDED] = { 0, };
 		int numKnown = critterSys.GetSpellEnumsKnownByClass(handle, spellSys.GetSpellClass(classEnum), &_knownSpells[0], SPELL_ENUM_MAX_EXPANDED);
 		for (int i = 0; i < numKnown; i++) {
-			knownSpells.push_back(KnownSpellInfo(_knownSpells[i], 0, classEnum));
+			knownSpells.push_back(KnownSpellInfo(_knownSpells[i], 0, spellSys.GetSpellClass(classEnum) ));
 		}
 		return knownSpells;
 	})
+	.def("get_learnable_spells", [](objHndl handle, int classEnum, int maxSpellLvl, int is_domain_spell_class)->std::vector<KnownSpellInfo>
+	{
+		auto result = std::vector<KnownSpellInfo>();
+		auto spellClass = spellSys.GetSpellClass(classEnum, is_domain_spell_class != 0);
+		std::vector<SpellEntry> spEntries;
+		auto numSpells = spellSys.CopyLearnableSpells(handle, spellClass, spEntries);
+		for (auto i = 0; i < spEntries.size(); i++) {
+			auto shouldCull = false;
+
+			auto &spEnt = spEntries[i];
+
+			auto spLvl = spellSys.GetSpellLevelBySpellClass(spEnt.spellEnum, spellClass);
+			if (spLvl < 0 || spLvl > maxSpellLvl)
+				shouldCull = true;
+
+			if (!shouldCull)
+				result.push_back(KnownSpellInfo(spEnt.spellEnum, 0, spellClass, is_domain_spell_class ));
+		}
+		return result;
+
+	}, py::arg("obj_handle"), py::arg("class_enum"), py::arg("is_domain_spell_class") = 0)
 	.def("get_spell_level", [](int spEnum, int classEnum)->int {
 		auto spellClass = spellSys.GetSpellClass(classEnum);
 		return spellSys.GetSpellLevelBySpellClass(spEnum, spellClass);
 	})
 	.def("populate_available_spells", [](int classEnum, int maxSpellLvl, int skipCantrips){
 		uiCharEditor.SpellsPopulateAvailableEntries((Stat)classEnum, maxSpellLvl, skipCantrips != 0);
-	}, py::arg("class_enum"), py::arg("max_spell_level"), py::arg("skip_cantrips") = 0);
+	}, py::arg("class_enum"), py::arg("max_spell_level"), py::arg("skip_cantrips") = 0)
+	.def("append_available_spells", [](std::vector<KnownSpellInfo> & ksi){
+		auto &avSpells = uiCharEditor.GetAvailableSpells();
+		for (auto i = 0u; i < ksi.size(); i++) {
+			avSpells.push_back(ksi[i]);
+		}
+	})
+	;
 
 
 	py::class_<CharEditorSelectionPacket>(mm, "CharEdSpecs", "Holds the character editing specs.")
@@ -314,6 +402,10 @@ CharEditorSelectionPacket& UiCharEditor::GetCharEditorSelPacket(){
 
 std::vector<KnownSpellInfo>& UiCharEditor::GetKnownSpellInfo(){
 	return mSpellInfo;
+}
+
+std::vector<KnownSpellInfo>& UiCharEditor::GetAvailableSpells(){
+	return mAvailableSpells;
 }
 
 void UiCharEditor::PrepareNextStages(){
@@ -572,6 +664,199 @@ BOOL UiCharEditor::ClassSystemInit(GameSystemConf &conf){
 		mPageCount++;
 
 	return ClassWidgetsInit();
+}
+
+BOOL UiCharEditor::SpellsSystemInit(GameSystemConf & conf){
+
+	auto pcCreationMes = temple::GetRef<MesHandle>(0x11E72EF0);
+	MesLine mesline;
+
+	TigTextStyle baseStyle;
+	baseStyle.flags = 0;
+	baseStyle.field2c = -1;
+	baseStyle.shadowColor = &genericShadowColor;
+	baseStyle.field0 = 0;
+	baseStyle.kerning = 1;
+	baseStyle.leading = 0;
+	baseStyle.tracking = 3;
+	baseStyle.textColor = baseStyle.colors2 = baseStyle.colors4 = &whiteColorRect;
+	
+
+	spellsTitleStyle = baseStyle;
+
+	// generic spells text style
+	spellsTextStyle = baseStyle;
+
+	// Spell Level Label Style
+	spellLevelLabelStyle = baseStyle;
+	static ColorRect spellLevelLabelColor(0x0FF43586E);
+	spellLevelLabelStyle.textColor = spellLevelLabelStyle.colors2 = spellLevelLabelStyle.colors4 = &spellLevelLabelColor;
+
+	// Spells Available Btn Style
+	spellsAvailBtnStyle = baseStyle;
+	static ColorRect spellsAvailColor1(0x0FF5D5D5D);
+	spellsAvailBtnStyle.textColor = &spellsAvailColor1;
+	spellsAvailBtnStyle.colors2 = &spellsAvailColor1;
+	spellsAvailBtnStyle.colors4 = &spellsAvailColor1;
+
+	
+	// Spells Per Day style
+	spellsPerDayStyle = baseStyle;
+
+	spellsPerDayTitleStyle = baseStyle;
+
+	// Spells Available title
+	mesline.key = 21000;
+	mesFuncs.GetLine_Safe(pcCreationMes, &mesline);
+	spellsAvailLabel.append(mesline.value);
+
+	// Spells Chosen title
+	mesline.key = 21001;
+	mesFuncs.GetLine_Safe(pcCreationMes, &mesline);
+	spellsChosenLabel.append(mesline.value);
+
+	// Spells Per Day title
+	mesline.key = 21002;
+	mesFuncs.GetLine_Safe(pcCreationMes, &mesline);
+	spellsPerDayLabel.append(mesline.value); 
+
+	// Spell Level label texts
+	MesLine line(21100), line2(21200);
+	mesFuncs.GetLine_Safe(pcCreationMes, &line);
+	mesFuncs.GetLine_Safe(pcCreationMes, &line2);
+
+	for (auto i = 0; i < NUM_SPELL_LEVELS; i++){
+		std::string text;
+		text.append(line2.value);
+		text[text.size()-1] = '0'+i;
+		levelLabels.push_back(text);
+
+		text.clear();
+		text.append(line.value);
+		text[text.size() - 1] = '0' + i;
+
+		spellLevelLabels.push_back(text);
+	}
+
+	levelupSpellbar = new CombinedImgFile("art\\interface\\pc_creation\\levelup_spellbar.img");
+	if (!levelupSpellbar)
+		return 0;
+
+	// Widgets
+	return uiCharEditor.SpellsWidgetsInit();
+}
+
+void UiCharEditor::SpellsFree()
+{
+	SpellsWidgetsFree();
+	//free(levelupSpellbar);
+}
+
+BOOL UiCharEditor::SpellsWidgetsInit(){
+
+	const int spellsWndX = 259, spellsWndY = 117, spellsWndW = 405, spellsWndH = 271;
+	spellsWnd = WidgetType1(spellsWndX, spellsWndY, spellsWndW, spellsWndH);
+	spellsWnd.widgetFlags = 1;
+	spellsWnd.render = [](int widId) {uiCharEditor.SpellsWndRender(widId); };
+	spellsWnd.handleMessage = [](int widId, TigMsg*msg) { return uiCharEditor.SpellsWndMsg(widId, msg); };
+	spellsWnd.Add(&spellsWndId);
+
+	// Available Spells Scrollbar
+	spellsScrollbar.Init(183, 37, 230);
+	spellsScrollbar.parentId = spellsWndId;
+	spellsScrollbar.x += spellsWnd.x;
+	spellsScrollbar.y += spellsWnd.y;
+	spellsScrollbar.Add(&spellsScrollbarId);
+	ui.BindToParent(spellsWndId, spellsScrollbarId);
+
+	// Spell selection scrollbar
+	spellsScrollbar2.Init(385, 37, 230);
+	spellsScrollbar2.parentId = spellsWndId;
+	spellsScrollbar2.x += spellsWnd.x;
+	spellsScrollbar2.y += spellsWnd.y;
+	spellsScrollbar2.Add(&spellsScrollbar2Id);
+	ui.BindToParent(spellsWndId, spellsScrollbar2Id);
+
+	int rowOff = 39;
+	for (auto i = 0u; i < SPELLS_BTN_COUNT; i++, rowOff += SPELLS_BTN_HEIGHT){
+		
+		int newId = 0;
+		WidgetType2 spellAvailBtn("Spell Available btn", spellsWndId, 4, rowOff, 180, SPELLS_BTN_HEIGHT);
+
+		spellAvailBtn.x += spellsWnd.x; spellAvailBtn.y += spellsWnd.y;
+		spellAvailBtn.render = [](int id) {uiCharEditor.SpellsAvailableEntryBtnRender(id); };
+		spellAvailBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.SpellsAvailableEntryBtnMsg(id, msg); };
+		spellAvailBtn.renderTooltip = nullptr;
+		spellAvailBtn.Add(&newId);
+		spellsAvailBtnIds.push_back(newId);
+		ui.SetDefaultSounds(newId);
+		ui.BindToParent(spellsWndId, newId);
+
+		WidgetType2 spellChosenBtn("Spell Chosen btn", spellsWndId, 206, rowOff, 170, SPELLS_BTN_HEIGHT);
+
+		spellChosenBtn.x += spellsWnd.x; spellChosenBtn.y += spellsWnd.y;
+		spellChosenBtn.render = [](int id) {uiCharEditor.SpellsEntryBtnRender(id); };
+		spellChosenBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.SpellsEntryBtnMsg(id, msg); };
+		spellChosenBtn.renderTooltip = nullptr;
+		spellChosenBtn.Add(&newId);
+		spellsChosenBtnIds.push_back(newId);
+		ui.SetDefaultSounds(newId);
+		ui.BindToParent(spellsWndId, newId);
+
+	}
+
+	// titles
+	spellsAvailTitleRect.x = 5;
+	spellsAvailTitleRect.y = 23;
+	spellsChosenTitleRect.x = 219;
+	spellsChosenTitleRect.y = 23;
+	UiRenderer::PushFont("priory-12", 12);
+
+	// Spells Per Day title
+	auto spellsPerDayMeasure = UiRenderer::MeasureTextSize(spellsPerDayLabel, spellsTextStyle);
+	spellsPerDayTitleRect = TigRect(5, 279, 99, 12);
+	spellsPerDayTitleRect.x += (spellsPerDayTitleRect.width - spellsPerDayMeasure.width) / 2;
+	spellsPerDayTitleRect.width = spellsPerDayMeasure.width;
+	spellsPerDayTitleRect.height = spellsPerDayMeasure.height;
+
+	// Spell Level labels
+	TigTextStyle &spellLevelLabelStyle = temple::GetRef<TigTextStyle>(0x10C74B08);
+	spellsNewSpellsBoxRects.clear();
+	for (auto lvl = 0u; lvl < NUM_SPELL_LEVELS; lvl++){
+		auto textMeas = UiRenderer::MeasureTextSize(levelLabels[lvl].c_str(), spellLevelLabelStyle);
+		spellsNewSpellsBoxRects.push_back(TigRect(116 + lvl * 45, 287, 29, 12));
+	//		spellsNewSpellsBoxRects[lvl].y
+
+	}
+	UiRenderer::PopFont();
+	return 1;
+}
+
+void UiCharEditor::SpellsWidgetsFree(){
+	for (auto i = 0; i < SPELLS_BTN_COUNT; i++){
+		ui.WidgetRemoveRegardParent(spellsChosenBtnIds[i]);
+		ui.WidgetRemoveRegardParent(spellsAvailBtnIds[i]);
+	}
+	spellsChosenBtnIds.clear();
+	spellsAvailBtnIds.clear();
+	ui.WidgetRemove(spellsWndId);
+}
+
+BOOL UiCharEditor::SpellsShow(){
+	ui.WidgetSetHidden(spellsWndId, 0);
+	ui.WidgetBringToFront(spellsWndId);
+	return 1;
+}
+
+BOOL UiCharEditor::SpellsHide(){
+	ui.WidgetSetHidden(spellsWndId, 1);
+	return 0;
+}
+
+BOOL UiCharEditor::SpellsWidgetsResize(UiResizeArgs & args){
+	SpellsWidgetsFree();
+	SpellsWidgetsInit();
+	return 0;
 }
 
 void UiCharEditor::SpellsActivate() {
@@ -845,6 +1130,12 @@ void UiCharEditor::SpellsFinalize(){
 	d20ClassSys.LevelupSpellsFinalize(charEdited, selPkt.classCode);
 }
 
+void UiCharEditor::SpellsReset(CharEditorSelectionPacket & selPkt){
+	temple::GetRef<int>(0x10C4D4C4) = 1; // needsPopulateEntries
+	mSpellInfo.clear();
+	mAvailableSpells.clear();
+}
+
 int &UiCharEditor::GetState(){
 	return temple::GetRef<int>(0x10BE8D34);
 }
@@ -1072,6 +1363,23 @@ void UiCharEditor::ClassPrevBtnRender(int widId){
 	UiRenderer::PopFont();
 }
 
+void UiCharEditor::SpellsWndRender(int widId){
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	UiRenderer::DrawTextInWidget(widId, spellsAvailLabel, spellsAvailTitleRect, spellsTitleStyle);
+	UiRenderer::DrawTextInWidget(widId, spellsChosenLabel, spellsChosenTitleRect, spellsTitleStyle);
+	UiRenderer::PopFont();
+
+	levelupSpellbar->SetX(spellsWnd.x);
+	levelupSpellbar->SetY(spellsWnd.y + 275);
+	levelupSpellbar->Render();
+
+	// TODO
+	// RenderSpellsPerDay
+	// Render rects
+
+	StateTitleRender(widId);
+}
+
 int UiCharEditor::GetClassWndPage(){
 	return classWndPage;
 }
@@ -1217,9 +1525,9 @@ class UiCharEditorHooks : public TempleFix {
 		replaceFunction<void(int)>(0x10148B70, [](int systemId) {
 			uiCharEditor.BtnStatesUpdate(systemId);
 		});
+
 		// Finish Btn Msg
-		static BOOL(__cdecl *orgFinishBtnMsg)(int, TigMsg*) = replaceFunction<BOOL(int, TigMsg*)>(0x10148FE0, [](int widId, TigMsg* msg)
-		{
+		static BOOL(__cdecl *orgFinishBtnMsg)(int, TigMsg*) = replaceFunction<BOOL(int, TigMsg*)>(0x10148FE0, [](int widId, TigMsg* msg){
 			auto result = orgFinishBtnMsg(widId, msg);
 			uiCharEditor.FinishBtnMsg(widId, msg);
 			return result;
@@ -1256,13 +1564,43 @@ class UiCharEditorHooks : public TempleFix {
 		
 
 		// spells
+
+		replaceFunction<BOOL(GameSystemConf&)>(0x101A7B10, [](GameSystemConf &conf) {
+			return uiCharEditor.SpellsSystemInit(conf);
+		});
+
+		replaceFunction<void()>(0x101A6350, []() {
+			uiCharEditor.SpellsFree();
+		});
+
+		replaceFunction<BOOL(UiResizeArgs& args)>(0x101A7E10, [](UiResizeArgs& args){
+			uiCharEditor.SpellsWidgetsFree();
+			return uiCharEditor.SpellsWidgetsInit();
+		});
+
+		replaceFunction<BOOL()>(0x101A5BE0, []() {
+			return uiCharEditor.SpellsShow();
+		});
+		
+		replaceFunction<BOOL()>(0x101A5BC0, []() {
+			return uiCharEditor.SpellsHide();
+		});
+		
+
 		replaceFunction<void()>(0x101A75F0, [](){
 			uiCharEditor.SpellsActivate();
 		});
 
-		replaceFunction<BOOL()>(0x101A5C00, []()
-		{
+		replaceFunction<BOOL()>(0x101A5C00, [](){
 			return uiCharEditor.SpellsCheckComplete();
+		});
+
+		replaceFunction<void(CharEditorSelectionPacket&, objHndl&)>(0x101A5C50, [](CharEditorSelectionPacket& selPkt, objHndl& handle){
+			uiCharEditor.SpellsFinalize();
+		});
+
+		replaceFunction<void(CharEditorSelectionPacket &)>(0x101A5B90, [](CharEditorSelectionPacket &selPkt){
+			uiCharEditor.SpellsReset(selPkt);
 		});
 
 	}

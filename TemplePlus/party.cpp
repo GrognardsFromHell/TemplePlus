@@ -99,7 +99,11 @@ void LegacyPartySystem::ApplyConditionAround(const objHndl& obj, double range, c
 			continue;
 		if (locSys.DistanceToObj(obj, partyMem) > range)
 			continue;
-		conds.AddTo(partyMem, condName, { (int)obj2.GetHandleLower(), (int)obj2.GetHandleUpper() });	
+		std::vector<int> args({ (int)obj2.GetHandleLower(), (int)obj2.GetHandleUpper() });
+		auto cond = conds.GetByName(condName);
+		for (auto i = 2; i < cond->numArgs; i++)
+			args.push_back(0);
+		conds.AddTo(partyMem, condName, args);	
 	}
 }
 
