@@ -17,6 +17,7 @@
 #include <d20_level.h>
 #include <tig/tig_msg.h>
 #include "graphics/imgfile.h"
+#include "graphics/render_hooks.h"
 #include <python/python_integration_class_spec.h>
 
 #undef HAVE_ROUND
@@ -96,6 +97,7 @@ public:
 
 	void SpellsWndRender(int widId);
 	BOOL SpellsWndMsg(int widId, TigMsg* msg);
+	void SpellsPerDayUpdate();
 	BOOL SpellsEntryBtnMsg(int widId, TigMsg* msg);
 	void SpellsEntryBtnRender(int widId);
 
@@ -130,12 +132,14 @@ public:
 	WidgetType1 spellsWnd;
 	WidgetType3 spellsScrollbar, spellsScrollbar2;
 	int spellsScrollbarId = 0, spellsScrollbar2Id = 0;
+	int spellsScrollbarY = 0, spellsScrollbar2Y = 0;
 	eastl::vector<int> spellsAvailBtnIds, spellsChosenBtnIds;
 	const int SPELLS_BTN_COUNT = 17; // vanilla had 20, decreasing this to increase the font
 	const int SPELLS_BTN_HEIGHT = 13; // vanilla was 11 (so 13*17 = 221 ~= 220 vanilla)
 	std::string spellsAvailLabel;
 	std::string spellsChosenLabel;
 	std::string spellsPerDayLabel;
+	const int SPELLS_PER_DAY_BOXES_COUNT = 6;
 
 
 	// caches
@@ -145,7 +149,10 @@ public:
 	eastl::vector<TigRect> classTextRects;
 	eastl::vector<string> levelLabels;
 	eastl::vector<string> spellLevelLabels;
+	eastl::vector<string> spellsPerDayTexts;
+	eastl::vector<TigRect> spellsPerDayTextRects;
 	eastl::vector<TigRect> spellsNewSpellsBoxRects;
+	
 
 	// art assets
 	int buttonBox = 0;
@@ -738,6 +745,10 @@ BOOL UiCharEditor::SpellsSystemInit(GameSystemConf & conf){
 		spellLevelLabels.push_back(text);
 	}
 
+	for (auto i = 0; i < SPELLS_PER_DAY_BOXES_COUNT;i++){
+		spellsPerDayTextRects.push_back(TigRect());
+	}
+
 	levelupSpellbar = new CombinedImgFile("art\\interface\\pc_creation\\levelup_spellbar.img");
 	if (!levelupSpellbar)
 		return 0;
@@ -825,7 +836,6 @@ BOOL UiCharEditor::SpellsWidgetsInit(){
 	for (auto lvl = 0u; lvl < NUM_SPELL_LEVELS; lvl++){
 		auto textMeas = UiRenderer::MeasureTextSize(levelLabels[lvl].c_str(), spellLevelLabelStyle);
 		spellsNewSpellsBoxRects.push_back(TigRect(116 + lvl * 45, 287, 29, 12));
-	//		spellsNewSpellsBoxRects[lvl].y
 
 	}
 	UiRenderer::PopFont();
@@ -1102,7 +1112,8 @@ void UiCharEditor::SpellsActivate() {
 
 	// populate entries
 	//temple::GetRef<void(__cdecl)()>(0x101A7390)(); // CharEditorLearnableSpellEntriesListPopulate (now done via Python API)
-	temple::GetRef<void(__cdecl)()>(0x101A5F30)(); // CharEditorSpellCountBoxesUpdate
+	//temple::GetRef<void(__cdecl)()>(0x101A5F30)(); // CharEditorSpellCountBoxesUpdate
+	SpellsPerDayUpdate();
 
 	setScrollbars();
 	needPopulateEntries = 0; // needPopulateEntries
@@ -1367,17 +1378,102 @@ void UiCharEditor::SpellsWndRender(int widId){
 	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
 	UiRenderer::DrawTextInWidget(widId, spellsAvailLabel, spellsAvailTitleRect, spellsTitleStyle);
 	UiRenderer::DrawTextInWidget(widId, spellsChosenLabel, spellsChosenTitleRect, spellsTitleStyle);
-	UiRenderer::PopFont();
+	
 
 	levelupSpellbar->SetX(spellsWnd.x);
 	levelupSpellbar->SetY(spellsWnd.y + 275);
 	levelupSpellbar->Render();
 
-	// TODO
+	
 	// RenderSpellsPerDay
-	// Render rects
+	UiRenderer::DrawTextInWidget(widId, spellsPerDayLabel, spellsPerDayTitleRect, spellsTextStyle);
+	for (auto i = 0; i < SPELLS_PER_DAY_BOXES_COUNT; i++){
+		UiRenderer::DrawTextInWidget(widId, spellsPerDayTexts[i], spellsPerDayTextRects[i], spellsPerDayStyle);
+	}
+
+	UiRenderer::PopFont();
+
+	// Rects
+	RenderHooks::RenderRectInt(spellsWnd.x , spellsWnd.y + 38, 195, 227, 0xFF5D5D5D);
+	RenderHooks::RenderRectInt(spellsWnd.x + 201, spellsWnd.y + 38, 195, 227, 0xFF5D5D5D);
 
 	StateTitleRender(widId);
+}
+
+BOOL UiCharEditor::SpellsWndMsg(int widId, TigMsg * msg){
+	
+	if (msg->type == TigMsgType::WIDGET){
+		auto msgW = (TigMsgWidget*)msg;
+		if (msgW->widgetEventType == TigMsgWidgetEvent::Scrolled){
+			ui.ScrollbarGetY(spellsScrollbarId, &spellsScrollbarY);
+			ui.ScrollbarGetY(spellsScrollbar2Id, &spellsScrollbar2Y);
+			SpellsPerDayUpdate();
+			return 1;
+		}
+		return 0;
+	}
+
+	if (msg->type == TigMsgType::MOUSE){
+		auto msgM = (TigMsgMouse*)msg;
+		if (msgM->buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED){
+			// TODO LMB handler
+		}
+		if (msgM->buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED) {
+			// TODO RMB handler
+		}
+		if (!(msgM->buttonStateFlags & MouseStateFlags::MSF_SCROLLWHEEL_CHANGE))
+			return 1;
+
+		TigMsgMouse msgCopy = *msgM;
+		msgCopy.buttonStateFlags = MouseStateFlags::MSF_SCROLLWHEEL_CHANGE;
+
+	}
+
+	return 0;
+}
+
+void UiCharEditor::SpellsPerDayUpdate(){
+	UiRenderer::PushFont(PredefinedFont::ARIAL_BOLD_24);
+	auto &selPkt = GetCharEditorSelPacket();
+
+	for (auto i = 0; i < SPELLS_PER_DAY_BOXES_COUNT; i++){
+		auto &handle = GetEditedChar();
+		auto casterLvl = objects.StatLevelGet(handle, selPkt.classCode);
+		auto numSpells = d20ClassSys.GetNumSpellsFromClass(handle, selPkt.classCode, i, casterLvl);
+		if (numSpells < 0)
+			numSpells = 0;
+		std::string text(fmt::format("{}", numSpells));
+		auto textMeas = UiRenderer::MeasureTextSize(text, spellsPerDayStyle);
+		spellsPerDayTextRects[i].x = spellsNewSpellsBoxRects[i].x +
+			(spellsNewSpellsBoxRects[i].width - textMeas.width)/2;
+		spellsPerDayTextRects[i].y = spellsNewSpellsBoxRects[i].y +
+			(spellsNewSpellsBoxRects[i].height - textMeas.height) / 2;
+		spellsPerDayTextRects[i].width = textMeas.width;
+		spellsPerDayTextRects[i].height = textMeas.height;
+	}
+	UiRenderer::PopFont();
+}
+
+BOOL UiCharEditor::SpellsEntryBtnMsg(int widId, TigMsg * msg)
+{
+	// TODO
+	return 0;
+}
+
+void UiCharEditor::SpellsEntryBtnRender(int widId)
+{
+	// TODO
+}
+
+BOOL UiCharEditor::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
+{
+	// TODO
+	return 0;
+}
+
+void UiCharEditor::SpellsAvailableEntryBtnRender(int widId)
+{
+	// TODO
 }
 
 int UiCharEditor::GetClassWndPage(){
