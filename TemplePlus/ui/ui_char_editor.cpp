@@ -31,6 +31,8 @@
 #include <action_sequence.h>
 #include <condition.h>
 #include <gamesystems/map/d20_help.h>
+#include <infrastructure/elfhash.h>
+#include <tig/tig_mouse.h>
 
 namespace py = pybind11;
 using namespace pybind11;
@@ -274,9 +276,10 @@ PYBIND11_PLUGIN(tp_char_editor){
 			auto nameCmp = _strcmpi(name1, name2);
 			return nameCmp ;
 		})
-		.def_readwrite("spell_enum", &KnownSpellInfo::spEnum)
-		.def_readwrite("spell_status", &KnownSpellInfo::spFlag, "1 - denotes as replaceable spell (e.g. sorcerers), 2 - ??, 3 - new spell slot; use 0 for the spell level labels")
-		.def_readwrite("spell_class", &KnownSpellInfo::spellClass, "Note: this is not the same as the casting class enum (use set_casting_class instead)")
+			.def_readwrite("spell_enum", &KnownSpellInfo::spEnum)
+			.def_readwrite("spell_status", &KnownSpellInfo::spFlag, "1 - denotes as replaceable spell (e.g. sorcerers), 2 - ??, 3 - new spell slot; use 0 for the spell level labels")
+			.def_readwrite("spell_class", &KnownSpellInfo::spellClass, "Note: this is not the same as the casting class enum (use set_casting_class instead)")
+			.def_readwrite("spell_level", &KnownSpellInfo::spellLevel, "Spell level; is calculated automatically on init according to the spell class")
 		.def("get_casting_class", [](KnownSpellInfo& ksi)->int{
 			return spellSys.GetCastingClass(ksi.spellClass);
 		})
@@ -373,7 +376,7 @@ PYBIND11_PLUGIN(tp_char_editor){
 		}
 		return result;
 
-	}, py::arg("obj_handle"), py::arg("class_enum"), py::arg("is_domain_spell_class") = 0)
+	}, py::arg("obj_handle"), py::arg("class_enum"), py::arg("max_spell_level"),py::arg("is_domain_spell_class") = 0)
 	.def("get_spell_level", [](int spEnum, int classEnum)->int {
 		auto spellClass = spellSys.GetSpellClass(classEnum);
 		return spellSys.GetSpellLevelBySpellClass(spEnum, spellClass);
@@ -1492,9 +1495,10 @@ BOOL UiCharEditor::SpellsWndMsg(int widId, TigMsg * msg){
 						continue;
 
 					// ensure spell slot is of correct level
-					if (curSpellLvl == -1 // for "wildcard" empty slots (e.g. Wizard)
-						|| curSpellLvl == spLevel && spLevel == spInfo.spellLevel ){
+					if (spInfo.spellLevel == -1 // for "wildcard" empty slots (e.g. Wizard)
+						|| curSpellLvl == spLevel   ){
 							mSpellInfo[j].spEnum = spEnum; // spell level might still be -1 so be careful when adding to spellbook later on!
+							break;
 					}
 				}
 			}
@@ -1504,6 +1508,21 @@ BOOL UiCharEditor::SpellsWndMsg(int widId, TigMsg * msg){
 
 		TigMsgMouse msgCopy = *msgM;
 		msgCopy.buttonStateFlags = MouseStateFlags::MSF_SCROLLWHEEL_CHANGE;
+
+		if ((int)msgM->x >= spellsWnd.x + 4 && (int)msgM->x <= spellsWnd.x + 184
+			&& (int)msgM->y >= spellsWnd.y && (int)msgM->y <= spellsWnd.y + 259){
+			ui.WidgetCopy(spellsScrollbarId, &spellsScrollbar);
+			if (spellsScrollbar.handleMessage)
+				return spellsScrollbar.handleMessage(spellsScrollbarId, (TigMsg*)&msgCopy);
+		}
+
+		if ((int)msgM->x >= spellsWnd.x +206 && (int)msgM->x <= spellsWnd.x + 376
+			&& (int)msgM->y >= spellsWnd.y && (int)msgM->y <= spellsWnd.y + 259) {
+			ui.WidgetCopy(spellsScrollbar2Id, &spellsScrollbar2);
+			if (spellsScrollbar2.handleMessage)
+				return spellsScrollbar2.handleMessage(spellsScrollbar2Id, (TigMsg*)&msgCopy);
+		}
+		return 1;
 
 	}
 
@@ -1537,24 +1556,231 @@ void UiCharEditor::SpellsPerDayUpdate(){
 
 BOOL UiCharEditor::SpellsEntryBtnMsg(int widId, TigMsg * msg)
 {
-	// TODO
+	if (msg->type != TigMsgType::WIDGET)
+		return 0;
+
+	auto widIdx = ui.WidgetlistIndexof(widId, &spellsChosenBtnIds[0], SPELLS_BTN_COUNT);
+	if (widIdx == -1)
+		return 0;
+
+	auto spellIdx = widIdx + spellsScrollbar2Y;
+	if (spellIdx >= (int)mSpellInfo.size())
+		return 0;
+
+	auto spInfo = mSpellInfo[spellIdx];
+	auto spFlag = spInfo.spFlag;
+	auto spEnum = spInfo.spEnum;
+	auto spLvl = spInfo.spellLevel;
+
 	return 0;
 }
 
 void UiCharEditor::SpellsEntryBtnRender(int widId)
 {
-	// TODO
+	auto widIdx = ui.WidgetlistIndexof(widId, &spellsChosenBtnIds[0], SPELLS_BTN_COUNT);
+	if (widIdx == -1)
+		return;
+	auto spellIdx = widIdx + spellsScrollbar2Y;
+	if (spellIdx >= (int)mSpellInfo.size())
+		return;
+
+	auto spInfo = mSpellInfo[spellIdx];
+	auto spFlag = spInfo.spFlag;
+	auto spEnum = spInfo.spEnum;
+	auto spLvl = spInfo.spellLevel;
+
+	auto btn = ui.GetButton(widId);
+	
+	auto &selPkt = GetCharEditorSelPacket();
+	if (spFlag && (!selPkt.spellEnumToRemove || spFlag != 1)){
+		RenderHooks::RenderRectInt(btn->x + 11, btn->y, btn->width - 11, btn->height, 0xFF222C37);
+	}
+
+	std::string text;
+	TigRect rect(btn->x - spellsWnd.x, btn->y - spellsWnd.y, btn->width, btn->height);
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	if (spEnum == SPELL_ENUM_VACANT){
+		// don't draw text (will only draw the frame)
+	}
+	else if (spellSys.IsLabel(spEnum)) {
+		if (spLvl >= 0 && spLvl < NUM_SPELL_LEVELS){
+			text.append(fmt::format("{}", spellLevelLabels[spLvl]));
+			UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
+		}
+	}
+	else
+	{
+		text.append(fmt::format("{}", spellSys.GetSpellMesline(spEnum)));
+		rect.x += 11;
+		//rect.width -= 11;
+		UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellsTextStyle);
+	}
+	UiRenderer::PopFont();
 }
 
 BOOL UiCharEditor::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 {
-	// TODO
+	if (msg->type != TigMsgType::WIDGET)
+		return 0;
+	auto msgW = (TigMsgWidget*)msg;
+
+	auto widIdx = ui.WidgetlistIndexof(widId, &spellsAvailBtnIds[0], SPELLS_BTN_COUNT);
+	if (widIdx == -1)
+		return 0;
+
+	auto spellIdx = widIdx + spellsScrollbarY;
+	if (spellIdx >= (int)mAvailableSpells.size())
+		return 0;
+
+	auto spInfo = mAvailableSpells[spellIdx];
+	auto spFlag = spInfo.spFlag;
+	auto spEnum = spInfo.spEnum;
+	auto spLvl = spInfo.spellLevel;
+	auto spClass = spInfo.spellClass;
+
+	if (!spellSys.IsLabel(spEnum)){
+		
+		auto btn = ui.GetButton(widId);
+		auto curSpellLvl = -1;
+		auto &selPkt = GetCharEditorSelPacket();
+
+		switch (msgW->widgetEventType){
+			case TigMsgWidgetEvent::Clicked: // button down - initiate drag
+				if (!SpellIsAlreadyKnown(spEnum, spClass ) && !SpellIsForbidden(spEnum)){
+					auto origX = msgW->x - btn->x, origY = msgW->y - btn->y;
+					auto spellCallback = [origX, origY, spEnum](int x, int y){
+						std::string text(spellSys.GetSpellMesline(spEnum));
+						UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+						TigRect rect(x - origX ,y - origY,180,uiCharEditor.SPELLS_BTN_HEIGHT);
+						tigFont.Draw(text.c_str(), rect, uiCharEditor.spellsTextStyle);
+						UiRenderer::PopFont();
+					};
+					mouseFuncs.SetCursorDrawCallback(spellCallback, (uint32_t)&spellCallback);
+				}
+				return 1;
+			case TigMsgWidgetEvent::MouseReleased: 
+				if (helpSys.IsClickForHelpActive()){
+					mouseFuncs.SetCursorDrawCallback(nullptr, 0);
+					helpSys.PresentWikiHelp(spEnum + 860);
+					return 1;
+				}
+			case TigMsgWidgetEvent::MouseReleasedAtDifferentButton: 
+				mouseFuncs.SetCursorDrawCallback(nullptr, 0);
+				if (SpellIsAlreadyKnown(spEnum, spClass)
+					|| SpellIsForbidden(spEnum))
+					return 1;
+
+
+				for (auto i = 0u; i < mSpellInfo.size(); i++){
+					auto rhsSpInfo = mSpellInfo[i];
+
+					// make sure the spell class is ok
+					if (rhsSpInfo.spellClass != spClass)
+						continue;
+
+					// if encountered label - go on
+					if (spellSys.IsLabel(rhsSpInfo.spEnum)){
+						curSpellLvl = rhsSpInfo.spellLevel;
+						continue;
+					}
+
+					// else - make sure is visible slot
+					if (i < spellsScrollbar2Y)
+						continue;
+					if (i >= spellsScrollbar2Y + SPELLS_BTN_COUNT)
+						break;
+
+					auto chosenWidIdx = i - spellsScrollbar2Y;
+					if (!ui.WidgetContainsPoint(spellsChosenBtnIds[chosenWidIdx], msgW->x, msgW->y))
+						continue;
+
+					if (rhsSpInfo.spellLevel == -1 // wildcard slot
+						|| rhsSpInfo.spellLevel == spLvl 
+						   && rhsSpInfo.spFlag != 0
+						   && (rhsSpInfo.spFlag != 1 || !selPkt.spellEnumToRemove)
+						){
+						
+						if (rhsSpInfo.spFlag == 1){ // replaceable spell
+							mSpellInfo[i].spFlag = 2;
+							selPkt.spellEnumToRemove = rhsSpInfo.spEnum;
+						} 
+						else if (rhsSpInfo.spFlag == 2 && selPkt.spellEnumToRemove == spEnum){ // was already replaced, and now restoring
+							mSpellInfo[i].spFlag = 1;
+							selPkt.spellEnumToRemove = 0;
+						}
+						mSpellInfo[i].spEnum = spEnum;
+						return 1;
+					}
+
+				}
+
+				return 1;
+			case TigMsgWidgetEvent::Entered: 
+				temple::GetRef<void(int, char*, size_t)>(0x10162AB0)(spEnum, temple::GetRef<char[1024]>(0x10C732B0), 1024u); // UiTooltipSetForSpell
+				temple::GetRef<void(char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C732B0)); // UiCharTextboxSet
+				return 1;
+			case TigMsgWidgetEvent::Exited: 
+				temple::GetRef<void(__cdecl)(char *)>(0x10162C00)(""); // UiCharTextboxSet
+				return 1;
+			default: 
+				return 0;
+		}
+	}
+
+	/*if (msgW->widgetEventType == TigMsgWidgetEvent::Entered){
+		std::string text;
+		text.append(fmt::format(""));
+		auto helpTopicId = ElfHash::Hash(text);
+		temple::GetRef<void(__cdecl)(uint32_t)>(0x)(helpTopicId);
+		return 1;
+	}*/
+
+	if (msgW->widgetEventType == TigMsgWidgetEvent::Exited) {
+		temple::GetRef<void(__cdecl)(char *)>(0x10162C00)(""); // UiCharTextboxSet
+		return 1;
+	}
+
 	return 0;
 }
 
-void UiCharEditor::SpellsAvailableEntryBtnRender(int widId)
-{
-	// TODO
+void UiCharEditor::SpellsAvailableEntryBtnRender(int widId){
+
+	auto widIdx = ui.WidgetlistIndexof(widId, &spellsAvailBtnIds[0], SPELLS_BTN_COUNT);
+	if (widIdx == -1)
+		return;
+	auto spellIdx = widIdx + spellsScrollbarY;
+	if (spellIdx >= (int)mAvailableSpells.size())
+		return;
+
+	auto btn = ui.GetButton(widId);
+	auto spEnum = mAvailableSpells[spellIdx].spEnum;
+
+	std::string text;
+	TigRect rect(btn->x - spellsWnd.x, btn->y - spellsWnd.y, btn->width, btn->height);
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	if (spellSys.IsLabel(spEnum)){
+		rect.x += 2;
+		auto spLvl = mAvailableSpells[spellIdx].spellLevel;
+		if (spLvl >= 0 && spLvl < NUM_SPELL_LEVELS)
+		{
+			text.append(fmt::format("{}", spellLevelLabels[spLvl]));
+			UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
+		}
+			
+	} 
+	else
+	{
+		text.append(fmt::format("{}", spellSys.GetSpellMesline(spEnum)));
+		rect.x += 12;
+		//rect.width -= 11;
+		if (SpellIsAlreadyKnown(spEnum, mAvailableSpells[spellIdx].spellClass)
+			|| SpellIsForbidden(spEnum))
+			UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellsAvailBtnStyle);
+		else
+			UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellsTextStyle);
+	}
+	UiRenderer::PopFont();
+	
 }
 
 int UiCharEditor::GetClassWndPage(){
