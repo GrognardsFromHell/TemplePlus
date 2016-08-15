@@ -606,6 +606,15 @@ uint32_t LegacySpellSystem::getWizSchool(objHndl objHnd)
 	return ( objects.getInt32(objHnd, obj_f_critter_school_specialization) & 0x000000FF );
 }
 
+bool LegacySpellSystem::IsForbiddenSchool(objHndl handle, int spSchool){
+	auto schoolData = gameSystems->GetObj().GetObject(handle)->GetInt32(obj_f_critter_school_specialization);
+	auto forbSch1 = (schoolData & (0xFF00) ) >> 8;
+	auto forbSch2 = (schoolData & (0xFF0000) ) >> 16;
+	if (forbSch1 == spSchool || forbSch2 == spSchool)
+		return true;
+	return false;
+}
+
 uint32_t LegacySpellSystem::getStatModBonusSpellCount(objHndl objHnd, uint32_t classCode, uint32_t slotLvl)
 {
 	uint32_t objHndLSB = objHnd.GetHandleLower();
@@ -1408,6 +1417,17 @@ uint32_t LegacySpellSystem::spellKnownQueryGetData(objHndl objHnd, uint32_t spel
 	return *n > 0;
 }
 
+bool LegacySpellSystem::IsSpellKnown(objHndl handle, int spEnum, int spClass){
+	uint32_t classCodes[SPELL_ENUM_MAX_EXPANDED];
+	uint32_t n;
+	spellKnownQueryGetData(handle, spEnum, classCodes, nullptr, &n );
+	for (auto i = 0u; i < n; i++){
+		if ((int)classCodes[i] == spClass)
+			return true;
+	}
+	return false;
+}
+
 uint32_t LegacySpellSystem::spellCanCast(objHndl objHnd, uint32_t spellEnum, uint32_t spellClassCode, uint32_t spellLevel)
 {
 	uint32_t count = 0;
@@ -1566,6 +1586,8 @@ int LegacySpellSystem::GetSpellLevelBySpellClass(int spellEnum, int spellClass, 
 		return spellEnum - SPELL_ENUM_LABEL_START;
 	if (IsNewSlotDesignator(spellEnum))
 		return spellEnum - SPELL_ENUM_NEW_SLOT_START;
+	if (spellEnum == SPELL_ENUM_VACANT)
+		return -1;
 
 	SpellEntry spEntry(spellEnum);
 	for (auto i = 0u; i < spEntry.spellLvlsNum; i++){

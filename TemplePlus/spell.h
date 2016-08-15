@@ -177,6 +177,7 @@ struct LegacySpellSystem : temple::AddressTable
 
 	uint32_t getBaseSpellCountByClassLvl(uint32_t classCode, uint32_t classLvl, uint32_t slotLvl, uint32_t unknown1);
 	uint32_t getWizSchool(objHndl objHnd);
+	bool IsForbiddenSchool(objHndl handle, int spSchool);
 	uint32_t getStatModBonusSpellCount(objHndl objHnd, uint32_t classCode, uint32_t slotLvl);
 	void spellPacketBodyReset(SpellPacketBody * spellPktBody);
 	void SpellPacketSetCasterLevel(SpellPacketBody * spellPktBody) const;
@@ -185,6 +186,7 @@ struct LegacySpellSystem : temple::AddressTable
 	uint32_t GetSpellPacketBody(uint32_t spellId, SpellPacketBody* spellPktBodyOut);
 	void UpdateSpellPacket(const SpellPacketBody &spellPktBody);
 	uint32_t spellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count);
+	bool IsSpellKnown(objHndl handle, int spEnum, int spClass);
 	uint32_t spellCanCast(objHndl objHnd, uint32_t spellEnum, uint32_t spellClassCode, uint32_t spellLevel);
 	uint32_t spellMemorizedQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count);
 	bool numSpellsKnownTooHigh(objHndl objHnd);

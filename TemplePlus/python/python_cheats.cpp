@@ -185,7 +185,7 @@ public:
 		// levelup
 		replaceFunction<int(__cdecl)(char*)>(0x100495B0, [](char* consoleStr)
 		{
-			for (auto i = 0; i < party.GroupListGetLen(); i++){
+			for (auto i = 0u; i < party.GroupListGetLen(); i++){
 				auto handle =  party.GroupListGetMemberN(i);
 				if (!party.ObjIsAIFollower(handle) && !d20LevelSys.CanLevelup(handle)){
 					auto obj = gameSystems->GetObj().GetObject(handle);
@@ -194,7 +194,7 @@ public:
 					auto xpReq = d20LevelSys.GetXpRequireForLevel(curLvl + 1);
 
 					auto curXp = obj->GetInt32(obj_f_critter_experience);
-					if (xpReq > curXp)
+					if ((int)xpReq > curXp)
 						critterSys.AwardXp(handle, xpReq - curXp);
 				}
 			}

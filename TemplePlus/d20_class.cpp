@@ -442,9 +442,9 @@ BOOL D20ClassSystem::IsClassSkill(SkillEnum skillEnum, Stat classCode){
 	return FALSE;
 }
 
-bool D20ClassSystem::LevelupSpellsCheckComplete(objHndl handle, Stat classEnum, int * spellEnums, int spellsAddedCount){
+bool D20ClassSystem::LevelupSpellsCheckComplete(objHndl handle, Stat classEnum){
 
-	return pythonClassIntegration.LevelupSpellsCheckComplete(handle, classEnum, spellEnums, spellsAddedCount);
+	return pythonClassIntegration.LevelupSpellsCheckComplete(handle, classEnum);
 }
 
 void D20ClassSystem::LevelupSpellsFinalize(objHndl handle, Stat classEnum){

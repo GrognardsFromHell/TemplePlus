@@ -217,3 +217,11 @@ int HelpSystem::LinkParser(D20HelpLink* d20hl, char* topicTitle, char** pos1, ch
 	int result = orgLinkParser(d20hl, topicTitle, pos1, pos2, offsetOut);
 	return result;
 }
+
+bool HelpSystem::IsClickForHelpActive(){
+	return temple::GetRef<int>(0x10BDE3D8) != 0;
+}
+
+void HelpSystem::PresentWikiHelp(int topicId){
+	temple::GetRef<void(__cdecl)(int)>(0x10124A40)(topicId);
+}

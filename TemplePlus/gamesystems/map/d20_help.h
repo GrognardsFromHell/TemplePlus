@@ -41,7 +41,8 @@ public:
 	static D20HelpTopic* GetTopic(int topicId);
 	static int GenerateLinks(D20HelpTopic * d20ht);
 	static int LinkParser(D20HelpLink* d20hl, char * topicTitle, char **pos1, char **pos2, int *offsetOut);
-
+	bool IsClickForHelpActive();
+	void PresentWikiHelp(int topicId);
 
 	static int (__cdecl*orgGenerateLinks)(D20HelpTopic * d20ht);
 	static int (__cdecl*orgLinkParser)(D20HelpLink* d20hl, char * topicTitle, char **pos1, char **pos2, int *offsetOut);

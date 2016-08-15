@@ -239,7 +239,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 			auto result = std::vector<SpellEntryLevelSpec>();
 			if (!spEntry.spellEnum)
 				return result;
-			for (auto i = 0; i < spEntry.spellLvlsNum; i++){
+			for (auto i = 0u; i < spEntry.spellLvlsNum; i++){
 				result.push_back(spEntry.spellLvls[i]);
 			}
 			return result;

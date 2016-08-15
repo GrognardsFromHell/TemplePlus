@@ -30,6 +30,7 @@
 #include <radialmenu.h>
 #include <action_sequence.h>
 #include <condition.h>
+#include <gamesystems/map/d20_help.h>
 
 namespace py = pybind11;
 using namespace pybind11;
@@ -42,8 +43,12 @@ struct KnownSpellInfo {
 	int spellLevel = 0;
 	KnownSpellInfo() { spEnum = 0; spFlag = 0; spellClass = 0; };
 	KnownSpellInfo(int SpellEnum, int SpellFlag) :spEnum(SpellEnum), spFlag(SpellFlag) { spellClass = 0; };
-	KnownSpellInfo(int SpellEnum, int SpellFlag, int SpellClass) :spEnum(SpellEnum), spFlag(SpellFlag), spellClass( spellSys.GetSpellClass(SpellClass) ) {};
-	KnownSpellInfo(int SpellEnum, int SpellFlag, int SpellClass, int isDomain) :spEnum(SpellEnum), spFlag(SpellFlag), spellClass(spellSys.GetSpellClass(SpellClass,isDomain)) {};
+	KnownSpellInfo(int SpellEnum, int SpellFlag, int SpellClass) :spEnum(SpellEnum), spFlag(SpellFlag), spellClass( spellSys.GetSpellClass(SpellClass) ){
+		spellLevel = spellSys.GetSpellLevelBySpellClass(SpellEnum, SpellClass);
+	};
+	KnownSpellInfo(int SpellEnum, int SpellFlag, int SpellClass, int isDomain) :spEnum(SpellEnum), spFlag(SpellFlag), spellClass(spellSys.GetSpellClass(SpellClass,isDomain == true)){
+		spellLevel = spellSys.GetSpellLevelBySpellClass(SpellEnum, SpellClass);
+	};
 
 };
 
@@ -116,6 +121,8 @@ public:
 
 	// utilities
 	void SpellsPopulateAvailableEntries(Stat classEnum, int maxSpellLvl, bool skipCantrips = false);
+	bool SpellIsForbidden(int spEnum);
+	bool SpellIsAlreadyKnown(int spEnum, int spellClass);
 
 	// widget IDs
 	int classWndId = 0;
@@ -352,7 +359,7 @@ PYBIND11_PLUGIN(tp_char_editor){
 		auto spellClass = spellSys.GetSpellClass(classEnum, is_domain_spell_class != 0);
 		std::vector<SpellEntry> spEntries;
 		auto numSpells = spellSys.CopyLearnableSpells(handle, spellClass, spEntries);
-		for (auto i = 0; i < spEntries.size(); i++) {
+		for (auto i = 0u; i < spEntries.size(); i++) {
 			auto shouldCull = false;
 
 			auto &spEnt = spEntries[i];
@@ -789,7 +796,7 @@ BOOL UiCharEditor::SpellsWidgetsInit(){
 	ui.BindToParent(spellsWndId, spellsScrollbar2Id);
 
 	int rowOff = 39;
-	for (auto i = 0u; i < SPELLS_BTN_COUNT; i++, rowOff += SPELLS_BTN_HEIGHT){
+	for (auto i = 0; i < SPELLS_BTN_COUNT; i++, rowOff += SPELLS_BTN_HEIGHT){
 		
 		int newId = 0;
 		WidgetType2 spellAvailBtn("Spell Available btn", spellsWndId, 4, rowOff, 180, SPELLS_BTN_HEIGHT);
@@ -889,18 +896,20 @@ void UiCharEditor::SpellsActivate() {
 	auto &needPopulateEntries = temple::GetRef<int>(0x10C4D4C4);
 
 	static auto setScrollbars = []() {
-		auto sbId = temple::GetRef<int>(0x10C737C0);
+		auto sbId = uiCharEditor.spellsScrollbarId;
 		ui.ScrollbarSetY(sbId, 0);
-		auto numEntries = temple::GetRef<int>(0x10C75A60);
+		int numEntries = (int)uiCharEditor.mAvailableSpells.size();
 		ui.ScrollbarSetYmax(sbId, max(0, numEntries - 20));
-		temple::GetRef<int>(0x10C73C34) = 0; // scrollbarY
-		ui.WidgetCopy(sbId, &temple::GetRef<WidgetType3>(0x10C736C0));
+		uiCharEditor.spellsScrollbar.y = 0;
+		ui.WidgetCopy(sbId, &uiCharEditor.spellsScrollbar);
 
 		auto &charEdSelPkt = uiCharEditor.GetCharEditorSelPacket();
-		auto sbAddedId = temple::GetRef<int>(0x10C4D548);
-		ui.ScrollbarSetY(sbAddedId, 0); ui.ScrollbarSetYmax(sbAddedId, max(0, charEdSelPkt.spellEnumsAddedCount - 20));
-		temple::GetRef<int>(0x10C75BC0) = 0; // scrollbarY
-		ui.WidgetCopy(sbAddedId, &temple::GetRef<WidgetType3>(0x10C75AC0));
+		auto sbAddedId = uiCharEditor.spellsScrollbar2Id;
+		int numAdded = (int)uiCharEditor.mSpellInfo.size();
+		ui.ScrollbarSetY(sbAddedId, 0); 
+		ui.ScrollbarSetYmax(sbAddedId, max(0, numAdded - 20));
+		uiCharEditor.spellsScrollbar2.y = 0;
+		ui.WidgetCopy(sbAddedId, &uiCharEditor.spellsScrollbar2);
 	};
 
 	if (!needPopulateEntries) {
@@ -909,21 +918,31 @@ void UiCharEditor::SpellsActivate() {
 	}
 
 
-	auto & spellFlags = temple::GetRef<uint8_t[802]>(0x10C72F20);
+	/*auto & spellFlags = temple::GetRef<uint8_t[802]>(0x10C72F20);
 	memset(spellFlags, 0, sizeof(spellFlags));
-	selPkt.spellEnumToRemove = 0;
+	selPkt.spellEnumToRemove = 0;*/
+	mSpellInfo.clear();
+	mAvailableSpells.clear();
 
 	d20ClassSys.LevelupInitSpellSelection(handle, selPkt.classCode);
 
-	// convert the "New Spell Slot" enums to vacant enums (they were just used for sorting)
-	for (auto i = 0u; i < selPkt.spellEnumsAddedCount; i++) {
-		if (selPkt.spellEnums[i] >= SPELL_ENUM_NEW_SLOT_START && selPkt.spellEnums[i] < SPELL_ENUM_NEW_SLOT_START + 10) {
-			selPkt.spellEnums[i] = 802;
-			spellFlags[i] = 3;
+	for (auto i = 0u; i < mSpellInfo.size(); i++){
+		auto spEnum = mSpellInfo[i].spEnum;
+		if (spellSys.IsNewSlotDesignator(spEnum)){
+			mSpellInfo[i].spEnum = 802;
+			mSpellInfo[i].spFlag = 3;
 		}
 	}
 
+	//
 	// legacy code
+	// convert the "New Spell Slot" enums to vacant enums (they were just used for sorting)
+	//for (auto i = 0u; i < selPkt.spellEnumsAddedCount; i++) {
+	//	if (selPkt.spellEnums[i] >= SPELL_ENUM_NEW_SLOT_START && selPkt.spellEnums[i] < SPELL_ENUM_NEW_SLOT_START + 10) {
+	//		selPkt.spellEnums[i] = 802;
+	//		spellFlags[i] = 3;
+	//	}
+	//}
 	//auto isNewClass = casterLvlNew == 1; // todo: generalize for PrC's
 	//
 	// newly taken class
@@ -1109,7 +1128,7 @@ void UiCharEditor::SpellsActivate() {
 	//
 	//
 	//}
-
+	//
 	// populate entries
 	//temple::GetRef<void(__cdecl)()>(0x101A7390)(); // CharEditorLearnableSpellEntriesListPopulate (now done via Python API)
 	//temple::GetRef<void(__cdecl)()>(0x101A5F30)(); // CharEditorSpellCountBoxesUpdate
@@ -1130,7 +1149,7 @@ BOOL UiCharEditor::SpellsCheckComplete(){
 	if (needPopulateEntries == 1)
 		return false;
 
-	return d20ClassSys.LevelupSpellsCheckComplete(GetEditedChar(), selPkt.classCode, selPkt.spellEnums, selPkt.spellEnumsAddedCount);
+	return d20ClassSys.LevelupSpellsCheckComplete(GetEditedChar(), selPkt.classCode);
 
 }
 
@@ -1415,11 +1434,70 @@ BOOL UiCharEditor::SpellsWndMsg(int widId, TigMsg * msg){
 
 	if (msg->type == TigMsgType::MOUSE){
 		auto msgM = (TigMsgMouse*)msg;
-		if (msgM->buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED){
-			// TODO LMB handler
+		if ((msgM->buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED) && helpSys.IsClickForHelpActive()){
+			// LMB handler - present help for spell
+			for (auto i = 0; i < SPELLS_BTN_COUNT; i++){
+				// check if mouse within button
+				if (!ui.WidgetContainsPoint(spellsChosenBtnIds[i], msgM->x, msgM->y))
+					continue;
+				
+				auto spellIdx = i + spellsScrollbar2Y;
+				if ((uint32_t)spellIdx >= mSpellInfo.size())
+					break;
+				
+				auto spEnum = mSpellInfo[spellIdx].spEnum;
+				// ensure is not label
+				if (spellSys.IsLabel(spEnum))
+					break;
+				
+				helpSys.PresentWikiHelp(860 + spEnum);
+				return 1;
+			}
 		}
 		if (msgM->buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED) {
-			// TODO RMB handler
+			// RMB handler - add to known spells
+			for (auto i = 0; i < SPELLS_BTN_COUNT; i++) {
+				// get spell btn
+				if (!ui.WidgetContainsPoint(spellsAvailBtnIds[i], msgM->x, msgM->y))
+					continue;
+				auto spellAvailIdx = i + spellsScrollbarY;
+				if ((uint32_t)spellAvailIdx >= mAvailableSpells.size())
+					break;
+
+				// got the avail btn, now search for suitable vacant slot
+				auto spEnum = mAvailableSpells[spellAvailIdx].spEnum;
+				auto spClass = mAvailableSpells[spellAvailIdx].spellClass;
+				auto spLevel = mAvailableSpells[spellAvailIdx].spellLevel;
+
+				if (spellSys.IsLabel(spEnum))
+					break;
+
+				if (SpellIsAlreadyKnown(spEnum, spClass) || SpellIsForbidden(spEnum))
+					break;
+
+				auto curSpellLvl = -1;
+				auto foundSlot = false;
+				for (auto j = 0u; j < mSpellInfo.size(); j++){
+					auto spInfo = mSpellInfo[j];
+					if (spInfo.spellClass != spClass)
+						continue;
+					if (spellSys.IsLabel(spInfo.spEnum)){
+						curSpellLvl = spInfo.spellLevel;
+						if (curSpellLvl > spLevel)
+							break;
+						continue;
+					}
+
+					if (spInfo.spEnum != SPELL_ENUM_VACANT)
+						continue;
+
+					// ensure spell slot is of correct level
+					if (curSpellLvl == -1 // for "wildcard" empty slots (e.g. Wizard)
+						|| curSpellLvl == spLevel && spLevel == spInfo.spellLevel ){
+							mSpellInfo[j].spEnum = spEnum; // spell level might still be -1 so be careful when adding to spellbook later on!
+					}
+				}
+			}
 		}
 		if (!(msgM->buttonStateFlags & MouseStateFlags::MSF_SCROLLWHEEL_CHANGE))
 			return 1;
@@ -1436,6 +1514,7 @@ void UiCharEditor::SpellsPerDayUpdate(){
 	UiRenderer::PushFont(PredefinedFont::ARIAL_BOLD_24);
 	auto &selPkt = GetCharEditorSelPacket();
 
+	spellsPerDayTexts.clear();
 	for (auto i = 0; i < SPELLS_PER_DAY_BOXES_COUNT; i++){
 		auto &handle = GetEditedChar();
 		auto casterLvl = objects.StatLevelGet(handle, selPkt.classCode);
@@ -1443,6 +1522,8 @@ void UiCharEditor::SpellsPerDayUpdate(){
 		if (numSpells < 0)
 			numSpells = 0;
 		std::string text(fmt::format("{}", numSpells));
+		spellsPerDayTexts.push_back(text);
+
 		auto textMeas = UiRenderer::MeasureTextSize(text, spellsPerDayStyle);
 		spellsPerDayTextRects[i].x = spellsNewSpellsBoxRects[i].x +
 			(spellsNewSpellsBoxRects[i].width - textMeas.width)/2;
@@ -1553,7 +1634,7 @@ void UiCharEditor::SpellsPopulateAvailableEntries(Stat classEnum, int maxSpellLv
 	}
 
 	// cull too high level spells, domain spells and (optionally) cantrips
-	for (auto i = 0; i < spEntries.size(); /* do not increment here! */ ){
+	for (auto i = 0u; i < spEntries.size(); /* do not increment here! */ ){
 		auto shouldCull = false;
 
 		auto &spEnt = spEntries[i];
@@ -1607,6 +1688,38 @@ void UiCharEditor::SpellsPopulateAvailableEntries(Stat classEnum, int maxSpellLv
 
 	// set charEditorSpellsNumEntries
 	temple::GetRef<int>(0x10C75A60) = numSpells;
+}
+
+bool UiCharEditor::SpellIsForbidden(int spEnum)
+{
+	auto &selPkt = GetCharEditorSelPacket();
+	auto handle = GetEditedChar();
+	SpellEntry spEntry(spEnum);
+	auto spSchool = spEntry.spellSchoolEnum;
+
+	if (spSchool == selPkt.forbiddenSchool1
+		|| spSchool == selPkt.forbiddenSchool2)
+		return true;
+	if (spellSys.IsForbiddenSchool(handle, spSchool))
+		return true;
+	return false;
+}
+
+bool UiCharEditor::SpellIsAlreadyKnown(int spEnum, int spellClass){
+	for (auto i = 0u; i < mSpellInfo.size(); i++){
+		if (mSpellInfo[i].spEnum == spEnum 
+			&& mSpellInfo[i].spellClass == spellClass)
+			return true;
+	}
+	
+	auto &selPkt = GetCharEditorSelPacket();
+	if (spellSys.IsSpellKnown(GetEditedChar(), spEnum, spellClass)){	
+		if (selPkt.spellEnumToRemove == spEnum)
+			return false; // Oh god... TODO! (need to record class too..)
+		return true;
+	}
+	
+	return false;
 }
 
 class UiCharEditorHooks : public TempleFix {

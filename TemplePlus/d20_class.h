@@ -150,7 +150,7 @@ public:
 	// Levelup
 	bool IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum);
 	void LevelupInitSpellSelection(objHndl handle, Stat classEnum);
-	bool LevelupSpellsCheckComplete(objHndl handle, Stat classEnum, int * spellEnums, int spellsAddedCount);
+	bool LevelupSpellsCheckComplete(objHndl handle, Stat classEnum);
 	void LevelupSpellsFinalize(objHndl handle, Stat classEnum);
 	
 protected:
