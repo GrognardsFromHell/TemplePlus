@@ -1441,12 +1441,15 @@ RenderingDevice::CreateRenderTargetTexture(gfx::BufferFormat format, int width, 
   auto sampleQuality = 0;
 
   if (multiSample) {
+	  logger->info("using multisampling");
 	  // If this is a multi sample render target, we cannot use it as a texture, or at least, we shouldn't
 	  bindFlags = D3D11_BIND_RENDER_TARGET;
 	  sampleCount = mImpl->msaaSamples;
 	  sampleQuality = mImpl->msaaQuality;
-  }
+  } else 
+	  logger->info("not using multisampling");
 
+  logger->info("width {} height {}", width, height);
   CD3D11_TEXTURE2D_DESC textureDesc(formatDx, width, height, 1, 1, bindFlags, D3D11_USAGE_DEFAULT, 0, sampleCount, sampleQuality);
 
   CComPtr<ID3D11Texture2D> texture;
