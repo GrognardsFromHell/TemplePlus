@@ -291,35 +291,13 @@ PYBIND11_PLUGIN(tp_char_editor){
 	// methods
 	mm
 	.def("get_spell_enums", []()->std::vector<KnownSpellInfo>& {
-		/*auto &spFlags = temple::GetRef<uint8_t[802]>(0x10C72F20);
-		auto &selPkt = temple::GetRef<CharEditorSelectionPacket>(0x11E72F00);
-		auto result = std::vector<KnownSpellInfo>();
-		for (auto i = 0; i < selPkt.spellEnumsAddedCount; i++) {
-			result.push_back({ selPkt.spellEnums[i], spFlags[i] });
-		}
-		return result;*/
 		return uiCharEditor.GetKnownSpellInfo();
 	})
 	.def("set_spell_enums", [](std::vector<KnownSpellInfo> &ksi){
-		/*auto &spFlags = temple::GetRef<uint8_t[802]>(0x10C72F20);
-		auto &selPkt = temple::GetRef<CharEditorSelectionPacket>(0x11E72F00);
-		for (auto i = 0; i < ksi.size(); i++) {
-			spFlags[i] = ksi[i].spFlag;
-			selPkt.spellEnums[i] = ksi[i].spEnum;
-		}
-		selPkt.spellEnumsAddedCount = ksi.size();*/
 		auto &spInfo = uiCharEditor.GetKnownSpellInfo();
 		spInfo = ksi;
 	})
 	.def("append_spell_enums", [](std::vector<KnownSpellInfo> &ksi) {
-		/*auto &spFlags = temple::GetRef<uint8_t[802]>(0x10C72F20);
-		auto &selPkt = temple::GetRef<CharEditorSelectionPacket>(0x11E72F00);
-		for (auto i = 0; i <  ksi.size(); i++) {
-			spFlags[selPkt.spellEnumsAddedCount+i] = ksi[i].spFlag;
-			selPkt.spellEnums[selPkt.spellEnumsAddedCount+i] = ksi[i].spEnum;
-		}
-		selPkt.spellEnumsAddedCount += ksi.size();*/
-
 		auto &spInfo = uiCharEditor.GetKnownSpellInfo();
 		for (auto i = 0u; i < ksi.size(); i++){
 			spInfo.push_back(ksi[i]);
@@ -388,6 +366,25 @@ PYBIND11_PLUGIN(tp_char_editor){
 		auto &avSpells = uiCharEditor.GetAvailableSpells();
 		for (auto i = 0u; i < ksi.size(); i++) {
 			avSpells.push_back(ksi[i]);
+		}
+	})
+	.def("spell_known_add", [](std::vector<KnownSpellInfo> &ksi){
+		auto handle = uiCharEditor.GetEditedChar();
+		for (auto it: ksi){
+			auto spEnum = it.spEnum;
+			if (spellSys.IsLabel(spEnum)
+				|| spEnum == SPELL_ENUM_VACANT
+				|| spellSys.IsNewSlotDesignator(spEnum))
+				continue;
+
+			SpellStoreData spData(spEnum, it.spellLevel, it.spellClass, 0, SpellStoreType::spellStoreKnown );
+			if (spData.spellLevel == -1)
+				spData.spellLevel = spellSys.GetSpellLevelBySpellClass(spEnum, spData.classCode);
+			
+			if (spellSys.IsSpellKnown(handle,spEnum, spData.classCode))
+				continue;
+
+			spellSys.SpellKnownAdd(handle, spEnum, spData.classCode, spData.spellLevel, SpellStoreType::spellStoreKnown, 0 );
 		}
 	})
 	;
@@ -1559,7 +1556,9 @@ BOOL UiCharEditor::SpellsEntryBtnMsg(int widId, TigMsg * msg)
 	if (msg->type != TigMsgType::WIDGET)
 		return 0;
 
-	auto widIdx = ui.WidgetlistIndexof(widId, &spellsChosenBtnIds[0], SPELLS_BTN_COUNT);
+	// oops, looks like this is handled in the SpellsWndMsg function
+
+	/*auto widIdx = ui.WidgetlistIndexof(widId, &spellsChosenBtnIds[0], SPELLS_BTN_COUNT);
 	if (widIdx == -1)
 		return 0;
 
@@ -1570,7 +1569,8 @@ BOOL UiCharEditor::SpellsEntryBtnMsg(int widId, TigMsg * msg)
 	auto spInfo = mSpellInfo[spellIdx];
 	auto spFlag = spInfo.spFlag;
 	auto spEnum = spInfo.spEnum;
-	auto spLvl = spInfo.spellLevel;
+	auto spLvl = spInfo.spellLevel;*/
+
 
 	return 0;
 }
