@@ -899,7 +899,7 @@ void UiCharEditor::SpellsActivate() {
 		auto sbId = uiCharEditor.spellsScrollbarId;
 		ui.ScrollbarSetY(sbId, 0);
 		int numEntries = (int)uiCharEditor.mAvailableSpells.size();
-		ui.ScrollbarSetYmax(sbId, max(0, numEntries - 20));
+		ui.ScrollbarSetYmax(sbId, max(0, numEntries - uiCharEditor.SPELLS_BTN_COUNT));
 		uiCharEditor.spellsScrollbar.y = 0;
 		ui.WidgetCopy(sbId, &uiCharEditor.spellsScrollbar);
 
@@ -907,7 +907,7 @@ void UiCharEditor::SpellsActivate() {
 		auto sbAddedId = uiCharEditor.spellsScrollbar2Id;
 		int numAdded = (int)uiCharEditor.mSpellInfo.size();
 		ui.ScrollbarSetY(sbAddedId, 0); 
-		ui.ScrollbarSetYmax(sbAddedId, max(0, numAdded - 20));
+		ui.ScrollbarSetYmax(sbAddedId, max(0, numAdded - uiCharEditor.SPELLS_BTN_COUNT));
 		uiCharEditor.spellsScrollbar2.y = 0;
 		ui.WidgetCopy(sbAddedId, &uiCharEditor.spellsScrollbar2);
 	};

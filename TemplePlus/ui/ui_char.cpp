@@ -370,7 +370,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 	}
 
 	// domain
-	auto clericLvl = objects.StatLevelGet(dude, stat_level_cleric);
+	auto clericLvl = critterSys.GetCasterLevelForClass(dude, stat_level_cleric);
 	if ( clericLvl > 0) {
 		mesline.key = 2;
 		mesFuncs.GetLine_Safe(spellsUiText, &mesline);

@@ -2,6 +2,7 @@
 #include "d20_class.h"
 #include "d20_level.h"
 #include "obj.h"
+#include <critter.h>
 #include "python/python_integration_class_spec.h"
 #include "util/fixes.h"
 #include "gamesystems/d20/d20stats.h"
@@ -358,7 +359,7 @@ int D20ClassSystem::NumDomainSpellsKnownFromClass(objHndl dude, Stat classCode)
 {
 	if (classCode != stat_level_cleric)
 		return 0;
-	auto clericLvl = objects.StatLevelGet(dude, stat_level_cleric);
+	auto clericLvl = critterSys.GetCasterLevelForClass(dude, stat_level_cleric);
 	return ClericMaxSpellLvl(clericLvl) * 2;
 }
 

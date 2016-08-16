@@ -102,7 +102,70 @@ class RadialMenuReplacements : public TempleFix
 			return radialMenus.GetStandardNode(static_cast<RadialMenuStandardNode>(stdNode));
 		});
 
-		ReplaceStandardRadialNodes();
+		ReplaceStandardRadialNodes(); // replaces reference to standardNodeIndices
+
+
+		replaceFunction<int(objHndl, int, int )>(0x100F12F0, [](objHndl handle, int stdNode, int specialParent) {
+			auto meskey = 1000 + stdNode;
+			auto isSpellNode = false;
+			auto isVanillaNode = false;
+			if (stdNode > RadialMenuStandardNode::SpellsDomain && stdNode <= 104) {
+				isSpellNode = true;
+
+				if (specialParent == RadialMenuStandardNode::SpellsSorcerer && stdNode < 34
+					|| specialParent == RadialMenuStandardNode::SpellsBard && stdNode < 44)
+					isVanillaNode = true;
+				
+				if (isVanillaNode)
+					meskey = (stdNode - 24) % 6 + 1024;
+				else
+					meskey = (stdNode - 24) % 10 + 1024;
+			}
+				
+			RadialMenuEntryParent radMenuEntry(meskey);
+
+			if (isSpellNode) {
+				// if (d20ClassSys.IsNaturalCastingClass())
+				if (specialParent == RadialMenuStandardNode::SpellsSorcerer
+					|| specialParent == RadialMenuStandardNode::SpellsBard) {
+					radMenuEntry.flags |= 6; // draw min/max arg
+					auto spLvl = (stdNode - 24) % NUM_SPELL_LEVELS;
+					auto classCode = stat_level_sorcerer;
+					
+					if (specialParent == RadialMenuStandardNode::SpellsSorcerer) {
+						if (isVanillaNode) {
+							auto spLvl = (stdNode - 24) % 6; // vanilla num spell levels is 6 (0-5)
+						}
+					}
+					else if (specialParent == RadialMenuStandardNode::SpellsBard){
+						classCode = stat_level_bard;
+						if (isVanillaNode) {
+							auto spLvl = (stdNode - 24) % 6; // vanilla num spell levels
+						}
+					}
+					auto spellClass = spellSys.GetSpellClass(classCode);
+					auto effLvl = critterSys.GetSpellListLevelExtension(handle, classCode) + objects.StatLevelGet(handle, classCode);
+					auto numSpellsPerDay = d20ClassSys.GetNumSpellsFromClass(handle, classCode, spLvl, effLvl);
+					if (numSpellsPerDay < 0)
+						numSpellsPerDay = 0;
+					
+					radMenuEntry.maxArg = numSpellsPerDay;
+
+					auto numSpellsCast = spellSys.NumSpellsInLevel(handle, obj_f_critter_spells_cast_idx, spellClass, spLvl);
+					if (numSpellsCast < numSpellsPerDay)
+						radMenuEntry.minArg = numSpellsPerDay - numSpellsCast;
+					else
+						radMenuEntry.minArg = 0;
+
+				}
+
+			}
+			
+
+			RadialMenus::standardNodeIndices[stdNode] = radialMenus.AddParentChildNode(handle, &radMenuEntry, RadialMenus::standardNodeIndices[specialParent]);
+			return RadialMenus::standardNodeIndices[stdNode];
+			
+		});
 
 
 		// RadialMenuUpdate
@@ -297,7 +360,7 @@ int RadialMenus::AddParentChildNode(objHndl objHnd, RadialMenuEntry* radialMenuE
 	node->entry.d20ActionType = D20A_NONE;
 	node->parent = parentIdx;
 	node->childCount = 0;
-	node->entry.callback = (int ( __cdecl*)(objHndl, RadialMenuEntry*) )return0;
+	node->entry.callback = (int(__cdecl*)(objHndl, RadialMenuEntry*))temple::GetRef<void(__cdecl)()>(0x10262530); //return0; ToEE actually checks against this... fucking hell
 	node->entry.type = RadialMenuEntryType::Parent;
 	node->morphsTo = -1;
 	node->entry.textHash = conds.hashmethods.StringHash(radialMenuEntry->text);
@@ -321,6 +384,7 @@ int RadialMenus::AddParentChildNodeClickable(objHndl objHnd, RadialMenuEntry* ra
 	node->parent = parentIdx;
 	node->childCount = 0;
 	//node->entry.callback = (void(__cdecl*)(objHndl, RadialMenuEntry*))return0;
+	node->entry.callback = (int(__cdecl*)(objHndl, RadialMenuEntry*))temple::GetRef<void(__cdecl)()>(0x10262530); //return0; ToEE actually checks against this... fucking hell
 	node->entry.type = RadialMenuEntryType::Parent;
 	node->morphsTo = -1;
 	node->entry.textHash = conds.hashmethods.StringHash(radialMenuEntry->text);
@@ -356,7 +420,8 @@ int RadialMenus::AddRootParentNode(objHndl obj, RadialMenuEntry* entry){
 
 	node->entry.d20ActionType = D20A_NONE;
 	node->childCount = 0;
-	node->entry.callback = (int(__cdecl*)(objHndl, RadialMenuEntry*))return0;
+	//node->entry.callback = (int(__cdecl*)(objHndl, RadialMenuEntry*))return0;
+	node->entry.callback = (int(__cdecl*)(objHndl, RadialMenuEntry*))temple::GetRef<void(__cdecl)()>(0x10262530); //return0; ToEE actually checks against this... fucking hell
 	node->entry.type = RadialMenuEntryType::Parent;
 	node->morphsTo = -1;
 	node->entry.textHash = ElfHash::Hash(entry->text);

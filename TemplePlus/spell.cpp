@@ -1486,6 +1486,19 @@ uint32_t LegacySpellSystem::spellCanCast(objHndl objHnd, uint32_t spellEnum, uin
 	return 0;
 }
 
+int LegacySpellSystem::NumSpellsInLevel(objHndl handle, obj_f spellField, int spellClass, int spellLvl){
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	auto spArray = obj->GetSpellArray(spellField);
+	auto N = spArray.GetSize();
+	auto count = 0;
+	for (auto i = 0u; i < N; i++) {
+		auto spData = spArray[i];
+		if (spData.classCode == spellClass && spData.spellLevel == spellLvl)
+			count++;
+	}
+	return count;
+}
+
 uint32_t LegacySpellSystem::spellMemorizedQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count)
 {
 	uint32_t countLocal;
