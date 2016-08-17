@@ -99,6 +99,7 @@ public:
 	int GetBaseAttackBonus(Stat classCode, uint32_t classLvl); // gets the class's BAB
 	bool IsSaveFavoredForClass(Stat classCode, int saveType);
 	int GetSkillPts(Stat classEnum);
+	int GetClassHitDice(Stat classEnum);
 	
 
 	const char* GetClassShortHelp(Stat classCode);
@@ -148,6 +149,8 @@ public:
 	BOOL IsClassSkill(SkillEnum skillEnum, Stat classCode);
 
 	// Levelup
+	bool IsSelectingFeatsOnLevelup(objHndl handle, Stat classEnum);
+
 	bool IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum);
 	void LevelupInitSpellSelection(objHndl handle, Stat classEnum);
 	bool LevelupSpellsCheckComplete(objHndl handle, Stat classEnum);

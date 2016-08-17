@@ -184,6 +184,22 @@ bool PythonClassSpecIntegration::LevelupSpellsCheckComplete(objHndl handle, Stat
 
 
 
+bool PythonClassSpecIntegration::IsSelectingFeatsOnLevelup(objHndl handle, Stat classEnum)
+{
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return false;
+
+	auto attachee = PyObjHndl_Create(handle);
+	auto args = Py_BuildValue("(O)", attachee);
+	Py_DECREF(attachee);
+
+	auto result = RunScriptDefault0(classSpecEntry->second.id, (EventId)ClassSpecFunc::IsSelectingFeatsOnLevelup, args) != 0;
+	Py_DECREF(args);
+	return result;
+
+}
+
 bool PythonClassSpecIntegration::IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum){
 	auto classSpecEntry = mScripts.find(classEnum);
 	if (classSpecEntry == mScripts.end())
@@ -247,6 +263,8 @@ static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 
 	{ ClassSpecFunc::ObjMeetsPreqreqs,"ObjMeetsPreqreqs" },
 	{ ClassSpecFunc::GetFeats,"GetClassFeats" },
+
+	{ ClassSpecFunc::IsSelectingFeatsOnLevelup, "IsSelectingFeatsOnLevelup" },
 
 	{ ClassSpecFunc::LevelupCheckSpells, "LevelupCheckSpells" },
 	{ ClassSpecFunc::IsSelectingSpellsOnLevelup, "IsSelectingSpellsOnLevelup" },

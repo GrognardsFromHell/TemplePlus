@@ -48,10 +48,16 @@ struct KnownSpellInfo {
 	KnownSpellInfo(int SpellEnum, int SpellFlag, int SpellClass) :spEnum(SpellEnum), spFlag(SpellFlag), spellClass( spellSys.GetSpellClass(SpellClass) ){
 		spellLevel = spellSys.GetSpellLevelBySpellClass(SpellEnum, SpellClass);
 	};
-	KnownSpellInfo(int SpellEnum, int SpellFlag, int SpellClass, int isDomain) :spEnum(SpellEnum), spFlag(SpellFlag), spellClass(spellSys.GetSpellClass(SpellClass,isDomain == true)){
+	KnownSpellInfo(int SpellEnum, int SpellFlag, int SpellClass, int isDomain) :spEnum(SpellEnum), spFlag(SpellFlag), spellClass(spellSys.GetSpellClass(SpellClass,isDomain != 0)){
 		spellLevel = spellSys.GetSpellLevelBySpellClass(SpellEnum, SpellClass);
 	};
 
+};
+struct FeatInfo {
+	int featEnum;
+	int flag =0;
+	int minLevel = 1;
+	FeatInfo(int FeatEnum) : featEnum(FeatEnum) {};
 };
 
 
@@ -78,6 +84,10 @@ public:
 	BOOL ClassCheckComplete();
 
 
+
+	BOOL FeatsSystemInit(GameSystemConf & conf);
+	BOOL FeatsWidgetsInit(int w, int h);
+
 	BOOL SpellsSystemInit(GameSystemConf & conf);
 	void SpellsFree();
 	BOOL SpellsWidgetsInit();
@@ -101,6 +111,18 @@ public:
 	BOOL FinishBtnMsg(int widId, TigMsg* msg); // gets after the original FinishBtnMsg
 	void ClassNextBtnRender(int widId);
 	void ClassPrevBtnRender(int widId);
+
+	void FeatsWndRender(int widId);
+	BOOL FeatsWndMsg(int widId, TigMsg* msg);
+	BOOL FeatsEntryBtnMsg(int widId, TigMsg* msg);
+	void FeatssEntryBtnRender(int widId);
+	void FeatsMultiSelectWndRender(int widId);
+	BOOL FeatsMultiSelectWndMsg(int widId, TigMsg* msg);
+	void FeatsMultiOkBtnRender(int widId);
+	BOOL FeatsMultiOkBtnMsg(int widId, TigMsg* msg);
+	void FeatsMultiCancelBtnRender(int widId);
+	BOOL FeatsMultiCancelBtnMsg(int widId, TigMsg* msg);
+
 
 	void SpellsWndRender(int widId);
 	BOOL SpellsWndMsg(int widId, TigMsg* msg);
@@ -136,6 +158,15 @@ public:
 		classPrevBtnRect, classPrevBtnFrameRect, classPrevBtnTextRect;
 		TigRect spellsChosenTitleRect, spellsAvailTitleRect;
 		TigRect spellsPerDayTitleRect;
+		int featsMultiCenterX, featsMultiCenterY;
+
+	int featsMainWndId = 0, featsMultiSelectWndId =0;
+	int featsScrollbarId =0, featsExistingScrollbarId =0, featsMultiSelectScrollbarId =0;
+	int featsScrollbarY =0, featsExistingScrollbarY =0, featsMultiSelectScrollbarY =0;
+	WidgetType1 featsMainWnd, featsMultiSelectWnd;
+	WidgetType3 featsScrollbar, featsExistingScrollbar, featsMultiSelectScrollbar;
+	eastl::vector<int> featsAvailBtnIds, featsExistingBtnIds, featsMultiSelectBtnIds;
+	int featsMultiOkBtnId = 0, featsMultiCancelBtnId = 0;
 
 	int spellsWndId = 0;
 	WidgetType1 spellsWnd;
@@ -176,7 +207,7 @@ public:
 	TigTextStyle spellsAvailBtnStyle;
 	TigTextStyle spellsPerDayStyle;
 	TigTextStyle spellsPerDayTitleStyle;
-	CombinedImgFile* levelupSpellbar;
+	CombinedImgFile* levelupSpellbar, *featsbackdrop;
 
 
 	CharEditorClassSystem& GetClass() const {
@@ -288,7 +319,12 @@ PYBIND11_PLUGIN(tp_char_editor){
 		}, py::arg("class_enum"))
 		;
 
-	// methods
+	py::class_<FeatInfo>(mm, "FeatInfo")
+		.def(py::init<int>(), py::arg("feat_enum"))
+		.def_readwrite("feat_enum", &FeatInfo::featEnum)
+		.def_readwrite("feat_status", &FeatInfo::flag, "0 - normal, 1 - automatic class feat, 2 - bonus selectable feat")
+		;
+		// methods
 	mm
 	.def("get_spell_enums", []()->std::vector<KnownSpellInfo>& {
 		return uiCharEditor.GetKnownSpellInfo();
@@ -423,38 +459,6 @@ std::vector<KnownSpellInfo>& UiCharEditor::GetAvailableSpells(){
 }
 
 void UiCharEditor::PrepareNextStages(){
-	//auto handle = GetEditedChar();
-	//auto &selPkt = GetCharEditorSelPacket();
-	//auto classCode = selPkt.classCode;
-	//auto classLvlNew = objects.StatLevelGet(handle, classCode) + 1;
-	//auto &stateBtnIds = temple::GetRef<int[6]>(0x11E72E40);
-
-	//if (classCode == stat_level_cleric){
-	//	if (classLvlNew == 1)
-	//		ui.ButtonSetButtonState(stateBtnIds[2], UBS_NORMAL); // features
-	//}
-	//if (classCode == stat_level_ranger) {
-	//	if (classLvlNew == 2)
-	//		ui.ButtonSetButtonState(stateBtnIds[2], UBS_NORMAL); // features
-	//}
-	//if (classCode == stat_level_fighter) {
-	//	if (! (classLvlNew % 2) )
-	//		ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL); // fighter feats
-	//}
-	//if (classCode == stat_level_monk) {
-	//	if (classLvlNew == 2 || classLvlNew == 6)
-	//		ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL); // monk feats
-	//}
-	//if (classCode == stat_level_rogue) {
-	//	if (classLvlNew >= 10 && (! ((classLvlNew-10) % 3)) )
-	//		ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL); // rogue special feat
-	//}
-	//if (classCode == stat_level_wizard)	{
-	//	if (classLvlNew == 1)
-	//		ui.ButtonSetButtonState(stateBtnIds[2], UBS_NORMAL); // wizard special school
-	//	if ( !(classLvlNew % 5) )
-	//		ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL); // wizard feats
-	//}
 	BtnStatesUpdate(0);
 }
 
@@ -479,8 +483,16 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 		ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL);
 
 
+	// feats and features
 	if (classCode >= stat_level_barbarian){
+
 		auto classLvlNew = objects.StatLevelGet(handle, classCode) + 1;
+
+		if (d20ClassSys.IsSelectingFeatsOnLevelup(handle, classCode) ) {
+			ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL);
+		}
+
+		
 		if (classCode == stat_level_cleric) {
 			if (classLvlNew == 1)
 				ui.ButtonSetButtonState(stateBtnIds[2], UBS_NORMAL); // features
@@ -489,23 +501,23 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 			if (classLvlNew == 1 || classLvlNew == 2 || !(classLvlNew % 5))
 				ui.ButtonSetButtonState(stateBtnIds[2], UBS_NORMAL); // features
 		}
-		if (classCode == stat_level_fighter) {
-			if (classLvlNew == 1 || !(classLvlNew % 2) )
-				ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL); // fighter feats
-		}
-		if (classCode == stat_level_monk) {
-			if (classLvlNew == 2 || classLvlNew == 6)
-				ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL); // monk feats
-		}
-		if (classCode == stat_level_rogue) {
-			if (classLvlNew >= 10 && (!((classLvlNew - 10) % 3)))
-				ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL); // rogue special feat
-		}
+		//if (classCode == stat_level_fighter) {
+		//	if (classLvlNew == 1 || !(classLvlNew % 2) )
+		//		ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL); // fighter feats
+		//}
+		//if (classCode == stat_level_monk) {
+		//	if (classLvlNew == 2 || classLvlNew == 6)
+		//		ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL); // monk feats
+		//}
+		//if (classCode == stat_level_rogue) {
+		//	if (classLvlNew >= 10 && (!((classLvlNew - 10) % 3)))
+		//		ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL); // rogue special feat
+		//}
 		if (classCode == stat_level_wizard) {
 			if (classLvlNew == 1)
 				ui.ButtonSetButtonState(stateBtnIds[2], UBS_NORMAL); // wizard special school
-			if (!(classLvlNew % 5))
-				ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL); // wizard feats
+			//if (!(classLvlNew % 5))
+			//	ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL); // wizard feats
 		}
 	}
 	
@@ -517,17 +529,7 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 	{
 		ui.ButtonSetButtonState(stateBtnIds[5], UBS_DISABLED);
 	};
-	/*switch (classCode){
-	case stat_level_bard:
-	case stat_level_sorcerer:
-	case stat_level_wizard:
-		ui.ButtonSetButtonState(stateBtnIds[5], UBS_NORMAL);
-		break;
-	default:
-		ui.ButtonSetButtonState(stateBtnIds[5], UBS_DISABLED);
-		break;
-	}*/
-
+	
 	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
 	auto &stateTitles = temple::GetRef<const char*[6]>(0x10BE8D1C);
 	auto text = stateTitles[systemId];
@@ -680,6 +682,14 @@ BOOL UiCharEditor::ClassSystemInit(GameSystemConf &conf){
 	return ClassWidgetsInit();
 }
 
+BOOL UiCharEditor::FeatsSystemInit(GameSystemConf & conf){
+
+	featsbackdrop = new CombinedImgFile("art\\interface\\pc_creation\\meta_backdrop.img");
+	if (!featsbackdrop)
+		return 0;
+	return FeatsWidgetsInit(conf.width, conf.height);
+}
+
 BOOL UiCharEditor::SpellsSystemInit(GameSystemConf & conf){
 
 	auto pcCreationMes = temple::GetRef<MesHandle>(0x11E72EF0);
@@ -768,6 +778,46 @@ void UiCharEditor::SpellsFree()
 {
 	SpellsWidgetsFree();
 	//free(levelupSpellbar);
+}
+
+
+BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
+	featsMainWnd = WidgetType1(259, 117, 405, 271);
+	featsMainWnd.widgetFlags = 1;
+	featsMainWnd.render = [](int widId) {uiCharEditor.FeatsWndRender(widId); };
+	featsMainWnd.handleMessage = [](int widId, TigMsg*msg) { return uiCharEditor.FeatsWndMsg(widId, msg); };
+	featsMainWnd.Add(&featsMainWndId);
+
+	// multi select wnd
+	featsMultiCenterX = (w - 289) / 2;
+	featsMultiCenterY = (h - 355) / 2;
+	featsMultiSelectWnd = WidgetType1(0, 0, w, h);
+	auto featsMultiRefX = featsMultiCenterX + featsMultiSelectWnd.x;
+	auto featsMultiRefY = featsMultiCenterY + featsMultiSelectWnd.y;
+	featsMultiSelectWnd.widgetFlags = 1;
+	featsMultiSelectWnd.render = [](int widId) {uiCharEditor.FeatsMultiSelectWndRender(widId); };
+	featsMultiSelectWnd.handleMessage = [](int widId, TigMsg*msg) { return uiCharEditor.FeatsMultiSelectWndMsg(widId, msg); };
+	featsMultiSelectWnd.Add(&featsMultiSelectWndId);
+	//scrollbar
+	featsMultiSelectScrollbar.Init(256, 71, 219);
+	featsMultiSelectScrollbar.parentId = featsMultiSelectWndId;
+	featsMultiSelectScrollbar.x += featsMultiRefX;
+	featsMultiSelectScrollbar.y += featsMultiRefY;
+	featsMultiSelectScrollbar.Add(&featsMultiSelectScrollbarId);
+	ui.BindToParent(featsMultiSelectWndId, featsMultiSelectScrollbarId);
+	//ok btn
+	int newId = 0;
+	WidgetType2 multiOkBtn("Feats Multiselect Ok Btn", featsMultiSelectWndId, 29, 307, 110, 22);
+
+	multiOkBtn.x += featsMultiRefX; multiOkBtn.y += featsMultiRefY;
+	multiOkBtn.render = [](int id) {uiCharEditor.FeatsMultiOkBtnRender(id); };
+	multiOkBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.FeatsMultiOkBtnMsg(id, msg); };
+	multiOkBtn.renderTooltip = nullptr;
+	multiOkBtn.Add(&newId);
+	featsMultiOkBtnId= newId;
+	ui.SetDefaultSounds(newId);
+	ui.BindToParent(featsMultiSelectWndId, newId);
+	return 0;
 }
 
 BOOL UiCharEditor::SpellsWidgetsInit(){
@@ -900,16 +950,18 @@ void UiCharEditor::SpellsActivate() {
 		ui.ScrollbarSetY(sbId, 0);
 		int numEntries = (int)uiCharEditor.mAvailableSpells.size();
 		ui.ScrollbarSetYmax(sbId, max(0, numEntries - uiCharEditor.SPELLS_BTN_COUNT));
-		uiCharEditor.spellsScrollbar.y = 0;
 		ui.WidgetCopy(sbId, &uiCharEditor.spellsScrollbar);
+		uiCharEditor.spellsScrollbar.y = 0;
+		uiCharEditor.spellsScrollbarY = 0;
 
 		auto &charEdSelPkt = uiCharEditor.GetCharEditorSelPacket();
 		auto sbAddedId = uiCharEditor.spellsScrollbar2Id;
 		int numAdded = (int)uiCharEditor.mSpellInfo.size();
 		ui.ScrollbarSetY(sbAddedId, 0); 
 		ui.ScrollbarSetYmax(sbAddedId, max(0, numAdded - uiCharEditor.SPELLS_BTN_COUNT));
-		uiCharEditor.spellsScrollbar2.y = 0;
 		ui.WidgetCopy(sbAddedId, &uiCharEditor.spellsScrollbar2);
+		uiCharEditor.spellsScrollbar2.y = 0;
+		uiCharEditor.spellsScrollbar2Y = 0;
 	};
 
 	if (!needPopulateEntries) {
@@ -918,9 +970,6 @@ void UiCharEditor::SpellsActivate() {
 	}
 
 
-	/*auto & spellFlags = temple::GetRef<uint8_t[802]>(0x10C72F20);
-	memset(spellFlags, 0, sizeof(spellFlags));
-	selPkt.spellEnumToRemove = 0;*/
 	mSpellInfo.clear();
 	mAvailableSpells.clear();
 
@@ -934,204 +983,6 @@ void UiCharEditor::SpellsActivate() {
 		}
 	}
 
-	//
-	// legacy code
-	// convert the "New Spell Slot" enums to vacant enums (they were just used for sorting)
-	//for (auto i = 0u; i < selPkt.spellEnumsAddedCount; i++) {
-	//	if (selPkt.spellEnums[i] >= SPELL_ENUM_NEW_SLOT_START && selPkt.spellEnums[i] < SPELL_ENUM_NEW_SLOT_START + 10) {
-	//		selPkt.spellEnums[i] = 802;
-	//		spellFlags[i] = 3;
-	//	}
-	//}
-	//auto isNewClass = casterLvlNew == 1; // todo: generalize for PrC's
-	//
-	// newly taken class
-	//if (isNewClass){
-		//
-		// let natural casters choose 4 cantrips (Now done via Python API)
-		//auto count = 0;
-		//if (classLeveled == stat_level_bard || classLeveled == stat_level_sorcerer ){
-		//	selPkt.spellEnums[count++] = 803; // Spell Level 0 label
-		//	for (int i = 1; i < 5; i++)	{
-		//		selPkt.spellEnums[count] = 802;
-		//		spellFlags[count++] = 3;
-		//	}
-		//		
-		//	selPkt.spellEnumsAddedCount = count;
-		//}
-		//
-		//// add 2 level 1 spells for wiz/sorc (Now done via Python API)
-		//if (classLeveled == stat_level_wizard || classLeveled == stat_level_sorcerer){
-		//	selPkt.spellEnums[count++] = 804; // Spell Level 1 label
-		//	for (int i = 0; i < 2; i++) {
-		//		selPkt.spellEnums[count] = 802;
-		//		spellFlags[count++] = 3;
-		//	}
-		//	selPkt.spellEnumsAddedCount = count;
-		//}
-		//
-		//// bonus spells for wizards (now done via Python API)
-		//if (classLeveled == stat_level_wizard){
-		//	auto intScore = objects.StatLevelGet(handle, stat_intelligence);
-		//	if (selPkt.statBeingRaised == stat_intelligence)
-		//		intScore++;
-		//	auto intScoreMod = objects.GetModFromStatLevel(intScore);
-		//	for (auto i = 0; i < intScoreMod; i++){
-		//		selPkt.spellEnums[count] = 802;
-		//		spellFlags[count++] = 3;
-		//	}
-		//	selPkt.spellEnumsAddedCount = count;
-		//}
-	//} 
-	//
-	// progressing with a class    todo: generalize for PrC's
-	//else{
-		//// 2 new spells for Vancians (Now done via Python API)
-		//if (d20ClassSys.IsVancianCastingClass(classLeveled, handle) ){
-		//	for (int i = 0; i < 2; i++) {
-		//		selPkt.spellEnums[selPkt.spellEnumsAddedCount] = SPELL_ENUM_VACANT;
-		//		spellFlags[selPkt.spellEnumsAddedCount++] = 3;
-		//	}
-		//}
-		//
-		// innate casters - show all known spells and add slots as necessary
-		//if (d20ClassSys.IsNaturalCastingClass(classLeveled, handle)){
-			//
-			//	
-			//std::vector<KnownSpellInfo> knownSpells;
-			//knownSpells.reserve(SPELL_ENUM_MAX_EXPANDED);
-			//// get all known spells for innate casters
-			//int _knownSpells[3999] = {0,};
-			//int numKnown = critterSys.GetSpellEnumsKnownByClass(handle, spellSys.GetSpellClass(classLeveled), &_knownSpells[0], SPELL_ENUM_MAX_EXPANDED);
-			//for (int i = 0; i < numKnown; i++){
-			//	knownSpells.push_back(KnownSpellInfo( _knownSpells[i],0 ));
-			//}
-			//selPkt.spellEnumsAddedCount = numKnown;
-			//
-			//
-			//
-			//auto maxSpellLvl = spellSys.GetMaxSpellLevel(handle, classLeveled , casterLvlNew);
-			// get max spell level
-			//auto maxSpellLvl = casterLvlNew / 2;
-			//if (classLeveled == stat_level_bard) {
-			//	maxSpellLvl = (casterLvlNew - 1) / 3 + 1;
-			//}
-			//
-			// add labels
-			//for (int spellLvl = 0u; spellLvl <= maxSpellLvl; spellLvl++) {
-			//	//selPkt.spellEnums[selPkt.spellEnumsAddedCount++] = SPELL_ENUM_LABEL_START + spellLvl;
-			//	knownSpells.push_back(KnownSpellInfo(SPELL_ENUM_LABEL_START + spellLvl, 0));
-			//}
-			//
-			//for (auto spellLvl = 0; spellLvl <= maxSpellLvl; spellLvl++)	{
-			//	
-			//	int numNewSpellsForLevel = 
-			//		d20LevelSys.GetSpellsPerLevel(handle, classLeveled, spellLvl, casterLvlNew)
-			//		- d20LevelSys.GetSpellsPerLevel(handle, classLeveled, spellLvl, casterLvlNew-1);
-			//	for (int i = 0; i < numNewSpellsForLevel; i++){
-			//		//selPkt.spellEnums[selPkt.spellEnumsAddedCount++] = SPELL_ENUM_NEW_SLOT_START + spellLvl ;
-			//		knownSpells.push_back(KnownSpellInfo(SPELL_ENUM_NEW_SLOT_START + spellLvl, 0));
-			//	}
-			//}
-			//auto spellClass = spellSys.GetSpellClass(classLeveled);
-			//for (auto i = 0; i < selPkt.spellEnumsAddedCount; i++){
-			//	knownSpells.push_back(KnownSpellInfo(selPkt.spellEnums[i], spellFlags[i]));
-			//}
-			//
-			//std::sort(knownSpells.begin(), knownSpells.end(), [spellClass](KnownSpellInfo &firstEntry, KnownSpellInfo &secondEntry){
-			//	auto first = firstEntry.spEnum, second = secondEntry.spEnum;
-			//
-			//auto firstIsLabel = spellSys.IsLabel(first);
-			//auto secondIsLabel = spellSys.IsLabel(second);
-			//
-			//auto firstIsNewSlot = spellSys.IsNewSlotDesignator(first);
-			//auto secondIsNewSlot = spellSys.IsNewSlotDesignator(second);
-			//
-			//auto firstSpellLvl = spellSys.GetSpellLevelBySpellClass(first, spellClass);
-			//auto secondSpellLvl = spellSys.GetSpellLevelBySpellClass(second, spellClass);
-			//
-			//
-			//	if (firstSpellLvl != secondSpellLvl)
-			//		return firstSpellLvl < secondSpellLvl;
-			//
-			//	// if they are the same level
-			//
-			//	if (firstIsLabel){
-			//		return !secondIsLabel;
-			//	}
-			//	if (secondIsLabel)
-			//		return false;
-			//
-			//	if (firstIsNewSlot){
-			//		return false;
-			//	}
-			//
-			//	if (secondIsNewSlot){
-			//		return true;
-			//	}
-			//		
-			//
-			//	auto name1 = spellSys.GetSpellName(first);
-			//	auto name2 = spellSys.GetSpellName(second);
-			//	auto nameCmp = _strcmpi(name1, name2);
-			//	return nameCmp < 0;
-			//
-			//	//return _stricmp(spellSys.GetSpellMesline(second), spellSys.GetSpellMesline(first) );
-			//
-			//});
-			//
-			// convert the "New Spell Slot" enums to vacant enums (they were just used for sorting)
-			//for (auto i = 0u; i < knownSpells.size(); i++) {
-			//	if (knownSpells[i].spEnum >= SPELL_ENUM_NEW_SLOT_START && knownSpells[i].spEnum  < SPELL_ENUM_NEW_SLOT_START + 10){
-			//		knownSpells[i].spEnum = 802;
-			//		knownSpells[i].spFlag = 3;
-			//	}
-			//}
-			//
-			// mark old replaceable spells for sorc lvls 4,6,8,... and bards 5,8,11,... 
-			//
-			//bool isReplacingSpells = false;
-			//if (classLeveled == stat_level_bard){
-			//	if (casterLvlNew >= 5 
-			//		&& !((casterLvlNew -5) % 3) )
-			//		isReplacingSpells = true;
-			//}
-			//if (classLeveled == stat_level_sorcerer){
-			//	if (casterLvlNew >= 4 && !(casterLvlNew % 2)){
-			//		isReplacingSpells = true;
-			//	}
-			//}
-			//if (isReplacingSpells){
-			//	auto spLvlReplaceable = maxSpellLvl - 2;
-			//	for (auto i = 0u; i < knownSpells.size(); i++){
-			//		auto spEnum = knownSpells[i].spEnum;
-			//		auto spLvl = 0;
-			//		if (spEnum >= SPELL_ENUM_LABEL_START && spEnum < SPELL_ENUM_LABEL_START + 10)
-			//			spLvl = spEnum - SPELL_ENUM_LABEL_START;
-			//		else if (spEnum != SPELL_ENUM_MAX)
-			//		{
-			//			spLvl = spellSys.GetSpellLevelBySpellClass(spEnum, spellClass, handle);
-			//			if (spLvl > spLvlReplaceable)
-			//				break;
-			//			knownSpells[i].spFlag = 1; // denotes as replaceable
-			//		}
-			//	}
-			//}
-			//
-			//selPkt.spellEnumsAddedCount = min(802u, knownSpells.size());
-			//for (auto i = 0u; i < knownSpells.size(); i++) {
-			//	selPkt.spellEnums[i] = knownSpells[i].spEnum;
-			//	spellFlags[i] = knownSpells[i].spFlag;
-			//}
-		//
-		//}
-	//
-	//
-	//}
-	//
-	// populate entries
-	//temple::GetRef<void(__cdecl)()>(0x101A7390)(); // CharEditorLearnableSpellEntriesListPopulate (now done via Python API)
-	//temple::GetRef<void(__cdecl)()>(0x101A5F30)(); // CharEditorSpellCountBoxesUpdate
 	SpellsPerDayUpdate();
 
 	setScrollbars();
@@ -1685,12 +1536,12 @@ BOOL UiCharEditor::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 					}
 
 					// else - make sure is visible slot
-					if (i < spellsScrollbar2Y)
+					if ((int)i < spellsScrollbar2Y)
 						continue;
-					if (i >= spellsScrollbar2Y + SPELLS_BTN_COUNT)
+					if ((int)i >= spellsScrollbar2Y + SPELLS_BTN_COUNT)
 						break;
 
-					auto chosenWidIdx = i - spellsScrollbar2Y;
+					auto chosenWidIdx = (int)i - spellsScrollbar2Y;
 					if (!ui.WidgetContainsPoint(spellsChosenBtnIds[chosenWidIdx], msgW->x, msgW->y))
 						continue;
 

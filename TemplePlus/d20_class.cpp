@@ -27,6 +27,12 @@ struct D20ClassSystemAddresses : temple::AddressTable
 class D20ClassHooks : public TempleFix
 {
 	void apply() override {
+
+		// GetClassHD
+		replaceFunction<int(Stat)>(0x10073C90, [](Stat classEnum)->int {
+			return d20ClassSys.GetClassHitDice(classEnum);
+		});
+
 		// IsNonClassSkill
 		replaceFunction<BOOL(SkillEnum, Stat classCode)>(0x1007D130, [](SkillEnum skillEnum, Stat classEnum)->BOOL
 		{
@@ -287,6 +293,14 @@ int D20ClassSystem::GetSkillPts(Stat classEnum){
 	return classSpec->second.skillPts;
 }
 
+int D20ClassSystem::GetClassHitDice(Stat classEnum){
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return 6;
+
+	return classSpec->second.hitDice;
+}
+
 const char* D20ClassSystem::GetClassShortHelp(Stat classCode){
 	return d20Stats.GetClassShortDesc(classCode);
 }
@@ -365,9 +379,6 @@ int D20ClassSystem::NumDomainSpellsKnownFromClass(objHndl dude, Stat classCode)
 
 int D20ClassSystem::GetNumSpellsFromClass(objHndl obj, Stat classEnum, int spellLvl, uint32_t classLvl, bool getFromStatMod)
 {
-	//LevelPacket lvlPkt;
-	//d20LevelSys.GetLevelPacket(classCode, obj, 0, classLvl, &lvlPkt);
-
 	auto result = -1;
 
 	auto classSpec = classSpecs.find(classEnum);
@@ -411,25 +422,6 @@ int D20ClassSystem::GetNumSpellsFromClass(objHndl obj, Stat classEnum, int spell
 
 	return result;
 
-	//if (classCode == stat_level_bard){
-	//	if (spellLvl > 7)
-	//		spellLvl = 7;
-	//}
-	//else if (classCode <= stat_level_monk || classCode > stat_level_ranger){
-	//	if (spellLvl > 10)
-	//		spellLvl = 10;
-	//}
-	//else{
-	//	if (spellLvl > 5)
-	//		spellLvl = 5;
-	//}
-	//auto spellCountFromClass = lvlPkt.spellCountFromClass[spellLvl];
-	//if (spellCountFromClass >=0)
-	//{
-	//	spellCountFromClass += lvlPkt.spellCountBonusFromStatMod[spellLvl];
-	//}
-
-	//return spellCountFromClass;
 }
 
 BOOL D20ClassSystem::IsClassSkill(SkillEnum skillEnum, Stat classCode){
@@ -454,6 +446,11 @@ void D20ClassSystem::LevelupSpellsFinalize(objHndl handle, Stat classEnum){
 	else
 		pythonClassIntegration.LevelupSpellsFinalize(handle, classEnum);
 	
+}
+
+bool D20ClassSystem::IsSelectingFeatsOnLevelup(objHndl handle, Stat classEnum){
+
+	return pythonClassIntegration.IsSelectingFeatsOnLevelup(handle, classEnum);
 }
 
 bool D20ClassSystem::IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum){
