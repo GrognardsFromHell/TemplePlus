@@ -377,6 +377,10 @@ int LegacyFeatSystem::IsFighterFeat(feat_enums feat)
 int LegacyFeatSystem::IsFeatPropertySet(feat_enums feat, int featProp)
 {
 	return (m_featPropertiesTable[feat] & featProp) == featProp;
+}
+
+bool LegacyFeatSystem::IsFeatMultiSelectMaster(feat_enums feat){
+	return IsFeatPropertySet(feat, 0x80000) != 0;
 };
 
 #pragma endregion

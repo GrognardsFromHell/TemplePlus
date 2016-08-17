@@ -87,6 +87,15 @@ public:
 
 	BOOL FeatsSystemInit(GameSystemConf & conf);
 	BOOL FeatsWidgetsInit(int w, int h);
+	void FeatsFree();
+	void FeatWidgetsFree();
+	BOOL FeatsWidgetsResize(UiResizeArgs &args);
+	BOOL FeatsShow();
+	BOOL FeatsHide();
+	void FeatsActivate();
+	BOOL FeatsCheckComplete();
+	void FeatsFinalize();
+	void FeatsReset(CharEditorSelectionPacket& selPkt);
 
 	BOOL SpellsSystemInit(GameSystemConf & conf);
 	void SpellsFree();
@@ -112,16 +121,21 @@ public:
 	void ClassNextBtnRender(int widId);
 	void ClassPrevBtnRender(int widId);
 
-	void FeatsWndRender(int widId);
 	BOOL FeatsWndMsg(int widId, TigMsg* msg);
+	void FeatsWndRender(int widId);
 	BOOL FeatsEntryBtnMsg(int widId, TigMsg* msg);
-	void FeatssEntryBtnRender(int widId);
+	void FeatsEntryBtnRender(int widId);
+	BOOL FeatsExistingBtnMsg(int widId, TigMsg* msg);
+	void FeatsExistingBtnRender(int widId);
+
 	void FeatsMultiSelectWndRender(int widId);
 	BOOL FeatsMultiSelectWndMsg(int widId, TigMsg* msg);
 	void FeatsMultiOkBtnRender(int widId);
 	BOOL FeatsMultiOkBtnMsg(int widId, TigMsg* msg);
 	void FeatsMultiCancelBtnRender(int widId);
 	BOOL FeatsMultiCancelBtnMsg(int widId, TigMsg* msg);
+	void FeatsMultiBtnRender(int widId);
+	BOOL FeatsMultiBtnMsg(int widId, TigMsg* msg);
 
 
 	void SpellsWndRender(int widId);
@@ -159,6 +173,9 @@ public:
 		TigRect spellsChosenTitleRect, spellsAvailTitleRect;
 		TigRect spellsPerDayTitleRect;
 		int featsMultiCenterX, featsMultiCenterY;
+		TigRect featMultiOkRect, featMultiOkTextRect, featMultiCancelRect, featMultiCancelTextRect, featMultiTitleRect;
+		TigRect featsAvailTitleRect, featsTitleRect, featsExistingTitleRect, featsClassBonusRect;
+		TigRect featsSelectedBorderRect, featsClassBonusBorderRect, feat0TextRect, feat1TextRect, feat2TextRect;
 
 	int featsMainWndId = 0, featsMultiSelectWndId =0;
 	int featsScrollbarId =0, featsExistingScrollbarId =0, featsMultiSelectScrollbarId =0;
@@ -167,6 +184,16 @@ public:
 	WidgetType3 featsScrollbar, featsExistingScrollbar, featsMultiSelectScrollbar;
 	eastl::vector<int> featsAvailBtnIds, featsExistingBtnIds, featsMultiSelectBtnIds;
 	int featsMultiOkBtnId = 0, featsMultiCancelBtnId = 0;
+	const int FEATS_AVAIL_BTN_COUNT = 18;
+	const int FEATS_AVAIL_BTN_HEIGHT = 11;
+	const int FEATS_EXISTING_BTN_COUNT = 11;
+	const int FEATS_EXISTING_BTN_HEIGHT = 12;
+	const int FEATS_MULTI_BTN_COUNT = 15;
+	const int FEATS_MULTI_BTN_HEIGHT = 12;
+	std::string featsAvailTitleString, featsExistingTitleString;
+	std::string featsTitleString;
+	std::string featsClassBonusTitleString;
+
 
 	int spellsWndId = 0;
 	WidgetType1 spellsWnd;
@@ -187,6 +214,8 @@ public:
 	eastl::vector<TigRect> classBtnFrameRects;
 	eastl::vector<TigRect> classBtnRects;
 	eastl::vector<TigRect> classTextRects;
+	eastl::vector<TigRect> featsMultiBtnRects;
+	eastl::vector<TigRect> featsBtnRects, featsExistingBtnRects;
 	eastl::vector<string> levelLabels;
 	eastl::vector<string> spellLevelLabels;
 	eastl::vector<string> spellsPerDayTexts;
@@ -201,6 +230,7 @@ public:
 	ColorRect classBtnShadowColor = ColorRect(0xFF000000);
 	ColorRect classBtnColorRect = ColorRect(0xFFFFffff);
 	TigTextStyle classBtnTextStyle;
+	TigTextStyle featsGreyedStyle, featsBonusTextStyle, featsExistingTitleStyle, featsGoldenStyle, featsClassStyle, featsCenteredStyle;
 	TigTextStyle spellsTextStyle;
 	TigTextStyle spellsTitleStyle;
 	TigTextStyle spellLevelLabelStyle;
@@ -218,9 +248,15 @@ public:
 private:
 	int mPageCount = 0;
 
+	bool mFeatsActivated = false;
+	bool mIsSelectingBonusFeat = false;
+	bool mBonusFeatOk = false;
+	feat_enums featsMultiSelected = FEAT_NONE;
+
 	std::unique_ptr<CharEditorClassSystem> mClass;
 	std::vector<KnownSpellInfo> mSpellInfo;
 	std::vector<KnownSpellInfo> mAvailableSpells; // spells available for learning
+	std::vector<FeatInfo> mExistingFeats, mSelectableFeats, mMultiSelectFeats, mMultiSelectMasterFeats;
 	//std::unique_ptr<CharEditorStatsSystem> mStats;
 	//std::unique_ptr<CharEditorFeaturesSystem> mFeatures;
 	//std::unique_ptr<CharEditorSkillsSystem> mSkills;
@@ -501,23 +537,9 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 			if (classLvlNew == 1 || classLvlNew == 2 || !(classLvlNew % 5))
 				ui.ButtonSetButtonState(stateBtnIds[2], UBS_NORMAL); // features
 		}
-		//if (classCode == stat_level_fighter) {
-		//	if (classLvlNew == 1 || !(classLvlNew % 2) )
-		//		ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL); // fighter feats
-		//}
-		//if (classCode == stat_level_monk) {
-		//	if (classLvlNew == 2 || classLvlNew == 6)
-		//		ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL); // monk feats
-		//}
-		//if (classCode == stat_level_rogue) {
-		//	if (classLvlNew >= 10 && (!((classLvlNew - 10) % 3)))
-		//		ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL); // rogue special feat
-		//}
 		if (classCode == stat_level_wizard) {
 			if (classLvlNew == 1)
 				ui.ButtonSetButtonState(stateBtnIds[2], UBS_NORMAL); // wizard special school
-			//if (!(classLvlNew % 5))
-			//	ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL); // wizard feats
 		}
 	}
 	
@@ -684,10 +706,88 @@ BOOL UiCharEditor::ClassSystemInit(GameSystemConf &conf){
 
 BOOL UiCharEditor::FeatsSystemInit(GameSystemConf & conf){
 
+	auto pcCreationMes = temple::GetRef<MesHandle>(0x11E72EF0);
+	MesLine mesline;
+
+	TigTextStyle baseStyle;
+	baseStyle.flags = 0x4000;
+	baseStyle.field2c = -1;
+	baseStyle.shadowColor = &genericShadowColor;
+	baseStyle.field0 = 0;
+	baseStyle.kerning = 1;
+	baseStyle.leading = 0;
+	baseStyle.tracking = 3;
+	baseStyle.textColor = baseStyle.colors2 = baseStyle.colors4 = &whiteColorRect;
+
+	featsCenteredStyle = featsGreyedStyle = featsBonusTextStyle = featsExistingTitleStyle =  featsGoldenStyle =  featsClassStyle = baseStyle;
+
+	featsCenteredStyle.flags = 0x10;
+
+	static ColorRect goldenColor(0xFFFFD919);
+	featsGoldenStyle.colors2 = featsGoldenStyle.colors4 = featsGoldenStyle.textColor = &goldenColor;
+
+	static ColorRect greyColor(0xFF5D5D5D);
+	featsGreyedStyle.colors2 = featsGreyedStyle.colors4 = featsGreyedStyle.textColor = &greyColor;
+
+#pragma region Titles
+	// Feats Available title
+	mesline.key = 19000;
+	mesFuncs.GetLine_Safe(pcCreationMes, &mesline);
+	featsAvailTitleString.append(mesline.value);
+
+	// Existing Feats title
+	mesline.key = 19005;
+	mesFuncs.GetLine_Safe(pcCreationMes, &mesline);
+	featsExistingTitleString.append(mesline.value);
+
+	// Feats title
+	mesline.key = 19001;
+	mesFuncs.GetLine_Safe(pcCreationMes, &mesline);
+	featsTitleString.append(mesline.value);
+
+	// Class Bonus title
+	mesline.key = 19001;
+	mesFuncs.GetLine_Safe(pcCreationMes, &mesline);
+	featsClassBonusTitleString.append(mesline.value);
+#pragma endregion
+
 	featsbackdrop = new CombinedImgFile("art\\interface\\pc_creation\\meta_backdrop.img");
 	if (!featsbackdrop)
 		return 0;
 	return FeatsWidgetsInit(conf.width, conf.height);
+}
+
+BOOL UiCharEditor::FeatsCheckComplete(){
+
+	auto handle = GetEditedChar();
+	auto &selPkt = GetCharEditorSelPacket();
+
+	// is a 3rd level and no feat chosen
+	auto newLvl = objects.StatLevelGet(handle, stat_level) + 1;
+	if (!(newLvl % 3) && selPkt.feat0 == FEAT_NONE)
+		return 0;
+
+	if (mIsSelectingBonusFeat && !mBonusFeatOk) // the logic will be handled in the msg callbacks & Python API now
+		return 0;
+
+	return 1;
+}
+
+void UiCharEditor::FeatsFinalize()
+{
+}
+
+void UiCharEditor::FeatsReset(CharEditorSelectionPacket & selPkt){
+	mFeatsActivated = false;
+	auto &selPkt = GetCharEditorSelPacket();
+	selPkt.feat0 = FEAT_NONE;
+	selPkt.feat1 = FEAT_NONE;
+	if (selPkt.classCode != stat_level_ranger || objects.StatLevelGet(GetEditedChar(), stat_level_ranger) != 1)
+		selPkt.feat2 = FEAT_NONE;
+
+	mExistingFeats.clear();
+	mSelectableFeats.clear();
+	mMultiSelectFeats.clear();
 }
 
 BOOL UiCharEditor::SpellsSystemInit(GameSystemConf & conf){
@@ -774,10 +874,8 @@ BOOL UiCharEditor::SpellsSystemInit(GameSystemConf & conf){
 	return uiCharEditor.SpellsWidgetsInit();
 }
 
-void UiCharEditor::SpellsFree()
-{
+void UiCharEditor::SpellsFree(){
 	SpellsWidgetsFree();
-	//free(levelupSpellbar);
 }
 
 
@@ -805,19 +903,214 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	featsMultiSelectScrollbar.y += featsMultiRefY;
 	featsMultiSelectScrollbar.Add(&featsMultiSelectScrollbarId);
 	ui.BindToParent(featsMultiSelectWndId, featsMultiSelectScrollbarId);
+	
 	//ok btn
-	int newId = 0;
-	WidgetType2 multiOkBtn("Feats Multiselect Ok Btn", featsMultiSelectWndId, 29, 307, 110, 22);
+	{
+		int newId = 0;
+		WidgetType2 multiOkBtn("Feats Multiselect Ok Btn", featsMultiSelectWndId, 29, 307, 110, 22);
+		multiOkBtn.x += featsMultiRefX; multiOkBtn.y += featsMultiRefY;
+		featMultiOkRect = TigRect(multiOkBtn.x, multiOkBtn.y, multiOkBtn.width, multiOkBtn.height);
+		featMultiOkTextRect = TigRect(multiOkBtn.x, multiOkBtn.y + 4, multiOkBtn.width, multiOkBtn.height - 8);
+		multiOkBtn.render = [](int id) {uiCharEditor.FeatsMultiOkBtnRender(id); };
+		multiOkBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.FeatsMultiOkBtnMsg(id, msg); };
+		multiOkBtn.renderTooltip = nullptr;
+		multiOkBtn.Add(&newId);
+		featsMultiOkBtnId = newId;
+		ui.SetDefaultSounds(newId);
+		ui.BindToParent(featsMultiSelectWndId, newId);
+	}
 
-	multiOkBtn.x += featsMultiRefX; multiOkBtn.y += featsMultiRefY;
-	multiOkBtn.render = [](int id) {uiCharEditor.FeatsMultiOkBtnRender(id); };
-	multiOkBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.FeatsMultiOkBtnMsg(id, msg); };
-	multiOkBtn.renderTooltip = nullptr;
-	multiOkBtn.Add(&newId);
-	featsMultiOkBtnId= newId;
-	ui.SetDefaultSounds(newId);
-	ui.BindToParent(featsMultiSelectWndId, newId);
+	//cancel btn
+	{
+		int newId = 0;
+		WidgetType2 multiCancelBtn("Feats Multiselect Cancel Btn", featsMultiSelectWndId, 153, 307, 110, 22);
+		multiCancelBtn.x += featsMultiRefX; multiCancelBtn.y += featsMultiRefY;
+		featMultiCancelRect = TigRect(multiCancelBtn.x, multiCancelBtn.y, multiCancelBtn.width, multiCancelBtn.height);
+		featMultiCancelTextRect = TigRect(multiCancelBtn.x, multiCancelBtn.y + 4, multiCancelBtn.width, multiCancelBtn.height - 8);
+		multiCancelBtn.render = [](int id) {uiCharEditor.FeatsMultiCancelBtnRender(id); };
+		multiCancelBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.FeatsMultiCancelBtnMsg(id, msg); };
+		multiCancelBtn.renderTooltip = nullptr;
+		multiCancelBtn.Add(&newId);
+		featsMultiOkBtnId = newId;
+		ui.SetDefaultSounds(newId);
+		ui.BindToParent(featsMultiSelectWndId, newId);
+	}
+	
+	featMultiTitleRect = TigRect(featsMultiCenterX, featsMultiCenterY + 20, 289, 12);
+	featsMultiSelectBtnIds.clear();
+	featsMultiBtnRects.clear();
+	auto rowOff = 75;
+	for (auto i=0; i < FEATS_MULTI_BTN_COUNT; i++){
+		int newId = 0;
+		WidgetType2 featMultiBtn("Feats Multiselect btn", featsMultiSelectWndId, 23, 75 + i*(FEATS_MULTI_BTN_HEIGHT+2), 233, FEATS_MULTI_BTN_HEIGHT);
+
+		featMultiBtn.x += featsMultiRefX; featMultiBtn.y += featsMultiRefY;
+		featMultiBtn.render = [](int id) {uiCharEditor.FeatsMultiBtnRender(id); };
+		featMultiBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.FeatsMultiBtnMsg(id, msg); };
+		featMultiBtn.renderTooltip = nullptr;
+		featMultiBtn.Add(&newId);
+		featsMultiSelectBtnIds.push_back(newId);
+		ui.SetDefaultSounds(newId);
+		ui.BindToParent(featsMultiSelectWndId, newId);
+		featsMultiBtnRects.push_back(TigRect(featMultiBtn.x, featMultiBtn.y, featMultiBtn.width, featMultiBtn.height));
+	}
+
+	featsAvailTitleRect = TigRect(7,24,185, 10 );
+	featsTitleRect = TigRect(206, 27, 185, 10);
+	featsExistingTitleRect =TigRect(206, 105, 185, 10);
+	featsClassBonusRect = TigRect(206, 65, 185, 10);
+
+	// Selectable feats
+	featsAvailBtnIds.clear();
+	featsBtnRects.clear();
+	for (auto i = 0; i < FEATS_AVAIL_BTN_COUNT; i++) {
+		int newId = 0;
+		WidgetType2 featsAvailBtn("Feats Available btn", featsMainWndId, 6, 40 + i*(FEATS_AVAIL_BTN_HEIGHT + 1), 169, FEATS_AVAIL_BTN_HEIGHT);
+
+		featsAvailBtn.x += featsMainWnd.x; featsAvailBtn.y += featsMainWnd.y;
+		featsAvailBtn.render = [](int id) {uiCharEditor.FeatsEntryBtnRender(id); };
+		featsAvailBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.FeatsEntryBtnMsg(id, msg); };
+		featsAvailBtn.renderTooltip = nullptr;
+		featsAvailBtn.Add(&newId);
+		featsAvailBtnIds.push_back(newId);
+		ui.SetDefaultSounds(newId);
+		ui.BindToParent(featsMainWndId, newId);
+		featsBtnRects.push_back(TigRect(featsAvailBtn.x, featsAvailBtn.y, featsAvailBtn.width, featsAvailBtn.height));
+	}
+	//scrollbar
+	featsScrollbar.Init(186, 35, 230);
+	featsScrollbar.parentId = featsMainWndId;
+	featsScrollbar.x += featsMainWnd.x;
+	featsScrollbar.y += featsMainWnd.y;
+	featsScrollbar.Add(&featsScrollbarId);
+	ui.BindToParent(featsMainWndId, featsScrollbarId);
+
+
+	// Existing feats
+	featsExistingBtnIds.clear();
+	featsBtnRects.clear();
+	for (auto i = 0; i < FEATS_EXISTING_BTN_COUNT; i++) {
+		int newId = 0;
+		WidgetType2 featsExistingBtn("Feats Existing btn", featsMainWndId, 212, 121 + i*(FEATS_EXISTING_BTN_HEIGHT + 1), 175, FEATS_EXISTING_BTN_HEIGHT);
+
+		featsExistingBtn.x += featsMainWnd.x; featsExistingBtn.y += featsMainWnd.y;
+		featsExistingBtn.render = [](int id) {uiCharEditor.FeatsExistingBtnRender(id); };
+		featsExistingBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.FeatsExistingBtnMsg(id, msg); };
+		featsExistingBtn.renderTooltip = nullptr;
+		featsExistingBtn.Add(&newId);
+		featsExistingBtnIds.push_back(newId);
+		ui.SetDefaultSounds(newId);
+		ui.BindToParent(featsMainWndId, newId);
+		featsExistingBtnRects.push_back(TigRect(featsExistingBtn.x, featsExistingBtn.y, featsExistingBtn.width, featsExistingBtn.height));
+	}
+	//scrollbar
+	featsExistingScrollbar.Init(381, 117, 148);
+	featsExistingScrollbar.parentId = featsMainWndId;
+	featsExistingScrollbar.x += featsMainWnd.x;
+	featsExistingScrollbar.y += featsMainWnd.y;
+	featsExistingScrollbar.Add(&featsExistingScrollbarId);
+	ui.BindToParent(featsMainWndId, featsExistingScrollbarId);
+
+	featsSelectedBorderRect = TigRect(featsMainWnd.x + 207, featsMainWnd.y + 42, 185, 19 );
+	featsClassBonusBorderRect = TigRect(featsMainWnd.x + 207, featsMainWnd.y + 81, 185, 19);
+	feat0TextRect = TigRect(209, 46, 185, 12);
+	feat1TextRect = TigRect(209, 46+21, 185, 12);
+	feat2TextRect = TigRect(209, 85, 185, 12);
+
+	return 1;
+}
+
+void UiCharEditor::FeatsFree(){
+	FeatWidgetsFree();
+}
+
+void UiCharEditor::FeatWidgetsFree(){
+	for (auto i = 0; i < FEATS_MULTI_BTN_COUNT; i++) {
+		ui.WidgetRemoveRegardParent(featsMultiSelectBtnIds[i]);
+	}
+	featsMultiSelectBtnIds.clear();
+
+	for (auto i = 0; i < FEATS_AVAIL_BTN_COUNT; i++) {
+		ui.WidgetRemoveRegardParent(featsAvailBtnIds[i]);
+	}
+	featsAvailBtnIds.clear();
+
+	for (auto i = 0; i < FEATS_EXISTING_BTN_COUNT; i++) {
+		ui.WidgetRemoveRegardParent(featsExistingBtnIds[i]);
+	}
+	featsExistingBtnIds.clear();
+
+	ui.WidgetRemoveRegardParent(featsMultiOkBtnId);
+	ui.WidgetRemoveRegardParent(featsMultiCancelBtnId);
+	ui.WidgetRemove(featsMultiSelectScrollbarId);
+	ui.WidgetRemove(featsScrollbarId);
+	ui.WidgetRemove(featsExistingScrollbarId);
+
+	ui.WidgetRemove(featsMultiSelectWndId);
+	ui.WidgetRemove(featsMainWndId);
+	
+	
+}
+
+BOOL UiCharEditor::FeatsWidgetsResize(UiResizeArgs & args){
+	FeatWidgetsFree();
+	return FeatsWidgetsInit(args.rect1.width, args.rect1.height);
+}
+
+BOOL UiCharEditor::FeatsShow(){
+	featsMultiSelected = FEAT_NONE;
+	ui.WidgetSetHidden(featsMainWndId, 0);
+	ui.WidgetBringToFront(featsMainWndId);
+	return 1;
+}
+
+BOOL UiCharEditor::FeatsHide()
+{
+	ui.WidgetSetHidden(featsMainWndId, 1);
 	return 0;
+}
+
+void UiCharEditor::FeatsActivate(){
+	mFeatsActivated = true;
+	auto handle = GetEditedChar();
+	auto &selPkt = GetCharEditorSelPacket();
+
+	feat_enums existingFeats[122];
+	auto isRangerStyleChoosing = selPkt.classCode == stat_level_ranger && (objects.StatLevelGet(handle, stat_level_ranger) == 1);
+	auto existingCount = feats.FeatListGet(handle, existingFeats, selPkt.classCode, isRangerStyleChoosing == true?selPkt.feat2:FEAT_ACROBATIC);
+
+	mExistingFeats.clear();
+	for (auto i=0u; i<existingCount; i++){
+		auto ftEnum = existingFeats[i];
+		if (selPkt.feat0 != ftEnum && selPkt.feat1 != ftEnum && selPkt.feat2 != ftEnum)
+			mExistingFeats.push_back(FeatInfo(ftEnum));
+	}
+	std::sort(mExistingFeats.begin(), mExistingFeats.end(), [](FeatInfo &first, FeatInfo &second){
+
+		auto firstEnum = (feat_enums)first.featEnum;
+		auto secEnum = (feat_enums)second.featEnum;
+		static auto getFeatName = [](feat_enums ftEnum)->char*{
+
+			if (feats.IsFeatMultiSelectMaster(ftEnum))
+				return feats.GetFeatName(ftEnum); // TODO
+			else
+				return feats.GetFeatName(ftEnum);
+		};
+		
+
+		auto firstName = getFeatName( firstEnum );
+		auto secondName = getFeatName(secEnum);
+
+		return _stricmp(firstName, secondName) < 0;
+	});
+
+	ui.WidgetCopy(featsExistingScrollbarId, &featsExistingScrollbar);
+	featsExistingScrollbar.scrollbarY = 0;
+	featsExistingScrollbarY = 0;
+	featsExistingScrollbar.yMax = max((int)mExistingFeats.size() - FEATS_EXISTING_BTN_COUNT, 0);
+	ui.WidgetSet(featsExistingScrollbarId, &featsExistingScrollbar);
+
+	// Available feats
 }
 
 BOOL UiCharEditor::SpellsWidgetsInit(){
@@ -1242,6 +1535,69 @@ void UiCharEditor::ClassPrevBtnRender(int widId){
 		textMeas.width, textMeas.height);
 	UiRenderer::DrawTextInWidget(classWndId, textt, textRect, classBtnTextStyle);
 	UiRenderer::PopFont();
+}
+
+void UiCharEditor::FeatsWndRender(int widId)
+{
+}
+
+BOOL UiCharEditor::FeatsWndMsg(int widId, TigMsg * msg)
+{
+	return 0;
+}
+
+BOOL UiCharEditor::FeatsEntryBtnMsg(int widId, TigMsg * msg)
+{
+	return 0;
+}
+
+void UiCharEditor::FeatsEntryBtnRender(int widId)
+{
+}
+
+BOOL UiCharEditor::FeatsExistingBtnMsg(int widId, TigMsg* msg)
+{
+	return 0;
+}
+
+void UiCharEditor::FeatsExistingBtnRender(int widId)
+{
+}
+
+void UiCharEditor::FeatsMultiSelectWndRender(int widId)
+{
+}
+
+BOOL UiCharEditor::FeatsMultiSelectWndMsg(int widId, TigMsg * msg)
+{
+	return 0;
+}
+
+void UiCharEditor::FeatsMultiOkBtnRender(int widId)
+{
+}
+
+BOOL UiCharEditor::FeatsMultiOkBtnMsg(int widId, TigMsg * msg)
+{
+	return 0;
+}
+
+void UiCharEditor::FeatsMultiCancelBtnRender(int widId)
+{
+}
+
+BOOL UiCharEditor::FeatsMultiCancelBtnMsg(int widId, TigMsg * msg)
+{
+	return 0;
+}
+
+void UiCharEditor::FeatsMultiBtnRender(int widId)
+{
+}
+
+BOOL UiCharEditor::FeatsMultiBtnMsg(int widId, TigMsg* msg)
+{
+	return 0;
 }
 
 void UiCharEditor::SpellsWndRender(int widId){
