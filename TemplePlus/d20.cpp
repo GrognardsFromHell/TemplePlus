@@ -129,6 +129,7 @@ public:
 
 	// Action Checks
 	ActionCheck(AidAnotherWakeUp);
+	ActionCheck(CastSpell);
 	ActionCheck(Disarm);
 	ActionCheck(DisarmedWeaponRetrieve);
 	ActionCheck(DivineMight);
@@ -350,6 +351,7 @@ void LegacyD20System::NewD20ActionsInit()
 
 	d20Type = D20A_CAST_SPELL;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformCastSpell;
+	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckCastSpell;
 
 	d20Type = D20A_USE_ITEM;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformUseItem;
@@ -2174,6 +2176,77 @@ ActionErrorCode D20ActionCallbacks::ActionCheckAidAnotherWakeUp(D20Actn* d20a, T
 	}
 	return AEC_OK;
 };
+
+ActionErrorCode D20ActionCallbacks::ActionCheckCastSpell(D20Actn* d20a, TurnBasedStatus* tbStat) {
+	int spEnum, spellEnumOrg, spellClass, spellLvl, invIdx;
+	MetaMagicData mmData;
+	d20a->d20SpellData.Extract(&spEnum, &spellEnumOrg, &spellClass, &spellLvl, &invIdx, &mmData);
+	if (spEnum <= 0 || spellSys.IsLabel(spEnum) || spEnum > SPELL_ENUM_MAX_EXPANDED)
+		return AEC_INVALID_ACTION;
+
+	SpellEntry spEntry(spEnum);
+
+	auto actSeqSpellResetter = []() {
+		if (*actSeqSys.actSeqCur) {
+			spellSys.spellPacketBodyReset(&(*actSeqSys.actSeqCur)->spellPktBody);
+		}
+	};
+
+	// check casting time
+	if (spEntry.castingTimeType == 2 && combatSys.isCombatActive())	{
+		actSeqSpellResetter();
+		return AEC_OUT_OF_COMBAT_ONLY;
+	}
+
+	// if not an item spell
+	if (invIdx == INV_IDX_INVALID) {
+		tbStat->surplusMoveDistance = 0;
+		
+		// check CannotCast
+		if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_CannotCast)) {
+			actSeqSpellResetter();
+			return AEC_CANNOT_CAST_SPELLS;
+		}
+
+		if (!spellSys.spellCanCast(d20a->d20APerformer, spellEnumOrg, spellClass, spellLvl))
+			return AEC_CANNOT_CAST_SPELLS;
+
+
+		// check Spell/Sorc slots
+		if (!spellSys.isDomainSpell(spellClass)) {
+			auto classCode = spellSys.GetCastingClass(spellClass);
+			if (d20ClassSys.IsNaturalCastingClass(classCode))
+				while (true) {
+
+					auto spellsPerDay = spellSys.GetSpellsPerDay(d20a->d20APerformer, classCode, spellLvl);
+					auto spellsCastNum = spellSys.NumSpellsInLevel(d20a->d20APerformer, obj_f_critter_spells_cast_idx, spellClass, spellLvl);
+
+					if (spellsCastNum < spellsPerDay) {
+						break;
+					}
+
+					d20a->d20SpellData.spellSlotLevel += 1;
+					if (++spellLvl >= NUM_SPELL_LEVELS) {
+						actSeqSpellResetter();
+						return AEC_CANNOT_CAST_OUT_OF_AVAILABLE_SPELLS;
+					}
+				}
+		}
+		
+		// check GP requirement
+		if (spEntry.costGP > 0 && party.IsInParty(d20a->d20APerformer) && party.GetMoney() < spEntry.costGP * 100) {
+			actSeqSpellResetter();
+			return AEC_CANNOT_CAST_NOT_ENOUGH_GP;
+		}
+	}
+
+	if (d20Sys.d20QueryWithData(d20a->d20APerformer, DK_QUE_IsActionInvalid_CheckAction, (uint32_t)d20a, 0)) {
+		actSeqSpellResetter();
+		return AEC_INVALID_ACTION;
+	}
+
+	return d20Sys.TargetCheck(d20a) != 0 ? AEC_OK : AEC_TARGET_INVALID;
+}
 
 
 ActionErrorCode D20ActionCallbacks::AddToSeqCharge(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat){

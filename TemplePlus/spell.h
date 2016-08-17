@@ -164,6 +164,7 @@ struct LegacySpellSystem : temple::AddressTable
 	int CopyLearnableSpells(objHndl & handle, int spellClass, std::vector<SpellEntry> & entries);
 	uint32_t ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
 	int GetMaxSpellLevel(objHndl objHnd, Stat classCode, int characterLvl);
+	int GetSpellsPerDay(objHndl handle, Stat classCode, int spellLvl);
 	int ParseSpellSpecString(SpellStoreData* spell, char* spellString);
 
 	const char* GetSpellMesline(uint32_t line) const;

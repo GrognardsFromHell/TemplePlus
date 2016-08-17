@@ -459,6 +459,12 @@ int LegacySpellSystem::GetMaxSpellLevel(objHndl objHnd, Stat classCode, int char
 	//return addresses.GetMaxSpellSlotLevel(objHnd, classCode, characterLvl);
 }
 
+int LegacySpellSystem::GetSpellsPerDay(objHndl handle, Stat classCode, int spellLvl){
+	auto spellClass = spellSys.GetSpellClass(classCode);
+	auto effLvl = critterSys.GetSpellListLevelExtension(handle, classCode) + objects.StatLevelGet(handle, classCode);
+	return d20ClassSys.GetNumSpellsFromClass(handle, classCode, spellLvl, effLvl);
+}
+
 int LegacySpellSystem::ParseSpellSpecString(SpellStoreData* spell, char* spellString)
 {
 	return addresses.ParseSpellSpecString(spell, spellString);
@@ -1453,13 +1459,11 @@ uint32_t LegacySpellSystem::spellCanCast(objHndl objHnd, uint32_t spellEnum, uin
 		return 0;
 	}
 
-	if (d20ClassSys.IsNaturalCastingClass(spellClassCode & 0x7F))
-	{
+	if (d20ClassSys.IsNaturalCastingClass(spellClassCode & 0x7F)){
 		if (numSpellsKnownTooHigh(objHnd)) return 0;
 
 		spellKnownQueryGetData(objHnd, spellEnum, classCodes, spellLevels, &count);
-		for (int32_t i = 0; i < (int32_t)count; i++)
-		{
+		for (int32_t i = 0; i < (int32_t)count; i++){
 			if ( !isDomainSpell(classCodes[i])
 				&& (classCodes[i] & 0x7F) == (spellClassCode & 0x7F)
 				&& spellLevels[i] <= spellLevel)

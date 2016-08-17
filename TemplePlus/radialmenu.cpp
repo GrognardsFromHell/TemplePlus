@@ -104,7 +104,7 @@ class RadialMenuReplacements : public TempleFix
 
 		ReplaceStandardRadialNodes(); // replaces reference to standardNodeIndices
 
-
+		// SetSandardNode
 		replaceFunction<int(objHndl, int, int )>(0x100F12F0, [](objHndl handle, int stdNode, int specialParent) {
 			auto meskey = 1000 + stdNode;
 			auto isSpellNode = false;
@@ -144,8 +144,7 @@ class RadialMenuReplacements : public TempleFix
 						}
 					}
 					auto spellClass = spellSys.GetSpellClass(classCode);
-					auto effLvl = critterSys.GetSpellListLevelExtension(handle, classCode) + objects.StatLevelGet(handle, classCode);
-					auto numSpellsPerDay = d20ClassSys.GetNumSpellsFromClass(handle, classCode, spLvl, effLvl);
+					auto numSpellsPerDay = spellSys.GetSpellsPerDay(handle, classCode, spLvl);
 					if (numSpellsPerDay < 0)
 						numSpellsPerDay = 0;
 					
