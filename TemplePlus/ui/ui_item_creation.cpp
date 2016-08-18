@@ -1550,8 +1550,14 @@ ItemEnhancementSpec::ItemEnhancementSpec(const char* CondName, uint32_t Flags, i
 	downgradesTo = upgradesTo = CRAFT_EFFECT_INVALID;
 }
 
-BOOL ItemCreation::ItemCreationShow(objHndl crafter, ItemCreationType icType)
-{
+BOOL ItemCreation::ItemCreationShow(objHndl crafter, ItemCreationType icType){
+
+	if (crafter == objHndl::null){
+		ui.WidgetSetHidden(mItemCreationWndId, 1);
+		ui.WidgetSetHidden(mMaaWndId, 1);
+		return FALSE;
+	}
+
 	if (icType == itemCreationType)
 		return TRUE;
 
@@ -2367,7 +2373,7 @@ void ItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 
 			auto icItemIdx = temple::GetRef<int>(0x10BEE398);
 			if (icItemIdx >= 0 && icItemIdx < numItemsCrafting[itemCreationType]) {
-				auto createBtnId = temple::GetRef<int>(0x10BED8B0);
+				auto createBtnId = mItemCreationCreateBtnId; //temple::GetRef<int>(0x10BED8B0);
 				if (CreateItemResourceCheck(crafter, item))
 				{
 					ui.ButtonSetButtonState(createBtnId, UiButtonState::UBS_NORMAL);
@@ -3650,17 +3656,30 @@ void ItemCreation::MaaWidgetsExit(int widId){
 	for (int i = 0; i < MAA_NUM_ENCHANTABLE_ITEM_WIDGETS; i++)	{
 		ui.WidgetRemoveRegardParent(mMaaItemBtnIds[i]);
 	}
+
+	auto wnd = ui.WidgetGetType1(widId);
+
 	ui.WidgetAndWindowRemove(widId);
 
 }
 
 void ItemCreation::ItemCreationWidgetsExit(int widId){
-	ui.WidgetRemoveRegardParent(temple::GetRef<int>(0x10BED8B0)); // create button
+
+	ui.WidgetRemoveRegardParent(mItemCreationCreateBtnId); 
 	ui.WidgetRemoveRegardParent(temple::GetRef<int>(0x10BEDA68)); // cancel button
-	auto icEntryBtnIds = temple::GetRef<int[NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX]>(0x10BECE28);
+	
+	/*auto icEntryBtnIds = temple::GetRef<int[NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX]>(0x10BECE28);
 	for (int i = 0; i < NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX; i++){
 		ui.WidgetRemoveRegardParent(icEntryBtnIds[i]);
+	}*/
+
+	for (int i = 0; i < NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX; i++) {
+		ui.WidgetRemoveRegardParent(mItemCreationEntryBtnIds[i]);
 	}
+	ui.WidgetRemoveRegardParent(mItemCreationScrollbarId);
+
+	auto wnd = ui.WidgetGetType1(widId);
+	
 	ui.WidgetAndWindowRemove(widId);
 }
 
