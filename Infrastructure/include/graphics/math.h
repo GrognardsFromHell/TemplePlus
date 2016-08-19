@@ -62,4 +62,5 @@ struct TigRect {
 	void FitInto(const TigRect &boundingRect);
 	bool Intersects(const TigRect &other);
 	bool Intersects(const TigRect &other, TigRect &intersection);
+	bool ContainsPoint(int px, int py);
 };

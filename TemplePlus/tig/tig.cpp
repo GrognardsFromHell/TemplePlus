@@ -1,3 +1,4 @@
+#include "..\..\Infrastructure\include\graphics\math.h"
 #include "stdafx.h"
 #include "tig.h"
 #include "tig_tabparser.h"
@@ -271,6 +272,10 @@ bool TigRect::Intersects(const TigRect& other, TigRect& intersection) {
 	intersection.width = intersectionWidth;
 	intersection.height = intersectionHeight;
 	return true;	
+}
+
+bool TigRect::ContainsPoint(int pX, int pY){
+	return (pX >= x && pX <= x + width && pY >= y && pY <= y + height);
 }
 
 RECT TigRect::ToRect() {

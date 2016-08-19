@@ -1497,7 +1497,6 @@ feat_simple_weapon_proficiency_bard = 648
 feat_none = 649
 feat_exotic_weapon_proficiency_head = 650
 feat_improved_critical_head = 651
-feat_exotic_weapon_proficiency_head = 652
 feat_martial_weapon_proficiency_head = 652
 feat_skill_focus_head = 653
 feat_weapon_finesse_head = 654
