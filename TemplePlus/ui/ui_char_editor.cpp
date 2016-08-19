@@ -1514,7 +1514,7 @@ BOOL UiCharEditor::ClassNextBtnMsg(int widId, TigMsg * msg){
 	}
 
 	if (_msg->widgetEventType == TigMsgWidgetEvent::Entered) {
-		auto textboxText = fmt::format("Coming soon!");
+		auto textboxText = fmt::format("Prestige Classes\n\n Currently limited to Eldritch Knight and Mystic Theurge. The rest are on the way!");
 		if (textboxText.size() >= 1024)
 			textboxText[1023] = 0;
 		strcpy(temple::GetRef<char[1024]>(0x10C80CC0), &textboxText[0]);

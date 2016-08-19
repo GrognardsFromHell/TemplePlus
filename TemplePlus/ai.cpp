@@ -1765,6 +1765,11 @@ public:
 					}
 				}
 			}*/
+			if (!triggerer || !attachee){
+				int dummy = 1;
+				if (!triggerer && !attachee)
+					return 0;
+			}
 			if (san == san_start_combat)
 			{
 				int dummy = 1;
