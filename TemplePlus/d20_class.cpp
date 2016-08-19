@@ -170,6 +170,23 @@ bool D20ClassSystem::IsArcaneCastingClass(Stat classCode, objHndl handle){
 	return false;
 }
 
+bool D20ClassSystem::IsDivineCastingClass(Stat classCode, objHndl handle)
+{
+	auto classSpec = classSpecs.find(classCode);
+	if (classSpec == classSpecs.end())
+		return false;
+
+	if (classSpec->second.spellListType == SpellListType::Divine
+		|| classSpec->second.spellListType == SpellListType::Clerical
+		|| classSpec->second.spellListType == SpellListType::Druidic
+		|| classSpec->second.spellListType == SpellListType::Ranger
+		|| classSpec->second.spellListType == SpellListType::Paladin
+		)
+		return true;
+
+	return false;
+}
+
 bool D20ClassSystem::HasDomainSpells(Stat classEnum){
 	if (classEnum == stat_level_cleric)
 		return true;
@@ -436,8 +453,13 @@ BOOL D20ClassSystem::IsClassSkill(SkillEnum skillEnum, Stat classCode){
 }
 
 bool D20ClassSystem::LevelupSpellsCheckComplete(objHndl handle, Stat classEnum){
-
-	return pythonClassIntegration.LevelupSpellsCheckComplete(handle, classEnum);
+	if (objects.StatLevelGet(handle, classEnum)){
+		auto result = dispatch.DispatchLevelupSystemEvent(handle, classEnum, DK_LVL_Spells_Check_Complete);
+		return result >= 0;
+	}
+		
+	else
+		return pythonClassIntegration.LevelupSpellsCheckComplete(handle, classEnum);
 }
 
 void D20ClassSystem::LevelupSpellsFinalize(objHndl handle, Stat classEnum){

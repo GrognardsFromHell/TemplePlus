@@ -76,7 +76,7 @@ int __declspec(naked) HookedUsercallFeatMultiselectSub_101A8080()
 };
 
 
-int HookedFeatMultiselectSub_101A8080(feat_enums feat)
+int HookedFeatMultiselectSub_101A8080(feat_enums feat) // redundant now
 {
 	if ( (feat >= FEAT_EXOTIC_WEAPON_PROFICIENCY && feat <= FEAT_WEAPON_SPECIALIZATION) || feat == FEAT_WEAPON_FINESSE_DAGGER )
 	{

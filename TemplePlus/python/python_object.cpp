@@ -821,21 +821,16 @@ static PyObject* PyObjHandle_ArcaneSpellLevelCanCast(PyObject* obj, PyObject* ar
 
 	auto arcaneSpellLvlMax = 0;
 
-	auto wizLvl = objects.StatLevelGet(self->handle, stat_level_wizard);
-	if (wizLvl > 0){
-		arcaneSpellLvlMax =  (1 + wizLvl) / 2;
-	}
-
-	auto sorcLvl = objects.StatLevelGet(self->handle, stat_level_sorcerer);
-	if (sorcLvl > 0){
-		auto sorcSpellLvlMax = max(1, sorcLvl / 2);
-		if (sorcSpellLvlMax > arcaneSpellLvlMax)
-			arcaneSpellLvlMax = sorcSpellLvlMax;
-	}
-
-	auto bardLvl = objects.StatLevelGet(self->handle, stat_level_bard);
 	critterSys.GetSpellLvlCanCast(self->handle, SpellSourceType::Arcane, SpellReadyingType::Any);
-	// todo: generalize
+
+	for (auto it: d20ClassSys.classEnums){
+		auto classEnum = (Stat)it;
+		if (d20ClassSys.IsArcaneCastingClass(classEnum)){
+			arcaneSpellLvlMax = max(arcaneSpellLvlMax , spellSys.GetMaxSpellLevel(self->handle, classEnum, 0));
+		}
+	}
+	
+
 
 	return PyInt_FromLong(arcaneSpellLvlMax);
 }
@@ -848,20 +843,15 @@ static PyObject* PyObjHandle_DivineSpellLevelCanCast(PyObject* obj, PyObject* ar
 
 	auto divineSpellLvlMax = 0;
 
-	auto clrLvl = objects.StatLevelGet(self->handle, stat_level_cleric);
-	if (clrLvl > 0) {
-		divineSpellLvlMax = (1 + clrLvl) / 2;
-	}
-
-	auto drdLvl = objects.StatLevelGet(self->handle, stat_level_druid);
-	if (drdLvl > 0) {
-		if (drdLvl > clrLvl)
-			divineSpellLvlMax = (1 + drdLvl) / 2;
-	}
-
-	auto palLvl = objects.StatLevelGet(self->handle, stat_level_paladin);
 	critterSys.GetSpellLvlCanCast(self->handle, SpellSourceType::Divine, SpellReadyingType::Any);
-	// todo: generalize
+	
+	for (auto it : d20ClassSys.classEnums) {
+		auto classEnum = (Stat)it;
+		if (d20ClassSys.IsDivineCastingClass(classEnum)) {
+			divineSpellLvlMax = max(divineSpellLvlMax, spellSys.GetMaxSpellLevel(self->handle, classEnum, 0));
+		}
+	}
+
 
 	return PyInt_FromLong(divineSpellLvlMax);
 }

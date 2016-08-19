@@ -88,6 +88,7 @@ public:
 	bool IsCastingClass(Stat classEnum);
 	bool IsLateCastingClass(Stat classEnum); // for classes like Ranger / Paladin that start casting on level 4
 	bool IsArcaneCastingClass(Stat stat, objHndl handle = objHndl::null);
+	bool IsDivineCastingClass(Stat stat, objHndl handle = objHndl::null);
 	static bool HasDomainSpells(Stat classEnum);
 	Stat GetSpellStat(Stat classEnum); // default - wisdom
 	int GetMaxSpellLevel(Stat classEnum, int characterLvl);
@@ -143,7 +144,7 @@ public:
 
 	int ClericMaxSpellLvl(uint32_t clericLvl) const;
 	int NumDomainSpellsKnownFromClass(objHndl dude, Stat classCode);
-	int GetNumSpellsFromClass(objHndl obj, Stat classCode, int spellLvl, uint32_t classLvl, bool getFromStatMod = true);
+	int GetNumSpellsFromClass(objHndl obj, Stat classCode, int spellLvl, uint32_t classLvl, bool getFromStatMod = true); // returns -1 if none; must have >=0 spells per day before taking into account the stat mod
 
 	// skills
 	BOOL IsClassSkill(SkillEnum skillEnum, Stat classCode);

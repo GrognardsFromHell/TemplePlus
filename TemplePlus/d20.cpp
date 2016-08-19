@@ -2218,7 +2218,7 @@ ActionErrorCode D20ActionCallbacks::ActionCheckCastSpell(D20Actn* d20a, TurnBase
 			if (d20ClassSys.IsNaturalCastingClass(classCode))
 				while (true) {
 
-					auto spellsPerDay = spellSys.GetSpellsPerDay(d20a->d20APerformer, classCode, spellLvl);
+					auto spellsPerDay = spellSys.GetNumSpellsPerDay(d20a->d20APerformer, classCode, spellLvl);
 					auto spellsCastNum = spellSys.NumSpellsInLevel(d20a->d20APerformer, obj_f_critter_spells_cast_idx, spellClass, spellLvl);
 
 					if (spellsCastNum < spellsPerDay) {

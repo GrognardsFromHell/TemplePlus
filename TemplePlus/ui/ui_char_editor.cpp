@@ -33,6 +33,7 @@
 #include <gamesystems/map/d20_help.h>
 #include <infrastructure/elfhash.h>
 #include <tig/tig_mouse.h>
+#include <combat.h>
 
 namespace py = pybind11;
 using namespace pybind11;
@@ -200,10 +201,10 @@ public:
 	WidgetType3 featsScrollbar, featsExistingScrollbar, featsMultiSelectScrollbar;
 	eastl::vector<int> featsAvailBtnIds, featsExistingBtnIds, featsMultiSelectBtnIds;
 	int featsMultiOkBtnId = 0, featsMultiCancelBtnId = 0;
-	const int FEATS_AVAIL_BTN_COUNT = 18;
-	const int FEATS_AVAIL_BTN_HEIGHT = 11;
-	const int FEATS_EXISTING_BTN_COUNT = 11;
-	const int FEATS_EXISTING_BTN_HEIGHT = 12;
+	const int FEATS_AVAIL_BTN_COUNT = 17; // vanilla 18
+	const int FEATS_AVAIL_BTN_HEIGHT = 12; // vanilla 11
+	const int FEATS_EXISTING_BTN_COUNT = 10; // vanilla 11
+	const int FEATS_EXISTING_BTN_HEIGHT = 13; // vanilla 12
 	const int FEATS_MULTI_BTN_COUNT = 15;
 	const int FEATS_MULTI_BTN_HEIGHT = 12;
 	std::string featsAvailTitleString, featsExistingTitleString;
@@ -287,7 +288,7 @@ private:
 	bool mFeatsActivated = false;
 	bool mIsSelectingBonusFeat = false;
 	bool mBonusFeatOk = false;
-	feat_enums featsMultiSelected = FEAT_NONE;
+	feat_enums featsMultiSelected = FEAT_NONE, mFeatsMultiMasterFeat = FEAT_NONE;
 
 	std::unique_ptr<CharEditorClassSystem> mClass;
 	std::vector<KnownSpellInfo> mSpellInfo;
@@ -429,6 +430,12 @@ PYBIND11_PLUGIN(tp_char_editor){
 	.def("spells_finalize", [](objHndl handle, int classEnum)
 	{
 		d20ClassSys.LevelupSpellsFinalize(handle, (Stat)classEnum);
+	})
+	.def("spells_check_complete", [](objHndl handle, int classEnum)->int{
+		if (d20ClassSys.IsSelectingSpellsOnLevelup(handle, (Stat)classEnum))
+			return d20ClassSys.LevelupSpellsCheckComplete(handle, (Stat)classEnum);
+		else
+			return 1;
 	})
 	.def("get_max_spell_level", [](const objHndl & handle, int classEnum, int characterLvl)
 	{
@@ -787,7 +794,7 @@ BOOL UiCharEditor::FeatsSystemInit(GameSystemConf & conf){
 	featsTitleString.append(mesline.value);
 
 	// Class Bonus title
-	mesline.key = 19001;
+	mesline.key = 19003;
 	mesFuncs.GetLine_Safe(pcCreationMes, &mesline);
 	featsClassBonusTitleString.append(mesline.value);
 
@@ -1016,9 +1023,9 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 		featsMultiBtnRects.push_back(TigRect(featMultiBtn.x, featMultiBtn.y, featMultiBtn.width, featMultiBtn.height));
 	}
 
-	featsAvailTitleRect = TigRect(7,24,185, 10 );
+	featsAvailTitleRect = TigRect(7,22,185, 10 );
 	featsTitleRect = TigRect(206, 27, 185, 10);
-	featsExistingTitleRect =TigRect(206, 105, 185, 10);
+	featsExistingTitleRect =TigRect(206, 103, 185, 10);
 	featsClassBonusRect = TigRect(206, 65, 185, 10);
 
 	// Selectable feats
@@ -1026,7 +1033,7 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	featsBtnRects.clear();
 	for (auto i = 0; i < FEATS_AVAIL_BTN_COUNT; i++) {
 		int newId = 0;
-		WidgetType2 featsAvailBtn("Feats Available btn", featsMainWndId, 6, 40 + i*(FEATS_AVAIL_BTN_HEIGHT + 1), 169, FEATS_AVAIL_BTN_HEIGHT);
+		WidgetType2 featsAvailBtn("Feats Available btn", featsMainWndId, 7, 38 + i*(FEATS_AVAIL_BTN_HEIGHT + 1), 169, FEATS_AVAIL_BTN_HEIGHT);
 
 		featsAvailBtn.x += featsMainWnd.x; featsAvailBtn.y += featsMainWnd.y;
 		featsAvailBtn.render = [](int id) {uiCharEditor.FeatsEntryBtnRender(id); };
@@ -1175,9 +1182,10 @@ void UiCharEditor::FeatsActivate(){
 	ui.WidgetSet(featsExistingScrollbarId, &featsExistingScrollbar);
 
 	// Available feats
+	mSelectableFeats.clear();
 	for (auto i = 0u; i < NUM_FEATS; i++){
 		auto feat = (feat_enums)i;
-		if (!feats.IsFeatEnabled(feat))
+		if (!feats.IsFeatEnabled(feat) && !feats.IsFeatMultiSelectMaster(feat))
 			continue;
 		if (feats.IsFeatRacialOrClassAutomatic(feat))
 			continue;
@@ -1620,6 +1628,9 @@ void UiCharEditor::ClassPrevBtnRender(int widId){
 	UiRenderer::PopFont();
 }
 
+
+#pragma region Feats
+
 void UiCharEditor::FeatsWndRender(int widId){
 	
 	auto &selPkt = GetCharEditorSelPacket();
@@ -1679,6 +1690,7 @@ BOOL UiCharEditor::FeatsWndMsg(int widId, TigMsg * msg)
 
 	if (msgM->buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED && ui.IsWidgetHidden(featsMultiSelectWndId)) {
 		
+		bool dumy = 1;
 		auto putFeat = false;
 		feat_enums feat;
 
@@ -1699,25 +1711,30 @@ BOOL UiCharEditor::FeatsWndMsg(int widId, TigMsg * msg)
 				putFeat = true;
 				break;
 			} 
-			else if (IsSelectingBonusFeat() && selPkt.feat2 == FEAT_NONE)
+			else if (IsSelectingBonusFeat() && IsClassBonusFeat(feat) && selPkt.feat2 == FEAT_NONE)
 			{
 				selPkt.feat2 = feat;
 				putFeat = true;
 				break;
 			}
 		}
+
 		if (putFeat){
 			
 			if (feats.IsFeatMultiSelectMaster(feat)){
 				FeatsMultiSelectActivate(feat);
 			}
 			FeatsSanitize();
+			if (feat == FEAT_SKILL_MASTERY && selPkt.feat2 == feat){
+				auto skillMasteryActivate = temple::GetRef<void(__cdecl)(objHndl, int(__cdecl*)(int))>(0x1016C2B0);
+				skillMasteryActivate(GetEditedChar(), temple::GetRef<int(__cdecl)(int)>(0x101A86D0));
+			}
 		}
 
-		if (featsSelectedBorderRect.ContainsPoint(msgM->x, msgM->y)){
+		else if (featsSelectedBorderRect.ContainsPoint(msgM->x, msgM->y)){
 			selPkt.feat0 = FEAT_NONE;
 		} 
-		else if (featsClassBonusRect.ContainsPoint(msgM->x, msgM->y) && IsSelectingBonusFeat()){
+		else if (featsClassBonusBorderRect.ContainsPoint(msgM->x, msgM->y) && IsSelectingBonusFeat()){
 			selPkt.feat2 = FEAT_NONE;
 		}
 		
@@ -1802,6 +1819,10 @@ BOOL UiCharEditor::FeatsEntryBtnMsg(int widId, TigMsg * msg){
 				selPkt.feat2 = feat;
 				if (feats.IsFeatMultiSelectMaster(feat))
 					FeatsMultiSelectActivate(feat);
+				else if (feat == FEAT_SKILL_MASTERY){
+					auto skillMasteryActivate = temple::GetRef<void(__cdecl)(objHndl, int(__cdecl*)(int))>(0x1016C2B0);
+					skillMasteryActivate(GetEditedChar(), temple::GetRef<int(__cdecl)(int)>(0x101A86D0));
+				}
 			}
 			FeatsSanitize();
 			return TRUE;
@@ -1818,9 +1839,6 @@ BOOL UiCharEditor::FeatsEntryBtnMsg(int widId, TigMsg * msg){
 		}
 	return TRUE;
 }
-
-
-
 
 
 void UiCharEditor::FeatsEntryBtnRender(int widId){
@@ -1842,48 +1860,644 @@ void UiCharEditor::FeatsEntryBtnRender(int widId){
 
 BOOL UiCharEditor::FeatsExistingBtnMsg(int widId, TigMsg* msg)
 {
-	return 0;
+	if (msg->type != TigMsgType::WIDGET)
+		return 0;
+	auto msgW = (TigMsgWidget*)msg;
+
+	auto widIdx = ui.WidgetlistIndexof(widId, &featsExistingBtnIds[0], FEATS_EXISTING_BTN_COUNT);
+	auto featIdx = widIdx + featsExistingScrollbarY;
+	if (widIdx == -1 || featIdx >= (int)mExistingFeats.size())
+		return FALSE;
+
+	auto featInfo = mExistingFeats[featIdx];
+	auto feat = (feat_enums)featInfo.featEnum;
+
+	auto &selPkt = GetCharEditorSelPacket();
+	auto btn = ui.GetButton(widId);
+
+	switch (msgW->widgetEventType) {
+	case TigMsgWidgetEvent::Entered:
+		temple::GetRef<void(int, char*, size_t)>(0x10162A10)(FeatsMultiGetFirst(feat), temple::GetRef<char[1024]>(0x10C76B48), 1024u); // UiTooltipSetForFeat
+		temple::GetRef<void(char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C76B48)); // UiCharTextboxSet
+		return TRUE;
+	case TigMsgWidgetEvent::Exited:
+		temple::GetRef<void(__cdecl)(char *)>(0x10162C00)(""); // UiCharTextboxSet
+		return TRUE;
+	default:
+		return FALSE;
+
+	}
+	return TRUE;
 }
 
 void UiCharEditor::FeatsExistingBtnRender(int widId){
+	auto widIdx = ui.WidgetlistIndexof(widId, &featsExistingBtnIds[0], FEATS_EXISTING_BTN_COUNT);
+	auto featIdx = widIdx + featsExistingScrollbarY;
+	if (widIdx == -1 || featIdx >= (int)mExistingFeats.size())
+		return;
+
+	auto featInfo = mExistingFeats[featIdx];
+	auto feat = (feat_enums)featInfo.featEnum;
+
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+
+	UiRenderer::DrawTextInWidget(featsMainWndId, GetFeatName(feat), featsExistingBtnRects[widIdx], featsClassStyle);
+
+	UiRenderer::PopFont();
+}
+
+
+void UiCharEditor::FeatsMultiSelectActivate(feat_enums feat) {
+	
+	if (!FeatCanPick(feat))
+		return;
+
+	auto &selPkt = GetCharEditorSelPacket();
+	if (feat == FEAT_WEAPON_FINESSE) {
+		if (selPkt.feat0 == FEAT_WEAPON_FINESSE)
+			selPkt.feat0 = FEAT_WEAPON_FINESSE_DAGGER;
+		if (selPkt.feat1 == FEAT_WEAPON_FINESSE)
+			selPkt.feat1 = FEAT_WEAPON_FINESSE_DAGGER;
+		if (selPkt.feat2 == FEAT_WEAPON_FINESSE)
+			selPkt.feat2 = FEAT_WEAPON_FINESSE_DAGGER;
+		return;
+	}
+
+	mFeatsMultiMasterFeat = feat;
+	featsMultiSelected = FEAT_NONE;
+
+	// populate list
+	mMultiSelectFeats.clear();
+
+	auto featIt = FEAT_ACROBATIC;
+	auto featProp = 0x100;
+	switch(feat){
+		case FEAT_EXOTIC_WEAPON_PROFICIENCY:
+			featProp = FPF_EXOTIC_WEAP_ITEM;
+			break;
+		case FEAT_IMPROVED_CRITICAL:
+			featProp = FPF_IMPR_CRIT_ITEM;
+			break;
+		case FEAT_MARTIAL_WEAPON_PROFICIENCY:
+			featProp = FPF_MARTIAL_WEAP_ITEM;
+			break;
+		case FEAT_SKILL_FOCUS:
+			featProp = FPF_SKILL_FOCUS_ITEM;
+			break;
+		case FEAT_WEAPON_FINESSE:
+			featProp = FPF_WEAP_FINESSE_ITEM;
+			break;
+		case FEAT_WEAPON_FOCUS:
+			featProp = FPF_WEAP_FOCUS_ITEM;
+			break;
+		case FEAT_WEAPON_SPECIALIZATION:
+			featProp = FPF_WEAP_SPEC_ITEM;
+			break;
+		case FEAT_GREATER_WEAPON_FOCUS:
+			featProp = FPF_GREATER_WEAP_FOCUS_ITEM;
+			break;
+		case FEAT_GREATER_WEAPON_SPECIALIZATION:
+			featProp = FPF_GREAT_WEAP_SPEC_ITEM;
+			break;
+		default:
+			break;
+	}
+
+	for (auto ft = 0; ft < NUM_FEATS; ft++) {
+		featIt = (feat_enums)ft;
+		if (feats.IsFeatPropertySet(featIt, featProp) && feats.IsFeatEnabled(featIt)) {
+			mMultiSelectFeats.push_back(FeatInfo(ft));
+		}
+	}
+
+	ui.WidgetCopy(featsMultiSelectScrollbarId, &featsMultiSelectScrollbar);
+	featsMultiSelectScrollbar.scrollbarY = 0;
+	featsMultiSelectScrollbarY = 0;
+	featsMultiSelectScrollbar.yMax = max(0, (int)mMultiSelectFeats.size() - FEATS_MULTI_BTN_COUNT);
+	ui.WidgetSet(featsMultiSelectScrollbarId, &featsMultiSelectScrollbar);
+	ui.ButtonSetButtonState(featsMultiOkBtnId, UBS_DISABLED);
+
+	ui.WidgetSetHidden(featsMultiSelectWndId, 0);
+	ui.WidgetBringToFront(featsMultiSelectWndId);
+}
+
+void UiCharEditor::FeatsMultiSelectWndRender(int widId){
+	featsbackdrop->SetX(featsMultiSelectWnd.x + featsMultiCenterX);
+	featsbackdrop->SetY(featsMultiSelectWnd.y + featsMultiCenterY);
+	featsbackdrop->Render();
+
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+
+	UiRenderer::DrawTextInWidget(widId, GetFeatName(mFeatsMultiMasterFeat), featMultiTitleRect, featsCenteredStyle);
+
+	UiRenderer::PopFont();
 
 }
 
-void UiCharEditor::FeatsMultiSelectWndRender(int widId)
+BOOL UiCharEditor::FeatsMultiSelectWndMsg(int widId, TigMsg * msg){
+	if (msg->type != TigMsgType::WIDGET && msg->type != TigMsgType::KEYSTATECHANGE)
+		return FALSE;
+	
+	ui.ScrollbarGetY(featsMultiSelectScrollbarId, &featsMultiSelectScrollbarY);
+	
+	return TRUE;
+}
+
+void UiCharEditor::FeatsMultiOkBtnRender(int widId){
+	UiButtonState buttonState;
+	if (ui.GetButtonState(widId, buttonState))
+		return;
+
+	int texId;
+	switch(buttonState){
+	case UBS_NORMAL:
+		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptNormal, texId);
+		break;
+	case UBS_HOVERED:
+		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptHover, texId);
+		break;
+	case UBS_DOWN:
+		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptPressed, texId);
+		break;
+	case UBS_DISABLED:
+		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DisabledNormal, texId);
+		break;
+	default:	
+		break;
+	}
+	
+	static TigRect srcRect(1,1,110,22);
+	UiRenderer::DrawTextureInWidget(featsMultiSelectWndId, texId, featMultiOkRect, srcRect);
+
+	
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	UiRenderer::DrawTextInWidget(featsMultiSelectWndId, combatSys.GetCombatMesLine(6009), featMultiOkTextRect, featsCenteredStyle);
+	UiRenderer::PopFont();
+
+}
+
+BOOL UiCharEditor::FeatsMultiOkBtnMsg(int widId, TigMsg * msg){
+
+	if (msg->type != TigMsgType::WIDGET)
+		return FALSE;
+	auto msgW = (TigMsgWidget*)msg;
+	if (msgW->widgetEventType != TigMsgWidgetEvent::MouseReleased)
+		return FALSE;
+
+	auto &selPkt = GetCharEditorSelPacket();
+
+	if (featsMultiSelected == FEAT_NONE)	{
+		if (selPkt.feat0 == mFeatsMultiMasterFeat) {
+			selPkt.feat0 = FEAT_NONE;
+		}
+		if (selPkt.feat1 == mFeatsMultiMasterFeat) {
+			selPkt.feat1 = FEAT_NONE;
+		}
+		if (selPkt.feat2 == mFeatsMultiMasterFeat) {
+			selPkt.feat2 = FEAT_NONE;
+		}
+	}
+	else
+	{
+		if (selPkt.feat2 == mFeatsMultiMasterFeat) {
+			selPkt.feat2 = featsMultiSelected;
+		}
+		else if (selPkt.feat0 == mFeatsMultiMasterFeat) {
+			selPkt.feat0 = featsMultiSelected;
+		}
+		else if (selPkt.feat1 == mFeatsMultiMasterFeat) {
+			selPkt.feat1 = featsMultiSelected;
+		}
+	}
+	
+	mFeatsMultiMasterFeat = FEAT_NONE;
+	featsMultiSelected = FEAT_NONE;
+	ui.WidgetSetHidden(featsMultiSelectWndId, 1);
+
+	return TRUE;
+}
+
+void UiCharEditor::FeatsMultiCancelBtnRender(int widId){
+	UiButtonState buttonState;
+	if (ui.GetButtonState(widId, buttonState))
+		return;
+
+	int texId;
+	switch (buttonState) {
+	case UBS_NORMAL:
+		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineNormal, texId);
+		break;
+	case UBS_HOVERED:
+		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineHover, texId);
+		break;
+	case UBS_DOWN:
+		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclinePressed, texId);
+		break;
+	case UBS_DISABLED:
+		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DisabledNormal, texId);
+		break;
+	default:
+		break;
+	}
+
+	static TigRect srcRect(1, 1, 110, 22);
+	UiRenderer::DrawTextureInWidget(featsMultiSelectWndId, texId, featMultiCancelRect, srcRect);
+
+
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	UiRenderer::DrawTextInWidget(featsMultiSelectWndId, combatSys.GetCombatMesLine(6010), featMultiCancelTextRect, featsCenteredStyle);
+	UiRenderer::PopFont();
+}
+
+BOOL UiCharEditor::FeatsMultiCancelBtnMsg(int widId, TigMsg * msg){
+	if (msg->type != TigMsgType::WIDGET)
+		return FALSE;
+	auto msgW = (TigMsgWidget*)msg;
+	if (msgW->widgetEventType != TigMsgWidgetEvent::MouseReleased)
+		return FALSE;
+
+	auto &selPkt = GetCharEditorSelPacket();
+	
+	if (selPkt.feat0 == mFeatsMultiMasterFeat){
+		selPkt.feat0 = FEAT_NONE;
+	}
+	if (selPkt.feat1 == mFeatsMultiMasterFeat) {
+		selPkt.feat1 = FEAT_NONE;
+	}
+	if (selPkt.feat2 == mFeatsMultiMasterFeat) {
+		selPkt.feat2 = FEAT_NONE;
+	}
+
+	mFeatsMultiMasterFeat = FEAT_NONE;
+	featsMultiSelected = FEAT_NONE;
+	ui.WidgetSetHidden(featsMultiSelectWndId, 1);
+
+	return TRUE;
+}
+
+void UiCharEditor::FeatsMultiBtnRender(int widId){
+	auto widIdx = ui.WidgetlistIndexof(widId, &featsMultiSelectBtnIds[0], FEATS_MULTI_BTN_COUNT);
+	auto featIdx = widIdx + featsMultiSelectScrollbarY;
+	if (widIdx == -1 || featIdx >= (int)mMultiSelectFeats.size())
+		return;
+
+	auto featInfo = mMultiSelectFeats[featIdx];
+	auto feat = (feat_enums)featInfo.featEnum;
+
+
+
+	auto getFeatShortName = [](feat_enums ft){
+		if (feats.IsFeatMultiSelectMaster(ft))
+			return uiCharEditor.GetFeatName(ft);
+		
+
+		auto mesKey = 50000 + ft;
+		
+		if (feats.IsFeatPropertySet(ft, FPF_GREAT_WEAP_SPEC_ITEM)){
+			mesKey = 50000 + (ft - FEAT_GREATER_WEAPON_SPECIALIZATION_GAUNTLET + FEAT_WEAPON_SPECIALIZATION_GAUNTLET);
+		}
+
+		MesLine line(mesKey);
+		auto pcCreationMes = temple::GetRef<MesHandle>(0x11E72EF0);
+		auto text = mesFuncs.GetLineById(pcCreationMes,mesKey);
+		if (!text)
+			text = uiCharEditor.GetFeatName(ft).c_str();
+		return std::string(text);
+	};
+
+	auto ftName = getFeatShortName(feat);
+
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	UiRenderer::DrawTextInWidget(featsMultiSelectWndId, ftName, featsMultiBtnRects[widIdx], GetFeatStyle(feat, false));
+
+	UiRenderer::PopFont();
+}
+
+BOOL UiCharEditor::FeatsMultiBtnMsg(int widId, TigMsg* msg){
+
+	if (msg->type == TigMsgType::MOUSE)
+		return TRUE;
+
+	if (msg->type != TigMsgType::WIDGET)
+		return FALSE;
+
+
+	auto msgW = (TigMsgWidget*)msg;
+
+	auto widIdx = ui.WidgetlistIndexof(widId, &featsMultiSelectBtnIds[0], FEATS_MULTI_BTN_COUNT);
+	auto featIdx = widIdx + featsMultiSelectScrollbarY;
+	if (widIdx == -1 || featIdx >= (int)mMultiSelectFeats.size())
+		return FALSE;
+
+	auto featInfo = mMultiSelectFeats[featIdx];
+	auto feat = (feat_enums)featInfo.featEnum;
+
+	auto &selPkt = GetCharEditorSelPacket();
+	auto btn = ui.GetButton(widId);
+
+	switch (msgW->widgetEventType) {
+	case TigMsgWidgetEvent::MouseReleased:
+		if (helpSys.IsClickForHelpActive()) {
+			helpSys.PresentWikiHelp(109 + feat);
+			return TRUE;
+		}
+		if (FeatCanPick(feat)){
+			featsMultiSelected = feat;
+			ui.ButtonSetButtonState(featsMultiOkBtnId, UBS_NORMAL);
+		} else
+		{
+			featsMultiSelected = FEAT_NONE;
+			ui.ButtonSetButtonState(featsMultiOkBtnId, UBS_DISABLED);
+		}
+		return TRUE;
+	default:
+		return FALSE;
+
+	}
+	
+	return FALSE;
+}
+
+
+
+bool UiCharEditor::IsSelectingNormalFeat() {
+	auto handle = GetEditedChar();
+	auto newLvl = GetNewLvl();
+	return (newLvl % 3) == 0;
+}
+
+bool UiCharEditor::IsSelectingBonusFeat() {
+	return mIsSelectingBonusFeat;
+}
+
+
+std::string UiCharEditor::GetFeatName(feat_enums feat) {
+
+	if (feat >= FEAT_EXOTIC_WEAPON_PROFICIENCY && feat <= FEAT_GREATER_WEAPON_FOCUS)
+		return featsMasterFeatStrings[feat];
+
+	return std::string(feats.GetFeatName(feat));
+
+}
+
+TigTextStyle & UiCharEditor::GetFeatStyle(feat_enums feat, bool allowMultiple) {
+	auto &selPkt = GetCharEditorSelPacket();
+	auto newLvl = uiCharEditor.GetNewLvl(selPkt.classCode);
+
+	if ((allowMultiple || !uiCharEditor.FeatAlreadyPicked(feat))
+		&& uiCharEditor.FeatCanPick(feat))
+	{
+		if (uiCharEditor.featsMultiSelected == feat) {
+			return uiCharEditor.blueTextStyle;
+		}
+		if (feats.IsClassFeat(feat)) { // class Specific feat
+			return uiCharEditor.featsClassStyle;
+		}
+		else if (uiCharEditor.IsClassBonusFeat(feat)) // is choosing class bonus right now
+		{
+			return uiCharEditor.featsGoldenStyle;
+		}
+		else
+			return uiCharEditor.featsBonusTextStyle;
+	}
+
+	return uiCharEditor.featsGreyedStyle;
+
+}
+
+bool UiCharEditor::FeatAlreadyPicked(feat_enums feat) {
+	if (feats.IsFeatPropertySet(feat, 0x1)  // can be gained multiple times
+		|| feats.IsFeatMultiSelectMaster(feat))
+		return false;
+	auto &selPkt = GetCharEditorSelPacket();
+	if (selPkt.feat0 == feat || selPkt.feat1 == feat || selPkt.feat2 == feat)
+		return true;
+
+	auto handle = GetEditedChar();
+
+	auto isRangerSpecial = IsSelectingRangerSpec();
+	return feats.HasFeatCountByClass(handle, feat, selPkt.classCode, isRangerSpecial ? selPkt.feat2 : FEAT_ACROBATIC) != 0;
+}
+
+bool UiCharEditor::FeatCanPick(feat_enums feat) {
+	std::vector<feat_enums> featsPicked;
+	auto &selPkt = GetCharEditorSelPacket();
+	auto handle = GetEditedChar();
+
+	if (selPkt.feat0 != FEAT_NONE) {
+		featsPicked.push_back(selPkt.feat0);
+	}
+	if (selPkt.feat1 != FEAT_NONE) {
+		featsPicked.push_back(selPkt.feat1);
+	}
+	if (selPkt.feat2 != FEAT_NONE) {
+		featsPicked.push_back(selPkt.feat2);
+	}
+
+	// TODO extend the specials
+	if (feat == FEAT_IMPROVED_TRIP || feat == FEAT_IMPROVED_DISARM) {
+		if (selPkt.classCode == stat_level_monk && GetNewLvl(stat_level_monk) == 6)
+			return true;
+	}
+
+	if (IsSelectingBonusFeat() && IsClassBonusFeat(feat) && feats.IsFeatPropertySet(feat, FPF_ROGUE_BONUS)){
+		return true;
+	}
+
+
+	if (!feats.IsFeatMultiSelectMaster(feat)) {
+		return feats.FeatPrereqsCheck(handle, feat, featsPicked.size() > 0 ? &featsPicked[0] : nullptr, featsPicked.size(), selPkt.classCode, selPkt.statBeingRaised);
+	}
+
+
+	// Multiselect Master feats
+
+	auto ftrLvl = objects.StatLevelGet(handle, stat_level_fighter);
+	if (selPkt.classCode == stat_level_fighter)
+		ftrLvl++;
+	bool hasFocus = false;
+	switch (feat) {
+	case FEAT_EXOTIC_WEAPON_PROFICIENCY:
+		return critterSys.GetBaseAttackBonus(handle, selPkt.classCode) >= 1;
+	case FEAT_IMPROVED_CRITICAL:
+		return critterSys.GetBaseAttackBonus(handle, selPkt.classCode) >= 8;
+
+	case FEAT_MARTIAL_WEAPON_PROFICIENCY:
+	case FEAT_SKILL_FOCUS:
+		return true;
+
+	case FEAT_WEAPON_FINESSE:
+		if (critterSys.GetBaseAttackBonus(handle, selPkt.classCode) < 1)
+			return false;
+		for (auto i = (int)FEAT_WEAPON_FINESSE_GAUNTLET; i <= FEAT_WEAPON_FINESSE_NET; i++) {
+			if (feats.HasFeatCountByClass(handle, (feat_enums)i, (Stat)0, 0))
+				return false;
+		}
+		for (auto it : featsPicked) {
+			if (feats.IsFeatPropertySet(it, FPF_WEAP_FINESSE_ITEM))
+				return false;
+		}
+		return true;
+
+	case FEAT_WEAPON_FOCUS:
+		return critterSys.GetBaseAttackBonus(handle, selPkt.classCode) >= 1;
+
+	case FEAT_WEAPON_SPECIALIZATION:
+
+		if (ftrLvl < 8)
+			return false;
+		// check if has weapon focus
+
+		for (auto i = (int)FEAT_WEAPON_FOCUS_GAUNTLET; i <= FEAT_WEAPON_FOCUS_RAY; i++) {
+			if (feats.HasFeatCountByClass(handle, (feat_enums)i, (Stat)0, 0)) {
+				return true;
+			}
+			// if not, check if it's one of the picked ones
+			for (auto it : featsPicked) {
+				if (it == (feat_enums)i)
+					return true;
+			}
+		}
+		return false;
+
+	case FEAT_GREATER_WEAPON_FOCUS:
+		return ftrLvl >= 4;
+
+	case FEAT_GREATER_WEAPON_SPECIALIZATION:
+		if (ftrLvl < 12)
+			return false;
+
+		for (auto i = (int)FEAT_GREATER_WEAPON_FOCUS_GAUNTLET; i <= FEAT_GREATER_WEAPON_FOCUS_RAY; i++) {
+			hasFocus = false;
+			if (feats.HasFeatCountByClass(handle, (feat_enums)i, (Stat)0, 0)) {
+				hasFocus = true;
+			}
+			// if not, check if it's one of the picked ones
+			for (auto it : featsPicked) {
+				if (it == (feat_enums)i)
+					hasFocus =  true;
+				break;
+			}
+			// if has Greater Weapon Focus, check for Weapon Specialization
+			if (hasFocus) {
+				
+				for (auto j = (int)FEAT_WEAPON_SPECIALIZATION_GAUNTLET; j <= FEAT_WEAPON_SPECIALIZATION_GRAPPLE; j++) {
+					if (feats.HasFeatCountByClass(handle, (feat_enums)j, (Stat)0, 0))
+						return true;
+				}
+			}
+		}
+
+	default:
+		return true;
+	}
+
+
+}
+
+bool UiCharEditor::IsSelectingRangerSpec()
 {
+	auto &selPkt = GetCharEditorSelPacket();
+	auto handle = GetEditedChar();
+	auto isRangerSpecial = selPkt.classCode == stat_level_ranger && (objects.StatLevelGet(handle, stat_level_ranger) + 1) == 2;
+	return isRangerSpecial;
 }
 
-BOOL UiCharEditor::FeatsMultiSelectWndMsg(int widId, TigMsg * msg)
-{
-	return 0;
+bool UiCharEditor::IsClassBonusFeat(feat_enums feat) {
+	// mBonusFeats is delivered via the python class API
+	for (auto it : mBonusFeats) {
+		if (it.featEnum == feat)
+			return true;
+	}
+
+	// the old stuff
+	auto &selPkt = GetCharEditorSelPacket();
+	auto newLvl = GetNewLvl(selPkt.classCode);
+
+
+	switch (selPkt.classCode) {
+	case stat_level_fighter:
+		return feats.IsFighterFeat(feat);
+	case stat_level_monk:
+		if (feats.IsFeatPropertySet(feat, 0x20) && newLvl == 1)
+			return true;
+		if (feats.IsFeatPropertySet(feat, 0x40) && newLvl == 2)
+			return true;
+		if (feats.IsFeatPropertySet(feat, 0x80) && newLvl == 6)
+			return true;
+		return false;
+	case stat_level_ranger:
+		return (newLvl == 2 && (feat == FEAT_RANGER_TWO_WEAPON_STYLE || feat == FEAT_RANGER_ARCHERY_STYLE));
+	case stat_level_rogue:
+		return (feat < FEAT_NONE &&  newLvl >= 10 && !( (newLvl-10) % 3));
+	case stat_level_wizard:
+		return feats.IsMagicFeat(feat);
+	default:
+		return false;
+	}
 }
 
-void UiCharEditor::FeatsMultiOkBtnRender(int widId)
-{
+void UiCharEditor::SetBonusFeats(std::vector<FeatInfo>& fti) {
+	mBonusFeats.clear();
+	for (auto it : fti) {
+		uiCharEditor.mBonusFeats.push_back(it);
+	}
 }
 
-BOOL UiCharEditor::FeatsMultiOkBtnMsg(int widId, TigMsg * msg)
-{
-	return 0;
+void UiCharEditor::FeatsSanitize() {
+	auto &selPkt = GetCharEditorSelPacket();
+
+	for (auto i = 0; i < 3; i++) { // check if any of the feat now lack the prereq (due to user removal). loop three times to ensure up-to-date state.
+		if (selPkt.feat0 != FEAT_NONE && !FeatCanPick(selPkt.feat0))
+			selPkt.feat0 = FEAT_NONE;
+		if (selPkt.feat1 != FEAT_NONE && !FeatCanPick(selPkt.feat1)) {
+			selPkt.feat1 = FEAT_NONE;
+		}
+		if (selPkt.feat2 != FEAT_NONE && !FeatCanPick(selPkt.feat2) && !IsSelectingRangerSpec())
+			selPkt.feat2 = FEAT_NONE;
+	}
+
+
 }
 
-void UiCharEditor::FeatsMultiCancelBtnRender(int widId)
-{
+feat_enums UiCharEditor::FeatsMultiGetFirst(feat_enums feat) {
+	switch (feat)
+	{
+	case FEAT_EXOTIC_WEAPON_PROFICIENCY:
+		return FEAT_EXOTIC_WEAPON_PROFICIENCY_BASTARD_SWORD;
+
+	case FEAT_IMPROVED_CRITICAL:
+		return FEAT_IMPROVED_CRITICAL_BASTARD_SWORD;
+
+	case FEAT_MARTIAL_WEAPON_PROFICIENCY:
+		return FEAT_MARTIAL_WEAPON_PROFICIENCY_BATTLEAXE;
+
+	case FEAT_SKILL_FOCUS:
+		return FEAT_SKILL_FOCUS_APPRAISE;
+
+	case FEAT_WEAPON_FINESSE:
+		return FEAT_WEAPON_FINESSE_BASTARD_SWORD;
+
+	case FEAT_WEAPON_FOCUS:
+		return FEAT_WEAPON_FOCUS_BASTARD_SWORD;
+
+	case FEAT_GREATER_WEAPON_FOCUS:
+		return FEAT_GREATER_WEAPON_FOCUS_BASTARD_SWORD;
+
+	case FEAT_WEAPON_SPECIALIZATION:
+		return FEAT_WEAPON_SPECIALIZATION_BASTARD_SWORD;
+
+	case FEAT_GREATER_WEAPON_SPECIALIZATION:
+		return FEAT_GREATER_WEAPON_SPECIALIZATION_BASTARD_SWORD;
+	default:
+		return feat;
+	}
 }
 
-BOOL UiCharEditor::FeatsMultiCancelBtnMsg(int widId, TigMsg * msg)
-{
-	return 0;
-}
 
-void UiCharEditor::FeatsMultiBtnRender(int widId)
-{
-}
+#pragma endregion
 
-BOOL UiCharEditor::FeatsMultiBtnMsg(int widId, TigMsg* msg)
-{
-	return 0;
-}
+#pragma region Spells
 
 void UiCharEditor::SpellsWndRender(int widId){
 	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
@@ -2047,23 +2661,6 @@ BOOL UiCharEditor::SpellsEntryBtnMsg(int widId, TigMsg * msg)
 {
 	if (msg->type != TigMsgType::WIDGET)
 		return 0;
-
-	// oops, looks like this is handled in the SpellsWndMsg function
-
-	/*auto widIdx = ui.WidgetlistIndexof(widId, &spellsChosenBtnIds[0], SPELLS_BTN_COUNT);
-	if (widIdx == -1)
-		return 0;
-
-	auto spellIdx = widIdx + spellsScrollbar2Y;
-	if (spellIdx >= (int)mSpellInfo.size())
-		return 0;
-
-	auto spInfo = mSpellInfo[spellIdx];
-	auto spFlag = spInfo.spFlag;
-	auto spEnum = spInfo.spEnum;
-	auto spLvl = spInfo.spellLevel;*/
-
-
 	return 0;
 }
 
@@ -2275,6 +2872,41 @@ void UiCharEditor::SpellsAvailableEntryBtnRender(int widId){
 	
 }
 
+bool UiCharEditor::SpellIsForbidden(int spEnum)
+{
+	auto &selPkt = GetCharEditorSelPacket();
+	auto handle = GetEditedChar();
+	SpellEntry spEntry(spEnum);
+	auto spSchool = spEntry.spellSchoolEnum;
+
+	if (spSchool == selPkt.forbiddenSchool1
+		|| spSchool == selPkt.forbiddenSchool2)
+		return true;
+	if (spellSys.IsForbiddenSchool(handle, spSchool))
+		return true;
+	return false;
+}
+
+bool UiCharEditor::SpellIsAlreadyKnown(int spEnum, int spellClass) {
+	for (auto i = 0u; i < mSpellInfo.size(); i++) {
+		if (mSpellInfo[i].spEnum == spEnum
+			&& mSpellInfo[i].spellClass == spellClass)
+			return true;
+	}
+
+	auto &selPkt = GetCharEditorSelPacket();
+	if (spellSys.IsSpellKnown(GetEditedChar(), spEnum, spellClass)) {
+		if (selPkt.spellEnumToRemove == spEnum)
+			return false; // Oh god... TODO! (need to record class too..)
+		return true;
+	}
+
+	return false;
+}
+
+
+#pragma endregion
+
 int UiCharEditor::GetClassWndPage(){
 	return classWndPage;
 }
@@ -2327,15 +2959,6 @@ void UiCharEditor::ClassSetPermissibles(){
 		ui.ButtonSetButtonState(classNextBtn, UBS_DISABLED);
 }
 
-bool UiCharEditor::IsSelectingNormalFeat(){
-	auto handle = GetEditedChar();
-	auto newLvl = GetNewLvl();
-	return (newLvl % 3) == 0;
-}
-
-bool UiCharEditor::IsSelectingBonusFeat(){
-	return mIsSelectingBonusFeat;
-}
 
 int UiCharEditor::GetNewLvl(Stat classEnum){ // default is classEnum  = stat_level i.e. get the overall new level
 	auto handle = GetEditedChar();
@@ -2423,270 +3046,8 @@ void UiCharEditor::SpellsPopulateAvailableEntries(Stat classEnum, int maxSpellLv
 	temple::GetRef<int>(0x10C75A60) = numSpells;
 }
 
-bool UiCharEditor::SpellIsForbidden(int spEnum)
-{
-	auto &selPkt = GetCharEditorSelPacket();
-	auto handle = GetEditedChar();
-	SpellEntry spEntry(spEnum);
-	auto spSchool = spEntry.spellSchoolEnum;
 
-	if (spSchool == selPkt.forbiddenSchool1
-		|| spSchool == selPkt.forbiddenSchool2)
-		return true;
-	if (spellSys.IsForbiddenSchool(handle, spSchool))
-		return true;
-	return false;
-}
 
-bool UiCharEditor::SpellIsAlreadyKnown(int spEnum, int spellClass){
-	for (auto i = 0u; i < mSpellInfo.size(); i++){
-		if (mSpellInfo[i].spEnum == spEnum 
-			&& mSpellInfo[i].spellClass == spellClass)
-			return true;
-	}
-	
-	auto &selPkt = GetCharEditorSelPacket();
-	if (spellSys.IsSpellKnown(GetEditedChar(), spEnum, spellClass)){	
-		if (selPkt.spellEnumToRemove == spEnum)
-			return false; // Oh god... TODO! (need to record class too..)
-		return true;
-	}
-	
-	return false;
-}
-
-std::string UiCharEditor::GetFeatName(feat_enums feat){
-	
-	if (feat >= FEAT_EXOTIC_WEAPON_PROFICIENCY && feat <= FEAT_GREATER_WEAPON_FOCUS)
-		return featsMasterFeatStrings[feat];
-		
-	return std::string(feats.GetFeatName(feat));
-	 
-}
-
-TigTextStyle & UiCharEditor::GetFeatStyle(feat_enums feat, bool allowMultiple){
-	auto &selPkt = GetCharEditorSelPacket();
-	auto newLvl = uiCharEditor.GetNewLvl(selPkt.classCode);
-
-	if ( (allowMultiple || !uiCharEditor.FeatAlreadyPicked(feat))
-		&& uiCharEditor.FeatCanPick(feat))
-	{
-		if (uiCharEditor.featsMultiSelected == feat) {
-			return uiCharEditor.blueTextStyle;
-		}
-		if (feats.IsClassFeat(feat)) { // class Specific feat
-			return uiCharEditor.featsClassStyle;
-		}
-		else if (uiCharEditor.IsClassBonusFeat(feat)) // is choosing class bonus right now
-		{
-			return uiCharEditor.featsGoldenStyle;
-		}
-		else
-			return uiCharEditor.featsBonusTextStyle;
-	}
-
-	return uiCharEditor.featsGreyedStyle;
-	
-}
-
-bool UiCharEditor::FeatAlreadyPicked(feat_enums feat){
-	if (feats.IsFeatPropertySet(feat, 0x1)  // can be gained multiple times
-		|| feats.IsFeatMultiSelectMaster(feat)) 
-		return false;
-	auto &selPkt = GetCharEditorSelPacket();
-	if (selPkt.feat0 == feat || selPkt.feat1 == feat || selPkt.feat2 == feat)
-		return true;
-
-	auto handle = GetEditedChar();
-
-	auto isRangerSpecial = IsSelectingRangerSpec();
-	return feats.HasFeatCountByClass(handle, feat, selPkt.classCode,  isRangerSpecial? selPkt.feat2 : FEAT_ACROBATIC) != 0;
-}
-
-bool UiCharEditor::FeatCanPick(feat_enums feat){
-	std::vector<feat_enums> featsPicked;
-	auto &selPkt = GetCharEditorSelPacket();
-	auto handle = GetEditedChar();
-
-	if (selPkt.feat0 != FEAT_NONE){
-		featsPicked.push_back(selPkt.feat0);
-	}
-	if (selPkt.feat1 != FEAT_NONE) {
-		featsPicked.push_back(selPkt.feat1);
-	}
-	if (selPkt.feat2 != FEAT_NONE) {
-		featsPicked.push_back(selPkt.feat2);
-	}
-
-	// TODO extend the specials
-	if (feat == FEAT_IMPROVED_TRIP || feat == FEAT_IMPROVED_DISARM){
-		if (selPkt.classCode == stat_level_monk && GetNewLvl(stat_level_monk) == 6)
-			return true;
-	}
-	if (!feats.IsFeatPartOfMultiselect(feat)){
-		return feats.FeatPrereqsCheck(handle, feat, featsPicked.size() > 0 ? &featsPicked[0] : nullptr, featsPicked.size(), selPkt.classCode, selPkt.statBeingRaised);
-	}
-	 // Multiselect feats
-
-	auto ftrLvl = objects.StatLevelGet(handle, stat_level_fighter);
-	if (selPkt.classCode == stat_level_fighter)
-		ftrLvl++;
-	bool hasFocus = false;
-	switch (feat){
-	case FEAT_EXOTIC_WEAPON_PROFICIENCY:
-		return critterSys.GetBaseAttackBonus(handle, selPkt.classCode) >= 1;
-	case FEAT_IMPROVED_CRITICAL:
-		return critterSys.GetBaseAttackBonus(handle, selPkt.classCode) >= 8;
-
-	case FEAT_MARTIAL_WEAPON_PROFICIENCY:
-	case FEAT_SKILL_FOCUS:
-		return true;
-
-	case FEAT_WEAPON_FINESSE:
-		if (critterSys.GetBaseAttackBonus(handle, selPkt.classCode) < 1)
-			return false;
-		for (auto i = (int)FEAT_WEAPON_FINESSE_GAUNTLET; i <= FEAT_WEAPON_FINESSE_NET; i++){
-			if (feats.HasFeatCountByClass(handle, (feat_enums)i, (Stat)0, 0))
-				return false;
-		}
-		for (auto it: featsPicked){
-			if (feats.IsFeatPropertySet(it, 0x2100))
-				return false;
-		}
-		return true;
-
-	case FEAT_WEAPON_FOCUS:
-		return critterSys.GetBaseAttackBonus(handle, selPkt.classCode) >= 1;
-
-	case FEAT_WEAPON_SPECIALIZATION:
-		
-		if (ftrLvl < 8)
-			return false;
-		// check if has weapon focus
-
-		for (auto i = (int)FEAT_WEAPON_FOCUS_GAUNTLET; i <= FEAT_WEAPON_FOCUS_RAY; i++) {
-			if (feats.HasFeatCountByClass(handle, (feat_enums)i, (Stat)0, 0)){
-				return true;
-			}
-			// if not, check if it's one of the picked ones
-			for (auto it : featsPicked) {
-				if (it  == (feat_enums)i)
-					return true;
-			}
-		}
-		return false;
-
-	case FEAT_GREATER_WEAPON_FOCUS:
-		return ftrLvl >= 4;
-	default:
-		return true;
-	}
-	
-
-}
-
-bool UiCharEditor::IsSelectingRangerSpec()
-{
-	auto &selPkt = GetCharEditorSelPacket();
-	auto handle = GetEditedChar();
-	auto isRangerSpecial = selPkt.classCode == stat_level_ranger && (objects.StatLevelGet(handle, stat_level_ranger) + 1) == 2;
-	return isRangerSpecial;
-}
-
-bool UiCharEditor::IsClassBonusFeat(feat_enums feat){
-	// mBonusFeats is delivered via the python class API
-	for (auto it : mBonusFeats) {
-		if (it.featEnum == feat)
-			return true;
-	}
-
-	// the old stuff
-	auto &selPkt = GetCharEditorSelPacket();
-	auto newLvl = GetNewLvl(selPkt.classCode);
-
-	
-	switch(selPkt.classCode){
-	case stat_level_fighter:
-		return feats.IsFighterFeat(feat);
-	case stat_level_monk:
-		if (feats.IsFeatPropertySet(feat, 0x20) && newLvl == 1)
-			return true;
-		if (feats.IsFeatPropertySet(feat, 0x40) && newLvl == 2)
-			return true;
-		if (feats.IsFeatPropertySet(feat, 0x80) && newLvl == 6)
-			return true;
-		return false;
-	case stat_level_ranger:
-		return (newLvl == 2 && (feat == FEAT_RANGER_TWO_WEAPON_STYLE || feat == FEAT_RANGER_ARCHERY_STYLE));
-	case stat_level_rogue:
-		return (feat < FEAT_NONE &&  newLvl >= 10 && !(newLvl % 3));
-	case stat_level_wizard:
-		return feats.IsMagicFeat(feat);
-	default:
-		return false;
-	}
-}
-
-void UiCharEditor::SetBonusFeats(std::vector<FeatInfo>& fti){
-	mBonusFeats.clear();
-	for (auto it : fti) {
-		uiCharEditor.mBonusFeats.push_back(it);
-	}
-}
-
-void UiCharEditor::FeatsSanitize(){
-	auto &selPkt = GetCharEditorSelPacket();
-
-	for (auto i=0; i < 3; i++){ // check if any of the feat now lack the prereq (due to user removal). loop three times to ensure up-to-date state.
-		if (selPkt.feat0 != FEAT_NONE && !FeatCanPick(selPkt.feat0))
-			selPkt.feat0 = FEAT_NONE;
-		if (selPkt.feat1 != FEAT_NONE && !FeatCanPick(selPkt.feat1)) {
-			selPkt.feat1 = FEAT_NONE;
-		}
-		if (selPkt.feat2 != FEAT_NONE && !FeatCanPick(selPkt.feat2) && !IsSelectingRangerSpec())
-			selPkt.feat2 = FEAT_NONE;
-	}
-	
-
-}
-
-void UiCharEditor::FeatsMultiSelectActivate(feat_enums feat){
-	
-	auto &selPkt = GetCharEditorSelPacket();
-	if (feat == FEAT_WEAPON_FINESSE){
-		if (selPkt.feat0 == FEAT_WEAPON_FINESSE)
-			selPkt.feat0 = FEAT_WEAPON_FINESSE_DAGGER;
-		if (selPkt.feat1 == FEAT_WEAPON_FINESSE)
-			selPkt.feat1 = FEAT_WEAPON_FINESSE_DAGGER;
-		if (selPkt.feat2 == FEAT_WEAPON_FINESSE)
-			selPkt.feat2 = FEAT_WEAPON_FINESSE_DAGGER;
-		return;
-	}
-
-	ui.WidgetBringToFront(featsMultiSelectWndId);
-}
-
-feat_enums UiCharEditor::FeatsMultiGetFirst(feat_enums feat){
-	switch(feat)
-	{
-	case FEAT_EXOTIC_WEAPON_PROFICIENCY:
-		return FEAT_EXOTIC_WEAPON_PROFICIENCY_BASTARD_SWORD;
-	case FEAT_IMPROVED_CRITICAL:
-		return FEAT_IMPROVED_CRITICAL_BASTARD_SWORD;
-	case FEAT_MARTIAL_WEAPON_PROFICIENCY:
-		return FEAT_MARTIAL_WEAPON_PROFICIENCY_BATTLEAXE;
-	case FEAT_SKILL_FOCUS:
-		return FEAT_SKILL_FOCUS_APPRAISE;
-	case FEAT_GREATER_WEAPON_FOCUS:
-		return FEAT_GREATER_WEAPON_FOCUS_BASTARD_SWORD;
-	case FEAT_WEAPON_SPECIALIZATION:
-		return FEAT_WEAPON_SPECIALIZATION_BASTARD_SWORD;
-	case FEAT_GREATER_WEAPON_SPECIALIZATION:
-		return FEAT_GREATER_WEAPON_SPECIALIZATION_BASTARD_SWORD;
-	default:
-		return feat;
-	}
-}
 
 class UiCharEditorHooks : public TempleFix {
 	

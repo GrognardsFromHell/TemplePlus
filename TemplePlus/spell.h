@@ -163,8 +163,8 @@ struct LegacySpellSystem : temple::AddressTable
 	uint32_t spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry);
 	int CopyLearnableSpells(objHndl & handle, int spellClass, std::vector<SpellEntry> & entries);
 	uint32_t ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
-	int GetMaxSpellLevel(objHndl objHnd, Stat classCode, int characterLvl);
-	int GetSpellsPerDay(objHndl handle, Stat classCode, int spellLvl);
+	int GetMaxSpellLevel(objHndl objHnd, Stat classCode, int characterLvl = 0); // if characterLvl is 0 it will fetch the actual level; it also takes into account spell list extension by PrC's and such
+	int GetNumSpellsPerDay(objHndl handle, Stat classCode, int spellLvl); // including from spell list extension
 	int ParseSpellSpecString(SpellStoreData* spell, char* spellString);
 
 	const char* GetSpellMesline(uint32_t line) const;

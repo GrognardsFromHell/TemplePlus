@@ -5,6 +5,31 @@
 #define NUM_FEATS 750 // vanilla was 649 (and Moebius hack increased this to 664 I think)
 #include "tig/tig_mes.h"
 
+enum FeatPropertyFlag : uint32_t {
+	FPF_CAN_GAIN_MULTIPLE_TIMES = 0x1,
+	FPF_DISABLED = 0x2,
+	FPF_RACE_AUTOMATIC = 0x4,
+	FPF_CLASS_AUTMATIC = 0x8 ,
+	FPF_FIGHTER_BONUS = 0x10,
+	FPF_MONK_BONUS_1st = 0x20,
+	FPF_MONK_BONUS_2nd = 0x40,
+	FPF_MONK_BONUS_6th = 0x80,
+	FPF_MULTI_SELECT_ITEM = 0x100,
+	FPF_EXOTIC_WEAP_ITEM = 0x300,
+	FPF_IMPR_CRIT_ITEM = 0x500,
+	FPF_MARTIAL_WEAP_ITEM = 0x900,
+	FPF_SKILL_FOCUS_ITEM = 0x1100,
+	FPF_WEAP_FINESSE_ITEM = 0x2100,
+	FPF_WEAP_FOCUS_ITEM = 0x4100,
+	FPF_WEAP_SPEC_ITEM = 0x8100,
+	FPF_GREATER_WEAP_FOCUS_ITEM = 0x10100,
+	FPF_WIZARD_BONUS = 0x20000,
+	FPF_ROGUE_BONUS = 0x40000, // rogue bonus at 10th level
+
+	FPF_MULTI_MASTER = 0x80000, // head of multiselect class of feats (NEW)
+	FPF_GREAT_WEAP_SPEC_ITEM = 0x100100, // NEW	
+};
+
 
 struct FeatPrereqRow;
 struct ClassFeatTableEntry

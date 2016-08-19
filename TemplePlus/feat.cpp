@@ -346,7 +346,7 @@ int LegacyFeatSystem::IsMagicFeat(feat_enums feat)
 
 int LegacyFeatSystem::IsFeatPartOfMultiselect(feat_enums feat)
 {
-	return ( m_featPropertiesTable[feat] & 0x100 ) != 0;
+	return ( m_featPropertiesTable[feat] & FPF_MULTI_SELECT_ITEM ) != 0;
 }
 
 int LegacyFeatSystem::IsFeatRacialOrClassAutomatic(feat_enums feat)
@@ -380,7 +380,7 @@ int LegacyFeatSystem::IsFeatPropertySet(feat_enums feat, int featProp)
 }
 
 bool LegacyFeatSystem::IsFeatMultiSelectMaster(feat_enums feat){
-	return IsFeatPropertySet(feat, 0x80000) != 0;
+	return IsFeatPropertySet(feat, FPF_MULTI_MASTER) != 0;
 };
 
 #pragma endregion
@@ -678,53 +678,30 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 	FeatPrereqRow * featPrereqs = feats.m_featPreReqTable;
 	const uint8_t numCasterClasses = 7;
 	uint32_t casterClassCodes[numCasterClasses] = { stat_level_bard, stat_level_cleric, stat_level_druid, stat_level_paladin, stat_level_ranger, stat_level_sorcerer, stat_level_wizard };
-
-	if (featProps & 2 && !(featProps & 524290))
-	{
+	
+	if (!feats.IsFeatEnabled(featIdx)  && !feats.IsFeatMultiSelectMaster(featIdx)){
 		return 0;
 	}
 
-	//return 1; // h4x :)
 
-#pragma region	checking feats in the character editor - SpellSlinger hack for special Rogue feats for level > 10
-	if ( ui.CharEditorIsActive() && *feats.charEditorClassCode != 0 && *feats.charEditorObjHnd)
-	{
-		auto newClassLvl = objects.StatLevelGet(*feats.charEditorObjHnd, *feats.charEditorClassCode) + 1;
-
-		if (classCodeBeingLevelledUp == stat_level_rogue)
-		{
-			if (newClassLvl == 10 || newClassLvl == 13 || newClassLvl == 16 || newClassLvl == 19)
-			{
-				if (featProps & featPropRogueFeat)
-				{
-					return 1;
-				}
-			}
+	// checking feats in the character editor - SpellSlinger hack for special Rogue feats for level > 10
+	if ( classCodeBeingLevelledUp == stat_level_rogue && objHnd && feats.IsFeatPropertySet(featIdx, FPF_ROGUE_BONUS)){
+		auto newClassLvl = objects.StatLevelGet(objHnd, stat_level_rogue) + 1;
+		if (newClassLvl == 10 || newClassLvl == 13 || newClassLvl == 16 || newClassLvl == 19){
+				return 1;			
 		}
 	}
-#pragma endregion
-
 
 	uint32_t initOffset = featIdx * 16;
-	if (featIdx == FEAT_GREATER_TWO_WEAPON_FIGHTING)
-	{
-		int bpDummy = 1;
-	}
+
 	if (featPrereqs[featIdx].featPrereqs[0].featPrereqCode == featReqCodeTerminator){ return 1; };
 
 
-	for (uint32_t i = 0; featPrereqs[featIdx].featPrereqs[i].featPrereqCode != featReqCodeTerminator; i += 1)
-	{
-		//disassm notes:
-		// eax is classCodeBeingLevelledUp
-		// esi is featReqCode
-		// ecx is featIdx
+	for (uint32_t i = 0; featPrereqs[featIdx].featPrereqs[i].featPrereqCode != featReqCodeTerminator; i += 1){
 
 		int32_t featReqCode = featPrereqs[featIdx].featPrereqs[i].featPrereqCode;
 		auto featReqCodeArg = featPrereqs[featIdx].featPrereqs[i].featPrereqCodeArg;
-		uint32_t var_2C = 0;
-
-		
+		uint32_t var_2C = 0;		
 
 		if (featReqCode == featReqCodeMinCasterLevel)
 		{

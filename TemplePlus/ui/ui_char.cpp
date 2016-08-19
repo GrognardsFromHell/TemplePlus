@@ -330,7 +330,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 	// find which caster class tabs should appear
 	for (int i = 0; i < VANILLA_NUM_CLASSES ; i++){
 		auto classCode = d20ClassSys.vanillaClassEnums[i];
-		auto spellClassCode = (classCode & 0x7F) | 0x80;
+		auto spellClassCode = spellSys.GetSpellClass(classCode);
 
 		if (!d20ClassSys.IsCastingClass(classCode))
 			continue;
@@ -349,10 +349,10 @@ void CharUiSystem::SpellsShow(objHndl obj)
 		ui.WidgetSetHidden(navTabBtn->widgetId, 0);
 		
 		navClassPackets[uiCharSpellTabsCount].spellClassCode = spellClassCode;
-
+		
 		int n1 = 0;
 		for (int spellLvl = 0; spellLvl < 10; spellLvl++){
-			int numSpells = d20ClassSys.GetNumSpellsFromClass(dude, classCode, spellLvl, classLvl);
+			int numSpells = spellSys.GetNumSpellsPerDay(dude, classCode, spellLvl); //d20ClassSys.GetNumSpellsFromClass(dude, classCode, spellLvl, classLvl);
 			if (numSpells > 0)
 				n1 += numSpells;
 		}
@@ -439,12 +439,12 @@ void CharUiSystem::SpellsShow(objHndl obj)
 		if (!spellSys.isDomainSpell(spellClassCode)){ //normal casting class
 			//LevelPacket lvlPkt;
 			auto classCode = spellSys.GetCastingClass(spellClassCode);
-			auto classLvl = objects.StatLevelGet(dude, classCode);
-			classLvl += critterSys.GetSpellListLevelExtension(dude, classCode);
+			//auto classLvl = objects.StatLevelGet(dude, classCode);
+			//classLvl += critterSys.GetSpellListLevelExtension(dude, classCode);
 			//lvlPkt.GetLevelPacket(classCode, dude, 0, classLvl);
 			auto numSpellsForLvl = navClassPackets[i].numSpellsForLvl;
 			for (int j = 0; j < NUM_SPELL_LEVELS; j++){
-				auto numSp = d20ClassSys.GetNumSpellsFromClass(dude, classCode, j, classLvl);
+				auto numSp = spellSys.GetNumSpellsPerDay(dude, classCode, j);  //d20ClassSys.GetNumSpellsFromClass(dude, classCode, j, classLvl);
 				if  (numSp >= 0){ //(lvlPkt.spellCountFromClass[j] >= 0){
 					numSpellsForLvl[j] = numSp; //lvlPkt.spellCountBonusFromStatMod[j] + lvlPkt.spellCountFromClass[j];
 					if (numSpellsForLvl[j] > 0 && classCode == stat_level_wizard) {

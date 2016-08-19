@@ -5,6 +5,7 @@
 #include "temple_functions.h"
 #include "obj.h"
 #include "gamesystems/objects/objsystem.h"
+#include <critter.h>
 
 
 void removeSurplusSpells(int surplus, objHndl objHnd, uint32_t classCode, int slotLvl)
@@ -45,18 +46,17 @@ int getMemorizedSpells(objHndl objHnd, uint32_t classCode, int slotLvl)
 
 int getMaxSpells(objHndl objHnd, uint32_t classCode, int slotLvl, uint32_t classLvl)
 {
-	uint32_t maxSpells = spellSys.getBaseSpellCountByClassLvl(classCode, classLvl, slotLvl, 0);
-	if (maxSpells)
-	{
-		if ( spellSys.getWizSchool(objHnd) )
-		{
+	int maxSpells = spellSys.GetNumSpellsPerDay(objHnd, (Stat)classCode, slotLvl); // spellSys.getBaseSpellCountByClassLvl(classCode, classLvl, slotLvl, 0);
+	
+	if (maxSpells >=0 ){
+		if ( spellSys.getWizSchool(objHnd) ){
 			maxSpells++;
 
 		}
-		maxSpells += spellSys.getStatModBonusSpellCount(objHnd, classCode, slotLvl);
+		// maxSpells += spellSys.getStatModBonusSpellCount(objHnd, classCode, slotLvl);
 		return maxSpells;
 	} 
-	else if ( d20ClassSys.IsLateCastingClass((Stat)classCode) 
+	/*else if ( d20ClassSys.IsLateCastingClass((Stat)classCode) 
 		      && (classLvl >= 4 && slotLvl == 1 
 				  || classLvl >= 8 && slotLvl == 2
 				  || classLvl >= 11 && slotLvl == 3
@@ -64,7 +64,7 @@ int getMaxSpells(objHndl objHnd, uint32_t classCode, int slotLvl, uint32_t class
 	{
 		maxSpells += spellSys.getStatModBonusSpellCount(objHnd, classCode, slotLvl);
 			return maxSpells;
-	}
+	}*/
 
 	return 0;
 	

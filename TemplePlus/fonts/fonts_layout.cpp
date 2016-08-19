@@ -643,12 +643,14 @@ uint32_t TextLayouter::CountLinesVanilla(uint32_t maxWidth, uint32_t maxLines, c
 		// Measure the length of the current word
 		for (; i < length; i++) {
 			ch = text[i];
-
+			if (ch == '’') // fix for this character that sometimes appears in vanilla
+				ch = '\'';
 			// Skip @[0-9]
 			if (ch == '@' && i + 1 < length && text[i + 1] >= '0' && text[i + 1] <= '9') {
 				i++;
 				continue;
 			}
+			
 
 			if (isspace(ch)) {
 				break;

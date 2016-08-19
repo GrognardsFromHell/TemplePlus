@@ -144,7 +144,7 @@ class RadialMenuReplacements : public TempleFix
 						}
 					}
 					auto spellClass = spellSys.GetSpellClass(classCode);
-					auto numSpellsPerDay = spellSys.GetSpellsPerDay(handle, classCode, spLvl);
+					auto numSpellsPerDay = spellSys.GetNumSpellsPerDay(handle, classCode, spLvl);
 					if (numSpellsPerDay < 0)
 						numSpellsPerDay = 0;
 					
