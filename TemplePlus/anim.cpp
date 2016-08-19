@@ -1646,17 +1646,22 @@ int GoalStateFuncs::GoalStateFunc78_IsHeadingOk(AnimSlot & slot){
 	auto &rot = slot.pCurrentGoal->scratchVal2.floatNum;
 	rot = (float)(M_PI_2 + M_PI * 0.75 - atan2(nodeAbsY - objAbsY, nodeAbsX - objAbsX) );
 	if (rot < 0.0) {
-		rot += (float)6.2831855;//M_PI * 2;
+		rot += (float)6.2831853;//M_PI * 2;
 	}
-	if (rot > 6.2831855) {
-		rot -= (float) 6.2831855;//M_PI * 2;
+	if (rot > 6.2831853) {
+		rot -= (float) 6.2831853;//M_PI * 2;
 	}
 
-
+	
 	auto objRot = obj->GetFloat(obj_f_rotation);
-	if (fabs(objRot - rot) > 0.017453292) {   // 1 degree
+
+
+	if (sin(objRot - rot) > 0.017453292)    // 1 degree
 		return 0;
-	}
+	
+	if (cos(objRot) - cos(rot) > 0.017453292) // in case it's a 180 degrees difference
+		return 0;
+
 	return 1;
 }
 
