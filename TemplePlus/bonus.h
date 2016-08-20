@@ -7,8 +7,9 @@ struct BonusList;
 
 struct BonusSystem : temple::AddressTable
 {
+	void GetBonusMesLine( MesLine & line);
 	uint32_t isBonusNotMaximal(BonusList * bonList, uint32_t bonIdx, uint32_t * maxBonIdx);
-	uint32_t bonusAddToBonusList(BonusList* bonList, int bonValue, int bonType, unsigned bonMesLineNum);
+	uint32_t bonusAddToBonusList(BonusList* bonList, int32_t bonValue, int32_t bonType, uint32_t bonMesLineNum);
 	uint32_t bonusAddToBonusListWithDescr(BonusList* bonList, int32_t bonValue, int32_t bonType, uint32_t bonMesLineNum, char * bonDescr);
 	uint32_t bonusCapAdd(BonusList * bonList, int capType, int capValue, uint32_t bonMesLineNum);
 	uint32_t bonusCapAddWithDescr(BonusList * bonList, int capType, int capValue, uint32_t bonMesLineNum, char* capDescr);

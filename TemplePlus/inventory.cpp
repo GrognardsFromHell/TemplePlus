@@ -540,6 +540,7 @@ int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnla
 
 	auto wieldType = 3;
 
+	// if regardEnlargement is true, wielderSizeBase is the same as wielderSize i.e. it is implicit that the itemSize is enlarged along with the wielder
 	if (itemSize < wielderSizeBase){
 		wieldType = 0;
 	} 

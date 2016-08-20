@@ -35,6 +35,14 @@ class BonusSysReplacements : public TempleFix
 #pragma region Bonus System Implementation
 BonusSystem bonusSys;
 
+void BonusSystem::GetBonusMesLine(MesLine & line){
+	if (line.key >= 335)
+		mesFuncs.GetLine_Safe(bonusMesNew, &line);
+	else
+		mesFuncs.GetLine_Safe(*bonusMesHandle, &line);
+	return;
+}
+
 uint32_t BonusSystem::isBonusNotMaximal(BonusList* bonlist, uint32_t bonIdx, uint32_t* maxBonIdx)
 {
 	/*
@@ -71,13 +79,12 @@ uint32_t BonusSystem::isBonusNotMaximal(BonusList* bonlist, uint32_t bonIdx, uin
 uint32_t BonusSystem::bonusAddToBonusList(BonusList* bonList, int32_t bonValue, int32_t bonType, uint32_t bonMesLineNum)
 {
 	MesLine mesLine;
+	
 	if (bonList->bonCount >= BonusListMax) return 0;
 	mesLine.key = bonMesLineNum;
 
-	if (bonMesLineNum >= 335)
-		mesFuncs.GetLine_Safe(bonusMesNew, &mesLine);
-	else
-		mesFuncs.GetLine_Safe(*bonusMesHandle, &mesLine);
+	GetBonusMesLine(mesLine);
+	
 	bonList->bonusEntries[bonList->bonCount].bonValue = bonValue;
 	bonList->bonusEntries[bonList->bonCount].bonType = bonType;
 	bonList->bonusEntries[bonList->bonCount].bonusMesString = (char*)mesLine.value;
@@ -104,10 +111,8 @@ uint32_t BonusSystem::bonusCapAdd(BonusList* bonList, int capType, int capValue,
 	} 
 
 	mesLine.key = bonMesLineNum;
-	if (bonMesLineNum >= 335)
-		mesFuncs.GetLine_Safe(bonusMesNew, &mesLine);
-	else
-		mesFuncs.GetLine_Safe(*bonusMesHandle, &mesLine);
+	GetBonusMesLine(mesLine);
+
 	bonList->bonCaps[bonList->bonCapperCount].capValue = capValue;
 	bonList->bonCaps[bonList->bonCapperCount].bonType = capType;
 	bonList->bonCaps[bonList->bonCapperCount].bonCapperString = (char*)mesLine.value;

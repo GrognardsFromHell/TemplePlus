@@ -2448,6 +2448,7 @@ void ActionSequenceSystem::ActionPerform()
 		if (d20->tumbleCheck(d20a))
 		{
 			DoAoo(d20a->d20APerformer, d20a->d20ATarget);
+			curSeq = *actSeqCur; // DoAoo updates the curSeq
 			curSeq->d20ActArray[curSeq->d20ActArrayNum - 1].d20Caf |= D20CAF_AOO_MOVEMENT;
 			sequencePerform();
 			return;

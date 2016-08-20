@@ -35,7 +35,7 @@ struct InventorySystem : temple::AddressTable
 	
 	objHndl(__cdecl *GetSubstituteInventory)  (objHndl);
 	objHndl(__cdecl *GetItemAtInvIdx)(objHndl, uint32_t nIdx); // returns the item at obj_f_critter_inventory subIdx nIdx  (or obj_f_container_inventory for containers); Note the difference to ItemWornAt! (this is a more low level function)
-	objHndl FindMatchingStackableItem(objHndl objHndReceiver, objHndl objHndItem); // TODO: rewrite so it doesn't stack items with different descriptions and/or caster levels, so potions/scrolls of different caster levels don't stack
+	objHndl FindMatchingStackableItem(objHndl objHndReceiver, objHndl objHndItem);
 	
 	
 	void (__cdecl *sub_100FF500)(Dispatcher *dispatcher, objHndl objHndItem, uint32_t itemInvLocation);

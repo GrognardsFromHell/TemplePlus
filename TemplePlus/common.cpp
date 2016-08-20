@@ -150,6 +150,27 @@ int BonusList::AddBonusFromFeat(int value, int bonType, int mesline, feat_enums 
 	return AddBonusWithDesc(value, bonType, mesline, featName);
 }
 
+int BonusList::ModifyBonus(int value, int bonType, int meslineIdentifier){
+	// AddBonus(value, -bonType, meslineIdentifier);
+	MesLine line(meslineIdentifier);	
+	bonusSys.GetBonusMesLine(line);
+	
+	for (auto i=0u; i< bonCount; i++){
+		auto &entry = bonusEntries[i];
+
+		if (entry.bonType == bonType){
+
+			if (meslineIdentifier && line.value == entry.bonusMesString)	{
+				entry.bonValue += value;
+			}
+			
+			if (meslineIdentifier)
+				break;
+		}
+	}
+	return 0;
+}
+
 BOOL BonusList::ZeroBonusSetMeslineNum(int mesline)
 {
 	if (zeroBonusCount >= 10)

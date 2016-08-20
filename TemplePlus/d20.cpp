@@ -335,6 +335,8 @@ void LegacyD20System::NewD20ActionsInit()
 	}
 	mesFuncs.Open("tpmes//combat.mes", &combatSys.combatMesNew);
 
+	d20Defs[D20A_PYTHON_ACTION];
+
 	d20Defs[D20A_DIVINE_MIGHT].addToSeqFunc = d20Callbacks.AddToSeqSimple;
 	d20Defs[D20A_DIVINE_MIGHT].actionCheckFunc = d20Callbacks.ActionCheckDivineMight;
 	d20Defs[D20A_DIVINE_MIGHT].performFunc = d20Callbacks.PerformDivineMight;

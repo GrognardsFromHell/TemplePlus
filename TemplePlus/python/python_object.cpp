@@ -2111,6 +2111,34 @@ static PyObject* PyObjHandle_GetDeity(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(objects.GetDeity(self->handle));
 }
 
+static PyObject* PyObjHandle_GetWieldType(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		PyInt_FromLong(0);
+	}
+	objHndl weapon = objHndl::null;
+	int regardEnlargement = false;
+	if (!PyArg_ParseTuple(args, "|O&i:objhndl.get_wield_type", &ConvertObjHndl, &weapon, &regardEnlargement))
+		return 0;
+
+	auto result = 0; // default - light weapon
+
+	if (weapon == objHndl::null) {
+		weapon = inventory.ItemWornAt(self->handle, EquipSlot::WeaponPrimary);
+		if (!weapon)
+			weapon = inventory.ItemWornAt(self->handle, EquipSlot::WeaponSecondary);
+		if (!weapon){ // no weapon at all!
+			return PyInt_FromLong(result);
+		}
+	}
+
+	result = inventory.GetWieldType(self->handle, weapon, regardEnlargement);
+
+	return PyInt_FromLong(result); 
+}
+
+
+
 static PyObject* PyObjHandle_WieldBestAll(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -2428,6 +2456,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL },
 	{ "get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL },
 	{ "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
+	{ "get_wield_type", PyObjHandle_GetWieldType, METH_VARARGS, NULL },
 	{ "group_list", PyObjHandle_GroupList, METH_VARARGS, NULL },
 	
 	{ "has_atoned", PyObjHandle_HasAtoned, METH_VARARGS, NULL },

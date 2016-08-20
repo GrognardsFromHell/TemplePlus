@@ -94,7 +94,7 @@ struct JumpPointPacket {
 struct BonusEntry
 {
 	int32_t bonValue;
-	uint32_t bonType; // gets comapred with 0, 8 and 21 in 100E6490; I think these types allow bonuses to stack
+	int32_t bonType; // types 0, 8 and 21 can stack ( 100E6490 ); use negative number for modifier
 	const char * bonusMesString; // parsable string for the help system e.g. "~Item~[TAG_ITEM]"
 	char * bonusDescr; // e.g. "Magic Full Plate +1"
 };
@@ -149,6 +149,7 @@ struct BonusList
 	int AddBonus(int value, int bonType, int mesline);
 	int AddBonusWithDesc(int value, int bonType, int mesline, char* descr);
 	int AddBonusFromFeat(int value, int bonType, int mesline, feat_enums feat); // same as the above, but it also gets the feat name automatically
+	int ModifyBonus(int value, int bonType, int meslineIdentifier); // directly modifies a bonus. For non-stacking bonus types that you want to stack anyway. Note: the mesline is used as an identifier here!
 	BOOL ZeroBonusSetMeslineNum(int mesline);
 
 	int AddCap(int capType, int capValue, uint32_t bonMesLineNum);

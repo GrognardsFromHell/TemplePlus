@@ -109,6 +109,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 			.def("add", &BonusList::AddBonus, "Adds a bonus entry. Args are: value, type, and bonus.mes line number")
 			.def("add_from_feat", &BonusList::AddBonusFromFeat)
 			.def("set_overall_cap", &BonusList::SetOverallCap)
+			.def("modify", &BonusList::ModifyBonus)
 			.def("get_sum", &BonusList::GetEffectiveBonusSum)
 			.def("get_total", &BonusList::GetEffectiveBonusSum)
 			.def("add_zeroed", &BonusList::ZeroBonusSetMeslineNum, "Adds a zero-value bonus (usually to represent nullified bonuses)")
@@ -119,7 +120,13 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def("get_weapon_used", &AttackPacket::GetWeaponUsed)
 		.def("is_offhand_attack", &AttackPacket::IsOffhandAttack)
 		.def_readwrite("attacker", &AttackPacket::attacker)
-		.def_readwrite("target", &AttackPacket::victim);
+		.def_readwrite("target", &AttackPacket::victim)
+		.def("get_flags", [](AttackPacket& pkt)->int{
+			return (int)pkt.flags;
+		}, "D20CAF flags")
+		.def("set_flags", [](AttackPacket& pkt, int flagsNew){
+			pkt.flags = (D20CAF)flagsNew;
+		}, "sets attack packet D20CAF flags to value specified");
 
 	py::class_<DamagePacket>(m, "DamagePacket")
 		.def(py::init())
