@@ -255,7 +255,7 @@ void D20StatusSystem::initFeats(objHndl objHnd)
 	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionCastDefensively);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionDealSubdualDamage);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionDealNormalDamage);
-	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionFightDefensively);
+	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.GetByName("Fighting Defensively"));// ConditionFightDefensively);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)conds.mConditionDisableAoO);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)&conds.mCondDisarm);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)conds.mCondAidAnother);

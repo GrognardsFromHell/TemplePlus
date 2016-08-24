@@ -275,12 +275,18 @@ int TextLayouter::GetGlyphIdx(char ch, const char* text) const {
 
 	// First character found in the FNT files
 	constexpr auto FirstFontChar = '!';
+	const unsigned char FirstNonEnglish = 0xa0;
+	const unsigned char FirstNonEnglishIdx = 92;
 	static bool tig_font_is_english = true; // TODO
 
 	auto glyphIdx = ch - FirstFontChar;
 
 	if (tig_font_is_english) {
-		if ((glyphIdx < -1 || glyphIdx > '_') && ch != '\n') {
+		
+		if ( (unsigned char)ch >= FirstNonEnglish){
+			glyphIdx = (unsigned char)ch - ( (unsigned char)FirstNonEnglish - FirstNonEnglishIdx);
+		}
+		if ((glyphIdx < -1 || ch > '~') && ch != '\n') {
 			logger->warn("Tried to display character {} in text '{}'", glyphIdx, text);
 			glyphIdx = -1;
 		}
@@ -652,8 +658,13 @@ uint32_t TextLayouter::CountLinesVanilla(uint32_t maxWidth, uint32_t maxLines, c
 			}
 			
 
-			if (isspace(ch)) {
-				break;
+			if ( ch < 255 && ch >=0){
+				if (isspace(ch)) {
+					break;
+				}
+			} else
+			{
+				int dummy = 2;
 			}
 
 			auto glyphIdx = GetGlyphIdx(ch, text);
@@ -665,7 +676,7 @@ uint32_t TextLayouter::CountLinesVanilla(uint32_t maxWidth, uint32_t maxLines, c
 		// If there's enough space in the maxWidth left and we're not at a newline
 		// increase the linewidth and continue on.
 		if (lineWidth <= maxWidth && ch != '\n') {
-			if (isspace(ch)) {
+			if (ch < 255 && ch >= 0 && isspace(ch)) {
 				lineWidth += style.tracking;
 			}
 			continue;
@@ -693,7 +704,7 @@ uint32_t TextLayouter::CountLinesVanilla(uint32_t maxWidth, uint32_t maxLines, c
 			lineWidth += 8 * style.tracking;
 		}
 
-		if (isspace(ch)) {
+		if (ch < 255 && ch >= 0 && isspace(ch)) {
 			if (ch != '\n') {
 				lineWidth += style.tracking;
 			}
@@ -797,7 +808,7 @@ ScanWordResult TextLayouter::ScanWord(const char* text,
 			break;
 		}
 
-		if (isspace(curCh)) {
+		if ( curCh < 128 && curCh >0 && isspace(curCh)) {
 			break;
 		}
 

@@ -33,6 +33,7 @@
 #include "python/python_integration_spells.h"
 #include "gamesystems/particlesystems.h"
 #include <infrastructure/elfhash.h>
+#include "python/python_integration_d20_action.h"
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
@@ -118,6 +119,7 @@ public:
 #define ActionFrame(fname) static ActionErrorCode ActionFrame ## fname ## (D20Actn* d20a)
 	// Add to sequence funcs
 	AddToSeq(Charge);
+	AddToSeq(Python);
 	AddToSeq(Simple);
 	AddToSeq(WithTarget);
 	static ActionErrorCode AddToSeqTripAttack(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);;
@@ -126,6 +128,7 @@ public:
 
 	// Turn Based Status checks
 	static ActionErrorCode StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode TurnBasedStatusCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat);
 
 	// Action Checks
 	ActionCheck(AidAnotherWakeUp);
@@ -134,18 +137,21 @@ public:
 	ActionCheck(DisarmedWeaponRetrieve);
 	ActionCheck(DivineMight);
 	ActionCheck(EmptyBody);
+	ActionCheck(Python);  // calls python script
 	ActionCheck(QuiveringPalm);
 	ActionCheck(Sunder);
 	ActionCheck(TripAttack);
 	
 
 	// Action Cost
+	ActionCost(Python);
 	ActionCost(StandardAttack);
 	ActionCost(MoveAction);
 	ActionCost(Null);
 	ActionCost(StandardAction);
 
 	static ActionErrorCode LocationCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc);
+	static ActionErrorCode LocationCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc);
 	
 	// Perform 
 	PerformFunc(AidAnotherWakeUp);
@@ -157,6 +163,7 @@ public:
 	PerformFunc(DisarmedWeaponRetrieve);
 	PerformFunc(DivineMight);
 	PerformFunc(EmptyBody);
+	PerformFunc(Python);
 	PerformFunc(QuiveringPalm);
 	PerformFunc(StandardAttack);
 	PerformFunc(TripAttack);
@@ -167,6 +174,7 @@ public:
 	ActionFrame(Aoo);
 	ActionFrame(Charge);
 	ActionFrame(Disarm);
+	ActionFrame(Python);
 	ActionFrame(QuiveringPalm);
 	ActionFrame(StandardAttack);
 	ActionFrame(Sunder);
@@ -335,7 +343,15 @@ void LegacyD20System::NewD20ActionsInit()
 	}
 	mesFuncs.Open("tpmes//combat.mes", &combatSys.combatMesNew);
 
-	d20Defs[D20A_PYTHON_ACTION];
+	d20Defs[D20A_PYTHON_ACTION].actionCost = d20Callbacks.ActionCostPython;
+	d20Defs[D20A_PYTHON_ACTION].actionCheckFunc = d20Callbacks.ActionCheckPython;
+	d20Defs[D20A_PYTHON_ACTION].addToSeqFunc = d20Callbacks.AddToSeqPython;
+	d20Defs[D20A_PYTHON_ACTION].performFunc = d20Callbacks.PerformPython;
+	d20Defs[D20A_PYTHON_ACTION].actionFrameFunc = d20Callbacks.ActionFramePython;
+	d20Defs[D20A_PYTHON_ACTION].turnBasedStatusCheck = d20Callbacks.TurnBasedStatusCheckPython;
+	d20Defs[D20A_PYTHON_ACTION].locCheckFunc = d20Callbacks.LocationCheckPython;
+	d20Defs[D20A_PYTHON_ACTION].projectilePerformFunc = nullptr;// d20Callbacks.ProjectilePerformFunc;
+	d20Defs[D20A_PYTHON_ACTION].flags = D20ADF::D20ADF_Python;
 
 	d20Defs[D20A_DIVINE_MIGHT].addToSeqFunc = d20Callbacks.AddToSeqSimple;
 	d20Defs[D20A_DIVINE_MIGHT].actionCheckFunc = d20Callbacks.ActionCheckDivineMight;
@@ -464,6 +480,27 @@ void LegacyD20System::NewD20ActionsInit()
 
 	//d20Defs[D20A_DISARM] = d20Defs[D20A_STANDARD_ATTACK];
 	//d20Defs[d20Type].actionCost = _ActionCostNull; // just for testing - REMOVE!!!
+}
+
+void LegacyD20System::GetPythonActionSpecs(){
+	std::vector<int> actEnums;
+	pythonD20ActionIntegration.GetActionEnums(actEnums);
+	std::sort(actEnums.begin(), actEnums.end());
+
+	for (auto it: actEnums){
+		
+		PythonActionSpec &pyActSpec = pyactions[it];
+
+		pyActSpec.flags = (D20ADF) pythonD20ActionIntegration.GetActionDefinitionFlags(it);
+		pyActSpec.tgtClass = (D20TargetClassification)pythonD20ActionIntegration.GetTargetingClassification(it);
+		pyActSpec.name = pythonD20ActionIntegration.GetActionName(it);
+
+	}
+}
+
+std::string & LegacyD20System::GetPythonActionName(D20DispatcherKey key) const
+{
+	return d20Sys.pyactions[key].name;
 }
 
 LegacyD20System::LegacyD20System()
@@ -639,8 +676,7 @@ void LegacyD20System::D20ActnInit(objHndl objHnd, D20Actn* d20a)
 }
 
 #pragma region Global D20 Action
-void LegacyD20System::GlobD20ActnSetTypeAndData1(D20ActionType d20type, uint32_t data1)
-{
+void LegacyD20System::GlobD20ActnSetTypeAndData1(D20ActionType d20type, uint32_t data1){
 	globD20Action->d20ActType = d20type;
 	globD20Action->data1 = data1;
 }
@@ -953,6 +989,11 @@ void LegacyD20System::D20ActnSetSetSpontCast(D20SpellData* d20SpellData, SpontCa
 D20TargetClassification LegacyD20System::TargetClassification(D20Actn* d20a)
 {
 	auto d20DefFlags = d20Defs[d20a->d20ActType].flags;
+
+	if (d20DefFlags & D20ADF_Python){
+		return pyactions[d20Sys.globD20ActionKey].tgtClass;
+	}
+
 	if (d20DefFlags & D20ADF::D20ADF_Movement)
 	{
 		return D20TargetClassification::D20TC_Movement;
@@ -1116,6 +1157,14 @@ int LegacyD20System::D20QueryPython(const objHndl& handle, const string& queryKe
 	dispIo.data2 = arg2;
 	dispatcher->Process(enum_disp_type::dispTypePythonQuery, static_cast<D20DispatcherKey>(ElfHash::Hash(queryKey)), &dispIo);
 	return dispIo.return_val;
+}
+
+D20ADF LegacyD20System::GetActionFlags(D20ActionType d20ActionType){
+	auto flags = d20Defs[d20ActionType].flags;
+	if (flags & D20ADF_Python){
+		return pyactions[d20Sys.globD20ActionKey].flags;
+	}
+	return flags;
 }
 
 bool LegacyD20System::D20QueryWithDataDefaultTrue(objHndl obj, D20DispatcherKey dispKey, const D20Actn* d20a, int arg2){
@@ -1411,6 +1460,13 @@ ActionErrorCode D20ActionCallbacks::PerformEmptyBody(D20Actn* d20a)
 	return static_cast<ActionErrorCode>(dispIo.returnVal);
 }
 
+ActionErrorCode D20ActionCallbacks::PerformPython(D20Actn* d20a){
+	DispIoD20ActionTurnBased dispIo(d20a);
+	dispIo.DispatchPythonActionPerform(d20Sys.globD20ActionKey);
+	
+	return (ActionErrorCode)dispIo.returnVal; 
+}
+
 ActionErrorCode D20ActionCallbacks::PerformQuiveringPalm(D20Actn* d20a){
 	DispIoD20ActionTurnBased dispIo(d20a);
 	dispIo.DispatchPerform(DK_D20A_QUIVERING_PALM);
@@ -1430,8 +1486,7 @@ ActionErrorCode D20ActionCallbacks::PerformQuiveringPalm(D20Actn* d20a){
 	auto attackAnimSubid = templeFuncs.RNG(0, 2);
 	
 	
-	if (animationGoals.PushAttackAnim(d20a->d20APerformer, d20a->d20ATarget, 0xFFFFFFFF, attackAnimSubid, playCritFlag, 0))
-	{
+	if (animationGoals.PushAttackAnim(d20a->d20APerformer, d20a->d20ATarget, 0xFFFFFFFF, attackAnimSubid, playCritFlag, 0))	{
 		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
@@ -1490,8 +1545,7 @@ ActionErrorCode D20ActionCallbacks::ActionCheckDisarm(D20Actn* d20a, TurnBasedSt
 		return AEC_NEED_MELEE_WEAPON;
 	}
 
-	if (d20a->d20ATarget)
-	{
+	if (d20a->d20ATarget){
 		objHndl targetWeapon = inventory.ItemWornAt(d20a->d20ATarget, 3);
 		if (!targetWeapon)
 		{
@@ -1518,6 +1572,20 @@ ActionErrorCode D20ActionCallbacks::ActionCheckEmptyBody(D20Actn* d20a, TurnBase
 	if (d20a->data1 > (uint32_t) numRounds) {
 		d20a->data1 = numRounds;
 	}
+
+	return AEC_OK;
+}
+
+ActionErrorCode D20ActionCallbacks::ActionCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat) {
+	objHndl performer = d20a->d20APerformer;
+	DispIoD20ActionTurnBased evtObj(d20a);
+	evtObj.DispatchPythonActionCheck(d20Sys.globD20ActionKey);
+
+	if (d20Sys.d20Query(performer, DK_QUE_Prone) || d20Sys.d20Query(performer, DK_QUE_Unconscious))
+		return AEC_CANT_WHILE_PRONE;
+
+	if (!d20a->d20ATarget)
+		return AEC_TARGET_INVALID;
 
 	return AEC_OK;
 }
@@ -1686,6 +1754,10 @@ ActionErrorCode D20ActionCallbacks::ActionFrameDisarm(D20Actn* d20a){
 	return AEC_OK;
 };
 
+ActionErrorCode D20ActionCallbacks::ActionFramePython(D20Actn* d20a){
+	return AEC_OK; // TODO
+}
+
 #pragma region Retrieve Disarmed Weapon
 ActionErrorCode D20ActionCallbacks::LocationCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc)
 {
@@ -1697,6 +1769,10 @@ ActionErrorCode D20ActionCallbacks::LocationCheckDisarmedWeaponRetrieve(D20Actn*
 	if (weapon)
 		return d20Sys.TargetWithinReachOfLoc(d20a->d20APerformer, weapon, loc) != 0 ? AEC_OK : AEC_TARGET_TOO_FAR;
 	return AEC_TARGET_INVALID;
+}
+
+ActionErrorCode D20ActionCallbacks::LocationCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc){
+	return AEC_OK; // TODO
 };
 
 ActionErrorCode D20ActionCallbacks::ActionCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat){
@@ -2286,6 +2362,15 @@ ActionErrorCode D20ActionCallbacks::AddToSeqCharge(D20Actn* d20a, ActnSeq* actSe
 
 }
 
+ActionErrorCode D20ActionCallbacks::AddToSeqPython(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat){
+	auto tgt = d20a->d20ATarget;
+	if (!tgt)
+		return AEC_TARGET_INVALID;
+
+	actSeq->d20ActArray[actSeq->d20ActArrayNum++] = *d20a;
+	return AEC_OK;
+}
+
 ActionErrorCode D20ActionCallbacks::AddToSeqSimple(D20Actn*d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat){
 	return actSeqSys.AddToSeqSimple(d20a, actSeq, tbStat);
 }
@@ -2357,6 +2442,28 @@ ActionErrorCode D20ActionCallbacks::AddToSeqTripAttack(D20Actn* d20a, ActnSeq* a
 
 ActionErrorCode D20ActionCallbacks::StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBasedStatus* tbStat){
 	return static_cast<ActionErrorCode>(actSeqSys.StdAttackTurnBasedStatusCheck(d20a, tbStat));
+}
+
+ActionErrorCode D20ActionCallbacks::TurnBasedStatusCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat){
+	return AEC_OK;
+}
+
+ActionErrorCode D20ActionCallbacks::ActionCostPython(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp) {
+	acp->hourglassCost = 0;
+	acp->chargeAfterPicker = 0;
+	acp->moveDistCost = 0;
+
+	if (!(d20a->d20Caf & D20CAF_FREE_ACTION) && combatSys.isCombatActive()){
+		acp->chargeAfterPicker = 1;
+		if ((!feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_SHOT_ON_THE_RUN)
+			|| d20a->d20ActType != D20A_STANDARD_RANGED_ATTACK)
+			&& (!feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_SPRING_ATTACK)
+				|| d20a->d20ActType != D20A_STANDARD_ATTACK))
+		{
+			tbStat->surplusMoveDistance = 0;
+		}
+	}
+	return AEC_OK;
 }
 
 ActionErrorCode D20ActionCallbacks::ActionCostStandardAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp){

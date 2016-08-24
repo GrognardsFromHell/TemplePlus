@@ -582,6 +582,30 @@ int RadialMenus::GetActiveMenuChildrenCount(int nodeidx) const
 	return activeMenu->nodes[nodeidx].childCount;
 }
 
+BOOL RadialMenus::PythonActionCallback(const objHndl & handle, RadialMenuEntry * entry){
+	actSeqSys.TurnBasedStatusInit(handle);
+	actSeqSys.SequenceSwitch(handle);
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(entry->d20ActionType, entry->d20ActionData1);
+	d20Sys.globD20ActionKey = static_cast<D20DispatcherKey>(entry->dispKey);
+	auto entryType = entry->type;
+	switch (entryType){
+		case RadialMenuEntryType::Slider: 
+		case RadialMenuEntryType::Toggle: 
+		case RadialMenuEntryType::Choice: 
+			d20Sys.globD20Action->radialMenuActualArg = *reinterpret_cast<uint32_t*>(entry->actualArg); // actualArg is actually a pointer to a condition's arg in practice
+			break;
+		default: 
+			break;
+	}
+	
+	d20Sys.globD20Action->d20Caf |= entry->d20Caf;
+	d20Sys.GlobD20ActnSetSpellData(&entry->d20SpellData);
+	ClearActiveRadialMenu();
+
+	return TRUE;
+}
+
 RadialMenuEntry::RadialMenuEntry(){
 	SetDefaults();
 }
@@ -661,4 +685,20 @@ int RadialMenuEntryParent::AddChildToStandard(objHndl handle, RadialMenuStandard
 
 int RadialMenuEntryParent::AddAsChild(objHndl handle, int parentId) {
 	return radialMenus.AddParentChildNode(handle, this, parentId);
+}
+
+RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(int combatMesLine, int d20aType, int d20aKey, int data1, const char helpId[]): RadialMenuEntryAction(1, d20aType, data1, helpId) {
+	if (combatMesLine == -1){
+		this->text = (char*)(d20Sys.GetPythonActionName((D20DispatcherKey)d20aKey).c_str());
+	} else
+	{
+		this->text = combatSys.GetCombatMesLine(combatMesLine);
+	}
+	this->dispKey = d20aKey;
+	this->callback = [](objHndl handle, RadialMenuEntry* entry) { return radialMenus.PythonActionCallback(handle, entry); };
+}
+
+RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(int combatMesLine, int d20aType, const char d20aKey[], int data1, const char helpId[]):RadialMenuEntryAction(combatMesLine, d20aType, data1, helpId) {
+	this->dispKey = ElfHash::Hash(d20aKey);
+	this->callback = [](objHndl handle, RadialMenuEntry* entry) { return radialMenus.PythonActionCallback(handle, entry); };
 }

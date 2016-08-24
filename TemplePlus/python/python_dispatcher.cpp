@@ -11,6 +11,7 @@
 #include "../common.h"
 #include <infrastructure/elfhash.h>
 #include "python_object.h"
+#include "python_dice.h"
 #include "python_dispatcher.h"
 
 #undef HAVE_ROUND
@@ -39,6 +40,24 @@ public:
 	}
 
 	PYBIND11_TYPE_CASTER(objHndl, _("objHndl"));
+protected:
+	bool success = false;
+};
+template <> class type_caster<Dice> {
+public:
+	bool load(handle src, bool) {
+		Dice dice;
+		ConvertDice(src.ptr(), &dice);
+		value = dice;
+		success = true;
+		return true;
+	}
+
+	static handle cast(const Dice &src, return_value_policy /* policy */, handle /* parent */) {
+		return PyDice_FromDice(src);
+	}
+
+	PYBIND11_TYPE_CASTER(Dice, _("PyDice"));
 protected:
 	bool success = false;
 };
@@ -130,7 +149,13 @@ PYBIND11_PLUGIN(tp_dispatcher){
 
 	py::class_<DamagePacket>(m, "DamagePacket")
 		.def(py::init())
-		.def("add_dice", &DamagePacket::AddDamageDice)
+		.def("add_dice", [](DamagePacket& damPkt, Dice & dice, int damType, int damageMesLine){
+		damPkt.AddDamageDice(dice.ToPacked(), (DamageType)damType, damageMesLine);
+		})
+		.def("add_dice", [](DamagePacket& damPkt, Dice & dice, int damType, int damageMesLine, const char reason[]) {
+		//damPkt.AddDamageDice(dice.ToPacked(), (DamageType)damType, damageMesLine);
+			//not implemented yet
+		})
 		.def_readwrite("flags", &DamagePacket::flags, "1 - maximized, 2 - empowered")
 		.def_readwrite("bonus_list", &DamagePacket::bonuses)
 		.def_readwrite("critical_multiplier", &DamagePacket::critHitMultiplier, "1 by default, gets increased by various things")
@@ -213,6 +238,10 @@ PYBIND11_PLUGIN(tp_dispatcher){
 	py::class_<RadialMenuEntryAction>(m, "RadialMenuEntryAction", py::base<RadialMenuEntry>())
 		.def(py::init<int, int, int, const char[]>(), py::arg("combesMesLine"), py::arg("action_type"), py::arg("data1"), py::arg("helpTopic"))
 	;
+	py::class_<RadialMenuEntryPythonAction>(m, "RadialMenuEntryPythonAction", py::base<RadialMenuEntryAction>())
+		.def(py::init<int, int, int, int, const char[]>(), py::arg("combatMesLine"), py::arg("action_type"), py::arg("action_id"), py::arg("data1"), py::arg("helpTopic"))
+		.def(py::init<int, int, const char[], int, const char[]>(), py::arg("combatMesLine"), py::arg("action_type"), py::arg("action_name"), py::arg("data1"), py::arg("helpTopic"))
+		;
 
 	py::class_<RadialMenuEntryParent>(m, "RadialMenuEntryParent")
 		.def(py::init<int>(), py::arg("combesMesLine"))

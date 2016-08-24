@@ -3635,3 +3635,67 @@ EK_LVL_Feats_Finalize = 402
 EK_LVL_Spells_Activate = 500
 EK_LVL_Spells_Check_Complete = 501
 EK_LVL_Spells_Finalize = 502
+
+D20ADF_None = 0
+D20ADF_Unk1 = 1
+D20ADF_Unk2 = 2
+D20ADF_Movement = 4
+D20ADF_TargetSingleExcSelf = 8
+D20ADF_MagicEffectTargeting = 0x10
+D20ADF_Unk20 = 0x20
+D20ADF_Unk40 = 0x40
+D20ADF_QueryForAoO = 0x80 # will trigger an AoO depending on a D20 Query for Action_Triggers_AOO (returns 1 by default from the Global condition, Cast Defensively sets this to 0 for D20A_CAST_SPELL)
+D20ADF_TriggersAoO = 0x100
+D20ADF_TargetSingleIncSelf = 0x200
+D20ADF_TargetingBasedOnD20Data = 0x400
+D20ADF_TriggersCombat = 0x800 # might be somewhat more general actually
+D20ADF_CallLightningTargeting = 0x1000
+D20ADF_Unk2000 = 0x2000
+D20ADF_Unk4000 = 0x4000
+D20ADF_UseCursorForPicking = 0x8000 # indicates that the target should be selected with a "normal" cursor (as opposed to a picker)
+D20ADF_TargetContainer = 0x10000
+D20ADF_SimulsCompatible = 0x20000
+D20ADF_DrawPathByDefault = 0x40000 # will draw path even without holding ALT
+D20ADF_PathSthg =   0x80000
+D20ADF_Breaks_Concentration = 0x100000
+
+D20ADF_Python = 0x1000000 # tells the engine to fetch the flags via the specs
+
+# Targeting classification enums
+D20TC_Target0 = 0
+D20TC_Movement = 1
+D20TC_SingleExcSelf = 2
+D20TC_CastSpell = 3
+D20TC_SingleIncSelf = 4
+D20TC_CallLightning = 5
+D20TC_ItemInteraction = 6 # includes: portals, container, dead critters
+D20TC_Invalid = -1
+
+# Action error codes
+AEC_OK = 0
+AEC_NOT_ENOUGH_TIME1 = 1
+AEC_NOT_ENOUGH_TIME2 = 2
+AEC_NOT_ENOUGH_TIME3 = 3
+AEC_ALREADY_MOVED = 4
+AEC_TARGET_OUT_OF_RANGE = 5
+AEC_TARGET_TOO_CLOSE = 6
+AEC_TARGET_BLOCKED = 7
+AEC_TARGET_TOO_FAR = 8
+AEC_TARGET_INVALID = 9
+AEC_NO_LOS = 10
+AEC_OUT_OF_AMMO = 11
+AEC_NEED_MELEE_WEAPON = 12
+AEC_CANT_WHILE_PRONE = 13
+AEC_INVALID_ACTION = 14
+AEC_CANNOT_CAST_SPELLS = 15
+AEC_OUT_OF_CHARGES = 16
+AEC_WRONG_WEAPON_TYPE = 17
+AEC_CANNOT_CAST_OUT_OF_AVAILABLE_SPELLS = 18
+AEC_CANNOT_CAST_NOT_ENOUGH_XP = 19
+AEC_CANNOT_CAST_NOT_ENOUGH_GP = 20
+AEC_OUT_OF_COMBAT_ONLY = 21
+AEC_CANNOT_USE_MUST_USE_BEFORE_ATTACKING = 22
+AEC_NEED_A_STRAIGHT_LINE = 23
+AEC_NO_ACTIONS = 24
+AEC_NOT_IN_COMBAT = 25
+AEC_AREA_NOT_SAFE = 26

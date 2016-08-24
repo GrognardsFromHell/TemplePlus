@@ -127,7 +127,7 @@ PyObject* DumpRadialNode(const RadialMenuNode &node) {
 	SetDictItem(result, "callback", (uint32_t) entry.callback);
 	SetDictItem(result, "flags", (uint32_t) entry.flags);
 	SetDictItem(result, "helpId", (uint32_t) entry.helpId);
-	SetDictItem(result, "field44", (uint32_t) entry.field44);
+	SetDictItem(result, "field44", (uint32_t) entry.spellId);
 
 	auto children = PyList_New(node.childCount);
 	for (int i = 0; i < node.childCount; ++i) {

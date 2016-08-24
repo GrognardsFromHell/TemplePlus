@@ -26,6 +26,7 @@
 #include "anim.h"
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
+#include "python/python_integration_d20_action.h"
 
 
 static struct ActnSeqAddresses : temple::AddressTable {
@@ -297,12 +298,17 @@ void ActionSequenceSystem::ActSeqSpellReset() const
 	actSeqSpellReset();
 }
 
-void ActionSequenceSystem::ActSeqGetPicker()
-{
+void ActionSequenceSystem::ActSeqGetPicker(){
+
+
 	auto tgtClassif = d20Sys.TargetClassification(d20Sys.globD20Action);
+
+	auto d20adflags = d20Sys.GetActionFlags(d20Sys.globD20Action->d20ActType);
+	
+
 	if (tgtClassif == D20TargetClassification::D20TC_ItemInteraction)
 	{
-		if (d20Sys.d20Defs[d20Sys.globD20Action->d20ActType].flags & D20ADF_UseCursorForPicking)
+		if (d20adflags & D20ADF_UseCursorForPicking)
 		{
 			*seqPickerD20ActnType = d20Sys.globD20Action->d20ActType;  // seqPickerD20ActnType
 			*seqPickerD20ActnData1 = d20Sys.globD20Action->data1;
@@ -324,7 +330,7 @@ void ActionSequenceSystem::ActSeqGetPicker()
 
 	if (tgtClassif == D20TargetClassification::D20TC_SingleIncSelf)
 	{
-		if (d20Sys.d20Defs[d20Sys.globD20Action->d20ActType].flags & D20ADF_UseCursorForPicking)
+		if (d20adflags & D20ADF_UseCursorForPicking)
 		{
 			*seqPickerD20ActnType = d20Sys.globD20Action->d20ActType; //seqPickerD20ActnType
 			*seqPickerD20ActnData1 = d20Sys.globD20Action->data1;
@@ -347,7 +353,7 @@ void ActionSequenceSystem::ActSeqGetPicker()
 
 	if (tgtClassif == D20TargetClassification::D20TC_SingleExcSelf)
 	{
-		if (d20Sys.d20Defs[d20Sys.globD20Action->d20ActType].flags & D20ADF_UseCursorForPicking)
+		if (d20adflags & D20ADF_UseCursorForPicking)
 		{
 			*seqPickerD20ActnType = d20Sys.globD20Action->d20ActType;
 			*seqPickerD20ActnData1 = d20Sys.globD20Action->data1;
@@ -367,8 +373,7 @@ void ActionSequenceSystem::ActSeqGetPicker()
 		return;
 	}
 
-	if (tgtClassif == D20TC_CallLightning)
-	{
+	if (tgtClassif == D20TC_CallLightning){
 		if (d20Sys.globD20Action->d20ActType == D20A_SPELL_CALL_LIGHTNING)
 		{
 			uint32_t callLightningId = (uint32_t) d20Sys.d20QueryReturnData(d20Sys.globD20Action->d20APerformer, DK_QUE_Critter_Can_Call_Lightning);
@@ -395,8 +400,7 @@ void ActionSequenceSystem::ActSeqGetPicker()
 		return;
 	}
 
-	if (tgtClassif == D20TC_CastSpell)
-	{
+	if (tgtClassif == D20TC_CastSpell){
 		unsigned int spellEnum, spellClass, spellLevel, metaMagicData;
 		D20SpellDataExtractInfo(&d20Sys.globD20Action->d20SpellData,
 			&spellEnum, nullptr, &spellClass, &spellLevel,nullptr,&metaMagicData);
@@ -2892,8 +2896,7 @@ void ActionSequenceSystem::FullAttackCostCalculate(D20Actn* d20a, TurnBasedStatu
 	*baseAttackNumCode = numAttacksBase + _attackTypeCodeHigh - 1 + usingOffhand;
 }
 
-int ActionSequenceSystem::TouchAttackAddToSeq(D20Actn* d20Actn, ActnSeq* actnSeq, TurnBasedStatus* turnBasedStatus)
-{
+int ActionSequenceSystem::TouchAttackAddToSeq(D20Actn* d20Actn, ActnSeq* actnSeq, TurnBasedStatus* turnBasedStatus){
 	return addresses.TouchAttackAddToSeq(d20Actn, actnSeq, turnBasedStatus);
 }
 

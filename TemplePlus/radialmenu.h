@@ -71,13 +71,11 @@ struct RadialMenuEntry {
 	int d20ActionData1;
 	D20CAF d20Caf;
 	D20SpellData d20SpellData;
-	//int spellEnumOrg;
-	//uint32_t spellMetaMagic;
-	int dispKey;
+	int dispKey; // example: DestructionDomainRadialMenu (the only one I've encountered so far), using this for python actions too now
 	BOOL (__cdecl *callback)(objHndl a1, RadialMenuEntry *entry);
 	int flags;
 	int helpId; // String hash for the help topic associated with this entry
-	int field44;
+	int spellId; // used for stuff like Break Free / Dismiss Spell, and it also puts the id in the d20ActionData1 field
 
 	RadialMenuEntry();
 	void SetDefaults();
@@ -103,6 +101,12 @@ struct RadialMenuEntryAction : RadialMenuEntry
 	RadialMenuEntryAction(int combatMesLine, D20ActionType d20aType, int data1,  uint32_t helpId);
 	RadialMenuEntryAction(int combatMesLine, D20ActionType d20aType, int data1, const char helpId[]);
 	RadialMenuEntryAction(int combatMesLine, int d20aType, int data1, const char helpId[]);
+};
+
+struct RadialMenuEntryPythonAction : RadialMenuEntryAction
+{
+	RadialMenuEntryPythonAction(int combatMesLine, int d20aType, int d20aKey, int data1, const char helpId[]);
+	RadialMenuEntryPythonAction(int combatMesLine, int d20aType, const char d20aKey [], int data1, const char helpId[]);
 };
 
 struct RadialMenuEntryToggle : RadialMenuEntry
@@ -192,6 +196,7 @@ public:
 	void GetRadialMenuXY(float& radX, float& radY) const;
 	RadialMenu* GetActiveRadialMenu() const;
 	int GetActiveMenuChildrenCount(int activeNodeIdx) const;
+	BOOL PythonActionCallback(const objHndl& handle, RadialMenuEntry* entry);
 };
 
 extern RadialMenus radialMenus;

@@ -54,10 +54,18 @@ void ModSupport::DetectCo8ActiveModule(){
 	while (std::getline(tfexIni, shit) && !mIsCo8NC){
 		if (shit.find(L"New Content") != shit.npos) {
 			mIsCo8NC = true;
+			mIsIWD = false;
 		}
 		if (shit.find(L"Keep on the Borderlands") != shit.npos)
 		{
+			mIsIWD = false;
 			mIsKotB = true;
+			mIsCo8NC = false;
+		}
+		if (shit.find(L"Icewind Dale") != shit.npos)
+		{
+			mIsIWD = true;
+			mIsKotB = false;
 			mIsCo8NC = false;
 		}
 	}
@@ -71,6 +79,11 @@ bool ModSupport::IsCo8NCEdition() const
 bool ModSupport::IsKotB() const
 {
 	return mIsKotB;
+}
+
+bool ModSupport::IsIWD() const
+{
+	return mIsIWD;
 }
 
 void ModSupport::SetNCGameFlag(bool value){

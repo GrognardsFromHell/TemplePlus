@@ -311,6 +311,7 @@ void PyTempleImporter_Install() {
 	PyTempleImporter::instance->mSearchPath.push_back("templeplus/lib/");
 	PyTempleImporter::instance->mSearchPath.push_back("scr/");
 	PyTempleImporter::instance->mSearchPath.push_back("rules/char_class/");
+	PyTempleImporter::instance->mSearchPath.push_back("rules/d20_actions/");
 }
 
 void PyTempleImporter_Uninstall() {

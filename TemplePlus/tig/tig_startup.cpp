@@ -237,7 +237,11 @@ void TigInitializer::LoadDataFiles() {
 			if (result != 0) {
 				logger->trace("Unable to add archive tpdata\\kotbfixes.dat");
 			}
-		} 
+		}
+		else if (modSupport.IsIWD()){
+			// placeholder
+			logger->info("Icewind Dale module detected.");
+		}
 		else{
 			logger->info("Registering Co8 file fixes tpdata\\co8fixes.dat");
 			result = tio_path_add(fmt::format("{}\\co8fixes.dat", tpDataPath).c_str());

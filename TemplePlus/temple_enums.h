@@ -1868,7 +1868,7 @@ enum enum_disp_type : uint32_t {
 	dispTypePythonActionCheck,
 	dispTypePythonActionPerform,
 	dispTypePythonActionFrame,
-	dispTypePythonUnused1, // for expansion
+	dispTypePythonAdf, // fetch action definition flags
 	dispTypePythonUnused2, // for expansion
 	dispTypePythonUnused3, // for expansion
 	dispTypePythonUnused4, // for expansion

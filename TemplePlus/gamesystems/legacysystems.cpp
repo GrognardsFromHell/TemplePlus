@@ -503,6 +503,7 @@ D20System::D20System(const GameSystemConf &config) {
 	d20LevelSys.GenerateSpellsPerLevelTables();
 	damage.Init();
 	itemCreation.GetMaaSpecs();
+	d20Sys.GetPythonActionSpecs();
 }
 D20System::~D20System() {
 	auto shutdown = temple::GetPointer<void()>(0x1004c950);

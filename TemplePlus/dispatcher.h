@@ -357,6 +357,10 @@ struct DispIoD20ActionTurnBased : DispIO { // dispIoType = 12; matches dispTypes
 	DispIoD20ActionTurnBased();
 	explicit DispIoD20ActionTurnBased(D20Actn* d20a);
 	void DispatchPerform(D20DispatcherKey key);
+	void DispatchPythonAdf(D20DispatcherKey key);
+	void DispatchPythonActionCheck(D20DispatcherKey key);
+	void DispatchPythonActionPerform(D20DispatcherKey key);
+	void DispatchPythonActionFrame(D20DispatcherKey key);
 };
 
 struct DispIoMoveSpeed : DispIO  // dispIoType = 13, matches dispTypes 40,41

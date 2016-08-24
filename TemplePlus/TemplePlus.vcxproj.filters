@@ -419,6 +419,9 @@
     <ClCompile Include="ui\ui_systems.cpp" />
     <ClCompile Include="ui\ui_legacysystems.cpp" />
     <ClCompile Include="ui\ui_systems_hooks.cpp" />
+    <ClCompile Include="python\python_integration_d20_action.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -790,6 +793,9 @@
     <ClInclude Include="ui\ui_systems.h" />
     <ClInclude Include="ui\ui_system.h" />
     <ClInclude Include="ui\ui_legacysystems.h" />
+    <ClInclude Include="python\python_integration_d20_action.h">
+      <Filter>python</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

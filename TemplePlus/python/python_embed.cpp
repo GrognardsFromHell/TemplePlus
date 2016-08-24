@@ -18,6 +18,7 @@
 
 #include "../gamesystems/gamesystems.h"
 #include "python_integration_class_spec.h"
+#include "python_integration_d20_action.h"
 
 extern "C" PyObject *inittp_dispatcher();
 extern "C" PyObject *inittp_char_editor();
@@ -102,6 +103,7 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 	pythonObjIntegration.LoadScripts();
 	pySpellIntegration.LoadScripts();
 	pythonClassIntegration.LoadScripts();
+	pythonD20ActionIntegration.LoadScripts(); // don't forget PyTempleImporter_Install
 
 	inittp_dispatcher();
 	inittp_char_editor();

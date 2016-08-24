@@ -1257,3 +1257,42 @@ void DispIoD20ActionTurnBased::DispatchPerform(D20DispatcherKey key){
 		dispatch.DispatcherProcessor(dispatcher, dispTypeD20ActionPerform, key, this);
 	}
 }
+
+void DispIoD20ActionTurnBased::DispatchPythonAdf(D20DispatcherKey key){
+	if (!d20a || !d20a->d20APerformer) {
+		returnVal = AEC_INVALID_ACTION;
+		return;
+	}
+
+	auto dispatcher = objects.GetDispatcher(d20a->d20APerformer);
+
+	if (dispatcher->IsValid()) {
+		dispatch.DispatcherProcessor(dispatcher, dispTypePythonAdf, key, this);
+	}
+}
+
+void DispIoD20ActionTurnBased::DispatchPythonActionCheck(D20DispatcherKey key){
+	if (!d20a || !d20a->d20APerformer) {
+		this->returnVal = AEC_INVALID_ACTION;
+		return;
+	}
+
+	auto dispatcher = objects.GetDispatcher(d20a->d20APerformer);
+
+	if (dispatcher->IsValid()) {
+		dispatch.DispatcherProcessor(dispatcher, dispTypePythonActionCheck, key, this);
+	}
+}
+
+void DispIoD20ActionTurnBased::DispatchPythonActionPerform(D20DispatcherKey key){
+	if (!d20a || !d20a->d20APerformer) {
+		this->returnVal = AEC_INVALID_ACTION;
+		return;
+	}
+
+	auto dispatcher = objects.GetDispatcher(d20a->d20APerformer);
+
+	if (dispatcher->IsValid()) {
+		dispatch.DispatcherProcessor(dispatcher, dispTypePythonActionPerform, key, this);
+	}
+}

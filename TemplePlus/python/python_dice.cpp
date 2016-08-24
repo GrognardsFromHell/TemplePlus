@@ -71,7 +71,7 @@ static PyMemberDef PyDice_Members[] = {
 	{ "number", T_INT, offsetof(PyDice, number), 0, NULL },
 	{ "size", T_INT, offsetof(PyDice, size), 0, NULL },
 	{ "bonus", T_INT, offsetof(PyDice, bonus), 0, NULL },
-	{ "num", T_INT, offsetof(PyDice, bonus), 0, NULL }, // because a few spell scripts use this, guess it's accepted because originally it did an _strnicmp using the input length
+	{ "num", T_INT, offsetof(PyDice, number), 0, NULL }, // because a few spell scripts use this, guess it's accepted because originally it did an _strnicmp using the input length
 	{NULL, NULL, NULL, NULL, NULL }
 };
 

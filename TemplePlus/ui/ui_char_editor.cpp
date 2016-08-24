@@ -2344,8 +2344,14 @@ bool UiCharEditor::FeatCanPick(feat_enums feat) {
 
 	case FEAT_WEAPON_SPECIALIZATION:
 
-		if (ftrLvl < 4)
+		return (ftrLvl >= 4);
+		
+
+	case FEAT_GREATER_WEAPON_FOCUS:
+		if (ftrLvl < 8)
 			return false;
+
+
 		// check if has weapon focus
 
 		for (auto i = (int)FEAT_WEAPON_FOCUS_GAUNTLET; i <= FEAT_WEAPON_FOCUS_RAY; i++) {
@@ -2359,9 +2365,6 @@ bool UiCharEditor::FeatCanPick(feat_enums feat) {
 			}
 		}
 		return false;
-
-	case FEAT_GREATER_WEAPON_FOCUS:
-		return ftrLvl >= 8;
 
 	case FEAT_GREATER_WEAPON_SPECIALIZATION:
 		if (ftrLvl < 12)

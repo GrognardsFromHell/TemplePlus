@@ -14,6 +14,7 @@
 #include "gamesystems/objects/gameobject.h"
 
 enum ActionErrorCode;
+enum D20ADF : int;
 struct GameSystemConf;
 struct ActionSequenceSystem;
 // Forward decls
@@ -42,9 +43,16 @@ enum D20TargetClassification : int {
 };
 
 
+struct PythonActionSpec {
+	D20ADF flags;
+	D20TargetClassification tgtClass;
+	std::string name;
+};
+
 struct LegacyD20System : temple::AddressTable
 {
 	D20Actn * globD20Action;
+	D20DispatcherKey globD20ActionKey; // used for the new Python actions
 	D20ActionDef * d20Defs;
 	Pathfinding * pathfinding;
 	ActionSequenceSystem * actSeq;
@@ -65,6 +73,9 @@ struct LegacyD20System : temple::AddressTable
 	uint64_t d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1 =0 , uint32_t arg2 =0);
 	uint64_t d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, CondStruct *arg1, uint32_t arg2);
 	int D20QueryPython(const objHndl& handle, const std::string& queryKey, int arg1 = 0, int arg2 = 0);
+
+	D20ADF GetActionFlags(D20ActionType d20ActionType);
+
 	static bool D20QueryWithDataDefaultTrue(objHndl obj, D20DispatcherKey dispKey, const D20Actn * d20a, int arg2);
 
 	void D20ActnInit(objHndl objHnd, D20Actn * d20a);
@@ -104,7 +115,14 @@ struct LegacyD20System : temple::AddressTable
 	//char **ToEEd20ActionNames;
 	void NewD20ActionsInit();
 
+	void GetPythonActionSpecs();
+	std::string &GetPythonActionName(D20DispatcherKey key) const;
+
+
 	LegacyD20System();
+
+protected:
+	std::map<int, PythonActionSpec> pyactions;
 };
 
 
