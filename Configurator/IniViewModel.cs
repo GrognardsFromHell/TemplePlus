@@ -24,6 +24,9 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty DisableAutomaticUpdatesProperty = DependencyProperty.Register(
             "DisableAutomaticUpdates", typeof (bool), typeof (IniViewModel), new PropertyMetadata(default(bool)));
 
+        public static readonly DependencyProperty AntiAliasingProperty = DependencyProperty.Register(
+            "AntiAliasing", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
         public static readonly DependencyProperty SoftShadowsProperty = DependencyProperty.Register(
             "SoftShadows", typeof (bool), typeof (IniViewModel), new PropertyMetadata(default(bool)));
 
@@ -103,6 +106,12 @@ namespace TemplePlusConfig
         {
             get { return (bool) GetValue(DisableAutomaticUpdatesProperty); }
             set { SetValue(DisableAutomaticUpdatesProperty, value); }
+        }
+
+        public bool AntiAliasing
+        {
+            get { return (bool)GetValue(AntiAliasingProperty); }
+            set { SetValue(AntiAliasingProperty, value); }
         }
 
         public bool SoftShadows
@@ -234,6 +243,7 @@ namespace TemplePlusConfig
             }
 
             SoftShadows = tpData["softShadows"] == "true";
+            AntiAliasing = tpData["antialiasing"] == "true";
             WindowedMode = tpData["windowed"] == "true";
 
             int maxLevel;
@@ -309,6 +319,7 @@ namespace TemplePlusConfig
             tpData["windowed"] = WindowedMode ? "true" : "false";
             tpData["windowWidth"] = RenderWidth.ToString();
             tpData["windowHeight"] = RenderHeight.ToString();
+            tpData["antialiasing"] = AntiAliasing? "true" : "false";
             tpData["softShadows"] = SoftShadows ? "true" : "false";
             tpData["maxLevel"] = MaxLevel.ToString();
             tpData["allowXpOverflow"] = AllowXpOverflow ? "true" : "false";
