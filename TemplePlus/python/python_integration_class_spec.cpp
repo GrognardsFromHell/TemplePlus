@@ -161,7 +161,7 @@ bool PythonClassSpecIntegration::ReqsMet(const objHndl & handle, int classEnum){
 	auto attachee = PyObjHndl_Create(handle);
 	args = Py_BuildValue("(O)", attachee);
 	Py_DECREF(attachee);
-	result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::ObjMeetsPreqreqs, args) != 0;
+	result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::ObjMeetsPrereqs, args) != 0;
 	Py_DECREF(args);
 	return result;
 
@@ -274,7 +274,7 @@ static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 
 	{ ClassSpecFunc::IsAlignmentCompatible,"IsAlignmentCompatible" },
 
-	{ ClassSpecFunc::ObjMeetsPreqreqs,"ObjMeetsPreqreqs" },
+	{ ClassSpecFunc::ObjMeetsPrereqs,"ObjMeetsPrereqs" },
 	{ ClassSpecFunc::GetFeats,"GetClassFeats" },
 
 	{ ClassSpecFunc::IsSelectingFeatsOnLevelup, "IsSelectingFeatsOnLevelup" },

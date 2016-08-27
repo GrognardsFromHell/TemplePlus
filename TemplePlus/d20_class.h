@@ -149,6 +149,9 @@ public:
 	// skills
 	BOOL IsClassSkill(SkillEnum skillEnum, Stat classCode);
 
+	// Feats
+	bool HasFeat(feat_enums featEnum, Stat classEnum, int classLvl); // checks if the class definition has the feat at the selected level.
+
 	// Levelup
 	bool IsSelectingFeatsOnLevelup(objHndl handle, Stat classEnum);
 	void LevelupGetBonusFeats( objHndl handle, Stat classEnum);

@@ -22,6 +22,7 @@
 
 extern "C" PyObject *inittp_dispatcher();
 extern "C" PyObject *inittp_char_editor();
+extern "C" PyObject *inittp_actions();
 static struct PythonInitInternal : temple::AddressTable {
 
 	// Writes to the console window
@@ -107,6 +108,7 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 
 	inittp_dispatcher();
 	inittp_char_editor();
+	inittp_actions();
 
 	// tpModifiers is imported in conditions.cpp since it needs the condition hashtable
 
@@ -128,6 +130,8 @@ static void __cdecl PythonReset() {
 static void __cdecl PythonExit() {
 	pythonObjIntegration.UnloadScripts();
 	pySpellIntegration.UnloadScripts();
+	pythonClassIntegration.UnloadScripts();
+	pythonD20ActionIntegration.UnloadScripts();
 
 	Py_XDECREF(MainModuleDict);
 	Py_XDECREF(MainModule);

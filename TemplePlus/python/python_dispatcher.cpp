@@ -127,7 +127,9 @@ PYBIND11_PLUGIN(tp_dispatcher){
 			.def(py::init())
 			.def("add", &BonusList::AddBonus, "Adds a bonus entry. Args are: value, type, and bonus.mes line number")
 			.def("add_from_feat", &BonusList::AddBonusFromFeat)
-			.def("set_overall_cap", &BonusList::SetOverallCap)
+			.def("set_overall_cap", [](BonusList & bonlist, int bonflags, int newCap, int newCapType, int bonusMesline) {
+				bonlist.SetOverallCap(bonflags, newCap, newCapType, bonusMesline);
+			 })
 			.def("modify", &BonusList::ModifyBonus)
 			.def("get_sum", &BonusList::GetEffectiveBonusSum)
 			.def("get_total", &BonusList::GetEffectiveBonusSum)
@@ -156,6 +158,9 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		//damPkt.AddDamageDice(dice.ToPacked(), (DamageType)damType, damageMesLine);
 			//not implemented yet
 		})
+		.def("add_physical_damage_res", [](DamagePacket& damPkt, int amount, int bypassingAttackPower, int damMesLine){
+			damPkt.AddPhysicalDR(amount, bypassingAttackPower, damMesLine);
+		}, "Adds physical (Slashing/Piercing/Crushing) damage resistance.")
 		.def_readwrite("flags", &DamagePacket::flags, "1 - maximized, 2 - empowered")
 		.def_readwrite("bonus_list", &DamagePacket::bonuses)
 		.def_readwrite("critical_multiplier", &DamagePacket::critHitMultiplier, "1 by default, gets increased by various things")
@@ -305,7 +310,8 @@ PYBIND11_PLUGIN(tp_dispatcher){
 	py::class_<DispIoSavingThrow>(m, "EventObjSavingThrow", "Used for fetching saving throw bonuses", py::base<DispIO>())
 		.def_readwrite("bonus_list", &DispIoSavingThrow::bonlist)
 		.def_readwrite("return_val", &DispIoSavingThrow::returVal)
-		.def_readwrite("obj", &DispIoSavingThrow::obj);
+		.def_readwrite("obj", &DispIoSavingThrow::obj)
+		.def_readwrite("flags", &DispIoSavingThrow::flags);
 
 	py::class_<DispIoDamage>(m, "EventObjDamage", "Used for damage dice and such", py::base<DispIO>())
 		.def_readwrite("attack_packet", &DispIoDamage::attackPacket)
@@ -563,12 +569,14 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 
 	case dispTypeD20AdvanceTime:
 	case dispTypeD20Signal:
+	case dispTypePythonSignal:
 	case dispTypeBeginRound:
 	case dispTypeDestructionDomain:
 		pbEvtObj = py::cast(static_cast<DispIoD20Signal*>(args.dispIO));
 		break;
 
 	case dispTypeD20Query:
+	case dispTypePythonQuery:
 	case dispTypeBaseCasterLevelMod:
 	case dispTypeWeaponGlowType:
 	case dispTypeGetSizeCategory:
@@ -604,6 +612,10 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 	case dispTypeGetNumAttacksBase:
 	case dispTypeGetBonusAttacks:
 	case dispTypeGetCritterNaturalAttacksNum:
+	case dispTypePythonActionPerform:
+	case dispTypePythonActionAdd:
+	case dispTypePythonActionCheck:
+	case dispTypePythonActionFrame:
 		pbEvtObj = py::cast(static_cast<DispIoD20ActionTurnBased*>(args.dispIO));
 		break;
 

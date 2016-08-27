@@ -25,7 +25,7 @@
             <CheckBox VerticalAlignment="Center" Content="Allow XP overflow" IsChecked="{Binding AllowXpOverflow}" Margin="0,5,0,5" ToolTip="Allows experience points to accumulate beyond the limit of the next level."/>
             <CheckBox VerticalAlignment="Center" Content="Slower levelling" IsChecked="{Binding SlowerLevelling}" Margin="0,5,0,5" ToolTip="Adjuts the experience point curve such that you rapidly get to level 3, but level more slowly afterwards. You will be about 1-2 levels behind a normal game."/>
             <CheckBox VerticalAlignment="Center" Content="Tolerant Townsfolk" IsChecked="{Binding TolerantTownsfolk}" Margin="0,5,0,5" ToolTip="Townsfolk will be tolerant of monstrous party members and NPCs."/>
-            <CheckBox VerticalAlignment="Center" Content="Prestige Classes" IsChecked="{Binding NewClasses}" Margin="0,5,0,5" ToolTip="Enables Prestige Classes. Currently only the Eldritch Knight and Mystic Theurge are selectable, with more on the way :)"/>
+            <CheckBox VerticalAlignment="Center" Content="Prestige Classes" IsChecked="{Binding NewClasses}" Margin="0,5,0,5" ToolTip="Enables Prestige Classes. Currently supported: Dwarven Defender, Duelist, Eldritch Knight and Mystic Theurge."/>
         </StackPanel>
         <Button x:Name="button" Content="Ok" HorizontalAlignment="Left" Margin="10,0,0,10" VerticalAlignment="Bottom" Width="75" Click="button_Click"/>
     </Grid>

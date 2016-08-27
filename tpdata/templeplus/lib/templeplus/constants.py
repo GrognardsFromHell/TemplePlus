@@ -3239,7 +3239,7 @@ ET_OnNewDay = 9 # refers both to an uninterrupted 8 hour rest period (key 0x91),
 ET_OnAbilityScoreLevel = 10
 ET_OnGetAC = 11
 ET_OnGetACBonus2 = 12 #in practice this is used for cappers like loss of Dex Bonus due to invisibility, but there's also an Inward Magic Circle spell effect using this. Could be a mistake though
-ET_OnSaveThrowLevel = 13 # goes with keys DK_SAVE_X 
+ET_OnSaveThrowLevel = 13 # goes with keys EK_SAVE_X
 ET_OnSaveThrowSpellResistanceBonus = 14 # only used for Inward Magic Circle
 ET_OnToHitBonusBase = 15
 ET_OnToHitBonus2 = 16
@@ -3307,8 +3307,8 @@ ET_OnD20PythonSignal = 75
 ET_OnD20PythonActionCheck = 76
 ET_OnD20PythonActionPerform = 77
 ET_OnD20PythonActionFrame = 78
-ET_OnPythonReserved1 = 79
-ET_OnPythonReserved2 = 80
+ET_OnD20PythonActionAdd = 79
+ET_OnPythonAdf = 80
 ET_OnPythonReserved3 = 81
 ET_OnPythonReserved4 = 82
 ET_OnPythonReserved5 = 83
@@ -3661,8 +3661,11 @@ D20ADF_Breaks_Concentration = 0x100000
 
 D20ADF_Python = 0x1000000 # tells the engine to fetch the flags via the specs
 
+# Action Cost Type (for prefab action cost callbacks)
+D20ACT_NULL = 0
+
 # Targeting classification enums
-D20TC_Target0 = 0
+D20TC_Target0 = 0 # without targeting
 D20TC_Movement = 1
 D20TC_SingleExcSelf = 2
 D20TC_CastSpell = 3

@@ -452,6 +452,22 @@ BOOL D20ClassSystem::IsClassSkill(SkillEnum skillEnum, Stat classCode){
 	return FALSE;
 }
 
+bool D20ClassSystem::HasFeat(feat_enums featEnum, Stat classCode, int classLvl){
+	auto classSpec = classSpecs.find(classCode);
+	if (classSpec == classSpecs.end())
+		return false;
+
+	auto & classFeats = classSpec->second.classFeats;
+	auto lvlSpec = classFeats.find(featEnum);
+	if (lvlSpec == classFeats.end())
+		return false;
+
+	if (lvlSpec->second <= classLvl)
+		return true;
+
+	return false;
+}
+
 bool D20ClassSystem::LevelupSpellsCheckComplete(objHndl handle, Stat classEnum){
 	if (objects.StatLevelGet(handle, classEnum)){
 		auto result = dispatch.DispatchLevelupSystemEvent(handle, classEnum, DK_LVL_Spells_Check_Complete);

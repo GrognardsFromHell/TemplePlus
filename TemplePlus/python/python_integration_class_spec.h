@@ -23,7 +23,7 @@ enum class ClassSpecFunc : int {
 
 
 	IsAlignmentCompatible,
-	ObjMeetsPreqreqs,
+	ObjMeetsPrereqs,
 	GetFeats,
 
 	// levelup callbacks

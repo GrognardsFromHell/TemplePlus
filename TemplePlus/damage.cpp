@@ -115,6 +115,10 @@ BOOL DamagePacket::AddDamageBonus(int32_t damBonus, int bonType, int bonMesline,
 	return 1;
 }
 
+int DamagePacket::AddPhysicalDR(int amount, int bypasserBitmask, int damageMesLine){
+	return damage.AddPhysicalDR(this, amount, bypasserBitmask, (unsigned)damageMesLine);
+}
+
 void Damage::DealDamage(objHndl victim, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType) {
 
 	addresses.DoDamage(victim, attacker, dice.ToPacked(), type, attackPower, reduction, damageDescId, actionType);

@@ -57,6 +57,11 @@ enum class RadialMenuEntryType : uint32_t {
 	Parent = 4
 };
 
+enum class RadialMenuEntryFlags : int
+{
+	HasMinArg = 0x2,
+	HasMaxArg = 0x4
+};
 
 struct RadialMenuEntry {
 	char *text; // Text to display

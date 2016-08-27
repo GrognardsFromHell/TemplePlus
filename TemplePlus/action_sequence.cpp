@@ -305,6 +305,9 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 
 	auto d20adflags = d20Sys.GetActionFlags(d20Sys.globD20Action->d20ActType);
 	
+	if (d20Sys.globD20Action->field_C) {
+		int asd = 1;
+	}
 
 	if (tgtClassif == D20TargetClassification::D20TC_ItemInteraction)
 	{
@@ -658,6 +661,16 @@ int ActionSequenceSystem::ActionAddToSeq()
 	auto d20ActnType = d20Sys.globD20Action->d20ActType;
 	int actnCheckResult = 0;
 	TurnBasedStatus tbStatus = curSeq->tbStatus;
+
+
+	if (d20Sys.globD20Action->field_C) {
+		int asd = 1;
+	}
+	if (d20ActnType != D20A_UNSPECIFIED_MOVE)
+	{
+		int asd = 1;
+	}
+
 	if (d20ActnType == D20A_CAST_SPELL
 		&& curSeq->spellPktBody.spellEnum >= 600)
 	{
@@ -706,7 +719,8 @@ uint32_t ActionSequenceSystem::addD20AToSeq(D20Actn* d20a, ActnSeq* actSeq)
 	ActnSeq * curSeq = *actSeqCur;
 	for (int d20aIdx = curSeq->d20aCurIdx + 1; d20aIdx < curSeq->d20ActArrayNum; d20aIdx++)
 	{
-		if (actSeq->tbStatus.tbsFlags & 0x40)
+		
+		if (actSeq->tbStatus.tbsFlags & TBSF_FullAttack)
 		{
 			curSeq->d20ActArray[d20aIdx].d20Caf |= D20CAF_FULL_ATTACK;
 		}
@@ -1254,8 +1268,7 @@ int ActionSequenceSystem::GetNewHourglassState(objHndl performer, D20ActionType 
 	if (!*actSeqCur || *actSeqCur == (ActnSeq*)0xFFFFF4EC)
 		return -1;
 	
-	TurnBasedStatus tbStatus;
-	memcpy(&tbStatus, &(*actSeqCur)->tbStatus, sizeof(TurnBasedStatus));
+	TurnBasedStatus tbStatus = (*actSeqCur)->tbStatus;
 
 	D20Actn d20a;
 	d20a.d20ActType = d20ActionType;
@@ -1629,9 +1642,8 @@ int ActionSequenceSystem::CrossBowSthgReload_1008E8A0(D20Actn* d20a, ActnSeq* ac
 uint32_t ActionSequenceSystem::TurnBasedStatusUpdate(D20Actn* d20a, TurnBasedStatus* tbStatus)
 {
 	uint32_t result = 0;
-	TurnBasedStatus tbStatCopy;
+	TurnBasedStatus tbStatCopy = *tbStatus;
 	
-	memcpy(&tbStatCopy, tbStatus, sizeof(TurnBasedStatus));
 
 	int actProcResult = ActionCostProcess(&tbStatCopy, d20a);
 	if (!actProcResult)
@@ -2198,6 +2210,11 @@ uint32_t ActionSequenceSystem::curSeqNext()
 					(int)d20a, 0);
 			}
 		}
+
+		if (d20a->field_C) { // for testing!
+			int asd = 1;
+		}
+
 	}
 
 	if (SequencePop())
@@ -2445,6 +2462,11 @@ void ActionSequenceSystem::ActionPerform()
 				ActionErrorCode performResult = static_cast<ActionErrorCode>(d20->d20Defs[d20a->d20ActType].performFunc(d20a));
 				InterruptNonCounterspell(d20a);
 			}
+
+			if (d20a->field_C){
+				int asd = 1;
+			}
+
 			return;
 		}
 

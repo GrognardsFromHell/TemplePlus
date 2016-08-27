@@ -13,7 +13,7 @@
 #include "tab_file.h"
 #include "gamesystems/objects/gameobject.h"
 
-enum ActionErrorCode;
+enum ActionErrorCode : uint32_t;
 enum D20ADF : int;
 struct GameSystemConf;
 struct ActionSequenceSystem;
@@ -30,6 +30,7 @@ struct D20ActionDef;
 struct ActnSeq;
 struct PathQueryResult;
 struct Pathfinding;
+struct ActionCostPacket;
 enum D20TargetClassification : int {
 	Target0 = 0,
 	D20TC_Movement = 1,
@@ -47,6 +48,7 @@ struct PythonActionSpec {
 	D20ADF flags;
 	D20TargetClassification tgtClass;
 	std::string name;
+	ActionCostType costType;
 };
 
 struct LegacyD20System : temple::AddressTable
@@ -117,7 +119,7 @@ struct LegacyD20System : temple::AddressTable
 
 	void GetPythonActionSpecs();
 	std::string &GetPythonActionName(D20DispatcherKey key) const;
-
+	ActionErrorCode GetPyActionCost(D20Actn * d20a, TurnBasedStatus * tbStat, ActionCostPacket* acp);
 
 	LegacyD20System();
 
@@ -137,7 +139,7 @@ int _D20Init(GameSystemConf* conf);
 
 struct D20Actn{
 	D20ActionType d20ActType;
-	uint32_t data1;
+	int data1;
 	int d20Caf; // Based on D20_CAF
 	uint32_t field_C;
 	objHndl d20APerformer;

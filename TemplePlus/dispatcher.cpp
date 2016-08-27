@@ -1284,6 +1284,19 @@ void DispIoD20ActionTurnBased::DispatchPythonActionCheck(D20DispatcherKey key){
 	}
 }
 
+void DispIoD20ActionTurnBased::DispatchPythonActionAddToSeq(D20DispatcherKey key){
+	if (!d20a || !d20a->d20APerformer) {
+		this->returnVal = AEC_INVALID_ACTION;
+		return;
+	}
+
+	auto dispatcher = objects.GetDispatcher(d20a->d20APerformer);
+
+	if (dispatcher->IsValid()) {
+		dispatch.DispatcherProcessor(dispatcher, dispTypePythonActionAdd, key, this);
+	}
+}
+
 void DispIoD20ActionTurnBased::DispatchPythonActionPerform(D20DispatcherKey key){
 	if (!d20a || !d20a->d20APerformer) {
 		this->returnVal = AEC_INVALID_ACTION;

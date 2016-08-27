@@ -267,7 +267,7 @@ struct DispIoBonusList : DispIO { // DispIoType = 2  used for fetching ability s
 struct DispIoSavingThrow : DispIO { // DispIoType = 3
 	uint32_t returVal;
 	objHndl obj;
-	uint32_t flags;
+	uint32_t flags; // looks like: 2 - trap, 0x100 - enchantment, 0x100000 - fear/morale effect?
 	int field_14;
 	BonusList bonlist;
 	int rollResult;
@@ -359,6 +359,7 @@ struct DispIoD20ActionTurnBased : DispIO { // dispIoType = 12; matches dispTypes
 	void DispatchPerform(D20DispatcherKey key);
 	void DispatchPythonAdf(D20DispatcherKey key);
 	void DispatchPythonActionCheck(D20DispatcherKey key);
+	void DispatchPythonActionAddToSeq(D20DispatcherKey key);
 	void DispatchPythonActionPerform(D20DispatcherKey key);
 	void DispatchPythonActionFrame(D20DispatcherKey key);
 };

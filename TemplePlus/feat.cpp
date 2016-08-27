@@ -982,12 +982,13 @@ uint32_t _FeatListElective(objHndl objHnd, feat_enums * listOut)
 };
 
 
-uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLevelBeingRaised, uint32_t rangerSpecializationFeat)
-{
+uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLevelBeingRaised, uint32_t rangerSpecializationFeat){
 
-	if (feats.m_featPropertiesTable[(uint32_t)featEnum] & featPropDisabled){ return 0; }
+	if (!feats.IsFeatEnabled(featEnum))
+		return FALSE;
 
-	// race feats
+	
+	// Race feats
 	uint32_t objRace = objects.StatLevelGet(objHnd, stat_race);
 	uint32_t * racialFeat = & (feats.racialFeats[objRace * 10]);
 	while (*racialFeat != -1)
@@ -998,7 +999,22 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 		racialFeat++;
 	}
 	
-	
+	// Class automatic feats
+	for (auto it: d20ClassSys.classEnums){
+		auto classEnum = (Stat)it;
+
+		auto classLvl = objects.StatLevelGet(objHnd, classEnum);
+		if (classLevelBeingRaised == it){
+			classLvl++;
+		}
+
+		if (classLvl <= 0)
+			continue;
+
+		if (d20ClassSys.HasFeat(featEnum, classEnum, classLvl))
+			return TRUE;
+	}
+
 	for (uint32_t i = 0; i < VANILLA_NUM_CLASSES; i++){
 		uint32_t classLevel = objects.StatLevelGet(objHnd, d20ClassSys.vanillaClassEnums[i]);
 		if (classLevelBeingRaised == d20ClassSys.vanillaClassEnums[i]){
@@ -1023,10 +1039,10 @@ uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLev
 
 	}
 	
-	
+	// special casing for uncanny dodge for Brb 2 / Rog 4 combo
 	 if (featEnum == FEAT_IMPROVED_UNCANNY_DODGE) {
 		 if (objects.StatLevelGet(objHnd, stat_level_barbarian) >= 2 
-			 || objects.StatLevelGet(objHnd, stat_level_rogue) >= 4)
+			 && objects.StatLevelGet(objHnd, stat_level_rogue) >= 4)
 		 {
 			 return 1;
 		 }

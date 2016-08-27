@@ -95,6 +95,10 @@ enum D20ActionType : int32_t
 	D20A_UNASSIGNED = -2 // used for hotkey binds
 };
 
+enum class ActionCostType : int {
+	Null
+};
+
 enum D20SavingThrow : uint32_t {
 	D20_Save_Fortitude = 0,
 	D20_Save_Reflex = 1,

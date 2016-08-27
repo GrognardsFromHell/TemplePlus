@@ -6,9 +6,16 @@ enum class D20ActionSpecFunc : int {
 
 	GetActionDefinitionFlags,
 	GetActionName,
-	GetTargetingClassification
+	GetTargetingClassification,
+	GetActionCostType,
+	AddToSequence
 };
 
+
+struct D20Actn;
+struct ActnSeq;
+struct TurnBasedStatus;
+enum ActionErrorCode : uint32_t;
 
 class PythonD20ActionIntegration : public PythonIntegration {
 public:
@@ -21,6 +28,10 @@ public:
 
 	int GetActionDefinitionFlags(int actionEnum);
 	int GetTargetingClassification(int actionEnum);
+	ActionCostType GetActionCostType(int actionEnum);
+
+
+	ActionErrorCode PyAddToSeq(int actionEnum, D20Actn *d20a, ActnSeq *actSeq, TurnBasedStatus *tbStat);
 	
 protected:
 	const char* GetFunctionName(EventId evt) override;

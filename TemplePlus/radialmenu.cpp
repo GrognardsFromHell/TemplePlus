@@ -586,8 +586,11 @@ BOOL RadialMenus::PythonActionCallback(const objHndl & handle, RadialMenuEntry *
 	actSeqSys.TurnBasedStatusInit(handle);
 	actSeqSys.SequenceSwitch(handle);
 	d20Sys.GlobD20ActnInit();
-	d20Sys.GlobD20ActnSetTypeAndData1(entry->d20ActionType, entry->d20ActionData1);
-	d20Sys.globD20ActionKey = static_cast<D20DispatcherKey>(entry->dispKey);
+	//d20Sys.GlobD20ActnSetTypeAndData1(entry->d20ActionType, entry->d20ActionData1);
+	// d20Sys.globD20ActionKey = static_cast<D20DispatcherKey>(entry->dispKey);
+
+	d20Sys.GlobD20ActnSetTypeAndData1(entry->d20ActionType, entry->dispKey);
+
 	auto entryType = entry->type;
 	switch (entryType){
 		case RadialMenuEntryType::Slider: 

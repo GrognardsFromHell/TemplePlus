@@ -494,6 +494,7 @@ void LegacyD20System::GetPythonActionSpecs(){
 		pyActSpec.flags = (D20ADF) pythonD20ActionIntegration.GetActionDefinitionFlags(it);
 		pyActSpec.tgtClass = (D20TargetClassification)pythonD20ActionIntegration.GetTargetingClassification(it);
 		pyActSpec.name = pythonD20ActionIntegration.GetActionName(it);
+		pyActSpec.costType = pythonD20ActionIntegration.GetActionCostType(it);
 
 	}
 }
@@ -501,6 +502,17 @@ void LegacyD20System::GetPythonActionSpecs(){
 std::string & LegacyD20System::GetPythonActionName(D20DispatcherKey key) const
 {
 	return d20Sys.pyactions[key].name;
+}
+
+ActionErrorCode LegacyD20System::GetPyActionCost(D20Actn * d20a, TurnBasedStatus * tbStat, ActionCostPacket * acp){
+	
+	switch (pyactions[d20a->data1].costType){
+	
+	case ActionCostType::Null:
+		return d20Callbacks.ActionCostNull(d20a, tbStat, acp);
+	default:
+		return d20Callbacks.ActionCostNull(d20a, tbStat, acp);
+	}
 }
 
 LegacyD20System::LegacyD20System()
@@ -991,7 +1003,7 @@ D20TargetClassification LegacyD20System::TargetClassification(D20Actn* d20a)
 	auto d20DefFlags = d20Defs[d20a->d20ActType].flags;
 
 	if (d20DefFlags & D20ADF_Python){
-		return pyactions[d20Sys.globD20ActionKey].tgtClass;
+		return pyactions[d20a->data1].tgtClass;
 	}
 
 	if (d20DefFlags & D20ADF::D20ADF_Movement)
@@ -1462,7 +1474,7 @@ ActionErrorCode D20ActionCallbacks::PerformEmptyBody(D20Actn* d20a)
 
 ActionErrorCode D20ActionCallbacks::PerformPython(D20Actn* d20a){
 	DispIoD20ActionTurnBased dispIo(d20a);
-	dispIo.DispatchPythonActionPerform(d20Sys.globD20ActionKey);
+	dispIo.DispatchPythonActionPerform((D20DispatcherKey)d20a->data1);
 	
 	return (ActionErrorCode)dispIo.returnVal; 
 }
@@ -1577,17 +1589,13 @@ ActionErrorCode D20ActionCallbacks::ActionCheckEmptyBody(D20Actn* d20a, TurnBase
 }
 
 ActionErrorCode D20ActionCallbacks::ActionCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat) {
-	objHndl performer = d20a->d20APerformer;
+
 	DispIoD20ActionTurnBased evtObj(d20a);
-	evtObj.DispatchPythonActionCheck(d20Sys.globD20ActionKey);
 
-	if (d20Sys.d20Query(performer, DK_QUE_Prone) || d20Sys.d20Query(performer, DK_QUE_Unconscious))
-		return AEC_CANT_WHILE_PRONE;
+	evtObj.DispatchPythonActionCheck((D20DispatcherKey)d20a->data1);
 
-	if (!d20a->d20ATarget)
-		return AEC_TARGET_INVALID;
+	return (ActionErrorCode)evtObj.returnVal;
 
-	return AEC_OK;
 }
 
 ActionErrorCode D20ActionCallbacks::ActionCheckQuiveringPalm(D20Actn* d20a, TurnBasedStatus* tbStat)
@@ -2363,12 +2371,9 @@ ActionErrorCode D20ActionCallbacks::AddToSeqCharge(D20Actn* d20a, ActnSeq* actSe
 }
 
 ActionErrorCode D20ActionCallbacks::AddToSeqPython(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat){
-	auto tgt = d20a->d20ATarget;
-	if (!tgt)
-		return AEC_TARGET_INVALID;
-
-	actSeq->d20ActArray[actSeq->d20ActArrayNum++] = *d20a;
-	return AEC_OK;
+	
+	return pythonD20ActionIntegration.PyAddToSeq((D20DispatcherKey)d20a->data1, d20a, actSeq, tbStat);
+	
 }
 
 ActionErrorCode D20ActionCallbacks::AddToSeqSimple(D20Actn*d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat){
@@ -2449,21 +2454,8 @@ ActionErrorCode D20ActionCallbacks::TurnBasedStatusCheckPython(D20Actn* d20a, Tu
 }
 
 ActionErrorCode D20ActionCallbacks::ActionCostPython(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp) {
-	acp->hourglassCost = 0;
-	acp->chargeAfterPicker = 0;
-	acp->moveDistCost = 0;
 
-	if (!(d20a->d20Caf & D20CAF_FREE_ACTION) && combatSys.isCombatActive()){
-		acp->chargeAfterPicker = 1;
-		if ((!feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_SHOT_ON_THE_RUN)
-			|| d20a->d20ActType != D20A_STANDARD_RANGED_ATTACK)
-			&& (!feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_SPRING_ATTACK)
-				|| d20a->d20ActType != D20A_STANDARD_ATTACK))
-		{
-			tbStat->surplusMoveDistance = 0;
-		}
-	}
-	return AEC_OK;
+	return (ActionErrorCode) d20Sys.GetPyActionCost(d20a, tbStat, acp);
 }
 
 ActionErrorCode D20ActionCallbacks::ActionCostStandardAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp){
