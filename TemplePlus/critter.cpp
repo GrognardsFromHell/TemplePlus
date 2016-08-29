@@ -1222,9 +1222,11 @@ bool LegacyCritterSystem::IsSummoned(objHndl obj)
 int LegacyCritterSystem::GetCasterLevel(objHndl obj){
 	int result = 0;
 	for (auto it: d20ClassSys.classEnums){
-		if (d20ClassSys.IsCastingClass((Stat)it))	{
-			//result += objects.StatLevelGet(obj, (Stat)it);
-			result += dispatch.DispatchGetBaseCasterLevel(obj, (Stat)it);
+		auto classEnum = (Stat)it;
+		if (d20ClassSys.IsCastingClass(classEnum))	{
+			auto cl = critterSys.GetCasterLevelForClass(obj, classEnum);
+			if (cl > result)
+				result = cl;
 		}
 	}
 	return result;

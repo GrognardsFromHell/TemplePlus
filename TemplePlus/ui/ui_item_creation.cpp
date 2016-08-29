@@ -117,6 +117,8 @@ public:
 
 	static void HookedGetLineForMaaAppend(MesHandle, MesLine*); // ensures the crafted item name doesn't overflow
 
+	static int HookedStatLevelGetForItemCreationPrereq(objHndl handle);
+
 	void apply() override {
 		// auto system = UiSystem::getUiSystem("ItemCreation-UI");		
 		// system->init = systemInit;
@@ -129,6 +131,8 @@ public:
 			itemCreation.UiItemCreationResize(arg);
 		});
 
+
+		redirectCall(0x1015068D, HookedStatLevelGetForItemCreationPrereq);
 
 		// Show
 		replaceFunction<BOOL(__cdecl)(objHndl, ItemCreationType)>(0x101536C0, [](objHndl crafter, ItemCreationType icTypeNew){
@@ -3749,6 +3753,15 @@ void ItemCreationHooks::HookedGetLineForMaaAppend(MesHandle handle, MesLine* lin
 
 
 
+}
+
+int ItemCreationHooks::HookedStatLevelGetForItemCreationPrereq(objHndl handle){
+	auto result = 0;
+	if (!handle)
+		return result;
+
+	result = critterSys.GetCasterLevel(handle);
+	return result;
 }
 
 int ItemCreation::MaaCpCost(int effIdx){

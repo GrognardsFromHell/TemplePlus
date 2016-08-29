@@ -319,7 +319,7 @@ struct LegacyCritterSystem : temple::AddressTable
 #pragma region Spellcasting
 	int GetSpellLvlCanCast(const objHndl& handle, SpellSourceType spellSourceType, SpellReadyingType spellReadyingType);
 	int GetSpellEnumsKnownByClass(const objHndl& handle, int spellClass, int* spellEnums, int capacity);
-	int GetCasterLevel(objHndl obj); // returns sum of all casting-class levels
+	int GetCasterLevel(objHndl obj); // returns highest caster level
 	int GetCasterLevelForClass(objHndl handle, Stat classCode);
 	int GetSpellListLevelExtension(objHndl handle, Stat classCode); // modifies the effective character level for the purpose of fetching spell lists
 	bool IsCaster(objHndl obj);
