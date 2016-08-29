@@ -647,6 +647,17 @@ public:
 			return orgObjfadeTimeeventExpires(evt);
 		});
 
+		// fix for Encumbered Complain on null handle crash (I think it happens if you encumber an NPC and leave the area / send him off from the party?)
+		static int (*orgEncumberedComplainTimeeventExpires)(TimeEvent* ) = replaceFunction<int(__cdecl)(TimeEvent*)>(0x10037DF0, [](TimeEvent*evt)	{
+			if (!evt->params[0].handle)	{
+				return 1;
+			}
+				
+
+			return orgEncumberedComplainTimeeventExpires(evt);
+		});
+
+
 		static int (*orgAdvanceTime)(int ) = replaceFunction<int (__cdecl)(int)>(0x100620C0, [](int timeMsec)
 		{
 			return orgAdvanceTime(timeMsec);
