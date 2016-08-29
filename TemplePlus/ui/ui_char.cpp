@@ -738,8 +738,8 @@ int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 		{
 			if (msg->arg4 & MSF_LMB_CLICK)
 			{
-				if ( infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) )
-				{
+				if ( infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) || infrastructure::gKeyboard.IsKeyPressed(VK_RMENU)){
+
 					objHndl critterLooted = GetCritterLooted(); // may be substitute inventory object (i.e. a container)
 
 					auto uiCharInvItemGetFromWidId = temple::GetRef<objHndl(__cdecl)(int)>(0x10157060);
