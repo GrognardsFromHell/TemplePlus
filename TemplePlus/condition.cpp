@@ -244,6 +244,8 @@ public:
 	static int BardicMusicGreatnessTakingTempHpDamage(DispatcherCallbackArgs args);
 	static int BardicMusicHeroicsSaveBonus(DispatcherCallbackArgs args);
 	static int BardicMusicHeroicsAC(DispatcherCallbackArgs args);
+
+	static int SneakAttackDamage(DispatcherCallbackArgs args);
 } classAbilityCallbacks;
 
 
@@ -351,7 +353,10 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FE570, classAbilityCallbacks.BardMusicActionFrame);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FE820, classAbilityCallbacks.BardicMusicBeginRound);
 		writeHex(0x102E6608 + 3*sizeof(int), "03" ); // fixes the Competence effect tooltip (was pointing to Inspire Courage)
-		
+
+		// Sneak Attack damage generalization
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100F9A10, classAbilityCallbacks.SneakAttackDamage);
+
 		// D20Mods countdown handler
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100EC9B0, genericCallbacks.D20ModCountdownHandler);
 	}
@@ -4522,6 +4527,59 @@ int ClassAbilityCallbacks::BardicMusicHeroicsAC(DispatcherCallbackArgs args){
 	if (args.GetCondArg(1)){ // have heard music for full round
 		dispIo->bonlist.AddBonus(4, 13, 348);
 	}
+	return 0;
+}
+
+int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
+	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
+	auto &atkPkt = dispIo->attackPacket;
+	auto tgt = atkPkt.victim;
+
+	if (!tgt)
+		return 0;
+
+	if (!atkPkt.attacker) {
+		logger->error("SneakAttackDamage: Error! Null attacker in attack packet");
+		return 0;
+	}
+
+	// imprecise attacks cannot sneak attack
+	if (atkPkt.flags & D20CAF_NO_PRECISION_DAMAGE)
+		return 0;
+
+	// limit to 30'
+	if (locSys.DistanceToObj(args.objHndCaller, tgt) > 30)
+		return 0;
+
+	if (atkPkt.flags & D20CAF_FLANKED
+		|| d20Sys.d20Query(tgt, DK_QUE_SneakAttack)
+		|| d20Sys.d20QueryWithData(atkPkt.attacker, DK_QUE_OpponentSneakAttack, (uint32_t)dispIo, 0)
+		|| !critterSys.CanSense(tgt, atkPkt.attacker))
+	{
+		// get sneak attack dice (NEW! now via query, for prestige class modularity)
+		auto sneakAttackDice = d20Sys.D20QueryPython(args.objHndCaller, fmt::format("Sneak Attack Dice"));
+		if (sneakAttackDice <= 0)
+			return 0;
+
+		if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Is_Immune_Critical_Hits))	{
+			dispIo->damage.bonuses.ZeroBonusSetMeslineNum(325);
+			return 0;
+		}
+
+		auto sneakDmgDice = Dice(sneakAttackDice, 6, 0);
+		dispIo->damage.AddDamageDice(sneakDmgDice.ToPacked(), DamageType::Unspecified, 106);
+		floatSys.FloatCombatLine(args.objHndCaller, 90); // Sneak Attack!
+		histSys.CreateRollHistoryLineFromMesfile(26, args.objHndCaller, tgt);
+
+		// crippling strike ability loss
+		if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_CRIPPLING_STRIKE)){
+			histSys.CreateRollHistoryLineFromMesfile(47, args.objHndCaller, tgt);
+			conds.AddTo(tgt, "Damage_Ability_Loss", { 0, 2 }); // note: vanilla had a bug (did 1 damage instead of 2)
+			floatSys.FloatCombatLine(args.objHndCaller, 96); // Ability Loss
+		}
+	}
+	
+
 	return 0;
 }
 

@@ -235,6 +235,13 @@ struct LegacyCritterSystem : temple::AddressTable
 	bool IsConcealed(objHndl critter);
 	
 	int GetPortraitId(objHndl critter);
+	
+	/*
+	 checks if critter can see target (i.e. target is not invisible to critter due to blindness or invisibility). 
+	 Regards concealment and moving silently (including skill checks for listen/spot). 
+	 Does not regard facing.
+	*/
+	bool CanSense(objHndl critter, objHndl tgt); 
 
 	int GetLevel(objHndl critter);
 
