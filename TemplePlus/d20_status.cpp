@@ -109,6 +109,13 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 	if (objects.IsCritter(objHnd))
 	{
 	//	hooked_print_debug_message("D20Status Init for %s", description.getDisplayName(objHnd));
+
+		auto psiptsCondStruct = conds.GetByName("Psi Points");
+		if (psiptsCondStruct){
+			_ConditionAddToAttribs_NumArgs0(dispatcher, psiptsCondStruct); // args will be set from D20StatusInitFromInternalFields if this condition has already been previously applied
+		}
+		
+
 		initClass(objHnd);
 
 		initRace(objHnd);
@@ -345,7 +352,7 @@ void D20StatusSystem::D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher
 		conds.SetPermanentModArgsFromDataFields(dispatcher, condStruct, condArgs);
 	}
 
-	// atempt recovery if necessary
+	// attempt recovery if necessary
 	if (troubledIdx != -1){
 		actualArgCount = 0;
 		auto numOfArgs = obj->GetInt32Array(obj_f_permanent_mod_data).GetSize();

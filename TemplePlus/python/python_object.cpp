@@ -2198,17 +2198,7 @@ static PyObject* PyObjHandle_D20SendSignal(PyObject* obj, PyObject* args) {
 		Py_RETURN_NONE;
 	}
 
-	// check python query
-	PyObject* signalKey = PyTuple_GET_ITEM(args, 0);
-	if (PyString_Check(signalKey)) {
-		auto argString = fmt::format("{}", PyString_AsString(signalKey));
-		int val = 0;
-		if	(PyTuple_Size(args) > 1 ){
-			
-		}
-		return PyInt_FromLong(d20Sys.D20QueryPython(self->handle, argString));
-	}
-
+	
 	PyObject* signalId = 0; //int signalId;
 	PyObject* arg = 0;
 	if (!PyArg_ParseTuple(args, "O|O:objhndl.d20_send_signal", &signalId, &arg)) {
