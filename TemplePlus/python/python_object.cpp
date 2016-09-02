@@ -31,6 +31,7 @@
 #include <ui/ui_picker.h>
 #include <config/config.h>
 #include <infrastructure/mesparser.h>
+#include <infrastructure/elfhash.h>
 #include "temple_functions.h"
 #include <gamesystems/objects/objfields.h>
 #include <d20_level.h>
@@ -1207,6 +1208,7 @@ static PyObject* PyObjHandle_FloatMesFileLine(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 
+
 	MesFile::Content content;
 	try {
 		content = MesFile::ParseFile(mesFilename);
@@ -1222,6 +1224,21 @@ static PyObject* PyObjHandle_FloatMesFileLine(PyObject* obj, PyObject* args) {
 	}
 
 	floatSys.floatMesLine(self->handle, 1, colorId, it->second.c_str());
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_FloatTextLine(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	PyObject* line;
+	auto colorId = FloatLineColor::White;
+	if (!PyArg_ParseTuple(args, "O|i:", &line, &colorId)) {
+		return 0;
+	}
+
+	if (line && PyString_Check(line)) {
+		floatSys.floatMesLine(self->handle, 1, colorId, fmt::format("{}", PyString_AsString(line)).c_str());
+	}
+		
 	Py_RETURN_NONE;
 }
 
@@ -2180,21 +2197,53 @@ static PyObject* PyObjHandle_D20SendSignal(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		Py_RETURN_NONE;
 	}
-	int signalId;
+
+	// check python query
+	PyObject* signalKey = PyTuple_GET_ITEM(args, 0);
+	if (PyString_Check(signalKey)) {
+		auto argString = fmt::format("{}", PyString_AsString(signalKey));
+		int val = 0;
+		if	(PyTuple_Size(args) > 1 ){
+			
+		}
+		return PyInt_FromLong(d20Sys.D20QueryPython(self->handle, argString));
+	}
+
+	PyObject* signalId = 0; //int signalId;
 	PyObject* arg = 0;
-	if (!PyArg_ParseTuple(args, "i|O:objhndl.d20_send_signal", &signalId, &arg)) {
+	if (!PyArg_ParseTuple(args, "O|O:objhndl.d20_send_signal", &signalId, &arg)) {
 		return 0;
 	}
-	D20DispatcherKey dispKey = (D20DispatcherKey)(DK_SIG_HP_Changed + signalId);
+
+
+	bool isPythonSig = false;
+	D20DispatcherKey dispKey;
+
+	if (PyInt_Check(signalId))
+		dispKey = (D20DispatcherKey)(DK_SIG_HP_Changed + PyInt_AsLong(signalId));
+	else if (PyString_Check(signalId))
+	{
+		dispKey = (D20DispatcherKey)ElfHash::Hash( PyString_AsString(signalId) );
+		isPythonSig = true;
+	}
 
 	if (arg && PyObjHndl_Check(arg)) {
 		objHndl hndl = PyObjHndl_AsObjHndl(arg);
-		d20Sys.d20SendSignal(self->handle, dispKey, hndl);
+		if (isPythonSig)
+			logger->error("Unimplemented D20SignalPython with handle arg");
+		else
+			d20Sys.d20SendSignal(self->handle, dispKey, hndl);
 	} else if (arg && PyInt_Check(arg)) {
 		auto val = PyInt_AsLong(arg);
-		d20Sys.d20SendSignal(self->handle, dispKey, val, 0);
+		if (isPythonSig)
+			d20Sys.D20SignalPython(self->handle, dispKey, val, 0);
+		else
+			d20Sys.d20SendSignal(self->handle, dispKey, val, 0);
 	} else {
-		d20Sys.d20SendSignal(self->handle, dispKey, 0, 0);
+		if (isPythonSig)
+			d20Sys.D20SignalPython(self->handle, dispKey );
+		else
+			d20Sys.d20SendSignal(self->handle, dispKey, 0, 0);
 	}
 
 	Py_RETURN_NONE;
@@ -2451,6 +2500,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "footstep", PyObjHandle_Footstep, METH_VARARGS, NULL },
 	{ "float_line", PyObjHandle_FloatLine, METH_VARARGS, NULL },
 	{ "float_mesfile_line", PyObjHandle_FloatMesFileLine, METH_VARARGS, NULL },
+	{ "float_text_line", PyObjHandle_FloatTextLine, METH_VARARGS, NULL },
 
 	{ "get_base_attack_bonus", PyObjHandle_GetBaseAttackBonus, METH_VARARGS, NULL },
 	{ "get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL },

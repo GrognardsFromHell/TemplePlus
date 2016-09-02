@@ -1798,7 +1798,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeNewDay, // refers both to an uninterrupted 8 hour rest period (key 0x91), or a 1 day rest period (key 0x91), or a new calendarical day (with key 0x92)
 	dispTypeAbilityScoreLevel,
 	dispTypeGetAC,
-	dispTypeGetACBonus2, //in practice this is used for cappers like loss of Dex Bonus due to invisibility, but there's also an Inward Magic Circle spell effect using this. Could be a mistake though
+	dispTypeAcModifyByAttacker, // modifies defender's Armor Class by attacker conditions (e.g. if the attacker is Invisible, they will have a hook that nullifies the defender's dexterity bonus using this event type)
 	dispTypeSaveThrowLevel, // goes with keys DK_SAVE_X 
 	dispTypeSaveThrowSpellResistanceBonus, // only used for Inward Magic Circle
 	dispTypeToHitBonusBase,

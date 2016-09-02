@@ -100,6 +100,9 @@ BOOL HotkeyReplacements::HotkeyCompare(RadialMenuEntry& first, RadialMenuEntry& 
 	if (first.d20ActionType == D20A_NONE &&first.textHash != second.textHash)
 		return FALSE;
 
+	if (first.dispKey != second.dispKey)
+		return FALSE;
+
 	return TRUE;
 }
 

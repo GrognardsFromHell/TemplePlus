@@ -658,6 +658,42 @@ void LegacyD20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, ob
 	dispatch.DispatcherProcessor(dispatcher, dispTypeD20Signal, dispKey, &dispIO);
 }
 
+void LegacyD20System::D20SignalPython(const objHndl& handle, const std::string& queryKey, int arg1, int arg2){
+
+	if (!handle) {
+		logger->warn("D20SignalPython called with null handle! Key was {}, arg1 {}, arg2 {}", queryKey, arg1, arg2);
+		return;
+	}
+
+	Dispatcher * dispatcher = objects.GetDispatcher(handle);
+	if (!dispatch.dispatcherValid(dispatcher)) { return ; }
+
+	DispIoD20Query dispIo;
+	dispIo.dispIOType = dispIoTypeSendSignal;
+	dispIo.return_val = 0;
+	dispIo.data1 = arg1;
+	dispIo.data2 = arg2;
+	dispatcher->Process(enum_disp_type::dispTypePythonSignal, static_cast<D20DispatcherKey>(ElfHash::Hash(queryKey)), &dispIo);
+	return;
+
+}
+void LegacyD20System::D20SignalPython(const objHndl & handle, int queryKey, int arg1, int arg2){
+	if (!handle) {
+		logger->warn("D20SignalPython called with null handle! Key was {}, arg1 {}, arg2 {}", queryKey, arg1, arg2);
+		return;
+	}
+
+	Dispatcher * dispatcher = objects.GetDispatcher(handle);
+	if (!dispatch.dispatcherValid(dispatcher)) { return; }
+
+	DispIoD20Query dispIo;
+	dispIo.dispIOType = dispIoTypeSendSignal;
+	dispIo.return_val = 0;
+	dispIo.data1 = arg1;
+	dispIo.data2 = arg2;
+	dispatcher->Process(enum_disp_type::dispTypePythonSignal, static_cast<D20DispatcherKey>(queryKey), &dispIo);
+	return;
+}
 #pragma endregion
 
 void LegacyD20System::D20ActnInit(objHndl objHnd, D20Actn* d20a)

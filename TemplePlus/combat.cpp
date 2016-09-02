@@ -1157,7 +1157,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 	dispIoTgtAc.attackPacket = dispIoToHitBon.attackPacket;
 	dispIoTgtAc.field_4 = dispIoToHitBon.field_4;
 	critterSys.GetArmorClass(tgt, &dispIoTgtAc);
-	auto tgtAcFinal = dispIoTgtAc.Dispatch(tgt, objHndl::null, dispTypeGetACBonus2, DK_NONE);
+	auto tgtAcFinal = dispIoTgtAc.Dispatch(performer, objHndl::null, dispTypeAcModifyByAttacker, DK_NONE);
 
 	auto toHitRoll = Dice::Roll(1, 20);
 

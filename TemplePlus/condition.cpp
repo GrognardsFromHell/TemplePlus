@@ -4566,10 +4566,16 @@ int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
 			return 0;
 		}
 
+		
 		auto sneakDmgDice = Dice(sneakAttackDice, 6, 0);
+		if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_DEADLY_PRECISION)) {
+			sneakDmgDice = Dice(sneakAttackDice, 5, 1);
+		}
 		dispIo->damage.AddDamageDice(sneakDmgDice.ToPacked(), DamageType::Unspecified, 106);
 		floatSys.FloatCombatLine(args.objHndCaller, 90); // Sneak Attack!
 		histSys.CreateRollHistoryLineFromMesfile(26, args.objHndCaller, tgt);
+
+		d20Sys.D20SignalPython(args.objHndCaller, "Sneak Attack Damage Applied");
 
 		// crippling strike ability loss
 		if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_CRIPPLING_STRIKE)){

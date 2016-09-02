@@ -551,7 +551,7 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 	
 
 	case dispTypeGetAC:
-	case dispTypeGetACBonus2:
+	case dispTypeAcModifyByAttacker:
 	case dispTypeToHitBonusBase:
 	case dispTypeToHitBonus2:
 	case dispTypeToHitBonusFromDefenderCondition:
