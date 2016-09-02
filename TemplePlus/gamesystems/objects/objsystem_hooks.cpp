@@ -116,7 +116,10 @@ public:
 		});
 
 		// obj_get_int64
-		replaceFunction<int64_t(objHndl, obj_f)>(0x1009e2e0, [](objHndl handle, obj_f field) {
+		replaceFunction<int64_t(objHndl, obj_f)>(0x1009e2e0, [](objHndl handle, obj_f field) ->int64_t{
+			if (!handle) {
+				return 0i64;
+			}
 			return GetObj(handle)->GetInt64(field);
 		});
 
