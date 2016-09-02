@@ -846,7 +846,7 @@ void UiCharEditor::FeatsFinalize()
 
 void UiCharEditor::FeatsReset(CharEditorSelectionPacket & selPkt){
 	mFeatsActivated = false;
-	mIsSelectingBonusFeat = false;
+	//mIsSelectingBonusFeat = false; // should not do this here, since then if a user goes back to skills and decreases/increases them, it can cause problems
 
 	selPkt.feat0 = FEAT_NONE;
 	selPkt.feat1 = FEAT_NONE;

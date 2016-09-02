@@ -1616,7 +1616,7 @@ int __cdecl CaptivatingSongEffectTooltipDuration(DispatcherCallbackArgs args){
 	char tooltipString[256];
 	sprintf(tooltipString, "\n%d rounds remaining.", durationRemaining);
 	auto effectTooltipBase = temple::GetRef<int(__cdecl)(BuffDebuffPacket*, int someIdx, int spellEnum, char*)>(0x100F4680);
-	effectTooltipBase(dispIo->bdb, 100, 20054, tooltipString); // will fetch 20054 from spell.mes (Captivated!)
+	effectTooltipBase(dispIo->bdb, 100, 90000, tooltipString); // will fetch 90000 from spell_ext.mes (Captivated!)
 	return 0;
 }
 

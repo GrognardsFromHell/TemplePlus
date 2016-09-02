@@ -15,11 +15,15 @@ public:
 #define ABFIX(fname) static int fname ## (DispatcherCallbackArgs args);
 
 	static int PoisonedOnBeginRound(DispatcherCallbackArgs args);;
-
+	
 
 	void apply() override {
 
 		replaceFunction(0x100EA040, PoisonedOnBeginRound);
+		static void (__cdecl*orgCompanionRunoff)(SubDispNode*, objHndl , objHndl ) = replaceFunction<void(__cdecl)(SubDispNode*, objHndl, objHndl)>(0x100FC3D0, [](SubDispNode* sdn, objHndl owner, objHndl handle){
+			orgCompanionRunoff(sdn, owner, handle);
+			conds.CondNodeSetArg(sdn->condNode, 2, 0);
+		});
 	
 	}
 } abilityConditionFixes;
