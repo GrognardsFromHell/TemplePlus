@@ -4,7 +4,7 @@ struct BuffDebuffSub
 {
 	uint32_t effectTypeId;
 	const char * text;
-	uint32_t spellEnum;
+	int spellEnum;
 };
 
 struct BuffDebuffPacket
