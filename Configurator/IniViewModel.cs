@@ -53,6 +53,11 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty TolerantTownsfolkProperty = DependencyProperty.Register(
           "TolerantTownsfolk", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
+        public static readonly DependencyProperty TransparentNpcStatsProperty = DependencyProperty.Register(
+          "TransparentNpcStats", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
+        
+
         public static readonly DependencyProperty NewClassesProperty = DependencyProperty.Register(
           "NewClasses", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
@@ -161,6 +166,13 @@ namespace TemplePlusConfig
             get { return (bool)GetValue(TolerantTownsfolkProperty); }
             set { SetValue(TolerantTownsfolkProperty, value); }
         }
+
+        public bool TransparentNpcStats
+        {
+            get { return (bool)GetValue(TransparentNpcStatsProperty); }
+            set { SetValue(TransparentNpcStatsProperty, value); }
+        }
+
         public bool NewClasses
         {
             get { return (bool)GetValue(NewClassesProperty); }
@@ -270,6 +282,15 @@ namespace TemplePlusConfig
                 TolerantTownsfolk = tolerantTownsfolk;
             }
 
+            bool showExactHPforNPCs, showNpcStats;
+            if (bool.TryParse(tpData["showExactHPforNPCs"], out showExactHPforNPCs)
+                && bool.TryParse(tpData["showNpcStats"], out showNpcStats))
+            {
+                TransparentNpcStats = showNpcStats && showExactHPforNPCs;
+            }
+
+
+
             bool newClasses;
             if (bool.TryParse(tpData["newClasses"], out newClasses))
             {
@@ -326,6 +347,8 @@ namespace TemplePlusConfig
             tpData["slowerLevelling"] = SlowerLevelling ? "true" : "false";
             tpData["newClasses"] = NewClasses? "true" : "false";
             tpData["tolerantNpcs"] = TolerantTownsfolk? "true" : "false";
+            tpData["showExactHPforNPCs"] = TransparentNpcStats? "true" : "false";
+            tpData["showNpcStats"] = TransparentNpcStats ? "true" : "false";
         }
     }
 
