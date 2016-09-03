@@ -277,6 +277,17 @@ bool SpellPacketBody::IsVancian(){
 	return false;
 }
 
+bool SpellPacketBody::IsDivine(){
+	if (spellSys.isDomainSpell(spellClass))
+		return true;
+	auto castingClass = spellSys.GetCastingClass(spellClass);
+
+	if (d20ClassSys.IsDivineCastingClass(castingClass))
+		return true;
+
+	return false;
+}
+
 void SpellPacketBody::Debit(){
 	// preamble
 	if (!caster){

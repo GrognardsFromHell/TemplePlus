@@ -13,6 +13,7 @@ public:
 	void initDomains(objHndl objHnd);
 	void initFeats(objHndl objHnd);
 	void initItemConditions(objHndl objHnd);
+	void InitFromItemConditionFields(Dispatcher* dispatcher, objHndl item, int invIdx);
 	void D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher *dispatcher);
 
 	std::map<Stat, std::string> classCondMap = {

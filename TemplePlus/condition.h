@@ -210,6 +210,8 @@ public:
 
 	void CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNodeNew);
 	void InitCondFromCondStructAndArgs(Dispatcher* dispatcher, CondStruct* condStruct, int* condargs);
+	void InitItemCondFromCondStructAndArgs(Dispatcher* dispatcher, CondStruct* condStruct, int* condargs);
+	
 
 #pragma endregion
 	void RegisterNewConditions();

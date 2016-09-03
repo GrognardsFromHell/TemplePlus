@@ -6,7 +6,7 @@
 #include "temple_functions.h"
 #include "d20_obj_registry.h"
 #include "gamesystems/objects/objsystem.h"
-
+#include <gamesystems/gamesystems.h>
 
 
 
@@ -289,12 +289,41 @@ void D20StatusSystem::initItemConditions(objHndl objHnd)
 				auto item = objSystem->GetObject(objHndItem);
 				uint32_t itemInvLocation = item->GetInt32(obj_f_item_inv_location);
 				if (inventory.IsItemEffectingConditions(objHndItem, itemInvLocation)) {
-					inventory.sub_100FF500(dispatcher, objHndItem, itemInvLocation);
+					//inventory.sub_100FF500(dispatcher, objHndItem, itemInvLocation);
+					InitFromItemConditionFields(dispatcher, objHndItem, itemInvLocation);
 				}
 			}
 		}
 
 	}
+}
+
+void D20StatusSystem::InitFromItemConditionFields(Dispatcher * dispatcher, objHndl item, int invIdx){
+
+	auto itemObj = gameSystems->GetObj().GetObject(item);
+	auto &itemConds = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
+	auto itemArgs = itemObj->GetInt32Array(obj_f_item_pad_wielder_argument_array);
+	int condArgs[64];
+
+	auto argIdx = 0u;
+	for (auto i = 0u; i < itemConds.GetSize(); i++){
+		auto condId = itemConds[i];
+		auto condStruct = conds.GetById(condId);
+		if (!condStruct){
+			logger->warn("Item condition not found!");
+			continue;
+		}
+
+		for (auto j=0u; j<condStruct->numArgs; j++)	{
+			condArgs[j] = itemArgs[argIdx++];
+		}
+		condArgs[2] = invIdx;
+
+		conds.InitItemCondFromCondStructAndArgs(dispatcher, condStruct, condArgs);
+
+	}
+
+
 }
 
 void D20StatusSystem::D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher* dispatcher)

@@ -112,6 +112,7 @@ struct SpellPacketBody{
 	bool SavingThrow(objHndl target, D20SavingThrowFlag flags);
 	const char* GetName(); // get the spell name
 	bool IsVancian();
+	bool IsDivine();
 	void Debit(); // debit from the caster's memorized / daily casted spells
 	void MemorizedUseUp(SpellStoreData &spellData); // mark memorized spell as used up
 	void Reset();

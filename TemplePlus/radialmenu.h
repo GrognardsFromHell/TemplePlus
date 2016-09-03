@@ -2,6 +2,7 @@
 #pragma once
 
 #include "common.h"
+#include <map>
 
 /*
 	Data structures
@@ -106,6 +107,7 @@ struct RadialMenuEntryAction : RadialMenuEntry
 	RadialMenuEntryAction(int combatMesLine, D20ActionType d20aType, int data1,  uint32_t helpId);
 	RadialMenuEntryAction(int combatMesLine, D20ActionType d20aType, int data1, const char helpId[]);
 	RadialMenuEntryAction(int combatMesLine, int d20aType, int data1, const char helpId[]);
+	RadialMenuEntryAction(std::string & text, int d20aType, int data1, std::string & helpId);
 };
 
 struct RadialMenuEntryPythonAction : RadialMenuEntryAction
@@ -202,6 +204,8 @@ public:
 	RadialMenu* GetActiveRadialMenu() const;
 	int GetActiveMenuChildrenCount(int activeNodeIdx) const;
 	BOOL PythonActionCallback(const objHndl& handle, RadialMenuEntry* entry);
+
+	std::map<int, std::string> radMenuStrings;
 };
 
 extern RadialMenus radialMenus;

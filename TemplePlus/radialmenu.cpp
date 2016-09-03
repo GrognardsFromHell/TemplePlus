@@ -657,6 +657,21 @@ RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, int d20aType, in
 {
 }
 
+RadialMenuEntryAction::RadialMenuEntryAction(std::string & textArg, int d20aType, int data1, std::string & helpId) : RadialMenuEntry()
+{
+	type = RadialMenuEntryType::Action;
+	auto textId = ElfHash::Hash(textArg);
+	auto textCache = radialMenus.radMenuStrings.find(textId);
+	if (textCache == radialMenus.radMenuStrings.end()){
+		radialMenus.radMenuStrings[textId] = textArg;
+	}
+
+	this->text = (char*)radialMenus.radMenuStrings[textId].c_str();
+	this->helpId = ElfHash::Hash(helpId);
+	d20ActionType = static_cast<D20ActionType>(d20aType);
+	d20ActionData1 = data1;
+}
+
 RadialMenuEntryToggle::RadialMenuEntryToggle(int combatMesLine, void* ActualArg, const char HelpId[]): RadialMenuEntry()
 {
 	type = RadialMenuEntryType::Toggle;

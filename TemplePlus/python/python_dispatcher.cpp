@@ -97,7 +97,10 @@ PYBIND11_PLUGIN(tp_dispatcher){
 					condStr.Register();
 				}
 			})
-			;
+		.def("add_item_force_remove_callback", [](CondStructNew &condStr){
+				condStr.AddHook(dispTypeItemForceRemove, DK_NONE, temple::GetRef<int(__cdecl*)(DispatcherCallbackArgs)>(0x10104410));
+		})
+		;
 		
 		
 		
@@ -119,6 +122,10 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def("get_arg", &DispatcherCallbackArgs::GetCondArg)
 		.def("set_arg", &DispatcherCallbackArgs::SetCondArg)
 		.def_readwrite("evt_obj", &DispatcherCallbackArgs::dispIO)
+		.def("condition_remove", [](DispatcherCallbackArgs& args)
+		{
+			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+		})
 		;
 
 	#pragma region useful data types
@@ -242,6 +249,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 
 	py::class_<RadialMenuEntryAction>(m, "RadialMenuEntryAction", py::base<RadialMenuEntry>())
 		.def(py::init<int, int, int, const char[]>(), py::arg("combesMesLine"), py::arg("action_type"), py::arg("data1"), py::arg("helpTopic"))
+		.def(py::init<std::string&, int, int, std::string&>(), py::arg("radialText"), py::arg("action_type"), py::arg("data1"), py::arg("helpTopic"))
 	;
 	py::class_<RadialMenuEntryPythonAction>(m, "RadialMenuEntryPythonAction", py::base<RadialMenuEntryAction>())
 		.def(py::init<int, int, int, int, const char[]>(), py::arg("combatMesLine"), py::arg("action_type"), py::arg("action_id"), py::arg("data1"), py::arg("helpTopic"))
@@ -290,6 +298,16 @@ PYBIND11_PLUGIN(tp_dispatcher){
 			return spellSys.GetSpellLevelBySpellClass(spEntry.spellEnum, spellClass);
 		})
 		;
+
+		py::class_<SpellPacketBody>(m, "SpellPacket")
+			.def_readwrite("spell_enum", &SpellPacketBody::spellEnum)
+			.def_readwrite("inventory_idx", &SpellPacketBody::invIdx)
+			.def_readwrite("spell_entry", &SpellPacketBody::spellEntry)
+			.def_readwrite("spell_class", &SpellPacketBody::spellClass)
+			.def_readwrite("spell_id", &SpellPacketBody::spellId)
+			.def_readwrite("caster_level", &SpellPacketBody::casterLevel)
+			.def("is_divine_spell", &SpellPacketBody::IsDivine)
+			;
 	#pragma endregion 
 
 	
@@ -328,13 +346,19 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def(py::init())
 		.def_readwrite("return_val", &DispIoD20Signal::return_val)
 		.def_readwrite("data1", &DispIoD20Signal::data1)
-		.def_readwrite("data2", &DispIoD20Signal::data2);
+		.def_readwrite("data2", &DispIoD20Signal::data2)
+		;
 
 	py::class_<DispIoD20Query>(m, "EventObjD20Query", py::base<DispIO>())
 		.def(py::init())
 		.def_readwrite("return_val", &DispIoD20Query::return_val)
 		.def_readwrite("data1", &DispIoD20Query::data1)
-		.def_readwrite("data2", &DispIoD20Query::data2);
+		.def_readwrite("data2", &DispIoD20Query::data2)
+		.def("get_spell_packet", [](DispIoD20Query& evtObj)->SpellPacketBody& {
+			SpellPacketBody* spPkt = (SpellPacketBody*)evtObj.data1;
+			return *spPkt;
+		}, "Used for CasterLevelMod callbacks to get a spellpacket from the data1 field")
+		;
 
 	py::class_<DispIOTurnBasedStatus>(m, "EventObjTurnBasedStatus", py::base<DispIO>())
 		.def(py::init())

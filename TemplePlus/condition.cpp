@@ -1879,6 +1879,35 @@ void ConditionSystem::InitCondFromCondStructAndArgs(Dispatcher* dispatcher, Cond
 	}
 }
 
+void ConditionSystem::InitItemCondFromCondStructAndArgs(Dispatcher * dispatcher, CondStruct * condStruct, int * condargs){
+	CondNode **node;
+	SubDispNode *subDispNode;
+	CondNode *condNode;
+
+	auto *condNodeNew = new CondNode(condStruct);
+	node = &dispatcher->itemConds;
+	while (*node)
+	{
+		node = &(*node)->nextCondNode;
+	}
+	*node = condNodeNew;
+
+	for (auto i = 0u; i < condStruct->numArgs; i++) {
+		condNodeNew->args[i] = condargs[i];
+	}
+
+	conds.CondNodeAddToSubDispNodeArray(dispatcher, condNodeNew);
+	for (subDispNode = dispatcher->subDispNodes[dispTypeConditionAddFromD20StatusInit]; subDispNode; subDispNode = subDispNode->next)
+	{
+		if (subDispNode->subDispDef->dispKey == 0)
+		{
+			condNode = subDispNode->condNode;
+			if (!(condNode->flags & 1) && condNode == condNodeNew)
+				subDispNode->subDispDef->dispCallback(subDispNode, dispatcher->objHnd, dispTypeConditionAddFromD20StatusInit, 0, nullptr);
+		}
+	}
+}
+
 void ConditionSystem::RegisterNewConditions()
 {
 
@@ -4569,7 +4598,7 @@ int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
 		
 		auto sneakDmgDice = Dice(sneakAttackDice, 6, 0);
 		if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_DEADLY_PRECISION)) {
-			sneakDmgDice = Dice(sneakAttackDice, 5, 1);
+			sneakDmgDice = Dice(sneakAttackDice, 5, 1*sneakAttackDice);
 		}
 		dispIo->damage.AddDamageDice(sneakDmgDice.ToPacked(), DamageType::Unspecified, 106);
 		floatSys.FloatCombatLine(args.objHndCaller, 90); // Sneak Attack!

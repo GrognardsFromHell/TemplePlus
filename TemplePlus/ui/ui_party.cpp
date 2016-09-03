@@ -12,7 +12,7 @@ public:
 		static char* (__cdecl* orgBuffDebuffGetBaseText)(BuffDebuffPacket*, int, int) = 
 			replaceFunction<char*(__cdecl)(BuffDebuffPacket* , int , int )>(0x100F45A0, [](BuffDebuffPacket* bdb, int iconType, int iconIdx)->char*{
 			if (iconType == 0){ // buff
-				auto spEnum = bdb->buffs[bdb->buffCount - 1].spellEnum;
+				auto spEnum = bdb->buffs[iconIdx ].spellEnum;
 				if (spEnum == -2){
 					return "";
 				}
