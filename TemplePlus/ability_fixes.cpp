@@ -13,16 +13,31 @@
 class AbilityConditionFixes : public TempleFix {
 public:
 #define ABFIX(fname) static int fname ## (DispatcherCallbackArgs args);
-
+#define HOOK_ORG(fname) static int (__cdecl* org ##fname)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>
 	static int PoisonedOnBeginRound(DispatcherCallbackArgs args);;
 	
 
 	void apply() override {
 
 		replaceFunction(0x100EA040, PoisonedOnBeginRound);
+
+		// fixes animal companion runoff crash (it didn't null the second part of the obj handle stored in args[1,2]
 		static void (__cdecl*orgCompanionRunoff)(SubDispNode*, objHndl , objHndl ) = replaceFunction<void(__cdecl)(SubDispNode*, objHndl, objHndl)>(0x100FC3D0, [](SubDispNode* sdn, objHndl owner, objHndl handle){
 			orgCompanionRunoff(sdn, owner, handle);
 			conds.CondNodeSetArg(sdn->condNode, 2, 0);
+		});
+
+		// fixes Opportunist getting an AOO for your own attack...
+		HOOK_ORG(OpportuninstBroadcast)(0x100FADF0, [](DispatcherCallbackArgs args)->int
+		{
+			auto numAvail = args.GetCondArg(0);
+			if (numAvail){
+				GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+				auto d20a = (D20Actn*)dispIo->data1;
+				if (d20a->d20APerformer != args.objHndCaller)
+					return orgOpportuninstBroadcast(args);
+			}
+			return 0;
 		});
 	
 	}

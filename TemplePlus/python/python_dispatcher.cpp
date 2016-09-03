@@ -83,7 +83,9 @@ PYBIND11_PLUGIN(tp_dispatcher){
 			Expects(condStr.numHooks < 99);
 			condStr.subDispDefs[condStr.numHooks++] = { (enum_disp_type)dispType, (D20DispatcherKey)ElfHash::Hash(dispKey), PyModHookWrapper, (uint32_t)pycallback.ptr(), (uint32_t)pydataTuple.ptr() };
 		}, "Add callback hook")
-		.def("add_to_feat_dict", &CondStructNew::AddToFeatDictionary)
+		.def("add_to_feat_dict", [](CondStructNew &condStr, int feat_enum, int feat_max, int feat_offset) {
+			condStr.AddToFeatDictionary((feat_enums)feat_enum, (feat_enums)feat_max, feat_offset);
+		}, py::arg("feat_enum"), py::arg("feat_list_max") = -1, py::arg("feat_list_offset") = 0)
 		// .def_readwrite("num_args", &CondStructNew::numArgs) // this is probably something we don't want to expose due to how ToEE saves/loads args
 		.def_readwrite("name", &CondStructNew::condName)
 		.def("extend_existing", [](CondStructNew &condStr, std::string condName){
