@@ -12,7 +12,8 @@
 #include <combat.h>
 #include <action_sequence.h>
 #include <tig/tig_font.h>
-
+#include <party.h>
+#include <damage.h>
 
 struct TigTextStyle;
 
@@ -242,6 +243,10 @@ uint32_t __cdecl BardicInspiredCourageInitArgs(DispatcherCallbackArgs args)
 	auto courageBonus = 1;
 	if ( objects.IsCritter(args.objHndCaller) )
 	{
+		if (party.IsInParty(args.objHndCaller))
+		{
+			
+		}
 		courageBonus = GetCourageBonus(args.objHndCaller);
 	}
 	else
@@ -249,7 +254,7 @@ uint32_t __cdecl BardicInspiredCourageInitArgs(DispatcherCallbackArgs args)
 		logger->info("Bardic Inspired Courage dispatched from non-critter! Mon seigneur {}", 
 			description.getDisplayName(args.objHndCaller));
 	}
-	conds.CondNodeSetArg(args.subDispNode->condNode, 3, courageBonus);
+	//conds.CondNodeSetArg(args.subDispNode->condNode, 3, courageBonus);
 	return 0;
 };
 
@@ -257,9 +262,15 @@ uint32_t __cdecl BardicInspiredCourageInitArgs(DispatcherCallbackArgs args)
 class BardicInspireCourageFix : public TempleFix
 {
 public:
+
+	static int BardicInspiredCourageToHit(DispatcherCallbackArgs args);
+	static int BardicInspiredCourageDamBon(DispatcherCallbackArgs args);
 	void apply() override
 	{
 		replaceFunction(0x100EA5C0, BardicInspiredCourageInitArgs);
+		replaceFunction(0x100EA5F0, BardicInspiredCourageToHit);
+		replaceFunction(0x100EA630, BardicInspiredCourageDamBon);
+		
 	}
 } bardicInspireCourageFix;
 
@@ -487,3 +498,58 @@ static class SkillMeasureFix : public TempleFix {
 		redirectCall(0x101AB5AE, HookedMeasure);
 	};
 } skillMeasureFix;
+
+int BardicInspireCourageFix::BardicInspiredCourageToHit(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+	if (!args.GetCondArg(1))
+		return 0;
+	auto bonVal = 1;
+	if (party.IsInParty(args.objHndCaller)){
+		auto brdLvl = 0;
+		for (auto i=0; i<party.GroupListGetLen(); i++){
+			auto dude = party.GroupListGetMemberN(i);
+			if (!dude)
+				continue;
+			auto dudeBrdLvl = objects.StatLevelGet(dude, stat_level_bard);
+			if (dudeBrdLvl > brdLvl)
+				brdLvl = dudeBrdLvl;
+		}
+		if (brdLvl < 8) 
+			bonVal =1;
+		else if (brdLvl < 14) 
+			bonVal = 2;
+		else if (brdLvl < 20) 
+			bonVal = 3;
+	}
+	dispIo->bonlist.AddBonus(bonVal, 13, 191);
+	return 0;
+}
+
+int BardicInspireCourageFix::BardicInspiredCourageDamBon(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
+	
+	if (!args.GetCondArg(1))
+		return 0;
+
+	auto bonVal = 1;
+	if (party.IsInParty(args.objHndCaller)) {
+		auto brdLvl = 0;
+		for (auto i = 0; i<party.GroupListGetLen(); i++) {
+			auto dude = party.GroupListGetMemberN(i);
+			if (!dude)
+				continue;
+			auto dudeBrdLvl = objects.StatLevelGet(dude, stat_level_bard);
+			if (dudeBrdLvl > brdLvl)
+				brdLvl = dudeBrdLvl;
+		}
+		if (brdLvl < 8)
+			bonVal = 1;
+		else if (brdLvl < 14)
+			bonVal = 2;
+		else if (brdLvl < 20)
+			bonVal = 3;
+	}
+	dispIo->damage.AddDamageBonus(bonVal, 13, 191);
+	return 0;
+}
