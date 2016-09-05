@@ -706,12 +706,13 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 		if (featReqCode == featReqCodeMinCasterLevel)
 		{
 # pragma region Minimum Caster Level
+			auto casterLevel = critterSys.GetCasterLevel(objHnd);
 			for (uint8_t j = 0; j < numCasterClasses; j++)
 			{
 				
-				auto casterLevel = objects.StatLevelGet(objHnd, (Stat)casterClassCodes[j]);
-				if (classCodeBeingLevelledUp == casterClassCodes[j]){ casterLevel++; };
-				if (casterClassCodes[j] == stat_level_paladin || casterClassCodes[j] == stat_level_ranger){ casterLevel /= 2; };
+				if (classCodeBeingLevelledUp == casterClassCodes[j])
+					casterLevel++;
+
 				if ((uint32_t)casterLevel >= (uint32_t)featReqCodeArg){ var_2C = 1; };
 			};
 
@@ -791,8 +792,8 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 		else if (featReqCode == featReqCodeMinArcaneCasterLevel)
 		{
 # pragma region Min Arcane Caster Level
-			uint32_t sorcererLevel = objects.StatLevelGet(objHnd, stat_level_sorcerer);
-			uint32_t wizardLevel = objects.StatLevelGet(objHnd, stat_level_wizard);
+			uint32_t sorcererLevel = critterSys.GetCasterLevelForClass(objHnd, stat_level_sorcerer); //objects.StatLevelGet(objHnd, stat_level_sorcerer);
+			uint32_t wizardLevel = critterSys.GetCasterLevelForClass(objHnd, stat_level_wizard); //objects.StatLevelGet(objHnd, stat_level_wizard);
 			if (sorcererLevel + (classCodeBeingLevelledUp == stat_level_sorcerer) < (uint32_t) featReqCodeArg
 				&& wizardLevel + (classCodeBeingLevelledUp == stat_level_wizard) < (uint32_t) featReqCodeArg
 				){
