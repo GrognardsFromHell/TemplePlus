@@ -715,7 +715,7 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 	
 	// domain spell
 	else if ( objects.StatLevelGet(caster, stat_level_cleric) > 0){
-		spellPkt->casterLevel = objects.StatLevelGet(caster, stat_level_cleric);
+		spellPkt->casterLevel = critterSys.GetCasterLevelForClass(caster, stat_level_cleric);
 		logger->info("Critter {} is casting Domain spell {} at base caster_level {}.", casterName, spellName, spellPkt->casterLevel);
 	
 	// domain special (usually used for monsters)
