@@ -1886,6 +1886,31 @@ static PyObject* PyObjHandle_SetInt(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_SetInt64(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+	obj_f field;
+	int64_t value;
+	if (!PyArg_ParseTuple(args, "iL:objhndl.obj_set_int64", &field, &value)) {
+		return 0;
+	}
+	
+	auto objBody = gameSystems->GetObj().GetObject(self->handle);
+	if (objectFields.GetType(field) == ObjectFieldType::Int64)
+	{
+		objBody->SetInt64(field, value);
+	}
+	else
+	{
+		logger->warn("Wrong field type for set_int, {}", (int)(field));
+	}
+	
+	Py_RETURN_NONE;
+}
+
+
 static PyObject* PyObjHandle_SetIdxInt(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -1894,11 +1919,28 @@ static PyObject* PyObjHandle_SetIdxInt(PyObject* obj, PyObject* args) {
 	obj_f field;
 
 	int value, idx = 0;
-	if (!PyArg_ParseTuple(args, "iii:objhndl.obj_set_int", &field, &idx, &value)) {
+	if (!PyArg_ParseTuple(args, "iii:objhndl.obj_set_idx_int", &field, &idx, &value)) {
 		return 0;
 	}
 	objSystem->GetObject(self->handle)->SetInt32(field, idx, value);
 	
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_SetIdxInt64(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+	obj_f field;
+
+	int64_t value =0;
+	int idx = 0;
+	if (!PyArg_ParseTuple(args, "iiL:objhndl.obj_set_idx_int64", &field, &idx, &value)) {
+		return 0;
+	}
+	objSystem->GetObject(self->handle)->SetInt64(field, idx, value);
+
 	Py_RETURN_NONE;
 }
 
@@ -2550,6 +2592,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "obj_set_int", PyObjHandle_SetInt, METH_VARARGS, NULL },
 	{ "obj_set_obj", PyObjHandle_SetObj, METH_VARARGS, NULL },
 	{ "obj_set_idx_int", PyObjHandle_SetIdxInt, METH_VARARGS, NULL },
+	{ "obj_set_int64", PyObjHandle_SetInt64, METH_VARARGS, NULL },
+	{ "obj_set_idx_int64", PyObjHandle_SetIdxInt64, METH_VARARGS, NULL },
 	{ "object_flags_get", GetFlags<obj_f_flags>, METH_VARARGS, NULL },
 	{ "object_flag_set", PyObjHandle_ObjectFlagSet, METH_VARARGS, NULL },
 	{ "object_flag_unset", PyObjHandle_ObjectFlagUnset, METH_VARARGS, NULL },
@@ -2777,6 +2821,19 @@ static PyObject* PyObjHandle_GetSubstituteInventory(PyObject* obj, void*) {
 	return PyObjHndl_Create(handle);
 }
 
+static int PyObjHandle_SetSubstituteInventory(PyObject* obj, PyObject* value, void*) {
+	auto self = GetSelf(obj);
+
+	if (!self->handle)
+		return -1;
+
+	auto subsObj = GetSelf(value);
+	auto gameObj = objSystem->GetObject(self->handle);
+	gameObj->SetObjHndl(obj_f_npc_substitute_inventory, subsObj->handle);
+
+	return 0;
+}
+
 static PyObject* PyObjHandle_GetFeats(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
 	auto feats = objects.feats.GetFeats(self->handle);
@@ -2868,7 +2925,7 @@ PyGetSetDef PyObjHandleGetSets[] = {
 	{"off_y", PyObjHandle_GetOffsetY, NULL, NULL},
 	{"scripts", PyObjHandle_GetScripts, NULL, NULL},
 	{"origin", PyObjHandle_GetOriginMapId, PyObjHandle_SetOriginMapId, NULL},
-	{"substitute_inventory", PyObjHandle_GetSubstituteInventory, NULL, NULL},
+	{"substitute_inventory", PyObjHandle_GetSubstituteInventory, PyObjHandle_SetSubstituteInventory, NULL},
 	{"factions", PyObjHandle_GetFactions, NULL, NULL },
 	{"feats", PyObjHandle_GetFeats, NULL, NULL},
 	{"loots", PyObjHandle_GetLoots, PyObjHandle_SetLoots, NULL},

@@ -100,7 +100,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 				}
 			})
 		.def("add_item_force_remove_callback", [](CondStructNew &condStr){
-				condStr.AddHook(dispTypeItemForceRemove, DK_NONE, temple::GetRef<int(__cdecl*)(DispatcherCallbackArgs)>(0x10104410));
+				condStr.AddHook(dispTypeItemForceRemove, DK_NONE, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x10104410));
 		})
 		;
 		
