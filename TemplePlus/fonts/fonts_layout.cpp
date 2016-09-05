@@ -271,7 +271,7 @@ void TextLayouter::DrawBackgroundOrOutline(const TigRect& rect, const TigTextSty
 
 }
 
-int TextLayouter::GetGlyphIdx(char ch, const char* text) const {
+int TextLayouter::GetGlyphIdx(char ch, const char* text) {
 
 	// First character found in the FNT files
 	constexpr auto FirstFontChar = '!';
@@ -281,11 +281,43 @@ int TextLayouter::GetGlyphIdx(char ch, const char* text) const {
 
 	auto glyphIdx = ch - FirstFontChar;
 
+	auto chUns = (unsigned char)ch;
+	if (chUns <= (unsigned char)'~')
+		return glyphIdx;
+
 	if (tig_font_is_english) {
-		
-		if ( (unsigned char)ch >= FirstNonEnglish){
-			glyphIdx = (unsigned char)ch - ( (unsigned char)FirstNonEnglish - FirstNonEnglishIdx);
+
+		if (chUns >= FirstNonEnglish) {
+			glyphIdx = chUns - ((unsigned char)FirstNonEnglish - FirstNonEnglishIdx);
 		}
+		else
+		{
+			switch(chUns)
+			{
+			case 0x82:
+				return GetGlyphIdx(',', text);
+			case 0x83:
+				return GetGlyphIdx('f', text);
+			case 0x84:
+				return GetGlyphIdx(',', text);
+			case 0x85: // elipsis
+				return GetGlyphIdx(';', text);
+			case 0x91:
+			case 0x92:
+				return GetGlyphIdx('\'', text);
+			case 0x93:
+			case 0x94:
+				return GetGlyphIdx('"', text);
+			case 0x95:
+				return GetGlyphIdx('·', text);
+			case 0x96:
+			case 0x97:
+				return GetGlyphIdx('-', text);
+			default:
+				return GetGlyphIdx(' ', text); // speak english or die!!!
+			}
+		}
+
 		if ((glyphIdx < -1 || ch > '~') && ch != '\n') {
 			logger->warn("Tried to display character {} in text '{}'", glyphIdx, text);
 			glyphIdx = -1;

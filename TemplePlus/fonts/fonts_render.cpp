@@ -15,6 +15,7 @@ using namespace gfx;
 
 // First character found in the FNT files
 constexpr auto FirstFontChar = '!';
+const unsigned char FirstNonEnglishIdx = 92;
 
 #pragma pack(push, 1)
 struct GlyphVertex2d {
@@ -145,7 +146,7 @@ void FontRenderer::RenderRun(cstring_span<> text,
 			continue;
 		}
 
-		auto glyphIdx = *it - FirstFontChar;
+		auto glyphIdx = TextLayouter::GetGlyphIdx(*it, nullptr); //*it - FirstFontChar;
 		
 		if ((unsigned char)*it == 0x20) {
 			glyphIdx = '-' - '!';

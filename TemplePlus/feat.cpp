@@ -905,7 +905,10 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 		else if (featReqCode == 266)
 		{
 #pragma region BAB Requirement
-			if ((int) templeFuncs.ObjGetBABAfterLevelling(objHnd, classCodeBeingLevelledUp) < featReqCodeArg){ return 0; }
+			auto babAfterLvl = critterSys.GetBaseAttackBonus(objHnd, classCodeBeingLevelledUp);
+			if (babAfterLvl < featReqCodeArg)
+				return 0;
+			// if ((int) templeFuncs.ObjGetBABAfterLevelling(objHnd, classCodeBeingLevelledUp) < featReqCodeArg){ return 0; }
 #pragma endregion 
 		} 
 		else if (featReqCode >= stat_strength && featReqCode <= stat_charisma)

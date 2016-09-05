@@ -46,6 +46,7 @@ Separates a block of text given flags into words split up
 on lines and renders them.
 */
 class TextLayouter {
+	friend class FontRenderer;
 public:
 	TextLayouter(gfx::RenderingDevice& device, gfx::ShapeRenderer2d& shapeRenderer);
 	~TextLayouter();
@@ -56,7 +57,7 @@ public:
 
 private:
 	void DrawBackgroundOrOutline(const TigRect& rect, const TigTextStyle& style);
-	int GetGlyphIdx(char ch, const char *text) const;
+	static int GetGlyphIdx(char ch, const char *text);
 	ScanWordResult ScanWord(const char* text,
 		int firstIdx,
 		int textLength,
