@@ -314,7 +314,7 @@ int TextLayouter::GetGlyphIdx(char ch, const char* text) {
 			case 0x97:
 				return GetGlyphIdx('-', text);
 			default:
-				return GetGlyphIdx(' ', text); // speak english or die!!!
+				return GetGlyphIdx('-', text); // speak english or die!!!
 			}
 		}
 

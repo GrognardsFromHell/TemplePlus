@@ -216,6 +216,10 @@ struct GameObjectBody {
 	void SetLocation(locXY location);
 
 	Dispatcher* GetDispatcher() const {
+		//if (type == obj_t_portal){
+		//	//return nullptr; //should be nullptr anyway
+		//	int dummy = 1;
+		//}
 		uint32_t dispatcher = GetInt32(obj_f_dispatcher);
 		if (dispatcher == -1 || dispatcher == 0) {
 			return nullptr;
