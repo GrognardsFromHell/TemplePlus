@@ -153,6 +153,8 @@ public:
 	
 	static int __cdecl D20ModCountdownHandler(DispatcherCallbackArgs args);
 
+	static int __cdecl MonsterRegenerationOnDamage(DispatcherCallbackArgs args);
+
 } genericCallbacks;
 
 
@@ -359,6 +361,8 @@ public:
 
 		// D20Mods countdown handler
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100EC9B0, genericCallbacks.D20ModCountdownHandler);
+
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100F72E0, genericCallbacks.MonsterRegenerationOnDamage);
 	}
 } condFuncReplacement;
 
@@ -1110,6 +1114,40 @@ int GenericCallbacks::D20ModCountdownHandler(DispatcherCallbackArgs args){
 		auto d20modCountdownEndHandler = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100E98B0);
 		d20modCountdownEndHandler(args);
 	}
+	return 0;
+}
+
+int GenericCallbacks::MonsterRegenerationOnDamage(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
+	auto arg0 = args.GetCondArg(0);
+	auto arg1 = args.GetCondArg(1);
+
+	if (arg0 == 0 && arg1 == 0)
+	{
+		arg0 = (int)DamageType::Fire;
+		arg1 = (int)DamageType::Acid;
+		args.SetCondArg(0, arg0);
+		args.SetCondArg(1, arg1);
+	}
+
+	if (arg0 < 0)
+	{
+		if ((arg0 & 0x7fffFFFF) == dispIo->damage.attackPowerType)
+			return 0;
+		arg0 = arg1;
+	}
+
+	auto replacedDice = false;
+	for (auto i = 0u; i < dispIo->damage.diceCount; i++) {
+		if (dispIo->damage.dice[i].type != (DamageType)arg0 
+			&& dispIo->damage.dice[i].type != (DamageType)arg1)
+		{
+			replacedDice = true;
+			dispIo->damage.dice[i].type = DamageType::Subdual;
+		}
+	}
+	if (replacedDice)
+		dispIo->damage.bonuses.ZeroBonusSetMeslineNum(322);
 	return 0;
 }
 

@@ -550,11 +550,11 @@ int __cdecl PcCreationFeatUiPrereqCheck(feat_enums feat)
 			return 1;
 	}
 	if (feat <= FEAT_NONE || feat > FEAT_MONK_PERFECT_SELF)
-		return feats.FeatPrereqsCheck(*feats.charEditorObjHnd, feat, featArray, featArrayLen, addresses.charEdSelPkt->classCode, addresses.charEdSelPkt->statBeingRaised);
+		return feats.FeatPrereqsCheck(*feats.charEditorObjHnd, feat, featArray, featArrayLen, (Stat)0, addresses.charEdSelPkt->statBeingRaised);
 
 	// the vanilla multiselect range
 
-	return feats.FeatPrereqsCheck(*feats.charEditorObjHnd, feat, featArray, featArrayLen, addresses.charEdSelPkt->classCode, addresses.charEdSelPkt->statBeingRaised);
+	return feats.FeatPrereqsCheck(*feats.charEditorObjHnd, feat, featArray, featArrayLen, (Stat)0, addresses.charEdSelPkt->statBeingRaised);
 }
 
 
