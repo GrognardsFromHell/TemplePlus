@@ -549,6 +549,15 @@ int __cdecl PcCreationFeatUiPrereqCheck(feat_enums feat)
 			&& addresses.charEdSelPkt->classCode == stat_level_monk)
 			return 1;
 	}
+
+	if (feat == FEAT_WEAPON_FINESSE){
+		if (addresses.charEdSelPkt->feat0 == FEAT_WEAPON_FINESSE_DAGGER
+			|| addresses.charEdSelPkt->feat1 == FEAT_WEAPON_FINESSE_DAGGER
+			|| addresses.charEdSelPkt->feat2 == FEAT_WEAPON_FINESSE_DAGGER
+			)
+			return 0;
+	}
+
 	if (feat <= FEAT_NONE || feat > FEAT_MONK_PERFECT_SELF)
 		return feats.FeatPrereqsCheck(*feats.charEditorObjHnd, feat, featArray, featArrayLen, (Stat)0, addresses.charEdSelPkt->statBeingRaised);
 
