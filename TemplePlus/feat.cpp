@@ -309,7 +309,8 @@ char* LegacyFeatSystem::GetFeatPrereqDescription(feat_enums feat)
 	if (feat >= FEAT_NONE
 		|| feat == FEAT_IMPROVED_DISARM
 		|| feat == FEAT_GREATER_WEAPON_SPECIALIZATION
-		|| feat == FEAT_IMPROVED_SUNDER)
+		|| feat == FEAT_IMPROVED_SUNDER
+		|| feat == FEAT_STUNNING_FIST)
 		mesHnd = &feats.featMesNew;
 
 	mesLineNone.key = 9998;

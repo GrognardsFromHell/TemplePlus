@@ -1514,7 +1514,7 @@ BOOL UiCharEditor::ClassNextBtnMsg(int widId, TigMsg * msg){
 	}
 
 	if (_msg->widgetEventType == TigMsgWidgetEvent::Entered) {
-		auto textboxText = fmt::format("Prestige Classes\n\n Currently supported:\n  Dwarven Defender\n  Duelist\n  Eldritch Knight\n  Mystic Theurge");
+		auto textboxText = fmt::format("Prestige Classes\n\n Currently supported:\n  Arcane Trickster\n  Dwarven Defender\n  Duelist\n  Eldritch Knight\n  Mystic Theurge");
 		if (textboxText.size() >= 1024)
 			textboxText[1023] = 0;
 		strcpy(temple::GetRef<char[1024]>(0x10C80CC0), &textboxText[0]);

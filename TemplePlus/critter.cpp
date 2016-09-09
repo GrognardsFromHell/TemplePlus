@@ -1275,7 +1275,34 @@ int LegacyCritterSystem::PlayCritterVoiceLine(objHndl obj, objHndl fellow, char*
 
 bool LegacyCritterSystem::HashMatchingClassForSpell(objHndl handle, uint32_t spellEnum) const
 {
-	return temple::GetRef<BOOL(__cdecl)(objHndl, uint32_t)>(0x10075DA0)(handle, spellEnum) == TRUE;
+	//return temple::GetRef<BOOL(__cdecl)(objHndl, uint32_t)>(0x10075DA0)(handle, spellEnum) == TRUE;
+	SpellEntry spEntry(spellEnum);
+	for (auto i=0u; i<spEntry.spellLvlsNum; i++){
+		auto &lvlSpec = spEntry.spellLvls[i];
+		
+		// domain spell
+		if (spellSys.isDomainSpell(lvlSpec.classCode)){
+			
+			auto obj = objSystem->GetObject(handle);
+			
+			// if is Cleric or NPC and the spell spec is Domain Special
+			if (objects.StatLevelGet(handle, stat_level_cleric) > 0 
+				|| (obj->IsNPC() && lvlSpec.classCode == Domain_Special)){
+
+				if (objects.StatLevelGet(handle, stat_domain_1) == lvlSpec.classCode
+					|| objects.StatLevelGet(handle, stat_domain_2) == lvlSpec.classCode)
+					return true;
+				}
+			
+		} 
+		// normal spell
+		else{
+			if (objects.StatLevelGet(handle, spellSys.GetCastingClass(lvlSpec.classCode)) > 0)
+				return true;
+		}
+	}
+
+	return false;
 }
 
 int LegacyCritterSystem::GetArmorClass(objHndl obj, DispIoAttackBonus* dispIo){
@@ -1316,6 +1343,13 @@ int LegacyCritterSystem::DomainSpellNumByField(objHndl obj, obj_f field)
 			numSpells++;
 	}
 	return numSpells;
+}
+
+bool LegacyCritterSystem::HasDomain(objHndl handle, uint32_t domainType){
+	if (objects.StatLevelGet(handle, stat_domain_1) == domainType
+		|| objects.StatLevelGet(handle, stat_domain_2) == domainType)
+		return true;
+	return false;
 }
 
 int LegacyCritterSystem::GetNumFollowers(objHndl obj, int excludeForcedFollowers)

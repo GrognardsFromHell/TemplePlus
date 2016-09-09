@@ -331,8 +331,9 @@ struct LegacyCritterSystem : temple::AddressTable
 	int GetSpellListLevelExtension(objHndl handle, Stat classCode); // modifies the effective character level for the purpose of fetching spell lists
 	bool IsCaster(objHndl obj);
 	static int SpellNumByFieldAndClass(objHndl obj, obj_f field, uint32_t spellClassCode);
-	bool HashMatchingClassForSpell(objHndl handle, uint32_t spellEnum) const; // checks if obj has a matching spell in their list
+	bool HashMatchingClassForSpell(objHndl handle, uint32_t spellEnum) const; // checks if obj has a matching spell in their list (does not regard level)
 	int DomainSpellNumByField(objHndl obj, obj_f field);
+	bool HasDomain(objHndl handle, uint32_t domainType);
 #pragma endregion 
 
 	bool IsWarded(objHndl obj); // checks if creature is warded from melee attacks (by stuff like Meld Into Stone, Tree Shape, Otiluke's Resislient Sphere)

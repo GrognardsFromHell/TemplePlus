@@ -201,6 +201,7 @@
 // prerequisites descriptions
 {10137} Greater Weapon Specialization {Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
 {10211} Improved Disarm {Int 13, Combat Expertise.}
+{10339} Stunning Fist {Dex 13, Wis 13, Improved Unarmed Strike, base attack bonus +8.}
 {10340} Improved Sunder {Str 13, Power Attack.}
 {10658} Diamond Body {}
 {10659} Abundant Step {}

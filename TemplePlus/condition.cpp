@@ -164,6 +164,8 @@ public:
 	static int __cdecl SkillBonus(DispatcherCallbackArgs args);
 
 	static int __cdecl UseableItemRadialEntry(DispatcherCallbackArgs args);
+	static int __cdecl UseableItemActionCheck(DispatcherCallbackArgs args);
+
 	static int __cdecl BucklerToHitPenalty(DispatcherCallbackArgs args);
 	static int __cdecl WeaponMerciful(DispatcherCallbackArgs);
 	static int __cdecl WeaponSeekingAttackerConcealmentMissChance(DispatcherCallbackArgs args);
@@ -324,6 +326,8 @@ public:
 		// power attack damage bonus
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F8540, genericCallbacks.PowerAttackDamageBonus);
 
+		// Use Item ActionCheck & Radial
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10100B60, itemCallbacks.UseableItemActionCheck);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10100840, itemCallbacks.UseableItemRadialEntry);
 		
 		// couraged aura
@@ -334,6 +338,7 @@ public:
 
 		// buckler to-hit penalty
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10104DA0, itemCallbacks.BucklerToHitPenalty);
+
 
 
 		// Druid wild shape
@@ -3450,9 +3455,28 @@ int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args){
 
 	auto spData = itemObj->GetSpell(obj_f_item_spell_idx, spIdx);
 
-	if ( (objType == obj_t_scroll || (itemFlags & OIF_NEEDS_SPELL) && (itemObj->type == obj_t_generic || itemObj->type == obj_t_weapon) )
-		&& !useMagicDeviceSkillBase && !critterSys.HashMatchingClassForSpell(args.objHndCaller, spData.spellEnum))
-		return 0;
+	auto handle = args.objHndCaller;
+	auto obj = objSystem->GetObject(handle);
+
+
+
+	if ( objType == obj_t_scroll || (itemFlags & OIF_NEEDS_SPELL) && (itemObj->type == obj_t_generic || itemObj->type == obj_t_weapon) ){
+		auto isOk = false;
+
+		if (useMagicDeviceSkillBase || critterSys.HashMatchingClassForSpell(args.objHndCaller, spData.spellEnum))
+			isOk = true;
+
+		// clerics with magic domain
+		else if (spellSys.IsArcaneSpellClass(spData.classCode)) {
+			auto clrLvl = objects.StatLevelGet(handle, stat_level_cleric);
+			if (clrLvl > 0 && max(1, clrLvl / 2) >= (int)spData.spellLevel && critterSys.HasDomain(handle, Domain_Magic))
+				isOk = true;
+		}
+
+		if (!isOk)
+			return 0;
+		
+	}
 
 	if (objType == obj_t_scroll && !spellSys.CheckAbilityScoreReqForSpell(args.objHndCaller, spData.spellEnum, -1) && !useMagicDeviceSkillBase)
 		return 0;
@@ -3499,6 +3523,72 @@ int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args){
 		radEntry.d20ActionType = D20A_COPY_SCROLL;
 		radEntry.d20ActionData1 = inventory.GetInventoryLocation(itemHandle);
 		radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::CopyScroll);
+	}
+
+	return 0;
+}
+
+int ItemCallbacks::UseableItemActionCheck(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIOTypeD20ActionTurnBased, DispIoD20ActionTurnBased);
+
+	auto invIdx = args.GetCondArg(2);
+
+	// check if this is the referenced item
+	if (dispIo->d20a->data1 != invIdx)
+		return 0;
+
+
+	auto itemHandle = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+	auto itemObj = gameSystems->GetObj().GetObject(itemHandle);
+	auto objType = itemObj->type;
+	int useMagicDeviceSkillBase = critterSys.SkillBaseGet(args.objHndCaller, skill_use_magic_device);
+
+	// ensure is identified
+	if (objType != obj_t_food && !inventory.IsIdentified(itemHandle)){
+		dispIo->returnVal = AEC_INVALID_ACTION;
+		return IEC_Cannot_Wield_Magical;
+	}
+		
+	// check item charges
+	auto charges = itemObj->GetInt32(obj_f_item_spell_charges_idx);
+	if (charges == 0){
+		dispIo->returnVal = AEC_OUT_OF_CHARGES;
+		return IEC_Cannot_Wield_Magical;
+	}
+	
+
+	// check if caster needs and has spell/class
+	auto itemFlags = itemObj->GetItemFlags();
+
+	auto spIdx = args.GetCondArg(0);
+	auto spData = itemObj->GetSpell(obj_f_item_spell_idx, spIdx);
+
+	auto handle = args.objHndCaller;
+	auto obj = objSystem->GetObject(handle);
+
+	if (objType == obj_t_scroll || (itemFlags & OIF_NEEDS_SPELL) && (itemObj->type == obj_t_generic || itemObj->type == obj_t_weapon)) {
+		auto isOk = false;
+		
+
+		if (useMagicDeviceSkillBase || critterSys.HashMatchingClassForSpell(args.objHndCaller, spData.spellEnum))
+			isOk = true;
+
+		// clerics with magic domain
+		else if (spellSys.IsArcaneSpellClass(spData.classCode)) {  
+			auto clrLvl = objects.StatLevelGet(handle, stat_level_cleric);
+			if (clrLvl > 0 && max(1, clrLvl / 2) >= (int)spData.spellLevel && critterSys.HasDomain(handle, Domain_Magic))
+				isOk = true;
+		}
+
+		if (!isOk){
+			dispIo->returnVal = AEC_INVALID_ACTION;
+			return IEC_Cannot_Wield_Magical;
+		}
+	}
+
+	if (objType == obj_t_scroll && !spellSys.CheckAbilityScoreReqForSpell(args.objHndCaller, spData.spellEnum, -1) && !useMagicDeviceSkillBase){
+		dispIo->returnVal = AEC_INVALID_ACTION;
+		return IEC_Cannot_Wield_Magical;
 	}
 
 	return 0;

@@ -2046,6 +2046,8 @@ ActionErrorCode D20ActionCallbacks::PerformCastItemSpell(D20Actn* d20a){
 	if (d20a->d20ActType == D20A_ACTIVATE_DEVICE_SPELL || !(item))
 		return AEC_OK;
 
+	auto caster = d20a->d20APerformer;
+
 	auto useMagicDeviceBase = critterSys.SkillBaseGet(d20a->d20APerformer, SkillEnum::skill_use_magic_device);
 	int resultDeltaFromDc;
 	if (!inventory.IsIdentified(item) && itemObj->type != obj_t_food){ // blind use of magic item
@@ -2063,31 +2065,48 @@ ActionErrorCode D20ActionCallbacks::PerformCastItemSpell(D20Actn* d20a){
 	}
 
 
-	
-	if ( (itemObj->type == obj_t_scroll || (itemFlags & OIF_NEEDS_SPELL ) && (itemObj->type == obj_t_generic || itemObj->type == obj_t_weapon))
-		  && !critterSys.HashMatchingClassForSpell(d20a->d20APerformer, spellEnum) ){
-		if (!useMagicDeviceBase)
-			return AEC_CANNOT_CAST_SPELLS;
-		
-		if (itemObj->type == obj_t_scroll){
-			
-			auto umdRoll = skillSys.SkillRoll(d20a->d20APerformer, SkillEnum::skill_use_magic_device, 20, &resultDeltaFromDc, 1);
-			if (!umdRoll){
-				skillSys.FloatError(d20a->d20APerformer, 7); // Use Scroll Failed
-				if (*actSeqSys.actSeqCur){
-					(*actSeqSys.actSeqCur)->spellPktBody.Reset();
+	// check if item requires knowing the spell
+	if  (itemObj->type == obj_t_scroll || (itemFlags & OIF_NEEDS_SPELL ) && (itemObj->type == obj_t_generic || itemObj->type == obj_t_weapon)){
+
+		auto isOk = false;
+
+		if (critterSys.HashMatchingClassForSpell(d20a->d20APerformer, spellEnum)){
+			isOk = true;
+		}
+		else if (spellSys.IsArcaneSpellClass(spellClass) ){
+			auto clrLvl = objects.StatLevelGet(caster, stat_level_cleric);
+			if (clrLvl > 0 && critterSys.HasDomain(caster, Domain_Magic)
+				&& spellLvl <= max(1,clrLvl/2) )
+				isOk = true;
+		}
+
+		if (!isOk){
+
+			// do Use Magic Device roll
+			if (!useMagicDeviceBase)
+				return AEC_CANNOT_CAST_SPELLS;
+
+			if (itemObj->type == obj_t_scroll) {
+
+				auto umdRoll = skillSys.SkillRoll(d20a->d20APerformer, SkillEnum::skill_use_magic_device, 20, &resultDeltaFromDc, 1);
+				if (!umdRoll) {
+					skillSys.FloatError(d20a->d20APerformer, 7); // Use Scroll Failed
+					if (*actSeqSys.actSeqCur) {
+						(*actSeqSys.actSeqCur)->spellPktBody.Reset();
+					}
+					return AEC_CANNOT_CAST_SPELLS;
 				}
-				return AEC_CANNOT_CAST_SPELLS;
 			}
-		} 
-		else{
-			auto umdRoll = skillSys.SkillRoll(d20a->d20APerformer, SkillEnum::skill_use_magic_device, 20, &resultDeltaFromDc, 1);
-			if (!umdRoll) {
-				skillSys.FloatError(d20a->d20APerformer, 8); // Use Wand Failed
-				return AEC_CANNOT_CAST_SPELLS;
+			else {
+				auto umdRoll = skillSys.SkillRoll(d20a->d20APerformer, SkillEnum::skill_use_magic_device, 20, &resultDeltaFromDc, 1);
+				if (!umdRoll) {
+					skillSys.FloatError(d20a->d20APerformer, 8); // Use Wand Failed
+					return AEC_CANNOT_CAST_SPELLS;
+				}
 			}
 		}
 	}
+		
 
 	if (itemObj->type == obj_t_scroll){
 		if (!spellSys.CheckAbilityScoreReqForSpell(d20a->d20APerformer, spellEnum, -1))	{
