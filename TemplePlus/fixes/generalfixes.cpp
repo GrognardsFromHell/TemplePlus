@@ -123,15 +123,22 @@ public:
 		writeHex(0x100D4259, "90 90 90 90  90 90");
 		
 
-		// caravan_encounter_fix.txt // looks like it has been updated since then too! 13D6 instead of 13D5
-		writeHex(0x1006ED1E, "04");
+		
 
-		writeHex(0x1006FE1B + 1, "D6 13");
-		writeHex(0x1007173C + 1, "D6 13");
-		writeHex(0x1012BDF2 + 1, "D6 13");
-		writeHex(0x1012C1EC + 1, "D6 13");
-		writeHex(0x1012C361 + 1, "D6 13");
+		
+		if (temple::Dll::GetInstance().HasCo8Hooks())
+		{
+			// caravan_encounter_fix.txt // looks like it has been updated since then too! 13D6 instead of 13D5
+			writeHex(0x1006ED1E, "04");
+			// expanded RE map range to 5078
+			writeHex(0x1006FE1B + 1, "D6 13");
+			writeHex(0x1007173C + 1, "D6 13");
+			writeHex(0x1012BDF2 + 1, "D6 13");
+			writeHex(0x1012C1EC + 1, "D6 13");
+			writeHex(0x1012C361 + 1, "D6 13");
 
+		}
+		
 
 		// D20STDF_fix.txt
 

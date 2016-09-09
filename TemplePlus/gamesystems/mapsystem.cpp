@@ -102,7 +102,7 @@ void MapSystem::LoadModule() {
 		alwaysFog = true;
 	}
 	else if (!_stricmp(tolower(config.fogOfWar).c_str(), "unfogged")) {
-		alwaysUnfog = true;;
+		alwaysUnfog = true;
 	}
 	
 
@@ -521,7 +521,11 @@ int MapSystem::GetMapIdByType(MapType type)
 
 bool MapSystem::IsRandomEncounterMap(int mapId) const
 {
-	return mapId >= 5070 && mapId <= 5078;
+	auto maxRange = 5077;
+	if (temple::Dll::GetInstance().HasCo8Hooks())
+		maxRange = 5078;
+
+	return mapId >= 5070 && mapId <= maxRange;
 }
 
 bool MapSystem::IsVignetteMap(int mapId) const
