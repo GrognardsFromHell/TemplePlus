@@ -123,6 +123,23 @@ public:
 			writeHex(0x1011DD4D, "90 90 90 90 90"); // disabling stat text draw calls
 		}
 
+		if (config.showNpcStats){
+			writeNoops(0x101C2247); // str output btn
+			writeNoops(0x101C2529); // dex output btn
+			writeNoops(0x101C2809); // con output btn
+			writeNoops(0x101C2AE9); // int output btn
+			writeNoops(0x101C2DC9); // wis output btn
+			writeNoops(0x101C30A9); // cha output btn
+
+			writeNoops(0x101C4D5A); // str mod btn
+			writeNoops(0x101C4F4A); // dex mod btn
+			writeNoops(0x101C513A); // con mod btn
+			writeNoops(0x101C532A); // int mod btn
+			writeNoops(0x101C551A); // wis mod btn
+			writeNoops(0x101C570A); // cha mod btn
+			
+		}
+
 		int charSheetAttackCodeForAttackBonusDisplay = 1 + ATTACK_CODE_OFFHAND;
 		write(0x101C45F3 + 7, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
 		write(0x101C8C7B + 4, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
