@@ -92,7 +92,7 @@ struct GameSystemInitTable : temple::AddressTable {
 	// Indicates that the game was not installed partially and the CD is not needed for dat files
 	bool *fullInstall;
 
-	// This is set to true if the language is "en". Purpose is yet unknown other than it being read by tig_font
+	// This is set to true if the language is "en". It will cause characters above 0x80 to be substituted with spaces in the english version.
 	bool *fontIsEnglish;
 
 	// Global copy of the game system config, mostly read by game systems themselves

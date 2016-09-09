@@ -151,16 +151,13 @@ void FontRenderer::RenderRun(cstring_span<> text,
 		if ((unsigned char)*it == 0x20) {
 			glyphIdx = '-' - '!';
 		}
-		else if ( (unsigned char) *it >= 0xa0){
-			glyphIdx = ( (unsigned char)*it - 0xa0) + 92;
-		}
 		
 
 		if (glyphIdx > font.glyphCount) {
 			return; // Trying to render invalid character
 		}
 
-		if ( ch > 0 && ch< 128 && isspace(ch)) {
+		if ( ch >= 0 && ch< 128 && isspace(ch)) {
 			x += style.tracking;
 			continue;
 		}

@@ -10,6 +10,7 @@
 
 #include "fonts.h"
 #include "fonts_mapping.h"
+#include <gamesystems/legacy.h>
 
 using namespace gfx;
 
@@ -277,11 +278,13 @@ int TextLayouter::GetGlyphIdx(char ch, const char* text) {
 	constexpr auto FirstFontChar = '!';
 	const unsigned char FirstNonEnglish = 0xa0;
 	const unsigned char FirstNonEnglishIdx = 92;
-	static bool tig_font_is_english = true; // TODO
-
-	auto glyphIdx = ch - FirstFontChar;
+	auto tig_font_is_english = *gameSystemInitTable.fontIsEnglish; // TODO
 
 	auto chUns = (unsigned char)ch;
+
+	auto glyphIdx = chUns - FirstFontChar;
+
+	
 	if (chUns <= (unsigned char)'~')
 		return glyphIdx;
 
@@ -558,7 +561,7 @@ void TextLayouter::LayoutAndDrawVanilla(gsl::cstring_span<> text, const TigFont 
 			}
 
 			startOfWord = lastIdx;
-			if (startOfWord < textLength && isspace(text[startOfWord])) {
+			if (startOfWord < textLength &&  text[startOfWord] >= 0 &&  isspace(text[startOfWord])) {
 				wordWidth += style.tracking;
 			}
 
