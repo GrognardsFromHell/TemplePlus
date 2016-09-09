@@ -1839,7 +1839,7 @@ static PyObject* PyObjHandle_IsCategorySubtype(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "i:objhndl.is_category_subtype", &type)) {
 		return 0;
 	}
-	auto result = critterSys.IsCategorySubtype(self->handle, (MonsterCategory)type);
+	auto result = critterSys.IsCategorySubtype(self->handle, (MonsterSubcategoryFlag)type);
 	return PyInt_FromLong(result);
 }
 
@@ -2191,7 +2191,7 @@ static PyObject* PyObjHandle_GetWieldType(PyObject* obj, PyObject* args) {
 		}
 	}
 
-	result = inventory.GetWieldType(self->handle, weapon, regardEnlargement);
+	result = inventory.GetWieldType(self->handle, weapon, regardEnlargement != 0);
 
 	return PyInt_FromLong(result); 
 }

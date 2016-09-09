@@ -482,7 +482,7 @@ int LegacyCritterSystem::GetPortraitId(objHndl leader) {
 }
 
 bool LegacyCritterSystem::CanSense(objHndl critter, objHndl tgt){
-	return temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x1007FFF0)(critter, tgt);
+	return (bool)temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x1007FFF0)(critter, tgt);
 }
 
 int LegacyCritterSystem::GetLevel(objHndl critter) {
@@ -977,10 +977,10 @@ uint32_t LegacyCritterSystem::IsCategoryType(objHndl objHnd, MonsterCategory cat
 	return 0;
 }
 
-uint32_t LegacyCritterSystem::IsCategorySubtype(objHndl objHnd, MonsterCategory categoryType){
+uint32_t LegacyCritterSystem::IsCategorySubtype(objHndl objHnd, MonsterSubcategoryFlag categoryType){
 	if (objHnd && objects.IsCritter(objHnd)) {
 		auto monCat = objects.getInt64(objHnd, obj_f_critter_monster_category);
-		MonsterCategory moncatSubtype = static_cast<MonsterCategory>(monCat >> 32);
+		auto moncatSubtype = static_cast<MonsterSubcategoryFlag>(monCat >> 32);
 		return (moncatSubtype & categoryType) == categoryType;
 	}
 	return 0;
@@ -1134,7 +1134,8 @@ int LegacyCritterSystem::GetBaseAttackBonus(const objHndl& handle, Stat classBei
 	auto obj = gameSystems->GetObj().GetObject(handle);
 	if (obj->type == obj_t_npc){
 		auto npcHd = obj->GetInt32(obj_f_npc_hitdice_idx, 0);
-		switch (static_cast<MonsterCategory>(obj->GetInt64(obj_f_critter_monster_category)))
+		auto moncat = critterSys.GetCategory(handle);
+		switch (moncat)
 		{
 		case mc_type_aberration: 
 		case mc_type_animal: 

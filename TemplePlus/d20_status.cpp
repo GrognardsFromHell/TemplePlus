@@ -340,10 +340,7 @@ void D20StatusSystem::D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher
 	{
 		auto condId = obj->GetInt32(obj_f_conditions, i);
 		condStruct = conds.hashmethods.GetCondStruct(condId);
-		if ((int)condStruct == 0x102EBB78)
-		{
-			auto asdf = 1;
-		}
+
 		if (condStruct)
 		{
 			for (unsigned int k = 0; k < condStruct->numArgs; k++)

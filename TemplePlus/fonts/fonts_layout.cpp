@@ -633,7 +633,7 @@ uint32_t TextLayouter::MeasureVanillaLine(const TigFont &font, const TigTextStyl
 			continue;
 		}
 
-		if (isspace(ch)) {
+		if ( ch >=0 && ch < 128 && isspace(ch)) {
 			if (ch != '\n') {
 				result += style.tracking;
 			}
@@ -697,9 +697,6 @@ uint32_t TextLayouter::CountLinesVanilla(uint32_t maxWidth, uint32_t maxLines, c
 				if (isspace(ch)) {
 					break;
 				}
-			} else
-			{
-				int dummy = 2;
 			}
 
 			auto glyphIdx = GetGlyphIdx(ch, text);

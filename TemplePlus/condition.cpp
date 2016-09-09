@@ -3193,7 +3193,7 @@ int SpellCallbacks::HezrouStenchObjEvent(DispatcherCallbackArgs args){
 					return 0;
 				if (d20Sys.d20Query(dispIo->tgt, DK_QUE_Critter_Is_Immune_Poison))
 					return 0;
-				if (critterSys.IsCategorySubtype(dispIo->tgt, MonsterCategory::mc_subtype_demon))
+				if (critterSys.IsCategorySubtype(dispIo->tgt, MonsterSubcategoryFlag::mc_subtype_demon))
 					return 0;
 				if (critterSys.IsCategoryType(dispIo->tgt, MonsterCategory::mc_type_elemental))
 					return 0;

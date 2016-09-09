@@ -8,17 +8,22 @@
 #include <gamesystems/objects/gameobject.h>
 #include <gamesystems/objects/objsystem.h>
 #include <condition.h>
+#include <tig/tig_tokenizer.h>
 
 class ProtosHooks : public TempleFix{
 public: 
 
 	// static int StdParamParserFunc(int colIdx, objHndl handle, char* content, obj_f fieldId, int arrayLen, char** stringArray, int fieldSubIdx); // for future reference
 	static int ParseCondition(int colIdx, objHndl handle, char* content, int condIdx, int stage, int unused, int unused2);
+	static int ParseMonsterSubcategory(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
 
 	void apply() override 
 	{
-		
+		// Fix for protos condition parser
 		replaceFunction<int(__cdecl)(int, objHndl, char*, int, int, int, int)>(0x10039E80, ParseCondition);
+
+		// Fix for monster subcateogry extraplanar / extraplaner
+		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f, int, char**)>(0x100398C0, ParseMonsterSubcategory);
 
 		// replaces the proto parser for supporting extensions
 		static int (*orgProtoParser)(TigTabParser*, int, const char**) = 
@@ -173,7 +178,7 @@ int ProtosHooks::ParseCondition(int colIdx, objHndl handle, char * content, int 
 		std::string txtBuf(content);
 		if (txtBuf[0] == '\''){ // unspecific string parameter
 			txtBuf.erase(0,1);
-			for (auto j=0; j < txtBuf.size(); j++){
+			for (auto j=0u; j < txtBuf.size(); j++){
 				if (!txtBuf[j] || txtBuf[j] == '\''){
 					txtBuf[j] = 0;
 					protoParseParam1 = ElfHash::Hash(txtBuf);
@@ -265,10 +270,43 @@ int ProtosHooks::ParseCondition(int colIdx, objHndl handle, char * content, int 
 		if (condStruct->numArgs > 1)
 			obj->SetInt32(condArgField, obj->GetInt32Array(condArgField).GetSize(), protoParseParam2);
 		// fill the rest with 0
-		for (auto j = 2; j < condStruct->numArgs; j++)
+		for (auto j = 2u; j < condStruct->numArgs; j++)
 			obj->SetInt32(condArgField, obj->GetInt32Array(condArgField).GetSize(), 0);
 
 		isParsingCond = 0;
 	}
+	return 1;
+}
+
+int ProtosHooks::ParseMonsterSubcategory(int colIdx, objHndl handle, char * content, obj_f field, int arrayLen, char ** strings){
+
+	if (!content[0])
+		return 1;
+
+	auto subcatFlags = (uint64_t)0;
+	StringTokenizer tok(content);
+	while (tok.next()){
+		auto& tokItem = tok.token();
+
+		// fix for extraplaner typo
+		if (!_strcmpi(tokItem.text, "mc_subtype_extraplaner") || !_strcmpi(tokItem.text, "mc_subtype_extraplanar")){
+			subcatFlags |= MonsterSubcategoryFlag::mc_subtype_extraplanar;
+			continue;
+		}
+
+		for (auto i=0; i < arrayLen; i++){
+			if (!_strcmpi(strings[i], tokItem.text)){
+				auto flagTmp = 1 << i;
+				subcatFlags |= flagTmp;
+			}
+		}
+	}
+
+	auto subcatTest = (MonsterSubcategoryFlag)subcatFlags;
+
+	auto obj = objSystem->GetObject(handle);
+	auto moncat = (uint64_t)obj->GetInt64(obj_f_critter_monster_category);
+	moncat |= (subcatFlags << 32);
+	obj->SetInt64(obj_f_critter_monster_category, moncat);
 	return 1;
 }

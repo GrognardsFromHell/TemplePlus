@@ -506,7 +506,7 @@ int BardicInspireCourageFix::BardicInspiredCourageToHit(DispatcherCallbackArgs a
 	auto bonVal = 1;
 	if (party.IsInParty(args.objHndCaller)){
 		auto brdLvl = 0;
-		for (auto i=0; i<party.GroupListGetLen(); i++){
+		for (auto i=0u; i<party.GroupListGetLen(); i++){
 			auto dude = party.GroupListGetMemberN(i);
 			if (!dude)
 				continue;
@@ -535,7 +535,7 @@ int BardicInspireCourageFix::BardicInspiredCourageDamBon(DispatcherCallbackArgs 
 	auto bonVal = 1;
 	if (party.IsInParty(args.objHndCaller)) {
 		auto brdLvl = 0;
-		for (auto i = 0; i<party.GroupListGetLen(); i++) {
+		for (auto i = 0u; i<party.GroupListGetLen(); i++) {
 			auto dude = party.GroupListGetMemberN(i);
 			if (!dude)
 				continue;

@@ -35,7 +35,7 @@ struct DamagePacket {
 	char* description;
 	int critHitMultiplier; // 1 by default; gets set on an actual crit hit (and may be modified by various things)
 	DamageDice dice[5];
-	int diceCount;
+	uint32_t diceCount;
 	DamageReduction damageResistances[5];
 	int damResCount;
 	DamageReduction damageFactorModifiers[5]; // may also be used for vulnerabilities (e.g. Condition Monster Subtype Fire does this for Cold Damage)

@@ -2306,7 +2306,7 @@ bool UiCharEditor::FeatCanPick(feat_enums feat) {
 
 
 	if (!feats.IsFeatMultiSelectMaster(feat)) {
-		return feats.FeatPrereqsCheck(handle, feat, featsPicked.size() > 0 ? &featsPicked[0] : nullptr, featsPicked.size(), selPkt.classCode, selPkt.statBeingRaised);
+		return feats.FeatPrereqsCheck(handle, feat, featsPicked.size() > 0 ? &featsPicked[0] : nullptr, featsPicked.size(), selPkt.classCode, selPkt.statBeingRaised) != FALSE;
 	}
 
 
@@ -2420,7 +2420,7 @@ bool UiCharEditor::IsClassBonusFeat(feat_enums feat) {
 
 	switch (selPkt.classCode) {
 	case stat_level_fighter:
-		return feats.IsFighterFeat(feat);
+		return feats.IsFighterFeat(feat) != FALSE;
 	case stat_level_monk:
 		if (feats.IsFeatPropertySet(feat, 0x20) && newLvl == 1)
 			return true;
@@ -2434,7 +2434,7 @@ bool UiCharEditor::IsClassBonusFeat(feat_enums feat) {
 	case stat_level_rogue:
 		return (feat < FEAT_NONE &&  newLvl >= 10 && !( (newLvl-10) % 3));
 	case stat_level_wizard:
-		return feats.IsMagicFeat(feat);
+		return feats.IsMagicFeat(feat) != FALSE;
 	default:
 		return false;
 	}

@@ -1617,7 +1617,7 @@ ActionErrorCode D20ActionCallbacks::ActionCheckEmptyBody(D20Actn* d20a, TurnBase
 	if (numRounds <= 0)
 		return AEC_OUT_OF_CHARGES;
 
-	if (d20a->data1 > (uint32_t) numRounds) {
+	if (d20a->data1 >  numRounds) {
 		d20a->data1 = numRounds;
 	}
 
@@ -2356,7 +2356,7 @@ ActionErrorCode D20ActionCallbacks::ActionCheckCastSpell(D20Actn* d20a, TurnBase
 		}
 		
 		// check GP requirement
-		if (spEntry.costGP > 0 && party.IsInParty(d20a->d20APerformer) && party.GetMoney() < spEntry.costGP * 100) {
+		if (spEntry.costGP > 0u && party.IsInParty(d20a->d20APerformer) && party.GetMoney() < spEntry.costGP * 100) {
 			actSeqSpellResetter();
 			return AEC_CANNOT_CAST_NOT_ENOUGH_GP;
 		}

@@ -34,7 +34,7 @@ const char* LegacyDescriptionSystem::GetDescriptionString(int descrIdx) const
 	// check if custom name idx
 	if (descrIdx & 0x40000000){
 		auto _descrIdx = descrIdx & (~0x40000000);
-		if (_descrIdx >= 0	&& _descrIdx  < *customNamesCount)	{
+		if (_descrIdx >= 0	&& _descrIdx  < (int)*customNamesCount)	{
 			return (*customNamesArray)[_descrIdx];
 		}
 		return nullptr;
@@ -89,7 +89,7 @@ void LegacyDescriptionSystem::Exit(){
 	mesFuncs.Close(descrMesExt);
 	mesFuncs.Close(longDescrMes);
 	if (*customNamesCount > 0){
-		for (int i = 0; i < *customNamesCount; i++){
+		for (int i = 0u; i < *customNamesCount; i++){
 			free((*customNamesArray)[i]);
 		}
 		free(*customNamesArray);

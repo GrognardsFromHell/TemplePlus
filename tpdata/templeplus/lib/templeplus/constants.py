@@ -1677,6 +1677,7 @@ mat_powder = 13
 mc_subtype_air = 0x1
 mc_subtype_aquatic = 0x2
 mc_subtype_extraplaner = 0x4
+mc_subtype_extraplanar = 0x4
 mc_subtype_cold = 0x8
 mc_subtype_chaotic = 0x10
 mc_subtype_demon = 0x20
