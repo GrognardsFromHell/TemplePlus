@@ -4718,7 +4718,7 @@ int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
 		if (sneakAttackDice <= 0)
 			return 0;
 
-		if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Is_Immune_Critical_Hits))	{
+		if (d20Sys.d20Query(tgt, DK_QUE_Critter_Is_Immune_Critical_Hits))	{
 			dispIo->damage.bonuses.ZeroBonusSetMeslineNum(325);
 			return 0;
 		}
