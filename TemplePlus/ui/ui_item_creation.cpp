@@ -312,20 +312,25 @@ bool ItemCreation::CreateItemResourceCheck(objHndl crafter, objHndl objHndItem){
 	uint32_t craftingCostCP;
 	auto partyMoney = party.GetMoney();
 
+	auto itemObj = objSystem->GetObject(objHndItem);
+
 	*insuffXp = 0;
 	*insuffCp = 0;
 	*insuffSkill = 0;
 	*insuffPrereqs = 0;
-	int itemWorth = objects.getInt32(objHndItem, obj_f_item_worth);
 
+	// Check GP Section
+	int itemWorth = itemObj->GetInt32(obj_f_item_worth);
+
+	// Scrolls
 	if (itemCreationType == ItemCreationType::ScribeScroll){
 		craftingCostCP = itemWorth / 2; // todo enhance with applied level etc.
 	}
-
-	// Check GP Section
+	// MAA
 	else if (itemCreationType == ItemCreationType::CraftMagicArmsAndArmor){
 		craftingCostCP = MaaCpCost( CRAFT_EFFECT_INVALID );
 	}
+	// Wands & Potions
 	else {
 		// current method for crafting stuff:
 		craftingCostCP =  itemWorth / 2;
@@ -345,17 +350,61 @@ bool ItemCreation::CreateItemResourceCheck(objHndl crafter, objHndl objHndItem){
 
 
 	// Check XP & prerequisites section
+
+	// Scrolls, Wands and Potions:
 	if ( itemCreationType != CraftMagicArmsAndArmor){
 		// check requirements from rules\\item_creation.mes
 		if ( temple::GetRef<int(__cdecl)(objHndl, objHndl)>(0x10152280)(crafter, objHndItem) == 0){ 
 			*insuffPrereqs = 1;
 			canCraft = 0;
-		};
+		}
+
+		// scrolls - ensure caster can also actually cast the spell
+		else if (itemCreationType == ItemCreationType::ScribeScroll )	{
+
+			auto spData = itemObj->GetSpell(obj_f_item_spell_idx, 0); // scrolls should only have a single spell...
+			auto spEnum = spData.spellEnum;
+
+			std::vector<int> spellClasses, spellLevels;
+
+			auto isLevelOk = false;
+
+			if (!spellSys.SpellKnownQueryGetData(crafter, spEnum, spellClasses, spellLevels))
+				*insuffPrereqs = 1;
+
+			for (auto i=0u; i < spellLevels.size(); i++){
+				auto maxSpellLvl = -1;
+				auto spClass = spellClasses[i];
+				if (spellSys.isDomainSpell(spClass))
+				{
+					maxSpellLvl = spellSys.GetMaxSpellLevel(crafter, stat_level_cleric);
+
+				} else
+				{
+					maxSpellLvl = spellSys.GetMaxSpellLevel(crafter, spellSys.GetCastingClass(spClass));
+				}
+
+				
+				if (maxSpellLvl >= spellLevels[i])
+				{
+					isLevelOk = true;
+					break;
+				}		
+			}
+
+			if (!isLevelOk){
+				*insuffPrereqs = 1;
+				canCraft = 0;
+			}
+
+		}
+
 		// check XP
 		
 		int itemXPCost = itemWorth / 2500;
 		xpCheck = surplusXP >= itemXPCost;
 	} 
+	// MAA
 	else {
 		int magicArmsAndArmorXPCost = MaaXpCost(CRAFT_EFFECT_INVALID);
 		xpCheck = surplusXP >= magicArmsAndArmorXPCost;

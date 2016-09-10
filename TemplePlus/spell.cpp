@@ -1434,6 +1434,24 @@ uint32_t LegacySpellSystem::spellKnownQueryGetData(objHndl objHnd, uint32_t spel
 	return *n > 0;
 }
 
+bool LegacySpellSystem::SpellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum, std::vector<int>& classCodesOut, std::vector<int>& spellLevels){
+
+	auto obj = objSystem->GetObject(objHnd);
+
+	auto n = 0;
+	auto numSpellsKnown = obj->GetSpellArray(obj_f_critter_spells_known_idx).GetSize();
+	for (auto i = 0u; i < numSpellsKnown; i++)	{
+
+		auto spellData = obj->GetSpell(obj_f_critter_spells_known_idx, i);
+		if (spellData.spellEnum == spellEnum){
+			classCodesOut.push_back(spellData.classCode);
+			spellLevels.push_back(spellData.spellLevel);
+			++n;
+		}
+	}
+	return n > 0;
+}
+
 bool LegacySpellSystem::IsSpellKnown(objHndl handle, int spEnum, int spClass){
 	uint32_t classCodes[SPELL_ENUM_MAX_EXPANDED];
 	uint32_t n;
