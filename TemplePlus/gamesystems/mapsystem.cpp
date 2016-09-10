@@ -619,6 +619,7 @@ void MapSystem::ShowGameTip(int tipId)
 	static MapSystem *sMapSystems = this;
 	static BOOL sShowTips = TRUE;
 
+	sTipText = mTips[tipId];
 	addresses.ui_show_tip(
 		mTipsDialogTitle.c_str(),
 		sTipText.c_str(),

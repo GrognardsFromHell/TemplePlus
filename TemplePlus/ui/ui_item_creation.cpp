@@ -32,6 +32,8 @@
 #include "graphics/imgfile.h"
 #include "ui_tooltip.h"
 #include <mod_support.h>
+#include <float_line.h>
+#include <ui/ui_dialog.h>
 
 #define NUM_ITEM_ENHANCEMENT_SPECS 41
 #define NUM_APPLIED_BONUSES_MAX 9 // number of bonuses that can be applied on item creation
@@ -2356,7 +2358,10 @@ void ItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 		CraftScrollWandPotionSetItemSpellData(newItemHandle, crafter);
 	}
 
-	inventory.ItemGet(newItemHandle, crafter, 8);
+	auto insertResult = inventory.ItemGet(newItemHandle, crafter, 0);
+	if (!insertResult){
+		uiDialog.ShowTextBubble(crafter, crafter, fmt::format("My inventory is full!\nI dropped the item on the ground.") , -1);
+	}
 
 	if (itemCreationType != ItemCreationType::Inactive) {
 		//infrastructure::gKeyboard.Update();

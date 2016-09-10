@@ -7,6 +7,8 @@
 #include "gamesystems/gamesystems.h"
 #include "util/fixes.h"
 #include "condition.h"
+#include <python/python_integration_obj.h>
+#include "float_line.h"
 
 InventorySystem inventory;
 
@@ -90,6 +92,10 @@ public:
 
 	
 } hooks;
+
+bool InventorySystem::IsInvIdxWorn(int invIdx){
+	return invIdx >= INVENTORY_WORN_IDX_START && invIdx <= INVENTORY_WORN_IDX_END;
+}
 
 objHndl InventorySystem::FindMatchingStackableItem(objHndl receiver, objHndl item){
 	if (!item)
@@ -441,8 +447,16 @@ int InventorySystem::IsItemNonTransferable(objHndl item, objHndl receiver)
 	return IEC_Item_Cannot_Be_Dropped;
 }
 
-int InventorySystem::ItemInsertGetLocation(objHndl item, objHndl receiver, int* itemInsertLocation, objHndl bag, char flags)
-{
+int InventorySystem::ItemInsertGetLocation(objHndl item, objHndl receiver, int* itemInsertLocation, objHndl bag, char flags){
+
+	auto parentObj = objSystem->GetObject(receiver);
+	auto invIdx = -1;
+
+	if (d20Sys.d20Query(receiver, DK_QUE_Polymorphed))
+		return IEC_Cannot_Use_While_Polymorphed;
+
+
+
 	return addresses.ItemInsertGetLocation(item, receiver, itemInsertLocation, bag, flags);
 }
 
@@ -454,16 +468,17 @@ void InventorySystem::InsertAtLocation(objHndl item, objHndl receiver, int itemI
 int InventorySystem::ItemUnwield(objHndl item)
 {
 	auto invenLoc = GetInventoryLocation(item);
-	if (invenLoc < 200 || invenLoc > 216)
-		return 1;
+	if (!IsInvIdxWorn(invenLoc ))
+		return TRUE;
+
 	objHndl parent = GetParent(item);
 	int itemInsertLocation = 0;
 	if (IsItemNonTransferable(item, parent)
 		|| inventory.ItemInsertGetLocation(item, parent, &itemInsertLocation, objHndl::null, 0))
-		return 0;
+		return FALSE;
 	ItemRemove(item);
 	inventory.InsertAtLocation(item, parent, itemInsertLocation);
-	return 1;
+	return TRUE;
 }
 
 int InventorySystem::ItemUnwieldByIdx(objHndl obj, int i)
@@ -723,9 +738,91 @@ void InventorySystem::ItemRemove(objHndl item)
 	// return _ItemRemove(item);
 }
 
-int InventorySystem::ItemGetAdvanced(objHndl item, objHndl parent, int slotIdx, int flags)
-{
-	return addresses.ItemGetAdvanced(item, parent, slotIdx, flags);
+BOOL InventorySystem::ItemGetAdvanced(objHndl item, objHndl parent, int invIdx, int flags){
+
+	auto itemInsertLocation = -1;
+
+	if (!item)
+		return FALSE;
+
+	auto itemObj = objSystem->GetObject(item);
+	if (!itemObj->IsItem())	{
+		logger->error("ItemGetAdvanced call on non-item!");
+		return FALSE;
+	}
+	
+	if (!parent)
+		return FALSE;
+	auto parentObj = objSystem->GetObject(parent);
+
+	// if is already inventory item
+	if (itemObj->GetFlags() & ObjectFlag::OF_INVENTORY){
+		return temple::GetRef<BOOL(__cdecl)(objHndl, objHndl, int)>(0x1006A3A0)(item, parent, invIdx);
+	}
+
+	// run the object's san_get script
+	if (!pythonObjIntegration.ExecuteObjectScript(parent, item, ObjScriptEvent::Get))
+		return FALSE;
+
+	auto itemAtSlot = objHndl::null;
+	auto invIdxIsWornSlot = false;
+	if (IsInvIdxWorn(invIdx)){
+		invIdxIsWornSlot = true;
+		itemAtSlot = GetItemAtInvIdx(parent, invIdx);
+	}
+
+	auto insertionErrorCode = (ItemErrorCode)ItemInsertGetLocation(item, parent, &itemInsertLocation, objHndl::null, flags);
+	if (insertionErrorCode)
+	{
+		auto dummy = 1;
+	}
+
+	// handle insertion error
+	if (insertionErrorCode && (insertionErrorCode != IEC_No_Room_For_Item || itemAtSlot || !invIdxIsWornSlot)){
+		
+
+		if (parentObj->type == obj_t_pc)
+			return FALSE;
+
+		if (parentObj->type == obj_t_npc){
+			floatSys.floatMesLine(parent, 1, FloatLineColor::White, GetItemErrorString(insertionErrorCode));
+			return insertionErrorCode;
+		}
+
+		return insertionErrorCode;
+	}
+
+	// on success
+
+	temple::GetRef<int(__cdecl)(objHndl, objHndl)>(0x1001F770)(item, parent); // MakeItemParented  (removes it from the sector object list and sets its obj_f_item_parent to parent, and sets the OF_INVENTORY flag for the item)
+	if (invIdx == -1)
+		invIdx = itemInsertLocation;
+	else if (invIdxIsWornSlot){
+		if (itemAtSlot){
+			invIdx = itemInsertLocation;
+		}
+	}
+	else
+	{
+		int indices[960] = {0,}; // index corresponds to invIdx, content corresponds to whether it's occupied and where in the critter's inventory field (is position + 1); 0 if unoccupied
+		temple::GetRef<int(__cdecl)(objHndl, int*)>(0x100674A0)(parent, indices); // maps indices to obj inventory field indices
+		if (! temple::GetRef<int(__cdecl)(objHndl, objHndl, int, int*)>(0x10068E80)(item, parent, invIdx, indices))
+		{
+			invIdx = itemInsertLocation;
+		}
+	}
+
+	InsertAtLocation(item, parent, invIdx);
+	if (parentObj->IsPC()){
+		auto testInvIdx = itemObj->GetInt32(obj_f_item_inv_location);
+		auto d = 1;
+	}
+
+	temple::GetRef<int(__cdecl)(objHndl)>(0x10067640)(item); // ItemDecayExpireEvents
+
+	return TRUE;
+
+	//return addresses.ItemGetAdvanced(item, parent, invIdx, flags);
 }
 
 const std::string & InventorySystem::GetAttachBone(objHndl handle)

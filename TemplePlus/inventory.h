@@ -6,6 +6,9 @@
 
 enum EquipSlot : uint32_t;
 
+#define INVENTORY_WORN_IDX_START 200 // the first inventory index for worn items
+#define INVENTORY_WORN_IDX_END 216 // the last index for worn items
+
 enum ItemErrorCode: uint32_t
 {
 	IEC_OK = 0,
@@ -30,9 +33,22 @@ enum ItemErrorCode: uint32_t
 };
 
 
+enum ItemInsertFlags : uint8_t {
+	IIF_Allow_Swap = 0x1,
+	IIF_Use_Wield_Slots = 0x2, // will let the item transfer try to insert in the wielded item slots (note: will not replace if there is already an item equipped!)
+	IIF_4 = 0x4,
+	IIF_Use_Max_Idx_200 = 0x8, // will use up to inventory index 200 (invisible slots)
+	IIF_10 = 0x10,
+	IIF_Use_Bags = 0x20, // use inventory indices of bags (not really supported in ToEE)
+	IIF_40 = 0x40,
+	IIF_80 = 0x80
+};
+
 struct InventorySystem : temple::AddressTable
 {
 	
+	static bool IsInvIdxWorn(int invIdx); // does the inventory index refer to a designated "worn item" slot?
+
 	objHndl(__cdecl *GetSubstituteInventory)  (objHndl);
 	objHndl(__cdecl *GetItemAtInvIdx)(objHndl, uint32_t nIdx); // returns the item at obj_f_critter_inventory subIdx nIdx  (or obj_f_container_inventory for containers); Note the difference to ItemWornAt! (this is a more low level function)
 	objHndl FindMatchingStackableItem(objHndl objHndReceiver, objHndl objHndItem);
@@ -90,7 +106,7 @@ struct InventorySystem : temple::AddressTable
 	ItemErrorCode TransferWithFlags(objHndl item, objHndl receiver, int invenInt, char flags, objHndl bag);
 	void ItemPlaceInIdx(objHndl item, int idx);
 	int ItemDrop(objHndl item);
-	int ItemGet(objHndl item, objHndl receiver, int flags);
+	int ItemGet(objHndl item, objHndl receiver, int flags); // see ItemInsertFlag
 	void ForceRemove(objHndl item, objHndl parent);
 	bool IsProficientWithArmor(objHndl obj, objHndl armor) const;
 	void GetItemMesLine(MesLine* line);
@@ -102,7 +118,7 @@ struct InventorySystem : temple::AddressTable
 	static bool IsBuckler(objHndl shield);
 	void(__cdecl*_ForceRemove)(objHndl, objHndl);
 	void ItemRemove(objHndl item); // pretty much same as ForceRemove, but also send a d20 signal for inventory update, and checks for parent first
-	int ItemGetAdvanced(objHndl item, objHndl parent, int slotIdx, int flags);
+	BOOL ItemGetAdvanced(objHndl item, objHndl parent, int slotIdx, int flags);
 
 	/*
 		gets the item's sell price (in Copper Pieces) when dealing with a vendor
