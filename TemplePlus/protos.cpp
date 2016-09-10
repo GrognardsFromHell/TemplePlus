@@ -52,6 +52,7 @@ int ProtosHooks::ParseCondition(int colIdx, objHndl handle, char * content, int 
 	static std::unordered_map<string, int> attributeEnumTable({
 		{"attribute_strength", stat_strength},
 		{"attribute_dexterity", stat_dexterity},
+		{"attribute_constitution", stat_constitution },
 		{"attribute_intelligence", stat_intelligence},
 		{"attribute_wisdom", stat_wisdom },
 		{"attribute_charisma", stat_charisma },
