@@ -444,7 +444,10 @@ static int PySpell_SetDuration(PyObject *obj, PyObject *value, void*) {
 		PyErr_SetString(PyExc_TypeError, "Duration can only be an integer");
 		return -1;
 	}
-	self->duration = PyInt_AsLong(value);
+	auto duration = PyInt_AsLong(value);
+	if (self->metaMagic.metaMagicExtendSpellCount)
+		duration = duration * (1 + self->metaMagic.metaMagicExtendSpellCount); // crappy but that's how it is in vanilla, and all the scripts are written with this in mind
+	self->duration = duration;
 	PySpell_UpdatePacket(obj);
 	return 0;
 }
