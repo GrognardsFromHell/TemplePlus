@@ -115,6 +115,23 @@ SpellListType PythonClassSpecIntegration::GetSpellListType(int classEnum){
 	return static_cast<SpellListType>(GetInt(classEnum, ClassSpecFunc::GetSpellListType, (int)SpellListType::None));
 }
 
+std::map<int, int> PythonClassSpecIntegration::GetSpellList(int classEnum)
+{
+	auto result = std::map<int, int>();
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return result;
+
+	auto dict = RunScriptMapResult(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetSpellList, nullptr);
+
+	for (auto item : dict) {
+		for (auto spEnum : item.second)
+			result[spEnum] = item.first;
+	}
+
+	return result;
+}
+
 bool PythonClassSpecIntegration::IsEnabled(int classEnum){
 	if (classEnum <= stat_level_wizard && classEnum >= stat_level_barbarian)
 		return true; // vanilla classes
@@ -262,7 +279,9 @@ static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 	{ ClassSpecFunc::IsFortSaveFavored,"IsFortSaveFavored" },
 	{ ClassSpecFunc::IsRefSaveFavored,"IsRefSaveFavored" },
 	{ ClassSpecFunc::IsWillSaveFavored,"IsWillSaveFavored" },
+
 	{ ClassSpecFunc::GetSpellListType,"GetSpellListType" },
+	{ ClassSpecFunc::GetSpellList,"GetSpellList" },
 	{ ClassSpecFunc::GetSpellsPerDay,"GetSpellsPerDay" },
 	{ ClassSpecFunc::GetSpellConditionName,"GetSpellCasterConditionName" },
 	{ ClassSpecFunc::GetSpellDeterminingStat,"GetSpellDeterminingStat" },

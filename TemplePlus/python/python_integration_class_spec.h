@@ -12,6 +12,7 @@ enum class ClassSpecFunc : int {
 	IsWillSaveFavored,
 
 	GetSpellListType,
+	GetSpellList,
 	GetSpellsPerDay,
 	GetSpellConditionName,
 	GetSpellDeterminingStat,
@@ -50,7 +51,8 @@ public:
 	int GetInt(int classEnum, ClassSpecFunc specType, int defaultVal = 0);
 	bool IsSaveFavored(int classEnum, SavingThrowType saveType);
 	
-	SpellListType GetSpellListType(int classCode);
+	SpellListType GetSpellListType(int classEnum);
+	std::map<int, int> GetSpellList(int classEnum); // returns a mapping of spellEnum -> spell level for this class, to be used by the spell system
 	std::map<int, std::vector<int>> GetSpellsPerDay(int classEnum);
 	std::string GetSpellCastingConditionName(int classEnum);
 	Stat GetSpellDeterminingStat(int classEnum);

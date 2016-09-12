@@ -67,6 +67,7 @@ struct D20ClassSpec {
 
 	std::string spellCastingConditionName; // name of the accompanying Spell Casting condition (e.g. "Bard Spellcasting")
 	SpellListType spellListType;
+	std::map<int, int> spellList; // mapping Spell Enum -> Spell Level for this class. This information is also stored in spellSystem under spellEntryExt
 	SpellReadyingType spellMemorizationType;
 	SpellSourceType spellSourceType;
 	std::map<int, std::vector<int>> spellsPerDay; // index is class level, vector enumerates spells per day for each spell level

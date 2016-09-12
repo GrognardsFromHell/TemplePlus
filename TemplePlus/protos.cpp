@@ -16,6 +16,7 @@ public:
 	// static int StdParamParserFunc(int colIdx, objHndl handle, char* content, obj_f fieldId, int arrayLen, char** stringArray, int fieldSubIdx); // for future reference
 	static int ParseCondition(int colIdx, objHndl handle, char* content, int condIdx, int stage, int unused, int unused2);
 	static int ParseMonsterSubcategory(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
+	static int ParseType(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
 
 	void apply() override 
 	{
@@ -24,6 +25,9 @@ public:
 
 		// Fix for monster subcateogry extraplanar / extraplaner
 		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f, int, char**)>(0x100398C0, ParseMonsterSubcategory);
+
+		// Hook the generic ParseType function
+		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f, int, char**)>(0x10039680, ParseType);
 
 		// replaces the proto parser for supporting extensions
 		static int (*orgProtoParser)(TigTabParser*, int, const char**) = 
@@ -310,4 +314,25 @@ int ProtosHooks::ParseMonsterSubcategory(int colIdx, objHndl handle, char * cont
 	moncat |= (subcatFlags << 32);
 	obj->SetInt64(obj_f_critter_monster_category, moncat);
 	return 1;
+}
+
+int ProtosHooks::ParseType(int colIdx, objHndl handle, char * content, obj_f field, int arrayLen, char ** strings){
+
+	if (content && *content){
+		if (arrayLen <= 0)
+			return 0;
+
+		for (auto i=0; i< arrayLen; i++){
+			if ( strings[i] && !_strcmpi(content, strings[i]))
+			{
+				objSystem->GetObject(handle)->SetInt32(field, i);
+				return 1;
+			}
+		}
+
+		if (field == obj_f_weapon_type){
+			auto asdf = 1;
+		}
+	}
+	return 0;
 }

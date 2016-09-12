@@ -2550,6 +2550,7 @@ spell_cats_grace = 49
 spell_cause_fear = 50
 spell_chain_lightning = 51
 spell_change_self = 52
+spell_disguise_self = 52
 spell_changestaff = 53
 spell_chaos_hammer = 54
 spell_charm_monster = 55

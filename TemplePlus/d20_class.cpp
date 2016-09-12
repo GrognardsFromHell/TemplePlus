@@ -335,7 +335,7 @@ void D20ClassSystem::GetClassSpecs(){
 
 		classEnums.push_back(it);
 
-		auto &classSpec = classSpecs[it];
+		D20ClassSpec &classSpec = classSpecs[it];
 
 		classSpec.classEnum = static_cast<Stat>(it);
 
@@ -359,10 +359,18 @@ void D20ClassSystem::GetClassSpecs(){
 		// spell casting
 		classSpec.spellListType = pythonClassIntegration.GetSpellListType(it);
 		if (classSpec.spellListType != SpellListType::None){
+			// Spellcasting Condition
 			classSpec.spellCastingConditionName = fmt::format("{}", pythonClassIntegration.GetSpellCastingConditionName(it));
+
+			// Spells per day table
 			classSpec.spellsPerDay = pythonClassIntegration.GetSpellsPerDay(it);
 			if (classSpec.spellsPerDay.size()){
 				classSpec.spellStat = pythonClassIntegration.GetSpellDeterminingStat(it);
+			}
+
+			if (classSpec.spellListType == SpellListType::Special){
+				classSpec.spellList = pythonClassIntegration.GetSpellList(it);
+				spellSys.GetSpellEntryExtFromClassSpec(classSpec.spellList, it);
 			}
 		}
 		

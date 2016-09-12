@@ -5,6 +5,7 @@
 #include "tig\tig_mes.h"
 #include "spell_structs.h"
 #include "tio/tio.h"
+#include <map>
 
 //#include "ui/ui_picker.h"
 
@@ -18,9 +19,9 @@ struct PickerArgs;
 
 struct SpellEntryLevelSpec
 {
-	uint32_t classCode;
+	uint32_t spellClass;
 	uint32_t slotLevel;
-	SpellEntryLevelSpec() { classCode = 0; slotLevel = 0; }
+	SpellEntryLevelSpec() { spellClass = 0; slotLevel = 0; }
 };
 
 enum SpellRangeType : uint32_t;
@@ -57,6 +58,11 @@ struct SpellEntry{
 	SpellEntry();
 	explicit SpellEntry(uint32_t spellEnum);
 	bool IsBaseModeTarget(UiPickerType type);
+	int SpellLevelForSpellClass(int spellClass); // returns -1 if none
+};
+
+struct SpellEntryExt {
+	std::vector<SpellEntryLevelSpec> levelSpecs;
 };
 
 const uint32_t TestSizeOfSpellEntry = sizeof(SpellEntry); // should be 0xC0  ( 192 )
@@ -151,7 +157,10 @@ struct CondStruct;
 
 struct LegacySpellSystem : temple::AddressTable
 {
+	friend class D20ClassSystem;
+
 	IdxTable<SpellPacket> * spellCastIdxTable;
+	std::map<int, SpellEntryExt> mSpellEntryExt;
 	
 	MesHandle * spellEnumMesHandle;
 	MesHandle spellEnumsExt;
@@ -271,6 +280,8 @@ struct LegacySpellSystem : temple::AddressTable
 		//rebase(spellMTI, 0x10AB59E8);
 	}
 private:
+
+	void GetSpellEntryExtFromClassSpec(std::map<int, int>& mapping, int classEnum);
 
 	uint32_t(__cdecl * _getSpellCountByClassLvl)();
 	uint32_t(__cdecl* _getStatModBonusSpellCount)();

@@ -171,6 +171,18 @@ bool SpellEntry::IsBaseModeTarget(UiPickerType type){
 	return (modeTargetSemiBitmask & 0xFF) == _type;
 }
 
+int SpellEntry::SpellLevelForSpellClass(int spellClass)
+{
+	auto spExtFind = spellSys.mSpellEntryExt.find(spellEnum);
+	if (spExtFind != spellSys.mSpellEntryExt.end())	{
+		for (auto it:spExtFind->second.levelSpecs){
+			if (it.spellClass == spellClass)
+				return it.slotLevel;
+		}
+	}
+	return -1;
+}
+
 SpellPacketBody::SpellPacketBody()
 {
 	spellSys.spellPacketBodyReset(this);
@@ -1370,6 +1382,15 @@ void LegacySpellSystem::ForgetMemorized(objHndl handle) {
 	objSystem->GetObject(handle)->ClearArray(obj_f_critter_spells_memorized_idx);
 }
 
+void LegacySpellSystem::GetSpellEntryExtFromClassSpec(std::map<int, int>& mapping, int classEnum){
+	for (auto it:mapping){
+		SpellEntryLevelSpec newEntry;
+		newEntry.spellClass = GetSpellClass(classEnum);
+		newEntry.slotLevel= it.second;
+		mSpellEntryExt[it.first].levelSpecs.push_back(newEntry);
+	}
+}
+
 uint32_t LegacySpellSystem::getSpellEnum(const char* spellName)
 {
 	MesLine mesLine;
@@ -1637,12 +1658,22 @@ int LegacySpellSystem::GetSpellLevelBySpellClass(int spellEnum, int spellClass, 
 
 	SpellEntry spEntry(spellEnum);
 	for (auto i = 0u; i < spEntry.spellLvlsNum; i++){
-		if (spEntry.spellLvls[i].classCode == spellClass)
+		if (spEntry.spellLvls[i].spellClass == spellClass)
 			return spEntry.spellLvls[i].slotLevel;
 	}
 
-	//todo add PrC support
-	// (for Assassin/Blackguard etc who should have their own unique tables)
+	// PrC support
+	// for Assassin/Blackguard etc who have their own unique spell tables
+
+	auto spEntryExt = mSpellEntryExt.find(spellEnum);
+	if (spEntryExt != mSpellEntryExt.end())	{
+		for (auto & it: spEntryExt->second.levelSpecs)
+		{
+			if (it.spellClass == spellClass)
+				return it.slotLevel;
+		}
+	}
+
 	return -1;
 }
 

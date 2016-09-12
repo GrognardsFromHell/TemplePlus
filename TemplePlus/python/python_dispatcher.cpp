@@ -266,13 +266,13 @@ PYBIND11_PLUGIN(tp_dispatcher){
 
 	py::class_<SpellEntryLevelSpec>(m, "SpellEntryLevelSpec")
 		.def(py::init())
-		.def_readwrite("spell_class_code", &SpellEntryLevelSpec::classCode)
+		.def_readwrite("spell_class_code", &SpellEntryLevelSpec::spellClass)
 		.def_readwrite("spell_level", &SpellEntryLevelSpec::slotLevel)
 		.def("casting_class", [](SpellEntryLevelSpec &spec)->int {
-			if (spellSys.isDomainSpell(spec.classCode))
-				return -( (int)spec.classCode );
+			if (spellSys.isDomainSpell(spec.spellClass))
+				return -( (int)spec.spellClass );
 			else
-				return (int)spellSys.GetCastingClass(spec.classCode);
+				return (int)spellSys.GetCastingClass(spec.spellClass);
 			}, "Returns casting class. Domain spell specs will return negative numbers.")
 		;
 

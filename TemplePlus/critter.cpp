@@ -1281,24 +1281,36 @@ bool LegacyCritterSystem::HashMatchingClassForSpell(objHndl handle, uint32_t spe
 		auto &lvlSpec = spEntry.spellLvls[i];
 		
 		// domain spell
-		if (spellSys.isDomainSpell(lvlSpec.classCode)){
+		if (spellSys.isDomainSpell(lvlSpec.spellClass)){
 			
 			auto obj = objSystem->GetObject(handle);
 			
 			// if is Cleric or NPC and the spell spec is Domain Special
 			if (objects.StatLevelGet(handle, stat_level_cleric) > 0 
-				|| (obj->IsNPC() && lvlSpec.classCode == Domain_Special)){
+				|| (obj->IsNPC() && lvlSpec.spellClass == Domain_Special)){
 
-				if (objects.StatLevelGet(handle, stat_domain_1) == lvlSpec.classCode
-					|| objects.StatLevelGet(handle, stat_domain_2) == lvlSpec.classCode)
+				if (objects.StatLevelGet(handle, stat_domain_1) == lvlSpec.spellClass
+					|| objects.StatLevelGet(handle, stat_domain_2) == lvlSpec.spellClass)
 					return true;
 				}
 			
 		} 
 		// normal spell
 		else{
-			if (objects.StatLevelGet(handle, spellSys.GetCastingClass(lvlSpec.classCode)) > 0)
+			if (objects.StatLevelGet(handle, spellSys.GetCastingClass(lvlSpec.spellClass)) > 0)
 				return true;
+		}
+	}
+
+	auto spExtFind = spellSys.mSpellEntryExt.find(spellEnum);
+	if (spExtFind != spellSys.mSpellEntryExt.end()) {
+		for (auto lvlSpec : spExtFind->second.levelSpecs) {
+			// TODO: domain extension for PrCs (Domain Wizard?)
+			{
+				if (objects.StatLevelGet(handle, spellSys.GetCastingClass(lvlSpec.spellClass)) > 0)
+					return true;
+			}
+			
 		}
 	}
 
