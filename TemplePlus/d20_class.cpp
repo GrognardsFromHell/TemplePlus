@@ -88,11 +88,16 @@ bool D20ClassSystem::ReqsMet(const objHndl& handle, const Stat classCode){
 	return pythonClassIntegration.ReqsMet(handle, classCode);
 }
 
-bool D20ClassSystem::IsNaturalCastingClass(Stat classEnum, objHndl handle)
-{
-	if (classEnum == stat_level_bard || classEnum == stat_level_sorcerer) 
-		return 1;
-	return 0;
+bool D20ClassSystem::IsNaturalCastingClass(Stat classEnum, objHndl handle){
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return false;
+	return classSpec->second.spellMemorizationType == SpellReadyingType::Innate;
+		
+
+	/*if (classEnum == stat_level_bard || classEnum == stat_level_sorcerer) 
+		return true;*/
+	//return false;
 }
 
 bool D20ClassSystem::IsNaturalCastingClass(uint32_t classEnum){
@@ -101,7 +106,12 @@ bool D20ClassSystem::IsNaturalCastingClass(uint32_t classEnum){
 
 bool D20ClassSystem::IsVancianCastingClass(Stat classEnum, objHndl handle )
 {
-	if (classEnum == stat_level_cleric
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return false;
+	return classSpec->second.spellMemorizationType == SpellReadyingType::Vancian;
+
+	/*if (classEnum == stat_level_cleric
 		|| classEnum == stat_level_druid 
 		|| classEnum == stat_level_paladin
 		|| classEnum == stat_level_ranger
@@ -111,7 +121,7 @@ bool D20ClassSystem::IsVancianCastingClass(Stat classEnum, objHndl handle )
 	if (classSpec == classSpecs.end())
 		return 0;
 	
-	return 0;
+	return 0;*/
 }
 
 bool D20ClassSystem::IsCastingClass(Stat classEnum){
@@ -125,12 +135,36 @@ bool D20ClassSystem::IsCastingClass(Stat classEnum){
 	
 	auto classSpec = classSpecs.find(classEnum);
 	if (classSpec == classSpecs.end())
-		return 0;
+		return false;
 	if (classSpec->second.spellListType == SpellListType::None){
-		return 0;
+		return false;
 	}
 
-	return 1;
+
+	return true;
+}
+
+bool D20ClassSystem::HasSpellList(Stat classEnum)
+{
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return false;
+	
+	switch (classSpec->second.spellListType)
+	{
+		case SpellListType::None: 
+			return false;
+		case SpellListType::Arcane:
+		case SpellListType::Bardic: 
+		case SpellListType::Clerical: 
+		case SpellListType::Druidic: 
+		case SpellListType::Paladin: 
+		case SpellListType::Ranger: 
+		case SpellListType::Special: 
+			return true;
+		default: 
+			return false;
+	}
 }
 
 bool D20ClassSystem::IsLateCastingClass(Stat classEnum)
@@ -359,6 +393,10 @@ void D20ClassSystem::GetClassSpecs(){
 		// spell casting
 		classSpec.spellListType = pythonClassIntegration.GetSpellListType(it);
 		if (classSpec.spellListType != SpellListType::None){
+			// Spell Readying Type
+			classSpec.spellMemorizationType = pythonClassIntegration.GetSpellReadyingType(it);
+
+
 			// Spellcasting Condition
 			classSpec.spellCastingConditionName = fmt::format("{}", pythonClassIntegration.GetSpellCastingConditionName(it));
 

@@ -104,67 +104,17 @@ class RadialMenuReplacements : public TempleFix
 
 		ReplaceStandardRadialNodes(); // replaces reference to standardNodeIndices
 
-		// SetSandardNode
-		replaceFunction<int(objHndl, int, int )>(0x100F12F0, [](objHndl handle, int stdNode, int specialParent) {
-			auto meskey = 1000 + stdNode;
-			auto isSpellNode = false;
-			auto isVanillaNode = false;
-			if (stdNode > RadialMenuStandardNode::SpellsDomain && stdNode <= 104) {
-				isSpellNode = true;
-
-				if (specialParent == RadialMenuStandardNode::SpellsSorcerer && stdNode < 34
-					|| specialParent == RadialMenuStandardNode::SpellsBard && stdNode < 44)
-					isVanillaNode = true;
-				
-				if (isVanillaNode)
-					meskey = (stdNode - 24) % 6 + 1024;
-				else
-					meskey = (stdNode - 24) % 10 + 1024;
-			}
-				
-			RadialMenuEntryParent radMenuEntry(meskey);
-
-			if (isSpellNode) {
-				// if (d20ClassSys.IsNaturalCastingClass())
-				if (specialParent == RadialMenuStandardNode::SpellsSorcerer
-					|| specialParent == RadialMenuStandardNode::SpellsBard) {
-					radMenuEntry.flags |= 6; // draw min/max arg
-					auto spLvl = (stdNode - 24) % NUM_SPELL_LEVELS;
-					auto classCode = stat_level_sorcerer;
-					
-					if (specialParent == RadialMenuStandardNode::SpellsSorcerer) {
-						if (isVanillaNode) {
-							auto spLvl = (stdNode - 24) % 6; // vanilla num spell levels is 6 (0-5)
-						}
-					}
-					else if (specialParent == RadialMenuStandardNode::SpellsBard){
-						classCode = stat_level_bard;
-						if (isVanillaNode) {
-							auto spLvl = (stdNode - 24) % 6; // vanilla num spell levels
-						}
-					}
-					auto spellClass = spellSys.GetSpellClass(classCode);
-					auto numSpellsPerDay = spellSys.GetNumSpellsPerDay(handle, classCode, spLvl);
-					if (numSpellsPerDay < 0)
-						numSpellsPerDay = 0;
-					
-					radMenuEntry.maxArg = numSpellsPerDay;
-
-					auto numSpellsCast = spellSys.NumSpellsInLevel(handle, obj_f_critter_spells_cast_idx, spellClass, spLvl);
-					if (numSpellsCast < numSpellsPerDay)
-						radMenuEntry.minArg = numSpellsPerDay - numSpellsCast;
-					else
-						radMenuEntry.minArg = 0;
-
-				}
-
-			}
-			
-
-			RadialMenus::standardNodeIndices[stdNode] = radialMenus.AddParentChildNode(handle, &radMenuEntry, RadialMenus::standardNodeIndices[specialParent]);
-			return RadialMenus::standardNodeIndices[stdNode];
-			
+		// Replace the general radial menu builder
+		replaceFunction<void(__cdecl)(objHndl)>(0x100F2650, [](objHndl handle)
+		{
+			radialMenus.BuildStandardRadialMenu(handle);
 		});
+
+		//// SetSandardNode
+		//replaceFunction<void(objHndl, int, int)>(0x100F12F0, [](objHndl handle, int stdNode, int specialParent) {
+		//	radialMenus.SetStandardNode(handle, stdNode, specialParent);
+		//	
+		//});
 
 
 		// RadialMenuUpdate
@@ -300,6 +250,207 @@ RadialMenuReplacements radMenuReplace;
 int return0()
 {
 	return 0;
+}
+
+void RadialMenus::BuildStandardRadialMenu(objHndl handle){
+
+	AssignMenu(handle); // TODO
+	standardNodeIndices[0] = 0; // root
+	// set the main 6 nodes: Spells, Skills, Feats, Class, Combat, Items
+	for (int i = RadialMenuStandardNode::Spells; i <= RadialMenuStandardNode::Items; i++){
+		SetStandardNode(handle, i, RadialMenuStandardNode::Root);
+	}
+
+	// Set the combat nodes
+	for (int i= RadialMenuStandardNode::Movement; i <= RadialMenuStandardNode::Options; i++)
+	{
+		SetStandardNode(handle, i, RadialMenuStandardNode::Combat);
+	}
+
+	// Set the magic item nodes: potions, wands, scrolls
+	for (int i = RadialMenuStandardNode::Potions; i <= RadialMenuStandardNode::Scrolls; i++)
+	{
+		SetStandardNode(handle, i, RadialMenuStandardNode::Items);
+	}
+
+
+	// Set spell nodes (classes & spell numbers)
+	SetStandardNode(handle, RadialMenuStandardNode::CopyScroll, RadialMenuStandardNode::Class);
+
+	for (int i=RadialMenuStandardNode::SpellsWizard; i <= RadialMenuStandardNode::SpellsDomain; i++)
+	{
+		SetStandardNode(handle, i, RadialMenuStandardNode::Spells);
+	}
+
+	for (int i = RadialMenuStandardNode::SpellsWizard; i <= RadialMenuStandardNode::SpellsDomain; i++)
+	{
+		for (auto j = 24 + (i - RadialMenuStandardNode::SpellsWizard) * 10; j < 34 + (i- RadialMenuStandardNode::SpellsWizard)*10; j++)
+		{
+			SetStandardNode(handle, j, i);
+		}
+	}
+
+	// add the tactical options
+	for (auto i=0; i < 18; i++){
+		auto & def = addresses.d20RadialDefs[i];
+
+		RadialMenuEntryAction radEntry(def.combatMesLineIdx, def.d20ActionType, def.d20ActionData1, def.helpSystemEntryName);
+		radEntry.callback = def.callback;
+		radEntry.AddAsChild(handle, GetStandardNode((RadialMenuStandardNode)def.parent));
+	}
+
+	// Decipher Script
+	auto umdSkill = critterSys.SkillBaseGet(handle, skill_use_magic_device);
+	if (umdSkill)
+	{
+		RadialMenuEntryAction radEntry(5073, D20ActionType::D20A_USE_MAGIC_DEVICE_DECIPHER_WRITTEN_SPELL, 0, "TAG_UMD");
+		radEntry.AddAsChild(handle, GetStandardNode(RadialMenuStandardNode::Skills));
+	}
+
+	// Disable Device
+	if (critterSys.SkillBaseGet(handle, skill_disable_device))
+	{
+		RadialMenuEntryAction radEntry(5080, D20ActionType::D20A_DISABLE_DEVICE, 0, "TAG_DISABLE_DEVICE");
+		radEntry.AddAsChild(handle, GetStandardNode(RadialMenuStandardNode::Skills));
+	}
+
+	// Open Lock
+	if (critterSys.SkillBaseGet(handle, skill_open_lock))
+	{
+		RadialMenuEntryAction radEntry(5086, D20ActionType::D20A_OPEN_LOCK, 0, "TAG_OPEN_LOCK");
+		radEntry.AddAsChild(handle, GetStandardNode(RadialMenuStandardNode::Skills));
+	}
+
+	// Open Lock
+	if (critterSys.SkillBaseGet(handle, skill_pick_pocket))
+	{
+		RadialMenuEntryAction radEntry(5087, D20ActionType::D20A_SLEIGHT_OF_HAND, 0, "TAG_SLEIGHT_OF_HAND");
+		radEntry.AddAsChild(handle, GetStandardNode(RadialMenuStandardNode::Skills));
+	}
+
+	// Sneak
+	RadialMenuEntryAction sneakRadEntry(5082 + (critterSys.IsMovingSilently(handle) != 0), D20ActionType::D20A_SNEAK, 0, "TAG_RADIAL_MENU_SNEAK");
+	sneakRadEntry.AddAsChild(handle, GetStandardNode(RadialMenuStandardNode::Skills));
+
+	// Search
+	if (!combatSys.isCombatActive()){
+		RadialMenuEntryAction radEntry(5081, D20ActionType::D20A_SEARCH, 0, "TAG_SEARCH");
+		radEntry.AddAsChild(handle, GetStandardNode(RadialMenuStandardNode::Skills));
+	}
+
+
+	// Spells
+	auto obj = objSystem->GetObject(handle);
+	auto numKnown = obj->GetSpellArray(obj_f_critter_spells_known_idx).GetSize();
+	auto numMem = obj->GetSpellArray(obj_f_critter_spells_memorized_idx).GetSize();
+	if (numKnown > 0 || numMem > 0){
+		RadialMenuEntryAction radEntry(5091, D20ActionType::D20A_READY_COUNTERSPELL, 0, "TAG_RADIAL_MENU_READY_COUNTERSPELL");
+		radEntry.AddAsChild(handle, GetStandardNode(RadialMenuStandardNode::Tactical));
+	}
+
+	auto addSpell = temple::GetRef<void(__cdecl)(objHndl, SpellStoreData&, int&, RadialMenuEntry&)>(0x100F1470);
+	int specNode;
+	RadialMenuEntry spellEntryAction;
+	for (auto i=0u; i<numMem; i++){
+		auto spData = obj->GetSpell(obj_f_critter_spells_memorized_idx, i);
+		if (spellSys.isDomainSpell(spData.classCode) 
+			|| d20ClassSys.IsVancianCastingClass(spellSys.GetCastingClass(spData.classCode))){
+			addSpell(handle, spData, specNode, spellEntryAction);
+		}
+	}
+	// Spells Known
+	for (auto i = 0u; i<numKnown; i++) {
+		auto spData = obj->GetSpell(obj_f_critter_spells_known_idx, i);
+		if (!spellSys.isDomainSpell(spData.classCode)
+			&& d20ClassSys.IsNaturalCastingClass(spellSys.GetCastingClass(spData.classCode))) {
+			addSpell(handle, spData, specNode, spellEntryAction);
+		}
+	}
+
+}
+
+void RadialMenus::AssignMenu(objHndl handle)
+{
+	temple::GetRef<void(__cdecl)(objHndl)>(0x100F0EE0)(handle);
+}
+
+void RadialMenus::SetStandardNode(objHndl handle, int stdNode, int specialParent){
+
+	auto meskey = 1000 + stdNode;
+	auto isSpellNode = false;
+	auto isVanillaNode = false;
+
+	static auto getClassFromSpecialNode = [](int specNode)->Stat {
+		if (specNode == RadialMenuStandardNode::SpellsWizard)
+			return stat_level_wizard;
+		if (specNode == RadialMenuStandardNode::SpellsBard)
+			return stat_level_bard;
+		if (specNode == RadialMenuStandardNode::SpellsCleric)
+			return stat_level_cleric;
+		if (specNode == RadialMenuStandardNode::SpellsDomain)
+			return stat_level_cleric;
+		if (specNode == RadialMenuStandardNode::SpellsDruid)
+			return stat_level_druid;
+		if (specNode == RadialMenuStandardNode::SpellsPaladin)
+			return stat_level_paladin;
+		if (specNode == RadialMenuStandardNode::SpellsRanger)
+			return stat_level_ranger;
+		if (specNode == RadialMenuStandardNode::SpellsSorcerer)
+			return stat_level_sorcerer;
+		return (Stat)0;
+	};
+
+	
+	if (stdNode > RadialMenuStandardNode::SpellsDomain && stdNode <= 104) {
+		isSpellNode = true;
+
+		if (specialParent == RadialMenuStandardNode::SpellsSorcerer && stdNode < 34
+			|| specialParent == RadialMenuStandardNode::SpellsBard && stdNode < 44)
+			isVanillaNode = true;
+
+		if (isVanillaNode)
+			meskey = (stdNode - 24) % 6 + 1024;
+		else
+			meskey = (stdNode - 24) % 10 + 1024;
+	}
+
+	RadialMenuEntryParent radMenuEntry(meskey);
+
+	if (isSpellNode) {
+		auto classCode = getClassFromSpecialNode(specialParent);
+
+		auto isNaturalCasting = d20ClassSys.IsNaturalCastingClass(classCode);
+
+		if (isNaturalCasting) {
+			radMenuEntry.flags |= 6; // draw min/max arg
+			auto spLvl = (stdNode - 24) % NUM_SPELL_LEVELS;
+
+			if (isVanillaNode) {
+				spLvl = (stdNode - 24) % 6; // vanilla num spell levels
+			}
+
+			auto spellClass = spellSys.GetSpellClass(classCode);
+			auto numSpellsPerDay = spellSys.GetNumSpellsPerDay(handle, classCode, spLvl);
+			if (numSpellsPerDay < 0)
+				numSpellsPerDay = 0;
+
+			radMenuEntry.maxArg = numSpellsPerDay;
+
+			auto numSpellsCast = spellSys.NumSpellsInLevel(handle, obj_f_critter_spells_cast_idx, spellClass, spLvl);
+			if (numSpellsCast < numSpellsPerDay)
+				radMenuEntry.minArg = numSpellsPerDay - numSpellsCast;
+			else
+				radMenuEntry.minArg = 0;
+
+		}
+
+	}
+
+
+	RadialMenus::standardNodeIndices[stdNode] = radialMenus.AddParentChildNode(handle, &radMenuEntry, RadialMenus::standardNodeIndices[specialParent]);
+	auto test = RadialMenus::standardNodeIndices[stdNode];
+	auto test2 = RadialMenus::standardNodeIndices[specialParent];
+	auto asdf = 0;
 }
 
 const RadialMenu* RadialMenus::GetForObj(objHndl handle) {

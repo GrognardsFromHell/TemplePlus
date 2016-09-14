@@ -115,6 +115,11 @@ SpellListType PythonClassSpecIntegration::GetSpellListType(int classEnum){
 	return static_cast<SpellListType>(GetInt(classEnum, ClassSpecFunc::GetSpellListType, (int)SpellListType::None));
 }
 
+SpellReadyingType PythonClassSpecIntegration::GetSpellReadyingType(int classEnum)
+{
+	return static_cast<SpellReadyingType>(GetInt(classEnum, ClassSpecFunc::GetSpellReadyingType, (int)SpellReadyingType::Vancian));
+}
+
 std::map<int, int> PythonClassSpecIntegration::GetSpellList(int classEnum)
 {
 	auto result = std::map<int, int>();
@@ -281,6 +286,7 @@ static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 	{ ClassSpecFunc::IsWillSaveFavored,"IsWillSaveFavored" },
 
 	{ ClassSpecFunc::GetSpellListType,"GetSpellListType" },
+	{ ClassSpecFunc::GetSpellReadyingType,"GetSpellReadyingType" },
 	{ ClassSpecFunc::GetSpellList,"GetSpellList" },
 	{ ClassSpecFunc::GetSpellsPerDay,"GetSpellsPerDay" },
 	{ ClassSpecFunc::GetSpellConditionName,"GetSpellCasterConditionName" },

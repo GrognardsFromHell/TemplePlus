@@ -55,8 +55,8 @@ static_assert(sizeof(UiCharSpellsNavPacket) == 0x30, "UiCharSpellPacket should h
 
 struct UiCharAddresses : temple::AddressTable
 {
-	UiCharSpellsNavPacket *uiCharSpellsNavPackets;
-	UiCharSpellPacket * uiCharSpellPackets; // size
+	UiCharSpellsNavPacket *uiCharSpellsNavPackets; // size 12 array
+	UiCharSpellPacket * uiCharSpellPackets; // size 12 array
 	int * uiCharSpellsNavClassTabIdx;
 	WidgetType1** uiCharSpellsMainWnd;
 	WidgetType1** uiCharSpellsNavClassTabWnd;
@@ -345,11 +345,11 @@ void CharUiSystem::SpellsShow(objHndl obj)
 	auto uiCharSpellTabPadding = temple::GetRef<int>(0x10C81B40);
 
 	// find which caster class tabs should appear
-	for (int i = 0; i < VANILLA_NUM_CLASSES ; i++){
-		auto classCode = d20ClassSys.vanillaClassEnums[i];
+	for (auto it: d20ClassSys.classEnums){
+		auto classCode = (Stat)it;
 		auto spellClassCode = spellSys.GetSpellClass(classCode);
 
-		if (!d20ClassSys.IsCastingClass(classCode))
+		if (!d20ClassSys.HasSpellList(classCode))
 			continue;
 
 		auto classLvl = objects.StatLevelGet(dude, classCode) ;
@@ -419,8 +419,12 @@ void CharUiSystem::SpellsShow(objHndl obj)
 	// show the first class's spellbook / spells memorized
 	if (uiCharSpellTabsCount > 0 && !spellSys.isDomainSpell(navClassPackets[0].spellClassCode))	{
 		auto classCode = spellSys.GetCastingClass(navClassPackets[0].spellClassCode );
+		// if is vancian, show the spells memorized too
 		if (d20ClassSys.IsVancianCastingClass(classCode)){
 			ui.WidgetSetHidden(charSpellPackets[0].classMemorizeWnd->widgetId, 0);
+		} else
+		{
+			ui.WidgetSetHidden(charSpellPackets[0].classMemorizeWnd->widgetId, 1);
 		}
 		ui.WidgetSetHidden(charSpellPackets[0].classSpellbookWnd->widgetId, 0);
 		ui.WidgetBringToFront(charSpellPackets[0].classSpellbookWnd->widgetId);
@@ -434,7 +438,8 @@ void CharUiSystem::SpellsShow(objHndl obj)
 		ui.WidgetSetHidden(charSpellPackets[i].classMemorizeWnd->widgetId, 1);
 	}
 
-	// hide inactive nav tabs
+	// hide inactive nav tabs 
+	// TODO extend to support more than 11 tabs... for that one crazy ass player who picks a shitload of casting classes :P
 	for (int i = uiCharSpellTabsCount; i < VANILLA_NUM_CLASSES + 1; i++){
 		ui.WidgetSetHidden(navClassPackets[i].button->widgetId, 1);
 	}
@@ -665,11 +670,12 @@ void CharUiSystem::SpellsShow(objHndl obj)
 		}
 	}
 
-	// hide memorized slots without spells
+	// hide memorized slots without spells and for natural casting classes
 	bool showMemSpells = true;
 	auto spellClassCode = navClassPackets[uiCharSpellsNavClassTabIdx].spellClassCode;
 	if (!spellSys.isDomainSpell(spellClassCode)){
 		auto casterClassCode = spellSys.GetCastingClass(spellClassCode);
+
 		if (d20ClassSys.IsNaturalCastingClass(casterClassCode))
 			showMemSpells = false;
 	}

@@ -87,6 +87,7 @@ public:
 	bool IsNaturalCastingClass(uint32_t classEnum);
 	bool IsVancianCastingClass(Stat classEnum, objHndl handle = objHndl::null);
 	bool IsCastingClass(Stat classEnum);
+	bool HasSpellList(Stat classEnum); // does this class have its own spell list? (as opposed to extending another's like Mystic Theurge does), e.g. Blackguard, Assassin
 	bool IsLateCastingClass(Stat classEnum); // for classes like Ranger / Paladin that start casting on level 4
 	bool IsArcaneCastingClass(Stat stat, objHndl handle = objHndl::null);
 	bool IsDivineCastingClass(Stat stat, objHndl handle = objHndl::null);

@@ -47,7 +47,7 @@ enum RadialMenuStandardNode : uint32_t {
 	SpellsPaladin,
 	SpellsDruid,
 	SpellsRanger,
-	SpellsDomain,
+	SpellsDomain, // above this are the spell numbers i.e. 0-9 for each class in the above order
 };
 
 enum class RadialMenuEntryType : uint32_t {
@@ -147,7 +147,7 @@ struct D20RadialMenuDef
 	int d20ActionData1;
 	int combatMesLineIdx;
 	const char * helpSystemEntryName;
-	void(__cdecl * callback)(objHndl, RadialMenuEntry*);
+	BOOL(__cdecl * callback)(objHndl, RadialMenuEntry*);
 };
 
 /*
@@ -155,6 +155,9 @@ struct D20RadialMenuDef
 */
 class RadialMenus {
 public:
+
+	void BuildStandardRadialMenu(objHndl handle); // called from the RadialMenuGlobal dispatcher callback
+		
 
 	static int standardNodeIndices[120];
 
@@ -206,6 +209,10 @@ public:
 	BOOL PythonActionCallback(const objHndl& handle, RadialMenuEntry* entry);
 
 	std::map<int, std::string> radMenuStrings;
+
+protected:
+	void AssignMenu(objHndl handle);
+	void SetStandardNode(objHndl handle, int stdNode , int specialParent);
 };
 
 extern RadialMenus radialMenus;

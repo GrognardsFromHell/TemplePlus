@@ -4245,7 +4245,7 @@ int ClassAbilityCallbacks::DruidWildShapeCheck(DispatcherCallbackArgs args){
 
 		auto idx = d20a->data1 - (1 << 24);
 		auto &spec = d20ClassSys.wildShapeProtos[(WildShapeProtoIdx)idx];
-		if (druidLvl < (int)spec.minLvl)
+		if (druidLvl < (int)spec.minLvl && spec.minLvl != 10000)
 			dispIo->returnVal = AEC_INVALID_ACTION;
 
 		auto numTimes = args.GetCondArg(0);

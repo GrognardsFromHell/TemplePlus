@@ -3217,6 +3217,9 @@ spell_list_type_ranger = 9
 spell_list_type_special = 10
 spell_list_type_theurge = 11
 
+spell_readying_vancian = 0
+spell_readying_innate = 1
+
 # Textfloater colors
 tf_white = 0
 tf_red = 1
