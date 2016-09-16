@@ -131,7 +131,7 @@ namespace ParticleEditor
             InteropImage.OnRender = DoRender;
             InteropImage.RequestRender();
 
-            _templeDll = new TempleDll(_dataPath);
+            _templeDll = new TempleDll(DataPath);
         }
 
         private void DoRender(IntPtr surface, bool isNewSurface)

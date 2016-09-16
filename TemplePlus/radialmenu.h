@@ -213,6 +213,9 @@ public:
 protected:
 	void AssignMenu(objHndl handle);
 	void SetStandardNode(objHndl handle, int stdNode , int specialParent);
+	int GetSpellClassFromSpecialNode(objHndl, int specialParent);
+	void AddSpell(objHndl handle, SpellStoreData &spData, int &specNode, RadialMenuEntry &spellEntryAction);
+	int GetSpellLevelNodeFromSpellClass(objHndl handle, int spellClass);
 };
 
 extern RadialMenus radialMenus;

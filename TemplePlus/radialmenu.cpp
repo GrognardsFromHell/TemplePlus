@@ -19,6 +19,8 @@
 #include "critter.h"
 #include "combat.h"
 #include <tig/tig_mouse.h>
+#include "gamesystems/d20/d20stats.h"
+#include "gamesystems/legacymapsystems.h"
 
 RadialMenus radialMenus;
 int RadialMenus::standardNodeIndices[120];
@@ -254,7 +256,7 @@ int return0()
 
 void RadialMenus::BuildStandardRadialMenu(objHndl handle){
 
-	AssignMenu(handle); // TODO
+	AssignMenu(handle); 
 	standardNodeIndices[0] = 0; // root
 	// set the main 6 nodes: Spells, Skills, Feats, Class, Combat, Items
 	for (int i = RadialMenuStandardNode::Spells; i <= RadialMenuStandardNode::Items; i++){
@@ -348,14 +350,15 @@ void RadialMenus::BuildStandardRadialMenu(objHndl handle){
 		radEntry.AddAsChild(handle, GetStandardNode(RadialMenuStandardNode::Tactical));
 	}
 
-	auto addSpell = temple::GetRef<void(__cdecl)(objHndl, SpellStoreData&, int&, RadialMenuEntry&)>(0x100F1470);
+	
 	int specNode;
 	RadialMenuEntry spellEntryAction;
 	for (auto i=0u; i<numMem; i++){
 		auto spData = obj->GetSpell(obj_f_critter_spells_memorized_idx, i);
 		if (spellSys.isDomainSpell(spData.classCode) 
 			|| d20ClassSys.IsVancianCastingClass(spellSys.GetCastingClass(spData.classCode))){
-			addSpell(handle, spData, specNode, spellEntryAction);
+			AddSpell(handle, spData, specNode, spellEntryAction);
+			
 		}
 	}
 	// Spells Known
@@ -363,7 +366,7 @@ void RadialMenus::BuildStandardRadialMenu(objHndl handle){
 		auto spData = obj->GetSpell(obj_f_critter_spells_known_idx, i);
 		if (!spellSys.isDomainSpell(spData.classCode)
 			&& d20ClassSys.IsNaturalCastingClass(spellSys.GetCastingClass(spData.classCode))) {
-			addSpell(handle, spData, specNode, spellEntryAction);
+			AddSpell(handle, spData, specNode, spellEntryAction);
 		}
 	}
 
@@ -380,26 +383,6 @@ void RadialMenus::SetStandardNode(objHndl handle, int stdNode, int specialParent
 	auto isSpellNode = false;
 	auto isVanillaNode = false;
 
-	static auto getClassFromSpecialNode = [](int specNode)->Stat {
-		if (specNode == RadialMenuStandardNode::SpellsWizard)
-			return stat_level_wizard;
-		if (specNode == RadialMenuStandardNode::SpellsBard)
-			return stat_level_bard;
-		if (specNode == RadialMenuStandardNode::SpellsCleric)
-			return stat_level_cleric;
-		if (specNode == RadialMenuStandardNode::SpellsDomain)
-			return stat_level_cleric;
-		if (specNode == RadialMenuStandardNode::SpellsDruid)
-			return stat_level_druid;
-		if (specNode == RadialMenuStandardNode::SpellsPaladin)
-			return stat_level_paladin;
-		if (specNode == RadialMenuStandardNode::SpellsRanger)
-			return stat_level_ranger;
-		if (specNode == RadialMenuStandardNode::SpellsSorcerer)
-			return stat_level_sorcerer;
-		return (Stat)0;
-	};
-
 	
 	if (stdNode > RadialMenuStandardNode::SpellsDomain && stdNode <= 104) {
 		isSpellNode = true;
@@ -409,48 +392,207 @@ void RadialMenus::SetStandardNode(objHndl handle, int stdNode, int specialParent
 			isVanillaNode = true;
 
 		if (isVanillaNode)
-			meskey = (stdNode - 24) % 6 + 1024;
+			meskey = (stdNode - 24) % NUM_SPELL_LEVELS_VANILLA + 1024;
 		else
-			meskey = (stdNode - 24) % 10 + 1024;
+			meskey = (stdNode - 24) % NUM_SPELL_LEVELS + 1024;
 	}
 
 	RadialMenuEntryParent radMenuEntry(meskey);
 
-	if (isSpellNode) {
-		auto classCode = getClassFromSpecialNode(specialParent);
-
-		auto isNaturalCasting = d20ClassSys.IsNaturalCastingClass(classCode);
-
-		if (isNaturalCasting) {
-			radMenuEntry.flags |= 6; // draw min/max arg
-			auto spLvl = (stdNode - 24) % NUM_SPELL_LEVELS;
-
-			if (isVanillaNode) {
-				spLvl = (stdNode - 24) % 6; // vanilla num spell levels
-			}
-
-			auto spellClass = spellSys.GetSpellClass(classCode);
-			auto numSpellsPerDay = spellSys.GetNumSpellsPerDay(handle, classCode, spLvl);
-			if (numSpellsPerDay < 0)
-				numSpellsPerDay = 0;
-
-			radMenuEntry.maxArg = numSpellsPerDay;
-
-			auto numSpellsCast = spellSys.NumSpellsInLevel(handle, obj_f_critter_spells_cast_idx, spellClass, spLvl);
-			if (numSpellsCast < numSpellsPerDay)
-				radMenuEntry.minArg = numSpellsPerDay - numSpellsCast;
-			else
-				radMenuEntry.minArg = 0;
-
+	// change name
+	if (stdNode >= RadialMenuStandardNode::SpellsWizard && stdNode < RadialMenuStandardNode::SpellsDomain){
+		auto spellClass = GetSpellClassFromSpecialNode(handle, stdNode);
+		
+		if (!spellSys.isDomainSpell(spellClass)){
+			auto classEnum = spellSys.GetCastingClass(spellClass);
+			radMenuEntry.text = (char*)d20Stats.GetStatShortName(classEnum);
+		} else
+		{
+			radMenuEntry.text = (char*)combatSys.GetCombatMesLine(1000 + RadialMenuStandardNode::SpellsDomain);
 		}
+	
+	}
+	// Set min/max for Natural Casting
+	else if (isSpellNode) {
+		auto spellClass = GetSpellClassFromSpecialNode(handle, specialParent);
+		if (!spellSys.isDomainSpell(spellClass))	{
+			auto classCode = spellSys.GetCastingClass(spellClass);
+			auto isNaturalCasting = d20ClassSys.IsNaturalCastingClass(classCode);
+
+			if (isNaturalCasting) {
+				radMenuEntry.flags |= 6; // draw min/max arg
+				auto spLvl = (stdNode - 24) % NUM_SPELL_LEVELS;
+
+				//if (isVanillaNode) {
+				//	spLvl = (stdNode - 24) % 6; // vanilla num spell levels
+				//}
+
+				auto spellClass = spellSys.GetSpellClass(classCode);
+				auto numSpellsPerDay = spellSys.GetNumSpellsPerDay(handle, classCode, spLvl);
+				if (numSpellsPerDay < 0)
+					numSpellsPerDay = 0;
+
+				radMenuEntry.maxArg = numSpellsPerDay;
+
+				auto numSpellsCast = spellSys.NumSpellsInLevel(handle, obj_f_critter_spells_cast_idx, spellClass, spLvl);
+				if (numSpellsCast < numSpellsPerDay)
+					radMenuEntry.minArg = numSpellsPerDay - numSpellsCast;
+				else
+					radMenuEntry.minArg = 0;
+
+			}
+		}
+
 
 	}
 
 
 	RadialMenus::standardNodeIndices[stdNode] = radialMenus.AddParentChildNode(handle, &radMenuEntry, RadialMenus::standardNodeIndices[specialParent]);
-	auto test = RadialMenus::standardNodeIndices[stdNode];
-	auto test2 = RadialMenus::standardNodeIndices[specialParent];
-	auto asdf = 0;
+}
+
+int RadialMenus::GetSpellClassFromSpecialNode(objHndl handle, int specialParent){
+	auto classArr = objSystem->GetObject(handle)->GetInt32Array(obj_f_critter_level_idx);
+	auto classArrSize = classArr.GetSize();
+	std::vector<int> spellClasses;
+	for (auto classEnum: d20ClassSys.classEnumsWithSpellLists){
+
+		if (objects.StatLevelGet(handle, classEnum) <= 0)
+			continue;
+
+		spellClasses.push_back( spellSys.GetSpellClass(classEnum) );
+	}
+
+	auto idx = specialParent - RadialMenuStandardNode::SpellsWizard;
+	if (idx < spellClasses.size()){
+		return spellClasses[specialParent - RadialMenuStandardNode::SpellsWizard];
+	}
+		
+	return 0; // will register as domain spell
+	// the legacy stuff
+	static auto getClassFromNode = [](int specPar) {
+		if (specPar== RadialMenuStandardNode::SpellsWizard)
+			return stat_level_wizard;
+		if (specPar== RadialMenuStandardNode::SpellsBard)
+			return stat_level_bard;
+		if (specPar== RadialMenuStandardNode::SpellsCleric)
+			return stat_level_cleric;
+		if (specPar== RadialMenuStandardNode::SpellsDomain)
+			return stat_level_cleric;
+		if (specPar== RadialMenuStandardNode::SpellsDruid)
+			return stat_level_druid;
+		if (specPar== RadialMenuStandardNode::SpellsPaladin)
+			return stat_level_paladin;
+		if (specPar== RadialMenuStandardNode::SpellsRanger)
+			return stat_level_ranger;
+		if (specPar== RadialMenuStandardNode::SpellsSorcerer)
+			return stat_level_sorcerer;
+		return (Stat) 0;
+	};
+	return spellSys.GetSpellClass(getClassFromNode(specialParent));
+}
+
+void RadialMenus::AddSpell(objHndl handle, SpellStoreData & spData, int & specNode, RadialMenuEntry & entry){
+	//auto addSpell = temple::GetRef<void(__cdecl)(objHndl, SpellStoreData&, int&, RadialMenuEntry&)>(0x100F1470);
+	//addSpell(handle, spData, specNode, spellEntryAction);
+
+	if (spData.spellStoreState.usedUp & 1){
+		return;
+	}
+
+	if (spellSys.spellCanCast(handle, spData.spellEnum, spData.classCode, spData.spellLevel ) != TRUE){
+		return;
+	}
+
+	entry.SetDefaults();
+	entry.text = (char*)spellSys.GetSpellMesline(spData.spellEnum);
+	
+	if (spData.spellLevel >= 10)
+		return;
+
+	specNode = GetSpellLevelNodeFromSpellClass(handle, spData.classCode) + spData.spellLevel;
+
+	if (!spellSys.SpellHasMultiSelection(spData.spellEnum)){
+		
+		entry.d20ActionType = D20A_CAST_SPELL;
+		entry.d20SpellData.Set(spData.spellEnum, spData.classCode, spData.spellLevel, -1, spData.metaMagicData);
+		entry.d20ActionData1 = 0;
+		entry.helpId = ElfHash::Hash(spellSys.GetSpellEnumTAG(spData.spellEnum));
+		auto nodeIdx = entry.AddAsChild(handle, GetStandardNode((RadialMenuStandardNode)specNode));
+		spellSys.SetSpontaneousCastingAltNode(handle, nodeIdx ,&spData);
+		return;
+	}
+
+	// Multiselection spells section
+	
+	// the parent node
+	auto parentNodeIdx = radialMenus.AddParentChildNode(handle, &entry, GetStandardNode((RadialMenuStandardNode)specNode));
+	spellSys.SetSpontaneousCastingAltNode(handle, parentNodeIdx, &spData);
+
+	// the options
+	std::vector<SpellMultiOption> multiOptions;
+	if (!spellSys.GetMultiSelectOptions(spData.spellEnum, multiOptions))
+	{
+		logger->error("Spell multiselect options not found!");
+		return;
+	}
+
+	// populate options
+	auto numOptions = multiOptions.size();
+	for (auto i=0u; i<numOptions; i++){
+		auto &op = multiOptions[i];
+		entry.SetDefaults();
+		
+		entry.d20SpellData.Set(spData.spellEnum, spData.classCode, spData.spellLevel, -1, spData.metaMagicData);
+		entry.d20ActionType = D20A_CAST_SPELL;
+		entry.d20ActionData1 = 0;
+		entry.helpId = ElfHash::Hash(spellSys.GetSpellEnumTAG(spData.spellEnum));
+		SetCallbackCopyEntryToSelected(&entry);
+
+
+		
+		if (op.isProto){
+			auto protoId = multiOptions[i].value;
+			entry.minArg = protoId;
+
+			auto protoHandle = objSystem->GetProtoHandle(protoId);
+			auto protoObj = objSystem->GetObject(protoHandle);
+			entry.text = (char*)description.GetDescriptionString(protoObj->GetInt32(obj_f_description));
+
+		} else	{
+			MesLine line(multiOptions[i].value);
+			mesFuncs.GetLine_Safe(*spellSys.spellsRadialMenuOptionsMes, &line);
+			entry.text = (char*)line.value;	
+			entry.minArg = i + 1;
+		}
+
+		entry.AddAsChild(handle, parentNodeIdx);
+	}
+}
+
+int RadialMenus::GetSpellLevelNodeFromSpellClass(objHndl handle, int spellClass){
+
+	auto classArr = objSystem->GetObject(handle)->GetInt32Array(obj_f_critter_level_idx);
+	auto classArrSize = classArr.GetSize();
+	std::vector<int> spellClasses;
+	for (auto classEnum : d20ClassSys.classEnumsWithSpellLists) {
+
+		if (objects.StatLevelGet(handle, classEnum) <= 0)
+			continue;
+
+		spellClasses.push_back(spellSys.GetSpellClass(classEnum));
+	}
+
+	// domain spells go last
+	if (spellSys.isDomainSpell(spellClass))
+		return RadialMenuStandardNode::SpellsDomain + 1 +  spellClasses.size() * NUM_SPELL_LEVELS;
+
+	for (auto i = 0u; i < spellClasses.size(); i++) {
+		if (spellClasses[i] == spellClass)
+			return RadialMenuStandardNode::SpellsDomain + 1 + i * NUM_SPELL_LEVELS;
+	}
+
+	logger->warn("GetSpellMasterNodeFromSpellClass: No matching class found for memorized/known spell???");
+	return RadialMenuStandardNode::SpellsDomain + 1;
 }
 
 const RadialMenu* RadialMenus::GetForObj(objHndl handle) {

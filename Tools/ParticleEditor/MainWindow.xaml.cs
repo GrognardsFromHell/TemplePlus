@@ -19,6 +19,10 @@ namespace ParticleEditor
         public MainWindow() {
             InitializeComponent();
             PreviewControl.DataPath = Settings.Default.TemplePath;
+            if (PreviewControl.DataPath.Length == 0)
+            {
+                ChooseDataPath();
+            }
             Model = new EditorViewModel();
             DataContext = Model;
         }

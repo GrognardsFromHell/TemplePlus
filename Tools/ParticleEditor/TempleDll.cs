@@ -26,8 +26,14 @@ namespace ParticleEditor
                     "Unable to find TemplePlus data in the installation directory of the editor."
                 );
             }
+            try
+            {
+                Handle = TempleDll_Load(path, tpData);
+            }
+            catch (Exception e){
 
-            Handle = TempleDll_Load(path, tpData);
+            }
+            
             if (Handle == IntPtr.Zero)
             {
                 throw new InvalidOperationException(

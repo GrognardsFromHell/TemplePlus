@@ -74,11 +74,12 @@ struct D20ClassSpec {
 	Stat spellStat; // stat that determines maximum spell level
 };
 
-struct D20ClassSystem : temple::AddressTable
+class D20ClassSystem : temple::AddressTable
 {
 public:
 	Stat vanillaClassEnums[VANILLA_NUM_CLASSES];
 	std::vector<int> classEnums;
+	std::vector<Stat> classEnumsWithSpellLists; // prepare a list of classes with spell lists
 	const int ClassLevelMax = 20;
 
 	bool ReqsMet(const objHndl &handle, const Stat classCode); // class requirements met

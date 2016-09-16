@@ -214,7 +214,12 @@ void D20StatsSystem::Init(const GameSystemConf& conf){
 		if (mesFuncs.GetLine(statMes, &shortNameLine)){
 			statShortNameStrings[i] = shortNameLine.value;
 		}
+		// overrun from the extension file
 		if (mesFuncs.GetLine(statMesExt, &shortNameLine)) {
+			statShortNameStrings[i] = shortNameLine.value;
+		}
+		if (!statShortNameStrings[i]){
+			mesFuncs.GetLine_Safe(statMesExt, &shortNameLine);
 			statShortNameStrings[i] = shortNameLine.value;
 		}
 	}

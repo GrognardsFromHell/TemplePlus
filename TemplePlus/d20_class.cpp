@@ -410,6 +410,10 @@ void D20ClassSystem::GetClassSpecs(){
 				classSpec.spellList = pythonClassIntegration.GetSpellList(it);
 				spellSys.GetSpellEntryExtFromClassSpec(classSpec.spellList, it);
 			}
+
+			if (HasSpellList((Stat)it))	{
+				classEnumsWithSpellLists.push_back((Stat)it);
+			}
 		}
 		
 		// skills

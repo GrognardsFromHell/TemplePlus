@@ -24,6 +24,7 @@
 #include "float_line.h"
 #include "history.h"
 #include "damage.h"
+#include <tig\tig_tokenizer.h>
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
@@ -83,6 +84,12 @@ public:
 		replaceFunction(0x10075660, _GetSpellEnumFromSpellId);
 		replaceFunction(0x100756E0, _GetSpellPacketBody);
 		replaceFunction(0x100F1010, _SetSpontaneousCastingAltNode);
+
+		replaceFunction<BOOL(__cdecl)(const char*)>(0x1007B5B0, [](const char* spellRulesFolder)->BOOL
+		{
+			return spellSys.SpellEntriesInit(spellRulesFolder);
+		});
+
 
 		replaceFunction<void(__cdecl)()>(0x10079390, []() {
 			spellSys.SpellSave();
@@ -1382,6 +1389,172 @@ void LegacySpellSystem::ForgetMemorized(objHndl handle) {
 	objSystem->GetObject(handle)->ClearArray(obj_f_critter_spells_memorized_idx);
 }
 
+BOOL LegacySpellSystem::SpellEntriesInit(const char * spellRulesFolder){
+	char filepat[260] = { 0, };
+	char spellFileName[260] = { 0, };
+	_snprintf(filepat, 260, "%s\\*.txt", spellRulesFolder);
+	TioFileList flist;
+	tio_filelist_create(&flist, filepat);
+	for (auto i=0; i < flist.count; i++){
+		auto &f = flist.files[i];
+
+		SpellEntry spEntry;
+		
+		
+		spEntry.spellEnum = atol(flist.files[i].name);
+		
+		// check if already exists
+		if (spellEntryRegistry.get(spEntry.spellEnum) != nullptr){
+			logger->error("Multiple spells with the same number {} ({})", spEntry.spellEnum, flist.files[i].name);
+			return FALSE;
+		}
+
+		_snprintf(spellFileName, 260, "%s\\%s", spellRulesFolder, f.name);
+		auto spellFile = tio_fopen(spellFileName, "rt");
+		if (!spellFile)
+		{
+			logger->error("Could not open spell file {}", f.name);
+			return FALSE;
+		}
+			
+		if (!SpellEntryFileParse(spEntry, spellFile))
+		{
+			return FALSE;
+		}
+
+		tio_fclose(spellFile);
+
+		spellEntryRegistry.put(spEntry.spellEnum, spEntry);
+
+	}
+
+	tio_filelist_destroy(&flist);
+	return TRUE;
+}
+
+bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
+{
+	char textBuf[1000] = { 0, };
+	static auto spellEntryLineParser = temple::GetRef<BOOL(__cdecl)(char *, int &, int &, int&)>(0x1007A890);
+	while (tio_fgets(textBuf, 1000, tf))
+	{
+		int fieldType, value, value2;
+
+		if (!strnicmp(textBuf, "choices", 7)){
+			
+			for (auto ch = textBuf; *ch; ch++)
+			{
+				if (*ch == ':'){
+					StringTokenizer choiceToks(ch+1);
+					while (choiceToks.next()) {
+						SpellMultiOption mOpt;
+						mOpt.value = atol(choiceToks.token().text);
+						mMultiOptions[spEntry.spellEnum].push_back(mOpt);
+					}
+					break;
+				}
+			}
+		}
+		else if (!strnicmp(textBuf, "proto choices", 13)) {
+
+			for (auto ch = textBuf; *ch; ch++){
+				if (*ch == ':') {
+					StringTokenizer choiceToks(ch + 1);
+					while (choiceToks.next()) {
+						SpellMultiOption mOpt;
+						mOpt.value = atol(choiceToks.token().text);
+						mOpt.isProto = true;
+						if (mOpt.value < 14000 || mOpt.value >= 15000)
+						{
+							logger->error("Bad proto specified in Spell proto choices!");
+						}
+						mMultiOptions[spEntry.spellEnum].push_back(mOpt);
+					} 
+					break;
+				}
+			}
+		}
+		
+
+		else if (spellEntryLineParser(textBuf, fieldType, value, value2)){
+			switch (fieldType)
+			{
+			case 0:
+				spEntry.spellSchoolEnum = value;
+				break;
+			case 1:
+				spEntry.spellSubSchoolEnum = value;
+				break;
+			case 2:
+				spEntry.spellDescriptorBitmask |= value;
+				break;
+			case 3:
+				if (spEntry.spellLvlsNum< 10)
+				{
+					spEntry.spellLvls[spEntry.spellLvlsNum].spellClass = value;
+					spEntry.spellLvls[spEntry.spellLvlsNum++].slotLevel = value2;
+				}
+				break;
+			case 4:
+				spEntry.spellComponentBitmask |= value;
+				if (value == 4)
+					spEntry.costGP = value2;
+				else if (value == 8)
+					spEntry.costXP = value2;
+				break;
+			case 5:
+				spEntry.castingTimeType = value;
+				break;
+			case 6:
+				spEntry.spellRangeType = (SpellRangeType)value;
+				spEntry.spellRange = value2;
+				break;
+			case 7:
+				spEntry.savingThrowType = value;
+				break;
+			case 8:
+				spEntry.spellResistanceCode = value;
+				break;
+			case 9:
+				spEntry.projectileFlag = value;
+				break;
+			case 10:
+				spEntry.flagsTargetBitmask |= temple::GetRef<uint64_t[]>(0x102BF800)[value];
+				break;
+			case 11:
+				spEntry.incFlagsTargetBitmask |= temple::GetRef<uint64_t[]>(0x102BF840)[value];
+				break;
+			case 12:
+				spEntry.excFlagsTargetBitmask |= temple::GetRef<uint64_t[]>(0x102BF840)[value];
+				break;
+			case 13:
+				spEntry.modeTargetSemiBitmask |= temple::GetRef<uint64_t[]>(0x102BF898)[value];
+				break;
+			case 14:
+				spEntry.minTarget = value;
+				break;
+			case 15:
+				spEntry.maxTarget = value;
+				break;
+			case 16:
+				spEntry.radiusTarget = value;
+				break;
+			case 17:
+				spEntry.degreesTarget = value; // TODO test this!
+				break;
+			case 18:
+				spEntry.aiTypeBitmask |= (1 << value);
+				break;
+			default:
+				logger->warn("Unhandled spell field {}", fieldType);
+				break;
+			}
+			
+		}
+	}
+	return true;
+}
+
 void LegacySpellSystem::GetSpellEntryExtFromClassSpec(std::map<int, int>& mapping, int classEnum){
 	for (auto it:mapping){
 		SpellEntryLevelSpec newEntry;
@@ -1489,13 +1662,17 @@ uint32_t LegacySpellSystem::spellCanCast(objHndl objHnd, uint32_t spellEnum, uin
 	uint32_t count = 0;
 	uint32_t classCodes[10000];
 	uint32_t spellLevels[10000];
+	if (d20Sys.d20Query(objHnd, DK_QUE_CannotCast))
+		return 0;
 
 	SpellEntry spellEntry;
-	if (d20Sys.d20Query(objHnd, DK_QUE_CannotCast) 
-		|| !spellEntryRegistry.copy(spellEnum, &spellEntry) ) 
+	if ( !spellEntryRegistry.copy(spellEnum, &spellEntry) ) 
 		return 0;
+
 	if (isDomainSpell(spellClassCode)) // domain spell
 	{
+		
+
 		if (numSpellsMemorizedTooHigh(objHnd))	return 0;
 
 		spellMemorizedQueryGetData(objHnd, spellEnum, classCodes, spellLevels, &count);
@@ -1509,16 +1686,20 @@ uint32_t LegacySpellSystem::spellCanCast(objHndl objHnd, uint32_t spellEnum, uin
 		return 0;
 	}
 
-	if (d20ClassSys.IsNaturalCastingClass(spellClassCode & 0x7F)){
+	std::vector<int> classCodesVec;
+	std::vector<int> spellLevelsVec;
+	// non-domain
+	auto classEnum = spellSys.GetCastingClass(spellClassCode);
+	if (d20ClassSys.IsNaturalCastingClass( classEnum )){
 		if (numSpellsKnownTooHigh(objHnd)) return 0;
 
-		spellKnownQueryGetData(objHnd, spellEnum, classCodes, spellLevels, &count);
-		for (int32_t i = 0; i < (int32_t)count; i++){
-			if ( !isDomainSpell(classCodes[i])
-				&& (classCodes[i] & 0x7F) == (spellClassCode & 0x7F)
-				&& spellLevels[i] <= spellLevel)
+		SpellKnownQueryGetData(objHnd, spellEnum, classCodesVec, spellLevelsVec);
+		for (auto i = 0u; i < classCodesVec.size(); i++){
+			if ( !isDomainSpell(classCodesVec[i])
+				&& spellSys.GetCastingClass(classCodesVec[i] ) == classEnum
+				&& spellLevelsVec[i] <= spellLevel)
 			{
-				if (spellLevels[i] < spellLevel)
+				if (spellLevelsVec[i] < spellLevel)
 					logger->info("Natural Spell Caster spellCanCast check - spell known is lower level than spellCanCast queried spell. Is this ok?? (this is vanilla code here...)");
 				return 1;
 			}
@@ -1675,6 +1856,25 @@ int LegacySpellSystem::GetSpellLevelBySpellClass(int spellEnum, int spellClass, 
 	}
 
 	return -1;
+}
+
+bool LegacySpellSystem::SpellHasMultiSelection(int spellEnum)
+{
+	auto moFind = mMultiOptions.find(spellEnum);
+	if (moFind == mMultiOptions.end())
+		return false;
+
+	return true;
+}
+
+bool LegacySpellSystem::GetMultiSelectOptions(int spellEnum, std::vector<SpellMultiOption>& multiOptions)
+{
+	auto moFind = mMultiOptions.find(spellEnum);
+	if (moFind == mMultiOptions.end())
+		return false;
+
+	multiOptions = moFind->second;
+	return true;
 }
 
 uint32_t LegacySpellSystem::pickerArgsFromSpellEntry(SpellEntry* spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLvl)

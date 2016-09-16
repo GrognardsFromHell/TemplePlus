@@ -24,6 +24,12 @@ struct SpellEntryLevelSpec
 	SpellEntryLevelSpec() { spellClass = 0; slotLevel = 0; }
 };
 
+struct SpellMultiOption
+{
+	int value;
+	bool isProto = false;
+};
+
 enum SpellRangeType : uint32_t;
 enum Domain;
 
@@ -158,6 +164,7 @@ struct CondStruct;
 struct LegacySpellSystem : temple::AddressTable
 {
 	friend class D20ClassSystem;
+	friend class SpellFuncReplacements;
 
 	IdxTable<SpellPacket> * spellCastIdxTable;
 	std::map<int, SpellEntryExt> mSpellEntryExt;
@@ -214,7 +221,8 @@ struct LegacySpellSystem : temple::AddressTable
 	static bool IsLabel(int spellEnum); // check if it is a hardcoded "label" enum (used in the GUI etc)
 	static bool IsNewSlotDesignator(int spellEnum); // check if it is a  hardcoded "new slot" designator (used for sorting)  enums 1605-1614
 	int GetSpellLevelBySpellClass(int spellEnum, int spellClass, objHndl handle = objHndl::null); // returns -1 if not available for spell class
-
+	bool SpellHasMultiSelection(int spellEnum);
+	bool GetMultiSelectOptions(int spellEnum, std::vector<SpellMultiOption>& multiOptions);
 
 	uint32_t pickerArgsFromSpellEntry(SpellEntry * spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLevel);
 	uint32_t GetSpellRangeExact(SpellRangeType spellRangeType, uint32_t casterLevel, objHndl caster);
@@ -281,6 +289,11 @@ struct LegacySpellSystem : temple::AddressTable
 	}
 private:
 
+	BOOL SpellEntriesInit(const char* spellRulesFodler);
+		bool SpellEntryFileParse(SpellEntry & spEntry, TioFile *tf);
+
+	std::map<int, std::vector<SpellMultiOption>> mMultiOptions;
+	void GetSpellMultiOptionsFromFile(int spellEnum);
 	void GetSpellEntryExtFromClassSpec(std::map<int, int>& mapping, int classEnum);
 
 	uint32_t(__cdecl * _getSpellCountByClassLvl)();
