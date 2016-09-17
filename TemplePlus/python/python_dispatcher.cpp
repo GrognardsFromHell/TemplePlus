@@ -131,7 +131,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		;
 
 	#pragma region useful data types
-
+		#pragma region Bonuslist etc
 	py::class_<BonusList>(m, "BonusList")
 			.def(py::init())
 			.def("add", &BonusList::AddBonus, "Adds a bonus entry. Args are: value, type, and bonus.mes line number")
@@ -201,7 +201,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def_readwrite("flags", &TurnBasedStatus::tbsFlags)
 		.def_readwrite("attack_mode_code", &TurnBasedStatus::attackModeCode, "0 - normal main hand, 99 - dual wielding, 999 - natural attack")
 		;
-
+		#pragma endregion
 
 
 	py::enum_<RadialMenuStandardNode>(m, "RadialMenuStandardNode")
@@ -256,10 +256,20 @@ PYBIND11_PLUGIN(tp_dispatcher){
 	py::class_<RadialMenuEntryPythonAction>(m, "RadialMenuEntryPythonAction", py::base<RadialMenuEntryAction>())
 		.def(py::init<int, int, int, int, const char[]>(), py::arg("combatMesLine"), py::arg("action_type"), py::arg("action_id"), py::arg("data1"), py::arg("helpTopic"))
 		.def(py::init<int, int, const char[], int, const char[]>(), py::arg("combatMesLine"), py::arg("action_type"), py::arg("action_name"), py::arg("data1"), py::arg("helpTopic"))
+		.def(py::init<std::string&, int, int, int, const char[]>(), py::arg("radialText"), py::arg("action_type"), py::arg("action_id"), py::arg("data1"), py::arg("helpTopic"))
+		;
+
+	py::class_<RadialMenuEntryToggle>(m, "RadialMenuEntryToggle")
+		.def(py::init<std::string&, const char[]>(), py::arg("radialText"), py::arg("helpTopic"))
+		.def("link_to_args", [](RadialMenuEntryToggle & entry, DispatcherCallbackArgs &args, int argIdx)
+		{
+			entry.actualArg = (int)args.GetCondArgPtr(argIdx);
+		})
 		;
 
 	py::class_<RadialMenuEntryParent>(m, "RadialMenuEntryParent")
 		.def(py::init<int>(), py::arg("combesMesLine"))
+		.def(py::init<std::string&>(), py::arg("radialText"))
 		.def("add_as_child", &RadialMenuEntryParent::AddAsChild, "Adds this node as a child to a specified node ID, and returns the newly created node ID (so you may give it other children, etc.)")
 		.def("add_child_to_standard", &RadialMenuEntryParent::AddChildToStandard, "Adds this node as a child to a Standard Node (one of several hardcoded root nodes such as class, inventory etc.), and returns the newly created node ID (so you may give it other children, etc.)")
 		;

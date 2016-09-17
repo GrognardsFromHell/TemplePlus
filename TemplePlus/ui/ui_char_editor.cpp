@@ -1195,6 +1195,17 @@ void UiCharEditor::FeatsActivate(){
 			continue;
 		mSelectableFeats.push_back(FeatInfo(feat));
 	}
+	for (auto feat: feats.newFeats){
+		if (!feats.IsFeatEnabled(feat) && !feats.IsFeatMultiSelectMaster(feat))
+			continue;
+		if (feats.IsFeatRacialOrClassAutomatic(feat))
+			continue;
+		if (feats.IsFeatPartOfMultiselect(feat))
+			continue;
+		if (feat == FEAT_NONE)
+			continue;
+		mSelectableFeats.push_back(FeatInfo(feat));
+	}
 	std::sort(mSelectableFeats.begin(), mSelectableFeats.end(), featSorter);
 
 	ui.WidgetCopy(featsScrollbarId, &featsScrollbar);
@@ -1514,7 +1525,7 @@ BOOL UiCharEditor::ClassNextBtnMsg(int widId, TigMsg * msg){
 	}
 
 	if (_msg->widgetEventType == TigMsgWidgetEvent::Entered) {
-		auto textboxText = fmt::format("Prestige Classes\n\n Currently supported:\n  Arcane Trickster\n  Dwarven Defender\n  Duelist\n  Eldritch Knight\n  Mystic Theurge");
+		auto textboxText = fmt::format("Prestige Classes\n\n Currently supported:\n  Arcane Trickster, Assassin,\n  Dwarven Defender, Duelist,\n  Eldritch Knight, Mystic Theurge");
 		if (textboxText.size() >= 1024)
 			textboxText[1023] = 0;
 		strcpy(temple::GetRef<char[1024]>(0x10C80CC0), &textboxText[0]);

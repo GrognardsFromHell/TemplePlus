@@ -4,6 +4,7 @@
 
 #define NUM_FEATS 750 // vanilla was 649 (and Moebius hack increased this to 664 I think)
 #include "tig/tig_mes.h"
+#include <map>
 
 enum FeatPropertyFlag : uint32_t {
 	FPF_CAN_GAIN_MULTIPLE_TIMES = 0x1,
@@ -46,14 +47,6 @@ struct ClassFeatTable
 	ClassFeatTableRow classEntries[VANILLA_NUM_CLASSES];
 };
 
-struct TabFileStatus;
-
-extern TabFileStatus featPropertiesTabFile;
-extern uint32_t  featPropertiesTable[];
-extern FeatPrereqRow featPreReqTable[];
-extern MesHandle * featMes;
-extern MesHandle * featEnumsMes;
-extern char ** featNames;
 
 struct FeatPrereq
 {
@@ -65,6 +58,25 @@ struct FeatPrereqRow
 {
 	FeatPrereq featPrereqs[8];
 };
+
+struct NewFeatSpec {
+	FeatPropertyFlag flags;
+	std::string name;
+	std::string description;
+	std::string prereqDescr;
+	std::vector<FeatPrereq> prereqs;
+	NewFeatSpec() { flags = (FeatPropertyFlag)0; };
+};
+
+struct TabFileStatus;
+
+extern TabFileStatus featPropertiesTabFile;
+extern uint32_t  featPropertiesTable[];
+extern FeatPrereqRow featPreReqTable[];
+extern MesHandle * featMes;
+extern MesHandle * featEnumsMes;
+extern char ** featNames;
+
 
 
 
@@ -92,6 +104,7 @@ struct LegacyFeatSystem : temple::AddressTable
 	0x00080000 - Multiselect Parent   NEW (overrides disablement for particular display purposes)
 	0x00100100 - G. Wpn. Specialization   (add 0x10 to make it a fighter feat, so the property number should be 1048848)
 	*/
+	std::vector<feat_enums> newFeats;
 	uint32_t * m_featPropertiesTable;
 	FeatPrereqRow * m_featPreReqTable;
 	char * featNames[NUM_FEATS +1000];
@@ -137,11 +150,14 @@ struct LegacyFeatSystem : temple::AddressTable
 
 	uint32_t(__cdecl *featTabLineParser)(TabFileStatus*, uint32_t, const char**);
 	LegacyFeatSystem();
+	BOOL FeatSystemInit();
+protected:
+	std::map<feat_enums, NewFeatSpec> mNewFeats;
+	void _GetNewFeatsFromFile();
 };
 
 extern LegacyFeatSystem feats;
 
-int FeatInit();
 
 uint32_t _HasFeatCount(objHndl objHnd, feat_enums featEnum);
 uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLevelBeingRaised, uint32_t rangerSpecializationFeat);

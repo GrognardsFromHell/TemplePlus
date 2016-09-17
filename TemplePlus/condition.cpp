@@ -3482,15 +3482,17 @@ int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args){
 		return 0;
 
 	RadialMenuEntry radEntry;
+	auto actType = D20A_USE_ITEM;
 	if (objType == obj_t_food){
 		if (inventory.IsMagicItem(itemHandle))
-			radEntry.d20ActionType = D20A_USE_POTION;
+			actType = D20A_USE_POTION;
 		else
-			radEntry.d20ActionType = D20A_USE_ITEM;
+			actType = D20A_USE_ITEM;
 	} 
 	else{
-		radEntry.d20ActionType = D20A_USE_ITEM;
+		actType = D20A_USE_ITEM;
 	}
+	radEntry.d20ActionType = actType;
 
 	radEntry.d20ActionData1 = invIdx;
 	radEntry.d20SpellData.Set(spData.spellEnum, spData.classCode, spData.spellLevel, invIdx, (MetaMagicData)0);
@@ -3511,8 +3513,56 @@ int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args){
 	}
 	
 	radEntry.helpId = ElfHash::Hash(spellSys.GetSpellEnumTAG(spData.spellEnum));
+	if (!spellSys.SpellHasMultiSelection(spData.spellEnum)){
+		radEntry.AddChildToStandard(args.objHndCaller, parentType);
+	} 
+	else
+	{
+		radEntry.type = RadialMenuEntryType::Parent;
+		radEntry.d20ActionType = D20A_NONE;
+		auto parentNodeIdx = radialMenus.AddParentChildNode(handle, &radEntry, radialMenus.GetStandardNode(parentType));
+		std::vector<SpellMultiOption> multiOptions;
+		if (!spellSys.GetMultiSelectOptions(spData.spellEnum, multiOptions))
+		{
+			logger->error("Spell multiselect options not found!");
+		}
 
-	radEntry.AddChildToStandard(args.objHndCaller, parentType);
+		// populate options
+		auto numOptions = multiOptions.size();
+		for (auto i = 0u; i<numOptions; i++) {
+			auto &op = multiOptions[i];
+			radEntry.SetDefaults();
+
+			radEntry.d20SpellData.Set(spData.spellEnum, spData.classCode, spData.spellLevel, invIdx, (MetaMagicData)0);
+			radEntry.d20ActionType = actType;
+			radEntry.d20ActionData1 = invIdx;
+			radEntry.helpId = ElfHash::Hash(spellSys.GetSpellEnumTAG(spData.spellEnum));
+			radialMenus.SetCallbackCopyEntryToSelected(&radEntry);
+
+
+			if (op.isProto) {
+				auto protoId = multiOptions[i].value;
+				radEntry.minArg = protoId;
+
+				auto protoHandle = objSystem->GetProtoHandle(protoId);
+				auto protoObj = objSystem->GetObject(protoHandle);
+				radEntry.text = (char*)description.GetDescriptionString(protoObj->GetInt32(obj_f_description));
+
+			}
+			else {
+				MesLine line(multiOptions[i].value);
+				mesFuncs.GetLine_Safe(*spellSys.spellsRadialMenuOptionsMes, &line);
+				radEntry.text = (char*)line.value;
+				radEntry.minArg = i + 1;
+			}
+
+			radEntry.AddAsChild(handle, parentNodeIdx);
+		}
+
+		auto radnow = radialMenus.GetForObj(handle);
+		auto asd = 1;
+	}
+	
 
 	// add to Copy Scroll
 	if (objType == obj_t_scroll && objects.StatLevelGet(args.objHndCaller, stat_level_wizard) >= 1
@@ -4533,7 +4583,7 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 	case BM_FASCINATE: 
 		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Fascinate", args.objHndCaller);
 		skillSys.SkillRoll(performer, SkillEnum::skill_perform, 20, &rollResult, 1);
-		if (!damage.SavingThrow(d20a->d20ATarget, performer, rollResult, SavingThrowType::Will, 0x10000000))	{
+		if (!damage.SavingThrow(d20a->d20ATarget, performer, rollResult, SavingThrowType::Will, D20STF_SPELL_DESCRIPTOR_SONIC ))	{ // might be an offset in the descriptors... should probably be MIND_AFFECTING
 			conds.AddTo(d20a->d20ATarget, "Fascinate", { 0,0 });
 		}		
 		break;
@@ -4545,7 +4595,7 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		chaScore = objects.StatLevelGet(args.objHndCaller, stat_charisma);
 		rollResult = 13 + objects.GetModFromStatLevel(chaScore);
 		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Suggestion", args.objHndCaller);
-		if (!damage.SavingThrow(d20a->d20ATarget, performer, rollResult, SavingThrowType::Will, 0x10000000)) {
+		if (!damage.SavingThrow(d20a->d20ATarget, performer, rollResult, SavingThrowType::Will, D20STF_SPELL_DESCRIPTOR_SONIC)) {
 			conds.AddTo(d20a->d20ATarget, "Suggestion", {});
 		}
 		break;

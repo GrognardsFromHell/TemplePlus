@@ -14,6 +14,7 @@
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
 #include "ui/ui.h"
+#include <infrastructure/elfhash.h>
 
 TabFileStatus featPropertiesTabFile;
 uint32_t featPropertiesTable[NUM_FEATS + 1000];
@@ -47,7 +48,7 @@ public:
 
 		
 		
-		replaceFunction(0x1007BFA0, FeatInit);
+		replaceFunction<BOOL(__cdecl)()>(0x1007BFA0, []() {return feats.FeatSystemInit(); });
 		replaceFunction(0x1007B930, _HasFeatCount);
 		
 		
@@ -91,21 +92,21 @@ public:
 
 		// overwrite the iteration limits for a bunch of ui loops
 		
-		write(0x10182C73 + 2, &writeNumFeats, sizeof(int));
+		write(0x10182C73 + 2, &writeNumFeats, sizeof(int)); // UiPcCreationFeatsActivate
 
 
-		write(0x101A811D + 2, &writeNumFeats, sizeof(int));
-		write(0x101A815D + 2, &writeNumFeats, sizeof(int));
-		write(0x101A819D + 2, &writeNumFeats, sizeof(int));
+		write(0x101A811D + 2, &writeNumFeats, sizeof(int)); // CharEditorFeatsMultiselectActivate - now redundant
+		write(0x101A815D + 2, &writeNumFeats, sizeof(int)); // CharEditorFeatsMultiselectActivate - now redundant
+		write(0x101A819D + 2, &writeNumFeats, sizeof(int)); // CharEditorFeatsMultiselectActivate - now redundant
 
-		write(0x101A81DD + 2, &writeNumFeats, sizeof(int));
-		write(0x101A821D + 2, &writeNumFeats, sizeof(int));
-		write(0x101A825D + 2, &writeNumFeats, sizeof(int));
-		write(0x101A829D + 2, &writeNumFeats, sizeof(int));
-		write(0x101A82DD + 2, &writeNumFeats, sizeof(int));
+		write(0x101A81DD + 2, &writeNumFeats, sizeof(int)); // CharEditorFeatsMultiselectActivate - now redundant
+		write(0x101A821D + 2, &writeNumFeats, sizeof(int)); // CharEditorFeatsMultiselectActivate - now redundant
+		write(0x101A825D + 2, &writeNumFeats, sizeof(int)); // CharEditorFeatsMultiselectActivate - now redundant
+		write(0x101A829D + 2, &writeNumFeats, sizeof(int)); // CharEditorFeatsMultiselectActivate - now redundant
+		write(0x101A82DD + 2, &writeNumFeats, sizeof(int)); // CharEditorFeatsMultiselectActivate - now redundant
 		
 
-		write(0x101A8BE1 + 2, &writeNumFeats, sizeof(int));
+		write(0x101A8BE1 + 2, &writeNumFeats, sizeof(int)); // CharEditorFeatsActive - now redundant
 		write(0x101BBDF4 + 2, &writeNumFeats, sizeof(int)); // charUiFeatList iteration limit
 	//	writeHex(0x101A940E, "90 90 90 90 90");
 		
@@ -158,9 +159,8 @@ LegacyFeatSystem::LegacyFeatSystem()
 
 	memset(emptyString, 0, 1);
 
-};
-
-int FeatInit()
+}
+BOOL LegacyFeatSystem::FeatSystemInit()
 {
 	if (mesFuncs.Open("mes\\feat.mes", feats.featMes) && mesFuncs.Open("rules\\feat_enum.mes", feats.featEnumsMes) && mesFuncs.Open("tpmes\\feat.mes", &feats.featMesNew))
 	{
@@ -197,11 +197,121 @@ int FeatInit()
 			tabSys.tabFileParseLines(&featPropertiesTabFile);
 		}
 
-
+		// New file-based Feats
+		_GetNewFeatsFromFile();
 		return 1;
 	}
+
+	
 	return 0;
+
 }
+void LegacyFeatSystem::_GetNewFeatsFromFile()
+{
+	TioFileList flist;
+	tio_filelist_create(&flist, "rules\\feats\\*.txt");
+
+	for (auto i=0; i<flist.count; i++){
+		
+		auto &f = flist.files[i];
+		auto featFile = tio_fopen(fmt::format("rules\\feats\\{}",f.name).c_str(), "rt");
+
+		char lineContent[2000]={0,};
+		NewFeatSpec featSpec;
+		while (tio_fgets(lineContent, 1000, featFile)){
+			auto len = strlen(lineContent);
+			if (!len)
+				continue;
+
+			if (lineContent[len - 1] == *"\n"){
+				lineContent[len - 1] = 0;
+			}
+
+			if (!_strnicmp(lineContent, "name:", 5)){
+				for (auto ch = lineContent + 5; *ch != 0 ; ch++)
+				{
+					if (*ch == ' ' || *ch == ':')
+						continue;
+					featSpec.name = fmt::format("{}", ch);
+					break;
+				}
+				
+			}
+
+			else if (!_strnicmp(lineContent, "flags:", 6)){
+				
+				for (auto ch = lineContent + 6; *ch != 0; ch++)
+				{
+					if (*ch == ' ' || *ch == ':')
+						continue;
+					*(int*)&featSpec.flags |= (FeatPropertyFlag)atol(fmt::format("{}", ch).c_str());
+					break;
+				}
+			}
+			else if (!_strnicmp(lineContent, "prereqs:", 8))
+			{
+				auto prereqCount = 0;
+				auto prereqArgCount = 0;
+				for (auto ch = lineContent + 8; *ch != 0; ch++)
+				{
+					if ( *ch == ':' || *ch == ' ' || *ch == '\t')
+						continue;
+					
+					if (prereqArgCount < prereqCount)
+					{
+						featSpec.prereqs[prereqArgCount++].featPrereqCodeArg = atol(ch);
+					}
+					else
+						featSpec.prereqs[prereqCount++].featPrereqCode = atol(ch);
+
+					// advance till next piece of content
+					while (*ch && *ch !=  ' ' && *ch != '\t')
+						ch++;
+				}
+			}
+			else if (!_strnicmp(lineContent, "description:", 12))
+			{
+				for (auto ch = lineContent + 12; *ch != 0; ch++)
+				{
+					if (*ch == ' ' || *ch == ':')
+						continue;
+					for (auto chNew = ch; *chNew; chNew++)
+					{
+						if (*chNew == '\v')
+							*chNew = '\n';
+					}
+					featSpec.description = fmt::format("{}", ch);
+					break;
+				}
+			}
+
+			else if (!_strnicmp(lineContent, "prereq descr:", 13))
+			{
+				for (auto ch = lineContent + 13; *ch != 0; ch++)
+				{
+					if (*ch == ' ' || *ch == ':')
+						continue;
+					featSpec.prereqDescr = fmt::format("{}", ch);
+					break;
+				}
+			}
+		}
+
+		if (featSpec.name.size()){
+			auto featId = (feat_enums)ElfHash::Hash(featSpec.name);
+			mNewFeats[featId] = featSpec;
+			newFeats.push_back(featId);
+		}
+
+		tio_fclose(featFile);
+
+	}
+
+	tio_filelist_destroy(&flist);
+}
+
+
+
 
 uint32_t LegacyFeatSystem::HasFeatCount(objHndl objHnd, feat_enums featEnum)
 {
@@ -217,9 +327,162 @@ uint32_t LegacyFeatSystem::HasFeatCount(objHndl objHnd, feat_enums featEnum)
 }
 
 
-uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classEnum, ::uint32_t rangerSpecializationFeat)
+uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLevelBeingRaised, uint32_t rangerSpecializationFeat)
 {
-	return _HasFeatCountByClass(objHnd, featEnum, classEnum, rangerSpecializationFeat);
+	if (!feats.IsFeatEnabled(featEnum))
+		return FALSE;
+
+
+	// Race feats
+	uint32_t objRace = objects.StatLevelGet(objHnd, stat_race);
+	uint32_t * racialFeat = &(feats.racialFeats[objRace * 10]);
+	while (*racialFeat != -1)
+	{
+		if (*racialFeat == featEnum) {
+			return 1;
+		}
+		racialFeat++;
+	}
+
+	// Class automatic feats
+	for (auto it : d20ClassSys.classEnums) {
+		auto classEnum = (Stat)it;
+
+		auto classLvl = objects.StatLevelGet(objHnd, classEnum);
+		if (classLevelBeingRaised == it) {
+			classLvl++;
+		}
+
+		if (classLvl <= 0)
+			continue;
+
+		if (d20ClassSys.HasFeat(featEnum, classEnum, classLvl))
+			return TRUE;
+	}
+
+	for (uint32_t i = 0; i < VANILLA_NUM_CLASSES; i++) {
+		if (d20ClassSys.vanillaClassEnums[i] == stat_level_monk)
+			continue; // so it doesn't add the improved trip feat
+
+		uint32_t classLevel = objects.StatLevelGet(objHnd, d20ClassSys.vanillaClassEnums[i]);
+		if (classLevelBeingRaised == d20ClassSys.vanillaClassEnums[i]) {
+			classLevel++;
+		}
+
+		feat_enums * classFeat = &feats.classFeatTable->classEntries[i].entries[0].feat;
+		feat_enums * classFeatStart = classFeat;
+
+		if (classLevel == 0) {
+			continue;
+		}
+
+		while (featEnum != classFeat[0]
+			&& classFeat[0] != -1) {
+			classFeat += 2;
+		}
+		if (classFeat[0] != -1 && (int)classLevel >= classFeat[1])
+		{
+			return 1;
+		}
+
+	}
+
+	// special casing for uncanny dodge for Brb 2 / Rog 4 combo
+	if (featEnum == FEAT_IMPROVED_UNCANNY_DODGE) {
+		if (objects.StatLevelGet(objHnd, stat_level_barbarian) >= 2
+			&& objects.StatLevelGet(objHnd, stat_level_rogue) >= 4)
+		{
+			return 1;
+		}
+	}
+
+	// ranger styles
+	auto rangerLvl = objects.StatLevelGet(objHnd, stat_level_ranger);
+	if (rangerSpecializationFeat) { rangerLvl++; }
+	if (rangerLvl >= 2)
+	{
+		if (_HasFeatCount(objHnd, FEAT_RANGER_ARCHERY_STYLE) || rangerSpecializationFeat == FEAT_RANGER_ARCHERY_STYLE)
+		{
+			auto rangerArcheryFeat = feats.rangerArcheryFeats;
+			while (*rangerArcheryFeat != -1)
+			{
+				if (rangerArcheryFeat[0] == featEnum && rangerLvl >= (int)rangerArcheryFeat[1]) { return 1; }
+				rangerArcheryFeat += 2;
+			}
+		}
+		else if (_HasFeatCount(objHnd, FEAT_RANGER_TWO_WEAPON_STYLE) || rangerSpecializationFeat == FEAT_RANGER_TWO_WEAPON_STYLE)
+		{
+			auto rangerTWFeat = feats.rangerTwoWeaponFeats;
+			while (rangerTWFeat[0] != -1)
+			{
+				if (rangerTWFeat[0] == featEnum && rangerLvl >= (int)rangerTWFeat[1]) { return 1; }
+				rangerTWFeat += 2;
+			}
+		}
+	}
+
+	// war domain
+	uint32_t objDeity = objects.getInt32(objHnd, obj_f_critter_deity);
+	uint32_t domain_1 = objects.getInt32(objHnd, obj_f_critter_domain_1);
+	uint32_t domain_2 = objects.getInt32(objHnd, obj_f_critter_domain_2);
+	if (domain_1 == 21 || domain_2 == 21) // must be war domain
+	{
+		switch (objDeity)
+		{
+		case DEITY_CORELLON_LARETHIAN:
+			if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_LONGSWORD || featEnum == FEAT_WEAPON_FOCUS_LONGSWORD) { return 1; }
+			break;
+		case DEITY_ERYTHNUL:
+			if (featEnum == FEAT_WEAPON_FOCUS_MORNINGSTAR) { return 1; }
+			break;
+		case DEITY_GRUUMSH:
+			if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_LONGSPEAR || featEnum == FEAT_WEAPON_FOCUS_LONGSPEAR) { return 1; }
+			break;
+		case DEITY_HEIRONEOUS:
+			if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_LONGSWORD || featEnum == FEAT_WEAPON_FOCUS_LONGSWORD) { return 1; }
+			break;
+		case DEITY_HEXTOR:
+			if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_HEAVY_FLAIL || featEnum == FEAT_WEAPON_FOCUS_HEAVY_FLAIL) { return 1; }
+		}
+	}
+
+	// simple weapon prof
+	if (featEnum == FEAT_SIMPLE_WEAPON_PROFICIENCY) {
+		auto obj = gameSystems->GetObj().GetObject(objHnd);
+		if (obj->type == obj_t_npc) {
+			auto monCat = critterSys.GetCategory(objHnd);
+			if (monCat == mc_type_outsider || monCat == mc_type_monstrous_humanoid
+				|| monCat == mc_type_humanoid || monCat == mc_type_giant || monCat == mc_type_fey) {
+				return 1;
+			}
+		}
+
+	}
+	else if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_ALL)
+	{
+		if ((uint32_t)critterSys.IsCategoryType(objHnd, mc_type_outsider)
+			&& objects.StatLevelGet(objHnd, stat_strength) >= 6)
+		{
+			return 1;
+		}
+	}
+	else if (featEnum == FEAT_TURN_UNDEAD
+		&& (objects.StatLevelGet(objHnd, stat_level_cleric) >= 1
+			|| objects.StatLevelGet(objHnd, stat_level_paladin) >= 4)
+		&& objects.getInt32(objHnd, obj_f_critter_alignment_choice) == 1)
+	{
+		return 1;
+	}
+	else if (featEnum == FEAT_REBUKE_UNDEAD
+		&& objects.StatLevelGet(objHnd, stat_level_cleric) >= 1
+		&& objects.getInt32(objHnd, obj_f_critter_alignment_choice) == 2)
+	{
+		return 1;
+	}
+
+
+	return _HasFeatCount(objHnd, featEnum);
+
 }
 
 uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEnum)
@@ -229,7 +492,38 @@ uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEn
 
 uint32_t LegacyFeatSystem::FeatListGet(objHndl objHnd, feat_enums* listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat)
 {
-	return _FeatListGet(objHnd, listOut, classBeingLevelled, rangerSpecFeat);
+	uint32_t featCount = 0;
+	int32_t hasFeatTimes = 0;
+	uint32_t i = 0;
+	void * ptrOut = listOut;
+	while (i < NUM_FEATS){
+		hasFeatTimes = _HasFeatCountByClass(objHnd, (feat_enums)i, classBeingLevelled, rangerSpecFeat);
+
+
+		if (hasFeatTimes && listOut && hasFeatTimes > 0)
+		{
+			for (auto j = 0; j < hasFeatTimes; j++)
+			{
+				memcpy(&(listOut[featCount + j]), &i, sizeof(uint32_t));
+
+			}
+			featCount += hasFeatTimes;
+		}
+		i++;
+	}
+	for (auto feat: newFeats)
+	{
+		hasFeatTimes = HasFeatCountByClass(objHnd, feat, classBeingLevelled, rangerSpecFeat);
+		if (hasFeatTimes && listOut && hasFeatTimes > 0)
+		{
+			for (auto j = 0; j < hasFeatTimes; j++)
+			{
+				listOut[featCount++] = feat;
+
+			}
+		}
+	}
+	return featCount;
 }
 
 
@@ -274,16 +568,29 @@ vector<feat_enums> LegacyFeatSystem::GetFeats(objHndl handle) {
 
 char* LegacyFeatSystem::GetFeatName(feat_enums feat)
 {
+	if (feat > NUM_FEATS) {
+		auto featFind = mNewFeats.find(feat);
+		if (featFind == mNewFeats.end())
+			return FALSE;
+		return (char*)featFind->second.name.c_str();
+	}
+
 	return featNames[feat];
 }
 
 char* LegacyFeatSystem::GetFeatDescription(feat_enums feat)
 {
+	if (feat > NUM_FEATS){
+		auto featFind = mNewFeats.find(feat);
+		if (featFind == mNewFeats.end())
+			return FALSE;
+		return (char*)featFind->second.description.c_str();
+	}
+
 	char getLineResult; 
 	const char *result; 
-	MesLine mesLine; 
+	MesLine mesLine(5000 + feat); 
 
-	mesLine.key = feat + 5000;
 	if (feat >= FEAT_NONE
 		|| feat == FEAT_IMPROVED_DISARM
 		|| feat ==  FEAT_GREATER_WEAPON_SPECIALIZATION
@@ -302,9 +609,9 @@ char* LegacyFeatSystem::GetFeatPrereqDescription(feat_enums feat)
 	char * result;
 	const char *v2;
 	char v3; 
-	MesLine mesLinePrerequisites;
-	MesLine mesLineFeatDesc; 
-	MesLine mesLineNone;
+	MesLine mesLinePrerequisites(9999);
+	MesLine mesLineFeatDesc(10000 + feat); 
+	MesLine mesLineNone(9998);
 	MesHandle * mesHnd = feats.featMes;
 	if (feat >= FEAT_NONE
 		|| feat == FEAT_IMPROVED_DISARM
@@ -313,10 +620,29 @@ char* LegacyFeatSystem::GetFeatPrereqDescription(feat_enums feat)
 		|| feat == FEAT_STUNNING_FIST)
 		mesHnd = &feats.featMesNew;
 
-	mesLineNone.key = 9998;
-	if (mesFuncs.GetLine(*feats.featMes, &mesLineNone)
-		&& (mesLinePrerequisites.key = 9999, mesFuncs.GetLine(*feats.featMes, &mesLinePrerequisites))
-		&& (mesLineFeatDesc.key = feat + 10000, mesFuncs.GetLine(*mesHnd, &mesLineFeatDesc)))
+	
+	mesFuncs.GetLine_Safe(*feats.featMes, &mesLineNone);
+	mesFuncs.GetLine_Safe(*feats.featMes, &mesLinePrerequisites);
+
+	if (feat > NUM_FEATS) {
+		auto featFind = mNewFeats.find(feat);
+		if (featFind == mNewFeats.end())
+			return FALSE;
+		auto &preDesc = featFind->second.prereqDescr;
+		if (!preDesc.size()){
+			sprintf(featPrereqDescrBuffer, "%s%s", mesLinePrerequisites.value, mesLineNone.value);
+			result = featPrereqDescrBuffer;
+		} else
+		{
+			sprintf(featPrereqDescrBuffer, "%s%s", mesLinePrerequisites.value, preDesc.c_str());
+			result = featPrereqDescrBuffer;
+		}
+		
+		return result;
+	}
+
+	
+	if ( mesFuncs.GetLine(*mesHnd, &mesLineFeatDesc))
 	{
 		v2 = mesLineFeatDesc.value;
 		do
@@ -337,29 +663,65 @@ char* LegacyFeatSystem::GetFeatPrereqDescription(feat_enums feat)
 
 int LegacyFeatSystem::IsFeatEnabled(feat_enums feat)
 {
+	if (feat > NUM_FEATS)
+	{
+		auto featFind = mNewFeats.find(feat);
+		if (featFind == mNewFeats.end())
+			return FALSE;
+		return (featFind->second.flags & FPF_DISABLED ) == 0;
+	}
 	return (m_featPropertiesTable[feat] & 2 ) == 0;
 }
 
 int LegacyFeatSystem::IsMagicFeat(feat_enums feat)
 {
+	if (feat > NUM_FEATS)
+	{
+		auto featFind = mNewFeats.find(feat);
+		if (featFind == mNewFeats.end())
+			return FALSE;
+		return (featFind->second.flags & FPF_WIZARD_BONUS) != 0;
+	}
 	return (m_featPropertiesTable[feat] & 0x20000 ) != 0;
 }
 
 int LegacyFeatSystem::IsFeatPartOfMultiselect(feat_enums feat)
 {
+	if (feat > NUM_FEATS)
+	{
+		auto featFind = mNewFeats.find(feat);
+		if (featFind == mNewFeats.end())
+			return FALSE;
+		return (featFind->second.flags & FPF_MULTI_SELECT_ITEM) != 0;
+	}
 	return ( m_featPropertiesTable[feat] & FPF_MULTI_SELECT_ITEM ) != 0;
 }
 
 int LegacyFeatSystem::IsFeatRacialOrClassAutomatic(feat_enums feat)
 {
-	return (m_featPropertiesTable[feat] & 0xC ) != 0;
+	if (feat > NUM_FEATS)
+	{
+		auto featFind = mNewFeats.find(feat);
+		if (featFind == mNewFeats.end())
+			return FALSE;
+		return (featFind->second.flags & (FPF_RACE_AUTOMATIC | FPF_RACE_AUTOMATIC)) != 0;
+	}
+	return (m_featPropertiesTable[feat] & (FPF_RACE_AUTOMATIC | FPF_RACE_AUTOMATIC) ) != 0;
 }
 
 int LegacyFeatSystem::IsClassFeat(feat_enums feat)
 {
+	if (feat > NUM_FEATS)
+	{
+		auto featFind = mNewFeats.find(feat);
+		if (featFind == mNewFeats.end())
+			return FALSE;
+		return (featFind->second.flags & FPF_CLASS_AUTMATIC) != 0;
+	}
+
 	if (feat > FEAT_NONE && feat < 664)
 		return 0;
-	return ( m_featPropertiesTable[feat] & 8 ) != 0;
+	return ( m_featPropertiesTable[feat] & FPF_CLASS_AUTMATIC ) != 0;
 }
 
 int LegacyFeatSystem::IsFighterFeat(feat_enums feat)
@@ -372,11 +734,18 @@ int LegacyFeatSystem::IsFighterFeat(feat_enums feat)
 			return 1;
 		return 0;
 	}
-	return (m_featPropertiesTable[feat] & 0x10 ) != 0;
+	return (m_featPropertiesTable[feat] & FPF_FIGHTER_BONUS ) != 0;
 }
 
 int LegacyFeatSystem::IsFeatPropertySet(feat_enums feat, int featProp)
 {
+	if (feat > NUM_FEATS)
+	{
+		auto featFind = mNewFeats.find(feat);
+		if (featFind == mNewFeats.end())
+			return FALSE;
+		return (featFind->second.flags & featProp) == featProp;
+	}
 	return (m_featPropertiesTable[feat] & featProp) == featProp;
 }
 
@@ -958,27 +1327,7 @@ uint32_t _HasFeatCount(objHndl objHnd, feat_enums featEnum)
 
 uint32_t _FeatListGet(objHndl objHnd, feat_enums * listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat)
 {
-	uint32_t featCount = 0;
-	int32_t hasFeatTimes = 0;
-	uint32_t i = 0;
-	void * ptrOut = listOut;
-	while (i < NUM_FEATS)
-	{
-		hasFeatTimes = _HasFeatCountByClass(objHnd, (feat_enums)i, classBeingLevelled, rangerSpecFeat);
-
-
-		if (hasFeatTimes && listOut && hasFeatTimes > 0)
-		{
-			for (auto j = 0; j < hasFeatTimes; j++)
-			{
-				memcpy(&(listOut[featCount + j]), &i, sizeof(uint32_t));
-
-			}
-			featCount += hasFeatTimes;
-		}
-		i++;
-	}
-	return featCount;
+	return feats.FeatListGet(objHnd, listOut, classBeingLevelled, rangerSpecFeat);
 };
 
 uint32_t _FeatListElective(objHndl objHnd, feat_enums * listOut)
@@ -989,157 +1338,7 @@ uint32_t _FeatListElective(objHndl objHnd, feat_enums * listOut)
 
 uint32_t _HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLevelBeingRaised, uint32_t rangerSpecializationFeat){
 
-	if (!feats.IsFeatEnabled(featEnum))
-		return FALSE;
-
-	
-	// Race feats
-	uint32_t objRace = objects.StatLevelGet(objHnd, stat_race);
-	uint32_t * racialFeat = & (feats.racialFeats[objRace * 10]);
-	while (*racialFeat != -1)
-	{
-		if (*racialFeat == featEnum){
-			return 1;
-		}
-		racialFeat++;
-	}
-	
-	// Class automatic feats
-	for (auto it: d20ClassSys.classEnums){
-		auto classEnum = (Stat)it;
-
-		auto classLvl = objects.StatLevelGet(objHnd, classEnum);
-		if (classLevelBeingRaised == it){
-			classLvl++;
-		}
-
-		if (classLvl <= 0)
-			continue;
-
-		if (d20ClassSys.HasFeat(featEnum, classEnum, classLvl))
-			return TRUE;
-	}
-
-	for (uint32_t i = 0; i < VANILLA_NUM_CLASSES; i++){
-		if (d20ClassSys.vanillaClassEnums[i] == stat_level_monk)
-			continue; // so it doesn't add the improved trip feat
-
-		uint32_t classLevel = objects.StatLevelGet(objHnd, d20ClassSys.vanillaClassEnums[i]);
-		if (classLevelBeingRaised == d20ClassSys.vanillaClassEnums[i]){
-			classLevel++;
-		}
-
-		feat_enums * classFeat = &feats.classFeatTable->classEntries[i].entries[0].feat;
-		feat_enums * classFeatStart = classFeat;
-
-		if (classLevel == 0){
-			continue;
-		}
-
-		while (featEnum != classFeat[0]
-			&& classFeat[0] != -1){
-			classFeat += 2;
-		}
-		if (classFeat[0] != -1 && (int) classLevel >= classFeat[1])
-		{
-			return 1;
-		}
-
-	}
-	
-	// special casing for uncanny dodge for Brb 2 / Rog 4 combo
-	 if (featEnum == FEAT_IMPROVED_UNCANNY_DODGE) {
-		 if (objects.StatLevelGet(objHnd, stat_level_barbarian) >= 2 
-			 && objects.StatLevelGet(objHnd, stat_level_rogue) >= 4)
-		 {
-			 return 1;
-		 }
-	 }
-
-	 // ranger styles
-	 auto rangerLvl = objects.StatLevelGet(objHnd, stat_level_ranger);
-	 if (rangerSpecializationFeat){ rangerLvl++; }
-	 if (rangerLvl >= 2)
-	 {
-		 if (_HasFeatCount(objHnd, FEAT_RANGER_ARCHERY_STYLE) || rangerSpecializationFeat == FEAT_RANGER_ARCHERY_STYLE)
-		 {
-			 auto rangerArcheryFeat = feats.rangerArcheryFeats;
-			 while (*rangerArcheryFeat != -1)
-			 {
-				 if (rangerArcheryFeat[0] == featEnum && rangerLvl >= (int)rangerArcheryFeat[1]){ return 1; }
-				 rangerArcheryFeat += 2;
-			 }
-		 }
-		 else if (_HasFeatCount(objHnd, FEAT_RANGER_TWO_WEAPON_STYLE) || rangerSpecializationFeat == FEAT_RANGER_TWO_WEAPON_STYLE)
-		 {
-			 auto rangerTWFeat = feats.rangerTwoWeaponFeats;
-			 while (rangerTWFeat[0] != -1)
-			 {
-				 if (rangerTWFeat[0] == featEnum && rangerLvl >= (int)rangerTWFeat[1]){ return 1; }
-				 rangerTWFeat += 2;
-			 }
-		 }
-	 }
-
-	 // war domain
-	 uint32_t objDeity= objects.getInt32(objHnd, obj_f_critter_deity);
-	 uint32_t domain_1 = objects.getInt32(objHnd, obj_f_critter_domain_1);
-	 uint32_t domain_2 = objects.getInt32(objHnd, obj_f_critter_domain_2);
-	 if (domain_1 == 21 || domain_2 == 21) // must be war domain
-	 {
-		 switch (objDeity)
-		 {
-		 case DEITY_CORELLON_LARETHIAN:
-			 if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_LONGSWORD || featEnum == FEAT_WEAPON_FOCUS_LONGSWORD){ return 1; }
-			 break;
-		 case DEITY_ERYTHNUL:
-			 if (featEnum == FEAT_WEAPON_FOCUS_MORNINGSTAR){ return 1; }
-			 break;
-		 case DEITY_GRUUMSH:
-			 if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_LONGSPEAR || featEnum == FEAT_WEAPON_FOCUS_LONGSPEAR){ return 1; }
-			 break;
-		 case DEITY_HEIRONEOUS:
-			 if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_LONGSWORD || featEnum == FEAT_WEAPON_FOCUS_LONGSWORD){ return 1; }
-			 break;
-		 case DEITY_HEXTOR:
-			 if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_HEAVY_FLAIL || featEnum == FEAT_WEAPON_FOCUS_HEAVY_FLAIL){ return 1; }
-		 }
-	 }
-
-	 // simple weapon prof
-	 if (featEnum == FEAT_SIMPLE_WEAPON_PROFICIENCY){
-		 auto obj = gameSystems->GetObj().GetObject(objHnd);
-		 if (obj->type == obj_t_npc){
-			 auto monCat = critterSys.GetCategory(objHnd);
-			 if (monCat == mc_type_outsider || monCat == mc_type_monstrous_humanoid
-				 || monCat == mc_type_humanoid || monCat == mc_type_giant || monCat == mc_type_fey) {
-				 return 1;
-			 }
-		 }
-		 
-	 } 
-	 else if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_ALL)
-	 {
-		 if ((uint32_t)critterSys.IsCategoryType(objHnd, mc_type_outsider)
-			 && objects.StatLevelGet(objHnd, stat_strength) >= 6)	
-		 {	return 1;	 }
-	 }
-	 else if (featEnum == FEAT_TURN_UNDEAD
-		 && (objects.StatLevelGet(objHnd, stat_level_cleric) >= 1 
-		     || objects.StatLevelGet(objHnd, stat_level_paladin) >= 4)
-		 && objects.getInt32(objHnd, obj_f_critter_alignment_choice) == 1)
-	 {
-		 return 1;
-	 } 
-	 else if (featEnum == FEAT_REBUKE_UNDEAD 
-		 && objects.StatLevelGet(objHnd, stat_level_cleric) >= 1 
-		 && objects.getInt32(objHnd, obj_f_critter_alignment_choice) == 2)
-	 {
-		 return 1;
-	 }
-	 
-	
-	return _HasFeatCount(objHnd, featEnum);
+	return feats.HasFeatCountByClass(objHnd, featEnum, classLevelBeingRaised, rangerSpecializationFeat);
 }
 
 

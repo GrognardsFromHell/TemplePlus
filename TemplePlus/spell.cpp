@@ -1440,7 +1440,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 	{
 		int fieldType, value, value2;
 
-		if (!strnicmp(textBuf, "choices", 7)){
+		if (!_strnicmp(textBuf, "choices", 7)){
 			
 			for (auto ch = textBuf; *ch; ch++)
 			{
@@ -1455,7 +1455,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 				}
 			}
 		}
-		else if (!strnicmp(textBuf, "proto choices", 13)) {
+		else if (!_strnicmp(textBuf, "proto choices", 13)) {
 
 			for (auto ch = textBuf; *ch; ch++){
 				if (*ch == ':') {
@@ -1540,7 +1540,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 				spEntry.radiusTarget = value;
 				break;
 			case 17:
-				spEntry.degreesTarget = value; // TODO test this!
+				spEntry.degreesTarget = value;
 				break;
 			case 18:
 				spEntry.aiTypeBitmask |= (1 << value);
@@ -1697,9 +1697,9 @@ uint32_t LegacySpellSystem::spellCanCast(objHndl objHnd, uint32_t spellEnum, uin
 		for (auto i = 0u; i < classCodesVec.size(); i++){
 			if ( !isDomainSpell(classCodesVec[i])
 				&& spellSys.GetCastingClass(classCodesVec[i] ) == classEnum
-				&& spellLevelsVec[i] <= spellLevel)
+				&& spellLevelsVec[i] <= (int)spellLevel)
 			{
-				if (spellLevelsVec[i] < spellLevel)
+				if (spellLevelsVec[i] < (int)spellLevel)
 					logger->info("Natural Spell Caster spellCanCast check - spell known is lower level than spellCanCast queried spell. Is this ok?? (this is vanilla code here...)");
 				return 1;
 			}

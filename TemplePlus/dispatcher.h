@@ -267,7 +267,7 @@ struct DispIoBonusList : DispIO { // DispIoType = 2  used for fetching ability s
 struct DispIoSavingThrow : DispIO { // DispIoType = 3
 	uint32_t returVal;
 	objHndl obj;
-	uint32_t flags; // looks like: 2 - trap, 0x100 - enchantment, 0x100000 - fear/morale effect?
+	uint32_t flags; // see D20SavingThrowFlag looks like: 2 - trap, 0x10 - Spell, 0x20 thru 0x1000 - spell schools (abjuration thru transmutation, e.g. 0x100 - enchantment), 0x100000 - fear/morale effect?
 	int field_14;
 	BonusList bonlist;
 	int rollResult;

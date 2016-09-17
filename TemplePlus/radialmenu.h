@@ -94,8 +94,10 @@ const int testSizeOfRadMenEn = sizeof(RadialMenuEntry);
 
 struct RadialMenuEntryParent : RadialMenuEntry {
 	RadialMenuEntryParent(int combatMesLine);
+	RadialMenuEntryParent(std::string & text);
 	int AddChildToStandard(objHndl handle, RadialMenuStandardNode stdNode);
 	int AddAsChild(objHndl handle, int parentId);
+	
 };
 
 struct RadialMenuEntrySlider : RadialMenuEntry{
@@ -114,11 +116,13 @@ struct RadialMenuEntryPythonAction : RadialMenuEntryAction
 {
 	RadialMenuEntryPythonAction(int combatMesLine, int d20aType, int d20aKey, int data1, const char helpId[]);
 	RadialMenuEntryPythonAction(int combatMesLine, int d20aType, const char d20aKey [], int data1, const char helpId[]);
+	RadialMenuEntryPythonAction(std::string & text, int d20aType, int d20aKey, int data1, const char helpId[]);
 };
 
 struct RadialMenuEntryToggle : RadialMenuEntry
 {
 	RadialMenuEntryToggle(int combatMesLine, void* actualArg, const char helpId[]);
+	RadialMenuEntryToggle(std::string &, const char helpId[]);
 };
 
 const auto TestSizeOfRadialMenuEntry = sizeof(RadialMenuEntry); // should be 72 (0x48)

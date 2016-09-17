@@ -62,6 +62,8 @@ struct UiCharAddresses : temple::AddressTable
 	WidgetType1** uiCharSpellsNavClassTabWnd;
 	WidgetType1** uiCharSpellsSpellsPerDayWnd;
 	WidgetType2** uiCharSpellsPerDayLevelBtns; // array of 6 buttons for levels 0-5
+
+	int * wndDisplayed; // 0 thru 4 - inventories (1-4 were meant for the various "bags"); 5 - Skills; 6 - Feats ; 7 - Spells
 	UiCharAddresses()
 	{
 		rebase(uiCharSpellsMainWnd, 0x10C81BC0);
@@ -71,6 +73,7 @@ struct UiCharAddresses : temple::AddressTable
 		rebase(uiCharSpellsNavPackets, 0x10C81BE4);
 		rebase(uiCharSpellPackets, 0x10C81E24);
 		rebase(uiCharSpellsNavClassTabIdx, 0x10D18F68);
+		rebase(wndDisplayed, 0x10BE9948);
 	}
 } addresses;
 
@@ -114,6 +117,12 @@ public:
 	static void TotalWeightOutputBtnTooltip(int x, int y, int *widId);
 #pragma endregion 
 	
+
+#pragma region Feats
+	static void FeatsShow();
+#pragma endregion 
+
+
 	void apply() override 
 	{
 
@@ -140,6 +149,8 @@ public:
 			
 		}
 
+
+
 		int charSheetAttackCodeForAttackBonusDisplay = 1 + ATTACK_CODE_OFFHAND;
 		write(0x101C45F3 + 7, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
 		write(0x101C8C7B + 4, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
@@ -148,6 +159,12 @@ public:
 		write(0x101C491B + 7, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
 		write(0x101C8D74 + 4, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
 		
+
+		// Feats
+		replaceFunction(0x101BBDB0, FeatsShow);
+
+
+
 		//orgSpellbookSpellsMsg = replaceFunction(0x101B8F10, SpellbookSpellsMsg);
 		//orgMemorizeSpellMsg= replaceFunction(   0x101B9360, MemorizeSpellMsg);
 		replaceFunction(0x101B2EE0, IsSpecializationSchoolSlot);
@@ -1003,6 +1020,43 @@ void CharUiSystem::TotalWeightOutputBtnTooltip(int x, int y, int* widId)
 	UiRenderer::RenderText(encumText, extents, style);
 
 	UiRenderer::PopFont();
+}
+
+void CharUiSystem::FeatsShow(){
+	auto dude = temple::GetRef<objHndl>(0x10BE9940); // critter with inventory open
+
+	temple::GetRef<int>(0x10D19E8C) = 1; // featsActive
+
+	auto &featsNum = temple::GetRef<int>(0x10D19388);
+	auto &featList = temple::GetRef<feat_enums[]>(0x10D1938C);
+	featsNum = 0;
+
+	for (auto i=0; i< NUM_FEATS; i++){
+		auto feat = (feat_enums)i;
+		if (feats.HasFeatCountByClass(dude, feat))
+		{
+			featList[featsNum++] = feat;
+		};
+	}
+	for (auto feat:feats.newFeats){
+		if (feats.HasFeatCountByClass(dude, feat))
+		{
+			featList[featsNum++] = feat;
+		};
+	}
+
+
+	for (auto i=featsNum; i < 128; i++)
+	{
+		featList[i] = FEAT_NONE;
+	}
+
+	auto featsScrollbar = temple::GetRef<WidgetType3*>(0x10D19DB4);
+	ui.ScrollbarSetYmax(featsScrollbar->widgetId, featsNum < 20 ? 0 : featsNum - 20);
+
+	auto featsWnd = temple::GetRef<WidgetType1*>(0x10D19DB0);
+	ui.WidgetSetHidden(featsWnd->widgetId, 0); // FeatsMainWnd
+	ui.WidgetBringToFront(featsWnd->widgetId);
 }
 
 BOOL(*CharUiSystem::orgSpellbookSpellsMsg)(int widId, TigMsg* tigMsg);

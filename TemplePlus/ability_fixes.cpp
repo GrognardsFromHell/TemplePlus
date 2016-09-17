@@ -72,7 +72,7 @@ int AbilityConditionFixes::PoisonedOnBeginRound(DispatcherCallbackArgs args){
 	}
 
 	// success - remove condition
-	if (damage.SavingThrow(args.objHndCaller, objHndl::null, dc, SavingThrowType::Fortitude, 8)){
+	if (damage.SavingThrow(args.objHndCaller, objHndl::null, dc, SavingThrowType::Fortitude, D20STF_POISON)){
 		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 		return 0;
 	}

@@ -6,6 +6,7 @@
 #include "python_integration.h"
 #include "tio/tio.h"
 #include "python_embed.h"
+#include <infrastructure/elfhash.h>
 
 PythonIntegration::PythonIntegration(const string& searchPattern, const string& filenameRegexp) {
 	mSearchPattern = searchPattern;
@@ -217,6 +218,10 @@ std::map<int, std::vector<int>> PythonIntegration::RunScriptMapResult(ScriptId s
 				auto value = PyTuple_GetItem(pyvalue, i);
 				if (PyInt_Check(value))
 					result[key].push_back(PyInt_AsLong(value));
+				else if (PyString_Check(value))
+				{
+					result[key].push_back(ElfHash::Hash(PyString_AsString(value)));
+				}
 			}
 		}
 		

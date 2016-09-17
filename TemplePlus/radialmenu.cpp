@@ -969,12 +969,27 @@ RadialMenuEntryToggle::RadialMenuEntryToggle(int combatMesLine, void* ActualArg,
 {
 	type = RadialMenuEntryType::Toggle;
 	text = combatSys.GetCombatMesLine(combatMesLine);
-	helpId = ElfHash::Hash(HelpId);
+	this->helpId = ElfHash::Hash(HelpId);
 	callback = temple::GetRef<BOOL(__cdecl)(objHndl, RadialMenuEntry*)>(0x100F0200);
 	minArg = 0;
 	maxArg = 1;
 	actualArg = reinterpret_cast<int>(ActualArg);
-};
+}
+RadialMenuEntryToggle::RadialMenuEntryToggle(std::string & textArg, const char HelpId[]): RadialMenuEntry()
+{
+	type = RadialMenuEntryType::Toggle;
+	auto textId = ElfHash::Hash(textArg);
+	auto textCache = radialMenus.radMenuStrings.find(textId);
+	if (textCache == radialMenus.radMenuStrings.end()) {
+		radialMenus.radMenuStrings[textId] = textArg;
+	}
+	this->text = (char*)radialMenus.radMenuStrings[textId].c_str();
+	this->helpId = ElfHash::Hash(HelpId);
+	callback = temple::GetRef<BOOL(__cdecl)(objHndl, RadialMenuEntry*)>(0x100F0200);
+	minArg = 0;
+	maxArg = 1;
+}
+;
 
 //
 //int RadialMenuEntry::AddChildToStandard(objHndl handle, RadialMenuStandardNode stdNode)
@@ -986,6 +1001,17 @@ RadialMenuEntryToggle::RadialMenuEntryToggle(int combatMesLine, void* ActualArg,
 RadialMenuEntryParent::RadialMenuEntryParent(int combatMesLine):RadialMenuEntry() {
 	type = RadialMenuEntryType::Parent;
 	text = combatSys.GetCombatMesLine(combatMesLine);
+}
+
+RadialMenuEntryParent::RadialMenuEntryParent(std::string & textArg) : RadialMenuEntryParent(1)
+{
+	auto textId = ElfHash::Hash(textArg);
+	auto textCache = radialMenus.radMenuStrings.find(textId);
+	if (textCache == radialMenus.radMenuStrings.end()) {
+		radialMenus.radMenuStrings[textId] = textArg;
+	}
+
+	this->text = (char*)radialMenus.radMenuStrings[textId].c_str();
 }
 
 
@@ -1011,5 +1037,21 @@ RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(int combatMesLine, int 
 
 RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(int combatMesLine, int d20aType, const char d20aKey[], int data1, const char helpId[]):RadialMenuEntryAction(combatMesLine, d20aType, data1, helpId) {
 	this->dispKey = ElfHash::Hash(d20aKey);
+	this->callback = [](objHndl handle, RadialMenuEntry* entry) { return radialMenus.PythonActionCallback(handle, entry); };
+}
+
+RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(std::string & textArg, int d20aType, int d20aKey, int data1, const char helpId[]) : RadialMenuEntryAction(1, d20aType, data1, helpId)
+{
+	type = RadialMenuEntryType::Action;
+	auto textId = ElfHash::Hash(textArg);
+	auto textCache = radialMenus.radMenuStrings.find(textId);
+	if (textCache == radialMenus.radMenuStrings.end()) {
+		radialMenus.radMenuStrings[textId] = textArg;
+	}
+
+	this->text = (char*)radialMenus.radMenuStrings[textId].c_str();
+	this->helpId = ElfHash::Hash(helpId);
+	d20ActionType = static_cast<D20ActionType>(d20aType);
+	d20ActionData1 = data1;
 	this->callback = [](objHndl handle, RadialMenuEntry* entry) { return radialMenus.PythonActionCallback(handle, entry); };
 }

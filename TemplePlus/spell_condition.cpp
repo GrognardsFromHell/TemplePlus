@@ -389,7 +389,7 @@ int SpellConditionFixes::GreaseSlippage(DispatcherCallbackArgs args){
 	if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Untripable))
 		return 0;
 
-	if (!spellPkt.SavingThrow(args.objHndCaller, D20STD_F_NONE)) {
+	if (!spellPkt.SavingThrow(args.objHndCaller, D20STF_NONE)) {
 		histSys.CreateRollHistoryLineFromMesfile(48, args.objHndCaller, objHndl::null);
 		combatSys.FloatCombatLine(args.objHndCaller, 104);
 		conds.AddTo(args.objHndCaller, "Prone", {});

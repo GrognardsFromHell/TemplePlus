@@ -1598,9 +1598,30 @@ static PyObject* PyObjHandle_D20QueryWithData(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		return PyInt_FromLong(0);
 	}
+
+	if (PyTuple_GET_SIZE(args) < 1) {
+		PyErr_SetString(PyExc_RuntimeError, "d20query_with_data called with no arguments!");
+		return PyInt_FromLong(0);
+	}
+
+	PyObject* arg = PyTuple_GET_ITEM(args, 0);
+	if (PyString_Check(arg)) {
+		auto argString = fmt::format("{}", PyString_AsString(arg));
+		auto arg1 = 0, arg2 = 0;
+		if (PyTuple_GET_SIZE(args) >=2 ){
+			PyObject* argTmp = PyTuple_GET_ITEM(args, 1);
+			arg1 = PyLong_AsLongLong(argTmp);
+		}
+		if (PyTuple_GET_SIZE(args) >= 3) {
+			PyObject* argTmp = PyTuple_GET_ITEM(args, 2);
+			arg2 = PyLong_AsLongLong(argTmp);
+		}
+		return PyInt_FromLong(d20Sys.D20QueryPython(self->handle, argString, arg1, arg2));
+	}
+
 	int queryKey;
 	int data1, data2 = 0;
-	if (!PyArg_ParseTuple(args, "ii|i:objhndl.d20query_with_data", &queryKey, &data1, &data2)) {
+	if (!PyArg_ParseTuple(args, "ii|i:objhndl.d20_query_with_data", &queryKey, &data1, &data2)) {
 		return 0;
 	}
 	auto dispatcherKey = (D20DispatcherKey)(DK_QUE_Helpless + queryKey);
@@ -1614,7 +1635,7 @@ static PyObject* PyObjHandle_D20QueryTestData(PyObject* obj, PyObject* args) {
 		return PyInt_FromLong(0);
 	}
 	int queryKey, testData;
-	if (!PyArg_ParseTuple(args, "ii:objhndl.d20query_test_data", &queryKey, &testData)) {
+	if (!PyArg_ParseTuple(args, "ii:objhndl.d20_query_test_data", &queryKey, &testData)) {
 		return 0;
 	}
 	auto dispatcherKey = (D20DispatcherKey)(DK_QUE_Helpless + queryKey);
@@ -1631,7 +1652,7 @@ static PyObject* PyObjHandle_D20QueryGetData(PyObject* obj, PyObject* args) {
 		return PyInt_FromLong(0);
 	}
 	int queryKey, testData;
-	if (!PyArg_ParseTuple(args, "ii:objhndl.d20query_get_data", &queryKey, &testData)) {
+	if (!PyArg_ParseTuple(args, "ii:objhndl.d20_query_get_data", &queryKey, &testData)) {
 		return 0;
 	}
 	auto dispatcherKey = (D20DispatcherKey)(DK_QUE_Helpless + queryKey);
