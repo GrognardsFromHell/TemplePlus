@@ -1610,11 +1610,11 @@ static PyObject* PyObjHandle_D20QueryWithData(PyObject* obj, PyObject* args) {
 		auto arg1 = 0, arg2 = 0;
 		if (PyTuple_GET_SIZE(args) >=2 ){
 			PyObject* argTmp = PyTuple_GET_ITEM(args, 1);
-			arg1 = PyLong_AsLongLong(argTmp);
+			arg1 = PyLong_AsLong(argTmp);
 		}
 		if (PyTuple_GET_SIZE(args) >= 3) {
 			PyObject* argTmp = PyTuple_GET_ITEM(args, 2);
-			arg2 = PyLong_AsLongLong(argTmp);
+			arg2 = PyLong_AsLong(argTmp);
 		}
 		return PyInt_FromLong(d20Sys.D20QueryPython(self->handle, argString, arg1, arg2));
 	}
@@ -2051,8 +2051,22 @@ static PyObject* PyObjHandle_HasFeat(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		return PyInt_FromLong(0);
 	}
+
+
 	feat_enums feat;
-	if (!PyArg_ParseTuple(args, "i:objhndl.has_feat", &feat)) {
+
+	if (PyTuple_GET_SIZE(args) < 1) {
+		PyErr_SetString(PyExc_RuntimeError, "has_feat called with no arguments!");
+		return PyInt_FromLong(0);
+	}
+
+	PyObject* arg = PyTuple_GET_ITEM(args, 0);
+	if (PyString_Check(arg)) {
+		auto argString = fmt::format("{}", PyString_AsString(arg));
+		feat = (feat_enums)ElfHash::Hash(argString);
+	}
+
+	else if (!PyArg_ParseTuple(args, "i:objhndl.has_feat", &feat)) {
 		return 0;
 	}
 

@@ -59,6 +59,7 @@ struct FeatInfo {
 	int flag =0;
 	int minLevel = 1;
 	FeatInfo(int FeatEnum) : featEnum(FeatEnum) {};
+	FeatInfo(std::string &featName) : featEnum(ElfHash::Hash(featName)) {};
 };
 
 
@@ -324,6 +325,8 @@ protected:
 PYBIND11_PLUGIN(tp_char_editor){
 	py::module mm("char_editor", "Temple+ Char Editor, used for extending the ToEE character editor.");
 
+
+	#pragma region KnownSpellInfo
 	py::class_<KnownSpellInfo>(mm, "KnownSpellInfo")
 		.def(py::init())
 		.def(py::init<int, int>(), py::arg("spell_enum"), py::arg("spell_status"))
@@ -392,8 +395,12 @@ PYBIND11_PLUGIN(tp_char_editor){
 		}, py::arg("class_enum"))
 		;
 
+	#pragma endregion
+
+
 	py::class_<FeatInfo>(mm, "FeatInfo")
 		.def(py::init<int>(), py::arg("feat_enum"))
+		.def(py::init<std::string &>(), py::arg("feat_name"))
 		.def_readwrite("feat_enum", &FeatInfo::featEnum)
 		.def_readwrite("feat_status", &FeatInfo::flag, "0 - normal, 1 - automatic class feat, 2 - bonus selectable feat")
 		;

@@ -2141,7 +2141,7 @@ ActionErrorCode D20ActionCallbacks::PerformCastItemSpell(D20Actn* d20a){
 }
 
 ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
-	// todo: this looks seriously fucked up :D
+	
 	int spellEnum = 0, spellClass, spellLvl, invIdx;
 	MetaMagicData mmData;
 	d20a->d20SpellData.Extract(&spellEnum, nullptr, &spellClass, &spellLvl, &invIdx, &mmData);
@@ -2375,7 +2375,9 @@ ActionErrorCode D20ActionCallbacks::ActionCheckCastSpell(D20Actn* d20a, TurnBase
 		}
 		
 		// check GP requirement
-		if (spEntry.costGP > 0u && party.IsInParty(d20a->d20APerformer) && party.GetMoney() < spEntry.costGP * 100) {
+		if (spEntry.costGP > 0u && party.IsInParty(d20a->d20APerformer) 
+			&& party.GetMoney() >=0 
+			&& (uint32_t)party.GetMoney() < spEntry.costGP * 100) { // making sure that costGP is interpreted as unsigned in case of some crazy overflow scenario
 			actSeqSpellResetter();
 			return AEC_CANNOT_CAST_NOT_ENOUGH_GP;
 		}

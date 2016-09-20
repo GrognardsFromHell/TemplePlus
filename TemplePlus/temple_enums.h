@@ -2,7 +2,7 @@
 
 
 #pragma region feats
-enum feat_enums : int {
+enum feat_enums : uint32_t {
 	FEAT_ACROBATIC = 0x0,
 	FEAT_AGILE = 0x1,
 	FEAT_ALERTNESS = 0x2,
@@ -688,18 +688,20 @@ enum feat_enums : int {
 	FEAT_MIGHTY_RAGE = 748,
 	FEAT_INDOMITABLE_WILL = 749,
 
-	FEAT_INVALID = -1
+	FEAT_INVALID = 0xffFFffFF
 };
 
 enum feat_requirement_codes : int32_t {
 	featReqCodeTerminator = -1,
 	featReqCodeMinCasterLevel = -2,
 	featReqCodeTurnUndeadRelated = -3,
+	featReqCodeWeaponFeat = -4,
 	featReqCodeEvasionRelated = -5,
 	featReqCodeFastMovement = -6,
 	featReqCodeUncannyDodgeRelated = -7,
 	featReqCodeMinArcaneCasterLevel = -8,
-	featReqCodeAnimalCompanion = -9
+	featReqCodeAnimalCompanion = -9,
+	featReqCodeCrossbowFeat = -10
 };
 
 enum featPropertyEnums : uint32_t {

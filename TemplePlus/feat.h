@@ -29,6 +29,7 @@ enum FeatPropertyFlag : uint32_t {
 
 	FPF_MULTI_MASTER = 0x80000, // head of multiselect class of feats (NEW)
 	FPF_GREAT_WEAP_SPEC_ITEM = 0x100100, // NEW	
+	FPF_PSIONIC = 0x200000
 };
 
 

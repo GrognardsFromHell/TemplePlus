@@ -89,7 +89,7 @@ void LegacyDescriptionSystem::Exit(){
 	mesFuncs.Close(descrMesExt);
 	mesFuncs.Close(longDescrMes);
 	if (*customNamesCount > 0){
-		for (int i = 0u; i < *customNamesCount; i++){
+		for (auto i = 0u; i < *customNamesCount; i++){
 			free((*customNamesArray)[i]);
 		}
 		free(*customNamesArray);

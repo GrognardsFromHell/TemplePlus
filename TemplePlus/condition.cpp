@@ -4994,7 +4994,7 @@ void Conditions::AddConditionsToTable(){
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondTirelessRage);
 	*/
 
-	PyImport_ImportModule("tpModifiers");
+	auto tpModule = PyImport_ImportModule("tpModifiers");
 }
 
 int AidAnotherRadialMenu(DispatcherCallbackArgs args)

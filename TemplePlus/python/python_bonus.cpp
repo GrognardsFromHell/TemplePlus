@@ -63,7 +63,7 @@ PyObject *PyBonusList_AddCap(PyObject *obj, PyObject *args) {
 PyObject *PyBonusList_AddFromFeat(PyObject *obj, PyObject *args) {
 	auto self = (PyBonusList*)obj;
 
-
+	// todo support for new feats
 	int value, bonType = 0, bonMesLine = 101, featEnum =0; // bonus type 0 is generic and stacking; 101 is "Misc."
 	if (!PyArg_ParseTuple(args, "i|iii:PyBonusList.add_from_feat", &value, &bonType, &bonMesLine, &featEnum)) {
 		return PyInt_FromLong(0);

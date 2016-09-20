@@ -299,6 +299,7 @@ void LegacyFeatSystem::_GetNewFeatsFromFile()
 
 		if (featSpec.name.size()){
 			auto featId = (feat_enums)ElfHash::Hash(featSpec.name);
+			Expects((uint32_t)featId > NUM_FEATS && (uint32_t)featId > 1000); // ensure no collision with the normal ToEE feats, and also > 1000 so that it meshes with the feat prerequisites check
 			mNewFeats[featId] = featSpec;
 			newFeats.push_back(featId);
 		}
@@ -1210,7 +1211,7 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 			}
 #pragma endregion 
 		}
-		else if (featReqCode == -10)
+		else if (featReqCode == featReqCodeCrossbowFeat)
 		{
 #pragma region Crossbow-related feats (probably rapid reload and stuff)
 			if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, wt_light_crossbow))
@@ -1225,7 +1226,7 @@ uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * feat
 			}
 #pragma endregion
 		}
-		else if (featReqCode == -4)
+		else if (featReqCode == featReqCodeWeaponFeat)
 		{
 #pragma region Weapon related feats general
 			if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, (WeaponTypes)featReqCodeArg))

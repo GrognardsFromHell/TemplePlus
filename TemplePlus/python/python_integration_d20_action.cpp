@@ -39,6 +39,10 @@ PYBIND11_PLUGIN(tp_actions) {
 		actSeq.d20ActArray[actSeq.d20ActArrayNum++] = d20a;
 	});
 
+	m.def("get_new_spell_id", []()->int{
+		return spellSys.GetNewSpellId();
+	});
+
 	return m.ptr();
 }
 

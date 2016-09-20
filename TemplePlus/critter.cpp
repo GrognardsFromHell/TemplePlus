@@ -482,7 +482,7 @@ int LegacyCritterSystem::GetPortraitId(objHndl leader) {
 }
 
 bool LegacyCritterSystem::CanSense(objHndl critter, objHndl tgt){
-	return (bool)temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x1007FFF0)(critter, tgt);
+	return temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x1007FFF0)(critter, tgt) != FALSE;
 }
 
 int LegacyCritterSystem::GetLevel(objHndl critter) {

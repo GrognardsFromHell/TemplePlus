@@ -19,6 +19,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/common.h>
 #include <pybind11/cast.h>
+#include <pybind11/stl.h>
 #include <radialmenu.h>
 #include <action_sequence.h>
 #include <condition.h>
@@ -72,6 +73,31 @@ void AddPyHook(CondStructNew& condStr, uint32_t dispType, uint32_t dispKey, PyOb
 PYBIND11_PLUGIN(tp_dispatcher){
 	py::module m("tpdp", "Temple+ Dispatcher module, used for creating modifier extensions.");
 
+	m.def("GetModifierFileList", [](){
+		auto result = std::vector<std::string>();
+		TioFileList flist;
+		tio_filelist_create(&flist, "scr\\tpModifiers\\*.py");
+
+		for (auto i=0; i < flist.count; i++){
+			auto &f = flist.files[i];
+			if (!_strcmpi(f.name, "__init__.py"))
+				continue;
+			for (auto ch = f.name; *ch; ch++)
+			{
+				if (*ch == '.')
+				{
+					*ch = 0;
+					break;
+				}
+					
+			}
+			result.push_back(f.name);
+		}
+
+		tio_filelist_destroy(&flist);
+		return result;
+	});
+
 	py::class_<CondStructNew>(m, "ModifierSpec")
 		.def(py::init())
 		.def(py::init<std::string, int, bool>(), py::arg("name"), py::arg("numArgs"), py::arg("preventDup") = true)
@@ -85,6 +111,9 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		}, "Add callback hook")
 		.def("add_to_feat_dict", [](CondStructNew &condStr, int feat_enum, int feat_max, int feat_offset) {
 			condStr.AddToFeatDictionary((feat_enums)feat_enum, (feat_enums)feat_max, feat_offset);
+		}, py::arg("feat_enum"), py::arg("feat_list_max") = -1, py::arg("feat_list_offset") = 0)
+			.def("add_to_feat_dict", [](CondStructNew &condStr, std::string &feat_name, int feat_max, int feat_offset) {
+			condStr.AddToFeatDictionary((feat_enums)ElfHash::Hash(feat_name), (feat_enums)feat_max, feat_offset);
 		}, py::arg("feat_enum"), py::arg("feat_list_max") = -1, py::arg("feat_list_offset") = 0)
 		// .def_readwrite("num_args", &CondStructNew::numArgs) // this is probably something we don't want to expose due to how ToEE saves/loads args
 		.def_readwrite("name", &CondStructNew::condName)
@@ -175,7 +204,32 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def_readwrite("critical_multiplier", &DamagePacket::critHitMultiplier, "1 by default, gets increased by various things")
 		.def_readwrite("attack_power", &DamagePacket::attackPowerType, "See D20DAP_");
 
+	py::class_<MetaMagicData>(m, "MetaMagicData")
+		.def(py::init<>())
+		.def("get_heighten_count", [](MetaMagicData& mmData)->int
+		{
+			return mmData.metaMagicHeightenSpellCount;
+		})
+		.def("set_heighten_count", [](MetaMagicData& mmData, int heightenCnt)->int
+		{
+			return mmData.metaMagicHeightenSpellCount = heightenCnt;
+		}) // todo rest
+			;
 
+	py::class_<D20SpellData>(m, "D20SpellData")
+		.def(py::init<>())
+		.def(py::init<int>(), py::arg("spell_enum"))
+		.def_readwrite("spell_enum", &D20SpellData::spellEnumOrg)
+		.def_readwrite("spell_class", &D20SpellData::spellClassCode)
+		.def("set_spell_level", [](D20SpellData& spData, int spLvl)
+		{
+		spData.spellSlotLevel = spLvl;
+		})
+		.def("get_spell_level", [](D20SpellData& spData)->int{
+			return spData.spellSlotLevel;
+		})
+		.def_readwrite("inven_idx", &D20SpellData::itemSpellData)
+			;
 
 	py::class_<D20Actn>(m, "D20Action")
 		.def(py::init())
@@ -246,13 +300,17 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def(py::init())
 		.def("add_as_child", &RadialMenuEntry::AddAsChild, "Adds this node as a child to a specified node ID, and returns the newly created node ID (so you may give it other children, etc.)")
 		.def("add_child_to_standard", &RadialMenuEntry::AddChildToStandard, "Adds this node as a child to a Standard Node (one of several hardcoded root nodes such as class, inventory etc.), and returns the newly created node ID (so you may give it other children, etc.)");
-
+		
 	
 
 	py::class_<RadialMenuEntryAction>(m, "RadialMenuEntryAction", py::base<RadialMenuEntry>())
 		.def(py::init<int, int, int, const char[]>(), py::arg("combesMesLine"), py::arg("action_type"), py::arg("data1"), py::arg("helpTopic"))
 		.def(py::init<std::string&, int, int, std::string&>(), py::arg("radialText"), py::arg("action_type"), py::arg("data1"), py::arg("helpTopic"))
-	;
+		.def("set_spell_data", [](RadialMenuEntryAction & entry, D20SpellData& spellData){
+		entry.d20SpellData.Set(spellData.spellEnumOrg, spellData.spellClassCode, spellData.spellSlotLevel, spellData.itemSpellData, spellData.metaMagicData);
+		})
+		;
+
 	py::class_<RadialMenuEntryPythonAction>(m, "RadialMenuEntryPythonAction", py::base<RadialMenuEntryAction>())
 		.def(py::init<int, int, int, int, const char[]>(), py::arg("combatMesLine"), py::arg("action_type"), py::arg("action_id"), py::arg("data1"), py::arg("helpTopic"))
 		.def(py::init<int, int, const char[], int, const char[]>(), py::arg("combatMesLine"), py::arg("action_type"), py::arg("action_name"), py::arg("data1"), py::arg("helpTopic"))
@@ -894,17 +952,11 @@ PyObject *PyEventArgs_New(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 
 PyObject* PyEventArgs_GetEventObject(PyObject *obj, void *) {
 	auto self = (PyEventArgs*)obj;
-	switch (self->args.dispKey) {
-		
-	}
 	return PyDispatchEventObject_Create(self->args.dispIO);
 }
 
 PyObject* PyEventArgs_GetAttachee(PyObject *obj, void *) {
 	auto self = (PyEventArgs*)obj;
-	switch (self->args.dispKey) {
-
-	}
 	return PyObjHndl_Create(self->args.objHndCaller);
 }
 
