@@ -1042,7 +1042,6 @@ RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(int combatMesLine, int 
 
 RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(std::string & textArg, int d20aType, int d20aKey, int data1, const char helpId[]) : RadialMenuEntryAction(1, d20aType, data1, helpId)
 {
-	type = RadialMenuEntryType::Action;
 	auto textId = ElfHash::Hash(textArg);
 	auto textCache = radialMenus.radMenuStrings.find(textId);
 	if (textCache == radialMenus.radMenuStrings.end()) {
@@ -1054,4 +1053,5 @@ RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(std::string & textArg, 
 	d20ActionType = static_cast<D20ActionType>(d20aType);
 	d20ActionData1 = data1;
 	this->callback = [](objHndl handle, RadialMenuEntry* entry) { return radialMenus.PythonActionCallback(handle, entry); };
+	this->dispKey = d20aKey;
 }

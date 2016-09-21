@@ -132,6 +132,10 @@ struct D20SpellData
 		spontCastType = SpontCastType::spontCastNone;
 		spellSlotLevel = 0;
 	}
+	D20SpellData(int spellEnum) : D20SpellData()
+	{
+		spellEnumOrg = spellEnum;
+	}
 };
 
 inline void D20SpellData::Set(uint32_t spellEnum, uint32_t SpellClassCode, uint32_t SpellLevel, uint32_t invIdx, MetaMagicData mmData)

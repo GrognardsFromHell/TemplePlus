@@ -284,7 +284,7 @@ int LegacyD20System::CastSpellProcessTargets(D20Actn* d20a, SpellPacketBody& spe
 
 		DispIOBonusListAndSpellEntry dispIoSr;
 		BonusList casterLvlBonlist;
-		auto casterLvl = dispatch.Dispatch35CasterLevelModify(d20a->d20APerformer, &spellPkt);
+		auto casterLvl = spellPkt.casterLevel; //dispatch.Dispatch35CasterLevelModify(d20a->d20APerformer, &spellPkt);  the caster level has already been modified at this point!
 		casterLvlBonlist.AddBonus(casterLvl, 0, 203);
 		if (feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_SPELL_PENETRATION))	{
 			casterLvlBonlist.AddBonusFromFeat(2, 0, 114, FEAT_SPELL_PENETRATION);

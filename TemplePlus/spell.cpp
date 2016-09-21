@@ -180,6 +180,7 @@ bool SpellEntry::IsBaseModeTarget(UiPickerType type){
 
 int SpellEntry::SpellLevelForSpellClass(int spellClass)
 {
+	// search the spell list extension first
 	auto spExtFind = spellSys.mSpellEntryExt.find(spellEnum);
 	if (spExtFind != spellSys.mSpellEntryExt.end())	{
 		for (auto it:spExtFind->second.levelSpecs){
@@ -187,6 +188,15 @@ int SpellEntry::SpellLevelForSpellClass(int spellClass)
 				return it.slotLevel;
 		}
 	}
+
+	// search the definition from the .txt file if none found
+	for (auto i=0u; i < this->spellLvlsNum; i++){
+		auto &spec = this->spellLvls[i];
+		if (spec.spellClass == spellClass)
+			return spec.slotLevel;
+	}
+
+	// default
 	return -1;
 }
 
@@ -437,6 +447,47 @@ SpellMapTransferInfo::SpellMapTransferInfo()
 void LegacySpellSystem::Init(const GameSystemConf& conf){
 	mesFuncs.Open("tprules\\spell_enums_ext.mes", &spellSys.spellEnumsExt);
 	mesFuncs.Open("mes\\spell_ext.mes", &spellMesExt);
+}
+
+int LegacySpellSystem::GetNewSpellId(){
+
+	auto &spellIdSerial = temple::GetRef<int>(0x10AAF204);
+	if (spellIdSerial >= 0x7fffFFFF)
+	{
+		logger->warn("WARNING! wow, we have reached the maxium amount of spell ids. Resetting to zero!");
+		spellIdSerial = 1;
+		return spellIdSerial;
+	}
+	return spellIdSerial++;
+}
+
+BOOL LegacySpellSystem::RegisterSpell(SpellPacketBody & spellPkt, int spellId)
+{
+	if (!spellId)
+	{
+		logger->warn("RegisterSpell: null spellId!");
+		return FALSE;
+	}
+
+	SpellPacket newPkt;
+	spellPkt.spellId = spellId;
+	auto spEnum = spellPkt.spellEnum;
+	newPkt.spellPktBody = spellPkt;
+	newPkt.key = spellId;
+	newPkt.isActive = 1;
+
+	SpellEntry spEntry(spEnum);
+	auto spLvl = spEntry.SpellLevelForSpellClass(spellPkt.spellClass);
+	if (spLvl < 0) // if none found
+		spLvl = 0;
+
+	MetaMagicData mmData(spellPkt.metaMagicData);
+
+	auto heightenCount = mmData.metaMagicHeightenSpellCount;
+	spLvl += heightenCount;
+
+
+	return TRUE;
 }
 
 uint32_t LegacySpellSystem::spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry)
@@ -752,7 +803,7 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 	}
 
 	auto orgCasterLvl = spellPkt->casterLevel;
-	dispatch.Dispatch35CasterLevelModify(caster, spellPkt);
+	spellPkt->casterLevel = dispatch.Dispatch35CasterLevelModify(caster, spellPkt);
 	
 	// if changed
 	if (spellPkt->casterLevel != orgCasterLvl){

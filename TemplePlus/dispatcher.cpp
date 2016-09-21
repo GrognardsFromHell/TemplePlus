@@ -586,7 +586,7 @@ unsigned DispatcherSystem::Dispatch35CasterLevelModify(objHndl obj, SpellPacketB
 	dispIo.data1 = reinterpret_cast<uint32_t>(spellPkt);
 	dispIo.data2 = 0;
 	DispatcherProcessor(_dispatcher, dispTypeBaseCasterLevelMod, 0, &dispIo);
-	spellPkt->casterLevel = dispIo.return_val;
+	//spellPkt->casterLevel = dispIo.return_val; // this caused bugs!
 	return dispIo.return_val;
 }
 

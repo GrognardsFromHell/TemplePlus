@@ -176,6 +176,10 @@ struct LegacySpellSystem : temple::AddressTable
 	MesHandle * spellsRadialMenuOptionsMes;
 	std::vector<SpellMapTransferInfo> spellMapTransInfo;
 	void Init(const GameSystemConf& conf);
+	
+
+	int GetNewSpellId();
+	BOOL RegisterSpell(SpellPacketBody& spellPkt, int spellId);
 
 	uint32_t spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry);
 	int CopyLearnableSpells(objHndl & handle, int spellClass, std::vector<SpellEntry> & entries);

@@ -256,7 +256,7 @@ struct DispIoCondStruct : DispIO { // DispIoType = 1
 
 struct DispIoBonusList : DispIO { // DispIoType = 2  used for fetching ability scores (dispType 10, 66), and Cur/Max HP 
 	BonusList bonlist;
-	uint32_t flags; 
+	uint32_t flags; // checked in 0x100C5C30 vs 2 for eagle's splendor spell (used to ignore the bonus from the spell)
 	DispIoBonusList(){
 		dispIOType = dispIOTypeBonusList;
 		flags = 0;
