@@ -37,6 +37,7 @@
 #include <graphics/device.h>
 #include <particles/instances.h>
 #include <gamesystems/legacymapsystems.h>
+#include <history.h>
 
 static PyObject *encounterQueue = nullptr;
 
@@ -1097,6 +1098,17 @@ PyObject* PyGame_CombatIsActive(PyObject*, PyObject* args) {
 	return PyInt_FromLong(combatSys.isCombatActive());
 }
 
+PyObject* PyGame_CreateHistoryFreeform(PyObject*, PyObject* args) {
+
+	char * histText;
+	if (!PyArg_ParseTuple(args, "s:game.create_history_freeform", &histText)) {
+		Py_RETURN_NONE;
+	}
+	histSys.CreateFromFreeText(histText);
+
+	Py_RETURN_NONE;
+}
+
 PyObject* PyGame_WrittenUiShow(PyObject*, PyObject* args) {
 	objHndl handle;
 	if (!PyArg_ParseTuple(args, "O&:game.written_ui_show", &ConvertObjHndl, &handle)) {
@@ -1112,6 +1124,7 @@ PyObject* PyGame_IsDaytime(PyObject*, PyObject* args) {
 }
 
 static PyMethodDef PyGameMethods[]{
+	{ "create_history_freeform", PyGame_CreateHistoryFreeform, METH_VARARGS, NULL },
 	{"fade_and_teleport", PyGame_FadeAndTeleport, METH_VARARGS, NULL},
 	{"fade", PyGame_Fade, METH_VARARGS, NULL},
 	{ "fnn", PyGame_FindNpcNear, METH_VARARGS, NULL },

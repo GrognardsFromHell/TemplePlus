@@ -35,6 +35,7 @@
 #include "temple_functions.h"
 #include <gamesystems/objects/objfields.h>
 #include <d20_level.h>
+#include <turn_based.h>
 
 struct PyObjHandle {
 	PyObject_HEAD;
@@ -1445,7 +1446,13 @@ static PyObject* PyObjHandle_KillByEffect(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		return 0;
 	}
-	critterSys.KillByEffect(self->handle, objHndl::null);
+
+	auto killer = objHndl::null;
+	if (!PyArg_ParseTuple(args, "|O&:objhndl.critter_kill_by_effect", &ConvertObjHndl, &killer)) {
+		return 0;
+	}
+
+	critterSys.KillByEffect(self->handle, killer);
 	Py_RETURN_NONE;
 }
 
@@ -1837,6 +1844,20 @@ static PyObject* PyObjHandle_GetCategoryType(PyObject* obj, PyObject* args) {
 	auto type = critterSys.GetCategory(self->handle);
 	return PyInt_FromLong(type);
 }
+
+static PyObject* PyObjHandle_IsActiveCombatant(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	
+	if (combatSys.isCombatActive() && tbSys.IsInInitiativeList(self->handle)){
+		return PyInt_FromLong(1);
+	}
+
+	return PyInt_FromLong(0);
+}
+
 
 static PyObject* PyObjHandle_IsCategoryType(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -2300,13 +2321,26 @@ static PyObject* PyObjHandle_D20SendSignal(PyObject* obj, PyObject* args) {
 			logger->error("Unimplemented D20SignalPython with handle arg");
 		else
 			d20Sys.d20SendSignal(self->handle, dispKey, hndl);
-	} else if (arg && PyInt_Check(arg)) {
+	}
+	
+	else if (arg && PyLong_Check(arg)) {
+		auto val = PyLong_AsLong(arg);
+		if (isPythonSig)
+			d20Sys.D20SignalPython(self->handle, dispKey, val, 0);
+		else
+			d20Sys.d20SendSignal(self->handle, dispKey, val, 0);
+	}
+	
+	else if (arg && PyInt_Check(arg))
+	{
 		auto val = PyInt_AsLong(arg);
 		if (isPythonSig)
 			d20Sys.D20SignalPython(self->handle, dispKey, val, 0);
 		else
 			d20Sys.d20SendSignal(self->handle, dispKey, val, 0);
-	} else {
+	} 
+	
+	else {
 		if (isPythonSig)
 			d20Sys.D20SignalPython(self->handle, dispKey );
 		else
@@ -2591,6 +2625,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 
 	{ "identify_all", PyObjHandle_IdentifyAll, METH_VARARGS, NULL },
 	{ "inventory_item", PyObjHandle_InventoryItem, METH_VARARGS, NULL },
+	{ "is_active_combatant", PyObjHandle_IsActiveCombatant, METH_VARARGS, NULL },
 	{ "is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL },
 	{ "is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL },
 	{ "is_friendly", PyObjHandle_IsFriendly, METH_VARARGS, NULL },

@@ -3,6 +3,7 @@
 #include <gamesystems/gamesystems.h>
 #include <gamesystems/objects/objsystem.h>
 #include "python_object.h"
+#include "python/python_integration_spells.h"
 
 #undef HAVE_ROUND
 #define PYBIND11_EXPORT
@@ -46,6 +47,10 @@ PYBIND11_PLUGIN(tp_actions) {
 
 	m.def("register_spell_cast", [](SpellPacketBody spellPkt, int spellId){
 		spellSys.RegisterSpell(spellPkt, spellId);
+	});
+
+	m.def("trigger_spell_effect", [](int spellId){
+		pySpellIntegration.SpellTrigger(spellId, SpellEvent::SpellEffect);
 	});
 
 	m.def("get_cur_seq", []()->ActnSeq &{

@@ -326,7 +326,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def(py::init<std::string&, int, int, int, const char[]>(), py::arg("radialText"), py::arg("action_type"), py::arg("action_id"), py::arg("data1"), py::arg("helpTopic"))
 		;
 
-	py::class_<RadialMenuEntryToggle>(m, "RadialMenuEntryToggle")
+	py::class_<RadialMenuEntryToggle>(m, "RadialMenuEntryToggle", py::base<RadialMenuEntry>())
 		.def(py::init<std::string&, const char[]>(), py::arg("radialText"), py::arg("helpTopic"))
 		.def("link_to_args", [](RadialMenuEntryToggle & entry, DispatcherCallbackArgs &args, int argIdx)
 		{
@@ -379,12 +379,19 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		;
 
 		py::class_<SpellPacketBody>(m, "SpellPacket")
+			.def(py::init<uint32_t>(), py::arg("spell_id"))
 			.def_readwrite("spell_enum", &SpellPacketBody::spellEnum)
 			.def_readwrite("inventory_idx", &SpellPacketBody::invIdx)
 			.def_readwrite("spell_entry", &SpellPacketBody::spellEntry)
 			.def_readwrite("spell_class", &SpellPacketBody::spellClass)
 			.def_readwrite("spell_id", &SpellPacketBody::spellId)
 			.def_readwrite("caster_level", &SpellPacketBody::casterLevel)
+			.def("get_target",[](SpellPacketBody &pkt, int idx)->objHndl
+			{
+				if (idx < pkt.targetCount)
+					return pkt.targetListHandles[idx];
+				return objHndl::null;
+			} )
 			.def("is_divine_spell", &SpellPacketBody::IsDivine)
 			;
 	#pragma endregion 
