@@ -160,11 +160,20 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		;
 
 	#pragma region useful data types
+
+
 		#pragma region Bonuslist etc
 	py::class_<BonusList>(m, "BonusList")
 			.def(py::init())
 			.def("add", &BonusList::AddBonus, "Adds a bonus entry. Args are: value, type, and bonus.mes line number")
-			.def("add_from_feat", &BonusList::AddBonusFromFeat)
+			.def("add_from_feat", [](BonusList &bonlist, int value, int bonType, int mesline, int feat)->int
+			{
+				return bonlist.AddBonusFromFeat(value, bonType, mesline, (feat_enums)feat);
+			})
+			.def("add_from_feat", [](BonusList &bonlist, int value, int bonType, int mesline, std::string &feat)->int
+			{
+				return bonlist.AddBonusFromFeat(value, bonType, mesline, feat);
+			})
 			.def("set_overall_cap", [](BonusList & bonlist, int bonflags, int newCap, int newCapType, int bonusMesline) {
 				bonlist.SetOverallCap(bonflags, newCap, newCapType, bonusMesline);
 			 })

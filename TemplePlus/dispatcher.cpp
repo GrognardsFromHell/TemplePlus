@@ -1309,3 +1309,18 @@ void DispIoD20ActionTurnBased::DispatchPythonActionPerform(D20DispatcherKey key)
 		dispatch.DispatcherProcessor(dispatcher, dispTypePythonActionPerform, key, this);
 	}
 }
+
+int DispIOBonusListAndSpellEntry::Dispatch(objHndl handle, enum_disp_type evtType){
+	auto dispatcher = objSystem->GetObject(handle)->GetDispatcher();
+	if (!dispatcher->IsValid())
+		return 0;
+
+	BonusList bonlistLocal;
+	if (!this->bonList){
+		this->bonList = &bonlistLocal;
+	}
+
+	dispatcher->Process(evtType, DK_NONE, this);
+
+	return this->bonList->GetEffectiveBonusSum();
+}

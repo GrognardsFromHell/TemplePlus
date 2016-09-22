@@ -388,6 +388,7 @@ struct DispIOBonusListAndSpellEntry: DispIO { // Type 14
 		spellEntry = nullptr;
 		field_C = 0;
 	}
+	int Dispatch(objHndl handle, enum_disp_type evtType);
 };
 
 struct DispIoReflexThrow : DispIO { // DispIoType = 15

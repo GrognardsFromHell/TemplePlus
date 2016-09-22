@@ -149,6 +149,7 @@ struct BonusList
 	int AddBonus(int value, int bonType, int mesline);
 	int AddBonusWithDesc(int value, int bonType, int mesline, char* descr);
 	int AddBonusFromFeat(int value, int bonType, int mesline, feat_enums feat); // same as the above, but it also gets the feat name automatically
+	int AddBonusFromFeat(int value, int bonType, int mesline, std::string &feat); 
 	int ModifyBonus(int value, int bonType, int meslineIdentifier); // directly modifies a bonus. For non-stacking bonus types that you want to stack anyway. Note: the mesline is used as an identifier here!
 	BOOL ZeroBonusSetMeslineNum(int mesline);
 

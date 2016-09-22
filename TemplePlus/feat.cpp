@@ -547,10 +547,296 @@ uint32_t LegacyFeatSystem::WeaponFeatCheck(objHndl objHnd, feat_enums * featArra
 	return _WeaponFeatCheck( objHnd,  featArray,  featArrayLen,  classBeingLeveled,  wpnType);
 }
 
-uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums* featArray, uint32_t featArrayLen, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased)
-{
-	return _FeatPrereqsCheck(objHnd, featIdx, featArray, featArrayLen, classCodeBeingLevelledUp, abilityScoreBeingIncreased);
-}
+uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums* featArray, uint32_t featArrayLen, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased){
+
+	
+
+	FeatPrereqRow * featPrereqs = feats.m_featPreReqTable;
+	const uint8_t numCasterClasses = 7;
+	uint32_t casterClassCodes[numCasterClasses] = { stat_level_bard, stat_level_cleric, stat_level_druid, stat_level_paladin, stat_level_ranger, stat_level_sorcerer, stat_level_wizard };
+
+	if (!feats.IsFeatEnabled(featIdx) && !feats.IsFeatMultiSelectMaster(featIdx)) {
+		return 0;
+	}
+
+
+	auto isNewFeat = featIdx > NUM_FEATS;
+
+	// checking feats in the character editor - SpellSlinger hack for special Rogue feats for level > 10
+	if (classCodeBeingLevelledUp == stat_level_rogue && objHnd && feats.IsFeatPropertySet(featIdx, FPF_ROGUE_BONUS)) {
+		auto newClassLvl = objects.StatLevelGet(objHnd, stat_level_rogue) + 1;
+		if (newClassLvl == 10 || newClassLvl == 13 || newClassLvl == 16 || newClassLvl == 19) {
+			return 1;
+		}
+	}
+
+
+	auto i = 0u;
+	auto endOfReqs = false;
+	int featReqCode, featReqCodeArg;
+	
+
+	std::vector<FeatPrereq> prereqs;
+	if (isNewFeat){
+		prereqs = feats.mNewFeats[featIdx].prereqs;
+	} else
+	{
+		while (featPrereqs[featIdx].featPrereqs[i].featPrereqCode != featReqCodeTerminator){
+			prereqs.push_back(featPrereqs[featIdx].featPrereqs[i++]);
+		}
+	}
+
+	for (auto it: prereqs){
+
+		featReqCode = it.featPrereqCode;
+		featReqCodeArg = it.featPrereqCodeArg;
+		
+		if (featReqCode == featReqCodeTerminator)
+			return TRUE;
+
+		if (featReqCode == featReqCodeMinCasterLevel){
+# pragma region Minimum Caster Level
+
+			uint32_t var_2C = 0;
+			auto casterLevel = critterSys.GetCasterLevel(objHnd);
+			for (uint8_t j = 0; j < numCasterClasses; j++)
+			{
+
+				if (classCodeBeingLevelledUp == casterClassCodes[j])
+					casterLevel++;
+
+				if ((uint32_t)casterLevel >= (uint32_t)featReqCodeArg) { var_2C = 1; };
+			};
+
+			if (var_2C == 0) { return 0; }
+#pragma endregion 
+		}
+		else if (featReqCode == featReqCodeTurnUndeadRelated)
+		{
+#pragma region Turn / Rebuke Undead Stuff
+			uint32_t critterAlignment = objects.StatLevelGet(objHnd, stat_alignment);
+			uint32_t paladinLevel = objects.StatLevelGet(objHnd, stat_level_paladin);
+			uint32_t clericLevel = objects.StatLevelGet(objHnd, stat_level_cleric);
+			uint32_t paladinReqLvl = featReqCodeArg;
+			uint32_t clericReqLvl = featReqCodeArg;
+			if (featIdx == FEAT_TURN_UNDEAD)
+			{
+				if (!(critterAlignment & ALIGNMENT_EVIL || critterAlignment == (ALIGNMENT_CHAOTIC | ALIGNMENT_LAWFUL)))// TODO: is this a bug??? might be harmless mistake, might be deliberate
+				{
+					if (paladinLevel + (classCodeBeingLevelledUp == stat_level_paladin) < 4
+						&& clericLevel + (classCodeBeingLevelledUp == stat_level_cleric) < 1
+						) {
+						return 0;
+					}
+				}
+
+			}
+			else if (featIdx == FEAT_REBUKE_UNDEAD)
+			{
+				if (!(critterAlignment > 10 || critterAlignment & ALIGNMENT_GOOD
+					|| critterAlignment == 3))
+				{
+					if (paladinLevel + (classCodeBeingLevelledUp == stat_level_paladin) < 4
+						&& clericLevel + (classCodeBeingLevelledUp == stat_level_cleric) < 1
+						) {
+						return 0;
+					}
+				};
+			}
+			if (paladinLevel + (classCodeBeingLevelledUp == stat_level_paladin) < paladinReqLvl
+				&& clericLevel + (classCodeBeingLevelledUp == stat_level_cleric) < clericReqLvl
+				) {
+				return 0;
+			}
+#pragma endregion 
+
+		}
+		else if (featReqCode == featReqCodeEvasionRelated)
+		{
+# pragma region Evasion Related
+			auto rogueLevel = objects.StatLevelGet(objHnd, stat_level_rogue);
+			auto monkLevel = objects.StatLevelGet(objHnd, stat_level_monk);
+			if (featIdx == FEAT_EVASION)
+			{
+				if (rogueLevel + (classCodeBeingLevelledUp == stat_level_rogue) < 2
+					&& monkLevel + (classCodeBeingLevelledUp == stat_level_monk) < 1
+					) {
+					return 0;
+				}
+			}
+			else if (featIdx == FEAT_IMPROVED_EVASION)
+			{
+				if (rogueLevel + (classCodeBeingLevelledUp == stat_level_rogue) < 10
+					&& monkLevel + (classCodeBeingLevelledUp == stat_level_monk) < 9
+					) {
+					return 0;
+				}
+			}
+#pragma endregion 
+		}
+		else if (featReqCode == featReqCodeFastMovement)
+		{
+#pragma region Fast Movement
+			auto monkLevel = objects.StatLevelGet(objHnd, stat_level_monk);
+			auto barbarianLevel = objects.StatLevelGet(objHnd, stat_level_barbarian);
+			if (featIdx == FEAT_FAST_MOVEMENT)
+			{
+				if (barbarianLevel + (classCodeBeingLevelledUp == stat_level_barbarian) < 1
+					&& monkLevel + (classCodeBeingLevelledUp == stat_level_monk) < 3
+					) {
+					return 0;
+				}
+			}
+#pragma endregion 
+		}
+		else if (featReqCode == featReqCodeMinArcaneCasterLevel)
+		{
+# pragma region Min Arcane Caster Level
+			uint32_t sorcererLevel = critterSys.GetCasterLevelForClass(objHnd, stat_level_sorcerer); //objects.StatLevelGet(objHnd, stat_level_sorcerer);
+			uint32_t wizardLevel = critterSys.GetCasterLevelForClass(objHnd, stat_level_wizard); //objects.StatLevelGet(objHnd, stat_level_wizard);
+			if (sorcererLevel + (classCodeBeingLevelledUp == stat_level_sorcerer) < (uint32_t)featReqCodeArg
+				&& wizardLevel + (classCodeBeingLevelledUp == stat_level_wizard) < (uint32_t)featReqCodeArg
+				) {
+				return 0;
+			}
+#pragma endregion 
+		}
+		else if (featReqCode == featReqCodeUncannyDodgeRelated)
+		{
+#pragma region Uncanny Dodge Related
+			auto rogueLevel = objects.StatLevelGet(objHnd, stat_level_rogue);
+			auto barbarianLevel = objects.StatLevelGet(objHnd, stat_level_barbarian);
+			if (featIdx == FEAT_UNCANNY_DODGE)
+			{
+				if (rogueLevel + (classCodeBeingLevelledUp == stat_level_rogue) < 3
+					&& barbarianLevel + (classCodeBeingLevelledUp == stat_level_barbarian) < 2
+					) {
+					return 0;
+				}
+			}
+			else if (featIdx == FEAT_IMPROVED_UNCANNY_DODGE)
+			{
+				if (rogueLevel + (classCodeBeingLevelledUp == stat_level_rogue) < 8
+					&& barbarianLevel + (classCodeBeingLevelledUp == stat_level_barbarian) < 5
+					) {
+					return 0;
+				}
+			}
+#pragma endregion 
+		}
+		else if (featReqCode == featReqCodeAnimalCompanion)
+		{
+#pragma region Animal Companion
+			auto druidLevel = objects.StatLevelGet(objHnd, stat_level_druid);
+			auto rangerLevel = objects.StatLevelGet(objHnd, stat_level_ranger);
+
+
+			if (featIdx == FEAT_ANIMAL_COMPANION)
+			{
+				if (druidLevel + (classCodeBeingLevelledUp == stat_level_druid) < 1
+					&& rangerLevel + (classCodeBeingLevelledUp == stat_level_ranger) < 4
+					) {
+					return 0;
+				}
+			}
+#pragma endregion 
+		}
+		else if (featReqCode == featReqCodeCrossbowFeat)
+		{
+#pragma region Crossbow-related feats (probably rapid reload and stuff)
+			if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, wt_light_crossbow))
+			{
+				if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, wt_heavy_crossbow))
+				{
+					if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, wt_hand_crossbow))
+					{
+						return 0;
+					}
+				}
+			}
+#pragma endregion
+		}
+		else if (featReqCode == featReqCodeWeaponFeat)
+		{
+#pragma region Weapon related feats general
+			if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, (WeaponTypes)featReqCodeArg))
+			{
+				return 0;
+			}
+#pragma endregion
+		}
+		else if (featReqCode >= 1000 && featReqCode <= 1999)
+		{
+# pragma region Custom Feat Stat Requirement (?)
+			feat_enums featIdxFromReqCode = (feat_enums)(featReqCode - 1000);
+			if (!_FeatExistsInArray(featIdxFromReqCode, featArray, featArrayLen))
+			{
+				if (templeFuncs.ObjStatBaseGet(objHnd, featReqCode) < featReqCodeArg)
+				{
+					uint32_t stat = 0;
+					if (featIdxFromReqCode == FEAT_TWO_WEAPON_FIGHTING)
+					{
+						stat = 1640;
+					}
+					else if (featIdxFromReqCode == FEAT_RAPID_SHOT)
+					{
+						stat = 1646;
+					}
+					else if (featIdxFromReqCode == FEAT_MANYSHOT)
+					{
+						stat = 1647;
+					}
+					else if (featIdxFromReqCode == FEAT_IMPROVED_TWO_WEAPON_FIGHTING)
+					{
+						stat = 1641;
+					}
+					if (stat == 0) { return 0; }
+					if (templeFuncs.ObjStatBaseGet(objHnd, stat) < featReqCodeArg) { return 0; }
+				}
+			}
+#pragma endregion 
+		}
+		else if (featReqCode >= 7 && featReqCode <= 17)
+		{
+# pragma region Class Level Requirement
+			if (classCodeBeingLevelledUp == featReqCode) { featReqCodeArg--; }
+			if ((int)objects.StatLevelGet(objHnd, (Stat)featReqCode) < featReqCodeArg) { return 0; }
+#pragma endregion 
+		}
+		else if (featReqCode == 266)
+		{
+#pragma region BAB Requirement
+			auto babAfterLvl = critterSys.GetBaseAttackBonus(objHnd, classCodeBeingLevelledUp);
+			if (babAfterLvl < featReqCodeArg)
+				return 0;
+			// if ((int) templeFuncs.ObjGetBABAfterLevelling(objHnd, classCodeBeingLevelledUp) < featReqCodeArg){ return 0; }
+#pragma endregion 
+		}
+		else if (featReqCode >= stat_strength && featReqCode <= stat_charisma)
+		{
+#pragma region Ability Score Requirement
+			if (abilityScoreBeingIncreased == featReqCode) { featReqCodeArg--; }
+			if ((int)templeFuncs.ObjStatBaseDispatch(objHnd, featReqCode, nullptr) < featReqCodeArg)
+			{
+				return 0;
+			}
+
+#pragma endregion 
+		}
+		else if (featReqCode != 266)
+		{
+# pragma region Default: Stat requirement
+			if ((int)templeFuncs.ObjStatBaseGet(objHnd, featReqCode) < featReqCodeArg) { return 0; }
+#pragma endregion 
+		}
+
+		// loop
+
+		i++;
+	}
+
+	return 1;
+};
 
 vector<feat_enums> LegacyFeatSystem::GetFeats(objHndl handle) {
 
@@ -671,7 +957,7 @@ int LegacyFeatSystem::IsFeatEnabled(feat_enums feat)
 			return FALSE;
 		return (featFind->second.flags & FPF_DISABLED ) == 0;
 	}
-	return (m_featPropertiesTable[feat] & 2 ) == 0;
+	return (m_featPropertiesTable[feat] & FPF_DISABLED ) == 0;
 }
 
 int LegacyFeatSystem::IsMagicFeat(feat_enums feat)
@@ -683,7 +969,7 @@ int LegacyFeatSystem::IsMagicFeat(feat_enums feat)
 			return FALSE;
 		return (featFind->second.flags & FPF_WIZARD_BONUS) != 0;
 	}
-	return (m_featPropertiesTable[feat] & 0x20000 ) != 0;
+	return (m_featPropertiesTable[feat] & FPF_WIZARD_BONUS) != 0;
 }
 
 int LegacyFeatSystem::IsFeatPartOfMultiselect(feat_enums feat)
@@ -705,9 +991,9 @@ int LegacyFeatSystem::IsFeatRacialOrClassAutomatic(feat_enums feat)
 		auto featFind = mNewFeats.find(feat);
 		if (featFind == mNewFeats.end())
 			return FALSE;
-		return (featFind->second.flags & (FPF_RACE_AUTOMATIC | FPF_RACE_AUTOMATIC)) != 0;
+		return (featFind->second.flags & (FPF_RACE_AUTOMATIC | FPF_CLASS_AUTMATIC)) != 0;
 	}
-	return (m_featPropertiesTable[feat] & (FPF_RACE_AUTOMATIC | FPF_RACE_AUTOMATIC) ) != 0;
+	return (m_featPropertiesTable[feat] & (FPF_RACE_AUTOMATIC | FPF_CLASS_AUTMATIC) ) != 0;
 }
 
 int LegacyFeatSystem::IsClassFeat(feat_enums feat)
@@ -1045,267 +1331,8 @@ uint32_t _FeatExistsInArray(feat_enums featCode, feat_enums * featArray, uint32_
 
 uint32_t _FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * featArray, uint32_t featArrayLen, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased)
 {
-	uint32_t featProps = (feats.m_featPropertiesTable)[featIdx];
-	FeatPrereqRow * featPrereqs = feats.m_featPreReqTable;
-	const uint8_t numCasterClasses = 7;
-	uint32_t casterClassCodes[numCasterClasses] = { stat_level_bard, stat_level_cleric, stat_level_druid, stat_level_paladin, stat_level_ranger, stat_level_sorcerer, stat_level_wizard };
-	
-	if (!feats.IsFeatEnabled(featIdx)  && !feats.IsFeatMultiSelectMaster(featIdx)){
-		return 0;
-	}
-
-
-	// checking feats in the character editor - SpellSlinger hack for special Rogue feats for level > 10
-	if ( classCodeBeingLevelledUp == stat_level_rogue && objHnd && feats.IsFeatPropertySet(featIdx, FPF_ROGUE_BONUS)){
-		auto newClassLvl = objects.StatLevelGet(objHnd, stat_level_rogue) + 1;
-		if (newClassLvl == 10 || newClassLvl == 13 || newClassLvl == 16 || newClassLvl == 19){
-				return 1;			
-		}
-	}
-
-	uint32_t initOffset = featIdx * 16;
-
-	if (featPrereqs[featIdx].featPrereqs[0].featPrereqCode == featReqCodeTerminator){ return 1; };
-
-
-	for (uint32_t i = 0; featPrereqs[featIdx].featPrereqs[i].featPrereqCode != featReqCodeTerminator; i += 1){
-
-		int32_t featReqCode = featPrereqs[featIdx].featPrereqs[i].featPrereqCode;
-		auto featReqCodeArg = featPrereqs[featIdx].featPrereqs[i].featPrereqCodeArg;
-		uint32_t var_2C = 0;		
-
-		if (featReqCode == featReqCodeMinCasterLevel)
-		{
-# pragma region Minimum Caster Level
-			auto casterLevel = critterSys.GetCasterLevel(objHnd);
-			for (uint8_t j = 0; j < numCasterClasses; j++)
-			{
-				
-				if (classCodeBeingLevelledUp == casterClassCodes[j])
-					casterLevel++;
-
-				if ((uint32_t)casterLevel >= (uint32_t)featReqCodeArg){ var_2C = 1; };
-			};
-
-			if (var_2C == 0){ return 0; }
-#pragma endregion 
-		} 
-		else if (featReqCode == featReqCodeTurnUndeadRelated)
-		{
-#pragma region Turn / Rebuke Undead Stuff
-			uint32_t critterAlignment = objects.StatLevelGet(objHnd, stat_alignment);
-			uint32_t paladinLevel = objects.StatLevelGet(objHnd, stat_level_paladin);
-			uint32_t clericLevel = objects.StatLevelGet(objHnd, stat_level_cleric);
-			uint32_t paladinReqLvl = featReqCodeArg;
-			uint32_t clericReqLvl = featReqCodeArg;
-			if (featIdx == FEAT_TURN_UNDEAD)
-			{
-				if ( !(critterAlignment & ALIGNMENT_EVIL || critterAlignment == (ALIGNMENT_CHAOTIC | ALIGNMENT_LAWFUL) ) )// TODO: is this a bug??? might be harmless mistake, might be deliberate
-				{
-					if (paladinLevel + (classCodeBeingLevelledUp == stat_level_paladin) < 4
-						&& clericLevel + (classCodeBeingLevelledUp == stat_level_cleric) < 1
-						){ return 0;}
-				} 
-				
-			} 
-			else if (featIdx == FEAT_REBUKE_UNDEAD)
-			{
-				if  (  ! ( critterAlignment > 10 || critterAlignment & ALIGNMENT_GOOD  	 
-							|| critterAlignment == 3))
-				{
-					if (paladinLevel + (classCodeBeingLevelledUp == stat_level_paladin) < 4
-						&& clericLevel + (classCodeBeingLevelledUp == stat_level_cleric) < 1
-						){	return 0;	}
-				};
-			}
-			if (paladinLevel + (classCodeBeingLevelledUp == stat_level_paladin) < paladinReqLvl
-				&& clericLevel + (classCodeBeingLevelledUp == stat_level_cleric) < clericReqLvl
-				){	return 0;	}
-#pragma endregion 
-
-		} else if (featReqCode == featReqCodeEvasionRelated)
-		{
-# pragma region Evasion Related
-			auto rogueLevel = objects.StatLevelGet(objHnd, stat_level_rogue);
-			auto monkLevel = objects.StatLevelGet(objHnd, stat_level_monk);
-			if (featIdx == FEAT_EVASION)
-			{
-				if (rogueLevel+ (classCodeBeingLevelledUp == stat_level_rogue) < 2
-					&& monkLevel+ (classCodeBeingLevelledUp == stat_level_monk) < 1
-					){
-					return 0;
-				}
-			} else if (featIdx == FEAT_IMPROVED_EVASION)
-			{
-				if (rogueLevel + (classCodeBeingLevelledUp == stat_level_rogue) < 10
-					&& monkLevel + (classCodeBeingLevelledUp == stat_level_monk) < 9
-					){
-					return 0;
-				}
-			}
-#pragma endregion 
-		}
-		else if (featReqCode == featReqCodeFastMovement)
-		{ 
-#pragma region Fast Movement
-			auto monkLevel = objects.StatLevelGet(objHnd, stat_level_monk);
-			auto barbarianLevel = objects.StatLevelGet(objHnd, stat_level_barbarian);
-			if (featIdx == FEAT_FAST_MOVEMENT)
-			{
-				if (barbarianLevel + (classCodeBeingLevelledUp == stat_level_barbarian) < 1
-					&& monkLevel + (classCodeBeingLevelledUp == stat_level_monk) < 3
-					){
-					return 0;
-				}
-			}
-#pragma endregion 
-		}
-		else if (featReqCode == featReqCodeMinArcaneCasterLevel)
-		{
-# pragma region Min Arcane Caster Level
-			uint32_t sorcererLevel = critterSys.GetCasterLevelForClass(objHnd, stat_level_sorcerer); //objects.StatLevelGet(objHnd, stat_level_sorcerer);
-			uint32_t wizardLevel = critterSys.GetCasterLevelForClass(objHnd, stat_level_wizard); //objects.StatLevelGet(objHnd, stat_level_wizard);
-			if (sorcererLevel + (classCodeBeingLevelledUp == stat_level_sorcerer) < (uint32_t) featReqCodeArg
-				&& wizardLevel + (classCodeBeingLevelledUp == stat_level_wizard) < (uint32_t) featReqCodeArg
-				){
-				return 0;
-			}
-#pragma endregion 
-		}
-		else if (featReqCode == featReqCodeUncannyDodgeRelated)
-		{
-#pragma region Uncanny Dodge Related
-			auto rogueLevel = objects.StatLevelGet(objHnd, stat_level_rogue);
-			auto barbarianLevel = objects.StatLevelGet(objHnd, stat_level_barbarian);
-			if (featIdx == FEAT_UNCANNY_DODGE)
-			{
-				if (rogueLevel + (classCodeBeingLevelledUp == stat_level_rogue) < 3
-					&& barbarianLevel + (classCodeBeingLevelledUp == stat_level_barbarian) < 2
-					){
-					return 0;
-				}
-			} else if (featIdx == FEAT_IMPROVED_UNCANNY_DODGE)
-			{
-				if (rogueLevel + (classCodeBeingLevelledUp == stat_level_rogue) < 8
-					&& barbarianLevel + (classCodeBeingLevelledUp == stat_level_barbarian) < 5
-					){
-					return 0;
-				}
-			}
-#pragma endregion 
-		}
-		else if (featReqCode == featReqCodeAnimalCompanion)
-		{
-#pragma region Animal Companion
-			auto druidLevel = objects.StatLevelGet(objHnd, stat_level_druid);
-			auto rangerLevel = objects.StatLevelGet(objHnd, stat_level_ranger);
-		
-
-			if (featIdx == FEAT_ANIMAL_COMPANION)
-			{
-				if (druidLevel + (classCodeBeingLevelledUp == stat_level_druid) < 1
-					&& rangerLevel + (classCodeBeingLevelledUp == stat_level_ranger) < 4
-					){
-					return 0;
-				}
-			}
-#pragma endregion 
-		}
-		else if (featReqCode == featReqCodeCrossbowFeat)
-		{
-#pragma region Crossbow-related feats (probably rapid reload and stuff)
-			if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, wt_light_crossbow))
-			{
-				if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, wt_heavy_crossbow))
-				{
-					if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, wt_hand_crossbow))
-					{
-						return 0;
-					}
-				}
-			}
-#pragma endregion
-		}
-		else if (featReqCode == featReqCodeWeaponFeat)
-		{
-#pragma region Weapon related feats general
-			if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, (WeaponTypes)featReqCodeArg))
-			{
-				return 0;
-			}
-#pragma endregion
-		} 
-		else if( featReqCode >= 1000 && featReqCode <= 1999)
-		{
-# pragma region Custom Feat Stat Requirement (?)
-			feat_enums featIdxFromReqCode = (feat_enums)(featReqCode - 1000);
-			if (!_FeatExistsInArray(featIdxFromReqCode, featArray, featArrayLen))
-			{
-				if (templeFuncs.ObjStatBaseGet(objHnd, featReqCode) < featReqCodeArg)
-				{
-					uint32_t stat = 0;
-					if (featIdxFromReqCode == FEAT_TWO_WEAPON_FIGHTING)
-					{
-						stat = 1640;
-					}
-					else if (featIdxFromReqCode == FEAT_RAPID_SHOT)
-					{
-						stat = 1646;
-					}
-					else if (featIdxFromReqCode == FEAT_MANYSHOT)
-					{
-						stat = 1647;
-					}
-					else if (featIdxFromReqCode == FEAT_IMPROVED_TWO_WEAPON_FIGHTING)
-					{
-						stat = 1641;
-					}
-					if (stat == 0){ return 0; }
-					if (templeFuncs.ObjStatBaseGet(objHnd, stat) < featReqCodeArg){ return 0; }
-				}
-			}
-#pragma endregion 
-		} 
-		else if (featReqCode >= 7 && featReqCode <= 17)
-		{
-# pragma region Class Level Requirement
-			if (classCodeBeingLevelledUp == featReqCode){	featReqCodeArg--;	}
-			if ((int) objects.StatLevelGet(objHnd, (Stat)featReqCode) < featReqCodeArg){ return 0; }
-#pragma endregion 
-		} 
-		else if (featReqCode == 266)
-		{
-#pragma region BAB Requirement
-			auto babAfterLvl = critterSys.GetBaseAttackBonus(objHnd, classCodeBeingLevelledUp);
-			if (babAfterLvl < featReqCodeArg)
-				return 0;
-			// if ((int) templeFuncs.ObjGetBABAfterLevelling(objHnd, classCodeBeingLevelledUp) < featReqCodeArg){ return 0; }
-#pragma endregion 
-		} 
-		else if (featReqCode >= stat_strength && featReqCode <= stat_charisma)
-		{
-#pragma region Ability Score Requirement
-			if (abilityScoreBeingIncreased == featReqCode){ featReqCodeArg--; }
-			if ((int) templeFuncs.ObjStatBaseDispatch(objHnd, featReqCode, nullptr) < featReqCodeArg)
-			{
-				return 0;
-			}
-
-#pragma endregion 
-		} 
-		else if (featReqCode != 266)
-		{
-# pragma region Default: Stat requirement
-			if ((int)templeFuncs.ObjStatBaseGet(objHnd, featReqCode) < featReqCodeArg){ return 0; }
-#pragma endregion 
-		}
-		
-		// loop
-	}
-
-	return 1;
-};
-
+	return feats.FeatPrereqsCheck(objHnd, featIdx, featArray, featArrayLen, classCodeBeingLevelledUp, abilityScoreBeingIncreased);
+}
 
 uint32_t _RogueSpecialFeat(feat_enums featIdx, uint32_t newLevel)
 {

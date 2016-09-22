@@ -2482,7 +2482,7 @@ int __cdecl GreaterTWFRanger(DispatcherCallbackArgs args)
 int __cdecl TwoWeaponFightingBonus(DispatcherCallbackArgs args)
 {
 	DispIoAttackBonus *dispIo = dispatch.DispIoCheckIoType5((DispIoAttackBonus*)args.dispIO);
-	char *featName; // eax@3 MAPDST
+	char *featName;
 
 	feat_enums feat = (feat_enums)conds.CondNodeGetArg(args.subDispNode->condNode, 0);
 	int attackCode = dispIo->attackPacket.dispKey;

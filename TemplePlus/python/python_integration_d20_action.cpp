@@ -30,6 +30,7 @@ PYBIND11_PLUGIN(tp_actions) {
 		.def_readwrite("performer", &ActnSeq::performer)
 		.def_readwrite("tb_status", &ActnSeq::tbStatus)
 		.def_readwrite("target", &ActnSeq::targetObj)
+		.def_readwrite("spell_packet", &ActnSeq::spellPktBody)
 		.def("add_action", [](ActnSeq & actSeq, D20Actn & d20a){
 			actSeq.d20ActArray[actSeq.d20ActArrayNum++] = d20a;
 		})
@@ -41,6 +42,14 @@ PYBIND11_PLUGIN(tp_actions) {
 
 	m.def("get_new_spell_id", []()->int{
 		return spellSys.GetNewSpellId();
+	});
+
+	m.def("register_spell_cast", [](SpellPacketBody spellPkt, int spellId){
+		spellSys.RegisterSpell(spellPkt, spellId);
+	});
+
+	m.def("get_cur_seq", []()->ActnSeq &{
+		return **actSeqSys.actSeqCur;
 	});
 
 	return m.ptr();

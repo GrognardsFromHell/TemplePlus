@@ -5,6 +5,7 @@
 #include "bonus.h"
 #include "feat.h"
 #include "d20.h"
+#include <infrastructure/elfhash.h>
 
 static void NormalizeAxis(float& offset, uint32_t &tilePos) {
 	auto tiles = (int) (offset / INCH_PER_TILE);
@@ -148,6 +149,11 @@ int BonusList::AddBonusWithDesc(int value, int bonType, int mesline, char* descr
 int BonusList::AddBonusFromFeat(int value, int bonType, int mesline, feat_enums feat){
 	auto featName = feats.GetFeatName(feat);
 	return AddBonusWithDesc(value, bonType, mesline, featName);
+}
+
+int BonusList::AddBonusFromFeat(int value, int bonType, int mesline, std::string & feat)
+{
+	return AddBonusFromFeat(value, bonType, mesline, (feat_enums)ElfHash::Hash(feat));
 }
 
 int BonusList::ModifyBonus(int value, int bonType, int meslineIdentifier){

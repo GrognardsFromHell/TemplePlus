@@ -299,7 +299,7 @@ int LegacyD20System::CastSpellProcessTargets(D20Actn* d20a, SpellPacketBody& spe
 			continue;
 		}
 		auto rollHistId = 0;
-		if (spellSys.DispelRoll(d20a->d20APerformer, &casterLvlBonlist, 0, dispelDc, combatSys.GetCombatMesLine(5048), &rollHistId) <= 0){
+		if (spellSys.DispelRoll(d20a->d20APerformer, &casterLvlBonlist, 0, dispelDc, combatSys.GetCombatMesLine(5048), &rollHistId) < 0){
 			logger->info("CastSpellProcessTargets: spell {} cast by {} resisted by target {}", spellPkt.GetName(), d20a->d20APerformer, tgt );
 			floatSys.FloatSpellLine(tgt, 30008, FloatLineColor::White);
 			gameSystems->GetParticleSys().CreateAtObj("Fizzle", tgt);
@@ -318,8 +318,10 @@ int LegacyD20System::CastSpellProcessTargets(D20Actn* d20a, SpellPacketBody& spe
 		targets.push_back(tgt);
 
 	}
-
-	memcpy(spellPkt.targetListHandles, &targets[0], min(sizeof spellPkt.targetListHandles, targets.size()*sizeof(objHndl)) );
+	if (targets.size() > 0){
+		memcpy(spellPkt.targetListHandles, &targets[0], min(sizeof spellPkt.targetListHandles, targets.size() * sizeof(objHndl)));
+	}
+	
 	for (int i = targets.size(); i < 32; i++){
 		spellPkt.targetListHandles[i] = 0;
 	}

@@ -463,8 +463,7 @@ int LegacySpellSystem::GetNewSpellId(){
 
 BOOL LegacySpellSystem::RegisterSpell(SpellPacketBody & spellPkt, int spellId)
 {
-	if (!spellId)
-	{
+	if (!spellId){
 		logger->warn("RegisterSpell: null spellId!");
 		return FALSE;
 	}
@@ -476,6 +475,7 @@ BOOL LegacySpellSystem::RegisterSpell(SpellPacketBody & spellPkt, int spellId)
 	newPkt.key = spellId;
 	newPkt.isActive = 1;
 
+
 	SpellEntry spEntry(spEnum);
 	auto spLvl = spEntry.SpellLevelForSpellClass(spellPkt.spellClass);
 	if (spLvl < 0) // if none found
@@ -486,6 +486,37 @@ BOOL LegacySpellSystem::RegisterSpell(SpellPacketBody & spellPkt, int spellId)
 	auto heightenCount = mmData.metaMagicHeightenSpellCount;
 	spLvl += heightenCount;
 
+
+	// Get Spell DC Base
+	auto spellClass = spellPkt.spellClass;
+	DispIOBonusListAndSpellEntry evtObjDcBase;
+	evtObjDcBase.spellEntry = &spEntry;
+	auto dc = evtObjDcBase.Dispatch(spellPkt.caster, dispTypeSpellDcBase); // as far as I know this is always 0
+
+	DispIoBonusList evtObjAbScore;
+	evtObjAbScore.flags |= 1; // effect unknown??
+
+	auto spellStat = stat_wisdom;
+	if (!spellSys.isDomainSpell(spellPkt.spellClass)){
+		spellStat = d20ClassSys.GetSpellStat(spellSys.GetCastingClass(spellClass));
+	}
+
+	dc += spLvl + objects.GetModFromStatLevel( dispatch.Dispatch10AbilityScoreLevelGet(spellPkt.caster, spellStat, &evtObjAbScore) );
+
+	// Spell DC Mod
+	DispIOBonusListAndSpellEntry evtObjDcMod;
+	evtObjDcMod.spellEntry = &spEntry;
+	dc += evtObjDcMod.Dispatch(spellPkt.caster, dispTypeSpellDcMod);
+
+	if (dc < 1)
+		dc = 1;
+
+	newPkt.spellPktBody.spellRange = spellPkt.spellRange;
+	newPkt.spellPktBody.casterLevel = spellPkt.casterLevel;
+	newPkt.spellPktBody.dc = dc;
+	newPkt.spellPktBody.flagSthg |= 8;
+
+	spellsCastRegistry.put(spellId, newPkt);
 
 	return TRUE;
 }
