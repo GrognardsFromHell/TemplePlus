@@ -609,6 +609,81 @@ ARMOR_TYPE_SHIELD = 3
 ARMOR_TYPE_BITMASK = 3
 ARMOR_TYPE_NONE = 0x10
 
+wt_gauntlet = 0
+wt_unarmed_strike_medium_sized_being = 1
+wt_unarmed_strike_small_being = 2
+wt_dagger = 3
+wt_punching_dagger = 4
+wt_spiked_gauntlet = 5
+wt_light_mace = 6
+wt_sickle = 7
+wt_club = 8
+wt_shortspear = 9
+wt_heavy_mace = 10
+wt_morningstar = 11
+wt_quarterstaff = 12
+wt_spear = 13
+wt_light_crossbow = 14
+wt_dart = 15
+wt_sling = 16
+wt_heavy_crossbow = 17
+wt_javelin = 18
+wt_throwing_axe = 19
+wt_light_hammer = 20
+wt_handaxe = 21
+wt_light_lance = 22
+wt_light_pick = 23
+wt_sap = 24
+wt_short_sword = 25
+wt_battleaxe = 26
+wt_light_flail = 27
+wt_heavy_lance = 28
+wt_longsword = 29
+wt_heavy_pick = 30
+wt_rapier = 31
+wt_scimitar = 32
+wt_trident = 33
+wt_warhammer = 34
+wt_falchion = 35
+wt_heavy_flail = 36
+wt_glaive = 37
+wt_greataxe = 38
+wt_greatclub = 39
+wt_greatsword = 40
+wt_guisarme = 41
+wt_halberd = 42
+wt_longspear = 43
+wt_ranseur = 44
+wt_scythe = 45
+wt_shortbow = 46
+wt_composite_shortbow = 47
+wt_longbow = 48
+wt_composite_longbow = 49
+wt_halfling_kama = 50
+wt_kukri = 51
+wt_halfling_nunchaku = 52
+wt_halfling_siangham = 53
+wt_kama = 54
+wt_nunchaku = 55
+wt_siangham = 56
+wt_bastard_sword = 57
+wt_dwarven_waraxe = 58
+wt_gnome_hooked_hammer = 59
+wt_orc_double_axe = 60
+wt_spike_chain = 61
+wt_dire_flail = 62
+wt_two_bladed_sword = 63
+wt_dwarven_urgrosh = 64
+wt_hand_crossbow = 65
+wt_shuriken = 66
+wt_whip = 67
+wt_repeating_crossbow = 68
+wt_net = 69
+wt_grapple = 70
+wt_ray = 71
+wt_grenade =72
+
+
 # Portal Flags
 OPF_LOCKED = 0x1
 OPF_JAMMED = 0x2
@@ -3138,6 +3213,50 @@ stat_level_mystic_theurge = 30
 stat_level_shadowdancer = 31
 stat_level_thaumaturgist = 32
 
+stat_level_warlock = 33
+stat_level_favored_soul = 34
+stat_level_red_avenger = 35
+stat_level_iaijutsu_master = 36
+stat_level_sacred_fist = 37
+stat_level_stormlord = 38
+stat_level_elemental_savant = 39
+stat_level_blood_magus = 40
+stat_level_beastmaster = 41
+stat_level_cryokineticist = 42
+stat_level_frost_mage = 43
+stat_level_artificer = 44
+stat_level_abjurant_champion = 45
+
+stat_level_psion = 58
+stat_level_psychic_warrior = 59
+stat_level_soulknife = 60
+stat_level_wilder = 61
+stat_level_cerebmancer = 62
+stat_level_elocator = 63
+stat_level_metamind = 64
+stat_level_psion_uncarnate = 65
+stat_level_psionic_fist = 66
+stat_level_pyrokineticist = 67
+stat_level_slayer = 68
+stat_level_thrallherd = 69
+stat_level_war_mind = 70
+
+stat_level_crusader = 71
+stat_level_swordsage = 72
+stat_level_warblade = 73
+stat_level_bloodclaw_master = 74
+stat_level_bloodstorm_blade = 75
+stat_level_deepstone_sentinel = 76
+stat_level_eternal_blade = 77
+stat_level_jade_phoenix_mage = 78
+stat_level_master_of_nine = 79
+stat_level_ruby_knight_vindicator = 80
+stat_level_shadow_sun_ninja = 81
+
+
+
+
+
 stat_hp_max = 228
 stat_hp_current = 229
 stat_race = 230
@@ -3199,6 +3318,9 @@ stat_subrace = 285
 stat_melee_attack_bonus = 286
 stat_ranged_attack_bonus = 287
 stat_spell_list_level = 288 # new - used for getting the effective level for taking the relevant spells per day / spell known entry
+
+stat_psi_points_max = 300 # new!
+stat_psi_points_cur = 301 # new!
 
 base_attack_bonus_type_martial = 0
 base_attack_bonus_type_semi_martial = 1

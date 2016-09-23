@@ -21,7 +21,8 @@ enum class StatType {
 	Load = 9,
 	SavingThrows = 10,
 	SpellCasting = 11, // (originally missing, this was probably related to the stat_caster_level etc stats)
-	Other = 12
+	Other = 12,
+	Psi = 13
 };
 
 class D20StatsSystem {
@@ -40,6 +41,8 @@ public:
 	int GetLevelStat(const objHndl &handle, Stat stat) const;
 	int GetSpellCastingStat(const objHndl &handle, Stat stat, int statArg) const;
 	int GetBaseAttackBonus(const objHndl &handle, Stat classLeveled) const;
+	int GetPsiStat(const objHndl &handle, Stat stat, int statArg = -1) const;
+	int GetPsiStatBase(const objHndl &handle, Stat stat, int statArg = -1) const;
 
 private:
 

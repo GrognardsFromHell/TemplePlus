@@ -771,68 +771,55 @@ uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, 
 			feat_enums featIdxFromReqCode = (feat_enums)(featReqCode - 1000);
 			if (!_FeatExistsInArray(featIdxFromReqCode, featArray, featArrayLen))
 			{
-				if (templeFuncs.ObjStatBaseGet(objHnd, featReqCode) < featReqCodeArg)
+				if (objects.StatLevelGetBase(objHnd, (Stat)featReqCode) < featReqCodeArg)
 				{
 					uint32_t stat = 0;
-					if (featIdxFromReqCode == FEAT_TWO_WEAPON_FIGHTING)
-					{
-						stat = 1640;
+					switch (featIdxFromReqCode){
+					case FEAT_TWO_WEAPON_FIGHTING:
+						stat = 1000 + FEAT_TWO_WEAPON_FIGHTING_RANGER;
+						break;
+					case FEAT_RAPID_SHOT:
+						stat = 1000 + FEAT_RANGER_RAPID_SHOT;
+						break;
+					case FEAT_MANYSHOT:
+						stat = 1000 + FEAT_RANGER_MANYSHOT;
+					case FEAT_IMPROVED_TWO_WEAPON_FIGHTING:
+						stat = 1000 + FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER;
+					default:
+						return FALSE;
 					}
-					else if (featIdxFromReqCode == FEAT_RAPID_SHOT)
-					{
-						stat = 1646;
-					}
-					else if (featIdxFromReqCode == FEAT_MANYSHOT)
-					{
-						stat = 1647;
-					}
-					else if (featIdxFromReqCode == FEAT_IMPROVED_TWO_WEAPON_FIGHTING)
-					{
-						stat = 1641;
-					}
-					if (stat == 0) { return 0; }
-					if (templeFuncs.ObjStatBaseGet(objHnd, stat) < featReqCodeArg) { return 0; }
+					if (objects.StatLevelGetBase(objHnd, (Stat)stat) < featReqCodeArg) { return 0; }
 				}
 			}
 #pragma endregion 
 		}
-		else if (featReqCode >= 7 && featReqCode <= 17)
-		{
-# pragma region Class Level Requirement
+
+	#pragma region Stats
+		// Class Level
+		else if (featReqCode >= stat_level_barbarian && featReqCode <= stat_level_shadow_sun_ninja)	{
 			if (classCodeBeingLevelledUp == featReqCode) { featReqCodeArg--; }
 			if ((int)objects.StatLevelGet(objHnd, (Stat)featReqCode) < featReqCodeArg) { return 0; }
-#pragma endregion 
 		}
-		else if (featReqCode == 266)
-		{
-#pragma region BAB Requirement
+		// BAB
+		else if (featReqCode == stat_attack_bonus){
 			auto babAfterLvl = critterSys.GetBaseAttackBonus(objHnd, classCodeBeingLevelledUp);
 			if (babAfterLvl < featReqCodeArg)
 				return 0;
-			// if ((int) templeFuncs.ObjGetBABAfterLevelling(objHnd, classCodeBeingLevelledUp) < featReqCodeArg){ return 0; }
-#pragma endregion 
 		}
-		else if (featReqCode >= stat_strength && featReqCode <= stat_charisma)
-		{
-#pragma region Ability Score Requirement
+		// Ability Score
+		else if (featReqCode >= stat_strength && featReqCode <= stat_charisma){
 			if (abilityScoreBeingIncreased == featReqCode) { featReqCodeArg--; }
-			if ((int)templeFuncs.ObjStatBaseDispatch(objHnd, featReqCode, nullptr) < featReqCodeArg)
-			{
+			if ((int)templeFuncs.ObjStatBaseDispatch(objHnd, featReqCode, nullptr) < featReqCodeArg){
 				return 0;
 			}
-
-#pragma endregion 
 		}
-		else if (featReqCode != 266)
-		{
-# pragma region Default: Stat requirement
-			if ((int)templeFuncs.ObjStatBaseGet(objHnd, featReqCode) < featReqCodeArg) { return 0; }
-#pragma endregion 
+		// Default: Stat requirement
+		else if (featReqCode != stat_attack_bonus){
+			if (objects.StatLevelGetBase(objHnd, (Stat)featReqCode) < featReqCodeArg){
+				return 0;
+			}
 		}
-
-		// loop
-
-		i++;
+	#pragma endregion
 	}
 
 	return 1;
@@ -1188,7 +1175,7 @@ int _IsWeaponSpecializationFeat(feat_enums feat)
 
 uint32_t _WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType)
 {
-	if (templeFuncs.sub_100664B0(objHnd, wpnType) == 3){ return 0; }
+	if (templeFuncs.sub_100664B0(objHnd, wpnType) == 3){ return 0; } // weapon size sthg
 
 	if (weapons.IsSimple(wpnType))
 	{

@@ -835,8 +835,7 @@ void ItemCreation::CreateItemDebitXPGP(objHndl crafter, objHndl objHndItem){
 		craftingCostXP = itemWorth / 2500;
 
 	};
-
-	templeFuncs.DebitPartyMoney(0, 0, 0, craftingCostCP);
+	party.DebitMoney(0, 0, 0, craftingCostCP);
 	objects.setInt32(crafter, obj_f_critter_experience, crafterXP - craftingCostXP);
 }
 
@@ -1001,7 +1000,7 @@ void ItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndIte
 	rect.y = 200;
 	rect.width = 150;
 	rect.height = 105;
-	prereqString = templeFuncs.ItemCreationPrereqSthg_sub_101525B0(itemCreationCrafter, objHndItem);
+	prereqString = temple::GetRef<char*(__cdecl)(objHndl, objHndl)>(0x101525B0)(itemCreationCrafter, objHndItem);
 	if (prereqString){
 		UiRenderer::DrawTextInWidget(widgetId, prereqString, rect, *itemCreationAddresses.itemCreationTextStyle);
 	}

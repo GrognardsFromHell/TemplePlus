@@ -32,6 +32,25 @@ class D20StatsHooks : public TempleFix{
 			return d20Stats.GetLevelStat(handle, stat);
 		});
 
+		// StatLevelGetBase
+		static int(__cdecl*orgGetLevelBase)(objHndl, Stat) = replaceFunction<int(objHndl, Stat)>(0x10074CF0, [](objHndl handle, Stat stat)->int {
+			auto statType = d20Stats.GetType(stat);
+
+			if (statType == StatType::Abilities){
+				return objSystem->GetObject(handle)->GetInt32(obj_f_critter_abilities_idx, stat);
+			}
+			if (statType == StatType::Level)
+				return d20Stats.GetValue(handle, stat);
+
+			if (statType == StatType::Feat)
+				return feats.HasFeatCountByClass(handle, (feat_enums)(stat - 1000));
+
+			if (statType == StatType::Psi)
+				return d20Stats.GetPsiStatBase(handle, stat);
+
+			return orgGetLevelBase(handle, stat);
+		});
+
 		// StatLevelGet
 		static int(__cdecl*orgGetLevel)(objHndl, Stat)  = replaceFunction<int(objHndl, Stat)>(0x10074800, [](objHndl handle, Stat stat)->int {
 			auto statType = d20Stats.GetType(stat);
@@ -39,8 +58,11 @@ class D20StatsHooks : public TempleFix{
 				return d20Stats.GetValue(handle, stat);
 			if (statType == StatType::SpellCasting)
 				return d20Stats.GetValue(handle, stat);
-			else
-				return orgGetLevel(handle, stat);
+			if (statType == StatType::Psi)
+				return d20Stats.GetPsiStat(handle, stat);
+			
+
+			return orgGetLevel(handle, stat);
 		});
 
 		replaceFunction<const char*(Stat)>(0x10074980, [](Stat stat)->const char*{
@@ -111,6 +133,8 @@ int D20StatsSystem::GetValue(const objHndl & handle, Stat stat, int statArg) con
 		return objects.StatLevelGetBase(handle, stat);
 	case StatType::SpellCasting:
 		return GetSpellCastingStat(handle, stat, statArg);
+	case StatType::Psi:
+		return GetPsiStat(handle, stat, statArg);
 	case StatType::HitPoints:
 		// todo!
 	case StatType::Combat:
@@ -125,6 +149,7 @@ int D20StatsSystem::GetValue(const objHndl & handle, Stat stat, int statArg) con
 		// todo
 	case StatType::SavingThrows:
 		// todo
+
 	default:
 		return objects.StatLevelGetBase(handle, stat);
 			//temple::GetRef<int(__cdecl)(objHndl, Stat)>(0x10074800)(handle, stat);
@@ -175,6 +200,29 @@ int D20StatsSystem::GetSpellCastingStat(const objHndl & handle, Stat stat, int s
 int D20StatsSystem::GetBaseAttackBonus(const objHndl & handle, Stat classLeveled) const
 {
 	return critterSys.GetBaseAttackBonus(handle, classLeveled);
+}
+
+int D20StatsSystem::GetPsiStat(const objHndl & handle, Stat stat, int statArg) const
+{
+	if (stat == stat_psi_points_max){
+		return d20Sys.D20QueryPython(handle, "Max Psi");
+	}
+
+	if (stat == stat_psi_points_cur) {
+		return d20Sys.D20QueryPython(handle, "Current Psi");
+	}
+	return 0;
+}
+
+int D20StatsSystem::GetPsiStatBase(const objHndl & handle, Stat stat, int statArg) const
+{
+	if (stat == stat_psi_points_max) {
+		return d20Sys.D20QueryPython(handle, "Base Max Psi");
+	}
+	if (stat == stat_psi_points_cur) {
+		return d20Sys.D20QueryPython(handle, "Current Psi");
+	}
+	return 0;
 }
 
 void D20StatsSystem::Init(const GameSystemConf& conf){
@@ -283,6 +331,47 @@ StatType D20StatsSystem::GetType(Stat stat) {
 	case stat_level_mystic_theurge:
 	case stat_level_shadowdancer:
 	case stat_level_thaumaturgist:
+
+	case stat_level_warlock:
+	case stat_level_favored_soul:
+	case stat_level_red_avenger:
+	case stat_level_iaijutsu_master:
+	case stat_level_sacred_fist:
+	case stat_level_stormlord:
+	case stat_level_elemental_savant:
+	case stat_level_blood_magus:
+	case stat_level_beastmaster:
+	case stat_level_cryokineticist:
+	case stat_level_frost_mage:
+	case stat_level_artificer:
+	case stat_level_abjurant_champion:
+
+	case stat_level_psion:
+	case stat_level_psychic_warrior:
+	case stat_level_soulknife:
+	case stat_level_wilder:
+	case stat_level_cerebmancer:
+	case stat_level_elocator:
+	case stat_level_metamind:
+	case stat_level_psion_uncarnate:
+	case stat_level_psionic_fist:
+	case stat_level_pyrokineticist:
+	case stat_level_slayer:
+	case stat_level_thrallherd:
+	case stat_level_war_mind:
+
+	case stat_level_crusader:
+	case stat_level_swordsage:
+	case stat_level_warblade:
+	case stat_level_bloodclaw_master:
+	case stat_level_bloodstorm_blade:
+	case stat_level_deepstone_sentinel:
+	case stat_level_eternal_blade:
+	case stat_level_jade_phoenix_mage:
+	case stat_level_master_of_nine:
+	case stat_level_ruby_knight_vindicator:
+	case stat_level_shadow_sun_ninja:
+
 		return StatType::Level;
 
 	case stat_money:
@@ -342,6 +431,10 @@ StatType D20StatsSystem::GetType(Stat stat) {
 	case stat_caster_level_wizard:
 	case stat_spell_list_level:
 		return StatType::SpellCasting;
+
+	case stat_psi_points_max:
+	case stat_psi_points_cur:
+		return StatType::Psi;
 
 	default:
 		return StatType::Other;

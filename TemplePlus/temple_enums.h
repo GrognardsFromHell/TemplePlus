@@ -2096,7 +2096,45 @@ enum Stat : uint32_t {
 	stat_level_shadowdancer =31,
 	stat_level_thaumaturgist =32,
 
+	stat_level_warlock = 33,
+	stat_level_favored_soul = 34,
+	stat_level_red_avenger = 35,
+	stat_level_iaijutsu_master = 36,
+	stat_level_sacred_fist = 37,
+	stat_level_stormlord = 38,
+	stat_level_elemental_savant = 39,
+	stat_level_blood_magus = 40,
+	stat_level_beastmaster = 41,
+	stat_level_cryokineticist = 42,
+	stat_level_frost_mage = 43,
+	stat_level_artificer = 44,
+	stat_level_abjurant_champion = 45,
 
+	stat_level_psion = 58,
+	stat_level_psychic_warrior = 59,
+	stat_level_soulknife = 60,
+	stat_level_wilder = 61,
+	stat_level_cerebmancer = 62,
+	stat_level_elocator = 63,
+	stat_level_metamind = 64,
+	stat_level_psion_uncarnate = 65,
+	stat_level_psionic_fist = 66,
+	stat_level_pyrokineticist = 67,
+	stat_level_slayer = 68,
+	stat_level_thrallherd = 69,
+	stat_level_war_mind = 70,
+
+	stat_level_crusader = 71,
+	stat_level_swordsage = 72,
+	stat_level_warblade = 73,
+	stat_level_bloodclaw_master = 74,
+	stat_level_bloodstorm_blade = 75,
+	stat_level_deepstone_sentinel = 76,
+	stat_level_eternal_blade = 77,
+	stat_level_jade_phoenix_mage = 78,
+	stat_level_master_of_nine = 79,
+	stat_level_ruby_knight_vindicator = 80,
+	stat_level_shadow_sun_ninja = 81,
 
 
 	stat_hp_max = 0xE4,
@@ -2171,6 +2209,8 @@ enum Stat : uint32_t {
 
 	stat_spell_list_level = 288, // NEW! used for getting the extended spell lists (modified by PrC's and such)
 
+	stat_psi_points_max = 300,
+	stat_psi_points_cur = 301,
 	_stat_count // for internal use
 };
 
