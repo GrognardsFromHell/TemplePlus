@@ -165,7 +165,12 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		#pragma region Bonuslist etc
 	py::class_<BonusList>(m, "BonusList")
 			.def(py::init())
-			.def("add", &BonusList::AddBonus, "Adds a bonus entry. Args are: value, type, and bonus.mes line number")
+			.def("add", [](BonusList & bonlist, int value, int bonType, int mesline) {
+				bonlist.AddBonus(value, bonType, mesline);
+			}, "Adds a bonus entry. Args are: value, type, and bonus.mes line number")
+			.def("add", [](BonusList & bonlist, int value, int bonType, std::string &text) {
+				bonlist.AddBonus(value, bonType, text);
+			}, "Adds a bonus entry. Args are: value, type, and free text")
 			.def("add_from_feat", [](BonusList &bonlist, int value, int bonType, int mesline, int feat)->int
 			{
 				return bonlist.AddBonusFromFeat(value, bonType, mesline, (feat_enums)feat);

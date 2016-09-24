@@ -1,7 +1,7 @@
 #pragma once
 #include "common.h"
 #include "tig/tig_mes.h"
-
+#include <map>
 
 struct BonusList;
 
@@ -27,6 +27,9 @@ struct BonusSystem : temple::AddressTable
 	MesHandle * bonusMesHandle; //102E45A8
 	MesHandle bonusMesNew;
 	BonusSystem();
+
+
+	std::map<int, std::string> customBonusStrings;
 };
 
 extern BonusSystem bonusSys;

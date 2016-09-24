@@ -404,9 +404,12 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 	}
 
 	if (tgtClassif == D20TC_CastSpell){
+
 		unsigned int spellEnum, spellClass, spellLevel, metaMagicData;
 		D20SpellDataExtractInfo(&d20Sys.globD20Action->d20SpellData,
 			&spellEnum, nullptr, &spellClass, &spellLevel,nullptr,&metaMagicData);
+
+
 		auto curSeq = *actSeqSys.actSeqCur;
 		curSeq->spellPktBody.spellRange *= ((MetaMagicData)metaMagicData).metaMagicEnlargeSpellCount + 1;
 		SpellEntry spellEntry;
@@ -1686,31 +1689,82 @@ uint32_t ActionSequenceSystem::TurnBasedStatusUpdate(D20Actn* d20a, TurnBasedSta
 	*/
 }
 
-uint32_t ActionSequenceSystem::SequencePathSthgSub_10096450(ActnSeq* actSeq, uint32_t idx ,TurnBasedStatus * tbStat)
-{
-	uint32_t result = 0;
-	__asm{
-		push esi;
-		push ecx;
-		push ebx;
-		mov ecx, this;
+uint32_t ActionSequenceSystem::SequencePathSthgSub_10096450(ActnSeq* actSeq, int idx ,TurnBasedStatus * tbStat){
 
+	if (idx < 0 || idx >= actSeq->d20ActArrayNum)
+		return AEC_INVALID_ACTION;
 
-mov esi, idx;
-push esi;
-mov esi, [ecx]._sub_10096450;
-mov ebx, tbStat;
-mov eax, actSeq;
-push eax;
-call esi;
-add esp, 8;
+	auto d20a = &actSeq->d20ActArray[idx];
 
-mov result, eax;
-pop ebx;
-pop ecx;
-pop esi;
+	auto performer = d20a->d20APerformer;
+
+	auto performerLoc = objSystem->GetObject(performer)->GetLocationFull();
+
+	auto d20aType = d20a->d20ActType;
+
+	// check actions
+	auto result = AEC_OK;
+
+	// target
+	auto tgtChecker = d20Sys.d20Defs[d20aType].tgtCheckFunc;
+	if (tgtChecker)
+		result = (ActionErrorCode)tgtChecker(d20a, tbStat);
+	if (result != AEC_OK)
+		return result;
+
+	// hourglass & action check
+	result = seqCheckAction(d20a, tbStat);
+	if (result != AEC_OK)
+		return result;
+
+	// location
+	auto locChecker = d20Sys.d20Defs[d20aType].locCheckFunc;
+	if (locChecker)
+		result = locChecker(d20a, tbStat, &performerLoc);
+	if (result != AEC_OK)
+		return result;
+
+	auto numActions = actSeq->d20ActArrayNum;
+	for (auto i=0; i < numActions; i++){
+		
+		auto flags = d20Sys.GetActionFlags(d20aType);
+		if (flags & D20ADF_DoLocationCheckAtDestination){
+			auto p = d20a->path;
+			if (p != nullptr){
+				performerLoc = p->to;
+			}
+			result = ActionSequenceChecksRegardLoc(&performerLoc, tbStat, idx + 1, actSeq);
+			return result;
+		}
+
 	}
-	return result;
+
+	return AEC_OK;
+
+
+//	uint32_t result = 0;
+//	__asm{
+//		push esi;
+//		push ecx;
+//		push ebx;
+//		mov ecx, this;
+//
+//
+//mov esi, idx;
+//push esi;
+//mov esi, [ecx]._sub_10096450;
+//mov ebx, tbStat;
+//mov eax, actSeq;
+//push eax;
+//call esi;
+//add esp, 8;
+//
+//mov result, eax;
+//pop ebx;
+//pop ecx;
+//pop esi;
+//	}
+//	return result;
 }
 
 uint32_t ActionSequenceSystem::seqCheckFuncs(TurnBasedStatus* tbStatus)
@@ -2204,6 +2258,10 @@ uint32_t ActionSequenceSystem::curSeqNext()
 						DK_SIG_Action_Recipient,
 						(int)d20a, 0);
 				}
+				if (critterSys.IsMovingSilently(performer)){
+					critterSys.SetMovingSilently(performer, FALSE);
+				}
+
 			} else
 			{
 				d20Sys.d20SendSignal((*actSeqCur)->performer, DK_SIG_Action_Recipient,

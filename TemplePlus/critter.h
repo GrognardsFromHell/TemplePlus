@@ -229,6 +229,8 @@ struct LegacyCritterSystem : temple::AddressTable
 	CritterFlag GetCritterFlags(objHndl critter);
 		
 	bool IsMovingSilently(objHndl critter);
+
+	void SetMovingSilently(objHndl critter, BOOL newMovingSilState);
 	
 	bool IsCombatModeActive(objHndl critter);
 
@@ -244,6 +246,8 @@ struct LegacyCritterSystem : temple::AddressTable
 	bool CanSense(objHndl critter, objHndl tgt); 
 
 	int GetLevel(objHndl critter);
+
+	int SkillLevel(objHndl critter, SkillEnum skill);
 
 	Race GetRace(objHndl critter);
 

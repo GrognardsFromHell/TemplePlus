@@ -34,6 +34,7 @@
 #include "gamesystems/particlesystems.h"
 #include <infrastructure/elfhash.h>
 #include "python/python_integration_d20_action.h"
+#include <turn_based.h>
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
@@ -139,6 +140,7 @@ public:
 	ActionCheck(EmptyBody);
 	ActionCheck(Python);  // calls python script
 	ActionCheck(QuiveringPalm);
+	ActionCheck(Sneak);
 	ActionCheck(Sunder);
 	ActionCheck(TripAttack);
 	
@@ -165,6 +167,7 @@ public:
 	PerformFunc(EmptyBody);
 	PerformFunc(Python);
 	PerformFunc(QuiveringPalm);
+	PerformFunc(Sneak);
 	PerformFunc(StandardAttack);
 	PerformFunc(TripAttack);
 	PerformFunc(UseItem);
@@ -475,6 +478,12 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].seqRenderFunc = addresses._PickerFuncTooltipToHitChance;
 	d20Defs[d20Type].flags = (D20ADF)(D20ADF_TargetSingleExcSelf | D20ADF_TriggersCombat | D20ADF_UseCursorForPicking);
 
+
+	d20Type = D20A_SNEAK;
+	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckSneak;
+	d20Defs[d20Type].locCheckFunc = nullptr;
+	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostMoveAction;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformSneak;
 
 
 	// *(int*)&d20Defs[D20A_USE_POTION].flags |= (int)D20ADF_SimulsCompatible;  // need to modify the SimulsEnqueue script because it also checks for san_start_combat being null
@@ -1110,10 +1119,12 @@ int LegacyD20System::TargetCheck(D20Actn* d20a)
 			return 0;
 		case D20TC_CallLightning:
 			return (*addresses.actSeqTargetsIdx) >= 0;
+
 		case D20TC_CastSpell:
 			curSeq->d20Action = d20a;
 			if (curSeq->spellPktBody.caster || curSeq->spellPktBody.spellEnum)
-				return 1;
+				return TRUE;
+
 			unsigned spellEnum, spellEnumOrg, spellClassCode, spellSlotLevel, itemSpellData, spellMetaMagicData;
 			D20SpellDataExtractInfo(&d20a->d20SpellData, &spellEnum, &spellEnumOrg, &spellClassCode, &spellSlotLevel, &itemSpellData, &spellMetaMagicData);
 			spellSys.spellPacketBodyReset(&curSeq->spellPktBody);
@@ -1134,7 +1145,9 @@ int LegacyD20System::TargetCheck(D20Actn* d20a)
 				spellSys.SpellPacketSetCasterLevel(&curSeq->spellPktBody);
 			else
 				curSeq->spellPktBody.casterLevel = max(1, 2 * static_cast<int>(spellSlotLevel) - 1);
+
 			curSeq->spellPktBody.spellRange = spellSys.GetSpellRange(&spellEntry, curSeq->spellPktBody.casterLevel, curSeq->spellPktBody.caster);
+			
 			if ((spellEntry.modeTargetSemiBitmask & 0xFF) != static_cast<unsigned>(UiPickerType::Personal)
 				|| spellEntry.radiusTarget < 0
 				|| (spellEntry.flagsTargetBitmask & UiPickerFlagsTarget::Radius))
@@ -1545,6 +1558,54 @@ ActionErrorCode D20ActionCallbacks::PerformQuiveringPalm(D20Actn* d20a){
 	
 }
 
+ActionErrorCode D20ActionCallbacks::PerformSneak(D20Actn* d20a){
+	auto performer = d20a->d20APerformer;
+	
+	auto newSneakState = 1 - critterSys.IsMovingSilently(performer);
+	animationGoals.Interrupt(performer, AnimGoalPriority::AGP_5);
+
+	if (newSneakState && combatSys.isCombatActive()){ // entering sneak while in combat
+
+		auto hasHideInPlainSight = d20Sys.D20QueryPython(performer, "Can Hide In Plain Sight");
+
+		auto N = combatSys.GetInitiativeListLength();
+
+		BonusList sneakerBon;
+		sneakerBon.AddBonus(-20, 0, 349); // Hiding in Combat
+		auto sneakerHide = dispatch.dispatch1ESkillLevel(performer, SkillEnum::skill_hide, &sneakerBon, performer, 1);
+		auto hideRoll = Dice(1, 20, 0).Roll();
+
+		for (auto i = 0; i < N; i++){
+			auto combatant = combatSys.GetInitiativeListMember(i);
+			if (!combatant || combatant == performer)
+				continue;
+			
+			if (critterSys.IsFriendly(combatant, performer) || critterSys.AllegianceShared(combatant, performer))
+				continue;
+
+			if (critterSys.HasLineOfSight(combatant, performer) == 0)	{ // note: the function actually returns obstacles
+
+				if (!hasHideInPlainSight)
+					return AEC_INVALID_ACTION;
+
+				BonusList spotterBon;
+				auto combatantSpot = dispatch.dispatch1ESkillLevel(combatant, SkillEnum::skill_spot, &spotterBon, combatant, 1);
+				auto spotRoll = Dice(1, 20, 0).Roll();
+				if (combatantSpot + spotRoll > hideRoll + sneakerHide){
+					auto rollHistId = histSys.RollHistoryAddType6OpposedCheck(performer, combatant, hideRoll, spotRoll, &sneakerBon, &spotterBon, 5123, 103, 1);
+					histSys.CreateRollHistoryString(rollHistId);
+					return AEC_INVALID_ACTION;
+				}
+					
+			}
+
+		}
+	}
+
+	critterSys.SetMovingSilently(performer, newSneakState);
+	return AEC_OK;
+}
+
 ActionErrorCode D20ActionCallbacks::ActionFrameQuiveringPalm(D20Actn* d20a){
 
 	objHndl performer = d20a->d20APerformer;
@@ -1655,6 +1716,13 @@ ActionErrorCode D20ActionCallbacks::ActionCheckQuiveringPalm(D20Actn* d20a, Turn
 	}
 
 	return AEC_OK;
+}
+
+ActionErrorCode D20ActionCallbacks::ActionCheckSneak(D20Actn* d20a, TurnBasedStatus* tbStat){
+	if (critterSys.IsMovingSilently(d20a->d20APerformer)) // will cause to stop sneaking
+		return AEC_OK;
+
+	return AEC_OK; // used to be possible only outside of combat, but now you can attempt it in combat too
 }
 
 ActionErrorCode D20ActionCallbacks::PerformCharge(D20Actn* d20a){

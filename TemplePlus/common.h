@@ -147,7 +147,9 @@ struct BonusList
 		Will register in the D20 roll history using the specified line from bonus.mes
 	*/
 	int AddBonus(int value, int bonType, int mesline);
+	BOOL AddBonus(int value, int bonType, std::string & text);
 	int AddBonusWithDesc(int value, int bonType, int mesline, char* descr);
+	int AddBonusWithDesc(int value, int bonType, std::string &text, char* descr);
 	int AddBonusFromFeat(int value, int bonType, int mesline, feat_enums feat); // same as the above, but it also gets the feat name automatically
 	int AddBonusFromFeat(int value, int bonType, int mesline, std::string &feat); 
 	int ModifyBonus(int value, int bonType, int meslineIdentifier); // directly modifies a bonus. For non-stacking bonus types that you want to stack anyway. Note: the mesline is used as an identifier here!

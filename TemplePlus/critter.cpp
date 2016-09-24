@@ -465,6 +465,10 @@ bool LegacyCritterSystem::IsMovingSilently(objHndl critter)
 	return (flags & OCF_MOVING_SILENTLY) == OCF_MOVING_SILENTLY;
 }
 
+void LegacyCritterSystem::SetMovingSilently(objHndl critter, BOOL newMovingSilState){
+	temple::GetRef<void(__cdecl)(objHndl, BOOL)>(0x100805C0)(critter, newMovingSilState);
+}
+
 bool LegacyCritterSystem::IsCombatModeActive(objHndl critter)
 {
 	auto flags = GetCritterFlags(critter);
@@ -487,6 +491,10 @@ bool LegacyCritterSystem::CanSense(objHndl critter, objHndl tgt){
 
 int LegacyCritterSystem::GetLevel(objHndl critter) {
 	return objects.StatLevelGet(critter, stat_level);
+}
+
+int LegacyCritterSystem::SkillLevel(objHndl critter, SkillEnum skill){
+	return dispatch.dispatch1ESkillLevel(critter, skill, nullptr, critter, 1);
 }
 
 Race LegacyCritterSystem::GetRace(objHndl critter) {

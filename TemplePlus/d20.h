@@ -220,7 +220,7 @@ enum D20ADF : int{
 	D20ADF_TargetContainer = 0x10000,
 	D20ADF_SimulsCompatible = 0x20000,
 	D20ADF_DrawPathByDefault = 0x40000, // will draw path even without holding ALT
-	D20ADF_PathSthg =   0x80000,
+	D20ADF_DoLocationCheckAtDestination =   0x80000,
 	D20ADF_Breaks_Concentration = 0x100000,
 
 	D20ADF_Python = 0x1000000

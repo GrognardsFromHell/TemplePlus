@@ -6,6 +6,7 @@
 #include "feat.h"
 #include "d20.h"
 #include <infrastructure/elfhash.h>
+#include <map>
 
 static void NormalizeAxis(float& offset, uint32_t &tilePos) {
 	auto tiles = (int) (offset / INCH_PER_TILE);
@@ -146,6 +147,14 @@ int BonusList::AddBonusWithDesc(int value, int bonType, int mesline, char* descr
 	return 0;
 }
 
+int BonusList::AddBonusWithDesc(int value, int bonType, std::string & text, char * descr){
+	if (AddBonus(value, bonType, text)){
+		this->bonusEntries[this->bonCount - 1].bonusDescr = descr;
+		return TRUE;
+	}
+	return FALSE;
+}
+
 int BonusList::AddBonusFromFeat(int value, int bonType, int mesline, feat_enums feat){
 	auto featName = feats.GetFeatName(feat);
 	return AddBonusWithDesc(value, bonType, mesline, featName);
@@ -284,6 +293,21 @@ PointNode::PointNode(float x, float y, float z){
 
 int BonusList::AddBonus(int value, int bonType, int mesline){
 	return bonusSys.bonusAddToBonusList(this, value, bonType, mesline);
+}
+
+BOOL BonusList::AddBonus(int value, int bonType, std::string & textArg){
+	auto textId = ElfHash::Hash(textArg);
+	auto textCache = bonusSys.customBonusStrings.find(textId);
+	if (textCache == bonusSys.customBonusStrings.end()) {
+		bonusSys.customBonusStrings[textId] = textArg;
+	}
+	if (this->bonCount >= BonusListMax) return FALSE;
+
+	this->bonusEntries[this->bonCount].bonValue = value;
+	this->bonusEntries[this->bonCount].bonType = bonType;
+	this->bonusEntries[this->bonCount].bonusMesString = (char*)bonusSys.customBonusStrings[textId].c_str();
+	this->bonusEntries[this->bonCount++].bonusDescr = nullptr;
+	return TRUE;
 }
 
 

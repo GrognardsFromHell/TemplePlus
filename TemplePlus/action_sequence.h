@@ -161,7 +161,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	*/
 	void ProcessSequenceForAoOs(ActnSeq*actSeq, D20Actn * d20a); // actSeq@<ebx>
 	int(CrossBowSthgReload_1008E8A0)(D20Actn *d20a, ActnSeq*actSeq); //, ActnSeq *actSeq@<ebx>
-	uint32_t SequencePathSthgSub_10096450(ActnSeq * actSeq, uint32_t idx, TurnBasedStatus* tbStat);
+	uint32_t SequencePathSthgSub_10096450(ActnSeq * actSeq, int idx, TurnBasedStatus* tbStat);
 	//10097C20
 	
 	uint32_t seqCheckFuncs(TurnBasedStatus *tbStatus);
