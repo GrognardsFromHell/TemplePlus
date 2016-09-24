@@ -3567,12 +3567,26 @@ int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args){
 	// add to Copy Scroll
 	if (objType == obj_t_scroll && objects.StatLevelGet(args.objHndCaller, stat_level_wizard) >= 1
 		&& critterSys.HashMatchingClassForSpell(args.objHndCaller, spData.spellEnum)
-		&& spellSys.IsArcaneSpellClass(spData.classCode)
-		&& !spellSys.spellKnownQueryGetData(args.objHndCaller, spData.spellEnum, nullptr, nullptr, nullptr))
+		&& spellSys.IsArcaneSpellClass(spData.classCode) )
 	{
-		radEntry.d20ActionType = D20A_COPY_SCROLL;
-		radEntry.d20ActionData1 = inventory.GetInventoryLocation(itemHandle);
-		radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::CopyScroll);
+		// check if spell is not known
+		std::vector<int> spellClasses, spellLevels;
+		spellSys.SpellKnownQueryGetData(args.objHndCaller, spData.spellEnum, spellClasses, spellLevels);
+		
+		auto alreadyKnows = false;
+
+		for (auto i=0u; i < spellClasses.size(); i++){
+			if (spellClasses[i] == spellSys.GetSpellClass(stat_level_wizard))
+				alreadyKnows = true;
+		}
+
+
+		if (!alreadyKnows){
+			radEntry.d20ActionType = D20A_COPY_SCROLL;
+			radEntry.d20ActionData1 = inventory.GetInventoryLocation(itemHandle);
+			radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::CopyScroll);
+		}
+		
 	}
 
 	return 0;
