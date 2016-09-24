@@ -1006,6 +1006,9 @@ static PyObject* PyObjHandle_DamageWithReduction(PyObject* obj, PyObject* args) 
 
 static PyObject* PyObjHandle_Heal(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle)
+		Py_RETURN_NONE;
+
 	objHndl healer;
 	Dice dice;
 	D20ActionType actionType = D20A_NONE;

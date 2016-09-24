@@ -123,6 +123,7 @@ public:
 	AddToSeq(Python);
 	AddToSeq(Simple);
 	AddToSeq(WithTarget);
+	AddToSeq(WhirlwindAttack);
 	static ActionErrorCode AddToSeqTripAttack(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);;
 	
 	
@@ -151,6 +152,7 @@ public:
 	ActionCost(MoveAction);
 	ActionCost(Null);
 	ActionCost(StandardAction);
+	ActionCost(WhirlwindAttack);
 
 	static ActionErrorCode LocationCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc);
 	static ActionErrorCode LocationCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc);
@@ -484,6 +486,11 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].locCheckFunc = nullptr;
 	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostMoveAction;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformSneak;
+
+
+	d20Type = D20A_WHIRLWIND_ATTACK;
+	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqWhirlwindAttack;
+	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostWhirlwindAttack;
 
 
 	// *(int*)&d20Defs[D20A_USE_POTION].flags |= (int)D20ADF_SimulsCompatible;  // need to modify the SimulsEnqueue script because it also checks for san_start_combat being null
@@ -2511,6 +2518,40 @@ ActionErrorCode D20ActionCallbacks::AddToSeqWithTarget(D20Actn* d20a, ActnSeq* a
 	return static_cast<ActionErrorCode>(actSeqSys.AddToSeqWithTarget(d20a, actSeq, tbStat));
 }
 
+ActionErrorCode D20ActionCallbacks::AddToSeqWhirlwindAttack(D20Actn* d20a, ActnSeq* actSeq, struct TurnBasedStatus* tbStat){
+	auto performer = d20a->d20APerformer;
+	if (d20Sys.d20Query(performer, DK_QUE_Prone)){
+		D20Actn standUp;
+		standUp = *d20a;
+		standUp.d20ActType = D20A_STAND_UP;
+		actSeq->d20ActArray[actSeq->d20ActArrayNum++] = standUp;
+	}
+
+	actSeq->d20ActArray[actSeq->d20ActArrayNum++] = *d20a;
+
+	
+
+	auto reach = critterSys.GetReach(performer, D20A_UNSPECIFIED_ATTACK);
+	auto perfSizeFeet = objects.GetRadius(performer)/INCH_PER_FEET;
+
+	std::vector<objHndl> enemies;
+	combatSys.GetEnemyListInRange(performer, 1.0 + perfSizeFeet + reach, enemies);
+	
+	for (auto i=0u; i<enemies.size(); i++){
+		if (locSys.DistanceToObj(performer, enemies[i]) <= reach) {
+			D20Actn stdAttack = *d20a;
+			stdAttack.d20ActType = D20A_STANDARD_ATTACK;
+			stdAttack.data1 = ATTACK_CODE_PRIMARY + 1;
+			stdAttack.d20ATarget = enemies[i];
+			stdAttack.d20Caf |= D20CAF_FREE_ACTION;
+			actSeq->d20ActArray[actSeq->d20ActArrayNum++] = stdAttack;
+		}
+	}
+
+
+	return AEC_OK;
+}
+
 ActionErrorCode D20ActionCallbacks::AddToSeqTripAttack(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat){
 
 	auto tgt = d20a->d20ATarget;
@@ -2643,5 +2684,34 @@ ActionErrorCode D20ActionCallbacks::ActionCostStandardAction(D20Actn*, TurnBased
 	return AEC_OK;
 };
 
+ActionErrorCode D20ActionCallbacks::ActionCostWhirlwindAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket*acp) {
+	acp->chargeAfterPicker = 0;
+	acp->moveDistCost = 0;
+	acp->hourglassCost = 4;
+	if ( ( d20a->d20Caf & D20CAF_FREE_ACTION) || !combatSys.isCombatActive()){
+		acp->hourglassCost = 0;
+	}
 
+	if (tbStat->attackModeCode >= tbStat->baseAttackNumCode && tbStat->hourglassState >= 4 && !tbStat->numBonusAttacks){
+
+		auto performer = d20a->d20APerformer;
+		auto reach = critterSys.GetReach(performer, D20A_UNSPECIFIED_ATTACK);
+		auto perfSizeFeet = objects.GetRadius(performer) / INCH_PER_FEET;
+
+		std::vector<objHndl> enemies;
+		combatSys.GetEnemyListInRange(performer, 1.0 + perfSizeFeet + reach, enemies);
+		auto numEnemies = 0;
+		for (auto i=0; i<enemies.size(); i++){
+			if (locSys.DistanceToObj(performer, enemies[i] ) < reach)
+				numEnemies++;
+		}
+		tbStat->numBonusAttacks = 0;
+		tbStat->baseAttackNumCode = 0;
+		tbStat->numAttacks = numEnemies;
+		tbStat->attackModeCode = ATTACK_CODE_PRIMARY;
+		tbStat->surplusMoveDistance = 0;
+	}
+
+	return AEC_OK;
+}
 

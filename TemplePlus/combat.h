@@ -38,7 +38,8 @@ struct LegacyCombatSystem : temple::AddressTable {
 	int GetThreateningCrittersAtLoc(objHndl obj, LocAndOffsets* loc, objHndl threateners[40]);
 	objHndl CheckRangedWeaponAmmo(objHndl obj); // checks if the ammo slot item matches a wielded weapon (primary or secondary), and if so, returns it
 	bool AmmoMatchesItemAtSlot(objHndl obj, EquipSlot equipSlot);
-	objHndl * GetHostileCombatantList(objHndl obj, int* count);
+	objHndl * GetHostileCombatantList(objHndl obj, int* count); // gets a list from the combat initiative
+	void GetEnemyListInRange(objHndl obj, float rangeFeet, std::vector<objHndl> & enemies);
 	bool HasLineOfAttack(objHndl obj, objHndl target); // can shoot or attack target (i.e. target isn't behind a wall or sthg)
 
 

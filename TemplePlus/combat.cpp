@@ -451,6 +451,27 @@ objHndl * LegacyCombatSystem::GetHostileCombatantList(objHndl obj, int * count)
 	return result;
 }
 
+void LegacyCombatSystem::GetEnemyListInRange(objHndl performer, float rangeFeet, std::vector<objHndl>& enemiesOut){
+
+	auto perfLoc = objSystem->GetObject(performer)->GetLocationFull();
+
+	ObjList enemies;
+	enemies.ListRadius(perfLoc, rangeFeet* INCH_PER_TILE, OLC_CRITTERS);
+	for (int i = 0; i < enemies.size(); i++) {
+		auto resHandle = enemies[i];
+		if (!resHandle)
+			break;
+
+		if (critterSys.IsDeadNullDestroyed(resHandle))
+			continue;
+
+		if (resHandle != performer && !critterSys.AllegianceShared(resHandle, performer) && !critterSys.IsFriendly(performer, resHandle)) {
+			enemiesOut.push_back(resHandle);
+		}
+	}
+
+}
+
 bool LegacyCombatSystem::HasLineOfAttack(objHndl obj, objHndl target)
 {
 	BOOL result = 1;
