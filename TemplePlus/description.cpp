@@ -24,6 +24,12 @@ const char* LegacyDescriptionSystem::getDisplayName(objHndl obj)
 		return "OBJ_HANDLE_NULL";
 }
 
+const char * LegacyDescriptionSystem::debugGetName(uint64_t handle){
+	objHndl _hnd;
+	_hnd.handle = handle;
+	return getDisplayName(_hnd);
+}
+
 const char* LegacyDescriptionSystem::getDisplayName(objHndl obj, objHndl observer)
 {
 	return _getDisplayName(obj, observer);

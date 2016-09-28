@@ -159,6 +159,7 @@ struct SpellStoreData
 	uint32_t classCode;
 	uint32_t spellLevel;
 	SpellStoreState spellStoreState;
+	uint16_t padSpellStore;
 	MetaMagicData metaMagicData; // should be stored as 32bit value!
 	char pad0;
 	uint32_t pad1; // these are actually related to MM indicator icons

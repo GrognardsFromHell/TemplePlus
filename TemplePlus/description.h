@@ -14,6 +14,7 @@ struct LegacyDescriptionSystem : temple::AddressTable
 	int *descrIdxMax; // the highest description.mes index (not to be confused with the number of description entries!!!)
 	char*** customNamesArray;
 	const char* getDisplayName(objHndl obj);
+	const char* debugGetName(uint64_t handle);
 	const char* getDisplayName(objHndl obj, objHndl observer);
 	const char* GetDescriptionString(int descrIdx) const;
 
