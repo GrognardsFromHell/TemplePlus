@@ -50,6 +50,8 @@ struct DamagePacket {
 	int AddDamageDice(uint32_t dicePacked, DamageType damType, int damageMesLine, const char* description = nullptr);
 	BOOL AddDamageBonus(int32_t damBonus, int bonType, int bonMesline, const char* causeDesc = nullptr);
 	int AddPhysicalDR(int amount, int bypasserBitmask, int damageMesLine);
+	void CalcFinalDamage(); // calcualtes the finalDamage field
+	int GetOverallDamageByType(DamageType damType);
 };
 
 #pragma pack(push, 1)

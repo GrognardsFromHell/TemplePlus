@@ -119,6 +119,42 @@ int DamagePacket::AddPhysicalDR(int amount, int bypasserBitmask, int damageMesLi
 	return damage.AddPhysicalDR(this, amount, bypasserBitmask, (unsigned)damageMesLine);
 }
 
+void DamagePacket::CalcFinalDamage(){ // todo hook this
+	for (auto i=0u; i < this->diceCount; i++){
+		auto &dice = this->dice[i];
+		if (dice.rolledDamage < 0){
+			Dice diceUnpacked;
+			diceUnpacked.FromPacked(dice.dicePacked);
+			if (this->flags & 1) // maximiuzed
+			{
+				dice.rolledDamage = diceUnpacked.GetModifier() + diceUnpacked.GetCount() * diceUnpacked.GetSides();
+			} else // normal
+			{
+				dice.rolledDamage = diceUnpacked.Roll();
+			}
+
+			if (this->flags & 2) //empowered
+			{
+				dice.rolledDamage *= 1.5;
+			}
+		}
+	}
+
+	this->finalDamage = temple::GetRef<int(__cdecl)(DamagePacket*, DamageType)>(0x100E1210)(this, DamageType::Unspecified);
+}
+
+int DamagePacket::GetOverallDamageByType(DamageType damType)
+{
+	// TODO
+	auto damTot = (double)0.0;
+
+	for (auto i=0u; i<this->diceCount; i++)	{
+		
+	}
+
+	return damTot;
+}
+
 void Damage::DealDamage(objHndl victim, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType) {
 
 	addresses.DoDamage(victim, attacker, dice.ToPacked(), type, attackPower, reduction, damageDescId, actionType);
@@ -174,7 +210,8 @@ int Damage::AddDamageBonusWithDescr(DamagePacket* damage, int damBonus, int bonT
 	return 1;
 }
 
-int Damage::AddPhysicalDR(DamagePacket* damPkt, int DRAmount, int bypasserBitmask, unsigned damageMesLine)
+
+int Damage::AddPhysicalDR(DamagePacket* damPkt, int DRAmount, int bypasserBitmask, unsigned int damageMesLine)
 {
 	MesLine mesLine; 
 
@@ -200,7 +237,7 @@ const char* Damage::GetMesline(unsigned damageMesLine){
 	return mesline.value;
 }
 
-int Damage::AddDamageDice(DamagePacket* dmgPkt, int dicePacked, DamageType damType, unsigned damageMesLine){
+int Damage::AddDamageDice(DamagePacket* dmgPkt, int dicePacked, DamageType damType, unsigned int damageMesLine){
 	if (dmgPkt->diceCount >= 5)
 		return FALSE;
 
@@ -212,13 +249,13 @@ int Damage::AddDamageDice(DamagePacket* dmgPkt, int dicePacked, DamageType damTy
 			_damType = dmgPkt->dice[0].type;
 	}
 	auto diceCount = dmgPkt->diceCount;
-	dmgPkt->dice[dmgPkt->diceCount++] = DamageDice(dicePacked, damType, line);
+	dmgPkt->dice[dmgPkt->diceCount++] = DamageDice(dicePacked, _damType, line);
 
 	return TRUE;
 	//return addresses.AddDamageDice(dmgPkt, dicePacked, damType, damageMesLine);
 }
 
-int Damage::AddDamageDiceWithDescr(DamagePacket* dmgPkt, int dicePacked, DamageType damType, unsigned damageMesLine, char* descr)
+int Damage::AddDamageDiceWithDescr(DamagePacket* dmgPkt, int dicePacked, DamageType damType, unsigned int damageMesLine, char* descr)
 {
 	if (AddDamageDice(dmgPkt, dicePacked, damType, damageMesLine) == 1)
 	{
