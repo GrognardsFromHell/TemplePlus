@@ -2221,6 +2221,21 @@ static PyObject* PyObjHandle_AiStopAttacking(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_AllegianceShared(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		PyInt_FromLong(0);
+	}
+
+	objHndl target;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.allegiance_shared", &ConvertObjHndl, &target)) {
+		return 0;
+	}
+
+	return PyInt_FromLong(critterSys.AllegianceShared(self->handle, target));
+}
+
+
 static PyObject* PyObjHandle_GetDeity(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -2550,6 +2565,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "ai_shitlist_add", PyObjHandle_AiShitlistAdd, METH_VARARGS, NULL },
 	{ "ai_shitlist_remove", PyObjHandle_AiShitlistRemove, METH_VARARGS, NULL },
 	{ "ai_stop_attacking", PyObjHandle_AiStopAttacking, METH_VARARGS, NULL },
+	{ "allegiance_shared", PyObjHandle_AllegianceShared, METH_VARARGS, NULL },
 	{ "anim_callback", PyObjHandle_AnimCallback, METH_VARARGS, NULL },
 	{ "anim_goal_interrupt", PyObjHandle_AnimGoalInterrupt, METH_VARARGS, NULL },
 	{ "arcane_spell_level_can_cast", PyObjHandle_ArcaneSpellLevelCanCast, METH_VARARGS, NULL },
