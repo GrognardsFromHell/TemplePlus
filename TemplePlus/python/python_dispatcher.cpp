@@ -162,7 +162,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 	#pragma region useful data types
 
 
-		#pragma region Bonuslist etc
+	#pragma region Bonuslist etc
 	py::class_<BonusList>(m, "BonusList")
 			.def(py::init())
 			.def("add", [](BonusList & bonlist, int value, int bonType, int mesline) {
@@ -271,9 +271,9 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def_readwrite("flags", &TurnBasedStatus::tbsFlags)
 		.def_readwrite("attack_mode_code", &TurnBasedStatus::attackModeCode, "0 - normal main hand, 99 - dual wielding, 999 - natural attack")
 		;
-		#pragma endregion
+	#pragma endregion
 
-
+	#pragma region Radial Menu Enums
 	py::enum_<RadialMenuStandardNode>(m, "RadialMenuStandardNode")
 		.value("Root", Root)
 		.value("Spells", Spells)
@@ -311,6 +311,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.value("EndEarlyMulti", UiPickerType::EndEarlyMulti)
 		.value("LocIsClear", UiPickerType::LocIsClear)
 		;
+	#pragma endregion 
 
 	py::class_<RadialMenuEntry>(m, "RadialMenuEntry")
 		.def(py::init())

@@ -1126,9 +1126,14 @@ static bool ParseCondNameAndArgs(PyObject* args, CondStruct*& condStructOut, vec
 	for (unsigned int i = 0; i < cond->numArgs; ++i) {
 		if ((uint32_t) PyTuple_GET_SIZE(args) > i + 1) {
 			auto item = PyTuple_GET_ITEM(args, i + 1);
+			if (PyLong_Check(item)){
+				condArgs[i] = PyLong_AsLong(item);
+				continue;
+			}
+
 			if (!PyInt_Check(item)) {
 				auto itemRepr = PyObject_Repr(item);
-				PyErr_Format(PyExc_ValueError, "Argument %d for condition %s (requires %d args) is not of type int: %s",
+				PyErr_Format(PyExc_ValueError, "Argument %d for condition %s (requires %d args) is not of type int or long: %s",
 				             i + 1, condName, cond->numArgs, PyString_AsString(itemRepr));
 				Py_DECREF(itemRepr);
 				return false;

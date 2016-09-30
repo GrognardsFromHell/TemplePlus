@@ -145,6 +145,8 @@ public:
 	static int __cdecl PowerAttackDamageBonus(DispatcherCallbackArgs args);
 	static int __cdecl GlobalWieldedTwoHandedQuery(DispatcherCallbackArgs args);
 
+	static int __cdecl GlobalHpChanged(DispatcherCallbackArgs args);
+
 
 	static int __cdecl HasCondition(DispatcherCallbackArgs args);
 
@@ -1022,6 +1024,67 @@ int GenericCallbacks::GlobalWieldedTwoHandedQuery(DispatcherCallbackArgs args)
 	}
 
 	dispIo->return_val = isTwohandedWieldable;
+
+	return 0;
+}
+
+int GenericCallbacks::GlobalHpChanged(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+
+	auto handle = args.objHndCaller;
+	auto obj = objSystem->GetObject(handle);
+
+	auto hpCur = objects.StatLevelGet(handle, stat_hp_current);
+	auto subdualDam = obj->GetInt32(obj_f_critter_subdual_damage);
+	auto lastHitBy = obj->GetObjHndl(obj_f_last_hit_by);
+	auto hpChange = dispIo->data2;
+
+	// Kill
+	if (hpCur <= -10){
+		critterSys.Kill(handle);
+		return 0;
+	}
+
+	auto isUncon = critterSys.IsDeadOrUnconscious(handle);
+
+	
+	auto addDisabled = false;
+	auto knockedOut = false;
+	auto isDying = false;
+	auto hasDiehard = feats.HasFeatCountByClass(args.objHndCaller, FEAT_DIEHARD);
+
+	if (hpCur < 0 && !hasDiehard){
+		knockedOut = true;
+		if (hpChange < 0){
+			isDying = true;
+		}
+	}
+	if (subdualDam >= hpCur){
+		if (!hasDiehard)
+			knockedOut = true;
+		else
+			knockedOut = subdualDam >= hpCur + 10;
+	}
+
+	// Knock Unconscious
+	if (knockedOut){
+		d20Sys.D20SignalPython(handle, "Knocked Unconscious");
+		if (!isUncon){
+			auto animId = Dice::Roll(1, 3, 72); // roll number between 73-75
+			animationGoals.PushFallDown(handle, animId);
+		}
+		if (isDying){
+			conds.AddTo(handle, "Dying", {});
+			return 0;
+		}
+		conds.AddTo(handle, "Unconscious", {});
+		return 0;
+	}
+	// Mark Disabled
+	else if (hpCur <= 0 ) {
+		conds.AddTo(args.objHndCaller, "Disabled", {});
+		return 0;
+	}
 
 	return 0;
 }
