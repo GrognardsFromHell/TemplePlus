@@ -322,6 +322,38 @@ gfx::TextureRef Textures::Resolve(const std::string& filename, bool withMipMaps)
 
 }
 
+gfx::TextureRef Textures::Override(const std::string & filename, bool withMipMaps)
+{
+	auto filenameLower = tolower(filename);
+
+	auto it = mTexturesByName.find(filenameLower);
+	auto id = -1;
+	if (it != mTexturesByName.end()) {
+		//return it->second;
+		id = it->second.get()->GetId();
+	}
+
+	// Texture is not registered yet, so let's do that
+	if (!vfs->FileExists(filename)) {
+		logger->error("Cannot register texture '{}', because it does not exist.", filename);
+		auto result = Texture::GetInvalidTexture();
+		mTexturesByName[filenameLower] = result;
+		return result;
+	}
+
+	if (id == -1)
+		id = mNextFreeId++;
+
+	auto texture(std::make_shared<FileTexture>(mLoader, id, filename));
+
+	//Expects(mTexturesByName.find(filenameLower) == mTexturesByName.end());
+	//Expects(mTexturesById.find(id) == mTexturesById.end());
+	mTexturesByName[filenameLower] = texture;
+	mTexturesById[id] = texture;
+
+	return texture;
+}
+
 gfx::TextureRef Textures::ResolveUncached(const std::string & filename, bool withMipMaps)
 {
 	// Texture is not registered yet, so let's do that

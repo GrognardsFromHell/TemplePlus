@@ -84,6 +84,7 @@ namespace gfx {
 		void FreeAllTextures();
 
 		gfx::TextureRef Resolve(const std::string& filename, bool withMipMaps);
+		gfx::TextureRef Override(const std::string& filename, bool withMipMaps);
 		
 		gfx::TextureRef ResolveUncached(const std::string& filename, bool withMipMaps);
 

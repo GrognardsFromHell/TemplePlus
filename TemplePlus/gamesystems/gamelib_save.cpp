@@ -11,6 +11,7 @@
 #include <tio/tio.h>
 #include "gamesystem.h"
 #include "util/savegame.h"
+#include <tig/tig_texture.h>
 
 struct GsiData {
 	string filename;
@@ -246,16 +247,19 @@ bool GameSystems::SaveGame(const string& filename, const string& displayName) {
 
 	// Rename screenshots
 	auto screenDestName = format("save\\{}l.jpg", filename);
+	int textId;
 	if (tio_fileexists(screenDestName.c_str())) {
 		tio_remove(screenDestName.c_str());
 	}
 	tio_rename("save\\templ.jpg", screenDestName.c_str());
+	textureFuncs.RegisterTextureOverride(screenDestName.c_str(), &textId); // override previous texture if any
 
 	screenDestName = format("save\\{}s.jpg", filename);
 	if (tio_fileexists(screenDestName.c_str())) {
 		tio_remove(screenDestName.c_str());
 	}
 	tio_rename("save\\temps.jpg", screenDestName.c_str());
+	textureFuncs.RegisterTextureOverride(screenDestName.c_str(), &textId);
 
 	// co8 savehook
 	auto saveHookArgs = Py_BuildValue("(s)", filename.c_str());

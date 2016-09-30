@@ -103,6 +103,8 @@ struct TextureFuncs : temple::AddressTable {
 	*/
 	int (__cdecl *LoadTexture)(int textureId, TigTextureRegistryEntry *pTextureOut);
 
+	int RegisterTextureOverride(const char* filename, int * textIdOut);
+
 	TextureFuncs() {
 		rebase(CreateBuffer, 0x101DCE50);
 		rebase(RegisterTexture, 0x101EE7B0);
