@@ -36,6 +36,7 @@
 #include <gamesystems/objects/objfields.h>
 #include <d20_level.h>
 #include <turn_based.h>
+#include <gamesystems/objects/objevent.h>
 
 struct PyObjHandle {
 	PyObject_HEAD;
@@ -1901,6 +1902,25 @@ static PyObject* PyObjHandle_RumorLogAdd(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+
+
+static PyObject* PyObjHandle_ObjectEventAppend(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(-1);
+	}
+
+	float radiusFeet;
+	ObjectListFilter filter;
+	if (!PyArg_ParseTuple(args, "if:objhndl.object_event_append", &filter, &radiusFeet)) {
+		return 0;
+	}
+
+	auto result = objEvents.EventAppend(self->handle, 0, 1, filter, radiusFeet * (float)12.0, 0.0, XM_2PI);
+
+	return PyInt_FromLong(result);
+}
+
 static PyObject* PyObjHandle_SetInt(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -2673,6 +2693,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "npc_flag_set", SetFlag<obj_f_npc_flags>, METH_VARARGS, NULL },
 	{ "npc_flag_unset", ClearFlag<obj_f_npc_flags>, METH_VARARGS, NULL },
 	
+	{ "object_event_append", PyObjHandle_ObjectEventAppend, METH_VARARGS, NULL },
 	{ "obj_get_int", PyObjHandle_GetInt, METH_VARARGS, NULL },
 	{ "obj_get_idx_int", PyObjHandle_GetIdxInt, METH_VARARGS, NULL },
 	{ "obj_get_int64", PyObjHandle_GetInt64, METH_VARARGS, "Gets 64 bit field" },
