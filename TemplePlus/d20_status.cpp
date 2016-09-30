@@ -74,6 +74,10 @@ void D20StatusSystem::initClass(objHndl objHnd){
 			_D20StatusInitDomains(objHnd);
 		}
 
+		if (feats.HasFeatCountByClass(objHnd, FEAT_REBUKE_UNDEAD)){
+			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.ConditionTurnUndead, 1, 0);
+		}
+
 		if (objects.StatLevelGet(objHnd, stat_level_paladin) >= 3)
 		{
 			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionTurnUndead);

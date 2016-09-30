@@ -23,7 +23,7 @@ struct CharEditorSelectionPacket{
 	int domain1;
 	int domain2;
 	Alignment alignment; 
-	int alignmentChoice;
+	int alignmentChoice; // 1 is for Positive Energy, 2 is for Negative Energy
 	feat_enums feat0;
 	feat_enums feat1;
 	feat_enums feat2;

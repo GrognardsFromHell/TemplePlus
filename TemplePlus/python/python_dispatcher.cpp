@@ -258,7 +258,9 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def_readwrite("loc", &D20Actn::destLoc, "Location")
 		.def_readwrite("anim_id", &D20Actn::animID)
 		
-		.def_readwrite("attack_mode_code", &TurnBasedStatus::attackModeCode, "0 - normal main hand, 99 - dual wielding, 999 - natural attack")
+		.def("query_can_be_affected_action_perform", [](D20Actn& d20a, objHndl handle)->int{
+			return d20Sys.D20QueryWithDataDefaultTrue(handle, DK_QUE_CanBeAffected_PerformAction, &d20a, 0);
+		})
 		;
 
 	py::class_<TurnBasedStatus>(m, "TurnBasedStatus")

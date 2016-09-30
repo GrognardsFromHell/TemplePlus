@@ -422,6 +422,9 @@
     <ClCompile Include="python\python_integration_d20_action.cpp">
       <Filter>python</Filter>
     </ClCompile>
+    <ClCompile Include="ui\ui_popup.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -795,6 +798,9 @@
     <ClInclude Include="ui\ui_legacysystems.h" />
     <ClInclude Include="python\python_integration_d20_action.h">
       <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_popup.h">
+      <Filter>ui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

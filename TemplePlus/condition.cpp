@@ -259,6 +259,7 @@ public:
 	static int LayOnHandsPerform(DispatcherCallbackArgs arg);
 	static int RemoveDiseasePerform(DispatcherCallbackArgs arg); // also used in WholenessOfBodyPerform
 	void HookSpellCallbacks();
+	static int TurnUndeadHook(objHndl, Stat shouldBeClassCleric, DispIoD20ActionTurnBased* evtObj);
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
 		
@@ -368,6 +369,9 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100EC9B0, genericCallbacks.D20ModCountdownHandler);
 
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F72E0, genericCallbacks.MonsterRegenerationOnDamage);
+
+		// Turn Undead extension
+		redirectCall(0x1004AF5F, TurnUndeadHook);
 	}
 } condFuncReplacement;
 
@@ -2983,6 +2987,16 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 	};
 	write(0x102DFF50, &sdd, sizeof(SubDispDefNew));
 
+}
+
+int ConditionFunctionReplacement::TurnUndeadHook(objHndl handle, Stat shouldBeClassCleric, DispIoD20ActionTurnBased * evtObj){
+
+	auto turnType = evtObj->d20a->data1;
+	auto result = objects.StatLevelGet(handle, stat_level_cleric); // the vanilla code we're replacing did this
+
+	result += d20Sys.D20QueryPython(handle, "Turn Undead Level", turnType);
+
+	return result;
 }
 
 #pragma region Spell Callbacks
