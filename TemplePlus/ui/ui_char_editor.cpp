@@ -1532,7 +1532,7 @@ BOOL UiCharEditor::ClassNextBtnMsg(int widId, TigMsg * msg){
 	}
 
 	if (_msg->widgetEventType == TigMsgWidgetEvent::Entered) {
-		auto textboxText = fmt::format("Prestige Classes\n\n Currently supported:\n  Arcane Trickster, Assassin,\n  Dwarven Defender, Duelist,\n  Eldritch Knight, Mystic Theurge");
+		auto textboxText = fmt::format("Prestige Classes");
 		if (textboxText.size() >= 1024)
 			textboxText[1023] = 0;
 		strcpy(temple::GetRef<char[1024]>(0x10C80CC0), &textboxText[0]);

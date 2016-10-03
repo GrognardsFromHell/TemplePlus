@@ -286,7 +286,6 @@
     <ClCompile Include="ui\ui_turn_based.cpp" />
     <ClCompile Include="ui\ui_intgame_select.cpp" />
     <ClCompile Include="ui\ui_combat.cpp" />
-    <ClCompile Include="ui\ui_slider.cpp" />
     <ClCompile Include="ui\ui_pc_creation.cpp">
       <Filter>ui</Filter>
     </ClCompile>
@@ -423,6 +422,9 @@
       <Filter>python</Filter>
     </ClCompile>
     <ClCompile Include="ui\ui_popup.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_slider.cpp">
       <Filter>ui</Filter>
     </ClCompile>
   </ItemGroup>
@@ -800,6 +802,9 @@
       <Filter>python</Filter>
     </ClInclude>
     <ClInclude Include="ui\ui_popup.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_slider.h">
       <Filter>ui</Filter>
     </ClInclude>
   </ItemGroup>
