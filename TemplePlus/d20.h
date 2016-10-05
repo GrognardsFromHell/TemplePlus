@@ -89,7 +89,7 @@ struct LegacyD20System : temple::AddressTable
 	void GlobD20ActnInit();
 	void d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx);//1008AE90    ActnSeq * @<eax>
 	int D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tbStat);// 1008A9C0
-	uint32_t tumbleCheck(D20Actn*);
+	uint32_t CheckAooIncurRegardTumble(D20Actn*);
 	void D20ActnSetSpellData(D20SpellData* d20SpellData, uint32_t spellEnumOrg, uint32_t spellClassCode, uint32_t spellSlotLevel, uint32_t itemSpellData, uint32_t metaMagicData);
 	void ExtractSpellInfo(D20SpellData* d20spellData, uint32_t* spellEnum, uint32_t * spellEnumOrg, uint32_t* spellClassCode, uint32_t* spellSlotLevel, uint32_t* itemSpellData, MetaMagicData* metaMagicData);
 	void GlobD20ActnSetSpellData(D20SpellData* d20SpellData);

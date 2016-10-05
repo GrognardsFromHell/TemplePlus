@@ -1342,10 +1342,13 @@ unsigned AiSystem::WakeFriend(AiTactic* aiTac)
 
 int AiSystem::Default(AiTactic* aiTac)
 {
-	if (actSeqSys.curSeqGetTurnBasedStatus()->hourglassState < 2)
-		return 0;
 	if (!aiTac->target)
 		return 0;
+	if (actSeqSys.curSeqGetTurnBasedStatus()->hourglassState < 2){
+		int dummy = 1;
+		//return 0;
+	}
+		
 	auto curSeq = *actSeqSys.actSeqCur;
 	d20Sys.GlobD20ActnInit();
 	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_ATTACK, 0);
@@ -1356,15 +1359,17 @@ int AiSystem::Default(AiTactic* aiTac)
 	//	logger->info("AI Default failed, error code: {}", (int)addToSeqError);
 	//}
 	int performError = actSeqSys.ActionSequenceChecksWithPerformerLocation();
-	if (performError == AEC_OK && addToSeqError == AEC_OK)
-	{
+	if (performError == AEC_OK && addToSeqError == AEC_OK){
 		return 1;
-	} else
-	{
+	} 
+	else{
 		logger->info("AI Default SequenceCheck failed, error codes are AddToSeq :{}, Location Checs: {}", static_cast<int>(addToSeqError), static_cast<int>(performError));
 	}
 	if (!critterSys.IsWieldingRangedWeapon(aiTac->performer))
 	{
+		if (combatSys.IsWithinReach(aiTac->performer, aiTac->target))
+			return 0;
+
 		logger->info("AI Action Perform: Resetting sequence; Do Unspecified Move Action");
 		actSeqSys.curSeqReset(aiTac->performer);
 		auto initialActNum = curSeq->d20ActArrayNum;

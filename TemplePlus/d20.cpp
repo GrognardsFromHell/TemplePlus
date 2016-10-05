@@ -119,12 +119,14 @@ public:
 #define ActionCost(fname) static ActionErrorCode ActionCost ## fname ## (D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 #define ActionFrame(fname) static ActionErrorCode ActionFrame ## fname ## (D20Actn* d20a)
 	// Add to sequence funcs
-	AddToSeq(Charge);
-	AddToSeq(Python);
-	AddToSeq(Simple);
-	AddToSeq(WithTarget);
-	AddToSeq(WhirlwindAttack);
-	static ActionErrorCode AddToSeqTripAttack(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);;
+	static ActionErrorCode AddToSeqCharge(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+	static ActionErrorCode AddToSeqPython(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+	static ActionErrorCode AddToSeqSimple(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+	static ActionErrorCode AddToStandardAttack(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+	static ActionErrorCode AddToSeqUnspecified(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+	static ActionErrorCode AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+	static ActionErrorCode AddToSeqWhirlwindAttack(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+	static ActionErrorCode AddToSeqTripAttack(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
 	
 	
 
@@ -133,58 +135,60 @@ public:
 	static ActionErrorCode TurnBasedStatusCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat);
 
 	// Action Checks
-	ActionCheck(AidAnotherWakeUp);
-	ActionCheck(CastSpell);
-	ActionCheck(Disarm);
-	ActionCheck(DisarmedWeaponRetrieve);
-	ActionCheck(DivineMight);
-	ActionCheck(EmptyBody);
-	ActionCheck(Python);  // calls python script
-	ActionCheck(QuiveringPalm);
-	ActionCheck(Sneak);
-	ActionCheck(Sunder);
-	ActionCheck(TripAttack);
+	static ActionErrorCode ActionCheckAidAnotherWakeUp(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckCastSpell(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckDivineMight(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckEmptyBody(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat);  // calls python script
+	static ActionErrorCode ActionCheckQuiveringPalm(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckSneak(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckTripAttack(D20Actn* d20a, TurnBasedStatus* tbStat);
 	
 
 	// Action Cost
-	ActionCost(Python);
-	ActionCost(StandardAttack);
-	ActionCost(MoveAction);
-	ActionCost(Null);
-	ActionCost(StandardAction);
-	ActionCost(WhirlwindAttack);
+	static ActionErrorCode ActionCostFullAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostPython(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostStandardAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostMoveAction(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostNull(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostStandardAction(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostWhirlwindAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 
 	static ActionErrorCode LocationCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc);
 	static ActionErrorCode LocationCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc);
 	
 	// Perform 
-	PerformFunc(AidAnotherWakeUp);
-	PerformFunc(Aoo);
-	PerformFunc(CastItemSpell);
-	PerformFunc(CastSpell); // also used in PerformUseItem
-	PerformFunc(Charge);
-	PerformFunc(Disarm);
-	PerformFunc(DisarmedWeaponRetrieve);
-	PerformFunc(DivineMight);
-	PerformFunc(EmptyBody);
-	PerformFunc(Python);
-	PerformFunc(QuiveringPalm);
-	PerformFunc(Sneak);
-	PerformFunc(StandardAttack);
-	PerformFunc(TripAttack);
-	PerformFunc(UseItem);
+	static ActionErrorCode PerformAidAnotherWakeUp(D20Actn* d20a);
+	static ActionErrorCode PerformAoo(D20Actn* d20a);
+	static ActionErrorCode PerformCastItemSpell(D20Actn* d20a);
+	static ActionErrorCode PerformCastSpell(D20Actn* d20a); // also used in PerformUseItem
+	static ActionErrorCode PerformCharge(D20Actn* d20a);
+	static ActionErrorCode PerformDisarm(D20Actn* d20a);
+	static ActionErrorCode PerformDisarmedWeaponRetrieve(D20Actn* d20a);
+	static ActionErrorCode PerformDivineMight(D20Actn* d20a);
+	static ActionErrorCode PerformEmptyBody(D20Actn* d20a);
+	static ActionErrorCode PerformFullAttack(D20Actn* d20a);
+	static ActionErrorCode PerformPython(D20Actn* d20a);
+	static ActionErrorCode PerformQuiveringPalm(D20Actn* d20a);
+	static ActionErrorCode PerformSneak(D20Actn* d20a);
+	static ActionErrorCode PerformStandardAttack(D20Actn* d20a);
+	static ActionErrorCode PerformTripAttack(D20Actn* d20a);
+	static ActionErrorCode PerformUseItem(D20Actn* d20a);
 
 	// Action Frame 
-	ActionFrame(AidAnotherWakeUp);
-	ActionFrame(Aoo);
-	ActionFrame(Charge);
-	ActionFrame(Disarm);
-	ActionFrame(Python);
-	ActionFrame(QuiveringPalm);
-	ActionFrame(StandardAttack);
-	ActionFrame(Sunder);
-	ActionFrame(TouchAttack);
-	ActionFrame(TripAttack);
+	static ActionErrorCode ActionFrameAidAnotherWakeUp(D20Actn* d20a);
+	static ActionErrorCode ActionFrameAoo(D20Actn* d20a);
+	static ActionErrorCode ActionFrameCharge(D20Actn* d20a);
+	static ActionErrorCode ActionFrameDisarm(D20Actn* d20a);
+	static ActionErrorCode ActionFramePython(D20Actn* d20a);
+	static ActionErrorCode ActionFrameQuiveringPalm(D20Actn* d20a);
+	static ActionErrorCode ActionFrameStandardAttack(D20Actn* d20a);
+	static ActionErrorCode ActionFrameSunder(D20Actn* d20a);
+	static ActionErrorCode ActionFrameTouchAttack(D20Actn* d20a);
+	static ActionErrorCode ActionFrameTripAttack(D20Actn* d20a);
 	
 
 
@@ -369,10 +373,19 @@ void LegacyD20System::NewD20ActionsInit()
 	
 	D20ActionType d20Type;
 
+	d20Type = D20A_UNSPECIFIED_ATTACK;
+
+	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqUnspecified;
+
 	
 	d20Type = D20A_STANDARD_ATTACK;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformStandardAttack;
 	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameStandardAttack;
+	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToStandardAttack;
+
+	d20Type = D20A_FULL_ATTACK;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformFullAttack;
+	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostFullAttack;
 
 	d20Type = D20A_CAST_SPELL;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformCastSpell;
@@ -855,7 +868,7 @@ int32_t LegacyD20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tb
 	*/
 }
 
-uint32_t LegacyD20System::tumbleCheck(D20Actn* d20a)
+uint32_t LegacyD20System::CheckAooIncurRegardTumble(D20Actn* d20a)
 {
 	if (d20QueryWithData(d20a->d20ATarget, DK_QUE_Critter_Has_Spell_Active, 407, 0)) return 0; // spell_sanctuary active
 	if (actSeq->isPerforming(d20a->d20APerformer))
@@ -1528,6 +1541,42 @@ ActionErrorCode D20ActionCallbacks::PerformEmptyBody(D20Actn* d20a)
 	conds.AddTo(d20a->d20APerformer, "Ethereal", { 0, 0 , numRounds});
 
 	return static_cast<ActionErrorCode>(dispIo.returnVal);
+}
+
+ActionErrorCode D20ActionCallbacks::PerformFullAttack(D20Actn* d20a){
+	// this function is largely irrelevant...
+
+	auto &curSeq = *actSeqSys.actSeqCur;
+
+
+	// if no subsequent actions
+	if (curSeq->d20aCurIdx == curSeq->d20ActArrayNum - 1){ 
+		
+		floatSys.FloatCombatLine(d20a->d20APerformer, 5001); // Full Attack
+
+		if (combatSys.isCombatActive() && !*actSeqSys.actSeqPickerActive
+			&& objects.IsPlayerControlled(curSeq->performer)) {
+
+			if (curSeq->tbStatus.baseAttackNumCode + curSeq->tbStatus.numBonusAttacks > curSeq->tbStatus.attackModeCode){
+				*actSeqSys.seqPickerD20ActnType = D20A_STANDARD_ATTACK;
+				*actSeqSys.seqPickerD20ActnData1 = 0;
+				*actSeqSys.seqPickerTargetingType = D20TC_SingleExcSelf;
+			}
+		}
+	} 
+	else {
+		if (combatSys.isCombatActive() && !*actSeqSys.actSeqPickerActive
+			&& objects.IsPlayerControlled(curSeq->performer)) {
+
+		/*	if (curSeq->tbStatus.baseAttackNumCode + curSeq->tbStatus.numBonusAttacks > curSeq->tbStatus.attackModeCode) {
+				*actSeqSys.seqPickerD20ActnType = D20A_STANDARD_ATTACK;
+				*actSeqSys.seqPickerD20ActnData1 = 0;
+				*actSeqSys.seqPickerTargetingType = D20TC_SingleExcSelf;
+			}*/
+		}
+	}
+
+	return AEC_OK;
 }
 
 ActionErrorCode D20ActionCallbacks::PerformPython(D20Actn* d20a){
@@ -2514,6 +2563,67 @@ ActionErrorCode D20ActionCallbacks::AddToSeqSimple(D20Actn*d20a, ActnSeq* actSeq
 	return actSeqSys.AddToSeqSimple(d20a, actSeq, tbStat);
 }
 
+ActionErrorCode D20ActionCallbacks::AddToStandardAttack(D20Actn * d20a, ActnSeq * actSeq, TurnBasedStatus * tbStat){
+	auto tgt = d20a->d20ATarget;
+	
+	if (!tgt)
+		return AEC_TARGET_INVALID;
+
+	auto performer = d20a->d20APerformer;
+
+	auto d20aCopy = *d20a;
+	auto tbStatCopy = *tbStat;
+
+	auto weapon = inventory.ItemWornAt(performer, EquipSlot::WeaponPrimary);
+
+	// ranged weapon
+	if (inventory.IsRangedWeapon(weapon)){
+		ActionCostPacket acp;
+		d20aCopy.d20Caf |= D20CAF_RANGED;
+		if (inventory.IsNormalCrossbow(weapon))	{
+			actSeqSys.ActionCostReload(d20a, &tbStatCopy, &acp);
+			if (acp.hourglassCost){
+				d20a->d20ActType = D20A_STANDARD_RANGED_ATTACK;
+				return (ActionErrorCode)actSeqSys.CrossBowSthgReload_1008E8A0(&d20aCopy, actSeq);
+			}
+		}
+
+		if (actSeqSys.TurnBasedStatusUpdate(&tbStatCopy, &d20aCopy) == AEC_OK){
+			if (inventory.IsThrowingWeapon(weapon)){
+				d20aCopy.d20ActType = D20A_THROW;
+				d20aCopy.d20Caf |= D20CAF_THROWN;
+			} else
+			{
+				d20aCopy.d20ActType = D20A_STANDARD_RANGED_ATTACK;
+			}
+		}
+
+		actSeqSys.AttackAppend(actSeq, &d20aCopy, &tbStatCopy, tbStatCopy.attackModeCode);
+		return AEC_OK;
+	}
+
+
+	auto reach = critterSys.GetReach(performer, d20a->d20ActType);
+	if (locSys.DistanceToObj(performer, tgt) > reach){
+		d20aCopy = *d20a;
+		d20aCopy.d20ActType = D20A_UNSPECIFIED_MOVE;
+		auto destLoc = objSystem->GetObject(tgt)->GetLocationFull();
+		actSeqSys.MoveSequenceParse(&d20aCopy, actSeq, tbStat, 0.0, reach, 1);
+	}
+
+	if (actSeqSys.TurnBasedStatusUpdate(&tbStatCopy, &d20aCopy) != AEC_OK){ // bug??
+		return AEC_OK;
+	}
+
+	actSeqSys.AttackAppend(actSeq, &d20aCopy, &tbStatCopy, tbStatCopy.attackModeCode);
+	return AEC_OK;
+
+}
+
+ActionErrorCode D20ActionCallbacks::AddToSeqUnspecified(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat){
+	return (ActionErrorCode)actSeqSys.UnspecifiedAttackAddToSeq(d20a, actSeq, tbStat);
+}
+
 ActionErrorCode D20ActionCallbacks::AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat){
 	return static_cast<ActionErrorCode>(actSeqSys.AddToSeqWithTarget(d20a, actSeq, tbStat));
 }
@@ -2567,7 +2677,7 @@ ActionErrorCode D20ActionCallbacks::AddToSeqTripAttack(D20Actn* d20a, ActnSeq* a
 		auto d20aCopy = *d20a;
 		d20aCopy.d20ActType = D20A_UNSPECIFIED_MOVE;
 		locSys.getLocAndOff(tgt, &d20aCopy.destLoc);
-		auto result = static_cast<ActionErrorCode>(actSeqSys.moveSequenceParse(&d20aCopy, actSeq, tbStat, 0.0, reach, 1));
+		auto result = static_cast<ActionErrorCode>(actSeqSys.MoveSequenceParse(&d20aCopy, actSeq, tbStat, 0.0, reach, 1));
 		if (!result)
 		{
 			auto tbStatusCopy = *tbStat;
@@ -2618,6 +2728,23 @@ ActionErrorCode D20ActionCallbacks::StdAttackTurnBasedStatusCheck(D20Actn* d20a,
 }
 
 ActionErrorCode D20ActionCallbacks::TurnBasedStatusCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat){
+	return AEC_OK;
+}
+
+ActionErrorCode D20ActionCallbacks::ActionCostFullAttack(D20Actn * d20a, TurnBasedStatus * tbStat, ActionCostPacket * acp){
+	acp->chargeAfterPicker = 0;
+	acp->moveDistCost = 0;
+	acp->hourglassCost = 4;
+	int flags = d20a->d20Caf;
+	if ( (d20a->d20Caf & D20CAF_FREE_ACTION ) || !combatSys.isCombatActive())
+		acp->hourglassCost = 0;
+	if (tbStat->attackModeCode >= tbStat->baseAttackNumCode && tbStat->hourglassState >= 4 && !tbStat->numBonusAttacks){
+		actSeqSys.FullAttackCostCalculate(d20a, tbStat, (int*)&tbStat->baseAttackNumCode, (int*)&tbStat->numBonusAttacks,
+			(int*)&tbStat->numAttacks, (int*)&tbStat->attackModeCode);
+		tbStat->surplusMoveDistance = 0;
+		tbStat->tbsFlags = tbStat->tbsFlags | TBSF_FullAttack;
+	}
+
 	return AEC_OK;
 }
 

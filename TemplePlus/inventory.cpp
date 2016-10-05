@@ -270,10 +270,10 @@ int InventorySystem::IsNormalCrossbow(objHndl weapon)
 	{
 		auto weapType = objects.GetWeaponType(weapon);
 		if (weapType == wt_heavy_crossbow || weapType == wt_light_crossbow)
-			return 1; // TODO: should this include repeating crossbow? I think the context is reloading action in some cases
+			return TRUE; // TODO: should this include repeating crossbow? I think the context is reloading action in some cases
 		// || weapType == wt_hand_crossbow
 	}
-	return 0;
+	return FALSE;
 }
 
 int InventorySystem::IsThrowingWeapon(objHndl weapon)
@@ -381,8 +381,9 @@ objHndl InventorySystem::GetParent(objHndl item)
 	return parent;
 }
 
-bool InventorySystem::IsRangedWeapon(objHndl weapon)
-{
+bool InventorySystem::IsRangedWeapon(objHndl weapon){
+	if (!weapon)
+		return false;
 	if (objects.GetType(weapon) != obj_t_weapon)
 		return false;
 	if (objects.getInt32(weapon, obj_f_weapon_flags) & OWF_RANGED_WEAPON)

@@ -58,7 +58,7 @@ enum TurnBasedStatusFlags : uint32_t
 	TBSF_Movement2 = 4,
 	TBSF_TouchAttack = 8, // denotes that you're doing a touch attack
 	TBSF_CritterSpell = 0x10, // denotes that the spell being cast is actually a critter's natural ability, so don't provoke AoO
-	TBSF_AoO = 0x20, // denotes that the critter was interrupted by an AoO
+	TBSF_AoO = 0x20, // denotes that the critter has passed the AoO stage I think
 	TBSF_FullAttack = 0x40,
 	TBSF_80 = 0x80,
 	TBSF_100 = 0x100,
@@ -88,7 +88,8 @@ struct ActionSequenceSystem : temple::AddressTable
 	ActnSeq * actSeqArray; // size 32
 	uint32_t * actnProcState;
 	MesHandle  * actionMesHandle; 
-	uint32_t * seqFlag_10B3D5C0; // init to 0
+	uint32_t * performingDefaultAction; // inited to 0
+	uint32_t * performedDefaultAction; // inited to 0
 	uint32_t * actSeqPickerActive;
 	TurnBasedStatus * tbStatus118CD3C0;
 
@@ -117,7 +118,7 @@ struct ActionSequenceSystem : temple::AddressTable
 
 	int StdAttackTurnBasedStatusCheck(D20Actn *d20a, TurnBasedStatus *tbStat);
 	uint32_t isPerforming(objHndl objHnd);
-	uint32_t moveSequenceParse(D20Actn * d20aIn, ActnSeq* actSeq, TurnBasedStatus *actnSthg, float distSthg, float reach, int a5);
+	uint32_t MoveSequenceParse(D20Actn * d20aIn, ActnSeq* actSeq, TurnBasedStatus *actnSthg, float distSthg, float reach, int a5);
 		void releasePath(PathQueryResult*);
 		void addReadiedInterrupts(ActnSeq* actSeq, CmbtIntrpts * intrpts);
 		void updateDistTraversed(ActnSeq* actSeq);
