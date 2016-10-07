@@ -58,7 +58,7 @@ enum TurnBasedStatusFlags : uint32_t
 	TBSF_Movement2 = 4,
 	TBSF_TouchAttack = 8, // denotes that you're doing a touch attack
 	TBSF_CritterSpell = 0x10, // denotes that the spell being cast is actually a critter's natural ability, so don't provoke AoO
-	TBSF_AoO = 0x20, // denotes that the critter has passed the AoO stage I think
+	TBSF_HasActedThisRound = 0x20, // prevents you from dragging the portrait in the initiative row
 	TBSF_FullAttack = 0x40,
 	TBSF_80 = 0x80,
 	TBSF_100 = 0x100,

@@ -25,6 +25,7 @@
 #include "ui_tooltip.h"
 #include "ui_render.h"
 #include <anim.h>
+#include <tig\tig_mouse.h>
 
 UiIntgameTurnbased uiIntgameTb;
 
@@ -174,6 +175,10 @@ public:
 		orgUiIntgameGenerateSequence = replaceFunction(0x10174100, UiIntgameGenerateSequence);
 		orgUiIntgamePathSequenceHandler = replaceFunction(0x10174790, UiIntgamePathSequenceHandler);
 		orgUiIntgameMsgHandler = replaceFunction(0x10174A30, UiIntgameMsgHandler);
+
+		replaceFunction<void(__cdecl)()>(0x10097060, [](){
+			uiIntgameTb.CursorRenderUpdate();
+		});
 	}
 } uiIntgameTurnbasedReplacements;
 
@@ -471,13 +476,14 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 					}
 				} 
 				else if (tigMsgType == TigMsgType::WIDGET){
-					if (msg->arg2 == 4) { //exiting widget
+					auto _msg = (TigMsgWidget*)msg;
+					if (_msg->widgetEventType == TigMsgWidgetEvent::Exited) {
 						*intgameAddresses.uiIntgameAcquireByRaycastOn = 0;
 						*intgameAddresses.uiIntgameSelectionConfirmed = 0;
 						*intgameAddresses.uiIntgameObjFromRaycast = 0i64;
 						*intgameAddresses.uiIntgameWidgetEnteredForGameplay = 0;
 					} 
-					else if (msg->arg2 == 3){
+					else if (_msg->widgetEventType == TigMsgWidgetEvent::Entered){
 						*intgameAddresses.uiIntgameWidgetEnteredForGameplay = 1;
 					}
 					
@@ -488,12 +494,13 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 
 
 	if (msg->type == TigMsgType::WIDGET){
+		auto _msg = (TigMsgWidget*)msg;
 		auto subtype = msg->arg2;
-		if (subtype == 4){ // widget exited
+		if (_msg->widgetEventType == TigMsgWidgetEvent::Exited){ 
 			*intgameAddresses.uiIntgameWidgetEnteredForRender = 0;
 			return result;
 		}
-		if (subtype == 3){ // widget exited
+		if (_msg->widgetEventType == TigMsgWidgetEvent::Entered){ 
 			*intgameAddresses.uiIntgameWidgetEnteredForRender = 1;
 		}
 	}
@@ -503,9 +510,6 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 	}
 
 	return result;
-
-	/*result = orgUiIntgameMsgHandler(widId, msg);
-	return result;*/
 }
 
 bool UiIntegameTurnbasedRepl::ToggleAcquisition(TigMsg* msg)
@@ -661,6 +665,93 @@ void UiIntgameTurnbased::AooInterceptArrowDraw(LocAndOffsets* perfLoc, LocAndOff
 	intgameAddresses.AooInterceptArrowDraw(perfLoc, targetLoc);
 }
 
+void UiIntgameTurnbased::CursorRenderUpdate(){
+	temple::GetRef<void(__cdecl)()>(0x100936D0)(); // CursorHandleIntgameFocusObj
+
+	auto &cursorStateForIntgameFocus = temple::GetRef<int>(0x10B3D5B0);
+	auto &cursorState = *intgameAddresses.cursorState;
+	auto &cursorPrevState = temple::GetRef<int>(0x10B3D5A8);
+	auto &widgetEnteredGameplay = *intgameAddresses.uiIntgameWidgetEnteredForGameplay;
+	auto &widgetEnteredRender = *intgameAddresses.uiIntgameWidgetEnteredForRender;
+	auto &intgameTarget = *intgameAddresses.uiIntgameObjFromRaycast;
+	auto &actionFailing = temple::GetRef<int>(0x10B3D5B4);
+
+	auto &curSeq = *actSeqSys.actSeqCur;
+	if ( (widgetEnteredGameplay || widgetEnteredRender) 
+		&& *actSeqSys.seqPickerTargetingType != D20TC_Invalid
+		&& party.GetConsciousPartyLeader() && objects.IsPlayerControlled(curSeq->performer)){
+		
+		auto seqRenderer = d20Sys.d20Defs[*actSeqSys.seqPickerD20ActnType].seqRenderFunc;
+		if (seqRenderer && seqRenderer != d20Sys.d20Defs[D20A_MOVE].seqRenderFunc){
+			D20Actn d20a;
+			d20a.d20APerformer = party.GetConsciousPartyLeader();
+			seqRenderer(&d20a, 0);
+		}
+	}
+
+	if (*actSeqSys.actSeqPickerActive && widgetEnteredGameplay){
+		auto &d20a = temple::GetRef<D20Actn>(0x118CD400);
+		auto seqRenderer = d20Sys.d20Defs[d20a.d20ActType].seqRenderFunc;
+		if (seqRenderer && seqRenderer != d20Sys.d20Defs[D20A_MOVE].seqRenderFunc) {
+			seqRenderer(&d20a, 0);
+		}
+	}
+
+	if ((widgetEnteredGameplay || widgetEnteredRender) 
+		&& curSeq && objects.IsPlayerControlled(curSeq->performer)
+		&& !actSeqSys.isPerforming(curSeq->performer)){
+		auto seqResultCheck = actSeqSys.ActionSequenceChecksWithPerformerLocation();
+		if (seqResultCheck != AEC_OK && seqResultCheck != AEC_NO_ACTIONS || actionFailing){
+			temple::GetRef<int>(0x11869298) = seqResultCheck;
+			*intgameAddresses.movementFeet = 0;
+			*intgameAddresses.objectHoverTooltipIdx = 0;
+			if (cursorState < 16)
+			{
+				cursorState += 16;
+				if (cursorState >= 32)
+					cursorState = 31;
+			}
+		}
+	}
+
+	auto specialCursor = temple::GetRef<int(__cdecl)()>(0x1009AC00)(); // stuff like dragging party/initiative portraits, wiki help etc.
+	if (specialCursor)
+		cursorState = specialCursor;
+
+	if (cursorState != cursorPrevState){
+		logger->debug("Changing cursor from {} to {}", cursorState, cursorPrevState);
+		if (cursorPrevState)
+			temple::GetRef<void(__cdecl)()>(0x101DD770)();
+
+		auto static &shaderIds = temple::GetRef<int[32]>(0x118A0900);
+		if (cursorState){
+			MouseFuncs::SetCursor(shaderIds[cursorState]);
+		}
+		cursorPrevState = cursorState;
+	}
+
+	cursorStateForIntgameFocus = 0;
+	actionFailing = 0;
+
+	if (mouseFuncs.GetCursorDrawCallbackId() == 0x1008A240){
+		mouseFuncs.SetCursorDrawCallback(nullptr, 0);
+	}
+
+	if ( ( widgetEnteredGameplay|| widgetEnteredRender || intgameTarget)
+		&& combatSys.isCombatActive() 
+		&& !*actSeqSys.actSeqPickerActive && curSeq 
+		&& objects.IsPlayerControlled(curSeq->performer)
+		&& !actSeqSys.isPerforming(curSeq->performer) 
+		&& (*actSeqSys.seqPickerD20ActnType == D20A_STANDARD_ATTACK
+			|| *actSeqSys.seqPickerD20ActnType == D20A_TRIP)
+		&& (curSeq->tbStatus.attackModeCode < curSeq->tbStatus.baseAttackNumCode + curSeq->tbStatus.numBonusAttacks)){
+			mouseFuncs.SetCursorDrawCallback([](int x, int y) {temple::GetRef<void(__cdecl)(int, int, void*)>(0x1008A240)(x,y, nullptr); }, 0x1008A240);
+	} 
+	/*else if (mouseFuncs.GetCursorDrawCallbackId() == 0x1008A240) {
+		mouseFuncs.SetCursorDrawCallback(nullptr, 0);
+	}*/
+}
+
 void UiIntegameTurnbasedRepl::HourglassUpdate(int intgameAcquireOn, int intgameSelectionConfirmed, int showPathPreview) {
 	int _showPathPreview = showPathPreview;
 	int v33 = 0;
@@ -687,11 +778,11 @@ void UiIntegameTurnbasedRepl::HourglassUpdate(int intgameAcquireOn, int intgameS
 	*intgameAddresses.cursorState = 0;
 	if (intgameAddresses.UiActiveRadialMenuHasActiveNode()) {
 		*intgameAddresses.cursorState = 0;
-		intgameAddresses.CursorRenderUpdate();
+		uiIntgameTb.CursorRenderUpdate();
 		return;
 	}
 	if (!combatSys.isCombatActive())
-		intgameAddresses.CursorRenderUpdate();
+		uiIntgameTb.CursorRenderUpdate();
 
 	if (_showPathPreview || intgameAcquireOn) {
 		v33 = 1;
@@ -829,6 +920,7 @@ void UiIntegameTurnbasedRepl::HourglassUpdate(int intgameAcquireOn, int intgameS
 		*intgameAddresses.cursorState = 4;
 	}
 	
-	intgameAddresses.CursorRenderUpdate();
+	//intgameAddresses.CursorRenderUpdate();
+	uiIntgameTb.CursorRenderUpdate();
 }
 

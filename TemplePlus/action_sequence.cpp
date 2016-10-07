@@ -2509,7 +2509,7 @@ void ActionSequenceSystem::ActionPerform()
 			} 
 			else{
 				curSeq->tbStatus = tbStatus;
-				*(uint32_t*)(&curSeq->tbStatus.tbsFlags) |= TBSF_AoO;
+				*(uint32_t*)(&curSeq->tbStatus.tbsFlags) |= TBSF_HasActedThisRound;
 				InterruptCounterspell(d20a);
 				logger->debug("ActionPerform: \t Performing action for {} ({}): {}",
 					description.getDisplayName(d20a->d20APerformer), 
