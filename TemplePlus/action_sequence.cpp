@@ -3604,7 +3604,7 @@ void ActnSeqReplacements::NaturalAttackOverwrites()
 
 
 	//projectileCheckBeforeNextAction
-	writeVal = (int)&d20Sys.d20Defs[0].projectilePerformFunc;
+	writeVal = (int)&d20Sys.d20Defs[0].projectileHitFunc;
 	write(0x1008AC99 + 2, &writeVal, sizeof(int));
 
 	// sub_1008ACC0 IsActionOffensive
@@ -3741,6 +3741,6 @@ void ActnSeqReplacements::NaturalAttackOverwrites()
 
 	// sub_10099B10
 	// 10099C2E projectilePerformFunc
-	writeVal = (int)&d20Sys.d20Defs[0].projectilePerformFunc;
+	writeVal = (int)&d20Sys.d20Defs[0].projectileHitFunc;
 	write(0x10099C2E + 2, &writeVal, sizeof(int));
 }

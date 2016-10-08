@@ -747,9 +747,6 @@ void UiIntgameTurnbased::CursorRenderUpdate(){
 		&& (curSeq->tbStatus.attackModeCode < curSeq->tbStatus.baseAttackNumCode + curSeq->tbStatus.numBonusAttacks)){
 			mouseFuncs.SetCursorDrawCallback([](int x, int y) {temple::GetRef<void(__cdecl)(int, int, void*)>(0x1008A240)(x,y, nullptr); }, 0x1008A240);
 	} 
-	/*else if (mouseFuncs.GetCursorDrawCallbackId() == 0x1008A240) {
-		mouseFuncs.SetCursorDrawCallback(nullptr, 0);
-	}*/
 }
 
 void UiIntegameTurnbasedRepl::HourglassUpdate(int intgameAcquireOn, int intgameSelectionConfirmed, int showPathPreview) {

@@ -69,28 +69,25 @@ void D20StatusSystem::initClass(objHndl objHnd){
 			
 		
 
-		if (objects.StatLevelGet(objHnd, stat_level_cleric) >= 1)
-		{
+		if (objects.StatLevelGet(objHnd, stat_level_cleric) >= 1){
 			_D20StatusInitDomains(objHnd);
 		}
 
 		if (feats.HasFeatCountByClass(objHnd, FEAT_REBUKE_UNDEAD)){
-			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.ConditionTurnUndead, 1, 0);
+			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Turn Undead"), 1, 0);
 		}
 
 		if (objects.StatLevelGet(objHnd, stat_level_paladin) >= 3)
 		{
-			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionTurnUndead);
+			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.GetByName("Turn Undead"));
 		}
 
-		if (objects.StatLevelGet(objHnd, stat_level_bard) >= 1)
-		{
-			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionBardicMusic);
+		if (objects.StatLevelGet(objHnd, stat_level_bard) >= 1){
+			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.GetByName("Bardic Music"));
 		}
-
-		if (objects.getInt32(objHnd, obj_f_critter_school_specialization) & 0xFF)
-		{
-			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionSchoolSpecialization);
+		
+		if (objects.getInt32(objHnd, obj_f_critter_school_specialization) & 0xFF){
+			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.GetByName("School Specialization"));
 		}
 	}
 }

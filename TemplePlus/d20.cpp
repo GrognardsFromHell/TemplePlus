@@ -179,18 +179,21 @@ public:
 	static ActionErrorCode PerformUseItem(D20Actn* d20a);
 
 	// Action Frame 
-	static ActionErrorCode ActionFrameAidAnotherWakeUp(D20Actn* d20a);
-	static ActionErrorCode ActionFrameAoo(D20Actn* d20a);
-	static ActionErrorCode ActionFrameCharge(D20Actn* d20a);
-	static ActionErrorCode ActionFrameDisarm(D20Actn* d20a);
-	static ActionErrorCode ActionFramePython(D20Actn* d20a);
-	static ActionErrorCode ActionFrameQuiveringPalm(D20Actn* d20a);
-	static ActionErrorCode ActionFrameStandardAttack(D20Actn* d20a);
-	static ActionErrorCode ActionFrameSunder(D20Actn* d20a);
-	static ActionErrorCode ActionFrameTouchAttack(D20Actn* d20a);
-	static ActionErrorCode ActionFrameTripAttack(D20Actn* d20a);
+	static BOOL ActionFrameAidAnotherWakeUp(D20Actn* d20a);
+	static BOOL ActionFrameAoo(D20Actn* d20a);
+	static BOOL ActionFrameCharge(D20Actn* d20a);
+	static BOOL ActionFrameDisarm(D20Actn* d20a);
+	static BOOL ActionFramePython(D20Actn* d20a);
+	static BOOL ActionFrameQuiveringPalm(D20Actn* d20a);
+	static BOOL ActionFrameSpell(D20Actn* d20a);
+	static BOOL ActionFrameStandardAttack(D20Actn* d20a);
+	static BOOL ActionFrameSunder(D20Actn* d20a);
+	static BOOL ActionFrameTouchAttack(D20Actn* d20a);
+	static BOOL ActionFrameTripAttack(D20Actn* d20a);
 	
 
+	// Projectile Hit
+	static BOOL ProjectileHitSpell(D20Actn* d20a, objHndl projectile, objHndl obj2);
 
 } d20Callbacks;
 
@@ -361,7 +364,7 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[D20A_PYTHON_ACTION].actionFrameFunc = d20Callbacks.ActionFramePython;
 	d20Defs[D20A_PYTHON_ACTION].turnBasedStatusCheck = d20Callbacks.TurnBasedStatusCheckPython;
 	d20Defs[D20A_PYTHON_ACTION].locCheckFunc = d20Callbacks.LocationCheckPython;
-	d20Defs[D20A_PYTHON_ACTION].projectilePerformFunc = nullptr;// d20Callbacks.ProjectilePerformFunc;
+	d20Defs[D20A_PYTHON_ACTION].projectileHitFunc = nullptr;// d20Callbacks.ProjectilePerformFunc;
 	d20Defs[D20A_PYTHON_ACTION].flags = D20ADF::D20ADF_Python;
 
 	d20Defs[D20A_DIVINE_MIGHT].addToSeqFunc = d20Callbacks.AddToSeqSimple;
@@ -390,6 +393,7 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Type = D20A_CAST_SPELL;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformCastSpell;
 	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckCastSpell;
+	d20Defs[d20Type].projectileHitFunc = d20Callbacks.ProjectileHitSpell;
 
 	d20Type = D20A_USE_ITEM;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformUseItem;
@@ -1662,13 +1666,13 @@ ActionErrorCode D20ActionCallbacks::PerformSneak(D20Actn* d20a){
 	return AEC_OK;
 }
 
-ActionErrorCode D20ActionCallbacks::ActionFrameQuiveringPalm(D20Actn* d20a){
+BOOL D20ActionCallbacks::ActionFrameQuiveringPalm(D20Actn* d20a){
 
 	objHndl performer = d20a->d20APerformer;
 	
 	d20Sys.d20Defs[D20A_STANDARD_ATTACK].actionFrameFunc(d20a);
 	if (!(d20a->d20Caf & D20CAF_HIT))
-		return AEC_OK;
+		return FALSE;
 
 
 	auto monkLvl = objects.StatLevelGet(performer, stat_level_monk);
@@ -1680,21 +1684,73 @@ ActionErrorCode D20ActionCallbacks::ActionFrameQuiveringPalm(D20Actn* d20a){
 		combatSys.FloatTextBubble(performer, 215);
 	} 
 		
-	return AEC_OK;
+	return FALSE;
 }
 
-ActionErrorCode D20ActionCallbacks::ActionFrameStandardAttack(D20Actn* d20a){
+BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a){
+
+	auto projectileProto = 3000;
+	auto numTgts = 0;
+	auto offx = 0;
+	auto offy = 0;
+	
+
+	int spellEnum, spellClass, spellLvl;
+	d20a->d20SpellData.Extract(&spellEnum, nullptr, &spellClass, &spellLvl, nullptr, nullptr);
+
+	SpellEntry spEntry(spellEnum);
+	if (!spEntry.projectileFlag)
+		return FALSE;
+
+
+	if (spEntry.spellRangeType == SRT_Personal 
+		|| spEntry.spellRangeType == SRT_Touch	&& !(d20a->d20Caf & D20CAF_RANGED)){
+		return FALSE;
+	}
+
+
+	SpellPacketBody pkt(d20a->spellId);
+	if (!pkt.spellEnum) {
+		logger->error("ActionFrameSpell: Unable to retrieve spell packet!");
+		return FALSE;
+	}
+
+
+	auto performer = d20a->d20APerformer;
+	auto perfLoc = objSystem->GetObject(performer)->GetLocation();
+	objHndl targets[MAX_SPELL_TARGETS] = { 0, };
+
+	/*
+	TODO...
+	*/
+
+	for (auto i=0; i < numTgts; i++){
+		pkt.targetListHandles[i] = targets[i];
+	}
+
+	for (auto i = numTgts; i < MAX_SPELL_TARGETS; i++){
+		pkt.targetListHandles[i] = objHndl::null;
+	}
+
+	spellSys.UpdateSpellPacket(pkt);
+	pySpellIntegration.UpdateSpell(pkt.spellId);
+
+	return pkt.targetCount > 0;
+	
+}
+
+BOOL D20ActionCallbacks::ActionFrameStandardAttack(D20Actn* d20a){
 
 	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Prone))	{
 		//histSys.CreateFromFreeText(fmt::format("{} aborted attack (prone).", description.getDisplayName(d20a->d20APerformer)).c_str());
-		return AEC_CANT_WHILE_PRONE;
+		return FALSE;
 	}
 	histSys.CreateRollHistoryString(d20a->rollHist1);
 	histSys.CreateRollHistoryString(d20a->rollHist2);
 	histSys.CreateRollHistoryString(d20a->rollHist3);
 	auto makeAttack = temple::GetRef<int(__cdecl)(objHndl, objHndl, int, D20CAF, D20ActionType)>(0x100B7950);
 	makeAttack(d20a->d20APerformer, d20a->d20ATarget, d20a->data1, static_cast<D20CAF>(d20a->d20Caf), d20a->d20ActType);
-	return AEC_NOT_ENOUGH_TIME1;
+	return TRUE;
 }
 
 ActionErrorCode D20ActionCallbacks::ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat)
@@ -1820,12 +1876,12 @@ ActionErrorCode D20ActionCallbacks::PerformDisarm(D20Actn* d20a){
 };
 
 
-ActionErrorCode D20ActionCallbacks::ActionFrameCharge(D20Actn* d20a){
+BOOL D20ActionCallbacks::ActionFrameCharge(D20Actn* d20a){
 	ActionFrameStandardAttack(d20a);
-	return AEC_OK;
+	return FALSE;
 }
 
-ActionErrorCode D20ActionCallbacks::ActionFrameDisarm(D20Actn* d20a){
+BOOL D20ActionCallbacks::ActionFrameDisarm(D20Actn* d20a){
 	objHndl performer = d20a->d20APerformer;
 	int failedOnce = 0;
 	if (!d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Can_Perform_Disarm))
@@ -1868,7 +1924,7 @@ ActionErrorCode D20ActionCallbacks::ActionFrameDisarm(D20Actn* d20a){
 		disarmedArgs.weapon = weapon;
 
 		conds.AddTo(d20a->d20ATarget, "Disarmed", { ((int*)&disarmedArgs)[0], ((int*)&disarmedArgs)[1],0,0,0,0,0,0 });
-		return AEC_OK;
+		return FALSE;
 	} 
 
 	
@@ -1921,11 +1977,11 @@ ActionErrorCode D20ActionCallbacks::ActionFrameDisarm(D20Actn* d20a){
 	
 	
 
-	return AEC_OK;
+	return FALSE;
 };
 
-ActionErrorCode D20ActionCallbacks::ActionFramePython(D20Actn* d20a){
-	return AEC_OK; // TODO
+BOOL D20ActionCallbacks::ActionFramePython(D20Actn* d20a){
+	return TRUE; // TODO
 }
 
 #pragma region Retrieve Disarmed Weapon
@@ -2017,7 +2073,7 @@ ActionErrorCode D20ActionCallbacks::ActionCheckTripAttack(D20Actn* d20a, TurnBas
 	return AEC_OK;
 }
 
-ActionErrorCode D20ActionCallbacks::ActionFrameSunder(D20Actn* d20a){
+BOOL D20ActionCallbacks::ActionFrameSunder(D20Actn* d20a){
 
 	if (combatSys.SunderCheck(d20a->d20APerformer, d20a->d20ATarget, d20a))
 	{
@@ -2031,17 +2087,17 @@ ActionErrorCode D20ActionCallbacks::ActionFrameSunder(D20Actn* d20a){
 	}
 
 
-	return AEC_OK;
+	return FALSE;
 }
 
-ActionErrorCode D20ActionCallbacks::ActionFrameTouchAttack(D20Actn* d20a){
+BOOL D20ActionCallbacks::ActionFrameTouchAttack(D20Actn* d20a){
 
 	histSys.CreateRollHistoryString(d20a->rollHist1);
 	histSys.CreateRollHistoryString(d20a->rollHist2);
 	histSys.CreateRollHistoryString(d20a->rollHist3);
 
 	if (d20a->d20Caf & D20CAF_RANGED)
-		return AEC_OK;
+		return FALSE;
 
 
 	auto curSeq = *actSeqSys.actSeqCur;
@@ -2049,7 +2105,7 @@ ActionErrorCode D20ActionCallbacks::ActionFrameTouchAttack(D20Actn* d20a){
 	{
 		curSeq->tbStatus.tbsFlags &= ~TBSF_TouchAttack;
 		d20a->d20Caf &= ~D20CAF_FREE_ACTION;
-		return AEC_OK;
+		return FALSE;
 	}
 		
 
@@ -2060,20 +2116,20 @@ ActionErrorCode D20ActionCallbacks::ActionFrameTouchAttack(D20Actn* d20a){
 		d20a->d20Caf &= ~D20CAF_FREE_ACTION;
 	}
 
-	return AEC_OK;
+	return FALSE;
 }
 
-ActionErrorCode D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a){
+BOOL D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a){
 
 	if (!d20a->d20ATarget)
-		return AEC_TARGET_INVALID;
+		return FALSE;
 
 	auto tgt = d20a->d20ATarget;
 	auto performer = d20a->d20APerformer;
 
 	if (!(d20a->d20Caf & D20CAF_HIT))	{
 		combatSys.FloatCombatLine(d20a->d20APerformer, 29); //miss
-		return AEC_OK;
+		return FALSE;
 	}
 
 	histSys.CreateRollHistoryString(d20a->rollHist1);
@@ -2090,13 +2146,13 @@ ActionErrorCode D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a){
 		if (feats.HasFeatCountByClass(performer, FEAT_IMPROVED_TRIP))	{
 			/*if(d20a->d20Caf & D20CAF_ATTACK_OF_OPPORTUNITY || d20a->d20ActType == D20A_ATTACK_OF_OPPORTUNITY)
 			{
-				return AEC_OK;
+				return FALSE;
 			}*/
 			auto insertD20Action = temple::GetRef<void(__cdecl)(objHndl, D20ActionType, int, objHndl, LocAndOffsets, int)>(0x10094B40);
 			insertD20Action(performer, D20A_STANDARD_ATTACK, d20a->data1, d20a->d20ATarget, d20a->destLoc, 0);
 			auto curSeq = *actSeqSys.actSeqCur;
 			curSeq->d20ActArray[curSeq->d20aCurIdx + 1].d20Caf |= D20CAF_FREE_ACTION;
-			return AEC_OK;
+			return FALSE;
 		}
 	} else // counter attempt
 	{
@@ -2106,12 +2162,59 @@ ActionErrorCode D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a){
 			animationGoals.PushAnimate(performer, 64);
 			combatSys.FloatCombatLine(performer, 104);
 			histSys.CreateRollHistoryLineFromMesfile(44, tgt, performer);
-			return AEC_OK;
+			return FALSE;
 		}
 		combatSys.FloatCombatLine(performer, 103);
 	}
 
-	return AEC_OK;
+	return FALSE;
+}
+
+BOOL D20ActionCallbacks::ProjectileHitSpell(D20Actn * d20a, objHndl projectile, objHndl obj2){
+
+	auto projectileIdx = -1;
+	int spellEnum, spellClass, spellLvl;
+	d20a->d20SpellData.Extract(&spellEnum, nullptr, &spellClass, &spellLvl, nullptr, nullptr);
+
+	SpellEntry spEntry(spellEnum);
+	if (!spEntry.projectileFlag)
+		return FALSE;
+
+	SpellPacketBody pkt(d20a->spellId);
+	if (!pkt.spellEnum){
+		logger->debug("ProjectileHitSpell: Unable to retrieve spell packet!");
+		return FALSE;
+	}
+
+	pySpellIntegration.SpellSoundPlay(&pkt, SpellEvent::SpellStruck);
+	if (pkt.projectileCount > 1)
+		d20a->d20Caf |= D20CAF_NEED_PROJECTILE_HIT;
+
+	// get the projectileIdx
+	for (auto i=0; i< 5; i++){
+		if (pkt.projectiles[i] == projectile){
+			projectileIdx = i;
+			break;
+		}
+	}
+
+	if (projectileIdx < 0){
+		logger->error("ProjectileHitSpell: Projectile not found!");
+		return FALSE;
+	}
+
+	pySpellIntegration.SpellTriggerProjectile(d20a->spellId, SpellEvent::EndProjectile, projectile, projectileIdx);
+
+	spellSys.GetSpellPacketBody(d20a->spellId, &pkt); // update spell if altered by the above
+	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_HoldingCharge)
+		&& (d20a->d20Caf & D20CAF_RANGED)){
+		pkt.targetListHandles[0] = pkt.caster;
+	}
+
+	spellSys.UpdateSpellPacket(pkt);
+	pySpellIntegration.UpdateSpell(pkt.spellId);
+
+	return TRUE;
 }
 
 ActionErrorCode D20ActionCallbacks::PerformAidAnotherWakeUp(D20Actn* d20a){
@@ -2417,17 +2520,17 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 	return AEC_OK;
 }
 
-ActionErrorCode D20ActionCallbacks::ActionFrameAidAnotherWakeUp(D20Actn* d20a)
+BOOL D20ActionCallbacks::ActionFrameAidAnotherWakeUp(D20Actn* d20a)
 {
 	
 	// objects.floats->FloatCombatLine(d20a->d20ATarget, 204); // woken up // not necessary - already gets applied with the removal of the sleep condition I think
 	d20Sys.d20SendSignal(d20a->d20ATarget, DK_SIG_AID_ANOTHER_WAKE_UP, d20a, 0);
 	
 	
-	return AEC_OK;
+	return TRUE;
 }
 
-ActionErrorCode D20ActionCallbacks::ActionFrameAoo(D20Actn* d20a)
+BOOL D20ActionCallbacks::ActionFrameAoo(D20Actn* d20a)
 {
 	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Trip_AOO) && !d20Sys.d20Query(d20a->d20ATarget, DK_QUE_Prone))
 	{

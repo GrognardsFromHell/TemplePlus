@@ -233,8 +233,8 @@ struct D20ActionDef{
 	uint32_t (__cdecl * tgtCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO);
 	ActionErrorCode (__cdecl * locCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO, LocAndOffsets * locAndOff); // also seems to double as a generic check function (e.g. for move silently it checks if combat is active and nothing to do with location)
 	ActionErrorCode (__cdecl * performFunc)(D20Actn* d20a);
-	ActionErrorCode(__cdecl * actionFrameFunc)(D20Actn* d20a);
-	void * projectilePerformFunc;
+	BOOL(__cdecl * actionFrameFunc)(D20Actn* d20a);
+	BOOL (__cdecl*projectileHitFunc)(D20Actn* d20a, objHndl projectile, objHndl ammoItem);
 	uint32_t pad_apparently; // only spell related actions have this as non-zero, and the callback is just return0()...
 	ActionErrorCode (__cdecl * actionCost)(D20Actn* d20a, TurnBasedStatus* iO, ActionCostPacket * actionCostPacket);
 	uint32_t (__cdecl * seqRenderFunc)(D20Actn* d20a, int flags);
