@@ -85,6 +85,11 @@ public:
 		replaceFunction(0x100756E0, _GetSpellPacketBody);
 		replaceFunction(0x100F1010, _SetSpontaneousCastingAltNode);
 
+		// SpellBeginRound
+		replaceFunction<void(__cdecl)(objHndl)>(0x100766E0, [](objHndl handle){
+			spellSys.SpellBeginRound(handle);
+		});
+
 		replaceFunction<BOOL(__cdecl)(const char*)>(0x1007B5B0, [](const char* spellRulesFolder)->BOOL
 		{
 			return spellSys.SpellEntriesInit(spellRulesFolder);
@@ -2115,6 +2120,32 @@ int LegacySpellSystem::CheckSpellResistance(SpellPacketBody* spellPkt, objHndl h
 void LegacySpellSystem::SpellsCastRegistryPut(int spellId, SpellPacket& pkt)
 {
 	spellsCastRegistry.put(spellId, pkt);
+}
+
+void LegacySpellSystem::SpellBeginRound(objHndl handle){
+	auto & spellsCastCount = temple::GetRef<int>(0x10AAF424);
+
+	spellsCastCount = spellsCastRegistry.itemCount();
+
+	std::vector<int> spellIds;
+
+	for (auto it: spellsCastRegistry){
+		if (it.data->isActive == 1)
+			spellIds.push_back(it.id);
+	}
+
+	spellsCastCount = spellIds.size();
+	std::sort(spellIds.begin(), spellIds.end());
+
+	for (auto it: spellIds){
+		SpellPacketBody spellPkt(it);
+		for (auto i = 0; i<spellPkt.targetCount; i++){
+			if ( spellPkt.targetListHandles[i] == handle){
+				mSpellBeginRoundObj = handle;
+				pySpellIntegration.SpellTrigger(it, SpellEvent::BeginRound);
+			}
+		}
+	}
 }
 
 int LegacySpellSystem::SpellEnd(int spellId, int endDespiteTargetList) const

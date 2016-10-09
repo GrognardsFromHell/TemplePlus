@@ -323,6 +323,14 @@ static PyMethodDef PySpellMethods[] = {
 	{NULL, NULL, NULL, NULL}
 };
 
+
+
+
+static PyObject* PySpell_GetBeginRoundObj(PyObject* obj, void*) {
+	return PyObjHndl_Create(spellSys.mSpellBeginRoundObj);
+}
+
+
 static PyObject* PySpell_GetCaster(PyObject* obj, void*) {
 	auto self = (PySpell*)obj;
 	return PyObjHndl_Create(self->caster);
@@ -517,6 +525,7 @@ static PyObject* PySpell_GetSpell(PyObject* obj, void*) {
 }
 
 static PyGetSetDef PySpellGetSet[] = {
+	{ "begin_round_obj", PySpell_GetBeginRoundObj, NULL, NULL },
 	{"caster", PySpell_GetCaster, PySpell_SetCaster, NULL},
 	{"caster_class", PySpell_GetCasterClass, NULL, NULL},
 	{"spell_level", PySpell_GetSpellLevel, NULL, NULL},

@@ -406,6 +406,9 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformUseItem;
 
 
+	d20Type = D20A_BARDIC_MUSIC;
+	d20Defs[d20Type].flags = (D20ADF)( D20ADF_MagicEffectTargeting | D20ADF_Breaks_Concentration );
+
 	d20Type = D20A_TRIP;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqTripAttack;
 	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckTripAttack;

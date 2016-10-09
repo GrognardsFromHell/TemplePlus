@@ -4483,6 +4483,12 @@ int ClassAbilityCallbacks::DruidWildShapeScale(DispatcherCallbackArgs args){
 	return 0;
 }
 
+// ************************************
+// *         Bardic Music             *
+// ************************************
+
+#pragma region Bardic Music
+
 int ClassAbilityCallbacks::BardicMusicBeginRound(DispatcherCallbackArgs args){
 	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
 	auto bmType = (BardicMusicSongType)args.GetCondArg(1);
@@ -4558,6 +4564,8 @@ int ClassAbilityCallbacks::BardMusicRadial(DispatcherCallbackArgs args){
 	counterSong.AddAsChild(args.objHndCaller, bmusicId);
 
 	RadialMenuEntryAction fasci(5042, D20A_BARDIC_MUSIC, BM_FASCINATE, "TAG_CLASS_FEATURES_BARD_FASCINATE");
+	//RadialMenuEntryPythonAction fasci(5042, D20A_PYTHON_ACTION, 3003, 0, "TAG_CLASS_FEATURES_BARD_FASCINATE");
+	fasci.d20SpellData.Set(3003, spellSys.GetSpellClass(stat_level_bard), bardLvl, -1, 0 );
 	fasci.AddAsChild(args.objHndCaller, bmusicId);
 
 	if (bardLvl >= 3 && perfSkill >= 6){	
@@ -4622,6 +4630,8 @@ int ClassAbilityCallbacks::BardMusicCheck(DispatcherCallbackArgs args){
 	
 	if (!perfSkillSufficient() || args.GetCondArg(1) == bmType){
 		dispIo->returnVal = AEC_INVALID_ACTION;
+		if (args.GetCondArg(1) == bmType)
+			floatSys.floatMesLine(args.objHndCaller, 1, FloatLineColor::Red, fmt::format("Already Singing").c_str());
 		return 0;
 	}
 
@@ -4661,7 +4671,8 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		}
 	}
 
-	auto partsysId = 0, rollResult =0, chaScore = 0;
+	auto partsysId = 0, rollResult =0, chaScore = 0, spellId = 0;
+	auto &curSeq = *actSeqSys.actSeqCur;
 	switch (bmType){
 	case BM_INSPIRE_COURAGE: 
 		party.ApplyConditionAround(args.objHndCaller, 30.0, "Inspired_Courage", objHndl::null);
@@ -4673,10 +4684,14 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		break;
 	case BM_FASCINATE: 
 		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Fascinate", args.objHndCaller);
-		skillSys.SkillRoll(performer, SkillEnum::skill_perform, 20, &rollResult, 1);
-		if (!damage.SavingThrow(d20a->d20ATarget, performer, rollResult, SavingThrowType::Will, D20STF_SPELL_DESCRIPTOR_SONIC ))	{ // might be an offset in the descriptors... should probably be MIND_AFFECTING
-			conds.AddTo(d20a->d20ATarget, "Fascinate", { 0,0 });
-		}		
+		spellId = spellSys.GetNewSpellId();
+		spellSys.RegisterSpell(curSeq->spellPktBody, spellId);
+		pySpellIntegration.SpellTrigger(spellId, SpellEvent::SpellEffect);
+		// effect now handled via spell
+		//skillSys.SkillRoll(performer, SkillEnum::skill_perform, 20, &rollResult, 1);
+		//	if (!damage.SavingThrow(d20a->d20ATarget, performer, rollResult, SavingThrowType::Will, D20STF_SPELL_DESCRIPTOR_SONIC ))	{ // might be an offset in the descriptors... should probably be MIND_AFFECTING
+		//		conds.AddTo(d20a->d20ATarget, "Fascinate", { 0,0 });
+		//	}		
 		break;
 	case BM_INSPIRE_COMPETENCE: 
 		conds.AddTo(d20a->d20ATarget, "Competence", {});
@@ -4827,6 +4842,10 @@ int ClassAbilityCallbacks::BardicMusicHeroicsAC(DispatcherCallbackArgs args){
 	}
 	return 0;
 }
+
+#pragma endregion
+
+
 
 int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
 	GET_DISPIO(dispIOTypeDamage, DispIoDamage);

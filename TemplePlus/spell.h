@@ -246,6 +246,8 @@ struct LegacySpellSystem : temple::AddressTable
 	BOOL PlayFizzle(objHndl handle);
 	int CheckSpellResistance(SpellPacketBody* spellPkt, objHndl obj);
 
+	void SpellBeginRound(objHndl); // plays the OnBeginRound python script
+	objHndl mSpellBeginRoundObj = objHndl::null; // supplemental info for the OnBeginRound invocation to identify whose round is beginning...
 	int SpellEnd(int spellId, int endDespiteTargetList) const; // endDespiteTargetList will end the spell even if the target list isn't empty
 	
 	void (__cdecl *SpellRemove)(int);

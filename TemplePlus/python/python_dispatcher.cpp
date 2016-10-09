@@ -317,9 +317,9 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def(py::init())
 		.def("add_as_child", &RadialMenuEntry::AddAsChild, "Adds this node as a child to a specified node ID, and returns the newly created node ID (so you may give it other children, etc.)")
 		.def("add_child_to_standard", &RadialMenuEntry::AddChildToStandard, "Adds this node as a child to a Standard Node (one of several hardcoded root nodes such as class, inventory etc.), and returns the newly created node ID (so you may give it other children, etc.)")
-		.def("flags", &RadialMenuEntry::flags)
-		.def("min_arg", &RadialMenuEntry::minArg)
-		.def("max_arg", &RadialMenuEntry::maxArg)
+		.def_readwrite("flags", &RadialMenuEntry::flags)
+		.def_readwrite("min_arg", &RadialMenuEntry::minArg)
+		.def_readwrite("max_arg", &RadialMenuEntry::maxArg)
 		;
 
 	py::class_<RadialMenuEntryAction>(m, "RadialMenuEntryAction", py::base<RadialMenuEntry>())
