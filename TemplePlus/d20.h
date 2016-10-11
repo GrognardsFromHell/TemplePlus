@@ -141,26 +141,26 @@ int _D20Init(GameSystemConf* conf);
 
 struct D20Actn{
 	D20ActionType d20ActType;
-	int data1;
-	int d20Caf; // Based on D20_CAF
-	uint32_t field_C;
+	int data1; // generic piece of data
+	int d20Caf; // Based on D20_CAF flags
+	uint32_t field_C; // unknown use
 	objHndl d20APerformer;
 	objHndl d20ATarget;
-	LocAndOffsets destLoc;
-	float distTraversed;
-	uint32_t radialMenuActualArg;
-	int rollHist3;
-	int rollHist1;
-	int rollHist2;
+	LocAndOffsets destLoc; // action located (usually movement destination)
+	float distTraversed; // distanced traversed by a move action
+	uint32_t radialMenuActualArg; // the value chosen by radial menu toggle/slider
+	int rollHistId0;
+	int rollHistId1;
+	int rollHistId2;
 	D20SpellData d20SpellData;
 	uint32_t spellId;
 	uint32_t animID;
 	PathQueryResult * path;
 
 	D20Actn(){
-		rollHist1 = -1;
-		rollHist2 = -1;
-		rollHist3 = -1;
+		rollHistId1 = -1;
+		rollHistId2 = -1;
+		rollHistId0 = -1;
 		//d20ActType = 0;
 		d20APerformer = 0;
 		d20ATarget = 0;
@@ -173,9 +173,9 @@ struct D20Actn{
 	}
 
 	D20Actn(D20ActionType type) {
-		rollHist1 = -1;
-		rollHist2 = -1;
-		rollHist3 = -1;
+		rollHistId1 = -1;
+		rollHistId2 = -1;
+		rollHistId0 = -1;
 		d20ActType = type;
 		d20APerformer = 0;
 		d20ATarget = 0;
@@ -227,17 +227,17 @@ enum D20ADF : int{
 };
 
 struct D20ActionDef{
-	ActionErrorCode (__cdecl *addToSeqFunc)(D20Actn *, ActnSeq *, TurnBasedStatus*iO);
-	ActionErrorCode (__cdecl* turnBasedStatusCheck)(D20Actn* d20a, TurnBasedStatus* iO);
-	ActionErrorCode (__cdecl * actionCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO);
-	uint32_t (__cdecl * tgtCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO);
-	ActionErrorCode (__cdecl * locCheckFunc)(D20Actn* d20a, TurnBasedStatus* iO, LocAndOffsets * locAndOff); // also seems to double as a generic check function (e.g. for move silently it checks if combat is active and nothing to do with location)
-	ActionErrorCode (__cdecl * performFunc)(D20Actn* d20a);
-	BOOL(__cdecl * actionFrameFunc)(D20Actn* d20a);
-	BOOL (__cdecl*projectileHitFunc)(D20Actn* d20a, objHndl projectile, objHndl ammoItem);
+	ActionErrorCode (__cdecl *addToSeqFunc)(D20Actn *d20a, ActnSeq *actSeq, TurnBasedStatus *tbStat);
+	ActionErrorCode (__cdecl *turnBasedStatusCheck)(D20Actn *d20a, TurnBasedStatus *tbStat);
+	ActionErrorCode (__cdecl *actionCheckFunc)(D20Actn *d20a, TurnBasedStatus *tbStat);
+	uint32_t (__cdecl *tgtCheckFunc)(D20Actn *d20a, TurnBasedStatus *tbStat);
+	ActionErrorCode (__cdecl *locCheckFunc)(D20Actn *d20a, TurnBasedStatus *tbStat, LocAndOffsets * locAndOff); // also seems to double as a generic check function (e.g. for move silently it checks if combat is active and nothing to do with location)
+	ActionErrorCode (__cdecl *performFunc)(D20Actn *d20a);
+	BOOL(__cdecl *actionFrameFunc)(D20Actn *d20a);
+	BOOL (__cdecl *projectileHitFunc)(D20Actn *d20a, objHndl projectile, objHndl ammoItem);
 	uint32_t pad_apparently; // only spell related actions have this as non-zero, and the callback is just return0()...
-	ActionErrorCode (__cdecl * actionCost)(D20Actn* d20a, TurnBasedStatus* iO, ActionCostPacket * actionCostPacket);
-	uint32_t (__cdecl * seqRenderFunc)(D20Actn* d20a, int flags);
+	ActionErrorCode (__cdecl *actionCost)(D20Actn *d20a, TurnBasedStatus *tbStat, ActionCostPacket *actionCostPacket);
+	uint32_t (__cdecl *seqRenderFunc)(D20Actn *d20a, int flags);
 	D20ADF flags;
 };
 

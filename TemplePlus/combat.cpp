@@ -1081,7 +1081,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 			DispIoAttackBonus mirrorImToHit;
 			mirrorImToHit.Dispatch(performer, objHndl::null, dispTypeToHitBonus2, DK_NONE);
 			auto spName = spellPkt.GetName();
-			auto dispelRes = DispelRoll(performer, &mirrorImToHit.bonlist, 0, tgtAc, spName, &d20a.rollHist3  );
+			auto dispelRes = DispelRoll(performer, &mirrorImToHit.bonlist, 0, tgtAc, spName, &d20a.rollHistId0  );
 			if (dispelRes >= 0)	{
 				d20Sys.d20SendSignal(tgt, DK_SIG_Spell_Mirror_Image_Struck, spellPkt.spellId, 0);
 				floatSys.FloatCombatLine(tgt, 109);
@@ -1129,10 +1129,10 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 		// roll 1d100
 		auto missChanceRoll = Dice::Roll(1, 100, 0);
 		if (missChanceRoll > defenderMissChance){ // success
-			d20a.rollHist1 = histSys.RollHistoryType5Add(performer, tgt, defenderMissChance, 60, missChanceRoll, 194, 193);
+			d20a.rollHistId1 = histSys.RollHistoryType5Add(performer, tgt, defenderMissChance, 60, missChanceRoll, 194, 193);
 		} 
 		else { // failure
-			d20a.rollHist1 = histSys.RollHistoryType5Add(performer, tgt, defenderMissChance, 60, missChanceRoll, 195, 193);
+			d20a.rollHistId1 = histSys.RollHistoryType5Add(performer, tgt, defenderMissChance, 60, missChanceRoll, 195, 193);
 
 
 			// Blind Fight handling (second chance)
@@ -1143,7 +1143,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 				histSys.RollHistoryType5Add(performer, tgt, defenderMissChance, 61, missChanceRoll, 195, 193);
 				return;
 			}
-			d20a.rollHist2 = histSys.RollHistoryType5Add(performer, tgt, defenderMissChance, 61, missChanceRoll, 194, 193);
+			d20a.rollHistId2 = histSys.RollHistoryType5Add(performer, tgt, defenderMissChance, 61, missChanceRoll, 194, 193);
 		}
 	}
 
@@ -1285,7 +1285,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 
 	// all this hard work just to set a couple of flags :D
 	d20a.d20Caf = dispIoToHitBon.attackPacket.flags;
-	d20a.rollHist3 = histSys.RollHistoryType0Add(toHitRoll, critHitRoll, performer, tgt, &dispIoToHitBon.bonlist, &dispIoTgtAc.bonlist, dispIoToHitBon.attackPacket.flags);
+	d20a.rollHistId0 = histSys.RollHistoryType0Add(toHitRoll, critHitRoll, performer, tgt, &dispIoToHitBon.bonlist, &dispIoTgtAc.bonlist, dispIoToHitBon.attackPacket.flags);
 	
 	// there were some additional debug stubs here (nullsubs)
 }

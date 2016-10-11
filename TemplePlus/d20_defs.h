@@ -96,7 +96,11 @@ enum D20ActionType : int32_t
 };
 
 enum class ActionCostType : int {
-	Null
+	Null,
+	Move,
+	Standard,
+	PartialCharge,
+	FullRound
 };
 
 enum D20SavingThrow : uint32_t {

@@ -446,6 +446,12 @@ static PyObject* PySpell_GetDuration(PyObject* obj, void*) {
 	return PyInt_FromLong(self->duration);
 }
 
+static PyObject* PySpell_GetDurationRemain(PyObject* obj, void*) {
+	auto self = (PySpell*)obj;
+	return PyInt_FromLong(self->durationRemaining);
+}
+
+
 static int PySpell_SetDuration(PyObject *obj, PyObject *value, void*) {
 	auto self = (PySpell*)obj;
 	if (!PyInt_Check(value)) {
@@ -538,6 +544,7 @@ static PyGetSetDef PySpellGetSet[] = {
 	{"dc", PySpell_GetDC, PySpell_SetDC, NULL},
 	{"id", PySpell_GetId, NULL, NULL},
 	{"duration", PySpell_GetDuration, PySpell_SetDuration, NULL},
+	{ "duration_remaining", PySpell_GetDurationRemain, NULL, NULL },
 	{"num_of_targets", PySpell_GetNumOfTargets, PySpell_SetNumOfTargets, NULL},
 	{"num_of_projectiles", PySpell_GetNumOfProjectiles, PySpell_SetNumOfProjectiles, NULL},
 	{"caster_partsys_id", PySpell_GetCasterPartsysId, PySpell_SetCasterPartsysId, NULL},

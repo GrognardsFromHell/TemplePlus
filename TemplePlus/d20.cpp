@@ -149,7 +149,9 @@ public:
 	
 
 	// Action Cost
+	static ActionErrorCode ActionCostFullRound(D20Actn* d20a, TurnBasedStatus *tbStat, ActionCostPacket *acp);
 	static ActionErrorCode ActionCostFullAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostPartialCharge(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostPython(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostStandardAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostMoveAction(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
@@ -546,10 +548,18 @@ ActionErrorCode LegacyD20System::GetPyActionCost(D20Actn * d20a, TurnBasedStatus
 	
 	switch (pyactions[d20a->data1].costType){
 	
-	case ActionCostType::Null:
-		return d20Callbacks.ActionCostNull(d20a, tbStat, acp);
-	default:
-		return d20Callbacks.ActionCostNull(d20a, tbStat, acp);
+		case ActionCostType::Null:
+			return d20Callbacks.ActionCostNull(d20a, tbStat, acp);
+		case ActionCostType::Move:
+			return d20Callbacks.ActionCostMoveAction(d20a, tbStat, acp);
+		case ActionCostType::Standard:
+			return d20Callbacks.ActionCostStandardAction(d20a, tbStat, acp);
+		case ActionCostType::PartialCharge:
+			return d20Callbacks.ActionCostPartialCharge(d20a, tbStat, acp);
+		case ActionCostType::FullRound:
+			return d20Callbacks.ActionCostFullRound(d20a, tbStat, acp);
+		default:
+			return d20Callbacks.ActionCostNull(d20a, tbStat, acp);
 	}
 }
 
@@ -755,9 +765,9 @@ void LegacyD20System::D20ActnInit(objHndl objHnd, D20Actn* d20a)
 	d20a->d20SpellData.spellEnumOrg = 0;
 	d20a->animID = 0;
 	//d20a->animID = -1;  // was 0 in vanilla, probably bug?
-	d20a->rollHist1 = -1;
-	d20a->rollHist2 = -1;
-	d20a->rollHist3 = -1;
+	d20a->rollHistId1 = -1;
+	d20a->rollHistId2 = -1;
+	d20a->rollHistId0 = -1;
 	
 }
 
@@ -1748,9 +1758,9 @@ BOOL D20ActionCallbacks::ActionFrameStandardAttack(D20Actn* d20a){
 		//histSys.CreateFromFreeText(fmt::format("{} aborted attack (prone).", description.getDisplayName(d20a->d20APerformer)).c_str());
 		return FALSE;
 	}
-	histSys.CreateRollHistoryString(d20a->rollHist1);
-	histSys.CreateRollHistoryString(d20a->rollHist2);
-	histSys.CreateRollHistoryString(d20a->rollHist3);
+	histSys.CreateRollHistoryString(d20a->rollHistId1);
+	histSys.CreateRollHistoryString(d20a->rollHistId2);
+	histSys.CreateRollHistoryString(d20a->rollHistId0);
 	auto makeAttack = temple::GetRef<int(__cdecl)(objHndl, objHndl, int, D20CAF, D20ActionType)>(0x100B7950);
 	makeAttack(d20a->d20APerformer, d20a->d20ATarget, d20a->data1, static_cast<D20CAF>(d20a->d20Caf), d20a->d20ActType);
 	return TRUE;
@@ -2076,6 +2086,16 @@ ActionErrorCode D20ActionCallbacks::ActionCheckTripAttack(D20Actn* d20a, TurnBas
 	return AEC_OK;
 }
 
+ActionErrorCode D20ActionCallbacks::ActionCostFullRound(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp){
+	acp->chargeAfterPicker = 0;
+	acp->moveDistCost = 0;
+	acp->hourglassCost = 4;
+	if ( (d20a->d20Caf & D20CAF_FREE_ACTION) || !combatSys.isCombatActive())
+		acp->hourglassCost = 0;
+
+	return AEC_OK;
+}
+
 BOOL D20ActionCallbacks::ActionFrameSunder(D20Actn* d20a){
 
 	if (combatSys.SunderCheck(d20a->d20APerformer, d20a->d20ATarget, d20a))
@@ -2095,9 +2115,9 @@ BOOL D20ActionCallbacks::ActionFrameSunder(D20Actn* d20a){
 
 BOOL D20ActionCallbacks::ActionFrameTouchAttack(D20Actn* d20a){
 
-	histSys.CreateRollHistoryString(d20a->rollHist1);
-	histSys.CreateRollHistoryString(d20a->rollHist2);
-	histSys.CreateRollHistoryString(d20a->rollHist3);
+	histSys.CreateRollHistoryString(d20a->rollHistId1);
+	histSys.CreateRollHistoryString(d20a->rollHistId2);
+	histSys.CreateRollHistoryString(d20a->rollHistId0);
 
 	if (d20a->d20Caf & D20CAF_RANGED)
 		return FALSE;
@@ -2135,9 +2155,9 @@ BOOL D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a){
 		return FALSE;
 	}
 
-	histSys.CreateRollHistoryString(d20a->rollHist1);
-	histSys.CreateRollHistoryString(d20a->rollHist2);
-	histSys.CreateRollHistoryString(d20a->rollHist3);
+	histSys.CreateRollHistoryString(d20a->rollHistId1);
+	histSys.CreateRollHistoryString(d20a->rollHistId2);
+	histSys.CreateRollHistoryString(d20a->rollHistId0);
 
 	// auto tripCheck = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x100B6230);
 	if (combatSys.TripCheck(d20a->d20APerformer, tgt))	{
@@ -2841,7 +2861,7 @@ ActionErrorCode D20ActionCallbacks::ActionCostFullAttack(D20Actn * d20a, TurnBas
 	acp->chargeAfterPicker = 0;
 	acp->moveDistCost = 0;
 	acp->hourglassCost = 4;
-	int flags = d20a->d20Caf;
+	//int flags = d20a->d20Caf;
 	if ( (d20a->d20Caf & D20CAF_FREE_ACTION ) || !combatSys.isCombatActive())
 		acp->hourglassCost = 0;
 	if (tbStat->attackModeCode >= tbStat->baseAttackNumCode && tbStat->hourglassState >= 4 && !tbStat->numBonusAttacks){
@@ -2850,6 +2870,16 @@ ActionErrorCode D20ActionCallbacks::ActionCostFullAttack(D20Actn * d20a, TurnBas
 		tbStat->surplusMoveDistance = 0;
 		tbStat->tbsFlags = tbStat->tbsFlags | TBSF_FullAttack;
 	}
+
+	return AEC_OK;
+}
+
+ActionErrorCode D20ActionCallbacks::ActionCostPartialCharge(D20Actn * d20a, TurnBasedStatus * tbStat, ActionCostPacket * acp){
+	acp->chargeAfterPicker = 0;
+	acp->moveDistCost = 0;
+	acp->hourglassCost = 3;
+	if ((d20a->d20Caf & D20CAF_FREE_ACTION) || !combatSys.isCombatActive())
+		acp->hourglassCost = 0;
 
 	return AEC_OK;
 }

@@ -1964,9 +1964,82 @@ bool LegacySpellSystem::GetMultiSelectOptions(int spellEnum, std::vector<SpellMu
 	return true;
 }
 
-uint32_t LegacySpellSystem::pickerArgsFromSpellEntry(SpellEntry* spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLvl)
-{
-	return _pickerArgsFromSpellEntry(spellEntry, pickArgs, objHnd, casterLvl);
+uint32_t LegacySpellSystem::pickerArgsFromSpellEntry(SpellEntry* spEntry, PickerArgs * args, objHndl caster, uint32_t casterLvl){
+
+	args->flagsTarget = (UiPickerFlagsTarget)spEntry->flagsTargetBitmask;
+	args->modeTarget = (UiPickerType)spEntry->modeTargetSemiBitmask;
+	args->incFlags = (UiPickerIncFlags)spEntry->incFlagsTargetBitmask;
+	args->excFlags = (UiPickerIncFlags)spEntry->excFlagsTargetBitmask;
+	args->minTargets = spEntry->minTarget;
+	args->maxTargets = spEntry->maxTarget;
+	args->radiusTarget = spEntry->radiusTarget;
+	args->degreesTarget = spEntry->degreesTarget;
+	if (spEntry->spellRangeType){
+		args->range = spellSys.GetSpellRangeExact(spEntry->spellRangeType, casterLvl, caster);
+	} 
+	else{
+		args->range = spEntry->spellRange;
+	}
+	args->callback = nullptr;
+	args->caster = caster;
+
+	if (spEntry->IsBaseModeTarget(UiPickerType::Single)
+		&& !(spEntry->modeTargetSemiBitmask & 0xffffFFFF00000000) 
+		&& spEntry->spellRangeType == SRT_Touch){
+		(*(uint64_t*)args->flagsTarget ) &= ~(uint64_t)UiPickerType::Ray;
+	}
+
+	if (spEntry->IsBaseModeTarget(UiPickerType::Cone)){
+		args->radiusTarget = args->range;
+	}
+
+	if (spEntry->IsBaseModeTarget(UiPickerType::Personal)) {
+		if (spEntry->radiusTarget < 0){
+			auto srt = (SpellRangeType)(-spEntry->radiusTarget);
+			args->radiusTarget = spellSys.GetSpellRangeExact(srt, casterLvl, caster);
+		}
+			
+		
+		if (spEntry->flagsTargetBitmask & UiPickerFlagsTarget::Radius){
+			args->range = spEntry->radiusTarget;
+		}
+	}
+
+	if (spEntry->spellRangeType == SRT_Personal
+		&& spEntry->IsBaseModeTarget(UiPickerType::Area))
+	{
+		// seems to do the spell range thing as above, so skipping this
+	}
+
+	if (args->maxTargets <= 0 && spEntry->IsBaseModeTarget(UiPickerType::Multi)){
+		auto maxTgts = -args->maxTargets;
+		auto lvlOffset = maxTgts / 10000;
+		maxTgts = maxTgts % 10000;
+
+		auto cap = maxTgts / 100;
+		auto rem = maxTgts % 100;
+		auto b = rem / 10;
+		auto c = rem % 10;
+		auto nom = b + casterLvl - lvlOffset;
+		auto denom = c + 1;
+
+		maxTgts = nom / denom;
+
+		if (cap && maxTgts > cap)
+			maxTgts = cap;
+
+		args->maxTargets = maxTgts;
+	}
+
+	if (spEntry->IsBaseModeTarget(UiPickerType::Area)
+		&& (spEntry->spellEnum == 133 // Dispel Magic
+		||  spEntry->spellEnum == 434) ){ // Silence
+		(*(uint64_t*)args->modeTarget ) |= (uint64_t)UiPickerType::AreaOrObj;
+	}
+
+
+	return TRUE;
+	//return _pickerArgsFromSpellEntry(spEntry, args, caster, casterLvl);
 }
 
 uint32_t LegacySpellSystem::GetSpellRangeExact(SpellRangeType spellRangeType, uint32_t casterLevel, objHndl caster)

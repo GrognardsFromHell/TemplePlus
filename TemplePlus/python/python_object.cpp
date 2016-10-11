@@ -1510,9 +1510,9 @@ static PyObject* PyObjHandle_PerformTouchAttack(PyObject* obj, PyObject* args) {
 	action.data1 = 1;
 
 	d20Sys.ToHitProc(&action);
-	d20Sys.CreateRollHistory(action.rollHist1);
-	d20Sys.CreateRollHistory(action.rollHist2);
-	d20Sys.CreateRollHistory(action.rollHist3);
+	d20Sys.CreateRollHistory(action.rollHistId1);
+	d20Sys.CreateRollHistory(action.rollHistId2);
+	d20Sys.CreateRollHistory(action.rollHistId0);
 
 	if (action.d20Caf & D20CAF_CRITICAL) {
 		return PyInt_FromLong(D20CAF_CRITICAL);

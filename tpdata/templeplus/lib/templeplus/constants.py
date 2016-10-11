@@ -3791,6 +3791,10 @@ D20ADF_Python = 0x1000000 # tells the engine to fetch the flags via the specs
 
 # Action Cost Type (for prefab action cost callbacks)
 D20ACT_NULL = 0
+D20ACT_Move_Action = 1
+D20ACT_Standard_Action = 2
+D20ACT_Partial_Charge = 3
+D20ACT_Full_Round_Action = 4
 
 # Targeting classification enums
 D20TC_Target0 = 0 # without targeting

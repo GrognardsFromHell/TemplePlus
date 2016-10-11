@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 
 struct BuffDebuffSub
 {
@@ -16,3 +17,18 @@ struct BuffDebuffPacket
 	int innerCount;
 	BuffDebuffSub innerStatuses[6]; // the icons appearing inside the portrait (e.g. Flatfooted)
 };
+
+
+struct BuffDebuffSpec{
+	std::string textureFilename;
+	std::string helpTopicName;
+	int textureId;
+
+};
+
+class UiParty
+{
+	std::map<int, BuffDebuffSpec> buffDebuffSpecs;
+};
+
+extern UiParty uiParty;

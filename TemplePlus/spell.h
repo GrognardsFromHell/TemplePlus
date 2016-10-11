@@ -55,7 +55,7 @@ struct SpellEntry{
 	uint64_t modeTargetSemiBitmask; // UiPickerType
 	uint32_t minTarget;
 	uint32_t maxTarget;
-	int radiusTarget; //note:	if it's negative, it means it's an index(up to - 7); if it's positive, it's a specified number(in feet ? )
+	int radiusTarget; //note:	if it's negative, then its absolute value is used as SpellRangeType for mode_target personal; if it's positive, it's a specified number(in feet ? )
 	int degreesTarget;
 	uint32_t aiTypeBitmask;
 	uint32_t pad;

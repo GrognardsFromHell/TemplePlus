@@ -2,6 +2,9 @@
 #include "ui_party.h"
 #include <util/fixes.h>
 
+
+UiParty uiParty;
+
 class UiPartyHooks : public TempleFix {
 public:
 
