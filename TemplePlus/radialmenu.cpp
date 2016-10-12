@@ -179,6 +179,12 @@ class RadialMenuReplacements : public TempleFix
 			return radialMenus.GetActiveMenuChildrenCount(activeNodeIdx);
 		});
 
+		// AddParentChildNode
+		replaceFunction<int(__cdecl)(objHndl, RadialMenuEntry*, int)>(0x100F0D10, [](objHndl handle, RadialMenuEntry *entry, int parIdx)
+		{
+			return radialMenus.AddParentChildNode(handle, entry, parIdx);
+		});
+
 	}
 };
 
@@ -628,7 +634,7 @@ int RadialMenus::AddChildNode(objHndl objHnd, RadialMenuEntry* radialMenuEntry, 
 	auto nodeCount = radMenu->nodeCount;
 	RadialMenuNode * node = (RadialMenuNode*)&radMenu->nodes[nodeCount];
 	((RadialMenu*)radMenu)->nodeCount++;
-	memcpy(&node->entry, radialMenuEntry, sizeof(RadialMenuEntry));
+	node->entry = *radialMenuEntry;
 	node->parent = parentIdx;
 	node->childCount = 0;
 	node->morphsTo = -1;
@@ -648,14 +654,14 @@ int RadialMenus::AddParentChildNode(objHndl objHnd, RadialMenuEntry* radialMenuE
 	((RadialMenu*)radMenu)->nodeCount++;
 	
 	node->entry.SetDefaults();
-	memcpy(&node->entry, radialMenuEntry, sizeof(RadialMenuEntry));
+	node->entry = *radialMenuEntry;
 	node->entry.d20ActionType = D20A_NONE;
 	node->parent = parentIdx;
 	node->childCount = 0;
 	node->entry.callback = (int(__cdecl*)(objHndl, RadialMenuEntry*))temple::GetRef<void(__cdecl)()>(0x10262530); //return0; ToEE actually checks against this... fucking hell
 	node->entry.type = RadialMenuEntryType::Parent;
 	node->morphsTo = -1;
-	node->entry.textHash = conds.hashmethods.StringHash(radialMenuEntry->text);
+	node->entry.textHash = ElfHash::Hash(radialMenuEntry->text);
 	if (parentIdx != -1){
 		RadialMenuNode * parentNode = (RadialMenuNode*)&radMenu->nodes[parentIdx];
 		parentNode->children[parentNode->childCount++] = nodeCount;

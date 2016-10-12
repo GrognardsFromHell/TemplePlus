@@ -4822,7 +4822,7 @@ int ClassAbilityCallbacks::BardicMusicEffectTooltip(DispatcherCallbackArgs args)
 	GET_DISPIO(dispIOTypeEffectTooltip, DispIoEffectTooltip);
 	auto bmtype = (BardicMusicSongType)args.GetData2();
 	if (bmtype == BM_INSPIRE_HEROICS){
-		dispIo->Append(43, -1, "Inspire Heroics");
+		dispIo->Append(ElfHash::Hash("INSPIRE_HEROICS"), -1, "Inspire Heroics");
 	}
 	return 0;
 }

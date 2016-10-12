@@ -980,37 +980,24 @@ int32_t _dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut
 void DispIoEffectTooltip::Append(int effectTypeId, int spellEnum, const char* text) const
 {
 	BuffDebuffSub * bdbSub;
-	if (effectTypeId >= 91)
+	auto findSpec = uiParty.IndicatorSpecGet(effectTypeId);
+	switch (findSpec.type)
 	{
-		if (effectTypeId >= 168)
-		{
-			/*
-				Status effects (icons inside the portrait)
-			*/
-			if (bdb->innerCount >= 6)
-				return;
-			bdbSub = &bdb->innerStatuses[bdb->innerCount++];
-
-		} 
-		/*
-			Debuffs (icons below the portrait)
-		*/
-		else
-		{
-			if (bdb->debuffCount >= 8)
-				return;
-			bdbSub = &bdb->debuffs[bdb->debuffCount++];
-		}
-
-	} 
-	/*
-		Buffs (icons above the portrait)
-	*/
-	else
-	{
-		if (bdb->buffCount >= 8)
+	case IT_BUFF:
+		if (this->bdb->buffCount >= 8)
 			return;
 		bdbSub = &bdb->buffs[bdb->buffCount++];
+		break;
+	case IT_AILMENT:
+		if (bdb->debuffCount >= 8)
+			return;
+		bdbSub = &bdb->debuffs[bdb->debuffCount++];
+		break;
+	case IT_CONDITION:
+		if (bdb->innerCount >= 6)
+			return;
+		bdbSub = &bdb->innerStatuses[bdb->innerCount++];
+		break;
 	}
 
 	//copy the text

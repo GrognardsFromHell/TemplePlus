@@ -73,6 +73,10 @@ void AddPyHook(CondStructNew& condStr, uint32_t dispType, uint32_t dispKey, PyOb
 PYBIND11_PLUGIN(tp_dispatcher){
 	py::module m("tpdp", "Temple+ Dispatcher module, used for creating modifier extensions.");
 
+	m.def("hash", [](std::string &text){
+		return ElfHash::Hash(text);
+	});
+
 	m.def("GetModifierFileList", [](){
 		auto result = std::vector<std::string>();
 		TioFileList flist;

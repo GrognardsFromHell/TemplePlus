@@ -95,7 +95,8 @@ struct TextureFuncs : temple::AddressTable {
 		Registers a texture filename in the texture registry and returns the assigned texture id in in pTexIdOut.
 		Returns 0 on success, 17 on failure.
 	*/
-	int (__cdecl *RegisterTexture)(const char *filename, int *pTexIdOut);
+	//int (__cdecl *RegisterTexture)(const char *filename, int *pTexIdOut);
+	int RegisterTexture(const char *filename, int *pTexIdOut);
 
 	/*
 		Loads the given texture by id or if it has already been loaded, returns the loaded entry.
@@ -107,7 +108,7 @@ struct TextureFuncs : temple::AddressTable {
 
 	TextureFuncs() {
 		rebase(CreateBuffer, 0x101DCE50);
-		rebase(RegisterTexture, 0x101EE7B0);
+		//rebase(RegisterTexture, 0x101EE7B0);
 		rebase(LoadTexture, 0x101EECA0);
 	}
 };

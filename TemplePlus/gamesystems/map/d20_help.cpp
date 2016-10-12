@@ -225,3 +225,8 @@ bool HelpSystem::IsClickForHelpActive(){
 void HelpSystem::PresentWikiHelp(int topicId){
 	temple::GetRef<void(__cdecl)(int)>(0x10124A40)(topicId);
 }
+
+void HelpSystem::PresentWikiHelpWindow(int topicId)
+{
+	temple::GetRef<void(__cdecl)(int)>(0x100E6CF0)(topicId);
+}

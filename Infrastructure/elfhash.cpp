@@ -4,6 +4,10 @@
 uint32_t ElfHash::Hash(const char * text)
 {
 	uint32_t hash = 0, g;
+
+	if (text == nullptr)
+		return 0;
+
 	while (*text) {
 		auto ch = *text++;
 
