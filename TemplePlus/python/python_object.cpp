@@ -394,8 +394,43 @@ static PyObject* PyObjHandle_MoneyAdj(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_CanSneakAttack(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle){
+		return PyInt_FromLong(0);
+	}
+
+	objHndl targetObj;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.can_sneak_attack", &ConvertObjHndl, &targetObj)) {
+		return 0;
+	}
+	if (!targetObj)
+		return PyInt_FromLong(0);
+
+	auto sneakAtkDice = d20Sys.D20QueryPython(self->handle, "Sneak Attack Dice");
+
+	if (!sneakAtkDice)
+		return PyInt_FromLong(0);
+	if (d20Sys.d20Query(targetObj, DK_QUE_Critter_Is_Immune_Critical_Hits))
+		return PyInt_FromLong(0);
+	
+	auto isFlanked = combatSys.IsFlankedBy(targetObj, self->handle);
+	
+
+	auto result = (isFlanked 
+		|| d20Sys.d20Query(targetObj, DK_QUE_SneakAttack)
+		|| !critterSys.CanSense(targetObj, self->handle));
+
+	return PyInt_FromLong(result);
+}
+
+
 static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle){
+		Py_RETURN_NONE;
+	}
+
 	uint32_t spellEnum;
 	PickerArgs pickArgs;
 	SpellPacketBody spellPktBody;
@@ -1174,8 +1209,30 @@ static PyObject* PyObjHandle_ConditionAddWithArgs(PyObject* obj, PyObject* args)
 	return PyInt_FromLong(result);
 }
 
+
+static PyObject* PyObjHandle_IsFlankedBy(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle)
+		return PyInt_FromLong(0);
+
+	objHndl critter;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.is_flanked_by", &ConvertObjHndl, &critter)) {
+		return 0;
+	}
+
+	if (!critter)
+		return PyInt_FromLong(0);
+
+	auto result = combatSys.IsFlankedBy(self->handle, critter);
+	return PyInt_FromLong(result);
+}
+
+
 static PyObject* PyObjHandle_IsFriendly(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle)
+		return PyInt_FromLong(0);
+
 	objHndl pc;
 	if (!PyArg_ParseTuple(args, "O&:objhndl.is_friendly", &ConvertObjHndl, &pc)) {
 		return 0;
@@ -1187,6 +1244,9 @@ static PyObject* PyObjHandle_IsFriendly(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_FadeTo(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle)
+		Py_RETURN_NONE;
+
 	int targetOpacity, transitionTimeInMs, unk1, unk2 = 0;
 	if (!PyArg_ParseTuple(args, "iii|i:objhndl.fade_to", &targetOpacity, &transitionTimeInMs, &unk1, &unk2)) {
 		return 0;
@@ -1198,6 +1258,9 @@ static PyObject* PyObjHandle_FadeTo(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_Move(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle)
+		Py_RETURN_NONE;
+
 	LocAndOffsets newLoc;
 	newLoc.off_x = 0;
 	newLoc.off_y = 0;
@@ -2605,6 +2668,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 
 	{"cast_spell", PyObjHandle_CastSpell, METH_VARARGS, NULL },
 	{"can_see", PyObjHandle_HasLos, METH_VARARGS, NULL },
+	{ "can_sneak_attack", PyObjHandle_CanSneakAttack, METH_VARARGS, NULL },
 	{ "concealed_set", PyObjHandle_ConcealedSet, METH_VARARGS, NULL },
 	{ "condition_add_with_args", PyObjHandle_ConditionAddWithArgs, METH_VARARGS, NULL },
 	{ "condition_add", PyObjHandle_ConditionAddWithArgs, METH_VARARGS, NULL },
@@ -2672,6 +2736,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "is_active_combatant", PyObjHandle_IsActiveCombatant, METH_VARARGS, NULL },
 	{ "is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL },
 	{ "is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL },
+	{ "is_flanked_by", PyObjHandle_IsFlankedBy, METH_VARARGS, NULL },
 	{ "is_friendly", PyObjHandle_IsFriendly, METH_VARARGS, NULL },
 	{ "is_unconscious", PyObjHandle_IsUnconscious, METH_VARARGS, NULL },
 	{ "item_condition_add_with_args", PyObjHandle_ItemConditionAdd, METH_VARARGS, NULL },
