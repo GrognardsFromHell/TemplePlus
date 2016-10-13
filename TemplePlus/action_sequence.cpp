@@ -1732,7 +1732,7 @@ uint32_t ActionSequenceSystem::SequencePathSthgSub_10096450(ActnSeq* actSeq, int
 	auto numActions = actSeq->d20ActArrayNum;
 	for (auto i=0; i < numActions; i++){
 		
-		auto flags = d20Sys.GetActionFlags(d20aType);
+		auto flags = d20Sys.GetActionFlags(actSeq->d20ActArray[i].d20ActType);
 		if (flags & D20ADF_DoLocationCheckAtDestination){
 			auto p = d20a->path;
 			if (p != nullptr){
