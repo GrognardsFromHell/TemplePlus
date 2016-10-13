@@ -73,7 +73,7 @@ class ItemCreation {
 public:
 
 
-	
+	BOOL IsActive();
 	BOOL ItemCreationShow(objHndl crafter, ItemCreationType icType); // shows the item creation UI for the chosen IC type
 
 	BOOL ItemCreationWndMsg(int widId, TigMsg* msg);

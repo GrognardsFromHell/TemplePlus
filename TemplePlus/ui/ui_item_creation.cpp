@@ -125,6 +125,11 @@ public:
 		// auto system = UiSystem::getUiSystem("ItemCreation-UI");		
 		// system->init = systemInit;
 		
+		// UiItemCreationIsActive
+		replaceFunction<BOOL(__cdecl)()>(0x1014F180, [](){
+			return itemCreation.IsActive();
+		});
+
 		// System Funcs
 		replaceFunction<int(__cdecl)(GameSystemConf&)>(0x10154BA0, [](GameSystemConf& conf) {
 			return itemCreation.UiItemCreationInit(conf);
@@ -1602,6 +1607,10 @@ ItemEnhancementSpec::ItemEnhancementSpec(const char* CondName, uint32_t Flags, i
 	data.enhBonus = enhBonus;
 	condId = ElfHash::Hash(condName);
 	downgradesTo = upgradesTo = CRAFT_EFFECT_INVALID;
+}
+
+BOOL ItemCreation::IsActive(){
+	return itemCreationType != ItemCreationType::Inactive;
 }
 
 BOOL ItemCreation::ItemCreationShow(objHndl crafter, ItemCreationType icType){

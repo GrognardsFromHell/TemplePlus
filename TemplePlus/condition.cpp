@@ -259,7 +259,7 @@ class RaceAbilityCallbacks
 {
 public:
 	static int __cdecl HalflingThrownWeaponAndSlingBonus(DispatcherCallbackArgs args);
-};
+} raceCallbacks;
 
 class ConditionFunctionReplacement : public TempleFix {
 public:
@@ -381,6 +381,12 @@ public:
 
 		// Turn Undead extension
 		redirectCall(0x1004AF5F, TurnUndeadHook);
+
+
+		// racial callbacks
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100FDC70, raceCallbacks.HalflingThrownWeaponAndSlingBonus);
+
+		
 	}
 } condFuncReplacement;
 
