@@ -22,9 +22,11 @@ void D20StatusSystem::initRace(objHndl objHnd)
 			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterUndead);
 		}
 
+		static std::vector<std::string> raceCondNames = {"Human", "Dwarf", "Elf", "Gnome", "Halfelf", "Halforc", "Halfling"};
+
 		uint32_t objRace = critterSys.GetRace(objHnd);
 		CondStruct ** condStructRace = conds.ConditionArrayRace + objRace;
-		_ConditionAddToAttribs_NumArgs0(dispatcher, *condStructRace);
+		_ConditionAddToAttribs_NumArgs0(dispatcher, conds.GetByName(raceCondNames[objRace]));
 
 		if (critterSys.IsSubtypeFire(objHnd))
 		{

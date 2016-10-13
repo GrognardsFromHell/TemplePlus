@@ -255,7 +255,11 @@ public:
 	static int SneakAttackDamage(DispatcherCallbackArgs args);
 } classAbilityCallbacks;
 
-
+class RaceAbilityCallbacks
+{
+public:
+	static int __cdecl HalflingThrownWeaponAndSlingBonus(DispatcherCallbackArgs args);
+};
 
 class ConditionFunctionReplacement : public TempleFix {
 public:
@@ -5161,3 +5165,27 @@ int AidAnotherRadialMenu(DispatcherCallbackArgs args)
 	return 0;
 }
 #pragma endregion
+
+int RaceAbilityCallbacks::HalflingThrownWeaponAndSlingBonus(DispatcherCallbackArgs args){
+
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+
+	if (dispIo->attackPacket.flags & D20CAF_THROWN){
+		dispIo->bonlist.AddBonus(1, 0, 139);
+	} 
+	else
+	{
+		auto weapon = dispIo->attackPacket.GetWeaponUsed();
+		if (weapon)
+		{
+			auto wpnType = (WeaponTypes)objSystem->GetObject(weapon)->GetInt32(obj_f_weapon_type);
+			if (wpnType == wt_sling){
+				dispIo->bonlist.AddBonus(1, 0, 139);
+			}
+		}
+		
+	}
+
+
+	return 0;
+}
