@@ -69,6 +69,10 @@ struct PickerArgs {
 	PickerResult result;
 	int field108;
 	int field10c;
+
+
+	bool IsBaseModeTarget(UiPickerType type);
+	bool IsModeTargetFlagSet(UiPickerType type);
 };
 
 const auto TestSizeOfPickerArgs = sizeof(PickerArgs);

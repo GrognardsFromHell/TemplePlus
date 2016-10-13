@@ -404,7 +404,7 @@ void SpellPacketBody::MemorizedUseUp(SpellStoreData &spellData){
 		return sd1.spellEnum == sd2.spellEnum
 			&& sd1.spellLevel == sd2.spellLevel
 			&& sd1.classCode == sd2.classCode
-			&& sd1.spellStoreState.spellStoreType == sd2.spellStoreState.spellStoreType
+		//	&& sd1.spellStoreState.spellStoreType == sd2.spellStoreState.spellStoreType
 			&& sd1.spellStoreState.usedUp == sd2.spellStoreState.usedUp
 			&& sd1.metaMagicData == sd2.metaMagicData	;
 	};
@@ -1986,7 +1986,7 @@ uint32_t LegacySpellSystem::pickerArgsFromSpellEntry(SpellEntry* spEntry, Picker
 	if (spEntry->IsBaseModeTarget(UiPickerType::Single)
 		&& !(spEntry->modeTargetSemiBitmask & 0xffffFFFF00000000) 
 		&& spEntry->spellRangeType == SRT_Touch){
-		(*(uint64_t*)args->flagsTarget ) &= ~(uint64_t)UiPickerType::Ray;
+		(*(uint64_t*)&args->flagsTarget ) &= ~(uint64_t)UiPickerType::Ray;
 	}
 
 	if (spEntry->IsBaseModeTarget(UiPickerType::Cone)){
