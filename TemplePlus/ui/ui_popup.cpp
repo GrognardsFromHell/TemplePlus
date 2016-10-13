@@ -70,6 +70,10 @@ BOOL UiPopup::UiPopupWndMsg(int widId, TigMsg * msg)
 	return FALSE;
 }
 
+int UiPopup::VanillaPopupShow(const char * bodyText, const char * title, int buttonTextType, int(*callback)(int), int(*callback2)(int)){
+	return temple::GetRef<int(__cdecl)(const char * , const char * , int(*)(int), int(*)(int))>(0x1017CF20)(bodyText, title, callback, callback2);
+}
+
 int UiPopup::FindPopupBtnIdx(int widId){
 
 	auto result = 0;

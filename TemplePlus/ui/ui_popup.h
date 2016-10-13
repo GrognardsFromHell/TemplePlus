@@ -50,12 +50,17 @@ struct UiPromptListEntry {
 	UiPromptPacket prompt;
 };
 
+
 class UiPopup
 {
 	friend class UiPopupReplacement;
 public:
 
-
+	/*
+	  buttonTextType: 0 for Okay / Cancel, 1 for Yes/No
+	  haven't seen the second callback actually used, might be debug?
+	*/
+	int VanillaPopupShow(const char *bodyText, const char *title, int buttonTextType, int(__cdecl *callback)(int), int(__cdecl *optionalCallback)(int)); 
 
 	int FindPopupBtnIdx(int widId);
 	void ExecuteCallback(int popupIdx, int btnIdx);

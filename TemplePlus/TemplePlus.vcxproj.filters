@@ -110,7 +110,6 @@
     <ClCompile Include="ui\ui_mainmenu.cpp">
       <Filter>ui</Filter>
     </ClCompile>
-    <ClCompile Include="ui\ui_char_highresfix.cpp" />
     <ClCompile Include="ui\ui_item_creation.cpp">
       <Filter>ui</Filter>
     </ClCompile>
@@ -177,8 +176,6 @@
     <ClCompile Include="sound.cpp" />
     <ClCompile Include="textbubbles.cpp" />
     <ClCompile Include="traps.cpp" />
-    <ClCompile Include="ui\ui_dialog.cpp" />
-    <ClCompile Include="ui\ui_tutorial.cpp" />
     <ClCompile Include="d20_levelup.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
@@ -281,15 +278,9 @@
     <ClCompile Include="gamesystems\map\gmesh.cpp" />
     <ClCompile Include="gamesystems\lightningrenderer.cpp" />
     <ClCompile Include="gamesystems\fogrenderer.cpp" />
-    <ClCompile Include="gamesystems\ui_intgame_renderer.cpp" />
-    <ClCompile Include="ui\ui_townmap.cpp" />
-    <ClCompile Include="ui\ui_turn_based.cpp" />
-    <ClCompile Include="ui\ui_intgame_select.cpp" />
-    <ClCompile Include="ui\ui_combat.cpp" />
     <ClCompile Include="ui\ui_pc_creation.cpp">
       <Filter>ui</Filter>
     </ClCompile>
-    <ClCompile Include="ui\ui_worldmap.cpp" />
     <ClCompile Include="ui\ui_intgame_turnbased.cpp">
       <Filter>ui</Filter>
     </ClCompile>
@@ -425,6 +416,39 @@
       <Filter>ui</Filter>
     </ClCompile>
     <ClCompile Include="ui\ui_slider.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_alert.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_sticky.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_townmap.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_turn_based.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_tutorial.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_worldmap.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_dialog.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_combat.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_char_highresfix.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="gamesystems\ui_intgame_renderer.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ui_intgame_select.cpp">
       <Filter>ui</Filter>
     </ClCompile>
   </ItemGroup>
@@ -608,8 +632,6 @@
     <ClInclude Include="textbubbles.h" />
     <ClInclude Include="tig\tig_tabparser.h" />
     <ClInclude Include="traps.h" />
-    <ClInclude Include="ui\ui_dialog.h" />
-    <ClInclude Include="ui\ui_tutorial.h" />
     <ClInclude Include="sound.h" />
     <ClInclude Include="d20_levelup.h">
       <Filter>Mods and Fixes</Filter>
@@ -685,10 +707,6 @@
     <ClInclude Include="gamesystems\map\gmesh.h" />
     <ClInclude Include="gamesystems\lightningrenderer.h" />
     <ClInclude Include="gamesystems\fogrenderer.h" />
-    <ClInclude Include="gamesystems\ui_intgame_renderer.h" />
-    <ClInclude Include="ui\ui_turn_based.h" />
-    <ClInclude Include="ui\ui_intgame_select.h" />
-    <ClInclude Include="ui\ui_combat.h" />
     <ClInclude Include="ui\ui_char_editor.h">
       <Filter>ui</Filter>
     </ClInclude>
@@ -805,6 +823,30 @@
       <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="ui\ui_slider.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_sticky.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_alert.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_turn_based.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_tutorial.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_dialog.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_combat.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_intgame_select.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="gamesystems\ui_intgame_renderer.h">
       <Filter>ui</Filter>
     </ClInclude>
   </ItemGroup>
