@@ -3,6 +3,16 @@
 #include "damage.h"
 #include "dice.h"
 #include "bonus.h"
+#include "ai.h"
+#include "gamesystems/objects/objsystem.h"
+#include "critter.h"
+#include "weapon.h"
+#include "combat.h"
+#include "history.h"
+#include "float_line.h"
+#include "sound.h"
+#include "anim.h"
+#include "ui/ui_logbook.h"
 
 static_assert(temple::validate_size<DispIoDamage, 0x550>::value, "DispIoDamage");
 
@@ -119,6 +129,11 @@ int DamagePacket::AddPhysicalDR(int amount, int bypasserBitmask, int damageMesLi
 	return damage.AddPhysicalDR(this, amount, bypasserBitmask, (unsigned)damageMesLine);
 }
 
+void DamagePacket::AddAttackPower(int attackPower)
+{
+	this->attackPowerType |= attackPower;
+}
+
 void DamagePacket::CalcFinalDamage(){ // todo hook this
 	for (auto i=0u; i < this->diceCount; i++){
 		auto &dice = this->dice[i];
@@ -155,16 +170,291 @@ int DamagePacket::GetOverallDamageByType(DamageType damType)
 	return damTot;
 }
 
+DamagePacket::DamagePacket(){
+	diceCount = 0;
+	damResCount = 0;
+	damModCount = 0;
+	attackPowerType = 0;
+	finalDamage = 0;
+	flags = 0;
+	description = nullptr;
+	critHitMultiplier = 1;
+
+}
+
 void Damage::DealDamage(objHndl victim, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType) {
 
 	addresses.DoDamage(victim, attacker, dice.ToPacked(), type, attackPower, reduction, damageDescId, actionType);
 
 }
 
-void Damage::DealSpellDamage(objHndl victim, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType, int spellId, int flags) {
+void Damage::DealSpellDamage(objHndl tgt, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType, int spellId, int flags) {
 
-	addresses.DoSpellDamage(victim, attacker, dice.ToPacked(), type, attackPower, reduction, damageDescId, actionType, spellId, flags);
+	SpellPacketBody spPkt(spellId);
+	if (!tgt)
+		return;
 
+	if (attacker && attacker != tgt && critterSys.AllegianceShared(tgt, attacker))
+		floatSys.FloatCombatLine(tgt, 107); // friendly fire
+
+	aiSys.ProvokeHostility(attacker, tgt, 1, 0);
+
+	if (critterSys.IsDeadNullDestroyed(tgt))
+		return;
+
+	DispIoDamage evtObjDam;
+	evtObjDam.attackPacket.d20ActnType = actionType;
+	evtObjDam.attackPacket.attacker = attacker;
+	evtObjDam.attackPacket.victim = tgt;
+	evtObjDam.attackPacket.dispKey = 1;
+	evtObjDam.attackPacket.flags = (D20CAF)(flags | D20CAF_HIT);
+
+	if (attacker && objects.IsCritter(attacker)){
+		if (flags & D20CAF_SECONDARY_WEAPON)
+			evtObjDam.attackPacket.weaponUsed = inventory.ItemWornAt(attacker, EquipSlot::WeaponSecondary);
+		else
+			evtObjDam.attackPacket.weaponUsed = inventory.ItemWornAt(attacker, EquipSlot::WeaponPrimary);
+
+		if (evtObjDam.attackPacket.weaponUsed && objects.GetType(evtObjDam.attackPacket.weaponUsed) != obj_t_weapon)
+			evtObjDam.attackPacket.weaponUsed = objHndl::null;
+
+		evtObjDam.attackPacket.ammoItem = combatSys.CheckRangedWeaponAmmo(attacker);
+	} else
+	{
+		evtObjDam.attackPacket.weaponUsed = objHndl::null;
+		evtObjDam.attackPacket.ammoItem = objHndl::null;
+	}
+
+	if (reduction != 100){
+		addresses.AddDamageModFactor(&evtObjDam.damage,  reduction * 0.01f, type, damageDescId);
+	}
+
+	evtObjDam.damage.AddDamageDice(dice.ToPacked(), type, 103);
+	evtObjDam.damage.AddAttackPower(attackPower);
+	auto mmData = (MetaMagicData)spPkt.metaMagicData;
+	if (mmData.metaMagicEmpowerSpellCount)
+		evtObjDam.damage.flags |= 2; // empowered
+	if (mmData.metaMagicFlags & 1)
+		evtObjDam.damage.flags |= 1; // maximized
+	temple::GetRef<int>(0x10BCA8AC) = 0; // is weapon damage
+
+	DamageCritter(attacker, tgt, evtObjDam);
+
+	//addresses.DoSpellDamage(tgt, attacker, dice.ToPacked(), type, attackPower, reduction, damageDescId, actionType, spellId, flags);
+
+}
+
+int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF flags, D20ActionType actionType)
+{
+	aiSys.ProvokeHostility(attacker, tgt, 1, 0);
+
+	auto tgtObj = objSystem->GetObject(tgt);
+	if (critterSys.IsDeadNullDestroyed(tgt)){
+		return -1;
+	}
+
+	DispIoDamage evtObjDam;
+	evtObjDam.attackPacket.d20ActnType = actionType;
+	evtObjDam.attackPacket.attacker = attacker;
+	evtObjDam.attackPacket.victim = tgt;
+	evtObjDam.attackPacket.dispKey = d20Data;
+	evtObjDam.attackPacket.flags = flags;
+
+	auto &weaponUsed = evtObjDam.attackPacket.weaponUsed;
+	if (flags & D20CAF_SECONDARY_WEAPON)
+		weaponUsed = inventory.ItemWornAt(attacker, EquipSlot::WeaponSecondary);
+	else
+		weaponUsed = inventory.ItemWornAt(attacker, EquipSlot::WeaponPrimary);
+
+	if (weaponUsed && objects.GetType(weaponUsed) != obj_t_weapon){
+		weaponUsed = objHndl::null;
+	}
+
+	evtObjDam.attackPacket.ammoItem = combatSys.CheckRangedWeaponAmmo(attacker);
+
+	if ( flags & D20CAF_CONCEALMENT_MISS){
+		histSys.CreateRollHistoryLineFromMesfile(11, attacker, tgt);
+		floatSys.FloatCombatLine(attacker, 45); // Miss (Concealment)!
+		auto soundId = inventory.GetSoundIdForItemEvent(weaponUsed, attacker, tgt, 6);
+		sound.PlaySoundAtObj(soundId, attacker);
+		d20Sys.d20SendSignal(attacker, DK_SIG_Attack_Made, (int)&evtObjDam, 0);
+		return -1;
+	}
+
+	if (!(flags & D20CAF_HIT)) {
+		floatSys.FloatCombatLine(attacker, 29);
+		d20Sys.d20SendSignal(attacker, DK_SIG_Attack_Made, (int)&evtObjDam, 0);
+
+		auto soundId = inventory.GetSoundIdForItemEvent(weaponUsed, attacker, tgt, 6);
+		sound.PlaySoundAtObj(soundId, attacker);
+
+		if (flags & D20CAF_DEFLECT_ARROWS){
+			floatSys.FloatCombatLine(tgt, 5052);
+			histSys.CreateRollHistoryLineFromMesfile(12, attacker, tgt);
+		}
+
+		// dodge animation
+		if (!critterSys.IsDeadOrUnconscious(tgt) && !critterSys.IsProne(tgt)){
+			animationGoals.PushDodge(attacker, tgt);
+		}
+		return -1;
+	}
+
+	if (tgt && attacker && critterSys.AllegianceShared(tgt, attacker)){ // TODO check that this solves the infamous "Friendly Fire" float for NPCs
+		floatSys.FloatCombatLine(tgt, 107); // Friendly Fire
+	}
+
+	auto isUnconsciousAlready = critterSys.IsDeadOrUnconscious(tgt);
+
+
+	dispatch.DispatchDamage(attacker, &evtObjDam, dispTypeDealingDamage, DK_NONE);
+	if (evtObjDam.attackPacket.flags & D20CAF_CRITICAL){
+
+		// get extra Hit Dice and apply them
+		DispIoAttackBonus evtObjCritDice;
+		evtObjCritDice.attackPacket.victim = tgt;
+		evtObjCritDice.attackPacket.d20ActnType = evtObjDam.attackPacket.d20ActnType;
+		evtObjCritDice.attackPacket.attacker = attacker;
+		evtObjCritDice.attackPacket.dispKey = d20Data;
+		evtObjCritDice.attackPacket.flags = evtObjDam.attackPacket.flags;
+		if (evtObjDam.attackPacket.flags & D20CAF_SECONDARY_WEAPON){
+			evtObjCritDice.attackPacket.weaponUsed = inventory.ItemWornAt(attacker, EquipSlot::WeaponSecondary);
+		} else
+			evtObjCritDice.attackPacket.weaponUsed = inventory.ItemWornAt(attacker, EquipSlot::WeaponPrimary);
+		if (evtObjCritDice.attackPacket.weaponUsed && objects.GetType(evtObjCritDice.attackPacket.weaponUsed) != obj_t_weapon)
+			evtObjCritDice.attackPacket.weaponUsed = objHndl::null;
+		evtObjCritDice.attackPacket.ammoItem = combatSys.CheckRangedWeaponAmmo(attacker);
+		auto extraHitDice = dispatch.DispatchAttackBonus(attacker, objHndl::null, &evtObjCritDice, dispTypeGetCriticalHitExtraDice, DK_NONE);
+		auto critMultiplierApply = temple::GetRef<BOOL(__cdecl)(DamagePacket&, int, int)>(0x100E1640); // damagepacket, multiplier, damage.mes line
+		critMultiplierApply(evtObjDam.damage, extraHitDice + 1, 102);
+		floatSys.FloatCombatLine(attacker, 12);
+		
+		// play sound
+		auto soundId = critterSys.SoundmapCritter(tgt, 0);
+		sound.PlaySoundAtObj(soundId, tgt);
+		soundId = inventory.GetSoundIdForItemEvent(evtObjCritDice.attackPacket.weaponUsed, attacker, tgt, 7);
+		sound.PlaySoundAtObj(soundId, attacker);
+
+		// increase crit hits in logbook
+		uiLogbook.IncreaseCritHits(attacker);
+	} else
+	{
+		auto soundId = inventory.GetSoundIdForItemEvent(evtObjDam.attackPacket.weaponUsed, attacker, tgt, 5);
+		sound.PlaySoundAtObj(soundId, attacker);
+	}
+
+	temple::GetRef<int>(0x10BCA8AC) = 1; // physical damage Flag used for logbook recording
+	DamageCritter(attacker, tgt, evtObjDam);
+
+	// play damage effect particles
+	for (auto i=0; i < evtObjDam.damage.diceCount; i++){
+		temple::GetRef<void(__cdecl)(objHndl, DamageType, int)>(0x10016A90)(tgt, evtObjDam.damage.dice[i].type, evtObjDam.damage.dice[i].rolledDamage);
+	}
+
+
+	// signal events
+	if (!isUnconsciousAlready && critterSys.IsDeadOrUnconscious(tgt)){
+		d20Sys.d20SendSignal(attacker, DK_SIG_Dropped_Enemy, (int)&evtObjDam, 0);
+	}
+
+	return addresses.GetDamageTypeOverallDamage(&evtObjDam.damage, DamageType::Unspecified);
+}
+
+int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice & dice, DamageType type, int attackPower, int damFactor, int damageDescId, D20ActionType actionType, int spellId, D20CAF flags, int prjoectileIdx)
+{
+
+	SpellPacketBody spPkt(spellId);
+	if (!tgt)
+		return -1;
+
+	if (attacker && attacker != tgt && critterSys.AllegianceShared(tgt, attacker))
+		floatSys.FloatCombatLine(tgt, 107); // friendly fire
+
+	aiSys.ProvokeHostility(attacker, tgt, 1, 0);
+
+	if (critterSys.IsDeadNullDestroyed(tgt))
+		return -1;
+
+	DispIoDamage evtObjDam;
+	evtObjDam.attackPacket.d20ActnType = actionType;
+	evtObjDam.attackPacket.attacker = attacker;
+	evtObjDam.attackPacket.victim = tgt;
+	evtObjDam.attackPacket.dispKey = prjoectileIdx;
+	evtObjDam.attackPacket.flags = (D20CAF)(flags | D20CAF_HIT);
+
+	if (attacker && objects.IsCritter(attacker)) {
+		if (flags & D20CAF_SECONDARY_WEAPON)
+			evtObjDam.attackPacket.weaponUsed = inventory.ItemWornAt(attacker, EquipSlot::WeaponSecondary);
+		else
+			evtObjDam.attackPacket.weaponUsed = inventory.ItemWornAt(attacker, EquipSlot::WeaponPrimary);
+
+		if (evtObjDam.attackPacket.weaponUsed && objects.GetType(evtObjDam.attackPacket.weaponUsed) != obj_t_weapon)
+			evtObjDam.attackPacket.weaponUsed = objHndl::null;
+
+		evtObjDam.attackPacket.ammoItem = combatSys.CheckRangedWeaponAmmo(attacker);
+	}
+	else
+	{
+		evtObjDam.attackPacket.weaponUsed = objHndl::null;
+		evtObjDam.attackPacket.ammoItem = objHndl::null;
+	}
+
+	if (damFactor != 100) {
+		addresses.AddDamageModFactor(&evtObjDam.damage, damFactor * 0.01f, type, damageDescId);
+	}
+
+
+	if (flags & D20CAF_CONCEALMENT_MISS) {
+		histSys.CreateRollHistoryLineFromMesfile(11, attacker, tgt);
+		floatSys.FloatCombatLine(attacker, 45); // Miss (Concealment)!
+		// d20Sys.d20SendSignal(attacker, DK_SIG_Attack_Made, (int)&evtObjDam, 0); // casting a spell isn't considered an attack action
+		return -1;
+	}
+
+	if (!(flags & D20CAF_HIT)) {
+		floatSys.FloatCombatLine(attacker, 29);
+
+		// dodge animation
+		if (!critterSys.IsDeadOrUnconscious(tgt) && !critterSys.IsProne(tgt)) {
+			animationGoals.PushDodge(attacker, tgt);
+		}
+		return -1;
+	}
+
+	// get damage dice
+	evtObjDam.damage.AddDamageDice(dice.ToPacked(), type, 103);
+	evtObjDam.damage.AddAttackPower(attackPower);
+	auto mmData = (MetaMagicData)spPkt.metaMagicData;
+	if (mmData.metaMagicEmpowerSpellCount)
+		evtObjDam.damage.flags |= 2; // empowered
+	if (mmData.metaMagicFlags & 1)
+		evtObjDam.damage.flags |= 1; // maximized
+	dispatch.DispatchDamage(attacker, &evtObjDam, dispTypeDealingDamageWeaponlikeSpell, DK_NONE);
+
+	if (evtObjDam.attackPacket.flags & D20CAF_CRITICAL) {
+		auto extraHitDice = dice.GetCount();
+		auto critMultiplierApply = temple::GetRef<BOOL(__cdecl)(DamagePacket&, int, int)>(0x100E1640); // damagepacket, multiplier, damage.mes line
+		critMultiplierApply(evtObjDam.damage, extraHitDice + 1, 102);
+		floatSys.FloatCombatLine(attacker, 12);
+
+		// play sound
+		auto soundId = critterSys.SoundmapCritter(tgt, 0);
+		sound.PlaySoundAtObj(soundId, tgt);
+
+		// increase crit hits in logbook
+		uiLogbook.IncreaseCritHits(attacker);
+	}
+
+	
+	temple::GetRef<int>(0x10BCA8AC) = 0; // is weapon damage
+
+	DamageCritter(attacker, tgt, evtObjDam);
+
+	return -1;
+}
+
+void Damage::DamageCritter(objHndl attacker, objHndl tgt, DispIoDamage & evtObjDam){
+	temple::GetRef<void(__cdecl)(objHndl, objHndl, DispIoDamage&)>(0x100B6B30)(attacker, tgt, evtObjDam);
 }
 
 void Damage::Heal(objHndl target, objHndl healer, const Dice& dice, D20ActionType actionType) {

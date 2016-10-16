@@ -171,6 +171,7 @@
     <ClCompile Include="ui\ui_dialog.cpp" />
     <ClCompile Include="ui\ui_intgame_select.cpp" />
     <ClCompile Include="ui\ui_legacysystems.cpp" />
+    <ClCompile Include="ui\ui_logbook.cpp" />
     <ClCompile Include="ui\ui_party.cpp" />
     <ClCompile Include="ui\ui_popup.cpp" />
     <ClCompile Include="ui\ui_slider.cpp" />
@@ -319,6 +320,7 @@
     <ClInclude Include="tutorial.h" />
     <ClInclude Include="ui\ui_alert.h" />
     <ClInclude Include="ui\ui_legacysystems.h" />
+    <ClInclude Include="ui\ui_logbook.h" />
     <ClInclude Include="ui\ui_popup.h" />
     <ClInclude Include="ui\ui_slider.h" />
     <ClInclude Include="ui\ui_sticky.h" />

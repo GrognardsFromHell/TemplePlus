@@ -1896,6 +1896,10 @@ enum enum_disp_type : uint32_t {
 	dispTypeSpellListExtension, // NEW! used for extending spell-casting classes by other classes (as with Prestige Classes)
 	dispTypeGetBaseCasterLevel,
 	dispTypeLevelupSystemEvent,
+
+
+
+	dispTypeDealingDamageWeaponlikeSpell,
 	dispTypeCount // used just for size definition purposes
 
 

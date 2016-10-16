@@ -158,6 +158,8 @@ struct InventorySystem : temple::AddressTable
 	// spawn the items for this object according to invensource.mes
 	int (__cdecl*SpawnInvenSourceItems)(objHndl obj);
 
+	int GetSoundIdForItemEvent(objHndl item, objHndl wielder, objHndl tgt, int eventType);
+
 	InventorySystem()
 	{
 		rebase(GetSubstituteInventory, 0x1007F5B0);

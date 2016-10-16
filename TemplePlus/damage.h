@@ -50,8 +50,11 @@ struct DamagePacket {
 	int AddDamageDice(uint32_t dicePacked, DamageType damType, int damageMesLine, const char* description = nullptr);
 	BOOL AddDamageBonus(int32_t damBonus, int bonType, int bonMesline, const char* causeDesc = nullptr);
 	int AddPhysicalDR(int amount, int bypasserBitmask, int damageMesLine);
+	void AddAttackPower(int attackPower);
 	void CalcFinalDamage(); // calcualtes the finalDamage field
 	int GetOverallDamageByType(DamageType damType);
+
+	DamagePacket();
 };
 
 #pragma pack(push, 1)
@@ -62,6 +65,7 @@ struct DispIoDamage : DispIO { // Io type 4
 
 	DispIoDamage() {
 		dispIOType = dispIOTypeDamage;
+		attackPacket.d20ActnType = D20A_NONE;
 	}
 };
 #pragma pack(pop)
@@ -89,6 +93,18 @@ public:
 	void DealDamage(objHndl victim, objHndl attacker, const Dice &dice, DamageType type, int attackPower, int damFactor, int damageDescId, D20ActionType actionType);
 	void DealSpellDamage(objHndl victim, objHndl attacker, const Dice &dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType,
 		int spellId, int flags);
+
+	/*
+		deals damage from a successful weapon attack
+	*/
+	int DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF flags, D20ActionType actionType);
+	/*
+	    used for spells that have an attack roll
+	*/
+	int DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice &dice, DamageType type, int attackPower, int damFactor, int damageDescId, D20ActionType actionType, int spellId, D20CAF flags, int projectileIdx = 0);
+
+	void DamageCritter(objHndl attacker, objHndl tgt, DispIoDamage & evtObjDam);
+
 
 	void Heal(objHndl target, objHndl healer, const Dice &dice, D20ActionType actionType);
 	

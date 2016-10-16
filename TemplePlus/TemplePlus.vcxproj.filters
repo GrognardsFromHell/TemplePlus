@@ -451,6 +451,9 @@
     <ClCompile Include="ui\ui_intgame_select.cpp">
       <Filter>ui</Filter>
     </ClCompile>
+    <ClCompile Include="ui\ui_logbook.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -847,6 +850,9 @@
       <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="gamesystems\ui_intgame_renderer.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_logbook.h">
       <Filter>ui</Filter>
     </ClInclude>
   </ItemGroup>

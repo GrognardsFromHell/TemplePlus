@@ -50,7 +50,7 @@ enum AnimGoalType : uint32_t {
 	ag_shoot_spell = 0x1D,
 	ag_hit_by_spell = 0x1E,
 	ag_hit_by_weapon = 0x1F,
-	ag_dodge = 0x20,
+	ag_dodge = 0x20, // this is where the enums start to be off compared to the debug string in the dll (they added ag_dodge and didn't update the list)
 	ag_dying,
 	ag_destroy_obj,
 	ag_use_skill_on,
@@ -153,6 +153,7 @@ public:
 	int PushAttackAnim(objHndl actor, objHndl target, int unk1, int hitAnimIdx, int playCrit, int useSecondaryAnim);
 	int GetActionAnimId(objHndl objHndl);
 	int PushAttemptAttack(objHndl attacker, objHndl defender);
+	int PushDodge(objHndl attacker, objHndl dodger);
 	int PushAnimate(objHndl obj, int anim);
 	BOOL PushSpellInterrupt(const objHndl& caster, objHndl item,  AnimGoalType animGoalType, int spellSchool);
 };

@@ -302,6 +302,11 @@ void AiSystem::StopAttacking(objHndl npc) {
 	_StopAttacking(npc);
 }
 
+void AiSystem::ProvokeHostility(objHndl agitator, objHndl provokedNpc, int rangeType, int flags)
+{
+	temple::GetRef<void(__cdecl)(objHndl, objHndl, int, int)>(0x1005E8D0)(agitator, provokedNpc, rangeType, flags);
+}
+
 objHndl AiSystem::GetCombatFocus(objHndl npc) {
 	auto obj = objSystem->GetObject(npc);
 	return obj->GetObjHndl(obj_f_npc_combat_focus);

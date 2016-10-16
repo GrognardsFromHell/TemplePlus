@@ -483,6 +483,10 @@ int AnimationGoals::PushAttemptAttack(objHndl attacker, objHndl defender) {
   return addresses.PushAttemptAttack(attacker, defender);
 }
 
+int AnimationGoals::PushDodge(objHndl attacker, objHndl dodger){
+	return temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x100158E0)(attacker, dodger);
+}
+
 int AnimationGoals::PushAnimate(objHndl obj, int anim) {
   return addresses.PushAnimate(obj, anim);
 }

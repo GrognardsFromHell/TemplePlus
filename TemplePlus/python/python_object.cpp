@@ -1104,6 +1104,25 @@ static PyObject* PyObjHandle_SpellDamageWithReduction(PyObject* obj, PyObject* a
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_SpellDamageWeaponlike(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	objHndl attacker;
+	Dice dice;
+	DamageType type;
+	int attackPowerType = 0;
+	int reduction = 100;
+	D20ActionType actionType = D20A_NONE;
+	int spellId = 0, projectileIdx = 0;
+	D20CAF flags;
+	if (!PyArg_ParseTuple(args, "O&iO&|iiiiii:objhndl.spell_damage_weaponlike", &ConvertObjHndl, &attacker, &type, &ConvertDice, &dice, &attackPowerType, &reduction, &actionType, &spellId, &flags, &projectileIdx)) {
+		return 0;
+	}
+	// Line 105: Saving Throw
+	damage.DealWeaponlikeSpellDamage(self->handle, attacker, dice, type, attackPowerType, reduction, 105, actionType, spellId, flags, projectileIdx);
+	Py_RETURN_NONE;
+}
+
+
 static PyObject* PyObjHandle_StealFrom(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	objHndl target;
@@ -1577,13 +1596,14 @@ static PyObject* PyObjHandle_PerformTouchAttack(PyObject* obj, PyObject* args) {
 	d20Sys.CreateRollHistory(action.rollHistId2);
 	d20Sys.CreateRollHistory(action.rollHistId0);
 
-	if (action.d20Caf & D20CAF_CRITICAL) {
+	/*if (action.d20Caf & D20CAF_CRITICAL) {
 		return PyInt_FromLong(D20CAF_CRITICAL);
 	} else if (action.d20Caf & D20CAF_HIT) {
 		return PyInt_FromLong(D20CAF_HIT);
 	} else {
 		return PyInt_FromLong(0);
-	}
+	}*/
+	return PyInt_FromLong(action.d20Caf);
 }
 
 static PyObject* PyObjHandle_AddToInitiative(PyObject* obj, PyObject* args) {
@@ -2813,6 +2833,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "spell_memorized_add", PyObjHandle_SpellMemorizedAdd, METH_VARARGS, NULL },
 	{ "spell_damage", PyObjHandle_SpellDamage, METH_VARARGS, NULL },
 	{ "spell_damage_with_reduction", PyObjHandle_SpellDamageWithReduction, METH_VARARGS, NULL },
+	{ "spell_damage_weaponlike", PyObjHandle_SpellDamageWeaponlike, METH_VARARGS, NULL },
 	{ "spell_heal", PyObjHandle_SpellHeal, METH_VARARGS, NULL },
 	{ "spells_pending_to_memorized", PyObjHandle_PendingToMemorized, METH_VARARGS, NULL },
 	{ "spells_cast_reset", PyObjHandle_SpellsCastReset, METH_VARARGS, NULL },

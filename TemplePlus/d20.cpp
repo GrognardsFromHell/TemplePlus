@@ -1761,8 +1761,8 @@ BOOL D20ActionCallbacks::ActionFrameStandardAttack(D20Actn* d20a){
 	histSys.CreateRollHistoryString(d20a->rollHistId1);
 	histSys.CreateRollHistoryString(d20a->rollHistId2);
 	histSys.CreateRollHistoryString(d20a->rollHistId0);
-	auto makeAttack = temple::GetRef<int(__cdecl)(objHndl, objHndl, int, D20CAF, D20ActionType)>(0x100B7950);
-	makeAttack(d20a->d20APerformer, d20a->d20ATarget, d20a->data1, static_cast<D20CAF>(d20a->d20Caf), d20a->d20ActType);
+	//auto makeAttack = temple::GetRef<int(__cdecl)(objHndl, objHndl, int, D20CAF, D20ActionType)>(0x100B7950);
+	damage.DealAttackDamage(d20a->d20APerformer, d20a->d20ATarget, d20a->data1, static_cast<D20CAF>(d20a->d20Caf), d20a->d20ActType);
 	return TRUE;
 }
 

@@ -127,6 +127,7 @@ struct AiSystem : temple::AddressTable
 	void ShitlistRemove(objHndl npc, objHndl target);
 	void FleeAdd(objHndl npc, objHndl target);
 	void StopAttacking(objHndl npc);
+	void ProvokeHostility(objHndl agitator, objHndl provokedNpc, int rangeType, int flags); // rangeType - 0 is for 5 tiles, 1 is for 10 tiles, 2 is for 20 tiles, and 3 is unlimited
 	
 	objHndl GetCombatFocus(objHndl npc);
 	objHndl GetWhoHitMeLast(objHndl npc);

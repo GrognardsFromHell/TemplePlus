@@ -866,3 +866,8 @@ const std::string & InventorySystem::GetAttachBone(objHndl handle)
 
 	return sBoneNames[slot - 200];
 }
+
+int InventorySystem::GetSoundIdForItemEvent(objHndl item, objHndl wielder, objHndl tgt, int eventType)
+{
+	return temple::GetRef<int(__cdecl)(objHndl, objHndl, objHndl, int)>(0x1006E0B0)(item, wielder, tgt, eventType);
+}
