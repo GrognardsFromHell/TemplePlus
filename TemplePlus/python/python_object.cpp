@@ -2497,9 +2497,7 @@ static PyObject* PyObjHandle_D20SendSignalEx(PyObject* obj, PyObject* args) {
 		auto args2 = Py_BuildValue("(O)", pytarget);
 		Py_DECREF(pytarget);
 		auto pytaResult = PyObjHandle_PerformTouchAttack(obj, args2);
-		auto taResult = PyInt_AsLong(pytaResult);
-		if (!taResult)
-			d20a.d20Caf = D20CAF_NONE;
+		d20a.d20Caf = PyInt_AsLong(pytaResult);
 	}
 
 	d20Sys.d20SendSignal(self->handle, dispKey, &d20a, 0);

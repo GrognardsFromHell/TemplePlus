@@ -94,6 +94,21 @@ class UiPickerHooks : TempleFix
 			if (args.IsBaseModeTarget(UiPickerType::Area)){
 				spPkt.aoeCenter.location = args.result.location;
 				spPkt.aoeCenter.off_z = args.result.offsetz;
+
+				auto objNode = args.result.objList.objects;
+				auto handle = objHndl::null;
+
+				if (!objNode) {
+					if (args.result.handle) {
+						spPkt.targetListHandles[spPkt.targetCount++] = args.result.handle;
+					}
+				}
+				else {
+					for (spPkt.targetCount = 0; objNode && spPkt.targetCount < MAX_SPELL_TARGETS; ++spPkt.targetCount) {
+						spPkt.targetListHandles[spPkt.targetCount] = objNode->handle;
+						objNode = objNode->next;
+					}
+				}
 			}
 			else {
 				spPkt.aoeCenter.location.location.locx = 0;
@@ -112,7 +127,7 @@ class UiPickerHooks : TempleFix
 
 				if (!objNode) {
 					if (args.result.handle) {
-						spPkt.targetListHandles[spPkt.targetCount] = args.result.handle;	
+						spPkt.targetListHandles[spPkt.targetCount++] = args.result.handle;	
 					}
 				}
 				else{
