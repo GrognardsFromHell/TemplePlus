@@ -481,23 +481,23 @@ static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 
 		if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Single)) {
 			objects.loc->getLocAndOff(targetObj, &loc);
-			uiPicker.sub_100BA480(targetObj, &pickArgs);
+			uiPicker.SetSingleTarget(targetObj, &pickArgs);
 		} else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Multi)) {
 			objects.loc->getLocAndOff(targetObj, &loc);
-			uiPicker.sub_100BA480(targetObj, &pickArgs);
+			uiPicker.SetSingleTarget(targetObj, &pickArgs);
 		} else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Cone)) {
 			objects.loc->getLocAndOff(targetObj, &loc);
-			uiPicker.sub_100BA6A0(&loc, &pickArgs);
+			uiPicker.SetConeTargets(&loc, &pickArgs);
 
 		} else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Area)) {
 			if (spellEntry.spellRangeType == SRT_Personal)
 				objects.loc->getLocAndOff(caster, &loc);
 			else
 				objects.loc->getLocAndOff(targetObj, &loc);
-			uiPicker.sub_100BA540(&loc, &pickArgs);
+			uiPicker.GetListRange(&loc, &pickArgs);
 		} else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Personal)) {
 			objects.loc->getLocAndOff(caster, &loc);
-			uiPicker.sub_100BA480(caster, &pickArgs);
+			uiPicker.SetSingleTarget(caster, &pickArgs);
 		}
 
 		spellSys.ConfigSpellTargetting(&pickArgs, &spellPktBody);

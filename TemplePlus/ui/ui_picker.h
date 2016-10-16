@@ -3,6 +3,7 @@
 #include "../objlist.h"
 
 
+struct TigMsg;
 
 enum class UiPickerIncFlags : uint64_t
 {
@@ -33,13 +34,20 @@ enum UiPickerFlagsTarget : uint64_t
 	LosNotRequired = 0x100
 };
 
-enum PickerResultFlags {
-	// User pressed escape
-	PRF_CANCELLED = 0x10
+enum PickerResultFlags : int32_t {
+	PRF_HAS_SINGLE_OBJ = 0x1,
+	PRF_HAS_MULTI_OBJ = 0x2,
+	PRF_CANCELLED = 0x10 // User pressed escape or RMB
+};
+
+enum PickerStatusFlags : int32_t
+{
+	PSF_OutOfRange = 0x1,
+	PSF_Invalid = 0x2
 };
 
 struct PickerResult {
-	int flags;
+	int flags; // see PickerResultFlags
 	int field4;
 	objHndl handle;
 	ObjListResult objList;
@@ -77,6 +85,30 @@ struct PickerArgs {
 
 const auto TestSizeOfPickerArgs = sizeof(PickerArgs);
 
+
+struct PickerMsgHandlers
+{
+	int(__cdecl *lmbClick)(TigMsg *);
+	int(__cdecl *lmbReleased)(TigMsg *);
+	int(__cdecl *rmbClick)(TigMsg *);
+	int(__cdecl *rmbReleased)(TigMsg *);
+	int(__cdecl *mmbClick)(TigMsg *);
+	int(__cdecl *mmbReleased)(TigMsg *);
+	int(__cdecl *posChange)(TigMsg *);
+	int(__cdecl *posChange2)(TigMsg *);
+	int(__cdecl *scrollwheel)(TigMsg *);
+	int(__cdecl *keystateChange)(TigMsg *);
+	int(__cdecl *charFunc)(TigMsg *);
+};
+
+struct PickerSpec{
+	int idx;
+	const char *name;
+	PickerMsgHandlers *msg;
+	void(__cdecl *cursorTextDraw)(int x, int y, void *data);
+	void(__cdecl *init)();
+};
+
 class UiPicker {
 public:
 	BOOL PickerActiveCheck();
@@ -85,9 +117,9 @@ public:
 	uint32_t sub_100BA030(objHndl objHnd, PickerArgs * pickerArgs);
 
 	void FreeCurrentPicker();
-	uint32_t sub_100BA480(objHndl objHndl, PickerArgs* pickerArgs);
-	void sub_100BA6A0(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs);
-	uint32_t sub_100BA540(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs);
+	uint32_t SetSingleTarget(objHndl objHndl, PickerArgs* pickerArgs);
+	void SetConeTargets(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs);
+	uint32_t GetListRange(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs);
 };
 
 extern UiPicker uiPicker;

@@ -4,6 +4,8 @@
 #include <temple_functions.h>
 #include <tig/tig_loadingscreen.h>
 #include "ui_intgame_select.h"
+#include <tig/tig_msg.h>
+#include <tig/tig_keyboard.h>
 
 UiPicker uiPicker;
 
@@ -13,8 +15,11 @@ static struct PickerAddresses : temple::AddressTable {
 	uint32_t(__cdecl * sub_100BA030)(objHndl, PickerArgs*);
 	int * activePickerIdx; 
 	BOOL(__cdecl* PickerActiveCheck)();
+	PickerSpec *pickerSpecs; // size 9 array containign specs for: None, Single, Multi, Cone, Area, Location, Personal, Inventory Item, Ray (corresponding to  UiPickerType )
 
 	PickerAddresses() {
+		rebase(pickerSpecs, 0x102F9158);
+
 		rebase(ShowPicker, 0x101357E0);
 		rebase(PickerActiveCheck, 0x10135970);
 		rebase(FreeCurrentPicker, 0x10137680);
@@ -35,12 +40,15 @@ static struct PickerAddresses : temple::AddressTable {
 
 class UiPickerHooks : TempleFix
 {
+	static BOOL PickerMultiKeystateChange(TigMsg *msg);
 	void apply() override{
+
+		// Picker Multi Keystate change - support pressing Enter key
+		replaceFunction(0x10137DA0, PickerMultiKeystateChange);
+
 		static BOOL(__cdecl *orgConfigSpellTargeting)(PickerArgs&, SpellPacketBody&) = replaceFunction<BOOL(__cdecl)(PickerArgs &, SpellPacketBody &)>(0x100B9690, [](PickerArgs &args, SpellPacketBody &spPkt)	{
 
 			//return orgConfigSpellTargeting(args, spPkt);
-			
-
 			if (args.IsBaseModeTarget(UiPickerType::Single)){
 				spPkt.targetCount = 1;
 				spPkt.orgTargetCount = 1;
@@ -179,17 +187,17 @@ void UiPicker::FreeCurrentPicker() {
 	addresses.FreeCurrentPicker();
 }
 
-uint32_t UiPicker::sub_100BA480(objHndl objHnd, PickerArgs* pickerArgs)
+uint32_t UiPicker::SetSingleTarget(objHndl objHnd, PickerArgs* pickerArgs)
 {
 	return addresses.sub_100BA480(objHnd, pickerArgs);
 }
 
-void UiPicker::sub_100BA6A0(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs)
+void UiPicker::SetConeTargets(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs)
 {
 	addresses.sub_100BA6A0(locAndOffsets, pickerArgs);
 }
 
-uint32_t UiPicker::sub_100BA540(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs)
+uint32_t UiPicker::GetListRange(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs)
 {
 	return addresses.sub_100BA540(locAndOffsets, pickerArgs);
 }
@@ -203,4 +211,17 @@ bool PickerArgs::IsBaseModeTarget(UiPickerType type)
 bool PickerArgs::IsModeTargetFlagSet(UiPickerType type)
 {
 	return (((uint64_t)modeTarget) & ((uint64_t)type)) == (uint64_t)type;
+}
+
+BOOL UiPickerHooks::PickerMultiKeystateChange(TigMsg * msg){
+	if (msg->type != TigMsgType::KEYSTATECHANGE)
+		return FALSE;
+
+	if (msg->arg2 & 0xFF)
+		return FALSE;
+
+	if (msg->arg1 != DIK_SPACE && msg->arg1 != DIK_RETURN)
+		return 0;
+
+	return temple::GetRef<BOOL(__cdecl)(TigMsg*)>(0x10136810)(msg);
 }
