@@ -40,6 +40,42 @@ public:
 			return 0;
 		});
 	
+
+		// Banshee Charisma Drain (fixes uninitialized values used when saving throw is successful)
+		HOOK_ORG(BansheeCharismaDrain)(0x100F67D0, [](DispatcherCallbackArgs args)->int {
+			GET_DISPIO(dispIOTypeDamage, DispIoDamage);
+			
+			if (dispIo->attackPacket.dispKey < ATTACK_CODE_NATURAL_ATTACK + 1)
+				return 0;
+
+			auto attacker = dispIo->attackPacket.attacker;
+			auto tgt = dispIo->attackPacket.victim;
+			//auto saveRes = damage.SavingThrow(tgt, attacker, 26, SavingThrowType::Fortitude, 0); // looks like by the rules there shouldn't even be a save? (Mon. Man. Ghost entry)
+
+			auto curHp = objects.StatLevelGet(attacker, stat_hp_current);
+			auto maxHp = objects.StatLevelGet(attacker, stat_hp_max);
+			int tempHpGain = 5;
+			auto chaDrainDice = 1;
+			if (dispIo->attackPacket.flags & D20CAF_CRITICAL){
+				tempHpGain = 10;
+				chaDrainDice = 2;
+			}
+			auto chaDrainAmt = Dice(chaDrainDice, 4, 0).Roll();
+
+			auto hpDam = maxHp - curHp;
+			// add Temporary HPs 
+			if (tempHpGain >= hpDam){
+				conds.AddTo(attacker, "Temporary_Hit_Points", {0, 14400, tempHpGain - hpDam});
+				tempHpGain -= tempHpGain - hpDam;
+			}
+			// heal normal damage if applicable
+			if (tempHpGain > 0 ){
+				damage.Heal(attacker, tgt, Dice(0, 0, tempHpGain), D20A_NONE);
+			}
+			conds.AddTo(tgt, "Temp_Ability_Loss", {stat_charisma, chaDrainAmt});
+		
+			return 0;
+		});
 	}
 } abilityConditionFixes;
 
