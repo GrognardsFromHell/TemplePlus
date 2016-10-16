@@ -375,6 +375,9 @@ int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice 
 	if (critterSys.IsDeadNullDestroyed(tgt))
 		return -1;
 
+	if (combatSys.IsFlankedBy(tgt, attacker))
+		*(int*)&flags |= D20CAF_FLANKED;
+
 	DispIoDamage evtObjDam;
 	evtObjDam.attackPacket.d20ActnType = actionType;
 	evtObjDam.attackPacket.attacker = attacker;
@@ -402,8 +405,7 @@ int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice 
 	if (damFactor != 100) {
 		addresses.AddDamageModFactor(&evtObjDam.damage, damFactor * 0.01f, type, damageDescId);
 	}
-
-
+	
 	if (flags & D20CAF_CONCEALMENT_MISS) {
 		histSys.CreateRollHistoryLineFromMesfile(11, attacker, tgt);
 		floatSys.FloatCombatLine(attacker, 45); // Miss (Concealment)!
@@ -421,6 +423,8 @@ int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice 
 		return -1;
 	}
 
+	temple::GetRef<int>(0x10BCA8AC) = 0; // is weapon damage
+
 	// get damage dice
 	evtObjDam.damage.AddDamageDice(dice.ToPacked(), type, 103);
 	evtObjDam.damage.AddAttackPower(attackPower);
@@ -429,10 +433,9 @@ int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice 
 		evtObjDam.damage.flags |= 2; // empowered
 	if (mmData.metaMagicFlags & 1)
 		evtObjDam.damage.flags |= 1; // maximized
-	dispatch.DispatchDamage(attacker, &evtObjDam, dispTypeDealingDamageWeaponlikeSpell, DK_NONE);
 
 	if (evtObjDam.attackPacket.flags & D20CAF_CRITICAL) {
-		auto extraHitDice = dice.GetCount();
+		auto extraHitDice = 1;
 		auto critMultiplierApply = temple::GetRef<BOOL(__cdecl)(DamagePacket&, int, int)>(0x100E1640); // damagepacket, multiplier, damage.mes line
 		critMultiplierApply(evtObjDam.damage, extraHitDice + 1, 102);
 		floatSys.FloatCombatLine(attacker, 12);
@@ -445,8 +448,12 @@ int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice 
 		uiLogbook.IncreaseCritHits(attacker);
 	}
 
+
+
+	dispatch.DispatchDamage(attacker, &evtObjDam, dispTypeDealingDamageWeaponlikeSpell, DK_NONE);
+
 	
-	temple::GetRef<int>(0x10BCA8AC) = 0; // is weapon damage
+
 
 	DamageCritter(attacker, tgt, evtObjDam);
 

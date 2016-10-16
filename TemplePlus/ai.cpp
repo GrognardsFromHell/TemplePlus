@@ -156,18 +156,22 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 		actSeq->sequencePerform();
 		return 1;
 	}
-	logger->info("AiStrategy: \t Default FAILED. Attempting to find pathable party member as target...");
-	objHndl pathablePartyMember = pathfindingSys.CanPathToParty(objHnd);
-	if (pathablePartyMember)
-	{
-		aiTac.target = pathablePartyMember;
-		if (aiTac.aiTac->aiFunc(&aiTac))
+
+	if (!aiTac.target || !combatSys.IsWithinReach(objHnd, aiTac.target)){
+		logger->info("AiStrategy: \t Default FAILED. Attempting to find pathable party member as target...");
+		objHndl pathablePartyMember = pathfindingSys.CanPathToParty(objHnd);
+		if (pathablePartyMember)
 		{
-			logger->info("AiStrategy: \t Default tactic succeeded; performing.");
-			actSeq->sequencePerform();
-			return 1;
+			aiTac.target = pathablePartyMember;
+			if (aiTac.aiTac->aiFunc(&aiTac))
+			{
+				logger->info("AiStrategy: \t Default tactic succeeded; performing.");
+				actSeq->sequencePerform();
+				return 1;
+			}
 		}
 	}
+	
 
 	// if that doesn't work either, try to Break Free (NPC might be held back by Web / Entangle)
 	if (d20Sys.d20Query(aiTac.performer, DK_QUE_Is_BreakFree_Possible))

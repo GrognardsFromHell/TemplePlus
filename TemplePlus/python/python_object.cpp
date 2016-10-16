@@ -1323,7 +1323,7 @@ static PyObject* PyObjHandle_FloatTextLine(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	PyObject* line;
 	auto colorId = FloatLineColor::White;
-	if (!PyArg_ParseTuple(args, "O|i:", &line, &colorId)) {
+	if (!PyArg_ParseTuple(args, "O|i:objhndl.float_text_line", &line, &colorId)) {
 		return 0;
 	}
 

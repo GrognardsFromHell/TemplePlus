@@ -30,7 +30,8 @@ public:
 #define SPFIX(fname) static int fname ## (DispatcherCallbackArgs args);
 	void VampiricTouchFix();
 	void enlargePersonModelScaleFix(); // fixes ambiguous float point calculations that resulted in cumulative roundoff errors
-	
+	static void SpellDamageWeaponlikeHook(objHndl tgt, objHndl caster, int dicePacked, DamageType damType, int attackPower, D20ActionType actionType, int spellId, D20CAF flags ); // allows for sneak attack damage on chill touch
+
 	static int ImmunityCheckHandler(DispatcherCallbackArgs args);
 
 	static int StinkingCloudObjEvent(DispatcherCallbackArgs args);
@@ -41,9 +42,17 @@ public:
 	static int BlinkDefenderMissChance(DispatcherCallbackArgs args);
 
 	static int WebOnMoveSpeed(DispatcherCallbackArgs args);
+	static int MelfsAcidArrowDamage(DispatcherCallbackArgs args);
 
 	void apply() override {
 		
+		// Spell damage conversion to Weapon-like spell damage (to support Sneak Attack with spells)
+		redirectCall(0x100DCDC4, SpellDamageWeaponlikeHook); // Chill Touch
+		redirectCall(0x100C94F3, SpellDamageWeaponlikeHook); // Produce Flame
+		redirectCall(0x100DDA04, SpellDamageWeaponlikeHook); // Shocking Grasp
+		redirectCall(0x100DDEB4, SpellDamageWeaponlikeHook); // Vampiric Touch
+		replaceFunction(0x100CE940, MelfsAcidArrowDamage);
+
 		VampiricTouchFix();
 		enlargePersonModelScaleFix();
 
@@ -174,6 +183,11 @@ void SpellConditionFixes::enlargePersonModelScaleFix()
 	redirectCall(0x100D84DE, enlargeSpellRestoreModelScaleHook); // sp152 enlarge 
 	redirectCall(0x100D9C22, enlargeSpellRestoreModelScaleHook); // sp404 righteous might
 
+}
+
+void SpellConditionFixes::SpellDamageWeaponlikeHook(objHndl tgt, objHndl caster, int dicePacked, DamageType damType, int attackPower, D20ActionType actionType, int spellId, D20CAF flags){
+	*(int*)&flags |= D20CAF_HIT;
+	damage.DealWeaponlikeSpellDamage(tgt, caster, Dice::FromPacked(dicePacked), damType, attackPower, 100, 103, actionType, spellId, flags);
 }
 
 int SpellConditionFixes::ImmunityCheckHandler(DispatcherCallbackArgs args)
@@ -465,5 +479,25 @@ int SpellConditionFixes::WebOnMoveSpeed(DispatcherCallbackArgs args){
 		dispIo->bonlist->SetOverallCap(2, 0, 0, args.GetData2());
 	}
 	
+	return 0;
+}
+
+int SpellConditionFixes::MelfsAcidArrowDamage(DispatcherCallbackArgs args){
+	auto isCritical = args.GetCondArg(2);
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spPkt(spellId);
+	floatSys.FloatCombatLine(args.objHndCaller, 46); // acid damage
+	Dice damDice(2, 4, 0);
+	int flags = D20CAF_HIT;
+
+	if (isCritical){
+		flags |= D20CAF_CRITICAL;
+		args.SetCondArg(2, 0);
+	}
+	if (spPkt.durationRemaining < spPkt.duration ) // only the first shot gets sneak attack damage
+		flags |= D20CAF_NO_PRECISION_DAMAGE;
+
+	damage.DealWeaponlikeSpellDamage(spPkt.targetListHandles[0], spPkt.caster, damDice, DamageType::Acid, 1, 100, 103, D20A_CAST_SPELL, spellId, (D20CAF)flags);
+
 	return 0;
 }

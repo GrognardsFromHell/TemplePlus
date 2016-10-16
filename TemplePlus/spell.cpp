@@ -2020,8 +2020,8 @@ uint32_t LegacySpellSystem::pickerArgsFromSpellEntry(SpellEntry* spEntry, Picker
 		auto rem = maxTgts % 100;
 		auto b = rem / 10;
 		auto c = rem % 10;
-		auto nom = b + casterLvl - lvlOffset;
-		auto denom = c + 1;
+		auto nom = c + casterLvl - lvlOffset;
+		auto denom = b + 1;
 
 		maxTgts = nom / denom;
 

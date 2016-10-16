@@ -373,6 +373,8 @@ public:
 
 		// Sneak Attack damage generalization
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F9A10, classAbilityCallbacks.SneakAttackDamage);
+		SubDispDefNew sdd(dispTypeDealingDamageWeaponlikeSpell, 0, classAbilityCallbacks.SneakAttackDamage, 0u,0u); // Weapon-like spell damage hook
+		write(0x102ED2A8, &sdd, sizeof(SubDispDefNew));
 
 		// D20Mods countdown handler
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100EC9B0, genericCallbacks.D20ModCountdownHandler);
