@@ -402,7 +402,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 			.def_readwrite("caster_level", &SpellPacketBody::casterLevel)
 			.def("get_target",[](SpellPacketBody &pkt, int idx)->objHndl
 			{
-				if (idx < pkt.targetCount)
+				if (idx < (int)pkt.targetCount)
 					return pkt.targetListHandles[idx];
 				return objHndl::null;
 			} )

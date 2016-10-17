@@ -168,6 +168,7 @@ public:
 	static ActionErrorCode PerformCastItemSpell(D20Actn* d20a);
 	static ActionErrorCode PerformCastSpell(D20Actn* d20a); // also used in PerformUseItem
 	static ActionErrorCode PerformCharge(D20Actn* d20a);
+	static ActionErrorCode PerformCopyScroll(D20Actn* d20a);
 	static ActionErrorCode PerformDisarm(D20Actn* d20a);
 	static ActionErrorCode PerformDisarmedWeaponRetrieve(D20Actn* d20a);
 	static ActionErrorCode PerformDivineMight(D20Actn* d20a);
@@ -407,6 +408,8 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Type = D20A_ACTIVATE_DEVICE_SPELL;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformUseItem;
 
+	d20Type = D20A_COPY_SCROLL;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformCopyScroll;
 
 	d20Type = D20A_BARDIC_MUSIC;
 	d20Defs[d20Type].flags = (D20ADF)( D20ADF_MagicEffectTargeting | D20ADF_Breaks_Concentration );
@@ -1876,6 +1879,54 @@ ActionErrorCode D20ActionCallbacks::PerformCharge(D20Actn* d20a){
 	}
 
 	return PerformStandardAttack(d20a);
+}
+
+ActionErrorCode D20ActionCallbacks::PerformCopyScroll(D20Actn * d20a){
+	auto performer = d20a->d20APerformer;
+
+	auto check = temple::GetRef<ActionErrorCode(__cdecl)(D20Actn*)>(0x10091B80)(d20a);
+	if (check == AEC_INVALID_ACTION){
+		skillSys.FloatError(performer, 17);
+		return AEC_OK;
+	} 
+	else if (check!= AEC_OK){
+		return AEC_OK;
+	}
+
+	// get spell enum & level
+	int spEnum = 0;
+	d20a->d20SpellData.Extract(&spEnum, nullptr, nullptr, nullptr, nullptr, nullptr);
+	auto spLvl = spellSys.GetSpellLevelBySpellClass(spEnum, spellSys.GetSpellClass(stat_level_wizard));
+
+	// check forbidden school
+	SpellEntry spEntry(spEnum);
+	if (spellSys.IsForbiddenSchool(performer, spEntry.spellSchoolEnum)){
+		skillSys.FloatError(performer, 18);
+		return AEC_OK;
+	}
+
+	auto roll = skillSys.SkillRoll(performer, SkillEnum::skill_spellcraft, spLvl + 15, nullptr, 1 << (spEntry.spellSchoolEnum + 4));
+	if (!roll){
+		auto spellcraftLvl = critterSys.SkillBaseGet(performer, SkillEnum::skill_spellcraft);
+		conds.AddTo(performer, "Failed_Copy_Scroll", {spEnum, spellcraftLvl});
+		skillSys.FloatError(performer, 16);
+		return AEC_OK;
+	}
+
+	spellSys.SpellKnownAdd(performer, spEnum, spellSys.GetSpellClass(stat_level_wizard), spLvl, 1, 0);
+	auto scrollObj = inventory.GetItemAtInvIdx(performer, d20a->data1);
+	if (scrollObj){
+		auto qty = inventory.GetQuantity(scrollObj);
+		if (qty > 1){
+			inventory.QuantitySet(scrollObj, qty - 1);
+		} 
+		else{
+			objects.Destroy(scrollObj);
+		}
+	}
+	skillSys.FloatError(performer, 15);
+
+	return AEC_OK;
 }
 
 ActionErrorCode D20ActionCallbacks::PerformDisarm(D20Actn* d20a){

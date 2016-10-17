@@ -347,7 +347,7 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 	DamageCritter(attacker, tgt, evtObjDam);
 
 	// play damage effect particles
-	for (auto i=0; i < evtObjDam.damage.diceCount; i++){
+	for (auto i=0u; i < evtObjDam.damage.diceCount; i++){
 		temple::GetRef<void(__cdecl)(objHndl, DamageType, int)>(0x10016A90)(tgt, evtObjDam.damage.dice[i].type, evtObjDam.damage.dice[i].rolledDamage);
 	}
 

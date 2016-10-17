@@ -3669,18 +3669,19 @@ int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args){
 
 		for (auto i=0u; i < spellClasses.size(); i++){
 			if (spellClasses[i] == spellSys.GetSpellClass(stat_level_wizard))
-				alreadyKnows = true;
+				return 0;
 		}
 
+		auto spLvl = spellSys.GetSpellLevelBySpellClass(spData.spellEnum, spellSys.GetSpellClass(stat_level_wizard));
 
-		if (!alreadyKnows){
+		if (spLvl >= 0){
 			radEntry.d20ActionType = D20A_COPY_SCROLL;
 			radEntry.d20ActionData1 = inventory.GetInventoryLocation(itemHandle);
 			radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::CopyScroll);
 		}
 		
 	}
-
+	
 	return 0;
 }
 
