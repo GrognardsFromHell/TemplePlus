@@ -49,76 +49,58 @@ class UiPickerHooks : TempleFix
 		static BOOL(__cdecl *orgConfigSpellTargeting)(PickerArgs&, SpellPacketBody&) = replaceFunction<BOOL(__cdecl)(PickerArgs &, SpellPacketBody &)>(0x100B9690, [](PickerArgs &args, SpellPacketBody &spPkt)	{
 
 			//return orgConfigSpellTargeting(args, spPkt);
-			if (args.IsBaseModeTarget(UiPickerType::Single)){
+			auto flags = (PickerResultFlags)args.result.flags;
+			
+			if (flags & PRF_HAS_SINGLE_OBJ){
 				spPkt.targetCount = 1;
 				spPkt.orgTargetCount = 1;
 				spPkt.targetListHandles[0] = args.result.handle;
-			} else
-			{
+
+				// add for the benefit of AI casters
+				if (args.IsBaseModeTarget(UiPickerType::Multi) && args.result.handle) {
+					auto N = 1;
+					if (!args.IsModeTargetFlagSet(UiPickerType::OnceMulti)) {
+						N = MAX_SPELL_TARGETS;
+					}
+					for ( ; spPkt.targetCount < args.maxTargets && spPkt.targetCount < N; spPkt.targetCount++) {
+						spPkt.targetListHandles[spPkt.targetCount] = args.result.handle;
+					}
+				}
+			} 
+			else	{
 				spPkt.targetCount = 0;
 				spPkt.orgTargetCount = 0;
 			}
 
-			if (args.IsBaseModeTarget(UiPickerType::Multi) ) {
-
+			if (flags & PRF_HAS_MULTI_OBJ){
 
 				auto objNode = args.result.objList.objects;
 
-				if (!objNode) {
-					if (args.result.handle){
-						auto N = 1;
-						if (!args.IsModeTargetFlagSet(UiPickerType::OnceMulti)) {
-							N = MAX_SPELL_TARGETS;
+				for (spPkt.targetCount = 0; objNode; ++spPkt.targetCount) {
+					if (spPkt.targetCount >= 32)
+						break;
+
+					spPkt.targetListHandles[spPkt.targetCount] = objNode->handle;
+
+					if (objNode->next)
+						objNode = objNode->next;
+					// else apply the rest of the targeting to the last object
+					else if (!args.IsModeTargetFlagSet(UiPickerType::OnceMulti)) {
+						while (spPkt.targetCount < args.maxTargets) {
+							spPkt.targetListHandles[spPkt.targetCount++] = objNode->handle;
 						}
-						for (spPkt.targetCount = 0; spPkt.targetCount < args.maxTargets && spPkt.targetCount < N; ++spPkt.targetCount) {
-							spPkt.targetListHandles[spPkt.targetCount] = args.result.handle;
-						}
+						objNode = nullptr;
+						break;
 					}
 				}
-				else{
-					for (spPkt.targetCount = 0; objNode; ++spPkt.targetCount) {
-						if (spPkt.targetCount >= 32)
-							break;
-
-						spPkt.targetListHandles[spPkt.targetCount] = objNode->handle;
-
-						if (objNode->next)
-							objNode = objNode->next;
-						// else apply the rest of the targeting to the last object
-						else if (!args.IsModeTargetFlagSet(UiPickerType::OnceMulti)) {
-							while (spPkt.targetCount < args.maxTargets) {
-								spPkt.targetListHandles[spPkt.targetCount++] = objNode->handle;
-							}
-							objNode = nullptr;
-							break;
-						}
-					}
-				}
-				
-
-				
 			}
-
-			if (args.IsBaseModeTarget(UiPickerType::Area)){
+			
+			if (flags & PRF_HAS_LOCATION){
 				spPkt.aoeCenter.location = args.result.location;
 				spPkt.aoeCenter.off_z = args.result.offsetz;
-
-				auto objNode = args.result.objList.objects;
-				auto handle = objHndl::null;
-
-				if (!objNode) {
-					if (args.result.handle) {
-						spPkt.targetListHandles[spPkt.targetCount++] = args.result.handle;
-					}
-				}
-				else {
-					for (spPkt.targetCount = 0; objNode && spPkt.targetCount < MAX_SPELL_TARGETS; ++spPkt.targetCount) {
-						spPkt.targetListHandles[spPkt.targetCount] = objNode->handle;
-						objNode = objNode->next;
-					}
-				}
-			}
-			else {
+			} 
+			else
+			{
 				spPkt.aoeCenter.location.location.locx = 0;
 				spPkt.aoeCenter.location.location.locy = 0;
 				spPkt.aoeCenter.location.off_x = 0;
@@ -126,26 +108,10 @@ class UiPickerHooks : TempleFix
 				spPkt.aoeCenter.off_z = 0;
 			}
 
-			if (args.IsBaseModeTarget(UiPickerType::Ray)){
-				auto objNode = args.result.objList.objects;
-				auto handle = objHndl::null;
-
-				spPkt.aoeCenter.location = args.result.location;
-				spPkt.aoeCenter.off_z = args.result.offsetz;
-
-				if (!objNode) {
-					if (args.result.handle) {
-						spPkt.targetListHandles[spPkt.targetCount++] = args.result.handle;	
-					}
-				}
-				else{
-					for (spPkt.targetCount = 0; objNode && spPkt.targetCount < MAX_SPELL_TARGETS; ++spPkt.targetCount) {
-						spPkt.targetListHandles[spPkt.targetCount] = objNode->handle;
-						objNode = objNode->next;
-					}
-				}
+			if (flags & PRF_UNK8){
+				logger->debug("ui_picker: not implemented - BECAME_TOUCH_ATTACK");
 			}
-
+			
 			return TRUE;
 		});
 	}

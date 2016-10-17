@@ -3,6 +3,7 @@
 #include <gamesystems/gamesystems.h>
 #include <gamesystems/objects/objsystem.h>
 #include "python_object.h"
+#include <config/config.h>
 
 PythonClassSpecIntegration pythonClassIntegration;
 
@@ -177,7 +178,7 @@ bool PythonClassSpecIntegration::ReqsMet(const objHndl & handle, int classEnum){
 	auto args = Py_BuildValue("(i)", objAlignment);
 	auto result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::IsAlignmentCompatible, args) != 0;
 	Py_DECREF(args);
-	if (!result)
+	if (!result && !config.laxRules)
 		return false;
 
 	auto attachee = PyObjHndl_Create(handle);

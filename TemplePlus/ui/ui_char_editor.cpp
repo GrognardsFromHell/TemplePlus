@@ -1211,6 +1211,8 @@ void UiCharEditor::FeatsActivate(){
 			continue;
 		if (feat == FEAT_NONE)
 			continue;
+		if (!config.nonCoreMaterials && feats.IsNonCore(feat) )
+			continue;
 		mSelectableFeats.push_back(FeatInfo(feat));
 	}
 	std::sort(mSelectableFeats.begin(), mSelectableFeats.end(), featSorter);

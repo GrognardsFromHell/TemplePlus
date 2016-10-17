@@ -1222,7 +1222,7 @@ void ItemCreation::GetMaaSpecs() const
 		}
 
 		// get spellReqs
-		if (tabEntry.spellReqs)
+		if (tabEntry.spellReqs && !config.laxRules)
 		{
 			StringTokenizer spellReqTok(tabEntry.spellReqs);
 			while (spellReqTok.next())
@@ -2542,7 +2542,7 @@ bool ItemCreation::MaaCrafterMeetsReqs(int effIdx, objHndl crafter)
 					spellKnown = true;
 			}
 		}
-		if (!spellKnown)
+		if (!spellKnown && !config.laxRules)
 			return false;
 	}
 	

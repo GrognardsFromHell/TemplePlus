@@ -77,6 +77,7 @@ struct TemplePlusConfig
 	std::string hpOnLevelup = "Normal" ;
 	bool allowXpOverflow = false;
 	bool slowerLevelling = false;
+	bool laxRules = false; // Relaxed restrictions for various things
 	bool newClasses = false; // Prestige classes and such
 	bool nonCoreMaterials = false; // splatbooks, fan suggestions etc
 	bool tolerantNpcs = false; // NPCs tolerate monster party members

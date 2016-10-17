@@ -37,6 +37,8 @@ enum UiPickerFlagsTarget : uint64_t
 enum PickerResultFlags : int32_t {
 	PRF_HAS_SINGLE_OBJ = 0x1,
 	PRF_HAS_MULTI_OBJ = 0x2,
+	PRF_HAS_LOCATION = 0x4,
+	PRF_UNK8 = 0x8,
 	PRF_CANCELLED = 0x10 // User pressed escape or RMB
 };
 

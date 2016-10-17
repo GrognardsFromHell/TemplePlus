@@ -1025,7 +1025,12 @@ int LegacyFeatSystem::IsFeatPropertySet(feat_enums feat, int featProp)
 
 bool LegacyFeatSystem::IsFeatMultiSelectMaster(feat_enums feat){
 	return IsFeatPropertySet(feat, FPF_MULTI_MASTER) != 0;
-};
+}
+bool LegacyFeatSystem::IsNonCore(feat_enums feat)
+{
+	return IsFeatPropertySet(feat, FPF_NON_CORE) != 0;
+}
+;
 
 #pragma endregion
 

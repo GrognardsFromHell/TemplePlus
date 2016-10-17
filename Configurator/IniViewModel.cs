@@ -64,6 +64,9 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty NonCoreProperty = DependencyProperty.Register(
           "NonCore", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
+        public static readonly DependencyProperty LaxRulesProperty = DependencyProperty.Register(
+          "LaxRules", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
         public IEnumerable<HpOnLevelUpType> HpOnLevelUpTypes => Enum.GetValues(typeof (HpOnLevelUpType))
             .Cast<HpOnLevelUpType>();
         public IEnumerable<FogOfWarType> FogOfWarTypes => Enum.GetValues(typeof(FogOfWarType))
@@ -186,6 +189,12 @@ namespace TemplePlusConfig
         {
             get { return (bool)GetValue(NonCoreProperty); }
             set { SetValue(NonCoreProperty, value); }
+        }
+
+        public bool LaxRules
+        {
+            get { return (bool)GetValue(LaxRulesProperty); }
+            set { SetValue(LaxRulesProperty, value); }
         }
 
         /// <summary>
@@ -312,6 +321,11 @@ namespace TemplePlusConfig
                 NonCore = nonCore;
             }
 
+            bool laxRules;
+            if (bool.TryParse(tpData["laxRules"], out laxRules))
+            {
+                LaxRules = laxRules;
+            }
 
         }
 
@@ -350,6 +364,7 @@ namespace TemplePlusConfig
                     tpData["fogOfWar"] = "normal";
                     break;
             }
+            tpData["laxRules"] = LaxRules ? "true" : "false";
             tpData["pointBuyPoints"] = PointBuyPoints.ToString();
             tpData["renderWidth"] = RenderWidth.ToString();
             tpData["renderHeight"] = RenderHeight.ToString();
