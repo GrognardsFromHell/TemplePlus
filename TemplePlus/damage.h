@@ -53,7 +53,7 @@ struct DamagePacket {
 	void AddAttackPower(int attackPower);
 	void CalcFinalDamage(); // calcualtes the finalDamage field
 	int GetOverallDamageByType(DamageType damType);
-
+	int AddModFactor(float factor, DamageType damType, int damageMesLine);
 	DamagePacket();
 };
 
@@ -129,6 +129,7 @@ public:
 	const char* GetMesline(unsigned damageMesLine);
 	int AddDamageDice(DamagePacket *dmgPkt, int dicePacked, DamageType damType, unsigned int damageMesLine);
 	int AddDamageDiceWithDescr(DamagePacket *dmgPkt, int dicePacked, DamageType damType, unsigned int damageMesLine, char* descr);
+	BOOL DamageTypeMatch(DamageType reduction, DamageType attackType);
 	Damage();
 private:
 	void Init();

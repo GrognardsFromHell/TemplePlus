@@ -2034,7 +2034,7 @@ uint32_t LegacySpellSystem::pickerArgsFromSpellEntry(SpellEntry* spEntry, Picker
 	if (spEntry->IsBaseModeTarget(UiPickerType::Area)
 		&& (spEntry->spellEnum == 133 // Dispel Magic
 		||  spEntry->spellEnum == 434) ){ // Silence
-		(*(uint64_t*)args->modeTarget ) |= (uint64_t)UiPickerType::AreaOrObj;
+		(*(uint64_t*)&args->modeTarget ) |= (uint64_t)UiPickerType::AreaOrObj;
 	}
 
 

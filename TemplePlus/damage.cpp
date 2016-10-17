@@ -160,14 +160,46 @@ void DamagePacket::CalcFinalDamage(){ // todo hook this
 
 int DamagePacket::GetOverallDamageByType(DamageType damType)
 {
-	// TODO
 	auto damTot = (double)0.0;
 
 	for (auto i=0u; i<this->diceCount; i++)	{
-		
+		if (damType == this->dice[i].type || damType == DamageType::Unspecified){
+			damTot += this->dice[i].rolledDamage;
+			if (i == 0) {
+				damTot += this->bonuses.GetEffectiveBonusSum();
+			}
+		}
+			
 	}
 
+	for (auto i=0; i<this->damModCount; i++){
+		addresses.CalcDamageModFromFactor(this, &this->damageFactorModifiers[i], DamageType::Unspecified, DamageType::Unspecified);
+	}
+
+	for (auto i=0; i<this->damResCount; i++){
+		addresses.CalcDamageModFromDR(this, &this->damageResistances[i], DamageType::Unspecified, DamageType::Unspecified);
+	}
+
+	for (auto i=0; i<this->damResCount; i++){
+		if (damage.DamageTypeMatch(damType, this->damageResistances[i].type)){
+			damTot += this->damageResistances[i].damageReduced;
+		}
+	}
+
+	for (auto i = 0; i < this->damModCount; i++) {
+		if (damage.DamageTypeMatch(damType, this->damageResistances[i].type)){
+			damTot += this->damageFactorModifiers[i].damageReduced;
+		}
+	}
+
+	if (damTot < 0.0)
+		damTot = 0.0;
+
 	return damTot;
+}
+
+int DamagePacket::AddModFactor(float factor, DamageType damType, int damageMesLine){
+	return addresses.AddDamageModFactor(this, factor, damType, damageMesLine);
 }
 
 DamagePacket::DamagePacket(){
@@ -560,6 +592,46 @@ int Damage::AddDamageDiceWithDescr(DamagePacket* dmgPkt, int dicePacked, DamageT
 		return 1;
 	}
 	return 0;
+}
+
+BOOL Damage::DamageTypeMatch(DamageType reduction, DamageType attackType){
+
+	if (attackType == DamageType::Subdual) {
+		if (reduction != DamageType::Subdual)
+			return FALSE;
+	}
+	else if (attackType == DamageType::Unspecified)
+		return TRUE;
+
+	if (reduction == DamageType::Unspecified || attackType == reduction)
+		return TRUE;
+
+	switch (attackType){
+	case DamageType::BludgeoningAndPiercing:
+		if (reduction == DamageType::Bludgeoning || reduction == DamageType::Piercing)
+			return TRUE;
+		break;
+	case DamageType::PiercingAndSlashing:
+		if (reduction == DamageType::Piercing || reduction == DamageType::Slashing)
+			return TRUE;
+		break;
+	case DamageType::SlashingAndBludgeoning:
+		if (reduction == DamageType::Slashing || reduction == DamageType::Bludgeoning)
+			return TRUE;
+		break;
+	case DamageType::SlashingAndBludgeoningAndPiercing:
+		if (reduction == DamageType::Bludgeoning || reduction == DamageType::Slashing
+			|| reduction == DamageType::Piercing || reduction == DamageType::BludgeoningAndPiercing
+			|| reduction == DamageType::PiercingAndSlashing || reduction == DamageType::SlashingAndBludgeoning
+			|| reduction == DamageType::Subdual)
+			return TRUE;
+		break;
+	default:
+		return FALSE;
+
+	}
+
+	return FALSE;
 }
 
 Damage::Damage(){

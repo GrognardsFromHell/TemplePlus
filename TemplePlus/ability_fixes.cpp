@@ -8,6 +8,9 @@
 #include "d20.h"
 #include "float_line.h"
 #include "history.h"
+#include "gamesystems/objects/objsystem.h"
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/particlesystems.h"
 
 // Ability Condition Fixes (for buggy abilities, including monster abilities)
 class AbilityConditionFixes : public TempleFix {
@@ -15,11 +18,15 @@ public:
 #define ABFIX(fname) static int fname ## (DispatcherCallbackArgs args);
 #define HOOK_ORG(fname) static int (__cdecl* org ##fname)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>
 	static int PoisonedOnBeginRound(DispatcherCallbackArgs args);;
-	
+	static int MonsterSplittingHpChange(DispatcherCallbackArgs args);
+	static int MonsterOozeSplittingOnDamage(DispatcherCallbackArgs args);
 
 	void apply() override {
 
 		replaceFunction(0x100EA040, PoisonedOnBeginRound);
+
+		replaceFunction(0x100F7550, MonsterSplittingHpChange);
+		replaceFunction(0x100F7490, MonsterOozeSplittingOnDamage);
 
 		// fixes animal companion runoff crash (it didn't null the second part of the obj handle stored in args[1,2]
 		static void (__cdecl*orgCompanionRunoff)(SubDispNode*, objHndl , objHndl ) = replaceFunction<void(__cdecl)(SubDispNode*, objHndl, objHndl)>(0x100FC3D0, [](SubDispNode* sdn, objHndl owner, objHndl handle){
@@ -136,5 +143,72 @@ int AbilityConditionFixes::PoisonedOnBeginRound(DispatcherCallbackArgs args){
 	}
 
 	conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+	return 0;
+}
+
+int AbilityConditionFixes::MonsterSplittingHpChange(DispatcherCallbackArgs args){
+	auto protoId = objSystem->GetProtoId(args.objHndCaller);
+	auto obj = objSystem->GetObject(args.objHndCaller);
+	auto loc = obj->GetLocationFull();
+	auto hpCur = objects.StatLevelGet(args.objHndCaller, stat_hp_current);
+	auto baseHp = obj->GetInt32(obj_f_hp_pts);
+	auto hpDam = obj->GetInt32(obj_f_hp_damage);
+
+	auto hpMod = (hpCur + hpDam) - baseHp;
+
+	if (hpCur <= 10)
+		return 0;
+
+	obj->SetInt32(obj_f_hp_pts, baseHp / 2);
+	obj->SetInt32(obj_f_hp_damage, (hpDam + hpMod) / 2);
+
+
+	auto protoHandle = objSystem->GetProtoHandle(protoId);
+	auto newMonster = objSystem->CreateObject(protoHandle, loc.location);
+	auto newMonObj = objSystem->GetObject(newMonster);
+	newMonObj->SetInt32(obj_f_hp_pts, baseHp / 2);
+	newMonObj->SetInt32(obj_f_hp_damage, (hpDam + hpMod) / 2);
+	newMonObj->SetInt32(obj_f_critter_flags, newMonObj->GetInt32(obj_f_critter_flags) | OCF_EXPERIENCE_AWARDED);
+
+	gameSystems->GetParticleSys().CreateAtObj("hit-Acid-medium", args.objHndCaller);
+	conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+
+	return 0;
+}
+
+int AbilityConditionFixes::MonsterOozeSplittingOnDamage(DispatcherCallbackArgs args){
+
+	auto curHp = objects.StatLevelGet(args.objHndCaller, stat_hp_current);
+	if (curHp <= 10)
+		return 0;
+
+	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
+	auto isSplitting = false;
+	auto protoId = objSystem->GetProtoId(args.objHndCaller);
+	if (protoId == 14142 && dispIo->damage.GetOverallDamageByType(DamageType::Electricity) > 0){
+		isSplitting = true;
+		dispIo->damage.AddModFactor(0.0f, DamageType::Electricity, 132);
+	}
+
+	if (dispIo->damage.GetOverallDamageByType(DamageType::Slashing) > 0) {
+		isSplitting = true;
+		dispIo->damage.AddModFactor(0.0f, DamageType::Slashing, 132);
+	}
+
+	if (dispIo->damage.GetOverallDamageByType(DamageType::Piercing) > 0) {
+		isSplitting = true;
+		dispIo->damage.AddModFactor(0.0f, DamageType::Piercing, 132);
+	}
+
+	if (dispIo->damage.GetOverallDamageByType(DamageType::PiercingAndSlashing) > 0) {
+		isSplitting = true;
+		dispIo->damage.AddModFactor(0.0f, DamageType::PiercingAndSlashing, 132);
+	}
+
+
+	if (isSplitting){
+		conds.AddTo(args.objHndCaller, "Monster Splitting", {});
+	}
+
 	return 0;
 }
