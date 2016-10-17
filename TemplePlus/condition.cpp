@@ -3623,32 +3623,33 @@ int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args){
 		auto numOptions = multiOptions.size();
 		for (auto i = 0u; i<numOptions; i++) {
 			auto &op = multiOptions[i];
-			radEntry.SetDefaults();
+			RadialMenuEntry radChild;
+			radChild.SetDefaults();
 
-			radEntry.d20SpellData.Set(spData.spellEnum, spData.classCode, spData.spellLevel, invIdx, (MetaMagicData)0);
-			radEntry.d20ActionType = actType;
-			radEntry.d20ActionData1 = invIdx;
-			radEntry.helpId = ElfHash::Hash(spellSys.GetSpellEnumTAG(spData.spellEnum));
-			radialMenus.SetCallbackCopyEntryToSelected(&radEntry);
+			radChild.d20SpellData.Set(spData.spellEnum, spData.classCode, spData.spellLevel, invIdx, (MetaMagicData)0);
+			radChild.d20ActionType = actType;
+			radChild.d20ActionData1 = invIdx;
+			radChild.helpId = ElfHash::Hash(spellSys.GetSpellEnumTAG(spData.spellEnum));
+			radialMenus.SetCallbackCopyEntryToSelected(&radChild);
 
 
 			if (op.isProto) {
 				auto protoId = multiOptions[i].value;
-				radEntry.minArg = protoId;
+				radChild.minArg = protoId;
 
 				auto protoHandle = objSystem->GetProtoHandle(protoId);
 				auto protoObj = objSystem->GetObject(protoHandle);
-				radEntry.text = (char*)description.GetDescriptionString(protoObj->GetInt32(obj_f_description));
+				radChild.text = (char*)description.GetDescriptionString(protoObj->GetInt32(obj_f_description));
 
 			}
 			else {
 				MesLine line(multiOptions[i].value);
 				mesFuncs.GetLine_Safe(*spellSys.spellsRadialMenuOptionsMes, &line);
-				radEntry.text = (char*)line.value;
-				radEntry.minArg = i + 1;
+				radChild.text = (char*)line.value;
+				radChild.minArg = i + 1;
 			}
 
-			radEntry.AddAsChild(handle, parentNodeIdx);
+			radChild.AddAsChild(handle, parentNodeIdx);
 		}
 
 		auto radnow = radialMenus.GetForObj(handle);
@@ -3675,6 +3676,9 @@ int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args){
 		auto spLvl = spellSys.GetSpellLevelBySpellClass(spData.spellEnum, spellSys.GetSpellClass(stat_level_wizard));
 
 		if (spLvl >= 0){
+			radEntry.text = const_cast<char*>(description.getDisplayName(itemHandle, args.objHndCaller));
+			radEntry.type = RadialMenuEntryType::Action;
+			radEntry.helpId = ElfHash::Hash(spellSys.GetSpellEnumTAG(spData.spellEnum));
 			radEntry.d20ActionType = D20A_COPY_SCROLL;
 			radEntry.d20ActionData1 = inventory.GetInventoryLocation(itemHandle);
 			radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::CopyScroll);
