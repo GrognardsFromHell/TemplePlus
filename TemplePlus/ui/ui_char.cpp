@@ -624,17 +624,21 @@ void CharUiSystem::SpellsShow(objHndl obj)
 			}
 			auto spFound2 = spFound;
 			auto numEmptySlotsForLvl = 0;
+			auto hasSpecializationSlot = 0;
 			while (spFound < spMemNum )	{
 				auto spFoundLvl = charSpellPackets[i].spellsMemorized.spells[spFound].spellLevel;
-				if (charSpellPackets[i].spellsMemorized.spells[spFound].pad0 & 0x80)
+				if (charSpellPackets[i].spellsMemorized.spells[spFound].pad0 & 0x80){
+					hasSpecializationSlot = 1; 
 					spFoundLvl++;
+				}
+					
 				if (spFoundLvl > spellLvl)
 					break;
 				spFound++;
 				numEmptySlotsForLvl++;
 			}
-
-			for (int j = 0; j < numSpellsForLvl - numEmptySlotsForLvl; j++) {
+			
+			for (int j = 0; j < numSpellsForLvl - numEmptySlotsForLvl - hasSpecializationSlot; j++) {
 				spStore.spellLevel = spellLvl;
 				spStore.spellEnum = -1;
 				spStore.metaMagicData = 0;
@@ -644,7 +648,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 				insertToSpellList(spFound, spStore, charSpellPackets[i].spellsMemorized);
 			}
 		}
-
+		 
 		// insert "Spell Level #" labels
 		for (int spellLvl = 0; spellLvl < NUM_SPELL_LEVELS; spellLvl++)	{
 			SpellStoreData spStore;
@@ -660,7 +664,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 				}
 			}
 		}
-
+		 
 		// mark the school specialization slots
 		if (!spellSys.isDomainSpell(spellClassCode) && spellSys.GetCastingClass(spellClassCode) == stat_level_wizard && spellSys.getWizSchool(dude)){
 			int slotIdx = 0;
