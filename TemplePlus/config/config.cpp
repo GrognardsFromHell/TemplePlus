@@ -162,6 +162,8 @@ static ConfigSetting configSettings[] = {
 	CONF_INT(msaaQuality),
 	CONF_BOOL(showNpcStats),
 	CONF_BOOL(newClasses),
+	CONF_BOOL(laxRules),
+	CONF_BOOL(nonCoreMaterials),
 	CONF_BOOL(tolerantNpcs),
 	CONF_STRING(fogOfWar)
 };

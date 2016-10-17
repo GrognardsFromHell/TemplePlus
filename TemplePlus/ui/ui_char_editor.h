@@ -6,7 +6,7 @@ struct UiResizeArgs;
 struct GameSystemConf;
 
 struct CharEditorSelectionPacket{
-	Stat abilityStats[6];
+	int abilityStats[6];
 	int numRerolls; // number of rerolls
 	int isPointbuy;
 	char rerollString[128];

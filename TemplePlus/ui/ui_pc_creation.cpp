@@ -48,12 +48,12 @@ const int testSizeOfCreationPc = sizeof(PartyCreationPc); // 344  0x158
 struct ChargenSystem{ // incomplete
 	const char* name;
 	void(__cdecl *reset)(CharEditorSelectionPacket & charSpec);
-	void(__cdecl *field_8)();
+	void(__cdecl *activate)();
 	BOOL(__cdecl *systemInit)(GameSystemConf *);
-	int field10;
-	int field14;
-	void(__cdecl *reset2)();
-	void(__cdecl *field_1C)();
+	void(__cdecl*free)();
+	int resize;
+	void(__cdecl *hide)();
+	void(__cdecl *show)();
 	int(__cdecl *checkComplete)(); // checks if the char editing stage is complete (thus allowing you to move on to the next stage). This is checked at every render call.
 	int field24;
 	void(__cdecl *buttonExited)();
@@ -63,6 +63,9 @@ struct ChargenSystem{ // incomplete
 class PcCreationUiSystem : TempleFix
 {
 public:
+
+	static CharEditorSelectionPacket &GetCharEdSelPkt();
+
 	static WidgetType1 pcPortraitsMain;
 	static int pcPortraitsMainId;
 	static TigRect pcPortraitRects[MAX_PC_CREATION_PORTRAITS];
@@ -78,8 +81,7 @@ public:
 	static void PcPortraitsButtonActivateNext();
 	static void PcPortraitsRefresh();
 	static void PcPortraitsDisable();
-	static int return0()
-	{
+	static int return0(){
 		return 0;
 	};
 	static int PcPortraitsMsgFunc(int widgetId, TigMsg* tigMsg);
@@ -92,8 +94,19 @@ public:
 	static void GetPartyPool(int fromIngame); //fromIngame is 0 when launching from main menu, 1 when launching from inn guestbook
 	static int PartyPoolLoader();
 
+
+	static BOOL StatsIncreaseBtnMsg(int widId, TigMsg* msg);
+	static BOOL StatsDecreaseBtnMsg(int widId, TigMsg* msg);
+	static BOOL StatsUpdateBtns();
+
 	void apply() override
 	{
+
+		// lax rules option for unbounded increase of stats
+		replaceFunction(0x1018B940, StatsIncreaseBtnMsg);
+		replaceFunction(0x1018B9B0, StatsDecreaseBtnMsg);
+		replaceFunction(0x1018B570, StatsUpdateBtns);
+
 		// PC Creation UI Fixes
 		replaceFunction(0x10182E80, PcCreationFeatUiPrereqCheckUsercallWrapper);
 		OrgFeatMultiselectSub_101822A0 = (int(__cdecl*)()) replaceFunction(0x101822A0, HookedUsercallFeatMultiselectSub_101822A0);
@@ -120,6 +133,7 @@ public:
 			writeNoops(0x1011D521); // disabling EXP draw call
 		}
 
+		// KotB alignment restrictions
 		static BOOL (__cdecl*orgPartyAlignmentChoiceShow)() = replaceFunction<BOOL()>(0x1011E200, []()->BOOL
 		{
 
@@ -242,6 +256,10 @@ int __declspec(naked) HookedUsercallFeatMultiselectSub_101822A0()
 	}
 	{ __asm pop edi __asm pop ebx __asm pop esi __asm pop ecx}
 	__asm retn;
+}
+
+CharEditorSelectionPacket & PcCreationUiSystem::GetCharEdSelPkt(){
+	return temple::GetRef<CharEditorSelectionPacket>(0x11E72F00);
 }
 
 BOOL PcCreationUiSystem::PcPortraitsInit(GameSystemConf* conf)
@@ -518,7 +536,134 @@ int PcCreationUiSystem::PartyPoolLoader()
 
 	
 	return result;
-};
+}
+BOOL PcCreationUiSystem::StatsIncreaseBtnMsg(int widId, TigMsg * msg){
+
+	if (msg->type != TigMsgType::WIDGET)
+		return FALSE;
+
+	auto msg_ = (TigMsgWidget*)msg;
+	if (msg_->widgetEventType != TigMsgWidgetEvent::MouseReleased)
+		return FALSE;
+
+	auto idx = ui.WidgetlistIndexof(widId, temple::GetRef<int[]>(0x10C45310), 6);
+	if (idx == -1)
+		return TRUE;
+
+	auto &selPkt = GetCharEdSelPkt();
+	auto abilityLvl = selPkt.abilityStats[idx];
+	auto cost = 1;
+	if (abilityLvl >= 15)
+		cost = 3;
+	else if (abilityLvl >= 13)
+		cost = 2;
+
+	auto &pbPoints = temple::GetRef<int>(0x10C453F4);
+	if (pbPoints >= cost && (abilityLvl < 18 || config.laxRules)){
+		pbPoints -= cost;
+		selPkt.abilityStats[idx]++;
+		StatsUpdateBtns();
+		temple::GetRef<void(__cdecl)(int)>(0x1011BC70)(0);
+	}
+	return TRUE;
+}
+
+BOOL PcCreationUiSystem::StatsDecreaseBtnMsg(int widId, TigMsg * msg){
+
+	if (msg->type != TigMsgType::WIDGET)
+		return FALSE;
+
+	auto msg_ = (TigMsgWidget*)msg;
+	if (msg_->widgetEventType != TigMsgWidgetEvent::MouseReleased)
+		return FALSE;
+
+	auto idx = ui.WidgetlistIndexof(widId, temple::GetRef<int[]>(0x10C44DA8), 6);
+	if (idx == -1)
+		return TRUE;
+
+	auto &selPkt = GetCharEdSelPkt();
+	auto abilityLvl = selPkt.abilityStats[idx];
+	auto cost = 1;
+	if (abilityLvl >= 16)
+		cost = 3;
+	else if (abilityLvl >= 14)
+		cost = 2;
+
+	auto &pbPoints = temple::GetRef<int>(0x10C453F4);
+	if (pbPoints < config.pointBuyPoints && (abilityLvl > 8 || config.laxRules)) {
+		pbPoints += cost;
+		selPkt.abilityStats[idx]--;
+		StatsUpdateBtns();
+		temple::GetRef<void(__cdecl)(int)>(0x1011BC70)(0);
+	}
+	return TRUE;
+}
+
+BOOL PcCreationUiSystem::StatsUpdateBtns(){
+
+	auto textBuf = temple::GetRef<char[]>(0x10C44C34);
+	auto &pbPoints = temple::GetRef<int>(0x10C453F4);
+	_snprintf(textBuf, 16, "%d@1/%d", pbPoints, config.pointBuyPoints);
+
+	auto isIronman = temple::GetRef<BOOL(__cdecl)()>(0x10003860)();
+	auto isPointBuyMode = temple::GetRef<BOOL(__cdecl)()>(0x1011B730)();
+
+
+	// hide/show basic/advanced toggle button
+	if (isIronman){
+		if (isPointBuyMode){
+			temple::GetRef<void(__cdecl)()>(0x1018B500)(); // pointbuy toggle
+		}
+		ui.WidgetSetHidden(temple::GetRef<int>(0x10C44C48), 1); // hide toggle button
+	}
+	else{
+		ui.WidgetSetHidden(temple::GetRef<int>(0x10C44C48), 0); // show toggle button
+	}
+
+	auto &selPkt = GetCharEdSelPkt();
+	for (auto i=0; i < 6; i++){
+		auto abLvl = selPkt.abilityStats[i];
+
+		// increase btn
+		{
+			auto incBtnId = temple::GetRef<int[6]>(0x10C45310)[i];
+			auto cost = 1;
+			if (abLvl >= 15)
+				cost = 3;
+			else if (abLvl >= 13)
+				cost = 2;
+			if (pbPoints < cost || (abLvl == 18 && !config.laxRules))
+				ui.ButtonSetButtonState(incBtnId, UiButtonState::UBS_DISABLED);
+			else
+				ui.ButtonSetButtonState(incBtnId, UiButtonState::UBS_NORMAL);
+			ui.WidgetSetHidden(incBtnId, isPointBuyMode == 0);
+
+		}
+
+		// dec btn
+		{
+			auto decBtnId = temple::GetRef<int[6]>(0x10C44DA8)[i];
+			auto cost = 1;
+			if (abLvl >= 16)
+				cost = 3;
+			else if (abLvl >= 14)
+				cost = 2;
+
+			if (pbPoints >= config.pointBuyPoints || (abLvl == 8 && !config.laxRules) || abLvl <= 4)
+				ui.ButtonSetButtonState(decBtnId, UiButtonState::UBS_DISABLED);
+			else
+				ui.ButtonSetButtonState(decBtnId, UiButtonState::UBS_NORMAL);
+			ui.WidgetSetHidden(decBtnId, isPointBuyMode == 0);
+		}
+		
+	}
+
+	auto rerollBtnId = temple::GetRef<int>(0x10C45460);
+	ui.WidgetSetHidden(rerollBtnId, isPointBuyMode);
+
+	return isPointBuyMode;
+}
+
 
 
 int HookedFeatMultiselectSub_101822A0(feat_enums feat)
