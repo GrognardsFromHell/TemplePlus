@@ -86,6 +86,16 @@ struct LegacySectorAddresses : temple::AddressTable
 LegacySectorSystem  sectorSys;
 BOOL(__cdecl * LegacySectorSystem::orgSectorCacheFind)(SectorLoc secLoc, int * secCacheIdx);
 
+
+class SectorHooks : TempleFix
+{
+	static int SectorTileIsBlocking_OldVersion(locXY loc, int isFlag8);
+	void apply() override {
+
+		replaceFunction(0x100AC570, SectorTileIsBlocking_OldVersion);
+	}
+} sectorHooks;
+
 int Sector::GetTileOffset(LocAndOffsets* loc)
 {
 	auto baseLoc = secLoc.GetBaseTile();
@@ -502,3 +512,19 @@ void MapSectorSystem::RemoveSectorLight(objHndl handle)
 	map_sector_reset_sectorlight(handle);
 }
 
+int SectorHooks::SectorTileIsBlocking_OldVersion(locXY loc, int regardSinks){
+	// should always return 0 in ToEE...
+	auto tileFlags = sectorSys.GetTileFlags({ loc, 0,0 });
+	if (!regardSinks){
+		if (tileFlags & (TileFlags::TF_Blocks | TileFlags::TF_CanFlyOver)){
+			int dummy = 1;
+		}
+		return tileFlags & (TileFlags::TF_Blocks | TileFlags::TF_CanFlyOver);
+	} else
+	{
+		int dummy = 1;
+	}
+		
+
+	return 0;
+}

@@ -140,15 +140,15 @@ struct SectorLights {
 enum TileFlags : uint32_t
 {
 	TILEFLAG_NONE = 0,
-	TF_1 = 1,
-	TF_2 = 2,
-	TF_4 = 4,
-	TF_8 = 8,
-	TF_10 = 0x10,
-	TF_20 = 0x20,
-	TF_40 = 0x40,
-	TF_80 = 0x80,
-	TF_100 = 0x100,
+	TF_Blocks = 1, // the range of flags 0x1 to 0x100 are obsolete / arcanum leftovers
+	TF_Sinks = 2,
+	TF_CanFlyOver = 4, 
+	TF_Icy = 8,
+	TF_Natural = 0x10,
+	TF_SoundProof = 0x20,
+	TF_Indoor = 0x40,
+	TF_Reflective = 0x80,
+	TF_BlocksVision = 0x100, // up to here is obsolete
 	BlockX0Y0 = 0x200,
 	BlockX1Y0 = 0x400,
 	BlockX2Y0 = 0x800,

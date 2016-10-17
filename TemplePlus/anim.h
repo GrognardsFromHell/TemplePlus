@@ -165,6 +165,8 @@ struct AnimActionCallback {
 	uint32_t uniqueId;
 };
 
+
+struct AnimPath;
 struct AnimSlot;
 struct AnimGoal;
 struct AnimSlotGoalStackEntry;

@@ -75,6 +75,43 @@ struct AnimSlotGoalStackEntry {
 
 const auto TestSizeOfAnimSlotGoalStackEntry = sizeof(AnimSlotGoalStackEntry);
 
+struct AnimPath
+{
+	int flags;
+	int8_t deltas[200]; // xy delta pairs describing deltas for drawing a line in screenspace
+	int range;
+	int fieldD0;
+	int fieldD4;
+	int fieldD8;
+	int fieldDC;
+	int pathLength;
+	int fieldE4;
+	locXY objLoc;
+	locXY tgtLoc;
+};
+
+const int testSizeofAnimPath = sizeof(AnimPath); //should be 248 (0xF8)
+
+struct LineRasterPacket{
+	int counter; 
+	int interval; 
+	int deltaIdx;
+	int unused;
+	int64_t x;
+	int64_t y;
+	int8_t * deltaXY;
+
+	LineRasterPacket(){
+		counter = 0;
+		interval = 10;
+		deltaIdx = 0;
+		x = 0i64;
+		y = 0i64;
+		deltaXY = nullptr;
+		
+	}
+};
+
 struct AnimSlot {
   AnimSlotId id;
   int flags; // See AnimSlotFlag
@@ -435,8 +472,10 @@ public:
 	static int __cdecl GoalStateFunc82(AnimSlot& slot);
 	static int __cdecl GoalStateFunc83(AnimSlot& slot);
 	static int __cdecl GoalStateFunc65(AnimSlot& slot); // belongs in ag_hit_by_weapon
+	static int __cdecl GoalStateFunc100_IsCurrentPathValid(AnimSlot& slot);
 	static int __cdecl GoalStateFunc106(AnimSlot& slot);
 	static int __cdecl GoalStateFunc130(AnimSlot& slot);
+	
 	
 } gsFuncs;
 
@@ -1294,9 +1333,19 @@ static BOOL goalstatefunc_42(AnimSlot &slot) {
 
 static class AnimSystemHooks : public TempleFix {
 public:
+
   static void Dump();
 
+  static void RasterPoint(int64_t x, int64_t y, LineRasterPacket & s300);
+  static int RasterizeLineBetweenLocs(locXY loc, locXY tgtLoc, int8_t *deltas);
+  static void RasterizeLineScreenspace(int64_t x, int64_t y, int64_t tgtX, int64_t tgtY, LineRasterPacket &s300, void(__cdecl*callback)(int64_t, int64_t, LineRasterPacket &));
+
   void apply() override {
+
+	  // Animation pathing stuff
+	  replaceFunction(0x1003DF30, RasterPoint);
+
+	  replaceFunction(0x1003FB40, RasterizeLineBetweenLocs);
 
 
 	  //static bool useNew = false;
@@ -1399,6 +1448,8 @@ public:
 	replaceFunction<BOOL(AnimSlot &)>(0x1001C100, gsFuncs.GoalStateFunc133);
     // goalstatefunc_106
     replaceFunction<BOOL(AnimSlot &)>(0x100185e0, gsFuncs.GoalStateFunc106);
+	// goalstatefunc_100
+	replaceFunction<BOOL(AnimSlot &)>(0x1000D150, gsFuncs.GoalStateFunc100_IsCurrentPathValid);
     // goalstatefunc_83_checks_flag4_set_flag8
     replaceFunction<BOOL(AnimSlot &)>(0x10012c80, gsFuncs.GoalStateFunc83);
 	// goalstatefunc_82
@@ -1728,6 +1779,11 @@ int GoalStateFuncs::GoalStateFunc65(AnimSlot& slot)
 
 }
 
+int GoalStateFuncs::GoalStateFunc100_IsCurrentPathValid(AnimSlot & slot)
+{
+	return slot.path.flags & PathFlags::PF_COMPLETE;
+}
+
 void AnimSystemHooks::Dump() {
 
   map<uint32_t, string> goalFuncNames;
@@ -1825,4 +1881,104 @@ void AnimSystemHooks::Dump() {
   jsonO << Json(goalsArray).dump();
 
   logger->info("DONE");
+}
+
+void AnimSystemHooks::RasterPoint(int64_t x, int64_t y, LineRasterPacket & rast)
+{
+	auto someIdx = rast.deltaIdx;
+	if (someIdx == -1 || someIdx >= 200) {
+		rast.deltaIdx = -1;
+		return;
+	}
+
+	rast.counter++;
+
+	if (rast.counter == rast.interval) {
+		rast.deltaXY[someIdx] = x - rast.x;
+		rast.deltaXY[rast.deltaIdx + 1] = y - rast.y;
+		rast.x = x;
+		rast.y = y;
+		rast.deltaIdx += 2;
+		rast.counter = 0;
+	}
+}
+
+int AnimSystemHooks::RasterizeLineBetweenLocs(locXY loc, locXY tgtLoc, int8_t * deltas){
+	// implementation of the Bresenham line algorithm
+	LineRasterPacket rast;
+	int64_t locTransX, locTransY, tgtTransX, tgtTransY;
+	auto getTranslation = temple::GetRef<void(__cdecl)(locXY, int64_t &, int64_t &)>(0x10028E10);
+	getTranslation(loc, locTransX, locTransY);
+	locTransX += 20;
+	locTransY += 14;
+	getTranslation(tgtLoc, tgtTransX, tgtTransY);
+	tgtTransX += 20;
+	tgtTransY += 14;
+
+	rast.x = locTransX;
+	rast.y = locTransY;
+	rast.deltaXY = deltas;
+
+	animHooks.RasterizeLineScreenspace(locTransX, locTransY, tgtTransX, tgtTransY, rast, animHooks.RasterPoint);
+
+	if (rast.deltaIdx == -1)
+		return 0;
+
+	while (rast.counter){
+		animHooks.RasterPoint(tgtTransX, tgtTransY, rast);
+	}
+
+	return rast.deltaIdx == -1 ? 0 : rast.deltaIdx;
+
+}
+
+void AnimSystemHooks::RasterizeLineScreenspace(int64_t x0, int64_t y0, int64_t tgtX, int64_t tgtY, LineRasterPacket & s300, void(*callback)(int64_t, int64_t, LineRasterPacket &)){
+	auto x = x0, y = y0;
+	auto deltaX = tgtX - x0, deltaY = tgtY - y0;
+	auto deltaXAbs = abs(deltaX), deltaYAbs = abs(deltaY);
+
+
+	auto extentX = 2 * deltaXAbs, extentY = 2 * deltaYAbs;
+
+	auto deltaXSign = 0, deltaYSign = 0;
+	if (deltaX > 0)
+		deltaXSign = 1;
+	else if (deltaX < 0)
+		deltaXSign = -1;
+
+	if (deltaY > 0)
+		deltaYSign = 1;
+	else if (deltaY < 0)
+		deltaYSign = -1;
+
+	
+	if (extentX <= extentY){
+
+		int64_t D = extentX - (extentY / 2);
+		callback(x0, y0, s300);
+		while (y != tgtY){
+			if (D >= 0){
+				x += deltaXSign;
+				D -= extentY;
+			}
+			D += extentX;
+			y += deltaYSign;
+			callback(x, y, s300);
+		}
+	} 
+	else
+	{
+		int64_t D = extentY - (extentX / 2);
+		callback(x0, y0, s300);
+		while (x != tgtX){
+			
+			if (D >= 0){
+				y += deltaYSign;
+				D -= extentX;
+			}
+			D += extentY;
+			x += deltaXSign;
+			callback(x, y, s300);
+		}
+	}
 }

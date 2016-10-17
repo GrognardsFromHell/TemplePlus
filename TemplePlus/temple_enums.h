@@ -761,7 +761,7 @@ enum obj_f : uint32_t {
 	obj_f_light_offset_Y = 20,
 	obj_f_light_offset_Z = 21,
 	obj_f_flags = 22, // was "obj_f_name" in the DLL but is used as obj_f_flags so it must be another mis-named one
-	obj_f_spell_flags = 23,
+	obj_f_spell_flags = 23, // looks more like animation system flags...
 	obj_f_name = 24,
 	obj_f_description = 25,
 	obj_f_size = 26,
