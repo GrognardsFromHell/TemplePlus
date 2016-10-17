@@ -61,6 +61,9 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty NewClassesProperty = DependencyProperty.Register(
           "NewClasses", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
+        public static readonly DependencyProperty NonCoreProperty = DependencyProperty.Register(
+          "NonCore", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
         public IEnumerable<HpOnLevelUpType> HpOnLevelUpTypes => Enum.GetValues(typeof (HpOnLevelUpType))
             .Cast<HpOnLevelUpType>();
         public IEnumerable<FogOfWarType> FogOfWarTypes => Enum.GetValues(typeof(FogOfWarType))
@@ -177,6 +180,12 @@ namespace TemplePlusConfig
         {
             get { return (bool)GetValue(NewClassesProperty); }
             set { SetValue(NewClassesProperty, value); }
+        }
+
+        public bool NonCore
+        {
+            get { return (bool)GetValue(NonCoreProperty); }
+            set { SetValue(NonCoreProperty, value); }
         }
 
         /// <summary>
@@ -297,6 +306,13 @@ namespace TemplePlusConfig
                 NewClasses = newClasses;
             }
 
+            bool nonCore;
+            if (bool.TryParse(tpData["nonCoreMaterials"], out nonCore))
+            {
+                NonCore = nonCore;
+            }
+
+
         }
 
         public void SaveToIni(IniData iniData)
@@ -346,6 +362,7 @@ namespace TemplePlusConfig
             tpData["allowXpOverflow"] = AllowXpOverflow ? "true" : "false";
             tpData["slowerLevelling"] = SlowerLevelling ? "true" : "false";
             tpData["newClasses"] = NewClasses? "true" : "false";
+            tpData["nonCoreMaterials"] = NonCore ? "true" : "false";
             tpData["tolerantNpcs"] = TolerantTownsfolk? "true" : "false";
             tpData["showExactHPforNPCs"] = TransparentNpcStats? "true" : "false";
             tpData["showNpcStats"] = TransparentNpcStats ? "true" : "false";

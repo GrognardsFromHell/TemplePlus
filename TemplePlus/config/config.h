@@ -78,6 +78,7 @@ struct TemplePlusConfig
 	bool allowXpOverflow = false;
 	bool slowerLevelling = false;
 	bool newClasses = false; // Prestige classes and such
+	bool nonCoreMaterials = false; // splatbooks, fan suggestions etc
 	bool tolerantNpcs = false; // NPCs tolerate monster party members
 	std::string fogOfWar = "Normal";
 	bool disableFogOfWar = false; // Previously: -nofog

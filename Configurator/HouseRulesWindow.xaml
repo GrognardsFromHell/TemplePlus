@@ -5,29 +5,35 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TemplePlusConfig"
         mc:Ignorable="d"
-        Title="HouseRulesWindow" Height="336.86" Width="645.051"
+        Title="HouseRulesWindow" Height="336.86" Width="503.027"
         WindowStartupLocation="CenterScreen"
         d:DataContext="{d:DesignInstance local:IniViewModel}">
-    <Grid>
-        <StackPanel HorizontalAlignment="Left" Height="247" VerticalAlignment="Top" Width="304" Margin="5,5,0,0">
-            <StackPanel Orientation="Horizontal">
-                <Label VerticalAlignment="Center" Content="HP on Level Up" />
-                <ComboBox VerticalAlignment="Center" SelectedValue="{Binding HpOnLevelUp}"  ItemsSource="{Binding HpOnLevelUpTypes}"/>
-            </StackPanel>
+    <Grid Margin="0,0,2,0">
+        <StackPanel HorizontalAlignment="Left" Height="247" VerticalAlignment="Top" Width="205" Margin="5,5,0,0">
             <StackPanel Orientation="Horizontal">
                 <Label VerticalAlignment="Center" Content="Fog of War" />
                 <ComboBox VerticalAlignment="Center" SelectedValue="{Binding FogOfWar}"  ItemsSource="{Binding FogOfWarTypes}"/>
             </StackPanel>
-            <StackPanel Orientation="Horizontal"  Margin="0,5,0,5">
-                <Label VerticalAlignment="Center" Content="Point Buy Points:"/>
-                <TextBox Width="50" VerticalAlignment="Center" Text="{Binding PointBuyPoints}" />
-            </StackPanel>
-            <CheckBox VerticalAlignment="Center" Content="Allow XP overflow" IsChecked="{Binding AllowXpOverflow}" Margin="0,5,0,5" ToolTip="Allows experience points to accumulate beyond the limit of the next level."/>
-            <CheckBox VerticalAlignment="Center" Content="Prestige Classes" IsChecked="{Binding NewClasses}" Margin="0,5,0,5" ToolTip="Enables Prestige Classes."/>
-            <CheckBox VerticalAlignment="Center" Content="Slower levelling" IsChecked="{Binding SlowerLevelling}" Margin="0,5,0,5" ToolTip="Adjuts the experience point curve such that you rapidly get to level 3, but level more slowly afterwards. You will be about 1-2 levels behind a normal game."/>
             <CheckBox VerticalAlignment="Center" Content="Tolerant Townsfolk" IsChecked="{Binding TolerantTownsfolk}" Margin="0,5,0,5" ToolTip="Townsfolk will be tolerant of monstrous party members and NPCs."/>
             <CheckBox VerticalAlignment="Center" Content="Transparent NPC Stats" IsChecked="{Binding TransparentNpcStats}" Margin="0,5,0,5" ToolTip="The game will show exact HPs for critters and your NPCs' stats."/>
+            <Label VerticalAlignment="Center" Content="&#xD;&#xA;Ruleset Options" Margin="0,0,-25,0" />
+            <CheckBox VerticalAlignment="Center" Content="Allow XP overflow" IsChecked="{Binding AllowXpOverflow}" Margin="0,5" ToolTip="Allows experience points to accumulate beyond the limit of the next level."/>
+            <CheckBox VerticalAlignment="Center" Content="Slower levelling" IsChecked="{Binding SlowerLevelling}" Margin="0,5" ToolTip="Adjuts the experience point curve such that you rapidly get to level 3, but level more slowly afterwards. You will be about 1-2 levels behind a normal game."/>
+            <StackPanel Orientation="Horizontal"  Margin="0,5">
+                <Label VerticalAlignment="Center" Content="Point Buy Points:" Height="25"/>
+                <TextBox Width="50" VerticalAlignment="Center" Text="{Binding PointBuyPoints}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Label VerticalAlignment="Center" Content="HP on Level Up" Height="27" />
+                <ComboBox VerticalAlignment="Center" SelectedValue="{Binding HpOnLevelUp}"  ItemsSource="{Binding HpOnLevelUpTypes}"/>
+            </StackPanel>
         </StackPanel>
         <Button x:Name="button" Content="Ok" HorizontalAlignment="Left" Margin="10,0,0,10" VerticalAlignment="Bottom" Width="75" Click="button_Click"/>
+        <StackPanel HorizontalAlignment="Left" Height="247" VerticalAlignment="Top" Width="240" Margin="243,5,0,0">
+            <Label VerticalAlignment="Center" Content="Content Options" Margin="0,0,10,0" />
+            <CheckBox VerticalAlignment="Center" Content="Non-Core Materials" IsChecked="{Binding NonCore}" Margin="0,5,0,5" ToolTip="Enables content from outside the core DnD rules, such as from splatbooks and fan suggestions."/>
+            <CheckBox VerticalAlignment="Center" Content="Prestige Classes" IsChecked="{Binding NewClasses}" Margin="0,5,0,5" ToolTip="Enables Prestige Classes."/>
+        </StackPanel>
+        <GridSplitter x:Name="gridSplitter" HorizontalAlignment="Left" Height="286" Margin="230,10,0,0" VerticalAlignment="Top" Width="3"/>
     </Grid>
 </Window>
