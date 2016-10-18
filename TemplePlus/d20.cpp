@@ -171,6 +171,7 @@ public:
 	static ActionErrorCode PerformCopyScroll(D20Actn* d20a);
 	static ActionErrorCode PerformDisarm(D20Actn* d20a);
 	static ActionErrorCode PerformDisarmedWeaponRetrieve(D20Actn* d20a);
+	static ActionErrorCode PerformDismissSpell(D20Actn* d20a);
 	static ActionErrorCode PerformDivineMight(D20Actn* d20a);
 	static ActionErrorCode PerformEmptyBody(D20Actn* d20a);
 	static ActionErrorCode PerformFullAttack(D20Actn* d20a);
@@ -410,6 +411,10 @@ void LegacyD20System::NewD20ActionsInit()
 
 	d20Type = D20A_COPY_SCROLL;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformCopyScroll;
+
+	d20Type = D20A_DISMISS_SPELLS;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformDismissSpell;
+
 
 	d20Type = D20A_BARDIC_MUSIC;
 	d20Defs[d20Type].flags = (D20ADF)( D20ADF_MagicEffectTargeting | D20ADF_Breaks_Concentration );
@@ -2073,7 +2078,29 @@ ActionErrorCode D20ActionCallbacks::ActionCheckDisarmedWeaponRetrieve(D20Actn* d
 ActionErrorCode D20ActionCallbacks::PerformDisarmedWeaponRetrieve(D20Actn* d20a){
 	d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Disarmed_Weapon_Retrieve, (int)d20a, 0);
 	return AEC_OK;
-};
+}
+ActionErrorCode D20ActionCallbacks::PerformDismissSpell(D20Actn * d20a){
+	auto spellId = d20a->data1;
+	d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Dismiss_Spells, spellId, 0);
+	SpellPacketBody spPkt(spellId);
+	if (!spPkt.spellEnum)
+		return AEC_OK;
+
+	if (spPkt.caster)
+		d20Sys.d20SendSignal(spPkt.caster, DK_SIG_Dismiss_Spells, spellId, 0);
+	if (spPkt.aoeObj){
+		d20Sys.d20SendSignal(spPkt.aoeObj, DK_SIG_Dismiss_Spells, spellId, 0);
+		d20Sys.d20SendSignal(spPkt.aoeObj, DK_SIG_Spell_End, spellId, 0);
+	}
+		
+	for (auto i=0u; i < spPkt.targetCount; i++){
+		auto tgtHndl = spPkt.targetListHandles[i];
+		if (tgtHndl)
+			d20Sys.d20SendSignal(tgtHndl, DK_SIG_Dismiss_Spells, spellId, 0);
+	}
+	return AEC_OK;
+}
+
 
 #pragma endregion
 

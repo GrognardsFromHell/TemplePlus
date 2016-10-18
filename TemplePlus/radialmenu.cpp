@@ -23,7 +23,7 @@
 #include "gamesystems/legacymapsystems.h"
 
 RadialMenus radialMenus;
-int RadialMenus::standardNodeIndices[120];
+int RadialMenus::standardNodeIndices[200]; // was 120 in Co8
 
 static_assert(temple::validate_size<RadialMenuEntry, 0x48>::value, "Structure has an incorrect size.");
 static_assert(temple::validate_size<RadialMenuNode, 0x11C>::value, "Structure has an incorrect size.");
@@ -376,6 +376,11 @@ void RadialMenus::BuildStandardRadialMenu(objHndl handle){
 		}
 	}
 
+	// dismiss spells
+	if (d20Sys.d20Query(handle, DK_QUE_Critter_Can_Dismiss_Spells)){
+		RadialMenuEntryParent dism(5101);
+		SetStandardNode(handle, RadialMenuStandardNode::SpellsDismiss ,RadialMenuStandardNode::Spells);
+	}
 }
 
 void RadialMenus::AssignMenu(objHndl handle)
@@ -389,8 +394,10 @@ void RadialMenus::SetStandardNode(objHndl handle, int stdNode, int specialParent
 	auto isSpellNode = false;
 	auto isVanillaNode = false;
 
-	
-	if (stdNode > RadialMenuStandardNode::SpellsDomain && stdNode <= 104) {
+	if (stdNode == RadialMenuStandardNode::SpellsDismiss){
+		meskey = 5101;
+	}
+	else if (stdNode > RadialMenuStandardNode::SpellsDomain && stdNode <= 104) {
 		isSpellNode = true;
 
 		if (specialParent == RadialMenuStandardNode::SpellsSorcerer && stdNode < 34
@@ -941,7 +948,10 @@ RadialMenuEntrySlider::RadialMenuEntrySlider(int combatMesLine, int _minArg, int
 
 RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, D20ActionType d20aType, int data1, uint32_t HelpId) : RadialMenuEntry() {
 	type = RadialMenuEntryType::Action;
-	text = combatSys.GetCombatMesLine(combatMesLine);
+	if (combatMesLine > 0)
+		text = combatSys.GetCombatMesLine(combatMesLine);
+	else
+		text = "NULL";
 	helpId = HelpId;
 	d20ActionType = d20aType;
 	d20ActionData1 = data1;

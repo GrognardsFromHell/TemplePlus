@@ -109,6 +109,10 @@ public:
 	static int __cdecl HezrouStenchCureNausea(DispatcherCallbackArgs args);
 	static int __cdecl RemoveSpell(DispatcherCallbackArgs args);
 	static int __cdecl HasCondition(DispatcherCallbackArgs args);
+
+	static int __cdecl SpellDismissRadialSub(DispatcherCallbackArgs args); // allows dismissal of specific spells
+	static int __cdecl SpellAddDismissCondition(DispatcherCallbackArgs args); // prevents dups
+	static int __cdecl SpellDismissSignalHandler(DispatcherCallbackArgs args); // fixes issue with dismissing multiple spells
 } spCallbacks;
 
 
@@ -156,6 +160,8 @@ public:
 	static int __cdecl D20ModCountdownHandler(DispatcherCallbackArgs args);
 
 	static int __cdecl MonsterRegenerationOnDamage(DispatcherCallbackArgs args);
+
+
 
 } genericCallbacks;
 
@@ -3065,6 +3071,28 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 	};
 	write(0x102DFF50, &sdd, sizeof(SubDispDefNew));
 
+	// Radial menu Spell Dismiss options
+	{
+		SubDispDefNew subd;
+		subd.dispKey = DK_NONE;
+		subd.dispType = dispTypeRadialMenuEntry;
+		subd.dispCallback = spCallbacks.SpellDismissRadialSub;
+		write(0x102E6988, &subd, sizeof(subd));
+
+		// disable the generic "Dismiss Spell" entry
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100EEDD0, [](DispatcherCallbackArgs){
+			return 0;
+		});
+
+		// prevent dups
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100CBD60, spCallbacks.SpellAddDismissCondition);
+
+		// signal handler
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100DE3F0, spCallbacks.SpellDismissSignalHandler);
+	}
+
+	
+	
 }
 
 int ConditionFunctionReplacement::TurnUndeadHook(objHndl handle, Stat shouldBeClassCleric, DispIoD20ActionTurnBased * evtObj){
@@ -3504,6 +3532,65 @@ int SpellCallbacks::HasCondition(DispatcherCallbackArgs args)
 	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
 	if (dispIo->data1 == args.GetData1())
 		dispIo->return_val = 1;
+	return 0;
+}
+
+int SpellCallbacks::SpellDismissRadialSub(DispatcherCallbackArgs args)
+{
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spPkt(spellId);
+	static auto helpId = ElfHash::Hash("TAG_DISMISS_SPELL");
+	RadialMenuEntryAction radEntry(-1, D20A_DISMISS_SPELLS, spellId, helpId);
+	radEntry.text = (char*)spellSys.GetSpellMesline(spPkt.spellEnum);
+	if (spPkt.targetCount == 1 && spPkt.targetListHandles[0] != spPkt.caster && spPkt.targetListHandles[0] && objects.IsCritter(spPkt.targetListHandles[0])){
+		auto text = fmt::format("{} ({})", radEntry.text, description.getDisplayName(spPkt.targetListHandles[0]));
+		auto id = ElfHash::Hash(text);
+		 radialMenus.radMenuStrings[id] = text;
+		 radEntry.text = (char*)radialMenus.radMenuStrings[id].c_str();
+	}
+	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::SpellsDismiss);
+	return 0;
+}
+
+int SpellCallbacks::SpellAddDismissCondition(DispatcherCallbackArgs args)
+{
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spPkt(spellId);
+	if (!spPkt.spellEnum || !spPkt.caster){
+		logger->error("Cannot add Dismiss condition to Caster");
+		return 0;
+	}
+	if (d20Sys.d20QueryReturnData(spPkt.caster, DK_QUE_Critter_Can_Dismiss_Spells) != spellId)
+		conds.AddTo(spPkt.caster, "Dismiss", { spellId,0,0 });
+
+	return 0;
+}
+
+int SpellCallbacks::SpellDismissSignalHandler(DispatcherCallbackArgs args) {
+	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+	if (!dispIo) {
+		return 1;
+	}
+
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spPkt(spellId);
+	if (!spPkt.spellEnum)
+		return 0;
+
+	if (dispIo->data1 != spellId)
+		return 0;
+
+	auto spellRemove = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100D7620);
+	auto spellModRemove = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100CBAB0);
+	
+	if (spPkt.spellEnum == 315 || args.GetData1() == 1 || spPkt.targetCount > 0){
+		floatSys.FloatSpellLine(args.objHndCaller, 20000, FloatLineColor::White); // a spell has expired
+		spellRemove(args);
+		spellModRemove(args);
+	}
+
+
+
 	return 0;
 }
 

@@ -47,7 +47,9 @@ enum RadialMenuStandardNode : uint32_t {
 	SpellsPaladin,
 	SpellsDruid,
 	SpellsRanger,
-	SpellsDomain, // above this are the spell numbers i.e. 0-9 for each class in the above order
+	SpellsDomain = 23, // above this are the spell numbers i.e. 0-9 for each class in the above order
+
+	SpellsDismiss = 199
 };
 
 enum class RadialMenuEntryType : uint32_t {
@@ -163,7 +165,7 @@ public:
 	void BuildStandardRadialMenu(objHndl handle); // called from the RadialMenuGlobal dispatcher callback
 		
 
-	static int standardNodeIndices[120];
+	static int standardNodeIndices[200];
 
 	/*
 		Returns the radial menu for the given object or null
