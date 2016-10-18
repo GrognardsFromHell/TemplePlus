@@ -29,9 +29,16 @@ struct LegacyPartySystem : temple::AddressTable
 	uint32_t(__cdecl *ObjAddToGroupArray)(GroupArray *, objHndl);
 	uint32_t AddToPCGroup(objHndl objHnd);
 	uint32_t AddToNpcGroup(objHndl objHnd);
+
+	// Currently Selected Group
 	void AddToCurrentlySelected(objHndl obj);
-	void GroupArrayClearMembers(GroupArray * groupArray);
 	void CurrentlySelectedClear();
+	uint32_t CurrentlySelectedNum();
+	objHndl GetCurrentlySelected(int n);
+
+
+	void GroupArrayClearMembers(GroupArray * groupArray);
+	
 
 	void (__cdecl *RumorLogAdd)(objHndl pc, int rumor);
 

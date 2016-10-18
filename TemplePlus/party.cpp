@@ -170,6 +170,19 @@ void LegacyPartySystem::CurrentlySelectedClear()
 	GroupArrayClearMembers(addresses.groupCurrentlySelected);
 }
 
+uint32_t LegacyPartySystem::CurrentlySelectedNum()
+{
+	return addresses.groupCurrentlySelected->GroupSize;
+}
+
+objHndl LegacyPartySystem::GetCurrentlySelected(int n){
+
+	if (n > CurrentlySelectedNum() - 1)
+		return objHndl::null;
+
+	return addresses.groupCurrentlySelected->GroupMembers[n];
+}
+
 objHndl LegacyPartySystem::GetLeader()
 {
 	objHndl leader = GroupListGetMemberN(0);

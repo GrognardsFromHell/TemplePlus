@@ -431,6 +431,16 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 
 }
 
+BOOL ActionSequenceSystem::SeqPickerHasTargetingType(){
+	return (*seqPickerTargetingType) != D20TC_Invalid;
+}
+
+void ActionSequenceSystem::SeqPickerTargetingReset(){
+	*seqPickerD20ActnData1 = 0;
+	*seqPickerD20ActnType = D20A_UNSPECIFIED_ATTACK;
+	*seqPickerTargetingType = D20TargetClassification::D20TC_Invalid;
+}
+
 void ActionSequenceSystem::ActionTypeAutomatedSelection(objHndl handle)
 {
 	

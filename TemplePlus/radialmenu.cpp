@@ -853,7 +853,7 @@ int RadialMenus::RadialMenuKeypressHandler(TigMsg* msg)
 		auto comrade = party.GetFellowPc(leader);
 		char text[1000];
 		int soundId;
-		critterSys.GetCritterVoiceLine(leader, comrade, text, &soundId);
+		critterSys.GetOkayVoiceLine(leader, comrade, text, &soundId);
 		critterSys.PlayCritterVoiceLine(leader, comrade, text, soundId);
 
 		radialMenus.ClearActiveRadialMenu();

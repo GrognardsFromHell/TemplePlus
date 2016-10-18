@@ -343,8 +343,12 @@ struct LegacyCritterSystem : temple::AddressTable
 	bool IsWarded(objHndl obj); // checks if creature is warded from melee attacks (by stuff like Meld Into Stone, Tree Shape, Otiluke's Resislient Sphere)
 	bool IsSummoned(objHndl obj);
 	bool IsWieldingRangedWeapon(objHndl performer);
-	void GetCritterVoiceLine(objHndl obj, objHndl fellow, char *str, int* soundId);
+
+
+	void GetOkayVoiceLine(objHndl obj, objHndl fellow, char *str, int* soundId); // play the OK sound
 	int PlayCritterVoiceLine(objHndl obj, objHndl fellow, char* text, int soundId);
+	
+	
 	static int SkillBaseGet(objHndl handle, SkillEnum skill);
 	static int GetNumFollowers(objHndl obj, int excludeForcedFollowers);
 

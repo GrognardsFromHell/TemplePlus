@@ -24,6 +24,15 @@
 #include "util/fixes.h"
 #include "updater/updater.h"
 #include "tig/tig_keyboard.h"
+#include "party.h"
+#include "critter.h"
+#include "anim.h"
+#include "gamesystems/objects/objsystem.h"
+#include "combat.h"
+#include "turn_based.h"
+#include "action_sequence.h"
+#include "maps.h"
+#include <infrastructure/keyboard.h>
 
 static GameLoop *gameLoop = nullptr;
 
@@ -400,6 +409,9 @@ void GameLoop::RenderVersion() {
 static class MainLoopHooks : public TempleFix {
 public:
 
+
+	static void NormalLmbHandleTarget(objHndl*tgt);
+
 	void apply() override {
 
 		/*
@@ -426,9 +438,9 @@ public:
 
 		static void(__cdecl*orgIngameMsgHandler)(TigMsg*) = replaceFunction<void(TigMsg*)>(0x10114EF0, [](TigMsg* msg)
 		{
-			if (msg->type == TigMsgType::KEYSTATECHANGE || msg->type == TigMsgType::CHAR || msg->type == TigMsgType::KEYDOWN){
+			if (msg->type == TigMsgType::KEYSTATECHANGE || msg->type == TigMsgType::CHAR || msg->type == TigMsgType::KEYDOWN) {
 				int dummy = 1;
-				if (msg->arg1 == DIK_HOME)	{
+				if (msg->arg1 == DIK_HOME) {
 					int asd = 1;
 					VK_HOME;
 				}
@@ -438,6 +450,177 @@ public:
 			//logger->debug("NormalLmbHandler: success.");
 		});
 
-
+		static void(__cdecl*orgNormalLmbHandleTarget)(objHndl*) = replaceFunction<void(objHndl*)>(0x101140F0, [](objHndl* tgt){
+			
+			NormalLmbHandleTarget(tgt);
+			//orgNormalLmbHandleTarget(tgt);
+		});
 	}
 } hooks;
+
+void MainLoopHooks::NormalLmbHandleTarget(objHndl * tgt)
+{
+	locXY tgtLoc;
+
+	auto leader = party.GetConsciousPartyLeader();
+	auto chosenOne = leader;
+	if (!chosenOne) {
+		chosenOne = party.GroupPCsGetMemberN(0);
+		if (!chosenOne || !critterSys.IsDeadOrUnconscious(chosenOne))
+			return;
+		party.AddToCurrentlySelected(chosenOne);
+	}
+
+	auto obj = objSystem->GetObject(chosenOne);
+	temple::GetRef<void(__cdecl)()>(0x100146C0)(); // FidgetAnimSchedule
+
+
+
+	auto tgtHndl = *tgt;
+	auto tgtObj = objSystem->GetObject(tgtHndl);
+	auto tgtType = tgtObj->type;
+	auto spellFlags = (SpellFlags)obj->GetInt32(obj_f_spell_flags);
+	auto critFlags = (CritterFlag)obj->GetInt32(obj_f_critter_flags);
+
+	if ((spellFlags & SpellFlags::SF_10000)	|| (critFlags & (CritterFlag::OCF_PARALYZED | CritterFlag::OCF_STUNNED) ) )
+		return;
+
+	if (!critterSys.isCritterCombatModeActive(chosenOne) && temple::GetRef<BOOL(__cdecl)(objHndl, void*, objHndl)>(0x10055060)(tgtHndl, nullptr, chosenOne)){
+		combatSys.enterCombat(chosenOne);
+	}
+
+	if (critterSys.isCritterCombatModeActive(chosenOne))
+		return;
+
+	auto goalType = AnimGoalType::ag_anim_fidget;
+	auto someFlag = 0;
+	auto playConfirmationSnd = 1;
+	auto onlyForPC = 0;
+	auto sceneryTeleport = 0;
+	auto perform = false;
+	JumpPoint jmpPt;
+
+	switch (tgtType){
+	case obj_t_portal: 
+		if (spellFlags & SpellFlags::SF_20000)
+			return;
+		goalType = ag_use_object;
+		someFlag = 1;
+		playConfirmationSnd = 1;
+		break;
+	
+	case obj_t_scenery: 
+		goalType = ag_use_object;
+		someFlag = 1;
+		playConfirmationSnd = 1;
+		sceneryTeleport = tgtObj->GetInt32(obj_f_scenery_teleport_to);
+		if (sceneryTeleport && maps.GetJumpPoint(sceneryTeleport, jmpPt)){
+			onlyForPC = 1;
+		}
+		break;
+
+	case obj_t_trap: 
+		goalType = ag_move_to_tile;
+		tgtLoc = tgtObj->GetLocation();
+		playConfirmationSnd = 1;
+		break;
+
+	case obj_t_container: 
+	case obj_t_weapon: 
+	case obj_t_ammo: 
+	case obj_t_armor: 
+	case obj_t_money: 
+	case obj_t_food: 
+	case obj_t_scroll: 
+	case obj_t_key: 
+	case obj_t_written: 
+	case obj_t_generic: 
+	case obj_t_bag: 
+	
+		playConfirmationSnd = 1;
+		perform = true;
+		break;
+	case obj_t_pc: 
+	case obj_t_npc: 
+		if (actSeqSys.SeqPickerHasTargetingType()){
+			perform = true;
+			break;
+		}
+		
+		if (!critterSys.IsDeadOrUnconscious(tgtHndl) || (tgtObj->GetInt32(obj_f_spell_flags) & SpellFlags::SF_2000000)){
+			if (party.IsInParty(tgtHndl))
+				return;
+			goalType = ag_talk;
+			playConfirmationSnd = 0;
+			onlyForPC = 1;
+		} 
+		else{
+			if (spellFlags & SpellFlags::SF_20000)
+				return;
+
+			if (infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) || infrastructure::gKeyboard.IsKeyPressed(VK_RMENU)){
+				temple::GetRef<void(__cdecl)(objHndl, objHndl)>(0x100264A0)(chosenOne, tgtHndl); // moves the tgtObj to chosenOne's location if it's inventory
+				return;
+			}
+			goalType = ag_use_container;
+			someFlag = 1;
+			playConfirmationSnd = 1;
+			onlyForPC = 1;
+		}
+		break;
+	case obj_t_projectile: 
+	default: 
+		return;
+	}
+
+
+	if (perform){
+		if (actSeqSys.isPerforming(chosenOne))
+			return;
+		actSeqSys.TurnBasedStatusInit(chosenOne);
+		d20Sys.GlobD20ActnInit();
+		actSeqSys.ActionTypeAutomatedSelection(tgtHndl);
+		d20Sys.GlobD20ActnSetTarget(tgtHndl, nullptr);
+		actSeqSys.ActionAddToSeq();
+		actSeqSys.sequencePerform();
+		actSeqSys.SeqPickerTargetingReset();
+	} 
+	// do animation goal instead
+	else
+	{
+		auto distToTgt = 100000000.0f;
+		auto curSelIdx = 0u;
+		auto foundOne = false;
+		auto selectedClosest = objHndl::null;
+		auto numSelected = party.CurrentlySelectedNum();
+		for (auto i=0u; i < numSelected; i++){
+			auto dude = party.GetCurrentlySelected(i);
+			if (!critterSys.IsDeadOrUnconscious(dude) 
+				&& ( (objects.GetType(dude) == obj_t_pc) || !onlyForPC)){
+				auto dist = locSys.DistanceToObj(dude, tgtHndl);
+				if (dist > distToTgt)
+					continue;
+				curSelIdx = i;
+				distToTgt = locSys.DistanceToObj(dude, tgtHndl);
+				foundOne = true;
+				selectedClosest = dude;
+			}
+		}
+
+		if (!foundOne)
+			return;
+
+		chosenOne = selectedClosest;
+		animationGoals.PushForMouseTarget(chosenOne, goalType, tgtHndl, tgtLoc, objHndl::null, someFlag);
+
+
+	}
+
+	if (playConfirmationSnd && !critterSys.IsDeadOrUnconscious(chosenOne)){
+		auto fellowPc = party.GetFellowPc(chosenOne);
+		char text[1000];
+		int soundId;
+		critterSys.GetOkayVoiceLine(chosenOne, fellowPc, text, &soundId);
+		critterSys.PlayCritterVoiceLine(chosenOne, fellowPc, text, soundId);
+	}
+}

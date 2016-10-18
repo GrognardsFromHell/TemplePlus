@@ -156,6 +156,11 @@ public:
 	int PushDodge(objHndl attacker, objHndl dodger);
 	int PushAnimate(objHndl obj, int anim);
 	BOOL PushSpellInterrupt(const objHndl& caster, objHndl item,  AnimGoalType animGoalType, int spellSchool);
+
+	/*
+		used by the general out-of-combat mouse LMB click handler
+	*/
+	void PushForMouseTarget(objHndl handle, AnimGoalType type, objHndl tgt, locXY loc, objHndl scratchObj, int someFlag);
 };
 
 extern AnimationGoals animationGoals;

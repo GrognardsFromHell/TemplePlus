@@ -330,7 +330,7 @@ int UiIntegameTurnbasedRepl::UiIntgamePathSequenceHandler(TigMsgMouse* msg) {
 		auto comrade = party.GetFellowPc(actor);
 		char text[1000];
 		int soundId;
-		critterSys.GetCritterVoiceLine(actor, comrade, text, &soundId);
+		critterSys.GetOkayVoiceLine(actor, comrade, text, &soundId);
 		critterSys.PlayCritterVoiceLine(actor, comrade, text, soundId);
 	}
 	*intgameAddresses.uiIntgameAcquireByRaycastOn = 0;
@@ -470,7 +470,7 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 						char voicelineText[1000];
 						voicelineText[0] = 0;
 						int soundId = 0;
-						critterSys.GetCritterVoiceLine(leader, fellowPc, voicelineText, &soundId);
+						critterSys.GetOkayVoiceLine(leader, fellowPc, voicelineText, &soundId);
 						critterSys.PlayCritterVoiceLine(leader, fellowPc, voicelineText, soundId);
 						result = 1;
 					}

@@ -544,6 +544,12 @@ BOOL AnimationGoals::PushSpellInterrupt(const objHndl& caster, objHndl item, Ani
 	return goalData.Push(&idNew);
 }
 
+void AnimationGoals::PushForMouseTarget(objHndl handle, AnimGoalType type, objHndl tgt, locXY loc, objHndl scratchObj, int someFlag){
+
+	AnimSlotGoalStackEntry goalData;
+	temple::GetRef<void(__cdecl)(AnimSlotGoalStackEntry&, objHndl, AnimGoalType, objHndl, locXY, objHndl, int)>(0x10113470)(goalData, handle, type, tgt, loc, scratchObj, someFlag);
+}
+
 //*****************************************************************************
 //* Anim
 //*****************************************************************************

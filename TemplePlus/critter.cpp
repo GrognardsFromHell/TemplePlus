@@ -1271,10 +1271,11 @@ bool LegacyCritterSystem::IsWieldingRangedWeapon(objHndl obj)
 	return (objects.getInt32(weapon, obj_f_weapon_flags) & OWF_RANGED_WEAPON ) != 0;
 }
 
-void LegacyCritterSystem::GetCritterVoiceLine(objHndl obj, objHndl fellow, char* text, int* soundId)
+void LegacyCritterSystem::GetOkayVoiceLine(objHndl obj, objHndl fellow, char* text, int* soundId)
 {
 	addresses.GetCritterVoiceLine(obj, fellow, text, soundId);
 }
+
 
 int LegacyCritterSystem::PlayCritterVoiceLine(objHndl obj, objHndl fellow, char* text, int soundId)
 {

@@ -103,6 +103,8 @@ struct ActionSequenceSystem : temple::AddressTable
 	void curSeqReset(objHndl objHnd);
 	void ActSeqSpellReset() const;
 	void ActSeqGetPicker();
+	BOOL SeqPickerHasTargetingType();
+	void SeqPickerTargetingReset();
 	void ActionTypeAutomatedSelection(objHndl handle);
 	void TurnStart(objHndl obj);
 	int ActionAddToSeq();
