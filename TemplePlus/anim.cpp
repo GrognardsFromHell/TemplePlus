@@ -487,6 +487,7 @@ public:
 	static int __cdecl GoalStateFunc82(AnimSlot& slot);
 	static int __cdecl GoalStateFunc83(AnimSlot& slot);
 	static int __cdecl GoalStateFunc65(AnimSlot& slot); // belongs in ag_hit_by_weapon
+	static int __cdecl GoalStateFunc70(AnimSlot& slot); // 
 	static int __cdecl GoalStateFunc100_IsCurrentPathValid(AnimSlot& slot);
 	static int __cdecl GoalStateFunc106(AnimSlot& slot);
 	static int __cdecl GoalStateFunc130(AnimSlot& slot);
@@ -511,6 +512,8 @@ bool AnimationGoals::PushRunNearTile(objHndl actor, LocAndOffsets target,
 
 bool AnimationGoals::PushRunToTile(objHndl handle, LocAndOffsets loc, PathQueryResult * pqr)
 {
+
+	// To DO!
 	if (!handle
 		|| critterSys.IsDeadOrUnconscious(handle) 
 		|| (!critterSys.IsPC(handle) && temple::GetRef<objHndl(__cdecl)(objHndl)>(0x10053CA0)(handle))  ) // npc is conversing with pc
@@ -531,7 +534,7 @@ bool AnimationGoals::PushRunToTile(objHndl handle, LocAndOffsets loc, PathQueryR
 	} 
 	else{
 		goalData.Init(handle, ag_run_to_tile, 0);
-
+		// To DO!
 	}
 	
 	return false;
@@ -1440,6 +1443,8 @@ public:
   static int RasterizeLineBetweenLocs(locXY loc, locXY tgtLoc, int8_t *deltas);
   static void RasterizeLineScreenspace(int64_t x, int64_t y, int64_t tgtX, int64_t tgtY, LineRasterPacket &s300, void(__cdecl*callback)(int64_t, int64_t, LineRasterPacket &));
 
+  static BOOL TargetDistChecker(objHndl handle, objHndl tgt);
+
   void apply() override {
 
 	  // Animation pathing stuff
@@ -1447,9 +1452,13 @@ public:
 
 	  replaceFunction(0x1003FB40, RasterizeLineBetweenLocs);
 
-
+	  static BOOL(__cdecl *orgGoalstate_20)(AnimSlot&) = replaceFunction<BOOL(__cdecl)(AnimSlot &)>(0x1000EC10, [](AnimSlot &runSlot)  {
+		  return orgGoalstate_20(runSlot);
+	  });
 	  //static bool useNew = false;
 
+
+	  replaceFunction(0x10017BF0, TargetDistChecker);
 
 	  // GetSlot
 	  replaceFunction<BOOL(__cdecl)(AnimSlotId*, AnimSlot**)>(0x10016C40, [](AnimSlotId* runId, AnimSlot** runSlotOut){
@@ -1572,7 +1581,8 @@ public:
 	replaceFunction<BOOL(AnimSlot &)>(0x10012C70, gsFuncs.GoalStateFunc82);
 	//goalstatefunc_78_isheadingok
 	replaceFunction<BOOL(AnimSlot &)>(0x100125F0, gsFuncs.GoalStateFunc78_IsHeadingOk);
-
+	//goalstatefunc_70
+	replaceFunction<BOOL(AnimSlot &)>(0x10011D40, gsFuncs.GoalStateFunc70);
 	// goalstatefunc_65
 	replaceFunction<BOOL(AnimSlot &)>(0x10011880, gsFuncs.GoalStateFunc65);
 	// gsf54
@@ -1807,7 +1817,7 @@ int GoalStateFuncs::GoalStateFunc133(AnimSlot& slot)
 	{
 		if (combatSys.isCombatActive())
 		{
-			logger->debug("Animsys for {} ending turn...", description.getDisplayName(slot.param1.obj));
+			logger->debug("Anim sys for {} ending turn...", description.getDisplayName(slot.param1.obj));
 			combatSys.CombatAdvanceTurn(slot.param1.obj);
 		}
 	}
@@ -1943,6 +1953,25 @@ int GoalStateFuncs::GoalStateFunc65(AnimSlot& slot)
 	anim_obj_set_aas_anim_id(slot.param1.obj, weaponAnimId);
 	return TRUE;
 
+}
+
+int GoalStateFuncs::GoalStateFunc70(AnimSlot & slot)
+{
+	auto someGoal = slot.someGoalType;
+
+	if (someGoal == -1){
+		SpellPacketBody spPkt;
+		spellSys.GetSpellPacketBody(slot.param1.number, &spPkt);
+		if (spPkt.flagSthg & 8){
+			slot.pCurrentGoal->animId.number = spPkt.spellRange; // weird shit!
+			return TRUE;
+		}
+		return FALSE;
+	} 
+	else{
+		slot.pCurrentGoal->animId.number = someGoal;
+		return TRUE;
+	}
 }
 
 int GoalStateFuncs::GoalStateFunc100_IsCurrentPathValid(AnimSlot & slot)
@@ -2147,4 +2176,51 @@ void AnimSystemHooks::RasterizeLineScreenspace(int64_t x0, int64_t y0, int64_t t
 			callback(x, y, s300);
 		}
 	}
+}
+
+BOOL AnimSystemHooks::TargetDistChecker(objHndl handle, objHndl tgt){
+
+	if (!handle || !objects.IsCritter(handle) || critterSys.IsDeadOrUnconscious(handle)
+		|| !tgt || !objects.IsCritter(tgt) || critterSys.IsDeadNullDestroyed(tgt))
+		return FALSE;
+
+	if ((objects.getInt32(handle, obj_f_spell_flags) & SpellFlags::SF_4)
+		&& !(objects.getInt32(handle, obj_f_critter_flags2) & CritterFlags2::OCF2_ELEMENTAL))
+	{
+		if (config.debugMessageEnable)
+			logger->debug("TargetDistChecker: spell flag 4 error");
+		return FALSE;
+	}
+		
+	auto tgtObj = objSystem->GetObject(tgt);
+	auto tgtLoc = tgtObj->GetLocation();
+	objHndl tgt2 = objHndl::null;
+	temple::GetRef<void(__cdecl)(objHndl, locXY, objHndl&)>(0x10058CA0)(handle, tgtLoc, tgt2);
+	if (config.debugMessageEnable)
+		logger->debug("TargetDistChecker: tgt2 is {}", tgt2);
+
+	if (!tgt2
+		|| tgt2 == tgt)
+		return TRUE;
+
+
+	AnimPath animPath;
+	animPath.flags = 0;
+	animPath.pathLength = 0;
+	animPath.fieldE4 = 0;
+	animPath.fieldD4 = 0;
+	animPath.fieldD8 = 0;
+	animPath.fieldD0 = 0;
+
+	auto animpathMaker = temple::GetRef<BOOL(__cdecl)(objHndl, locXY, AnimPath&, int)>(0x10017AD0);
+
+	if (animpathMaker(handle, tgtLoc, animPath, 1)){
+		if (config.debugMessageEnable)
+			logger->debug("animpath successful");
+		return TRUE;
+	}
+		
+	if (config.debugMessageEnable)
+		logger->debug("animpath failed!");
+	return FALSE;
 }

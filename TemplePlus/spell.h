@@ -76,7 +76,7 @@ const uint32_t TestSizeOfSpellEntry = sizeof(SpellEntry); // should be 0xC0  ( 1
 struct SpellPacketBody{
 	uint32_t spellEnum;
 	uint32_t spellEnumOriginal; // used for spontaneous casting in order to debit the "original" spell
-	uint32_t flagSthg;
+	uint32_t flagSthg; // 8 used in GoalStateFunc70
 	void * pSthg;
 	objHndl caster;
 	uint32_t casterPartsysId;
