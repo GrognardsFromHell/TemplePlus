@@ -85,10 +85,17 @@ public:
 		}
 		
 		auto actor = tbSys.turnBasedGetCurrentActor();
-		if (actor)
-			logger->debug("Greybar Reset! Current actor: {} ({})", description.getDisplayName(actor), actor);
+		if (actor )
+			if (objSystem->IsValidHandle(actor))
+				logger->debug("Greybar Reset! Current actor: {} ({})", description.getDisplayName(actor), actor);
+			else
+			{
+				logger->debug("Greybar Reset! Current actor is invalid handle.");
+			}
+				
 		else
 			logger->debug("Greybar Reset! Actor is null.");
+
 		if (actor && objSystem->IsValidHandle(actor) && !objects.IsPlayerControlled(actor))
 		{
 			actSeqSys.GreybarReset();
