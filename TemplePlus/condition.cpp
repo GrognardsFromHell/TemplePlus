@@ -3677,6 +3677,19 @@ int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args){
 	radEntry.d20SpellData.Set(spData.spellEnum, spData.classCode, spData.spellLevel, invIdx, (MetaMagicData)0);
 	radEntry.text = const_cast<char*>(description.getDisplayName(itemHandle, args.objHndCaller));
 
+
+	auto chargesRem = charges;
+	if (objType == obj_t_scroll || objType == obj_t_food){
+		chargesRem = inventory.GetQuantity(itemHandle);
+	}
+	
+	if (chargesRem > 1){
+		auto text = fmt::format("{} ({})", radEntry.text, chargesRem);
+		auto textId = ElfHash::Hash(text);
+		radialMenus.radMenuStrings[textId] = text;
+		radEntry.text = (char*)radialMenus.radMenuStrings[textId].c_str();
+	}
+
 	RadialMenuStandardNode parentType;
 	switch(objType)
 	{

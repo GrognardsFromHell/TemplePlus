@@ -915,7 +915,7 @@ void CharUiSystem::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& add
 			addStr = fmt::format("{}: {}", d20Stats.GetStatName(stat_caster_level), casterLevel);
 	}
 
-	if (itemObj->type == obj_t_generic){
+	if (itemObj->type == obj_t_generic || itemObj->type == obj_t_weapon){
 		auto remCharges = gameSystems->GetObj().GetObject(item)->GetInt32(obj_f_item_spell_charges_idx);
 		if (remCharges > 0){
 			addStr = fmt::format("Remaining Charges: {}", remCharges);
