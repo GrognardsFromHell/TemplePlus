@@ -463,6 +463,11 @@ static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 	spellPktBody.spellEnum = spellEnum;
 	spellPktBody.spellEnumOriginal = spellEnum;
 	spellPktBody.caster = caster;
+
+	/*if (*actSeqSys.actSeqPickerActive){
+		auto dummy = 1;
+	}*/
+
 	for (uint32_t i = 0; i < numSpells; i++) {
 		if (!spellSys.spellCanCast(caster, spellEnum, classCodes[i], spellLevels[i]))
 			continue;

@@ -2614,6 +2614,12 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 		d20Sys.d20SendSignal(tgt, DK_SIG_Spell_Cast, spellId, 0);
 	}
 	
+	/*if (party.IsInParty(d20a->d20APerformer)){
+		auto dummy = 1;
+	} else
+	{
+		auto dummy = 1;
+	}*/
 
 	if (curSeq)
 		curSeq->spellPktBody.Reset();

@@ -2578,7 +2578,9 @@ void ActionSequenceSystem::sequencePerform()
 {
 	// check if OK to perform
 	if (*actSeqPickerActive){
-		return;
+		ActnSeq * curSeq = *actSeqCur;
+		if (!curSeq || party.IsInParty(curSeq->performer)) // should solve the issue when casting a spell in the presence of prebuffing NPCs (i.e NPCs can still cast spells while the picker is active)
+			return;
 	}
 
 	// is curSeq ok to perform?
