@@ -3,6 +3,8 @@
 #include "obj.h"
 #include "util/fixes.h"
 
+const LocAndOffsets LocAndOffsets::null{ locXY::fromField(0), 0,0 };
+
 LocationSys locSys;
 
 typedef int(__cdecl*locfunc)(int64_t x, int64_t y, locXY *loc, float*offx, float*offy);

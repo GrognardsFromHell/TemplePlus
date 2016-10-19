@@ -4,6 +4,12 @@
 #include "skill.h"
 #include "gamesystems/gamesystem.h"
 
+struct AnimPath;
+struct AnimSlot;
+struct AnimGoal;
+struct AnimSlotGoalStackEntry;
+struct AnimGoalState;
+
 #pragma pack(push, 1)
 struct AnimSlotId {
 	int slotIndex;
@@ -107,6 +113,8 @@ std::string GetAnimGoalTypeName(AnimGoalType type);
 
 ostream &operator<<(ostream &str, AnimGoalType type);
 
+struct PathQueryResult;
+
 enum AnimGoalPriority {
 	AGP_NONE = 0,
 	AGP_1 = 1,
@@ -120,6 +128,7 @@ enum AnimGoalPriority {
 };
 
 class AnimationGoals {
+friend class AnimSystemHooks;
 public:
 
 	/*
@@ -137,6 +146,8 @@ public:
 		Pushes a goal for the actor to run near a certain tile.
 	*/
 	bool PushRunNearTile(objHndl actor, LocAndOffsets target, int radiusFeet);
+
+	bool PushRunToTile(objHndl handle, LocAndOffsets loc, PathQueryResult *pqr);
 
 	/*
 		Pushes a goal to play the unconceal animation and unconceal the critter.
@@ -161,6 +172,12 @@ public:
 		used by the general out-of-combat mouse LMB click handler
 	*/
 	void PushForMouseTarget(objHndl handle, AnimGoalType type, objHndl tgt, locXY loc, objHndl scratchObj, int someFlag);
+
+	void Debug();
+	const AnimGoal* GetGoal(AnimGoalType goalType);
+
+private:
+	BOOL GetSlot(AnimSlotId* runId, AnimSlot **runSlotOut);
 };
 
 extern AnimationGoals animationGoals;
@@ -171,11 +188,7 @@ struct AnimActionCallback {
 };
 
 
-struct AnimPath;
-struct AnimSlot;
-struct AnimGoal;
-struct AnimSlotGoalStackEntry;
-struct AnimGoalState;
+
 
 using AnimSlotArray = AnimSlot[512];
 using AnimGoalArray = const AnimGoal*[82];
@@ -183,6 +196,7 @@ using AnimGoalArray = const AnimGoal*[82];
 struct TimeEvent;
 class AnimSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem {
 friend class AnimSystemHooks;
+friend class AnimationGoals;
 public:
 	static constexpr auto Name = "Anim";
 	AnimSystem(const GameSystemConf &config);
@@ -235,4 +249,6 @@ private:
 
 	std::vector<AnimActionCallback> mActionCallbacks;
 
+	void DebugGoals();
+	
 };

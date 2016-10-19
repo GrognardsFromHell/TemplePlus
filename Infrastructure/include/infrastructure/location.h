@@ -64,6 +64,8 @@ struct LocAndOffsets {
 	/*LocAndOffsets();
 	LocAndOffsets(locXY loc);
 	LocAndOffsets(locXY loc, float offx, float offy);*/
+
+	static const LocAndOffsets null;
 };
 
 struct LocFull {
