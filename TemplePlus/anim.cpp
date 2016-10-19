@@ -80,7 +80,8 @@ struct AnimSlotGoalStackEntry {
   AnimSlotGoalStackEntry() { memset(this, 0, sizeof(AnimSlotGoalStackEntry)); };
 };
 
-const auto TestSizeOfAnimSlotGoalStackEntry = sizeof(AnimSlotGoalStackEntry);
+const auto testSizeofTimeEventObjInfo = sizeof(TimeEventObjInfo); // should be 40
+const auto TestSizeOfAnimSlotGoalStackEntry = sizeof(AnimSlotGoalStackEntry); // should be 544 (0x220)
 
 struct AnimPath
 {
@@ -131,9 +132,7 @@ struct AnimSlot {
   AnimSlotGoalStackEntry goals[8];
   AnimSlotGoalStackEntry *pCurrentGoal;
   uint32_t unk1; // field_1134
-  uint32_t unk2; // field_1138
-  uint32_t unk3; // field_113C
-  uint32_t padding[60];
+  AnimPath animPath;
   PathQueryResult path;
   AnimParam param1; // Used as parameters for goal states
   AnimParam param2; // Used as parameters for goal states
@@ -143,6 +142,8 @@ struct AnimSlot {
   uint32_t currentPing;    // I.e. used in
   uint32_t uniqueActionId; // ID assigned when triggered by a D20 action
 };
+
+const int testSizeofAnimslot = sizeof(AnimSlot); // should be 11416 (0x2C98)
 
 enum AnimStateTransitionFlags : uint32_t
 {
@@ -911,7 +912,7 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
 				  if (PrepareSlotForGoalState(slot, &goal0->state_special))
 					goal0->state_special.callback(slot);
 				}
-				slot.unk2 |= 1u;
+				slot.animPath.flags |= 1u;
 				slot.currentState = 0;
 				slot.path.flags &= ~PF_COMPLETE;
 				GoalDestinationsRemove(slot.path.mover);
@@ -1065,12 +1066,12 @@ void AnimSystem::PopGoal(AnimSlot &slot, uint32_t popFlags,
 
   if (!(popFlags & 0x1000000)) {
     slot.flags &= ~0x83C;
-    slot.padding[54] = 0; // slot->anim_path.maxPathLength = 0;
+    slot.animPath.pathLength = 0; // slot->anim_path.maxPathLength = 0;
   }
 
   if (popFlags & ASTF_GOAL_DESTINATION_REMOVE) {
     objHndl mover = slot.path.mover;
-    slot.unk2 = 1; // slot->anim_path.field_0 = 1;
+    slot.animPath.flags = 1;
     slot.path.flags = PF_NONE;
     GoalDestinationsRemove(mover);
   }
@@ -1263,7 +1264,7 @@ int GoalStateFuncs::GoalStateFunc106(AnimSlot &slot) {
   auto aasHandle = objects.GetAnimHandle(obj);
   assert(aasHandle);
 
-  if (objects.getInt32(obj, obj_f_spell_flags) & 0x10000) {
+  if (objects.getInt32(obj, obj_f_spell_flags) & SpellFlags::SF_10000) {
 	  //logger->debug("GSF 106: return FALSE due to obj_f_spell_flags 0x10000");
     return FALSE;
   }
@@ -1349,9 +1350,9 @@ int GoalStateFuncs::GoalStateFunc130(AnimSlot& slot)
 		return FALSE;
 	}
 
-	if (obj->GetInt32(obj_f_spell_flags) & 0x10000)
+	if (obj->GetInt32(obj_f_spell_flags) & SpellFlags::SF_10000)
 		return FALSE;
-
+	
 	if (obj->IsCritter())
 	{
 		if (obj->GetInt32(obj_f_critter_flags) & (OCF_PARALYZED | OCF_STUNNED))
@@ -1582,7 +1583,7 @@ public:
 	//goalstatefunc_78_isheadingok
 	replaceFunction<BOOL(AnimSlot &)>(0x100125F0, gsFuncs.GoalStateFunc78_IsHeadingOk);
 	//goalstatefunc_70
-	replaceFunction<BOOL(AnimSlot &)>(0x10011D40, gsFuncs.GoalStateFunc70);
+//	replaceFunction<BOOL(AnimSlot &)>(0x10011D40, gsFuncs.GoalStateFunc70);  // not sure this is correct, not needed anyway right now
 	// goalstatefunc_65
 	replaceFunction<BOOL(AnimSlot &)>(0x10011880, gsFuncs.GoalStateFunc65);
 	// gsf54
@@ -2194,14 +2195,17 @@ BOOL AnimSystemHooks::TargetDistChecker(objHndl handle, objHndl tgt){
 		
 	auto tgtObj = objSystem->GetObject(tgt);
 	auto tgtLoc = tgtObj->GetLocation();
-	objHndl tgt2 = objHndl::null;
-	temple::GetRef<void(__cdecl)(objHndl, locXY, objHndl&)>(0x10058CA0)(handle, tgtLoc, tgt2);
+	objHndl obstructor = objHndl::null;
+	temple::GetRef<void(__cdecl)(objHndl, locXY, objHndl&)>(0x10058CA0)(handle, tgtLoc, obstructor);
 	if (config.debugMessageEnable)
-		logger->debug("TargetDistChecker: tgt2 is {}", tgt2);
+		logger->debug("TargetDistChecker: tgt2 is {}", obstructor);
 
-	if (!tgt2
-		|| tgt2 == tgt)
+	if (!obstructor
+		|| obstructor == tgt|| obstructor == handle)
+	{
 		return TRUE;
+	}
+		
 
 
 	AnimPath animPath;
@@ -2211,9 +2215,10 @@ BOOL AnimSystemHooks::TargetDistChecker(objHndl handle, objHndl tgt){
 	animPath.fieldD4 = 0;
 	animPath.fieldD8 = 0;
 	animPath.fieldD0 = 0;
+	//animPath.range = 200;
 
 	auto animpathMaker = temple::GetRef<BOOL(__cdecl)(objHndl, locXY, AnimPath&, int)>(0x10017AD0);
-
+	
 	if (animpathMaker(handle, tgtLoc, animPath, 1)){
 		if (config.debugMessageEnable)
 			logger->debug("animpath successful");

@@ -165,3 +165,5 @@ struct ObjectId {
 
 };
 #pragma pack(pop)
+
+const int testSizeofObjectId = sizeof(ObjectId); // should be 24

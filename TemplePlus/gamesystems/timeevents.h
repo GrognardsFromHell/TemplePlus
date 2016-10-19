@@ -114,12 +114,15 @@ union TimeEventArg {
 	LocAndOffsets location;
 };
 
+#pragma pack(push, 1)
 struct TimeEventObjInfo {
 	ObjectId guid;
 	locXY location;
 	int mapNumber;
 	int padding;
 };
+#pragma pack(pop)
+const int shit5 = offsetof(TimeEventObjInfo, location);
 
 struct TimeEvent {
 	GameTime time;
