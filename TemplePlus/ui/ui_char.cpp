@@ -113,6 +113,7 @@ public:
 	static BOOL (*orgInventorySlotMsg)(int widId, TigMsg* msg);
 	static char* HookedItemDescriptionBarter(objHndl obj, objHndl item);
 	static void ItemGetDescrAddon(objHndl obj, objHndl item, std::string&); // makes an addon string for the item description boxes
+	void LongDescriptionPopupCreate(objHndl item);
 
 	static void TotalWeightOutputBtnTooltip(int x, int y, int *widId);
 #pragma endregion 
@@ -175,7 +176,28 @@ public:
 		
 		writeNoops(0x101B957E); // so it doesn't decrement the spells memorized num (this causes weirdness in right clicking from the spellbook afterwards)
 
-		static bool (__cdecl* orgUiCharLootingLootWndMsg)(int , TigMsg* ) = replaceFunction<bool(__cdecl)(int , TigMsg* ) >(0x101406D0, [](int widId, TigMsg* msg){
+		static BOOL (__cdecl* orgUiCharLootingLootWndMsg)(int , TigMsg* ) = replaceFunction<BOOL(__cdecl)(int , TigMsg* ) >(0x101406D0, [](int widId, TigMsg* msg){
+
+
+			if (msg->type == TigMsgType::WIDGET) {
+
+				auto msg_ = (TigMsgWidget*)msg;
+				if (msg_->widgetEventType == TigMsgWidgetEvent::Clicked
+					&& (infrastructure::gKeyboard.IsKeyPressed(VK_LSHIFT) || infrastructure::gKeyboard.IsKeyPressed(VK_RSHIFT))) {
+
+					objHndl critterLooted = GetCritterLooted(); // may be substitute inventory object (i.e. a container)
+					auto invenIdx = temple::GetRef<int(__cdecl)(int)>(0x1013F9C0)(widId);
+
+					auto item = inventory.GetItemAtInvIdx(critterLooted, invenIdx);
+					if (item && inventory.IsIdentified(item) && description.LongDescriptionHas(item)) {
+						charUiSys.LongDescriptionPopupCreate(item);
+						return TRUE;
+					}
+
+				}
+
+			}
+			
 			return orgUiCharLootingLootWndMsg(widId, msg);
 		});
 
@@ -782,12 +804,14 @@ int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 		{
 			if (msg->arg4 & MSF_LMB_CLICK)
 			{
+				
 				if ( infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) || infrastructure::gKeyboard.IsKeyPressed(VK_RMENU)){
 
 					objHndl critterLooted = GetCritterLooted(); // may be substitute inventory object (i.e. a container)
 
 					auto uiCharInvItemGetFromWidId = temple::GetRef<objHndl(__cdecl)(int)>(0x10157060);
 					auto item = uiCharInvItemGetFromWidId(widId);
+
 					objHndl vendor = GetVendor();
 
 					logger->debug("Quickselling item {} to {} ({})", description.getDisplayName(item), description.getDisplayName(vendor),description.getDisplayName(critterLooted));
@@ -822,17 +846,20 @@ int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 							party.MoneyAdj(plat, gold, silver, copper);
 						}
 					}
-					return 1;
+					return TRUE;
 				}
+				
 				
 			}
 		}
 	}
 
 
-	if (msg->type == TigMsgType::WIDGET)
-	{
-		int dummy = 1;
+	if (msg->type == TigMsgType::WIDGET){
+
+		auto msg_ = (TigMsgWidget*)msg;
+
+		
 	}
 	return orgInventorySlotMsg(widId, msg);
 }
@@ -873,6 +900,10 @@ char* CharUiSystem::HookedItemDescriptionBarter(objHndl obj, objHndl item)
 			
 	}
 	
+	if (description.LongDescriptionHas(item) && inventory.IsIdentified(item) ){
+		sprintf(strOut, "%s\n\n%s", strOut, temple::GetRef<const char*(__cdecl)(int)>(0x10122DA0)(6048));
+	}
+
 	return strOut;
 }
 
@@ -921,6 +952,10 @@ void CharUiSystem::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& add
 			addStr = fmt::format("Remaining Charges: {}", remCharges);
 		}
 	}
+}
+
+void CharUiSystem::LongDescriptionPopupCreate(objHndl item){
+	temple::GetRef<void(__cdecl)(objHndl)>(0x10144400)(item);
 }
 
 void CharUiSystem::TotalWeightOutputBtnTooltip(int x, int y, int* widId)

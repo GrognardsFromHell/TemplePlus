@@ -5,11 +5,19 @@
 #include <temple/dll.h>
 #include "description.h"
 #include "util/fixes.h"
+#include "gamesystems/objects/objsystem.h"
 
 LegacyDescriptionSystem description;
 
 class DescriptionHooks : public TempleFix{
 	void apply() override {
+
+		// fix for crafted items not showing long descriptions (the long description will be outdated of course)
+		replaceFunction<const char*(objHndl, objHndl)>(0x1001FB60, [](objHndl handle, objHndl observer){
+			return description.GetLongDescription(handle, observer);
+		});
+
+		// GetDescriptionString
 		replaceFunction<const char*(int)>(0x100869D0, [](int descrIdx)->const char*	{
 			return description.GetDescriptionString(descrIdx);
 		});
@@ -64,6 +72,61 @@ const char* LegacyDescriptionSystem::GetDescriptionString(int descrIdx) const
 		return nullptr;
 	}
 	return line.value;
+}
+
+BOOL LegacyDescriptionSystem::LongDescriptionHas(objHndl handle){
+
+	if (!handle)
+		return FALSE;
+
+	auto descr = GetLongDescription(handle, handle);
+	if (descr == nullptr)
+		return FALSE;
+
+	return TRUE;
+}
+
+const char * LegacyDescriptionSystem::GetLongDescription(objHndl handle, objHndl observer)
+{
+	if (!handle)
+		return nullptr;
+
+	
+
+	auto obj = objSystem->GetObject(handle);
+	if (obj->type == obj_t_key){
+		auto keyId = obj->GetInt32(obj_f_key_key_id);
+		return temple::GetRef<const char*(__cdecl)(int)>(0x100867E0)(keyId); // gets line from gamekeylog.mes
+	}
+
+	if (obj->IsPC()){
+		return temple::GetRef<const char*(__cdecl)(objHndl, obj_f)>(0x1009E430)(handle, obj_f_pc_player_name);
+	}
+
+	auto getLongDescrFromMesfile = temple::GetRef<const char*(__cdecl)(int)>(0x100867A0);
+	if (obj->IsNPC()){
+		if (!observer)
+			observer = handle;
+		auto descrId = temple::GetRef<int(__cdecl)(objHndl, objHndl)>(0x1007F670)(handle, observer);
+		return getLongDescrFromMesfile(descrId);
+	}
+	
+	if (temple::GetRef<int>(0x10788098) || inventory.IsIdentified(handle)){  // is editor mode or is identified
+		auto descrIdx = obj->GetInt32(obj_f_description);
+
+		// check if custom name idx
+		if ( (descrIdx & 0x40000000)
+			|| descrIdx < 0 || descrIdx > *descrIdxMax) {
+			auto protoId = objSystem->GetProtoId(handle);
+			auto protoHndl = objSystem->GetProtoHandle(protoId);
+			descrIdx = objSystem->GetObject(protoHndl)->GetInt32(obj_f_description);
+		}
+		return getLongDescrFromMesfile(descrIdx);
+	}
+
+	// unidentified item
+	auto descrId = obj->GetInt32(obj_f_item_description_unknown);
+	return getLongDescrFromMesfile(descrId);
 }
 
 BOOL LegacyDescriptionSystem::Init(GameSystemConf& conf){

@@ -16,13 +16,14 @@ struct LegacyDescriptionSystem : temple::AddressTable
 	const char* getDisplayName(objHndl obj);
 	const char* debugGetName(uint64_t handle);
 	const char* getDisplayName(objHndl obj, objHndl observer);
-	const char* GetDescriptionString(int descrIdx) const;
+	const char* GetDescriptionString(int descrIdx) const; // extends the description strings with Temple+ file description_ext.mes
 
 	uint32_t(__cdecl *DescriptionIsCustom)(int32_t descrIdx);
 	uint32_t(__cdecl *CustomNameNew)(const char *pString);
 	void(__cdecl *CustomNameChange)(const char * pNewNameSource, uint32_t descrIdx);
 	const char *(__cdecl *_getDisplayName)(objHndl obj, objHndl observer);
-
+	BOOL LongDescriptionHas(objHndl handle);
+	const char* GetLongDescription(objHndl handle, objHndl observer = objHndl::null);
 
 	BOOL Init(GameSystemConf& conf);
 	void Exit();
