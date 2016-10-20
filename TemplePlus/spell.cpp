@@ -211,7 +211,10 @@ SpellPacketBody::SpellPacketBody()
 }
 
 SpellPacketBody::SpellPacketBody(uint32_t spellId){
-	spellSys.GetSpellPacketBody(spellId, this);
+	auto res = spellSys.GetSpellPacketBody(spellId, this);
+
+	if (!res)
+		memset(this, 0, sizeof(SpellPacketBody));
 }
 
 bool SpellPacketBody::UpdateSpellsCastRegistry() const

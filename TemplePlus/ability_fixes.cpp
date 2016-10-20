@@ -20,8 +20,38 @@ public:
 	static int PoisonedOnBeginRound(DispatcherCallbackArgs args);;
 	static int MonsterSplittingHpChange(DispatcherCallbackArgs args);
 	static int MonsterOozeSplittingOnDamage(DispatcherCallbackArgs args);
+	static int GrappledMoveSpeed(DispatcherCallbackArgs args);
 
 	void apply() override {
+
+		replaceFunction(0x100CB890, GrappledMoveSpeed); // fixed Grappled when the frog is dead
+		{
+			SubDispDefNew sdd;
+			sdd.dispKey = DK_QUE_Critter_Is_Grappling;
+			sdd.dispType = dispTypeD20Query;
+			sdd.dispCallback = [](DispatcherCallbackArgs args){
+				auto spellId = args.GetCondArg(0);
+				SpellPacketBody spPkt(spellId);
+				if (!spPkt.caster
+					|| objSystem->IsValidHandle(spPkt.caster) && critterSys.IsDeadOrUnconscious(spPkt.caster)){
+					conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+					return 0;
+				}
+					
+				GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
+				dispIo->return_val = 1;
+				return 0;
+			};
+
+			write(0x102E6158, &sdd, sizeof(sdd));
+			write(0x102E616C, &sdd, sizeof(sdd));
+			write(0x102E6180, &sdd, sizeof(sdd));
+			write(0x102E61A8, &sdd, sizeof(sdd));
+			write(0x102E15C0 + offsetof(CondStruct, subDispDefs) + (1) * sizeof(SubDispDefNew), &sdd, sizeof(sdd));
+
+		}
+
+
 
 		replaceFunction(0x100EA040, PoisonedOnBeginRound);
 
@@ -209,6 +239,20 @@ int AbilityConditionFixes::MonsterOozeSplittingOnDamage(DispatcherCallbackArgs a
 	if (isSplitting){
 		conds.AddTo(args.objHndCaller, "Monster Splitting", {});
 	}
+
+	return 0;
+}
+
+int AbilityConditionFixes::GrappledMoveSpeed(DispatcherCallbackArgs args){
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spPkt(spellId);
+	if (!spPkt.caster
+		|| critterSys.IsDeadOrUnconscious(spPkt.caster))
+		return 0;
+	
+	GET_DISPIO(dispIOTypeMoveSpeed, DispIoMoveSpeed);
+	dispIo->bonlist->SetOverallCap(1, args.GetData1(), 0, args.GetData2());
+	dispIo->bonlist->SetOverallCap(2, args.GetData1(), 0, args.GetData2());
 
 	return 0;
 }
