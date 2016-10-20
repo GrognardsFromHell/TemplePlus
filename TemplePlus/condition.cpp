@@ -4716,10 +4716,11 @@ int ClassAbilityCallbacks::BardMusicRadial(DispatcherCallbackArgs args){
 	}
 	
 
-	/*if (bardLvl >= 12 && perfSkill >= 15) {
+	if (bardLvl >= 12 && perfSkill >= 15) {
 		RadialMenuEntryAction songOfFreedom(5119, D20A_BARDIC_MUSIC, BM_SONG_OF_FREEDOM, "TAG_CLASS_FEATURES_BARD_SONG_OF_FREEDOM");
+		songOfFreedom.d20SpellData.Set(3007, spellSys.GetSpellClass(stat_level_bard), 1, -1, 0); // Spell 3007 - Bardic Song of Freedom
 		songOfFreedom.AddAsChild(args.objHndCaller, bmusicId);
-	}*/
+	}
 
 	if (bardLvl >= 15 && perfSkill >= 18) {
 		RadialMenuEntryAction insHeroics(5120, D20A_BARDIC_MUSIC, BM_INSPIRE_HEROICS, "TAG_CLASS_FEATURES_BARD_INSPIRE_HEROICS");
@@ -4761,7 +4762,7 @@ int ClassAbilityCallbacks::BardMusicCheck(DispatcherCallbackArgs args){
 		}
 	};
 	
-	if (!perfSkillSufficient() || (args.GetCondArg(1) == bmType && bmType != BM_SUGGESTION)){
+	if (!perfSkillSufficient() || (args.GetCondArg(1) == bmType && bmType != BM_SUGGESTION && bmType != BM_SONG_OF_FREEDOM)){
 		dispIo->returnVal = AEC_INVALID_ACTION;
 		if (args.GetCondArg(1) == bmType)
 			floatSys.floatMesLine(args.objHndCaller, 1, FloatLineColor::Red, fmt::format("Already Singing").c_str());
@@ -4845,7 +4846,10 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		pySpellIntegration.SpellTrigger(spellId, SpellEvent::SpellEffect);
 		break;
 	case BM_SONG_OF_FREEDOM:
-		return 0;
+		//partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Inspire Courage", args.objHndCaller);
+		spellId = spellSys.GetNewSpellId();
+		spellSys.RegisterSpell(curSeq->spellPktBody, spellId);
+		pySpellIntegration.SpellTrigger(spellId, SpellEvent::SpellEffect);
 		break;
 	case BM_INSPIRE_HEROICS: 
 		//conds.AddTo(d20a->d20ATarget, "Inspired Heroics", {});
@@ -5235,6 +5239,8 @@ void Conditions::AddConditionsToTable(){
 		bardSuggestion.AddHook(dispTypeConditionAddFromD20StatusInit, DK_NONE, genericCallbacks.PlayParticlesSavePartsysId, 1, (uint32_t)"Bardic-Suggestion-hit");
 		bardSuggestion.AddHook(dispTypeConditionAdd, DK_NONE, genericCallbacks.PlayParticlesSavePartsysId, 1, (uint32_t)"Bardic-Suggestion-hit");
 		bardSuggestion.AddHook(dispTypeConditionRemove, DK_NONE, genericCallbacks.EndParticlesFromArg, 1, 0);
+		bardSuggestion.AddHook(dispTypeD20Signal, DK_SIG_Killed, ConditionRemoveCallback);
+		bardSuggestion.AddHook(dispTypeD20Signal, DK_SIG_Teleport_Prepare, ConditionRemoveCallback);
 	}
 
 	static CondStructNew bardInspireHeroics("Inspired Heroics", 4);
