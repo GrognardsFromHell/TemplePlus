@@ -9,6 +9,7 @@
 #include "party.h"
 #include "d20_level.h"
 #include "gamesystems/objects/objsystem.h"
+#include "sound.h"
 
 temple::GlobalPrimitive<float, 0x102CF708> experienceMultiplier;
 temple::GlobalPrimitive<int, 0x10BCA850> numCrittersSlainByCR;
@@ -178,6 +179,8 @@ void XPTableForHighLevels::GiveXPAwards(){
 
 	if (bShouldUpdatePartyUI){
 		templeFuncs.UpdatePartyUI();
+		sound.PlaySound(100001); // LEVEL_UP.WAV
+		sound.PlaySound(100001); // amp it up a bit
 	}
 
 	return;

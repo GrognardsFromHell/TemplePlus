@@ -74,7 +74,7 @@ int SoundHooks::FindSound(int soundId, char* filename){
 	}
 
 
-	// try tpSounds.mes first
+	// try tpmes\sounds.mes first
 
 	MesLine mesline;
 	mesline.key = soundId;
