@@ -745,8 +745,15 @@ void UiIntgameTurnbased::CursorRenderUpdate(){
 		&& (*actSeqSys.seqPickerD20ActnType == D20A_STANDARD_ATTACK
 			|| *actSeqSys.seqPickerD20ActnType == D20A_TRIP)
 		&& (curSeq->tbStatus.attackModeCode < curSeq->tbStatus.baseAttackNumCode + curSeq->tbStatus.numBonusAttacks)){
+
 			mouseFuncs.SetCursorDrawCallback([](int x, int y) {temple::GetRef<void(__cdecl)(int, int, void*)>(0x1008A240)(x,y, nullptr); }, 0x1008A240);
 	} 
+	else if ( (*actSeqSys.seqPickerD20ActnType == D20A_UNSPECIFIED_ATTACK) 
+		&& intgameTarget && cursorState
+		&& (curSeq->tbStatus.attackModeCode < curSeq->tbStatus.baseAttackNumCode + curSeq->tbStatus.numBonusAttacks))
+	{
+		mouseFuncs.SetCursorDrawCallback([](int x, int y) {temple::GetRef<void(__cdecl)(int, int, void*)>(0x1008A240)(x, y, nullptr); }, 0x1008A240);
+	}
 }
 
 void UiIntegameTurnbasedRepl::HourglassUpdate(int intgameAcquireOn, int intgameSelectionConfirmed, int showPathPreview) {
