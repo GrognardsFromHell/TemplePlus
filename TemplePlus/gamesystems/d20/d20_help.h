@@ -2,9 +2,7 @@
 #include <util/fixes.h>
 #include "common.h"
 
-
 struct D20HelpLink;
-
 
 struct D20HelpTopic
 { // all ids are elf hashes
@@ -30,6 +28,26 @@ struct D20HelpLink
 	int field8;
 	int startPos;
 	int endPos;
+};
+
+struct D20RollHistoryEntry
+{
+	char * string;
+	int stringSize;
+	int field8;
+	int stringLen;
+	D20HelpLink *links;
+	int numLinks; //I think
+	int idx;
+	int num2;
+
+	void Clear(){
+		this->idx = 0;
+		this->num2 = 0;
+		this->field8 = 0;
+		this->stringLen = 0;
+		this->string = nullptr;
+	}
 };
 
 class HelpSystem : TempleFix

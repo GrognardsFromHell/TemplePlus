@@ -4,6 +4,11 @@
 #include "damage.h"
 #include "tig/tig_mes.h"
 #include "util/fixes.h"
+#include <gamesystems/d20/d20_help.h>
+#include "party.h"
+#include "description.h"
+#include "combat.h"
+#include <string.h>
 
 #define HISTORY_ARRAY_SIZE 150
 
@@ -124,14 +129,6 @@ struct HistoryArrayEntry{
 	}entry;
 };
 
-class HistSysReplacements : public TempleFix
-{
-public: 
-	void apply() override 
-	{
-		
-	}
-} historySysReplacements;
 
 
 struct HistorySystemAddresses : temple::AddressTable
@@ -167,6 +164,70 @@ struct HistorySystemAddresses : temple::AddressTable
 } addresses;
 
 
+class HistSysReplacements : public TempleFix
+{
+
+public:
+	void apply() override {
+
+		static void(__cdecl*orgParseHistoryEntry)(int, D20RollHistoryEntry *) = replaceFunction<void(__cdecl)(int, D20RollHistoryEntry *)>(0x1019CE60, [](int histId, D20RollHistoryEntry *rh) {
+			auto hist = histSys.HistoryFind(histId);
+			if (!hist)
+				return;
+			if (hist->histType != 3) {
+				orgParseHistoryEntry(histId, rh);
+				return;
+			}
+
+			// saving throw
+			auto hist3 = (HistoryEntryType3*)hist;
+			//if normal roll
+			if (hist3->rollResult != 20 && hist3->rollResult != 1) {
+				orgParseHistoryEntry(histId, rh);
+				return;
+			}
+
+			
+			rh->Clear();
+			/*
+			auto observer = party.GetConsciousPartyLeader();
+			auto descr = description._getDisplayName(hist->obj, observer);
+			histSys.GetRollUiString();
+			if (hist3->rollResult == 1) {
+				
+			}*/
+			
+		});
+
+		// Print to D20 Roll console
+		static void(__cdecl*orgPrintHistoryEntryToD20Console)(int, char *) = replaceFunction<void(__cdecl)(int, char *)>(0x10048960, [](int histId, char *textOut) {
+			auto hist = histSys.HistoryFind(histId);
+			if (!hist)
+				return;
+
+			if (hist->histType != 3){
+				return orgPrintHistoryEntryToD20Console(histId, textOut);
+			}
+
+			auto hist3 = (HistoryEntryType3*)hist;
+			if (hist3->rollResult != 20 && hist3->rollResult != 1)
+				return 	 orgPrintHistoryEntryToD20Console(histId, textOut);
+
+			auto observer = party.GetConsciousPartyLeader();
+			auto descr = description._getDisplayName(hist->obj, observer);
+			auto saveTypeString = combatSys.GetCombatMesLine(hist3->saveType + 500);
+			auto text = fmt::format("{} {} {} {} - {}", descr, histSys.GetRollUiString(26), saveTypeString, histSys.GetRollUiString(18), histSys.GetRollUiString(20 + hist3->rollResult != 20));
+			if (hist3->rollResult == 20){
+				text.append(fmt::format(" (natural 20)"));
+			} else
+			{
+				text.append(fmt::format(" (natural 1)"));
+			}
+
+		});
+
+	}
+} historySysReplacements;
 
 #pragma region History System Implementation
 HistorySystem histSys;
@@ -272,6 +333,14 @@ void HistorySystem::AppendHistoryId(int histId){
 		}
 		lastHistId = histId;
 	}
+}
+void HistorySystem::ParseHistoryEntry(int histId, D20RollHistoryEntry * rh)
+{
+	//todo
+}
+const char * HistorySystem::GetRollUiString(int lineId)
+{
+	return nullptr;
 }
 #pragma endregion
 

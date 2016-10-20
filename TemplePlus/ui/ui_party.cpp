@@ -9,7 +9,7 @@
 #include <ui/ui.h>
 #include "ui_render.h"
 #include <tig/tig_msg.h>
-#include <gamesystems/map/d20_help.h>
+#include <gamesystems/d20/d20_help.h>
 UiParty uiParty;
 
 class UiPartyHooks : public TempleFix {

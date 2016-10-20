@@ -11,7 +11,7 @@
 #define DIRECTINPUT_VERSION 0x800
 #include "tig/tig_keyboard.h"
 #include "ui/ui.h"
-#include "gamesystems/map/d20_help.h"
+#include "gamesystems/d20/d20_help.h"
 #include "hotkeys.h"
 #include "party.h"
 #include "turn_based.h"

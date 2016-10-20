@@ -47,6 +47,7 @@
     <ClCompile Include="gamesystems\clipping\clipping_hooks.cpp" />
     <ClCompile Include="gamesystems\clipping\clipping.cpp" />
     <ClCompile Include="gamesystems\d20\d20stats.cpp" />
+    <ClCompile Include="gamesystems\d20\d20_help.cpp" />
     <ClCompile Include="gamesystems\fogrenderer.cpp" />
     <ClCompile Include="gamesystems\froggrapplecontroller.cpp" />
     <ClCompile Include="gamesystems\gamerenderer.cpp" />
@@ -94,7 +95,6 @@
     <ClCompile Include="graphics\rectangle.cpp" />
     <ClCompile Include="graphics\renderstates_hooks.cpp" />
     <ClCompile Include="graphics\render_hooks.cpp" />
-    <ClCompile Include="gamesystems\map\d20_help.cpp" />
     <ClCompile Include="gamesystems\map\sector.cpp" />
     <ClCompile Include="gamesystems\map\tig_console.cpp" />
     <ClCompile Include="gametime.cpp" />
@@ -285,6 +285,7 @@
     <ClInclude Include="gamesystems\clipping\clippingmesh.h" />
     <ClInclude Include="gamesystems\clipping\clipping.h" />
     <ClInclude Include="gamesystems\d20\d20stats.h" />
+    <ClInclude Include="gamesystems\d20\d20_help.h" />
     <ClInclude Include="gamesystems\fogrenderer.h" />
     <ClInclude Include="gamesystems\froggrapplecontroller.h" />
     <ClInclude Include="gamesystems\gamerenderer.h" />
@@ -295,7 +296,6 @@
     <ClInclude Include="gamesystems\lightningrenderer.h" />
     <ClInclude Include="gamesystems\loadingscreen.h" />
     <ClInclude Include="gamesystems\mapsystem.h" />
-    <ClInclude Include="gamesystems\map\d20_help.h" />
     <ClInclude Include="gamesystems\map\gmesh.h" />
     <ClInclude Include="gamesystems\map\sector.h" />
     <ClInclude Include="gamesystems\map\tig_console.h" />

@@ -248,7 +248,6 @@
     <ClCompile Include="gamesystems\map\tig_console.cpp">
       <Filter>tig</Filter>
     </ClCompile>
-    <ClCompile Include="gamesystems\map\d20_help.cpp" />
     <ClCompile Include="maps.cpp">
       <Filter>Map System</Filter>
     </ClCompile>
@@ -454,6 +453,7 @@
     <ClCompile Include="ui\ui_logbook.cpp">
       <Filter>ui</Filter>
     </ClCompile>
+    <ClCompile Include="gamesystems\d20\d20_help.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -685,7 +685,6 @@
     <ClInclude Include="gamesystems\map\tig_console.h">
       <Filter>tig</Filter>
     </ClInclude>
-    <ClInclude Include="gamesystems\map\d20_help.h" />
     <ClInclude Include="maps.h">
       <Filter>Map System</Filter>
     </ClInclude>
@@ -855,6 +854,7 @@
     <ClInclude Include="ui\ui_logbook.h">
       <Filter>ui</Filter>
     </ClInclude>
+    <ClInclude Include="gamesystems\d20\d20_help.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

@@ -257,6 +257,7 @@ public:
 	static int BardicMusicGreatnessTakingTempHpDamage(DispatcherCallbackArgs args);
 	static int BardicMusicHeroicsSaveBonus(DispatcherCallbackArgs args);
 	static int BardicMusicHeroicsAC(DispatcherCallbackArgs args);
+	static int BardicMusicSuggestionFearQuery(DispatcherCallbackArgs args);
 
 	static int SneakAttackDamage(DispatcherCallbackArgs args);
 } classAbilityCallbacks;
@@ -4643,7 +4644,7 @@ int ClassAbilityCallbacks::BardicMusicBeginRound(DispatcherCallbackArgs args){
 				conds.AddTo(tgt, "Competence", {0,0});
 			return 0;
 		case BM_SUGGESTION: 
-			args.SetCondArg(1,0);
+			//args.SetCondArg(1,0);
 			return 0;
 		case BM_SONG_OF_FREEDOM: break; // TODO
 		case BM_INSPIRE_HEROICS: 
@@ -4699,10 +4700,14 @@ int ClassAbilityCallbacks::BardMusicRadial(DispatcherCallbackArgs args){
 		insCompetence.AddAsChild(args.objHndCaller, bmusicId);
 	}
 
-	/*if (bardLvl >= 6 && perfSkill >= 9) {
-		RadialMenuEntryAction insHeroics(5121, D20A_BARDIC_MUSIC, BM_SUGGESTION, "TAG_CLASS_FEATURES_BARD_SUGGESTION");
-		insHeroics.AddAsChild(args.objHndCaller, bmusicId);
-	}*/
+	if (bardLvl >= 6 && perfSkill >= 9) {
+		RadialMenuEntryAction bardSugg(5121, D20A_BARDIC_MUSIC, BM_SUGGESTION, "TAG_CLASS_FEATURES_BARD_SUGGESTION");
+		if (bardLvl >= 18 && perfSkill >= 21)
+			bardSugg.d20SpellData.Set(3000, spellSys.GetSpellClass(stat_level_bard), 1, -1, 0); // Spell 3000 - Bard Suggestion
+		else
+			bardSugg.d20SpellData.Set(3000, spellSys.GetSpellClass(stat_level_bard), 1, -1, 0); // Spell 3000 - Bard Suggestion
+		bardSugg.AddAsChild(args.objHndCaller, bmusicId);
+	}
 
 	if (bardLvl >= 9 && perfSkill >= 12){
 		RadialMenuEntryAction insGreatness(5044, D20A_BARDIC_MUSIC, BM_INSPIRE_GREATNESS, "TAG_CLASS_FEATURES_BARD_INSPIRE_GREATNESS");
@@ -4756,7 +4761,7 @@ int ClassAbilityCallbacks::BardMusicCheck(DispatcherCallbackArgs args){
 		}
 	};
 	
-	if (!perfSkillSufficient() || args.GetCondArg(1) == bmType){
+	if (!perfSkillSufficient() || (args.GetCondArg(1) == bmType && bmType != BM_SUGGESTION)){
 		dispIo->returnVal = AEC_INVALID_ACTION;
 		if (args.GetCondArg(1) == bmType)
 			floatSys.floatMesLine(args.objHndCaller, 1, FloatLineColor::Red, fmt::format("Already Singing").c_str());
@@ -4826,12 +4831,10 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Inspire Competence", args.objHndCaller);
 		break;
 	case BM_SUGGESTION: 
-		chaScore = objects.StatLevelGet(args.objHndCaller, stat_charisma);
-		rollResult = 13 + objects.GetModFromStatLevel(chaScore);
 		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Suggestion", args.objHndCaller);
-		if (!damage.SavingThrow(d20a->d20ATarget, performer, rollResult, SavingThrowType::Will, D20STF_SPELL_DESCRIPTOR_SONIC)) {
-			conds.AddTo(d20a->d20ATarget, "Suggestion", {});
-		}
+		spellId = spellSys.GetNewSpellId();
+		spellSys.RegisterSpell(curSeq->spellPktBody, spellId);
+		pySpellIntegration.SpellTrigger(spellId, SpellEvent::SpellEffect);
 		break;
 	case BM_INSPIRE_GREATNESS: 
 		//conds.AddTo(d20a->d20ATarget, "Greatness", {}); // effect now handled via spell
@@ -4985,6 +4988,23 @@ int ClassAbilityCallbacks::BardicMusicHeroicsAC(DispatcherCallbackArgs args){
 	if (args.GetCondArg(1)){ // have heard music for full round
 		dispIo->bonlist.AddBonus(4, 13, 348);
 	}
+	return 0;
+}
+
+int ClassAbilityCallbacks::BardicMusicSuggestionFearQuery(DispatcherCallbackArgs args){
+	auto spellId = args.GetCondArg(2);
+	SpellPacketBody spPkt(spellId);
+	auto caster = spPkt.caster;
+	if (!caster){
+		args.SetCondArg(0, 0); // set duration to 0
+		return 0;
+	}
+	if (d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Calm Emotions"), 0u))
+		return 0;
+	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
+	dispIo->return_val = 1;
+	*(objHndl*)&dispIo->data1 = caster;
+
 	return 0;
 }
 
@@ -5187,21 +5207,33 @@ void Conditions::AddConditionsToTable(){
 	ironWill.AddHook(dispTypeSaveThrowLevel, DK_SAVE_WILL, classAbilityCallbacks.FeatIronWillSave, 2, 0);
 	ironWill.AddToFeatDictionary(FEAT_IRON_WILL);
 
-	static CondStructNew bardicGreatness("Greatness", 4);
-	bardicGreatness.AddHook(dispTypeConditionAddPre, DK_NONE, classAbilityCallbacks.BardicMusicInspireRefresh, &bardicGreatness, 0);
-	bardicGreatness.AddHook(dispTypeBeginRound, DK_NONE, classAbilityCallbacks.BardicMusicInspireBeginRound, 0u, BM_INSPIRE_GREATNESS);
-	bardicGreatness.AddHook(dispTypeConditionAdd, DK_NONE, classAbilityCallbacks.BardicMusicInspireOnAdd,0u, BM_INSPIRE_GREATNESS);
-	bardicGreatness.AddHook(dispTypeToHitBonus2, DK_NONE, classAbilityCallbacks.BardicMusicGreatnessToHitBonus);
-	bardicGreatness.AddHook(dispTypeSaveThrowLevel, DK_SAVE_FORTITUDE, classAbilityCallbacks.BardicMusicGreatnessSaveBonus);
-	bardicGreatness.AddHook(dispTypeTooltip, DK_NONE, classAbilityCallbacks.BardicMusicTooltip, 82, BM_INSPIRE_GREATNESS);
-	bardicGreatness.AddHook(dispTypeD20Query, DK_QUE_Has_Temporary_Hit_Points, genericCallbacks.QuerySetReturnVal1);
-	bardicGreatness.AddHook(dispTypeEffectTooltip, DK_NONE, genericCallbacks.EffectTooltipGeneral, 5, 0);
-	bardicGreatness.AddHook(dispTypeConditionRemove, DK_NONE, genericCallbacks.EndParticlesFromArg, 2, 0);
-	bardicGreatness.AddHook(dispTypeConditionAddFromD20StatusInit, DK_NONE, genericCallbacks.PlayParticlesSavePartsysId, 2, (uint32_t)"Bardic-Inspire Greatness-hit");
-	bardicGreatness.AddHook(dispTypeConditionAdd, DK_NONE, genericCallbacks.PlayParticlesSavePartsysId, 2, (uint32_t)"Bardic-Inspire Greatness-hit");
-	bardicGreatness.AddHook(dispTypeTakingDamage2, DK_NONE, classAbilityCallbacks.BardicMusicGreatnessTakingTempHpDamage);
 
+	{
+		static CondStructNew bardicGreatness("Greatness", 4);
+		bardicGreatness.AddHook(dispTypeConditionAddPre, DK_NONE, classAbilityCallbacks.BardicMusicInspireRefresh, &bardicGreatness, 0);
+		bardicGreatness.AddHook(dispTypeBeginRound, DK_NONE, classAbilityCallbacks.BardicMusicInspireBeginRound, 0u, BM_INSPIRE_GREATNESS);
+		bardicGreatness.AddHook(dispTypeConditionAdd, DK_NONE, classAbilityCallbacks.BardicMusicInspireOnAdd, 0u, BM_INSPIRE_GREATNESS);
+		bardicGreatness.AddHook(dispTypeToHitBonus2, DK_NONE, classAbilityCallbacks.BardicMusicGreatnessToHitBonus);
+		bardicGreatness.AddHook(dispTypeSaveThrowLevel, DK_SAVE_FORTITUDE, classAbilityCallbacks.BardicMusicGreatnessSaveBonus);
+		bardicGreatness.AddHook(dispTypeTooltip, DK_NONE, classAbilityCallbacks.BardicMusicTooltip, 82, BM_INSPIRE_GREATNESS);
+		bardicGreatness.AddHook(dispTypeD20Query, DK_QUE_Has_Temporary_Hit_Points, genericCallbacks.QuerySetReturnVal1);
+		bardicGreatness.AddHook(dispTypeEffectTooltip, DK_NONE, genericCallbacks.EffectTooltipGeneral, 5, 0);
+		bardicGreatness.AddHook(dispTypeConditionRemove, DK_NONE, genericCallbacks.EndParticlesFromArg, 2, 0);
+		bardicGreatness.AddHook(dispTypeConditionAddFromD20StatusInit, DK_NONE, genericCallbacks.PlayParticlesSavePartsysId, 2, (uint32_t)"Bardic-Inspire Greatness-hit");
+		bardicGreatness.AddHook(dispTypeConditionAdd, DK_NONE, genericCallbacks.PlayParticlesSavePartsysId, 2, (uint32_t)"Bardic-Inspire Greatness-hit");
+		bardicGreatness.AddHook(dispTypeTakingDamage2, DK_NONE, classAbilityCallbacks.BardicMusicGreatnessTakingTempHpDamage);
 
+	}
+	
+
+	{
+		static CondStructNew bardSuggestion("Bard Suggestion", 4); // Duration, particle ID, spell ID
+		bardSuggestion.AddHook(dispTypeTooltip, DK_NONE, classAbilityCallbacks.BardicMusicTooltip, 52, BM_SUGGESTION);
+		bardSuggestion.AddHook(dispTypeD20Query, DK_QUE_Critter_Is_Afraid, classAbilityCallbacks.BardicMusicSuggestionFearQuery);
+		bardSuggestion.AddHook(dispTypeConditionAddFromD20StatusInit, DK_NONE, genericCallbacks.PlayParticlesSavePartsysId, 1, (uint32_t)"Bardic-Suggestion-hit");
+		bardSuggestion.AddHook(dispTypeConditionAdd, DK_NONE, genericCallbacks.PlayParticlesSavePartsysId, 1, (uint32_t)"Bardic-Suggestion-hit");
+		bardSuggestion.AddHook(dispTypeConditionRemove, DK_NONE, genericCallbacks.EndParticlesFromArg, 1, 0);
+	}
 
 	static CondStructNew bardInspireHeroics("Inspired Heroics", 4);
 	bardInspireHeroics.AddHook(dispTypeConditionAddPre, DK_NONE, classAbilityCallbacks.BardicMusicInspireRefresh, &bardInspireHeroics, 0);

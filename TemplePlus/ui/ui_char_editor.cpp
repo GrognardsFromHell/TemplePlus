@@ -30,7 +30,7 @@
 #include <radialmenu.h>
 #include <action_sequence.h>
 #include <condition.h>
-#include <gamesystems/map/d20_help.h>
+#include <gamesystems/d20/d20_help.h>
 #include <infrastructure/elfhash.h>
 #include <tig/tig_mouse.h>
 #include <combat.h>

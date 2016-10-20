@@ -5,6 +5,7 @@
 
 struct HistoryEntry;
 struct HistoryArrayEntry;
+struct D20RollHistoryEntry;
 
 struct HistorySystem : temple::AddressTable
 {
@@ -22,6 +23,9 @@ struct HistorySystem : temple::AddressTable
 
 	HistoryEntry* HistoryFind(int histId);
 	void AppendHistoryId(int histId);
+
+	void ParseHistoryEntry(int histId, D20RollHistoryEntry* rh);
+	const char* GetRollUiString(int lineId);
 };
 
 extern HistorySystem histSys;
