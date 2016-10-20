@@ -81,7 +81,7 @@ struct HistoryEntryType5 : HistoryEntry { // used for rolls vs a percentage, lik
 	int combatMesResult; // descrition for the result
 	int combatMesTitle;
 	
-	int pad[322];
+	int pad[321];
 
 	HistoryEntryType5(objHndl Obj, objHndl Target, int FailureChance, int combatMesFailureReason, int RollResult, int combatMesResult, int combatMesTitle);
 };
@@ -216,14 +216,16 @@ public:
 			auto observer = party.GetConsciousPartyLeader();
 			auto descr = description._getDisplayName(hist->obj, observer);
 			auto saveTypeString = combatSys.GetCombatMesLine(hist3->saveType + 500);
-			auto text = fmt::format("{} {} {} {} - {}", descr, histSys.GetRollUiString(26), saveTypeString, histSys.GetRollUiString(18), histSys.GetRollUiString(20 + hist3->rollResult != 20));
+			auto text = fmt::format("{} {} {} {} - {}", descr, histSys.GetRollUiString(26), saveTypeString, histSys.GetRollUiString(18), histSys.GetRollUiString(20 + (hist3->rollResult != 20) ));
 			if (hist3->rollResult == 20){
-				text.append(fmt::format(" (natural 20)"));
+				text.append(fmt::format(" (natural 20)\n\n"));
 			} else
 			{
-				text.append(fmt::format(" (natural 1)"));
+				text.append(fmt::format(" (natural 1)\n\n"));
 			}
 
+			sprintf(textOut, "%s", text.c_str());
+			textOut[text.size()] = 0;
 		});
 
 	}
@@ -340,7 +342,9 @@ void HistorySystem::ParseHistoryEntry(int histId, D20RollHistoryEntry * rh)
 }
 const char * HistorySystem::GetRollUiString(int lineId)
 {
-	return nullptr;
+	MesLine line(lineId);
+	mesFuncs.GetLine_Safe(*addresses.rollUiMesHandle, &line);
+	return line.value;
 }
 #pragma endregion
 

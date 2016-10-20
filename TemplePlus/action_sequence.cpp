@@ -2547,7 +2547,10 @@ void ActionSequenceSystem::ActionPerform()
 						*performedDefaultAction = 0;
 						curSeq->d20ActArrayNum = curSeq->d20aCurIdx;
 						//curSeq->tbStatus.tbsFlags |= TBSF_FullAttack;
-						curSeq->tbStatus.attackModeCode--;
+						if (curSeq->tbStatus.attackModeCode > 0) // not the case for bonus attacks
+							curSeq->tbStatus.attackModeCode--;
+						else
+							curSeq->tbStatus.numBonusAttacks++;
 						break;
 					}
 				}

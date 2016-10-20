@@ -4703,7 +4703,7 @@ int ClassAbilityCallbacks::BardMusicRadial(DispatcherCallbackArgs args){
 	if (bardLvl >= 6 && perfSkill >= 9) {
 		RadialMenuEntryAction bardSugg(5121, D20A_BARDIC_MUSIC, BM_SUGGESTION, "TAG_CLASS_FEATURES_BARD_SUGGESTION");
 		if (bardLvl >= 18 && perfSkill >= 21)
-			bardSugg.d20SpellData.Set(3000, spellSys.GetSpellClass(stat_level_bard), 1, -1, 0); // Spell 3000 - Bard Suggestion
+			bardSugg.d20SpellData.Set(3006, spellSys.GetSpellClass(stat_level_bard), 1, -1, 0); // Spell 3006 - Bard Suggestion Mass
 		else
 			bardSugg.d20SpellData.Set(3000, spellSys.GetSpellClass(stat_level_bard), 1, -1, 0); // Spell 3000 - Bard Suggestion
 		bardSugg.AddAsChild(args.objHndCaller, bmusicId);
@@ -4787,9 +4787,10 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 	auto bmType = (BardicMusicSongType)(d20a->data1);
 
 	/*
-	 decrease usages left
+	 decrease usages left, except for Suggestion
 	*/
-	args.SetCondArg(0, args.GetCondArg(0) - 1); 
+	if (bmType != BM_SUGGESTION)
+		args.SetCondArg(0, args.GetCondArg(0) - 1); 
 
 	/*
 	handle already performing music
@@ -5228,6 +5229,7 @@ void Conditions::AddConditionsToTable(){
 
 	{
 		static CondStructNew bardSuggestion("Bard Suggestion", 4); // Duration, particle ID, spell ID
+		bardSuggestion.AddHook(dispTypeBeginRound, DK_NONE, ConditionDurationTicker, 0u, 0u);
 		bardSuggestion.AddHook(dispTypeTooltip, DK_NONE, classAbilityCallbacks.BardicMusicTooltip, 52, BM_SUGGESTION);
 		bardSuggestion.AddHook(dispTypeD20Query, DK_QUE_Critter_Is_Afraid, classAbilityCallbacks.BardicMusicSuggestionFearQuery);
 		bardSuggestion.AddHook(dispTypeConditionAddFromD20StatusInit, DK_NONE, genericCallbacks.PlayParticlesSavePartsysId, 1, (uint32_t)"Bardic-Suggestion-hit");

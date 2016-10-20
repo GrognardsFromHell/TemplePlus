@@ -553,9 +553,9 @@ BOOL PcCreationUiSystem::StatsIncreaseBtnMsg(int widId, TigMsg * msg){
 	auto &selPkt = GetCharEdSelPkt();
 	auto abilityLvl = selPkt.abilityStats[idx];
 	auto cost = 1;
-	if (abilityLvl >= 15)
+	if (abilityLvl >= 16)
 		cost = 3;
-	else if (abilityLvl >= 13)
+	else if (abilityLvl >= 14)
 		cost = 2;
 
 	auto &pbPoints = temple::GetRef<int>(0x10C453F4);
@@ -584,9 +584,9 @@ BOOL PcCreationUiSystem::StatsDecreaseBtnMsg(int widId, TigMsg * msg){
 	auto &selPkt = GetCharEdSelPkt();
 	auto abilityLvl = selPkt.abilityStats[idx];
 	auto cost = 1;
-	if (abilityLvl >= 16)
+	if (abilityLvl >= 17)
 		cost = 3;
-	else if (abilityLvl >= 14)
+	else if (abilityLvl >= 15)
 		cost = 2;
 
 	auto &pbPoints = temple::GetRef<int>(0x10C453F4);
@@ -628,9 +628,9 @@ BOOL PcCreationUiSystem::StatsUpdateBtns(){
 		{
 			auto incBtnId = temple::GetRef<int[6]>(0x10C45310)[i];
 			auto cost = 1;
-			if (abLvl >= 15)
+			if (abLvl >= 16)
 				cost = 3;
-			else if (abLvl >= 13)
+			else if (abLvl >= 14)
 				cost = 2;
 			if (pbPoints < cost || (abLvl == 18 && !config.laxRules))
 				ui.ButtonSetButtonState(incBtnId, UiButtonState::UBS_DISABLED);
@@ -644,12 +644,12 @@ BOOL PcCreationUiSystem::StatsUpdateBtns(){
 		{
 			auto decBtnId = temple::GetRef<int[6]>(0x10C44DA8)[i];
 			auto cost = 1;
-			if (abLvl >= 16)
+			if (abLvl >= 17)
 				cost = 3;
-			else if (abLvl >= 14)
+			else if (abLvl >= 15)
 				cost = 2;
 
-			if (pbPoints >= config.pointBuyPoints || (abLvl == 8 && !config.laxRules) || abLvl <= 4)
+			if (pbPoints >= config.pointBuyPoints || (abLvl == 8 && !config.laxRules) || abLvl <= 5)
 				ui.ButtonSetButtonState(decBtnId, UiButtonState::UBS_DISABLED);
 			else
 				ui.ButtonSetButtonState(decBtnId, UiButtonState::UBS_NORMAL);
