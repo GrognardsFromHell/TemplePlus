@@ -193,3 +193,18 @@ struct SpellStoreData
 };
 const auto TestSizeOfSpellStoreData = sizeof(SpellStoreData);
 #pragma pack(pop)
+
+
+
+enum SpellSchools : uint32_t
+{
+	School_None = 0,
+	School_Abjuration = 1,
+	School_Conjuration = 2,
+	School_Divination = 3,
+	School_Enchantment =4,
+	School_Evocation = 5,
+	School_Illusion = 6,
+	School_Necromancy = 7,
+	School_Transmutation = 8
+};

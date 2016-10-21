@@ -199,6 +199,9 @@ int SpellConditionFixes::ImmunityCheckHandler(DispatcherCallbackArgs args)
 		1. Protection from Alignment overzealously protecting against friendly spells
 		2. Necklace of Adaptation protecting against Cloudkill and Stinking Cloud spell effects
 		3. Death Ward issue
+
+		return 0 to let the original handler handle
+		return 1 to prevent immunity
 	*/
 
 	/*
@@ -280,26 +283,31 @@ int SpellConditionFixes::ImmunityCheckHandler(DispatcherCallbackArgs args)
 	}
 
 
-	if (immSpellPkt.spellEnum != 368
-		&& (immSpellPkt.spellEnum < 370 || immSpellPkt.spellEnum > 372)) {
-		// prot from alignment spells
-		return 0;
-	}
-	
+	// Prot from alignment spells
+	if (immSpellPkt.spellEnum == 368
+		|| immSpellPkt.spellEnum >= 370 && immSpellPkt.spellEnum <= 372){
 
-	if (!(offendingSpellEntry.spellDescriptorBitmask & 0x4000)) //Mind Affecting
-		return 0;
 
-	auto caster = dispIo23->spellPkt->caster;
-	
-	if (!caster || !objects.IsCritter(caster))
-		return 0;
 
-	if ( offendingSpellEntry.aiTypeBitmask && ( 1<<ai_action_defensive)  )
-	{
-		if (critterSys.IsFriendly(caster, args.objHndCaller)) // because some spells are actually both ways, such as prayer
+		if (!(offendingSpellEntry.spellDescriptorBitmask & 0x4000)) //Mind Affecting
+			return 0;
+
+		if (offendingSpellEntry.spellSchoolEnum != School_Enchantment) // only enchantment effects should be warded from Prot. From Evil
 			return 1;
+
+
+		auto caster = dispIo23->spellPkt->caster;
+
+		if (!caster || !objects.IsCritter(caster))
+			return 0;
+
+		if (offendingSpellEntry.aiTypeBitmask && (1 << ai_action_defensive))
+		{
+			if (critterSys.IsFriendly(caster, args.objHndCaller)) // because some spells are actually both ways, such as prayer
+				return 1;
+		}
 	}
+	
 
 	return 0;
 }
