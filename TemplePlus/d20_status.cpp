@@ -293,7 +293,7 @@ void D20StatusSystem::initItemConditions(objHndl objHnd)
 				uint32_t itemInvLocation = item->GetInt32(obj_f_item_inv_location);
 				if (inventory.IsItemEffectingConditions(objHndItem, itemInvLocation)) {
 					//inventory.sub_100FF500(dispatcher, objHndItem, itemInvLocation);
-					InitFromItemConditionFields(dispatcher, objHndItem, itemInvLocation);
+					InitFromItemConditionFields(dispatcher, objHndItem, itemInvLocation); // sets args[2] equal to the itemInvLocation
 				}
 			}
 		}

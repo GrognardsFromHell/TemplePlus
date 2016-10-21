@@ -193,10 +193,20 @@ void SpellConditionFixes::SpellDamageWeaponlikeHook(objHndl tgt, objHndl caster,
 int SpellConditionFixes::ImmunityCheckHandler(DispatcherCallbackArgs args)
 {
 	/*
+		this function serves as a hook for the complete (and much longer...) immunity handler. 
+		Its purpose is to fix issues with:
+
+		1. Protection from Alignment overzealously protecting against friendly spells
+		2. Necklace of Adaptation protecting against Cloudkill and Stinking Cloud spell effects
+		3. Death Ward issue
+	*/
+
+	/*
 		the dispatch is performed from the functions:
 		0x100C3810 CheckSpellResistance
-		0x1008D830 PerformCastSpell
+		0x1008D830 PerformCastSpellProcessTargets - sets the spellPkt field of dispIo23 , and sets flag = 1
 	*/
+
 	auto dispIo23 = dispatch.DispIoCheckIoType23(args.dispIO);
 	if (dispIo23->returnVal == 1)
 		return 1;
@@ -210,6 +220,7 @@ int SpellConditionFixes::ImmunityCheckHandler(DispatcherCallbackArgs args)
 	if (!dispatch.dispatcherValid(dispatcher))
 		return 1;
 	
+	// check which immunity trigger this condition handles (if any)
 	int immType = 10;
 	for (; immType <= 16; immType++){
 		dispatch.DispatcherProcessor(dispatcher, dispTypeImmunityTrigger, immType, &dispIo21);
@@ -219,7 +230,9 @@ int SpellConditionFixes::ImmunityCheckHandler(DispatcherCallbackArgs args)
 	if (immType > 16)
 		return 1;
 
-
+	/*
+		Necklace of Adaptation immunity to Cloudkill and Stinking Cloud
+	*/
 	if (immType == 0x10) // immunity special
 	{
 		if (args.subDispNode->subDispDef->data1 == 0x4) //  necklace of adaptation (NEW!)
@@ -237,6 +250,7 @@ int SpellConditionFixes::ImmunityCheckHandler(DispatcherCallbackArgs args)
 	if (immType != 10)
 		return 0;
 
+	// get the spellpacket of the protective spell (i.e. the one this hook belongs to)
 	auto immSpellId = conds.CondNodeGetArg(args.subDispNode->condNode, 0);
 	SpellPacketBody immSpellPkt;
 	if (!spellSys.GetSpellPacketBody(immSpellId, &immSpellPkt))
@@ -246,23 +260,39 @@ int SpellConditionFixes::ImmunityCheckHandler(DispatcherCallbackArgs args)
 		return 0;
 
 
+	auto offendingSpellPkt = dispIo23->spellPkt;
+	SpellEntry offendingSpellEntry;
+	spellSys.spellRegistryCopy(offendingSpellPkt->spellEnum, &offendingSpellEntry);
+
+	// Death Ward
+	if (immSpellPkt.spellEnum == 101){ 
+		auto spClass = offendingSpellPkt->spellClass;
+		
+		if (offendingSpellEntry.spellDescriptorBitmask & 0x10)
+			return 0; // Has Death descriptor - do as usual (should filter it out)
+
+		// otherwise,
+		// if offending spell is not a death domain spell, skip the immunity
+
+		if (!spellSys.isDomainSpell(spClass) || spClass != Domain_Death){
+				return 1;
+		}
+	}
+
+
 	if (immSpellPkt.spellEnum != 368
 		&& (immSpellPkt.spellEnum < 370 || immSpellPkt.spellEnum > 372)) {
 		// prot from alignment spells
 		return 0;
 	}
-	SpellEntry offendingSpellEntry;
-	spellSys.spellRegistryCopy(dispIo23->spellPkt->spellEnum, &offendingSpellEntry);
+	
 
 	if (!(offendingSpellEntry.spellDescriptorBitmask & 0x4000)) //Mind Affecting
 		return 0;
 
 	auto caster = dispIo23->spellPkt->caster;
 	
-	if (!caster)
-		return 0;
-
-	if (!objects.IsCritter(caster))
+	if (!caster || !objects.IsCritter(caster))
 		return 0;
 
 	if ( offendingSpellEntry.aiTypeBitmask && ( 1<<ai_action_defensive)  )

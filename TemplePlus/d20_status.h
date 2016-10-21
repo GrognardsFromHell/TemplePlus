@@ -13,7 +13,7 @@ public:
 	void initDomains(objHndl objHnd);
 	void initFeats(objHndl objHnd);
 	void initItemConditions(objHndl objHnd);
-	void InitFromItemConditionFields(Dispatcher* dispatcher, objHndl item, int invIdx);
+	void InitFromItemConditionFields(Dispatcher* dispatcher, objHndl item, int invIdx); // inits conditions for the wearer from the item. Note: args[2] is set to be the inventory index here!
 	void D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher *dispatcher);
 
 	std::map<Stat, std::string> classCondMap = {
