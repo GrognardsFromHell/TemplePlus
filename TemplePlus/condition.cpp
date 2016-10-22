@@ -113,6 +113,8 @@ public:
 	static int __cdecl SpellDismissRadialSub(DispatcherCallbackArgs args); // allows dismissal of specific spells
 	static int __cdecl SpellAddDismissCondition(DispatcherCallbackArgs args); // prevents dups
 	static int __cdecl SpellDismissSignalHandler(DispatcherCallbackArgs args); // fixes issue with dismissing multiple spells
+
+	static int __cdecl SpellRemoveMod(DispatcherCallbackArgs args); // fixes issue with dismissing multiple spells
 } spCallbacks;
 
 
@@ -279,7 +281,6 @@ public:
 		
 		//conds.RegisterNewConditions();
 		
-		
 
 		replaceFunction(0x100E19C0, _CondStructAddToHashtable);
 		replaceFunction(0x100E1A80, _GetCondStructFromHashcode);
@@ -395,7 +396,7 @@ public:
 		// racial callbacks
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FDC70, raceCallbacks.HalflingThrownWeaponAndSlingBonus);
 
-		
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100CBAB0, spCallbacks.SpellRemoveMod);
 	}
 } condFuncReplacement;
 
@@ -3602,6 +3603,68 @@ int SpellCallbacks::SpellDismissSignalHandler(DispatcherCallbackArgs args) {
 		spellModRemove(args);
 	}
 
+	return 0;
+}
+
+int SpellCallbacks::SpellRemoveMod(DispatcherCallbackArgs args){
+	
+	DispIoD20Signal *evtObj = nullptr;
+	if (args.dispIO)
+		evtObj = dispatch.DispIoCheckIoType6(args.dispIO);
+		
+
+	if (args.dispKey == DK_SIG_Sequence){
+		logger->warn("Caught a DK_SIG_Sequence, make sure we are removing spell_mod properly...");
+	}
+
+	switch (args.dispKey){
+	case DK_SIG_Killed:
+	case DK_SIG_Critter_Killed:
+	case DK_SIG_Sequence:
+	case DK_SIG_Spell_Cast:
+	case DK_SIG_Action_Recipient:
+	case DK_SIG_Remove_Concentration:
+	case DK_SIG_TouchAttackAdded:
+	case DK_SIG_Teleport_Prepare:
+	case DK_SIG_Teleport_Reconnect:
+		break;
+	default:
+		if (evtObj && evtObj->data1 != args.GetCondArg(0))
+			return 0;
+		break;
+	}
+
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spPkt(spellId);
+	switch (args.GetData1()){
+	case 2:
+		if (args.dispKey == DK_SIG_Remove_Concentration){
+			if (spPkt.spellEnum != 0){
+				floatSys.FloatCombatLine(args.objHndCaller, 5060);
+				d20Sys.d20SendSignal(args.objHndCaller, DK_SIG_Concentration_Broken, spellId, 0);
+				for (auto i=0u; i < spPkt.targetCount; i++){
+					if (args.objHndCaller != spPkt.targetListHandles[i])
+						d20Sys.d20SendSignal(spPkt.targetListHandles[i], DK_SIG_Concentration_Broken, spellId, 0);
+				}
+			}
+		}
+		break;
+	case 29:
+	case 69:
+	case 70:
+	case 71:
+	case 72:
+	case 121:
+	case 171:
+	case 232:
+		temple::GetRef<void(__cdecl)(objHndl)>(0x1004D1F0)(args.objHndCaller); // Build radial menu
+		break;
+	default:
+		break;
+	}
+
+	conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+	
 	return 0;
 }
 

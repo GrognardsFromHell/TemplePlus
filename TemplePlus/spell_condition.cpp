@@ -57,6 +57,28 @@ public:
 			write(0x102DAFB8, &sdd, sizeof(sdd)); // in place of Teleport_Reconnect which does nothing
 		}
 
+		static int (__cdecl*orgSpell_remove_spell)(DispatcherCallbackArgs) = replaceFunction<int(DispatcherCallbackArgs)>(0x100D7620, [](DispatcherCallbackArgs args){
+			// fixes not removing Invisibility if target != caster
+			auto spellId = args.GetCondArg(0);
+			SpellPacketBody spPkt(spellId);
+			if (spPkt.spellEnum == 253){
+				if (spPkt.targetCount && spPkt.targetListHandles[0])
+					d20Sys.d20SendSignal(spPkt.targetListHandles[0], DK_SIG_Spell_End, spellId, 0);
+			}
+			return orgSpell_remove_spell(args);
+
+		});
+
+		//// spell mod end handler
+		//static int(__cdecl*orgSpellEndModHandler)(DispatcherCallbackArgs) = replaceFunction<int(DispatcherCallbackArgs)>(0x100E9680, [](DispatcherCallbackArgs args)
+		//{
+		//	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+		//	if (dispIo->data1 != args.GetCondArg(0)){
+		//		auto dummy = 1;
+		//	}
+		//	return orgSpellEndModHandler(args);
+		//});
+
 		// Spell damage conversion to Weapon-like spell damage (to support Sneak Attack with spells)
 		redirectCall(0x100DCDC4, SpellDamageWeaponlikeHook); // Chill Touch
 		redirectCall(0x100C94F3, SpellDamageWeaponlikeHook); // Produce Flame
