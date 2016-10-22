@@ -1203,9 +1203,21 @@ int GenericCallbacks::D20ModCountdownHandler(DispatcherCallbackArgs args){
 	int durNew = durRem - dispIo->data1;
 	if (durNew >= 0){
 		args.SetCondArg(durArgIdx, durNew);
+		return 0;
 	}
-	else if (args.GetData1() != 6 || args.dispType != dispTypeBeginRound){
-		auto d20modCountdownEndHandler = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100E98B0);
+
+	auto d20modCountdownEndHandler = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100E98B0);
+	if (args.dispType == dispTypeBeginRound){
+		
+		if (args.GetData1() != 6){ // invisibility
+			d20modCountdownEndHandler(args);
+		}
+
+		SpellPacketBody spPkt(args.GetCondArg(0));
+		if (spPkt.spellEnum == 0)
+			d20modCountdownEndHandler(args);
+	} else
+	{
 		d20modCountdownEndHandler(args);
 	}
 	return 0;
@@ -3589,8 +3601,6 @@ int SpellCallbacks::SpellDismissSignalHandler(DispatcherCallbackArgs args) {
 		spellRemove(args);
 		spellModRemove(args);
 	}
-
-
 
 	return 0;
 }
