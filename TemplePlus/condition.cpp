@@ -1212,9 +1212,18 @@ int GenericCallbacks::D20ModCountdownHandler(DispatcherCallbackArgs args){
 		
 		if (args.GetData1() != 6){ // invisibility
 			d20modCountdownEndHandler(args);
+			return 0;
 		}
 
-		SpellPacketBody spPkt(args.GetCondArg(0));
+
+		// Invisibility is getting special-cased because of the Ring of Invisbility
+		auto spellId = args.GetCondArg(0);
+
+		if (spellId < 0 || spellId > 100000){ // when the Invisbility condition is applied frmo the Ring, arg0 is actually a memory address of the condition; this check is a bit hacky but it should do the trick in most cases
+			return 0;
+		}
+
+		SpellPacketBody spPkt(spellId);
 		if (spPkt.spellEnum == 0)
 			d20modCountdownEndHandler(args);
 	} else
