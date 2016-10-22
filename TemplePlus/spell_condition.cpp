@@ -283,6 +283,15 @@ int SpellConditionFixes::ImmunityCheckHandler(DispatcherCallbackArgs args)
 		}
 	}
 
+	// fix for Co8 now-unnecessary Monster Plant application to Undead
+	if (immType == DK_IMMUNITY_SPECIAL){
+		if (args.GetData1() == 1  // Monster Plant
+		&& critterSys.IsCategoryType(args.objHndCaller, MonsterCategory::mc_type_undead)){ 
+			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+			return 1;
+		}
+	}
+
 	if (immType != 10)
 		return 0;
 
