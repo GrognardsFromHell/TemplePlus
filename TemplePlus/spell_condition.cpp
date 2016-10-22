@@ -44,8 +44,19 @@ public:
 	static int WebOnMoveSpeed(DispatcherCallbackArgs args);
 	static int MelfsAcidArrowDamage(DispatcherCallbackArgs args);
 
+	static int InvisibSphereDismiss(DispatcherCallbackArgs args);
+
 	void apply() override {
-		
+
+		// Invisibility Sphere lacking a Dismiss handler
+		{
+			SubDispDefNew sdd;
+			sdd.dispType = dispTypeD20Signal;
+			sdd.dispKey = DK_SIG_Dismiss_Spells;
+			sdd.dispCallback = InvisibSphereDismiss;
+			write(0x102DAFB8, &sdd, sizeof(sdd)); // in place of Teleport_Reconnect which does nothing
+		}
+
 		// Spell damage conversion to Weapon-like spell damage (to support Sneak Attack with spells)
 		redirectCall(0x100DCDC4, SpellDamageWeaponlikeHook); // Chill Touch
 		redirectCall(0x100C94F3, SpellDamageWeaponlikeHook); // Produce Flame
@@ -536,6 +547,32 @@ int SpellConditionFixes::MelfsAcidArrowDamage(DispatcherCallbackArgs args){
 		flags |= D20CAF_NO_PRECISION_DAMAGE;
 
 	damage.DealWeaponlikeSpellDamage(spPkt.targetListHandles[0], spPkt.caster, damDice, DamageType::Acid, 1, 100, 103, D20A_CAST_SPELL, spellId, (D20CAF)flags);
+
+	return 0;
+}
+
+int SpellConditionFixes::InvisibSphereDismiss(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+	if (!dispIo) {
+		return 1;
+	}
+
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spPkt(spellId);
+	if (!spPkt.spellEnum)
+		return 0;
+
+	if (dispIo->data1 != spellId)
+		return 0;
+
+	auto spellRemove = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100D7620);
+	auto spellModRemove = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100CBAB0);
+
+	if (spPkt.spellEnum == 315 || args.GetData1() == 1 || spPkt.targetCount > 0) {
+		floatSys.FloatSpellLine(args.objHndCaller, 20000, FloatLineColor::White); // a spell has expired
+		spellRemove(args);
+		spellModRemove(args);
+	}
 
 	return 0;
 }
