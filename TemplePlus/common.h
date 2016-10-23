@@ -242,6 +242,7 @@ enum class UiPickerType : uint64_t {
 	Personal,
 	InventoryItem,
 	Ray = 8,
+	Wall = 9, // NEW!
 	BecomeTouch = 0x100,
 	AreaOrObj = 0x200,
 	OnceMulti = 0x400,

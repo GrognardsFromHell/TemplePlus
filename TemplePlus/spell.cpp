@@ -1565,6 +1565,82 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 			}
 		}
 		
+		else if(!_strnicmp(textBuf, "mode_target", 11)){
+			static std::map<string, UiPickerType> modeTgtStrings = {
+				{ "none", UiPickerType::None},
+				{ "single", UiPickerType::Single },
+				{ "multi", UiPickerType::Multi },
+				{ "cone", UiPickerType::Cone },
+				{ "area", UiPickerType::Area },
+				{ "location", UiPickerType::Location },
+				{ "personal", UiPickerType::Personal},
+				{ "inventory", UiPickerType::InventoryItem},
+				{ "ray", UiPickerType::Ray},
+				{ "wall", UiPickerType::Wall},
+
+				{ "become_touch", UiPickerType::BecomeTouch },
+				{ "area or obj", UiPickerType::AreaOrObj},
+				{ "once-multi", UiPickerType::OnceMulti},
+				{ "any 30 feet", UiPickerType::Any30Feet },
+				{ "primary 30 feet", UiPickerType::Primary30Feet },
+				{ "primary", UiPickerType::Primary30Feet },
+				{ "end early multi", UiPickerType::EndEarlyMulti },
+				{ "loc is clear", UiPickerType::LocIsClear }
+			};
+			
+			 
+			for (auto ch = textBuf + 11; *ch; ch++) {
+				if (*ch == ':' || *ch == ' ')
+					continue;
+				
+				auto found = false;
+				std::string text(ch);
+				text = tolower(text);
+				for (auto it: modeTgtStrings){
+					if (!_strnicmp(it.first.c_str(), ch, strlen(it.first.c_str()))){
+						spEntry.modeTargetSemiBitmask |= (uint64_t)it.second;
+						found = true;
+						break;
+					}
+				}
+				if (!found) {
+					logger->warn("Spell Array: Mode_Target type not found: {}", ch);
+				}
+				break;
+			}
+
+		}
+
+		else if (!_strnicmp(textBuf, "Saving Throw", 12)) {
+			static std::map<string, int> saveThrowStrings = {
+				{ "fortitude", 3 }, // lol bug
+				{ "willpower", (int)SavingThrowType::Will },
+				{ "will", (int)SavingThrowType::Will },
+				{ "reflex", (int)SavingThrowType::Reflex },
+				{ "none", 0}, // bug! this will count as fortitude. Seems mostly harmless though as usually saving throws are directly handled in the script file or just hardcoded in the gameplay callbacks.
+			};
+
+
+			for (auto ch = textBuf + 12; *ch; ch++) {
+				if (*ch == ':' || *ch == ' ')
+					continue;
+
+				auto found = false;
+				std::string text(ch);
+				text = tolower(text);
+				for (auto it : saveThrowStrings) {
+					if (!_strnicmp(it.first.c_str(), ch, strlen(it.first.c_str()))) {
+						spEntry.savingThrowType = it.second;
+						found = true;
+						break;
+					}
+				}
+				if (!found){
+					logger->warn("Spell Array: Saving Throw type not found: {}", ch);
+				}
+				break;
+			}
+		}
 
 		else if (spellEntryLineParser(textBuf, fieldType, value, value2)){
 			switch (fieldType)
