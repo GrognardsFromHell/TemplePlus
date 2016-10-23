@@ -14,7 +14,7 @@ public:
 	void apply() override {
 		redirectCall(0x10108E7A, Render);
 		redirectCall(0x101DCDAD, Render);
-		redirectCall(0x101DCE38, Render);
+		redirectCall(0x101DCE38, Render); // in DrawSpellEffectPointer
 
 		// hooks for the render calls for the path preview in combat
 		redirectCall(0x10107524, Render);

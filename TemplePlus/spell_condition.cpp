@@ -257,19 +257,19 @@ int SpellConditionFixes::ImmunityCheckHandler(DispatcherCallbackArgs args)
 		return 1;
 	
 	// check which immunity trigger this condition handles (if any)
-	int immType = 10;
-	for (; immType <= 16; immType++){
+	int immType = DK_IMMUNITY_SPELL;
+	for (; immType <= DK_IMMUNITY_SPECIAL; immType++){
 		dispatch.DispatcherProcessor(dispatcher, dispTypeImmunityTrigger, immType, &dispIo21);
 		if (dispIo21.interrupt == 1)
 			break;
 	}
-	if (immType > 16)
+	if (immType > DK_IMMUNITY_SPECIAL)
 		return 1;
 
 	/*
 		Necklace of Adaptation immunity to Cloudkill and Stinking Cloud
 	*/
-	if (immType == 0x10) // immunity special
+	if (immType == DK_IMMUNITY_SPECIAL) // immunity special
 	{
 		if (args.subDispNode->subDispDef->data1 == 0x4) //  necklace of adaptation (NEW!)
 		{
@@ -281,16 +281,15 @@ int SpellConditionFixes::ImmunityCheckHandler(DispatcherCallbackArgs args)
 			}
 
 		}
-	}
 
-	// fix for Co8 now-unnecessary Monster Plant application to Undead
-	if (immType == DK_IMMUNITY_SPECIAL){
+		// fix for Co8 now-unnecessary Monster Plant application to Undead
 		if (args.GetData1() == 1  // Monster Plant
-		&& critterSys.IsCategoryType(args.objHndCaller, MonsterCategory::mc_type_undead)){ 
+			&& critterSys.IsCategoryType(args.objHndCaller, MonsterCategory::mc_type_undead)) {
 			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 			return 1;
 		}
 	}
+
 
 	if (immType != 10)
 		return 0;

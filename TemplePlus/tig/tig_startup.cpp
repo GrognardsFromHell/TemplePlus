@@ -230,6 +230,7 @@ void TigInitializer::LoadDataFiles() {
 	}
 
 	if (temple::Dll::GetInstance().HasCo8Hooks()){
+		modSupport.mIsCo8 = true;
 		modSupport.DetectCo8ActiveModule();
 		if (modSupport.IsKotB()){
 			logger->info("KotB module detected; registering  kotbfixes.dat.");

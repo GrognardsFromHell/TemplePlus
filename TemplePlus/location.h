@@ -47,6 +47,8 @@ struct LocationSys : temple::AddressTable
 	int64_t *translationX;
 	int64_t *translationY;
 
+	LocAndOffsets TrimToLength(LocAndOffsets srcLoc, LocAndOffsets tgtLoc, float lengthInches);
+
 	LocationSys();
 };
 

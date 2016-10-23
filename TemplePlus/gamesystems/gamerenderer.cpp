@@ -101,7 +101,7 @@ static struct GameRenderFuncs : temple::AddressTable {
   void (*RenderPartSys)();
   void (*RenderFogOfWar)();
   void (*RenderOcclusion)(RenderWorldInfo *info);
-  void (*RenderUiRelated)(RenderWorldInfo *info);
+  void (*RenderUiRelated)(RenderWorldInfo *info); // renders Move Destinations, Character discs, Hovered objects, Boxselect, Radial Menu, and Pickers (Intgame Select)
   void (*RenderTextBubbles)(RenderWorldInfo *info);
   void (*RenderTextFloaters)(RenderWorldInfo *info);
 

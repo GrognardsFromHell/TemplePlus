@@ -86,6 +86,11 @@ bool ModSupport::IsIWD() const
 	return mIsIWD;
 }
 
+bool ModSupport::IsCo8() const
+{
+	return mIsCo8;
+}
+
 void ModSupport::SetNCGameFlag(bool value){
 	modSupportAddresses.Set(500, value);
 }

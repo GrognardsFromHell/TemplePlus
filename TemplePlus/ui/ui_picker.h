@@ -4,6 +4,7 @@
 
 
 struct TigMsg;
+#define MAX_PICKER_COUNT 32
 
 enum class UiPickerIncFlags : uint64_t
 {
@@ -70,14 +71,14 @@ struct PickerArgs {
 	int minTargets;
 	int maxTargets;
 	int radiusTarget;
-	int range;
+	int range; // in feet
 	float degreesTarget;
 	int spellEnum;
 	objHndl caster;
 	PickerCallback callback;
 	int field44;
 	PickerResult result;
-	int field108;
+	float trimmedRangeInches; // after processing for collision with walls
 	int field10c;
 
 
@@ -85,8 +86,23 @@ struct PickerArgs {
 	bool IsModeTargetFlagSet(UiPickerType type);
 };
 
-const auto TestSizeOfPickerArgs = sizeof(PickerArgs);
+const auto TestSizeOfPickerArgs = sizeof(PickerArgs); // should be 272 (0x110)
 
+struct PickerCacheEntry
+{
+	PickerArgs args;
+	void *callbackArgs;
+	int field114;
+	int field118;
+	int x;
+	int y;
+	int field124;
+	objHndl tgt;
+	int tgtIdx;
+	int field134;
+};
+
+const auto TestSizeOfPickerCacheEntry = sizeof(PickerCacheEntry); // should be 312 (0x138)
 
 struct PickerMsgHandlers
 {
@@ -119,9 +135,14 @@ public:
 	uint32_t sub_100BA030(objHndl objHnd, PickerArgs * pickerArgs);
 
 	void FreeCurrentPicker();
+	PickerCacheEntry &GetPicker(int pickerIdx);
+
 	uint32_t SetSingleTarget(objHndl objHndl, PickerArgs* pickerArgs);
 	void SetConeTargets(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs);
 	uint32_t GetListRange(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs);
+
+
+	void RenderPickers();
 };
 
 extern UiPicker uiPicker;

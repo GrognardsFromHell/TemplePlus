@@ -191,6 +191,17 @@ float LocationSys::InchesToFeet(float inches) {
 	return inches / 12.0f;
 }
 
+LocAndOffsets LocationSys::TrimToLength(LocAndOffsets srcLoc, LocAndOffsets tgtLoc, float lengthInches){
+	float srcAbsX, srcAbsY, tgtAbsX, tgtAbsY;
+	GetOverallOffset(srcLoc, &srcAbsX, &srcAbsY);
+	GetOverallOffset(tgtLoc, &tgtAbsX, &tgtAbsY);
+	auto deltaX = tgtAbsX - srcAbsX;
+	auto deltaY = tgtAbsY - srcAbsY;
+	auto norm = 1.0f / sqrt(deltaX*deltaX + deltaY*deltaY);
+
+	return LocAndOffsets::FromInches(srcAbsX + norm * deltaX * lengthInches, srcAbsY + norm * deltaY * lengthInches);
+}
+
 LocationSys::LocationSys()
 {
 	rebase(getLocAndOff, 0x10040080);
