@@ -27,6 +27,7 @@
 #include "objlist.h"
 #include "ui/ui_dialog.h"
 #include "condition.h"
+#include "legacyscriptsystem.h"
 
 
 struct CombatSystemAddresses : temple::AddressTable
@@ -607,18 +608,16 @@ void LegacyCombatSystem::TurnProcessAi(objHndl obj)
 		return;
 
 	auto isPcUnderAiControl = temple::GetRef<int(__cdecl)(objHndl)>(0x1005AD20);
-	auto getGlobalFlag = temple::GetRef<int(__cdecl)(int)>(0x10006790);
-	auto setGlobalFlag = temple::GetRef<void(__cdecl)(int, int)>(0x100067C0);
 	auto aiProcessPc = temple::GetRef<int(__cdecl)(objHndl)>(0x1005AE10);
 	if (isPcUnderAiControl(obj)){
 
 		// tutorial shite
-		if (maps.GetCurrentMapId() == 5118 && getGlobalFlag(7))	{
+		if (maps.GetCurrentMapId() == 5118 && scriptSys.GetGlobalFlag(7))	{
 			if (!tutorial.IsTutorialActive()){
 				tutorial.Toggle();
 			}
 			tutorial.ShowTopic(31);
-			setGlobalFlag(7, 0);
+			scriptSys.SetGlobalFlag(7, 0);
 		}
 		if (!aiProcessPc(obj)){
 			logger->info("Combat for {} ending turn (ai fail).", description.getDisplayName(obj));

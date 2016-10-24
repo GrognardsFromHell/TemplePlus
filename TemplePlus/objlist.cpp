@@ -10,7 +10,7 @@ static struct ObjListAddresses : temple::AddressTable {
 	void(__cdecl *ObjListVicinity)(locXY loc, int flags, ObjListResult &result);
 	void(__cdecl *ObjListRadius)(LocAndOffsets loc, float radius, float unk1, float unk2, int flags, ObjListResult &result);
 	void(__cdecl *ObjListFollowers)(objHndl critter, ObjListResult &result);
-	void(__cdecl *ObjListFree)(ObjListResult &result);
+	int(__cdecl *ObjListFree)(ObjListResult &result);
 	
 	ObjListAddresses() {
 		rebase(ObjListTile, 0x1001E970);
@@ -23,6 +23,10 @@ static struct ObjListAddresses : temple::AddressTable {
 
 	
 } addresses;
+
+int ObjListResult::Free(){
+	return addresses.ObjListFree(*this);
+}
 
 ObjList::ObjList() {
 	FreeResult();

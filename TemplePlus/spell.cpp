@@ -1576,7 +1576,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 				{ "personal", UiPickerType::Personal},
 				{ "inventory", UiPickerType::InventoryItem},
 				{ "ray", UiPickerType::Ray},
-				{ "wall", UiPickerType::Wall},
+				{ "wall", UiPickerType::Wall}, //New!
 
 				{ "become_touch", UiPickerType::BecomeTouch },
 				{ "area or obj", UiPickerType::AreaOrObj},

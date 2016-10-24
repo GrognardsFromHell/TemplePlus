@@ -55,8 +55,13 @@ struct TigTextStyle
 	ColorRect *bgColor = nullptr; // Use with flags |= 0x400
 	int field48 = 0;
 	int field4c = 0;
+
+	static const TigTextStyle standardWhite;
+	TigTextStyle(ColorRect * color);
+	TigTextStyle();
 };
 #pragma pack(pop)
+
 
 /**
  * Plug in "text" and pass to Measure to get the on-screen measurements a blob of text

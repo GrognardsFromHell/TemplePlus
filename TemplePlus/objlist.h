@@ -78,6 +78,8 @@ struct ObjListResult
 	int field_8C;
 	int field_90;
 	int field_94;
+
+	int Free();
 };
 #pragma pack(pop)
 

@@ -49,6 +49,16 @@ enum PickerStatusFlags : int32_t
 	PSF_Invalid = 0x2
 };
 
+enum WallPickerState : int32_t {
+	// wall targeting consists of two stages: start point stage and end point stage
+	WallPicker_StartPoint = 0,
+	WallPicker_EndPoint = 1,
+
+	// circle targeting
+	WallPicker_CenterPoint = 10,
+	WallPicker_Radius = 11
+};
+
 struct PickerResult {
 	int flags; // see PickerResultFlags
 	int field4;
@@ -57,6 +67,8 @@ struct PickerResult {
 	LocAndOffsets location;
 	float offsetz;
 	int fieldbc;
+
+	void FreeObjlist();
 };
 
 const auto TestSizeOfPickerResult = sizeof(PickerResult);
@@ -84,6 +96,7 @@ struct PickerArgs {
 
 	bool IsBaseModeTarget(UiPickerType type);
 	bool IsModeTargetFlagSet(UiPickerType type);
+	UiPickerType GetBaseModeTarget();
 };
 
 const auto TestSizeOfPickerArgs = sizeof(PickerArgs); // should be 272 (0x110)
@@ -93,7 +106,7 @@ struct PickerCacheEntry
 	PickerArgs args;
 	void *callbackArgs;
 	int field114;
-	int field118;
+	int cursorStackCount_Maybe;
 	int x;
 	int y;
 	int field124;
@@ -112,11 +125,14 @@ struct PickerMsgHandlers
 	int(__cdecl *rmbReleased)(TigMsg *);
 	int(__cdecl *mmbClick)(TigMsg *);
 	int(__cdecl *mmbReleased)(TigMsg *);
+
 	int(__cdecl *posChange)(TigMsg *);
 	int(__cdecl *posChange2)(TigMsg *);
 	int(__cdecl *scrollwheel)(TigMsg *);
 	int(__cdecl *keystateChange)(TigMsg *);
 	int(__cdecl *charFunc)(TigMsg *);
+
+	PickerMsgHandlers();
 };
 
 struct PickerSpec{
@@ -124,25 +140,58 @@ struct PickerSpec{
 	const char *name;
 	PickerMsgHandlers *msg;
 	void(__cdecl *cursorTextDraw)(int x, int y, void *data);
-	void(__cdecl *init)();
+	void(__cdecl *init)(); // gets called on ShowPicker
+
+	PickerSpec();
+	static const PickerSpec null;
 };
 
 class UiPicker {
+friend class UiPickerHooks;
 public:
-	BOOL PickerActiveCheck();
+
+
+
+
+	BOOL PickerActiveCheck(); // is there an active picker?
 	
 	int ShowPicker(const PickerArgs &args, void *callbackArgs);
-	uint32_t sub_100BA030(objHndl objHnd, PickerArgs * pickerArgs);
-
-	void FreeCurrentPicker();
+	BOOL FreeCurrentPicker();
 	PickerCacheEntry &GetPicker(int pickerIdx);
+	PickerCacheEntry &GetActivePicker();
+	int &GetActivePickerIdx();
 
+
+
+	uint32_t ObjectNodesFromPickerResult(objHndl objHnd, PickerArgs * pickerArgs);
+
+	
 	uint32_t SetSingleTarget(objHndl objHndl, PickerArgs* pickerArgs);
 	void SetConeTargets(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs);
 	uint32_t GetListRange(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs);
 
+	// Wall mode
+	void WallStateReset() { mWallState = WallPicker_StartPoint; };
+	WallPickerState GetWallState() { return  mWallState ; };
 
-	void RenderPickers();
+	UiPicker();
+protected:
+	
+	
+	void RenderPickers(); // renders the targeting circles, area of effect overlay and "spell pointers" (the arrow pointing from the caster to AoE and vice versa)
+	BOOL PickerMsgHandler(TigMsg *msg);
+	BOOL PickerMsgMouse(TigMsg *msg); // Mouse message handler
+	BOOL PickerMsgKeyboard(TigMsg *msg); // KB message handler
+	const PickerSpec &GetPickerSpec(UiPickerType modeTarget) ;
+
+	// Wall mode
+	// walls are defined by a start point and an end point
+	void InitWallSpec();
+	PickerSpec mWallSpec;
+	PickerMsgHandlers mWallMsgHandlers;
+	BOOL WallPosChange(TigMsg*msg);
+	void WallCursorText(int x, int y);
+	WallPickerState mWallState = WallPicker_StartPoint;
 };
 
 extern UiPicker uiPicker;

@@ -9,6 +9,13 @@
 #include <party.h>
 #include <gamesystems/objects/objsystem.h>
 #include <critter.h>
+#include "ui_render.h"
+#include <tutorial.h>
+#include <legacyscriptsystem.h>
+#include <tig/tig_mouse.h>
+
+
+const PickerSpec PickerSpec::null;
 
 UiPicker uiPicker;
 
@@ -28,10 +35,10 @@ static struct PickerAddresses : temple::AddressTable {
 		rebase(FreeCurrentPicker, 0x10137680);
 		
 		rebase(activePickerIdx, 0x102F920C);
-		macRebase(sub_100BA030, 100BA030)
-		macRebase(sub_100BA480, 100BA480)
-		macRebase(sub_100BA540, 100BA540) // for area range type
-		macRebase(sub_100BA6A0, 100BA6A0) // something with conical selection
+		rebase(sub_100BA030,0x100BA030); 
+		rebase(sub_100BA480,0x100BA480); 
+		rebase(sub_100BA540,0x100BA540);  // for area range type
+		rebase(sub_100BA6A0,0x100BA6A0);  // something with conical selection
 	}
 
 	uint32_t (__cdecl *sub_100BA540)(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs);
@@ -122,15 +129,27 @@ class UiPickerHooks : TempleFix
 	
 		static void(__cdecl*orgRenderPickers)() = replaceFunction<void()>(0x101350F0, [](){
 			uiPicker.RenderPickers();
-			//return orgRenderPickers();
 		});
 
-		/*static void(__cdecl*orgRenderRay)(LocAndOffsets, LocAndOffsets, float, float, float, int) = replaceFunction<void(LocAndOffsets, LocAndOffsets, float, float, float, int)>(0x10108340, [](LocAndOffsets srcLoc, LocAndOffsets tgtLoc, float rayWidth, float minRange, float maxRange, int spellEnum)
+		replaceFunction<BOOL(__cdecl)(TigMsg*)>(0x101375E0, [](TigMsg*msg){
+			return uiPicker.PickerMsgHandler(msg);
+		});
+
+		// Show Picker
+		replaceFunction<BOOL(__cdecl)(PickerArgs&, void *)>(0x101357E0, [](PickerArgs& args, void *callbackArgs)->BOOL
 		{
-			return orgRenderRay(srcLoc, tgtLoc, rayWidth, minRange, maxRange, spellEnum);
-		});*/
+			return uiPicker.ShowPicker(args, callbackArgs);
+		});
+
+		// Free Current picker
+		replaceFunction<BOOL(__cdecl)()>(0x10137680, [](){
+			return uiPicker.FreeCurrentPicker();
+		});
+
 	}
 } uiPickerHooks;
+
+
 
 BOOL UiPicker::PickerActiveCheck()
 {
@@ -138,38 +157,91 @@ BOOL UiPicker::PickerActiveCheck()
 }
 
 int UiPicker::ShowPicker(const PickerArgs& args, void* callbackArgs) {
-	//if (maps.GetCurrentMapId() == 5118 ) // tutorial map
-	//{
-	//	if (args.spellEnum == 288)
-	//	{
-	//		
-	//	} else if (args.spellEnum == 171)
-	//	{
-	//		
-	//	}
-	//}
-	//if (*addresses.activePickerIdx >= 32)
-	//	return 0;
-	//ui.WidgetSetHidden(uiIntgameSelect.GetId(), 0);
-	//(*addresses.activePickerIdx)++;
-	//if (*addresses.activePickerIdx >= 32 || *addresses.activePickerIdx < 0)
-	//	return 0;
-	//
+
+	tutorial.CastingSpells(args.spellEnum);
+
+	auto &pickerIdx = GetActivePickerIdx();
+
+	if (pickerIdx >= MAX_PICKER_COUNT)
+		return FALSE;
+
 	
-	return addresses.ShowPicker(args, callbackArgs);
+	ui.WidgetSetHidden(uiIntgameSelect.GetId(), 0);
+	pickerIdx++;
+
+	if (pickerIdx >= MAX_PICKER_COUNT || pickerIdx < 0)
+		return FALSE;
+	
+	TigMouseState mouseState;
+	mouseFuncs.GetState(&mouseState);
+
+	auto &picker = GetActivePicker();
+	picker.x = mouseState.x;
+	picker.y = mouseState.y;
+	picker.field114 = 0;
+	picker.cursorStackCount_Maybe = 0;
+	picker.tgt = objHndl::null;
+	picker.tgtIdx = 0;
+	picker.callbackArgs = callbackArgs;
+	picker.args = args;
+	memset(&picker.args.result, 0, sizeof(PickerResult));
+
+	auto modeTarget = picker.args.GetBaseModeTarget();
+	Expects(modeTarget >= UiPickerType::None && modeTarget <= UiPickerType::Wall);
+
+	auto initer = GetPickerSpec(modeTarget).init;
+	if (initer)
+		initer();
+
+	auto cursorDrawer = GetPickerSpec(modeTarget).cursorTextDraw;
+	if (cursorDrawer)
+		mouseFuncs.SetCursorDrawCallback([cursorDrawer](int x, int y) {cursorDrawer(x, y, nullptr); }, (int)cursorDrawer);
+
+	return TRUE;
+	// return addresses.ShowPicker(args, callbackArgs);
 }
 
-uint32_t UiPicker::sub_100BA030(objHndl objHnd, PickerArgs* pickerArgs)
+uint32_t UiPicker::ObjectNodesFromPickerResult(objHndl objHnd, PickerArgs* pickerArgs)
 {
 	return addresses.sub_100BA030(objHnd, pickerArgs);
 }
 
-void UiPicker::FreeCurrentPicker() {
-	addresses.FreeCurrentPicker();
+BOOL UiPicker::FreeCurrentPicker() {
+
+	auto &pickerIdx = GetActivePickerIdx();
+	if (pickerIdx < 0 || pickerIdx >= MAX_PICKER_COUNT)
+		return FALSE;
+
+
+	auto &picker = GetActivePicker();
+	picker.args.result.FreeObjlist();
+	ui.WidgetSetHidden(uiIntgameSelect.GetId(), 1);
+
+	if (picker.cursorStackCount_Maybe){
+		mouseFuncs.ResetCursor();
+	}
+
+	auto modeTarget = picker.args.GetBaseModeTarget();
+	auto &pickerSpec = GetPickerSpec(modeTarget);
+
+	if (pickerSpec.cursorTextDraw)
+		mouseFuncs.SetCursorDrawCallback(nullptr, 0);
+
+	pickerIdx--;
+	return TRUE;
+	// addresses.FreeCurrentPicker();
 }
 
 PickerCacheEntry & UiPicker::GetPicker(int pickerIdx){
 	return temple::GetRef<PickerCacheEntry[32]>(0x10BE3490)[pickerIdx];
+}
+
+PickerCacheEntry & UiPicker::GetActivePicker(){
+	return GetPicker(*addresses.activePickerIdx);
+}
+
+int &UiPicker::GetActivePickerIdx(){
+	return temple::GetRef<int>(0x102F920C);
 }
 
 uint32_t UiPicker::SetSingleTarget(objHndl objHnd, PickerArgs* pickerArgs)
@@ -187,9 +259,25 @@ uint32_t UiPicker::GetListRange(LocAndOffsets* locAndOffsets, PickerArgs* picker
 	return addresses.sub_100BA540(locAndOffsets, pickerArgs);
 }
 
+UiPicker::UiPicker(){
+
+	InitWallSpec();
+	
+}
+
+void UiPicker::InitWallSpec(){
+	mWallSpec.msg = &mWallMsgHandlers;
+	mWallSpec.name = "SP_M_WALL";
+	mWallSpec.init = []() { uiPicker.WallStateReset();  };
+	mWallSpec.idx = (int)UiPickerType::Wall;
+	mWallSpec.cursorTextDraw = [](int x, int y, void*) { uiPicker.WallCursorText(x, y); };
+	mWallMsgHandlers.posChange = [](TigMsg*msg) {return uiPicker.WallPosChange(msg); };
+
+}
+
 void UiPicker::RenderPickers(){
 	
-	auto &activePickerIdx = temple::GetRef<int>(0x102F920C);
+	auto &activePickerIdx = GetActivePickerIdx();
 	auto intgameSelTextDraw = temple::GetRef<void(__cdecl)()>(0x10108FA0);
 	auto &pickerStatusFlags = temple::GetRef<PickerStatusFlags>(0x10BE5F2C);
 
@@ -334,7 +422,7 @@ void UiPicker::RenderPickers(){
 		}
 
 		auto degreesTarget = pick.args.degreesTarget;
-		if (!pick.args.flagsTarget & UiPickerFlagsTarget::Degrees){
+		if (!(pick.args.flagsTarget & UiPickerFlagsTarget::Degrees)){
 			degreesTarget = 60.0f;
 		}
 
@@ -357,8 +445,162 @@ void UiPicker::RenderPickers(){
 	return;
 }
 
-bool PickerArgs::IsBaseModeTarget(UiPickerType type)
-{
+BOOL UiPicker::PickerMsgHandler(TigMsg* msg){
+	if (!PickerActiveCheck())
+		return FALSE;
+
+	auto &pick = GetActivePicker();
+	if (msg->type == TigMsgType::MOUSE){
+		return PickerMsgMouse(msg);
+	}
+
+	if (msg->type == TigMsgType::KEYSTATECHANGE || msg->type == TigMsgType::CHAR) {
+		return PickerMsgKeyboard(msg);
+	}
+
+	return FALSE;
+}
+
+BOOL UiPicker::PickerMsgMouse(TigMsg * msg){
+	auto activePickerIdx = GetActivePickerIdx();
+
+	if (activePickerIdx >= MAX_PICKER_COUNT || activePickerIdx < 0)
+		return FALSE;
+
+	auto &picker = GetPicker(activePickerIdx);
+	auto msgMouse = (TigMsgMouse*)msg;
+	auto &pickerSpec = GetPickerSpec(picker.args.GetBaseModeTarget());
+
+	// update x/y position
+	picker.x = msgMouse->x;
+	picker.y = msgMouse->y;
+
+	auto msf = (MouseStateFlags)msgMouse->buttonStateFlags;
+
+	
+	auto result = FALSE;
+
+	if (msf & MSF_LMB_CLICK){
+		auto handler = pickerSpec.msg->lmbClick;
+		if (handler && handler(msg))
+			result = TRUE;
+	}
+
+	if (msgMouse->buttonStateFlags & MSF_LMB_RELEASED) {
+		auto handler = pickerSpec.msg->lmbReleased;
+		if (handler && handler(msg))
+			result = TRUE;
+	}
+
+	if (msgMouse->buttonStateFlags & MSF_RMB_CLICK) {
+		auto handler = pickerSpec.msg->rmbClick;
+		if (handler && handler(msg))
+			result = TRUE;
+	}
+
+	if (msgMouse->buttonStateFlags & MSF_RMB_RELEASED) {
+		auto handler = pickerSpec.msg->rmbReleased;
+		if (handler && handler(msg))
+			result = TRUE;
+	}
+
+	if (msgMouse->buttonStateFlags & MSF_MMB_CLICK) {
+		auto handler = pickerSpec.msg->mmbClick;
+		if (handler && handler(msg))
+			result = TRUE;
+	}
+
+	if (msgMouse->buttonStateFlags & MSF_MMB_RELEASED) {
+		auto handler = pickerSpec.msg->mmbReleased;
+		if (handler && handler(msg))
+			result = TRUE;
+	}
+
+	if (msgMouse->buttonStateFlags & MSF_POS_CHANGE) {
+		auto handler = pickerSpec.msg->posChange;
+		if (handler && handler(msg))
+			result = TRUE;
+	}
+
+	if (msgMouse->buttonStateFlags & MSF_POS_CHANGE2) {
+		auto handler = pickerSpec.msg->posChange2;
+		if (handler && handler(msg))
+			result = TRUE;
+	}
+
+	if (msgMouse->buttonStateFlags & MSF_SCROLLWHEEL_CHANGE) {
+		auto handler = pickerSpec.msg->scrollwheel;
+		if (handler && handler(msg))
+			result = TRUE;
+	}
+
+	return result;
+}
+
+BOOL UiPicker::PickerMsgKeyboard(TigMsg * msg){
+
+	auto modeTarget = GetActivePicker().args.GetBaseModeTarget();
+	auto &pickerSpec = GetPickerSpec(modeTarget);
+	
+	if (msg->type == TigMsgType::KEYSTATECHANGE){
+		auto keystateHandler = pickerSpec.msg->keystateChange;
+		if (keystateHandler && keystateHandler(msg))
+			return TRUE;
+	}
+
+	if (msg->type == TigMsgType::CHAR) {
+		auto charFunc = pickerSpec.msg->charFunc;
+		if (charFunc && charFunc(msg))
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
+const PickerSpec & UiPicker::GetPickerSpec(UiPickerType modeTarget){
+
+	assert(modeTarget <= UiPickerType::Wall);
+
+	if (modeTarget <= UiPickerType::Ray){
+		return addresses.pickerSpecs[(int)modeTarget];
+	} 
+	else if (modeTarget == UiPickerType::Wall){
+		return mWallSpec;
+	}
+	else{
+		logger->error("GetPickerSpec: Invalid picker type!");
+		return PickerSpec::null;
+	}
+}
+
+BOOL UiPicker::WallPosChange(TigMsg * msg){
+
+	auto wallState = GetWallState();
+
+	if (wallState == WallPicker_StartPoint){
+		return TRUE;
+	}
+
+	if (wallState == WallPicker_EndPoint) {
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+void UiPicker::WallCursorText(int x, int y){
+	auto wallState = GetWallState();
+
+
+	if (wallState == WallPicker_StartPoint){
+		static std::string selStartPt("Select Start Point");
+		TigRect destRect(x + 5, y + 5, 100, 13);
+		
+		UiRenderer::RenderText(selStartPt.c_str(), destRect, TigTextStyle::standardWhite);
+	}
+}
+
+bool PickerArgs::IsBaseModeTarget(UiPickerType type){
 	auto _type = (uint64_t)type;
 	return ( ((uint64_t)modeTarget) & 0xFF) == _type;
 }
@@ -366,6 +608,11 @@ bool PickerArgs::IsBaseModeTarget(UiPickerType type)
 bool PickerArgs::IsModeTargetFlagSet(UiPickerType type)
 {
 	return (((uint64_t)modeTarget) & ((uint64_t)type)) == (uint64_t)type;
+}
+
+UiPickerType PickerArgs::GetBaseModeTarget()
+{
+	return (UiPickerType) (((uint64_t)this->modeTarget) & 0xFF);
 }
 
 BOOL UiPickerHooks::PickerMultiKeystateChange(TigMsg * msg){
@@ -379,4 +626,36 @@ BOOL UiPickerHooks::PickerMultiKeystateChange(TigMsg * msg){
 		return 0;
 
 	return temple::GetRef<BOOL(__cdecl)(TigMsg*)>(0x10136810)(msg);
+}
+
+
+
+
+PickerSpec::PickerSpec() {
+	this->name = "";
+	this->cursorTextDraw = nullptr;
+	this->idx = -1;
+	this->init = nullptr;
+	this->msg = nullptr;
+}
+
+PickerMsgHandlers::PickerMsgHandlers(){
+	this->lmbClick = nullptr;
+	this->lmbReleased = nullptr;
+	this->rmbClick = nullptr;
+	this->rmbReleased = nullptr;
+	this->mmbClick = nullptr;
+	this->mmbReleased = nullptr;
+
+	this->posChange= nullptr;
+	this->posChange2 = nullptr;
+	this->keystateChange = nullptr;
+	this->charFunc = nullptr;
+	this->scrollwheel = nullptr;
+}
+
+void PickerResult::FreeObjlist(){
+	if (this->flags & PickerResultFlags::PRF_HAS_MULTI_OBJ)
+		this->objList.Free();
+	this->flags = 0;
 }
