@@ -1,14 +1,19 @@
 #include "stdafx.h"
 #include "common.h"
+#include <EASTL/hash_map.h>
+#include <EASTL/fixed_string.h>
 #include "config/config.h"
 #include "d20.h"
 #include "feat.h"
 #include "ui_char_editor.h"
 #include "obj.h"
 #include "ui/ui.h"
+#include "ui_render.h"
 #include "util/fixes.h"
-#include "tig/tig_texture.h"
 #include "gamesystems/gamesystems.h"
+#include <tig/tig_texture.h>
+#include <tig/tig_font.h>
+#include "graphics/imgfile.h"
 
 #define MAX_PC_CREATION_PORTRAITS 8
 #include "party.h"
@@ -16,8 +21,33 @@
 #include <location.h>
 #include <tio/tio.h>
 #include <mod_support.h>
+#include <gamesystems/d20/d20stats.h>
+#include <gamesystems/objects/objsystem.h>
+#include <gamesystems/d20/d20_help.h>
+#include <critter.h>
+#include <infrastructure/elfhash.h>
+#include <condition.h>
 
-struct TigMsg;
+
+enum ChargenStages : int {
+	CG_Stage_Stats = 0,
+	CG_Stage_Race,
+	CG_Stage_Gender,
+	CG_Stage_Height,
+	CG_Stage_Hair,
+	CG_Stage_Class,
+	CG_Stage_Alignment,
+	CG_Stage_Deity,
+	CG_Stage_Abilities,
+	CG_Stage_Feats,
+	CG_Stage_Skills,
+	CG_Stage_Spells,
+	CG_Stage_Portrait,
+	CG_Stage_Voice,
+
+	CG_STAGE_COUNT
+};
+
 int PcCreationFeatUiPrereqCheckUsercallWrapper();
 int(__cdecl * OrgFeatMultiselectSub_101822A0)();
 int HookedFeatMultiselectSub_101822A0(feat_enums feat);
@@ -51,7 +81,7 @@ struct ChargenSystem{ // incomplete
 	void(__cdecl *activate)();
 	BOOL(__cdecl *systemInit)(GameSystemConf *);
 	void(__cdecl*free)();
-	int resize;
+	int (__cdecl*resize)(UiResizeArgs &resizeArgs);
 	void(__cdecl *hide)();
 	void(__cdecl *show)();
 	int(__cdecl *checkComplete)(); // checks if the char editing stage is complete (thus allowing you to move on to the next stage). This is checked at every render call.
@@ -60,7 +90,291 @@ struct ChargenSystem{ // incomplete
 };
 
 
-class PcCreationUiSystem : TempleFix
+class UiPcCreation{
+	friend class PcCreationHooks;
+
+public:
+	objHndl GetEditedChar();
+	CharEditorSelectionPacket & GetCharEditorSelPacket();
+	WidgetType1 &GetPcCreationWnd();
+	int &GetState();
+	Alignment GetPartyAlignment();
+
+	void PrepareNextStages();
+	void BtnStatesUpdate(int systemId);
+	void ResetNextStages(int systemId); // activates the reset callback for all the subsequent stages
+	void ToggleClassRelatedStages(); // Spell Selection and Class Features
+
+#pragma region Systems
+	// 
+	BOOL ClassSystemInit(GameSystemConf & conf);
+	BOOL ClassWidgetsInit();
+	void ClassWidgetsFree();
+	BOOL ClassShow();
+	BOOL ClassHide();
+	BOOL ClassWidgetsResize(UiResizeArgs & args);
+	BOOL ClassCheckComplete();
+	void ClassBtnEntered();
+	void ClassActivate();
+	void ClassFinalize(CharEditorSelectionPacket & selPkt, objHndl & handle);
+#pragma endregion
+
+#pragma region Widget callbacks
+	void StateTitleRender(int widId);
+	void ClassBtnRender(int widId);
+	BOOL ClassBtnMsg(int widId, TigMsg* msg);
+	BOOL ClassNextBtnMsg(int widId, TigMsg* msg);
+	BOOL ClassPrevBtnMsg(int widId, TigMsg* msg);
+	BOOL FinishBtnMsg(int widId, TigMsg* msg); // goes after the original FinishBtnMsg
+	void ClassNextBtnRender(int widId);
+	void ClassPrevBtnRender(int widId);
+
+#pragma endregion
+
+
+	// state
+	int classWndPage = 0;
+	eastl::vector<int> classBtnMapping; // used as an index of choosable character classes
+	int GetClassWndPage();
+	Stat GetClassCodeFromWidgetAndPage(int idx, int page);
+	int GetStatesComplete();
+
+	// logic
+	void ClassSetPermissibles();
+	bool IsSelectingNormalFeat(); // the normal feat you get every 3rd level in 3.5ed
+	bool IsSelectingBonusFeat(); // selecting a class bonus feat
+
+	// utilities
+	bool IsCastingStatSufficient(Stat classEnum);
+	bool IsAlignmentOk(Stat classEnums); // checks if class is compatible with the selected party alignment
+	void ClassScrollboxTextSet(Stat classEnum); // sets the chargen textbox to the class's short description from stat.mes
+	void ButtonEnteredHandler(int helpId);
+	int GetNewLvl(Stat classEnum = stat_level);
+
+	// Spell Utilities
+	void SpellsPopulateAvailableEntries(Stat classEnum, int maxSpellLvl, bool skipCantrips = false);
+	bool SpellIsForbidden(int spEnum);
+	bool SpellIsAlreadyKnown(int spEnum, int spellClass);
+
+	// Feat Utilities
+	std::string GetFeatName(feat_enums feat); // includes strings for Mutli-selection feat categories e.g. FEAT_WEAPON_FOCUS
+	TigTextStyle & GetFeatStyle(feat_enums feat, bool allowMultiple = true);
+	bool FeatAlreadyPicked(feat_enums feat);
+	bool FeatCanPick(feat_enums feat);
+	bool IsSelectingRangerSpec();
+	bool IsClassBonusFeat(feat_enums feat);
+	void SetBonusFeats(std::vector<FeatInfo> & fti);
+	void FeatsSanitize();
+	void FeatsMultiSelectActivate(feat_enums feat);
+	feat_enums FeatsMultiGetFirst(feat_enums feat); // first alphabetical
+
+													// widget IDs
+	int classWndId = 0;
+	int classNextBtn = 0, classPrevBtn = 0;
+	eastl::vector<int> classBtnIds;
+
+	// geometry
+	TigRect classNextBtnRect, classNextBtnFrameRect, classNextBtnTextRect,
+		classPrevBtnRect, classPrevBtnFrameRect, classPrevBtnTextRect;
+	TigRect spellsChosenTitleRect, spellsAvailTitleRect;
+	TigRect spellsPerDayTitleRect;
+	int featsMultiCenterX, featsMultiCenterY;
+	TigRect featMultiOkRect, featMultiOkTextRect, featMultiCancelRect, featMultiCancelTextRect, featMultiTitleRect;
+	TigRect featsAvailTitleRect, featsTitleRect, featsExistingTitleRect, featsClassBonusRect;
+	TigRect featsSelectedBorderRect, featsClassBonusBorderRect, feat0TextRect, feat1TextRect, feat2TextRect;
+
+	int featsMainWndId = 0, featsMultiSelectWndId = 0;
+	int featsScrollbarId = 0, featsExistingScrollbarId = 0, featsMultiSelectScrollbarId = 0;
+	int featsScrollbarY = 0, featsExistingScrollbarY = 0, featsMultiSelectScrollbarY = 0;
+	WidgetType1 featsMainWnd, featsMultiSelectWnd;
+	WidgetType3 featsScrollbar, featsExistingScrollbar, featsMultiSelectScrollbar;
+	eastl::vector<int> featsAvailBtnIds, featsExistingBtnIds, featsMultiSelectBtnIds;
+	int featsMultiOkBtnId = 0, featsMultiCancelBtnId = 0;
+	const int FEATS_AVAIL_BTN_COUNT = 17; // vanilla 18
+	const int FEATS_AVAIL_BTN_HEIGHT = 12; // vanilla 11
+	const int FEATS_EXISTING_BTN_COUNT = 10; // vanilla 11
+	const int FEATS_EXISTING_BTN_HEIGHT = 13; // vanilla 12
+	const int FEATS_MULTI_BTN_COUNT = 15;
+	const int FEATS_MULTI_BTN_HEIGHT = 12;
+	std::string featsAvailTitleString, featsExistingTitleString;
+	std::string featsTitleString;
+	std::string featsClassBonusTitleString;
+
+
+	int spellsWndId = 0;
+	WidgetType1 spellsWnd;
+	WidgetType3 spellsScrollbar, spellsScrollbar2;
+	int spellsScrollbarId = 0, spellsScrollbar2Id = 0;
+	int spellsScrollbarY = 0, spellsScrollbar2Y = 0;
+	eastl::vector<int> spellsAvailBtnIds, spellsChosenBtnIds;
+	const int SPELLS_BTN_COUNT = 17; // vanilla had 20, decreasing this to increase the font
+	const int SPELLS_BTN_HEIGHT = 13; // vanilla was 11 (so 13*17 = 221 ~= 220 vanilla)
+	std::string spellsAvailLabel;
+	std::string spellsChosenLabel;
+	std::string spellsPerDayLabel;
+	const int SPELLS_PER_DAY_BOXES_COUNT = 6;
+
+
+	// caches
+	eastl::hash_map<int, eastl::string> classNamesUppercase;
+	eastl::vector<TigRect> classBtnFrameRects;
+	eastl::vector<TigRect> classBtnRects;
+	eastl::vector<TigRect> classTextRects;
+	eastl::vector<TigRect> featsMultiBtnRects;
+	eastl::vector<TigRect> featsBtnRects, featsExistingBtnRects;
+	eastl::hash_map<int, std::string> featsMasterFeatStrings;
+	eastl::vector<string> levelLabels;
+	eastl::vector<string> spellLevelLabels;
+	eastl::vector<string> spellsPerDayTexts;
+	eastl::vector<TigRect> spellsPerDayTextRects;
+	eastl::vector<TigRect> spellsNewSpellsBoxRects;
+
+
+	// art assets
+	int buttonBox = 0;
+	ColorRect genericShadowColor = ColorRect(0xFF000000);
+	ColorRect whiteColorRect = ColorRect(0xFFFFffff);
+	ColorRect blueColorRect = ColorRect(0xFF0000ff);
+	ColorRect classBtnShadowColor = ColorRect(0xFF000000);
+	ColorRect classBtnColorRect = ColorRect(0xFFFFffff);
+	TigTextStyle whiteTextGenericStyle;
+	TigTextStyle blueTextStyle;
+	TigTextStyle classBtnTextStyle;
+	TigTextStyle featsGreyedStyle, featsBonusTextStyle, featsExistingTitleStyle, featsGoldenStyle, featsClassStyle, featsCenteredStyle;
+	TigTextStyle spellsTextStyle;
+	TigTextStyle spellsTitleStyle;
+	TigTextStyle spellLevelLabelStyle;
+	TigTextStyle spellsAvailBtnStyle;
+	TigTextStyle spellsPerDayStyle;
+	TigTextStyle spellsPerDayTitleStyle;
+	CombinedImgFile* levelupSpellbar, *featsbackdrop;
+
+
+	CharEditorClassSystem& GetClass() const {
+		Expects(!!mClass);
+		return *mClass;
+	}
+
+	UiPcCreation() {
+		TigTextStyle baseStyle;
+		baseStyle.flags = 0x4000;
+		baseStyle.field2c = -1;
+		baseStyle.shadowColor = &genericShadowColor;
+		baseStyle.field0 = 0;
+		baseStyle.kerning = 1;
+		baseStyle.leading = 0;
+		baseStyle.tracking = 3;
+		baseStyle.textColor = baseStyle.colors2 = baseStyle.colors4 = &whiteColorRect;
+		whiteTextGenericStyle = baseStyle;
+
+		blueTextStyle = baseStyle;
+		blueTextStyle.colors4 = blueTextStyle.colors2 = blueTextStyle.textColor = &blueColorRect;
+	}
+
+private:
+	int mPageCount = 0;
+
+	bool mFeatsActivated = false;
+	bool mIsSelectingBonusFeat = false;
+	bool mBonusFeatOk = false;
+	feat_enums featsMultiSelected = FEAT_NONE, mFeatsMultiMasterFeat = FEAT_NONE;
+
+	std::unique_ptr<CharEditorClassSystem> mClass;
+	std::vector<KnownSpellInfo> mSpellInfo;
+	std::vector<KnownSpellInfo> mAvailableSpells; // spells available for learning
+	std::vector<FeatInfo> mExistingFeats, mSelectableFeats, mMultiSelectFeats, mMultiSelectMasterFeats, mBonusFeats;
+
+} uiPcCreation;
+
+
+struct PcCreationUiAddresses : temple::AddressTable
+{
+	int * pcCreationIdx;
+
+	WidgetType1 * pcCreationPortraitsMainWidget;
+	int * mainWindowWidgetId; // 10BF0ED4
+	int * pcPortraitsWidgetIds; // 10BF0EBC  array of 5 entries
+
+
+	int * uiPccPortraitTexture;
+	int *uiPccPortraitHoverTexture;
+	int *uiPccPortraitClickTexture;
+	int * uiPccPortraitDisabledTexture;
+	int * uiPcPortraitsFullMaybe;
+
+
+
+	int * dword_10C75F30;
+	int * featsMultiselectNum_10C75F34;
+	feat_enums * featMultiselect_10C75F38;
+	int *dword_10C76AF0;
+	Widget* widg_10C77CD0;
+	int * dword_10C77D50;
+	int * dword_10C77D54;
+	int *widIdx_10C77D80;
+	feat_enums * featsMultiselectList;
+	feat_enums * feat_10C79344;
+	int * widgId_10C7AE14;
+	char* (__cdecl*sub_10182760)(feat_enums featEnums);
+	int(__cdecl* j_CopyWidget_101F87A0)(int widIdx, Widget* widg);
+	int(__cdecl*sub_101F87B0)(int widIdx, Widget* widg);
+	int(__cdecl*sub_101F8E40)(int);
+	int(__cdecl*sub_101F9100)(int widId, int);
+	int(__cdecl*sub_101F9510)(int, int);
+
+	CharEditorSelectionPacket * charEdSelPkt;
+	MesHandle* pcCreationMes;
+	void(__cdecl*ui_render_pc_creation_portraits)(int widId);
+	BOOL(__cdecl*ui_msg_pc_creation_portraits)(int widId, TigMsg*);
+
+	PcCreationUiAddresses()
+	{
+
+		rebase(ui_render_pc_creation_portraits, 0x10163270);
+		rebase(ui_msg_pc_creation_portraits, 0x101633A0);
+		rebase(pcCreationIdx, 0x10BF0BC8);
+		rebase(uiPccPortraitTexture, 0x10BF0BCC);
+		rebase(uiPccPortraitHoverTexture, 0x10BF0C20);
+		rebase(pcCreationPortraitsMainWidget, 0x10BF0C28);
+		rebase(uiPccPortraitClickTexture, 0x10BF1354);
+		rebase(uiPccPortraitDisabledTexture, 0x10BF1358);
+		rebase(uiPcPortraitsFullMaybe, 0x10BF0ED0);
+
+
+		rebase(dword_10C75F30, 0x10C75F30);
+		rebase(featsMultiselectNum_10C75F34, 0x10C75F34);
+		rebase(featMultiselect_10C75F38, 0x10C75F38);
+		rebase(dword_10C76AF0, 0x10C76AF0);
+		rebase(widg_10C77CD0, 0x10C77CD0);
+		rebase(dword_10C77D50, 0x10C77D50);
+		rebase(dword_10C77D54, 0x10C77D54);
+		rebase(widIdx_10C77D80, 0x10C77D80);
+		rebase(featsMultiselectList, 0x10C78920);
+		rebase(feat_10C79344, 0x10C79344);
+		rebase(widgId_10C7AE14, 0x10C7AE14);
+
+		rebase(sub_10182760, 0x10182760);
+		rebase(j_CopyWidget_101F87A0, 0x101F87A0);
+		rebase(sub_101F87B0, 0x101F87B0);
+		rebase(sub_101F8E40, 0x101F8E40);
+		rebase(sub_101F9100, 0x101F9100);
+		rebase(sub_101F9510, 0x101F9510);
+
+		rebase(pcCreationMes, 0x11E72EF0);
+		rebase(charEdSelPkt, 0x11E72F00);
+
+
+
+	}
+
+
+} addresses;
+
+
+
+
+
+class PcCreationHooks : TempleFix
 {
 public:
 
@@ -101,11 +415,24 @@ public:
 
 	void apply() override
 	{
+		// Chargen Class system
+		replaceFunction<void(__cdecl)(GameSystemConf&)>(0x10188910, [](GameSystemConf& conf) {uiPcCreation.ClassSystemInit(conf); });
+		replaceFunction<void(__cdecl)()>(0x101885E0, []() {uiPcCreation.ClassWidgetsFree(); });
+		replaceFunction<void(__cdecl)()>(0x101885D0, []() {uiPcCreation.ClassActivate(); });
+		replaceFunction<void(__cdecl)(UiResizeArgs&)>(0x101889F0, [](UiResizeArgs& args) {uiPcCreation.ClassWidgetsResize(args); });
+		replaceFunction<void(__cdecl)()>(0x101880F0, []() {uiPcCreation.ClassShow(); });
+		replaceFunction<void(__cdecl)()>(0x101880D0, []() {uiPcCreation.ClassHide(); });
+		replaceFunction<void(__cdecl)(CharEditorSelectionPacket& , objHndl& )>(0x10188110, [](CharEditorSelectionPacket& selPkt, objHndl& handle) {uiPcCreation.ClassFinalize(selPkt, handle); });
+		replaceFunction<void(__cdecl)()>(0x101B0620, []() {uiPcCreation.ClassCheckComplete(); });
+		replaceFunction<void(__cdecl)()>(0x10188260, []() {uiPcCreation.ClassBtnEntered(); });
+		
+		
 
-		// lax rules option for unbounded increase of stats
+		// lax rules option for unbounded increase of stats & party member alignment
 		replaceFunction(0x1018B940, StatsIncreaseBtnMsg);
 		replaceFunction(0x1018B9B0, StatsDecreaseBtnMsg);
 		replaceFunction(0x1018B570, StatsUpdateBtns);
+		replaceFunction<BOOL(Alignment, Alignment)>(0x1011B880, [](Alignment a, Alignment b)->BOOL { if (config.laxRules) return TRUE; return (BOOL)d20Stats.AlignmentsCompatible(a, b); });
 
 		// PC Creation UI Fixes
 		replaceFunction(0x10182E80, PcCreationFeatUiPrereqCheckUsercallWrapper);
@@ -152,97 +479,13 @@ public:
 			return result;
 		});
 	}
-} pcCreationSys;
-WidgetType1 PcCreationUiSystem::pcPortraitsMain;
-int PcCreationUiSystem::pcPortraitsMainId = -1;
-int PcCreationUiSystem::pcPortraitWidgIds[MAX_PC_CREATION_PORTRAITS] = { -1, };
-TigRect PcCreationUiSystem::pcPortraitRects[MAX_PC_CREATION_PORTRAITS];
-TigRect PcCreationUiSystem::pcPortraitBoxRects[MAX_PC_CREATION_PORTRAITS];
-UiMsgFunc PcCreationUiSystem::orgPcPortraitsMsgFunc;
-
-struct PcCreationUiAddresses : temple::AddressTable
-{
-	int * pcCreationIdx;
-
-	WidgetType1 * pcCreationPortraitsMainWidget;
-	int * mainWindowWidgetId; // 10BF0ED4
-	int * pcPortraitsWidgetIds; // 10BF0EBC  array of 5 entries
-
-
-	int * uiPccPortraitTexture;
-	int *uiPccPortraitHoverTexture;
-	int *uiPccPortraitClickTexture;
-	int * uiPccPortraitDisabledTexture;
-	int * uiPcPortraitsFullMaybe;
-
-
-
-	int * dword_10C75F30;
-	int * featsMultiselectNum_10C75F34;
-	feat_enums * featMultiselect_10C75F38;
-	int *dword_10C76AF0;
-	Widget* widg_10C77CD0;
-	int * dword_10C77D50;
-	int * dword_10C77D54;
-	int *widIdx_10C77D80;
-	feat_enums * featsMultiselectList;
-	feat_enums * feat_10C79344;
-	int * widgId_10C7AE14;
-	char* (__cdecl*sub_10182760)(feat_enums featEnums);
-	int(__cdecl* j_CopyWidget_101F87A0)(int widIdx, Widget* widg);
-	int(__cdecl*sub_101F87B0)(int widIdx, Widget* widg);
-	int(__cdecl*sub_101F8E40)(int);
-	int(__cdecl*sub_101F9100)(int widId, int);
-	int(__cdecl*sub_101F9510)(int, int);
-
-	CharEditorSelectionPacket * charEdSelPkt;
-	MesHandle* pcCreationMes;
-	void (__cdecl*ui_render_pc_creation_portraits)(int widId);
-	BOOL(__cdecl*ui_msg_pc_creation_portraits)(int widId, TigMsg*);
-
-	PcCreationUiAddresses()
-	{
-
-		rebase(ui_render_pc_creation_portraits, 0x10163270);
-		rebase(ui_msg_pc_creation_portraits   , 0x101633A0);
-		rebase(pcCreationIdx,					0x10BF0BC8);
-		rebase(uiPccPortraitTexture,			0x10BF0BCC);
-		rebase(uiPccPortraitHoverTexture,		0x10BF0C20);
-		rebase(pcCreationPortraitsMainWidget,	0x10BF0C28);
-		rebase(uiPccPortraitClickTexture,		0x10BF1354);
-		rebase(uiPccPortraitDisabledTexture,	0x10BF1358);
-		rebase(uiPcPortraitsFullMaybe,			0x10BF0ED0);
-
-
-		rebase(dword_10C75F30, 0x10C75F30);
-		rebase(featsMultiselectNum_10C75F34, 0x10C75F34);
-		rebase(featMultiselect_10C75F38, 0x10C75F38);
-		rebase(dword_10C76AF0, 0x10C76AF0);
-		rebase(widg_10C77CD0, 0x10C77CD0);
-		rebase(dword_10C77D50, 0x10C77D50);
-		rebase(dword_10C77D54, 0x10C77D54);
-		rebase(widIdx_10C77D80, 0x10C77D80);
-		rebase(featsMultiselectList, 0x10C78920);
-		rebase(feat_10C79344, 0x10C79344);
-		rebase(widgId_10C7AE14, 0x10C7AE14);
-
-		rebase(sub_10182760, 0x10182760);
-		rebase(j_CopyWidget_101F87A0, 0x101F87A0);
-		rebase(sub_101F87B0, 0x101F87B0);
-		rebase(sub_101F8E40, 0x101F8E40);
-		rebase(sub_101F9100, 0x101F9100);
-		rebase(sub_101F9510, 0x101F9510);
-
-		rebase(pcCreationMes, 0x11E72EF0);
-		rebase(charEdSelPkt, 0x11E72F00);
-		
-
-		
-	}
-
-
-} addresses;
-
+} pcCreationHooks;
+WidgetType1 PcCreationHooks::pcPortraitsMain;
+int PcCreationHooks::pcPortraitsMainId = -1;
+int PcCreationHooks::pcPortraitWidgIds[MAX_PC_CREATION_PORTRAITS] = { -1, };
+TigRect PcCreationHooks::pcPortraitRects[MAX_PC_CREATION_PORTRAITS];
+TigRect PcCreationHooks::pcPortraitBoxRects[MAX_PC_CREATION_PORTRAITS];
+UiMsgFunc PcCreationHooks::orgPcPortraitsMsgFunc;
 
 
 
@@ -258,11 +501,11 @@ int __declspec(naked) HookedUsercallFeatMultiselectSub_101822A0()
 	__asm retn;
 }
 
-CharEditorSelectionPacket & PcCreationUiSystem::GetCharEdSelPkt(){
+CharEditorSelectionPacket & PcCreationHooks::GetCharEdSelPkt(){
 	return temple::GetRef<CharEditorSelectionPacket>(0x11E72F00);
 }
 
-BOOL PcCreationUiSystem::PcPortraitsInit(GameSystemConf* conf)
+BOOL PcCreationHooks::PcPortraitsInit(GameSystemConf* conf)
 {
 	if (textureFuncs.RegisterTexture("art\\interface\\pc_creation\\portrait.tga", addresses.uiPccPortraitTexture)
 		|| textureFuncs.RegisterTexture("art\\interface\\pc_creation\\portrait_click.tga", addresses.uiPccPortraitClickTexture)
@@ -275,7 +518,7 @@ BOOL PcCreationUiSystem::PcPortraitsInit(GameSystemConf* conf)
 	return PcPortraitWidgetsInit(conf->height);
 }
 
-BOOL PcCreationUiSystem::PcPortraitWidgetsInit(int height)
+BOOL PcCreationHooks::PcPortraitWidgetsInit(int height)
 {
 	pcPortraitsMain.WidgetType1Init(10, height - 80, 650, 63);
 	pcPortraitsMain.widgetFlags = 1;
@@ -316,7 +559,7 @@ BOOL PcCreationUiSystem::PcPortraitWidgetsInit(int height)
 	return 1;
 }
 
-BOOL PcCreationUiSystem::PcPortraitsExit()
+BOOL PcCreationHooks::PcPortraitsExit()
 {
 	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
 	{
@@ -325,7 +568,7 @@ BOOL PcCreationUiSystem::PcPortraitsExit()
 	return ui.WidgetAndWindowRemove(pcPortraitsMainId);
 }
 
-BOOL PcCreationUiSystem::PcPortraitsResize(UiResizeArgs* resizeArgs)
+BOOL PcCreationHooks::PcPortraitsResize(UiResizeArgs* resizeArgs)
 {
 	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS;i++)
 	{
@@ -335,13 +578,13 @@ BOOL PcCreationUiSystem::PcPortraitsResize(UiResizeArgs* resizeArgs)
 	return PcPortraitWidgetsInit(resizeArgs->rect1.height);
 }
 
-BOOL PcCreationUiSystem::PcPortraitsMainHideAndGet()
+BOOL PcCreationHooks::PcPortraitsMainHideAndGet()
 {
 	ui.WidgetSetHidden(pcPortraitsMainId, 1);
 	return ui.WidgetCopy(pcPortraitsMainId, &pcPortraitsMain);
 }
 
-void PcCreationUiSystem::PcPortraitsButtonActivateNext()
+void PcCreationHooks::PcPortraitsButtonActivateNext()
 {
 	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
 	{
@@ -358,7 +601,7 @@ void PcCreationUiSystem::PcPortraitsButtonActivateNext()
 	*addresses.uiPcPortraitsFullMaybe = 1;
 }
 
-void PcCreationUiSystem::PcPortraitsRefresh()
+void PcCreationHooks::PcPortraitsRefresh()
 {
 	ui.WidgetSetHidden(pcPortraitsMainId,0);
 	ui.WidgetCopy(pcPortraitsMainId, &pcPortraitsMain);
@@ -379,7 +622,7 @@ void PcCreationUiSystem::PcPortraitsRefresh()
 	*addresses.pcCreationIdx = -1;
 }
 
-void PcCreationUiSystem::PcPortraitsDisable()
+void PcCreationHooks::PcPortraitsDisable()
 {
 	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS;i++)
 	{
@@ -388,7 +631,7 @@ void PcCreationUiSystem::PcPortraitsDisable()
 	*addresses.uiPcPortraitsFullMaybe = 0;
 }
 
-int PcCreationUiSystem::PcPortraitsMsgFunc(int widgetId, TigMsg* tigMsg)
+int PcCreationHooks::PcPortraitsMsgFunc(int widgetId, TigMsg* tigMsg)
 {
 	int i;
 	if (tigMsg->type != TigMsgType::WIDGET
@@ -399,7 +642,7 @@ int PcCreationUiSystem::PcPortraitsMsgFunc(int widgetId, TigMsg* tigMsg)
 	return orgPcPortraitsMsgFunc(widgetId, tigMsg);
 }
 
-void PcCreationUiSystem::WriteMaxPcPortraitValues()
+void PcCreationHooks::WriteMaxPcPortraitValues()
 {
 	// 1016312F
 	int writeVal = (int)&pcPortraitWidgIds[-1];
@@ -426,7 +669,7 @@ void PcCreationUiSystem::WriteMaxPcPortraitValues()
 	write(0x10163329 + 2, &writeVal, 4);
 }
 
-void PcCreationUiSystem::GetPartyPool(int fromIngame)
+void PcCreationHooks::GetPartyPool(int fromIngame)
 {
 	int& uiPartypoolWidgetId = temple::GetRef<int>(0x10BF1764);
 	int& uiPcCreationMainWndId = temple::GetRef<int>(0x10BDD690);
@@ -486,7 +729,7 @@ void PcCreationUiSystem::GetPartyPool(int fromIngame)
 	UiUtilityBarHide();
 }
 
-int PcCreationUiSystem::PartyPoolLoader()
+int PcCreationHooks::PartyPoolLoader()
 {
 	int result = 1;
 
@@ -537,7 +780,7 @@ int PcCreationUiSystem::PartyPoolLoader()
 	
 	return result;
 }
-BOOL PcCreationUiSystem::StatsIncreaseBtnMsg(int widId, TigMsg * msg){
+BOOL PcCreationHooks::StatsIncreaseBtnMsg(int widId, TigMsg * msg){
 
 	if (msg->type != TigMsgType::WIDGET)
 		return FALSE;
@@ -568,7 +811,7 @@ BOOL PcCreationUiSystem::StatsIncreaseBtnMsg(int widId, TigMsg * msg){
 	return TRUE;
 }
 
-BOOL PcCreationUiSystem::StatsDecreaseBtnMsg(int widId, TigMsg * msg){
+BOOL PcCreationHooks::StatsDecreaseBtnMsg(int widId, TigMsg * msg){
 
 	if (msg->type != TigMsgType::WIDGET)
 		return FALSE;
@@ -599,7 +842,7 @@ BOOL PcCreationUiSystem::StatsDecreaseBtnMsg(int widId, TigMsg * msg){
 	return TRUE;
 }
 
-BOOL PcCreationUiSystem::StatsUpdateBtns(){
+BOOL PcCreationHooks::StatsUpdateBtns(){
 
 	auto textBuf = temple::GetRef<char[]>(0x10C44C34);
 	auto &pbPoints = temple::GetRef<int>(0x10C453F4);
@@ -725,3 +968,605 @@ int __declspec(naked) PcCreationFeatUiPrereqCheckUsercallWrapper()
 	{ __asm pop edi __asm pop ebx __asm pop esi __asm pop ecx }
 	__asm retn;
 }
+
+objHndl UiPcCreation::GetEditedChar(){
+	return temple::GetRef<objHndl>(0x11E741A0);
+}
+
+CharEditorSelectionPacket & UiPcCreation::GetCharEditorSelPacket(){
+	return temple::GetRef<CharEditorSelectionPacket>(0x11E72F00);
+}
+
+WidgetType1 & UiPcCreation::GetPcCreationWnd(){
+	return temple::GetRef<WidgetType1>(0x11E73E40);
+}
+
+int & UiPcCreation::GetState(){
+	return temple::GetRef<int>(0x102F7D68);
+}
+
+Alignment UiPcCreation::GetPartyAlignment(){
+	return temple::GetRef<Alignment>(0x11E741A8);
+}
+
+void UiPcCreation::PrepareNextStages(){
+}
+
+void UiPcCreation::ResetNextStages(int systemId){
+	temple::GetRef<void(__cdecl)(int)>(0x1011BC70)(systemId);
+}
+
+void UiPcCreation::ToggleClassRelatedStages(){
+	auto handle = GetEditedChar();
+	auto &selPkt = GetCharEditorSelPacket();
+	auto classCode = selPkt.classCode;
+	auto lvlNew = 1;
+	auto &stateBtnIds = temple::GetRef<int[CG_STAGE_COUNT]>(0x10BDC434);
+
+
+	ui.ButtonSetButtonState(stateBtnIds[CG_Stage_Abilities], UBS_DISABLED); // class features - off by default; todo expand this
+
+
+	mIsSelectingBonusFeat = false;
+	// feats and features
+	if (classCode >= stat_level_barbarian) {
+
+		auto classLvlNew = 1;
+
+		if (d20ClassSys.IsSelectingFeatsOnLevelup(handle, classCode)) {
+			mIsSelectingBonusFeat = true;
+		}
+
+
+		if (classCode == stat_level_cleric) {
+			ui.ButtonSetButtonState(stateBtnIds[CG_Stage_Abilities], UBS_NORMAL); // features
+		}
+		if (classCode == stat_level_ranger) {
+			ui.ButtonSetButtonState(stateBtnIds[CG_Stage_Abilities], UBS_NORMAL); // features
+		}
+		if (classCode == stat_level_wizard) {
+			ui.ButtonSetButtonState(stateBtnIds[CG_Stage_Abilities], UBS_NORMAL); // wizard special school
+		}
+	}
+
+	// Spells
+	if (d20ClassSys.IsSelectingSpellsOnLevelup(handle, classCode)) {
+		ui.ButtonSetButtonState(stateBtnIds[CG_Stage_Spells], UBS_NORMAL);
+	}
+	else
+	{
+		ui.ButtonSetButtonState(stateBtnIds[CG_Stage_Spells], UBS_DISABLED);
+	};
+
+}
+
+BOOL UiPcCreation::ClassSystemInit(GameSystemConf & conf){
+	if (textureFuncs.RegisterTexture("art\\interface\\pc_creation\\buttonbox.tga", &buttonBox))
+		return 0;
+
+	classBtnTextStyle.flags = 8;
+	classBtnTextStyle.field2c = -1;
+	classBtnTextStyle.textColor = &classBtnColorRect;
+	classBtnTextStyle.shadowColor = &classBtnShadowColor;
+	classBtnTextStyle.colors4 = &classBtnColorRect;
+	classBtnTextStyle.colors2 = &classBtnColorRect;
+	classBtnTextStyle.field0 = 0;
+	classBtnTextStyle.kerning = 1;
+	classBtnTextStyle.leading = 0;
+	classBtnTextStyle.tracking = 3;
+
+	for (auto it : d20ClassSys.classEnums) {
+		auto className = _strdup(d20Stats.GetStatName((Stat)it));
+		classNamesUppercase[it] = className;
+		for (auto &letter : classNamesUppercase[it]) {
+			letter = toupper(letter);
+		}
+		classBtnMapping.push_back(it);
+	}
+	mPageCount = classBtnMapping.size() / 11;
+	if (mPageCount * 11u < classBtnMapping.size())
+		mPageCount++;
+
+	return ClassWidgetsInit();
+}
+
+BOOL UiPcCreation::ClassWidgetsInit(){
+	static WidgetType1 classWnd(219, 50, 431, 250);
+	classWnd.x = GetPcCreationWnd().x + 219;
+	classWnd.y = GetPcCreationWnd().y + 50;
+	classWnd.widgetFlags = 1;
+	classWnd.windowId = 0x7FFFFFFF;
+	classWnd.render = [](int widId) { uiPcCreation.StateTitleRender(widId); };
+	if (classWnd.Add(&classWndId))
+		return 0;
+
+	int coloff = 0, rowoff = 0;
+
+	for (auto it : d20ClassSys.vanillaClassEnums) {
+		// class buttons
+		int newId = 0;
+		WidgetType2 classBtn("Class btn", classWndId, 81 + coloff, 42 + rowoff, 130, 20);
+		coloff = 139 - coloff;
+		if (!coloff)
+			rowoff += 29;
+		if (rowoff == 5 * 29) // the bottom button
+			coloff = 69;
+
+		classBtnRects.push_back(TigRect(classBtn.x, classBtn.y, classBtn.width, classBtn.height));
+		classBtn.x += classWnd.x; classBtn.y += classWnd.y;
+		classBtn.render = [](int id) {uiPcCreation.ClassBtnRender(id); };
+		classBtn.handleMessage = [](int id, TigMsg* msg) { return uiPcCreation.ClassBtnMsg(id, msg); };
+		classBtn.Add(&newId);
+		classBtnIds.push_back(newId);
+		ui.SetDefaultSounds(newId);
+		ui.BindToParent(classWndId, newId);
+
+		//rects
+		classBtnFrameRects.push_back(TigRect(classBtn.x - 5, classBtn.y - 5, classBtn.width + 10, classBtn.height + 10));
+
+
+		UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+		auto classMeasure = UiRenderer::MeasureTextSize(classNamesUppercase[it].c_str(), classBtnTextStyle);
+		TigRect rect(classBtn.x + (110 - classMeasure.width) / 2 - classWnd.x,
+			classBtn.y + (20 - classMeasure.height) / 2 - classWnd.y,
+			classMeasure.width, classMeasure.height);
+		classTextRects.push_back(rect);
+		UiRenderer::PopFont();
+	}
+
+	const int nextBtnXoffset = 329;
+	const int nextBtnYoffset = 205;
+	const int prevBtnXoffset = 38;
+	classNextBtnTextRect = classNextBtnRect = TigRect(classWnd.x + nextBtnXoffset, classWnd.y + nextBtnYoffset, 55, 20);
+	classPrevBtnTextRect = classPrevBtnRect = TigRect(classWnd.x + prevBtnXoffset, classWnd.y + nextBtnYoffset, 55, 20);
+	classNextBtnFrameRect = TigRect(classWnd.x + nextBtnXoffset - 3, classWnd.y + nextBtnYoffset - 5, 55 + 6, 20 + 10);
+	classPrevBtnFrameRect = TigRect(classWnd.x + prevBtnXoffset - 3, classWnd.y + nextBtnYoffset - 5, 55 + 6, 20 + 10);
+	classNextBtnTextRect.x -= classWnd.x; classNextBtnTextRect.y -= classWnd.y;
+	classPrevBtnTextRect.x -= classWnd.x; classPrevBtnTextRect.y -= classWnd.y;
+
+	WidgetType2 nextBtn("Class Next Button", classWndId, classWnd.x + nextBtnXoffset, classWnd.y + nextBtnYoffset-4, 55, 20),
+		prevBtn("Class Prev. Button", classWndId, classWnd.x + prevBtnXoffset, classWnd.y + nextBtnYoffset-4, 55, 20);
+
+	nextBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {
+		if (uiPcCreation.classWndPage < uiPcCreation.mPageCount)
+			uiPcCreation.classWndPage++;
+		uiPcCreation.ClassSetPermissibles();
+		return 1; };
+	nextBtn.render = [](int id) { uiPcCreation.ClassNextBtnRender(id); };
+	nextBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {	return uiPcCreation.ClassNextBtnMsg(widId, msg); };
+	prevBtn.render = [](int id) { uiPcCreation.ClassPrevBtnRender(id); };
+	prevBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {	return uiPcCreation.ClassPrevBtnMsg(widId, msg); };
+	nextBtn.Add(&classNextBtn);	prevBtn.Add(&classPrevBtn);
+
+	ui.SetDefaultSounds(classNextBtn);	ui.BindToParent(classWndId, classNextBtn);
+	ui.SetDefaultSounds(classPrevBtn);	ui.BindToParent(classWndId, classPrevBtn);
+
+	return TRUE;
+	
+}
+
+void UiPcCreation::ClassWidgetsFree(){
+	for (auto it : classBtnIds) {
+		ui.WidgetRemoveRegardParent(it);
+	}
+	classBtnIds.clear();
+	ui.WidgetRemoveRegardParent(classNextBtn);
+	ui.WidgetRemoveRegardParent(classPrevBtn);
+	ui.WidgetRemove(classWndId);
+}
+
+BOOL UiPcCreation::ClassShow(){
+	ui.WidgetSetHidden(classWndId, 0);
+	ui.WidgetBringToFront(classWndId);
+	return 1;
+}
+
+BOOL UiPcCreation::ClassHide(){
+	ui.WidgetSetHidden(classWndId, 1);
+	return 0;
+}
+
+BOOL UiPcCreation::ClassWidgetsResize(UiResizeArgs & args){
+	for (auto it : classBtnIds) {
+		ui.WidgetRemoveRegardParent(it);
+	}
+	classBtnIds.clear();
+	ui.WidgetRemoveRegardParent(classNextBtn);
+	ui.WidgetRemoveRegardParent(classPrevBtn);
+	ui.WidgetAndWindowRemove(classWndId);
+	classBtnFrameRects.clear();
+	classBtnRects.clear();
+	classTextRects.clear();
+	return ClassWidgetsInit();
+}
+
+BOOL UiPcCreation::ClassCheckComplete(){
+	auto &selPkt = GetCharEditorSelPacket();
+	return (BOOL)(selPkt.classCode != 0);
+}
+
+void UiPcCreation::ClassBtnEntered(){
+	auto &selPkt = GetCharEditorSelPacket();
+	if (selPkt.classCode){
+		ClassScrollboxTextSet(selPkt.classCode);
+	}
+	else{
+		ButtonEnteredHandler(ElfHash::Hash("TAG_CHARGEN_CLASS"));
+	}
+}
+
+void UiPcCreation::ClassActivate(){
+	ClassSetPermissibles();
+}
+
+void UiPcCreation::ClassFinalize(CharEditorSelectionPacket & selPkt, objHndl & handle){
+	auto obj = objSystem->GetObject(handle);
+	obj->ClearArray(obj_f_critter_level_idx);
+	obj->SetInt32(obj_f_critter_level_idx, 0, selPkt.classCode);
+	d20StatusSys.D20StatusRefresh(handle);
+	critterSys.GenerateHp(handle);
+}
+
+void UiPcCreation::StateTitleRender(int widId){
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	int state = GetState();
+	auto &selPkt = GetCharEditorSelPacket();
+	auto &stateTitles = temple::GetRef<const char*[14]>(0x10BDAE28);
+	auto &altStateTitles = temple::GetRef<const char*[14]>(0x10BDAE60);
+
+
+	auto &rect = temple::GetRef<TigRect>(0x10BDB8E8);
+	auto &style = temple::GetRef<TigTextStyle>(0x10BDD638);
+	if (!selPkt.isPointbuy)
+		UiRenderer::DrawTextInWidget(widId, stateTitles[state], rect, style);
+	else
+		UiRenderer::DrawTextInWidget(widId, altStateTitles[state], rect, style);
+	UiRenderer::PopFont();
+}
+
+void UiPcCreation::ClassBtnRender(int widId){
+	auto idx = ui.WidgetlistIndexof(widId, &classBtnIds[0], classBtnIds.size());
+	if (idx == -1)
+		return;
+
+	auto page = GetClassWndPage();
+	auto classCode = GetClassCodeFromWidgetAndPage(idx, page);
+	if (classCode == (Stat)-1)
+		return;
+
+	static TigRect srcRect(1, 1, 120, 30);
+	UiRenderer::DrawTexture(buttonBox, classBtnFrameRects[idx], srcRect);
+
+	UiButtonState btnState;
+	ui.GetButtonState(widId, btnState);
+	if (btnState != UiButtonState::UBS_DISABLED && btnState != UiButtonState::UBS_DOWN)
+	{
+		auto &selPkt = GetCharEditorSelPacket();
+		if (selPkt.classCode == classCode)
+			btnState = UiButtonState::UBS_RELEASED;
+		else
+			btnState = btnState == UiButtonState::UBS_HOVERED ? UiButtonState::UBS_HOVERED : UiButtonState::UBS_NORMAL;
+	}
+
+	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
+	static TigRect srcRect2(1, 1, 110, 20);
+	auto &rect = classBtnRects[idx];
+	UiRenderer::DrawTextureInWidget(classWndId, texId, rect, srcRect2);
+
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	auto textt = classNamesUppercase[classCode].c_str();
+
+	auto textMeas = UiRenderer::MeasureTextSize(textt, classBtnTextStyle);
+	TigRect classTextRect(rect.x + (rect.width - textMeas.width) / 2,
+		rect.y + (rect.height - textMeas.height) / 2,
+		textMeas.width, textMeas.height);
+
+	UiRenderer::DrawTextInWidget(classWndId, textt, classTextRect, classBtnTextStyle);
+	UiRenderer::PopFont();
+}
+
+BOOL UiPcCreation::ClassBtnMsg(int widId, TigMsg * msg){
+	if (msg->type != TigMsgType::WIDGET)
+		return 0;
+
+	auto idx = ui.WidgetlistIndexof(widId, &classBtnIds[0], classBtnIds.size());
+	if (idx == -1)
+		return 0;
+
+	auto _msg = (TigMsgWidget*)msg;
+	auto classCode = GetClassCodeFromWidgetAndPage(idx, GetClassWndPage());
+	if (classCode == (Stat)-1)
+		return 0;
+
+	auto handle = GetEditedChar();
+	auto obj = objSystem->GetObject(handle);
+
+	if (_msg->widgetEventType == TigMsgWidgetEvent::MouseReleased) {
+
+		if (helpSys.IsClickForHelpActive()){
+			helpSys.PresentWikiHelp(88 + idx); // todo hook this to support PRCs
+			return TRUE;
+		}
+		GetCharEditorSelPacket().classCode = classCode;
+		obj->ClearArray(obj_f_critter_level_idx);
+		obj->SetInt32(obj_f_critter_level_idx, 0, classCode);
+		d20StatusSys.D20StatusRefresh(handle);
+		critterSys.GenerateHp(handle);
+
+		ToggleClassRelatedStages();
+		ResetNextStages(CG_Stage_Class);
+		return TRUE;
+	}
+
+	if (_msg->widgetEventType == TigMsgWidgetEvent::Exited) {
+		ClassBtnEntered();
+		return TRUE;
+	}
+
+	if (_msg->widgetEventType == TigMsgWidgetEvent::Entered) {
+
+		auto isValid = true;
+		if (!IsCastingStatSufficient(classCode)){
+			isValid = false;
+		}
+
+		if (!IsAlignmentOk(classCode))
+			isValid = false;
+		
+		if (!isValid){
+			temple::GetRef<void(__cdecl)(Stat)>(0x1011B990)(classCode); // sets text in the scrollbox for why you can't pick the class 
+			return TRUE;
+		}
+		
+
+		ClassScrollboxTextSet(classCode); // ChargenClassScrollboxTextSet  (class short description)
+		return TRUE;
+	}
+
+
+	return 0;
+}
+
+BOOL UiPcCreation::ClassNextBtnMsg(int widId, TigMsg * msg){
+
+	if (msg->type != TigMsgType::WIDGET)
+		return FALSE;
+
+	auto _msg = (TigMsgWidget*)msg;
+
+	if (_msg->widgetEventType == TigMsgWidgetEvent::Clicked) {
+		if (classWndPage < mPageCount - 1)
+			classWndPage++;
+		ClassSetPermissibles();
+		return TRUE;
+	}
+
+	/*if (_msg->widgetEventType == TigMsgWidgetEvent::Exited) {
+		temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)("");
+		return 1;
+	}
+
+	if (_msg->widgetEventType == TigMsgWidgetEvent::Entered) {
+		auto textboxText = fmt::format("Prestige Classes");
+		if (textboxText.size() >= 1024)
+			textboxText[1023] = 0;
+		strcpy(temple::GetRef<char[1024]>(0x10C80CC0), &textboxText[0]);
+		temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C80CC0));
+		return 1;
+	}*/
+
+	return FALSE;
+}
+
+BOOL UiPcCreation::ClassPrevBtnMsg(int widId, TigMsg * msg)
+{
+	if (msg->type != TigMsgType::WIDGET)
+		return 0;
+
+	auto _msg = (TigMsgWidget*)msg;
+
+	if (_msg->widgetEventType == TigMsgWidgetEvent::Clicked) {
+		if (classWndPage > 0)
+			classWndPage--;
+		ClassSetPermissibles();
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+BOOL UiPcCreation::FinishBtnMsg(int widId, TigMsg * msg)
+{
+	if (msg->type == TigMsgType::MOUSE)
+		return TRUE;
+
+	if (msg->type != TigMsgType::WIDGET)
+		return FALSE;
+
+	auto _msg = (TigMsgWidget*)msg;
+
+	if (_msg->widgetEventType != TigMsgWidgetEvent::MouseReleased)
+		return TRUE;
+
+	auto stComplete = GetStatesComplete();
+	if (stComplete != CG_STAGE_COUNT)
+		return TRUE;
+
+	auto &selPkt = GetCharEditorSelPacket();
+	auto charEdited = GetEditedChar();
+
+	// add spell casting condition
+	if (d20ClassSys.IsCastingClass(selPkt.classCode)) {
+		auto spellcastCond = (std::string)d20ClassSys.GetSpellCastingCondition(selPkt.classCode);
+		if (spellcastCond.size()) {
+			conds.AddTo(charEdited, spellcastCond, { 0,0,0,0, 0,0,0,0 });
+		}
+	}
+	return TRUE;
+}
+
+void UiPcCreation::ClassNextBtnRender(int widId){
+	if (!config.newClasses)
+		return;
+
+	static TigRect srcRect(1, 1, 120, 30);
+	UiRenderer::DrawTexture(buttonBox, classNextBtnFrameRect, srcRect);
+
+	UiButtonState btnState;
+	ui.GetButtonState(widId, btnState);
+	if (btnState != UiButtonState::UBS_DISABLED && btnState != UiButtonState::UBS_DOWN) {
+		btnState = btnState == UiButtonState::UBS_HOVERED ? UiButtonState::UBS_HOVERED : UiButtonState::UBS_NORMAL;
+	}
+
+	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
+	static TigRect srcRect2(1, 1, 110, 20);
+	UiRenderer::DrawTexture(texId, classNextBtnRect, srcRect2);
+
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	auto textt = fmt::format("NEXT");
+	auto textMeas = UiRenderer::MeasureTextSize(textt, classBtnTextStyle);
+	TigRect textRect(classNextBtnTextRect.x + (classNextBtnTextRect.width - textMeas.width) / 2,
+		classNextBtnTextRect.y + (classNextBtnTextRect.height - textMeas.height) / 2,
+		textMeas.width, textMeas.height);
+	UiRenderer::DrawTextInWidget(classWndId, textt, textRect, classBtnTextStyle);
+	UiRenderer::PopFont();
+
+}
+
+void UiPcCreation::ClassPrevBtnRender(int widId){
+	if (!config.newClasses)
+		return;
+
+	static TigRect srcRect(1, 1, 120, 30);
+	UiRenderer::DrawTexture(buttonBox, classPrevBtnFrameRect, srcRect);
+
+	UiButtonState btnState;
+	ui.GetButtonState(widId, btnState);
+	if (btnState != UiButtonState::UBS_DISABLED && btnState != UiButtonState::UBS_DOWN) {
+		btnState = btnState == UiButtonState::UBS_HOVERED ? UiButtonState::UBS_HOVERED : UiButtonState::UBS_NORMAL;
+	}
+
+	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
+	static TigRect srcRect2(1, 1, 110, 20);
+	UiRenderer::DrawTexture(texId, classPrevBtnRect, srcRect2);
+
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	auto textt = fmt::format("PREV");
+	auto textMeas = UiRenderer::MeasureTextSize(textt, classBtnTextStyle);
+	TigRect textRect(classPrevBtnTextRect.x + (classPrevBtnTextRect.width - textMeas.width) / 2,
+		classPrevBtnTextRect.y + (classPrevBtnTextRect.height - textMeas.height) / 2,
+		textMeas.width, textMeas.height);
+	UiRenderer::DrawTextInWidget(classWndId, textt, textRect, classBtnTextStyle);
+	UiRenderer::PopFont();
+}
+
+int UiPcCreation::GetClassWndPage(){
+	return classWndPage;
+}
+
+Stat UiPcCreation::GetClassCodeFromWidgetAndPage(int idx, int page){
+	if (page == 0)
+		return (Stat)(stat_level_barbarian + idx);
+
+	auto idx2 = idx + page * 11u;
+	if (idx2 >= classBtnMapping.size())
+		return (Stat)-1;
+	return (Stat)classBtnMapping[idx2];
+}
+
+int UiPcCreation::GetStatesComplete(){
+	return temple::GetRef<int>(0x10BDD5D4);
+}
+
+void UiPcCreation::ClassSetPermissibles(){
+
+	auto page = GetClassWndPage();
+	auto idx = 0;
+	auto handle = GetEditedChar();
+
+	for (auto it : classBtnIds) {
+		auto classCode = GetClassCodeFromWidgetAndPage(idx++, page);
+		if (classCode == (Stat)-1)
+			ui.ButtonSetButtonState(it, UBS_DISABLED);
+
+		auto isValid = true;
+
+		if (!d20ClassSys.ReqsMet(handle, classCode)){
+			isValid = false;
+		}
+		if (!IsCastingStatSufficient(classCode) || !IsAlignmentOk(classCode))
+			isValid = false;
+		
+		if (isValid){
+			ui.ButtonSetButtonState(it, UBS_NORMAL);
+		}
+		else {
+			ui.ButtonSetButtonState(it, UBS_DISABLED);
+		}
+
+	}
+
+	if (!config.newClasses) {
+		ui.ButtonSetButtonState(classNextBtn, UBS_DISABLED);
+		ui.ButtonSetButtonState(classPrevBtn, UBS_DISABLED);
+		return;
+	}
+
+	if (page > 0)
+		ui.ButtonSetButtonState(classPrevBtn, UBS_NORMAL);
+	else
+		ui.ButtonSetButtonState(classPrevBtn, UBS_DISABLED);
+
+	if (page < mPageCount - 1)
+		ui.ButtonSetButtonState(classNextBtn, UBS_NORMAL);
+	else
+		ui.ButtonSetButtonState(classNextBtn, UBS_DISABLED);
+}
+
+bool UiPcCreation::IsCastingStatSufficient(Stat classEnum){
+
+	auto handle = GetEditedChar();
+
+	if (d20ClassSys.IsCastingClass(classEnum) 
+		&& !d20ClassSys.IsLateCastingClass(classEnum)){
+		return objects.StatLevelGet(handle, d20ClassSys.GetSpellStat(classEnum)) > 10;
+	}
+	return true;
+}
+
+bool UiPcCreation::IsAlignmentOk(Stat classCode){
+
+	if (!config.laxRules) {
+		auto hasOkAlignment = false;;
+		static std::vector<Alignment> alignments{
+			ALIGNMENT_LAWFUL_GOOD, ALIGNMENT_LAWFUL, ALIGNMENT_LAWFUL_EVIL,
+			ALIGNMENT_GOOD, ALIGNMENT_NEUTRAL, ALIGNMENT_EVIL,
+			ALIGNMENT_CHAOTIC_GOOD, ALIGNMENT_CHAOTIC, ALIGNMENT_CHAOTIC_EVIL };
+
+		auto partyAlignment = GetPartyAlignment();
+
+		// make sure class is compatible with at least one alignment that is compatible with the party alignment
+		for (auto al : alignments) {
+
+			if (d20Stats.AlignmentsCompatible(al, partyAlignment)) {
+				if (d20ClassSys.IsCompatibleWithAlignment(classCode, al)) {
+					hasOkAlignment = true;
+					break;
+				}
+			}
+		}
+		if (!hasOkAlignment)
+			return false;
+	}
+	return true;
+}
+
+void UiPcCreation::ClassScrollboxTextSet(Stat classEnum){
+	temple::GetRef<void(__cdecl)(Stat)>(0x1011B920)(classEnum);
+}
+
+void UiPcCreation::ButtonEnteredHandler(int helpId){
+	temple::GetRef<void(__cdecl)(int)>(0x1011B890)(helpId);
+}
+
+

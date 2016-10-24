@@ -43,6 +43,25 @@ struct CharEditorSelectionPacket{
 	int voiceId; // -1 is considered invalid
 };
 
+struct KnownSpellInfo {
+	int spEnum = 0;
+	uint8_t spFlag = 0;
+	int spellClass = 0;
+	int spellLevel = 0;
+	KnownSpellInfo() { spEnum = 0; spFlag = 0; spellClass = 0; };
+	KnownSpellInfo(int SpellEnum, int SpellFlag);
+	KnownSpellInfo(int SpellEnum, int SpellFlag, int SpellClass);
+	KnownSpellInfo(int SpellEnum, int SpellFlag, int SpellClass, int isDomain);
+
+};
+struct FeatInfo {
+	int featEnum;
+	int flag = 0;
+	int minLevel = 1;
+	FeatInfo(int FeatEnum) : featEnum(FeatEnum) {};
+	FeatInfo(std::string &featName);
+};
+
 
 struct LegacyCharEditorSystem{
 	const char* name;

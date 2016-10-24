@@ -39,33 +39,11 @@ namespace py = pybind11;
 using namespace pybind11;
 using namespace pybind11::detail;
 
-struct KnownSpellInfo {
-	int spEnum = 0;
-	uint8_t spFlag = 0;
-	int spellClass = 0;
-	int spellLevel = 0;
-	KnownSpellInfo() { spEnum = 0; spFlag = 0; spellClass = 0; };
-	KnownSpellInfo(int SpellEnum, int SpellFlag) :spEnum(SpellEnum), spFlag(SpellFlag) { spellClass = 0; };
-	KnownSpellInfo(int SpellEnum, int SpellFlag, int SpellClass) :spEnum(SpellEnum), spFlag(SpellFlag), spellClass( spellSys.GetSpellClass(SpellClass) ){
-		spellLevel = spellSys.GetSpellLevelBySpellClass(SpellEnum, SpellClass);
-	};
-	KnownSpellInfo(int SpellEnum, int SpellFlag, int SpellClass, int isDomain) :spEnum(SpellEnum), spFlag(SpellFlag), spellClass(spellSys.GetSpellClass(SpellClass,isDomain != 0)){
-		spellLevel = spellSys.GetSpellLevelBySpellClass(SpellEnum, SpellClass);
-	};
-
-};
-struct FeatInfo {
-	int featEnum;
-	int flag =0;
-	int minLevel = 1;
-	FeatInfo(int FeatEnum) : featEnum(FeatEnum) {};
-	FeatInfo(std::string &featName) : featEnum(ElfHash::Hash(featName)) {};
-};
-
 
 class UiCharEditor {
 	friend class UiCharEditorHooks;
 public:
+
 	objHndl GetEditedChar();
 	CharEditorSelectionPacket & GetCharEditorSelPacket();
 	std::vector<KnownSpellInfo>& GetKnownSpellInfo();
@@ -121,7 +99,7 @@ public:
 	BOOL ClassBtnMsg(int widId, TigMsg* msg);
 	BOOL ClassNextBtnMsg(int widId, TigMsg* msg);
 	BOOL ClassPrevBtnMsg(int widId, TigMsg* msg);
-	BOOL FinishBtnMsg(int widId, TigMsg* msg); // gets after the original FinishBtnMsg
+	BOOL FinishBtnMsg(int widId, TigMsg* msg); // goes after the original FinishBtnMsg
 	void ClassNextBtnRender(int widId);
 	void ClassPrevBtnRender(int widId);
 
@@ -152,6 +130,7 @@ public:
 	BOOL SpellsAvailableEntryBtnMsg(int widId, TigMsg* msg);
 	void SpellsAvailableEntryBtnRender(int widId);
 #pragma endregion
+
 	// state
 	int classWndPage = 0;
 	eastl::vector<int> classBtnMapping; // used as an index of choosable character classes
@@ -1516,7 +1495,7 @@ BOOL UiCharEditor::ClassBtnMsg(int widId, TigMsg * msg){
 
 BOOL UiCharEditor::ClassNextBtnMsg(int widId, TigMsg * msg){
 	if (msg->type != TigMsgType::WIDGET)
-		return 0;
+		return FALSE;
 
 	auto _msg = (TigMsgWidget*)msg;
 
@@ -1524,8 +1503,7 @@ BOOL UiCharEditor::ClassNextBtnMsg(int widId, TigMsg * msg){
 		if (classWndPage < mPageCount-1)
 			classWndPage++;
 		uiCharEditor.ClassSetPermissibles();
-		//temple::GetRef<void(__cdecl)(int)>(0x10143FF0)(0); // resets all the next systems in case of change
-		return 1;
+		return TRUE;
 	}
 
 	if (_msg->widgetEventType == TigMsgWidgetEvent::Exited) {
@@ -1542,7 +1520,7 @@ BOOL UiCharEditor::ClassNextBtnMsg(int widId, TigMsg * msg){
 		return 1;
 	}
 
-	return 0;
+	return FALSE;
 }
 
 BOOL UiCharEditor::ClassPrevBtnMsg(int widId, TigMsg * msg){
@@ -1555,12 +1533,11 @@ BOOL UiCharEditor::ClassPrevBtnMsg(int widId, TigMsg * msg){
 		if (classWndPage > 0)
 			classWndPage--;
 		uiCharEditor.ClassSetPermissibles();
-		//temple::GetRef<void(__cdecl)(int)>(0x10143FF0)(0); // resets all the next systems in case of change
-		return 1;
+		return TRUE;
 	}
 
 
-	return 0;
+	return FALSE;
 }
 
 BOOL UiCharEditor::FinishBtnMsg(int widId, TigMsg * msg){
@@ -3217,3 +3194,16 @@ const std::string& CharEditorClassSystem::GetName() const
 	static std::string name("char_editor_class");
 	return name;
 }
+
+KnownSpellInfo::KnownSpellInfo(int SpellEnum, int SpellFlag) :spEnum(SpellEnum), spFlag(SpellFlag){
+	spellClass = 0;
+};
+
+KnownSpellInfo::KnownSpellInfo(int SpellEnum, int SpellFlag, int SpellClass) :spEnum(SpellEnum), spFlag(SpellFlag), spellClass(spellSys.GetSpellClass(SpellClass)) {
+	spellLevel = spellSys.GetSpellLevelBySpellClass(SpellEnum, SpellClass);
+}
+KnownSpellInfo::KnownSpellInfo(int SpellEnum, int SpellFlag, int SpellClass, int isDomain) : spEnum(SpellEnum), spFlag(SpellFlag), spellClass(spellSys.GetSpellClass(SpellClass, isDomain != 0)) {
+	spellLevel = spellSys.GetSpellLevelBySpellClass(SpellEnum, SpellClass);
+};
+
+FeatInfo::FeatInfo(std::string & featName) : featEnum(ElfHash::Hash(featName)) {};

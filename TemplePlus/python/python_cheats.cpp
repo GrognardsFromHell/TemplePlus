@@ -174,8 +174,7 @@ public:
 
 			auto handleNew = gameSystems->GetObj().CreateObject(protoHandle, loc);
 			if (handleNew) {
-				auto objGenerateHp = temple::GetRef<void(__cdecl)(objHndl)>(0x1007F720);
-				objGenerateHp(handleNew);	
+				critterSys.GenerateHp(handleNew);	
 			}
 			auto& consoleNewlyCreatedObj = temple::GetRef<objHndl>(0x10AA31B8);
 			consoleNewlyCreatedObj = handleNew;

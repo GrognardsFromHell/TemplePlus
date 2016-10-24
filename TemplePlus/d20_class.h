@@ -83,6 +83,7 @@ public:
 	const int ClassLevelMax = 20;
 
 	bool ReqsMet(const objHndl &handle, const Stat classCode); // class requirements met
+	bool IsCompatibleWithAlignment(Stat classEnum, Alignment al);
 
 	bool IsNaturalCastingClass(Stat classEnum, objHndl handle = objHndl::null);
 	bool IsNaturalCastingClass(uint32_t classEnum);

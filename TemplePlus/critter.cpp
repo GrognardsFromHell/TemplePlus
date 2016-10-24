@@ -482,6 +482,10 @@ StandPoint LegacyCritterSystem::GetStandPoint(objHndl critter, StandPointType ty
 	return result;
 }
 
+void LegacyCritterSystem::GenerateHp(objHndl critter){
+	temple::GetRef<void(__cdecl)(objHndl)>(0x1007F720)(critter);
+}
+
 void LegacyCritterSystem::SetSubdualDamage(objHndl critter, int damage) {
 	addresses.SetSubdualDamage(critter, damage);
 }

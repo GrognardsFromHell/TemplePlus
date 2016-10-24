@@ -6,6 +6,7 @@
 #include <util/fixes.h>
 #include <d20.h>
 #include <critter.h>
+#include <config/config.h>
 
 #define VANILLA_STAT_COUNT 288
 
@@ -15,6 +16,10 @@ class D20StatsHooks : public TempleFix{
 	
 	void apply() override {
 		
+		replaceFunction<BOOL(Alignment, Alignment)>(0x1004A8F0, [](Alignment a, Alignment b)->BOOL{
+			return (BOOL)d20Stats.AlignmentsCompatible(a, b);
+		});
+
 		replaceFunction<const char*(Stat)>(0x10073A20, [](Stat stat)->const char* {
 			return d20Stats.GetStatRulesString(stat);
 		});
@@ -223,6 +228,27 @@ int D20StatsSystem::GetPsiStatBase(const objHndl & handle, Stat stat, int statAr
 		return d20Sys.D20QueryPython(handle, "Current Psi");
 	}
 	return 0;
+}
+
+bool D20StatsSystem::AlignmentsCompatible(Alignment a, Alignment b){
+	if (config.laxRules)
+		return true;
+
+	switch (a^b)
+	{
+		// XOR operation 
+		// example:
+		// LAWFUL_GOOD ^ LAWFUL_EVIL      -> GOOD | EVIL -> no 
+		// LAWFUL_GOOD ^ LAWFUL_NEUTRAL   -> GOOD        -> ok
+	case ALIGNMENT_LAWFUL:
+	case ALIGNMENT_CHAOTIC:
+	case ALIGNMENT_GOOD:
+	case ALIGNMENT_EVIL:
+	
+		return true;
+	default:
+		return a == b;
+	}
 }
 
 void D20StatsSystem::Init(const GameSystemConf& conf){

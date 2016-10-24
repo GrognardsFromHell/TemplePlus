@@ -199,6 +199,8 @@ struct LegacyCritterSystem : temple::AddressTable
 	*/
 	StandPoint GetStandPoint(objHndl critter, StandPointType type);
 
+
+	void GenerateHp(objHndl critter); // sets the field obj_f_hp_pts according to class levels and NPC hit die using dice throws
 	/*
 		Sets the overall subdual damage received by the critter.
 	*/

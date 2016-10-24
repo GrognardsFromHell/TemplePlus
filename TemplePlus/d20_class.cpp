@@ -88,6 +88,14 @@ bool D20ClassSystem::ReqsMet(const objHndl& handle, const Stat classCode){
 	return pythonClassIntegration.ReqsMet(handle, classCode);
 }
 
+bool D20ClassSystem::IsCompatibleWithAlignment(Stat classEnum, Alignment al){
+
+	if (config.laxRules)
+		return true;
+
+	return temple::GetRef<BOOL(__cdecl)(Stat, Alignment)>(0x1004A8F0)(classEnum, al);
+}
+
 bool D20ClassSystem::IsNaturalCastingClass(Stat classEnum, objHndl handle){
 	auto classSpec = classSpecs.find(classEnum);
 	if (classSpec == classSpecs.end())
