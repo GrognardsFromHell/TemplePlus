@@ -92,6 +92,8 @@ struct InventorySystem : temple::AddressTable
 	int GetQuantity(objHndl item); // note: returns 0 for items with no quantity fields!
 	void QuantitySet(const objHndl& item, int qtyNew);
 
+	int ItemWeight(objHndl item); // returns weight of item (or item stack if applicable)
+
 	objHndl GetParent(objHndl item);
 	bool IsRangedWeapon(objHndl weapon);
 	int GetInventory(objHndl obj, objHndl** inventoryArray);
@@ -152,6 +154,8 @@ struct InventorySystem : temple::AddressTable
 	void (__cdecl *Clear)(objHndl parent, BOOL keepPersistent);
 
 
+	bool ItemCanBePickpocketed(objHndl item); // checks if the item is lightweight, unequipped, and not marked OIF_NO_PICKPOCKET
+	
 	// When equipped, which bone of the parent obj does this item attach to?
 	const std::string &GetAttachBone(objHndl item);
 

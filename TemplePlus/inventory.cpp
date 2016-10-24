@@ -683,6 +683,19 @@ void InventorySystem::QuantitySet(const objHndl& item, int qtyNew){
 	}
 }
 
+int InventorySystem::ItemWeight(objHndl item){
+	auto obj = objSystem->GetObject(item);
+	if (obj->type == obj_t_money)
+		return 0;
+
+	auto baseWeight = obj->GetInt32(obj_f_item_weight);
+	obj_f qtyField;
+	if (inventory.GetQuantityField(item, &qtyField)){
+		return baseWeight * obj->GetInt32(qtyField) / 4;
+	}
+	return baseWeight;
+}
+
 void InventorySystem::ItemSpellChargeConsume(const objHndl& item, int chargesUsedUp){
 	auto itemObj = gameSystems->GetObj().GetObject(item);
 	auto spellCharges = itemObj->GetInt32(obj_f_item_spell_charges_idx);
@@ -824,6 +837,16 @@ BOOL InventorySystem::ItemGetAdvanced(objHndl item, objHndl parent, int invIdx, 
 	return TRUE;
 
 	//return addresses.ItemGetAdvanced(item, parent, invIdx, flags);
+}
+
+bool InventorySystem::ItemCanBePickpocketed(objHndl item){
+	if (GetParent(item) && GetInventoryLocation(item) >= 200 || ItemWeight(item) > 1)
+		return false;
+
+	if (objSystem->GetObject(item)->GetItemFlags() & OIF_NO_PICKPOCKET)
+		return false;
+
+	return true;
 }
 
 const std::string & InventorySystem::GetAttachBone(objHndl handle)

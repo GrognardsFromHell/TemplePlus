@@ -25,6 +25,7 @@
 #include "ui\ui.h"
 #include "temple_functions.h"
 #include "combat.h"
+#include "history.h"
 
 static struct CritterAddresses : temple::AddressTable {
 
@@ -348,6 +349,103 @@ void LegacyCritterSystem::Attack(objHndl target, objHndl attacker, int n1, int f
 	}
 
 	//addresses.Attack(target, attacker, n1, flags);
+}
+
+void LegacyCritterSystem::Pickpocket(objHndl handle, objHndl tgt, int & gotCaught){
+	if (!handle || !tgt)
+		return;
+	auto obj = objSystem->GetObject(handle);
+	if (obj->GetFlags() & (OF_OFF | OF_DESTROYED))
+		return;
+	if (critterSys.IsDeadOrUnconscious(handle))
+		return;
+
+	auto tgtObj = objSystem->GetObject(tgt);
+
+	auto pickpocketFailed = true;
+	int deltaFromDc = 0;
+
+	auto tgtMoney = critterSys.MoneyAmount(tgt) / 100;
+	auto isStealingMoney = Dice::Roll(1, 2) == 1;
+	auto dc = 20;
+	
+	if (isStealingMoney){
+		if (tgtMoney < 1) {  // less than 1 GP
+			isStealingMoney = false;
+		}
+	}
+	
+	if (skillSys.SkillRoll(handle, SkillEnum::skill_pick_pocket, dc, &deltaFromDc, 1 )){
+
+		if (isStealingMoney){
+			auto moneyAmt = Dice::Roll(1, 1900, 99) / 100;
+			if (moneyAmt > tgtMoney)
+				moneyAmt = tgtMoney;
+			critterSys.TakeMoney(tgt, 0, moneyAmt, 0, 0);
+			critterSys.GiveMoney(handle, 0, moneyAmt , 0, 0);
+			histSys.CreateFromFreeText(fmt::format("Stole {} GP.\n\n", moneyAmt).c_str());
+			pickpocketFailed = false;
+		}
+		else{
+			auto invenCount = tgtObj->GetInt32(obj_f_critter_inventory_num);
+			std::vector<objHndl> stealableItems;
+			for (auto i=0; i < invenCount; i++){
+				auto item = tgtObj->GetObjHndl(obj_f_critter_inventory_list_idx, i);
+				if (inventory.ItemCanBePickpocketed(item))
+					stealableItems.push_back(item);
+			}
+
+			if (stealableItems.size()){
+				auto itemStolen = stealableItems[Dice::Roll(1, stealableItems.size()) - 1];
+				histSys.CreateFromFreeText(fmt::format("Stole {}.\n\n", description.getDisplayName(itemStolen, handle)).c_str());
+				inventory.ItemGet(itemStolen, handle, 0);
+				pickpocketFailed = false;
+			}
+			else if (tgtMoney > 0 ) // steal coins instead
+			{
+				auto moneyAmt = Dice::Roll(1, 1900, 99) / 100;
+				if (moneyAmt > tgtMoney)
+					moneyAmt = tgtMoney;
+				critterSys.TakeMoney(tgt, 0, moneyAmt, 0, 0);
+				critterSys.GiveMoney(handle, 0, moneyAmt , 0, 0);
+				histSys.CreateFromFreeText(fmt::format("Stole {} GP.\n\n", moneyAmt).c_str());
+				pickpocketFailed = false;
+			}
+			else{
+				histSys.CreateFromFreeText("Nothing to steal...\n\n");
+			}
+			
+		}
+
+	}
+
+
+	if (skillSys.SkillRoll(tgt, SkillEnum::skill_spot, 20 + deltaFromDc, nullptr, 1)) {
+		pythonObjIntegration.ExecuteObjectScript(tgt, handle,  0, ObjScriptEvent::CaughtThief); // e.g. when Dala is stealing from you
+		gotCaught = 1;
+		aiSys.ProvokeHostility(handle, tgt, 1, 2);
+	}
+	
+	if ( objects.IsPlayerControlled(handle) || gotCaught){
+		MesLine line(1100);
+		if (pickpocketFailed)
+			line.key++;
+		auto skillUiMes = temple::GetRef<MesHandle>(0x103074C8);
+		mesFuncs.GetLine_Safe(skillUiMes, &line);
+		floatSys.floatMesLine(handle, 1, FloatLineColor::Blue, line.value);
+
+		if (gotCaught){
+			line.key = 1102;
+			mesFuncs.GetLine_Safe(skillUiMes, &line);
+			floatSys.floatMesLine(handle, 1, FloatLineColor::Red, line.value);
+		}
+	}
+
+
+}
+
+int LegacyCritterSystem::MoneyAmount(objHndl handle){
+	return temple::GetRef<int(__cdecl)(objHndl)>(0x1007F880)(handle);
 }
 
 uint32_t LegacyCritterSystem::IsFriendly(objHndl pc, objHndl npc) {

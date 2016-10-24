@@ -151,6 +151,16 @@ struct LegacyCritterSystem : temple::AddressTable
 	void Attack(objHndl target, objHndl attacker, int n1, int n2);
 
 	/*
+		does the gameplay logic for pickpocketing (this gets called at the end of the pickpocket animation)
+	*/
+	void Pickpocket(objHndl handle, objHndl tgt, int &gotCaught);
+
+	/*
+		Get money amount (in copper). For PCs, this returns the party money.
+	*/
+	int MoneyAmount(objHndl handle);
+
+	/*
 		Checks if the given critter is friendly towards the target.
 	*/
 	uint32_t IsFriendly(objHndl, objHndl);

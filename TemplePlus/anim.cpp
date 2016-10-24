@@ -492,7 +492,7 @@ public:
 	static int __cdecl GoalStateFunc100_IsCurrentPathValid(AnimSlot& slot);
 	static int __cdecl GoalStateFunc106(AnimSlot& slot);
 	static int __cdecl GoalStateFunc130(AnimSlot& slot);
-	
+	static int __cdecl GoalStateFuncPickpocket(AnimSlot &slot);
 	
 } gsFuncs;
 
@@ -1370,6 +1370,26 @@ int GoalStateFuncs::GoalStateFunc130(AnimSlot& slot)
 	return TRUE;
 }
 
+int GoalStateFuncs::GoalStateFuncPickpocket(AnimSlot & slot)
+{
+
+	auto tgt = slot.param2.obj;
+	auto handle = slot.param1.obj;
+	int gotCaught = 0;
+
+	
+	if ( !tgt 
+		|| (objects.GetFlags(handle) & (OF_OFF | OF_DESTROYED))
+		|| (objects.GetFlags(tgt) & (OF_OFF | OF_DESTROYED)) )
+		return FALSE;
+
+	critterSys.Pickpocket(handle, tgt, gotCaught);
+	if (!gotCaught){
+		slot.flags |= AnimSlotFlag::ASF_UNK12;
+	}
+	return TRUE;
+}
+
 int GoalStateFuncs::GoalStateFunc83(AnimSlot &slot) {
   //logger->debug("GSF83 for {}, current goal {} ({})", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType], slot.currentGoal);
   auto flags = slot.flags;
@@ -1447,6 +1467,7 @@ public:
   static BOOL TargetDistChecker(objHndl handle, objHndl tgt);
 
   void apply() override {
+
 
 	  // Animation pathing stuff
 	  replaceFunction(0x1003DF30, RasterPoint);
@@ -1588,6 +1609,8 @@ public:
 	replaceFunction<BOOL(AnimSlot &)>(0x10011880, gsFuncs.GoalStateFunc65);
 	// gsf54
 	replaceFunction<BOOL(AnimSlot &)>(0x10010D60, gsFuncs.GoalStateFunc54);
+	// goalstatefunc_48
+	replaceFunction<BOOL(AnimSlot &)>(0x100107E0, gsFuncs.GoalStateFuncPickpocket);
     // goalstatefunc_45
     replaceFunction<BOOL(AnimSlot &)>(0x10010520, goalstatefunc_45);
     // goalstatefunc_41
