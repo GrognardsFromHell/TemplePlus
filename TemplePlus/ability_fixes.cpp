@@ -21,6 +21,7 @@ public:
 	static int MonsterSplittingHpChange(DispatcherCallbackArgs args);
 	static int MonsterOozeSplittingOnDamage(DispatcherCallbackArgs args);
 	static int GrappledMoveSpeed(DispatcherCallbackArgs args);
+	static int DiplomacySkillSynergy(DispatcherCallbackArgs args);
 
 	void apply() override {
 
@@ -57,6 +58,8 @@ public:
 
 		replaceFunction(0x100F7550, MonsterSplittingHpChange);
 		replaceFunction(0x100F7490, MonsterOozeSplittingOnDamage);
+
+		replaceFunction(0x100EEE70, DiplomacySkillSynergy); // fixes skill synergy bonuses to diplomacy not stacking
 
 		// fixes animal companion runoff crash (it didn't null the second part of the obj handle stored in args[1,2]
 		static void (__cdecl*orgCompanionRunoff)(SubDispNode*, objHndl , objHndl ) = replaceFunction<void(__cdecl)(SubDispNode*, objHndl, objHndl)>(0x100FC3D0, [](SubDispNode* sdn, objHndl owner, objHndl handle){
@@ -254,5 +257,15 @@ int AbilityConditionFixes::GrappledMoveSpeed(DispatcherCallbackArgs args){
 	dispIo->bonlist->SetOverallCap(1, args.GetData1(), 0, args.GetData2());
 	dispIo->bonlist->SetOverallCap(2, args.GetData1(), 0, args.GetData2());
 
+	return 0;
+}
+
+int AbilityConditionFixes::DiplomacySkillSynergy(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIoTypeObjBonus, DispIoObjBonus);
+
+	if (critterSys.SkillBaseGet(args.objHndCaller, SkillEnum::skill_bluff) >= 5)
+		dispIo->bonOut->AddBonus(2, 0, 140);
+	if (critterSys.SkillBaseGet(args.objHndCaller, SkillEnum::skill_sense_motive) >= 5)
+		dispIo->bonOut->AddBonus(2, 0, 302);
 	return 0;
 }
