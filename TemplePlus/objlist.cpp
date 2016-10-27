@@ -11,6 +11,7 @@ static struct ObjListAddresses : temple::AddressTable {
 	void(__cdecl *ObjListRadius)(LocAndOffsets loc, float radius, float unk1, float unk2, int flags, ObjListResult &result);
 	void(__cdecl *ObjListFollowers)(objHndl critter, ObjListResult &result);
 	int(__cdecl *ObjListFree)(ObjListResult &result);
+	ObjListResultItem *(__cdecl*ObjlistPop)();
 	
 	ObjListAddresses() {
 		rebase(ObjListTile, 0x1001E970);
@@ -19,6 +20,7 @@ static struct ObjListAddresses : temple::AddressTable {
 		rebase(ObjListRadius, 0x10022E50);
 		rebase(ObjListFollowers, 0x1001F450);
 		rebase(ObjListFree, 0x1001F2C0);
+		rebase(ObjlistPop, 0x100C0CA0);
 	}
 
 	
@@ -26,6 +28,13 @@ static struct ObjListAddresses : temple::AddressTable {
 
 int ObjListResult::Free(){
 	return addresses.ObjListFree(*this);
+}
+
+void ObjListResult::PrependHandle(objHndl handle){
+	auto objNodeNew = addresses.ObjlistPop();
+	objNodeNew->handle = handle;
+	objNodeNew->next = this->objects;
+	this->objects = objNodeNew;
 }
 
 ObjList::ObjList() {

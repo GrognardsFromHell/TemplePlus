@@ -80,6 +80,7 @@ struct ObjListResult
 	int field_94;
 
 	int Free();
+	void PrependHandle(objHndl handle);
 };
 #pragma pack(pop)
 
