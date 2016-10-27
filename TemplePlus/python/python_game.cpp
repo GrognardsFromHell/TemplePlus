@@ -38,6 +38,7 @@
 #include <particles/instances.h>
 #include <gamesystems/legacymapsystems.h>
 #include <history.h>
+#include <config/config.h>
 
 static PyObject *encounterQueue = nullptr;
 
@@ -493,6 +494,10 @@ PyObject* PyGame_IsSaveFavoerdForClass(PyObject*, PyObject* args) {
 	}
 
 	return PyInt_FromLong(d20ClassSys.IsSaveFavoredForClass(classCode, saveType));
+}
+
+PyObject* PyGame_IsLaxRules(PyObject*, PyObject* args) {
+	return PyInt_FromLong(config.laxRules);
 }
 
 
@@ -1181,6 +1186,7 @@ static PyMethodDef PyGameMethods[]{
 	{"getproto", PyGame_GetProto, METH_VARARGS, NULL },
 	{"get_bab_for_class", PyGame_GetBabForClass,METH_VARARGS, NULL },
 	{"is_save_favored_for_class", PyGame_IsSaveFavoerdForClass,METH_VARARGS, NULL },
+	{ "is_lax_rules", PyGame_IsLaxRules,METH_VARARGS, NULL },
 	// This is some unfinished UI for which the graphics are missing
 	// {"charmap", PyGame_Charmap, METH_VARARGS, NULL},
 	{NULL, NULL, NULL, NULL}

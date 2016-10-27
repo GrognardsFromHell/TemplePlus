@@ -3322,6 +3322,10 @@ stat_spell_list_level = 288 # new - used for getting the effective level for tak
 stat_psi_points_max = 300 # new!
 stat_psi_points_cur = 301 # new!
 
+CDF_None = 0
+CDF_BaseClass = 1 # denotes class is base class (can be taken at level 1, and factors into multiclass calculations; unlike Prestige Classes for instance)
+CDF_CoreClass = 2 # class is drawn from Core 3.5 rules. Those that aren't will not be selectable unless "Non-Core Materials" is enabled.
+
 base_attack_bonus_type_martial = 0
 base_attack_bonus_type_semi_martial = 1
 base_attack_bonus_type_non_martial = 2

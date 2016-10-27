@@ -10,6 +10,11 @@
 #include "d20_level.h"
 #include "gamesystems/objects/objsystem.h"
 #include "sound.h"
+#include "combat.h"
+#include "history.h"
+#include "float_line.h"
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/particlesystems.h"
 
 temple::GlobalPrimitive<float, 0x102CF708> experienceMultiplier;
 temple::GlobalPrimitive<int, 0x10BCA850> numCrittersSlainByCR;
@@ -23,6 +28,75 @@ static_assert(XPTABLE_MAXLEVEL >= 20, "XPTABLE_MAXLEVEL for XP award definition 
 // static int XPAwardTable[XPTABLE_MAXLEVEL][CRMAX - CRMIN + 1] = {};
 
 
+BOOL XPAward::XpGainProcess(objHndl handle, int xpGainRaw){
+
+
+	if (!xpGainRaw || !handle)
+		return FALSE;
+
+	auto obj = objSystem->GetObject(handle);
+	auto couldAlreadyLevelup = d20LevelSys.CanLevelup(handle);
+	
+	auto xpReduction = GetMulticlassXpReductionPercent(handle);
+	auto xpGain = (int)(1.0 - xpReduction / 100.0)*xpGainRaw;
+
+	std::string text(fmt::format("{} {} {} {}", description.getDisplayName(handle), combatSys.GetCombatMesLine(145), xpGain, combatSys.GetCombatMesLine(146) )); // [obj] gains [xpGain] experience points
+	if (xpReduction){
+		text.append(fmt::format(" {}", combatSys.GetCombatMesLine(147)));
+	}
+	histSys.CreateFromFreeText( (text + "\n").c_str());
+
+	auto xpNew = obj->GetInt32(obj_f_critter_experience) + xpGain;
+	auto curLvl = objects.StatLevelGet(handle, stat_level);
+	
+	auto xpCap = d20LevelSys.GetXpRequireForLevel(curLvl + 2) - 1;
+	if (curLvl >= config.maxLevel)
+		xpCap = d20LevelSys.GetXpRequireForLevel(config.maxLevel);
+
+	if (!config.allowXpOverflow && xpNew > xpCap)
+		xpNew = xpCap;
+
+	d20Sys.d20SendSignal(handle, DK_SIG_Experience_Awarded, xpNew, 0);
+	obj->SetInt32(obj_f_critter_experience, xpNew);
+
+	if (couldAlreadyLevelup || !d20LevelSys.CanLevelup(handle))
+		return FALSE;
+
+	floatSys.FloatCombatLine(handle, 148); // gains a level!
+	histSys.CreateFromFreeText(fmt::format("{} {}\n", description.getDisplayName(handle), combatSys.GetCombatMesLine(148)).c_str()); // [obj] gains a level!
+	gameSystems->GetParticleSys().CreateAtObj("LEVEL UP", handle);
+
+	return TRUE;
+}
+
+int XPAward::GetMulticlassXpReductionPercent(objHndl handle){
+	auto highestLvl = -1;
+	auto reductionPct = 0;
+
+	if (config.laxRules)
+		return reductionPct;
+
+	for (auto it: d20ClassSys.baseClassEnums){
+		auto classEnum = (Stat)it;
+		auto classLvl = objects.StatLevelGet(handle, classEnum);
+		if (classLvl > highestLvl && !d20Sys.d20QueryWithData(handle, DK_QUE_FavoredClass, classEnum,0)){
+			highestLvl = classLvl;
+		}
+	}
+
+	for (auto it : d20ClassSys.baseClassEnums) {
+		auto classEnum = (Stat)it;
+		auto classLvl = objects.StatLevelGet(handle, classEnum);
+		if (classLvl > 0 && classLvl < highestLvl - 1 && !d20Sys.d20QueryWithData(handle, DK_QUE_FavoredClass, classEnum,0)){
+			reductionPct += 20;
+		}
+	}
+
+	if (reductionPct >= 80)
+		reductionPct = 80;
+
+	return reductionPct;
+}
 
 XPAward::XPAward(){
 	int table[XPTABLE_MAXLEVEL][CRMAX - CRMIN + 1];
@@ -164,7 +238,8 @@ void XPTableForHighLevels::GiveXPAwards(){
 		}
 		xpForxpPile += xpGainRaw;
 		xpGainRaw = int((float)(xpGainRaw) / fNumLivingPartyMembers);
-		if (templeFuncs.ObjXPGainProcess(objHnd, xpGainRaw)) {
+		//if (templeFuncs.ObjXPGainProcess(objHnd, xpGainRaw)) {
+		if (xpawarddd->XpGainProcess(objHnd, xpGainRaw)){
 			auto obj = objSystem->GetObject(objHnd);
 			if (obj->IsPC() || config.NPCsLevelLikePCs){
 				bShouldUpdatePartyUI = true;
