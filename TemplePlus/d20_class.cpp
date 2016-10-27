@@ -390,7 +390,9 @@ void D20ClassSystem::GetClassSpecs(){
 			d20StatusSys.classCondMap[classSpec.classEnum] = classSpec.conditionName;
 		}
 
-
+		classSpec.flags = pythonClassIntegration.GetClassDefinitionFlags(it);
+		if (classSpec.flags & ClassDefinitionFlag::CDF_BaseClass)
+			baseClassEnums.push_back(it);
 		classSpec.babProgression = static_cast<BABProgressionType>(pythonClassIntegration.GetBabProgression(it));
 		classSpec.hitDice = pythonClassIntegration.GetHitDieType(it);
 		classSpec.fortitudeSaveIsFavored = pythonClassIntegration.IsSaveFavored(it, SavingThrowType::Fortitude);

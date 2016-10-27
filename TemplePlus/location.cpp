@@ -7,6 +7,15 @@ const LocAndOffsets LocAndOffsets::null{ locXY::fromField(0), 0,0 };
 
 LocationSys locSys;
 
+struct LocationAddresses : temple::AddressTable{
+	int(__cdecl*GetLocFromScreenLocPrecise)(int64_t x, int64_t y, locXY* location, float* offX, float* offY);
+
+	LocationAddresses(){
+		rebase(GetLocFromScreenLocPrecise, 0x10029300);
+	}
+	
+} locAddresses;
+
 typedef int(__cdecl*locfunc)(int64_t x, int64_t y, locXY *loc, float*offx, float*offy);
 
 class LocReplacement : public TempleFix
@@ -144,6 +153,10 @@ BOOL LocationSys::ShiftLocationByOneSubtile(LocAndOffsets* loc, ScreenDirections
 	return 1;
 }
 
+int LocationSys::GetLocFromScreenLocPrecise(int x, int y, LocAndOffsets &loc){
+	return locAddresses.GetLocFromScreenLocPrecise(x, y, &loc.location, &loc.off_x, &loc.off_y);
+}
+
 
 
 float LocationSys::intToFloat(int32_t x)
@@ -210,7 +223,7 @@ LocationSys::LocationSys()
 	rebase(PointNodeInit, 0x100408A0);
 
 	rebase(DistanceToObj, 0x100236E0);
-	rebase(GetLocFromScreenLocPrecise, 0x10029300);
+	
 	rebase(ShiftSubtileOnceByDirection, 0x10029DC0);
 	rebase(Distance3d, 0x1002A0A0);
 	rebase(translationX, 0x10808D00);

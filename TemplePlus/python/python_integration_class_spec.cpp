@@ -72,6 +72,14 @@ Stat PythonClassSpecIntegration::GetSpellDeterminingStat(int classEnum)
 	return  (Stat)RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetSpellDeterminingStat, nullptr);
 }
 
+ClassDefinitionFlag PythonClassSpecIntegration::GetClassDefinitionFlags(int classEnum){
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return ClassDefinitionFlag::CDF_BaseClass;
+
+	return (ClassDefinitionFlag)RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetClassDefFlags, nullptr);
+}
+
 int PythonClassSpecIntegration::GetBabProgression(int classEnum){
 	auto classSpecEntry = mScripts.find(classEnum);
 	if (classSpecEntry == mScripts.end())
@@ -280,6 +288,7 @@ void PythonClassSpecIntegration::LevelupSpellsFinalize(objHndl handle, Stat clas
 static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 	// class spec fetchers
 	{ClassSpecFunc::GetHitDieType,"GetHitDieType"},
+	{ ClassSpecFunc::GetClassDefFlags,"GetClassDefinitionFlags" },
 	{ ClassSpecFunc::GetBabProgression,"GetBabProgression" },
 	{ ClassSpecFunc::GetSkillPtsPerLevel,"GetSkillPtsPerLevel" },
 	{ ClassSpecFunc::IsFortSaveFavored,"IsFortSaveFavored" },

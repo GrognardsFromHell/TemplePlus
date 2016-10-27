@@ -46,10 +46,17 @@ enum class BABProgressionType{
 	NonMartial = 2 // + 1/2
 };
 
+enum ClassDefinitionFlag : int
+{
+	CDF_BaseClass = 0x1, // denotes whether class is base class (can be taken at level 1, and factors into multiclass calculations; unlike Prestige Classes for instance)
+	CDF_CoreClass = 0x2,  // is the class drawn from Core 3.5 rules?
+};
+
 struct ClassPacket;
 
 struct D20ClassSpec {
 	Stat classEnum;
+	ClassDefinitionFlag flags;
 	BABProgressionType babProgression;
 
 
@@ -79,6 +86,7 @@ class D20ClassSystem : temple::AddressTable
 public:
 	Stat vanillaClassEnums[VANILLA_NUM_CLASSES];
 	std::vector<int> classEnums;
+	std::vector<int> baseClassEnums;
 	std::vector<Stat> classEnumsWithSpellLists; // prepare a list of classes with spell lists
 	const int ClassLevelMax = 20;
 

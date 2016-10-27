@@ -10,13 +10,14 @@ struct LocationSys : temple::AddressTable
 {
 	int64_t * locTransX;
 	int64_t*locTransY;
-	float distBtwnLocAndOffs(LocAndOffsets, LocAndOffsets);
+	float distBtwnLocAndOffs(LocAndOffsets, LocAndOffsets); // in inches
 	void RegularizeLoc(LocAndOffsets* toLocTweaked); //  alters the location and offsets so that the offsets are within the tile
 	void GetOverallOffset(LocAndOffsets loc, float* absX, float* absY);
 	BOOL ShiftLocationByOneSubtile(LocAndOffsets* loc, ScreenDirections direction, LocAndOffsets* locOut);
 	
 	void (__cdecl*PointNodeInit)(LocAndOffsets* loc, PointNode* pntNode);
-	int (__cdecl*GetLocFromScreenLocPrecise)(int64_t x, int64_t y, locXY* location, float* offX, float* offY);
+	int GetLocFromScreenLocPrecise(int x, int y, LocAndOffsets&);
+	
 	void(__cdecl * getLocAndOff)(objHndl objHnd, LocAndOffsets * locAndOff);
 	void(__cdecl* SubtileToLocAndOff)(int64_t subtile, LocAndOffsets* locFromSubtile);
 	int64_t(__cdecl * subtileFromLoc)(LocAndOffsets * loc);
