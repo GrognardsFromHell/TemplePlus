@@ -203,11 +203,11 @@ bool D20ClassSystem::IsArcaneCastingClass(Stat classCode, objHndl handle){
 	if (classSpec == classSpecs.end())
 		return false;
 
-	if (classSpec->second.spellListType == SpellListType::Arcane
-		|| classSpec->second.spellListType == SpellListType::Bardic)
-		return true;
+	if (classSpec->second.spellListType == SpellListType::None)
+		return false;
 
-	// todo handle PrC that can be either
+	if (classSpec->second.spellSourceType == SpellSourceType::Arcane)
+		return true;
 
 	return false;
 }
@@ -218,12 +218,10 @@ bool D20ClassSystem::IsDivineCastingClass(Stat classCode, objHndl handle)
 	if (classSpec == classSpecs.end())
 		return false;
 
-	if (classSpec->second.spellListType == SpellListType::Divine
-		|| classSpec->second.spellListType == SpellListType::Clerical
-		|| classSpec->second.spellListType == SpellListType::Druidic
-		|| classSpec->second.spellListType == SpellListType::Ranger
-		|| classSpec->second.spellListType == SpellListType::Paladin
-		)
+	if (classSpec->second.spellListType == SpellListType::None)
+		return false;
+
+	if (classSpec->second.spellSourceType == SpellSourceType::Divine)
 		return true;
 
 	return false;
@@ -406,6 +404,9 @@ void D20ClassSystem::GetClassSpecs(){
 			// Spell Readying Type
 			classSpec.spellMemorizationType = pythonClassIntegration.GetSpellReadyingType(it);
 
+			// Spell Source Type (Arcane/Divine/other...)
+			classSpec.spellSourceType = pythonClassIntegration.GetSpellSourceType(it);
+
 
 			// Spellcasting Condition
 			classSpec.spellCastingConditionName = fmt::format("{}", pythonClassIntegration.GetSpellCastingConditionName(it));
@@ -414,6 +415,29 @@ void D20ClassSystem::GetClassSpecs(){
 			classSpec.spellsPerDay = pythonClassIntegration.GetSpellsPerDay(it);
 			if (classSpec.spellsPerDay.size()){
 				classSpec.spellStat = pythonClassIntegration.GetSpellDeterminingStat(it);
+			}
+
+			static std::map<SpellListType, Stat> spellListMaps = {
+				{ SpellListType::Arcane, stat_level_wizard },
+				{ SpellListType::Bardic, stat_level_bard },
+				{ SpellListType::Clerical, stat_level_cleric },
+				{ SpellListType::Druidic, stat_level_druid },
+				{ SpellListType::Paladin, stat_level_paladin },
+				{ SpellListType::Ranger, stat_level_ranger },
+			};
+
+			auto findSpellListMap = spellListMaps.find(classSpec.spellListType);
+			if (findSpellListMap != spellListMaps.end() && classSpec.classEnum != findSpellListMap->second && !(classSpec.flags & CDF_CoreClass)) {
+				
+				auto asdf = objHndl::null;
+				std::vector<SpellEntry> entries;
+				spellSys.CopyLearnableSpells(asdf, spellSys.GetSpellClass(findSpellListMap->second), entries);
+
+				for (auto &sp:entries){
+					auto lvl = sp.SpellLevelForSpellClass(spellSys.GetSpellClass(findSpellListMap->second));
+					classSpec.spellList[sp.spellEnum] = lvl;
+				}
+				spellSys.GetSpellEntryExtFromClassSpec(classSpec.spellList, it);
 			}
 
 			if (classSpec.spellListType == SpellListType::Special){

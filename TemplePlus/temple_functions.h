@@ -36,9 +36,6 @@ struct TempleFuncs : temple::AddressTable {
 	
 	int32_t(__cdecl *ObjStatBaseDispatch)(objHndl, uint32_t obj_stat, void *); // Dispatcher Type 0x42; defaults to ObjStatBaseGet if no Dispatcher found
 
-	uint32_t(__cdecl *XPReqForLevel)(uint32_t level);
-	uint32_t(__cdecl *ObjXPGainProcess)(objHndl, uint32_t nXPGainRaw);
-
 	
 	uint32_t(__cdecl *sub_100664B0)(objHndl objHnd, uint32_t);
 

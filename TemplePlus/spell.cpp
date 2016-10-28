@@ -175,7 +175,10 @@ SpellEntry::SpellEntry()
 
 SpellEntry::SpellEntry(uint32_t spellEnumIn)
 {
-	spellSys.spellRegistryCopy(spellEnumIn, this);
+	if (!spellSys.spellRegistryCopy(spellEnumIn, this)){
+		logger->error("Could not find spell enum {}", spellEnumIn);
+		memset(this, 0, sizeof(SpellEntry));
+	}
 }
 
 bool SpellEntry::IsBaseModeTarget(UiPickerType type){
@@ -1967,10 +1970,12 @@ bool LegacySpellSystem::IsArcaneSpellClass(uint32_t spellClass)
 	}
 
 	auto casterClass = GetCastingClass(spellClass);
-	if (casterClass == stat_level_bard || casterClass == stat_level_sorcerer || casterClass == stat_level_wizard)
+	/*if (casterClass == stat_level_bard || casterClass == stat_level_sorcerer || casterClass == stat_level_wizard)
+		return true;*/
+
+	if (d20ClassSys.IsArcaneCastingClass(casterClass))
 		return true;
 
-	// todo take care of other classes?
 	return false;
 }
 

@@ -18,6 +18,22 @@ enum SpellStoreType : uint8_t{
 	spellStoreCast = 3
 };
 
+enum MetaMagicFlags : uint8_t
+{
+	MetaMagic_Maximize = 1,
+	MetaMagic_Quicken = 2,
+	MetaMagic_Silent = 4,
+	MetaMagic_Still = 8
+};
+
+enum SpellComponentFlag : uint32_t
+{
+	SpellComponent_Verbal = 1,
+	SpellComponent_Somatic = 2,
+	SpellComponent_XpCost = 4,
+	SpellComponent_GpCost = 0x8,
+};
+
 struct MetaMagicData{
 	unsigned char metaMagicFlags : 4; // 1 - Maximize Spell ; 2 - Quicken Spell ; 4 - Silent Spell;  8 - Still Spell
 	unsigned char metaMagicEmpowerSpellCount : 4;
@@ -86,11 +102,11 @@ enum AiSpellType : unsigned {
 };
 
 enum class SpellSourceType : int {
-	Arcane = 0,
-	Divine,
-	Ability,
-	Psionic,
-	Any
+	Ability = 0,
+	Arcane = 1,
+	Divine = 2,
+	Psionic = 3,
+	Any = 4
 };
 
 enum class SpellReadyingType : int {
@@ -190,6 +206,8 @@ struct SpellStoreData
 		metaMagicData = mmData;
 		spellStoreState = SpellStoreState(0);
 	}
+
+	SpellComponentFlag GetSpellComponentFlags(); // regards metamagic data
 };
 const auto TestSizeOfSpellStoreData = sizeof(SpellStoreData);
 #pragma pack(pop)

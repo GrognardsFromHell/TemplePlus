@@ -41,3 +41,23 @@ void D20SpellData::Extract(int* SpellEnum, int *SpellEnumOrg, int* SpellClass, i
 		*MmData = metaMagicData;
 	}
 }
+
+SpellComponentFlag SpellStoreData::GetSpellComponentFlags(){
+
+	SpellEntry spEntry(this->spellEnum);
+
+	if (spEntry.spellEnum == 0){
+		logger->error("Could not find spell {}", this->spellEnum);
+		return (SpellComponentFlag)0;
+	}
+
+	auto result = spEntry.spellComponentBitmask;
+	if (metaMagicData.metaMagicFlags & MetaMagic_Silent){
+		result &= ~SpellComponent_Verbal;
+	}
+	if (metaMagicData.metaMagicFlags & MetaMagic_Still) {
+		result &= ~SpellComponent_Somatic;
+	}
+
+	return (SpellComponentFlag)result;
+}

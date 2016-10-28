@@ -1737,6 +1737,7 @@ enum D20DispatcherKey : uint32_t {
 	DK_QUE_Empty_Body_Num_Rounds = 0x146, // returns number of rounds set for Monk's Empty Body
 	DK_QUE_Quivering_Palm_Can_Perform = 0x147,
 	DK_QUE_Trip_AOO = 0x148,
+	DK_QUE_Get_Arcane_Spell_Failure = 0x149, // returns additive spell failure chance
 
 
 	DK_LVL_Stats_Activate = 100,

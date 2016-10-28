@@ -43,9 +43,6 @@ TempleFuncs::TempleFuncs()
 
 	rebase(ObjStatBaseDispatch, 0x1004E810);
 
-	rebase(XPReqForLevel, 0x100802E0);
-	rebase(ObjXPGainProcess, 0x100B5480);
-
 	
 	rebase(sub_100664B0, 0x100664B0);
 

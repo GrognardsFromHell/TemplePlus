@@ -90,6 +90,8 @@ class SpellCallbacks {
 #define SPELL_CALLBACK(name) static int __cdecl name(DispatcherCallbackArgs args);
 public:
 
+	static int __cdecl ArmorSpellFailure(DispatcherCallbackArgs args);
+
 	static int __cdecl SkillBonus(DispatcherCallbackArgs args);
 	static int __cdecl BeginHezrouStench(DispatcherCallbackArgs args);
 
@@ -115,6 +117,8 @@ public:
 	static int __cdecl SpellDismissSignalHandler(DispatcherCallbackArgs args); // fixes issue with dismissing multiple spells
 
 	static int __cdecl SpellRemoveMod(DispatcherCallbackArgs args); // fixes issue with dismissing multiple spells
+
+
 } spCallbacks;
 
 
@@ -336,6 +340,9 @@ public:
 
 		HookSpellCallbacks();
 
+		// Armor Spell Failure
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100EF060, spCallbacks.ArmorSpellFailure);
+			
 		// Enlarge Person weapon damage dice modification
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100CA2B0, spCallbacks.EnlargePersonWeaponDice);
 
@@ -977,7 +984,7 @@ int GenericCallbacks::GlobalWieldedTwoHandedQuery(DispatcherCallbackArgs args)
 	auto dispIo = static_cast<DispIoD20Query*>(args.dispIO);
 	dispIo->AssertType(dispIOTypeQuery);
 
-	auto dispIoAttack = (DispIoDamage*)dispIo->data1;
+	auto dispIoAttack = (DispIoDamage*)(dispIo->data1);
 	auto weaponUsed = dispIoAttack->attackPacket.GetWeaponUsed();
 
 	if (!weaponUsed)
@@ -1129,7 +1136,7 @@ int GenericCallbacks::CastDefensivelyAooTrigger(DispatcherCallbackArgs args){
 
 
 	auto isSet = args.GetCondArg(0);
-	auto d20a = (D20Actn*)dispIo->data1;
+	auto d20a = (D20Actn*)(dispIo->data1);
 
 	if (d20a->d20ActType== D20A_CAST_SPELL && isSet){
 		dispIo->return_val = 0;
@@ -3129,6 +3136,56 @@ int ConditionFunctionReplacement::TurnUndeadHook(objHndl handle, Stat shouldBeCl
 }
 
 #pragma region Spell Callbacks
+
+int SpellCallbacks::ArmorSpellFailure(DispatcherCallbackArgs args){
+
+	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
+
+	if (dispIo->return_val){
+		return 0;
+	}
+
+	auto d20SpellData = (D20SpellData*)(dispIo->data1);
+	int spellEnum, spellClass, spellLvl, invIdx;
+	MetaMagicData mmData;
+	d20SpellData->Extract(&spellEnum, nullptr, &spellClass, &spellLvl, &invIdx, &mmData);
+
+	if (spellSys.isDomainSpell(spellClass))
+		return 0;
+
+	SpellStoreData spData(spellEnum, spellLvl, spellClass, mmData);
+	if (!(spData.GetSpellComponentFlags() & SpellComponent_Somatic))
+		return 0;
+
+	if (!spellSys.IsArcaneSpellClass(spellClass))
+		return 0;
+
+	auto classCode = spellSys.GetCastingClass(spellClass);
+	auto failChance = 0;
+	for (auto i = (int)EquipSlot::Helmet; i < EquipSlot::Count; i++){
+		auto itemFailChance = d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_Get_Arcane_Spell_Failure, classCode, i);
+		if (itemFailChance > 0)
+			failChance += itemFailChance;
+	}
+
+	if (failChance <= 0)
+		return 0;
+
+	auto rollRes = Dice::Roll(1, 100);
+	if (rollRes <= failChance){
+		floatSys.FloatCombatLine(args.objHndCaller, 57); // Miscast (Armor)!
+		dispIo->return_val = 1;
+		auto histId = histSys.RollHistoryType5Add(args.objHndCaller, objHndl::null, failChance, 59, rollRes, 57, 192); // Arcane Spell Failure due to Armor
+		histSys.CreateRollHistoryString(histId);
+		histSys.CreateRollHistoryLineFromMesfile(29, args.objHndCaller, objHndl::null); // [ACTOR] ~loses spell~[TAG_ARCANE_SPELL_FAILURE] due to armor.
+		return 0;
+	}
+
+	auto histId = histSys.RollHistoryType5Add(args.objHndCaller, objHndl::null, failChance, 59, rollRes, 62, 192); // Arcane Spell Failure due to Armor
+	histSys.CreateRollHistoryString(histId);
+
+	return 0;
+}
 
 int SpellCallbacks::SkillBonus(DispatcherCallbackArgs args){
 

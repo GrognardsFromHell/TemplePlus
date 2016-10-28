@@ -99,8 +99,8 @@ public:
 	bool IsCastingClass(Stat classEnum);
 	bool HasSpellList(Stat classEnum); // does this class have its own spell list? (as opposed to extending another's like Mystic Theurge does), e.g. Blackguard, Assassin
 	bool IsLateCastingClass(Stat classEnum); // for classes like Ranger / Paladin that start casting on level 4
-	bool IsArcaneCastingClass(Stat stat, objHndl handle = objHndl::null);
-	bool IsDivineCastingClass(Stat stat, objHndl handle = objHndl::null);
+	bool IsArcaneCastingClass(Stat stat, objHndl handle = objHndl::null); // classes who list SpellSourceType as Arcane; this is mostly used to retrieve spell properties, so Mystic Theurges need not apply since they don't have an independent spell list
+	bool IsDivineCastingClass(Stat stat, objHndl handle = objHndl::null); // similar to IsArcaneCastingClass
 	static bool HasDomainSpells(Stat classEnum);
 	Stat GetSpellStat(Stat classEnum); // default - wisdom
 	int GetMaxSpellLevel(Stat classEnum, int characterLvl);

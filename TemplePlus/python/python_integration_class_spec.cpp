@@ -129,6 +129,11 @@ SpellReadyingType PythonClassSpecIntegration::GetSpellReadyingType(int classEnum
 	return static_cast<SpellReadyingType>(GetInt(classEnum, ClassSpecFunc::GetSpellReadyingType, (int)SpellReadyingType::Vancian));
 }
 
+SpellSourceType PythonClassSpecIntegration::GetSpellSourceType(int classEnum)
+{
+	return static_cast<SpellSourceType>(GetInt(classEnum, ClassSpecFunc::GetSpellSourceType, (int)SpellSourceType::Ability));
+}
+
 std::map<int, int> PythonClassSpecIntegration::GetSpellList(int classEnum)
 {
 	auto result = std::map<int, int>();
@@ -297,6 +302,7 @@ static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 
 	{ ClassSpecFunc::GetSpellListType,"GetSpellListType" },
 	{ ClassSpecFunc::GetSpellReadyingType,"GetSpellReadyingType" },
+	{ ClassSpecFunc::GetSpellSourceType,"GetSpellSourceType" },
 	{ ClassSpecFunc::GetSpellList,"GetSpellList" },
 	{ ClassSpecFunc::GetSpellsPerDay,"GetSpellsPerDay" },
 	{ ClassSpecFunc::GetSpellConditionName,"GetSpellCasterConditionName" },
