@@ -5,6 +5,7 @@
 #include "obj.h"
 #include "ui/ui.h"
 #include "util/fixes.h"
+#include "EASTL/hash_map.h"
 
 
 int FeatUiPrereqCheckUsercallWrapper();

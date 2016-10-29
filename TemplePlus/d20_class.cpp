@@ -577,9 +577,9 @@ bool D20ClassSystem::IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum){
 	return pythonClassIntegration.IsSelectingSpellsOnLevelup(handle, classEnum);
 }
 
-void D20ClassSystem::LevelupInitSpellSelection(objHndl handle, Stat classEnum){
-	if (objects.StatLevelGet(handle, classEnum))
+void D20ClassSystem::LevelupInitSpellSelection(objHndl handle, Stat classEnum, int classLvlNew, int classLvlIncrease){
+	if (objects.StatLevelGet(handle, classEnum) && classLvlNew == -1)
 		dispatch.DispatchLevelupSystemEvent(handle, classEnum, DK_LVL_Spells_Activate);
 	else
-		pythonClassIntegration.LevelupInitSpellSelection(handle, classEnum);
+		pythonClassIntegration.LevelupInitSpellSelection(handle, classEnum, classLvlNew);
 }

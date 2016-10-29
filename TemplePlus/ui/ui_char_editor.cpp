@@ -8,8 +8,9 @@
 #include <tig/tig_texture.h>
 #include <tig/tig_font.h>
 #include <critter.h>
-#include <EASTL/hash_map.h>
+
 #include "ui_render.h"
+#include <EASTL/hash_map.h>
 #include <EASTL/fixed_string.h>
 #include <gamesystems/d20/d20stats.h>
 #include <gamesystems/gamesystems.h>
@@ -212,8 +213,6 @@ public:
 	eastl::vector<TigRect> featsMultiBtnRects;
 	eastl::vector<TigRect> featsBtnRects, featsExistingBtnRects;
 	eastl::hash_map<int, std::string> featsMasterFeatStrings;
-	eastl::vector<string> levelLabels;
-	eastl::vector<string> spellLevelLabels;
 	eastl::vector<string> spellsPerDayTexts;
 	eastl::vector<TigRect> spellsPerDayTextRects;
 	eastl::vector<TigRect> spellsNewSpellsBoxRects;
@@ -891,18 +890,6 @@ BOOL UiCharEditor::SpellsSystemInit(GameSystemConf & conf){
 	mesFuncs.GetLine_Safe(pcCreationMes, &line);
 	mesFuncs.GetLine_Safe(pcCreationMes, &line2);
 
-	for (auto i = 0; i < NUM_SPELL_LEVELS; i++){
-		std::string text;
-		text.append(line2.value);
-		text[text.size()-1] = '0'+i;
-		levelLabels.push_back(text);
-
-		text.clear();
-		text.append(line.value);
-		text[text.size() - 1] = '0' + i;
-
-		spellLevelLabels.push_back(text);
-	}
 
 	for (auto i = 0; i < SPELLS_PER_DAY_BOXES_COUNT;i++){
 		spellsPerDayTextRects.push_back(TigRect());
@@ -1262,7 +1249,7 @@ BOOL UiCharEditor::SpellsWidgetsInit(){
 	TigTextStyle &spellLevelLabelStyle = temple::GetRef<TigTextStyle>(0x10C74B08);
 	spellsNewSpellsBoxRects.clear();
 	for (auto lvl = 0u; lvl < NUM_SPELL_LEVELS; lvl++){
-		auto textMeas = UiRenderer::MeasureTextSize(levelLabels[lvl].c_str(), spellLevelLabelStyle);
+		auto textMeas = UiRenderer::MeasureTextSize(chargen.levelLabels[lvl].c_str(), spellLevelLabelStyle);
 		spellsNewSpellsBoxRects.push_back(TigRect(116 + lvl * 45, 287, 29, 12));
 
 	}
@@ -2691,7 +2678,7 @@ void UiCharEditor::SpellsEntryBtnRender(int widId)
 	}
 	else if (spellSys.IsLabel(spEnum)) {
 		if (spLvl >= 0 && spLvl < NUM_SPELL_LEVELS){
-			text.append(fmt::format("{}", spellLevelLabels[spLvl]));
+			text.append(fmt::format("{}", chargen.spellLevelLabels[spLvl]));
 			UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
 		}
 	}
@@ -2855,7 +2842,7 @@ void UiCharEditor::SpellsAvailableEntryBtnRender(int widId){
 		auto spLvl = avSpInfo[spellIdx].spellLevel;
 		if (spLvl >= 0 && spLvl < NUM_SPELL_LEVELS)
 		{
-			text.append(fmt::format("{}", spellLevelLabels[spLvl]));
+			text.append(fmt::format("{}", chargen.spellLevelLabels[spLvl]));
 			UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
 		}
 			
@@ -3120,6 +3107,15 @@ int * Chargen::GetRolledStats(){
 int Chargen::GetRolledStatIdx(int x, int y, int * xyOut)
 {
 	return 0;
+}
+
+bool Chargen::SpellsNeedReset()
+{
+	return mSpellsNeedReset;
+}
+
+void Chargen::SpellsNeedResetSet(bool value){
+	mSpellsNeedReset = value;
 }
 
 bool Chargen::SpellIsAlreadyKnown(int spEnum, int spellClass){

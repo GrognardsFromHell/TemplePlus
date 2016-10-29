@@ -270,14 +270,15 @@ bool PythonClassSpecIntegration::IsSelectingSpellsOnLevelup(objHndl handle, Stat
 	Py_DECREF(args);
 	return result;
 }
-void PythonClassSpecIntegration::LevelupInitSpellSelection(objHndl handle, Stat classEnum)
+void PythonClassSpecIntegration::LevelupInitSpellSelection(objHndl handle, Stat classEnum, int classLvlNew , int classLvlIncrease)
 {
 	auto classSpecEntry = mScripts.find(classEnum);
 	if (classSpecEntry == mScripts.end())
 		return;
 
 	auto attachee = PyObjHndl_Create(handle);
-	auto args = Py_BuildValue("(O)", attachee);
+
+	auto args = Py_BuildValue("(Oi)", attachee, classLvlNew);
 	Py_DECREF(attachee);
 
 	RunScriptDefault0(classSpecEntry->second.id, (EventId)ClassSpecFunc::LevelupInitSpellSelection, args) ;

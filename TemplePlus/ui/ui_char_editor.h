@@ -1,6 +1,9 @@
 #pragma once
 #include "common.h"
 #include <spell_structs.h>
+#include <EASTL/fixed_string.h>
+#include <EASTL/hash_map.h>
+#include "EASTL/vector.h"
 
 struct UiResizeArgs;
 struct GameSystemConf;
@@ -118,15 +121,23 @@ public:
 	int * GetRolledStats();
 	int GetRolledStatIdx(int x, int y, int *xyOut = nullptr); // gets the index of the Rolled Stats button according to the mouse position. Returns -1 if none.
 
+	bool SpellsNeedReset();
+	void SpellsNeedResetSet(bool value);
+
 	// utilities
 	bool SpellIsAlreadyKnown(int spEnum, int spellClass);
 	bool SpellIsForbidden(int spEnum);
 
 
+	eastl::vector<string> levelLabels;
+	eastl::vector<string> spellLevelLabels;
+
 protected:
 	std::vector<KnownSpellInfo> mSpellInfo;
 	std::vector<KnownSpellInfo> mAvailableSpells; // spells available for learning
 	std::vector<FeatInfo> mExistingFeats, mSelectableFeats, mMultiSelectFeats, mMultiSelectMasterFeats, mBonusFeats;
+
+	bool mSpellsNeedReset;
 };
 
 extern Chargen chargen;

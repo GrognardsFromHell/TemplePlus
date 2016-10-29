@@ -125,6 +125,7 @@ public:
 	BOOL SpellsSystemInit(GameSystemConf & conf);
 	void SpellsFree();
 	BOOL SpellsWidgetsInit();
+	void SpellsReset();
 	void SpellsWidgetsFree();
 	BOOL SpellsShow();
 	BOOL SpellsHide();
@@ -242,8 +243,8 @@ public:
 	int spellsScrollbarId = 0, spellsScrollbar2Id = 0;
 	int spellsScrollbarY = 0, spellsScrollbar2Y = 0;
 	eastl::vector<int> spellsAvailBtnIds, spellsChosenBtnIds;
-	const int SPELLS_BTN_COUNT = 17; // vanilla had 20, decreasing this to increase the font
-	const int SPELLS_BTN_HEIGHT = 13; // vanilla was 11 (so 13*17 = 221 ~= 220 vanilla)
+	const int SPELLS_BTN_COUNT = 11; // vanilla had 12, decreasing this to increase the font
+	const int SPELLS_BTN_HEIGHT = 13; // vanilla was 12 (so 13*11 = 143 ~= 144 vanilla)
 	std::string spellsAvailLabel;
 	std::string spellsChosenLabel;
 	std::string spellsPerDayLabel;
@@ -258,8 +259,6 @@ public:
 	eastl::vector<TigRect> featsMultiBtnRects;
 	eastl::vector<TigRect> featsBtnRects, featsExistingBtnRects;
 	eastl::hash_map<int, std::string> featsMasterFeatStrings;
-	eastl::vector<string> levelLabels;
-	eastl::vector<string> spellLevelLabels;
 	eastl::vector<string> spellsPerDayTexts;
 	eastl::vector<TigRect> spellsPerDayTextRects;
 	eastl::vector<TigRect> spellsNewSpellsBoxRects;
@@ -467,8 +466,18 @@ public:
 		replaceFunction<void(__cdecl)()>(0x101B0620, []() {uiPcCreation.ClassCheckComplete(); });
 		replaceFunction<void(__cdecl)()>(0x10188260, []() {uiPcCreation.ClassBtnEntered(); });
 		
+		// Spell system
+		replaceFunction<void(__cdecl)(GameSystemConf&)>(0x101800E0, [](GameSystemConf& conf) {uiPcCreation.SpellsSystemInit(conf); });
+		replaceFunction<void(__cdecl)()>(0x1017F090, []() {uiPcCreation.SpellsFree(); });
+		replaceFunction<void(__cdecl)()>(0x101804A0, []() {uiPcCreation.SpellsActivate(); });
+		replaceFunction<void(__cdecl)()>(0x1017EAE0, []() {uiPcCreation.SpellsReset(); });
+		replaceFunction<void(__cdecl)(UiResizeArgs&)>(0x10180390, [](UiResizeArgs& args) {uiPcCreation.SpellsWidgetsResize(args); });
+		replaceFunction<void(__cdecl)()>(0x1017EB60, []() {uiPcCreation.SpellsShow(); });
+		replaceFunction<void(__cdecl)()>(0x1017EB40, []() {uiPcCreation.SpellsHide(); });
+		replaceFunction<void(__cdecl)(CharEditorSelectionPacket&, objHndl&)>(0x1017F0A0, [](CharEditorSelectionPacket& selPkt, objHndl& handle) {uiPcCreation.SpellsFinalize(); });
+		replaceFunction<void(__cdecl)()>(0x1017EB80, []() {uiPcCreation.SpellsCheckComplete(); });
 
-
+		// Deity
 		replaceFunction<void(__cdecl)()>(0x10187340, []() {uiPcCreation.DeitySetPermissibles(); });
 
 		// lax rules option for unbounded increase of stats & party member alignment
@@ -1013,11 +1022,11 @@ int __declspec(naked) PcCreationFeatUiPrereqCheckUsercallWrapper()
 }
 
 objHndl UiPcCreation::GetEditedChar(){
-	return temple::GetRef<objHndl>(0x11E741A0);
+	return chargen.GetEditedChar();
 }
 
 CharEditorSelectionPacket & UiPcCreation::GetCharEditorSelPacket(){
-	return temple::GetRef<CharEditorSelectionPacket>(0x11E72F00);
+	return chargen.GetCharEditorSelPacket();
 }
 
 WidgetType1 & UiPcCreation::GetPcCreationWnd(){
@@ -1313,17 +1322,18 @@ BOOL UiPcCreation::SpellsSystemInit(GameSystemConf & conf)
 	mesFuncs.GetLine_Safe(pcCreationMes, &line);
 	mesFuncs.GetLine_Safe(pcCreationMes, &line2);
 
+
 	for (auto i = 0; i < NUM_SPELL_LEVELS; i++) {
 		std::string text;
 		text.append(line2.value);
 		text[text.size() - 1] = '0' + i;
-		levelLabels.push_back(text);
+		chargen.levelLabels.push_back(text);
 
 		text.clear();
 		text.append(line.value);
 		text[text.size() - 1] = '0' + i;
 
-		spellLevelLabels.push_back(text);
+		chargen.spellLevelLabels.push_back(text);
 	}
 
 	for (auto i = 0; i < SPELLS_PER_DAY_BOXES_COUNT; i++) {
@@ -1344,15 +1354,17 @@ void UiPcCreation::SpellsFree(){
 
 BOOL UiPcCreation::SpellsWidgetsInit(){
 
-	const int spellsWndX = 259, spellsWndY = 117, spellsWndW = 405, spellsWndH = 271;
-	spellsWnd = WidgetType1(spellsWndX, spellsWndY, spellsWndW, spellsWndH);
+	auto &pcWnd = GetPcCreationWnd();
+
+	const int spellsWndX = 219, spellsWndY = 50, spellsWndW = 431, spellsWndH = 250;
+	spellsWnd = WidgetType1(pcWnd.x + spellsWndX, pcWnd.y + spellsWndY, spellsWndW, spellsWndH);
 	spellsWnd.widgetFlags = 1;
 	spellsWnd.render = [](int widId) {uiPcCreation.SpellsWndRender(widId); };
 	spellsWnd.handleMessage = [](int widId, TigMsg*msg) { return uiPcCreation.SpellsWndMsg(widId, msg); };
 	spellsWnd.Add(&spellsWndId);
 
 	// Available Spells Scrollbar
-	spellsScrollbar.Init(183, 37, 230);
+	spellsScrollbar.Init(201, 34, 152);
 	spellsScrollbar.parentId = spellsWndId;
 	spellsScrollbar.x += spellsWnd.x;
 	spellsScrollbar.y += spellsWnd.y;
@@ -1360,18 +1372,18 @@ BOOL UiPcCreation::SpellsWidgetsInit(){
 	ui.BindToParent(spellsWndId, spellsScrollbarId);
 
 	// Spell selection scrollbar
-	spellsScrollbar2.Init(385, 37, 230);
+	spellsScrollbar2.Init(415, 34, 152);
 	spellsScrollbar2.parentId = spellsWndId;
 	spellsScrollbar2.x += spellsWnd.x;
 	spellsScrollbar2.y += spellsWnd.y;
 	spellsScrollbar2.Add(&spellsScrollbar2Id);
 	ui.BindToParent(spellsWndId, spellsScrollbar2Id);
 
-	int rowOff = 39;
+	int rowOff = 38;
 	for (auto i = 0; i < SPELLS_BTN_COUNT; i++, rowOff += SPELLS_BTN_HEIGHT) {
 
 		int newId = 0;
-		WidgetType2 spellAvailBtn("Spell Available btn", spellsWndId, 4, rowOff, 180, SPELLS_BTN_HEIGHT);
+		WidgetType2 spellAvailBtn("Spell Available btn", spellsWndId, 4, rowOff, 193, SPELLS_BTN_HEIGHT);
 
 		spellAvailBtn.x += spellsWnd.x; spellAvailBtn.y += spellsWnd.y;
 		spellAvailBtn.render = [](int id) {uiPcCreation.SpellsAvailableEntryBtnRender(id); };
@@ -1382,7 +1394,7 @@ BOOL UiPcCreation::SpellsWidgetsInit(){
 		ui.SetDefaultSounds(newId);
 		ui.BindToParent(spellsWndId, newId);
 
-		WidgetType2 spellChosenBtn("Spell Chosen btn", spellsWndId, 206, rowOff, 170, SPELLS_BTN_HEIGHT);
+		WidgetType2 spellChosenBtn("Spell Chosen btn", spellsWndId, 221, rowOff, 193, SPELLS_BTN_HEIGHT);
 
 		spellChosenBtn.x += spellsWnd.x; spellChosenBtn.y += spellsWnd.y;
 		spellChosenBtn.render = [](int id) {uiPcCreation.SpellsEntryBtnRender(id); };
@@ -1404,7 +1416,7 @@ BOOL UiPcCreation::SpellsWidgetsInit(){
 
 	// Spells Per Day title
 	auto spellsPerDayMeasure = UiRenderer::MeasureTextSize(spellsPerDayLabel, spellsTextStyle);
-	spellsPerDayTitleRect = TigRect(5, 279, 99, 12);
+	spellsPerDayTitleRect = TigRect(5, 205, 99, 12);
 	spellsPerDayTitleRect.x += (spellsPerDayTitleRect.width - spellsPerDayMeasure.width) / 2;
 	spellsPerDayTitleRect.width = spellsPerDayMeasure.width;
 	spellsPerDayTitleRect.height = spellsPerDayMeasure.height;
@@ -1413,12 +1425,17 @@ BOOL UiPcCreation::SpellsWidgetsInit(){
 	TigTextStyle &spellLevelLabelStyle = temple::GetRef<TigTextStyle>(0x10C74B08);
 	spellsNewSpellsBoxRects.clear();
 	for (auto lvl = 0u; lvl < NUM_SPELL_LEVELS; lvl++) {
-		auto textMeas = UiRenderer::MeasureTextSize(levelLabels[lvl].c_str(), spellLevelLabelStyle);
-		spellsNewSpellsBoxRects.push_back(TigRect(116 + lvl * 45, 287, 29, 12));
+		auto textMeas = UiRenderer::MeasureTextSize(chargen.levelLabels[lvl].c_str(), spellLevelLabelStyle);
+		spellsNewSpellsBoxRects.push_back(TigRect(105 + lvl * 51, 201, 29, 25));
 
 	}
 	UiRenderer::PopFont();
 	return 1;
+}
+
+void UiPcCreation::SpellsReset(){
+	chargen.SpellsNeedResetSet(true);
+	chargen.GetKnownSpellInfo().clear();
 }
 
 void UiPcCreation::SpellsWidgetsFree(){
@@ -1453,23 +1470,17 @@ BOOL UiPcCreation::SpellsWidgetsResize(UiResizeArgs & args)
 
 void UiPcCreation::SpellsActivate()
 {
-	auto handle = GetEditedChar();
+	auto handle = chargen.GetEditedChar();
 	auto obj = gameSystems->GetObj().GetObject(handle);
-	auto &selPkt = GetCharEditorSelPacket();
+	auto &selPkt = chargen.GetCharEditorSelPacket();
 	auto &avSpInfo = chargen.GetAvailableSpells();
 	auto &knSpInfo = chargen.GetKnownSpellInfo();
 
 	// get the new caster level for the levelled class (1 indicates a newly taken class)
 	auto casterLvlNew = 1;
 	auto classLeveled = selPkt.classCode;
-	auto lvls = obj->GetInt32Array(obj_f_critter_level_idx);
-	for (auto i = 0u; i < lvls.GetSize(); i++) {
-		auto classCode = static_cast<Stat>(lvls[i]);
-		if (classLeveled == classCode) // is the same the one being levelled
-			casterLvlNew++;
-	}
-
-	auto &needPopulateEntries = temple::GetRef<int>(0x10C4D4C4);
+	
+	auto needsReset = chargen.SpellsNeedReset();
 
 	static auto setScrollbars = []() {
 		auto sbId = uiPcCreation.spellsScrollbarId;
@@ -1480,7 +1491,7 @@ void UiPcCreation::SpellsActivate()
 		uiPcCreation.spellsScrollbar.y = 0;
 		uiPcCreation.spellsScrollbarY = 0;
 
-		auto &charEdSelPkt = uiPcCreation.GetCharEditorSelPacket();
+		auto &charEdSelPkt = chargen.GetCharEditorSelPacket();
 		auto sbAddedId = uiPcCreation.spellsScrollbar2Id;
 		int numAdded = (int)chargen.GetKnownSpellInfo().size();
 		ui.ScrollbarSetY(sbAddedId, 0);
@@ -1490,7 +1501,7 @@ void UiPcCreation::SpellsActivate()
 		uiPcCreation.spellsScrollbar2Y = 0;
 	};
 
-	if (!needPopulateEntries) {
+	if (!needsReset) {
 		setScrollbars();
 		return;
 	}
@@ -1499,7 +1510,7 @@ void UiPcCreation::SpellsActivate()
 	knSpInfo.clear();
 	avSpInfo.clear();
 
-	d20ClassSys.LevelupInitSpellSelection(handle, selPkt.classCode);
+	d20ClassSys.LevelupInitSpellSelection(handle, selPkt.classCode, 1);
 
 
 	for (auto i = 0u; i < knSpInfo.size(); i++) {
@@ -1513,7 +1524,7 @@ void UiPcCreation::SpellsActivate()
 	SpellsPerDayUpdate();
 
 	setScrollbars();
-	needPopulateEntries = 0; // needPopulateEntries
+	chargen.SpellsNeedResetSet(false);
 }
 
 BOOL UiPcCreation::SpellsCheckComplete()
@@ -1523,9 +1534,7 @@ BOOL UiPcCreation::SpellsCheckComplete()
 	if (!d20ClassSys.IsSelectingSpellsOnLevelup(handle, selPkt.classCode))
 		return true;
 
-	auto &needPopulateEntries = temple::GetRef<int>(0x10C4D4C4);
-
-	if (needPopulateEntries == 1)
+	if (chargen.SpellsNeedReset())
 		return false;
 
 	return d20ClassSys.LevelupSpellsCheckComplete(GetEditedChar(), selPkt.classCode);
@@ -1871,24 +1880,28 @@ void UiPcCreation::SpellsWndRender(int widId)
 	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
 	UiRenderer::DrawTextInWidget(widId, spellsAvailLabel, spellsAvailTitleRect, spellsTitleStyle);
 	UiRenderer::DrawTextInWidget(widId, spellsChosenLabel, spellsChosenTitleRect, spellsTitleStyle);
-
-
-	levelupSpellbar->SetX(spellsWnd.x);
-	levelupSpellbar->SetY(spellsWnd.y + 275);
-	levelupSpellbar->Render();
+	for (auto i = 0; i < SPELLS_PER_DAY_BOXES_COUNT; i++) {
+		UiRenderer::DrawTextInWidget(widId, chargen.spellLevelLabels[i], spellsChosenTitleRect, spellsTitleStyle);
+		
+	}
 
 
 	// RenderSpellsPerDay
+	
 	UiRenderer::DrawTextInWidget(widId, spellsPerDayLabel, spellsPerDayTitleRect, spellsTextStyle);
-	for (auto i = 0; i < SPELLS_PER_DAY_BOXES_COUNT; i++) {
-		UiRenderer::DrawTextInWidget(widId, spellsPerDayTexts[i], spellsPerDayTextRects[i], spellsPerDayStyle);
-	}
+	UiRenderer::PopFont();
 
+	UiRenderer::PushFont(PredefinedFont::ARIAL_BOLD_24);
+	for (auto i = 0; i < SPELLS_PER_DAY_BOXES_COUNT; i++) {
+		RenderHooks::RenderRectInt(spellsWnd.x + spellsNewSpellsBoxRects[i].x, spellsWnd.y + spellsNewSpellsBoxRects[i].y, spellsNewSpellsBoxRects[i].width, spellsNewSpellsBoxRects[i].height, 0xFF43586E);
+		UiRenderer::DrawTextInWidget(widId, spellsPerDayTexts[i], spellsPerDayTextRects[i], spellsPerDayStyle);
+		
+	}
 	UiRenderer::PopFont();
 
 	// Rects
-	RenderHooks::RenderRectInt(spellsWnd.x, spellsWnd.y + 38, 195, 227, 0xFF5D5D5D);
-	RenderHooks::RenderRectInt(spellsWnd.x + 201, spellsWnd.y + 38, 195, 227, 0xFF5D5D5D);
+	RenderHooks::RenderRectInt(spellsWnd.x + 5  , spellsWnd.y + 35, 207, 149, 0xFF5D5D5D);
+	RenderHooks::RenderRectInt(spellsWnd.x + 219, spellsWnd.y + 35, 207, 149, 0xFF5D5D5D);
 
 	StateTitleRender(widId);
 }
@@ -2071,7 +2084,7 @@ void UiPcCreation::SpellsEntryBtnRender(int widId)
 	}
 	else if (spellSys.IsLabel(spEnum)) {
 		if (spLvl >= 0 && spLvl < NUM_SPELL_LEVELS) {
-			text.append(fmt::format("{}", spellLevelLabels[spLvl]));
+			text.append(fmt::format("{}", chargen.spellLevelLabels[spLvl]));
 			UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
 		}
 	}
@@ -2236,7 +2249,7 @@ void UiPcCreation::SpellsAvailableEntryBtnRender(int widId)
 		auto spLvl = avSpInfo[spellIdx].spellLevel;
 		if (spLvl >= 0 && spLvl < NUM_SPELL_LEVELS)
 		{
-			text.append(fmt::format("{}", spellLevelLabels[spLvl]));
+			text.append(fmt::format("{}", chargen.spellLevelLabels[spLvl]));
 			UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
 		}
 
