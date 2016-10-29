@@ -549,11 +549,7 @@ uint32_t LegacyFeatSystem::WeaponFeatCheck(objHndl objHnd, feat_enums * featArra
 
 uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums* featArray, uint32_t featArrayLen, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased){
 
-	
-
 	FeatPrereqRow * featPrereqs = feats.m_featPreReqTable;
-	const uint8_t numCasterClasses = 7;
-	uint32_t casterClassCodes[numCasterClasses] = { stat_level_bard, stat_level_cleric, stat_level_druid, stat_level_paladin, stat_level_ranger, stat_level_sorcerer, stat_level_wizard };
 
 	if (!feats.IsFeatEnabled(featIdx) && !feats.IsFeatMultiSelectMaster(featIdx)) {
 		return 0;
@@ -595,65 +591,54 @@ uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, 
 			return TRUE;
 
 		if (featReqCode == featReqCodeMinCasterLevel){
-# pragma region Minimum Caster Level
-
-			uint32_t var_2C = 0;
 			auto casterLevel = critterSys.GetCasterLevel(objHnd);
-			for (uint8_t j = 0; j < numCasterClasses; j++)
-			{
 
-				if (classCodeBeingLevelledUp == casterClassCodes[j])
-					casterLevel++;
+			if (d20ClassSys.IsCastingClass(classCodeBeingLevelledUp))
+				casterLevel++;
 
-				if ((uint32_t)casterLevel >= (uint32_t)featReqCodeArg) { var_2C = 1; };
-			};
-
-			if (var_2C == 0) { return 0; }
-#pragma endregion 
+			if (casterLevel < featReqCodeArg)
+				return FALSE;
 		}
-		else if (featReqCode == featReqCodeTurnUndeadRelated)
-		{
-#pragma region Turn / Rebuke Undead Stuff
-			uint32_t critterAlignment = objects.StatLevelGet(objHnd, stat_alignment);
-			uint32_t paladinLevel = objects.StatLevelGet(objHnd, stat_level_paladin);
-			uint32_t clericLevel = objects.StatLevelGet(objHnd, stat_level_cleric);
-			uint32_t paladinReqLvl = featReqCodeArg;
-			uint32_t clericReqLvl = featReqCodeArg;
-			if (featIdx == FEAT_TURN_UNDEAD)
-			{
+
+		else if (featReqCode == featReqCodeTurnUndeadRelated){
+			auto critterAlignment = objects.StatLevelGet(objHnd, stat_alignment);
+			auto turnReqLvl = featReqCodeArg;
+
+
+			auto palLvl = objects.StatLevelGet(objHnd, stat_level_paladin);
+			auto paladinTurnLvl = max(0, palLvl + (classCodeBeingLevelledUp == stat_level_paladin) - 3);
+			
+			auto clericLvl = objects.StatLevelGet(objHnd, stat_level_cleric);
+			auto clericTurnLvl = clericLvl + (classCodeBeingLevelledUp == stat_level_cleric) - 0;
+
+			auto otherTurnLvl = max(0, d20Sys.D20QueryPython(objHnd, "Turn Undead Level"));
+			
+			auto highestTurnLvl = clericTurnLvl + paladinTurnLvl + otherTurnLvl;
+			
+
+			if (featIdx == FEAT_TURN_UNDEAD){
 				if (!(critterAlignment & ALIGNMENT_EVIL || critterAlignment == (ALIGNMENT_CHAOTIC | ALIGNMENT_LAWFUL)))// TODO: is this a bug??? might be harmless mistake, might be deliberate
 				{
-					if (paladinLevel + (classCodeBeingLevelledUp == stat_level_paladin) < 4
-						&& clericLevel + (classCodeBeingLevelledUp == stat_level_cleric) < 1
-						) {
+					if (highestTurnLvl  < turnReqLvl ) {
 						return 0;
 					}
 				}
 
 			}
-			else if (featIdx == FEAT_REBUKE_UNDEAD)
-			{
-				if (!(critterAlignment > 10 || critterAlignment & ALIGNMENT_GOOD
-					|| critterAlignment == 3))
-				{
-					if (paladinLevel + (classCodeBeingLevelledUp == stat_level_paladin) < 4
-						&& clericLevel + (classCodeBeingLevelledUp == stat_level_cleric) < 1
-						) {
+			else if (featIdx == FEAT_REBUKE_UNDEAD){
+				if (!(critterAlignment > 10 || critterAlignment & ALIGNMENT_GOOD || critterAlignment == 3))	{
+					if (highestTurnLvl  < turnReqLvl ) {
 						return 0;
 					}
 				};
 			}
-			if (paladinLevel + (classCodeBeingLevelledUp == stat_level_paladin) < paladinReqLvl
-				&& clericLevel + (classCodeBeingLevelledUp == stat_level_cleric) < clericReqLvl
-				) {
+
+			if (highestTurnLvl < turnReqLvl) {
 				return 0;
 			}
-#pragma endregion 
-
 		}
-		else if (featReqCode == featReqCodeEvasionRelated)
-		{
-# pragma region Evasion Related
+
+		else if (featReqCode == featReqCodeEvasionRelated){
 			auto rogueLevel = objects.StatLevelGet(objHnd, stat_level_rogue);
 			auto monkLevel = objects.StatLevelGet(objHnd, stat_level_monk);
 			if (featIdx == FEAT_EVASION)
@@ -672,11 +657,9 @@ uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, 
 					return 0;
 				}
 			}
-#pragma endregion 
 		}
-		else if (featReqCode == featReqCodeFastMovement)
-		{
-#pragma region Fast Movement
+		
+		else if (featReqCode == featReqCodeFastMovement){
 			auto monkLevel = objects.StatLevelGet(objHnd, stat_level_monk);
 			auto barbarianLevel = objects.StatLevelGet(objHnd, stat_level_barbarian);
 			if (featIdx == FEAT_FAST_MOVEMENT)
@@ -687,22 +670,30 @@ uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, 
 					return 0;
 				}
 			}
-#pragma endregion 
 		}
-		else if (featReqCode == featReqCodeMinArcaneCasterLevel)
-		{
-# pragma region Min Arcane Caster Level
-			uint32_t sorcererLevel = critterSys.GetCasterLevelForClass(objHnd, stat_level_sorcerer); //objects.StatLevelGet(objHnd, stat_level_sorcerer);
-			uint32_t wizardLevel = critterSys.GetCasterLevelForClass(objHnd, stat_level_wizard); //objects.StatLevelGet(objHnd, stat_level_wizard);
-			if (sorcererLevel + (classCodeBeingLevelledUp == stat_level_sorcerer) < (uint32_t)featReqCodeArg
-				&& wizardLevel + (classCodeBeingLevelledUp == stat_level_wizard) < (uint32_t)featReqCodeArg
-				) {
-				return 0;
+
+		else if (featReqCode == featReqCodeMinArcaneCasterLevel){ // so far only Call Familiar has this
+			auto foundOne = false;
+
+			for (auto it: d20ClassSys.classEnumsWithSpellLists){
+				if (!d20ClassSys.IsArcaneCastingClass(Stat(it)))
+					continue;
+				
+				auto arcaneLvl = critterSys.GetCasterLevelForClass(objHnd, it);
+				if (classCodeBeingLevelledUp == it)  // todo: extend for PRCs that extend caster level. Not critical since only Call Familiar has this, and it's a level 1 affair.
+					arcaneLvl++; 
+
+				if (arcaneLvl >= featReqCodeArg){
+					foundOne = true;	break;
+				}
 			}
-#pragma endregion 
+
+			if (!foundOne) 
+				return 0;
+			
 		}
-		else if (featReqCode == featReqCodeUncannyDodgeRelated)
-		{
+
+		else if (featReqCode == featReqCodeUncannyDodgeRelated){
 #pragma region Uncanny Dodge Related
 			auto rogueLevel = objects.StatLevelGet(objHnd, stat_level_rogue);
 			auto barbarianLevel = objects.StatLevelGet(objHnd, stat_level_barbarian);
@@ -724,49 +715,37 @@ uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, 
 			}
 #pragma endregion 
 		}
-		else if (featReqCode == featReqCodeAnimalCompanion)
-		{
-#pragma region Animal Companion
+		
+		else if (featReqCode == featReqCodeAnimalCompanion){
 			auto druidLevel = objects.StatLevelGet(objHnd, stat_level_druid);
 			auto rangerLevel = objects.StatLevelGet(objHnd, stat_level_ranger);
 
 
-			if (featIdx == FEAT_ANIMAL_COMPANION)
-			{
+			if (featIdx == FEAT_ANIMAL_COMPANION){
 				if (druidLevel + (classCodeBeingLevelledUp == stat_level_druid) < 1
 					&& rangerLevel + (classCodeBeingLevelledUp == stat_level_ranger) < 4
 					) {
 					return 0;
 				}
 			}
-#pragma endregion 
 		}
-		else if (featReqCode == featReqCodeCrossbowFeat)
-		{
-#pragma region Crossbow-related feats (probably rapid reload and stuff)
-			if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, wt_light_crossbow))
-			{
-				if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, wt_heavy_crossbow))
-				{
-					if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, wt_hand_crossbow))
-					{
-						return 0;
-					}
-				}
-			}
-#pragma endregion
+		
+		else if (featReqCode == featReqCodeCrossbowFeat){
+			
+			if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, wt_light_crossbow)
+		     && !feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, wt_heavy_crossbow)
+			 && !feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, wt_hand_crossbow)){
+				return 0;
+			}	
 		}
-		else if (featReqCode == featReqCodeWeaponFeat)
-		{
-#pragma region Weapon related feats general
-			if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, (WeaponTypes)featReqCodeArg))
-			{
+
+		else if (featReqCode == featReqCodeWeaponFeat){ // Weapon related feats general
+			if (!feats.WeaponFeatCheck(objHnd, featArray, featArrayLen, classCodeBeingLevelledUp, (WeaponTypes)featReqCodeArg))	{
 				return 0;
 			}
-#pragma endregion
 		}
-		else if (featReqCode >= 1000 && featReqCode <= 1999)
-		{
+
+		else if (featReqCode >= 1000 && featReqCode <= 1999){
 # pragma region Custom Feat Stat Requirement (?)
 			feat_enums featIdxFromReqCode = (feat_enums)(featReqCode - 1000);
 			if (!_FeatExistsInArray(featIdxFromReqCode, featArray, featArrayLen))

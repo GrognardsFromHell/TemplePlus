@@ -177,7 +177,7 @@ uint32_t LegacyPartySystem::CurrentlySelectedNum()
 
 objHndl LegacyPartySystem::GetCurrentlySelected(int n){
 
-	if (n > CurrentlySelectedNum() - 1)
+	if (n > (int)CurrentlySelectedNum() - 1)
 		return objHndl::null;
 
 	return addresses.groupCurrentlySelected->GroupMembers[n];
