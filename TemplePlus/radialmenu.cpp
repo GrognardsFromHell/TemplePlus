@@ -481,6 +481,7 @@ int RadialMenus::GetSpellClassFromSpecialNode(objHndl handle, int specialParent)
 	}
 		
 	return 0; // will register as domain spell
+
 	// the legacy stuff
 	static auto getClassFromNode = [](int specPar) {
 		if (specPar== RadialMenuStandardNode::SpellsWizard)

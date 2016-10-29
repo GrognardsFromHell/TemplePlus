@@ -1392,7 +1392,20 @@ uint32_t ItemCreation::CraftedWandWorth(objHndl item, int casterLevelNew){
 			itemWorthBaseGp = 21000; break;
 		}
 		break;
-	default:
+	default: // use Wizard-like
+		switch (spellLevelBase) {
+		case 0:
+			itemWorthBaseGp = 375; break;
+		case 1:
+			itemWorthBaseGp = 750; break;
+		case 2:
+			itemWorthBaseGp = 4500; break;
+		case 3:
+			itemWorthBaseGp = 11250; break;
+		case 4:
+		default:
+			itemWorthBaseGp = 21000; break;
+		}
 		break;
 	}
 

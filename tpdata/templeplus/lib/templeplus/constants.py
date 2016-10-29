@@ -681,7 +681,7 @@ wt_repeating_crossbow = 68
 wt_net = 69
 wt_grapple = 70
 wt_ray = 71
-wt_grenade =72
+wt_grenade = 72
 
 
 # Portal Flags

@@ -100,12 +100,8 @@ bool D20ClassSystem::IsNaturalCastingClass(Stat classEnum, objHndl handle){
 	auto classSpec = classSpecs.find(classEnum);
 	if (classSpec == classSpecs.end())
 		return false;
-	return classSpec->second.spellMemorizationType == SpellReadyingType::Innate;
-		
-
-	/*if (classEnum == stat_level_bard || classEnum == stat_level_sorcerer) 
-		return true;*/
-	//return false;
+	
+	return classSpec->second.spellMemorizationType == SpellReadyingType::Innate;	
 }
 
 bool D20ClassSystem::IsNaturalCastingClass(uint32_t classEnum){
@@ -117,37 +113,18 @@ bool D20ClassSystem::IsVancianCastingClass(Stat classEnum, objHndl handle )
 	auto classSpec = classSpecs.find(classEnum);
 	if (classSpec == classSpecs.end())
 		return false;
-	return classSpec->second.spellMemorizationType == SpellReadyingType::Vancian;
 
-	/*if (classEnum == stat_level_cleric
-		|| classEnum == stat_level_druid 
-		|| classEnum == stat_level_paladin
-		|| classEnum == stat_level_ranger
-		|| classEnum == stat_level_wizard)
-		return 1;
-	auto classSpec = classSpecs.find(classEnum);
-	if (classSpec == classSpecs.end())
-		return 0;
-	
-	return 0;*/
+	return classSpec->second.spellMemorizationType == SpellReadyingType::Vancian;
 }
 
 bool D20ClassSystem::IsCastingClass(Stat classEnum){
-	/*if (classEnum == stat_level_cleric 
-		|| classEnum == stat_level_druid 
-		|| classEnum == stat_level_paladin 
-		|| classEnum == stat_level_ranger 
-		|| classEnum == stat_level_wizard
-		|| classEnum == stat_level_bard
-		|| classEnum == stat_level_sorcerer) return 1;*/
-	
 	auto classSpec = classSpecs.find(classEnum);
 	if (classSpec == classSpecs.end())
 		return false;
+
 	if (classSpec->second.spellListType == SpellListType::None){
 		return false;
 	}
-
 
 	return true;
 }

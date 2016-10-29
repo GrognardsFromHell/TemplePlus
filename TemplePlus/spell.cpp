@@ -796,10 +796,8 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 
 		// casting class
 		if (casterClass){
-			auto casterLvl = critterSys.GetCasterLevelForClass(caster, casterClass);; //objects.StatLevelGet(caster, casterClass); // todo: remove this
+			auto casterLvl = critterSys.GetCasterLevelForClass(caster, casterClass);
 			spellPkt->casterLevel = casterLvl;
-			//if (d20ClassSys.IsLateCastingClass(casterClass)) // todo: remove this (supplant with above GetCasterLevelForClass)
-			//	spellPkt->casterLevel = casterLvl / 2;
 			logger->info("Critter {} is casting spell {} at base caster_level {}.", casterName, spellName , casterLvl);
 		} 
 
@@ -1970,8 +1968,6 @@ bool LegacySpellSystem::IsArcaneSpellClass(uint32_t spellClass)
 	}
 
 	auto casterClass = GetCastingClass(spellClass);
-	/*if (casterClass == stat_level_bard || casterClass == stat_level_sorcerer || casterClass == stat_level_wizard)
-		return true;*/
 
 	if (d20ClassSys.IsArcaneCastingClass(casterClass))
 		return true;
