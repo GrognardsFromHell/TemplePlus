@@ -13,6 +13,7 @@
 #include "../gamesystems/mapobjrender.h"
 #include "../gamesystems/partsystemsrenderer.h"
 #include "../gamesystems/clipping/clipping.h"
+#include <tig/tig_mouse.h>
 
 using namespace gfx;
 
@@ -60,6 +61,10 @@ void DiagScreen::Render() {
 	auto loaded = textureManager.GetLoaded();
 	auto registered = textureManager.GetRegistered();
 	std::vector<std::string> lines;
+
+	POINT mousePt = mouseFuncs.GetPos();
+	lines.push_back(fmt::format("#Mouse"));
+	lines.push_back(fmt::format("x: {} y: {}", mousePt.x, mousePt.y));
 
 	lines.push_back(fmt::format("#Textures"));
 	lines.push_back(fmt::format("{} of {} loaded", loaded, registered));

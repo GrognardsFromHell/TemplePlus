@@ -312,7 +312,7 @@ void GameLoop::DoMouseScrolling() {
 	}
 	
 	int scrollMarginV = 2;
-	int scrollMarginH = 2;
+	int scrollMarginH = 3;
 	if (config.windowed)
 	{
 		scrollMarginV = 7;
