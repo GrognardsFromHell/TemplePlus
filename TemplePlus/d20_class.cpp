@@ -80,6 +80,23 @@ class D20ClassHooks : public TempleFix
 	}
 } d20ClassHooks;
 
+bool D20ClassSystem::IsCoreClass(Stat classEnum){
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return false;
+
+	return (classSpec->second.flags & CDF_CoreClass) != 0;
+}
+
+bool D20ClassSystem::IsBaseClass(Stat classEnum)
+{
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return false;
+
+	return (classSpec->second.flags & CDF_BaseClass) != 0;
+}
+
 bool D20ClassSystem::ReqsMet(const objHndl& handle, const Stat classCode){
 	auto classSpec = classSpecs.find(classCode);
 	if (classSpec == classSpecs.end())
@@ -555,11 +572,11 @@ bool D20ClassSystem::LevelupSpellsCheckComplete(objHndl handle, Stat classEnum){
 		return pythonClassIntegration.LevelupSpellsCheckComplete(handle, classEnum);
 }
 
-void D20ClassSystem::LevelupSpellsFinalize(objHndl handle, Stat classEnum){
-	if (objects.StatLevelGet(handle, classEnum))
+void D20ClassSystem::LevelupSpellsFinalize(objHndl handle, Stat classEnum, int classLvlNew){
+	if (objects.StatLevelGet(handle, classEnum) && classLvlNew == -1)
 		dispatch.DispatchLevelupSystemEvent(handle, classEnum, DK_LVL_Spells_Finalize);
 	else
-		pythonClassIntegration.LevelupSpellsFinalize(handle, classEnum);
+		pythonClassIntegration.LevelupSpellsFinalize(handle, classEnum, classLvlNew);
 	
 }
 

@@ -90,6 +90,8 @@ public:
 	std::vector<int> baseClassEnums;
 	std::vector<Stat> classEnumsWithSpellLists; // prepare a list of classes with spell lists
 	const int ClassLevelMax = 20;
+	bool IsCoreClass(Stat classEnum);
+	bool IsBaseClass(Stat classEnum);
 
 	bool ReqsMet(const objHndl &handle, const Stat classCode); // class requirements met
 	bool IsCompatibleWithAlignment(Stat classEnum, Alignment al);
@@ -173,7 +175,7 @@ public:
 	bool IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum);
 	void LevelupInitSpellSelection(objHndl handle, Stat classEnum, int classLvlNew = -1, int classLvlIncrease = 1);
 	bool LevelupSpellsCheckComplete(objHndl handle, Stat classEnum);
-	void LevelupSpellsFinalize(objHndl handle, Stat classEnum);
+	void LevelupSpellsFinalize(objHndl handle, Stat classEnum, int classLvlNew = -1);
 	
 protected:
 	std::map<int, D20ClassSpec> classSpecs;

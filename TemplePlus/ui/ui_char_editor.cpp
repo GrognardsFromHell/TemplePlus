@@ -711,12 +711,18 @@ BOOL UiCharEditor::ClassSystemInit(GameSystemConf &conf){
 	classBtnTextStyle.tracking = 3;
 
 	for (auto it: d20ClassSys.classEnums){
-		auto className = _strdup(d20Stats.GetStatName((Stat)it));
+		auto classEnum = (Stat)it;
+		auto className = _strdup(d20Stats.GetStatName(classEnum));
 		classNamesUppercase[it] = className;
 		for (auto &letter: classNamesUppercase[it]){
 			letter = toupper(letter);
 		}
-		classBtnMapping.push_back(it);
+
+		if (config.nonCoreMaterials || d20ClassSys.IsCoreClass(classEnum)){
+			if (config.newClasses || d20ClassSys.IsBaseClass(classEnum))
+				classBtnMapping.push_back(it);
+		}
+			
 	}
 	mPageCount = classBtnMapping.size() / 11;
 	if (mPageCount * 11u < classBtnMapping.size())
@@ -1547,7 +1553,7 @@ BOOL UiCharEditor::FinishBtnMsg(int widId, TigMsg * msg){
 
 void UiCharEditor::ClassNextBtnRender(int widId){
 
-	if (!config.newClasses)
+	if (mPageCount <= 1)
 		return;
 
 	static TigRect srcRect(1, 1, 120, 30);
@@ -1575,7 +1581,7 @@ void UiCharEditor::ClassNextBtnRender(int widId){
 
 void UiCharEditor::ClassPrevBtnRender(int widId){
 
-	if (!config.newClasses)
+	if (mPageCount <= 1)
 		return;
 
 	static TigRect srcRect(1, 1, 120, 30);
@@ -2900,7 +2906,7 @@ void UiCharEditor::ClassSetPermissibles(){
 		
 	}
 
-	if (!config.newClasses){
+	if (mPageCount <= 1){
 		ui.ButtonSetButtonState(classNextBtn, UBS_DISABLED);
 		ui.ButtonSetButtonState(classPrevBtn, UBS_DISABLED);
 		return;

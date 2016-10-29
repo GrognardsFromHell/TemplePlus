@@ -261,7 +261,8 @@ public:
 	eastl::hash_map<int, std::string> featsMasterFeatStrings;
 	eastl::vector<string> spellsPerDayTexts;
 	eastl::vector<TigRect> spellsPerDayTextRects;
-	eastl::vector<TigRect> spellsNewSpellsBoxRects;
+	eastl::vector<TigRect> spellsPerDayBorderRects;
+	eastl::vector<TigRect> spellsLevelLabelRects;
 
 
 	// art assets
@@ -1286,7 +1287,7 @@ BOOL UiPcCreation::SpellsSystemInit(GameSystemConf & conf)
 
 	// Spell Level Label Style
 	spellLevelLabelStyle = baseStyle;
-	static ColorRect spellLevelLabelColor(0x0FF43586E);
+	static ColorRect spellLevelLabelColor(0xFF43586E);
 	spellLevelLabelStyle.textColor = spellLevelLabelStyle.colors2 = spellLevelLabelStyle.colors4 = &spellLevelLabelColor;
 
 	// Spells Available Btn Style
@@ -1345,7 +1346,7 @@ BOOL UiPcCreation::SpellsSystemInit(GameSystemConf & conf)
 		return 0;
 
 	// Widgets
-	return uiPcCreation.SpellsWidgetsInit();
+	return SpellsWidgetsInit();
 }
 
 void UiPcCreation::SpellsFree(){
@@ -1409,9 +1410,9 @@ BOOL UiPcCreation::SpellsWidgetsInit(){
 
 	// titles
 	spellsAvailTitleRect.x = 5;
-	spellsAvailTitleRect.y = 23;
+	spellsAvailTitleRect.y = 20;
 	spellsChosenTitleRect.x = 219;
-	spellsChosenTitleRect.y = 23;
+	spellsChosenTitleRect.y = 20;
 	UiRenderer::PushFont("priory-12", 12);
 
 	// Spells Per Day title
@@ -1422,12 +1423,14 @@ BOOL UiPcCreation::SpellsWidgetsInit(){
 	spellsPerDayTitleRect.height = spellsPerDayMeasure.height;
 
 	// Spell Level labels
-	TigTextStyle &spellLevelLabelStyle = temple::GetRef<TigTextStyle>(0x10C74B08);
-	spellsNewSpellsBoxRects.clear();
+	spellsPerDayBorderRects.clear();
+	spellsLevelLabelRects.clear();
+	
 	for (auto lvl = 0u; lvl < NUM_SPELL_LEVELS; lvl++) {
 		auto textMeas = UiRenderer::MeasureTextSize(chargen.levelLabels[lvl].c_str(), spellLevelLabelStyle);
-		spellsNewSpellsBoxRects.push_back(TigRect(105 + lvl * 51, 201, 29, 25));
-
+		spellsPerDayBorderRects.push_back(TigRect(105 + lvl * 51, 201, 29, 25));
+		spellsLevelLabelRects.push_back(TigRect(spellsPerDayBorderRects[lvl].x + spellsPerDayBorderRects[lvl].width / 2 - textMeas.width / 2,
+			spellsPerDayBorderRects[lvl].y - textMeas.height - 2, textMeas.width, textMeas.height));
 	}
 	UiRenderer::PopFont();
 	return 1;
@@ -1544,7 +1547,7 @@ void UiPcCreation::SpellsFinalize(){
 	auto charEdited = GetEditedChar();
 	auto &selPkt = GetCharEditorSelPacket();
 
-	d20ClassSys.LevelupSpellsFinalize(charEdited, selPkt.classCode);
+	d20ClassSys.LevelupSpellsFinalize(charEdited, selPkt.classCode, 1);
 }
 
 void UiPcCreation::SpellsReset(CharEditorSelectionPacket & selPkt)
@@ -1681,6 +1684,7 @@ void UiPcCreation::ClassBtnRender(int widId){
 }
 
 BOOL UiPcCreation::ClassBtnMsg(int widId, TigMsg * msg){
+
 	if (msg->type != TigMsgType::WIDGET)
 		return 0;
 
@@ -1744,6 +1748,9 @@ BOOL UiPcCreation::ClassBtnMsg(int widId, TigMsg * msg){
 
 BOOL UiPcCreation::ClassNextBtnMsg(int widId, TigMsg * msg){
 
+	if (!config.nonCoreMaterials)
+		return FALSE;
+
 	if (msg->type != TigMsgType::WIDGET)
 		return FALSE;
 
@@ -1775,6 +1782,10 @@ BOOL UiPcCreation::ClassNextBtnMsg(int widId, TigMsg * msg){
 
 BOOL UiPcCreation::ClassPrevBtnMsg(int widId, TigMsg * msg)
 {
+
+	if (!config.nonCoreMaterials)
+		return FALSE;
+
 	if (msg->type != TigMsgType::WIDGET)
 		return 0;
 
@@ -1821,7 +1832,7 @@ BOOL UiPcCreation::FinishBtnMsg(int widId, TigMsg * msg)
 }
 
 void UiPcCreation::ClassNextBtnRender(int widId){
-	if (!config.newClasses)
+	if (!config.nonCoreMaterials)
 		return;
 
 	static TigRect srcRect(1, 1, 120, 30);
@@ -1849,7 +1860,7 @@ void UiPcCreation::ClassNextBtnRender(int widId){
 }
 
 void UiPcCreation::ClassPrevBtnRender(int widId){
-	if (!config.newClasses)
+	if (!config.nonCoreMaterials)
 		return;
 
 	static TigRect srcRect(1, 1, 120, 30);
@@ -1881,8 +1892,7 @@ void UiPcCreation::SpellsWndRender(int widId)
 	UiRenderer::DrawTextInWidget(widId, spellsAvailLabel, spellsAvailTitleRect, spellsTitleStyle);
 	UiRenderer::DrawTextInWidget(widId, spellsChosenLabel, spellsChosenTitleRect, spellsTitleStyle);
 	for (auto i = 0; i < SPELLS_PER_DAY_BOXES_COUNT; i++) {
-		UiRenderer::DrawTextInWidget(widId, chargen.spellLevelLabels[i], spellsChosenTitleRect, spellsTitleStyle);
-		
+		UiRenderer::DrawTextInWidget(widId, chargen.levelLabels[i], spellsLevelLabelRects[i], spellLevelLabelStyle);
 	}
 
 
@@ -1893,7 +1903,7 @@ void UiPcCreation::SpellsWndRender(int widId)
 
 	UiRenderer::PushFont(PredefinedFont::ARIAL_BOLD_24);
 	for (auto i = 0; i < SPELLS_PER_DAY_BOXES_COUNT; i++) {
-		RenderHooks::RenderRectInt(spellsWnd.x + spellsNewSpellsBoxRects[i].x, spellsWnd.y + spellsNewSpellsBoxRects[i].y, spellsNewSpellsBoxRects[i].width, spellsNewSpellsBoxRects[i].height, 0xFF43586E);
+		RenderHooks::RenderRectInt(spellsWnd.x + spellsPerDayBorderRects[i].x, spellsWnd.y + spellsPerDayBorderRects[i].y, spellsPerDayBorderRects[i].width, spellsPerDayBorderRects[i].height, 0xFF43586E);
 		UiRenderer::DrawTextInWidget(widId, spellsPerDayTexts[i], spellsPerDayTextRects[i], spellsPerDayStyle);
 		
 	}
@@ -2035,10 +2045,10 @@ void UiPcCreation::SpellsPerDayUpdate()
 		spellsPerDayTexts.push_back(text);
 
 		auto textMeas = UiRenderer::MeasureTextSize(text, spellsPerDayStyle);
-		spellsPerDayTextRects[i].x = spellsNewSpellsBoxRects[i].x +
-			(spellsNewSpellsBoxRects[i].width - textMeas.width) / 2;
-		spellsPerDayTextRects[i].y = spellsNewSpellsBoxRects[i].y +
-			(spellsNewSpellsBoxRects[i].height - textMeas.height) / 2;
+		spellsPerDayTextRects[i].x = spellsPerDayBorderRects[i].x +
+			(spellsPerDayBorderRects[i].width - textMeas.width) / 2;
+		spellsPerDayTextRects[i].y = spellsPerDayBorderRects[i].y +
+			(spellsPerDayBorderRects[i].height - textMeas.height) / 2;
 		spellsPerDayTextRects[i].width = textMeas.width;
 		spellsPerDayTextRects[i].height = textMeas.height;
 	}

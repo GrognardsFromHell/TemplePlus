@@ -286,13 +286,13 @@ void PythonClassSpecIntegration::LevelupInitSpellSelection(objHndl handle, Stat 
 
 }
 
-void PythonClassSpecIntegration::LevelupSpellsFinalize(objHndl handle, Stat classEnum) {
+void PythonClassSpecIntegration::LevelupSpellsFinalize(objHndl handle, Stat classEnum, int classLvlNew) {
 	auto classSpecEntry = mScripts.find(classEnum);
 	if (classSpecEntry == mScripts.end())
 		return;
 
 	auto attachee = PyObjHndl_Create(handle);
-	auto args = Py_BuildValue("(O)", attachee);
+	auto args = Py_BuildValue("(Oi)", attachee, classLvlNew);
 	Py_DECREF(attachee);
 
 	RunScriptDefault0(classSpecEntry->second.id, (EventId)ClassSpecFunc::LevelupSpellsFinalize, args);
