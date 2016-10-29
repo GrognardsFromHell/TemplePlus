@@ -455,6 +455,7 @@
     </ClCompile>
     <ClCompile Include="gamesystems\d20\d20_help.cpp" />
     <ClCompile Include="legacyscriptsystem.cpp" />
+    <ClCompile Include="gamesystems\deity\legacydeitysystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -857,6 +858,7 @@
     </ClInclude>
     <ClInclude Include="gamesystems\d20\d20_help.h" />
     <ClInclude Include="legacyscriptsystem.h" />
+    <ClInclude Include="gamesystems\deity\legacydeitysystem.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

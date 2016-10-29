@@ -58,6 +58,7 @@ struct D20ClassSpec {
 	Stat classEnum;
 	ClassDefinitionFlag flags;
 	BABProgressionType babProgression;
+	Stat deityClass; // emulate deity compatibility of the vanilla classes
 
 
 	bool fortitudeSaveIsFavored;
@@ -103,6 +104,7 @@ public:
 	bool IsDivineCastingClass(Stat stat, objHndl handle = objHndl::null); // similar to IsArcaneCastingClass
 	static bool HasDomainSpells(Stat classEnum);
 	Stat GetSpellStat(Stat classEnum); // default - wisdom
+	Stat GetDeityClass(Stat classEnum); // get effective class for deity selection
 	int GetMaxSpellLevel(Stat classEnum, int characterLvl);
 	std::string GetSpellCastingCondition(Stat classEnum);
 

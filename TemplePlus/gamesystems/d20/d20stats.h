@@ -44,7 +44,7 @@ public:
 	int GetPsiStat(const objHndl &handle, Stat stat, int statArg = -1) const;
 	int GetPsiStatBase(const objHndl &handle, Stat stat, int statArg = -1) const;
 
-	bool AlignmentsCompatible(Alignment a, Alignment b);
+	bool AlignmentsUnopposed(Alignment a, Alignment b, bool strictCheck = false);
 
 private:
 

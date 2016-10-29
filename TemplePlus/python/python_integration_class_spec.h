@@ -29,6 +29,7 @@ enum class ClassSpecFunc : int {
 
 	IsAlignmentCompatible,
 	ObjMeetsPrereqs,
+	GetDeityClass, // for the purposes of determining compatible deities.
 	GetFeats,
 
 	// levelup callbacks
@@ -69,6 +70,8 @@ public:
 	int IsClassFeat(int classCode, int featEnum);
 
 	bool ReqsMet(const objHndl &handle, int classEnum);
+
+	Stat GetDeityClass(int classEnum);
 
 	// levelup
 	bool IsSelectingFeatsOnLevelup(objHndl handle, Stat classEnum);

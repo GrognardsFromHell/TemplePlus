@@ -105,6 +105,30 @@ public:
 
 const auto testSizeOfCharEditorSelectionPacket = sizeof(CharEditorSelectionPacket); // should be 3640 (0xE38)
 
+/*
+	Used by UiCharEditor and UiPcCreation systems
+*/
+class Chargen {
 
+public:
+	objHndl GetEditedChar();
+	CharEditorSelectionPacket & GetCharEditorSelPacket();
+	std::vector<KnownSpellInfo>& GetKnownSpellInfo();
+	std::vector<KnownSpellInfo> &GetAvailableSpells();
+	int * GetRolledStats();
+	int GetRolledStatIdx(int x, int y, int *xyOut = nullptr); // gets the index of the Rolled Stats button according to the mouse position. Returns -1 if none.
+
+	// utilities
+	bool SpellIsAlreadyKnown(int spEnum, int spellClass);
+	bool SpellIsForbidden(int spEnum);
+
+
+protected:
+	std::vector<KnownSpellInfo> mSpellInfo;
+	std::vector<KnownSpellInfo> mAvailableSpells; // spells available for learning
+	std::vector<FeatInfo> mExistingFeats, mSelectableFeats, mMultiSelectFeats, mMultiSelectMasterFeats, mBonusFeats;
+};
+
+extern Chargen chargen;
 
 int HookedFeatMultiselectSub_101A8080(feat_enums feat);

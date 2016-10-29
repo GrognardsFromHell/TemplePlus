@@ -13,6 +13,8 @@
 #include <tutorial.h>
 #include <legacyscriptsystem.h>
 #include <tig/tig_mouse.h>
+#include <config/config.h>
+#include "raycast.h"
 
 
 const PickerSpec PickerSpec::null;
@@ -265,6 +267,10 @@ UiPicker::UiPicker(){
 	
 }
 
+PickerStatusFlags& UiPicker::GetPickerStatusFlags(){
+	return temple::GetRef<PickerStatusFlags>(0x10BE5F2C);
+}
+
 void UiPicker::InitWallSpec(){
 	mWallSpec.msg = &mWallMsgHandlers;
 	mWallSpec.name = "SP_M_WALL";
@@ -279,7 +285,7 @@ void UiPicker::RenderPickers(){
 	
 	auto &activePickerIdx = GetActivePickerIdx();
 	auto intgameSelTextDraw = temple::GetRef<void(__cdecl)()>(0x10108FA0);
-	auto &pickerStatusFlags = temple::GetRef<PickerStatusFlags>(0x10BE5F2C);
+	auto &pickerStatusFlags = GetPickerStatusFlags();
 
 	auto drawSpellPlayerPointer = true;
 	auto tgtCount = 0;
@@ -303,9 +309,9 @@ void UiPicker::RenderPickers(){
 	if (tgt){
 		// renders the circle for the current hovered target (using an appropriate shader based on ok/not ok selection)
 		if (pickerStatusFlags & PickerStatusFlags::PSF_Invalid)
-			temple::GetRef<void(objHndl, objHndl, int)>(0x10109980)(tgt, originator, pick.args.spellEnum); // render Invalid circle
+			DrawCircleInvalidTarget(tgt, originator, pick.args.spellEnum);
 		else
-			temple::GetRef<void(objHndl, objHndl, int)>(0x10109940)(tgt, originator, pick.args.spellEnum); // render OK circle
+			DrawCircleValidTarget(tgt, originator, pick.args.spellEnum);
 	}
 
 	// Draw rotating circles for selected targets
@@ -316,7 +322,7 @@ void UiPicker::RenderPickers(){
 		}
 
 		if (pick.args.IsBaseModeTarget(UiPickerType::Multi)){
-			temple::GetRef<void(objHndl, objHndl, int)>(0x10109940)(handle, originator, pick.args.spellEnum);
+			DrawCircleValidTarget(handle, originator, pick.args.spellEnum);
 			temple::GetRef<void(objHndl, int)>(0x10108ED0)(handle, 1); // text append
 		}
 	}
@@ -332,8 +338,8 @@ void UiPicker::RenderPickers(){
 			auto handleObj = objSystem->GetObject(handle);
 			auto fogFlags = temple::GetRef<uint8_t(__cdecl)(LocAndOffsets)>(0x1002ECB0)(handleObj->GetLocationFull()) ;
 
-			if (!critterSys.IsConcealed(handle) && (fogFlags & 1) ){ // fixed rendering for hidden critters
-				temple::GetRef<void(objHndl, objHndl, int)>(0x10109940)(handle, originator, pick.args.spellEnum);
+			if (config.laxRules || !critterSys.IsConcealed(handle) && (fogFlags & 1) ){ // fixed rendering for hidden critters
+				DrawCircleValidTarget(handle, originator, pick.args.spellEnum);
 				temple::GetRef<void(objHndl, int)>(0x10108ED0)(handle, ++tgtCount); // text append	
 			}
 			
@@ -346,14 +352,15 @@ void UiPicker::RenderPickers(){
 		if (tgt){
 			if (tgt != originator){
 				auto tgtLoc = objSystem->GetObject(tgt)->GetLocationFull();
-				temple::GetRef<void(__cdecl)(objHndl, LocAndOffsets&)>(0x10106D10)(originator, tgtLoc); // draw the picker arrow from the originator to the target
+				DrawPlayerSpellPointer(originator, tgtLoc);
 			}
 		}
 		else // draw the picker arrow from the originator to the mouse position
 		{
 			LocAndOffsets tgtLoc;
-			locSys.GetLocFromScreenLocPrecise(pick.x, pick.y, &tgtLoc.location, &tgtLoc.off_x, &tgtLoc.off_y);
-			temple::GetRef<void(__cdecl)(objHndl, LocAndOffsets&)>(0x10106D10)(originator, tgtLoc);
+			locSys.GetLocFromScreenLocPrecise(pick.x, pick.y, tgtLoc);
+
+			DrawPlayerSpellPointer(originator, tgtLoc);
 		}
 	}
 
@@ -371,7 +378,7 @@ void UiPicker::RenderPickers(){
 			tgtLoc = tgtObj->GetLocationFull();
 		} 
 		else{
-			locSys.GetLocFromScreenLocPrecise(pick.x, pick.y, &tgtLoc.location, &tgtLoc.off_x, &tgtLoc.off_y);
+			locSys.GetLocFromScreenLocPrecise(pick.x, pick.y, tgtLoc);
 		}
 
 		float orgAbsX, orgAbsY, tgtAbsX, tgtAbsY;
@@ -381,7 +388,7 @@ void UiPicker::RenderPickers(){
 		auto areaRadiusInch = INCH_PER_FEET * pick.args.radiusTarget;
 
 		// Draw the big AoE circle
-		temple::GetRef<void(__cdecl)(LocAndOffsets, float, float, int)>(0x10107610)(tgtLoc, 1.0, areaRadiusInch, pick.args.spellEnum);
+		DrawCircleAoE(tgtLoc, 1.0, areaRadiusInch, pick.args.spellEnum);
 
 
 		// Draw Spell Effect pointer (points from AoE to caster)
@@ -395,14 +402,14 @@ void UiPicker::RenderPickers(){
 		}
 
 		if (originRadius * 1.5f + areaRadiusInch  + spellEffectPointerSize < locSys.distBtwnLocAndOffs(tgtLoc, originiLoc)){
-			temple::GetRef<void(__cdecl)(LocAndOffsets, LocAndOffsets, float)>(0x101068A0)(tgtLoc, originiLoc, areaRadiusInch);
+			DrawSpellEffectPointer(tgtLoc, originiLoc, areaRadiusInch);
 		}	
 	}
 
 	else if (pick.args.IsBaseModeTarget(UiPickerType::Personal)){
 		if (tgt && (pick.args.flagsTarget &UiPickerFlagsTarget::Radius) && tgt != originator){
 
-			temple::GetRef<void(__cdecl)(LocAndOffsets, float, float, int)>(0x10107610)(originiLoc, 1.0, INCH_PER_FEET * pick.args.radiusTarget, pick.args.spellEnum);
+			DrawCircleAoE(originiLoc, 1.0, INCH_PER_FEET * pick.args.radiusTarget, pick.args.spellEnum);
 
 		}
 	}
@@ -413,7 +420,7 @@ void UiPicker::RenderPickers(){
 			tgtLoc = tgtObj->GetLocationFull();
 		}
 		else {
-			locSys.GetLocFromScreenLocPrecise(pick.x, pick.y, &tgtLoc.location, &tgtLoc.off_x, &tgtLoc.off_y);
+			locSys.GetLocFromScreenLocPrecise(pick.x, pick.y, tgtLoc);
 		}
 
 		if (pick.args.flagsTarget & UiPickerFlagsTarget::FixedRadius){
@@ -426,18 +433,42 @@ void UiPicker::RenderPickers(){
 			degreesTarget = 60.0f;
 		}
 
-		temple::GetRef<void(__cdecl)(LocAndOffsets, LocAndOffsets, float, int)>(0x10107920)(originiLoc, tgtLoc, degreesTarget, pick.args.spellEnum);
+		DrawConeAoE(originiLoc, tgtLoc, degreesTarget, pick.args.spellEnum);
 	}
 
 	else if (pick.args.IsBaseModeTarget(UiPickerType::Ray)){
 		if (pick.args.flagsTarget & UiPickerFlagsTarget::Range){
 			LocAndOffsets tgtLoc;
-			locSys.GetLocFromScreenLocPrecise(pick.x, pick.y, &tgtLoc.location, &tgtLoc.off_x, &tgtLoc.off_y);
+			locSys.GetLocFromScreenLocPrecise(pick.x, pick.y, tgtLoc);
 
 			auto rayWidth = pick.args.radiusTarget * INCH_PER_FEET / 2.0f;
 			auto rayLength = originRadius + pick.args.trimmedRangeInches;
 
-			temple::GetRef<void(__cdecl)(LocAndOffsets, LocAndOffsets, float, float, float, int)>(0x10108340)(originiLoc, tgtLoc, rayWidth, rayLength, rayLength, pick.args.spellEnum);
+			DrawRectangleAoE(originiLoc, tgtLoc, rayWidth, rayLength, rayLength, pick.args.spellEnum);
+		}
+	}
+
+	else if (pick.args.IsBaseModeTarget(UiPickerType::Wall)) {
+		if (pick.args.flagsTarget & UiPickerFlagsTarget::Range) {
+			LocAndOffsets tgtLoc;
+			locSys.GetLocFromScreenLocPrecise(pick.x, pick.y, tgtLoc);
+
+			if (mWallState == WallPicker_StartPoint){
+				
+			} 
+			else if (mWallState == WallPicker_EndPoint){
+				auto rayWidth = pick.args.radiusTarget * INCH_PER_FEET / 2.0f;
+				auto rayLength = originRadius + pick.args.trimmedRangeInches;
+
+				DrawRectangleAoE(originiLoc, tgtLoc, rayWidth, rayLength, rayLength, pick.args.spellEnum);
+			}
+			else if (mWallState == WallPicker_CenterPoint){
+				
+			}
+			else if (mWallState == WallPicker_Radius){
+				
+			}
+			
 		}
 	}
 
@@ -575,13 +606,41 @@ const PickerSpec & UiPicker::GetPickerSpec(UiPickerType modeTarget){
 
 BOOL UiPicker::WallPosChange(TigMsg * msg){
 
+	auto activePickerIdx = GetActivePickerIdx();
+	if (activePickerIdx < 0 || activePickerIdx >= MAX_PICKER_COUNT)
+		return FALSE;
+
+	auto msgMouse = (TigMsgMouse*)msg;
+
+	auto &pick = GetActivePicker();
+	pick.args.result.FreeObjlist();
+
+	LocAndOffsets mouseLoc;
+	locSys.GetLocFromScreenLocPrecise(msgMouse->x, msgMouse->y, mouseLoc);
+	
 	auto wallState = GetWallState();
 
-	if (wallState == WallPicker_StartPoint){
+	if (wallState == WallPicker_StartPoint || wallState == WallPicker_CenterPoint){
+		// get startpoint location from mouse
+		
+		pick.args.result.location = mouseLoc;
+		pick.args.result.offsetz = 0.0f;
+		pick.args.result.flags = PickerResultFlags::PRF_HAS_LOCATION;
+
 		return TRUE;
 	}
 
 	if (wallState == WallPicker_EndPoint) {
+
+		if (!(pick.args.result.flags & PRF_HAS_LOCATION)){
+			logger->error("WallPosChange: no location set!");
+		}
+
+		auto radiusInch = pick.args.radiusTarget * INCH_PER_FEET / 2.0f;
+		auto maxRange = INCH_PER_FEET * pick.args.range;
+		pick.args.GetTrimmedRange(pick.args.result.location, mouseLoc, radiusInch, maxRange);
+		pick.args.GetTargetsInPath(pick.args.result.location, mouseLoc, radiusInch);
+		// cull invalids regard IncFlags TODO
 		return TRUE;
 	}
 
@@ -600,6 +659,34 @@ void UiPicker::WallCursorText(int x, int y){
 	}
 }
 
+void UiPicker::DrawConeAoE(LocAndOffsets originLoc, LocAndOffsets tgtLoc, float angularWidthDegrees, int spellEnum){
+	temple::GetRef<void(__cdecl)(LocAndOffsets, LocAndOffsets, float, int)>(0x10107920)(originLoc, tgtLoc, angularWidthDegrees, spellEnum);
+}
+
+void UiPicker::DrawCircleAoE(LocAndOffsets originLoc, float unkFactor, float radiusInch, int spellEnum){
+	temple::GetRef<void(__cdecl)(LocAndOffsets, float, float, int)>(0x10107610)(originLoc, unkFactor, radiusInch, spellEnum);
+}
+
+void UiPicker::DrawPlayerSpellPointer(objHndl originator, LocAndOffsets tgtLoc){
+	temple::GetRef<void(__cdecl)(objHndl, LocAndOffsets&)>(0x10106D10)(originator, tgtLoc);
+}
+
+void UiPicker::DrawSpellEffectPointer(LocAndOffsets spellAoECenter, LocAndOffsets pointedToLoc, float aoeRadiusInch){
+	temple::GetRef<void(__cdecl)(LocAndOffsets, LocAndOffsets, float)>(0x101068A0)(spellAoECenter, pointedToLoc, aoeRadiusInch);
+}
+
+void UiPicker::DrawCircleValidTarget(objHndl tgt, objHndl caster, int spellEnum){
+	temple::GetRef<void(objHndl, objHndl, int)>(0x10109940)(tgt, caster, spellEnum); 
+}
+
+void UiPicker::DrawCircleInvalidTarget(objHndl tgt, objHndl caster, int spellEnum){
+	temple::GetRef<void(objHndl, objHndl, int)>(0x10109980)(tgt, caster, spellEnum);
+}
+
+void UiPicker::DrawRectangleAoE(LocAndOffsets originLoc, LocAndOffsets endLoc, float width, float minLength, float maxLength, int spellEnum){
+	temple::GetRef<void(__cdecl)(LocAndOffsets, LocAndOffsets, float, float, float, int)>(0x10108340)(originLoc, endLoc, width, minLength, maxLength, spellEnum);
+}
+
 bool PickerArgs::IsBaseModeTarget(UiPickerType type){
 	auto _type = (uint64_t)type;
 	return ( ((uint64_t)modeTarget) & 0xFF) == _type;
@@ -613,6 +700,48 @@ bool PickerArgs::IsModeTargetFlagSet(UiPickerType type)
 UiPickerType PickerArgs::GetBaseModeTarget()
 {
 	return (UiPickerType) (((uint64_t)this->modeTarget) & 0xFF);
+}
+
+void PickerArgs::GetTrimmedRange(LocAndOffsets &originLoc, LocAndOffsets &tgtLoc, float radiusInch, float maxRange){
+	this->trimmedRangeInches = maxRange;
+
+	RaycastPacket rayPkt;
+	rayPkt.sourceObj = objHndl::null;
+	rayPkt.origin = originLoc;
+	rayPkt.rayRangeInches = maxRange;
+	rayPkt.targetLoc = tgtLoc;
+	rayPkt.radius = radiusInch;
+	rayPkt.flags = (RaycastFlags)(RaycastFlags::ExcludeItemObjects | RaycastFlags::HasRadius | RaycastFlags::HasRangeLimit);
+	rayPkt.Raycast();
+
+	for (auto i = 0; i < rayPkt.resultCount; i++) {
+		auto &rayRes = rayPkt.results[i];
+		if (rayRes.obj == objHndl::null) {
+			auto dist = locSys.distBtwnLocAndOffs(rayPkt.origin, rayRes.loc);
+			if (dist < this->trimmedRangeInches)
+				this->trimmedRangeInches = dist;
+		}
+	}
+}
+
+void PickerArgs::GetTargetsInPath(LocAndOffsets & originLoc, LocAndOffsets & tgtLoc, float radiusInch){
+
+	RaycastPacket rayPkt;
+	rayPkt.sourceObj = objHndl::null;
+	rayPkt.origin = originLoc;
+	rayPkt.rayRangeInches = this->trimmedRangeInches;
+	rayPkt.targetLoc = tgtLoc;
+	rayPkt.radius = radiusInch;
+	rayPkt.flags = (RaycastFlags)(RaycastFlags::ExcludeItemObjects | RaycastFlags::HasRadius | RaycastFlags::HasRangeLimit);
+	rayPkt.Raycast();
+
+	for (auto i = 0; i < rayPkt.resultCount; i++) {
+		auto &rayRes = rayPkt.results[i];
+		if (rayRes.obj){
+			result.objList.PrependHandle(rayRes.obj);
+		}
+	}
+	result.flags |= PickerResultFlags::PRF_HAS_MULTI_OBJ; // is this ok? what if no objects were found? (this is in the original)
 }
 
 BOOL UiPickerHooks::PickerMultiKeystateChange(TigMsg * msg){

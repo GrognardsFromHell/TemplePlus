@@ -17,7 +17,10 @@ class D20StatsHooks : public TempleFix{
 	void apply() override {
 		
 		replaceFunction<BOOL(Alignment, Alignment)>(0x1004A8F0, [](Alignment a, Alignment b)->BOOL{
-			return (BOOL)d20Stats.AlignmentsCompatible(a, b);
+			if (config.laxRules)
+				return TRUE;
+
+			return (BOOL)d20Stats.AlignmentsUnopposed(a, b);
 		});
 
 		replaceFunction<const char*(Stat)>(0x10073A20, [](Stat stat)->const char* {
@@ -230,8 +233,8 @@ int D20StatsSystem::GetPsiStatBase(const objHndl & handle, Stat stat, int statAr
 	return 0;
 }
 
-bool D20StatsSystem::AlignmentsCompatible(Alignment a, Alignment b){
-	if (config.laxRules)
+bool D20StatsSystem::AlignmentsUnopposed(Alignment a, Alignment b, bool strictCheck){
+	if (config.laxRules && !strictCheck)
 		return true;
 
 	switch (a^b)

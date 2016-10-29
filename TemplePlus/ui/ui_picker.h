@@ -97,6 +97,8 @@ struct PickerArgs {
 	bool IsBaseModeTarget(UiPickerType type);
 	bool IsModeTargetFlagSet(UiPickerType type);
 	UiPickerType GetBaseModeTarget();
+	void GetTrimmedRange(LocAndOffsets &originLoc, LocAndOffsets &tgtLoc, float radiusInch, float maxRange);
+	void GetTargetsInPath(LocAndOffsets &originLoc, LocAndOffsets &tgtLoc, float radiusInch); // must have valid trimmedRangeInches value
 };
 
 const auto TestSizeOfPickerArgs = sizeof(PickerArgs); // should be 272 (0x110)
@@ -176,7 +178,7 @@ public:
 
 	UiPicker();
 protected:
-	
+	PickerStatusFlags& GetPickerStatusFlags();
 	
 	void RenderPickers(); // renders the targeting circles, area of effect overlay and "spell pointers" (the arrow pointing from the caster to AoE and vice versa)
 	BOOL PickerMsgHandler(TigMsg *msg);
@@ -192,6 +194,41 @@ protected:
 	BOOL WallPosChange(TigMsg*msg);
 	void WallCursorText(int x, int y);
 	WallPickerState mWallState = WallPicker_StartPoint;
+
+
+	/*
+		Draws the rotating spiked circle for a valid target
+		Is colored depending on whether tgt is friendly to the caster
+	*/
+	void DrawCircleValidTarget(objHndl tgt, objHndl caster, int spellEnum);
+	void DrawCircleInvalidTarget(objHndl tgt, objHndl caster, int spellEnum);
+
+	/*
+		Draws a rectangular Spell AoE between originLoc and endLoc, with specified width caps.
+		I think spellEnum doesn't actually do anything (might allow for custom cursors)
+	*/
+	void DrawRectangleAoE(LocAndOffsets originLoc, LocAndOffsets endLoc, float width, float minLength, float maxLength, int spellEnum);
+
+	/*
+	
+	*/
+	void DrawConeAoE(LocAndOffsets originLoc, LocAndOffsets tgtLoc, float angularWidthDegrees, int spellEnum);
+
+	/*
+		Draws circular Spell AoE.
+		unkFactor doesn't seem to do anything?
+	*/
+	void DrawCircleAoE(LocAndOffsets originLoc, float unkFactor, float radiusInch, int spellEnum);
+
+	/*
+		Draws Player Spell Pointer (an arrow pointing from the caster to tgtLoc)
+	*/
+	void DrawPlayerSpellPointer(objHndl caster, LocAndOffsets tgtLoc);
+
+	/*
+		Draws Spell Effect pointer (an arrow shaped thing pointing from an AoE circle to caster)
+	*/
+	void DrawSpellEffectPointer(LocAndOffsets spellAoECenter, LocAndOffsets pointedToLoc, float aoeRadiusInch); 
 };
 
 extern UiPicker uiPicker;

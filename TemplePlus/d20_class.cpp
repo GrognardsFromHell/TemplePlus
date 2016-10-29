@@ -93,7 +93,7 @@ bool D20ClassSystem::IsCompatibleWithAlignment(Stat classEnum, Alignment al){
 	if (config.laxRules)
 		return true;
 
-	return temple::GetRef<BOOL(__cdecl)(Stat, Alignment)>(0x1004A8F0)(classEnum, al);
+	return temple::GetRef<BOOL(__cdecl)(Stat, Alignment)>(0x10188170)(classEnum, al);
 }
 
 bool D20ClassSystem::IsNaturalCastingClass(Stat classEnum, objHndl handle){
@@ -216,6 +216,19 @@ Stat D20ClassSystem::GetSpellStat(Stat classEnum){
 		return stat_wisdom; 
 	
 	return classSpec->second.spellStat;
+}
+
+Stat D20ClassSystem::GetDeityClass(Stat classEnum){
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return (Stat)0;
+
+	auto deityClass = classSpec->second.deityClass;
+
+	if (deityClass == (Stat)0)
+		return classEnum;
+
+	return deityClass;
 }
 
 int D20ClassSystem::GetMaxSpellLevel(Stat classEnum, int characterLvl)
@@ -435,6 +448,9 @@ void D20ClassSystem::GetClassSpecs(){
 		// feats
 		classSpec.classFeats = pythonClassIntegration.GetFeats(it);
 		auto test = 1;
+
+		// deity
+		classSpec.deityClass = pythonClassIntegration.GetDeityClass(it);
 	}
 
 }

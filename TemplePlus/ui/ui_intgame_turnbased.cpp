@@ -581,7 +581,7 @@ int UiIntegameTurnbasedRepl::IntgameValidateMouseSelection(TigMsgMouse* msg) {
 	if (UiIntgameRaycast(&obj, msg->x, msg->y, 6)) {
 		objFromRaycast = obj;
 	} else {
-		locSys.GetLocFromScreenLocPrecise(msg->x, msg->y, &locFromScreen.location, &locFromScreen.off_x, &locFromScreen.off_y);
+		locSys.GetLocFromScreenLocPrecise(msg->x, msg->y, locFromScreen);
 		locSys.PointNodeInit(intgameAddresses.locFromScreenLoc, &prevPntNode);
 		locSys.PointNodeInit(&locFromScreen, &pntNode);
 		objFromRaycast = 0i64;

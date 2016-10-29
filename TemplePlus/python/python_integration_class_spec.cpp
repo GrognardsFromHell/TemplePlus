@@ -101,7 +101,7 @@ int PythonClassSpecIntegration::GetInt(int classEnum, ClassSpecFunc specType, in
 	if (classSpecEntry == mScripts.end())
 		return defaultVal; 
 
-	return RunScript(classSpecEntry->second.id, (EventId)specType, nullptr); //classSpec->second
+	return RunScriptDefault0(classSpecEntry->second.id, (EventId)specType, nullptr); //classSpec->second
 }
 
 bool PythonClassSpecIntegration::IsSaveFavored(int classEnum, SavingThrowType saveType){
@@ -201,6 +201,14 @@ bool PythonClassSpecIntegration::ReqsMet(const objHndl & handle, int classEnum){
 	Py_DECREF(args);
 	return result;
 
+}
+
+Stat PythonClassSpecIntegration::GetDeityClass(int classEnum){
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return (Stat)0;
+	
+	return (Stat)GetInt(classEnum, ClassSpecFunc::GetDeityClass, 0);
 }
 
 bool PythonClassSpecIntegration::LevelupSpellsCheckComplete(objHndl handle, Stat classEnum){
@@ -314,6 +322,7 @@ static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 	{ ClassSpecFunc::GetConditionName,"GetConditionName" },
 
 	{ ClassSpecFunc::IsAlignmentCompatible,"IsAlignmentCompatible" },
+	{ ClassSpecFunc::GetDeityClass,"GetDeityClass" },
 
 	{ ClassSpecFunc::ObjMeetsPrereqs,"ObjMeetsPrereqs" },
 	{ ClassSpecFunc::GetFeats,"GetClassFeats" },
