@@ -50,14 +50,17 @@ struct LocationSys : temple::AddressTable
 
 	LocAndOffsets TrimToLength(LocAndOffsets srcLoc, LocAndOffsets tgtLoc, float lengthInches);
 
+	/*
+	Calculates the angle in radians between two points in the tile coordinate system.
+	The angle can be used to make an object that is at fromPoint face the location at toPoint,
+	given that rotation 0 means "look directly north".
+	*/
+	float AngleBetweenPoints(LocAndOffsets &fromPoint, LocAndOffsets &toPoint);
+
 	LocationSys();
 };
 
-/*
-	Calculates the angle in radians between two points in the tile coordinate system.
-	The angle can be used to make an object that is at fromPoint face the location at toPoint,
-	given that rotation 0 means "look directory north".
-*/
+
 float AngleBetweenPoints(LocAndOffsets fromPoint, LocAndOffsets toPoint);
 
 bool operator!=(const LocAndOffsets& to, const LocAndOffsets& rhs);

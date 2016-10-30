@@ -215,6 +215,21 @@ LocAndOffsets LocationSys::TrimToLength(LocAndOffsets srcLoc, LocAndOffsets tgtL
 	return LocAndOffsets::FromInches(srcAbsX + norm * deltaX * lengthInches, srcAbsY + norm * deltaY * lengthInches);
 }
 
+float LocationSys::AngleBetweenPoints(LocAndOffsets &fromPoint, LocAndOffsets &toPoint)
+{
+	auto fromCoord = fromPoint.ToInches2D();
+	auto toCoord = fromPoint.ToInches2D();
+
+	// Create the vector from->to
+	auto dir = XMFLOAT2(
+		toCoord.x - fromCoord.x,
+		toCoord.y - fromCoord.y
+	);
+
+	auto angle = atan2(dir.y, dir.x);
+	return angle + 2.3561945f; // + 135 degrees
+}
+
 LocationSys::LocationSys()
 {
 	rebase(getLocAndOff, 0x10040080);

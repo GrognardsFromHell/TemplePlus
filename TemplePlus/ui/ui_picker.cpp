@@ -278,6 +278,7 @@ void UiPicker::InitWallSpec(){
 	mWallSpec.idx = (int)UiPickerType::Wall;
 	mWallSpec.cursorTextDraw = [](int x, int y, void*) { uiPicker.WallCursorText(x, y); };
 	mWallMsgHandlers.posChange = [](TigMsg*msg) {return uiPicker.WallPosChange(msg); };
+	mWallMsgHandlers.lmbReleased = [](TigMsg*msg) {return uiPicker.WallLmbReleased(msg); };
 
 }
 
@@ -456,11 +457,14 @@ void UiPicker::RenderPickers(){
 			if (mWallState == WallPicker_StartPoint){
 				
 			} 
+
 			else if (mWallState == WallPicker_EndPoint){
 				auto rayWidth = pick.args.radiusTarget * INCH_PER_FEET / 2.0f;
 				auto rayLength = originRadius + pick.args.trimmedRangeInches;
 
-				DrawRectangleAoE(originiLoc, tgtLoc, rayWidth, rayLength, rayLength, pick.args.spellEnum);
+				auto wallStart = pick.args.result.location;
+
+				DrawRectangleAoE(wallStart, tgtLoc, rayWidth, rayLength, rayLength, pick.args.spellEnum);
 			}
 			else if (mWallState == WallPicker_CenterPoint){
 				
@@ -630,21 +634,62 @@ BOOL UiPicker::WallPosChange(TigMsg * msg){
 		return TRUE;
 	}
 
+
+	if (!(pick.args.result.flags & PRF_HAS_LOCATION)) {
+		logger->error("WallPosChange: no location set!");
+	}
+	auto maxRange = INCH_PER_FEET * pick.args.range;
+
 	if (wallState == WallPicker_EndPoint) {
 
-		if (!(pick.args.result.flags & PRF_HAS_LOCATION)){
-			logger->error("WallPosChange: no location set!");
-		}
-
-		auto radiusInch = pick.args.radiusTarget * INCH_PER_FEET / 2.0f;
-		auto maxRange = INCH_PER_FEET * pick.args.range;
+		// get radius and range up to mouse (trimmed by walls and such)
+		auto radiusInch = pick.args.radiusTarget * INCH_PER_FEET / 2.0f;	
 		pick.args.GetTrimmedRange(pick.args.result.location, mouseLoc, radiusInch, maxRange);
+		pick.args.degreesTarget = locSys.AngleBetweenPoints(pick.args.result.location, mouseLoc);
+
 		pick.args.GetTargetsInPath(pick.args.result.location, mouseLoc, radiusInch);
-		// cull invalids regard IncFlags TODO
+
+		
+		pick.args.DoExclusions();
 		return TRUE;
+
+		
+	} 
+	else if  (wallState == WallPicker_Radius){
+		// todo
 	}
 
 	return FALSE;
+}
+
+BOOL UiPicker::WallLmbReleased(TigMsg * msg)
+{
+	auto pickerIdx = GetActivePickerIdx();
+	if (pickerIdx < 0 || pickerIdx >= MAX_PICKER_COUNT)
+		return FALSE;
+
+	auto &pick = GetActivePicker();
+	WallPosChange(msg);
+
+	auto wallState = GetWallState();
+
+	if (wallState == WallPicker_StartPoint){
+		mWallState = WallPicker_EndPoint;
+	}
+
+	else if (wallState == WallPicker_EndPoint){
+		return pick.Finalize();
+	}
+
+	else if (wallState == WallPicker_CenterPoint) {
+		mWallState = WallPicker_Radius;
+	}
+	
+	else if (wallState == WallPicker_Radius) {
+		// todo
+	}
+
+	return TRUE;
 }
 
 void UiPicker::WallCursorText(int x, int y){
@@ -735,13 +780,18 @@ void PickerArgs::GetTargetsInPath(LocAndOffsets & originLoc, LocAndOffsets & tgt
 	rayPkt.flags = (RaycastFlags)(RaycastFlags::ExcludeItemObjects | RaycastFlags::HasRadius | RaycastFlags::HasRangeLimit);
 	rayPkt.Raycast();
 
-	for (auto i = 0; i < rayPkt.resultCount; i++) {
-		auto &rayRes = rayPkt.results[i];
-		if (rayRes.obj){
-			result.objList.PrependHandle(rayRes.obj);
+	
+	if (rayPkt.resultCount){
+		result.objList.Init();
+		for (auto i = 0; i < rayPkt.resultCount; i++) {
+			auto &rayRes = rayPkt.results[i];
+			if (rayRes.obj) {
+				result.objList.PrependHandle(rayRes.obj);
+			}
 		}
+		result.flags |= PickerResultFlags::PRF_HAS_MULTI_OBJ; // is this ok? what if no objects were found? (this is in the original)
 	}
-	result.flags |= PickerResultFlags::PRF_HAS_MULTI_OBJ; // is this ok? what if no objects were found? (this is in the original)
+
 }
 
 BOOL UiPickerHooks::PickerMultiKeystateChange(TigMsg * msg){
@@ -787,4 +837,47 @@ void PickerResult::FreeObjlist(){
 	if (this->flags & PickerResultFlags::PRF_HAS_MULTI_OBJ)
 		this->objList.Free();
 	this->flags = 0;
+}
+
+void PickerArgs::DoExclusions(){
+	if (flagsTarget & UiPickerFlagsTarget::Exclude1st){
+		ExcludeTargets();
+		FilterResults();
+	} 
+	else{
+		FilterResults();
+		ExcludeTargets();
+	}
+}
+
+void PickerArgs::ExcludeTargets(){
+	temple::GetRef<void(__cdecl)(PickerArgs*)>(0x100BA3C0)(this);
+}
+
+void PickerArgs::FilterResults(){
+	temple::GetRef<void(__cdecl)(PickerArgs*)>(0x100BA030)(this);
+}
+
+BOOL PickerCacheEntry::Finalize(){
+
+	if (!(args.flagsTarget & UiPickerFlagsTarget::Exclude1st))
+		args.ExcludeTargets();
+
+	auto flags = args.result.flags;
+	auto modeTarget = args.GetBaseModeTarget();
+
+	if (modeTarget != UiPickerType::Single && modeTarget != UiPickerType::Multi
+		|| (flags & PRF_HAS_MULTI_OBJ || flags & PickerResultFlags::PRF_HAS_SINGLE_OBJ)
+		&& (!(flags & PRF_HAS_MULTI_OBJ) || args.result.objList.CountResults())
+		&& (!(flags & PRF_HAS_SINGLE_OBJ) || args.result.handle))	
+	{
+		if (args.callback)
+			args.callback(args.result, callbackArgs);
+		args.result.FreeObjlist();
+		return flags != 0;
+	}
+	else
+	{
+		return TRUE;
+	}
 }

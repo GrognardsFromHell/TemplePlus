@@ -69,6 +69,7 @@ struct PickerResult {
 	int fieldbc;
 
 	void FreeObjlist();
+	
 };
 
 const auto TestSizeOfPickerResult = sizeof(PickerResult);
@@ -76,6 +77,7 @@ const auto TestSizeOfPickerResult = sizeof(PickerResult);
 typedef void(__cdecl *PickerCallback)(const PickerResult &result, void *callbackData);
 
 struct PickerArgs {
+	friend class PickerCacheEntry;
 	UiPickerFlagsTarget flagsTarget;
 	UiPickerType modeTarget;
 	UiPickerIncFlags incFlags;
@@ -98,7 +100,12 @@ struct PickerArgs {
 	bool IsModeTargetFlagSet(UiPickerType type);
 	UiPickerType GetBaseModeTarget();
 	void GetTrimmedRange(LocAndOffsets &originLoc, LocAndOffsets &tgtLoc, float radiusInch, float maxRange);
-	void GetTargetsInPath(LocAndOffsets &originLoc, LocAndOffsets &tgtLoc, float radiusInch); // must have valid trimmedRangeInches value
+	void GetTargetsInPath(LocAndOffsets &originLoc, LocAndOffsets &tgtLoc, float radiusInch); // must have valid trimmedRangeInches value; must also free preexisting ObjectList!
+
+	void DoExclusions();
+protected:
+	void ExcludeTargets();
+	void FilterResults();
 };
 
 const auto TestSizeOfPickerArgs = sizeof(PickerArgs); // should be 272 (0x110)
@@ -115,6 +122,8 @@ struct PickerCacheEntry
 	objHndl tgt;
 	int tgtIdx;
 	int field134;
+
+	BOOL Finalize();
 };
 
 const auto TestSizeOfPickerCacheEntry = sizeof(PickerCacheEntry); // should be 312 (0x138)
@@ -192,6 +201,7 @@ protected:
 	PickerSpec mWallSpec;
 	PickerMsgHandlers mWallMsgHandlers;
 	BOOL WallPosChange(TigMsg*msg);
+	BOOL WallLmbReleased(TigMsg *msg);
 	void WallCursorText(int x, int y);
 	WallPickerState mWallState = WallPicker_StartPoint;
 

@@ -40,7 +40,7 @@ struct ObjListResultItem {
 
 struct ObjListResult
 {
-	int field_0;
+	int numSectorObjects;
 	int field_4;
 	int field_8;
 	int field_C;
@@ -79,8 +79,12 @@ struct ObjListResult
 	int field_90;
 	int field_94;
 
+	void Init();
 	int Free();
 	void PrependHandle(objHndl handle);
+	void IncreaseObjListCount();
+	int CountResults();
+	
 };
 #pragma pack(pop)
 

@@ -26,6 +26,12 @@ static struct ObjListAddresses : temple::AddressTable {
 	
 } addresses;
 
+void ObjListResult::Init(){
+	this->objects = nullptr;
+	this->numSectorObjects = 0;
+	IncreaseObjListCount();
+}
+
 int ObjListResult::Free(){
 	return addresses.ObjListFree(*this);
 }
@@ -35,6 +41,19 @@ void ObjListResult::PrependHandle(objHndl handle){
 	objNodeNew->handle = handle;
 	objNodeNew->next = this->objects;
 	this->objects = objNodeNew;
+}
+
+void ObjListResult::IncreaseObjListCount(){
+	temple::GetRef<int>(0x10808CF8)++;
+}
+
+int ObjListResult::CountResults(){
+	auto node = this->objects;
+	auto count = 0;
+	for (count = 0; node; count++){
+		node = node->next;
+	}
+	return count;
 }
 
 ObjList::ObjList() {
