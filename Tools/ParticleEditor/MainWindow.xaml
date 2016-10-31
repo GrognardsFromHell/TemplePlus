@@ -25,6 +25,12 @@
                     <TextBlock Margin="4,0,0,0">Set Data Path</TextBlock>
                 </StackPanel>
             </Button>
+            <Button Click="CopySystemToClipboard_OnClick" Margin="2">
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="Icons\Property_501.png"></Image>
+                    <TextBlock Margin="4,0,0,0">Copy System To Clipboard</TextBlock>
+                </StackPanel>
+            </Button>
         </ToolBar>
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>

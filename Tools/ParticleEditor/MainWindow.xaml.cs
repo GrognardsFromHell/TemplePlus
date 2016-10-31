@@ -111,6 +111,16 @@ namespace ParticleEditor
             ChooseDataPath();
         }
 
+        private void CopySystemToClipboard_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (Model.SelectedSystem != null)
+            {
+                var spec = Model.SelectedSystem.ToSpec();
+                Clipboard.SetText(spec);
+                MessageBox.Show("Copied particle system spec to clipboard.");
+            }
+        }
+
         private void DeleteEmitter_Click(object sender, RoutedEventArgs e)
         {
             if (Model.SelectedEmitter != null)
