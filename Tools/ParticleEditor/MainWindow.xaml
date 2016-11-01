@@ -58,8 +58,9 @@
                     <ComboBox ItemsSource="{Binding Path=SelectedSystem.Emitters}" DisplayMemberPath="Name"
                               SelectedValue="{Binding Path=SelectedEmitter}" />
                     <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
-                        <Button Content="New Emitter" Margin="0,0,5,0" />
+                        <Button Content="New Emitter" Margin="0,0,5,0" Click="NewEmitter_Click"/>
                         <Button Content="Delete Emitter" Margin="0,0,5,0" Click="DeleteEmitter_Click" />
+                        <Button Content="Rename" Margin="0,0,5,0" Click="RenameEmitter_Click" />
                     </StackPanel>
                     <Grid>
                         <Grid.ColumnDefinitions>

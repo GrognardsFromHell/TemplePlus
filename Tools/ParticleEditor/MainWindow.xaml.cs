@@ -5,6 +5,7 @@ using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using ParticleEditor.Properties;
 using ParticleModel;
+using Microsoft.VisualBasic;
 
 namespace ParticleEditor
 {
@@ -126,6 +127,24 @@ namespace ParticleEditor
             if (Model.SelectedEmitter != null)
             {
                 Model.SelectedSystem.Emitters.Remove(Model.SelectedEmitter);
+            }
+        }
+
+        private void NewEmitter_Click(object sender, RoutedEventArgs e){
+            if (Model.SelectedEmitter != null && Model.SelectedSystem != null)
+            {
+                var partsysName = Model.SelectedEmitter.ToSpec(Model.SelectedSystem.Name);
+                Model.SelectedSystem.Emitters.Add(EmitterSpec.Parse(partsysName));
+
+            }
+                
+        }
+
+        private void RenameEmitter_Click(object sender, RoutedEventArgs e){
+            if (Model.SelectedEmitter != null && Model.SelectedSystem != null)
+            {
+                var shit = Microsoft.VisualBasic.Interaction.InputBox("Enter new name", "Rename Emitter", "em");
+                Model.SelectedEmitter.Name = shit;
             }
         }
     }

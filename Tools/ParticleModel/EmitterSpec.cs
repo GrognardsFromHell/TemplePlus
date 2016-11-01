@@ -356,7 +356,7 @@ namespace ParticleModel
                     Params.CollectionChanged -= ParamsChanged;
                 }
                 SetValue(ParamsProperty, value);
-                if (value != null)
+                //if (value != null)
                 {
                     value.CollectionChanged += ParamsChanged;
                 }
@@ -605,7 +605,7 @@ namespace ParticleModel
             {
                 result.MinActiveParticles = minActiveParts;
             }
-
+            
             // Parse the variable parameters
             foreach (ParamId paramId in Enum.GetValues(typeof (ParamId)))
             {
@@ -615,10 +615,12 @@ namespace ParticleModel
                     Id = paramId,
                     Value = cols[col]
                 };
-                if (!string.IsNullOrWhiteSpace(param.Value))
+
+                if (string.IsNullOrWhiteSpace(param.Value))
                 {
-                    result.Params.Add(param);
+                    param.Value = "0";
                 }
+                result.Params.Add(param);
             }
 
             return result;
