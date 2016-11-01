@@ -43,6 +43,16 @@ ParticleSysSystem::ParticleSysSystem(WorldCamera& camera) {
 	parser.ParseFile("rules\\partsys1.tab");
 	parser.ParseFile("rules\\partsys2.tab");
 
+	TioFileList partsysFlist;
+	tio_filelist_create(&partsysFlist,"rules\\partsys\\*.tab");
+	for (int i = 0; i < partsysFlist.count; ++i) {
+		auto file = partsysFlist.files[i];
+		logger->info("Registering partsys specs {}", file.name);
+		parser.ParseFile(fmt::format("rules\\partsys\\{}", file.name));
+	}
+
+	tio_filelist_destroy(&partsysFlist);
+
 	for (auto &spec : parser) {
 		mPartSysByName[spec.first] = spec.second;
 		mPartSysByHash[spec.second->GetNameHash()] = spec.second;
