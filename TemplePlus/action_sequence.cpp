@@ -47,6 +47,10 @@ static struct ActnSeqAddresses : temple::AddressTable {
 	int * aooShaderLocationsNum;
 	AooShaderPacket * aooShaderLocations; // size 64 array
 	BOOL(*IsLastSimulsPerformer)(objHndl obj);
+	PickerCallback spellPickerCallback;
+	int *actSeqTargetsIdx;
+	objHndl *actSeqTargets; // size 32 array; I think it's used for call lightning
+	LocAndOffsets * actSeqSpellLoc;
 
 	ActnSeqAddresses()
 	{
@@ -69,7 +73,11 @@ static struct ActnSeqAddresses : temple::AddressTable {
 		rebase(actSeqInterrupt, 0x118CD574);
 
 		rebase(aooShaderId, 0x1186A8E8);
+		rebase(spellPickerCallback, 0x10096CC0);
 
+		rebase(actSeqTargetsIdx, 0x118CD2A0);
+		rebase(actSeqTargets, 0x118CD2A8);
+		rebase(actSeqSpellLoc, 0x118CD3A8);
 	}
 
 	
@@ -421,9 +429,8 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		PickerArgs pickArgs;
 		spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, curSeq->spellPktBody.caster, curSeq->spellPktBody.casterLevel);
 		pickArgs.spellEnum = spellEnum;
-		pickArgs.callback = reinterpret_cast<PickerCallback>(0x10096CC0);
+		pickArgs.callback = [](const PickerResult & result, void* cbArgs) { actSeqSys.SpellPickerCallback(result, (SpellPacketBody*)cbArgs); };
 		*actSeqPickerActive = 1;
-		// uiTurnBased.ShowPicker(&pickArgs, &curSeq->spellPktBody); //0x10B3D5D0
 		uiPicker.ShowPicker(pickArgs, &curSeq->spellPktBody);
 		*addresses.actSeqPickerAction = *d20Sys.globD20Action;
 		return;
@@ -439,6 +446,83 @@ void ActionSequenceSystem::SeqPickerTargetingReset(){
 	*seqPickerD20ActnData1 = 0;
 	*seqPickerD20ActnType = D20A_UNSPECIFIED_ATTACK;
 	*seqPickerTargetingType = D20TargetClassification::D20TC_Invalid;
+}
+
+void ActionSequenceSystem::SpellPickerCallback(const PickerResult & result, SpellPacketBody * pkt){
+	if (!result.flags) {
+		*actSeqPickerActive = 1;
+		return;
+	}
+	
+	*actSeqPickerActive = 0;
+
+	if (result.flags & PRF_CANCELLED){
+		uiPicker.FreeCurrentPicker();
+		if (*actSeqCur)
+			(*actSeqCur)->spellPktBody.Reset();
+		*addresses.actSeqTargetsIdx = -1;
+		for (auto i=0; i< 32; i++)
+			addresses.actSeqTargets[i] = objHndl::null;
+		*addresses.actSeqSpellLoc = LocAndOffsets::null;
+		d20Sys.D20ActnInit(d20Sys.globD20Action->d20APerformer, d20Sys.globD20Action);
+		return;
+	}
+	
+	logger->info("SpellPickerCallback(): Resetting sequence");
+	auto performer = addresses.actSeqPickerAction->d20APerformer;
+	
+	if (!SequenceSwitch(performer) && ((*actSeqCur)->seqOccupied & SEQF_PERFORMING))
+		return;
+
+	actSeqSys.curSeqReset(performer);
+	*d20Sys.globD20Action = *addresses.actSeqPickerAction;
+
+	auto d20a = (D20Actn*)(pkt[1].spellEnum);
+	if (result.flags & PRF_HAS_SINGLE_OBJ){
+		pkt->targetCount = 1;
+		pkt->orgTargetCount = 1;
+		pkt->targetListHandles[0] = result.handle;
+		d20a->d20ATarget = result.handle;
+		d20a->destLoc = objSystem->GetObject(result.handle)->GetLocationFull();
+	} 
+	else{
+		pkt->targetCount = 0;
+		pkt->orgTargetCount = 0;
+	}
+
+	if (result.flags & PRF_HAS_MULTI_OBJ){
+		auto objNode = result.objList.objects;
+		for (pkt->targetCount = 0; objNode != nullptr && pkt->targetCount < MAX_SPELL_TARGETS; ++pkt->targetCount){
+			pkt->targetListHandles[pkt->targetCount] = objNode->handle;
+			objNode = objNode->next;
+		}
+		pkt->orgTargetCount = pkt->targetCount;
+	}
+
+	if (result.flags & PRF_HAS_LOCATION){
+		pkt->aoeCenter.location = result.location;
+		pkt->aoeCenter.off_z = result.offsetz;
+		d20a->destLoc = result.location;
+	} 
+	else{
+		pkt->aoeCenter.location = LocAndOffsets::null;
+		pkt->aoeCenter.off_z = 0.0f;
+		d20a->destLoc = LocAndOffsets::null;
+	}
+
+	if (result.flags & PRF_UNK8){
+		logger->warn("SpellPickerCallback: not implemented - BECAME_TOUCH_ATTACK");
+	}
+
+	pkt->pickerResult = result;
+	uiPicker.FreeCurrentPicker();
+	ActionAddToSeq();
+	sequencePerform();
+	*addresses.actSeqTargetsIdx = -1;
+	for (auto i = 0; i< 32; i++)
+		addresses.actSeqTargets[i] = objHndl::null;
+	*addresses.actSeqSpellLoc = LocAndOffsets::null;
+
 }
 
 void ActionSequenceSystem::ActionTypeAutomatedSelection(objHndl handle)

@@ -279,6 +279,7 @@ void UiPicker::InitWallSpec(){
 	mWallSpec.cursorTextDraw = [](int x, int y, void*) { uiPicker.WallCursorText(x, y); };
 	mWallMsgHandlers.posChange = [](TigMsg*msg) {return uiPicker.WallPosChange(msg); };
 	mWallMsgHandlers.lmbReleased = [](TigMsg*msg) {return uiPicker.WallLmbReleased(msg); };
+	mWallMsgHandlers.rmbReleased = [](TigMsg*msg) {return uiPicker.WallRmbReleased(msg); };
 
 }
 
@@ -639,6 +640,9 @@ BOOL UiPicker::WallPosChange(TigMsg * msg){
 		logger->error("WallPosChange: no location set!");
 	}
 	auto maxRange = INCH_PER_FEET * pick.args.range;
+	auto dist = locSys.distBtwnLocAndOffs(mouseLoc, pick.args.result.location);
+	if (maxRange > dist)
+		maxRange = dist;
 
 	if (wallState == WallPicker_EndPoint) {
 
@@ -675,6 +679,7 @@ BOOL UiPicker::WallLmbReleased(TigMsg * msg)
 
 	if (wallState == WallPicker_StartPoint){
 		mWallState = WallPicker_EndPoint;
+		pick.args.result.flags |= PickerResultFlags::PRF_HAS_LOCATION;
 	}
 
 	else if (wallState == WallPicker_EndPoint){
@@ -686,20 +691,68 @@ BOOL UiPicker::WallLmbReleased(TigMsg * msg)
 	}
 	
 	else if (wallState == WallPicker_Radius) {
-		// todo
+		return pick.Finalize();
 	}
 
+	return TRUE;
+}
+
+BOOL UiPicker::WallRmbReleased(TigMsg * msg)
+{
+	auto pickerIdx = GetActivePickerIdx();
+	if (pickerIdx < 0 || pickerIdx >= MAX_PICKER_COUNT)
+		return FALSE;
+
+	auto &pick = GetActivePicker();
+	pick.args.result.FreeObjlist();
+
+	auto wallState = GetWallState();
+	if (wallState == WallPicker_StartPoint || wallState == WallPicker_CenterPoint){
+		pick.args.result.flags = PRF_CANCELLED;
+		if (pick.args.callback) {
+			pick.args.callback(pick.args.result, pick.callbackArgs);
+		}
+		return TRUE;
+	}
+
+	if (wallState == WallPicker_EndPoint){
+		mWallState = WallPicker_StartPoint;
+	}
+	else if (wallState == WallPicker_Radius){
+		mWallState = WallPicker_CenterPoint;
+	}
 	return TRUE;
 }
 
 void UiPicker::WallCursorText(int x, int y){
 	auto wallState = GetWallState();
 
-
+	const int cursorOffset = 22;
 	if (wallState == WallPicker_StartPoint){
-		static std::string selStartPt("Select Start Point");
-		TigRect destRect(x + 5, y + 5, 100, 13);
+		static std::string selStartPt("Start Point");
+		TigRect destRect(x + cursorOffset, y + cursorOffset, 100, 13);
 		
+		UiRenderer::RenderText(selStartPt.c_str(), destRect, TigTextStyle::standardWhite);
+	} 
+
+	else if (wallState == WallPicker_EndPoint){
+		static std::string selStartPt("End Point");
+		TigRect destRect(x + cursorOffset, y + cursorOffset, 100, 13);
+
+		UiRenderer::RenderText(selStartPt.c_str(), destRect, TigTextStyle::standardWhite);
+	}
+
+	else if (wallState == WallPicker_CenterPoint) {
+		static std::string selStartPt("Center Point");
+		TigRect destRect(x + cursorOffset, y + cursorOffset, 100, 13);
+
+		UiRenderer::RenderText(selStartPt.c_str(), destRect, TigTextStyle::standardWhite);
+	}
+
+	else if (wallState == WallPicker_Radius) {
+		static std::string selStartPt("Ring Radius");
+		TigRect destRect(x + cursorOffset, y + cursorOffset, 100, 13);
+
 		UiRenderer::RenderText(selStartPt.c_str(), destRect, TigTextStyle::standardWhite);
 	}
 }
@@ -836,7 +889,7 @@ PickerMsgHandlers::PickerMsgHandlers(){
 void PickerResult::FreeObjlist(){
 	if (this->flags & PickerResultFlags::PRF_HAS_MULTI_OBJ)
 		this->objList.Free();
-	this->flags = 0;
+	this->flags &= ~PickerResultFlags::PRF_HAS_MULTI_OBJ;
 }
 
 void PickerArgs::DoExclusions(){
@@ -871,8 +924,9 @@ BOOL PickerCacheEntry::Finalize(){
 		&& (!(flags & PRF_HAS_MULTI_OBJ) || args.result.objList.CountResults())
 		&& (!(flags & PRF_HAS_SINGLE_OBJ) || args.result.handle))	
 	{
+		SpellPacketBody *pkt = (SpellPacketBody*)callbackArgs;
 		if (args.callback)
-			args.callback(args.result, callbackArgs);
+			args.callback(args.result, pkt);
 		args.result.FreeObjlist();
 		return flags != 0;
 	}

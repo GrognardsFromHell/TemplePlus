@@ -100,11 +100,16 @@ struct ActionSequenceSystem : temple::AddressTable
 	uint32_t * simulsIdx;  //10B3D5BC
 	objHndl * simultPerformerQueue;
 	int turnBasedStatusTransitionMatrix[7][5]; // describes the new hourglass state when current state is i after doing an action that costs j
+
 	void curSeqReset(objHndl objHnd);
 	void ActSeqSpellReset() const;
+	
+	// Pickers
 	void ActSeqGetPicker();
 	BOOL SeqPickerHasTargetingType();
 	void SeqPickerTargetingReset();
+	void SpellPickerCallback(const PickerResult &result, SpellPacketBody *pkt);
+
 	void ActionTypeAutomatedSelection(objHndl handle);
 	void TurnStart(objHndl obj);
 	int ActionAddToSeq();
