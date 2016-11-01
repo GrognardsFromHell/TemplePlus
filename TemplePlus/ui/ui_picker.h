@@ -40,7 +40,8 @@ enum PickerResultFlags : int32_t {
 	PRF_HAS_MULTI_OBJ = 0x2,
 	PRF_HAS_LOCATION = 0x4,
 	PRF_UNK8 = 0x8,
-	PRF_CANCELLED = 0x10 // User pressed escape or RMB
+	PRF_CANCELLED = 0x10, // User pressed escape or RMB
+	PRF_HAS_SELECTED_OBJECT = 0x20,
 };
 
 enum PickerStatusFlags : int32_t
@@ -59,18 +60,7 @@ enum WallPickerState : int32_t {
 	WallPicker_Radius = 11
 };
 
-struct PickerResult {
-	int flags; // see PickerResultFlags
-	int field4;
-	objHndl handle;
-	ObjListResult objList;
-	LocAndOffsets location;
-	float offsetz;
-	int fieldbc;
 
-	void FreeObjlist();
-	
-};
 
 const auto TestSizeOfPickerResult = sizeof(PickerResult);
 
@@ -110,8 +100,9 @@ protected:
 
 const auto TestSizeOfPickerArgs = sizeof(PickerArgs); // should be 272 (0x110)
 
-struct PickerCacheEntry
+class PickerCacheEntry
 {
+public:
 	PickerArgs args;
 	void *callbackArgs;
 	int field114;
@@ -202,6 +193,7 @@ protected:
 	PickerMsgHandlers mWallMsgHandlers;
 	BOOL WallPosChange(TigMsg*msg);
 	BOOL WallLmbReleased(TigMsg *msg);
+	BOOL WallRmbReleased(TigMsg *msg);
 	void WallCursorText(int x, int y);
 	WallPickerState mWallState = WallPicker_StartPoint;
 

@@ -1496,8 +1496,11 @@ BOOL LegacySpellSystem::SpellEntriesInit(const char * spellRulesFolder){
 		
 		// check if already exists
 		if (spellEntryRegistry.get(spEntry.spellEnum) != nullptr){
-			logger->error("Multiple spells with the same number {} ({})", spEntry.spellEnum, flist.files[i].name);
-			return FALSE;
+			if (spEntry.spellEnum != 522){ // Glibness duplicate taking up the slot of Wall of Fire
+				logger->error("Multiple spells with the same number {} ({})", spEntry.spellEnum, flist.files[i].name);
+				return FALSE;
+			}
+			
 		}
 
 		_snprintf(spellFileName, 260, "%s\\%s", spellRulesFolder, f.name);

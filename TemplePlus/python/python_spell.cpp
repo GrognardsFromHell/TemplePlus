@@ -15,6 +15,7 @@
 #include <anim.h>
 #include <gamesystems/gamesystems.h>
 #include <gamesystems/objects/objsystem.h>
+#include <ui/ui_picker.h>
 
 struct PySpell;
 static PyObject *PySpellTargets_Create(PySpell *spell);
@@ -229,7 +230,7 @@ static PyObject *PySpell_IsObjectSelected(PyObject *obj, PyObject *) {
 	auto self = (PySpell*)obj;
 	SpellPacketBody body;
 	spellSys.GetSpellPacketBody(self->spellId, &body);
-	auto result = (body.spellEntry.spellEnum & 0x20) == 0x20;
+	auto result = (body.pickerResult.flags & PRF_HAS_SELECTED_OBJECT) == PRF_HAS_SELECTED_OBJECT;
 	return PyInt_FromLong(result);
 }
 

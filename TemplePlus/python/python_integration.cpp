@@ -43,8 +43,17 @@ void PythonIntegration::LoadScripts() {
 		record.id = stoi(scriptMatch[2]);
 
 		if (mScripts.find(record.id) != mScripts.end()) {
-			logger->error("Multiple scripts have the id {}. Skipping {}.", record.id, scriptName);
-			continue;
+			if (record.id == 522){ // ugly hack for glibness spell - damn you troika!
+				if (strstr(record.filename.c_str(), "Wall of Fire") == nullptr){
+					logger->error("Multiple scripts have the id {}. Skipping {}.", record.id, scriptName);
+					continue;
+				}
+			}
+			else{
+				logger->error("Multiple scripts have the id {}. Skipping {}.", record.id, scriptName);
+				continue;
+			}
+			
 		}
 
 		logger->trace("Discovered {} (ID: {})", record.moduleName, record.id);

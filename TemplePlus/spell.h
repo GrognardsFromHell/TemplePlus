@@ -7,8 +7,6 @@
 #include "tio/tio.h"
 #include <map>
 
-//#include "ui/ui_picker.h"
-
 struct GameSystemConf;
 class TioOutputStream;
 struct PickerArgs;
@@ -101,7 +99,7 @@ struct SpellPacketBody{
 	objHndl projectiles[5];
 	LocFull aoeCenter;
 	uint32_t field_A04;
-	SpellEntry spellEntry;
+	PickerResult pickerResult;
 	int duration;
 	int durationRemaining;
 	uint32_t spellRange;

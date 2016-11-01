@@ -208,7 +208,7 @@ uint32_t PythonSpellIntegration::SpellSoundPlay(SpellPacketBody* spellPkt, Spell
 	auto spellSoundId = spellSoundType + 20 * spellPkt->spellEnum + 6000;
 	SpellEntry spellEntry;
 	spellSys.spellRegistryCopy(spellPkt->spellEnum, &spellEntry);
-	//UiPickerType modeTarget = spellEntry.GetModeTarget();
+	//UiPickerType modeTarget = pickerResult.GetModeTarget();
 	UiPickerType modeTarget = (UiPickerType)(spellEntry.modeTargetSemiBitmask & 0xFF);
 	auto tgtCount = spellPkt->targetCount;
 

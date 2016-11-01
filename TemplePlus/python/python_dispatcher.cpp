@@ -396,7 +396,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 			.def(py::init<uint32_t>(), py::arg("spell_id"))
 			.def_readwrite("spell_enum", &SpellPacketBody::spellEnum)
 			.def_readwrite("inventory_idx", &SpellPacketBody::invIdx)
-			.def_readwrite("spell_entry", &SpellPacketBody::spellEntry)
+			.def_readwrite("picker_result", &SpellPacketBody::pickerResult)
 			.def_readwrite("spell_class", &SpellPacketBody::spellClass)
 			.def_readwrite("spell_id", &SpellPacketBody::spellId)
 			.def_readwrite("caster_level", &SpellPacketBody::casterLevel)
