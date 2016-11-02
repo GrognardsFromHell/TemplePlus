@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "tig/tig_mes.h"
+#include <map>
 
 
 struct GameSystemConf;
@@ -25,8 +26,9 @@ struct LegacyDescriptionSystem : temple::AddressTable
 	BOOL LongDescriptionHas(objHndl handle);
 	const char* GetLongDescription(objHndl handle, objHndl observer = objHndl::null);
 
-	BOOL Init(GameSystemConf& conf);
+	BOOL Init(const GameSystemConf& conf);
 	void Exit();
+	void Reset();
 
 
 
@@ -48,6 +50,9 @@ protected:
 	MesHandle descriptionMes =0;
 	MesHandle longDescrMes =0;
 	MesHandle descrMesExt = 0;
+	static std::map<int, std::string> descrOverrides;
+	static std::map<int, std::string> longDescrOverrides;
+	const char *GetLongDescriptionFromFile(int idx);
 };
 
 extern LegacyDescriptionSystem description;

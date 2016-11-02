@@ -48,14 +48,16 @@ const std::string &VagrantSystem::GetName() const {
 //*****************************************************************************
 
 DescriptionSystem::DescriptionSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x100865d0);
-	if (!startup(&config)) {
+	//auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x100865d0);
+	if (!description.Init(config)){
+	//if (!startup(&config)) {
 		throw TempleException("Unable to initialize game system Description");
 	}
 }
 DescriptionSystem::~DescriptionSystem() {
-	auto shutdown = temple::GetPointer<void()>(0x10086670);
-	shutdown();
+	/*auto shutdown = temple::GetPointer<void()>(0x10086670);
+	shutdown();*/
+	description.Exit();
 }
 void DescriptionSystem::LoadModule() {
 	auto loadModule = temple::GetPointer<int()>(0x10086710);
@@ -68,8 +70,9 @@ void DescriptionSystem::UnloadModule() {
 	unloadModule();
 }
 void DescriptionSystem::Reset() {
-	auto reset = temple::GetPointer<void()>(0x100866c0);
-	reset();
+	/*auto reset = temple::GetPointer<void()>(0x100866c0);
+	reset();*/
+	description.Reset();
 }
 bool DescriptionSystem::SaveGame(TioFile *file) {
 	auto save = temple::GetPointer<int(TioFile*)>(0x10086810);

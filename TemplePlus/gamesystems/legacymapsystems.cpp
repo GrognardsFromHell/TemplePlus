@@ -258,26 +258,52 @@ static ProtoIdRange sProtoIdRanges[17] = {
 ProtoSystem::ProtoSystem(const GameSystemConf &config) {
 	static auto protos_tab_parse_line = temple::GetPointer<TigTabLineParser>(0x1003b640);
 
-	TigTabParser tabParser;
-	tabParser.Init(protos_tab_parse_line);
+	// do parsing for additive protos files
+	TioFileList protosFlist;
+	tio_filelist_create(&protosFlist, "rules\\protos\\*.tab");
 
-	if (tabParser.Open("rules\\protos_override.tab")) {
-		throw TempleException("Unable to open rules\\protos_override.tab");
+	for (auto i=0; i < protosFlist.count; i++){
+
+		TigTabParser tabParser;
+		tabParser.Init(protos_tab_parse_line);
+
+		std::string combinedFname(fmt::format("rules\\protos\\{}", protosFlist.files[i].name) ) ;
+		if (tabParser.Open(combinedFname.c_str() ) ) {
+			throw TempleException("Unable to open rules\\protos_override.tab");
+		}
+
+		tabParser.Process();
+		tabParser.Close();
+
 	}
 
-	tabParser.Process();
-	tabParser.Close();
+	tio_filelist_destroy(&protosFlist);
+
+	/*{
+		TigTabParser tabParser;
+		tabParser.Init(protos_tab_parse_line);
+
+		if (tabParser.Open("rules\\protos_override.tab")) {
+			throw TempleException("Unable to open rules\\protos_override.tab");
+		}
+
+		tabParser.Process();
+		tabParser.Close();
+	}*/
 
 
-	//TigTabParser tabParser;
-	tabParser.Init(protos_tab_parse_line);
+	{
+		TigTabParser tabParser;
+		tabParser.Init(protos_tab_parse_line);
 
-	if (tabParser.Open("rules\\protos.tab")) {
-		throw TempleException("Unable to open rules\\protos.tab");
+		if (tabParser.Open("rules\\protos.tab")) {
+			throw TempleException("Unable to open rules\\protos.tab");
+		}
+
+		tabParser.Process();
+		tabParser.Close();
 	}
-
-	tabParser.Process();
-	tabParser.Close();
+	
 }
 
 ProtoSystem::~ProtoSystem() {
