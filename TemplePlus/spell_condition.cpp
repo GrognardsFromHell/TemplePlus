@@ -46,6 +46,8 @@ public:
 
 	static int InvisibSphereDismiss(DispatcherCallbackArgs args);
 
+	static BOOL MindFogSaveThrowHook(objHndl tgt, objHndl caster, int spellDc, SavingThrowType saveType, int flags, int spellId);
+
 	void apply() override {
 
 		// Invisibility Sphere lacking a Dismiss handler
@@ -186,6 +188,9 @@ public:
 		// Divine Power BAB bouns type change from 12 to 40 so it stacks with Weapon Enh Bonus but doesn't stack with itself
 		char divPowWriteVal = 40;
 		write(0x100C7426 + 1, &divPowWriteVal, 1);
+
+
+		redirectCall(0x100D56A3, MindFogSaveThrowHook);
 	}
 } spellConditionFixes;
 
@@ -605,4 +610,8 @@ int SpellConditionFixes::InvisibSphereDismiss(DispatcherCallbackArgs args){
 	}
 
 	return 0;
+}
+
+BOOL SpellConditionFixes::MindFogSaveThrowHook(objHndl tgt, objHndl caster, int spellDc, SavingThrowType saveType, int flags, int spellId){
+	return damage.SavingThrowSpell(tgt, caster, spellDc, SavingThrowType::Will, 0, spellId);
 }

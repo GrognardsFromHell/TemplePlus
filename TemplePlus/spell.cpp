@@ -131,8 +131,10 @@ public:
 		replaceFunction<const char*(__cdecl)(uint32_t)>(0x1007AD80, [](uint32_t spellEnum) {
 			return spellSys.GetSpellMesline(spellEnum);
 		});
-			
-			
+		// GetSpellDescription	
+		replaceFunction<const char*(__cdecl)(uint32_t)>(0x10077910, [](uint32_t spellEnum) {
+			return spellSys.GetSpellDescription(spellEnum);
+		});
 
 		// SpellPacketSetCasterLevel
 		replaceFunction<void(__cdecl)(SpellPacketBody*)>(0x10079B70, [](SpellPacketBody* spellPkt){
@@ -600,6 +602,11 @@ const char* LegacySpellSystem::GetSpellMesline(uint32_t lineNumber) const{
 		return mesLine.value;
 	mesFuncs.GetLine_Safe(*spellMes, &mesLine);
 	return mesLine.value;
+}
+
+const char * LegacySpellSystem::GetSpellDescription(uint32_t spellEnum) const
+{
+	return GetSpellMesline(5000 + spellEnum);
 }
 
 bool LegacySpellSystem::CheckAbilityScoreReqForSpell(objHndl handle, uint32_t spellEnum, int statBeingRaised) const

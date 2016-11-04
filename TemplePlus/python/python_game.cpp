@@ -244,6 +244,7 @@ static PyGetSetDef PyGameGettersSetters[] = {
 	{"hovered", PyGame_GetHovered, NULL, NULL},
 	{"maps_visited", PyGame_GetMapsVisited, NULL, NULL},
 	{"leader", PyGame_GetLeader, NULL, NULL},
+	{"elader", PyGame_GetLeader, NULL, NULL }, // commonly made typo so might as well support it :D
 	{"time", PyGame_GetTime, NULL, NULL},
 	{"global_vars", PyGame_GetGlobalVars, NULL, NULL},
 	{"ggv", PyGame_GetGlobalVars, NULL, NULL },

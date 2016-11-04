@@ -288,6 +288,8 @@ int ProtosHooks::ParseMonsterSubcategory(int colIdx, objHndl handle, char * cont
 	if (!content[0])
 		return 1;
 
+	arrayLen = 28; // bug in ToEE - looks like a last minute addition of mc_subtype_water and they forgot to increase the array length
+
 	auto subcatFlags = (uint64_t)0;
 	StringTokenizer tok(content);
 	while (tok.next()){
