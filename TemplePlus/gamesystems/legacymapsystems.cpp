@@ -258,7 +258,7 @@ static ProtoIdRange sProtoIdRanges[17] = {
 ProtoSystem::ProtoSystem(const GameSystemConf &config) {
 	static auto protos_tab_parse_line = temple::GetPointer<TigTabLineParser>(0x1003b640);
 
-	// do parsing for additive protos files
+	// do parsing for additive protos files (for usermade content)
 	TioFileList protosFlist;
 	tio_filelist_create(&protosFlist, "rules\\protos\\*.tab");
 
@@ -279,7 +279,8 @@ ProtoSystem::ProtoSystem(const GameSystemConf &config) {
 
 	tio_filelist_destroy(&protosFlist);
 
-	/*{
+	// protos override (for Temple+)
+	{
 		TigTabParser tabParser;
 		tabParser.Init(protos_tab_parse_line);
 
@@ -289,7 +290,7 @@ ProtoSystem::ProtoSystem(const GameSystemConf &config) {
 
 		tabParser.Process();
 		tabParser.Close();
-	}*/
+	}
 
 
 	{

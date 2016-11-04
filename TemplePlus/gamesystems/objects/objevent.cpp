@@ -23,33 +23,6 @@ struct ObjEventListItem
 };
 
 
-
-//class ObjEventSystem
-//{
-//	
-//public:
-//	IdxTableWrapper<ObjEventAoE> * objEvtTable;
-//
-//	ObjEventSystem();
-//
-//	int ListRangeUpdate(ObjEventAoE &data, int id, ObjEventListItem* listItem) const;
-//	BOOL ObjEventHandler(ObjEventAoE* const aoeEvt,int id, ObjEventListItem& evt) const;
-//	void AdvanceTime() ;
-//	void TablePruneNullAoeObjs() const;
-//
-//	#pragma region ObjEventList functions
-//	void PrependEvtListNode(ObjEventListItem& evtListNode);
-//	void ListItemNew(objHndl obj, LocAndOffsets loc, LocAndOffsets aoeObjLoc);
-//	bool ListHasItems() const;
-//	void ListPrune() ; //  remove consecutive duplicates and null obj handles
-//	
-//	
-//private:
-//	std::vector<ObjEventListItem>  objEvtList;
-//	std::vector<ObjEventListItem>  objEvtDebugList;
-//#pragma endregion
-//	bool ObjEventLocIsInAoE(ObjEventAoE* const aoeEvt, LocAndOffsets aoeObjLoc, float objRadius) const;
-//} objEvents;
 ObjEventSystem objEvents;
 
 
@@ -82,47 +55,7 @@ void ObjEventHooks::ObjectEventAdvanceTime()
 {
 	objEvents.AdvanceTime();
 }
-//
-//int ObjEventHooks::EventAppend(objHndl aoeObj, int onEnterFuncIdx, int onLeaveFuncIdx, ObjectListFilter olcFilter, float radiusInch, float angleMin, float angleMax)
-//{
-//	if (!aoeObj){
-//		logger->warn("ObjectEventAppend: Null aoeObj!");
-//		return 0;
-//	}
-//	auto aoeObjBody = gameSystems->GetObj().GetObject(aoeObj);
-//	auto objLoc = aoeObjBody->GetLocationFull();
-//	SectorLoc secLoc;
-//	secLoc.GetFromLoc(objLoc.location);
-//
-//	ObjEventAoE evt;
-//	evt.aoeObj = aoeObj;
-//	evt.sectorLoc = secLoc;
-//	evt.onEnterFuncIdx = onEnterFuncIdx;
-//	evt.onLeaveFuncIdx = onLeaveFuncIdx;
-//	evt.radiusInch = radiusInch;
-//	evt.angleMin = angleMin;
-//	evt.angleSize = angleMax;
-//	evt.objNodesPrev = nullptr;
-//	evt.filter = olcFilter;
-//
-//	auto getNewId = temple::GetRef<int(__cdecl)()>(0x10044AE0);
-//	auto id = getNewId();
-//	objEvents.objEvtTable->put(id, evt);
-//
-//	if (objEvents.objEvtTable->itemCount()){
-//		ObjEventListItem evtListNode;
-//		evtListNode.aoeObj = aoeObj;
-//		evtListNode.aoeObjLoc = objLoc;
-//		evtListNode.loc.location.locx = 0;
-//		evtListNode.loc.location.locy = 0;
-//		evtListNode.loc.off_x = 0;
-//		evtListNode.loc.off_y = 0;
-//		evtListNode.pad = evt.onLeaveFuncIdx; // for debug
-//		objEvents.PrependEvtListNode(evtListNode);
-//	}
-//	return id;
-//	
-//}
+
 
 void ObjEventHooks::ObjEventListItemNew(objHndl obj, LocAndOffsets loc, LocAndOffsets newLoc)
 {
@@ -225,7 +158,12 @@ BOOL ObjEventSystem::ObjEventLoadGame(GameSystemSaveFile* saveFile) const
 BOOL ObjEventSystem::ObjEventHandler(ObjEventAoE* const aoeEvt, int id,ObjEventListItem& evt) const
 {
 
-	auto objEventHandlerFuncs = temple::GetPointer<void(*)(objHndl, objHndl, int)>(0x102AFB40);
+	auto objEventHandlerFuncs = temple::GetPointer<void(__cdecl*)(objHndl, objHndl, int)>(0x102AFB40); // an array of 50 callbacks, though there are only 2 duplicated for them all
+	auto onLeaveHandler = objEventHandlerFuncs[aoeEvt->onLeaveFuncIdx];
+	auto onEnterHandler = objEventHandlerFuncs[aoeEvt->onEnterFuncIdx];
+
+	auto isWallAoE = false;
+
 	if (aoeEvt->aoeObj != evt.obj)
 	{
 		// find the event obj in the aoeEvt list of previously appearing objects
@@ -241,6 +179,7 @@ BOOL ObjEventSystem::ObjEventHandler(ObjEventAoE* const aoeEvt, int id,ObjEventL
 		if (!evt.obj){
 			throw TempleException("Null event node after pruning???");
 		}
+
 		auto objBody = gameSystems->GetObj().GetObject(evt.obj);
 		auto objRadius = objects.GetRadius(evt.obj);
 		auto aoeObjLoc = evt.aoeObjLoc;
@@ -249,12 +188,12 @@ BOOL ObjEventSystem::ObjEventHandler(ObjEventAoE* const aoeEvt, int id,ObjEventL
 		if (foundInNodes){
 			if(!isInAreaOfEffect)
 			{
-				objEventHandlerFuncs[aoeEvt->onLeaveFuncIdx](aoeEvt->aoeObj, evt.obj, id);
+				onLeaveHandler(aoeEvt->aoeObj, evt.obj, id);
 				return 1;
 			}
 		} else if (isInAreaOfEffect)
 		{
-			objEventHandlerFuncs[aoeEvt->onEnterFuncIdx](aoeEvt->aoeObj, evt.obj, id);
+			onEnterHandler(aoeEvt->aoeObj, evt.obj, id);
 		}
 		return 1;
 	}
@@ -273,7 +212,7 @@ BOOL ObjEventSystem::ObjEventHandler(ObjEventAoE* const aoeEvt, int id,ObjEventL
 
 		// if not found in the previous list, execute an onEnter event
 		if (!prevObj){
-			objEventHandlerFuncs[aoeEvt->onEnterFuncIdx](aoeEvt->aoeObj, it->handle, id);
+			onEnterHandler(aoeEvt->aoeObj, it->handle, id);
 		}
 	}
 
@@ -289,7 +228,7 @@ BOOL ObjEventSystem::ObjEventHandler(ObjEventAoE* const aoeEvt, int id,ObjEventL
 
 		// not found in the current list
 		if (!it){
-			objEventHandlerFuncs[aoeEvt->onLeaveFuncIdx](aoeEvt->aoeObj, prevObj->handle, id);
+			onLeaveHandler(aoeEvt->aoeObj, prevObj->handle, id);
 		}
 
 		prevObj = prevObj->next;
