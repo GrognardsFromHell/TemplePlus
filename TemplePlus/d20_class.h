@@ -59,7 +59,7 @@ struct D20ClassSpec {
 	ClassDefinitionFlag flags;
 	BABProgressionType babProgression;
 	Stat deityClass; // emulate deity compatibility of the vanilla classes
-
+	std::string helpTopic; // e.g. TAG_BARDS
 
 	bool fortitudeSaveIsFavored;
 	bool reflexSaveIsFavored;
@@ -120,6 +120,7 @@ public:
 	
 
 	const char* GetClassShortHelp(Stat classCode);
+	std::string &GetClassHelpTopic(Stat classEnum); // the TAG_XXX help ID
 
 	struct WildShapeSpec {
 		int protoId;

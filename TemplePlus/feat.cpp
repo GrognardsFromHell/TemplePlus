@@ -914,6 +914,14 @@ char* LegacyFeatSystem::GetFeatPrereqDescription(feat_enums feat)
 	return result;
 }
 
+const char * LegacyFeatSystem::GetFeatHelpTopic(feat_enums feat){
+
+	MesLine line(feat+10000);
+	if (mesFuncs.GetLine(*featEnumsMes, &line))
+		return line.value;
+	return "";
+}
+
 int LegacyFeatSystem::IsFeatEnabled(feat_enums feat)
 {
 	if (feat > NUM_FEATS)

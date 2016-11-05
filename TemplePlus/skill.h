@@ -33,6 +33,9 @@ struct LegacySkillSystem : temple::AddressTable {
 	*/
 	void FloatError(const objHndl& obj, int errorOffset);
 
+	const char *GetSkillHelpTopic(SkillEnum skillEnum);
+
+
 	LegacySkillSystem();
 	
 };

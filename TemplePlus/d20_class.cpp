@@ -369,6 +369,15 @@ const char* D20ClassSystem::GetClassShortHelp(Stat classCode){
 	return d20Stats.GetClassShortDesc(classCode);
 }
 
+std::string & D20ClassSystem::GetClassHelpTopic(Stat classEnum){
+	static std::string noneString("");
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return noneString;
+
+	return classSpec->second.helpTopic;
+}
+
 // D20ClassSpec
 void D20ClassSystem::GetClassSpecs(){
 	std::vector<int> _classEnums;
@@ -385,6 +394,7 @@ void D20ClassSystem::GetClassSpecs(){
 		D20ClassSpec &classSpec = classSpecs[it];
 
 		classSpec.classEnum = static_cast<Stat>(it);
+		classSpec.helpTopic = pythonClassIntegration.GetClassHelpTopic(it);
 
 		// get class condition from py file
 		classSpec.conditionName = fmt::format("{}", pythonClassIntegration.GetConditionName(it));

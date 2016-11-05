@@ -1451,6 +1451,11 @@ BOOL UiCharEditor::ClassBtnMsg(int widId, TigMsg * msg){
 		return 0;
 
 	if (_msg->widgetEventType == TigMsgWidgetEvent::Clicked){
+		if (helpSys.IsClickForHelpActive()){
+			helpSys.PresentWikiHelp(HELP_IDX_CLASSES + classCode - stat_level_barbarian, D20HelpType::Classes);
+			return TRUE;
+		}
+
 		GetCharEditorSelPacket().classCode = classCode;
 		PrepareNextStages();
 		temple::GetRef<void(__cdecl)(int)>(0x10143FF0)(0); // resets all the next systems in case of change

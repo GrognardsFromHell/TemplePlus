@@ -1703,7 +1703,7 @@ BOOL UiPcCreation::ClassBtnMsg(int widId, TigMsg * msg){
 	if (_msg->widgetEventType == TigMsgWidgetEvent::MouseReleased) {
 
 		if (helpSys.IsClickForHelpActive()){
-			helpSys.PresentWikiHelp(88 + idx); // todo hook this to support PRCs
+			helpSys.PresentWikiHelp(HELP_IDX_CLASSES + classCode - stat_level_barbarian, D20HelpType::Classes);
 			return TRUE;
 		}
 		GetCharEditorSelPacket().classCode = classCode;

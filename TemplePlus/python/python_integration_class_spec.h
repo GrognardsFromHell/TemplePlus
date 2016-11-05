@@ -5,7 +5,12 @@
 enum class ClassSpecFunc : int {
 
 	GetHitDieType = 0,
+	IsEnabled,
+	GetConditionName, // gets the CondStruct's name (? id)
+
 	GetClassDefFlags,
+	GetClassHelpTopic,
+
 	GetBabProgression,
 	GetSkillPtsPerLevel,
 	IsFortSaveFavored,
@@ -21,10 +26,10 @@ enum class ClassSpecFunc : int {
 	GetSpellDeterminingStat,
 	
 	
-	IsEnabled,
+	
 	IsClassSkill,
 	IsClassFeat,
-	GetConditionName, // gets the CondStruct's name (? id)
+	
 
 
 	IsAlignmentCompatible,
@@ -49,6 +54,8 @@ public:
 
 	void GetClassEnums(std::vector<int>& classEnums);
 	std::string GetConditionName(int classEnum);
+	std::string GetClassHelpTopic(int classEnum);
+
 	std::map<feat_enums, int> GetFeats(int classEnum);
 	
 	ClassDefinitionFlag GetClassDefinitionFlags(int classEnum);

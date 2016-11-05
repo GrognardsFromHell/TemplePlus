@@ -135,6 +135,7 @@ struct LegacyFeatSystem : temple::AddressTable
 	char* GetFeatName(feat_enums feat);
 	char* GetFeatDescription(feat_enums feat);
 	char* GetFeatPrereqDescription(feat_enums feat);
+	const char* GetFeatHelpTopic(feat_enums feat);
 	int IsFeatEnabled(feat_enums feat);
 	int IsMagicFeat(feat_enums feat); // crafting / metamagic feats (that Wiz/Sorcs can pick as bonus feats)
 	int IsFeatPartOfMultiselect(feat_enums feat); // hidden feats that are only selectable in a submenu

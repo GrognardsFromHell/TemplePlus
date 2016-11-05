@@ -6,6 +6,10 @@
 #include <infrastructure/elfhash.h>
 #include <tio/tio.h>
 #include <tig/tig_tokenizer.h>
+#include <spell.h>
+#include <feat.h>
+#include <skill.h>
+#include <d20.h>
 
 struct HelpTabEntry
 {
@@ -28,6 +32,10 @@ public:
 	void apply() override 
 	{
 		replaceFunction(0x100E7120, TabLineParserPriliminary);
+
+		replaceFunction<void(__cdecl)(int)>(0x10124A40, [](int helpIdx){
+			helpSys.PresentWikiHelp(helpIdx);
+		});
 	}
 } fixes;
 
@@ -256,13 +264,81 @@ bool HelpSystem::IsClickForHelpActive(){
 	return temple::GetRef<int>(0x10BDE3D8) != 0;
 }
 
-void HelpSystem::PresentWikiHelp(int topicId){
-	temple::GetRef<void(__cdecl)(int)>(0x10124A40)(topicId);
+void HelpSystem::PresentWikiHelp(int helpIdx, D20HelpType helpType){
+
+	auto helpId = GetTAG_ROOT();
+
+	if (helpType == D20HelpType::Default){
+		
+		if (helpIdx <= 0)
+			helpType = D20HelpType::Default;
+		else if (helpIdx >= HELP_IDX_UI && helpIdx < HELP_IDX_ALIGNMENT) {
+			helpType = D20HelpType::UI;
+		}
+		else if (helpIdx >= HELP_IDX_ALIGNMENT && helpIdx < HELP_IDX_CLASSES) {
+			helpType = D20HelpType::Alignments;
+		}
+		else if (helpIdx >= HELP_IDX_CLASSES && helpIdx < HELP_IDX_RACES) {
+			helpType = D20HelpType::Classes;
+		}
+		else if (helpIdx >= HELP_IDX_RACES && helpIdx < HELP_IDX_FEATS) {
+			helpType = D20HelpType::Races;
+		}
+		else if (helpIdx >= HELP_IDX_FEATS && helpIdx < HELP_IDX_SKILLS) {
+			helpType = D20HelpType::Feats;
+		}
+		else if (helpIdx >= HELP_IDX_SKILLS && helpIdx < HELP_IDX_SPELLS) {
+			helpType = D20HelpType::Skills;
+		}
+		else if (helpIdx >= HELP_IDX_SPELLS && helpIdx < HELP_IDX_VANILLA_MAX)
+			helpType = D20HelpType::Spells;
+	}
+
+	int adjustedIdx = 0;
+	switch (helpType){
+	case D20HelpType::Default: 
+		break;
+	case D20HelpType::Alignments: 
+		helpId = ElfHash::Hash(temple::GetRef<const char*[]>(0x102F8500)[helpIdx - HELP_IDX_ALIGNMENT ]  );
+		break;
+	case D20HelpType::Classes:
+		adjustedIdx = helpIdx - HELP_IDX_CLASSES + stat_level_barbarian;
+		helpId = ElfHash::Hash(d20ClassSys.GetClassHelpTopic((Stat)adjustedIdx));
+		break;
+	case D20HelpType::Feats:
+		helpId = ElfHash::Hash(feats.GetFeatHelpTopic((feat_enums)(helpIdx - HELP_IDX_FEATS)) );
+		break;
+	case D20HelpType::Races:
+		helpId = ElfHash::Hash(temple::GetRef<const char*[]>(0x102F84B8)[helpIdx - HELP_IDX_RACES]);
+		break;
+	case D20HelpType::Skills:
+		helpId = ElfHash::Hash(skillSys.GetSkillHelpTopic((SkillEnum)(helpIdx - HELP_IDX_SKILLS)) );
+		break;
+	case D20HelpType::Spells:
+		helpId = ElfHash::Hash(spellSys.GetSpellEnumTAG(helpIdx - HELP_IDX_SPELLS));
+		break;
+	case D20HelpType::UI:
+		helpId = ElfHash::Hash(temple::GetRef<const char*[]>(0x102F838C)[helpIdx - HELP_IDX_UI]);
+		break;
+	default: 
+		break;
+	}
+	
+	PresentWikiHelpWindow(helpId);
+	ClickForHelpToggle();
+
+
+	// temple::GetRef<void(__cdecl)(int)>(0x10124A40)(helpIdx);
 }
 
 void HelpSystem::PresentWikiHelpWindow(int topicId)
 {
 	temple::GetRef<void(__cdecl)(int)>(0x100E6CF0)(topicId);
+}
+
+int HelpSystem::GetTAG_ROOT(){
+	static int rootHash = ElfHash::Hash("TAG_ROOT");
+	return rootHash;
 }
 
 void D20RollHistoryEntry::CreateFromString(const char * stringWithRefs){

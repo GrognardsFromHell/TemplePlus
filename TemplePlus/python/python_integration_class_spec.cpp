@@ -26,6 +26,15 @@ std::string PythonClassSpecIntegration::GetConditionName(int classEnum){
 	return RunScriptStringResult(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetConditionName, nullptr);
 }
 
+std::string PythonClassSpecIntegration::GetClassHelpTopic(int classEnum)
+{
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return fmt::format("");
+
+	return RunScriptStringResult(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetClassHelpTopic, nullptr);
+}
+
 std::map<feat_enums, int> PythonClassSpecIntegration::GetFeats(int classEnum)
 {
 	auto result =  std::map<feat_enums, int>();
@@ -302,6 +311,8 @@ void PythonClassSpecIntegration::LevelupSpellsFinalize(objHndl handle, Stat clas
 static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 	// class spec fetchers
 	{ClassSpecFunc::GetHitDieType,"GetHitDieType"},
+	{ ClassSpecFunc::GetClassHelpTopic,"GetClassHelpTopic" },
+
 	{ ClassSpecFunc::GetClassDefFlags,"GetClassDefinitionFlags" },
 	{ ClassSpecFunc::GetBabProgression,"GetBabProgression" },
 	{ ClassSpecFunc::GetSkillPtsPerLevel,"GetSkillPtsPerLevel" },

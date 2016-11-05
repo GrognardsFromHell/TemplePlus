@@ -2,9 +2,27 @@
 #include <util/fixes.h>
 #include "common.h"
 
+#define HELP_IDX_UI 1  // 1 to 74;   75,76 are separators
+#define HELP_IDX_ALIGNMENT 76  // 76 to 86;    87, 88 are separators
+#define HELP_IDX_CLASSES 88 // 89 to 99;    100,102 are separators
+#define HELP_IDX_RACES 101 // 101 to 108;   108, 109 are separators
+#define HELP_IDX_FEATS 109 // 109 to 757
+#define HELP_IDX_SKILLS 759 // 759 to 858
 #define HELP_IDX_SPELLS 860 // vanilla spell are mapped to 860 up to 860 + 802 (the vanilla spell count)
+#define HELP_IDX_VANILLA_MAX 1661
 
 struct D20HelpLink;
+
+enum class D20HelpType {
+	Default = 0,
+	Alignments,
+	Classes,
+	Feats,
+	Races,
+	Skills,
+	Spells,
+	UI
+};
 
 struct D20HelpTopic
 { // all ids are elf hashes
@@ -64,12 +82,14 @@ public:
 	static int GenerateLinks(D20HelpTopic * d20ht);
 	static int LinkParser(D20HelpLink* d20hl, char * topicTitle, char **pos1, char **pos2, int *offsetOut);
 	bool IsClickForHelpActive();
-	void PresentWikiHelp(int topicId);
+	void PresentWikiHelp(int topicIdx, D20HelpType helpType = D20HelpType::Default); // topicIdx is not the hashcode of a TAG_XXX string - it's a hardcoded index that gets converted via a lookup table
 	void PresentWikiHelpWindow(int topicId);
 
 	static int (__cdecl*orgGenerateLinks)(D20HelpTopic * d20ht);
 	static int (__cdecl*orgLinkParser)(D20HelpLink* d20hl, char * topicTitle, char **pos1, char **pos2, int *offsetOut);
 
+protected:
+	int GetTAG_ROOT();
 };
 
 extern HelpSystem helpSys;
