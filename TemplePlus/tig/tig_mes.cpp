@@ -20,6 +20,25 @@ MesLine::MesLine(uint32_t Key, const char* Line){
 	value = Line;
 }
 
+void MesFuncs::AddToMap(MesHandle openedMesHandle, std::map<int, std::string>& mesMap, int *highestKey){
+	auto mh = openedMesHandle;
+	auto numLines = mesFuncs.GetNumLines(mh);
+	for (auto i=0; i < numLines; i++){
+		MesLine line;
+		mesFuncs.ReadLineDirect(mh, i, &line);
+		mesMap[line.key] = line.value;
+		if (highestKey && *highestKey < line.key)
+			*highestKey = line.key;
+	}
+}
+
+void MesFuncs::AddToMap(std::string & mesFilename, std::map<int, std::string>& mesMap, int *highestKey){
+	MesHandle mh;
+	mesFuncs.Open(mesFilename.c_str(), &mh);
+	AddToMap(mh, mesMap, highestKey);
+	mesFuncs.Close(mh);
+}
+
 int MesFuncs::GetNumLines(MesHandle mesHandle){
 	return temple::GetRef<int(__cdecl)(MesHandle)>(0x101E62F0)(mesHandle);
 }

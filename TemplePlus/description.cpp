@@ -151,17 +151,7 @@ BOOL LegacyDescriptionSystem::Init(const GameSystemConf& conf){
 
 		for (auto i=0; i < descrFlist.count; i++){
 			std::string combinedFname(fmt::format("mes\\description\\{}", descrFlist.files[i].name));
-			MesHandle mh;
-			mesFuncs.Open(combinedFname.c_str(), &mh);
-			auto numLines = mesFuncs.GetNumLines(mh);
-			for (auto j=0; j<numLines; j++){
-				MesLine line;
-				mesFuncs.ReadLineDirect(mh, j, &line);
-				descrOverrides[line.key] = line.value;
-				if (line.key > *descrIdxMax)
-					*descrIdxMax = line.key;
-			}
-			mesFuncs.Close(mh);
+			mesFuncs.AddToMap(combinedFname, descrOverrides,descrIdxMax);
 		}
 
 		tio_filelist_destroy(&descrFlist);

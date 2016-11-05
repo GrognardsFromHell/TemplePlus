@@ -85,54 +85,88 @@ int HelpSystem::HelpTabInit()
 	*addresses.isEditor = 0;
 	logger->info("Parsing Help Data...");
 
+	// Open the files and do preliminary parsing
+	int helpTabNumLines = 0;
+
+	// Original help.tab file first
 	TigTabParser tabOrg;
 	tabOrg.Init(fixes.TabLineParserPriliminary);
-	//tigTabParserFuncs.Open(&tabOrg, "mes\\help.tab");
 	tabOrg.Open("mes\\help.tab");
-	
-	int helpTabNumLines = tigTabParserFuncs.GetLineCount(&tabOrg);
+	helpTabNumLines += tigTabParserFuncs.GetLineCount(&tabOrg);
 
-
-	// the extensions
+	// Temple+ extension
 	TigTabParser tabExt;
 	tabExt.Init(fixes.TabLineParserPriliminary);
 	tabExt.Open("tpmes\\help_extensions.tab");
-	//tigTabParserFuncs.Open(&tabExt, "tpmes\\help_extensions.tab");
-	
 	int helpExtNumLines = tigTabParserFuncs.GetLineCount(&tabExt);
+
+	// User-files
+	TioFileList helpFiles;
+	tio_filelist_create(&helpFiles, "mes\\help\\*.tab");
+
+	std::vector<TigTabParser> tabUserFiles;
+	for (auto i=0; i < helpFiles.count; i++){
+		TigTabParser p;
+		p.Init(fixes.TabLineParserPriliminary);
+		p.Open(fmt::format("mes\\help\\{}", helpFiles.files[i].name).c_str());
+		helpExtNumLines += tigTabParserFuncs.GetLineCount(&p);
+		tabUserFiles.push_back(p);
+	}
 	
-	
+	// Init Hashtable with the necessary amount of lines
 	ToEEHashtableSystem<D20HelpTopic> hashtableSystem;
 	auto helpHashtable = addresses.helpSysHashTable;
-	hashtableSystem.HashtableInit(helpHashtable, helpTabNumLines + helpExtNumLines + 100);
+	
+	int numLinesNew = helpTabNumLines + helpExtNumLines + 100;
+	hashtableSystem.HashtableInit(helpHashtable, numLinesNew);
 
+	// First process the original file
 	tabOrg.Process();
 	tabOrg.Close();
 
+	// Then Temple+ Extension
 	tabExt.Process();
 	tabExt.Close();
 
-	// generate the links
+	// Then the user files
+	for (auto p : tabUserFiles){
+		p.Process();
+		p.Close();
+	}
+
+	// Generate the links
 	int hashTableNumItems = hashtableSystem.HashtableNumItems(addresses.helpSysHashTable);
 	D20HelpTopic * d20ht;
-	for (int i = 0; i < hashTableNumItems; i++)
-	{
+	for (int i = 0; i < hashTableNumItems; i++){
 		d20ht = hashtableSystem.HashtableGetDataPtr(helpHashtable, i);
 		addresses.HelpSystemTopicLinker(d20ht);
 	}
 
+
+	// Now do the post-processing
+
 	tabOrg.Init(addresses.HelpSystemTabLineParserFinal);
 	tabOrg.Open("mes\\help.tab");
-	//tigTabParserFuncs.Open(&tabOrg, "mes\\help.tab");
 	tabOrg.Process();
 	tabOrg.Close();
-
 	logger->info("Done Parsing Original Help Data.");
 
+	// Temple+ extensions
 	tabExt.Init(addresses.HelpSystemTabLineParserFinal);
 	tabExt.Open("tpmes\\help_extensions.tab");
 	tabExt.Process();
 	tabExt.Close();
+	
+	// User files
+	for (auto i = 0; i < helpFiles.count; i++) {
+		TigTabParser p;
+		p.Init(addresses.HelpSystemTabLineParserFinal);
+		p.Open(fmt::format("mes\\help\\{}", helpFiles.files[i].name).c_str());
+		p.Process();
+		p.Close();
+	}
+
+	tio_filelist_destroy(&helpFiles);
 
 	logger->info("Done Parsing Help Data Extensions.");
 	return 1;

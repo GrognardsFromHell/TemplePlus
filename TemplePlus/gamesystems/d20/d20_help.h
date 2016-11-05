@@ -2,6 +2,8 @@
 #include <util/fixes.h>
 #include "common.h"
 
+#define HELP_IDX_SPELLS 860 // vanilla spell are mapped to 860 up to 860 + 802 (the vanilla spell count)
+
 struct D20HelpLink;
 
 struct D20HelpTopic

@@ -2,6 +2,7 @@
 #pragma once
 
 #include <temple/dll.h>
+#include <map>
 
 typedef int MesHandle;
 
@@ -26,6 +27,9 @@ struct MesFuncs : temple::AddressTable {
 			return nullptr;
 		}
 	}
+
+	void AddToMap(MesHandle openedMesHandle, std::map<int, std::string> & mesMap, int *highestKey = nullptr);
+	void AddToMap(std::string &mesFilename, std::map<int, std::string> & mesMap, int *highestKey = nullptr);
 
 	MesFuncs() {
 		rebase(Open, 0x101E6D00);

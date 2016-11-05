@@ -172,10 +172,12 @@ struct LegacySpellSystem : temple::AddressTable
 	IdxTable<SpellPacket> * spellCastIdxTable;
 	std::map<int, SpellEntryExt> mSpellEntryExt;
 	
-	MesHandle * spellEnumMesHandle;
+	MesHandle *spellEnumMesHandle;
 	MesHandle spellEnumsExt;
-	MesHandle * spellMes;
+	MesHandle *spellMes;
 	MesHandle spellMesExt;
+	static std::map<int, std::string> mUserSpellMesLines;
+	static std::map<int, std::string> mUserSpellEnumsMesLines;
 	MesHandle * spellsRadialMenuOptionsMes;
 	std::vector<SpellMapTransferInfo> spellMapTransInfo;
 	void Init(const GameSystemConf& conf);

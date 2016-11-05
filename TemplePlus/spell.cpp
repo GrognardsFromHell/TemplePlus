@@ -171,6 +171,9 @@ public:
 
 LegacySpellSystem spellSys;
 
+std::map<int, std::string> LegacySpellSystem::mUserSpellMesLines;
+std::map<int, std::string> LegacySpellSystem::mUserSpellEnumsMesLines;
+
 //UiPickerType SpellEntry::GetModeTarget() const
 //{
 //	return (UiPickerType)(modeTargetSemiBitmask & 0xFF);
@@ -476,6 +479,29 @@ void LegacySpellSystem::Init(const GameSystemConf& conf){
 	// this is run after the vanilla code
 	mesFuncs.Open("tprules\\spell_enums_ext.mes", &spellSys.spellEnumsExt);
 	mesFuncs.Open("mes\\spell_ext.mes", &spellMesExt);
+
+
+	
+	{// mes\spell.mes extension
+		TioFileList spellMesFiles;
+		tio_filelist_create(&spellMesFiles, "mes\\spells\\*.mes");
+
+		for (auto i = 0; i < spellMesFiles.count; i++) {
+			std::string combinedFname(fmt::format("mes\\spells\\{}", spellMesFiles.files[i].name));
+			mesFuncs.AddToMap(combinedFname, mUserSpellMesLines);
+		}
+		tio_filelist_destroy(&spellMesFiles);
+	}
+
+	// rules\spell_enums.mes extension
+	TioFileList spellEnumsMesFiles;
+	tio_filelist_create(&spellEnumsMesFiles, "rules\\spell_enums\\*.mes");
+
+	for (auto i = 0; i< spellEnumsMesFiles.count; i++) {
+		std::string combinedFname(fmt::format("rules\\spell_enums\\{}", spellEnumsMesFiles.files[i].name));
+		mesFuncs.AddToMap(combinedFname, mUserSpellEnumsMesLines);
+	}
+	tio_filelist_destroy(&spellEnumsMesFiles);
 }
 
 int LegacySpellSystem::GetNewSpellId(){
@@ -614,8 +640,15 @@ int LegacySpellSystem::ParseSpellSpecString(SpellStoreData* spell, char* spellSt
 const char* LegacySpellSystem::GetSpellMesline(uint32_t lineNumber) const{
 
 	MesLine mesLine(lineNumber);
+
+	auto findInUserFiles = mUserSpellMesLines.find(lineNumber);
+	if (findInUserFiles != mUserSpellMesLines.end())
+		return findInUserFiles->second.c_str();
+
+
 	if (mesFuncs.GetLine(spellMesExt, &mesLine))
 		return mesLine.value;
+
 	mesFuncs.GetLine_Safe(*spellMes, &mesLine);
 	return mesLine.value;
 }
@@ -642,6 +675,10 @@ const char* LegacySpellSystem::GetSpellEnumTAG(uint32_t spellEnum){
 
 	MesLine mesline;
 	mesline.key = spellEnum + 20000;
+
+	auto findInUserFiles = mUserSpellEnumsMesLines.find(mesline.key);
+	if (findInUserFiles != mUserSpellEnumsMesLines.end())
+		return findInUserFiles->second.c_str();
 
 	if (mesFuncs.GetLine(spellSys.spellEnumsExt, &mesline)){
 		return mesline.value;

@@ -1949,7 +1949,7 @@ BOOL UiPcCreation::SpellsWndMsg(int widId, TigMsg * msg)
 				if (spellSys.IsLabel(spEnum))
 					break;
 
-				helpSys.PresentWikiHelp(860 + spEnum);
+				helpSys.PresentWikiHelp(HELP_IDX_SPELLS + spEnum);
 				return 1;
 			}
 		}
@@ -2153,7 +2153,7 @@ BOOL UiPcCreation::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 		case TigMsgWidgetEvent::MouseReleased:
 			if (helpSys.IsClickForHelpActive()) {
 				mouseFuncs.SetCursorDrawCallback(nullptr, 0);
-				helpSys.PresentWikiHelp(spEnum + 860);
+				helpSys.PresentWikiHelp(spEnum + HELP_IDX_SPELLS);
 				return 1;
 			}
 		case TigMsgWidgetEvent::MouseReleasedAtDifferentButton:
