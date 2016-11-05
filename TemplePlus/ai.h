@@ -129,9 +129,11 @@ struct AiSystem : temple::AddressTable
 	void StopAttacking(objHndl npc);
 	void ProvokeHostility(objHndl agitator, objHndl provokedNpc, int rangeType, int flags); // rangeType - 0 is for 5 tiles, 1 is for 10 tiles, 2 is for 20 tiles, and 3 is unlimited
 	
+
 	objHndl GetCombatFocus(objHndl npc);
 	objHndl GetWhoHitMeLast(objHndl npc);
 	BOOL ConsiderTarget(objHndl obj, objHndl tgt); // checks if it's a good target
+	BOOL CannotHear(objHndl handle, objHndl tgt, int tileRangeIdx); // checks if a critter (handle) can observe tgt up to a specified range; regards magic effects such as Invisibility to Undead / Animals, and also makes a hidden listen check
 	void SetCombatFocus(objHndl npc, objHndl target);
 	void SetWhoHitMeLast(objHndl npc, objHndl target);
 	void GetAiFightStatus(objHndl obj, AiFightStatus* status, objHndl * target);

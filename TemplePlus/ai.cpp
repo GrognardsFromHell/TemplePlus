@@ -311,6 +311,10 @@ void AiSystem::ProvokeHostility(objHndl agitator, objHndl provokedNpc, int range
 	temple::GetRef<void(__cdecl)(objHndl, objHndl, int, int)>(0x1005E8D0)(agitator, provokedNpc, rangeType, flags);
 }
 
+BOOL AiSystem::CannotHear(objHndl handle, objHndl tgt, int tileRangeIdx){
+	return temple::GetRef<BOOL(__cdecl)(objHndl, objHndl, int)>(0x10059A10)(handle, tgt, tileRangeIdx);
+}
+
 objHndl AiSystem::GetCombatFocus(objHndl npc) {
 	auto obj = objSystem->GetObject(npc);
 	return obj->GetObjHndl(obj_f_npc_combat_focus);

@@ -57,6 +57,7 @@ public:
 		centered on the given tile.
 	*/
 	void ListVicinity(locXY loc, int flags);
+	void ListVicinity(objHndl handle, int flags); // using the object's location
 
 	/*
 		Lists objects in a radius. This seems to be the radius in the X,Y 3D coordinate

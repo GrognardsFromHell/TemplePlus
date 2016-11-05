@@ -3,6 +3,7 @@
 #include "objlist.h"
 
 #include <temple/dll.h>
+#include "gamesystems/objects/objsystem.h"
 
 static struct ObjListAddresses : temple::AddressTable {
 	void(__cdecl *ObjListTile)(locXY loc, int flags, ObjListResult &result);
@@ -81,6 +82,10 @@ void ObjList::ListVicinity(locXY loc, int flags) {
 	FreeResult();
 	addresses.ObjListVicinity(loc, flags, mResult);
 	mHasToFree = true;
+}
+
+void ObjList::ListVicinity(objHndl handle, int flags){
+	ListVicinity(objSystem->GetObject(handle)->GetLocation(), flags);
 }
 
 void ObjList::ListRadius(LocAndOffsets loc, float radius, int flags) {

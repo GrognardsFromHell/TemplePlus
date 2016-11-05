@@ -19,13 +19,20 @@ struct HistorySystem : temple::AddressTable
 	int RollHistoryType7Add(objHndl obj, BonusList* bonlist, int line, int unk);
 	int RollHistoryType0Add(int RollResult, int unk, objHndl Obj, objHndl Obj2, BonusList* Bonlist, BonusList* Bonlist2, D20CAF flags);
 	int RollHistoryType5Add(objHndl obj, objHndl tgt, int defenderMissChance, int combatMesLine, int missChanceRoll, int combatMesLineResult, int combatMesLineCheckType);
+
+
+
 	static void CreateFromFreeText(const char *);
+	void PrintSpellCast(objHndl caster, int spEnum);
 
 	HistoryEntry* HistoryFind(int histId);
 	void AppendHistoryId(int histId);
 
 	void ParseHistoryEntry(int histId, D20RollHistoryEntry* rh);
 	const char* GetRollUiString(int lineId);
+	const char* GetHistoryMesLine(int lineId);
+
+	D20RollHistoryEntry &GetD20RollHistoryConsole();
 };
 
 extern HistorySystem histSys;

@@ -118,6 +118,7 @@ struct LegacyD20System : temple::AddressTable
 
 	//char **ToEEd20ActionNames;
 	void NewD20ActionsInit();
+	void InfinityEngineBullshit();
 
 	void GetPythonActionSpecs();
 	std::string &GetPythonActionName(D20DispatcherKey key) const;

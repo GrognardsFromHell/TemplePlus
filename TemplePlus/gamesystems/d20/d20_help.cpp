@@ -230,3 +230,7 @@ void HelpSystem::PresentWikiHelpWindow(int topicId)
 {
 	temple::GetRef<void(__cdecl)(int)>(0x100E6CF0)(topicId);
 }
+
+void D20RollHistoryEntry::CreateFromString(const char * stringWithRefs){
+	temple::GetRef<void(__cdecl)(D20RollHistoryEntry*, const char*)>(0x1010EE00)(this, stringWithRefs);
+}

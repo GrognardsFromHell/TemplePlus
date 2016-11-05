@@ -301,6 +301,26 @@ void HistorySystem::CreateFromFreeText(const char*text)
 	addresses.CreateFromFreeText(text);
 }
 
+void HistorySystem::PrintSpellCast(objHndl caster, int spEnum){
+	auto historyFormat = histSys.GetHistoryMesLine(49); // [ACTOR] casts [SPELL NAME]!
+	const char* actorName = nullptr;
+	
+	if (caster){
+		actorName = description.getDisplayName(caster, party.GroupPCsGetMemberN(0)); // Get a PC to identify the caster (regards HasMet status)
+	}
+
+	auto spellHelpId = spellSys.GetSpellEnumTAG(spEnum);
+	auto spellName = spellSys.GetSpellMesline(spEnum);
+
+	char txtBuffer[512];
+	char stringOut[512];
+	sprintf(txtBuffer, "~%s~[%s]", spellName, spellHelpId);
+	auto strGenerator = temple::GetRef<void(__cdecl)(char*, const char*, const char*, const char*, const char*)>(0x100E00B0);
+	strGenerator(stringOut, historyFormat, actorName, nullptr, txtBuffer);
+	
+	GetD20RollHistoryConsole().CreateFromString(stringOut);
+}
+
 HistoryEntry* HistorySystem::HistoryFind(int histId){
 	auto histArray = addresses.histArray;
 	for (auto i = 0; i < HISTORY_ARRAY_SIZE; i++){
@@ -345,6 +365,14 @@ const char * HistorySystem::GetRollUiString(int lineId)
 	MesLine line(lineId);
 	mesFuncs.GetLine_Safe(*addresses.rollUiMesHandle, &line);
 	return line.value;
+}
+const char * HistorySystem::GetHistoryMesLine(int lineId){
+	MesLine line(lineId);
+	mesFuncs.GetLine_Safe(temple::GetRef<MesHandle>(0x10BCAD9C), &line);
+	return line.value;
+}
+D20RollHistoryEntry & HistorySystem::GetD20RollHistoryConsole(){
+	return temple::GetRef<D20RollHistoryEntry>(0x11868F80);
 }
 #pragma endregion
 

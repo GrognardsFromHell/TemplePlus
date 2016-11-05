@@ -1986,7 +1986,7 @@ int GoalStateFuncs::GoalStateFunc70(AnimSlot & slot)
 	if (someGoal == -1){
 		SpellPacketBody spPkt;
 		spellSys.GetSpellPacketBody(slot.param1.number, &spPkt);
-		if (spPkt.flagSthg & 8){
+		if (spPkt.animFlags & 8){
 			slot.pCurrentGoal->animId.number = spPkt.spellRange; // weird shit!
 			return TRUE;
 		}

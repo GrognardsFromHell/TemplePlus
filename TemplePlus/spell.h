@@ -74,7 +74,7 @@ const uint32_t TestSizeOfSpellEntry = sizeof(SpellEntry); // should be 0xC0  ( 1
 struct SpellPacketBody{
 	uint32_t spellEnum;
 	uint32_t spellEnumOriginal; // used for spontaneous casting in order to debit the "original" spell
-	uint32_t flagSthg; // 8 used in GoalStateFunc70
+	uint32_t animFlags; // See SpellAnimationFlag
 	void * pSthg;
 	objHndl caster;
 	uint32_t casterPartsysId;
@@ -104,7 +104,7 @@ struct SpellPacketBody{
 	int durationRemaining;
 	uint32_t spellRange;
 	uint32_t savingThrowResult;
-	uint32_t invIdx; // inventory index, used for casting spells from items e.g. scrolls
+	uint32_t invIdx; // inventory index, used for casting spells from items e.g. scrolls; it is 0xFF for non-item spells
 	uint32_t metaMagicData;
 	uint32_t spellId;
 	uint32_t field_AE4;
@@ -121,8 +121,13 @@ struct SpellPacketBody{
 	bool AddTarget(objHndl tgt, int partsysId, int replaceExisting); // will add target (or replace its partsys if it already exists)
 	bool SavingThrow(objHndl target, D20SavingThrowFlag flags);
 	const char* GetName(); // get the spell name
+
 	bool IsVancian();
 	bool IsDivine();
+	bool IsItemSpell();
+
+	int GetSpellSchool();
+
 	void Debit(); // debit from the caster's memorized / daily casted spells
 	void MemorizedUseUp(SpellStoreData &spellData); // mark memorized spell as used up
 	void Reset();
@@ -180,6 +185,8 @@ struct LegacySpellSystem : temple::AddressTable
 	BOOL RegisterSpell(SpellPacketBody& spellPkt, int spellId);
 
 	uint32_t spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry);
+
+
 	int CopyLearnableSpells(objHndl & handle, int spellClass, std::vector<SpellEntry> & entries);
 	uint32_t ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
 	int GetMaxSpellLevel(objHndl objHnd, Stat classCode, int characterLvl = 0); // if characterLvl is 0 it will fetch the actual level; it also takes into account spell list extension by PrC's and such
@@ -219,10 +226,19 @@ struct LegacySpellSystem : temple::AddressTable
 	bool isDomainSpell(uint32_t spellClassCode);
 	Stat GetCastingClass(uint32_t spellClassCode);
 	bool IsArcaneSpellClass(uint32_t spellClass);
+	int GetSpellSchool(int spellEnum);
 
-	static bool IsSpellLike(int spellEnum); // checks if the spell is in the Spell Like Ability range
+	// Special Spell Enums
+	/*
+	 Checks if the spell is in the Spell Like Ability range or the Class abilities implemented as spells. 
+	 These are not interruptible via Ready vs. Spell, and 
+	 do not automatically show up in the console as [ACTOR] casts [SPELL]!
+	*/
+	static bool IsSpellLike(int spellEnum); 
 	static bool IsLabel(int spellEnum); // check if it is a hardcoded "label" enum (used in the GUI etc)
 	static bool IsNewSlotDesignator(int spellEnum); // check if it is a  hardcoded "new slot" designator (used for sorting)  enums 1605-1614
+
+
 	int GetSpellLevelBySpellClass(int spellEnum, int spellClass, objHndl handle = objHndl::null); // returns -1 if not available for spell class
 	bool SpellHasMultiSelection(int spellEnum);
 	bool GetMultiSelectOptions(int spellEnum, std::vector<SpellMultiOption>& multiOptions);
@@ -239,6 +255,11 @@ struct LegacySpellSystem : temple::AddressTable
 		does a d20 roll for dispelling, and logs to history (outputting a history ID)
 	*/
 	int DispelRoll(objHndl obj,	BonusList* bonlist, int rollMod, int dispelDC, char* historyText, int* rollHistId);
+	/*
+		Does Spellcraft skill checks for the spell being cast and logs to history
+	*/
+	void IdentifySpellCast(int spellId);
+
 	/*
 		Plays the Fizzle particles and does a sound
 	*/

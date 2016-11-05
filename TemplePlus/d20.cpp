@@ -35,6 +35,7 @@
 #include <infrastructure/elfhash.h>
 #include "python/python_integration_d20_action.h"
 #include <turn_based.h>
+#include "InfinityEngine.h"
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
@@ -528,6 +529,106 @@ void LegacyD20System::NewD20ActionsInit()
 
 	//d20Defs[D20A_DISARM] = d20Defs[D20A_STANDARD_ATTACK];
 	//d20Defs[d20Type].actionCost = _ActionCostNull; // just for testing - REMOVE!!!
+}
+
+void LegacyD20System::InfinityEngineBullshit(){
+	
+	std::vector<BifRecord> biffEntries;
+	std::vector<ChitinResEntry> resKeyEntries;
+
+	// read header
+	ChitinKeyHeader keyHeader;
+	auto chitin_file = tio_fopen("chitin.key", "rb");
+
+	if (chitin_file == nullptr)
+		return;
+
+	tio_fread(&keyHeader, sizeof(ChitinKeyHeader), 1, chitin_file);
+	
+
+
+
+	
+	// Get biff entries (file names really)
+	for (auto i=0; i<keyHeader.biffCount; i++){
+		ChitinBifEntry biffTemp;
+		tio_fread(&biffTemp, sizeof(ChitinBifEntry), 1, chitin_file);
+		biffEntries.push_back({ biffTemp });
+	}
+
+	auto curPos = tio_ftell(chitin_file);
+
+	for (auto i = 0; i<keyHeader.biffCount; i++) {
+		char tempBuffer[1024];
+		auto &be = biffEntries[i];
+		if (tio_ftell(chitin_file) != be.entry.biffFilenameOffset){
+			logger->warn("oy vey!");
+		}
+		tio_fread(&tempBuffer, sizeof(char), biffEntries[i].entry.biffFilenameLength, chitin_file);
+		be.fileName = fmt::format("{}", tempBuffer);
+	}
+
+
+	// Get resource entries
+	curPos = tio_ftell(chitin_file);
+	if (curPos > keyHeader.resourceOffset){
+		logger->warn("oy vey!");
+	}
+	tio_fseek(chitin_file, keyHeader.resourceOffset, 0);
+	curPos = tio_ftell(chitin_file);
+	for (auto i = 0; i<keyHeader.resourceCount; i++) {
+		ChitinResEntry resTemp;
+		tio_fread(&resTemp, sizeof(ChitinResEntry), 1, chitin_file);
+		resKeyEntries.push_back(resTemp);
+	}
+
+
+	curPos = tio_ftell(chitin_file); // should be 522652 for IWD:EE
+	tio_fclose(chitin_file);
+
+	
+	// read biff files
+	TioFileList fl;
+	tio_filelist_create(&fl, "data/*.BIF");
+	
+	std::vector<BiffContent> biffContents;
+
+	std::map<int, std::vector<char>> fileCache;
+
+	for (auto i=0; i< fl.count; i++){
+
+
+
+		auto f = tio_fopen(fmt::format("data/{}",fl.files[i].name).c_str() , "rb");
+
+		BiffHeader bifHeader;
+
+		tio_fread(&bifHeader, sizeof(BiffHeader), 1, f);
+
+		biffContents.push_back({ bifHeader });
+		// read file entries
+		tio_fseek(f, bifHeader.fileEntriesOff, 0);
+
+		for (auto j = 0; j < bifHeader.fileCount; j++){
+			BiffFileEntry fe;
+			tio_fread(&fe, sizeof(BiffFileEntry), 1, f);
+			biffContents[i].files.push_back(fe);
+		}
+
+
+
+		for (auto j=0; j < bifHeader.fileCount; j++){
+			auto &fe = biffContents[i].files[j];
+			tio_fseek(f, fe.dataOffset, 0);
+		}
+		// read the file data
+		
+		tio_fclose(f);
+		
+	}
+
+	tio_filelist_destroy(&fl);
+
 }
 
 void LegacyD20System::GetPythonActionSpecs(){
@@ -1503,6 +1604,7 @@ uint32_t _d20actionTabLineParser(TabFileStatus*, uint32_t n, const char** string
 
 int _D20Init(GameSystemConf* conf){
 	d20Sys.NewD20ActionsInit();
+	d20Sys.InfinityEngineBullshit();
 	return OrgD20Init(conf);
 }
 

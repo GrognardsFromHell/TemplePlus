@@ -165,7 +165,7 @@ namespace temple {
 		bool (*fileexists)(const char* path, TioFileListFile* pInfoOut);
 		void (*rename)(const char* from, const char* to);
 		void (*path_guid)();
-		void (*fseek)();
+		void (*fseek)(TioFile *file, int offset, int origin);
 		void (*file_extract)();
 		void (*fgets)(char* buffer, int size, TioFile* file);
 		void (*fsetpos)();

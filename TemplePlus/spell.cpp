@@ -25,11 +25,13 @@
 #include "history.h"
 #include "damage.h"
 #include <tig\tig_tokenizer.h>
+#include "ai.h"
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
-#define NORMAL_SPELL_RANGE 600
-#define SPELL_LIKE_ABILITY_RANGE 699
+#define NORMAL_SPELL_RANGE 600 // vanilla normal spells are up to here
+#define SPELL_LIKE_ABILITY_RANGE 699 // Monster spell-like abilities are up to here
+#define CLASS_SPELL_LIKE_ABILITY_START 3000 // new in Temple+ - this is the range used for class spells
 
 struct SpellCondListEntry {
 	CondStruct *condition;
@@ -141,6 +143,10 @@ public:
 			spellSys.SpellPacketSetCasterLevel(spellPkt);
 		});
 		
+		// IdentifySpellCast - expands the range of applicable spells to above 600
+		replaceFunction<void(__cdecl)(int)>(0x1007A440, [](int spellId){
+			spellSys.IdentifySpellCast(spellId);
+		});
 	}
 } spellFuncReplacements;
 
@@ -330,6 +336,15 @@ bool SpellPacketBody::IsDivine(){
 	return false;
 }
 
+bool SpellPacketBody::IsItemSpell(){
+	return invIdx != INV_IDX_INVALID;
+}
+
+int SpellPacketBody::GetSpellSchool()
+{
+	return spellSys.GetSpellSchool(this->spellEnum);
+}
+
 void SpellPacketBody::Debit(){
 	// preamble
 	if (!caster){
@@ -337,7 +352,7 @@ void SpellPacketBody::Debit(){
 		return;
 	}
 
-	if (invIdx != INV_IDX_INVALID) // this is handled separately
+	if (IsItemSpell()) // this is handled separately
 		return;
 
 	auto casterObj = gameSystems->GetObj().GetObject(caster);
@@ -458,6 +473,7 @@ SpellMapTransferInfo::SpellMapTransferInfo()
 }
 
 void LegacySpellSystem::Init(const GameSystemConf& conf){
+	// this is run after the vanilla code
 	mesFuncs.Open("tprules\\spell_enums_ext.mes", &spellSys.spellEnumsExt);
 	mesFuncs.Open("mes\\spell_ext.mes", &spellMesExt);
 }
@@ -527,7 +543,7 @@ BOOL LegacySpellSystem::RegisterSpell(SpellPacketBody & spellPkt, int spellId)
 	newPkt.spellPktBody.spellRange = spellPkt.spellRange;
 	newPkt.spellPktBody.casterLevel = spellPkt.casterLevel;
 	newPkt.spellPktBody.dc = dc;
-	newPkt.spellPktBody.flagSthg |= 8;
+	newPkt.spellPktBody.animFlags |= 8;
 
 	spellsCastRegistry.put(spellId, newPkt);
 
@@ -1107,7 +1123,7 @@ int LegacySpellSystem::SpellSave(TioOutputStream& file)
 		file.WriteInt32(it.data->isActive);
 		file.WriteInt32(pkt.spellEnum);
 		file.WriteInt32(pkt.spellEnumOriginal);
-		file.WriteInt32(pkt.flagSthg);
+		file.WriteInt32(pkt.animFlags);
 
 		// caster
 		if (!SerializeHandleToFile(pkt.caster, file))
@@ -1277,7 +1293,7 @@ bool LegacySpellSystem::LoadActiveSpellElement(TioFile* file, uint32_t& spellId,
 		return false;
 	if (!tio_fread(&pkt.spellPktBody.spellEnumOriginal, sizeof(int), 1, file))
 		return false;
-	if (!tio_fread(&pkt.spellPktBody.flagSthg, sizeof(int), 1, file))
+	if (!tio_fread(&pkt.spellPktBody.animFlags, sizeof(int), 1, file))
 		return false;
 
 	// get the caster
@@ -1985,9 +2001,17 @@ bool LegacySpellSystem::IsArcaneSpellClass(uint32_t spellClass)
 	return false;
 }
 
+int LegacySpellSystem::GetSpellSchool(int spellEnum){
+	SpellEntry spEntry(spellEnum);
+	if (!spEntry.spellEnum)
+		return 0;
+
+	return spEntry.spellSchoolEnum;
+}
+
 bool LegacySpellSystem::IsSpellLike(int spellEnum){
 	return (spellEnum >= NORMAL_SPELL_RANGE
-		&& spellEnum <= SPELL_LIKE_ABILITY_RANGE);
+		&& spellEnum <= SPELL_LIKE_ABILITY_RANGE) || spellEnum >= CLASS_SPELL_LIKE_ABILITY_START;
 }
 
 bool LegacySpellSystem::IsLabel(int spellEnum){
@@ -2198,6 +2222,86 @@ int LegacySpellSystem::DispelRoll(objHndl obj, BonusList* bonlist, int rollMod, 
 {
 	auto dispelRoll = temple::GetRef<int(__cdecl)(objHndl, BonusList*, int, int, char*, int*)>(0x100B51E0);
 	return dispelRoll(obj, bonlist, rollMod, dispelDC, historyText, rollHistId);
+}
+
+void LegacySpellSystem::IdentifySpellCast(int spellId){
+
+	SpellPacketBody pkt(spellId);
+	if (!pkt.spellEnum 	|| spellSys.IsSpellLike(pkt.spellEnum))
+		return;
+
+	if (pkt.animFlags & SpellAnimationFlag::SAF_ID_ATTEMPTED)
+		return;
+
+	pkt.animFlags |= SpellAnimationFlag::SAF_ID_ATTEMPTED;
+	pkt.UpdateSpellsCastRegistry();
+
+	auto caster = pkt.caster;
+
+
+
+	// if caster is player controlled, just display it
+	if (objects.IsPlayerControlled(caster)){
+
+		if (pkt.IsItemSpell()){
+			floatSys.FloatCombatLine(caster, 188); // Uses Item!
+			histSys.CreateRollHistoryLineFromMesfile(55, caster, objHndl::null); // [ACTOR] uses item!
+		}
+		else{
+			histSys.PrintSpellCast(caster, pkt.spellEnum);
+		}
+		return;
+	}
+
+
+	// non-player controlled Caster - 
+	// Get a list of nearby PCs 
+	// Let them try to identify the spell
+	auto isIdentified = false;
+
+	SpellStoreData spData(pkt.spellEnum, pkt.spellKnownSlotLevel, pkt.spellClass, pkt.metaMagicData, SpellStoreType::spellStoreMemorized);
+	auto spComponents = spData.GetSpellComponentFlags();
+
+	auto isVerbal = spComponents & SpellComponentFlag::SpellComponent_Verbal;
+	auto isSomatic = spComponents & SpellComponentFlag::SpellComponent_Somatic;
+
+	ObjList vlist;
+	vlist.ListVicinity(caster, ObjectListFilter::OLC_PC);
+
+	for (auto i=0; i < vlist.size(); i++){
+		auto pc = vlist.get(i);
+
+		auto canPerceive = (!isVerbal || !aiSys.CannotHear(pc, caster, 1)) && (!isSomatic || !critterSys.HasLineOfSight(pc, caster));
+		if (!canPerceive)
+			continue;
+			
+		// If item spell - no skill check required (but it just says an item was used)
+		if (pkt.IsItemSpell()){
+			floatSys.FloatCombatLine(caster, 188); // Uses Item!
+			histSys.CreateRollHistoryLineFromMesfile(55, caster, objHndl::null); // [ACTOR] uses item!
+			return;
+		}
+		auto spSchool = pkt.GetSpellSchool();
+		auto skillRollFlag = 1 << (spSchool + 4);
+		if (skillSys.SkillRoll(pc, SkillEnum::skill_spellcraft, spData.spellLevel + 15, nullptr, skillRollFlag )){
+			isIdentified = true;
+			break;
+		}
+	}
+
+
+	// print to D20 Rolls History and show float messages
+	if (!isIdentified){
+		histSys.CreateRollHistoryLineFromMesfile(50, caster, objHndl::null); // [ACTOR] casts unknown spell!
+		return;
+	}
+
+	auto skillUiMes = temple::GetRef<MesHandle>(0x10AAF420);
+	MesLine line(1200); // Casting spell...
+	mesFuncs.GetLine_Safe(skillUiMes, &line);
+	floatSys.floatMesLine(caster, 1, FloatLineColor::White, line.value);
+	floatSys.FloatSpellLine(caster, pkt.spellEnum, FloatLineColor::White); // floats the spell name
+	histSys.PrintSpellCast(caster, pkt.spellEnum);
 }
 
 BOOL LegacySpellSystem::PlayFizzle(objHndl handle)

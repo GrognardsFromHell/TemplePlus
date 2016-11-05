@@ -3445,7 +3445,7 @@ uint32_t __declspec(naked) _moveSequenceParseUsercallWrapper(ActnSeq* actSeq, Tu
 { //, D20_Action *d20aIn@<eax>
 	macAsmProl; // esp = esp0 - 16
 	__asm{
-		mov ebx, [esp + 36]; // flagSthg @ esp0+20 , esp = esp0-16
+		mov ebx, [esp + 36]; // animFlags @ esp0+20 , esp = esp0-16
 		push ebx;
 		mov esi, [esp + 36];  // esp = esp0-20,  reach @ esp0+16
 		push esi;

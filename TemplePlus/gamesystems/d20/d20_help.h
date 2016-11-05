@@ -48,6 +48,8 @@ struct D20RollHistoryEntry
 		this->stringLen = 0;
 		this->string = nullptr;
 	}
+
+	void CreateFromString(const char *stringWithRefs);
 };
 
 class HelpSystem : TempleFix

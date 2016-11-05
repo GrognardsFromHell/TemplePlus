@@ -226,3 +226,10 @@ enum SpellSchools : uint32_t
 	School_Necromancy = 7,
 	School_Transmutation = 8
 };
+
+
+enum SpellAnimationFlag : int32_t
+{
+	SAF_UNK8 = 0x8,
+	SAF_ID_ATTEMPTED = 0x10,
+};

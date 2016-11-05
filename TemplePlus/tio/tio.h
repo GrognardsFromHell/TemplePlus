@@ -100,7 +100,7 @@ extern "C" {
 	TIOLIB bool TIOAPI tio_fileexists(const char *path, TioFileListFile *pInfoOut = nullptr);
 	TIOLIB void TIOAPI tio_rename(const char *from, const char *to);
 	TIOLIB void TIOAPI tio_path_guid();
-	TIOLIB void TIOAPI tio_fseek();
+	TIOLIB void TIOAPI tio_fseek(TioFile *file, int offset, int origin);
 	TIOLIB void TIOAPI tio_file_extract();
 	TIOLIB int TIOAPI tio_fgets(char *buffer, int size, TioFile *file);
 	TIOLIB uint32_t TIOAPI tio_ftell(TioFile *file);
