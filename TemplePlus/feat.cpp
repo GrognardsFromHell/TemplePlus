@@ -924,8 +924,7 @@ const char * LegacyFeatSystem::GetFeatHelpTopic(feat_enums feat){
 
 int LegacyFeatSystem::IsFeatEnabled(feat_enums feat)
 {
-	if (feat > NUM_FEATS)
-	{
+	if (feat > NUM_FEATS){
 		auto featFind = mNewFeats.find(feat);
 		if (featFind == mNewFeats.end())
 			return FALSE;
@@ -936,8 +935,7 @@ int LegacyFeatSystem::IsFeatEnabled(feat_enums feat)
 
 int LegacyFeatSystem::IsMagicFeat(feat_enums feat)
 {
-	if (feat > NUM_FEATS)
-	{
+	if (feat > NUM_FEATS){
 		auto featFind = mNewFeats.find(feat);
 		if (featFind == mNewFeats.end())
 			return FALSE;
@@ -960,8 +958,7 @@ int LegacyFeatSystem::IsFeatPartOfMultiselect(feat_enums feat)
 
 int LegacyFeatSystem::IsFeatRacialOrClassAutomatic(feat_enums feat)
 {
-	if (feat > NUM_FEATS)
-	{
+	if (feat > NUM_FEATS){
 		auto featFind = mNewFeats.find(feat);
 		if (featFind == mNewFeats.end())
 			return FALSE;
@@ -970,10 +967,9 @@ int LegacyFeatSystem::IsFeatRacialOrClassAutomatic(feat_enums feat)
 	return (m_featPropertiesTable[feat] & (FPF_RACE_AUTOMATIC | FPF_CLASS_AUTMATIC) ) != 0;
 }
 
-int LegacyFeatSystem::IsClassFeat(feat_enums feat)
-{
-	if (feat > NUM_FEATS)
-	{
+int LegacyFeatSystem::IsClassFeat(feat_enums feat){
+
+	if (feat > NUM_FEATS){
 		auto featFind = mNewFeats.find(feat);
 		if (featFind == mNewFeats.end())
 			return FALSE;
@@ -985,8 +981,15 @@ int LegacyFeatSystem::IsClassFeat(feat_enums feat)
 	return ( m_featPropertiesTable[feat] & FPF_CLASS_AUTMATIC ) != 0;
 }
 
-int LegacyFeatSystem::IsFighterFeat(feat_enums feat)
-{
+int LegacyFeatSystem::IsFighterFeat(feat_enums feat){
+
+	if (feat>NUM_FEATS){
+		auto featFind = mNewFeats.find(feat);
+		if (featFind == mNewFeats.end())
+			return FALSE;
+		return (featFind->second.flags & FPF_FIGHTER_BONUS) == FPF_FIGHTER_BONUS;
+	}
+
 	if (feat > 649 && feat < 664)
 	{
 		if (feat > 657)
@@ -1000,8 +1003,7 @@ int LegacyFeatSystem::IsFighterFeat(feat_enums feat)
 
 int LegacyFeatSystem::IsFeatPropertySet(feat_enums feat, int featProp)
 {
-	if (feat > NUM_FEATS)
-	{
+	if (feat > NUM_FEATS){
 		auto featFind = mNewFeats.find(feat);
 		if (featFind == mNewFeats.end())
 			return FALSE;

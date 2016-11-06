@@ -107,10 +107,12 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def(py::init<std::string, int, bool>(), py::arg("name"), py::arg("numArgs"), py::arg("preventDup") = true)
 		.def("add_hook", [](CondStructNew &condStr, uint32_t dispType, uint32_t dispKey, py::function &pycallback, py::tuple &pydataTuple) {
 				Expects(condStr.numHooks < 99);
+				pydataTuple.inc_ref();
 				condStr.subDispDefs[condStr.numHooks++] = { (enum_disp_type)dispType, (D20DispatcherKey)dispKey, PyModHookWrapper, (uint32_t)pycallback.ptr(), (uint32_t)pydataTuple.ptr() };
 		}, "Add callback hook")
 		.def("add_hook", [](CondStructNew &condStr, uint32_t dispType, std::string dispKey, py::function &pycallback, py::tuple &pydataTuple) {
 			Expects(condStr.numHooks < 99);
+			pydataTuple.inc_ref();
 			condStr.subDispDefs[condStr.numHooks++] = { (enum_disp_type)dispType, (D20DispatcherKey)ElfHash::Hash(dispKey), PyModHookWrapper, (uint32_t)pycallback.ptr(), (uint32_t)pydataTuple.ptr() };
 		}, "Add callback hook")
 		.def("add_to_feat_dict", [](CondStructNew &condStr, int feat_enum, int feat_max, int feat_offset) {
@@ -156,6 +158,18 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		})
 		.def("get_arg", &DispatcherCallbackArgs::GetCondArg)
 		.def("set_arg", &DispatcherCallbackArgs::SetCondArg)
+		.def("get_param", [](DispatcherCallbackArgs &args, int paramIdx){
+			PyObject*tuplePtr = (PyObject*)args.GetData2();
+			
+			//return tuplePtr;
+			if (!tuplePtr || paramIdx >= PyTuple_Size(tuplePtr)){
+				return 0;
+			}
+				
+			auto tupItem = PyTuple_GetItem(tuplePtr, paramIdx);
+			auto result = (int)PyLong_AsLong(tupItem);
+			return result;
+		})
 		.def_readwrite("evt_obj", &DispatcherCallbackArgs::dispIO)
 		.def("condition_remove", [](DispatcherCallbackArgs& args)
 		{
@@ -217,6 +231,10 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def("add_physical_damage_res", [](DamagePacket& damPkt, int amount, int bypassingAttackPower, int damMesLine){
 			damPkt.AddPhysicalDR(amount, bypassingAttackPower, damMesLine);
 		}, "Adds physical (Slashing/Piercing/Crushing) damage resistance.")
+		.def("add_damage_resistance", [](DamagePacket& damPkt, int amount, int damType, int damMesLine) {
+			auto _damType = (DamageType)damType;
+			damPkt.AddDR(amount, _damType, damMesLine);
+		}, "Adds damage resistance.")
 		.def_readwrite("flags", &DamagePacket::flags, "1 - maximized, 2 - empowered")
 		.def_readwrite("bonus_list", &DamagePacket::bonuses)
 		.def_readwrite("critical_multiplier", &DamagePacket::critHitMultiplier, "1 by default, gets increased by various things")

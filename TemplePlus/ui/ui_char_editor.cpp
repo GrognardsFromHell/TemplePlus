@@ -1117,7 +1117,7 @@ void UiCharEditor::FeatsActivate(){
 	mIsSelectingBonusFeat = d20ClassSys.IsSelectingFeatsOnLevelup(handle, selPkt.classCode);
 	mBonusFeats.clear();
 	if (mIsSelectingBonusFeat)
-		d20ClassSys.LevelupGetBonusFeats(handle, selPkt.classCode);
+		d20ClassSys.LevelupGetBonusFeats(handle, selPkt.classCode); // can call set_bonus_feats
 
 	feat_enums existingFeats[122];
 	auto isRangerStyleChoosing = selPkt.classCode == stat_level_ranger && (objects.StatLevelGet(handle, stat_level_ranger) == 1);
@@ -1165,14 +1165,19 @@ void UiCharEditor::FeatsActivate(){
 	for (auto feat: feats.newFeats){
 		if (!feats.IsFeatEnabled(feat) && !feats.IsFeatMultiSelectMaster(feat))
 			continue;
+		if (!config.nonCoreMaterials && feats.IsNonCore(feat))
+			continue;
+		if (IsClassBonusFeat(feat)){
+			mSelectableFeats.push_back(FeatInfo(feat));
+			continue;
+		}
 		if (feats.IsFeatRacialOrClassAutomatic(feat))
 			continue;
 		if (feats.IsFeatPartOfMultiselect(feat))
 			continue;
 		if (feat == FEAT_NONE)
 			continue;
-		if (!config.nonCoreMaterials && feats.IsNonCore(feat) )
-			continue;
+
 		mSelectableFeats.push_back(FeatInfo(feat));
 	}
 	std::sort(mSelectableFeats.begin(), mSelectableFeats.end(), featSorter);
@@ -2406,11 +2411,11 @@ bool UiCharEditor::IsClassBonusFeat(feat_enums feat) {
 	case stat_level_fighter:
 		return feats.IsFighterFeat(feat) != FALSE;
 	case stat_level_monk:
-		if (feats.IsFeatPropertySet(feat, 0x20) && newLvl == 1)
+		if (feats.IsFeatPropertySet(feat, FPF_MONK_BONUS_1st) && newLvl == 1)
 			return true;
-		if (feats.IsFeatPropertySet(feat, 0x40) && newLvl == 2)
+		if (feats.IsFeatPropertySet(feat, FPF_MONK_BONUS_2nd) && newLvl == 2)
 			return true;
-		if (feats.IsFeatPropertySet(feat, 0x80) && newLvl == 6)
+		if (feats.IsFeatPropertySet(feat, FPF_MONK_BONUS_6th) && newLvl == 6)
 			return true;
 		return false;
 	case stat_level_ranger:
