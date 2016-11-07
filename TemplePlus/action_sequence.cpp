@@ -3679,6 +3679,8 @@ void ActnSeqReplacements::NaturalAttackOverwrites()
 	int writeVal = ATTACK_CODE_NATURAL_ATTACK;
 	write(0x1008C542 + 3, &writeVal, 4);
 
+	writeVal = ATTACK_CODE_OFFHAND+1;
+	write(0x1006BF62 + 4, &writeVal, sizeof(int));
 
 	// new D20Defs
 

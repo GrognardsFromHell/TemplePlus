@@ -18,6 +18,7 @@
 #include <damage.h>
 #include <ui/ui_item_creation.h>
 #include "d20/d20stats.h"
+#include "deity/legacydeitysystem.h"
 
 
 //*****************************************************************************
@@ -1365,6 +1366,7 @@ DeitySystem::DeitySystem(const GameSystemConf &config) {
 	if (!startup(&config)) {
 		throw TempleException("Unable to initialize game system Deity");
 	}
+	deitySys.Init();
 }
 DeitySystem::~DeitySystem() {
 	auto shutdown = temple::GetPointer<void()>(0x1004a800);

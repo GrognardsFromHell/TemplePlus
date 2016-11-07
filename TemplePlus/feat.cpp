@@ -426,10 +426,8 @@ uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEn
 	uint32_t objDeity = objects.getInt32(objHnd, obj_f_critter_deity);
 	uint32_t domain_1 = objects.getInt32(objHnd, obj_f_critter_domain_1);
 	uint32_t domain_2 = objects.getInt32(objHnd, obj_f_critter_domain_2);
-	if (domain_1 == 21 || domain_2 == 21) // must be war domain
-	{
-		switch (objDeity)
-		{
+	if (domain_1 == Domain_War || domain_2 == Domain_War){
+		switch (objDeity){
 		case DEITY_CORELLON_LARETHIAN:
 			if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_LONGSWORD || featEnum == FEAT_WEAPON_FOCUS_LONGSWORD) { return 1; }
 			break;
@@ -545,6 +543,41 @@ uint32_t LegacyFeatSystem::FeatExistsInArray(feat_enums featCode, feat_enums * f
 uint32_t LegacyFeatSystem::WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType)
 {
 	return _WeaponFeatCheck( objHnd,  featArray,  featArrayLen,  classBeingLeveled,  wpnType);
+}
+
+feat_enums LegacyFeatSystem::GetFeatForWeaponType(WeaponTypes wt, feat_enums baseFeat){
+
+
+	if (baseFeat == FEAT_WEAPON_FOCUS) {
+		if (wt >= wt_gauntlet && wt <= wt_ray)
+			return (feat_enums)(FEAT_WEAPON_FOCUS_GAUNTLET + (wt - wt_gauntlet));
+	}
+	else if (baseFeat == FEAT_GREATER_WEAPON_FOCUS){
+		if (wt >= wt_gauntlet && wt <= wt_ray)
+			return (feat_enums)(FEAT_GREATER_WEAPON_FOCUS_GAUNTLET + (wt - wt_gauntlet));
+	}
+	else if (baseFeat == FEAT_WEAPON_SPECIALIZATION) {
+		if (wt >= wt_gauntlet && wt <= wt_grapple)
+			return (feat_enums)(FEAT_WEAPON_SPECIALIZATION_GAUNTLET + (wt - wt_gauntlet));
+	}
+	else if (baseFeat == FEAT_GREATER_WEAPON_SPECIALIZATION){
+		if (wt >= wt_gauntlet && wt <= wt_grapple)
+			return (feat_enums)(FEAT_GREATER_WEAPON_SPECIALIZATION_GAUNTLET + (wt - wt_gauntlet));
+	}
+	else if (baseFeat == FEAT_IMPROVED_CRITICAL){
+		if (wt >= wt_gauntlet && wt <= wt_net)
+			return (feat_enums)(FEAT_IMPROVED_CRITICAL_GAUNTLET + (wt - wt_gauntlet));
+	}
+	else if (baseFeat == FEAT_EXOTIC_WEAPON_PROFICIENCY){
+		
+	}
+	else if (baseFeat == FEAT_MARTIAL_WEAPON_PROFICIENCY){
+		
+	}
+	else if (baseFeat == FEAT_SIMPLE_WEAPON_PROFICIENCY){
+		
+	}
+	return FEAT_NONE;
 }
 
 uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums* featArray, uint32_t featArrayLen, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased){

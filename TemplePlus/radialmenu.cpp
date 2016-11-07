@@ -505,15 +505,19 @@ int RadialMenus::GetSpellClassFromSpecialNode(objHndl handle, int specialParent)
 	return spellSys.GetSpellClass(getClassFromNode(specialParent));
 }
 
-void RadialMenus::AddSpell(objHndl handle, SpellStoreData & spData, int & specNode, RadialMenuEntry & entry){
+void RadialMenus::AddSpell(objHndl handle, SpellStoreData & spData, int & specNode, RadialMenuEntry & entry) {
 	//auto addSpell = temple::GetRef<void(__cdecl)(objHndl, SpellStoreData&, int&, RadialMenuEntry&)>(0x100F1470);
 	//addSpell(handle, spData, specNode, spellEntryAction);
 
-	if (spData.spellStoreState.usedUp & 1){
+	if (spData.spellStoreState.usedUp & 1) {
 		return;
 	}
 
-	if (spellSys.spellCanCast(handle, spData.spellEnum, spData.classCode, spData.spellLevel ) != TRUE){
+	if (spellSys.spellCanCast(handle, spData.spellEnum, spData.classCode, spData.spellLevel) != TRUE) {
+		return;
+	}
+
+	if (spData.classCode == spellSys.GetSpellClass(stat_level_paladin) && d20Sys.d20Query(handle, DK_QUE_IsFallenPaladin)){
 		return;
 	}
 

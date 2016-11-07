@@ -85,7 +85,9 @@ BOOL HotkeyReplacements::HotkeyCompare(RadialMenuEntry& first, RadialMenuEntry& 
 
 		if (first.d20SpellData.metaMagicData != second.d20SpellData.metaMagicData)
 			return FALSE;
-		return first.textHash == second.textHash;
+		//return first.textHash == second.textHash;
+		return first.d20SpellData.spellSlotLevel == second.d20SpellData.spellSlotLevel;
+
 	}
 
 	if (first.d20ActionData1 != second.d20ActionData1)

@@ -23,7 +23,7 @@ bool LegacyDeitySystem::CanPickDeity(objHndl handle, int deityId){
 	if (!handle)
 		return false;
 
-	auto &deitySpec = GetDeitySpec(deityId);
+	auto &deitySpec = GetLegacyDeitySpec(deityId);
 	if (!deitySpec.isSelectable)
 		return false;
 
@@ -83,7 +83,7 @@ bool LegacyDeitySystem::CanPickDeity(objHndl handle, int deityId){
 
 bool LegacyDeitySystem::DeityHasDomain(int deityId, Domain domain){
 
-	auto &deiSpec = GetDeitySpec(deityId);
+	auto &deiSpec = GetLegacyDeitySpec(deityId);
 	auto foundIt = false;
 	for (auto it: deiSpec.domains){
 		if (it == Domain::Domain_None)
@@ -95,11 +95,107 @@ bool LegacyDeitySystem::DeityHasDomain(int deityId, Domain domain){
 	return false;
 }
 
-DeitySpec & LegacyDeitySystem::GetDeitySpec(int deityId){
-	return temple::GetRef<DeitySpec[28]>(0x102726F8)[deityId];
+WeaponTypes LegacyDeitySystem::GetDeityFavoredWeapon(int deityId){
+	auto &ds = GetDeitySpec(deityId);
+	return ds.favoredWeapon;
 }
 
-bool DeitySpec::HasClass(Stat deityClass)
+DeitySpec & LegacyDeitySystem::GetDeitySpec(int id){
+	return mDeitySpecs[id];
+}
+
+LegacyDeitySpec & LegacyDeitySystem::GetLegacyDeitySpec(int deityId){
+	return temple::GetRef<LegacyDeitySpec[28]>(0x102726F8)[deityId];
+}
+
+void LegacyDeitySystem::Init(){
+	for (auto i=0; i < DEITY_COUNT_VANILLA; i++)	{
+		auto deityEnum = (Deities)i;
+
+		DeitySpec s(GetLegacyDeitySpec(i));
+		s.id = i;
+		s.favoredWeapon = GetHardcodedFavoredWeapon(deityEnum);
+		
+		mDeitySpecs[i] = s;
+	}
+
+
+}
+
+WeaponTypes LegacyDeitySystem::GetHardcodedFavoredWeapon(Deities deityEnum){
+	// based on the help wiki and http://www.imarvintpa.com/dndlive/Index_Deities.php
+	switch (deityEnum) {
+	case DEITY_NONE:
+		return wt_bastard_sword; // easter egg :)
+
+	case DEITY_BOCCOB: 
+		return wt_quarterstaff;
+
+	case DEITY_CORELLON_LARETHIAN: 
+		return wt_longsword;
+
+	case DEITY_EHLONNA: 
+		return wt_longbow;
+
+	case DEITY_ERYTHNUL: 
+		return wt_morningstar;
+	
+	case DEITY_FHARLANGHN: 
+		return wt_quarterstaff;
+
+	case DEITY_GARL_GLITTERGOLD: 
+		return wt_battleaxe;
+	
+	case DEITY_GRUUMSH:
+		return wt_longspear;
+	
+	case DEITY_HEIRONEOUS:
+		return wt_longsword;
+	
+	case DEITY_HEXTOR:
+		return wt_heavy_flail;
+	
+	case DEITY_KORD:return wt_greatsword;
+	
+	case DEITY_MORADIN:return wt_warhammer;
+	
+	case DEITY_NERULL:return wt_scythe;
+	
+	case DEITY_OBAD_HAI:return wt_quarterstaff;
+	
+	case DEITY_OLIDAMMARA:return wt_rapier;
+	
+	case DEITY_PELOR:return wt_heavy_mace;
+	
+	case DEITY_ST_CUTHBERT:return wt_heavy_mace;
+	
+	case DEITY_VECNA:return wt_dagger;
+	
+	case DEITY_WEE_JAS:return wt_dagger;
+	
+	case DEITY_YONDALLA:return wt_short_sword;
+	
+	case DEITY_OLD_FAITH:return wt_quarterstaff; // taken to match Shillelagh, also seems appropriate
+	
+	case DEITY_ZUGGTMOY:return wt_scythe;
+	
+	case DEITY_IUZ:return wt_greatsword;
+	
+	case DEITY_LOLTH:return wt_whip;
+	
+	case DEITY_PROCAN:return wt_trident;
+	
+	case DEITY_NOREBO:return wt_dagger; // https://en.wikipedia.org/wiki/Norebo
+	
+	case DEITY_PYREMIUS:return wt_longsword;
+	
+	case DEITY_RALISHAZ:return wt_heavy_mace;
+	
+	default: return wt_quarterstaff;
+	}
+}
+
+bool LegacyDeitySpec::HasClass(Stat deityClass)
 {
 	auto foundIt = false;
 	for (auto it : classes) {
@@ -112,7 +208,7 @@ bool DeitySpec::HasClass(Stat deityClass)
 	return false;
 }
 
-bool DeitySpec::HasRace(Race race)
+bool LegacyDeitySpec::HasRace(Race race)
 {
 	auto foundIt = false;
 	for (auto it : races) {
@@ -123,4 +219,20 @@ bool DeitySpec::HasRace(Race race)
 	}
 
 	return false;
+}
+
+DeitySpec::DeitySpec(){
+	alignment = ALIGNMENT_NEUTRAL;
+	domains[0] = Domain_None;
+	races[0] = race_human;
+	classes[0] = (Stat)0;
+	isSelectable = 0;
+}
+
+DeitySpec::DeitySpec(LegacyDeitySpec & legacySpec){
+	this->alignment = legacySpec.alignment;
+	memcpy(this->domains, legacySpec.domains, sizeof(this->domains));
+	memcpy(this->classes, legacySpec.classes, sizeof(this->classes));
+	memcpy(this->races, legacySpec.races, sizeof(this->races));
+	this->isSelectable = legacySpec.isSelectable;
 }

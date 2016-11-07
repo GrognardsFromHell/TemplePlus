@@ -129,6 +129,7 @@ struct LegacyFeatSystem : temple::AddressTable
 	uint32_t FeatListGet(objHndl objHnd, feat_enums * listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat);
 	uint32_t FeatExistsInArray(feat_enums featCode, feat_enums * featArray, uint32_t featArrayLen);
 	uint32_t WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType);
+	feat_enums GetFeatForWeaponType(WeaponTypes wt, feat_enums baseFeat); // for stuff like Weapon Specialization/Focus etc.
 	uint32_t FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * featArray, uint32_t featArrayLen, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased);
 
 	std::vector<feat_enums> GetFeats(objHndl handle); // This is what objHndl.feats in python returns ??

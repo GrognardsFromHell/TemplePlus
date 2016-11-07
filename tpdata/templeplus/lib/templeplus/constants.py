@@ -682,6 +682,7 @@ wt_net = 69
 wt_grapple = 70
 wt_ray = 71
 wt_grenade = 72
+wt_mindblade = 73
 
 
 # Portal Flags

@@ -39,6 +39,7 @@
 #include <gamesystems/legacymapsystems.h>
 #include <history.h>
 #include <config/config.h>
+#include <gamesystems/deity/legacydeitysystem.h>
 
 static PyObject *encounterQueue = nullptr;
 
@@ -837,6 +838,17 @@ PyObject* PyGame_GetStatMod(PyObject*, PyObject* args) {
 	return PyInt_FromLong(GetAttributeMod(attributeValue));
 }
 
+
+PyObject* PyGame_GetDeityFavoredWeapon(PyObject*, PyObject* args) {
+	int deityId = 0;
+
+	if (!PyArg_ParseTuple(args, "i:game.get_deity_favored_weapon", &deityId)) {
+		return PyInt_FromLong(0);
+	}
+	return PyInt_FromLong(deitySys.GetDeityFavoredWeapon(deityId));
+}
+
+
 PyObject* PyGame_UiShowWorldmap(PyObject*, PyObject* args) {
 	int unk;
 	if (!PyArg_ParseTuple(args, "i:game.ui_show_worldmap", &unk)) {
@@ -1160,6 +1172,7 @@ static PyMethodDef PyGameMethods[]{
 	{"random_range", PyGame_RandomRange, METH_VARARGS, NULL},
 	{"target_random_tile_near_get", PyGame_TargetRandomTileNearGet, METH_VARARGS, NULL},
 	{"get_stat_mod", PyGame_GetStatMod, METH_VARARGS, NULL},
+	{"get_deity_favored_weapon", PyGame_GetDeityFavoredWeapon, METH_VARARGS, NULL},
 	{"ui_show_worldmap", PyGame_UiShowWorldmap, METH_VARARGS, NULL},
 	{"worldmap_travel_by_dialog", PyGame_WorldmapTravelByDialog, METH_VARARGS, NULL},
 	{"pfx_call_lightning", PyGame_PfxCallLightning, METH_VARARGS, NULL},

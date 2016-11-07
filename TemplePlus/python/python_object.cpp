@@ -2229,22 +2229,38 @@ static PyObject* PyObjHandle_HasFeat(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
-static PyObject * PyObjHandle_ObjFeatAdd(PyObject* obj, PyObject * args){
+static PyObject * PyObjHandle_FeatAdd(PyObject* obj, PyObject * args){
 	auto self = GetSelf(obj);
 	if (!self->handle) {
 		return PyInt_FromLong(0);
 	}
+
+	if (PyTuple_GET_SIZE(args) < 1) {
+		PyErr_SetString(PyExc_RuntimeError, "has_feat called with no arguments!");
+		return PyInt_FromLong(0);
+	}
+
+	// get the feat enum
 	feat_enums featCode;
-	if (!PyArg_ParseTuple(args, "i:objhndl.feat_add", &featCode)) {
+	int doRefresh = 0;
+
+	PyObject* arg = PyTuple_GET_ITEM(args, 0);
+	if (PyString_Check(arg)) {
+		auto argString = fmt::format("{}", PyString_AsString(arg));
+		featCode = (feat_enums)ElfHash::Hash(argString);
+	}
+	else if (!PyArg_ParseTuple(args, "i|i:objhndl.feat_add", &featCode, &doRefresh)) {
 		return nullptr;
 	};
+
 
 	if (featCode == 0){
 		return PyInt_FromLong(0);
 	}
 
 	objects.feats.FeatAdd(self->handle, featCode);
-	d20Sys.d20Status->D20StatusRefresh(self->handle);
+	if (doRefresh)
+		d20Sys.d20Status->D20StatusRefresh(self->handle);
 
 	return PyInt_FromLong(1);
 };
@@ -2742,7 +2758,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "faction_has", PyObjHandle_FactionHas, METH_VARARGS, "Check if NPC has faction. Doesn't work on PCs!" },
 	{ "faction_add", PyObjHandle_FactionAdd, METH_VARARGS, "Adds faction to NPC. Doesn't work on PCs!" },
 	{ "fade_to", PyObjHandle_FadeTo, METH_VARARGS, NULL },
-	{ "feat_add", PyObjHandle_ObjFeatAdd, METH_VARARGS, "Gives you a feat" },
+	{ "feat_add", PyObjHandle_FeatAdd, METH_VARARGS, "Gives you a feat" },
 	{ "fall_down", PyObjHandle_FallDown, METH_VARARGS, "Makes a Critter fall down" },
 	{ "follower_add", PyObjHandle_FollowerAdd, METH_VARARGS, NULL },
 	{ "follower_remove", PyObjHandle_FollowerRemove, METH_VARARGS, NULL },
