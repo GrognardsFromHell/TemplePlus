@@ -57,6 +57,12 @@ struct KnownSpellInfo {
 	KnownSpellInfo(int SpellEnum, int SpellFlag, int SpellClass, int isDomain);
 
 };
+
+enum FeatInfoFlag
+{
+	None = 0, 
+	DisregardPrereqs = 4 
+};
 struct FeatInfo {
 	int featEnum;
 	int flag = 0;

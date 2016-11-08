@@ -153,6 +153,8 @@ public:
 	bool FeatCanPick(feat_enums feat);
 	bool IsSelectingRangerSpec();
 	bool IsClassBonusFeat(feat_enums feat);
+	bool IsBonusFeatDisregardingPrereqs(feat_enums feat);
+
 	void SetBonusFeats(std::vector<FeatInfo> & fti);
 	void FeatsSanitize();
 	void FeatsMultiSelectActivate(feat_enums feat);
@@ -228,7 +230,7 @@ public:
 	TigTextStyle whiteTextGenericStyle;
 	TigTextStyle blueTextStyle;
 	TigTextStyle classBtnTextStyle;
-	TigTextStyle featsGreyedStyle, featsBonusTextStyle, featsExistingTitleStyle, featsGoldenStyle, featsClassStyle, featsCenteredStyle;
+	TigTextStyle featsGreyedStyle, featsNormalTextStyle, featsExistingTitleStyle, featsGoldenStyle, featsClassStyle, featsCenteredStyle;
 	TigTextStyle spellsTextStyle;
 	TigTextStyle spellsTitleStyle;
 	TigTextStyle spellLevelLabelStyle;
@@ -376,7 +378,7 @@ PYBIND11_PLUGIN(tp_char_editor){
 		.def(py::init<int>(), py::arg("feat_enum"))
 		.def(py::init<std::string &>(), py::arg("feat_name"))
 		.def_readwrite("feat_enum", &FeatInfo::featEnum)
-		.def_readwrite("feat_status", &FeatInfo::flag, "0 - normal, 1 - automatic class feat, 2 - bonus selectable feat")
+		.def_readwrite("feat_status_flags", &FeatInfo::flag, "0 - normal, 1 - automatic class feat, 2 - bonus selectable feat, 4 - selectable feat (disregard reqs)")
 		;
 		// methods
 	mm
@@ -746,7 +748,7 @@ BOOL UiCharEditor::FeatsSystemInit(GameSystemConf & conf){
 	baseStyle.tracking = 3;
 	baseStyle.textColor = baseStyle.colors2 = baseStyle.colors4 = &whiteColorRect;
 
-	featsCenteredStyle = featsGreyedStyle = featsBonusTextStyle = featsExistingTitleStyle =  featsGoldenStyle =  featsClassStyle = baseStyle;
+	featsCenteredStyle = featsGreyedStyle = featsNormalTextStyle = featsExistingTitleStyle =  featsGoldenStyle =  featsClassStyle = baseStyle;
 
 	featsCenteredStyle.flags = 0x10;
 
@@ -1633,7 +1635,7 @@ void UiCharEditor::FeatsWndRender(int widId){
 	// Feat Slot
 	if (IsSelectingNormalFeat()){
 		RenderHooks::RenderRectInt(featsSelectedBorderRect.x , featsSelectedBorderRect.y, featsSelectedBorderRect.width, featsSelectedBorderRect.height, 0xFFFFffff);
-		UiRenderer::DrawTextInWidget(widId, featsTitleString, featsTitleRect, featsBonusTextStyle);
+		UiRenderer::DrawTextInWidget(widId, featsTitleString, featsTitleRect, featsNormalTextStyle);
 		if (selPkt.feat0 != FEAT_NONE){
 			UiRenderer::DrawTextInWidget(widId, GetFeatName(selPkt.feat0), feat0TextRect ,GetFeatStyle(selPkt.feat0));
 		}
@@ -2239,15 +2241,16 @@ TigTextStyle & UiCharEditor::GetFeatStyle(feat_enums feat, bool allowMultiple) {
 		if (uiCharEditor.featsMultiSelected == feat) {
 			return uiCharEditor.blueTextStyle;
 		}
-		if (feats.IsClassFeat(feat)) { // class Specific feat
-			return uiCharEditor.featsClassStyle;
-		}
-		else if (uiCharEditor.IsClassBonusFeat(feat)) // is choosing class bonus right now
-		{
+
+		if (uiCharEditor.IsClassBonusFeat(feat)) {  // is choosing class bonus right now 
 			return uiCharEditor.featsGoldenStyle;
 		}
+		else if (feats.IsClassFeat(feat))// class Specific feat
+		{
+			return uiCharEditor.featsClassStyle;
+		}
 		else
-			return uiCharEditor.featsBonusTextStyle;
+			return uiCharEditor.featsNormalTextStyle;
 	}
 
 	return uiCharEditor.featsGreyedStyle;
@@ -2289,8 +2292,11 @@ bool UiCharEditor::FeatCanPick(feat_enums feat) {
 			return true;
 	}
 
-	if (IsSelectingBonusFeat() && IsClassBonusFeat(feat) && feats.IsFeatPropertySet(feat, FPF_ROGUE_BONUS)){
-		return true;
+	if (IsSelectingBonusFeat() && IsClassBonusFeat(feat)){
+		if ( feats.IsFeatPropertySet(feat, FPF_ROGUE_BONUS))
+			return true;
+		if (uiCharEditor.IsBonusFeatDisregardingPrereqs(feat))
+			return true;
 	}
 
 
@@ -2427,6 +2433,16 @@ bool UiCharEditor::IsClassBonusFeat(feat_enums feat) {
 	default:
 		return false;
 	}
+}
+
+bool UiCharEditor::IsBonusFeatDisregardingPrereqs(feat_enums feat){
+	
+	for (auto it : mBonusFeats) {
+		if (it.featEnum == feat)
+			return (it.flag & FeatInfoFlag::DisregardPrereqs) != 0;
+	}
+
+	return false;
 }
 
 void UiCharEditor::SetBonusFeats(std::vector<FeatInfo>& fti) {
