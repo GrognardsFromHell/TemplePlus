@@ -34,6 +34,7 @@ enum ItemErrorCode: uint32_t
 
 
 enum ItemInsertFlags : uint8_t {
+	IIF_None = 0,
 	IIF_Allow_Swap = 0x1,
 	IIF_Use_Wield_Slots = 0x2, // will let the item transfer try to insert in the wielded item slots (note: will not replace if there is already an item equipped!)
 	IIF_4 = 0x4,
@@ -104,11 +105,13 @@ struct InventorySystem : temple::AddressTable
 	void InsertAtLocation(objHndl item, objHndl receiver, int itemInsertLocation);
 	int ItemUnwield(objHndl item);
 	int ItemUnwieldByIdx(objHndl obj, int i);
+	int ItemUnwield(objHndl critter, EquipSlot slot);
+	int Wield(objHndl handle, objHndl item, EquipSlot slot = EquipSlot::Invalid);
 	
 	ItemErrorCode TransferWithFlags(objHndl item, objHndl receiver, int invenInt, char flags, objHndl bag);
 	void ItemPlaceInIdx(objHndl item, int idx);
 	int ItemDrop(objHndl item);
-	int ItemGet(objHndl item, objHndl receiver, int flags); // see ItemInsertFlag
+	int ItemGet(objHndl item, objHndl receiver, ItemInsertFlags flags); // see ItemInsertFlag
 	void ForceRemove(objHndl item, objHndl parent);
 	bool IsProficientWithArmor(objHndl obj, objHndl armor) const;
 	void GetItemMesLine(MesLine* line);
@@ -199,6 +202,8 @@ private:
 	int(__cdecl*_ItemDrop)(objHndl item);
 	objHndl(__cdecl *_ItemWornAt)(objHndl, EquipSlot nItemSlot);
 	int(__cdecl *_GetWieldType)(objHndl wielder, objHndl item);
+
+	int InvIdxForSlot(EquipSlot slot);
 };
 
 extern InventorySystem inventory;

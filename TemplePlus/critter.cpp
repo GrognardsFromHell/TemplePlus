@@ -398,7 +398,7 @@ void LegacyCritterSystem::Pickpocket(objHndl handle, objHndl tgt, int & gotCaugh
 			if (stealableItems.size()){
 				auto itemStolen = stealableItems[Dice::Roll(1, stealableItems.size()) - 1];
 				histSys.CreateFromFreeText(fmt::format("Stole {}.\n\n", description.getDisplayName(itemStolen, handle)).c_str());
-				inventory.ItemGet(itemStolen, handle, 0);
+				inventory.ItemGet(itemStolen, handle, ItemInsertFlags::IIF_None);
 				pickpocketFailed = false;
 			}
 			else if (tgtMoney > 0 ) // steal coins instead

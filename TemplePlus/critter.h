@@ -14,26 +14,6 @@ namespace gfx {
 	using AnimatedModelPtr = std::shared_ptr<class AnimatedModel>;
 }
 
-enum EquipSlot : uint32_t {
-	Helmet = 0,
-	Necklace = 1,
-	Gloves = 2,
-	WeaponPrimary = 3,
-	WeaponSecondary = 4,
-	Armor = 5,
-	RingPrimary = 6,
-	RingSecondary = 7,
-	Boots = 8,
-	Ammo = 9,
-	Cloak = 10,
-	Shield = 11,
-	Robes = 12,
-	Bracers = 13,
-	BardicItem = 14,
-	Lockpicks = 15,
-	Count = 16
-};
-
 enum class StandPointType : uint32_t {
 	Day = 0,
 	Night = 1,

@@ -142,7 +142,7 @@ public:
 
 			auto handleNew = gameSystems->GetObj().CreateObject(protoHandle, loc);
 			if (handleNew){
-				if (!inventory.ItemGet(handleNew, leader, 0))
+				if (!inventory.ItemGet(handleNew, leader, ItemInsertFlags::IIF_None))
 				{
 					objects.Destroy(handleNew);
 					return 0;

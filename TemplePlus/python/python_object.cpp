@@ -2418,6 +2418,44 @@ static PyObject* PyObjHandle_GetWieldType(PyObject* obj, PyObject* args) {
 }
 
 
+static PyObject* PyObjHandle_Unwield(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+
+	int es;
+	if (!PyArg_ParseTuple(args, "i:objhndl.item_worn_unwield",  &es)) {
+		return 0;
+	}
+
+
+	if (es >= EquipSlot::Count || es < 0)
+		es = EquipSlot::Invalid;
+	auto equipSlot = (EquipSlot)es;
+
+	inventory.ItemUnwield(self->handle,  equipSlot);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_Wield(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+	objHndl item = objHndl::null;
+	int equipSlot;
+	if (!PyArg_ParseTuple(args, "O&i:objhndl.item_wield", &ConvertObjHndl, &item, &equipSlot)) {
+		return 0;
+	}
+
+
+	if (equipSlot >= EquipSlot::Count || equipSlot < 0)
+		equipSlot = EquipSlot::Invalid;
+
+	inventory.Wield(self->handle, item, (EquipSlot)equipSlot);
+	Py_RETURN_NONE;
+}
 
 static PyObject* PyObjHandle_WieldBestAll(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -2425,7 +2463,7 @@ static PyObject* PyObjHandle_WieldBestAll(PyObject* obj, PyObject* args) {
 		Py_RETURN_NONE;
 	}
 	objHndl targetHndl = objHndl::null;
-	if (!PyArg_ParseTuple(args, "|O&:objhndl.wield_best_all", &ConvertObjHndl, &targetHndl)) {
+	if (!PyArg_ParseTuple(args, "|O&:objhndl.item_wield_best_all", &ConvertObjHndl, &targetHndl)) {
 		return 0;
 	}
 	inventory.WieldBestAll(self->handle, targetHndl);
@@ -2806,7 +2844,10 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "item_flags_get", GetFlags<obj_f_item_flags>, METH_VARARGS, NULL },
 	{ "item_flag_set", SetFlag<obj_f_item_flags>, METH_VARARGS, NULL },
 	{ "item_flag_unset", ClearFlag<obj_f_item_flags>, METH_VARARGS, NULL },
+	{ "item_worn_unwield", PyObjHandle_Unwield, METH_VARARGS, NULL },
+	{ "item_wield", PyObjHandle_Wield, METH_VARARGS, NULL },
 	{ "item_wield_best_all", PyObjHandle_WieldBestAll, METH_VARARGS, NULL },
+
 
 	{ "leader_get", PyObjHandle_LeaderGet, METH_VARARGS, NULL },
 

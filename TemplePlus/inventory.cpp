@@ -351,7 +351,7 @@ int InventorySystem::ItemDrop(objHndl item)
 	return _ItemDrop(item);
 }
 
-int InventorySystem::ItemGet(objHndl item, objHndl receiver, int flags)
+int InventorySystem::ItemGet(objHndl item, objHndl receiver, ItemInsertFlags flags)
 {
 	auto itemObj = gameSystems->GetObj().GetObject(item);
 	auto recObj = gameSystems->GetObj().GetObject(receiver);
@@ -488,6 +488,31 @@ int InventorySystem::ItemUnwieldByIdx(objHndl obj, int i)
 	if (!item)
 		return 1;
 	return ItemUnwield(item);
+}
+
+int InventorySystem::ItemUnwield(objHndl critter, EquipSlot slot){
+	return ItemUnwieldByIdx( critter, InvIdxForSlot(slot));
+}
+
+int InventorySystem::Wield(objHndl critter, objHndl item, EquipSlot slot){
+
+	if (!item)
+		return FALSE;
+
+	auto canWield = false;
+
+	auto existingItem = inventory.ItemWornAt(critter, slot);
+	if (existingItem){
+		if (inventory.ItemUnwield(existingItem))
+			canWield = true;
+	}
+	else
+		canWield = true;
+
+	if (canWield)
+		ItemPlaceInIdx(item, inventory.InvIdxForSlot(slot));
+
+	return TRUE;
 }
 
 ItemErrorCode InventorySystem::TransferWithFlags(objHndl item, objHndl receiver, int invenIdx, char flags, objHndl bag)
@@ -893,4 +918,8 @@ const std::string & InventorySystem::GetAttachBone(objHndl handle)
 int InventorySystem::GetSoundIdForItemEvent(objHndl item, objHndl wielder, objHndl tgt, int eventType)
 {
 	return temple::GetRef<int(__cdecl)(objHndl, objHndl, objHndl, int)>(0x1006E0B0)(item, wielder, tgt, eventType);
+}
+
+int InventorySystem::InvIdxForSlot(EquipSlot slot){
+	return slot + INVENTORY_WORN_IDX_START;
 }
