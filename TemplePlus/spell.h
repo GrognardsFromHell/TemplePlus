@@ -321,7 +321,6 @@ private:
 		bool SpellEntryFileParse(SpellEntry & spEntry, TioFile *tf);
 
 	std::map<int, std::vector<SpellMultiOption>> mMultiOptions;
-	void GetSpellMultiOptionsFromFile(int spellEnum);
 	void GetSpellEntryExtFromClassSpec(std::map<int, int>& mapping, int classEnum);
 
 	uint32_t(__cdecl * _getSpellCountByClassLvl)();

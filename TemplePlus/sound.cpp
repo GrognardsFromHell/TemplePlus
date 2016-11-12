@@ -3,7 +3,9 @@
 #include "sound.h"
 #include "util/fixes.h"
 
+
 Sound sound;
+std::map<int, std::string> Sound::mUserSounds;
 
 static struct SoundAddresses : temple::AddressTable {
 	// Seems to return the sound stream id or -1 on failure
@@ -46,6 +48,18 @@ int Sound::MssPlaySound(int soundId)
 	return addresses.MssSoundPlay(soundId);
 }
 
+void Sound::Init(){
+
+	// rules\spell_enums.mes extension
+	TioFileList soundMesFiles;
+	tio_filelist_create(&soundMesFiles, "sound\\user_sounds\\*.mes");
+
+	for (auto i = 0; i< soundMesFiles.count; i++) {
+		std::string combinedFname(fmt::format("sound\\user_sounds\\{}", soundMesFiles.files[i].name));
+		mesFuncs.AddToMap(combinedFname, mUserSounds);
+	}
+	tio_filelist_destroy(&soundMesFiles);
+}
 
 class SoundHooks: TempleFix
 {
@@ -74,7 +88,14 @@ int SoundHooks::FindSound(int soundId, char* filename){
 	}
 
 
-	// try tpmes\sounds.mes first
+	// First try the Temple+ user sounds
+	auto findUserSnd = sound.mUserSounds.find(soundId);
+	if (findUserSnd != sound.mUserSounds.end()){
+		sprintf(filename, "%s%s", *addresses.soundFolder, findUserSnd->second.c_str());
+		return 0;
+	}
+
+	// try tpmes\sounds.mes
 
 	MesLine mesline;
 	mesline.key = soundId;

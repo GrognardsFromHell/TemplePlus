@@ -710,6 +710,8 @@ SoundGameSystem::SoundGameSystem(const GameSystemConf &config) {
 	if (!startup(&config)) {
 		throw TempleException("Unable to initialize game system SoundGame");
 	}
+
+	sound.Init(); // init user_sounds extensions
 }
 SoundGameSystem::~SoundGameSystem() {
 	auto shutdown = temple::GetPointer<void()>(0x1003bb10);

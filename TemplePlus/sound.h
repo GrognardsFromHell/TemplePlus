@@ -35,6 +35,8 @@ public:
 	int MssPlaySound(int soundId);
 
 private:
+	void Init();
+	static std::map<int, std::string> mUserSounds;
 	MesHandle tpSounds = -1;
 };
 
