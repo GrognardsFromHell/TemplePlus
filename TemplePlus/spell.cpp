@@ -1804,8 +1804,15 @@ uint32_t LegacySpellSystem::getSpellEnum(const char* spellName)
 		if (!_stricmp(spellName, mesLine.value)){
 			return i;
 		}
-			
 	}
+
+	for (auto it: mUserSpellEnumsMesLines){
+		if (!_strcmpi(it.second.c_str(), spellName)
+			&& it.first >= 5000){
+				return it.first - 5000;
+		}
+	}
+
 	return 0;
 }
 

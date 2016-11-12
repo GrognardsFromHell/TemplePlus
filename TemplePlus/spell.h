@@ -211,7 +211,7 @@ struct LegacySpellSystem : temple::AddressTable
 	uint32_t getStatModBonusSpellCount(objHndl objHnd, uint32_t classCode, uint32_t slotLvl);
 	void spellPacketBodyReset(SpellPacketBody * spellPktBody);
 	void SpellPacketSetCasterLevel(SpellPacketBody * spellPktBody) const;
-	uint32_t getSpellEnum(const char* spellName);
+	uint32_t getSpellEnum(const char* spellName); // retrieve spell enum from string. Used for parsing protos.tab and item creation strings
 	uint32_t GetSpellEnumFromSpellId(uint32_t spellId);
 	uint32_t GetSpellPacketBody(uint32_t spellId, SpellPacketBody* spellPktBodyOut);
 	void UpdateSpellPacket(const SpellPacketBody &spellPktBody);
