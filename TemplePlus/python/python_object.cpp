@@ -1591,7 +1591,14 @@ static PyObject* PyObjHandle_ItemGet(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "O&:objhndl.item_get", &ConvertObjHndl, &item)) {
 		return 0;
 	}
-	auto result = inventory.SetItemParent(item, self->handle, 0);
+	
+	if (inventory.IsVisibleInventoryFull(self->handle)) {
+		auto result = inventory.SetItemParent(item, self->handle, 8);
+	}
+	else {
+		auto result = inventory.SetItemParent(item, self->handle, 0);
+	}
+	
 	return PyInt_FromLong(result);
 }
 
