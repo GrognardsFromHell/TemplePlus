@@ -1591,7 +1591,14 @@ static PyObject* PyObjHandle_ItemGet(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "O&:objhndl.item_get", &ConvertObjHndl, &item)) {
 		return 0;
 	}
-	auto result = inventory.SetItemParent(item, self->handle, 0);
+	
+	if (inventory.IsVisibleInventoryFull(self->handle)) {
+		auto result = inventory.SetItemParent(item, self->handle, 8);
+	}
+	else {
+		auto result = inventory.SetItemParent(item, self->handle, 0);
+	}
+	
 	return PyInt_FromLong(result);
 }
 
@@ -2448,7 +2455,16 @@ static PyObject* PyObjHandle_Wield(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "O&i:objhndl.item_wield", &ConvertObjHndl, &item, &equipSlot)) {
 		return 0;
 	}
-
+	
+	if ( GetParent(item) != self->handle )
+	{
+		if (inventory.IsVisibleInventoryFull(self->handle)) {
+			auto result = inventory.SetItemParent(item, self->handle, 8);
+		}
+		else {
+			auto result = inventory.SetItemParent(item, self->handle, 0);
+		}
+	}
 
 	if (equipSlot >= EquipSlot::Count || equipSlot < 0)
 		equipSlot = EquipSlot::Invalid;

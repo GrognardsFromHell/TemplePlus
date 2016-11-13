@@ -391,6 +391,28 @@ bool InventorySystem::IsRangedWeapon(objHndl weapon){
 	return false;
 }
 
+bool InventorySystem::IsVisibleInventoryFull(objHndl objHandle)
+{
+	auto obj = objSystem->GetObject(objHandle);
+	auto invenNumField = obj_f_critter_inventory_num;
+	auto invenField = obj_f_critter_inventory_list_idx;
+	
+	if (obj->type == obj_t_container)
+	{
+		invenNumField = obj_f_container_inventory_num;
+		invenField = obj_f_container_inventory_list_idx;
+	}
+	auto numItems = obj->GetInt32(invenNumField);
+	if (numItems <= 0 || numItems < 24) return false;
+	
+	for (int i = 0; i < 24; i++)
+	{
+		if ( !(obj->GetObjHndl(invenField, i)) )
+			return false;
+	}
+	return true;
+}
+
 int InventorySystem::GetInventory(objHndl objHandle, objHndl ** inventoryArray)
 {
 	*inventoryArray = nullptr;
