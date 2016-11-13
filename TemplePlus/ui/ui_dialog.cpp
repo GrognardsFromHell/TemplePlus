@@ -126,3 +126,17 @@ BOOL UiDialog::WidgetsInit(int w, int h)
 	return TRUE;
 	return 0;
 }
+
+BOOL UiDialog::ResponseWidgetsInit(int w, int h)
+{
+	return 0;
+}
+
+BOOL UiDialog::WndMsg(int widId, TigMsg * msg)
+{
+	return 0;
+}
+
+void UiDialog::WndRender(int widId)
+{
+}

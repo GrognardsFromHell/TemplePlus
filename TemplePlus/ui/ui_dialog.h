@@ -30,10 +30,10 @@ public:
 
 protected:
 	BOOL WidgetsInit(int w, int h);
-	BOOL ResponseWidgetsInit(int w, int h);
+	BOOL ResponseWidgetsInit(int w, int h); // todo
 
-	BOOL WndMsg(int widId, TigMsg* msg);
-	void WndRender(int widId);
+	BOOL WndMsg(int widId, TigMsg* msg); // todo
+	void WndRender(int widId); // todo
 
 	int wndId, wnd2Id;
 	int responseWndId;

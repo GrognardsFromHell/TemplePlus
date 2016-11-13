@@ -6,6 +6,7 @@
 
 enum EquipSlot : uint32_t;
 
+#define CRITTER_INVENTORY_SLOT_COUNT 24 // amount of inventory slots visible
 #define INVENTORY_WORN_IDX_START 200 // the first inventory index for worn items
 #define INVENTORY_WORN_IDX_END 216 // the last index for worn items
 
@@ -82,7 +83,7 @@ struct InventorySystem : temple::AddressTable
 
 	objHndl FindItemByProtoId(objHndl container, int protoId, bool skipWorn = false);
 
-	int SetItemParent(objHndl item, objHndl parent, int flags);
+	
 	int IsNormalCrossbow(objHndl weapon);
 	int IsThrowingWeapon(objHndl weapon);
 	bool UsesWandAnim(const objHndl item);
@@ -95,24 +96,30 @@ struct InventorySystem : temple::AddressTable
 
 	int ItemWeight(objHndl item); // returns weight of item (or item stack if applicable)
 
-	objHndl GetParent(objHndl item);
+	
 	bool IsRangedWeapon(objHndl weapon);
+	bool IsVisibleInventoryFull(objHndl obj);
 	int GetInventory(objHndl obj, objHndl** inventoryArray);
 	int GetInventoryLocation(objHndl item);
 	ItemFlag GetItemFlags(objHndl item);
 	int IsItemNonTransferable(objHndl item, objHndl receiver);
+	
+	
+	objHndl GetParent(objHndl item);
+	int SetItemParent(objHndl item, objHndl parent, int flags);
+	int SetItemParent(objHndl item, objHndl receiver, ItemInsertFlags flags);
+	ItemErrorCode TransferWithFlags(objHndl item, objHndl receiver, int invenInt, char flags, objHndl bag);
+	void ItemPlaceInIdx(objHndl item, int idx);
 	int ItemInsertGetLocation(objHndl item, objHndl receiver, int* itemInsertLocation, objHndl bag, char flags);
 	void InsertAtLocation(objHndl item, objHndl receiver, int itemInsertLocation);
+	int Wield(objHndl handle, objHndl item, EquipSlot slot = EquipSlot::Invalid);
+
+	void ForceRemove(objHndl item, objHndl parent);
+	int ItemDrop(objHndl item);
 	int ItemUnwield(objHndl item);
 	int ItemUnwieldByIdx(objHndl obj, int i);
 	int ItemUnwield(objHndl critter, EquipSlot slot);
-	int Wield(objHndl handle, objHndl item, EquipSlot slot = EquipSlot::Invalid);
-	
-	ItemErrorCode TransferWithFlags(objHndl item, objHndl receiver, int invenInt, char flags, objHndl bag);
-	void ItemPlaceInIdx(objHndl item, int idx);
-	int ItemDrop(objHndl item);
-	int ItemGet(objHndl item, objHndl receiver, ItemInsertFlags flags); // see ItemInsertFlag
-	void ForceRemove(objHndl item, objHndl parent);
+
 	bool IsProficientWithArmor(objHndl obj, objHndl armor) const;
 	void GetItemMesLine(MesLine* line);
 	const char* GetItemErrorString(ItemErrorCode itemErrorCode);

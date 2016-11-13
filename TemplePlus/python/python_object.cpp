@@ -1588,10 +1588,19 @@ static PyObject* PyObjHandle_ItemGet(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 	objHndl item;
-	if (!PyArg_ParseTuple(args, "O&:objhndl.item_get", &ConvertObjHndl, &item)) {
+	int flags = ItemInsertFlags::IIF_None;
+	if (!PyArg_ParseTuple(args, "O&|i:objhndl.item_get", &ConvertObjHndl, &item, &flags)) {
 		return 0;
 	}
-	auto result = inventory.SetItemParent(item, self->handle, 0);
+
+	auto result = 0;
+	if (inventory.IsVisibleInventoryFull(self->handle) && (flags & ItemInsertFlags::IIF_Use_Max_Idx_200 )) {
+		result = inventory.SetItemParent(item, self->handle, ItemInsertFlags::IIF_Use_Max_Idx_200);
+	}
+	else {
+		result = inventory.SetItemParent(item, self->handle, ItemInsertFlags::IIF_None);
+	}
+	
 	return PyInt_FromLong(result);
 }
 
@@ -2448,7 +2457,15 @@ static PyObject* PyObjHandle_Wield(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "O&i:objhndl.item_wield", &ConvertObjHndl, &item, &equipSlot)) {
 		return 0;
 	}
-	 
+	
+	if ( inventory.GetParent(item) != self->handle ){
+		if (inventory.IsVisibleInventoryFull(self->handle)) {
+			auto result = inventory.SetItemParent(item, self->handle, ItemInsertFlags::IIF_Use_Max_Idx_200);
+		}
+		else {
+			auto result = inventory.SetItemParent(item, self->handle, 0);
+		}
+	}
 
 	if (equipSlot >= EquipSlot::Count || equipSlot < 0)
 		equipSlot = EquipSlot::Invalid;

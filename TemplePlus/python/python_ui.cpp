@@ -64,7 +64,8 @@ PYBIND11_PLUGIN(tp_ui) {
 
 	py::class_<WidgetType3>(m, "WidgetScrollbar", py::base<Widget>())
 		.def(py::init())
-		.def("init", &WidgetType3::Init)
+		.def("init", (bool (WidgetType3::*)(int, int, int)) &WidgetType3::Init)
+		.def("init", (bool (WidgetType3::*)(int, int, int, int)) &WidgetType3::Init)
 		.def_readwrite("scroll_position_min", &WidgetType3::yMin)
 		.def_readwrite("scroll_position_max", &WidgetType3::yMax)
 		.def_readwrite("scroll_position", &WidgetType3::scrollbarY)

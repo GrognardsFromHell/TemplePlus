@@ -261,7 +261,7 @@ objHndl InventorySystem::FindItemByProtoId(objHndl container, int protoId, bool 
 }
 
 int InventorySystem::SetItemParent(objHndl item, objHndl parent, int flags)  {
-	return _SetItemParent(item, parent, flags);
+	return SetItemParent(item, parent, (ItemInsertFlags)flags);
 }
 
 int InventorySystem::IsNormalCrossbow(objHndl weapon)
@@ -351,20 +351,20 @@ int InventorySystem::ItemDrop(objHndl item)
 	return _ItemDrop(item);
 }
 
-int InventorySystem::ItemGet(objHndl item, objHndl receiver, ItemInsertFlags flags)
-{
+int InventorySystem::SetItemParent(objHndl item, objHndl receiver, ItemInsertFlags flags){
+
 	auto itemObj = gameSystems->GetObj().GetObject(item);
 	auto recObj = gameSystems->GetObj().GetObject(receiver);
 	
 	if (objects.IsContainer(receiver)){
-		return ItemGetAdvanced(item, receiver, -1, 0x8);
+		return ItemGetAdvanced(item, receiver, -1, ItemInsertFlags::IIF_Use_Max_Idx_200);
 	}
 	
 	if (!objects.IsCritter(receiver)){
 		return 0;
 	}
 	
-	if ( gameSystems->GetObj().GetProtoId(item) == 6239){ // Darley's Neckalce
+	if ( gameSystems->GetObj().GetProtoId(item) == 6239){ // Darley's Neckalce special casing
 		return ItemGetAdvanced(item, receiver, 201, flags);
 	}
 
@@ -391,8 +391,29 @@ bool InventorySystem::IsRangedWeapon(objHndl weapon){
 	return false;
 }
 
-int InventorySystem::GetInventory(objHndl objHandle, objHndl ** inventoryArray)
-{
+bool InventorySystem::IsVisibleInventoryFull(objHndl handle){
+
+	auto obj = objSystem->GetObject(handle);
+	auto invenNumField = obj_f_critter_inventory_num;
+	auto invenField = obj_f_critter_inventory_list_idx;
+	
+	if (obj->type == obj_t_container){
+		invenNumField = obj_f_container_inventory_num;
+		invenField = obj_f_container_inventory_list_idx;
+	}
+
+	auto numItems = obj->GetInt32(invenNumField);
+	if (numItems <= 0 || numItems < CRITTER_INVENTORY_SLOT_COUNT) return false;
+	
+	for (int i = 0; i < CRITTER_INVENTORY_SLOT_COUNT; i++){
+		if ( !inventory.GetItemAtInvIdx(handle, i) )
+			return false;
+	}
+	return true;
+}
+
+int InventorySystem::GetInventory(objHndl objHandle, objHndl ** inventoryArray){
+
 	*inventoryArray = nullptr;
 	auto obj = objSystem->GetObject(objHandle);
 	auto invenNumField = obj_f_critter_inventory_num;
