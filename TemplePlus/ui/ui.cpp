@@ -365,6 +365,16 @@ bool WidgetType3::Init(int X, int Y, int Height){
 	return false;
 }
 
+bool WidgetType3::Init(int x, int y, int height, int parentId)
+{
+	Init(x, y, height);
+	this->parentId = parentId;
+	auto p = ui.WidgetGetType1(parentId);
+	this->x += p->x;
+	this->y += p->y;
+	return false;
+}
+
 bool WidgetType3::Add(int* widIdOut){
 	return temple::GetRef<bool(__cdecl)(Widget*, size_t, int*, const char*, int)>(0x101F93D0)(this, sizeof(WidgetType3), widIdOut, "ui.cpp", 366);
 }

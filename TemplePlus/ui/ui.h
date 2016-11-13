@@ -167,6 +167,7 @@ struct WidgetType3 : public Widget {
 	int fieldAC;
 	int GetY();
 	bool Init(int x, int y, int height);
+	bool Init(int x, int y, int height, int parentId);
 	bool Add(int * widIdOut);
 };
 
