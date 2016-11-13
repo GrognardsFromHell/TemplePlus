@@ -2456,7 +2456,7 @@ static PyObject* PyObjHandle_Wield(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 	
-	if ( GetParent(item) != self->handle )
+	if ( inventory.GetParent(item) != self->handle )
 	{
 		if (inventory.IsVisibleInventoryFull(self->handle)) {
 			auto result = inventory.SetItemParent(item, self->handle, 8);
