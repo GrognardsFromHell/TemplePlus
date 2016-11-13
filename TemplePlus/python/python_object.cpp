@@ -1584,6 +1584,7 @@ static PyObject* PyObjHandle_Destroy(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_ItemGet(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	auto result = 0;
 	if (!self->handle) {
 		return 0;
 	}
@@ -1593,10 +1594,10 @@ static PyObject* PyObjHandle_ItemGet(PyObject* obj, PyObject* args) {
 	}
 	
 	if (inventory.IsVisibleInventoryFull(self->handle)) {
-		auto result = inventory.SetItemParent(item, self->handle, 8);
+		result = inventory.SetItemParent(item, self->handle, 8);
 	}
 	else {
-		auto result = inventory.SetItemParent(item, self->handle, 0);
+		result = inventory.SetItemParent(item, self->handle, 0);
 	}
 	
 	return PyInt_FromLong(result);
@@ -2447,6 +2448,7 @@ static PyObject* PyObjHandle_Unwield(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_Wield(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	auto result = 0;
 	if (!self->handle) {
 		Py_RETURN_NONE;
 	}
@@ -2459,10 +2461,10 @@ static PyObject* PyObjHandle_Wield(PyObject* obj, PyObject* args) {
 	if ( inventory.GetParent(item) != self->handle )
 	{
 		if (inventory.IsVisibleInventoryFull(self->handle)) {
-			auto result = inventory.SetItemParent(item, self->handle, 8);
+			result = inventory.SetItemParent(item, self->handle, 8);
 		}
 		else {
-			auto result = inventory.SetItemParent(item, self->handle, 0);
+			result = inventory.SetItemParent(item, self->handle, 0);
 		}
 	}
 
