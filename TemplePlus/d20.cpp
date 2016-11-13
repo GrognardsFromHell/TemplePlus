@@ -38,6 +38,7 @@
 #include "InfinityEngine.h"
 
 
+
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
 static_assert(sizeof(D20Actn) == 0x58, "D20Action struct has the wrong size!");
 static_assert(sizeof(D20ActionDef) == 0x30, "D20ActionDef struct has the wrong size!");
@@ -533,21 +534,23 @@ void LegacyD20System::NewD20ActionsInit()
 
 void LegacyD20System::InfinityEngineBullshit(){
 	
+
+
+#pragma region chitin
+	// Process chitin.key file
 	std::vector<BifRecord> biffEntries;
 	std::vector<ChitinResEntry> resKeyEntries;
+	std::vector<ChitinResEntry> tisKeyEntries;
+	std::map<std::string, ieResourceLoc> tisMapping; // maps resource name to resource locator
 
 	// read header
-	ChitinKeyHeader keyHeader;
+	ChitinKeyHeader keyHeader; // contains the number of BIFs and Resources and their starting offset
 	auto chitin_file = tio_fopen("chitin.key", "rb");
 
 	if (chitin_file == nullptr)
 		return;
 
 	tio_fread(&keyHeader, sizeof(ChitinKeyHeader), 1, chitin_file);
-	
-
-
-
 	
 	// Get biff entries (file names really)
 	for (auto i=0; i<keyHeader.biffCount; i++){
@@ -558,6 +561,7 @@ void LegacyD20System::InfinityEngineBullshit(){
 
 	auto curPos = tio_ftell(chitin_file);
 
+	// get the BIF file names
 	for (auto i = 0; i<keyHeader.biffCount; i++) {
 		char tempBuffer[1024];
 		auto &be = biffEntries[i];
@@ -570,22 +574,28 @@ void LegacyD20System::InfinityEngineBullshit(){
 
 
 	// Get resource entries
+	// Consist of string ID, type, and index
 	curPos = tio_ftell(chitin_file);
 	if (curPos > keyHeader.resourceOffset){
 		logger->warn("oy vey!");
 	}
+
 	tio_fseek(chitin_file, keyHeader.resourceOffset, 0);
 	curPos = tio_ftell(chitin_file);
 	for (auto i = 0; i<keyHeader.resourceCount; i++) {
 		ChitinResEntry resTemp;
 		tio_fread(&resTemp, sizeof(ChitinResEntry), 1, chitin_file);
 		resKeyEntries.push_back(resTemp);
+		if (resTemp.resType == IeResourceType::IERT_Tileset){
+			tisKeyEntries.push_back(resTemp);
+			tisMapping[resTemp.resName] = resTemp.resLocator;
+		}
 	}
 
 
 	curPos = tio_ftell(chitin_file); // should be 522652 for IWD:EE
 	tio_fclose(chitin_file);
-
+#pragma endregion
 	
 	// read biff files
 	TioFileList fl;
@@ -596,33 +606,80 @@ void LegacyD20System::InfinityEngineBullshit(){
 	std::map<int, std::vector<char>> fileCache;
 
 	for (auto i=0; i< fl.count; i++){
-
-
-
+		// open the BIF file
 		auto f = tio_fopen(fmt::format("data/{}",fl.files[i].name).c_str() , "rb");
 
+		// read the BIFF header
+		char bifSignature[4];
+		char bifVersion[4];
+		tio_fread(&bifSignature, sizeof(char), 4, f);
+		tio_fread(&bifVersion, sizeof(char), 4, f);
+
+		if (!_strcmpi(bifSignature, "BIFC")){
+			BifCHeader bifCHeader;
+			memcpy(bifCHeader.signature ,bifSignature, sizeof(bifSignature));
+			memcpy(bifCHeader.version, bifVersion, sizeof(bifVersion));
+			tio_fread(&bifCHeader.filenameLen, sizeof(ieDword), 1, f);
+			gsl::span<uint8_t> rawData;
+			
+		}
+
 		BiffHeader bifHeader;
-
-		tio_fread(&bifHeader, sizeof(BiffHeader), 1, f);
-
+		memcpy(bifHeader.signature, bifSignature, sizeof(bifSignature));
+		memcpy(bifHeader.version , bifVersion, sizeof(bifVersion));
+		tio_fread(&bifHeader.fileCount, sizeof(ieDword), 1, f);
+		tio_fread(&bifHeader.tilesetCount, sizeof(ieDword), 1, f);
+		tio_fread(&bifHeader.fileEntriesOff, sizeof(ieDword), 1, f);
+		;
+		// initialize the BIFF Contents
 		biffContents.push_back({ bifHeader });
+		auto &bifC = biffContents[i];
+
 		// read file entries
 		tio_fseek(f, bifHeader.fileEntriesOff, 0);
 
 		for (auto j = 0; j < bifHeader.fileCount; j++){
 			BiffFileEntry fe;
 			tio_fread(&fe, sizeof(BiffFileEntry), 1, f);
-			biffContents[i].files.push_back(fe);
+			bifC.files.push_back(fe);
+		}
+
+		// read tile entries 
+		for (auto j = 0; j < bifHeader.tilesetCount; j++){
+				BiffTileEntry te;
+				tio_fread(&te, sizeof(BiffTileEntry), 1, f);
+				bifC.tiles.push_back(te);
 		}
 
 
-
-		for (auto j=0; j < bifHeader.fileCount; j++){
-			auto &fe = biffContents[i].files[j];
-			tio_fseek(f, fe.dataOffset, 0);
-		}
 		// read the file data
+		for (auto j = 0; j < bifHeader.fileCount; j++) {
+			auto &fe = bifC.files[j];
+			tio_fseek(f, fe.dataOffset, 0);
+			curPos = tio_ftell(f);
+			
+		}
+
+
+
+		// read the tile data
+		for (auto j=0; j < bifHeader.tilesetCount; j++){
+			auto &te = bifC.tiles[j];
+			tio_fseek(f, te.dataOffset, 0);
 		
+			auto tileCount = te.tilesCount;
+			auto tileSize = te.tileSize;
+
+			curPos = tio_ftell(f);
+			
+
+			int dummy = 1;
+		}
+		
+		
+		
+
+
 		tio_fclose(f);
 		
 	}

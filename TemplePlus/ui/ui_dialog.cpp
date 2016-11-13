@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "ui_dialog.h"
 #include <temple/dll.h>
+#include "ui.h"
 
 UiDialog uiDialog;
 
@@ -47,4 +48,81 @@ void UiDialog::Unk() {
 
 void UiDialog::ShowTextBubble(objHndl speaker, objHndl speakingTo, const string &text, int speechId) {
 	addresses.ShowTextBubble(speaker, speakingTo, text.c_str(), speechId);
+}
+
+BOOL UiDialog::WidgetsInit(int w, int h)
+{
+	static WidgetType1 dlgWnd(9, h - 374, 611, 292);
+	dlgWnd.widgetFlags = 1;
+	dlgWnd.render = [](int widId) { uiDialog.WndRender(widId); };
+	dlgWnd.handleMessage = [](int widId, TigMsg* msg) { return uiDialog.WndMsg(widId, msg); };
+	if (dlgWnd.Add(&wndId))
+		return 0;
+
+	// scrollbar
+	scrollbar.Init(592, 28, 126, wndId);
+	scrollbar.Add(&scrollbarId);
+	ui.BindToParent(wndId, scrollbarId);
+
+
+	int coloff = 0, rowoff = 0;
+
+	//for (auto it : d20ClassSys.vanillaClassEnums) {
+	//	// class buttons
+	//	int newId = 0;
+	//	WidgetType2 classBtn("Class btn", wndId, 71 + coloff, 47 + rowoff, 130, 20);
+	//	coloff = 139 - coloff;
+	//	if (!coloff)
+	//		rowoff += 29;
+	//	if (rowoff == 5 * 29) // the bottom button
+	//		coloff = 69;
+
+	//	classBtnRects.push_back(TigRect(classBtn.x, classBtn.y, classBtn.width, classBtn.height));
+	//	classBtn.x += dlgWnd.x; classBtn.y += dlgWnd.y;
+	//	classBtn.render = [](int id) {uiCharEditor.ClassBtnRender(id); };
+	//	classBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.ClassBtnMsg(id, msg); };
+	//	classBtn.Add(&newId);
+	//	classBtnIds.push_back(newId);
+	//	ui.SetDefaultSounds(newId);
+	//	ui.BindToParent(wndId, newId);
+
+	//	//rects
+	//	classBtnFrameRects.push_back(TigRect(classBtn.x - 5, classBtn.y - 5, classBtn.width + 10, classBtn.height + 10));
+
+
+	//	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	//	auto classMeasure = UiRenderer::MeasureTextSize(classNamesUppercase[it].c_str(), classBtnTextStyle);
+	//	TigRect rect(classBtn.x + (110 - classMeasure.width) / 2 - dlgWnd.x,
+	//		classBtn.y + (20 - classMeasure.height) / 2 - dlgWnd.y,
+	//		classMeasure.width, classMeasure.height);
+	//	classTextRects.push_back(rect);
+	//	UiRenderer::PopFont();
+	//}
+
+	//classNextBtnTextRect = classNextBtnRect = TigRect(dlgWnd.x + 293, dlgWnd.y + 234, 55, 20);
+	//classPrevBtnTextRect = classPrevBtnRect = TigRect(dlgWnd.x + 58, dlgWnd.y + 234, 55, 20);
+	//classNextBtnFrameRect = TigRect(dlgWnd.x + 293 - 3, dlgWnd.y + 234 - 5, 55 + 6, 20 + 10);
+	//classPrevBtnFrameRect = TigRect(dlgWnd.x + 58 - 3, dlgWnd.y + 234 - 5, 55 + 6, 20 + 10);
+	//classNextBtnTextRect.x -= dlgWnd.x; classNextBtnTextRect.y -= dlgWnd.y;
+	//classPrevBtnTextRect.x -= dlgWnd.x; classPrevBtnTextRect.y -= dlgWnd.y;
+
+	//WidgetType2 nextBtn("Class Next Button", wndId, dlgWnd.x + 293, dlgWnd.y + 230, 55, 20),
+	//	prevBtn("Class Prev. Button", wndId, dlgWnd.x + 58, dlgWnd.y + 230, 55, 20);
+
+	//nextBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {
+	//	if (uiCharEditor.classWndPage < uiCharEditor.mPageCount)
+	//		uiCharEditor.classWndPage++;
+	//	uiCharEditor.ClassSetPermissibles();
+	//	return 1; };
+	//nextBtn.render = [](int id) { uiCharEditor.ClassNextBtnRender(id); };
+	//nextBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {	return uiCharEditor.ClassNextBtnMsg(widId, msg); };
+	//prevBtn.render = [](int id) { uiCharEditor.ClassPrevBtnRender(id); };
+	//prevBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {	return uiCharEditor.ClassPrevBtnMsg(widId, msg); };
+	//nextBtn.Add(&classNextBtn);	prevBtn.Add(&classPrevBtn);
+
+	//ui.SetDefaultSounds(classNextBtn);	ui.BindToParent(wndId, classNextBtn);
+	//ui.SetDefaultSounds(classPrevBtn);	ui.BindToParent(wndId, classPrevBtn);
+
+	return TRUE;
+	return 0;
 }
