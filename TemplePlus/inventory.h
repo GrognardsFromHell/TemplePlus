@@ -97,6 +97,7 @@ struct InventorySystem : temple::AddressTable
 
 	objHndl GetParent(objHndl item);
 	bool IsRangedWeapon(objHndl weapon);
+	bool IsVisibleInventoryFull(objHndl objHandle);
 	int GetInventory(objHndl obj, objHndl** inventoryArray);
 	int GetInventoryLocation(objHndl item);
 	ItemFlag GetItemFlags(objHndl item);
