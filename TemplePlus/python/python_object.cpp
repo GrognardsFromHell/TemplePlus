@@ -2448,7 +2448,7 @@ static PyObject* PyObjHandle_Wield(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "O&i:objhndl.item_wield", &ConvertObjHndl, &item, &equipSlot)) {
 		return 0;
 	}
-
+	 
 
 	if (equipSlot >= EquipSlot::Count || equipSlot < 0)
 		equipSlot = EquipSlot::Invalid;
