@@ -2449,6 +2449,7 @@ static PyObject* PyObjHandle_Unwield(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_Wield(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	auto result = 0;
 	if (!self->handle) {
 		Py_RETURN_NONE;
 	}
@@ -2461,9 +2462,10 @@ static PyObject* PyObjHandle_Wield(PyObject* obj, PyObject* args) {
 	if ( inventory.GetParent(item) != self->handle ){
 		if (inventory.IsVisibleInventoryFull(self->handle)) {
 			auto result = inventory.SetItemParent(item, self->handle, ItemInsertFlags::IIF_Use_Max_Idx_200);
+			result = inventory.SetItemParent(item, self->handle, 8);
 		}
 		else {
-			auto result = inventory.SetItemParent(item, self->handle, 0);
+			result = inventory.SetItemParent(item, self->handle, 0);
 		}
 	}
 
