@@ -608,72 +608,112 @@ void LegacyD20System::InfinityEngineBullshit(){
 	for (auto i=0; i< fl.count; i++){
 		// open the BIF file
 		auto f = tio_fopen(fmt::format("data/{}",fl.files[i].name).c_str() , "rb");
-
+		logger->info("Opening BIFF file: {}", f->filename);
+		
 		// read the BIFF header
-		char bifSignature[4];
-		char bifVersion[4];
+		char bifSignature[5] = {0,};
+		char bifVersion[5] = { 0, };
 		tio_fread(&bifSignature, sizeof(char), 4, f);
 		tio_fread(&bifVersion, sizeof(char), 4, f);
 
-		if (!_strcmpi(bifSignature, "BIFC")){
+		if (!_strcmpi(bifSignature, "BIF ")){
 			BifCHeader bifCHeader;
 			memcpy(bifCHeader.signature ,bifSignature, sizeof(bifSignature));
 			memcpy(bifCHeader.version, bifVersion, sizeof(bifVersion));
+
 			tio_fread(&bifCHeader.filenameLen, sizeof(ieDword), 1, f);
-			gsl::span<uint8_t> rawData;
+			char fname[1024] = {0,};
+			tio_fread(&fname, sizeof(uint8_t), bifCHeader.filenameLen, f);
+			uint32_t uncompressedDataLen = 0;
+			tio_fread(&uncompressedDataLen, sizeof(uint32_t), 1, f);
+
+			uint32_t compressedDataLen = 0;
+			tio_fread(&compressedDataLen, sizeof(uint32_t), 1, f);
+ 
+			std::vector<uint8_t> rawData;
+			rawData.resize(compressedDataLen);
+			tio_fread(&rawData[0], 1, compressedDataLen, f);
 			
+			int dummy = 1;
+			
+		} 
+		else if (!strcmp(bifSignature, "BIFC")){
+			// header
+			uint32_t uncompressedBifSize= 0;
+			tio_fread(&uncompressedBifSize, sizeof(uint32_t), 1, f);
+
+
+			// compressed blocks
+			uint32_t decompressedBlockSize = 0;
+			uint32_t compressedBlockSize = 0;
+			std::vector<uint8_t> rawData;
+			tio_fread(&decompressedBlockSize, sizeof(uint32_t), 1, f);
+			tio_fread(&compressedBlockSize, sizeof(uint32_t), 1, f);
+			rawData.resize(compressedBlockSize);
+			tio_fread(&rawData[0], sizeof(uint8_t), compressedBlockSize, f);
+
+			 int dummy = 1;
 		}
+		else if (!strcmp(bifSignature, "BIFF")) {
 
-		BiffHeader bifHeader;
-		memcpy(bifHeader.signature, bifSignature, sizeof(bifSignature));
-		memcpy(bifHeader.version , bifVersion, sizeof(bifVersion));
-		tio_fread(&bifHeader.fileCount, sizeof(ieDword), 1, f);
-		tio_fread(&bifHeader.tilesetCount, sizeof(ieDword), 1, f);
-		tio_fread(&bifHeader.fileEntriesOff, sizeof(ieDword), 1, f);
-		;
-		// initialize the BIFF Contents
-		biffContents.push_back({ bifHeader });
-		auto &bifC = biffContents[i];
 
-		// read file entries
-		tio_fseek(f, bifHeader.fileEntriesOff, 0);
 
-		for (auto j = 0; j < bifHeader.fileCount; j++){
-			BiffFileEntry fe;
-			tio_fread(&fe, sizeof(BiffFileEntry), 1, f);
-			bifC.files.push_back(fe);
-		}
+			BiffHeader bifHeader;
+			memcpy(bifHeader.signature, bifSignature, sizeof(bifSignature));
+			memcpy(bifHeader.version, bifVersion, sizeof(bifVersion));
+			tio_fread(&bifHeader.fileCount, sizeof(ieDword), 1, f);
+			tio_fread(&bifHeader.tilesetCount, sizeof(ieDword), 1, f);
+			tio_fread(&bifHeader.fileEntriesOff, sizeof(ieDword), 1, f);
 
-		// read tile entries 
-		for (auto j = 0; j < bifHeader.tilesetCount; j++){
+			if (bifHeader.fileCount > 10000) {
+				int ummy = 1;
+			}
+
+			// initialize the BIFF Contents
+			biffContents.push_back({ bifHeader });
+			auto &bifC = biffContents[i];
+
+			// read file entries
+			tio_fseek(f, bifHeader.fileEntriesOff, 0);
+
+			for (auto j = 0; j < bifHeader.fileCount; j++) {
+				BiffFileEntry fe;
+				tio_fread(&fe, sizeof(BiffFileEntry), 1, f);
+				bifC.files.push_back(fe);
+			}
+
+			// read tile entries 
+			for (auto j = 0; j < bifHeader.tilesetCount; j++) {
 				BiffTileEntry te;
 				tio_fread(&te, sizeof(BiffTileEntry), 1, f);
 				bifC.tiles.push_back(te);
-		}
+			}
 
 
-		// read the file data
-		for (auto j = 0; j < bifHeader.fileCount; j++) {
-			auto &fe = bifC.files[j];
-			tio_fseek(f, fe.dataOffset, 0);
-			curPos = tio_ftell(f);
-			
-		}
+			// read the file data
+			for (auto j = 0; j < bifHeader.fileCount; j++) {
+				auto &fe = bifC.files[j];
+				tio_fseek(f, fe.dataOffset, 0);
+				curPos = tio_ftell(f);
+
+			}
 
 
 
-		// read the tile data
-		for (auto j=0; j < bifHeader.tilesetCount; j++){
-			auto &te = bifC.tiles[j];
-			tio_fseek(f, te.dataOffset, 0);
-		
-			auto tileCount = te.tilesCount;
-			auto tileSize = te.tileSize;
+			// read the tile data
+			for (auto j = 0; j < bifHeader.tilesetCount; j++) {
+				auto &te = bifC.tiles[j];
+				tio_fseek(f, te.dataOffset, 0);
 
-			curPos = tio_ftell(f);
-			
+				auto tileCount = te.tilesCount;
+				auto tileSize = te.tileSize;
 
-			int dummy = 1;
+				curPos = tio_ftell(f);
+
+
+				int dummy = 1;
+			}
+
 		}
 		
 		

@@ -7,6 +7,7 @@
 #include "util/fixes.h"
 #include "gamesystems/d20/d20stats.h"
 #include "gamesystems/legacysystems.h"
+#include "gamesystems/deity/legacydeitysystem.h"
 
 D20ClassSystem d20ClassSys;
 
@@ -54,10 +55,15 @@ class D20ClassHooks : public TempleFix
 		replaceFunction<BOOL(objHndl, SkillEnum, Stat)>(0x1007D4E0, [](objHndl obj, SkillEnum skillEnum, Stat classEnum)->BOOL
 		{
 			if (classEnum == stat_level_cleric)	{
-				auto isDomainSkill = temple::GetRef<BOOL(__cdecl)(objHndl, SkillEnum)>(0x1004C0D0);
-				if (isDomainSkill(obj, skillEnum))
+
+				if (deitySys.IsDomainSkill(obj, skillEnum))
 					return FALSE;
 			}
+
+			if (d20Sys.D20QueryPython(obj, "Is Class Skill", skillEnum)){
+				return FALSE;
+			}
+
 			return !d20ClassSys.IsClassSkill(skillEnum, classEnum);
 		});
 

@@ -4,6 +4,8 @@
 
 #define DEITY_COUNT_VANILLA 28 // includes non-selectable ones like Ralishaz and Zuggtmoy
 
+enum SkillEnum : uint32_t;
+
 struct LegacyDeitySpec{
 	Alignment alignment; // the character's alignment must not oppose this
 	Domain domains[7];
@@ -33,6 +35,8 @@ public:
 	bool CanPickDeity(objHndl handle, int deityId);
 	bool DeityHasDomain(int deityId, Domain domain);
 	WeaponTypes GetDeityFavoredWeapon(int deityId);
+	bool IsDomainSkill(objHndl handle, SkillEnum skill);
+	bool IsDomainSkill(SkillEnum skill, Domain dom);
 
 protected:
 	DeitySpec &GetDeitySpec(int id);

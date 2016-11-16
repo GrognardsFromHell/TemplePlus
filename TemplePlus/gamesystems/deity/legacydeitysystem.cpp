@@ -15,6 +15,7 @@ class DeityHooks : TempleFix
 		replaceFunction<BOOL(__cdecl)(int, Domain)>(0x1004AA90, [](int deityId, Domain domain)->BOOL	{
 			return (BOOL)deitySys.DeityHasDomain(deityId, domain);
 		});
+
 	}
 } deityHooks;
 
@@ -98,6 +99,35 @@ bool LegacyDeitySystem::DeityHasDomain(int deityId, Domain domain){
 WeaponTypes LegacyDeitySystem::GetDeityFavoredWeapon(int deityId){
 	auto &ds = GetDeitySpec(deityId);
 	return ds.favoredWeapon;
+}
+
+bool LegacyDeitySystem::IsDomainSkill(objHndl handle, SkillEnum skill){
+	auto obj = objSystem->GetObject(handle);
+
+	auto dom1 = (Domain)obj->GetInt32(obj_f_critter_domain_1);
+	auto dom2 = (Domain)obj->GetInt32(obj_f_critter_domain_2);
+
+	return (IsDomainSkill(skill, dom1) || IsDomainSkill(skill, dom2));
+}
+
+bool LegacyDeitySystem::IsDomainSkill(SkillEnum skill, Domain dom){
+
+	if (dom == Domain_Trickery){
+		return (skill == skill_bluff || skill == skill_disguise || skill == skill_hide);
+	}
+
+	if (dom == Domain_Knowledge){
+		return (skill == skill_knowledge_all || skill == skill_knowledge_arcana || skill == skill_knowledge_religion);
+	}
+
+	if (dom == Domain_Travel){
+		return skill == skill_wilderness_lore;
+	}
+
+	if (dom == Domain_Animal || dom == Domain_Plant)
+		return skill == skill_knowledge_nature;
+
+	return false;
 }
 
 DeitySpec & LegacyDeitySystem::GetDeitySpec(int id){
