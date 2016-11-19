@@ -553,7 +553,7 @@ BOOL LegacySpellSystem::RegisterSpell(SpellPacketBody & spellPkt, int spellId)
 
 	auto spellStat = stat_wisdom;
 	if (!spellSys.isDomainSpell(spellPkt.spellClass)){
-		spellStat = d20ClassSys.GetSpellStat(spellSys.GetCastingClass(spellClass));
+		spellStat = d20ClassSys.GetSpellDcStat(spellSys.GetCastingClass(spellClass));
 	}
 
 	dc += spLvl + objects.GetModFromStatLevel( dispatch.Dispatch10AbilityScoreLevelGet(spellPkt.caster, spellStat, &evtObjAbScore) );

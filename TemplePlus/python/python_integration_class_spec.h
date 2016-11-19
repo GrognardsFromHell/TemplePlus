@@ -24,6 +24,7 @@ enum class ClassSpecFunc : int {
 	GetSpellsPerDay,
 	GetSpellConditionName,
 	GetSpellDeterminingStat,
+	GetSpellDcStat,
 	
 	
 	
@@ -71,6 +72,7 @@ public:
 	std::map<int, std::vector<int>> GetSpellsPerDay(int classEnum);
 	std::string GetSpellCastingConditionName(int classEnum);
 	Stat GetSpellDeterminingStat(int classEnum);
+	Stat GetSpellDcStat(int classEnum);
 
 	bool IsEnabled(int classEnum);
 	bool IsClassSkill(int classCode, int skillEnum);

@@ -73,12 +73,20 @@ std::string PythonClassSpecIntegration::GetSpellCastingConditionName(int classEn
 	return RunScriptStringResult(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetSpellConditionName, nullptr);
 }
 
-Stat PythonClassSpecIntegration::GetSpellDeterminingStat(int classEnum)
-{
+Stat PythonClassSpecIntegration::GetSpellDeterminingStat(int classEnum){
+
 	auto classSpecEntry = mScripts.find(classEnum);
 	if (classSpecEntry == mScripts.end())
 		return stat_wisdom;
 	return  (Stat)RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetSpellDeterminingStat, nullptr);
+}
+
+Stat PythonClassSpecIntegration::GetSpellDcStat(int classEnum)
+{
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return stat_wisdom;
+	return  (Stat)RunScriptDefault0(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetSpellDcStat, nullptr);
 }
 
 ClassDefinitionFlag PythonClassSpecIntegration::GetClassDefinitionFlags(int classEnum){
@@ -327,6 +335,7 @@ static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 	{ ClassSpecFunc::GetSpellsPerDay,"GetSpellsPerDay" },
 	{ ClassSpecFunc::GetSpellConditionName,"GetSpellCasterConditionName" },
 	{ ClassSpecFunc::GetSpellDeterminingStat,"GetSpellDeterminingStat" },
+	{ ClassSpecFunc::GetSpellDcStat,"GetSpellDcStat" },
 
 	{ ClassSpecFunc::IsClassSkill,"IsClassSkill" },
 	{ ClassSpecFunc::IsClassFeat,"IsClassFeat" },

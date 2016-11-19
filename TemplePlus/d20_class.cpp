@@ -241,6 +241,17 @@ Stat D20ClassSystem::GetSpellStat(Stat classEnum){
 	return classSpec->second.spellStat;
 }
 
+Stat D20ClassSystem::GetSpellDcStat(Stat classEnum){
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return stat_wisdom; 
+	
+	if (classSpec->second.spellDcStat == Stat::stat_strength)
+		return classSpec->second.spellStat;
+
+	return classSpec->second.spellDcStat;
+}
+
 Stat D20ClassSystem::GetDeityClass(Stat classEnum){
 	auto classSpec = classSpecs.find(classEnum);
 	if (classSpec == classSpecs.end())
@@ -438,6 +449,7 @@ void D20ClassSystem::GetClassSpecs(){
 			classSpec.spellsPerDay = pythonClassIntegration.GetSpellsPerDay(it);
 			if (classSpec.spellsPerDay.size()){
 				classSpec.spellStat = pythonClassIntegration.GetSpellDeterminingStat(it);
+				classSpec.spellDcStat = pythonClassIntegration.GetSpellDcStat(it);
 			}
 
 			static std::map<SpellListType, Stat> spellListMaps = {
