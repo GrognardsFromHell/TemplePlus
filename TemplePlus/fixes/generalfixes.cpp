@@ -287,7 +287,7 @@ class SorcererFailureDoubleChargeFix : public TempleFix
 public:
 	void apply() override
 	{
-		writeHex(0x1008D80E, "90 90 90 90 90");
+		writeHex(0x1008D80E, "90 90 90 90 90"); // no longer necessary - code entirely replaced now
 	}
 } sorcererSpellFailureFix;
 

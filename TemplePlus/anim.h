@@ -166,6 +166,12 @@ public:
 	int PushAttemptAttack(objHndl attacker, objHndl defender);
 	int PushDodge(objHndl attacker, objHndl dodger);
 	int PushAnimate(objHndl obj, int anim);
+
+	/*
+	pushes spell animation, including wand animation if relevant
+	*/
+	BOOL PushSpellCast(SpellPacketBody &spellPkt, objHndl item);
+
 	BOOL PushSpellInterrupt(const objHndl& caster, objHndl item,  AnimGoalType animGoalType, int spellSchool);
 
 	/*

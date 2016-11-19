@@ -2784,8 +2784,11 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 		}
 	}
 
+	auto spellId = spellSys.GetNewSpellId();
+	spellSys.RegisterSpell(spellPkt, spellId);
 
-	if (temple::GetRef<BOOL(__cdecl)(SpellPacketBody &, objHndl)>(0x10079790)(spellPkt, item) ){ // PushSpellcastAnim
+	if (animationGoals.PushSpellCast(spellPkt, item)){
+		spellPkt.Debit();
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
 	}
@@ -2803,7 +2806,7 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 		}
 	}
 
-	auto spellId = d20a->spellId  = curSeq->d20Action->spellId = curSeq->spellPktBody.spellId;
+	d20a->spellId  = curSeq->d20Action->spellId = curSeq->spellPktBody.spellId;
 	d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Spell_Cast, spellId, 0);
 
 	for (auto i = 0u; i < curSeq->spellPktBody.targetCount; i++) {

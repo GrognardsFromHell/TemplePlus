@@ -546,7 +546,7 @@ BOOL LegacySpellSystem::RegisterSpell(SpellPacketBody & spellPkt, int spellId)
 	auto spellClass = spellPkt.spellClass;
 	DispIOBonusListAndSpellEntry evtObjDcBase;
 	evtObjDcBase.spellEntry = &spEntry;
-	auto dc = evtObjDcBase.Dispatch(spellPkt.caster, dispTypeSpellDcBase); // as far as I know this is always 0
+	auto dc = 10 + evtObjDcBase.Dispatch(spellPkt.caster, dispTypeSpellDcBase); // as far as I know this is always 0
 
 	DispIoBonusList evtObjAbScore;
 	evtObjAbScore.flags |= 1; // effect unknown??
@@ -569,8 +569,8 @@ BOOL LegacySpellSystem::RegisterSpell(SpellPacketBody & spellPkt, int spellId)
 	newPkt.spellPktBody.spellRange = spellPkt.spellRange;
 	newPkt.spellPktBody.casterLevel = spellPkt.casterLevel;
 	newPkt.spellPktBody.dc = dc;
-	newPkt.spellPktBody.animFlags |= 8;
-
+	newPkt.spellPktBody.animFlags |= SpellAnimationFlag::SAF_UNK8;
+	
 	spellsCastRegistry.put(spellId, newPkt);
 
 	return TRUE;
