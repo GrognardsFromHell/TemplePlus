@@ -217,7 +217,6 @@ void LegacyFeatSystem::_GetNewFeatsFromFile()
 		auto featFile = tio_fopen(fmt::format("rules\\feats\\{}",f.name).c_str(), "rt");
 
 		char lineContent[2000]={0,};
-		FeatPrereq featPrereq;
 		NewFeatSpec featSpec;
 		while (tio_fgets(lineContent, 1000, featFile)){
 			auto len = strlen(lineContent);
@@ -260,25 +259,15 @@ void LegacyFeatSystem::_GetNewFeatsFromFile()
 					
 					if (prereqArgCount < prereqCount)
 					{
-						if (featSpec.prereqs.capacity() <= prereqArgCount)
-						{
-							featPrereq.featPrereqCodeArg = atol(ch);
-							featSpec.prereqs.push_back(featPrereq);
-							prereqArgCount++;
-						}
-						else
-							featSpec.prereqs[prereqArgCount++].featPrereqCodeArg = atol(ch);
+						if (featSpec.prereqs.size() <= prereqArgCount)
+							featSpec.prereqs.resize(featSpec.prereqs.size() + 1);
+						featSpec.prereqs[prereqArgCount++].featPrereqCodeArg = atol(ch);
 					}
 					else
 					{
-						if (featSpec.prereqs.capacity() <= prereqCount)
-						{
-							featPrereq.featPrereqCode = atol(ch);
-							featSpec.prereqs.push_back(featPrereq);
-							prereqCount++;
-						}
-						else
-							featSpec.prereqs[prereqCount++].featPrereqCode = atol(ch);
+						if (featSpec.prereqs.size() <= prereqCount)
+							featSpec.prereqs.resize(featSpec.prereqs.size() + 1);
+						featSpec.prereqs[prereqCount++].featPrereqCode = atol(ch);
 					}
 
 					// advance till next piece of content
