@@ -255,6 +255,9 @@ void LegacyFeatSystem::_GetNewFeatsFromFile()
 				auto prereqArgCount = 0;
 				for (auto ch = lineContent + 8; *ch != 0; ch++)
 				{
+					if ( *ch == ':' || *ch == ' ' || *ch == '\t')
+						continue;
+					
 					if (prereqArgCount < prereqCount)
 					{
 						if (featSpec.prereqs.capacity() <= prereqArgCount)
