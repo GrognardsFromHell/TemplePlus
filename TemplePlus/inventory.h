@@ -116,6 +116,7 @@ struct InventorySystem : temple::AddressTable
 
 	void ForceRemove(objHndl item, objHndl parent);
 	int ItemDrop(objHndl item);
+	int ItemDrop(objHndl critter, Equipslot slot);
 	int ItemUnwield(objHndl item);
 	int ItemUnwieldByIdx(objHndl obj, int i);
 	int ItemUnwield(objHndl critter, EquipSlot slot);
