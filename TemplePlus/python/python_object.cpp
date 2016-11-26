@@ -2434,8 +2434,8 @@ static PyObject* PyObjHandle_Unwield(PyObject* obj, PyObject* args) {
 	}
 
 	int es;
-	objHndl item = objHndl::null;
-	if (!PyArg_ParseTuple(args, "i|O&:objhndl.item_worn_unwield",  &es, &ConvertObjHndl, &item)) {
+	int flag = 0;
+	if (!PyArg_ParseTuple(args, "i|i:objhndl.item_worn_unwield",  &es, &flag)) {
 		return 0;
 	}
 
@@ -2444,8 +2444,8 @@ static PyObject* PyObjHandle_Unwield(PyObject* obj, PyObject* args) {
 		es = EquipSlot::Invalid;
 	auto equipSlot = (EquipSlot)es;
 
-	if (item != objHndl::null && inventory.GetParent(item) == self->handle ) {
-		inventory.ItemDrop(item);
+	if ( flag == 1 ) {
+		inventory.ItemDrop(self->handle, equipSlot);
 		Py_RETURN_NONE;
 	}
 
