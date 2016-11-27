@@ -259,10 +259,16 @@ void LegacyFeatSystem::_GetNewFeatsFromFile()
 					
 					if (prereqArgCount < prereqCount)
 					{
+						if (featSpec.prereqs.size() <= prereqArgCount)
+							featSpec.prereqs.resize(featSpec.prereqs.size() + 1);
 						featSpec.prereqs[prereqArgCount++].featPrereqCodeArg = atol(ch);
 					}
 					else
+					{
+						if (featSpec.prereqs.size() <= prereqCount)
+							featSpec.prereqs.resize(featSpec.prereqs.size() + 1);
 						featSpec.prereqs[prereqCount++].featPrereqCode = atol(ch);
+					}
 
 					// advance till next piece of content
 					while (*ch && *ch !=  ' ' && *ch != '\t')

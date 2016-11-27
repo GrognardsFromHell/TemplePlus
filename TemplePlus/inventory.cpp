@@ -351,6 +351,19 @@ int InventorySystem::ItemDrop(objHndl item)
 	return _ItemDrop(item);
 }
 
+int InventorySystem::ItemDrop(objHndl critter, EquipSlot slot) {
+	auto item = inventory.GetItemAtInvIdx(critter, InvIdxForSlot(slot));
+	if (!item)
+		return FALSE;
+
+	auto invenLoc = GetInventoryLocation(item);
+	if (!IsInvIdxWorn(invenLoc))
+		return TRUE;
+
+	ItemDrop(item);
+	return TRUE;
+}
+
 int InventorySystem::SetItemParent(objHndl item, objHndl receiver, ItemInsertFlags flags){
 
 	auto itemObj = gameSystems->GetObj().GetObject(item);
