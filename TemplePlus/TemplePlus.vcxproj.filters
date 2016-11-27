@@ -456,6 +456,7 @@
     <ClCompile Include="gamesystems\d20\d20_help.cpp" />
     <ClCompile Include="legacyscriptsystem.cpp" />
     <ClCompile Include="gamesystems\deity\legacydeitysystem.cpp" />
+    <ClCompile Include="InfinityEngine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />

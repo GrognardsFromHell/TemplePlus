@@ -1,6 +1,10 @@
 #pragma once
 
 #include <string>
+#include <map>
+
+#define IeTilePaletteCount 256
+#define IeTileDim 4096 // Each tile is 64x64 px
 
 typedef unsigned char ieByte;
 typedef signed char ieByteSigned;
@@ -17,8 +21,13 @@ typedef ieDword ieStrRef;
 typedef char ieResRef[9];
 typedef char ieVariable[33];
 
+#pragma region Data Types
 
 
+struct IeFileHeader {
+	char signature[4];
+	char version[4];
+};
 
 #pragma pack(push, 1)
 
@@ -52,10 +61,10 @@ struct ieResourceLoc{
 
 const int testSizeofResourceLoc = sizeof(ieResourceLoc);
 
-struct ChitinKeyHeader
+
+// Chitin.key file
+struct ChitinKeyHeader : IeFileHeader
 {
-	char signature[4];
-	char version[4];
 	ieDword biffCount;
 	ieDword resourceCount;
 	ieDword biffEntriesOffset;
@@ -69,9 +78,6 @@ struct ChitinBifEntry
 	ieWord biffFilenameLength;
 	ieWord locationMarker;
 };
-
-
-
 
 struct ChitinResEntry{
 	char resName[8];
@@ -94,23 +100,23 @@ struct ChitinResEntry{
 const int testSizeofChitinResEntry = sizeof(ChitinResEntry); // should be 14 (0xE)
 const int asd = offsetof(ChitinResEntry, resLocator); // should be 10 (0xa)
 
-
-struct BiffHeader {
-	char signature[4];
-	char version[4];
+// BIF file headers
+struct BiffHeader : IeFileHeader {
 	ieDword fileCount;
 	ieDword tilesetCount;
 	ieDword fileEntriesOff;
 };
 
-struct BifCHeader{
-	char signature[4];
-	char version[4];
+struct BifCHeader : IeFileHeader {
 	ieDword filenameLen;
-	char fileName; // actual length is as specified by filenameLen
+	// char fileName[?]; // actual length is as specified by filenameLen
 	// ieDword uncompressedDataLen;
 	// ieDword compressedDataLen;
 	// rawData; // compressed data
+};
+
+struct BifCV10Header : IeFileHeader {
+	ieDword uncompBifSize; // Uncompressed BIF size
 };
 
 const int testSizeofBiffHeader = sizeof(BiffHeader);
@@ -137,32 +143,12 @@ struct BiffTileEntry {
 
 const int testSizeofBiffTileEntry = sizeof(BiffTileEntry); // should be 20 (0x14)
 
-struct TilesetHeader{
-	char signature[4];
-	char version[4];
-	ieDword tileCount;
-	ieDword tileSectionLength;
-	ieDword headerSize; // offset to tiles
-	ieDword tileDimenPx; // Dimension of 1 tile in pixels (64x64)
-};
-
-const int testSizeofTilesetHeader = sizeof(TilesetHeader);
-
-struct TileData{
-	
-};
-
-
-#pragma pack(pop)
-
-
 struct BifRecord {
 	std::string fileName;
 	ChitinBifEntry entry;
 	BifRecord() {};
 	BifRecord(const ChitinBifEntry &Entry) :entry(Entry) {};
 };
-
 
 struct BiffContent
 {
@@ -171,5 +157,106 @@ struct BiffContent
 	std::vector<BiffTileEntry> tiles;
 
 	BiffContent() {};
-	BiffContent(const BiffHeader&Header) :header(Header){};
+	BiffContent(const BiffHeader&Header) :header(Header) {};
 };
+
+
+// Tileset
+
+struct TilesetHeader : IeFileHeader{
+	ieDword tileCount;
+	ieDword tileSectionLength;
+	ieDword headerSize; // offset to tiles
+	ieDword tileDimenPx; // Dimension of 1 tile in pixels (64x64)
+};
+
+const int testSizeofTilesetHeader = sizeof(TilesetHeader);
+
+struct TilePalette
+{
+	RGBQUAD bgra[IeTilePaletteCount];
+};
+
+struct TileData {
+	TilePalette pal;
+	BYTE pxValues[IeTileDim]; // indices into the palette. Index 0 is hardcoded to be the transparent color.
+};
+
+
+struct IeBitmapFromTile
+{
+	BITMAPFILEHEADER fileHead;
+	BITMAPINFOHEADER coreHead;
+	TileData td;
+
+	IeBitmapFromTile(){
+		fileHead.bfType = 0x4D42;
+		fileHead.bfSize = sizeof(IeBitmapFromTile);
+		fileHead.bfOffBits = offsetof(IeBitmapFromTile, td.pxValues);
+		fileHead.bfReserved1 = 0;
+		fileHead.bfReserved2 = 0;
+
+		coreHead.biSize = 40;
+		coreHead.biWidth = 64;
+		coreHead.biHeight = 64;
+		coreHead.biPlanes = 1;
+		coreHead.biBitCount = 8;
+		coreHead.biCompression = 0;
+		coreHead.biSizeImage = 0x1000;
+		coreHead.biXPelsPerMeter = 0;
+		coreHead.biYPelsPerMeter = 0;
+		coreHead.biClrUsed = 0; // will default to 2^n
+		coreHead.biClrImportant = 0;
+	}
+
+	IeBitmapFromTile(TileData &TileIn) : IeBitmapFromTile(){
+		td = TileIn;
+	}
+};
+
+
+
+
+#pragma pack(pop)
+
+
+
+#pragma endregion 
+
+class InfiniData {
+public:
+	/*
+	  Process chitin.key file
+	  This contructs the following:
+		* biffEntries
+		* resKeyEntries
+		* resMapping      - mapping of resource name to resource locator (ieResourceLoc)
+
+		Subset of the above:
+		* tisKeyEntries 
+		* tisMapping
+	*/
+	void ReadChitin();
+	void ReadBifFiles(); // read biff files
+	void ReadBif(std::vector<uint8_t> &bifBytes); // read single uncompressed BIF file
+	void ReadBifcV1(std::vector<uint8_t> &bifBytes);
+	void ReadBifcV10(std::vector<uint8_t> &bifBytes);
+
+	
+	std::vector<ChitinResEntry> resKeyEntries;
+	std::map<std::string, ieResourceLoc> resMapping; // maps resource name to resource locator
+
+	std::vector<ChitinResEntry> tisKeyEntries;
+	std::map<std::string, ieResourceLoc> tisMapping; 
+
+
+	ChitinKeyHeader keyHeader; // contains the number of BIFs and Resources and their starting offset
+	std::vector<BifRecord> biffEntries; // from chitin.key file
+
+
+	// Biff files
+	std::vector<BiffContent> biffContents;
+
+};
+
+extern InfiniData ieData;

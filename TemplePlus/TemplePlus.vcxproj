@@ -87,6 +87,7 @@
     <ClCompile Include="gamesystems\staticmeshes.cpp" />
     <ClCompile Include="gamesystems\ui_intgame_renderer.cpp" />
     <ClCompile Include="gameview.cpp" />
+    <ClCompile Include="InfinityEngine.cpp" />
     <ClCompile Include="legacyscriptsystem.cpp" />
     <ClCompile Include="graphics\aas_hooks.cpp" />
     <ClCompile Include="graphics\imgfile.cpp" />
