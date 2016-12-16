@@ -24,6 +24,9 @@ public:
 	static int GrappledMoveSpeed(DispatcherCallbackArgs args);
 	static int DiplomacySkillSynergy(DispatcherCallbackArgs args);
 
+	static int BootsOfSpeedNewday(DispatcherCallbackArgs args);
+	static int BootsOfSpeedBeginRound(DispatcherCallbackArgs args);
+
 	void apply() override {
 
 		replaceFunction(0x100CB890, GrappledMoveSpeed); // fixed Grappled when the frog is dead
@@ -52,6 +55,9 @@ public:
 			write(0x102E15C0 + offsetof(CondStruct, subDispDefs) + (1) * sizeof(SubDispDefNew), &sdd, sizeof(sdd));
 
 		}
+
+		replaceFunction(0x10101EB0, BootsOfSpeedNewday);
+		replaceFunction(0x101020A0, BootsOfSpeedBeginRound);
 
 		replaceFunction(0x100FDE00, MonsterSubtypeFire); // fixes 2x damage factor for vulnerability to cold (should be 1.5)
 
@@ -280,5 +286,31 @@ int AbilityConditionFixes::DiplomacySkillSynergy(DispatcherCallbackArgs args){
 		dispIo->bonOut->AddBonus(2, 0, 140);
 	if (critterSys.SkillBaseGet(args.objHndCaller, SkillEnum::skill_sense_motive) >= 5)
 		dispIo->bonOut->AddBonus(2, 0, 302);
+	return 0;
+}
+
+int AbilityConditionFixes::BootsOfSpeedNewday(DispatcherCallbackArgs args){
+	auto arg1 = args.GetCondArg(1);
+	args.SetCondArg(0, arg1);
+	return 0;
+}
+
+int AbilityConditionFixes::BootsOfSpeedBeginRound(DispatcherCallbackArgs args){
+
+	auto roundsRem = args.GetCondArg(0);
+	auto isOn = args.GetCondArg(3);
+	if (!isOn)
+		return 0;
+	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+	int roundsNew = roundsRem - (int)dispIo->data1;
+	if (roundsNew >= 0){
+		args.SetCondArg(0, roundsNew);
+		return 1;
+	}
+	// conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode); // this was a bug in vanilla! should just reset the isOn arg, as below
+	args.SetCondArg(3, 0);
+	
+	auto partsysId = args.GetCondArg(4);
+	gameSystems->GetParticleSys().End(partsysId);
 	return 0;
 }
