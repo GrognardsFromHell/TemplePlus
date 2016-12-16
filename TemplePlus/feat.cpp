@@ -15,6 +15,7 @@
 #include "gamesystems/objects/objsystem.h"
 #include "ui/ui.h"
 #include <infrastructure/elfhash.h>
+#include "python/python_integration_feat.h"
 
 TabFileStatus featPropertiesTabFile;
 uint32_t featPropertiesTable[NUM_FEATS + 1000];
@@ -301,6 +302,15 @@ void LegacyFeatSystem::_GetNewFeatsFromFile()
 					break;
 				}
 			}
+
+			else if (!_strnicmp(lineContent, "parent:", 7)){
+				for (auto ch = lineContent + 7; *ch != 0; ch++){
+					if (*ch == ' ' || *ch == ':')
+						continue;
+					featSpec.parentId = (feat_enums) ElfHash::Hash(ch);
+					break;
+				}
+			}
 		}
 
 		if (featSpec.name.size()){
@@ -315,6 +325,21 @@ void LegacyFeatSystem::_GetNewFeatsFromFile()
 	}
 
 	tio_filelist_destroy(&flist);
+}
+
+void LegacyFeatSystem::_CompileParents(){
+	for (auto it: mNewFeats){
+		if (it.second.parentId){
+			auto findIt = mNewFeats.find(it.second.parentId);
+
+			if (findIt == mNewFeats.end()){
+				logger->warn("Missing parent feat for {}", it.second.name);
+			} 
+			else{
+				findIt->second.children.push_back(it.first);
+			}
+		}
+	}
 }
 
 
@@ -838,9 +863,16 @@ uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, 
 			}
 		}
 	#pragma endregion
+
+
 	}
 
-	return 1;
+	if (feats.IsFeatPropertySet(featIdx, FPF_CUSTOM_REQ)){
+		if (!pyFeatIntegration.CheckPrereq(featIdx, objHnd, classCodeBeingLevelledUp, abilityScoreBeingIncreased))
+			return FALSE;
+	}
+
+	return TRUE;
 };
 
 vector<feat_enums> LegacyFeatSystem::GetFeats(objHndl handle) {
@@ -985,12 +1017,14 @@ int LegacyFeatSystem::IsMagicFeat(feat_enums feat)
 
 int LegacyFeatSystem::IsFeatPartOfMultiselect(feat_enums feat)
 {
-	if (feat > NUM_FEATS)
-	{
+	if (feat > NUM_FEATS){
 		auto featFind = mNewFeats.find(feat);
 		if (featFind == mNewFeats.end())
 			return FALSE;
-		return (featFind->second.flags & FPF_MULTI_SELECT_ITEM) != 0;
+		if ((featFind->second.flags & FPF_MULTI_SELECT_ITEM) != 0)
+			return TRUE;
+		return featFind->second.parentId != 0;
+
 	}
 	return ( m_featPropertiesTable[feat] & FPF_MULTI_SELECT_ITEM ) != 0;
 }
@@ -1052,7 +1086,58 @@ int LegacyFeatSystem::IsFeatPropertySet(feat_enums feat, int featProp)
 }
 
 bool LegacyFeatSystem::IsFeatMultiSelectMaster(feat_enums feat){
-	return IsFeatPropertySet(feat, FPF_MULTI_MASTER) != 0;
+	if (IsFeatPropertySet(feat, FPF_MULTI_MASTER) != 0)
+		return true;
+
+	if (feat > NUM_FEATS){
+		if (mNewFeats[feat].children.size() > 0)
+			return true;
+	}
+
+	return false;
+}
+feat_enums LegacyFeatSystem::MultiselectGetFirst(feat_enums feat)
+{
+
+	if (feat > NUM_FEATS) {
+		if (mNewFeats[feat].children.size())
+			return (feat_enums)mNewFeats[feat].children[0];
+	}
+
+	switch (feat)
+	{
+	case FEAT_EXOTIC_WEAPON_PROFICIENCY:
+		return FEAT_EXOTIC_WEAPON_PROFICIENCY_BASTARD_SWORD;
+
+	case FEAT_IMPROVED_CRITICAL:
+		return FEAT_IMPROVED_CRITICAL_BASTARD_SWORD;
+
+	case FEAT_MARTIAL_WEAPON_PROFICIENCY:
+		return FEAT_MARTIAL_WEAPON_PROFICIENCY_BATTLEAXE;
+
+	case FEAT_SKILL_FOCUS:
+		return FEAT_SKILL_FOCUS_APPRAISE;
+
+	case FEAT_WEAPON_FINESSE:
+		return FEAT_WEAPON_FINESSE_BASTARD_SWORD;
+
+	case FEAT_WEAPON_FOCUS:
+		return FEAT_WEAPON_FOCUS_BASTARD_SWORD;
+
+	case FEAT_GREATER_WEAPON_FOCUS:
+		return FEAT_GREATER_WEAPON_FOCUS_BASTARD_SWORD;
+
+	case FEAT_WEAPON_SPECIALIZATION:
+		return FEAT_WEAPON_SPECIALIZATION_BASTARD_SWORD;
+
+	case FEAT_GREATER_WEAPON_SPECIALIZATION:
+		return FEAT_GREATER_WEAPON_SPECIALIZATION_BASTARD_SWORD;
+	default:
+		return feat;
+	}
+}
+void LegacyFeatSystem::MultiselectGetChildren(feat_enums feat, std::vector<feat_enums>& out){
+	out = mNewFeats[feat].children;
 }
 bool LegacyFeatSystem::IsNonCore(feat_enums feat)
 {

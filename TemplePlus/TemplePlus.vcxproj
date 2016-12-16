@@ -120,6 +120,7 @@
     <ClCompile Include="python\python_damage.cpp" />
     <ClCompile Include="python\python_dispatcher.cpp" />
     <ClCompile Include="python\python_integration_d20_action.cpp" />
+    <ClCompile Include="python\python_integration_feat.cpp" />
     <ClCompile Include="python\python_ui.cpp" />
     <ClCompile Include="raycast.cpp" />
     <ClCompile Include="obj_hooks.cpp" />
@@ -322,6 +323,7 @@
     <ClInclude Include="python\python_dispatcher.h" />
     <ClInclude Include="python\python_integration_class_spec.h" />
     <ClInclude Include="python\python_integration_d20_action.h" />
+    <ClInclude Include="python\python_integration_feat.h" />
     <ClInclude Include="tig\tig_keyboard.h" />
     <ClInclude Include="tutorial.h" />
     <ClInclude Include="ui\ui_alert.h" />

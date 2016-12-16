@@ -457,6 +457,9 @@
     <ClCompile Include="legacyscriptsystem.cpp" />
     <ClCompile Include="gamesystems\deity\legacydeitysystem.cpp" />
     <ClCompile Include="InfinityEngine.cpp" />
+    <ClCompile Include="python\python_integration_feat.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -861,6 +864,9 @@
     <ClInclude Include="legacyscriptsystem.h" />
     <ClInclude Include="gamesystems\deity\legacydeitysystem.h" />
     <ClInclude Include="InfinityEngine.h" />
+    <ClInclude Include="python\python_integration_feat.h">
+      <Filter>python</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

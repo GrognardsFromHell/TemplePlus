@@ -1920,9 +1920,17 @@ void UiCharEditor::FeatsMultiSelectActivate(feat_enums feat) {
 	// populate list
 	mMultiSelectFeats.clear();
 
-	auto featIt = FEAT_ACROBATIC;
-	auto featProp = 0x100;
-	switch(feat){
+	if (feat >NUM_FEATS){
+		std::vector<feat_enums> tmp;
+		feats.MultiselectGetChildren(feat, tmp);
+		for (auto it: tmp){
+			mMultiSelectFeats.push_back(FeatInfo(it));
+		}
+	}
+	else{
+		auto featIt = FEAT_ACROBATIC;
+		auto featProp = 0x100;
+		switch (feat) {
 		case FEAT_EXOTIC_WEAPON_PROFICIENCY:
 			featProp = FPF_EXOTIC_WEAP_ITEM;
 			break;
@@ -1952,14 +1960,17 @@ void UiCharEditor::FeatsMultiSelectActivate(feat_enums feat) {
 			break;
 		default:
 			break;
-	}
+		}
 
-	for (auto ft = 0; ft < NUM_FEATS; ft++) {
-		featIt = (feat_enums)ft;
-		if (feats.IsFeatPropertySet(featIt, featProp) && feats.IsFeatEnabled(featIt)) {
-			mMultiSelectFeats.push_back(FeatInfo(ft));
+		for (auto ft = 0; ft < NUM_FEATS; ft++) {
+			featIt = (feat_enums)ft;
+			if (feats.IsFeatPropertySet(featIt, featProp) && feats.IsFeatEnabled(featIt)) {
+				mMultiSelectFeats.push_back(FeatInfo(ft));
+			}
 		}
 	}
+
+	
 
 	ui.WidgetCopy(featsMultiSelectScrollbarId, &featsMultiSelectScrollbar);
 	featsMultiSelectScrollbar.scrollbarY = 0;
@@ -2469,37 +2480,8 @@ void UiCharEditor::FeatsSanitize() {
 }
 
 feat_enums UiCharEditor::FeatsMultiGetFirst(feat_enums feat) {
-	switch (feat)
-	{
-	case FEAT_EXOTIC_WEAPON_PROFICIENCY:
-		return FEAT_EXOTIC_WEAPON_PROFICIENCY_BASTARD_SWORD;
 
-	case FEAT_IMPROVED_CRITICAL:
-		return FEAT_IMPROVED_CRITICAL_BASTARD_SWORD;
-
-	case FEAT_MARTIAL_WEAPON_PROFICIENCY:
-		return FEAT_MARTIAL_WEAPON_PROFICIENCY_BATTLEAXE;
-
-	case FEAT_SKILL_FOCUS:
-		return FEAT_SKILL_FOCUS_APPRAISE;
-
-	case FEAT_WEAPON_FINESSE:
-		return FEAT_WEAPON_FINESSE_BASTARD_SWORD;
-
-	case FEAT_WEAPON_FOCUS:
-		return FEAT_WEAPON_FOCUS_BASTARD_SWORD;
-
-	case FEAT_GREATER_WEAPON_FOCUS:
-		return FEAT_GREATER_WEAPON_FOCUS_BASTARD_SWORD;
-
-	case FEAT_WEAPON_SPECIALIZATION:
-		return FEAT_WEAPON_SPECIALIZATION_BASTARD_SWORD;
-
-	case FEAT_GREATER_WEAPON_SPECIALIZATION:
-		return FEAT_GREATER_WEAPON_SPECIALIZATION_BASTARD_SWORD;
-	default:
-		return feat;
-	}
+	return feats.MultiselectGetFirst(feat);
 }
 
 

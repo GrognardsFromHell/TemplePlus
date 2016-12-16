@@ -9,6 +9,7 @@
 #include <gamesystems/objects/objsystem.h>
 #include <condition.h>
 #include <tig/tig_tokenizer.h>
+#include "weapon.h"
 
 class ProtosHooks : public TempleFix{
 public: 
@@ -320,21 +321,44 @@ int ProtosHooks::ParseMonsterSubcategory(int colIdx, objHndl handle, char * cont
 
 int ProtosHooks::ParseType(int colIdx, objHndl handle, char * content, obj_f field, int arrayLen, char ** strings){
 
+	auto foundType = false;
+	auto val = 0;
+
 	if (content && *content){
 		if (arrayLen <= 0)
 			return 0;
 
 		for (auto i=0; i< arrayLen; i++){
-			if ( strings[i] && !_strcmpi(content, strings[i]))
-			{
-				objSystem->GetObject(handle)->SetInt32(field, i);
-				return 1;
+			if ( strings[i] && !_strcmpi(content, strings[i])){
+				
+				val = i;
+				objSystem->GetObject(handle)->SetInt32(field, val);
+				foundType = true; 
+				break;
 			}
 		}
 
 		if (field == obj_f_weapon_type){
-			auto asdf = 1;
+			if (!foundType && !_strcmpi(content, "wt_mindblade")){
+				val = wt_mindblade;
+				foundType = true;
+				objSystem->GetObject(handle)->SetInt32(field, val);
+				
+			}
+
+			/*auto weapType = (WeaponTypes)val;
+			auto damType = weapons.wpnProps[weapType].damType;
+			
+			if (damType == DamageType::Unspecified){
+				weapons.wpnProps[weapType].damType = (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype);
+			} 
+			else if (damType != (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype)){
+				auto d = description.getDisplayName(handle);
+				auto dummy = 1;
+			}*/
 		}
 	}
-	return 0;
+
+	
+	return foundType ? TRUE : FALSE;
 }

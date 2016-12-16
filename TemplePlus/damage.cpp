@@ -130,17 +130,13 @@ int DamagePacket::AddPhysicalDR(int amount, int bypasserBitmask, int damageMesLi
 }
 
 int DamagePacket::AddDR(int amount, DamageType damType, int damageMesLine){
-	
-	MesLine mesLine;
 
 	if (this->damResCount < 5u){
-		mesLine.key = damageMesLine;
-		mesFuncs.GetLine_Safe(*addresses.damageMes, &mesLine);
 		this->damageResistances[this->damResCount].damageReductionAmount = amount;
 		this->damageResistances[this->damResCount].dmgFactor = 0.0f;
 		this->damageResistances[this->damResCount].type = damType;
 		this->damageResistances[this->damResCount].attackPowerType = D20AttackPower::D20DAP_NORMAL;
-		this->damageResistances[this->damResCount].typeDescription = mesLine.value;
+		this->damageResistances[this->damResCount].typeDescription = damage.GetMesline(damageMesLine);
 		this->damageResistances[this->damResCount++].causedBy = nullptr;
 		return TRUE;
 	}
@@ -217,7 +213,16 @@ int DamagePacket::GetOverallDamageByType(DamageType damType)
 }
 
 int DamagePacket::AddModFactor(float factor, DamageType damType, int damageMesLine){
-	return addresses.AddDamageModFactor(this, factor, damType, damageMesLine);
+
+	if (this->damModCount < 5){
+		this->damageFactorModifiers[this->damModCount].dmgFactor = factor;
+		this->damageFactorModifiers[this->damModCount].type = damType;
+		this->damageFactorModifiers[this->damModCount].attackPowerType = D20AttackPower::D20DAP_NORMAL;
+		this->damageFactorModifiers[this->damModCount].typeDescription = damage.GetMesline(damageMesLine);
+		this->damageFactorModifiers[this->damModCount++].causedBy = nullptr;
+		return TRUE;
+	}
+	return FALSE;
 }
 
 DamagePacket::DamagePacket(){
@@ -560,28 +565,30 @@ int Damage::AddDamageBonusWithDescr(DamagePacket* damage, int damBonus, int bonT
 
 int Damage::AddPhysicalDR(DamagePacket* damPkt, int DRAmount, int bypasserBitmask, unsigned int damageMesLine)
 {
-	MesLine mesLine; 
-
 	if (damPkt->damResCount < 5u)
 	{
-		mesLine.key = damageMesLine;
-		mesFuncs.GetLine_Safe(*addresses.damageMes, &mesLine);
 		damPkt->damageResistances[damPkt->damResCount].damageReductionAmount = DRAmount;
 		damPkt->damageResistances[damPkt->damResCount].dmgFactor = 0;
 		damPkt->damageResistances[damPkt->damResCount].type = DamageType::SlashingAndBludgeoningAndPiercing;
 		damPkt->damageResistances[damPkt->damResCount].attackPowerType = bypasserBitmask;
-		damPkt->damageResistances[damPkt->damResCount].typeDescription = mesLine.value;
+		damPkt->damageResistances[damPkt->damResCount].typeDescription = damage.GetMesline(damageMesLine);
 		damPkt->damageResistances[damPkt->damResCount++].causedBy = 0;
-		return 1;
+		return TRUE;
 	}
-	return  0;
+	return  FALSE;
 	
 }
 
-const char* Damage::GetMesline(unsigned damageMesLine){
-	MesLine mesline(damageMesLine);
-	mesFuncs.GetLine_Safe(damageMes, &mesline);
-	return mesline.value;
+const char* Damage::GetMesline(unsigned lineId){
+
+	MesLine line(lineId);
+	auto res = mesFuncs.GetLine(*addresses.damageMes, &line);
+	if (!res){
+		mesFuncs.GetLine_Safe(damageMes, &line);
+	}
+		
+
+	return line.value;
 }
 
 int Damage::AddDamageDice(DamagePacket* dmgPkt, int dicePacked, DamageType damType, unsigned int damageMesLine){
@@ -665,3 +672,4 @@ void Damage::Exit() const
 {
 	mesFuncs.Close(damageMes);
 }
+

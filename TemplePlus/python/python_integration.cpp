@@ -8,9 +8,10 @@
 #include "python_embed.h"
 #include <infrastructure/elfhash.h>
 
-PythonIntegration::PythonIntegration(const string& searchPattern, const string& filenameRegexp) {
+PythonIntegration::PythonIntegration(const string& searchPattern, const string& filenameRegexp, bool isHashId) {
 	mSearchPattern = searchPattern;
 	mFilenameRegexp = filenameRegexp;
+	mIsHashId = isHashId;
 }
 
 PythonIntegration::~PythonIntegration() {
@@ -40,7 +41,10 @@ void PythonIntegration::LoadScripts() {
 		ScriptRecord record;
 		record.filename = scriptName;
 		record.moduleName = scriptMatch[1];
-		record.id = stoi(scriptMatch[2]);
+		if (mIsHashId)
+			record.id = ElfHash::Hash(scriptMatch[2]);
+		else
+			record.id = stoi(scriptMatch[2]);
 
 		if (mScripts.find(record.id) != mScripts.end()) {
 			if (record.id == 522){ // ugly hack for glibness spell - damn you troika!

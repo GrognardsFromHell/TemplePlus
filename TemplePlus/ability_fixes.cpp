@@ -20,6 +20,7 @@ public:
 	static int PoisonedOnBeginRound(DispatcherCallbackArgs args);;
 	static int MonsterSplittingHpChange(DispatcherCallbackArgs args);
 	static int MonsterOozeSplittingOnDamage(DispatcherCallbackArgs args);
+	static int MonsterSubtypeFire(DispatcherCallbackArgs args);
 	static int GrappledMoveSpeed(DispatcherCallbackArgs args);
 	static int DiplomacySkillSynergy(DispatcherCallbackArgs args);
 
@@ -52,7 +53,7 @@ public:
 
 		}
 
-
+		replaceFunction(0x100FDE00, MonsterSubtypeFire); // fixes 2x damage factor for vulnerability to cold (should be 1.5)
 
 		replaceFunction(0x100EA040, PoisonedOnBeginRound);
 
@@ -243,6 +244,18 @@ int AbilityConditionFixes::MonsterOozeSplittingOnDamage(DispatcherCallbackArgs a
 		conds.AddTo(args.objHndCaller, "Monster Splitting", {});
 	}
 
+	return 0;
+}
+
+int AbilityConditionFixes::MonsterSubtypeFire(DispatcherCallbackArgs args){
+
+	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
+	auto immuneDamType = (DamageType)args.GetData1();
+	auto vulnerDamType = (DamageType)args.GetData2();
+
+	if (!(dispIo->attackPacket.flags & D20CAF_SAVE_SUCCESSFUL))
+		dispIo->damage.AddModFactor(1.5, vulnerDamType, 136); // Vulnerable
+	dispIo->damage.AddModFactor(0.0, immuneDamType, 104); // Invulnerable
 	return 0;
 }
 

@@ -30,7 +30,8 @@ enum FeatPropertyFlag : uint32_t {
 	FPF_MULTI_MASTER = 0x80000, // head of multiselect class of feats (NEW)
 	FPF_GREAT_WEAP_SPEC_ITEM = 0x100100, // NEW	
 	FPF_PSIONIC = 0x200000,
-	FPF_NON_CORE =0x400000
+	FPF_NON_CORE =0x400000,
+	FPF_CUSTOM_REQ = 0x800000 // signifies that requirements should be checked via script
 };
 
 
@@ -67,6 +68,9 @@ struct NewFeatSpec {
 	std::string description;
 	std::string prereqDescr;
 	std::vector<FeatPrereq> prereqs;
+	feat_enums parentId = (feat_enums)0;              // for multiselect feats such as Weapon Focus
+	std::vector<feat_enums> children; // for multiselect feats such as Weapon Focus
+	WeaponTypes weapType;      // for weapon feats which are weapon specific (such as Weapon Focus - Shortsword)
 	NewFeatSpec() { flags = (FeatPropertyFlag)0; };
 };
 
@@ -139,12 +143,17 @@ struct LegacyFeatSystem : temple::AddressTable
 	const char* GetFeatHelpTopic(feat_enums feat);
 	int IsFeatEnabled(feat_enums feat);
 	int IsMagicFeat(feat_enums feat); // crafting / metamagic feats (that Wiz/Sorcs can pick as bonus feats)
-	int IsFeatPartOfMultiselect(feat_enums feat); // hidden feats that are only selectable in a submenu
+	
 	int IsFeatRacialOrClassAutomatic(feat_enums feat);  // feats automatically granted (cannot be manually selected at levelup)
 	int IsClassFeat(feat_enums feat);
 	int IsFighterFeat(feat_enums feat); // feats that fighters can select as bonus feats
 	int IsFeatPropertySet(feat_enums feat, int featProp); // checks bitfield if the entire featProp is set (i.e. partial matches return 0)
+
+	int IsFeatPartOfMultiselect(feat_enums feat); // hidden feats that are only selectable in a submenu
 	bool IsFeatMultiSelectMaster(feat_enums feat);
+	feat_enums MultiselectGetFirst(feat_enums feat);
+	void MultiselectGetChildren(feat_enums feat, std::vector<feat_enums>& out);
+
 	bool IsNonCore(feat_enums feat);
 	uint32_t rangerArcheryFeats[4 * 2 + 100];
 	uint32_t rangerTwoWeaponFeats[4 * 2 + 100];
@@ -159,6 +168,7 @@ struct LegacyFeatSystem : temple::AddressTable
 protected:
 	std::map<feat_enums, NewFeatSpec> mNewFeats;
 	void _GetNewFeatsFromFile();
+	void _CompileParents();
 };
 
 extern LegacyFeatSystem feats;

@@ -22,7 +22,7 @@ public:
 	typedef int ScriptId;
 	typedef int EventId;
 
-	PythonIntegration(const string &searchPattern, const string &filenameRegexp);
+	PythonIntegration(const string &searchPattern, const string &filenameRegexp, bool hashId = false);
 	virtual ~PythonIntegration();
 
 	void LoadScripts();
@@ -47,7 +47,7 @@ protected:
 	ScriptCache mScripts;
 private:
 	
-	
+	bool mIsHashId;
 	string mSearchPattern;
 	string mFilenameRegexp;
 };

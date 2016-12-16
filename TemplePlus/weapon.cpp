@@ -245,11 +245,44 @@ bool WeaponSystem::IsSlashingOrBludgeoning(WeaponTypes wpnType)
 	case wt_gnome_hooked_hammer:
 	case wt_two_bladed_sword:
 	case wt_dwarven_urgrosh:
-		return 1;
+		return true;
 	default:
-		return 0;
+		return false;
 	}
+	
+	/*if (IsSlashingWeapon(wpnType) || IsBludgeoningWeapon(wpnType))
+		return true;*/
+	return false;
 }
+
+//bool WeaponSystem::IsSlashingWeapon(WeaponTypes wpnType){
+//	auto p = wpnProps.find(wpnType);
+//	if (p == wpnProps.end()) return false;
+//	return p->second.damType == DamageType::Slashing
+//		|| p->second.damType == DamageType::SlashingAndBludgeoning
+//		|| p->second.damType == DamageType::PiercingAndSlashing
+//		|| p->second.damType == DamageType::SlashingAndBludgeoningAndPiercing;
+//}
+//
+//bool WeaponSystem::IsPiercingWeapon(WeaponTypes wpnType)
+//{
+//	auto p = wpnProps.find(wpnType);
+//	if (p == wpnProps.end()) return false;
+//	return p->second.damType == DamageType::Piercing
+//		|| p->second.damType == DamageType::PiercingAndSlashing
+//		|| p->second.damType == DamageType::BludgeoningAndPiercing
+//		|| p->second.damType == DamageType::SlashingAndBludgeoningAndPiercing;
+//}
+//
+//bool WeaponSystem::IsBludgeoningWeapon(WeaponTypes wpnType)
+//{
+//	auto p = wpnProps.find(wpnType);
+//	if (p == wpnProps.end()) return false;
+//	return p->second.damType == DamageType::Bludgeoning
+//		|| p->second.damType == DamageType::SlashingAndBludgeoning
+//		|| p->second.damType == DamageType::BludgeoningAndPiercing
+//		|| p->second.damType == DamageType::SlashingAndBludgeoningAndPiercing;
+//}
 
 int WeaponSystem::GetBaseHardness(objHndl item)
 {

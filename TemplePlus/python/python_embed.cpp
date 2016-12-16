@@ -19,6 +19,7 @@
 #include "../gamesystems/gamesystems.h"
 #include "python_integration_class_spec.h"
 #include "python_integration_d20_action.h"
+#include "python_integration_feat.h"
 
 extern "C" PyObject *inittp_dispatcher();
 extern "C" PyObject *inittp_char_editor();
@@ -101,10 +102,12 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 	console = new PyConsole;
 	pythonInitInternal.TigConsoleSetCommandInterpreter(PyConsole_Exec);
 
+	// don't forget PyTempleImporter_Install (when adding new python integrations, for example...)
 	pythonObjIntegration.LoadScripts();
 	pySpellIntegration.LoadScripts();
 	pythonClassIntegration.LoadScripts();
-	pythonD20ActionIntegration.LoadScripts(); // don't forget PyTempleImporter_Install
+	pythonD20ActionIntegration.LoadScripts(); 
+	pyFeatIntegration.LoadScripts();
 
 	inittp_dispatcher();
 	inittp_char_editor();

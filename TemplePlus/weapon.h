@@ -1,8 +1,14 @@
 #pragma once
 
 #include "common.h"
-
+#include <map>
 #include <temple/dll.h>
+
+
+struct WeaponTypeProperties
+{
+	DamageType damType = DamageType::Unspecified;
+};
 
 struct WeaponSystem : temple::AddressTable
 {
@@ -15,11 +21,19 @@ struct WeaponSystem : temple::AddressTable
 	uint32_t IsWizardWeapon(WeaponTypes wpnType);
 	uint32_t IsElvenWeapon(WeaponTypes wpnType);
 	uint32_t IsBardWeapon(WeaponTypes wpnType);
+
 	bool IsSlashingOrBludgeoning(objHndl weapon);
 	bool IsSlashingOrBludgeoning(WeaponTypes wpnType);
+	/*bool IsSlashingWeapon(WeaponTypes wpnType);
+	bool IsPiercingWeapon(WeaponTypes wpnType);
+	bool IsBludgeoningWeapon(WeaponTypes wpnType);*/
+
 	int GetBaseHardness(objHndl item);
 	int GetBaseHardness(WeaponTypes weapon);
 	bool AmmoMatchesWeapon(objHndl weapon, objHndl ammoItem);
+
+
+	std::map<WeaponTypes, WeaponTypeProperties> wpnProps;
 };
 
 extern WeaponSystem weapons;

@@ -312,6 +312,7 @@ void PyTempleImporter_Install() {
 	PyTempleImporter::instance->mSearchPath.push_back("scr/");
 	PyTempleImporter::instance->mSearchPath.push_back("rules/char_class/");
 	PyTempleImporter::instance->mSearchPath.push_back("rules/d20_actions/");
+	PyTempleImporter::instance->mSearchPath.push_back("scr/feats/");
 }
 
 void PyTempleImporter_Uninstall() {
