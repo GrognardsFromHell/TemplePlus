@@ -125,6 +125,7 @@ struct AiSystem : temple::AddressTable
 
 	void ShitlistAdd(objHndl npc, objHndl target);
 	void ShitlistRemove(objHndl npc, objHndl target);
+	BOOL AiListFind(objHndl aiHandle, objHndl tgt, int typeToFind); // search for tgt in ai list field. 0 is for enemies, 1 is for allies
 	void FleeAdd(objHndl npc, objHndl target);
 	void StopAttacking(objHndl npc);
 	void ProvokeHostility(objHndl agitator, objHndl provokedNpc, int rangeType, int flags); // rangeType - 0 is for 5 tiles, 1 is for 10 tiles, 2 is for 20 tiles, and 3 is unlimited
@@ -133,6 +134,17 @@ struct AiSystem : temple::AddressTable
 	objHndl GetCombatFocus(objHndl npc);
 	objHndl GetWhoHitMeLast(objHndl npc);
 	BOOL ConsiderTarget(objHndl obj, objHndl tgt); // checks if it's a good target
+	int CannotHate(objHndl aiHandle, objHndl triggerer, objHndl aiLeader);
+	int WillKos(objHndl aiHandle, objHndl triggerer); // does the triggerer provoke KOS hostility
+	/*
+	// returns 4 if aiHandle == tgt
+	// returns 3 if  tgt == leader   or   tgt in party and (leader or aiHandle in party)
+	// otherwise:
+	// returns 0 if aiHandle is charmed
+	// otherwise:
+	// returns 1 if allegiance shared
+	*/
+	int GetAllegianceStrength(objHndl aiHandle, objHndl tgt);
 	BOOL CannotHear(objHndl handle, objHndl tgt, int tileRangeIdx); // checks if a critter (handle) can observe tgt up to a specified range; regards magic effects such as Invisibility to Undead / Animals, and also makes a hidden listen check
 	void SetCombatFocus(objHndl npc, objHndl target);
 	void SetWhoHitMeLast(objHndl npc, objHndl target);

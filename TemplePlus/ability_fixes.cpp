@@ -57,7 +57,7 @@ public:
 		}
 
 		replaceFunction(0x10101EB0, BootsOfSpeedNewday);
-		replaceFunction(0x101020A0, BootsOfSpeedBeginRound);
+		replaceFunction(0x101020A0, BootsOfSpeedBeginRound); // fixes the bug that fucked things up
 
 		replaceFunction(0x100FDE00, MonsterSubtypeFire); // fixes 2x damage factor for vulnerability to cold (should be 1.5)
 
@@ -308,6 +308,7 @@ int AbilityConditionFixes::BootsOfSpeedBeginRound(DispatcherCallbackArgs args){
 		return 1;
 	}
 	// conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode); // this was a bug in vanilla! should just reset the isOn arg, as below
+	args.SetCondArg(0, 0);
 	args.SetCondArg(3, 0);
 	
 	auto partsysId = args.GetCondArg(4);

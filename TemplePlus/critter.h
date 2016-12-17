@@ -113,7 +113,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	/*
 	Gets the current leader of the given critter (recursive in case it's an NPC charmed by an NPC). Might be 0.
 	*/
-	objHndl GetLeaderRecursive(objHndl critter);
+	objHndl GetLeaderForNpc(objHndl critter);
 
 	/*
 		Checks for line of sight betwen a critter and a target obj.
@@ -152,6 +152,8 @@ struct LegacyCritterSystem : temple::AddressTable
 		 - both share a faction (including factions from reputations for PCs)
 	*/
 	BOOL AllegianceShared(objHndl obj, objHndl obj2);
+	int GetReaction(objHndl of, objHndl towards); // gets npc reaction towards
+
 
 	/*
 		For id = 7, this returns footstep sound ids for the critter

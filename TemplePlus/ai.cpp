@@ -23,6 +23,7 @@
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/timeevents.h"
 #include "python/python_header.h"
+#include "condition.h"
 
 struct AiSystem aiSys;
 AiParamPacket * AiSystem::aiParams;
@@ -298,6 +299,35 @@ void AiSystem::ShitlistRemove(objHndl npc, objHndl target) {
 	_AiSetCombatStatus(npc, 0, objHndl::null, 0); // I think this means stop attacking?
 }
 
+BOOL AiSystem::AiListFind(objHndl aiHandle, objHndl tgt, int typeToFind){
+
+	// ensure is NPC handle
+	if (!aiHandle)
+		return FALSE;
+	auto obj = objSystem->GetObject(aiHandle);
+	if (!obj->IsNPC())
+		return FALSE;
+
+	auto typeListCount = obj->GetInt32Array(obj_f_npc_ai_list_type_idx).GetSize();
+	if (!typeListCount)
+		return FALSE;
+
+	auto aiListCount = obj->GetObjectIdArray(obj_f_npc_ai_list_idx).GetSize();
+	auto N = min(aiListCount, typeListCount);
+
+	for (auto i=0; i < N; i++){
+		auto aiListType = obj->GetInt32(obj_f_npc_ai_list_type_idx, i);
+		if (aiListType != typeToFind)
+			continue;
+		
+		auto aiListItem = obj->GetObjHndl(obj_f_npc_ai_list_idx, i);
+		if (aiListItem == tgt)
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
 void AiSystem::FleeAdd(objHndl npc, objHndl target) {
 	_FleeAdd(npc, target);
 }
@@ -309,6 +339,25 @@ void AiSystem::StopAttacking(objHndl npc) {
 void AiSystem::ProvokeHostility(objHndl agitator, objHndl provokedNpc, int rangeType, int flags)
 {
 	temple::GetRef<void(__cdecl)(objHndl, objHndl, int, int)>(0x1005E8D0)(agitator, provokedNpc, rangeType, flags);
+}
+
+int AiSystem::GetAllegianceStrength(objHndl aiHandle, objHndl tgt){
+	if (aiHandle == tgt)
+		return 4;
+	if (combat->IsBrawlInProgress())
+		return 0;
+	auto leader = critterSys.GetLeader(aiHandle);
+	if (leader && (leader == tgt || party.IsInParty(tgt) && (party.IsInParty(leader) || party.IsInParty(aiHandle))))
+		return 3;
+	else{
+		if (objSystem->GetObject(aiHandle)->GetInt32(obj_f_spell_flags) & SpellFlags::SF_SPELL_FLEE || d20Sys.d20Query(aiHandle, DK_QUE_Critter_Is_Charmed))
+			return 0;
+		if (critterSys.AllegianceShared(aiHandle, tgt))
+			return 1;
+		return 0;
+		// there's a stub here for value 2
+	}
+	return 0;
 }
 
 BOOL AiSystem::CannotHear(objHndl handle, objHndl tgt, int tileRangeIdx){
@@ -383,6 +432,98 @@ BOOL AiSystem::ConsiderTarget(objHndl obj, objHndl tgt)
 			return 0;
 	}
 	return 1;
+}
+
+int AiSystem::CannotHate(objHndl aiHandle, objHndl triggerer, objHndl aiLeader){
+	auto obj = objSystem->GetObject(aiHandle);
+	if (obj->GetInt32(obj_f_spell_flags) & SpellFlags::SF_SPELL_FLEE && critterSys.GetLeaderForNpc(aiHandle))
+		return 0;
+	if (!triggerer || !objSystem->GetObject(triggerer)->IsCritter())
+		return 0;
+	if (critterSys.GetLeader(triggerer) == aiLeader)
+		return 4;
+	if (critterSys.AllegianceShared(aiHandle, triggerer))
+		return 3;
+	if (d20Sys.d20QueryWithData(aiHandle, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Sanctuary Save Failed"), 0) != TRUE
+		|| d20Sys.d20QueryWithData(triggerer, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Sanctuary"), 0) != TRUE)
+		return 0;
+	else{
+		auto triggererSanctuaryHandle = d20Sys.d20QueryReturnData(triggerer, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Sanctuary"), 0);
+		auto sancHandle = d20Sys.d20QueryReturnData(aiHandle, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Sanctuary Save Failed"), 0);
+		if (sancHandle == triggererSanctuaryHandle)
+			return 5;
+	}
+
+	return 0;
+}
+
+int AiSystem::WillKos(objHndl aiHandle, objHndl triggerer){
+
+	if (!ConsiderTarget(aiHandle, triggerer))
+		return FALSE;
+
+	auto leader = critterSys.GetLeaderForNpc(aiHandle);
+	if (!pythonObjIntegration.ExecuteObjectScript(triggerer, aiHandle, ObjScriptEvent::WillKos))
+		return FALSE;
+
+	if (AiListFind(aiHandle, triggerer, 1))
+		return FALSE;
+
+	AiFightStatus aiFightStatus;
+	objHndl curTgt = objHndl::null;
+	GetAiFightStatus(aiHandle, &aiFightStatus, &curTgt);
+
+	if (aiFightStatus == AIFS_SURRENDERED && curTgt == triggerer)
+		return FALSE;
+
+	if (!leader && !party.IsInParty(aiHandle)){
+		auto npcFlags = objSystem->GetObject(aiHandle)->GetNPCFlags();
+		if ((npcFlags & NpcFlag::ONF_KOS) && !(npcFlags & NpcFlag::ONF_KOS_OVERRIDE)) {
+
+			if (!critterSys.AllegianceShared(aiHandle, triggerer) && (objSystem->GetObject(triggerer)->IsPC() || !factions.HasNullFaction(triggerer))) {
+				return 1;
+			}
+
+
+			if (d20Sys.d20Query(triggerer, DK_QUE_Critter_Is_Charmed)) {
+				objHndl charmer;
+				charmer = d20Sys.d20QueryReturnData(triggerer, DK_QUE_Critter_Is_Charmed);
+				auto res = WillKos(aiHandle, charmer);
+				if (res != 0)
+				{
+					return res;
+				}
+					
+			}
+		}
+
+		// check AI Params hostility threshold
+		if (objSystem->GetObject(triggerer)->IsPC()) {
+			auto aiPar = GetAiParams(aiHandle);
+			auto reac = critterSys.GetReaction(aiHandle, triggerer);
+			if (reac <= aiPar.hostilityThreshold){
+				return 2;
+			}
+				
+			return 0;
+		}
+	}
+
+	if (!objSystem->GetObject(triggerer)->IsNPC())
+		return FALSE;
+	GetAiFightStatus(triggerer, &aiFightStatus, &curTgt);
+	if (aiFightStatus != AIFS_FIGHTING || !curTgt)
+		return FALSE;
+	if (GetAllegianceStrength(aiHandle, curTgt) == 0) {
+		return FALSE; // there's a stub for more extensive logic here...
+	}
+	leader = critterSys.GetLeader(aiHandle);
+	if (!CannotHate(aiHandle, triggerer, leader)){
+		return 4;
+	}
+		
+	return FALSE;
+
 }
 
 void AiSystem::SetCombatFocus(objHndl npc, objHndl target) {
@@ -1680,6 +1821,11 @@ public:
 	void apply() override 
 	{
 		logger->info("Replacing AI functions...");
+
+		// Will KOS
+		replaceFunction<int(__cdecl)(objHndl, objHndl)>(0x1005C920, [](objHndl aiHandle, objHndl triggerer){
+			return aiSys.WillKos(aiHandle, triggerer);
+		});
 		
 		replaceFunction(0x100E3270, AiDefault);
 		replaceFunction(0x100E3A00, _AiTargetClosest);

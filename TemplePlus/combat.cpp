@@ -210,7 +210,7 @@ void LegacyCombatSystem::FloatCombatLine(objHndl obj, int line)
 	FloatLineColor floatColor = FloatLineColor::White;
 	if (objType == obj_t_npc )
 	{
-		auto npcLeader = critterSys.GetLeaderRecursive(obj);
+		auto npcLeader = critterSys.GetLeaderForNpc(obj);
 		if (!party.IsInParty(npcLeader))
 			floatColor = FloatLineColor::Red;
 		else

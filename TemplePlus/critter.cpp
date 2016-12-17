@@ -184,9 +184,17 @@ objHndl LegacyCritterSystem::GetLeader(objHndl critter) {
 	return addresses.GetLeader(critter);
 }
 
-objHndl LegacyCritterSystem::GetLeaderRecursive(objHndl critter)
-{
-	return addresses.GetLeaderRecursive(critter);
+objHndl LegacyCritterSystem::GetLeaderForNpc(objHndl critter){
+
+	auto obj = objSystem->GetObject(critter);
+	if (!obj->IsNPC())
+		return objHndl::null;
+
+	auto leader = critter;
+	while (leader && !objSystem->GetObject(leader)->IsPC()){
+		leader = GetLeader(leader);
+	}
+	return leader;
 }
 
 int LegacyCritterSystem::HasLineOfSight(objHndl critter, objHndl target) {
@@ -255,7 +263,7 @@ void LegacyCritterSystem::Attack(objHndl target, objHndl attacker, int n1, int f
 			if (attackerObj->IsCritter()){
 
 				// UnConceal
-				auto attackerLeader = critterSys.GetLeaderRecursive(attacker);
+				auto attackerLeader = critterSys.GetLeaderForNpc(attacker);
 				auto toUnconceal = attackerLeader;
 				if (!attackerLeader){
 					toUnconceal = attacker;
@@ -456,6 +464,10 @@ BOOL LegacyCritterSystem::AllegianceShared(objHndl obj, objHndl obj2)
 {
 	auto allegShared = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x10080A70);
 	return allegShared(obj, obj2);
+}
+
+int LegacyCritterSystem::GetReaction(objHndl of, objHndl towards){
+	return temple::GetRef<int(objHndl, objHndl)>(0x10054180)(of, towards);
 }
 
 int LegacyCritterSystem::SoundmapCritter(objHndl critter, int id) {

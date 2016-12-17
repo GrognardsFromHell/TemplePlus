@@ -7,7 +7,7 @@ struct FactionSystem : temple::AddressTable
 	uint32_t(__cdecl *FactionHas)(objHndl, uint32_t nFaction);
 	uint32_t(__cdecl *PCHasFactionFromReputation)(objHndl, uint32_t nFaction);
 	uint32_t(__cdecl *FactionAdd)(objHndl, uint32_t nFaction);
-
+	bool HasNullFaction(objHndl handle);
 	FactionSystem()
 	{
 		rebase(FactionHas, 0x1007E430);
