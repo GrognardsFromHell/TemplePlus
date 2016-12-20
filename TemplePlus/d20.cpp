@@ -2514,7 +2514,7 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 
 	if (d20Sys.SpellIsInterruptedCheck(d20a, invIdx, &spellData)){
 		if (invIdx == INV_IDX_INVALID){
-			spellPkt.MemorizedUseUp(spellData);
+			//spellPkt.MemorizedUseUp(spellData);
 			spellPkt.Debit();
 		}
 		spellInterruptApply(spellEntry.spellSchoolEnum, spellPkt.caster, invIdx);

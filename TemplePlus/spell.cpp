@@ -360,7 +360,7 @@ void SpellPacketBody::Debit(){
 
 	auto casterObj = gameSystems->GetObj().GetObject(caster);
 	
-	auto spellEnumDebited = spellEnumOriginal;
+	auto spellEnumDebited = this->spellEnumOriginal;
 
 	// Spontaneous vs. Normal logging
 	bool isSpont = (spellEnum != spellEnumOriginal) && spellEnumOriginal != 0;
@@ -393,6 +393,7 @@ void SpellPacketBody::Debit(){
 				&& spellMem.spellStoreState.spellStoreType == SpellStoreType::spellStoreMemorized
 				&& spellMem.spellStoreState.usedUp == 0
 				&& spellMem.metaMagicData == metaMagicData)	{
+				spellMem.spellStoreState.usedUp = 1;
 				casterObj->SetSpell(obj_f_critter_spells_memorized_idx, i, spellMem);
 				break;
 			}
@@ -404,7 +405,7 @@ void SpellPacketBody::Debit(){
 		
 	} 
 
-	// add to casted list (so it shows up as used / gets counted up for spells per day)
+	// add to casted list (so it shows up as used in the Spellbook / gets counted up for spells per day)
 	SpellStoreData sd(spellEnum, spellKnownSlotLevel, spellClass, metaMagicData);
 	sd.spellStoreState.spellStoreType = SpellStoreType::spellStoreCast;
 	casterObj->SetSpell(obj_f_critter_spells_cast_idx, casterObj->GetSpellArray(obj_f_critter_spells_cast_idx).GetSize(), sd);

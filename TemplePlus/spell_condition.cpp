@@ -18,6 +18,7 @@
 #include "damage.h"
 #include "anim.h"
 #include "float_line.h"
+#include "action_sequence.h"
 
 
 void PyPerformTouchAttack_PatchedCallToHitProcessing(D20Actn * pd20A, D20Actn d20A, uint32_t savedesi, uint32_t retaddr, PyObject * pyObjCaller, PyObject * pyTupleArgs);
@@ -47,6 +48,7 @@ public:
 	static int InvisibSphereDismiss(DispatcherCallbackArgs args);
 
 	static BOOL MindFogSaveThrowHook(objHndl tgt, objHndl caster, int spellDc, SavingThrowType saveType, int flags, int spellId);
+	static bool ShouldRemoveInvisibility(objHndl handle, DispIoD20Signal *evtObj, DispatcherCallbackArgs args);
 
 	void apply() override {
 
@@ -59,17 +61,59 @@ public:
 			write(0x102DAFB8, &sdd, sizeof(sdd)); // in place of Teleport_Reconnect which does nothing
 		}
 
-		static int (__cdecl*orgSpell_remove_spell)(DispatcherCallbackArgs) = replaceFunction<int(DispatcherCallbackArgs)>(0x100D7620, [](DispatcherCallbackArgs args){
+		// Invisibility Spell
+		static int(__cdecl*orgSpell_remove_spell)(DispatcherCallbackArgs) = replaceFunction<int(DispatcherCallbackArgs)>(0x100D7620, [](DispatcherCallbackArgs args) {
 			// fixes not removing Invisibility if target != caster
+
+			DispIoD20Signal *evtObj = nullptr;
+			if (args.dispIO)
+				evtObj = dispatch.DispIoCheckIoType6(args.dispIO);
+
+
+			if (args.dispKey == DK_SIG_Sequence) {
+				logger->warn("Caught a DK_SIG_Sequence, make sure we are removing spell properly...");
+			}
+
+			switch (args.dispKey) {
+			case DK_SIG_Killed:
+			case DK_SIG_Critter_Killed:
+			case DK_SIG_Sequence:
+			case DK_SIG_Spell_Cast:
+			case DK_SIG_Action_Recipient:
+			case DK_SIG_Concentration_Broken:
+			case DK_SIG_TouchAttackAdded:
+			case DK_SIG_Teleport_Prepare:
+			case DK_SIG_Teleport_Reconnect:
+				break;
+			default:
+				if (evtObj && evtObj->data1 != args.GetCondArg(0))
+					return 0;
+				break;
+			}
+
+
 			auto spellId = args.GetCondArg(0);
 			SpellPacketBody spPkt(spellId);
 			if (spPkt.spellEnum == 253){
-				if (spPkt.targetCount && spPkt.targetListHandles[0])
+				if (ShouldRemoveInvisibility(args.objHndCaller, evtObj, args) && spPkt.targetCount && spPkt.targetListHandles[0])
 					d20Sys.d20SendSignal(spPkt.targetListHandles[0], DK_SIG_Spell_End, spellId, 0);
 			}
 			return orgSpell_remove_spell(args);
 
 		});
+
+		/*{
+			SubDispDefNew sdd(dispTypeD20Signal, DK_SIG_Sequence, [](DispatcherCallbackArgs args)->int {
+
+				auto removeSpell = temple::GetRef<int(DispatcherCallbackArgs)>(0x100D7620);
+
+				auto dispIo = args.dispIO;
+
+
+				return removeSpell(args);
+			}, 136, 0);
+			write(0x102DACA0, &sdd, sizeof(SubDispDefNew));
+		}*/
 
 		//// spell mod end handler
 		//static int(__cdecl*orgSpellEndModHandler)(DispatcherCallbackArgs) = replaceFunction<int(DispatcherCallbackArgs)>(0x100E9680, [](DispatcherCallbackArgs args)
@@ -191,6 +235,7 @@ public:
 
 
 		redirectCall(0x100D56A3, MindFogSaveThrowHook);
+
 	}
 } spellConditionFixes;
 
@@ -614,4 +659,65 @@ int SpellConditionFixes::InvisibSphereDismiss(DispatcherCallbackArgs args){
 
 BOOL SpellConditionFixes::MindFogSaveThrowHook(objHndl tgt, objHndl caster, int spellDc, SavingThrowType saveType, int flags, int spellId){
 	return damage.SavingThrowSpell(tgt, caster, spellDc, SavingThrowType::Will, 0, spellId);
+}
+
+bool SpellConditionFixes::ShouldRemoveInvisibility(objHndl handle, DispIoD20Signal * evtObj, DispatcherCallbackArgs args){
+	if (!evtObj){
+		if (args.dispType == dispTypeBeginRound || args.dispKey == DK_SIG_Dismiss_Spells || args.dispType == dispTypeConditionAddPre){
+			auto spellId = args.GetCondArg(0);
+			d20Sys.d20SendSignal(handle, DK_SIG_Spell_End, spellId, 0);
+			return true;
+		}
+		return false;
+	}
+	if (args.dispKey == DK_SIG_Killed || args.dispKey == DK_SIG_Dismiss_Spells
+		|| args.dispType == dispTypeBeginRound || args.dispType == dispTypeConditionAddPre)
+		return true;
+
+	auto spellId = args.GetCondArg(0);
+	if (evtObj->dispIOType != dispIoTypeSendSignal){
+		if (evtObj->dispIOType == dispIOTypeDispelCheck){
+			d20Sys.d20SendSignal(handle, DK_SIG_Spell_End, spellId, 0);
+			return true;
+		}
+		return false;
+	}
+
+	ActnSeq *seq = (ActnSeq*)evtObj->data1;
+	if (!seq)
+		return true;
+
+	if (!seq->d20ActArrayNum)
+		return false;
+
+	auto objIsInvisible = d20Sys.d20QueryWithData(handle, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Invisibility"), 0);
+	if (!objIsInvisible)
+		return false;
+
+	for (auto i=0; i < seq->d20ActArrayNum; i++){
+		auto &d20a = seq->d20ActArray[i];
+		auto d20aSpellId = d20a.spellId;
+		if (d20a.d20ActType != D20A_CAST_SPELL){
+			auto tgt = d20a.d20ATarget;
+			if (d20Sys.IsActionOffensive(d20a.d20ActType, d20a.d20ATarget)){
+				d20Sys.d20SendSignal(handle, DK_SIG_Spell_End, spellId, 0);
+				return true;
+			}
+		} 
+		else if (d20aSpellId != spellId){
+			SpellPacketBody spellPkt(d20aSpellId);
+			if (!spellPkt.spellEnum){
+				logger->warn("RemoveInvisibility: Error, unable to retrieve spell.");
+				return false;
+			}
+			for (auto j = 0; j < spellPkt.targetCount; j++){
+				if (spellSys.IsSpellHarmful(spellPkt.spellEnum, spellPkt.caster, spellPkt.targetListHandles[j])){
+					d20Sys.d20SendSignal(handle, DK_SIG_Spell_End, spellId, 0);
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
 }

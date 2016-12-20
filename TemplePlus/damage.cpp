@@ -13,6 +13,7 @@
 #include "sound.h"
 #include "anim.h"
 #include "ui/ui_logbook.h"
+#include "party.h"
 
 static_assert(temple::validate_size<DispIoDamage, 0x550>::value, "DispIoDamage");
 
@@ -355,7 +356,7 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 		return -1;
 	}
 
-	if (tgt && attacker && critterSys.AllegianceShared(tgt, attacker)){ // TODO check that this solves the infamous "Friendly Fire" float for NPCs
+	if (tgt && attacker && critterSys.AllegianceShared(tgt, attacker) && combatSys.AffiliationSame(tgt, attacker)){
 		floatSys.FloatCombatLine(tgt, 107); // Friendly Fire
 	}
 
