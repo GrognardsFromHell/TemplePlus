@@ -255,34 +255,34 @@ bool WeaponSystem::IsSlashingOrBludgeoning(WeaponTypes wpnType)
 	return false;
 }
 
-//bool WeaponSystem::IsSlashingWeapon(WeaponTypes wpnType){
-//	auto p = wpnProps.find(wpnType);
-//	if (p == wpnProps.end()) return false;
-//	return p->second.damType == DamageType::Slashing
-//		|| p->second.damType == DamageType::SlashingAndBludgeoning
-//		|| p->second.damType == DamageType::PiercingAndSlashing
-//		|| p->second.damType == DamageType::SlashingAndBludgeoningAndPiercing;
-//}
-//
-//bool WeaponSystem::IsPiercingWeapon(WeaponTypes wpnType)
-//{
-//	auto p = wpnProps.find(wpnType);
-//	if (p == wpnProps.end()) return false;
-//	return p->second.damType == DamageType::Piercing
-//		|| p->second.damType == DamageType::PiercingAndSlashing
-//		|| p->second.damType == DamageType::BludgeoningAndPiercing
-//		|| p->second.damType == DamageType::SlashingAndBludgeoningAndPiercing;
-//}
-//
-//bool WeaponSystem::IsBludgeoningWeapon(WeaponTypes wpnType)
-//{
-//	auto p = wpnProps.find(wpnType);
-//	if (p == wpnProps.end()) return false;
-//	return p->second.damType == DamageType::Bludgeoning
-//		|| p->second.damType == DamageType::SlashingAndBludgeoning
-//		|| p->second.damType == DamageType::BludgeoningAndPiercing
-//		|| p->second.damType == DamageType::SlashingAndBludgeoningAndPiercing;
-//}
+bool WeaponSystem::IsSlashingWeapon(WeaponTypes wpnType){
+	auto p = wpnProps.find(wpnType);
+	if (p == wpnProps.end()) return false;
+	return p->second.damType == DamageType::Slashing
+		|| p->second.damType == DamageType::SlashingAndBludgeoning
+		|| p->second.damType == DamageType::PiercingAndSlashing
+		|| p->second.damType == DamageType::SlashingAndBludgeoningAndPiercing;
+}
+
+bool WeaponSystem::IsPiercingWeapon(WeaponTypes wpnType)
+{
+	auto p = wpnProps.find(wpnType);
+	if (p == wpnProps.end()) return false;
+	return p->second.damType == DamageType::Piercing
+		|| p->second.damType == DamageType::PiercingAndSlashing
+		|| p->second.damType == DamageType::BludgeoningAndPiercing
+		|| p->second.damType == DamageType::SlashingAndBludgeoningAndPiercing;
+}
+
+bool WeaponSystem::IsBludgeoningWeapon(WeaponTypes wpnType)
+{
+	auto p = wpnProps.find(wpnType);
+	if (p == wpnProps.end()) return false;
+	return p->second.damType == DamageType::Bludgeoning
+		|| p->second.damType == DamageType::SlashingAndBludgeoning
+		|| p->second.damType == DamageType::BludgeoningAndPiercing
+		|| p->second.damType == DamageType::SlashingAndBludgeoningAndPiercing;
+}
 
 int WeaponSystem::GetBaseHardness(objHndl item)
 {
@@ -375,4 +375,18 @@ bool WeaponSystem::AmmoMatchesWeapon(objHndl weapon, objHndl ammoItem)
 	if (!ammoItem)
 		return 0;
 	return ammoType == objects.getInt32(ammoItem, obj_f_ammo_type);
+}
+
+WeaponSystem::WeaponSystem(){
+	wpnProps[wt_javelin].damType = DamageType::Piercing;
+	wpnProps[wt_dagger].damType = DamageType::PiercingAndSlashing;
+	wpnProps[wt_short_sword].damType = DamageType::Piercing;
+	wpnProps[wt_longsword].damType = DamageType::Slashing;
+	wpnProps[wt_dart].damType = DamageType::Piercing;
+	wpnProps[wt_dwarven_waraxe].damType = DamageType::Slashing;
+	wpnProps[wt_quarterstaff].damType = DamageType::Bludgeoning;
+	wpnProps[wt_light_crossbow].damType = DamageType::Piercing;
+	wpnProps[wt_morningstar].damType = DamageType::BludgeoningAndPiercing;
+	wpnProps[wt_shuriken].damType = DamageType::Piercing;
+	// todo: wakizashi, cutlass, or just generalize the fucking thing
 }

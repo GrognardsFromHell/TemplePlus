@@ -2149,6 +2149,12 @@ void UiCharEditor::FeatsMultiBtnRender(int widId){
 
 
 	auto getFeatShortName = [](feat_enums ft){
+
+		if (ft > NUM_FEATS)
+		{
+			auto dummy = 1;
+		}
+
 		if (feats.IsFeatMultiSelectMaster(ft))
 			return uiCharEditor.GetFeatName(ft);
 		
@@ -2162,9 +2168,11 @@ void UiCharEditor::FeatsMultiBtnRender(int widId){
 		MesLine line(mesKey);
 		auto pcCreationMes = temple::GetRef<MesHandle>(0x11E72EF0);
 		auto text = mesFuncs.GetLineById(pcCreationMes,mesKey);
-		if (!text)
-			text = uiCharEditor.GetFeatName(ft).c_str();
-		return std::string(text);
+		if (text){
+			return std::string(text);
+		}
+		else
+			return uiCharEditor.GetFeatName(ft);	
 	};
 
 	auto ftName = getFeatShortName(feat);

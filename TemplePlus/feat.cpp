@@ -325,6 +325,8 @@ void LegacyFeatSystem::_GetNewFeatsFromFile()
 	}
 
 	tio_filelist_destroy(&flist);
+
+	_CompileParents();
 }
 
 void LegacyFeatSystem::_CompileParents(){

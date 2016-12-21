@@ -24,9 +24,9 @@ struct WeaponSystem : temple::AddressTable
 
 	bool IsSlashingOrBludgeoning(objHndl weapon);
 	bool IsSlashingOrBludgeoning(WeaponTypes wpnType);
-	/*bool IsSlashingWeapon(WeaponTypes wpnType);
+	bool IsSlashingWeapon(WeaponTypes wpnType);
 	bool IsPiercingWeapon(WeaponTypes wpnType);
-	bool IsBludgeoningWeapon(WeaponTypes wpnType);*/
+	bool IsBludgeoningWeapon(WeaponTypes wpnType);
 
 	int GetBaseHardness(objHndl item);
 	int GetBaseHardness(WeaponTypes weapon);
@@ -34,6 +34,7 @@ struct WeaponSystem : temple::AddressTable
 
 
 	std::map<WeaponTypes, WeaponTypeProperties> wpnProps;
+	WeaponSystem();
 };
 
 extern WeaponSystem weapons;
