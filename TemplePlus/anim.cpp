@@ -1068,6 +1068,18 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
   return result;
 }
 
+void AnimSystem::PushDisableFidget()
+{
+	static auto call = temple::GetPointer<void()>(0x100603F0);
+	call();
+}
+
+void AnimSystem::PopDisableFidget()
+{
+	static auto call = temple::GetPointer<void()>(0x10060410);
+	call();
+}
+
 void AnimSystem::ProcessActionCallbacks() {
 	// changed to manual iteration because PerformOnAnimComplete can alter the vector
 	auto initSize = mActionCallbacks.size();
