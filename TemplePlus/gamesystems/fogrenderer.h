@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <EASTL/vector.h>
+
 #include <graphics/buffers.h>
 #include <graphics/device.h>
 #include <graphics/mdfmaterials.h>
@@ -23,7 +25,7 @@ private:
 
 	std::unique_ptr<gfx::Material> mMaterial;
 
-	std::vector<uint8_t> mBlurredFog;
+	eastl::vector<uint8_t> mBlurredFog;
 	size_t mBlurredFogWidth;
 	size_t mBlurredFogHeight;
 	

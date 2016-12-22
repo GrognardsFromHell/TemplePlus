@@ -78,7 +78,7 @@ void FogOfWarRenderer::Render() {
 	gfx::PerfGroup perfGroup(mDevice, "Fog Of War");
 
 	// Reset the blurred buffer
-	std::fill(mBlurredFog.begin(), mBlurredFog.end(), 0);
+	eastl::fill(mBlurredFog.begin(), mBlurredFog.end(), 0);
 
 	static auto sOpaquePattern = FogBlurKernel::Create(0xFF);
 	static auto sHalfTransparentPattern = FogBlurKernel::Create(0xA0);
