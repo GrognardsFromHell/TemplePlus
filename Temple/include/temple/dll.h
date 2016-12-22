@@ -44,6 +44,7 @@ namespace temple {
 
 		std::wstring FindConflictingModule();
 		void ReserveMemoryRange();
+		void SetReservedMemory(void*);
 
 		bool IsVanillaDll() const;
 
