@@ -178,8 +178,8 @@ public:
 	int featsMainWndId = 0, featsMultiSelectWndId =0;
 	int featsScrollbarId =0, featsExistingScrollbarId =0, featsMultiSelectScrollbarId =0;
 	int featsScrollbarY =0, featsExistingScrollbarY =0, featsMultiSelectScrollbarY =0;
-	WidgetType1 featsMainWnd, featsMultiSelectWnd;
-	WidgetType3 featsScrollbar, featsExistingScrollbar, featsMultiSelectScrollbar;
+	LgcyWindow featsMainWnd, featsMultiSelectWnd;
+	LgcyScrollBar featsScrollbar, featsExistingScrollbar, featsMultiSelectScrollbar;
 	eastl::vector<int> featsAvailBtnIds, featsExistingBtnIds, featsMultiSelectBtnIds;
 	int featsMultiOkBtnId = 0, featsMultiCancelBtnId = 0;
 	const int FEATS_AVAIL_BTN_COUNT = 17; // vanilla 18
@@ -194,8 +194,8 @@ public:
 
 
 	int spellsWndId = 0;
-	WidgetType1 spellsWnd;
-	WidgetType3 spellsScrollbar, spellsScrollbar2;
+	LgcyWindow spellsWnd;
+	LgcyScrollBar spellsScrollbar, spellsScrollbar2;
 	int spellsScrollbarId = 0, spellsScrollbar2Id = 0;
 	int spellsScrollbarY = 0, spellsScrollbar2Y = 0;
 	eastl::vector<int> spellsAvailBtnIds, spellsChosenBtnIds;
@@ -526,18 +526,18 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 	auto lvlNew = objects.StatLevelGet(handle, stat_level) + 1;
 	auto &stateBtnIds = temple::GetRef<int[6]>(0x11E72E40);
 
-	ui.ButtonSetButtonState(stateBtnIds[2], UBS_DISABLED); // features
+	ui.ButtonSetButtonState(stateBtnIds[2], LgcyButtonState::Disabled); // features
 
 	// gain stat every 4 levels
 	if (lvlNew % 4)
-		ui.ButtonSetButtonState(stateBtnIds[1], UBS_DISABLED); // stats
+		ui.ButtonSetButtonState(stateBtnIds[1], LgcyButtonState::Disabled); // stats
 	else
-		ui.ButtonSetButtonState(stateBtnIds[1], UBS_NORMAL); 
+		ui.ButtonSetButtonState(stateBtnIds[1], LgcyButtonState::Normal); 
 
 	if (lvlNew % 3)
-		ui.ButtonSetButtonState(stateBtnIds[4], UBS_DISABLED); // feats
+		ui.ButtonSetButtonState(stateBtnIds[4], LgcyButtonState::Disabled); // feats
 	else
-		ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL);
+		ui.ButtonSetButtonState(stateBtnIds[4], LgcyButtonState::Normal);
 
 
 	mIsSelectingBonusFeat = false;
@@ -547,34 +547,34 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 		auto classLvlNew = GetNewLvl(classCode);
 
 		if (d20ClassSys.IsSelectingFeatsOnLevelup(handle, classCode) ) {
-			ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL); // feats
+			ui.ButtonSetButtonState(stateBtnIds[4], LgcyButtonState::Normal); // feats
 			mIsSelectingBonusFeat = true;
 		}
 
 		
 		if (classCode == stat_level_cleric) {
 			if (classLvlNew == 1)
-				ui.ButtonSetButtonState(stateBtnIds[2], UBS_NORMAL); // features
+				ui.ButtonSetButtonState(stateBtnIds[2], LgcyButtonState::Normal); // features
 		}
 		if (classCode == stat_level_ranger) {
 			if (classLvlNew == 1 || classLvlNew == 2 || !(classLvlNew % 5))
-				ui.ButtonSetButtonState(stateBtnIds[2], UBS_NORMAL); // features
+				ui.ButtonSetButtonState(stateBtnIds[2], LgcyButtonState::Normal); // features
 		}
 		if (classCode == stat_level_wizard) {
 			if (classLvlNew == 1)
-				ui.ButtonSetButtonState(stateBtnIds[2], UBS_NORMAL); // wizard special school
+				ui.ButtonSetButtonState(stateBtnIds[2], LgcyButtonState::Normal); // wizard special school
 		}
 	}
 	
 	// Spells
 	if (d20ClassSys.IsSelectingSpellsOnLevelup(handle, classCode)){
-		ui.ButtonSetButtonState(stateBtnIds[5], UBS_NORMAL);
+		ui.ButtonSetButtonState(stateBtnIds[5], LgcyButtonState::Normal);
 	} 
 	else
 	{
-		ui.ButtonSetButtonState(stateBtnIds[5], UBS_DISABLED);
+		ui.ButtonSetButtonState(stateBtnIds[5], LgcyButtonState::Disabled);
 	};
-	
+
 	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
 	auto &stateTitles = temple::GetRef<const char*[6]>(0x10BE8D1C);
 	auto text = stateTitles[systemId];
@@ -590,8 +590,8 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 }
 
 BOOL UiCharEditor::ClassWidgetsInit(){
-	static WidgetType1 classWnd(259,117, 405, 271);
-	classWnd.widgetFlags = 1;
+	static LgcyWindow classWnd(259,117, 405, 271);
+	classWnd.flags = 1;
 	classWnd.render = [](int widId) { uiCharEditor.StateTitleRender(widId); };
 	if (classWnd.Add(&classWndId))
 		return 0;
@@ -601,7 +601,7 @@ BOOL UiCharEditor::ClassWidgetsInit(){
 	for (auto it: d20ClassSys.vanillaClassEnums){
 		// class buttons
 		int newId = 0;
-		WidgetType2 classBtn("Class btn", classWndId, 71 + coloff, 47 + rowoff, 130, 20);
+		LgcyButton classBtn("Class btn", classWndId, 71 + coloff, 47 + rowoff, 130, 20);
 		coloff = 139 - coloff;
 		if (!coloff)
 			rowoff += 29;
@@ -637,7 +637,7 @@ BOOL UiCharEditor::ClassWidgetsInit(){
 	classNextBtnTextRect.x -= classWnd.x; classNextBtnTextRect.y -= classWnd.y;
 	classPrevBtnTextRect.x -= classWnd.x; classPrevBtnTextRect.y -= classWnd.y;
 
-	WidgetType2 nextBtn("Class Next Button", classWndId, classWnd.x + 293, classWnd.y + 230, 55, 20),
+	LgcyButton nextBtn("Class Next Button", classWndId, classWnd.x + 293, classWnd.y + 230, 55, 20),
 		prevBtn("Class Prev. Button", classWndId, classWnd.x + 58, classWnd.y + 230, 55, 20);
 
 	nextBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {
@@ -917,8 +917,8 @@ void UiCharEditor::SpellsFree(){
 
 
 BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
-	featsMainWnd = WidgetType1(259, 117, 405, 271);
-	featsMainWnd.widgetFlags = 1;
+	featsMainWnd = LgcyWindow(259, 117, 405, 271);
+	featsMainWnd.flags = 1;
 	featsMainWnd.render = [](int widId) {uiCharEditor.FeatsWndRender(widId); };
 	featsMainWnd.handleMessage = [](int widId, TigMsg*msg) { return uiCharEditor.FeatsWndMsg(widId, msg); };
 	featsMainWnd.Add(&featsMainWndId);
@@ -926,10 +926,10 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	// multi select wnd
 	featsMultiCenterX = (w - 289) / 2;
 	featsMultiCenterY = (h - 355) / 2;
-	featsMultiSelectWnd = WidgetType1(0, 0, w, h);
+	featsMultiSelectWnd = LgcyWindow(0, 0, w, h);
 	auto featsMultiRefX = featsMultiCenterX + featsMultiSelectWnd.x;
 	auto featsMultiRefY = featsMultiCenterY + featsMultiSelectWnd.y;
-	featsMultiSelectWnd.widgetFlags = 1;
+	featsMultiSelectWnd.flags = 1;
 	featsMultiSelectWnd.render = [](int widId) {uiCharEditor.FeatsMultiSelectWndRender(widId); };
 	featsMultiSelectWnd.handleMessage = [](int widId, TigMsg*msg) { return uiCharEditor.FeatsMultiSelectWndMsg(widId, msg); };
 	featsMultiSelectWnd.Add(&featsMultiSelectWndId);
@@ -944,7 +944,7 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	//ok btn
 	{
 		int newId = 0;
-		WidgetType2 multiOkBtn("Feats Multiselect Ok Btn", featsMultiSelectWndId, 29, 307, 110, 22);
+		LgcyButton multiOkBtn("Feats Multiselect Ok Btn", featsMultiSelectWndId, 29, 307, 110, 22);
 		multiOkBtn.x += featsMultiRefX; multiOkBtn.y += featsMultiRefY;
 		featMultiOkRect = TigRect(multiOkBtn.x, multiOkBtn.y, multiOkBtn.width, multiOkBtn.height);
 		featMultiOkTextRect = TigRect(multiOkBtn.x, multiOkBtn.y + 4, multiOkBtn.width, multiOkBtn.height - 8);
@@ -960,7 +960,7 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	//cancel btn
 	{
 		int newId = 0;
-		WidgetType2 multiCancelBtn("Feats Multiselect Cancel Btn", featsMultiSelectWndId, 153, 307, 110, 22);
+		LgcyButton multiCancelBtn("Feats Multiselect Cancel Btn", featsMultiSelectWndId, 153, 307, 110, 22);
 		multiCancelBtn.x += featsMultiRefX; multiCancelBtn.y += featsMultiRefY;
 		featMultiCancelRect = TigRect(multiCancelBtn.x, multiCancelBtn.y, multiCancelBtn.width, multiCancelBtn.height);
 		featMultiCancelTextRect = TigRect(multiCancelBtn.x, multiCancelBtn.y + 4, multiCancelBtn.width, multiCancelBtn.height - 8);
@@ -979,7 +979,7 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	auto rowOff = 75;
 	for (auto i=0; i < FEATS_MULTI_BTN_COUNT; i++){
 		int newId = 0;
-		WidgetType2 featMultiBtn("Feats Multiselect btn", featsMultiSelectWndId, 23, 75 + i*(FEATS_MULTI_BTN_HEIGHT+2), 233, FEATS_MULTI_BTN_HEIGHT);
+		LgcyButton featMultiBtn("Feats Multiselect btn", featsMultiSelectWndId, 23, 75 + i*(FEATS_MULTI_BTN_HEIGHT+2), 233, FEATS_MULTI_BTN_HEIGHT);
 
 		featMultiBtn.x += featsMultiRefX; featMultiBtn.y += featsMultiRefY;
 		featMultiBtn.render = [](int id) {uiCharEditor.FeatsMultiBtnRender(id); };
@@ -1002,7 +1002,7 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	featsBtnRects.clear();
 	for (auto i = 0; i < FEATS_AVAIL_BTN_COUNT; i++) {
 		int newId = 0;
-		WidgetType2 featsAvailBtn("Feats Available btn", featsMainWndId, 7, 38 + i*(FEATS_AVAIL_BTN_HEIGHT + 1), 169, FEATS_AVAIL_BTN_HEIGHT);
+		LgcyButton featsAvailBtn("Feats Available btn", featsMainWndId, 7, 38 + i*(FEATS_AVAIL_BTN_HEIGHT + 1), 169, FEATS_AVAIL_BTN_HEIGHT);
 
 		featsAvailBtn.x += featsMainWnd.x; featsAvailBtn.y += featsMainWnd.y;
 		featsAvailBtn.render = [](int id) {uiCharEditor.FeatsEntryBtnRender(id); };
@@ -1028,7 +1028,7 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	featsExistingBtnRects.clear();
 	for (auto i = 0; i < FEATS_EXISTING_BTN_COUNT; i++) {
 		int newId = 0;
-		WidgetType2 featsExistingBtn("Feats Existing btn", featsMainWndId, 212, 121 + i*(FEATS_EXISTING_BTN_HEIGHT + 1), 175, FEATS_EXISTING_BTN_HEIGHT);
+		LgcyButton featsExistingBtn("Feats Existing btn", featsMainWndId, 212, 121 + i*(FEATS_EXISTING_BTN_HEIGHT + 1), 175, FEATS_EXISTING_BTN_HEIGHT);
 
 		featsExistingBtn.x += featsMainWnd.x; featsExistingBtn.y += featsMainWnd.y;
 		featsExistingBtn.render = [](int id) {uiCharEditor.FeatsExistingBtnRender(id); };
@@ -1194,8 +1194,8 @@ void UiCharEditor::FeatsActivate(){
 BOOL UiCharEditor::SpellsWidgetsInit(){
 
 	const int spellsWndX = 259, spellsWndY = 117, spellsWndW = 405, spellsWndH = 271;
-	spellsWnd = WidgetType1(spellsWndX, spellsWndY, spellsWndW, spellsWndH);
-	spellsWnd.widgetFlags = 1;
+	spellsWnd = LgcyWindow(spellsWndX, spellsWndY, spellsWndW, spellsWndH);
+	spellsWnd.flags = 1;
 	spellsWnd.render = [](int widId) {uiCharEditor.SpellsWndRender(widId); };
 	spellsWnd.handleMessage = [](int widId, TigMsg*msg) { return uiCharEditor.SpellsWndMsg(widId, msg); };
 	spellsWnd.Add(&spellsWndId);
@@ -1220,7 +1220,7 @@ BOOL UiCharEditor::SpellsWidgetsInit(){
 	for (auto i = 0; i < SPELLS_BTN_COUNT; i++, rowOff += SPELLS_BTN_HEIGHT){
 		
 		int newId = 0;
-		WidgetType2 spellAvailBtn("Spell Available btn", spellsWndId, 4, rowOff, 180, SPELLS_BTN_HEIGHT);
+		LgcyButton spellAvailBtn("Spell Available btn", spellsWndId, 4, rowOff, 180, SPELLS_BTN_HEIGHT);
 
 		spellAvailBtn.x += spellsWnd.x; spellAvailBtn.y += spellsWnd.y;
 		spellAvailBtn.render = [](int id) {uiCharEditor.SpellsAvailableEntryBtnRender(id); };
@@ -1231,7 +1231,7 @@ BOOL UiCharEditor::SpellsWidgetsInit(){
 		ui.SetDefaultSounds(newId);
 		ui.BindToParent(spellsWndId, newId);
 
-		WidgetType2 spellChosenBtn("Spell Chosen btn", spellsWndId, 206, rowOff, 170, SPELLS_BTN_HEIGHT);
+		LgcyButton spellChosenBtn("Spell Chosen btn", spellsWndId, 206, rowOff, 170, SPELLS_BTN_HEIGHT);
 
 		spellChosenBtn.x += spellsWnd.x; spellChosenBtn.y += spellsWnd.y;
 		spellChosenBtn.render = [](int id) {uiCharEditor.SpellsEntryBtnRender(id); };
@@ -1416,15 +1416,15 @@ void UiCharEditor::ClassBtnRender(int widId){
 	static TigRect srcRect(1, 1, 120, 30);
 	UiRenderer::DrawTexture(buttonBox, classBtnFrameRects[idx], srcRect);
 
-	UiButtonState btnState; 
+	LgcyButtonState btnState; 
 	ui.GetButtonState(widId, btnState);
-	if (btnState != UiButtonState::UBS_DISABLED && btnState != UiButtonState::UBS_DOWN)
+	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down)
 	{
 		auto &selPkt = GetCharEditorSelPacket();
 		if (selPkt.classCode == classCode)
-			btnState = UiButtonState::UBS_RELEASED;
-		else
-			btnState = btnState == UiButtonState::UBS_HOVERED ? UiButtonState::UBS_HOVERED : UiButtonState::UBS_NORMAL;
+			btnState = LgcyButtonState::Released;
+		else if (btnState != LgcyButtonState::Hovered)
+			btnState = LgcyButtonState::Normal;
 	}
 		
 	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
@@ -1571,10 +1571,10 @@ void UiCharEditor::ClassNextBtnRender(int widId){
 	static TigRect srcRect(1, 1, 120, 30);
 	UiRenderer::DrawTexture(buttonBox, classNextBtnFrameRect, srcRect);
 
-	UiButtonState btnState;
+	LgcyButtonState btnState;
 	ui.GetButtonState(widId, btnState);
-	if (btnState != UiButtonState::UBS_DISABLED && btnState != UiButtonState::UBS_DOWN){
-		btnState = btnState == UiButtonState::UBS_HOVERED ? UiButtonState::UBS_HOVERED : UiButtonState::UBS_NORMAL;
+	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down){
+		btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
 	}
 
 	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
@@ -1599,10 +1599,10 @@ void UiCharEditor::ClassPrevBtnRender(int widId){
 	static TigRect srcRect(1, 1, 120, 30);
 	UiRenderer::DrawTexture(buttonBox, classPrevBtnFrameRect, srcRect);
 
-	UiButtonState btnState;
+	LgcyButtonState btnState;
 	ui.GetButtonState(widId, btnState);
-	if (btnState != UiButtonState::UBS_DISABLED && btnState != UiButtonState::UBS_DOWN) {
-		btnState = btnState == UiButtonState::UBS_HOVERED ? UiButtonState::UBS_HOVERED : UiButtonState::UBS_NORMAL;
+	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down) {
+		btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
 	}
 
 	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
@@ -1977,7 +1977,7 @@ void UiCharEditor::FeatsMultiSelectActivate(feat_enums feat) {
 	featsMultiSelectScrollbarY = 0;
 	featsMultiSelectScrollbar.yMax = max(0, (int)mMultiSelectFeats.size() - FEATS_MULTI_BTN_COUNT);
 	ui.WidgetSet(featsMultiSelectScrollbarId, &featsMultiSelectScrollbar);
-	ui.ButtonSetButtonState(featsMultiOkBtnId, UBS_DISABLED);
+	ui.ButtonSetButtonState(featsMultiOkBtnId, LgcyButtonState::Disabled);
 
 	ui.WidgetSetHidden(featsMultiSelectWndId, 0);
 	ui.WidgetBringToFront(featsMultiSelectWndId);
@@ -2006,22 +2006,22 @@ BOOL UiCharEditor::FeatsMultiSelectWndMsg(int widId, TigMsg * msg){
 }
 
 void UiCharEditor::FeatsMultiOkBtnRender(int widId){
-	UiButtonState buttonState;
+	LgcyButtonState buttonState;
 	if (ui.GetButtonState(widId, buttonState))
 		return;
 
 	int texId;
 	switch(buttonState){
-	case UBS_NORMAL:
+	case LgcyButtonState::Normal:
 		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptNormal, texId);
 		break;
-	case UBS_HOVERED:
+	case LgcyButtonState::Hovered:
 		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptHover, texId);
 		break;
-	case UBS_DOWN:
+	case LgcyButtonState::Down:
 		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptPressed, texId);
 		break;
-	case UBS_DISABLED:
+	case LgcyButtonState::Disabled:
 		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DisabledNormal, texId);
 		break;
 	default:	
@@ -2080,22 +2080,22 @@ BOOL UiCharEditor::FeatsMultiOkBtnMsg(int widId, TigMsg * msg){
 }
 
 void UiCharEditor::FeatsMultiCancelBtnRender(int widId){
-	UiButtonState buttonState;
+	LgcyButtonState buttonState;
 	if (ui.GetButtonState(widId, buttonState))
 		return;
 
 	int texId;
 	switch (buttonState) {
-	case UBS_NORMAL:
+	case LgcyButtonState::Normal:
 		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineNormal, texId);
 		break;
-	case UBS_HOVERED:
+	case LgcyButtonState::Hovered:
 		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineHover, texId);
 		break;
-	case UBS_DOWN:
+	case LgcyButtonState::Down:
 		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclinePressed, texId);
 		break;
-	case UBS_DISABLED:
+	case LgcyButtonState::Disabled:
 		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DisabledNormal, texId);
 		break;
 	default:
@@ -2213,11 +2213,11 @@ BOOL UiCharEditor::FeatsMultiBtnMsg(int widId, TigMsg* msg){
 		}
 		if (FeatCanPick(feat) && !FeatAlreadyPicked(feat)){
 			featsMultiSelected = feat;
-			ui.ButtonSetButtonState(featsMultiOkBtnId, UBS_NORMAL);
+			ui.ButtonSetButtonState(featsMultiOkBtnId, LgcyButtonState::Normal);
 		} else
 		{
 			featsMultiSelected = FEAT_NONE;
-			ui.ButtonSetButtonState(featsMultiOkBtnId, UBS_DISABLED);
+			ui.ButtonSetButtonState(featsMultiOkBtnId, LgcyButtonState::Disabled);
 		}
 		return TRUE;
 	default:
@@ -2912,31 +2912,31 @@ void UiCharEditor::ClassSetPermissibles(){
 	for (auto it:classBtnIds){
 		auto classCode = GetClassCodeFromWidgetAndPage(idx++, page);
 		if (classCode == (Stat)-1)
-			ui.ButtonSetButtonState(it, UBS_DISABLED);
+			ui.ButtonSetButtonState(it, LgcyButtonState::Disabled);
 		else if (d20ClassSys.ReqsMet(handle, classCode)){
-			ui.ButtonSetButtonState(it, UBS_NORMAL);
+			ui.ButtonSetButtonState(it, LgcyButtonState::Normal);
 		}
 		else{
-			ui.ButtonSetButtonState(it, UBS_DISABLED);
+			ui.ButtonSetButtonState(it, LgcyButtonState::Disabled);
 		}
 		
 	}
 
 	if (mPageCount <= 1){
-		ui.ButtonSetButtonState(classNextBtn, UBS_DISABLED);
-		ui.ButtonSetButtonState(classPrevBtn, UBS_DISABLED);
+		ui.ButtonSetButtonState(classNextBtn, LgcyButtonState::Disabled);
+		ui.ButtonSetButtonState(classPrevBtn, LgcyButtonState::Disabled);
 		return;
 	}
 
 	if (page > 0)
-		ui.ButtonSetButtonState(classPrevBtn, UBS_NORMAL);
+		ui.ButtonSetButtonState(classPrevBtn, LgcyButtonState::Normal);
 	else 
-		ui.ButtonSetButtonState(classPrevBtn, UBS_DISABLED);
+		ui.ButtonSetButtonState(classPrevBtn, LgcyButtonState::Disabled);
 
 	if (page < mPageCount-1)
-		ui.ButtonSetButtonState(classNextBtn, UBS_NORMAL);
+		ui.ButtonSetButtonState(classNextBtn, LgcyButtonState::Normal);
 	else
-		ui.ButtonSetButtonState(classNextBtn, UBS_DISABLED);
+		ui.ButtonSetButtonState(classNextBtn, LgcyButtonState::Disabled);
 }
 
 

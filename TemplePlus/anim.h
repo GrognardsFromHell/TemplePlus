@@ -217,6 +217,9 @@ public:
 
 	BOOL ProcessAnimEvent(const TimeEvent *evt);
 
+	void PushDisableFidget();
+	void PopDisableFidget();
+
 private:
 	/*
 		Set to true when ToEE cannot allocate an animation slot. This causes

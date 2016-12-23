@@ -245,6 +245,17 @@ namespace temple {
 
 	}
 
+	void Dll::SetReservedMemory(void *reservedMem)
+	{
+		if (mReservedMem) {
+			throw TempleException("Memory has already been reserved.");
+		}
+		if (mImpl) {
+			throw TempleException("DLL has already been loaded.");
+		}
+		mReservedMem = reservedMem;
+	}
+
 	bool Dll::IsVanillaDll() const {
 		// One of the differences between vanilla and GoG is the
 		// condition table referenced @ 100F7BC0

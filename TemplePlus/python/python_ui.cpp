@@ -37,41 +37,41 @@ using namespace pybind11::detail;
 PYBIND11_PLUGIN(tp_ui) {
 	py::module m("tpui", "Temple+ UI module, for UI stuff.");
 
-	py::class_<Widget>(m, "Widget")
-		.def_readwrite("widgetId", &Widget::widgetId)
-		.def_readwrite("parentId", &Widget::parentId)
-		.def_readwrite("x", &Widget::x)
-		.def_readwrite("y", &Widget::y)
-		.def_readwrite("x_base", &Widget::xrelated)
-		.def_readwrite("y_base", &Widget::yrelated)
-		.def_readwrite("width", &Widget::width)
-		.def_readwrite("height", &Widget::height)
+	py::class_<LgcyWidget>(m, "Widget")
+		.def_readwrite("widgetId", &LgcyWidget::widgetId)
+		.def_readwrite("parentId", &LgcyWidget::parentId)
+		.def_readwrite("x", &LgcyWidget::x)
+		.def_readwrite("y", &LgcyWidget::y)
+		.def_readwrite("x_base", &LgcyWidget::xrelated)
+		.def_readwrite("y_base", &LgcyWidget::yrelated)
+		.def_readwrite("width", &LgcyWidget::width)
+		.def_readwrite("height", &LgcyWidget::height)
 		;
 	
-	py::class_<WidgetType1>(m, "WidgetWindow", py::base<Widget>())
+	py::class_<LgcyWindow>(m, "WidgetWindow", py::base<LgcyWidget>())
 		.def(py::init())
-		.def_readwrite("children_count", &WidgetType1::childrenCount)
-		.def_readwrite("windowId", &WidgetType1::windowId)
+		.def_readwrite("children_count", &LgcyWindow::childrenCount)
+		.def_readwrite("windowId", &LgcyWindow::zIndex)
 		;
 
-	py::class_<WidgetType2>(m, "WidgetButton", py::base<Widget>())
-		.def_readwrite("state", &WidgetType2::buttonState, "0 - normal, 1 - hovered, 2 - down, 3 - released, 4 - disabled")
-		.def_readwrite("sound_down", &WidgetType2::sndDown)
-		.def_readwrite("sound_click", &WidgetType2::sndClick)
-		.def_readwrite("sound_hover_on", &WidgetType2::hoverOn)
-		.def_readwrite("sound_hover_off", &WidgetType2::hoverOff)
+	py::class_<LgcyButton>(m, "WidgetButton", py::base<LgcyWidget>())
+		.def_readwrite("state", &LgcyButton::buttonState, "0 - normal, 1 - hovered, 2 - down, 3 - released, 4 - disabled")
+		.def_readwrite("sound_down", &LgcyButton::sndDown)
+		.def_readwrite("sound_click", &LgcyButton::sndClick)
+		.def_readwrite("sound_hover_on", &LgcyButton::hoverOn)
+		.def_readwrite("sound_hover_off", &LgcyButton::hoverOff)
 		;
 
-	py::class_<WidgetType3>(m, "WidgetScrollbar", py::base<Widget>())
+	py::class_<LgcyScrollBar>(m, "WidgetScrollbar", py::base<LgcyWidget>())
 		.def(py::init())
-		.def("init", (bool (WidgetType3::*)(int, int, int)) &WidgetType3::Init)
-		.def("init", (bool (WidgetType3::*)(int, int, int, int)) &WidgetType3::Init)
-		.def_readwrite("scroll_position_min", &WidgetType3::yMin)
-		.def_readwrite("scroll_position_max", &WidgetType3::yMax)
-		.def_readwrite("scroll_position", &WidgetType3::scrollbarY)
-		.def_readwrite("scroll_quantum",&WidgetType3::scrollQuantum)
-		.def("GetPosition", &WidgetType3::GetY)
-		.def("Register", &WidgetType3::Add)
+		.def("init", (bool (LgcyScrollBar::*)(int, int, int)) &LgcyScrollBar::Init)
+		.def("init", (bool (LgcyScrollBar::*)(int, int, int, int)) &LgcyScrollBar::Init)
+		.def_readwrite("scroll_position_min", &LgcyScrollBar::yMin)
+		.def_readwrite("scroll_position_max", &LgcyScrollBar::yMax)
+		.def_readwrite("scroll_position", &LgcyScrollBar::scrollbarY)
+		.def_readwrite("scroll_quantum",&LgcyScrollBar::scrollQuantum)
+		.def("GetPosition", &LgcyScrollBar::GetY)
+		.def("Register", &LgcyScrollBar::Add)
 		;
 
 	

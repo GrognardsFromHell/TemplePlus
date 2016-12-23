@@ -9,7 +9,6 @@
 #include "mainloop.h"
 #include <temple/dll.h>
 #include "mainwindow.h"
-#include "tig/tig_msg.h"
 #include "tig/tig_mouse.h"
 #include "tig/tig_startup.h"
 #include "gameview.h"
@@ -33,6 +32,7 @@
 #include "action_sequence.h"
 #include "maps.h"
 #include <infrastructure/keyboard.h>
+#include "messages/messagequeue.h"
 
 static GameLoop *gameLoop = nullptr;
 
@@ -139,7 +139,7 @@ void GameLoop::Run() {
 		Stopwatch sw1;
 
 		// Read user input and external system events (such as time)
-		msgFuncs.ProcessSystemEvents();
+		messageQueue->PollExternalEvents();
 
 		mGameSystems.AdvanceTime();
 
@@ -158,7 +158,7 @@ void GameLoop::Run() {
 		RenderFrame();
 
 		// Why does it process msgs AFTER rendering???		
-		while (!msgFuncs.Process(&msg)) {
+		while (messageQueue->Process(msg)) {
 			if (msg.type == TigMsgType::EXIT) {
 				quit = true;
 				break;

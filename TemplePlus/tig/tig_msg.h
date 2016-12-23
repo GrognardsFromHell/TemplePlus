@@ -96,31 +96,9 @@ struct TigMsg : TigMsgBase {
 	uint32_t arg2; // y for mouse events
 	uint32_t arg3;
 	uint32_t arg4; // button state flags for mouse events - see MouseStateFlags
-	void Enqueue();
 };
 
 struct TigMsgGlobalKeyCallback {
 	uint32_t keycode; // DirectInput constants
 	void(__cdecl *callback)(uint32_t);
 };
-
-struct TigMsgFuncs : temple::AddressTable {
-	// Return code of 0 means a msg has been written to msgOut.
-	int(__cdecl *Process)(TigMsgBase *msgOut);
-	void(__cdecl *Enqueue)(TigMsgBase *msg);
-	void(__cdecl *ProcessSystemEvents)();
-
-	TigMsgFuncs() {
-		rebase(Process, 0x101DE750);
-		rebase(Enqueue, 0x101DE660);
-		rebase(ProcessSystemEvents, 0x101DF440);
-	}
-} ;
-
-extern TigMsgFuncs msgFuncs;
-
-inline void processTigMessages() {
-	TigMsg msg;
-	while (!msgFuncs.Process(&msg))
-		;
-}

@@ -717,6 +717,18 @@ const std::string &UiUtilityBar::GetName() const {
     return name;
 }
 
+void UiUtilityBar::HideOpenedWindows(bool hideOptions)
+{
+	static auto hideWindows = temple::GetPointer<BOOL(BOOL)>(0x101156B0);
+	hideWindows(hideOptions ? TRUE : FALSE);
+}
+
+void UiUtilityBar::Hide()
+{
+	static auto hide = temple::GetPointer<BOOL()>(0x1010EEC0);
+	hide();
+}
+
 //*****************************************************************************
 //* Track-UI
 //*****************************************************************************
@@ -920,22 +932,22 @@ const std::string &UiPartyQuickview::GetName() const {
 //*****************************************************************************
 
 UiOptions::UiOptions(const UiSystemConf &config) {
-    auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x1011b640);
-    if (!startup(&config)) {
-        throw TempleException("Unable to initialize game system Options-UI");
-    }
+	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x1011b640);
+	if (!startup(&config)) {
+		throw TempleException("Unable to initialize game system Options-UI");
+	}
 }
 UiOptions::~UiOptions() {
-    auto shutdown = temple::GetPointer<void()>(0x1011b0e0);
-    shutdown();
+	auto shutdown = temple::GetPointer<void()>(0x1011b0e0);
+	shutdown();
 }
 void UiOptions::ResizeViewport(const UiResizeArgs& resizeArg) {
-    auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x10117540);
-    resize(&resizeArg);
+	auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x10117540);
+	resize(&resizeArg);
 }
 const std::string &UiOptions::GetName() const {
-    static std::string name("Options-UI");
-    return name;
+	static std::string name("Options-UI");
+	return name;
 }
 
 //*****************************************************************************

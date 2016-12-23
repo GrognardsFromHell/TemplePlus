@@ -70,9 +70,6 @@
     <ClCompile Include="tig\tig_mouse.cpp">
       <Filter>tig</Filter>
     </ClCompile>
-    <ClCompile Include="tig\tig_msg.cpp">
-      <Filter>tig</Filter>
-    </ClCompile>
     <ClCompile Include="tig\tig_shader.cpp">
       <Filter>tig</Filter>
     </ClCompile>
@@ -460,6 +457,8 @@
     <ClCompile Include="python\python_integration_feat.cpp">
       <Filter>python</Filter>
     </ClCompile>
+    <ClCompile Include="ui\ui_legacy.cpp" />
+    <ClCompile Include="ui\ui_legacy_wrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -651,7 +650,6 @@
     <ClInclude Include="hotkeys.h">
       <Filter>ui</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h" />
     <ClInclude Include="tig\tig_startup.h">
       <Filter>tig</Filter>
     </ClInclude>
@@ -867,6 +865,7 @@
     <ClInclude Include="python\python_integration_feat.h">
       <Filter>python</Filter>
     </ClInclude>
+    <ClInclude Include="ui\ui_legacy.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

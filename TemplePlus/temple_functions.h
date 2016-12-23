@@ -22,8 +22,6 @@ struct locationSec {
 struct TempleFuncs : temple::AddressTable {
 	TempleFuncs();
 
-
-	void(*ProcessSystemEvents)();
 	uint32_t(__cdecl *StringHash)(const char * pString);
 
 

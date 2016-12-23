@@ -99,8 +99,8 @@ class UiPcCreation{
 public:
 	objHndl GetEditedChar();
 	CharEditorSelectionPacket & GetCharEditorSelPacket();
-	WidgetType1 &GetPcCreationWnd();
-	WidgetType1 &GetStatsWnd();
+	LgcyWindow &GetPcCreationWnd();
+	LgcyWindow &GetStatsWnd();
 	int &GetState();
 	Alignment GetPartyAlignment();
 
@@ -221,8 +221,8 @@ public:
 	int featsMainWndId = 0, featsMultiSelectWndId = 0;
 	int featsScrollbarId = 0, featsExistingScrollbarId = 0, featsMultiSelectScrollbarId = 0;
 	int featsScrollbarY = 0, featsExistingScrollbarY = 0, featsMultiSelectScrollbarY = 0;
-	WidgetType1 featsMainWnd, featsMultiSelectWnd;
-	WidgetType3 featsScrollbar, featsExistingScrollbar, featsMultiSelectScrollbar;
+	LgcyWindow featsMainWnd, featsMultiSelectWnd;
+	LgcyScrollBar featsScrollbar, featsExistingScrollbar, featsMultiSelectScrollbar;
 	eastl::vector<int> featsAvailBtnIds, featsExistingBtnIds, featsMultiSelectBtnIds;
 	int featsMultiOkBtnId = 0, featsMultiCancelBtnId = 0;
 	const int FEATS_AVAIL_BTN_COUNT = 17; // vanilla 18
@@ -238,8 +238,8 @@ public:
 	const int DEITY_BTN_COUNT = 20;
 
 	int spellsWndId = 0;
-	WidgetType1 spellsWnd;
-	WidgetType3 spellsScrollbar, spellsScrollbar2;
+	LgcyWindow spellsWnd;
+	LgcyScrollBar spellsScrollbar, spellsScrollbar2;
 	int spellsScrollbarId = 0, spellsScrollbar2Id = 0;
 	int spellsScrollbarY = 0, spellsScrollbar2Y = 0;
 	eastl::vector<int> spellsAvailBtnIds, spellsChosenBtnIds;
@@ -321,12 +321,11 @@ private:
 
 } uiPcCreation;
 
-
 struct PcCreationUiAddresses : temple::AddressTable
 {
 	int * pcCreationIdx;
 
-	WidgetType1 * pcCreationPortraitsMainWidget;
+	LgcyWindow * pcCreationPortraitsMainWidget;
 	int * mainWindowWidgetId; // 10BF0ED4
 	int * pcPortraitsWidgetIds; // 10BF0EBC  array of 5 entries
 
@@ -343,7 +342,7 @@ struct PcCreationUiAddresses : temple::AddressTable
 	int * featsMultiselectNum_10C75F34;
 	feat_enums * featMultiselect_10C75F38;
 	int *dword_10C76AF0;
-	Widget* widg_10C77CD0;
+	LgcyWidget* widg_10C77CD0;
 	int * dword_10C77D50;
 	int * dword_10C77D54;
 	int *widIdx_10C77D80;
@@ -351,8 +350,8 @@ struct PcCreationUiAddresses : temple::AddressTable
 	feat_enums * feat_10C79344;
 	int * widgId_10C7AE14;
 	char* (__cdecl*sub_10182760)(feat_enums featEnums);
-	int(__cdecl* j_CopyWidget_101F87A0)(int widIdx, Widget* widg);
-	int(__cdecl*sub_101F87B0)(int widIdx, Widget* widg);
+	int(__cdecl* j_CopyWidget_101F87A0)(int widIdx, LgcyWidget* widg);
+	int(__cdecl*sub_101F87B0)(int widIdx, LgcyWidget* widg);
 	int(__cdecl*sub_101F8E40)(int);
 	int(__cdecl*sub_101F9100)(int widId, int);
 	int(__cdecl*sub_101F9510)(int, int);
@@ -415,7 +414,7 @@ public:
 
 	static CharEditorSelectionPacket &GetCharEdSelPkt();
 
-	static WidgetType1 pcPortraitsMain;
+	static LgcyWindow pcPortraitsMain;
 	static int pcPortraitsMainId;
 	static TigRect pcPortraitRects[MAX_PC_CREATION_PORTRAITS];
 	static TigRect pcPortraitBoxRects[MAX_PC_CREATION_PORTRAITS];
@@ -520,20 +519,20 @@ public:
 			auto result = orgPartyAlignmentChoiceShow();
 			if (modSupport.IsKotB()){
 				auto alignmentBtnIds = temple::GetRef<int[9]>(0x10BDA73C);
-				ui.ButtonSetButtonState(alignmentBtnIds[0], UBS_DISABLED); // LG
-				ui.ButtonSetButtonState(alignmentBtnIds[2], UBS_DISABLED); // CG
+				ui.ButtonSetButtonState(alignmentBtnIds[0], LgcyButtonState::Disabled); // LG
+				ui.ButtonSetButtonState(alignmentBtnIds[2], LgcyButtonState::Disabled); // CG
 
-				ui.ButtonSetButtonState(alignmentBtnIds[4], UBS_DISABLED); // TN
-				ui.ButtonSetButtonState(alignmentBtnIds[5], UBS_DISABLED); // CN
+				ui.ButtonSetButtonState(alignmentBtnIds[4], LgcyButtonState::Disabled); // TN
+				ui.ButtonSetButtonState(alignmentBtnIds[5], LgcyButtonState::Disabled); // CN
 
-				ui.ButtonSetButtonState(alignmentBtnIds[6], UBS_DISABLED); // LE
-				ui.ButtonSetButtonState(alignmentBtnIds[8], UBS_DISABLED); // CE
+				ui.ButtonSetButtonState(alignmentBtnIds[6], LgcyButtonState::Disabled); // LE
+				ui.ButtonSetButtonState(alignmentBtnIds[8], LgcyButtonState::Disabled); // CE
 			}
 			return result;
 		});
 	}
 } pcCreationHooks;
-WidgetType1 PcCreationHooks::pcPortraitsMain;
+LgcyWindow PcCreationHooks::pcPortraitsMain;
 int PcCreationHooks::pcPortraitsMainId = -1;
 int PcCreationHooks::pcPortraitWidgIds[MAX_PC_CREATION_PORTRAITS] = { -1, };
 TigRect PcCreationHooks::pcPortraitRects[MAX_PC_CREATION_PORTRAITS];
@@ -573,17 +572,17 @@ BOOL PcCreationHooks::PcPortraitsInit(GameSystemConf* conf)
 
 BOOL PcCreationHooks::PcPortraitWidgetsInit(int height)
 {
-	pcPortraitsMain.WidgetType1Init(10, height - 80, 650, 63);
-	pcPortraitsMain.widgetFlags = 1;
+	pcPortraitsMain = LgcyWindow(10, height - 80, 650, 63);
+	pcPortraitsMain.flags = 1;
 	pcPortraitsMain.render = [](int widId) {return0(); };
 	pcPortraitsMain.handleMessage = [](int widId, TigMsg* msg)->BOOL {return return0(); };
 
-	if (ui.AddWindow(&pcPortraitsMain, sizeof(WidgetType1), &pcPortraitsMainId, "pc_creation_portraits.c", 275) )
+	if (ui.AddWindow(&pcPortraitsMain, sizeof(LgcyWindow), &pcPortraitsMainId, "pc_creation_portraits.c", 275) )
 		return 0;
 
 	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
 	{
-		WidgetType2 button;
+		LgcyButton button;
 		ui.ButtonInit(&button, 0, pcPortraitsMainId, pcPortraitsMain.x + 81 * i, pcPortraitsMain.y, 76, 63);
 
 		pcPortraitBoxRects[i].x = button.x;
@@ -602,9 +601,9 @@ BOOL PcCreationHooks::PcPortraitWidgetsInit(int height)
 		button.render = addresses.ui_render_pc_creation_portraits;
 		button.handleMessage = addresses.ui_msg_pc_creation_portraits;
 
-		if (ui.AddButton(&button, sizeof(WidgetType2), &pcPortraitWidgIds[i], "pc_creation_portraits.c", 299)
+		if (ui.AddButton(&button, sizeof(LgcyButton), &pcPortraitWidgIds[i], "pc_creation_portraits.c", 299)
 			|| ui.BindToParent(pcPortraitsMainId, pcPortraitWidgIds[i])
-			|| ui.ButtonSetButtonState(pcPortraitWidgIds[i], 4))
+			|| ui.ButtonSetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Disabled))
 			return 0;
 
 	}
@@ -645,7 +644,7 @@ void PcCreationHooks::PcPortraitsButtonActivateNext()
 		ui.GetButtonState(pcPortraitWidgIds[i], &state);
 		if (state == 4)
 		{
-			ui.ButtonSetButtonState(pcPortraitWidgIds[i],0);
+			ui.ButtonSetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Normal);
 			if (i == MAX_PC_CREATION_PORTRAITS -1)
 				*addresses.uiPcPortraitsFullMaybe = 1;
 			return ;
@@ -661,7 +660,7 @@ void PcCreationHooks::PcPortraitsRefresh()
 	ui.WidgetBringToFront(pcPortraitsMainId);
 	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS;i++)
 	{
-		ui.ButtonSetButtonState(pcPortraitWidgIds[i], 4);
+		ui.ButtonSetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Disabled);
 	}
 	*addresses.uiPcPortraitsFullMaybe = 0;
 
@@ -669,7 +668,7 @@ void PcCreationHooks::PcPortraitsRefresh()
 	{
 		for (int i = 0; i < MAX_PC_CREATION_PORTRAITS;i++)
 		{
-			ui.ButtonSetButtonState(pcPortraitWidgIds[i], 0);
+			ui.ButtonSetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Normal);
 		}
 	}
 	*addresses.pcCreationIdx = -1;
@@ -679,7 +678,7 @@ void PcCreationHooks::PcPortraitsDisable()
 {
 	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS;i++)
 	{
-		ui.ButtonSetButtonState(pcPortraitWidgIds[i], 4);
+		ui.ButtonSetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Disabled);
 	}
 	*addresses.uiPcPortraitsFullMaybe = 0;
 }
@@ -752,10 +751,10 @@ void PcCreationHooks::GetPartyPool(int fromIngame)
 	UiPartyCreationHidePcWidgets();
 	int& uiPartyPoolPcsIdx = temple::GetRef<int>(0x10BF1760);
 	uiPartyPoolPcsIdx = -1;
-	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF2408), 4); // Add
-	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF2538), 4); // VIEW
-	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF2410), 4); // RENAME
-	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF239C), 4); // DELETE
+	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF2408), LgcyButtonState::Disabled); // Add
+	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF2538), LgcyButtonState::Disabled); // VIEW
+	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF2410), LgcyButtonState::Disabled); // RENAME
+	ui.ButtonSetButtonState(temple::GetRef<int>(0x10BF239C), LgcyButtonState::Disabled); // DELETE
 
 	auto GetPcCreationPcBuffer = temple::GetRef<void()>(0x101631B0);
 	GetPcCreationPcBuffer();
@@ -929,9 +928,9 @@ BOOL PcCreationHooks::StatsUpdateBtns(){
 			else if (abLvl >= 14)
 				cost = 2;
 			if (pbPoints < cost || (abLvl == 18 && !config.laxRules))
-				ui.ButtonSetButtonState(incBtnId, UiButtonState::UBS_DISABLED);
+				ui.ButtonSetButtonState(incBtnId, LgcyButtonState::Disabled);
 			else
-				ui.ButtonSetButtonState(incBtnId, UiButtonState::UBS_NORMAL);
+				ui.ButtonSetButtonState(incBtnId, LgcyButtonState::Normal);
 			ui.WidgetSetHidden(incBtnId, isPointBuyMode == 0);
 
 		}
@@ -946,9 +945,9 @@ BOOL PcCreationHooks::StatsUpdateBtns(){
 				cost = 2;
 
 			if (pbPoints >= config.pointBuyPoints || (abLvl == 8 && !config.laxRules) || abLvl <= 5)
-				ui.ButtonSetButtonState(decBtnId, UiButtonState::UBS_DISABLED);
+				ui.ButtonSetButtonState(decBtnId, LgcyButtonState::Disabled);
 			else
-				ui.ButtonSetButtonState(decBtnId, UiButtonState::UBS_NORMAL);
+				ui.ButtonSetButtonState(decBtnId, LgcyButtonState::Normal);
 			ui.WidgetSetHidden(decBtnId, isPointBuyMode == 0);
 		}
 		
@@ -1030,12 +1029,12 @@ CharEditorSelectionPacket & UiPcCreation::GetCharEditorSelPacket(){
 	return chargen.GetCharEditorSelPacket();
 }
 
-WidgetType1 & UiPcCreation::GetPcCreationWnd(){
-	return temple::GetRef<WidgetType1>(0x11E73E40);
+LgcyWindow & UiPcCreation::GetPcCreationWnd(){
+	return temple::GetRef<LgcyWindow>(0x11E73E40);
 }
 
-WidgetType1 & UiPcCreation::GetStatsWnd(){
-	return temple::GetRef<WidgetType1>(0x11E72BA0);
+LgcyWindow & UiPcCreation::GetStatsWnd(){
+	return temple::GetRef<LgcyWindow>(0x11E72BA0);
 }
 
 int & UiPcCreation::GetState(){
@@ -1061,7 +1060,7 @@ void UiPcCreation::ToggleClassRelatedStages(){
 	auto &stateBtnIds = temple::GetRef<int[CG_STAGE_COUNT]>(0x10BDC434);
 
 
-	ui.ButtonSetButtonState(stateBtnIds[CG_Stage_Abilities], UBS_DISABLED); // class features - off by default; todo expand this
+	ui.ButtonSetButtonState(stateBtnIds[CG_Stage_Abilities], LgcyButtonState::Disabled); // class features - off by default; todo expand this
 
 
 	mIsSelectingBonusFeat = false;
@@ -1076,23 +1075,23 @@ void UiPcCreation::ToggleClassRelatedStages(){
 
 
 		if (classCode == stat_level_cleric) {
-			ui.ButtonSetButtonState(stateBtnIds[CG_Stage_Abilities], UBS_NORMAL); // features
+			ui.ButtonSetButtonState(stateBtnIds[CG_Stage_Abilities], LgcyButtonState::Normal); // features
 		}
 		if (classCode == stat_level_ranger) {
-			ui.ButtonSetButtonState(stateBtnIds[CG_Stage_Abilities], UBS_NORMAL); // features
+			ui.ButtonSetButtonState(stateBtnIds[CG_Stage_Abilities], LgcyButtonState::Normal); // features
 		}
 		if (classCode == stat_level_wizard) {
-			ui.ButtonSetButtonState(stateBtnIds[CG_Stage_Abilities], UBS_NORMAL); // wizard special school
+			ui.ButtonSetButtonState(stateBtnIds[CG_Stage_Abilities], LgcyButtonState::Normal); // wizard special school
 		}
 	}
 
 	// Spells
 	if (d20ClassSys.IsSelectingSpellsOnLevelup(handle, classCode)) {
-		ui.ButtonSetButtonState(stateBtnIds[CG_Stage_Spells], UBS_NORMAL);
+		ui.ButtonSetButtonState(stateBtnIds[CG_Stage_Spells], LgcyButtonState::Normal);
 	}
 	else
 	{
-		ui.ButtonSetButtonState(stateBtnIds[CG_Stage_Spells], UBS_DISABLED);
+		ui.ButtonSetButtonState(stateBtnIds[CG_Stage_Spells], LgcyButtonState::Disabled);
 	};
 
 }
@@ -1128,11 +1127,10 @@ BOOL UiPcCreation::ClassSystemInit(GameSystemConf & conf){
 }
 
 BOOL UiPcCreation::ClassWidgetsInit(){
-	static WidgetType1 classWnd(219, 50, 431, 250);
+	static LgcyWindow classWnd(219, 50, 431, 250);
 	classWnd.x = GetPcCreationWnd().x + 219;
 	classWnd.y = GetPcCreationWnd().y + 50;
-	classWnd.widgetFlags = 1;
-	classWnd.windowId = 0x7FFFFFFF;
+	classWnd.flags = 1;
 	classWnd.render = [](int widId) { uiPcCreation.StateTitleRender(widId); };
 	if (classWnd.Add(&classWndId))
 		return 0;
@@ -1142,7 +1140,7 @@ BOOL UiPcCreation::ClassWidgetsInit(){
 	for (auto it : d20ClassSys.vanillaClassEnums) {
 		// class buttons
 		int newId = 0;
-		WidgetType2 classBtn("Class btn", classWndId, 81 + coloff, 42 + rowoff, 130, 20);
+		LgcyButton classBtn("Class btn", classWndId, 81 + coloff, 42 + rowoff, 130, 20);
 		coloff = 139 - coloff;
 		if (!coloff)
 			rowoff += 29;
@@ -1181,7 +1179,7 @@ BOOL UiPcCreation::ClassWidgetsInit(){
 	classNextBtnTextRect.x -= classWnd.x; classNextBtnTextRect.y -= classWnd.y;
 	classPrevBtnTextRect.x -= classWnd.x; classPrevBtnTextRect.y -= classWnd.y;
 
-	WidgetType2 nextBtn("Class Next Button", classWndId, classWnd.x + nextBtnXoffset, classWnd.y + nextBtnYoffset-4, 55, 20),
+	LgcyButton nextBtn("Class Next Button", classWndId, classWnd.x + nextBtnXoffset, classWnd.y + nextBtnYoffset-4, 55, 20),
 		prevBtn("Class Prev. Button", classWndId, classWnd.x + prevBtnXoffset, classWnd.y + nextBtnYoffset-4, 55, 20);
 
 	nextBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {
@@ -1358,8 +1356,8 @@ BOOL UiPcCreation::SpellsWidgetsInit(){
 	auto &pcWnd = GetPcCreationWnd();
 
 	const int spellsWndX = 219, spellsWndY = 50, spellsWndW = 431, spellsWndH = 250;
-	spellsWnd = WidgetType1(pcWnd.x + spellsWndX, pcWnd.y + spellsWndY, spellsWndW, spellsWndH);
-	spellsWnd.widgetFlags = 1;
+	spellsWnd = LgcyWindow(pcWnd.x + spellsWndX, pcWnd.y + spellsWndY, spellsWndW, spellsWndH);
+	spellsWnd.flags = 1;
 	spellsWnd.render = [](int widId) {uiPcCreation.SpellsWndRender(widId); };
 	spellsWnd.handleMessage = [](int widId, TigMsg*msg) { return uiPcCreation.SpellsWndMsg(widId, msg); };
 	spellsWnd.Add(&spellsWndId);
@@ -1384,7 +1382,7 @@ BOOL UiPcCreation::SpellsWidgetsInit(){
 	for (auto i = 0; i < SPELLS_BTN_COUNT; i++, rowOff += SPELLS_BTN_HEIGHT) {
 
 		int newId = 0;
-		WidgetType2 spellAvailBtn("Spell Available btn", spellsWndId, 4, rowOff, 193, SPELLS_BTN_HEIGHT);
+		LgcyButton spellAvailBtn("Spell Available btn", spellsWndId, 4, rowOff, 193, SPELLS_BTN_HEIGHT);
 
 		spellAvailBtn.x += spellsWnd.x; spellAvailBtn.y += spellsWnd.y;
 		spellAvailBtn.render = [](int id) {uiPcCreation.SpellsAvailableEntryBtnRender(id); };
@@ -1395,7 +1393,7 @@ BOOL UiPcCreation::SpellsWidgetsInit(){
 		ui.SetDefaultSounds(newId);
 		ui.BindToParent(spellsWndId, newId);
 
-		WidgetType2 spellChosenBtn("Spell Chosen btn", spellsWndId, 221, rowOff, 193, SPELLS_BTN_HEIGHT);
+		LgcyButton spellChosenBtn("Spell Chosen btn", spellsWndId, 221, rowOff, 193, SPELLS_BTN_HEIGHT);
 
 		spellChosenBtn.x += spellsWnd.x; spellChosenBtn.y += spellsWnd.y;
 		spellChosenBtn.render = [](int id) {uiPcCreation.SpellsEntryBtnRender(id); };
@@ -1655,15 +1653,15 @@ void UiPcCreation::ClassBtnRender(int widId){
 	static TigRect srcRect(1, 1, 120, 30);
 	UiRenderer::DrawTexture(buttonBox, classBtnFrameRects[idx], srcRect);
 
-	UiButtonState btnState;
+	LgcyButtonState btnState;
 	ui.GetButtonState(widId, btnState);
-	if (btnState != UiButtonState::UBS_DISABLED && btnState != UiButtonState::UBS_DOWN)
+	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down)
 	{
 		auto &selPkt = GetCharEditorSelPacket();
 		if (selPkt.classCode == classCode)
-			btnState = UiButtonState::UBS_RELEASED;
+			btnState = LgcyButtonState::Released;
 		else
-			btnState = btnState == UiButtonState::UBS_HOVERED ? UiButtonState::UBS_HOVERED : UiButtonState::UBS_NORMAL;
+			btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
 	}
 
 	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
@@ -1838,10 +1836,10 @@ void UiPcCreation::ClassNextBtnRender(int widId){
 	static TigRect srcRect(1, 1, 120, 30);
 	UiRenderer::DrawTexture(buttonBox, classNextBtnFrameRect, srcRect);
 
-	UiButtonState btnState;
+	LgcyButtonState btnState;
 	ui.GetButtonState(widId, btnState);
-	if (btnState != UiButtonState::UBS_DISABLED && btnState != UiButtonState::UBS_DOWN) {
-		btnState = btnState == UiButtonState::UBS_HOVERED ? UiButtonState::UBS_HOVERED : UiButtonState::UBS_NORMAL;
+	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down) {
+		btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
 	}
 
 	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
@@ -1866,10 +1864,10 @@ void UiPcCreation::ClassPrevBtnRender(int widId){
 	static TigRect srcRect(1, 1, 120, 30);
 	UiRenderer::DrawTexture(buttonBox, classPrevBtnFrameRect, srcRect);
 
-	UiButtonState btnState;
+	LgcyButtonState btnState;
 	ui.GetButtonState(widId, btnState);
-	if (btnState != UiButtonState::UBS_DISABLED && btnState != UiButtonState::UBS_DOWN) {
-		btnState = btnState == UiButtonState::UBS_HOVERED ? UiButtonState::UBS_HOVERED : UiButtonState::UBS_NORMAL;
+	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down) {
+		btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
 	}
 
 	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
@@ -2305,7 +2303,7 @@ void UiPcCreation::ClassSetPermissibles(){
 	for (auto it : classBtnIds) {
 		auto classCode = GetClassCodeFromWidgetAndPage(idx++, page);
 		if (classCode == (Stat)-1)
-			ui.ButtonSetButtonState(it, UBS_DISABLED);
+			ui.ButtonSetButtonState(it, LgcyButtonState::Disabled);
 
 		auto isValid = true;
 
@@ -2316,37 +2314,37 @@ void UiPcCreation::ClassSetPermissibles(){
 			isValid = false;
 		
 		if (isValid){
-			ui.ButtonSetButtonState(it, UBS_NORMAL);
+			ui.ButtonSetButtonState(it, LgcyButtonState::Normal);
 		}
 		else {
-			ui.ButtonSetButtonState(it, UBS_DISABLED);
+			ui.ButtonSetButtonState(it, LgcyButtonState::Disabled);
 		}
 
 	}
 
 	if (!config.newClasses) {
-		ui.ButtonSetButtonState(classNextBtn, UBS_DISABLED);
-		ui.ButtonSetButtonState(classPrevBtn, UBS_DISABLED);
+		ui.ButtonSetButtonState(classNextBtn, LgcyButtonState::Disabled);
+		ui.ButtonSetButtonState(classPrevBtn, LgcyButtonState::Disabled);
 		return;
 	}
 
 	if (page > 0)
-		ui.ButtonSetButtonState(classPrevBtn, UBS_NORMAL);
+		ui.ButtonSetButtonState(classPrevBtn, LgcyButtonState::Normal);
 	else
-		ui.ButtonSetButtonState(classPrevBtn, UBS_DISABLED);
+		ui.ButtonSetButtonState(classPrevBtn, LgcyButtonState::Disabled);
 
 	if (page < mPageCount - 1)
-		ui.ButtonSetButtonState(classNextBtn, UBS_NORMAL);
+		ui.ButtonSetButtonState(classNextBtn, LgcyButtonState::Normal);
 	else
-		ui.ButtonSetButtonState(classNextBtn, UBS_DISABLED);
+		ui.ButtonSetButtonState(classNextBtn, LgcyButtonState::Disabled);
 }
 
 void UiPcCreation::DeitySetPermissibles(){
 	for (auto i = 0; i < DEITY_BTN_COUNT; i++){
 		if (deitySys.CanPickDeity(GetEditedChar(), i)){
-			ui.ButtonSetButtonState(GetDeityBtnId(i), UiButtonState::UBS_NORMAL);
+			ui.ButtonSetButtonState(GetDeityBtnId(i), LgcyButtonState::Normal);
 		} else
-			ui.ButtonSetButtonState(GetDeityBtnId(i), UiButtonState::UBS_DISABLED);	
+			ui.ButtonSetButtonState(GetDeityBtnId(i), LgcyButtonState::Disabled);	
 	}
 }
 
