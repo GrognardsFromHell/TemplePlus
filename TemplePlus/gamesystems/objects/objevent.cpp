@@ -97,12 +97,20 @@ int ObjEventSystem::ListRangeUpdate(ObjEventAoE& evt, int id, ObjEventListItem* 
 	}
 	
 	auto obj = gameSystems->GetObj().GetObject(evt.aoeObj);
-	if (gameSystems->GetObj().IsValidHandle(evt.aoeObj))
-	{
+	if (gameSystems->GetObj().IsValidHandle(evt.aoeObj)){
+
 		LocAndOffsets locFull = obj->GetLocationFull();
-		auto listRange = temple::GetRef<void(__cdecl)(LocAndOffsets, float, float, float, ObjectListFilter, ObjListResult*)>(0x10022E50);
-		listRange(locFull, evt.radiusInch, evt.angleMin, evt.angleSize, evt.filter, &evt.objListResult);
-		objEvtTable->put(id, evt);
+
+		if (evt.IsWall()){
+			// todo insert wall detection
+		}
+		else
+		{
+			auto listRange = temple::GetRef<void(__cdecl)(LocAndOffsets, float, float, float, ObjectListFilter, ObjListResult*)>(0x10022E50);
+			listRange(locFull, evt.radiusInch, evt.angleMin, evt.angleSize, evt.filter, &evt.objListResult);
+			objEvtTable->put(id, evt);
+		}
+
 	} else
 	{
 		int dummy = 1;
@@ -159,10 +167,10 @@ BOOL ObjEventSystem::ObjEventHandler(ObjEventAoE* const aoeEvt, int id,ObjEventL
 {
 
 	auto objEventHandlerFuncs = temple::GetPointer<void(__cdecl*)(objHndl, objHndl, int)>(0x102AFB40); // an array of 50 callbacks, though there are only 2 duplicated for them all
-	auto onLeaveHandler = objEventHandlerFuncs[aoeEvt->onLeaveFuncIdx];
-	auto onEnterHandler = objEventHandlerFuncs[aoeEvt->onEnterFuncIdx];
+	auto onLeaveHandler = objEventHandlerFuncs[1]; // does  a dispatch for DK_OnLeaveAoE
+	auto onEnterHandler = objEventHandlerFuncs[0]; // does  a dispatch for DK_OnEnterAoE
 
-	auto isWallAoE = false;
+	auto isWallAoE = aoeEvt->IsWall();
 
 	if (aoeEvt->aoeObj != evt.obj)
 	{
@@ -200,7 +208,6 @@ BOOL ObjEventSystem::ObjEventHandler(ObjEventAoE* const aoeEvt, int id,ObjEventL
 
 	// obj is aoeObj - iterate over the aoeEvt's objlist
 	for (auto it = aoeEvt->objListResult.objects; it; it=it->next){
-		
 		
 		bool foundInNodes = false;
 
@@ -480,4 +487,8 @@ bool ObjEventSystem::ObjEventLocIsInAoE(ObjEventAoE* const aoeEvt, LocAndOffsets
 
 	return 0;
 
+}
+
+bool ObjEventAoE::IsWall(){
+	return this->onEnterFuncIdx == OBJ_EVENT_WALL_ENTERED_HANDLER_ID && this->onLeaveFuncIdx == OBJ_EVENT_WALL_EXITED_HANDLER_ID;
 }
