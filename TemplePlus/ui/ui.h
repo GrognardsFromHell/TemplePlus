@@ -5,6 +5,7 @@
 #include "tig/tig.h"
 #include <obj.h>
 #include <util/fixes.h>
+#include "ui_legacy.h"
 
 #define ACTIVE_WIDGET_CAP 3000
 
@@ -20,166 +21,12 @@ struct UiResizeArgs {
 	TigRect rect2;
 };
 
-struct Widget {
-	uint32_t type; // 1 - window 2 - button 3 - scrollbar
-	uint32_t size;
-	int parentId;
-	int widgetId;
-	char name[64];
-	uint32_t widgetFlags; // 1 - hidden?
-	int x;
-	int y;
-	int xrelated;
-	int yrelated;
-	uint32_t width;
-	uint32_t height;
-	uint32_t field_6c;
-	int(__cdecl*renderTooltip)(int x, int y, int* widId) ;
-	void(__cdecl*render)(int widId); // Function pointer
-	BOOL(__cdecl*handleMessage)(int widId, TigMsg* msg); // Function pointer
-};
-
-enum class WindowMouseState : uint32_t {
-	Outside = 0,
-	Hovered = 6,
-	// I have not actually found any place where this is ever set
-	Pressed = 7,
-	PressedOutside = 8
-};
-
-/*
-	Type: 1
-	Size: 660
-	Examples: mm_ui->c:1057
-*/
-struct WidgetType1 : public Widget {
-	int children[128];
-	uint32_t field_27c;
-	uint32_t childrenCount;
-	int windowId;
-	WindowMouseState mouseState;
-	uint32_t field_28c;
-	uint32_t field_290;
-
-
-	WidgetType1()
-	{
-		widgetId = -1;
-		parentId = -1;
-		type = 1;
-		x = 0;
-		y = 0;
-		xrelated = 0;
-		yrelated = 0;
-		height = 0;
-		width = 0;
-		render = 0;
-		handleMessage = 0;
-		renderTooltip = 0;
-		childrenCount = 0;
-		mouseState = WindowMouseState::Outside;
-		field_28c = 0;
-		windowId = 0;
-		widgetFlags = 0;
-	}
-	WidgetType1(int xin, int yin, int widthin, int heightin){
-		WidgetType1Init(xin, yin, widthin, heightin);
-	}
-
-	void WidgetType1Init(int xin, int yin, int widthin, int heightin)
-	{
-		widgetId = -1;
-		parentId = -1;
-		type = 1;
-		x = xin;
-		y = yin;
-		xrelated = xin;
-		yrelated = yin;
-		height = heightin;
-		width = widthin;
-		render = 0;
-		handleMessage = 0;
-		renderTooltip = 0;
-		childrenCount = 0;
-		mouseState = WindowMouseState::Outside;
-		field_28c = 0;
-		windowId = 0;
-		widgetFlags = 0;
-	}
-	bool Add(int * widIdOut);
-};
-
-/*
-	Type: 2
-	Size: 188
-	Examples: charmap_ui->c:203, options_ui->c:1342
-*/
-enum UiButtonState : uint32_t
-{
-	UBS_NORMAL = 0,
-	UBS_HOVERED,
-	UBS_DOWN,
-	UBS_RELEASED,
-	UBS_DISABLED
-};
-
-struct WidgetType2 : public Widget {
-	int field7c;
-	int field80;
-	int field84;
-	int field88;
-	int field8C;
-	int field90;
-	int buttonState; // 1 - hovered 2 - down  3 - released 4 - disabled
-	int field98;
-	int field9C;
-	int fieldA0;
-	int fieldA4;
-	int fieldA8;
-	int sndDown;
-	int sndClick;
-	int hoverOn;
-	int hoverOff;
-	WidgetType2();
-	WidgetType2(char* ButtonName, int ParentId, int X, int Y, int Width, int Height);
-	WidgetType2(char* ButtonName, int ParentId, TigRect& rect);
-	bool Add(int* widIdOut);
-};
-
-/*
-	Type: 3
-	Size: 176
-	Only Example: wft\wft_scrollbar.c:138
-*/
-struct WidgetType3 : public Widget {
-	int yMin;
-	int yMax;
-	int scrollbarY;
-	int scrollQuantum; //the amount of change per each scrollwheel roll
-	int field8C;
-	int field90;
-	int field94;
-	int field98;
-	int field9C;
-	int fieldA0;
-	int fieldA4;
-	int fieldA8;
-	int fieldAC;
-	int GetY();
-	bool Init(int x, int y, int height);
-	bool Init(int x, int y, int height, int parentId);
-	bool Add(int * widIdOut);
-};
-
 struct ActiveWidgetListEntry {
-	Widget *widget;
+	LgcyWidget *widget;
 	const char *sourceFilename;
 	uint32_t sourceLine;
 	ActiveWidgetListEntry *next;
 };
-
-
-
 
 struct ImgFile {
 	int tilesX;
@@ -231,7 +78,7 @@ extern temple::GlobalPrimitive<ActiveWidgetListEntry*, 0x10EF68DC> activeWidgetA
 extern temple::GlobalPrimitive<int, 0x10EF68D8> activeWidgetCount;
 
 
-class Ui : public TempleFix {
+class Ui {
 public:
 	bool GetAsset(UiAssetType assetType, UiGenericAsset assetIndex, int &textureIdOut);
 
@@ -284,30 +131,30 @@ public:
 	bool CharLootingIsActive();
 
 	bool IsWidgetHidden(int widId);
-	BOOL AddWindow(Widget* widget, unsigned size, int* widgetId, const char * codeFileName, int lineNumber);
-	BOOL ButtonInit(WidgetType2 * widg, char* buttonName, int parentId, int x, int y, int width, int height);
-	BOOL AddButton(WidgetType2* button, unsigned size, int* widgId, const char * codeFileName, int lineNumber);
+	BOOL AddWindow(LgcyWidget* widget, unsigned size, int* widgetId, const char * codeFileName, int lineNumber);
+	BOOL ButtonInit(LgcyButton * widg, char* buttonName, int parentId, int x, int y, int width, int height);
+	BOOL AddButton(LgcyButton* button, unsigned size, int* widgId, const char * codeFileName, int lineNumber);
 	/*
 		sets the button's parent, and also does a bunch of mouse handling (haven't delved too deep there yet)
 	*/
 	BOOL BindToParent(int parentId, int buttonId);
 	BOOL SetDefaultSounds(int widId);
-	BOOL ButtonSetButtonState(int widgetId, int newState);
-	BOOL WidgetRemoveRegardParent(int widIdx);
+	BOOL ButtonSetButtonState(int widgetId, LgcyButtonState newState);
+	void WidgetRemoveRegardParent(int widIdx);
 	BOOL WidgetAndWindowRemove(int widId);
 	BOOL WidgetRemove(int widId);
 	BOOL WidgetSetHidden(int widId, int hiddenState);
-	BOOL WidgetCopy(int widId, Widget* widgetOut);
-	int WidgetSet(int widId, const Widget* widg);
+	BOOL WidgetCopy(int widId, LgcyWidget* widgetOut);
+	int WidgetSet(int widId, const LgcyWidget* widg);
 
-	Widget* WidgetGet(int widId);
-	WidgetType1* WidgetGetType1(int widId);
-	WidgetType2* GetButton(int widId);
-	WidgetType3* ScrollbarGet(int widId);
+	LgcyWidget* WidgetGet(int widId);
+	LgcyWindow* WidgetGetType1(int widId);
+	LgcyButton* GetButton(int widId);
+	LgcyScrollBar* ScrollbarGet(int widId);
 
 	int GetWindowContainingPoint(int x, int y);
 	BOOL GetButtonState(int widId, int* state);
-	bool GetButtonState(int widId, UiButtonState& state);
+	bool GetButtonState(int widId, LgcyButtonState& state);
 	void WidgetBringToFront(int widId);
 	int WidgetlistIndexof(int widgetId, int * widgetlist, int size);
 	BOOL WidgetContainsPoint(int widgetId, int x, int y);
@@ -317,7 +164,11 @@ public:
 			*/
 	int GetAtInclChildren(int x, int y);
 
-	int UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg);
+	/**
+	 * Handles a mouse message and produces higher level mouse messages based on it.
+	 */
+	int TranslateMouseMessage(TigMouseMsg* mouseMsg);
+	int ProcessMessage(TigMsg* mouseMsg);
 
 	bool ScrollbarGetY(int widId, int * y);
 	void ScrollbarSetYmax(int widId, int yMax);
@@ -325,14 +176,8 @@ public:
 	const char* GetTooltipString(int line) const;
 	const char* GetStatShortName(Stat stat) const;
 	const char* GetStatMesLine(int line) const;
-	/*
-			The list of all active widgets
-			*/
-	static Widget** activeWidgets;
-	// = 
-	void  apply  () override
-	{
-		activeWidgets = temple::GetPointer<Widget*>(0x10EF68E0); // [3000]
-	}
+
+private:
+	UiLegacyManager mLegacy;
 };
 extern Ui ui;

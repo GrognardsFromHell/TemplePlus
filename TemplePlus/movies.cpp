@@ -13,7 +13,7 @@
 #include <temple/moviesystem.h>
 
 #include "movies.h"
-#include "tig/tig_msg.h"
+#include "messages/messagequeue.h"
 #include "tig/tig_sound.h"
 #include "ui/ui_render.h"
 
@@ -213,7 +213,7 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 	// Create the movie texture we write to
 	auto texture = device.CreateDynamicTexture(BufferFormat::X8R8G8B8, movie->GetWidth(), movie->GetHeight());
 	
-	processTigMessages();
+	messageQueue->ProcessMessages();
 
 	auto movieRect(GetMovieRect(movie->GetWidth(), movie->GetHeight()));
 
@@ -260,10 +260,10 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 		
 		device.PresentForce();
 
-		templeFuncs.ProcessSystemEvents();
+		messageQueue->PollExternalEvents();
 
 		TigMsg msg;
-		while (!msgFuncs.Process(&msg)) {
+		while (messageQueue->Process(msg)) {
 			// Flags 1 seems to disable skip via keyboard. Also seems unused.
 			if (!(flags & 1) && msg.type == TigMsgType::KEYSTATECHANGE && LOBYTE(msg.arg2) == 1) {
 				// TODO Wait for the key to be unpressed again
@@ -350,10 +350,10 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 
 		device.PresentForce();
 
-		templeFuncs.ProcessSystemEvents();
+		messageQueue->PollExternalEvents();
 
 		TigMsg msg;
-		while (!msgFuncs.Process(&msg)) {
+		while (messageQueue->Process(msg)) {
 			// Flags 1 seems to disable skip via keyboard. Also seems unused.
 			if (!(flags & 1) && msg.type == TigMsgType::KEYSTATECHANGE && LOBYTE(msg.arg2) == 1) {
 				// TODO Wait for the key to be unpressed again

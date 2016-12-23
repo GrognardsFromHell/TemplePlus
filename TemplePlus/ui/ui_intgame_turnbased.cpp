@@ -60,7 +60,7 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable {
 	int* uiIntgameSelectionConfirmed;
 	int* uiIntgameWidgetEnteredForRender;
 	int* uiIntgameWidgetEnteredForGameplay;
-	WidgetType1** uiIntgameMainWnd;
+	LgcyWindow** uiIntgameMainWnd;
 	int* uiIntgameWaypointMode;
 	objHndl* intgameActor;
 	objHndl* intgameFocusObj; // hovered char, more or less

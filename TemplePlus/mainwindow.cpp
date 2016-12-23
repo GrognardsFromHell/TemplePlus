@@ -5,11 +5,11 @@
 #include <windowsx.h>
 
 #include "movies.h"
-#include "tig/tig_msg.h"
 #include "tig/tig_mouse.h"
 #include "config/config.h"
 #include "mainwindow.h"
 #include "tig/tig_startup.h"
+#include "messages/messagequeue.h"
 
 struct WindowFuncs : temple::AddressTable {
 	void (*TigSoundSetActive)(BOOL active);
@@ -224,7 +224,7 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 			tigMsg.createdMs = timeGetTime();
 			tigMsg.type = TigMsgType::KEYDOWN;
 			tigMsg.arg1 = wparam;
-			msgFuncs.Enqueue(&tigMsg);
+			messageQueue->Enqueue(tigMsg);
 		}
 
 		tigMsg.createdMs = timeGetTime();
@@ -232,7 +232,7 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		tigMsg.arg1 = ToDirectInputKey(wparam);
 		tigMsg.arg2 = 1; // Means it has changed to pressed
 		if (tigMsg.arg1 != 0) {
-			msgFuncs.Enqueue(&tigMsg);
+			messageQueue->Enqueue(tigMsg);
 		}
 		break;
 	case WM_SYSKEYDOWN:
@@ -241,7 +241,7 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		tigMsg.arg1 = ToDirectInputKey(wparam);
 		tigMsg.arg2 = 1; // Means it has changed to pressed
 		if (tigMsg.arg1 != 0) {
-			msgFuncs.Enqueue(&tigMsg);
+			messageQueue->Enqueue(tigMsg);
 		}
 		break;
 	case WM_KEYUP:
@@ -251,14 +251,14 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		tigMsg.arg1 = ToDirectInputKey(wparam);
 		tigMsg.arg2 = 0; // Means it has changed to unpressed
 		if (tigMsg.arg1 != 0) {
-			msgFuncs.Enqueue(&tigMsg);
+			messageQueue->Enqueue(tigMsg);
 		}
 		break;
 	case WM_CHAR:
 		tigMsg.createdMs = timeGetTime();
 		tigMsg.type = TigMsgType::CHAR;
 		tigMsg.arg1 = wparam;
-		msgFuncs.Enqueue(&tigMsg);
+		messageQueue->Enqueue(tigMsg);
 		break;
 	case WM_SYSCOMMAND:
 		if (wparam == SC_KEYMENU || wparam == SC_SCREENSAVE || wparam == SC_MONITORPOWER) {
@@ -272,7 +272,7 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		tigMsg.createdMs = timeGetTime();
 		tigMsg.type = TigMsgType::EXIT;
 		tigMsg.arg1 = 1;
-		msgFuncs.Enqueue(&tigMsg);
+		messageQueue->Enqueue(tigMsg);
 		return 0;
 	case WM_ERASEBKGND:
 		return 0;

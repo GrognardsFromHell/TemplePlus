@@ -15,7 +15,7 @@
 #include <tig/tig_mouse.h>
 #include <tig/tig_loadingscreen.h>
 #include <tig/tig_font.h>
-#include <tig/tig_msg.h>
+#include "messages/messagequeue.h"
 #include <movies.h>
 #include <python/python_integration_obj.h>
 #include "legacysystems.h"
@@ -764,7 +764,7 @@ template <typename Type, typename... Args>
 std::unique_ptr<Type> GameSystems::InitializeSystem(LoadingScreen& loadingScreen,
                                                     Args&&... args) {
 	logger->info("Loading game system {}", Type::Name);
-	msgFuncs.ProcessSystemEvents();
+	messageQueue->PollExternalEvents();
 	loadingScreen.Render();
 
 	auto result(std::make_unique<Type>(std::forward<Args>(args)...));

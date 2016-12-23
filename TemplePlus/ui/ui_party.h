@@ -7,8 +7,8 @@
 #define CONDITION_INDICATOR_COUNT 12
 #define INDICATOR_COUNT_VANILLA 180
 
-struct WidgetType1;
-struct WidgetType2;
+struct LgcyWindow;
+struct LgcyButton;
 struct TigMsg;
 
 enum IndicatorType : int {
@@ -41,15 +41,15 @@ struct PartyPortraitPacket
 	int unk2;
 	int partyIdx;
 	int isActive;
-	WidgetType1 *partyUiMain;
-	WidgetType2 *partyUiPortraitButton;
-	WidgetType2 *hpButton;
-	WidgetType2 *subdualButton;
-	WidgetType2 *buffs[8];
-	WidgetType2 *ailments[8];
-	WidgetType2 *conditions[6];
-	WidgetType2 *removeFromPartyButton;
-	WidgetType2 *levelupButton;
+	LgcyWindow *partyUiMain;
+	LgcyButton *partyUiPortraitButton;
+	LgcyButton *hpButton;
+	LgcyButton *subdualButton;
+	LgcyButton *buffs[8];
+	LgcyButton *ailments[8];
+	LgcyButton *conditions[6];
+	LgcyButton *removeFromPartyButton;
+	LgcyButton *levelupButton;
 	BuffDebuffPacket *bdb;
 };
 
