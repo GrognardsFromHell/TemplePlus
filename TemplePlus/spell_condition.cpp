@@ -50,6 +50,8 @@ public:
 	static BOOL MindFogSaveThrowHook(objHndl tgt, objHndl caster, int spellDc, SavingThrowType saveType, int flags, int spellId);
 	static bool ShouldRemoveInvisibility(objHndl handle, DispIoD20Signal *evtObj, DispatcherCallbackArgs args);
 
+	static int InvisibilityAooWillTake(DispatcherCallbackArgs args);
+
 	void apply() override {
 
 		// Invisibility Sphere lacking a Dismiss handler
@@ -61,7 +63,11 @@ public:
 			write(0x102DAFB8, &sdd, sizeof(sdd)); // in place of Teleport_Reconnect which does nothing
 		}
 
+
+
 		// Invisibility Spell
+		replaceFunction(0x100E87D0, InvisibilityAooWillTake); // fixes infinite AoO issue for Greater Invisibility and other spells which cause an inivisbility effect (like Sleet Storm)
+
 		static int(__cdecl*orgSpell_remove_spell)(DispatcherCallbackArgs) = replaceFunction<int(DispatcherCallbackArgs)>(0x100D7620, [](DispatcherCallbackArgs args) {
 			// fixes not removing Invisibility if target != caster
 
@@ -102,18 +108,6 @@ public:
 
 		});
 
-		/*{
-			SubDispDefNew sdd(dispTypeD20Signal, DK_SIG_Sequence, [](DispatcherCallbackArgs args)->int {
-
-				auto removeSpell = temple::GetRef<int(DispatcherCallbackArgs)>(0x100D7620);
-
-				auto dispIo = args.dispIO;
-
-
-				return removeSpell(args);
-			}, 136, 0);
-			write(0x102DACA0, &sdd, sizeof(SubDispDefNew));
-		}*/
 
 		//// spell mod end handler
 		//static int(__cdecl*orgSpellEndModHandler)(DispatcherCallbackArgs) = replaceFunction<int(DispatcherCallbackArgs)>(0x100E9680, [](DispatcherCallbackArgs args)
@@ -720,4 +714,25 @@ bool SpellConditionFixes::ShouldRemoveInvisibility(objHndl handle, DispIoD20Sign
 	}
 
 	return false;
+}
+
+int SpellConditionFixes::InvisibilityAooWillTake(DispatcherCallbackArgs args){
+
+	auto spellId = args.GetCondArg(0);
+	if (!spellId)
+		return 0;
+
+	SpellPacketBody spellPkt(spellId);
+	if (!spellPkt.spellEnum)
+		return 0;
+
+	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
+	if (spellPkt.spellEnum == 253 || spellPkt.spellEnum == 256 || spellPkt.spellEnum == 257){
+		dispIo->return_val = 0;
+	}
+	else{
+		if (dispIo->return_val > 0) // vanilla forgot to check this before setting the value! It would cause infinite AoOs for Greater Invis. and Sleet Storm because it override the AOO condition's value, which would be 0 (is it even necessary???)
+			dispIo->return_val = 1;
+	}
+	return 0;
 }

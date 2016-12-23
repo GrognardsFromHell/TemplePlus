@@ -801,8 +801,10 @@ int ActionSequenceSystem::ActionAddToSeq()
 			actSeqSys.ActSeqGetPicker();
 			return AEC_TARGET_INVALID;
 		}
-	} else
-	{
+	} 
+	else{
+		if (actnCheckResult == AEC_OUT_OF_CHARGES)
+			return actnCheckResult;
 		d20Sys.TargetCheck(d20Sys.globD20Action);
 	}
 	auto result =  actSeqSys.addD20AToSeq(d20Sys.globD20Action, curSeq);
