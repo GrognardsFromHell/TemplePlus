@@ -715,7 +715,7 @@ bool SpellConditionFixes::ShouldRemoveInvisibility(objHndl handle, DispIoD20Sign
 
 	return false;
 }
-
+ 
 int SpellConditionFixes::InvisibilityAooWillTake(DispatcherCallbackArgs args){
 
 	auto spellId = args.GetCondArg(0);
