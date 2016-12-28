@@ -56,13 +56,11 @@ BOOL UiDialog::WidgetsInit(int w, int h)
 	dlgWnd.flags = 1;
 	dlgWnd.render = [](int widId) { uiDialog.WndRender(widId); };
 	dlgWnd.handleMessage = [](int widId, TigMsg* msg) { return uiDialog.WndMsg(widId, msg); };
-	if (dlgWnd.Add(&wndId))
-		return 0;
+	wndId = ui.AddWindow(dlgWnd);
 
 	// scrollbar
 	scrollbar.Init(592, 28, 126, wndId);
-	scrollbar.Add(&scrollbarId);
-	ui.BindToParent(wndId, scrollbarId);
+	scrollbarId = ui.AddScrollBar(scrollbar, wndId);
 
 
 	int coloff = 0, rowoff = 0;

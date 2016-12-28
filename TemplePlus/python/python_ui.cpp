@@ -32,8 +32,6 @@ using namespace pybind11::detail;
 //};
 
 
-
-
 PYBIND11_PLUGIN(tp_ui) {
 	py::module m("tpui", "Temple+ UI module, for UI stuff.");
 
@@ -52,6 +50,9 @@ PYBIND11_PLUGIN(tp_ui) {
 		.def(py::init())
 		.def_readwrite("children_count", &LgcyWindow::childrenCount)
 		.def_readwrite("windowId", &LgcyWindow::zIndex)
+		.def("Register", [](LgcyWindow &window, int* widIdOut) {
+			*widIdOut = ui.AddWindow(window);
+		})
 		;
 
 	py::class_<LgcyButton>(m, "WidgetButton", py::base<LgcyWidget>())
@@ -60,6 +61,9 @@ PYBIND11_PLUGIN(tp_ui) {
 		.def_readwrite("sound_click", &LgcyButton::sndClick)
 		.def_readwrite("sound_hover_on", &LgcyButton::hoverOn)
 		.def_readwrite("sound_hover_off", &LgcyButton::hoverOff)
+		.def("Register", [](LgcyButton &button, int* widIdOut) {
+			*widIdOut = ui.AddButton(button);
+		})
 		;
 
 	py::class_<LgcyScrollBar>(m, "WidgetScrollbar", py::base<LgcyWidget>())
@@ -71,7 +75,9 @@ PYBIND11_PLUGIN(tp_ui) {
 		.def_readwrite("scroll_position", &LgcyScrollBar::scrollbarY)
 		.def_readwrite("scroll_quantum",&LgcyScrollBar::scrollQuantum)
 		.def("GetPosition", &LgcyScrollBar::GetY)
-		.def("Register", &LgcyScrollBar::Add)
+		.def("Register", [](LgcyScrollBar &scrollBar, int* widIdOut) {
+			*widIdOut = ui.AddScrollBar(scrollBar);
+		})
 		;
 
 	

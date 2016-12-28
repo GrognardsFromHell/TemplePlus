@@ -1,4 +1,3 @@
-#include "..\..\Infrastructure\include\graphics\math.h"
 #include "stdafx.h"
 #include "tig.h"
 #include "tig_tabparser.h"

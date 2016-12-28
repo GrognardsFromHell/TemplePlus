@@ -27,15 +27,6 @@ static struct UiFuncs : temple::AddressTable {
 	void (__cdecl *ShowCharUi)(int page);
 	bool (__cdecl *ShowWrittenUi)(objHndl handle);
 	
-	BOOL(__cdecl*BindButton)(int parentId, int buttonId);
-	BOOL(__cdecl*AddWindow)(LgcyWidget* widget, unsigned size, int* widgetId, const char* codeFileName, int lineNumber);
-	BOOL(__cdecl*AddButton)(LgcyButton* button, unsigned size, int* widgId, const char* codeFileName, int lineNumber);
-	BOOL(__cdecl*ButtonSetButtonState)(int widgetId, LgcyButtonState newState);
-	BOOL(__cdecl*WidgetAndWindowRemove)(int widId);
-	BOOL(__cdecl*WidgetRemove)(int widId);
-	BOOL(__cdecl*WidgetSetHidden)(int widId, int hiddenState);
-	BOOL(__cdecl*GetButtonState)(int widId, int* state);
-	void(__cdecl*WidgetBringToFront)(int widId);
 	void(*UiMouseMsgHandlerRenderTooltipCallback)(int x, int y, void* data); //
 
 	int* uiWidgetMouseHandlerWidgetId;
@@ -55,15 +46,6 @@ static struct UiFuncs : temple::AddressTable {
 		rebase(uiWidgetMouseHandlerWidgetId, 0x10301324);
 		rebase(uiMouseButtonId, 0x10301328);
 
-		rebase(WidgetBringToFront, 0x101F8E40);
-		rebase(BindButton, 0x101F8950);
-		rebase(AddWindow,  0x101F8FD0);
-		rebase(AddButton,  0x101F9460);
-		rebase(WidgetAndWindowRemove, 0x101F9010);
-		rebase(WidgetRemove,          0x101F9420);
-		rebase(WidgetSetHidden, 0x101F9100);
-		rebase(ButtonSetButtonState, 0x101F9510);
-		rebase(GetButtonState,  0x101F9740);
 		rebase(UiMouseMsgHandlerRenderTooltipCallback, 0x101F9870);
 		
 		
@@ -108,7 +90,7 @@ public:
 		 // DrawTextInWidget hook
 		 replaceFunction<bool(__cdecl)(int, char*, TigRect&, TigTextStyle&)>(0x101F87C0, [](int widgetId ,char* text, TigRect& rect, TigTextStyle& style)->bool
 		 {
-			 auto wid = ui.WidgetGet(widgetId);
+			 auto wid = ui.GetWidget(widgetId);
 			 if (!wid)
 				 return 1;
 			 if (*text == 0)
@@ -141,10 +123,6 @@ public:
 
 	}
 } uiReplacement;
-
-bool LgcyWindow::Add(int* widIdOut){
-	return ui.AddWindow(this, sizeof(LgcyWindow), widIdOut, "ui.cpp", 325) != 0;
-}
 
 LgcyButton::LgcyButton(char* ButtonName, int ParentId, int X, int Y, int Width, int Height){
 	if (ButtonName){
@@ -214,11 +192,14 @@ LgcyButton::LgcyButton(char* ButtonName, int ParentId, TigRect& rect){
 	sndClick = -1;
 	hoverOn = -1;
 	hoverOff = -1;
-	return;
 }
 
-bool LgcyButton::Add(int* widIdOut){
-	return ui.AddButton(this, sizeof(LgcyButton), widIdOut, "ui.cpp", 367) != 0;
+void LgcyButton::SetDefaultSounds()
+{
+	sndDown = 3012;
+	sndClick = 3013;
+	hoverOn = 3010;
+	hoverOff = 3011;
 }
 
 int LgcyScrollBar::GetY()
@@ -266,14 +247,10 @@ bool LgcyScrollBar::Init(int x, int y, int height, int parentId)
 {
 	Init(x, y, height);
 	this->parentId = parentId;
-	auto p = ui.WidgetGetType1(parentId);
+	auto p = ui.GetWindow(parentId);
 	this->x += p->x;
 	this->y += p->y;
 	return false;
-}
-
-bool LgcyScrollBar::Add(int* widIdOut){
-	return temple::GetRef<bool(__cdecl)(LgcyWidget*, size_t, int*, const char*, int)>(0x101F93D0)(this, sizeof(LgcyScrollBar), widIdOut, "ui.cpp", 366);
 }
 
 bool Ui::GetAsset(UiAssetType assetType, UiGenericAsset assetIndex, int& textureIdOut) {
@@ -336,9 +313,13 @@ bool Ui::IsWidgetHidden(int widId)
 	return !widget || widget->IsHidden();
 }
 
-BOOL Ui::AddWindow(LgcyWidget* widget, unsigned size, int* widgetId, const char* codeFileName, int lineNumber)
+LgcyWidgetId Ui::AddWindow(LgcyWindow& widget)
 {
-	return uiFuncs.AddWindow(widget, size, widgetId, codeFileName, lineNumber);
+	widget.type = LgcyWidgetType::Window;
+
+	auto widgetId = mLegacy.AddWidget(&widget, __FILE__, __LINE__);
+	mLegacy.AddWindow(widgetId);
+	return widgetId;
 }
 
 BOOL Ui::ButtonInit(LgcyButton* widg, char* buttonName, int parentId, int x, int y, int width, int height)
@@ -372,53 +353,61 @@ BOOL Ui::ButtonInit(LgcyButton* widg, char* buttonName, int parentId, int x, int
 	return 0;
 }
 
-BOOL Ui::AddButton(LgcyButton* button, unsigned size, int* widgId, const char* codeFileName, int lineNumber)
+LgcyWidgetId Ui::AddButton(LgcyButton& button)
 {
-	return uiFuncs.AddButton(button, size, widgId, codeFileName, lineNumber);
+	button.type = LgcyWidgetType::Button;
+	return mLegacy.AddWidget(&button, __FILE__, __LINE__);
 }
 
-BOOL Ui::BindToParent(int parentId, int buttonId){
-	return uiFuncs.BindButton(parentId, buttonId);
-}
-
-BOOL Ui::SetDefaultSounds(int widId){
-	LgcyButton widg;
-	if (WidgetCopy(widId, &widg))
-		return true;
-	widg.sndDown = 3012;
-	widg.sndClick = 3013;
-	widg.hoverOn = 3010;
-	widg.hoverOff = 3011;
-	return WidgetSet(widId, &widg) != 0;
-}
-
-BOOL Ui::ButtonSetButtonState(int widgetId, LgcyButtonState newState)
+LgcyWidgetId Ui::AddButton(LgcyButton &button, LgcyWidgetId parentId)
 {
-	return uiFuncs.ButtonSetButtonState(widgetId, newState);
+	auto buttonId = AddButton(button);
+	mLegacy.AddChild(parentId, buttonId);
+	return buttonId;
 }
 
-void Ui::WidgetRemoveRegardParent(int widIdx)
+LgcyWidgetId Ui::AddScrollBar(LgcyScrollBar& scrollBar)
+{
+	scrollBar.type = LgcyWidgetType::Scrollbar;
+	return mLegacy.AddWidget(&scrollBar, __FILE__, __LINE__);
+}
+
+LgcyWidgetId Ui::AddScrollBar(LgcyScrollBar& scrollBar, LgcyWidgetId parentId)
+{
+	auto scrollBarId = AddScrollBar(scrollBar);
+	mLegacy.AddChild(parentId, scrollBarId);
+	return scrollBarId;
+}
+
+void Ui::SetButtonState(LgcyWidgetId widgetId, LgcyButtonState newState)
+{
+	auto button = GetButton(widgetId);
+	Expects(button);
+	button->buttonState = newState;
+}
+
+void Ui::WidgetRemoveRegardParent(LgcyWidgetId widIdx)
 {
 	mLegacy.RemoveChildWidget(widIdx);
 }
 
-BOOL Ui::WidgetAndWindowRemove(int widId)
+void Ui::WidgetAndWindowRemove(LgcyWidgetId widId)
 {
-	return uiFuncs.WidgetAndWindowRemove(widId);
+	mLegacy.RemoveWindow(widId);
+	mLegacy.RemoveWidget(widId);
 }
 
-BOOL Ui::WidgetRemove(int widId){
-	return uiFuncs.WidgetRemove(widId);
+void Ui::WidgetRemove(LgcyWidgetId widId) {
+	mLegacy.RemoveWidget(widId);
 }
 
-BOOL Ui::WidgetSetHidden(int widId, int hiddenState)
+void Ui::WidgetSetHidden(LgcyWidgetId widId, BOOL hidden)
 {
-	return uiFuncs.WidgetSetHidden(widId, hiddenState);
+	mLegacy.SetHidden(widId, hidden == TRUE);
 }
 
-
-LgcyWindow* Ui::WidgetGetType1(int widId){
-	LgcyWidget* result = WidgetGet(widId);
+LgcyWindow* Ui::GetWindow(LgcyWidgetId widId){
+	LgcyWidget* result = GetWidget(widId);
 	if (!result)
 		return nullptr;
 	if (result->type == LgcyWidgetType::Window)	{
@@ -427,22 +416,22 @@ LgcyWindow* Ui::WidgetGetType1(int widId){
 	return nullptr;
 }
 
-LgcyButton* Ui::GetButton(int widId){
-	auto result = WidgetGet(widId);
+LgcyButton* Ui::GetButton(LgcyWidgetId widId){
+	auto result = GetWidget(widId);
 	if (!result || result->type != LgcyWidgetType::Button) {
 		return nullptr;
 	}
 	return static_cast<LgcyButton*>(result);
 }
 
-LgcyScrollBar * Ui::ScrollbarGet(int widId){
-	auto result = WidgetGet(widId);
+LgcyScrollBar * Ui::GetScrollBar(LgcyWidgetId widId) {
+	auto result = mLegacy.GetWidget(widId);
 	if (!result || result->type != LgcyWidgetType::Scrollbar)
 		return nullptr;
 	return static_cast<LgcyScrollBar*>(result);
 }
 
-LgcyWidget* Ui::WidgetGet(int widId)
+LgcyWidget* Ui::GetWidget(LgcyWidgetId widId)
 {
 	return mLegacy.GetWidget(widId);
 }
@@ -457,24 +446,18 @@ int Ui::GetWindowContainingPoint(int x, int y)
 	}
 }
 
-BOOL Ui::GetButtonState(int widId, int* state){
-	return uiFuncs.GetButtonState(widId, state);
+LgcyButtonState Ui::GetButtonState(LgcyWidgetId widId) {
+	auto button = GetButton(widId);
+	Expects(button);
+	return button->buttonState;
 }
 
-bool Ui::GetButtonState(int widId, LgcyButtonState& state){
-	auto widg = ui.GetButton(widId);
-	if (!widg)
-		return true;
-	state = widg->buttonState;
-	return false;
-}
-
-void Ui::WidgetBringToFront(int widId)
+void Ui::WidgetBringToFront(LgcyWidgetId widId)
 {
-	return uiFuncs.WidgetBringToFront(widId);
+	mLegacy.BringToFront(widId);
 }
 
-int Ui::WidgetlistIndexof(int widgetId, int* widgetlist, int size)
+int Ui::WidgetlistIndexof(LgcyWidgetId widgetId, int* widgetlist, int size)
 {
 	for (int i = 0; i < size; i++) {
 		if (widgetlist[i] == widgetId)
@@ -486,7 +469,7 @@ int Ui::WidgetlistIndexof(int widgetId, int* widgetlist, int size)
 
 BOOL Ui::WidgetContainsPoint(int widgetId, int x, int y)
 {
-	auto widg = WidgetGet(widgetId);
+	auto widg = GetWidget(widgetId);
 	if (!widg)
 		return false;
 	if (x < widg->x || x > (widg->x + (int)widg->width) )
@@ -501,7 +484,7 @@ int Ui::GetAtInclChildren(int x, int y)
 	int windowId = GetWindowContainingPoint(x, y);
 	if (windowId == -1)
 		return windowId;
-	auto wndWidget = WidgetGetType1(windowId);
+	auto wndWidget = GetWindow(windowId);
 	if (wndWidget == nullptr)
 		return windowId;
 	if (wndWidget->IsHidden())
@@ -512,7 +495,7 @@ int Ui::GetAtInclChildren(int x, int y)
 		auto childId = wndWidget->children[i];
 		if (childId != -1)
 		{
-			auto childWid = WidgetGet(childId);
+			auto childWid = GetWidget(childId);
 			if (childWid != nullptr
 				&& !childWid->IsHidden()
 				&& WidgetContainsPoint(childId, x,y))
@@ -550,7 +533,7 @@ int Ui::TranslateMouseMessage(TigMouseMsg* mouseMsg)
 		if (globalWidId != -1)
 		{
 			bool enqueue4 = false;
-			auto globalWid = WidgetGet(globalWidId);
+			auto globalWid = GetWidget(globalWidId);
 			// if window
 			if (globalWid->IsWindow())
 			{
@@ -577,7 +560,7 @@ int Ui::TranslateMouseMessage(TigMouseMsg* mouseMsg)
 					buttonWid->buttonState = LgcyButtonState::Released;
 					break;
 				}
-				if (!WidgetGet(globalWid->parentId)->IsHidden())
+				if (!GetWidget(globalWid->parentId)->IsHidden())
 				{
 					enqueue4 = true;
 				}
@@ -585,7 +568,7 @@ int Ui::TranslateMouseMessage(TigMouseMsg* mouseMsg)
 			// scrollbar
 			else if (globalWid->IsScrollBar())
 			{
-				if (globalWid->IsHidden() || WidgetGet(globalWid->parentId)->IsHidden())
+				if (globalWid->IsHidden() || GetWidget(globalWid->parentId)->IsHidden())
 					enqueue4 = false;
 				else
 					enqueue4 = true;
@@ -601,10 +584,10 @@ int Ui::TranslateMouseMessage(TigMouseMsg* mouseMsg)
 
 		if (widIdAtCursor != -1)
 		{
-			auto widAtCursor = WidgetGet(widIdAtCursor);
+			auto widAtCursor = GetWidget(widIdAtCursor);
 			if (widAtCursor->type == LgcyWidgetType::Window)
 			{
-				auto widAtCursorWindow = WidgetGetType1(widIdAtCursor);
+				auto widAtCursorWindow = GetWindow(widIdAtCursor);
 				if (widAtCursorWindow->mouseState == LgcyWindowMouseState::PressedOutside) {
 					widAtCursorWindow->mouseState = LgcyWindowMouseState::Pressed;
 				} else if (widAtCursorWindow->mouseState != LgcyWindowMouseState::Pressed) {
@@ -693,20 +676,6 @@ int Ui::TranslateMouseMessage(TigMouseMsg* mouseMsg)
 	return 0;
 }
 
-int Ui::WidgetSet(int widId, const LgcyWidget* widg)
-{
-	auto dst = WidgetGet(widId);
-	memcpy(dst, widg, dst->size);
-	return 0;
-}
-
-int Ui::WidgetCopy(int widId, LgcyWidget* widg)
-{
-	auto src = WidgetGet(widId);
-	memcpy(widg, src, src->size);
-	return 0;
-}
-
 int Ui::ProcessMessage(TigMsg * msg)
 {
 	TigMsg *v1; // ebx@1
@@ -740,7 +709,7 @@ int Ui::ProcessMessage(TigMsg * msg)
 			{
 				while (1)
 				{
-					v8 = WidgetGet(v7);
+					v8 = GetWidget(v7);
 					v9 = v8;
 					if (!v8)
 						break;
@@ -782,7 +751,7 @@ int Ui::ProcessMessage(TigMsg * msg)
 
 	if (widgetMouseCaptureId != -1)
 	{
-		v12 = WidgetGet(widgetMouseCaptureId);
+		v12 = GetWidget(widgetMouseCaptureId);
 		if (v12)
 		{
 			v13 = v12->handleMessage;
@@ -846,7 +815,7 @@ int Ui::ProcessMessage(TigMsg * msg)
 }
 
 bool Ui::ScrollbarGetY(int widId, int * scrollbarY) {
-	auto widget = (LgcyScrollBar*) WidgetGet(widId);
+	auto widget = (LgcyScrollBar*) GetWidget(widId);
 	if (!widget || widget->type != LgcyWidgetType::Scrollbar)
 		return true;
 
@@ -883,31 +852,24 @@ bool Ui::ScrollbarGetY(int widId, int * scrollbarY) {
 	return false;
 }
 
-void Ui::ScrollbarSetYmax(int widId, int yMax)
+void Ui::ScrollbarSetYmax(LgcyWidgetId widId, int yMax)
 {
-	LgcyScrollBar widg;
-	if (!ui.WidgetCopy(widId, &widg))
-	{
-		widg.yMax = yMax;
-		WidgetSet(widId, &widg);
-	}
+	LgcyScrollBar *widg = GetScrollBar(widId);
+	Expects(widg);
+	widg->yMax = yMax;
 }
 
-BOOL Ui::ScrollbarSetY(int widId, int value){
-	LgcyScrollBar scrollbarWid;
-	auto result = WidgetCopy(widId, &scrollbarWid);
-	if (!result)
-	{
-		scrollbarWid.scrollbarY = value;
-		TigMsg msg;
-		msg.createdMs = temple::GetRef<int>(0x11E74578);
-		msg.type = TigMsgType::WIDGET;
-		msg.arg2 = 5;
-		msg.arg1 = scrollbarWid.parentId;
-		messageQueue->Enqueue(msg);
-		result = ui.WidgetSet(widId, &scrollbarWid);
-	}
-	return result;
+void Ui::ScrollbarSetY(LgcyWidgetId widId, int value) {
+	auto scrollbar = GetScrollBar(widId);
+
+	scrollbar->scrollbarY = value;
+
+	TigMsg msg;
+	msg.createdMs = temple::GetRef<int>(0x11E74578);
+	msg.type = TigMsgType::WIDGET;
+	msg.arg2 = 5;
+	msg.arg1 = scrollbar->parentId;
+	messageQueue->Enqueue(msg);
 }
 
 const char* Ui::GetTooltipString(int line) const

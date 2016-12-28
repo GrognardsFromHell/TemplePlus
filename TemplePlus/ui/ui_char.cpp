@@ -19,6 +19,9 @@
 #include "ui_tooltip.h"
 #include <gamesystems/d20/d20stats.h>
 
+#include "ui/ui_legacysystems.h"
+#include "ui/ui_systems.h"
+
 #define NUM_SPELLBOOK_SLOTS 18 // 18 in vanilla
 
 
@@ -109,7 +112,6 @@ public:
 	static objHndl GetCritterLooted(); // this may be a substitute inventory object when buying from NPCs with shops
 	static objHndl GetVendor();
 
-	static int GetInventoryState(); // 1 - looting, 2 - bartering, 4 - using magic on inventory item
 	static int InventorySlotMsg(int widId, TigMsg* msg);
 	static BOOL (*orgInventorySlotMsg)(int widId, TigMsg* msg);
 	static char* HookedItemDescriptionBarter(objHndl obj, objHndl item);
@@ -791,11 +793,6 @@ objHndl CharUiSystem::GetVendor()
 	return temple::GetRef<objHndl>(0x10BE6EC8);
 }
 
-int CharUiSystem::GetInventoryState()
-{
-	return temple::GetRef<int>(0x10BE994C);
-}
-
 int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 {
 	// Alt-click to Quicksell
@@ -822,7 +819,7 @@ int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 					
 					int appraisedWorth = inventory.GetAppraisedWorth(item, appraiser, vendor, SkillEnum::skill_appraise);
 					int plat =0, gold=0, silver=0, copper=0;
-					if (appraisedWorth && GetInventoryState() == 2){
+					if (appraisedWorth && uiSystems->GetChar().IsBartering()) {
 						
 						int qty = max(1, inventory.GetQuantity(item));
 						appraisedWorth *= qty;
@@ -830,7 +827,7 @@ int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 					}
 					
 					ItemErrorCode itemTransferError = inventory.TransferWithFlags(item, critterLooted, -1, 1+2+4+8+16, objHndl::null);
-					if (itemTransferError == IEC_OK && GetInventoryState() == 2){
+					if (itemTransferError == IEC_OK && uiSystems->GetChar().IsBartering()) {
 						objSystem->GetObject(item)->SetItemFlag(OIF_IDENTIFIED, 1);
 						party.MoneyAdj(plat, gold, silver, copper);
 					} 
@@ -842,7 +839,7 @@ int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 						}
 						if (itemIdx < 200)
 							itemTransferError = inventory.TransferWithFlags(item, critterLooted, itemIdx, 1 + 2 + 4 + 8 , objHndl::null);
-						if (itemTransferError == IEC_OK && GetInventoryState() == 2) {
+						if (itemTransferError == IEC_OK && uiSystems->GetChar().IsBartering()) {
 							objSystem->GetObject(item)->SetItemFlag(OIF_IDENTIFIED, 1);
 							party.MoneyAdj(plat, gold, silver, copper);
 						}

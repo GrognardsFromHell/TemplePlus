@@ -5,6 +5,9 @@ struct LgcyWindow;
 struct LgcyScrollBar;
 struct TigTextStyle;
 struct UiResizeArgs;
+struct UiSystemConf;
+
+#include "ui_system.h"
 
 #define CRAFT_EFFECT_INVALID -1
 
@@ -63,15 +66,20 @@ struct ItemEnhancementSpec {
 		condId = 0;
 		downgradesTo = upgradesTo = CRAFT_EFFECT_INVALID;
 	}
-	ItemEnhancementSpec(const char* CondName, uint32_t Flags, int EffcBonus, int enhBonus = 0);
+	ItemEnhancementSpec(const std::string &condName, uint32_t Flags, int EffcBonus, int enhBonus = 0);
 };
 
 struct TigMsg;
 
-class ItemCreation {
+class UiItemCreation : public UiSystem {
 	friend class D20System;
 public:
-
+	static constexpr auto Name = "ItemCreation-UI";
+	UiItemCreation(const UiSystemConf &config);
+	~UiItemCreation();
+	void Reset() override;
+	void ResizeViewport(const UiResizeArgs &resizeArgs) override;
+	const std::string &GetName() const override;
 
 	BOOL IsActive();
 	BOOL ItemCreationShow(objHndl crafter, ItemCreationType icType); // shows the item creation UI for the chosen IC type
@@ -130,8 +138,8 @@ public:
 
 
 	
-	bool UiItemCreationWidgetsInit(int width, int height);
-	bool MaaWidgetsInit(int width, int height);
+	void UiItemCreationWidgetsInit(int width, int height);
+	void MaaWidgetsInit(int width, int height);
 	void MaaWidgetsExit(int widId);
 	void ItemCreationWidgetsExit(int widId);
 	void UiItemCreationResize(UiResizeArgs& resizeArgs);
@@ -171,7 +179,7 @@ public:
 	
 	void CraftScrollWandPotionSetItemSpellData(objHndl item, objHndl crafter);
 
-	ItemCreation();
+	UiItemCreation();
 
 protected:
 
@@ -180,7 +188,7 @@ protected:
 	void MaaInitCrafter(objHndl crafter);
 	void MaaInitWnd(int wndId);
 
-	void GetMaaSpecs() const;
+	void LoadMaaSpecs();
 	static int GetSurplusXp(objHndl crafter);
 	bool ItemWielderCondsHasAntecedent(int effIdx, objHndl item);
 
@@ -278,10 +286,6 @@ int ItemCreation::craftingWidgetId;
 	
 	*/
 };
-
-extern ItemCreation itemCreation;
-
-
 
 //uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t slotLevelNew);
 void UiItemCreationCraftingCostTexts(objHndl objHndItem);

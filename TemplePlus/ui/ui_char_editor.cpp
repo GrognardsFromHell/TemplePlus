@@ -195,8 +195,8 @@ public:
 
 	int spellsWndId = 0;
 	LgcyWindow spellsWnd;
-	LgcyScrollBar spellsScrollbar, spellsScrollbar2;
 	int spellsScrollbarId = 0, spellsScrollbar2Id = 0;
+	LgcyScrollBar spellsScrollbar, spellsScrollbar2;
 	int spellsScrollbarY = 0, spellsScrollbar2Y = 0;
 	eastl::vector<int> spellsAvailBtnIds, spellsChosenBtnIds;
 	const int SPELLS_BTN_COUNT = 17; // vanilla had 20, decreasing this to increase the font
@@ -526,18 +526,18 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 	auto lvlNew = objects.StatLevelGet(handle, stat_level) + 1;
 	auto &stateBtnIds = temple::GetRef<int[6]>(0x11E72E40);
 
-	ui.ButtonSetButtonState(stateBtnIds[2], LgcyButtonState::Disabled); // features
+	ui.SetButtonState(stateBtnIds[2], LgcyButtonState::Disabled); // features
 
 	// gain stat every 4 levels
 	if (lvlNew % 4)
-		ui.ButtonSetButtonState(stateBtnIds[1], LgcyButtonState::Disabled); // stats
+		ui.SetButtonState(stateBtnIds[1], LgcyButtonState::Disabled); // stats
 	else
-		ui.ButtonSetButtonState(stateBtnIds[1], LgcyButtonState::Normal); 
+		ui.SetButtonState(stateBtnIds[1], LgcyButtonState::Normal); 
 
 	if (lvlNew % 3)
-		ui.ButtonSetButtonState(stateBtnIds[4], LgcyButtonState::Disabled); // feats
+		ui.SetButtonState(stateBtnIds[4], LgcyButtonState::Disabled); // feats
 	else
-		ui.ButtonSetButtonState(stateBtnIds[4], LgcyButtonState::Normal);
+		ui.SetButtonState(stateBtnIds[4], LgcyButtonState::Normal);
 
 
 	mIsSelectingBonusFeat = false;
@@ -547,32 +547,32 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 		auto classLvlNew = GetNewLvl(classCode);
 
 		if (d20ClassSys.IsSelectingFeatsOnLevelup(handle, classCode) ) {
-			ui.ButtonSetButtonState(stateBtnIds[4], LgcyButtonState::Normal); // feats
+			ui.SetButtonState(stateBtnIds[4], LgcyButtonState::Normal); // feats
 			mIsSelectingBonusFeat = true;
 		}
 
 		
 		if (classCode == stat_level_cleric) {
 			if (classLvlNew == 1)
-				ui.ButtonSetButtonState(stateBtnIds[2], LgcyButtonState::Normal); // features
+				ui.SetButtonState(stateBtnIds[2], LgcyButtonState::Normal); // features
 		}
 		if (classCode == stat_level_ranger) {
 			if (classLvlNew == 1 || classLvlNew == 2 || !(classLvlNew % 5))
-				ui.ButtonSetButtonState(stateBtnIds[2], LgcyButtonState::Normal); // features
+				ui.SetButtonState(stateBtnIds[2], LgcyButtonState::Normal); // features
 		}
 		if (classCode == stat_level_wizard) {
 			if (classLvlNew == 1)
-				ui.ButtonSetButtonState(stateBtnIds[2], LgcyButtonState::Normal); // wizard special school
+				ui.SetButtonState(stateBtnIds[2], LgcyButtonState::Normal); // wizard special school
 		}
 	}
 	
 	// Spells
 	if (d20ClassSys.IsSelectingSpellsOnLevelup(handle, classCode)){
-		ui.ButtonSetButtonState(stateBtnIds[5], LgcyButtonState::Normal);
+		ui.SetButtonState(stateBtnIds[5], LgcyButtonState::Normal);
 	} 
 	else
 	{
-		ui.ButtonSetButtonState(stateBtnIds[5], LgcyButtonState::Disabled);
+		ui.SetButtonState(stateBtnIds[5], LgcyButtonState::Disabled);
 	};
 
 	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
@@ -593,14 +593,12 @@ BOOL UiCharEditor::ClassWidgetsInit(){
 	static LgcyWindow classWnd(259,117, 405, 271);
 	classWnd.flags = 1;
 	classWnd.render = [](int widId) { uiCharEditor.StateTitleRender(widId); };
-	if (classWnd.Add(&classWndId))
-		return 0;
+	classWndId = ui.AddWindow(classWnd);
 
 	int coloff = 0, rowoff = 0;
 
 	for (auto it: d20ClassSys.vanillaClassEnums){
 		// class buttons
-		int newId = 0;
 		LgcyButton classBtn("Class btn", classWndId, 71 + coloff, 47 + rowoff, 130, 20);
 		coloff = 139 - coloff;
 		if (!coloff)
@@ -612,10 +610,8 @@ BOOL UiCharEditor::ClassWidgetsInit(){
 		classBtn.x += classWnd.x; classBtn.y += classWnd.y;
 		classBtn.render = [](int id) {uiCharEditor.ClassBtnRender(id); };
 		classBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.ClassBtnMsg(id, msg); };
-		classBtn.Add(&newId);
-		classBtnIds.push_back(newId);
-		ui.SetDefaultSounds(newId);
-		ui.BindToParent(classWndId, newId);
+		classBtn.SetDefaultSounds();
+		classBtnIds.push_back(ui.AddButton(classBtn, classWndId));
 
 		//rects
 		classBtnFrameRects.push_back(TigRect(classBtn.x-5, classBtn.y-5, classBtn.width+10, classBtn.height+10));
@@ -637,9 +633,7 @@ BOOL UiCharEditor::ClassWidgetsInit(){
 	classNextBtnTextRect.x -= classWnd.x; classNextBtnTextRect.y -= classWnd.y;
 	classPrevBtnTextRect.x -= classWnd.x; classPrevBtnTextRect.y -= classWnd.y;
 
-	LgcyButton nextBtn("Class Next Button", classWndId, classWnd.x + 293, classWnd.y + 230, 55, 20),
-		prevBtn("Class Prev. Button", classWndId, classWnd.x + 58, classWnd.y + 230, 55, 20);
-
+	LgcyButton nextBtn("Class Next Button", classWndId, classWnd.x + 293, classWnd.y + 230, 55, 20);
 	nextBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {
 		if (uiCharEditor.classWndPage < uiCharEditor.mPageCount)
 			uiCharEditor.classWndPage++;
@@ -647,13 +641,15 @@ BOOL UiCharEditor::ClassWidgetsInit(){
 		return 1; };
 	nextBtn.render = [](int id) { uiCharEditor.ClassNextBtnRender(id); };
 	nextBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {	return uiCharEditor.ClassNextBtnMsg(widId, msg); };
+	nextBtn.SetDefaultSounds();
+	classNextBtn = ui.AddButton(nextBtn, classWndId);
+
+	LgcyButton prevBtn("Class Prev. Button", classWndId, classWnd.x + 58, classWnd.y + 230, 55, 20);
 	prevBtn.render = [](int id) { uiCharEditor.ClassPrevBtnRender(id); };
 	prevBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {	return uiCharEditor.ClassPrevBtnMsg(widId, msg); };
-	nextBtn.Add(&classNextBtn);	prevBtn.Add(&classPrevBtn);
+	prevBtn.SetDefaultSounds();
+	classPrevBtn = ui.AddButton(prevBtn, classWndId);
 	
-	ui.SetDefaultSounds(classNextBtn);	ui.BindToParent(classWndId, classNextBtn);
-	ui.SetDefaultSounds(classPrevBtn);	ui.BindToParent(classWndId, classPrevBtn);
-
 	return TRUE;
 }
 
@@ -921,7 +917,7 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	featsMainWnd.flags = 1;
 	featsMainWnd.render = [](int widId) {uiCharEditor.FeatsWndRender(widId); };
 	featsMainWnd.handleMessage = [](int widId, TigMsg*msg) { return uiCharEditor.FeatsWndMsg(widId, msg); };
-	featsMainWnd.Add(&featsMainWndId);
+	featsMainWndId = ui.AddWindow(featsMainWnd);
 
 	// multi select wnd
 	featsMultiCenterX = (w - 289) / 2;
@@ -932,18 +928,16 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	featsMultiSelectWnd.flags = 1;
 	featsMultiSelectWnd.render = [](int widId) {uiCharEditor.FeatsMultiSelectWndRender(widId); };
 	featsMultiSelectWnd.handleMessage = [](int widId, TigMsg*msg) { return uiCharEditor.FeatsMultiSelectWndMsg(widId, msg); };
-	featsMultiSelectWnd.Add(&featsMultiSelectWndId);
+	featsMultiSelectWndId = ui.AddWindow(featsMultiSelectWnd);
 	//scrollbar
 	featsMultiSelectScrollbar.Init(256, 71, 219);
 	featsMultiSelectScrollbar.parentId = featsMultiSelectWndId;
 	featsMultiSelectScrollbar.x += featsMultiRefX;
 	featsMultiSelectScrollbar.y += featsMultiRefY;
-	featsMultiSelectScrollbar.Add(&featsMultiSelectScrollbarId);
-	ui.BindToParent(featsMultiSelectWndId, featsMultiSelectScrollbarId);
+	featsMultiSelectScrollbarId = ui.AddScrollBar(featsMultiSelectScrollbar, featsMultiSelectWndId);
 	
 	//ok btn
 	{
-		int newId = 0;
 		LgcyButton multiOkBtn("Feats Multiselect Ok Btn", featsMultiSelectWndId, 29, 307, 110, 22);
 		multiOkBtn.x += featsMultiRefX; multiOkBtn.y += featsMultiRefY;
 		featMultiOkRect = TigRect(multiOkBtn.x, multiOkBtn.y, multiOkBtn.width, multiOkBtn.height);
@@ -951,15 +945,12 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 		multiOkBtn.render = [](int id) {uiCharEditor.FeatsMultiOkBtnRender(id); };
 		multiOkBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.FeatsMultiOkBtnMsg(id, msg); };
 		multiOkBtn.renderTooltip = nullptr;
-		multiOkBtn.Add(&newId);
-		featsMultiOkBtnId = newId;
-		ui.SetDefaultSounds(newId);
-		ui.BindToParent(featsMultiSelectWndId, newId);
+		multiOkBtn.SetDefaultSounds();
+		featsMultiOkBtnId = ui.AddButton(multiOkBtn, featsMultiSelectWndId);
 	}
 
 	//cancel btn
 	{
-		int newId = 0;
 		LgcyButton multiCancelBtn("Feats Multiselect Cancel Btn", featsMultiSelectWndId, 153, 307, 110, 22);
 		multiCancelBtn.x += featsMultiRefX; multiCancelBtn.y += featsMultiRefY;
 		featMultiCancelRect = TigRect(multiCancelBtn.x, multiCancelBtn.y, multiCancelBtn.width, multiCancelBtn.height);
@@ -967,10 +958,8 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 		multiCancelBtn.render = [](int id) {uiCharEditor.FeatsMultiCancelBtnRender(id); };
 		multiCancelBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.FeatsMultiCancelBtnMsg(id, msg); };
 		multiCancelBtn.renderTooltip = nullptr;
-		multiCancelBtn.Add(&newId);
-		featsMultiCancelBtnId = newId;
-		ui.SetDefaultSounds(newId);
-		ui.BindToParent(featsMultiSelectWndId, newId);
+		multiCancelBtn.SetDefaultSounds();
+		featsMultiCancelBtnId = ui.AddButton(multiCancelBtn, featsMultiSelectWndId);
 	}
 	
 	featMultiTitleRect = TigRect(featsMultiCenterX, featsMultiCenterY + 20, 289, 12);
@@ -978,17 +967,14 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	featsMultiBtnRects.clear();
 	auto rowOff = 75;
 	for (auto i=0; i < FEATS_MULTI_BTN_COUNT; i++){
-		int newId = 0;
 		LgcyButton featMultiBtn("Feats Multiselect btn", featsMultiSelectWndId, 23, 75 + i*(FEATS_MULTI_BTN_HEIGHT+2), 233, FEATS_MULTI_BTN_HEIGHT);
 
 		featMultiBtn.x += featsMultiRefX; featMultiBtn.y += featsMultiRefY;
 		featMultiBtn.render = [](int id) {uiCharEditor.FeatsMultiBtnRender(id); };
 		featMultiBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.FeatsMultiBtnMsg(id, msg); };
 		featMultiBtn.renderTooltip = nullptr;
-		featMultiBtn.Add(&newId);
-		featsMultiSelectBtnIds.push_back(newId);
-		ui.SetDefaultSounds(newId);
-		ui.BindToParent(featsMultiSelectWndId, newId);
+		featMultiBtn.SetDefaultSounds();
+		featsMultiSelectBtnIds.push_back(ui.AddButton(featMultiBtn, featsMultiSelectWndId));
 		featsMultiBtnRects.push_back(TigRect(featMultiBtn.x, featMultiBtn.y, featMultiBtn.width, featMultiBtn.height));
 	}
 
@@ -1001,17 +987,14 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	featsAvailBtnIds.clear();
 	featsBtnRects.clear();
 	for (auto i = 0; i < FEATS_AVAIL_BTN_COUNT; i++) {
-		int newId = 0;
 		LgcyButton featsAvailBtn("Feats Available btn", featsMainWndId, 7, 38 + i*(FEATS_AVAIL_BTN_HEIGHT + 1), 169, FEATS_AVAIL_BTN_HEIGHT);
 
 		featsAvailBtn.x += featsMainWnd.x; featsAvailBtn.y += featsMainWnd.y;
 		featsAvailBtn.render = [](int id) {uiCharEditor.FeatsEntryBtnRender(id); };
 		featsAvailBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.FeatsEntryBtnMsg(id, msg); };
 		featsAvailBtn.renderTooltip = nullptr;
-		featsAvailBtn.Add(&newId);
-		featsAvailBtnIds.push_back(newId);
-		ui.SetDefaultSounds(newId);
-		ui.BindToParent(featsMainWndId, newId);
+		featsAvailBtn.SetDefaultSounds();
+		featsAvailBtnIds.push_back(ui.AddButton(featsAvailBtn, featsMainWndId));
 		featsBtnRects.push_back(TigRect(featsAvailBtn.x - featsMainWnd.x, featsAvailBtn.y - featsMainWnd.y, featsAvailBtn.width, featsAvailBtn.height));
 	}
 	//scrollbar
@@ -1019,25 +1002,21 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	featsScrollbar.parentId = featsMainWndId;
 	featsScrollbar.x += featsMainWnd.x;
 	featsScrollbar.y += featsMainWnd.y;
-	featsScrollbar.Add(&featsScrollbarId);
-	ui.BindToParent(featsMainWndId, featsScrollbarId);
+	featsScrollbarId = ui.AddScrollBar(featsScrollbar, featsMainWndId);
 
 
 	// Existing feats
 	featsExistingBtnIds.clear();
 	featsExistingBtnRects.clear();
 	for (auto i = 0; i < FEATS_EXISTING_BTN_COUNT; i++) {
-		int newId = 0;
 		LgcyButton featsExistingBtn("Feats Existing btn", featsMainWndId, 212, 121 + i*(FEATS_EXISTING_BTN_HEIGHT + 1), 175, FEATS_EXISTING_BTN_HEIGHT);
 
 		featsExistingBtn.x += featsMainWnd.x; featsExistingBtn.y += featsMainWnd.y;
 		featsExistingBtn.render = [](int id) {uiCharEditor.FeatsExistingBtnRender(id); };
 		featsExistingBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.FeatsExistingBtnMsg(id, msg); };
 		featsExistingBtn.renderTooltip = nullptr;
-		featsExistingBtn.Add(&newId);
-		featsExistingBtnIds.push_back(newId);
-		ui.SetDefaultSounds(newId);
-		ui.BindToParent(featsMainWndId, newId);
+		featsExistingBtn.SetDefaultSounds();
+		featsExistingBtnIds.push_back(ui.AddButton(featsExistingBtn, featsMainWndId));
 		featsExistingBtnRects.push_back(TigRect(featsExistingBtn.x - featsMainWnd.x, featsExistingBtn.y - featsMainWnd.y, featsExistingBtn.width, featsExistingBtn.height));
 	}
 	//scrollbar
@@ -1045,8 +1024,7 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	featsExistingScrollbar.parentId = featsMainWndId;
 	featsExistingScrollbar.x += featsMainWnd.x;
 	featsExistingScrollbar.y += featsMainWnd.y;
-	featsExistingScrollbar.Add(&featsExistingScrollbarId);
-	ui.BindToParent(featsMainWndId, featsExistingScrollbarId);
+	auto featsExistingScrollbarId = ui.AddScrollBar(featsExistingScrollbar, featsMainWndId);
 
 	featsSelectedBorderRect = TigRect(featsMainWnd.x + 207, featsMainWnd.y + 42, 185, 19 );
 	featsClassBonusBorderRect = TigRect(featsMainWnd.x + 207, featsMainWnd.y + 81, 185, 19);
@@ -1083,8 +1061,8 @@ void UiCharEditor::FeatWidgetsFree(){
 	ui.WidgetRemoveRegardParent(featsScrollbarId);
 	ui.WidgetRemoveRegardParent(featsExistingScrollbarId);
 
-	auto wid = ui.WidgetGetType1(featsMultiSelectWndId);
-	auto wid2 = ui.WidgetGetType1(featsMainWndId);
+	auto wid = ui.GetWindow(featsMultiSelectWndId);
+	auto wid2 = ui.GetWindow(featsMainWndId);
 
 	ui.WidgetRemove(featsMultiSelectWndId);
 	ui.WidgetRemove(featsMainWndId);
@@ -1144,11 +1122,11 @@ void UiCharEditor::FeatsActivate(){
 
 	std::sort(mExistingFeats.begin(), mExistingFeats.end(), featSorter);
 
-	ui.WidgetCopy(featsExistingScrollbarId, &featsExistingScrollbar);
+	featsExistingScrollbar = *ui.GetScrollBar(featsExistingScrollbarId);
 	featsExistingScrollbar.scrollbarY = 0;
 	featsExistingScrollbarY = 0;
 	featsExistingScrollbar.yMax = max((int)mExistingFeats.size() - FEATS_EXISTING_BTN_COUNT, 0);
-	ui.WidgetSet(featsExistingScrollbarId, &featsExistingScrollbar);
+	featsExistingScrollbar = *ui.GetScrollBar(featsExistingScrollbarId);
 
 	// Available feats
 	mSelectableFeats.clear();
@@ -1184,11 +1162,11 @@ void UiCharEditor::FeatsActivate(){
 	}
 	std::sort(mSelectableFeats.begin(), mSelectableFeats.end(), featSorter);
 
-	ui.WidgetCopy(featsScrollbarId, &featsScrollbar);
+	featsScrollbar = *ui.GetScrollBar(featsScrollbarId);
 	featsScrollbar.scrollbarY = 0;
 	featsScrollbarY= 0;
 	featsScrollbar.yMax = max((int)mSelectableFeats.size() - FEATS_AVAIL_BTN_COUNT, 0);
-	ui.WidgetSet(featsScrollbarId, &featsScrollbar);
+	featsScrollbar = *ui.GetScrollBar(featsScrollbarId);
 }
 
 BOOL UiCharEditor::SpellsWidgetsInit(){
@@ -1198,38 +1176,33 @@ BOOL UiCharEditor::SpellsWidgetsInit(){
 	spellsWnd.flags = 1;
 	spellsWnd.render = [](int widId) {uiCharEditor.SpellsWndRender(widId); };
 	spellsWnd.handleMessage = [](int widId, TigMsg*msg) { return uiCharEditor.SpellsWndMsg(widId, msg); };
-	spellsWnd.Add(&spellsWndId);
+	spellsWndId = ui.AddWindow(spellsWnd);
 
 	// Available Spells Scrollbar
 	spellsScrollbar.Init(183, 37, 230);
 	spellsScrollbar.parentId = spellsWndId;
 	spellsScrollbar.x += spellsWnd.x;
 	spellsScrollbar.y += spellsWnd.y;
-	spellsScrollbar.Add(&spellsScrollbarId);
-	ui.BindToParent(spellsWndId, spellsScrollbarId);
+	spellsScrollbarId = ui.AddScrollBar(spellsScrollbar, spellsWndId);
 
 	// Spell selection scrollbar
 	spellsScrollbar2.Init(385, 37, 230);
 	spellsScrollbar2.parentId = spellsWndId;
 	spellsScrollbar2.x += spellsWnd.x;
 	spellsScrollbar2.y += spellsWnd.y;
-	spellsScrollbar2.Add(&spellsScrollbar2Id);
-	ui.BindToParent(spellsWndId, spellsScrollbar2Id);
+	spellsScrollbar2Id = ui.AddScrollBar(spellsScrollbar2, spellsWndId);
 
 	int rowOff = 39;
 	for (auto i = 0; i < SPELLS_BTN_COUNT; i++, rowOff += SPELLS_BTN_HEIGHT){
 		
-		int newId = 0;
 		LgcyButton spellAvailBtn("Spell Available btn", spellsWndId, 4, rowOff, 180, SPELLS_BTN_HEIGHT);
 
 		spellAvailBtn.x += spellsWnd.x; spellAvailBtn.y += spellsWnd.y;
 		spellAvailBtn.render = [](int id) {uiCharEditor.SpellsAvailableEntryBtnRender(id); };
 		spellAvailBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.SpellsAvailableEntryBtnMsg(id, msg); };
 		spellAvailBtn.renderTooltip = nullptr;
-		spellAvailBtn.Add(&newId);
-		spellsAvailBtnIds.push_back(newId);
-		ui.SetDefaultSounds(newId);
-		ui.BindToParent(spellsWndId, newId);
+		spellAvailBtn.SetDefaultSounds();
+		spellsAvailBtnIds.push_back(ui.AddButton(spellAvailBtn, spellsWndId));
 
 		LgcyButton spellChosenBtn("Spell Chosen btn", spellsWndId, 206, rowOff, 170, SPELLS_BTN_HEIGHT);
 
@@ -1237,10 +1210,8 @@ BOOL UiCharEditor::SpellsWidgetsInit(){
 		spellChosenBtn.render = [](int id) {uiCharEditor.SpellsEntryBtnRender(id); };
 		spellChosenBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.SpellsEntryBtnMsg(id, msg); };
 		spellChosenBtn.renderTooltip = nullptr;
-		spellChosenBtn.Add(&newId);
-		spellsChosenBtnIds.push_back(newId);
-		ui.SetDefaultSounds(newId);
-		ui.BindToParent(spellsWndId, newId);
+		spellChosenBtn.SetDefaultSounds();
+		spellsChosenBtnIds.push_back(ui.AddButton(spellChosenBtn, spellsWndId));
 
 	}
 
@@ -1321,7 +1292,7 @@ void UiCharEditor::SpellsActivate() {
 		ui.ScrollbarSetY(sbId, 0);
 		int numEntries = (int)chargen.GetAvailableSpells().size();
 		ui.ScrollbarSetYmax(sbId, max(0, numEntries - uiCharEditor.SPELLS_BTN_COUNT));
-		ui.WidgetCopy(sbId, &uiCharEditor.spellsScrollbar);
+		uiCharEditor.spellsScrollbar = *ui.GetScrollBar(sbId);
 		uiCharEditor.spellsScrollbar.y = 0;
 		uiCharEditor.spellsScrollbarY = 0;
 
@@ -1330,7 +1301,7 @@ void UiCharEditor::SpellsActivate() {
 		int numAdded = (int)chargen.GetKnownSpellInfo().size();
 		ui.ScrollbarSetY(sbAddedId, 0); 
 		ui.ScrollbarSetYmax(sbAddedId, max(0, numAdded - uiCharEditor.SPELLS_BTN_COUNT));
-		ui.WidgetCopy(sbAddedId, &uiCharEditor.spellsScrollbar2);
+		uiCharEditor.spellsScrollbar2 = *ui.GetScrollBar(sbAddedId);
 		uiCharEditor.spellsScrollbar2.y = 0;
 		uiCharEditor.spellsScrollbar2Y = 0;
 	};
@@ -1416,8 +1387,7 @@ void UiCharEditor::ClassBtnRender(int widId){
 	static TigRect srcRect(1, 1, 120, 30);
 	UiRenderer::DrawTexture(buttonBox, classBtnFrameRects[idx], srcRect);
 
-	LgcyButtonState btnState; 
-	ui.GetButtonState(widId, btnState);
+	auto btnState = ui.GetButtonState(widId);
 	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down)
 	{
 		auto &selPkt = GetCharEditorSelPacket();
@@ -1571,8 +1541,7 @@ void UiCharEditor::ClassNextBtnRender(int widId){
 	static TigRect srcRect(1, 1, 120, 30);
 	UiRenderer::DrawTexture(buttonBox, classNextBtnFrameRect, srcRect);
 
-	LgcyButtonState btnState;
-	ui.GetButtonState(widId, btnState);
+	auto btnState = ui.GetButtonState(widId);
 	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down){
 		btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
 	}
@@ -1599,8 +1568,7 @@ void UiCharEditor::ClassPrevBtnRender(int widId){
 	static TigRect srcRect(1, 1, 120, 30);
 	UiRenderer::DrawTexture(buttonBox, classPrevBtnFrameRect, srcRect);
 
-	LgcyButtonState btnState;
-	ui.GetButtonState(widId, btnState);
+	auto btnState = ui.GetButtonState(widId);
 	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down) {
 		btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
 	}
@@ -1739,14 +1707,14 @@ BOOL UiCharEditor::FeatsWndMsg(int widId, TigMsg * msg)
 
 	if ((int)msgM->x >= featsMainWnd.x + 3 && (int)msgM->x <= featsMainWnd.x + 188
 		&& (int)msgM->y >= featsMainWnd.y +36 && (int)msgM->y <= featsMainWnd.y + 263) {
-		ui.WidgetCopy(featsScrollbarId, &featsScrollbar);
+		featsScrollbar = *ui.GetScrollBar(featsScrollbarId);
 		if (featsScrollbar.handleMessage)
 			return featsScrollbar.handleMessage(featsScrollbarId, (TigMsg*)&msgCopy);
 	}
 
 	if ((int)msgM->x >= featsMainWnd.x + 207 && (int)msgM->x <= featsMainWnd.x + 392
 		&& (int)msgM->y >= featsMainWnd.y + 118 && (int)msgM->y <= featsMainWnd.y + 263) {
-		ui.WidgetCopy(featsExistingScrollbarId, &featsExistingScrollbar);
+		featsExistingScrollbar = *ui.GetScrollBar(featsExistingScrollbarId);
 		if (featsExistingScrollbar.handleMessage)
 			return featsExistingScrollbar.handleMessage(featsExistingScrollbarId, (TigMsg*)&msgCopy);
 	}
@@ -1972,12 +1940,12 @@ void UiCharEditor::FeatsMultiSelectActivate(feat_enums feat) {
 
 	
 
-	ui.WidgetCopy(featsMultiSelectScrollbarId, &featsMultiSelectScrollbar);
+	featsMultiSelectScrollbar = *ui.GetScrollBar(featsMultiSelectScrollbarId);
 	featsMultiSelectScrollbar.scrollbarY = 0;
 	featsMultiSelectScrollbarY = 0;
 	featsMultiSelectScrollbar.yMax = max(0, (int)mMultiSelectFeats.size() - FEATS_MULTI_BTN_COUNT);
-	ui.WidgetSet(featsMultiSelectScrollbarId, &featsMultiSelectScrollbar);
-	ui.ButtonSetButtonState(featsMultiOkBtnId, LgcyButtonState::Disabled);
+	featsMultiSelectScrollbar = *ui.GetScrollBar(featsMultiSelectScrollbarId);
+	ui.SetButtonState(featsMultiOkBtnId, LgcyButtonState::Disabled);
 
 	ui.WidgetSetHidden(featsMultiSelectWndId, 0);
 	ui.WidgetBringToFront(featsMultiSelectWndId);
@@ -2006,9 +1974,7 @@ BOOL UiCharEditor::FeatsMultiSelectWndMsg(int widId, TigMsg * msg){
 }
 
 void UiCharEditor::FeatsMultiOkBtnRender(int widId){
-	LgcyButtonState buttonState;
-	if (ui.GetButtonState(widId, buttonState))
-		return;
+	auto buttonState = ui.GetButtonState(widId);
 
 	int texId;
 	switch(buttonState){
@@ -2080,9 +2046,7 @@ BOOL UiCharEditor::FeatsMultiOkBtnMsg(int widId, TigMsg * msg){
 }
 
 void UiCharEditor::FeatsMultiCancelBtnRender(int widId){
-	LgcyButtonState buttonState;
-	if (ui.GetButtonState(widId, buttonState))
-		return;
+	auto buttonState = ui.GetButtonState(widId);
 
 	int texId;
 	switch (buttonState) {
@@ -2213,11 +2177,11 @@ BOOL UiCharEditor::FeatsMultiBtnMsg(int widId, TigMsg* msg){
 		}
 		if (FeatCanPick(feat)){
 			featsMultiSelected = feat;
-			ui.ButtonSetButtonState(featsMultiOkBtnId, LgcyButtonState::Normal);
+			ui.SetButtonState(featsMultiOkBtnId, LgcyButtonState::Normal);
 		} else
 		{
 			featsMultiSelected = FEAT_NONE;
-			ui.ButtonSetButtonState(featsMultiOkBtnId, LgcyButtonState::Disabled);
+			ui.SetButtonState(featsMultiOkBtnId, LgcyButtonState::Disabled);
 		}
 		return TRUE;
 	default:
@@ -2618,14 +2582,14 @@ BOOL UiCharEditor::SpellsWndMsg(int widId, TigMsg * msg){
 
 		if ((int)msgM->x >= spellsWnd.x + 4 && (int)msgM->x <= spellsWnd.x + 184
 			&& (int)msgM->y >= spellsWnd.y && (int)msgM->y <= spellsWnd.y + 259){
-			ui.WidgetCopy(spellsScrollbarId, &spellsScrollbar);
+			spellsScrollbar = *ui.GetScrollBar(spellsScrollbarId);
 			if (spellsScrollbar.handleMessage)
 				return spellsScrollbar.handleMessage(spellsScrollbarId, (TigMsg*)&msgCopy);
 		}
 
 		if ((int)msgM->x >= spellsWnd.x +206 && (int)msgM->x <= spellsWnd.x + 376
 			&& (int)msgM->y >= spellsWnd.y && (int)msgM->y <= spellsWnd.y + 259) {
-			ui.WidgetCopy(spellsScrollbar2Id, &spellsScrollbar2);
+			spellsScrollbar2 = *ui.GetScrollBar(spellsScrollbar2Id);
 			if (spellsScrollbar2.handleMessage)
 				return spellsScrollbar2.handleMessage(spellsScrollbar2Id, (TigMsg*)&msgCopy);
 		}
@@ -2912,31 +2876,31 @@ void UiCharEditor::ClassSetPermissibles(){
 	for (auto it:classBtnIds){
 		auto classCode = GetClassCodeFromWidgetAndPage(idx++, page);
 		if (classCode == (Stat)-1)
-			ui.ButtonSetButtonState(it, LgcyButtonState::Disabled);
+			ui.SetButtonState(it, LgcyButtonState::Disabled);
 		else if (d20ClassSys.ReqsMet(handle, classCode)){
-			ui.ButtonSetButtonState(it, LgcyButtonState::Normal);
+			ui.SetButtonState(it, LgcyButtonState::Normal);
 		}
 		else{
-			ui.ButtonSetButtonState(it, LgcyButtonState::Disabled);
+			ui.SetButtonState(it, LgcyButtonState::Disabled);
 		}
 		
 	}
 
 	if (mPageCount <= 1){
-		ui.ButtonSetButtonState(classNextBtn, LgcyButtonState::Disabled);
-		ui.ButtonSetButtonState(classPrevBtn, LgcyButtonState::Disabled);
+		ui.SetButtonState(classNextBtn, LgcyButtonState::Disabled);
+		ui.SetButtonState(classPrevBtn, LgcyButtonState::Disabled);
 		return;
 	}
 
 	if (page > 0)
-		ui.ButtonSetButtonState(classPrevBtn, LgcyButtonState::Normal);
+		ui.SetButtonState(classPrevBtn, LgcyButtonState::Normal);
 	else 
-		ui.ButtonSetButtonState(classPrevBtn, LgcyButtonState::Disabled);
+		ui.SetButtonState(classPrevBtn, LgcyButtonState::Disabled);
 
 	if (page < mPageCount-1)
-		ui.ButtonSetButtonState(classNextBtn, LgcyButtonState::Normal);
+		ui.SetButtonState(classNextBtn, LgcyButtonState::Normal);
 	else
-		ui.ButtonSetButtonState(classNextBtn, LgcyButtonState::Disabled);
+		ui.SetButtonState(classNextBtn, LgcyButtonState::Disabled);
 }
 
 

@@ -19,6 +19,7 @@
 #include <ui/ui_item_creation.h>
 #include "d20/d20stats.h"
 #include "deity/legacydeitysystem.h"
+#include "ui/ui_systems.h"
 
 
 //*****************************************************************************
@@ -506,7 +507,6 @@ D20System::D20System(const GameSystemConf &config) {
 	d20ClassSys.GetClassSpecs();
 	d20LevelSys.GenerateSpellsPerLevelTables();
 	damage.Init();
-	itemCreation.GetMaaSpecs();
 	d20Sys.GetPythonActionSpecs();
 }
 D20System::~D20System() {

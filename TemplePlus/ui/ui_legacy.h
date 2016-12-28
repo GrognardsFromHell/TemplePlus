@@ -79,8 +79,6 @@ struct LgcyWindow : public LgcyWidget {
 
 	LgcyWindow();
 	LgcyWindow(int x, int y, int w, int h);
-
-	bool Add(int * widIdOut);
 };
 
 /*
@@ -117,7 +115,8 @@ struct LgcyButton : public LgcyWidget {
 	LgcyButton();
 	LgcyButton(char* ButtonName, int ParentId, int X, int Y, int Width, int Height);
 	LgcyButton(char* ButtonName, int ParentId, TigRect& rect);
-	bool Add(int* widIdOut);
+
+	void SetDefaultSounds();
 };
 
 struct LgcyScrollBar : public LgcyWidget {
@@ -137,7 +136,6 @@ struct LgcyScrollBar : public LgcyWidget {
 	int GetY();
 	bool Init(int x, int y, int height);
 	bool Init(int x, int y, int height, int parentId);
-	bool Add(int * widIdOut);
 };
 
 #pragma pack(pop)
@@ -196,6 +194,7 @@ public:
 	void SetHidden(LgcyWidgetId id, bool hidden);
 
 	void RemoveWidget(LgcyWidgetId id);
+	bool AddChild(LgcyWidgetId parentId, LgcyWidgetId childId);
 	void RemoveChildWidget(LgcyWidgetId id);
 
 	void Render();
@@ -205,7 +204,10 @@ public:
 	LgcyWidgetId GetWidgetAt(int x, int y);
 	bool DoesWidgetContain(LgcyWidgetId id, int x, int y);
 
-	const std::vector<LgcyWidgetId> GetActiveWindows() const {
+	using IdVector = std::vector<LgcyWidgetId>;
+	using WidgetMap = eastl::hash_map<LgcyWidgetId, ActiveLegacyWidget>;
+
+	const IdVector& GetActiveWindows() const {
 		return mActiveWindows;
 	}
 
@@ -221,8 +223,8 @@ private:
 	UiLegacyManager& operator=(UiLegacyManager&) = delete;
 
 	LgcyWidgetId mNextWidgetId = 0;
-	std::unordered_map<LgcyWidgetId, ActiveLegacyWidget> mActiveWidgets;
-	std::vector<LgcyWidgetId> mActiveWindows;
+	WidgetMap mActiveWidgets;
+	IdVector mActiveWindows;
 	int maxZIndex = 0;
 
 	/*

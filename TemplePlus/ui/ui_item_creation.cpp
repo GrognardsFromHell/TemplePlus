@@ -34,6 +34,9 @@
 #include <mod_support.h>
 #include <float_line.h>
 #include <ui/ui_dialog.h>
+#include "ui_legacysystems.h"
+#include "ui_systems.h"
+#include <infrastructure/tabparser.h>
 
 #define NUM_ITEM_ENHANCEMENT_SPECS 41
 #define NUM_APPLIED_BONUSES_MAX 9 // number of bonuses that can be applied on item creation
@@ -62,7 +65,9 @@ const std::unordered_map<std::string, uint32_t> ItemEnhSpecFlagDict = {
 
 int WandCraftCostCp=0;
 
-ItemCreation itemCreation;
+static inline UiItemCreation &itemCreation() {
+	return uiSystems->GetItemCreation();
+}
 
 struct UiItemCreationAddresses : temple::AddressTable
 {
@@ -115,7 +120,6 @@ static int disabledBtnTexture;
 
 class ItemCreationHooks : public TempleFix {
 public:
-	
 
 	static void HookedGetLineForMaaAppend(MesHandle, MesLine*); // ensures the crafted item name doesn't overflow
 
@@ -127,15 +131,12 @@ public:
 		
 		// UiItemCreationIsActive
 		replaceFunction<BOOL(__cdecl)()>(0x1014F180, [](){
-			return itemCreation.IsActive();
+			return itemCreation().IsActive();
 		});
 
 		// System Funcs
-		replaceFunction<int(__cdecl)(GameSystemConf&)>(0x10154BA0, [](GameSystemConf& conf) {
-			return itemCreation.UiItemCreationInit(conf);
-		});
 		replaceFunction<void(__cdecl)(UiResizeArgs&)>(0x10154E90, [](UiResizeArgs& arg){
-			itemCreation.UiItemCreationResize(arg);
+			itemCreation().UiItemCreationResize(arg);
 		});
 
 
@@ -143,58 +144,58 @@ public:
 
 		// Show
 		replaceFunction<BOOL(__cdecl)(objHndl, ItemCreationType)>(0x101536C0, [](objHndl crafter, ItemCreationType icTypeNew){
-			return itemCreation.ItemCreationShow(crafter, icTypeNew);
+			return itemCreation().ItemCreationShow(crafter, icTypeNew);
 		});
 
 		replaceFunction<int(__cdecl)(objHndl, objHndl)>(0x10152690, [](objHndl crafter, objHndl item) {
-			return itemCreation.CreateItemResourceCheck(crafter, item) ? 1 : 0;
+			return itemCreation().CreateItemResourceCheck(crafter, item) ? 1 : 0;
 		});
 
 
 		// MAA Window Message Handler
 		replaceFunction<BOOL(__cdecl)(int, TigMsg*)>(0x10153110, [](int widId, TigMsg* msg)	{
-			return itemCreation.MaaWndMsg(widId, msg);
+			return itemCreation().MaaWndMsg(widId, msg);
 		});
 
 		// MAA Textbox
 		replaceFunction<BOOL(__cdecl)(int, TigMsg*)>(0x10151890, [](int widId, TigMsg* msg) {
-			return itemCreation.MaaTextboxMsg(widId, msg);
+			return itemCreation().MaaTextboxMsg(widId, msg);
 		});
 		replaceFunction<bool(__cdecl)(int , objHndl)>(0x10151C10, [](int widId, objHndl item)
 		{
-			return itemCreation.MaaWndRenderText(widId, item);
+			return itemCreation().MaaWndRenderText(widId, item);
 		});
 
 		// MAA selected item for crafting
 		replaceFunction<BOOL(__cdecl)(int, TigMsg*)>(0x10152E40, [](int widId, TigMsg* msg) {
-			return itemCreation.MaaItemMsg(widId, msg); }
+			return itemCreation().MaaItemMsg(widId, msg); }
 		);
 
 		// MAA Effect "buttons"
 		replaceFunction<BOOL(__cdecl)(int, TigMsg*)>(0x10153250, [](int widId, TigMsg* msg) {
-			return itemCreation.MaaEffectMsg(widId, msg); }
+			return itemCreation().MaaEffectMsg(widId, msg); }
 		);
 		replaceFunction<void(__cdecl)(int)>(0x10153990, [](int widId) {
-			return itemCreation.MaaEffectRender(widId); }
+			return itemCreation().MaaEffectRender(widId); }
 		);
 		replaceFunction<BOOL(__cdecl)(int, TigMsg*)>(0x10152ED0, [](int widId, TigMsg* msg) {
-			return itemCreation.MaaEffectAddMsg(widId, msg);
+			return itemCreation().MaaEffectAddMsg(widId, msg);
 		});
 		replaceFunction<BOOL(__cdecl)(int, TigMsg*)>(0x10152FE0, [](int widId, TigMsg* msg) {
-			return itemCreation.MaaEffectRemoveMsg(widId, msg);
+			return itemCreation().MaaEffectRemoveMsg(widId, msg);
 		});
 		replaceFunction<BOOL(__cdecl)(int, TigMsg*)>(0x10151EF0, [](int widId, TigMsg* msg) {
-			return itemCreation.MaaAppliedBtnMsg(widId, msg);
+			return itemCreation().MaaAppliedBtnMsg(widId, msg);
 		});
 
 		// CreateBtnMsg
 		replaceFunction<BOOL(int, TigMsg * )>(0x10153F60, [](int widId, TigMsg* msg){
-			return itemCreation.CreateBtnMsg(widId, msg);
+			return itemCreation().CreateBtnMsg(widId, msg);
 		});
 
 		// CancelBtnMsg
 		replaceFunction<BOOL(int, TigMsg *)>(0x10153820, [](int widId, TigMsg* msg) {
-			return itemCreation.CancelBtnMsg(widId, msg);
+			return itemCreation().CancelBtnMsg(widId, msg);
 		});
 
 		
@@ -224,9 +225,130 @@ public:
 
 } itemCreationHooks;
 
+//*****************************************************************************
+//* ItemCreation-UI
+//*****************************************************************************
+
+UiItemCreation::UiItemCreation(const UiSystemConf &config) {
+
+	LoadMaaSpecs();
+
+	mCreateBtnRect = TigRect(133, 339, 112, 22);
+	mMaaCancelBtnRect = TigRect(256, 339, 112, 22);
+	mMaaCraftedItemIconDestRect = TigRect(215, 62, 64, 64);
+	mItemCreationScrollbar = new LgcyScrollBar;
+	mEnhBonusDnRect = TigRect(450, 156, 15, 9);
+
+	if (!mesFuncs.Open("tpmes\\item_creation.mes", &mItemCreationMes))
+		throw TempleException("Unable to open item_creation.mes");
+	temple::GetRef<MesHandle>(0x10BEDFD0) = mItemCreationMes;
+	if (!mesFuncs.Open("rules\\item_creation.mes", temple::GetPointer<MesHandle>(0x10BEDA90)))
+		throw TempleException("Unable to open item_creation.mes");
+	if (!mesFuncs.Open("mes\\item_creation_names.mes", temple::GetPointer<MesHandle>(0x10BEDB4C)))
+		throw TempleException("Unable to open item_creation_names.mes");
+
+	if (!InitItemCreationRules())
+		throw TempleException("Unable to initialize item creation rules");
+
+	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptNormal, temple::GetRef<int>(0x10BED9F0));
+	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptHover, temple::GetRef<int>(0x10BEDA48));
+	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptPressed, temple::GetRef<int>(0x10BED9EC));
+	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DisabledNormal, temple::GetRef<int>(0x10BEDB48));
+	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineNormal, temple::GetRef<int>(0x10BEDA5C));
+	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineHover, temple::GetRef<int>(0x10BEE2D4));
+	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclinePressed, temple::GetRef<int>(0x10BED6D0));
+
+	bkgImage = new CombinedImgFile("art\\interface\\item_creation_ui\\item_creation.img");
+
+	if (temple::Dll::GetInstance().HasCo8Hooks() && !modSupport.IsKotB()) {
+		mUseCo8Ui = true;
+		if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\ITEM_CREATION_WIDENED_0_0.tga", &mItemCreationWidenedTexture00)
+			|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\ITEM_CREATION_WIDENED_1_0.tga", &mItemCreationWidenedTexture10)
+			|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\ITEM_CREATION_WIDENED_0_1.tga", &mItemCreationWidenedTexture01)
+			|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\ITEM_CREATION_WIDENED_1_1.tga", &mItemCreationWidenedTexture11))
+			throw TempleException("Unable to register Co8 textures");
+	}
+
+	if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\craftarms_0.tga", temple::GetPointer<int>(0x10BEE38C))
+		|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\craftarms_1.tga", temple::GetPointer<int>(0x10BECEE8))
+		|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\craftarms_2.tga", temple::GetPointer<int>(0x10BED988))
+		|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\craftarms_3.tga", temple::GetPointer<int>(0x10BECEEC))
+		|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\invslot_selected.tga", temple::GetPointer<int>(0x10BECDAC))
+		|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\invslot.tga", temple::GetPointer<int>(0x10BEE038))
+		|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\add_button.tga", temple::GetPointer<int>(0x10BEE334))
+		|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\add_button_grey.tga", temple::GetPointer<int>(0x10BED990))
+		|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\add_button_hover.tga", temple::GetPointer<int>(0x10BEE2D8))
+		|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\add_button_press.tga", temple::GetPointer<int>(0x10BED79C))
+		|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\down_arrow.tga", &mDownArrowTga)
+		|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\down_arrow_click.tga", &mDownArrowClickTga)
+		|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\down_arrow_disabled.tga", &mDownArrowDisabledTga)
+		|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\down_arrow_hovered.tga", &mDownArrowHoveredTga)) {
+		throw TempleException("Missing textures for Item Creation UI!");
+	}
+
+	/*
+	Init Widgets
+	*/
+	UiItemCreationWidgetsInit(config.width, config.height);
+	MaaWidgetsInit(config.width, config.height);
+
+	if (!temple::GetRef<bool(__cdecl)()>(0x1014F4D0)()) //   ItemCreationStringsGet()
+		throw TempleException("Unable to initialize item creation strings");
 
 
-int ItemCreation::CraftedWandSpellLevel(objHndl objHndItem)
+	auto& icWnd = temple::GetRef<LgcyWindow>(0x10BEE040);
+	auto& maaWnd = temple::GetRef<LgcyWindow>(0x10BEDB58);
+
+	auto& rect = temple::GetRef<TigRect>(0x102FAEC4);
+	rect.x += icWnd.x;	rect.y += icWnd.y;
+
+	mMaaCraftedItemIconDestRect.x += maaWnd.x;	mMaaCraftedItemIconDestRect.y += maaWnd.y;
+
+	auto& rect3 = temple::GetRef<TigRect>(0x102FAEF4);
+	rect3.x += icWnd.x;	rect3.y += icWnd.y;
+
+	auto& rect4 = temple::GetRef<TigRect>(0x102FAF14);
+	rect4.x += icWnd.x;	rect4.y += icWnd.y;
+
+	mCreateBtnRect.x += maaWnd.x;	mCreateBtnRect.y += maaWnd.y;
+	mMaaCancelBtnRect.x += maaWnd.x; mMaaCancelBtnRect.y += maaWnd.y;
+
+	itemCreationType = ItemCreationType::Inactive;
+
+
+
+	itemCreationCrafter = temple::GetRef<objHndl>(0x10BECEE0);
+	// craftingItemIdx = temple::GetRef<int>(0x10BEE398);
+
+	//MAA
+	// maaSelectedEffIdx = temple::GetRef<int>(0x10BECD74);
+	mMaaWnd = temple::GetPointer<LgcyWindow>(0x10BEDB58);
+	// mMaaItemsScrollbarId = temple::GetRef<int>(0x10BED8A0);
+	// mMaaApplicableEffectsScrollbarId = temple::GetRef<int>(0x10BECD78);
+
+	mItemCreationWnd = temple::GetPointer<LgcyWindow>(0x10BEE040);
+	// mItemCreationScrollbarId = temple::GetRef<int>(0x10BED9F4);
+	// mMaaItemsScrollbarY = temple::GetRef<int>(0x10BECDA4);
+
+}
+UiItemCreation::~UiItemCreation() {
+	auto shutdown = temple::GetPointer<void()>(0x10150eb0);
+	shutdown();
+}
+void UiItemCreation::ResizeViewport(const UiResizeArgs& resizeArg) {
+	auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x10154e90);
+	resize(&resizeArg);
+}
+void UiItemCreation::Reset() {
+	auto reset = temple::GetPointer<void()>(0x1014f170);
+	reset();
+}
+const std::string &UiItemCreation::GetName() const {
+	static std::string name("ItemCreation-UI");
+	return name;
+}
+
+int UiItemCreation::CraftedWandSpellLevel(objHndl objHndItem)
 {
 	SpellStoreData wandSpell;
 	if (!CraftedWandSpellGet(objHndItem, wandSpell))
@@ -298,7 +420,7 @@ int ItemCreation::CraftedWandSpellLevel(objHndl objHndItem)
 	//return spellLevelFinal;
 }
 
-int ItemCreation::CraftedWandCasterLevel(objHndl item)
+int UiItemCreation::CraftedWandCasterLevel(objHndl item)
 {
 	int result = CraftedWandSpellLevel(item);
 	if (result <= 1)
@@ -306,7 +428,7 @@ int ItemCreation::CraftedWandCasterLevel(objHndl item)
 	return (result * 2) - 1;
 }
 
-bool ItemCreation::CreateItemResourceCheck(objHndl crafter, objHndl objHndItem){
+bool UiItemCreation::CreateItemResourceCheck(objHndl crafter, objHndl objHndItem){
 	bool canCraft = 1;
 	bool xpCheck = 0;
 	auto insuffXp = itemCreationAddresses.craftInsufficientXP;
@@ -425,7 +547,7 @@ bool ItemCreation::CreateItemResourceCheck(objHndl crafter, objHndl objHndItem){
 
 }
 
-const char* ItemCreation::GetItemCreationMesLine(int lineId){
+const char* UiItemCreation::GetItemCreationMesLine(int lineId){
 	MesLine line;
 	line.key = lineId;
 
@@ -433,7 +555,7 @@ const char* ItemCreation::GetItemCreationMesLine(int lineId){
 	return line.value;
 }
 
-char const* ItemCreation::ItemCreationGetItemName(objHndl itemHandle) const
+char const* UiItemCreation::ItemCreationGetItemName(objHndl itemHandle) const
 {
 	if (!itemHandle)
 		return nullptr;
@@ -464,14 +586,14 @@ char const* ItemCreation::ItemCreationGetItemName(objHndl itemHandle) const
 		
 }
 
-objHndl ItemCreation::MaaGetItemHandle(){
+objHndl UiItemCreation::MaaGetItemHandle(){
 	if (craftingItemIdx < 0 || (uint32_t) craftingItemIdx >= mMaaCraftableItemList.size()) {
 		return objHndl::null;
 	}
 	return mMaaCraftableItemList[craftingItemIdx];
 }
 
-bool ItemCreation::IsWeaponBonus(int effIdx)
+bool UiItemCreation::IsWeaponBonus(int effIdx)
 {
 	if (effIdx < 0)
 		return false;
@@ -483,7 +605,7 @@ bool ItemCreation::IsWeaponBonus(int effIdx)
 	return false;
 }
 
-bool ItemCreation::IsOutmoded(int effIdx){
+bool UiItemCreation::IsOutmoded(int effIdx){
 
 	auto itEnh = &itemEnhSpecs[effIdx];
 	while ( itEnh->upgradesTo != CRAFT_EFFECT_INVALID){
@@ -496,7 +618,7 @@ bool ItemCreation::IsOutmoded(int effIdx){
 	return false;
 }
 
-bool ItemCreation::MaaEffectIsApplicable(int effIdx){
+bool UiItemCreation::MaaEffectIsApplicable(int effIdx){
 
 	auto& itEnh = itemEnhSpecs[effIdx];
 	if (!(itEnh.flags & IESF_ENABLED))
@@ -553,7 +675,7 @@ bool ItemCreation::MaaEffectIsApplicable(int effIdx){
 	return true;
 }
 
-int ItemCreation::GetEffIdxFromWidgetIdx(int widIdx){
+int UiItemCreation::GetEffIdxFromWidgetIdx(int widIdx){
 
 	// auto scrollbar2Y = temple::GetRef<int>(0x10BECDA8);
 	auto adjIdx = mMaaApplicableEffectsScrollbarY + widIdx; // this is the overall index for the effect
@@ -570,7 +692,7 @@ int ItemCreation::GetEffIdxFromWidgetIdx(int widIdx){
 	return CRAFT_EFFECT_INVALID;
 }
 
-int ItemCreation::GetEffIdxFromWidgetId(int widId){
+int UiItemCreation::GetEffIdxFromWidgetId(int widId){
 	auto idx = 0;
 	for (idx = 0; idx < MAA_EFFECT_BUTTONS_COUNT; idx++) {
 		if (maaBtnIds[idx] == widId)
@@ -583,7 +705,7 @@ int ItemCreation::GetEffIdxFromWidgetId(int widId){
 	return GetEffIdxFromWidgetIdx(idx);
 }
 
-int ItemCreation::HasNecessaryEffects(int effIdx){
+int UiItemCreation::HasNecessaryEffects(int effIdx){
 
 	if (effIdx == CRAFT_EFFECT_INVALID)
 		return FALSE;
@@ -633,7 +755,7 @@ int ItemCreation::HasNecessaryEffects(int effIdx){
 
 }
 
-int ItemCreation::MaaGetCurEnhBonus(){
+int UiItemCreation::MaaGetCurEnhBonus(){
 
 	auto curEnhBon = 0;
 	for (auto it : appliedBonusIndices) {
@@ -645,7 +767,7 @@ int ItemCreation::MaaGetCurEnhBonus(){
 	return curEnhBon;
 }
 
-int ItemCreation::MaaGetEffIdxForEnhBonus(int enhBon, objHndl itemHandle){
+int UiItemCreation::MaaGetEffIdxForEnhBonus(int enhBon, objHndl itemHandle){
 
 	auto flag = IESF_WEAPON;
 	auto itemObj = gameSystems->GetObj().GetObject(itemHandle);
@@ -668,7 +790,7 @@ int ItemCreation::MaaGetEffIdxForEnhBonus(int enhBon, objHndl itemHandle){
 
 	
 
-bool ItemCreation::ItemWielderCondsContainEffect(int effIdx, objHndl item)
+bool UiItemCreation::ItemWielderCondsContainEffect(int effIdx, objHndl item)
 {
 	if (effIdx == CRAFT_EFFECT_INVALID)
 		return false;
@@ -734,7 +856,7 @@ bool ItemCreation::ItemWielderCondsContainEffect(int effIdx, objHndl item)
 	return false;
 };
 
-void ItemCreation::CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCrafter){
+void UiItemCreation::CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, objHndl objHndCrafter){
 
 	// the new and improved Wands/Scroll Property Setting Function
 
@@ -820,7 +942,7 @@ void ItemCreation::CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, obj
 };
 
 
-void ItemCreation::CreateItemDebitXPGP(objHndl crafter, objHndl objHndItem){
+void UiItemCreation::CreateItemDebitXPGP(objHndl crafter, objHndl objHndItem){
 	uint32_t crafterXP = objects.getInt32(crafter, obj_f_critter_experience);
 	uint32_t craftingCostCP = 0;
 	uint32_t craftingCostXP = 0;
@@ -844,7 +966,7 @@ void ItemCreation::CreateItemDebitXPGP(objHndl crafter, objHndl objHndItem){
 	objects.setInt32(crafter, obj_f_critter_experience, crafterXP - craftingCostXP);
 }
 
-bool ItemCreation::CraftedWandSpellGet(objHndl item, SpellStoreData & spellDataOut, int * spellLevelBaseOut){
+bool UiItemCreation::CraftedWandSpellGet(objHndl item, SpellStoreData & spellDataOut, int * spellLevelBaseOut){
 
 	if (!item)
 		return false;
@@ -925,7 +1047,7 @@ bool ItemCreation::CraftedWandSpellGet(objHndl item, SpellStoreData & spellDataO
 }
 
 
-void ItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndItem){
+void UiItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndItem){
 	// prolog
 	int32_t * insuffXp;
 	int32_t * insuffCp;
@@ -1028,7 +1150,7 @@ void ItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndIte
 	
 }
 
-BOOL ItemCreation::ItemCreationEntryMsg(int widId, TigMsg* msg){
+BOOL UiItemCreation::ItemCreationEntryMsg(int widId, TigMsg* msg){
 	auto _msg = (TigMsgWidget*)msg;
 	if (msg->type != TigMsgType::WIDGET || _msg->widgetEventType != TigMsgWidgetEvent::MouseReleased)
 		return false;
@@ -1052,20 +1174,18 @@ BOOL ItemCreation::ItemCreationEntryMsg(int widId, TigMsg* msg){
 	craftingItemIdx = itemIdx;
 	auto itemHandle = craftedItemHandles[itemCreationType][itemIdx];
 	if (CreateItemResourceCheck(itemCreationCrafter, itemHandle)) {
-		ui.ButtonSetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Normal);
+		ui.SetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Normal);
 	}
 	else {
-		ui.ButtonSetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Disabled);
+		ui.SetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Disabled);
 	}
 
 	return true;
 }
 
-void ItemCreation::ItemCreationCreateBtnRender(int widId) const
+void UiItemCreation::ItemCreationCreateBtnRender(int widId) const
 {
-	LgcyButtonState buttonState;
-	if (ui.GetButtonState(widId, buttonState))
-		return;
+	auto buttonState = ui.GetButtonState(widId);
 
 	Render2dArgs arg;
 	if (buttonState == LgcyButtonState::Down)
@@ -1099,11 +1219,9 @@ void ItemCreation::ItemCreationCreateBtnRender(int widId) const
 	UiRenderer::PopFont();
 }
 
-void ItemCreation::ItemCreationCancelBtnRender(int widId) const
+void UiItemCreation::ItemCreationCancelBtnRender(int widId) const
 {
-	LgcyButtonState buttonState;
-	if (ui.GetButtonState(widId, buttonState))
-		return;
+	auto buttonState = ui.GetButtonState(widId);
 
 	Render2dArgs arg;
 	if (buttonState == LgcyButtonState::Down)
@@ -1139,27 +1257,37 @@ void ItemCreation::ItemCreationCancelBtnRender(int widId) const
 };
 
 
-void ItemCreation::GetMaaSpecs() const
+void UiItemCreation::LoadMaaSpecs()
 {
 
 	struct MaaSpecTabEntry	{
-		char * id;
-		char * condName;
-		char * flags;
-		char * effBonus;
-		char * enhBonus;
-		char * classReq; // class req
-		char * charReqs; // Character Level, Alignment
-		char * spellReqs;
-		char * featReqs; // TODO
-		char * antecedent;
+		std::string id;
+		std::string condName;
+		std::string flags;
+		std::string effBonus;
+		std::string enhBonus;
+		std::string classReq; // class req
+		std::string charReqs; // Character Level, Alignment
+		std::string spellReqs;
+		std::string featReqs; // TODO
+		std::string antecedent;
 	};
 
-	auto maaSpecLineParser = [](const TigTabParser*, int lineIdx, char ** cols)
+	auto maaSpecLineParser = [this](const TabFileRecord &record)
 	{
-		auto& tabEntry = *reinterpret_cast<MaaSpecTabEntry*>(cols);
+		MaaSpecTabEntry tabEntry;
+		tabEntry.id = record[0].AsString();
+		tabEntry.condName = record[1].AsString();
+		tabEntry.flags = record[2].AsString();
+		tabEntry.effBonus = record[3].AsString();
+		tabEntry.enhBonus = record[4].AsString();
+		tabEntry.classReq = record[5].AsString();
+		tabEntry.charReqs = record[6].AsString();
+		tabEntry.spellReqs = record[7].AsString();
+		tabEntry.featReqs = record[8].AsString();
+		tabEntry.antecedent = record[9].AsString();
 		
-		auto effIdx = atol(tabEntry.id);
+		auto effIdx = std::stoi(tabEntry.id);
 		auto condName = tabEntry.condName;
 
 		// get flags
@@ -1181,20 +1309,20 @@ void ItemCreation::GetMaaSpecs() const
 		}
 		
 		
-		auto effBonus = atol(tabEntry.effBonus);
-		auto enhBonus = atol(tabEntry.enhBonus);
+		auto effBonus = std::stoi(tabEntry.effBonus);
+		auto enhBonus = std::stoi(tabEntry.enhBonus);
 
-		itemCreation.itemEnhSpecs[effIdx] = ItemEnhancementSpec(condName, flags, effBonus, enhBonus);
+		itemEnhSpecs[effIdx] = ItemEnhancementSpec(condName, flags, effBonus, enhBonus);
 
-		auto &itEnh = itemCreation.itemEnhSpecs[effIdx];
+		auto &itEnh = itemEnhSpecs[effIdx];
 		// get class req
-		if (tabEntry.classReq)
+		if (!tabEntry.classReq.empty())
 		{
 			// TODO (right now only Weapon Ki Focus uses it and it's not enabled anyway)
 		}
 
 		// get charReqs
-		if (tabEntry.charReqs)
+		if (!tabEntry.charReqs.empty())
 		{
 			StringTokenizer charReqTok(tabEntry.charReqs);
 			while (charReqTok.next())
@@ -1222,7 +1350,7 @@ void ItemCreation::GetMaaSpecs() const
 		}
 
 		// get spellReqs
-		if (tabEntry.spellReqs && !config.laxRules)
+		if (!tabEntry.spellReqs.empty() && !config.laxRules)
 		{
 			StringTokenizer spellReqTok(tabEntry.spellReqs);
 			while (spellReqTok.next())
@@ -1238,31 +1366,26 @@ void ItemCreation::GetMaaSpecs() const
 			}
 		}
 		
-		if (tabEntry.antecedent && *tabEntry.antecedent){
-			itEnh.downgradesTo = atol(tabEntry.antecedent);
-		} 
-		else{
+		if (!tabEntry.antecedent.empty()) {
+			itEnh.downgradesTo = std::stoi(tabEntry.antecedent);
+		} else {
 			itEnh.downgradesTo = CRAFT_EFFECT_INVALID;
 		}
 
 		return 0;
 	};
 
-	TigTabParser maaSpecsTab;
-	maaSpecsTab.Init(maaSpecLineParser);
-	maaSpecsTab.Open("tprules\\craft_maa_specs.tab");
-	maaSpecsTab.Process();
-	maaSpecsTab.Close();
-
+	TabFile::ParseFile("tprules/craft_maa_specs.tab", maaSpecLineParser);
+	
 	for (auto i = itemEnhSpecs.begin(); i != itemEnhSpecs.end(); ++i) {
 		auto downgradesTo = i->second.downgradesTo;
 		if (downgradesTo != CRAFT_EFFECT_INVALID){
-			itemCreation.itemEnhSpecs[downgradesTo].upgradesTo = i->first;
+			itemEnhSpecs[downgradesTo].upgradesTo = i->first;
 		}
 	}
 }
 
-uint32_t ItemCreation::ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t casterLevelNew){
+uint32_t UiItemCreation::ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t casterLevelNew){
 	auto obj = objSystem->GetObject(objHndItem);
 
 	auto itemWorthBase = obj->GetInt32(obj_f_item_worth);
@@ -1296,7 +1419,7 @@ uint32_t ItemCreation::ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint3
 	
 }
 
-uint32_t ItemCreation::CraftedWandWorth(objHndl item, int casterLevelNew){
+uint32_t UiItemCreation::CraftedWandWorth(objHndl item, int casterLevelNew){
 	auto obj = objSystem->GetObject(item);
 
 	// which spell?
@@ -1429,7 +1552,7 @@ uint32_t ItemCreation::CraftedWandWorth(objHndl item, int casterLevelNew){
 
 }
 
-bool ItemCreation::ScribedScrollSpellGet(objHndl item, SpellStoreData & spellDataOut, int * spellLevelBaseOut){
+bool UiItemCreation::ScribedScrollSpellGet(objHndl item, SpellStoreData & spellDataOut, int * spellLevelBaseOut){
 	if (!item)
 		return false;
 	auto obj = objSystem->GetObject(item);
@@ -1580,7 +1703,7 @@ static void __cdecl systemExit() {
 }
 
 
-ItemCreation::ItemCreation(){
+UiItemCreation::UiItemCreation(){
 
 	for (int i = 0; i < 30; i++) {
 		GoldCraftCostVsEffectiveBonus[i] = 1000 * i*i;
@@ -1597,13 +1720,13 @@ ItemCreation::ItemCreation(){
 
 }
 
-int ItemCreation::GetSurplusXp(objHndl crafter){
+int UiItemCreation::GetSurplusXp(objHndl crafter){
 	auto level = objects.StatLevelGet(crafter, stat_level);
 	auto xpReq = d20LevelSys.GetXpRequireForLevel(level);
 	return gameSystems->GetObj().GetObject(crafter)->GetInt32(obj_f_critter_experience) - xpReq;
 }
 
-bool ItemCreation::ItemWielderCondsHasAntecedent(int effIdx, objHndl item){
+bool UiItemCreation::ItemWielderCondsHasAntecedent(int effIdx, objHndl item){
 	auto &itEnh = itemEnhSpecs[effIdx];
 	if (itEnh.downgradesTo != CRAFT_EFFECT_INVALID){
 		if (ItemWielderCondsContainEffect(itEnh.downgradesTo, item))
@@ -1615,18 +1738,18 @@ bool ItemCreation::ItemWielderCondsHasAntecedent(int effIdx, objHndl item){
 }
 
 
-ItemEnhancementSpec::ItemEnhancementSpec(const char* CondName, uint32_t Flags, int EffcBonus, int enhBonus)
-	:condName(CondName),flags(Flags),effectiveBonus(EffcBonus){
+ItemEnhancementSpec::ItemEnhancementSpec(const std::string &condName, uint32_t Flags, int EffcBonus, int enhBonus)
+	:condName(condName),flags(Flags),effectiveBonus(EffcBonus){
 	data.enhBonus = enhBonus;
 	condId = ElfHash::Hash(condName);
 	downgradesTo = upgradesTo = CRAFT_EFFECT_INVALID;
 }
 
-BOOL ItemCreation::IsActive(){
+BOOL UiItemCreation::IsActive(){
 	return itemCreationType != ItemCreationType::Inactive;
 }
 
-BOOL ItemCreation::ItemCreationShow(objHndl crafter, ItemCreationType icType){
+BOOL UiItemCreation::ItemCreationShow(objHndl crafter, ItemCreationType icType){
 
 	if (crafter == objHndl::null){
 		ui.WidgetSetHidden(mItemCreationWndId, 1);
@@ -1642,7 +1765,7 @@ BOOL ItemCreation::ItemCreationShow(objHndl crafter, ItemCreationType icType){
 		if (itemCreationResourceCheckResults)
 			free(itemCreationResourceCheckResults);
 		ui.WidgetSetHidden(mItemCreationWndId, 1);
-		ui.WidgetCopy(mItemCreationWndId, mItemCreationWnd);
+		*mItemCreationWnd = *ui.GetWindow(mItemCreationWndId);
 	} 
 	else if (itemCreationType == ItemCreationType::CraftMagicArmsAndArmor)	{
 		ui.WidgetSetHidden(mMaaWndId, 1);
@@ -1664,14 +1787,14 @@ BOOL ItemCreation::ItemCreationShow(objHndl crafter, ItemCreationType icType){
 	return TRUE;
 }
 
-BOOL ItemCreation::ItemCreationWndMsg(int widId, TigMsg * msg){
+BOOL UiItemCreation::ItemCreationWndMsg(int widId, TigMsg * msg){
 
 	if (msg->type == TigMsgType::MOUSE) {
 		auto _msg = (TigMsgMouse*)msg;
 		if (_msg->buttonStateFlags & MSF_SCROLLWHEEL_CHANGE) {
 			auto newMsg = *(TigMsgMouse*)msg;
 			newMsg.buttonStateFlags = MSF_SCROLLWHEEL_CHANGE;
-			ui.WidgetCopy(mItemCreationScrollbarId, mItemCreationScrollbar);
+			*mItemCreationScrollbar = *ui.GetScrollBar(mItemCreationScrollbarId);
 			mItemCreationScrollbar->handleMessage(mItemCreationScrollbarId, (TigMsg*)&newMsg);
 		}
 		return true;
@@ -1712,7 +1835,7 @@ BOOL ItemCreation::ItemCreationWndMsg(int widId, TigMsg * msg){
 	return false;
 }
 
-void ItemCreation::ItemCreationWndRender(int widId){
+void UiItemCreation::ItemCreationWndRender(int widId){
 	// Background Image
 	if (mUseCo8Ui){
 		// draw background (composed of pieces)
@@ -1812,7 +1935,7 @@ void ItemCreation::ItemCreationWndRender(int widId){
 }
 
 
-void ItemCreation::ItemCreationEntryRender(int widId){
+void UiItemCreation::ItemCreationEntryRender(int widId){
 	auto widIdx = 0;
 	for (; widIdx< NUM_ITEM_CREATION_ENTRY_WIDGETS; widIdx++){
 		if (mItemCreationEntryBtnIds[ widIdx ] == widId)
@@ -1852,7 +1975,7 @@ void ItemCreation::ItemCreationEntryRender(int widId){
 	UiRenderer::PopFont();
 }
 
-void ItemCreation::MaaWndRender(int widId){
+void UiItemCreation::MaaWndRender(int widId){
 
 	// draw background (composed of pieces)
 	TigRect srcRect(1, 1, 254, 254);
@@ -1918,7 +2041,7 @@ void ItemCreation::MaaWndRender(int widId){
 	UiRenderer::PopFont();
 }
 
-void ItemCreation::MaaItemRender(int widId){
+void UiItemCreation::MaaItemRender(int widId){
 	auto widIdx = 0;
 	for (; widIdx < MAA_NUM_ENCHANTABLE_ITEM_WIDGETS; widIdx++){
 		if (widId == mMaaItemBtnIds[widIdx])
@@ -1967,7 +2090,7 @@ void ItemCreation::MaaItemRender(int widId){
 
 }
 
-void ItemCreation::MaaAppliedBtnRender(int widId){
+void UiItemCreation::MaaAppliedBtnRender(int widId){
 	if (craftingItemIdx < 0)
 		return;
 
@@ -2023,15 +2146,14 @@ void ItemCreation::MaaAppliedBtnRender(int widId){
 
 }
 
-void ItemCreation::MaaEnhBonusDnRender(int widId){
+void UiItemCreation::MaaEnhBonusDnRender(int widId){
 
 	objHndl itemHandle = MaaGetItemHandle();
 	if (!itemHandle)
 		return;
 
 	int texId;
-	LgcyButtonState bs;
-	ui.GetButtonState(widId, bs);
+	auto bs = ui.GetButtonState(widId);
 	switch (bs) {
 	case Disabled:
 		texId = mDownArrowDisabledTga;
@@ -2051,15 +2173,14 @@ void ItemCreation::MaaEnhBonusDnRender(int widId){
 	UiRenderer::DrawTextureInWidget(mMaaWndId, texId, mEnhBonusDnRect, srcRect);
 }
 
-void ItemCreation::MaaEnhBonusUpRender(int widId){
+void UiItemCreation::MaaEnhBonusUpRender(int widId){
 
 	objHndl itemHandle = MaaGetItemHandle();
 	if (!itemHandle)
 		return;
 
 	int texId;
-	LgcyButtonState bs;
-	ui.GetButtonState(widId, bs);
+	auto bs = ui.GetButtonState(widId);
 	switch (bs) {
 	case Disabled:
 		texId = mDownArrowDisabledTga;
@@ -2080,9 +2201,9 @@ void ItemCreation::MaaEnhBonusUpRender(int widId){
 	UiRenderer::DrawTextureInWidget(mMaaWndId,texId, rect, srcRect, 0x20);
 }
 
-void ItemCreation::ButtonStateInit(int wndId){
+void UiItemCreation::ButtonStateInit(int wndId){
 	ui.WidgetSetHidden(wndId, 0);
-	ui.WidgetCopy(wndId, mItemCreationWnd);
+	*mItemCreationWnd = *ui.GetWindow(wndId);
 	itemCreationResourceCheckResults = new bool[numItemsCrafting[itemCreationType]];
 	for (int i = 0; i < (int)numItemsCrafting[itemCreationType];i++)
 	{
@@ -2094,9 +2215,9 @@ void ItemCreation::ButtonStateInit(int wndId){
 
 	if (craftingItemIdx >= 0 && craftingItemIdx < (int)numItemsCrafting[itemCreationType]){
 		if (CreateItemResourceCheck(itemCreationCrafter, craftedItemHandles[itemCreationType][craftingItemIdx]))
-			ui.ButtonSetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Normal);
+			ui.SetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Normal);
 		else
-			ui.ButtonSetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Disabled);
+			ui.SetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Disabled);
 	}
 
 	ui.ScrollbarSetYmax(mItemCreationScrollbarId, numItemsCrafting[itemCreationType] - NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX  < 0 ? 0 : numItemsCrafting[itemCreationType] - NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX);
@@ -2105,7 +2226,7 @@ void ItemCreation::ButtonStateInit(int wndId){
 	ui.WidgetBringToFront(wndId);
 }
 
-void ItemCreation::MaaInitCraftedItem(objHndl itemHandle){
+void UiItemCreation::MaaInitCraftedItem(objHndl itemHandle){
 
 	craftedItemName.clear();
 	craftedItemExistingEffectiveBonus = 0;
@@ -2137,7 +2258,7 @@ void ItemCreation::MaaInitCraftedItem(objHndl itemHandle){
 
 }
 
-void ItemCreation::MaaInitCrafter(objHndl crafter){
+void UiItemCreation::MaaInitCrafter(objHndl crafter){
 	mMaaCraftableItemList.clear();
 	auto crafterObj = gameSystems->GetObj().GetObject(crafter);
 	auto crafterInvenNum = crafterObj->GetInt32(obj_f_critter_inventory_num);
@@ -2192,7 +2313,7 @@ void ItemCreation::MaaInitCrafter(objHndl crafter){
 	MaaInitCraftedItem(objHndl::null);
 }
 
-void ItemCreation::MaaInitWnd(int wndId){
+void UiItemCreation::MaaInitWnd(int wndId){
 	maaSelectedEffIdx = -1;
 	mMaaActiveAppliedWidIdx = -1;
 	objHndl itemHandle = objHndl::null;
@@ -2202,7 +2323,7 @@ void ItemCreation::MaaInitWnd(int wndId){
 
 	MaaInitCraftedItem(itemHandle);
 	ui.WidgetSetHidden(wndId, 0);
-	ui.WidgetCopy(wndId, mMaaWnd);
+	*mMaaWnd = *ui.GetWindow(wndId);
 	ui.WidgetBringToFront(wndId);
 	// auto scrollbarId =  mMaaCraftableItemsScrollbarId;// temple::GetRef<int>(0x10BED8A0);
 	ui.ScrollbarSetYmax(mMaaItemsScrollbarId, mMaaCraftableItemList.size() < 5 ? 0 : mMaaCraftableItemList.size() - 5);
@@ -2226,12 +2347,12 @@ void ItemCreation::MaaInitWnd(int wndId){
 		auto title = combatSys.GetCombatMesLine(6009);
 		auto helpId = ElfHash::Hash("TAG_CRAFT_MAGIC_ARMS_ARMOR_POPUP");
 		auto popupType0 = temple::GetRef<int(__cdecl)(int, int(__cdecl*)(), const char*)>(0x100E6F10);
-		popupType0(helpId, []() { return itemCreation.ItemCreationShow(objHndl::null, ItemCreationType::Inactive); }, title);
+		popupType0(helpId, []() { return itemCreation().ItemCreationShow(objHndl::null, ItemCreationType::Inactive); }, title);
 	}
 	craftedItemNamePos = craftedItemName.size();
 }
 
-BOOL ItemCreation::CreateBtnMsg(int widId, TigMsg* msg)
+BOOL UiItemCreation::CreateBtnMsg(int widId, TigMsg* msg)
 {
 	auto _msg = (TigMsgWidget*)msg;
 	if (msg->type == TigMsgType::WIDGET && _msg->widgetEventType == TigMsgWidgetEvent::MouseReleased)
@@ -2258,7 +2379,7 @@ BOOL ItemCreation::CreateBtnMsg(int widId, TigMsg* msg)
 	return false;
 }
 
-bool ItemCreation::MaaShouldJustModifyArg(int effIdx, objHndl item){
+bool UiItemCreation::MaaShouldJustModifyArg(int effIdx, objHndl item){
 
 	auto &itEnh = itemEnhSpecs[effIdx];
 	if (!(itEnh.flags & (IESF_ENH_BONUS | IESF_INCREMENTAL)))
@@ -2267,11 +2388,9 @@ bool ItemCreation::MaaShouldJustModifyArg(int effIdx, objHndl item){
 	return ItemWielderCondsHasAntecedent(effIdx, item);
 }
 
-void ItemCreation::MaaCreateBtnRender(int widId) const
+void UiItemCreation::MaaCreateBtnRender(int widId) const
 {
-	LgcyButtonState buttonState;
-	if (ui.GetButtonState(widId,buttonState))
-		return;
+	auto buttonState = ui.GetButtonState(widId);
 	
 	Render2dArgs arg;
 	if (buttonState == LgcyButtonState::Down)
@@ -2297,7 +2416,7 @@ void ItemCreation::MaaCreateBtnRender(int widId) const
 }
 
 // Item Creation UI
-void ItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
+void UiItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 
 	auto icType = itemCreationType;
 	auto effBonus = 0;
@@ -2455,11 +2574,11 @@ void ItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 				auto createBtnId = mItemCreationCreateBtnId; //temple::GetRef<int>(0x10BED8B0);
 				if (CreateItemResourceCheck(crafter, item))
 				{
-					ui.ButtonSetButtonState(createBtnId, LgcyButtonState::Normal);
+					ui.SetButtonState(createBtnId, LgcyButtonState::Normal);
 				}
 				else
 				{
-					ui.ButtonSetButtonState(createBtnId, LgcyButtonState::Disabled);
+					ui.SetButtonState(createBtnId, LgcyButtonState::Disabled);
 				}
 			}
 			return;
@@ -2473,7 +2592,7 @@ void ItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 	}
 }
 
-BOOL ItemCreation::CancelBtnMsg(int widId, TigMsg* msg) {
+BOOL UiItemCreation::CancelBtnMsg(int widId, TigMsg* msg) {
 	if (msg->type == TigMsgType::WIDGET && (TigMsgWidgetEvent)msg->arg2 == TigMsgWidgetEvent::MouseReleased)
 	{
 		craftedItemNamePos = craftedItemName.size();
@@ -2483,12 +2602,12 @@ BOOL ItemCreation::CancelBtnMsg(int widId, TigMsg* msg) {
 			if (itemCreationType <= ItemCreationType::ForgeRing){
 				free(itemCreationResourceCheckResults);
 				ui.WidgetSetHidden(mItemCreationWndId, 1);
-				ui.WidgetCopy(mItemCreationWndId, mItemCreationWnd);
+				*mItemCreationWnd = *ui.GetWindow(mItemCreationWndId);
 			}
 			else if (itemCreationType == ItemCreationType::CraftMagicArmsAndArmor)
 			{
 				ui.WidgetSetHidden(mMaaWndId, 1);
-				ui.WidgetCopy(mItemCreationWndId, mMaaWnd);
+				*mMaaWnd = *ui.GetWindow(mItemCreationWndId);
 			}
 
 			itemCreationType = ItemCreationType::Inactive;
@@ -2498,11 +2617,9 @@ BOOL ItemCreation::CancelBtnMsg(int widId, TigMsg* msg) {
 	return false;
 }
 
-void ItemCreation::MaaCancelBtnRender(int widId) const
+void UiItemCreation::MaaCancelBtnRender(int widId) const
 {
-	LgcyButtonState buttonState;
-	if (ui.GetButtonState(widId, buttonState))
-		return;
+	auto buttonState = ui.GetButtonState(widId);
 
 	Render2dArgs arg;
 	if (buttonState == LgcyButtonState::Down)
@@ -2529,7 +2646,7 @@ void ItemCreation::MaaCancelBtnRender(int widId) const
 	UiRenderer::PopFont();
 }
 
-bool ItemCreation::MaaCrafterMeetsReqs(int effIdx, objHndl crafter)
+bool UiItemCreation::MaaCrafterMeetsReqs(int effIdx, objHndl crafter)
 {
 	if (!crafter)
 		return false;
@@ -2563,7 +2680,7 @@ bool ItemCreation::MaaCrafterMeetsReqs(int effIdx, objHndl crafter)
 	return true;
 }
 
-bool ItemCreation::MaaEffectIsInAppliedList(int effIdx){
+bool UiItemCreation::MaaEffectIsInAppliedList(int effIdx){
 	for (auto it: appliedBonusIndices){
 		if (it == effIdx)
 			return true;
@@ -2571,13 +2688,13 @@ bool ItemCreation::MaaEffectIsInAppliedList(int effIdx){
 	return false;
 }
 
-BOOL ItemCreation::MaaWndMsg(int widId, TigMsg * msg)
+BOOL UiItemCreation::MaaWndMsg(int widId, TigMsg * msg)
 {
 	if (msg->type == TigMsgType::MOUSE) {
 
 		auto _msg = (TigMsgMouse*)msg;
 		if (_msg->buttonStateFlags & MSF_SCROLLWHEEL_CHANGE) {
-			auto widg = ui.ScrollbarGet(mMaaApplicableEffectsScrollbarId);
+			auto widg = ui.GetScrollBar(mMaaApplicableEffectsScrollbarId);
 			auto newMsg = *(TigMsgMouse*)msg;
 			newMsg.buttonStateFlags = MSF_SCROLLWHEEL_CHANGE;
 			widg->handleMessage(mMaaApplicableEffectsScrollbarId, (TigMsg*)&newMsg);
@@ -2684,7 +2801,7 @@ BOOL ItemCreation::MaaWndMsg(int widId, TigMsg * msg)
 	return false;
 }
 
-BOOL ItemCreation::MaaTextboxMsg(int widId, TigMsg* msg){
+BOOL UiItemCreation::MaaTextboxMsg(int widId, TigMsg* msg){
 	auto _msg = (TigMsgWidget*)msg;
 	if (msg->type != TigMsgType::WIDGET || _msg->widgetEventType != TigMsgWidgetEvent::MouseReleased)
 		return false;
@@ -2695,7 +2812,7 @@ BOOL ItemCreation::MaaTextboxMsg(int widId, TigMsg* msg){
 	return false;
 }
 
-bool ItemCreation::MaaWndRenderText(int widId, objHndl item){
+bool UiItemCreation::MaaWndRenderText(int widId, objHndl item){
 	std::string text;
 
 	// draw the textbox text
@@ -2770,7 +2887,7 @@ bool ItemCreation::MaaWndRenderText(int widId, objHndl item){
 	return UiRenderer::DrawTextInWidget(widId, text, rect, textStyle);
 }
 
-BOOL ItemCreation::MaaItemMsg(int widId, TigMsg* msg){
+BOOL UiItemCreation::MaaItemMsg(int widId, TigMsg* msg){
 
 	auto _msg =(TigMsgWidget*)(msg);
 	if (msg->type != TigMsgType::WIDGET || _msg->widgetEventType != TigMsgWidgetEvent::MouseReleased)
@@ -2798,7 +2915,7 @@ BOOL ItemCreation::MaaItemMsg(int widId, TigMsg* msg){
 	return true;
 }
 
-BOOL ItemCreation::MaaEffectMsg(int widId, TigMsg* msg){
+BOOL UiItemCreation::MaaEffectMsg(int widId, TigMsg* msg){
 
 	if (msg->type != TigMsgType::WIDGET || msg->arg2 != 1)
 		return false;
@@ -2835,7 +2952,7 @@ BOOL ItemCreation::MaaEffectMsg(int widId, TigMsg* msg){
 	return true;
 }
 
-void ItemCreation::MaaEffectRender(int widId){
+void UiItemCreation::MaaEffectRender(int widId){
 
 	if (craftingItemIdx == -1)
 		return;
@@ -2861,7 +2978,7 @@ void ItemCreation::MaaEffectRender(int widId){
 	UiRenderer::DrawTextInWidget(mMaaWndId, effName, rect, *textstyle);
 }
 
-int ItemCreation::MaaEffectTooltip(int x, int y, int * widId){
+int UiItemCreation::MaaEffectTooltip(int x, int y, int * widId){
 
 	if (craftingItemIdx == -1)
 		return 0;
@@ -2961,7 +3078,7 @@ int ItemCreation::MaaEffectTooltip(int x, int y, int * widId){
 	return 0;
 }
 
-void ItemCreation::MaaEffectGetTextStyle(int effIdx, objHndl crafter, TigTextStyle* &style){
+void UiItemCreation::MaaEffectGetTextStyle(int effIdx, objHndl crafter, TigTextStyle* &style){
 	if (!MaaCrafterMeetsReqs(effIdx, crafter)){
 		style = temple::GetPointer<TigTextStyle>(0x10BEDE40);
 		return;
@@ -3005,7 +3122,7 @@ void ItemCreation::MaaEffectGetTextStyle(int effIdx, objHndl crafter, TigTextSty
 }
 
 
-BOOL ItemCreation::MaaEffectAddMsg(int widId, TigMsg* msg)
+BOOL UiItemCreation::MaaEffectAddMsg(int widId, TigMsg* msg)
 {
 	if (msg->type != TigMsgType::WIDGET || msg->arg2 != 1)
 		return false;
@@ -3044,7 +3161,7 @@ BOOL ItemCreation::MaaEffectAddMsg(int widId, TigMsg* msg)
 	return true;
 }
 
-int ItemCreation::MaaGetTotalEffectiveBonus(int effIdx){
+int UiItemCreation::MaaGetTotalEffectiveBonus(int effIdx){
 
 
 	// calculate the effective bonus from pre-existing effects
@@ -3074,7 +3191,7 @@ int ItemCreation::MaaGetTotalEffectiveBonus(int effIdx){
 	return effBonus;
 }
 
-void ItemCreation::MaaAppendEnhancement(int effIdx){
+void UiItemCreation::MaaAppendEnhancement(int effIdx){
 
 	if (effIdx == CRAFT_EFFECT_INVALID)
 		return;
@@ -3161,7 +3278,7 @@ void ItemCreation::MaaAppendEnhancement(int effIdx){
 	craftedItemNamePos = craftedItemName.size();
 }
 
-BOOL ItemCreation::MaaEffectRemoveMsg(int widId, TigMsg* msg){
+BOOL UiItemCreation::MaaEffectRemoveMsg(int widId, TigMsg* msg){
 	if (msg->type != TigMsgType::WIDGET || msg->arg2 != 1)
 		return false;
 
@@ -3217,7 +3334,7 @@ BOOL ItemCreation::MaaEffectRemoveMsg(int widId, TigMsg* msg){
 	return false;
 }
 
-BOOL ItemCreation::MaaAppliedBtnMsg(int widId, TigMsg* msg){
+BOOL UiItemCreation::MaaAppliedBtnMsg(int widId, TigMsg* msg){
 	if (msg->type != TigMsgType::WIDGET || msg->arg2 != 1)
 		return false;
 	craftedItemNamePos = craftedItemName.size();
@@ -3234,7 +3351,7 @@ BOOL ItemCreation::MaaAppliedBtnMsg(int widId, TigMsg* msg){
 	return true;
 }
 
-BOOL ItemCreation::MaaEnhBonusUpMsg(int widId, TigMsg * msg){
+BOOL UiItemCreation::MaaEnhBonusUpMsg(int widId, TigMsg * msg){
 	if (msg->type != TigMsgType::WIDGET || ((TigMsgWidget*)msg)->widgetEventType != TigMsgWidgetEvent::MouseReleased)
 		return false;
 
@@ -3279,7 +3396,7 @@ BOOL ItemCreation::MaaEnhBonusUpMsg(int widId, TigMsg * msg){
 	return true;
 }
 
-BOOL ItemCreation::MaaEnhBonusDnMsg(int widId, TigMsg * msg){
+BOOL UiItemCreation::MaaEnhBonusDnMsg(int widId, TigMsg * msg){
 
 	if (msg->type != TigMsgType::WIDGET || ((TigMsgWidget*)msg)->widgetEventType != TigMsgWidgetEvent::MouseReleased)
 		return false;
@@ -3318,126 +3435,7 @@ BOOL ItemCreation::MaaEnhBonusDnMsg(int widId, TigMsg * msg){
 	return false;
 }
 
-int ItemCreation::UiItemCreationInit(GameSystemConf& conf)
-{
-	mCreateBtnRect = TigRect(133, 339, 112, 22);
-	mMaaCancelBtnRect = TigRect(256, 339, 112, 22);
-	mMaaCraftedItemIconDestRect = TigRect(215, 62, 64, 64);
-	mItemCreationScrollbar = new LgcyScrollBar;
-	mEnhBonusDnRect = TigRect(450, 156, 15, 9);
-
-	if (!mesFuncs.Open("tpmes\\item_creation.mes", &mItemCreationMes))
-		return 0;
-	temple::GetRef<MesHandle>(0x10BEDFD0) = mItemCreationMes;
-	if (!mesFuncs.Open("rules\\item_creation.mes", temple::GetPointer<MesHandle>(0x10BEDA90)))
-		return 0;
-	if (!mesFuncs.Open("mes\\item_creation_names.mes", temple::GetPointer<MesHandle>(0x10BEDB4C)))
-		return 0;
-
-	if (!InitItemCreationRules())
-		return 0;
-
-	ui.GetAsset(UiAssetType::Generic,  UiGenericAsset::AcceptNormal,temple::GetRef<int>(0x10BED9F0));
-	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptHover, temple::GetRef<int>(0x10BEDA48));
-	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptPressed, temple::GetRef<int>(0x10BED9EC));
-	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DisabledNormal, temple::GetRef<int>(0x10BEDB48));
-	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineNormal, temple::GetRef<int>(0x10BEDA5C));
-	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineHover, temple::GetRef<int>(0x10BEE2D4));
-	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclinePressed, temple::GetRef<int>(0x10BED6D0));
-
-	bkgImage = new CombinedImgFile("art\\interface\\item_creation_ui\\item_creation.img");
-
-	if (temple::Dll::GetInstance().HasCo8Hooks() && !modSupport.IsKotB()){	
-		mUseCo8Ui = true;
-		if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\ITEM_CREATION_WIDENED_0_0.tga", &mItemCreationWidenedTexture00))
-			return 0;
-		if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\ITEM_CREATION_WIDENED_1_0.tga", &mItemCreationWidenedTexture10))
-			return 0;
-		if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\ITEM_CREATION_WIDENED_0_1.tga", &mItemCreationWidenedTexture01))
-			return 0;
-		if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\ITEM_CREATION_WIDENED_1_1.tga", &mItemCreationWidenedTexture11))
-			return 0;
-	}
-
-	if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\craftarms_0.tga", temple::GetPointer<int>(0x10BEE38C)))
-		return 0;
-	if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\craftarms_1.tga", temple::GetPointer<int>(0x10BECEE8)))
-		return 0;
-	if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\craftarms_2.tga", temple::GetPointer<int>(0x10BED988)))
-		return 0;
-	if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\craftarms_3.tga", temple::GetPointer<int>(0x10BECEEC)))
-		return 0;
-	if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\invslot_selected.tga", temple::GetPointer<int>(0x10BECDAC)))
-		return 0;
-	if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\invslot.tga", temple::GetPointer<int>(0x10BEE038)))
-		return 0;
-	if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\add_button.tga", temple::GetPointer<int>(0x10BEE334)))
-		return 0;
-	if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\add_button_grey.tga", temple::GetPointer<int>(0x10BED990)))
-		return 0;
-	if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\add_button_hover.tga", temple::GetPointer<int>(0x10BEE2D8)))
-		return 0;
-	if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\add_button_press.tga", temple::GetPointer<int>(0x10BED79C)))
-		return 0;
-	if (textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\down_arrow.tga", &mDownArrowTga)
-		|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\down_arrow_click.tga", &mDownArrowClickTga)
-		|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\down_arrow_disabled.tga", &mDownArrowDisabledTga)
-		|| textureFuncs.RegisterTexture("art\\interface\\item_creation_ui\\down_arrow_hovered.tga", &mDownArrowHoveredTga)
-		)
-		throw TempleException("Missing textures for Item Creation UI!");
-
-
-	/*
-	  Init Widgets
-	*/
-	if (!UiItemCreationWidgetsInit(conf.width, conf.height))
-		return 0;
-
-	if (!MaaWidgetsInit(conf.width, conf.height))
-		return 0;
-
-	if (! temple::GetRef<bool(__cdecl)()>(0x1014F4D0)()) //   ItemCreationStringsGet()
-		return 0;
-
-
-	auto& icWnd = temple::GetRef<LgcyWindow>(0x10BEE040);
-	auto& maaWnd = temple::GetRef<LgcyWindow>(0x10BEDB58);
-
-	auto& rect = temple::GetRef<TigRect>(0x102FAEC4);
-	rect.x += icWnd.x;	rect.y += icWnd.y;
-
-	mMaaCraftedItemIconDestRect.x += maaWnd.x;	mMaaCraftedItemIconDestRect.y += maaWnd.y;
-
-	auto& rect3 = temple::GetRef<TigRect>(0x102FAEF4);
-	rect3.x += icWnd.x;	rect3.y += icWnd.y;
-
-	auto& rect4 = temple::GetRef<TigRect>(0x102FAF14);
-	rect4.x += icWnd.x;	rect4.y += icWnd.y;
-
-	mCreateBtnRect.x += maaWnd.x;	mCreateBtnRect.y += maaWnd.y;
-	mMaaCancelBtnRect.x += maaWnd.x; mMaaCancelBtnRect.y += maaWnd.y;
-
-	itemCreationType = ItemCreationType::Inactive;
-
-
-
-	itemCreationCrafter = temple::GetRef<objHndl>(0x10BECEE0);
-	// craftingItemIdx = temple::GetRef<int>(0x10BEE398);
-
-	//MAA
-	// maaSelectedEffIdx = temple::GetRef<int>(0x10BECD74);
-	mMaaWnd = temple::GetPointer<LgcyWindow>(0x10BEDB58);
-	// mMaaItemsScrollbarId = temple::GetRef<int>(0x10BED8A0);
-	// mMaaApplicableEffectsScrollbarId = temple::GetRef<int>(0x10BECD78);
-
-	mItemCreationWnd = temple::GetPointer<LgcyWindow>(0x10BEE040);
-	// mItemCreationScrollbarId = temple::GetRef<int>(0x10BED9F4);
-	// mMaaItemsScrollbarY = temple::GetRef<int>(0x10BECDA4);
-
-	return 1;
-}
-
-bool ItemCreation::InitItemCreationRules(){
+bool UiItemCreation::InitItemCreationRules(){
 	auto fname = "rules\\item_creation.mes";
 	MesHandle icrules;
 	auto mesFile = mesFuncs.Open(fname, &icrules);
@@ -3476,9 +3474,9 @@ bool ItemCreation::InitItemCreationRules(){
 				}
 				numItemsCrafting[i] = j; // in case there are invalid protos
 				std::sort(craftedItemHandles[i], &craftedItemHandles[i][numItemsCrafting[i]],
-					[](objHndl first, objHndl second){
-					auto firstName = itemCreation.ItemCreationGetItemName(first);
-					auto secondName = itemCreation.ItemCreationGetItemName(second);
+					[this](objHndl first, objHndl second){
+					auto firstName = ItemCreationGetItemName(first);
+					auto secondName = ItemCreationGetItemName(second);
 					auto comRes = _stricmp(firstName, secondName);
 					return comRes < 0;
 				});
@@ -3494,210 +3492,184 @@ bool ItemCreation::InitItemCreationRules(){
 	return true;
 }
 
-bool ItemCreation::UiItemCreationWidgetsInit(int width, int height){
-	auto wndId = &mItemCreationWndId;
+void UiItemCreation::UiItemCreationWidgetsInit(int width, int height){
 	auto& wnd = temple::GetRef<LgcyWindow>(0x10BEE040);
 	wnd = LgcyWindow((width - 404 - 108*mUseCo8Ui) / 2, (height - 421) / 2, 404+ 108*mUseCo8Ui, 421);
 	wnd.flags = 1;
 	wnd.zIndex = -1;
-	wnd.render = [](int widId) { itemCreation.ItemCreationWndRender(widId); };
-	wnd.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.ItemCreationWndMsg(widId, msg); };//temple::GetRef<bool(__cdecl)(int, TigMsg*)>(0x1014FC20);
+	wnd.render = [](int widId) { itemCreation().ItemCreationWndRender(widId); };
+	wnd.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().ItemCreationWndMsg(widId, msg); };//temple::GetRef<bool(__cdecl)(int, TigMsg*)>(0x1014FC20);
 
-	if (ui.AddWindow(temple::GetPointer<LgcyWindow>(0x10BEE040), sizeof(LgcyWindow),
-		wndId, "ui_item_creation.cpp", 2094))
-		return false;
+	mItemCreationWndId = ui.AddWindow(temple::GetRef<LgcyWindow>(0x10BEE040));
 
-	if (mItemCreationScrollbar->Init(185 + mUseCo8Ui * 108, 51, 259))
-		return false;
+	mItemCreationScrollbar->Init(185 + mUseCo8Ui * 108, 51, 259);
 	mItemCreationScrollbar->scrollQuantum = 3;
 	mItemCreationScrollbar->x += wnd.x;
 	mItemCreationScrollbar->y += wnd.y;
 
-	if (mItemCreationScrollbar->Add(&mItemCreationScrollbarId) || ui.BindToParent(*wndId, mItemCreationScrollbarId))
-		return false;
+	mItemCreationScrollbarId = ui.AddScrollBar(*mItemCreationScrollbar, mItemCreationWndId);
 
 	auto btnY = 55;
 
 	for (int i = 0; i < NUM_ITEM_CREATION_ENTRY_WIDGETS; i++){
-		LgcyButton btn(nullptr, *wndId, 32, btnY, 155 + 108 * mUseCo8Ui, 12);
+		LgcyButton btn(nullptr, mItemCreationWndId, 32, btnY, 155 + 108 * mUseCo8Ui, 12);
 		btn.x += wnd.x;
 		btn.y += wnd.y;
-		btn.render = [](int widId) {itemCreation.ItemCreationEntryRender(widId); };
-		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.ItemCreationEntryMsg(widId, msg); };
-		ui.AddButton(&btn, sizeof(LgcyButton), &mItemCreationEntryBtnIds[i], "ui_item_creation.cpp", 2115);
-		if (ui.BindToParent(*wndId, mItemCreationEntryBtnIds[i]))
-			return false;
+		btn.render = [](int widId) {itemCreation().ItemCreationEntryRender(widId); };
+		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().ItemCreationEntryMsg(widId, msg); };
+		mItemCreationEntryBtnIds[i] = ui.AddButton(btn, mItemCreationWndId);
 		btnY += 12;
 	}
 	// create button
 	{
-		LgcyButton btn(nullptr, *wndId, 81, 373, 112, 22);
+		LgcyButton btn(nullptr, mItemCreationWndId, 81, 373, 112, 22);
 		btn.x += wnd.x;
 		btn.y += wnd.y;
-		btn.render = [](int widId) { itemCreation.ItemCreationCreateBtnRender(widId); };
-		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.CreateBtnMsg(widId, msg); };
+		btn.render = [](int widId) { itemCreation().ItemCreationCreateBtnRender(widId); };
+		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().CreateBtnMsg(widId, msg); };
+		btn.SetDefaultSounds();
 
-		ui.AddButton(&btn, sizeof(LgcyButton), &mItemCreationCreateBtnId, "ui_item_creation.cpp", 2127);
-		ui.SetDefaultSounds(mItemCreationCreateBtnId);
-		ui.BindToParent(*wndId, mItemCreationCreateBtnId);
+		mItemCreationCreateBtnId = ui.AddButton(btn, mItemCreationWndId);
 	}
 	// cancel button
-	auto cancelBtnId = temple::GetPointer<int>(0x10BEDA68);
+	auto &cancelBtnId = temple::GetRef<int>(0x10BEDA68);
 	
-	LgcyButton btn(nullptr, *wndId, 205 + 108*mUseCo8Ui, 373, 112, 22);
+	LgcyButton btn(nullptr, mItemCreationWndId, 205 + 108*mUseCo8Ui, 373, 112, 22);
 	btn.x += wnd.x;
 	btn.y += wnd.y;
-	btn.render = [](int widId) {itemCreation.ItemCreationCancelBtnRender(widId); };
-	btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.CancelBtnMsg(widId, msg); };
+	btn.render = [](int widId) {itemCreation().ItemCreationCancelBtnRender(widId); };
+	btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().CancelBtnMsg(widId, msg); };
+	btn.SetDefaultSounds();
 
-	ui.AddButton(&btn, sizeof(LgcyButton), cancelBtnId, "ui_item_creation.cpp", 2142);
-	ui.SetDefaultSounds(*cancelBtnId);
-	return ui.BindToParent(*wndId, *cancelBtnId) == 0;
-	
+	cancelBtnId = ui.AddButton(btn, mItemCreationWndId);
 }
 
-bool ItemCreation::MaaWidgetsInit(int width, int height) {
+void UiItemCreation::MaaWidgetsInit(int width, int height) {
 	auto& wnd = temple::GetRef<LgcyWindow>(0x10BEDB58);
-	auto wndId = &mMaaWndId;
 	wnd = LgcyWindow((width - 504) / 2, (height - 387) / 2, 504, 387);
 	wnd.flags = 1;
-	wnd.render = [](int widId) {itemCreation.MaaWndRender(widId); };
-	wnd.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaWndMsg(widId, msg); };
+	wnd.render = [](int widId) {itemCreation().MaaWndRender(widId); };
+	wnd.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().MaaWndMsg(widId, msg); };
 	wnd.zIndex = -1;
-	if (wnd.Add(wndId))
-		return false;
+	mMaaWndId = ui.AddWindow(wnd);
 
 	// Scrollbar for the Items
-	auto maaScrollbar = temple::GetPointer<LgcyScrollBar>(0x10BEDA98);
-	maaScrollbar->Init(184, 51, 225);
-	maaScrollbar->x += wnd.x;
-	maaScrollbar->y += wnd.y;
-	maaScrollbar->Add(&mMaaItemsScrollbarId);
-	if (ui.BindToParent(*wndId, mMaaItemsScrollbarId))
-		return false;
-
+	auto &maaScrollbar = temple::GetRef<LgcyScrollBar>(0x10BEDA98);
+	maaScrollbar.Init(184, 51, 225);
+	maaScrollbar.x += wnd.x;
+	maaScrollbar.y += wnd.y;
+	mMaaItemsScrollbarId = ui.AddScrollBar(maaScrollbar, mMaaWndId);
 
 	// Scrollbar for the effects
-	auto appEffectsScrollbar = temple::GetPointer<LgcyScrollBar>(0x10BEDE90);
-	appEffectsScrollbar->Init(313, 148, 128);
-	appEffectsScrollbar->x += wnd.x;
-	appEffectsScrollbar->y += wnd.y;
-	appEffectsScrollbar->Add(&mMaaApplicableEffectsScrollbarId);
-	if (ui.BindToParent(*wndId, mMaaApplicableEffectsScrollbarId))
-		return false;
+	auto appEffectsScrollbar = temple::GetRef<LgcyScrollBar>(0x10BEDE90);
+	appEffectsScrollbar.Init(313, 148, 128);
+	appEffectsScrollbar.x += wnd.x;
+	appEffectsScrollbar.y += wnd.y;
+	mMaaApplicableEffectsScrollbarId = ui.AddScrollBar(appEffectsScrollbar, mMaaWndId);
 
 	// Item buttons
 	auto btnY = 53;
 	for (int i = 0; i < MAA_NUM_ENCHANTABLE_ITEM_WIDGETS; i++) {
-		LgcyButton btn(nullptr, *wndId, 28, btnY, 152, 42);
+		LgcyButton btn(nullptr, mMaaWndId, 28, btnY, 152, 42);
 		btn.x += wnd.x;	btn.y += wnd.y;
-		btn.render = [](int widId) { itemCreation.MaaItemRender(widId); };
-		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaItemMsg(widId, msg); };
-		btn.Add(&mMaaItemBtnIds[i]);
-		ui.BindToParent(*wndId, mMaaItemBtnIds[i]);
+		btn.render = [](int widId) { itemCreation().MaaItemRender(widId); };
+		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().MaaItemMsg(widId, msg); };
+		mMaaItemBtnIds[i] = ui.AddButton(btn, mMaaWndId);
 		btnY += 42;
 	}
 
 	// applicable effect butons
 	btnY = 152;
 	for (int i = 0; i < MAA_EFFECT_BUTTONS_COUNT; i++) {
-		LgcyButton btn(nullptr, *wndId, 207, btnY, 106, 12);
+		LgcyButton btn(nullptr, mMaaWndId, 207, btnY, 106, 12);
 		btn.x += wnd.x;	btn.y += wnd.y;
-		btn.render = [](int widId) { itemCreation.MaaEffectRender(widId); };
-		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaEffectMsg(widId, msg); };
-		btn.renderTooltip = [](int x, int y, LgcyWidgetId* widId) { itemCreation.MaaEffectTooltip(x, y, widId); };
-		btn.Add(&maaBtnIds[i]);
-		ui.BindToParent(*wndId, maaBtnIds[i]);
+		btn.render = [](int widId) { itemCreation().MaaEffectRender(widId); };
+		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().MaaEffectMsg(widId, msg); };
+		btn.renderTooltip = [](int x, int y, LgcyWidgetId* widId) { itemCreation().MaaEffectTooltip(x, y, widId); };
+		maaBtnIds[i] = ui.AddButton(btn, mMaaWndId);
 		btnY += 12;
 	}
 
 	// Enhancement bonus buttons
-	LgcyButton enhBonusDown(nullptr, *wndId, mEnhBonusDnRect);
+	LgcyButton enhBonusDown(nullptr, mMaaWndId, mEnhBonusDnRect);
 	enhBonusDown.x += wnd.x; enhBonusDown.y += wnd.y;
-	enhBonusDown.render = [](int widId) {itemCreation.MaaEnhBonusDnRender(widId); };
-	enhBonusDown.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaEnhBonusDnMsg(widId, msg); };
-	enhBonusDown.Add(&mEnhBonusArrowDnId);
-	ui.BindToParent(*wndId, mEnhBonusArrowDnId);
-	ui.SetDefaultSounds(mEnhBonusArrowDnId);
+	enhBonusDown.render = [](int widId) {itemCreation().MaaEnhBonusDnRender(widId); };
+	enhBonusDown.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().MaaEnhBonusDnMsg(widId, msg); };
+	enhBonusDown.SetDefaultSounds();
+	mEnhBonusArrowDnId = ui.AddButton(enhBonusDown, mMaaWndId);
 
-	LgcyButton enhBonusUp(nullptr, *wndId, mEnhBonusDnRect);
+	LgcyButton enhBonusUp(nullptr, mMaaWndId, mEnhBonusDnRect);
 	enhBonusUp.x += wnd.x - 15; enhBonusUp.y += wnd.y;
-	enhBonusUp.render = [](int widId) {itemCreation.MaaEnhBonusUpRender(widId); };
-	enhBonusUp.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaEnhBonusUpMsg(widId, msg); };
-	enhBonusUp.Add(&mEnhBonusArrowUpId);
-	ui.BindToParent(*wndId, mEnhBonusArrowUpId);
-	ui.SetDefaultSounds(mEnhBonusArrowUpId);
+	enhBonusUp.render = [](int widId) {itemCreation().MaaEnhBonusUpRender(widId); };
+	enhBonusUp.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().MaaEnhBonusUpMsg(widId, msg); };
+	enhBonusUp.SetDefaultSounds();
+	mEnhBonusArrowUpId = ui.AddButton(enhBonusUp, mMaaWndId);
 
 	// applied effects
 	btnY = 152 + 12;
 	for (int i = 0; i < NUM_APPLIED_BONUSES_MAX; i++) {
-		LgcyButton btn(nullptr, *wndId, 355, btnY, 106, 12);
+		LgcyButton btn(nullptr, mMaaWndId, 355, btnY, 106, 12);
 		btn.x += wnd.x;	btn.y += wnd.y;
-		btn.render = [](int widId) { itemCreation.MaaAppliedBtnRender(widId); };
-		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaAppliedBtnMsg(widId, msg); };
-		btn.Add(&mMaaAppliedBtnIds[i]);
-		ui.BindToParent(*wndId, mMaaAppliedBtnIds[i]);
+		btn.render = [](int widId) { itemCreation().MaaAppliedBtnRender(widId); };
+		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().MaaAppliedBtnMsg(widId, msg); };
+		mMaaAppliedBtnIds[i] = ui.AddButton(btn, mMaaWndId);
 		btnY += 12;
 	}
 
 	// create button
 	//auto createBtnId = temple::GetPointer<int>(0x10BED8B0);
 	{
-		LgcyButton btn(nullptr, *wndId, 132, 340, 112, 22);
+		LgcyButton btn(nullptr, mMaaWndId, 132, 340, 112, 22);
 		btn.x += wnd.x;
 		btn.y += wnd.y;
-		btn.render = [](int widId) { itemCreation.MaaCreateBtnRender(widId); };
-		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.CreateBtnMsg(widId, msg); };
+		btn.render = [](int widId) { itemCreation().MaaCreateBtnRender(widId); };
+		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().CreateBtnMsg(widId, msg); };
+		btn.SetDefaultSounds();
 
-		ui.AddButton(&btn, sizeof(LgcyButton), &mMaaCreateBtnId, "ui_item_creation.cpp", 2224);
-		ui.SetDefaultSounds(mMaaCreateBtnId);
-		ui.BindToParent(*wndId, mMaaCreateBtnId);
+		mMaaCreateBtnId= ui.AddButton(btn, mMaaWndId);
 	}
 	// cancel button
 	//auto cancelBtnId = temple::GetPointer<int>(0x10BECD70);
 	{
-		LgcyButton btn(nullptr, *wndId, 256, 340, 112, 22);
+		LgcyButton btn(nullptr, mMaaWndId, 256, 340, 112, 22);
 		btn.x += wnd.x;
 		btn.y += wnd.y;
-		btn.render = [](int widId) { itemCreation.MaaCancelBtnRender(widId); };
-		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.CancelBtnMsg(widId, msg); };
+		btn.render = [](int widId) { itemCreation().MaaCancelBtnRender(widId); };
+		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().CancelBtnMsg(widId, msg); };
+		btn.SetDefaultSounds();
 
-		ui.AddButton(&btn, sizeof(LgcyButton), &mMaaCancelBtnId, "ui_item_creation.cpp", 2237);
-		ui.SetDefaultSounds(mMaaCancelBtnId);
-		ui.BindToParent(*wndId, mMaaCancelBtnId);
+		mMaaCancelBtnId = ui.AddButton(btn, mMaaWndId);
 	}
 
 
 	// Add Effect button
 	//auto effectAddBtnId = temple::GetPointer<int>(0x10BEE394);
 	{
-		LgcyButton btn(nullptr, *wndId, 333, 189, temple::GetRef<int>(0x102FAF5C), temple::GetRef<int>(0x102FAF60));
+		LgcyButton btn(nullptr, mMaaWndId, 333, 189, temple::GetRef<int>(0x102FAF5C), temple::GetRef<int>(0x102FAF60));
 		btn.x += wnd.x;
 		btn.y += wnd.y;
 		temple::GetRef<int>(0x102FAF54) = 333 + wnd.x;
 		temple::GetRef<int>(0x102FAF58) = 189 + wnd.y;
 		btn.render = temple::GetRef<void(__cdecl)(int)>(0x10150020);
-		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaEffectAddMsg(widId, msg); };
+		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().MaaEffectAddMsg(widId, msg); };
+		btn.SetDefaultSounds();
 
-		ui.AddButton(&btn, sizeof(LgcyButton), &mMaaEffectAddBtnId, "ui_item_creation.cpp", 2237);
-		ui.SetDefaultSounds(mMaaEffectAddBtnId);
-		ui.BindToParent(*wndId, mMaaEffectAddBtnId);
+		mMaaEffectAddBtnId = ui.AddButton(btn, mMaaWndId);
 	}
 
 	// Remove Effect button
 	//auto effectRemoveBtnId = temple::GetPointer<int>(0x10BEE394);
 	{
-		LgcyButton btn(nullptr, *wndId, 335, 220, temple::GetRef<int>(0x102FAF6C), temple::GetRef<int>(0x102FAF70));
+		LgcyButton btn(nullptr, mMaaWndId, 335, 220, temple::GetRef<int>(0x102FAF6C), temple::GetRef<int>(0x102FAF70));
 		btn.x += wnd.x;
 		btn.y += wnd.y;
 		temple::GetRef<int>(0x102FAF64) = 335 + wnd.x;
 		temple::GetRef<int>(0x102FAF68) = 220 + wnd.y;
 		btn.render = temple::GetRef<void(__cdecl)(int)>(0x101500B0);
-		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaEffectRemoveMsg(widId, msg); };
+		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().MaaEffectRemoveMsg(widId, msg); };
+		btn.SetDefaultSounds();
 
-		ui.AddButton(&btn, sizeof(LgcyButton), &mMaaEffectRemoveBtnId, "ui_item_creation.cpp", 2237);
-		ui.SetDefaultSounds(mMaaEffectRemoveBtnId);
-		ui.BindToParent(*wndId, mMaaEffectRemoveBtnId);
+		mMaaEffectRemoveBtnId = ui.AddButton(btn, mMaaWndId);
 	}
 
 	// Textbox
@@ -3705,22 +3677,21 @@ bool ItemCreation::MaaWidgetsInit(int width, int height) {
 	auto& maaTextboxRect = temple::GetRef<TigRect>(0x102FAF74);
 	maaTextboxRect.x = 296; maaTextboxRect.y = 72;
 	{
-		LgcyButton btn(nullptr, *wndId, maaTextboxRect);
+		LgcyButton btn(nullptr, mMaaWndId, maaTextboxRect);
 		btn.x += wnd.x;
 		btn.y += wnd.y;
 		maaTextboxRect.x += wnd.x;
 		maaTextboxRect.y += wnd.y;
 		// render is handled in the main window
-		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation.MaaTextboxMsg(widId, msg); };
+		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().MaaTextboxMsg(widId, msg); };
+		btn.SetDefaultSounds();
 
-		ui.AddButton(&btn, sizeof(LgcyButton), &mMaaTextboxId, "ui_item_creation.cpp", 2286);
-		ui.SetDefaultSounds(mMaaTextboxId);
-		return ui.BindToParent(*wndId, mMaaTextboxId) == 0;
+		mMaaTextboxId = ui.AddButton(btn, mMaaWndId);
 	}
 
 }
 
-void ItemCreation::MaaWidgetsExit(int widId){
+void UiItemCreation::MaaWidgetsExit(int widId){
 	ui.WidgetRemoveRegardParent(mMaaTextboxId);
 	ui.WidgetRemoveRegardParent(mMaaEffectRemoveBtnId);
 	ui.WidgetRemoveRegardParent(mMaaEffectAddBtnId);
@@ -3736,13 +3707,13 @@ void ItemCreation::MaaWidgetsExit(int widId){
 		ui.WidgetRemoveRegardParent(mMaaItemBtnIds[i]);
 	}
 
-	auto wnd = ui.WidgetGetType1(widId);
+	auto wnd = ui.GetWindow(widId);
 
 	ui.WidgetAndWindowRemove(widId);
 
 }
 
-void ItemCreation::ItemCreationWidgetsExit(int widId){
+void UiItemCreation::ItemCreationWidgetsExit(int widId){
 
 	ui.WidgetRemoveRegardParent(mItemCreationCreateBtnId); 
 	ui.WidgetRemoveRegardParent(temple::GetRef<int>(0x10BEDA68)); // cancel button
@@ -3757,12 +3728,12 @@ void ItemCreation::ItemCreationWidgetsExit(int widId){
 	}
 	ui.WidgetRemoveRegardParent(mItemCreationScrollbarId);
 
-	auto wnd = ui.WidgetGetType1(widId);
+	auto wnd = ui.GetWindow(widId);
 	
 	ui.WidgetAndWindowRemove(widId);
 }
 
-void ItemCreation::UiItemCreationResize(UiResizeArgs& resizeArgs){
+void UiItemCreation::UiItemCreationResize(UiResizeArgs& resizeArgs){
 
 	auto& icWnd = temple::GetRef<LgcyWindow>(0x10BEE040);
 	auto& maaWnd = temple::GetRef<LgcyWindow>(0x10BEDB58);
@@ -3839,7 +3810,7 @@ int ItemCreationHooks::HookedStatLevelGetForItemCreationPrereq(objHndl handle){
 	return result;
 }
 
-int ItemCreation::MaaCpCost(int effIdx){
+int UiItemCreation::MaaCpCost(int effIdx){
 
 	auto icType = itemCreationType;
 
@@ -3872,7 +3843,7 @@ int ItemCreation::MaaCpCost(int effIdx){
 	return 50 * (GoldCraftCostVsEffectiveBonus[effBonus] - GoldCraftCostVsEffectiveBonus[craftedItemExistingEffectiveBonus]);
 }
 
-int ItemCreation::MaaXpCost(int effIdx){
+int UiItemCreation::MaaXpCost(int effIdx){
 
 	auto icType = itemCreationType;
 

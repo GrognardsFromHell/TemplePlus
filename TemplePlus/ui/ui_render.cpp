@@ -75,7 +75,7 @@ void UiRenderer::DrawTexture(int texId, const TigRect& destRect, const TigRect& 
 }
 
 void UiRenderer::DrawTextureInWidget(int widId, int texId, const TigRect & destRect, const TigRect & srcRect, int flags){
-	auto wid = ui.WidgetGet(widId);
+	auto wid = ui.GetWidget(widId);
 	if (!wid)
 		return;
 	
@@ -126,7 +126,7 @@ void UiRenderer::PopFont() {
 }
 
 bool UiRenderer::DrawTextInWidget(int widgetId, const string &text, const TigRect &rect, const TigTextStyle &style) {
-	auto wid = ui.WidgetGet(widgetId);
+	auto wid = ui.GetWidget(widgetId);
 	if (!wid)
 		return 1;
 	if (text.empty())

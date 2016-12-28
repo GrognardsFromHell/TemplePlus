@@ -12,6 +12,7 @@ static int ui_add_window(LgcyWindow *widget, size_t widgetSize, LgcyWidgetId *as
 	if (assignedIdOut) {
 		*assignedIdOut = assignedId;
 	}
+	uiLegacyManager->AddWindow(assignedId);
 	return 0;
 }
 
@@ -128,30 +129,12 @@ static LgcyButton *ui_get_button(LgcyWidgetId widId) {
 }
 
 static int ui_widget_add_child(LgcyWidgetId parentId, LgcyWidgetId childId) {
-	auto parent = (LgcyWindow*) ui_widget_get(parentId);
-	if (parent && parent->IsWindow()) {
-
-		if (parent->childrenCount >= 127) {
-			return 1;
-		}
-
-		auto child = ui_widget_get(childId);
-		if (child) {
-			child->parentId = parentId;
-		}
-		parent->children[parent->childrenCount++] = childId;
-		
-		uiLegacyManager->RefreshMouseOverState();
-
-		return 0;
-	} else {
-		return 1;
-	}
+	return uiLegacyManager->AddChild(parentId, childId) ? FALSE : TRUE;
 }
 
 /*
 	Replaces all functions that access global widget state with wrappers around our
-	legeacy UI manager class.
+	legacy UI manager class.
 */
 static class UiLegacyWrapper : public TempleFix {
 public:

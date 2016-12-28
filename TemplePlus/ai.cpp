@@ -251,11 +251,16 @@ uint32_t AiSystem::AiStrategDefaultCast(objHndl objHnd, objHndl target, D20Spell
 	return 0;
 }
 
-bool AiSystem::HasAiFlag(objHndl npc, AiFlag flag) {
+bool AiSystem::HasAiFlag(objHndl npc, AiFlag flag) const {
 	auto obj = objSystem->GetObject(npc);
 	auto aiFlags = obj->GetInt64(obj_f_npc_ai_flags64);
 	auto flagBit = (uint64_t)flag;
 	return (aiFlags & flagBit) != 0;
+}
+
+bool AiSystem::IsRunningOff(objHndl handle) const
+{
+	return objects.IsNPC(handle) && HasAiFlag(handle, AiFlag::RunningOff);
 }
 
 void AiSystem::SetAiFlag(objHndl npc, AiFlag flag) {
@@ -1694,6 +1699,7 @@ int AiSystem::AiTimeEventExpires(TimeEvent* evt)
 {
 	return 1;
 }
+
 #pragma endregion
 
 #pragma region AI replacement functions

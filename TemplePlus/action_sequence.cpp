@@ -28,7 +28,6 @@
 #include "gamesystems/objects/objsystem.h"
 #include "python/python_integration_d20_action.h"
 
-
 static struct ActnSeqAddresses : temple::AddressTable {
 
 	int(__cdecl *TouchAttackAddToSeq)(D20Actn* d20Actn, ActnSeq* actnSeq, TurnBasedStatus* turnBasedStatus);
@@ -335,7 +334,7 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		addresses.actSeqPicker->spellEnum = 0;
 		addresses.actSeqPicker->caster = d20Sys.globD20Action->d20APerformer;
 		*actSeqPickerActive = 1;
-		uiTurnBased.ShowPicker(addresses.actSeqPicker,nullptr);
+		uiPicker.ShowPicker(*addresses.actSeqPicker,nullptr);
 		*addresses.actSeqPickerAction = *d20Sys.globD20Action;
 		return;
 	}
@@ -358,7 +357,7 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		addresses.actSeqPicker->caster = d20Sys.globD20Action->d20APerformer;
 
 		*actSeqPickerActive = 1;
-		uiTurnBased.ShowPicker(addresses.actSeqPicker, nullptr);
+		uiPicker.ShowPicker(*addresses.actSeqPicker, nullptr);
 		*addresses.actSeqPickerAction = *d20Sys.globD20Action;
 		return;
 	}
@@ -380,7 +379,7 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		addresses.actSeqPicker->spellEnum = 0;
 		addresses.actSeqPicker->caster = d20Sys.globD20Action->d20APerformer;
 		*actSeqPickerActive = 1;
-		uiTurnBased.ShowPicker(addresses.actSeqPicker, nullptr);
+		uiPicker.ShowPicker(*addresses.actSeqPicker, nullptr);
 		*addresses.actSeqPickerAction = *d20Sys.globD20Action;
 		return;
 	}
@@ -407,7 +406,7 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		addresses.actSeqPicker->spellEnum = 0;
 		addresses.actSeqPicker->caster = d20Sys.globD20Action->d20APerformer;
 		*actSeqPickerActive = 1;
-		uiTurnBased.ShowPicker(addresses.actSeqPicker, nullptr);
+		uiPicker.ShowPicker(*addresses.actSeqPicker, nullptr);
 		*addresses.actSeqPickerAction = *d20Sys.globD20Action;
 		return;
 	}

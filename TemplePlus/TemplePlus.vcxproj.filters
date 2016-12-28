@@ -459,6 +459,8 @@
     </ClCompile>
     <ClCompile Include="ui\ui_legacy.cpp" />
     <ClCompile Include="ui\ui_legacy_wrapper.cpp" />
+    <ClCompile Include="ui\ui_ingame_wrapper.cpp" />
+    <ClCompile Include="ui\ui_ingame.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -837,9 +839,6 @@
     <ClInclude Include="ui\ui_alert.h">
       <Filter>ui</Filter>
     </ClInclude>
-    <ClInclude Include="ui\ui_turn_based.h">
-      <Filter>ui</Filter>
-    </ClInclude>
     <ClInclude Include="ui\ui_tutorial.h">
       <Filter>ui</Filter>
     </ClInclude>
@@ -866,6 +865,12 @@
       <Filter>python</Filter>
     </ClInclude>
     <ClInclude Include="ui\ui_legacy.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="ui\ui_ingame.h" />
+    <ClInclude Include="ui\ui_intgame_wrapper.h" />
+    <ClInclude Include="ui\ui_turn_based.h">
+      <Filter>ui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

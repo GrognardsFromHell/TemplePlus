@@ -27,8 +27,6 @@ struct UiCharEditorFeatsAddresses : temple::AddressTable
 	int(__cdecl* j_CopyWidget_101F87A0)(int widIdx, LgcyWidget* widg);
 	int(__cdecl*sub_101F87B0)(int widIdx, LgcyWidget* widg);
 	int(__cdecl*sub_101F8E40)(int);
-	int(__cdecl*sub_101F9100)(int widId, int);
-	int(__cdecl*sub_101F9510)(int, int);
 
 	CharEditorSelectionPacket * charEdSelPkt;
 	MesHandle* pcCreationMes;
@@ -51,8 +49,6 @@ struct UiCharEditorFeatsAddresses : temple::AddressTable
 		rebase(j_CopyWidget_101F87A0, 0x101F87A0);
 		rebase(sub_101F87B0, 0x101F87B0);
 		rebase(sub_101F8E40, 0x101F8E40);
-		rebase(sub_101F9100, 0x101F9100);
-		rebase(sub_101F9510, 0x101F9510);
 
 		rebase(pcCreationMes, 0x11E72EF0);
 		rebase(charEdSelPkt, 0x11E72F00);
@@ -105,8 +101,8 @@ int HookedFeatMultiselectSub_101A8080(feat_enums feat) // redundant now
 	*addresses.dword_10C75F30 = 0;
 	*addresses.dword_10C77D50 = ( (*addresses.featsMultiselectNum_10C75F34) - 15) & ((*addresses.featsMultiselectNum_10C75F34 - 15 < 0) - 1);
 	addresses.sub_101F87B0(*addresses.widIdx_10C77D80, addresses.featsScrollbar);
-	addresses.sub_101F9510(*addresses.dword_10C76AF0, 4);
-	addresses.sub_101F9100(*addresses.widgId_10C7AE14, 0);
+	ui.SetButtonState(*addresses.dword_10C76AF0, LgcyButtonState::Disabled);
+	ui.WidgetSetHidden(*addresses.widgId_10C7AE14, FALSE);
 	return addresses.sub_101F8E40(*addresses.widgId_10C7AE14);
 		
 }

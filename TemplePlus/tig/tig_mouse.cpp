@@ -97,6 +97,12 @@ void MouseFuncs::DrawItemUnderCursor() const {
 
 }
 
+bool MouseFuncs::SetDraggedIcon(uint32_t textureId, int centerX, int centerY)
+{
+	static auto tig_mouse_set_dragged_icon = temple::GetPointer<signed int(int textureId, int draggedCenterX, int draggedCenterY)>(0x101dd500);
+	return tig_mouse_set_dragged_icon(textureId, centerX, centerY) == 0;
+}
+
 void MouseFuncs::SetCursorDrawCallback(CursorDrawCallback callback, uint32_t id)
 {
 	mCursorDrawCallback = callback;

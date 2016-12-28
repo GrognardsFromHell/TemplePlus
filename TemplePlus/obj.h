@@ -174,7 +174,7 @@ struct Objects : temple::AddressTable {
 		Calculates the rotation for obj from when it is facing object "to" directly.
 	*/
 	float GetRotationTowards(objHndl from, objHndl to);
-
+	
 	/*
 		Fades an object to a certain opacity, in time step tickTimeMs and opacity quantum tickQuantum
 		callbackMode:
@@ -205,6 +205,11 @@ struct Objects : temple::AddressTable {
 
 	bool SecretdoorDetect(objHndl door, objHndl viewer) {
 		return _SecretdoorDetect(door, viewer);
+	}
+
+	bool IsUndetectedSecretDoor(objHndl handle) {
+		auto flags = GetSecretDoorFlags(handle);
+		return (flags & OSDF_SECRET_DOOR) && !(flags & OSDF_SECRET_DOOR_FOUND);
 	}
 
 	SecretDoorFlag GetSecretDoorFlags(objHndl handle);

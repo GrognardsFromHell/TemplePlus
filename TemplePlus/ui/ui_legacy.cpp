@@ -135,6 +135,28 @@ void UiLegacyManager::RemoveWidget(LgcyWidgetId id)
 	}
 }
 
+bool UiLegacyManager::AddChild(LgcyWidgetId parentId, LgcyWidgetId childId)
+{
+	auto parent = GetWindow(parentId);
+	if (parent) {
+
+		if (parent->childrenCount >= 127) {
+			return false;
+		}
+
+		auto child = GetWidget(childId);
+		if (child) {
+			child->parentId = parentId;
+		}
+		parent->children[parent->childrenCount++] = childId;
+
+		RefreshMouseOverState();
+		return true;
+	} else {
+		return false;
+	}
+}
+
 void UiLegacyManager::RemoveChildWidget(LgcyWidgetId id)
 {
 	auto widget = GetWidget(id);
@@ -248,12 +270,12 @@ void UiLegacyManager::RefreshMouseOverState()
 	TigMouseState state;
 	mouseFuncs.GetState(&state);
 	
-	TigMsg msg;
-	msg.arg1 = state.x;
-	msg.arg2 = state.y;
-	msg.arg3 = state.field24;
-	msg.arg4 = 0x1000;
-	ui.ProcessMessage(&msg);
+	TigMouseMsg msg;
+	msg.x = state.x;
+	msg.y = state.y;
+	msg.mouseStateField24 = state.field24;
+	msg.flags = 0x1000;
+	ui.TranslateMouseMessage(&msg);
 }
 
 void UiLegacyManager::SortWindows()
@@ -288,10 +310,10 @@ size_t LgcyWidget::GetSize() const
 
 LgcyWindow::LgcyWindow()
 {
-
 	widgetId = -1;
 	parentId = -1;
 	type = LgcyWidgetType::Window;
+	this->size = sizeof(LgcyWindow);
 	x = 0;
 	y = 0;
 	xrelated = 0;

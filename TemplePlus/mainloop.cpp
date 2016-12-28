@@ -33,6 +33,8 @@
 #include "maps.h"
 #include <infrastructure/keyboard.h>
 #include "messages/messagequeue.h"
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
 
 static GameLoop *gameLoop = nullptr;
 
@@ -49,8 +51,6 @@ static struct MainLoop : temple::AddressTable {
 	// Not sure what these do
 	int (__cdecl *sub_10113CD0)();
 	bool (__cdecl *sub_10113D40)(int arg);
-
-	bool (__cdecl *IsMainMenuVisible)();
 
 	objHndl (__cdecl *GetPCGroupMemberN)(int nIdx);
 
@@ -78,7 +78,6 @@ static struct MainLoop : temple::AddressTable {
 		rebase(sub_10113D40, 0x10113D40);
 
 		rebase(GetPCGroupMemberN, 0x1002B170);
-		rebase(IsMainMenuVisible, 0x101157F0);
 
 		rebase(DoMouseScrolling, 0x10001010);
 		rebase(SetScrollDirection, 0x10006480);
@@ -174,7 +173,7 @@ void GameLoop::Run() {
 			// I have not found any place where message type 7 is queued,
 			// so i removed the out of place re-rendering of the game frame
 
-			if (!mainLoop.IsMainMenuVisible()) {
+			if (!uiSystems->GetMM().IsVisible()) {
 					mainLoop.InGameHandleMessage(msg);
 			}
 
@@ -217,7 +216,7 @@ void GameLoop::RenderFrame() {
 	mDiagScreen->Render();
 
 	// Draw Version Number while in Main Menu
-	if (mainLoop.IsMainMenuVisible()) {
+	if (uiSystems->GetMM().IsVisible()) {
 		RenderVersion();
 	}
 
@@ -434,21 +433,7 @@ public:
 			//logger->debug("NormalLmbHandler: LMB released; args:  {} , {} , {} , {}", msg->arg1, msg->arg2, msg->arg3, msg->arg4);
 			orgNormalLmbHandler(msg);
 			//logger->debug("NormalLmbHandler: success.");
-		});
-
-		static void(__cdecl*orgIngameMsgHandler)(TigMsg*) = replaceFunction<void(TigMsg*)>(0x10114EF0, [](TigMsg* msg)
-		{
-			if (msg->type == TigMsgType::KEYSTATECHANGE || msg->type == TigMsgType::CHAR || msg->type == TigMsgType::KEYDOWN) {
-				int dummy = 1;
-				if (msg->arg1 == DIK_HOME) {
-					int asd = 1;
-					VK_HOME;
-				}
-			}
-			//logger->debug("NormalLmbHandler: LMB released; args:  {} , {} , {} , {}", msg->arg1, msg->arg2, msg->arg3, msg->arg4);
-			orgIngameMsgHandler(msg);
-			//logger->debug("NormalLmbHandler: success.");
-		});
+		});		
 
 		static void(__cdecl*orgNormalLmbHandleTarget)(objHndl*) = replaceFunction<void(objHndl*)>(0x101140F0, [](objHndl* tgt){
 			

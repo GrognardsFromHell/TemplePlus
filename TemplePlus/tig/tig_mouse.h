@@ -96,6 +96,8 @@ struct MouseFuncs : temple::AddressTable {
 	
 	void DrawItemUnderCursor() const;
 
+	bool SetDraggedIcon(uint32_t textureId, int centerX, int centerY);
+
 private:
 	bool mMouseOutsideWnd;
 	POINT mmbReference;

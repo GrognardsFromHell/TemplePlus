@@ -118,7 +118,8 @@ struct AiSystem : temple::AddressTable
 	uint32_t AiStrategyParse(objHndl objHnd, objHndl target);
 	uint32_t AiStrategDefaultCast(objHndl objHnd, objHndl target, D20SpellData* spellData, SpellPacketBody* spellPkt);
 	
-	bool HasAiFlag(objHndl npc, AiFlag flag);
+	bool IsRunningOff(objHndl handle) const;
+	bool HasAiFlag(objHndl npc, AiFlag flag) const;
 	void SetAiFlag(objHndl npc, AiFlag flag);
 	void ClearAiFlag(objHndl npc, AiFlag flag);
 	AiParamPacket GetAiParams(objHndl obj);
@@ -202,7 +203,7 @@ struct AiSystem : temple::AddressTable
 	void AiProcess(objHndl obj);
 
 	int AiTimeEventExpires(TimeEvent* evt);
-
+	
 private:
 	void (__cdecl *_ShitlistAdd)(objHndl npc, objHndl target);
 	void (__cdecl *_AiRemoveFromList)(objHndl npc, objHndl target, int listType);	

@@ -173,6 +173,8 @@
     <ClCompile Include="ui\ui_char_editor.cpp" />
     <ClCompile Include="ui\ui_combat.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
+    <ClCompile Include="ui\ui_ingame.cpp" />
+    <ClCompile Include="ui\ui_ingame_wrapper.cpp" />
     <ClCompile Include="ui\ui_intgame_select.cpp" />
     <ClCompile Include="ui\ui_legacy.cpp" />
     <ClCompile Include="ui\ui_legacysystems.cpp" />
@@ -328,6 +330,8 @@
     <ClInclude Include="tig\tig_keyboard.h" />
     <ClInclude Include="tutorial.h" />
     <ClInclude Include="ui\ui_alert.h" />
+    <ClInclude Include="ui\ui_ingame.h" />
+    <ClInclude Include="ui\ui_intgame_wrapper.h" />
     <ClInclude Include="ui\ui_legacy.h" />
     <ClInclude Include="ui\ui_legacysystems.h" />
     <ClInclude Include="ui\ui_logbook.h" />

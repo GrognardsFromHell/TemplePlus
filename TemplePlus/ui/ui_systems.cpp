@@ -3,6 +3,7 @@
 
 #include "ui_systems.h"
 #include "ui_legacysystems.h"
+#include "ui_turn_based.h"
 
 UiSystems* uiSystems = nullptr;
 
@@ -19,7 +20,7 @@ UiSystems::UiSystems(int width, int height)
 	mInGame = InitializeSystem<UiInGame>(config);
 	mInGameSelect = InitializeSystem<UiInGameSelect>(config);
 	mRadialMenu = InitializeSystem<UiRadialMenu>(config);
-	mTurnBased = InitializeSystem<UiTurnBased>(config);
+	mTurnBased = InitializeSystem<UiTurnBased>(config.width, config.height);
 	mAnim = InitializeSystem<UiAnim>(config);
 	mTB = InitializeSystem<UiTB>(config);
 	mWMapRnd = InitializeSystem<UiWMapRnd>();

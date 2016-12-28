@@ -131,33 +131,33 @@ public:
 	bool CharLootingIsActive();
 
 	bool IsWidgetHidden(int widId);
-	BOOL AddWindow(LgcyWidget* widget, unsigned size, int* widgetId, const char * codeFileName, int lineNumber);
-	BOOL ButtonInit(LgcyButton * widg, char* buttonName, int parentId, int x, int y, int width, int height);
-	BOOL AddButton(LgcyButton* button, unsigned size, int* widgId, const char * codeFileName, int lineNumber);
+	
+	LgcyWidgetId AddWindow(LgcyWindow& widget);
+	BOOL ButtonInit(LgcyButton * widg, char* buttonName, LgcyWidgetId parentId, int x, int y, int width, int height);
+	LgcyWidgetId AddButton(LgcyButton& button);
+	LgcyWidgetId AddButton(LgcyButton& button, LgcyWidgetId parentId);
+	LgcyWidgetId AddScrollBar(LgcyScrollBar& scrollBar);
+	LgcyWidgetId AddScrollBar(LgcyScrollBar& scrollBar, LgcyWidgetId parentId);
+
 	/*
 		sets the button's parent, and also does a bunch of mouse handling (haven't delved too deep there yet)
 	*/
-	BOOL BindToParent(int parentId, int buttonId);
-	BOOL SetDefaultSounds(int widId);
-	BOOL ButtonSetButtonState(int widgetId, LgcyButtonState newState);
-	void WidgetRemoveRegardParent(int widIdx);
-	BOOL WidgetAndWindowRemove(int widId);
-	BOOL WidgetRemove(int widId);
-	BOOL WidgetSetHidden(int widId, int hiddenState);
-	BOOL WidgetCopy(int widId, LgcyWidget* widgetOut);
-	int WidgetSet(int widId, const LgcyWidget* widg);
+	void SetButtonState(LgcyWidgetId widgetId, LgcyButtonState newState);
+	void WidgetRemoveRegardParent(LgcyWidgetId widIdx);
+	void WidgetAndWindowRemove(LgcyWidgetId widId);
+	void WidgetRemove(LgcyWidgetId widId);
+	void WidgetSetHidden(LgcyWidgetId widId, int hiddenState);
 
-	LgcyWidget* WidgetGet(int widId);
-	LgcyWindow* WidgetGetType1(int widId);
-	LgcyButton* GetButton(int widId);
-	LgcyScrollBar* ScrollbarGet(int widId);
+	LgcyWidget* GetWidget(LgcyWidgetId widId);
+	LgcyWindow* GetWindow(LgcyWidgetId widId);
+	LgcyButton* GetButton(LgcyWidgetId widId);
+	LgcyScrollBar* GetScrollBar(LgcyWidgetId widId);
 
 	int GetWindowContainingPoint(int x, int y);
-	BOOL GetButtonState(int widId, int* state);
-	bool GetButtonState(int widId, LgcyButtonState& state);
-	void WidgetBringToFront(int widId);
-	int WidgetlistIndexof(int widgetId, int * widgetlist, int size);
-	BOOL WidgetContainsPoint(int widgetId, int x, int y);
+	LgcyButtonState GetButtonState(LgcyWidgetId widId);
+	void WidgetBringToFront(LgcyWidgetId widId);
+	int WidgetlistIndexof(LgcyWidgetId widgetId, int * widgetlist, int size);
+	BOOL WidgetContainsPoint(LgcyWidgetId widgetId, int x, int y);
 	
 	/*
 			gets widget at x,y including children
@@ -170,9 +170,9 @@ public:
 	int TranslateMouseMessage(TigMouseMsg* mouseMsg);
 	int ProcessMessage(TigMsg* mouseMsg);
 
-	bool ScrollbarGetY(int widId, int * y);
-	void ScrollbarSetYmax(int widId, int yMax);
-	BOOL ScrollbarSetY(int widId, int value); // I think? sets field84
+	bool ScrollbarGetY(LgcyWidgetId widId, int * y);
+	void ScrollbarSetYmax(LgcyWidgetId widId, int yMax);
+	void ScrollbarSetY(LgcyWidgetId widId, int value); // I think? sets field84
 	const char* GetTooltipString(int line) const;
 	const char* GetStatShortName(Stat stat) const;
 	const char* GetStatMesLine(int line) const;

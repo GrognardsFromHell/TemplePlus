@@ -4,7 +4,10 @@
 #include <infrastructure/exception.h>
 #include <temple/dll.h>
 #include "ui_legacysystems.h"
-
+#include "tig/tig_texture.h"
+#include "tig/tig_msg.h"
+#include "party.h"
+#include "ui_systems.h"
 
 //*****************************************************************************
 //* MainMenu-UI
@@ -46,6 +49,12 @@ void UiMM::ResizeViewport(const UiResizeArgs& resizeArg) {
 const std::string &UiMM::GetName() const {
     static std::string name("MM-UI");
     return name;
+}
+
+bool UiMM::IsVisible() const
+{
+	static auto ui_mm_is_visible = temple::GetPointer<int()>(0x101157f0);
+	return ui_mm_is_visible() == TRUE;
 }
 
 //*****************************************************************************
@@ -95,37 +104,6 @@ const std::string &UiSaveGame::GetName() const {
 }
 
 //*****************************************************************************
-//* Intgame
-//*****************************************************************************
-
-UiInGame::UiInGame(const UiSystemConf &config) {
-    auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10112e70);
-    if (!startup(&config)) {
-        throw TempleException("Unable to initialize game system Intgame");
-    }
-}
-UiInGame::~UiInGame() {
-    auto shutdown = temple::GetPointer<void()>(0x10112eb0);
-    shutdown();
-}
-void UiInGame::ResizeViewport(const UiResizeArgs& resizeArg) {
-    auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x10112ec0);
-    resize(&resizeArg);
-}
-void UiInGame::Reset() {
-    auto reset = temple::GetPointer<void()>(0x101140b0);
-    reset();
-}
-bool UiInGame::LoadGame(const UiSaveFile &save) {
-        auto load = temple::GetPointer<int(const UiSaveFile*)>(0x101140c0);
-        return load(&save) == 1;
-}
-const std::string &UiInGame::GetName() const {
-    static std::string name("Intgame");
-    return name;
-}
-
-//*****************************************************************************
 //* IntgameSelect
 //*****************************************************************************
 
@@ -168,33 +146,6 @@ void UiRadialMenu::ResizeViewport(const UiResizeArgs& resizeArg) {
 }
 const std::string &UiRadialMenu::GetName() const {
     static std::string name("RadialMenu");
-    return name;
-}
-
-//*****************************************************************************
-//* TurnBased
-//*****************************************************************************
-
-UiTurnBased::UiTurnBased(const UiSystemConf &config) {
-    auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10174d70);
-    if (!startup(&config)) {
-        throw TempleException("Unable to initialize game system TurnBased");
-    }
-}
-UiTurnBased::~UiTurnBased() {
-    auto shutdown = temple::GetPointer<void()>(0x10173ab0);
-    shutdown();
-}
-void UiTurnBased::ResizeViewport(const UiResizeArgs& resizeArg) {
-    auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x10173a50);
-    resize(&resizeArg);
-}
-void UiTurnBased::Reset() {
-    auto reset = temple::GetPointer<void()>(0x10173ac0);
-    reset();
-}
-const std::string &UiTurnBased::GetName() const {
-    static std::string name("TurnBased");
     return name;
 }
 
@@ -342,6 +293,11 @@ bool UiDlg::LoadGame(const UiSaveFile &save) {
 const std::string &UiDlg::GetName() const {
     static std::string name("Dlg-UI");
     return name;
+}
+
+bool UiDlg::IsActive() const
+{
+	return !(mFlags & 1) || !ui.IsWidgetHidden(mWindowId);
 }
 
 //*****************************************************************************
@@ -641,33 +597,6 @@ const std::string &UiHelp::GetName() const {
 }
 
 //*****************************************************************************
-//* ItemCreation-UI
-//*****************************************************************************
-
-UiItemCreation::UiItemCreation(const UiSystemConf &config) {
-    auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10154ba0);
-    if (!startup(&config)) {
-        throw TempleException("Unable to initialize game system ItemCreation-UI");
-    }
-}
-UiItemCreation::~UiItemCreation() {
-    auto shutdown = temple::GetPointer<void()>(0x10150eb0);
-    shutdown();
-}
-void UiItemCreation::ResizeViewport(const UiResizeArgs& resizeArg) {
-    auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x10154e90);
-    resize(&resizeArg);
-}
-void UiItemCreation::Reset() {
-    auto reset = temple::GetPointer<void()>(0x1014f170);
-    reset();
-}
-const std::string &UiItemCreation::GetName() const {
-    static std::string name("ItemCreation-UI");
-    return name;
-}
-
-//*****************************************************************************
 //* SkillMastery-UI
 //*****************************************************************************
 
@@ -791,24 +720,205 @@ const std::string &UiPartyPool::GetName() const {
 //* pcc_portrait
 //*****************************************************************************
 
+static class UiPccPortraitFix : public TempleFix {
+public:
+	void apply() override {
+
+		// ui_msg_pc_creation_portraits
+		static LgcyWidgetHandleMsgFn orgPcPortraitsMsgFunc;
+		orgPcPortraitsMsgFunc = replaceFunction<BOOL(LgcyWidgetId, TigMsg*)>(0x101633a0, [](LgcyWidgetId widgetId, TigMsg *msg) {
+
+			if (!uiSystems->GetPccPortrait().HandleMessage(widgetId, msg)) {
+				return orgPcPortraitsMsgFunc(widgetId, msg);
+			}
+			else {
+				return FALSE;
+			}
+
+		});
+
+		// UiPcCreationPortraitsMainHide
+		replaceFunction<int()>(0x10163030, []() {
+			uiSystems->GetPccPortrait().Hide();
+			return FALSE;
+		});
+		// PcPortraitsDeactivate
+		replaceFunction<void()>(0x10163060, []() {
+			return uiSystems->GetPccPortrait().Disable();
+		});
+		// PcPortraitsButtonActivateNext
+		replaceFunction<void()>(0x10163090, []() {
+			return uiSystems->GetPccPortrait().ButtonActivateNext();
+		});
+		// PcPortraitsRefresh
+		replaceFunction<void(void)>(0x10163440, [](void) {
+			return uiSystems->GetPccPortrait().Refresh();
+		});
+
+	}
+
+	void WriteMaxPCPortraitValues(UiPccPortrait &system) {
+		// 1016312F
+		int writeVal = (int)&system.pcPortraitWidgIds[-1];
+		write(0x1016312F + 3, &writeVal, 4);
+
+		// ui_msg_pc_creation_portraits
+		writeVal = system.MAX_PC_CREATION_PORTRAITS;
+		write(0x101633B5 + 1, &writeVal, 1);
+		writeVal = (int)&system.pcPortraitWidgIds;
+		write(0x101633B7 + 1, &writeVal, 4);
+
+		// ui_render_pc_creation_portraits
+		writeVal = system.MAX_PC_CREATION_PORTRAITS;
+		write(0x10163279 + 1, &writeVal, 1);
+		writeVal = (int)&system.pcPortraitWidgIds;
+		write(0x1016327B + 1, &writeVal, 4);
+
+		writeVal = (int)&system.pcPortraitsMainId;
+		write(0x101632E6 + 2, &writeVal, 4);
+		write(0x1016337A + 2, &writeVal, 4);
+		writeVal = (int)&system.pcPortraitBoxRects;
+		write(0x101632F6 + 2, &writeVal, 4);
+		writeVal = (int)&system.pcPortraitRects;
+		write(0x10163329 + 2, &writeVal, 4);
+	}
+} uiPccPortraitFix;
+
 UiPccPortrait::UiPccPortrait(const UiSystemConf &config) {
-    auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10163660);
-    if (!startup(&config)) {
-        throw TempleException("Unable to initialize game system pcc_portrait");
-    }
+
+	if (textureFuncs.RegisterTexture("art\\interface\\pc_creation\\portrait.tga", uiPccPortraitTexture)
+		|| textureFuncs.RegisterTexture("art\\interface\\pc_creation\\portrait_click.tga", uiPccPortraitClickTexture)
+		|| textureFuncs.RegisterTexture("art\\interface\\pc_creation\\portrait_hover.tga", uiPccPortraitHoverTexture)
+		|| textureFuncs.RegisterTexture("art\\interface\\pc_creation\\portrait_disabled.tga", uiPccPortraitDisabledTexture)
+		)
+	{
+		throw TempleException("Unable to open PCCPortrait textures");
+	}
+		
+	InitWidgets(config.height);
+
+	uiPccPortraitFix.WriteMaxPCPortraitValues(*this);
+
 }
 UiPccPortrait::~UiPccPortrait() {
-    auto shutdown = temple::GetPointer<void()>(0x10163410);
-    shutdown();
+	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
+	{
+		ui.WidgetRemoveRegardParent(pcPortraitWidgIds[i]);
+	}
+	ui.WidgetAndWindowRemove(pcPortraitsMainId);
 }
 void UiPccPortrait::ResizeViewport(const UiResizeArgs& resizeArg) {
-    auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x101636e0);
-    resize(&resizeArg);
+	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
+	{
+		ui.WidgetRemoveRegardParent(pcPortraitWidgIds[i]);
+	}
+	ui.WidgetAndWindowRemove(pcPortraitsMainId);
+	return InitWidgets(resizeArg.rect1.height);
 }
 const std::string &UiPccPortrait::GetName() const {
     static std::string name("pcc_portrait");
     return name;
 }
+
+void UiPccPortrait::Hide()
+{
+	ui.WidgetSetHidden(pcPortraitsMainId, 1);
+}
+
+void UiPccPortrait::ButtonActivateNext()
+{
+	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
+	{
+		auto state = ui.GetButtonState(pcPortraitWidgIds[i]);
+		if (state == LgcyButtonState::Disabled)
+		{
+			ui.SetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Normal);
+			if (i == MAX_PC_CREATION_PORTRAITS - 1)
+				*uiPcPortraitsFullMaybe = 1;
+			return;
+		}
+	}
+	*uiPcPortraitsFullMaybe = 1;
+}
+
+void UiPccPortrait::Refresh()
+{
+	ui.WidgetSetHidden(pcPortraitsMainId, 0);
+	ui.WidgetBringToFront(pcPortraitsMainId);
+	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
+	{
+		ui.SetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Disabled);
+	}
+	*uiPcPortraitsFullMaybe = 0;
+
+	if (party.GroupPCsLen())
+	{
+		for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
+		{
+			ui.SetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Normal);
+		}
+	}
+	*pcCreationIdx = -1;
+}
+
+void UiPccPortrait::Disable()
+{
+	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
+	{
+		ui.SetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Disabled);
+	}
+	*uiPcPortraitsFullMaybe = 0;
+}
+
+bool UiPccPortrait::HandleMessage(LgcyWidgetId widgetId, TigMsg * tigMsg)
+{
+
+	if (tigMsg->type != TigMsgType::WIDGET
+		|| tigMsg->arg2 != 1
+		|| (ui.WidgetlistIndexof(widgetId, pcPortraitWidgIds, MAX_PC_CREATION_PORTRAITS) == -1))
+		return true;
+	return false;
+
+}
+
+void UiPccPortrait::InitWidgets(int height)
+{
+	LgcyWindow pcPortraitsMain(10, height - 80, 650, 63);
+	pcPortraitsMain.flags = 1;
+	pcPortraitsMain.render = [](int widId) {};
+	pcPortraitsMain.handleMessage = [](int widId, TigMsg* msg)->BOOL { return FALSE; };
+
+	pcPortraitsMainId = ui.AddWindow(pcPortraitsMain);
+
+	static auto ui_render_pc_creation_portraits = temple::GetPointer<void(LgcyWidgetId widgetId)>(0x10163270);
+	static auto ui_msg_pc_creation_portraits = temple::GetPointer<BOOL(LgcyWidgetId widgetId, TigMsg *msg)>(0x101633a0);
+
+	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
+	{
+		LgcyButton button;
+		ui.ButtonInit(&button, 0, pcPortraitsMainId, pcPortraitsMain.x + 81 * i, pcPortraitsMain.y, 76, 63);
+
+		pcPortraitBoxRects[i].x = button.x;
+		pcPortraitRects[i].x = button.x + 4;
+
+		pcPortraitBoxRects[i].y = button.y;
+		pcPortraitRects[i].y = button.y + 4;
+
+
+		pcPortraitBoxRects[i].width = button.width;
+		pcPortraitBoxRects[i].height = button.height;
+
+		pcPortraitRects[i].width = 51;
+		pcPortraitRects[i].height = 45;
+
+		button.render = ui_render_pc_creation_portraits;
+		button.handleMessage = ui_msg_pc_creation_portraits;
+
+		pcPortraitWidgIds[i] = ui.AddButton(button, pcPortraitsMainId);
+		ui.SetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Disabled);
+	}
+}
+
 
 //*****************************************************************************
 //* Party-UI
@@ -971,6 +1081,12 @@ void UiManager::Reset() {
 const std::string &UiManager::GetName() const {
     static std::string name("UI-Manager");
     return name;
+}
+
+bool UiManager::HandleKeyEvent(const InGameKeyEvent & msg)
+{
+	static auto UiManagerKeyEventHandler = temple::GetPointer<BOOL(const InGameKeyEvent &kbMsg)>(0x10143d60);
+	return UiManagerKeyEventHandler(msg) != 0;
 }
 
 //*****************************************************************************

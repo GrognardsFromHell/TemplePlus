@@ -5,6 +5,8 @@
 #include <cstdint>
 
 #include "ui_system.h"
+#include "ui_ingame.h"
+#include "ui_item_creation.h"
 
 struct UiSystemConf {
 	BOOL editor = FALSE;
@@ -23,6 +25,31 @@ public:
     const std::string &GetName() const override;
 };
 
+#pragma pack(push, 1)
+struct MainMenuPageButton {
+	LgcyButton widget;
+	LgcyWidgetId widgetId;
+	LgcyWidgetId parentWidgetId;
+	int buttonIdx;
+	char *label;
+	TigRect rect;
+	TigRect textureRect;
+	int _1;
+	int textureIdNormal;
+	int _2;
+	int textureIdHover;
+	int _3;
+	int textureIdDown;
+};
+
+struct MainMenuPage {
+	LgcyWindow widget;
+	LgcyWidgetId widgetId;
+	MainMenuPageButton buttons[10];
+};
+using MainMenuPages = MainMenuPage[10];
+#pragma pack(pop)
+
 class UiMM : public UiSystem {
 public:
     static constexpr auto Name = "MM-UI";
@@ -30,6 +57,11 @@ public:
     ~UiMM();
     void ResizeViewport(const UiResizeArgs &resizeArgs) override;
     const std::string &GetName() const override;
+
+	bool IsVisible() const;
+
+private:
+	MainMenuPages &mPages = temple::GetRef<MainMenuPages>(0x10BD4F40);
 };
 
 class UiLoadGame : public UiSystem {
@@ -50,17 +82,6 @@ public:
     const std::string &GetName() const override;
 };
 
-class UiInGame : public UiSystem, public SaveGameAwareUiSystem {
-public:
-    static constexpr auto Name = "Intgame";
-    UiInGame(const UiSystemConf &config);
-    ~UiInGame();
-    void Reset() override;
-    bool LoadGame(const UiSaveFile &saveGame) override;
-    void ResizeViewport(const UiResizeArgs &resizeArgs) override;
-    const std::string &GetName() const override;
-};
-
 class UiInGameSelect : public UiSystem {
 public:
     static constexpr auto Name = "IntgameSelect";
@@ -75,16 +96,6 @@ public:
     static constexpr auto Name = "RadialMenu";
     UiRadialMenu(const UiSystemConf &config);
     ~UiRadialMenu();
-    void ResizeViewport(const UiResizeArgs &resizeArgs) override;
-    const std::string &GetName() const override;
-};
-
-class UiTurnBased : public UiSystem {
-public:
-    static constexpr auto Name = "TurnBased";
-    UiTurnBased(const UiSystemConf &config);
-    ~UiTurnBased();
-    void Reset() override;
     void ResizeViewport(const UiResizeArgs &resizeArgs) override;
     const std::string &GetName() const override;
 };
@@ -143,6 +154,12 @@ public:
     bool LoadGame(const UiSaveFile &saveGame) override;
     void ResizeViewport(const UiResizeArgs &resizeArgs) override;
     const std::string &GetName() const override;
+
+	bool IsActive() const;
+
+private:
+	uint32_t& mFlags = temple::GetRef<uint32_t>(0x10BEA5F4);
+	LgcyWidgetId& mWindowId = temple::GetRef<LgcyWidgetId>(0x10BEA2E4);
 };
 
 class UiPcCreation : public UiSystem {
@@ -154,6 +171,19 @@ public:
     const std::string &GetName() const override;
 };
 
+/**
+ * For which purpose has the inventory screen been opened?
+ */
+enum class UiCharDisplayType : uint32_t {
+	Unk0 = 0,
+	Looting = 1,
+	Bartering = 2,
+	LevelUp = 3,
+	UsingMagicOnItem = 4,
+	PartyPool = 5,
+	Unk6 = 6
+};
+
 class UiChar : public UiSystem {
 public:
     static constexpr auto Name = "Char-UI";
@@ -162,6 +192,50 @@ public:
     void Reset() override;
     void ResizeViewport(const UiResizeArgs &resizeArgs) override;
     const std::string &GetName() const override;
+
+	// Was @ 101F97D0 (GetInventoryObjState)
+	bool GetInventoryObjectState() const {
+		return mInventoryObjState != 0;
+	}
+
+	// Was @ 101F97E0 (UiCharInventoryObjSetState)
+	void SetInventoryObjectState(bool state) {
+		mInventoryObjState = state ? 1 : 0;
+	}
+
+	// Was @ 10155160 (GetCharInventoryObj)
+	objHndl GetInventoryObject() const {
+		return mInventoryObj;
+	}
+
+	// Was @ 10155170 (UiCharInventoryObjSet)
+	void SetInventoryObject(objHndl handle) {
+		mInventoryObj = handle;
+		SetInventoryObjectState(!!handle);
+	}
+
+	// Was @ 10144030 (ui_char_has_current_critter)
+	bool IsVisible() const {
+		return !!mCurrentCritter;
+	}
+
+	UiCharDisplayType GetDisplayType() const {
+		return mDisplayType;
+	}
+
+	bool IsLevelingUp() const {
+		return GetDisplayType() == UiCharDisplayType::LevelUp;
+	}
+
+	bool IsBartering() const {
+		return GetDisplayType() == UiCharDisplayType::Bartering;
+	}
+
+private:
+	objHndl &mInventoryObj = temple::GetRef<objHndl>(0x10BEECC0);
+	BOOL &mInventoryObjState = temple::GetRef<BOOL>(0x10EF97C4);
+	objHndl &mCurrentCritter = temple::GetRef<objHndl>(0x10BE9940);
+	UiCharDisplayType &mDisplayType = temple::GetRef<UiCharDisplayType>(0x10BE994C);
 };
 
 class UiToolTip : public UiSystem {
@@ -182,6 +256,14 @@ public:
     bool LoadGame(const UiSaveFile &saveGame) override;
     void ResizeViewport(const UiResizeArgs &resizeArgs) override;
     const std::string &GetName() const override;
+
+	// Was @ 101260F0 (ui_logbook_is_visible)
+	bool IsVisible() const {
+		return mVisible != 0;
+	}
+
+private:
+	BOOL &mVisible = temple::GetRef<BOOL>(0x10BE0C58);
 };
 
 class UiScrollpane : public UiSystem {
@@ -202,6 +284,14 @@ public:
     bool LoadGame(const UiSaveFile &saveGame) override;
     void ResizeViewport(const UiResizeArgs &resizeArgs) override;
     const std::string &GetName() const override;
+
+	// Was @ 10128B60 (ui_townmap_is_visible)
+	bool IsVisible() const {
+		return mVisible != 0;
+	}
+
+private:
+	BOOL &mVisible = temple::GetRef<BOOL>(0x10BE1F28);
 };
 
 class UiPopup : public UiSystem {
@@ -258,16 +348,6 @@ public:
     const std::string &GetName() const override;
 };
 
-class UiItemCreation : public UiSystem {
-public:
-    static constexpr auto Name = "ItemCreation-UI";
-    UiItemCreation(const UiSystemConf &config);
-    ~UiItemCreation();
-    void Reset() override;
-    void ResizeViewport(const UiResizeArgs &resizeArgs) override;
-    const std::string &GetName() const override;
-};
-
 class UiSkillMastery : public UiSystem {
 public:
     static constexpr auto Name = "SkillMastery-UI";
@@ -314,12 +394,40 @@ public:
 };
 
 class UiPccPortrait : public UiSystem {
+friend class UiPccPortraitFix;
 public:
     static constexpr auto Name = "pcc_portrait";
     UiPccPortrait(const UiSystemConf &config);
     ~UiPccPortrait();
     void ResizeViewport(const UiResizeArgs &resizeArgs) override;
     const std::string &GetName() const override;
+
+	void Hide();
+	void ButtonActivateNext();
+	void Refresh();
+	void Disable();
+	
+private:
+	static constexpr int MAX_PC_CREATION_PORTRAITS = 8;
+
+	bool HandleMessage(LgcyWidgetId widgetId, TigMsg* tigMsg);
+
+	int* pcCreationIdx = temple::GetPointer<int>(0x10BF0BC8);
+	int* uiPccPortraitTexture = temple::GetPointer<int>(0x10BF0BCC);
+	int* uiPccPortraitHoverTexture = temple::GetPointer<int>(0x10BF0C20);
+	int* uiPccPortraitClickTexture = temple::GetPointer<int>(0x10BF1354);
+	int* uiPccPortraitDisabledTexture = temple::GetPointer<int>(0x10BF1358);
+	int* uiPcPortraitsFullMaybe = temple::GetPointer<int>(0x10BF0ED0);
+
+	LgcyWindow * pcCreationPortraitsMainWidget = temple::GetPointer<LgcyWindow>(0x10BF0C28);
+		
+	int pcPortraitsMainId = -1;
+	int pcPortraitWidgIds[MAX_PC_CREATION_PORTRAITS] = { -1, };
+	TigRect pcPortraitRects[MAX_PC_CREATION_PORTRAITS];
+	TigRect pcPortraitBoxRects[MAX_PC_CREATION_PORTRAITS];
+
+	void InitWidgets(int height);
+
 };
 
 class UiParty : public UiSystem {
@@ -330,6 +438,29 @@ public:
     void Reset() override;
     void ResizeViewport(const UiResizeArgs &resizeArgs) override;
     const std::string &GetName() const override;
+
+	// Was @ 10131990
+	void SetPressedObj(objHndl handle) {
+		mPressedObj = handle;
+	}
+
+	// Was @ 10131970
+	void SetHoveredObj(objHndl handle) {
+		mHoveredObj = handle;
+	}
+
+private:
+	/**
+	 * Indicates for which party member a "mouse pressed" frame should be drawn regardless 
+	 * of the actual mouse state.
+	 */
+	objHndl& mPressedObj = temple::GetRef<objHndl>(0x10BE3400);
+
+	/**
+	* Indicates for which party member a "mouse over" frame should be drawn regardless
+	* of the actual mouse state.
+	*/
+	objHndl& mHoveredObj = temple::GetRef<objHndl>(0x10BE33F8);
 };
 
 class UiFormation : public UiSystem {
@@ -377,6 +508,18 @@ public:
     const std::string &GetName() const override;
 };
 
+#pragma pack(push, 1)
+struct InGameKeyEvent {
+	const TigMsg &msg;
+	uint32_t eventName = 62;
+	uint32_t field8;
+	uint32_t field10;
+	uint32_t field14;
+
+	explicit InGameKeyEvent(const TigMsg &msg) : msg(msg) {}
+};
+#pragma pack(pop)
+
 class UiManager : public UiSystem {
 public:
     static constexpr auto Name = "UI-Manager";
@@ -384,6 +527,16 @@ public:
     ~UiManager();
     void Reset() override;
     const std::string &GetName() const override;
+
+	// Was @ 101431D0 UiManStateSet
+	void SetState(uint32_t state) {
+		mState = state;
+	}
+
+	bool HandleKeyEvent(const InGameKeyEvent &msg);
+
+private:
+	uint32_t &mState = temple::GetRef<uint32_t>(0x10BE8CF4);
 };
 
 class UiHelpManager : public UiSystem, public SaveGameAwareUiSystem {
