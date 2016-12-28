@@ -70,7 +70,7 @@ struct NewFeatSpec {
 	std::vector<FeatPrereq> prereqs;
 	feat_enums parentId = (feat_enums)0;              // for multiselect feats such as Weapon Focus
 	std::vector<feat_enums> children; // for multiselect feats such as Weapon Focus
-	WeaponTypes weapType;      // for weapon feats which are weapon specific (such as Weapon Focus - Shortsword)
+	WeaponTypes weapType = wt_none;      // for weapon feats which are weapon specific (such as Weapon Focus - Shortsword)
 	NewFeatSpec() { flags = (FeatPropertyFlag)0; };
 };
 
@@ -132,8 +132,6 @@ struct LegacyFeatSystem : temple::AddressTable
 	uint32_t FeatListElective(objHndl objHnd, feat_enums * listOut);
 	uint32_t FeatListGet(objHndl objHnd, feat_enums * listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat);
 	uint32_t FeatExistsInArray(feat_enums featCode, feat_enums * featArray, uint32_t featArrayLen);
-	uint32_t WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType);
-	feat_enums GetFeatForWeaponType(WeaponTypes wt, feat_enums baseFeat); // for stuff like Weapon Specialization/Focus etc.
 	uint32_t FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * featArray, uint32_t featArrayLen, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased);
 
 	std::vector<feat_enums> GetFeats(objHndl handle); // This is what objHndl.feats in python returns ??
@@ -148,6 +146,11 @@ struct LegacyFeatSystem : temple::AddressTable
 	int IsClassFeat(feat_enums feat);
 	int IsFighterFeat(feat_enums feat); // feats that fighters can select as bonus feats
 	int IsFeatPropertySet(feat_enums feat, int featProp); // checks bitfield if the entire featProp is set (i.e. partial matches return 0)
+
+	// weapon feats handling
+	WeaponTypes GetWeaponType(feat_enums feat); // gets the associated weapon type
+	uint32_t WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType);
+	feat_enums GetFeatForWeaponType(WeaponTypes wt, feat_enums baseFeat); // for stuff like Weapon Specialization/Focus etc.
 
 	int IsFeatPartOfMultiselect(feat_enums feat); // hidden feats that are only selectable in a submenu
 	bool IsFeatMultiSelectMaster(feat_enums feat);

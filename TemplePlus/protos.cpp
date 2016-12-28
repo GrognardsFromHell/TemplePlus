@@ -352,11 +352,11 @@ int ProtosHooks::ParseType(int colIdx, objHndl handle, char * content, obj_f fie
 			if (damType == DamageType::Unspecified){
 				weapons.wpnProps[weapType].damType = (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype);
 			} 
-			else if (damType != (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype)){ // for debug
-				auto d = description.getDisplayName(handle);
-				auto strangeWeaponDamType = (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype);
-				auto dummy = 1;
-			}
+			//else if (damType != (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype)){ // for debug
+			//	auto d = description.getDisplayName(handle);
+			//	auto strangeWeaponDamType = (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype);
+			//	auto dummy = 1;
+			//}
 		}
 	}
 

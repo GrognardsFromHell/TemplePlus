@@ -2041,6 +2041,23 @@ static PyObject* PyObjHandle_ObjectEventAppend(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+static PyObject* PyObjHandle_WallEventAppend(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(-1);
+	}
+
+	float radiusFeet, wallAngle;
+	ObjectListFilter filter;
+	if (!PyArg_ParseTuple(args, "iff:objhndl.object_event_append_wall", &filter, &radiusFeet, &wallAngle)) {
+		return 0;
+	}
+
+	auto result = objEvents.EventAppend(self->handle, OBJ_EVENT_WALL_ENTERED_HANDLER_ID, OBJ_EVENT_WALL_EXITED_HANDLER_ID, filter, radiusFeet * (float)12.0, wallAngle, XM_2PI);
+
+	return PyInt_FromLong(result);
+}
+
 static PyObject* PyObjHandle_SetInt(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -2887,6 +2904,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "npc_flag_unset", ClearFlag<obj_f_npc_flags>, METH_VARARGS, NULL },
 	
 	{ "object_event_append", PyObjHandle_ObjectEventAppend, METH_VARARGS, NULL },
+	{ "object_event_append_wall", PyObjHandle_WallEventAppend, METH_VARARGS, NULL },
 	{ "obj_get_int", PyObjHandle_GetInt, METH_VARARGS, NULL },
 	{ "obj_get_idx_int", PyObjHandle_GetIdxInt, METH_VARARGS, NULL },
 	{ "obj_get_int64", PyObjHandle_GetInt64, METH_VARARGS, "Gets 64 bit field" },

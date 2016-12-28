@@ -2522,7 +2522,9 @@ enum WeaponTypes : uint32_t
 	wt_grapple,
 	wt_ray,
 	wt_grenade,   // 72
-	wt_mindblade
+	wt_mindblade,
+
+	wt_none = 0xFFFFffff
 };
 
 

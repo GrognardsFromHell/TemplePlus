@@ -573,13 +573,44 @@ uint32_t LegacyFeatSystem::FeatExistsInArray(feat_enums featCode, feat_enums * f
 	return 0;
 };
 
-uint32_t LegacyFeatSystem::WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType)
-{
+WeaponTypes LegacyFeatSystem::GetWeaponType(feat_enums feat){
+	if (feat > NUM_FEATS){
+		return mNewFeats[feat].weapType;
+	}
+
+	if (IsFeatPropertySet(feat, FPF_WEAP_FOCUS_ITEM)){
+		return (WeaponTypes)(wt_gauntlet + (feat-FEAT_WEAPON_FOCUS_GAUNTLET));
+	}
+	else if (IsFeatPropertySet(feat, FPF_GREATER_WEAP_FOCUS_ITEM)){
+		return (WeaponTypes)(wt_gauntlet + (feat - FEAT_GREATER_WEAPON_FOCUS_GAUNTLET));
+	}
+	else if (IsFeatPropertySet(feat, FPF_WEAP_SPEC_ITEM)){
+		return (WeaponTypes)(wt_gauntlet + (feat - FEAT_WEAPON_SPECIALIZATION_GAUNTLET));
+	}
+	else if (IsFeatPropertySet(feat, FPF_GREAT_WEAP_SPEC_ITEM)) {
+		return (WeaponTypes)(wt_gauntlet + (feat - FEAT_GREATER_WEAPON_SPECIALIZATION_GAUNTLET));
+	}
+	else if (IsFeatPropertySet(feat, FPF_IMPR_CRIT_ITEM)) {
+		return (WeaponTypes)(wt_gauntlet + (feat - FEAT_IMPROVED_CRITICAL_GAUNTLET));
+	}
+}
+
+uint32_t LegacyFeatSystem::WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType){
 	return _WeaponFeatCheck( objHnd,  featArray,  featArrayLen,  classBeingLeveled,  wpnType);
 }
 
 feat_enums LegacyFeatSystem::GetFeatForWeaponType(WeaponTypes wt, feat_enums baseFeat){
 
+	if (baseFeat > NUM_FEATS){
+		
+		auto ft = mNewFeats[baseFeat];
+		for (auto it:ft.children){
+			if (mNewFeats[it].weapType == wt){
+				return it;
+			}
+		}
+		return FEAT_NONE;
+	}
 
 	if (baseFeat == FEAT_WEAPON_FOCUS) {
 		if (wt >= wt_gauntlet && wt <= wt_ray)

@@ -2175,7 +2175,7 @@ BOOL UiCharEditor::FeatsMultiBtnMsg(int widId, TigMsg* msg){
 			helpSys.PresentWikiHelp(109 + feat);
 			return TRUE;
 		}
-		if (FeatCanPick(feat)){
+		if (FeatCanPick(feat) && !FeatAlreadyPicked(feat)){
 			featsMultiSelected = feat;
 			ui.SetButtonState(featsMultiOkBtnId, LgcyButtonState::Normal);
 		} else

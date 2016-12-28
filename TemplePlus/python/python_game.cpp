@@ -40,6 +40,8 @@
 #include <history.h>
 #include <config/config.h>
 #include <gamesystems/deity/legacydeitysystem.h>
+#include <damage.h>
+#include <weapon.h>
 
 static PyObject *encounterQueue = nullptr;
 
@@ -486,6 +488,33 @@ PyObject* PyGame_GetBabForClass(PyObject*, PyObject* args){
 
 	return PyInt_FromLong(d20ClassSys.GetBaseAttackBonus(classCode, classLvl));
 }
+
+PyObject* PyGame_GetWpnTypeForFeat(PyObject*, PyObject* args) {
+	feat_enums featCode;
+	if (!PyArg_ParseTuple(args, "i:game.get_weapon_type_for_feat", &featCode)) {
+		return nullptr;
+	}
+
+	return PyInt_FromLong(feats.GetWeaponType(featCode));
+}
+
+PyObject* PyGame_DamageTypeMatch(PyObject*, PyObject* args) {
+	DamageType dt1, dt2;
+	if (!PyArg_ParseTuple(args, "ii:game.damage_type_match", &dt1, &dt2)) {
+		return nullptr;
+	}
+	return PyInt_FromLong(damage.DamageTypeMatch(dt1, dt2) + damage.DamageTypeMatch(dt2, dt1));
+}
+
+PyObject* PyGame_GetWpnDamType(PyObject*, PyObject* args) {
+	WeaponTypes wt;
+	if (!PyArg_ParseTuple(args, "i:game.get_weapon_damage_type", &wt)) {
+		return nullptr;
+	}
+	auto damType = weapons.wpnProps[wt].damType;
+	return PyInt_FromLong((int)damType);
+}
+
 
 
 PyObject* PyGame_IsSaveFavoerdForClass(PyObject*, PyObject* args) {
@@ -1196,9 +1225,13 @@ static PyMethodDef PyGameMethods[]{
 	{"combat_is_active", PyGame_CombatIsActive, METH_VARARGS, NULL},
 	{"written_ui_show", PyGame_WrittenUiShow, METH_VARARGS, NULL},
 	{"is_daytime", PyGame_IsDaytime, METH_VARARGS, NULL},
+
+	{"damage_type_match", PyGame_DamageTypeMatch, METH_VARARGS, NULL },
 	{"vlist", PyGame_Vlist, METH_VARARGS, NULL },
 	{"getproto", PyGame_GetProto, METH_VARARGS, NULL },
 	{"get_bab_for_class", PyGame_GetBabForClass,METH_VARARGS, NULL },
+	{ "get_weapon_type_for_feat", PyGame_GetWpnTypeForFeat,METH_VARARGS, NULL },
+	{ "get_weapon_damage_type", PyGame_GetWpnDamType,METH_VARARGS, NULL },
 	{"is_save_favored_for_class", PyGame_IsSaveFavoerdForClass,METH_VARARGS, NULL },
 	{ "is_lax_rules", PyGame_IsLaxRules,METH_VARARGS, NULL },
 	// This is some unfinished UI for which the graphics are missing
