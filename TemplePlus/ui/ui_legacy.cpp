@@ -187,7 +187,10 @@ void UiLegacyManager::RemoveChildWidget(LgcyWidgetId id)
 
 void UiLegacyManager::Render()
 {
-	for (auto windowId : mActiveWindows) {
+	// Make a copy here since some vanilla logic will show/hide windows in their render callbacks
+	auto activeWindows(mActiveWindows);
+
+	for (auto windowId : activeWindows) {
 		auto window = GetWindow(windowId);
 		if (window->IsHidden()) {
 			continue;
