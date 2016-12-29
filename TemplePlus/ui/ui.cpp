@@ -66,7 +66,7 @@ public:
 		});
 
 		replaceFunction<BOOL(TigMsg*)>(0x101F8A80, [](TigMsg *msg) {
-			return ui.ProcessMessage(msg);
+			return ui.ProcessMessage(*msg) ? TRUE : FALSE;
 		});
 
 		 /*
@@ -467,7 +467,7 @@ int Ui::WidgetlistIndexof(LgcyWidgetId widgetId, int* widgetlist, int size)
 	return -1;
 }
 
-BOOL Ui::WidgetContainsPoint(int widgetId, int x, int y)
+bool Ui::WidgetContainsPoint(int widgetId, int x, int y)
 {
 	auto widg = GetWidget(widgetId);
 	if (!widg)
@@ -676,142 +676,27 @@ int Ui::TranslateMouseMessage(TigMouseMsg* mouseMsg)
 	return 0;
 }
 
-int Ui::ProcessMessage(TigMsg * msg)
+bool Ui::ProcessMessage(TigMsg &msg)
 {
-	TigMsg *v1; // ebx@1
-	TigMsgType eventType; // eax@1
-	LgcyWidgetHandleMsgFn v5;
-	int v7; // edi@10
-	LgcyWidget *v8; // eax@11
-	LgcyWidget *v9; // esi@11
-	LgcyWidgetHandleMsgFn v10;
-	LgcyWidget *v12; // eax@20
-	LgcyWidgetHandleMsgFn v13;
-	int v14; // esi@24
-	LgcyWindow *v15; // eax@25
-	LgcyWindow *v16; // ebp@25
-	signed __int32 v17; // edi@29
-	int *v18; // esi@30
-	LgcyWidget *v19; // eax@32
-	LgcyWidgetHandleMsgFn v20;
-	LgcyWidgetHandleMsgFn v21;
-	int a1a; // [sp+14h] [bp+4h]@24
 
-	v1 = msg;
-	eventType = msg->type;
-	if (eventType != TigMsgType::MOUSE)
-	{
-		// TMT_UNK1
-		if (eventType == TigMsgType::WIDGET)
-		{
-			v7 = msg->arg1;
-			if (v7 != -1)
-			{
-				while (1)
-				{
-					v8 = GetWidget(v7);
-					v9 = v8;
-					if (!v8)
-						break;
-					if ((v8->parentId == -1 || !IsWidgetHidden(v8->parentId)) && !v9->IsHidden())
-					{
-						v10 = v9->handleMessage;
-						if (v10)
-						{
-							if (v10(v7, msg))
-								return 1;
-						}
-					}
-					v7 = v9->parentId;
-					if (v7 == -1)
-						return 0;
+	switch (msg.type) {
+	case TigMsgType::MOUSE:
+		return ProcessMouseMessage(msg);
+	case TigMsgType::WIDGET:
+		return ProcessWidgetMessage(msg);
+	default:
+		for (auto &windowId : mLegacy.GetActiveWindows()) {
+			auto window = mLegacy.GetWidget(windowId);
+
+			if (!window->IsHidden() && window->CanHandleMessage()) {
+				if (window->HandleMessage(msg)) {
+					return true;
 				}
 			}
 		}
-		else
-		{
-			for (auto &windowId : mLegacy.GetActiveWindows()) {
-				auto window = mLegacy.GetWidget(windowId);
-
-				if (!window->IsHidden()) {
-					v5 = window->handleMessage;
-					if (v5)
-					{
-						if (v5(windowId, msg))
-							return 1;
-					}
-				}
-			}
-			return 0;
-		}
-		return 0;
+		return false;
 	}
 
-	static int& widgetMouseCaptureId = temple::GetRef<int>(0x11E74384);
-
-	if (widgetMouseCaptureId != -1)
-	{
-		v12 = GetWidget(widgetMouseCaptureId);
-		if (v12)
-		{
-			v13 = v12->handleMessage;
-			if (v13)
-			{
-				v13(widgetMouseCaptureId, msg);
-				return 1;
-			}
-		}
-		return 0;
-	}
-	v14 = 0;
-	a1a = 0;
-
-	auto &windowIds = mLegacy.GetActiveWindows();
-
-	if (windowIds.size() <= 0)
-		return 0;
-	while (1)
-	{
-		v15 = mLegacy.GetWindow(windowIds[v14]);
-		v16 = v15;
-		if (!v15 || !v15->IsWindow() || v15->IsHidden() || !WidgetContainsPoint(windowIds[v14], v1->arg1, v1->arg2))
-			goto LABEL_41;
-		v17 = v16->childrenCount - 1;
-		if (v17 >= 0)
-			break;
-	LABEL_38:
-		v21 = v16->handleMessage;
-		if (v21 && !v16->IsHidden() && v21(windowIds[v14], v1))
-			return 1;
-	LABEL_41:
-		a1a = ++v14;
-		if (v14 >= windowIds.size())
-			return 0;
-	}
-	v18 = &v16->children[v17];
-	while (1)
-	{
-		if (mLegacy.DoesWidgetContain(*v18, v1->arg1, v1->arg2))
-		{
-			v19 = mLegacy.GetWidget(*v18);
-			if (v19)
-			{
-				v20 = v19->handleMessage;
-				if (v20)
-				{
-					if (!v19->IsHidden() && v20(*v18, v1))
-						return 1;
-				}
-			}
-		}
-		--v17;
-		--v18;
-		if (v17 < 0)
-		{
-			v14 = a1a;
-			goto LABEL_38;
-		}
-	}
 }
 
 bool Ui::ScrollbarGetY(int widId, int * scrollbarY) {
@@ -888,4 +773,74 @@ const char * Ui::GetStatMesLine(int lineNumber) const
 	MesLine line(lineNumber);
 	mesFuncs.GetLine_Safe(mesHandle, &line);
 	return line.value;
+}
+
+bool Ui::ProcessWidgetMessage(TigMsg & msg)
+{
+	auto widgetId = msg.arg1;
+	LgcyWidget *dispatchTo;
+	while (widgetId != -1 && (dispatchTo = GetWidget(widgetId)) != nullptr)
+	{
+		if ((dispatchTo->parentId == -1 || !IsWidgetHidden(dispatchTo->parentId)) && !dispatchTo->IsHidden())
+		{
+			if (dispatchTo->CanHandleMessage())
+			{
+				if (dispatchTo->HandleMessage(msg)) {
+					return true;
+				}
+			}
+		}
+		// Bubble up the msg if the widget didn't handle it
+		widgetId = dispatchTo->parentId;
+	}
+	return false;
+}
+
+bool Ui::ProcessMouseMessage(TigMsg & msg)
+{
+	// Handle if a widget requested mouse capture
+	if (mMouseCaptureWidgetId != -1)
+	{
+		auto widget = GetWidget(mMouseCaptureWidgetId);
+		if (widget && widget->CanHandleMessage()) {
+			widget->HandleMessage(msg);
+			return true;
+		}
+		return false;
+	}
+
+	auto &windowIds = mLegacy.GetActiveWindows();
+
+	for (size_t i = 0; i < windowIds.size(); i++) {
+		auto window = mLegacy.GetWindow(windowIds[i]);
+
+		if (!window || !window->IsWindow() || window->IsHidden() || !WidgetContainsPoint(windowIds[i], msg.arg1, msg.arg2)) {
+			continue;
+		}
+
+		// Try dispatching the msg to all children of the window that are also under the mouse cursor, in reverse order of their
+		// own insertion into the children list
+		for (auto j = 0u; j < window->childrenCount; j++) {
+			auto idx = window->childrenCount - 1 - j;
+			auto childId = window->children[idx];
+
+			if (mLegacy.DoesWidgetContain(childId, msg.arg1, msg.arg2))
+			{
+				auto child = mLegacy.GetWidget(childId);
+				if (child && child->CanHandleMessage() && !child->IsHidden()) {
+					if (child->HandleMessage(msg)) {
+						return true;
+					}
+				}
+			}
+		}
+
+		// After checking with all children, dispatch the msg to the window itself
+		if (window->CanHandleMessage() && !window->IsHidden() && window->HandleMessage(msg)) {
+			return true;
+		}
+
+	}
+
+	return false;
 }

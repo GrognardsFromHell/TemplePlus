@@ -1795,7 +1795,7 @@ BOOL UiItemCreation::ItemCreationWndMsg(int widId, TigMsg * msg){
 			auto newMsg = *(TigMsgMouse*)msg;
 			newMsg.buttonStateFlags = MSF_SCROLLWHEEL_CHANGE;
 			*mItemCreationScrollbar = *ui.GetScrollBar(mItemCreationScrollbarId);
-			mItemCreationScrollbar->handleMessage(mItemCreationScrollbarId, (TigMsg*)&newMsg);
+			mItemCreationScrollbar->HandleMessage((TigMsg&)newMsg);
 		}
 		return true;
 	}
@@ -2697,7 +2697,7 @@ BOOL UiItemCreation::MaaWndMsg(int widId, TigMsg * msg)
 			auto widg = ui.GetScrollBar(mMaaApplicableEffectsScrollbarId);
 			auto newMsg = *(TigMsgMouse*)msg;
 			newMsg.buttonStateFlags = MSF_SCROLLWHEEL_CHANGE;
-			widg->handleMessage(mMaaApplicableEffectsScrollbarId, (TigMsg*)&newMsg);
+			widg->HandleMessage((TigMsg&)newMsg);
 		}
 
 		return true;

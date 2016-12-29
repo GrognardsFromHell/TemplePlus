@@ -57,6 +57,14 @@ struct LgcyWidget {
 		return (flags & 1) != 0;
 	}
 
+	bool CanHandleMessage() const {
+		return !!handleMessage;
+	}
+
+	bool HandleMessage(const TigMsg &msg) {
+		return handleMessage(widgetId, const_cast<TigMsg*>(&msg)) != 0;
+	}
+
 	size_t GetSize() const;
 };
 

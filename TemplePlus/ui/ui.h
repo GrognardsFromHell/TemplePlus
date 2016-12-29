@@ -157,7 +157,7 @@ public:
 	LgcyButtonState GetButtonState(LgcyWidgetId widId);
 	void WidgetBringToFront(LgcyWidgetId widId);
 	int WidgetlistIndexof(LgcyWidgetId widgetId, int * widgetlist, int size);
-	BOOL WidgetContainsPoint(LgcyWidgetId widgetId, int x, int y);
+	bool WidgetContainsPoint(LgcyWidgetId widgetId, int x, int y);
 	
 	/*
 			gets widget at x,y including children
@@ -168,7 +168,7 @@ public:
 	 * Handles a mouse message and produces higher level mouse messages based on it.
 	 */
 	int TranslateMouseMessage(TigMouseMsg* mouseMsg);
-	int ProcessMessage(TigMsg* mouseMsg);
+	bool ProcessMessage(TigMsg& mouseMsg);
 
 	bool ScrollbarGetY(LgcyWidgetId widId, int * y);
 	void ScrollbarSetYmax(LgcyWidgetId widId, int yMax);
@@ -178,6 +178,12 @@ public:
 	const char* GetStatMesLine(int line) const;
 
 private:
+
+	int& mMouseCaptureWidgetId = temple::GetRef<int>(0x11E74384);
+
+	bool ProcessWidgetMessage(TigMsg &msg);
+	bool ProcessMouseMessage(TigMsg &msg);
+
 	UiLegacyManager mLegacy;
 };
 extern Ui ui;

@@ -61,7 +61,7 @@ bool MessageQueue::HandleMessage(const Message& msg) {
 		return true;
 	}
 
-	if (ui.ProcessMessage((TigMsg*)&msg)) {
+	if (ui.ProcessMessage(const_cast<TigMsg&>(msg))) {
 		if (msg.type == TigMsgType::TMT_UNK7) {
 			return false;
 		}
