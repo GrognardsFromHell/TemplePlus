@@ -23,6 +23,12 @@ public:
 		replaceFunction<void()>(0x101df7f0, []() {
 			tig->GetConsole().Hide();
 		});
+
+		// console_set_cheats
+		replaceFunction<void(Cheat*, int)>(0x101df690, [](Cheat* cheats, int cheatCount) {
+			tig->GetConsole().SetCheats(cheats, cheatCount);
+		});
+
 	}
 
 } consoleWrapper;

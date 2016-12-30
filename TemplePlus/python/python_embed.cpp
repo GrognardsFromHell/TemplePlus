@@ -12,7 +12,11 @@
 #include "python_integration_spells.h"
 #include "python_console.h"
 #include "tio/tio.h"
+#include "tig/tig_startup.h"
+#include "tig/tig_console.h"
 #include <set>
+#include <string>
+#include <functional>
 #include "python_module.h"
 #include "python_dispatcher.h"
 
@@ -24,29 +28,10 @@
 extern "C" PyObject *inittp_dispatcher();
 extern "C" PyObject *inittp_char_editor();
 extern "C" PyObject *inittp_actions();
-static struct PythonInitInternal : temple::AddressTable {
-
-	// Writes to the console window
-	size_t (__cdecl *PythonConsoleWrite)(const void* ptr, size_t size, size_t count, void* handle);
-
-	void(__cdecl *TigConsoleSetCommandInterpreter)(void(__cdecl*)(const char*));
-
-	PythonInitInternal() {
-		rebase(PythonConsoleWrite, 0x101DFE90);
-		rebase(TigConsoleSetCommandInterpreter, 0x101DF820);
-	}	
-} pythonInitInternal;
 
 static PyObject *MainModule;
 PyObject *MainModuleDict;
 static PyConsole *console;
-
-// Wrapper for PyConsole::Exec
-static void __cdecl PyConsole_Exec(const char *str) {
-	if (console) {
-		console->Exec(str);
-	}
-}
 
 void PythonPrepareGlobalNamespace() {
 	// Pre-Import anything from toee into globals
@@ -100,7 +85,7 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 	Py_XDECREF(m);
 
 	console = new PyConsole;
-	pythonInitInternal.TigConsoleSetCommandInterpreter(PyConsole_Exec);
+	tig->GetConsole().SetCommandInterpreter(std::bind(&PyConsole::Exec, console, std::placeholders::_1));
 
 	// don't forget PyTempleImporter_Install (when adding new python integrations, for example...)
 	pythonObjIntegration.LoadScripts();

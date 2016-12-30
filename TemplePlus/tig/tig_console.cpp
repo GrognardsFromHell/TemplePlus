@@ -102,8 +102,14 @@ void Console::Execute(const std::string &command, bool skipHistory)
 		mCommandHistory.push_back(command);
 	}
 
+	if (!ExecuteCheat(command)) {
+		ExecuteScript(command);
+	}
 
+}
 
+void Console::RunBatchFile(const std::string & path)
+{
 }
 
 void Console::Show()
@@ -122,4 +128,44 @@ void Console::Append(const char * text)
 	rtrim(line);
 	mLog.push_back(line);
 	ScrollToBottom();
+}
+
+void Console::SetCheats(Cheat * cheats, size_t count)
+{
+	mCheats.resize(count);
+	for (size_t i = 0; i < count; i++) {
+		mCheats[i] = cheats[i];
+	}
+}
+
+void Console::SetCommandInterpreter(std::function<void(const std::string&)> interpreter)
+{
+	mInterpreter = interpreter;
+}
+
+bool Console::ExecuteCheat(const std::string & command)
+{
+	for (auto &cheat : mCheats) {
+
+		if (!cheat.handler) {
+			continue; // Dont bother if it doesn't have a handler
+		}
+
+		int nameLen = strlen(cheat.name);
+		// This is equivalent to a case insensitive "startsWith"
+		if (!_strnicmp(&command[0], cheat.name, nameLen)) {
+			if (cheat.handler(command.c_str()) == 1) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+void Console::ExecuteScript(const std::string & command)
+{
+	if (mInterpreter) {
+		mInterpreter(command);
+	}
 }
