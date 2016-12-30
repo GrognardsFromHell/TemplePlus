@@ -234,12 +234,8 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def("is_offhand_attack", &AttackPacket::IsOffhandAttack)
 		.def_readwrite("attacker", &AttackPacket::attacker)
 		.def_readwrite("target", &AttackPacket::victim)
-		.def("get_flags", [](AttackPacket& pkt)->int{
-			return (int)pkt.flags;
-		}, "D20CAF flags")
-		.def("set_flags", [](AttackPacket& pkt, int flagsNew){
-			pkt.flags = (D20CAF)flagsNew;
-		}, "sets attack packet D20CAF flags to value specified");
+		.def("get_flags", [](AttackPacket& pkt)->int{	return (int)pkt.flags;	}, "D20CAF flags")
+		.def("set_flags", [](AttackPacket& pkt, int flagsNew){	pkt.flags = (D20CAF)flagsNew;	}, "sets attack packet D20CAF flags to value specified");
 
 	py::class_<DamagePacket>(m, "DamagePacket")
 		.def(py::init())
@@ -264,30 +260,21 @@ PYBIND11_PLUGIN(tp_dispatcher){
 
 	py::class_<MetaMagicData>(m, "MetaMagicData")
 		.def(py::init<>())
-		.def("get_heighten_count", [](MetaMagicData& mmData)->int
-		{
-			return mmData.metaMagicHeightenSpellCount;
-		})
-		.def("set_heighten_count", [](MetaMagicData& mmData, int heightenCnt)->int
-		{
-			return mmData.metaMagicHeightenSpellCount = heightenCnt;
-		}) // todo rest
-			;
+		.def("get_heighten_count", [](MetaMagicData& mmData)->int {	return mmData.metaMagicHeightenSpellCount;	})
+		.def("set_heighten_count", [](MetaMagicData& mmData, int heightenCnt)->int { return mmData.metaMagicHeightenSpellCount = heightenCnt;	}) 
+		// todo rest
+		;
 
 	py::class_<D20SpellData>(m, "D20SpellData")
 		.def(py::init<>())
 		.def(py::init<int>(), py::arg("spell_enum"))
 		.def_readwrite("spell_enum", &D20SpellData::spellEnumOrg)
 		.def_readwrite("spell_class", &D20SpellData::spellClassCode)
-		.def("set_spell_level", [](D20SpellData& spData, int spLvl)
-		{
-		spData.spellSlotLevel = spLvl;
-		})
-		.def("get_spell_level", [](D20SpellData& spData)->int{
-			return spData.spellSlotLevel;
-		})
+		.def("set_spell_level", [](D20SpellData& spData, int spLvl){ spData.spellSlotLevel = spLvl;	})
+		.def("get_spell_level", [](D20SpellData& spData)->int{	return spData.spellSlotLevel;	})
 		.def_readwrite("inven_idx", &D20SpellData::itemSpellData)
-			;
+		.def("get_spell_store", [](D20SpellData&spData)->SpellStoreData {	return spData.ToSpellStore();	})
+		;
 
 	py::class_<D20Actn>(m, "D20Action")
 		.def(py::init())
@@ -301,7 +288,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def_readwrite("action_type", &D20Actn::d20ActType, "See D20A_ constants")
 		.def_readwrite("loc", &D20Actn::destLoc, "Location")
 		.def_readwrite("anim_id", &D20Actn::animID)
-		
+		.def_readwrite("spell_data", &D20Actn::d20SpellData)
 		.def("query_can_be_affected_action_perform", [](D20Actn& d20a, objHndl handle)->int{
 			return d20Sys.D20QueryWithDataDefaultTrue(handle, DK_QUE_CanBeAffected_PerformAction, &d20a, 0);
 		})
@@ -371,7 +358,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def(py::init<std::string&, int, int, std::string&>(), py::arg("radialText"), py::arg("action_type"), py::arg("data1"), py::arg("helpTopic"))
 		.def(py::init<SpellStoreData&>(), py::arg("spell_data"))
 		.def("set_spell_data", [](RadialMenuEntryAction & entry, D20SpellData& spellData){
-		entry.d20SpellData.Set(spellData.spellEnumOrg, spellData.spellClassCode, spellData.spellSlotLevel, spellData.itemSpellData, spellData.metaMagicData);
+			entry.d20SpellData.Set(spellData.spellEnumOrg, spellData.spellClassCode, spellData.spellSlotLevel, spellData.itemSpellData, spellData.metaMagicData);
 		})
 		;
 
@@ -379,6 +366,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def(py::init<int, int, int, int, const char[]>(), py::arg("combatMesLine"), py::arg("action_type"), py::arg("action_id"), py::arg("data1"), py::arg("helpTopic"))
 		.def(py::init<int, int, const char[], int, const char[]>(), py::arg("combatMesLine"), py::arg("action_type"), py::arg("action_name"), py::arg("data1"), py::arg("helpTopic"))
 		.def(py::init<std::string&, int, int, int, const char[]>(), py::arg("radialText"), py::arg("action_type"), py::arg("action_id"), py::arg("data1"), py::arg("helpTopic"))
+		.def(py::init<SpellStoreData&, int, int, int, const char[]>(), py::arg("spell_store"), py::arg("action_type"), py::arg("action_id"), py::arg("data1"), py::arg("helpTopic")="")
 		;
 
 	py::class_<RadialMenuEntryToggle>(m, "RadialMenuEntryToggle", py::base<RadialMenuEntry>())

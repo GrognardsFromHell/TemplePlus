@@ -1089,3 +1089,13 @@ RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(std::string & textArg, 
 	this->callback = [](objHndl handle, RadialMenuEntry* entry) { return radialMenus.PythonActionCallback(handle, entry); };
 	this->dispKey = d20aKey;
 }
+
+RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(SpellStoreData & spData, int d20aType, int d20aKey, int data1, const char helpId[]):RadialMenuEntryAction(spData){
+	this->d20ActionType = (D20ActionType)d20aType;
+	if (helpId && *helpId){
+		this->helpId = ElfHash::Hash(helpId);
+	}
+	this->d20ActionData1 = data1;
+	this->dispKey = d20aKey;
+	this->callback = [](objHndl handle, RadialMenuEntry* entry) { return radialMenus.PythonActionCallback(handle, entry); };
+}

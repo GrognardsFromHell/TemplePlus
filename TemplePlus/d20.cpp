@@ -46,6 +46,99 @@ static_assert(sizeof(D20ActionDef) == 0x30, "D20ActionDef struct has the wrong s
 
 int (__cdecl *OrgD20Init)(GameSystemConf* conf);
 
+class D20ActionCallbacks {
+public:
+#define ActionCheck(fname) static ActionErrorCode  ActionCheck ## fname ## (D20Actn* d20a, TurnBasedStatus* tbStat)
+#define AddToSeq(fname) static ActionErrorCode AddToSeq ## fname ## (D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+#define PerformFunc(fname) static ActionErrorCode  Perform ## fname ## (D20Actn* d20a)
+#define ActionCost(fname) static ActionErrorCode ActionCost ## fname ## (D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+#define ActionFrame(fname) static ActionErrorCode ActionFrame ## fname ## (D20Actn* d20a)
+	// Add to sequence funcs
+	static ActionErrorCode AddToSeqCharge(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+	static ActionErrorCode AddToSeqPython(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+	static ActionErrorCode AddToSeqSimple(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+	static ActionErrorCode AddToSeqSpellCast(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+	static ActionErrorCode AddToStandardAttack(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+	static ActionErrorCode AddToSeqUnspecified(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+	static ActionErrorCode AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+	static ActionErrorCode AddToSeqWhirlwindAttack(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+	static ActionErrorCode AddToSeqTripAttack(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
+
+
+
+	// Turn Based Status checks
+	static ActionErrorCode StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode TurnBasedStatusCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat);
+
+	// Action Checks
+	static ActionErrorCode ActionCheckAidAnotherWakeUp(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckCastSpell(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckDivineMight(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckEmptyBody(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat);  // calls python script
+	static ActionErrorCode ActionCheckQuiveringPalm(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckSneak(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckTripAttack(D20Actn* d20a, TurnBasedStatus* tbStat);
+
+
+	// Action Cost
+	static ActionErrorCode ActionCostFullRound(D20Actn* d20a, TurnBasedStatus *tbStat, ActionCostPacket *acp);
+	static ActionErrorCode ActionCostFullAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostPartialCharge(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostPython(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostStandardAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostMoveAction(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostNull(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostStandardAction(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostWhirlwindAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+
+	static ActionErrorCode LocationCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc);
+	static ActionErrorCode LocationCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc);
+
+	// Perform 
+	static ActionErrorCode PerformAidAnotherWakeUp(D20Actn* d20a);
+	static ActionErrorCode PerformAoo(D20Actn* d20a);
+	static ActionErrorCode PerformCastItemSpell(D20Actn* d20a);
+	static ActionErrorCode PerformCastSpell(D20Actn* d20a); // also used in PerformUseItem
+	static ActionErrorCode PerformCharge(D20Actn* d20a);
+	static ActionErrorCode PerformCopyScroll(D20Actn* d20a);
+	static ActionErrorCode PerformDisarm(D20Actn* d20a);
+	static ActionErrorCode PerformDisarmedWeaponRetrieve(D20Actn* d20a);
+	static ActionErrorCode PerformDismissSpell(D20Actn* d20a);
+	static ActionErrorCode PerformDivineMight(D20Actn* d20a);
+	static ActionErrorCode PerformEmptyBody(D20Actn* d20a);
+	static ActionErrorCode PerformFullAttack(D20Actn* d20a);
+	static ActionErrorCode PerformPython(D20Actn* d20a);
+	static ActionErrorCode PerformQuiveringPalm(D20Actn* d20a);
+	static ActionErrorCode PerformSneak(D20Actn* d20a);
+	static ActionErrorCode PerformStandardAttack(D20Actn* d20a);
+	static ActionErrorCode PerformTripAttack(D20Actn* d20a);
+	static ActionErrorCode PerformUseItem(D20Actn* d20a);
+
+	// Action Frame 
+	static BOOL ActionFrameAidAnotherWakeUp(D20Actn* d20a);
+	static BOOL ActionFrameAoo(D20Actn* d20a);
+	static BOOL ActionFrameCharge(D20Actn* d20a);
+	static BOOL ActionFrameDisarm(D20Actn* d20a);
+	static BOOL ActionFramePython(D20Actn* d20a);
+	static BOOL ActionFrameQuiveringPalm(D20Actn* d20a);
+	static BOOL ActionFrameSpell(D20Actn* d20a);
+	static BOOL ActionFrameStandardAttack(D20Actn* d20a);
+	static BOOL ActionFrameSunder(D20Actn* d20a);
+	static BOOL ActionFrameTouchAttack(D20Actn* d20a);
+	static BOOL ActionFrameTripAttack(D20Actn* d20a);
+
+
+	// Projectile Hit
+	static BOOL ProjectileHitSpell(D20Actn* d20a, objHndl projectile, objHndl obj2);
+
+} d20Callbacks;
+
+
+
 class D20Replacements : public TempleFix {
 public:
 	static int PerformActivateReadiedAction(D20Actn* d20a);
@@ -79,6 +172,7 @@ public:
 		replaceFunction(0x1008A450, _GlobD20ActnSetSpellData);
 		replaceFunction(0x1008A530, _globD20aSetPerformer);
 
+		replaceFunction<ActionErrorCode(__cdecl)(D20Actn*, ActnSeq*, TurnBasedStatus*)>(0x100958A0, d20Callbacks.AddToSeqSpellCast);
 		replaceFunction(0x1008CE30, _PerformStandardAttack);
 		
 		replaceFunction(0x100920B0, PerformActivateReadiedAction);
@@ -112,96 +206,6 @@ int D20Replacements::PerformActivateReadiedAction(D20Actn* d20a)
 	
 }
 
-
-class D20ActionCallbacks {
-public:
-#define ActionCheck(fname) static ActionErrorCode  ActionCheck ## fname ## (D20Actn* d20a, TurnBasedStatus* tbStat)
-#define AddToSeq(fname) static ActionErrorCode AddToSeq ## fname ## (D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
-#define PerformFunc(fname) static ActionErrorCode  Perform ## fname ## (D20Actn* d20a)
-#define ActionCost(fname) static ActionErrorCode ActionCost ## fname ## (D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
-#define ActionFrame(fname) static ActionErrorCode ActionFrame ## fname ## (D20Actn* d20a)
-	// Add to sequence funcs
-	static ActionErrorCode AddToSeqCharge(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
-	static ActionErrorCode AddToSeqPython(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
-	static ActionErrorCode AddToSeqSimple(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
-	static ActionErrorCode AddToStandardAttack(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
-	static ActionErrorCode AddToSeqUnspecified(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
-	static ActionErrorCode AddToSeqWithTarget(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
-	static ActionErrorCode AddToSeqWhirlwindAttack(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
-	static ActionErrorCode AddToSeqTripAttack(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
-	
-	
-
-	// Turn Based Status checks
-	static ActionErrorCode StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBasedStatus* tbStat);
-	static ActionErrorCode TurnBasedStatusCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat);
-
-	// Action Checks
-	static ActionErrorCode ActionCheckAidAnotherWakeUp(D20Actn* d20a, TurnBasedStatus* tbStat);
-	static ActionErrorCode ActionCheckCastSpell(D20Actn* d20a, TurnBasedStatus* tbStat);
-	static ActionErrorCode ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat);
-	static ActionErrorCode ActionCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat);
-	static ActionErrorCode ActionCheckDivineMight(D20Actn* d20a, TurnBasedStatus* tbStat);
-	static ActionErrorCode ActionCheckEmptyBody(D20Actn* d20a, TurnBasedStatus* tbStat);
-	static ActionErrorCode ActionCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat);  // calls python script
-	static ActionErrorCode ActionCheckQuiveringPalm(D20Actn* d20a, TurnBasedStatus* tbStat);
-	static ActionErrorCode ActionCheckSneak(D20Actn* d20a, TurnBasedStatus* tbStat);
-	static ActionErrorCode ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat);
-	static ActionErrorCode ActionCheckTripAttack(D20Actn* d20a, TurnBasedStatus* tbStat);
-	
-
-	// Action Cost
-	static ActionErrorCode ActionCostFullRound(D20Actn* d20a, TurnBasedStatus *tbStat, ActionCostPacket *acp);
-	static ActionErrorCode ActionCostFullAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
-	static ActionErrorCode ActionCostPartialCharge(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
-	static ActionErrorCode ActionCostPython(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
-	static ActionErrorCode ActionCostStandardAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
-	static ActionErrorCode ActionCostMoveAction(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
-	static ActionErrorCode ActionCostNull(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
-	static ActionErrorCode ActionCostStandardAction(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
-	static ActionErrorCode ActionCostWhirlwindAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
-
-	static ActionErrorCode LocationCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc);
-	static ActionErrorCode LocationCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc);
-	
-	// Perform 
-	static ActionErrorCode PerformAidAnotherWakeUp(D20Actn* d20a);
-	static ActionErrorCode PerformAoo(D20Actn* d20a);
-	static ActionErrorCode PerformCastItemSpell(D20Actn* d20a);
-	static ActionErrorCode PerformCastSpell(D20Actn* d20a); // also used in PerformUseItem
-	static ActionErrorCode PerformCharge(D20Actn* d20a);
-	static ActionErrorCode PerformCopyScroll(D20Actn* d20a);
-	static ActionErrorCode PerformDisarm(D20Actn* d20a);
-	static ActionErrorCode PerformDisarmedWeaponRetrieve(D20Actn* d20a);
-	static ActionErrorCode PerformDismissSpell(D20Actn* d20a);
-	static ActionErrorCode PerformDivineMight(D20Actn* d20a);
-	static ActionErrorCode PerformEmptyBody(D20Actn* d20a);
-	static ActionErrorCode PerformFullAttack(D20Actn* d20a);
-	static ActionErrorCode PerformPython(D20Actn* d20a);
-	static ActionErrorCode PerformQuiveringPalm(D20Actn* d20a);
-	static ActionErrorCode PerformSneak(D20Actn* d20a);
-	static ActionErrorCode PerformStandardAttack(D20Actn* d20a);
-	static ActionErrorCode PerformTripAttack(D20Actn* d20a);
-	static ActionErrorCode PerformUseItem(D20Actn* d20a);
-
-	// Action Frame 
-	static BOOL ActionFrameAidAnotherWakeUp(D20Actn* d20a);
-	static BOOL ActionFrameAoo(D20Actn* d20a);
-	static BOOL ActionFrameCharge(D20Actn* d20a);
-	static BOOL ActionFrameDisarm(D20Actn* d20a);
-	static BOOL ActionFramePython(D20Actn* d20a);
-	static BOOL ActionFrameQuiveringPalm(D20Actn* d20a);
-	static BOOL ActionFrameSpell(D20Actn* d20a);
-	static BOOL ActionFrameStandardAttack(D20Actn* d20a);
-	static BOOL ActionFrameSunder(D20Actn* d20a);
-	static BOOL ActionFrameTouchAttack(D20Actn* d20a);
-	static BOOL ActionFrameTripAttack(D20Actn* d20a);
-	
-
-	// Projectile Hit
-	static BOOL ProjectileHitSpell(D20Actn* d20a, objHndl projectile, objHndl obj2);
-
-} d20Callbacks;
 
 
 static struct LegacyD20SystemAddresses : temple::AddressTable {
@@ -397,18 +401,22 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostFullAttack;
 
 	d20Type = D20A_CAST_SPELL;
+	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSpellCast;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformCastSpell;
 	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckCastSpell;
 	d20Defs[d20Type].projectileHitFunc = d20Callbacks.ProjectileHitSpell;
 
 	d20Type = D20A_USE_ITEM;
+	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSpellCast;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformUseItem;
 	d20Defs[d20Type].flags = D20ADF(D20ADF_QueryForAoO | D20ADF_MagicEffectTargeting);
 
 	d20Type = D20A_USE_POTION;
+	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSpellCast;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformUseItem;
 
 	d20Type = D20A_ACTIVATE_DEVICE_SPELL;
+	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSpellCast;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformUseItem;
 
 	d20Type = D20A_COPY_SCROLL;
@@ -2784,6 +2792,31 @@ ActionErrorCode D20ActionCallbacks::AddToSeqPython(D20Actn* d20a, ActnSeq* actSe
 
 ActionErrorCode D20ActionCallbacks::AddToSeqSimple(D20Actn*d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat){
 	return actSeqSys.AddToSeqSimple(d20a, actSeq, tbStat);
+}
+
+ActionErrorCode D20ActionCallbacks::AddToSeqSpellCast(D20Actn * d20a, ActnSeq * seq, TurnBasedStatus * tbStat){
+
+	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Prone)){
+		D20Actn d20aGetup = *d20a;
+		d20aGetup.d20ActType = D20A_STAND_UP;
+		seq->d20ActArray[seq->d20ActArrayNum++] = d20aGetup;
+	}
+
+	uint32_t spellEnum;
+	d20Sys.ExtractSpellInfo(&d20a->d20SpellData, &spellEnum, nullptr, nullptr, nullptr, nullptr, nullptr);
+	SpellEntry spellEntry;
+	auto srcResult = spellSys.spellRegistryCopy(spellEnum, &spellEntry);
+	if (srcResult
+		&& spellEntry.spellRangeType == SpellRangeType::SRT_Touch
+		&& static_cast<UiPickerType>(spellEntry.modeTargetSemiBitmask) == UiPickerType::Single
+		&& !(seq->ignoreLos & 1)
+		)
+	{
+		int dummy = 1;
+		return (ActionErrorCode)actSeqSys.AddToSeqWithTarget(d20a, seq, tbStat);
+	}
+	seq->d20ActArray[seq->d20ActArrayNum++] = *d20a;
+	return ActionErrorCode::AEC_OK;
 }
 
 ActionErrorCode D20ActionCallbacks::AddToStandardAttack(D20Actn * d20a, ActnSeq * actSeq, TurnBasedStatus * tbStat){
