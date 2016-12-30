@@ -120,6 +120,7 @@ struct RadialMenuEntryPythonAction : RadialMenuEntryAction
 	RadialMenuEntryPythonAction(int combatMesLine, int d20aType, int d20aKey, int data1, const char helpId[]);
 	RadialMenuEntryPythonAction(int combatMesLine, int d20aType, const char d20aKey [], int data1, const char helpId[]);
 	RadialMenuEntryPythonAction(std::string & text, int d20aType, int d20aKey, int data1, const char helpId[]);
+	RadialMenuEntryPythonAction(SpellStoreData& spData, int d20aType, int d20aKey, int data1, const char helpId[] = "");
 };
 
 struct RadialMenuEntryToggle : RadialMenuEntry

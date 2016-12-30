@@ -32,6 +32,7 @@ PYBIND11_PLUGIN(tp_actions) {
 		.def_readwrite("tb_status", &ActnSeq::tbStatus)
 		.def_readwrite("target", &ActnSeq::targetObj)
 		.def_readwrite("spell_packet", &ActnSeq::spellPktBody)
+		.def_readwrite("spell_action", &ActnSeq::d20Action)
 		.def("add_action", [](ActnSeq & actSeq, D20Actn & d20a){
 			actSeq.d20ActArray[actSeq.d20ActArrayNum++] = d20a;
 		})
