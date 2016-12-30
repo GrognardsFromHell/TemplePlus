@@ -11,6 +11,7 @@
 #include "mainloop.h"
 #include <temple/dll.h>
 #include "mainwindow.h"
+#include "tig/tig_console.h"
 #include "tig/tig_mouse.h"
 #include "tig/tig_startup.h"
 #include "gameview.h"
@@ -136,11 +137,12 @@ void GameLoop::Run() {
 	TigMsg msg;
 	auto quit = false;
 	while (!quit) {
-		
-		tig->GetDebugUI().NewFrame();
 
 		// Read user input and external system events (such as time)
 		messageQueue->PollExternalEvents();			
+		
+		tig->GetDebugUI().NewFrame();
+		tig->GetConsole().Render();
 
 		mGameSystems.AdvanceTime();
 

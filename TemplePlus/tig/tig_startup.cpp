@@ -21,6 +21,7 @@
 
 #include "tig_startup.h"
 #include "../tio/tio.h"
+#include "tig_console.h"
 
 #include "../config/config.h"
 #include <fstream>
@@ -145,6 +146,7 @@ TigInitializer::TigInitializer(HINSTANCE hInstance)
 	// mStartedSystems.emplace_back(StartSystem("movie.c", 0x101F1090, TigShutdownNoop));
 	mStartedSystems.emplace_back(StartSystem("wft.c", 0x101F98A0, 0x101F9770));
 	mStartedSystems.emplace_back(StartSystem("font.c", 0x101EAEC0, 0x101EA140));
+	mConsole = std::make_unique<Console>();
 	// mStartedSystems.emplace_back(StartSystem("console.c", 0x101E0290, 0x101DFBC0));
 	mStartedSystems.emplace_back(StartSystem("loadscreen.c", 0x101E8260, TigShutdownNoop));
 
