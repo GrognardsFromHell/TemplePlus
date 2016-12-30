@@ -24,6 +24,10 @@
 #include <action_sequence.h>
 #include <condition.h>
 #include "python_spell.h"
+#include "turn_based.h"
+#include "combat.h"
+#include "location.h"
+#include "gamesystems/objects/objsystem.h"
 
 namespace py = pybind11;
 using namespace pybind11;
@@ -124,6 +128,8 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		return result;
 	});
 
+	#pragma region Basic Dispatcher stuff
+
 	py::class_<CondStructNew>(m, "ModifierSpec")
 		.def(py::init())
 		.def(py::init<std::string, int, bool>(), py::arg("name"), py::arg("numArgs"), py::arg("preventDup") = true)
@@ -199,8 +205,21 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		})
 		;
 
-	#pragma region useful data types
+	#pragma endregion 
 
+	#pragma region useful data types
+		py::class_<locXY>(m, "LocXY")
+		.def_readwrite("x", &locXY::locx)
+		.def_readwrite("y", &locXY::locy)
+		;
+		py::class_<LocAndOffsets>(m, "LocAndOffsets")
+		.def_readwrite("loc_xy", &LocAndOffsets::location)
+		.def_readwrite("off_x", &LocAndOffsets::off_x)
+		.def_readwrite("off_y", &LocAndOffsets::off_y)
+		;
+		py::class_<LocFull>(m, "LocFull")
+		.def_readwrite("loc_and_offsets", &LocFull::location)
+		;
 
 	#pragma region Bonuslist etc
 	py::class_<BonusList>(m, "BonusList")
@@ -292,6 +311,15 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def("query_can_be_affected_action_perform", [](D20Actn& d20a, objHndl handle)->int{
 			return d20Sys.D20QueryWithDataDefaultTrue(handle, DK_QUE_CanBeAffected_PerformAction, &d20a, 0);
 		})
+		.def("to_hit_processing", [](D20Actn& d20a){
+			combatSys.ToHitProcessing(d20a);
+		})
+		.def("create_projectile_and_throw", [](D20Actn& d20a, int protoNum, LocAndOffsets endLoc)->objHndl {
+			auto createProjAndThrow = temple::GetRef<objHndl(__cdecl)(locXY, int, int, int, LocAndOffsets, objHndl, objHndl)>(0x100B4D00);
+			auto startLoc = objSystem->GetObject(d20a.d20APerformer)->GetLocationFull();
+			return createProjAndThrow(startLoc.location, protoNum, 0,0, endLoc, d20a.d20APerformer, d20a.d20ATarget);
+		})
+		.def("projectile_append", &D20Actn::ProjectileAppend)
 		;
 
 	py::class_<TurnBasedStatus>(m, "TurnBasedStatus")
@@ -344,6 +372,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		;
 	#pragma endregion 
 
+	#pragma region Radial Menu Entries
 	py::class_<RadialMenuEntry>(m, "RadialMenuEntry")
 		.def(py::init())
 		.def("add_as_child", &RadialMenuEntry::AddAsChild, "Adds this node as a child to a specified node ID, and returns the newly created node ID (so you may give it other children, etc.)")
@@ -395,6 +424,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 				return (int)spellSys.GetCastingClass(spec.spellClass);
 			}, "Returns casting class. Domain spell specs will return negative numbers.")
 		;
+	#pragma endregion
 
 	py::class_<SpellEntry>(m, "SpellEntry")
 		.def(py::init())
@@ -429,6 +459,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 			.def_readwrite("spell_class", &SpellPacketBody::spellClass)
 			.def_readwrite("spell_id", &SpellPacketBody::spellId)
 			.def_readwrite("caster_level", &SpellPacketBody::casterLevel)
+			.def_readwrite("loc", &SpellPacketBody::aoeCenter)
 			.def("get_target",[](SpellPacketBody &pkt, int idx)->objHndl
 			{
 				if (idx < (int)pkt.targetCount)

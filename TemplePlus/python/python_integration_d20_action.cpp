@@ -124,6 +124,31 @@ ActionErrorCode PythonD20ActionIntegration::PyAddToSeq(int actionEnum, D20Actn *
 
 }
 
+BOOL PythonD20ActionIntegration::PyProjectileHit(int actionEnum, D20Actn * d20a, objHndl projectile, objHndl obj2)
+{
+	auto actionSpecEntry = mScripts.find(actionEnum);
+	if (actionSpecEntry == mScripts.end())
+		return FALSE;
+
+	py::object pbD20A = py::cast(d20a);
+	py::object pbActSeq = py::cast(projectile);
+	py::object pbTbStat = py::cast(obj2);
+	auto pyProjectile = PyObjHndl_Create(projectile);
+	auto pyObj2 = PyObjHndl_Create(obj2);
+
+
+	auto dispPyArgs = Py_BuildValue("(OOO)", pbD20A.ptr(), pyProjectile, pyObj2);
+
+	Py_DECREF(pyProjectile);
+	Py_DECREF(pyObj2);
+
+	auto result = RunScriptDefault0(actionSpecEntry->second.id, (EventId)D20ActionSpecFunc::ProjectileHit, dispPyArgs);
+
+	Py_DECREF(dispPyArgs);
+
+	return result;
+}
+
 
 static std::map<D20ActionSpecFunc, std::string> D20ActionSpecFunctions = {
 
@@ -132,6 +157,7 @@ static std::map<D20ActionSpecFunc, std::string> D20ActionSpecFunctions = {
 	{ D20ActionSpecFunc::GetTargetingClassification,"GetTargetingClassification" },
 	{ D20ActionSpecFunc::GetActionCostType,"GetActionCostType" },
 	{ D20ActionSpecFunc::AddToSequence,"AddToSequence" },
+	{ D20ActionSpecFunc::ProjectileHit,"ProjectileHit" },
 	
 	
 };

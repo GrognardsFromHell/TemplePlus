@@ -1297,6 +1297,19 @@ void DispIoD20ActionTurnBased::DispatchPythonActionPerform(D20DispatcherKey key)
 	}
 }
 
+void DispIoD20ActionTurnBased::DispatchPythonActionFrame(D20DispatcherKey key){
+	if (!d20a || !d20a->d20APerformer) {
+		this->returnVal = AEC_INVALID_ACTION;
+		return;
+	}
+
+	auto dispatcher = objects.GetDispatcher(d20a->d20APerformer);
+
+	if (dispatcher->IsValid()) {
+		dispatch.DispatcherProcessor(dispatcher, dispTypePythonActionFrame, key, this);
+	}
+}
+
 int DispIOBonusListAndSpellEntry::Dispatch(objHndl handle, enum_disp_type evtType){
 	auto dispatcher = objSystem->GetObject(handle)->GetDispatcher();
 	if (!dispatcher->IsValid())

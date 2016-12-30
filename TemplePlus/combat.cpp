@@ -1070,6 +1070,8 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 	auto d20Data = d20a.data1;
 	auto caflags = d20a.d20Caf;
 	auto tgt = d20a.d20ATarget;
+	if (!tgt)
+		return;
 
 	// mirror image processing
 	auto mirrorImageCond = conds.GetByName("sp-Mirror Image");

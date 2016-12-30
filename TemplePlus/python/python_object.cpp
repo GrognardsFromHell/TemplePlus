@@ -1926,6 +1926,30 @@ static PyObject* PyObjHandle_AnimGoalInterrupt(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_AnimGoalPushAttack(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	objHndl tgt = objHndl::null;
+	int animIdx = 0, isCrit = 0, isSecondary = 0;
+	if (!PyArg_ParseTuple(args, "O&|iii:objhndl.anim_goal_push_attack", &ConvertObjHndl, &tgt, &animIdx, &isCrit, &isSecondary)) {
+		return 0;
+	}
+	return PyInt_FromLong(animationGoals.PushAttackAnim(self->handle, tgt, -1, animIdx, isCrit, isSecondary));
+}
+
+static PyObject* PyObjHandle_AnimGoalGetNewId(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	return PyInt_FromLong(animationGoals.GetActionAnimId(self->handle));
+}
+
+
+
 static PyObject* PyObjHandle_D20StatusInit(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -2452,7 +2476,7 @@ static PyObject* PyObjHandle_AiStopAttacking(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_AllegianceShared(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
-		PyInt_FromLong(0);
+		return PyInt_FromLong(0);
 	}
 
 	objHndl target;
@@ -2467,7 +2491,7 @@ static PyObject* PyObjHandle_AllegianceShared(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_GetDeity(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
-		PyInt_FromLong(0);
+		return PyInt_FromLong(0);
 	}
 	return PyInt_FromLong(objects.GetDeity(self->handle));
 }
@@ -2475,7 +2499,7 @@ static PyObject* PyObjHandle_GetDeity(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_GetWieldType(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
-		PyInt_FromLong(0);
+		return PyInt_FromLong(0);
 	}
 	objHndl weapon = objHndl::null;
 	int regardEnlargement = false;
@@ -2497,6 +2521,18 @@ static PyObject* PyObjHandle_GetWieldType(PyObject* obj, PyObject* args) {
 
 	return PyInt_FromLong(result); 
 }
+
+static PyObject* PyObjHandle_GetWeaponProjectileProto(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	auto result = temple::GetRef<int(__cdecl)(objHndl)>(0x10065760)(self->handle);
+
+	return PyInt_FromLong(result);
+}
+
 
 
 static PyObject* PyObjHandle_Unwield(PyObject* obj, PyObject* args) {
@@ -2848,6 +2884,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "allegiance_shared", PyObjHandle_AllegianceShared, METH_VARARGS, NULL },
 	{ "anim_callback", PyObjHandle_AnimCallback, METH_VARARGS, NULL },
 	{ "anim_goal_interrupt", PyObjHandle_AnimGoalInterrupt, METH_VARARGS, NULL },
+	{ "anim_goal_push_attack", PyObjHandle_AnimGoalPushAttack, METH_VARARGS, NULL },
+	{ "anim_goal_get_new_id", PyObjHandle_AnimGoalGetNewId, METH_VARARGS, NULL },
 	{ "arcane_spell_level_can_cast", PyObjHandle_ArcaneSpellLevelCanCast, METH_VARARGS, NULL },
 	{ "attack", PyObjHandle_Attack, METH_VARARGS, NULL },
 	{ "award_experience", PyObjHandle_AwardExperience, METH_VARARGS, NULL },
@@ -2909,6 +2947,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL },
 	{ "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
 	{ "get_wield_type", PyObjHandle_GetWieldType, METH_VARARGS, NULL },
+	{ "get_weapon_projectile_proto", PyObjHandle_GetWeaponProjectileProto, METH_VARARGS, NULL },
 	{ "group_list", PyObjHandle_GroupList, METH_VARARGS, NULL },
 	
 	{ "has_atoned", PyObjHandle_HasAtoned, METH_VARARGS, NULL },
