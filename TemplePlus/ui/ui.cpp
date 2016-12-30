@@ -835,8 +835,9 @@ bool UiManager::ProcessMessage(TigMsg &msg)
 	case TigMsgType::WIDGET:
 		return ProcessWidgetMessage(msg);
 	default:
-		for (auto windowId : mActiveWindows) {
-			auto window = GetWidget(windowId);
+		// In order from top to bottom (back is top)
+		for (auto it = mActiveWindows.rbegin(); it != mActiveWindows.rend(); it++) {
+			auto window = GetWidget(*it);
 
 			if (!window->IsHidden() && window->CanHandleMessage()) {
 				if (window->HandleMessage(msg)) {
@@ -884,12 +885,11 @@ bool UiManager::ProcessMouseMessage(TigMsg & msg)
 		return false;
 	}
 
-	auto &windowIds = mActiveWindows;
+	for (auto it = mActiveWindows.rbegin(); it != mActiveWindows.rend(); it++) {
+		auto windowId = *it;
+		auto window = GetWindow(windowId);
 
-	for (size_t i = 0; i < windowIds.size(); i++) {
-		auto window = GetWindow(windowIds[i]);
-
-		if (!window || !window->IsWindow() || window->IsHidden() || !DoesWidgetContain(windowIds[i], msg.arg1, msg.arg2)) {
+		if (!window || !window->IsWindow() || window->IsHidden() || !DoesWidgetContain(windowId, msg.arg1, msg.arg2)) {
 			continue;
 		}
 

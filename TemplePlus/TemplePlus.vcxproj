@@ -99,7 +99,6 @@
     <ClCompile Include="graphics\renderstates_hooks.cpp" />
     <ClCompile Include="graphics\render_hooks.cpp" />
     <ClCompile Include="gamesystems\map\sector.cpp" />
-    <ClCompile Include="gamesystems\map\tig_console.cpp" />
     <ClCompile Include="gametime.cpp" />
     <ClCompile Include="graphics\textures_hooks.cpp" />
     <ClCompile Include="graphics\video_hooks.cpp">
@@ -160,6 +159,7 @@
     <ClCompile Include="temple_enums.cpp" />
     <ClCompile Include="textbubbles.cpp" />
     <ClCompile Include="tig\tig.cpp" />
+    <ClCompile Include="tig\tig_console.cpp" />
     <ClCompile Include="tig\tig_sound.cpp" />
     <ClCompile Include="tio\tio_utils.cpp" />
     <ClCompile Include="python\python_consoleout.cpp" />
@@ -306,7 +306,6 @@
     <ClInclude Include="gamesystems\mapsystem.h" />
     <ClInclude Include="gamesystems\map\gmesh.h" />
     <ClInclude Include="gamesystems\map\sector.h" />
-    <ClInclude Include="gamesystems\map\tig_console.h" />
     <ClInclude Include="gamesystems\objects\arrayidxbitmaps.h" />
     <ClInclude Include="gamesystems\objects\gameobject.h" />
     <ClInclude Include="gamesystems\objects\objarrays.h" />
@@ -327,6 +326,7 @@
     <ClInclude Include="python\python_integration_class_spec.h" />
     <ClInclude Include="python\python_integration_d20_action.h" />
     <ClInclude Include="python\python_integration_feat.h" />
+    <ClInclude Include="tig\tig_console.h" />
     <ClInclude Include="tig\tig_keyboard.h" />
     <ClInclude Include="tutorial.h" />
     <ClInclude Include="ui\ui_alert.h" />

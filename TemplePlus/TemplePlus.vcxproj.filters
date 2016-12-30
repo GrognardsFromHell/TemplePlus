@@ -242,9 +242,6 @@
     <ClCompile Include="path_node.cpp">
       <Filter>Map System</Filter>
     </ClCompile>
-    <ClCompile Include="gamesystems\map\tig_console.cpp">
-      <Filter>tig</Filter>
-    </ClCompile>
     <ClCompile Include="maps.cpp">
       <Filter>Map System</Filter>
     </ClCompile>
@@ -461,6 +458,7 @@
     <ClCompile Include="ui\ui_ingame.cpp" />
     <ClCompile Include="ui\ui_assets.cpp" />
     <ClCompile Include="ui\ui_wrapper.cpp" />
+    <ClCompile Include="tig\tig_console.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -688,9 +686,6 @@
     <ClInclude Include="path_node.h">
       <Filter>Map System</Filter>
     </ClInclude>
-    <ClInclude Include="gamesystems\map\tig_console.h">
-      <Filter>tig</Filter>
-    </ClInclude>
     <ClInclude Include="maps.h">
       <Filter>Map System</Filter>
     </ClInclude>
@@ -871,6 +866,7 @@
       <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="ui\ui_assets.h" />
+    <ClInclude Include="tig\tig_console.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
