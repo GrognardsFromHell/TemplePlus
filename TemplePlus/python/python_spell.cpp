@@ -53,6 +53,11 @@ struct PySpell {
 	MetaMagicData metaMagic;
 };
 
+struct PySpellStore {
+	PyObject_HEAD;
+	SpellStoreData spellData;
+};
+
 
 const int testSizeofPyspell = sizeof PySpell; // should be 680 (due to HEAD_EXTRA is +8 relative to toee)
 
@@ -719,6 +724,7 @@ objHndl PySpell_GetTargetHandle(PyObject* spell, int targetIdx) {
 	return self->targets[targetIdx].obj;
 }
 
+
 /******************************************************************************
 * Spell Target
 ******************************************************************************/
@@ -1016,3 +1022,196 @@ BOOL ConvertTargetArray(PyObject* obj, PySpell** pySpellOut) {
 	*pySpellOut = ((PySpellTargets*)obj)->spell;
 	return TRUE;
 }
+
+
+
+/******************************************************************************
+* Spell Store
+******************************************************************************/
+
+BOOL ConvertSpellStore(PyObject * obj, SpellStoreData * pSpellStoreOut)
+{
+	if (obj == Py_None) {
+		pSpellStoreOut->spellEnum = 0;
+		pSpellStoreOut->spellLevel = 0;
+		pSpellStoreOut->classCode = 0;
+		return TRUE;
+	}
+
+	if (obj->ob_type != &PySpellStoreType) {
+		PyErr_SetString(PyExc_TypeError, "Expected PySpellStore.");
+		return FALSE;
+	}
+
+	*pSpellStoreOut = ((PySpellStore*)obj)->spellData;
+	return TRUE;
+}
+
+PyObject* PySpellStore_Create(const SpellStoreData& spellData){
+	if (PyType_Ready(&PySpellStoreType)) {
+		return 0;
+	}
+
+	auto self = PyObject_NEW(PySpellStore, &PySpellStoreType);
+	self->spellData = spellData;
+
+	return (PyObject*)self;
+}
+
+SpellStoreData PySpellStore_AsSpellStore(PyObject * obj){
+	auto self = (PySpellStore*)obj;
+	return self->spellData;
+}
+
+static void PySpellStore_Del(PyObject *obj) {
+	PyObject_Del(obj);
+}
+
+static PyObject* PySpellStore_Repr(PyObject* obj) {
+	auto self = (PySpellStore*)obj;
+	return PyString_FromFormat("PySpellStore %s (enum=%d, class=%d, level=%d)", spellSys.GetSpellName(self->spellData.spellEnum), self->spellData.spellEnum, self->spellData.classCode, self->spellData.spellLevel);
+}
+
+
+static PyObject* PySpellStore_IsNaturallyCast(PyObject* obj, PyObject* args) {
+	auto self = (PySpellStore*)obj;
+	if (!self->spellData.spellEnum)
+		return PyInt_FromLong(0);
+
+	if (spellSys.isDomainSpell(self->spellData.classCode))
+		return PyInt_FromLong(0);
+
+	return PyInt_FromLong(d20ClassSys.IsNaturalCastingClass(spellSys.GetCastingClass(self->spellData.classCode)));
+
+}
+
+static PyObject* PySpellStore_IsAreaSpell(PyObject* obj, PyObject* args) {
+	auto self = (PySpellStore*)obj;
+	if (!self->spellData.spellEnum)
+		return PyInt_FromLong(0);
+
+	SpellEntry spEntry(self->spellData.spellEnum);
+	if (!spEntry.spellEnum){
+		return PyInt_FromLong(0);
+	}
+
+	return PyInt_FromLong(spEntry.IsBaseModeTarget(UiPickerType::Area));
+
+}
+
+static PyObject* PySpellStore_IsUsedUp(PyObject* obj, PyObject* args) {
+	auto self = (PySpellStore*)obj;
+	if (!self->spellData.spellEnum)
+		return PyInt_FromLong(0);
+
+	return PyInt_FromLong(self->spellData.spellStoreState.usedUp & 1);
+}
+
+static PyMethodDef PySpellStoreMethods[] = {
+	{"is_area_spell", PySpellStore_IsAreaSpell, METH_VARARGS, NULL },
+	{"is_naturally_cast", PySpellStore_IsNaturallyCast, METH_VARARGS, NULL },
+	{"is_used_up", PySpellStore_IsUsedUp, METH_VARARGS, NULL },
+	{ NULL, NULL, NULL, NULL }
+};
+
+
+
+static PyObject* PySpellStore_GetEnum(PyObject* obj, void*) {
+	auto self = (PySpellStore*)obj;
+	return PyInt_FromLong(self->spellData.spellEnum);
+}
+
+static int PySpellStore_SetEnum(PyObject *obj, PyObject *value, void*) {
+	auto self = (PySpellStore*)obj;
+	if (!PyInt_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, "spell_enum can only be an integer");
+		return -1;
+	}
+	self->spellData.spellEnum = PyInt_AsLong(value);
+	return 0;
+}
+
+static PyObject* PySpellStore_GetLevel(PyObject* obj, void*) {
+	auto self = (PySpellStore*)obj;
+	return PyInt_FromLong(self->spellData.spellLevel);
+}
+
+static int PySpellStore_SetLevel(PyObject *obj, PyObject *value, void*) {
+	auto self = (PySpellStore*)obj;
+	if (!PyInt_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, "spell_level can only be an integer");
+		return -1;
+	}
+	self->spellData.spellLevel = PyInt_AsLong(value);
+	return 0;
+}
+
+static PyObject* PySpellStore_GetClass(PyObject* obj, void*) {
+	auto self = (PySpellStore*)obj;
+	return PyInt_FromLong(self->spellData.classCode);
+}
+
+static int PySpellStore_SetClass(PyObject *obj, PyObject *value, void*) {
+	auto self = (PySpellStore*)obj;
+	if (!PyInt_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, "spell_class can only be an integer");
+		return -1;
+	}
+	self->spellData.classCode = PyInt_AsLong(value);
+	return 0;
+}
+
+
+static PyObject* PySpellStore_GetName(PyObject* obj, void*) {
+	auto self = (PySpellStore*)obj;
+	return PyString_FromString(spellSys.GetSpellName(self->spellData.spellEnum));
+}
+static PyGetSetDef PySpellStoreGetSet[] = {
+	{ "spell_enum", PySpellStore_GetEnum, PySpellStore_SetEnum, NULL },
+	{ "spell_level", PySpellStore_GetLevel, PySpellStore_SetLevel, NULL },
+	{ "spell_class", PySpellStore_GetClass, PySpellStore_SetClass, NULL },
+	{ "spell_name", PySpellStore_GetName, NULL, NULL },
+	{ NULL, NULL, NULL, NULL }
+};
+
+PyTypeObject PySpellStoreType = {
+	PyObject_HEAD_INIT(NULL)
+	0, /*ob_size*/
+	"toee.PySpellStore", /*tp_name*/
+	sizeof(PySpellStore), /*tp_basicsize*/
+	0, /*tp_itemsize*/
+	PySpellStore_Del, /*tp_dealloc*/
+	0, /*tp_print*/
+	0, /*tp_getattr*/
+	0, /*tp_setattr*/
+	0, /*tp_compare*/
+	PySpellStore_Repr, /*tp_repr*/
+	0, /*tp_as_number*/
+	0, /*tp_as_sequence*/
+	0, /*tp_as_mapping*/
+	0, /*tp_hash */
+	0, /*tp_call*/
+	0, /*tp_str*/
+	PyObject_GenericGetAttr, /*tp_getattro*/
+	PyObject_GenericSetAttr, /*tp_setattro*/
+	0, /*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT, /*tp_flags*/
+	0, /* tp_doc */
+	0, /* tp_traverse */
+	0, /* tp_clear */
+	0, /* tp_richcompare */
+	0, /* tp_weaklistoffset */
+	0, /* tp_iter */
+	0, /* tp_iternext */
+	PySpellStoreMethods, /* tp_methods */
+	0, /* tp_members */
+	PySpellStoreGetSet, /* tp_getset */
+	0, /* tp_base */
+	0, /* tp_dict */
+	0, /* tp_descr_get */
+	0, /* tp_descr_set */
+	0, /* tp_dictoffset */
+	0, /* tp_init */
+	0, /* tp_alloc */
+	0, /* tp_new */
+};
