@@ -14,6 +14,8 @@
 #include <tig/tig_font.h>
 #include <party.h>
 #include <damage.h>
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
 
 struct TigTextStyle;
 
@@ -416,7 +418,7 @@ int RemoveSuggestionSpellFix::RemoveSpellSuggestion(DispIO* dispIo, enum_disp_ty
 			auto spellId = _CondNodeGetArg(sdn->condNode, 0);
 			d20Sys.d20SendSignal(obj, DK_SIG_Spell_End, spellId, 0);
 			critterSys.RemoveFollower(obj, 1);
-			ui.UpdatePartyUi();
+			uiSystems->GetParty().Update();
 			return 1;
 		}
 		return 0;
@@ -432,7 +434,7 @@ int RemoveSuggestionSpellFix::RemoveSpellSuggestion(DispIO* dispIo, enum_disp_ty
 	if (dispKey == DK_SIG_Killed ||dispKey == DK_SIG_Critter_Killed){
 		d20Sys.d20SendSignal(obj, DK_SIG_Spell_End, spellId, 0);
 		critterSys.RemoveFollower(obj, 1);
-		ui.UpdatePartyUi();
+		uiSystems->GetParty().Update();
 		return 1;
 	}
 
@@ -441,7 +443,7 @@ int RemoveSuggestionSpellFix::RemoveSpellSuggestion(DispIO* dispIo, enum_disp_ty
 		if (dispIo->dispIOType == dispIOTypeDispelCheck || dispIo->dispIOType == dispIOTypeTurnBasedStatus)	{
 			d20Sys.d20SendSignal(obj, DK_SIG_Spell_End, 0, 0);
 			critterSys.RemoveFollower(obj, 1);
-			ui.UpdatePartyUi();
+			uiSystems->GetParty().Update();
 		}
 		return 0;
 	}
@@ -456,7 +458,7 @@ int RemoveSuggestionSpellFix::RemoveSpellSuggestion(DispIO* dispIo, enum_disp_ty
 		if (d20Sys.d20QueryWithData(obj, DK_QUE_Critter_Has_Condition, condSuggestion, 0) == 1 && d20a->spellId != spellId)	{
 			d20Sys.d20SendSignal(obj, DK_SIG_Spell_End, spellPkt.spellId, 0);
 			critterSys.RemoveFollower(obj, 1);
-			ui.UpdatePartyUi();
+			uiSystems->GetParty().Update();
 			return 1;
 		}	
 	} else if (d20Sys.IsActionOffensive(d20a->d20ActType, d20a->d20ATarget))	{
@@ -464,7 +466,7 @@ int RemoveSuggestionSpellFix::RemoveSpellSuggestion(DispIO* dispIo, enum_disp_ty
 			if (d20Sys.d20QueryWithData(obj, DK_QUE_Critter_Has_Condition, condSuggestion, 0))	{
 				d20Sys.d20SendSignal(obj, DK_SIG_Spell_End, objHndl::null);
 				critterSys.RemoveFollower(obj, 1);
-				ui.UpdatePartyUi();
+				uiSystems->GetParty().Update();
 				return 1;
 			}
 		}

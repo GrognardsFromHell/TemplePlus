@@ -144,6 +144,8 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 		logger->error("Unable to set the default cursor");
 		return 1;
 	}
+
+	UiManager uiManager;
 		
 	UiSystems uiSystems(config.renderWidth, config.renderHeight);
 

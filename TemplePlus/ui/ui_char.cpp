@@ -17,6 +17,7 @@
 #include "tig/tig_startup.h"
 #include "fonts/fonts.h"
 #include "ui_tooltip.h"
+#include "ui_assets.h"
 #include <gamesystems/d20/d20stats.h>
 
 #include "ui/ui_legacysystems.h"
@@ -225,7 +226,7 @@ public:
 } charUiSys;
 
 void CharUiSystem::ClassLevelBtnRender(int widId){
-	auto btn = ui.GetButton(widId);
+	auto btn = uiManager->GetButton(widId);
 	const int maxWidth = 340;
 	UiRenderer::PushFont(temple::GetRef<char*>(0x10BE93A4), temple::GetRef<int>(0x10BE93A0) );
 
@@ -362,11 +363,11 @@ void CharUiSystem::SpellsShow(objHndl obj)
 
 	};
 
-	ui.WidgetSetHidden(spellsMainWndId, 0);
-	ui.WidgetSetHidden((*addresses.uiCharSpellsNavClassTabWnd)->widgetId, 0);
-	ui.WidgetSetHidden((*addresses.uiCharSpellsSpellsPerDayWnd)->widgetId, 0);
-	ui.WidgetBringToFront(spellsMainWndId);
-	ui.WidgetBringToFront((*addresses.uiCharSpellsSpellsPerDayWnd)->widgetId);
+	uiManager->SetHidden(spellsMainWndId, false);
+	uiManager->SetHidden((*addresses.uiCharSpellsNavClassTabWnd)->widgetId, false);
+	uiManager->SetHidden((*addresses.uiCharSpellsSpellsPerDayWnd)->widgetId, false);
+	uiManager->BringToFront(spellsMainWndId);
+	uiManager->BringToFront((*addresses.uiCharSpellsSpellsPerDayWnd)->widgetId);
 
 	UiRenderer::PushFont(PredefinedFont::ARIAL_12);
 
@@ -405,7 +406,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 		navTabBtn->width = textSize.width + 2 * uiCharSpellTabPadding;
 		navTabBtn->x += navTabX;
 		navTabX += navTabBtn->width ;
-		ui.WidgetSetHidden(navTabBtn->widgetId, 0);
+		uiManager->SetHidden(navTabBtn->widgetId, false);
 		
 		navClassPackets[uiCharSpellTabsCount].spellClassCode = spellClassCode;
 		
@@ -421,8 +422,8 @@ void CharUiSystem::SpellsShow(objHndl obj)
 
 		int nKnown = max(0, critterSys.SpellNumByFieldAndClass(dude, obj_f_critter_spells_known_idx, spellClassCode)-2);
 		
-		ui.ScrollbarSetYmax(charSpellPackets[uiCharSpellTabsCount].spellbookScrollbar->widgetId, nKnown);
-		ui.ScrollbarSetYmax(charSpellPackets[uiCharSpellTabsCount].memorizeScrollbar->widgetId, nMemo-2 <=0 ? 0 : nMemo-2);
+		uiManager->ScrollbarSetYmax(charSpellPackets[uiCharSpellTabsCount].spellbookScrollbar->widgetId, nKnown);
+		uiManager->ScrollbarSetYmax(charSpellPackets[uiCharSpellTabsCount].memorizeScrollbar->widgetId, nMemo-2 <=0 ? 0 : nMemo-2);
 
 		uiCharSpellTabsCount++;
 
@@ -440,7 +441,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 		domainTabBtn->width = textSize.width + 2 * uiCharSpellTabPadding;
 		domainTabBtn->x += navTabX;
 		navTabX += textSize.width;
-		ui.WidgetSetHidden(domainTabBtn->widgetId, 0);
+		uiManager->SetHidden(domainTabBtn->widgetId, false);
 		navClassPackets[uiCharSpellTabsCount].spellClassCode = Domain_Count;
 
 
@@ -452,8 +453,8 @@ void CharUiSystem::SpellsShow(objHndl obj)
 		int nKnown = max(0, critterSys.DomainSpellNumByField(dude, obj_f_critter_spells_known_idx) - 2);
 
 
-		ui.ScrollbarSetYmax(charSpellPackets[uiCharSpellTabsCount].spellbookScrollbar->widgetId, nKnown);
-		ui.ScrollbarSetYmax(charSpellPackets[uiCharSpellTabsCount].memorizeScrollbar->widgetId, nMemo - 2 <= 0 ? 0 : nMemo - 2);
+		uiManager->ScrollbarSetYmax(charSpellPackets[uiCharSpellTabsCount].spellbookScrollbar->widgetId, nKnown);
+		uiManager->ScrollbarSetYmax(charSpellPackets[uiCharSpellTabsCount].memorizeScrollbar->widgetId, nMemo - 2 <= 0 ? 0 : nMemo - 2);
 
 		uiCharSpellTabsCount++;
 	}
@@ -463,34 +464,34 @@ void CharUiSystem::SpellsShow(objHndl obj)
 		auto classCode = spellSys.GetCastingClass(navClassPackets[0].spellClassCode );
 		// if is vancian, show the spells memorized too
 		if (d20ClassSys.IsVancianCastingClass(classCode)){
-			ui.WidgetSetHidden(charSpellPackets[0].classMemorizeWnd->widgetId, 0);
+			uiManager->SetHidden(charSpellPackets[0].classMemorizeWnd->widgetId, false);
 		} else
 		{
-			ui.WidgetSetHidden(charSpellPackets[0].classMemorizeWnd->widgetId, 1);
+			uiManager->SetHidden(charSpellPackets[0].classMemorizeWnd->widgetId, true);
 		}
-		ui.WidgetSetHidden(charSpellPackets[0].classSpellbookWnd->widgetId, 0);
-		ui.WidgetBringToFront(charSpellPackets[0].classSpellbookWnd->widgetId);
-		ui.WidgetBringToFront(charSpellPackets[0].classMemorizeWnd->widgetId);
+		uiManager->SetHidden(charSpellPackets[0].classSpellbookWnd->widgetId, false);
+		uiManager->BringToFront(charSpellPackets[0].classSpellbookWnd->widgetId);
+		uiManager->BringToFront(charSpellPackets[0].classMemorizeWnd->widgetId);
 
 	}
 
 	// hide the other spellbook windows
 	for (int i = 1; i < uiCharSpellTabsCount; i++){
-		ui.WidgetSetHidden(charSpellPackets[i].classSpellbookWnd->widgetId, 1);
-		ui.WidgetSetHidden(charSpellPackets[i].classMemorizeWnd->widgetId, 1);
+		uiManager->SetHidden(charSpellPackets[i].classSpellbookWnd->widgetId, true);
+		uiManager->SetHidden(charSpellPackets[i].classMemorizeWnd->widgetId, true);
 	}
 
 	// hide inactive nav tabs 
 	// TODO extend to support more than 11 tabs... for that one crazy ass player who picks a shitload of casting classes :P
 	for (int i = uiCharSpellTabsCount; i < VANILLA_NUM_CLASSES + 1; i++){
-		ui.WidgetSetHidden(navClassPackets[i].button->widgetId, 1);
+		uiManager->SetHidden(navClassPackets[i].button->widgetId, true);
 	}
 
 	// if no tabs, return
 	if (!uiCharSpellTabsCount)
 	{
 		UiRenderer::PopFont();
-		ui.WidgetBringToFront((*addresses.uiCharSpellsNavClassTabWnd)->widgetId);
+		uiManager->BringToFront((*addresses.uiCharSpellsNavClassTabWnd)->widgetId);
 		return;
 	}
 
@@ -707,12 +708,12 @@ void CharUiSystem::SpellsShow(objHndl obj)
 	auto& curCharSpellPkt = charSpellPackets[uiCharSpellsNavClassTabIdx];
 	for (auto i = 0u; i < NUM_SPELLBOOK_SLOTS; i++){
 		if (i < curCharSpellPkt.spellsKnown.count){
-			ui.WidgetSetHidden(curCharSpellPkt.spellbookSpellWnds[i]->widgetId, 0);
-			ui.WidgetBringToFront(curCharSpellPkt.spellbookSpellWnds[i]->widgetId);
+			uiManager->SetHidden(curCharSpellPkt.spellbookSpellWnds[i]->widgetId, false);
+			uiManager->BringToFront(curCharSpellPkt.spellbookSpellWnds[i]->widgetId);
 
 		} else
 		{
-			ui.WidgetSetHidden(curCharSpellPkt.spellbookSpellWnds[i]->widgetId, 1);
+			uiManager->SetHidden(curCharSpellPkt.spellbookSpellWnds[i]->widgetId, true);
 		}
 	}
 
@@ -728,12 +729,12 @@ void CharUiSystem::SpellsShow(objHndl obj)
 	
 	for (auto i = 0u; i < NUM_SPELLBOOK_SLOTS; i++) {
 		if (showMemSpells && i < curCharSpellPkt.spellsMemorized.count) {
-			ui.WidgetSetHidden(curCharSpellPkt.memorizeSpellWnds[i]->widgetId, 0);
-			ui.WidgetBringToFront(curCharSpellPkt.memorizeSpellWnds[i]->widgetId);
+			uiManager->SetHidden(curCharSpellPkt.memorizeSpellWnds[i]->widgetId, false);
+			uiManager->BringToFront(curCharSpellPkt.memorizeSpellWnds[i]->widgetId);
 		}
 		else
 		{
-			ui.WidgetSetHidden(curCharSpellPkt.memorizeSpellWnds[i]->widgetId, 1);
+			uiManager->SetHidden(curCharSpellPkt.memorizeSpellWnds[i]->widgetId, true);
 		}
 	}
 	
@@ -749,7 +750,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 
 	UiRenderer::PopFont();
 
-	ui.WidgetBringToFront((*addresses.uiCharSpellsNavClassTabWnd)->widgetId);
+	uiManager->BringToFront((*addresses.uiCharSpellsNavClassTabWnd)->widgetId);
 
 
 	auto charSpellPkts = &addresses.uiCharSpellPackets[0];
@@ -796,7 +797,7 @@ objHndl CharUiSystem::GetVendor()
 int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 {
 	// Alt-click to Quicksell
-	if (ui.CharLootingIsActive())
+	if (uiSystems->GetChar().IsLootingActive())
 	{
 		if (msg->type == TigMsgType::MOUSE)
 		{
@@ -880,7 +881,7 @@ char* CharUiSystem::HookedItemDescriptionBarter(objHndl obj, objHndl item)
 			auto wpnType = objects.GetWeaponType(item);
 			if (!feats.WeaponFeatCheck(obj, nullptr, 0, (Stat)0, wpnType))
 			{
-				auto itemError = ui.GetTooltipString(136);
+				auto itemError = uiAssets->GetTooltipString(136);
 				sprintf(strOut, "%s\n\n%s", strOut, itemError);
 			}
 		}
@@ -959,7 +960,7 @@ void CharUiSystem::LongDescriptionPopupCreate(objHndl item){
 void CharUiSystem::TotalWeightOutputBtnTooltip(int x, int y, int* widId)
 {
 
-	LgcyButton * btn = ui.GetButton(*widId);
+	LgcyButton * btn = uiManager->GetButton(*widId);
 	if (btn->buttonState == 2)
 		return;
 
@@ -1089,11 +1090,11 @@ void CharUiSystem::FeatsShow(){
 	}
 
 	auto featsScrollbar = temple::GetRef<LgcyScrollBar*>(0x10D19DB4);
-	ui.ScrollbarSetYmax(featsScrollbar->widgetId, featsNum < 20 ? 0 : featsNum - 20);
+	uiManager->ScrollbarSetYmax(featsScrollbar->widgetId, featsNum < 20 ? 0 : featsNum - 20);
 
 	auto featsWnd = temple::GetRef<LgcyWindow*>(0x10D19DB0);
-	ui.WidgetSetHidden(featsWnd->widgetId, 0); // FeatsMainWnd
-	ui.WidgetBringToFront(featsWnd->widgetId);
+	uiManager->SetHidden(featsWnd->widgetId, false); // FeatsMainWnd
+	uiManager->BringToFront(featsWnd->widgetId);
 }
 
 BOOL(*CharUiSystem::orgSpellbookSpellsMsg)(int widId, TigMsg* tigMsg);

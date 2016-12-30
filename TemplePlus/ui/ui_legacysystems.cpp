@@ -241,6 +241,12 @@ const std::string &UiCombat::GetName() const {
     return name;
 }
 
+void UiCombat::Update()
+{
+	static auto ui_combat_update = temple::GetPointer<void()>(0x10142740);
+	ui_combat_update();
+}
+
 //*****************************************************************************
 //* Slide-UI
 //*****************************************************************************
@@ -297,7 +303,7 @@ const std::string &UiDlg::GetName() const {
 
 bool UiDlg::IsActive() const
 {
-	return !(mFlags & 1) || !ui.IsWidgetHidden(mWindowId);
+	return !(mFlags & 1) || !uiManager->IsHidden(mWindowId);
 }
 
 //*****************************************************************************
@@ -348,6 +354,12 @@ void UiChar::Reset() {
 const std::string &UiChar::GetName() const {
     static std::string name("Char-UI");
     return name;
+}
+
+void UiChar::Show(UiCharDisplayType type)
+{
+	static auto ui_show_charui = temple::GetPointer<void(UiCharDisplayType)>(0x10148e20);
+	ui_show_charui(type);
 }
 
 //*****************************************************************************
@@ -550,6 +562,18 @@ const std::string &UiWorldmap::GetName() const {
     return name;
 }
 
+void UiWorldmap::Show(int mode)
+{
+	static auto ui_show_worldmap = temple::GetPointer<void(int mode)>(0x1015f140);
+	ui_show_worldmap(mode);
+}
+
+void UiWorldmap::TravelToArea(int area)
+{
+	static auto ui_worldmap_travel_by_dialog = temple::GetPointer<void(int)>(0x10160450);
+	ui_worldmap_travel_by_dialog(area);
+}
+
 //*****************************************************************************
 //* RandomEncounter-UI
 //*****************************************************************************
@@ -716,6 +740,12 @@ const std::string &UiPartyPool::GetName() const {
     return name;
 }
 
+void UiPartyPool::Show(bool ingame)
+{
+	static auto ui_partypool_show = temple::GetPointer<void(int ingame)>(0x10165e60);
+	ui_partypool_show(ingame ? TRUE : FALSE);
+}
+
 //*****************************************************************************
 //* pcc_portrait
 //*****************************************************************************
@@ -803,16 +833,16 @@ UiPccPortrait::UiPccPortrait(const UiSystemConf &config) {
 UiPccPortrait::~UiPccPortrait() {
 	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
 	{
-		ui.WidgetRemoveRegardParent(pcPortraitWidgIds[i]);
+		uiManager->RemoveChildWidget(pcPortraitWidgIds[i]);
 	}
-	ui.WidgetAndWindowRemove(pcPortraitsMainId);
+	uiManager->RemoveWidget(pcPortraitsMainId);
 }
 void UiPccPortrait::ResizeViewport(const UiResizeArgs& resizeArg) {
 	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
 	{
-		ui.WidgetRemoveRegardParent(pcPortraitWidgIds[i]);
+		uiManager->RemoveChildWidget(pcPortraitWidgIds[i]);
 	}
-	ui.WidgetAndWindowRemove(pcPortraitsMainId);
+	uiManager->RemoveWidget(pcPortraitsMainId);
 	return InitWidgets(resizeArg.rect1.height);
 }
 const std::string &UiPccPortrait::GetName() const {
@@ -822,17 +852,17 @@ const std::string &UiPccPortrait::GetName() const {
 
 void UiPccPortrait::Hide()
 {
-	ui.WidgetSetHidden(pcPortraitsMainId, 1);
+	uiManager->SetHidden(pcPortraitsMainId, true);
 }
 
 void UiPccPortrait::ButtonActivateNext()
 {
 	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
 	{
-		auto state = ui.GetButtonState(pcPortraitWidgIds[i]);
+		auto state = uiManager->GetButtonState(pcPortraitWidgIds[i]);
 		if (state == LgcyButtonState::Disabled)
 		{
-			ui.SetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Normal);
+			uiManager->SetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Normal);
 			if (i == MAX_PC_CREATION_PORTRAITS - 1)
 				*uiPcPortraitsFullMaybe = 1;
 			return;
@@ -843,11 +873,11 @@ void UiPccPortrait::ButtonActivateNext()
 
 void UiPccPortrait::Refresh()
 {
-	ui.WidgetSetHidden(pcPortraitsMainId, 0);
-	ui.WidgetBringToFront(pcPortraitsMainId);
+	uiManager->SetHidden(pcPortraitsMainId, false);
+	uiManager->BringToFront(pcPortraitsMainId);
 	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
 	{
-		ui.SetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Disabled);
+		uiManager->SetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Disabled);
 	}
 	*uiPcPortraitsFullMaybe = 0;
 
@@ -855,7 +885,7 @@ void UiPccPortrait::Refresh()
 	{
 		for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
 		{
-			ui.SetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Normal);
+			uiManager->SetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Normal);
 		}
 	}
 	*pcCreationIdx = -1;
@@ -865,7 +895,7 @@ void UiPccPortrait::Disable()
 {
 	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
 	{
-		ui.SetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Disabled);
+		uiManager->SetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Disabled);
 	}
 	*uiPcPortraitsFullMaybe = 0;
 }
@@ -875,7 +905,7 @@ bool UiPccPortrait::HandleMessage(LgcyWidgetId widgetId, TigMsg * tigMsg)
 
 	if (tigMsg->type != TigMsgType::WIDGET
 		|| tigMsg->arg2 != 1
-		|| (ui.WidgetlistIndexof(widgetId, pcPortraitWidgIds, MAX_PC_CREATION_PORTRAITS) == -1))
+		|| (WidgetIdIndexOf(widgetId, pcPortraitWidgIds, MAX_PC_CREATION_PORTRAITS) == -1))
 		return true;
 	return false;
 
@@ -888,7 +918,7 @@ void UiPccPortrait::InitWidgets(int height)
 	pcPortraitsMain.render = [](int widId) {};
 	pcPortraitsMain.handleMessage = [](int widId, TigMsg* msg)->BOOL { return FALSE; };
 
-	pcPortraitsMainId = ui.AddWindow(pcPortraitsMain);
+	pcPortraitsMainId = uiManager->AddWindow(pcPortraitsMain);
 
 	static auto ui_render_pc_creation_portraits = temple::GetPointer<void(LgcyWidgetId widgetId)>(0x10163270);
 	static auto ui_msg_pc_creation_portraits = temple::GetPointer<BOOL(LgcyWidgetId widgetId, TigMsg *msg)>(0x101633a0);
@@ -896,7 +926,7 @@ void UiPccPortrait::InitWidgets(int height)
 	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
 	{
 		LgcyButton button;
-		ui.ButtonInit(&button, 0, pcPortraitsMainId, pcPortraitsMain.x + 81 * i, pcPortraitsMain.y, 76, 63);
+		uiManager->ButtonInit(&button, 0, pcPortraitsMainId, pcPortraitsMain.x + 81 * i, pcPortraitsMain.y, 76, 63);
 
 		pcPortraitBoxRects[i].x = button.x;
 		pcPortraitRects[i].x = button.x + 4;
@@ -914,8 +944,8 @@ void UiPccPortrait::InitWidgets(int height)
 		button.render = ui_render_pc_creation_portraits;
 		button.handleMessage = ui_msg_pc_creation_portraits;
 
-		pcPortraitWidgIds[i] = ui.AddButton(button, pcPortraitsMainId);
-		ui.SetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Disabled);
+		pcPortraitWidgIds[i] = uiManager->AddButton(button, pcPortraitsMainId);
+		uiManager->SetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Disabled);
 	}
 }
 
@@ -1064,26 +1094,26 @@ const std::string &UiOptions::GetName() const {
 //* UI-Manager
 //*****************************************************************************
 
-UiManager::UiManager(const UiSystemConf &config) {
+UiManagerSystem::UiManagerSystem(const UiSystemConf &config) {
     auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10143bd0);
     if (!startup(&config)) {
         throw TempleException("Unable to initialize game system UI-Manager");
     }
 }
-UiManager::~UiManager() {
+UiManagerSystem::~UiManagerSystem() {
     auto shutdown = temple::GetPointer<void()>(0x101431a0);
     shutdown();
 }
-void UiManager::Reset() {
+void UiManagerSystem::Reset() {
     auto reset = temple::GetPointer<void()>(0x10143190);
     reset();
 }
-const std::string &UiManager::GetName() const {
+const std::string &UiManagerSystem::GetName() const {
     static std::string name("UI-Manager");
     return name;
 }
 
-bool UiManager::HandleKeyEvent(const InGameKeyEvent & msg)
+bool UiManagerSystem::HandleKeyEvent(const InGameKeyEvent & msg)
 {
 	static auto UiManagerKeyEventHandler = temple::GetPointer<BOOL(const InGameKeyEvent &kbMsg)>(0x10143d60);
 	return UiManagerKeyEventHandler(msg) != 0;
@@ -1160,6 +1190,12 @@ UiWritten::~UiWritten() {
 const std::string &UiWritten::GetName() const {
     static std::string name("written_ui");
     return name;
+}
+
+bool UiWritten::Show(objHndl handle)
+{
+	static auto ui_written_show = temple::GetPointer<BOOL(objHndl)>(0x10160f50);
+	return ui_written_show(handle) != FALSE;
 }
 
 //*****************************************************************************

@@ -51,7 +51,7 @@ UiSystems::UiSystems(int width, int height)
 	mHelpInventory = InitializeSystem<UiHelpInventory>(config);
 	mPartyQuickview = InitializeSystem<UiPartyQuickview>();
 	mOptions = InitializeSystem<UiOptions>(config);
-	mManager = InitializeSystem<UiManager>(config);
+	mManager = InitializeSystem<UiManagerSystem>(config);
 	mHelpManager = InitializeSystem<UiHelpManager>(config);
 	mSlider = InitializeSystem<UiSlider>(config);
 	mWritten = InitializeSystem<UiWritten>(config);

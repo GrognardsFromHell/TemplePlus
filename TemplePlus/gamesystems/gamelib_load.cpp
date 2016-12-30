@@ -11,6 +11,8 @@
 #include "util/savegame.h"
 #include <infrastructure/vfs.h>
 #include <mod_support.h>
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
 
 static struct GameLibLoadAddresses : temple::AddressTable {
 	/*
@@ -197,7 +199,7 @@ bool GameSystems::LoadGame(const string& filename) {
 	
 	logger->info("Completed loading of save game");
 	
-	ui.UpdatePartyUi();
+	uiSystems->GetParty().Update();
 	
 	if (temple::Dll::GetInstance().HasCo8Hooks()){
 		// Co8 load hook

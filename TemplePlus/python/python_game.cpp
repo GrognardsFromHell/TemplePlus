@@ -42,6 +42,8 @@
 #include <gamesystems/deity/legacydeitysystem.h>
 #include <damage.h>
 #include <weapon.h>
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
 
 static PyObject *encounterQueue = nullptr;
 
@@ -827,12 +829,12 @@ PyObject* PyGame_LoadGame(PyObject*, PyObject* args) {
 }
 
 PyObject* PyGame_UpdateCombatUi(PyObject*, PyObject* args) {
-	ui.UpdateCombatUi();
+	uiSystems->GetCombat().Update();
 	Py_RETURN_NONE;
 }
 
 PyObject* PyGame_UpdatePartyUi(PyObject*, PyObject* args) {
-	ui.UpdatePartyUi();
+	uiSystems->GetParty().Update();
 	Py_RETURN_NONE;
 }
 
@@ -879,20 +881,20 @@ PyObject* PyGame_GetDeityFavoredWeapon(PyObject*, PyObject* args) {
 
 
 PyObject* PyGame_UiShowWorldmap(PyObject*, PyObject* args) {
-	int unk;
-	if (!PyArg_ParseTuple(args, "i:game.ui_show_worldmap", &unk)) {
+	int mode;
+	if (!PyArg_ParseTuple(args, "i:game.ui_show_worldmap", &mode)) {
 		return 0;
 	}
-	ui.ShowWorldMap(unk);
+	uiSystems->GetWorldmap().Show(mode);
 	Py_RETURN_NONE;
 }
 
 PyObject* PyGame_WorldmapTravelByDialog(PyObject*, PyObject* args) {
-	int destination;
-	if (!PyArg_ParseTuple(args, "i:game.ui_worldmap_travel_by_dialog", &destination)) {
+	int area;
+	if (!PyArg_ParseTuple(args, "i:game.ui_worldmap_travel_by_dialog(area)", &area)) {
 		return 0;
 	}
-	ui.WorldMapTravelByDialog(destination);
+	uiSystems->GetWorldmap().TravelToArea(area);
 	Py_RETURN_NONE;
 }
 
@@ -1099,12 +1101,12 @@ static void __cdecl PyGame_PickerCallback(const PickerResult &result, void*) {
 }
 
 PyObject* PyGame_PartyPool(PyObject*, PyObject* args) {
-	ui.ShowPartyPool(true);
+	uiSystems->GetPartyPool().Show(true);
 	Py_RETURN_NONE;
 }
 
 PyObject* PyGame_CharUiHide(PyObject*, PyObject* args) {
-	ui.ShowCharUi(0);
+	uiSystems->GetChar().Hide();
 	Py_RETURN_NONE;
 }
 
@@ -1162,7 +1164,7 @@ PyObject* PyGame_WrittenUiShow(PyObject*, PyObject* args) {
 		return 0;
 	}
 
-	auto result = ui.ShowWrittenUi(handle);
+	auto result = uiSystems->GetWritten().Show(handle) ? 1 : 0;
 	return PyInt_FromLong(result);
 }
 

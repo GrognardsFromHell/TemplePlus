@@ -16,6 +16,8 @@
 #include <gamesystems/gamesystems.h>
 #include <gamesystems/objects/objsystem.h>
 #include <ui/ui_picker.h>
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
 
 struct PySpell;
 static PyObject *PySpellTargets_Create(PySpell *spell);
@@ -270,8 +272,8 @@ static PyObject *PySpell_SummonMonsters(PyObject *obj, PyObject *args) {
 	auto casterIni = combatSys.GetInitiative(self->caster);
 	combatSys.SetInitiative(newHandle, casterIni);
 
-	ui.UpdateCombatUi();
-	ui.UpdatePartyUi();
+	uiSystems->GetCombat().Update();
+	uiSystems->GetParty().Update();
 
 	conds.AddTo(newHandle, "sp-Summoned", { (int)self->spellId, (int) self->duration, 0 });
 	conds.AddTo(newHandle, "Timed-Disappear", { (int) self->spellId, (int)self->duration, 0 });

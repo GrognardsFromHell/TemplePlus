@@ -134,6 +134,8 @@ public:
     ~UiCombat();
     void Reset() override;
     const std::string &GetName() const override;
+
+	void Update();
 };
 
 class UiSlide : public UiSystem {
@@ -175,7 +177,7 @@ public:
  * For which purpose has the inventory screen been opened?
  */
 enum class UiCharDisplayType : uint32_t {
-	Unk0 = 0,
+	Hidden = 0,
 	Looting = 1,
 	Bartering = 2,
 	LevelUp = 3,
@@ -231,11 +233,30 @@ public:
 		return GetDisplayType() == UiCharDisplayType::Bartering;
 	}
 
+	bool IsLootingActive() const {
+		return mLooting != FALSE;
+	}
+
+	/*
+		This is actually used to *hide* the char ui if param is 0.
+		Other meanings of param are currently unknown.
+		1 means opening for looting; enables the Take All button
+		2 means opening for bartering
+		3 ??
+		4 means opening for spells targeting inventory items
+	*/
+	void Show(UiCharDisplayType type);
+
+	void Hide() {
+		Show(UiCharDisplayType::Hidden);
+	}
+	
 private:
 	objHndl &mInventoryObj = temple::GetRef<objHndl>(0x10BEECC0);
 	BOOL &mInventoryObjState = temple::GetRef<BOOL>(0x10EF97C4);
 	objHndl &mCurrentCritter = temple::GetRef<objHndl>(0x10BE9940);
 	UiCharDisplayType &mDisplayType = temple::GetRef<UiCharDisplayType>(0x10BE994C);
+	BOOL &mLooting = temple::GetRef<BOOL>(0x10BE6EE8);
 };
 
 class UiToolTip : public UiSystem {
@@ -328,6 +349,11 @@ public:
     bool LoadGame(const UiSaveFile &saveGame) override;
     void ResizeViewport(const UiResizeArgs &resizeArgs) override;
     const std::string &GetName() const override;
+
+	void Show(int mode);
+
+	// Called by the dialog scripts to travel to an area based on a dialog choice
+	void TravelToArea(int area);
 };
 
 class UiRandomEncounter : public UiSystem {
@@ -391,6 +417,12 @@ public:
     bool LoadGame(const UiSaveFile &saveGame) override;
     void ResizeViewport(const UiResizeArgs &resizeArgs) override;
     const std::string &GetName() const override;
+
+	/*
+		Shows the party pool UI. Flag indicates whether the pool
+		is being shown ingame (tavern) or from outside the game.
+	*/
+	void Show(bool ingame);
 };
 
 class UiPccPortrait : public UiSystem {
@@ -449,6 +481,10 @@ public:
 		mHoveredObj = handle;
 	}
 
+	void Update() {
+
+	}
+
 private:
 	/**
 	 * Indicates for which party member a "mouse pressed" frame should be drawn regardless 
@@ -461,6 +497,8 @@ private:
 	* of the actual mouse state.
 	*/
 	objHndl& mHoveredObj = temple::GetRef<objHndl>(0x10BE33F8);
+
+	void(*UpdatePartyUi)() = temple::GetPointer<void()>(0x1009A740);
 };
 
 class UiFormation : public UiSystem {
@@ -520,11 +558,11 @@ struct InGameKeyEvent {
 };
 #pragma pack(pop)
 
-class UiManager : public UiSystem {
+class UiManagerSystem : public UiSystem {
 public:
     static constexpr auto Name = "UI-Manager";
-    UiManager(const UiSystemConf &config);
-    ~UiManager();
+	UiManagerSystem(const UiSystemConf &config);
+    ~UiManagerSystem();
     void Reset() override;
     const std::string &GetName() const override;
 
@@ -565,6 +603,9 @@ public:
     UiWritten(const UiSystemConf &config);
     ~UiWritten();
     const std::string &GetName() const override;
+
+	bool Show(objHndl handle);
+
 };
 
 class UiCharmap : public UiSystem {

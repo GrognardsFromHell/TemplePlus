@@ -169,6 +169,7 @@
     <ClCompile Include="traps.cpp" />
     <ClCompile Include="tutorial.cpp" />
     <ClCompile Include="ui\ui_alert.cpp" />
+    <ClCompile Include="ui\ui_assets.cpp" />
     <ClCompile Include="ui\ui_char.cpp" />
     <ClCompile Include="ui\ui_char_editor.cpp" />
     <ClCompile Include="ui\ui_combat.cpp" />
@@ -176,10 +177,9 @@
     <ClCompile Include="ui\ui_ingame.cpp" />
     <ClCompile Include="ui\ui_ingame_wrapper.cpp" />
     <ClCompile Include="ui\ui_intgame_select.cpp" />
-    <ClCompile Include="ui\ui_legacy.cpp" />
     <ClCompile Include="ui\ui_legacysystems.cpp" />
     <ClCompile Include="ui\ui_logbook.cpp" />
-    <ClCompile Include="ui\ui_legacy_wrapper.cpp" />
+    <ClCompile Include="ui\ui_wrapper.cpp" />
     <ClCompile Include="ui\ui_party.cpp" />
     <ClCompile Include="ui\ui_popup.cpp" />
     <ClCompile Include="ui\ui_slider.cpp" />
@@ -330,9 +330,9 @@
     <ClInclude Include="tig\tig_keyboard.h" />
     <ClInclude Include="tutorial.h" />
     <ClInclude Include="ui\ui_alert.h" />
+    <ClInclude Include="ui\ui_assets.h" />
     <ClInclude Include="ui\ui_ingame.h" />
     <ClInclude Include="ui\ui_intgame_wrapper.h" />
-    <ClInclude Include="ui\ui_legacy.h" />
     <ClInclude Include="ui\ui_legacysystems.h" />
     <ClInclude Include="ui\ui_logbook.h" />
     <ClInclude Include="ui\ui_popup.h" />

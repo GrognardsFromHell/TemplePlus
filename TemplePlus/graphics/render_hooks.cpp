@@ -8,6 +8,7 @@
 #include <util/fixes.h>
 
 #include <ui/ui.h>
+#include <ui/ui_assets.h>
 #include "tig/tig_startup.h"
 #include "tig/tig_texture.h"
 

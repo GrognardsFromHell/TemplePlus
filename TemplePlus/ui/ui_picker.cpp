@@ -168,7 +168,7 @@ int UiPicker::ShowPicker(const PickerArgs& args, void* callbackArgs) {
 		return FALSE;
 
 	
-	ui.WidgetSetHidden(uiIntgameSelect.GetId(), 0);
+	uiManager->SetHidden(uiIntgameSelect.GetId(), false);
 	pickerIdx++;
 
 	if (pickerIdx >= MAX_PICKER_COUNT || pickerIdx < 0)
@@ -217,7 +217,7 @@ BOOL UiPicker::FreeCurrentPicker() {
 
 	auto &picker = GetActivePicker();
 	picker.args.result.FreeObjlist();
-	ui.WidgetSetHidden(uiIntgameSelect.GetId(), 1);
+	uiManager->SetHidden(uiIntgameSelect.GetId(), true);
 
 	if (picker.cursorStackCount_Maybe){
 		mouseFuncs.ResetCursor();

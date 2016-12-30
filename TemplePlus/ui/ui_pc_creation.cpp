@@ -446,14 +446,14 @@ public:
 			auto result = orgPartyAlignmentChoiceShow();
 			if (modSupport.IsKotB()){
 				auto alignmentBtnIds = temple::GetRef<int[9]>(0x10BDA73C);
-				ui.SetButtonState(alignmentBtnIds[0], LgcyButtonState::Disabled); // LG
-				ui.SetButtonState(alignmentBtnIds[2], LgcyButtonState::Disabled); // CG
+				uiManager->SetButtonState(alignmentBtnIds[0], LgcyButtonState::Disabled); // LG
+				uiManager->SetButtonState(alignmentBtnIds[2], LgcyButtonState::Disabled); // CG
 
-				ui.SetButtonState(alignmentBtnIds[4], LgcyButtonState::Disabled); // TN
-				ui.SetButtonState(alignmentBtnIds[5], LgcyButtonState::Disabled); // CN
+				uiManager->SetButtonState(alignmentBtnIds[4], LgcyButtonState::Disabled); // TN
+				uiManager->SetButtonState(alignmentBtnIds[5], LgcyButtonState::Disabled); // CN
 
-				ui.SetButtonState(alignmentBtnIds[6], LgcyButtonState::Disabled); // LE
-				ui.SetButtonState(alignmentBtnIds[8], LgcyButtonState::Disabled); // CE
+				uiManager->SetButtonState(alignmentBtnIds[6], LgcyButtonState::Disabled); // LE
+				uiManager->SetButtonState(alignmentBtnIds[8], LgcyButtonState::Disabled); // CE
 			}
 			return result;
 		});
@@ -484,9 +484,9 @@ void PcCreationHooks::GetPartyPool(int fromIngame)
 	LocAndOffsets& locToCreatePcs = temple::GetRef<LocAndOffsets>(0x10BF17A8);
 
 
-	ui.WidgetSetHidden(uiPartypoolWidgetId, 0);
-	ui.WidgetBringToFront(uiPartypoolWidgetId);
-	ui.WidgetBringToFront(uiPcCreationMainWndId);
+	uiManager->SetHidden(uiPartypoolWidgetId, false);
+	uiManager->BringToFront(uiPartypoolWidgetId);
+	uiManager->BringToFront(uiPcCreationMainWndId);
 	uiPartyCreationNotFromShopmap = fromIngame;
 	if (fromIngame)
 	{
@@ -506,10 +506,10 @@ void PcCreationHooks::GetPartyPool(int fromIngame)
 	UiPartyCreationHidePcWidgets();
 	int& uiPartyPoolPcsIdx = temple::GetRef<int>(0x10BF1760);
 	uiPartyPoolPcsIdx = -1;
-	ui.SetButtonState(temple::GetRef<int>(0x10BF2408), LgcyButtonState::Disabled); // Add
-	ui.SetButtonState(temple::GetRef<int>(0x10BF2538), LgcyButtonState::Disabled); // VIEW
-	ui.SetButtonState(temple::GetRef<int>(0x10BF2410), LgcyButtonState::Disabled); // RENAME
-	ui.SetButtonState(temple::GetRef<int>(0x10BF239C), LgcyButtonState::Disabled); // DELETE
+	uiManager->SetButtonState(temple::GetRef<int>(0x10BF2408), LgcyButtonState::Disabled); // Add
+	uiManager->SetButtonState(temple::GetRef<int>(0x10BF2538), LgcyButtonState::Disabled); // VIEW
+	uiManager->SetButtonState(temple::GetRef<int>(0x10BF2410), LgcyButtonState::Disabled); // RENAME
+	uiManager->SetButtonState(temple::GetRef<int>(0x10BF239C), LgcyButtonState::Disabled); // DELETE
 
 	auto GetPcCreationPcBuffer = temple::GetRef<void()>(0x101631B0);
 	GetPcCreationPcBuffer();
@@ -526,11 +526,11 @@ void PcCreationHooks::GetPartyPool(int fromIngame)
 
 	if (fromIngame || !party.GroupListGetLen())
 	{
-		ui.WidgetSetHidden(temple::GetRef<int>(0x10BDB8E0), 1);
+		uiManager->SetHidden(temple::GetRef<int>(0x10BDB8E0), true);
 	}
 	else
 	{
-		ui.WidgetSetHidden(temple::GetRef<int>(0x10BDB8E0), 0);
+		uiManager->SetHidden(temple::GetRef<int>(0x10BDB8E0), false);
 	}
 	auto UiUtilityBarHide = temple::GetRef<void()>(0x1010EEC0);
 	UiUtilityBarHide();
@@ -596,7 +596,7 @@ BOOL PcCreationHooks::StatsIncreaseBtnMsg(int widId, TigMsg * msg){
 	if (msg_->widgetEventType != TigMsgWidgetEvent::MouseReleased)
 		return FALSE;
 
-	auto idx = ui.WidgetlistIndexof(widId, temple::GetRef<int[]>(0x10C45310), 6);
+	auto idx = WidgetIdIndexOf(widId, temple::GetRef<int[]>(0x10C45310), 6);
 	if (idx == -1)
 		return TRUE;
 
@@ -627,7 +627,7 @@ BOOL PcCreationHooks::StatsDecreaseBtnMsg(int widId, TigMsg * msg){
 	if (msg_->widgetEventType != TigMsgWidgetEvent::MouseReleased)
 		return FALSE;
 
-	auto idx = ui.WidgetlistIndexof(widId, temple::GetRef<int[]>(0x10C44DA8), 6);
+	auto idx = WidgetIdIndexOf(widId, temple::GetRef<int[]>(0x10C44DA8), 6);
 	if (idx == -1)
 		return TRUE;
 
@@ -664,10 +664,10 @@ BOOL PcCreationHooks::StatsUpdateBtns(){
 		if (isPointBuyMode){
 			temple::GetRef<void(__cdecl)()>(0x1018B500)(); // pointbuy toggle
 		}
-		ui.WidgetSetHidden(temple::GetRef<int>(0x10C44C48), 1); // hide toggle button
+		uiManager->SetHidden(temple::GetRef<int>(0x10C44C48), true); // hide toggle button
 	}
 	else{
-		ui.WidgetSetHidden(temple::GetRef<int>(0x10C44C48), 0); // show toggle button
+		uiManager->SetHidden(temple::GetRef<int>(0x10C44C48), false); // show toggle button
 	}
 
 	auto &selPkt = GetCharEdSelPkt();
@@ -683,10 +683,10 @@ BOOL PcCreationHooks::StatsUpdateBtns(){
 			else if (abLvl >= 14)
 				cost = 2;
 			if (pbPoints < cost || (abLvl == 18 && !config.laxRules))
-				ui.SetButtonState(incBtnId, LgcyButtonState::Disabled);
+				uiManager->SetButtonState(incBtnId, LgcyButtonState::Disabled);
 			else
-				ui.SetButtonState(incBtnId, LgcyButtonState::Normal);
-			ui.WidgetSetHidden(incBtnId, isPointBuyMode == 0);
+				uiManager->SetButtonState(incBtnId, LgcyButtonState::Normal);
+			uiManager->SetHidden(incBtnId, isPointBuyMode == 0);
 
 		}
 
@@ -700,16 +700,16 @@ BOOL PcCreationHooks::StatsUpdateBtns(){
 				cost = 2;
 
 			if (pbPoints >= config.pointBuyPoints || (abLvl == 8 && !config.laxRules) || abLvl <= 5)
-				ui.SetButtonState(decBtnId, LgcyButtonState::Disabled);
+				uiManager->SetButtonState(decBtnId, LgcyButtonState::Disabled);
 			else
-				ui.SetButtonState(decBtnId, LgcyButtonState::Normal);
-			ui.WidgetSetHidden(decBtnId, isPointBuyMode == 0);
+				uiManager->SetButtonState(decBtnId, LgcyButtonState::Normal);
+			uiManager->SetHidden(decBtnId, isPointBuyMode == 0);
 		}
 		
 	}
 
 	auto rerollBtnId = temple::GetRef<int>(0x10C45460);
-	ui.WidgetSetHidden(rerollBtnId, isPointBuyMode);
+	uiManager->SetHidden(rerollBtnId, isPointBuyMode != FALSE);
 
 	return isPointBuyMode;
 }
@@ -815,7 +815,7 @@ void UiPcCreation::ToggleClassRelatedStages(){
 	auto &stateBtnIds = temple::GetRef<int[CG_STAGE_COUNT]>(0x10BDC434);
 
 
-	ui.SetButtonState(stateBtnIds[CG_Stage_Abilities], LgcyButtonState::Disabled); // class features - off by default; todo expand this
+	uiManager->SetButtonState(stateBtnIds[CG_Stage_Abilities], LgcyButtonState::Disabled); // class features - off by default; todo expand this
 
 
 	mIsSelectingBonusFeat = false;
@@ -830,23 +830,23 @@ void UiPcCreation::ToggleClassRelatedStages(){
 
 
 		if (classCode == stat_level_cleric) {
-			ui.SetButtonState(stateBtnIds[CG_Stage_Abilities], LgcyButtonState::Normal); // features
+			uiManager->SetButtonState(stateBtnIds[CG_Stage_Abilities], LgcyButtonState::Normal); // features
 		}
 		if (classCode == stat_level_ranger) {
-			ui.SetButtonState(stateBtnIds[CG_Stage_Abilities], LgcyButtonState::Normal); // features
+			uiManager->SetButtonState(stateBtnIds[CG_Stage_Abilities], LgcyButtonState::Normal); // features
 		}
 		if (classCode == stat_level_wizard) {
-			ui.SetButtonState(stateBtnIds[CG_Stage_Abilities], LgcyButtonState::Normal); // wizard special school
+			uiManager->SetButtonState(stateBtnIds[CG_Stage_Abilities], LgcyButtonState::Normal); // wizard special school
 		}
 	}
 
 	// Spells
 	if (d20ClassSys.IsSelectingSpellsOnLevelup(handle, classCode)) {
-		ui.SetButtonState(stateBtnIds[CG_Stage_Spells], LgcyButtonState::Normal);
+		uiManager->SetButtonState(stateBtnIds[CG_Stage_Spells], LgcyButtonState::Normal);
 	}
 	else
 	{
-		ui.SetButtonState(stateBtnIds[CG_Stage_Spells], LgcyButtonState::Disabled);
+		uiManager->SetButtonState(stateBtnIds[CG_Stage_Spells], LgcyButtonState::Disabled);
 	};
 
 }
@@ -887,7 +887,7 @@ BOOL UiPcCreation::ClassWidgetsInit(){
 	classWnd.y = GetPcCreationWnd().y + 50;
 	classWnd.flags = 1;
 	classWnd.render = [](int widId) { uiPcCreation.StateTitleRender(widId); };
-	classWndId = ui.AddWindow(classWnd);
+	classWndId = uiManager->AddWindow(classWnd);
 
 	int coloff = 0, rowoff = 0;
 
@@ -905,7 +905,7 @@ BOOL UiPcCreation::ClassWidgetsInit(){
 		classBtn.render = [](int id) {uiPcCreation.ClassBtnRender(id); };
 		classBtn.handleMessage = [](int id, TigMsg* msg) { return uiPcCreation.ClassBtnMsg(id, msg); };
 		classBtn.SetDefaultSounds();
-		classBtnIds.push_back(ui.AddButton(classBtn, classWndId));
+		classBtnIds.push_back(uiManager->AddButton(classBtn, classWndId));
 
 		//rects
 		classBtnFrameRects.push_back(TigRect(classBtn.x - 5, classBtn.y - 5, classBtn.width + 10, classBtn.height + 10));
@@ -939,13 +939,13 @@ BOOL UiPcCreation::ClassWidgetsInit(){
 	nextBtn.render = [](int id) { uiPcCreation.ClassNextBtnRender(id); };
 	nextBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {	return uiPcCreation.ClassNextBtnMsg(widId, msg); };
 	nextBtn.SetDefaultSounds();
-	classNextBtn = ui.AddButton(nextBtn, classWndId);
+	classNextBtn = uiManager->AddButton(nextBtn, classWndId);
 
 	LgcyButton prevBtn("Class Prev. Button", classWndId, classWnd.x + prevBtnXoffset, classWnd.y + nextBtnYoffset - 4, 55, 20);
 	prevBtn.render = [](int id) { uiPcCreation.ClassPrevBtnRender(id); };
 	prevBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {	return uiPcCreation.ClassPrevBtnMsg(widId, msg); };
 	prevBtn.SetDefaultSounds();
-	classPrevBtn = ui.AddButton(prevBtn, classWndId);
+	classPrevBtn = uiManager->AddButton(prevBtn, classWndId);
 	
 	return TRUE;
 	
@@ -953,33 +953,33 @@ BOOL UiPcCreation::ClassWidgetsInit(){
 
 void UiPcCreation::ClassWidgetsFree(){
 	for (auto it : classBtnIds) {
-		ui.WidgetRemoveRegardParent(it);
+		uiManager->RemoveChildWidget(it);
 	}
 	classBtnIds.clear();
-	ui.WidgetRemoveRegardParent(classNextBtn);
-	ui.WidgetRemoveRegardParent(classPrevBtn);
-	ui.WidgetRemove(classWndId);
+	uiManager->RemoveChildWidget(classNextBtn);
+	uiManager->RemoveChildWidget(classPrevBtn);
+	uiManager->RemoveWidget(classWndId);
 }
 
 BOOL UiPcCreation::ClassShow(){
-	ui.WidgetSetHidden(classWndId, 0);
-	ui.WidgetBringToFront(classWndId);
+	uiManager->SetHidden(classWndId, false);
+	uiManager->BringToFront(classWndId);
 	return 1;
 }
 
 BOOL UiPcCreation::ClassHide(){
-	ui.WidgetSetHidden(classWndId, 1);
+	uiManager->SetHidden(classWndId, true);
 	return 0;
 }
 
 BOOL UiPcCreation::ClassWidgetsResize(UiResizeArgs & args){
 	for (auto it : classBtnIds) {
-		ui.WidgetRemoveRegardParent(it);
+		uiManager->RemoveChildWidget(it);
 	}
 	classBtnIds.clear();
-	ui.WidgetRemoveRegardParent(classNextBtn);
-	ui.WidgetRemoveRegardParent(classPrevBtn);
-	ui.WidgetAndWindowRemove(classWndId);
+	uiManager->RemoveChildWidget(classNextBtn);
+	uiManager->RemoveChildWidget(classPrevBtn);
+	uiManager->RemoveWidget(classWndId);
 	classBtnFrameRects.clear();
 	classBtnRects.clear();
 	classTextRects.clear();
@@ -1111,21 +1111,21 @@ BOOL UiPcCreation::SpellsWidgetsInit(){
 	spellsWnd.flags = 1;
 	spellsWnd.render = [](int widId) {uiPcCreation.SpellsWndRender(widId); };
 	spellsWnd.handleMessage = [](int widId, TigMsg*msg) { return uiPcCreation.SpellsWndMsg(widId, msg); };
-	spellsWndId = ui.AddWindow(spellsWnd);
+	spellsWndId = uiManager->AddWindow(spellsWnd);
 
 	// Available Spells Scrollbar
 	spellsScrollbar.Init(201, 34, 152);
 	spellsScrollbar.parentId = spellsWndId;
 	spellsScrollbar.x += spellsWnd.x;
 	spellsScrollbar.y += spellsWnd.y;
-	spellsScrollbarId = ui.AddScrollBar(spellsScrollbar, spellsWndId);
+	spellsScrollbarId = uiManager->AddScrollBar(spellsScrollbar, spellsWndId);
 
 	// Spell selection scrollbar
 	spellsScrollbar2.Init(415, 34, 152);
 	spellsScrollbar2.parentId = spellsWndId;
 	spellsScrollbar2.x += spellsWnd.x;
 	spellsScrollbar2.y += spellsWnd.y;
-	spellsScrollbar2Id = ui.AddScrollBar(spellsScrollbar2, spellsWndId);
+	spellsScrollbar2Id = uiManager->AddScrollBar(spellsScrollbar2, spellsWndId);
 
 	int rowOff = 38;
 	for (auto i = 0; i < SPELLS_BTN_COUNT; i++, rowOff += SPELLS_BTN_HEIGHT) {
@@ -1137,7 +1137,7 @@ BOOL UiPcCreation::SpellsWidgetsInit(){
 		spellAvailBtn.handleMessage = [](int id, TigMsg* msg) { return uiPcCreation.SpellsAvailableEntryBtnMsg(id, msg); };
 		spellAvailBtn.renderTooltip = nullptr;
 		spellAvailBtn.SetDefaultSounds();
-		spellsAvailBtnIds.push_back(ui.AddButton(spellAvailBtn, spellsWndId));
+		spellsAvailBtnIds.push_back(uiManager->AddButton(spellAvailBtn, spellsWndId));
 
 		LgcyButton spellChosenBtn("Spell Chosen btn", spellsWndId, 221, rowOff, 193, SPELLS_BTN_HEIGHT);
 
@@ -1146,7 +1146,7 @@ BOOL UiPcCreation::SpellsWidgetsInit(){
 		spellChosenBtn.handleMessage = [](int id, TigMsg* msg) { return uiPcCreation.SpellsEntryBtnMsg(id, msg); };
 		spellChosenBtn.renderTooltip = nullptr;
 		spellChosenBtn.SetDefaultSounds();
-		spellsChosenBtnIds.push_back(ui.AddButton(spellChosenBtn, spellsWndId));
+		spellsChosenBtnIds.push_back(uiManager->AddButton(spellChosenBtn, spellsWndId));
 
 	}
 
@@ -1185,24 +1185,24 @@ void UiPcCreation::SpellsReset(){
 
 void UiPcCreation::SpellsWidgetsFree(){
 	for (auto i = 0; i < SPELLS_BTN_COUNT; i++) {
-		ui.WidgetRemoveRegardParent(spellsChosenBtnIds[i]);
-		ui.WidgetRemoveRegardParent(spellsAvailBtnIds[i]);
+		uiManager->RemoveChildWidget(spellsChosenBtnIds[i]);
+		uiManager->RemoveChildWidget(spellsAvailBtnIds[i]);
 	}
 	spellsChosenBtnIds.clear();
 	spellsAvailBtnIds.clear();
-	ui.WidgetRemove(spellsWndId);
+	uiManager->RemoveWidget(spellsWndId);
 }
 
 BOOL UiPcCreation::SpellsShow()
 {
-	ui.WidgetSetHidden(spellsWndId, 0);
-	ui.WidgetBringToFront(spellsWndId);
+	uiManager->SetHidden(spellsWndId, false);
+	uiManager->BringToFront(spellsWndId);
 	return 1;
 }
 
 BOOL UiPcCreation::SpellsHide()
 {
-	ui.WidgetSetHidden(spellsWndId, 1);
+	uiManager->SetHidden(spellsWndId, true);
 	return 0;
 }
 
@@ -1229,19 +1229,19 @@ void UiPcCreation::SpellsActivate()
 
 	static auto setScrollbars = []() {
 		auto sbId = uiPcCreation.spellsScrollbarId;
-		ui.ScrollbarSetY(sbId, 0);
+		uiManager->ScrollbarSetY(sbId, 0);
 		int numEntries = (int)chargen.GetAvailableSpells().size();
-		ui.ScrollbarSetYmax(sbId, max(0, numEntries - uiPcCreation.SPELLS_BTN_COUNT));
-		uiPcCreation.spellsScrollbar = *ui.GetScrollBar(sbId);
+		uiManager->ScrollbarSetYmax(sbId, max(0, numEntries - uiPcCreation.SPELLS_BTN_COUNT));
+		uiPcCreation.spellsScrollbar = *uiManager->GetScrollBar(sbId);
 		uiPcCreation.spellsScrollbar.y = 0;
 		uiPcCreation.spellsScrollbarY = 0;
 
 		auto &charEdSelPkt = chargen.GetCharEditorSelPacket();
 		auto sbAddedId = uiPcCreation.spellsScrollbar2Id;
 		int numAdded = (int)chargen.GetKnownSpellInfo().size();
-		ui.ScrollbarSetY(sbAddedId, 0);
-		ui.ScrollbarSetYmax(sbAddedId, max(0, numAdded - uiPcCreation.SPELLS_BTN_COUNT));
-		uiPcCreation.spellsScrollbar2 = *ui.GetScrollBar(sbAddedId);
+		uiManager->ScrollbarSetY(sbAddedId, 0);
+		uiManager->ScrollbarSetYmax(sbAddedId, max(0, numAdded - uiPcCreation.SPELLS_BTN_COUNT));
+		uiPcCreation.spellsScrollbar2 = *uiManager->GetScrollBar(sbAddedId);
 		uiPcCreation.spellsScrollbar2.y = 0;
 		uiPcCreation.spellsScrollbar2Y = 0;
 	};
@@ -1385,7 +1385,7 @@ BOOL UiPcCreation::StatsWndMsg(int widId, TigMsg * msg){
 }
 
 void UiPcCreation::ClassBtnRender(int widId){
-	auto idx = ui.WidgetlistIndexof(widId, &classBtnIds[0], classBtnIds.size());
+	auto idx = WidgetIdIndexOf(widId, &classBtnIds[0], classBtnIds.size());
 	if (idx == -1)
 		return;
 
@@ -1397,7 +1397,7 @@ void UiPcCreation::ClassBtnRender(int widId){
 	static TigRect srcRect(1, 1, 120, 30);
 	UiRenderer::DrawTexture(buttonBox, classBtnFrameRects[idx], srcRect);
 
-	auto btnState = ui.GetButtonState(widId);
+	auto btnState = uiManager->GetButtonState(widId);
 	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down)
 	{
 		auto &selPkt = GetCharEditorSelPacket();
@@ -1429,7 +1429,7 @@ BOOL UiPcCreation::ClassBtnMsg(int widId, TigMsg * msg){
 	if (msg->type != TigMsgType::WIDGET)
 		return 0;
 
-	auto idx = ui.WidgetlistIndexof(widId, &classBtnIds[0], classBtnIds.size());
+	auto idx = WidgetIdIndexOf(widId, &classBtnIds[0], classBtnIds.size());
 	if (idx == -1)
 		return 0;
 
@@ -1579,7 +1579,7 @@ void UiPcCreation::ClassNextBtnRender(int widId){
 	static TigRect srcRect(1, 1, 120, 30);
 	UiRenderer::DrawTexture(buttonBox, classNextBtnFrameRect, srcRect);
 
-	auto btnState = ui.GetButtonState(widId);
+	auto btnState = uiManager->GetButtonState(widId);
 	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down) {
 		btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
 	}
@@ -1606,7 +1606,7 @@ void UiPcCreation::ClassPrevBtnRender(int widId){
 	static TigRect srcRect(1, 1, 120, 30);
 	UiRenderer::DrawTexture(buttonBox, classPrevBtnFrameRect, srcRect);
 
-	auto btnState = ui.GetButtonState(widId);
+	auto btnState = uiManager->GetButtonState(widId);
 	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down) {
 		btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
 	}
@@ -1660,8 +1660,8 @@ BOOL UiPcCreation::SpellsWndMsg(int widId, TigMsg * msg)
 	if (msg->type == TigMsgType::WIDGET) {
 		auto msgW = (TigMsgWidget*)msg;
 		if (msgW->widgetEventType == TigMsgWidgetEvent::Scrolled) {
-			ui.ScrollbarGetY(spellsScrollbarId, &spellsScrollbarY);
-			ui.ScrollbarGetY(spellsScrollbar2Id, &spellsScrollbar2Y);
+			uiManager->ScrollbarGetY(spellsScrollbarId, &spellsScrollbarY);
+			uiManager->ScrollbarGetY(spellsScrollbar2Id, &spellsScrollbar2Y);
 			SpellsPerDayUpdate();
 			return 1;
 		}
@@ -1676,7 +1676,7 @@ BOOL UiPcCreation::SpellsWndMsg(int widId, TigMsg * msg)
 			auto &knSpInfo = chargen.GetKnownSpellInfo();
 			for (auto i = 0; i < SPELLS_BTN_COUNT; i++) {
 				// check if mouse within button
-				if (!ui.WidgetContainsPoint(spellsChosenBtnIds[i], msgM->x, msgM->y))
+				if (!uiManager->DoesWidgetContain(spellsChosenBtnIds[i], msgM->x, msgM->y))
 					continue;
 
 				auto spellIdx = i + spellsScrollbar2Y;
@@ -1700,7 +1700,7 @@ BOOL UiPcCreation::SpellsWndMsg(int widId, TigMsg * msg)
 
 			for (auto i = 0; i < SPELLS_BTN_COUNT; i++) {
 				// get spell btn
-				if (!ui.WidgetContainsPoint(spellsAvailBtnIds[i], msgM->x, msgM->y))
+				if (!uiManager->DoesWidgetContain(spellsAvailBtnIds[i], msgM->x, msgM->y))
 					continue;
 				auto spellAvailIdx = i + spellsScrollbarY;
 				if ((uint32_t)spellAvailIdx >= avSpInfo.size())
@@ -1750,14 +1750,14 @@ BOOL UiPcCreation::SpellsWndMsg(int widId, TigMsg * msg)
 
 		if ((int)msgM->x >= spellsWnd.x + 4 && (int)msgM->x <= spellsWnd.x + 184
 			&& (int)msgM->y >= spellsWnd.y && (int)msgM->y <= spellsWnd.y + 259) {
-			spellsScrollbar = *ui.GetScrollBar(spellsScrollbarId);
+			spellsScrollbar = *uiManager->GetScrollBar(spellsScrollbarId);
 			if (spellsScrollbar.handleMessage)
 				return spellsScrollbar.handleMessage(spellsScrollbarId, (TigMsg*)&msgCopy);
 		}
 
 		if ((int)msgM->x >= spellsWnd.x + 206 && (int)msgM->x <= spellsWnd.x + 376
 			&& (int)msgM->y >= spellsWnd.y && (int)msgM->y <= spellsWnd.y + 259) {
-			spellsScrollbar2 = *ui.GetScrollBar(spellsScrollbar2Id);
+			spellsScrollbar2 = *uiManager->GetScrollBar(spellsScrollbar2Id);
 			if (spellsScrollbar2.handleMessage)
 				return spellsScrollbar2.handleMessage(spellsScrollbar2Id, (TigMsg*)&msgCopy);
 		}
@@ -1803,7 +1803,7 @@ BOOL UiPcCreation::SpellsEntryBtnMsg(int widId, TigMsg * msg)
 
 void UiPcCreation::SpellsEntryBtnRender(int widId)
 {
-	auto widIdx = ui.WidgetlistIndexof(widId, &spellsChosenBtnIds[0], SPELLS_BTN_COUNT);
+	auto widIdx = WidgetIdIndexOf(widId, &spellsChosenBtnIds[0], SPELLS_BTN_COUNT);
 	if (widIdx == -1)
 		return;
 
@@ -1818,7 +1818,7 @@ void UiPcCreation::SpellsEntryBtnRender(int widId)
 	auto spEnum = spInfo.spEnum;
 	auto spLvl = spInfo.spellLevel;
 
-	auto btn = ui.GetButton(widId);
+	auto btn = uiManager->GetButton(widId);
 
 	auto &selPkt = GetCharEditorSelPacket();
 	if (spFlag && (!selPkt.spellEnumToRemove || spFlag != 1)) {
@@ -1853,7 +1853,7 @@ BOOL UiPcCreation::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 		return 0;
 	auto msgW = (TigMsgWidget*)msg;
 
-	auto widIdx = ui.WidgetlistIndexof(widId, &spellsAvailBtnIds[0], SPELLS_BTN_COUNT);
+	auto widIdx = WidgetIdIndexOf(widId, &spellsAvailBtnIds[0], SPELLS_BTN_COUNT);
 	if (widIdx == -1)
 		return 0;
 
@@ -1870,7 +1870,7 @@ BOOL UiPcCreation::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 
 	if (!spellSys.IsLabel(spEnum)) {
 
-		auto btn = ui.GetButton(widId);
+		auto btn = uiManager->GetButton(widId);
 		auto curSpellLvl = -1;
 		auto &selPkt = GetCharEditorSelPacket();
 		auto &knSpInfo = chargen.GetKnownSpellInfo();
@@ -1922,7 +1922,7 @@ BOOL UiPcCreation::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 					break;
 
 				auto chosenWidIdx = (int)i - spellsScrollbar2Y;
-				if (!ui.WidgetContainsPoint(spellsChosenBtnIds[chosenWidIdx], msgW->x, msgW->y))
+				if (!uiManager->DoesWidgetContain(spellsChosenBtnIds[chosenWidIdx], msgW->x, msgW->y))
 					continue;
 
 				if (rhsSpInfo.spellLevel == -1 // wildcard slot
@@ -1977,7 +1977,7 @@ BOOL UiPcCreation::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 
 void UiPcCreation::SpellsAvailableEntryBtnRender(int widId)
 {
-	auto widIdx = ui.WidgetlistIndexof(widId, &spellsAvailBtnIds[0], SPELLS_BTN_COUNT);
+	auto widIdx = WidgetIdIndexOf(widId, &spellsAvailBtnIds[0], SPELLS_BTN_COUNT);
 	if (widIdx == -1)
 		return;
 
@@ -1987,7 +1987,7 @@ void UiPcCreation::SpellsAvailableEntryBtnRender(int widId)
 	if (spellIdx >= (int)avSpInfo.size())
 		return;
 
-	auto btn = ui.GetButton(widId);
+	auto btn = uiManager->GetButton(widId);
 	auto spEnum = avSpInfo[spellIdx].spEnum;
 
 	std::string text;
@@ -2044,7 +2044,7 @@ void UiPcCreation::ClassSetPermissibles(){
 	for (auto it : classBtnIds) {
 		auto classCode = GetClassCodeFromWidgetAndPage(idx++, page);
 		if (classCode == (Stat)-1)
-			ui.SetButtonState(it, LgcyButtonState::Disabled);
+			uiManager->SetButtonState(it, LgcyButtonState::Disabled);
 
 		auto isValid = true;
 
@@ -2055,37 +2055,37 @@ void UiPcCreation::ClassSetPermissibles(){
 			isValid = false;
 		
 		if (isValid){
-			ui.SetButtonState(it, LgcyButtonState::Normal);
+			uiManager->SetButtonState(it, LgcyButtonState::Normal);
 		}
 		else {
-			ui.SetButtonState(it, LgcyButtonState::Disabled);
+			uiManager->SetButtonState(it, LgcyButtonState::Disabled);
 		}
 
 	}
 
 	if (!config.newClasses) {
-		ui.SetButtonState(classNextBtn, LgcyButtonState::Disabled);
-		ui.SetButtonState(classPrevBtn, LgcyButtonState::Disabled);
+		uiManager->SetButtonState(classNextBtn, LgcyButtonState::Disabled);
+		uiManager->SetButtonState(classPrevBtn, LgcyButtonState::Disabled);
 		return;
 	}
 
 	if (page > 0)
-		ui.SetButtonState(classPrevBtn, LgcyButtonState::Normal);
+		uiManager->SetButtonState(classPrevBtn, LgcyButtonState::Normal);
 	else
-		ui.SetButtonState(classPrevBtn, LgcyButtonState::Disabled);
+		uiManager->SetButtonState(classPrevBtn, LgcyButtonState::Disabled);
 
 	if (page < mPageCount - 1)
-		ui.SetButtonState(classNextBtn, LgcyButtonState::Normal);
+		uiManager->SetButtonState(classNextBtn, LgcyButtonState::Normal);
 	else
-		ui.SetButtonState(classNextBtn, LgcyButtonState::Disabled);
+		uiManager->SetButtonState(classNextBtn, LgcyButtonState::Disabled);
 }
 
 void UiPcCreation::DeitySetPermissibles(){
 	for (auto i = 0; i < DEITY_BTN_COUNT; i++){
 		if (deitySys.CanPickDeity(GetEditedChar(), i)){
-			ui.SetButtonState(GetDeityBtnId(i), LgcyButtonState::Normal);
+			uiManager->SetButtonState(GetDeityBtnId(i), LgcyButtonState::Normal);
 		} else
-			ui.SetButtonState(GetDeityBtnId(i), LgcyButtonState::Disabled);	
+			uiManager->SetButtonState(GetDeityBtnId(i), LgcyButtonState::Disabled);	
 	}
 }
 

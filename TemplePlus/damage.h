@@ -73,7 +73,7 @@ struct DispIoDamage : DispIO { // Io type 4
 
 class Damage {
 	friend class D20System;
-	friend class DamagePacket;
+	friend struct DamagePacket;
 public:
 	
 	MesHandle damageMes;

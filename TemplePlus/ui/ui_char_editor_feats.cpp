@@ -101,8 +101,8 @@ int HookedFeatMultiselectSub_101A8080(feat_enums feat) // redundant now
 	*addresses.dword_10C75F30 = 0;
 	*addresses.dword_10C77D50 = ( (*addresses.featsMultiselectNum_10C75F34) - 15) & ((*addresses.featsMultiselectNum_10C75F34 - 15 < 0) - 1);
 	addresses.sub_101F87B0(*addresses.widIdx_10C77D80, addresses.featsScrollbar);
-	ui.SetButtonState(*addresses.dword_10C76AF0, LgcyButtonState::Disabled);
-	ui.WidgetSetHidden(*addresses.widgId_10C7AE14, FALSE);
+	uiManager->SetButtonState(*addresses.dword_10C76AF0, LgcyButtonState::Disabled);
+	uiManager->SetHidden(*addresses.widgId_10C7AE14, false);
 	return addresses.sub_101F8E40(*addresses.widgId_10C7AE14);
 		
 }

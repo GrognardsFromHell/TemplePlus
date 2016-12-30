@@ -57,11 +57,11 @@ bool MessageQueue::HandleMessage(const Message& msg) {
 		return false;
 	}
 	
-	if (msg.type == TigMsgType::MOUSE && ui.TranslateMouseMessage((TigMouseMsg*)&msg.arg1)) {
+	if (msg.type == TigMsgType::MOUSE && uiManager->TranslateMouseMessage((TigMouseMsg&)msg.arg1)) {
 		return true;
 	}
 
-	if (ui.ProcessMessage(const_cast<TigMsg&>(msg))) {
+	if (uiManager->ProcessMessage(const_cast<TigMsg&>(msg))) {
 		if (msg.type == TigMsgType::TMT_UNK7) {
 			return false;
 		}

@@ -457,10 +457,10 @@
     <ClCompile Include="python\python_integration_feat.cpp">
       <Filter>python</Filter>
     </ClCompile>
-    <ClCompile Include="ui\ui_legacy.cpp" />
-    <ClCompile Include="ui\ui_legacy_wrapper.cpp" />
     <ClCompile Include="ui\ui_ingame_wrapper.cpp" />
     <ClCompile Include="ui\ui_ingame.cpp" />
+    <ClCompile Include="ui\ui_assets.cpp" />
+    <ClCompile Include="ui\ui_wrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -864,13 +864,13 @@
     <ClInclude Include="python\python_integration_feat.h">
       <Filter>python</Filter>
     </ClInclude>
-    <ClInclude Include="ui\ui_legacy.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ui\ui_ingame.h" />
     <ClInclude Include="ui\ui_intgame_wrapper.h" />
     <ClInclude Include="ui\ui_turn_based.h">
       <Filter>ui</Filter>
     </ClInclude>
+    <ClInclude Include="ui\ui_assets.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

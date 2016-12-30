@@ -37,6 +37,8 @@
 #include <d20_level.h>
 #include <turn_based.h>
 #include <gamesystems/objects/objevent.h>
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
 
 struct PyObjHandle {
 	PyObject_HEAD;
@@ -700,7 +702,7 @@ static PyObject* PyObjHandle_FollowerAdd(PyObject* obj, PyObject* args) {
 	}
 
 	auto result = critterSys.AddFollower(follower, self->handle, 1, false);
-	ui.UpdatePartyUi();
+	uiSystems->GetParty().Update();
 	return PyInt_FromLong(result);
 }
 
@@ -711,7 +713,7 @@ static PyObject* PyObjHandle_FollowerRemove(PyObject* obj, PyObject* args) {
 	}
 
 	auto result = critterSys.RemoveFollower(follower, 1);
-	ui.UpdatePartyUi();
+	uiSystems->GetParty().Update();
 	return PyInt_FromLong(result);
 }
 
@@ -737,7 +739,7 @@ static PyObject* PyObjHandle_AiFollowerAdd(PyObject* obj, PyObject* args) {
 	}
 
 	auto result = critterSys.AddFollower(follower, self->handle, 1, true);
-	ui.UpdatePartyUi();
+	uiSystems->GetParty().Update();
 	return PyInt_FromLong(result);
 }
 
@@ -749,7 +751,7 @@ static PyObject * PyObjHandle_RemoveFromAllGroups(PyObject* obj, PyObject* args)
 		return 0;
 	}
 	auto result = party.ObjRemoveFromAllGroupArrays(dude);
-	ui.UpdatePartyUi();
+	uiSystems->GetParty().Update();
 	return PyInt_FromLong(result);
 };
 
@@ -763,7 +765,7 @@ static PyObject * PyObjHandle_PCAdd(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 	auto result = party.AddToPCGroup(self->handle);
-	ui.UpdatePartyUi();
+	uiSystems->GetParty().Update();
 	return PyInt_FromLong(result);
 };
 
@@ -2522,7 +2524,7 @@ static PyObject* PyObjHandle_AwardExperience(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 	critterSys.AwardXp(self->handle, xpAwarded);
-	ui.UpdatePartyUi();
+	uiSystems->GetParty().Update();
 	Py_RETURN_NONE;
 }
 

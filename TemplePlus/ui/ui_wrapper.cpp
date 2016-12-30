@@ -1,18 +1,19 @@
 
 #include "stdafx.h"
 
-#include "ui_legacy.h"
+#include "tig/tig_msg.h"
+#include "ui.h"
 #include "util/fixes.h"
 
 static int ui_add_window(LgcyWindow *widget, size_t widgetSize, LgcyWidgetId *assignedIdOut, const char *sourceFile, uint32_t lineNumber) {
 	widget->type = LgcyWidgetType::Window;
 	assert(widget->GetSize() == widgetSize);
 	
-	auto assignedId = uiLegacyManager->AddWidget(widget, sourceFile, lineNumber);
+	auto assignedId = uiManager->AddWidget(widget, sourceFile, lineNumber);
 	if (assignedIdOut) {
 		*assignedIdOut = assignedId;
 	}
-	uiLegacyManager->AddWindow(assignedId);
+	uiManager->AddWindow(assignedId);
 	return 0;
 }
 
@@ -20,7 +21,7 @@ static int ui_scrollbar_add(LgcyScrollBar *widget, size_t widgetSize, LgcyWidget
 	widget->type = LgcyWidgetType::Scrollbar;
 	assert(widget->GetSize() == widgetSize);
 
-	auto assignedId = uiLegacyManager->AddWidget(widget, __FILE__, __LINE__);
+	auto assignedId = uiManager->AddWidget(widget, __FILE__, __LINE__);
 	if (assignedIdOut) {
 		*assignedIdOut = assignedId;
 	}
@@ -31,7 +32,7 @@ static int ui_add_button(LgcyButton *widget, size_t widgetSize, LgcyWidgetId *as
 	widget->type = LgcyWidgetType::Button;
 	assert(widget->GetSize() == widgetSize);
 
-	auto assignedId = uiLegacyManager->AddWidget(widget, sourceFile, lineNumber);
+	auto assignedId = uiManager->AddWidget(widget, sourceFile, lineNumber);
 	if (assignedIdOut) {
 		*assignedIdOut = assignedId;
 	}
@@ -39,7 +40,7 @@ static int ui_add_button(LgcyButton *widget, size_t widgetSize, LgcyWidgetId *as
 }
 
 static int ui_copy_widget(LgcyWidgetId id, LgcyWidget *widgetOut) {
-	auto widget = uiLegacyManager->GetWidget(id);
+	auto widget = uiManager->GetWidget(id);
 	if (!widget) {
 		throw new TempleException(format("Trying to access widget id {} which does not exist.", id));
 	}
@@ -48,7 +49,7 @@ static int ui_copy_widget(LgcyWidgetId id, LgcyWidget *widgetOut) {
 }
 
 static int ui_widget_set(LgcyWidgetId id, const LgcyWidget *widgetData) {
-	auto widget = uiLegacyManager->GetWidget(id);
+	auto widget = uiManager->GetWidget(id);
 	if (!widget) {
 		throw new TempleException(format("Trying to access widget id {} which does not exist.", id));
 	}
@@ -58,56 +59,55 @@ static int ui_widget_set(LgcyWidgetId id, const LgcyWidget *widgetData) {
 }
 
 static LgcyWidget *ui_widget_get(LgcyWidgetId id) {
-	return uiLegacyManager->GetWidget(id);
+	return uiManager->GetWidget(id);
 }
 
 static int ui_widget_set_hidden(LgcyWidgetId id, BOOL hidden) {
-	uiLegacyManager->SetHidden(id, hidden == TRUE);
+	uiManager->SetHidden(id, hidden == TRUE);
 	return 0;
 }
 
 static BOOL is_widget_hidden(LgcyWidgetId id) {
-	auto widget = uiLegacyManager->GetWidget(id);
-	return widget->IsHidden() ? TRUE : FALSE;
+	return uiManager->IsHidden(id) ? TRUE : FALSE;
 }
 
 static BOOL ui_widget_contains_point(LgcyWidgetId widgetId, int x, int y) {
-	return uiLegacyManager->DoesWidgetContain(widgetId, x, y) ? TRUE : FALSE;
+	return uiManager->DoesWidgetContain(widgetId, x, y) ? TRUE : FALSE;
 }
 
 static LgcyWidgetId ui_widget_get_at_incl_children(int x, int y) {
 	// -1 means no widget
-	return uiLegacyManager->GetWidgetAt(x, y);	
+	return uiManager->GetWidgetAt(x, y);	
 }
 
 static int ui_widget_remove(LgcyWidgetId id) {
-	uiLegacyManager->RemoveWidget(id);
+	uiManager->RemoveWidget(id);
 	return 0;
 }
 
 static int ui_widget_remove_regard_parent(LgcyWidgetId id) {
-	uiLegacyManager->RemoveChildWidget(id);
+	uiManager->RemoveChildWidget(id);
 	return 0;
 }
 
 static int ui_widgets_render() {
-	uiLegacyManager->Render();
+	uiManager->Render();
 	return 0;
 }
 
 static int ui_widget_and_window_remove(LgcyWidgetId id) {
-	uiLegacyManager->RemoveWindow(id);
-	uiLegacyManager->RemoveWidget(id);
+	uiManager->RemoveWindow(id);
+	uiManager->RemoveWidget(id);
 	return 0;
 }
 
 static int ui_widget_bring_to_front(LgcyWidgetId id) {
-	uiLegacyManager->BringToFront(id);
+	uiManager->BringToFront(id);
 	return 0;
 }
 
 static int ui_widget_send_to_back(LgcyWidgetId id) {
-	uiLegacyManager->SendToBack(id);
+	uiManager->SendToBack(id);
 	return 0;
 }
 
@@ -129,14 +129,14 @@ static LgcyButton *ui_get_button(LgcyWidgetId widId) {
 }
 
 static int ui_widget_add_child(LgcyWidgetId parentId, LgcyWidgetId childId) {
-	return uiLegacyManager->AddChild(parentId, childId) ? FALSE : TRUE;
+	return uiManager->AddChild(parentId, childId) ? FALSE : TRUE;
 }
 
 /*
 	Replaces all functions that access global widget state with wrappers around our
 	legacy UI manager class.
 */
-static class UiLegacyWrapper : public TempleFix {
+static class UiWrapper : public TempleFix {
 public:
 
 	void apply() override
@@ -163,6 +163,14 @@ public:
 		replaceFunction(0x101F8EA0, ui_widget_send_to_back);
 
 		replaceFunction(0x101F9D20, ui_scrollbar_add);
+
+		replaceFunction<BOOL(TigMouseMsg*)>(0x101F9970, [](TigMouseMsg *msg) {
+			return uiManager->TranslateMouseMessage(*msg) ? TRUE : FALSE;
+		});
+
+		replaceFunction<BOOL(TigMsg*)>(0x101F8A80, [](TigMsg *msg) {
+			return uiManager->ProcessMessage(*msg) ? TRUE : FALSE;
+		});
 		
 		// Only called by functions we've already replaced
 		// replaceFunction(0x101F91A0, ui_active_ctrl_get_free_id);
@@ -170,4 +178,4 @@ public:
 		
 	}
 
-} uiLegacyWrapper;
+} uiWrapper;

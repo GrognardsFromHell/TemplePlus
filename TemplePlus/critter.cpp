@@ -26,6 +26,8 @@
 #include "temple_functions.h"
 #include "combat.h"
 #include "history.h"
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
 
 static struct CritterAddresses : temple::AddressTable {
 
@@ -314,7 +316,7 @@ void LegacyCritterSystem::Attack(objHndl target, objHndl attacker, int n1, int f
 							auto npcRefuseFollowingCheck = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x10058A30);
 							if (npcRefuseFollowingCheck(attacker, target) && critterSys.RemoveFollower(attacker, 0))
 							{
-								ui.UpdatePartyUi();
+								uiSystems->GetParty().Update();
 								auto npcFlags = attackerObj->GetInt32(obj_f_npc_flags);
 								attackerObj->SetNPCFlags(npcFlags | ONF_JILTED);
 							}

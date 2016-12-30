@@ -20,6 +20,8 @@ struct RectColor {
 	}
 };
 
+struct ImgFile;
+
 /*
 	Chroeographs a TIG loading screen. Describes the colors of the progress bar, the
 	text messages that should be shown for each step and the primary splash screen image.
@@ -41,10 +43,7 @@ struct LoadingSequence {
 
 	LoadingSequence() {
 	}
-	~LoadingSequence() {
-		delete image;
-		delete[] messages;
-	}
+	~LoadingSequence();
 
 	LoadingSequence(const LoadingSequence&) = delete;
 	LoadingSequence &operator =(const LoadingSequence&) = delete;

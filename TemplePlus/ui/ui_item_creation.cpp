@@ -37,6 +37,7 @@
 #include "ui_legacysystems.h"
 #include "ui_systems.h"
 #include <infrastructure/tabparser.h>
+#include "ui_assets.h"
 
 #define NUM_ITEM_ENHANCEMENT_SPECS 41
 #define NUM_APPLIED_BONUSES_MAX 9 // number of bonuses that can be applied on item creation
@@ -250,13 +251,13 @@ UiItemCreation::UiItemCreation(const UiSystemConf &config) {
 	if (!InitItemCreationRules())
 		throw TempleException("Unable to initialize item creation rules");
 
-	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptNormal, temple::GetRef<int>(0x10BED9F0));
-	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptHover, temple::GetRef<int>(0x10BEDA48));
-	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptPressed, temple::GetRef<int>(0x10BED9EC));
-	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DisabledNormal, temple::GetRef<int>(0x10BEDB48));
-	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineNormal, temple::GetRef<int>(0x10BEDA5C));
-	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineHover, temple::GetRef<int>(0x10BEE2D4));
-	ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclinePressed, temple::GetRef<int>(0x10BED6D0));
+	uiAssets->GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptNormal, temple::GetRef<int>(0x10BED9F0));
+	uiAssets->GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptHover, temple::GetRef<int>(0x10BEDA48));
+	uiAssets->GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptPressed, temple::GetRef<int>(0x10BED9EC));
+	uiAssets->GetAsset(UiAssetType::Generic, UiGenericAsset::DisabledNormal, temple::GetRef<int>(0x10BEDB48));
+	uiAssets->GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineNormal, temple::GetRef<int>(0x10BEDA5C));
+	uiAssets->GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineHover, temple::GetRef<int>(0x10BEE2D4));
+	uiAssets->GetAsset(UiAssetType::Generic, UiGenericAsset::DeclinePressed, temple::GetRef<int>(0x10BED6D0));
 
 	bkgImage = new CombinedImgFile("art\\interface\\item_creation_ui\\item_creation.img");
 
@@ -1174,10 +1175,10 @@ BOOL UiItemCreation::ItemCreationEntryMsg(int widId, TigMsg* msg){
 	craftingItemIdx = itemIdx;
 	auto itemHandle = craftedItemHandles[itemCreationType][itemIdx];
 	if (CreateItemResourceCheck(itemCreationCrafter, itemHandle)) {
-		ui.SetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Normal);
+		uiManager->SetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Normal);
 	}
 	else {
-		ui.SetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Disabled);
+		uiManager->SetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Disabled);
 	}
 
 	return true;
@@ -1185,7 +1186,7 @@ BOOL UiItemCreation::ItemCreationEntryMsg(int widId, TigMsg* msg){
 
 void UiItemCreation::ItemCreationCreateBtnRender(int widId) const
 {
-	auto buttonState = ui.GetButtonState(widId);
+	auto buttonState = uiManager->GetButtonState(widId);
 
 	Render2dArgs arg;
 	if (buttonState == LgcyButtonState::Down)
@@ -1221,7 +1222,7 @@ void UiItemCreation::ItemCreationCreateBtnRender(int widId) const
 
 void UiItemCreation::ItemCreationCancelBtnRender(int widId) const
 {
-	auto buttonState = ui.GetButtonState(widId);
+	auto buttonState = uiManager->GetButtonState(widId);
 
 	Render2dArgs arg;
 	if (buttonState == LgcyButtonState::Down)
@@ -1752,8 +1753,8 @@ BOOL UiItemCreation::IsActive(){
 BOOL UiItemCreation::ItemCreationShow(objHndl crafter, ItemCreationType icType){
 
 	if (crafter == objHndl::null){
-		ui.WidgetSetHidden(mItemCreationWndId, 1);
-		ui.WidgetSetHidden(mMaaWndId, 1);
+		uiManager->SetHidden(mItemCreationWndId, true);
+		uiManager->SetHidden(mMaaWndId, true);
 		return FALSE;
 	}
 
@@ -1764,11 +1765,11 @@ BOOL UiItemCreation::ItemCreationShow(objHndl crafter, ItemCreationType icType){
 	{
 		if (itemCreationResourceCheckResults)
 			free(itemCreationResourceCheckResults);
-		ui.WidgetSetHidden(mItemCreationWndId, 1);
-		*mItemCreationWnd = *ui.GetWindow(mItemCreationWndId);
+		uiManager->SetHidden(mItemCreationWndId, true);
+		*mItemCreationWnd = *uiManager->GetWindow(mItemCreationWndId);
 	} 
 	else if (itemCreationType == ItemCreationType::CraftMagicArmsAndArmor)	{
-		ui.WidgetSetHidden(mMaaWndId, 1);
+		uiManager->SetHidden(mMaaWndId, true);
 	}
 
 	itemCreationType = icType;
@@ -1794,7 +1795,7 @@ BOOL UiItemCreation::ItemCreationWndMsg(int widId, TigMsg * msg){
 		if (_msg->buttonStateFlags & MSF_SCROLLWHEEL_CHANGE) {
 			auto newMsg = *(TigMsgMouse*)msg;
 			newMsg.buttonStateFlags = MSF_SCROLLWHEEL_CHANGE;
-			*mItemCreationScrollbar = *ui.GetScrollBar(mItemCreationScrollbarId);
+			*mItemCreationScrollbar = *uiManager->GetScrollBar(mItemCreationScrollbarId);
 			mItemCreationScrollbar->HandleMessage((TigMsg&)newMsg);
 		}
 		return true;
@@ -1827,7 +1828,7 @@ BOOL UiItemCreation::ItemCreationWndMsg(int widId, TigMsg * msg){
 	if (msg->type == TigMsgType::WIDGET) { // scrolling
 		auto _msg = (TigMsgWidget*)msg;
 		if (_msg->widgetEventType == TigMsgWidgetEvent::Scrolled) {
-			ui.ScrollbarGetY(mItemCreationScrollbarId, &mItemCreationScrollbarY);
+			uiManager->ScrollbarGetY(mItemCreationScrollbarId, &mItemCreationScrollbarY);
 		}
 		return true;
 	}
@@ -1886,7 +1887,7 @@ void UiItemCreation::ItemCreationWndRender(int widId){
 	UiRenderer::DrawTextInWidget(widId, text, resourceRect, temple::GetRef<TigTextStyle>(0x10BED938));
 
 
-	auto shortname = ui.GetStatShortName(stat_experience);
+	auto shortname = uiAssets->GetStatShortName(stat_experience);
 	measText = UiRenderer::MeasureTextSize(shortname, temple::GetRef<TigTextStyle>(0x10BED938));
 	resourceRect = TigRect((37 - measText.width) / 2 + 89 + 14 * mUseCo8Ui, (15 - measText.height) / 2 + 341, 37, 15);
 	UiRenderer::DrawTextInWidget(widId, shortname, resourceRect, temple::GetRef<TigTextStyle>(0x10BED850));
@@ -1913,7 +1914,7 @@ void UiItemCreation::ItemCreationWndRender(int widId){
 		// draw icon
 		auto invAid = (UiGenericAsset)gameSystems->GetObj().GetObject(itemHandle)->GetInt32(obj_f_item_inv_aid);
 		int textureId;
-		ui.GetAsset(UiAssetType::Inventory, invAid, textureId);
+		uiAssets->GetAsset(UiAssetType::Inventory, invAid, textureId);
 		rect = TigRect(temple::GetRef<TigRect>(0x102FAEC4));
 		rect.x += 108 * mUseCo8Ui;
 		UiRenderer::DrawTexture(textureId, rect);
@@ -2017,7 +2018,7 @@ void UiItemCreation::MaaWndRender(int widId){
 	UiRenderer::DrawTextInWidget(widId, text, resourceRect, temple::GetRef<TigTextStyle>(0x10BED9F8));
 
 
-	auto shortname = ui.GetStatShortName(stat_experience);
+	auto shortname = uiAssets->GetStatShortName(stat_experience);
 	measText = UiRenderer::MeasureTextSize(shortname, temple::GetRef<TigTextStyle>(0x10BED938));
 	resourceRect = TigRect((37 - measText.width) / 2 + 140, (15- measText.height) / 2 + 308, 37, 15);
 	UiRenderer::DrawTextInWidget(widId, shortname, resourceRect, temple::GetRef<TigTextStyle>(0x10BED850));
@@ -2084,7 +2085,7 @@ void UiItemCreation::MaaItemRender(int widId){
 	rect = TigRect(mMaaWnd->x + 31, mMaaWnd->y + 54 + 44 * widIdx, 40, 40);
 	auto invAid = (UiGenericAsset)gameSystems->GetObj().GetObject(itemHandle)->GetInt32(obj_f_item_inv_aid);
 	int textureId =0;
-	ui.GetAsset(UiAssetType::Inventory, invAid, textureId);
+	uiAssets->GetAsset(UiAssetType::Inventory, invAid, textureId);
 	srcRect = TigRect(0, 0, 64, 64);
 	UiRenderer::DrawTexture(textureId, rect, srcRect);
 
@@ -2153,7 +2154,7 @@ void UiItemCreation::MaaEnhBonusDnRender(int widId){
 		return;
 
 	int texId;
-	auto bs = ui.GetButtonState(widId);
+	auto bs = uiManager->GetButtonState(widId);
 	switch (bs) {
 	case Disabled:
 		texId = mDownArrowDisabledTga;
@@ -2180,7 +2181,7 @@ void UiItemCreation::MaaEnhBonusUpRender(int widId){
 		return;
 
 	int texId;
-	auto bs = ui.GetButtonState(widId);
+	auto bs = uiManager->GetButtonState(widId);
 	switch (bs) {
 	case Disabled:
 		texId = mDownArrowDisabledTga;
@@ -2202,8 +2203,8 @@ void UiItemCreation::MaaEnhBonusUpRender(int widId){
 }
 
 void UiItemCreation::ButtonStateInit(int wndId){
-	ui.WidgetSetHidden(wndId, 0);
-	*mItemCreationWnd = *ui.GetWindow(wndId);
+	uiManager->SetHidden(wndId, false);
+	*mItemCreationWnd = *uiManager->GetWindow(wndId);
 	itemCreationResourceCheckResults = new bool[numItemsCrafting[itemCreationType]];
 	for (int i = 0; i < (int)numItemsCrafting[itemCreationType];i++)
 	{
@@ -2215,15 +2216,15 @@ void UiItemCreation::ButtonStateInit(int wndId){
 
 	if (craftingItemIdx >= 0 && craftingItemIdx < (int)numItemsCrafting[itemCreationType]){
 		if (CreateItemResourceCheck(itemCreationCrafter, craftedItemHandles[itemCreationType][craftingItemIdx]))
-			ui.SetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Normal);
+			uiManager->SetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Normal);
 		else
-			ui.SetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Disabled);
+			uiManager->SetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Disabled);
 	}
 
-	ui.ScrollbarSetYmax(mItemCreationScrollbarId, numItemsCrafting[itemCreationType] - NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX  < 0 ? 0 : numItemsCrafting[itemCreationType] - NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX);
-	ui.ScrollbarSetY(mItemCreationScrollbarId, 0);
+	uiManager->ScrollbarSetYmax(mItemCreationScrollbarId, numItemsCrafting[itemCreationType] - NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX  < 0 ? 0 : numItemsCrafting[itemCreationType] - NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX);
+	uiManager->ScrollbarSetY(mItemCreationScrollbarId, 0);
 	mItemCreationScrollbarY = 0;
-	ui.WidgetBringToFront(wndId);
+	uiManager->BringToFront(wndId);
 }
 
 void UiItemCreation::MaaInitCraftedItem(objHndl itemHandle){
@@ -2322,12 +2323,12 @@ void UiItemCreation::MaaInitWnd(int wndId){
 	}
 
 	MaaInitCraftedItem(itemHandle);
-	ui.WidgetSetHidden(wndId, 0);
-	*mMaaWnd = *ui.GetWindow(wndId);
-	ui.WidgetBringToFront(wndId);
+	uiManager->SetHidden(wndId, false);
+	*mMaaWnd = *uiManager->GetWindow(wndId);
+	uiManager->BringToFront(wndId);
 	// auto scrollbarId =  mMaaCraftableItemsScrollbarId;// temple::GetRef<int>(0x10BED8A0);
-	ui.ScrollbarSetYmax(mMaaItemsScrollbarId, mMaaCraftableItemList.size() < 5 ? 0 : mMaaCraftableItemList.size() - 5);
-	ui.ScrollbarSetY(mMaaItemsScrollbarId, 0);
+	uiManager->ScrollbarSetYmax(mMaaItemsScrollbarId, mMaaCraftableItemList.size() < 5 ? 0 : mMaaCraftableItemList.size() - 5);
+	uiManager->ScrollbarSetY(mMaaItemsScrollbarId, 0);
 	mMaaItemsScrollbarY = 0;
 
 	auto numApplicableEffects = 0;
@@ -2337,8 +2338,8 @@ void UiItemCreation::MaaInitWnd(int wndId){
 		}
 	}
 
-	ui.ScrollbarSetYmax(mMaaApplicableEffectsScrollbarId, numApplicableEffects < MAA_EFFECT_BUTTONS_COUNT ? 0 : numApplicableEffects - MAA_EFFECT_BUTTONS_COUNT);
-	ui.ScrollbarSetY(mMaaApplicableEffectsScrollbarId, 0);
+	uiManager->ScrollbarSetYmax(mMaaApplicableEffectsScrollbarId, numApplicableEffects < MAA_EFFECT_BUTTONS_COUNT ? 0 : numApplicableEffects - MAA_EFFECT_BUTTONS_COUNT);
+	uiManager->ScrollbarSetY(mMaaApplicableEffectsScrollbarId, 0);
 
 	mMaaApplicableEffectsScrollbarY = 0;
 	craftingItemIdx = -1;
@@ -2390,7 +2391,7 @@ bool UiItemCreation::MaaShouldJustModifyArg(int effIdx, objHndl item){
 
 void UiItemCreation::MaaCreateBtnRender(int widId) const
 {
-	auto buttonState = ui.GetButtonState(widId);
+	auto buttonState = uiManager->GetButtonState(widId);
 	
 	Render2dArgs arg;
 	if (buttonState == LgcyButtonState::Down)
@@ -2520,7 +2521,7 @@ void UiItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 			itemObj->SetInt32(obj_f_description, itemDescNew);
 		}
 
-		ui.WidgetSetHidden(mMaaWndId, 1);
+		uiManager->SetHidden(mMaaWndId, true);
 		itemCreationType = ItemCreationType::Inactive;
 		itemCreationCrafter = 0i64;
 
@@ -2574,11 +2575,11 @@ void UiItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 				auto createBtnId = mItemCreationCreateBtnId; //temple::GetRef<int>(0x10BED8B0);
 				if (CreateItemResourceCheck(crafter, item))
 				{
-					ui.SetButtonState(createBtnId, LgcyButtonState::Normal);
+					uiManager->SetButtonState(createBtnId, LgcyButtonState::Normal);
 				}
 				else
 				{
-					ui.SetButtonState(createBtnId, LgcyButtonState::Disabled);
+					uiManager->SetButtonState(createBtnId, LgcyButtonState::Disabled);
 				}
 			}
 			return;
@@ -2586,7 +2587,7 @@ void UiItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 
 		// else close the window and reset everything
 		free(itemCreationResourceCheckResults);
-		ui.WidgetSetHidden(mItemCreationWndId, 1);
+		uiManager->SetHidden(mItemCreationWndId, true);
 		itemCreationType = ItemCreationType::Inactive;
 		itemCreationCrafter = 0i64;
 	}
@@ -2601,13 +2602,13 @@ BOOL UiItemCreation::CancelBtnMsg(int widId, TigMsg* msg) {
 		if (itemCreationType != ItemCreationType::Inactive) {
 			if (itemCreationType <= ItemCreationType::ForgeRing){
 				free(itemCreationResourceCheckResults);
-				ui.WidgetSetHidden(mItemCreationWndId, 1);
-				*mItemCreationWnd = *ui.GetWindow(mItemCreationWndId);
+				uiManager->SetHidden(mItemCreationWndId, true);
+				*mItemCreationWnd = *uiManager->GetWindow(mItemCreationWndId);
 			}
 			else if (itemCreationType == ItemCreationType::CraftMagicArmsAndArmor)
 			{
-				ui.WidgetSetHidden(mMaaWndId, 1);
-				*mMaaWnd = *ui.GetWindow(mItemCreationWndId);
+				uiManager->SetHidden(mMaaWndId, true);
+				*mMaaWnd = *uiManager->GetWindow(mItemCreationWndId);
 			}
 
 			itemCreationType = ItemCreationType::Inactive;
@@ -2619,7 +2620,7 @@ BOOL UiItemCreation::CancelBtnMsg(int widId, TigMsg* msg) {
 
 void UiItemCreation::MaaCancelBtnRender(int widId) const
 {
-	auto buttonState = ui.GetButtonState(widId);
+	auto buttonState = uiManager->GetButtonState(widId);
 
 	Render2dArgs arg;
 	if (buttonState == LgcyButtonState::Down)
@@ -2694,7 +2695,7 @@ BOOL UiItemCreation::MaaWndMsg(int widId, TigMsg * msg)
 
 		auto _msg = (TigMsgMouse*)msg;
 		if (_msg->buttonStateFlags & MSF_SCROLLWHEEL_CHANGE) {
-			auto widg = ui.GetScrollBar(mMaaApplicableEffectsScrollbarId);
+			auto widg = uiManager->GetScrollBar(mMaaApplicableEffectsScrollbarId);
 			auto newMsg = *(TigMsgMouse*)msg;
 			newMsg.buttonStateFlags = MSF_SCROLLWHEEL_CHANGE;
 			widg->HandleMessage((TigMsg&)newMsg);
@@ -2792,8 +2793,8 @@ BOOL UiItemCreation::MaaWndMsg(int widId, TigMsg * msg)
 	if (msg->type == TigMsgType::WIDGET) { // scrolling
 		auto _msg = (TigMsgWidget*)msg;
 		if (_msg->widgetEventType== TigMsgWidgetEvent::Scrolled) {
-			ui.ScrollbarGetY(mMaaItemsScrollbarId, &mMaaItemsScrollbarY);
-			ui.ScrollbarGetY(mMaaApplicableEffectsScrollbarId, &mMaaApplicableEffectsScrollbarY);
+			uiManager->ScrollbarGetY(mMaaItemsScrollbarId, &mMaaItemsScrollbarY);
+			uiManager->ScrollbarGetY(mMaaApplicableEffectsScrollbarId, &mMaaApplicableEffectsScrollbarY);
 		}
 		return true;
 	}
@@ -2983,7 +2984,7 @@ int UiItemCreation::MaaEffectTooltip(int x, int y, int * widId){
 	if (craftingItemIdx == -1)
 		return 0;
 
-	LgcyButton * btn = ui.GetButton(*widId);
+	LgcyButton * btn = uiManager->GetButton(*widId);
 	if (btn->buttonState == Down || btn->buttonState == Disabled)
 		return 0;
 
@@ -3005,18 +3006,18 @@ int UiItemCreation::MaaEffectTooltip(int x, int y, int * widId){
 	std::string text(fmt::format("{}", tooltips.GetTooltipString(6049))); // Requirements:
 	
 	if (itEnh.reqs.minLevel) {
-		text.append(fmt::format("\n{} {}", ui.GetStatMesLine(273), itEnh.reqs.minLevel )); // Caster Level
+		text.append(fmt::format("\n{} {}", uiAssets->GetStatMesLine(273), itEnh.reqs.minLevel )); // Caster Level
 	}
 	if (itEnh.reqs.alignment) {
 		if (itEnh.reqs.alignment & ALIGNMENT_GOOD)
-			text.append(fmt::format("\n{} {}", ui.GetStatMesLine(238), ui.GetStatMesLine(8017)));
+			text.append(fmt::format("\n{} {}", uiAssets->GetStatMesLine(238), uiAssets->GetStatMesLine(8017)));
 		else if (itEnh.reqs.alignment & ALIGNMENT_EVIL)
-			text.append(fmt::format("\n{} {}", ui.GetStatMesLine(238), ui.GetStatMesLine(8011)));
+			text.append(fmt::format("\n{} {}", uiAssets->GetStatMesLine(238), uiAssets->GetStatMesLine(8011)));
 
 		if (itEnh.reqs.alignment & ALIGNMENT_LAWFUL)
-			text.append(fmt::format("\n{} {}", ui.GetStatMesLine(238), ui.GetStatMesLine(8022)));
+			text.append(fmt::format("\n{} {}", uiAssets->GetStatMesLine(238), uiAssets->GetStatMesLine(8022)));
 		else if (itEnh.reqs.alignment & ALIGNMENT_CHAOTIC)
-			text.append(fmt::format("\n{} {}", ui.GetStatMesLine(238), ui.GetStatMesLine(8004)));
+			text.append(fmt::format("\n{} {}", uiAssets->GetStatMesLine(238), uiAssets->GetStatMesLine(8004)));
 	}
 	
 	if (itEnh.reqs.spells.size()) {
@@ -3500,14 +3501,14 @@ void UiItemCreation::UiItemCreationWidgetsInit(int width, int height){
 	wnd.render = [](int widId) { itemCreation().ItemCreationWndRender(widId); };
 	wnd.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().ItemCreationWndMsg(widId, msg); };//temple::GetRef<bool(__cdecl)(int, TigMsg*)>(0x1014FC20);
 
-	mItemCreationWndId = ui.AddWindow(temple::GetRef<LgcyWindow>(0x10BEE040));
+	mItemCreationWndId = uiManager->AddWindow(temple::GetRef<LgcyWindow>(0x10BEE040));
 
 	mItemCreationScrollbar->Init(185 + mUseCo8Ui * 108, 51, 259);
 	mItemCreationScrollbar->scrollQuantum = 3;
 	mItemCreationScrollbar->x += wnd.x;
 	mItemCreationScrollbar->y += wnd.y;
 
-	mItemCreationScrollbarId = ui.AddScrollBar(*mItemCreationScrollbar, mItemCreationWndId);
+	mItemCreationScrollbarId = uiManager->AddScrollBar(*mItemCreationScrollbar, mItemCreationWndId);
 
 	auto btnY = 55;
 
@@ -3517,7 +3518,7 @@ void UiItemCreation::UiItemCreationWidgetsInit(int width, int height){
 		btn.y += wnd.y;
 		btn.render = [](int widId) {itemCreation().ItemCreationEntryRender(widId); };
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().ItemCreationEntryMsg(widId, msg); };
-		mItemCreationEntryBtnIds[i] = ui.AddButton(btn, mItemCreationWndId);
+		mItemCreationEntryBtnIds[i] = uiManager->AddButton(btn, mItemCreationWndId);
 		btnY += 12;
 	}
 	// create button
@@ -3529,7 +3530,7 @@ void UiItemCreation::UiItemCreationWidgetsInit(int width, int height){
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().CreateBtnMsg(widId, msg); };
 		btn.SetDefaultSounds();
 
-		mItemCreationCreateBtnId = ui.AddButton(btn, mItemCreationWndId);
+		mItemCreationCreateBtnId = uiManager->AddButton(btn, mItemCreationWndId);
 	}
 	// cancel button
 	auto &cancelBtnId = temple::GetRef<int>(0x10BEDA68);
@@ -3541,7 +3542,7 @@ void UiItemCreation::UiItemCreationWidgetsInit(int width, int height){
 	btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().CancelBtnMsg(widId, msg); };
 	btn.SetDefaultSounds();
 
-	cancelBtnId = ui.AddButton(btn, mItemCreationWndId);
+	cancelBtnId = uiManager->AddButton(btn, mItemCreationWndId);
 }
 
 void UiItemCreation::MaaWidgetsInit(int width, int height) {
@@ -3551,21 +3552,21 @@ void UiItemCreation::MaaWidgetsInit(int width, int height) {
 	wnd.render = [](int widId) {itemCreation().MaaWndRender(widId); };
 	wnd.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().MaaWndMsg(widId, msg); };
 	wnd.zIndex = -1;
-	mMaaWndId = ui.AddWindow(wnd);
+	mMaaWndId = uiManager->AddWindow(wnd);
 
 	// Scrollbar for the Items
 	auto &maaScrollbar = temple::GetRef<LgcyScrollBar>(0x10BEDA98);
 	maaScrollbar.Init(184, 51, 225);
 	maaScrollbar.x += wnd.x;
 	maaScrollbar.y += wnd.y;
-	mMaaItemsScrollbarId = ui.AddScrollBar(maaScrollbar, mMaaWndId);
+	mMaaItemsScrollbarId = uiManager->AddScrollBar(maaScrollbar, mMaaWndId);
 
 	// Scrollbar for the effects
 	auto appEffectsScrollbar = temple::GetRef<LgcyScrollBar>(0x10BEDE90);
 	appEffectsScrollbar.Init(313, 148, 128);
 	appEffectsScrollbar.x += wnd.x;
 	appEffectsScrollbar.y += wnd.y;
-	mMaaApplicableEffectsScrollbarId = ui.AddScrollBar(appEffectsScrollbar, mMaaWndId);
+	mMaaApplicableEffectsScrollbarId = uiManager->AddScrollBar(appEffectsScrollbar, mMaaWndId);
 
 	// Item buttons
 	auto btnY = 53;
@@ -3574,7 +3575,7 @@ void UiItemCreation::MaaWidgetsInit(int width, int height) {
 		btn.x += wnd.x;	btn.y += wnd.y;
 		btn.render = [](int widId) { itemCreation().MaaItemRender(widId); };
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().MaaItemMsg(widId, msg); };
-		mMaaItemBtnIds[i] = ui.AddButton(btn, mMaaWndId);
+		mMaaItemBtnIds[i] = uiManager->AddButton(btn, mMaaWndId);
 		btnY += 42;
 	}
 
@@ -3586,7 +3587,7 @@ void UiItemCreation::MaaWidgetsInit(int width, int height) {
 		btn.render = [](int widId) { itemCreation().MaaEffectRender(widId); };
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().MaaEffectMsg(widId, msg); };
 		btn.renderTooltip = [](int x, int y, LgcyWidgetId* widId) { itemCreation().MaaEffectTooltip(x, y, widId); };
-		maaBtnIds[i] = ui.AddButton(btn, mMaaWndId);
+		maaBtnIds[i] = uiManager->AddButton(btn, mMaaWndId);
 		btnY += 12;
 	}
 
@@ -3596,14 +3597,14 @@ void UiItemCreation::MaaWidgetsInit(int width, int height) {
 	enhBonusDown.render = [](int widId) {itemCreation().MaaEnhBonusDnRender(widId); };
 	enhBonusDown.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().MaaEnhBonusDnMsg(widId, msg); };
 	enhBonusDown.SetDefaultSounds();
-	mEnhBonusArrowDnId = ui.AddButton(enhBonusDown, mMaaWndId);
+	mEnhBonusArrowDnId = uiManager->AddButton(enhBonusDown, mMaaWndId);
 
 	LgcyButton enhBonusUp(nullptr, mMaaWndId, mEnhBonusDnRect);
 	enhBonusUp.x += wnd.x - 15; enhBonusUp.y += wnd.y;
 	enhBonusUp.render = [](int widId) {itemCreation().MaaEnhBonusUpRender(widId); };
 	enhBonusUp.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().MaaEnhBonusUpMsg(widId, msg); };
 	enhBonusUp.SetDefaultSounds();
-	mEnhBonusArrowUpId = ui.AddButton(enhBonusUp, mMaaWndId);
+	mEnhBonusArrowUpId = uiManager->AddButton(enhBonusUp, mMaaWndId);
 
 	// applied effects
 	btnY = 152 + 12;
@@ -3612,7 +3613,7 @@ void UiItemCreation::MaaWidgetsInit(int width, int height) {
 		btn.x += wnd.x;	btn.y += wnd.y;
 		btn.render = [](int widId) { itemCreation().MaaAppliedBtnRender(widId); };
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().MaaAppliedBtnMsg(widId, msg); };
-		mMaaAppliedBtnIds[i] = ui.AddButton(btn, mMaaWndId);
+		mMaaAppliedBtnIds[i] = uiManager->AddButton(btn, mMaaWndId);
 		btnY += 12;
 	}
 
@@ -3626,7 +3627,7 @@ void UiItemCreation::MaaWidgetsInit(int width, int height) {
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().CreateBtnMsg(widId, msg); };
 		btn.SetDefaultSounds();
 
-		mMaaCreateBtnId= ui.AddButton(btn, mMaaWndId);
+		mMaaCreateBtnId= uiManager->AddButton(btn, mMaaWndId);
 	}
 	// cancel button
 	//auto cancelBtnId = temple::GetPointer<int>(0x10BECD70);
@@ -3638,7 +3639,7 @@ void UiItemCreation::MaaWidgetsInit(int width, int height) {
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().CancelBtnMsg(widId, msg); };
 		btn.SetDefaultSounds();
 
-		mMaaCancelBtnId = ui.AddButton(btn, mMaaWndId);
+		mMaaCancelBtnId = uiManager->AddButton(btn, mMaaWndId);
 	}
 
 
@@ -3654,7 +3655,7 @@ void UiItemCreation::MaaWidgetsInit(int width, int height) {
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().MaaEffectAddMsg(widId, msg); };
 		btn.SetDefaultSounds();
 
-		mMaaEffectAddBtnId = ui.AddButton(btn, mMaaWndId);
+		mMaaEffectAddBtnId = uiManager->AddButton(btn, mMaaWndId);
 	}
 
 	// Remove Effect button
@@ -3669,7 +3670,7 @@ void UiItemCreation::MaaWidgetsInit(int width, int height) {
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().MaaEffectRemoveMsg(widId, msg); };
 		btn.SetDefaultSounds();
 
-		mMaaEffectRemoveBtnId = ui.AddButton(btn, mMaaWndId);
+		mMaaEffectRemoveBtnId = uiManager->AddButton(btn, mMaaWndId);
 	}
 
 	// Textbox
@@ -3686,51 +3687,51 @@ void UiItemCreation::MaaWidgetsInit(int width, int height) {
 		btn.handleMessage = [](int widId, TigMsg* msg) { return itemCreation().MaaTextboxMsg(widId, msg); };
 		btn.SetDefaultSounds();
 
-		mMaaTextboxId = ui.AddButton(btn, mMaaWndId);
+		mMaaTextboxId = uiManager->AddButton(btn, mMaaWndId);
 	}
 
 }
 
 void UiItemCreation::MaaWidgetsExit(int widId){
-	ui.WidgetRemoveRegardParent(mMaaTextboxId);
-	ui.WidgetRemoveRegardParent(mMaaEffectRemoveBtnId);
-	ui.WidgetRemoveRegardParent(mMaaEffectAddBtnId);
-	ui.WidgetRemoveRegardParent(mMaaCreateBtnId);
-	ui.WidgetRemoveRegardParent(mMaaCancelBtnId);
+	uiManager->RemoveChildWidget(mMaaTextboxId);
+	uiManager->RemoveChildWidget(mMaaEffectRemoveBtnId);
+	uiManager->RemoveChildWidget(mMaaEffectAddBtnId);
+	uiManager->RemoveChildWidget(mMaaCreateBtnId);
+	uiManager->RemoveChildWidget(mMaaCancelBtnId);
 	for (int i = 0; i < NUM_APPLIED_BONUSES_MAX; i++){
-		ui.WidgetRemoveRegardParent(mMaaAppliedBtnIds[i]);
+		uiManager->RemoveChildWidget(mMaaAppliedBtnIds[i]);
 	}
 	for (int i = 0; i < MAA_EFFECT_BUTTONS_COUNT; i++) {
-		ui.WidgetRemoveRegardParent(maaBtnIds[i]);
+		uiManager->RemoveChildWidget(maaBtnIds[i]);
 	}
 	for (int i = 0; i < MAA_NUM_ENCHANTABLE_ITEM_WIDGETS; i++)	{
-		ui.WidgetRemoveRegardParent(mMaaItemBtnIds[i]);
+		uiManager->RemoveChildWidget(mMaaItemBtnIds[i]);
 	}
 
-	auto wnd = ui.GetWindow(widId);
+	auto wnd = uiManager->GetWindow(widId);
 
-	ui.WidgetAndWindowRemove(widId);
+	uiManager->RemoveWidget(widId);
 
 }
 
 void UiItemCreation::ItemCreationWidgetsExit(int widId){
 
-	ui.WidgetRemoveRegardParent(mItemCreationCreateBtnId); 
-	ui.WidgetRemoveRegardParent(temple::GetRef<int>(0x10BEDA68)); // cancel button
+	uiManager->RemoveChildWidget(mItemCreationCreateBtnId); 
+	uiManager->RemoveChildWidget(temple::GetRef<int>(0x10BEDA68)); // cancel button
 	
 	/*auto icEntryBtnIds = temple::GetRef<int[NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX]>(0x10BECE28);
 	for (int i = 0; i < NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX; i++){
-		ui.WidgetRemoveRegardParent(icEntryBtnIds[i]);
+		uiManager->RemoveChildWidget(icEntryBtnIds[i]);
 	}*/
 
 	for (int i = 0; i < NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX; i++) {
-		ui.WidgetRemoveRegardParent(mItemCreationEntryBtnIds[i]);
+		uiManager->RemoveChildWidget(mItemCreationEntryBtnIds[i]);
 	}
-	ui.WidgetRemoveRegardParent(mItemCreationScrollbarId);
+	uiManager->RemoveChildWidget(mItemCreationScrollbarId);
 
-	auto wnd = ui.GetWindow(widId);
+	auto wnd = uiManager->GetWindow(widId);
 	
-	ui.WidgetAndWindowRemove(widId);
+	uiManager->RemoveWidget(widId);
 }
 
 void UiItemCreation::UiItemCreationResize(UiResizeArgs& resizeArgs){

@@ -3,11 +3,11 @@
 
 #include "render_hooks.h"
 
-#include <ui/ui.h>
+#include <ui/ui_assets.h>
 
 CombinedImgFile::CombinedImgFile(const std::string& filename)
 	: mFilename(filename) {
-	mImgFile.reset(ui.LoadImg(filename.c_str()));
+	mImgFile.reset(uiAssets->LoadImg(filename.c_str()));
 }
 
 CombinedImgFile::~CombinedImgFile() = default;

@@ -51,7 +51,7 @@ PYBIND11_PLUGIN(tp_ui) {
 		.def_readwrite("children_count", &LgcyWindow::childrenCount)
 		.def_readwrite("windowId", &LgcyWindow::zIndex)
 		.def("Register", [](LgcyWindow &window, int* widIdOut) {
-			*widIdOut = ui.AddWindow(window);
+			*widIdOut = uiManager->AddWindow(window);
 		})
 		;
 
@@ -62,7 +62,7 @@ PYBIND11_PLUGIN(tp_ui) {
 		.def_readwrite("sound_hover_on", &LgcyButton::hoverOn)
 		.def_readwrite("sound_hover_off", &LgcyButton::hoverOff)
 		.def("Register", [](LgcyButton &button, int* widIdOut) {
-			*widIdOut = ui.AddButton(button);
+			*widIdOut = uiManager->AddButton(button);
 		})
 		;
 
@@ -76,7 +76,7 @@ PYBIND11_PLUGIN(tp_ui) {
 		.def_readwrite("scroll_quantum",&LgcyScrollBar::scrollQuantum)
 		.def("GetPosition", &LgcyScrollBar::GetY)
 		.def("Register", [](LgcyScrollBar &scrollBar, int* widIdOut) {
-			*widIdOut = ui.AddScrollBar(scrollBar);
+			*widIdOut = uiManager->AddScrollBar(scrollBar);
 		})
 		;
 

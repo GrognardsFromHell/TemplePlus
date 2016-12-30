@@ -53,7 +53,7 @@ UiTurnBased::UiTurnBased(int width, int height) {
 	window.render = temple::GetPointer<void(LgcyWidgetId)>(0x10173f70);
 	window.handleMessage = temple::GetPointer<BOOL(LgcyWidgetId, TigMsg*)>(0x10174a30);
 
-	auto widgetId = ui.AddWindow(window);
+	auto widgetId = uiManager->AddWindow(window);
 	mWidgetId = widgetId;
 	uiLegacyManager->SendToBack(widgetId);
 

@@ -8,52 +8,18 @@
 #include <tig/tig_mouse.h>
 #include "messages/messagequeue.h"
 
-Ui ui;
+UiManager *uiManager;
 
-/*
-	Native ToEE functions we use.
-*/
-typedef void (__cdecl *SaveCallback)();
+UiManager::UiManager() {
+	Expects(uiManager == nullptr);
+	uiManager = this;
+}
 
-static struct UiFuncs : temple::AddressTable {
-
-	ImgFile*(__cdecl *LoadImg)(const char* filename);
-	int (__cdecl *GetAsset)(UiAssetType assetType, uint32_t assetIndex, int& textureIdOut, int offset);
-	void (__cdecl *UpdateCombatUi)();
-	void (__cdecl *UpdatePartyUi)();
-	void (__cdecl *ShowWorldMap)(int unk);
-	void (__cdecl *WorldMapTravelByDialog)(int destination);
-	void (__cdecl *ShowPartyPool)(bool ingame);
-	void (__cdecl *ShowCharUi)(int page);
-	bool (__cdecl *ShowWrittenUi)(objHndl handle);
-	
-	void(*UiMouseMsgHandlerRenderTooltipCallback)(int x, int y, void* data); //
-
-	int* uiWidgetMouseHandlerWidgetId;
-	int* uiMouseButtonId;
-
-	UiFuncs() {
-		rebase(LoadImg, 0x101E8320);
-		rebase(GetAsset, 0x1004A360);
-		rebase(UpdateCombatUi, 0x1009A730);
-		rebase(UpdatePartyUi, 0x1009A740);
-		rebase(ShowWorldMap, 0x1015F140);
-		rebase(WorldMapTravelByDialog, 0x10160450);
-		rebase(ShowPartyPool, 0x10165E60);
-		rebase(ShowCharUi, 0x10148E20);
-		rebase(ShowWrittenUi, 0x10160F50);
-
-		rebase(uiWidgetMouseHandlerWidgetId, 0x10301324);
-		rebase(uiMouseButtonId, 0x10301328);
-
-		rebase(UiMouseMsgHandlerRenderTooltipCallback, 0x101F9870);
-		
-		
+UiManager::~UiManager() {
+	if (uiManager == this) {
+		uiManager = nullptr;
 	}
-
-	
-} uiFuncs;
-
+}
 
 class UiReplacement : TempleFix
 {
@@ -61,14 +27,6 @@ public:
 
 	void apply() override
 	{
-		replaceFunction<BOOL(TigMouseMsg*)>(0x101F9970, [](TigMouseMsg *msg) {
-			return ui.TranslateMouseMessage(msg);
-		});
-
-		replaceFunction<BOOL(TigMsg*)>(0x101F8A80, [](TigMsg *msg) {
-			return ui.ProcessMessage(*msg) ? TRUE : FALSE;
-		});
-
 		 /*
 		 Hook for missing portraits (annoying logspam!)
 		 */
@@ -90,7 +48,7 @@ public:
 		 // DrawTextInWidget hook
 		 replaceFunction<bool(__cdecl)(int, char*, TigRect&, TigTextStyle&)>(0x101F87C0, [](int widgetId ,char* text, TigRect& rect, TigTextStyle& style)->bool
 		 {
-			 auto wid = ui.GetWidget(widgetId);
+			 auto wid = uiManager->GetWidget(widgetId);
 			 if (!wid)
 				 return 1;
 			 if (*text == 0)
@@ -247,82 +205,22 @@ bool LgcyScrollBar::Init(int x, int y, int height, int parentId)
 {
 	Init(x, y, height);
 	this->parentId = parentId;
-	auto p = ui.GetWindow(parentId);
+	auto p = uiManager->GetWindow(parentId);
 	this->x += p->x;
 	this->y += p->y;
 	return false;
 }
 
-bool Ui::GetAsset(UiAssetType assetType, UiGenericAsset assetIndex, int& textureIdOut) {
-	return uiFuncs.GetAsset(assetType, static_cast<uint32_t>(assetIndex), textureIdOut, 0) == 0;
-}
-
-ImgFile* Ui::LoadImg(const char* filename) {
-	return uiFuncs.LoadImg(filename);
-}
-
-void Ui::UpdateCombatUi() {
-	uiFuncs.UpdateCombatUi();
-}
-
-void Ui::UpdatePartyUi() {
-	uiFuncs.UpdatePartyUi();
-}
-
-void Ui::ShowWorldMap(int unk) {
-	uiFuncs.ShowWorldMap(unk);
-}
-
-void Ui::WorldMapTravelByDialog(int destination) {
-	uiFuncs.WorldMapTravelByDialog(destination);
-}
-
-void Ui::ShowPartyPool(bool ingame) {
-	uiFuncs.ShowPartyPool(ingame);
-}
-
-void Ui::ShowCharUi(int page) {
-	uiFuncs.ShowCharUi(page);
-}
-
-bool Ui::ShowWrittenUi(objHndl handle) {
-	return uiFuncs.ShowWrittenUi(handle);
-}
-
-bool Ui::CharEditorIsActive()
-{
-	auto charEditorWndId = temple::GetRef<int>(0x10BE8E50);
-	bool charEditorHidden = ui.IsWidgetHidden(charEditorWndId);
-	if (!charEditorHidden)
-	{
-		return true;
-	}
-		
-	return false;
-}
-
-bool Ui::CharLootingIsActive()
-{
-	auto result = temple::GetRef<int>(0x10BE6EE8);
-	return result != 0;
-}
-
-bool Ui::IsWidgetHidden(int widId)
-{
-	auto widget = mLegacy.GetWidget(widId);
-	return !widget || widget->IsHidden();
-}
-
-LgcyWidgetId Ui::AddWindow(LgcyWindow& widget)
+LgcyWidgetId UiManager::AddWindow(LgcyWindow& widget)
 {
 	widget.type = LgcyWidgetType::Window;
 
-	auto widgetId = mLegacy.AddWidget(&widget, __FILE__, __LINE__);
-	mLegacy.AddWindow(widgetId);
+	auto widgetId = AddWidget(&widget, __FILE__, __LINE__);
+	AddWindow(widgetId);
 	return widgetId;
 }
 
-BOOL Ui::ButtonInit(LgcyButton* widg, char* buttonName, int parentId, int x, int y, int width, int height)
+BOOL UiManager::ButtonInit(LgcyButton* widg, char* buttonName, int parentId, int x, int y, int width, int height)
 {
 	if (buttonName)
 	{
@@ -353,353 +251,46 @@ BOOL Ui::ButtonInit(LgcyButton* widg, char* buttonName, int parentId, int x, int
 	return 0;
 }
 
-LgcyWidgetId Ui::AddButton(LgcyButton& button)
+LgcyWidgetId UiManager::AddButton(LgcyButton& button)
 {
 	button.type = LgcyWidgetType::Button;
-	return mLegacy.AddWidget(&button, __FILE__, __LINE__);
+	return AddWidget(&button, __FILE__, __LINE__);
 }
 
-LgcyWidgetId Ui::AddButton(LgcyButton &button, LgcyWidgetId parentId)
+LgcyWidgetId UiManager::AddButton(LgcyButton &button, LgcyWidgetId parentId)
 {
 	auto buttonId = AddButton(button);
-	mLegacy.AddChild(parentId, buttonId);
+	AddChild(parentId, buttonId);
 	return buttonId;
 }
 
-LgcyWidgetId Ui::AddScrollBar(LgcyScrollBar& scrollBar)
+LgcyWidgetId UiManager::AddScrollBar(LgcyScrollBar& scrollBar)
 {
 	scrollBar.type = LgcyWidgetType::Scrollbar;
-	return mLegacy.AddWidget(&scrollBar, __FILE__, __LINE__);
+	return AddWidget(&scrollBar, __FILE__, __LINE__);
 }
 
-LgcyWidgetId Ui::AddScrollBar(LgcyScrollBar& scrollBar, LgcyWidgetId parentId)
+LgcyWidgetId UiManager::AddScrollBar(LgcyScrollBar& scrollBar, LgcyWidgetId parentId)
 {
 	auto scrollBarId = AddScrollBar(scrollBar);
-	mLegacy.AddChild(parentId, scrollBarId);
+	AddChild(parentId, scrollBarId);
 	return scrollBarId;
 }
 
-void Ui::SetButtonState(LgcyWidgetId widgetId, LgcyButtonState newState)
+void UiManager::SetButtonState(LgcyWidgetId widgetId, LgcyButtonState newState)
 {
 	auto button = GetButton(widgetId);
 	Expects(button);
 	button->buttonState = newState;
 }
 
-void Ui::WidgetRemoveRegardParent(LgcyWidgetId widIdx)
-{
-	mLegacy.RemoveChildWidget(widIdx);
-}
-
-void Ui::WidgetAndWindowRemove(LgcyWidgetId widId)
-{
-	mLegacy.RemoveWindow(widId);
-	mLegacy.RemoveWidget(widId);
-}
-
-void Ui::WidgetRemove(LgcyWidgetId widId) {
-	mLegacy.RemoveWidget(widId);
-}
-
-void Ui::WidgetSetHidden(LgcyWidgetId widId, BOOL hidden)
-{
-	mLegacy.SetHidden(widId, hidden == TRUE);
-}
-
-LgcyWindow* Ui::GetWindow(LgcyWidgetId widId){
-	LgcyWidget* result = GetWidget(widId);
-	if (!result)
-		return nullptr;
-	if (result->type == LgcyWidgetType::Window)	{
-		return static_cast<LgcyWindow*>(result);
-	}
-	return nullptr;
-}
-
-LgcyButton* Ui::GetButton(LgcyWidgetId widId){
-	auto result = GetWidget(widId);
-	if (!result || result->type != LgcyWidgetType::Button) {
-		return nullptr;
-	}
-	return static_cast<LgcyButton*>(result);
-}
-
-LgcyScrollBar * Ui::GetScrollBar(LgcyWidgetId widId) {
-	auto result = mLegacy.GetWidget(widId);
-	if (!result || result->type != LgcyWidgetType::Scrollbar)
-		return nullptr;
-	return static_cast<LgcyScrollBar*>(result);
-}
-
-LgcyWidget* Ui::GetWidget(LgcyWidgetId widId)
-{
-	return mLegacy.GetWidget(widId);
-}
-
-int Ui::GetWindowContainingPoint(int x, int y)
-{
-	auto window = mLegacy.GetWindowAt(x, y);
-	if (window) {
-		return window->widgetId;
-	} else {
-		return -1;
-	}
-}
-
-LgcyButtonState Ui::GetButtonState(LgcyWidgetId widId) {
+LgcyButtonState UiManager::GetButtonState(LgcyWidgetId widId) {
 	auto button = GetButton(widId);
 	Expects(button);
 	return button->buttonState;
 }
 
-void Ui::WidgetBringToFront(LgcyWidgetId widId)
-{
-	mLegacy.BringToFront(widId);
-}
-
-int Ui::WidgetlistIndexof(LgcyWidgetId widgetId, int* widgetlist, int size)
-{
-	for (int i = 0; i < size; i++) {
-		if (widgetlist[i] == widgetId)
-			return i;
-	}
-
-	return -1;
-}
-
-bool Ui::WidgetContainsPoint(int widgetId, int x, int y)
-{
-	auto widg = GetWidget(widgetId);
-	if (!widg)
-		return false;
-	if (x < widg->x || x > (widg->x + (int)widg->width) )
-		return false;
-	if (y < widg->y || y >(widg->y + (int)widg->height))
-		return false;
-	return true;
-}
-
-int Ui::GetAtInclChildren(int x, int y)
-{
-	int windowId = GetWindowContainingPoint(x, y);
-	if (windowId == -1)
-		return windowId;
-	auto wndWidget = GetWindow(windowId);
-	if (wndWidget == nullptr)
-		return windowId;
-	if (wndWidget->IsHidden())
-		return windowId;
-
-	for (int i = wndWidget->childrenCount - 1; i >= 0; i-- )
-	{
-		auto childId = wndWidget->children[i];
-		if (childId != -1)
-		{
-			auto childWid = GetWidget(childId);
-			if (childWid != nullptr
-				&& !childWid->IsHidden()
-				&& WidgetContainsPoint(childId, x,y))
-			{
-				return childId;
-			}
-		}
-		
-	}
-	return windowId;
-}
-
-int Ui::TranslateMouseMessage(TigMouseMsg* mouseMsg)
-{
-	int flags = mouseMsg->flags;
-	int x = mouseMsg->x, y = mouseMsg->y;
-	TigMsgWidget newTigMsg;
-	newTigMsg.createdMs = temple::GetRef<int>(0x11E74578); // system time as recorded by the Msg Process function
-	newTigMsg.type = TigMsgType::WIDGET;
-	newTigMsg.x = x;
-	newTigMsg.y = y;
-
-	int widIdAtCursor = GetAtInclChildren(x, y);
-
-	int globalWidId = *uiFuncs.uiWidgetMouseHandlerWidgetId;
-
-	// moused widget changed
-	if ((flags & 0x1000) && widIdAtCursor != globalWidId)
-	{
-		if (widIdAtCursor != -1 && mouseFuncs.GetCursorDrawCallbackId() == (uint32_t) uiFuncs.UiMouseMsgHandlerRenderTooltipCallback)
-		{
-			mouseFuncs.SetCursorDrawCallback(nullptr, 0);
-		}
-
-		if (globalWidId != -1)
-		{
-			bool enqueue4 = false;
-			auto globalWid = GetWidget(globalWidId);
-			// if window
-			if (globalWid->IsWindow())
-			{
-				auto prevHoveredWindow = (LgcyWindow*)globalWid;
-				if (prevHoveredWindow->mouseState == LgcyWindowMouseState::Pressed) {
-					prevHoveredWindow->mouseState = LgcyWindowMouseState::PressedOutside;
-				} else if (prevHoveredWindow->mouseState != LgcyWindowMouseState::PressedOutside) {
-					prevHoveredWindow->mouseState = LgcyWindowMouseState::Outside;
-				}
-				enqueue4 = true;
-			} 
-			// button
-			else if (globalWid->IsButton() && !globalWid->IsHidden())
-			{
-				auto buttonWid = GetButton(globalWidId);
-				switch (buttonWid->buttonState) {
-				case 1:
-					// Unhover
-					buttonWid->buttonState = LgcyButtonState::Normal;
-					sound.MssPlaySound(buttonWid->hoverOff);
-					break;
-				case 2:
-					// Down -> Released without click event
-					buttonWid->buttonState = LgcyButtonState::Released;
-					break;
-				}
-				if (!GetWidget(globalWid->parentId)->IsHidden())
-				{
-					enqueue4 = true;
-				}
-			}
-			// scrollbar
-			else if (globalWid->IsScrollBar())
-			{
-				if (globalWid->IsHidden() || GetWidget(globalWid->parentId)->IsHidden())
-					enqueue4 = false;
-				else
-					enqueue4 = true;
-			}
-
-			if (enqueue4)
-			{
-				newTigMsg.widgetId = globalWidId;
-				newTigMsg.widgetEventType = TigMsgWidgetEvent::Exited;
-				messageQueue->Enqueue(newTigMsg);
-			}
-		}
-
-		if (widIdAtCursor != -1)
-		{
-			auto widAtCursor = GetWidget(widIdAtCursor);
-			if (widAtCursor->type == LgcyWidgetType::Window)
-			{
-				auto widAtCursorWindow = GetWindow(widIdAtCursor);
-				if (widAtCursorWindow->mouseState == LgcyWindowMouseState::PressedOutside) {
-					widAtCursorWindow->mouseState = LgcyWindowMouseState::Pressed;
-				} else if (widAtCursorWindow->mouseState != LgcyWindowMouseState::Pressed) {
-					widAtCursorWindow->mouseState = LgcyWindowMouseState::Hovered;
-				}
-			} else if (widAtCursor->type == LgcyWidgetType::Button) {
-				auto buttonWid = GetButton(widIdAtCursor);
-				if (buttonWid->buttonState)
-				{
-					if (buttonWid->buttonState == LgcyButtonState::Released)
-					{
-						buttonWid->buttonState = LgcyButtonState::Down;
-					}
-				} 
-				else
-				{
-					buttonWid->buttonState = LgcyButtonState::Hovered;
-					sound.MssPlaySound(buttonWid->hoverOn);
-				}
-			}
-			newTigMsg.widgetId = widIdAtCursor;
-			newTigMsg.widgetEventType = TigMsgWidgetEvent::Entered;
-			messageQueue->Enqueue(newTigMsg);
-		}
-		globalWidId = *uiFuncs.uiWidgetMouseHandlerWidgetId = widIdAtCursor;
-	}
-	
-	if (mouseMsg->flags & MouseStateFlags::MSF_POS_CHANGE2 && globalWidId != -1 && !mouseFuncs.GetCursorDrawCallbackId())
-	{
-		mouseFuncs.SetCursorDrawCallback([](int x, int y) {
-			(*uiFuncs.UiMouseMsgHandlerRenderTooltipCallback)(x, y, uiFuncs.uiWidgetMouseHandlerWidgetId);
-		}, (uint32_t)*uiFuncs.UiMouseMsgHandlerRenderTooltipCallback);
-	}
-
-	if (mouseMsg->flags & MouseStateFlags::MSF_LMB_CLICK)
-	{
-		auto widIdAtCursor2 = GetAtInclChildren(mouseMsg->x, mouseMsg->y); // probably redundant to do again, but just to be safe...
-		if (widIdAtCursor2 != -1)
-		{
-			auto button = GetButton(widIdAtCursor2);
-			if (button)
-			{
-				int buttonState = button->buttonState;
-				switch (button->buttonState) {
-				case LgcyButtonState::Hovered:
-					button->buttonState = LgcyButtonState::Down;
-					sound.MssPlaySound(button->sndDown);
-					break;
-				case LgcyButtonState::Disabled:
-					return 0;
-				}
-			}
-			newTigMsg.widgetEventType = TigMsgWidgetEvent::Clicked;
-			newTigMsg.widgetId = widIdAtCursor2;
-			*uiFuncs.uiMouseButtonId = widIdAtCursor2;
-			messageQueue->Enqueue(newTigMsg);
-		}
-	}
-
-	if ( (mouseMsg->flags & MouseStateFlags::MSF_LMB_RELEASED) && *uiFuncs.uiMouseButtonId != -1)
-	{
-		auto button = GetButton(*uiFuncs.uiMouseButtonId);
-		if (button)
-		{
-			switch (button->buttonState)
-			{
-			case LgcyButtonState::Down:
-				button->buttonState = LgcyButtonState::Hovered;
-				sound.MssPlaySound(button->sndClick);
-				break;
-			case LgcyButtonState::Released:
-				button->buttonState = LgcyButtonState::Normal;
-				sound.MssPlaySound(button->sndClick);
-				break;
-			case LgcyButtonState::Disabled:
-				return 0;
-			}
-		}
-		auto widIdAtCursor2 = GetAtInclChildren(mouseMsg->x, mouseMsg->y); // probably redundant to do again, but just to be safe...
-		newTigMsg.widgetId = *uiFuncs.uiMouseButtonId;
-		newTigMsg.widgetEventType = (widIdAtCursor2 != *uiFuncs.uiMouseButtonId)?TigMsgWidgetEvent::MouseReleasedAtDifferentButton : TigMsgWidgetEvent::MouseReleased;
-		messageQueue->Enqueue(newTigMsg);
-		*uiFuncs.uiMouseButtonId = -1;
-	}
-
-	return 0;
-}
-
-bool Ui::ProcessMessage(TigMsg &msg)
-{
-
-	switch (msg.type) {
-	case TigMsgType::MOUSE:
-		return ProcessMouseMessage(msg);
-	case TigMsgType::WIDGET:
-		return ProcessWidgetMessage(msg);
-	default:
-		for (auto &windowId : mLegacy.GetActiveWindows()) {
-			auto window = mLegacy.GetWidget(windowId);
-
-			if (!window->IsHidden() && window->CanHandleMessage()) {
-				if (window->HandleMessage(msg)) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-}
-
-bool Ui::ScrollbarGetY(int widId, int * scrollbarY) {
+bool UiManager::ScrollbarGetY(int widId, int * scrollbarY) {
 	auto widget = (LgcyScrollBar*) GetWidget(widId);
 	if (!widget || widget->type != LgcyWidgetType::Scrollbar)
 		return true;
@@ -737,14 +328,14 @@ bool Ui::ScrollbarGetY(int widId, int * scrollbarY) {
 	return false;
 }
 
-void Ui::ScrollbarSetYmax(LgcyWidgetId widId, int yMax)
+void UiManager::ScrollbarSetYmax(LgcyWidgetId widId, int yMax)
 {
 	LgcyScrollBar *widg = GetScrollBar(widId);
 	Expects(widg);
 	widg->yMax = yMax;
 }
 
-void Ui::ScrollbarSetY(LgcyWidgetId widId, int value) {
+void UiManager::ScrollbarSetY(LgcyWidgetId widId, int value) {
 	auto scrollbar = GetScrollBar(widId);
 
 	scrollbar->scrollbarY = value;
@@ -757,31 +348,515 @@ void Ui::ScrollbarSetY(LgcyWidgetId widId, int value) {
 	messageQueue->Enqueue(msg);
 }
 
-const char* Ui::GetTooltipString(int line) const
+
+LgcyWidgetId UiManager::AddWidget(const LgcyWidget *widget, const char *sourceFile, uint32_t sourceLine)
 {
-	auto getTooltipString = temple::GetRef<const char*(__cdecl)(int)>(0x10122DA0);
-	return getTooltipString(line);
+	// Assign a free id
+	auto assignedId = mNextWidgetId++;
+
+	// Make a private copy of the widget
+	auto &activeWidget = mActiveWidgets[assignedId];
+
+	activeWidget.sourceFile = sourceFile;
+	activeWidget.sourceLine = sourceLine;
+
+	// Make a copy and have it managed by the unique_ptr
+	activeWidget.widget.reset(reinterpret_cast<LgcyWidget*>(malloc(widget->GetSize())));
+	memcpy(activeWidget.widget.get(), widget, widget->GetSize());
+
+	// Set some basic properties on the widget
+	activeWidget.widget->size = widget->GetSize();
+	activeWidget.widget->widgetId = assignedId;
+
+	return assignedId;
 }
 
-const char* Ui::GetStatShortName(Stat stat) const
+void UiManager::AddWindow(LgcyWidgetId id)
 {
-	return temple::GetRef<const char*(__cdecl)(Stat)>(0x10074980)(stat);
-}
-const char * Ui::GetStatMesLine(int lineNumber) const
-{
-	auto mesHandle = temple::GetRef<MesHandle>(0x10AAF1F4);
-	MesLine line(lineNumber);
-	mesFuncs.GetLine_Safe(mesHandle, &line);
-	return line.value;
+
+	if (find(mActiveWindows.begin(), mActiveWindows.end(), id) != mActiveWindows.end()) {
+		// Window is already in the list
+		return;
+	}
+
+	auto window = GetWindow(id);
+	if (!window) {
+		throw new TempleException(format("Trying to add widget {} as a window which isn't a window.", id));
+	}
+
+	// Don't add it, if it's hidden
+	if (window->IsHidden()) {
+		return;
+	}
+
+	mActiveWindows.push_back(id);
+	BringToFront(id);
 }
 
-bool Ui::ProcessWidgetMessage(TigMsg & msg)
+void UiManager::RemoveWindow(LgcyWidgetId id)
+{
+	for (auto it = mActiveWindows.begin(); it != mActiveWindows.end(); ) {
+		if (*it == id) {
+			it = mActiveWindows.erase(it);
+		}
+		else {
+			it++;
+		}
+	}
+	SortWindows();
+}
+
+LgcyWidget * UiManager::GetWidget(LgcyWidgetId id) const
+{
+	auto it = mActiveWidgets.find(id);
+	if (it != mActiveWidgets.end()) {
+		return it->second.widget.get();
+	}
+	return nullptr;
+}
+
+LgcyWindow* UiManager::GetWindow(LgcyWidgetId widId) const
+{
+	LgcyWidget* result = GetWidget(widId);
+	if (!result)
+		return nullptr;
+	if (result->type == LgcyWidgetType::Window) {
+		return static_cast<LgcyWindow*>(result);
+	}
+	return nullptr;
+}
+
+LgcyButton* UiManager::GetButton(LgcyWidgetId widId) const
+{
+	auto result = GetWidget(widId);
+	if (!result || result->type != LgcyWidgetType::Button) {
+		return nullptr;
+	}
+	return static_cast<LgcyButton*>(result);
+}
+
+LgcyScrollBar* UiManager::GetScrollBar(LgcyWidgetId widId) const
+{
+	auto result = GetWidget(widId);
+	if (!result || result->type != LgcyWidgetType::Scrollbar)
+		return nullptr;
+	return static_cast<LgcyScrollBar*>(result);
+}
+
+void UiManager::BringToFront(LgcyWidgetId id)
+{
+	auto window = GetWindow(id);
+	if (window) {
+		window->zIndex = INT32_MAX;
+		SortWindows();
+	}
+}
+
+void UiManager::SendToBack(LgcyWidgetId id)
+{
+	auto window = GetWindow(id);
+	if (window) {
+		window->zIndex = INT32_MIN;
+		SortWindows();
+	}
+}
+
+void UiManager::SetHidden(LgcyWidgetId id, bool hidden)
+{
+	auto widget = GetWidget(id);
+	if (hidden) {
+		widget->flags |= 1;
+	}
+	else {
+		widget->flags &= (~1);
+	}
+
+	if (widget->IsWindow()) {
+		if (hidden) {
+			RemoveWindow(id);
+		}
+		else {
+			AddWindow(id);
+		}
+	}
+
+	RefreshMouseOverState();
+
+}
+
+void UiManager::RemoveWidget(LgcyWidgetId id)
+{
+	auto it = mActiveWidgets.find(id);
+	if (it != mActiveWidgets.end()) {
+		mActiveWidgets.erase(it);
+	}
+}
+
+bool UiManager::AddChild(LgcyWidgetId parentId, LgcyWidgetId childId)
+{
+	auto parent = GetWindow(parentId);
+	if (parent) {
+
+		if (parent->childrenCount >= 127) {
+			return false;
+		}
+
+		auto child = GetWidget(childId);
+		if (child) {
+			child->parentId = parentId;
+		}
+		parent->children[parent->childrenCount++] = childId;
+
+		RefreshMouseOverState();
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+void UiManager::RemoveChildWidget(LgcyWidgetId id)
+{
+	auto widget = GetWidget(id);
+
+	if (!widget || widget->parentId == -1) {
+		return;
+	}
+
+	auto parent = GetWidget(widget->parentId);
+	if (!parent) {
+		return;
+	}
+	assert(parent->IsWindow());
+	auto parentWindow = (LgcyWindow*)parent;
+
+	for (uint32_t i = 0; i < parentWindow->childrenCount; ++i) {
+		if (parentWindow->children[i] == widget->widgetId) {
+			parentWindow->children[i] = -1;
+			for (uint32_t j = i + 1; j < parentWindow->childrenCount; ++j) {
+				parentWindow->children[j - 1] = parentWindow->children[j];
+			}
+			parentWindow->childrenCount--;
+			return;
+		}
+	}
+
+}
+
+void UiManager::Render()
+{
+	// Make a copy here since some vanilla logic will show/hide windows in their render callbacks
+	auto activeWindows(mActiveWindows);
+
+	for (auto windowId : activeWindows) {
+		auto window = GetWindow(windowId);
+		if (window->IsHidden()) {
+			continue;
+		}
+
+		// Render the widget itself
+		auto renderFunc = window->render;
+		if (renderFunc) {
+			renderFunc(windowId);
+		}
+
+		// Render all child widgets
+		for (uint32_t i = 0; i < window->childrenCount; ++i) {
+			auto childId = window->children[i];
+			auto child = GetWidget(childId);
+			if (!child->IsHidden() && child->render) {
+				child->render(childId);
+			}
+		}
+	}
+}
+
+LgcyWindow * UiManager::GetWindowAt(int x, int y)
+{
+	// Backwards because of render order (rendered last is really on top)
+	for (int i = mActiveWindows.size() - 1; i >= 0; --i) {
+		auto windowId = mActiveWindows[i];
+		auto window = GetWindow(windowId);
+		if (!window->IsHidden() && DoesWidgetContain(windowId, x, y)) {
+			return window;
+		}
+	}
+	return nullptr;
+}
+
+LgcyWidgetId UiManager::GetWidgetAt(int x, int y)
+{
+	LgcyWidgetId result = -1;
+
+	// Backwards because of render order (rendered last is really on top)
+	for (int i = mActiveWindows.size() - 1; i >= 0; --i) {
+		auto windowId = mActiveWindows[i];
+		auto window = GetWindow(windowId);
+		if (!window->IsHidden() && DoesWidgetContain(windowId, x, y)) {
+			result = windowId;
+
+			// Also in reverse order
+			for (int j = window->childrenCount - 1; j >= 0; --j) {
+				auto childId = window->children[j];
+				auto child = GetWidget(childId);
+				if (child && !child->IsHidden() && DoesWidgetContain(childId, x, y)) {
+					result = childId;
+					break;
+				}
+			}
+
+			break;
+		}
+	}
+	return result;
+}
+
+bool UiManager::DoesWidgetContain(LgcyWidgetId id, int x, int y)
+{
+	if (id == -1) {
+		return false;
+	}
+
+	auto widget = GetWidget(id);
+
+	return widget
+		&& x >= widget->x
+		&& y >= widget->y
+		&& x < (int)(widget->x + widget->width)
+		&& y < (int)(widget->y + widget->height);
+}
+
+void UiManager::RefreshMouseOverState()
+{
+	TigMouseState state;
+	mouseFuncs.GetState(&state);
+
+	TigMouseMsg msg;
+	msg.x = state.x;
+	msg.y = state.y;
+	msg.mouseStateField24 = state.field24;
+	msg.flags = MouseStateFlags::MSF_POS_CHANGE;
+	TranslateMouseMessage(msg);
+}
+
+void UiManager::SortWindows()
+{
+	// Sort Windows by Z-Index
+	sort(mActiveWindows.begin(), mActiveWindows.end(), [this](LgcyWidgetId idA, LgcyWidgetId idB) {
+		auto windowA = GetWindow(idA);
+		auto windowB = GetWindow(idB);
+		return windowA->zIndex < windowB->zIndex;
+	});
+
+	// Reassign a zindex in monotonous order
+	for (size_t i = 0; i < mActiveWindows.size(); ++i) {
+		auto window = GetWindow(mActiveWindows[i]);
+		window->zIndex = i;
+	}
+}
+
+bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
+{
+	int flags = mouseMsg.flags;
+	int x = mouseMsg.x, y = mouseMsg.y;
+	TigMsgWidget newTigMsg;
+	newTigMsg.createdMs = temple::GetRef<int>(0x11E74578); // system time as recorded by the Msg Process function
+	newTigMsg.type = TigMsgType::WIDGET;
+	newTigMsg.x = x;
+	newTigMsg.y = y;
+
+	int widIdAtCursor = GetWidgetAt(x, y);
+
+	int globalWidId = mWidgetMouseHandlerWidgetId;
+
+	// moused widget changed
+	if ((flags & MSF_POS_CHANGE) && widIdAtCursor != globalWidId)
+	{
+		if (widIdAtCursor != -1 && mouseFuncs.GetCursorDrawCallbackId() == (uint32_t)mMouseMsgHandlerRenderTooltipCallback)
+		{
+			mouseFuncs.SetCursorDrawCallback(nullptr, 0);
+		}
+
+		if (globalWidId != -1)
+		{
+			bool enqueueExited = false;
+			auto globalWid = GetWidget(globalWidId);
+			// if window
+			if (globalWid->IsWindow())
+			{
+				auto prevHoveredWindow = (LgcyWindow*)globalWid;
+				if (prevHoveredWindow->mouseState == LgcyWindowMouseState::Pressed) {
+					prevHoveredWindow->mouseState = LgcyWindowMouseState::PressedOutside;
+				}
+				else if (prevHoveredWindow->mouseState != LgcyWindowMouseState::PressedOutside) {
+					prevHoveredWindow->mouseState = LgcyWindowMouseState::Outside;
+				}
+				enqueueExited = true;
+			}
+			// button
+			else if (globalWid->IsButton() && !globalWid->IsHidden())
+			{
+				auto buttonWid = GetButton(globalWidId);
+				switch (buttonWid->buttonState) {
+				case LgcyButtonState::Hovered:
+					// Unhover
+					buttonWid->buttonState = LgcyButtonState::Normal;
+					sound.MssPlaySound(buttonWid->hoverOff);
+					break;
+				case LgcyButtonState::Down:
+					// Down -> Released without click event
+					buttonWid->buttonState = LgcyButtonState::Released;
+					break;
+				}
+				if (!GetWidget(globalWid->parentId)->IsHidden())
+				{
+					enqueueExited = true;
+				}
+			}
+			// scrollbar
+			else if (globalWid->IsScrollBar())
+			{
+				if (globalWid->IsHidden() || GetWidget(globalWid->parentId)->IsHidden())
+					enqueueExited = false;
+				else
+					enqueueExited = true;
+			}
+
+			if (enqueueExited)
+			{
+				newTigMsg.widgetId = globalWidId;
+				newTigMsg.widgetEventType = TigMsgWidgetEvent::Exited;
+				messageQueue->Enqueue(newTigMsg);
+			}
+		}
+
+		if (widIdAtCursor != -1)
+		{
+			auto widAtCursor = GetWidget(widIdAtCursor);
+			if (widAtCursor->type == LgcyWidgetType::Window)
+			{
+				auto widAtCursorWindow = GetWindow(widIdAtCursor);
+				if (widAtCursorWindow->mouseState == LgcyWindowMouseState::PressedOutside) {
+					widAtCursorWindow->mouseState = LgcyWindowMouseState::Pressed;
+				}
+				else if (widAtCursorWindow->mouseState != LgcyWindowMouseState::Pressed) {
+					widAtCursorWindow->mouseState = LgcyWindowMouseState::Hovered;
+				}
+			}
+			else if (widAtCursor->type == LgcyWidgetType::Button) {
+				auto buttonWid = GetButton(widIdAtCursor);
+				if (buttonWid->buttonState != LgcyButtonState::Normal)
+				{
+					if (buttonWid->buttonState == LgcyButtonState::Released)
+					{
+						buttonWid->buttonState = LgcyButtonState::Down;
+					}
+				}
+				else
+				{
+					buttonWid->buttonState = LgcyButtonState::Hovered;
+					sound.MssPlaySound(buttonWid->hoverOn);
+				}
+			}
+			newTigMsg.widgetId = widIdAtCursor;
+			newTigMsg.widgetEventType = TigMsgWidgetEvent::Entered;
+			messageQueue->Enqueue(newTigMsg);
+		}
+		globalWidId = mWidgetMouseHandlerWidgetId = widIdAtCursor;
+	}
+
+	if (mouseMsg.flags & MouseStateFlags::MSF_POS_CHANGE2 && globalWidId != -1 && !mouseFuncs.GetCursorDrawCallbackId())
+	{
+		mouseFuncs.SetCursorDrawCallback([&](int x, int y) {
+			mMouseMsgHandlerRenderTooltipCallback(x, y, &mWidgetMouseHandlerWidgetId);
+		}, (uint32_t)mMouseMsgHandlerRenderTooltipCallback);
+	}
+
+	if (mouseMsg.flags & MouseStateFlags::MSF_LMB_CLICK)
+	{
+		auto widIdAtCursor2 = GetWidgetAt(mouseMsg.x, mouseMsg.y); // probably redundant to do again, but just to be safe...
+		if (widIdAtCursor2 != -1)
+		{
+			auto button = GetButton(widIdAtCursor2);
+			if (button)
+			{
+				int buttonState = button->buttonState;
+				switch (button->buttonState) {
+				case LgcyButtonState::Hovered:
+					button->buttonState = LgcyButtonState::Down;
+					sound.MssPlaySound(button->sndDown);
+					break;
+				case LgcyButtonState::Disabled:
+					return 0;
+				}
+			}
+			newTigMsg.widgetEventType = TigMsgWidgetEvent::Clicked;
+			newTigMsg.widgetId = widIdAtCursor2;
+			mMouseButtonId = widIdAtCursor2;
+			messageQueue->Enqueue(newTigMsg);
+		}
+	}
+
+	if ((mouseMsg.flags & MouseStateFlags::MSF_LMB_RELEASED) && mMouseButtonId != -1)
+	{
+		auto button = GetButton(mMouseButtonId);
+		if (button)
+		{
+			switch (button->buttonState)
+			{
+			case LgcyButtonState::Down:
+				button->buttonState = LgcyButtonState::Hovered;
+				sound.MssPlaySound(button->sndClick);
+				break;
+			case LgcyButtonState::Released:
+				button->buttonState = LgcyButtonState::Normal;
+				sound.MssPlaySound(button->sndClick);
+				break;
+			case LgcyButtonState::Disabled:
+				return false;
+			}
+		}
+		auto widIdAtCursor2 = GetWidgetAt(mouseMsg.x, mouseMsg.y); // probably redundant to do again, but just to be safe...
+		newTigMsg.widgetId = mMouseButtonId;
+		newTigMsg.widgetEventType = (widIdAtCursor2 != mMouseButtonId) ? TigMsgWidgetEvent::MouseReleasedAtDifferentButton : TigMsgWidgetEvent::MouseReleased;
+		messageQueue->Enqueue(newTigMsg);
+		mMouseButtonId = -1;
+	}
+
+	return false;
+}
+
+bool UiManager::ProcessMessage(TigMsg &msg)
+{
+
+	switch (msg.type) {
+	case TigMsgType::MOUSE:
+		return ProcessMouseMessage(msg);
+	case TigMsgType::WIDGET:
+		return ProcessWidgetMessage(msg);
+	default:
+		for (auto windowId : mActiveWindows) {
+			auto window = GetWidget(windowId);
+
+			if (!window->IsHidden() && window->CanHandleMessage()) {
+				if (window->HandleMessage(msg)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+}
+
+bool UiManager::ProcessWidgetMessage(TigMsg & msg)
 {
 	auto widgetId = msg.arg1;
 	LgcyWidget *dispatchTo;
 	while (widgetId != -1 && (dispatchTo = GetWidget(widgetId)) != nullptr)
 	{
-		if ((dispatchTo->parentId == -1 || !IsWidgetHidden(dispatchTo->parentId)) && !dispatchTo->IsHidden())
+		LgcyWidget *parent = (dispatchTo->parentId != -1) ? GetWindow(dispatchTo->parentId) : nullptr;
+		if ((!parent || !parent->IsHidden()) && !dispatchTo->IsHidden())
 		{
 			if (dispatchTo->CanHandleMessage())
 			{
@@ -796,7 +871,7 @@ bool Ui::ProcessWidgetMessage(TigMsg & msg)
 	return false;
 }
 
-bool Ui::ProcessMouseMessage(TigMsg & msg)
+bool UiManager::ProcessMouseMessage(TigMsg & msg)
 {
 	// Handle if a widget requested mouse capture
 	if (mMouseCaptureWidgetId != -1)
@@ -809,12 +884,12 @@ bool Ui::ProcessMouseMessage(TigMsg & msg)
 		return false;
 	}
 
-	auto &windowIds = mLegacy.GetActiveWindows();
+	auto &windowIds = mActiveWindows;
 
 	for (size_t i = 0; i < windowIds.size(); i++) {
-		auto window = mLegacy.GetWindow(windowIds[i]);
+		auto window = GetWindow(windowIds[i]);
 
-		if (!window || !window->IsWindow() || window->IsHidden() || !WidgetContainsPoint(windowIds[i], msg.arg1, msg.arg2)) {
+		if (!window || !window->IsWindow() || window->IsHidden() || !DoesWidgetContain(windowIds[i], msg.arg1, msg.arg2)) {
 			continue;
 		}
 
@@ -824,9 +899,9 @@ bool Ui::ProcessMouseMessage(TigMsg & msg)
 			auto idx = window->childrenCount - 1 - j;
 			auto childId = window->children[idx];
 
-			if (mLegacy.DoesWidgetContain(childId, msg.arg1, msg.arg2))
+			if (DoesWidgetContain(childId, msg.arg1, msg.arg2))
 			{
-				auto child = mLegacy.GetWidget(childId);
+				auto child = GetWidget(childId);
 				if (child && child->CanHandleMessage() && !child->IsHidden()) {
 					if (child->HandleMessage(msg)) {
 						return true;
@@ -843,4 +918,59 @@ bool Ui::ProcessMouseMessage(TigMsg & msg)
 	}
 
 	return false;
+}
+
+size_t LgcyWidget::GetSize() const
+{
+	switch (type) {
+	case LgcyWidgetType::Window:
+		return 0x294;
+	case LgcyWidgetType::Button:
+		return 0xBC;
+	case LgcyWidgetType::Scrollbar:
+		return 0xB0;
+	default:
+		throw new TempleException("Cannot determine size of a widget that has an unknown type.");
+	}
+}
+
+LgcyWindow::LgcyWindow()
+{
+	widgetId = -1;
+	parentId = -1;
+	type = LgcyWidgetType::Window;
+	this->size = sizeof(LgcyWindow);
+	x = 0;
+	y = 0;
+	xrelated = 0;
+	yrelated = 0;
+	height = 0;
+	width = 0;
+	render = 0;
+	handleMessage = 0;
+	renderTooltip = 0;
+	childrenCount = 0;
+	mouseState = LgcyWindowMouseState::Outside;
+	field_28c = 0;
+	zIndex = 0;
+	flags = 0;
+}
+
+LgcyWindow::LgcyWindow(int x, int y, int w, int h) : LgcyWindow()
+{
+	this->x = x;
+	this->y = y;
+	this->xrelated = x;
+	this->yrelated = y;
+	this->width = w;
+	this->height = h;
+}
+
+LgcyButton::LgcyButton() {
+	memset(this, 0, sizeof(LgcyButton));
+	type = LgcyWidgetType::Button;
+}
+
+void LgcyWidgetDeleter::operator()(LgcyWidget* p) {
+	free(p);
 }

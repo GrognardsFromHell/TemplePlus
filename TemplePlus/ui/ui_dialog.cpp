@@ -56,11 +56,11 @@ BOOL UiDialog::WidgetsInit(int w, int h)
 	dlgWnd.flags = 1;
 	dlgWnd.render = [](int widId) { uiDialog.WndRender(widId); };
 	dlgWnd.handleMessage = [](int widId, TigMsg* msg) { return uiDialog.WndMsg(widId, msg); };
-	wndId = ui.AddWindow(dlgWnd);
+	wndId = uiManager->AddWindow(dlgWnd);
 
 	// scrollbar
 	scrollbar.Init(592, 28, 126, wndId);
-	scrollbarId = ui.AddScrollBar(scrollbar, wndId);
+	scrollbarId = uiManager->AddScrollBar(scrollbar, wndId);
 
 
 	int coloff = 0, rowoff = 0;
@@ -81,8 +81,8 @@ BOOL UiDialog::WidgetsInit(int w, int h)
 	//	classBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.ClassBtnMsg(id, msg); };
 	//	classBtn.Add(&newId);
 	//	classBtnIds.push_back(newId);
-	//	ui.SetDefaultSounds(newId);
-	//	ui.BindToParent(wndId, newId);
+	//	uiManager->SetDefaultSounds(newId);
+	//	uiManager->BindToParent(wndId, newId);
 
 	//	//rects
 	//	classBtnFrameRects.push_back(TigRect(classBtn.x - 5, classBtn.y - 5, classBtn.width + 10, classBtn.height + 10));
@@ -118,8 +118,8 @@ BOOL UiDialog::WidgetsInit(int w, int h)
 	//prevBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {	return uiCharEditor.ClassPrevBtnMsg(widId, msg); };
 	//nextBtn.Add(&classNextBtn);	prevBtn.Add(&classPrevBtn);
 
-	//ui.SetDefaultSounds(classNextBtn);	ui.BindToParent(wndId, classNextBtn);
-	//ui.SetDefaultSounds(classPrevBtn);	ui.BindToParent(wndId, classPrevBtn);
+	//uiManager->SetDefaultSounds(classNextBtn);	uiManager->BindToParent(wndId, classNextBtn);
+	//uiManager->SetDefaultSounds(classPrevBtn);	uiManager->BindToParent(wndId, classPrevBtn);
 
 	return TRUE;
 	return 0;

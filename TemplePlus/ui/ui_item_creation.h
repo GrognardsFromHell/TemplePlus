@@ -297,15 +297,15 @@ struct ButtonStateTextures {
 	ButtonStateTextures() : normal(-1), hover(-1), pressed(-1) {}
 
 	void loadAccept() {
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptNormal, normal);
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptHover, hover);
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptPressed, pressed);
+		uiManager->GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptNormal, normal);
+		uiManager->GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptHover, hover);
+		uiManager->GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptPressed, pressed);
 	}
 
 	void loadDecline() {
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineNormal, normal);
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineHover, hover);
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclinePressed, pressed);
+		uiManager->GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineNormal, normal);
+		uiManager->GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineHover, hover);
+		uiManager->GetAsset(UiAssetType::Generic, UiGenericAsset::DeclinePressed, pressed);
 	}
 };
 */

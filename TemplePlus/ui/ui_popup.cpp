@@ -25,7 +25,7 @@ class UiPopupReplacement : public TempleFix
 
 BOOL UiPopup::UiPopupMsg(int widId, TigMsg * msg){
 
-	ui.GetButton(widId);
+	uiManager->GetButton(widId);
 
 	if (msg->type == TigMsgType::MOUSE)
 		return TRUE;

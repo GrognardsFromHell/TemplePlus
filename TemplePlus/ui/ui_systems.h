@@ -44,7 +44,7 @@ class UiCamping;
 class UiHelpInventory;
 class UiPartyQuickview;
 class UiOptions;
-class UiManager;
+class UiManagerSystem;
 class UiHelpManager;
 class UiSlider;
 class UiWritten;
@@ -207,7 +207,7 @@ public:
 		Expects(!!mOptions);
 		return *mOptions;
 	}
-	UiManager& GetManager() const {
+	UiManagerSystem& GetManager() const {
 		Expects(!!mManager);
 		return *mManager;
 	}
@@ -283,7 +283,7 @@ private:
 	std::unique_ptr<UiHelpInventory> mHelpInventory;
 	std::unique_ptr<UiPartyQuickview> mPartyQuickview;
 	std::unique_ptr<UiOptions> mOptions;
-	std::unique_ptr<UiManager> mManager;
+	std::unique_ptr<UiManagerSystem> mManager;
 	std::unique_ptr<UiHelpManager> mHelpManager;
 	std::unique_ptr<UiSlider> mSlider;
 	std::unique_ptr<UiWritten> mWritten;

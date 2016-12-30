@@ -27,6 +27,8 @@
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
 #include "python/python_integration_d20_action.h"
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
 
 static struct ActnSeqAddresses : temple::AddressTable {
 
@@ -2262,7 +2264,7 @@ void ActionSequenceSystem::InterruptSwitchActionSequence(ReadiedActionPacket* re
 			sequencePerform();
 		}
 	}
-	ui.UpdateCombatUi();
+	uiSystems->GetCombat().Update();
 
 }
 
