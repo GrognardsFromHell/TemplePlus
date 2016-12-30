@@ -23,6 +23,7 @@
 #include <radialmenu.h>
 #include <action_sequence.h>
 #include <condition.h>
+#include "python_spell.h"
 
 namespace py = pybind11;
 using namespace pybind11;
@@ -59,6 +60,27 @@ public:
 	}
 
 	PYBIND11_TYPE_CASTER(Dice, _("PyDice"));
+protected:
+	bool success = false;
+};
+
+template <> class type_caster<SpellStoreData> {
+public:
+	bool load(handle src, bool) {
+		SpellStoreData spData;
+		ConvertSpellStore(src.ptr(), &spData);
+		value = spData;
+		success = true;
+		return true;
+	}
+
+	static handle cast(const SpellStoreData& src, return_value_policy
+	                   /* policy */, handle
+	                   /* parent */) {
+		return PySpellStore_Create(src);
+	}
+
+	PYBIND11_TYPE_CASTER(SpellStoreData, _("PySpellStore"));
 protected:
 	bool success = false;
 };
@@ -347,6 +369,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 	py::class_<RadialMenuEntryAction>(m, "RadialMenuEntryAction", py::base<RadialMenuEntry>())
 		.def(py::init<int, int, int, const char[]>(), py::arg("combesMesLine"), py::arg("action_type"), py::arg("data1"), py::arg("helpTopic"))
 		.def(py::init<std::string&, int, int, std::string&>(), py::arg("radialText"), py::arg("action_type"), py::arg("data1"), py::arg("helpTopic"))
+		.def(py::init<SpellStoreData&>(), py::arg("spell_data"))
 		.def("set_spell_data", [](RadialMenuEntryAction & entry, D20SpellData& spellData){
 		entry.d20SpellData.Set(spellData.spellEnumOrg, spellData.spellClassCode, spellData.spellSlotLevel, spellData.itemSpellData, spellData.metaMagicData);
 		})

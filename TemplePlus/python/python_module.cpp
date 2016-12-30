@@ -7,6 +7,7 @@
 #include "python_bonus.h"
 #include "python_damage.h"
 #include "python_dispatcher.h"
+#include "python_spell.h"
 
 static PyObject *Anyone(PyObject *obj, PyObject *args) {
 	PyObject *targetObjs;
@@ -64,6 +65,9 @@ void PyToeeInitModule() {
 	if (PyType_Ready(&PyObjHandleType)) {
 		PyErr_Print();
 	}
+	if (PyType_Ready(&PySpellStoreType)) {
+		PyErr_Print();
+	}
 	if (PyType_Ready(&PyBonusListType)) {
 		PyErr_Print();
 	}
@@ -77,6 +81,7 @@ void PyToeeInitModule() {
 	// This is critical for unpickling object handles stored in timed events
 	PyDict_SetItemString(dict, "PyObjHandle", (PyObject*) &PyObjHandleType);
 	PyDict_SetItemString(dict, "dice_new", (PyObject*) &PyDiceType);
+	PyDict_SetItemString(dict, "PySpellStore", (PyObject*)&PySpellStoreType);
 	PyDict_SetItemString(dict, "PyBonusList", (PyObject*)&PyBonusListType);
 	PyDict_SetItemString(dict, "PyDamagePacket", (PyObject*)&PyDamagePacketType);
 	PyDict_SetItemString(dict, "PyModifierSpec", (PyObject*)&PyModifierSpecType);

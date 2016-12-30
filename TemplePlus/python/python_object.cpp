@@ -40,6 +40,20 @@
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
 
+
+#undef HAVE_ROUND
+#define PYBIND11_EXPORT
+#include <pybind11/pybind11.h>
+#include <pybind11/common.h>
+#include <pybind11/cast.h>
+#include <pybind11/stl.h>
+#include "python_spell.h"
+
+namespace py = pybind11;
+using namespace pybind11;
+using namespace pybind11::detail;
+
+
 struct PyObjHandle {
 	PyObject_HEAD;
 	ObjectId id;
@@ -528,6 +542,29 @@ static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 	return Py_None;
 
 	return 0;
+}
+
+static PyObject* PyObjHandle_CanCastSpell(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	auto handle = self->handle;
+
+	SpellStoreData spData;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.can_cast_spell", &ConvertSpellStore, &spData)) {
+		return 0;
+	}
+
+	if (spellSys.spellCanCast(handle, spData.spellEnum, spData.classCode, spData.spellLevel) != TRUE) {
+		return PyInt_FromLong(0);
+	}
+
+	if (spData.classCode == spellSys.GetSpellClass(stat_level_paladin) && d20Sys.d20Query(handle, DK_QUE_IsFallenPaladin)) {
+		return PyInt_FromLong(0);
+	}
+
+	return PyInt_FromLong(1);
 }
 
 static PyObject* PyObjHandle_SkillLevelGet(PyObject* obj, PyObject* args) {
@@ -2229,6 +2266,22 @@ static PyObject* PyObjHandle_GetObj(PyObject* obj, PyObject* args) {
 	return PyObjHndl_Create(value);
 }
 
+static PyObject* PyObjHandle_GetSpell(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	obj_f field;
+	int subIdx = 0;
+	if (!PyArg_ParseTuple(args, "i|i:objhndl.obj_get_spell", &field, &subIdx)) {
+		return 0;
+	}
+	assert(subIdx >= 0);
+	auto value = objSystem->GetObject(self->handle)->GetSpell(field, subIdx);
+	return PySpellStore_Create(value);
+}
+
+
 static PyObject* PyObjHandle_HasFeat(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -2806,6 +2859,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"barter", PyObjHandle_Barter, METH_VARARGS, NULL },
 
 	{"cast_spell", PyObjHandle_CastSpell, METH_VARARGS, NULL },
+	{"can_cast_spell", PyObjHandle_CanCastSpell, METH_VARARGS, NULL },
 	{"can_see", PyObjHandle_HasLos, METH_VARARGS, NULL },
 	{ "can_sneak_attack", PyObjHandle_CanSneakAttack, METH_VARARGS, NULL },
 	{ "concealed_set", PyObjHandle_ConcealedSet, METH_VARARGS, NULL },
@@ -2911,6 +2965,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "obj_get_idx_int", PyObjHandle_GetIdxInt, METH_VARARGS, NULL },
 	{ "obj_get_int64", PyObjHandle_GetInt64, METH_VARARGS, "Gets 64 bit field" },
 	{ "obj_get_obj", PyObjHandle_GetObj, METH_VARARGS, "Gets Object field" },
+	{ "obj_get_spell", PyObjHandle_GetSpell, METH_VARARGS, NULL },
 	{ "obj_remove_from_all_groups", PyObjHandle_RemoveFromAllGroups, METH_VARARGS, "Removes the object from all the groups (GroupList, PCs, NPCs, AI controlled followers, Currently Selected" },
 	{ "obj_set_int", PyObjHandle_SetInt, METH_VARARGS, NULL },
 	{ "obj_set_obj", PyObjHandle_SetObj, METH_VARARGS, NULL },
@@ -3209,8 +3264,35 @@ static PyObject* PyObjHandle_GetCharacterClasses(PyObject* obj, void*) {
 	return  outTup;
 }
 
+static PyObject* PyObjHandle_GetSpellsKnown(PyObject* obj, void*) {
+	auto self = GetSelf(obj);
+	if (!self->handle)
+		Py_RETURN_NONE;
 
+	auto gameobj = objSystem->GetObject(self->handle);
+	auto numKnown = gameobj->GetSpellArray(obj_f_critter_spells_known_idx).GetSize();
 
+	auto result = PyTuple_New(numKnown);
+	for (size_t i = 0; i < numKnown; ++i) {
+		PyTuple_SET_ITEM(result, i, PySpellStore_Create(gameobj->GetSpell(obj_f_critter_spells_known_idx, i)));
+	}
+	return result;
+}
+
+static PyObject* PyObjHandle_GetSpellsMemorized(PyObject* obj, void*) {
+	auto self = GetSelf(obj);
+	if (!self->handle)
+		Py_RETURN_NONE;
+
+	auto gameobj = objSystem->GetObject(self->handle);
+	auto numMem = gameobj->GetSpellArray(obj_f_critter_spells_memorized_idx).GetSize();
+
+	auto result = PyTuple_New(numMem);
+	for (size_t i = 0; i < numMem; ++i) {
+		PyTuple_SET_ITEM(result, i, PySpellStore_Create(gameobj->GetSpell(obj_f_critter_spells_memorized_idx, i)));
+	}
+	return result;
+}
 
 // This is the NPC looting behaviour
 static PyObject* PyObjHandle_GetLoots(PyObject* obj, void*) {
@@ -3253,6 +3335,8 @@ PyGetSetDef PyObjHandleGetSets[] = {
 	{"substitute_inventory", PyObjHandle_GetSubstituteInventory, PyObjHandle_SetSubstituteInventory, NULL},
 	{"factions", PyObjHandle_GetFactions, NULL, NULL },
 	{"feats", PyObjHandle_GetFeats, NULL, NULL},
+	{"spells_known", PyObjHandle_GetSpellsKnown, NULL, NULL },
+	{"spells_memorized", PyObjHandle_GetSpellsMemorized, NULL, NULL },
 	{"loots", PyObjHandle_GetLoots, PyObjHandle_SetLoots, NULL},
 	{"proto", PyObjHandle_GetProto, NULL, NULL },
 	{"__safe_for_unpickling__", PyObjHandle_SafeForUnpickling, NULL, NULL},

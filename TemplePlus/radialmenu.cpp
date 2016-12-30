@@ -986,6 +986,19 @@ RadialMenuEntryAction::RadialMenuEntryAction(std::string & textArg, int d20aType
 	d20ActionData1 = data1;
 }
 
+RadialMenuEntryAction::RadialMenuEntryAction(SpellStoreData & spData){
+	type = RadialMenuEntryType::Action;
+	if (spData.spellEnum > 0)
+		this->text = (char*)spellSys.GetSpellName(spData.spellEnum);
+	else
+		text = "NULL SPELL";
+	this->d20ActionType = D20A_CAST_SPELL;
+	this->d20ActionData1 = 0;
+
+	this->helpId = ElfHash::Hash(spellSys.GetSpellEnumTAG(spData.spellEnum));
+	this->d20SpellData.Set(spData.spellEnum, spData.classCode, spData.spellLevel, -1, spData.metaMagicData);
+}
+
 RadialMenuEntryToggle::RadialMenuEntryToggle(int combatMesLine, void* ActualArg, const char HelpId[]): RadialMenuEntry()
 {
 	type = RadialMenuEntryType::Toggle;
