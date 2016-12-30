@@ -5,6 +5,8 @@
 #include <graphics/shaperenderer3d.h>
 #include <graphics/mdfmaterials.h>
 
+#include <debugui.h>
+
 #include <temple/dll.h>
 #include <temple/vfs.h>
 #include <temple/soundsystem.h>
@@ -101,6 +103,13 @@ TigInitializer::TigInitializer(HINSTANCE hInstance)
 	mRenderingDevice->SetAntiAliasing(config.antialiasing,
 		config.msaaSamples,
 		config.msaaQuality);
+
+	mDebugUI = std::make_unique<DebugUI>(*mRenderingDevice);
+	// Install a message filter for the debug UI
+	mMainWindow->SetWindowMsgFilter([&](UINT msg, WPARAM wParam, LPARAM lParam) {
+		return mDebugUI->HandleMessage(msg, wParam, lParam);
+	});
+
 	mMdfFactory = std::make_unique<gfx::MdfMaterialFactory>(*mRenderingDevice);
 	mMdfFactory->LoadReplacementSets("rules\\materials.mes");
 	mShapeRenderer2d = std::make_unique<gfx::ShapeRenderer2d>(*mRenderingDevice);

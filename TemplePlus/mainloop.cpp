@@ -6,6 +6,8 @@
 #include <graphics/dynamictexture.h>
 #include <graphics/shaperenderer2d.h>
 
+#include <debugui.h>
+
 #include "mainloop.h"
 #include <temple/dll.h>
 #include "mainwindow.h"
@@ -134,11 +136,11 @@ void GameLoop::Run() {
 	TigMsg msg;
 	auto quit = false;
 	while (!quit) {
-
-		Stopwatch sw1;
+		
+		tig->GetDebugUI().NewFrame();
 
 		// Read user input and external system events (such as time)
-		messageQueue->PollExternalEvents();
+		messageQueue->PollExternalEvents();			
 
 		mGameSystems.AdvanceTime();
 
@@ -152,7 +154,6 @@ void GameLoop::Run() {
 				(int) sceneRect.w
 			);
 		}
-		Stopwatch sw2;
 
 		RenderFrame();
 
@@ -252,6 +253,15 @@ void GameLoop::RenderFrame() {
 		auto h = (float)device.GetCamera().GetScreenHeight();
 		tig->GetShapeRenderer2d().DrawRectangle(0, 0, w, h, gfadeColor);
 	}
+	
+	ImGui::ShowTestWindow();
+
+	auto &io = ImGui::GetIO();
+
+	ImGui::LabelText("wants_mouse", "Mouse: %d, Keyboard: %d", io.WantCaptureMouse, io.WantCaptureKeyboard);
+
+	// Render the Debug UI
+	tig->GetDebugUI().Render();
 	
 	device.Present();
 

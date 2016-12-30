@@ -193,6 +193,7 @@ namespace gfx {
 	friend class Shader;
 	friend class BufferBinding;
 	friend class TextureLoader;
+	friend class DebugUI;
 	public:
 		RenderingDevice(HWND mWindowHandle, uint32_t adapterIdx = 0, bool debugDevice = false);
 		~RenderingDevice();

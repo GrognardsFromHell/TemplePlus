@@ -165,6 +165,7 @@
     <ClInclude Include="include\graphics\bufferbinding.h" />
     <ClInclude Include="include\graphics\buffers.h" />
     <ClInclude Include="include\graphics\camera.h" />
+    <ClInclude Include="include\debugui.h" />
     <ClInclude Include="include\graphics\device.h" />
     <ClInclude Include="include\graphics\dynamictexture.h" />
     <ClInclude Include="include\graphics\materials.h" />
@@ -179,6 +180,8 @@
     <ClInclude Include="include\gsl\gsl_util.h" />
     <ClInclude Include="include\gsl\span.h" />
     <ClInclude Include="include\gsl\string_span.h" />
+    <ClInclude Include="include\imconfig.h" />
+    <ClInclude Include="include\imgui.h" />
     <ClInclude Include="include\infrastructure\binaryreader.h" />
     <ClInclude Include="include\infrastructure\breakpad.h" />
     <ClInclude Include="include\infrastructure\crypto.h" />
@@ -231,6 +234,7 @@
     <ClInclude Include="include\infrastructure\version.h" />
     <ClInclude Include="include\infrastructure\vfs.h" />
     <ClInclude Include="include\graphics\textures.h" />
+    <ClInclude Include="src\debugui\imgui\imgui_impl_dx11.h" />
     <ClInclude Include="src\graphics\shaders_compiler.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
@@ -252,6 +256,11 @@
     <ClCompile Include="mdfparser.cpp" />
     <ClCompile Include="meshes_animfallbacks.cpp" />
     <ClCompile Include="meshes_rewrite.cpp" />
+    <ClCompile Include="src\debugui\debugui.cpp" />
+    <ClCompile Include="src\debugui\imgui\imgui.cpp" />
+    <ClCompile Include="src\debugui\imgui\imgui_demo.cpp" />
+    <ClCompile Include="src\debugui\imgui\imgui_draw.cpp" />
+    <ClCompile Include="src\debugui\imgui\imgui_impl_dx11.cpp" />
     <ClCompile Include="src\graphics\dynamictexture.cpp" />
     <ClCompile Include="src\graphics\shaders_compiler.cpp" />
     <ClCompile Include="src\graphics\bufferbinding.cpp" />

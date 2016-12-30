@@ -71,6 +71,7 @@ namespace temple {
 	class MovieSystem;
 }
 class TextLayouter;
+class DebugUI;
 
 // RAII for TIG initialization
 class TigInitializer {
@@ -94,6 +95,10 @@ public:
 		return *mRenderingDevice;
 	}
 	
+	DebugUI &GetDebugUI() {
+		return *mDebugUI;
+	}
+
 	TextLayouter& GetTextLayouter() {
 		return *mTextLayouter;
 	}
@@ -137,6 +142,7 @@ private:
 
 	std::unique_ptr<MainWindow> mMainWindow;
 	std::unique_ptr<gfx::RenderingDevice> mRenderingDevice;
+	std::unique_ptr<DebugUI> mDebugUI;
 	std::unique_ptr<TextLayouter> mTextLayouter;
 	std::unique_ptr<gfx::MdfMaterialFactory> mMdfFactory;
 	std::unique_ptr<gfx::ShapeRenderer2d> mShapeRenderer2d;
