@@ -4,15 +4,34 @@
 #include "osdefs.h"
 #include "marshal.h"
 #include "tio/tio.h"
+#include "tig/tig_startup.h"
+#include "tig/tig_console.h"
 #include <temple/dll.h>
 
-static struct PyConsoleOutAddresses : temple::AddressTable {
-	int (__cdecl *AppendLine)(const char *line);
-
-	PyConsoleOutAddresses() {
-		rebase(AppendLine, 0x101DFDC0);
+static void AppendText(const char *message, int messageLen) {
+	static std::string buf;
+	for (int i = 0; i < messageLen; i++) {
+		char ch = message[i];
+		if (ch == '\n') {
+			tig->GetConsole().Append(buf.c_str());
+			buf.clear();
+			continue;
+		}
+		else if (ch == '\r') {
+			continue;
+		}
+		buf.push_back(ch);
 	}
-} addresses;
+
+	// Dont append a new line for the logger
+	char *messageCopy = _strdup(message);
+	int len = strlen(messageCopy);
+	if (len > 0 && messageCopy[len - 1] == '\n') {
+		messageCopy[len - 1] = '\0';
+	}
+	logger->info("Python: {}", messageCopy);
+	free(messageCopy);
+}
 
 PyObject *pytcout_write(PyObject *self, PyObject *args) {
 	char *message;
@@ -20,17 +39,8 @@ PyObject *pytcout_write(PyObject *self, PyObject *args) {
 
 	if (!PyArg_ParseTuple(args, "s#:PyTempleConsoleOut.write", &message, &messageLen))
 		return NULL;
-		
-	addresses.AppendLine(message);
-	
-	// Dont append a new line for the logger
-	message = _strdup(message);
-	int len = strlen(message);
-	if (len > 0 && message[len - 1] == '\n') {
-		message[len - 1] = '\0';
-	}
-	logger->info("Python: {}", message);
-	free(message);
+
+	AppendText(message, messageLen);
 
 	Py_INCREF(Py_None);
 	return Py_None;
@@ -85,5 +95,5 @@ PyObject *PyTempleConsoleOut_New() {
 }
 
 void PyTempleConsoleOut_Append(const char *text) {
-	addresses.AppendLine(text);
+	AppendText(text, strlen(text));
 }

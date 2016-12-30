@@ -1,7 +1,8 @@
 
 #pragma once
 
-#include <EASTL/fixed_list.h>
+#include <EASTL/bonus/ring_buffer.h>
+#include <EASTL/vector.h>
 #include <string>
 
 class Console {
@@ -21,6 +22,8 @@ public:
 		mScrollToBottom = true;
 	}
 
+	void Execute(const std::string &command, bool skipHistory = false);
+
 	void Show();
 	void Hide();
 	void Append(const char *text);
@@ -30,5 +33,7 @@ private:
 	bool mScrollToBottom = false;
 	std::string mCommandBuf;
 
-	eastl::fixed_list<std::string, 1024, false> mLines;
+	eastl::ring_buffer<std::string, eastl::vector<std::string>> mLog;
+	eastl::ring_buffer<std::string, eastl::vector<std::string>> mCommandHistory;
+
 };

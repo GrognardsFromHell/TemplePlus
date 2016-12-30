@@ -160,6 +160,7 @@
     <ClCompile Include="textbubbles.cpp" />
     <ClCompile Include="tig\tig.cpp" />
     <ClCompile Include="tig\tig_console.cpp" />
+    <ClCompile Include="tig\tig_console_wrapper.cpp" />
     <ClCompile Include="tig\tig_sound.cpp" />
     <ClCompile Include="tio\tio_utils.cpp" />
     <ClCompile Include="python\python_consoleout.cpp" />

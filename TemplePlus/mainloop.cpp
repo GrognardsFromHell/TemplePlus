@@ -138,10 +138,11 @@ void GameLoop::Run() {
 	auto quit = false;
 	while (!quit) {
 
+		tig->GetDebugUI().NewFrame();
+
 		// Read user input and external system events (such as time)
 		messageQueue->PollExternalEvents();			
 		
-		tig->GetDebugUI().NewFrame();
 		tig->GetConsole().Render();
 
 		mGameSystems.AdvanceTime();
@@ -257,10 +258,6 @@ void GameLoop::RenderFrame() {
 	}
 	
 	ImGui::ShowTestWindow();
-
-	auto &io = ImGui::GetIO();
-
-	ImGui::LabelText("wants_mouse", "Mouse: %d, Keyboard: %d", io.WantCaptureMouse, io.WantCaptureKeyboard);
 
 	// Render the Debug UI
 	tig->GetDebugUI().Render();
@@ -433,25 +430,16 @@ public:
 			if (!gameLoop) {
 				return 0;
 			}
-
+			
 			gameLoop->RenderFrame();
+			
+			// We have to manually trigger a new frame for the debug UI here since 
+			// this can be called from virtually anywhere
+			ImGui::NewFrame();
+
 			return 0;
 		});
-		/*
-			The normal (non-combat) LMB handler function
-		*/
-		static void(__cdecl*orgNormalLmbHandler)(TigMsg*) = replaceFunction<void(TigMsg*)>(0x10114AF0, [](TigMsg* msg)
-		{
-			//logger->debug("NormalLmbHandler: LMB released; args:  {} , {} , {} , {}", msg->arg1, msg->arg2, msg->arg3, msg->arg4);
-			orgNormalLmbHandler(msg);
-			//logger->debug("NormalLmbHandler: success.");
-		});		
 
-		static void(__cdecl*orgNormalLmbHandleTarget)(objHndl*) = replaceFunction<void(objHndl*)>(0x101140F0, [](objHndl* tgt){
-			
-			NormalLmbHandleTarget(tgt);
-			//orgNormalLmbHandleTarget(tgt);
-		});
 	}
 } hooks;
 

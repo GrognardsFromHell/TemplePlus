@@ -459,6 +459,7 @@
     <ClCompile Include="ui\ui_assets.cpp" />
     <ClCompile Include="ui\ui_wrapper.cpp" />
     <ClCompile Include="tig\tig_console.cpp" />
+    <ClCompile Include="tig\tig_console_wrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />

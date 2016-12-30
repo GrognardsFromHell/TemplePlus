@@ -3,7 +3,7 @@
 #include "tig_console.h"
 #include "debugui.h"
 
-Console::Console() : mCommandBuf(1024, '\0') {
+Console::Console() : mLog(1024), mCommandHistory(100), mCommandBuf(1024, '\0') {
 }
 
 Console::~Console() {
@@ -11,31 +11,21 @@ Console::~Console() {
 
 void Console::Render()
 {
-	ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiSetCond_FirstUseEver);
+	if (!mOpen) {
+		return;
+	}
 
-	if (!ImGui::Begin("Console", &mOpen))
+	constexpr auto consoleWidgeFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings;
+
+	auto size = ImGui::GetIO().DisplaySize;
+	size.y /= 2;
+	ImGui::SetNextWindowSize(size);
+	ImGui::SetNextWindowPos(ImVec2(0, 0));
+	if (!ImGui::Begin("Console", &mOpen, consoleWidgeFlags))
 	{
 		ImGui::End();
 		return;
 	}
-	
-	ImGui::TextWrapped("This example implements a console with basic coloring, completion and history. A more elaborate implementation may want to store entries along with extra data such as timestamp, emitter, etc.");
-	ImGui::TextWrapped("Enter 'HELP' for help, press TAB to use text completion.");
-
-	// TODO: display items starting from the bottom
-
-	if (ImGui::SmallButton("Add Dummy Text")) {  } ImGui::SameLine();
-	if (ImGui::SmallButton("Add Dummy Error")) {} ImGui::SameLine();
-	if (ImGui::SmallButton("Clear")) Clear(); ImGui::SameLine();
-	if (ImGui::SmallButton("Scroll to bottom")) ScrollToBottom();
-
-	ImGui::Separator();
-
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-	static ImGuiTextFilter filter;
-	filter.Draw("Filter (\"incl,-excl\") (\"error\")", 180);
-	ImGui::PopStyleVar();
-	ImGui::Separator();
 
 	ImGui::BeginChild("ScrollingRegion", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing()), false, ImGuiWindowFlags_HorizontalScrollbar);
 	if (ImGui::BeginPopupContextWindow())
@@ -57,7 +47,16 @@ void Console::Render()
 	// If your items are of variable size you may want to implement code similar to what ImGuiListClipper does. Or split your data into fixed height items to allow random-seeking into your list.
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1)); // Tighten spacing
 
-	// TODO: Children
+	for (auto it = mLog.begin(); it != mLog.end(); it++)
+	{
+		auto item = it->c_str();
+		ImVec4 col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); // A better implementation may store a type per-item. For the sample let's just parse the text.
+		if (strstr(item, "[error]")) col = ImColor(1.0f, 0.4f, 0.4f, 1.0f);
+		else if (strncmp(item, "# ", 2) == 0) col = ImColor(1.0f, 0.78f, 0.58f, 1.0f);
+		ImGui::PushStyleColor(ImGuiCol_Text, col);
+		ImGui::TextUnformatted(item);
+		ImGui::PopStyleColor();
+	}
 
 	if (mScrollToBottom)
 		ImGui::SetScrollHere();
@@ -70,35 +69,57 @@ void Console::Render()
 	auto editCallback = [](ImGuiTextEditCallbackData *self) -> int {
 		return 0;
 	};
+
+	ImGui::PushItemWidth(-1);
 	if (ImGui::InputText("Input", &mCommandBuf[0], mCommandBuf.size(), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, editCallback, (void*)this))
 	{
-		/*char* input_end = InputBuf + strlen(InputBuf);
-		while (input_end > InputBuf && input_end[-1] == ' ') input_end--; *input_end = 0;
-		if (InputBuf[0])
-			ExecCommand(InputBuf);
-		strcpy(InputBuf, "");*/
-	}
+		std::string command = mCommandBuf;
+		command.resize(command.length()); // This discards trailing null-bytes
+		trim(command);
+		Execute(command);
 
-	// Demonstrate keeping auto focus on the input box
-	if (ImGui::IsItemHovered() || (ImGui::IsRootWindowOrAnyChildFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0)))
-		ImGui::SetKeyboardFocusHere(-1); // Auto focus previous widget
+		std::fill(mCommandBuf.begin(), mCommandBuf.end(), '\0'); // Clear command buffer
+	}
 
 	ImGui::End();
 }
 
 void Console::Clear()
 {
+	mLog.clear();
+}
+
+void Console::Execute(const std::string &command, bool skipHistory)
+{
+	if (!skipHistory) {
+		// Remove it from the history first
+		auto it = eastl::find(mCommandHistory.begin(), mCommandHistory.end(), command);
+		if (it != mCommandHistory.end()) {
+			mCommandHistory.erase(it);
+		}
+
+		// Append it at the end
+		mCommandHistory.push_back(command);
+	}
+
+
+
 }
 
 void Console::Show()
 {
+	mOpen = true;
 }
 
 void Console::Hide()
 {
+	mOpen = false;
 }
 
 void Console::Append(const char * text)
 {
-	mLines.push_back(text);
+	std::string line(text);
+	rtrim(line);
+	mLog.push_back(line);
+	ScrollToBottom();
 }
