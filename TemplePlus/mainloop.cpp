@@ -178,7 +178,7 @@ void GameLoop::Run() {
 			// so i removed the out of place re-rendering of the game frame
 
 			if (!uiSystems->GetMM().IsVisible()) {
-					mainLoop.InGameHandleMessage(msg);
+				mainLoop.InGameHandleMessage(msg);
 			}
 
 			auto unk = mainLoop.sub_10113CD0();

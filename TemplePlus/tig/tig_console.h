@@ -6,6 +6,8 @@
 #include <string>
 #include <functional>
 
+struct ImGuiTextEditCallbackData;
+
 // Returns 1 if it can handle the command
 typedef int(__cdecl *CheatFn)(const char *command);
 typedef void(__cdecl *CheatSetStateFn)(const char *command, int state);
@@ -59,8 +61,11 @@ private:
 
 	eastl::ring_buffer<std::string, eastl::vector<std::string>> mLog;
 	eastl::ring_buffer<std::string, eastl::vector<std::string>> mCommandHistory;
+	int mCommandHistoryPos = -1;
 
 	bool ExecuteCheat(const std::string &command);
 	void ExecuteScript(const std::string &command);
+
+	static int CommandEditCallback(ImGuiTextEditCallbackData *data);
 
 };

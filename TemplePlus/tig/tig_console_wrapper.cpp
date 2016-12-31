@@ -16,7 +16,12 @@ public:
 
 		// tig_console_show
 		replaceFunction<void()>(0x101df7c0, []() {
-			tig->GetConsole().Show();
+			auto &console = tig->GetConsole();
+			if (console.IsOpen()) {
+				console.Hide();
+			} else {
+				console.Show();
+			}
 		});
 
 		// tig_console_hide

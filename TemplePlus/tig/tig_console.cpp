@@ -65,13 +65,8 @@ void Console::Render()
 	ImGui::EndChild();
 	ImGui::Separator();
 
-	// Command-line
-	auto editCallback = [](ImGuiTextEditCallbackData *self) -> int {
-		return 0;
-	};
-
 	ImGui::PushItemWidth(-1);
-	if (ImGui::InputText("Input", &mCommandBuf[0], mCommandBuf.size(), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, editCallback, (void*)this))
+	if (ImGui::InputText("Input", &mCommandBuf[0], mCommandBuf.size(), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, Console::CommandEditCallback, this))
 	{
 		std::string command = mCommandBuf;
 		command.resize(command.length()); // This discards trailing null-bytes
@@ -79,6 +74,9 @@ void Console::Render()
 		Execute(command);
 
 		std::fill(mCommandBuf.begin(), mCommandBuf.end(), '\0'); // Clear command buffer
+
+		// Refocus the control
+		ImGui::SetKeyboardFocusHere(-1);
 	}
 
 	ImGui::End();
@@ -100,6 +98,9 @@ void Console::Execute(const std::string &command, bool skipHistory)
 
 		// Append it at the end
 		mCommandHistory.push_back(command);
+		
+		// Reset cur pos within the list
+		mCommandHistoryPos = -1;
 	}
 
 	if (!ExecuteCheat(command)) {
@@ -168,4 +169,35 @@ void Console::ExecuteScript(const std::string & command)
 	if (mInterpreter) {
 		mInterpreter(command);
 	}
+}
+
+int Console::CommandEditCallback(ImGuiTextEditCallbackData * data)
+{
+	Console *console = (Console*)data->UserData;
+	if (data->EventFlag == ImGuiInputTextFlags_CallbackHistory)
+	{
+		// Example of HISTORY
+		const int prev_history_pos = console->mCommandHistoryPos;
+		if (data->EventKey == ImGuiKey_UpArrow)
+		{
+			if (console->mCommandHistoryPos == -1)
+				console->mCommandHistoryPos = console->mCommandHistory.size() - 1;
+			else if (console->mCommandHistoryPos > 0)
+				console->mCommandHistoryPos--;
+		}
+		else if (data->EventKey == ImGuiKey_DownArrow)
+		{
+			if (console->mCommandHistoryPos != -1)
+				if (++console->mCommandHistoryPos >= console->mCommandHistory.size())
+					console->mCommandHistoryPos = -1;
+		}
+
+		// A better implementation would preserve the data on the current input line along with cursor position.
+		if (prev_history_pos != console->mCommandHistoryPos)
+		{
+			data->CursorPos = data->SelectionStart = data->SelectionEnd = data->BufTextLen = (int)snprintf(data->Buf, (size_t)data->BufSize, "%s", (console->mCommandHistoryPos >= 0) ? console->mCommandHistory[console->mCommandHistoryPos].c_str() : "");
+			data->BufDirty = true;
+		}
+	}
+	return 0;
 }

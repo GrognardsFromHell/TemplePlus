@@ -63,7 +63,7 @@ bool DebugUI::HandleMessage(uint32_t message, uint32_t wParam, uint32_t lParam)
 	case WM_MOUSEMOVE:
 		io.MousePos.x = (signed short)(lParam);
 		io.MousePos.y = (signed short)(lParam >> 16);
-		return io.WantCaptureMouse;
+		return false; // Always update, never take it
 	case WM_KEYDOWN:
 		if (wParam < 256)
 			io.KeysDown[wParam] = 1;
