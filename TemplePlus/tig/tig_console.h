@@ -25,6 +25,7 @@ public:
 	void Execute(const std::string &command, bool skipHistory = false);
 
 	void Show();
+	void Toggle();
 	void Hide();
 	void Append(const char *text);
 

@@ -467,6 +467,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 				return objHndl::null;
 			} )
 			.def("is_divine_spell", &SpellPacketBody::IsDivine)
+			.def("debit_spell", &SpellPacketBody::Debit)
 			;
 	#pragma endregion 
 

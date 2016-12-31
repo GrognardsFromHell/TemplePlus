@@ -956,6 +956,18 @@ PyObject* PyGame_IsOutdoor(PyObject*, PyObject* args) {
 	return PyInt_FromLong(maps.IsCurrentMapOutdoor());
 }
 
+
+PyObject* PyGame_IsSpellHarmful(PyObject*, PyObject* args) {
+
+	int spellEnum = 0;
+	objHndl caster, tgt;
+	if (!PyArg_ParseTuple(args, "iO&O&:game.is_spell_harmful", &spellEnum, &ConvertObjHndl, &caster, &ConvertObjHndl, &tgt)) {
+		return 0;
+	}
+	auto result = spellSys.IsSpellHarmful(spellEnum, caster, tgt);
+	return PyInt_FromLong(result);
+}
+
 PyObject* PyGame_Shake(PyObject*, PyObject* args) {
 	float amount, duration;
 
@@ -1211,6 +1223,7 @@ static PyMethodDef PyGameMethods[]{
 	{"pfx_lightning_bolt", PyGame_PfxLightningBolt, METH_VARARGS, NULL},
 	{"gametime_add", PyGame_GametimeAdd, METH_VARARGS, NULL},
 	{"is_outdoor", PyGame_IsOutdoor, METH_VARARGS, NULL},
+	{"is_spell_harmful", PyGame_IsSpellHarmful, METH_VARARGS, NULL },
 	{ "scroll_to", PyGame_ScrollTo, METH_VARARGS, NULL },
 	{"shake", PyGame_Shake, METH_VARARGS, NULL},
 	{"moviequeue_add", PyGame_MoviequeueAdd, METH_VARARGS, NULL},
