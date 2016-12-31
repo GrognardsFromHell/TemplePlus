@@ -66,6 +66,7 @@ private:
 
 	bool ExecuteCheat(const std::string &command);
 	void ExecuteScript(const std::string &command);
+	void RenderCheatsMenu();
 
 	static int CommandEditCallback(ImGuiTextEditCallbackData *data);
 
