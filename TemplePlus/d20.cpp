@@ -134,6 +134,7 @@ public:
 
 	// Projectile Hit
 	static BOOL ProjectileHitSpell(D20Actn* d20a, objHndl projectile, objHndl obj2);
+	static BOOL ProjectileHitPython(D20Actn* d20a, objHndl projectile, objHndl obj2);
 
 } d20Callbacks;
 
@@ -374,7 +375,7 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[D20A_PYTHON_ACTION].actionFrameFunc = d20Callbacks.ActionFramePython;
 	d20Defs[D20A_PYTHON_ACTION].turnBasedStatusCheck = d20Callbacks.TurnBasedStatusCheckPython;
 	d20Defs[D20A_PYTHON_ACTION].locCheckFunc = d20Callbacks.LocationCheckPython;
-	d20Defs[D20A_PYTHON_ACTION].projectileHitFunc = nullptr;// d20Callbacks.ProjectilePerformFunc;
+	d20Defs[D20A_PYTHON_ACTION].projectileHitFunc = d20Callbacks.ProjectileHitPython;
 	d20Defs[D20A_PYTHON_ACTION].flags = D20ADF::D20ADF_Python;
 
 	d20Defs[D20A_DIVINE_MIGHT].addToSeqFunc = d20Callbacks.AddToSeqSimple;
@@ -2068,7 +2069,10 @@ BOOL D20ActionCallbacks::ActionFrameDisarm(D20Actn* d20a){
 };
 
 BOOL D20ActionCallbacks::ActionFramePython(D20Actn* d20a){
-	return TRUE; // TODO
+	DispIoD20ActionTurnBased dispIo(d20a);
+	dispIo.DispatchPythonActionFrame((D20DispatcherKey)d20a->data1);
+
+	return TRUE;
 }
 
 #pragma region Retrieve Disarmed Weapon
@@ -2334,6 +2338,10 @@ BOOL D20ActionCallbacks::ProjectileHitSpell(D20Actn * d20a, objHndl projectile, 
 	pySpellIntegration.UpdateSpell(pkt.spellId);
 
 	return TRUE;
+}
+
+BOOL D20ActionCallbacks::ProjectileHitPython(D20Actn * d20a, objHndl projectile, objHndl obj2){
+	return pythonD20ActionIntegration.PyProjectileHit((D20DispatcherKey)d20a->data1, d20a, projectile, obj2);
 }
 
 ActionErrorCode D20ActionCallbacks::PerformAidAnotherWakeUp(D20Actn* d20a){
@@ -3108,3 +3116,23 @@ ActionErrorCode D20ActionCallbacks::ActionCostWhirlwindAttack(D20Actn* d20a, Tur
 	return AEC_OK;
 }
 
+BOOL D20Actn::ProjectileAppend(objHndl projHndl, objHndl thrownItem){
+	if (!projHndl)
+		return FALSE;
+	struct ProjectileEntry{
+		D20Actn * d20a;
+		int pad4;
+		objHndl projectile;
+		objHndl ammoItem;
+	};
+	auto projectileArray = temple::GetRef<ProjectileEntry[20]>(0x118A0720);
+	for (auto i = 0; i < 20; i++){
+		if (!projectileArray[i].projectile)	{
+			projectileArray[i].projectile = projHndl;
+			projectileArray[i].ammoItem = thrownItem;
+			projectileArray[i].d20a = this;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}

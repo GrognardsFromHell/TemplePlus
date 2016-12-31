@@ -2,6 +2,11 @@
 #include "stdafx.h"
 #include "tig_console.h"
 #include "debugui.h"
+#include "party.h"
+#include "d20_level.h"
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/objects/objsystem.h"
+#include "critter.h"
 
 Console::Console() : mLog(1024), mCommandHistory(100), mCommandBuf(1024, '\0') {
 }
@@ -26,6 +31,100 @@ void Console::Render()
 		ImGui::End();
 		return;
 	}
+	if (ImGui::Button("Levelup")){
+		for (auto i = 0u; i < party.GroupListGetLen(); i++) {
+			auto handle = party.GroupListGetMemberN(i);
+			if (!party.ObjIsAIFollower(handle) && !d20LevelSys.CanLevelup(handle)) {
+				auto obj = gameSystems->GetObj().GetObject(handle);
+
+				auto curLvl = objects.StatLevelGet(handle, stat_level);
+				auto xpReq = d20LevelSys.GetXpRequireForLevel(curLvl + 1);
+
+				auto curXp = obj->GetInt32(obj_f_critter_experience);
+				if ((int)xpReq > curXp)
+					critterSys.AwardXp(handle, xpReq - curXp);
+			}
+		}
+	}
+	static char cheatsInput[256] = { 0, };
+	ImGui::SameLine();
+	if (ImGui::Button("Give")){
+		int protoNum = 5001; // DO NOT USE arrow
+		sscanf(cheatsInput, "%d", &protoNum);
+
+
+		auto protoValid = true;
+		if (protoNum < 1000 || protoNum > 20000) {
+			logger->warn("Invalid proto for give command: {}", protoNum);
+			protoValid = false;
+		}
+
+
+		auto protoHandle = gameSystems->GetObj().GetProtoHandle(protoNum);
+		if (!protoHandle)
+			protoValid = false;
+
+		auto leader = party.GetConsciousPartyLeader();
+		auto loc = objects.GetLocation(leader);
+
+
+		if (protoValid){
+			auto handleNew = gameSystems->GetObj().CreateObject(protoHandle, loc);
+			if (handleNew) {
+				if (!inventory.SetItemParent(handleNew, leader, ItemInsertFlags::IIF_None)){
+					objects.Destroy(handleNew);
+				}
+				else{
+					auto obj = gameSystems->GetObj().GetObject(handleNew);
+					obj->SetItemFlag(OIF_IDENTIFIED, 1);
+				}
+				
+			}
+		}
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Create")){
+		int protoNum = 5001; // DO NOT USE arrow
+		sscanf(cheatsInput, "%d", &protoNum);
+		auto protoHandle = gameSystems->GetObj().GetProtoHandle(protoNum);
+		if (protoHandle){
+
+			auto leader = party.GetConsciousPartyLeader();
+			auto loc = objects.GetLocation(leader);
+
+			auto handleNew = gameSystems->GetObj().CreateObject(protoHandle, loc);
+			if (handleNew) {
+				critterSys.GenerateHp(handleNew);
+			}
+			auto& consoleNewlyCreatedObj = temple::GetRef<objHndl>(0x10AA31B8);
+			consoleNewlyCreatedObj = handleNew;
+		}
+	}
+
+	static std::string cheatsInputDescr("Cheat Input");
+	ImGui::SameLine();
+	auto editCheatInputCallback = [](ImGuiTextEditCallbackData *self) -> int {
+		int protoNum = 5001; // DO NOT USE arrow
+		sscanf(cheatsInput, "%d", &protoNum);
+		if (!strlen(cheatsInput))
+			return 0;
+		if (protoNum <= 1000 || protoNum >= 20000)
+			return 0;
+		auto protoHandle = gameSystems->GetObj().GetProtoHandle(protoNum);
+		if (!protoHandle)
+			return 0;
+
+		cheatsInputDescr.clear();
+		cheatsInputDescr.append(fmt::format("{}", description.getDisplayName(protoHandle)));
+		return 0;
+	};
+	
+	ImGui::PushItemWidth(100);
+	if (ImGui::InputText(cheatsInputDescr.c_str(), &cheatsInput[0], 256, ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, editCheatInputCallback, (void*)this))
+	{
+		editCheatInputCallback(nullptr);
+	}
+	
 
 	ImGui::BeginChild("ScrollingRegion", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing()), false, ImGuiWindowFlags_HorizontalScrollbar);
 	if (ImGui::BeginPopupContextWindow())
@@ -116,6 +215,11 @@ void Console::RunBatchFile(const std::string & path)
 void Console::Show()
 {
 	mOpen = true;
+}
+
+void Console::Toggle()
+{
+	mOpen = !mOpen;
 }
 
 void Console::Hide()

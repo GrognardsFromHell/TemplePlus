@@ -45,6 +45,7 @@ public:
 	void RunBatchFile(const std::string &path);
 
 	void Show();
+	void Toggle();
 	void Hide();
 	void Append(const char *text);
 

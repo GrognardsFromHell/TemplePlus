@@ -187,6 +187,7 @@ struct D20Actn{
 		data1 = 0;
 		//animID = -1;
 	}
+	BOOL ProjectileAppend(objHndl projHndl, objHndl thrownItem);
 };
 
 const auto TestSizeOfD20Action = sizeof(D20Actn); // should be 88 (0x58)

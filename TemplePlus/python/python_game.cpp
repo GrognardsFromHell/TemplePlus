@@ -956,6 +956,18 @@ PyObject* PyGame_IsOutdoor(PyObject*, PyObject* args) {
 	return PyInt_FromLong(maps.IsCurrentMapOutdoor());
 }
 
+
+PyObject* PyGame_IsSpellHarmful(PyObject*, PyObject* args) {
+
+	int spellEnum = 0;
+	objHndl caster, tgt;
+	if (!PyArg_ParseTuple(args, "iO&O&:game.is_spell_harmful", &spellEnum, &ConvertObjHndl, &caster, &ConvertObjHndl, &tgt)) {
+		return 0;
+	}
+	auto result = spellSys.IsSpellHarmful(spellEnum, caster, tgt);
+	return PyInt_FromLong(result);
+}
+
 PyObject* PyGame_Shake(PyObject*, PyObject* args) {
 	float amount, duration;
 
@@ -1158,6 +1170,19 @@ PyObject* PyGame_CreateHistoryFreeform(PyObject*, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+PyObject* PyGame_CreateHistoryFromId(PyObject*, PyObject* args) {
+
+	int histId;
+	if (!PyArg_ParseTuple(args, "i:game.create_history_from_id", &histId)) {
+		Py_RETURN_NONE;
+	}
+	histSys.CreateRollHistoryString(histId);
+	Py_RETURN_NONE;
+}
+
+
+
+
 PyObject* PyGame_WrittenUiShow(PyObject*, PyObject* args) {
 	objHndl handle;
 	if (!PyArg_ParseTuple(args, "O&:game.written_ui_show", &ConvertObjHndl, &handle)) {
@@ -1174,6 +1199,7 @@ PyObject* PyGame_IsDaytime(PyObject*, PyObject* args) {
 
 static PyMethodDef PyGameMethods[]{
 	{ "create_history_freeform", PyGame_CreateHistoryFreeform, METH_VARARGS, NULL },
+	{ "create_history_from_id", PyGame_CreateHistoryFromId, METH_VARARGS, NULL },
 	{"fade_and_teleport", PyGame_FadeAndTeleport, METH_VARARGS, NULL},
 	{"fade", PyGame_Fade, METH_VARARGS, NULL},
 	{ "fnn", PyGame_FindNpcNear, METH_VARARGS, NULL },
@@ -1211,6 +1237,7 @@ static PyMethodDef PyGameMethods[]{
 	{"pfx_lightning_bolt", PyGame_PfxLightningBolt, METH_VARARGS, NULL},
 	{"gametime_add", PyGame_GametimeAdd, METH_VARARGS, NULL},
 	{"is_outdoor", PyGame_IsOutdoor, METH_VARARGS, NULL},
+	{"is_spell_harmful", PyGame_IsSpellHarmful, METH_VARARGS, NULL },
 	{ "scroll_to", PyGame_ScrollTo, METH_VARARGS, NULL },
 	{"shake", PyGame_Shake, METH_VARARGS, NULL},
 	{"moviequeue_add", PyGame_MoviequeueAdd, METH_VARARGS, NULL},

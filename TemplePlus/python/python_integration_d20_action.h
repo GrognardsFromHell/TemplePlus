@@ -8,7 +8,8 @@ enum class D20ActionSpecFunc : int {
 	GetActionName,
 	GetTargetingClassification,
 	GetActionCostType,
-	AddToSequence
+	AddToSequence,
+	ProjectileHit
 };
 
 
@@ -32,6 +33,7 @@ public:
 
 
 	ActionErrorCode PyAddToSeq(int actionEnum, D20Actn *d20a, ActnSeq *actSeq, TurnBasedStatus *tbStat);
+	BOOL PyProjectileHit(int actionEnum, D20Actn *d20a, objHndl projectile, objHndl obj2 );
 	
 protected:
 	const char* GetFunctionName(EventId evt) override;
