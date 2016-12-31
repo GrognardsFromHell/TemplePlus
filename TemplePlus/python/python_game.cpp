@@ -1170,6 +1170,19 @@ PyObject* PyGame_CreateHistoryFreeform(PyObject*, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+PyObject* PyGame_CreateHistoryFromId(PyObject*, PyObject* args) {
+
+	int histId;
+	if (!PyArg_ParseTuple(args, "i:game.create_history_from_id", &histId)) {
+		Py_RETURN_NONE;
+	}
+	histSys.CreateRollHistoryString(histId);
+	Py_RETURN_NONE;
+}
+
+
+
+
 PyObject* PyGame_WrittenUiShow(PyObject*, PyObject* args) {
 	objHndl handle;
 	if (!PyArg_ParseTuple(args, "O&:game.written_ui_show", &ConvertObjHndl, &handle)) {
@@ -1186,6 +1199,7 @@ PyObject* PyGame_IsDaytime(PyObject*, PyObject* args) {
 
 static PyMethodDef PyGameMethods[]{
 	{ "create_history_freeform", PyGame_CreateHistoryFreeform, METH_VARARGS, NULL },
+	{ "create_history_from_id", PyGame_CreateHistoryFromId, METH_VARARGS, NULL },
 	{"fade_and_teleport", PyGame_FadeAndTeleport, METH_VARARGS, NULL},
 	{"fade", PyGame_Fade, METH_VARARGS, NULL},
 	{ "fnn", PyGame_FindNpcNear, METH_VARARGS, NULL },

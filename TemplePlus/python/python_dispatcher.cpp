@@ -28,6 +28,7 @@
 #include "combat.h"
 #include "location.h"
 #include "gamesystems/objects/objsystem.h"
+#include "python_integration_spells.h"
 
 namespace py = pybind11;
 using namespace pybind11;
@@ -294,7 +295,9 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def_readwrite("inven_idx", &D20SpellData::itemSpellData)
 		.def("get_spell_store", [](D20SpellData&spData)->SpellStoreData {	return spData.ToSpellStore();	})
 		;
+	#pragma endregion
 
+	#pragma region D20Actions
 	py::class_<D20Actn>(m, "D20Action")
 		.def(py::init())
 		.def(py::init<D20ActionType>())
@@ -308,6 +311,9 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def_readwrite("loc", &D20Actn::destLoc, "Location")
 		.def_readwrite("anim_id", &D20Actn::animID)
 		.def_readwrite("spell_data", &D20Actn::d20SpellData)
+		.def_readwrite("roll_id_0", &D20Actn::rollHistId0)
+		.def_readwrite("roll_id_1", &D20Actn::rollHistId1)
+		.def_readwrite("roll_id_2", &D20Actn::rollHistId2)
 		.def("query_can_be_affected_action_perform", [](D20Actn& d20a, objHndl handle)->int{
 			return d20Sys.D20QueryWithDataDefaultTrue(handle, DK_QUE_CanBeAffected_PerformAction, &d20a, 0);
 		})
@@ -320,6 +326,19 @@ PYBIND11_PLUGIN(tp_dispatcher){
 			return createProjAndThrow(startLoc.location, protoNum, 0,0, endLoc, d20a.d20APerformer, d20a.d20ATarget);
 		})
 		.def("projectile_append", &D20Actn::ProjectileAppend)
+		;
+
+
+	py::enum_<D20ActionType>(m, "D20ActionType")
+		.value("FiveFootStep", D20ActionType::D20A_5FOOTSTEP)
+		.value("PythonAction", D20ActionType::D20A_PYTHON_ACTION)
+		.value("StandardAttack", D20ActionType::D20A_STANDARD_ATTACK)
+		.value("FullAttack", D20ActionType::D20A_FULL_ATTACK)
+		.value("StandardRangedAttack", D20ActionType::D20A_STANDARD_RANGED_ATTACK)
+		.value("CastSpell", D20ActionType::D20A_CAST_SPELL)
+		.value("UseItem", D20ActionType::D20A_USE_ITEM)
+		.value("UsePotion", D20ActionType::D20A_USE_POTION)
+		.export_values()
 		;
 
 	py::class_<TurnBasedStatus>(m, "TurnBasedStatus")
@@ -426,6 +445,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		;
 	#pragma endregion
 
+	#pragma region Spell stuff
 	py::class_<SpellEntry>(m, "SpellEntry")
 		.def(py::init())
 		.def(py::init<int>(), py::arg("spell_enum"))
@@ -466,9 +486,23 @@ PYBIND11_PLUGIN(tp_dispatcher){
 					return pkt.targetListHandles[idx];
 				return objHndl::null;
 			} )
+			.def("set_projectile", [](SpellPacketBody &pkt, int idx, objHndl projectile){
+				if (idx >=0 && idx < 5){
+					pkt.projectiles[idx] = projectile;
+					if (pkt.projectileCount <= idx)
+						pkt.projectileCount = idx+1;
+
+					// update the spell repositories
+					spellSys.UpdateSpellPacket(pkt);
+					pySpellIntegration.UpdateSpell(pkt.spellId);
+				}
+			})
 			.def("is_divine_spell", &SpellPacketBody::IsDivine)
 			.def("debit_spell", &SpellPacketBody::Debit)
 			;
+
+	#pragma endregion 
+
 	#pragma endregion 
 
 	

@@ -1032,6 +1032,8 @@ static PyObject* PyObjHandle_TripCheck(PyObject* obj, PyObject* args){
 
 static PyObject* PyObjHandle_FloatLine(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle)
+		Py_RETURN_NONE;
 	int lineId;
 	objHndl pc;
 	if (!PyArg_ParseTuple(args, "iO&:objhndl.float_line", &lineId, &ConvertObjHndl, &pc)) {
@@ -1072,6 +1074,8 @@ static PyObject* PyObjHandle_FloatLine(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_Damage(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle)
+		Py_RETURN_NONE;
 	objHndl attacker;
 	DamageType damageType;
 	Dice dice;
@@ -1087,6 +1091,8 @@ static PyObject* PyObjHandle_Damage(PyObject* obj, PyObject* args) {
 
 static PyObject* PyObjHandle_DamageWithReduction(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
+	if (!self->handle)
+		Py_RETURN_NONE;
 	objHndl attacker;
 	DamageType damageType;
 	Dice dice;
@@ -1101,6 +1107,22 @@ static PyObject* PyObjHandle_DamageWithReduction(PyObject* obj, PyObject* args) 
 	damage.DealDamage(self->handle, attacker, dice, damageType, attackPower, reduction, 105, actionType);
 	Py_RETURN_NONE;
 }
+
+static PyObject* PyObjHandle_DealAttackDamage(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle)
+		Py_RETURN_NONE;
+	objHndl attacker;
+	int d20data = 0;
+	D20ActionType actionType = D20A_NONE;
+	D20CAF flags;
+	if (!PyArg_ParseTuple(args, "O&iii:objhndl.deal_attack_damage", &ConvertObjHndl, &attacker, &d20data,&flags, &actionType)) {
+		return 0;
+	}
+	damage.DealAttackDamage(attacker, self->handle, d20data, flags, actionType);
+	Py_RETURN_NONE;
+}
+
 
 static PyObject* PyObjHandle_Heal(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -1949,6 +1971,36 @@ static PyObject* PyObjHandle_AnimGoalGetNewId(PyObject* obj, PyObject* args) {
 }
 
 
+static PyObject* PyObjHandle_ApplyProjectileParticles(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	D20CAF flags;
+	objHndl projectile;
+	if (!PyArg_ParseTuple(args, "O&|i:objhndl.apply_projectile_particles", &ConvertObjHndl, &projectile, &flags)) {
+		return 0;
+	}
+
+	auto result = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl, D20CAF)>(0x1004F330)(self->handle, projectile, flags);
+	return PyInt_FromLong(result);
+}
+
+static PyObject* PyObjHandle_ApplyProjectileHitParticles(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	D20CAF flags;
+	objHndl projectile;
+	if (!PyArg_ParseTuple(args, "O&|i:objhndl.apply_projectile_hit_particles", &ConvertObjHndl, &projectile, &flags)) {
+		return 0;
+	}
+
+	auto result = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl, D20CAF)>(0x1004F420)(self->handle, projectile, flags);
+	return PyInt_FromLong(result);
+}
+
 
 static PyObject* PyObjHandle_D20StatusInit(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -2150,6 +2202,22 @@ static PyObject* PyObjHandle_SetInt(PyObject* obj, PyObject* args) {
 	}
 	Py_RETURN_NONE;
 }
+
+static PyObject* PyObjHandle_SetFloat(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+	obj_f field;
+	float value;
+	if (!PyArg_ParseTuple(args, "if:objhndl.obj_set_float", &field, &value)) {
+		return 0;
+	}
+
+	objSystem->GetObject(self->handle)->SetFloat(field, value);
+	Py_RETURN_NONE;
+}
+
 
 static PyObject* PyObjHandle_SetInt64(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -2886,6 +2954,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "anim_goal_interrupt", PyObjHandle_AnimGoalInterrupt, METH_VARARGS, NULL },
 	{ "anim_goal_push_attack", PyObjHandle_AnimGoalPushAttack, METH_VARARGS, NULL },
 	{ "anim_goal_get_new_id", PyObjHandle_AnimGoalGetNewId, METH_VARARGS, NULL },
+	{ "apply_projectile_particles", PyObjHandle_ApplyProjectileParticles, METH_VARARGS, NULL },
+	{ "apply_projectile_hit_particles", PyObjHandle_ApplyProjectileHitParticles, METH_VARARGS, NULL },
 	{ "arcane_spell_level_can_cast", PyObjHandle_ArcaneSpellLevelCanCast, METH_VARARGS, NULL },
 	{ "attack", PyObjHandle_Attack, METH_VARARGS, NULL },
 	{ "award_experience", PyObjHandle_AwardExperience, METH_VARARGS, NULL },
@@ -2924,6 +2994,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "d20_status_init", PyObjHandle_D20StatusInit, METH_VARARGS, NULL },
 	{ "damage", PyObjHandle_Damage, METH_VARARGS, NULL },
 	{ "damage_with_reduction", PyObjHandle_DamageWithReduction, METH_VARARGS, NULL },
+	{ "deal_attack_damage", PyObjHandle_DealAttackDamage, METH_VARARGS, NULL },
 	{ "destroy", PyObjHandle_Destroy, METH_VARARGS, NULL },
 	{ "distance_to", PyObjHandle_DistanceTo, METH_VARARGS, NULL },
 	{ "divine_spell_level_can_cast", PyObjHandle_DivineSpellLevelCanCast, METH_VARARGS, NULL },
@@ -3007,6 +3078,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "obj_get_spell", PyObjHandle_GetSpell, METH_VARARGS, NULL },
 	{ "obj_remove_from_all_groups", PyObjHandle_RemoveFromAllGroups, METH_VARARGS, "Removes the object from all the groups (GroupList, PCs, NPCs, AI controlled followers, Currently Selected" },
 	{ "obj_set_int", PyObjHandle_SetInt, METH_VARARGS, NULL },
+	{ "obj_set_float", PyObjHandle_SetFloat, METH_VARARGS, NULL },
 	{ "obj_set_obj", PyObjHandle_SetObj, METH_VARARGS, NULL },
 	{ "obj_set_idx_int", PyObjHandle_SetIdxInt, METH_VARARGS, NULL },
 	{ "obj_set_int64", PyObjHandle_SetInt64, METH_VARARGS, NULL },

@@ -1025,7 +1025,7 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	featsExistingScrollbar.parentId = featsMainWndId;
 	featsExistingScrollbar.x += featsMainWnd.x;
 	featsExistingScrollbar.y += featsMainWnd.y;
-	auto featsExistingScrollbarId = uiManager->AddScrollBar(featsExistingScrollbar, featsMainWndId);
+	featsExistingScrollbarId = uiManager->AddScrollBar(featsExistingScrollbar, featsMainWndId);
 
 	featsSelectedBorderRect = TigRect(featsMainWnd.x + 207, featsMainWnd.y + 42, 185, 19 );
 	featsClassBonusBorderRect = TigRect(featsMainWnd.x + 207, featsMainWnd.y + 81, 185, 19);

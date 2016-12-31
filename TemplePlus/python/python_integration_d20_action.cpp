@@ -18,7 +18,22 @@ namespace py = pybind11;
 using namespace pybind11;
 using namespace pybind11::detail;
 
+template <> class type_caster<objHndl> {
+public:
+	bool load(handle src, bool) {
+		value = PyObjHndl_AsObjHndl(src.ptr());
+		success = true;
+		return true;
+	}
 
+	static handle cast(const objHndl &src, return_value_policy /* policy */, handle /* parent */) {
+		return PyObjHndl_Create(src);
+	}
+
+	PYBIND11_TYPE_CASTER(objHndl, _("objHndl"));
+protected:
+	bool success = false;
+};
 PythonD20ActionIntegration pythonD20ActionIntegration;
 
 
@@ -46,12 +61,52 @@ PYBIND11_PLUGIN(tp_actions) {
 		return spellSys.GetNewSpellId();
 	});
 
-	m.def("register_spell_cast", [](SpellPacketBody spellPkt, int spellId){
+	m.def("register_spell_cast", [](SpellPacketBody &spellPkt, int spellId){
 		spellSys.RegisterSpell(spellPkt, spellId);
 	});
 
 	m.def("trigger_spell_effect", [](int spellId){
 		pySpellIntegration.SpellTrigger(spellId, SpellEvent::SpellEffect);
+	});
+	m.def("trigger_spell_projectile", [](int spellId, objHndl projectile) {
+
+		auto projectileIdx = -1;
+		
+		SpellPacketBody pkt(spellId);
+		if (!pkt.spellEnum){
+			logger->debug("trigger_spell_projectile: Unable to retrieve spell packet!");
+			return FALSE;
+		}
+
+		int spellEnum = pkt.spellEnum;
+
+		SpellEntry spEntry(spellEnum);
+		if (!spEntry.projectileFlag)
+			return FALSE;
+
+		pySpellIntegration.SpellSoundPlay(&pkt, SpellEvent::SpellStruck);
+
+		// get the projectileIdx
+		for (auto i = 0; i< 5; i++) {
+			if (pkt.projectiles[i] == projectile) {
+				projectileIdx = i;
+				break;
+			}
+		}
+
+		if (projectileIdx < 0) {
+			logger->error("ProjectileHitSpell: Projectile not found!");
+			return FALSE;
+		}
+
+		pySpellIntegration.SpellTriggerProjectile(spellId, SpellEvent::EndProjectile, projectile, projectileIdx);
+
+		spellSys.GetSpellPacketBody(spellId, &pkt); // update spell if altered by the above
+
+		spellSys.UpdateSpellPacket(pkt);
+		pySpellIntegration.UpdateSpell(pkt.spellId);
+
+		return TRUE;
 	});
 
 	m.def("get_cur_seq", []()->ActnSeq &{
