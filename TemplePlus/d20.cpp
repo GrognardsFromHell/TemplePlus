@@ -2563,37 +2563,13 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 	}
 
 
-	static auto blinkSpellHandler = [](D20Actn *d20a, SpellEntry &spellEntry)->bool{
-		if (!d20Sys.d20QueryWithData(d20a->d20APerformer, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Blink"), 0))
-			return false;
-
-		auto modeTgt = (UiPickerType) spellEntry.modeTargetSemiBitmask;
-		if (!spellEntry.IsBaseModeTarget(UiPickerType::Single))
-			return false;
-		// "Spell failure due to Blink" roll
-		auto rollRes = Dice(1, 100, 0).Roll();
-		if (rollRes >= 50){ 
-			histSys.RollHistoryType5Add(d20a->d20APerformer, d20a->d20ATarget, 50, 111, rollRes, 62, 192);
-			return false;
-		} 
-		else{
-			floatSys.FloatSpellLine(d20a->d20APerformer, 30015, FloatLineColor::White);
-			gameSystems->GetParticleSys().CreateAtObj("Fizzle", d20a->d20ATarget);
-			histSys.RollHistoryType5Add(d20a->d20APerformer, d20a->d20ATarget, 50, 111, rollRes, 112, 192); // Miscast (Blink)!
-			if (*actSeqSys.actSeqCur){
-				(*actSeqSys.actSeqCur)->spellPktBody.Reset();
-				return false; // this was the original code, not sure if ok
-			}
-		}
-		return false;
-	};
+	
 
 	if (spellPkt.targetCount > 0) {
-		int targetsAftedProcessing = d20Sys.CastSpellProcessTargets(d20a, spellPkt);
-		blinkSpellHandler(d20a, spellEntry); // originally this cheked the result, but the result was always 0 anyway
-		auto filterResult = actSeqSys.SpellTargetsFilterInvalid(*d20a);
+		auto filterResult = d20a->FilterSpellTargets(spellPkt);
+		
 		auto modeTgt = (UiPickerType)spellEntry.modeTargetSemiBitmask;
-		if ((!filterResult || !targetsAftedProcessing)
+		if (!filterResult
 			&& !spellEntry.IsBaseModeTarget(UiPickerType::Area)
 			&& !spellEntry.IsBaseModeTarget(UiPickerType::Cone)
 			&& spellEntry.IsBaseModeTarget(UiPickerType::Location)) {
@@ -3135,4 +3111,41 @@ BOOL D20Actn::ProjectileAppend(objHndl projHndl, objHndl thrownItem){
 		}
 	}
 	return FALSE;
+}
+
+int D20Actn::FilterSpellTargets(SpellPacketBody & spellPkt){
+	if (spellPkt.targetCount <= 0)
+		return 0;
+
+	SpellEntry spEntry(spellPkt.spellEnum);
+
+	auto blinkSpellHandler = [](D20Actn *d20a, SpellEntry &spellEntry)->bool {
+		if (!d20Sys.d20QueryWithData(d20a->d20APerformer, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Blink"), 0))
+			return false;
+
+		auto modeTgt = (UiPickerType)spellEntry.modeTargetSemiBitmask;
+		if (!spellEntry.IsBaseModeTarget(UiPickerType::Single))
+			return false;
+		// "Spell failure due to Blink" roll
+		auto rollRes = Dice(1, 100, 0).Roll();
+		if (rollRes >= 50) {
+			histSys.RollHistoryType5Add(d20a->d20APerformer, d20a->d20ATarget, 50, 111, rollRes, 62, 192);
+			return false;
+		}
+		else {
+			floatSys.FloatSpellLine(d20a->d20APerformer, 30015, FloatLineColor::White);
+			gameSystems->GetParticleSys().CreateAtObj("Fizzle", d20a->d20ATarget);
+			histSys.RollHistoryType5Add(d20a->d20APerformer, d20a->d20ATarget, 50, 111, rollRes, 112, 192); // Miscast (Blink)!
+			if (*actSeqSys.actSeqCur) {
+				(*actSeqSys.actSeqCur)->spellPktBody.Reset();
+				return false; // this was the original code, not sure if ok
+			}
+		}
+		return false;
+	};
+
+	int targetsAftedProcessing = d20Sys.CastSpellProcessTargets(this, spellPkt);
+	blinkSpellHandler(this, spEntry); // originally this cheked the result, but the result was always 0 anyway
+	auto filterResult = actSeqSys.SpellTargetsFilterInvalid(*this);
+	return filterResult;
 }

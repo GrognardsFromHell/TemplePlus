@@ -217,6 +217,9 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def_readwrite("loc_xy", &LocAndOffsets::location)
 		.def_readwrite("off_x", &LocAndOffsets::off_x)
 		.def_readwrite("off_y", &LocAndOffsets::off_y)
+		.def("get_location", [](LocAndOffsets& loc)->int64_t{
+			return (int64_t)loc.location;
+		})
 		;
 		py::class_<LocFull>(m, "LocFull")
 		.def_readwrite("loc_and_offsets", &LocFull::location)
@@ -319,6 +322,9 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		})
 		.def("to_hit_processing", [](D20Actn& d20a){
 			combatSys.ToHitProcessing(d20a);
+		})
+		.def("filter_spell_targets", [](D20Actn&d20a, SpellPacketBody& pkt){
+			return d20a.FilterSpellTargets(pkt);
 		})
 		.def("create_projectile_and_throw", [](D20Actn& d20a, int protoNum, LocAndOffsets endLoc)->objHndl {
 			auto createProjAndThrow = temple::GetRef<objHndl(__cdecl)(locXY, int, int, int, LocAndOffsets, objHndl, objHndl)>(0x100B4D00);

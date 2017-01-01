@@ -1866,11 +1866,12 @@ static PyObject* PyObjHandle_DistanceTo(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		return PyInt_FromLong(0);
 	}
-	if (PyTuple_GET_SIZE(args) != 1) {
-		PyErr_SetString(PyExc_RuntimeError, "distance_to takes exactly one argument: objhndl or location");
+	if (PyTuple_GET_SIZE(args) < 1) {
+		PyErr_SetString(PyExc_RuntimeError, "distance_to takes at least one argument: objhndl or location");
 		return 0;
 	}
 	PyObject* arg = PyTuple_GET_ITEM(args, 0);
+
 	if (PyObjHndl_Check(arg)) {
 		auto target = PyObjHndl_AsObjHndl(arg);
 		auto dist = locSys.DistanceToObj(self->handle, target); // Returns feet
@@ -1878,9 +1879,21 @@ static PyObject* PyObjHandle_DistanceTo(PyObject* obj, PyObject* args) {
 	} else if (PyLong_Check(arg)) {
 		LocAndOffsets targetLoc;
 		targetLoc.location = locXY::fromField(PyLong_AsUnsignedLongLong(arg));
-		targetLoc.off_x = 0;
-		targetLoc.off_y = 0;
+
+		float off_x = 0, off_y = 0;
+		if (PyTuple_GET_SIZE(args) >= 3) {
+			PyObject* offxArg = PyTuple_GET_ITEM(args, 1);
+			PyObject* offyArg = PyTuple_GET_ITEM(args, 2);
+			if (PyFloat_Check(offxArg))
+				off_x = PyFloat_AsDouble(offxArg);
+			if (PyFloat_Check(offyArg))
+				off_y = PyFloat_AsDouble(offyArg);
+		}
+		targetLoc.off_x = off_x;
+		targetLoc.off_y = off_y;
 		auto dist = locSys.DistanceToLoc(self->handle, targetLoc);
+		if (dist < 0)
+			dist = 0;
 		dist = locSys.InchesToFeet(dist);
 		return PyFloat_FromDouble(dist);
 	}

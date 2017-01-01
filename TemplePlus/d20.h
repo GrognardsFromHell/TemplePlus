@@ -188,6 +188,7 @@ struct D20Actn{
 		//animID = -1;
 	}
 	BOOL ProjectileAppend(objHndl projHndl, objHndl thrownItem);
+	int FilterSpellTargets(SpellPacketBody& spellPkt); // returns number of remaining targets
 };
 
 const auto TestSizeOfD20Action = sizeof(D20Actn); // should be 88 (0x58)
