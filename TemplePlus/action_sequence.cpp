@@ -2046,7 +2046,10 @@ bool ActionSequenceSystem::SpellTargetsFilterInvalid(D20Actn& d20a){
 
 		// Check if Critter
 		if (tgtObj->IsCritter()){
-			d20a.d20ATarget = tgt;
+			if (!d20a.d20ATarget){
+				d20a.d20ATarget = tgt;
+			}
+				
 			// Check Q_CanBeAffected_PerformAction
 			auto canBeAffected = d20Sys.D20QueryWithDataDefaultTrue(tgt, DK_QUE_CanBeAffected_PerformAction, &d20a, 0);
 			if (!canBeAffected) {
