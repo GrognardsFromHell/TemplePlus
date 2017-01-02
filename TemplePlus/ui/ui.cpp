@@ -7,6 +7,7 @@
 #include <tig/tig_font.h>
 #include <tig/tig_mouse.h>
 #include "messages/messagequeue.h"
+#include "widgets/widgets.h"
 
 UiManager *uiManager;
 
@@ -19,6 +20,23 @@ UiManager::~UiManager() {
 	if (uiManager == this) {
 		uiManager = nullptr;
 	}
+}
+
+void UiManager::SetAdvancedWidget(LgcyWidgetId id, WidgetBase * widget)
+{
+	auto it = mActiveWidgets.find(id);
+	if (it != mActiveWidgets.end()) {
+		it->second.advancedWidget = widget;
+	}
+}
+
+WidgetBase * UiManager::GetAdvancedWidget(LgcyWidgetId id) const
+{
+	auto it = mActiveWidgets.find(id);
+	if (it != mActiveWidgets.end()) {
+		return it->second.advancedWidget;
+	}
+	return nullptr;
 }
 
 class UiReplacement : TempleFix
@@ -488,6 +506,9 @@ void UiManager::RemoveWidget(LgcyWidgetId id)
 {
 	auto it = mActiveWidgets.find(id);
 	if (it != mActiveWidgets.end()) {
+		if (it->second.widget->IsWindow()) {
+			RemoveWindow(id);
+		}
 		mActiveWidgets.erase(it);
 	}
 }
@@ -594,6 +615,17 @@ LgcyWidgetId UiManager::GetWidgetAt(int x, int y)
 		auto window = GetWindow(windowId);
 		if (!window->IsHidden() && DoesWidgetContain(windowId, x, y)) {
 			result = windowId;
+			
+			auto advWidget = GetAdvancedWidget(windowId);
+			if (advWidget) {
+				int localX = x - window->x;
+				int localY = y - window->y;
+
+				auto in = advWidget->PickWidget(localX, localY);
+				if (in) {
+					return in->GetWidgetId();
+				}
+			}
 
 			// Also in reverse order
 			for (int j = window->childrenCount - 1; j >= 0; --j) {

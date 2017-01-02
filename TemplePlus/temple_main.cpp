@@ -14,6 +14,8 @@
 #include "config/config.h"
 #include "updater/updater.h"
 #include "ui/ui_systems.h"
+#include "ui/widgets/widgets.h"
+#include "ui/widgets/widget_styles.h"
 
 class TempleMutex {
 public:
@@ -146,6 +148,9 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	}
 
 	UiManager uiManager;
+
+	WidgetTextStyles widgetTextStyles;
+	WidgetButtonStyles widgetButtonStyles;
 		
 	UiSystems uiSystems(config.renderWidth, config.renderHeight);
 
@@ -166,7 +171,7 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	// Show the main menu
 	mouseFuncs.ShowCursor();
 	if (!config.editor) {
-		uiMainMenuFuncs.ShowPage(0);
+		uiSystems.GetMM().ShowPage(0);
 	} else {
 		startupRelevantFuncs.MapOpenInGame(5001, 0, 1);
 	}

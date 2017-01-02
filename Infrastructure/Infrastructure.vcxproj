@@ -239,7 +239,6 @@
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="include\graphics\materials.cpp" />
     <ClCompile Include="src\allocator.cpp" />
     <ClCompile Include="breakpad.cpp" />
     <ClCompile Include="breakpad\crash_generation_client.cc" />

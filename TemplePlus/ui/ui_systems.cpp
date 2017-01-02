@@ -4,6 +4,7 @@
 #include "ui_systems.h"
 #include "ui_legacysystems.h"
 #include "ui_turn_based.h"
+#include "ui_mainmenu.h"
 
 UiSystems* uiSystems = nullptr;
 

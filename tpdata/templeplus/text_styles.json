@@ -1,0 +1,24 @@
+[
+  {
+    "id": "default",
+    "inherit": null,
+    "fontFace": "Junicode",
+    "pointSize": 12,
+    "bold": false,
+    "align": "left",
+    "paragraphAlign": "near",
+    "foreground": "#FFFFFFFF",
+    "uniformLineHeight": false,
+    "lineHeight": 0,
+    "baseLine": 0,
+    "dropShadow": false,
+    "dropShadowBrush": "#00000000"
+  },
+  {
+    "id": "mm-style1",
+    "inherit": "default",
+    "align": "center",
+    "paragraphAlign": "center",
+    "bold":  true
+  }
+]

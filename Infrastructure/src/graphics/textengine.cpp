@@ -67,7 +67,8 @@ namespace gfx {
 				^ eastl::hash<bool>()(style.italic)
 				^ eastl::hash<float>()(style.pointSize)
 				^ eastl::hash<float>()(style.tabStopWidth)
-				^ eastl::hash<uint32_t>()((uint32_t) style.align)
+				^ eastl::hash<uint32_t>()((uint32_t)style.align)
+				^ eastl::hash<uint32_t>()((uint32_t)style.paragraphAlign)
 				^ eastl::hash<bool>()(style.uniformLineHeight);
 
 			if (style.uniformLineHeight) {
@@ -86,6 +87,7 @@ namespace gfx {
 				&& a.italic == b.italic
 				&& a.tabStopWidth == b.tabStopWidth
 				&& a.align == b.align
+				&& a.paragraphAlign == b.paragraphAlign
 				&& a.uniformLineHeight == b.uniformLineHeight)) {
 				return false;
 			}
@@ -510,6 +512,18 @@ namespace gfx {
 			break;
 		case TextAlign::Justified:
 			D3DVERIFY(textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED));
+			break;
+		}
+
+		switch (textStyle.paragraphAlign) {
+		case ParagraphAlign::Near:
+			D3DVERIFY(textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR));
+			break;
+		case ParagraphAlign::Far:
+			D3DVERIFY(textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR));
+			break;
+		case ParagraphAlign::Center:
+			D3DVERIFY(textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER));
 			break;
 		}
 

@@ -38,6 +38,7 @@
 #include "messages/messagequeue.h"
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
+#include "ui/ui_mainmenu.h"
 
 static GameLoop *gameLoop = nullptr;
 

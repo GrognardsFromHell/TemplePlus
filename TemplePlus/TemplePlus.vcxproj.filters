@@ -460,6 +460,10 @@
     <ClCompile Include="ui\ui_wrapper.cpp" />
     <ClCompile Include="tig\tig_console.cpp" />
     <ClCompile Include="tig\tig_console_wrapper.cpp" />
+    <ClCompile Include="ui\widgets\widget_content.cpp" />
+    <ClCompile Include="ui\widgets\widgets.cpp" />
+    <ClCompile Include="ui\widgets\widget_styles.cpp" />
+    <ClCompile Include="ui\widgets\widget_doc.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -868,6 +872,10 @@
     </ClInclude>
     <ClInclude Include="ui\ui_assets.h" />
     <ClInclude Include="tig\tig_console.h" />
+    <ClInclude Include="ui\widgets\widget_content.h" />
+    <ClInclude Include="ui\widgets\widgets.h" />
+    <ClInclude Include="ui\widgets\widget_styles.h" />
+    <ClInclude Include="ui\widgets\widget_doc.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

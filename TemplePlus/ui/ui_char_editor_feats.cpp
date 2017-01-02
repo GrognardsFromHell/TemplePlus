@@ -24,7 +24,6 @@ struct UiCharEditorFeatsAddresses : temple::AddressTable
 	feat_enums * feat_10C79344;
 	int * widgId_10C7AE14;
 	char* (__cdecl*sub_10182760)(feat_enums featEnums);
-	int(__cdecl* j_CopyWidget_101F87A0)(int widIdx, LgcyWidget* widg);
 	int(__cdecl*sub_101F87B0)(int widIdx, LgcyWidget* widg);
 	int(__cdecl*sub_101F8E40)(int);
 
@@ -46,7 +45,6 @@ struct UiCharEditorFeatsAddresses : temple::AddressTable
 		rebase(widgId_10C7AE14, 0x10C7AE14);
 
 		rebase(sub_10182760, 0x10182760);
-		rebase(j_CopyWidget_101F87A0, 0x101F87A0);
 		rebase(sub_101F87B0, 0x101F87B0);
 		rebase(sub_101F8E40, 0x101F8E40);
 
@@ -96,7 +94,7 @@ int HookedFeatMultiselectSub_101A8080(feat_enums feat) // redundant now
 	}
 
 
-	addresses.j_CopyWidget_101F87A0(*addresses.widIdx_10C77D80, addresses.featsScrollbar);
+	*addresses.featsScrollbar = *uiManager->GetScrollBar(*addresses.widIdx_10C77D80);
 	*addresses.dword_10C77D54 = 0;
 	*addresses.dword_10C75F30 = 0;
 	*addresses.dword_10C77D50 = ( (*addresses.featsMultiselectNum_10C75F34) - 15) & ((*addresses.featsMultiselectNum_10C75F34 - 15 < 0) - 1);

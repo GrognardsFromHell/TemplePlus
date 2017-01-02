@@ -63,4 +63,12 @@ struct TigRect {
 	bool Intersects(const TigRect &other);
 	bool Intersects(const TigRect &other, TigRect &intersection);
 	bool ContainsPoint(int px, int py);
+
+	bool operator==(const TigRect &other) const {
+		return x == other.x && y == other.y && width == other.width && height == other.height;
+	}
+
+	bool operator!=(const TigRect &other) const {
+		return !(*this == other);
+	}
 };

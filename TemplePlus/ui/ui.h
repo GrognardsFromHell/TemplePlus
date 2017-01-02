@@ -22,7 +22,7 @@ struct UiResizeArgs {
 	TigRect rect2;
 };
 
-struct TooltipStyle{
+struct TooltipStyle {
 	const char* styleName;
 	const char* fontName;
 	int fontSize;
@@ -66,9 +66,9 @@ struct LgcyWidget {
 	uint32_t width;
 	uint32_t height;
 	uint32_t field_6c;
-	LgcyWidgetRenderTooltipFn renderTooltip;
-	LgcyWidgetRenderFn render;
-	LgcyWidgetHandleMsgFn handleMessage;
+	LgcyWidgetRenderTooltipFn renderTooltip = nullptr;
+	LgcyWidgetRenderFn render = nullptr;
+	LgcyWidgetHandleMsgFn handleMessage = nullptr;
 
 	bool IsWindow() const {
 		return type == LgcyWidgetType::Window;
@@ -85,7 +85,7 @@ struct LgcyWidget {
 	bool IsHidden() const {
 		return (flags & 1) != 0;
 	}
-
+	
 	bool CanHandleMessage() const {
 		return !!handleMessage;
 	}
@@ -139,7 +139,7 @@ struct LgcyButton : public LgcyWidget {
 	int field88;
 	int field8C;
 	int field90;
-	LgcyButtonState buttonState; // 1 - hovered 2 - down  3 - released 4 - disabled
+	LgcyButtonState buttonState = LgcyButtonState::Normal; // 1 - hovered 2 - down  3 - released 4 - disabled
 	int field98;
 	int field9C;
 	int fieldA0;
@@ -182,14 +182,17 @@ struct LgcyWidgetDeleter
 	void operator()(LgcyWidget *p);
 };
 
+class WidgetBase;
+
 class ActiveLegacyWidget {
 public:
 	ActiveLegacyWidget() = default;
 	EA_NON_COPYABLE(ActiveLegacyWidget)
 
-		const char *sourceFile;
+	const char *sourceFile;
 	uint32_t sourceLine;
 	unique_ptr<LgcyWidget, LgcyWidgetDeleter> widget;
+	WidgetBase *advancedWidget = nullptr;
 };
 
 #pragma endregion
@@ -210,6 +213,9 @@ public:
 	UiManager();
 	~UiManager();
 		
+	void SetAdvancedWidget(LgcyWidgetId id, WidgetBase *widget);
+	WidgetBase *GetAdvancedWidget(LgcyWidgetId id) const;
+
 	LgcyWidgetId AddWindow(LgcyWindow& widget);
 	BOOL ButtonInit(LgcyButton * widg, char* buttonName, LgcyWidgetId parentId, int x, int y, int width, int height);
 	LgcyWidgetId AddButton(LgcyButton& button);

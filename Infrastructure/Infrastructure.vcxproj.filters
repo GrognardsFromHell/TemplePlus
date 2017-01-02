@@ -389,9 +389,6 @@
     <ClCompile Include="src\allocator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="include\graphics\materials.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\graphics\textengine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -29,35 +29,6 @@ const std::string &UiMainMenu::GetName() const {
 }
 
 //*****************************************************************************
-//* MM-UI
-//*****************************************************************************
-
-UiMM::UiMM(const UiSystemConf &config) {
-    auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10117370);
-    if (!startup(&config)) {
-        throw TempleException("Unable to initialize game system MM-UI");
-    }
-}
-UiMM::~UiMM() {
-    auto shutdown = temple::GetPointer<void()>(0x101164c0);
-    shutdown();
-}
-void UiMM::ResizeViewport(const UiResizeArgs& resizeArg) {
-    auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x101172c0);
-    resize(&resizeArg);
-}
-const std::string &UiMM::GetName() const {
-    static std::string name("MM-UI");
-    return name;
-}
-
-bool UiMM::IsVisible() const
-{
-	static auto ui_mm_is_visible = temple::GetPointer<int()>(0x101157f0);
-	return ui_mm_is_visible() == TRUE;
-}
-
-//*****************************************************************************
 //* LoadGame
 //*****************************************************************************
 

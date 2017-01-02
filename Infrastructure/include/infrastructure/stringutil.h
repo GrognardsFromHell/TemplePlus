@@ -142,3 +142,11 @@ std::ostream &operator <<(std::ostream &os, const std::vector<T> &v) {
 
 	return os;
 }
+
+inline bool endsWith(const std::string &str, const std::string &suffix) {
+	if (suffix.length() > str.length()) {
+		return false; // Short-circuit
+	}
+
+	return str.compare(str.length() - suffix.length(), suffix.length(), suffix) == 0;
+}

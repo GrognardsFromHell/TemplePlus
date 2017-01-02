@@ -18,6 +18,12 @@ namespace gfx {
 		Justified
 	};
 
+	enum class ParagraphAlign: uint8_t {
+		Near,
+		Far,
+		Center
+	};
+
 	struct Brush {
 		bool gradient = false;
 		XMCOLOR primaryColor = { 1,1,1,1 };
@@ -30,6 +36,7 @@ namespace gfx {
 		bool bold = false;
 		bool italic = false;
 		TextAlign align = TextAlign::Left;
+		ParagraphAlign paragraphAlign = ParagraphAlign::Near;
 		Brush foreground;
 		bool uniformLineHeight = false;
 		float lineHeight;

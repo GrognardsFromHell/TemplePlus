@@ -1,0 +1,143 @@
+{
+  "type": "container",
+  "sizeToParent":  true,
+  "__styles": [
+    {
+      "id": "mm-button-text",
+      "fontFamily": "Scurlock",
+      "pointSize": 48,
+      "foreground": [ "#0064a4", "#01415d" ],
+      "dropShadow": true,
+      "dropShadowBrush": "#000000",
+      "align": "center"
+    },
+    {
+      "id": "mm-button-hover-text",
+      "inherit": "mm-button-text",
+      "foreground": [ "#01ffff", "#01d0ff" ]
+    },
+    {
+      "id": "mm-button-pressed-text",
+      "inherit": "mm-button-text",
+      "foreground": [ "#eb1510", "#da5b61" ]
+    }
+  ],
+  "__buttonStyles": [
+    {
+      "id": "mm-button",
+      "textStyle": "mm-button-text",
+      "hoverTextStyle": "mm-button-hover-text",
+      "pressedTextStyle": "mm-button-pressed-text"
+    }
+  ],
+  "children": [
+    {
+      "type": "container",
+      "y": 30,
+      "centerHorizontally":  true,
+      "content": [
+        {
+          "type": "image",
+          "path": "art/interface/mainmenu_ui/MainMenu_Title.img"
+        }
+      ]
+    },
+    {
+      "id":  "pages",
+      "type": "container",
+      "width": 300,
+      "height": 270,
+      "centerHorizontally":  true,
+      "children": [
+        {
+          "id": "page1",
+          "type": "container",
+          "sizeToParent": true,
+          "children": [
+            {
+              "id": "new-game",
+              "type": "button",
+              "text": "New Game",
+              "style": "mm-button",
+              "width": 300
+            },
+            {
+              "id": "load-game",
+              "type": "button",
+              "text": "Load Game",
+              "style": "mm-button",
+              "y": 40,
+              "width": 300
+            },
+            {
+              "id": "tutorial",
+              "type": "button",
+              "text": "Tutorial",
+              "style": "mm-button",
+              "y": 80,
+              "width": 300
+            },
+            {
+              "id": "options",
+              "type": "button",
+              "text": "Options",
+              "style": "mm-button",
+              "y": 120,
+              "width": 300
+            },
+            {
+              "id": "quit-game",
+              "type": "button",
+              "text": "Quit Game",
+              "style": "mm-button",
+              "y": 160,
+              "width": 300
+            }
+          ]
+        },
+        {
+          "id": "page2",
+          "type": "container",
+          "sizeToParent": true,
+          "children": [
+            {
+              "id": "difficulty-normal",
+              "type": "button",
+              "text": "Normal",
+              "style": "mm-button",
+              "width": 300
+            },
+            {
+              "id": "difficulty-iron-man",
+              "type": "button",
+              "text": "Iron Man",
+              "style": "mm-button",
+              "y": 40,
+              "width": 300
+            },
+            {
+              "id": "difficulty-exit",
+              "type": "button",
+              "text": "Exit",
+              "style": "mm-button",
+              "y": 80,
+              "width": 300
+            }
+          ]
+        },
+        {
+          "id": "page3",
+          "type": "container"
+        },
+        {
+          "id": "page4",
+          "type": "container"
+        },
+        {
+          "id": "page5",
+          "type": "container"
+        }
+      ]
+    }
+  ]
+}
