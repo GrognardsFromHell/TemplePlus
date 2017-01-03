@@ -251,6 +251,10 @@ public:
 	const std::string &GetName() const override;
 
 	void SetSoundSchemeIds(int scheme1, int scheme2);
+
+	// Used when starting the game
+	void StopAll(bool flag);
+
 };
 
 class ItemSystem : public GameSystem, public BufferResettingGameSystem {

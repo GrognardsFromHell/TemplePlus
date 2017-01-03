@@ -6,8 +6,14 @@
 #include "ui_legacysystems.h"
 
 #include "anim.h"
+#include "critter.h"
+#include "party.h"
+#include "fade.h"
 
 #include "gamesystems/gamesystems.h"
+#include "gamesystems/mapsystem.h"
+#include "gamesystems/legacysystems.h"
+#include "gamesystems/objects/objsystem.h"
 
 #include "tig/tig_msg.h"
 #include "movies.h"
@@ -48,13 +54,7 @@ UiMM::UiMM(const UiSystemConf &config) {
 		uiSystems->GetLoadGame().Show(true);
 	});
 	widgetDoc.GetButton("tutorial")->SetClickHandler([this]() {
-		/*
-		ui_mm_launch_tutorial();
-		sub_10111AD0();
-		sub_10111240();
-		ui_mm_hide();
-		ui_party_refresh();
-		*/
+		LaunchTutorial();
 	});
 	widgetDoc.GetButton("options")->SetClickHandler([this]() {
 		Show(MainMenuPage::Options);
@@ -222,4 +222,76 @@ void UiMM::RepositionWidgets(int width, int height)
 {
 	// Attach the pages to the bottom of the screen
 	mPagesWidget->SetY(height - mPagesWidget->GetHeight());
+}
+
+void UiMM::LaunchTutorial()
+{
+	auto velkorProto = objSystem->GetProtoHandle(13105);
+	
+	auto velkor = objSystem->CreateObject(velkorProto, locXY{480, 40});
+	auto velkorObj = objSystem->GetObject(velkor);
+	velkorObj->SetInt32(obj_f_pc_voice_idx, 11);
+	critterSys.GenerateHp(velkor);
+	party.AddToPCGroup(velkor);
+
+	static auto spawn_velkor_equipment = temple::GetPointer<void(objHndl)>(0x1006d300);
+	spawn_velkor_equipment(velkor);
+	
+	auto anim = objects.GetAnimHandle(velkor);
+	objects.UpdateRenderHeight(velkor, *anim);
+	objects.UpdateRadius(velkor, *anim);
+	
+	SetupTutorialMap();
+	uiSystems->GetParty().UpdateAndShowMaybe();
+	Hide();
+	uiSystems->GetParty().Update();
+}
+
+// Was @ 10111AD0
+void UiMM::SetupTutorialMap()
+{	
+	static auto ui_tutorial_isactive = temple::GetPointer<int()>(0x10124a10);
+	static auto ui_tutorial_toggle = temple::GetPointer<int()>(0x101249e0);
+
+	if (!ui_tutorial_isactive()) {
+		ui_tutorial_toggle();
+	}
+
+	auto tutorialMap = gameSystems->GetMap().GetMapIdByType(MapType::TutorialMap);
+	TransitionToMap(tutorialMap);
+}
+
+void UiMM::TransitionToMap(int mapId)
+{
+	FadeArgs fadeArgs;
+	fadeArgs.field0 = 0;
+	fadeArgs.color = 0;
+	fadeArgs.field8 = 1;
+	fadeArgs.transitionTime = 0;
+	fadeArgs.field10 = 0;
+	fade.PerformFade(fadeArgs);
+	gameSystems->GetAnim().StartFidgetTimer();
+
+	FadeAndTeleportArgs fadeTp;
+	fadeTp.destLoc = gameSystems->GetMap().GetStartPos(mapId);
+	fadeTp.destMap = mapId;
+	fadeTp.flags = 4;
+	fadeTp.somehandle = party.GetLeader();
+
+	auto enterMovie = gameSystems->GetMap().GetEnterMovie(mapId, true);
+	if (enterMovie) {
+		fadeTp.flags |= 1;
+		fadeTp.field20 = 0;
+		fadeTp.movieId = enterMovie;
+	}
+	fadeTp.field48 = 1;
+	fadeTp.field4c = 0xFF000000;
+	fadeTp.field50 = 64;
+	fadeTp.somefloat2 = 3.0;
+	fadeTp.field58 = 0;
+	fade.FadeAndTeleport(fadeTp);
+
+	gameSystems->GetSoundGame().StopAll(false);
+	uiSystems->GetWMapRnd().StartRandomEncounterTimer();
+	gameSystems->GetAnim().PopDisableFidget();
 }

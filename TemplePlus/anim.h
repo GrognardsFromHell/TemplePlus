@@ -220,6 +220,8 @@ public:
 	void PushDisableFidget();
 	void PopDisableFidget();
 
+	void StartFidgetTimer();
+
 private:
 	/*
 		Set to true when ToEE cannot allocate an animation slot. This causes

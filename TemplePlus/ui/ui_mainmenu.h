@@ -69,4 +69,8 @@ private:
 	WidgetContainer *mPagesWidget;
 
 	void RepositionWidgets(int width, int height);
+
+	void LaunchTutorial();
+	void SetupTutorialMap();
+	void TransitionToMap(int mapId);
 };

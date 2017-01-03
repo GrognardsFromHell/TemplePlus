@@ -200,6 +200,8 @@ WidgetContainer::WidgetContainer(int width, int height)
 void WidgetContainer::Add(std::unique_ptr<WidgetBase> childWidget)
 {
 	childWidget->SetParent(this);
+	// If the child widget was a top-level window before, remove it
+	uiManager->RemoveWindow(childWidget->GetWidgetId());
 	uiManager->AddChild(mWindow->widgetId, childWidget->GetWidgetId());
 	mChildren.emplace_back(std::move(childWidget));
 }

@@ -1080,6 +1080,12 @@ void AnimSystem::PopDisableFidget()
 	call();
 }
 
+void AnimSystem::StartFidgetTimer()
+{
+	static auto queue_fidget_anim_event = temple::GetPointer<BOOL()>(0x100146c0);
+	queue_fidget_anim_event();
+}
+
 void AnimSystem::ProcessActionCallbacks() {
 	// changed to manual iteration because PerformOnAnimComplete can alter the vector
 	auto initSize = mActionCallbacks.size();

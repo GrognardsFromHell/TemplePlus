@@ -15,6 +15,8 @@
 #include "float_line.h"
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/particlesystems.h"
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
 
 temple::GlobalPrimitive<float, 0x102CF708> experienceMultiplier;
 temple::GlobalPrimitive<int, 0x10BCA850> numCrittersSlainByCR;
@@ -253,7 +255,7 @@ void XPTableForHighLevels::GiveXPAwards(){
 	*(xpPile.ptr()) = xpForxpPile;
 
 	if (bShouldUpdatePartyUI){
-		templeFuncs.UpdatePartyUI();
+		uiSystems->GetParty().Update();
 		sound.PlaySound(100001); // LEVEL_UP.WAV
 		sound.PlaySound(100001); // amp it up a bit
 	}

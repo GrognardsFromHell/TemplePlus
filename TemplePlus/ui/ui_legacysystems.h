@@ -94,6 +94,8 @@ public:
     bool SaveGame(TioFile *file) override;
     bool LoadGame(const UiSaveFile &saveGame) override;
     const std::string &GetName() const override;
+
+	void StartRandomEncounterTimer();
 };
 
 class UiCombat : public UiSystem {
@@ -398,6 +400,8 @@ public:
 		is being shown ingame (tavern) or from outside the game.
 	*/
 	void Show(bool ingame);
+
+	void Refresh();
 };
 
 class UiPccPortrait : public UiSystem {
@@ -456,9 +460,8 @@ public:
 		mHoveredObj = handle;
 	}
 
-	void Update() {
-
-	}
+	void Update();
+	void UpdateAndShowMaybe();
 
 private:
 	/**

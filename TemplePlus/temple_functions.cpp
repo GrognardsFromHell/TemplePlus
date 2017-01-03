@@ -36,10 +36,7 @@ TempleFuncs::TempleFuncs()
 {
 	rebase(StringHash, 0x101EBB00);
 	rebase(RNG, 0x10038DF0);
-	rebase(UpdatePartyUI, 0x10134CB0);
-
-
-
+	
 	rebase(ObjStatBaseDispatch, 0x1004E810);
 
 	

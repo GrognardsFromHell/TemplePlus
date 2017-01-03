@@ -225,6 +225,12 @@ const std::string &UiWMapRnd::GetName() const {
     return name;
 }
 
+void UiWMapRnd::StartRandomEncounterTimer()
+{
+	static auto ui_wmaprnd_start_timer = temple::GetPointer<void()>(0x101210d0);
+	ui_wmaprnd_start_timer();
+}
+
 //*****************************************************************************
 //* Combat-UI
 //*****************************************************************************
@@ -770,6 +776,12 @@ void UiPartyPool::Show(bool ingame)
 	ui_partypool_show(ingame ? TRUE : FALSE);
 }
 
+void UiPartyPool::Refresh()
+{
+	static auto ui_party_refresh = temple::GetPointer<void()>(0x10134cb0);
+	ui_party_refresh();
+}
+
 //*****************************************************************************
 //* pcc_portrait
 //*****************************************************************************
@@ -999,6 +1011,18 @@ void UiParty::Reset() {
 const std::string &UiParty::GetName() const {
     static std::string name("Party-UI");
     return name;
+}
+
+void UiParty::Update()
+{
+	static auto ui_party_refresh = temple::GetPointer<int()>(0x10134cb0);
+	ui_party_refresh();
+}
+
+void UiParty::UpdateAndShowMaybe()
+{
+	static auto ui_party_refresh2 = temple::GetPointer<int()>(0x10135000);
+	ui_party_refresh2();
 }
 
 //*****************************************************************************

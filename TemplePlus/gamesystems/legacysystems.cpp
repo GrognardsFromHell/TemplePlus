@@ -758,6 +758,12 @@ void SoundGameSystem::SetSoundSchemeIds(int scheme1, int scheme2)
 	soundscheme_set(scheme1, scheme2);
 }
 
+void SoundGameSystem::StopAll(bool flag)
+{
+	static auto soundgame_stop_all = temple::GetPointer<void(int a1)>(0x1003c5b0);
+	soundgame_stop_all(flag ? TRUE : FALSE);
+}
+
 //*****************************************************************************
 //* Item
 //*****************************************************************************
