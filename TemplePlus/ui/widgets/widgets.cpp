@@ -323,7 +323,7 @@ void WidgetButton::Render()
 
 void WidgetButton::SetText(const std::string & text)
 {
-	mLabel.SetText(text);
+	mLabel.SetText(uiAssets->ApplyTranslation(text));
 	UpdateAutoSize();
 }
 

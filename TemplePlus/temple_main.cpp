@@ -148,6 +148,7 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	}
 
 	UiManager uiManager;
+	UiAssets uiAssets;
 
 	WidgetTextStyles widgetTextStyles;
 	WidgetButtonStyles widgetButtonStyles;
@@ -171,7 +172,7 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	// Show the main menu
 	mouseFuncs.ShowCursor();
 	if (!config.editor) {
-		uiSystems.GetMM().ShowPage(0);
+		uiSystems.GetMM().Show(MainMenuPage::MainMenu);
 	} else {
 		startupRelevantFuncs.MapOpenInGame(5001, 0, 1);
 	}

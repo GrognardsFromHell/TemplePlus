@@ -169,6 +169,7 @@
     <ClCompile Include="python\python_importer.cpp" />
     <ClCompile Include="traps.cpp" />
     <ClCompile Include="tutorial.cpp" />
+    <ClCompile Include="ui\ui_mainmenu_wrapper.cpp" />
     <ClCompile Include="ui\widgets\widgets.cpp" />
     <ClCompile Include="ui\widgets\widget_content.cpp" />
     <ClCompile Include="ui\ui_alert.cpp" />

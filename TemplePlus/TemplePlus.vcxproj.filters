@@ -464,6 +464,7 @@
     <ClCompile Include="ui\widgets\widgets.cpp" />
     <ClCompile Include="ui\widgets\widget_styles.cpp" />
     <ClCompile Include="ui\widgets\widget_doc.cpp" />
+    <ClCompile Include="ui\ui_mainmenu_wrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />

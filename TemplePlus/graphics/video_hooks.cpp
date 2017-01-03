@@ -77,7 +77,6 @@ private:
 	static void GetSystemMemory(int* totalMem, int* availableMem);
 	static void TakeScreenshot(int);
 	static void UpdateProjMatrices(const TigMatrices& matrices);
-	static void TakeSaveScreenshots();
 } fix;
 
 void VideoFixes::apply() {
@@ -112,7 +111,6 @@ void VideoFixes::apply() {
 	MH_CreateHook(temple::GetPointer<0x101DBC80>(), AllocTextureMemory, nullptr);
 	MH_CreateHook(temple::GetPointer<0x101E0750>(), GetSystemMemory, nullptr);
 	MH_CreateHook(temple::GetPointer<0x101DBD80>(), TakeScreenshot, nullptr);
-	MH_CreateHook(temple::GetPointer<0x10002830>(), TakeSaveScreenshots, nullptr);
 
 	// tig_buffer_create
 	replaceFunction<int(void*, void**)>(0x101dce50, [](void* createargs, void** bufferout) {
@@ -272,13 +270,6 @@ void VideoFixes::UpdateProjMatrices(const TigMatrices& matrices) {
 	XMFLOAT4X4 diff;
 	XMStoreFloat4x4(&diff, XMLoadFloat4x4(&viewProjNew) - XMLoadFloat4x4(&viewProjOld));
 
-}
-
-// Take screenshots for the savegame
-void VideoFixes::TakeSaveScreenshots() {
-	auto& device = tig->GetRenderingDevice();
-	device.TakeScaledScreenshot("save\\temps.jpg", 64, 48);
-	device.TakeScaledScreenshot("save\\templ.jpg", 256, 192);
 }
 
 class LegacyResourceManager : public ResourceListener {

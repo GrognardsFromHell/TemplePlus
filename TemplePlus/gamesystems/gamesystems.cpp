@@ -304,6 +304,12 @@ TigBufferstuffInitializer::~TigBufferstuffInitializer() {
 	gameSystemInitTable.TigWindowBufferstuffFree(mBufferIdx);
 }
 
+void GameSystems::TakeSaveScreenshots() {
+	auto& device = mTig.GetRenderingDevice();
+	device.TakeScaledScreenshot("save\\temps.jpg", 64, 48);
+	device.TakeScaledScreenshot("save\\templ.jpg", 256, 192);
+}
+
 /*
 Checks that the TemplePlus data file has been loaded in some way.
 */
@@ -804,16 +810,18 @@ public:
 	void apply() override {
 		replaceFunction(0x10001DB0, Reset);
 		replaceFunction(0x10002510, IsResetting);
+		replaceFunction(0x10002830, TakeSaveScreenshots);
 	}
 
-	static void Reset();
-	static BOOL IsResetting();
+	static void Reset() {
+		gameSystems->ResetGame();
+	}
+
+	static BOOL IsResetting() {
+		return gameSystems->IsResetting() ? TRUE : FALSE;
+	}
+
+	static void TakeSaveScreenshots() {
+		gameSystems->TakeSaveScreenshots();
+	}
 } hooks;
-
-void GameSystemsHooks::Reset() {
-	gameSystems->ResetGame();
-}
-
-BOOL GameSystemsHooks::IsResetting() {
-	return gameSystems->IsResetting() ? TRUE : FALSE;
-}

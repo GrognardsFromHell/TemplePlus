@@ -34,6 +34,12 @@ public:
 	 */
 	bool IsUntargetable(objHndl obj);
 
+	/**
+	 * Seems to reset any input focus the ingame UI might have. Used
+	 * i.e. when dialog is initiated, etc.
+	 */
+	void ResetInput();
+
 private:
 	bool mPrevMsgWasInCombat = false;
 	bool mPartyMembersMoving = false;

@@ -32,6 +32,10 @@ public:
     ~UiLoadGame();
     void ResizeViewport(const UiResizeArgs &resizeArgs) override;
     const std::string &GetName() const override;
+
+	void Show(bool fromMainMenu);
+	void Hide();
+	void Hide2(); // This seems to be an internal one
 };
 
 class UiSaveGame : public UiSystem {
@@ -41,6 +45,10 @@ public:
     ~UiSaveGame();
     void ResizeViewport(const UiResizeArgs &resizeArgs) override;
     const std::string &GetName() const override;
+
+	void Show(bool fromMainMenu);
+	void Hide();
+	void Hide2(); // Pops back to main menu sometimes (?)
 };
 
 class UiInGameSelect : public UiSystem {
@@ -357,6 +365,7 @@ public:
 	void HideOpenedWindows(bool hideOptions);
 
 	void Hide();
+	void Show();
 };
 
 class UiTrack : public UiSystem {

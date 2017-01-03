@@ -483,6 +483,11 @@ public:
 		return mResetting;
 	}
 
+	/**
+	 * Creates the screenshots that will be used in case the game is saved.
+	 */
+	void TakeSaveScreenshots();
+
 private:
 	void VerifyTemplePlusData();
 	std::string GetLanguage();

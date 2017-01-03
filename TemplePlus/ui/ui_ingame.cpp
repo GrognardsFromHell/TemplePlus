@@ -263,3 +263,9 @@ bool UiInGame::IsUntargetable(objHndl obj)
 	return false;
 	
 }
+
+void UiInGame::ResetInput()
+{
+	static auto ui_intgame_reset_input = temple::GetPointer<void()>(0x10112f10);
+	ui_intgame_reset_input();
+}

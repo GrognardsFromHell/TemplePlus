@@ -4,6 +4,11 @@
 #include <cstdint>
 #include <obj.h>
 
+#include <infrastructure/mesparser.h>
+
+#include <EASTL/hash_map.h>
+#include <EASTL/string.h>
+
 struct ImgFile {
 	int tilesX;
 	int tilesY;
@@ -44,9 +49,18 @@ public:
 	*/
 	ImgFile* LoadImg(const char *filename);
 
+	/**
+	 * Replaces placeholders of the form #{main_menu:123} with the key 123 from the mes file registered
+	 * as main_menu.
+	 */
+	std::string ApplyTranslation(const std::string &text);
+
 	const char* GetTooltipString(int line) const;
 	const char* GetStatShortName(Stat stat) const;
 	const char* GetStatMesLine(int line) const;
+	
+private:
+	eastl::hash_map<eastl::string, MesFile::Content> mTranslationFiles;
 
 };
 

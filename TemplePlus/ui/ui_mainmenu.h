@@ -8,6 +8,9 @@
 
 struct UiSystemConf;
 
+/*
+	These are the structs used by the old system internally...
+
 #pragma pack(push, 1)
 struct MainMenuPageButton {
 	LgcyButton widget;
@@ -32,6 +35,16 @@ struct MainMenuPage {
 };
 using MainMenuPages = MainMenuPage[10];
 #pragma pack(pop)
+*/
+
+enum class MainMenuPage {
+	MainMenu,
+	Difficulty,
+	InGameNormal,
+	InGameIronman,
+	Options,
+	Cinematics
+};
 
 class UiMM : public UiSystem {
 public:
@@ -43,13 +56,16 @@ public:
 
 	bool IsVisible() const;
 
-	void ShowPage(int page);
+	void Show(MainMenuPage page);
+	void Hide();
 
 private:
-	MainMenuPages &mPages = temple::GetRef<MainMenuPages>(0x10BD4F40);
+	// MainMenuPages &mPages = temple::GetRef<MainMenuPages>(0x10BD4F40);
+
+	MainMenuPage mCurrentPage = MainMenuPage::MainMenu;
 
 	std::unique_ptr<WidgetContainer> mMainWidget;
-	std::vector<WidgetContainer*> mPageWidgets;
+	std::map<MainMenuPage, WidgetContainer*> mPageWidgets;
 	// The widget that contains all pages
 	WidgetContainer *mPagesWidget;
 

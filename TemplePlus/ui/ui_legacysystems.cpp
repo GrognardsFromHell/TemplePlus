@@ -51,6 +51,24 @@ const std::string &UiLoadGame::GetName() const {
     return name;
 }
 
+void UiLoadGame::Show(bool fromMainMenu)
+{
+	static auto ui_loadgame_show = temple::GetPointer<void(int fromMainMenu)>(0x101772e0);
+	ui_loadgame_show(fromMainMenu ? TRUE : FALSE);
+}
+
+void UiLoadGame::Hide()
+{
+	static auto ui_loadgame_hide = temple::GetPointer<int()>(0x101773a0);
+	ui_loadgame_hide();
+}
+
+void UiLoadGame::Hide2()
+{
+	static auto ui_loadgame_hide2 = temple::GetPointer<int()>(0x101774d0);
+	ui_loadgame_hide2();
+}
+
 //*****************************************************************************
 //* SaveGame
 //*****************************************************************************
@@ -72,6 +90,24 @@ void UiSaveGame::ResizeViewport(const UiResizeArgs& resizeArg) {
 const std::string &UiSaveGame::GetName() const {
     static std::string name("SaveGame");
     return name;
+}
+
+void UiSaveGame::Show(bool fromMainMenu)
+{
+	static auto ui_savegame_show = temple::GetPointer<void(int)>(0x10175980);
+	ui_savegame_show(fromMainMenu ? TRUE : FALSE);
+}
+
+void UiSaveGame::Hide()
+{
+	static auto ui_savegame_hide = temple::GetPointer<int()>(0x10175a40);
+	ui_savegame_hide();
+}
+
+void UiSaveGame::Hide2()
+{
+	static auto ui_savegame_hide2 = temple::GetPointer<int()>(0x10175ae0);
+	ui_savegame_hide2();
 }
 
 //*****************************************************************************
@@ -653,6 +689,12 @@ void UiUtilityBar::Hide()
 	hide();
 }
 
+void UiUtilityBar::Show()
+{
+	static auto ui_utility_bar_show = temple::GetPointer<void()>(0x1010ee80);
+	ui_utility_bar_show();
+}
+
 //*****************************************************************************
 //* Track-UI
 //*****************************************************************************
@@ -681,6 +723,11 @@ const std::string &UiTrack::GetName() const {
 //*****************************************************************************
 
 UiPartyPool::UiPartyPool(const UiSystemConf &config) {
+
+	// Fixes a bug in ui_partypool_init that previously only didn't cause issues because
+	// ui_mm did create widget #0, and that widget was always hidden
+	temple::GetRef<LgcyWidgetId>(0x10BF1BA4) = -1;
+
     auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x101675f0);
     if (!startup(&config)) {
         throw TempleException("Unable to initialize game system party_pool");

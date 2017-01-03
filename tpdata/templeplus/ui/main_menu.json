@@ -50,21 +50,21 @@
       "centerHorizontally":  true,
       "children": [
         {
-          "id": "page1",
+          "id": "page-main-menu",
           "type": "container",
           "sizeToParent": true,
           "children": [
             {
               "id": "new-game",
               "type": "button",
-              "text": "New Game",
+              "text": "#{main_menu:0}",
               "style": "mm-button",
               "width": 300
             },
             {
               "id": "load-game",
               "type": "button",
-              "text": "Load Game",
+              "text": "#{main_menu:1}",
               "style": "mm-button",
               "y": 40,
               "width": 300
@@ -72,7 +72,7 @@
             {
               "id": "tutorial",
               "type": "button",
-              "text": "Tutorial",
+              "text": "#{main_menu:2}",
               "style": "mm-button",
               "y": 80,
               "width": 300
@@ -80,7 +80,7 @@
             {
               "id": "options",
               "type": "button",
-              "text": "Options",
+              "text": "#{main_menu:3}",
               "style": "mm-button",
               "y": 120,
               "width": 300
@@ -88,7 +88,7 @@
             {
               "id": "quit-game",
               "type": "button",
-              "text": "Quit Game",
+              "text": "#{main_menu:4}",
               "style": "mm-button",
               "y": 160,
               "width": 300
@@ -96,21 +96,21 @@
           ]
         },
         {
-          "id": "page2",
+          "id": "page-difficulty",
           "type": "container",
           "sizeToParent": true,
           "children": [
             {
               "id": "difficulty-normal",
               "type": "button",
-              "text": "Normal",
+              "text": "#{main_menu:10}",
               "style": "mm-button",
               "width": 300
             },
             {
               "id": "difficulty-iron-man",
               "type": "button",
-              "text": "Iron Man",
+              "text": "#{main_menu:11}",
               "style": "mm-button",
               "y": 40,
               "width": 300
@@ -118,7 +118,7 @@
             {
               "id": "difficulty-exit",
               "type": "button",
-              "text": "Exit",
+              "text": "#{main_menu:12}",
               "style": "mm-button",
               "y": 80,
               "width": 300
@@ -126,15 +126,19 @@
           ]
         },
         {
-          "id": "page3",
+          "id": "page-ingame-normal",
           "type": "container"
         },
         {
-          "id": "page4",
+          "id": "page-ingame-ironman",
           "type": "container"
         },
         {
-          "id": "page5",
+          "id": "page-options",
+          "type": "container"
+        },
+        {
+          "id": "page-cinematics",
           "type": "container"
         }
       ]
