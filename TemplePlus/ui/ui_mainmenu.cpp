@@ -37,9 +37,8 @@ UiMM::UiMM(const UiSystemConf &config) {
 	mPageWidgets[MainMenuPage::InGameNormal] = widgetDoc.GetWindow("page-ingame-normal");
 	mPageWidgets[MainMenuPage::InGameIronman] = widgetDoc.GetWindow("page-ingame-ironman");
 	mPageWidgets[MainMenuPage::Options] = widgetDoc.GetWindow("page-options");
-	mPageWidgets[MainMenuPage::Cinematics] = widgetDoc.GetWindow("page-cinematics");
 
-	// Wire up buttons on page 1
+	// Wire up buttons on the main menu
 	widgetDoc.GetButton("new-game")->SetClickHandler([this]() {
 		Show(MainMenuPage::Difficulty);
 	});
@@ -64,6 +63,75 @@ UiMM::UiMM(const UiSystemConf &config) {
 		msg.type = TigMsgType::EXIT;
 		msg.arg1 = 0;
 		messageQueue->Enqueue(msg);
+	});
+
+	// Wire up buttons on the difficulty selection page
+	widgetDoc.GetButton("difficulty-normal")->SetClickHandler([this]() {
+		gameSystems->SetIronman(false);
+		Hide();
+		uiSystems->GetPcCreation().Start();
+	});
+	widgetDoc.GetButton("difficulty-ironman")->SetClickHandler([this]() {
+		gameSystems->SetIronman(true);
+		Hide();
+		uiSystems->GetPcCreation().Start();
+	});
+	widgetDoc.GetButton("difficulty-exit")->SetClickHandler([this]() {
+		Show(MainMenuPage::MainMenu);
+	});
+
+	// Wire up buttons on the ingame menu (normal difficulty)
+	widgetDoc.GetButton("ingame-normal-load")->SetClickHandler([this]() {
+		Hide();
+		uiSystems->GetLoadGame().Show(false);
+	});
+	widgetDoc.GetButton("ingame-normal-save")->SetClickHandler([this]() {
+		Hide();
+		uiSystems->GetSaveGame().Show(true);
+	});
+	widgetDoc.GetButton("ingame-normal-close")->SetClickHandler([this]() {
+		Hide();
+	});
+	widgetDoc.GetButton("ingame-normal-quit")->SetClickHandler([this]() {
+		Hide();
+		gameSystems->ResetGame();
+		uiSystems->Reset();
+		Show(MainMenuPage::MainMenu);
+	});
+
+	// Wire up buttons on the ingame menu (ironman difficulty)
+	widgetDoc.GetButton("ingame-ironman-close")->SetClickHandler([this]() {
+		Hide();
+	});
+	widgetDoc.GetButton("ingame-ironman-save-quit")->SetClickHandler([this]() {
+		if (gameSystems->SaveGameIronman()) {
+			gameSystems->ResetGame();
+			uiSystems->Reset();
+			Show(MainMenuPage::MainMenu);
+		}
+	});
+
+	// Wire up buttons on the ingame menu (ironman difficulty)
+	widgetDoc.GetButton("options-show")->SetClickHandler([this]() {
+		Hide();
+		uiSystems->GetOptions().Show(true);
+	});
+	widgetDoc.GetButton("options-view-cinematics")->SetClickHandler([this]() {
+		Hide();
+		uiSystems->GetUtilityBar().Hide();
+		//ui_mm_msg_ui4();
+	});
+	widgetDoc.GetButton("options-credits")->SetClickHandler([this]() {
+		/*v4 = 0;
+		do
+		{
+			Moviequeue_Add(dword_102F7368[v4]);
+			++v4;
+		} while (v4 < 5);
+		Moviequeue_Play();*/
+	});
+	widgetDoc.GetButton("options-back")->SetClickHandler([this]() {
+		Show(MainMenuPage::MainMenu);
 	});
 
 	RepositionWidgets(config.width, config.height);

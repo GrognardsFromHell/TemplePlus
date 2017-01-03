@@ -3,6 +3,8 @@
 
 #include <map>
 
+#include <temple/dll.h>
+
 #include "gamesystem.h"
 
 #ifdef GetObject
@@ -457,6 +459,8 @@ public:
 
 	// Makes a savegame.
 	bool SaveGame(const std::string &filename, const std::string &displayName);
+
+	bool SaveGameIronman();
 	
 	// Loads a game.
 	bool LoadGame(const std::string &filename);
@@ -488,7 +492,18 @@ public:
 	 */
 	void TakeSaveScreenshots();
 
+	bool IsIronman() const {
+		return mIronmanFlag != FALSE;
+	}
+	void SetIronman(bool enable) {
+		mIronmanFlag = enable ? TRUE : FALSE;
+	}
+
 private:
+	BOOL &mIronmanFlag = temple::GetRef<BOOL>(0x103072B8);
+	int& mIronmanSaveNumber = temple::GetRef<int>(0x10306F44);
+	char *&mIronmanSaveName = temple::GetRef<char*>(0x103072C0);
+
 	void VerifyTemplePlusData();
 	std::string GetLanguage();
 	void PlayLegalMovies();

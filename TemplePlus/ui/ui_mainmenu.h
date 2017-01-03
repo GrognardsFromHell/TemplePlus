@@ -42,8 +42,7 @@ enum class MainMenuPage {
 	Difficulty,
 	InGameNormal,
 	InGameIronman,
-	Options,
-	Cinematics
+	Options
 };
 
 class UiMM : public UiSystem {

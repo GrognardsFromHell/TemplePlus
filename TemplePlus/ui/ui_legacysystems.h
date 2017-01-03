@@ -140,6 +140,11 @@ public:
     ~UiPcCreation();
     void ResizeViewport(const UiResizeArgs &resizeArgs) override;
     const std::string &GetName() const override;
+
+	/**
+	 * Will immediately start a new game if the default party was set.
+	 */
+	void Start();
 };
 
 /**
@@ -514,6 +519,8 @@ public:
     ~UiOptions();
     void ResizeViewport(const UiResizeArgs &resizeArgs) override;
     const std::string &GetName() const override;
+
+	void Show(bool fromMainMenu);
 };
 
 #pragma pack(push, 1)

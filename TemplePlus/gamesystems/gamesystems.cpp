@@ -185,8 +185,8 @@ GameSystems::GameSystems(TigInitializer& tig) : mTig(tig) {
 
 	gameSystemInitTable.InitPfxLightning();
 
-	*gameSystemInitTable.ironmanFlag = false;
-	*gameSystemInitTable.ironmanSaveGame = 0;
+	mIronmanFlag = FALSE;
+	mIronmanSaveName = nullptr;
 
 }
 
@@ -530,11 +530,11 @@ void GameSystems::ResetGame() {
 		system->Reset();
 	}
 
-	*gameSystemInitTable.ironmanFlag = false;
-	if (*gameSystemInitTable.ironmanSaveGame) {
-		free(*gameSystemInitTable.ironmanSaveGame);
+	mIronmanFlag = FALSE;
+	if (mIronmanSaveName) {
+		free(mIronmanSaveName);
 	}
-	*gameSystemInitTable.ironmanSaveGame = nullptr;
+	mIronmanSaveName = nullptr;
 
 	mResetting = false;
 

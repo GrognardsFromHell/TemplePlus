@@ -336,6 +336,12 @@ const std::string &UiPcCreation::GetName() const {
     return name;
 }
 
+void UiPcCreation::Start()
+{
+	static auto ui_pc_creation_start = temple::GetPointer<int()>(0x1011fdc0);
+	ui_pc_creation_start();
+}
+
 //*****************************************************************************
 //* Char-UI
 //*****************************************************************************
@@ -1106,6 +1112,10 @@ void UiOptions::ResizeViewport(const UiResizeArgs& resizeArg) {
 const std::string &UiOptions::GetName() const {
 	static std::string name("Options-UI");
 	return name;
+}
+void UiOptions::Show(bool fromMainMenu) {
+	static auto ui_options_show = temple::GetPointer<void(int fromMainMenu)>(0x10119d20);
+	ui_options_show(fromMainMenu ? TRUE : FALSE);
 }
 
 //*****************************************************************************

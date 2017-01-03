@@ -108,7 +108,7 @@
               "width": 300
             },
             {
-              "id": "difficulty-iron-man",
+              "id": "difficulty-ironman",
               "type": "button",
               "text": "#{main_menu:11}",
               "style": "mm-button",
@@ -127,19 +127,101 @@
         },
         {
           "id": "page-ingame-normal",
-          "type": "container"
+          "type": "container",
+          "sizeToParent": true,
+          "children": [
+            {
+              "id": "ingame-normal-load",
+              "type": "button",
+              "text": "#{main_menu:20}",
+              "style": "mm-button",
+              "width": 300
+            },
+            {
+              "id": "ingame-normal-save",
+              "type": "button",
+              "text": "#{main_menu:21}",
+              "style": "mm-button",
+              "y": 40,
+              "width": 300
+            },
+            {
+              "id": "ingame-normal-close",
+              "type": "button",
+              "text": "#{main_menu:22}",
+              "style": "mm-button",
+              "y": 80,
+              "width": 300
+            },
+            {
+              "id": "ingame-normal-quit",
+              "type": "button",
+              "text": "#{main_menu:23}",
+              "style": "mm-button",
+              "y": 120,
+              "width": 300
+            }
+          ]
         },
         {
           "id": "page-ingame-ironman",
-          "type": "container"
+          "type": "container",
+          "sizeToParent": true,
+          "children": [
+            {
+              "id": "ingame-ironman-close",
+              "type": "button",
+              "text": "#{main_menu:30}",
+              "style": "mm-button",
+              "width": 300
+            },
+            {
+              "id": "ingame-ironman-save-quit",
+              "type": "button",
+              "text": "#{main_menu:31}",
+              "style": "mm-button",
+              "y": 40,
+              "width": 300
+            }
+          ]
         },
         {
           "id": "page-options",
-          "type": "container"
-        },
-        {
-          "id": "page-cinematics",
-          "type": "container"
+          "type": "container",
+          "sizeToParent": true,
+          "children": [
+            {
+              "id": "options-show",
+              "type": "button",
+              "text": "#{main_menu:40}",
+              "style": "mm-button",
+              "width": 300
+            },
+            {
+              "id": "options-view-cinematics",
+              "type": "button",
+              "text": "#{main_menu:41}",
+              "style": "mm-button",
+              "y": 40,
+              "width": 300
+            },
+            {
+              "id": "options-credits",
+              "type": "button",
+              "text": "#{main_menu:42}",
+              "style": "mm-button",
+              "y": 80,
+              "width": 300
+            },
+            {
+              "id": "options-back",
+              "type": "button",
+              "text": "#{main_menu:43}",
+              "style": "mm-button",
+              "y": 120,
+              "width": 300
+            }
+          ]
         }
       ]
     }
