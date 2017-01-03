@@ -10,6 +10,7 @@
 #include "gamesystems/gamesystems.h"
 
 #include "tig/tig_msg.h"
+#include "movies.h"
 #include "messages/messagequeue.h"
 
 #include "widgets/widget_content.h"
@@ -120,15 +121,17 @@ UiMM::UiMM(const UiSystemConf &config) {
 		Hide();
 		uiSystems->GetUtilityBar().Hide();
 		//ui_mm_msg_ui4();
-	});
+	});	
 	widgetDoc.GetButton("options-credits")->SetClickHandler([this]() {
-		/*v4 = 0;
-		do
-		{
-			Moviequeue_Add(dword_102F7368[v4]);
-			++v4;
-		} while (v4 < 5);
-		Moviequeue_Play();*/
+		Hide();
+
+		static std::vector<int> creditsMovies{ 100, 110, 111, 112, 113 };
+		for (auto movieId : creditsMovies) {
+			movieFuncs.MovieQueueAdd(movieId);
+		}		
+		movieFuncs.MovieQueuePlay();
+
+		Show(MainMenuPage::Options);
 	});
 	widgetDoc.GetButton("options-back")->SetClickHandler([this]() {
 		Show(MainMenuPage::MainMenu);
@@ -184,7 +187,7 @@ void UiMM::Show(MainMenuPage page)
 	uiSystems->GetUtilityBar().HideOpenedWindows(false);
 	uiSystems->GetChar().Hide();
 
-	mMainWidget->SetVisible(true);
+	mMainWidget->Show();
 	mMainWidget->BringToFront();
 
 	for (auto &entry : mPageWidgets) {

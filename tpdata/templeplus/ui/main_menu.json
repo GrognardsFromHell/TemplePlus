@@ -45,7 +45,7 @@
     {
       "id":  "pages",
       "type": "container",
-      "width": 300,
+      "width": 400,
       "height": 270,
       "centerHorizontally":  true,
       "children": [
@@ -59,7 +59,7 @@
               "type": "button",
               "text": "#{main_menu:0}",
               "style": "mm-button",
-              "width": 300
+              "width": 400
             },
             {
               "id": "load-game",
@@ -67,7 +67,7 @@
               "text": "#{main_menu:1}",
               "style": "mm-button",
               "y": 40,
-              "width": 300
+              "width": 400
             },
             {
               "id": "tutorial",
@@ -75,7 +75,7 @@
               "text": "#{main_menu:2}",
               "style": "mm-button",
               "y": 80,
-              "width": 300
+              "width": 400
             },
             {
               "id": "options",
@@ -83,7 +83,7 @@
               "text": "#{main_menu:3}",
               "style": "mm-button",
               "y": 120,
-              "width": 300
+              "width": 400
             },
             {
               "id": "quit-game",
@@ -91,7 +91,7 @@
               "text": "#{main_menu:4}",
               "style": "mm-button",
               "y": 160,
-              "width": 300
+              "width": 400
             }
           ]
         },
@@ -105,7 +105,7 @@
               "type": "button",
               "text": "#{main_menu:10}",
               "style": "mm-button",
-              "width": 300
+              "width": 400
             },
             {
               "id": "difficulty-ironman",
@@ -113,7 +113,7 @@
               "text": "#{main_menu:11}",
               "style": "mm-button",
               "y": 40,
-              "width": 300
+              "width": 400
             },
             {
               "id": "difficulty-exit",
@@ -121,7 +121,7 @@
               "text": "#{main_menu:12}",
               "style": "mm-button",
               "y": 80,
-              "width": 300
+              "width": 400
             }
           ]
         },
@@ -135,7 +135,7 @@
               "type": "button",
               "text": "#{main_menu:20}",
               "style": "mm-button",
-              "width": 300
+              "width": 400
             },
             {
               "id": "ingame-normal-save",
@@ -143,7 +143,7 @@
               "text": "#{main_menu:21}",
               "style": "mm-button",
               "y": 40,
-              "width": 300
+              "width": 400
             },
             {
               "id": "ingame-normal-close",
@@ -151,7 +151,7 @@
               "text": "#{main_menu:22}",
               "style": "mm-button",
               "y": 80,
-              "width": 300
+              "width": 400
             },
             {
               "id": "ingame-normal-quit",
@@ -159,7 +159,7 @@
               "text": "#{main_menu:23}",
               "style": "mm-button",
               "y": 120,
-              "width": 300
+              "width": 400
             }
           ]
         },
@@ -173,7 +173,7 @@
               "type": "button",
               "text": "#{main_menu:30}",
               "style": "mm-button",
-              "width": 300
+              "width": 400
             },
             {
               "id": "ingame-ironman-save-quit",
@@ -181,7 +181,7 @@
               "text": "#{main_menu:31}",
               "style": "mm-button",
               "y": 40,
-              "width": 300
+              "width": 400
             }
           ]
         },
@@ -195,7 +195,7 @@
               "type": "button",
               "text": "#{main_menu:40}",
               "style": "mm-button",
-              "width": 300
+              "width": 400
             },
             {
               "id": "options-view-cinematics",
@@ -203,7 +203,7 @@
               "text": "#{main_menu:41}",
               "style": "mm-button",
               "y": 40,
-              "width": 300
+              "width": 400
             },
             {
               "id": "options-credits",
@@ -211,7 +211,7 @@
               "text": "#{main_menu:42}",
               "style": "mm-button",
               "y": 80,
-              "width": 300
+              "width": 400
             },
             {
               "id": "options-back",
@@ -219,7 +219,7 @@
               "text": "#{main_menu:43}",
               "style": "mm-button",
               "y": 120,
-              "width": 300
+              "width": 400
             }
           ]
         }
