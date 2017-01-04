@@ -322,6 +322,20 @@ void MainWindow::UpdateMousePos(int xAbs, int yAbs, int wheelDelta) {
 
 int MainWindow::ToDirectInputKey(int vk) {
 
+	// Special case for keys that can be on the numpad
+	switch (vk) {
+	case VK_HOME:
+		return 0xC7; // DIK_HOME/* Home on arrow keypad */
+	case VK_END:
+		return 0xCF; // DIK_END/* End on arrow keypad */
+	case VK_PRIOR:
+		return 0xC9; // DIK_PRIOR/* PgUp on arrow keypad */
+	case VK_NEXT:
+		return 0xD1; // DIK_NEXT/* PgDn on arrow keypad */
+	default:
+		break;
+	}
+
 	// This seems to map using scan codes, which
 	// actually look like original US keyboard ones
 	auto mapped = MapVirtualKey(vk, MAPVK_VK_TO_VSC);

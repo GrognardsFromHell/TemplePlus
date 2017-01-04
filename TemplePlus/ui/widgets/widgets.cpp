@@ -137,6 +137,11 @@ void WidgetBase::Render()
 
 bool WidgetBase::HandleMessage(const TigMsg &msg)
 {
+	if (msg.type == TigMsgType::MOUSE && mMouseMsgHandler) {
+		return mMouseMsgHandler((const TigMouseMsg &)msg);
+	} else if (msg.type == TigMsgType::WIDGET && mWidgetMsgHandler) {
+		mWidgetMsgHandler((const TigMsgWidget&)msg);
+	}
 	return false;
 }
 

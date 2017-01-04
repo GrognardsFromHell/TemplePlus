@@ -4,6 +4,7 @@
 #include <EASTL/vector.h>
 #include <memory>
 #include "../ui.h"
+#include "tig/tig_msg.h"
 #include "widget_content.h"
 
 class WidgetContent;
@@ -109,6 +110,14 @@ public:
 
 	TigRect GetContentArea() const;
 
+	void SetMouseMsgHandler(std::function<bool(const TigMouseMsg &msg)> handler) {
+		mMouseMsgHandler = handler;
+	}
+
+	void SetWidgetMsgHandler(std::function<bool(const TigMsgWidget &msg)> handler) {
+		mWidgetMsgHandler = handler;
+	}
+
 protected:
 	LgcyWidget *mWidget = nullptr;
 	WidgetContainer *mParent = nullptr;
@@ -117,6 +126,8 @@ protected:
 	bool mCenterHorizontally = false;
 	bool mCenterVertically = false;
 	bool mSizeToParent = false;
+	std::function<bool(const TigMouseMsg &msg)> mMouseMsgHandler;
+	std::function<bool(const TigMsgWidget &msg)> mWidgetMsgHandler;
 
 	eastl::vector<std::unique_ptr<WidgetContent>> mContent;
 };

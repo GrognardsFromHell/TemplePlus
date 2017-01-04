@@ -34,6 +34,15 @@ UiMM::UiMM(const UiSystemConf &config) {
 	
 	WidgetDoc widgetDoc(WidgetDoc::Load("templeplus/ui/main_menu.json"));
 	mMainWidget = widgetDoc.TakeRootContainer();
+
+	// This eats all mouse messages that reach the full-screen main menu
+	mMainWidget->SetMouseMsgHandler([](auto msg) {
+		return true;
+	});
+	mMainWidget->SetWidgetMsgHandler([](auto msg) {
+		return true;
+	});
+
 	widgetDoc.GetButton("new-game")->SetClickHandler([] {
 		logger->info("Hello World!");
 	});
