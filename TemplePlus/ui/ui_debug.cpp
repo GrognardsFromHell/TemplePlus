@@ -117,6 +117,10 @@ static void DrawAdvWidgetTreeNode(WidgetBase *widget) {
 	}
 
 	ImGui::BulletText(" X:%d Y:%d W:%d H:%d", widget->GetX(), widget->GetY(), widget->GetWidth(), widget->GetHeight());
+	if (!widget->IsVisible()) {
+		ImGui::SameLine();
+		ImGui::TextColored({1, 0, 0, 1}, "[Hidden]");
+	}
 
 	if (widget->IsContainer()) {
 		auto window = (WidgetContainer*)widget;
