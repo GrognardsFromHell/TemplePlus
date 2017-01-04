@@ -8,6 +8,8 @@
 #include "gamesystems/objects/objsystem.h"
 #include "critter.h"
 
+#include "ui/ui_debug.h"
+
 Console::Console() : mLog(1024), mCommandHistory(100), mCommandBuf(1024, '\0') {
 }
 
@@ -16,6 +18,8 @@ Console::~Console() {
 
 void Console::Render()
 {
+	UIRenderDebug();
+
 	if (!mOpen) {
 		return;
 	}
@@ -277,6 +281,12 @@ void Console::RenderCheatsMenu()
 				ImGui::Text(cheatsInputDescr.c_str());
 			}
 
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Debug")) {
+			if (ImGui::MenuItem("UI System")) {
+				UIShowDebug();
+			}
 			ImGui::EndMenu();
 		}
 		ImGui::EndMenuBar();

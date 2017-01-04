@@ -465,6 +465,9 @@
     <ClCompile Include="ui\widgets\widget_styles.cpp" />
     <ClCompile Include="ui\widgets\widget_doc.cpp" />
     <ClCompile Include="ui\ui_mainmenu_wrapper.cpp" />
+    <ClCompile Include="ui\ui_debug.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -877,6 +880,9 @@
     <ClInclude Include="ui\widgets\widgets.h" />
     <ClInclude Include="ui\widgets\widget_styles.h" />
     <ClInclude Include="ui\widgets\widget_doc.h" />
+    <ClInclude Include="ui\ui_debug.h">
+      <Filter>ui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

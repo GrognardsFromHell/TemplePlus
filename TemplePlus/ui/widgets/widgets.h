@@ -107,6 +107,8 @@ public:
 		mSizeToParent = enable;
 	}
 
+	TigRect GetContentArea() const;
+
 protected:
 	LgcyWidget *mWidget = nullptr;
 	WidgetContainer *mParent = nullptr;
@@ -115,8 +117,6 @@ protected:
 	bool mCenterHorizontally = false;
 	bool mCenterVertically = false;
 	bool mSizeToParent = false;
-
-	TigRect GetContentArea() const;
 
 	eastl::vector<std::unique_ptr<WidgetContent>> mContent;
 };
@@ -131,6 +131,10 @@ public:
 
 	bool IsContainer() const override {
 		return true;
+	}
+
+	const eastl::vector<std::unique_ptr<WidgetBase>> &GetChildren() const {
+		return mChildren;
 	}
 
 private:

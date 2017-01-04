@@ -144,8 +144,6 @@ void GameLoop::Run() {
 		// Read user input and external system events (such as time)
 		messageQueue->PollExternalEvents();			
 		
-		tig->GetConsole().Render();
-
 		mGameSystems.AdvanceTime();
 
 		// This locks the cursor to our window if we are in the foreground and it's enabled
@@ -259,6 +257,8 @@ void GameLoop::RenderFrame() {
 	}
 	
 	ImGui::ShowTestWindow();
+
+	tig->GetConsole().Render();
 
 	// Render the Debug UI
 	tig->GetDebugUI().Render();
