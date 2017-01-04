@@ -140,7 +140,11 @@ bool WidgetBase::HandleMessage(const TigMsg &msg)
 	if (msg.type == TigMsgType::MOUSE && mMouseMsgHandler) {
 		return mMouseMsgHandler((const TigMouseMsg &)msg);
 	} else if (msg.type == TigMsgType::WIDGET && mWidgetMsgHandler) {
-		mWidgetMsgHandler((const TigMsgWidget&)msg);
+		return mWidgetMsgHandler((const TigMsgWidget&)msg);
+	} else if (msg.type == TigMsgType::KEYSTATECHANGE && mKeyStateChangeHandler) {
+		return mKeyStateChangeHandler((const TigKeyStateChangeMsg&)msg);
+	} else if (msg.type == TigMsgType::CHAR && mCharHandler) {
+		return mCharHandler((const TigCharMsg&)msg);
 	}
 	return false;
 }

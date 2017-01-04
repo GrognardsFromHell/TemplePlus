@@ -118,6 +118,14 @@ public:
 		mWidgetMsgHandler = handler;
 	}
 
+	void SetKeyStateChangeHandler(std::function<bool(const TigKeyStateChangeMsg &msg)> handler) {
+		mKeyStateChangeHandler = handler;
+	}
+
+	void SetCharHandler(std::function<bool(const TigCharMsg &msg)> handler) {
+		mCharHandler = handler;
+	}
+
 protected:
 	LgcyWidget *mWidget = nullptr;
 	WidgetContainer *mParent = nullptr;
@@ -128,6 +136,8 @@ protected:
 	bool mSizeToParent = false;
 	std::function<bool(const TigMouseMsg &msg)> mMouseMsgHandler;
 	std::function<bool(const TigMsgWidget &msg)> mWidgetMsgHandler;
+	std::function<bool(const TigKeyStateChangeMsg &msg)> mKeyStateChangeHandler;
+	std::function<bool(const TigCharMsg &msg)> mCharHandler;
 
 	eastl::vector<std::unique_ptr<WidgetContent>> mContent;
 };

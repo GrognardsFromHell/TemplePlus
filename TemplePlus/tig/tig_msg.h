@@ -71,6 +71,21 @@ struct TigMsgMouse : TigMsgBase // type 0
 	uint32_t buttonStateFlags; // button state flags for mouse events - see MouseStateFlags
 };
 
+struct TigKeyStateChangeMsg : TigMsgBase // type 5
+{
+	uint32_t key; // DINPUT KEY
+	BOOL down; // false = up, true = down
+	uint32_t _unused1;
+	uint32_t _unused2;
+};
+
+struct TigCharMsg : TigMsgBase // type 4
+{
+	uint32_t charCode; // VK_* constant
+	uint32_t _unused1;
+	uint32_t _unused2;
+	uint32_t _unused3;
+};
 
 enum class TigMsgWidgetEvent : uint32_t
 {

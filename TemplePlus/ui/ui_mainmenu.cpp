@@ -42,6 +42,15 @@ UiMM::UiMM(const UiSystemConf &config) {
 	mMainWidget->SetWidgetMsgHandler([](auto msg) {
 		return true;
 	});
+	mMainWidget->SetKeyStateChangeHandler([this](const TigKeyStateChangeMsg &msg) {
+		// Close the menu if it's the ingame menu
+		if (msg.key == 1 && !msg.down) {
+			if (mCurrentPage == MainMenuPage::InGameNormal || mCurrentPage == MainMenuPage::InGameIronman) {
+				Hide();
+			}
+		}
+		return true;
+	});
 
 	widgetDoc.GetButton("new-game")->SetClickHandler([] {
 		logger->info("Hello World!");
