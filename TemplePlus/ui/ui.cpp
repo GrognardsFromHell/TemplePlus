@@ -489,11 +489,11 @@ void UiManager::SetHidden(LgcyWidgetId id, bool hidden)
 		widget->flags &= (~1);
 	}
 
-	if (widget->IsWindow()) {
+	// Update the top-level window list
+	if (widget->IsWindow() && widget->parentId == -1) {
 		if (hidden) {
 			RemoveWindow(id);
-		}
-		else {
+		} else {
 			AddWindow(id);
 		}
 	}
@@ -570,6 +570,14 @@ void UiManager::Render()
 	auto activeWindows(mActiveWindows);
 
 	for (auto windowId : activeWindows) {
+
+		// Our new widget system handles rendering itself
+		auto advWidget = GetAdvancedWidget(windowId);
+		if (advWidget) {
+			advWidget->Render();
+			continue;
+		}
+
 		auto window = GetWindow(windowId);
 		if (window->IsHidden()) {
 			continue;

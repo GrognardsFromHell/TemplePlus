@@ -137,6 +137,8 @@ public:
 		return mChildren;
 	}
 
+	void Render() override;
+
 private:
 	LgcyWindow *mWindow;
 	eastl::vector<std::unique_ptr<WidgetBase>> mChildren;

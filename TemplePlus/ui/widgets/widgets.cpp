@@ -83,6 +83,10 @@ WidgetBase::~WidgetBase()
 
 void WidgetBase::Render()
 {
+	if (!IsVisible()) {
+		return;
+	}
+
 	if (mSizeToParent) {
 		int containerWidth = mParent ? mParent->GetWidth() : (int)tig->GetRenderingDevice().GetCamera().GetScreenWidth();
 		int containerHeight = mParent ? mParent->GetHeight() : (int)tig->GetRenderingDevice().GetCamera().GetScreenHeight();
@@ -224,6 +228,21 @@ WidgetBase * WidgetContainer::PickWidget(int x, int y)
 		}
 	}
 	return WidgetBase::PickWidget(x, y);
+}
+
+void WidgetContainer::Render()
+{
+	if (!IsVisible()) {
+		return;
+	}
+
+	WidgetBase::Render();
+
+	for (auto &child : mChildren) {
+		if (child->IsVisible()) {
+			child->Render();
+		}
+	}
 }
 
 WidgetButtonBase::WidgetButtonBase()
