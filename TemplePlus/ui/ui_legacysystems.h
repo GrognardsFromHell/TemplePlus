@@ -526,10 +526,76 @@ public:
 	void Show(bool fromMainMenu);
 };
 
+enum class InGameHotKey : uint32_t {
+	/*
+		Toggles the corresponding party member selection
+	*/
+	TogglePartySelection1 = 2,
+	TogglePartySelection2 = 3,
+	TogglePartySelection3 = 4,
+	TogglePartySelection4 = 5,
+	TogglePartySelection5 = 6,
+	TogglePartySelection6 = 7,
+	TogglePartySelection7 = 8,
+	TogglePartySelection8 = 9,
+	AssignGroup1 = 10,
+	AssignGroup2 = 11,
+	AssignGroup3 = 12,
+	AssignGroup4 = 13,
+	AssignGroup5 = 14,
+	AssignGroup6 = 15,
+	AssignGroup7 = 16,
+	AssignGroup8 = 17,
+	RecallGroup1 = 18,
+	RecallGroup2 = 19,
+	RecallGroup3 = 20,
+	RecallGroup4 = 21,
+	RecallGroup5 = 22,
+	RecallGroup6 = 23,
+	RecallGroup7 = 24,
+	RecallGroup8 = 25,
+	SelectAll = 26,
+	ToggleConsole = 27,
+	CenterOnChar = 28,
+	SelectChar1 = 29,
+	SelectChar2 = 30,
+	SelectChar3 = 31,
+	SelectChar4 = 32,
+	SelectChar5 = 33,
+	SelectChar6 = 34,
+	SelectChar7 = 35,
+	SelectChar8 = 36,
+	ToggleMainMenu = 37,
+	QuickLoad = 38,
+	QuickSave = 39,
+	Quit = 40,
+	Screenshot = 41, // Handled elsewhere, but swallowed
+	ScrollUp = 42, // Handled elsewhere
+	ScrollDown = 43, // Handled elsewhere
+	ScrollLeft = 44, // Handled elsewhere
+	ScrollRight = 45, // Handled elsewhere
+	ScrollUpArrow = 46, // Handled elsewhere
+	ScrollDownArrow = 47, // Handled elsewhere
+	ScrollLeftArrow = 48, // Handled elsewhere
+	ScrollRightArrow = 49, // Handled elsewhere
+	ObjectHighlight = 50, // Handled elsewhere (but swallowed)
+	ShowInventory = 51,
+	ShowLogbook = 52,
+	ShowMap = 53,
+	ShowFormation = 54,
+	Rest = 55,
+	ShowHelp = 56,
+	ShowOptions = 57,
+	ToggleCombat = 58,
+	EndTurn = 59,
+	EndTurnNonParty = 60,
+	None = 62
+};
+
 #pragma pack(push, 1)
 struct InGameKeyEvent {
 	const TigMsg &msg;
-	uint32_t eventName = 62;
+	InGameHotKey eventName = InGameHotKey::None;
 	uint32_t field8;
 	uint32_t field10;
 	uint32_t field14;
@@ -538,11 +604,11 @@ struct InGameKeyEvent {
 };
 #pragma pack(pop)
 
-class UiManagerSystem : public UiSystem {
+class UiKeyManager : public UiSystem {
 public:
     static constexpr auto Name = "UI-Manager";
-	UiManagerSystem(const UiSystemConf &config);
-    ~UiManagerSystem();
+	UiKeyManager(const UiSystemConf &config);
+    ~UiKeyManager();
     void Reset() override;
     const std::string &GetName() const override;
 

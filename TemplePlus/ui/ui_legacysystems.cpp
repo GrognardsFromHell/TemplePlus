@@ -1146,26 +1146,132 @@ void UiOptions::Show(bool fromMainMenu) {
 //* UI-Manager
 //*****************************************************************************
 
-UiManagerSystem::UiManagerSystem(const UiSystemConf &config) {
+#pragma pack(push, 1)
+struct LgcyHotKeySpec {
+	int field0;
+	int field4;
+	int kbModifier;
+	int hotKeyId;
+	int field10;
+	int tigArg1;
+	int tigArg2;
+	int tigArg1_2;
+	int tigArg2_2;
+};
+#pragma pack(pop)
+using DfltHotKeySpecs = LgcyHotKeySpec[62];
+
+enum class HotKeyModifier {
+	None,
+	Ctrl, // DIK_LCONTROL
+	Shift, // DIK_LSHIFT
+	Alt // DIK_LMENU
+};
+
+struct HotKeySpec {
+	bool unkBool;
+	bool unkBool2;
+	HotKeyModifier modifier;
+	InGameHotKey eventCode;
+	int primaryKeyCode = 0;
+	bool primaryOnDown = false;
+	int secondaryKeyCode = 0;
+	bool secondaryOnDown = false;
+
+
+	HotKeySpec(bool unkBool1, bool unkBool2, HotKeyModifier modifier, InGameHotKey eventCode, int keyCode, bool onDown) {}
+	HotKeySpec(bool unkBool1, bool unkBool2, HotKeyModifier modifier, InGameHotKey eventCode, int keyCode, bool onDown, int altKeyCode, bool altOnDown) {}
+};
+
+static std::vector<HotKeySpec> sDefaultHotKeys{
+	HotKeySpec{true,  false, HotKeyModifier::Shift, InGameHotKey::TogglePartySelection1, 0x2, 0}, // DIK_1
+	HotKeySpec{true,  false, HotKeyModifier::Shift, InGameHotKey::TogglePartySelection2, 0x3, 0}, // DIK_2
+	HotKeySpec{true,  false, HotKeyModifier::Shift, InGameHotKey::TogglePartySelection3, 0x4, 0}, // DIK_3
+	HotKeySpec{true,  false, HotKeyModifier::Shift, InGameHotKey::TogglePartySelection4, 0x5, 0}, // DIK_4
+	HotKeySpec{true,  false, HotKeyModifier::Shift, InGameHotKey::TogglePartySelection5, 0x6, 0}, // DIK_5
+	HotKeySpec{true,  false, HotKeyModifier::Shift, InGameHotKey::TogglePartySelection6, 0x7, 0}, // DIK_6
+	HotKeySpec{true,  false, HotKeyModifier::Shift, InGameHotKey::TogglePartySelection7, 0x8, 0}, // DIK_7
+	HotKeySpec{true,  false, HotKeyModifier::Shift, InGameHotKey::TogglePartySelection8, 0x9, 0}, // DIK_8
+	HotKeySpec{true,  false, HotKeyModifier::Ctrl, InGameHotKey::AssignGroup1, 0x3b, 0}, // DIK_F1
+	HotKeySpec{true,  false, HotKeyModifier::Ctrl, InGameHotKey::AssignGroup2, 0x3c, 0}, // DIK_F2
+	HotKeySpec{true,  false, HotKeyModifier::Ctrl, InGameHotKey::AssignGroup3, 0x3d, 0}, // DIK_F3
+	HotKeySpec{true,  false, HotKeyModifier::Ctrl, InGameHotKey::AssignGroup4, 0x3e, 0}, // DIK_F4
+	HotKeySpec{true,  false, HotKeyModifier::Ctrl, InGameHotKey::AssignGroup5, 0x3f, 0}, // DIK_F5
+	HotKeySpec{true,  false, HotKeyModifier::Ctrl, InGameHotKey::AssignGroup6, 0x40, 0}, // DIK_F6
+	HotKeySpec{true,  false, HotKeyModifier::Ctrl, InGameHotKey::AssignGroup7, 0x41, 0}, // DIK_F7
+	HotKeySpec{true,  false, HotKeyModifier::Ctrl, InGameHotKey::AssignGroup8, 0x42, 0}, // DIK_F8
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::RecallGroup1, 0x3b, 0}, // DIK_F1
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::RecallGroup2, 0x3c, 0}, // DIK_F2
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::RecallGroup3, 0x3d, 0}, // DIK_F3
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::RecallGroup4, 0x3e, 0}, // DIK_F4
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::RecallGroup5, 0x3f, 0}, // DIK_F5
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::RecallGroup6, 0x40, 0}, // DIK_F6
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::RecallGroup7, 0x41, 0}, // DIK_F7
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::RecallGroup8, 0x42, 0}, // DIK_F8
+	HotKeySpec{false, false, HotKeyModifier::None, InGameHotKey::SelectAll, 0x29, 0}, // DIK_GRAVE
+	HotKeySpec{false, false, HotKeyModifier::Shift, InGameHotKey::ToggleConsole, 0x29, 0}, // Shift + DIK_GRAVE
+	HotKeySpec{false, false, HotKeyModifier::None, InGameHotKey::CenterOnChar, 0xc7, 0}, // DIK_HOME
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::SelectChar1, 0x2, 0}, // DIK_1
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::SelectChar2, 0x3, 0}, // DIK_2
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::SelectChar3, 0x4, 0}, // DIK_3
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::SelectChar4, 0x5, 0}, // DIK_4
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::SelectChar5, 0x6, 0}, // DIK_5
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::SelectChar6, 0x7, 0}, // DIK_6
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::SelectChar7, 0x8, 0}, // DIK_7
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::SelectChar8, 0x9, 0}, // DIK_8
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::ToggleMainMenu, 0x1, 0}, // DIK_ESCAPE
+	HotKeySpec{false, false, HotKeyModifier::None, InGameHotKey::QuickLoad, 0x43, 0}, // DIK_F9
+	HotKeySpec{false, false, HotKeyModifier::None, InGameHotKey::QuickSave, 0x58, 0, 0x57, 0}, // DIK_F12 or DIK_F11
+	HotKeySpec{false, false, HotKeyModifier::Alt, InGameHotKey::Quit, 0x10, 0}, // DIK_Q
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::Screenshot, 0xb7, 0}, // DIK_SYSRQ (print screen)
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::ScrollUp, 0xc8, 1}, // DIK_UP
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::ScrollDown, 0xd0, 1}, // DIK_DOWN
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::ScrollLeft, 0xcb, 1}, // DIK_LEFT
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::ScrollRight, 0xcd, 1}, // DIK_RIGHT
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::ScrollUpArrow, 0xc8, 1}, // DIK_UP
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::ScrollDownArrow, 0xd0, 1}, // DIK_DOWN
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::ScrollLeftArrow, 0xcb, 1}, // DIK_LEFT
+	HotKeySpec{true,  false, HotKeyModifier::None, InGameHotKey::ScrollRightArrow, 0xcd, 1}, // DIK_RIGHT
+	HotKeySpec{true,  false, HotKeyModifier::Alt, InGameHotKey::ObjectHighlight, 0xf, 1}, // alt + DIK_TAB
+	HotKeySpec{false, false, HotKeyModifier::None, InGameHotKey::ShowInventory, 0x17, 0}, // DIK_I
+	HotKeySpec{false, false, HotKeyModifier::None, InGameHotKey::ShowLogbook, 0x26, 0}, // DIK_L
+	HotKeySpec{false, false, HotKeyModifier::None, InGameHotKey::ShowMap, 0x32, 0}, // DIK_M
+	HotKeySpec{false, false, HotKeyModifier::None, InGameHotKey::ShowFormation, 0x21, 0}, // DIK_F
+	HotKeySpec{false, false, HotKeyModifier::None, InGameHotKey::Rest, 0x13, 0}, // DIK_R
+	HotKeySpec{false, false, HotKeyModifier::None, InGameHotKey::ShowHelp, 0x23, 0}, // DIK_H
+	HotKeySpec{false, false, HotKeyModifier::None, InGameHotKey::ShowOptions, 0x18, 0}, // DIK_O
+	HotKeySpec{false, false, HotKeyModifier::None, InGameHotKey::ToggleCombat, 0x2e, 0}, // DIK_C
+	HotKeySpec{false, false, HotKeyModifier::None, InGameHotKey::EndTurn, 0x39, 0, 0x1c, 0}, // DIK_SPACE or DIK_RETURN
+	HotKeySpec{true,  true,  HotKeyModifier::Shift, InGameHotKey::EndTurnNonParty, 0x1c, 0}, // shift + DIK_RETURN
+};
+
+UiKeyManager::UiKeyManager(const UiSystemConf &config) {
     auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10143bd0);
     if (!startup(&config)) {
         throw TempleException("Unable to initialize game system UI-Manager");
     }
+
+	auto fh = fopen("specs.txt", "wt");
+	auto &arr = temple::GetRef<DfltHotKeySpecs>(0x102F9C88);
+	for (auto &spec : arr) {
+		fprintf(fh, "HotKeySpec{%d, %d, %d, %d, %d, 0x%x, %d, 0x%x, %d},\n", spec.field0, spec.field4, spec.kbModifier, spec.hotKeyId, spec.field10, spec.tigArg1, spec.tigArg2, spec.tigArg1_2, spec.tigArg2_2);
+	}
+	fclose(fh);
 }
-UiManagerSystem::~UiManagerSystem() {
+UiKeyManager::~UiKeyManager() {
     auto shutdown = temple::GetPointer<void()>(0x101431a0);
     shutdown();
 }
-void UiManagerSystem::Reset() {
+void UiKeyManager::Reset() {
     auto reset = temple::GetPointer<void()>(0x10143190);
     reset();
 }
-const std::string &UiManagerSystem::GetName() const {
+const std::string &UiKeyManager::GetName() const {
     static std::string name("UI-Manager");
     return name;
 }
 
-bool UiManagerSystem::HandleKeyEvent(const InGameKeyEvent & msg)
+bool UiKeyManager::HandleKeyEvent(const InGameKeyEvent & msg)
 {
 	static auto UiManagerKeyEventHandler = temple::GetPointer<BOOL(const InGameKeyEvent &kbMsg)>(0x10143d60);
 	return UiManagerKeyEventHandler(msg) != 0;
