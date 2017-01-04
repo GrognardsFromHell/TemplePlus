@@ -1250,13 +1250,6 @@ UiKeyManager::UiKeyManager(const UiSystemConf &config) {
     if (!startup(&config)) {
         throw TempleException("Unable to initialize game system UI-Manager");
     }
-
-	auto fh = fopen("specs.txt", "wt");
-	auto &arr = temple::GetRef<DfltHotKeySpecs>(0x102F9C88);
-	for (auto &spec : arr) {
-		fprintf(fh, "HotKeySpec{%d, %d, %d, %d, %d, 0x%x, %d, 0x%x, %d},\n", spec.field0, spec.field4, spec.kbModifier, spec.hotKeyId, spec.field10, spec.tigArg1, spec.tigArg2, spec.tigArg1_2, spec.tigArg2_2);
-	}
-	fclose(fh);
 }
 UiKeyManager::~UiKeyManager() {
     auto shutdown = temple::GetPointer<void()>(0x101431a0);
