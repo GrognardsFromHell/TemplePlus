@@ -25,6 +25,7 @@
   "__buttonStyles": [
     {
       "id": "mm-button",
+      "inherit": "default-sounds",
       "textStyle": "mm-button-text",
       "hoverTextStyle": "mm-button-hover-text",
       "pressedTextStyle": "mm-button-pressed-text"

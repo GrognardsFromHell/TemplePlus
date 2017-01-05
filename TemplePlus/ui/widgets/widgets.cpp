@@ -127,8 +127,27 @@ void WidgetBase::Render()
 	}
 	
 	for (auto &content : mContent) {
-		if (content->GetContentArea() != contentArea) {
-			content->SetContentArea(contentArea);
+		TigRect specificContentArea = contentArea;
+		// Shift according to the content item positioning
+		if (content->GetX() != 0) {
+			specificContentArea.x += content->GetX();
+			specificContentArea.width -= content->GetX();
+		}
+		if (content->GetY() != 0) {
+			specificContentArea.y += content->GetY();
+			specificContentArea.height -= content->GetY();
+		}
+
+		// Constraint width if necessary
+		if (content->GetFixedWidth() != 0 && content->GetFixedWidth() < specificContentArea.width) {
+			specificContentArea.width = content->GetFixedWidth();
+		}
+		if (content->GetFixedHeight() != 0 && content->GetFixedHeight() < specificContentArea.height) {
+			specificContentArea.height = content->GetFixedHeight();
+		}
+
+		if (content->GetContentArea() != specificContentArea) {
+			content->SetContentArea(specificContentArea);
 		}
 		
 		content->Render();
@@ -286,6 +305,16 @@ WidgetButton::WidgetButton()
 {
 }
 
+void WidgetButton::SetStyle(const WidgetButtonStyle & style)
+{
+	mStyle = style;
+	mButton->sndHoverOn = style.soundEnter;
+	mButton->sndHoverOff = style.soundLeave;
+	mButton->sndDown = style.soundDown;
+	mButton->sndClick = style.soundClick;
+	UpdateContent();
+}
+
 void WidgetButton::Render()
 {
 	auto contentArea = GetContentArea();
@@ -353,7 +382,7 @@ void WidgetButton::Render()
 
 void WidgetButton::SetText(const std::string & text)
 {
-	mLabel.SetText(uiAssets->ApplyTranslation(text));
+	mLabel.SetText(text);
 	UpdateAutoSize();
 }
 

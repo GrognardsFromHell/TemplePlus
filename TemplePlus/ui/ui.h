@@ -147,8 +147,8 @@ struct LgcyButton : public LgcyWidget {
 	int fieldA8;
 	int sndDown;
 	int sndClick;
-	int hoverOn;
-	int hoverOff;
+	int sndHoverOn;
+	int sndHoverOff;
 	LgcyButton();
 	LgcyButton(char* ButtonName, int ParentId, int X, int Y, int Width, int Height);
 	LgcyButton(char* ButtonName, int ParentId, TigRect& rect);

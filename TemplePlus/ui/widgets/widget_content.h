@@ -28,10 +28,41 @@ public:
 		return mPreferredSize;
 	}
 
+
+	void SetX(int x) {
+		mX = x;
+	}
+	int GetX() const {
+		return mX;
+	}
+	void SetY(int y) {
+		mY = y;
+	}
+	int GetY() const {
+		return mY;
+	}
+	void SetFixedWidth(int width) {
+		mFixedWidth = width;
+	}
+	int GetFixedWidth() const {
+		return mFixedWidth;
+	}
+	void SetFixedHeight(int height) {
+		mFixedHeight = height;
+	}
+	int GetFixedHeight() const {
+		return mFixedHeight;
+	}
+
 protected:
 	TigRect mContentArea;
 	gfx::Size mPreferredSize;
 	bool mDirty = true;
+
+	int mFixedWidth = 0;
+	int mFixedHeight = 0;
+	int mX = 0;
+	int mY = 0;
 };
 
 class WidgetImage : public WidgetContent {

@@ -88,7 +88,7 @@ WidgetText::WidgetText(const std::string & text, const std::string &styleId)
 void WidgetText::SetText(const std::string & text)
 {
 	// TODO: Process mes file placeholders
-	mText.text = local_to_ucs2(text);
+	mText.text = local_to_ucs2(uiAssets->ApplyTranslation(text));
 	UpdateBounds();
 }
 

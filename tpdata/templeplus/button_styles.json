@@ -1,0 +1,28 @@
+[
+	{
+		"__comment": "The default sounds that are used by most buttons that have audible feedback",
+		"id": "default-sounds",
+		"soundEnter": 3010,
+		"soundLeave": 3011,
+		"soundDown": 3012,
+		"soundClick": 3013 
+	},
+	{
+      "id": "accept-button",
+	  "inherit": "default-sounds",
+      "textStyle": "default-button-text",
+      "normalImage": "art/interface/generic/Accept_Hover.tga",
+      "hoverImage": "art/interface/generic/Accept_Normal.tga",
+      "pressedImage": "art/interface/generic/Accept_Pressed.tga",
+      "disabledImage": "art/interface/generic/Disabled_Normal.tga"
+    },
+    {
+      "id": "cancel-button",
+	  "inherit": "default-sounds",
+      "textStyle": "default-button-text",
+      "normalImage": "art/interface/generic/Decline_Hover.tga",
+      "hoverImage": "art/interface/generic/Decline_Normal.tga",
+      "pressedImage": "art/interface/generic/Decline_Pressed.tga",
+      "disabledImage": "art/interface/generic/Disabled_Normal.tga"
+    }
+]

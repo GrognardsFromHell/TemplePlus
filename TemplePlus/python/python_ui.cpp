@@ -59,8 +59,8 @@ PYBIND11_PLUGIN(tp_ui) {
 		.def_readwrite("state", &LgcyButton::buttonState, "0 - normal, 1 - hovered, 2 - down, 3 - released, 4 - disabled")
 		.def_readwrite("sound_down", &LgcyButton::sndDown)
 		.def_readwrite("sound_click", &LgcyButton::sndClick)
-		.def_readwrite("sound_hover_on", &LgcyButton::hoverOn)
-		.def_readwrite("sound_hover_off", &LgcyButton::hoverOff)
+		.def_readwrite("sound_hover_on", &LgcyButton::sndHoverOn)
+		.def_readwrite("sound_hover_off", &LgcyButton::sndHoverOff)
 		.def("Register", [](LgcyButton &button, int* widIdOut) {
 			*widIdOut = uiManager->AddButton(button);
 		})

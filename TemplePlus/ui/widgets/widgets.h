@@ -201,6 +201,10 @@ struct WidgetButtonStyle {
 	std::string hoverTextStyleId;
 	std::string pressedTextStyleId;
 	std::string disabledTextStyleId;
+	int soundEnter = -1;
+	int soundLeave = -1;
+	int soundDown = -1;
+	int soundClick = -1;
 };
 
 class WidgetButton : public WidgetButtonBase {
@@ -208,11 +212,7 @@ public:
 
 	WidgetButton();
 
-	void SetStyle(const WidgetButtonStyle &style) 
-	{
-		mStyle = style;
-		UpdateContent();
-	}
+	void SetStyle(const WidgetButtonStyle &style);
 	const WidgetButtonStyle &GetStyle() 
 	{
 		return mStyle;

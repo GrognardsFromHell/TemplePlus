@@ -236,6 +236,7 @@ WidgetButtonStyles::WidgetButtonStyles()
 {
 	Expects(!widgetButtonStyles);
 	widgetButtonStyles = this;
+	LoadStylesFile("templeplus/button_styles.json");
 }
 
 WidgetButtonStyles::~WidgetButtonStyles()
@@ -284,7 +285,17 @@ void WidgetButtonStyles::LoadStyles(const json11::Json & jsonStyleArray)
 			throw TempleException("Found button style without id!");
 		}
 
+		// Process the inherit attribute (what is the base style)
+		auto inherit = style["inherit"];
 		WidgetButtonStyle buttonStyle;
+		if (inherit.is_string()) {
+			auto inheritId = inherit.string_value();
+			if (!HasStyle(eastl::string(inheritId.c_str()))) {
+				logger->warn("Style {} inherits from unknown style {}", id, inheritId);
+			}
+			buttonStyle = GetStyle(inheritId.c_str());
+		}
+
 		buttonStyle.textStyleId = style["textStyle"].string_value();
 		buttonStyle.hoverTextStyleId = style["hoverTextStyle"].string_value();
 		buttonStyle.pressedTextStyleId = style["pressedTextStyle"].string_value();
@@ -293,6 +304,18 @@ void WidgetButtonStyles::LoadStyles(const json11::Json & jsonStyleArray)
 		buttonStyle.normalImagePath = style["normalImage"].string_value();
 		buttonStyle.hoverImagePath = style["hoverImage"].string_value();
 		buttonStyle.pressedImagePath = style["pressedImage"].string_value();
+		if (style["soundEnter"].is_number()) {
+			buttonStyle.soundEnter = (int) style["soundEnter"].number_value();
+		}
+		if (style["soundLeave"].is_number()) {
+			buttonStyle.soundLeave = (int)style["soundLeave"].number_value();
+		}
+		if (style["soundDown"].is_number()) {
+			buttonStyle.soundDown = (int)style["soundDown"].number_value();
+		}
+		if (style["soundClick"].is_number()) {
+			buttonStyle.soundClick = (int)style["soundClick"].number_value();
+		}
 
 		if (mStyles.find(id) != mStyles.end()) {
 			throw TempleException("Duplicate button style: {}", id);

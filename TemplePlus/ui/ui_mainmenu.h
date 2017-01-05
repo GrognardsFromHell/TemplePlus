@@ -45,6 +45,8 @@ enum class MainMenuPage {
 	Options
 };
 
+class ViewCinematicsDialog;
+
 class UiMM : public UiSystem {
 public:
 	static constexpr auto Name = "MM-UI";
@@ -62,6 +64,8 @@ private:
 	// MainMenuPages &mPages = temple::GetRef<MainMenuPages>(0x10BD4F40);
 
 	MainMenuPage mCurrentPage = MainMenuPage::MainMenu;
+
+	std::unique_ptr<ViewCinematicsDialog> mViewCinematicsDialog;
 
 	std::unique_ptr<WidgetContainer> mMainWidget;
 	std::map<MainMenuPage, WidgetContainer*> mPageWidgets;

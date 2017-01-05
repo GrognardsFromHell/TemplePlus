@@ -1178,7 +1178,6 @@ struct HotKeySpec {
 	int secondaryKeyCode = 0;
 	bool secondaryOnDown = false;
 
-
 	HotKeySpec(bool unkBool1, bool unkBool2, HotKeyModifier modifier, InGameHotKey eventCode, int keyCode, bool onDown) {}
 	HotKeySpec(bool unkBool1, bool unkBool2, HotKeyModifier modifier, InGameHotKey eventCode, int keyCode, bool onDown, int altKeyCode, bool altOnDown) {}
 };

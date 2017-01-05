@@ -22,6 +22,16 @@
 #include "widgets/widget_content.h"
 #include "widgets/widget_doc.h"
 
+class ViewCinematicsDialog {
+public:
+	ViewCinematicsDialog();
+
+	void Show();
+
+private:
+	std::unique_ptr<WidgetContainer> mWidget;
+};
+
 //*****************************************************************************
 //* MM-UI
 //*****************************************************************************
@@ -34,6 +44,8 @@ UiMM::UiMM(const UiSystemConf &config) {
 	
 	WidgetDoc widgetDoc(WidgetDoc::Load("templeplus/ui/main_menu.json"));
 	mMainWidget = widgetDoc.TakeRootContainer();
+
+	mViewCinematicsDialog = std::make_unique<ViewCinematicsDialog>();
 
 	// This eats all mouse messages that reach the full-screen main menu
 	mMainWidget->SetMouseMsgHandler([](auto msg) {
@@ -52,9 +64,6 @@ UiMM::UiMM(const UiSystemConf &config) {
 		return true;
 	});
 
-	widgetDoc.GetButton("new-game")->SetClickHandler([] {
-		logger->info("Hello World!");
-	});
 	mPagesWidget = widgetDoc.GetWindow("pages");
 
 	mPageWidgets[MainMenuPage::MainMenu] = widgetDoc.GetWindow("page-main-menu");
@@ -138,7 +147,8 @@ UiMM::UiMM(const UiSystemConf &config) {
 	widgetDoc.GetButton("options-view-cinematics")->SetClickHandler([this]() {
 		Hide();
 		uiSystems->GetUtilityBar().Hide();
-		//ui_mm_msg_ui4();
+		// TODO ui_mm_msg_ui4();
+		mViewCinematicsDialog->Show();
 	});	
 	widgetDoc.GetButton("options-credits")->SetClickHandler([this]() {
 		Hide();
@@ -312,4 +322,27 @@ void UiMM::TransitionToMap(int mapId)
 	gameSystems->GetSoundGame().StopAll(false);
 	uiSystems->GetWMapRnd().StartRandomEncounterTimer();
 	gameSystems->GetAnim().PopDisableFidget();
+}
+
+ViewCinematicsDialog::ViewCinematicsDialog()
+{
+	WidgetDoc doc = WidgetDoc::Load("templeplus/ui/main_menu_cinematics.json");
+
+	doc.GetButton("view")->SetClickHandler([this]() {
+
+	});
+	doc.GetButton("cancel")->SetClickHandler([this]() {
+		mWidget->Hide();
+		uiSystems->GetMM().Show(MainMenuPage::Options);
+	});
+
+	mWidget = std::move(doc.TakeRootContainer());
+	mWidget->Hide();
+}
+
+void ViewCinematicsDialog::Show()
+{
+
+
+	mWidget->Show();
 }

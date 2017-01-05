@@ -1,0 +1,56 @@
+{
+  "type": "container",
+  "centerHorizontally": true,
+  "centerVertically": true,
+  "width": 291,
+  "height": 357,
+  "__styles": [
+    {
+      "id": "mm-dialog-title",
+      "fontFamily": "Arial",
+      "pointSize": 12,
+      "foreground": "#ffffff",
+      "align": "center"
+    },
+    {
+      "id": "default-button-text",
+      "fontFamily": "Arial",
+      "pointSize": 12,
+      "foreground": "#ffffff",
+      "align": "center"
+    }
+  ],
+  "__buttonStyles": [
+    
+  ],
+  "content": [
+    {
+      "type": "image",
+      "path": "art/interface/pc_creation/meta_backdrop.img"
+    },
+    {
+      "type": "text",
+      "text": "#{main_menu:1000}",
+      "style": "mm-dialog-title",
+      "y": 20
+    }
+  ],
+  "children": [
+    {
+      "id": "view",
+      "type": "button",
+      "text": "#{main_menu:1001}",
+      "x": 28,
+      "y": 306,
+      "style": "accept-button"
+    },
+    {
+      "id":  "cancel",
+      "type": "button",
+      "text": "#{main_menu:1002}",
+      "x": 152,
+      "y": 306,
+      "style": "cancel-button"
+    }
+  ]
+}

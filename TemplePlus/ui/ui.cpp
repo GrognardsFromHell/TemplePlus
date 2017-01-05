@@ -131,8 +131,8 @@ LgcyButton::LgcyButton(char* ButtonName, int ParentId, int X, int Y, int Width, 
 	field88 = -1;
 	sndDown = -1;
 	sndClick = -1;
-	hoverOn = -1;
-	hoverOff = -1;
+	sndHoverOn = -1;
+	sndHoverOff = -1;
 }
 
 LgcyButton::LgcyButton(char* ButtonName, int ParentId, TigRect& rect){
@@ -166,16 +166,16 @@ LgcyButton::LgcyButton(char* ButtonName, int ParentId, TigRect& rect){
 	field88 = -1;
 	sndDown = -1;
 	sndClick = -1;
-	hoverOn = -1;
-	hoverOff = -1;
+	sndHoverOn = -1;
+	sndHoverOff = -1;
 }
 
 void LgcyButton::SetDefaultSounds()
 {
 	sndDown = 3012;
 	sndClick = 3013;
-	hoverOn = 3010;
-	hoverOff = 3011;
+	sndHoverOn = 3010;
+	sndHoverOff = 3011;
 }
 
 int LgcyScrollBar::GetY()
@@ -264,8 +264,8 @@ BOOL UiManager::ButtonInit(LgcyButton* widg, char* buttonName, int parentId, int
 	widg->field88 = -1;
 	widg->sndDown = -1;
 	widg->sndClick = -1;
-	widg->hoverOn = -1;
-	widg->hoverOff = -1;
+	widg->sndHoverOn = -1;
+	widg->sndHoverOff = -1;
 	return 0;
 }
 
@@ -741,7 +741,7 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 				case LgcyButtonState::Hovered:
 					// Unhover
 					buttonWid->buttonState = LgcyButtonState::Normal;
-					sound.MssPlaySound(buttonWid->hoverOff);
+					sound.MssPlaySound(buttonWid->sndHoverOff);
 					break;
 				case LgcyButtonState::Down:
 					// Down -> Released without click event
@@ -795,7 +795,7 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 				else
 				{
 					buttonWid->buttonState = LgcyButtonState::Hovered;
-					sound.MssPlaySound(buttonWid->hoverOn);
+					sound.MssPlaySound(buttonWid->sndHoverOn);
 				}
 			}
 			newTigMsg.widgetId = widIdAtCursor;

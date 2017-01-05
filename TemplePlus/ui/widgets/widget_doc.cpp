@@ -25,8 +25,29 @@ static void LoadContent(const json11::Json &contentList, WidgetBase &widget) {
 		if (type == "image") {
 			auto path = contentJson["path"].string_value();
 			content = std::make_unique<WidgetImage>(path);
+		} else if (type == "text") {
+			auto text = contentJson["text"].string_value();
+			auto styleId = contentJson["style"].string_value();
+			auto textContent = std::make_unique<WidgetText>();
+			textContent->SetStyleId(styleId);
+			textContent->SetText(text);
+			content = std::move(textContent);
 		} else {
 			throw TempleException("Unknown widget content type: '{}'", type);
+		}
+
+		// Generic properties
+		if (contentJson["x"].is_number()) {
+			content->SetX((int) contentJson["x"].number_value());
+		}
+		if (contentJson["y"].is_number()) {
+			content->SetY((int)contentJson["y"].number_value());
+		}
+		if (contentJson["width"].is_number()) {
+			content->SetFixedWidth((int)contentJson["width"].number_value());
+		}
+		if (contentJson["height"].is_number()) {
+			content->SetFixedHeight((int)contentJson["height"].number_value());
 		}
 
 		widget.AddContent(std::move(content));
