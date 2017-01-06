@@ -291,6 +291,19 @@ public:
 	bool TranslateMouseMessage(const TigMouseMsg &mouseMsg);
 	bool ProcessMessage(TigMsg& mouseMsg);
 
+	LgcyWidgetId GetMouseCaptureWidgetId() const {
+		return mMouseCaptureWidgetId;
+	}
+
+	void SetMouseCaptureWidgetId(LgcyWidgetId widgetId) {
+		mMouseCaptureWidgetId = widgetId;
+	}
+	void UnsetMouseCaptureWidgetId(LgcyWidgetId widgetId) {
+		if (mMouseCaptureWidgetId == widgetId) {
+			mMouseCaptureWidgetId = -1;
+		}
+	}
+
 private:
 	UiManager(UiManager&) = delete;
 	UiManager& operator=(UiManager&) = delete;
@@ -308,7 +321,7 @@ private:
 	*/
 	void SortWindows();
 
-	int& mMouseCaptureWidgetId = temple::GetRef<int>(0x11E74384);
+	LgcyWidgetId& mMouseCaptureWidgetId = temple::GetRef<LgcyWidgetId>(0x11E74384);
 	int& mWidgetMouseHandlerWidgetId = temple::GetRef<int>(0x10301324);
 	int& mMouseButtonId = temple::GetRef<int>(0x10301328);
 	void(*mMouseMsgHandlerRenderTooltipCallback)(int x, int y, void* data) = temple::GetPointer<void(int x, int y, void* data)>(0x101F9870);

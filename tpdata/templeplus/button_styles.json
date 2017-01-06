@@ -11,8 +11,8 @@
       "id": "accept-button",
 	  "inherit": "default-sounds",
       "textStyle": "default-button-text",
-      "normalImage": "art/interface/generic/Accept_Hover.tga",
-      "hoverImage": "art/interface/generic/Accept_Normal.tga",
+      "normalImage": "art/interface/generic/Accept_Normal.tga",
+      "hoverImage": "art/interface/generic/Accept_Hover.tga",
       "pressedImage": "art/interface/generic/Accept_Pressed.tga",
       "disabledImage": "art/interface/generic/Disabled_Normal.tga"
     },
@@ -20,9 +20,25 @@
       "id": "cancel-button",
 	  "inherit": "default-sounds",
       "textStyle": "default-button-text",
-      "normalImage": "art/interface/generic/Decline_Hover.tga",
-      "hoverImage": "art/interface/generic/Decline_Normal.tga",
+      "normalImage": "art/interface/generic/Decline_Normal.tga",
+      "hoverImage": "art/interface/generic/Decline_Hover.tga",
       "pressedImage": "art/interface/generic/Decline_Pressed.tga",
       "disabledImage": "art/interface/generic/Disabled_Normal.tga"
-    }
+    },
+	{
+		"id": "scrollbar-up",
+		"inherit": "default-sounds",
+		"normalImage": "art/scrollbar/up.tga",
+		"pressedImage": "art/scrollbar/up_click.tga"
+	},
+	{
+		"id": "scrollbar-down",
+		"inherit": "default-sounds",
+		"normalImage": "art/scrollbar/down.tga",
+		"pressedImage": "art/scrollbar/down_click.tga"
+	},
+	{
+		"id": "scrollbar-track",
+		"normalImage": "art/scrollbar/empty.tga"
+	}
 ]

@@ -75,6 +75,13 @@ public:
 		return mWidget->widgetId;
 	}
 
+	void SetWidth(int width) {
+		SetSize({ width, GetHeight() });
+	}
+	void SetHeight(int height) {
+		SetSize({ GetWidth(), height });
+	}
+
 	void SetSize(gfx::Size size);
 	gfx::Size GetSize() const;
 
@@ -126,6 +133,8 @@ public:
 		mCharHandler = handler;
 	}
 
+	virtual bool HandleMouseMessage(const TigMouseMsg &msg);
+
 protected:
 	LgcyWidget *mWidget = nullptr;
 	WidgetContainer *mParent = nullptr;
@@ -160,6 +169,8 @@ public:
 
 	void Render() override;
 
+	bool HandleMouseMessage(const TigMouseMsg &msg) override;
+
 private:
 	LgcyWindow *mWindow;
 	eastl::vector<std::unique_ptr<WidgetBase>> mChildren;
@@ -178,6 +189,9 @@ public:
 		return mDisabled;
 	}
 	void SetClickHandler(std::function<void()> handler) {
+		mClickHandler = [=](int, int) { handler(); };
+	}
+	void SetClickHandler(std::function<void(int x, int y)> handler) {
 		mClickHandler = handler;
 	}
 
@@ -189,7 +203,7 @@ protected:
 	LgcyButton *mButton;
 	bool mDisabled = false;
 
-	std::function<void()> mClickHandler;
+	std::function<void(int x, int y)> mClickHandler;
 };
 
 struct WidgetButtonStyle {
@@ -234,4 +248,57 @@ private:
 	std::unique_ptr<WidgetImage> mDisabledImage;
 	WidgetText mLabel;
 	
+};
+
+class WidgetScrollBarHandle;
+
+class WidgetScrollBar : public WidgetContainer {
+friend class WidgetScrollBarHandle;
+public:
+
+	WidgetScrollBar();
+
+	int GetMin() const {
+		return mMin;
+	}
+	void SetMin(int value) {
+		mMin = value;
+	}
+	int GetMax() const {
+		return mMax;
+	}
+	void SetMax(int value) {
+		mMax = value;
+	}
+	int GetValue() const {
+		return mValue;
+	}
+	void SetValue(int value) {
+		if (value < mMin) {
+			value = mMin;
+		}
+		if (value > mMax) {
+			value = mMax;
+		}
+		mValue = value;
+	}
+
+	void Render() override;
+
+private:
+	LgcyScrollBar *mScrollBar;
+
+	int mValue = 0;
+	int mMin = 0;
+	int mMax = 100;
+
+	WidgetButton *mUpButton;
+	WidgetButton *mDownButton;
+	WidgetButton *mTrack;
+	WidgetScrollBarHandle *mHandleButton;
+
+	int GetHandleHeight() const;
+	int GetScrollRange() const;
+	int GetTrackHeight() const;
+
 };

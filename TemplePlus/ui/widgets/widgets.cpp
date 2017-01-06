@@ -2,8 +2,12 @@
 #include "stdafx.h"
 #include "widgets.h"
 #include "widget_content.h"
+#include "widget_styles.h"
 #include "tig/tig_msg.h"
 #include "tig/tig_startup.h"
+#include "tig/tig_mouse.h"
+#include "ui/ui_render.h"
+#include "messages/messagequeue.h"
 
 #include <graphics/device.h>
 
@@ -156,15 +160,24 @@ void WidgetBase::Render()
 
 bool WidgetBase::HandleMessage(const TigMsg &msg)
 {
-	if (msg.type == TigMsgType::MOUSE && mMouseMsgHandler) {
-		return mMouseMsgHandler((const TigMouseMsg &)msg);
-	} else if (msg.type == TigMsgType::WIDGET && mWidgetMsgHandler) {
+	if (msg.type == TigMsgType::WIDGET && mWidgetMsgHandler) {
 		return mWidgetMsgHandler((const TigMsgWidget&)msg);
 	} else if (msg.type == TigMsgType::KEYSTATECHANGE && mKeyStateChangeHandler) {
 		return mKeyStateChangeHandler((const TigKeyStateChangeMsg&)msg);
 	} else if (msg.type == TigMsgType::CHAR && mCharHandler) {
 		return mCharHandler((const TigCharMsg&)msg);
 	}
+
+	if (msg.type == TigMsgType::MOUSE) {
+		// The TIG msgs use screen coordinates. Move the coordinates for the 
+		// mouse-specific message handler into the local coordinate space
+		auto contentArea = GetContentArea();
+		TigMouseMsg mouseMsg = *(const TigMouseMsg*)&msg.arg1;
+		mouseMsg.x -= contentArea.x;
+		mouseMsg.y -= contentArea.y;
+		return HandleMouseMessage(mouseMsg);
+	}
+
 	return false;
 }
 
@@ -213,6 +226,14 @@ static TigRect GetContentArea(LgcyWidgetId id) {
 TigRect WidgetBase::GetContentArea() const
 {
 	return ::GetContentArea(mWidget->widgetId);
+}
+
+bool WidgetBase::HandleMouseMessage(const TigMouseMsg & msg)
+{
+	if (mMouseMsgHandler) {
+		return mMouseMsgHandler(msg);
+	}
+	return false;
 }
 
 WidgetContainer::WidgetContainer(int width, int height)
@@ -273,6 +294,25 @@ void WidgetContainer::Render()
 	}
 }
 
+bool WidgetContainer::HandleMouseMessage(const TigMouseMsg & msg)
+{
+	for (auto it = mChildren.rbegin(); it != mChildren.rend(); it++) {
+		auto child = it->get();
+
+		TigMouseMsg childMsg = msg;
+		childMsg.x -= child->GetX();
+		childMsg.y -= child->GetY();
+
+		if (childMsg.x >= 0 && childMsg.x < child->GetWidth() && childMsg.y >= 0 && childMsg.y < child->GetHeight()) {
+			if (child->HandleMouseMessage(childMsg)) {
+				return true;
+			}
+		}
+	}
+
+	return WidgetBase::HandleMouseMessage(msg);
+}
+
 WidgetButtonBase::WidgetButtonBase()
 {
 	LgcyButton button;
@@ -293,12 +333,15 @@ bool WidgetButtonBase::HandleMessage(const TigMsg & msg)
 		TigMsgWidget &widgetMsg = (TigMsgWidget&)msg;
 		if (widgetMsg.widgetEventType == TigMsgWidgetEvent::Clicked) {
 			if (mClickHandler && !mDisabled) {
-				mClickHandler();
+				auto contentArea = GetContentArea();
+				int x = widgetMsg.x - contentArea.x;
+				int y = widgetMsg.y - contentArea.y;
+				mClickHandler(x, y);
 			}
 			return true;
 		}
 	}
-	return false;
+	return WidgetBase::HandleMessage(msg);
 }
 
 WidgetButton::WidgetButton()
@@ -440,4 +483,171 @@ void WidgetButton::UpdateAutoSize()
 		}
 		SetSize(prefSize);
 	}
+}
+
+class WidgetScrollBarHandle : public WidgetButtonBase {
+public:
+	WidgetScrollBarHandle(WidgetScrollBar &scrollBar);
+
+	void Render() override;
+
+	bool HandleMouseMessage(const TigMouseMsg &msg) override;
+
+private:
+	WidgetScrollBar &mScrollBar;
+
+	WidgetImage mTop;
+	WidgetImage mTopClicked;
+	WidgetImage mHandle;
+	WidgetImage mHandleClicked;
+	WidgetImage mBottom;
+	WidgetImage mBottomClicked;
+
+	int mDragGrabPoint = 0;
+};
+
+WidgetScrollBarHandle::WidgetScrollBarHandle(WidgetScrollBar &scrollBar) :
+	mScrollBar(scrollBar),
+	mTop("art/scrollbar/top.tga"),
+	mTopClicked("art/scrollbar/top_click.tga"),
+	mHandle("art/scrollbar/fill.tga"),
+	mHandleClicked("art/scrollbar/fill_click.tga"),
+	mBottom("art/scrollbar/bottom.tga"),
+	mBottomClicked("art/scrollbar/bottom_click.tga") 
+{
+	SetWidth(mHandle.GetPreferredSize().width);
+}
+
+void WidgetScrollBarHandle::Render() {
+	auto contentArea = GetContentArea();
+
+	auto topArea = contentArea;
+	topArea.width = mTop.GetPreferredSize().width;
+	topArea.height = mTop.GetPreferredSize().height;
+	mTop.SetContentArea(topArea);
+	mTop.Render();
+
+	auto bottomArea = contentArea;	
+	bottomArea.width = mBottom.GetPreferredSize().width;
+	bottomArea.height = mBottom.GetPreferredSize().height;
+	bottomArea.y = contentArea.y + contentArea.height - bottomArea.height; // Align to bottom
+	mBottom.SetContentArea(bottomArea);
+	mBottom.Render();
+
+	int inBetween = bottomArea.y - topArea.y - topArea.height;
+	if (inBetween > 0) {
+		auto centerArea = contentArea;
+		centerArea.y = topArea.y + topArea.height;
+		centerArea.height = inBetween;
+		centerArea.width = mHandle.GetPreferredSize().width;
+		mHandle.SetContentArea(centerArea);
+		mHandle.Render();
+	}
+}
+
+bool WidgetScrollBarHandle::HandleMouseMessage(const TigMouseMsg &msg) {
+	if (uiManager->GetMouseCaptureWidgetId() == GetWidgetId()) {
+		int y = GetY() + msg.y; // Get back into the parent coordinate system
+		if ((msg.flags & MSF_POS_CHANGE || msg.flags & MSF_POS_CHANGE2)) {
+			int curY = y - mDragGrabPoint;
+
+			int scrollRange = mScrollBar.GetScrollRange();
+			auto vPercent = (curY - mScrollBar.mUpButton->GetHeight()) / (float) scrollRange;
+			if (vPercent < 0) {
+				vPercent = 0;
+			} else if (vPercent > 1) {
+				vPercent = 1;
+			}
+			auto newVal = mScrollBar.mMin + (mScrollBar.mMax - mScrollBar.mMin) * vPercent;
+
+			mScrollBar.mValue = (int) newVal;
+		} 
+		if (msg.flags & MSF_LMB_RELEASED) {
+			uiManager->UnsetMouseCaptureWidgetId(GetWidgetId());
+		}
+	} else {
+		if (msg.flags & MSF_LMB_DOWN) {
+			uiManager->SetMouseCaptureWidgetId(GetWidgetId());
+			mDragGrabPoint = msg.y;
+		}		
+	}
+	return true;
+}
+
+WidgetScrollBar::WidgetScrollBar() : WidgetContainer(0, 0)
+{
+	auto upButton = std::make_unique<WidgetButton>();
+	upButton->SetParent(this);
+	upButton->SetStyle(widgetButtonStyles->GetStyle("scrollbar-up"));
+	upButton->SetClickHandler([this]() {
+		SetValue(GetValue() - 1);
+	});
+
+	auto downButton = std::make_unique<WidgetButton>();
+	downButton->SetParent(this);
+	downButton->SetStyle(widgetButtonStyles->GetStyle("scrollbar-down"));
+	downButton->SetClickHandler([this]() {
+		SetValue(GetValue() + 1);
+	});
+
+	auto track = std::make_unique<WidgetButton>();
+	track->SetParent(this);
+	track->SetStyle(widgetButtonStyles->GetStyle("scrollbar-track"));
+	track->SetClickHandler([this](int x, int y) {
+		// The y value is in relation to the track, we need to add it's own Y value,
+		// and compare against the current position of the handle
+		y += mTrack->GetY();
+		if (y < mHandleButton->GetY()) {
+			SetValue(GetValue() - 5);
+		} else if (y >= mHandleButton->GetY() + mHandleButton->GetHeight()) {
+			SetValue(GetValue() + 5);
+		}
+	});
+
+	auto handle = std::make_unique<WidgetScrollBarHandle>(*this);
+	handle->SetParent(this);
+	handle->SetHeight(100);
+	
+	SetWidth(std::max(upButton->GetWidth(), downButton->GetWidth()));
+
+	mUpButton = upButton.get();
+	mDownButton = downButton.get();
+	mTrack = track.get();
+	mHandleButton = handle.get();
+
+	Add(std::move(track));
+	Add(std::move(upButton));
+	Add(std::move(downButton));
+	Add(std::move(handle));
+}
+
+void WidgetScrollBar::Render()
+{
+	mDownButton->SetY(GetHeight() - mDownButton->GetHeight());
+
+	// Update the track position
+	mTrack->SetWidth(GetWidth());
+	mTrack->SetY(mUpButton->GetHeight());
+	mTrack->SetHeight(GetHeight() - mUpButton->GetHeight() - mDownButton->GetHeight());
+
+	int handleOffset = (int)(((mValue - mMin) / (float)mMax) * GetScrollRange());
+	mHandleButton->SetY(mUpButton->GetHeight() + handleOffset);
+	mHandleButton->SetHeight(GetHandleHeight());
+
+	WidgetContainer::Render();
+}
+
+int WidgetScrollBar::GetHandleHeight() const
+{	
+	return 5 * GetTrackHeight() / (5 + GetMax() - GetMin()) + 20;
+}
+
+int WidgetScrollBar::GetScrollRange() const
+{
+	return GetTrackHeight() - GetHandleHeight();
+}
+
+int WidgetScrollBar::GetTrackHeight() const
+{
+	return GetHeight() - mUpButton->GetHeight() - mDownButton->GetHeight();
 }

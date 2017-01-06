@@ -45,12 +45,18 @@
       "style": "accept-button"
     },
     {
-      "id":  "cancel",
+      "id": "cancel",
       "type": "button",
       "text": "#{main_menu:1002}",
       "x": 152,
       "y": 306,
       "style": "cancel-button"
+    },
+    {
+      "type": "scrollBar",
+      "x": 256,
+      "y": 71,
+      "height": 219
     }
   ]
 }

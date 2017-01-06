@@ -917,10 +917,16 @@ bool UiManager::ProcessMouseMessage(TigMsg & msg)
 	// Handle if a widget requested mouse capture
 	if (mMouseCaptureWidgetId != -1)
 	{
-		auto widget = GetWidget(mMouseCaptureWidgetId);
-		if (widget && widget->CanHandleMessage()) {
-			widget->HandleMessage(msg);
+		auto advWidget = GetAdvancedWidget(mMouseCaptureWidgetId);
+		if (advWidget) {			
+			advWidget->HandleMessage(msg);
 			return true;
+		} else {
+			auto widget = GetWidget(mMouseCaptureWidgetId);
+			if (widget && widget->CanHandleMessage()) {
+				widget->HandleMessage(msg);
+				return true;
+			}
 		}
 		return false;
 	}

@@ -71,9 +71,14 @@ void LoadWidgetBase(const json11::Json &jsonObj, WidgetBase &widget, WidgetLoadi
 	int y = (int) jsonObj["y"].number_value();
 	widget.SetPos(x, y);
 
-	auto width = (int)jsonObj["width"].number_value();
-	auto height = (int)jsonObj["height"].number_value();
-	widget.SetSize({ width, height });
+	auto size = widget.GetSize();
+	if (jsonObj["width"].is_number()) {
+		size.width = (int)jsonObj["width"].number_value();
+	}
+	if (jsonObj["height"].is_number()) {
+		size.height = (int)jsonObj["height"].number_value();
+	}
+	widget.SetSize(size);
 
 	if (jsonObj["centerHorizontally"].is_bool()) {
 		widget.SetCenterHorizontally(jsonObj["centerHorizontally"].bool_value());
@@ -162,9 +167,20 @@ static std::unique_ptr<WidgetBase> LoadWidgetButton(const json11::Json &jsonObj,
 
 }
 
+static std::unique_ptr<WidgetBase> LoadWidgetScrollBar(const json11::Json &jsonObj, WidgetLoadingContext &context) {
+
+	auto result = std::make_unique<WidgetScrollBar>();
+
+	LoadWidgetBase(jsonObj, *result, context);
+	
+	return result;
+
+}
+
 static std::map<std::string, std::function<WidgetPtr(const json11::Json&, WidgetLoadingContext &context)>> sWidgetFactories {
 	{ "container", LoadWidgetContainer },
 	{ "button", LoadWidgetButton },
+	{ "scrollBar", LoadWidgetScrollBar },
 };
 
 static std::unique_ptr<WidgetBase> LoadWidgetTree(const json11::Json &jsonObj, WidgetLoadingContext &context) {
