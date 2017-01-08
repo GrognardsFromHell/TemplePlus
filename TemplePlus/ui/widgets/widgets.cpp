@@ -236,6 +236,10 @@ bool WidgetBase::HandleMouseMessage(const TigMouseMsg & msg)
 	return false;
 }
 
+void WidgetBase::OnUpdateTime(uint32_t timeMs)
+{
+}
+
 WidgetContainer::WidgetContainer(int width, int height)
 {
 	LgcyWindow window(0, 0, width, height);
@@ -329,6 +333,7 @@ WidgetButtonBase::WidgetButtonBase()
 
 bool WidgetButtonBase::HandleMessage(const TigMsg & msg)
 {
+	
 	if (msg.type == TigMsgType::WIDGET) {
 		TigMsgWidget &widgetMsg = (TigMsgWidget&)msg;
 		if (widgetMsg.widgetEventType == TigMsgWidgetEvent::Clicked) {
@@ -337,11 +342,26 @@ bool WidgetButtonBase::HandleMessage(const TigMsg & msg)
 				int x = widgetMsg.x - contentArea.x;
 				int y = widgetMsg.y - contentArea.y;
 				mClickHandler(x, y);
+				mLastClickTriggered = msg.createdMs;
 			}
 			return true;
 		}
 	}
 	return WidgetBase::HandleMessage(msg);
+}
+
+void WidgetButtonBase::OnUpdateTime(uint32_t timeMs)
+{
+	if (mRepeat && mButton->buttonState == LgcyButtonState::Down) {
+		auto pos = mouseFuncs.GetPos();
+		if (mClickHandler && !mDisabled && mLastClickTriggered + mRepeatInterval < timeMs) {
+			auto contentArea = GetContentArea();
+			int x = pos.x - contentArea.x;
+			int y = pos.y - contentArea.y;
+			mClickHandler(x, y);
+			mLastClickTriggered = timeMs;
+		}
+	}
 }
 
 WidgetButton::WidgetButton()
@@ -548,7 +568,7 @@ void WidgetScrollBarHandle::Render() {
 bool WidgetScrollBarHandle::HandleMouseMessage(const TigMouseMsg &msg) {
 	if (uiManager->GetMouseCaptureWidgetId() == GetWidgetId()) {
 		int y = GetY() + msg.y; // Get back into the parent coordinate system
-		if ((msg.flags & MSF_POS_CHANGE || msg.flags & MSF_POS_CHANGE2)) {
+		if ((msg.flags & MSF_POS_CHANGE || msg.flags & MSF_POS_CHANGE_SLOW)) {
 			int curY = y - mDragGrabPoint;
 
 			int scrollRange = mScrollBar.GetScrollRange();
@@ -582,6 +602,7 @@ WidgetScrollBar::WidgetScrollBar() : WidgetContainer(0, 0)
 	upButton->SetClickHandler([this]() {
 		SetValue(GetValue() - 1);
 	});
+	upButton->SetRepeat(true);
 
 	auto downButton = std::make_unique<WidgetButton>();
 	downButton->SetParent(this);
@@ -589,6 +610,7 @@ WidgetScrollBar::WidgetScrollBar() : WidgetContainer(0, 0)
 	downButton->SetClickHandler([this]() {
 		SetValue(GetValue() + 1);
 	});
+	downButton->SetRepeat(true);
 
 	auto track = std::make_unique<WidgetButton>();
 	track->SetParent(this);
@@ -603,6 +625,7 @@ WidgetScrollBar::WidgetScrollBar() : WidgetContainer(0, 0)
 			SetValue(GetValue() + 5);
 		}
 	});
+	track->SetRepeat(true);
 
 	auto handle = std::make_unique<WidgetScrollBarHandle>(*this);
 	handle->SetParent(this);

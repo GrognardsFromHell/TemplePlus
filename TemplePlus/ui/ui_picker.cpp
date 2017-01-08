@@ -558,7 +558,7 @@ BOOL UiPicker::PickerMsgMouse(TigMsg * msg){
 			result = TRUE;
 	}
 
-	if (msgMouse->buttonStateFlags & MSF_POS_CHANGE2) {
+	if (msgMouse->buttonStateFlags & MSF_POS_CHANGE_SLOW) {
 		auto handler = pickerSpec.msg->posChange2;
 		if (handler && handler(msg))
 			result = TRUE;

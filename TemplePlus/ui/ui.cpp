@@ -11,6 +11,34 @@
 
 UiManager *uiManager;
 
+/**
+ * Handles button click triggering.
+ * When a button receives a mouse-down event, there are two possible behaviors:
+ * - If the button is non-repeat, the button captures the mouse input
+ *   - If the mouse button is released while the mouse is over the button, 
+ *     an OnClick message is dispatched to that button.
+ * - If the button is repeat, the button also captures the mouse input, and an OnClick
+ *   msg is immediately dispatched.
+ *  - The next trigger time is set to current-time + 500ms
+ *  - When the mouse leaves the button's client area, the auto-repeat is suspended (next action time set to 0)
+ *  - When the mouse button is released (regardless of where), the auto repeat is suspended
+ *  - When the time update event is received, and the time for the next press elapsed, trigger an onclick msg
+ */
+class ButtonClickBehavior {
+public:
+		
+	void UpdateTime(int newTime);
+	
+private:
+	int mNextClick = 0;
+	int mX;
+	int mY;
+	int mButtonDown = false;
+	LgcyWidgetId mReceiver = -1;
+};
+
+static ButtonClickBehavior buttonClickBehavior;
+
 UiManager::UiManager() {
 	Expects(uiManager == nullptr);
 	uiManager = this;
@@ -487,10 +515,15 @@ void UiManager::SetHidden(LgcyWidgetId id, bool hidden)
 	}
 	else {
 		widget->flags &= (~1);
-	}
+	} 
+
+	// New widgets are rendered recursively and dont need to be 
+	// in the top-level window list to be rendered if they are nested
+	// children
+	bool isNewWidget = GetAdvancedWidget(id) != nullptr;
 
 	// Update the top-level window list
-	if (widget->IsWindow() && widget->parentId == -1) {
+	if (widget->IsWindow() && (!isNewWidget || widget->parentId == -1)) {
 		if (hidden) {
 			RemoveWindow(id);
 		} else {
@@ -805,7 +838,7 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 		globalWidId = mWidgetMouseHandlerWidgetId = widIdAtCursor;
 	}
 
-	if (mouseMsg.flags & MouseStateFlags::MSF_POS_CHANGE2 && globalWidId != -1 && !mouseFuncs.GetCursorDrawCallbackId())
+	if (mouseMsg.flags & MouseStateFlags::MSF_POS_CHANGE_SLOW && globalWidId != -1 && !mouseFuncs.GetCursorDrawCallbackId())
 	{
 		mouseFuncs.SetCursorDrawCallback([&](int x, int y) {
 			mMouseMsgHandlerRenderTooltipCallback(x, y, &mWidgetMouseHandlerWidgetId);
@@ -862,12 +895,20 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 		messageQueue->Enqueue(newTigMsg);
 		mMouseButtonId = -1;
 	}
-
+	
 	return false;
 }
 
 bool UiManager::ProcessMessage(TigMsg &msg)
 {
+	// Dispatch time update messages continuously to all advanced widgets
+	if (msg.type == TigMsgType::UPDATE_TIME) {
+		for (auto &entry : mActiveWidgets) {
+			if (entry.second.advancedWidget) {
+				entry.second.advancedWidget->OnUpdateTime(msg.createdMs);
+			}
+		}
+	}
 
 	switch (msg.type) {
 	case TigMsgType::MOUSE:

@@ -144,7 +144,7 @@ void UiInGame::HandleCombatMessage(const TigMsg & msg)
 	}
 	else if (msg.type == TigMsgType::MOUSE)
 	{
-		if (msg.arg4 & MSF_POS_CHANGE || msg.arg4 & MSF_POS_CHANGE2) {
+		if (msg.arg4 & MSF_POS_CHANGE || msg.arg4 & MSF_POS_CHANGE_SLOW) {
 			HandleCombatMouseEvent(msg);
 		}
 	}
