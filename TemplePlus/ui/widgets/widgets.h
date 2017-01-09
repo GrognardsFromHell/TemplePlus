@@ -135,6 +135,8 @@ public:
 
 	virtual bool HandleMouseMessage(const TigMouseMsg &msg);
 
+	virtual void OnUpdateTime(uint32_t timeMs);
+
 protected:
 	LgcyWidget *mWidget = nullptr;
 	WidgetContainer *mParent = nullptr;
@@ -199,9 +201,27 @@ public:
 		return true;
 	}
 
+	bool IsRepeat() const {
+		return mRepeat;
+	}
+	void SetRepeat(bool enable) {
+		mRepeat = enable;
+	}
+	int GetRepeatInterval() const {
+		return mRepeatInterval;
+	}
+	void SetRepeatInterval(int interval) {
+		mRepeatInterval = interval;
+	}
+
+	void OnUpdateTime(uint32_t timeMs) override;
+	
 protected:
 	LgcyButton *mButton;
 	bool mDisabled = false;
+	bool mRepeat = false;
+	uint32_t mRepeatInterval = 200;
+	uint32_t mLastClickTriggered = 0;
 
 	std::function<void(int x, int y)> mClickHandler;
 };
