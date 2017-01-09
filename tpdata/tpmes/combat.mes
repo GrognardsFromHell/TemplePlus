@@ -43,3 +43,11 @@
 {6019}{Set Caster Level (0 for min, 20 for max possible)}
 {6020}{Empty Body}
 {6021}{Select number of rounds to activate.}
+
+
+// error messsages if problem in Psionics.py
+{6100}{Error in Psionics.py - wrong class!}
+{6101}{No Psionic Focus present!}
+
+// secondary damage for Alchemical splash weapons
+{6500}{Secondary damage!}
