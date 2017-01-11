@@ -61,7 +61,7 @@ ShapeRenderer2d::Impl::Impl(RenderingDevice &device)
 	samplerWrapSpec.minFilter = TextureFilterType::Linear;
 	samplerWrapSpec.magFilter = TextureFilterType::Linear;
 	samplerWrapSpec.mipFilter = TextureFilterType::Linear;
-	samplerWrapState = device.createSamplerState(samplerWrapSpec);
+	samplerWrapState = device.CreateSamplerState(samplerWrapSpec);
 
 	SamplerSpec samplerClampSpec;
 	samplerClampSpec.addressU = TextureAddress::Clamp;
@@ -69,7 +69,7 @@ ShapeRenderer2d::Impl::Impl(RenderingDevice &device)
 	samplerClampSpec.minFilter = TextureFilterType::Linear;
 	samplerClampSpec.magFilter = TextureFilterType::Linear;
 	samplerClampSpec.mipFilter = TextureFilterType::Linear;
-	samplerClampState = device.createSamplerState(samplerClampSpec);
+	samplerClampState = device.CreateSamplerState(samplerClampSpec);
 
 	DepthStencilSpec noDepthSpec;
 	noDepthSpec.depthEnable = false;

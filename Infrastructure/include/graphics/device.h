@@ -237,7 +237,13 @@ namespace gfx {
 		BlendStatePtr CreateBlendState(const BlendSpec &spec);
 		DepthStencilStatePtr CreateDepthStencilState(const DepthStencilSpec &spec);
 		RasterizerStatePtr CreateRasterizerState(const RasterizerSpec &spec);
-		SamplerStatePtr createSamplerState(const SamplerSpec &spec);
+		SamplerStatePtr CreateSamplerState(const SamplerSpec &spec);
+
+		// Changes the current scissor rect to the given rectangle
+		void SetScissorRect(int x, int y, int width, int height);
+
+		// Resets the scissor rect to the current render target's size
+		void ResetScissorRect();
 				
 		std::shared_ptr<class IndexBuffer> CreateEmptyIndexBuffer(size_t count);
 		std::shared_ptr<class VertexBuffer> CreateEmptyVertexBuffer(size_t count, bool forPoints = false);

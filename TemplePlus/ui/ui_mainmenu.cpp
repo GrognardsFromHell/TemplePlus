@@ -342,7 +342,7 @@ ViewCinematicsDialog::ViewCinematicsDialog()
 
 void ViewCinematicsDialog::Show()
 {
-
+	mWidget->SetScrollOffsetY(100);
 
 	mWidget->Show();
 }
