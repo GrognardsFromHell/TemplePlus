@@ -42,7 +42,8 @@ enum class MainMenuPage {
 	Difficulty,
 	InGameNormal,
 	InGameIronman,
-	Options
+	Options,
+	SetPieces
 };
 
 class ViewCinematicsDialog;

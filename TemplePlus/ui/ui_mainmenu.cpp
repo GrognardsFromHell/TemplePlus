@@ -21,6 +21,7 @@
 
 #include "widgets/widget_content.h"
 #include "widgets/widget_doc.h"
+#include "tig/tig_keyboard.h"
 
 class ViewCinematicsDialog {
 public:
@@ -54,9 +55,10 @@ UiMM::UiMM(const UiSystemConf &config) {
 	mMainWidget->SetWidgetMsgHandler([](auto msg) {
 		return true;
 	});
+	
 	mMainWidget->SetKeyStateChangeHandler([this](const TigKeyStateChangeMsg &msg) {
 		// Close the menu if it's the ingame menu
-		if (msg.key == 1 && !msg.down) {
+		if (msg.key == DIK_ESCAPE && !msg.down) {
 			if (mCurrentPage == MainMenuPage::InGameNormal || mCurrentPage == MainMenuPage::InGameIronman) {
 				Hide();
 			}
@@ -71,6 +73,7 @@ UiMM::UiMM(const UiSystemConf &config) {
 	mPageWidgets[MainMenuPage::InGameNormal] = widgetDoc.GetWindow("page-ingame-normal");
 	mPageWidgets[MainMenuPage::InGameIronman] = widgetDoc.GetWindow("page-ingame-ironman");
 	mPageWidgets[MainMenuPage::Options] = widgetDoc.GetWindow("page-options");
+	mPageWidgets[MainMenuPage::SetPieces] = widgetDoc.GetWindow("page-set-pieces");
 
 	// Wire up buttons on the main menu
 	widgetDoc.GetButton("new-game")->SetClickHandler([this]() {
@@ -79,6 +82,9 @@ UiMM::UiMM(const UiSystemConf &config) {
 	widgetDoc.GetButton("load-game")->SetClickHandler([this]() {
 		Hide();
 		uiSystems->GetLoadGame().Show(true);
+	});
+	widgetDoc.GetButton("set-pieces")->SetClickHandler([this]() {
+		Show(MainMenuPage::Options);
 	});
 	widgetDoc.GetButton("tutorial")->SetClickHandler([this]() {
 		LaunchTutorial();

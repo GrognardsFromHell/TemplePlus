@@ -41,13 +41,7 @@ enum PathQueryFlags : uint32_t {
 	PQF_STRAIGHT_LINE_ONLY_FOR_SANS_NODE = 0x200,
 	PQF_DOORS_ARE_BLOCKING = 0x400, // if set, it will consider doors to block the path
 	PQF_800 = 0x800,
-
-
-	/*
-	Indicates that the query is to move to a target object.
-	WAS ERRONEOUSLY LISTED AS 0x10  (look out for those BYTE1() operators DS!)
-	*/
-	PQF_TARGET_OBJ = 0x1000,
+	PQF_TARGET_OBJ = 0x1000, // Indicates that the query is to move to a target object.
 
 	/*
 	Indicates that the destination should be adjusted for the critter and target
@@ -68,7 +62,7 @@ enum PathQueryFlags : uint32_t {
 	PQF_ALLOW_ALTERNATIVE_TARGET_TILE = 0x40000,
 
 	// Appears to mean that pathfinding should obey the time limit
-	PQF_A_STAR_TIME_CAPPED = 0x80000, // it is set when the D20 action has the flag D20CAF_TRUNCATED
+	PQF_A_STAR_TIME_CAPPED = 0x80000, // it is set when the D20 action has the flag D20CAF_UNNECESSARY
 
 	PQF_IGNORE_CRITTERS_ON_DESTINATION = 0x800000, // NEW! makes it ignored critters on the PathDestIsClear function
 	PQF_AVOID_AOOS = 0x1000000 // NEW! Make the PF attempt avoid Aoos (using the ShouldIgnore function in combat.py to ignore insiginificant threats)

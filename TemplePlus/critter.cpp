@@ -28,6 +28,7 @@
 #include "history.h"
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
+#include "rng.h"
 
 static struct CritterAddresses : temple::AddressTable {
 
@@ -320,7 +321,7 @@ void LegacyCritterSystem::Attack(objHndl target, objHndl attacker, int n1, int f
 								auto npcFlags = attackerObj->GetInt32(obj_f_npc_flags);
 								attackerObj->SetNPCFlags(npcFlags | ONF_JILTED);
 							}
-							else if (templeFuncs.RNG(1,3) == 1 && !critterSys.IsDeadOrUnconscious(attacker))
+							else if (rngSys.GetInt(1,3) == 1 && !critterSys.IsDeadOrUnconscious(attacker))
 							{
 								auto uiDlgSoundPlayer = temple::GetRef<void(__cdecl*)(objHndl, objHndl, char*, int)>(0x10AA73B0);
 								if (uiDlgSoundPlayer)

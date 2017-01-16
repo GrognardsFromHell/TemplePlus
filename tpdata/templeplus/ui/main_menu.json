@@ -47,7 +47,7 @@
       "id":  "pages",
       "type": "container",
       "width": 400,
-      "height": 270,
+      "height": 310,
       "centerHorizontally":  true,
       "children": [
         {
@@ -70,12 +70,20 @@
               "y": 40,
               "width": 400
             },
+			{
+              "id": "set-pieces",
+              "type": "button",
+              "text": "Set Pieces",
+              "style": "mm-button",
+              "y": 80,
+              "width": 400
+            },
             {
               "id": "tutorial",
               "type": "button",
               "text": "#{main_menu:2}",
               "style": "mm-button",
-              "y": 80,
+              "y": 120,
               "width": 400
             },
             {
@@ -83,7 +91,7 @@
               "type": "button",
               "text": "#{main_menu:3}",
               "style": "mm-button",
-              "y": 120,
+              "y": 160,
               "width": 400
             },
             {
@@ -91,7 +99,7 @@
               "type": "button",
               "text": "#{main_menu:4}",
               "style": "mm-button",
-              "y": 160,
+              "y": 200,
               "width": 400
             }
           ]
@@ -216,6 +224,44 @@
             },
             {
               "id": "options-back",
+              "type": "button",
+              "text": "#{main_menu:43}",
+              "style": "mm-button",
+              "y": 120,
+              "width": 400
+            }
+          ]
+        },
+		{
+          "id": "page-set-pieces",
+          "type": "container",
+          "sizeToParent": true,
+          "children": [
+            {
+              "id": "options-show2",
+              "type": "button",
+              "text": "#{main_menu:40}",
+              "style": "mm-button",
+              "width": 400
+            },
+            {
+              "id": "options-view-cinematics2",
+              "type": "button",
+              "text": "#{main_menu:41}",
+              "style": "mm-button",
+              "y": 40,
+              "width": 400
+            },
+            {
+              "id": "options-credits2",
+              "type": "button",
+              "text": "#{main_menu:42}",
+              "style": "mm-button",
+              "y": 80,
+              "width": 400
+            },
+            {
+              "id": "options-back2",
               "type": "button",
               "text": "#{main_menu:43}",
               "style": "mm-button",

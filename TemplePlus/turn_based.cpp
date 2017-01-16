@@ -13,6 +13,7 @@
 #include "gamesystems/objects/objsystem.h"
 #include "ai.h"
 #include "condition.h"
+#include "rng.h"
 
 class TurnBasedReplacements : public TempleFix
 {
@@ -168,7 +169,7 @@ void TurnBasedSys::AddToInitiative(objHndl handle) const
 
 	aiSys.AiOnInitiativeAdd(handle);
 
-	auto initiativeRoll = templeFuncs.RNG(1, 20);
+	auto initiativeRoll = rngSys.GetInt(1, 20);
 	int initiativeMod = 0;
 	auto dispatcher = obj->GetDispatcher();
 	if (dispatcher->IsValid()){

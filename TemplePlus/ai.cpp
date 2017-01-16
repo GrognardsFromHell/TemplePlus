@@ -24,6 +24,7 @@
 #include "gamesystems/timeevents.h"
 #include "python/python_header.h"
 #include "condition.h"
+#include "rng.h"
 
 struct AiSystem aiSys;
 AiParamPacket * AiSystem::aiParams;
@@ -1381,15 +1382,15 @@ int AiSystem::ChooseRandomSpell(AiPacket* aiPkt)
 	auto aiDataIdx = objects.getInt32(obj, obj_f_npc_ai_data);
 	Expects(aiDataIdx >= 0 && aiDataIdx <= 150);
 	AiParamPacket aiParam = aiParams[aiDataIdx];
-
-	if (aiParam.defensiveSpellChance > templeFuncs.RNG(1,100))
+	
+	if (aiParam.defensiveSpellChance > rngSys.GetInt(1,100))
 	{
 		GetAiSpells(&aiSpell, obj, AiSpellType::ai_action_defensive);
 		if (ChooseRandomSpellFromList(aiPkt, &aiSpell)) {
 			return 1;
 		}
 	}
-	if (aiParam.offensiveSpellChance > templeFuncs.RNG(1,100))
+	if (aiParam.offensiveSpellChance > rngSys.GetInt(1,100))
 	{
 		GetAiSpells(&aiSpell, obj, AiSpellType::ai_action_offensive);
 		if (ChooseRandomSpellFromList(aiPkt, &aiSpell)) {
@@ -1470,7 +1471,7 @@ unsigned AiSystem::WakeFriend(AiTactic* aiTac)
 		}
 		delete [] enemies;
 		if (!isThreatened)
-			shouldWake = (templeFuncs.RNG(1, 100) <= 40);
+			shouldWake = (rngSys.GetInt(1, 100) <= 40);
 	}
 
 	if (!shouldWake)
@@ -1746,7 +1747,7 @@ int AiSystem::ChooseRandomSpellFromList(AiPacket* aiPkt, AiSpellList* aiSpells){
 	temple::GetRef<objHndl>(0x10AA73C8) = aiPkt->obj;
 	temple::GetRef<objHndl>(0x10AA73D0) = aiPkt->target;
 	for (int i = 0; i < 5; i++)	{
-		auto spellIdx = templeFuncs.RNG(0, aiSpells->spellEnums.size() - 1);
+		auto spellIdx = rngSys.GetInt(0, aiSpells->spellEnums.size() - 1);
 		spellSys.spellPacketBodyReset(&aiPkt->spellPktBod);
 		unsigned int spellClass;
 		unsigned int spellLevels[2];

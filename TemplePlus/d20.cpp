@@ -36,7 +36,7 @@
 #include "python/python_integration_d20_action.h"
 #include <turn_based.h>
 #include "InfinityEngine.h"
-
+#include "rng.h"
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
@@ -1035,7 +1035,7 @@ objHndl LegacyD20System::GetAttackWeapon(objHndl obj, int attackCode, D20CAF fla
 
 ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
 {
-	int hitAnimIdx = templeFuncs.RNG(0, 2);
+	int hitAnimIdx = rngSys.GetInt(0, 2);
 
 	int d20data = d20a->data1;
 	int playCritFlag = 0;
@@ -1047,7 +1047,7 @@ ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
 	}
 	else if (d20a->data1 >= ATTACK_CODE_NATURAL_ATTACK + 1)
 	{
-		useSecondaryAnim = templeFuncs.RNG(0, 1);
+		useSecondaryAnim = rngSys.GetInt(0, 1);
 		hitAnimIdx = (d20a->data1 - (ATTACK_CODE_NATURAL_ATTACK + 1)) % 3;
 	}
 
@@ -1646,7 +1646,7 @@ ActionErrorCode D20ActionCallbacks::PerformQuiveringPalm(D20Actn* d20a){
 	{
 		playCritFlag = 1;
 	}
-	auto attackAnimSubid = templeFuncs.RNG(0, 2);
+	auto attackAnimSubid = rngSys.GetInt(0, 2);
 	
 	
 	if (animationGoals.PushAttackAnim(d20a->d20APerformer, d20a->d20ATarget, 0xFFFFFFFF, attackAnimSubid, playCritFlag, 0))	{

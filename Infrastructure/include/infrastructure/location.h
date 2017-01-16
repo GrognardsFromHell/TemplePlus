@@ -65,6 +65,8 @@ struct LocAndOffsets {
 	LocAndOffsets(locXY loc);
 	LocAndOffsets(locXY loc, float offx, float offy);*/
 
+	void Regularize(); // ensures the floating point offset corresponds to less than half a tile
+
 	static const LocAndOffsets null;
 };
 

@@ -2,6 +2,7 @@
 
 #include <ostream>
 #include <string>
+//#include "../../TemplePlus/location.h"
 
 XMFLOAT2 locXY::ToInches2D(float offsetX, float offsetY) const {
 	return{
@@ -38,6 +39,41 @@ LocAndOffsets LocAndOffsets::create(locXY locXy, float offx, float offy)
 	loc.off_x = offx;
 	loc.off_y = offy;
 	return loc;
+}
+
+void LocAndOffsets::Regularize(){
+	auto loc = this;
+	if (abs(loc->off_x) > 14.142136f)
+	{
+		while (loc->off_x >= 14.142136f)
+		{
+			loc->off_x -= 28.284271f;
+			loc->location.locx++;
+		}
+
+
+		while (loc->off_x < -14.142136f)
+		{
+			loc->off_x += 28.284271f;
+			loc->location.locx--;
+		}
+	}
+
+	if (abs(loc->off_y) > 14.142136f)
+	{
+		while (loc->off_y >= 14.142136f)
+		{
+			loc->off_y -= 28.284271f;
+			loc->location.locy++;
+		}
+
+
+		while (loc->off_y < -14.142136f)
+		{
+			loc->off_y += 28.284271f;
+			loc->location.locy--;
+		}
+	}
 }
 
 //LocAndOffsets::LocAndOffsets()

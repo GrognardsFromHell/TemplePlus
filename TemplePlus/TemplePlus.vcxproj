@@ -151,6 +151,7 @@
     <ClCompile Include="objlist.cpp" />
     <ClCompile Include="radialmenu.cpp" />
     <ClCompile Include="reputations.cpp" />
+    <ClCompile Include="rng.cpp" />
     <ClCompile Include="secret_door.cpp" />
     <ClCompile Include="skill.cpp" />
     <ClCompile Include="spell_structs.cpp" />
@@ -333,6 +334,7 @@
     <ClInclude Include="python\python_integration_class_spec.h" />
     <ClInclude Include="python\python_integration_d20_action.h" />
     <ClInclude Include="python\python_integration_feat.h" />
+    <ClInclude Include="rng.h" />
     <ClInclude Include="tig\tig_console.h" />
     <ClInclude Include="tig\tig_keyboard.h" />
     <ClInclude Include="tutorial.h" />

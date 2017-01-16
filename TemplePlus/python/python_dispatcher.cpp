@@ -29,6 +29,8 @@
 #include "location.h"
 #include "gamesystems/objects/objsystem.h"
 #include "python_integration_spells.h"
+#include "temple_functions.h"
+#include "rng.h"
 
 namespace py = pybind11;
 using namespace pybind11;
@@ -320,6 +322,9 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def("query_can_be_affected_action_perform", [](D20Actn& d20a, objHndl handle)->int{
 			return d20Sys.D20QueryWithDataDefaultTrue(handle, DK_QUE_CanBeAffected_PerformAction, &d20a, 0);
 		})
+		.def("query_is_action_invalid", [](D20Actn& d20a, objHndl handle)->int {
+			return d20Sys.d20QueryWithData(handle, DK_QUE_CanBeAffected_PerformAction, (int)&d20a, 0);
+		})
 		.def("to_hit_processing", [](D20Actn& d20a){
 			combatSys.ToHitProcessing(d20a);
 		})
@@ -328,8 +333,36 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		})
 		.def("create_projectile_and_throw", [](D20Actn& d20a, int protoNum, LocAndOffsets endLoc)->objHndl {
 			auto createProjAndThrow = temple::GetRef<objHndl(__cdecl)(locXY, int, int, int, LocAndOffsets, objHndl, objHndl)>(0x100B4D00);
+			
+			// if missed, randomize the target location a bit
+			if (!(d20a.d20Caf & D20CAF_HIT)){
+				endLoc.off_x = rngSys.GetInt(-30, 30);
+				endLoc.off_y = rngSys.GetInt(-30, 30);
+			}
 			auto startLoc = objSystem->GetObject(d20a.d20APerformer)->GetLocationFull();
 			return createProjAndThrow(startLoc.location, protoNum, 0,0, endLoc, d20a.d20APerformer, d20a.d20ATarget);
+		})
+		.def("create_projectile_and_throw", [](D20Actn& d20a, int protoNum, objHndl tgt)->objHndl {
+			auto createProjAndThrow = temple::GetRef<objHndl(__cdecl)(locXY, int, int, int, LocAndOffsets, objHndl, objHndl)>(0x100B4D00);
+
+			if (!tgt)
+				tgt = d20a.d20ATarget;
+			if (!tgt){
+				logger->error("create_projectile_and_throw: Target is null! using performer as target.");
+				tgt = d20a.d20APerformer;
+			}
+				
+
+			auto endLoc = objSystem->GetObject(tgt)->GetLocationFull();
+
+			// if missed, randomize the target location a bit
+			if (!(d20a.d20Caf & D20CAF_HIT)) {
+				endLoc.off_x = rngSys.GetInt(-30, 30);
+				endLoc.off_y = rngSys.GetInt(-30, 30);
+				endLoc.Regularize();
+			}
+			auto startLoc = objSystem->GetObject(d20a.d20APerformer)->GetLocationFull();
+			return createProjAndThrow(startLoc.location, protoNum, 0, 0, endLoc, d20a.d20APerformer, d20a.d20ATarget);
 		})
 		.def("projectile_append", &D20Actn::ProjectileAppend)
 		;

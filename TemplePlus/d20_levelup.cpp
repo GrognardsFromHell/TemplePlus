@@ -8,6 +8,7 @@
 #include "gamesystems/objects/objsystem.h"
 #include "gamesystems/deity/legacydeitysystem.h"
 #include "ui/ui_char_editor.h"
+#include "rng.h"
 
 
 struct D20LevelupSystemAddresses : temple::AddressTable
@@ -42,10 +43,10 @@ public:
 		if (!_stricmp(cfgLower.c_str(), "max")){
 			result = max;
 		} else if (!_stricmp(cfgLower.c_str(), "average")){
-			result = (min + max) / 2  + templeFuncs.RNG(0,1); // hit die are always even numbered so randomize the roundoff
+			result = (min + max) / 2  + rngSys.GetInt(0,1); // hit die are always even numbered so randomize the roundoff
 		} else
 		{
-			result = templeFuncs.RNG(min, max);
+			result = rngSys.GetInt(min, max);
 		}
 		
 		return result;

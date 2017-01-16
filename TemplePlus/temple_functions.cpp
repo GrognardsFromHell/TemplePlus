@@ -9,6 +9,7 @@
 #include "common.h"
 #include "config/config.h"
 #include "util/fixes.h"
+#include "rng.h"
 
 TempleFuncs templeFuncs;
 
@@ -27,7 +28,7 @@ int32_t TempleFuncs::diceRoll(uint32_t dieNum, uint32_t dieType, int32_t dieBonu
 	int32_t result = dieBonus;
 	for (uint32_t i = 0; i < dieNum; i++)
 	{
-		result += RNG(1, dieType);
+		result += rngSys.GetInt(1, dieType);
 	}
 	return result;
 }
@@ -35,7 +36,6 @@ int32_t TempleFuncs::diceRoll(uint32_t dieNum, uint32_t dieType, int32_t dieBonu
 TempleFuncs::TempleFuncs()
 {
 	rebase(StringHash, 0x101EBB00);
-	rebase(RNG, 0x10038DF0);
 	
 	rebase(ObjStatBaseDispatch, 0x1004E810);
 

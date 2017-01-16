@@ -468,6 +468,7 @@
     <ClCompile Include="ui\ui_debug.cpp">
       <Filter>ui</Filter>
     </ClCompile>
+    <ClCompile Include="rng.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -883,6 +884,7 @@
     <ClInclude Include="ui\ui_debug.h">
       <Filter>ui</Filter>
     </ClInclude>
+    <ClInclude Include="rng.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

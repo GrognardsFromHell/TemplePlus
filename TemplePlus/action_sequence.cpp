@@ -779,6 +779,9 @@ int ActionSequenceSystem::ActionAddToSeq()
 		curSeq->tbStatus.tbsFlags |= TBSF_CritterSpell; // perhaps bug that it's not affecting the local copy?? TODO
 		curSeq->spellPktBody.spellEnumOriginal = curSeq->spellPktBody.spellEnum;
 	}
+	if (d20ActnType == D20A_PYTHON_ACTION){
+		d20Sys.globD20ActionKey = (D20DispatcherKey) d20Sys.globD20Action->data1;
+	}
 	auto actnCheckFunc = d20Sys.d20Defs[d20ActnType].actionCheckFunc;
 	if (actnCheckFunc)
 		actnCheckResult = actnCheckFunc(d20Sys.globD20Action, &tbStatus);
@@ -1053,7 +1056,6 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		if (pathQ.critter == pathQ.targetObj)
 			return ActionErrorCode::AEC_TARGET_INVALID;
 
-		const float twelve = 12.0;
 		const float fourPointSevenPlusEight = 4.714045f + 8.0f;
 		pathQ.flags = static_cast<PathQueryFlags>(PathQueryFlags::PQF_TO_EXACT | PathQueryFlags::PQF_HAS_CRITTER | PathQueryFlags::PQF_800
 			| PathQueryFlags::PQF_TARGET_OBJ | PathQueryFlags::PQF_ADJUST_RADIUS | PathQueryFlags::PQF_ADJ_RADIUS_REQUIRE_LOS);
@@ -1061,8 +1063,8 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		
 		if (reach < 0.1){ reach = 3.0; }
 		actSeq->targetObj = d20a->d20ATarget;
-		pathQ.distanceToTargetMin = distToTgtMin * twelve;
-		pathQ.tolRadius = reach * twelve - fourPointSevenPlusEight;
+		pathQ.distanceToTargetMin = distToTgtMin * 12.0;
+		pathQ.tolRadius = reach * 12.0 - fourPointSevenPlusEight;
 	} else
 	{
 		pathQ.to = d20aIn->destLoc;
@@ -1070,8 +1072,7 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 			 | PathQueryFlags::PQF_ALLOW_ALTERNATIVE_TARGET_TILE);
 	}
 
-	if (d20a->d20Caf & D20CAF_UNNECESSARY)
-	{
+	if (d20a->d20Caf & D20CAF_UNNECESSARY){
 		*reinterpret_cast<int*>(&pathQ.flags) |= PQF_A_STAR_TIME_CAPPED;
 	} 
 
@@ -3376,8 +3377,8 @@ int ActionSequenceSystem::StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBased
 	int hgState = tbStat->hourglassState;
 
 	if (tbStat->attackModeCode < tbStat->baseAttackNumCode || hgState < 2)
-		return 1; // Not enough time error
-
+		return AEC_NOT_ENOUGH_TIME1; // Not enough time error
+	
 	
 	if (hgState != -1)
 		hgState = turnBasedStatusTransitionMatrix[hgState][2];

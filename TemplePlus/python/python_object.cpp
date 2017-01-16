@@ -39,7 +39,7 @@
 #include <gamesystems/objects/objevent.h>
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
-
+#include "pathfinding.h"
 
 #undef HAVE_ROUND
 #define PYBIND11_EXPORT
@@ -566,6 +566,48 @@ static PyObject* PyObjHandle_CanCastSpell(PyObject* obj, PyObject* args) {
 
 	return PyInt_FromLong(1);
 }
+
+static PyObject* PyObjHandle_CanFindPathToObj(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	auto handle = self->handle;
+
+	objHndl tgtObj;
+	LocAndOffsets tgtLoc;
+	int flags;
+
+	PathQuery pathQ;
+	PathQueryResult pqr;
+
+	// get target
+	if (!PyArg_ParseTuple(args, "O&|i:objhndl.can_find_path_to_obj", &ConvertObjHndl, &tgtObj, &flags)) {
+		return 0;
+	}
+
+	pathQ.critter = self->handle;
+	pathQ.targetObj = tgtObj;
+	if (pathQ.critter == pathQ.targetObj)
+		return PyInt_FromLong(0);
+
+	const float fourPointSevenPlusEight = 4.714045f + 8.0f;
+	pathQ.flags = static_cast<PathQueryFlags>(PathQueryFlags::PQF_TO_EXACT | PathQueryFlags::PQF_HAS_CRITTER | PathQueryFlags::PQF_800
+		| PathQueryFlags::PQF_TARGET_OBJ | PathQueryFlags::PQF_ADJUST_RADIUS | PathQueryFlags::PQF_ADJ_RADIUS_REQUIRE_LOS);
+	*((int*)&pathQ.flags) |= flags;
+
+	auto reach = critterSys.GetReach(self->handle, D20A_UNSPECIFIED_MOVE);
+	if (reach < 0.1) { reach = 3.0; }
+	pathQ.distanceToTargetMin = 0.0;
+	pathQ.tolRadius = reach * 12.0 - fourPointSevenPlusEight;
+
+	auto nodeCount = pathfindingSys.FindPath(&pathQ, &pqr);
+	
+	auto pathLen = pathfindingSys.pathLength(&pqr);
+
+	return PyInt_FromLong(pathLen);
+}
+
 
 static PyObject* PyObjHandle_SkillLevelGet(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -2981,6 +3023,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 
 	{"cast_spell", PyObjHandle_CastSpell, METH_VARARGS, NULL },
 	{"can_cast_spell", PyObjHandle_CanCastSpell, METH_VARARGS, NULL },
+	{"can_find_path_to_obj", PyObjHandle_CanFindPathToObj, METH_VARARGS, NULL },
 	{"can_see", PyObjHandle_HasLos, METH_VARARGS, NULL },
 	{ "can_sneak_attack", PyObjHandle_CanSneakAttack, METH_VARARGS, NULL },
 	{ "concealed_set", PyObjHandle_ConcealedSet, METH_VARARGS, NULL },
