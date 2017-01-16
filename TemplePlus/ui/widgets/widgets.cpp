@@ -308,6 +308,11 @@ void WidgetContainer::Add(std::unique_ptr<WidgetBase> childWidget)
 	mChildren.emplace_back(std::move(childWidget));
 }
 
+void WidgetContainer::Clear()
+{
+	mChildren.clear();
+}
+
 WidgetBase * WidgetContainer::PickWidget(int x, int y)
 {
 	for (auto it = mChildren.rbegin(); it != mChildren.rend(); it++) {
@@ -544,7 +549,7 @@ void WidgetButton::UpdateContent()
 void WidgetButton::UpdateAutoSize()
 {
 	// Try to auto-size
-	if (!mButton->width || !mButton->height) {
+	if (mAutoSizeWidth || mAutoSizeHeight) {
 		gfx::Size prefSize;
 		if (mNormalImage) {
 			prefSize = mNormalImage->GetPreferredSize();
@@ -552,15 +557,13 @@ void WidgetButton::UpdateAutoSize()
 			prefSize = mLabel.GetPreferredSize();
 		}
 
-		// If the label is set to "center", it might return a pref. width of 0
-		// but a correct preferred height
-		if (!prefSize.width) {
-			prefSize.width = GetWidth();
+		if (mAutoSizeWidth && mAutoSizeHeight) {
+			SetSize(prefSize);
+		} else if (mAutoSizeWidth) {
+			SetWidth(prefSize.width);
+		} else if (mAutoSizeHeight) {
+			SetHeight(prefSize.height);
 		}
-		if (!prefSize.height) {
-			prefSize.height = GetHeight();
-		}
-		SetSize(prefSize);
 	}
 }
 
@@ -639,7 +642,7 @@ bool WidgetScrollBarHandle::HandleMouseMessage(const TigMouseMsg &msg) {
 			}
 			auto newVal = mScrollBar.mMin + (mScrollBar.mMax - mScrollBar.mMin) * vPercent;
 
-			mScrollBar.mValue = (int) newVal;
+			mScrollBar.SetValue((int)newVal);
 		}
 		if (msg.flags & MSF_LMB_RELEASED) {
 			uiManager->UnsetMouseCaptureWidgetId(GetWidgetId());
@@ -733,4 +736,47 @@ int WidgetScrollBar::GetScrollRange() const
 int WidgetScrollBar::GetTrackHeight() const
 {
 	return GetHeight() - mUpButton->GetHeight() - mDownButton->GetHeight();
+}
+
+WidgetScrollView::WidgetScrollView(int width, int height) : WidgetContainer(width, height)
+{
+	auto scrollBar = std::make_unique<WidgetScrollBar>();
+	scrollBar->SetHeight(height);
+	scrollBar->SetX(width - scrollBar->GetWidth());	
+	scrollBar->SetValueChangeHandler([this](int newValue) {
+		mContainer->SetScrollOffsetY(newValue);
+	});
+	mScrollBar = scrollBar.get();
+	WidgetContainer::Add(std::move(scrollBar));
+	
+	auto scrollView = std::make_unique<WidgetContainer>(GetInnerWidth(), height);
+	mContainer = scrollView.get();
+	WidgetContainer::Add(std::move(scrollView));
+}
+
+void WidgetScrollView::Add(std::unique_ptr<WidgetBase> childWidget)
+{
+	mContainer->Add(std::move(childWidget));
+}
+
+void WidgetScrollView::Clear()
+{
+	mContainer->Clear();
+}
+
+int WidgetScrollView::GetInnerWidth() const
+{
+	return GetWidth() - mScrollBar->GetWidth();
+}
+
+void WidgetScrollView::UpdateInnerHeight()
+{
+	int innerHeight = 0;
+	for (auto &child : mContainer->GetChildren()) {
+		auto bottom = child->GetY() + child->GetHeight();
+		if (bottom > innerHeight) {
+			innerHeight = bottom;
+		}
+	}
+	mScrollBar->SetMax(innerHeight);
 }

@@ -15,10 +15,10 @@
     "dropShadowBrush": "#00000000"
   },
   {
-    "id": "mm-style1",
-    "inherit": "default",
-    "align": "center",
-    "paragraphAlign": "center",
-    "bold":  true
+    "id": "default-button-text",
+    "fontFamily": "Arial",
+    "pointSize": 12,
+    "foreground": "#ffffff",
+    "align": "center"
   }
 ]

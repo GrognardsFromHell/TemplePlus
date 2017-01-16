@@ -1571,12 +1571,16 @@ RenderingDevice::CreateRenderTargetDepthStencil(int width, int height, bool mult
 void RenderingDevice::SetScissorRect(int x, int y, int width, int height) {
 	D3D11_RECT rect{ x, y, x + width, y + height };
 	mContext->RSSetScissorRects(1, &rect);
+
+	mImpl->textEngine->SetScissorRect({ x, y, width, height });
 }
 
 void RenderingDevice::ResetScissorRect() {
 	auto &size = mRenderTargetStack.back().colorBuffer->GetSize();
 	D3D11_RECT rect{ 0, 0, size.width, size.height };
 	mContext->RSSetScissorRects(1, &rect);
+
+	mImpl->textEngine->ResetScissorRect();
 }
 
 }

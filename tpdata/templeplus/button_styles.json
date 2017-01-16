@@ -9,7 +9,7 @@
 	},
 	{
       "id": "accept-button",
-	  "inherit": "default-sounds",
+	    "inherit": "default-sounds",
       "textStyle": "default-button-text",
       "normalImage": "art/interface/generic/Accept_Normal.tga",
       "hoverImage": "art/interface/generic/Accept_Hover.tga",
@@ -18,7 +18,7 @@
     },
     {
       "id": "cancel-button",
-	  "inherit": "default-sounds",
+	    "inherit": "default-sounds",
       "textStyle": "default-button-text",
       "normalImage": "art/interface/generic/Decline_Normal.tga",
       "hoverImage": "art/interface/generic/Decline_Hover.tga",

@@ -39,8 +39,8 @@ namespace gfx {
 		ParagraphAlign paragraphAlign = ParagraphAlign::Near;
 		Brush foreground;
 		bool uniformLineHeight = false;
-		float lineHeight;
-		float baseLine;
+		float lineHeight = 0;
+		float baseLine = 0;
 		bool dropShadow = false;
 		Brush dropShadowBrush;
 		bool trim = false;
@@ -96,6 +96,9 @@ namespace gfx {
 		void SetRenderTarget(ID3D11Texture2D *renderTarget);
 
 		void AddFont(const std::string &filename);
+
+		void SetScissorRect(const TigRect &rect);
+		void ResetScissorRect();
 
 	private:
 		struct Impl;

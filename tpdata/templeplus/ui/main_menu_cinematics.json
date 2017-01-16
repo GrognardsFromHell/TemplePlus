@@ -13,15 +13,17 @@
       "align": "center"
     },
     {
-      "id": "default-button-text",
+      "id": "mm-cinematics-list-button",
       "fontFamily": "Arial",
       "pointSize": 12,
-      "foreground": "#ffffff",
-      "align": "center"
+      "foreground": "#ffffff"
     }
   ],
   "__buttonStyles": [
-    
+    {
+      "id": "mm-cinematics-list-button",
+      "textStyle": "mm-cinematics-list-button"
+    }
   ],
   "content": [
     {
@@ -53,9 +55,11 @@
       "style": "cancel-button"
     },
     {
-      "type": "scrollBar",
-      "x": 256,
+      "id":  "cinematicsList",
+      "type": "scrollView",
+      "x": 10,
       "y": 71,
+      "width": 200,
       "height": 219
     }
   ]

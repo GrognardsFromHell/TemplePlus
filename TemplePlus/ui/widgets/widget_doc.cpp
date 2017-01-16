@@ -74,9 +74,11 @@ void LoadWidgetBase(const json11::Json &jsonObj, WidgetBase &widget, WidgetLoadi
 	auto size = widget.GetSize();
 	if (jsonObj["width"].is_number()) {
 		size.width = (int)jsonObj["width"].number_value();
+		widget.SetAutoSizeWidth(false);
 	}
 	if (jsonObj["height"].is_number()) {
 		size.height = (int)jsonObj["height"].number_value();
+		widget.SetAutoSizeHeight(false);
 	}
 	widget.SetSize(size);
 
@@ -92,26 +94,43 @@ void LoadWidgetBase(const json11::Json &jsonObj, WidgetBase &widget, WidgetLoadi
 
 }
 
-static std::unique_ptr<WidgetBase> LoadWidgetContainer(const json11::Json &jsonObj, WidgetLoadingContext &context) {
+static void LoadChildren(const json11::Json &jsonObj, WidgetLoadingContext &context, WidgetContainer &container) {
+	for (auto &childJson : jsonObj.array_items()) {
+		auto childWidget = LoadWidgetTree(childJson, context);
+		childWidget->SetParent(&container);
+		container.Add(std::move(childWidget));
+	}
+}
+
+static std::unique_ptr<WidgetBase> LoadWidgetScrollView(const json11::Json &jsonObj, WidgetLoadingContext &context) {
 
 	auto width = (int)jsonObj["width"].number_value();
 	auto height = (int) jsonObj["height"].number_value();
+
+	auto result = std::make_unique<WidgetScrollView>(width, height);
+
+	LoadWidgetBase(jsonObj, *result, context);
+
+	LoadContent(jsonObj["content"], *result);
+	LoadChildren(jsonObj["children"], context, *result);	
+
+	return result;
+}
+
+static std::unique_ptr<WidgetBase> LoadWidgetContainer(const json11::Json &jsonObj, WidgetLoadingContext &context) {
+
+	auto width = (int)jsonObj["width"].number_value();
+	auto height = (int)jsonObj["height"].number_value();
 
 	auto result = std::make_unique<WidgetContainer>(width, height);
 
 	LoadWidgetBase(jsonObj, *result, context);
 
 	LoadContent(jsonObj["content"], *result);
-
-	for (auto &childJson : jsonObj["children"].array_items()) {
-		auto childWidget = LoadWidgetTree(childJson, context);
-		childWidget->SetParent(result.get());
-		result->Add(std::move(childWidget));
-	}
+	LoadChildren(jsonObj["children"], context, *result);
 
 	return result;
 }
-
 
 static std::unique_ptr<WidgetBase> LoadWidgetButton(const json11::Json &jsonObj, WidgetLoadingContext &context) {
 
@@ -181,6 +200,7 @@ static std::map<std::string, std::function<WidgetPtr(const json11::Json&, Widget
 	{ "container", LoadWidgetContainer },
 	{ "button", LoadWidgetButton },
 	{ "scrollBar", LoadWidgetScrollBar },
+	{ "scrollView", LoadWidgetScrollView }
 };
 
 static std::unique_ptr<WidgetBase> LoadWidgetTree(const json11::Json &jsonObj, WidgetLoadingContext &context) {
@@ -278,4 +298,13 @@ WidgetButtonBase * WidgetDoc::GetButton(const std::string & id) const
 		throw TempleException("Expected widget with id '{}' in doc '{}' to be a button!", id, mPath);
 	}
 	return (WidgetButton*)widget;
+}
+
+WidgetScrollView* WidgetDoc::GetScrollView(const std::string & id) const
+{
+	auto widget = GetWidget(id);
+	if (!widget->IsScrollView()) {
+		throw TempleException("Expected widget with id '{}' in doc '{}' to be a scroll view!", id, mPath);
+	}
+	return (WidgetScrollView*)widget;
 }
