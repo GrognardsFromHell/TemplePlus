@@ -666,6 +666,7 @@ LgcyWidgetId UiManager::GetWidgetAt(int x, int y)
 				if (in) {
 					return in->GetWidgetId();
 				}
+				break;
 			}
 
 			// Also in reverse order

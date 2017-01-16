@@ -379,6 +379,9 @@ void RenderingDevice::PushRenderTarget(
   mContext->RSSetViewports(1, &viewport);
 
   mRenderTargetStack.push_back({colorBuffer, depthStencilBuffer});
+
+  ResetScissorRect();
+
 }
 
 void RenderingDevice::PopRenderTarget() {
@@ -415,6 +418,9 @@ void RenderingDevice::PopRenderTarget() {
   // Set the viewport accordingly
   CD3D11_VIEWPORT viewport(0.0f, 0.0f, (float)size.width, (float)size.height);
   mContext->RSSetViewports(1, &viewport);
+
+  ResetScissorRect();
+
 }
 
 ResizeListenerRegistration RenderingDevice::AddResizeListener(ResizeListener listener)
@@ -730,7 +736,7 @@ Material RenderingDevice::CreateMaterial(
   samplerBindings.reserve(samplerSpecs.size());
   for (auto &samplerSpec : samplerSpecs) {
     samplerBindings.push_back(
-        {samplerSpec.texture, createSamplerState(samplerSpec.samplerSpec)});
+        {samplerSpec.texture, CreateSamplerState(samplerSpec.samplerSpec)});
   }
 
   return Material(blendState, depthStencilState, rasterizerState,
@@ -883,6 +889,8 @@ RenderingDevice::CreateRasterizerState(const RasterizerSpec &spec) {
     break;
   }
 
+  rasterizerDesc.ScissorEnable = spec.scissor ? TRUE : FALSE;
+
   rasterizerDesc.MultisampleEnable = mImpl->antiAliasing ? TRUE : FALSE;
 
   CComPtr<ID3D11RasterizerState> gpuState;
@@ -906,7 +914,7 @@ static D3D11_TEXTURE_ADDRESS_MODE ConvertTextureAddress(TextureAddress address) 
 	}
 }
 
-SamplerStatePtr RenderingDevice::createSamplerState(const SamplerSpec &spec) {
+SamplerStatePtr RenderingDevice::CreateSamplerState(const SamplerSpec &spec) {
 
   CD3D11_SAMPLER_DESC samplerDesc{CD3D11_DEFAULT()};
 
@@ -1558,6 +1566,17 @@ RenderingDevice::CreateRenderTargetDepthStencil(int width, int height, bool mult
 
   Size size{width, height};
   return std::make_shared<RenderTargetDepthStencil>(texture, depthStencilView, size);
+}
+
+void RenderingDevice::SetScissorRect(int x, int y, int width, int height) {
+	D3D11_RECT rect{ x, y, x + width, y + height };
+	mContext->RSSetScissorRects(1, &rect);
+}
+
+void RenderingDevice::ResetScissorRect() {
+	auto &size = mRenderTargetStack.back().colorBuffer->GetSize();
+	D3D11_RECT rect{ 0, 0, size.width, size.height };
+	mContext->RSSetScissorRects(1, &rect);
 }
 
 }

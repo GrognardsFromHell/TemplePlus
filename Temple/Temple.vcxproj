@@ -31,7 +31,6 @@
   <ItemGroup>
     <ClCompile Include="src\aasrenderer.cpp" />
     <ClCompile Include="src\dll.cpp" />
-    <ClCompile Include="src\materials.cpp" />
     <ClCompile Include="src\meshes.cpp" />
     <ClCompile Include="src\moviesystem.cpp" />
     <ClCompile Include="src\soundsystem.cpp" />

@@ -8,6 +8,7 @@
 #include "tig/tig_mouse.h"
 #include "ui/ui_render.h"
 #include "messages/messagequeue.h"
+#include "gameview.h"
 
 #include <graphics/device.h>
 
@@ -156,6 +157,7 @@ void WidgetBase::Render()
 		
 		content->Render();
 	}
+
 }
 
 bool WidgetBase::HandleMessage(const TigMsg &msg)
@@ -169,12 +171,7 @@ bool WidgetBase::HandleMessage(const TigMsg &msg)
 	}
 
 	if (msg.type == TigMsgType::MOUSE) {
-		// The TIG msgs use screen coordinates. Move the coordinates for the 
-		// mouse-specific message handler into the local coordinate space
-		auto contentArea = GetContentArea();
 		TigMouseMsg mouseMsg = *(const TigMouseMsg*)&msg.arg1;
-		mouseMsg.x -= contentArea.x;
-		mouseMsg.y -= contentArea.y;
 		return HandleMouseMessage(mouseMsg);
 	}
 
@@ -196,11 +193,20 @@ static TigRect GetContentArea(LgcyWidgetId id) {
 	
 	auto widget = uiManager->GetWidget(id);
 	TigRect bounds{ widget->x, widget->y, (int) widget->width, (int) widget->height };
+	
+	auto advWidget = uiManager->GetAdvancedWidget(id);
 
+	// The content of an advanced widget container may be moved
+	int scrollOffsetY = 0;
+	if (advWidget->GetParent()) {
+		auto container = advWidget->GetParent();
+		scrollOffsetY = container->GetScrollOffsetY();
+	}
+	
 	if (widget->parentId != -1) {
 		TigRect parentBounds = GetContentArea(widget->parentId);
 		bounds.x += parentBounds.x;
-		bounds.y += parentBounds.y;
+		bounds.y += parentBounds.y - scrollOffsetY;
 		
 		// Clamp width/height if necessary
 		int parentRight = parentBounds.x + parentBounds.width;
@@ -213,10 +219,10 @@ static TigRect GetContentArea(LgcyWidgetId id) {
 		}
 
 		if (bounds.x + bounds.width > parentRight) {
-			bounds.width = parentRight - bounds.x;
+			bounds.width = std::max(0, parentRight - bounds.x);
 		}
 		if (bounds.y + bounds.height > parentBottom) {
-			bounds.height = parentBottom - bounds.y;
+			bounds.height = std::max(0, parentBottom - bounds.y);
 		}
 	}
 
@@ -226,6 +232,45 @@ static TigRect GetContentArea(LgcyWidgetId id) {
 TigRect WidgetBase::GetContentArea() const
 {
 	return ::GetContentArea(mWidget->widgetId);
+}
+
+TigRect WidgetBase::GetVisibleArea() const
+{	
+	if (mParent) {
+		TigRect parentArea = mParent->GetVisibleArea();
+		int parentLeft = parentArea.x;
+		int parentTop = parentArea.y;
+		int parentRight = parentLeft + parentArea.width;
+		int parentBottom = parentTop + parentArea.height;
+
+		int clientLeft = parentArea.x + mWidget->x;
+		int clientTop = parentArea.y + mWidget->y - mParent->GetScrollOffsetY();
+		int clientRight = clientLeft + mWidget->width;
+		int clientBottom = clientTop + mWidget->height;
+
+		clientLeft = std::max(parentLeft, clientLeft);
+		clientTop = std::max(parentTop, clientTop);
+
+		clientRight = std::min(parentRight, clientRight);
+		clientBottom = std::min(parentBottom, clientBottom);
+
+		if (clientRight <= clientLeft) {
+			clientRight = clientLeft;
+		}
+		if (clientBottom <= clientTop) {
+			clientBottom = clientTop;
+		}
+
+		return{
+			clientLeft,
+			clientTop,
+			clientRight - clientLeft,
+			clientBottom - clientTop
+		};		
+	} else {
+		return{ mWidget->x, mWidget->y, (int) mWidget->width, (int) mWidget->height };
+	}
+
 }
 
 bool WidgetBase::HandleMouseMessage(const TigMouseMsg & msg)
@@ -273,7 +318,7 @@ WidgetBase * WidgetContainer::PickWidget(int x, int y)
 		}
 
 		int localX = x - child->GetPos().x;
-		int localY = y - child->GetPos().y;
+		int localY = y - child->GetPos().y + mScrollOffsetY;
 		
 		auto result = child->PickWidget(localX, localY);
 		if (result) {
@@ -291,30 +336,44 @@ void WidgetContainer::Render()
 
 	WidgetBase::Render();
 
+	auto visArea = GetVisibleArea();
+
 	for (auto &child : mChildren) {
-		if (child->IsVisible()) {
+		if (child->IsVisible()) {			
+			tig->GetRenderingDevice().SetScissorRect(visArea.x, visArea.y, visArea.width, visArea.height);
 			child->Render();
 		}
 	}
+
+	tig->GetRenderingDevice().ResetScissorRect();
+
 }
 
 bool WidgetContainer::HandleMouseMessage(const TigMouseMsg & msg)
 {
+	auto area = GetContentArea();
+
+	// Iterate in reverse order since this list is ordered in ascending z-order
 	for (auto it = mChildren.rbegin(); it != mChildren.rend(); it++) {
 		auto child = it->get();
 
-		TigMouseMsg childMsg = msg;
-		childMsg.x -= child->GetX();
-		childMsg.y -= child->GetY();
-
-		if (childMsg.x >= 0 && childMsg.x < child->GetWidth() && childMsg.y >= 0 && childMsg.y < child->GetHeight()) {
-			if (child->HandleMouseMessage(childMsg)) {
+		int x = msg.x - area.x;
+		int y = msg.y - area.y + GetScrollOffsetY();
+		
+		if (child->IsVisible() && x >= child->GetX() && y >= child->GetY() && x < child->GetX() + child->GetWidth() && y < child->GetY() + child->GetHeight()) {
+			if (child->HandleMouseMessage(msg)) {
 				return true;
 			}
 		}
 	}
 
 	return WidgetBase::HandleMouseMessage(msg);
+}
+
+void WidgetContainer::SetScrollOffsetY(int scrollY)
+{
+	mScrollOffsetY = scrollY;
+	uiManager->RefreshMouseOverState();
 }
 
 WidgetButtonBase::WidgetButtonBase()
@@ -523,6 +582,7 @@ private:
 	WidgetImage mBottom;
 	WidgetImage mBottomClicked;
 
+	int mDragY = 0;
 	int mDragGrabPoint = 0;
 };
 
@@ -567,9 +627,8 @@ void WidgetScrollBarHandle::Render() {
 
 bool WidgetScrollBarHandle::HandleMouseMessage(const TigMouseMsg &msg) {
 	if (uiManager->GetMouseCaptureWidgetId() == GetWidgetId()) {
-		int y = GetY() + msg.y; // Get back into the parent coordinate system
-		if ((msg.flags & MSF_POS_CHANGE || msg.flags & MSF_POS_CHANGE_SLOW)) {
-			int curY = y - mDragGrabPoint;
+		if (msg.flags & MSF_POS_CHANGE) {
+			int curY = mDragY + msg.y - mDragGrabPoint;
 
 			int scrollRange = mScrollBar.GetScrollRange();
 			auto vPercent = (curY - mScrollBar.mUpButton->GetHeight()) / (float) scrollRange;
@@ -581,7 +640,7 @@ bool WidgetScrollBarHandle::HandleMouseMessage(const TigMouseMsg &msg) {
 			auto newVal = mScrollBar.mMin + (mScrollBar.mMax - mScrollBar.mMin) * vPercent;
 
 			mScrollBar.mValue = (int) newVal;
-		} 
+		}
 		if (msg.flags & MSF_LMB_RELEASED) {
 			uiManager->UnsetMouseCaptureWidgetId(GetWidgetId());
 		}
@@ -589,6 +648,7 @@ bool WidgetScrollBarHandle::HandleMouseMessage(const TigMouseMsg &msg) {
 		if (msg.flags & MSF_LMB_DOWN) {
 			uiManager->SetMouseCaptureWidgetId(GetWidgetId());
 			mDragGrabPoint = msg.y;
+			mDragY = GetY();
 		}		
 	}
 	return true;

@@ -116,6 +116,7 @@ public:
 	}
 
 	TigRect GetContentArea() const;
+	TigRect GetVisibleArea() const;
 
 	void SetMouseMsgHandler(std::function<bool(const TigMouseMsg &msg)> handler) {
 		mMouseMsgHandler = handler;
@@ -173,9 +174,16 @@ public:
 
 	bool HandleMouseMessage(const TigMouseMsg &msg) override;
 
+	void SetScrollOffsetY(int scrollY);
+	int GetScrollOffsetY() const {
+		return mScrollOffsetY;
+	}
+
 private:
 	LgcyWindow *mWindow;
 	eastl::vector<std::unique_ptr<WidgetBase>> mChildren;
+
+	int mScrollOffsetY = 0;
 };
 
 class WidgetButtonBase : public WidgetBase {
@@ -322,3 +330,4 @@ private:
 	int GetTrackHeight() const;
 
 };
+

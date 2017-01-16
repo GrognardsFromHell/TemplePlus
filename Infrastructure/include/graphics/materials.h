@@ -23,8 +23,11 @@ namespace gfx {
 		// indices need to be clock wise for the front
 		CullMode cullMode = CullMode::Back;
 
+		// Enable or disable scissor culling
+		bool scissor = true;
+
 		bool operator <(const RasterizerSpec &o) const {
-			return std::tie(wireframe, cullMode) < std::tie(o.wireframe, o.cullMode);
+			return std::tie(wireframe, cullMode, scissor) < std::tie(o.wireframe, o.cullMode, scissor);
 		}
 
 	};
