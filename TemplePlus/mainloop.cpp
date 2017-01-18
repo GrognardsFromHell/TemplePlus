@@ -147,13 +147,24 @@ void GameLoop::Run() {
 		mGameSystems.AdvanceTime();
 
 		// This locks the cursor to our window if we are in the foreground and it's enabled
-		if (!config.windowed && config.lockCursor) {
+		if (!config.windowed && config.lockCursor){
 			auto sceneRect = gameView.GetSceneRect();
 			tig->GetMainWindow().LockCursor(
 				(int) sceneRect.x,
 				(int) sceneRect.y,
 				(int) sceneRect.z,
 				(int) sceneRect.w
+			);
+		}
+		else if (config.windowed && config.windowedLockCursor) {
+			auto sceneRect = gameView.GetSceneRect();
+			RECT winrect;
+			GetWindowRect(tig->GetMainWindow().GetHwnd(), &winrect);
+			tig->GetMainWindow().LockCursor(
+				(int)winrect.left+8,
+				(int)winrect.top+5,
+				(int)(winrect.right - winrect.left - 18),
+				(int)(winrect.bottom - winrect.top - 13)
 			);
 		}
 
