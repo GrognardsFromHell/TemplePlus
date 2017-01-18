@@ -586,7 +586,9 @@ static PyObject* PyObjHandle_CanFindPathToObj(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 
+	
 	pathQ.critter = self->handle;
+	pathQ.from = objSystem->GetObject(self->handle)->GetLocationFull();
 	pathQ.targetObj = tgtObj;
 	if (pathQ.critter == pathQ.targetObj)
 		return PyInt_FromLong(0);
