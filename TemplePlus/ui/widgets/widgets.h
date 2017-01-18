@@ -24,6 +24,9 @@ public:
 	virtual bool IsButton() const {
 		return false;
 	}
+	virtual bool IsScrollView() const {
+		return false;
+	}
 
 	/**
 	 * Picks the widget a the x,y coordinate local to this widget. 
@@ -138,6 +141,13 @@ public:
 
 	virtual void OnUpdateTime(uint32_t timeMs);
 
+	void SetAutoSizeWidth(bool enable) {
+		mAutoSizeWidth = enable;
+	}
+	void SetAutoSizeHeight(bool enable) {
+		mAutoSizeHeight = enable;
+	}
+
 protected:
 	LgcyWidget *mWidget = nullptr;
 	WidgetContainer *mParent = nullptr;
@@ -146,6 +156,8 @@ protected:
 	bool mCenterHorizontally = false;
 	bool mCenterVertically = false;
 	bool mSizeToParent = false;
+	bool mAutoSizeWidth = true;
+	bool mAutoSizeHeight = true;
 	std::function<bool(const TigMouseMsg &msg)> mMouseMsgHandler;
 	std::function<bool(const TigMsgWidget &msg)> mWidgetMsgHandler;
 	std::function<bool(const TigKeyStateChangeMsg &msg)> mKeyStateChangeHandler;
@@ -158,7 +170,8 @@ class WidgetContainer : public WidgetBase {
 public:
 	WidgetContainer(int width, int height);
 
-	void Add(std::unique_ptr<WidgetBase> childWidget);
+	virtual void Add(std::unique_ptr<WidgetBase> childWidget);
+	virtual void Clear();
 
 	WidgetBase *PickWidget(int x, int y) override;
 
@@ -182,7 +195,7 @@ public:
 private:
 	LgcyWindow *mWindow;
 	eastl::vector<std::unique_ptr<WidgetBase>> mChildren;
-
+	
 	int mScrollOffsetY = 0;
 };
 
@@ -291,12 +304,24 @@ public:
 	}
 	void SetMin(int value) {
 		mMin = value;
+		if (mMin > mMax) {
+			mMin = mMax;
+		}
+		if (mValue < mMin) {
+			SetValue(mMin);
+		}
 	}
 	int GetMax() const {
 		return mMax;
 	}
 	void SetMax(int value) {
 		mMax = value;
+		if (mMax < mMin) {
+			mMax = mMin;
+		}
+		if (mValue > mMax) {
+			SetValue(mMax);
+		}
 	}
 	int GetValue() const {
 		return mValue;
@@ -309,12 +334,21 @@ public:
 			value = mMax;
 		}
 		mValue = value;
+		if (mValueChanged) {
+			mValueChanged(mValue);
+		}
 	}
 
 	void Render() override;
 
+	void SetValueChangeHandler(std::function<void(int)> handler) {
+		mValueChanged = handler;
+	}
+
 private:
 	LgcyScrollBar *mScrollBar;
+
+	std::function<void(int)> mValueChanged;
 
 	int mValue = 0;
 	int mMin = 0;
@@ -331,3 +365,23 @@ private:
 
 };
 
+class WidgetScrollView : public WidgetContainer {
+public:
+	WidgetScrollView(int width, int height);
+
+	void Add(std::unique_ptr<WidgetBase> childWidget) override;
+	void Clear() override;
+
+	int GetInnerWidth() const;
+	
+	bool IsScrollView() const override {
+		return true;
+	}
+
+private:
+	WidgetContainer *mContainer;
+	WidgetScrollBar *mScrollBar;
+
+	void UpdateInnerHeight();
+	
+};

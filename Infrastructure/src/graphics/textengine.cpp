@@ -169,6 +169,13 @@ namespace gfx {
 		CComPtr<IDWriteTextLayout> GetTextLayout(int width, int height, const TextStyle &style, const std::wstring &text);
 		CComPtr<IDWriteTextLayout> GetTextLayout(int width, int height, const FormattedText &formatted, bool skipDrawingEffects = false);
 
+		// Clipping
+		bool enableClipRect = false;
+		D2D1_RECT_F clipRect;
+
+		void BeginDraw();
+		void EndDraw();
+
 	};
 	
 	class FontLoader : public IDWriteFontCollectionLoader, public IDWriteFontFileEnumerator, public IDWriteFontFileLoader {
@@ -256,7 +263,7 @@ namespace gfx {
 	void TextEngine::RenderText(const TigRect &rect, const FormattedText &formattedStr)
 	{
 
-		mImpl->context->BeginDraw();
+		mImpl->BeginDraw();
 
 		float x = (float) rect.x;
 		float y = (float) rect.y;
@@ -301,8 +308,8 @@ namespace gfx {
 		(float)rect.y + metrics.top + metrics.height
 		};
 		mImpl->context->DrawRectangle(rectOutline, brush);*/
-
-		D3DVERIFY(mImpl->context->EndDraw());
+		
+		mImpl->EndDraw();
 	}
 
 	void TextEngine::RenderTextRotated(const TigRect &rect, 
@@ -323,7 +330,7 @@ namespace gfx {
 	void TextEngine::RenderText(const TigRect &rect, const TextStyle & style, const std::wstring & text)
 	{
 
-		mImpl->context->BeginDraw();
+		mImpl->BeginDraw();
 
 		// Draw the drop shadow first as a simple +1, +1 shift
 		if (style.dropShadow) {
@@ -367,7 +374,7 @@ namespace gfx {
 		};
 		mImpl->context->DrawRectangle(rectOutline, brush);*/
 
-		D3DVERIFY(mImpl->context->EndDraw());
+		mImpl->EndDraw();
 	}
 
 	void TextEngine::RenderText(const TigRect &rect, const TextStyle & style, const std::string & text)
@@ -454,6 +461,20 @@ namespace gfx {
 		mImpl->fonts.emplace_back(std::move(file));
 		mImpl->fontCollection.Release(); // Has to be rebuilt...
 		mImpl->textFormats.clear();
+	}
+
+	void TextEngine::SetScissorRect(const TigRect & rect)
+	{
+		mImpl->enableClipRect = true;
+		mImpl->clipRect.left = (float) rect.x;
+		mImpl->clipRect.top = (float) rect.y;
+		mImpl->clipRect.right = (float) rect.x + rect.width;
+		mImpl->clipRect.bottom = (float) rect.y + rect.height;
+	}
+
+	void TextEngine::ResetScissorRect()
+	{
+		mImpl->enableClipRect = false;
 	}
 
 	IDWriteTextFormat* TextEngine::Impl::GetTextFormat(const TextStyle &textStyle)
@@ -687,6 +708,24 @@ namespace gfx {
 
 		return textLayout;
 
+	}
+
+	void TextEngine::Impl::BeginDraw()
+	{
+		context->BeginDraw();
+
+		if (enableClipRect) {
+			context->PushAxisAlignedClip(clipRect, D2D1_ANTIALIAS_MODE_ALIASED);
+		}		
+	}
+
+	void TextEngine::Impl::EndDraw()
+	{
+		if (enableClipRect) {
+			context->PopAxisAlignedClip();
+		}
+
+		D3DVERIFY(context->EndDraw());
 	}
 
 	FontLoader::FontLoader(TextEngine::Impl &impl) : mImpl(impl) {

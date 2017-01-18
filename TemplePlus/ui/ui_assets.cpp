@@ -51,6 +51,7 @@ std::string UiAssets::ApplyTranslation(const std::string &text)
 	for (size_t i = 0; i < text.size(); i++) {
 		if (!IsStartOfTranslation(text, i)) {
 			result.push_back(text[i]);
+			continue;
 		}
 
 		size_t firstToken = i; // If parsing fails, we append the original

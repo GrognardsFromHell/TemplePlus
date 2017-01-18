@@ -19,7 +19,7 @@ WidgetTextStyles::WidgetTextStyles()
 	Expects(!widgetTextStyles);
 	widgetTextStyles = this;
 
-	LoadStyles("templeplus/text_styles.json");
+	LoadStylesFile("templeplus/text_styles.json");
 }
 
 WidgetTextStyles::~WidgetTextStyles()

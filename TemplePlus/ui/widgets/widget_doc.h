@@ -36,6 +36,7 @@ public:
 	WidgetBase *GetWidget(const std::string &id) const;
 	WidgetContainer *GetWindow(const std::string &id) const;
 	WidgetButtonBase *GetButton(const std::string &id) const;
+	WidgetScrollView *GetScrollView(const std::string &id) const;
 
 private:
 	std::string mPath;
