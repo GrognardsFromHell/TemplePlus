@@ -37,6 +37,7 @@
 #include <turn_based.h>
 #include "InfinityEngine.h"
 #include "rng.h"
+#include "ai.h"
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
@@ -832,7 +833,43 @@ void LegacyD20System::GlobD20ActnSetSpellData(D20SpellData* d20SpellData)
 
 void LegacyD20System::d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx)
 {
-	__asm{
+	auto performer = actSeq->performer;
+	auto &d20a = actSeq->d20ActArray[idx];
+	auto tgt = d20a.d20ATarget;
+	auto flags = d20a.GetActionDefinitionFlags();
+	if (flags & D20ADF_TriggersCombat){
+		combatSys.enterCombat(actSeq->performer);
+		if (tgt){
+			combatSys.enterCombat(tgt);
+			aiSys.ProvokeHostility(performer, tgt, 1, 0);
+		}
+	}
+
+	if (idx == 0 && (d20a.d20ActType == D20A_CAST_SPELL || d20a.d20ActType == D20A_USE_ITEM)){
+		auto &spellPkt = actSeq->spellPktBody;
+		auto spEnum = spellPkt.spellEnum;
+		if (!spEnum)
+			return;
+
+
+		auto caster = spellPkt.caster;
+		auto tgtCount = spellPkt.targetCount;
+		for (auto i=0; i<tgtCount; i++){
+			auto spTgt = spellPkt.targetListHandles[i];
+			if (!spTgt)
+				break;
+			if (!objSystem->GetObject(spTgt)->IsCritter())
+				continue;
+			if (spellSys.IsSpellHarmful(spEnum, caster, spTgt)){
+				combatSys.enterCombat(performer);
+				combatSys.enterCombat(spTgt);
+			}
+		}
+		
+
+	}
+
+	/*__asm{
 		push esi;
 		push ecx;
 		mov ecx, this;
@@ -845,7 +882,7 @@ void LegacyD20System::d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx)
 
 		pop ecx;
 		pop esi;
-	}
+	}*/
 	//void d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx);//1008AE90    ActnSeq * @<eax>
 }
 
@@ -857,8 +894,8 @@ int32_t LegacyD20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tb
 		return 0;
 
 
-
-	if ( (d20Defs[d20a->d20ActType].flags & D20ADF::D20ADF_QueryForAoO)
+	auto flags = d20a->GetActionDefinitionFlags();
+	if ( (flags & D20ADF::D20ADF_QueryForAoO)
 		&& d20QueryWithData(d20a->d20APerformer, DK_QUE_ActionTriggersAOO, (int)d20a, 0))
 	{
 		if (d20a->d20ActType == D20A_DISARM)
@@ -867,8 +904,8 @@ int32_t LegacyD20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tb
 	}
 		
 	
-	if (!(d20Defs[d20a->d20ActType].flags & D20ADF::D20ADF_TriggersAoO))
-		return 0;
+	if (!(flags & D20ADF::D20ADF_TriggersAoO))
+		return FALSE;
 
 	if (d20a->d20ActType == D20A_TRIP){
 		auto weaponUsed = d20Sys.GetAttackWeapon(d20a->d20APerformer, d20a->data1, (D20CAF)d20a->d20Caf);
@@ -1110,7 +1147,7 @@ void LegacyD20System::D20ActnSetSetSpontCast(D20SpellData* d20SpellData, SpontCa
 
 D20TargetClassification LegacyD20System::TargetClassification(D20Actn* d20a)
 {
-	auto d20DefFlags = d20Defs[d20a->d20ActType].flags;
+	auto d20DefFlags = d20Defs[d20a->d20ActType].flags; // direct access to action flags - intentional
 
 	if (d20DefFlags & D20ADF_Python){
 		return pyactions[d20a->data1].tgtClass;
@@ -1233,7 +1270,7 @@ int LegacyD20System::TargetCheck(D20Actn* d20a)
 
 BOOL LegacyD20System::IsActionOffensive(D20ActionType actionType, objHndl obj) const
 {
-	auto d20ADF = d20Defs[actionType].flags;
+	auto d20ADF = d20Sys.GetActionFlags(actionType);
 	if (d20ADF & D20ADF::D20ADF_TriggersCombat){
 		if (actionType != D20A_LAY_ON_HANDS_USE)
 			return 1;
@@ -1288,7 +1325,7 @@ int LegacyD20System::D20QueryPython(const objHndl& handle, const string& queryKe
 D20ADF LegacyD20System::GetActionFlags(D20ActionType d20ActionType){
 	auto flags = d20Defs[d20ActionType].flags;
 	if (flags & D20ADF_Python){
-		return pyactions[d20Sys.globD20ActionKey].flags;
+		return (D20ADF)(pyactions[d20Sys.globD20ActionKey].flags | D20ADF_Python); // enforce python flag in case it's not defined elsewhere
 	}
 	return flags;
 }
@@ -3148,4 +3185,8 @@ int D20Actn::FilterSpellTargets(SpellPacketBody & spellPkt){
 	blinkSpellHandler(this, spEntry); // originally this cheked the result, but the result was always 0 anyway
 	auto filterResult = actSeqSys.SpellTargetsFilterInvalid(*this);
 	return filterResult;
+}
+
+D20ADF D20Actn::GetActionDefinitionFlags(){
+	return d20Sys.GetActionFlags(this->d20ActType);
 }

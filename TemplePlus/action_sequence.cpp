@@ -2274,18 +2274,37 @@ void ActionSequenceSystem::InterruptSwitchActionSequence(ReadiedActionPacket* re
 
 uint32_t ActionSequenceSystem::combatTriggerSthg(ActnSeq* actSeq)
 {
-	uint32_t result;
-	macAsmProl;
-	__asm{
-		mov ecx, this;
-		mov esi, [ecx]._combatTriggerSthg;
-		mov ebx, actSeq;
-		call esi;
-		mov result, eax;
+	auto performer = actSeq->performer;
+	ActnSeq seqCopy = *actSeq;
+
+
+	combatSys.enterCombat(performer);
+	for (auto i=0; i < actSeq->d20ActArrayNum; i++){
+		d20Sys.d20aTriggerCombatCheck(actSeq, i);
 	}
-	macAsmEpil;
-	
-	return result;
+
+	combatSys.StartCombat(performer, 1);
+
+	if (objects.IsPlayerControlled(performer)){
+		*actSeq = seqCopy;
+		return FALSE;
+	}
+	return TRUE;
+
+
+
+	//uint32_t result;
+	//macAsmProl;
+	//__asm{
+	//	mov ecx, this;
+	//	mov esi, [ecx]._combatTriggerSthg;
+	//	mov ebx, actSeq;
+	//	call esi;
+	//	mov result, eax;
+	//}
+	//macAsmEpil;
+	//
+	//return result;
 }
 
 ActionErrorCode ActionSequenceSystem::seqCheckAction(D20Actn* d20a, TurnBasedStatus* tbStat)
@@ -2355,7 +2374,8 @@ uint32_t ActionSequenceSystem::curSeqNext()
 		else
 		{
 			auto d20aTarget = d20a->d20ATarget;
-			bool triggersCombat = (d20Sys.d20Defs[d20aType].flags & D20ADF_TriggersCombat) != 0;
+			auto actionFlag = d20a->GetActionDefinitionFlags();
+			bool triggersCombat = (actionFlag & D20ADF_TriggersCombat) != 0;
 			if (triggersCombat || (d20aType == D20A_LAY_ON_HANDS_USE && critterSys.IsUndead(d20aTarget)) )
 			{
 				if (d20aTarget)
@@ -2673,7 +2693,7 @@ void ActionSequenceSystem::sequencePerform()
 	// check if OK to perform
 	if (*actSeqPickerActive){
 		ActnSeq * curSeq = *actSeqCur;
-		if (!curSeq || party.IsInParty(curSeq->performer)) // should solve the issue when casting a spell in the presence of prebuffing NPCs (i.e NPCs can still cast spells while the picker is active)
+		if (!curSeq || party.IsInParty(curSeq->performer)) // should solve the issue when casting a spell in the presence of prebuffing NPCs (i.e non-party members can now cast spells while the player's picker is active, so there shouldn't be a lingering spell cast sequence fucking your shit up)
 			return;
 	}
 
@@ -2696,7 +2716,7 @@ void ActionSequenceSystem::sequencePerform()
 
 	// try to perform the sequence and its actions
 	ActnSeq * curSeq = *actSeqCur;
-	if (combat->isCombatActive() || !actSeqSpellHarmful(curSeq) || !combatTriggerSthg(curSeq) ) // POSSIBLE BUG: I think this can cause spells to be overridden (e.g. when the temple priests prebuff simulataneously with you, and you get the spell effect instead) TODO
+	if (combat->isCombatActive() || !ShouldTriggerCombat(curSeq) || !combatTriggerSthg(curSeq) )
 	{
 		if (curSeq != *actSeqCur)
 		{
@@ -2897,19 +2917,39 @@ bool ActionSequenceSystem::projectileCheckBeforeNextAction()
 	return 1;
 }
 
-uint32_t ActionSequenceSystem::actSeqSpellHarmful(ActnSeq* actSeq)
+uint32_t ActionSequenceSystem::ShouldTriggerCombat(ActnSeq* actSeq)
 {
-	uint32_t result;
-	macAsmProl;
-	__asm{
-		mov ecx, this;
-		mov esi, [ecx]._actSeqSpellHarmful;
-		mov ebx, actSeq;
-		call esi;
-		mov result, eax;
+
+	// check if any of the actions triggers combat
+	for (auto i=0; i< actSeq->d20ActArrayNum; i++){
+		auto &d20a = actSeq->d20ActArray[i];
+		auto flags = d20a.GetActionDefinitionFlags();
+		if (flags & D20ADF_TriggersCombat){
+			if (party.IsInParty(actSeq->performer))
+				return TRUE;
+			if (actSeq->targetObj && party.IsInParty(actSeq->targetObj))
+				return TRUE;
+		}
 	}
-	macAsmEpil;
-	return result;
+
+	// check spell targets
+	auto &spPkt = actSeq->spellPktBody;
+	if (!spPkt.spellEnum)
+		return FALSE;
+	for (auto i=0; i<spPkt.targetCount; i++){
+		auto spTgt = spPkt.targetListHandles[i];
+		if (!spTgt)
+			continue;
+		if (!objSystem->GetObject(spTgt)->IsCritter())
+			continue;
+		if (spellSys.IsSpellHarmful(spPkt.spellEnum, spPkt.caster, spTgt)){
+			if (party.IsInParty(spTgt) || party.IsInParty(actSeq->performer))
+				return TRUE;
+		}
+	}
+
+	return FALSE;
+	
 }
 
 uint32_t ActionSequenceSystem::isSimultPerformer(objHndl objHnd)
@@ -2931,11 +2971,10 @@ uint32_t ActionSequenceSystem::simulsOk(ActnSeq* actSeq)
 	if (numd20as <= 0){ return 1; }
 	auto d20a = &actSeq->d20ActArray[0];
 	auto numStdAttkActns = 0;
-	while (d20Sys.d20Defs[d20a->d20ActType].flags & D20ADF_SimulsCompatible)
-	{
+	while (d20a->GetActionDefinitionFlags() & D20ADF_SimulsCompatible){
 		++d20a;
 		++numStdAttkActns;
-		if (numStdAttkActns >= numd20as) return 1;
+		if (numStdAttkActns >= numd20as) return TRUE;
 	}
 	if (isSomeoneAlreadyActingSimult(actSeq->performer))
 	{
@@ -3719,7 +3758,7 @@ void ActnSeqReplacements::NaturalAttackOverwrites()
 	writeVal = (int)&d20Sys.d20Defs[0].flags;
 	write(0x1008ACCA + 2, &writeVal, sizeof(int));
 
-	// actSeqSpellHarmful
+	// ShouldTriggerCombat
 	//  flags
 	writeVal = (int)&d20Sys.d20Defs[0].flags;
 	write(0x1008AD59 + 2, &writeVal, sizeof(int));

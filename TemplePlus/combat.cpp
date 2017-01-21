@@ -644,6 +644,14 @@ void LegacyCombatSystem::TurnProcessAi(objHndl obj)
 
 }
 
+BOOL LegacyCombatSystem::StartCombat(objHndl combatInitiator, int setToFirstInitiativeFlag){
+
+	if (!*combatModeActive){
+		return temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x100639A0)(combatInitiator, setToFirstInitiativeFlag);
+	}
+	return TRUE;
+}
+
 void LegacyCombatSystem::EndTurn()
 {
 	auto actor = tbSys.turnBasedGetCurrentActor();

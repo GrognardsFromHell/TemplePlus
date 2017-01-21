@@ -202,7 +202,7 @@ struct ActionSequenceSystem : temple::AddressTable
 
 
 	bool projectileCheckBeforeNextAction();
-	uint32_t actSeqSpellHarmful(ActnSeq* actSeq);
+	uint32_t ShouldTriggerCombat(ActnSeq* actSeq);
 	uint32_t isSimultPerformer(objHndl);
 	uint32_t simulsOk(ActnSeq* actSeq);
 	uint32_t simulsAbort(objHndl);

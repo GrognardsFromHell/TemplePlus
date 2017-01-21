@@ -769,7 +769,7 @@ void UiIntegameTurnbasedRepl::HourglassUpdate(int intgameAcquireOn, int intgameS
 	TurnBasedStatus tbStat1;
 
 
-	if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].flags & D20ADF::D20ADF_DrawPathByDefault) {
+	if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.globD20Action->GetActionDefinitionFlags() & D20ADF::D20ADF_DrawPathByDefault) {
 		_showPathPreview = 1;
 		intgameAcquireOn = 1;
 		intgameSelectionConfirmed = 1;
@@ -854,7 +854,7 @@ void UiIntegameTurnbasedRepl::HourglassUpdate(int intgameAcquireOn, int intgameS
 		}
 
 		d20aType = d20Sys.globD20Action->d20ActType;
-		if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].flags & D20ADF::D20ADF_DrawPathByDefault) {
+		if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.globD20Action->GetActionDefinitionFlags() & D20ADF::D20ADF_DrawPathByDefault) {
 			tbStat1.tbsFlags = tbStat->tbsFlags;
 			tbStat1.surplusMoveDistance = tbStat->surplusMoveDistance;
 			if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].turnBasedStatusCheck) {
