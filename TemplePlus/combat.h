@@ -48,6 +48,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 	void CombatSubturnEnd();
 	void Subturn();
 	void TurnProcessAi(objHndl obj);
+	BOOL StartCombat(objHndl combatInitiator, int setToFirstInitiativeFlag); // setToFirstInitiativeFlag - will set combatInitiator to start of initiative list if true
 	void TurnStart2( int initiativeIdx);
 	void CombatAdvanceTurn(objHndl obj);
 	BOOL IsBrawlInProgress();

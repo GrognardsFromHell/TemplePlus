@@ -9,6 +9,8 @@
 #include "critter.h"
 
 #include "ui/ui_debug.h"
+#include "combat.h"
+#include "action_sequence.h"
 
 Console::Console() : mLog(1024), mCommandHistory(100), mCommandBuf(1024, '\0') {
 }
@@ -27,7 +29,7 @@ void Console::Render()
 	constexpr auto consoleWidgeFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
 
 	auto size = ImGui::GetIO().DisplaySize;
-	size.y /= 2;
+	size.y = max(300.0f, size.y*0.4f);
 	ImGui::SetNextWindowSize(size);
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	if (!ImGui::Begin("Console", &mOpen, consoleWidgeFlags))
@@ -65,6 +67,14 @@ void Console::Render()
 	ImGui::EndChild();
 	ImGui::Separator();
 
+
+	ImGui::PushItemWidth(12);
+	if (ImGui::Button("X")){
+		ImGui::End();
+		Hide();
+		return;
+	}
+	ImGui::SameLine();
 	ImGui::PushItemWidth(-1);
 	if (ImGui::InputText("Input", &mCommandBuf[0], mCommandBuf.size(), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, Console::CommandEditCallback, this))
 	{
@@ -197,6 +207,21 @@ void Console::RenderCheatsMenu()
 					}
 				}
 			}
+
+			if (combatSys.isCombatActive()){
+				ImGui::PushItemWidth(100);
+				if (ImGui::MenuItem("Refresh Turn")) {
+					auto curSeq = *actSeqSys.actSeqCur;
+					if (curSeq){
+						curSeq->tbStatus.hourglassState = 4;
+						curSeq->tbStatus.surplusMoveDistance = 0;
+						curSeq->tbStatus.tbsFlags = 0;
+					}
+					
+				}
+			}
+			
+
 
 			static char cheatsInput[256] = { 0, };
 			static std::string cheatsInputDescr;

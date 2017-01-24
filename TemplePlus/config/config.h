@@ -40,6 +40,7 @@ struct TemplePlusConfig
 	bool windowed = false;
 	bool d3dDebug = false; // Enables D3D11 debugging
 	bool lockCursor = true; // When in fullscreen, lock cursor
+	bool windowedLockCursor = false; // lock cursor anyway
 	int windowWidth = 1024;
 	int windowHeight = 768;
 	int renderWidth = 800; // will set to window size on first run
