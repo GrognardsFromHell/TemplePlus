@@ -57,10 +57,10 @@
     {
       "id":  "cinematicsList",
       "type": "scrollView",
-      "x": 10,
+      "x": 22,
       "y": 71,
-      "width": 200,
-      "height": 219
+      "width": 246,
+      "height": 218
     }
   ]
 }

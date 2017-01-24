@@ -373,15 +373,20 @@ public:
 	void Clear() override;
 
 	int GetInnerWidth() const;
+	int GetInnerHeight() const;
 	
 	bool IsScrollView() const override {
 		return true;
 	}
 
+	void SetPadding(int padding);
+	int GetPadding() const;
+
 private:
 	WidgetContainer *mContainer;
 	WidgetScrollBar *mScrollBar;
+	int mPadding = 5;
 
 	void UpdateInnerHeight();
-	
+	void UpdateLayout();
 };
