@@ -752,6 +752,8 @@ WidgetScrollView::WidgetScrollView(int width, int height) : WidgetContainer(widt
 	auto scrollView = std::make_unique<WidgetContainer>(GetInnerWidth(), height);
 	mContainer = scrollView.get();
 	WidgetContainer::Add(std::move(scrollView));
+
+	UpdateLayout();
 }
 
 void WidgetScrollView::Add(std::unique_ptr<WidgetBase> childWidget)
@@ -766,7 +768,24 @@ void WidgetScrollView::Clear()
 
 int WidgetScrollView::GetInnerWidth() const
 {
-	return GetWidth() - mScrollBar->GetWidth();
+	return GetWidth() - mScrollBar->GetWidth() - 2 * mPadding;
+}
+
+int WidgetScrollView::GetInnerHeight() const
+{
+	return GetHeight() - 2 * mPadding;
+}
+
+void WidgetScrollView::SetPadding(int padding)
+{
+	mPadding = padding;
+
+	UpdateLayout();	
+}
+
+int WidgetScrollView::GetPadding() const
+{
+	return mPadding;
 }
 
 void WidgetScrollView::UpdateInnerHeight()
@@ -779,4 +798,13 @@ void WidgetScrollView::UpdateInnerHeight()
 		}
 	}
 	mScrollBar->SetMax(innerHeight);
+}
+
+void WidgetScrollView::UpdateLayout()
+{
+	mContainer->SetX(mPadding);
+	mContainer->SetWidth(GetInnerWidth());
+
+	mContainer->SetY(mPadding);
+	mContainer->SetHeight(GetInnerHeight());
 }
