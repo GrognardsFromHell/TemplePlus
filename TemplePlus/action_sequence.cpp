@@ -758,7 +758,7 @@ int ActionSequenceSystem::ActionAddToSeq()
 {
 	auto curSeq = *actSeqCur;
 	auto d20ActnType = d20Sys.globD20Action->d20ActType;
-	int actnCheckResult = 0;
+	int actnCheckResult = AEC_OK;
 	TurnBasedStatus tbStatus = curSeq->tbStatus;
 
 

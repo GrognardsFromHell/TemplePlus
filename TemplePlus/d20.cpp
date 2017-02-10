@@ -1238,7 +1238,7 @@ int LegacyD20System::TargetCheck(D20Actn* d20a)
 
 			if (!spellSys.spellRegistryCopy(spellEnum, &spellEntry))
 			{
-				logger->warn("Perform Cast Spell: failed to retrieve spell entry %d!\n", spellEnum);
+				logger->warn("Perform Cast Spell: failed to retrieve spell entry {}!\n", spellEnum);
 				return 1;
 			}
 			if (itemSpellData == 255)

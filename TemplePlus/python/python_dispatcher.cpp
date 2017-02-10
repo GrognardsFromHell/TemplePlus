@@ -299,6 +299,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def("get_spell_level", [](D20SpellData& spData)->int{	return spData.spellSlotLevel;	})
 		.def_readwrite("inven_idx", &D20SpellData::itemSpellData)
 		.def("get_spell_store", [](D20SpellData&spData)->SpellStoreData {	return spData.ToSpellStore();	})
+		.def("set_spell_class", [](D20SpellData& spData, int spClass) { spData.spellClassCode= spellSys.GetSpellClass(spClass);	})
 		;
 	#pragma endregion
 
