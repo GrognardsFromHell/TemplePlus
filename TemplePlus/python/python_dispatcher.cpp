@@ -251,16 +251,24 @@ PYBIND11_PLUGIN(tp_dispatcher){
 			.def("get_sum", &BonusList::GetEffectiveBonusSum)
 			.def("get_total", &BonusList::GetEffectiveBonusSum)
 			.def("add_zeroed", &BonusList::ZeroBonusSetMeslineNum, "Adds a zero-value bonus (usually to represent nullified bonuses)")
-			.def("add_cap", &BonusList::AddCap, "Adds cap for a particular bonus type");
+			.def("add_cap", [](BonusList & bonlist, int bonType, int value, int mesline) {
+				 bonlist.AddCap(bonType, value, mesline); }, "Adds cap for a particular bonus type")
+			.def("add_cap", [](BonusList & bonlist, int bonType, int value, int mesline, std::string &text) {
+					 bonlist.AddCapWithCustomDescr(bonType, value, mesline, text);
+				 }, "Adds cap for a particular bonus type")
+			;
 
-	py::class_<AttackPacket>(m, "AttackPacket")
+	 py::class_<AttackPacket>(m, "AttackPacket")
 		.def(py::init())
 		.def("get_weapon_used", &AttackPacket::GetWeaponUsed)
 		.def("is_offhand_attack", &AttackPacket::IsOffhandAttack)
 		.def_readwrite("attacker", &AttackPacket::attacker)
 		.def_readwrite("target", &AttackPacket::victim)
-		.def("get_flags", [](AttackPacket& pkt)->int{	return (int)pkt.flags;	}, "D20CAF flags")
-		.def("set_flags", [](AttackPacket& pkt, int flagsNew){	pkt.flags = (D20CAF)flagsNew;	}, "sets attack packet D20CAF flags to value specified");
+		.def("get_flags", [](AttackPacket& pkt)->int {	return (int)pkt.flags;	}, "D20CAF flags")
+		.def("set_flags", [](AttackPacket& pkt, int flagsNew) {	pkt.flags = (D20CAF)flagsNew;	}, "sets attack packet D20CAF flags to value specified")
+		.def_readwrite("action_type", &AttackPacket::d20ActnType)
+		.def_readwrite("event_key", &AttackPacket::dispKey)
+		;
 
 	py::class_<DamagePacket>(m, "DamagePacket")
 		.def(py::init())
