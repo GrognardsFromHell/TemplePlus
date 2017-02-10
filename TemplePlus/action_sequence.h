@@ -144,7 +144,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	uint32_t AssignSeq(objHndl objHnd);
 	uint32_t TurnBasedStatusInit(objHndl objHnd);
 	void ActSeqCurSetSpellPacket(SpellPacketBody* spellPacketBody, int flag);
-	int GetNewHourglassState(objHndl performer, D20ActionType d20ActionType, int d20Data1, int radMenuActualArg, D20SpellData* d20SpellData);
+	int GetNewHourglassState(objHndl performer, D20ActionType d20ActionType, int d20Data1, int radMenuActualArg, D20SpellData* d20SpellData); // used in radial menu rendering
 	int GetHourglassTransition(int hourglassCurrent, int hourglassCost);
 
 	BOOL SequenceSwitch(objHndl obj);

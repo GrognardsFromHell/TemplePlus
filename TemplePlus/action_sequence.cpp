@@ -29,6 +29,7 @@
 #include "python/python_integration_d20_action.h"
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
+#include "radialmenu.h"
 
 static struct ActnSeqAddresses : temple::AddressTable {
 
@@ -1386,6 +1387,12 @@ int ActionSequenceSystem::GetNewHourglassState(objHndl performer, D20ActionType 
 	d20a.distTraversed = 0;
 	d20a.spellId = 0;
 	d20a.path = nullptr;
+
+	auto activeMenu = radialMenus.GetActiveRadialMenu();
+	if (d20ActionType == D20A_PYTHON_ACTION && radialMenus.lastPythonActionNode > 0 ){
+		d20a.data1= (D20DispatcherKey)activeMenu->nodes[radialMenus.lastPythonActionNode].entry.dispKey;
+	}
+
 	if (d20SpellData)
 	{
 		d20a.d20SpellData = *d20SpellData;

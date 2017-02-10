@@ -573,7 +573,12 @@ std::string & LegacyD20System::GetPythonActionName(D20DispatcherKey key) const
 
 ActionErrorCode LegacyD20System::GetPyActionCost(D20Actn * d20a, TurnBasedStatus * tbStat, ActionCostPacket * acp){
 	
-	switch (pyactions[d20a->data1].costType){
+	auto actionKey = d20a->data1;
+	if (!actionKey){
+		actionKey = d20Sys.globD20ActionKey;
+	}
+
+	switch (pyactions[actionKey].costType){
 	
 		case ActionCostType::Null:
 			return d20Callbacks.ActionCostNull(d20a, tbStat, acp);
