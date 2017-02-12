@@ -269,6 +269,8 @@ namespace gfx {
 		void SetDepthStencilState(const DepthStencilState &state);
 		void SetSamplerState(int samplerIdx, const SamplerState &state);
 
+		void RestoreState();
+
 		void SetTexture(uint32_t slot, gfx::Texture &texture);
 
 		void SetIndexBuffer(const gfx::IndexBuffer &indexBuffer);
@@ -386,6 +388,18 @@ namespace gfx {
 		void EndPerfGroup() const;
 
 		TextEngine& GetTextEngine() const;
+
+		IDXGISwapChain* GetSwapChain() const {
+			return mSwapChain;
+		}
+
+		ID3D11Device* GetDevice() const {
+			return mD3d11Device;
+		}
+
+		ID3D11DeviceContext* GetContext() const {
+			return mContext;
+		}
 
 	private:
 		friend class ResourceListenerRegistration;

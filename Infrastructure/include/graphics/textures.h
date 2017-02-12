@@ -30,7 +30,8 @@ namespace gfx {
 		Invalid,
 		Dynamic,
 		File,
-		RenderTarget
+		RenderTarget,
+		Custom
 	};
 
 	/*

@@ -227,6 +227,8 @@ void UiMM::Show(MainMenuPage page)
 	mMainWidget->Show();
 	mMainWidget->BringToFront();
 
+	uiManager->AddQmlWindow(0, 0, 800, 600, "MainForm.ui.qml");
+
 	for (auto &entry : mPageWidgets) {
 		entry.second->SetVisible(entry.first == page);
 	}

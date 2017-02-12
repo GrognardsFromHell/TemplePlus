@@ -120,9 +120,10 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 		Write ToEE global config vars from our config
 	*/
 	applyGlobalConfig();
-
-
+	
 	TigInitializer tig(hInstance);
+
+	UiManager uiManager;
 	
 	setMiles3dProvider();
 	addScreenshotHotkey();
@@ -147,7 +148,6 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 		return 1;
 	}
 
-	UiManager uiManager;
 	UiAssets uiAssets;
 
 	WidgetTextStyles widgetTextStyles;

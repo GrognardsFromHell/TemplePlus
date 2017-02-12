@@ -180,6 +180,21 @@ RenderingDevice::RenderingDevice(HWND windowHandle, uint32_t adapterIdx, bool de
   // Retrieve the interface used to emit event groupings for debugging
   if (debugDevice) {
 	  mContext.QueryInterface(&mImpl->annotation);
+
+	  CComPtr<ID3D11InfoQueue> infoQueue;
+	  if (SUCCEEDED(mD3d11Device.QueryInterface(&infoQueue))) {
+		  infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
+		  infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, true);
+		  infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, true);
+		  D3D11_INFO_QUEUE_FILTER filter = {};
+		  filter.DenyList.NumIDs = 0;
+		  filter.DenyList.pIDList = nullptr;
+		  // setting the filter would enable Info messages which we don't need
+		  D3D11_MESSAGE_SEVERITY infoSev = D3D11_MESSAGE_SEVERITY_INFO;
+		  filter.DenyList.NumSeverities = 1;
+		  filter.DenyList.pSeverityList = &infoSev;
+		  infoQueue->PushStorageFilter(&filter);
+	  }
   }
 
   // Retrieve DXGI device
@@ -1019,6 +1034,38 @@ void RenderingDevice::SetSamplerState(int samplerIdx,
 
   ID3D11SamplerState *sampler = state.mGpuState;
   mContext->PSSetSamplers(samplerIdx, 1, &sampler);
+}
+
+void RenderingDevice::RestoreState()
+{
+	// Reset all the state pointers we *think* we have cached
+	mImpl->currentBlendState = nullptr;
+	mImpl->currentDepthStencilState = nullptr;
+	mImpl->currentRasterizerState = nullptr;
+	for (auto &currentState : mImpl->currentSamplerState) {
+		currentState = nullptr;
+	}
+
+	// Fix render targets
+	auto &newTarget = mRenderTargetStack.back();
+
+	// Activate the render target on the device
+	auto rtv = newTarget.colorBuffer->mRtView;
+	ID3D11DepthStencilView *depthStencilView = nullptr; // Optional!
+	if (newTarget.depthStencilBuffer) {
+		depthStencilView = newTarget.depthStencilBuffer->mDsView;
+	}
+
+	mContext->OMSetRenderTargets(1, &rtv.p, depthStencilView);
+	mImpl->textEngine->SetRenderTarget(newTarget.colorBuffer->mTexture);
+
+	// Set the viewport accordingly
+	auto &size = newTarget.colorBuffer->GetSize();
+	CD3D11_VIEWPORT viewport(0.0f, 0.0f, (float)size.width, (float)size.height);
+	mContext->RSSetViewports(1, &viewport);
+
+	ResetScissorRect();
+
 }
 
 void RenderingDevice::SetTexture(uint32_t slot, gfx::Texture &texture) {

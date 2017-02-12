@@ -320,7 +320,7 @@ struct PickerResult {
 };
 
 
-enum EquipSlot : uint32_t {
+enum class EquipSlot : uint32_t {
 	Helmet = 0,
 	Necklace = 1,
 	Gloves = 2,

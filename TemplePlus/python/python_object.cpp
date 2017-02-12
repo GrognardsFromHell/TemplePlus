@@ -2673,8 +2673,8 @@ static PyObject* PyObjHandle_Unwield(PyObject* obj, PyObject* args) {
 	}
 
 
-	if (es >= EquipSlot::Count || es < 0)
-		es = EquipSlot::Invalid;
+	if (es >= (int) EquipSlot::Count || es < 0)
+		es = (int) EquipSlot::Invalid;
 	auto equipSlot = (EquipSlot)es;
 
 	if ( flag == 1 ) {
@@ -2708,8 +2708,8 @@ static PyObject* PyObjHandle_Wield(PyObject* obj, PyObject* args) {
 		}
 	}
 
-	if (equipSlot >= EquipSlot::Count || equipSlot < 0)
-		equipSlot = EquipSlot::Invalid;
+	if (equipSlot >= (int) EquipSlot::Count || equipSlot < 0)
+		equipSlot = (int) EquipSlot::Invalid;
 
 	inventory.Wield(self->handle, item, (EquipSlot)equipSlot);
 	Py_RETURN_NONE;

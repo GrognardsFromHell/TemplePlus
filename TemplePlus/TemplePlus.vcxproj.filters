@@ -469,6 +469,72 @@
       <Filter>ui</Filter>
     </ClCompile>
     <ClCompile Include="rng.cpp" />
+    <ClCompile Include="ui\ui_rendercontrol.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\qsgd3d11adaptation.cpp">
+      <Filter>QSG D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\qsgd3d11builtinmaterials.cpp">
+      <Filter>QSG D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\qsgd3d11context.cpp">
+      <Filter>QSG D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\qsgd3d11engine.cpp">
+      <Filter>QSG D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\qsgd3d11glyphcache.cpp">
+      <Filter>QSG D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\qsgd3d11glyphnode.cpp">
+      <Filter>QSG D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\qsgd3d11internalimagenode.cpp">
+      <Filter>QSG D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\qsgd3d11internalrectanglenode.cpp">
+      <Filter>QSG D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\qsgd3d11layer.cpp">
+      <Filter>QSG D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\qsgd3d11material.cpp">
+      <Filter>QSG D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\qsgd3d11painternode.cpp">
+      <Filter>QSG D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\qsgd3d11publicnodes.cpp">
+      <Filter>QSG D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\qsgd3d11rendercontext.cpp">
+      <Filter>QSG D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\qsgd3d11renderer.cpp">
+      <Filter>QSG D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\qsgd3d11renderloop.cpp">
+      <Filter>QSG D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\qsgd3d11spritenode.cpp">
+      <Filter>QSG D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\qsgd3d11texture.cpp">
+      <Filter>QSG D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\moc\moc_qsgd3d11adaptation_p.cpp">
+      <Filter>QSG D3D11\moc</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\moc\moc_qsgd3d11layer_p.cpp">
+      <Filter>QSG D3D11\moc</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\moc\moc_qsgd3d11renderloop_p.cpp">
+      <Filter>QSG D3D11\moc</Filter>
+    </ClCompile>
+    <ClCompile Include="qsgd3d11\qwindowskeymapper.cpp">
+      <Filter>QSG D3D11</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -885,6 +951,69 @@
       <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="rng.h" />
+    <ClInclude Include="ui\ui_rendercontrol.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\qsgd3d11adaptation_p.h">
+      <Filter>QSG D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\qsgd3d11builtinmaterials_p.h">
+      <Filter>QSG D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\qsgd3d11context_p.h">
+      <Filter>QSG D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\qsgd3d11engine_p.h">
+      <Filter>QSG D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\qsgd3d11engine_p_p.h">
+      <Filter>QSG D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\qsgd3d11glyphcache_p.h">
+      <Filter>QSG D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\qsgd3d11glyphnode_p.h">
+      <Filter>QSG D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\qsgd3d11internalimagenode_p.h">
+      <Filter>QSG D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\qsgd3d11internalrectanglenode_p.h">
+      <Filter>QSG D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\qsgd3d11layer_p.h">
+      <Filter>QSG D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\qsgd3d11material_p.h">
+      <Filter>QSG D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\qsgd3d11painternode_p.h">
+      <Filter>QSG D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\qsgd3d11publicnodes_p.h">
+      <Filter>QSG D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\qsgd3d11rendercontext_p.h">
+      <Filter>QSG D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\qsgd3d11renderer_p.h">
+      <Filter>QSG D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\qsgd3d11renderloop_p.h">
+      <Filter>QSG D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\qsgd3d11spritenode_p.h">
+      <Filter>QSG D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\qsgd3d11texture_p.h">
+      <Filter>QSG D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\moc\moc_predefs.h">
+      <Filter>QSG D3D11\moc</Filter>
+    </ClInclude>
+    <ClInclude Include="qsgd3d11\qwindowskeymapper.h">
+      <Filter>QSG D3D11</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -914,6 +1043,15 @@
     <Filter Include="Mods and Fixes\Condition Fixes">
       <UniqueIdentifier>{0e53287e-d500-4b3d-a274-09c4e0cf6dbf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="QSG D3D11">
+      <UniqueIdentifier>{9cfb3e34-a7d7-46d8-a588-1ca8d14cec96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="QSG D3D11\Shaders">
+      <UniqueIdentifier>{f1019179-e3d1-4c01-a090-f9b236dfe9d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="QSG D3D11\moc">
+      <UniqueIdentifier>{3eb4d52a-a1ec-4ce2-a49b-d9eefd61def5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Image Include="toee_gog_icon.ico">
@@ -927,5 +1065,88 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="manifest.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="qsgd3d11\ps_flatcolor.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\ps_outlinedtext.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\ps_shadereffectdefault.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\ps_smoothcolor.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\ps_smoothtexture.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\ps_sprite.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\ps_stencilclip.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\ps_styledtext.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\ps_textmask8.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\ps_textmask24.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\ps_textmask32.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\ps_texture.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\ps_vertexcolor.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\vs_flatcolor.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\vs_outlinedtext.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\vs_shadereffectdefault.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\vs_smoothcolor.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\vs_smoothtexture.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\vs_sprite.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\vs_stencilclip.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\vs_styledtext.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\vs_textmask.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\vs_texture.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\vs_vertexcolor.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\cs_mipmapgen.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\cs_tdr.hlslh">
+      <Filter>QSG D3D11\Shaders</Filter>
+    </None>
+    <None Include="qsgd3d11\moc\qsgd3d11threadedrenderloop.moc">
+      <Filter>QSG D3D11\moc</Filter>
+    </None>
   </ItemGroup>
 </Project>

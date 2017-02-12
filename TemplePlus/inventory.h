@@ -4,7 +4,7 @@
 #include <map>
 
 
-enum EquipSlot : uint32_t;
+enum class EquipSlot : uint32_t;
 
 #define CRITTER_INVENTORY_SLOT_COUNT 24 // amount of inventory slots visible
 #define INVENTORY_WORN_IDX_START 200 // the first inventory index for worn items

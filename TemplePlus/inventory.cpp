@@ -955,5 +955,5 @@ int InventorySystem::GetSoundIdForItemEvent(objHndl item, objHndl wielder, objHn
 }
 
 int InventorySystem::InvIdxForSlot(EquipSlot slot){
-	return slot + INVENTORY_WORN_IDX_START;
+	return (int) slot + INVENTORY_WORN_IDX_START;
 }

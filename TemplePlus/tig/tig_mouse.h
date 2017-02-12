@@ -35,7 +35,7 @@ struct MouseFuncs : temple::AddressTable {
 	void (__cdecl *SetPos)(int x, int y, int wheelDelta);
 	void RefreshCursor();
 	int (__cdecl*GetState)(TigMouseState * mouseState);
-	
+
 	void SetMmbReference()
 	{
 		if (mmbReference.x == -1 && mmbReference.y == -1)

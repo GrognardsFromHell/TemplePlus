@@ -183,6 +183,7 @@ struct LgcyWidgetDeleter
 };
 
 class WidgetBase;
+class QQuickView;
 
 class ActiveLegacyWidget {
 public:
@@ -193,6 +194,7 @@ public:
 	uint32_t sourceLine;
 	unique_ptr<LgcyWidget, LgcyWidgetDeleter> widget;
 	WidgetBase *advancedWidget = nullptr;
+	QQuickView *view = nullptr;
 };
 
 #pragma endregion
@@ -303,6 +305,8 @@ public:
 			mMouseCaptureWidgetId = -1;
 		}
 	}
+
+	LgcyWidgetId AddQmlWindow(int x, int y, int w, int h, const std::string &path);
 
 private:
 	UiManager(UiManager&) = delete;

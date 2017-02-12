@@ -223,7 +223,7 @@ bool EncodedAnimId::IsConjuireAnimation() const
 	}
 }
 
-inline std::string EncodedAnimId::GetName() const {
+std::string EncodedAnimId::GetName() const {
 
 	static std::string sUnknown = "<unknown>";
 

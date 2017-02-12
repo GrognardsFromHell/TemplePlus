@@ -182,7 +182,7 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	if (mWindowMsgFilter && mWindowMsgFilter(msg, wparam, lparam)) {
 		return DefWindowProcA(hWnd, msg, wparam, lparam);
 	}
-
+	
 	static int mousePosX = 0; // Replaces memory @ 10D25CEC
 	static int mousePosY = 0; // Replaces memory @ 10D25CF0
 	RECT rect;
@@ -235,6 +235,8 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		tigMsg.type = TigMsgType::KEYSTATECHANGE;
 		tigMsg.arg1 = ToDirectInputKey(wparam);
 		tigMsg.arg2 = 1; // Means it has changed to pressed
+		tigMsg.arg3 = wparam;
+		tigMsg.arg4 = lparam;
 		if (tigMsg.arg1 != 0) {
 			messageQueue->Enqueue(tigMsg);
 		}
@@ -244,6 +246,8 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		tigMsg.type = TigMsgType::KEYSTATECHANGE;
 		tigMsg.arg1 = ToDirectInputKey(wparam);
 		tigMsg.arg2 = 1; // Means it has changed to pressed
+		tigMsg.arg3 = wparam;
+		tigMsg.arg4 = lparam;
 		if (tigMsg.arg1 != 0) {
 			messageQueue->Enqueue(tigMsg);
 		}
@@ -254,6 +258,8 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		tigMsg.type = TigMsgType::KEYSTATECHANGE;
 		tigMsg.arg1 = ToDirectInputKey(wparam);
 		tigMsg.arg2 = 0; // Means it has changed to unpressed
+		tigMsg.arg3 = wparam;
+		tigMsg.arg4 = lparam;
 		if (tigMsg.arg1 != 0) {
 			messageQueue->Enqueue(tigMsg);
 		}
@@ -262,6 +268,8 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		tigMsg.createdMs = timeGetTime();
 		tigMsg.type = TigMsgType::CHAR;
 		tigMsg.arg1 = wparam;
+		tigMsg.arg3 = wparam;
+		tigMsg.arg4 = lparam;
 		messageQueue->Enqueue(tigMsg);
 		break;
 	case WM_SYSCOMMAND:
